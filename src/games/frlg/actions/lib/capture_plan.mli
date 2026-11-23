@@ -14,9 +14,7 @@ type t = {
   max_encounters : int;  (** wild battles, of any species, before giving up *)
   max_balls : int;  (** Poké Balls thrown before giving up *)
   pace : Grid_maps.Direction.t;
-      (** the fork's way to step for a battle and back; read and logged only, as
-          the encounters are found by turning in place ({!Spin_for_encounter})
-      *)
+      (** the way to step for a battle, and back ({!Pacing}) *)
 }
 
 val decode : Grid_maps.Json_field.obj -> (t, Story.Failure.cause) result

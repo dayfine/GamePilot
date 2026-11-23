@@ -173,26 +173,28 @@ let grind t (_ : Story.Plan.event) args =
       Result.bind (Grind_plan.decode strategies args) (fun plan ->
           Menu_input.run (fun () -> Grind.run (grind_rig t) plan))
 
-(* The catches that went to the party join it; the player faces a way the
-   turning does not report. *)
-let after_capture t (plan : Capture_plan.t) (result : Capture.result) =
+(* The catches that went to the party join it; the player stands where the
+   pacing left them: the patch's tile, or one tile [pace] from it. *)
+let after_capture t (plan : Capture_plan.t) (spot : Pacing.spot) result =
   t.party := Capture.party_after !(t.party) plan result;
-  t.at <- Option.map (fun at -> { at with Story.Pose.faces = None }) t.at
+  let stands (at : Story.Pose.observed) =
+    let at_tile = Pacing.stands_on ~pace:plan.pace spot at.at_tile in
+    { at with at_tile; faces = spot.facing }
+  in
+  t.at <- Option.map stands t.at
 
 let run_capture t (plan : Capture_plan.t) () =
   let log = t.config.log in
   log ("Capture: " ^ Capture_plan.describe plan ^ ".");
+  let spot = ref (Pacing.on_patch (Option.bind t.at (fun at -> at.faces))) in
   let rig =
-    Capture_steps.make ~log
-      ~facing:(fun () -> faced t)
-      ~target:plan.species
-      ~max_spin_batches:Action_requests.default_spin_batches
+    Capture_steps.make ~log ~pace:plan.pace ~spot ~target:plan.species
   in
   let result =
     Effects.with_probes Frlg_battle.Battle_look.probes (fun () ->
         Capture.run rig plan ~party:(Party_roster.size !(t.party)))
   in
-  after_capture t plan result;
+  after_capture t plan !spot result;
   let message = Capture.message plan result in
   log message;
   match result.end_ with

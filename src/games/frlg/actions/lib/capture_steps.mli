@@ -4,8 +4,8 @@
     {!Frlg_battle.Battle_look.probes} and {!Menu_input.probes}.
 
     Where it differs:
-    - A wild battle is found by turning in place ({!Spin_for_encounter}, the
-      Mail Glitch program's way), not by pacing to the plan's [pace] and back.
+    - The flee settles the overworld with the talk settle
+      ({!Menu_input.settle_back}), not wait_for_quiet_overworld().
     - The species is read off the battle's first message,
       ["Wild SPEAROW appeared!"], drawn in the game's font
       ({!Frlg_text.Line_reading}), not by OCR of the foe's HP box, whose small
@@ -31,9 +31,10 @@ val opening_line : string -> string
 
 val make :
   log:(string -> unit) ->
-  facing:(unit -> Grid_maps.Direction.t) ->
+  pace:Grid_maps.Direction.t ->
+  spot:Pacing.spot ref ->
   target:string ->
-  max_spin_batches:int ->
   Capture.rig
-(** [facing]: where the player faces before each search (turning starts from
-    it). [target]: the plan's species. *)
+(** A wild battle is found by pacing [pace] and back from [spot], which the
+    steps keep from one search to the next ({!Pacing_steps}). [target]: the
+    plan's species. *)
