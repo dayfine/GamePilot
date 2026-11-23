@@ -9,6 +9,7 @@
 #include "Common/Cpp/Filesystem/Filesystem.h"
 #include "check.h"
 #include "rpc.h"
+#include "template_store.h"
 
 namespace pa = PokemonAutomation;
 using namespace gamepilot;
@@ -57,6 +58,16 @@ void check_requests(const std::map<std::string, pa::JsonValue>& files) {
   CHECK(probes.probes[0].box.x == 0.7 && probes.probes[0].box.h == 0.5);
   CHECK(probes.probes[0].delivery == "every");
 
+  const Request templated =
+      decode_request(files.at("17-subscribe.template_match.request.json"));
+  const SubscribeParams cursor = decode_subscribe(templated.params);
+  CHECK(cursor.probes.size() == 1);
+  CHECK(cursor.probes[0].kind == kTemplateMatchKind);
+  CHECK(cursor.probes[0].delivery == "latest");
+  CHECK(cursor.probes[0].template_hash ==
+        *result_of(files.at("16-upload_template.response.json"))
+             .get_string("template"));
+
   const Request submit = decode_request(files.at("08-submit.request.json"));
   const SubmitParams batch = decode_submit(submit.params);
   CHECK(batch.batch_id == "b1");
@@ -69,6 +80,29 @@ void check_requests(const std::map<std::string, pa::JsonValue>& files) {
   const Request cancel = decode_request(files.at("12-cancel.request.json"));
   CHECK(cancel.method == "cancel");
   decode_cancel(cancel.params);
+}
+
+// The golden upload decodes to a 3x2 PNG whose hash is the golden response's.
+void check_upload(const std::map<std::string, pa::JsonValue>& files) {
+  const Request upload =
+      decode_request(files.at("15-upload_template.request.json"));
+  CHECK(upload.method == "probe.upload_template");
+  TemplateStore store;
+  const auto hash = store.add_png(decode_upload_template(upload.params).png);
+  CHECK(hash.has_value());
+  if (!hash) {
+    return;
+  }
+  CHECK(result_message(pa::JsonValue(std::int64_t{7}),
+                       upload_template_result(*hash)) ==
+        files.at("16-upload_template.response.json"));
+  const cv::Mat* image = store.find(*hash);
+  CHECK(image != nullptr && image->cols == 3 && image->rows == 2);
+  if (image != nullptr) {
+    // Top-right pixel is pure red: BGR (0, 0, 255).
+    CHECK(image->at<cv::Vec3b>(0, 2) == cv::Vec3b(0, 0, 255));
+  }
+  CHECK(store.add_png(decode_upload_template(upload.params).png) == hash);
 }
 
 void check_encoders(const std::map<std::string, pa::JsonValue>& files) {
@@ -90,6 +124,9 @@ void check_encoders(const std::map<std::string, pa::JsonValue>& files) {
   const pa::JsonValue frame =
       frame_notification(1201, 1, 20113.6, {{"menu_panel", stats}});
   CHECK(frame == files.at("07-frame.notification.json"));
+  const ProbeResult cursor = TemplateMatch{0.000412, 0.75, 0.0625};
+  CHECK(frame_notification(1260, 1, 21101.4, {{"cursor", cursor}}) ==
+        files.at("18-frame.template_match.notification.json"));
   CHECK(batch_done_notification("b1", 1230, 20599.0) ==
         files.at("10-batch_done.notification.json"));
 
@@ -135,15 +172,36 @@ void check_errors() {
     threw = error.code() == kInvalidParams;
   }
   CHECK(threw);
+
+  threw = false;
+  try {
+    decode_subscribe(
+        parse_message(
+            R"({"probes":[{"id":"p","kind":"core.template_match@1","delivery":"every","box":{"x":0,"y":0,"w":1,"h":1}}]})")
+            .to_object_throw());
+  } catch (const RpcError& error) {
+    threw = error.code() == kInvalidParams;
+  }
+  CHECK(threw);  // a template match needs its template
+
+  threw = false;
+  try {
+    decode_upload_template(
+        parse_message(R"({"png":"not base64"})").to_object_throw());
+  } catch (const RpcError& error) {
+    threw = error.code() == kInvalidParams;
+  }
+  CHECK(threw);
 }
 
 }  // namespace
 
 int main() {
   const auto files = load_contracts();
-  CHECK(files.size() == 14);
-  if (files.size() == 14) {
+  CHECK(files.size() == 18);
+  if (files.size() == 18) {
     check_requests(files);
+    check_upload(files);
     check_encoders(files);
   }
   check_errors();

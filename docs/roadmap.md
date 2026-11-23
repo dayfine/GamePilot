@@ -46,7 +46,7 @@ Tests compare against the C++ tests' expectations case by case.
 
 | Item | Where |
 |---|---|
-| Daemon probes: template match (templates uploaded at registration, R13), black screen | `daemon/` |
+| Daemon probes: template match (templates uploaded at registration, R13); black screen is `core.color_stats@1` plus a reader threshold (#15) | `daemon/`, `src/base/wire` |
 | Screen state: fade, settled, free control (one rule for scenes, as in the fork) | `src/core/screen_state` |
 | FRLG readers: dialog, Start menu, bag and item list, party and held item, summary moves, digits, battle screen | `src/games/frlg/readers` |
 | R19 decided: font templates or OCR, when the item list and move readers need text | design doc |

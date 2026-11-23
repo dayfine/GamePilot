@@ -1,0 +1,8 @@
+{
+  "jsonrpc": "2.0",
+  "id": 7,
+  "method": "probe.upload_template",
+  "params": {
+    "png": "iVBORw0KGgoAAAANSUhEUgAAAAMAAAACCAIAAAASFvFNAAAAFUlEQVR42mP4//8/AwMDCIMoEOc/AFLBB/nppN2iAAAAAElFTkSuQmCC"
+  }
+}

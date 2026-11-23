@@ -17,6 +17,7 @@
 #include "net.h"
 #include "rpc.h"
 #include "schedule.h"
+#include "template_store.h"
 
 namespace gamepilot {
 
@@ -42,6 +43,8 @@ class Server {
   void drop_client(const char* reason);
   void handle_line(const std::string& line);
   pa::JsonObject dispatch(const Request& request);
+  void check_probe(const ProbeSpec& probe) const;
+  ProbeResult evaluate(const ProbeSpec& probe, const cv::Mat& frame) const;
   void send(const pa::JsonValue& message);
   void log(const char* dir, const pa::JsonValue& message);
   void step_frame();
@@ -56,6 +59,7 @@ class Server {
   pa::FileIO wire_log_;
 
   std::vector<ProbeSpec> probes_;
+  TemplateStore templates_;
   InputSchedule schedule_;
   std::optional<KeyMask> sent_mask_;
 

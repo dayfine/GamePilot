@@ -1,0 +1,21 @@
+{
+  "jsonrpc": "2.0",
+  "id": 8,
+  "method": "subscribe",
+  "params": {
+    "probes": [
+      {
+        "id": "cursor",
+        "kind": "core.template_match@1",
+        "box": {
+          "x": 0.5,
+          "y": 0.0,
+          "w": 0.5,
+          "h": 0.25
+        },
+        "delivery": "latest",
+        "template": "21e018b423be9dbd6ab58c8545d5c727d9273f36b56b4596ed49b365f43e17fd"
+      }
+    ]
+  }
+}
