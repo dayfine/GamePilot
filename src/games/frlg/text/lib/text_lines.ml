@@ -49,7 +49,6 @@ let battle_message i =
     width = 208;
   }
 
-
 (* The info page's right pane (window left 15 tiles, top 2) prints the species
    at (47, 19). *)
 let summary_species =

@@ -141,6 +141,10 @@
     "menu": "full"
   },
   "metadata": {
-    "phase": "testing"
+    "phase": "testing",
+    "postconditions": {
+      "party_includes": ["farfetchd"],
+      "money": {"min": 25014, "max": 25014}
+    }
   }
 }
