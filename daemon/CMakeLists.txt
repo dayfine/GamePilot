@@ -23,10 +23,6 @@ set(PA_ASSEMBLY_LISTINGS OFF CACHE BOOL "" FORCE)
 add_subdirectory("${PA_SERIAL_PROGRAMS_DIR}" "${CMAKE_BINARY_DIR}/pa_core" EXCLUDE_FROM_ALL)
 
 add_executable(gamepilot_daemon src/main.cpp)
-# CoreLib keeps its include directories and definitions PRIVATE; upstream's helper
-# applies the same ones to our target. It reads PA_SERIAL_PROGRAMS_DIR from the
-# caller's scope, which is why that variable is set above.
-pa_apply_gui_free_target_properties(gamepilot_daemon)
 target_link_libraries(gamepilot_daemon PRIVATE CoreLib ${OpenCV_LIBS})
 target_include_directories(gamepilot_daemon SYSTEM PRIVATE ${OpenCV_INCLUDE_DIRS})
 

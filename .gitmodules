@@ -1,6 +1,7 @@
 [submodule "third_party/Arduino-Source"]
 	path = third_party/Arduino-Source
 	url = https://github.com/dayfine/Arduino-Source.git
+	branch = gamepilot/base
 [submodule "third_party/Packages"]
 	path = third_party/Packages
 	url = https://github.com/PokemonAutomation/Packages.git
