@@ -205,7 +205,58 @@ void rng_calibration_lines(FILE* out){
 }
 
 
+//  ---- Provisional state ----
+
+const char* step_text(ProvisionalStep step){
+    switch (step){
+    case ProvisionalStep::KEEP_COLLECTING: return "keep";
+    case ProvisionalStep::PROVISIONAL: return "provisional";
+    case ProvisionalStep::CHANGED: return "changed";
+    case ProvisionalStep::DROPPED: return "dropped";
+    case ProvisionalStep::CONFIRMED: return "confirmed";
+    }
+    return "?";
+}
+
+//  Solves as "<state letter><events>" ("A44": state A from 44 rolls) or "-"
+//  for a failed one, fed to update_provisional in order.
+void provisional_line(FILE* out, size_t confirmation_events, const std::vector<std::string>& solves){
+    const std::vector<Xorshift128State> STATES{{1, 2, 3, 4}, {5, 6, 7, 8}, {9, 10, 11, 12}};
+    ProvisionalState provisional;
+    std::fprintf(out, "provisional %zu %zu", confirmation_events, solves.size());
+    for (const std::string& solve : solves){
+        std::fprintf(out, " %s", solve.c_str());
+    }
+    std::fprintf(out, " :");
+    for (const std::string& solve : solves){
+        bool solved = solve != "-";
+        Xorshift128State state = solved ? STATES[solve[0] - 'A'] : Xorshift128State();
+        size_t events = solved ? std::stoul(solve.substr(1)) : 0;
+        ProvisionalStep step = update_provisional(provisional, solved, state, events, confirmation_events);
+        std::fprintf(out, " %s", step_text(step));
+    }
+    std::fprintf(out, " | %d %u %zu %zu\n", provisional.held ? 1 : 0, provisional.state.s0,
+        provisional.events, provisional.failed_solves);
+}
+
+void provisional_lines(FILE* out){
+    provisional_line(out, 6, {"-", "-", "A44", "A50"});
+    provisional_line(out, 6, {"A44", "B50", "B56"});
+    provisional_line(out, 6, {"A44", "-", "-", "-", "-", "-", "A60"});
+    provisional_line(out, 6, {"A44", "-", "-", "-", "-", "-", "-", "-", "B70", "B76"});
+    provisional_line(out, 6, {"A44", "-", "-", "B50", "-", "-", "-", "-", "-", "-"});
+    provisional_line(out, 1, {"A44", "-", "-", "C45"});
+    provisional_line(out, 0, {"A44", "-", "A45"});
+}
+
+
+
+void blink_recovery_lines(FILE* out){
+    provisional_lines(out);
+}
+
 }
 
 void advance_clock_golden(FILE* out){ advance_clock_lines(out); }
 void rng_calibration_golden(FILE* out){ rng_calibration_lines(out); }
+void blink_recovery_golden(FILE* out){ blink_recovery_lines(out); }

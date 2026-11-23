@@ -1,0 +1,7 @@
+provisional 6 4 - - A44 A50 : keep keep provisional confirmed | 1 1 44 0
+provisional 6 3 A44 B50 B56 : provisional changed confirmed | 1 5 50 0
+provisional 6 7 A44 - - - - - A60 : provisional keep keep keep keep keep confirmed | 1 1 44 0
+provisional 6 10 A44 - - - - - - - B70 B76 : provisional keep keep keep keep keep dropped keep provisional confirmed | 1 5 70 0
+provisional 6 10 A44 - - B50 - - - - - - : provisional keep keep changed keep keep keep keep keep dropped | 0 0 0 0
+provisional 1 4 A44 - - C45 : provisional dropped keep provisional | 1 9 45 0
+provisional 0 3 A44 - A45 : provisional dropped provisional | 1 1 45 0

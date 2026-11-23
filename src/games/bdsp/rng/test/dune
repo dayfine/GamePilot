@@ -7,7 +7,8 @@
   test_blink_extraction
   test_state_reidentifier
   test_advance_clock
-  test_rng_calibration)
+  test_rng_calibration
+  test_provisional_state)
  (modules
   fixture_lines
   test_xorshift128
@@ -17,7 +18,8 @@
   test_blink_extraction
   test_state_reidentifier
   test_advance_clock
-  test_rng_calibration)
+  test_rng_calibration
+  test_provisional_state)
  (deps
   (glob_files fixtures/*.txt))
  (libraries gamepilot.case_table gamepilot.bdsp_rng))
