@@ -80,21 +80,19 @@ let use_move read_move_name ~slot ~target ~expect : Battle_driver.move_result =
         Other_move name
     | None -> choose_move ~slot ~target
 
-(* The cursor read on another slot than [slot]; [None] (no slot read) is not
-   taken for a mismatch. *)
-let cursor_elsewhere ~slot =
-  match Option.bind (Effects.read ()) Party_menu.selected_slot with
-  | Some n -> n <> slot + 1
-  | None -> false
-
-(* On the party list, opened on slot 0: down to [slot], A, and SHIFT at the top
+(* On the party list: the cursor read down (or up) to [slot] (from 0; the list
+   keeps no row, but it drops taps while it slides in), A, and SHIFT at the top
    of the member's menu; done once the battle shows again. *)
 let send_in ~slot =
-  tap_all (Battle_cursor.down slot);
-  if cursor_elsewhere ~slot then false
-  else (
-    tap_all Wire.[ A; A ];
-    shows ~timeout_ms:list_timeout_ms Battle_screen.battle_shows)
+  match
+    Frlg_menu_cursor.Cursor_steps.step_to ~timeout_ms:list_timeout_ms
+      ~tap:(fun b -> tap_all [ b ])
+      Party_menu.selected_slot (slot + 1)
+  with
+  | Reached ->
+      tap_all Wire.[ A; A ];
+      shows ~timeout_ms:list_timeout_ms Battle_screen.battle_shows
+  | Unread | Stuck _ -> false
 
 let switch_to ~slot =
   tap_all Battle_cursor.pokemon;

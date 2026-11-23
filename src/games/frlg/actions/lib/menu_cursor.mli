@@ -22,13 +22,6 @@ val party : column
 val member_menu : column
 (** {!Frlg_readers.Member_menu.cursor_row}: rows from 0 (SUMMARY). *)
 
-val tap_timeout_ms : int
-(** How long a tap may take to move the read cursor before it counts as lost and
-    is tapped again: 400 ms. *)
-
-val max_taps : int
-(** Taps toward one row before the move fails: 16. *)
-
 val confirm_ms : int
 (** Between the A (or START) presses of {!choose} and {!open_start_menu_row}
     while the next screen does not show: 1000 ms. *)
@@ -38,7 +31,7 @@ val max_confirms : int
 
 val move_to : code:string -> column -> int -> unit
 (** Taps until the menu reads the cursor on this row. Fails as [code] when the
-    menu does not show or the cursor stays off the row for {!max_taps} taps. *)
+    menu does not show or the cursor stays off the row. *)
 
 val choose :
   code:string -> column -> int -> taken:(Effects.measurements -> bool) -> unit

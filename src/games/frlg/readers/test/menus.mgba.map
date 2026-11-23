@@ -46,3 +46,7 @@ repo src/games/frlg/readers/test/images/mgba/mail-glitch-04-inspect/pause-menu.p
 repo src/games/frlg/readers/test/images/mgba/grind-2026-11-23/member-menu-slot5.png|grind-2026-11-23/member-menu-slot5__member0.png
 repo src/games/frlg/readers/test/images/mgba/grind-2026-11-23/mimien-moves.png|grind-2026-11-23/mimien-moves__summary3.png
 repo src/games/frlg/readers/test/images/mgba/grind-2026-11-23/mimien-moves-drawing.png|grind-2026-11-23/mimien-moves-drawing__summary3.png
+repo src/games/frlg/readers/test/images/mgba/grind-2026-11-23/member-menu-switch.png|grind-2026-11-23/member-menu-switch__member1.png
+repo src/games/frlg/readers/test/images/mgba/grind-2026-11-23/member-menu-6rows-surf.png|grind-2026-11-23/member-menu-6rows-surf__member2.png
+repo src/games/frlg/readers/test/images/mgba/grind-2026-11-23/member-menu-6rows-switch.png|grind-2026-11-23/member-menu-6rows-switch__member3.png
+repo src/games/frlg/readers/test/images/mgba/grind-2026-11-23/party-move-to-where.png|grind-2026-11-23/party-move-to-where__party-held6.png
