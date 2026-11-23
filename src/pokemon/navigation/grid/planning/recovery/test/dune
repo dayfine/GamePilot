@@ -1,0 +1,4 @@
+(tests
+ (names test_wall_recovery test_wander_recovery)
+ (modules check test_wall_recovery test_wander_recovery)
+ (libraries gamepilot.grid_maps gamepilot.grid_recovery))
