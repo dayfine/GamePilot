@@ -1,0 +1,1 @@
+{"jsonrpc":"2.0","id":2,"method":"backend.load_state","params":{"path":"/Users/example/FRLGLab/mgba/gamepilot/states/overworld.ss"}}
