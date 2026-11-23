@@ -1,37 +1,60 @@
+module J = Grid_maps.Json_field
+
 type town = {
   name : string;
   cell : Grid_maps.Tile_pos.t;
   landing : Story.Pose.observed;
 }
 
-let columns = 22
-let rows = 15
+type t = { columns : int; rows : int; towns : town list }
 
-let town name (cx, cy) map (x, y) =
+let asset = "src/games/frlg/assets/kanto_fly_towns.json"
+
+let tile ~where key obj : Grid_maps.Tile_pos.t =
+  match J.field ~where key obj with
+  | `List [ `Int x; `Int y ] -> { x; y }
+  | _ -> J.fail "%s%s is not [x, y]." where key
+
+let town i json =
+  let where = J.item_where "kanto_fly_towns.json: " "towns" i in
+  let obj = J.as_object where json in
+  let landing = J.as_object where (J.field ~where "landing" obj) in
   {
-    name;
-    cell = { x = cx; y = cy };
-    landing = { at_map = map; at_tile = { x; y }; faces = None };
+    name = J.string ~where "name" obj;
+    cell = tile ~where "cell" obj;
+    landing =
+      {
+        at_map = J.string ~where "map" landing;
+        at_tile = tile ~where "tile" landing;
+        faces = None;
+      };
   }
 
-let kanto =
-  [
-    town "PalletTown" (4, 11) "PalletTown" (6, 8);
-    town "ViridianCity" (4, 8) "ViridianCity" (26, 27);
-    town "PewterCity" (4, 4) "PewterCity" (17, 26);
-    town "Route4" (8, 3) "Route4" (12, 6);
-    town "CeruleanCity" (14, 3) "CeruleanCity" (22, 20);
-    town "VermilionCity" (14, 9) "VermilionCity" (15, 7);
-    town "Route10" (18, 3) "Route10" (13, 21);
-    town "LavenderTown" (18, 6) "LavenderTown" (6, 6);
-    town "CeladonCity" (11, 6) "CeladonCity" (48, 12);
-    town "SaffronCity" (14, 6) "SaffronCity" (24, 39);
-    town "FuchsiaCity" (12, 12) "FuchsiaCity" (25, 32);
-    town "CinnabarIsland" (4, 14) "CinnabarIsland" (14, 12);
-    town "IndigoPlateau" (2, 3) "IndigoPlateau_Exterior" (11, 7);
-  ]
+let parse json =
+  let where = "kanto_fly_towns.json: " in
+  match
+    let obj = J.as_object where json in
+    let towns = Option.value (J.list_opt ~where "towns" obj) ~default:[] in
+    {
+      columns = J.int ~where "columns" obj;
+      rows = J.int ~where "rows" obj;
+      towns = List.mapi town towns;
+    }
+  with
+  | table -> Ok table
+  | exception J.Invalid e -> Error e
 
-let find name = List.find_opt (fun t -> t.name = name) kanto
+let read () =
+  match Frlg_repo_files.Repo_files.locate asset with
+  | None -> Error (asset ^ " not found from the working directory")
+  | Some path -> (
+      match Yojson.Safe.from_file path with
+      | json -> parse json
+      | exception Yojson.Json_error e -> Error (path ^ ": " ^ e))
+
+let table = lazy (read ())
+let load () = Lazy.force table
+let find t name = List.find_opt (fun town -> town.name = name) t.towns
 
 (* A cursor step takes 4 frames; the release lets it stop. Up-left to the
    corner: 21 cells at 4 frames is 1.4 s. *)
@@ -50,11 +73,11 @@ let taps button n =
   in
   List.init n (fun _ -> tap)
 
-let cursor_presses t =
+let cursor_presses town =
   Wire.Press
     {
       buttons = [ Wire.Up; Wire.Left ];
       hold_ms = to_corner_ms;
       cooldown_ms = cursor_release_ms;
     }
-  :: (taps Wire.Right t.cell.x @ taps Wire.Down t.cell.y)
+  :: (taps Wire.Right town.cell.x @ taps Wire.Down town.cell.y)

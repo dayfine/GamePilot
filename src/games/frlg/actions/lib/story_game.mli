@@ -25,5 +25,5 @@ val create : config -> start:Story.Pose.observed option -> t
 val game : t -> Story.Game.t
 
 val fly_plan : Grid_maps.Json_field.obj -> (Fly.plan, string) result
-(** A ["fly"] action's args: ["town"] (a {!Fly_towns.kanto} name), ["slot"]
+(** A ["fly"] action's args: ["town"] (a town of {!Fly_towns.load}), ["slot"]
     (from 1) and ["menu_row"] (default 2). *)

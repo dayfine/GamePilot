@@ -80,14 +80,16 @@ let plan_for town args =
   | exception Grid_maps.Json_field.Invalid e -> Error e
   | slot -> Ok { Fly.town; slot; menu_row = menu_row args }
 
+let town_named name =
+  Result.bind (Fly_towns.load ()) (fun towns ->
+      Option.to_result
+        ~none:(name ^ " is no Fly destination")
+        (Fly_towns.find towns name))
+
 let fly_plan args =
   match Grid_maps.Json_field.string ~where "town" args with
   | exception Grid_maps.Json_field.Invalid e -> Error e
-  | name ->
-      Option.fold
-        ~none:(Error (name ^ " is no Fly destination"))
-        ~some:(fun town -> plan_for town args)
-        (Fly_towns.find name)
+  | name -> Result.bind (town_named name) (fun town -> plan_for town args)
 
 let fly t (_ : Story.Plan.event) args =
   match fly_plan args with

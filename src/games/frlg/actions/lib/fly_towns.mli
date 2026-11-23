@@ -1,7 +1,6 @@
 (** Kanto's Fly destinations: each town's cell on the fly map and the tile Fly
-    lands the player on. Ported from the fork's Overworld/PokemonFRLG_FlyMap:
-    cells are pokefirered's sRegionMapSections_Kanto (the cursor's x and y),
-    landing tiles its heal locations. Pure. *)
+    lands the player on, read from [src/games/frlg/assets/kanto_fly_towns.json]
+    (made from pokefirered, as its ["source"] says). *)
 
 type town = {
   name : string;  (** The map's name, as a plan names it (["CeladonCity"]). *)
@@ -10,16 +9,22 @@ type town = {
   landing : Story.Pose.observed;  (** Facing unknown. *)
 }
 
-val columns : int
-(** 22 cells across (MAP_WIDTH in region_map.c). *)
+type t = {
+  columns : int;  (** Cells across the fly map. *)
+  rows : int;  (** Cells down. *)
+  towns : town list;  (** Pallet Town first. *)
+}
 
-val rows : int
-(** 15 cells down. *)
+val asset : string
+(** The table's path from the repo root. *)
 
-val kanto : town list
-(** Pallet Town first. *)
+val parse : Yojson.Safe.t -> (t, string) result
 
-val find : string -> town option
+val load : unit -> (t, string) result
+(** The table, found from the working directory
+    ({!Frlg_repo_files.Repo_files.locate}) and read once. *)
+
+val find : t -> string -> town option
 
 val cursor_presses : town -> Wire.command list
 (** On the fly map: up-left held to the corner, then taps right and down to the

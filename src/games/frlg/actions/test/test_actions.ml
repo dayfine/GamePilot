@@ -46,7 +46,9 @@ let fly_screen ~row ~fade screen (p : S.press) =
 let fly ?(row = 1) ?(fade = true) () =
   let plan =
     {
-      Fly.town = Option.get (Fly_towns.find "PewterCity");
+      Fly.town =
+        Option.get
+          (Fly_towns.find (Result.get_ok (Fly_towns.load ())) "PewterCity");
       slot = 3;
       menu_row = 2;
     }

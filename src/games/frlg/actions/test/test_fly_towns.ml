@@ -4,28 +4,34 @@
 
 open Frlg_actions
 
+let table = Result.get_ok (Fly_towns.load ())
+
 let cells_on_map () =
   List.filter
     (fun (t : Fly_towns.town) ->
-      t.cell.x < 0
-      || t.cell.x >= Fly_towns.columns
-      || t.cell.y < 0 || t.cell.y >= Fly_towns.rows)
-    Fly_towns.kanto
+      t.cell.x < 0 || t.cell.x >= table.columns || t.cell.y < 0
+      || t.cell.y >= table.rows)
+    table.towns
   |> List.map (fun (t : Fly_towns.town) -> t.name)
   |> String.concat ", "
 
 let distinct key =
-  let keys = List.map key Fly_towns.kanto in
+  let keys = List.map key table.towns in
   string_of_bool (List.length (List.sort_uniq compare keys) = List.length keys)
 
 let presses town =
-  Fly_towns.cursor_presses (Option.get (Fly_towns.find town))
+  Fly_towns.cursor_presses (Option.get (Fly_towns.find table town))
   |> List.map (function
        | Wire.Press { buttons; hold_ms; _ } ->
            String.concat "+" (List.map Wire.string_of_button buttons)
            ^ " " ^ string_of_int hold_ms
        | Wire.Wait { wait_ms } -> "wait " ^ string_of_int wait_ms)
   |> String.concat ", "
+
+let bad json =
+  match Fly_towns.parse (Yojson.Safe.from_string json) with
+  | Ok _ -> "parsed"
+  | Error e -> e
 
 let case name input expectation = { Case_table.name; input; expectation }
 
@@ -45,8 +51,13 @@ let () =
          80, Down 80, Down 80, Down 80, Down 80, Down 80, Down 80";
       case "Indigo Plateau lands outside"
         (fun () ->
-          match Fly_towns.find "IndigoPlateau" with
+          match Fly_towns.find table "IndigoPlateau" with
           | Some t -> Story.Pose.observed_to_string t.landing
           | None -> "none")
         "IndigoPlateau_Exterior (11, 7)";
+      case "a cell that is not [x, y]"
+        (fun () ->
+          bad
+            {|{"columns": 22, "rows": 15, "towns": [{"name": "A", "cell": [1], "landing": {"map": "A", "tile": [0, 0]}}]}|})
+        "kanto_fly_towns.json: towns[0].cell is not [x, y].";
     ]

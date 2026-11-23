@@ -11,6 +11,7 @@
  (modules test_fly_towns test_actions test_story_game)
  (deps mgba.probes.jsonl menus.mgba.probes.jsonl)
  (libraries
+  yojson
   gamepilot.case_table
   gamepilot.wire
   gamepilot.grid_maps
