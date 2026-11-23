@@ -138,32 +138,54 @@ let spin ~after_ms () =
     (fun () -> Spin_for_encounter.spin ~log ~facing:North ~max_batches:2)
 
 (* The clerk's text box shows 200 ms after A; its BUY/SELL box takes an A only
-   [menu_ms] later (no reader: the text box), which opens the BUY list; B on
-   the list closes the Mart. *)
+   [menu_ms] later (no reader: the text box), which opens the BUY list, whose
+   cursor takes a tap only [menu_ms] after it shows. On the list, A on row 1
+   asks how many, A on the quantity the price question, YES the list again; A
+   on another row does nothing here. B on the list closes the Mart. *)
 let mart_screen ~menu_ms =
-  let text_at = ref max_int in
+  let text_at = ref max_int and list_at = ref max_int and row = ref 0 in
   fun screen (p : S.press) ->
     let show d s = S.show screen ~at_ms:(p.at_ms + d) s in
     match (p.buttons, S.screen_at screen p.at_ms) with
     | [ Wire.A ], S.Overworld ->
         text_at := p.at_ms + 200;
         show 200 S.Dialog
+    | [ Wire.A ], S.Dialog when !row = 1 ->
+        row := -1;
+        show 300 S.Question
     | [ Wire.A ], S.Dialog when p.at_ms >= !text_at + menu_ms ->
+        list_at := p.at_ms + 300;
         show 300 S.Mart_list
+    | [ Wire.Down ], S.Mart_list when p.at_ms >= !list_at + menu_ms -> incr row
+    | [ Wire.A ], S.Mart_list when !row = 1 -> show 300 S.Dialog
+    | [ Wire.A ], S.Question -> show 300 S.Mart_list
     | [ Wire.B ], S.Mart_list -> show 300 S.Overworld
     | _ -> ()
 
-let mart_open ~menu_ms () =
-  let plan = { Mart_plan.map = "test"; lines = []; budget = None } in
-  run ~react:(mart_screen ~menu_ms) (fun () -> Mart.run ~log [] plan)
+(* Two Retro Mail at Celadon 4F: row 1, under POKé DOLL. *)
+let mart_buy ~menu_ms () =
+  let stock =
+    [
+      { Mart_plan.item = "poke-doll"; price = 1000 };
+      { item = "retro-mail"; price = 50 };
+    ]
+  in
+  let plan =
+    {
+      Mart_plan.map = "test";
+      lines = [ { line_item = "retro-mail"; quantity = 2 } ];
+      budget = None;
+    }
+  in
+  run ~react:(mart_screen ~menu_ms) (fun () -> Mart.run ~log stock plan)
 
 let case name input expectation = { Case_table.name; input; expectation }
 
 let () =
   Case_table.run "menu_actions"
     [
-      case "mart: A on BUY once the clerk's box takes it"
-        (mart_open ~menu_ms:1500) "ok; A x2, B x6";
+      case "mart: BUY and the row once the clerk's box and list take them"
+        (mart_buy ~menu_ms:1500) "ok; A x2, down, A, up, A x3, B x6";
       case "heal: a page, YES, the healing, back" heal "ok; A x3, B x8";
       case "heal: a text box with no question fails" heal_no_question
         "failed heal_no_question: the nurse's question did not show; A";

@@ -4,7 +4,8 @@
     waits by time:
 
     - A to the clerk, then A on BUY once the text box shows and
-      {!clerk_menu_wait_ms} has passed (BUY is on top).
+      {!clerk_menu_wait_ms} has passed (BUY is on top), and the same wait before
+      the list takes the cursor.
     - The BUY list: its money box ({!Frlg_readers.Money_box}).
     - Per line: the cursor moved to the item's row (counted: no reader names a
       BUY list row yet), A, the quantity typed after {!how_many_wait_ms} ("How
@@ -14,7 +15,7 @@
     - B until the money box is gone, then the talk settle. *)
 
 val clerk_menu_wait_ms : int
-(** 2000, the fork's wait after A to the clerk. *)
+(** 2000, the fork's wait after the A to the clerk and after the A on BUY. *)
 
 val how_many_wait_ms : int
 (** 2500, the fork's measured wait. *)
