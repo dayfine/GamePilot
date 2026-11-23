@@ -165,12 +165,17 @@ let find_battle t () =
     ~max_batches:Action_requests.default_spin_batches;
   t.at <- Option.map (fun at -> { at with Story.Pose.faces = None }) t.at
 
-let battle t script =
-  let module B = Frlg_battle in
-  Effects.with_probes B.Battle_look.probes (fun () ->
-      B.Scripted_battle.run ~log:t.config.log
-        (B.Screen_driver.make ~read_offered_move:Summary_moves.read_offered ())
+let screen_driver () =
+  Frlg_battle.Screen_driver.make ~read_offered_move:Summary_moves.read_offered
+    ()
+
+let battle_on t wrap script =
+  Effects.with_probes Frlg_battle.Battle_look.probes (fun () ->
+      Frlg_battle.Scripted_battle.run ~log:t.config.log
+        (wrap (screen_driver ()))
         script)
+
+let battle t script = battle_on t Fun.id script
 
 let grind_rig t : Grind.rig =
   let log = t.config.log in
@@ -195,6 +200,39 @@ let grind t (_ : Story.Plan.event) args =
       Result.bind (Grind_plan.decode strategies args) (fun plan ->
           Menu_input.run (fun () -> Grind.run (grind_rig t) plan))
 
+let known_moves t ~slot = Summary_moves.read_known ~log:t.config.log ~slot
+let species_at t slot = List.nth_opt (Party_roster.to_list !(t.party)) (slot - 1)
+
+let prepare_berry_pp t (_ : Story.Plan.event) args =
+  let rig : Berry_pp.rig =
+    {
+      lead = (fun () -> species_at t 1);
+      known_moves = known_moves t;
+      find_battle = find_battle t;
+      battle = battle t;
+      log = t.config.log;
+    }
+  in
+  Result.bind (Berry_pp.decode args) (fun plan ->
+      Menu_input.run (fun () -> Berry_pp.run rig plan))
+
+let double_battle t (_ : Story.Plan.event) args =
+  let log = t.config.log in
+  let rig : Mail_glitch_battle.rig =
+    {
+      species_at = species_at t;
+      known_moves = known_moves t;
+      start_battle = Mail_glitch_battle.step_into_sight ~log;
+      restored = Mail_glitch_battle.pp_restored;
+      battle = battle_on t;
+      after_battle =
+        (fun () -> Menu_input.settle_back ~label:"after Lea & Jed" ~log);
+      log;
+    }
+  in
+  Result.bind (Mail_glitch_battle.decode args) (fun plan ->
+      Menu_input.run (fun () -> Mail_glitch_battle.run rig plan))
+
 let action_context t : Game_actions.context =
   {
     log = t.config.log;
@@ -211,6 +249,8 @@ let game t : Story.Game.t =
       ("fly", fly t)
       :: ("grind", grind t)
       :: ("lift_floor", lift t)
+      :: ("prepare_berry_pp", prepare_berry_pp t)
+      :: ("mail_glitch_double_battle", double_battle t)
       :: Game_actions.handlers (action_context t);
     flag_holds = t.config.flags;
     position = (fun () -> t.at);

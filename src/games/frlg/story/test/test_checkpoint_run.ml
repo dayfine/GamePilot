@@ -1,4 +1,4 @@
-(* The Mail Glitch plans mg-01..mg-03 against FireRed's story game: each is a
+(* The Mail Glitch plans mg-01..mg-05 against FireRed's story game: each is a
    FireRed plan it runs, from its start tile, and the game actions it names
    that FireRed has no handler for yet (the runner refuses such a plan before
    its first event). *)
@@ -6,7 +6,10 @@
 open Frlg_story
 
 let plan file = Result.get_ok (Story.Plan_decode.load file)
-let handled = "fly" :: "lift_floor" :: Frlg_actions.Action_requests.names
+
+let handled =
+  "fly" :: "lift_floor" :: "grind" :: "prepare_berry_pp"
+  :: "mail_glitch_double_battle" :: Frlg_actions.Action_requests.names
 
 let missing (p : Story.Plan.t) =
   List.filter_map
@@ -96,4 +99,14 @@ let () =
       case "mg-03"
         (summary "mg-03.plan.json")
         "frlg; from VermilionCity (19, 18) south; missing: none";
+      case "mg-05a"
+        (summary "mg-05a.plan.json")
+        "frlg; from LavenderTown (18, 7) south; missing: none";
+      case "mg-05a's walks plan on the maps" (walks "mg-05a.plan.json")
+        "lavender_mart_clerk 6; out_of_lavender_mart 1; return_to_tower_door \
+         4; to_route8_cut_tree 9; to_route8_grass 1; face_route8_leppa_berry \
+         2; return_to_route8_grass 3; to_route16_cut_tree 6; to_lea_and_jed 3";
+      case "mg-05"
+        (summary "mg-05.plan.json")
+        "frlg; from Route16 (30, 7) north; missing: verify_mail_glitch";
     ]

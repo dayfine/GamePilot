@@ -2,9 +2,10 @@
     walked ({!Frlg_overworld}), [talk] and [scene] settled ({!Talk}), [heal] and
     [save] events ({!Heal_and_save}), the ["fly"] game action ({!Fly}),
     ["lift_floor"] ({!Lift_ride}), the ["grind"] one ({!Grind}, its walks and
-    heals this game's) and the shared ones ({!Game_actions}). Battles and the
-    other built-in kinds fail as [not_implemented] (repeats): they come from
-    their own libraries.
+    heals this game's), mg-05's ["prepare_berry_pp"] ({!Berry_pp}) and
+    ["mail_glitch_double_battle"] ({!Mail_glitch_battle}) and the shared ones
+    ({!Game_actions}). Battles and the other built-in kinds fail as
+    [not_implemented] (repeats): they come from their own libraries.
 
     Between loop rounds, heal walks to the configured Center's nurse and talks
     to her, save saves from the Start menu, and reload is the program's (an
