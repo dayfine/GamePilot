@@ -1,0 +1,6 @@
+(library
+ (name grid_recovery)
+ (public_name gamepilot.grid_recovery)
+ (flags
+  (:standard -open Grid_maps))
+ (libraries gamepilot.grid_maps))
