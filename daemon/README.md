@@ -20,11 +20,27 @@ runs on one thread: the client is served between frames.
 `daemon/tools/smoke_client.py --state <file.ss>` drives a running daemon: load a state, subscribe a
 `core.color_stats@1` box on the FireRed start menu, press Start, then B, and print the numbers.
 
+## Probing saved images
+
+`probe_images` runs the same probes on PNG files, with no backend and no socket, so readers can be
+built and tested from saved screenshots (mGBA shots, CommandLineTests images):
+
+    daemon/build/probe_images --spec probes.json shot1.png [shot2.png ...] > results.jsonl
+
+The spec file is the `subscribe` params (`{"probes": [...]}`, `contracts/v1`); a
+`core.template_match@1` probe's `template` is a PNG path, relative to the spec file, instead of an
+uploaded hash. Each image gives one line `{"image": path, "probes": {id: result}}`, the `probes` of a
+`frame` notification. Boxes are normalized, so an image need not be the backend's size (a Switch
+1920x1080 shot works like a GBA 240x160 one); templates are in pixels and must fit their box at each
+image's size, or the tool stops with an error. `tests/probe_images/` is a worked example.
+
 | File | Role |
 |---|---|
 | `src/backend.h` | the I/O boundary |
 | `src/mgba_backend.*` | mGBA through the bridge's line protocol |
 | `src/probes.*` | probe kinds (`core.color_stats@1`, `core.template_match@1`) |
+| `src/probe_evaluation.*` | checks a subscribed probe and runs it on a frame (daemon and `probe_images`) |
+| `src/probe_images.cpp` | the offline `probe_images` tool |
 | `src/template_store.*` | uploaded templates, decoded and keyed by the SHA-256 of their PNG bytes |
 | `src/base64.*` | base64 decoding for template uploads |
 | `src/schedule.*` | command batches to key masks on exact frames |

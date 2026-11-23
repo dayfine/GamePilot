@@ -119,6 +119,10 @@ pa::JsonObject submit_result(const std::string& batch_id,
                              std::int64_t start_seq);
 pa::JsonObject cancel_result(std::int64_t released_seq);
 
+// A frame notification's `probes` object: {id: result}.
+pa::JsonObject probe_results_json(
+    const std::vector<std::pair<std::string, ProbeResult>>& results);
+
 // `load`: how many backend.load_state calls succeeded before this frame.
 pa::JsonValue frame_notification(
     std::int64_t seq, std::int64_t load, double t_ms,
