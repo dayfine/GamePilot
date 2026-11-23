@@ -21,14 +21,16 @@
   test_story_game
   test_action_requests
   test_menu_actions
-  test_grind)
+  test_grind
+  test_lift_ride)
  (modules
   test_fly_towns
   test_actions
   test_story_game
   test_action_requests
   test_menu_actions
-  test_grind)
+  test_grind
+  test_lift_ride)
  (deps
   mgba.probes.jsonl
   menus.mgba.probes.jsonl

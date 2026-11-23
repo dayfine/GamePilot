@@ -1,19 +1,20 @@
 (** FireRed's story {!Story.Game.t}: [route] and [ready] events planned and
     walked ({!Frlg_overworld}), [talk] and [scene] settled ({!Talk}), [heal] and
-    [save] events ({!Heal_and_save}), the ["fly"] game action ({!Fly}), the
-    ["grind"] one ({!Grind}, its walks and heals this game's) and the shared
-    ones ({!Game_actions}). Battles and the other built-in kinds fail as
-    [not_implemented] (repeats): they come from their own libraries.
+    [save] events ({!Heal_and_save}), the ["fly"] game action ({!Fly}),
+    ["lift_floor"] ({!Lift_ride}), the ["grind"] one ({!Grind}, its walks and
+    heals this game's) and the shared ones ({!Game_actions}). Battles and the
+    other built-in kinds fail as [not_implemented] (repeats): they come from
+    their own libraries.
 
     Between loop rounds, heal walks to the configured Center's nurse and talks
     to her, save saves from the Start menu, and reload is the program's (an
     emulator loads a state; a console would soft reset).
 
     FireRed can't show where the player stands, so the position is reckoned: a
-    walk ends on its plan's tile, a Fly on the town's landing tile, and after
-    any other event that passes the player is taken to be where its
-    [declared_after] says when that names one tile. The party is reckoned too
-    ({!Party_roster}), from the config's. *)
+    walk ends on its plan's tile, a Fly on the town's landing tile, a lift ride
+    below the floor's lift door, and after any other event that passes the
+    player is taken to be where its [declared_after] says when that names one
+    tile. The party is reckoned too ({!Party_roster}), from the config's. *)
 
 type config = {
   world : Frlg_overworld.Frlg_steps.world;

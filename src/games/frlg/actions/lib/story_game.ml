@@ -119,6 +119,16 @@ let fly t (_ : Story.Plan.event) args =
       if Result.is_ok outcome then t.at <- Some plan.town.landing;
       outcome
 
+(* The ride leaves the player below the floor's lift door, as Fly does on the
+   town's landing tile. *)
+let lift t (_ : Story.Plan.event) args =
+  Result.bind (Lift_ride.ride_of_args args) (fun ride ->
+      let outcome =
+        Menu_input.run (fun () -> Lift_ride.ride ~log:t.config.log ride)
+      in
+      if Result.is_ok outcome then t.at <- Some (Lift_ride.arrival ride);
+      outcome)
+
 (* Between loop rounds: to the configured Center's nurse, then the nurse. *)
 let heal t () =
   match t.config.center with
@@ -200,6 +210,7 @@ let game t : Story.Game.t =
     game_actions =
       ("fly", fly t)
       :: ("grind", grind t)
+      :: ("lift_floor", lift t)
       :: Game_actions.handlers (action_context t);
     flag_holds = t.config.flags;
     position = (fun () -> t.at);
