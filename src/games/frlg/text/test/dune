@@ -1,0 +1,15 @@
+(executable
+ (name write_text_probe_spec)
+ (modules write_text_probe_spec)
+ (libraries yojson gamepilot.wire gamepilot.frlg_text))
+
+(test
+ (name test_text_reading)
+ (modules test_text_reading)
+ (deps
+  (glob_files fixtures/*))
+ (libraries
+  gamepilot.wire
+  gamepilot.effects
+  gamepilot.case_table
+  gamepilot.frlg_text))

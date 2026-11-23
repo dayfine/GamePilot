@@ -1,0 +1,4 @@
+(library
+ (name frlg_text)
+ (public_name gamepilot.frlg_text)
+ (libraries yojson gamepilot.wire gamepilot.effects))

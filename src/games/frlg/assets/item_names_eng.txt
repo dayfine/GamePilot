@@ -1,0 +1,308 @@
+# FRLG English item names, made by tools/extract_frlg_item_names.py
+# from pret/pokefirered src/data/items.json: <pocket> <name>
+poke_balls MASTER BALL
+poke_balls ULTRA BALL
+poke_balls GREAT BALL
+poke_balls POKé BALL
+poke_balls SAFARI BALL
+poke_balls NET BALL
+poke_balls DIVE BALL
+poke_balls NEST BALL
+poke_balls REPEAT BALL
+poke_balls TIMER BALL
+poke_balls LUXURY BALL
+poke_balls PREMIER BALL
+items POTION
+items ANTIDOTE
+items BURN HEAL
+items ICE HEAL
+items AWAKENING
+items PARLYZ HEAL
+items FULL RESTORE
+items MAX POTION
+items HYPER POTION
+items SUPER POTION
+items FULL HEAL
+items REVIVE
+items MAX REVIVE
+items FRESH WATER
+items SODA POP
+items LEMONADE
+items MOOMOO MILK
+items ENERGYPOWDER
+items ENERGY ROOT
+items HEAL POWDER
+items REVIVAL HERB
+items ETHER
+items MAX ETHER
+items ELIXIR
+items MAX ELIXIR
+items LAVA COOKIE
+items BLUE FLUTE
+items YELLOW FLUTE
+items RED FLUTE
+items BLACK FLUTE
+items WHITE FLUTE
+items BERRY JUICE
+items SACRED ASH
+items SHOAL SALT
+items SHOAL SHELL
+items RED SHARD
+items BLUE SHARD
+items YELLOW SHARD
+items GREEN SHARD
+items HP UP
+items PROTEIN
+items IRON
+items CARBOS
+items CALCIUM
+items RARE CANDY
+items PP UP
+items ZINC
+items PP MAX
+items GUARD SPEC.
+items DIRE HIT
+items X ATTACK
+items X DEFEND
+items X SPEED
+items X ACCURACY
+items X SPECIAL
+items POKé DOLL
+items FLUFFY TAIL
+items SUPER REPEL
+items MAX REPEL
+items ESCAPE ROPE
+items REPEL
+items SUN STONE
+items MOON STONE
+items FIRE STONE
+items THUNDERSTONE
+items WATER STONE
+items LEAF STONE
+items TINYMUSHROOM
+items BIG MUSHROOM
+items PEARL
+items BIG PEARL
+items STARDUST
+items STAR PIECE
+items NUGGET
+items HEART SCALE
+items ORANGE MAIL
+items HARBOR MAIL
+items GLITTER MAIL
+items MECH MAIL
+items WOOD MAIL
+items WAVE MAIL
+items BEAD MAIL
+items SHADOW MAIL
+items TROPIC MAIL
+items DREAM MAIL
+items FAB MAIL
+items RETRO MAIL
+berry_pouch CHERI BERRY
+berry_pouch CHESTO BERRY
+berry_pouch PECHA BERRY
+berry_pouch RAWST BERRY
+berry_pouch ASPEAR BERRY
+berry_pouch LEPPA BERRY
+berry_pouch ORAN BERRY
+berry_pouch PERSIM BERRY
+berry_pouch LUM BERRY
+berry_pouch SITRUS BERRY
+berry_pouch FIGY BERRY
+berry_pouch WIKI BERRY
+berry_pouch MAGO BERRY
+berry_pouch AGUAV BERRY
+berry_pouch IAPAPA BERRY
+berry_pouch RAZZ BERRY
+berry_pouch BLUK BERRY
+berry_pouch NANAB BERRY
+berry_pouch WEPEAR BERRY
+berry_pouch PINAP BERRY
+berry_pouch POMEG BERRY
+berry_pouch KELPSY BERRY
+berry_pouch QUALOT BERRY
+berry_pouch HONDEW BERRY
+berry_pouch GREPA BERRY
+berry_pouch TAMATO BERRY
+berry_pouch CORNN BERRY
+berry_pouch MAGOST BERRY
+berry_pouch RABUTA BERRY
+berry_pouch NOMEL BERRY
+berry_pouch SPELON BERRY
+berry_pouch PAMTRE BERRY
+berry_pouch WATMEL BERRY
+berry_pouch DURIN BERRY
+berry_pouch BELUE BERRY
+berry_pouch LIECHI BERRY
+berry_pouch GANLON BERRY
+berry_pouch SALAC BERRY
+berry_pouch PETAYA BERRY
+berry_pouch APICOT BERRY
+berry_pouch LANSAT BERRY
+berry_pouch STARF BERRY
+berry_pouch ENIGMA BERRY
+items BRIGHTPOWDER
+items WHITE HERB
+items MACHO BRACE
+items EXP. SHARE
+items QUICK CLAW
+items SOOTHE BELL
+items MENTAL HERB
+items CHOICE BAND
+items KING'S ROCK
+items SILVERPOWDER
+items AMULET COIN
+items CLEANSE TAG
+items SOUL DEW
+items DEEPSEATOOTH
+items DEEPSEASCALE
+items SMOKE BALL
+items EVERSTONE
+items FOCUS BAND
+items LUCKY EGG
+items SCOPE LENS
+items METAL COAT
+items LEFTOVERS
+items DRAGON SCALE
+items LIGHT BALL
+items SOFT SAND
+items HARD STONE
+items MIRACLE SEED
+items BLACKGLASSES
+items BLACK BELT
+items MAGNET
+items MYSTIC WATER
+items SHARP BEAK
+items POISON BARB
+items NEVERMELTICE
+items SPELL TAG
+items TWISTEDSPOON
+items CHARCOAL
+items DRAGON FANG
+items SILK SCARF
+items UP-GRADE
+items SHELL BELL
+items SEA INCENSE
+items LAX INCENSE
+items LUCKY PUNCH
+items METAL POWDER
+items THICK CLUB
+items STICK
+items RED SCARF
+items BLUE SCARF
+items PINK SCARF
+items GREEN SCARF
+items YELLOW SCARF
+key_items MACH BIKE
+key_items COIN CASE
+key_items ITEMFINDER
+key_items OLD ROD
+key_items GOOD ROD
+key_items SUPER ROD
+key_items S.S. TICKET
+key_items CONTEST PASS
+key_items WAILMER PAIL
+key_items DEVON GOODS
+key_items SOOT SACK
+key_items BASEMENT KEY
+key_items ACRO BIKE
+key_items LETTER
+key_items EON TICKET
+key_items RED ORB
+key_items BLUE ORB
+key_items SCANNER
+key_items GO-GOGGLES
+key_items METEORITE
+key_items RM. 1 KEY
+key_items RM. 2 KEY
+key_items RM. 4 KEY
+key_items RM. 6 KEY
+key_items STORAGE KEY
+key_items ROOT FOSSIL
+key_items CLAW FOSSIL
+key_items DEVON SCOPE
+tm_case TM01
+tm_case TM02
+tm_case TM03
+tm_case TM04
+tm_case TM05
+tm_case TM06
+tm_case TM07
+tm_case TM08
+tm_case TM09
+tm_case TM10
+tm_case TM11
+tm_case TM12
+tm_case TM13
+tm_case TM14
+tm_case TM15
+tm_case TM16
+tm_case TM17
+tm_case TM18
+tm_case TM19
+tm_case TM20
+tm_case TM21
+tm_case TM22
+tm_case TM23
+tm_case TM24
+tm_case TM25
+tm_case TM26
+tm_case TM27
+tm_case TM28
+tm_case TM29
+tm_case TM30
+tm_case TM31
+tm_case TM32
+tm_case TM33
+tm_case TM34
+tm_case TM35
+tm_case TM36
+tm_case TM37
+tm_case TM38
+tm_case TM39
+tm_case TM40
+tm_case TM41
+tm_case TM42
+tm_case TM43
+tm_case TM44
+tm_case TM45
+tm_case TM46
+tm_case TM47
+tm_case TM48
+tm_case TM49
+tm_case TM50
+tm_case HM01
+tm_case HM02
+tm_case HM03
+tm_case HM04
+tm_case HM05
+tm_case HM06
+tm_case HM07
+tm_case HM08
+key_items OAK'S PARCEL
+key_items POKé FLUTE
+key_items SECRET KEY
+key_items BIKE VOUCHER
+key_items GOLD TEETH
+key_items OLD AMBER
+key_items CARD KEY
+key_items LIFT KEY
+key_items HELIX FOSSIL
+key_items DOME FOSSIL
+key_items SILPH SCOPE
+key_items BICYCLE
+key_items TOWN MAP
+key_items VS SEEKER
+key_items FAME CHECKER
+key_items TM CASE
+key_items BERRY POUCH
+key_items TEACHY TV
+key_items TRI-PASS
+key_items RAINBOW PASS
+key_items TEA
+key_items MYSTICTICKET
+key_items AURORATICKET
+key_items POWDER JAR
+key_items RUBY
+key_items SAPPHIRE
