@@ -36,6 +36,20 @@ let west_onto_route16 w () =
       | Ok (Turn _) -> "a turn"
       | Error e -> "error: " ^ e)
 
+(* mg-02's walk from below the cut tree, Route 16 (41, 12), to the grass at
+   (35, 6), through the tree's tile (41, 11), the only way north. *)
+let past_cut_tree ~cut () =
+  let w = world ~edge_stalls:false celadon_names in
+  let w =
+    if cut then
+      Option.get
+        (Frlg_overworld.Frlg_steps.with_tree_cut w (place w "Route16" 41 11))
+    else w
+  in
+  legs_text w
+    (Route_target.plan w ~from:(place w "Route16" 41 12) ~facing:(Some North)
+       (target ~facing:East "Route16" [ (35, 6) ]))
+
 let () =
   Case_table.run "route_target"
     [
@@ -75,6 +89,12 @@ let () =
          past)"
         (west_onto_route16 (world ~edge_stalls:false celadon_names))
         "west 11 -> Route16 (41, 14) west: held 1396 ms, stalled steps []";
+      case "the tree cut: north through its tile to the grass"
+        (past_cut_tree ~cut:true)
+        "north 4 -> Route16 (41, 8) north; west 6 -> Route16 (35, 8) west; \
+         north 2 -> Route16 (35, 6) north; face east -> Route16 (35, 6) east";
+      case "the tree standing: no way north" (past_cut_tree ~cut:false)
+        "error: no walk reaches Route16 (35, 6) east";
       case "a map not loaded"
         (plan ~from:(place pallet "PalletTown" 6 10) (target "CeladonCity" []))
         "error: map CeladonCity is not loaded";

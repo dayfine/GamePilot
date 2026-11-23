@@ -41,11 +41,12 @@ let react screen (p : S.press) =
     S.show screen ~at_ms:(p.at_ms + 200) S.Dialog;
     S.show screen ~at_ms:(p.at_ms + 1200) S.Overworld)
 
-let run ?(checkpoint = checkpoint) ?(party = []) start () =
+let run ?(world = Frlg_world.pallet) ?(react = react) ?(checkpoint = checkpoint)
+    ?(party = []) start () =
   let screen = S.create ~react () in
   let config : Story_game.config =
     {
-      world = Frlg_world.pallet;
+      world;
       gait = Walking;
       flee = ignore;
       flags = (fun _ -> false);
@@ -105,6 +106,46 @@ let done_trade : Story.Plan.event =
            });
   }
 
+(* mg-02's Cut, then its walk north through the tree's tile to the grass. *)
+let cut_then_grass : Story.Plan.checkpoint =
+  {
+    checkpoint_id = "test";
+    title = "cut and on";
+    start = None;
+    events =
+      [
+        {
+          (event "cut" (Game_action [ ("direction", `String "north") ])) with
+          action = Some "cut_tree";
+        };
+        event "grass"
+          (Route
+             {
+               target =
+                 {
+                   map = "Route16";
+                   tiles = [ { x = 35; y = 6 } ];
+                   facing = Some East;
+                 };
+               fight_wild = false;
+             });
+      ];
+  }
+
+(* A on the tree asks; YES fells it. *)
+let cut_screen screen (p : S.press) =
+  let show d s = S.show screen ~at_ms:(p.at_ms + d) s in
+  if p.buttons = [ Wire.A ] then
+    match S.screen_at screen p.at_ms with
+    | S.Overworld -> show 200 S.Question
+    | S.Question ->
+        show 100 S.Dialog;
+        show 1600 S.Overworld
+    | _ -> ()
+
+let below_tree : Story.Pose.observed =
+  { at_map = "Route16"; at_tile = { x = 41; y = 12 }; faces = Some North }
+
 let case name input expectation = { Case_table.name; input; expectation }
 
 let () =
@@ -124,4 +165,13 @@ let () =
            ~checkpoint:{ checkpoint with events = [ done_trade ] }
            ~party:[ "farfetchd" ] (Some house))
         "ok; at PalletTown_PlayersHouse_1F (3, 5) north; ";
+      case
+        "after a Cut the player stands on the tree's tile, and the walk on \
+         goes through it"
+        (run
+           ~world:
+             (Frlg_world.world ~edge_stalls:false [ "CeladonCity"; "Route16" ])
+           ~react:cut_screen ~checkpoint:cut_then_grass (Some below_tree))
+        "ok; at Route16 (35, 6) east; up, A x2, B x6, up, up 667, left, left \
+         1468, up, up 400, right";
     ]

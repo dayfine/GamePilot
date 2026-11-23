@@ -42,6 +42,10 @@ type world = {
           mGBA it does not: the fork's run of 2026-11-23 held "west 11" from
           Celadon City onto Route 16 for 10.5 tiles and ended on its tile, and
           ours, held a tile longer for the stall, ended a tile past it. *)
+  cut : Gate_state.t;
+      (** The cut trees cut since the last map change ({!with_tree_cut}): their
+          gates open and their trees gone, as the fork's [tree_cut] opens them
+          in its run state. *)
 }
 
 val world :
@@ -49,7 +53,17 @@ val world :
   ?edge_stalls:bool ->
   Connected_maps.t ->
   world
-(** Every object shown, {!default_costs}, edges that stall (the console). *)
+(** Every object shown, {!default_costs}, edges that stall (the console), no
+    tree cut. *)
+
+val with_tree_cut : world -> Connected_maps.place -> world option
+(** The world with the cut tree on that tile cut: the fork's [tree_cut]
+    (AutoStory/PokemonFRLG_AutoStoryBoulders) with [cut_gate_key]. [None] when
+    no cut tree's gate has the tile. *)
+
+val trees_regrown : world -> world
+(** Every cut tree back: a cut tree's flag is temporary, so leaving its map
+    regrows it (the fork's [regrow_on_warp]). *)
 
 val press :
   world ->

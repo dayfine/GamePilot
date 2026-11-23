@@ -14,10 +14,13 @@ type config = {
 type t = {
   config : config;
   mutable at : Story.Pose.observed option;
+  mutable world : Frlg_steps.world;
   party : Party_roster.t ref;
 }
 
-let create config ~start = { config; at = start; party = ref config.party }
+let create config ~start =
+  { config; at = start; world = config.world; party = ref config.party }
+
 let party t = !(t.party)
 let default_fly_row = 2
 
@@ -31,18 +34,17 @@ let route_from w (at : Story.Pose.observed) target =
 
 let walker t : Route_walk.t =
   {
-    world = t.config.world;
+    world = t.world;
     gait = t.config.gait;
     flee = t.config.flee;
     log = t.config.log;
   }
 
 let arrived t (ended : Route_walk.at) =
-  t.at <-
-    Some (Route_target.observed_of t.config.world ended.place ended.facing)
+  t.at <- Some (Route_target.observed_of t.world ended.place ended.facing)
 
 let walk_from t (at : Story.Pose.observed) target =
-  match route_from t.config.world at target with
+  match route_from t.world at target with
   | Error e -> Error (Story.Failure.cause ~repeats:true "no_route" e)
   | Ok (place, legs) ->
       Result.map (arrived t)
@@ -73,10 +75,19 @@ let builtin t (event : Story.Plan.event) =
       not_implemented
         ("event " ^ event.id ^ " of a kind FireRed does not run yet")
 
-let run_builtin t (event : Story.Plan.event) =
-  let outcome = builtin t event in
-  if Result.is_ok outcome then adopt_declared t event;
+let map_now t = Option.map (fun (at : Story.Pose.observed) -> at.at_map) t.at
+
+let regrowing t run =
+  let before = map_now t in
+  let outcome = run () in
+  t.world <- Tree_cut.regrown t.world ~before ~after:(map_now t);
   outcome
+
+let run_builtin t (event : Story.Plan.event) =
+  regrowing t (fun () ->
+      let outcome = builtin t event in
+      if Result.is_ok outcome then adopt_declared t event;
+      outcome)
 
 let where = "fly: "
 
@@ -241,15 +252,36 @@ let action_context t : Game_actions.context =
    outcome reports none (Engine/Pokemon_StoryStepRunner.cpp). *)
 let adopting t (name, (handler : Story.Game.game_action)) =
   let adopted event args =
-    let outcome = handler event args in
-    if Result.is_ok outcome then adopt_declared t event;
-    outcome
+    regrowing t (fun () ->
+        let outcome = handler event args in
+        if Result.is_ok outcome then adopt_declared t event;
+        outcome)
   in
   (name, adopted)
 
+(* The fork's tree_cut, after its cut_tree event passed. *)
+let tree_cut t at args =
+  let world, on_tree =
+    Tree_cut.cut t.world at
+      (Grid_maps.Json_field.direction ~where:"cut_tree: " "direction" args)
+  in
+  t.world <- world;
+  t.at <- Some on_tree
+
+let cutting t (name, (handler : Story.Game.game_action)) =
+  let cut event args =
+    let before = t.at in
+    let outcome = handler event args in
+    (match (outcome, before) with
+    | Ok (), Some at -> tree_cut t at args
+    | _ -> ());
+    outcome
+  in
+  if name = "cut_tree" then (name, cut) else (name, handler)
+
 let game t : Story.Game.t =
   {
-    walk_route = (fun _ route -> walk_to t route.target);
+    walk_route = (fun _ route -> regrowing t (fun () -> walk_to t route.target));
     run_builtin = run_builtin t;
     game_actions =
       List.map (adopting t)
@@ -257,7 +289,7 @@ let game t : Story.Game.t =
         :: ("grind", grind t)
         :: ("capture", capture t)
         :: ("lift_floor", lift t)
-        :: Game_actions.handlers (action_context t));
+        :: List.map (cutting t) (Game_actions.handlers (action_context t)));
     flag_holds = t.config.flags;
     position = (fun () -> t.at);
     heal = heal t;
