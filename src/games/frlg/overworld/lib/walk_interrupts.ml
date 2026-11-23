@@ -4,6 +4,15 @@ exception Trainer_battle
 exception Message_stuck
 
 let late_wild_battle_delay_ms = 3700
+
+(* mGBA, 2026-11-23, run 4 of mg-04: the flash watcher fired 13 frames after
+   the step that set the battle off. 15 frames places the step within half a
+   tile either way, walking (16 frames a tile) or running (8). *)
+let wild_flash_delay_ms = 250
+
+(* A hold's release can leave a step to finish (16 frames), and the flash
+   fires 13 frames after it. *)
+let flash_watch_ms = 600
 let trainer_battle_watch_ms = 6000
 
 (* The box shows as the step ends; then video lag. Not calibrated yet. *)
@@ -14,9 +23,18 @@ let max_b_presses = 5
 let b_hold_ms = 160
 let b_cooldown_ms = 840
 
-let wild_battle ~flee : Grid_walker.Leg_interrupt.t =
+let wild_flash ~flee : Grid_walker.Leg_interrupt.t =
   {
     name = "a wild battle";
+    kind = Wild_battle;
+    seen = Battle_flash.seen (Battle_flash.create ());
+    detection_delay_ms = wild_flash_delay_ms;
+    clear = flee;
+  }
+
+let wild_battle ~flee : Grid_walker.Leg_interrupt.t =
+  {
+    name = "a wild battle (seen late)";
     kind = Wild_battle;
     seen = Battle_screen.battle_shows;
     detection_delay_ms = late_wild_battle_delay_ms;
@@ -57,4 +75,5 @@ let message () : Grid_walker.Leg_interrupt.t =
   }
 
 let for_leg ~flee ~wild =
-  if wild then [ wild_battle ~flee; message () ] else [ message () ]
+  if wild then [ wild_flash ~flee; wild_battle ~flee; message () ]
+  else [ message () ]

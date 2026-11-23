@@ -1,11 +1,9 @@
-(** Running from a wild battle that interrupts a walk: RUN on the action menu
-    once it shows, then the talk settle back to the overworld ("Got away
-    safely!"). A trainer's battle can't be run from; its settle then fails. *)
-
-val menu_timeout_ms : int
-(** The action menu showing after the battle's opening text: 20 s, B pressed
-    through the text meanwhile. *)
+(** Running from a wild battle that interrupts a walk: {!Frlg_battle.Wild_flee}
+    on the screen ({!Frlg_battle.Screen_driver}), then the talk settle until the
+    overworld is quiet and in control. The battle's probes
+    ({!Frlg_battle.Battle_look.probes}) must be subscribed. *)
 
 val flee : log:(string -> unit) -> unit -> unit
-(** Raises [Failure] when the menu never shows or the overworld never comes
-    back: the walk can't go on. *)
+(** Raises [Failure] when the battle is not fled (a trainer's battle, no escape,
+    a screen the flee has no answer for) or the overworld never comes back: the
+    walk can't go on. *)

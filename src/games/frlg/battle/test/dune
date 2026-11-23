@@ -7,3 +7,8 @@
  (name test_battle_rules)
  (modules test_battle_rules)
  (libraries gamepilot.wire gamepilot.case_table gamepilot.frlg_battle))
+
+(test
+ (name test_wild_flee)
+ (modules test_wild_flee)
+ (libraries gamepilot.case_table gamepilot.frlg_battle))

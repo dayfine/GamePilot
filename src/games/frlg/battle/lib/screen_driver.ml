@@ -186,13 +186,20 @@ let next_event ~timeout_ms =
   in
   loop (Event_rule.start ~at_ms:(Effects.now ()))
 
+(* RUN, then the menu gone ("Got away safely!" or a refusal's text), so the
+   next look does not take the menu RUN was chosen on for the next one; a menu
+   still up means the press was lost, and the next look gets RUN again. *)
+let run () =
+  tap_all Battle_cursor.run_away;
+  ignore (shows (fun m -> not (Battle_screen.battle_menu m)) : bool)
+
 let make ?read_move_name () : Battle_driver.t =
   {
     next_event;
     use_move = use_move read_move_name;
     switch_to;
     send_in;
-    run = (fun () -> tap_all Battle_cursor.run_away);
+    run;
     use_item;
     answer_move_learn;
     answer_use_next;

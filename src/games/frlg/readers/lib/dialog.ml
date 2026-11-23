@@ -37,11 +37,16 @@ let frame_min_white_sum = 720.
 let white m id = Solid_color.holds m id (fun s -> Solid_color.is_white s)
 let edges_white m = white m right_id && white m top_id && white m bottom_id
 
+(* The box's frame line is a flat light grey, a channel sum of 603 to 686 in
+   every capture, below white. Testing it for "not flat white" let a fade to
+   white through: Pokemon Tower 5F's purified zone whitens the bright floor
+   until the box's edges are white and the frame line near white but not flat
+   (sums 738 to 763; mGBA, 2026-11-23, run 3 of the mg-04 flee fix). *)
+let frame_below_white (s : Solid_color.stats) =
+  Solid_color.sum s.mean < frame_min_white_sum
+
 let dialog_up m =
-  edges_white m
-  && not
-       (Solid_color.holds m frame_id
-          (Solid_color.is_white ~min_sum:frame_min_white_sum))
+  edges_white m && Solid_color.holds m frame_id frame_below_white
 
 let arrow_red m =
   match Effects.probe m arrow_id with

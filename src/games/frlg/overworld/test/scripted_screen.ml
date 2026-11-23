@@ -12,6 +12,7 @@ type screen =
   | Dialog_arrow  (** A text page done: its advance arrow shows. *)
   | Question  (** A Yes/No box over the text box (a Switch capture). *)
   | Battle
+  | Flash  (** A wild battle's flash: the overworld with its middle darkened. *)
   | Black
   | Start_menu of int
   | Party
@@ -25,6 +26,7 @@ let screen_name = function
   | Dialog_arrow -> "dialog arrow"
   | Question -> "question"
   | Battle -> "battle"
+  | Flash -> "flash"
   | Black -> "black"
   | Start_menu row -> Printf.sprintf "start menu row %d" row
   | Party -> "party"
@@ -38,6 +40,7 @@ let image = function
   | Overworld -> "mail-glitch-04/overworld__none.png"
   | Dialog -> "screenshots-779/20261122-003725-01.01__dialog.png"
   | Battle -> "mail-glitch-04/mg05-recycle-3__battle.png"
+  | Flash -> "mail-glitch-04/overworld__none.png"
   | Black -> "mail-glitch-04/recap__black.png"
   | Start_menu 0 -> "mail-glitch-04/pause-menu__start0.png"
   | Start_menu _ -> "mail-glitch-04/mg05-start-menu__start1.png"
@@ -77,13 +80,33 @@ let find_probes screen =
   | [] -> failwith ("no fixture for " ^ image screen)
   | found -> List.concat_map snd found
 
+(* The darkest frame of run 4's flash (mg-04, mGBA, 2026-11-23) had 0.56 of
+   the overworld's brightness in the middle of the screen. *)
+let flash_share = 0.56
+
+let darken (id, (r : Wire.probe_result)) =
+  match r with
+  | Color_stats { mean; stddev } when id = "fade" ->
+      let scale c = c *. flash_share in
+      ( id,
+        Wire.Color_stats
+          {
+            mean = { r = scale mean.r; g = scale mean.g; b = scale mean.b };
+            stddev;
+          } )
+  | _ -> (id, r)
+
+let screen_probes screen =
+  let p = find_probes screen in
+  if screen = Flash then List.map darken p else p
+
 let cache = Hashtbl.create 8
 
 let probes screen =
   match Hashtbl.find_opt cache screen with
   | Some p -> p
   | None ->
-      let p = find_probes screen in
+      let p = screen_probes screen in
       Hashtbl.add cache screen p;
       p
 

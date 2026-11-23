@@ -1,11 +1,12 @@
 (** What stops the player part-way through a leg on FireRed, as the walker's
     {!Grid_walker.Leg_interrupt.t}s. Ported from the fork's
     Overworld/PokemonFRLG_OverworldWalk ([LateWildBattleInterrupt],
-    [MessageInterrupt]) and PokemonFRLG_OverworldWalkWatches.
+    [WildBattleInterrupt], [LateWildBattleInterrupt], [MessageInterrupt]) and
+    PokemonFRLG_OverworldWalkWatches.
 
-    The fork also sees a wild battle by its first flashes; there is no flash
-    reader here yet, so a battle is seen by its screen
-    ({!Frlg_readers.Battle_screen}), which places an open leg's stop only
+    A wild battle is seen by its first flashes ({!Battle_flash}), which place
+    the step that set it off within half a tile; if they are missed, by its
+    screen ({!Frlg_readers.Battle_screen}) seconds later, which places it only
     roughly. *)
 
 exception Trainer_battle
@@ -19,13 +20,24 @@ val late_wild_battle_delay_ms : int
 (** 3700: from the step that set a wild battle off to its screen (console B,
     2026-11-01, Route 1). *)
 
+val wild_flash_delay_ms : int
+(** 250: from the step that set a wild battle off to {!Battle_flash} firing. *)
+
+val flash_watch_ms : int
+(** 600: how long a hold on a leg with wild battles is watched after its
+    release, so a battle set off by its last steps is seen by its flashes and
+    timed from the hold's start like one during it. *)
+
 val trainer_battle_watch_ms : int
 (** 6000: after a message closes, how long a trainer's battle may take to show.
 *)
 
+val wild_flash : flee:(unit -> unit) -> Grid_walker.Leg_interrupt.t
+(** A wild battle's first flashes, cleared by [flee] (which leaves the player on
+    the overworld). Each call watches with a fresh {!Battle_flash.t}. *)
+
 val wild_battle : flee:(unit -> unit) -> Grid_walker.Leg_interrupt.t
-(** A wild battle's screen, cleared by [flee] (which leaves the player on the
-    overworld). *)
+(** A wild battle's screen, when its flashes were missed; cleared by [flee]. *)
 
 val message : unit -> Grid_walker.Leg_interrupt.t
 (** The white text box (a sign, someone speaking, a trainer who saw the player):
@@ -34,5 +46,5 @@ val message : unit -> Grid_walker.Leg_interrupt.t
 
 val for_leg :
   flee:(unit -> unit) -> wild:bool -> Grid_walker.Leg_interrupt.t list
-(** A battle first, then a message, on a leg where a wild battle can start; else
-    only a message. *)
+(** A battle's flashes, its screen, then a message, on a leg where a wild battle
+    can start; else only a message. *)

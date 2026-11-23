@@ -17,7 +17,8 @@ val probes : Wire.probe_spec list
 val frame_min_white_sum : float
 (** The frame line counts as white from this channel sum: above the light blue
     frame's (603-686 measured on Switch and mGBA dialogs), below a white wall's
-    765. *)
+    765. {!dialog_up} wants the frame line below it, flat or not: a fade to
+    white leaves the line near white but not flat. *)
 
 val min_red_excess : float
 (** The arrow is red: the text area's pixels in the arrow's color range ((164,
