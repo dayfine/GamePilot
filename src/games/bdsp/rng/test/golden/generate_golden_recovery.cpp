@@ -250,9 +250,353 @@ void provisional_lines(FILE* out){
 }
 
 
+//  ---- Blink recovery ----
+
+//  recover_state_from_blinks waits on video, so RecoveryPoll below is its loop
+//  body copied with the waits, the display, the logging and the keep-awake
+//  nudges taken out and the watchers replaced by sample buffers. Everything
+//  else it calls (update_provisional, build_blink_streams, the extraction, the
+//  grid, the solver) is the fork's own code, linked in.
+
+const int64_t CAPTURE_START_US = 1763900000000000;
+const int64_t FRAME_US = 100000;    //  10 fps
+const int64_t POLL_US = 1000000;    //  BlinkRecoveryConfig::poll_interval
+//  Between the clean capture's provisional state (180 s) and its confirmation
+//  (201 s): a dip on one of the second NPC's ticks without a blink.
+const double MISREAD_SECONDS = 0.37 + 186 * 1.0197;
+
+//  recover_state_from_blinks's loop, one pass per call (see above for what
+//  is taken out). Returns the pass's outcome as text; "events"
+//  is set once the streams are built and "done" when the loop would return.
+struct RecoveryPoll{
+    BlinkRecoveryConfig config;
+    size_t give_up_after;
+    size_t failed_solves = 0;
+    std::vector<double> frozen_thresholds;
+    std::vector<double> estimated_thresholds;
+    std::vector<size_t> estimated_from;
+    ProvisionalState provisional;
+    std::vector<WallClock> newest_blink;
+    WallClock deadline;
+    WallClock start;
+
+    RecoveryPoll(const BlinkRecoveryConfig& c, size_t watchers, WallClock now)
+        : config(c)
+        , give_up_after(c.max_failed_windows * c.window_events)
+        , frozen_thresholds(watchers, -1)
+        , estimated_thresholds(watchers, -1)
+        , estimated_from(watchers, 0)
+        , newest_blink(watchers, WallClock::min())
+        , deadline(now + c.liveness_timeout)
+        , start(now)
+    {}
+
+    //  trim_to_window, with EyeBlinkWatcher::discard_before on a buffer.
+    static void trim(
+        std::vector<std::vector<BlinkMatchSample>>& buffers,
+        const std::vector<std::vector<BlinkEvent>>& streams,
+        WallClock origin, size_t keep
+    ){
+        for (size_t c = 0; c < streams.size(); c++){
+            if (streams[c].size() <= keep){
+                continue;
+            }
+            double seconds = streams[c][streams[c].size() - keep].seconds - 1.0;
+            WallClock keep_from = origin + std::chrono::duration_cast<WallDuration>(
+                std::chrono::duration<double>(seconds)
+            );
+            auto first = std::lower_bound(buffers[c].begin(), buffers[c].end(), keep_from,
+                [](const BlinkMatchSample& sample, WallClock cutoff){ return sample.timestamp < cutoff; });
+            buffers[c].erase(buffers[c].begin(), first);
+        }
+    }
+
+    bool thresholds_for(const std::vector<std::vector<BlinkMatchSample>>& matches, std::vector<double>& thresholds){
+        for (size_t w = 0; w < matches.size(); w++){
+            double threshold = frozen_thresholds[w];
+            if (threshold <= 0){
+                size_t counted = estimated_from[w];
+                size_t held = matches[w].size();
+                if (estimated_thresholds[w] <= 0
+                    || held >= counted + counted / 4
+                    || counted >= held + held / 4
+                ){
+                    estimated_thresholds[w] = auto_blink_threshold(matches[w]);
+                    estimated_from[w] = matches[w].size();
+                }
+                threshold = estimated_thresholds[w];
+            }
+            if (!(threshold > 0)){
+                return false;
+            }
+            thresholds.emplace_back(threshold);
+        }
+        return true;
+    }
+
+    std::string poll(std::vector<std::vector<BlinkMatchSample>>& buffers, WallClock now, long long& events_out, bool& done){
+        if (failed_solves >= give_up_after){
+            done = true;
+            return "gave_up reason=no RNG state solved over " + std::to_string(give_up_after) + " blinks";
+        }
+        if (now > deadline){
+            done = true;
+            return "gave_up reason=no RNG state solved in "
+                + std::to_string(config.liveness_timeout.count() / 60) + " minutes";
+        }
+        std::vector<std::vector<BlinkMatchSample>> matches;
+        WallClock origin = WallClock::max();
+        for (const std::vector<BlinkMatchSample>& buffer : buffers){
+            matches.emplace_back(buffer);
+            if (matches.back().empty()){
+                return "no_samples";
+            }
+            origin = std::min(origin, matches.back()[0].timestamp);
+        }
+        std::vector<double> thresholds;
+        if (!thresholds_for(matches, thresholds)){
+            return "no_threshold";
+        }
+        std::vector<std::vector<BlinkEvent>> streams = build_blink_streams(matches, thresholds, origin);
+
+        size_t events = 0;
+        const std::vector<BlinkEvent>* longest = &streams[0];
+        for (const std::vector<BlinkEvent>& stream : streams){
+            events += stream.size();
+            if (stream.size() > longest->size()){
+                longest = &stream;
+            }
+        }
+        events_out = (long long)events;
+        if (!provisional.held){
+            trim(buffers, streams, origin, config.window_events / streams.size());
+        }
+        bool fresh = false;
+        for (size_t w = 0; w < streams.size(); w++){
+            if (streams[w].empty()){
+                continue;
+            }
+            WallClock newest = origin + std::chrono::duration_cast<WallDuration>(
+                std::chrono::duration<double>(streams[w].back().seconds)
+            );
+            if (newest > newest_blink[w] + std::chrono::seconds(1)){
+                fresh = true;
+            }
+            newest_blink[w] = std::max(newest_blink[w], newest);
+        }
+        if (!fresh){
+            return "not_fresh";
+        }
+        if (longest->size() < 3){
+            return "too_few_blinks";
+        }
+        TickFit fit = fit_tick_period(*longest);
+        if (!(fit.period_seconds > 0)){
+            return "no_tick_fit";
+        }
+        if (provisional.held && events < provisional.events + config.confirmation_events){
+            return "confirming";
+        }
+        if (events < config.min_rolls_to_try){
+            return "too_few_rolls";
+        }
+
+        std::vector<uint8_t> slots(streams.size());
+        for (uint8_t c = 0; c < (uint8_t)streams.size(); c++){
+            slots[c] = c;
+        }
+        BlinkSolveResult solved;
+        std::vector<uint8_t> winning_slots;
+        for (size_t attempt = 0; attempt < streams.size(); attempt++){
+            std::vector<BlinkSample> samples;
+            std::string failure;
+            if (build_samples(streams, slots, fit.period_seconds, samples, failure)){
+                BlinkSolveResult attempt_result = solve_state_from_samples(samples, nullptr);
+                if (attempt_result.success){
+                    solved = attempt_result;
+                    winning_slots = slots;
+                    break;
+                }
+            }
+            std::rotate(slots.begin(), slots.begin() + 1, slots.end());
+        }
+        failed_solves = solved.success ? 0 : failed_solves + 1;
+        if (solved.success && frozen_thresholds[0] <= 0){
+            frozen_thresholds = thresholds;
+        }
+        const ProvisionalStep step = update_provisional(
+            provisional, solved.success, solved.state, events, config.confirmation_events
+        );
+        switch (step){
+        case ProvisionalStep::KEEP_COLLECTING:
+            return "unsolved";
+        case ProvisionalStep::PROVISIONAL:
+        case ProvisionalStep::CHANGED:
+            return std::string(step_text(step)) + " " + state_words(solved.state) + " " + std::to_string(events);
+        case ProvisionalStep::DROPPED:
+            return "dropped";
+        case ProvisionalStep::CONFIRMED:
+            break;
+        }
+        done = true;
+        uint64_t anchor_advance = 0;
+        double anchor_seconds = 0;
+        size_t anchor_stream = 0;
+        if (!last_blink_anchor(streams, winning_slots, fit.period_seconds, anchor_advance, anchor_seconds, anchor_stream)){
+            return "gave_up reason=the RNG state was found but no blink could anchor the clock";
+        }
+        WallClock anchor_time = origin + std::chrono::duration_cast<WallDuration>(
+            std::chrono::duration<double>(anchor_seconds)
+        );
+        char buffer[512];
+        std::snprintf(buffer, sizeof(buffer), "confirmed %s %zu slots", state_words(solved.state).c_str(), events);
+        std::string text = buffer;
+        for (uint8_t slot : winning_slots){
+            text += " " + std::to_string(slot);
+        }
+        std::snprintf(buffer, sizeof(buffer), " anchor %zu %" PRIu64 " %s %.17g %u thresholds",
+            anchor_stream, anchor_advance, micros(anchor_time, start).c_str(), fit.period_seconds, config.npcs);
+        text += buffer;
+        for (double threshold : frozen_thresholds){
+            std::snprintf(buffer, sizeof(buffer), " %.17g", threshold);
+            text += buffer;
+        }
+        return text;
+    }
+};
+
+//  One watcher's template match, in thousandths, every FRAME_US: resting at
+//  0.850, every 97th frame a shallow 0.800 that is not a blink, and each blink
+//  a 0.2 s dip to between 0.350 and 0.390 (a double blink dips twice, 0.35 s
+//  apart). "extra" adds dips where the NPC did not blink: misreads.
+std::vector<int> recovery_matches(
+    const Xorshift128State& seed, uint8_t npcs, uint8_t slot, double period,
+    double offset, double seconds, const std::vector<double>& extra
+){
+    std::vector<double> closed = extra;
+    std::vector<BlinkTick> ticks = generate_blink_ticks(Xorshift128(seed), (size_t)(seconds / period), npcs, slot);
+    for (size_t tick = 0; tick < ticks.size(); tick++){
+        if (ticks[tick].blinked){
+            closed.push_back(offset + tick * period);
+            if (ticks[tick].type == BlinkType::Double){
+                closed.push_back(offset + tick * period + 0.35);
+            }
+        }
+    }
+    std::sort(closed.begin(), closed.end());
+    std::vector<int> milli;
+    size_t frames = (size_t)(seconds * 1e6 / FRAME_US);
+    for (size_t frame = 0; frame < frames; frame++){
+        double t = (double)(frame * FRAME_US) / 1e6;
+        int value = frame % 97 == 13u + slot ? 800 : 850;
+        for (size_t c = 0; c < closed.size(); c++){
+            if (t >= closed[c] && t - closed[c] < 0.2){
+                value = 350 + 10 * (int)(c % 5);
+            }
+        }
+        milli.push_back(value);
+    }
+    return milli;
+}
+
+//  "v*n": n frames of v in a row.
+std::string runs_text(const std::vector<int>& milli){
+    std::string text;
+    size_t runs = 0;
+    for (size_t c = 0; c < milli.size();){
+        size_t end = c;
+        while (end < milli.size() && milli[end] == milli[c]){
+            end++;
+        }
+        text += " " + std::to_string(milli[c]) + "*" + std::to_string(end - c);
+        runs++;
+        c = end;
+    }
+    return std::to_string(runs) + text;
+}
+
+struct RecoveryCase{
+    const char* name;
+    Xorshift128State seed;
+    uint8_t npcs;
+    double seconds;
+    std::vector<std::vector<double>> extra;     //  misread dips per watcher
+    bool foreign_second;    //  the second watcher sees another seed's NPC
+    bool flat;              //  no blinks at all
+    int64_t liveness_seconds = 3600;
+};
+
+//  Polls the loop once a second over a capture that arrives in real time, as
+//  the watchers would fill: "recover <npcs> <liveness> <start> <frame> <poll> <watchers>
+//  <runs per watcher...>", then one line per pass that is not "no_samples" or
+//  "not_fresh" and differs from the line before.
+void recovery_line(FILE* out, const RecoveryCase& c){
+    BlinkRecoveryConfig config;
+    config.npcs = c.npcs;
+    config.liveness_timeout = std::chrono::seconds(c.liveness_seconds);
+    std::vector<std::vector<int>> captures;
+    for (uint8_t slot = 0; slot < c.npcs; slot++){
+        Xorshift128State seed = c.foreign_second && slot == 1 ? Xorshift128State(0xdeadbeef, 0xcafebabe, 0x8badf00d, 0x0badc0de) : c.seed;
+        std::vector<double> extra = slot < c.extra.size() ? c.extra[slot] : std::vector<double>();
+        std::vector<int> milli = c.flat
+            ? std::vector<int>((size_t)(c.seconds * 1e6 / FRAME_US), 850)
+            : recovery_matches(seed, c.npcs, slot, 1.0197, 0.3 + 0.07 * slot, c.seconds, extra);
+        captures.push_back(milli);
+    }
+    std::fprintf(out, "recover %u %" PRId64 " %" PRId64 " %" PRId64 " %" PRId64 " %zu", c.npcs, c.liveness_seconds, CAPTURE_START_US, FRAME_US, POLL_US, captures.size());
+    for (const std::vector<int>& milli : captures){
+        std::fprintf(out, " %s", runs_text(milli).c_str());
+    }
+    std::fprintf(out, " : %s", c.name);
+
+    WallClock start = at_us(CAPTURE_START_US);
+    RecoveryPoll loop(config, captures.size(), start);
+    std::vector<std::vector<BlinkMatchSample>> buffers(captures.size());
+    std::vector<size_t> next(captures.size(), 0);
+    std::string last;
+    for (int64_t k = 1;; k++){
+        int64_t now_us = CAPTURE_START_US + k * POLL_US;
+        bool ended = true;
+        for (size_t w = 0; w < captures.size(); w++){
+            while (next[w] < captures[w].size() && CAPTURE_START_US + (int64_t)next[w] * FRAME_US <= now_us){
+                BlinkMatchSample sample;
+                sample.timestamp = at_us(CAPTURE_START_US + (int64_t)next[w] * FRAME_US);
+                sample.match = captures[w][next[w]] / 1000.0;
+                buffers[w].push_back(sample);
+                next[w]++;
+            }
+            ended = ended && next[w] == captures[w].size();
+        }
+        long long events = -1;
+        bool done = false;
+        std::string outcome = loop.poll(buffers, at_us(now_us), events, done);
+        std::string line = (events < 0 ? std::string("-") : std::to_string(events)) + " " + outcome;
+        if (outcome != "no_samples" && outcome != "not_fresh" && line != last){
+            std::fprintf(out, "\n  %" PRId64 " %s", k, line.c_str());
+            last = line;
+        }
+        if (done){
+            break;
+        }
+        if (ended){
+            std::fprintf(out, "\n  %" PRId64 " capture_ended", k);
+            break;
+        }
+    }
+    std::fprintf(out, "\n");
+}
+
 
 void blink_recovery_lines(FILE* out){
     provisional_lines(out);
+    const Xorshift128State seed{0x12345678, 0x9abcdef0, 0x0fedcba9, 0x87654321};
+    const Xorshift128State seed3{0x6b2c0bc7, 0x3e5a4f1d, 0xa1d0e3b9, 0x55f0c2e4};
+    recovery_line(out, {"clean", seed, 2, 400, {}, false, false});
+    recovery_line(out, {"three", seed3, 3, 400, {}, false, false});
+    recovery_line(out, {"misread", seed, 2, 500, {{}, {MISREAD_SECONDS}}, false, false});
+    recovery_line(out, {"foreign", seed, 2, 1100, {}, true, false});
+    recovery_line(out, {"flat", seed, 2, 120, {}, false, true, 60});
+    recovery_line(out, {"short", seed, 2, 150, {}, false, false});
 }
 
 }
