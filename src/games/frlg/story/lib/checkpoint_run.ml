@@ -40,17 +40,6 @@ let start_of (checkpoint : Story.Plan.checkpoint) =
       Some { Story.Pose.at_map = map; at_tile = tile; faces = facing }
   | _ -> None
 
-let probes =
-  let all =
-    A.Scene_looks.probes @ Party_menu.probes @ Bag_screen.probes
-    @ Money_box.probes @ Frlg_battle.Battle_look.probes
-  in
-  List.fold_left
-    (fun kept (p : Wire.probe_spec) ->
-      if List.exists (fun (k : Wire.probe_spec) -> k.id = p.id) kept then kept
-      else kept @ [ p ])
-    [] all
-
 let reload state () =
   match state with
   | Some path ->
@@ -74,8 +63,8 @@ let config options world : A.Story_game.config =
 
 let run options world (plan : Story.Plan.t) =
   Option.iter (fun s -> ignore (Effects.load_state s)) options.state;
-  ignore (Effects.subscribe probes);
   let game =
     A.Story_game.create (config options world) ~start:(start_of plan.checkpoint)
   in
-  Story.Runner.run (A.Story_game.game game) plan.checkpoint
+  Effects.with_probes Screen_facts.probes (fun () ->
+      Story.Runner.run (A.Story_game.game game) plan.checkpoint)

@@ -52,7 +52,10 @@ let io ~flee_battle ~log : Screen_state.Settle.io =
 
 let settle kind ~label ~battle_ends ~log =
   let io = io ~flee_battle:(fun () -> false) ~log in
-  match Screen_state.Settle.run (Screen_state.Settle.rule kind) ~label io with
+  match
+    Effects.with_probes probes (fun () ->
+        Screen_state.Settle.run (Screen_state.Settle.rule kind) ~label io)
+  with
   | Quiet _ -> Ok ()
   | Battle what when battle_ends ->
       log (label ^ ": a battle starts, " ^ what);

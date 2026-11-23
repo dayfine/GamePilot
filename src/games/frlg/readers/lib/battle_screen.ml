@@ -88,6 +88,14 @@ let boxes : (string * Wire.box) list =
   ]
 
 let probes = List.map (fun (id, b) -> Solid_color.probe ~id b) boxes
+
+let text_box_and_menu id =
+  String.starts_with ~prefix:"battle.box." id
+  || String.starts_with ~prefix:"battle.menu" id
+
+let start_probes =
+  List.filter (fun (p : Wire.probe_spec) -> text_box_and_menu p.id) probes
+
 let holds = Solid_color.holds
 
 (* The teal is dark, a channel sum near 230. Its hue test alone takes near

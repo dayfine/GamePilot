@@ -5,8 +5,13 @@ exception Action_failed of Story.Failure.cause
 let fail ?repeats code detail =
   raise (Action_failed (Story.Failure.cause ?repeats code detail))
 
+let probes =
+  Scene_looks.probes @ Party_menu.probes @ Bag_screen.probes @ Money_box.probes
+
 let run body =
-  match body () with () -> Ok () | exception Action_failed c -> Error c
+  match Effects.with_probes probes body with
+  | () -> Ok ()
+  | exception Action_failed c -> Error c
 
 let button_hold_ms = 160
 let tap_hold_ms = 80

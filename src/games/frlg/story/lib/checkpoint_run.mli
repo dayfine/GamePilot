@@ -1,5 +1,5 @@
 (** Runs one checkpoint of a FireRed plan live: the start state loaded (when
-    given), the readers' probes subscribed, then the plan's events through
+    given), the overworld's probes subscribed, then the plan's events through
     {!Story.Runner} with FireRed's {!Frlg_actions.Story_game}. What
     [gamepilot checkpoint] runs, and replays from its wire log. *)
 
@@ -26,13 +26,11 @@ val check_plan : Story.Plan.t -> (unit, string) result
 val start_of : Story.Plan.checkpoint -> Story.Pose.observed option
 (** The checkpoint's [start] when it names one tile. *)
 
-val probes : Wire.probe_spec list
-(** Every reader the story game uses, each probe once. *)
-
 val run :
   options ->
   Frlg_overworld.Frlg_steps.world ->
   Story.Plan.t ->
   (unit, Story.Failure.t) result
-(** In the effect context: loads the state, subscribes {!probes}, runs the
-    checkpoint. *)
+(** In the effect context: loads the state and runs the checkpoint with the
+    overworld's probes ({!Frlg_readers.Screen_facts.probes}) subscribed; a walk,
+    a settle, a menu action and a battle add their own while they run. *)
