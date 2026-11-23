@@ -144,6 +144,26 @@ let check_probe_constructors () =
     [ ""; "\x00"; "\xff\xfe"; "PNG"; "\x89PNG\r\n" ];
   print_endline "ok probe constructors and upload round trip"
 
+(* probe_images prints one line per image; blank lines (a trailing newline)
+   are skipped and each probes map decodes like a frame's. *)
+let check_image_probes () =
+  let text =
+    {|{"image":"a.png","probes":{"bg":{"kind":"core.color_stats@1","mean":[1,2,3],"stddev":[0,0,0]}}}
+{"image":"b.png","probes":{"cursor":{"kind":"core.template_match@1","score":0.5,"x":0.25,"y":0}}}
+|}
+  in
+  (match Wire.image_probes_of_string text with
+  | [
+   ("a.png", [ ("bg", Wire.Color_stats { mean = { r = 1.; _ }; _ }) ]);
+   ("b.png", [ ("cursor", Wire.Template_match { score = 0.5; x = 0.25; _ }) ]);
+  ] ->
+      ()
+  | _ -> failwith "FAILED probe_images lines decoded wrong");
+  (match Wire.image_probes_of_string {|{"probes":{}}|} with
+  | _ -> failwith "FAILED probe_images line without image decoded"
+  | exception Wire.Decode_error _ -> ());
+  print_endline "ok probe_images lines"
+
 let () =
   let dir = contracts_dir () in
   let files =
@@ -181,4 +201,5 @@ let () =
   | exception Wire.Decode_error e ->
       Printf.printf "ok probe result without kind rejected: %s\n" e);
   check_template_upload dir;
-  check_probe_constructors ()
+  check_probe_constructors ();
+  check_image_probes ()
