@@ -62,13 +62,17 @@ let take tbl key () =
       Some v
   | None -> None
 
-let call t c =
+let send_request t c =
   let id = t.next_id in
   t.next_id <- id + 1;
   t.transport.send (Wire.Request { id; call = c });
-  match pump_until t (take t.responses id) with
+  id
+
+let result_of = function
   | Ok result -> result
   | Error e -> raise (Effects.Rpc_error e)
+
+let call t c = result_of (pump_until t (take t.responses (send_request t c)))
 
 let hello t =
   let r =
@@ -82,17 +86,58 @@ let hello t =
          (Printf.sprintf "daemon speaks protocol %d, we speak %d" r.protocol
             protocol_version))
 
-let submit t commands =
+let next_batch_id t =
   let batch_id = Printf.sprintf "b%d" t.next_batch in
   t.next_batch <- t.next_batch + 1;
-  let r =
-    Wire.submit_result_of_json (call t (Wire.Submit { batch_id; commands }))
-  in
+  batch_id
+
+let check_submitted batch_id result =
+  let r = Wire.submit_result_of_json result in
   if r.batch_id <> batch_id then
     raise
       (Protocol_error
-         (Printf.sprintf "submit %s answered for batch %s" batch_id r.batch_id));
+         (Printf.sprintf "submit %s answered for batch %s" batch_id r.batch_id))
+
+let submit t commands =
+  let batch_id = next_batch_id t in
+  check_submitted batch_id (call t (Wire.Submit { batch_id; commands }));
   pump_until t (take t.dones batch_id)
+
+(* Cancels the batch [race] stopped. Its [batch_done] can still arrive before
+   the cancel's reply (it was on its way); after the reply none can, so the one
+   that came is dropped there. *)
+let cancel_batch t batch_id =
+  ignore (Wire.cancel_result_of_json (call t Wire.Cancel) : int);
+  Hashtbl.remove t.dones batch_id
+
+(* Every frame pumped after the submit was sent is checked against [stop],
+   also while its reply is still on the way. *)
+let race t commands stop =
+  let batch_id = next_batch_id t in
+  let id = send_request t (Wire.Submit { batch_id; commands }) in
+  let check_reply () =
+    Option.iter
+      (fun r -> check_submitted batch_id (result_of r))
+      (take t.responses id ())
+  in
+  let rec watch () =
+    check_reply ();
+    match take t.dones batch_id () with
+    | Some d -> Effects.Finished d
+    | None -> (
+        match pump t with
+        | Some f when stop f -> Effects.Stopped f
+        | Some _ | None -> watch ())
+  in
+  let raced = watch () in
+  match raced with
+  | Effects.Finished _ -> raced
+  | Effects.Stopped _ ->
+      cancel_batch t batch_id;
+      (* The submit's reply, if it was still on the way, came before the
+         cancel's. *)
+      check_reply ();
+      raced
 
 let await t pred timeout_ms =
   let timeout = float_of_int timeout_ms in
@@ -135,6 +180,8 @@ let handle t f =
           in
           match eff with
           | Effects.Submit commands -> answer (fun () -> submit t commands)
+          | Effects.Race (commands, stop) ->
+              answer (fun () -> race t commands stop)
           | Effects.Await (pred, timeout_ms) ->
               answer (fun () -> await t pred timeout_ms)
           | Effects.Now -> answer (fun () -> Option.value t.now ~default:0.)

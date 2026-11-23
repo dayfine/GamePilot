@@ -1,0 +1,10 @@
+(test
+ (name test_leg_walker)
+ (modules scripted_interrupts test_leg_walker)
+ (libraries
+  gamepilot.wire
+  gamepilot.effects
+  gamepilot.case_table
+  gamepilot.grid_maps
+  gamepilot.grid_trace
+  gamepilot.grid_walker))

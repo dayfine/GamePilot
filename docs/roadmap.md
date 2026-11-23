@@ -38,7 +38,7 @@ Port `Pokemon/Navigation/Grid` from the fork (~6k lines, ~5k of tests) together 
 | Map model: grid, direction, gates, connected maps, move mechanics; loads PokemonSimulation maps | `src/pokemon/navigation/grid/maps` | `Grid/Maps` |
 | Leg planner, route scorer, wall and wander recovery | `src/pokemon/navigation/grid/planning` | `Grid/Planning` |
 | Leg trace and route log (what was walked vs planned) | `src/pokemon/navigation/grid/trace` | `Grid/Trace` |
-| Leg walker (plan → `submit` batches, re-localize at walls) | `src/pokemon/navigation/grid/walker` | `Grid/Walker` |
+| Leg walker (holds as `race` batches, interrupts cleared on the way) | `src/pokemon/navigation/grid/walker` | `Grid/Walker` |
 
 Tests compare against the C++ tests' expectations case by case.
 
