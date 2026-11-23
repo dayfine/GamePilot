@@ -23,9 +23,23 @@ let light_ink : Wire.color_range =
     max = (brightest, brightest, brightest);
   }
 
-let template glyphs (line : Text_lines.t) text =
+let holds_black (range : Wire.color_range) =
+  let r, g, b = range.min in
+  r = darkest && g = darkest && b = darkest
+
+(* The daemon masks the template with the probe's ink too, so the drawing's
+   text must be in the ink: white on black for a light ink. *)
+let inverted (image : Text_drawing.image) =
+  {
+    image with
+    pixels =
+      Bytes.map (fun c -> Char.chr (brightest - Char.code c)) image.pixels;
+  }
+
+let template ?(ink = ink) glyphs (line : Text_lines.t) text =
   Text_drawing.draw_mask glyphs ~width:line.width ~indent:line.indent
     ~top:Text_lines.template_top ~height:Text_lines.template_height text
+  |> Result.map (fun image -> if holds_black ink then image else inverted image)
   |> Result.map Png_encoding.encode_rgb
 
 let probe_id (line : Text_lines.t) text = line.id ^ "/" ^ text
@@ -47,7 +61,7 @@ let pick line candidates m =
   | [] -> No_match { best = None; score = Float.infinity }
 
 let upload ?ink glyphs line text =
-  match template glyphs line text with
+  match template ?ink glyphs line text with
   | Ok png -> probe ?ink line text ~template:(Effects.upload_template png)
   | Error why -> invalid_arg why
 

@@ -27,39 +27,54 @@ let moves =
 
 let rows n line = List.init n line
 
+let species =
+  List.map snd (Species_names.load (required Data_files.species_names_eng))
+
+let dark = Line_reading.ink
+
+(* Each screen: its lines, their candidates and the ink they are read in. *)
 let screens =
   [
     ( "bag_items",
       rows 6 Text_lines.bag_row,
-      Item_names.in_pocket items Items @ [ "CANCEL" ] );
+      Item_names.in_pocket items Items @ [ "CANCEL" ],
+      dark );
     ( "bag_key_items",
       rows 6 Text_lines.bag_row,
-      Item_names.in_pocket items Key_items @ [ "CANCEL" ] );
-    ("tm_case", rows 5 Text_lines.tm_case_row, tm_moves);
-    ("summary_moves", rows 4 Text_lines.summary_move, moves);
+      Item_names.in_pocket items Key_items @ [ "CANCEL" ],
+      dark );
+    ("tm_case", rows 5 Text_lines.tm_case_row, tm_moves, dark);
+    ("summary_moves", rows 4 Text_lines.summary_move, moves, dark);
+    ( "battle_opening",
+      [ Text_lines.battle_message 0 ],
+      List.map (fun name -> "Wild " ^ name ^ " appeared!") species,
+      Line_reading.light_ink );
   ]
 
 let write_file path data =
   Out_channel.with_open_bin path (fun oc -> output_string oc data)
 
-let line_probes dir screen line candidates =
-  List.mapi
-    (fun i text ->
-      match Line_reading.template glyphs line text with
-      | Error why -> failwith why
-      | Ok png ->
-          let name =
-            Printf.sprintf "%s/%s.%d.png" screen line.Text_lines.id i
-          in
-          write_file (Filename.concat dir name) png;
-          Line_reading.probe line text ~template:name)
+let line_probes dir screen ink line candidates =
+  List.filteri
+    (fun _ text -> Result.is_ok (Line_reading.template ~ink glyphs line text))
     candidates
+  |> List.mapi (fun i text ->
+         match Line_reading.template ~ink glyphs line text with
+         | Error why -> failwith why
+         | Ok png ->
+             let name =
+               Printf.sprintf "%s/%s.%d.png" screen line.Text_lines.id i
+             in
+             write_file (Filename.concat dir name) png;
+             Line_reading.probe ~ink line text ~template:name)
 
-let write_screen dir (screen, lines, candidates) =
+let write_screen dir (screen, lines, candidates, ink) =
   let sub = Filename.concat dir screen in
   if not (Sys.file_exists sub) then Sys.mkdir sub 0o755;
   let probes =
-    List.concat_map (fun line -> line_probes dir screen line candidates) lines
+    List.concat_map
+      (fun line -> line_probes dir screen ink line candidates)
+      lines
   in
   let request =
     Wire.json_of_message (Request { id = 1; call = Subscribe probes })

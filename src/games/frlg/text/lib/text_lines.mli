@@ -29,9 +29,10 @@ val summary_move : int -> t
 
 val battle_message : int -> t
 (** Line [i] (0..1) of a battle's message box, white on teal ("Wild SPEAROW
-    appeared!"; read with {!Line_reading.light_ink}), as wide as the box. The
-    action prompt ("What will / BLASTOISE do?") draws its lines there too:
-    measured on an mGBA frame of it (capitals from x 10, rows 125 and 141). *)
+    appeared!"; read with {!Line_reading.light_ink}), as wide as the box.
+    Measured on mGBA frames of the opening message (Route 16, mg-02 testing run
+    7): its capitals from x 10, rows from 125, three below the cell's top as on
+    the bag's list. *)
 
 val summary_species : t
 (** The species on the summary's POKéMON INFO page (page 1), right of NAME:

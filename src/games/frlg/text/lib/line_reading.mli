@@ -31,10 +31,16 @@ val light_ink : Wire.color_range
     teal box (41, 82, 107), with a dark shadow; measured on mGBA frames. *)
 
 val template :
-  Glyph_table.t -> Text_lines.t -> string -> (string, string) result
+  ?ink:Wire.color_range ->
+  Glyph_table.t ->
+  Text_lines.t ->
+  string ->
+  (string, string) result
 (** The candidate's mask drawn where the line shows it, as PNG bytes for
     [probe.upload_template]: {!Text_lines.template_height} rows, the line's full
-    width. *)
+    width. The daemon masks the template with the probe's [ink] (default {!ink})
+    as it masks the screen, so the text is drawn in it: black on white, or white
+    on black for {!light_ink}. *)
 
 val probe_id : Text_lines.t -> string -> string
 (** ["<line id>/<candidate>"]. *)

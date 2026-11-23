@@ -31,3 +31,5 @@ summary_moves switch repo src/games/frlg/readers/test/images/switch/tmcase/16-su
 summary_moves mgba repo src/games/frlg/readers/test/images/mgba/mail-glitch-04-inspect/live.png|mgba/live-known-moves.png
 summary_moves mgba repo src/games/frlg/readers/test/images/mgba/grind-2026-11-23/mimien-moves-drawing.png|mgba/grind-mimien-moves-drawing.png
 summary_moves mgba repo src/games/frlg/readers/test/images/mgba/grind-2026-11-23/mimien-moves.png|mgba/grind-mimien-moves.png
+battle_opening mgba repo src/games/frlg/readers/test/images/mgba/mail-glitch-route16/wild-spearow.png|mgba/mail-glitch-route16/wild-spearow.png
+battle_opening mgba repo src/games/frlg/readers/test/images/mgba/mail-glitch-route16/wild-doduo.png|mgba/mail-glitch-route16/wild-doduo.png
