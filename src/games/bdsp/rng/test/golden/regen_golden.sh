@@ -4,6 +4,10 @@
 # and runs it. link_stubs.cpp stands in for the app-wide error and cancellation
 # code those sources name but the generator never reaches.
 #
+# -ffp-contract=off keeps every float operation rounded as written. Clang on
+# arm64 otherwise fuses BlinkModel's "f * min + (1 - f) * max" into an FMA and
+# differs from x86 and MSVC builds (and from OCaml) by one ulp.
+#
 #   sh src/games/bdsp/rng/test/golden/regen_golden.sh
 #
 # FORK is an Arduino-Source checkout with the BDSP RNG code (default
@@ -17,7 +21,7 @@ HERE=$(cd "$(dirname "$0")" && pwd)
 WORK=$(mktemp -d)
 trap 'rm -rf "$WORK"' EXIT
 
-clang++ -std=c++23 -O2 -I"$FORK" -I"$SOURCE" -o "$WORK/generate_golden" \
+clang++ -std=c++23 -O2 -ffp-contract=off -I"$FORK" -I"$SOURCE" -o "$WORK/generate_golden" \
   "$HERE/generate_golden.cpp" \
   "$SOURCE/Pokemon/Pokemon_Xorshift128.cpp" \
   "$SOURCE/Pokemon/Pokemon_Gf2Matrix.cpp" \
