@@ -9,6 +9,9 @@ exception Action_failed of Story.Failure.cause
 val fail : ?repeats:bool -> string -> string -> 'a
 (** Raises {!Action_failed} with [Story.Failure.cause code detail]. *)
 
+val raise_error : (unit, Story.Failure.cause) result -> unit
+(** Raises {!Action_failed} with an [Error]'s cause; [Ok] does nothing. *)
+
 val probes : Wire.probe_spec list
 (** What the menu actions read: {!Scene_looks.probes}, the party and a member's
     menu, the bag and the money box. *)

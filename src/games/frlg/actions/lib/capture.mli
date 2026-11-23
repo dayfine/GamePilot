@@ -68,3 +68,6 @@ val end_name : end_ -> string
 
 val message : Capture_plan.t -> result -> string
 (** The run's last line, as capture_message(). *)
+
+val party_after : Party_roster.t -> Capture_plan.t -> result -> Party_roster.t
+(** The party with each catch that went to it added. *)

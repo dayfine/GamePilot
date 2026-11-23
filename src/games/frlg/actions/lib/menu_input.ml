@@ -5,6 +5,10 @@ exception Action_failed of Story.Failure.cause
 let fail ?repeats code detail =
   raise (Action_failed (Story.Failure.cause ?repeats code detail))
 
+let raise_error = function
+  | Ok () -> ()
+  | Error cause -> raise (Action_failed cause)
+
 let probes =
   Scene_looks.probes @ Party_menu.probes @ Bag_screen.probes @ Money_box.probes
 
@@ -42,9 +46,7 @@ let await_screen ?(timeout_ms = screen_timeout_ms) ~code what reader =
   | Timeout -> fail code (what ^ " did not show")
 
 let settle_back ~label ~log =
-  match Scene_looks.settle Talk ~label ~battle_ends:false ~log with
-  | Ok () -> ()
-  | Error cause -> raise (Action_failed cause)
+  raise_error (Scene_looks.settle Talk ~label ~battle_ends:false ~log)
 
 let max_pages = 8
 let question m = Option.is_some (Dialog.yes_no_cursor m)

@@ -140,3 +140,9 @@ let message (plan : Capture_plan.t) (result : result) =
   | No_encounter ->
       Printf.sprintf "Capture of %s: no wild battle started: %s." s tally
   | Failed detail -> Printf.sprintf "Capture of %s: %s: %s." s detail tally
+
+let party_after party (plan : Capture_plan.t) (result : result) =
+  List.fold_left
+    (fun party d ->
+      if d = Party then Party_roster.add party plan.species else party)
+    party result.caught
