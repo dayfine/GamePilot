@@ -313,18 +313,23 @@ pa::JsonObject cancel_result(std::int64_t released_seq) {
   return result;
 }
 
-pa::JsonValue frame_notification(
-    std::int64_t seq, std::int64_t load, double t_ms,
+pa::JsonObject probe_results_json(
     const std::vector<std::pair<std::string, ProbeResult>>& results) {
   pa::JsonObject probes;
   for (const auto& [id, result] : results) {
     probes[id] = probe_result_json(result);
   }
+  return probes;
+}
+
+pa::JsonValue frame_notification(
+    std::int64_t seq, std::int64_t load, double t_ms,
+    const std::vector<std::pair<std::string, ProbeResult>>& results) {
   pa::JsonObject params;
   params["seq"] = seq;
   params["load"] = load;
   params["t_ms"] = round_to(t_ms, 10);
-  params["probes"] = std::move(probes);
+  params["probes"] = probe_results_json(results);
   pa::JsonObject message;
   message["jsonrpc"] = "2.0";
   message["method"] = "frame";
