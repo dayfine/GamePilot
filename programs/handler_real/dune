@@ -1,9 +1,0 @@
-(library
- (name handler_real)
- (public_name gamepilot.handler_real)
- (libraries
-  gamepilot.wire
-  gamepilot.kernel
-  gamepilot.handler
-  unix
-  threads.posix))

@@ -1,4 +1,0 @@
-(library
- (name handler)
- (public_name gamepilot.handler)
- (libraries yojson gamepilot.wire gamepilot.kernel))

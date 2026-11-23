@@ -1,0 +1,4 @@
+(library
+ (name session)
+ (public_name gamepilot.session)
+ (libraries gamepilot.wire gamepilot.effects))

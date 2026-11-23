@@ -1,4 +1,0 @@
-(library
- (name kernel)
- (public_name gamepilot.kernel)
- (libraries gamepilot.wire))
