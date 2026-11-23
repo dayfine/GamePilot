@@ -20,10 +20,11 @@ let press button =
       cooldown_ms = 0;
     }
 
-(* After the landing's settle, how long the screen may take to show another
-   scene than the departure town before Fly fails: the settle has seen the
-   overworld quiet by then, so this only covers the look's lag. *)
-let left_departure_ms = 2000
+(* The fork's TAKEOFF_TIMEOUT: the fade after the town's A (none: the town
+   is not one Fly goes to), and LANDING_TIMEOUT: the flight and the landing,
+   to the overworld at rest. *)
+let takeoff_timeout_ms = 10000
+let landing_timeout_ms = 30000
 
 (* The overworld before the party opens: the scene Fly must leave. *)
 let departure () =
@@ -34,43 +35,63 @@ let departure () =
   | Holds m -> Frlg_readers.Scene_signature.read m
   | Timeout -> None
 
-(* The fork's landing judge (judge_fly_landing()): a fade and a quiet
-   overworld (the warp settle), then the screen no longer the departure
-   town's; its facing read has no reader here. *)
-let no_landing detail = Error (Story.Failure.cause "fly_no_landing" detail)
+let faded m =
+  (Frlg_readers.Screen_facts.of_measurements m).fade
+  <> Screen_state.Fade.No_fade
+
+let fail code detail = Error (Story.Failure.cause code detail)
+
+(* A on the town, the fade watched from the press on: the fly map's fade is
+   over in half a second, so a look that starts after it misses it (mg-01
+   run 1, 2026-11-23: the settle's looks, 1.4 s apart, saw neither black). *)
+let take_off () =
+  match Effects.race [ press Wire.A ] ~stop:faded with
+  | Stopped _ -> true
+  | Finished _ -> (
+      match Effects.await ~timeout_ms:takeoff_timeout_ms faded with
+      | Holds _ -> true
+      | Timeout -> false)
 
 let left_departure before =
-  match
-    Effects.await ~timeout_ms:left_departure_ms
-      (Frlg_readers.Scene_signature.left ~before)
-  with
-  | Holds _ -> true
-  | Timeout -> false
+  match Effects.read () with
+  | Some m -> Frlg_readers.Scene_signature.left ~before m
+  | None -> false
 
-let landed ~log plan departure =
+(* The fork's landing judge (judge_fly_landing()), looked at until it holds
+   or the landing's time is up: the overworld quiet (the talk settle) and the
+   screen no longer the departure town's, whose quiet with the bird over it
+   comes first. Its facing read has no reader here. *)
+let rec judge_landing ~log ~deadline plan before =
   let town = plan.town.Fly_towns.name in
-  match departure with
-  | None -> no_landing "no screen before the Fly"
-  | Some before when left_departure before ->
+  match
+    Scene_looks.settle Talk ~label:("fly to " ^ town) ~battle_ends:false ~log
+  with
+  | Error _ as e -> e
+  | Ok () when left_departure before ->
       log ("Fly: landed in " ^ town ^ ".");
       Ok ()
-  | Some _ -> no_landing (town ^ ": the screen still shows the departure town")
+  | Ok () when Effects.now () > deadline ->
+      fail "fly_no_landing"
+        (town ^ ": the screen still shows the departure town")
+  | Ok () -> judge_landing ~log ~deadline plan before
+
+let fly_from_map ~log plan before =
+  ignore (Effects.submit (Fly_towns.cursor_presses plan.town));
+  if take_off () then
+    judge_landing ~log
+      ~deadline:(Effects.now () +. float_of_int landing_timeout_ms)
+      plan before
+  else fail "fly_no_takeoff" (plan.town.name ^ ": no fade after the town's A")
 
 let fly_steps ~log plan =
   let departure = departure () in
   log
     (Printf.sprintf "Fly with slot %d, menu row %d, to %s (cell %d, %d)."
        plan.slot plan.menu_row plan.town.name plan.town.cell.x plan.town.cell.y);
-  match to_fly_map plan with
+  match (to_fly_map plan, departure) with
   | exception Menu_input.Action_failed cause -> Error cause
-  | () ->
-      ignore
-        (Effects.submit (Fly_towns.cursor_presses plan.town @ [ press Wire.A ]));
-      Result.bind
-        (Scene_looks.settle After_warp
-           ~label:("fly to " ^ plan.town.name)
-           ~battle_ends:false ~log)
-        (fun () -> landed ~log plan departure)
+  | (), None -> fail "fly_no_landing" "no screen before the Fly"
+  | (), Some before -> fly_from_map ~log plan before
 
 let fly ~log plan =
   Effects.with_probes (Menu_input.probes @ Frlg_readers.Scene_signature.probes)
