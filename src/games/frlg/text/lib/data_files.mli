@@ -10,6 +10,9 @@ val glyph_table : string
 val item_names_eng : string
 (** English item names by pocket. *)
 
+val species_names_eng : string
+(** English species names by slug. *)
+
 val tm_hm_moves_eng : string
 (** The moves the English TMs and HMs teach. *)
 

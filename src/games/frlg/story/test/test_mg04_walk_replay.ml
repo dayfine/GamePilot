@@ -32,6 +32,7 @@ let replayed_walk () =
       party = Frlg_actions.Party_roster.of_string "";
       center = None;
       gait = Running;
+      end_check_only = false;
       log = (fun line -> lines := line :: !lines);
     }
   in

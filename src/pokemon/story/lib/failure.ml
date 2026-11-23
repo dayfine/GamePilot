@@ -10,6 +10,7 @@ type reason =
   | No_handler of string
   | Not_at_declared of { declared : Pose.grid; observed : Pose.observed }
   | Not_at_end of { declared : Pose.grid; observed : Pose.observed option }
+  | Unmet_postconditions of string list
 
 type t = {
   checkpoint_id : string;
@@ -22,7 +23,7 @@ let repeats failure =
   match failure.reason with
   | Handler cause -> cause.repeats
   | No_handler _ -> true
-  | Not_at_declared _ | Not_at_end _ -> false
+  | Not_at_declared _ | Not_at_end _ | Unmet_postconditions _ -> false
 
 let reason_to_string = function
   | Handler cause -> cause_to_string cause
@@ -37,6 +38,8 @@ let reason_to_string = function
         (match observed with
         | Some o -> Pose.observed_to_string o
         | None -> "no position")
+  | Unmet_postconditions unmet ->
+      "postconditions unmet: " ^ String.concat "; " unmet
 
 let to_string failure =
   Printf.sprintf "%s event %d (%s): %s" failure.checkpoint_id

@@ -7,3 +7,6 @@ val item_names : unit -> Frlg_text.Item_names.t
 
 val move_names : unit -> Frlg_text.Move_names.t
 (** English: the language the readers are measured on. *)
+
+val species_names : unit -> Frlg_text.Species_names.t
+(** English: (slug, name) of every species. *)

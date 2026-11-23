@@ -10,6 +10,10 @@ type options = {
   party : Frlg_actions.Party_roster.t;  (** The party at the start. *)
   center : string option;  (** The town whose Center heals between rounds. *)
   gait : Frlg_overworld.Route_legs.gait;
+  end_check_only : bool;
+      (** Run no events: the start state's postconditions checked alone (the end
+          position too is not checked: FireRed reckons it from the walks). A
+          live check that a state holds what a checkpoint promises. *)
   log : string -> unit;
 }
 
@@ -36,4 +40,6 @@ val run :
     overworld's probes ({!Frlg_readers.Screen_facts.probes}) subscribed; a walk,
     a settle, a menu action and a battle add their own while they run. With
     [end_at], the player must end there ({!Story.Runner.run}); FireRed reads no
-    position yet, so it is where the walks tracked the player. *)
+    position yet, so it is where the walks tracked the player. Then the plan's
+    postconditions ({!Story.Plan.postconditions}), read by
+    {!Postcondition_reads}, must all pass. *)

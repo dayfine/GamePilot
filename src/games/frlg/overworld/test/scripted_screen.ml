@@ -22,6 +22,9 @@ type screen =
           CANCEL), its cursor on this row from 0. *)
   | Bag_items  (** The bag's Items pocket, cursor on the top row. *)
   | Mart_list  (** A Mart's BUY list with the money box (a Switch capture). *)
+  | Summary of string
+      (** The summary's info page (a Switch capture) showing this species name
+          (["ABRA"]): the text reader's species line reads it and no other. *)
 
 let screen_name = function
   | Overworld -> "overworld"
@@ -37,6 +40,7 @@ let screen_name = function
   | Member_menu row -> Printf.sprintf "member menu row %d" row
   | Bag_items -> "bag items"
   | Mart_list -> "mart list"
+  | Summary name -> "summary " ^ name
 
 (* The fixture images each screen is read from; a screen merges the probes of
    every fixture file that has its image. *)
@@ -56,6 +60,7 @@ let image = function
   | Member_menu _ -> "mail-glitch-04/mg05-mimien-menu__none.png"
   | Bag_items -> "emu-1/20261122-024507-05.04__bag-items-row0.png"
   | Mart_list -> "ItemListReader/MartBuyList_eng__money.png"
+  | Summary _ -> "captures/sm3_s1__summary1.png"
 
 (* Copied next to the test by its dune rules. *)
 let fixtures =
@@ -178,6 +183,8 @@ type t = {
   mutable shows : (int * screen) list;  (** From a time on, newest first. *)
   mutable presses : press list;  (** Newest first. *)
   mutable react : t -> press -> unit;
+  mutable subscribed : string list;
+      (** Probe ids the code under test subscribed, for the text lines. *)
 }
 
 let create ?(react = fun _ _ -> ()) ?(input_delay_ms = 0) () =
@@ -188,6 +195,7 @@ let create ?(react = fun _ _ -> ()) ?(input_delay_ms = 0) () =
     shows = [ (0, Overworld) ];
     presses = [];
     react;
+    subscribed = [];
   }
 
 let show t ~at_ms screen = t.shows <- (at_ms, screen) :: t.shows
@@ -246,11 +254,34 @@ let move_cursor t (p : press) =
   | Some s when step <> 0 && taken -> show t ~at_ms:(p.at_ms + 1) s
   | _ -> ()
 
+(* A text line's template probe ("<line>/<text>"): a perfect match for the
+   species the summary shows on its line, far off for every other candidate
+   and on every other screen. *)
+let species_line = "summary_species/"
+let far_off = 0.3
+
+let text_result screen id =
+  let shown =
+    match screen with Summary name -> id = species_line ^ name | _ -> false
+  in
+  ( id,
+    Wire.Template_match
+      { score = (if shown then 0. else far_off); x = 0.; y = 0. } )
+
+let text_probes t screen =
+  List.filter_map
+    (fun id ->
+      if String.starts_with ~prefix:species_line id then
+        Some (text_result screen id)
+      else None)
+    t.subscribed
+
 let frame t : Wire.frame =
+  let screen = screen_at t t.clock_ms in
   {
     seq = t.seq;
     t_ms = float_of_int t.clock_ms;
-    probes = probes (screen_at t t.clock_ms);
+    probes = probes screen @ text_probes t screen;
   }
 
 let tick t =
@@ -322,8 +353,18 @@ let run t f =
           | Effects.Read -> answer (fun () -> Some (frame t))
           | Effects.Subscribe probes ->
               answer (fun () ->
-                  List.map (fun (p : Wire.probe_spec) -> p.id) probes)
-          | Effects.Unsubscribe ids -> answer (fun () -> ids)
+                  let ids =
+                    List.map (fun (p : Wire.probe_spec) -> p.id) probes
+                  in
+                  t.subscribed <- ids @ t.subscribed;
+                  ids)
+          | Effects.Unsubscribe ids ->
+              answer (fun () ->
+                  t.subscribed <-
+                    List.filter (fun id -> not (List.mem id ids)) t.subscribed;
+                  ids)
+          | Effects.Upload_template png ->
+              answer (fun () -> Digest.to_hex (Digest.string png))
           | _ -> None);
     }
 
