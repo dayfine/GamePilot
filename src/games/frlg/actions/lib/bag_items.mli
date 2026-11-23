@@ -41,6 +41,21 @@ val open_pocket_top : Frlg_readers.Bag_screen.pocket -> unit
     as its arrows read) with the cursor on the list's top row. Fails as [no_bag]
     or [no_pocket]. *)
 
+val item_action : string -> int -> unit
+(** From the overworld: the item's pocket opened ({!open_pocket_top}), the item
+    selected ({!select}), A, and once its menu shows (USE or CHECK or OPEN,
+    GIVE, TOSS, CANCEL: the pocket arrows hide), the action on this row (from 0)
+    chosen with A. Fails as {!open_pocket_top} and {!select} do, or as
+    [no_item_menu]. *)
+
+val count_on_row : int -> int option
+(** The count on shown list row [row] (0..5; the Berry Pouch's 0..6, the same
+    column), read digit by digit in the small font
+    ({!Frlg_text.Text_lines.bag_count_digit}); [None] where no count shows (a
+    key item, CANCEL, an empty row). Not in the fork, whose bag reader
+    (Menus/PokemonFRLG_ItemListReader) reads counts with its own digit
+    templates. Read right on mGBA (1 to 9) and on Switch captures (up to 21). *)
+
 val select : string -> unit
 (** In the open pocket, from the list's top: the item the slug names found by
     reading the rows, then DOWN until the cursor's own row reads its name (a

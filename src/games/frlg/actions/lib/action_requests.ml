@@ -12,6 +12,7 @@ type t =
   | Ingame_trade of { offer : string; receive : string option }
   | Spin_for_encounter of { max_batches : int }
   | Cut_tree of Grid_maps.Direction.t
+  | Verify_mail_glitch of Action_args.member
 
 let default_spin_batches = 25
 
@@ -59,6 +60,8 @@ let readers stocks =
     ("ingame_trade", ingame_trade);
     ("spin_for_encounter", spin);
     ("cut_tree", fun ~where a -> Cut_tree (J.direction ~where "direction" a));
+    ( "verify_mail_glitch",
+      fun ~where a -> Verify_mail_glitch (Action_args.member ~where a) );
   ]
 
 let names =
@@ -72,6 +75,7 @@ let names =
     "ingame_trade";
     "spin_for_encounter";
     "cut_tree";
+    "verify_mail_glitch";
   ]
 
 let decode stocks name args =
@@ -106,3 +110,4 @@ let to_string = function
   | Spin_for_encounter { max_batches } ->
       Printf.sprintf "spin for an encounter, %d batches at most" max_batches
   | Cut_tree d -> "cut the tree to the " ^ Grid_maps.Direction.name d
+  | Verify_mail_glitch m -> "verify the mail glitch on " ^ member_text m

@@ -57,6 +57,32 @@ val bag_message_digit : int -> t
     message window 5 of bag.c at (16, 120), the second line's glyphs at y 137.
     Read right on mGBA (20 coins, 2026-11-23). *)
 
+val small_digit_width : int
+(** Every digit (and the space) of the small font is 5 pixels wide. *)
+
+val bag_count_digit : int -> int -> t
+(** [bag_count_digit row k]: digit [k], counted from the right (0: ones), of the
+    count on list row [row] of a bag pocket (0..5) or the Berry Pouch (0..6).
+    Small font: pokefirered item_menu.c [BagListMenuItemPrintFunc] and
+    berry_pouch.c [BerryPouchItemPrintFunc] print ["×<count>"] (the count right
+    aligned in 3 cells, spaces before it) at x 110 of the list window (left 88),
+    on the row's line; the × is 8 wide, so the ones digit starts at x 216. *)
+
+val berry_pouch_number_digit : int -> int -> t
+(** [berry_pouch_number_digit row k]: digit [k] (0: tens) of the berry's number
+    on Berry Pouch row [row] (0..6), the ["06"] of ["No06 LEPPA BERRY"]. Small
+    font: pokefirered berry_pouch.c [GetBerryNameAndIndexForMenu] prints the No
+    symbol (8 wide), a 1-pixel gap and the two digits (leading zero) from the
+    label's x 97, so the digits start at x 106. *)
+
+val mail_field_one : width:int -> t
+(** The first word field of the Easy Chat mail editor, [width] pixels from its
+    left: pokefirered easy_chat_3.c prints each row of the phrase window as
+    [CLEAR 17], the word (or seven underscores for an empty field), [CLEAR 17],
+    the next word, so field 1 starts 17 pixels into the window and the next
+    field after the word and a 17-pixel gap. The window's left (x 24) and top
+    measured on mGBA, where ABRA reads at x 41, glyphs from y 2 (2026-11-23). *)
+
 (** {1 Template rows and the probe box} *)
 
 val template_top : int
