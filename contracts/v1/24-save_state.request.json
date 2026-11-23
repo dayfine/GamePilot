@@ -3,6 +3,6 @@
   "id": 11,
   "method": "backend.save_state",
   "params": {
-    "path": "/Users/example/FRLGLab/mgba/gamepilot/states/mg-02.start.ss"
+    "path": "/home/example/.local/share/gamepilot/states/mg-02.start.ss"
   }
 }

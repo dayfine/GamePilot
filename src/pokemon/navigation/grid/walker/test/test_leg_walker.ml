@@ -226,7 +226,7 @@ let cases : Case_table.case list =
     };
     {
       (* Running, a tile takes 133ms, and the sign spoke 353 to 726ms into
-         each hold (console B, 2026-11-13 18:29, 12.03 pallet_shore). *)
+         each hold (Switch, 2026-11-13 18:29, 12.03 pallet_shore). *)
       name = "a wall leg blocked by a sign stops, running";
       input =
         (fun () -> blocked ~tile_ms:133 [ Some 353; Some 578; Some 603 ] 6);
