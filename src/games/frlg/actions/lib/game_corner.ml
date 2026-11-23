@@ -1,0 +1,52 @@
+open Frlg_readers
+module J = Grid_maps.Json_field
+module M = Menu_input
+
+let small = 50
+let large = 500
+
+let rec coin_batches total =
+  if total >= large then large :: coin_batches (total - large)
+  else if total >= small then small :: coin_batches (total - small)
+  else []
+
+let coins_of_args ~where args =
+  let coins = J.int ~where "coins" args in
+  if coins <= 0 || coins mod small <> 0 then
+    J.fail "%scoins is %d, not a positive multiple of %d." where coins small;
+  coins
+
+let fire_red_prizes = [ "abra"; "clefairy"; "dratini"; "scyther"; "porygon" ]
+let prize_slots = List.length fire_red_prizes
+
+let prize_slot_of_args ~where args =
+  let slot = J.int ~where "slot" args in
+  if slot < 0 || slot >= prize_slots then
+    J.fail "%sslot is %d, not a prize row (0-%d)." where slot (prize_slots - 1);
+  slot
+
+let choice_wait_ms = 1800
+
+(* A, then A on the first page once its arrow shows: the choice box comes. *)
+let to_choices ~code what =
+  M.press Wire.A;
+  ignore (M.await_screen ~code what Dialog.advance_arrow);
+  M.press Wire.A ~cooldown_ms:choice_wait_ms
+
+let buy_batch ~log batch =
+  to_choices ~code:"coins_no_clerk" "the coins clerk's page";
+  if batch = large then M.taps Wire.Down 1;
+  M.press Wire.A;
+  M.settle_back ~label:(Printf.sprintf "buy %d coins" batch) ~log
+
+let buy_coins ~log coins =
+  log (Printf.sprintf "Game Corner: buy %d coins." coins);
+  List.iter (buy_batch ~log) (coin_batches coins)
+
+let redeem_prize_mon ~log slot =
+  log (Printf.sprintf "Game Corner: redeem prize row %d." slot);
+  to_choices ~code:"prize_no_clerk" "the prize clerk's page";
+  M.taps Wire.Down slot;
+  M.press Wire.A;
+  M.answer_yes ~code:"prize_no_question" "the prize's question";
+  M.settle_back ~label:"redeem prize" ~log

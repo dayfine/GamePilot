@@ -1,0 +1,17 @@
+(rule
+ (copy ../../programs/mail_glitch/plans/mg-01.plan.json mg-01.plan.json))
+
+(rule
+ (copy ../../programs/mail_glitch/plans/mg-02.plan.json mg-02.plan.json))
+
+(rule
+ (copy ../../programs/mail_glitch/plans/mg-03.plan.json mg-03.plan.json))
+
+(test
+ (name test_checkpoint_run)
+ (deps mg-01.plan.json mg-02.plan.json mg-03.plan.json)
+ (libraries
+  gamepilot.case_table
+  gamepilot.story
+  gamepilot.frlg_actions
+  gamepilot.frlg_story))

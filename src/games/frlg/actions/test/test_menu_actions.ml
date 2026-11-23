@@ -1,0 +1,144 @@
+(* The shared actions' flows on a scripted screen read through the FRLG
+   readers from recorded frames (Scripted_screen): what each presses, and
+   that each waits on the screen it needs. *)
+
+open Frlg_actions
+open Frlg_overworld_fixtures
+module S = Scripted_screen
+
+let outcome = function
+  | Ok () -> "ok"
+  | Error cause -> "failed " ^ Story.Failure.cause_to_string cause
+
+let a p = p.S.buttons = [ Wire.A ]
+
+(* A talk: A on the overworld (or a menu) shows a page with the arrow when
+   [page], else the question; A on the page shows the question; A on the
+   question (YES) shows text for [after_ms], then the overworld. *)
+let talk ~page ~after_ms screen (p : S.press) =
+  let show d s = S.show screen ~at_ms:(p.at_ms + d) s in
+  if a p then
+    match S.screen_at screen p.at_ms with
+    | S.Overworld | S.Start_menu _ ->
+        show 200 (if page then S.Dialog_arrow else S.Question)
+    | S.Dialog_arrow ->
+        show 100 S.Dialog;
+        show 400 S.Question
+    | S.Question ->
+        show 100 S.Dialog;
+        show (100 + after_ms) S.Overworld
+    | _ -> ()
+
+let run_on ?react summary body =
+  let screen = S.create ?react () in
+  let result = S.run screen (fun () -> Menu_input.run body) in
+  Printf.sprintf "%s; %s" (outcome result) (summary screen)
+
+let run ?react body = run_on ?react S.presses_text body
+let log = ignore
+
+let heal () =
+  run ~react:(talk ~page:true ~after_ms:3000) (Heal_and_save.heal_at_nurse ~log)
+
+let heal_no_question () =
+  run
+    ~react:(fun screen p ->
+      if a p then S.show screen ~at_ms:(p.at_ms + 200) S.Dialog)
+    (Heal_and_save.heal_at_nurse ~log)
+
+(* START opens the menu on row 1; A on SAVE asks. *)
+let save_screen screen (p : S.press) =
+  if p.buttons = [ Wire.Start ] then
+    S.show screen ~at_ms:(p.at_ms + 100) (S.Start_menu 1)
+  else talk ~page:false ~after_ms:2000 screen p
+
+let save () = run ~react:save_screen (Heal_and_save.save ~log)
+
+let cut () =
+  run ~react:(talk ~page:true ~after_ms:1500) (fun () ->
+      Cut_tree.cut ~log Grid_maps.Direction.North)
+
+(* Each A shows the next group of screens, each a delay after the press. *)
+let on_each_a groups =
+  let left = ref groups in
+  fun screen (p : S.press) ->
+    match !left with
+    | group :: rest when a p ->
+        left := rest;
+        List.iter (fun (d, s) -> S.show screen ~at_ms:(p.at_ms + d) s) group
+    | _ -> ()
+
+(* The clerk's page, the choice box (no reader: a dialog), the question, then
+   the prize's text. *)
+let redeem () =
+  run
+    ~react:
+      (on_each_a
+         [
+           [ (200, S.Dialog_arrow) ];
+           [ (100, S.Dialog) ];
+           [ (300, S.Question) ];
+           [ (100, S.Dialog); (2000, S.Overworld) ];
+         ])
+    (fun () -> Game_corner.redeem_prize_mon ~log 0)
+
+(* The party opens on POKéMON; A on a slot opens its menu; A on SWITCH and on
+   the second slot keep the party. *)
+let swap_screen screen (p : S.press) =
+  let show s = S.show screen ~at_ms:(p.at_ms + 200) s in
+  match (p.buttons, S.screen_at screen p.at_ms) with
+  | [ Wire.Start ], _ -> show (S.Start_menu 1)
+  | [ Wire.A ], S.Start_menu _ -> show S.Party
+  | [ Wire.A ], S.Party when List.length screen.S.presses = 3 ->
+      show S.Member_menu
+  | [ Wire.A ], S.Member_menu -> show S.Party
+  | [ Wire.B ], S.Party -> show S.Overworld
+  | _ -> ()
+
+let swap () = run ~react:swap_screen (fun () -> Party_actions.swap ~log 1 4)
+
+(* A trade: the offer's question, the party, then the trade (black) and the
+   trader's text. *)
+let trade_screen screen (p : S.press) =
+  let show d s = S.show screen ~at_ms:(p.at_ms + d) s in
+  match S.screen_at screen p.at_ms with
+  | S.Overworld when a p -> show 200 S.Question
+  | S.Question when a p -> show 300 S.Party
+  | S.Party when a p ->
+      show 100 S.Black;
+      show 5000 S.Dialog;
+      show 7000 S.Overworld
+  | _ -> ()
+
+let trade () =
+  run ~react:trade_screen (fun () -> Ingame_trade.trade ~log ~slot:3)
+
+(* A wild battle starts [after_ms] into the spin. *)
+let spin ~after_ms () =
+  run_on
+    (fun screen -> Printf.sprintf "%d turns" (List.length screen.S.presses))
+    ~react:(fun screen p ->
+      if p.index = 0 then S.show screen ~at_ms:(p.at_ms + after_ms) S.Battle)
+    (fun () -> Spin_for_encounter.spin ~log ~facing:North ~max_batches:2)
+
+let case name input expectation = { Case_table.name; input; expectation }
+
+let () =
+  Case_table.run "menu_actions"
+    [
+      case "heal: a page, YES, the healing, back" heal "ok; A x3, B x8";
+      case "heal: a text box with no question fails" heal_no_question
+        "failed heal_no_question: the nurse's question did not show; A";
+      case "save: START, down to SAVE, YES, saved" save
+        "ok; Start, down x3, A x2, B x5";
+      case "cut: the turn, A, the page, YES" cut "ok; up, A x3, B x7";
+      case "redeem: the page, Abra's row, YES" redeem "ok; A x4, B x7";
+      case "party swap: slot 1, SWITCH, slot 4" swap
+        "ok; Start, A x2, up x3, A, down x3, A, B x6";
+      case "trade: YES, slot 3, A through the trade" trade
+        "ok; A x2, down x2, A x6, B x7";
+      case "spin: a battle in the first batch" (spin ~after_ms:1500)
+        "ok; 12 turns";
+      case "spin: no battle in two batches" (spin ~after_ms:100000)
+        "failed no_encounter: no wild battle in 2 batches; 48 turns";
+    ]

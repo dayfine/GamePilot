@@ -1,10 +1,11 @@
 (* gamepilot run <program> [--port N] [--state PATH]
-   gamepilot replay <program> <wirelog> *)
+   gamepilot replay <program> <wirelog>
+   gamepilot checkpoint PLAN.json [flags] (Checkpoint_command) *)
 
 let usage =
   "usage:\n\
   \  gamepilot run start_menu_poc [--port 47900] [--state PATH]\n\
-  \  gamepilot replay start_menu_poc WIRELOG\n"
+  \  gamepilot replay start_menu_poc WIRELOG\n" ^ Checkpoint_command.usage
 
 let die msg =
   prerr_string msg;
@@ -43,11 +44,19 @@ let run_program handle state =
         (Unix.error_message e);
       1
 
+let exit_with = function
+  | Ok code -> exit code
+  | Error e -> die (e ^ "\n" ^ usage)
+
 let () =
   match List.tl (Array.to_list Sys.argv) with
   | "run" :: "start_menu_poc" :: flags ->
       let port, state = parse_run_flags flags in
       exit (run_program (Live.run ~port) state)
+  | "checkpoint" :: plan :: flags ->
+      exit_with (Checkpoint_command.live plan flags)
+  | "replay" :: "checkpoint" :: wirelog :: plan :: flags ->
+      exit_with (Checkpoint_command.replay wirelog plan flags)
   | [ "replay"; "start_menu_poc"; wirelog ] ->
       let log = Replay.log_of_file wirelog in
       exit (run_program (Replay.run log) Start_menu_poc.default_state)
