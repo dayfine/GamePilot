@@ -1,1 +1,7 @@
-{"jsonrpc":"2.0","id":3,"result":{"subscribed":["menu_panel"]}}
+{
+  "jsonrpc": "2.0",
+  "id": 3,
+  "result": {
+    "subscribed": ["menu_panel"]
+  }
+}

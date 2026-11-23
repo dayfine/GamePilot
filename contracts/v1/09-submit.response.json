@@ -1,1 +1,8 @@
-{"jsonrpc":"2.0","id":4,"result":{"batch_id":"b1","start_seq":1203}}
+{
+  "jsonrpc": "2.0",
+  "id": 4,
+  "result": {
+    "batch_id": "b1",
+    "start_seq": 1203
+  }
+}
