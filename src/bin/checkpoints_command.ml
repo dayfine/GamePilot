@@ -14,6 +14,9 @@
    next checkpoint only after this one passed; in verification mode the last
    passing run's end becomes the next checkpoint's start state.
 
+   --states defaults to $GAMEPILOT_STATES and --runs-dir to $GAMEPILOT_RUNS,
+   else to $HOME/.local/share/gamepilot/{states,runs}.
+
    Mirrors, on the fork's frlg/lean (SerialPrograms/Source/Pokemon/AutoStory/):
    the START/END_CHECKPOINT range (Options/Pokemon_StoryRangeOptions.h) and
    StoryEngine::run_checkpoints() (Engine/Pokemon_StoryEngine.cpp) over it;
@@ -47,6 +50,15 @@ let usage =
   \      [--end-check-only]\n"
 
 let home = Option.value (Sys.getenv_opt "HOME") ~default:"."
+
+(* [var] from the environment, else [$HOME/.local/share/gamepilot/<name>]. *)
+let data_dir var name =
+  match Sys.getenv_opt var with
+  | Some dir when dir <> "" -> dir
+  | _ ->
+      List.fold_left Filename.concat home
+        [ ".local"; "share"; "gamepilot"; name ]
+
 let mgba_bridge_port = 47810
 
 let defaults =
@@ -55,8 +67,8 @@ let defaults =
     to_id = None;
     mode = None;
     runs = None;
-    states = Filename.concat home "FRLGLab/mgba/gamepilot/states";
-    runs_dir = Filename.concat home "FRLGLab/gamepilot-runs";
+    states = data_dir "GAMEPILOT_STATES" "states";
+    runs_dir = data_dir "GAMEPILOT_RUNS" "runs";
     daemon = "daemon/build/gamepilot_daemon";
     mgba_port = mgba_bridge_port;
     common = Checkpoint_command.defaults;

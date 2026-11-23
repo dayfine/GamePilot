@@ -27,6 +27,7 @@ type call =
   | Unsubscribe of string list
   | Submit of { batch_id : string; commands : Command.command list }
   | Cancel
+  | Status
 
 type request = { id : int; call : call }
 type response = { id : int; outcome : (json, error) result }
@@ -50,6 +51,7 @@ let method_name = function
   | Unsubscribe _ -> "unsubscribe"
   | Submit _ -> "submit"
   | Cancel -> "cancel"
+  | Status -> "status"
 
 let hello_of_params what params =
   Hello
@@ -88,6 +90,7 @@ let call_of_json name params =
   | "unsubscribe" -> Unsubscribe (string_list_field what "ids" params)
   | "submit" -> submit_of_params what params
   | "cancel" -> Cancel
+  | "status" -> Status
   | m -> fail "unknown method %S" m
 
 let params_of_call = function
@@ -105,7 +108,7 @@ let params_of_call = function
           ("batch_id", `String batch_id);
           ("commands", `List (List.map Command.json_of_command commands));
         ]
-  | Cancel -> `Assoc []
+  | Cancel | Status -> `Assoc []
 
 let check_version j =
   match field_opt "message" "jsonrpc" j with

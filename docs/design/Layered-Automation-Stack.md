@@ -234,7 +234,7 @@ be written by OCaml programs; do not invest further in retiring CFR on the old a
 | Slice | What | Proves |
 |---|---|---|
 | S0 | Mail Glitch checkpoints (fork #781, `mg-01`..`mg-05`) on mGBA from their saves | probe model, stream, OCaml loop, protocol |
-| S1 | The same checkpoints on console B's post-game save | capture, `CoreLib` link, real timing |
+| S1 | The same checkpoints on a Switch's post-game save | capture, `CoreLib` link, real timing |
 | S4 | FRLG dex collection (design: `autostory/frlg/design/AutoStory-FRLG-Dex-Collection.md` on `agents`, fork #776) | engine, planner, the FRLG action set |
 | S2 | BDSP legendary shiny RNG | `every` probes, clock-anchored batches, OCaml RNG |
 | S3 | SV programs (legendary collection, isolated shiny hunts) | free-camera 3D, model and audio probes |
@@ -255,7 +255,8 @@ that fits a tick period from per-frame timestamps). Generate golden vectors from
 
 Gates: pass rate (10 runs each, both stacks from the same save, interleaved) on mGBA;
 real timing on the Switch (3 testing-mode runs per checkpoint, no save, then one forward
-run that saves); `mg-05` (the glitch itself) is gated on mGBA only.
+run that saves). `mg-05` (the glitch itself) is no longer mGBA only: it is ported from the
+fork's tested Route 16 version and runs on the Switch after mGBA (user, 2026-11-23).
 
 ## 10. Week 0, budget and stop rules
 
@@ -294,7 +295,7 @@ Estimates here are rough judgments, not measurements.
 
 - I/O library under the real effect handler: settled (stdlib, section 13).
 - Repo, S0/S1 checkpoint, mGBA attachment, console takeover: settled (section 13).
-- Exact console-B windows for S1: decided by the main session under the one-train rule.
+- Exact Switch windows for S1: scheduled so that only one program drives the console at a time.
 
 ## 13. Second interview (2026-11-22)
 
@@ -304,12 +305,12 @@ Estimates here are rough judgments, not measurements.
 | R2 | Upstream | Nothing has to go upstream. The overlay on Arduino-Source stays thin |
 | R3 | Image primitives | Probes on OpenCV; only `CoreLib` from PA via upstream's cmake files |
 | R4 | S0 backend | mGBA through the existing `lab/mgba/bridge.lua` protocol, unchanged (the daemon is a second client), plus replay of the recorded wire log |
-| R5 | S0/S1 checkpoints | The Mail Glitch checkpoints of fork #781, after it lands. mGBA has a save per checkpoint (`~/FRLGLab/mgba/emu-1/saves`, story to `20.05`; `mail-glitch-test/` for `mg-*`); console B is post-game |
-| R6 | Repo | `dayfine/GamePilot`, private, `~/Projects/GamePilot`; harness from `dayfine/agent-harness` plus the fork's `pr-maintenance`, `reviewer`, `dispatch`, `console-iteration`, `codex-dispatch`, `cpp-style-review` |
+| R5 | S0/S1 checkpoints | The Mail Glitch checkpoints of fork #781, after it lands. mGBA has a save per checkpoint (story to `20.05`; `mail-glitch-test/` for `mg-*`); the Switch save is post-game |
+| R6 | Repo | `dayfine/GamePilot`; harness from `dayfine/agent-harness` plus the fork's `codex-dispatch` and `cpp-style-review` skills. Console iteration has a hard stop: when the same step fails twice in a row, stop and diagnose before another run |
 | R7 | C++ | One small daemon, glue only (about 2k lines): no thresholds, state machines or game names. `daemon/` and `programs/` are fully separate, each with its own build, lint and CI; `clang-format`, strict warnings, PA's `Filesystem` wrappers for paths |
 | R8 | Real effect handler | OCaml stdlib only (`Unix` sockets, one reader thread, a queue, a small scheduler); OCaml 5.2+ pinned in CI on three OSes; Eio later is a handler swap (D8) |
-| R9 | Gates | Pass rate on mGBA; timing on the Switch in testing mode; `mg-05` on mGBA only |
-| R10 | Console B | GamePilot is one more lab process under the one-train rule (`lablock.sh`); the main session schedules windows |
+| R9 | Gates | Pass rate on mGBA; timing on the Switch in testing mode; `mg-05` too, after mGBA (user, 2026-11-23) |
+| R10 | The Switch | GamePilot shares the console with other automation; only one program may drive it at a time |
 | R11 | Swappable parts | P1: anything that may be swapped (I/O backend, RNG, effect handler, probes) sits behind one boundary. No I/O survey or RNG library search up front |
 | R12 | FRLG RNG | Needed in S4; D6's OCaml rewrite starts there, PA's FRLG RNG as oracle |
 | R13 | Templates | Packages as a read-only submodule; new templates in `src/games/<game>/assets/`; programs upload templates at probe registration (cached by hash); template readers get replay tests |

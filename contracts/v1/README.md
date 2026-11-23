@@ -1,4 +1,4 @@
-# Wire protocol v1.4
+# Wire protocol v1.5
 
 JSON-RPC 2.0 between the OCaml programs (client) and the daemon (server). The golden files in this
 folder are the spec: the daemon's tests parse every file and the OCaml tests decode and re-encode
@@ -12,6 +12,9 @@ v1.3 adds `unsubscribe` and the optional `ink` of `core.template_match@1`.
 v1.4 sends only changed probe results: a `frame` carries a probe's result only when it differs from
 the one the previous frame sent for it (see Notifications). A v1.3 frame with every result is a valid
 v1.4 frame, so older wire logs replay unchanged.
+v1.5 adds `status` (the daemon's health: thread heartbeats, capture ring, gaps, client, fidelity),
+answered also on a second connection while a client is served, and the live `switch` backend (see
+Live backends).
 v1.2 makes the daemon own where the game picture sits in the frame: `hello` gives the `viewport` and
 the `game_size`, probe boxes and template placements are relative to the picture, templates are in game
 pixels, and `core.color_count@1` is new.
@@ -21,8 +24,9 @@ size) every v1.1 message means the same in v1.2.
 
 ## Transport
 
-- TCP on `127.0.0.1`, default port 47900 (`--port`). One client at a time; a second gets an error and
-  is closed.
+- TCP on `127.0.0.1`, default port 47900 (`--port`). One client at a time. While a client is
+  connected, one more connection is an observer: it gets answers to `status` and an error (-32600) for
+  any other request. A connection beyond that gets an error and is closed.
   When the client disconnects, the daemon drops its probes and queued commands.
 - One JSON object per line, LF-terminated, UTF-8, no embedded newlines.
 - Requests have an `id`; the daemon answers each with exactly one `result` or `error`.
@@ -52,6 +56,7 @@ size) every v1.1 message means the same in v1.2.
 | `unsubscribe` | `ids`: probe ids | `unsubscribed`: the ids that were subscribed, now removed (others are ignored) |
 | `submit` | `batch_id`, `commands`: list of {`press`: buttons, `hold_ms`, `cooldown_ms`} or {`wait_ms`} | `batch_id`, `start_seq` |
 | `cancel` | {} | `released_seq`: drops queued commands and releases all buttons |
+| `status` | {} | `t_ms`, `backend` (its `kind`), `client` (the `hello` client name, or `null`), `fidelity`, `threads`, `ring`, `gaps` (below) |
 
 - `width`, `height`: the frame's size in pixels. `viewport` {`x`, `y`, `w`, `h`}: where the game
   picture sits in the frame, normalized to the frame. `game_size` {`width`, `height`}: the picture's
@@ -73,6 +78,29 @@ size) every v1.1 message means the same in v1.2.
 - Batches run in order, one after another. Times are rounded to whole frames by the backend.
 - `backend.load_state` also drops queued commands and releases all buttons, as `cancel` does;
   queued batches then get no `batch_done`.
+
+`status` (`29-status.response.json`):
+
+- `threads`: one heartbeat per daemon thread, {`name`, `seq`, `t_ms`}: the last frame it handled and
+  when it last showed life. mGBA has one thread, `server` (it steps and probes each frame). The Switch
+  has `capture` (`seq`, `t_ms`: the last frame captured) and `server` (`seq`: the last frame probed,
+  `t_ms`: its last loop pass, at least every 50 ms). A thread whose `t_ms` is far behind the reply's
+  `t_ms` is stuck; the daemon reports and the reader judges (`gamepilot status` states its limits).
+- `ring` {`depth`, `capacity`}: frames captured and not yet probed (0, 0 on mGBA).
+- `gaps` {`count`, `frames`}: jumps in `seq` the server saw because the ring was full, and the frames
+  lost in them.
+- `fidelity`: `full` while an `every` probe is subscribed, else `latest`. Thread priority does not
+  follow it yet.
+
+## Live backends
+
+The `switch` backend (`hello` `backend.kind`) is live: the capture card is not paused. `seq` counts
+captured frames from 1, and `t_ms` of a `frame` is when the frame was captured. Commands are timed in
+wall time: a batch starts when submitted (or when the queued ones end), each press and wait runs for
+its milliseconds as given, without rounding to frames, and `start_seq` is the last frame captured
+when it was submitted. `backend.load_state` and `backend.save_state` answer -32002 (a console has
+no save states). The game picture sits inside the frame (`viewport`, by default the fork's FRLG
+`GAME_BOX`); GBA buttons map to the Switch's GBA app: Start is Plus, Select is Minus.
 
 ## Notifications
 

@@ -1,4 +1,4 @@
-(** Wire protocol v1.4 (contracts/v1): message types and their JSON codec.
+(** Wire protocol v1.5 (contracts/v1): message types and their JSON codec.
 
     The codec lives in one module per message family ([Command], [Probe],
     [Backend], [Jsonrpc], [Wire_log], [Probe_images]); this module re-exports
@@ -171,6 +171,7 @@ type call = Jsonrpc.call =
       (** probe ids; the daemon stops measuring them *)
   | Submit of { batch_id : string; commands : command list }
   | Cancel
+  | Status  (** the daemon's health; answered on an observer connection too *)
 
 type request = Jsonrpc.request = { id : int; call : call }
 
@@ -235,6 +236,9 @@ val cancel_result_of_json : json -> int
 (** The [released_seq]. *)
 
 val json_of_cancel_result : int -> json
+
+module Daemon_status = Daemon_status
+(** The [status] result: decode it with [Daemon_status.of_json]. *)
 
 (** {1 Wire log} *)
 

@@ -1,7 +1,7 @@
-# Roadmap: Start menu PoC to the Mail Glitch on console B (2026-11-23)
+# Roadmap: Start menu PoC to the Mail Glitch on the Switch (2026-11-23)
 
 The goal is the Mail Glitch (`mg-01`..`mg-05`, fork #781) written as an OCaml program: first on mGBA
-(S0), then on console B's post-game save (S1). Decisions live in `docs/design/Layered-Automation-Stack.md`
+(S0), then on a Switch's post-game save (S1). Decisions live in `docs/design/Layered-Automation-Stack.md`
 section 13 (R1-R20). This file says what is built in what order. Mark each item done with its PR.
 
 ## Phase 0: foundation (now)
@@ -66,7 +66,7 @@ Follow fork #804's split (R20), not #781's monolith.
 ## Phase 4: the Mail Glitch on mGBA (S0)
 
 One PR per checkpoint, each with its recorded wire log as a replay test and an mGBA save state at
-its start (`~/FRLGLab/mgba/emu-1/saves`, `mail-glitch-test/`).
+its start (under `GAMEPILOT_STATES`; the source saves are in `mail-glitch-test/`).
 
 | Checkpoint | Content |
 |---|---|
@@ -74,7 +74,7 @@ its start (`~/FRLGLab/mgba/emu-1/saves`, `mail-glitch-test/`).
 | mg-02 | Spearow on Route 16, Sitrus Berry on Route 6, trade for CH'DING |
 | mg-03 | Abra for MIMIEN on Route 2, Revives at Lavender |
 | mg-04 | Level CH'DING to 21 (Knock Off) and MIMIEN to 33 (Recycle): see below |
-| mg-05 | Route 8 setup and the double battle (mGBA only, R9) |
+| mg-05 | Ported from the fork's tested Route 16 version, in two checkpoints like the fork's: `mg-05a` (Leppa Berry from Route 8, Blastoise's Blizzard PP used up, Fly to Celadon, Route 16's tree, party and held items arranged at (30, 7)) and `mg-05` (Lea & Jed's double battle: Knock Off, Recycle; MIMIEN Lv 33 ends holding the recycled Leppa Berry). Runs on mGBA, then on the Switch (user, 2026-11-23). Still missing: giving a Berry (the Berry Pouch) and `verify_mail_glitch` (a held-item reader) |
 
 ### mg-04: grinding options
 
@@ -98,14 +98,14 @@ learned in; every other move offered is declined.
 Missing readers: the grinder's level (the summary draws it in the small font), HP and PP (heals go
 by battle count, the sim's rate), and the foe's species.
 
-## Phase 5: console B (S1)
+## Phase 5: the Switch (S1)
 
 | Item | Gate |
 |---|---|
 | Daemon Switch backend: capture card frames and serial controller (one boundary each, R11) | latency spike: frame to command p99 under one frame (stop rule) |
-| mg-01..mg-04 on the post-game save, in console B windows under the one-train rule | 10 runs per checkpoint, pass rate at least the C++ twin's (R9) |
+| mg-01..mg-05 on the post-game save, in Switch windows (only one program drives the console at a time) | 10 runs per checkpoint, pass rate at least the C++ twin's (R9) |
 
-mg-05 stays on mGBA only.
+mg-05 runs on the Switch too, after mGBA (user, 2026-11-23; it was mGBA only before).
 
 ## Standing gates
 

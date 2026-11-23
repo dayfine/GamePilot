@@ -3,6 +3,6 @@
   "id": 2,
   "method": "backend.load_state",
   "params": {
-    "path": "/Users/example/FRLGLab/mgba/gamepilot/states/overworld.ss"
+    "path": "/home/example/.local/share/gamepilot/states/overworld.ss"
   }
 }

@@ -1,7 +1,14 @@
-// The v1 JSON-RPC server and the frame loop. Single-threaded: between two
-// emulator frames it serves the client; at each frame boundary it sets keys,
-// steps the backend one frame, runs the subscribed probes on that frame and
-// sends the results that changed since the client's previous frame.
+// The v1 JSON-RPC server and the frame loop. With a lockstep backend (mGBA) it
+// is the daemon's one thread: between two emulator frames it serves the
+// client; at each frame boundary it sets keys, steps the backend one frame,
+// runs the subscribed probes on that frame and sends the results that changed
+// since the client's previous frame. With a live backend (the Switch) it is the
+// server thread of two: it takes each captured frame from the backend's ring,
+// probes it the same way, and hands timed key segments to the controller when
+// they are due.
+//
+// One client at a time. A second connection is an observer: it may only ask
+// for `status`, so `gamepilot status` works while a program runs.
 
 #pragma once
 
@@ -14,6 +21,7 @@
 #include "Common/Cpp/Filesystem/FileIO.h"
 #include "backend.h"
 #include "clock.h"
+#include "live_schedule.h"
 #include "net.h"
 #include "probe_evaluation.h"
 #include "rpc.h"
@@ -39,11 +47,17 @@ class Server {
   void run(const std::atomic<bool>& stop);
 
  private:
+  void run_lockstep(const std::atomic<bool>& stop);
+  void run_live(const std::atomic<bool>& stop);
   void serve_network(int timeout_ms);
   void accept_pending();
   void read_client();
+  void read_observer();
   void drop_client(const char* reason);
   void handle_line(const std::string& line);
+  void handle_observer_line(const std::string& line);
+  DaemonStatus status() const;
+  void send_probe_results(std::int64_t seq, double t_ms);
   pa::JsonObject dispatch(const Request& request);
   void send(const pa::JsonValue& message);
   void log(const char* dir, const pa::JsonValue& message);
@@ -56,6 +70,9 @@ class Server {
   Socket listener_;
   Socket client_;
   LineBuffer client_lines_;
+  std::optional<std::string> client_name_;  // from its hello
+  Socket observer_;
+  LineBuffer observer_lines_;
   pa::FileIO wire_log_;
 
   std::vector<FrameProbe> probes_;
@@ -63,8 +80,13 @@ class Server {
   // ones that changed, the first frame after either sends all.
   SentResults sent_results_;
   TemplateStore templates_;
-  InputSchedule schedule_;
+  InputSchedule schedule_;      // lockstep
+  LiveSchedule live_schedule_;  // live
   std::optional<KeyMask> sent_mask_;
+
+  // The server loop's heartbeat: the last frame it handled and when it last
+  // went round.
+  ThreadBeat beat_{"server", 0, 0};
 
   double pace_base_ms_ = 0;
   std::int64_t pace_base_seq_ = 0;

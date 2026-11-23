@@ -1,5 +1,5 @@
 (* What one checkpoint run leaves on disk, under the runs folder
-   (~/FRLGLab/gamepilot-runs by default):
+   ($GAMEPILOT_RUNS, else ~/.local/share/gamepilot/runs):
 
      <date>-<checkpoint>-<mode>-<n>/
        wire.jsonl    the daemon's wire log (replays with gamepilot replay)

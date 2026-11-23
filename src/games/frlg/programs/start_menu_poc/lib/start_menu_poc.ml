@@ -10,10 +10,14 @@ let home () =
   | Some h -> h
   | None -> Option.value (Sys.getenv_opt "USERPROFILE") ~default:"."
 
-let default_state =
-  List.fold_left Filename.concat (home ())
-    [ "FRLGLab"; "mgba"; "gamepilot"; "states"; "overworld.ss" ]
+let states_dir () =
+  match Sys.getenv_opt "GAMEPILOT_STATES" with
+  | Some dir when dir <> "" -> dir
+  | _ ->
+      List.fold_left Filename.concat (home ())
+        [ ".local"; "share"; "gamepilot"; "states" ]
 
+let default_state = Filename.concat (states_dir ()) "overworld.ss"
 let timeout_ms = 3000
 
 let press button =

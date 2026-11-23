@@ -428,6 +428,36 @@ pa::JsonValue frame_notification(std::int64_t seq, std::int64_t load,
   return message;
 }
 
+pa::JsonObject status_result(const DaemonStatus& status) {
+  pa::JsonObject result;
+  result["t_ms"] = round_to(status.t_ms, 10);
+  result["backend"] = status.backend;
+  if (status.client) {
+    result["client"] = *status.client;
+  } else {
+    result["client"] = pa::JsonValue();
+  }
+  result["fidelity"] = status.fidelity;
+  pa::JsonArray threads;
+  for (const ThreadBeat& beat : status.health.threads) {
+    pa::JsonObject thread;
+    thread["name"] = beat.name;
+    thread["seq"] = beat.seq;
+    thread["t_ms"] = round_to(beat.t_ms, 10);
+    threads.push_back(std::move(thread));
+  }
+  result["threads"] = std::move(threads);
+  pa::JsonObject ring;
+  ring["depth"] = static_cast<std::int64_t>(status.health.ring_depth);
+  ring["capacity"] = static_cast<std::int64_t>(status.health.ring_capacity);
+  result["ring"] = std::move(ring);
+  pa::JsonObject gaps;
+  gaps["count"] = status.health.gaps;
+  gaps["frames"] = status.health.gap_frames;
+  result["gaps"] = std::move(gaps);
+  return result;
+}
+
 pa::JsonValue batch_done_notification(const std::string& batch_id,
                                       std::int64_t seq, double t_ms) {
   pa::JsonObject params;
