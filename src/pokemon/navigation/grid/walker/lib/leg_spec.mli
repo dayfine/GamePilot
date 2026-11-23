@@ -12,9 +12,9 @@ type t = {
       (** An open leg stops at its first interrupt, once cleared, instead of
           walking on from an estimate; the caller finds the player again. *)
   stop_if_blocked : bool;
-      (** A leg to a wall stops when, held again after an interrupt, it is
-          interrupted again right away: something on the way, like a sign,
-          interrupts every hold, so the wall is never reached. *)
+      (** The leg stops when, held again after an interrupt, it is interrupted
+          again right away: something on the way, like a sign, interrupts every
+          hold, so the leg's end is never reached. *)
   stalled_steps : int list;
       (** The steps (from 1) the game holds the player up a tile before, as
           FireRed does on a step onto a connected map: each makes a hold over it

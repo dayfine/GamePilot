@@ -20,10 +20,14 @@ type costs = {
   grass : int;  (** On top of a tile, for a step into tall grass. *)
   warp : int;  (** A warp's fade. *)
   wander : int;  (** A tile someone may wander onto. *)
+  trainer_line : int;
+      (** A tile in the line of a trainer who stands and looks one way: a battle
+          the walk would rather not start, if they are not beaten yet. The
+          fork's [LINE_TILE], as its story weighs it. *)
 }
 
 val default_costs : costs
-(** Grass 3, warp 10, wander 8. *)
+(** Grass 3, warp 10, wander 8, trainer line 100. *)
 
 type world = {
   maps : Connected_maps.t;
@@ -49,6 +53,14 @@ val held_at : world -> Connected_maps.place -> Direction.t -> bool
 (** Whether holding the direction keeps the player on the place: a wall, but not
     a sign read going north or south, a ledge, someone who may walk off or a
     trainer, an edge onto another map, or a warp to a map not loaded. *)
+
+val sign_ahead : world -> Connected_maps.place -> Direction.t -> bool
+(** Whether pressing the direction from the place reads a sign: one on the next
+    tile, faced going north or south. *)
+
+val walked_out_onto : world -> Connected_maps.place -> bool
+(** Whether a warp that leaves the player on the place came out of a doorway
+    above it, which the game walks the player out of before it takes input. *)
 
 val hop_tiles : world -> Connected_maps.place -> Direction.t -> int
 (** Tiles one press moves the player: 2 over a ledge, else 1. *)

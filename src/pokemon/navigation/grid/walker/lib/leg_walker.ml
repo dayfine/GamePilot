@@ -56,15 +56,18 @@ let hold walker ~hold_watchers (leg : Leg_spec.t) hold_ms =
       record_hold walker hold_ms;
       None
 
-(* Whether [leg] stops at the interrupt just cleared: an open leg asked to stop
-   at any, or a leg to a wall interrupted again soon after being held again. *)
+(* Whether [leg], held again after an interrupt, was interrupted again soon:
+   something on the way that speaks, like a sign, stops every hold. *)
+let blocked (leg : Leg_spec.t) ~interruptions held =
+  let window =
+    max (leg.tile_ms * blocked_window_tiles) blocked_message_window_ms
+  in
+  leg.stop_if_blocked && interruptions > 1 && held.elapsed_ms < window
+
+(* Whether [leg] stops at the interrupt just cleared: a blocked leg, or an
+   open leg asked to stop at any. *)
 let stops_here (leg : Leg_spec.t) ~interruptions held =
-  if not leg.to_wall then leg.stop_on_interrupt
-  else
-    let window =
-      max (leg.tile_ms * blocked_window_tiles) blocked_message_window_ms
-    in
-    leg.stop_if_blocked && interruptions > 1 && held.elapsed_ms < window
+  blocked leg ~interruptions held || ((not leg.to_wall) && leg.stop_on_interrupt)
 
 type progress = { remaining : int; interruptions : int; exact : bool }
 
