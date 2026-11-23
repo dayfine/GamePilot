@@ -224,6 +224,18 @@ pa::JsonObject Server::dispatch(const Request& request) {
     }
     return subscribe_result(ids);
   }
+  if (method == "unsubscribe") {
+    const UnsubscribeParams unsubscribe = decode_unsubscribe(request.params);
+    std::vector<std::string> removed;
+    for (const std::string& id : unsubscribe.ids) {
+      if (std::erase_if(probes_, [&](const FrameProbe& probe) {
+            return probe.spec.id == id;
+          }) > 0) {
+        removed.push_back(id);
+      }
+    }
+    return unsubscribe_result(removed);
+  }
   if (method == "submit") {
     const SubmitParams submit = decode_submit(request.params);
     const std::int64_t start =

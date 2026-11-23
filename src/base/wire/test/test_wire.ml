@@ -41,6 +41,9 @@ let result_round_trips =
     );
     ( "subscribe",
       fun j -> Wire.(json_of_subscribe_result (subscribe_result_of_json j)) );
+    ( "unsubscribe",
+      fun j -> Wire.(json_of_unsubscribe_result (unsubscribe_result_of_json j))
+    );
     ("submit", fun j -> Wire.(json_of_submit_result (submit_result_of_json j)));
     ("cancel", fun j -> Wire.(json_of_cancel_result (cancel_result_of_json j)));
   ]
@@ -103,13 +106,20 @@ let check_template_upload dir =
      Wire.message_of_json
        (read_golden dir "17-subscribe.template_match.request.json")
    with
-  | Wire.Request { call = Wire.Subscribe [ spec ]; _ } ->
+  | Wire.Request { call = Wire.Subscribe [ cursor; word ]; _ } ->
       let box = { Wire.x = 0.5; y = 0.0; w = 0.5; h = 0.25 } in
       if
-        spec
+        cursor
         <> Wire.template_match_probe ~id:"cursor" ~box ~delivery:Latest
-             ~template:hash
-      then failwith "FAILED template subscribe differs from the constructor"
+             ~template:hash ()
+      then failwith "FAILED template subscribe differs from the constructor";
+      let box = { Wire.x = 0.38333; y = 0.1625; w = 0.425; h = 0.1 } in
+      let ink = { Wire.min = (0, 0, 0); max = (144, 144, 255) } in
+      if
+        word
+        <> Wire.template_match_probe ~ink ~id:"bag.1/TM CASE" ~box
+             ~delivery:Latest ~template:hash ()
+      then failwith "FAILED ink subscribe differs from the constructor"
   | _ -> failwith "FAILED template subscribe decoded as something else");
   (* Wrong length, '=' inside, padding before the end, a char outside the
      alphabet. *)

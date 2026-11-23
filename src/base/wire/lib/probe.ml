@@ -27,6 +27,7 @@ type probe_spec = {
   box : box;
   delivery : delivery;
   template : string option;
+  ink : color_range option;
   color_range : color_range option;
 }
 
@@ -41,16 +42,18 @@ let color_stats_probe ~id ~box ~delivery =
     box;
     delivery;
     template = None;
+    ink = None;
     color_range = None;
   }
 
-let template_match_probe ~id ~box ~delivery ~template =
+let template_match_probe ?ink ~id ~box ~delivery ~template () =
   {
     id;
     kind = template_match_kind;
     box;
     delivery;
     template = Some template;
+    ink;
     color_range = None;
   }
 
@@ -61,6 +64,7 @@ let color_count_probe ~id ~box ~delivery ~min ~max =
     box;
     delivery;
     template = None;
+    ink = None;
     color_range = Some { min; max };
   }
 
@@ -71,20 +75,35 @@ let channels_of_json what j =
 
 let json_of_channels (r, g, b) = `List [ `Int r; `Int g; `Int b ]
 
-let color_range_of_json j =
-  match (field_opt "probe" "min" j, field_opt "probe" "max" j) with
+(* [what] is the object holding [min] and [max]: the probe, or its ink. *)
+let color_range_of_json what j =
+  match (field_opt what "min" j, field_opt what "max" j) with
   | None, None -> None
   | Some min, Some max ->
       Some
         {
-          min = channels_of_json "probe.min" min;
-          max = channels_of_json "probe.max" max;
+          min = channels_of_json (what ^ ".min") min;
+          max = channels_of_json (what ^ ".max") max;
         }
-  | _ -> fail "probe: min and max come together"
+  | _ -> fail "%s: min and max come together" what
+
+let color_range_fields { min; max } =
+  [ ("min", json_of_channels min); ("max", json_of_channels max) ]
 
 let json_of_color_range = function
-  | Some { min; max } ->
-      [ ("min", json_of_channels min); ("max", json_of_channels max) ]
+  | Some range -> color_range_fields range
+  | None -> []
+
+let ink_of_json j =
+  match field_opt "probe" "ink" j with
+  | None -> None
+  | Some ink -> (
+      match color_range_of_json "probe.ink" ink with
+      | Some range -> Some range
+      | None -> fail "probe.ink: needs min and max")
+
+let json_of_ink = function
+  | Some range -> [ ("ink", `Assoc (color_range_fields range)) ]
   | None -> []
 
 let probe_spec_of_json j =
@@ -96,14 +115,15 @@ let probe_spec_of_json j =
     delivery = delivery_of_string (string_field what "delivery" j);
     template =
       Option.map (to_string "probe.template") (field_opt what "template" j);
-    color_range = color_range_of_json j;
+    ink = ink_of_json j;
+    color_range = color_range_of_json what j;
   }
 
 let json_of_template = function
   | Some t -> [ ("template", `String t) ]
   | None -> []
 
-let json_of_probe_spec { id; kind; box; delivery; template; color_range } =
+let json_of_probe_spec { id; kind; box; delivery; template; ink; color_range } =
   `Assoc
     ([
        ("id", `String id);
@@ -111,7 +131,7 @@ let json_of_probe_spec { id; kind; box; delivery; template; color_range } =
        ("box", json_of_box box);
        ("delivery", `String (string_of_delivery delivery));
      ]
-    @ json_of_template template
+    @ json_of_template template @ json_of_ink ink
     @ json_of_color_range color_range)
 
 type rgb = { r : float; g : float; b : float }
@@ -225,3 +245,9 @@ let subscribe_result_of_json j =
 
 let json_of_subscribe_result ids =
   `Assoc [ ("subscribed", json_of_strings ids) ]
+
+let unsubscribe_result_of_json j =
+  string_list_field "unsubscribe.result" "unsubscribed" j
+
+let json_of_unsubscribe_result ids =
+  `Assoc [ ("unsubscribed", json_of_strings ids) ]

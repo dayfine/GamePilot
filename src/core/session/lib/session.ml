@@ -206,6 +206,22 @@ let load_state t path =
 let subscribe t probes =
   Wire.subscribe_result_of_json (call t (Wire.Subscribe probes))
 
+(* The latest frame keeps no result of a probe that is gone, so a later
+   subscribe of the same id waits for a fresh one. *)
+let unsubscribe t ids =
+  let removed =
+    Wire.unsubscribe_result_of_json (call t (Wire.Unsubscribe ids))
+  in
+  t.latest <-
+    Option.map
+      (fun (f : Wire.frame) ->
+        {
+          f with
+          probes = List.filter (fun (id, _) -> not (List.mem id ids)) f.probes;
+        })
+      t.latest;
+  removed
+
 (* The session's answer to an effect, or [None] for effects it does not
    handle. *)
 let answer : type a. t -> a Effect.t -> (unit -> a) option =
@@ -219,6 +235,7 @@ let answer : type a. t -> a Effect.t -> (unit -> a) option =
   | Effects.Load_state path -> Some (fun () -> load_state t path)
   | Effects.Upload_template png -> Some (fun () -> upload_template t png)
   | Effects.Subscribe probes -> Some (fun () -> subscribe t probes)
+  | Effects.Unsubscribe ids -> Some (fun () -> unsubscribe t ids)
   | _ -> None
 
 (* Errors go back into the program, so its own handlers see them. *)

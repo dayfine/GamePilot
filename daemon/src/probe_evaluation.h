@@ -18,8 +18,9 @@ struct FrameProbe {
   ProbeSpec spec;
   Viewport viewport;
   cv::Rect pixels;  // the box in frame pixels
-  // core.template_match@1 only: the template scaled to frame pixels.
-  cv::Mat template_bgr;
+  // core.template_match@1 only: the template scaled to frame pixels, BGR, or
+  // with ink its mask.
+  cv::Mat template_image;
 };
 
 // Maps the probe's picture-relative box (and template, given in game pixels)

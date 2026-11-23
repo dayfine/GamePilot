@@ -9,6 +9,7 @@ type call =
   | Load_state of { path : string }
   | Upload_template of { png : string }
   | Subscribe of Probe.probe_spec list
+  | Unsubscribe of string list
   | Submit of { batch_id : string; commands : Command.command list }
   | Cancel
 

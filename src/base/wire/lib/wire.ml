@@ -38,6 +38,7 @@ type probe_spec = Probe.probe_spec = {
   box : box;
   delivery : delivery;
   template : string option;
+  ink : color_range option;
   color_range : color_range option;
 }
 
@@ -99,6 +100,7 @@ type call = Jsonrpc.call =
   | Load_state of { path : string }
   | Upload_template of { png : string }
   | Subscribe of probe_spec list
+  | Unsubscribe of string list
   | Submit of { batch_id : string; commands : command list }
   | Cancel
 
@@ -130,6 +132,8 @@ let upload_template_result_of_json = Probe.upload_template_result_of_json
 let json_of_upload_template_result = Probe.json_of_upload_template_result
 let subscribe_result_of_json = Probe.subscribe_result_of_json
 let json_of_subscribe_result = Probe.json_of_subscribe_result
+let unsubscribe_result_of_json = Probe.unsubscribe_result_of_json
+let json_of_unsubscribe_result = Probe.json_of_unsubscribe_result
 let submit_result_of_json = Command.submit_result_of_json
 let json_of_submit_result = Command.json_of_submit_result
 let cancel_result_of_json = Command.cancel_result_of_json
