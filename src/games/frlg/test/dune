@@ -1,0 +1,5 @@
+(test
+ (name test_replay)
+ (deps
+  (glob_files fixtures/*.jsonl))
+ (libraries gamepilot.wire gamepilot.kernel gamepilot.handler gamepilot.frlg))

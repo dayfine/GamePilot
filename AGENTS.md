@@ -5,8 +5,11 @@ GamePilot automates games through three layers (design: `docs/design/Layered-Aut
 - `daemon/` (C++): I/O (frame source, input sink, one clock) and probes (pixels -> numbers).
   Glue only: no thresholds, no state machines, no game names. Its own CMake build,
   `clang-format`, strict warnings.
-- `programs/` (OCaml 5.2+, dune): readers, actions, checkpoints, stories, sim and replay.
+- `src/` (OCaml 5.2+, dune): one dune project. `base/` (wire codec), `core/` (effect kernel,
+  replay and real handlers), `games/<game>/` (readers, actions, checkpoints, programs), `bin/`.
+  Each library is `<name>/lib` with its tests in `<name>/test`.
 - `contracts/`: golden JSON-RPC messages both sides must parse. The only thing they share.
+  Formatted by `tools/fmt_json.py` (one key per line, lists of scalars inline).
 
 ## Hard rules
 
