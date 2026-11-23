@@ -29,3 +29,5 @@ summary_moves switch repo src/games/frlg/readers/test/images/switch/summary-2026
 summary_moves switch repo src/games/frlg/readers/test/images/switch/summary-20261102/sm3_s3a.png|switch_lab/sm3_s3a.png
 summary_moves switch repo src/games/frlg/readers/test/images/switch/tmcase/16-summary-moves-after-teach.png|switch_lab/tmcase-16-summary-moves-after-teach.png
 summary_moves mgba repo src/games/frlg/readers/test/images/mgba/mail-glitch-04-inspect/live.png|mgba/live-known-moves.png
+summary_moves mgba repo src/games/frlg/readers/test/images/mgba/grind-2026-11-23/mimien-moves-drawing.png|mgba/grind-mimien-moves-drawing.png
+summary_moves mgba repo src/games/frlg/readers/test/images/mgba/grind-2026-11-23/mimien-moves.png|mgba/grind-mimien-moves.png

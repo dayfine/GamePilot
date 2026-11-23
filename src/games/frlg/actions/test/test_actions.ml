@@ -28,15 +28,18 @@ let talk ?then_ () =
   Printf.sprintf "%s after %d ms; %s" (outcome result) screen.S.clock_ms
     (S.presses_text screen)
 
-(* Start opens the menu on row [row]; A on POKEMON the party; the last A, on
-   the fly map, the warp's black, then the town. *)
+(* Start opens the menu on row [row]; A on POKEMON the party; A on a slot its
+   menu; A on FLY the fly map (no reader: the overworld's frame); the last A,
+   on the fly map, the warp's black, then the town. *)
 let fly_screen ~row ~fade screen (p : S.press) =
   match p.buttons with
   | [ Wire.Start ] -> S.show screen ~at_ms:(p.at_ms + 100) (S.Start_menu row)
   | [ Wire.Up; Wire.Left ] -> S.show screen ~at_ms:p.at_ms S.Overworld
   | [ Wire.A ] -> (
       match S.screen_at screen p.at_ms with
-      | S.Start_menu _ -> S.show screen ~at_ms:(p.at_ms + 300) S.Party
+      | S.Start_menu _ -> S.show screen ~at_ms:(p.at_ms + 300) (S.Party 1)
+      | S.Party _ -> S.show screen ~at_ms:(p.at_ms + 200) (S.Member_menu 0)
+      | S.Member_menu _ -> S.show screen ~at_ms:(p.at_ms + 300) S.Overworld
       | S.Overworld when fade ->
           S.show screen ~at_ms:(p.at_ms + 500) S.Black;
           S.show screen ~at_ms:(p.at_ms + 3000) S.Overworld

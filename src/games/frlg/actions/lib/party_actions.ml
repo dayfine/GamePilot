@@ -1,35 +1,44 @@
 open Frlg_readers
 module M = Menu_input
+module C = Menu_cursor
 
 let pokemon_row = 1
-let switch_taps_up = 3
 let mail_editor_wait_ms = 2500
 
 (* An Easy Chat press, as the fork waits after each. *)
 let easy_chat_press_ms = 800
 
 let open_party () =
-  M.open_start_menu_row pokemon_row;
-  M.await_screen ~code:"no_party" "the party" Party_menu.party_menu
+  C.open_start_menu_row pokemon_row;
+  ignore (M.await_screen ~code:"no_party" "the party" Party_menu.party_menu)
 
-let choose_slot m slot =
-  M.moves ~from:(Option.value (Party_menu.selected_slot m) ~default:1) ~to_:slot;
+let choose_slot slot =
+  C.move_to ~code:"no_party" C.party slot;
   M.press Wire.A
 
-(* A member's menu shrinks the party's message box: the party reader stops. *)
-let member_menu m = not (Party_menu.party_menu m)
+let member_menu m = Option.is_some (Member_menu.cursor_row m)
+
+let on_member_menu slot body =
+  Effects.with_probes Member_menu.probes (fun () ->
+      C.choose ~code:"no_member_menu" C.party slot ~taken:member_menu;
+      body ())
+
+let choose_member_row row ~taken =
+  C.choose ~code:"no_member_menu" C.member_menu row ~taken
+
+(* SWITCH taken: the member's menu gone, the party back to pick the other. *)
+let switching m = not (member_menu m)
 
 let swap ~log a b =
   log (Printf.sprintf "Party: swap slot %d with slot %d." a b);
-  let m = open_party () in
-  choose_slot m a;
-  ignore (M.await_screen ~code:"no_member_menu" "the member's menu" member_menu);
-  M.taps Wire.Up switch_taps_up;
-  M.press Wire.A;
-  ignore
-    (M.await_screen ~code:"no_party" "the party to switch" Party_menu.party_menu);
-  M.moves ~from:a ~to_:b;
-  M.press Wire.A;
+  open_party ();
+  on_member_menu a (fun () ->
+      let rows =
+        M.await_screen ~code:"no_member_menu" "the member's menu" member_menu
+        |> Member_menu.rows |> Option.get
+      in
+      choose_member_row (Member_menu.switch_row ~rows) ~taken:switching;
+      choose_slot b);
   ignore
     (M.await_screen ~code:"no_party" "the party after the switch"
        Party_menu.party_menu);
@@ -65,10 +74,10 @@ let give ~log ~item ~slot =
     M.fail ~repeats:true "not_implemented" "giving a berry (the Berry Pouch)";
   log (Printf.sprintf "Bag: give %s to slot %d." item slot);
   item_menu_row 1 item;
-  let m =
-    M.await_screen ~code:"no_party" "the party to give to" Party_menu.party_menu
-  in
-  choose_slot m slot;
+  ignore
+    (M.await_screen ~code:"no_party" "the party to give to"
+       Party_menu.party_menu);
+  choose_slot slot;
   (match
      Effects.await ~timeout_ms:switch_question_ms Dialog.selection_dialog
    with
@@ -87,11 +96,10 @@ let use ~log ~item ~slot =
   item_menu_row 0 item;
   match slot with
   | Some slot ->
-      let m =
-        M.await_screen ~code:"no_party" "the party to use it on"
-          Party_menu.party_menu
-      in
-      choose_slot m slot;
+      ignore
+        (M.await_screen ~code:"no_party" "the party to use it on"
+           Party_menu.party_menu);
+      choose_slot slot;
       M.close "the bag" bag_or_party;
       M.settle_back ~label:("use " ^ item) ~log
   | None when not (warps item) ->

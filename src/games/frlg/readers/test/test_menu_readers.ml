@@ -12,6 +12,8 @@
      summaryN      the summary screen on page N
      money         the money box
      moverowN      a move being picked on the summary's move list, row N
+     memberN       a member's menu over the party, its cursor on row N (0 is
+                   SUMMARY at the top)
      jpn           a Japanese game (the icons sit elsewhere: marks not read)
      none          none of these
 
@@ -115,6 +117,12 @@ let screen_readers =
       applies = everywhere;
       verdict = (fun m -> optional (Move_list_cursor.row m));
       expected = (fun tags -> optional (numbered "moverow" tags));
+    };
+    {
+      reader = "member_menu_row";
+      applies = everywhere;
+      verdict = (fun m -> optional (Member_menu.cursor_row m));
+      expected = (fun tags -> optional (numbered "member" tags));
     };
   ]
 

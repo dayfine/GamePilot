@@ -165,7 +165,7 @@ let battle t script =
 let grind_rig t : Grind.rig =
   let log = t.config.log in
   {
-    slot_of = Party_roster.slot_of !(t.party);
+    slot_of = (fun species -> Party_roster.slot_of !(t.party) species);
     known_moves = (fun ~slot -> Summary_moves.read_known ~log ~slot);
     swap =
       (fun a b ->

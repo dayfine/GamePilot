@@ -14,9 +14,11 @@ type screen =
   | Battle
   | Flash  (** A wild battle's flash: the overworld with its middle darkened. *)
   | Black
-  | Start_menu of int
-  | Party
-  | Member_menu  (** A party member's own menu over the party. *)
+  | Start_menu of int  (** Its cursor on this row, from 0. *)
+  | Party of int  (** This slot (from 1) selected. *)
+  | Member_menu of int
+      (** A party member's own menu over the party (SUMMARY, SWITCH, MAIL,
+          CANCEL), its cursor on this row from 0. *)
   | Bag_items  (** The bag's Items pocket, cursor on the top row. *)
   | Mart_list  (** A Mart's BUY list with the money box (a Switch capture). *)
 
@@ -29,8 +31,8 @@ let screen_name = function
   | Flash -> "flash"
   | Black -> "black"
   | Start_menu row -> Printf.sprintf "start menu row %d" row
-  | Party -> "party"
-  | Member_menu -> "member menu"
+  | Party slot -> Printf.sprintf "party slot %d" slot
+  | Member_menu row -> Printf.sprintf "member menu row %d" row
   | Bag_items -> "bag items"
   | Mart_list -> "mart list"
 
@@ -44,11 +46,11 @@ let image = function
   | Black -> "mail-glitch-04/recap__black.png"
   | Start_menu 0 -> "mail-glitch-04/pause-menu__start0.png"
   | Start_menu _ -> "mail-glitch-04/mg05-start-menu__start1.png"
-  | Party ->
+  | Party _ ->
       "mail-glitch-04/mg05-party__party-slot1-members6-held1-held2-mail3.png"
   | Dialog_arrow -> "screenshots-779/20261122-121507-17.04__dialog-arrow.png"
   | Question -> "AdvanceWhiteDialogDetector/Eng-Select_False__dialog-choice.png"
-  | Member_menu -> "mail-glitch-04/mg05-mimien-menu__none.png"
+  | Member_menu _ -> "mail-glitch-04/mg05-mimien-menu__none.png"
   | Bag_items -> "emu-1/20261122-024507-05.04__bag-items-row0.png"
   | Mart_list -> "ItemListReader/MartBuyList_eng__money.png"
 
@@ -96,9 +98,57 @@ let darken (id, (r : Wire.probe_result)) =
           } )
   | _ -> (id, r)
 
+(* A cursor elsewhere than the recorded frame's: the arrow's share moved to
+   another row of a Cursor_column, or the orange border to another slot. *)
+let arrow_on ~prefix ~row probes =
+  let id i = Printf.sprintf "%s.row%d" prefix i in
+  let arrow =
+    List.fold_left
+      (fun best (pid, r) ->
+        match r with
+        | Wire.Color_count { fraction; _ }
+          when String.starts_with ~prefix:(prefix ^ ".row") pid ->
+            Float.max best fraction
+        | _ -> best)
+      0. probes
+  in
+  List.map
+    (fun (pid, r) ->
+      match r with
+      | Wire.Color_count c when String.starts_with ~prefix:(prefix ^ ".row") pid
+        ->
+          ( pid,
+            Wire.Color_count
+              { c with fraction = (if pid = id row then arrow else 0.) } )
+      | _ -> (pid, r))
+    probes
+
+let border_on ~slot probes =
+  let selected = List.assoc "party.selected1" probes
+  and plain = List.assoc "party.selected2" probes in
+  List.map
+    (fun (pid, r) ->
+      match String.starts_with ~prefix:"party.selected" pid with
+      | true ->
+          ( pid,
+            if pid = Printf.sprintf "party.selected%d" slot then selected
+            else plain )
+      | false -> (pid, r))
+    probes
+
+(* The recorded member menu has four rows; the reader counts them from the
+   bottom. *)
+let member_menu_rows = 4
+
 let screen_probes screen =
   let p = find_probes screen in
-  if screen = Flash then List.map darken p else p
+  match screen with
+  | Flash -> List.map darken p
+  | Start_menu row -> arrow_on ~prefix:"start_menu" ~row p
+  | Party slot -> border_on ~slot p
+  | Member_menu row ->
+      arrow_on ~prefix:"member_menu" ~row:(member_menu_rows - 1 - row) p
+  | _ -> p
 
 let cache = Hashtbl.create 8
 
@@ -118,6 +168,8 @@ type press = {
 }
 
 type t = {
+  input_delay_ms : int;
+      (** A menu takes no cursor tap until it has shown this long. *)
   mutable clock_ms : int;
   mutable seq : int;
   mutable shows : (int * screen) list;  (** From a time on, newest first. *)
@@ -125,8 +177,15 @@ type t = {
   mutable react : t -> press -> unit;
 }
 
-let create ?(react = fun _ _ -> ()) () =
-  { clock_ms = 0; seq = 0; shows = [ (0, Overworld) ]; presses = []; react }
+let create ?(react = fun _ _ -> ()) ?(input_delay_ms = 0) () =
+  {
+    input_delay_ms;
+    clock_ms = 0;
+    seq = 0;
+    shows = [ (0, Overworld) ];
+    presses = [];
+    react;
+  }
 
 let show t ~at_ms screen = t.shows <- (at_ms, screen) :: t.shows
 
@@ -141,6 +200,48 @@ let screen_at t ms =
       None t.shows
   in
   Option.fold ~none:Overworld ~some:snd current
+
+let same_menu a b =
+  match (a, b) with
+  | Start_menu _, Start_menu _ | Party _, Party _ | Member_menu _, Member_menu _
+    ->
+      true
+  | a, b -> a = b
+
+(* When the menu on screen at [ms] showed, its cursor moves aside. *)
+let shown_since t ms =
+  let now = screen_at t ms in
+  let rec back since = function
+    | (from, s) :: rest when same_menu s now -> back from rest
+    | _ -> since
+  in
+  List.filter (fun (from, _) -> from <= ms) t.shows
+  |> List.stable_sort (fun (a, _) (b, _) -> compare b a)
+  |> back ms
+
+let start_menu_rows = 7
+let party_slots = 6
+
+(* UP or DOWN on a menu with a cursor moves it a row (no wrap), once the menu
+   has shown {!input_delay_ms}: the game drops a tap before. *)
+let move_cursor t (p : press) =
+  let step =
+    match p.buttons with [ Wire.Down ] -> 1 | [ Wire.Up ] -> -1 | _ -> 0
+  in
+  let clamp low high v = max low (min high v) in
+  let taken = p.at_ms - shown_since t p.at_ms >= t.input_delay_ms in
+  let moved =
+    match screen_at t p.at_ms with
+    | Start_menu row ->
+        Some (Start_menu (clamp 0 (start_menu_rows - 1) (row + step)))
+    | Party slot -> Some (Party (clamp 1 party_slots (slot + step)))
+    | Member_menu row ->
+        Some (Member_menu (clamp 0 (member_menu_rows - 1) (row + step)))
+    | _ -> None
+  in
+  match moved with
+  | Some s when step <> 0 && taken -> show t ~at_ms:(p.at_ms + 1) s
+  | _ -> ()
 
 let frame t : Wire.frame =
   {
@@ -168,6 +269,7 @@ let start_command t (command : Wire.command) =
         { buttons; at_ms = t.clock_ms; hold_ms; index = List.length t.presses }
       in
       t.presses <- press :: t.presses;
+      move_cursor t press;
       t.react t press;
       hold_ms + cooldown_ms
   | Wait { wait_ms } -> wait_ms

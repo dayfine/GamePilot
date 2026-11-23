@@ -41,15 +41,6 @@ let await_screen ?(timeout_ms = screen_timeout_ms) ~code what reader =
   | Holds m -> m
   | Timeout -> fail code (what ^ " did not show")
 
-let open_start_menu_row row =
-  press Wire.Start;
-  let m =
-    await_screen ~code:"no_start_menu" "the Start menu"
-      Start_menu.start_menu_open
-  in
-  moves ~from:(Option.value (Start_menu.cursor_row m) ~default:0) ~to_:row;
-  press Wire.A
-
 let settle_back ~label ~log =
   match Scene_looks.settle Talk ~label ~battle_ends:false ~log with
   | Ok () -> ()
