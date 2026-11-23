@@ -87,9 +87,7 @@ let boxes : (string * Wire.box) list =
       { x = 0.6625; y = 0.7375; w = 0.008333; h = 0.21875 } );
   ]
 
-let probes screen =
-  List.map (fun (id, b) -> Game_screen.color_stats_probe screen ~id b) boxes
-
+let probes = List.map (fun (id, b) -> Solid_color.probe ~id b) boxes
 let holds = Solid_color.holds
 
 let teal m id =

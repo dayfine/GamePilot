@@ -15,6 +15,7 @@
 #include "backend.h"
 #include "clock.h"
 #include "net.h"
+#include "probe_evaluation.h"
 #include "rpc.h"
 #include "schedule.h"
 #include "template_store.h"
@@ -56,7 +57,7 @@ class Server {
   LineBuffer client_lines_;
   pa::FileIO wire_log_;
 
-  std::vector<ProbeSpec> probes_;
+  std::vector<FrameProbe> probes_;
   TemplateStore templates_;
   InputSchedule schedule_;
   std::optional<KeyMask> sent_mask_;

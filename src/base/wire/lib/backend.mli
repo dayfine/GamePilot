@@ -8,7 +8,14 @@ type backend = {
   game_code : string;
   frame_rate : float;
   width : int;
-  height : int;
+  height : int;  (** the frame's size in pixels *)
+  viewport : Probe.box;
+      (** where the game picture sits in the frame, normalized to it; probe
+          boxes are relative to this *)
+  game_width : int;
+  game_height : int;
+      (** the picture's native size in game pixels ([game_size] on the wire);
+          templates are in these *)
 }
 
 type hello_result = {

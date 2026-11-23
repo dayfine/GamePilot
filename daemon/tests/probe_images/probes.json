@@ -18,6 +18,14 @@
       "box": {"x": 0.5, "y": 0.25, "w": 0.5, "h": 0.75},
       "delivery": "latest",
       "template": "pattern.png"
+    },
+    {
+      "id": "red_count",
+      "kind": "core.color_count@1",
+      "box": {"x": 0.0, "y": 0.0, "w": 1.0, "h": 0.125},
+      "delivery": "every",
+      "min": [200, 0, 0],
+      "max": [255, 50, 50]
     }
   ]
 }

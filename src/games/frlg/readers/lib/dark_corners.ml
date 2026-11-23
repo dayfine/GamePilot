@@ -9,9 +9,9 @@ let corners : (string * Wire.box) list =
 let middle_id = "dark.middle"
 let middle : Wire.box = { x = 0.45; y = 0.42; w = 0.1; h = 0.16 }
 
-let probes screen =
+let probes =
   List.map
-    (fun (id, b) -> Game_screen.color_stats_probe screen ~id b)
+    (fun (id, b) -> Solid_color.probe ~id b)
     ((middle_id, middle) :: corners)
 
 (* The fork's values, set from the GBA screen, not measured on frames. *)

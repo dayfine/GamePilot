@@ -8,19 +8,36 @@ type backend = {
   frame_rate : float;
   width : int;
   height : int;
+  viewport : Probe.box;
+  game_width : int;
+  game_height : int;
 }
 
 let backend_of_json j =
   let what = "hello.result.backend" in
+  let game_size = field what "game_size" j in
   {
     kind = string_field what "kind" j;
     game_code = string_field what "game_code" j;
     frame_rate = float_field what "frame_rate" j;
     width = int_field what "width" j;
     height = int_field what "height" j;
+    viewport = Probe.box_of_json (field what "viewport" j);
+    game_width = int_field (what ^ ".game_size") "width" game_size;
+    game_height = int_field (what ^ ".game_size") "height" game_size;
   }
 
-let json_of_backend { kind; game_code; frame_rate; width; height } =
+let json_of_backend
+    {
+      kind;
+      game_code;
+      frame_rate;
+      width;
+      height;
+      viewport;
+      game_width;
+      game_height;
+    } =
   `Assoc
     [
       ("kind", `String kind);
@@ -28,6 +45,9 @@ let json_of_backend { kind; game_code; frame_rate; width; height } =
       ("frame_rate", `Float frame_rate);
       ("width", `Int width);
       ("height", `Int height);
+      ("viewport", Probe.json_of_box viewport);
+      ( "game_size",
+        `Assoc [ ("width", `Int game_width); ("height", `Int game_height) ] );
     ]
 
 type hello_result = {

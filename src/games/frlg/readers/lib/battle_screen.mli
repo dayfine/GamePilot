@@ -8,7 +8,7 @@
     The battle text box is dark teal with a white line and a gold band above it.
     The menu is a white box on the right of a shorter teal box. *)
 
-val probes : Game_screen.t -> Wire.probe_spec list
+val probes : Wire.probe_spec list
 (** Every probe the readers need. *)
 
 (** {1 Readers} *)

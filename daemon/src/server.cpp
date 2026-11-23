@@ -4,8 +4,6 @@
 #include <cmath>
 #include <cstdio>
 
-#include "probe_evaluation.h"
-
 namespace gamepilot {
 
 namespace {
@@ -85,10 +83,8 @@ void Server::step_frame() {
     const cv::Mat frame = backend_.frame();
     const double t_ms = clock_.now_ms();
     std::vector<std::pair<std::string, ProbeResult>> results;
-    for (const ProbeSpec& probe : probes_) {
-      // subscribe checked each probe, and templates are only dropped together
-      // with the probes.
-      results.emplace_back(probe.id, evaluate_probe(probe, frame, templates_));
+    for (const FrameProbe& probe : probes_) {
+      results.emplace_back(probe.spec.id, evaluate_probe(probe, frame));
     }
     send(frame_notification(seq, loads_, t_ms, results));
   }
@@ -211,16 +207,19 @@ pa::JsonObject Server::dispatch(const Request& request) {
     return upload_template_result(*hash);
   }
   if (method == "subscribe") {
-    SubscribeParams subscribe = decode_subscribe(request.params);
+    const SubscribeParams subscribe = decode_subscribe(request.params);
     const BackendInfo& info = backend_.info();
+    std::vector<FrameProbe> mapped;
     for (const ProbeSpec& probe : subscribe.probes) {
-      check_probe(probe, templates_, info.width, info.height);
+      mapped.push_back(
+          map_probe(probe, templates_, info.viewport, info.width, info.height));
     }
     std::vector<std::string> ids;
-    for (ProbeSpec& probe : subscribe.probes) {
-      ids.push_back(probe.id);
-      std::erase_if(probes_,
-                    [&](const ProbeSpec& old) { return old.id == probe.id; });
+    for (FrameProbe& probe : mapped) {
+      ids.push_back(probe.spec.id);
+      std::erase_if(probes_, [&](const FrameProbe& old) {
+        return old.spec.id == probe.spec.id;
+      });
       probes_.push_back(std::move(probe));
     }
     return subscribe_result(ids);

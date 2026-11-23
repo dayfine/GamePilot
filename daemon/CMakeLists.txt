@@ -44,6 +44,7 @@ add_library(gamepilot_core STATIC
   src/schedule.cpp
   src/server.cpp
   src/template_store.cpp
+  src/viewport.cpp
 )
 target_include_directories(gamepilot_core PUBLIC src)
 target_include_directories(gamepilot_core SYSTEM PUBLIC ${OpenCV_INCLUDE_DIRS})

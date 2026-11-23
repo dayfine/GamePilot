@@ -3,13 +3,19 @@
 // {"image": path, "probes": {id: result}}, the `probes` object of a `frame`
 // notification.
 //
-//   probe_images --spec probes.json image.png [image.png ...]
+//   probe_images --spec probes.json [--viewport x,y,w,h] [--game-size WxH]
+//                image.png [image.png ...]
 //
 // The spec file holds the `subscribe` params ({"probes": [...]}); a
 // core.template_match@1 probe's `template` is a PNG path, relative to the spec
 // file's folder, that the tool uploads to its own template store.
+// --viewport is where the game picture sits in every image, normalized
+// (default the whole image, as on mGBA; a Switch capture has side bars), and
+// --game-size the picture's native size in game pixels (default 240x160, the
+// GBA), which templates are given in.
 
 #include <cstdio>
+#include <cstdlib>
 #include <opencv2/imgcodecs.hpp>
 #include <optional>
 #include <string>
@@ -31,9 +37,28 @@ namespace gp = gamepilot;
 namespace pa = PokemonAutomation;
 
 int usage() {
-  std::fputs("usage: probe_images --spec FILE IMAGE.png [IMAGE.png ...]\n",
-             stderr);
+  std::fputs(
+      "usage: probe_images --spec FILE [--viewport x,y,w,h] [--game-size WxH] "
+      "IMAGE.png [IMAGE.png ...]\n",
+      stderr);
   return 2;
+}
+
+// "WxH" with both positive, into the viewport's game size.
+bool parse_game_size(const char* text, gp::Viewport& viewport) {
+  char* end = nullptr;
+  const long width = std::strtol(text, &end, 10);
+  if (end == text || *end != 'x') {
+    return false;
+  }
+  const char* height_text = end + 1;
+  const long height = std::strtol(height_text, &end, 10);
+  if (end == height_text || *end != '\0' || width <= 0 || height <= 0) {
+    return false;
+  }
+  viewport.game_width = static_cast<int>(width);
+  viewport.game_height = static_cast<int>(height);
+  return true;
 }
 
 // Thrown for a bad spec or image; main prints it and exits 1.
@@ -81,16 +106,19 @@ cv::Mat load_image(const std::string& path) {
 
 pa::JsonValue image_line(const std::string& path,
                          const std::vector<gp::ProbeSpec>& probes,
-                         const gp::TemplateStore& templates) {
+                         const gp::TemplateStore& templates,
+                         const gp::Viewport& viewport) {
   const cv::Mat image = load_image(path);
   std::vector<std::pair<std::string, gp::ProbeResult>> results;
   for (const gp::ProbeSpec& probe : probes) {
+    gp::FrameProbe mapped;
     try {
-      gp::check_probe(probe, templates, image.cols, image.rows);
+      mapped =
+          gp::map_probe(probe, templates, viewport, image.cols, image.rows);
     } catch (const gp::RpcError& error) {
       throw InputError{path + ": " + error.what()};
     }
-    results.emplace_back(probe.id, gp::evaluate_probe(probe, image, templates));
+    results.emplace_back(probe.id, gp::evaluate_probe(mapped, image));
   }
   pa::JsonObject line;
   line["image"] = path;
@@ -103,10 +131,24 @@ pa::JsonValue image_line(const std::string& path,
 int main(int argc, char** argv) {
   std::string spec_path;
   std::vector<std::string> image_paths;
+  constexpr int kGbaWidth = 240;
+  constexpr int kGbaHeight = 160;
+  gp::Viewport viewport{gp::Box{0, 0, 1, 1}, kGbaWidth, kGbaHeight};
   for (int i = 1; i < argc; i++) {
     const std::string_view arg = argv[i];
-    if (arg == "--spec" && i + 1 < argc) {
+    const bool has_value = i + 1 < argc;
+    if (arg == "--spec" && has_value) {
       spec_path = argv[++i];
+    } else if (arg == "--viewport" && has_value) {
+      const std::optional<gp::Box> picture = gp::parse_box(argv[++i]);
+      if (!picture) {
+        return usage();
+      }
+      viewport.picture = *picture;
+    } else if (arg == "--game-size" && has_value) {
+      if (!parse_game_size(argv[++i], viewport)) {
+        return usage();
+      }
     } else if (arg.starts_with("--")) {
       return usage();
     } else {
@@ -122,7 +164,7 @@ int main(int argc, char** argv) {
     const std::vector<gp::ProbeSpec> probes = load_probes(spec_path, templates);
     for (const std::string& path : image_paths) {
       const std::string line =
-          gp::to_line(image_line(path, probes, templates)) + "\n";
+          gp::to_line(image_line(path, probes, templates, viewport)) + "\n";
       std::fputs(line.c_str(), stdout);
     }
     return 0;

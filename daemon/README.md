@@ -25,21 +25,26 @@ runs on one thread: the client is served between frames.
 `probe_images` runs the same probes on PNG files, with no backend and no socket, so readers can be
 built and tested from saved screenshots (mGBA shots, CommandLineTests images):
 
-    daemon/build/probe_images --spec probes.json shot1.png [shot2.png ...] > results.jsonl
+    daemon/build/probe_images --spec probes.json [--viewport x,y,w,h] [--game-size WxH] \
+        shot1.png [shot2.png ...] > results.jsonl
 
 The spec file is the `subscribe` params (`{"probes": [...]}`, `contracts/v1`); a
 `core.template_match@1` probe's `template` is a PNG path, relative to the spec file, instead of an
 uploaded hash. Each image gives one line `{"image": path, "probes": {id: result}}`, the `probes` of a
-`frame` notification. Boxes are normalized, so an image need not be the backend's size (a Switch
-1920x1080 shot works like a GBA 240x160 one); templates are in pixels and must fit their box at each
-image's size, or the tool stops with an error. `tests/probe_images/` is a worked example.
+`frame` notification. Boxes are relative to the game picture and templates are in game pixels, as on
+the wire; `--viewport` says where the picture sits in every image (default the whole image, as on
+mGBA; for a Switch capture of FRLG, the fork's `GAME_BOX`: `0.09375,0.00462963,0.8125,0.962963`) and
+`--game-size` its native size (default `240x160`, the GBA). A scaled template must fit its box at each
+image's size, or the tool stops with an error. `tests/probe_images/` is a worked example: the same
+picture whole and at 2x inside side bars give the same results.
 
 | File | Role |
 |---|---|
 | `src/backend.h` | the I/O boundary |
 | `src/mgba_backend.*` | mGBA through the bridge's line protocol |
-| `src/probes.*` | probe kinds (`core.color_stats@1`, `core.template_match@1`) |
-| `src/probe_evaluation.*` | checks a subscribed probe and runs it on a frame (daemon and `probe_images`) |
+| `src/probes.*` | probe kinds (`core.color_stats@1`, `core.template_match@1`, `core.color_count@1`) on frame pixels |
+| `src/viewport.*` | where the game picture sits in the frame: picture boxes to frame pixels, template scale |
+| `src/probe_evaluation.*` | maps a subscribed probe onto the frame and runs it (daemon and `probe_images`) |
 | `src/probe_images.cpp` | the offline `probe_images` tool |
 | `src/template_store.*` | uploaded templates, decoded and keyed by the SHA-256 of their PNG bytes |
 | `src/base64.*` | base64 decoding for template uploads |

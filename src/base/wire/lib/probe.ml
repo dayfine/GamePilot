@@ -19,22 +19,73 @@ let delivery_of_string = function
 
 let string_of_delivery = function Every -> "every" | Latest -> "latest"
 
+type color_range = { min : int * int * int; max : int * int * int }
+
 type probe_spec = {
   id : string;
   kind : string;
   box : box;
   delivery : delivery;
   template : string option;
+  color_range : color_range option;
 }
 
 let color_stats_kind = "core.color_stats@1"
 let template_match_kind = "core.template_match@1"
+let color_count_kind = "core.color_count@1"
 
 let color_stats_probe ~id ~box ~delivery =
-  { id; kind = color_stats_kind; box; delivery; template = None }
+  {
+    id;
+    kind = color_stats_kind;
+    box;
+    delivery;
+    template = None;
+    color_range = None;
+  }
 
 let template_match_probe ~id ~box ~delivery ~template =
-  { id; kind = template_match_kind; box; delivery; template = Some template }
+  {
+    id;
+    kind = template_match_kind;
+    box;
+    delivery;
+    template = Some template;
+    color_range = None;
+  }
+
+let color_count_probe ~id ~box ~delivery ~min ~max =
+  {
+    id;
+    kind = color_count_kind;
+    box;
+    delivery;
+    template = None;
+    color_range = Some { min; max };
+  }
+
+let channels_of_json what j =
+  match List.map (to_int what) (to_list what j) with
+  | [ r; g; b ] -> (r, g, b)
+  | _ -> fail "%s: expected [r, g, b]" what
+
+let json_of_channels (r, g, b) = `List [ `Int r; `Int g; `Int b ]
+
+let color_range_of_json j =
+  match (field_opt "probe" "min" j, field_opt "probe" "max" j) with
+  | None, None -> None
+  | Some min, Some max ->
+      Some
+        {
+          min = channels_of_json "probe.min" min;
+          max = channels_of_json "probe.max" max;
+        }
+  | _ -> fail "probe: min and max come together"
+
+let json_of_color_range = function
+  | Some { min; max } ->
+      [ ("min", json_of_channels min); ("max", json_of_channels max) ]
+  | None -> []
 
 let probe_spec_of_json j =
   let what = "probe" in
@@ -45,13 +96,14 @@ let probe_spec_of_json j =
     delivery = delivery_of_string (string_field what "delivery" j);
     template =
       Option.map (to_string "probe.template") (field_opt what "template" j);
+    color_range = color_range_of_json j;
   }
 
 let json_of_template = function
   | Some t -> [ ("template", `String t) ]
   | None -> []
 
-let json_of_probe_spec { id; kind; box; delivery; template } =
+let json_of_probe_spec { id; kind; box; delivery; template; color_range } =
   `Assoc
     ([
        ("id", `String id);
@@ -59,7 +111,8 @@ let json_of_probe_spec { id; kind; box; delivery; template } =
        ("box", json_of_box box);
        ("delivery", `String (string_of_delivery delivery));
      ]
-    @ json_of_template template)
+    @ json_of_template template
+    @ json_of_color_range color_range)
 
 type rgb = { r : float; g : float; b : float }
 
@@ -74,6 +127,7 @@ let json_of_rgb { r; g; b } = `List [ `Float r; `Float g; `Float b ]
 type probe_result =
   | Color_stats of { mean : rgb; stddev : rgb }
   | Template_match of { score : float; x : float; y : float }
+  | Color_count of { fraction : float; mean : rgb option }
   | Other of json
 
 let color_stats_of_json what j =
@@ -87,11 +141,22 @@ let template_match_of_json what j =
   let f = float_field what in
   Template_match { score = f "score" j; x = f "x" j; y = f "y" j }
 
+let color_count_of_json what j =
+  Color_count
+    {
+      fraction = float_field what "fraction" j;
+      mean =
+        (match field what "mean" j with
+        | `Null -> None
+        | mean -> Some (rgb_of_json "probe.mean" mean));
+    }
+
 let probe_result_of_json j =
   let what = "probe result" in
   match string_field what "kind" j with
   | kind when kind = color_stats_kind -> color_stats_of_json what j
   | kind when kind = template_match_kind -> template_match_of_json what j
+  | kind when kind = color_count_kind -> color_count_of_json what j
   | _ -> Other j
 
 let json_of_color_stats ~mean ~stddev =
@@ -111,9 +176,18 @@ let json_of_template_match ~score ~x ~y =
       ("y", `Float y);
     ]
 
+let json_of_color_count ~fraction ~mean =
+  `Assoc
+    [
+      ("kind", `String color_count_kind);
+      ("fraction", `Float fraction);
+      ("mean", Option.fold ~none:`Null ~some:json_of_rgb mean);
+    ]
+
 let json_of_probe_result = function
   | Color_stats { mean; stddev } -> json_of_color_stats ~mean ~stddev
   | Template_match { score; x; y } -> json_of_template_match ~score ~x ~y
+  | Color_count { fraction; mean } -> json_of_color_count ~fraction ~mean
   | Other j -> j
 
 let probes_of_json what j =

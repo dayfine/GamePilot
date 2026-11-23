@@ -1,0 +1,21 @@
+{
+  "jsonrpc": "2.0",
+  "method": "frame",
+  "params": {
+    "seq": 1302,
+    "load": 1,
+    "t_ms": 21804.7,
+    "probes": {
+      "arrow_line1": {
+        "kind": "core.color_count@1",
+        "fraction": 0.0,
+        "mean": null
+      },
+      "arrow_line2": {
+        "kind": "core.color_count@1",
+        "fraction": 0.013333,
+        "mean": [224.0, 48.5, 40.25]
+      }
+    }
+  }
+}

@@ -5,6 +5,9 @@
 type stats = { mean : Wire.rgb; stddev : Wire.rgb }
 (** A box's per-channel mean and stddev, 0..255. *)
 
+val probe : id:string -> Wire.box -> Wire.probe_spec
+(** A [core.color_stats@1] probe over a box of the game picture, every frame. *)
+
 val read : Effects.measurements -> string -> stats option
 (** The color stats of the probe with this id; [None] when it is missing or of
     another kind. *)

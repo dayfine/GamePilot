@@ -13,40 +13,27 @@ let edge_boxes : (string * Wire.box) list =
     (selection_id, { x = 0.885231; y = 0.447962; w = 0.016; h = 0.2025 });
   ]
 
-(* The arrow strips, in game pixels of the 240x160 picture: two text lines
-   (y 120-135 and 135-150), strips 17 px wide every 8 px from x 15, so the 9 px
-   wide arrow lies wholly inside one of them wherever it is. *)
-let picture_w = 240.
-let picture_h = 160.
-let strip_left_px = 15.
-let strip_w_px = 17.
-let strip_step_px = 8.
-let strips_per_line = 25
-let first_line_top_px = 120.
-let line_h_px = 15.
-let line_tops_px = [ first_line_top_px; first_line_top_px +. line_h_px ]
+(* The fork's arrow test: the text area's pixels in its red range, (164, 0, 0)
+   to (255, 114, 87), whose mean must be far redder than green and blue. *)
+let arrow_id = "dialog.arrow"
 
-let arrow_strips : (string * Wire.box) list =
-  List.concat_map
-    (fun top ->
-      List.init strips_per_line (fun i ->
-          let left = strip_left_px +. (float_of_int i *. strip_step_px) in
-          ( Printf.sprintf "dialog.arrow.%.0f.%d" top i,
-            {
-              Wire.x = left /. picture_w;
-              y = top /. picture_h;
-              w = strip_w_px /. picture_w;
-              h = line_h_px /. picture_h;
-            } )))
-    line_tops_px
+let text_area : Wire.box =
+  { x = 0.0630769; y = 0.750154; w = 0.870154; h = 0.200423 }
 
-let probes screen =
-  List.map
-    (fun (id, b) -> Game_screen.color_stats_probe screen ~id b)
-    (edge_boxes @ arrow_strips)
+let channel_max = 255
+let arrow_min_red = 164
+let arrow_max_green = 114
+let arrow_max_blue = 87
+let arrow_min = (arrow_min_red, 0, 0)
+let arrow_max = (channel_max, arrow_max_green, arrow_max_blue)
+let min_red_excess = 160.
+
+let probes =
+  Wire.color_count_probe ~id:arrow_id ~box:text_area ~delivery:Every
+    ~min:arrow_min ~max:arrow_max
+  :: List.map (fun (id, b) -> Solid_color.probe ~id b) edge_boxes
 
 let frame_min_white_sum = 720.
-let min_red_excess = 10.
 let white m id = Solid_color.holds m id (fun s -> Solid_color.is_white s)
 let edges_white m = white m right_id && white m top_id && white m bottom_id
 
@@ -56,11 +43,11 @@ let dialog_up m =
        (Solid_color.holds m frame_id
           (Solid_color.is_white ~min_sum:frame_min_white_sum))
 
-let red (s : Solid_color.stats) =
-  Float.min (s.mean.r -. s.mean.g) (s.mean.r -. s.mean.b) >= min_red_excess
+let arrow_red m =
+  match Effects.probe m arrow_id with
+  | Some (Wire.Color_count { mean = Some mean; _ }) ->
+      Float.min (mean.r -. mean.g) (mean.r -. mean.b) > min_red_excess
+  | Some _ | None -> false
 
-let advance_arrow m =
-  dialog_up m
-  && List.exists (fun (id, _) -> Solid_color.holds m id red) arrow_strips
-
+let advance_arrow m = dialog_up m && arrow_red m
 let selection_dialog m = dialog_up m && white m selection_id

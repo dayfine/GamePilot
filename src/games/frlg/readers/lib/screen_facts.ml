@@ -1,9 +1,8 @@
 let fade_id = "fade"
 
-let probes screen =
-  Game_screen.color_stats_probe screen ~id:fade_id Screen_state.Fade.middle_box
-  :: (Dark_corners.probes screen @ Dialog.probes screen
-     @ Battle_screen.probes screen)
+let probes =
+  Solid_color.probe ~id:fade_id Screen_state.Fade.middle_box
+  :: (Dark_corners.probes @ Dialog.probes @ Battle_screen.probes)
 
 let fade m =
   match Solid_color.read m fade_id with

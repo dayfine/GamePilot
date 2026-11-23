@@ -14,4 +14,5 @@ let start_menu_open m =
   | Some (Wire.Color_stats { mean; stddev }) ->
       Float.min mean.r (Float.min mean.g mean.b) >= min_white
       && Float.max stddev.r (Float.max stddev.g stddev.b) <= max_stddev
-  | Some (Wire.Template_match _ | Wire.Other _) | None -> false
+  | Some (Wire.Template_match _ | Wire.Color_count _ | Wire.Other _) | None ->
+      false
