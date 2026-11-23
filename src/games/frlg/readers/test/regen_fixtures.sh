@@ -6,9 +6,11 @@
 #
 # <root> is clt (CommandLineTests, $COMMANDLINETESTS_DIR, default
 # ~/Projects/CommandLineTests), clt@<commit> (a file at that commit of the
-# CommandLineTests repo, for images not on its main), or shots (lab
-# screenshots, $FRLG_SHOTS_DIR, default ~/FRLGLab). The tagged name is what
-# the test reads its expectations from. Sets: screen (test_screen_readers.ml,
+# CommandLineTests repo, for images not on its main), or repo (a file in this
+# repository, given from its root: the lab's Switch captures and mGBA frames
+# live under games/frlg/readers/test/images/, one copy each, shared by every
+# map that names them). The tagged name is what the test reads its
+# expectations from. Sets: screen (test_screen_readers.ml,
 # the write_probe_spec default), menus (test_menu_readers.ml) and battle
 # (test_battle_readers.ml).
 #
@@ -17,12 +19,17 @@
 # run from src/, with probe_images at $PROBE_IMAGES (default the repo's
 # daemon/build/probe_images). Switch captures use the fork's FRLG GAME_BOX as
 # the viewport; mGBA frames are the picture.
+#
+# To add a lab capture: copy the file byte-for-byte (no re-encode, no resize)
+# into images/<switch|mgba>/<folder named for what it shows or where it came
+# from>/, add a "repo src/games/frlg/readers/test/images/..." line to the map,
+# and run this script.
 set -eu
 
 CLT=${COMMANDLINETESTS_DIR:-$HOME/Projects/CommandLineTests}
-SHOTS=${FRLG_SHOTS_DIR:-$HOME/FRLGLab}
 HERE=$(cd "$(dirname "$0")" && pwd)
 SRC=$(cd "$HERE/../../../.." && pwd)
+REPO=$(cd "$SRC/.." && pwd)
 PROBE_IMAGES=${PROBE_IMAGES:-$SRC/../daemon/build/probe_images}
 SWITCH_VIEWPORT=0.09375,0.00462963,0.8125,0.962963
 WORK=$(mktemp -d)
@@ -37,7 +44,7 @@ stage() {
     case $root in
     clt) cp "$CLT/$path" "$2/$tagged" ;;
     clt@*) git -C "$CLT" show "${root#clt@}:$path" >"$2/$tagged" ;;
-    shots) cp "$SHOTS/$path" "$2/$tagged" ;;
+    repo) cp "$REPO/$path" "$2/$tagged" ;;
     *) echo "unknown root $root" >&2 && exit 1 ;;
     esac
   done <"$1"
