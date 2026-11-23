@@ -1,0 +1,235 @@
+#include "net.h"
+
+#include <stdexcept>
+
+#ifdef _WIN32
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#else
+#include <arpa/inet.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <poll.h>
+#include <sys/socket.h>
+#include <unistd.h>
+#endif
+
+namespace gamepilot {
+
+namespace {
+
+#ifdef _WIN32
+using NativeSocket = SOCKET;
+constexpr NativeSocket kNativeInvalid = INVALID_SOCKET;
+#else
+using NativeSocket = int;
+constexpr NativeSocket kNativeInvalid = -1;
+#endif
+
+NativeSocket native(std::intptr_t handle) {
+  return static_cast<NativeSocket>(handle);
+}
+
+std::intptr_t wrap(NativeSocket socket) {
+  if (socket == kNativeInvalid) {
+    return Socket::kInvalid;
+  }
+  return static_cast<std::intptr_t>(socket);
+}
+
+sockaddr_in loopback(std::uint16_t port) {
+  sockaddr_in address{};
+  address.sin_family = AF_INET;
+  address.sin_port = htons(port);
+  address.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+  return address;
+}
+
+void set_no_delay(NativeSocket socket) {
+  int one = 1;
+  setsockopt(socket, IPPROTO_TCP, TCP_NODELAY,
+             reinterpret_cast<const char*>(&one), sizeof(one));
+}
+
+}  // namespace
+
+Socket::~Socket() { close(); }
+
+Socket::Socket(Socket&& other) noexcept : handle_(other.handle_) {
+  other.handle_ = kInvalid;
+}
+
+Socket& Socket::operator=(Socket&& other) noexcept {
+  if (this != &other) {
+    close();
+    handle_ = other.handle_;
+    other.handle_ = kInvalid;
+  }
+  return *this;
+}
+
+void Socket::close() {
+  if (handle_ == kInvalid) {
+    return;
+  }
+#ifdef _WIN32
+  closesocket(native(handle_));
+#else
+  ::close(native(handle_));
+#endif
+  handle_ = kInvalid;
+}
+
+bool Socket::send_all(const std::string& data) {
+  std::size_t sent = 0;
+  while (sent < data.size()) {
+    const std::size_t chunk = data.size() - sent;
+#ifdef _WIN32
+    const int n =
+        ::send(native(handle_), data.data() + sent,
+               static_cast<int>(chunk > 1u << 30 ? 1u << 30 : chunk), 0);
+#elif defined(MSG_NOSIGNAL)
+    const auto n =
+        ::send(native(handle_), data.data() + sent, chunk, MSG_NOSIGNAL);
+#else
+    const auto n = ::send(native(handle_), data.data() + sent, chunk, 0);
+#endif
+    if (n <= 0) {
+      return false;
+    }
+    sent += static_cast<std::size_t>(n);
+  }
+  return true;
+}
+
+std::optional<std::string> Socket::receive_some() {
+  char buffer[4096];
+#ifdef _WIN32
+  const int n =
+      ::recv(native(handle_), buffer, static_cast<int>(sizeof(buffer)), 0);
+#else
+  const auto n = ::recv(native(handle_), buffer, sizeof(buffer), 0);
+#endif
+  if (n <= 0) {
+    return std::nullopt;
+  }
+  return std::string(buffer, static_cast<std::size_t>(n));
+}
+
+void init_sockets() {
+#ifdef _WIN32
+  static const bool started = [] {
+    WSADATA data;
+    return WSAStartup(MAKEWORD(2, 2), &data) == 0;
+  }();
+  if (!started) {
+    throw std::runtime_error("WSAStartup failed");
+  }
+#endif
+}
+
+Socket listen_local(std::uint16_t port) {
+  const NativeSocket socket = ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+  if (socket == kNativeInvalid) {
+    throw std::runtime_error("socket() failed");
+  }
+  Socket result(wrap(socket));
+  int one = 1;
+  setsockopt(socket, SOL_SOCKET, SO_REUSEADDR,
+             reinterpret_cast<const char*>(&one), sizeof(one));
+  const sockaddr_in address = loopback(port);
+  if (::bind(socket, reinterpret_cast<const sockaddr*>(&address),
+             sizeof(address)) != 0) {
+    throw std::runtime_error("cannot bind 127.0.0.1:" + std::to_string(port));
+  }
+  if (::listen(socket, 4) != 0) {
+    throw std::runtime_error("cannot listen on 127.0.0.1:" +
+                             std::to_string(port));
+  }
+  return result;
+}
+
+Socket accept_client(const Socket& listener) {
+  const NativeSocket socket =
+      ::accept(native(listener.handle()), nullptr, nullptr);
+  if (socket == kNativeInvalid) {
+    return Socket();
+  }
+  set_no_delay(socket);
+#ifdef SO_NOSIGPIPE
+  int one = 1;
+  setsockopt(socket, SOL_SOCKET, SO_NOSIGPIPE, &one, sizeof(one));
+#endif
+  return Socket(wrap(socket));
+}
+
+Socket connect_local(std::uint16_t port) {
+  const NativeSocket socket = ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+  if (socket == kNativeInvalid) {
+    throw std::runtime_error("socket() failed");
+  }
+  Socket result(wrap(socket));
+  const sockaddr_in address = loopback(port);
+  if (::connect(socket, reinterpret_cast<const sockaddr*>(&address),
+                sizeof(address)) != 0) {
+    throw std::runtime_error("cannot connect to 127.0.0.1:" +
+                             std::to_string(port));
+  }
+  set_no_delay(socket);
+#ifdef SO_NOSIGPIPE
+  int one = 1;
+  setsockopt(socket, SOL_SOCKET, SO_NOSIGPIPE, &one, sizeof(one));
+#endif
+  return result;
+}
+
+std::vector<bool> poll_readable(const std::vector<const Socket*>& sockets,
+                                int timeout_ms) {
+#ifdef _WIN32
+  std::vector<WSAPOLLFD> fds;
+#else
+  std::vector<pollfd> fds;
+#endif
+  std::vector<std::size_t> index;
+  for (std::size_t i = 0; i < sockets.size(); i++) {
+    if (sockets[i] != nullptr && sockets[i]->valid()) {
+      fds.push_back({});
+      fds.back().fd = native(sockets[i]->handle());
+      fds.back().events = POLLIN;
+      index.push_back(i);
+    }
+  }
+  std::vector<bool> readable(sockets.size(), false);
+  if (fds.empty()) {
+    return readable;
+  }
+#ifdef _WIN32
+  const int n = WSAPoll(fds.data(), static_cast<ULONG>(fds.size()), timeout_ms);
+#else
+  const int n = ::poll(fds.data(), static_cast<nfds_t>(fds.size()), timeout_ms);
+#endif
+  if (n <= 0) {
+    return readable;
+  }
+  for (std::size_t k = 0; k < fds.size(); k++) {
+    if ((fds[k].revents & (POLLIN | POLLHUP | POLLERR)) != 0) {
+      readable[index[k]] = true;
+    }
+  }
+  return readable;
+}
+
+std::optional<std::string> LineBuffer::next_line() {
+  const std::size_t newline = buffer_.find('\n');
+  if (newline == std::string::npos) {
+    return std::nullopt;
+  }
+  std::string line = buffer_.substr(0, newline);
+  buffer_.erase(0, newline + 1);
+  if (!line.empty() && line.back() == '\r') {
+    line.pop_back();
+  }
+  return line;
+}
+
+}  // namespace gamepilot

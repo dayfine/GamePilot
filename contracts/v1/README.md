@@ -8,6 +8,7 @@ every file. Change a file here first, then both sides.
 
 - TCP on `127.0.0.1`, default port 47900 (`--port`). One client at a time; a second gets an error and
   is closed.
+  When the client disconnects, the daemon drops its probes and queued commands.
 - One JSON object per line, LF-terminated, UTF-8, no embedded newlines.
 - Requests have an `id`; the daemon answers each with exactly one `result` or `error`.
   Notifications (`frame`, `batch_done`) have no `id`.
@@ -32,6 +33,8 @@ every file. Change a file here first, then both sides.
 - `delivery`: `every` (one result per frame, a gap is an error) or `latest`.
 - Buttons (GBA): `A`, `B`, `Select`, `Start`, `Right`, `Left`, `Up`, `Down`, `R`, `L`.
 - Batches run in order, one after another. Times are rounded to whole frames by the backend.
+- `backend.load_state` also drops queued commands and releases all buttons, as `cancel` does;
+  queued batches then get no `batch_done`.
 
 ## Notifications
 

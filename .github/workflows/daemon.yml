@@ -5,11 +5,13 @@ on:
     branches: [main]
     paths:
       - "daemon/**"
+      - "contracts/**"
       - "third_party/Arduino-Source"
       - ".github/workflows/daemon.yml"
   pull_request:
     paths:
       - "daemon/**"
+      - "contracts/**"
       - "third_party/Arduino-Source"
       - ".github/workflows/daemon.yml"
   workflow_dispatch:
@@ -58,11 +60,5 @@ jobs:
           fi
       - name: Build
         run: cmake --build daemon/build --config Release --parallel 4
-      - name: Run
-        shell: bash
-        run: |
-          if [ "$RUNNER_OS" = "Windows" ]; then
-            daemon/build/Release/gamepilot_daemon.exe
-          else
-            daemon/build/gamepilot_daemon
-          fi
+      - name: Test
+        run: ctest --test-dir daemon/build -C Release --output-on-failure
