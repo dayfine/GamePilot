@@ -47,6 +47,10 @@ class Backend {
   // seq(). Throws BackendError on failure.
   virtual std::int64_t load_state(const std::string& path) = 0;
 
+  // Saves the emulator's state to a file and returns seq(). Throws
+  // BackendError on failure.
+  virtual std::int64_t save_state(const std::string& path) = 0;
+
   // Releases keys and lets the backend run on its own.
   virtual void release() = 0;
 };

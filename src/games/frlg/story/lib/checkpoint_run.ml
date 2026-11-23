@@ -61,10 +61,10 @@ let config options world : A.Story_game.config =
     log = options.log;
   }
 
-let run options world (plan : Story.Plan.t) =
+let run ?end_at options world (plan : Story.Plan.t) =
   Option.iter (fun s -> ignore (Effects.load_state s)) options.state;
   let game =
     A.Story_game.create (config options world) ~start:(start_of plan.checkpoint)
   in
   Effects.with_probes Screen_facts.probes (fun () ->
-      Story.Runner.run (A.Story_game.game game) plan.checkpoint)
+      Story.Runner.run ?end_at (A.Story_game.game game) plan.checkpoint)
