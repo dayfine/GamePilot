@@ -60,6 +60,35 @@ type checkpoint = {
   events : event list;
 }
 
+(** Which party a checkpoint promises. *)
+type party =
+  | Party_in_order of string list
+      (** Exactly these species (slugs, ["abra"]), slot 1 first. *)
+  | Party_includes of string list
+      (** Each of these species somewhere in the party (a species named twice
+          needs two members). *)
+
+type money = { min : int; max : int }
+(** Money from [min] to [max], both included. *)
+
+type postconditions = {
+  position : Pose.grid option;
+      (** Where the checkpoint ends; unset, the end is the next checkpoint's
+          start ({!Checkpoint_end}). *)
+  party : party option;
+  items : item list;  (** Each item's count in the bag, exactly. *)
+  coins : int option;  (** Game Corner coins, exactly. *)
+  money : money option;
+  flags : string list;  (** Story flags (named by the game) that must be set. *)
+}
+(** What must hold once the checkpoint is done, from the plan's
+    [metadata.postconditions]. [position], [items] and [flags] are
+    PokemonSimulation's ([read_metadata] in
+    [src/pokesim/story/checkpoint_wire.py]) and the C++'s ([StoryPostconditions]
+    in [Pokemon/AutoStory/Types/Pokemon_StoryPostconditions.h], fork
+    [frlg/lean]); [party], [coins] and [money] are GamePilot's additions: the
+    state a Mail Glitch checkpoint exists to change. *)
+
 type t = {
   game : string;  (** The plan's [game], e.g. ["frlg"]. *)
   checkpoint : checkpoint;
@@ -68,4 +97,6 @@ type t = {
           fields are each game's own. *)
   metadata : Grid_maps.Json_field.obj option;
       (** The plan's phase, verification and postconditions, kept as written. *)
+  postconditions : postconditions;
+      (** The metadata's postconditions, read; all empty when it states none. *)
 }

@@ -98,23 +98,55 @@ let check_end (game : Game.t) (checkpoint : Plan.checkpoint) index declared =
       })
     verdict
 
-let finish (game : Game.t) checkpoint index end_at =
+let unmet_failure (checkpoint : Plan.checkpoint) index unmet =
+  {
+    Failure.checkpoint_id = checkpoint.checkpoint_id;
+    event_index = index;
+    event_id = "postconditions";
+    reason =
+      Unmet_postconditions (List.map Postcondition_check.result_to_string unmet);
+  }
+
+(* After the end position: the plan's postconditions, read and checked. *)
+let check_postconditions (game : Game.t) (checkpoint : Plan.checkpoint) index
+    (promised, observe) =
+  let results = Postcondition_check.check promised (observe promised) in
+  List.iter game.log
+    (Postcondition_check.log_lines checkpoint.checkpoint_id results);
+  match Postcondition_check.unmet results with
+  | [] -> Ok ()
+  | unmet -> Error (unmet_failure checkpoint index unmet)
+
+(* The plan states something beyond the position to check. *)
+let states_end_state (p : Plan.postconditions) =
+  p.party <> None || p.items <> [] || p.coins <> None || p.money <> None
+  || p.flags <> []
+
+let check_end_position game checkpoint index = function
+  | None -> Ok ()
+  | Some declared -> check_end game checkpoint index declared
+
+let check_end_state game checkpoint index = function
+  | Some ((promised, _) as checks) when states_end_state promised ->
+      check_postconditions game checkpoint index checks
+  | _ -> Ok ()
+
+let finish (game : Game.t) checkpoint index ~end_at ~end_state =
   let checked =
-    match end_at with
-    | None -> Ok ()
-    | Some declared -> check_end game checkpoint index declared
+    Result.bind (check_end_position game checkpoint index end_at) (fun () ->
+        check_end_state game checkpoint index end_state)
   in
   if Result.is_ok checked then
     game.log ("[Story] " ^ checkpoint.Plan.checkpoint_id ^ ": done");
   checked
 
-let rec run_from (game : Game.t) checkpoint ~end_at index = function
-  | [] -> finish game checkpoint index end_at
+let rec run_from (game : Game.t) checkpoint ~end_at ~end_state index = function
+  | [] -> finish game checkpoint index ~end_at ~end_state
   | event :: rest ->
       Result.bind (step game checkpoint index event) (fun () ->
-          run_from game checkpoint ~end_at (index + 1) rest)
+          run_from game checkpoint ~end_at ~end_state (index + 1) rest)
 
-let run ?end_at (game : Game.t) (checkpoint : Plan.checkpoint) =
+let run ?end_at ?end_state (game : Game.t) (checkpoint : Plan.checkpoint) =
   let id = checkpoint.checkpoint_id in
   match missing_handler game checkpoint with
   | Some failure ->
@@ -124,4 +156,4 @@ let run ?end_at (game : Game.t) (checkpoint : Plan.checkpoint) =
       game.log
         (Printf.sprintf "[Story] %s: start, %d events" id
            (List.length checkpoint.events));
-      run_from game checkpoint ~end_at 0 checkpoint.events
+      run_from game checkpoint ~end_at ~end_state 0 checkpoint.events

@@ -24,8 +24,16 @@ let normalize name =
 let display_name names slug =
   List.find_opt (fun name -> normalize name = slug) names
 
+let is_key_item slug =
+  let key_items =
+    Text.Item_names.in_pocket (Text_data.item_names ()) Key_items
+  in
+  Option.is_some (display_name key_items slug)
+
 let pocket_of_item slug : Bag_screen.pocket =
-  if String.ends_with ~suffix:"-ball" slug then Poke_balls else Items
+  if String.ends_with ~suffix:"-ball" slug then Poke_balls
+  else if is_key_item slug then Key_items
+  else Items
 
 let taps_to_reveal k =
   if k < shown_rows then 0 else k - (shown_rows - 1) + scroll_row
@@ -37,12 +45,20 @@ let other_pocket p m =
   match Bag_screen.pocket m with Some q -> q <> p | None -> false
 
 (* One pocket toward the target, then the pocket read again. *)
+let pocket_turn_ms = 1000
+
+(* A tap the bag takes before it is ready is lost: tapped again until the
+   pocket changes. *)
 let step_from p pocket =
-  M.taps (if index p < index pocket then Wire.Right else Wire.Left) 1;
-  ignore (M.await_screen ~code:"no_pocket" "the next pocket" (other_pocket p))
+  M.press_until ~max_presses:4 ~code:"no_pocket" "the next pocket"
+    (if index p < index pocket then Wire.Right else Wire.Left)
+    ~cooldown_ms:pocket_turn_ms (other_pocket p)
+
+(* The arrows hide while a pocket slides in: the pocket reads once they show. *)
+let pocket_shown m = Bag_screen.bag_open m && Bag_screen.pocket m <> None
 
 let rec turn_from tries pocket =
-  let m = M.await_screen ~code:"no_bag" "the bag" Bag_screen.bag_open in
+  let m = M.await_screen ~code:"no_bag" "the bag" pocket_shown in
   match Bag_screen.pocket m with
   | Some p when p = pocket -> ()
   | Some p when tries < List.length order ->

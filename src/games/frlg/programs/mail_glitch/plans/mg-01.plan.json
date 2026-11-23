@@ -150,6 +150,11 @@
     "live_start": true
   },
   "metadata": {
-    "phase": "testing"
+    "phase": "testing",
+    "postconditions": {
+      "party": ["blastoise", "rattata", "oddish", "pidgey", "abra"],
+      "coins": 20,
+      "money": {"min": 25014, "max": 25014}
+    }
   }
 }

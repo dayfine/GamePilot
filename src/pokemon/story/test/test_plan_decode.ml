@@ -261,4 +261,103 @@ let inline_plans : Case_table.case list =
       (at ^ {|start has a "map" or a "place", not both or neither.|});
   ]
 
-let () = Case_table.run "plan_decode" (real_plans @ inline_plans)
+(* A plan's postconditions, one per line; "none" when it states none. *)
+let postconditions_text (plan : Plan.t) =
+  let p = plan.postconditions in
+  let list = String.concat ", " in
+  List.concat
+    [
+      Option.fold ~none:[]
+        ~some:(fun g -> [ "position " ^ Pose.grid_to_string g ])
+        p.position;
+      (match p.party with
+      | Some (Party_in_order l) -> [ "party in order " ^ list l ]
+      | Some (Party_includes l) -> [ "party includes " ^ list l ]
+      | None -> []);
+      List.map
+        (fun ({ item; quantity } : Plan.item) ->
+          Printf.sprintf "item %s x%d" item quantity)
+        p.items;
+      Option.fold ~none:[]
+        ~some:(fun c -> [ Printf.sprintf "coins %d" c ])
+        p.coins;
+      Option.fold ~none:[]
+        ~some:(fun ({ min; max } : Plan.money) ->
+          [ Printf.sprintf "money %d to %d" min max ])
+        p.money;
+      (if p.flags = [] then [] else [ "flags " ^ list p.flags ]);
+    ]
+  |> function
+  | [] -> "none"
+  | lines -> String.concat "\n" lines
+
+let with_postconditions json =
+  let text =
+    edited {|"title": "Test",|}
+      (Printf.sprintf
+         {|"title": "Test", "metadata": {"phase": "testing", "postconditions": %s},|}
+         json)
+  in
+  match
+    Plan_decode.decode ~source:"base.plan.json" (Yojson.Safe.from_string text)
+  with
+  | Ok plan -> postconditions_text plan
+  | Error message -> message
+
+let post = at ^ "metadata.postconditions."
+
+let postcondition_cases : Case_table.case list =
+  [
+    {
+      name = "mg-01 promises Abra, 20 coins and $25,014";
+      input = (fun () -> postconditions_text (load "mg-01.plan.json" mg));
+      expectation =
+        "party in order blastoise, rattata, oddish, pidgey, abra\n\
+         coins 20\n\
+         money 25014 to 25014";
+    };
+    {
+      name = "a plan that states none";
+      input = (fun () -> postconditions_text (load "mg-02.plan.json" mg));
+      expectation = "none";
+    };
+    {
+      name = "every postcondition, PokemonSimulation's and ours";
+      input =
+        (fun () ->
+          with_postconditions
+            {|{"position": {"map": "Town", "tiles": [[3, 4]]}, "party_includes": ["abra", "abra"],
+               "items": [{"item": "retro-mail", "quantity": 2}], "coins": 20,
+               "money": {"min": 100, "max": 200}, "flags": ["got_coin_case"]}|});
+      expectation =
+        "position Town (3, 4)\n\
+         party includes abra, abra\n\
+         item retro-mail x2\n\
+         coins 20\n\
+         money 100 to 200\n\
+         flags got_coin_case";
+    };
+    {
+      name = "party in order and party_includes, not both";
+      input =
+        (fun () ->
+          with_postconditions
+            {|{"party": ["abra"], "party_includes": ["abra"]}|});
+      expectation =
+        post ^ "party and party_includes: one or the other, not both.";
+    };
+    {
+      name = "money min above max";
+      input =
+        (fun () -> with_postconditions {|{"money": {"min": 5, "max": 4}}|});
+      expectation = post ^ "money.min 5 is above max 4.";
+    };
+    {
+      name = "an unknown postcondition";
+      input = (fun () -> with_postconditions {|{"badges": 3}|});
+      expectation = post ^ "badges is not a known field.";
+    };
+  ]
+
+let () =
+  Case_table.run "plan_decode" (real_plans @ inline_plans @ postcondition_cases)

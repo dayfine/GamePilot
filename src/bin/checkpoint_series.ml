@@ -35,7 +35,10 @@ let checkpoint ~plan_dir (setup : Run.setup) id ~next =
       Run.id;
       plan;
       start_state;
-      end_at = Checkpoint_end.declared ~next plan.checkpoint;
+      end_at =
+        (match plan.postconditions.position with
+        | Some position -> Some position
+        | None -> Checkpoint_end.declared ~next plan.checkpoint);
     }
 
 (* Runs [cp] until the policy decides; the verdict and the runs, oldest

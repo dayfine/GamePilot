@@ -1,13 +1,16 @@
 (* gamepilot checkpoints PLAN_DIR --from ID --to ID --mode testing|verification
      [--runs N] [--states DIR] [--runs-dir DIR] [--daemon PATH]
      [--mgba-port N] [--port N] [--party SPECIES,...] [--center TOWN] [--walk]
+     [--end-check-only]
 
    The checkpoint dev loop. A program's checkpoints are its plan files
    (<ID>.plan.json in PLAN_DIR, in name order); each runs from its start state
    (<states>/<ID>.start.ss), as many times as the mode's policy says
    (Story.Checkpoint_trials), each run with its own daemon and run folder
    (Run_record). A run passes when every event passed and the player ends at
-   the checkpoint's declared end (Story.Checkpoint_end). The loop goes to the
+   the checkpoint's declared end (Story.Checkpoint_end) and the plan's
+   postconditions hold (Story.Postcondition_check). With --end-check-only each
+   run checks its start state against the postconditions and runs no event. The loop goes to the
    next checkpoint only after this one passed; in verification mode the last
    passing run's end becomes the next checkpoint's start state.
 
@@ -40,7 +43,8 @@ let usage =
    testing|verification\n\
   \      [--runs N] [--states DIR] [--runs-dir DIR] [--daemon PATH]\n\
   \      [--mgba-port N] [--port N] [--party SPECIES,...] [--center TOWN] \
-   [--walk]\n"
+   [--walk]\n\
+  \      [--end-check-only]\n"
 
 let home = Option.value (Sys.getenv_opt "HOME") ~default:"."
 let mgba_bridge_port = 47810
@@ -96,6 +100,8 @@ let rec parse f = function
   | [] -> Ok f
   | "--walk" :: rest ->
       parse (common_flag f (fun c -> { c with walk = true })) rest
+  | "--end-check-only" :: rest ->
+      parse (common_flag f (fun c -> { c with end_check_only = true })) rest
   | name :: v :: rest when Option.is_some (valued f name v) ->
       Result.bind (Option.get (valued f name v)) (fun f -> parse f rest)
   | a :: _ -> Error ("unknown argument " ^ a)
