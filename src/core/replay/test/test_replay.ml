@@ -66,6 +66,7 @@ let () =
       @ [
           frame ~seq:501 ~load:2;
           {|{"dir":"in","t_ms":2,"msg":{"jsonrpc":"2.0","id":3,"method":"submit","params":{"batch_id":"b1","commands":[{"press":["B"],"hold_ms":100,"cooldown_ms":100}]}}}|};
+          frame ~seq:502 ~load:2;
         ])
   in
   let reader_misses () =
