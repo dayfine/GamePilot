@@ -1,0 +1,43 @@
+(** Why a story event or checkpoint failed. *)
+
+type cause = {
+  code : string;  (** A name the game owns, such as ["route_blocked"]. *)
+  detail : string;
+  repeats : bool;
+      (** Another attempt would fail the same way, so nothing reloads to retry.
+      *)
+}
+(** What a game's handler reports when its event did not do what it should. *)
+
+val cause : ?repeats:bool -> string -> string -> cause
+(** [cause code detail]; [repeats] is [false] unless given. *)
+
+val cause_to_string : cause -> string
+(** ["code: detail"], or the code alone when there is no detail. *)
+
+(** Why the runner stopped at an event. *)
+type reason =
+  | Handler of cause  (** The game's handler for the event failed. *)
+  | No_handler of string
+      (** The game has no handler for this game action; found before any event
+          runs. *)
+  | Not_at_declared of { declared : Pose.grid; observed : Pose.observed }
+      (** The event passed, but the game reads the player somewhere other than
+          its [declared_after]. *)
+
+type t = {
+  checkpoint_id : string;
+  event_index : int;  (** From 0. *)
+  event_id : string;
+  reason : reason;
+}
+
+val repeats : t -> bool
+(** Whether another attempt would fail the same way: a handler's cause says so,
+    and a missing handler always does. *)
+
+val reason_to_string : reason -> string
+
+val to_string : t -> string
+(** ["mg-01 event 3 (talk_coin_case_man): no_text: ..."], the event counted from
+    1. *)

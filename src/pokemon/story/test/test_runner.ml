@@ -1,0 +1,137 @@
+(* Runner.run takes a checkpoint's events in order through the game's handlers
+   and stops at the first failure, naming the event. *)
+
+open Story
+
+let tile x y : Grid_maps.Tile_pos.t = { x; y }
+
+let events =
+  [
+    {|{"id": "to_door", "kind": "route", "args": {"target": {"map": "Town", "tiles": [[4, 0]]}}, "why": "walk to the door",
+       "declared_after": {"map": "Town", "tiles": [[4, 0]], "facing": "north"}}|};
+    {|{"id": "buy", "kind": "game_action", "action": "mart", "args": {"budget": 300}}|};
+    {|{"id": "chat", "kind": "talk", "skip_if": ["met_clerk"]}|};
+    {|{"id": "leave", "kind": "scene", "why": "back to the overworld"}|};
+  ]
+
+let checkpoint = Plan_files.checkpoint_of_events events
+
+let run script =
+  let game, log = Scripted_game.make script in
+  let result =
+    match Runner.run game checkpoint with
+    | Ok () -> "passed"
+    | Error failure -> "stopped: " ^ Failure.to_string failure
+  in
+  log () ^ "\n" ^ result
+
+let mart = { Scripted_game.script with actions = [ "mart" ] }
+
+let at_door facing : Pose.observed =
+  { at_map = "Town"; at_tile = tile 4 0; faces = facing }
+
+let cases : Case_table.case list =
+  [
+    {
+      name = "every event in order, each logged with its why";
+      input = (fun () -> run mart);
+      expectation =
+        {|[Story] cp: start, 4 events
+[Story] cp #1 to_door: start (walk to the door)
+walk to_door
+[Story] cp #1 to_door: done
+[Story] cp #2 buy: start
+action mart buy
+[Story] cp #2 buy: done
+[Story] cp #3 chat: start
+builtin chat
+[Story] cp #3 chat: done
+[Story] cp #4 leave: start (back to the overworld)
+builtin leave
+[Story] cp #4 leave: done
+[Story] cp: done
+passed|};
+    };
+    {
+      name = "a failing handler stops the run; later events do not run";
+      input =
+        (fun () ->
+          run
+            {
+              mart with
+              fails =
+                [ ("buy", Failure.cause "no_money" "300 needed, 120 held") ];
+            });
+      expectation =
+        {|[Story] cp: start, 4 events
+[Story] cp #1 to_door: start (walk to the door)
+walk to_door
+[Story] cp #1 to_door: done
+[Story] cp #2 buy: start
+action mart buy
+[Story] cp #2 buy: failed: no_money: 300 needed, 120 held
+stopped: cp event 2 (buy): no_money: 300 needed, 120 held|};
+    };
+    {
+      name = "a game action the game lacks fails before any event runs";
+      input = (fun () -> run Scripted_game.script);
+      expectation =
+        {|[Story] cp: not started: cp event 2 (buy): no handler for game action "mart"
+stopped: cp event 2 (buy): no handler for game action "mart"|};
+    };
+    {
+      name = "a flag in skip_if skips the event";
+      input = (fun () -> run { mart with flags = [ "met_clerk" ] });
+      expectation =
+        {|[Story] cp: start, 4 events
+[Story] cp #1 to_door: start (walk to the door)
+walk to_door
+[Story] cp #1 to_door: done
+[Story] cp #2 buy: start
+action mart buy
+[Story] cp #2 buy: done
+[Story] cp #3 chat: skipped (met_clerk)
+[Story] cp #4 leave: start (back to the overworld)
+builtin leave
+[Story] cp #4 leave: done
+[Story] cp: done
+passed|};
+    };
+    {
+      name = "read away from declared_after: stops at that event";
+      input =
+        (fun () ->
+          run
+            {
+              mart with
+              read_after =
+                [
+                  ("to_door", { (at_door (Some North)) with at_tile = tile 4 1 });
+                ];
+            }
+          |> String.split_on_char '\n' |> List.rev |> List.hd);
+      expectation =
+        "stopped: cp event 1 (to_door): declared after at Town (4, 0) north, \
+         but the game reads Town (4, 1) north";
+    };
+    {
+      name = "read facing elsewhere: stops";
+      input =
+        (fun () ->
+          run { mart with read_after = [ ("to_door", at_door (Some South)) ] }
+          |> String.split_on_char '\n' |> List.rev |> List.hd);
+      expectation =
+        "stopped: cp event 1 (to_door): declared after at Town (4, 0) north, \
+         but the game reads Town (4, 0) south";
+    };
+    {
+      name = "facing the game cannot read is not checked";
+      input =
+        (fun () ->
+          run { mart with read_after = [ ("to_door", at_door None) ] }
+          |> String.split_on_char '\n' |> List.rev |> List.hd);
+      expectation = "passed";
+    };
+  ]
+
+let () = Case_table.run "runner" cases
