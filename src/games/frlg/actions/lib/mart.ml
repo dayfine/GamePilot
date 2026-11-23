@@ -3,6 +3,11 @@ module M = Menu_input
 
 let how_many_wait_ms = 2500
 
+(* As the fork's open_buy_list(): A, then 2 s for "May I help you?" and its
+   BUY/SELL/SEE YA! box to take presses. An A sent as the text box showed
+   only finished the text (mg-01 run 2, 2026-11-23: the box was up, no list). *)
+let clerk_menu_wait_ms = 2000
+
 (* The list back, with no text box over it. *)
 let list_back m = Money_box.money_box m && not (Dialog.dialog_up m)
 
@@ -24,7 +29,7 @@ let buy_one ~log cursor (b : Mart_plan.buy) =
 let run ~log stock (plan : Mart_plan.t) =
   let buys = Mart_plan.buys stock plan in
   log ("Mart (" ^ plan.map ^ "): " ^ Mart_plan.buys_to_string buys);
-  M.press Wire.A;
+  M.press Wire.A ~cooldown_ms:clerk_menu_wait_ms;
   ignore
     (M.await_screen ~code:"mart_no_clerk" "the clerk's menu" Dialog.dialog_up);
   M.press Wire.A;

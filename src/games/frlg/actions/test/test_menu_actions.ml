@@ -137,11 +137,33 @@ let spin ~after_ms () =
       if p.index = 0 then S.show screen ~at_ms:(p.at_ms + after_ms) S.Battle)
     (fun () -> Spin_for_encounter.spin ~log ~facing:North ~max_batches:2)
 
+(* The clerk's text box shows 200 ms after A; its BUY/SELL box takes an A only
+   [menu_ms] later (no reader: the text box), which opens the BUY list; B on
+   the list closes the Mart. *)
+let mart_screen ~menu_ms =
+  let text_at = ref max_int in
+  fun screen (p : S.press) ->
+    let show d s = S.show screen ~at_ms:(p.at_ms + d) s in
+    match (p.buttons, S.screen_at screen p.at_ms) with
+    | [ Wire.A ], S.Overworld ->
+        text_at := p.at_ms + 200;
+        show 200 S.Dialog
+    | [ Wire.A ], S.Dialog when p.at_ms >= !text_at + menu_ms ->
+        show 300 S.Mart_list
+    | [ Wire.B ], S.Mart_list -> show 300 S.Overworld
+    | _ -> ()
+
+let mart_open ~menu_ms () =
+  let plan = { Mart_plan.map = "test"; lines = []; budget = None } in
+  run ~react:(mart_screen ~menu_ms) (fun () -> Mart.run ~log [] plan)
+
 let case name input expectation = { Case_table.name; input; expectation }
 
 let () =
   Case_table.run "menu_actions"
     [
+      case "mart: A on BUY once the clerk's box takes it"
+        (mart_open ~menu_ms:1500) "ok; A x2, B x6";
       case "heal: a page, YES, the healing, back" heal "ok; A x3, B x8";
       case "heal: a text box with no question fails" heal_no_question
         "failed heal_no_question: the nurse's question did not show; A";
