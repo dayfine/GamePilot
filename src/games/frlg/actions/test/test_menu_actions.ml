@@ -70,12 +70,12 @@ let on_each_a groups =
 
 (* The clerk's page, the choice box (no reader: a dialog), the question, then
    the prize's text. *)
-let redeem () =
+let redeem ?(page = S.Dialog_arrow) () =
   run
     ~react:
       (on_each_a
          [
-           [ (200, S.Dialog_arrow) ];
+           [ (200, page) ];
            [ (100, S.Dialog) ];
            [ (300, S.Question) ];
            [ (100, S.Dialog); (2000, S.Overworld) ];
@@ -193,6 +193,8 @@ let () =
         "ok; Start, down x3, A x2, B x5";
       case "cut: the turn, A, the page, YES" cut "ok; up, A x3, B x7";
       case "redeem: the page, Abra's row, YES" redeem "ok; A x4, B x7";
+      case "redeem: the clerk's blue arrow unread, the page turned by time"
+        (redeem ~page:S.Dialog) "ok; A x4, B x7";
       case "party swap: slot 1, SWITCH, slot 4" (swap 1 4)
         "ok; Start, A x2, down, A, down x3, A, B x6";
       case

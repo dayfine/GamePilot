@@ -30,6 +30,7 @@ val buy_coins : log:(string -> unit) -> int -> unit
     chosen, then the talk settle. Fails as [coins_no_clerk]. *)
 
 val redeem_prize_mon : log:(string -> unit) -> int -> unit
-(** Facing the Pokémon prize clerk: A, the page turned, the prize's row, A, YES,
-    then the talk settle (whose B declines a nickname). Fails as
+(** Facing the Pokémon prize clerk: A, the page turned after {!choice_wait_ms}
+    (his blue arrow has no reader; the fork turns it by time too), the prize's
+    row, A, YES, then the talk settle (whose B declines a nickname). Fails as
     [prize_no_clerk] or [prize_no_question]. *)

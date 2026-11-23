@@ -43,9 +43,22 @@ let buy_coins ~log coins =
   log (Printf.sprintf "Game Corner: buy %d coins." coins);
   List.iter (buy_batch ~log) (coin_batches coins)
 
+(* The prize clerk talks in blue, so his page's arrow is blue, and the arrow
+   reader knows only the red one (mg-01 run 3, 2026-11-23: "We exchange your
+   COINS for prizes." done, no arrow read). As the fork: A and its wait, the
+   page turned by time; here the text box is checked between. *)
+let page_wait_ms = choice_wait_ms
+
+let to_prize_choices () =
+  M.press Wire.A ~cooldown_ms:page_wait_ms;
+  ignore
+    (M.await_screen ~code:"prize_no_clerk" "the prize clerk's page"
+       Dialog.dialog_up);
+  M.press Wire.A ~cooldown_ms:choice_wait_ms
+
 let redeem_prize_mon ~log slot =
   log (Printf.sprintf "Game Corner: redeem prize row %d." slot);
-  to_choices ~code:"prize_no_clerk" "the prize clerk's page";
+  to_prize_choices ();
   M.taps Wire.Down slot;
   M.press Wire.A;
   M.answer_yes ~code:"prize_no_question" "the prize's question";
