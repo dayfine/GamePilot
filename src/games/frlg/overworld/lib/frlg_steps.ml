@@ -1,9 +1,9 @@
 open Grid_maps
 open Grid_planning
 
-type costs = { grass : int; warp : int; wander : int }
+type costs = { grass : int; warp : int; wander : int; trainer_line : int }
 
-let default_costs = { grass = 3; warp = 10; wander = 8 }
+let default_costs = { grass = 3; warp = 10; wander = 8; trainer_line = 100 }
 
 type world = {
   maps : Connected_maps.t;
@@ -37,6 +37,25 @@ let wander_at w (map : Map_data.t) pos =
       (not (w.hidden o))
       && match o.wander with Some box -> in_box box pos | None -> false)
     map.objects
+
+(* Whether a trainer standing still and looking one way sees [pos]: one of the
+   [sight] tiles ahead of them, up to a wall. *)
+let in_line_of (map : Map_data.t) pos (o : Map_features.map_object) =
+  match (o.trainer, o.wander) with
+  | Some { sight; looks = [ look ] }, None ->
+      let rec sees tile n =
+        n > 0
+        &&
+        let seen = Tile_pos.next tile look in
+        match tile_at map seen with
+        | Some (Wall | Outside) | None -> false
+        | Some _ -> Tile_pos.equal seen pos || sees seen (n - 1)
+      in
+      sees o.object_pos sight
+  | _ -> false
+
+let in_trainer_line w (map : Map_data.t) pos =
+  List.exists (fun o -> (not (w.hidden o)) && in_line_of map pos o) map.objects
 
 (* Whether a tile can be stepped onto moving [d], on foot. *)
 let enterable kind d =
@@ -108,7 +127,8 @@ let costed w (place : Connected_maps.place) (next : Connected_maps.place) d =
     connection = next.map <> place.map;
     extra_cost =
       ((if grass then w.costs.grass else 0)
-      + if wander_at w map next.tile then w.costs.wander else 0);
+      + (if wander_at w map next.tile then w.costs.wander else 0)
+      + if in_trainer_line w map next.tile then w.costs.trainer_line else 0);
   }
 
 (* Where a step onto [target] (on [place]'s map or across its edge) lands:
@@ -189,6 +209,14 @@ let held_at w (place : Connected_maps.place) d =
   && (not (warp_off_maps w place d))
   && (not (sign_read map ahead d))
   && holds_ahead w map ahead d
+
+let sign_ahead w (place : Connected_maps.place) d =
+  sign_read (map_of w place) (Tile_pos.next place.tile d) d
+
+let walked_out_onto w (place : Connected_maps.place) =
+  let map = map_of w place in
+  let doorway = Tile_pos.next place.tile North in
+  Grid.contains map.tiles doorway && walks_out map doorway
 
 let hop_tiles w (place : Connected_maps.place) d =
   let map = map_of w place in

@@ -238,6 +238,23 @@ let cases : Case_table.case list =
          Leg: a battle after 578ms, stopping the leg.";
     };
     {
+      (* Held north into a sign two tiles short of the leg's end: its message
+         shows at once on every hold (mGBA, 2026-11-23, mg-04's north 2 into
+         Lavender Town's sign). *)
+      name = "an open leg blocked by a sign stops";
+      input =
+        (fun () ->
+          walked
+            [ Some 217; Some 83; Some 83 ]
+            { (open_leg ~tile_ms:133 North 2) with stop_if_blocked = true });
+      expectation =
+        "holds 199, 199\n\
+         cleared 2\n\
+         tiles 0, exact false, interruptions 2, stopped true\n\
+         Leg: a battle after 217ms, about 0 tiles walked, 2 to go.\n\
+         Leg: a battle after 83ms, about 0 of 2 tiles walked, stopping the leg.";
+    };
+    {
       name = "a watcher along a hold never stops it";
       input = watch_along;
       expectation =

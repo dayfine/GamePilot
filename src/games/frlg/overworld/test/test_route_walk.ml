@@ -39,7 +39,7 @@ let at_text (at : Route_walk.at) =
 
 (* Plans from [from] to [goal] and walks it on a screen that [react]s to the
    presses; the outcome, then the presses. *)
-let walk ?react ~from goal () =
+let walk ?react ?(logged = false) ~from goal () =
   let screen = S.create ?react () in
   let log = ref [] in
   fled := 0;
@@ -53,7 +53,10 @@ let walk ?react ~from goal () =
     | Ok at -> "at " ^ at_text at
     | Error cause -> "failed " ^ Story.Failure.cause_to_string cause
   in
-  Printf.sprintf "%s; fled %d; %s" outcome !fled (S.presses_text screen)
+  let walked =
+    Printf.sprintf "%s; fled %d; %s" outcome !fled (S.presses_text screen)
+  in
+  if logged then String.concat "\n" (walked :: List.rev !log) else walked
 
 (* The black of a warp after the hold onto it, then the new map. *)
 let fade_after_hold screen (p : S.press) =
@@ -66,6 +69,15 @@ let fade_after_hold screen (p : S.press) =
 let during_hold ~nth ~after_ms what screen (p : S.press) =
   if S.holds_dpad p && p.index = nth then
     S.show screen ~at_ms:(p.at_ms + after_ms) what
+
+(* A sign speaks 100ms into each of the first [n] holds [d]: the walk was held
+   into one the plan did not walk into. B closes it. *)
+let sign_speaks ~n d screen (p : S.press) =
+  let held (q : S.press) = List.mem d q.buttons && q.hold_ms > 160 in
+  if held p && List.length (List.filter held screen.S.presses) <= n then
+    S.show screen ~at_ms:(p.at_ms + 100) S.Dialog;
+  if p.buttons = [ Wire.B ] then
+    S.show screen ~at_ms:(p.at_ms + 100) S.Overworld
 
 let in_house = place pallet "PalletTown_PlayersHouse_1F" 4 6
 let route1_top = place pallet "Route1" 12 5
@@ -99,4 +111,29 @@ let () =
            (target "Route1" [ (7, 24) ]))
         "failed trainer_battle: a battle started after a message on the \
          overworld; fled 0; up, up 400, B";
+      case "a sign at every hold: the walk goes on from before it"
+        (walk ~logged:true
+           ~react:(sign_speaks ~n:2 Wire.Down)
+           ~from:(place pallet "PalletTown" 12 9)
+           (target "PalletTown" [ (10, 16) ]))
+        "at PalletTown (10, 16) south; fled 0; left, left 400, down, down \
+         2403, B, down 2403, B, right x2, down, down 2136\n\
+         Route: west 2\n\
+         Route: south 7 (to wall)\n\
+         Leg: a message after 100ms, walking to the wall again.\n\
+         Leg: a message after 100ms, stopping the leg.\n\
+         Route: a sign ahead speaks at every hold; on from (9, 10).\n\
+         Route: east 1\n\
+         Route: south 6 (to wall)";
+      case "a message at every hold with no sign ahead fails the walk"
+        (walk ~logged:true
+           ~react:(sign_speaks ~n:9 Wire.Down)
+           ~from:(place pallet "PalletTown" 12 8)
+           (target "PalletTown" [ (10, 15) ]))
+        "failed leg_blocked: south: a message at every hold; no sign on the \
+         maps is ahead: off the route; fled 0; down, down 667, B, down 667, B\n\
+         Route: south 3\n\
+         Leg: a message after 100ms, about 0 tiles walked, 3 to go.\n\
+         Leg: a message after 100ms, about 0 of 3 tiles walked, stopping the \
+         leg.";
     ]

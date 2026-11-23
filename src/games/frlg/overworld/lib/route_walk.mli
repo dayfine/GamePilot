@@ -6,8 +6,10 @@
     the core effects.
 
     FireRed can't show where the player stands, so the walk is dead reckoned:
-    each leg ends on its planned tile, and a leg that stops part-way fails the
-    walk rather than guess. *)
+    each leg ends on its planned tile. A leg interrupted at once, hold after
+    hold, is held into something that speaks: when a sign on the maps explains
+    it ({!Before_signs}), the walk goes on from before the sign, else it fails
+    rather than guess. *)
 
 open Grid_maps
 
@@ -27,6 +29,10 @@ val warp_fade_timeout_ms : int
 val fade_up_timeout_ms : int
 (** 5000: how long a warp's fade may take to come back up. *)
 
+val door_step_out_ms : int
+(** 1000: after a warp's fade comes up, how long the game takes to walk the
+    player out of a doorway, ignoring presses. *)
+
 val after_leg_watch_ms : int
 (** 500: a message the last step set off shows after the hold. *)
 
@@ -39,5 +45,5 @@ val walk :
   Connected_maps.place Grid_planning.Leg.t list ->
   (at, Story.Failure.cause) result
 (** Walks the legs from [at]. Fails with [route_unsupported] (an action leg),
-    [leg_stopped], [interrupted], [no_warp_fade], [fade_stuck], [trainer_battle]
+    [leg_blocked], [interrupted], [no_warp_fade], [fade_stuck], [trainer_battle]
     or [message_stuck]. *)
