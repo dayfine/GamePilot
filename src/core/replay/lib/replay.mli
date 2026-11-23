@@ -28,5 +28,6 @@ val log_of_file : string -> log
 val run : log -> (unit -> 'a) -> 'a
 (** Runs the program against the log. Raises {!Divergence} (also when the
     program returns before sending every client message the log has, naming the
-    first one it did not send), or [Effects.Disconnected] when the program waits
-    past the end of the log. *)
+    first one it did not send, unless one of its waits timed out at a recorded
+    point: then it is on its own failure path), or [Effects.Disconnected] when
+    the program waits past the end of the log. *)

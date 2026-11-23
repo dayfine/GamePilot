@@ -73,8 +73,10 @@ let find_from (log : log) i p =
   in
   go i
 
-(* [next_in]: index of the next client message the program must send. *)
-let transport (log : log) next_in : Session.transport =
+(* [next_in]: index of the next client message the program must send.
+   [timed_out]: set once a wait timed out at a recorded point; from then on the
+   program follows its own failure path, so it need not send the rest. *)
+let transport (log : log) next_in timed_out : Session.transport =
   (* Index of the next log entry to scan for daemon output. *)
   let next_out = ref 0 in
   (* Set when the program waits for daemon output but the recorded client spoke
@@ -100,6 +102,7 @@ let transport (log : log) next_in : Session.transport =
         match find_from log !next_in (is_dir Wire.In) with
         | Some j when j < i && not !ran_out ->
             ran_out := true;
+            timed_out := true;
             Session.Idle
         | Some j when j < i ->
             let n, l = log.(j) in
@@ -115,11 +118,12 @@ let transport (log : log) next_in : Session.transport =
 
 let run log f =
   let next_in = ref 0 in
-  let result = Session.run (transport log next_in) f in
+  let timed_out = ref false in
+  let result = Session.run (transport log next_in timed_out) f in
   (match find_from log !next_in (is_dir Wire.In) with
-  | Some i ->
+  | Some i when not !timed_out ->
       let n, l = log.(i) in
       diverge "wire log line %d: program ended without sending %s" n
         (describe l.msg)
-  | None -> ());
+  | Some _ | None -> ());
   result

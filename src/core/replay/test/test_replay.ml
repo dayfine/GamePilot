@@ -55,3 +55,24 @@ let () =
       print_endline e;
       expect "missing recorded request -> divergence"
         (contains e "line 5" && contains e "submit (id 3)")
+
+(* A reader that misses on the recorded frames times out where the live run
+   pressed next; the program then fails on its own path, which is its outcome,
+   not a divergence, even though it never sends the recorded press. *)
+let () =
+  let log =
+    Replay.log_of_lines
+      (hello
+      @ [
+          frame ~seq:501 ~load:2;
+          {|{"dir":"in","t_ms":2,"msg":{"jsonrpc":"2.0","id":3,"method":"submit","params":{"batch_id":"b1","commands":[{"press":["B"],"hold_ms":100,"cooldown_ms":100}]}}}|};
+        ])
+  in
+  let reader_misses () =
+    ignore (Effects.load_state "state.ss" : int);
+    Effects.await ~timeout_ms:1000 (fun _ -> false)
+  in
+  expect "reader miss -> program's own timeout, not a divergence"
+    (match Replay.run log reader_misses with
+    | Effects.Timeout -> true
+    | Effects.Holds _ -> false)
