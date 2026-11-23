@@ -56,10 +56,18 @@ let to_prize_choices () =
        Dialog.dialog_up);
   M.press Wire.A ~cooldown_ms:choice_wait_ms
 
+(* After A on the prize, as the fork (pbf_press_button(A, 160ms, 1200ms)):
+   the prize list, itself a selection box, stays up until "So, you want the
+   ABRA?" has printed, and the Yes/No wait would take it for the question
+   (mg-01 verification, 2026-11-23: the A meant for YES went to the list's
+   last frames, the B after it answered NO, and all three runs passed with
+   no Abra). *)
+let prize_question_wait_ms = 1200
+
 let redeem_prize_mon ~log slot =
   log (Printf.sprintf "Game Corner: redeem prize row %d." slot);
   to_prize_choices ();
   M.taps Wire.Down slot;
-  M.press Wire.A;
+  M.press Wire.A ~cooldown_ms:prize_question_wait_ms;
   M.answer_yes ~code:"prize_no_question" "the prize's question";
   M.settle_back ~label:"redeem prize" ~log

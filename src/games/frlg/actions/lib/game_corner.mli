@@ -32,5 +32,10 @@ val buy_coins : log:(string -> unit) -> int -> unit
 val redeem_prize_mon : log:(string -> unit) -> int -> unit
 (** Facing the Pokémon prize clerk: A, the page turned after {!choice_wait_ms}
     (his blue arrow has no reader; the fork turns it by time too), the prize's
-    row, A, YES, then the talk settle (whose B declines a nickname). Fails as
+    row, A and {!prize_question_wait_ms} (the list lingers under the question),
+    YES, then the talk settle (whose B declines a nickname). Fails as
     [prize_no_clerk] or [prize_no_question]. *)
+
+val prize_question_wait_ms : int
+(** 1200, the fork's wait after A on the prize: the prize list stays up until
+    the question has printed. *)
