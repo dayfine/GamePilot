@@ -5,14 +5,21 @@ GamePilot automates games through three layers (design: `docs/design/Layered-Aut
 - `daemon/` (C++): I/O (frame source, input sink, one clock) and probes (pixels -> numbers).
   Glue only: no thresholds, no state machines, no game names. Its own CMake build,
   `clang-format`, strict warnings.
-- `src/` (OCaml 5.2+, dune): one dune project. `base/` (wire codec), `core/` (effect kernel,
-  replay and real handlers), `games/<game>/` (readers, actions, checkpoints, programs), `bin/`.
-  Each library is `<name>/lib` with its tests in `<name>/test`.
+- `src/` (OCaml 5.2+, dune): one dune project. Every library is `<name>/lib` with its tests in
+  `<name>/test`.
+  - `base/`: pure, game-agnostic code with no effects (`wire`: the protocol codec).
+  - `core/`: the effects programs use (`effects`) and their handlers (`session`, `live`, `replay`).
+  - `pokemon/`: code shared by Pokemon games (navigation grid, story plans and their engine).
+  - `games/<game>/`: `readers/`, `actions/`, `maps/`, `story/`, and `programs/<program>/`.
+  - `bin/`: the `gamepilot` command.
 - `contracts/`: golden JSON-RPC messages both sides must parse. The only thing they share.
   Formatted by `tools/fmt_json.py` (one key per line, lists of scalars inline).
 
 ## Hard rules
 
+- **Names say what a thing is or does.** No catch-all modules or folders (`helpers`, `utils`, `common`, `misc`):
+  a function with no obvious home gets a module named for its job. The C++ folder names on the
+  fork are a guide where they are informative.
 - **No C in OCaml.** No `foreign_stubs`, `foreign_archives`, `extra_objects` or `ctypes` in any
   `dune` file (`tools/lint_dune.sh`). Every opam dependency is listed in
   `tools/opam-allowlist.txt`. The Windows CI build is the real gate.

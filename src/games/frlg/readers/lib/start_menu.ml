@@ -13,7 +13,7 @@ let min_white = 220.
 let max_stddev = 20.
 
 let start_menu_open m =
-  match Kernel.probe m probe_id with
+  match Effects.probe m probe_id with
   | Some (Wire.Color_stats { mean; stddev }) ->
       Float.min mean.r (Float.min mean.g mean.b) >= min_white
       && Float.max stddev.r (Float.max stddev.g stddev.b) <= max_stddev

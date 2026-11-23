@@ -27,4 +27,4 @@ val log_of_file : string -> log
 
 val run : log -> (unit -> 'a) -> 'a
 (** Runs the program against the log. Raises {!Divergence}, or
-    [Kernel.Disconnected] when the program waits past the end of the log. *)
+    [Effects.Disconnected] when the program waits past the end of the log. *)

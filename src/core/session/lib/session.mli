@@ -1,8 +1,8 @@
 (** The scheduler shared by every handler that speaks the wire protocol.
 
     It owns the client side of a session (request ids, batch ids, the latest
-    frame, the daemon clock) and answers the kernel effects from a {!transport}.
-    The real handler's transport is a socket plus a reader thread; the replay
+    frame, the daemon clock) and answers the effects from a {!transport}. The
+    real handler's transport is a socket plus a reader thread; the replay
     handler's transport is a recorded wire log. Both see the same scheduler, so
     a replay takes the same decisions the live run took. *)
 
@@ -29,5 +29,5 @@ val client_name : string
 (** Sent in [hello]. *)
 
 val run : transport -> (unit -> 'a) -> 'a
-(** Sends [hello], then runs the program with the kernel effects handled. Raises
-    [Kernel.Rpc_error], [Kernel.Disconnected] or [Protocol_error]. *)
+(** Sends [hello], then runs the program with the effects handled. Raises
+    [Effects.Rpc_error], [Effects.Disconnected] or [Protocol_error]. *)

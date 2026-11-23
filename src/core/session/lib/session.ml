@@ -42,7 +42,7 @@ let pump t =
         (Protocol_error
            (Printf.sprintf "daemon sent a %s request" (Wire.method_name call)))
   | Idle -> None
-  | Closed why -> raise (Kernel.Disconnected why)
+  | Closed why -> raise (Effects.Disconnected why)
 
 let rec pump_until t ready =
   match ready () with
@@ -64,7 +64,7 @@ let call t c =
   t.transport.send (Wire.Request { id; call = c });
   match pump_until t (take t.responses id) with
   | Ok result -> result
-  | Error e -> raise (Kernel.Rpc_error e)
+  | Error e -> raise (Effects.Rpc_error e)
 
 let hello t =
   let r =
@@ -106,14 +106,14 @@ let await t pred timeout_ms =
               deadline := Some d;
               d
         in
-        if f.t_ms > d then Kernel.Timeout
-        else if pred f then Kernel.Holds f
+        if f.t_ms > d then Effects.Timeout
+        else if pred f then Effects.Holds f
         else loop ()
     | None ->
-        if t.transport.wall_ms () > wall_deadline then Kernel.Timeout
+        if t.transport.wall_ms () > wall_deadline then Effects.Timeout
         else loop ()
   in
-  match t.latest with Some f when pred f -> Kernel.Holds f | _ -> loop ()
+  match t.latest with Some f when pred f -> Effects.Holds f | _ -> loop ()
 
 let handle t f =
   let open Effect.Deep in
@@ -130,12 +130,12 @@ let handle t f =
                 | exception e -> discontinue k e)
           in
           match eff with
-          | Kernel.Submit commands -> answer (fun () -> submit t commands)
-          | Kernel.Await (pred, timeout_ms) ->
+          | Effects.Submit commands -> answer (fun () -> submit t commands)
+          | Effects.Await (pred, timeout_ms) ->
               answer (fun () -> await t pred timeout_ms)
-          | Kernel.Now -> answer (fun () -> Option.value t.now ~default:0.)
-          | Kernel.Read -> answer (fun () -> t.latest)
-          | Kernel.Load_state path ->
+          | Effects.Now -> answer (fun () -> Option.value t.now ~default:0.)
+          | Effects.Read -> answer (fun () -> t.latest)
+          | Effects.Load_state path ->
               answer (fun () ->
                   let seq =
                     Wire.load_state_result_of_json
@@ -144,7 +144,7 @@ let handle t f =
                   (* Frames from before the load describe another state. *)
                   t.latest <- None;
                   seq)
-          | Kernel.Subscribe probes ->
+          | Effects.Subscribe probes ->
               answer (fun () ->
                   Wire.subscribe_result_of_json (call t (Wire.Subscribe probes)))
           | _ -> None);

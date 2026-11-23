@@ -1,0 +1,9 @@
+(library
+ (name live)
+ (public_name gamepilot.live)
+ (libraries
+  gamepilot.wire
+  gamepilot.effects
+  gamepilot.session
+  unix
+  threads.posix))

@@ -20,5 +20,5 @@ val max_stddev : float
 
 (** {1 Reader} *)
 
-val start_menu_open : Kernel.measurements -> bool
+val start_menu_open : Effects.measurements -> bool
 (** False when the probe is missing from the frame. *)

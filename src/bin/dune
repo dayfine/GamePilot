@@ -4,8 +4,8 @@
  (package gamepilot)
  (libraries
   gamepilot.wire
-  gamepilot.kernel
-  gamepilot.handler
-  gamepilot.handler_real
-  gamepilot.frlg
+  gamepilot.effects
+  gamepilot.replay
+  gamepilot.live
+  gamepilot.start_menu_poc
   unix))

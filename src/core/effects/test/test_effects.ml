@@ -1,13 +1,13 @@
 let () =
   let t =
-    Effect.Deep.match_with Kernel.now ()
+    Effect.Deep.match_with Effects.now ()
       {
         retc = Fun.id;
         exnc = raise;
         effc =
           (fun (type a) (eff : a Effect.t) ->
             match eff with
-            | Kernel.Now ->
+            | Effects.Now ->
                 Some
                   (fun (k : (a, _) Effect.Deep.continuation) ->
                     Effect.Deep.continue k 42.)
@@ -15,4 +15,4 @@ let () =
       }
   in
   assert (t = 42.);
-  print_endline "kernel: virtual clock ok"
+  print_endline "effects: virtual clock ok"

@@ -6,7 +6,7 @@ let recv_chunk = 65536
 
 (* The queue between the reader thread and the program's thread. *)
 type queue = {
-  events : Handler.Session.event Queue.t;
+  events : Session.event Queue.t;
   mutex : Mutex.t;
   nonempty : Condition.t;
 }
@@ -19,7 +19,7 @@ let push q ev =
 let push_idle q =
   Mutex.protect q.mutex (fun () ->
       if Queue.is_empty q.events then (
-        Queue.push Handler.Session.Idle q.events;
+        Queue.push Session.Idle q.events;
         Condition.signal q.nonempty))
 
 let pop q =
@@ -39,9 +39,9 @@ let drain_lines q buf =
         let line = String.trim (String.sub s start (nl - start)) in
         (if line <> "" then
            match Wire.message_of_string line with
-           | m -> push q (Handler.Session.Message m)
+           | m -> push q (Session.Message m)
            | exception Wire.Decode_error e ->
-               push q (Handler.Session.Closed ("bad message from daemon: " ^ e)));
+               push q (Session.Closed ("bad message from daemon: " ^ e)));
         go (nl + 1)
   in
   let consumed = go 0 in
@@ -59,7 +59,7 @@ let reader fd q stop =
           loop ()
       | _ -> (
           match Unix.recv fd chunk 0 recv_chunk [] with
-          | 0 -> push q (Handler.Session.Closed "daemon closed the connection")
+          | 0 -> push q (Session.Closed "daemon closed the connection")
           | n ->
               Buffer.add_subbytes buf chunk 0 n;
               drain_lines q buf;
@@ -68,7 +68,7 @@ let reader fd q stop =
   try loop ()
   with Unix.Unix_error (e, _, _) ->
     if not (Atomic.get stop) then
-      push q (Handler.Session.Closed ("socket: " ^ Unix.error_message e))
+      push q (Session.Closed ("socket: " ^ Unix.error_message e))
 
 let rec send_all fd b off len =
   if len > 0 then
@@ -100,7 +100,7 @@ let run ?(port = default_port) f =
   in
   let transport =
     {
-      Handler.Session.send;
+      Session.send;
       recv = (fun () -> pop q);
       wall_ms = (fun () -> Unix.gettimeofday () *. 1000.);
     }
@@ -110,4 +110,4 @@ let run ?(port = default_port) f =
       Atomic.set stop true;
       Thread.join thread;
       Unix.close fd)
-    (fun () -> Handler.Session.run transport f)
+    (fun () -> Session.run transport f)

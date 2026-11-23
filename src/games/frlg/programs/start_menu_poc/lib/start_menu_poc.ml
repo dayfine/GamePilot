@@ -20,19 +20,22 @@ let press button =
 (* Presses [button], then waits for [pred]; returns ms from batch_done to the
    frame where it held. *)
 let press_until button pred =
-  let done_ = Kernel.submit [ press button ] in
-  match Kernel.await ~timeout_ms pred with
-  | Kernel.Holds m -> Some (Float.max 0. (m.t_ms -. done_.t_ms))
-  | Kernel.Timeout -> None
+  let done_ = Effects.submit [ press button ] in
+  match Effects.await ~timeout_ms pred with
+  | Effects.Holds m -> Some (Float.max 0. (m.t_ms -. done_.t_ms))
+  | Effects.Timeout -> None
 
 let run ~state () =
-  ignore (Kernel.load_state state : int);
-  ignore (Kernel.subscribe [ Start_menu.probe ] : string list);
-  match press_until Wire.Start (fun m -> Start_menu.start_menu_open m) with
+  ignore (Effects.load_state state : int);
+  ignore (Effects.subscribe [ Frlg_readers.Start_menu.probe ] : string list);
+  match
+    press_until Wire.Start (fun m -> Frlg_readers.Start_menu.start_menu_open m)
+  with
   | None -> Did_not_open
   | Some opened_ms -> (
       match
-        press_until Wire.B (fun m -> not (Start_menu.start_menu_open m))
+        press_until Wire.B (fun m ->
+            not (Frlg_readers.Start_menu.start_menu_open m))
       with
       | None -> Did_not_close
       | Some closed_ms -> Passed { opened_ms; closed_ms })

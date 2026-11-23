@@ -1,0 +1,4 @@
+(library
+ (name replay)
+ (public_name gamepilot.replay)
+ (libraries yojson gamepilot.wire gamepilot.effects gamepilot.session))
