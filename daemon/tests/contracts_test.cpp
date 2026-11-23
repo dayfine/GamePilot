@@ -12,6 +12,7 @@
 #include "Common/Cpp/Filesystem/Filesystem.h"
 #include "check.h"
 #include "rpc.h"
+#include "sent_results.h"
 #include "template_store.h"
 
 namespace pa = PokemonAutomation;
@@ -146,13 +147,14 @@ void check_encoders(const std::map<std::string, pa::JsonValue>& files) {
         files.at("09-submit.response.json"));
 
   const ColorStats stats{{248.1, 248.0, 247.9}, {6.2, 6.1, 6.3}};
-  const pa::JsonValue frame =
-      frame_notification(1201, 1, 20113.6, {{"menu_panel", stats}});
+  const pa::JsonValue frame = frame_notification(
+      1201, 1, 20113.6, probe_results_json({{"menu_panel", stats}}));
   CHECK(frame == files.at("07-frame.notification.json"));
   const ProbeResult cursor = TemplateMatch{0.000412, 0.75, 0.0625};
   const ProbeResult word = TemplateMatch{0.021875, 0.39167, 0.06875};
   CHECK(frame_notification(1260, 1, 21101.4,
-                           {{"cursor", cursor}, {"bag.1/TM CASE", word}}) ==
+                           probe_results_json({{"cursor", cursor},
+                                               {"bag.1/TM CASE", word}})) ==
         files.at("18-frame.template_match.notification.json"));
   CHECK(result_message(pa::JsonValue(std::int64_t{10}),
                        unsubscribe_result({"bag.1/TM CASE"})) ==
@@ -160,10 +162,10 @@ void check_encoders(const std::map<std::string, pa::JsonValue>& files) {
   const ProbeResult no_arrow = ColorCount{0.0, std::nullopt};
   const ProbeResult arrow =
       ColorCount{0.013333, std::array<double, 3>{224.0, 48.5, 40.25}};
-  CHECK(
-      frame_notification(1302, 1, 21804.7,
-                         {{"arrow_line1", no_arrow}, {"arrow_line2", arrow}}) ==
-      files.at("20-frame.color_count.notification.json"));
+  CHECK(frame_notification(1302, 1, 21804.7,
+                           probe_results_json({{"arrow_line1", no_arrow},
+                                               {"arrow_line2", arrow}})) ==
+        files.at("20-frame.color_count.notification.json"));
   CHECK(batch_done_notification("b1", 1230, 20599.0) ==
         files.at("10-batch_done.notification.json"));
 
@@ -179,6 +181,31 @@ void check_encoders(const std::map<std::string, pa::JsonValue>& files) {
   // The wire log line round-trips through the daemon's one-line encoding.
   CHECK(parse_message(to_line(files.at("14-wire_log.line.json"))) ==
         files.at("14-wire_log.line.json"));
+}
+
+// The first frame sends every result; a later one only the results that
+// changed; a forgotten probe is sent again.
+void check_changed_results(const std::map<std::string, pa::JsonValue>& files) {
+  const ProbeResult word = TemplateMatch{0.021875, 0.39167, 0.06875};
+  const ProbeResult cursor_up = TemplateMatch{0.000412, 0.75, 0.0625};
+  const ProbeResult cursor_down = TemplateMatch{0.000412, 0.75, 0.125};
+  SentResults sent;
+  CHECK(frame_notification(1260, 1, 21101.4,
+                           sent.take_changed({{"cursor", cursor_up},
+                                              {"bag.1/TM CASE", word}})) ==
+        files.at("18-frame.template_match.notification.json"));
+  CHECK(frame_notification(1261, 1, 21118.1,
+                           sent.take_changed({{"cursor", cursor_down},
+                                              {"bag.1/TM CASE", word}})) ==
+        files.at("23-frame.changed_only.notification.json"));
+  CHECK(sent.take_changed({{"cursor", cursor_down}, {"bag.1/TM CASE", word}})
+            .empty());
+  sent.forget("bag.1/TM CASE");
+  CHECK(sent.take_changed({{"cursor", cursor_down}, {"bag.1/TM CASE", word}})
+            .size() == 1);
+  sent.forget_all();
+  CHECK(sent.take_changed({{"cursor", cursor_down}, {"bag.1/TM CASE", word}})
+            .size() == 2);
 }
 
 void check_errors() {
@@ -280,11 +307,12 @@ void check_errors() {
 
 int main() {
   const auto files = load_contracts();
-  CHECK(files.size() == 22);
-  if (files.size() == 22) {
+  CHECK(files.size() == 23);
+  if (files.size() == 23) {
     check_requests(files);
     check_upload(files);
     check_encoders(files);
+    check_changed_results(files);
   }
   check_errors();
   return TEST_RESULT();

@@ -1,7 +1,7 @@
 // The v1 JSON-RPC server and the frame loop. Single-threaded: between two
 // emulator frames it serves the client; at each frame boundary it sets keys,
 // steps the backend one frame, runs the subscribed probes on that frame and
-// sends the results.
+// sends the results that changed since the client's previous frame.
 
 #pragma once
 
@@ -18,6 +18,7 @@
 #include "probe_evaluation.h"
 #include "rpc.h"
 #include "schedule.h"
+#include "sent_results.h"
 #include "template_store.h"
 
 namespace gamepilot {
@@ -58,6 +59,9 @@ class Server {
   pa::FileIO wire_log_;
 
   std::vector<FrameProbe> probes_;
+  // Results sent since the last subscribe or load: a frame sends only the
+  // ones that changed, the first frame after either sends all.
+  SentResults sent_results_;
   TemplateStore templates_;
   InputSchedule schedule_;
   std::optional<KeyMask> sent_mask_;

@@ -1,4 +1,4 @@
-(** Wire protocol v1.3 (contracts/v1): message types and their JSON codec.
+(** Wire protocol v1.4 (contracts/v1): message types and their JSON codec.
 
     The codec lives in one module per message family ([Command], [Probe],
     [Backend], [Jsonrpc], [Wire_log], [Probe_images]); this module re-exports
@@ -111,7 +111,9 @@ type frame = Probe.frame = {
   t_ms : float;
   probes : (string * probe_result) list;
 }
-(** One [frame] notification. [probes] keeps the daemon's order. *)
+(** One [frame] notification. [probes] keeps the daemon's order and holds only
+    the results that changed since the previous frame (all of them on the first
+    frame after a subscribe or a load); the session fills in the rest. *)
 
 type batch_done = Command.batch_done = {
   batch_id : string;

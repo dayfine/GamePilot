@@ -4,7 +4,8 @@
     handler has the answer. *)
 
 type measurements = Wire.frame
-(** The latest numbers from the subscribed probes, one per frame. *)
+(** The latest numbers from the subscribed probes, one per frame: every
+    subscribed probe's latest result, also those the frame did not repeat. *)
 
 type template_hash = string
 (** An uploaded template as the daemon names it: the lowercase hex SHA-256 of

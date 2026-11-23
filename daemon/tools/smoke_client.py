@@ -21,6 +21,7 @@ class Client:
         self.file = self.sock.makefile("rw", encoding="utf-8", newline="\n")
         self.next_id = 1
         self.frames = []
+        self.held = {}  # latest result per probe id: a frame sends only changed ones
         self.done = {}
 
     def _read(self):
@@ -29,7 +30,8 @@ class Client:
             sys.exit("daemon closed the connection")
         msg = json.loads(line)
         if msg.get("method") == "frame":
-            self.frames.append(msg["params"])
+            self.held.update(msg["params"]["probes"])
+            self.frames.append({**msg["params"], "probes": dict(self.held)})
         elif msg.get("method") == "batch_done":
             self.done[msg["params"]["batch_id"]] = msg["params"]
         return msg
