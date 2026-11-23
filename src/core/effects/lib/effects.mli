@@ -10,6 +10,13 @@ type awaited =
   | Holds of measurements  (** the first frame on which the predicate held *)
   | Timeout
 
+(** How a {!race} ended. *)
+type raced =
+  | Finished of Wire.batch_done  (** the batch ran to its end *)
+  | Stopped of measurements
+      (** the first frame on which the stop reader held; the batch was cancelled
+      *)
+
 exception Rpc_error of Wire.error
 (** The daemon answered a request with an error. *)
 
@@ -21,6 +28,7 @@ exception Disconnected of string
 type _ Effect.t +=
   | Submit : Wire.command list -> Wire.batch_done Effect.t
   | Await : (measurements -> bool) * int -> awaited Effect.t
+  | Race : Wire.command list * (measurements -> bool) -> raced Effect.t
   | Now : float Effect.t
   | Read : measurements option Effect.t
   | Load_state : string -> int Effect.t
@@ -35,6 +43,15 @@ val await : timeout_ms:int -> (measurements -> bool) -> awaited
 (** Returns [Holds m] for the first frame [m] (the latest one included) on which
     the predicate holds, or [Timeout] once a frame is more than [timeout_ms]
     later than [now ()] at the call. *)
+
+val race : Wire.command list -> stop:(measurements -> bool) -> raced
+(** Queues one batch and watches the frames while it runs. Returns
+    [Finished done] when its [batch_done] arrives first, or [Stopped m] for the
+    first frame [m] received after the batch was submitted on which [stop]
+    holds. On a stop the handler sends [cancel] (which drops every queued
+    command and releases all buttons) and returns once the daemon answered it,
+    so the next op starts from released buttons. Frames received before the
+    submit, the latest included, are not checked. *)
 
 val now : unit -> float
 (** Daemon clock in ms: the [t_ms] of the newest frame or [batch_done] seen. *)

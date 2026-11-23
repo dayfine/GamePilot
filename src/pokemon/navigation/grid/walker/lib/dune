@@ -1,0 +1,9 @@
+(library
+ (name grid_walker)
+ (public_name gamepilot.grid_walker)
+ (modules_without_implementation leg_interrupt)
+ (libraries
+  gamepilot.wire
+  gamepilot.effects
+  gamepilot.grid_maps
+  gamepilot.grid_trace))
