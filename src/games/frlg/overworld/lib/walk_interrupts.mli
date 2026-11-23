@@ -9,6 +9,11 @@
     screen ({!Frlg_readers.Battle_screen}) seconds later, which places it only
     roughly. *)
 
+val probes : Wire.probe_spec list
+(** What the interrupts read: the fade (the flash), the dialog box and the
+    battle's start ({!Frlg_readers.Screen_facts.probes}). The battle itself
+    subscribes its own in the flee. *)
+
 exception Trainer_battle
 (** A battle started after a message: a trainer saw the player. It can't be
     fled, so the walk stops for the caller. *)

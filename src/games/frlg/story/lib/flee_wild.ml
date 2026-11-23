@@ -10,6 +10,9 @@ let flee_body ~log () =
   | Not_fled why -> M.fail "not_fled" why
 
 let flee ~log () =
-  match M.run (flee_body ~log) with
+  match
+    Effects.with_probes Frlg_battle.Battle_look.probes (fun () ->
+        M.run (flee_body ~log))
+  with
   | Ok () -> ()
   | Error c -> failwith ("flee: " ^ Story.Failure.cause_to_string c)

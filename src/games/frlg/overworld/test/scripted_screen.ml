@@ -215,6 +215,10 @@ let run t f =
               answer (fun () -> await t pred timeout_ms)
           | Effects.Now -> answer (fun () -> float_of_int t.clock_ms)
           | Effects.Read -> answer (fun () -> Some (frame t))
+          | Effects.Subscribe probes ->
+              answer (fun () ->
+                  List.map (fun (p : Wire.probe_spec) -> p.id) probes)
+          | Effects.Unsubscribe ids -> answer (fun () -> ids)
           | _ -> None);
     }
 

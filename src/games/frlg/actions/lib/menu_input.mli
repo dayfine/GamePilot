@@ -9,8 +9,13 @@ exception Action_failed of Story.Failure.cause
 val fail : ?repeats:bool -> string -> string -> 'a
 (** Raises {!Action_failed} with [Story.Failure.cause code detail]. *)
 
+val probes : Wire.probe_spec list
+(** What the menu actions read: {!Scene_looks.probes}, the party, the bag and
+    the money box. *)
+
 val run : (unit -> unit) -> (unit, Story.Failure.cause) result
-(** Runs the body; [Error] with the cause it failed with. *)
+(** Runs the body with {!probes} subscribed; [Error] with the cause it failed
+    with. *)
 
 val button_hold_ms : int
 (** A button press: 160 ms held, as the fork's menus press. *)

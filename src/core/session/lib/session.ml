@@ -220,8 +220,16 @@ let load_state t path =
   t.latest <- None;
   r.seq
 
+(* The first frame after a subscribe carries every subscribed result. *)
+let first_results_timeout_ms = 1000
+
+let has_results ids (f : Wire.frame) =
+  List.for_all (fun id -> List.mem_assoc id f.probes) ids
+
 let subscribe t probes =
-  Wire.subscribe_result_of_json (call t (Wire.Subscribe probes))
+  let ids = Wire.subscribe_result_of_json (call t (Wire.Subscribe probes)) in
+  ignore (await t (has_results ids) first_results_timeout_ms : Effects.awaited);
+  ids
 
 (* The latest frame keeps no result of a probe that is gone, so a later
    subscribe of the same id waits for a fresh one. *)

@@ -49,7 +49,7 @@ let to_fly_map plan =
        @ menu_moves ~from:1 ~to_:plan.menu_row
        @ [ press Wire.A ~cooldown_ms:fly_map_wait_ms ]))
 
-let fly ~log plan =
+let fly_steps ~log plan =
   log
     (Printf.sprintf "Fly with slot %d, menu row %d, to %s (cell %d, %d)."
        plan.slot plan.menu_row plan.town.name plan.town.cell.x plan.town.cell.y);
@@ -61,3 +61,6 @@ let fly ~log plan =
       Scene_looks.settle After_warp
         ~label:("fly to " ^ plan.town.name)
         ~battle_ends:false ~log
+
+let fly ~log plan =
+  Effects.with_probes Menu_input.probes (fun () -> fly_steps ~log plan)

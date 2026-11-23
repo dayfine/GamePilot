@@ -79,7 +79,9 @@ val upload_template : string -> template_hash
     uploading the same bytes again returns the first hash without a request. *)
 
 val subscribe : Wire.probe_spec list -> string list
-(** Subscribes probes; returns the subscribed ids. *)
+(** Subscribes probes; returns the subscribed ids once a frame carried their
+    first results (or after a second without one), so a reader that starts right
+    after it reads them. *)
 
 val unsubscribe : string list -> string list
 (** Stops measuring these probes; returns the ids that were subscribed. The
@@ -87,8 +89,10 @@ val unsubscribe : string list -> string list
 
 val with_probes : Wire.probe_spec list -> (unit -> 'a) -> 'a
 (** [with_probes probes f] subscribes [probes], runs [f] and unsubscribes them,
-    also when [f] raises (unless the connection is gone). A reader that measures
-    once uses it so its probes do not cost time on every later frame. *)
+    also when [f] raises (unless the connection is gone). Calls nest: an inner
+    call subscribes only the probes no outer call holds and unsubscribes only
+    those, so each phase of a program names every probe its readers need and
+    pays for them only while it runs. *)
 
 (** {1 Helpers for readers} *)
 

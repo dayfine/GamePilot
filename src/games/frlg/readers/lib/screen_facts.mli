@@ -7,7 +7,9 @@ val fade_id : string
 
 val probes : Wire.probe_spec list
 (** The fade probe ({!Screen_state.Fade.middle_box} of the picture), then
-    {!Dark_corners}, {!Dialog} and {!Battle_screen}'s probes. *)
+    {!Dark_corners}, {!Dialog} and {!Battle_screen.start_probes}: what the
+    overworld needs, a walk's interrupts and a settle. [battle] sees a battle
+    start with these; a battle's own readers subscribe the rest. *)
 
 val of_measurements : Effects.measurements -> Screen_state.Facts.t
 (** [fade], [dialog] (the white box, with or without a Yes/No box) and [battle].

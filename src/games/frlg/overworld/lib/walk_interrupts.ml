@@ -22,6 +22,7 @@ let message_delay_ms = 400
 let max_b_presses = 5
 let b_hold_ms = 160
 let b_cooldown_ms = 840
+let probes = Screen_facts.probes
 
 let wild_flash ~flee : Grid_walker.Leg_interrupt.t =
   {

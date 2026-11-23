@@ -168,7 +168,10 @@ let rec walk_legs t ~rejoins at legs =
   | Error (at, legs) -> walk_legs t ~rejoins:(rejoins + 1) at legs
 
 let walk t at legs =
-  match walk_legs t ~rejoins:0 at legs with
+  match
+    Effects.with_probes Walk_interrupts.probes (fun () ->
+        walk_legs t ~rejoins:0 at legs)
+  with
   | at -> Ok at
   | exception Walk_failed cause -> Error cause
   | exception Grid_walker.Leg_walker.Interrupted_too_often s ->

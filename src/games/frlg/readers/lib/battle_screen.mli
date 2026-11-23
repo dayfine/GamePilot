@@ -11,6 +11,11 @@
 val probes : Wire.probe_spec list
 (** Every probe the readers need. *)
 
+val start_probes : Wire.probe_spec list
+(** The text box's 4 of the 28: enough for {!battle_shows} to see a battle
+    start, which opens with the text box ("Wild X appeared!", a trainer's
+    challenge). *)
+
 val teal_box : Effects.measurements -> string -> bool
 (** The probe with this id ({!Solid_color.probe}) shows the text box's flat
     teal, as the fork tests it. *)

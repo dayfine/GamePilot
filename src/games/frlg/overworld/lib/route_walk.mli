@@ -44,6 +44,6 @@ val walk :
   at ->
   Connected_maps.place Grid_planning.Leg.t list ->
   (at, Story.Failure.cause) result
-(** Walks the legs from [at]. Fails with [route_unsupported] (an action leg),
-    [leg_blocked], [interrupted], [no_warp_fade], [fade_stuck], [trainer_battle]
-    or [message_stuck]. *)
+(** Walks the legs from [at], with {!Walk_interrupts.probes} subscribed. Fails
+    with [route_unsupported] (an action leg), [leg_blocked], [interrupted],
+    [no_warp_fade], [fade_stuck], [trainer_battle] or [message_stuck]. *)

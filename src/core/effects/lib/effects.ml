@@ -26,17 +26,43 @@ let load_state path = Effect.perform (Load_state path)
 let upload_template png = Effect.perform (Upload_template png)
 let subscribe probes = Effect.perform (Subscribe probes)
 let unsubscribe ids = Effect.perform (Unsubscribe ids)
+let probe (m : measurements) id = List.assoc_opt id m.probes
+
+(* The probe ids the [with_probes] calls running on this domain subscribed:
+   an inner call leaves the ones an outer call holds to it. *)
+let held_ids = Domain.DLS.new_key (fun () -> [])
+
+let first_of_each_id probes =
+  List.fold_left
+    (fun kept (p : Wire.probe_spec) ->
+      if List.exists (fun (k : Wire.probe_spec) -> k.id = p.id) kept then kept
+      else kept @ [ p ])
+    [] probes
+
+(* The probes of [probes] no running [with_probes] holds, each id once. *)
+let not_held probes =
+  let held = Domain.DLS.get held_ids in
+  List.filter
+    (fun (p : Wire.probe_spec) -> not (List.mem p.id held))
+    (first_of_each_id probes)
 
 let with_probes probes f =
-  ignore (subscribe probes : string list);
-  let ids = List.map (fun (p : Wire.probe_spec) -> p.id) probes in
+  let fresh = not_held probes in
+  let ids = List.map (fun (p : Wire.probe_spec) -> p.id) fresh in
+  let outer = Domain.DLS.get held_ids in
+  if ids <> [] then ignore (subscribe fresh : string list);
+  Domain.DLS.set held_ids (ids @ outer);
+  let release () =
+    Domain.DLS.set held_ids outer;
+    if ids <> [] then ignore (unsubscribe ids : string list)
+  in
   match f () with
   | result ->
-      ignore (unsubscribe ids : string list);
+      release ();
       result
-  | exception (Disconnected _ as e) -> raise e
-  | exception e ->
-      ignore (unsubscribe ids : string list);
+  | exception (Disconnected _ as e) ->
+      Domain.DLS.set held_ids outer;
       raise e
-
-let probe (m : measurements) id = List.assoc_opt id m.probes
+  | exception e ->
+      release ();
+      raise e

@@ -29,7 +29,7 @@ val settle :
   battle_ends:bool ->
   log:(string -> unit) ->
   (unit, Story.Failure.cause) result
-(** Runs the settle of that kind, fleeing no battle: [Ok] once quiet, or when a
-    battle starts if [battle_ends] (a trainer's after their talk, which the
-    plan's next event fights); else a battle fails as [battle]. The cap fails as
-    [not_settled]. *)
+(** Runs the settle of that kind with {!probes} subscribed, fleeing no battle:
+    [Ok] once quiet, or when a battle starts if [battle_ends] (a trainer's after
+    their talk, which the plan's next event fights); else a battle fails as
+    [battle]. The cap fails as [not_settled]. *)
