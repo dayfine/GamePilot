@@ -1,0 +1,4 @@
+(library
+ (name frlg)
+ (public_name gamepilot.frlg)
+ (libraries gamepilot.wire gamepilot.kernel))

@@ -6,4 +6,5 @@
  (synopsis "GamePilot programs")
  (depends
   (ocaml (>= 5.2))
-  dune))
+  dune
+  (yojson (>= 2.0))))

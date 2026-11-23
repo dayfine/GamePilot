@@ -25,3 +25,9 @@ jobs:
         run: opam exec -- dune build
       - working-directory: programs
         run: opam exec -- dune test
+      - name: Check formatting (ocamlformat version from programs/.ocamlformat)
+        if: runner.os == 'Linux'
+        working-directory: programs
+        run: |
+          opam install --yes "ocamlformat=$(sed -n 's/^version *= *//p' .ocamlformat)"
+          opam exec -- dune build @fmt
