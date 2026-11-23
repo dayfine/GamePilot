@@ -142,3 +142,5 @@ repo src/games/frlg/readers/test/images/mgba/tower5f-purified/purified-105.png|t
 repo src/games/frlg/readers/test/images/mgba/tower5f-purified/purified-107.png|tower5f-purified/purified-107__none.png
 repo src/games/frlg/readers/test/images/mgba/tower5f-purified/purified-112.png|tower5f-purified/purified-112__white.png
 repo src/games/frlg/readers/test/images/mgba/tower5f-purified/purified-200.png|tower5f-purified/purified-200__dialog-arrow.png
+repo src/games/frlg/readers/test/images/mgba/mail-glitch-route16/cut-question.png|mail-glitch-route16/cut-question__dialog-choice.png
+repo src/games/frlg/readers/test/images/mgba/mail-glitch-route16/cut-used.png|mail-glitch-route16/cut-used__dialog.png

@@ -47,19 +47,46 @@ let settle_back ~label ~log =
   | Error cause -> raise (Action_failed cause)
 
 let max_pages = 8
-let page_or_question m = Dialog.selection_dialog m || Dialog.advance_arrow m
+let question m = Option.is_some (Dialog.yes_no_cursor m)
+let page_or_question m = question m || Dialog.advance_arrow m
+let question_input_ms = 300
+let answer_cooldown_ms = 800
+
+let answer_yes_to m =
+  if Dialog.yes_no_cursor m = Some false then taps Wire.Up 1;
+  ignore (Effects.submit [ Wire.Wait { wait_ms = question_input_ms } ]);
+  press ~cooldown_ms:answer_cooldown_ms Wire.A
+
+let turn_page ~code what =
+  press Wire.A;
+  ignore
+    (await_screen ~code (what ^ "'s next page") (fun m ->
+         not (Dialog.advance_arrow m)))
 
 let rec answer_yes_from page ~code what =
   let m = await_screen ~code what page_or_question in
-  press Wire.A;
-  if not (Dialog.selection_dialog m) then (
-    ignore
-      (await_screen ~code (what ^ "'s next page") (fun m ->
-           not (Dialog.advance_arrow m)));
-    if page >= max_pages then fail code (what ^ " did not show")
-    else answer_yes_from (page + 1) ~code what)
+  if question m then answer_yes_to m
+  else if page >= max_pages then (
+    turn_page ~code what;
+    fail code (what ^ " did not show"))
+  else (
+    turn_page ~code what;
+    answer_yes_from (page + 1) ~code what)
 
-let answer_yes ~code what = answer_yes_from 1 ~code what
+let answer_yes ~code what =
+  Effects.with_probes Dialog.yes_no_probes (fun () ->
+      answer_yes_from 1 ~code what)
+
+let answer_if_asked ~timeout_ms () =
+  match Effects.await ~timeout_ms question with
+  | Holds m ->
+      answer_yes_to m;
+      true
+  | Timeout -> false
+
+let answer_yes_if_asked ~timeout_ms =
+  Effects.with_probes Dialog.yes_no_probes (answer_if_asked ~timeout_ms)
+
 let default_max_presses = 45
 
 let press_until ?(max_presses = default_max_presses) ~code what button
