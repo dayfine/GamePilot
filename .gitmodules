@@ -6,3 +6,8 @@
 	path = third_party/Packages
 	url = https://github.com/PokemonAutomation/Packages.git
 	shallow = true
+[submodule "third_party/PokemonSimulation"]
+	path = third_party/PokemonSimulation
+	url = https://github.com/dayfine/PokemonSimulation.git
+	branch = main
+	shallow = true
