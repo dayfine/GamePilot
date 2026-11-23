@@ -6,6 +6,12 @@
 type measurements = Wire.frame
 (** The latest numbers from the subscribed probes, one per frame. *)
 
+type template_hash = string
+(** An uploaded template as the daemon names it: the lowercase hex SHA-256 of
+    its PNG bytes. A [core.template_match@1] probe spec takes it
+    ([Wire.template_match_probe]); it is valid for the rest of the connection.
+*)
+
 type awaited =
   | Holds of measurements  (** the first frame on which the predicate held *)
   | Timeout
@@ -32,6 +38,7 @@ type _ Effect.t +=
   | Now : float Effect.t
   | Read : measurements option Effect.t
   | Load_state : string -> int Effect.t
+  | Upload_template : string -> template_hash Effect.t
   | Subscribe : Wire.probe_spec list -> string list Effect.t
 
 (** {1 Ops} *)
@@ -63,6 +70,11 @@ val read : unit -> measurements option
 
 val load_state : string -> int
 (** Loads a save state; returns the frame [seq] after loading. *)
+
+val upload_template : string -> template_hash
+(** [upload_template png] registers a template from a PNG file's bytes and
+    returns its hash. The handler sends each distinct PNG once per connection:
+    uploading the same bytes again returns the first hash without a request. *)
 
 val subscribe : Wire.probe_spec list -> string list
 (** Subscribes probes; returns the subscribed ids. *)

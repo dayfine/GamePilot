@@ -1,10 +1,11 @@
 (** The scheduler shared by every handler that speaks the wire protocol.
 
     It owns the client side of a session (request ids, batch ids, the latest
-    frame, the daemon clock) and answers the effects from a {!transport}. The
-    real handler's transport is a socket plus a reader thread; the replay
-    handler's transport is a recorded wire log. Both see the same scheduler, so
-    a replay takes the same decisions the live run took. *)
+    frame, the daemon clock, the templates uploaded on the connection) and
+    answers the effects from a {!transport}. The real handler's transport is a
+    socket plus a reader thread; the replay handler's transport is a recorded
+    wire log. Both see the same scheduler, so a replay takes the same decisions
+    the live run took. *)
 
 type event =
   | Message of Wire.message
