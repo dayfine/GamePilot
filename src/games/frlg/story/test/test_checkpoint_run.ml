@@ -6,7 +6,7 @@
 open Frlg_story
 
 let plan file = Result.get_ok (Story.Plan_decode.load file)
-let handled = "fly" :: Frlg_actions.Action_requests.names
+let handled = "fly" :: "lift_floor" :: Frlg_actions.Action_requests.names
 
 let missing (p : Story.Plan.t) =
   List.filter_map
@@ -31,6 +31,53 @@ let summary file () =
   in
   Printf.sprintf "%s; from %s; missing: %s" checked start missing
 
+(* Where the player stands after an event that names it, as the story game
+   reckons it: a walk's target, a lift ride's exit, a single declared tile. *)
+let reckoned (e : Story.Plan.event) : Story.Pose.observed option =
+  let of_grid (g : Story.Pose.grid) =
+    match g.tiles with
+    | [ tile ] ->
+        Some { Story.Pose.at_map = g.map; at_tile = tile; faces = g.facing }
+    | _ -> None
+  in
+  match (e.kind, e.action) with
+  | Route r, _ -> of_grid r.target
+  | Game_action args, Some "lift_floor" ->
+      Result.to_option (Frlg_actions.Lift_ride.ride_of_args args)
+      |> Option.map Frlg_actions.Lift_ride.arrival
+  | _ ->
+      Option.bind e.declared_after (function Grid g -> of_grid g | _ -> None)
+
+(* Each walk of the plan planned on the maps from where the events before it
+   leave the player: its leg count, or why it has none. *)
+let walks file () =
+  let p = plan file in
+  let world = Result.get_ok (Checkpoint_run.load_world ()) in
+  let step (at, out) (e : Story.Plan.event) =
+    let out =
+      match (e.kind, at) with
+      | Route r, Some (at : Story.Pose.observed) ->
+          let legs =
+            Result.bind (Frlg_overworld.Route_target.place_of world at)
+              (fun from ->
+                Frlg_overworld.Route_target.plan world ~from ~facing:at.faces
+                  r.target)
+          in
+          (e.id ^ " "
+          ^
+          match legs with Ok l -> string_of_int (List.length l) | Error e -> e)
+          :: out
+      | _ -> out
+    in
+    ((match reckoned e with Some _ as r -> r | None -> at), out)
+  in
+  let _, out =
+    List.fold_left step
+      (Checkpoint_run.start_of p.checkpoint, [])
+      p.checkpoint.events
+  in
+  String.concat "; " (List.rev out)
+
 let case name input expectation = { Case_table.name; input; expectation }
 
 let () =
@@ -38,7 +85,11 @@ let () =
     [
       case "mg-01"
         (summary "mg-01.plan.json")
-        "frlg; from CeladonCity (48, 12) south; missing: lift_floor";
+        "frlg; from CeladonCity (48, 12) south; missing: none";
+      case "mg-01's walks plan on the maps" (walks "mg-01.plan.json")
+        "to_coin_case_man 8; to_dept_store_lift 11; to_4f_clerk 3; \
+         back_to_4f_lift 3; to_coins_clerk 10; to_prize_clerk 5; \
+         exit_prize_room 1";
       case "mg-02"
         (summary "mg-02.plan.json")
         "frlg; from CeladonCity (39, 21) south; missing: capture";

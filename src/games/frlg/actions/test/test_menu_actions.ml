@@ -70,12 +70,12 @@ let on_each_a groups =
 
 (* The clerk's page, the choice box (no reader: a dialog), the question, then
    the prize's text. *)
-let redeem () =
+let redeem ?(page = S.Dialog_arrow) () =
   run
     ~react:
       (on_each_a
          [
-           [ (200, S.Dialog_arrow) ];
+           [ (200, page) ];
            [ (100, S.Dialog) ];
            [ (300, S.Question) ];
            [ (100, S.Dialog); (2000, S.Overworld) ];
@@ -137,11 +137,86 @@ let spin ~after_ms () =
       if p.index = 0 then S.show screen ~at_ms:(p.at_ms + after_ms) S.Battle)
     (fun () -> Spin_for_encounter.spin ~log ~facing:North ~max_batches:2)
 
+(* The clerk's text box shows 200 ms after A; its BUY/SELL box takes an A only
+   [menu_ms] later (no reader: the text box), which opens the BUY list, whose
+   cursor takes a tap only [menu_ms] after it shows. On the list, A on row 1
+   asks how many, A on the quantity the price question, YES the list again; A
+   on another row does nothing here. B on the list closes the Mart. *)
+let mart_screen ~menu_ms =
+  let text_at = ref max_int and list_at = ref max_int and row = ref 0 in
+  fun screen (p : S.press) ->
+    let show d s = S.show screen ~at_ms:(p.at_ms + d) s in
+    match (p.buttons, S.screen_at screen p.at_ms) with
+    | [ Wire.A ], S.Overworld ->
+        text_at := p.at_ms + 200;
+        show 200 S.Dialog
+    | [ Wire.A ], S.Dialog when !row = 1 ->
+        row := -1;
+        show 300 S.Question
+    | [ Wire.A ], S.Dialog when p.at_ms >= !text_at + menu_ms ->
+        list_at := p.at_ms + 300;
+        show 300 S.Mart_list
+    | [ Wire.Down ], S.Mart_list when p.at_ms >= !list_at + menu_ms -> incr row
+    | [ Wire.A ], S.Mart_list when !row = 1 -> show 300 S.Dialog
+    | [ Wire.A ], S.Question -> show 300 S.Mart_list
+    | [ Wire.B ], S.Mart_list -> show 300 S.Overworld
+    | _ -> ()
+
+(* Two Retro Mail at Celadon 4F: row 1, under POKé DOLL. *)
+let mart_buy ~menu_ms () =
+  let stock =
+    [
+      { Mart_plan.item = "poke-doll"; price = 1000 };
+      { item = "retro-mail"; price = 50 };
+    ]
+  in
+  let plan =
+    {
+      Mart_plan.map = "test";
+      lines = [ { line_item = "retro-mail"; quantity = 2 } ];
+      budget = None;
+    }
+  in
+  run ~react:(mart_screen ~menu_ms) (fun () -> Mart.run ~log stock plan)
+
+(* As mGBA showed it (mg-01, 2026-11-23): the prize list, a selection box
+   too, stays up after A on ABRA until "So, you want the ABRA?" has printed
+   (0.9 s), then YES/NO shows; an A on YES then gives the prize, and anything
+   else declines it. *)
+let redeem_list_lingers () =
+  let a_count = ref 0 and question_at = ref max_int and taken = ref false in
+  let react screen (p : S.press) =
+    let show d s = S.show screen ~at_ms:(p.at_ms + d) s in
+    if a p then (
+      incr a_count;
+      match !a_count with
+      | 1 -> show 200 S.Dialog
+      | 2 -> show 600 S.Question
+      | 3 ->
+          question_at := p.at_ms + 900;
+          show 300 S.Dialog;
+          show 900 S.Question
+      | _ when p.at_ms >= !question_at && not !taken ->
+          taken := true;
+          show 100 S.Dialog;
+          show 2000 S.Overworld
+      | _ -> ())
+  in
+  let screen = S.create ~react () in
+  let result =
+    S.run screen (fun () ->
+        Menu_input.run (fun () -> Game_corner.redeem_prize_mon ~log 0))
+  in
+  Printf.sprintf "%s; %s" (outcome result)
+    (if !taken then "the prize taken" else "the prize declined")
+
 let case name input expectation = { Case_table.name; input; expectation }
 
 let () =
   Case_table.run "menu_actions"
     [
+      case "mart: BUY and the row once the clerk's box and list take them"
+        (mart_buy ~menu_ms:1500) "ok; A x2, down, A, up, A x3, B x6";
       case "heal: a page, YES, the healing, back" heal "ok; A x3, B x8";
       case "heal: a text box with no question fails" heal_no_question
         "failed heal_no_question: the nurse's question did not show; A";
@@ -149,6 +224,10 @@ let () =
         "ok; Start, down x3, A x2, B x5";
       case "cut: the turn, A, the page, YES" cut "ok; up, A x3, B x7";
       case "redeem: the page, Abra's row, YES" redeem "ok; A x4, B x7";
+      case "redeem: YES once the question has replaced the prize list"
+        redeem_list_lingers "ok; the prize taken";
+      case "redeem: the clerk's blue arrow unread, the page turned by time"
+        (redeem ~page:S.Dialog) "ok; A x4, B x7";
       case "party swap: slot 1, SWITCH, slot 4" (swap 1 4)
         "ok; Start, A x2, down, A, down x3, A, B x6";
       case

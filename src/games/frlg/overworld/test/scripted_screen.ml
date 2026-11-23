@@ -8,6 +8,7 @@
 
 type screen =
   | Overworld
+  | Town  (** Another place's overworld: where a Fly lands. *)
   | Dialog
   | Dialog_arrow  (** A text page done: its advance arrow shows. *)
   | Question  (** A Yes/No box over the text box (a Switch capture). *)
@@ -24,6 +25,7 @@ type screen =
 
 let screen_name = function
   | Overworld -> "overworld"
+  | Town -> "town"
   | Dialog -> "dialog"
   | Dialog_arrow -> "dialog arrow"
   | Question -> "question"
@@ -40,6 +42,7 @@ let screen_name = function
    every fixture file that has its image. *)
 let image = function
   | Overworld -> "mail-glitch-04/overworld__none.png"
+  | Town -> "mail-glitch-04/mg05-overworld__none.png"
   | Dialog -> "screenshots-779/20261122-003725-01.01__dialog.png"
   | Battle -> "mail-glitch-04/mg05-recycle-3__battle.png"
   | Flash -> "mail-glitch-04/overworld__none.png"
