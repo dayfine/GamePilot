@@ -59,7 +59,7 @@ let to_top () =
       Bag_screen.cursor_row m = Some 0)
 
 let open_pocket_top pocket =
-  M.open_start_menu_row bag_row;
+  Menu_cursor.open_start_menu_row bag_row;
   turn_to pocket;
   to_top ()
 
@@ -86,10 +86,35 @@ let rec find_from candidates name k =
   M.taps Wire.Down (taps - taps_to_reveal (k - 1));
   let row = if taps > 0 then shown_rows - 1 else k in
   match read_row candidates row with
-  | Some text when text = name -> Some (k, taps)
+  | Some text when text = name -> Some k
   | Some text when text <> cancel && k < max_list_rows ->
       find_from candidates name (k + 1)
   | _ -> None
+
+let cursor_text candidates =
+  let m =
+    M.await_screen ~code:"no_bag" "the bag's cursor" (fun m ->
+        Option.is_some (Bag_screen.cursor_row m))
+  in
+  let row = Option.get (Bag_screen.cursor_row m) in
+  (row, read_row candidates row)
+
+(* DOWN until the cursor's row reads the item: the cursor stays on the
+   window's fourth row while the list scrolls under it, so the name, not the
+   row, says where it is. A tap the bag did not take is tapped again. *)
+let tap_down_from row =
+  M.taps Wire.Down 1;
+  ignore
+    (Effects.await ~timeout_ms:Menu_cursor.tap_timeout_ms (fun m ->
+         Bag_screen.cursor_row m <> Some row))
+
+let rec down_to candidates name presses =
+  match cursor_text candidates with
+  | _, Some text when text = name -> ()
+  | row, _ when presses < max_list_rows ->
+      tap_down_from row;
+      down_to candidates name (presses + 1)
+  | _ -> M.fail "not_in_bag" (name ^ " did not come under the cursor")
 
 let select slug =
   let pocket = pocket_of_item slug in
@@ -104,4 +129,4 @@ let select slug =
   | Some name -> (
       match find_from (cancel :: in_pocket) name 0 with
       | None -> not_in_bag ()
-      | Some (k, taps) -> M.taps Wire.Down (k - taps))
+      | Some _ -> down_to (cancel :: in_pocket) name 0)

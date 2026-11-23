@@ -10,8 +10,8 @@ val fail : ?repeats:bool -> string -> string -> 'a
 (** Raises {!Action_failed} with [Story.Failure.cause code detail]. *)
 
 val probes : Wire.probe_spec list
-(** What the menu actions read: {!Scene_looks.probes}, the party, the bag and
-    the money box. *)
+(** What the menu actions read: {!Scene_looks.probes}, the party and a member's
+    menu, the bag and the money box. *)
 
 val run : (unit -> unit) -> (unit, Story.Failure.cause) result
 (** Runs the body with {!probes} subscribed; [Error] with the cause it failed
@@ -37,7 +37,9 @@ val taps : Wire.button -> int -> unit
 (** [n] cursor taps of the button; none for [n <= 0]. *)
 
 val moves : from:int -> to_:int -> unit
-(** Taps down (or up) that move a menu cursor from row [from] to row [to_]. *)
+(** Taps down (or up) that move a menu cursor from row [from] to row [to_], for
+    a menu with no cursor reader (a Mart's list); the others move by reading
+    ({!Menu_cursor}). *)
 
 val await_screen :
   ?timeout_ms:int ->
@@ -48,10 +50,6 @@ val await_screen :
 (** The first frame the reader holds on; fails as [code] with
     ["<what> did not show"] after [timeout_ms] (default {!screen_timeout_ms}).
 *)
-
-val open_start_menu_row : int -> unit
-(** START, the Start menu read, the cursor moved from the row it reads on to
-    this row (from 0 at the top), then A. Fails as [no_start_menu]. *)
 
 val settle_back : label:string -> log:(string -> unit) -> unit
 (** The talk settle ({!Scene_looks.settle}) back to a quiet overworld: B through

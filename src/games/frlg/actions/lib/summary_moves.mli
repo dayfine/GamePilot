@@ -15,6 +15,15 @@ val read_offered : unit -> string option
 (** {!read_row} 4: the move offered on the list to forget from. *)
 
 val read_known : log:(string -> unit) -> slot:int -> string list
-(** From the overworld: the party, the member in [slot] (from 1), SUMMARY (the
-    top of its menu), RIGHT to the moves page, its four rows read, then B back
-    to the overworld. Fails as [no_party], [no_member_menu] or [no_summary]. *)
+
+val reread_ms : int
+(** Between two reads of the moves page's rows: 150 ms. *)
+
+val max_reads : int
+(** Reads of the rows before they must have settled: 12. *)
+
+(** From the overworld: the party, the member in [slot] (from 1), SUMMARY on its
+    menu ({!Menu_cursor}), RIGHT to the moves page, its four rows read until the
+    first shows a move and two reads {!reread_ms} apart agree (the page's mark
+    turns before the names are drawn), then B back to the overworld. Fails as
+    [no_party], [no_member_menu] or [no_summary]. *)

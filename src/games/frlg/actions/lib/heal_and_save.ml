@@ -17,7 +17,7 @@ let overwrite_question_ms = 3000
 
 let save ~log () =
   log "Save.";
-  M.open_start_menu_row save_row;
+  Menu_cursor.open_start_menu_row save_row;
   M.answer_yes ~code:"save_no_question" "the save question";
   ignore
     (M.await_screen ~code:"save_no_question" "the save question closing"

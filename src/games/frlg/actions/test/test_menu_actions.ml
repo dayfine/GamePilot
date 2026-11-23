@@ -82,20 +82,36 @@ let redeem () =
          ])
     (fun () -> Game_corner.redeem_prize_mon ~log 0)
 
-(* The party opens on POKéMON; A on a slot opens its menu; A on SWITCH and on
-   the second slot keep the party. *)
-let swap_screen screen (p : S.press) =
-  let show s = S.show screen ~at_ms:(p.at_ms + 200) s in
-  match (p.buttons, S.screen_at screen p.at_ms) with
-  | [ Wire.Start ], _ -> show (S.Start_menu 1)
-  | [ Wire.A ], S.Start_menu _ -> show S.Party
-  | [ Wire.A ], S.Party when List.length screen.S.presses = 3 ->
-      show S.Member_menu
-  | [ Wire.A ], S.Member_menu -> show S.Party
-  | [ Wire.B ], S.Party -> show S.Overworld
-  | _ -> ()
+(* START opens the menu on [start_row]; A on POKéMON the party, its cursor on
+   [slot]; A on a slot opens its menu; A on SWITCH and on the second slot
+   keep the party. The cursors move as the presses move them, once a menu has
+   shown [input_delay_ms]. *)
+let swap_screen ~start_row ~slot () =
+  let switching = ref false and chosen = ref slot in
+  fun screen (p : S.press) ->
+    let show s = S.show screen ~at_ms:(p.at_ms + 200) s in
+    match (p.buttons, S.screen_at screen p.at_ms) with
+    | [ Wire.Start ], _ -> show (S.Start_menu start_row)
+    | [ Wire.A ], S.Start_menu 1 -> show (S.Party slot)
+    | [ Wire.A ], S.Start_menu _ -> show S.Black
+    | [ Wire.A ], S.Party s when not !switching ->
+        chosen := s;
+        show (S.Member_menu 0)
+    | [ Wire.A ], S.Member_menu 1 ->
+        switching := true;
+        show (S.Party !chosen)
+    | [ Wire.B ], S.Party _ -> show S.Overworld
+    | _ -> ()
 
-let swap () = run ~react:swap_screen (fun () -> Party_actions.swap ~log 1 4)
+let swap ?(start_row = 1) ?(slot = 1) ?(input_delay_ms = 0) a b () =
+  let screen =
+    S.create ~react:(swap_screen ~start_row ~slot ()) ~input_delay_ms ()
+  in
+  let result =
+    S.run screen (fun () ->
+        Menu_input.run (fun () -> Party_actions.swap ~log a b))
+  in
+  Printf.sprintf "%s; %s" (outcome result) (S.presses_text screen)
 
 (* A trade: the offer's question, the party, then the trade (black) and the
    trader's text. *)
@@ -103,8 +119,8 @@ let trade_screen screen (p : S.press) =
   let show d s = S.show screen ~at_ms:(p.at_ms + d) s in
   match S.screen_at screen p.at_ms with
   | S.Overworld when a p -> show 200 S.Question
-  | S.Question when a p -> show 300 S.Party
-  | S.Party when a p ->
+  | S.Question when a p -> show 300 (S.Party 1)
+  | S.Party _ when a p ->
       show 100 S.Black;
       show 5000 S.Dialog;
       show 7000 S.Overworld
@@ -133,8 +149,18 @@ let () =
         "ok; Start, down x3, A x2, B x5";
       case "cut: the turn, A, the page, YES" cut "ok; up, A x3, B x7";
       case "redeem: the page, Abra's row, YES" redeem "ok; A x4, B x7";
-      case "party swap: slot 1, SWITCH, slot 4" swap
-        "ok; Start, A x2, up x3, A, down x3, A, B x6";
+      case "party swap: slot 1, SWITCH, slot 4" (swap 1 4)
+        "ok; Start, A x2, down, A, down x3, A, B x6";
+      case
+        "party swap after a load on the Pokédex row, the menu slow to take \
+         taps (live run t1): read down to POKéMON"
+        (swap ~start_row:0 ~input_delay_ms:150 1 4)
+        "ok; Start, down x2, A x2, down x2, A, down x4, A, B x6";
+      case
+        "party swap with the party's cursor left on slot 5 and the party slow \
+         to take taps (live run t5): 6 with 1"
+        (swap ~slot:5 ~input_delay_ms:150 6 1)
+        "ok; Start, A, down x2, A, down x2, A, up x6, A, B x6";
       case "trade: YES, slot 3, A through the trade" trade
         "ok; A x2, down x2, A x6, B x7";
       case "spin: a battle in the first batch" (spin ~after_ms:1500)

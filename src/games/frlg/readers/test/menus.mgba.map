@@ -19,7 +19,7 @@ repo src/games/frlg/readers/test/images/mgba/emu-1/screenshots-779/20261122-1155
 repo src/games/frlg/readers/test/images/mgba/emu-1/screenshots-779/20261122-123508-19.04b.png|emu-1/20261122-123508-19.04b__none.png
 repo src/games/frlg/readers/test/images/mgba/emu-1/screenshots-779/20261122-135540-19.04d.png|emu-1/20261122-135540-19.04d__bag-items-row3.png
 repo src/games/frlg/readers/test/images/mgba/emu-1/screenshots-779/20261122-142507-20.01a.png|emu-1/20261122-142507-20.01a__party-slot1-members4.png
-repo src/games/frlg/readers/test/images/mgba/emu-1/screenshots-779/20261122-150506-20.01.png|emu-1/20261122-150506-20.01__slot1.png
+repo src/games/frlg/readers/test/images/mgba/emu-1/screenshots-779/20261122-150506-20.01.png|emu-1/20261122-150506-20.01__slot1-member0.png
 repo src/games/frlg/readers/test/images/mgba/emu-1/screenshots-779/20261122-153505-20.02.png|emu-1/20261122-153505-20.02__bag-items-row3.png
 repo src/games/frlg/readers/test/images/mgba/emu-1/screenshots-779/20261122-154509-20.03.png|emu-1/20261122-154509-20.03__bag-items-row2.png
 repo src/games/frlg/readers/test/images/mgba/emu-1/screenshots-779/20261122-155504-20.04.png|emu-1/20261122-155504-20.04__bag-items-row3.png
@@ -29,11 +29,11 @@ repo src/games/frlg/readers/test/images/mgba/emu-1/screenshots-779/20261122-1624
 repo src/games/frlg/readers/test/images/mgba/emu-1/screenshots-779/20261122-163504-20.05.png|emu-1/20261122-163504-20.05__bag-items-row3.png
 repo src/games/frlg/readers/test/images/mgba/emu-1/screenshots-779/20261122-164509-20.05.png|emu-1/20261122-164509-20.05__none.png
 repo src/games/frlg/readers/test/images/mgba/mail-glitch-04-inspect/boot.png|mail-glitch-04/boot__none.png
-repo src/games/frlg/readers/test/images/mgba/mail-glitch-04-inspect/chding-menu.png|mail-glitch-04/chding-menu__none.png
+repo src/games/frlg/readers/test/images/mgba/mail-glitch-04-inspect/chding-menu.png|mail-glitch-04/chding-menu__member0.png
 repo src/games/frlg/readers/test/images/mgba/mail-glitch-04-inspect/field.png|mail-glitch-04/field__none.png
 repo src/games/frlg/readers/test/images/mgba/mail-glitch-04-inspect/live.png|mail-glitch-04/live__summary3.png
 repo src/games/frlg/readers/test/images/mgba/mail-glitch-04-inspect/menu.png|mail-glitch-04/menu__none.png
-repo src/games/frlg/readers/test/images/mgba/mail-glitch-04-inspect/mg05-mimien-menu.png|mail-glitch-04/mg05-mimien-menu__slot3-held1-held2-mail3.png
+repo src/games/frlg/readers/test/images/mgba/mail-glitch-04-inspect/mg05-mimien-menu.png|mail-glitch-04/mg05-mimien-menu__slot3-held1-held2-mail3-member0.png
 repo src/games/frlg/readers/test/images/mgba/mail-glitch-04-inspect/mg05-overworld.png|mail-glitch-04/mg05-overworld__none.png
 repo src/games/frlg/readers/test/images/mgba/mail-glitch-04-inspect/mg05-party.png|mail-glitch-04/mg05-party__party-slot1-members6-held1-held2-mail3.png
 repo src/games/frlg/readers/test/images/mgba/mail-glitch-04-inspect/mg05-party-detail.png|mail-glitch-04/mg05-party-detail__party-slot1-members6-held1-held2-mail3.png
@@ -43,3 +43,6 @@ repo src/games/frlg/readers/test/images/mgba/mail-glitch-04-inspect/overworld.pn
 repo src/games/frlg/readers/test/images/mgba/mail-glitch-04-inspect/party.png|mail-glitch-04/party__party-slot1-members6-held6.png
 repo src/games/frlg/readers/test/images/mgba/mail-glitch-04-inspect/party-detail.png|mail-glitch-04/party-detail__party-slot1-members6-held6.png
 repo src/games/frlg/readers/test/images/mgba/mail-glitch-04-inspect/pause-menu.png|mail-glitch-04/pause-menu__start0.png
+repo src/games/frlg/readers/test/images/mgba/grind-2026-11-23/member-menu-slot5.png|grind-2026-11-23/member-menu-slot5__member0.png
+repo src/games/frlg/readers/test/images/mgba/grind-2026-11-23/mimien-moves.png|grind-2026-11-23/mimien-moves__summary3.png
+repo src/games/frlg/readers/test/images/mgba/grind-2026-11-23/mimien-moves-drawing.png|grind-2026-11-23/mimien-moves-drawing__summary3.png
