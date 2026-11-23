@@ -90,10 +90,17 @@ let boxes : (string * Wire.box) list =
 let probes = List.map (fun (id, b) -> Solid_color.probe ~id b) boxes
 let holds = Solid_color.holds
 
+(* The teal is dark, a channel sum near 230. Its hue test alone takes near
+   white too (shares within 0.21 of the teal's): Pokemon Tower 5F's purified
+   zone fades the overworld to white, and a frame of that fade read as the
+   action menu (mGBA, 2026-11-23, run 1 of the mg-04 flee fix). *)
+let teal_max_sum = 400.
+
 let teal m id =
-  holds m id
-    (Solid_color.is_solid ~ratio:box_teal ~max_distance:teal_distance
-       ~max_stddev_sum:teal_stddev)
+  holds m id (fun s ->
+      Solid_color.sum s.mean <= teal_max_sum
+      && Solid_color.is_solid ~ratio:box_teal ~max_distance:teal_distance
+           ~max_stddev_sum:teal_stddev s)
 
 let teal_box = teal
 let white m id = holds m id (fun s -> Solid_color.is_white s)
@@ -148,10 +155,16 @@ let foe_box m =
 
 let hp_box m = player_box m || foe_box m
 
+(* The slate is a mid grey, a channel sum near 375; like the teal, its hue
+   test alone takes near white (the purified zone's fade read as a level-up
+   box on the same run). *)
+let slate_max_sum = 500.
+
 let slate m id =
-  holds m id
-    (Solid_color.is_solid ~ratio:level_up_slate ~max_distance:teal_distance
-       ~max_stddev_sum:teal_stddev)
+  holds m id (fun s ->
+      Solid_color.sum s.mean <= slate_max_sum
+      && Solid_color.is_solid ~ratio:level_up_slate ~max_distance:teal_distance
+           ~max_stddev_sum:teal_stddev s)
 
 let level_up_box m =
   slate m "battle.level_up.border_top"
