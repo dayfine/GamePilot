@@ -98,6 +98,8 @@ type error = Jsonrpc.error = {
 type call = Jsonrpc.call =
   | Hello of { protocol : int; client : string }
   | Load_state of { path : string }
+  | Save_state of { path : string }
+  | Save_frame of { path : string }
   | Upload_template of { png : string }
   | Subscribe of probe_spec list
   | Unsubscribe of string list
@@ -128,6 +130,8 @@ type load_state_result = Backend.load_state_result = { seq : int; load : int }
 
 let load_state_result_of_json = Backend.load_state_result_of_json
 let json_of_load_state_result = Backend.json_of_load_state_result
+let save_result_of_json = Backend.save_result_of_json
+let json_of_save_result = Backend.json_of_save_result
 let upload_template_result_of_json = Probe.upload_template_result_of_json
 let json_of_upload_template_result = Probe.json_of_upload_template_result
 let subscribe_result_of_json = Probe.subscribe_result_of_json

@@ -3,10 +3,32 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
+#include <vector>
+
+#include <opencv2/imgcodecs.hpp>
 
 namespace gamepilot {
 
 namespace {
+
+RpcError backend_error(const std::exception& error) {
+  pa::JsonObject data;
+  data["detail"] = std::string(error.what());
+  return RpcError(kBackendError, "backend error", std::move(data));
+}
+
+// Writes `frame` to `path` as a PNG. Throws BackendError.
+void write_png(const cv::Mat& frame, const std::string& path) {
+  std::vector<unsigned char> png;
+  if (!cv::imencode(".png", frame, png)) {
+    throw BackendError("cannot encode the frame as PNG");
+  }
+  pa::FileIO file;
+  if (!file.open(path, pa::FileMode::WRITE | pa::FileMode::BINARY) ||
+      file.write(png.data(), png.size()) != png.size()) {
+    throw BackendError("cannot write " + path);
+  }
+}
 
 // A frame this far behind its slot is not caught up; pacing restarts from now.
 constexpr double kMaxLagMs = 250;
@@ -196,9 +218,24 @@ pa::JsonObject Server::dispatch(const Request& request) {
       loads_++;
       return load_state_result(seq, loads_);
     } catch (const BackendError& error) {
-      pa::JsonObject data;
-      data["detail"] = std::string(error.what());
-      throw RpcError(kBackendError, "backend error", std::move(data));
+      throw backend_error(error);
+    }
+  }
+  if (method == "backend.save_state") {
+    const SaveParams save = decode_save(request.params);
+    try {
+      return save_result(backend_.save_state(save.path));
+    } catch (const BackendError& error) {
+      throw backend_error(error);
+    }
+  }
+  if (method == "backend.save_frame") {
+    const SaveParams save = decode_save(request.params);
+    try {
+      write_png(backend_.frame(), save.path);
+      return save_result(backend_.seq());
+    } catch (const BackendError& error) {
+      throw backend_error(error);
     }
   }
   if (method == "probe.upload_template") {

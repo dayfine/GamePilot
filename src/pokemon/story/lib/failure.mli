@@ -24,11 +24,16 @@ type reason =
   | Not_at_declared of { declared : Pose.grid; observed : Pose.observed }
       (** The event passed, but the game reads the player somewhere other than
           its [declared_after]. *)
+  | Not_at_end of { declared : Pose.grid; observed : Pose.observed option }
+      (** Every event passed, but the player is not at the checkpoint's declared
+          end ({!Checkpoint_end}), or the game cannot tell where they are. *)
 
 type t = {
   checkpoint_id : string;
-  event_index : int;  (** From 0. *)
-  event_id : string;
+  event_index : int;
+      (** From 0; the number of events for a {!Not_at_end}, which comes after
+          the last one. *)
+  event_id : string;  (** ["end"] for a {!Not_at_end}. *)
   reason : reason;
 }
 

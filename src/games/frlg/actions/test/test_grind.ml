@@ -256,4 +256,102 @@ let flows =
       " => failed not_in_party: mr-mime is not in the party";
   ]
 
-let () = Case_table.run "grind" (decoding @ decisions @ flows)
+(* The default strategy's walks on all of FireRed's maps, as a run loads them:
+   the Victory Road 2F spot is reached by Route 23's top exit, a walk from
+   Indigo Plateau with no Strength puzzle on the way. *)
+module Route_target = Frlg_overworld.Route_target
+
+let kanto =
+  lazy
+    (Frlg_overworld_fixtures.Frlg_world.world
+       (Grid_maps.Map_file.runtime_names
+          ~maps_dir:Frlg_overworld_fixtures.Frlg_world.maps_dir))
+
+let victory_road =
+  List.find
+    (fun (s : Grind_plan.strategy) -> s.name = "victory_road_2f")
+    strategies
+
+let nurse_of (s : Grind_plan.strategy) =
+  match s.heal with Nurse g | Pad g -> g
+
+let pose_of (g : Story.Pose.grid) : Story.Pose.observed =
+  { at_map = g.map; at_tile = List.hd g.tiles; faces = g.facing }
+
+let legs_from (from : Story.Pose.observed) target =
+  let w = Lazy.force kanto in
+  Result.bind (Route_target.place_of w from) (fun place ->
+      Route_target.plan w ~from:place ~facing:from.faces target)
+
+(* The maps each press of the walk stands on, in order, including the ones a
+   leg crosses without stopping. *)
+let maps_crossed from target () =
+  let w = Lazy.force kanto in
+  let name (p : Grid_maps.Connected_maps.place) =
+    (Grid_maps.Connected_maps.map w.maps p.map).name
+  in
+  let rec pressed place direction n acc =
+    match (n, Frlg_overworld.Frlg_steps.press w place direction) with
+    | 0, _ | _, None -> acc
+    | n, Some step -> pressed step.next direction (n - 1) (name step.next :: acc)
+  in
+  let leg_maps acc (leg : _ Grid_planning.Leg.t) =
+    match leg.kind with
+    | Walk { tiles; _ } -> pressed leg.start leg.direction tiles acc
+    | Face | Action _ -> name leg.finish :: acc
+  in
+  let rec dedupe = function
+    | a :: (b :: _ as rest) when a = b -> dedupe rest
+    | a :: rest -> a :: dedupe rest
+    | [] -> []
+  in
+  match legs_from from target with
+  | Error e -> "error: " ^ e
+  | Ok legs ->
+      List.fold_left leg_maps [ from.at_map ] legs
+      |> List.rev |> dedupe |> String.concat " -> "
+
+let indigo_landing =
+  (Option.get
+     (Fly_towns.find (Result.get_ok (Fly_towns.load ())) "IndigoPlateau"))
+    .landing
+
+(* Fly lands the player facing south, so the first leg south is held at once:
+   a turn tap would be a step south, and every leg after it a tile off. *)
+let first_hold from target () =
+  let w = Lazy.force kanto in
+  match legs_from from target with
+  | Error e -> "error: " ^ e
+  | Ok [] -> "no legs"
+  | Ok (leg :: _) -> (
+      match
+        Frlg_overworld.Route_legs.move_of w Running ~facing:from.faces leg
+      with
+      | Ok (Hold { turn_first; _ }) ->
+          Grid_maps.Direction.name leg.direction
+          ^ if turn_first then ", turn tap first" else ", no turn tap"
+      | Ok (Turn d) -> "turn " ^ Grid_maps.Direction.name d
+      | Error e -> "error: " ^ e)
+
+let routes =
+  [
+    case
+      "victory_road_2f: Fly's landing to the spot, south by Route 23's top exit"
+      (maps_crossed indigo_landing victory_road.spot)
+      "IndigoPlateau_Exterior -> Route23 -> VictoryRoad_2F";
+    case
+      "victory_road_2f: Fly's landing faces south, the first hold has no turn \
+       tap"
+      (first_hold indigo_landing victory_road.spot)
+      "south, no turn tap";
+    case "victory_road_2f: the nurse to the spot"
+      (maps_crossed (pose_of (nurse_of victory_road)) victory_road.spot)
+      "IndigoPlateau_PokemonCenter_1F -> IndigoPlateau_Exterior -> Route23 -> \
+       VictoryRoad_2F";
+    case "victory_road_2f: the spot back to the nurse"
+      (maps_crossed (pose_of victory_road.spot) (nurse_of victory_road))
+      "VictoryRoad_2F -> Route23 -> IndigoPlateau_Exterior -> \
+       IndigoPlateau_PokemonCenter_1F";
+  ]
+
+let () = Case_table.run "grind" (decoding @ decisions @ flows @ routes)

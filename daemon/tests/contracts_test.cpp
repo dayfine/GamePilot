@@ -53,6 +53,15 @@ void check_requests(const std::map<std::string, pa::JsonValue>& files) {
   CHECK(load.method == "backend.load_state");
   CHECK(decode_load_state(load.params).path.ends_with("overworld.ss"));
 
+  const Request save_state =
+      decode_request(files.at("24-save_state.request.json"));
+  CHECK(save_state.method == "backend.save_state");
+  CHECK(decode_save(save_state.params).path.ends_with("mg-02.start.ss"));
+  const Request save_frame =
+      decode_request(files.at("26-save_frame.request.json"));
+  CHECK(save_frame.method == "backend.save_frame");
+  CHECK(decode_save(save_frame.params).path.ends_with("failure.png"));
+
   const Request subscribe =
       decode_request(files.at("05-subscribe.request.json"));
   const SubscribeParams probes = decode_subscribe(subscribe.params);
@@ -136,6 +145,10 @@ void check_encoders(const std::map<std::string, pa::JsonValue>& files) {
   CHECK(hello_result(mgba) == result_of(files.at("02-hello.response.json")));
   CHECK(load_state_result(1200, 1) ==
         result_of(files.at("04-load_state.response.json")));
+  CHECK(save_result(5400) ==
+        result_of(files.at("25-save_state.response.json")));
+  CHECK(save_result(5460) ==
+        result_of(files.at("27-save_frame.response.json")));
   CHECK(subscribe_result({"menu_panel"}) ==
         result_of(files.at("06-subscribe.response.json")));
   CHECK(submit_result("b1", 1203) ==
@@ -307,8 +320,8 @@ void check_errors() {
 
 int main() {
   const auto files = load_contracts();
-  CHECK(files.size() == 23);
-  if (files.size() == 23) {
+  CHECK(files.size() == 27);
+  if (files.size() == 27) {
     check_requests(files);
     check_upload(files);
     check_encoders(files);

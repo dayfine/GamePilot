@@ -39,6 +39,8 @@ type _ Effect.t +=
   | Now : float Effect.t
   | Read : measurements option Effect.t
   | Load_state : string -> int Effect.t
+  | Save_state : string -> int Effect.t
+  | Save_frame : string -> int Effect.t
   | Upload_template : string -> template_hash Effect.t
   | Subscribe : Wire.probe_spec list -> string list Effect.t
   | Unsubscribe : string list -> string list Effect.t
@@ -72,6 +74,15 @@ val read : unit -> measurements option
 
 val load_state : string -> int
 (** Loads a save state; returns the frame [seq] after loading. *)
+
+val save_state : string -> int
+(** Saves the emulator's state to the path; returns the frame [seq] saved. A
+    dev-loop op (the checkpoint runner saves a passing checkpoint's end as the
+    next one's start), not one a program's steps use. *)
+
+val save_frame : string -> int
+(** Writes the current frame to the path as a PNG; returns its [seq]. The
+    checkpoint runner's failure frame. *)
 
 val upload_template : string -> template_hash
 (** [upload_template png] registers a template from a PNG file's bytes and

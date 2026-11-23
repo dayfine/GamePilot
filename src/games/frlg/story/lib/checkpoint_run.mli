@@ -27,10 +27,13 @@ val start_of : Story.Plan.checkpoint -> Story.Pose.observed option
 (** The checkpoint's [start] when it names one tile. *)
 
 val run :
+  ?end_at:Story.Pose.grid ->
   options ->
   Frlg_overworld.Frlg_steps.world ->
   Story.Plan.t ->
   (unit, Story.Failure.t) result
 (** In the effect context: loads the state and runs the checkpoint with the
     overworld's probes ({!Frlg_readers.Screen_facts.probes}) subscribed; a walk,
-    a settle, a menu action and a battle add their own while they run. *)
+    a settle, a menu action and a battle add their own while they run. With
+    [end_at], the player must end there ({!Story.Runner.run}); FireRed reads no
+    position yet, so it is where the walks tracked the player. *)
