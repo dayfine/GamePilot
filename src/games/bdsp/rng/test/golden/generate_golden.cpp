@@ -5,12 +5,14 @@
 
 #include <cinttypes>
 #include <cmath>
+#include <chrono>
 #include <cstdio>
 #include <limits>
 #include <string>
 #include <vector>
 #include "Pokemon/Pokemon_BdspRng.h"
 #include "Pokemon/Pokemon_Gf2Matrix.h"
+#include "PokemonBDSP/Inference/Rng/PokemonBDSP_BlinkExtraction.h"
 #include "PokemonBDSP/Programs/RngManipulation/PokemonBDSP_BlinkModel.h"
 #include "PokemonBDSP/Programs/RngManipulation/PokemonBDSP_StateSolver.h"
 
@@ -429,6 +431,282 @@ void state_solver_lines(FILE* out){
     solve_pokemon_line(out, request);
 }
 
+using PokemonAutomation::WallClock;
+
+//  Capture timestamps are whole microseconds near a real epoch time; the OCaml
+//  reads them as seconds (us / 1e6), which is what the C++ computes from them.
+const int64_t CAPTURE_START_US = 1763900000000000;
+const int64_t FRAME_US = 66667;     //  15 fps
+const size_t CAPTURE_FRAMES = 3000; //  200 s, past the 180 s auto threshold
+
+std::vector<BlinkMatchSample> match_samples(int64_t start_us, int64_t step_us, const std::vector<int>& milli){
+    std::vector<BlinkMatchSample> samples;
+    for (size_t c = 0; c < milli.size(); c++){
+        BlinkMatchSample sample;
+        sample.timestamp = WallClock(std::chrono::microseconds(start_us + (int64_t)c * step_us));
+        sample.match = milli[c] / 1000.0;
+        samples.push_back(sample);
+    }
+    return samples;
+}
+
+//  One watcher's template match, in thousandths, for the NPC at "slot" of
+//  "npcs" ticking every "period" seconds from "seed": resting near 0.85, each
+//  blink a 0.2 s dip to 0.35 (a double blink dips twice, 0.35 s apart), and
+//  now and then a shallow dip that is not a blink.
+std::vector<int> synthetic_matches(
+    const Xorshift128State& seed, uint8_t npcs, uint8_t slot, double period, double offset
+){
+    size_t ticks = (size_t)(CAPTURE_FRAMES * FRAME_US / 1e6 / period);
+    std::vector<double> closed;
+    std::vector<BlinkTick> blinks = generate_blink_ticks(Xorshift128(seed), ticks, npcs, slot);
+    for (size_t tick = 0; tick < blinks.size(); tick++){
+        if (blinks[tick].blinked){
+            double at = offset + tick * period;
+            closed.push_back(at);
+            if (blinks[tick].type == BlinkType::Double){
+                closed.push_back(at + 0.35);
+            }
+        }
+    }
+    Xorshift128 noise(Xorshift128State(0x31415926, 0x53589793, 0x23846264, 0x33832795 + slot));
+    std::vector<int> milli;
+    for (size_t frame = 0; frame < CAPTURE_FRAMES; frame++){
+        double t = frame * FRAME_US / 1e6;
+        int jitter = (int)(noise.next() % 17) - 8;
+        int value = 850 + jitter;
+        if (noise.next() % 211 == 0){
+            value = 800 + jitter;
+        }
+        for (double at : closed){
+            if (t >= at && t - at < 0.2){
+                value = 350 + jitter;
+            }
+        }
+        milli.push_back(value);
+    }
+    return milli;
+}
+
+std::string events_text(const std::vector<BlinkEvent>& events){
+    std::string text = std::to_string(events.size());
+    char buffer[40];
+    for (const BlinkEvent& event : events){
+        std::snprintf(buffer, sizeof(buffer), " %.17g%c", event.seconds,
+            event.type == BlinkType::Single ? 'S' : 'D');
+        text += buffer;
+    }
+    return text;
+}
+
+std::string fit_text(const TickFit& fit){
+    char buffer[80];
+    std::snprintf(buffer, sizeof(buffer), "%.17g %.17g %.17g", fit.period_seconds, fit.rms_ticks, fit.worst_ticks);
+    return buffer;
+}
+
+void blinks_lines(FILE* out, const std::vector<Blink>& blinks){
+    for (const Blink& blink : blinks){
+        std::fprintf(out, "\n  blink %.17g %.17g %zu", blink.seconds, blink.depth, blink.frames);
+    }
+}
+
+void matches_inputs(FILE* out, int64_t start_us, int64_t step_us, const std::vector<int>& milli){
+    std::fprintf(out, " %" PRId64 " %" PRId64 " %zu", start_us, step_us, milli.size());
+    for (int value : milli){
+        std::fprintf(out, " %d", value);
+    }
+}
+
+//  The whole extraction of one watcher: threshold, blinks, events, period.
+std::vector<BlinkEvent> extract_stream_line(FILE* out, const std::vector<int>& milli, TickFit& fit){
+    std::vector<BlinkMatchSample> samples = match_samples(CAPTURE_START_US, FRAME_US, milli);
+    double threshold = auto_blink_threshold(samples);
+    std::vector<Blink> blinks = extract_blinks(samples, threshold);
+    std::vector<BlinkEvent> events = group_blinks(blinks);
+    fit = fit_tick_period(events);
+    std::fprintf(out, "extract_stream");
+    matches_inputs(out, CAPTURE_START_US, FRAME_US, milli);
+    std::fprintf(out, " : threshold %.17g", threshold);
+    blinks_lines(out, blinks);
+    std::fprintf(out, "\n  events %s\n  fit %s\n", events_text(events).c_str(), fit_text(fit).c_str());
+    return events;
+}
+
+std::string streams_inputs(const std::vector<std::vector<BlinkEvent>>& streams, const std::vector<uint8_t>& slots){
+    //  The slots, then each stream's events.
+    std::string text = std::to_string(slots.size());
+    for (uint8_t slot : slots){
+        text += " " + std::to_string(slot);
+    }
+    text += " " + std::to_string(streams.size());
+    for (const std::vector<BlinkEvent>& stream : streams){
+        text += " " + events_text(stream);
+    }
+    return text;
+}
+
+void build_samples_line(FILE* out, const std::vector<std::vector<BlinkEvent>>& streams, const std::vector<uint8_t>& slots, double period){
+    std::vector<BlinkSample> samples;
+    std::string reason;
+    bool ok = build_samples(streams, slots, period, samples, reason);
+    std::fprintf(out, "build_samples %.17g %s : ", period, streams_inputs(streams, slots).c_str());
+    if (!ok){
+        std::fprintf(out, "fail reason=%s\n", reason.c_str());
+        return;
+    }
+    std::fprintf(out, "ok %zu", samples.size());
+    for (const BlinkSample& sample : samples){
+        if (sample.blinked){
+            std::fprintf(out, " %" PRIu64 "%c", sample.advance,
+                !sample.type ? '?' : *sample.type == BlinkType::Single ? 'S' : 'D');
+        }
+    }
+    std::fprintf(out, "\n  solve %s\n", npc_result_text(solve_state_from_samples(samples)).c_str());
+}
+
+void anchor_line(FILE* out, const std::vector<std::vector<BlinkEvent>>& streams, const std::vector<uint8_t>& slots, double period){
+    uint64_t advance = 0;
+    double seconds = 0;
+    size_t stream_index = 0;
+    bool ok = last_blink_anchor(streams, slots, period, advance, seconds, stream_index);
+    std::fprintf(out, "anchor %.17g %s : ", period, streams_inputs(streams, slots).c_str());
+    if (ok){
+        std::fprintf(out, "1 %" PRIu64 " %.17g %zu\n", advance, seconds, stream_index);
+    }else{
+        std::fprintf(out, "0\n");
+    }
+}
+
+BlinkEvent event_at(double seconds, BlinkType type = BlinkType::Single){
+    BlinkEvent event;
+    event.seconds = seconds;
+    event.type = type;
+    return event;
+}
+
+void blink_extraction_lines(FILE* out){
+    struct Capture{ size_t seed; uint8_t npcs; };
+    for (const Capture& capture : {Capture{1, 2}, Capture{4, 3}}){
+        std::vector<std::vector<BlinkEvent>> streams;
+        std::vector<uint8_t> slots;
+        double period = 0;
+        for (uint8_t slot = 0; slot < capture.npcs; slot++){
+            std::vector<int> milli = synthetic_matches(SEEDS[capture.seed], capture.npcs, slot, 1.0197, 0.3 + 0.07 * slot);
+            TickFit fit;
+            streams.push_back(extract_stream_line(out, milli, fit));
+            slots.push_back(slot);
+            if (slot == 0){
+                period = fit.period_seconds;
+            }
+        }
+        build_samples_line(out, streams, slots, period);
+        anchor_line(out, streams, slots, period);
+        //  The nominal tick instead of the fitted one.
+        build_samples_line(out, streams, slots, 1.017);
+    }
+
+    //  Short captures: thresholds that cannot be estimated, and extraction at
+    //  a given threshold and origin.
+    std::vector<int> dips;
+    for (size_t c = 0; c < 40; c++){
+        dips.push_back(c % 9 == 4 ? 300 : c % 9 == 5 ? 600 : 840 + (int)(c % 3));
+    }
+    struct Short{ std::vector<int> milli; int64_t step_us; double threshold; int64_t origin_us; };
+    const std::vector<Short> SHORTS{
+        {dips, FRAME_US, 0.3, 0},
+        {dips, FRAME_US, 0.5, CAPTURE_START_US - 2000000},
+        {dips, FRAME_US, 0.0, 0},
+        {dips, 5000000, 0.3, 0},
+        {{850}, FRAME_US, 0.3, 0},
+        {{}, FRAME_US, 0.3, 0},
+        {{0, 0, 0, 0}, FRAME_US, 0.3, 0},
+        {std::vector<int>(3000, 850), FRAME_US, 0.3, 0},
+    };
+    for (const Short& item : SHORTS){
+        std::vector<BlinkMatchSample> samples = match_samples(CAPTURE_START_US, item.step_us, item.milli);
+        WallClock origin = item.origin_us == 0
+            ? WallClock::min()
+            : WallClock(std::chrono::microseconds(item.origin_us));
+        std::fprintf(out, "extract_short %.17g %" PRId64, item.threshold, item.origin_us);
+        matches_inputs(out, CAPTURE_START_US, item.step_us, item.milli);
+        std::fprintf(out, " : threshold %.17g", auto_blink_threshold(samples));
+        blinks_lines(out, extract_blinks(samples, item.threshold, origin));
+        std::fprintf(out, "\n");
+    }
+
+    const std::vector<std::vector<double>> GAPS{
+        {}, {1.0}, {1.0, 1.3, 1.9, 2.2}, {1.0, 1.55, 1.6, 3.0, 3.54}, {0.1, 0.2, 0.3},
+    };
+    for (const std::vector<double>& seconds : GAPS){
+        std::vector<Blink> blinks;
+        for (double at : seconds){
+            Blink blink;
+            blink.seconds = at;
+            blinks.push_back(blink);
+        }
+        for (double window : {0.55, 0.25}){
+            std::fprintf(out, "group %.17g %zu", window, seconds.size());
+            for (double at : seconds){
+                std::fprintf(out, " %.17g", at);
+            }
+            std::fprintf(out, " : %s\n", events_text(group_blinks(blinks, window)).c_str());
+        }
+    }
+
+    const std::vector<std::vector<double>> TIMES{
+        {}, {0.0, 1.0}, {0.0, 1.0197, 3.0591, 8.1576},
+        {10.0, 11.017, 15.085, 21.187, 22.204, 40.5},
+        {0.0, 0.5, 1.0, 1.5},
+    };
+    for (const std::vector<double>& times : TIMES){
+        std::vector<BlinkEvent> events;
+        for (double at : times){
+            events.push_back(event_at(at));
+        }
+        for (const std::pair<double, double>& range : {std::pair<double, double>{1.0, 1.04}, {0.9, 1.1}}){
+            std::fprintf(out, "fit %.17g %.17g %zu", range.first, range.second, times.size());
+            for (double at : times){
+                std::fprintf(out, " %.17g", at);
+            }
+            std::fprintf(out, " : %s\n", fit_text(fit_tick_period(events, range.first, range.second)).c_str());
+        }
+    }
+
+    //  Hand-placed streams for the failures and edge cases of build_samples
+    //  and last_blink_anchor.
+    const std::vector<BlinkEvent> A{event_at(2.0), event_at(5.05, BlinkType::Double), event_at(9.1)};
+    const std::vector<BlinkEvent> B{event_at(1.5, BlinkType::Double), event_at(9.1)};
+    const std::vector<BlinkEvent> CROWDED{event_at(2.0), event_at(2.3), event_at(4.0)};
+    struct Placement{ std::vector<std::vector<BlinkEvent>> streams; std::vector<uint8_t> slots; double period; };
+    const std::vector<Placement> PLACEMENTS{
+        {{A}, {0}, 1.0},
+        {{A, B}, {0, 1}, 1.0},
+        {{B, A}, {1, 0}, 1.0},
+        {{A, B}, {0, 1}, 0.0},
+        {{A, {}}, {0, 1}, 1.0},
+        {{A}, {0, 1}, 1.0},
+        {{}, {}, 1.0},
+        {{CROWDED}, {0}, 1.0},
+    };
+    for (const Placement& item : PLACEMENTS){
+        build_samples_line(out, item.streams, item.slots, item.period);
+        anchor_line(out, item.streams, item.slots, item.period);
+    }
+
+    struct Step{ double elapsed; double period; uint8_t npcs; uint64_t previous; };
+    const std::vector<Step> STEPS{
+        {10.2, 1.02, 2, 100}, {0.4, 1.02, 2, 100}, {0.6, 1.02, 3, 7}, {-1.0, 1.02, 2, 5},
+        {5.0, 0.0, 2, 5}, {5.0, 1.0, 0, 5}, {1000.0, 1.0197, 1, 0},
+    };
+    for (const Step& step : STEPS){
+        uint64_t advance = 0;
+        bool ok = step_blink_anchor(step.elapsed, step.period, step.npcs, step.previous, advance);
+        std::fprintf(out, "step_anchor %.17g %.17g %u %" PRIu64 " : %d %" PRIu64 "\n",
+            step.elapsed, step.period, step.npcs, step.previous, ok ? 1 : 0, advance);
+    }
+}
+
 void write_file(const std::string& path, void (*lines)(FILE*)){
     FILE* out = std::fopen(path.c_str(), "w");
     if (out == nullptr){
@@ -451,5 +729,6 @@ int main(int argc, char** argv){
     write_file(folder + "/blink_model.txt", blink_model_lines);
     write_file(folder + "/bdsp_rng.txt", bdsp_rng_lines);
     write_file(folder + "/state_solver.txt", state_solver_lines);
+    write_file(folder + "/blink_extraction.txt", blink_extraction_lines);
     return 0;
 }

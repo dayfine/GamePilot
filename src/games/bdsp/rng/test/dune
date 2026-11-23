@@ -3,13 +3,15 @@
   test_xorshift128
   test_static_encounter
   test_blink_model
-  test_state_solver)
+  test_state_solver
+  test_blink_extraction)
  (modules
   fixture_lines
   test_xorshift128
   test_static_encounter
   test_blink_model
-  test_state_solver)
+  test_state_solver
+  test_blink_extraction)
  (deps
   (glob_files fixtures/*.txt))
  (libraries gamepilot.case_table gamepilot.bdsp_rng))
