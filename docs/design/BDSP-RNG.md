@@ -1,9 +1,12 @@
 # BDSP blink RNG on GamePilot (S2)
 
-Status: **draft for discussion, nothing built** (2026-11-23). Nothing here is decided until the user
-says so; recommendations are marked as such. It plans slice S2 of `Layered-Automation-Stack.md`
+Status: **design, nothing built** (2026-11-23). The user decided the open questions on 2026-11-23
+(section 8); W1 and W2 are approved to start now. It plans slice S2 of `Layered-Automation-Stack.md`
 (section 9), starting with the starter RNG that the fork's C++ AutoStory runs today, and follows
 that document's decisions (Q2, Q3, D5, D6, R7, R11, R21) unless a section says it proposes a change.
+
+Scope: BDSP blink RNG only (BDSP renders at 30 fps, so timing gates here are one BDSP frame, 33 ms).
+FRLG RNG on the Switch is out of scope (section 8, item 7).
 
 ## 1. What the C++ does today
 
@@ -60,7 +63,7 @@ solved (5 of them reached a shiny target, the rest found none in range).
 | F1 | Every captured frame is matched (no silent skips); a frame that could not be matched is reported as a gap | blink lasts a few frames; section 2 |
 | F2 | Each match carries the frame's **capture** time, not its processing time | the solver's tolerance is 0.1 s; processing delay under load reached 1 s |
 | F3 | The solver can tell "no blink here" from "no data here" | section 2 |
-| F4 | A press can be scheduled at an absolute time on the frame clock and lands on the console with a spread (p99 minus median) under 50 ms, measured end to end: daemon, serial controller and the console's input path. A constant offset is fine: the C++ already calibrates one out (`RngAim`'s aim offset and calibration bias) | step 6; an advance is about 1.017 s and the timeline keeps 100 ms slack |
+| F4 | (BDSP only) A press can be scheduled at an absolute time on the frame clock and lands on the console with a spread (p99 minus median) under 50 ms, measured end to end: daemon, serial controller and the console's input path. A constant offset is fine: the C++ already calibrates one out (`RngAim`'s aim offset and calibration bias) | step 6; an advance is about 1.017 s and the timeline keeps 100 ms slack |
 | F5 | Same results as the C++ for the same inputs (state, targets, timeline) | R21 (transparent port), D6 (C++ as oracle) |
 | F6 | A failed attempt can be replayed offline from its recording, blink for blink | stop rule 4; "every live failure becomes a replay test" |
 | F7 | Works for every language the C++ supports (9) and both games (BD, SP) | runs 1-9 |
@@ -121,7 +124,7 @@ pixels per frame.
 | `mode: "ncc_gray"` option on `core.template_match@1` | one kind | the score's meaning and direction change with an option, unlike `ink`, which keeps the formula (contracts README) |
 | `bdsp.eye_blink@1` | names the use | game name in the daemon (D3) |
 
-Recommendation: the new kind. Result `{score, x, y}` like `template_match`; `score` in -1..1.
+**Decided (user): the new kind `core.template_ncc@1`.** Result `{score, x, y}` like `template_match`; `score` in -1..1.
 Templates uploaded as today (R13), from the fork's `PokemonBDSP/Rng` resources, moved into
 `src/games/bdsp/assets/` with their source noted.
 
@@ -137,9 +140,27 @@ design change, not only as part of S2.
 | Latest frame wins, as the C++ app does | simple | the section 2 failure |
 | Lockstep, as on mGBA | exact | a capture card cannot be paused |
 
-Recommendation: the ring, with probes evaluated on box crops so a frame costs kilobytes, not
-megabytes. Raise the capture and probe threads to QoS user-interactive (allowed without root) so
-other jobs yield to them.
+**Decided (user): two threads on the Switch backend**, as below. The ring holds the probe boxes'
+crops, so a frame costs kilobytes, not megabytes.
+
+**Priority follows fidelity (user).** Threads run at default priority. A subscription states the
+frame fidelity it needs: `latest` (frames may be skipped) or full fidelity (every captured frame,
+gaps reported; today's `every`, W5). While at least one full-fidelity probe is subscribed, the daemon
+raises the capture and server threads to QoS user-interactive (allowed without root); when the last
+one is unsubscribed it drops them back. Full fidelity is rare (blink calibration and the press
+timeline), so priority is normally default and the daemon does not crowd out other lab jobs.
+
+**Visibility (user).** The user and the runner must be able to see what is running and whether it is
+healthy (W3b):
+
+| Scope | What is shown |
+|---|---|
+| daemon | per thread a heartbeat (last frame captured, last frame evaluated, with times); ring depth; gap count and rate; current fidelity and priority level; the connected client |
+| run | which processes are up (daemon, program, emulator or capture) and whether any is stuck |
+
+Stuck means a heartbeat older than a stated limit (for example 2 s for capture, 5 s for the program).
+The daemon serves it as a `status` method and notification (the Control UI draft already plans a
+`status` notification); `gamepilot status` prints the run view.
 
 What each thread may touch:
 
@@ -206,14 +227,15 @@ console and do not disturb the S0/S1 order; W3 onward wait for Phase 5.
 
 | # | Item | Where | Done when | Size |
 |---|---|---|---|---|
-| W1 | Log blink samples (time, watcher, score) and solver decisions in the C++ app. Through the fork lane like any fork PR: draft into `bdsp/lean`, fork CI, code health | fork, `PokemonBDSP/Programs/RngManipulation` | one lab attempt's samples are on disk and a script turns them into a stream file | S |
-| W2 | Pure RNG math in OCaml: `Xorshift128`, `BdspRng`, `BlinkModel`, `BlinkExtraction`, `StateSolver`, `StateReidentifier`, `AdvanceClock`, target search, timeline math; each module names its C++ file | `src/games/bdsp/rng/` | golden vectors from the C++ (states, intervals, solves, targets) pass; W1 streams replay to the C++'s results | L (~1 week) |
-| W3 | Switch backend: capture thread with capture timestamps, crop ring, gap reporting, QoS | `daemon/` | latency spike passes; at load 10 with lab jobs running, the gap rate and timestamp jitter are measured and written down | L (Phase 5 item) |
+| W1 | **Approved, starts now.** Log per attempt: sample time (capture time if the app has it, else read time, and the log says which), watcher, score, threshold, and the solver's decisions; a few KB per attempt in the run folder; a script turns a log into a stream file. Through the fork lane like any fork PR: draft into `bdsp/lean`, fork CI, code health | fork, `PokemonBDSP/Programs/RngManipulation` | one lab attempt's samples are on disk and a script turns them into a stream file | S |
+| W2 | **Approved, starts now, as a background lane that must not disturb S0/S1 or their use of the mGBA instance.** Pure RNG math in OCaml, ported transparently (R21): `Xorshift128`, `BdspRng`, `BlinkModel`, `BlinkExtraction`, `StateSolver`, `StateReidentifier`, `AdvanceClock`, target search, timeline math; each module names its C++ file | `src/games/bdsp/rng/` | golden vectors from the C++ (states, intervals, solves, targets) pass; W1 streams replay to the C++'s results | L (~1 week) |
+| W3 | Switch backend: capture thread with capture timestamps, crop ring, gap reporting; thread priority raised only while a full-fidelity probe is subscribed (5.3) | `daemon/` | latency spike passes (for BDSP: one BDSP frame, 33 ms, section 4); at load 10 with lab jobs running, the gap rate and timestamp jitter at default and at raised priority are measured and written down | L (Phase 5 item) |
+| W3b | Health and visibility: daemon `status` method and notification (heartbeats, ring depth, gaps, fidelity and priority, client) and `gamepilot status` (processes up, stuck = heartbeat older than its limit) | `contracts/`, `daemon/`, `src/bin` | golden files; a stalled capture thread shows as stuck within its limit in a test | M |
 | W4 | `core.template_ncc@1` | `daemon/`, `contracts/`, `src/base/wire` | golden files; same scores as `EyeBlinkDetector` on the fork's test images (`probe_images`) | S |
-| W5 | Gaps on the wire. The gap signal is the frame `seq`, not a missing result (v1.4 omits unchanged results). While an `every` probe is subscribed the daemon sends a `frame` for every captured `seq`, consecutive; a frame it could not evaluate (ring overflow, capture hole) is reported by a `gap` notification {`from_seq`, `to_seq`}. This gives `every` its meaning back; without an `every` probe frames may skip as today | `contracts/`, daemon, `core/session` | golden files; replay of a recorded gap reaches the program as a gap | S |
+| W5 | Fidelity and gaps on the wire. A subscription states its fidelity (`latest` or full; full is today's `every`); full fidelity also raises thread priority (5.3). The gap signal is the frame `seq`, not a missing result (v1.4 omits unchanged results). While an `every` probe is subscribed the daemon sends a `frame` for every captured `seq`, consecutive; a frame it could not evaluate (ring overflow, capture hole) is reported by a `gap` notification {`from_seq`, `to_seq`}. This gives `every` its meaning back; without an `every` probe frames may skip as today | `contracts/`, daemon, `core/session` | golden files; replay of a recorded gap reaches the program as a gap | S |
 | W6 | `submit` `start_at_t_ms` (v1.5) | `contracts/`, daemon `schedule`, `core/effects` | F4 measured end to end on the Switch, as the latency spike does: schedule a press whose effect shows on screen at once (opening a menu), take the capture time of the first frame that shows it, and report the spread of (that time minus `start_at_t_ms`) over 100 presses at idle and at load 10. Spread p99 under 50 ms; the median is the constant offset the aim calibration absorbs | M |
 | W7 | Blink recovery and calibration as a program on the effects, ported with #816 | `src/games/bdsp/rng/` | replays of W1 streams give the same provisional and confirmed states, and the same give-ups, as the C++ | M |
-| W8 | BDSP readers: eye boxes per scene and player model, Yes/No arrow, dialog, battle shiny check, summary | `src/games/bdsp/readers/` | replay tests from recorded frames in each language | M |
+| W8 | BDSP readers: eye boxes per scene and player model, Yes/No arrow, dialog, battle shiny check, summary. The eye reader must work in dark (evening) scenes without changing the Switch clock (user): candidates are contrast-normalized boxes, templates per lighting, or a threshold estimated per attempt from the samples, chosen with W1 data | `src/games/bdsp/readers/` | replay tests from recorded frames in each language, including evening-run recordings | M |
 | W9 | Starter attempt loop and timeline (reset, lake walk-in, target wait, presses, check) | `src/games/bdsp/programs/starter_rng/` | 10 attempts from the same save on console B, hit rate at least the C++'s | M |
 | W10 | Gap-aware solve (5.4 second step) | `src/games/bdsp/rng/` | on recorded failures it confirms where the port gave up, and never confirms a wrong state in the Monte Carlo | M |
 
@@ -229,8 +251,7 @@ the save, as S4 does for FRLG).
 - **A gap still costs data.** F1-F3 stop false readings; they do not create true ones. At heavy load
   attempts still slow down; the gain is that they no longer give up after collecting 156 bad blinks.
 - **Dark scenes are a separate problem.** Lower eye-match margins at night are lighting, not timing;
-  gap handling does not help. Options are templates per time of day, a contrast-normalized box, or
-  setting the Switch clock to day before RNG (changes in-game time for the whole run; needs the user).
+  gap handling does not help. The Switch clock stays as it is (user): the eye reader has to cope (W8).
 - **Transparent port means old weaknesses too.** The first OCaml version will give up where the C++
   gives up; W10 is where it gets better.
 - **Two stacks in parallel.** Until W9 passes, the C++ starter RNG keeps running the language runs.
@@ -240,13 +261,18 @@ the save, as S4 does for FRLG).
 - **Effort estimates are guesses.** The design's stop rules (section 10 of the stack design) apply:
   a failed spike takes its fallback and a new estimate.
 
-## 8. Open questions for the user
+## 8. Decisions (user, 2026-11-23)
 
-1. Approve W1 (C++ sample logging on the fork) now, ahead of S2?
-2. Approve W2 (OCaml RNG math) as a background lane now, or keep everything for S2?
-3. New kind `core.template_ncc@1` (recommended) or an option on `template_match`?
-4. Daemon threads at QoS user-interactive: fine as a default?
-5. Dark scenes: is setting the Switch clock to daytime before RNG acceptable, or must readers cope?
-6. Agree to 5.3 as a change to the stack design (two daemon threads on the Switch backend)?
-7. The stack design's latency gate says "p99 under one frame (33 ms)": one frame is 33 ms at 30 fps
-   but 16.7 ms at the capture's 60 fps. Which does the gate mean? (BDSP itself renders at 30 fps.)
+1. **W1 approved**: C++ blink sample logging on the fork, owned by this lane (draft fork PR, fork CI).
+2. **W2 approved**: OCaml RNG math as a background lane now, owned by this lane; it must not disturb
+   the Mail Glitch order or its use of the mGBA instance.
+3. **New probe kind `core.template_ncc@1`**, not an option on `template_match`.
+4. **No higher thread priority by default.** Priority is raised only while a subscription asks for
+   full fidelity (5.3, W3, W5).
+5. **Dark scenes must just work**: no change to the Switch clock; the eye reader copes (W8).
+6. **Two daemon threads on the Switch backend: yes**, with health and visibility (5.3, W3b).
+7. **Gate scope.** Blink RNG is BDSP only and BDSP renders at 30 fps, so this design's timing gate is
+   one BDSP frame (33 ms). FRLG RNG on the Switch is a different problem (presses timed from a known
+   boot, at about 60 fps, 16.7 ms frames) and is out of scope here; it gets its own requirements
+   when it is ported, and that port revisits the stack design's gate. This PR does not change the
+   stack design.
