@@ -32,6 +32,7 @@ clang++ -std=c++23 -O2 -ffp-contract=off -I"$FORK" -I"$SOURCE" -I"$FORK/3rdParty
   "$SOURCE/Pokemon/Pokemon_BdspRng.cpp" \
   "$SOURCE/PokemonBDSP/Programs/RngManipulation/PokemonBDSP_BlinkModel.cpp" \
   "$SOURCE/PokemonBDSP/Programs/RngManipulation/PokemonBDSP_StateSolver.cpp" \
+  "$SOURCE/PokemonBDSP/Programs/RngManipulation/PokemonBDSP_StateReidentifier.cpp" \
   "$SOURCE/PokemonBDSP/Inference/Rng/PokemonBDSP_BlinkExtraction.cpp" \
   "$FORK/Common/Cpp/PrettyPrint.cpp" \
   "$HERE/link_stubs.cpp"

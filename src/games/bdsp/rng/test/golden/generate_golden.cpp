@@ -14,6 +14,7 @@
 #include "Pokemon/Pokemon_Gf2Matrix.h"
 #include "PokemonBDSP/Inference/Rng/PokemonBDSP_BlinkExtraction.h"
 #include "PokemonBDSP/Programs/RngManipulation/PokemonBDSP_BlinkModel.h"
+#include "PokemonBDSP/Programs/RngManipulation/PokemonBDSP_StateReidentifier.h"
 #include "PokemonBDSP/Programs/RngManipulation/PokemonBDSP_StateSolver.h"
 
 using namespace PokemonAutomation::Pokemon;
@@ -707,6 +708,114 @@ void blink_extraction_lines(FILE* out){
     }
 }
 
+void reidentify_line(FILE* out, const ReidentifyRequest& request){
+    ReidentifyResult r = reidentify_advances(request);
+    std::fprintf(out, "reidentify %s %" PRIu64 " %" PRIu64 " %u", state_text(request.base_state).c_str(),
+        request.search_min, request.search_max, request.npcs);
+    if (request.method == ReidentifyMethod::Intervals){
+        std::fprintf(out, " intervals %zu", request.intervals.size());
+        for (uint32_t interval : request.intervals){
+            std::fprintf(out, " %u", interval);
+        }
+    }else{
+        std::fprintf(out, " types %zu", request.types.size());
+        for (BlinkType type : request.types){
+            std::fprintf(out, " %c", type == BlinkType::Single ? 'S' : 'D');
+        }
+    }
+    std::fprintf(out, " : %d %d %zu %" PRIu64 " %" PRIu64 " reason=%s\n", r.success ? 1 : 0,
+        r.ambiguous ? 1 : 0, r.match_count, r.advances_to_first_blink, r.advances_to_last_blink,
+        r.failure_reason.c_str());
+}
+
+//  What a watcher of every "npcs"th roll sees from the first blink at or after
+//  "from": the ticks between its next "count" blinks and their types.
+ReidentifyRequest observed_request(
+    const Xorshift128State& seed, uint8_t npcs, uint64_t from, size_t count,
+    uint64_t search_min, uint64_t search_max, ReidentifyMethod method
+){
+    std::vector<uint32_t> rolls;
+    Xorshift128 rng(seed);
+    for (uint64_t c = 0; c < from + 64 * npcs * (count + 1); c++){
+        rolls.push_back(rng.next());
+    }
+    ReidentifyRequest request;
+    request.base_state = seed;
+    request.search_min = search_min;
+    request.search_max = search_max;
+    request.npcs = npcs;
+    request.method = method;
+    uint64_t position = from;
+    while (!npc_blinks(rolls[position])){
+        position++;
+    }
+    uint32_t since = 0;
+    request.types.push_back(NPC_blink_type(rolls[position]));
+    while (request.intervals.size() < count){
+        position += npcs;
+        since++;
+        if (npc_blinks(rolls[position])){
+            request.intervals.push_back(since);
+            request.types.push_back(NPC_blink_type(rolls[position]));
+            since = 0;
+        }
+    }
+    if (method == ReidentifyMethod::Types){
+        request.intervals.clear();
+    }else{
+        request.types.clear();
+    }
+    return request;
+}
+
+void reidentifier_lines(FILE* out){
+    const Xorshift128State& seed = SEEDS[3];
+    const ReidentifyMethod INTERVALS = ReidentifyMethod::Intervals;
+    const ReidentifyMethod TYPES = ReidentifyMethod::Types;
+    reidentify_line(out, observed_request(seed, 1, 3000, 10, 0, 10000, INTERVALS));
+    reidentify_line(out, observed_request(seed, 2, 3001, 12, 0, 10000, INTERVALS));
+    reidentify_line(out, observed_request(seed, 3, 5000, 8, 4000, 6000, INTERVALS));
+    reidentify_line(out, observed_request(seed, 1, 3000, 1, 0, 10000, INTERVALS));
+    reidentify_line(out, observed_request(seed, 1, 3000, 3, 0, 10000, INTERVALS));
+    reidentify_line(out, observed_request(seed, 1, 3000, 10, 3100, 10000, INTERVALS));
+
+    ReidentifyRequest request = observed_request(seed, 1, 3000, 10, 0, 10000, INTERVALS);
+    request.intervals[4]++;
+    reidentify_line(out, request);
+    request.intervals[4] = 0;
+    reidentify_line(out, request);
+    request = observed_request(seed, 2, 3001, 12, 0, 10000, INTERVALS);
+    request.npcs = 0;
+    reidentify_line(out, request);
+    request.npcs = 2;
+    request.search_min = 10001;
+    reidentify_line(out, request);
+    request.search_min = 0;
+    request.intervals.clear();
+    reidentify_line(out, request);
+
+    reidentify_line(out, observed_request(seed, 1, 3000, 40, 0, 10000, TYPES));
+    reidentify_line(out, observed_request(seed, 1, 3000, 5, 0, 5000, TYPES));
+    reidentify_line(out, observed_request(seed, 1, 3000, 13, 0, 5000, TYPES));
+    reidentify_line(out, observed_request(seed, 3, 5000, 30, 1000, 8000, TYPES));
+    reidentify_line(out, observed_request(seed, 2, 500, 20, 0, 1000, TYPES));
+    reidentify_line(out, observed_request(seed, 2, 500, 10, 0, 1000, TYPES));
+    //  Types alone rarely fit twice: the first window of 16 advances where
+    //  four types do.
+    for (uint64_t base = 0; base < 20000; base += 16){
+        request = observed_request(seed, 1, base, 3, base, base + 15, TYPES);
+        if (reidentify_advances(request).ambiguous){
+            reidentify_line(out, request);
+            break;
+        }
+    }
+    request = observed_request(seed, 1, 3000, 40, 0, 10000, TYPES);
+    request.types[7] = request.types[7] == BlinkType::Single ? BlinkType::Double : BlinkType::Single;
+    reidentify_line(out, request);
+    request.types.clear();
+    reidentify_line(out, request);
+}
+
 void write_file(const std::string& path, void (*lines)(FILE*)){
     FILE* out = std::fopen(path.c_str(), "w");
     if (out == nullptr){
@@ -730,5 +839,6 @@ int main(int argc, char** argv){
     write_file(folder + "/bdsp_rng.txt", bdsp_rng_lines);
     write_file(folder + "/state_solver.txt", state_solver_lines);
     write_file(folder + "/blink_extraction.txt", blink_extraction_lines);
+    write_file(folder + "/reidentifier.txt", reidentifier_lines);
     return 0;
 }
