@@ -6,9 +6,23 @@
 
 namespace gamepilot {
 
+namespace {
+
+// OpenCV channels are B, G, R; results are R, G, B.
+std::array<double, 3> rgb_of(const cv::Scalar& bgr) {
+  return {bgr[2], bgr[1], bgr[0]};
+}
+
+cv::Scalar bgr_of(const std::array<std::uint8_t, 3>& rgb) {
+  return cv::Scalar(rgb[2], rgb[1], rgb[0]);
+}
+
+}  // namespace
+
 const std::vector<std::string>& probe_kinds() {
   static const std::vector<std::string> kinds = {
-      std::string(kColorStatsKind), std::string(kTemplateMatchKind)};
+      std::string(kColorStatsKind), std::string(kTemplateMatchKind),
+      std::string(kColorCountKind)};
   return kinds;
 }
 
@@ -17,46 +31,16 @@ bool is_known_probe_kind(std::string_view kind) {
   return std::find(kinds.begin(), kinds.end(), kind) != kinds.end();
 }
 
-cv::Rect box_to_pixels(const Box& box, int width, int height) {
-  const auto edge = [](double fraction, int size) {
-    return std::clamp(static_cast<int>(std::lround(fraction * size)), 0, size);
-  };
-  int x0 = edge(box.x, width);
-  int y0 = edge(box.y, height);
-  int x1 = edge(box.x + box.w, width);
-  int y1 = edge(box.y + box.h, height);
-  x0 = std::min(x0, width - 1);
-  y0 = std::min(y0, height - 1);
-  x1 = std::max(x1, x0 + 1);
-  y1 = std::max(y1, y0 + 1);
-  return cv::Rect(x0, y0, x1 - x0, y1 - y0);
-}
-
-ColorStats color_stats(const cv::Mat& bgr, const Box& box) {
-  const cv::Mat region = bgr(box_to_pixels(box, bgr.cols, bgr.rows));
+ColorStats color_stats(const cv::Mat& bgr, const cv::Rect& pixels) {
   cv::Scalar mean;
   cv::Scalar stddev;
-  cv::meanStdDev(region, mean, stddev);
-  ColorStats stats;
-  for (int c = 0; c < 3; c++) {
-    // OpenCV channels are B, G, R; results are R, G, B.
-    stats.mean[static_cast<std::size_t>(c)] = mean[2 - c];
-    stats.stddev[static_cast<std::size_t>(c)] = stddev[2 - c];
-  }
-  return stats;
-}
-
-bool template_fits_box(const cv::Mat& template_bgr, const Box& box, int width,
-                       int height) {
-  const cv::Rect pixels = box_to_pixels(box, width, height);
-  return template_bgr.cols <= pixels.width &&
-         template_bgr.rows <= pixels.height;
+  cv::meanStdDev(bgr(pixels), mean, stddev);
+  return ColorStats{rgb_of(mean), rgb_of(stddev)};
 }
 
 TemplateMatch template_match(const cv::Mat& bgr, const cv::Mat& template_bgr,
-                             const Box& box) {
+                             const cv::Rect& pixels) {
   constexpr double kChannelMax = 255;
-  const cv::Rect pixels = box_to_pixels(box, bgr.cols, bgr.rows);
   cv::Mat differences;
   cv::matchTemplate(bgr(pixels), template_bgr, differences, cv::TM_SQDIFF);
   double min_difference = 0;
@@ -68,9 +52,32 @@ TemplateMatch template_match(const cv::Mat& bgr, const cv::Mat& template_bgr,
   // OpenCV may sum in the frequency domain and land a hair below 0.
   match.score = std::clamp(
       min_difference / (samples * kChannelMax * kChannelMax), 0.0, 1.0);
-  match.x = static_cast<double>(pixels.x + best.x) / bgr.cols;
-  match.y = static_cast<double>(pixels.y + best.y) / bgr.rows;
+  match.x = pixels.x + best.x;
+  match.y = pixels.y + best.y;
   return match;
+}
+
+ColorCount color_count(const cv::Mat& bgr, const cv::Rect& pixels,
+                       const ColorRange& range) {
+  const cv::Mat region = bgr(pixels);
+  cv::Mat in_range;
+  cv::inRange(region, bgr_of(range.min), bgr_of(range.max), in_range);
+  const int count = cv::countNonZero(in_range);
+  ColorCount result;
+  result.fraction = static_cast<double>(count) / pixels.area();
+  if (count > 0) {
+    result.mean = rgb_of(cv::mean(region, in_range));
+  }
+  return result;
+}
+
+cv::Mat scale_template(const cv::Mat& template_bgr, cv::Size size) {
+  if (template_bgr.size() == size) {
+    return template_bgr;
+  }
+  cv::Mat scaled;
+  cv::resize(template_bgr, scaled, size, 0, 0, cv::INTER_AREA);
+  return scaled;
 }
 
 }  // namespace gamepilot

@@ -1,9 +1,12 @@
 type stats = { mean : Wire.rgb; stddev : Wire.rgb }
 
+let probe ~id box = Wire.color_stats_probe ~id ~box ~delivery:Every
+
 let read m id =
   match Effects.probe m id with
   | Some (Wire.Color_stats { mean; stddev }) -> Some { mean; stddev }
-  | Some (Wire.Template_match _ | Wire.Other _) | None -> None
+  | Some (Wire.Template_match _ | Wire.Color_count _ | Wire.Other _) | None ->
+      None
 
 let holds m id test = Option.fold ~none:false ~some:test (read m id)
 let sum (c : Wire.rgb) = c.r +. c.g +. c.b

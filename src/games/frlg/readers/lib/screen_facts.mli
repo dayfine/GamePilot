@@ -5,7 +5,7 @@
 
 val fade_id : string
 
-val probes : Game_screen.t -> Wire.probe_spec list
+val probes : Wire.probe_spec list
 (** The fade probe ({!Screen_state.Fade.middle_box} of the picture), then
     {!Dark_corners}, {!Dialog} and {!Battle_screen}'s probes. *)
 

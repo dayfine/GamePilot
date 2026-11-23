@@ -1,4 +1,4 @@
-# Wire protocol v1.1
+# Wire protocol v1.2
 
 JSON-RPC 2.0 between the OCaml programs (client) and the daemon (server). The golden files in this
 folder are the spec: the daemon's tests parse every file and the OCaml tests decode and re-encode
@@ -8,8 +8,12 @@ one line.
 
 v1.1 adds the `load` counter to `frame` and `backend.load_state`, and a `kind` to every probe result.
 Template probes (`probe.upload_template`, `core.template_match@1`) came later under the same number.
-`hello` still says `protocol: 1`: both sides ship from this repo at one commit, so there is no v1 peer
-to tell apart.
+v1.2 makes the daemon own where the game picture sits in the frame: `hello` gives the `viewport` and
+the `game_size`, probe boxes and template placements are relative to the picture, templates are in game
+pixels, and `core.color_count@1` is new.
+`hello` still says `protocol: 1`: both sides ship from this repo at one commit, so there is no older
+peer to tell apart, and on the only backend so far (mGBA, viewport = whole frame, game size = frame
+size) every v1.1 message means the same in v1.2.
 
 ## Transport
 
@@ -37,14 +41,20 @@ to tell apart.
 
 | Method | Params | Result |
 |---|---|---|
-| `hello` | `protocol` (must be 1), `client` | `protocol`, `daemon`, `backend` {`kind`, `game_code`, `frame_rate`, `width`, `height`}, `probe_kinds` |
+| `hello` | `protocol` (must be 1), `client` | `protocol`, `daemon`, `backend` {`kind`, `game_code`, `frame_rate`, `width`, `height`, `viewport`, `game_size`}, `probe_kinds` |
 | `backend.load_state` | `path` (a save state file; the daemon passes it to the backend unread) | `seq` after loading, the new `load` |
 | `probe.upload_template` | `png`: a PNG file, base64 | `template`: the lowercase hex SHA-256 of the PNG bytes |
-| `subscribe` | `probes`: list of {`id`, `kind`, `box`, `delivery`, and `template` for `core.template_match@1`} | `subscribed`: ids |
+| `subscribe` | `probes`: list of {`id`, `kind`, `box`, `delivery`, and `template` for `core.template_match@1`, `min` and `max` for `core.color_count@1`} | `subscribed`: ids |
 | `submit` | `batch_id`, `commands`: list of {`press`: buttons, `hold_ms`, `cooldown_ms`} or {`wait_ms`} | `batch_id`, `start_seq` |
 | `cancel` | {} | `released_seq`: drops queued commands and releases all buttons |
 
-- `box` is normalized to the frame: `x`, `y`, `w`, `h` in 0..1.
+- `width`, `height`: the frame's size in pixels. `viewport` {`x`, `y`, `w`, `h`}: where the game
+  picture sits in the frame, normalized to the frame. `game_size` {`width`, `height`}: the picture's
+  native size in game pixels (240x160 on the GBA). On mGBA the frame is the picture (viewport 0, 0,
+  1, 1); a capture card frame has it inside side bars (a Switch backend will take it from a daemon
+  flag, by default the fork's FRLG `GAME_BOX`).
+- `box` is normalized to the game picture: `x`, `y`, `w`, `h` in 0..1 of the viewport. The daemon
+  maps it onto the frame, so a reader's boxes are the same on every backend.
 - `template`: the hash `probe.upload_template` returned on this connection; an unknown hash is
   -32602. Uploads last until the client disconnects. Uploading the same bytes again returns the same
   hash, so a client keeps its own bytes-to-hash table per connection and uploads each template once.
@@ -70,15 +80,32 @@ decodes it by kind, not by shape.
 |---|---|
 | `core.color_stats@1` | `mean` [r, g, b], `stddev` [r, g, b] over the box, 0..255 |
 | `core.template_match@1` | `score`, `x`, `y`: the best placement of the template inside the box |
+| `core.color_count@1` | `fraction`, `mean` [r, g, b] or `null`: the box's pixels inside a color range |
 
-`core.template_match@1` slides the template over every placement fully inside the box (which must be
-at least the template's size in pixels, else subscribe fails with -32602). `score` is the mean squared
-difference per pixel and channel at the best placement, divided by 255²: 0 for identical pixels, 1 when
-every channel is as far off as it can be (OpenCV `TM_SQDIFF` / (w·h·3·255²)). Lower is better; there is
-no threshold in the daemon. `x`, `y` are the top-left corner of that placement, normalized to the
-frame. The PNG is read as 8-bit RGB; an alpha channel is ignored. Plain `TM_SQDIFF_NORMED` is not
-used: it divides by the template's energy, so a flat dark template (a black text box) scores 1 on
-an exact match.
+`core.template_match@1` takes the template in game pixels (a GBA tile is 8x8 whatever the capture).
+The daemon scales it to the frame by the viewport's pixels per game pixel (each axis: viewport size in
+frame pixels over `game_size`), then slides it over every placement fully inside the box (which must
+be at least the scaled template's size, else subscribe fails with -32602). Scaling uses OpenCV
+`INTER_AREA`: at scale 1 (mGBA) the template is used as uploaded, and at a whole scale (a 2x capture)
+each game pixel becomes a block, as with nearest neighbour; at a fractional scale (6.5x for the
+Switch's 1080p picture) nearest neighbour would push every seam between two game pixels to one side,
+while `INTER_AREA` blends the one frame pixel a seam crosses by how much of it each game pixel covers,
+which is what a scaled capture shows there; and it averages, not samples, when a capture is smaller
+than the game.
+
+`score` is the mean squared difference per pixel and channel at the best placement, divided by 255²:
+0 for identical pixels, 1 when every channel is as far off as it can be (OpenCV `TM_SQDIFF` /
+(w·h·3·255²)). Lower is better; there is no threshold in the daemon. `x`, `y` are the top-left corner
+of that placement, normalized to the game picture. The PNG is read as 8-bit RGB; an alpha channel is
+ignored. Plain `TM_SQDIFF_NORMED` is not used: it divides by the template's energy, so a flat dark
+template (a black text box) scores 1 on an exact match.
+
+`core.color_count@1` takes `min` and `max`, [r, g, b] integers 0..255 with `min` <= `max` per
+channel (else -32602), and counts the box's pixels whose every channel lies in `min`..`max`, both
+ends included. `fraction` is that count over the box's pixel count (0..1). `mean` is the per-channel
+mean of those pixels, 0..255, and `null` (present, not omitted) when no pixel is in range, so every
+result has the same fields. Like the other kinds it has no threshold: the reader decides from the
+numbers (the fork's advance arrow: `mean` red far above green and blue).
 
 There is no black-screen kind: `core.color_stats@1` gives the mean and stddev over a box, and a
 reader decides "black" from those numbers (low mean, low stddev) in OCaml.

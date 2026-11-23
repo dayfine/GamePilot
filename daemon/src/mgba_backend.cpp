@@ -15,6 +15,8 @@ namespace gamepilot {
 namespace {
 
 constexpr double kGbaFrameRate = 59.7275;
+constexpr int kGbaWidth = 240;
+constexpr int kGbaHeight = 160;
 
 std::vector<std::string> split_words(const std::string& line) {
   std::vector<std::string> words;
@@ -58,7 +60,10 @@ MgbaBackend::MgbaBackend(std::uint16_t port) : socket_(connect_local(port)) {
     throw BackendError("bridge runs in mode " + words[4] +
                        "; lockstep needs paced");
   }
-  info_ = BackendInfo{"mgba", words[2], kGbaFrameRate, 240, 160};
+  // The frame is the 240x160 GBA picture.
+  info_ = BackendInfo{
+      "mgba",    words[2],   kGbaFrameRate,
+      kGbaWidth, kGbaHeight, Viewport{Box{0, 0, 1, 1}, kGbaWidth, kGbaHeight}};
 
   // GRANT 0 stalls the emulator at its next frame callback, since every frame
   // is >= 0. Give it a few frames to get there, then read the frame it holds

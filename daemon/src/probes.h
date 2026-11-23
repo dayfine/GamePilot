@@ -1,24 +1,21 @@
-// Probes: pixels in, numbers out. No thresholds; the program judges the
-// numbers.
+// Probes: pixels in, numbers out, on a pixel rectangle of a BGR frame. No
+// thresholds; the program judges the numbers. Mapping a client's box onto the
+// frame is probe_evaluation's job.
 
 #pragma once
 
 #include <array>
+#include <cstdint>
 #include <opencv2/core.hpp>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <variant>
 #include <vector>
 
-namespace gamepilot {
+#include "viewport.h"
 
-// A box normalized to the frame: x, y, w, h in 0..1.
-struct Box {
-  double x = 0;
-  double y = 0;
-  double w = 0;
-  double h = 0;
-};
+namespace gamepilot {
 
 struct ColorStats {
   std::array<double, 3> mean{};    // r, g, b, 0..255
@@ -30,37 +27,54 @@ struct TemplateMatch {
   // Mean squared difference per pixel and channel, divided by 255^2: 0 for
   // identical pixels, 1 for every channel as far off as it can be.
   double score = 0;
-  // Top-left corner of the placement, normalized to the frame.
+  // Top-left corner of the placement: frame pixels from template_match,
+  // normalized to the game picture in a probe result.
   double x = 0;
   double y = 0;
 };
 
-using ProbeResult = std::variant<ColorStats, TemplateMatch>;
+// An inclusive per-channel range: r, g, b, 0..255.
+struct ColorRange {
+  std::array<std::uint8_t, 3> min{};
+  std::array<std::uint8_t, 3> max{};
+};
+
+// The pixels of a box inside a color range.
+struct ColorCount {
+  double fraction = 0;  // pixels in range / pixels in the box
+  // r, g, b mean of the pixels in range; nullopt when there are none.
+  std::optional<std::array<double, 3>> mean;
+};
+
+using ProbeResult = std::variant<ColorStats, TemplateMatch, ColorCount>;
 
 inline constexpr std::string_view kColorStatsKind = "core.color_stats@1";
 inline constexpr std::string_view kTemplateMatchKind = "core.template_match@1";
+inline constexpr std::string_view kColorCountKind = "core.color_count@1";
 
 // The probe kinds this daemon evaluates, for hello and subscribe.
 const std::vector<std::string>& probe_kinds();
 bool is_known_probe_kind(std::string_view kind);
 
-// The pixel rectangle a normalized box covers in a width x height frame: at
-// least one pixel, clipped to the frame.
-cv::Rect box_to_pixels(const Box& box, int width, int height);
+// core.color_stats@1: per-channel mean and stddev of a BGR frame over the
+// pixels.
+ColorStats color_stats(const cv::Mat& bgr, const cv::Rect& pixels);
 
-// core.color_stats@1: per-channel mean and stddev of a BGR frame over the box.
-ColorStats color_stats(const cv::Mat& bgr, const Box& box);
-
-// Whether a BGR template fits inside the box's pixels in a width x height
-// frame, as template_match requires.
-bool template_fits_box(const cv::Mat& template_bgr, const Box& box, int width,
-                       int height);
-
-// core.template_match@1: the template's best placement fully inside the box,
-// scored with OpenCV TM_SQDIFF / (w * h * 3 * 255^2). Requires
-// template_fits_box. Not TM_SQDIFF_NORMED: that divides by the template's
-// energy and scores a flat black template 1 on an exact match.
+// core.template_match@1: the template's best placement fully inside the pixels
+// (which must be at least the template's size), scored with OpenCV TM_SQDIFF /
+// (w * h * 3 * 255^2). x, y are frame pixels. Not TM_SQDIFF_NORMED: that
+// divides by the template's energy and scores a flat black template 1 on an
+// exact match.
 TemplateMatch template_match(const cv::Mat& bgr, const cv::Mat& template_bgr,
-                             const Box& box);
+                             const cv::Rect& pixels);
+
+// core.color_count@1: how many of the pixels lie inside the range, and their
+// mean color.
+ColorCount color_count(const cv::Mat& bgr, const cv::Rect& pixels,
+                       const ColorRange& range);
+
+// A template given in game pixels, resized to `size` frame pixels with
+// INTER_AREA (unchanged when it already has that size).
+cv::Mat scale_template(const cv::Mat& template_bgr, cv::Size size);
 
 }  // namespace gamepilot

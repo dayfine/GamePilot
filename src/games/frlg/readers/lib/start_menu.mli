@@ -8,7 +8,8 @@
 val probe_id : string
 
 val probe : Wire.probe_spec
-(** [core.color_stats@1] over x 0.94 w 0.04, y 0.05 h 0.5, every frame. *)
+(** [core.color_stats@1] over x 0.94 w 0.04, y 0.05 h 0.5 of the game picture,
+    every frame. *)
 
 (** {1 Thresholds} *)
 

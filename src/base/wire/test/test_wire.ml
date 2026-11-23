@@ -144,6 +144,51 @@ let check_probe_constructors () =
     [ ""; "\x00"; "\xff\xfe"; "PNG"; "\x89PNG\r\n" ];
   print_endline "ok probe constructors and upload round trip"
 
+(* The golden color count subscribe is what the constructor builds; in its
+   frame the line without red pixels has no mean and the other one has. A
+   range needs both ends. *)
+let check_color_count dir =
+  (match
+     Wire.message_of_json
+       (read_golden dir "19-subscribe.color_count.request.json")
+   with
+  | Wire.Request { call = Wire.Subscribe [ first; _ ]; _ } ->
+      let box = { Wire.x = 0.0625; y = 0.75; w = 0.875; h = 0.09375 } in
+      if
+        first
+        <> Wire.color_count_probe ~id:"arrow_line1" ~box ~delivery:Every
+             ~min:(160, 0, 0) ~max:(255, 120, 120)
+      then failwith "FAILED color count subscribe differs from the constructor"
+  | _ -> failwith "FAILED color count subscribe decoded as something else");
+  (match
+     Wire.message_of_json
+       (read_golden dir "20-frame.color_count.notification.json")
+   with
+  | Wire.Notification
+      (Wire.Frame
+         {
+           frame =
+             {
+               probes =
+                 [
+                   ("arrow_line1", Wire.Color_count { mean = None; _ });
+                   ( "arrow_line2",
+                     Wire.Color_count { mean = Some { r = 224.; _ }; _ } );
+                 ];
+               _;
+             };
+           _;
+         }) ->
+      ()
+  | _ -> failwith "FAILED color count frame decoded wrong");
+  (match
+     Wire.message_of_string
+       {|{"jsonrpc":"2.0","id":1,"method":"subscribe","params":{"probes":[{"id":"p","kind":"core.color_count@1","box":{"x":0,"y":0,"w":1,"h":1},"delivery":"every","min":[0,0,0]}]}}|}
+   with
+  | _ -> failwith "FAILED color count without max decoded"
+  | exception Wire.Decode_error _ -> ());
+  print_endline "ok color count"
+
 (* probe_images prints one line per image; blank lines (a trailing newline)
    are skipped and each probes map decodes like a frame's. *)
 let check_image_probes () =
@@ -171,7 +216,7 @@ let () =
     |> List.filter (fun f -> Filename.check_suffix f ".json")
     |> List.sort compare
   in
-  if List.length files < 18 then failwith "expected at least 18 golden files";
+  if List.length files < 20 then failwith "expected at least 20 golden files";
   List.iter (check_file dir (methods_by_id dir files)) files;
   (* Bad input names the field instead of crashing. *)
   (match
@@ -201,5 +246,6 @@ let () =
   | exception Wire.Decode_error e ->
       Printf.printf "ok probe result without kind rejected: %s\n" e);
   check_template_upload dir;
+  check_color_count dir;
   check_probe_constructors ();
   check_image_probes ()

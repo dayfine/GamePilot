@@ -1,4 +1,4 @@
-(** Wire protocol v1 (contracts/v1): message types and their JSON codec.
+(** Wire protocol v1.2 (contracts/v1): message types and their JSON codec.
 
     The codec lives in one module per message family ([Command], [Probe],
     [Backend], [Jsonrpc], [Wire_log], [Probe_images]); this module re-exports
@@ -35,9 +35,16 @@ type command = Command.command =
   | Wait of { wait_ms : int }
 
 type box = Probe.box = { x : float; y : float; w : float; h : float }
-(** Normalized to the frame, 0..1. *)
+(** Normalized, 0..1. A probe's box is relative to the game picture (the [hello]
+    backend's [viewport]), not to the frame. *)
 
 type delivery = Probe.delivery = Every | Latest
+
+type color_range = Probe.color_range = {
+  min : int * int * int;
+  max : int * int * int;
+}
+(** An inclusive (r, g, b) range, 0..255 per channel. *)
 
 type probe_spec = Probe.probe_spec = {
   id : string;
@@ -47,6 +54,7 @@ type probe_spec = Probe.probe_spec = {
   template : string option;
       (** [core.template_match@1] only: the hash [probe.upload_template]
           returned on this connection. *)
+  color_range : color_range option;  (** [core.color_count@1] only *)
 }
 (** [kind] is an open set, e.g. ["core.color_stats@1"]. Programs build specs
     with the constructors below. *)
@@ -58,7 +66,18 @@ val color_stats_probe : id:string -> box:box -> delivery:delivery -> probe_spec
 val template_match_probe :
   id:string -> box:box -> delivery:delivery -> template:string -> probe_spec
 (** [core.template_match@1]: the best placement of an uploaded template inside
-    [box]. [template] is the hash from {!upload_template_result_of_json}. *)
+    [box]. [template] is the hash from {!upload_template_result_of_json}; the
+    PNG is in game pixels and the daemon scales it to the frame. *)
+
+val color_count_probe :
+  id:string ->
+  box:box ->
+  delivery:delivery ->
+  min:int * int * int ->
+  max:int * int * int ->
+  probe_spec
+(** [core.color_count@1]: the share of [box]'s pixels whose every channel lies
+    in [min..max] (inclusive), and their mean color. *)
 
 type rgb = Probe.rgb = { r : float; g : float; b : float }
 
@@ -68,7 +87,10 @@ type probe_result = Probe.probe_result =
   | Template_match of { score : float; x : float; y : float }
       (** [core.template_match@1]: [score] is the mean squared difference per
           pixel and channel over 255², 0 = identical, lower is better; [x], [y]
-          the placement's top-left corner, normalized to the frame. *)
+          the placement's top-left corner, normalized to the game picture. *)
+  | Color_count of { fraction : float; mean : rgb option }
+      (** [core.color_count@1]: pixels in range over pixels in the box, and the
+          mean of those in range ([None] when there are none). *)
   | Other of json  (** a kind this side does not know yet, kept verbatim *)
 
 type frame = Probe.frame = {
@@ -89,7 +111,14 @@ type backend = Backend.backend = {
   game_code : string;
   frame_rate : float;
   width : int;
-  height : int;
+  height : int;  (** the frame's size in pixels *)
+  viewport : box;
+      (** where the game picture sits in the frame, normalized to it; probe
+          boxes are relative to this (the whole frame on mGBA) *)
+  game_width : int;
+  game_height : int;
+      (** the picture's native size in game pixels ([game_size] on the wire,
+          240x160 on the GBA); templates are in these *)
 }
 
 type hello_result = Backend.hello_result = {

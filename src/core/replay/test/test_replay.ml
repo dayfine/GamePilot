@@ -13,7 +13,7 @@ let contains s sub =
 let hello =
   [
     {|{"dir":"in","t_ms":0,"msg":{"jsonrpc":"2.0","id":1,"method":"hello","params":{"protocol":1,"client":"gamepilot-programs/0.1"}}}|};
-    {|{"dir":"out","t_ms":0,"msg":{"jsonrpc":"2.0","id":1,"result":{"protocol":1,"daemon":"gamepilot-daemon/0.1","backend":{"kind":"mgba","game_code":"BPRE","frame_rate":59.7275,"width":240,"height":160},"probe_kinds":["core.color_stats@1"]}}}|};
+    {|{"dir":"out","t_ms":0,"msg":{"jsonrpc":"2.0","id":1,"result":{"protocol":1,"daemon":"gamepilot-daemon/0.1","backend":{"kind":"mgba","game_code":"BPRE","frame_rate":59.7275,"width":240,"height":160,"viewport":{"x":0,"y":0,"w":1,"h":1},"game_size":{"width":240,"height":160}},"probe_kinds":["core.color_stats@1"]}}}|};
     {|{"dir":"in","t_ms":0,"msg":{"jsonrpc":"2.0","id":2,"method":"backend.load_state","params":{"path":"state.ss"}}}|};
     {|{"dir":"out","t_ms":1,"msg":{"jsonrpc":"2.0","id":2,"result":{"seq":500,"load":2}}}|};
   ]

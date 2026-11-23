@@ -5,7 +5,7 @@
     would pass for a battle's text box, so {!Screen_facts} reads nothing else
     there. Corners: 2 by 2 tiles of the picture; middle: the player's tile. *)
 
-val probes : Game_screen.t -> Wire.probe_spec list
+val probes : Wire.probe_spec list
 
 (** {1 Thresholds} *)
 

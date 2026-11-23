@@ -1,5 +1,5 @@
-// core.color_stats@1 and core.template_match@1 on synthetic frames, base64
-// decoding, and the input schedule's frame rounding.
+// The probe kinds on synthetic frames, the viewport mapping, base64 decoding,
+// and the input schedule's frame rounding.
 
 #include "probes.h"
 
@@ -15,27 +15,31 @@ namespace {
 
 bool near(double a, double b) { return std::abs(a - b) < 1e-6; }
 
+// The pixel rectangle of a frame-normalized box in a 240x160 frame.
+cv::Rect gba_pixels(const Box& box) { return box_to_pixels(box, 240, 160); }
+
 void check_color_stats() {
   // A 240x160 BGR frame: black, with a pure red block in the right half of the
   // top rows.
   cv::Mat frame(160, 240, CV_8UC3, cv::Scalar(0, 0, 0));
   frame(cv::Rect(120, 0, 120, 16)).setTo(cv::Scalar(0, 0, 255));
 
-  const ColorStats inside = color_stats(frame, Box{0.5, 0.0, 0.5, 0.1});
+  const ColorStats inside =
+      color_stats(frame, gba_pixels(Box{0.5, 0.0, 0.5, 0.1}));
   CHECK(near(inside.mean[0], 255) && near(inside.mean[1], 0) &&
         near(inside.mean[2], 0));
   CHECK(near(inside.stddev[0], 0));
 
   // Left half of the box red, right half black: mean 127.5, stddev 127.5 in
   // red.
-  const ColorStats half = color_stats(frame, Box{0.25, 0.0, 0.5, 0.1});
+  const ColorStats half =
+      color_stats(frame, gba_pixels(Box{0.25, 0.0, 0.5, 0.1}));
   CHECK(near(half.mean[0], 127.5) && near(half.stddev[0], 127.5));
   CHECK(near(half.mean[2], 0));
 
-  CHECK(box_to_pixels(Box{0.7, 0.02, 0.28, 0.5}, 240, 160) ==
-        cv::Rect(168, 3, 67, 80));
+  CHECK(gba_pixels(Box{0.7, 0.02, 0.28, 0.5}) == cv::Rect(168, 3, 67, 80));
   // A box thinner than a pixel still covers one.
-  CHECK(box_to_pixels(Box{0.999, 0.999, 0.0001, 0.0001}, 240, 160).area() == 1);
+  CHECK(gba_pixels(Box{0.999, 0.999, 0.0001, 0.0001}).area() == 1);
   CHECK(is_known_probe_kind("core.color_stats@1"));
   CHECK(!is_known_probe_kind("core.ocr@1"));
 }
@@ -49,33 +53,91 @@ void check_template_match() {
   pattern.row(2).setTo(cv::Scalar(0, 0, 0));
   pattern.copyTo(frame(cv::Rect(200, 20, 4, 3)));
 
-  const Box right_top{0.5, 0.0, 0.5, 0.25};
+  const cv::Rect right_top = gba_pixels(Box{0.5, 0.0, 0.5, 0.25});
   const TemplateMatch exact = template_match(frame, pattern, right_top);
   CHECK(near(exact.score, 0));
-  CHECK(near(exact.x * 240, 200) && near(exact.y * 160, 20));
+  CHECK(near(exact.x, 200) && near(exact.y, 20));
 
   // A box that misses the pattern: the best placement is all gray, so the
   // score is the pattern's mean squared distance from gray (128). Per row of
   // 4 pixels: white is 127 off in 3 channels, red 128, 128 and 127, black 128
   // in 3.
   const TemplateMatch miss =
-      template_match(frame, pattern, Box{0.0, 0.5, 0.5, 0.5});
+      template_match(frame, pattern, gba_pixels(Box{0.0, 0.5, 0.5, 0.5}));
   const double off127 = 127.0 * 127.0;
   const double off128 = 128.0 * 128.0;
   const double expected = 4 *
                           (3 * off127 + (2 * off128 + off127) + 3 * off128) /
                           (12.0 * 3) / (255.0 * 255.0);
   CHECK(std::abs(miss.score - expected) < 1e-4);
-  CHECK(miss.x >= 0 && miss.y >= 0.5);
+  CHECK(miss.x >= 0 && miss.y >= 80);
 
   // A flat black template matches black exactly; TM_SQDIFF_NORMED would say 1.
   const cv::Mat black(3, 3, CV_8UC3, cv::Scalar(0, 0, 0));
   frame(cv::Rect(0, 0, 10, 10)).setTo(cv::Scalar(0, 0, 0));
-  CHECK(near(template_match(frame, black, Box{0.0, 0.0, 0.25, 0.25}).score, 0));
-
-  CHECK(template_fits_box(pattern, right_top, 240, 160));
-  CHECK(!template_fits_box(pattern, Box{0.0, 0.0, 0.01, 0.01}, 240, 160));
+  CHECK(near(
+      template_match(frame, black, gba_pixels(Box{0.0, 0.0, 0.25, 0.25})).score,
+      0));
   CHECK(is_known_probe_kind("core.template_match@1"));
+}
+
+void check_color_count() {
+  // A 10x10 frame: gray, with 5 pixels of dark red (200, 40, 30) and 5 of
+  // bright red (250, 60, 50) in the top row.
+  cv::Mat frame(10, 10, CV_8UC3, cv::Scalar(128, 128, 128));
+  frame(cv::Rect(0, 0, 5, 1)).setTo(cv::Scalar(30, 40, 200));
+  frame(cv::Rect(5, 0, 5, 1)).setTo(cv::Scalar(50, 60, 250));
+  const cv::Rect whole(0, 0, 10, 10);
+
+  const ColorCount reds =
+      color_count(frame, whole, ColorRange{{160, 0, 0}, {255, 120, 120}});
+  CHECK(near(reds.fraction, 0.1));
+  CHECK(reds.mean && near((*reds.mean)[0], 225) && near((*reds.mean)[1], 50) &&
+        near((*reds.mean)[2], 40));
+
+  // The range is inclusive at both ends: exactly the bright red.
+  const ColorCount bright =
+      color_count(frame, whole, ColorRange{{250, 60, 50}, {250, 60, 50}});
+  CHECK(near(bright.fraction, 0.05));
+  CHECK(bright.mean && near((*bright.mean)[0], 250));
+
+  const ColorCount none =
+      color_count(frame, whole, ColorRange{{0, 200, 0}, {255, 255, 255}});
+  CHECK(near(none.fraction, 0) && !none.mean);
+  CHECK(is_known_probe_kind("core.color_count@1"));
+}
+
+void check_viewport() {
+  // A 1920x1080 capture with the 240x160 picture inside side bars, as the
+  // fork's FRLG GAME_BOX puts it.
+  const Viewport switch_capture{Box{0.09375, 0.00462963, 0.8125, 0.962963}, 240,
+                                160};
+  const Box whole = picture_box_to_frame(switch_capture, Box{0, 0, 1, 1});
+  CHECK(box_to_pixels(whole, 1920, 1080) == cv::Rect(180, 5, 1560, 1040));
+  const Box right_half =
+      picture_box_to_frame(switch_capture, Box{0.5, 0, 0.5, 1});
+  CHECK(box_to_pixels(right_half, 1920, 1080) == cv::Rect(960, 5, 780, 1040));
+  CHECK(near(frame_x_to_picture(switch_capture, 960.0 / 1920), 0.5));
+  CHECK(near(frame_y_to_picture(switch_capture, 5.0 / 1080), 0));
+
+  // 6.5 frame pixels per game pixel each way.
+  CHECK(template_size_in_frame(switch_capture, cv::Size(4, 2), 1920, 1080) ==
+        cv::Size(26, 13));
+  const Viewport mgba{Box{0, 0, 1, 1}, 240, 160};
+  CHECK(template_size_in_frame(mgba, cv::Size(4, 2), 240, 160) ==
+        cv::Size(4, 2));
+
+  // INTER_AREA: at a whole scale every game pixel becomes a block.
+  cv::Mat pattern(1, 2, CV_8UC3, cv::Scalar(0, 0, 0));
+  pattern.at<cv::Vec3b>(0, 1) = cv::Vec3b(255, 255, 255);
+  const cv::Mat doubled = scale_template(pattern, cv::Size(4, 2));
+  CHECK(doubled.at<cv::Vec3b>(1, 1) == cv::Vec3b(0, 0, 0));
+  CHECK(doubled.at<cv::Vec3b>(1, 2) == cv::Vec3b(255, 255, 255));
+
+  CHECK(parse_box("0.09375,0.00462963,0.8125,0.962963").has_value());
+  CHECK(!parse_box("0.5,0,0.6,1"));  // past the right edge
+  CHECK(!parse_box("0,0,1"));
+  CHECK(!parse_box("0,0,1,1,"));
 }
 
 void check_base64() {
@@ -116,6 +178,8 @@ void check_schedule() {
 int main() {
   check_color_stats();
   check_template_match();
+  check_color_count();
+  check_viewport();
   check_base64();
   check_schedule();
   return TEST_RESULT();

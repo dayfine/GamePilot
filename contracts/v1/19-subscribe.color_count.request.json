@@ -1,0 +1,35 @@
+{
+  "jsonrpc": "2.0",
+  "id": 9,
+  "method": "subscribe",
+  "params": {
+    "probes": [
+      {
+        "id": "arrow_line1",
+        "kind": "core.color_count@1",
+        "box": {
+          "x": 0.0625,
+          "y": 0.75,
+          "w": 0.875,
+          "h": 0.09375
+        },
+        "delivery": "every",
+        "min": [160, 0, 0],
+        "max": [255, 120, 120]
+      },
+      {
+        "id": "arrow_line2",
+        "kind": "core.color_count@1",
+        "box": {
+          "x": 0.0625,
+          "y": 0.84375,
+          "w": 0.875,
+          "h": 0.09375
+        },
+        "delivery": "every",
+        "min": [160, 0, 0],
+        "max": [255, 120, 120]
+      }
+    ]
+  }
+}

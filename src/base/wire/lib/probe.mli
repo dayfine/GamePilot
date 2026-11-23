@@ -3,7 +3,12 @@
 
 type json = Yojson.Safe.t
 type box = { x : float; y : float; w : float; h : float }
+
+val box_of_json : json -> box
+val json_of_box : box -> json
+
 type delivery = Every | Latest
+type color_range = { min : int * int * int; max : int * int * int }
 
 type probe_spec = {
   id : string;
@@ -11,12 +16,21 @@ type probe_spec = {
   box : box;
   delivery : delivery;
   template : string option;
+  color_range : color_range option;
 }
 
 val color_stats_probe : id:string -> box:box -> delivery:delivery -> probe_spec
 
 val template_match_probe :
   id:string -> box:box -> delivery:delivery -> template:string -> probe_spec
+
+val color_count_probe :
+  id:string ->
+  box:box ->
+  delivery:delivery ->
+  min:int * int * int ->
+  max:int * int * int ->
+  probe_spec
 
 val probe_spec_of_json : json -> probe_spec
 val json_of_probe_spec : probe_spec -> json
@@ -26,6 +40,7 @@ type rgb = { r : float; g : float; b : float }
 type probe_result =
   | Color_stats of { mean : rgb; stddev : rgb }
   | Template_match of { score : float; x : float; y : float }
+  | Color_count of { fraction : float; mean : rgb option }
   | Other of json
 
 val probes_of_json : string -> json -> (string * probe_result) list

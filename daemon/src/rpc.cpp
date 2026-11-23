@@ -73,6 +73,26 @@ double round_to(double value, double scale) {
   return std::round(value * scale) / scale;
 }
 
+// An [r, g, b] param of integers 0..255.
+std::array<std::uint8_t, 3> require_rgb(const pa::JsonObject& params,
+                                        const char* key) {
+  const pa::JsonArray& values = require_array(params, key);
+  constexpr std::int64_t kChannelMax = 255;
+  std::array<std::uint8_t, 3> rgb{};
+  bool ok = values.size() == rgb.size();
+  for (std::size_t c = 0; ok && c < rgb.size(); c++) {
+    const pa::JsonValue& value = values[c];
+    const std::int64_t channel = value.to_integer_default(-1);
+    ok = value.is_integer() && channel >= 0 && channel <= kChannelMax;
+    rgb[c] = static_cast<std::uint8_t>(channel);
+  }
+  if (!ok) {
+    throw RpcError(kInvalidParams,
+                   std::string("param must be [r, g, b] in 0..255: ") + key);
+  }
+  return rgb;
+}
+
 pa::JsonArray triple(const std::array<double, 3>& values) {
   pa::JsonArray array;
   for (const double value : values) {
@@ -90,6 +110,11 @@ pa::JsonObject probe_result_json(const ProbeResult& result) {
           json["kind"] = std::string(kColorStatsKind);
           json["mean"] = triple(value.mean);
           json["stddev"] = triple(value.stddev);
+        } else if constexpr (std::is_same_v<T, ColorCount>) {
+          json["kind"] = std::string(kColorCountKind);
+          json["fraction"] = round_to(value.fraction, 1e6);
+          json["mean"] =
+              value.mean ? pa::JsonValue(triple(*value.mean)) : pa::JsonValue();
         } else {
           json["kind"] = std::string(kTemplateMatchKind);
           json["score"] = round_to(value.score, 1e6);
@@ -171,9 +196,7 @@ SubscribeParams decode_subscribe(const pa::JsonObject& params) {
     const pa::JsonObject& box = require_object(require(probe, "box"), "box");
     spec.box = Box{require_number(box, "x"), require_number(box, "y"),
                    require_number(box, "w"), require_number(box, "h")};
-    const Box& b = spec.box;
-    if (!(b.x >= 0 && b.y >= 0 && b.w > 0 && b.h > 0 &&
-          b.x + b.w <= 1.0 + 1e-9 && b.y + b.h <= 1.0 + 1e-9)) {
+    if (!is_unit_box(spec.box)) {
       throw RpcError(kInvalidParams,
                      "box must lie in 0..1 with w, h > 0: " + spec.id);
     }
@@ -188,6 +211,20 @@ SubscribeParams decode_subscribe(const pa::JsonObject& params) {
     } else if (has_template) {
       throw RpcError(kInvalidParams,
                      "template is only for core.template_match@1: " + spec.id);
+    }
+    const bool has_range =
+        probe.get_value("min") != nullptr || probe.get_value("max") != nullptr;
+    if (spec.kind == kColorCountKind) {
+      spec.color_range =
+          ColorRange{require_rgb(probe, "min"), require_rgb(probe, "max")};
+      for (std::size_t c = 0; c < 3; c++) {
+        if (spec.color_range.min[c] > spec.color_range.max[c]) {
+          throw RpcError(kInvalidParams, "min must not exceed max: " + spec.id);
+        }
+      }
+    } else if (has_range) {
+      throw RpcError(kInvalidParams,
+                     "min and max are only for core.color_count@1: " + spec.id);
     }
     subscribe.probes.push_back(std::move(spec));
   }
@@ -264,6 +301,17 @@ pa::JsonObject hello_result(const BackendInfo& backend) {
   info["frame_rate"] = backend.frame_rate;
   info["width"] = static_cast<std::int64_t>(backend.width);
   info["height"] = static_cast<std::int64_t>(backend.height);
+  const Box& picture = backend.viewport.picture;
+  pa::JsonObject viewport;
+  viewport["x"] = picture.x;
+  viewport["y"] = picture.y;
+  viewport["w"] = picture.w;
+  viewport["h"] = picture.h;
+  info["viewport"] = std::move(viewport);
+  pa::JsonObject game_size;
+  game_size["width"] = static_cast<std::int64_t>(backend.viewport.game_width);
+  game_size["height"] = static_cast<std::int64_t>(backend.viewport.game_height);
+  info["game_size"] = std::move(game_size);
   pa::JsonArray kinds;
   for (const std::string& kind : probe_kinds()) {
     kinds.push_back(kind);

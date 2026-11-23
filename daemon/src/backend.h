@@ -9,14 +9,17 @@
 #include <stdexcept>
 #include <string>
 
+#include "viewport.h"
+
 namespace gamepilot {
 
 struct BackendInfo {
   std::string kind;       // "mgba"
   std::string game_code;  // cartridge code as the backend reports it
   double frame_rate = 0;  // frames per second of the emulated machine
-  int width = 0;
+  int width = 0;          // frame size in pixels
   int height = 0;
+  Viewport viewport;  // the game picture in the frame, and its native size
 };
 
 // GBA KEYINPUT bit order.

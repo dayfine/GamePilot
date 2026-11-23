@@ -9,8 +9,18 @@
       "game_code": "BPRE",
       "frame_rate": 59.7275,
       "width": 240,
-      "height": 160
+      "height": 160,
+      "viewport": {
+        "x": 0.0,
+        "y": 0.0,
+        "w": 1.0,
+        "h": 1.0
+      },
+      "game_size": {
+        "width": 240,
+        "height": 160
+      }
     },
-    "probe_kinds": ["core.color_stats@1", "core.template_match@1"]
+    "probe_kinds": ["core.color_stats@1", "core.template_match@1", "core.color_count@1"]
   }
 }

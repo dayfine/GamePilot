@@ -27,22 +27,30 @@ type command = Command.command =
 type box = Probe.box = { x : float; y : float; w : float; h : float }
 type delivery = Probe.delivery = Every | Latest
 
+type color_range = Probe.color_range = {
+  min : int * int * int;
+  max : int * int * int;
+}
+
 type probe_spec = Probe.probe_spec = {
   id : string;
   kind : string;
   box : box;
   delivery : delivery;
   template : string option;
+  color_range : color_range option;
 }
 
 let color_stats_probe = Probe.color_stats_probe
 let template_match_probe = Probe.template_match_probe
+let color_count_probe = Probe.color_count_probe
 
 type rgb = Probe.rgb = { r : float; g : float; b : float }
 
 type probe_result = Probe.probe_result =
   | Color_stats of { mean : rgb; stddev : rgb }
   | Template_match of { score : float; x : float; y : float }
+  | Color_count of { fraction : float; mean : rgb option }
   | Other of json
 
 type frame = Probe.frame = {
@@ -63,6 +71,9 @@ type backend = Backend.backend = {
   frame_rate : float;
   width : int;
   height : int;
+  viewport : Probe.box;
+  game_width : int;
+  game_height : int;
 }
 
 type hello_result = Backend.hello_result = {

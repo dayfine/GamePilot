@@ -2,7 +2,10 @@
 // decode into the daemon's structs; the daemon's encoders reproduce the golden
 // results and notifications.
 
+#include <array>
+#include <cstdint>
 #include <map>
+#include <optional>
 #include <string>
 
 #include "Common/Cpp/Filesystem/FileIO.h"
@@ -68,6 +71,17 @@ void check_requests(const std::map<std::string, pa::JsonValue>& files) {
         *result_of(files.at("16-upload_template.response.json"))
              .get_string("template"));
 
+  const Request counted =
+      decode_request(files.at("19-subscribe.color_count.request.json"));
+  const SubscribeParams arrow = decode_subscribe(counted.params);
+  CHECK(arrow.probes.size() == 2);
+  CHECK(arrow.probes[0].kind == kColorCountKind);
+  CHECK(arrow.probes[1].box.y == 0.84375);
+  CHECK(arrow.probes[1].color_range.min ==
+        (std::array<std::uint8_t, 3>{160, 0, 0}));
+  CHECK(arrow.probes[1].color_range.max ==
+        (std::array<std::uint8_t, 3>{255, 120, 120}));
+
   const Request submit = decode_request(files.at("08-submit.request.json"));
   const SubmitParams batch = decode_submit(submit.params);
   CHECK(batch.batch_id == "b1");
@@ -106,7 +120,8 @@ void check_upload(const std::map<std::string, pa::JsonValue>& files) {
 }
 
 void check_encoders(const std::map<std::string, pa::JsonValue>& files) {
-  const BackendInfo mgba{"mgba", "BPRE", 59.7275, 240, 160};
+  const BackendInfo mgba{"mgba", "BPRE", 59.7275,
+                         240,    160,    Viewport{Box{0, 0, 1, 1}, 240, 160}};
   CHECK(hello_result(mgba) == result_of(files.at("02-hello.response.json")));
   CHECK(load_state_result(1200, 1) ==
         result_of(files.at("04-load_state.response.json")));
@@ -127,6 +142,13 @@ void check_encoders(const std::map<std::string, pa::JsonValue>& files) {
   const ProbeResult cursor = TemplateMatch{0.000412, 0.75, 0.0625};
   CHECK(frame_notification(1260, 1, 21101.4, {{"cursor", cursor}}) ==
         files.at("18-frame.template_match.notification.json"));
+  const ProbeResult no_arrow = ColorCount{0.0, std::nullopt};
+  const ProbeResult arrow =
+      ColorCount{0.013333, std::array<double, 3>{224.0, 48.5, 40.25}};
+  CHECK(
+      frame_notification(1302, 1, 21804.7,
+                         {{"arrow_line1", no_arrow}, {"arrow_line2", arrow}}) ==
+      files.at("20-frame.color_count.notification.json"));
   CHECK(batch_done_notification("b1", 1230, 20599.0) ==
         files.at("10-batch_done.notification.json"));
 
@@ -184,6 +206,35 @@ void check_errors() {
   }
   CHECK(threw);  // a template match needs its template
 
+  const auto subscribe_error = [](const char* probe) {
+    try {
+      decode_subscribe(
+          parse_message(std::string(R"({"probes":[)") + probe + "]}")
+              .to_object_throw());
+    } catch (const RpcError& error) {
+      return error.code() == kInvalidParams;
+    }
+    return false;
+  };
+  const char* const kBox =
+      R"("box":{"x":0,"y":0,"w":1,"h":1},"delivery":"every")";
+  CHECK(subscribe_error(
+      (std::string(R"({"id":"p","kind":"core.color_count@1",)") + kBox +
+       R"(,"min":[0,0,0]})")
+          .c_str()));  // a color count needs both ends
+  CHECK(subscribe_error(
+      (std::string(R"({"id":"p","kind":"core.color_count@1",)") + kBox +
+       R"(,"min":[0,0,0],"max":[0,256,0]})")
+          .c_str()));  // channels are 0..255
+  CHECK(subscribe_error(
+      (std::string(R"({"id":"p","kind":"core.color_count@1",)") + kBox +
+       R"(,"min":[9,0,0],"max":[8,0,0]})")
+          .c_str()));  // min above max
+  CHECK(subscribe_error(
+      (std::string(R"({"id":"p","kind":"core.color_stats@1",)") + kBox +
+       R"(,"min":[0,0,0],"max":[1,1,1]})")
+          .c_str()));  // a range only for color counts
+
   threw = false;
   try {
     decode_upload_template(
@@ -198,8 +249,8 @@ void check_errors() {
 
 int main() {
   const auto files = load_contracts();
-  CHECK(files.size() == 18);
-  if (files.size() == 18) {
+  CHECK(files.size() == 20);
+  if (files.size() == 20) {
     check_requests(files);
     check_upload(files);
     check_encoders(files);

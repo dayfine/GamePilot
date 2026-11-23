@@ -78,6 +78,8 @@ struct ProbeSpec {
   std::string delivery;  // "every" or "latest"
   // core.template_match@1 only: the hash probe.upload_template returned.
   std::string template_hash;
+  // core.color_count@1 only.
+  ColorRange color_range;
 };
 
 struct SubscribeParams {
