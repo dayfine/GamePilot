@@ -77,7 +77,13 @@ let transport (log : log) : Session.transport =
   (* Index of the next client message the program must send, and of the next
      log entry to scan for daemon output. *)
   let next_in = ref 0 and next_out = ref 0 in
+  (* Set when the program waits for daemon output but the recorded client spoke
+     first: the live run's wait ended there. The first time, the wall clock
+     jumps to infinity so a pending [await] times out (the reader did not hold
+     on the recorded frames); waiting again is a divergence. *)
+  let ran_out = ref false in
   let send actual =
+    ran_out := false;
     match find_from log !next_in (is_dir Wire.In) with
     | None ->
         diverge "program sent %s after the log's last client message"
@@ -92,6 +98,9 @@ let transport (log : log) : Session.transport =
     | None -> Session.Closed "end of wire log"
     | Some i -> (
         match find_from log !next_in (is_dir Wire.In) with
+        | Some j when j < i && not !ran_out ->
+            ran_out := true;
+            Session.Idle
         | Some j when j < i ->
             let n, l = log.(j) in
             diverge
@@ -102,6 +111,6 @@ let transport (log : log) : Session.transport =
             next_out := i + 1;
             Session.Message (snd log.(i)).msg)
   in
-  { send; recv; wall_ms = (fun () -> 0.) }
+  { send; recv; wall_ms = (fun () -> if !ran_out then infinity else 0.) }
 
 let run log f = Session.run (transport log) f

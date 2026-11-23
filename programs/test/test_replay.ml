@@ -49,22 +49,39 @@ let () =
         (contains e "commands" && contains e "press Start"
        && contains e "press A")
 
-(* A program that keeps waiting where the recorded client pressed a button
-   must not read the frames that press caused. *)
+(* A program whose wait never holds where the recorded client pressed a button
+   times out there (the reader missed on the recorded frames) and must not read
+   the frames that press caused; waiting again diverges. *)
 let () =
-  let waits_forever () =
+  let waits_twice () =
     ignore (Kernel.load_state state : int);
     ignore (Kernel.subscribe [ Frlg.Start_menu.probe ] : string list);
+    let first = Kernel.await ~timeout_ms:60_000 (fun _ -> false) in
+    expect "await that never holds -> timeout at the recorded press"
+      (first = Kernel.Timeout);
     Kernel.await ~timeout_ms:60_000 (fun _ -> false)
   in
   match
-    Handler.Replay.run (fixture "opens_closes.wirelog.jsonl") waits_forever
+    Handler.Replay.run (fixture "opens_closes.wirelog.jsonl") waits_twice
   with
-  | _ -> failwith "FAILED divergence: await read past a client message"
+  | _ -> failwith "FAILED divergence: second await read past a client message"
   | exception Handler.Replay.Divergence e ->
       print_endline e;
-      expect "await past a client message -> divergence"
+      expect "second await past a client message -> divergence"
         (contains e "recorded client sent submit")
+
+(* A wire log recorded live on mGBA (FireRed, Pallet overworld state): the
+   program passes on it, so a reader change can be checked here without the
+   emulator or the daemon. *)
+let () =
+  let outcome =
+    Handler.Replay.run
+      (fixture "mgba_run1.wirelog.jsonl")
+      (Frlg.Start_menu_poc.run ~state)
+  in
+  print_endline (Frlg.Start_menu_poc.describe outcome);
+  expect "recorded mGBA run passes"
+    (match outcome with Frlg.Start_menu_poc.Passed _ -> true | _ -> false)
 
 (* The reader on the golden frame (open panel) and on overworld colors. *)
 let () =
