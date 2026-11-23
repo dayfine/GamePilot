@@ -20,13 +20,15 @@
   test_actions
   test_story_game
   test_action_requests
-  test_menu_actions)
+  test_menu_actions
+  test_grind)
  (modules
   test_fly_towns
   test_actions
   test_story_game
   test_action_requests
-  test_menu_actions)
+  test_menu_actions
+  test_grind)
  (deps
   mgba.probes.jsonl
   menus.mgba.probes.jsonl
@@ -40,4 +42,5 @@
   gamepilot.story
   gamepilot.frlg_overworld
   gamepilot.frlg_actions
+  gamepilot.frlg_battle
   frlg_overworld_fixtures))

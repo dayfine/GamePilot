@@ -1,7 +1,8 @@
 (** FireRed's story {!Story.Game.t}: [route] and [ready] events planned and
     walked ({!Frlg_overworld}), [talk] and [scene] settled ({!Talk}), [heal] and
-    [save] events ({!Heal_and_save}), the ["fly"] game action ({!Fly}) and the
-    shared ones ({!Game_actions}). Battles and the other built-in kinds fail as
+    [save] events ({!Heal_and_save}), the ["fly"] game action ({!Fly}), the
+    ["grind"] one ({!Grind}, its walks and heals this game's) and the shared
+    ones ({!Game_actions}). Battles and the other built-in kinds fail as
     [not_implemented] (repeats): they come from their own libraries.
 
     Between loop rounds, heal walks to the configured Center's nurse and talks

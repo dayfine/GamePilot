@@ -130,6 +130,61 @@ let heal t () =
       Result.bind (walk_to t front) (fun () ->
           Menu_input.run (Heal_and_save.heal_at_nurse ~log:t.config.log))
 
+let raise_cause = function
+  | Ok () -> ()
+  | Error cause -> raise (Menu_input.Action_failed cause)
+
+let heal_at t : Grind_plan.heal -> unit =
+  let log = t.config.log in
+  function
+  | Nurse front ->
+      raise_cause (walk_to t front);
+      Heal_and_save.heal_at_nurse ~log ()
+  | Pad pad ->
+      raise_cause (walk_to t pad);
+      Menu_input.settle_back ~label:"heal pad" ~log
+
+(* Turning ends facing a way the spin does not report. *)
+let find_battle t () =
+  let facing =
+    Option.value
+      (Option.bind t.at (fun at -> at.faces))
+      ~default:Grid_maps.Direction.North
+  in
+  Spin_for_encounter.spin ~log:t.config.log ~facing
+    ~max_batches:Action_requests.default_spin_batches;
+  t.at <- Option.map (fun at -> { at with Story.Pose.faces = None }) t.at
+
+let battle t script =
+  let module B = Frlg_battle in
+  Effects.with_probes B.Battle_look.probes (fun () ->
+      B.Scripted_battle.run ~log:t.config.log
+        (B.Screen_driver.make ~read_offered_move:Summary_moves.read_offered ())
+        script)
+
+let grind_rig t : Grind.rig =
+  let log = t.config.log in
+  {
+    slot_of = Party_roster.slot_of !(t.party);
+    known_moves = (fun ~slot -> Summary_moves.read_known ~log ~slot);
+    swap =
+      (fun a b ->
+        Party_actions.swap ~log a b;
+        t.party := Party_roster.swap !(t.party) a b);
+    go_to = (fun pose -> raise_cause (walk_to t pose));
+    heal = heal_at t;
+    find_battle = find_battle t;
+    battle = battle t;
+    log;
+  }
+
+let grind t (_ : Story.Plan.event) args =
+  match Grind_plan.load_strategies () with
+  | Error e -> Error (Story.Failure.cause ~repeats:true "no_grind_strategies" e)
+  | Ok strategies ->
+      Result.bind (Grind_plan.decode strategies args) (fun plan ->
+          Menu_input.run (fun () -> Grind.run (grind_rig t) plan))
+
 let action_context t : Game_actions.context =
   {
     log = t.config.log;
@@ -142,7 +197,10 @@ let game t : Story.Game.t =
   {
     walk_route = (fun _ route -> walk_to t route.target);
     run_builtin = run_builtin t;
-    game_actions = ("fly", fly t) :: Game_actions.handlers (action_context t);
+    game_actions =
+      ("fly", fly t)
+      :: ("grind", grind t)
+      :: Game_actions.handlers (action_context t);
     flag_holds = t.config.flags;
     position = (fun () -> t.at);
     heal = heal t;

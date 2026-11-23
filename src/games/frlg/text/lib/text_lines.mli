@@ -23,7 +23,9 @@ val tm_case_row : int -> t
     row starts further left and matches nothing here. *)
 
 val summary_move : int -> t
-(** Move [i] (0..3) on the summary's KNOWN MOVES page. *)
+(** Move [i] (0..3) on the summary's KNOWN MOVES page; row 4 is the move offered
+    on the list a battle opens to forget a move from (the same 28-pixel pitch,
+    pokefirered pokemon_summary_screen.c). *)
 
 (** {1 Template rows and the probe box} *)
 

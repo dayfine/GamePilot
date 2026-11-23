@@ -139,19 +139,58 @@ let use_item (item : Battle_driver.item) =
   && shows ~timeout_ms:list_timeout_ms Battle_screen.battle_shows
 
 let move_list m = Summary_screen.page m = Some moves_page
+let cursor_read m = Move_list_cursor.row m <> None
 
-(* A on the move list only with its cursor read on [slot]; else B, which
-   leaves the list for "Stop learning ...?", a {!Battle_driver.Move_learn}
-   again. *)
-let forget_move slot =
+(* "Stop learning ...?" comes after a NO or a list left without a choice;
+   YES (A, where its cursor starts) stops, NO (B) asks "Delete a move?" again.
+   [Unread] when it never shows. *)
+let stop_prompt_ms = 8000
+
+let answer_stop_learning button ~then_ : Battle_driver.learned =
+  ignore (shows (fun m -> not (Battle_yes_no.yes_no_box m)) : bool);
+  if shows ~timeout_ms:stop_prompt_ms Battle_yes_no.yes_no_box then (
+    tap_all [ button ];
+    then_)
+  else Unread "no \"Stop learning?\" after the move list"
+
+(* B leaves the list; the game asks "Stop learning ...?". *)
+let leave_list button ~then_ =
+  tap_all [ Wire.B ];
+  answer_stop_learning button ~then_
+
+(* On the list, on its top row: down to [slot], A only with the cursor read
+   there. *)
+let pick slot ~move : Battle_driver.learned =
+  tap_all (Battle_cursor.down slot);
+  if shows (fun m -> Move_list_cursor.row m = Some slot) then (
+    tap_all [ Wire.A ];
+    Learned { slot; move })
+  else
+    leave_list Wire.B
+      ~then_:(Unread (Printf.sprintf "the cursor did not read on move %d" slot))
+
+let open_list () =
   tap_all [ Wire.A ];
-  if shows ~timeout_ms:list_timeout_ms move_list then (
-    tap_all (Battle_cursor.down slot);
-    let on_slot m = Move_list_cursor.row m = Some slot in
-    tap_all [ (if shows on_slot then Wire.A else Wire.B) ])
+  shows ~timeout_ms:list_timeout_ms (fun m -> move_list m && cursor_read m)
 
-let answer_move_learn ~forget =
-  match forget with None -> tap_all [ Wire.B ] | Some slot -> forget_move slot
+let forget_for read_offered ~move ~slot : Battle_driver.learned =
+  match read_offered () with
+  | Some offered when offered = move -> pick slot ~move:(Some offered)
+  | Some offered ->
+      leave_list Wire.A ~then_:(Not_learned { offered = Some offered })
+  | None -> leave_list Wire.B ~then_:(Unread "the move offered did not read")
+
+let no_list = Battle_driver.Unread "the list to forget from did not show"
+
+let answer_move_learn read_offered (learn : Battle_driver.learn) :
+    Battle_driver.learned =
+  match learn with
+  | Keep_moves ->
+      tap_all [ Wire.B ];
+      answer_stop_learning Wire.A ~then_:(Not_learned { offered = None })
+  | Forget slot -> if open_list () then pick slot ~move:None else no_list
+  | Forget_for { move; slot } ->
+      if open_list () then forget_for read_offered ~move ~slot else no_list
 
 let answer_use_next yes = tap_all [ (if yes then Wire.A else Wire.B) ]
 
@@ -193,7 +232,9 @@ let run () =
   tap_all Battle_cursor.run_away;
   ignore (shows (fun m -> not (Battle_screen.battle_menu m)) : bool)
 
-let make ?read_move_name () : Battle_driver.t =
+let no_reader () = None
+
+let make ?read_move_name ?(read_offered_move = no_reader) () : Battle_driver.t =
   {
     next_event;
     use_move = use_move read_move_name;
@@ -201,6 +242,6 @@ let make ?read_move_name () : Battle_driver.t =
     send_in;
     run;
     use_item;
-    answer_move_learn;
+    answer_move_learn = answer_move_learn read_offered_move;
     answer_use_next;
   }

@@ -1,0 +1,21 @@
+{
+  "source": "dayfine/PokemonSimulation PR #119, docs/progression/mail-glitch-grind.md (Monte Carlo of the mg-03 party, 200 runs per row)",
+  "strategies": [
+    {
+      "name": "victory_road_2f",
+      "spot": {"map": "VictoryRoad_2F", "tile": [45, 10], "facing": "west"},
+      "lead": "switch",
+      "heal": {"nurse": {"map": "IndigoPlateau_PokemonCenter_1F", "tile": [13, 12], "facing": "north"}},
+      "heal_every": 7,
+      "why": "fastest wild spot open post-game without the Sevii story: 40,600 EXP/h, 77 battles and 11 heal trips to MIMIEN Lv 33. The spot is cave floor 3 tiles from the Route 23 exit, out of every trainer's sight; the Indigo Plateau nurse is a walk away (Fly does not work in a cave). Heal every 7 battles is the sim's 77 battles over 11 trips: no HP reader yet"
+    },
+    {
+      "name": "pokemon_tower_5f",
+      "spot": {"map": "PokemonTower_5F", "tile": [8, 9], "facing": "east"},
+      "lead": "switch",
+      "heal": {"pad": {"map": "PokemonTower_5F", "tile": [10, 9], "facing": "east"}},
+      "heal_every": 1,
+      "why": "fallback: 17,100 EXP/h with the switch trick, healing on the PurifiedZone pad 2 tiles east whenever Blastoise is below full (every battle, with no HP reader). The sim's faster Tower row has MIMIEN fight alone when it outspeeds and surely one-hits, which needs a foe species reader and the grinder's level"
+    }
+  ]
+}

@@ -70,17 +70,9 @@ let text_pocket : Bag_screen.pocket -> Text.Item_names.pocket = function
 
 let cancel = "CANCEL"
 
-let load_data path load =
-  match Text.Data_files.locate path with
-  | Some file -> load file
-  | None -> M.fail ~repeats:true "no_text_data" (path ^ " not found")
-
-let glyphs = lazy (load_data Text.Data_files.glyph_table Text.Glyph_table.load)
-let names = lazy (load_data Text.Data_files.item_names_eng Text.Item_names.load)
-
 let read_row candidates row =
   match
-    Text.Line_reading.read (Lazy.force glyphs)
+    Text.Line_reading.read (Text_data.glyphs ())
       (Text.Text_lines.bag_row row)
       candidates
   with
@@ -102,7 +94,7 @@ let rec find_from candidates name k =
 let select slug =
   let pocket = pocket_of_item slug in
   let in_pocket =
-    Text.Item_names.in_pocket (Lazy.force names) (text_pocket pocket)
+    Text.Item_names.in_pocket (Text_data.item_names ()) (text_pocket pocket)
   in
   let not_in_bag () =
     M.fail "not_in_bag" (slug ^ " is not in " ^ Bag_screen.pocket_name pocket)

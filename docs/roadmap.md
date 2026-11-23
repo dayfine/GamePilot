@@ -73,26 +73,30 @@ its start (`~/FRLGLab/mgba/emu-1/saves`, `mail-glitch-test/`).
 | mg-01 | Celadon: Coin Case, Retro Mail, 200 coins, Abra |
 | mg-02 | Spearow on Route 16, Sitrus Berry on Route 6, trade for CH'DING |
 | mg-03 | Abra for MIMIEN on Route 2, Revives at Lavender |
-| mg-04 | Level CH'DING to 21 (Knock Off) and MIMIEN to 33 (Recycle) with clean EVs: see below |
+| mg-04 | Level CH'DING to 21 (Knock Off) and MIMIEN to 33 (Recycle): see below |
 | mg-05 | Route 8 setup and the double battle (mGBA only, R9) |
 
 ### mg-04: grinding options
 
-The plan grinds wild Gastly, Haunter and Cubone in Pokemon Tower, because they give no HP, Attack or
-Speed EVs. It works but is slow (300 encounters for MIMIEN). The checkpoint becomes one `grind` action
-with a goal (species, target level, move to learn, EV stats that must stay zero) and several
-strategies. The program picks the fastest one the save allows, read from the screen and the plan's
-facts (badges, post-game, VS Seeker in the bag):
+EVs do not matter (user, 2026-11-23), and the save is post-game with the Sevii Islands not done
+(Cerulean Cave and Sevault Canyon closed) and no Exp. Share. PokemonSimulation PR #119
+(`docs/progression/mail-glitch-grind.md`) compared the options on the mg-03 party: CH'DING is Lv 22
+with Knock Off already, so only MIMIEN (Lv 9 to 33, 35,208 EXP) grinds.
 
-1. **Tower wilds** (today's plan): always available at this point in the story.
-2. **Post-game wilds**: Victory Road or Cerulean Cave, much more experience per battle; flee from every
-   species whose EV yield breaks the goal.
-3. **VS Seeker rematches**: trainers whose whole party yields only allowed EVs, including double
-   battles for two shares of experience per fight; trainer parties from pokefirered.
+The checkpoint is one `grind` game action per grinder: a goal (species, target level, move to learn,
+the move slot it replaces) and a named strategy from `src/games/frlg/assets/grind_strategies.json`
+(the spot, who leads, how and how often to heal). The action reads the grinder's moves on the summary
+first and passes at once when it knows the move (CH'DING), and ends after the battle the move is
+learned in; every other move offered is declined.
 
-Strategies and their experience per hour are compared in PokemonSimulation first (policy is
-simulated before it is coded), and the plan names the default. The EV table and trainer parties come
-from the decomp data, never typed by hand.
+1. **Victory Road 2F, switch trick** (default): 40,600 EXP/h, 77 battles, 11 heal trips walked to the
+   Indigo Plateau nurse, about 53 min.
+2. **Pokemon Tower 5F** (fallback): the switch trick with the PurifiedZone pad. The sim's faster Tower
+   row (MIMIEN alone when it outspeeds and surely one-hits, else switch) needs a foe species reader
+   and a level reader first.
+
+Missing readers: the grinder's level (the summary draws it in the small font), HP and PP (heals go
+by battle count, the sim's rate), and the foe's species.
 
 ## Phase 5: console B (S1)
 

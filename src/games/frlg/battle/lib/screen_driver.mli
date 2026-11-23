@@ -20,8 +20,11 @@
 
 val make :
   ?read_move_name:(Effects.measurements -> slot:int -> string option) ->
+  ?read_offered_move:(unit -> string option) ->
   unit ->
   Battle_driver.t
 (** [read_move_name] reads a move's name off the open move menu; without it a
     script's move names are not checked. The move-name reader of the FRLG text
-    work plugs in here. *)
+    work plugs in here. [read_offered_move] reads the slug of the move offered
+    on the open list to forget from (its fifth row); without it a [Forget_for]
+    answer finds the move unread. *)
