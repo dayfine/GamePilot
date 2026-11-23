@@ -42,6 +42,7 @@ add_library(gamepilot_core STATIC
   src/probes.cpp
   src/rpc.cpp
   src/schedule.cpp
+  src/sent_results.cpp
   src/server.cpp
   src/template_store.cpp
   src/viewport.cpp

@@ -27,9 +27,25 @@ type t = {
 
 let protocol_error fmt = Printf.ksprintf (fun s -> raise (Protocol_error s)) fmt
 
-(* Takes one event from the transport into the session; returns the frame if
-   the event was one. A frame taken before the last load shows another state
-   and is dropped. *)
+(* A frame carries only the results that changed since the previous one
+   (contract v1.4; all of them after a subscribe or a load); the others are
+   still the held ones. Held probes keep their place, new ones go last. *)
+let with_held_results (held : Wire.frame option) (f : Wire.frame) =
+  match held with
+  | None -> f
+  | Some held ->
+      let latest (id, r) =
+        (id, Option.value (List.assoc_opt id f.probes) ~default:r)
+      in
+      let is_new (id, _) = not (List.mem_assoc id held.probes) in
+      {
+        f with
+        probes = List.map latest held.probes @ List.filter is_new f.probes;
+      }
+
+(* Takes one event from the transport into the session; returns the frame,
+   with the held results it did not repeat, if the event was one. A frame
+   taken before the last load shows another state and is dropped. *)
 let pump t =
   match t.transport.recv () with
   | Message (Wire.Response { id; outcome }) ->
@@ -37,7 +53,8 @@ let pump t =
       None
   | Message (Wire.Notification (Wire.Frame { load; _ })) when load < t.load ->
       None
-  | Message (Wire.Notification (Wire.Frame { frame = f; _ })) ->
+  | Message (Wire.Notification (Wire.Frame { frame; _ })) ->
+      let f = with_held_results t.latest frame in
       t.latest <- Some f;
       t.now <- Some f.t_ms;
       Some f

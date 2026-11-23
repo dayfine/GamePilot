@@ -1,4 +1,4 @@
-# Wire protocol v1.3
+# Wire protocol v1.4
 
 JSON-RPC 2.0 between the OCaml programs (client) and the daemon (server). The golden files in this
 folder are the spec: the daemon's tests parse every file and the OCaml tests decode and re-encode
@@ -9,6 +9,9 @@ one line.
 v1.1 adds the `load` counter to `frame` and `backend.load_state`, and a `kind` to every probe result.
 Template probes (`probe.upload_template`, `core.template_match@1`) came later under the same number.
 v1.3 adds `unsubscribe` and the optional `ink` of `core.template_match@1`.
+v1.4 sends only changed probe results: a `frame` carries a probe's result only when it differs from
+the one the previous frame sent for it (see Notifications). A v1.3 frame with every result is a valid
+v1.4 frame, so older wire logs replay unchanged.
 v1.2 makes the daemon own where the game picture sits in the frame: `hello` gives the `viewport` and
 the `game_size`, probe boxes and template placements are relative to the picture, templates are in game
 pixels, and `core.color_count@1` is new.
@@ -73,7 +76,20 @@ size) every v1.1 message means the same in v1.2.
 
 ## Notifications
 
-- `frame`: `seq`, `load`, `t_ms`, `probes` {id: result}. One per frame while any probe is subscribed.
+- `frame`: `seq`, `load`, `t_ms`, `probes` {id: result}. One per frame while any probe is subscribed,
+  also when `probes` is empty.
+  `probes` holds only the results that changed since this client's previous frame
+  (`23-frame.changed_only.notification.json`): a result is left out when its JSON, as sent (rounded as
+  below), equals the last one sent for that probe id. The first frame after a `subscribe`, a
+  successful `backend.load_state` or a new connection carries every subscribed probe's result, so a
+  reader starting at one of those points needs no earlier frame. A re-subscribed id is always sent
+  again (every `subscribe` starts over), and an unsubscribed id is forgotten.
+  The client keeps the latest result per probe id and reads from that; both deliveries get the same
+  frames, since an unchanged result is still that frame's result.
+  Results are compared after the daemon's rounding: means and stddevs to 0.01, `fraction` and
+  `score` to 1e-6, `x` and `y` to 1e-5. A deterministic backend (mGBA) gives the same pixels the same
+  numbers, so a still screen sends nothing; the rounding is not coarsened for this, because a probe
+  whose numbers change does so because its pixels did.
 - `batch_done`: `batch_id`, `seq`, `t_ms` once the batch's last command (including its cooldown) ended.
 
 ## Probe kinds

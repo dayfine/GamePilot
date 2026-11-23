@@ -1,0 +1,17 @@
+{
+  "jsonrpc": "2.0",
+  "method": "frame",
+  "params": {
+    "seq": 1261,
+    "load": 1,
+    "t_ms": 21118.1,
+    "probes": {
+      "cursor": {
+        "kind": "core.template_match@1",
+        "score": 0.000412,
+        "x": 0.75,
+        "y": 0.125
+      }
+    }
+  }
+}
