@@ -151,16 +151,15 @@ let read_format ~where root =
   | Some (`String name) when name = v2_name -> V2
   | Some _ -> fail "%sformat is unsupported." where
 
+let section_records format ~where name value : Yojson.Safe.t =
+  let one i item =
+    `Assoc (record format ~where:(item_where where name i) item)
+  in
+  `List (List.mapi one (array (where ^ name) value))
+
 let section format ~where root name =
   Option.map
-    (fun value ->
-      let records = array (where ^ name) value in
-      ( name,
-        `List
-          (List.mapi
-             (fun i item ->
-               `Assoc (record format ~where:(item_where where name i) item))
-             records) ))
+    (fun value -> (name, section_records format ~where name value))
     (find name root)
 
 let to_v1 ~where json =

@@ -51,17 +51,18 @@ let warp_entries =
   ]
   @ List.map (fun d -> ("walk_" ^ Direction.name d, Walk d)) Direction.all
 
+let named_entry ~where name =
+  match List.assoc_opt name warp_entries with
+  | Some entry -> entry
+  | None ->
+      fail
+        "%senter \"%s\" is not walk_into, step_on, cave_entrance or \
+         walk_<direction>."
+        where name
+
 let warp_entry ~where obj =
-  match string_opt ~where "enter" obj with
-  | None -> Walk_into
-  | Some name -> (
-      match List.assoc_opt name warp_entries with
-      | Some entry -> entry
-      | None ->
-          fail
-            "%senter \"%s\" is not walk_into, step_on, cave_entrance or \
-             walk_<direction>."
-            where name)
+  Option.fold ~none:Walk_into ~some:(named_entry ~where)
+    (string_opt ~where "enter" obj)
 
 let destination ~where obj =
   match (has "to_map" obj, has "to_point" obj) with
@@ -102,16 +103,15 @@ let box ~where obj =
       (String.sub where 0 (String.length where - 1));
   { top_left; bottom_right }
 
+let look ~where i : Yojson.Safe.t -> Direction.t =
+  let at = Printf.sprintf "%slooks[%d]" where i in
+  function
+  | `String name -> direction_named at name
+  | _ -> fail "%s is not a string." at
+
 let looks ~where ~facing obj =
   match (list_opt ~where "looks" obj, facing) with
-  | Some names, _ ->
-      List.mapi
-        (fun i value ->
-          let at = Printf.sprintf "%slooks[%d]" where i in
-          match value with
-          | `String name -> direction_named at name
-          | _ -> fail "%s is not a string." at)
-        names
+  | Some names, _ -> List.mapi (look ~where) names
   | None, Some facing -> [ facing ]
   | None, None -> fail "%slooks is missing, and the object has no facing." where
 

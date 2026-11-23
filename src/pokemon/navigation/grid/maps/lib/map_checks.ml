@@ -56,16 +56,18 @@ let gate_switch_listed ~where (map : Map_data.t) (gate : gate) =
         switch_id
   | _ -> ()
 
+let unlisted_gate_tile (map : Map_data.t) claimed pos =
+  Grid.get map.tiles pos = Tile_kind.Gate
+  && not (List.exists (Tile_pos.equal pos) claimed)
+
 let every_gate_tile_listed ~where (map : Map_data.t) claimed =
-  List.iter
-    (fun pos ->
-      if
-        Grid.get map.tiles pos = Tile_kind.Gate
-        && not (List.exists (Tile_pos.equal pos) claimed)
-      then
-        fail "%stiles has a G at %s that no gate lists." where
-          (Tile_pos.to_string pos))
-    (Grid.positions map.tiles)
+  match
+    List.find_opt (unlisted_gate_tile map claimed) (Grid.positions map.tiles)
+  with
+  | Some pos ->
+      fail "%stiles has a G at %s that no gate lists." where
+        (Tile_pos.to_string pos)
+  | None -> ()
 
 let statue_fits map what statue =
   inside map what statue.statue_tile;
@@ -91,14 +93,14 @@ let switch_fits ~where (map : Map_data.t) (switch : switch) =
       each where "buttons" buttons (fun what pos ->
           tile_is map what pos Tile_kind.Strength_button "Strength button (B)")
 
+let hole_one_way (map : Map_data.t) what warp =
+  let on_hole = Grid.get map.tiles warp.warp_pos = Tile_kind.Fall_hole in
+  if on_hole && not warp.one_way then
+    fail "%s %s is on a hole (H) but not one_way." what
+      (Tile_pos.to_string warp.warp_pos)
+
 let holes_one_way ~where (map : Map_data.t) =
-  each where "warps" map.warps (fun what warp ->
-      if
-        Grid.get map.tiles warp.warp_pos = Tile_kind.Fall_hole
-        && not warp.one_way
-      then
-        fail "%s %s is on a hole (H) but not one_way." what
-          (Tile_pos.to_string warp.warp_pos))
+  each where "warps" map.warps (hole_one_way map)
 
 let gates_fit ~where (map : Map_data.t) =
   let gates = List.map snd (Map_data.String_map.bindings map.gates) in
