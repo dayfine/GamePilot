@@ -1,0 +1,20 @@
+{
+  "source": "pokefirered: the fly map's cells from src/data/region_map/region_map_layout_kanto.h (sRegionMapSections_Kanto, the cursor's x and y; size MAP_WIDTH x MAP_HEIGHT in src/region_map.c), landing tiles from src/data/heal_locations.json (SetFlyWarpDestination() in src/region_map.c); as the fork's Overworld/PokemonFRLG_FlyMap.cpp",
+  "columns": 22,
+  "rows": 15,
+  "towns": [
+    {"name": "PalletTown", "cell": [4, 11], "landing": {"map": "PalletTown", "tile": [6, 8]}},
+    {"name": "ViridianCity", "cell": [4, 8], "landing": {"map": "ViridianCity", "tile": [26, 27]}},
+    {"name": "PewterCity", "cell": [4, 4], "landing": {"map": "PewterCity", "tile": [17, 26]}},
+    {"name": "Route4", "cell": [8, 3], "landing": {"map": "Route4", "tile": [12, 6]}},
+    {"name": "CeruleanCity", "cell": [14, 3], "landing": {"map": "CeruleanCity", "tile": [22, 20]}},
+    {"name": "VermilionCity", "cell": [14, 9], "landing": {"map": "VermilionCity", "tile": [15, 7]}},
+    {"name": "Route10", "cell": [18, 3], "landing": {"map": "Route10", "tile": [13, 21]}},
+    {"name": "LavenderTown", "cell": [18, 6], "landing": {"map": "LavenderTown", "tile": [6, 6]}},
+    {"name": "CeladonCity", "cell": [11, 6], "landing": {"map": "CeladonCity", "tile": [48, 12]}},
+    {"name": "SaffronCity", "cell": [14, 6], "landing": {"map": "SaffronCity", "tile": [24, 39]}},
+    {"name": "FuchsiaCity", "cell": [12, 12], "landing": {"map": "FuchsiaCity", "tile": [25, 32]}},
+    {"name": "CinnabarIsland", "cell": [4, 14], "landing": {"map": "CinnabarIsland", "tile": [14, 12]}},
+    {"name": "IndigoPlateau", "cell": [2, 3], "landing": {"map": "IndigoPlateau_Exterior", "tile": [11, 7]}}
+  ]
+}

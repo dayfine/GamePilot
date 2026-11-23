@@ -1,0 +1,8 @@
+{
+  "jsonrpc": "2.0",
+  "id": 10,
+  "method": "unsubscribe",
+  "params": {
+    "ids": ["bag.1/TM CASE", "gone"]
+  }
+}

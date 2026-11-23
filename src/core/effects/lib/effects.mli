@@ -40,6 +40,7 @@ type _ Effect.t +=
   | Load_state : string -> int Effect.t
   | Upload_template : string -> template_hash Effect.t
   | Subscribe : Wire.probe_spec list -> string list Effect.t
+  | Unsubscribe : string list -> string list Effect.t
 
 (** {1 Ops} *)
 
@@ -78,6 +79,15 @@ val upload_template : string -> template_hash
 
 val subscribe : Wire.probe_spec list -> string list
 (** Subscribes probes; returns the subscribed ids. *)
+
+val unsubscribe : string list -> string list
+(** Stops measuring these probes; returns the ids that were subscribed. The
+    latest frame ({!read}) drops their results too. *)
+
+val with_probes : Wire.probe_spec list -> (unit -> 'a) -> 'a
+(** [with_probes probes f] subscribes [probes], runs [f] and unsubscribes them,
+    also when [f] raises (unless the connection is gone). A reader that measures
+    once uses it so its probes do not cost time on every later frame. *)
 
 (** {1 Helpers for readers} *)
 

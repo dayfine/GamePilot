@@ -15,6 +15,7 @@ type _ Effect.t +=
   | Load_state : string -> int Effect.t
   | Upload_template : string -> template_hash Effect.t
   | Subscribe : Wire.probe_spec list -> string list Effect.t
+  | Unsubscribe : string list -> string list Effect.t
 
 let submit commands = Effect.perform (Submit commands)
 let await ~timeout_ms pred = Effect.perform (Await (pred, timeout_ms))
@@ -24,4 +25,18 @@ let read () = Effect.perform Read
 let load_state path = Effect.perform (Load_state path)
 let upload_template png = Effect.perform (Upload_template png)
 let subscribe probes = Effect.perform (Subscribe probes)
+let unsubscribe ids = Effect.perform (Unsubscribe ids)
+
+let with_probes probes f =
+  ignore (subscribe probes : string list);
+  let ids = List.map (fun (p : Wire.probe_spec) -> p.id) probes in
+  match f () with
+  | result ->
+      ignore (unsubscribe ids : string list);
+      result
+  | exception (Disconnected _ as e) -> raise e
+  | exception e ->
+      ignore (unsubscribe ids : string list);
+      raise e
+
 let probe (m : measurements) id = List.assoc_opt id m.probes

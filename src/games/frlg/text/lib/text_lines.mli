@@ -1,7 +1,7 @@
-(** Where a line of text sits on an FRLG screen, in game pixels (240x160), and
-    the colors it is drawn in. Measured on Switch captures by matching drawn
-    words (the fork's CommandLineTests images); the game draws the same pixels
-    on every backend. *)
+(** Where a line of text sits on an FRLG screen, in game pixels (240x160).
+    Measured on Switch captures by matching drawn words (the fork's
+    CommandLineTests images); the game draws the same pixels on every backend.
+*)
 
 type t = {
   id : string;  (** names the line in probe ids, e.g. ["bag.2"] *)
@@ -13,7 +13,6 @@ type t = {
   width : int;
       (** the template's width from [left - indent]: the name column, blank
           included, so a short word does not match a longer one's start *)
-  style : Text_drawing.style;
 }
 
 val bag_row : int -> t

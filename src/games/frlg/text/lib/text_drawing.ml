@@ -1,5 +1,8 @@
 type rgb = { r : int; g : int; b : int }
-type style = { text : rgb; shadow : rgb; background : rgb }
+
+let ink = { r = 0; g = 0; b = 0 }
+let paper = { r = 255; g = 255; b = 255 }
+
 type image = { width : int; height : int; pixels : Bytes.t }
 
 let bytes_per_pixel = 3
@@ -38,38 +41,37 @@ let set_pixel image x y { r; g; b } =
   Bytes.set_uint8 image.pixels (at + 1) g;
   Bytes.set_uint8 image.pixels (at + 2) b
 
-let color style : Glyph_table.pixel -> rgb = function
-  | Background -> style.background
-  | Text -> style.text
-  | Shadow -> style.shadow
+let color : Glyph_table.pixel -> rgb = function
+  | Text -> ink
+  | Shadow | Background -> paper
 
-let blank style ~width ~height =
+let blank ~width ~height =
   let image =
     { width; height; pixels = Bytes.create (width * height * bytes_per_pixel) }
   in
   for y = 0 to height - 1 do
     for x = 0 to width - 1 do
-      set_pixel image x y style.background
+      set_pixel image x y paper
     done
   done;
   image
 
-let draw_glyph image style ~top ~left (g : Glyph_table.glyph) =
+let draw_glyph image ~top ~left (g : Glyph_table.glyph) =
   for y = 0 to image.height - 1 do
     Array.iteri
-      (fun x pixel -> set_pixel image (left + x) y (color style pixel))
+      (fun x pixel -> set_pixel image (left + x) y (color pixel))
       g.rows.(top + y)
   done
 
-let draw glyphs style ~width ~indent ~top ~height text =
+let draw_mask glyphs ~width ~indent ~top ~height text =
   match glyphs_of glyphs text with
   | Error _ as e -> e
   | Ok gs when indent + total_width gs > width ->
       Error (Printf.sprintf "%S is wider than %d pixels" text width)
   | Ok gs ->
-      let image = blank style ~width ~height in
+      let image = blank ~width ~height in
       let draw_at left (g : Glyph_table.glyph) =
-        draw_glyph image style ~top ~left g;
+        draw_glyph image ~top ~left g;
         left + g.width
       in
       ignore (List.fold_left draw_at indent gs);

@@ -1,0 +1,103 @@
+{
+  "source": "pokefirered: each Mart's <map>_Items list in data/maps/<map>/scripts.inc, in list order (the fork's PokemonFRLG_AutoStoryMart.cpp table plus CeladonCity_DepartmentStore_4F); prices from src/data/items.json",
+  "marts": [
+    {"map": "ViridianCity_Mart", "stock": [
+      {"item": "poke-ball", "price": 200},
+      {"item": "potion", "price": 300},
+      {"item": "antidote", "price": 100},
+      {"item": "parlyz-heal", "price": 200}
+    ]},
+    {"map": "PewterCity_Mart", "stock": [
+      {"item": "poke-ball", "price": 200},
+      {"item": "potion", "price": 300},
+      {"item": "antidote", "price": 100},
+      {"item": "parlyz-heal", "price": 200},
+      {"item": "awakening", "price": 250},
+      {"item": "burn-heal", "price": 250},
+      {"item": "escape-rope", "price": 550},
+      {"item": "repel", "price": 350}
+    ]},
+    {"map": "CeruleanCity_Mart", "stock": [
+      {"item": "poke-ball", "price": 200},
+      {"item": "super-potion", "price": 700},
+      {"item": "potion", "price": 300},
+      {"item": "antidote", "price": 100},
+      {"item": "parlyz-heal", "price": 200},
+      {"item": "awakening", "price": 250},
+      {"item": "burn-heal", "price": 250},
+      {"item": "escape-rope", "price": 550},
+      {"item": "repel", "price": 350}
+    ]},
+    {"map": "VermilionCity_Mart", "stock": [
+      {"item": "poke-ball", "price": 200},
+      {"item": "super-potion", "price": 700},
+      {"item": "antidote", "price": 100},
+      {"item": "parlyz-heal", "price": 200},
+      {"item": "awakening", "price": 250},
+      {"item": "ice-heal", "price": 250},
+      {"item": "repel", "price": 350}
+    ]},
+    {"map": "LavenderTown_Mart", "stock": [
+      {"item": "great-ball", "price": 600},
+      {"item": "super-potion", "price": 700},
+      {"item": "revive", "price": 1500},
+      {"item": "antidote", "price": 100},
+      {"item": "parlyz-heal", "price": 200},
+      {"item": "burn-heal", "price": 250},
+      {"item": "ice-heal", "price": 250},
+      {"item": "escape-rope", "price": 550},
+      {"item": "super-repel", "price": 500}
+    ]},
+    {"map": "CeladonCity_DepartmentStore_4F", "stock": [
+      {"item": "poke-doll", "price": 1000},
+      {"item": "retro-mail", "price": 50},
+      {"item": "fire-stone", "price": 2100},
+      {"item": "thunder-stone", "price": 2100},
+      {"item": "water-stone", "price": 2100},
+      {"item": "leaf-stone", "price": 2100}
+    ]},
+    {"map": "CeladonCity_DepartmentStore_5F", "stock": [
+      {"item": "x-attack", "price": 500},
+      {"item": "x-defend", "price": 550},
+      {"item": "x-speed", "price": 350},
+      {"item": "x-special", "price": 350},
+      {"item": "x-accuracy", "price": 950},
+      {"item": "guard-spec", "price": 700},
+      {"item": "dire-hit", "price": 650}
+    ]},
+    {"map": "FuchsiaCity_Mart", "stock": [
+      {"item": "ultra-ball", "price": 1200},
+      {"item": "great-ball", "price": 600},
+      {"item": "super-potion", "price": 700},
+      {"item": "revive", "price": 1500},
+      {"item": "full-heal", "price": 600},
+      {"item": "max-repel", "price": 700}
+    ]},
+    {"map": "SaffronCity_Mart", "stock": [
+      {"item": "great-ball", "price": 600},
+      {"item": "hyper-potion", "price": 1200},
+      {"item": "revive", "price": 1500},
+      {"item": "full-heal", "price": 600},
+      {"item": "escape-rope", "price": 550},
+      {"item": "max-repel", "price": 700}
+    ]},
+    {"map": "CinnabarIsland_Mart", "stock": [
+      {"item": "ultra-ball", "price": 1200},
+      {"item": "great-ball", "price": 600},
+      {"item": "hyper-potion", "price": 1200},
+      {"item": "revive", "price": 1500},
+      {"item": "full-heal", "price": 600},
+      {"item": "escape-rope", "price": 550},
+      {"item": "max-repel", "price": 700}
+    ]},
+    {"map": "IndigoPlateau_PokemonCenter_1F", "stock": [
+      {"item": "ultra-ball", "price": 1200},
+      {"item": "great-ball", "price": 600},
+      {"item": "full-restore", "price": 3000},
+      {"item": "max-potion", "price": 2500},
+      {"item": "revive", "price": 1500},
+      {"item": "full-heal", "price": 600},
+      {"item": "max-repel", "price": 700}
+    ]}
+  ]
+}

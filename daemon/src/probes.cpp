@@ -38,22 +38,39 @@ ColorStats color_stats(const cv::Mat& bgr, const cv::Rect& pixels) {
   return ColorStats{rgb_of(mean), rgb_of(stddev)};
 }
 
-TemplateMatch template_match(const cv::Mat& bgr, const cv::Mat& template_bgr,
+TemplateMatch template_match(const cv::Mat& image,
+                             const cv::Mat& template_image,
                              const cv::Rect& pixels) {
   constexpr double kChannelMax = 255;
   cv::Mat differences;
-  cv::matchTemplate(bgr(pixels), template_bgr, differences, cv::TM_SQDIFF);
+  cv::matchTemplate(image(pixels), template_image, differences, cv::TM_SQDIFF);
   double min_difference = 0;
   cv::Point best;
   cv::minMaxLoc(differences, &min_difference, nullptr, &best, nullptr);
   const double samples =
-      static_cast<double>(template_bgr.total()) * template_bgr.channels();
+      static_cast<double>(template_image.total()) * template_image.channels();
   TemplateMatch match;
   // OpenCV may sum in the frequency domain and land a hair below 0.
   match.score = std::clamp(
       min_difference / (samples * kChannelMax * kChannelMax), 0.0, 1.0);
   match.x = pixels.x + best.x;
   match.y = pixels.y + best.y;
+  return match;
+}
+
+cv::Mat ink_mask(const cv::Mat& bgr, const ColorRange& ink) {
+  cv::Mat mask;
+  cv::inRange(bgr, bgr_of(ink.min), bgr_of(ink.max), mask);
+  return mask;
+}
+
+TemplateMatch mask_match(const cv::Mat& bgr, const cv::Mat& template_mask,
+                         const cv::Rect& pixels, const ColorRange& ink) {
+  const cv::Mat box_mask = ink_mask(bgr(pixels), ink);
+  TemplateMatch match = template_match(
+      box_mask, template_mask, cv::Rect(0, 0, pixels.width, pixels.height));
+  match.x += pixels.x;
+  match.y += pixels.y;
   return match;
 }
 
@@ -71,12 +88,12 @@ ColorCount color_count(const cv::Mat& bgr, const cv::Rect& pixels,
   return result;
 }
 
-cv::Mat scale_template(const cv::Mat& template_bgr, cv::Size size) {
-  if (template_bgr.size() == size) {
-    return template_bgr;
+cv::Mat scale_template(const cv::Mat& template_image, cv::Size size) {
+  if (template_image.size() == size) {
+    return template_image;
   }
   cv::Mat scaled;
-  cv::resize(template_bgr, scaled, size, 0, 0, cv::INTER_AREA);
+  cv::resize(template_image, scaled, size, 0, 0, cv::INTER_AREA);
   return scaled;
 }
 
