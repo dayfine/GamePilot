@@ -21,13 +21,16 @@ let read_offered () = read_row offered_row
 let summary_timeout_ms = 5000
 let page_turn_ms = 700
 let on_page p m = Summary_screen.page m = Some p
-let summary_open m = Option.is_some (Summary_screen.page m)
+
+(* The menu goes as the summary starts fading in, which takes a while. *)
+let summary_opening m =
+  Option.is_some (Summary_screen.page m) || not (Party_actions.member_menu m)
 
 let open_moves_page slot =
   Party_actions.open_party ();
   Party_actions.on_member_menu slot (fun () ->
       Party_actions.choose_member_row Member_menu.summary_row
-        ~taken:summary_open);
+        ~taken:summary_opening);
   ignore
     (M.await_screen ~timeout_ms:summary_timeout_ms ~code:"no_summary"
        "the summary" (on_page 1));

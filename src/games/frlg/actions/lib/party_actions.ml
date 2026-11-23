@@ -26,8 +26,8 @@ let on_member_menu slot body =
 let choose_member_row row ~taken =
   C.choose ~code:"no_member_menu" C.member_menu row ~taken
 
-(* SWITCH: the member's menu gone, the party back to pick the other. *)
-let switching m = Party_menu.party_menu m && not (member_menu m)
+(* SWITCH taken: the member's menu gone, the party back to pick the other. *)
+let switching m = not (member_menu m)
 
 let swap ~log a b =
   log (Printf.sprintf "Party: swap slot %d with slot %d." a b);
