@@ -22,6 +22,7 @@ type call =
   | Load_state of { path : string }
   | Upload_template of { png : string }
   | Subscribe of Probe.probe_spec list
+  | Unsubscribe of string list
   | Submit of { batch_id : string; commands : Command.command list }
   | Cancel
 
@@ -42,6 +43,7 @@ let method_name = function
   | Load_state _ -> "backend.load_state"
   | Upload_template _ -> "probe.upload_template"
   | Subscribe _ -> "subscribe"
+  | Unsubscribe _ -> "unsubscribe"
   | Submit _ -> "submit"
   | Cancel -> "cancel"
 
@@ -75,6 +77,7 @@ let call_of_json name params =
   | "subscribe" ->
       Subscribe
         (List.map Probe.probe_spec_of_json (list_field what "probes" params))
+  | "unsubscribe" -> Unsubscribe (string_list_field what "ids" params)
   | "submit" -> submit_of_params what params
   | "cancel" -> Cancel
   | m -> fail "unknown method %S" m
@@ -86,6 +89,7 @@ let params_of_call = function
   | Upload_template { png } -> `Assoc [ ("png", `String (Base64.encode png)) ]
   | Subscribe probes ->
       `Assoc [ ("probes", `List (List.map Probe.json_of_probe_spec probes)) ]
+  | Unsubscribe ids -> `Assoc [ ("ids", json_of_strings ids) ]
   | Submit { batch_id; commands } ->
       `Assoc
         [

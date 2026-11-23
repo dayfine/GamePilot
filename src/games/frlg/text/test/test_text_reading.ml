@@ -1,17 +1,10 @@
 (* The text reader on real screenshots. The fixtures are the daemon's
    [probe_images] output for the specs write_text_probe_spec.exe writes (one
-   per screen), over the images expected.txt names; the images stay out of the
-   repo. Image paths start with their source: switch_clt (the fork's
-   CommandLineTests/PokemonFRLG), switch_lab (~/FRLGLab/captures/summary-20261102)
-   and mgba (~/FRLGLab/mgba/mail-glitch-04-inspect.u8fIqr). To make them again,
-   with the images linked under those names in the current directory:
-
-     dune exec games/frlg/text/test/write_text_probe_spec.exe -- <spec dir>
-     probe_images --spec <spec dir>/<screen>.json \
-       --viewport 0.09375,0.00462963,0.8125,0.962963 <switch images> \
-       > fixtures/<screen>.probes.jsonl
-
-   and the mGBA images appended without [--viewport]. *)
+   per screen), over the images images.map names, each line trimmed to its best
+   candidates; the images stay out of the repo. Image paths start with their
+   source: switch_clt (the fork's CommandLineTests/PokemonFRLG), switch_lab
+   (Switch captures under ~/FRLGLab/captures) and mgba (mGBA frames under
+   ~/FRLGLab/mgba). regen_fixtures.sh makes them again. *)
 
 open Frlg_text
 

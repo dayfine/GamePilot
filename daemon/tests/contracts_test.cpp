@@ -64,12 +64,22 @@ void check_requests(const std::map<std::string, pa::JsonValue>& files) {
   const Request templated =
       decode_request(files.at("17-subscribe.template_match.request.json"));
   const SubscribeParams cursor = decode_subscribe(templated.params);
-  CHECK(cursor.probes.size() == 1);
+  CHECK(cursor.probes.size() == 2);
   CHECK(cursor.probes[0].kind == kTemplateMatchKind);
   CHECK(cursor.probes[0].delivery == "latest");
   CHECK(cursor.probes[0].template_hash ==
         *result_of(files.at("16-upload_template.response.json"))
              .get_string("template"));
+  CHECK(!cursor.probes[0].ink);
+  CHECK(cursor.probes[1].ink &&
+        cursor.probes[1].ink->max ==
+            (std::array<std::uint8_t, 3>{144, 144, 255}));
+
+  const Request unsubscribe =
+      decode_request(files.at("21-unsubscribe.request.json"));
+  CHECK(unsubscribe.method == "unsubscribe");
+  CHECK(decode_unsubscribe(unsubscribe.params).ids ==
+        (std::vector<std::string>{"bag.1/TM CASE", "gone"}));
 
   const Request counted =
       decode_request(files.at("19-subscribe.color_count.request.json"));
@@ -140,8 +150,13 @@ void check_encoders(const std::map<std::string, pa::JsonValue>& files) {
       frame_notification(1201, 1, 20113.6, {{"menu_panel", stats}});
   CHECK(frame == files.at("07-frame.notification.json"));
   const ProbeResult cursor = TemplateMatch{0.000412, 0.75, 0.0625};
-  CHECK(frame_notification(1260, 1, 21101.4, {{"cursor", cursor}}) ==
+  const ProbeResult word = TemplateMatch{0.021875, 0.39167, 0.06875};
+  CHECK(frame_notification(1260, 1, 21101.4,
+                           {{"cursor", cursor}, {"bag.1/TM CASE", word}}) ==
         files.at("18-frame.template_match.notification.json"));
+  CHECK(result_message(pa::JsonValue(std::int64_t{10}),
+                       unsubscribe_result({"bag.1/TM CASE"})) ==
+        files.at("22-unsubscribe.response.json"));
   const ProbeResult no_arrow = ColorCount{0.0, std::nullopt};
   const ProbeResult arrow =
       ColorCount{0.013333, std::array<double, 3>{224.0, 48.5, 40.25}};
@@ -234,6 +249,22 @@ void check_errors() {
       (std::string(R"({"id":"p","kind":"core.color_stats@1",)") + kBox +
        R"(,"min":[0,0,0],"max":[1,1,1]})")
           .c_str()));  // a range only for color counts
+  CHECK(subscribe_error(
+      (std::string(R"({"id":"p","kind":"core.template_match@1",)") + kBox +
+       R"(,"template":"t","ink":{"min":[9,0,0],"max":[8,0,0]}})")
+          .c_str()));  // ink min above max
+  CHECK(subscribe_error(
+      (std::string(R"({"id":"p","kind":"core.color_stats@1",)") + kBox +
+       R"(,"ink":{"min":[0,0,0],"max":[1,1,1]}})")
+          .c_str()));  // ink only for template matches
+
+  threw = false;
+  try {
+    decode_unsubscribe(parse_message(R"({"ids":[1]})").to_object_throw());
+  } catch (const RpcError& error) {
+    threw = error.code() == kInvalidParams;
+  }
+  CHECK(threw);
 
   threw = false;
   try {
@@ -249,8 +280,8 @@ void check_errors() {
 
 int main() {
   const auto files = load_contracts();
-  CHECK(files.size() == 20);
-  if (files.size() == 20) {
+  CHECK(files.size() == 22);
+  if (files.size() == 22) {
     check_requests(files);
     check_upload(files);
     check_encoders(files);

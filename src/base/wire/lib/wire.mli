@@ -1,4 +1,4 @@
-(** Wire protocol v1.2 (contracts/v1): message types and their JSON codec.
+(** Wire protocol v1.3 (contracts/v1): message types and their JSON codec.
 
     The codec lives in one module per message family ([Command], [Probe],
     [Backend], [Jsonrpc], [Wire_log], [Probe_images]); this module re-exports
@@ -54,6 +54,9 @@ type probe_spec = Probe.probe_spec = {
   template : string option;
       (** [core.template_match@1] only: the hash [probe.upload_template]
           returned on this connection. *)
+  ink : color_range option;
+      (** [core.template_match@1] only: compare the masks of the pixels in this
+          range instead of the colors. *)
   color_range : color_range option;  (** [core.color_count@1] only *)
 }
 (** [kind] is an open set, e.g. ["core.color_stats@1"]. Programs build specs
@@ -64,10 +67,19 @@ val color_stats_probe : id:string -> box:box -> delivery:delivery -> probe_spec
     probe with a reader's threshold; there is no daemon kind for it. *)
 
 val template_match_probe :
-  id:string -> box:box -> delivery:delivery -> template:string -> probe_spec
+  ?ink:color_range ->
+  id:string ->
+  box:box ->
+  delivery:delivery ->
+  template:string ->
+  unit ->
+  probe_spec
 (** [core.template_match@1]: the best placement of an uploaded template inside
     [box]. [template] is the hash from {!upload_template_result_of_json}; the
-    PNG is in game pixels and the daemon scales it to the frame. *)
+    PNG is in game pixels and the daemon scales it to the frame. With [ink] the
+    daemon compares the masks of the template's and the box's pixels inside that
+    range (the score is then the fraction of differing pixels), so text matches
+    whatever its color and shading. *)
 
 val color_count_probe :
   id:string ->
@@ -86,8 +98,9 @@ type probe_result = Probe.probe_result =
   | Color_stats of { mean : rgb; stddev : rgb }  (** [core.color_stats@1] *)
   | Template_match of { score : float; x : float; y : float }
       (** [core.template_match@1]: [score] is the mean squared difference per
-          pixel and channel over 255², 0 = identical, lower is better; [x], [y]
-          the placement's top-left corner, normalized to the game picture. *)
+          pixel and channel over 255² (with ink, of the masks), 0 = identical,
+          lower is better; [x], [y] the placement's top-left corner, normalized
+          to the game picture. *)
   | Color_count of { fraction : float; mean : rgb option }
       (** [core.color_count@1]: pixels in range over pixels in the box, and the
           mean of those in range ([None] when there are none). *)
@@ -147,6 +160,8 @@ type call = Jsonrpc.call =
   | Upload_template of { png : string }
       (** [png]: the PNG file's bytes (base64 on the wire). *)
   | Subscribe of probe_spec list
+  | Unsubscribe of string list
+      (** probe ids; the daemon stops measuring them *)
   | Submit of { batch_id : string; commands : command list }
   | Cancel
 
@@ -195,6 +210,11 @@ val upload_template_result_of_json : json -> string
 val json_of_upload_template_result : string -> json
 val subscribe_result_of_json : json -> string list
 val json_of_subscribe_result : string list -> json
+
+val unsubscribe_result_of_json : json -> string list
+(** The ids that were subscribed and are now removed. *)
+
+val json_of_unsubscribe_result : string list -> json
 val submit_result_of_json : json -> submit_result
 val json_of_submit_result : submit_result -> json
 

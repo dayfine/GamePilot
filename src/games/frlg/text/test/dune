@@ -13,3 +13,10 @@
   gamepilot.effects
   gamepilot.case_table
   gamepilot.frlg_text))
+
+(test
+ (name test_text_drawing)
+ (modules test_text_drawing)
+ (deps
+  (glob_files fixtures/*))
+ (libraries gamepilot.case_table gamepilot.frlg_text))
