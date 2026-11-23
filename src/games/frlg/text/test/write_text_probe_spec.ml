@@ -5,8 +5,8 @@
 
      dune exec games/frlg/text/test/write_text_probe_spec.exe -- <dir>
 
-   writes <dir>/<screen>.json and <dir>/<screen>/<n>.png. See
-   test_text_reading.ml for the images and the probe_images command. *)
+   writes <dir>/<screen>.json and <dir>/<screen>/<n>.png. regen_fixtures.sh
+   runs it. *)
 
 open Frlg_text
 
@@ -17,6 +17,9 @@ let required path =
 
 let glyphs = Glyph_table.load (required Data_files.glyph_table)
 let items = Item_names.load (required Data_files.item_names_eng)
+
+let tm_moves =
+  Tm_moves.names (Tm_moves.load (required Data_files.tm_hm_moves_eng))
 
 let moves =
   List.map snd
@@ -32,7 +35,7 @@ let screens =
     ( "bag_key_items",
       rows 6 Text_lines.bag_row,
       Item_names.in_pocket items Key_items @ [ "CANCEL" ] );
-    ("tm_case", rows 5 Text_lines.tm_case_row, moves);
+    ("tm_case", rows 5 Text_lines.tm_case_row, tm_moves);
     ("summary_moves", rows 4 Text_lines.summary_move, moves);
   ]
 

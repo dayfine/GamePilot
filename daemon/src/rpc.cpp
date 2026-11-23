@@ -93,6 +93,19 @@ std::array<std::uint8_t, 3> require_rgb(const pa::JsonObject& params,
   return rgb;
 }
 
+// `min` and `max`, [r, g, b] each, with min <= max per channel.
+ColorRange require_color_range(const pa::JsonObject& params,
+                               const std::string& probe_id) {
+  const ColorRange range{require_rgb(params, "min"),
+                         require_rgb(params, "max")};
+  for (std::size_t c = 0; c < range.min.size(); c++) {
+    if (range.min[c] > range.max[c]) {
+      throw RpcError(kInvalidParams, "min must not exceed max: " + probe_id);
+    }
+  }
+  return range;
+}
+
 pa::JsonArray triple(const std::array<double, 3>& values) {
   pa::JsonArray array;
   for (const double value : values) {
@@ -205,23 +218,22 @@ SubscribeParams decode_subscribe(const pa::JsonObject& params) {
       throw RpcError(kInvalidParams,
                      "delivery must be every or latest: " + spec.id);
     }
-    const bool has_template = probe.get_value("template") != nullptr;
+    const bool has_template = probe.get_value("template") != nullptr ||
+                              probe.get_value("ink") != nullptr;
     if (spec.kind == kTemplateMatchKind) {
       spec.template_hash = require_string(probe, "template");
+      if (const pa::JsonValue* ink = probe.get_value("ink")) {
+        spec.ink = require_color_range(require_object(*ink, "ink"), spec.id);
+      }
     } else if (has_template) {
-      throw RpcError(kInvalidParams,
-                     "template is only for core.template_match@1: " + spec.id);
+      throw RpcError(
+          kInvalidParams,
+          "template and ink are only for core.template_match@1: " + spec.id);
     }
     const bool has_range =
         probe.get_value("min") != nullptr || probe.get_value("max") != nullptr;
     if (spec.kind == kColorCountKind) {
-      spec.color_range =
-          ColorRange{require_rgb(probe, "min"), require_rgb(probe, "max")};
-      for (std::size_t c = 0; c < 3; c++) {
-        if (spec.color_range.min[c] > spec.color_range.max[c]) {
-          throw RpcError(kInvalidParams, "min must not exceed max: " + spec.id);
-        }
-      }
+      spec.color_range = require_color_range(probe, spec.id);
     } else if (has_range) {
       throw RpcError(kInvalidParams,
                      "min and max are only for core.color_count@1: " + spec.id);
@@ -229,6 +241,18 @@ SubscribeParams decode_subscribe(const pa::JsonObject& params) {
     subscribe.probes.push_back(std::move(spec));
   }
   return subscribe;
+}
+
+UnsubscribeParams decode_unsubscribe(const pa::JsonObject& params) {
+  UnsubscribeParams unsubscribe;
+  for (const pa::JsonValue& item : require_array(params, "ids")) {
+    const std::string* id = item.to_string();
+    if (id == nullptr) {
+      throw RpcError(kInvalidParams, "ids must be strings");
+    }
+    unsubscribe.ids.push_back(*id);
+  }
+  return unsubscribe;
 }
 
 KeyMask button_mask(const std::string& name) {
@@ -344,6 +368,16 @@ pa::JsonObject subscribe_result(const std::vector<std::string>& ids) {
   }
   pa::JsonObject result;
   result["subscribed"] = std::move(list);
+  return result;
+}
+
+pa::JsonObject unsubscribe_result(const std::vector<std::string>& ids) {
+  pa::JsonArray list;
+  for (const std::string& id : ids) {
+    list.push_back(id);
+  }
+  pa::JsonObject result;
+  result["unsubscribed"] = std::move(list);
   return result;
 }
 

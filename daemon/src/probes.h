@@ -62,19 +62,31 @@ ColorStats color_stats(const cv::Mat& bgr, const cv::Rect& pixels);
 
 // core.template_match@1: the template's best placement fully inside the pixels
 // (which must be at least the template's size), scored with OpenCV TM_SQDIFF /
-// (w * h * 3 * 255^2). x, y are frame pixels. Not TM_SQDIFF_NORMED: that
-// divides by the template's energy and scores a flat black template 1 on an
-// exact match.
-TemplateMatch template_match(const cv::Mat& bgr, const cv::Mat& template_bgr,
+// (w * h * channels * 255^2). The image and the template have the same
+// channels: BGR, or one for masks. x, y are frame pixels. Not TM_SQDIFF_NORMED:
+// that divides by the template's energy and scores a flat black template 1 on
+// an exact match.
+TemplateMatch template_match(const cv::Mat& image,
+                             const cv::Mat& template_image,
                              const cv::Rect& pixels);
+
+// The pixels of a BGR image inside the ink range as an 8-bit mask: 255 where
+// every channel is in range, 0 elsewhere.
+cv::Mat ink_mask(const cv::Mat& bgr, const ColorRange& ink);
+
+// core.template_match@1 with ink: template_match of the box's ink mask against
+// a template mask (ink_mask of the template, then scaled). With binary masks
+// the score is the fraction of template pixels whose mask differs.
+TemplateMatch mask_match(const cv::Mat& bgr, const cv::Mat& template_mask,
+                         const cv::Rect& pixels, const ColorRange& ink);
 
 // core.color_count@1: how many of the pixels lie inside the range, and their
 // mean color.
 ColorCount color_count(const cv::Mat& bgr, const cv::Rect& pixels,
                        const ColorRange& range);
 
-// A template given in game pixels, resized to `size` frame pixels with
-// INTER_AREA (unchanged when it already has that size).
-cv::Mat scale_template(const cv::Mat& template_bgr, cv::Size size);
+// A template (BGR or a mask) given in game pixels, resized to `size` frame
+// pixels with INTER_AREA (unchanged when it already has that size).
+cv::Mat scale_template(const cv::Mat& template_image, cv::Size size);
 
 }  // namespace gamepilot

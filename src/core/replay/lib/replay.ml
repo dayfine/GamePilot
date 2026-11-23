@@ -40,6 +40,7 @@ let describe = function
       Printf.sprintf "%s (id %d)%s" (Wire.method_name call) id
         (match call with
         | Wire.Submit { commands; _ } -> " " ^ describe_commands commands
+        | Wire.Unsubscribe ids -> " [" ^ String.concat ", " ids ^ "]"
         | _ -> "")
   | m -> Wire.string_of_message m
 
@@ -47,6 +48,7 @@ let describe = function
 let differing_field (e : Wire.request) (a : Wire.request) =
   match (e.call, a.call) with
   | Wire.Subscribe ep, Wire.Subscribe ap when ep <> ap -> Some "probes"
+  | Wire.Unsubscribe ei, Wire.Unsubscribe ai when ei <> ai -> Some "ids"
   | Wire.Upload_template ep, Wire.Upload_template ap when ep.png <> ap.png ->
       Some "template"
   | Wire.Submit ec, Wire.Submit ac when ec.commands <> ac.commands ->

@@ -55,7 +55,7 @@ mgba/chding-summary.png|bag.3|-
 mgba/chding-summary.png|bag.4|-
 mgba/chding-summary.png|bag.5|-
 switch_clt/TeachScreenReader/BagKeyItems_eng.png|bag.0|TEACHY TV
-switch_clt/TeachScreenReader/BagKeyItems_eng.png|bag.1|TM CASE|-|registered items are drawn in blue
+switch_clt/TeachScreenReader/BagKeyItems_eng.png|bag.1|TM CASE
 switch_clt/TeachScreenReader/BagKeyItems_eng.png|bag.2|HELIX FOSSIL
 switch_clt/TeachScreenReader/BagKeyItems_eng.png|bag.3|CANCEL
 switch_clt/TeachScreenReader/BagKeyItems_eng.png|bag.4|-
@@ -68,7 +68,7 @@ switch_clt/Bag/KeyItems_Top_Girl_True.png|bag.4|-
 switch_clt/Bag/KeyItems_Top_Girl_True.png|bag.5|-
 switch_clt/Bag/KeyItems_Top_True.png|bag.0|TOWN MAP
 switch_clt/Bag/KeyItems_Top_True.png|bag.1|TEACHY TV
-switch_clt/Bag/KeyItems_Top_True.png|bag.2|TM CASE|-|registered items are drawn in blue
+switch_clt/Bag/KeyItems_Top_True.png|bag.2|TM CASE
 switch_clt/Bag/KeyItems_Top_True.png|bag.3|FAME CHECKER
 switch_clt/Bag/KeyItems_Top_True.png|bag.4|S.S. TICKET
 switch_clt/Bag/KeyItems_Top_True.png|bag.5|VS SEEKER
@@ -101,3 +101,71 @@ switch_clt/TeachScreenReader/TmCaseList_eng.png|tm_case.1|ROCK TOMB
 switch_clt/TeachScreenReader/TmCaseList_eng.png|tm_case.2|-
 switch_clt/TeachScreenReader/TmCaseList_eng.png|tm_case.3|-
 switch_clt/TeachScreenReader/TmCaseList_eng.png|tm_case.4|-
+mgba/route16-items.png|bag.0|MOON STONE
+mgba/route16-items.png|bag.1|NUGGET
+mgba/route16-items.png|bag.2|AWAKENING
+mgba/route16-items.png|bag.3|ESCAPE ROPE
+mgba/route16-items.png|bag.4|RARE CANDY
+mgba/route16-items.png|bag.5|X SPEED
+mgba/route16-items-page2.png|bag.0|ESCAPE ROPE
+mgba/route16-items-page2.png|bag.1|RARE CANDY
+mgba/route16-items-page2.png|bag.2|X SPEED
+mgba/route16-items-page2.png|bag.3|X ACCURACY
+mgba/route16-items-page2.png|bag.4|GUARD SPEC.
+mgba/route16-items-page2.png|bag.5|MAX ELIXIR
+mgba/route16-items-page3.png|bag.0|GUARD SPEC.
+mgba/route16-items-page3.png|bag.1|MAX ELIXIR
+mgba/route16-items-page3.png|bag.2|PARLYZ HEAL
+mgba/route16-items-page3.png|bag.3|RETRO MAIL
+mgba/route16-items-page3.png|bag.4|REVIVE
+mgba/route16-items-page3.png|bag.5|CANCEL
+mgba/emu1-05.04.png|bag.0|POTION
+mgba/emu1-05.04.png|bag.1|MOON STONE
+mgba/emu1-05.04.png|bag.2|NUGGET
+mgba/emu1-05.04.png|bag.3|CANCEL
+mgba/emu1-05.04.png|bag.4|-
+mgba/emu1-05.04.png|bag.5|-
+mgba/emu1-10.04.png|bag.0|AWAKENING
+mgba/emu1-10.04.png|bag.1|REPEL
+mgba/emu1-10.04.png|bag.2|ESCAPE ROPE
+mgba/emu1-10.04.png|bag.3|SUPER REPEL
+mgba/emu1-10.04.png|bag.4|ANTIDOTE
+mgba/emu1-10.04.png|bag.5|PARLYZ HEAL
+mgba/emu1-19.04d.png|bag.0|AWAKENING
+mgba/emu1-19.04d.png|bag.1|REPEL
+mgba/emu1-19.04d.png|bag.2|ESCAPE ROPE
+mgba/emu1-19.04d.png|bag.3|RARE CANDY
+mgba/emu1-19.04d.png|bag.4|X SPECIAL
+mgba/emu1-19.04d.png|bag.5|X SPEED
+mgba/emu1-20.02.png|bag.0|ESCAPE ROPE
+mgba/emu1-20.02.png|bag.1|RARE CANDY
+mgba/emu1-20.02.png|bag.2|X SPECIAL
+mgba/emu1-20.02.png|bag.3|X SPEED
+mgba/emu1-20.02.png|bag.4|X ACCURACY
+mgba/emu1-20.02.png|bag.5|MAX ELIXIR
+mgba/emu1-20.05.png|bag.0|X SPEED
+mgba/emu1-20.05.png|bag.1|X ACCURACY
+mgba/emu1-20.05.png|bag.2|MAX ELIXIR
+mgba/emu1-20.05.png|bag.3|FULL HEAL
+mgba/emu1-20.05.png|bag.4|SUPER POTION
+mgba/emu1-20.05.png|bag.5|GUARD SPEC.
+switch_lab/tmcase-04-tmcase-after-A.png|bag.0|TEACHY TV
+switch_lab/tmcase-04-tmcase-after-A.png|bag.1|TM CASE
+switch_lab/tmcase-04-tmcase-after-A.png|bag.2|HELIX FOSSIL
+switch_lab/tmcase-04-tmcase-after-A.png|bag.3|CANCEL
+mgba/route16-key-items.png|bag.0|POKé FLUTE
+mgba/route16-key-items.png|bag.1|SECRET KEY
+mgba/route16-key-items.png|bag.2|CARD KEY
+mgba/route16-key-items.png|bag.3|COIN CASE
+mgba/route16-key-items.png|bag.4|BERRY POUCH
+mgba/route16-key-items.png|bag.5|CANCEL
+switch_lab/tmcase-16-summary-moves-after-teach.png|summary_move.0|BITE
+switch_lab/tmcase-16-summary-moves-after-teach.png|summary_move.1|WATER PULSE
+switch_lab/tmcase-16-summary-moves-after-teach.png|summary_move.2|BUBBLE
+switch_lab/tmcase-16-summary-moves-after-teach.png|summary_move.3|WITHDRAW
+mgba/live-known-moves.png|summary_move.0|SURF
+mgba/live-known-moves.png|summary_move.1|BITE
+mgba/live-known-moves.png|summary_move.2|BLIZZARD
+mgba/live-known-moves.png|summary_move.3|STRENGTH
+switch_lab/tmcase-04-tmcase-after-A.png|bag.4|-
+switch_lab/tmcase-04-tmcase-after-A.png|bag.5|-

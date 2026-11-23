@@ -1,4 +1,4 @@
-# Wire protocol v1.2
+# Wire protocol v1.3
 
 JSON-RPC 2.0 between the OCaml programs (client) and the daemon (server). The golden files in this
 folder are the spec: the daemon's tests parse every file and the OCaml tests decode and re-encode
@@ -8,6 +8,7 @@ one line.
 
 v1.1 adds the `load` counter to `frame` and `backend.load_state`, and a `kind` to every probe result.
 Template probes (`probe.upload_template`, `core.template_match@1`) came later under the same number.
+v1.3 adds `unsubscribe` and the optional `ink` of `core.template_match@1`.
 v1.2 makes the daemon own where the game picture sits in the frame: `hello` gives the `viewport` and
 the `game_size`, probe boxes and template placements are relative to the picture, templates are in game
 pixels, and `core.color_count@1` is new.
@@ -44,7 +45,8 @@ size) every v1.1 message means the same in v1.2.
 | `hello` | `protocol` (must be 1), `client` | `protocol`, `daemon`, `backend` {`kind`, `game_code`, `frame_rate`, `width`, `height`, `viewport`, `game_size`}, `probe_kinds` |
 | `backend.load_state` | `path` (a save state file; the daemon passes it to the backend unread) | `seq` after loading, the new `load` |
 | `probe.upload_template` | `png`: a PNG file, base64 | `template`: the lowercase hex SHA-256 of the PNG bytes |
-| `subscribe` | `probes`: list of {`id`, `kind`, `box`, `delivery`, and `template` for `core.template_match@1`, `min` and `max` for `core.color_count@1`} | `subscribed`: ids |
+| `subscribe` | `probes`: list of {`id`, `kind`, `box`, `delivery`, and `template` (and optionally `ink`) for `core.template_match@1`, `min` and `max` for `core.color_count@1`} | `subscribed`: ids |
+| `unsubscribe` | `ids`: probe ids | `unsubscribed`: the ids that were subscribed, now removed (others are ignored) |
 | `submit` | `batch_id`, `commands`: list of {`press`: buttons, `hold_ms`, `cooldown_ms`} or {`wait_ms`} | `batch_id`, `start_seq` |
 | `cancel` | {} | `released_seq`: drops queued commands and releases all buttons |
 
@@ -61,6 +63,9 @@ size) every v1.1 message means the same in v1.2.
   Uploading is its own method rather than a field of `subscribe` so that the daemon computes the hash
   (CoreLib's SHA-256) and the client needs no hash code, and so a subscribe stays small.
 - `delivery`: `every` (one result per frame, a gap is an error) or `latest`.
+- A probe stays subscribed until `unsubscribe` names it or the client disconnects; subscribing its id
+  again replaces it. Each probe costs time on every frame, so a reader unsubscribes the probes it no
+  longer reads.
 - Buttons (GBA): `A`, `B`, `Select`, `Start`, `Right`, `Left`, `Up`, `Down`, `R`, `L`.
 - Batches run in order, one after another. Times are rounded to whole frames by the backend.
 - `backend.load_state` also drops queued commands and releases all buttons, as `cancel` does;
@@ -99,6 +104,16 @@ than the game.
 of that placement, normalized to the game picture. The PNG is read as 8-bit RGB; an alpha channel is
 ignored. Plain `TM_SQDIFF_NORMED` is not used: it divides by the template's energy, so a flat dark
 template (a black text box) scores 1 on an exact match.
+
+`ink` {`min`, `max`}, each [r, g, b] integers 0..255 with `min` <= `max` per channel, makes the probe
+compare masks instead of colors: the daemon replaces the template (in game pixels, before scaling) and
+the box by their masks, 255 where every channel lies in `min`..`max` (both ends included) and 0
+elsewhere, and scores as above with one channel. With whole pixels (mGBA) `score` is then the fraction
+of the template's pixels whose mask differs; at a fractional scale a seam pixel of the scaled mask is
+between 0 and 255 and counts by its squared difference. A text reader sets `ink` to the range of its
+text color, so the same drawn word matches gray, blue or shaded text on any background.
+`ink` is an option rather than a kind of its own because the result, its fields and the score's formula
+stay the same; only the pixels compared change.
 
 `core.color_count@1` takes `min` and `max`, [r, g, b] integers 0..255 with `min` <= `max` per
 channel (else -32602), and counts the box's pixels whose every channel lies in `min`..`max`, both

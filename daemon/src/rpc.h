@@ -4,6 +4,7 @@
 #pragma once
 
 #include <cstdint>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <utility>
@@ -76,14 +77,20 @@ struct ProbeSpec {
   std::string kind;
   Box box;
   std::string delivery;  // "every" or "latest"
-  // core.template_match@1 only: the hash probe.upload_template returned.
+  // core.template_match@1 only: the hash probe.upload_template returned, and
+  // the optional ink range that makes it compare masks.
   std::string template_hash;
+  std::optional<ColorRange> ink;
   // core.color_count@1 only.
   ColorRange color_range;
 };
 
 struct SubscribeParams {
   std::vector<ProbeSpec> probes;
+};
+
+struct UnsubscribeParams {
+  std::vector<std::string> ids;
 };
 
 struct SubmitParams {
@@ -104,6 +111,7 @@ HelloParams decode_hello(const pa::JsonObject& params);
 LoadStateParams decode_load_state(const pa::JsonObject& params);
 UploadTemplateParams decode_upload_template(const pa::JsonObject& params);
 SubscribeParams decode_subscribe(const pa::JsonObject& params);
+UnsubscribeParams decode_unsubscribe(const pa::JsonObject& params);
 SubmitParams decode_submit(const pa::JsonObject& params);
 CancelParams decode_cancel(const pa::JsonObject& params);
 
@@ -117,6 +125,7 @@ pa::JsonObject hello_result(const BackendInfo& backend);
 pa::JsonObject load_state_result(std::int64_t seq, std::int64_t load);
 pa::JsonObject upload_template_result(const std::string& hash);
 pa::JsonObject subscribe_result(const std::vector<std::string>& ids);
+pa::JsonObject unsubscribe_result(const std::vector<std::string>& ids);
 pa::JsonObject submit_result(const std::string& batch_id,
                              std::int64_t start_seq);
 pa::JsonObject cancel_result(std::int64_t released_seq);

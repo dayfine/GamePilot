@@ -1,5 +1,5 @@
 (** Probe specs, probe results, the [frame] that carries them, and the
-    [probe.upload_template] and [subscribe] results. *)
+    [probe.upload_template], [subscribe] and [unsubscribe] results. *)
 
 type json = Yojson.Safe.t
 type box = { x : float; y : float; w : float; h : float }
@@ -16,13 +16,20 @@ type probe_spec = {
   box : box;
   delivery : delivery;
   template : string option;
+  ink : color_range option;
   color_range : color_range option;
 }
 
 val color_stats_probe : id:string -> box:box -> delivery:delivery -> probe_spec
 
 val template_match_probe :
-  id:string -> box:box -> delivery:delivery -> template:string -> probe_spec
+  ?ink:color_range ->
+  id:string ->
+  box:box ->
+  delivery:delivery ->
+  template:string ->
+  unit ->
+  probe_spec
 
 val color_count_probe :
   id:string ->
@@ -57,3 +64,5 @@ val upload_template_result_of_json : json -> string
 val json_of_upload_template_result : string -> json
 val subscribe_result_of_json : json -> string list
 val json_of_subscribe_result : string list -> json
+val unsubscribe_result_of_json : json -> string list
+val json_of_unsubscribe_result : string list -> json

@@ -81,6 +81,28 @@ void check_template_match() {
   CHECK(is_known_probe_kind("core.template_match@1"));
 }
 
+void check_mask_match() {
+  // Dark gray text on yellow, and the same word drawn blue on white: the ink
+  // masks agree, so the mask score is 0 where the color score is not.
+  const ColorRange dark_ink{{0, 0, 0}, {144, 144, 255}};
+  cv::Mat frame(20, 40, CV_8UC3, cv::Scalar(198, 255, 255));
+  frame(cv::Rect(10, 5, 2, 6)).setTo(cv::Scalar(99, 99, 99));
+  frame(cv::Rect(14, 5, 3, 1)).setTo(cv::Scalar(99, 99, 99));
+  cv::Mat word(8, 10, CV_8UC3, cv::Scalar(255, 255, 255));
+  word(cv::Rect(2, 1, 2, 6)).setTo(cv::Scalar(240, 88, 40));
+  word(cv::Rect(6, 1, 3, 1)).setTo(cv::Scalar(240, 88, 40));
+  const cv::Rect whole(0, 0, 40, 20);
+  const cv::Mat word_mask = ink_mask(word, dark_ink);
+  CHECK(cv::countNonZero(word_mask) == 15);
+  const TemplateMatch masked = mask_match(frame, word_mask, whole, dark_ink);
+  CHECK(near(masked.score, 0) && near(masked.x, 8) && near(masked.y, 4));
+  CHECK(template_match(frame, word, whole).score > 0.03);
+
+  // One stroke pixel missing: 1 of the template's 80 pixels differs.
+  frame.at<cv::Vec3b>(10, 11) = cv::Vec3b(198, 255, 255);
+  CHECK(near(mask_match(frame, word_mask, whole, dark_ink).score, 1.0 / 80));
+}
+
 void check_color_count() {
   // A 10x10 frame: gray, with 5 pixels of dark red (200, 40, 30) and 5 of
   // bright red (250, 60, 50) in the top row.
@@ -178,6 +200,7 @@ void check_schedule() {
 int main() {
   check_color_stats();
   check_template_match();
+  check_mask_match();
   check_color_count();
   check_viewport();
   check_base64();

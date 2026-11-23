@@ -234,3 +234,51 @@ let () =
       print_endline e;
       expect "other template bytes -> divergence"
         (contains e "line 5" && contains e "template differs")
+
+(* [unsubscribe]: [with_probes] unsubscribes after the reader is done, the
+   latest frame drops the probe, and a replay checks the ids. *)
+
+let subscribe_p_then_unsubscribe =
+  [
+    {|{"dir":"in","t_ms":2,"msg":{"jsonrpc":"2.0","id":3,"method":"subscribe","params":{"probes":[{"id":"p","kind":"core.color_stats@1","box":{"x":0,"y":0,"w":1,"h":1},"delivery":"latest"}]}}}|};
+    {|{"dir":"out","t_ms":2,"msg":{"jsonrpc":"2.0","id":3,"result":{"subscribed":["p"]}}}|};
+    {|{"dir":"out","t_ms":3,"msg":{"jsonrpc":"2.0","method":"frame","params":{"seq":502,"load":2,"t_ms":3,"probes":{"p":{"kind":"core.color_stats@1","mean":[1,2,3],"stddev":[0,0,0]}}}}}|};
+    {|{"dir":"in","t_ms":4,"msg":{"jsonrpc":"2.0","id":4,"method":"unsubscribe","params":{"ids":["p"]}}}|};
+    {|{"dir":"out","t_ms":4,"msg":{"jsonrpc":"2.0","id":4,"result":{"unsubscribed":["p"]}}}|};
+  ]
+
+let p_probe =
+  Wire.color_stats_probe ~id:"p"
+    ~box:{ x = 0.; y = 0.; w = 1.; h = 1. }
+    ~delivery:Latest
+
+let read_p_once ~unsubscribe_ids () =
+  ignore (Effects.load_state "state.ss" : int);
+  ignore (Effects.subscribe [ p_probe ] : string list);
+  let has_p m = Effects.probe m "p" <> None in
+  let awaited = Effects.await ~timeout_ms:1000 has_p in
+  ignore (Effects.unsubscribe unsubscribe_ids : string list);
+  (awaited, Effects.read ())
+
+let () =
+  let log = Replay.log_of_lines (hello @ subscribe_p_then_unsubscribe) in
+  let read_with_probes () =
+    ignore (Effects.load_state "state.ss" : int);
+    let awaited =
+      Effects.with_probes [ p_probe ] (fun () ->
+          Effects.await ~timeout_ms:1000 (fun m -> Effects.probe m "p" <> None))
+    in
+    (awaited, Effects.read ())
+  in
+  expect "with_probes unsubscribes; the latest frame drops the probe"
+    (match Replay.run log read_with_probes with
+    | Effects.Holds _, Some latest -> Effects.probe latest "p" = None
+    | _ -> false)
+
+let () =
+  let log = Replay.log_of_lines (hello @ subscribe_p_then_unsubscribe) in
+  match Replay.run log (read_p_once ~unsubscribe_ids:[ "q" ]) with
+  | _ -> failwith "FAILED replay accepted an unsubscribe of other ids"
+  | exception Replay.Divergence e ->
+      print_endline e;
+      expect "other unsubscribe ids -> divergence" (contains e "ids differs")
