@@ -35,11 +35,35 @@ type world = {
       (** Whether the story has hidden the object (its [hide_flag] holds): it no
           longer stands in the way. *)
   costs : costs;
+  edge_stalls : bool;
+      (** Whether the game holds the player up a tile on each step onto a
+          connected map while it loads the map (the fork's
+          [RouteStep::connection_steps], measured on console B, 2026-11-03). On
+          mGBA it does not: the fork's run of 2026-11-23 held "west 11" from
+          Celadon City onto Route 16 for 10.5 tiles and ended on its tile, and
+          ours, held a tile longer for the stall, ended a tile past it. *)
+  cut : Gate_state.t;
+      (** The cut trees cut since the last map change ({!with_tree_cut}): their
+          gates open and their trees gone, as the fork's [tree_cut] opens them
+          in its run state. *)
 }
 
 val world :
-  ?hidden:(Map_features.map_object -> bool) -> Connected_maps.t -> world
-(** Every object shown, {!default_costs}. *)
+  ?hidden:(Map_features.map_object -> bool) ->
+  ?edge_stalls:bool ->
+  Connected_maps.t ->
+  world
+(** Every object shown, {!default_costs}, edges that stall (the console), no
+    tree cut. *)
+
+val with_tree_cut : world -> Connected_maps.place -> world option
+(** The world with the cut tree on that tile cut: the fork's [tree_cut]
+    (AutoStory/PokemonFRLG_AutoStoryBoulders) with [cut_gate_key]. [None] when
+    no cut tree's gate has the tile. *)
+
+val trees_regrown : world -> world
+(** Every cut tree back: a cut tree's flag is temporary, so leaving its map
+    regrows it (the fork's [regrow_on_warp]). *)
 
 val press :
   world ->

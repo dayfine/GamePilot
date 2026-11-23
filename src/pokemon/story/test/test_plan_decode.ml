@@ -330,7 +330,7 @@ let postcondition_cases : Case_table.case list =
     };
     {
       name = "a plan that states none";
-      input = (fun () -> postconditions_text (load "mg-02.plan.json" mg));
+      input = (fun () -> postconditions_text (load "mg-03.plan.json" mg));
       expectation = "none";
     };
     {

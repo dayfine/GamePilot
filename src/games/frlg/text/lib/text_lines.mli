@@ -27,6 +27,13 @@ val summary_move : int -> t
     on the list a battle opens to forget a move from (the same 28-pixel pitch,
     pokefirered pokemon_summary_screen.c). *)
 
+val battle_message : int -> t
+(** Line [i] (0..1) of a battle's message box, white on teal ("Wild SPEAROW
+    appeared!"; read with {!Line_reading.light_ink}), as wide as the box.
+    Measured on mGBA frames of the opening message (Route 16, mg-02 testing run
+    7): its capitals from x 10, rows from 125, three below the cell's top as on
+    the bag's list. *)
+
 val summary_species : t
 (** The species on the summary's POKéMON INFO page (page 1), right of NAME:
     pokefirered pokemon_summary_screen.c, [PrintInfoPage], at (47, 19) in the

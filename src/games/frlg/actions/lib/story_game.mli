@@ -2,7 +2,8 @@
     walked ({!Frlg_overworld}), [talk] and [scene] settled ({!Talk}), [heal] and
     [save] events ({!Heal_and_save}), the ["fly"] game action ({!Fly}),
     ["lift_floor"] ({!Lift_ride}), the ["grind"] one ({!Grind}, its walks and
-    heals this game's), mg-05's ["prepare_berry_pp"] ({!Berry_pp}) and
+    heals this game's), ["capture"] ({!Capture} on {!Capture_steps}; its catches
+    join the reckoned party), mg-05's ["prepare_berry_pp"] ({!Berry_pp}) and
     ["mail_glitch_double_battle"] ({!Mail_glitch_battle}) and the shared ones
     ({!Game_actions}). Battles and the other built-in kinds fail as
     [not_implemented] (repeats): they come from their own libraries.
@@ -13,9 +14,10 @@
 
     FireRed can't show where the player stands, so the position is reckoned: a
     walk ends on its plan's tile, a Fly on the town's landing tile, a lift ride
-    below the floor's lift door, and after any other event that passes the
-    player is taken to be where its [declared_after] says when that names one
-    tile. The party is reckoned too ({!Party_roster}), from the config's. *)
+    below the floor's lift door, and after any other event that passes, game
+    actions included, the player is taken to be where its [declared_after] says
+    when that names one tile (the fork's StoryStepRunner). The party is reckoned
+    too ({!Party_roster}), from the config's. *)
 
 type config = {
   world : Frlg_overworld.Frlg_steps.world;
@@ -40,9 +42,3 @@ val game : t -> Story.Game.t
 
 val party : t -> Party_roster.t
 (** The party as reckoned now. *)
-
-val fly_plan :
-  Party_roster.t -> Grid_maps.Json_field.obj -> (Fly.plan, string) result
-(** A ["fly"] action's args: ["town"] (a town of {!Fly_towns.load}), the Fly
-    user as ["slot"] (from 1) or ["species"] (found in the party), and
-    ["menu_row"] (default 2). *)

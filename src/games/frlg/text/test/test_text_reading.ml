@@ -8,13 +8,15 @@
 
 open Frlg_text
 
-let screens = [ "bag_items"; "bag_key_items"; "tm_case"; "summary_moves" ]
+let screens =
+  [ "bag_items"; "bag_key_items"; "tm_case"; "summary_moves"; "battle_opening" ]
 
 let line_of_id id =
   match String.split_on_char '.' id with
   | [ "bag"; i ] -> Text_lines.bag_row (int_of_string i)
   | [ "tm_case"; i ] -> Text_lines.tm_case_row (int_of_string i)
   | [ "summary_move"; i ] -> Text_lines.summary_move (int_of_string i)
+  | [ "battle_message"; i ] -> Text_lines.battle_message (int_of_string i)
   | _ -> failwith ("line id " ^ id)
 
 type expectation = {

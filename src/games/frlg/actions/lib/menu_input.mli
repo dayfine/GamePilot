@@ -9,6 +9,9 @@ exception Action_failed of Story.Failure.cause
 val fail : ?repeats:bool -> string -> string -> 'a
 (** Raises {!Action_failed} with [Story.Failure.cause code detail]. *)
 
+val raise_error : (unit, Story.Failure.cause) result -> unit
+(** Raises {!Action_failed} with an [Error]'s cause; [Ok] does nothing. *)
+
 val probes : Wire.probe_spec list
 (** What the menu actions read: {!Scene_looks.probes}, the party and a member's
     menu, the bag and the money box. *)
@@ -56,12 +59,37 @@ val settle_back : label:string -> log:(string -> unit) -> unit
     the rest of a menu's or a talk's text. Fails as its cause. *)
 
 val max_pages : int
-(** Text pages {!answer_yes} turns before the question must show: 8. *)
+(** A presses {!answer_yes} gives the pages before the question must show: 8. *)
+
+val page_press_ms : int
+(** The wait after an A on a page, before the next look: 600 ms, the fork's
+    [answer_yes_no] (its 300 ms after the press, then its 300 ms poll). As
+    there, a page whose arrow still shows gets another A: an A the game takes
+    while it prints only hurries the text (mg-02 testing run 10: Elyssa's "Do
+    you have a SPEAROW?" kept its arrow after an A 90 ms after it showed). *)
+
+val question_input_ms : int
+(** How long the Yes/No box shows before {!answer_yes} presses: 300 ms. The
+    fork's [answer_yes_no] (AutoStory/PokemonFRLG_AutoStoryActions) polls the
+    screen every 300 ms, so its press comes up to that long after the box shows;
+    GamePilot sees the box within a frame, and the game drops an A that comes
+    that early (mGBA, Route 16's Cut, mg-02 testing run 4: an A 3 ms after the
+    box was lost and the settle's B then answered NO; run 5's A, 118 ms after,
+    was taken). *)
+
+val answer_cooldown_ms : int
+(** The fork's wait after its answer: 800 ms. *)
 
 val answer_yes : code:string -> string -> unit
-(** After a talk: A on each page with the advance arrow until the Yes/No box
-    shows, then A on YES (the cursor starts there). Fails as [code] with
-    ["<what> did not show"] when no page or question comes. *)
+(** After a talk: A on each look at a page with the advance arrow until the
+    Yes/No box shows with its arrow ({!Dialog.yes_no_cursor}), then YES as the
+    fork's [answer_yes_no] answers it: UP if the arrow is on NO, A
+    {!question_input_ms} after the box showed, then {!answer_cooldown_ms}. Fails
+    as [code] with ["<what> did not show"] when no page or question comes. *)
+
+val answer_yes_if_asked : timeout_ms:int -> bool
+(** YES to a Yes/No box that shows within [timeout_ms], answered as
+    {!answer_yes} answers it; whether one showed. *)
 
 val press_until :
   ?max_presses:int ->

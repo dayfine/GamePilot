@@ -177,3 +177,5 @@ mgba/grind-mimien-moves.png|summary_move.2|SUBSTITUTE
 mgba/grind-mimien-moves.png|summary_move.3|-
 switch_lab/tmcase-04-tmcase-after-A.png|bag.4|-
 switch_lab/tmcase-04-tmcase-after-A.png|bag.5|-
+mgba/mail-glitch-route16/wild-spearow.png|battle_message.0|Wild SPEAROW appeared!
+mgba/mail-glitch-route16/wild-doduo.png|battle_message.0|Wild DODUO appeared!

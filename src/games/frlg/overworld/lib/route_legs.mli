@@ -30,8 +30,9 @@ val move_of :
   (move, string) result
 (** The leg's move from a player facing [facing]; an error for an action leg
     (Surf, a gate), which the walker does not do yet. A ledge hop takes two
-    tiles' time; each step onto a connected map is a stalled step. Indoors,
-    where the game does not let the player run, the leg walks. *)
+    tiles' time; each step onto a connected map is a stalled step where the
+    world's edges stall. Indoors, where the game does not let the player run,
+    the leg walks. *)
 
 val mover : running:bool -> Direction.t -> int -> Wire.command list
 (** The D-pad held for the time, with B when running, then the release. *)

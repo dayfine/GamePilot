@@ -22,9 +22,5 @@ let save ~log () =
   ignore
     (M.await_screen ~code:"save_no_question" "the save question closing"
        (fun m -> not (Dialog.selection_dialog m)));
-  (match
-     Effects.await ~timeout_ms:overwrite_question_ms Dialog.selection_dialog
-   with
-  | Holds _ -> M.press Wire.A
-  | Timeout -> ());
+  ignore (M.answer_yes_if_asked ~timeout_ms:overwrite_question_ms);
   M.settle_back ~label:"save" ~log

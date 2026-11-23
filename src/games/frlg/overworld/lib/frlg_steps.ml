@@ -9,21 +9,61 @@ type world = {
   maps : Connected_maps.t;
   hidden : Map_features.map_object -> bool;
   costs : costs;
+  edge_stalls : bool;
+  cut : Gate_state.t;
 }
 
-let world ?(hidden = fun _ -> false) maps =
-  { maps; hidden; costs = default_costs }
+let world ?(hidden = fun _ -> false) ?(edge_stalls = true) maps =
+  {
+    maps;
+    hidden;
+    costs = default_costs;
+    edge_stalls;
+    cut = Gate_state.new_game;
+  }
 
 let map_of w (place : Connected_maps.place) =
   Connected_maps.map w.maps place.map
 
 let tile_at (map : Map_data.t) pos = Grid.find map.tiles pos
 
+let cut_open w (map : Map_data.t) pos =
+  match Gate_tiles.gate_at map pos with
+  | Some gate -> Gate_tiles.gate_is_open map w.cut gate
+  | None -> false
+
+(* The tile for walking: a cut tree's gate as {!cut} has it. *)
+let walk_tile w (map : Map_data.t) pos =
+  match tile_at map pos with
+  | Some Gate -> Some (Gate_tiles.resolved_tile map w.cut pos)
+  | kind -> kind
+
+(* The cut tree stands on its gate's tile while the gate is shut. *)
 let object_at w (map : Map_data.t) pos =
   List.find_opt
     (fun (o : Map_features.map_object) ->
-      Tile_pos.equal o.object_pos pos && not (w.hidden o))
+      Tile_pos.equal o.object_pos pos
+      && (not (w.hidden o))
+      && not (cut_open w map pos))
     map.objects
+
+let cut_gate w (place : Connected_maps.place) =
+  let map = map_of w place in
+  match Gate_tiles.gate_at map place.tile with
+  | Some { control = Flag { opener = Cut; _ }; gate_id; _ } ->
+      Some (Gate_state.gate_key ~map:map.name ~gate:gate_id)
+  | Some _ | None -> None
+
+let with_tree_cut w place =
+  Option.map
+    (fun key ->
+      {
+        w with
+        cut = { w.cut with opened = Gate_state.Names.add key w.cut.opened };
+      })
+    (cut_gate w place)
+
+let trees_regrown w = { w with cut = Gate_state.new_game }
 
 let in_box (box : Map_features.tile_box) (pos : Tile_pos.t) =
   pos.x >= box.top_left.x
@@ -136,7 +176,7 @@ let costed w (place : Connected_maps.place) (next : Connected_maps.place) d =
 let landing w d (target : Connected_maps.place) =
   let map = map_of w target in
   let free (p : Connected_maps.place) =
-    match tile_at map p.tile with
+    match walk_tile w map p.tile with
     | Some kind -> enterable kind d && Option.is_none (object_at w map p.tile)
     | None -> false
   in
@@ -160,7 +200,7 @@ let press w (place : Connected_maps.place) d =
   | Some warp, _ | None, Some warp -> take_warp w warp d
   | None, None ->
       let here =
-        Option.value (tile_at map place.tile) ~default:Tile_kind.Open
+        Option.value (walk_tile w map place.tile) ~default:Tile_kind.Open
       in
       if not (leaves here d) then None
       else if Grid.contains map.tiles ahead then

@@ -26,22 +26,47 @@ val max_score : float
     row, the TM case's CLOSE). A word the line shows that is missing from the
     candidates can still read as a near one: candidates must cover the line. *)
 
+val light_ink : Wire.color_range
+(** White text: every channel 200..255. The battle's messages are white on its
+    teal box (41, 82, 107), with a dark shadow; measured on mGBA frames. *)
+
 val template :
-  Glyph_table.t -> Text_lines.t -> string -> (string, string) result
+  ?ink:Wire.color_range ->
+  Glyph_table.t ->
+  Text_lines.t ->
+  string ->
+  (string, string) result
 (** The candidate's mask drawn where the line shows it, as PNG bytes for
     [probe.upload_template]: {!Text_lines.template_height} rows, the line's full
-    width. *)
+    width. The daemon masks the template with the probe's [ink] (default {!ink})
+    as it masks the screen, so the text is drawn in it: black on white, or white
+    on black for {!light_ink}. *)
 
 val probe_id : Text_lines.t -> string -> string
 (** ["<line id>/<candidate>"]. *)
 
-val probe : Text_lines.t -> string -> template:string -> Wire.probe_spec
-(** The candidate's [core.template_match@1] probe with {!ink} over the line's
-    box, [Latest] delivery. [template] is the upload's hash (or, for the offline
-    [probe_images] tool, the PNG's path). *)
+val probe :
+  ?ink:Wire.color_range ->
+  Text_lines.t ->
+  string ->
+  template:string ->
+  Wire.probe_spec
+(** The candidate's [core.template_match@1] probe with [ink] (default {!ink})
+    over the line's box, [Latest] delivery. [template] is the upload's hash (or,
+    for the offline [probe_images] tool, the PNG's path). *)
 
 val pick : Text_lines.t -> string list -> Effects.measurements -> reading
 (** The best candidate among those with a result in the frame. *)
+
+val probes :
+  ?ink:Wire.color_range ->
+  Glyph_table.t ->
+  Text_lines.t ->
+  string list ->
+  Wire.probe_spec list
+(** One probe per candidate, its template uploaded (the handler sends each
+    distinct PNG once per connection); the caller subscribes them and {!pick}s.
+    Raises [Invalid_argument] if a candidate cannot be drawn on the line. *)
 
 val read : Glyph_table.t -> Text_lines.t -> string list -> reading
 (** Uploads one template per candidate (the handler sends each distinct PNG once

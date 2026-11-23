@@ -78,13 +78,8 @@ let give ~log ~item ~slot =
     (M.await_screen ~code:"no_party" "the party to give to"
        Party_menu.party_menu);
   choose_slot slot;
-  (match
-     Effects.await ~timeout_ms:switch_question_ms Dialog.selection_dialog
-   with
-  | Holds _ ->
-      log "Bag: the member holds an item; switching it.";
-      M.press Wire.A
-  | Timeout -> ());
+  if M.answer_yes_if_asked ~timeout_ms:switch_question_ms then
+    log "Bag: the member held an item; switched it.";
   if is_mail item then write_one_word ();
   M.close "the bag" bag_or_party;
   M.settle_back ~label:("give " ^ item) ~log

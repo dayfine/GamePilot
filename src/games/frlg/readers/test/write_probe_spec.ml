@@ -22,7 +22,7 @@ let () =
     match Sys.argv with
     | [| _; "menus" |] -> menu_probes
     | [| _; "battle" |] -> battle_probes
-    | _ -> Screen_facts.probes @ Scene_signature.probes
+    | _ -> Screen_facts.probes @ Scene_signature.probes @ Dialog.yes_no_probes
   in
   let call = Wire.Subscribe probes in
   let request = Wire.json_of_message (Request { id = 1; call }) in
