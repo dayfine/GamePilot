@@ -37,6 +37,9 @@ FONTS = {
 }
 LAST_CODE = 0xFE  # 0xFF ends a string
 JAPANESE_SECTION = "@ Hiragana"
+# Extra symbols (charmap "NAME = F9 xx": glyph 0x100 + xx) given a code point
+# here: the Easy Chat editor draws an empty word as seven {UNDERSCORE}s.
+EXTRA_SYMBOLS = [(0x09, "_")]
 PIXEL_CHARS = {0: ".", 1: "#", 2: "s", 3: "."}  # palette index -> pixel
 
 
@@ -100,8 +103,9 @@ def main(decomp, font):
     cells_per_row = len(pixels[0]) // cell_width
     print("# FRLG %s Latin glyphs, made by tools/extract_frlg_font_glyphs.py" % name)
     print("# from pret/pokefirered: <code> <width> <codepoint> <rows> (see the script)")
-    for char, code in sorted(chars, key=lambda entry: entry[1]):
-        if code > LAST_CODE:
+    extras = [(char, 0x100 + symbol) for symbol, char in EXTRA_SYMBOLS]
+    for char, code in sorted(chars, key=lambda entry: entry[1]) + extras:
+        if code > LAST_CODE and code < 0x100:
             continue
         top = (code // cells_per_row) * cell_height
         left = (code % cells_per_row) * cell_width

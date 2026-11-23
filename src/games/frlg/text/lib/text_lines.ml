@@ -99,6 +99,19 @@ let berry_pouch_number_digit row k =
     ~left:(berry_number_left + (small_digit_width * k))
     ~glyph_top:(list_row_top row)
 
+(* The phrase window at x 24; a row's first word after CLEAR 17. *)
+let mail_field_one_left = 41
+let mail_first_row_top = 2
+
+let mail_field_one ~width =
+  {
+    id = "mail_field.1";
+    left = mail_field_one_left;
+    indent = 0;
+    glyph_top = mail_first_row_top;
+    width;
+  }
+
 let box t : Wire.box =
   let x = float (t.left - t.indent - slack)
   and y = float (t.glyph_top + template_top - slack) in

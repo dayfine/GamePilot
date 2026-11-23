@@ -340,3 +340,8 @@ mgba/route16-pouch.png|pouch_number.5.0|-
 mgba/route16-pouch.png|pouch_number.5.1|-
 mgba/route16-pouch.png|pouch_number.6.0|-
 mgba/route16-pouch.png|pouch_number.6.1|-
+# The mail editor's field 1 (Mail_fields; a frame without the editor reads none).
+mgba/mail-editor-abra.png|mail_field.1|ABRA
+mgba/mail-editor-blank.png|mail_field.1|_______
+mgba/route16-items.png|mail_field.1|-
+mgba/route16-final-party.png|mail_field.1|-

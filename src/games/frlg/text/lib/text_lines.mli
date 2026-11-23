@@ -68,6 +68,14 @@ val berry_pouch_number_digit : int -> int -> t
     symbol (8 wide), a 1-pixel gap and the two digits (leading zero) from the
     label's x 97, so the digits start at x 106. *)
 
+val mail_field_one : width:int -> t
+(** The first word field of the Easy Chat mail editor, [width] pixels from its
+    left: pokefirered easy_chat_3.c prints each row of the phrase window as
+    [CLEAR 17], the word (or seven underscores for an empty field), [CLEAR 17],
+    the next word, so field 1 starts 17 pixels into the window and the next
+    field after the word and a 17-pixel gap. The window's left (x 24) and top
+    measured on mGBA, where ABRA reads at x 41, glyphs from y 2 (2026-11-23). *)
+
 (** {1 Template rows and the probe box} *)
 
 val template_top : int

@@ -56,27 +56,34 @@ let screens =
 let write_file path data =
   Out_channel.with_open_bin path (fun oc -> output_string oc data)
 
+(* Template files are named by the line and the candidate's hash: a screen may
+   draw several candidates on lines of one id (the mail field's). *)
 let line_probes dir screen glyphs line candidates =
-  List.mapi
-    (fun i text ->
+  let sub = Filename.concat dir screen in
+  if not (Sys.file_exists sub) then Sys.mkdir sub 0o755;
+  List.map
+    (fun text ->
       match Line_reading.template glyphs line text with
       | Error why -> failwith why
       | Ok png ->
           let name =
-            Printf.sprintf "%s/%s.%d.png" screen line.Text_lines.id i
+            Printf.sprintf "%s/%s.%x.png" screen line.Text_lines.id
+              (Hashtbl.hash text)
           in
           write_file (Filename.concat dir name) png;
           Line_reading.probe line text ~template:name)
     candidates
 
-let write_screen dir (screen, glyphs, lines, candidates) =
-  let sub = Filename.concat dir screen in
-  if not (Sys.file_exists sub) then Sys.mkdir sub 0o755;
-  let probes =
-    List.concat_map
-      (fun line -> line_probes dir screen glyphs line candidates)
-      lines
-  in
+(* The mail editor's field 1: each candidate on its own line. *)
+let mail_candidates = [ "ABRA"; Mail_fields.unknown_word; Mail_fields.blank ]
+
+let mail_probes dir screen =
+  List.concat_map
+    (fun text ->
+      line_probes dir screen glyphs (Mail_fields.line glyphs text) [ text ])
+    mail_candidates
+
+let write_spec dir screen probes =
   let request =
     Wire.json_of_message (Request { id = 1; call = Subscribe probes })
   in
@@ -84,6 +91,14 @@ let write_screen dir (screen, glyphs, lines, candidates) =
     (Filename.concat dir (screen ^ ".json"))
     (Yojson.Safe.to_string (Yojson.Safe.Util.member "params" request))
 
+let write_screen dir (screen, glyphs, lines, candidates) =
+  write_spec dir screen
+    (List.concat_map
+       (fun line -> line_probes dir screen glyphs line candidates)
+       lines)
+
 let () =
   let dir = Sys.argv.(1) in
-  List.iter (write_screen dir) screens
+  List.iter (write_screen dir) screens;
+  let mail = "mail_editor" in
+  write_spec dir mail (mail_probes dir mail)

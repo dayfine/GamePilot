@@ -39,3 +39,7 @@ bag_counts mgba repo src/games/frlg/readers/test/images/mgba/mail-glitch-route16
 bag_counts mgba repo src/games/frlg/readers/test/images/mgba/mail-glitch-route16/items-page3.png|mgba/route16-items-page3.png
 bag_counts mgba repo src/games/frlg/readers/test/images/mgba/mail-glitch-route16/pouch.png|mgba/route16-pouch.png
 berry_pouch_numbers mgba repo src/games/frlg/readers/test/images/mgba/mail-glitch-route16/pouch.png|mgba/route16-pouch.png
+mail_editor mgba repo src/games/frlg/readers/test/images/mgba/mail-editor/editor-abra.png|mgba/mail-editor-abra.png
+mail_editor mgba repo src/games/frlg/readers/test/images/mgba/mail-editor/editor-blank.png|mgba/mail-editor-blank.png
+mail_editor mgba repo src/games/frlg/readers/test/images/mgba/mail-glitch-route16/items.png|mgba/route16-items.png
+mail_editor mgba repo src/games/frlg/readers/test/images/mgba/mail-glitch-route16/final-party.png|mgba/route16-final-party.png

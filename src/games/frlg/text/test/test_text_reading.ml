@@ -16,7 +16,16 @@ let screens =
     "summary_moves";
     "bag_counts";
     "berry_pouch_numbers";
+    "mail_editor";
   ]
+
+let glyphs =
+  match Data_files.locate Data_files.glyph_table with
+  | Some path -> Glyph_table.load path
+  | None -> failwith "glyph table not found"
+
+(* The mail editor's field: each candidate on a line of its own width. *)
+let mail_field = "mail_field.1"
 
 (* A line and the score its reader allows: small-font digits have their own. *)
 let line_of_id id =
@@ -79,10 +88,13 @@ let reading (e : expectation) =
       probes
   in
   let m : Effects.measurements = { seq = 0; t_ms = 0.; probes } in
-  let line, max_score = line_of_id e.line in
-  match Line_reading.pick ~max_score line candidates m with
-  | Read { text; _ } -> text
-  | No_match _ -> "-"
+  let picked =
+    if e.line = mail_field then Mail_fields.pick glyphs candidates m
+    else
+      let line, max_score = line_of_id e.line in
+      Line_reading.pick ~max_score line candidates m
+  in
+  match picked with Read { text; _ } -> text | No_match _ -> "-"
 
 let source image = List.hd (String.split_on_char '/' image)
 
