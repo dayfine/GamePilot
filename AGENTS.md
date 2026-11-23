@@ -20,6 +20,9 @@ GamePilot automates games through three layers (design: `docs/design/Layered-Aut
 - **Names say what a thing is or does.** No catch-all modules or folders (`helpers`, `utils`, `common`, `misc`):
   a function with no obvious home gets a module named for its job. The C++ folder names on the
   fork are a guide where they are informative.
+- **OCaml passes `sh tools/lint_ocaml.sh`** (`lint/`, configured by `tools/ocaml_lint.conf`): function
+  length, nesting, magic numbers, file length, `.mli` for every `lib/` module, layer boundaries;
+  complexity is advisory. Waive only in `tools/ocaml_lint_exceptions.conf`, with a reason.
 - **No C in OCaml.** No `foreign_stubs`, `foreign_archives`, `extra_objects` or `ctypes` in any
   `dune` file (`tools/lint_dune.sh`). Every opam dependency is listed in
   `tools/opam-allowlist.txt`. The Windows CI build is the real gate.
