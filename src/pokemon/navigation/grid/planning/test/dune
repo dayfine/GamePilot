@@ -1,0 +1,12 @@
+(tests
+ (names test_leg_planner test_open_stops test_gate_tiles test_gated_planner)
+ (modules
+  check
+  toy_game
+  leg_case
+  gate_maps
+  test_leg_planner
+  test_open_stops
+  test_gate_tiles
+  test_gated_planner)
+ (libraries gamepilot.grid_maps gamepilot.grid_planning))

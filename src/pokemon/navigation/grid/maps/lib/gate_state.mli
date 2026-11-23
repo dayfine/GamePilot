@@ -34,3 +34,7 @@ val change_between : before:t -> after:t -> change
     not is ignored. *)
 
 val equal : t -> t -> bool
+
+val compare : t -> t -> int
+(** The opened gates, then the switches on: an order for sets and maps of states
+    (a planner searches over them). *)

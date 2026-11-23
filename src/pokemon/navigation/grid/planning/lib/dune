@@ -1,0 +1,6 @@
+(library
+ (name grid_planning)
+ (public_name gamepilot.grid_planning)
+ (flags
+  (:standard -open Grid_maps))
+ (libraries gamepilot.grid_maps))
