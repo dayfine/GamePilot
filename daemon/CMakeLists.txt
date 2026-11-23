@@ -8,7 +8,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
-find_package(OpenCV REQUIRED COMPONENTS core imgproc imgcodecs)
+find_package(OpenCV REQUIRED COMPONENTS core imgproc imgcodecs videoio)
 
 # CoreLib, through Arduino-Source's own cmake files. SourceFiles.cmake globs paths
 # relative to SerialPrograms/, so the folder is added as a subdirectory with
@@ -36,15 +36,22 @@ endfunction()
 
 add_library(gamepilot_core STATIC
   src/base64.cpp
+  src/fake_switch.cpp
+  src/frame_ring.cpp
+  src/live_schedule.cpp
   src/mgba_backend.cpp
   src/net.cpp
+  src/press_latency.cpp
   src/probe_evaluation.cpp
   src/probes.cpp
   src/rpc.cpp
   src/schedule.cpp
   src/sent_results.cpp
   src/server.cpp
+  src/switch_backend.cpp
+  src/switch_controller.cpp
   src/template_store.cpp
+  src/video_capture.cpp
   src/viewport.cpp
 )
 target_include_directories(gamepilot_core PUBLIC src)
@@ -63,12 +70,18 @@ add_executable(probe_images src/probe_images.cpp)
 target_link_libraries(probe_images PRIVATE gamepilot_core)
 gamepilot_warnings(probe_images)
 
+add_executable(press_latency src/press_latency_tool.cpp)
+target_link_libraries(press_latency PRIVATE gamepilot_core)
+gamepilot_warnings(press_latency)
+
 enable_testing()
-foreach(test contracts_test probes_test)
+foreach(test contracts_test probes_test switch_backend_test)
   add_executable(${test} tests/${test}.cpp)
   target_link_libraries(${test} PRIVATE gamepilot_core)
   target_compile_definitions(${test} PRIVATE
-    GAMEPILOT_CONTRACTS_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../contracts/v1")
+    GAMEPILOT_CONTRACTS_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../contracts/v1"
+    GAMEPILOT_SWITCH_IMAGES_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../src/games/frlg/readers/test/images/switch/tmcase"
+    GAMEPILOT_TEST_OUTPUT_DIR="${CMAKE_CURRENT_BINARY_DIR}")
   gamepilot_warnings(${test})
   add_test(NAME ${test} COMMAND ${test})
 endforeach()

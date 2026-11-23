@@ -3,9 +3,8 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
-#include <vector>
-
 #include <opencv2/imgcodecs.hpp>
+#include <vector>
 
 namespace gamepilot {
 
@@ -34,6 +33,9 @@ void write_png(const cv::Mat& frame, const std::string& path) {
 constexpr double kMaxLagMs = 250;
 // Longest wait between two network polls while pacing.
 constexpr double kMaxPollMs = 50;
+// Longest wait for a captured frame before the live loop polls the network
+// and the input schedule again.
+constexpr double kLivePollMs = 5;
 
 }  // namespace
 
@@ -57,6 +59,36 @@ void Server::rebase_pacing() {
 }
 
 void Server::run(const std::atomic<bool>& stop) {
+  if (backend_.info().timing == Timing::kLive) {
+    run_live(stop);
+  } else {
+    run_lockstep(stop);
+  }
+}
+
+void Server::run_live(const std::atomic<bool>& stop) {
+  while (!stop.load()) {
+    serve_network(0);
+    double now = clock_.now_ms();
+    for (const KeySegment& segment : live_schedule_.take_due(now)) {
+      backend_.queue_keys(segment.keys, segment.ms);
+    }
+    const double next =
+        live_schedule_.next_event_ms().value_or(now + kMaxPollMs);
+    const double wait = std::clamp(next - now, 0.0, kLivePollMs);
+    if (const auto frame = backend_.next_frame(wait)) {
+      beat_.seq = frame->seq;
+      send_probe_results(frame->seq, frame->t_ms);
+    }
+    now = clock_.now_ms();
+    beat_.t_ms = now;
+    for (const EndedBatch& done : live_schedule_.take_finished(now)) {
+      send(batch_done_notification(done.batch_id, backend_.seq(), now));
+    }
+  }
+}
+
+void Server::run_lockstep(const std::atomic<bool>& stop) {
   const double frame_ms = 1000.0 / backend_.info().frame_rate;
   double report_ms = clock_.now_ms();
   std::int64_t report_frames = 0;
@@ -101,16 +133,8 @@ void Server::step_frame() {
   }
   const std::int64_t seq = backend_.step();
   frames_stepped_++;
-  if (client_.valid() && !probes_.empty()) {
-    const cv::Mat frame = backend_.frame();
-    const double t_ms = clock_.now_ms();
-    std::vector<std::pair<std::string, ProbeResult>> results;
-    for (const FrameProbe& probe : probes_) {
-      results.emplace_back(probe.spec.id, evaluate_probe(probe, frame));
-    }
-    send(frame_notification(seq, loads_, t_ms,
-                            sent_results_.take_changed(results)));
-  }
+  beat_ = ThreadBeat{"server", seq, clock_.now_ms()};
+  send_probe_results(seq, beat_.t_ms);
   for (const FinishedBatch& done : schedule_.take_finished(seq)) {
     if (client_.valid()) {
       send(batch_done_notification(done.batch_id, done.seq, clock_.now_ms()));
@@ -118,13 +142,30 @@ void Server::step_frame() {
   }
 }
 
+void Server::send_probe_results(std::int64_t seq, double t_ms) {
+  if (!client_.valid() || probes_.empty()) {
+    return;
+  }
+  const cv::Mat frame = backend_.frame();
+  std::vector<std::pair<std::string, ProbeResult>> results;
+  for (const FrameProbe& probe : probes_) {
+    results.emplace_back(probe.spec.id, evaluate_probe(probe, frame));
+  }
+  send(frame_notification(seq, loads_, t_ms,
+                          sent_results_.take_changed(results)));
+}
+
 void Server::serve_network(int timeout_ms) {
-  const auto readable = poll_readable({&listener_, &client_}, timeout_ms);
+  const auto readable =
+      poll_readable({&listener_, &client_, &observer_}, timeout_ms);
   if (readable[0]) {
     accept_pending();
   }
   if (readable[1]) {
     read_client();
+  }
+  if (readable[2]) {
+    read_observer();
   }
 }
 
@@ -134,6 +175,11 @@ void Server::accept_pending() {
     return;
   }
   if (client_.valid()) {
+    if (!observer_.valid()) {
+      observer_ = std::move(socket);
+      observer_lines_ = LineBuffer();
+      return;
+    }
     const RpcError busy(kInvalidRequest,
                         "busy: the daemon serves one client at a time");
     socket.send_all(to_line(error_message(pa::JsonValue(), busy)) + "\n");
@@ -149,7 +195,9 @@ void Server::drop_client(const char* reason) {
                "daemon: client disconnected (%s); probes and batches dropped\n",
                reason);
   client_.close();
+  client_name_.reset();
   probes_.clear();
+  live_schedule_.clear();
   sent_results_.forget_all();
   templates_.clear();
   schedule_.clear();
@@ -171,6 +219,59 @@ void Server::read_client() {
       handle_line(*line);
     }
   }
+}
+
+void Server::read_observer() {
+  auto data = observer_.receive_some();
+  if (!data) {
+    observer_.close();
+    return;
+  }
+  observer_lines_.append(*data);
+  while (observer_.valid()) {
+    auto line = observer_lines_.next_line();
+    if (!line) {
+      break;
+    }
+    if (!line->empty()) {
+      handle_observer_line(*line);
+    }
+  }
+}
+
+// An observer may only ask for `status`; anything else is answered busy.
+void Server::handle_observer_line(const std::string& line) {
+  pa::JsonValue id;
+  pa::JsonValue reply;
+  try {
+    const Request request = decode_request(parse_message(line));
+    id = request.id.clone();
+    if (request.method != "status") {
+      throw RpcError(
+          kInvalidRequest,
+          "busy: another client is connected; only status is served");
+    }
+    reply = result_message(id, status_result(status()));
+  } catch (const RpcError& error) {
+    reply = error_message(id, error);
+  }
+  if (!observer_.send_all(to_line(reply) + "\n")) {
+    observer_.close();
+  }
+}
+
+DaemonStatus Server::status() const {
+  DaemonStatus status;
+  status.t_ms = clock_.now_ms();
+  status.backend = backend_.info().kind;
+  status.client = client_name_;
+  const bool full = std::any_of(
+      probes_.begin(), probes_.end(),
+      [](const FrameProbe& probe) { return probe.spec.delivery == "every"; });
+  status.fidelity = full ? "full" : "latest";
+  status.health = backend_.health();
+  status.health.threads.push_back(beat_);
+  return status;
 }
 
 void Server::handle_line(const std::string& line) {
@@ -205,7 +306,11 @@ pa::JsonObject Server::dispatch(const Request& request) {
       throw RpcError(kProtocolMismatch, "protocol version mismatch",
                      std::move(data));
     }
+    client_name_ = hello.client;
     return hello_result(backend_.info());
+  }
+  if (method == "status") {
+    return status_result(status());
   }
   if (method == "backend.load_state") {
     const LoadStateParams load = decode_load_state(request.params);
@@ -280,6 +385,10 @@ pa::JsonObject Server::dispatch(const Request& request) {
   }
   if (method == "submit") {
     const SubmitParams submit = decode_submit(request.params);
+    if (backend_.info().timing == Timing::kLive) {
+      live_schedule_.submit(submit.batch_id, submit.commands, clock_.now_ms());
+      return submit_result(submit.batch_id, backend_.seq());
+    }
     const std::int64_t start =
         schedule_.submit(submit.batch_id, submit.commands, backend_.seq());
     return submit_result(submit.batch_id, start);
@@ -287,6 +396,7 @@ pa::JsonObject Server::dispatch(const Request& request) {
   if (method == "cancel") {
     decode_cancel(request.params);
     schedule_.clear();
+    live_schedule_.clear();
     backend_.set_keys(0);
     sent_mask_ = KeyMask{0};
     return cancel_result(backend_.seq());

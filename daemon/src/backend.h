@@ -1,29 +1,57 @@
 // The I/O boundary: one emulator or console as frame source, input sink and
-// frame clock. The daemon steps a backend in lockstep: the backend never runs
-// past the frame the daemon asked for.
+// frame clock. A lockstep backend (mGBA) never runs past the frame the daemon
+// asked for; a live backend (the Switch) runs on its own: frames come at the
+// capture card's rate and inputs are timed in wall time.
 
 #pragma once
 
 #include <cstdint>
 #include <opencv2/core.hpp>
+#include <optional>
 #include <stdexcept>
 #include <string>
+#include <vector>
 
 #include "viewport.h"
 
 namespace gamepilot {
 
+enum class Timing { kLockstep, kLive };
+
 struct BackendInfo {
-  std::string kind;       // "mgba"
+  std::string kind;       // "mgba", "switch"
   std::string game_code;  // cartridge code as the backend reports it
   double frame_rate = 0;  // frames per second of the emulated machine
   int width = 0;          // frame size in pixels
   int height = 0;
   Viewport viewport;  // the game picture in the frame, and its native size
+  Timing timing = Timing::kLockstep;
 };
 
 // GBA KEYINPUT bit order.
 using KeyMask = std::uint16_t;
+
+// A thread's last sign of life: the last frame it handled and when.
+struct ThreadBeat {
+  std::string name;
+  std::int64_t seq = 0;
+  double t_ms = 0;
+};
+
+// What a live backend reports for the daemon's `status`.
+struct BackendHealth {
+  std::vector<ThreadBeat> threads;
+  std::size_t ring_depth = 0;
+  std::size_t ring_capacity = 0;
+  std::int64_t gaps = 0;        // jumps in seq seen by the reader
+  std::int64_t gap_frames = 0;  // frames lost in them
+};
+
+// A frame a live backend made current.
+struct FrameStamp {
+  std::int64_t seq = 0;
+  double t_ms = 0;  // capture time on the daemon clock
+};
 
 class Backend {
  public:
@@ -53,11 +81,29 @@ class Backend {
 
   // Releases keys and lets the backend run on its own.
   virtual void release() = 0;
+
+  // Live backends only. Makes the next captured frame current (frame(),
+  // seq()), waiting up to `timeout_ms` for one; nullopt if none came.
+  virtual std::optional<FrameStamp> next_frame(double timeout_ms);
+
+  // Live backends only. Holds `mask` for `ms` from now, after inputs already
+  // queued.
+  virtual void queue_keys(KeyMask mask, double ms);
+
+  virtual BackendHealth health() const { return {}; }
 };
 
 class BackendError : public std::runtime_error {
  public:
   using std::runtime_error::runtime_error;
 };
+
+inline std::optional<FrameStamp> Backend::next_frame(double) {
+  throw BackendError(info().kind + " is not a live backend");
+}
+
+inline void Backend::queue_keys(KeyMask, double) {
+  throw BackendError(info().kind + " is not a live backend");
+}
 
 }  // namespace gamepilot

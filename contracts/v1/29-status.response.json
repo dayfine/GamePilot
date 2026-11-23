@@ -1,0 +1,30 @@
+{
+  "jsonrpc": "2.0",
+  "id": 13,
+  "result": {
+    "t_ms": 60012.5,
+    "backend": "switch",
+    "client": "gamepilot-programs/0.1",
+    "fidelity": "latest",
+    "threads": [
+      {
+        "name": "capture",
+        "seq": 3601,
+        "t_ms": 60010.2
+      },
+      {
+        "name": "server",
+        "seq": 3599,
+        "t_ms": 60011.9
+      }
+    ],
+    "ring": {
+      "depth": 2,
+      "capacity": 8
+    },
+    "gaps": {
+      "count": 1,
+      "frames": 3
+    }
+  }
+}

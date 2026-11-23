@@ -14,6 +14,7 @@ type call =
   | Unsubscribe of string list
   | Submit of { batch_id : string; commands : Command.command list }
   | Cancel
+  | Status
 
 type request = { id : int; call : call }
 type response = { id : int; outcome : (json, error) result }

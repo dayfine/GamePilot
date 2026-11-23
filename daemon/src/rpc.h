@@ -105,6 +105,16 @@ struct SubmitParams {
 
 struct CancelParams {};
 
+// The daemon's health, for `status`.
+struct DaemonStatus {
+  double t_ms = 0;
+  std::string backend;                // BackendInfo::kind
+  std::optional<std::string> client;  // the connected client's hello name
+  std::string fidelity;               // "full" while an `every` probe is
+                                      // subscribed, else "latest"
+  BackendHealth health;  // threads: the backend's, then the server's
+};
+
 // Parses one line. Throws RpcError kParseError.
 pa::JsonValue parse_message(const std::string& line);
 
@@ -136,6 +146,7 @@ pa::JsonObject unsubscribe_result(const std::vector<std::string>& ids);
 pa::JsonObject submit_result(const std::string& batch_id,
                              std::int64_t start_seq);
 pa::JsonObject cancel_result(std::int64_t released_seq);
+pa::JsonObject status_result(const DaemonStatus& status);
 
 // One probe result as sent: its `kind` and fields, rounded.
 pa::JsonObject probe_result_json(const ProbeResult& result);

@@ -45,6 +45,7 @@ let result_round_trips =
     );
     ( "subscribe",
       fun j -> Wire.(json_of_subscribe_result (subscribe_result_of_json j)) );
+    ("status", fun j -> Wire.Daemon_status.(to_json (of_json j)));
     ( "unsubscribe",
       fun j -> Wire.(json_of_unsubscribe_result (unsubscribe_result_of_json j))
     );
@@ -223,6 +224,36 @@ let check_image_probes () =
   | exception Wire.Decode_error _ -> ());
   print_endline "ok probe_images lines"
 
+(* The golden status has every heartbeat fresh; a capture thread whose last
+   frame is older than the limit is the one reported stuck. *)
+let check_daemon_status dir =
+  let golden =
+    match Wire.message_of_json (read_golden dir "29-status.response.json") with
+    | Wire.Response { outcome = Ok result; _ } ->
+        Wire.Daemon_status.of_json result
+    | _ -> failwith "29-status.response.json: expected a result"
+  in
+  let module S = Wire.Daemon_status in
+  if S.stuck golden <> [] then failwith "golden status: nothing should be stuck";
+  if golden.client <> Some "gamepilot-programs/0.1" then
+    failwith "golden status: client";
+  let stalled =
+    {
+      golden with
+      threads =
+        List.map
+          (fun (th : S.thread) ->
+            if th.name = "capture" then
+              { th with t_ms = golden.t_ms -. S.stuck_limit_ms -. 1. }
+            else th)
+          golden.threads;
+    }
+  in
+  (match S.stuck stalled with
+  | [ { name = "capture"; _ } ] -> ()
+  | _ -> failwith "stalled capture: expected exactly capture stuck");
+  print_endline "ok daemon status"
+
 let () =
   let dir = contracts_dir () in
   let files =
@@ -261,5 +292,6 @@ let () =
       Printf.printf "ok probe result without kind rejected: %s\n" e);
   check_template_upload dir;
   check_color_count dir;
+  check_daemon_status dir;
   check_probe_constructors ();
   check_image_probes ()

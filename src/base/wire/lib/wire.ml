@@ -105,6 +105,7 @@ type call = Jsonrpc.call =
   | Unsubscribe of string list
   | Submit of { batch_id : string; commands : command list }
   | Cancel
+  | Status
 
 type request = Jsonrpc.request = { id : int; call : call }
 type response = Jsonrpc.response = { id : int; outcome : (json, error) result }
@@ -142,6 +143,8 @@ let submit_result_of_json = Command.submit_result_of_json
 let json_of_submit_result = Command.json_of_submit_result
 let cancel_result_of_json = Command.cancel_result_of_json
 let json_of_cancel_result = Command.json_of_cancel_result
+
+module Daemon_status = Daemon_status
 
 type direction = Wire_log.direction = In | Out
 

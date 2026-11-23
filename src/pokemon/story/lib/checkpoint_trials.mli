@@ -10,8 +10,8 @@
     - the verification policy is [VerifyModePolicy{runs = 3, passes_needed = 2}]
       and its loop [verify_checkpoint()] ([Pokemon_StoryVerifyRuns.{h,cpp}]):
       every run goes from the same start, a failure that repeats stops the loop.
-    - the hard stop "the same step fails twice in a row" is the
-      console-iteration skill's (section 9); the C++ does not enforce it.
+    - the hard stop: when the same step fails twice in a row, stop the loop and
+      diagnose before another run. The C++ does not enforce it.
 
     Where it differs: [verify_checkpoint()] saves the end only when every run
     passed; here a verified checkpoint (2 of 3) keeps its last passing run's
