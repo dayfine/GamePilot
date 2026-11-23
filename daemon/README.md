@@ -17,6 +17,28 @@ subscribed, reads that frame (`FRAME`) and sends one `frame` notification for it
 the backend's rate (59.7275 fps on the GBA); `--fast` steps as fast as the emulator goes. Everything
 runs on one thread: the client is served between frames.
 
+## The Switch backend
+
+    daemon/build/gamepilot_daemon --backend switch (--replay clip.avi | --capture DEVICE) \
+        [--viewport x,y,w,h] [--port 47900] [--log wire.jsonl]
+
+Live, not lockstep (a capture card cannot be paused): a capture thread reads frames at the source's
+rate, stamps each with a `seq` and the daemon clock, and pushes it into a bounded ring; the server
+thread probes each frame from the ring and hands timed key segments to the controller when they are
+due. A full ring drops its oldest frame, which the server counts as a gap. `--replay` plays a recorded
+video at its own frame rate; `--capture` opens a capture card through OpenCV (index or name; 1920x1080
+at 60 fps requested). The controller speaks CoreLib's PABotBase2 wire format (a wired controller state
+per press, in CoreLib-built packets), but for now to `FakeSwitch`, a fake board that acks every
+packet: the real board needs the session handshake first.
+
+`status` (contracts v1.5) reports each thread's heartbeat, the ring, gaps, the client and the
+fidelity, also to a second connection while a program is connected; `gamepilot status` prints it and
+marks a thread stuck when its heartbeat is over 2 s old.
+
+`press_latency --fake [--response-ms 50] [--fps 60] [--presses 20]` is the latency harness: it
+presses a button and times the first captured frame that changes. On `FakeSwitch` the screen turns
+bright `response-ms` after a press starts, so it should report that plus up to one frame.
+
 `daemon/tools/smoke_client.py --state <file.ss>` drives a running daemon: load a state, subscribe a
 `core.color_stats@1` box on the FireRed start menu, press Start, then B, and print the numbers.
 
@@ -52,6 +74,13 @@ picture whole and at 2x inside side bars give the same results.
 | `src/rpc.*` | v1 messages to and from structs |
 | `src/server.*` | the JSON-RPC server and the frame loop |
 | `src/net.*` | 127.0.0.1 TCP (POSIX and Winsock) |
+| `src/switch_backend.*` | the Switch: capture thread, ring reader, controller |
+| `src/video_capture.*` | frame sources: capture card and video replay (OpenCV `VideoCapture`) |
+| `src/frame_ring.*` | the bounded ring between the capture and server threads |
+| `src/switch_controller.*` | GBA keys to wired controller states, sent in CoreLib's PABotBase2 packets |
+| `src/live_schedule.*` | command batches to key segments in wall time (live backends) |
+| `src/fake_switch.*` | a fake controller board and screen, for tests, the harness and console-free runs |
+| `src/press_latency*` | the latency harness and its `press_latency` command |
 
 `daemon/CMakeLists.txt` adds `third_party/Arduino-Source/SerialPrograms` as a subdirectory with
 `PA_CORE_ONLY=ON`, which includes only upstream's `SourceFiles.cmake` and `CoreLib.cmake`.

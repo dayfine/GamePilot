@@ -1,13 +1,14 @@
 (* gamepilot run <program> [--port N] [--state PATH]
    gamepilot replay <program> <wirelog>
    gamepilot checkpoint PLAN.json [flags] (Checkpoint_command)
-   gamepilot checkpoints PLAN_DIR [flags] (Checkpoints_command) *)
+   gamepilot checkpoints PLAN_DIR [flags] (Checkpoints_command)
+   gamepilot status [--port N] (Status_command) *)
 
 let usage =
   "usage:\n\
   \  gamepilot run start_menu_poc [--port 47900] [--state PATH]\n\
   \  gamepilot replay start_menu_poc WIRELOG\n" ^ Checkpoint_command.usage
-  ^ Checkpoints_command.usage
+  ^ Checkpoints_command.usage ^ Status_command.usage
 
 let die msg =
   prerr_string msg;
@@ -57,6 +58,7 @@ let () =
       exit (run_program (Live.run ~port) state)
   | "checkpoint" :: plan :: flags ->
       exit_with (Checkpoint_command.live plan flags)
+  | "status" :: flags -> exit_with (Status_command.main flags)
   | "checkpoints" :: plan_dir :: flags ->
       exit_with (Checkpoints_command.main plan_dir flags)
   | "replay" :: "checkpoint" :: wirelog :: plan :: flags ->

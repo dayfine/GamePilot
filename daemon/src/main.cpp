@@ -3,6 +3,11 @@
 //
 //   gamepilot_daemon --backend mgba --mgba-port 47810 [--port 47900] [--log f]
 //   [--fast]
+//   gamepilot_daemon --backend switch (--replay VIDEO | --capture DEVICE)
+//   [--viewport x,y,w,h] [--port 47900] [--log f]
+//
+// The switch backend's inputs go to FakeSwitch's board for now: the real
+// controller board needs its session handshake first (switch_controller.h).
 
 #include <atomic>
 #include <csignal>
@@ -13,9 +18,11 @@
 #include <string>
 #include <string_view>
 
+#include "fake_switch.h"
 #include "mgba_backend.h"
 #include "net.h"
 #include "server.h"
+#include "switch_backend.h"
 
 namespace {
 
@@ -26,8 +33,9 @@ extern "C" void on_signal(int) { g_stop.store(true); }
 int usage() {
   std::fputs(
       "usage: gamepilot_daemon --backend mgba --mgba-port N [--port 47900] "
-      "[--log FILE] "
-      "[--fast]\n",
+      "[--log FILE] [--fast]\n"
+      "       gamepilot_daemon --backend switch (--replay VIDEO | --capture "
+      "DEVICE) [--viewport x,y,w,h] [--port 47900] [--log FILE]\n",
       stderr);
   return 2;
 }
@@ -42,34 +50,114 @@ bool parse_port(const char* text, std::uint16_t& port) {
   return true;
 }
 
-}  // namespace
-
-int main(int argc, char** argv) {
-  std::string backend_kind;
+struct Flags {
+  std::string backend;
   std::uint16_t mgba_port = 0;
-  gamepilot::ServerOptions options;
+  std::string replay;
+  std::string capture;
+  gamepilot::SwitchOptions switch_options;
+  gamepilot::ServerOptions server;
+};
+
+bool parse_flags(int argc, char** argv, Flags& flags) {
   for (int i = 1; i < argc; i++) {
     const std::string_view arg = argv[i];
     const bool has_value = i + 1 < argc;
     if (arg == "--backend" && has_value) {
-      backend_kind = argv[++i];
+      flags.backend = argv[++i];
     } else if (arg == "--mgba-port" && has_value) {
-      if (!parse_port(argv[++i], mgba_port)) {
-        return usage();
+      if (!parse_port(argv[++i], flags.mgba_port)) {
+        return false;
       }
+    } else if (arg == "--replay" && has_value) {
+      flags.replay = argv[++i];
+    } else if (arg == "--capture" && has_value) {
+      flags.capture = argv[++i];
+    } else if (arg == "--viewport" && has_value) {
+      const auto box = gamepilot::parse_box(argv[++i]);
+      if (!box) {
+        return false;
+      }
+      flags.switch_options.viewport.picture = *box;
     } else if (arg == "--port" && has_value) {
-      if (!parse_port(argv[++i], options.port)) {
-        return usage();
+      if (!parse_port(argv[++i], flags.server.port)) {
+        return false;
       }
     } else if (arg == "--log" && has_value) {
-      options.log_path = argv[++i];
+      flags.server.log_path = argv[++i];
     } else if (arg == "--fast") {
-      options.fast = true;
+      flags.server.fast = true;
     } else {
-      return usage();
+      return false;
     }
   }
-  if (backend_kind != "mgba" || mgba_port == 0) {
+  if (flags.backend == "mgba") {
+    return flags.mgba_port != 0;
+  }
+  if (flags.backend == "switch") {
+    return flags.replay.empty() != flags.capture.empty();
+  }
+  return false;
+}
+
+// Serves until a signal; returns the exit status.
+int serve(gamepilot::Backend& backend,
+          const gamepilot::ServerOptions& options) {
+  gamepilot::Server server(backend, options);
+  std::fprintf(stderr, "daemon: listening on 127.0.0.1:%u%s\n",
+               static_cast<unsigned>(options.port),
+               options.fast ? " (fast)" : "");
+  try {
+    server.run(g_stop);
+    return 0;
+  } catch (const std::exception& error) {
+    std::fprintf(stderr, "daemon: %s\n", error.what());
+    return 1;
+  }
+}
+
+int run_mgba(const Flags& flags) {
+  gamepilot::MgbaBackend backend(flags.mgba_port);
+  std::fprintf(
+      stderr, "daemon: mgba bridge on %u, game %s, held at frame %lld\n",
+      static_cast<unsigned>(flags.mgba_port), backend.info().game_code.c_str(),
+      static_cast<long long>(backend.seq()));
+  const int status = serve(backend, flags.server);
+  std::fprintf(stderr,
+               "daemon: stopped at frame %lld; %lld KEYS applied late\n",
+               static_cast<long long>(backend.seq()),
+               static_cast<long long>(backend.late_keys()));
+  return status;
+}
+
+int run_switch(const Flags& flags) {
+  const gamepilot::Clock clock;
+  constexpr std::uint32_t kSession = 0x47500001;
+  gamepilot::FakeSwitch board(clock, kSession);
+  gamepilot::Pabb2Controller controller(board, kSession);
+  const auto attached = board.attach(controller);
+  controller.reset();
+  std::unique_ptr<gamepilot::FrameSource> source =
+      flags.replay.empty()
+          ? gamepilot::open_capture_card({.device = flags.capture})
+          : gamepilot::open_video_replay(flags.replay, clock);
+  gamepilot::SwitchBackend backend(std::move(source), controller, clock,
+                                   flags.switch_options);
+  std::fprintf(
+      stderr,
+      "daemon: switch, %s %s, %dx%d at %.2f fps; inputs go to a fake "
+      "controller board\n",
+      flags.replay.empty() ? "capture" : "replay",
+      flags.replay.empty() ? flags.capture.c_str() : flags.replay.c_str(),
+      backend.info().width, backend.info().height, backend.info().frame_rate);
+  return serve(backend, flags.server);
+}
+
+}  // namespace
+
+int main(int argc, char** argv) {
+  Flags flags;
+  if (!parse_flags(argc, argv, flags)) {
     return usage();
   }
 
@@ -81,27 +169,7 @@ int main(int argc, char** argv) {
 
   try {
     gamepilot::init_sockets();
-    gamepilot::MgbaBackend backend(mgba_port);
-    std::fprintf(
-        stderr, "daemon: mgba bridge on %u, game %s, held at frame %lld\n",
-        static_cast<unsigned>(mgba_port), backend.info().game_code.c_str(),
-        static_cast<long long>(backend.seq()));
-    gamepilot::Server server(backend, options);
-    std::fprintf(stderr, "daemon: listening on 127.0.0.1:%u%s\n",
-                 static_cast<unsigned>(options.port),
-                 options.fast ? " (fast)" : "");
-    int status = 0;
-    try {
-      server.run(g_stop);
-    } catch (const std::exception& error) {
-      std::fprintf(stderr, "daemon: %s\n", error.what());
-      status = 1;
-    }
-    std::fprintf(stderr,
-                 "daemon: stopped at frame %lld; %lld KEYS applied late\n",
-                 static_cast<long long>(backend.seq()),
-                 static_cast<long long>(backend.late_keys()));
-    return status;
+    return flags.backend == "mgba" ? run_mgba(flags) : run_switch(flags);
   } catch (const std::exception& error) {
     std::fprintf(stderr, "daemon: %s\n", error.what());
     return 1;

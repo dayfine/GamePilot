@@ -114,6 +114,9 @@ void check_requests(const std::map<std::string, pa::JsonValue>& files) {
   const Request cancel = decode_request(files.at("12-cancel.request.json"));
   CHECK(cancel.method == "cancel");
   decode_cancel(cancel.params);
+
+  const Request status = decode_request(files.at("28-status.request.json"));
+  CHECK(status.method == "status" && status.has_id);
 }
 
 // The golden upload decodes to a 3x2 PNG whose hash is the golden response's.
@@ -154,6 +157,22 @@ void check_encoders(const std::map<std::string, pa::JsonValue>& files) {
   CHECK(submit_result("b1", 1203) ==
         result_of(files.at("09-submit.response.json")));
   CHECK(cancel_result(1240) == result_of(files.at("13-cancel.response.json")));
+
+  DaemonStatus status;
+  status.t_ms = 60012.5;
+  status.backend = "switch";
+  status.client = "gamepilot-programs/0.1";
+  status.fidelity = "latest";
+  status.health.threads = {ThreadBeat{"capture", 3601, 60010.2},
+                           ThreadBeat{"server", 3599, 60011.9}};
+  status.health.ring_depth = 2;
+  status.health.ring_capacity = 8;
+  status.health.gaps = 1;
+  status.health.gap_frames = 3;
+  CHECK(status_result(status) ==
+        result_of(files.at("29-status.response.json")));
+  status.client.reset();
+  CHECK(status_result(status).get_value("client")->is_null());
 
   CHECK(result_message(pa::JsonValue(std::int64_t{4}),
                        submit_result("b1", 1203)) ==
@@ -320,8 +339,8 @@ void check_errors() {
 
 int main() {
   const auto files = load_contracts();
-  CHECK(files.size() == 27);
-  if (files.size() == 27) {
+  CHECK(files.size() == 29);
+  if (files.size() == 29) {
     check_requests(files);
     check_upload(files);
     check_encoders(files);
