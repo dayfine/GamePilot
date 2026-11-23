@@ -58,6 +58,65 @@ let cut () =
   run ~react:(talk ~page:true ~after_ms:1500) (fun () ->
       Cut_tree.cut ~log Grid_maps.Direction.North)
 
+(* The Cut talk, its question dropping presses for its first
+   [question_input_ms]: A then answers YES, B answers NO, each ending the talk.
+   The summary adds the answer. *)
+let question_input_ms = 100
+
+let cut_slow_question () =
+  let asked = ref max_int and answer = ref "none" in
+  let react screen (p : S.press) =
+    let on_question = S.screen_at screen p.at_ms = S.Question in
+    let taken = p.at_ms - !asked >= question_input_ms in
+    let answered word =
+      answer := word;
+      S.show screen ~at_ms:(p.at_ms + 100) S.Dialog;
+      S.show screen ~at_ms:(p.at_ms + 1600) S.Overworld
+    in
+    match p.buttons with
+    | [ Wire.A ] when on_question && taken && !answer = "none" -> answered "YES"
+    | [ Wire.B ] when on_question && taken && !answer = "none" -> answered "NO"
+    | _ when on_question -> ()
+    | _ ->
+        talk ~page:true ~after_ms:1500 screen p;
+        if a p && S.screen_at screen p.at_ms = S.Dialog_arrow then
+          asked := p.at_ms + 400
+  in
+  run_on ~react
+    (fun screen ->
+      let presses = S.presses_text screen in
+      let before_b =
+        match String.index_opt presses 'B' with
+        | Some i -> String.sub presses 0 (i - 2)
+        | None -> presses
+      in
+      Printf.sprintf "%s; answered %s" before_b !answer)
+    (fun () -> Cut_tree.cut ~log Grid_maps.Direction.North)
+
+(* A talk whose page drops an A for its first [page_input_ms] (the A only
+   hurries the text): a later A shows the question, YES ends it. *)
+let page_input_ms = 150
+
+let slow_page () =
+  let page_at = ref max_int in
+  let react screen (p : S.press) =
+    let show d s = S.show screen ~at_ms:(p.at_ms + d) s in
+    if a p then
+      match S.screen_at screen p.at_ms with
+      | S.Overworld ->
+          page_at := p.at_ms + 100;
+          show 100 S.Dialog_arrow
+      | S.Dialog_arrow when p.at_ms - !page_at >= page_input_ms ->
+          show 100 S.Question
+      | S.Question ->
+          show 100 S.Dialog;
+          show 1600 S.Overworld
+      | _ -> ()
+  in
+  run ~react (fun () ->
+      Menu_input.press Wire.A;
+      Menu_input.answer_yes ~code:"no_question" "the offer")
+
 (* Each A shows the next group of screens, each a delay after the press. *)
 let on_each_a groups =
   let left = ref groups in
@@ -229,18 +288,26 @@ let () =
   Case_table.run "menu_actions"
     [
       case "mart: BUY and the row once the clerk's box and list take them"
-        (mart_buy ~menu_ms:1500) "ok; A x2, down, A, up, A x3, B x6";
-      case "heal: a page, YES, the healing, back" heal "ok; A x3, B x8";
+        (mart_buy ~menu_ms:1500) "ok; A x2, down, A, up, A x2, B x6";
+      case "heal: a page, YES, the healing, back" heal "ok; A x3, B x7";
       case "heal: a text box with no question fails" heal_no_question
         "failed heal_no_question: the nurse's question did not show; A";
       case "save: START, down to SAVE, YES, saved" save
         "ok; Start, down x3, A x2, B x5";
-      case "cut: the turn, A, the page, YES" cut "ok; up, A x3, B x7";
-      case "redeem: the page, Abra's row, YES" redeem "ok; A x4, B x7";
+      case "cut: the turn, A, the page, YES" cut "ok; up, A x3, B x6, up";
+      case "redeem: the page, Abra's row, YES" redeem "ok; A x4, B x6";
       case "redeem: YES once the question has replaced the prize list"
         redeem_list_lingers "ok; the prize taken";
       case "redeem: the clerk's blue arrow unread, the page turned by time"
-        (redeem ~page:S.Dialog) "ok; A x4, B x7";
+        (redeem ~page:S.Dialog) "ok; A x4, B x6";
+      case
+        "cut: YES once the question takes input (mg-02 testing run 4: an A on \
+         its first frame was dropped, the settle's B answered NO)"
+        cut_slow_question "ok; up, A x3; answered YES";
+      case
+        "a page that took the first A as a hurry gets another (mg-02 testing \
+         run 10: Elyssa's question)"
+        slow_page "ok; A x4";
       case "berry numbers in the pouch: the fork's Leppa 6, Oran 7, Sitrus 10"
         (fun () ->
           List.map

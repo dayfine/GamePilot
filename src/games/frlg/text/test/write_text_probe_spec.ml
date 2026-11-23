@@ -31,47 +31,64 @@ let rows n line = List.init n line
 let cells ~rows ~cells cell =
   List.concat (List.init rows (fun r -> List.init cells (cell r)))
 
+let species =
+  List.map snd (Species_names.load (required Data_files.species_names_eng))
+
+let dark = Line_reading.ink
+
+(* Each screen: its font, its lines, their candidates and the ink they are read
+   in. *)
 let screens =
   [
     ( "bag_items",
       glyphs,
       rows 6 Text_lines.bag_row,
-      Item_names.in_pocket items Items @ [ "CANCEL" ] );
+      Item_names.in_pocket items Items @ [ "CANCEL" ],
+      dark );
     ( "bag_key_items",
       glyphs,
       rows 6 Text_lines.bag_row,
-      Item_names.in_pocket items Key_items @ [ "CANCEL" ] );
-    ("tm_case", glyphs, rows 5 Text_lines.tm_case_row, tm_moves);
-    ("summary_moves", glyphs, rows 4 Text_lines.summary_move, moves);
+      Item_names.in_pocket items Key_items @ [ "CANCEL" ],
+      dark );
+    ("tm_case", glyphs, rows 5 Text_lines.tm_case_row, tm_moves, dark);
+    ("summary_moves", glyphs, rows 4 Text_lines.summary_move, moves, dark);
+    ( "battle_opening",
+      glyphs,
+      [ Text_lines.battle_message 0 ],
+      List.map (fun name -> "Wild " ^ name ^ " appeared!") species,
+      Line_reading.light_ink );
     ( "bag_counts",
       small_glyphs,
       cells ~rows:7 ~cells:3 Text_lines.bag_count_digit,
-      Number_reading.digits );
+      Number_reading.digits,
+      dark );
     ( "berry_pouch_numbers",
       small_glyphs,
       cells ~rows:7 ~cells:2 Text_lines.berry_pouch_number_digit,
-      Number_reading.digits );
+      Number_reading.digits,
+      dark );
   ]
 
 let write_file path data =
   Out_channel.with_open_bin path (fun oc -> output_string oc data)
 
-(* Template files are named by the line and the candidate's hash: a screen may
-   draw several candidates on lines of one id (the mail field's). *)
-let line_probes dir screen glyphs line candidates =
+(* The candidates the line can draw (a long name may not fit), each template
+   named by the line and the candidate's hash: a screen may draw several
+   candidates on lines of one id (the mail field's). *)
+let line_probes dir screen glyphs ink line candidates =
   let sub = Filename.concat dir screen in
   if not (Sys.file_exists sub) then Sys.mkdir sub 0o755;
-  List.map
+  List.filter_map
     (fun text ->
-      match Line_reading.template glyphs line text with
-      | Error why -> failwith why
+      match Line_reading.template ~ink glyphs line text with
+      | Error _ -> None
       | Ok png ->
           let name =
             Printf.sprintf "%s/%s.%x.png" screen line.Text_lines.id
               (Hashtbl.hash text)
           in
           write_file (Filename.concat dir name) png;
-          Line_reading.probe line text ~template:name)
+          Some (Line_reading.probe ~ink line text ~template:name))
     candidates
 
 (* The mail editor's field 1: each candidate on its own line. *)
@@ -80,7 +97,7 @@ let mail_candidates = [ "ABRA"; Mail_fields.unknown_word; Mail_fields.blank ]
 let mail_probes dir screen =
   List.concat_map
     (fun text ->
-      line_probes dir screen glyphs (Mail_fields.line glyphs text) [ text ])
+      line_probes dir screen glyphs dark (Mail_fields.line glyphs text) [ text ])
     mail_candidates
 
 let write_spec dir screen probes =
@@ -91,10 +108,10 @@ let write_spec dir screen probes =
     (Filename.concat dir (screen ^ ".json"))
     (Yojson.Safe.to_string (Yojson.Safe.Util.member "params" request))
 
-let write_screen dir (screen, glyphs, lines, candidates) =
+let write_screen dir (screen, glyphs, lines, candidates, ink) =
   write_spec dir screen
     (List.concat_map
-       (fun line -> line_probes dir screen glyphs line candidates)
+       (fun line -> line_probes dir screen glyphs ink line candidates)
        lines)
 
 let () =

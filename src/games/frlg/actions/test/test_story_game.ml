@@ -41,15 +41,16 @@ let react screen (p : S.press) =
     S.show screen ~at_ms:(p.at_ms + 200) S.Dialog;
     S.show screen ~at_ms:(p.at_ms + 1200) S.Overworld)
 
-let run ?(checkpoint = checkpoint) start () =
+let run ?(world = Frlg_world.pallet) ?(react = react) ?(checkpoint = checkpoint)
+    ?(party = []) start () =
   let screen = S.create ~react () in
   let config : Story_game.config =
     {
-      world = Frlg_world.pallet;
+      world;
       gait = Walking;
       flee = ignore;
       flags = (fun _ -> false);
-      party = Party_roster.of_list [];
+      party = Party_roster.of_list party;
       center = None;
       reload = (fun () -> Ok ());
       log = ignore;
@@ -86,6 +87,65 @@ let swap_event species : Story.Plan.event =
 let swap_checkpoint species =
   { checkpoint with events = [ swap_event species ] }
 
+(* A trade that ran before this save passes without a press; its declared
+   tile is where the player is taken to stand, as for a built-in event. *)
+let done_trade : Story.Plan.event =
+  {
+    (event "trade"
+       (Game_action
+          [ ("species", `String "spearow"); ("receive", `String "farfetchd") ]))
+    with
+    action = Some "ingame_trade";
+    declared_after =
+      Some
+        (Grid
+           {
+             map = "PalletTown_PlayersHouse_1F";
+             tiles = [ { x = 3; y = 5 } ];
+             facing = Some North;
+           });
+  }
+
+(* mg-02's Cut, then its walk north through the tree's tile to the grass. *)
+let cut_then_grass : Story.Plan.checkpoint =
+  {
+    checkpoint_id = "test";
+    title = "cut and on";
+    start = None;
+    events =
+      [
+        {
+          (event "cut" (Game_action [ ("direction", `String "north") ])) with
+          action = Some "cut_tree";
+        };
+        event "grass"
+          (Route
+             {
+               target =
+                 {
+                   map = "Route16";
+                   tiles = [ { x = 35; y = 6 } ];
+                   facing = Some East;
+                 };
+               fight_wild = false;
+             });
+      ];
+  }
+
+(* A on the tree asks; YES fells it. *)
+let cut_screen screen (p : S.press) =
+  let show d s = S.show screen ~at_ms:(p.at_ms + d) s in
+  if p.buttons = [ Wire.A ] then
+    match S.screen_at screen p.at_ms with
+    | S.Overworld -> show 200 S.Question
+    | S.Question ->
+        show 100 S.Dialog;
+        show 1600 S.Overworld
+    | _ -> ()
+
+let below_tree : Story.Pose.observed =
+  { at_map = "Route16"; at_tile = { x = 41; y = 12 }; faces = Some North }
+
 let case name input expectation = { Case_table.name; input; expectation }
 
 let () =
@@ -100,4 +160,18 @@ let () =
         (run ~checkpoint:(swap_checkpoint "mr-mime") (Some house))
         "test event 1 (swap): not_in_party: mr-mime is not in the party (); at \
          PalletTown_PlayersHouse_1F (4, 6); ";
+      case "a game action that passed leaves the player on its declared tile"
+        (run
+           ~checkpoint:{ checkpoint with events = [ done_trade ] }
+           ~party:[ "farfetchd" ] (Some house))
+        "ok; at PalletTown_PlayersHouse_1F (3, 5) north; ";
+      case
+        "after a Cut the player stands on the tree's tile, and the walk on \
+         goes through it"
+        (run
+           ~world:
+             (Frlg_world.world ~edge_stalls:false [ "CeladonCity"; "Route16" ])
+           ~react:cut_screen ~checkpoint:cut_then_grass (Some below_tree))
+        "ok; at Route16 (35, 6) east; up, A x2, B x6, up, up 667, left, left \
+         1468, up, up 400, right";
     ]

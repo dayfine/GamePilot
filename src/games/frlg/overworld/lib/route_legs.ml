@@ -42,8 +42,12 @@ let turn_tap direction =
       };
   ]
 
+(* A step onto another map stalls, where the world's edges stall. *)
+let stalls (w : Frlg_steps.world) (step : _ Grid_planning.Leg.step) =
+  step.connection && w.edge_stalls
+
 (* The tiles' time and the stalled steps (from 1) of [presses] presses from
-   the leg's start: a hop is two tiles, a step onto another map stalls. *)
+   the leg's start: a hop is two tiles, a step onto another map may stall. *)
 let walked_tiles w (leg : Connected_maps.place Grid_planning.Leg.t) presses =
   let rec go place i tiles stalled =
     if i > presses then (tiles, List.rev stalled)
@@ -52,7 +56,7 @@ let walked_tiles w (leg : Connected_maps.place Grid_planning.Leg.t) presses =
       | None -> (tiles + presses - i + 1, List.rev stalled)
       | Some step ->
           let tiles = tiles + Frlg_steps.hop_tiles w place leg.direction in
-          let stalled = if step.connection then tiles :: stalled else stalled in
+          let stalled = if stalls w step then tiles :: stalled else stalled in
           go step.next (i + 1) tiles stalled
   in
   go leg.start 1 0 []

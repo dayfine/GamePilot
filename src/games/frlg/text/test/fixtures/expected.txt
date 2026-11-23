@@ -177,6 +177,8 @@ mgba/grind-mimien-moves.png|summary_move.2|SUBSTITUTE
 mgba/grind-mimien-moves.png|summary_move.3|-
 switch_lab/tmcase-04-tmcase-after-A.png|bag.4|-
 switch_lab/tmcase-04-tmcase-after-A.png|bag.5|-
+mgba/mail-glitch-route16/wild-spearow.png|battle_message.0|Wild SPEAROW appeared!
+mgba/mail-glitch-route16/wild-doduo.png|battle_message.0|Wild DODUO appeared!
 # The bag's and the Berry Pouch's counts (small font): <image>|bag_count.<row>.<cell from the right>|<digit>.
 switch_clt/Bag/Items_Scrolled_True.png|bag_count.0.0|1
 switch_clt/Bag/Items_Scrolled_True.png|bag_count.0.1|2

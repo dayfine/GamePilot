@@ -14,6 +14,7 @@ let screens =
     "bag_key_items";
     "tm_case";
     "summary_moves";
+    "battle_opening";
     "bag_counts";
     "berry_pouch_numbers";
     "mail_editor";
@@ -35,6 +36,8 @@ let line_of_id id =
   | [ "bag"; i ] -> normal (Text_lines.bag_row (int_of_string i))
   | [ "tm_case"; i ] -> normal (Text_lines.tm_case_row (int_of_string i))
   | [ "summary_move"; i ] -> normal (Text_lines.summary_move (int_of_string i))
+  | [ "battle_message"; i ] ->
+      normal (Text_lines.battle_message (int_of_string i))
   | [ "bag_count"; row; k ] ->
       small (Text_lines.bag_count_digit (int_of_string row) (int_of_string k))
   | [ "pouch_number"; row; k ] ->

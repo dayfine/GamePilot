@@ -21,7 +21,8 @@ val maps_dir : string
 (** PokemonSimulation's FireRed maps, from the repo root. *)
 
 val load_world : unit -> (Frlg_overworld.Frlg_steps.world, string) result
-(** Every runtime map of {!maps_dir}, found from the working directory. *)
+(** Every runtime map of {!maps_dir}, found from the working directory, as mGBA
+    walks them: map edges do not stall ({!Frlg_overworld.Frlg_steps.world}). *)
 
 val check_plan : Story.Plan.t -> (unit, string) result
 (** A FireRed plan whose [execution.menu], when given, is ["full"]: the Start
