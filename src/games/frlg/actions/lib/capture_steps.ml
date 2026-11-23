@@ -11,6 +11,11 @@ let presses_per_check = 4
 
 (* The fork's taps here: 160 ms held, then 640 ms (throw) or 340 ms (B). *)
 let throw_press_ms = 640
+
+(* A on USE until the battle's text box is back: the fork presses it once, but
+   on mGBA the USE menu sometimes drops that A (mg-02 testing run 11: nine
+   "throws" in a row left the bag open, its ball not thrown). *)
+let use_presses = 4
 let mash_release_ms = 340
 let opening_timeout_ms = 15000
 
@@ -129,7 +134,8 @@ let throw_ball ~log () : Capture.throw_end =
   else (
     (* A on the ball, then USE at the top of its menu: the throw. *)
     M.press ~cooldown_ms:throw_press_ms Wire.A;
-    M.press ~cooldown_ms:throw_press_ms Wire.A;
+    M.press_until ~max_presses:use_presses ~code:"capture_no_throw" "the throw"
+      Wire.A ~cooldown_ms:throw_press_ms Battle_screen.battle_text_box;
     Effects.with_probes Dialog.yes_no_probes (fun () ->
         wait_for_throw ~deadline:(Effects.now () +. float throw_timeout_ms) 1))
 
