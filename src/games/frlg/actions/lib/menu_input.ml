@@ -57,20 +57,14 @@ let answer_yes_to m =
   ignore (Effects.submit [ Wire.Wait { wait_ms = question_input_ms } ]);
   press ~cooldown_ms:answer_cooldown_ms Wire.A
 
-let turn_page ~code what =
-  press Wire.A;
-  ignore
-    (await_screen ~code (what ^ "'s next page") (fun m ->
-         not (Dialog.advance_arrow m)))
+let page_press_ms = 600
 
 let rec answer_yes_from page ~code what =
   let m = await_screen ~code what page_or_question in
   if question m then answer_yes_to m
-  else if page >= max_pages then (
-    turn_page ~code what;
-    fail code (what ^ " did not show"))
+  else if page > max_pages then fail code (what ^ " did not show")
   else (
-    turn_page ~code what;
+    press ~cooldown_ms:page_press_ms Wire.A;
     answer_yes_from (page + 1) ~code what)
 
 let answer_yes ~code what =

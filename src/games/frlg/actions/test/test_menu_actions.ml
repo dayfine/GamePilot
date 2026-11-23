@@ -93,6 +93,30 @@ let cut_slow_question () =
       Printf.sprintf "%s; answered %s" before_b !answer)
     (fun () -> Cut_tree.cut ~log Grid_maps.Direction.North)
 
+(* A talk whose page drops an A for its first [page_input_ms] (the A only
+   hurries the text): a later A shows the question, YES ends it. *)
+let page_input_ms = 150
+
+let slow_page () =
+  let page_at = ref max_int in
+  let react screen (p : S.press) =
+    let show d s = S.show screen ~at_ms:(p.at_ms + d) s in
+    if a p then
+      match S.screen_at screen p.at_ms with
+      | S.Overworld ->
+          page_at := p.at_ms + 100;
+          show 100 S.Dialog_arrow
+      | S.Dialog_arrow when p.at_ms - !page_at >= page_input_ms ->
+          show 100 S.Question
+      | S.Question ->
+          show 100 S.Dialog;
+          show 1600 S.Overworld
+      | _ -> ()
+  in
+  run ~react (fun () ->
+      Menu_input.press Wire.A;
+      Menu_input.answer_yes ~code:"no_question" "the offer")
+
 (* Each A shows the next group of screens, each a delay after the press. *)
 let on_each_a groups =
   let left = ref groups in
@@ -267,6 +291,10 @@ let () =
         "cut: YES once the question takes input (mg-02 testing run 4: an A on \
          its first frame was dropped, the settle's B answered NO)"
         cut_slow_question "ok; up, A x3; answered YES";
+      case
+        "a page that took the first A as a hurry gets another (mg-02 testing \
+         run 10: Elyssa's question)"
+        slow_page "ok; A x4";
       case "party swap: slot 1, SWITCH, slot 4" (swap 1 4)
         "ok; Start, A x2, down, A, down x3, A, B x6";
       case

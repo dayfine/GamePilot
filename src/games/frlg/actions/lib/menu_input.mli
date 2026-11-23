@@ -56,7 +56,14 @@ val settle_back : label:string -> log:(string -> unit) -> unit
     the rest of a menu's or a talk's text. Fails as its cause. *)
 
 val max_pages : int
-(** Text pages {!answer_yes} turns before the question must show: 8. *)
+(** A presses {!answer_yes} gives the pages before the question must show: 8. *)
+
+val page_press_ms : int
+(** The wait after an A on a page, before the next look: 600 ms, the fork's
+    [answer_yes_no] (its 300 ms after the press, then its 300 ms poll). As
+    there, a page whose arrow still shows gets another A: an A the game takes
+    while it prints only hurries the text (mg-02 testing run 10: Elyssa's "Do
+    you have a SPEAROW?" kept its arrow after an A 90 ms after it showed). *)
 
 val question_input_ms : int
 (** How long the Yes/No box shows before {!answer_yes} presses: 300 ms. The
@@ -71,11 +78,11 @@ val answer_cooldown_ms : int
 (** The fork's wait after its answer: 800 ms. *)
 
 val answer_yes : code:string -> string -> unit
-(** After a talk: A on each page with the advance arrow until the Yes/No box
-    shows with its arrow ({!Dialog.yes_no_cursor}), then YES as the fork's
-    [answer_yes_no] answers it: UP if the arrow is on NO, A {!question_input_ms}
-    after the box showed, then {!answer_cooldown_ms}. Fails as [code] with
-    ["<what> did not show"] when no page or question comes. *)
+(** After a talk: A on each look at a page with the advance arrow until the
+    Yes/No box shows with its arrow ({!Dialog.yes_no_cursor}), then YES as the
+    fork's [answer_yes_no] answers it: UP if the arrow is on NO, A
+    {!question_input_ms} after the box showed, then {!answer_cooldown_ms}. Fails
+    as [code] with ["<what> did not show"] when no page or question comes. *)
 
 val answer_yes_if_asked : timeout_ms:int -> bool
 (** YES to a Yes/No box that shows within [timeout_ms], answered as
