@@ -35,11 +35,21 @@ type world = {
       (** Whether the story has hidden the object (its [hide_flag] holds): it no
           longer stands in the way. *)
   costs : costs;
+  edge_stalls : bool;
+      (** Whether the game holds the player up a tile on each step onto a
+          connected map while it loads the map (the fork's
+          [RouteStep::connection_steps], measured on console B, 2026-11-03). On
+          mGBA it does not: the fork's run of 2026-11-23 held "west 11" from
+          Celadon City onto Route 16 for 10.5 tiles and ended on its tile, and
+          ours, held a tile longer for the stall, ended a tile past it. *)
 }
 
 val world :
-  ?hidden:(Map_features.map_object -> bool) -> Connected_maps.t -> world
-(** Every object shown, {!default_costs}. *)
+  ?hidden:(Map_features.map_object -> bool) ->
+  ?edge_stalls:bool ->
+  Connected_maps.t ->
+  world
+(** Every object shown, {!default_costs}, edges that stall (the console). *)
 
 val press :
   world ->

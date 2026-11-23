@@ -31,6 +31,10 @@ val taps_to_reveal : int -> int
 (** Taps from the list's top before list row [k] (from 0) shows on the screen's
     bottom row: 0 while [k] is one of the first six, else [k - 2]. *)
 
+val pocket_top : Frlg_readers.Bag_screen.pocket -> unit
+(** In the open bag (the Start menu's or a battle's BAG): to the pocket and its
+    list's top row. Fails as [no_bag] or [no_pocket]. *)
+
 val open_pocket_top : Frlg_readers.Bag_screen.pocket -> unit
 (** From the overworld: the bag open on the pocket (turned to by LEFT or RIGHT
     as its arrows read) with the cursor on the list's top row. Fails as [no_bag]

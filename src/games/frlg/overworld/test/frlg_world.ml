@@ -27,8 +27,9 @@ let load name =
   | Ok map -> map
   | Error e -> failwith e
 
-let world names =
-  Frlg_overworld.Frlg_steps.world (Connected_maps.create (List.map load names))
+let world ?edge_stalls names =
+  Frlg_overworld.Frlg_steps.world ?edge_stalls
+    (Connected_maps.create (List.map load names))
 
 let pallet =
   world

@@ -14,6 +14,27 @@ let plan ~from goal () =
   legs_text pallet (Route_target.plan pallet ~from ~facing:None goal)
 
 let case name input expectation = { Case_table.name; input; expectation }
+let celadon_names = [ "CeladonCity"; "Route16" ]
+
+(* mg-02's "west 11" from Celadon City (4, 24) onto Route 16 (41, 14): how
+   long it is held, and its stalled steps. *)
+let west_onto_route16 w () =
+  let from = place w "CeladonCity" 4 24 in
+  match
+    Route_target.plan w ~from ~facing:None (target "Route16" [ (41, 14) ])
+  with
+  | Error e -> "error: " ^ e
+  | Ok legs -> (
+      let leg = List.hd (List.rev legs) in
+      match
+        Frlg_overworld.Route_legs.move_of w Running ~facing:(Some West) leg
+      with
+      | Ok (Hold { spec; _ }) ->
+          Printf.sprintf "%s: held %d ms, stalled steps [%s]" (leg_text w leg)
+            (Grid_walker.Leg_timing.hold_ms spec spec.tiles)
+            (String.concat "; " (List.map string_of_int spec.stalled_steps))
+      | Ok (Turn _) -> "a turn"
+      | Error e -> "error: " ^ e)
 
 let () =
   Case_table.run "route_target"
@@ -46,6 +67,14 @@ let () =
            (target ~facing:Direction.West "PalletTown" [ (6, 12) ]))
         "east 6 (to wall) -> PalletTown (12, 10) east; south 2 -> PalletTown \
          (12, 12) south; west 6 -> PalletTown (6, 12) west";
+      case "console: the step onto Route 16 stalls a tile"
+        (west_onto_route16 (world celadon_names))
+        "west 11 -> Route16 (41, 14) west: held 1529 ms, stalled steps [5]";
+      case
+        "mGBA: no stall at the edge (mg-02 run 1 ended on (40, 12), a tile \
+         past)"
+        (west_onto_route16 (world ~edge_stalls:false celadon_names))
+        "west 11 -> Route16 (41, 14) west: held 1396 ms, stalled steps []";
       case "a map not loaded"
         (plan ~from:(place pallet "PalletTown" 6 10) (target "CeladonCity" []))
         "error: map CeladonCity is not loaded";

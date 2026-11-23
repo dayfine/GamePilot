@@ -27,6 +27,12 @@ val summary_move : int -> t
     on the list a battle opens to forget a move from (the same 28-pixel pitch,
     pokefirered pokemon_summary_screen.c). *)
 
+val battle_message : int -> t
+(** Line [i] (0..1) of a battle's message box, white on teal ("Wild SPEAROW
+    appeared!"; read with {!Line_reading.light_ink}), as wide as the box. The
+    action prompt ("What will / BLASTOISE do?") draws its lines there too:
+    measured on an mGBA frame of it (capitals from x 10, rows 125 and 141). *)
+
 (** {1 Template rows and the probe box} *)
 
 val template_top : int

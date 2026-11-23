@@ -58,10 +58,13 @@ let to_top () =
     Wire.Up ~cooldown_ms:M.tap_release_ms (fun m ->
       Bag_screen.cursor_row m = Some 0)
 
-let open_pocket_top pocket =
-  Menu_cursor.open_start_menu_row bag_row;
+let pocket_top pocket =
   turn_to pocket;
   to_top ()
+
+let open_pocket_top pocket =
+  Menu_cursor.open_start_menu_row bag_row;
+  pocket_top pocket
 
 let text_pocket : Bag_screen.pocket -> Text.Item_names.pocket = function
   | Items -> Items

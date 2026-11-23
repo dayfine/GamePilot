@@ -6,7 +6,9 @@
 open Frlg_story
 
 let plan file = Result.get_ok (Story.Plan_decode.load file)
-let handled = "fly" :: "lift_floor" :: Frlg_actions.Action_requests.names
+
+let handled =
+  "fly" :: "lift_floor" :: "capture" :: Frlg_actions.Action_requests.names
 
 let missing (p : Story.Plan.t) =
   List.filter_map
@@ -92,7 +94,11 @@ let () =
          exit_prize_room 1";
       case "mg-02"
         (summary "mg-02.plan.json")
-        "frlg; from CeladonCity (39, 21) south; missing: capture";
+        "frlg; from CeladonCity (39, 21) south; missing: none";
+      case "mg-02's walks plan on the maps" (walks "mg-02.plan.json")
+        "to_route16_cut_tree 7; to_route16_grass 4; to_route6_pond_wall 2; \
+         to_route6_sitrus_berry 9; to_vermilion_mart_wall 3; \
+         to_vermilion_elyssa 5; exit_vermilion_house2 1";
       case "mg-03"
         (summary "mg-03.plan.json")
         "frlg; from VermilionCity (19, 18) south; missing: none";

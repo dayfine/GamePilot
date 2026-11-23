@@ -154,14 +154,14 @@ let heal_at t : Grind_plan.heal -> unit =
       raise_cause (walk_to t pad);
       Menu_input.settle_back ~label:"heal pad" ~log
 
+let faced t =
+  Option.value
+    (Option.bind t.at (fun at -> at.faces))
+    ~default:Grid_maps.Direction.North
+
 (* Turning ends facing a way the spin does not report. *)
 let find_battle t () =
-  let facing =
-    Option.value
-      (Option.bind t.at (fun at -> at.faces))
-      ~default:Grid_maps.Direction.North
-  in
-  Spin_for_encounter.spin ~log:t.config.log ~facing
+  Spin_for_encounter.spin ~log:t.config.log ~facing:(faced t)
     ~max_batches:Action_requests.default_spin_batches;
   t.at <- Option.map (fun at -> { at with Story.Pose.faces = None }) t.at
 
@@ -195,6 +195,39 @@ let grind t (_ : Story.Plan.event) args =
       Result.bind (Grind_plan.decode strategies args) (fun plan ->
           Menu_input.run (fun () -> Grind.run (grind_rig t) plan))
 
+(* The catches that went to the party join it; the player faces a way the
+   turning does not report. *)
+let after_capture t (plan : Capture_plan.t) (result : Capture.result) =
+  List.iter
+    (fun (d : Capture.destination) ->
+      if d = Party then t.party := Party_roster.add !(t.party) plan.species)
+    result.caught;
+  t.at <- Option.map (fun at -> { at with Story.Pose.faces = None }) t.at
+
+let run_capture t (plan : Capture_plan.t) () =
+  let log = t.config.log in
+  log ("Capture: " ^ Capture_plan.describe plan ^ ".");
+  let rig =
+    Capture_steps.make ~log
+      ~facing:(fun () -> faced t)
+      ~target:plan.species
+      ~max_spin_batches:Action_requests.default_spin_batches
+  in
+  let result =
+    Effects.with_probes Frlg_battle.Battle_look.probes (fun () ->
+        Capture.run rig plan ~party:(Party_roster.size !(t.party)))
+  in
+  after_capture t plan result;
+  let message = Capture.message plan result in
+  log message;
+  match result.end_ with
+  | All_caught -> ()
+  | end_ -> Menu_input.fail ("capture_" ^ Capture.end_name end_) message
+
+let capture t (_ : Story.Plan.event) args =
+  Result.bind (Capture_plan.decode args) (fun plan ->
+      Menu_input.run (run_capture t plan))
+
 let action_context t : Game_actions.context =
   {
     log = t.config.log;
@@ -210,6 +243,7 @@ let game t : Story.Game.t =
     game_actions =
       ("fly", fly t)
       :: ("grind", grind t)
+      :: ("capture", capture t)
       :: ("lift_floor", lift t)
       :: Game_actions.handlers (action_context t);
     flag_holds = t.config.flags;

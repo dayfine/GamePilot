@@ -9,10 +9,11 @@ type world = {
   maps : Connected_maps.t;
   hidden : Map_features.map_object -> bool;
   costs : costs;
+  edge_stalls : bool;
 }
 
-let world ?(hidden = fun _ -> false) maps =
-  { maps; hidden; costs = default_costs }
+let world ?(hidden = fun _ -> false) ?(edge_stalls = true) maps =
+  { maps; hidden; costs = default_costs; edge_stalls }
 
 let map_of w (place : Connected_maps.place) =
   Connected_maps.map w.maps place.map

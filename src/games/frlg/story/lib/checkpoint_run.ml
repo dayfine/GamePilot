@@ -19,7 +19,8 @@ let load_all dir =
   in
   Result.map
     (fun maps ->
-      Frlg_overworld.Frlg_steps.world (Grid_maps.Connected_maps.create maps))
+      Frlg_overworld.Frlg_steps.world ~edge_stalls:false
+        (Grid_maps.Connected_maps.create maps))
     (all [] (Grid_maps.Map_file.runtime_names ~maps_dir:dir))
 
 let load_world () =

@@ -14,6 +14,15 @@ let ink : Wire.color_range =
     max = (text_red_green_max, text_red_green_max, any_blue);
   }
 
+let light_min = 200
+let brightest = 255
+
+let light_ink : Wire.color_range =
+  {
+    min = (light_min, light_min, light_min);
+    max = (brightest, brightest, brightest);
+  }
+
 let template glyphs (line : Text_lines.t) text =
   Text_drawing.draw_mask glyphs ~width:line.width ~indent:line.indent
     ~top:Text_lines.template_top ~height:Text_lines.template_height text
@@ -21,7 +30,7 @@ let template glyphs (line : Text_lines.t) text =
 
 let probe_id (line : Text_lines.t) text = line.id ^ "/" ^ text
 
-let probe line text ~template =
+let probe ?(ink = ink) line text ~template =
   Wire.template_match_probe ~ink ~id:(probe_id line text)
     ~box:(Text_lines.box line) ~delivery:Latest ~template ()
 
@@ -37,13 +46,16 @@ let pick line candidates m =
   | (text, score) :: _ -> No_match { best = Some text; score }
   | [] -> No_match { best = None; score = Float.infinity }
 
-let upload glyphs line text =
+let upload ?ink glyphs line text =
   match template glyphs line text with
-  | Ok png -> probe line text ~template:(Effects.upload_template png)
+  | Ok png -> probe ?ink line text ~template:(Effects.upload_template png)
   | Error why -> invalid_arg why
 
+let probes ?ink glyphs line candidates =
+  List.map (upload ?ink glyphs line) candidates
+
 let read glyphs line candidates =
-  let probes = List.map (upload glyphs line) candidates in
+  let probes = probes glyphs line candidates in
   let ids = List.map (fun (p : Wire.probe_spec) -> p.id) probes in
   let all_there m = List.for_all (fun id -> Effects.probe m id <> None) ids in
   match
