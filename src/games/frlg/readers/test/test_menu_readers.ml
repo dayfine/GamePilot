@@ -1,0 +1,215 @@
+(* The FRLG menu readers on real screenshots: Switch captures (CommandLineTests
+   and console B) and native mGBA frames from the lab. The fixtures are the
+   daemon's [probe_images] output, as for test_screen_readers.ml, from
+
+     dune exec games/frlg/readers/test/write_probe_spec.exe -- menus
+
+   Each image's name carries what it shows after "__", dash-separated:
+
+     startN        the Start menu, its cursor on row N (0 at the top)
+     bag           the bag; items, keyitems, balls its pocket; rowN its cursor
+     party         the party menu (its message box not covered)
+     slotN         slot N (1-6) selected        membersN  N slots filled
+     heldN, mailN  slot N's sprite carries the held-item or the mail icon
+     summaryN      the summary screen on page N
+     money         the money box
+     jpn           a Japanese game (the icons sit elsewhere: marks not read)
+     none          none of these
+
+   Switch names keep their CommandLineTests folder and file name, whose
+   True/False the fork's tests read for that folder's detector. A reader is
+   checked on every image unless it reads inside a screen: then only on the
+   images whose tags give its answer. *)
+
+open Frlg_readers
+
+let tags image =
+  let base = Filename.remove_extension (Filename.basename image) in
+  match String.split_on_char '_' base |> List.rev with
+  | last :: "" :: _ -> String.split_on_char '-' last
+  | _ -> failwith ("no tags in " ^ image)
+
+let measurements probes : Effects.measurements = { seq = 0; t_ms = 0.; probes }
+
+(* The number after [prefix] in a tag such as "row3"; the first such tag. *)
+let numbered prefix tags =
+  List.find_map
+    (fun tag ->
+      if String.starts_with ~prefix tag then
+        int_of_string_opt
+          (String.sub tag (String.length prefix)
+             (String.length tag - String.length prefix))
+      else None)
+    tags
+
+let all_numbered prefix tags =
+  List.filter_map (fun tag -> numbered prefix [ tag ]) tags
+
+type reader = {
+  reader : string;
+  applies : string list -> bool;
+  verdict : Effects.measurements -> string;
+  expected : string list -> string;
+}
+
+let everywhere _ = true
+let has tag tags = List.mem tag tags
+let flag read m = string_of_bool (read m)
+let tagged tag tags = string_of_bool (has tag tags)
+let optional = Option.fold ~none:"none" ~some:string_of_int
+let slots = [ 1; 2; 3; 4; 5; 6 ]
+let pockets = [ Bag_screen.Items; Bag_screen.Key_items; Bag_screen.Poke_balls ]
+
+let expected_pocket tags =
+  List.find_opt (fun p -> has (Bag_screen.pocket_name p) tags) pockets
+  |> Option.fold ~none:"none" ~some:Bag_screen.pocket_name
+
+let marks_text mark_of = String.concat " " (List.map mark_of slots)
+
+let expected_marks tags =
+  let held = all_numbered "held" tags and mail = all_numbered "mail" tags in
+  marks_text (fun n ->
+      if List.mem n held then "held"
+      else if List.mem n mail then "mail"
+      else "none")
+
+let shows_marks tags =
+  (not (has "jpn" tags))
+  && (has "party" tags
+     || all_numbered "held" tags <> []
+     || all_numbered "mail" tags <> [])
+
+let screen_readers =
+  [
+    {
+      reader = "start_menu";
+      applies = everywhere;
+      verdict = (fun m -> optional (Start_menu.cursor_row m));
+      expected = (fun tags -> optional (numbered "start" tags));
+    };
+    {
+      reader = "bag_open";
+      applies = everywhere;
+      verdict = flag Bag_screen.bag_open;
+      expected = tagged "bag";
+    };
+    {
+      reader = "party_menu";
+      applies = everywhere;
+      verdict = flag Party_menu.party_menu;
+      expected = tagged "party";
+    };
+    {
+      reader = "summary_page";
+      applies = everywhere;
+      verdict = (fun m -> optional (Summary_screen.page m));
+      expected = (fun tags -> optional (numbered "summary" tags));
+    };
+    {
+      reader = "money_box";
+      applies = everywhere;
+      verdict = flag Money_box.money_box;
+      expected = tagged "money";
+    };
+  ]
+
+let inner_readers =
+  [
+    {
+      reader = "bag_pocket";
+      applies = (fun tags -> expected_pocket tags <> "none");
+      verdict =
+        (fun m ->
+          Option.fold ~none:"none" ~some:Bag_screen.pocket_name
+            (Bag_screen.pocket m));
+      expected = expected_pocket;
+    };
+    {
+      reader = "bag_row";
+      applies = (fun tags -> has "bag" tags && numbered "row" tags <> None);
+      verdict = (fun m -> optional (Bag_screen.cursor_row m));
+      expected = (fun tags -> optional (numbered "row" tags));
+    };
+    {
+      reader = "selected_slot";
+      applies = (fun tags -> numbered "slot" tags <> None);
+      verdict = (fun m -> optional (Party_menu.selected_slot m));
+      expected = (fun tags -> optional (numbered "slot" tags));
+    };
+    {
+      reader = "members";
+      applies = (fun tags -> numbered "members" tags <> None);
+      verdict = (fun m -> string_of_int (Party_menu.members m));
+      expected = (fun tags -> optional (numbered "members" tags));
+    };
+    {
+      reader = "marks";
+      applies = shows_marks;
+      verdict =
+        (fun m ->
+          marks_text (fun n -> Party_menu.mark_name (Party_menu.mark m n)));
+      expected = expected_marks;
+    };
+  ]
+
+let readers = screen_readers @ inner_readers
+
+(* Images a reader reads wrong. The case expects the misread so the suite
+   stays green; the tally counts it wrong. *)
+let known_misreads =
+  [
+    (* A Key Items action menu covers the bag's grey shadow, as in the fork. *)
+    ("bag_open", "captures/tmcase-04-tmcase-after-A__bag.png", "false");
+  ]
+
+let expectation r image =
+  match
+    List.find_opt
+      (fun (name, i, _) -> name = r.reader && i = image)
+      known_misreads
+  with
+  | Some (_, _, misread) -> misread
+  | None -> r.expected (tags image)
+
+let applicable r images = List.filter (fun (i, _) -> r.applies (tags i)) images
+
+let cases backend images =
+  List.concat_map
+    (fun r ->
+      List.map
+        (fun (image, probes) ->
+          {
+            Case_table.name = Printf.sprintf "%s %s: %s" backend r.reader image;
+            input = (fun () -> r.verdict (measurements probes));
+            expectation = expectation r image;
+          })
+        (applicable r images))
+    readers
+
+(* Per reader and backend: images read right / images it applies to. *)
+let print_tally backend images =
+  List.iter
+    (fun r ->
+      let images = applicable r images in
+      let right =
+        List.filter
+          (fun (image, probes) ->
+            r.verdict (measurements probes) = r.expected (tags image))
+          images
+      in
+      Printf.printf "tally %s %s: %d/%d\n" backend r.reader (List.length right)
+        (List.length images))
+    readers
+
+let () =
+  let backends =
+    List.map
+      (fun backend ->
+        ( backend,
+          Wire.read_image_probes ("fixtures/menus." ^ backend ^ ".probes.jsonl")
+        ))
+      [ "switch"; "mgba" ]
+  in
+  List.iter (fun (backend, images) -> print_tally backend images) backends;
+  Case_table.run "menu readers"
+    (List.concat_map (fun (backend, images) -> cases backend images) backends)

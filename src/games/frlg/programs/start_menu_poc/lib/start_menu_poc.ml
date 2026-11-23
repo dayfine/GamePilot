@@ -1,3 +1,5 @@
+module Menu_panel = Menu_panel
+
 type outcome =
   | Passed of { opened_ms : float; closed_ms : float }
   | Did_not_open
@@ -25,12 +27,12 @@ let press_until button pred =
   | Effects.Holds m -> Some (Float.max 0. (m.t_ms -. done_.t_ms))
   | Effects.Timeout -> None
 
-let menu_open = Frlg_readers.Start_menu.start_menu_open
+let menu_open = Menu_panel.start_menu_open
 let menu_closed m = not (menu_open m)
 
 let run ~state () =
   ignore (Effects.load_state state : int);
-  ignore (Effects.subscribe [ Frlg_readers.Start_menu.probe ] : string list);
+  ignore (Effects.subscribe [ Menu_panel.probe ] : string list);
   match press_until Wire.Start menu_open with
   | None -> Did_not_open
   | Some opened_ms -> (
