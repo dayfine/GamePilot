@@ -255,7 +255,8 @@ that fits a tick period from per-frame timestamps). Generate golden vectors from
 
 Gates: pass rate (10 runs each, both stacks from the same save, interleaved) on mGBA;
 real timing on the Switch (3 testing-mode runs per checkpoint, no save, then one forward
-run that saves); `mg-05` (the glitch itself) is gated on mGBA only.
+run that saves). `mg-05` (the glitch itself) is no longer mGBA only: it is ported from the
+fork's tested Route 16 version and runs on the Switch after mGBA (user, 2026-11-23).
 
 ## 10. Week 0, budget and stop rules
 
@@ -308,7 +309,7 @@ Estimates here are rough judgments, not measurements.
 | R6 | Repo | `dayfine/GamePilot`; harness from `dayfine/agent-harness` plus the fork's `codex-dispatch` and `cpp-style-review` skills. Console iteration has a hard stop: when the same step fails twice in a row, stop and diagnose before another run |
 | R7 | C++ | One small daemon, glue only (about 2k lines): no thresholds, state machines or game names. `daemon/` and `programs/` are fully separate, each with its own build, lint and CI; `clang-format`, strict warnings, PA's `Filesystem` wrappers for paths |
 | R8 | Real effect handler | OCaml stdlib only (`Unix` sockets, one reader thread, a queue, a small scheduler); OCaml 5.2+ pinned in CI on three OSes; Eio later is a handler swap (D8) |
-| R9 | Gates | Pass rate on mGBA; timing on the Switch in testing mode; `mg-05` on mGBA only |
+| R9 | Gates | Pass rate on mGBA; timing on the Switch in testing mode; `mg-05` too, after mGBA (user, 2026-11-23) |
 | R10 | The Switch | GamePilot shares the console with other automation; only one program may drive it at a time |
 | R11 | Swappable parts | P1: anything that may be swapped (I/O backend, RNG, effect handler, probes) sits behind one boundary. No I/O survey or RNG library search up front |
 | R12 | FRLG RNG | Needed in S4; D6's OCaml rewrite starts there, PA's FRLG RNG as oracle |

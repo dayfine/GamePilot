@@ -86,7 +86,8 @@ let case name f script expectation : Case_table.case =
 let menus n = List.init n (fun _ -> Battle_driver.Action_menu)
 let move ?name slot target = Battle_script.Move { slot; target; name }
 
-(* mg-05: Knock Off on the ally, MIMIEN in, the sweeper in, Recycle. *)
+(* The old Route 8 mg-05: Knock Off on the ally, MIMIEN in, the sweeper in,
+   Recycle. *)
 let double_opening =
   [
     move ~name:"knock-off" 0 Ally;
@@ -182,7 +183,8 @@ let switch_grind_cases =
        was refused (4 menus, 0 send-ins, 2 refused, 0 prompts)";
   ]
 
-(* mg-05: the Berry holder attacks until it faints, the sweeper flees. *)
+(* The old Route 8 mg-05: the Berry holder attacks until it faints, the sweeper
+   flees. *)
 let faint_and_flee =
   Battle_script.make
     ~send_ins:[ { slot = 1; then_ = Some Flee } ]

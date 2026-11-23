@@ -10,11 +10,14 @@
       sweeper's moves, [send_ins = [{ slot = 1; then_ = None }]] in case the
       trainee faints before the switch, [learn = Forget_for { move; slot }]; a
       second faint, the sweeper's, finds no send-in left and fails the battle;
-    - faint-and-flee (mg-05's Berry holder): [fallback = Attack] with move 0,
-      [send_ins = [{ slot = 1; then_ = Some Flee }]];
-    - the double battle (mg-05): four opening commands (Knock Off on the ally, a
-      switch, a switch, Recycle), then [Attack] with Surf, [Default] as it hits
-      both foes. *)
+    - the Leppa Berry's PP drain (mg-05a, [Frlg_actions.Berry_pp]):
+      [fallback = Attack] with the move, then the backup once it is refused;
+    - the double battle (mg-05, [Frlg_actions.Mail_glitch_battle]): the whole
+      battle as the opening (the Berry turn, Knock Off on the ally, a switch, a
+      switch, Recycle, then Surf and Recycle in turn), [fallback = Stop].
+
+    (Faint-and-flee, the old Route 8 plan's Berry holder, is the same shape with
+    [send_ins = [{ slot = 1; then_ = Some Flee }]].) *)
 
 type command =
   | Move of {

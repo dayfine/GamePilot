@@ -149,10 +149,16 @@ let real_plans : Case_table.case list =
          5 game_action";
     };
     {
+      name = "mg-05a outline";
+      input = (fun () -> outline "mg-05a.plan.json" mg);
+      expectation =
+        "frlg mg-05a from LavenderTown (18, 7) south: 9 route, 11 game_action, \
+         1 talk, 1 scene";
+    };
+    {
       name = "mg-05 outline";
       input = (fun () -> outline "mg-05.plan.json" mg);
-      expectation =
-        "frlg mg-05 from LavenderTown (18, 7) south: 3 route, 10 game_action";
+      expectation = "frlg mg-05 from Route16 (30, 7) north: 2 game_action";
     };
     {
       name = "a plan with no start (new game)";
@@ -315,6 +321,12 @@ let postcondition_cases : Case_table.case list =
         "party in order blastoise, rattata, oddish, pidgey, abra\n\
          coins 20\n\
          money 25014 to 25014";
+    };
+    {
+      name = "mg-05 promises the party in its battle order";
+      input = (fun () -> postconditions_text (load "mg-05.plan.json" mg));
+      expectation =
+        "party in order farfetchd, blastoise, mr-mime, pidgey, rattata, oddish";
     };
     {
       name = "a plan that states none";

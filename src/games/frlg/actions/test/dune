@@ -22,6 +22,7 @@
   test_action_requests
   test_menu_actions
   test_grind
+  test_mail_glitch_actions
   test_lift_ride)
  (modules
   test_fly_towns
@@ -30,6 +31,7 @@
   test_action_requests
   test_menu_actions
   test_grind
+  test_mail_glitch_actions
   test_lift_ride)
  (deps
   mgba.probes.jsonl

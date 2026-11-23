@@ -11,6 +11,12 @@
  (copy ../../programs/mail_glitch/plans/mg-04.plan.json mg-04.plan.json))
 
 (rule
+ (copy ../../programs/mail_glitch/plans/mg-05a.plan.json mg-05a.plan.json))
+
+(rule
+ (copy ../../programs/mail_glitch/plans/mg-05.plan.json mg-05.plan.json))
+
+(rule
  (target mg04_walk_two_fled_battles.wire.jsonl)
  (deps mg04_walk_two_fled_battles.wire.jsonl.gz)
  (action
@@ -21,7 +27,12 @@
 (test
  (name test_checkpoint_run)
  (modules test_checkpoint_run)
- (deps mg-01.plan.json mg-02.plan.json mg-03.plan.json)
+ (deps
+  mg-01.plan.json
+  mg-02.plan.json
+  mg-03.plan.json
+  mg-05a.plan.json
+  mg-05.plan.json)
  (libraries
   gamepilot.case_table
   gamepilot.story
