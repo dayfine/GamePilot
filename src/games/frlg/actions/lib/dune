@@ -10,6 +10,7 @@
   gamepilot.grid_planning
   gamepilot.story
   gamepilot.frlg_readers
+  gamepilot.frlg_menu_cursor
   gamepilot.frlg_text
   gamepilot.frlg_repo_files
   gamepilot.frlg_overworld

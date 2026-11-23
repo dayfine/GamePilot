@@ -18,21 +18,19 @@ let read_row i =
   | No_match _ -> None
 
 let read_offered () = read_row offered_row
-let menu_settle_ms = 500
 let summary_timeout_ms = 5000
 let page_turn_ms = 700
 let on_page p m = Summary_screen.page m = Some p
-let member_menu m = not (Party_menu.party_menu m)
+
+(* The menu goes as the summary starts fading in, which takes a while. *)
+let summary_opening m =
+  Option.is_some (Summary_screen.page m) || not (Party_actions.member_menu m)
 
 let open_moves_page slot =
-  let m = Party_actions.open_party () in
-  Party_actions.choose_slot m slot;
-  ignore (M.await_screen ~code:"no_member_menu" "the member's menu" member_menu);
-  (* The menu slides in: an A before it settles is lost. *)
-  ignore
-    (Effects.submit [ Wire.Wait { wait_ms = menu_settle_ms } ]
-      : Wire.batch_done);
-  M.press Wire.A;
+  Party_actions.open_party ();
+  Party_actions.on_member_menu slot (fun () ->
+      Party_actions.choose_member_row Member_menu.summary_row
+        ~taken:summary_opening);
   ignore
     (M.await_screen ~timeout_ms:summary_timeout_ms ~code:"no_summary"
        "the summary" (on_page 1));
@@ -40,9 +38,25 @@ let open_moves_page slot =
   M.press_until ~max_presses:(2 * moves_page) ~code:"no_summary"
     "the moves page" Wire.Right ~cooldown_ms:page_turn_ms (on_page moves_page)
 
+let reread_ms = 150
+let max_reads = 12
+
+(* The page's mark turns before its rows are drawn (blank boxes, then the
+   names): the rows count once the first shows a move (every member knows
+   one) and a second read a moment later agrees. *)
+let rec settled_rows previous reads =
+  let rows = List.init known_rows read_row in
+  if List.hd rows <> None && Some rows = previous then rows
+  else if reads >= max_reads then
+    M.fail "no_summary" "the moves page's rows did not settle"
+  else (
+    ignore
+      (Effects.submit [ Wire.Wait { wait_ms = reread_ms } ] : Wire.batch_done);
+    settled_rows (Some rows) (reads + 1))
+
 let read_page ~log ~slot () =
   open_moves_page slot;
-  let known = List.filter_map read_row (List.init known_rows Fun.id) in
+  let known = List.filter_map Fun.id (settled_rows None 1) in
   log
     (Printf.sprintf "Summary: slot %d knows %s." slot (String.concat ", " known));
   M.close "the summary" (fun m -> Summary_screen.page m <> None);

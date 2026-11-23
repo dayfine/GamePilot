@@ -167,5 +167,13 @@ mgba/live-known-moves.png|summary_move.0|SURF
 mgba/live-known-moves.png|summary_move.1|BITE
 mgba/live-known-moves.png|summary_move.2|BLIZZARD
 mgba/live-known-moves.png|summary_move.3|STRENGTH
+mgba/grind-mimien-moves-drawing.png|summary_move.0|-
+mgba/grind-mimien-moves-drawing.png|summary_move.1|-
+mgba/grind-mimien-moves-drawing.png|summary_move.2|-
+mgba/grind-mimien-moves-drawing.png|summary_move.3|-
+mgba/grind-mimien-moves.png|summary_move.0|BARRIER
+mgba/grind-mimien-moves.png|summary_move.1|CONFUSION
+mgba/grind-mimien-moves.png|summary_move.2|SUBSTITUTE
+mgba/grind-mimien-moves.png|summary_move.3|-
 switch_lab/tmcase-04-tmcase-after-A.png|bag.4|-
 switch_lab/tmcase-04-tmcase-after-A.png|bag.5|-

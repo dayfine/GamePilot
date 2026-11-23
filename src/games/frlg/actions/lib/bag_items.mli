@@ -37,6 +37,7 @@ val open_pocket_top : Frlg_readers.Bag_screen.pocket -> unit
     or [no_pocket]. *)
 
 val select : string -> unit
-(** In the open pocket, the cursor from the list's top to the item the slug
-    names, read by name. Fails as [not_in_bag] when the item is not in the
+(** In the open pocket, from the list's top: the item the slug names found by
+    reading the rows, then DOWN until the cursor's own row reads its name (a
+    lost tap is tapped again). Fails as [not_in_bag] when the item is not in the
     pocket. *)
