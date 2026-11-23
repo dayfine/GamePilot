@@ -1,10 +1,15 @@
 (test
  (name test_replay)
+ (modules test_replay)
  (deps
   (glob_files fixtures/*.jsonl))
  (libraries
   gamepilot.wire
   gamepilot.effects
   gamepilot.replay
-  gamepilot.frlg_readers
   gamepilot.start_menu_poc))
+
+(test
+ (name test_menu_panel)
+ (modules test_menu_panel)
+ (libraries gamepilot.wire gamepilot.effects gamepilot.start_menu_poc))

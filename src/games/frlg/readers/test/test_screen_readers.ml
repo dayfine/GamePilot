@@ -11,16 +11,11 @@
 
    Switch names keep their CommandLineTests folder and file name, whose
    True/False the fork's tests read for that folder's detector; the tags add
-   the other readers' answers. To make them again (images not in the repo):
-
-     dune exec games/frlg/readers/test/write_probe_spec.exe > spec.json
-     cd <tagged Switch images> && probe_images --spec spec.json \
-       --viewport 0.09375,0.00462963,0.8125,0.962963 <images> > \
-       games/frlg/readers/test/fixtures/switch.probes.jsonl
-
-   with the images each fixture lists, and the same for mGBA without
-   [--viewport] (the frame is the picture). The viewport is the fork's FRLG
-   GAME_BOX: the picture inside the Switch capture's side bars. *)
+   the other readers' answers. regen_fixtures.sh makes them again from the
+   source images listed in screen.switch.map and screen.mgba.map (set
+   COMMANDLINETESTS_DIR and FRLG_SHOTS_DIR where those live). The Switch
+   viewport is the fork's FRLG GAME_BOX: the picture inside the capture's side
+   bars. *)
 
 open Frlg_readers
 
