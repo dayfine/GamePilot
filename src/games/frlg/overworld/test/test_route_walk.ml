@@ -12,7 +12,8 @@ module S = Frlg_overworld_fixtures.Scripted_screen
 
 let fled = ref 0
 
-(* Fleeing takes the screen back to the overworld. *)
+(* Fleeing takes the screen back to the overworld, for good: the rest of the
+   battle the script set up (its screen after the flashes) is skipped. *)
 let walker screen log : Route_walk.t =
   {
     world = pallet;
@@ -20,7 +21,7 @@ let walker screen log : Route_walk.t =
     flee =
       (fun () ->
         incr fled;
-        S.show screen ~at_ms:screen.S.clock_ms S.Overworld);
+        screen.S.shows <- [ (screen.S.clock_ms, S.Overworld) ]);
     log = (fun line -> log := line :: !log);
   }
 
@@ -79,6 +80,15 @@ let sign_speaks ~n d screen (p : S.press) =
   if p.buttons = [ Wire.B ] then
     S.show screen ~at_ms:(p.at_ms + 100) S.Overworld
 
+(* Run 4 of mg-04 (mGBA, 2026-11-23): a wild battle set off by the second
+   tile of a three-tile hold flashes just after the hold's release, and its
+   screen shows seconds later. *)
+let flash_after_release screen (p : S.press) =
+  if S.holds_dpad p && p.index = 1 then (
+    S.show screen ~at_ms:(p.at_ms + 700) S.Flash;
+    S.show screen ~at_ms:(p.at_ms + 760) S.Overworld;
+    S.show screen ~at_ms:(p.at_ms + 2500) S.Battle)
+
 let in_house = place pallet "PalletTown_PlayersHouse_1F" 4 6
 let route1_top = place pallet "Route1" 12 5
 let case name input expectation = { Case_table.name; input; expectation }
@@ -100,6 +110,13 @@ let () =
            ~from:(place pallet "Route1" 14 3)
            (target "Route1" [ (14, 12) ]))
         "at Route1 (14, 12) south; fled 1; down, down 2269 x2";
+      case "a battle flashing just after the hold: the leg's last tile walked"
+        (walk ~logged:true ~react:flash_after_release
+           ~from:(place pallet "Route1" 14 3)
+           (target "Route1" [ (14, 6) ]))
+        "at Route1 (14, 6) south; fled 1; down, down 667, down\n\
+         Route: south 3\n\
+         Leg: a wild battle after 760ms, about 2 tiles walked, 1 to go.";
       case "a message, then a trainer's battle: the walk stops"
         (walk
            ~react:(fun screen p ->

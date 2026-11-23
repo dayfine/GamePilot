@@ -67,9 +67,20 @@ let wait_out_warp fade ~preview ~steps_out =
 let map_name t (place : Connected_maps.place) =
   (Connected_maps.map t.world.maps place.map).name
 
+(* A hold on a leg with wild battles goes on watching after its release, so a
+   battle set off by its last steps is timed from the hold's start: the walk
+   learns how far it got (run 4 of mg-04, 2026-11-23: a battle on the second
+   tile of "south 3" flashed as the hold ended and was taken for one at the
+   leg's end, so the walk went on a tile short). *)
+let mover ~running ~wild direction hold_ms =
+  Route_legs.mover ~running direction hold_ms
+  @
+  if wild then [ Wire.Wait { wait_ms = Walk_interrupts.flash_watch_ms } ]
+  else []
+
 let walker t ~running ~wild : Grid_walker.Leg_walker.t =
   {
-    mover = Route_legs.mover ~running;
+    mover = mover ~running ~wild;
     interrupts = Walk_interrupts.for_leg ~flee:t.flee ~wild;
     log = t.log;
     tracer = None;

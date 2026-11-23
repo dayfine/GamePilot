@@ -43,7 +43,7 @@ let start_of (checkpoint : Story.Plan.checkpoint) =
 let probes =
   let all =
     A.Scene_looks.probes @ Party_menu.probes @ Bag_screen.probes
-    @ Money_box.probes
+    @ Money_box.probes @ Frlg_battle.Battle_look.probes
   in
   List.fold_left
     (fun kept (p : Wire.probe_spec) ->
