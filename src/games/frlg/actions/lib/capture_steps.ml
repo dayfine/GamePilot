@@ -41,21 +41,11 @@ let reads_opening candidate m =
 let opening_over m =
   Battle_text_arrow.advance_arrow m || Battle_screen.battle_menu m
 
-let dev_frame () =
-  match Sys.getenv_opt "GP_DEV_FRAMES" with
-  | Some d ->
-      ignore
-        (Effects.save_frame
-           (Printf.sprintf "%s/enc-%.0f.png" d (Effects.now ()))
-          : int)
-  | None -> ()
-
 let await_opening reads =
   let awaited =
     Effects.await ~timeout_ms:opening_timeout_ms (fun m ->
         reads m || opening_over m)
   in
-  dev_frame ();
   match awaited with Holds m -> reads m | Timeout -> false
 
 (* The opening message's line once it reads, its page waits (the arrow) or the

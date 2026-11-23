@@ -41,7 +41,7 @@ let react screen (p : S.press) =
     S.show screen ~at_ms:(p.at_ms + 200) S.Dialog;
     S.show screen ~at_ms:(p.at_ms + 1200) S.Overworld)
 
-let run ?(checkpoint = checkpoint) start () =
+let run ?(checkpoint = checkpoint) ?(party = []) start () =
   let screen = S.create ~react () in
   let config : Story_game.config =
     {
@@ -49,7 +49,7 @@ let run ?(checkpoint = checkpoint) start () =
       gait = Walking;
       flee = ignore;
       flags = (fun _ -> false);
-      party = Party_roster.of_list [];
+      party = Party_roster.of_list party;
       center = None;
       reload = (fun () -> Ok ());
       log = ignore;
@@ -86,6 +86,25 @@ let swap_event species : Story.Plan.event =
 let swap_checkpoint species =
   { checkpoint with events = [ swap_event species ] }
 
+(* A trade that ran before this save passes without a press; its declared
+   tile is where the player is taken to stand, as for a built-in event. *)
+let done_trade : Story.Plan.event =
+  {
+    (event "trade"
+       (Game_action
+          [ ("species", `String "spearow"); ("receive", `String "farfetchd") ]))
+    with
+    action = Some "ingame_trade";
+    declared_after =
+      Some
+        (Grid
+           {
+             map = "PalletTown_PlayersHouse_1F";
+             tiles = [ { x = 3; y = 5 } ];
+             facing = Some North;
+           });
+  }
+
 let case name input expectation = { Case_table.name; input; expectation }
 
 let () =
@@ -100,4 +119,9 @@ let () =
         (run ~checkpoint:(swap_checkpoint "mr-mime") (Some house))
         "test event 1 (swap): not_in_party: mr-mime is not in the party (); at \
          PalletTown_PlayersHouse_1F (4, 6); ";
+      case "a game action that passed leaves the player on its declared tile"
+        (run
+           ~checkpoint:{ checkpoint with events = [ done_trade ] }
+           ~party:[ "farfetchd" ] (Some house))
+        "ok; at PalletTown_PlayersHouse_1F (3, 5) north; ";
     ]

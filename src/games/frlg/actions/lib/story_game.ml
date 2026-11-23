@@ -236,16 +236,28 @@ let action_context t : Game_actions.context =
     stocks = Mart_plan.load;
   }
 
+(* A game action that passed leaves the player where its [declared_after]
+   says, as the fork's StoryStepRunner takes a step's declared pose when its
+   outcome reports none (Engine/Pokemon_StoryStepRunner.cpp). *)
+let adopting t (name, (handler : Story.Game.game_action)) =
+  let adopted event args =
+    let outcome = handler event args in
+    if Result.is_ok outcome then adopt_declared t event;
+    outcome
+  in
+  (name, adopted)
+
 let game t : Story.Game.t =
   {
     walk_route = (fun _ route -> walk_to t route.target);
     run_builtin = run_builtin t;
     game_actions =
-      ("fly", fly t)
-      :: ("grind", grind t)
-      :: ("capture", capture t)
-      :: ("lift_floor", lift t)
-      :: Game_actions.handlers (action_context t);
+      List.map (adopting t)
+        (("fly", fly t)
+        :: ("grind", grind t)
+        :: ("capture", capture t)
+        :: ("lift_floor", lift t)
+        :: Game_actions.handlers (action_context t));
     flag_holds = t.config.flags;
     position = (fun () -> t.at);
     heal = heal t;

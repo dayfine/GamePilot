@@ -13,9 +13,10 @@
 
     FireRed can't show where the player stands, so the position is reckoned: a
     walk ends on its plan's tile, a Fly on the town's landing tile, a lift ride
-    below the floor's lift door, and after any other event that passes the
-    player is taken to be where its [declared_after] says when that names one
-    tile. The party is reckoned too ({!Party_roster}), from the config's. *)
+    below the floor's lift door, and after any other event that passes, game
+    actions included, the player is taken to be where its [declared_after] says
+    when that names one tile (the fork's StoryStepRunner). The party is reckoned
+    too ({!Party_roster}), from the config's. *)
 
 type config = {
   world : Frlg_overworld.Frlg_steps.world;
