@@ -107,6 +107,15 @@ let rec find_from candidates name k =
       find_from candidates name (k + 1)
   | _ -> None
 
+let max_count_digits = 3
+
+let count_on_row row =
+  Text.Number_reading.read_right_aligned
+    ~max_score:Text.Number_reading.small_max_score
+    (Text_data.small_glyphs ())
+    (Text.Text_lines.bag_count_digit row)
+    ~max_cells:max_count_digits
+
 let cursor_text candidates =
   let m =
     M.await_screen ~code:"no_bag" "the bag's cursor" (fun m ->
@@ -146,3 +155,14 @@ let select slug =
       match find_from (cancel :: in_pocket) name 0 with
       | None -> not_in_bag ()
       | Some _ -> down_to (cancel :: in_pocket) name 0)
+
+(* The item's own menu (USE or CHECK, GIVE, TOSS, CANCEL) hides the arrows. *)
+let item_menu m = Bag_screen.bag_open m && Bag_screen.pocket m = None
+
+let item_action item row =
+  open_pocket_top (pocket_of_item item);
+  select item;
+  M.press Wire.A;
+  ignore (M.await_screen ~code:"no_item_menu" ("the menu of " ^ item) item_menu);
+  M.taps Wire.Down row;
+  M.press Wire.A

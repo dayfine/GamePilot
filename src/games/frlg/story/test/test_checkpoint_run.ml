@@ -108,5 +108,5 @@ let () =
          2; return_to_route8_grass 3; to_route16_cut_tree 6; to_lea_and_jed 3";
       case "mg-05"
         (summary "mg-05.plan.json")
-        "frlg; from Route16 (30, 7) north; missing: verify_mail_glitch";
+        "frlg; from Route16 (30, 7) north; missing: none";
     ]

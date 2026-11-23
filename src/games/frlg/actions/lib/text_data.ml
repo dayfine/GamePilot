@@ -8,6 +8,9 @@ let load_data path load =
 let glyph_table =
   lazy (load_data Text.Data_files.glyph_table Text.Glyph_table.load)
 
+let small_glyph_table =
+  lazy (load_data Text.Data_files.small_glyph_table Text.Glyph_table.load)
+
 let item_table =
   lazy (load_data Text.Data_files.item_names_eng Text.Item_names.load)
 
@@ -17,6 +20,7 @@ let move_table =
        (Text.Move_names.load ~language:"eng"))
 
 let glyphs () = Lazy.force glyph_table
+let small_glyphs () = Lazy.force small_glyph_table
 let item_names () = Lazy.force item_table
 let move_names () = Lazy.force move_table
 

@@ -36,7 +36,7 @@ val give : log:(string -> unit) -> item:string -> slot:int -> unit
 (** The item from its pocket, GIVE (row 1 of its menu, mail's too), the member;
     a held item is switched for it (YES). Mail opens its Easy Chat editor, where
     one word is written and confirmed ({!mail_editor_wait_ms}: no reader for the
-    editor). Berries (the Berry Pouch) are not done: [not_implemented]. *)
+    editor). A berry comes from the Berry Pouch ({!Berry_pouch.choose_give}). *)
 
 val mail_editor_wait_ms : int
 (** The Easy Chat editor opening: 2500, the fork's measured wait. *)
@@ -46,3 +46,14 @@ val use : log:(string -> unit) -> item:string -> slot:int option -> unit
     given, then out to the overworld. With no slot the item acts on the field:
     an Escape Rope ends at the settle after a warp, anything else at the talk
     settle. *)
+
+val party_settle_ms : int
+(** After the party opens, before its marks are read: 800, the fork's wait. *)
+
+val verify_mail_glitch : log:(string -> unit) -> who:string -> slot:int -> unit
+(** The fork's [run_verify_mail_glitch()]: the party opened, the member's sprite
+    read for the held-item mark ({!Frlg_readers.Party_menu.mark}, the fork's
+    PartyHeldItemDetector), the party closed. After mg-05's Recycle the member
+    holds the berry, not mail: any other mark fails as [mail_glitch_not_active],
+    naming the mark read (mail: Knock Off missed; none: the berry was not
+    recycled). [who] names the member in the log. *)

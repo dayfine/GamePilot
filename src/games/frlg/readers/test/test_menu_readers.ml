@@ -6,6 +6,7 @@
 
      startN        the Start menu, its cursor on row N (0 at the top)
      bag           the bag; items, keyitems, balls its pocket; rowN its cursor
+     pouch         the Berry Pouch
      party         the party menu (its message box not covered)
      slotN         slot N (1-6) selected        membersN  N slots filled
      heldN, mailN  slot N's sprite carries the held-item or the mail icon
@@ -105,6 +106,12 @@ let screen_readers =
       applies = everywhere;
       verdict = (fun m -> optional (Summary_screen.page m));
       expected = (fun tags -> optional (numbered "summary" tags));
+    };
+    {
+      reader = "berry_pouch";
+      applies = everywhere;
+      verdict = flag Berry_pouch_screen.berry_pouch;
+      expected = tagged "pouch";
     };
     {
       reader = "money_box";

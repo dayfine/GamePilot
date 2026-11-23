@@ -40,12 +40,19 @@ val probe : Text_lines.t -> string -> template:string -> Wire.probe_spec
     box, [Latest] delivery. [template] is the upload's hash (or, for the offline
     [probe_images] tool, the PNG's path). *)
 
-val pick : Text_lines.t -> string list -> Effects.measurements -> reading
-(** The best candidate among those with a result in the frame. *)
+val pick :
+  ?max_score:float ->
+  Text_lines.t ->
+  string list ->
+  Effects.measurements ->
+  reading
+(** The best candidate among those with a result in the frame, scoring at most
+    [max_score] (default {!max_score}). *)
 
-val read : Glyph_table.t -> Text_lines.t -> string list -> reading
+val read :
+  ?max_score:float -> Glyph_table.t -> Text_lines.t -> string list -> reading
 (** Uploads one template per candidate (the handler sends each distinct PNG once
-    per connection), subscribes one probe per candidate, picks from the first
-    frame that has them all, and unsubscribes them. Raises [Invalid_argument] if
-    a candidate cannot be drawn on the line, and [Failure] if no such frame
-    comes within a second. *)
+    per connection), subscribes one probe per candidate, picks ({!pick}) from
+    the first frame that has them all, and unsubscribes them. Raises
+    [Invalid_argument] if a candidate cannot be drawn on the line, and [Failure]
+    if no such frame comes within a second. *)

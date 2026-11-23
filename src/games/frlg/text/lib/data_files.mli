@@ -7,6 +7,9 @@
 val glyph_table : string
 (** The FRLG normal font's Latin glyphs. *)
 
+val small_glyph_table : string
+(** The FRLG small font's Latin glyphs. *)
+
 val item_names_eng : string
 (** English item names by pocket. *)
 

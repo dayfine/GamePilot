@@ -8,13 +8,30 @@
 
 open Frlg_text
 
-let screens = [ "bag_items"; "bag_key_items"; "tm_case"; "summary_moves" ]
+let screens =
+  [
+    "bag_items";
+    "bag_key_items";
+    "tm_case";
+    "summary_moves";
+    "bag_counts";
+    "berry_pouch_numbers";
+  ]
 
+(* A line and the score its reader allows: small-font digits have their own. *)
 let line_of_id id =
+  let normal line = (line, Line_reading.max_score)
+  and small line = (line, Number_reading.small_max_score) in
   match String.split_on_char '.' id with
-  | [ "bag"; i ] -> Text_lines.bag_row (int_of_string i)
-  | [ "tm_case"; i ] -> Text_lines.tm_case_row (int_of_string i)
-  | [ "summary_move"; i ] -> Text_lines.summary_move (int_of_string i)
+  | [ "bag"; i ] -> normal (Text_lines.bag_row (int_of_string i))
+  | [ "tm_case"; i ] -> normal (Text_lines.tm_case_row (int_of_string i))
+  | [ "summary_move"; i ] -> normal (Text_lines.summary_move (int_of_string i))
+  | [ "bag_count"; row; k ] ->
+      small (Text_lines.bag_count_digit (int_of_string row) (int_of_string k))
+  | [ "pouch_number"; row; k ] ->
+      small
+        (Text_lines.berry_pouch_number_digit (int_of_string row)
+           (int_of_string k))
   | _ -> failwith ("line id " ^ id)
 
 type expectation = {
@@ -42,9 +59,14 @@ let frames =
       Wire.read_image_probes ("fixtures/" ^ screen ^ ".probes.jsonl"))
     screens
 
-(* The candidates are the line's probes in the frame: the spec drew them. *)
+(* The candidates are the line's probes in the frame: the spec drew them. An
+   image probed for several screens has their probes together. *)
 let reading (e : expectation) =
-  let probes = List.assoc e.image frames in
+  let probes =
+    List.concat_map
+      (fun (image, probes) -> if image = e.image then probes else [])
+      frames
+  in
   let prefix = e.line ^ "/" in
   let candidates =
     List.filter_map
@@ -57,7 +79,8 @@ let reading (e : expectation) =
       probes
   in
   let m : Effects.measurements = { seq = 0; t_ms = 0.; probes } in
-  match Line_reading.pick (line_of_id e.line) candidates m with
+  let line, max_score = line_of_id e.line in
+  match Line_reading.pick ~max_score line candidates m with
   | Read { text; _ } -> text
   | No_match _ -> "-"
 

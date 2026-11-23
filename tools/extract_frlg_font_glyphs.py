@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Writes the FRLG Latin glyph table GamePilot draws text templates from.
+"""Writes an FRLG Latin glyph table GamePilot draws text templates from.
 
-Reads a pret/pokefirered checkout (graphics/fonts/latin_normal.png, the glyph
-width table in src/text.c and charmap.txt) and prints one line per glyph:
+Reads a pret/pokefirered checkout (graphics/fonts/latin_<font>.png, the font's
+glyph width table in src/text.c and charmap.txt) and prints one line per glyph:
 
     <code> <width> <codepoint> <row>/<row>/...
 
@@ -13,6 +13,13 @@ letter spacing (RenderText in src/text.c).
 
     python3 tools/extract_frlg_font_glyphs.py ~/Projects/pokefirered \
         > src/games/frlg/assets/font_latin_normal.glyphs
+    python3 tools/extract_frlg_font_glyphs.py ~/Projects/pokefirered small \
+        > src/games/frlg/assets/font_latin_small.glyphs
+
+The fonts (DecompressGlyph_Normal and DecompressGlyph_Small in src/text.c):
+FONT_NORMAL glyphs are 16x16 cells, 16 to a row of the PNG, 14 rows tall;
+FONT_SMALL glyphs (the bag's "x 2" counts, the Berry Pouch's "No06") are 8x16
+cells, 32 to a row, 13 rows tall.
 
 Stdlib only: the font PNG is a 2-bit paletted image with no interlace.
 """
@@ -22,8 +29,12 @@ import struct
 import sys
 import zlib
 
-GLYPH_CELL = 16  # each glyph is a 16x16 cell, 16 cells per row in the PNG
-GLYPH_HEIGHT = 14  # gGlyphInfo.height for FONT_NORMAL Latin glyphs
+# font: (cell width, cell height, glyph height (gGlyphInfo.height), the width
+# table's name in src/text.c, the name in the header line)
+FONTS = {
+    "normal": (16, 16, 14, "sFontNormalLatinGlyphWidths", "FONT_NORMAL"),
+    "small": (8, 16, 13, "sFontSmallLatinGlyphWidths", "FONT_SMALL"),
+}
 LAST_CODE = 0xFE  # 0xFF ends a string
 JAPANESE_SECTION = "@ Hiragana"
 PIXEL_CHARS = {0: ".", 1: "#", 2: "s", 3: "."}  # palette index -> pixel
@@ -60,10 +71,10 @@ def png_indices(path):
     return rows
 
 
-def glyph_widths(text_c):
-    """sFontNormalLatinGlyphWidths from src/text.c."""
+def glyph_widths(text_c, table):
+    """The font's glyph width table from src/text.c."""
     source = open(text_c, encoding="utf-8").read()
-    match = re.search(r"sFontNormalLatinGlyphWidths\[\]\s*=\s*\{([^}]*)\}", source)
+    match = re.search(table + r"\[\]\s*=\s*\{([^}]*)\}", source)
     return [int(v) for v in re.findall(r"\d+", match.group(1))]
 
 
@@ -81,25 +92,26 @@ def charmap_chars(charmap):
     return chars
 
 
-def main(decomp):
-    pixels = png_indices(decomp + "/graphics/fonts/latin_normal.png")
-    widths = glyph_widths(decomp + "/src/text.c")
+def main(decomp, font):
+    cell_width, cell_height, glyph_height, table, name = FONTS[font]
+    pixels = png_indices(decomp + "/graphics/fonts/latin_%s.png" % font)
+    widths = glyph_widths(decomp + "/src/text.c", table)
     chars = charmap_chars(decomp + "/charmap.txt")
-    cells_per_row = len(pixels[0]) // GLYPH_CELL
-    print("# FRLG FONT_NORMAL Latin glyphs, made by tools/extract_frlg_font_glyphs.py")
+    cells_per_row = len(pixels[0]) // cell_width
+    print("# FRLG %s Latin glyphs, made by tools/extract_frlg_font_glyphs.py" % name)
     print("# from pret/pokefirered: <code> <width> <codepoint> <rows> (see the script)")
     for char, code in sorted(chars, key=lambda entry: entry[1]):
         if code > LAST_CODE:
             continue
-        top = (code // cells_per_row) * GLYPH_CELL
-        left = (code % cells_per_row) * GLYPH_CELL
+        top = (code // cells_per_row) * cell_height
+        left = (code % cells_per_row) * cell_width
         width = widths[code]
         rows = [
             "".join(PIXEL_CHARS[pixels[top + y][left + x]] for x in range(width))
-            for y in range(GLYPH_HEIGHT)
+            for y in range(glyph_height)
         ]
         print("%02X %d %04X %s" % (code, width, ord(char), "/".join(rows)))
 
 
 if __name__ == "__main__":
-    main(sys.argv[1])
+    main(sys.argv[1], sys.argv[2] if len(sys.argv) > 2 else "normal")

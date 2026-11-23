@@ -30,7 +30,7 @@ let score line m text =
   | Some (Wire.Template_match { score; _ }) -> Some (text, score)
   | _ -> None
 
-let pick line candidates m =
+let pick ?(max_score = max_score) line candidates m =
   let scored = List.filter_map (score line m) candidates in
   match List.sort (fun (_, a) (_, b) -> Float.compare a b) scored with
   | (text, score) :: _ when score <= max_score -> Read { text; score }
@@ -42,7 +42,7 @@ let upload glyphs line text =
   | Ok png -> probe line text ~template:(Effects.upload_template png)
   | Error why -> invalid_arg why
 
-let read glyphs line candidates =
+let read ?max_score glyphs line candidates =
   let probes = List.map (upload glyphs line) candidates in
   let ids = List.map (fun (p : Wire.probe_spec) -> p.id) probes in
   let all_there m = List.for_all (fun id -> Effects.probe m id <> None) ids in
@@ -50,5 +50,5 @@ let read glyphs line candidates =
     Effects.with_probes probes (fun () ->
         Effects.await ~timeout_ms:frame_timeout_ms all_there)
   with
-  | Holds m -> pick line candidates m
+  | Holds m -> pick ?max_score line candidates m
   | Timeout -> failwith ("no frame with the probes of " ^ line.id)

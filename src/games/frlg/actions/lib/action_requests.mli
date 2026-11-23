@@ -14,11 +14,12 @@ type t =
   | Ingame_trade of { offer : string; receive : string option }
   | Spin_for_encounter of { max_batches : int }
   | Cut_tree of Grid_maps.Direction.t
+  | Verify_mail_glitch of Action_args.member
 
 val names : string list
 (** The action names {!decode} reads: ["mart"], ["use_item"], ["give_bag_item"],
     ["party_swap"], ["buy_coins"], ["redeem_prize_mon"], ["ingame_trade"],
-    ["spin_for_encounter"], ["cut_tree"]. *)
+    ["spin_for_encounter"], ["cut_tree"], ["verify_mail_glitch"]. *)
 
 val default_spin_batches : int
 (** ["spin_for_encounter"]'s ["max_batches"] when left out: 25. *)
@@ -39,7 +40,8 @@ val decode :
     - [buy_coins]: ["coins"]. [redeem_prize_mon]: ["slot"] from 0.
     - [ingame_trade]: ["species"] offered, optional ["receive"].
     - [spin_for_encounter]: optional ["max_batches"].
-    - [cut_tree]: ["direction"]. *)
+    - [cut_tree]: ["direction"].
+    - [verify_mail_glitch]: ["species"] or ["target_slot"]. *)
 
 val to_string : t -> string
 (** One line, for logs and tests. *)

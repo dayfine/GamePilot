@@ -28,7 +28,7 @@
   },
   "metadata": {
     "phase": "testing",
-    "notes": "Ported from the fork's tested PlanData/mg-05.plan.json (Route 16 run on mGBA, 2026-11-23; passed on its third attempt from the save before Lea & Jed). Ends with MIMIEN (Lv 33) holding the recycled Leppa Berry: the Mail Glitch is active. Held items do not read yet: the postconditions check the party order only, and verify_mail_glitch (the held-item icon on the party screen) has no reader here yet.",
+    "notes": "Ported from the fork's tested PlanData/mg-05.plan.json (Route 16 run on mGBA, 2026-11-23; passed on its third attempt from the save before Lea & Jed). Ends with MIMIEN (Lv 33) holding the recycled Leppa Berry: the Mail Glitch is active. The postconditions check the party order only; verify_mail_glitch reads the held-item icon on the party screen.",
     "postconditions": {"party": ["farfetchd", "blastoise", "mr-mime", "pidgey", "rattata", "oddish"]}
   }
 }

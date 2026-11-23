@@ -103,6 +103,19 @@ let swap_screen ~start_row ~slot () =
     | [ Wire.B ], S.Party _ -> show S.Overworld
     | _ -> ()
 
+(* START, POKéMON shows [party]; B on it the overworld. *)
+let verify_screen party screen (p : S.press) =
+  let show s = S.show screen ~at_ms:(p.at_ms + 100) s in
+  match (p.buttons, S.screen_at screen p.at_ms) with
+  | [ Wire.Start ], _ -> show (S.Start_menu 1)
+  | [ Wire.A ], S.Start_menu 1 -> show party
+  | [ Wire.B ], (S.Party _ | S.Party_after_recycle) -> show S.Overworld
+  | _ -> ()
+
+let verify party () =
+  run ~react:(verify_screen party) (fun () ->
+      Party_actions.verify_mail_glitch ~log ~who:"mr-mime" ~slot:3)
+
 let swap ?(start_row = 1) ?(slot = 1) ?(input_delay_ms = 0) a b () =
   let screen =
     S.create ~react:(swap_screen ~start_row ~slot ()) ~input_delay_ms ()
@@ -228,6 +241,22 @@ let () =
         redeem_list_lingers "ok; the prize taken";
       case "redeem: the clerk's blue arrow unread, the page turned by time"
         (redeem ~page:S.Dialog) "ok; A x4, B x7";
+      case "berry numbers in the pouch: the fork's Leppa 6, Oran 7, Sitrus 10"
+        (fun () ->
+          List.map
+            (fun b ->
+              Option.fold ~none:"none" ~some:string_of_int
+                (Berry_pouch.berry_number b))
+            [ "leppa-berry"; "oran-berry"; "sitrus-berry"; "retro-mail" ]
+          |> String.concat " ")
+        "6 7 10 none";
+      case "verify_mail_glitch: MIMIEN shows the held-item mark after Recycle"
+        (verify S.Party_after_recycle)
+        "ok; Start, A, B x6";
+      case "verify_mail_glitch: MIMIEN still shows mail (Knock Off missed)"
+        (verify (S.Party 1))
+        "failed mail_glitch_not_active: mr-mime (slot 3) shows mail, not a \
+         held item icon, after Recycle; Start, A, B x6";
       case "party swap: slot 1, SWITCH, slot 4" (swap 1 4)
         "ok; Start, A x2, down, A, down x3, A, B x6";
       case

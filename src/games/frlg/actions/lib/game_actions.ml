@@ -64,6 +64,10 @@ let body ctx (request : R.t) () =
   | Spin_for_encounter { max_batches } ->
       Spin_for_encounter.spin ~log ~facing:(facing ctx) ~max_batches
   | Cut_tree d -> Cut_tree.cut ~log d
+  | Verify_mail_glitch member ->
+      Party_actions.verify_mail_glitch ~log
+        ~who:(Action_args.member_to_string member)
+        ~slot:(resolve ctx member)
 
 let perform ctx request = Menu_input.run (body ctx request)
 
