@@ -35,6 +35,10 @@ let result_round_trips =
     ("hello", fun j -> Wire.(json_of_hello_result (hello_result_of_json j)));
     ( "backend.load_state",
       fun j -> Wire.(json_of_load_state_result (load_state_result_of_json j)) );
+    ( "probe.upload_template",
+      fun j ->
+        Wire.(json_of_upload_template_result (upload_template_result_of_json j))
+    );
     ( "subscribe",
       fun j -> Wire.(json_of_subscribe_result (subscribe_result_of_json j)) );
     ("submit", fun j -> Wire.(json_of_submit_result (submit_result_of_json j)));
@@ -81,6 +85,65 @@ let check_file dir methods file =
   | _ | (exception Wire.Decode_error _) -> ());
   Printf.printf "ok %s\n" file
 
+(* The golden upload carries the 3x2 PNG's bytes, and its spec names the hash
+   the golden response returned. *)
+let check_template_upload dir =
+  (match
+     Wire.message_of_json (read_golden dir "15-upload_template.request.json")
+   with
+  | Wire.Request { call = Wire.Upload_template { png }; _ } ->
+      if String.sub png 1 3 <> "PNG" then failwith "FAILED upload is not a PNG"
+  | _ -> failwith "FAILED upload request decoded as something else");
+  let hash =
+    Wire.upload_template_result_of_json
+      (Yojson.Safe.Util.member "result"
+         (read_golden dir "16-upload_template.response.json"))
+  in
+  (match
+     Wire.message_of_json
+       (read_golden dir "17-subscribe.template_match.request.json")
+   with
+  | Wire.Request { call = Wire.Subscribe [ spec ]; _ } ->
+      let box = { Wire.x = 0.5; y = 0.0; w = 0.5; h = 0.25 } in
+      if
+        spec
+        <> Wire.template_match_probe ~id:"cursor" ~box ~delivery:Latest
+             ~template:hash
+      then failwith "FAILED template subscribe differs from the constructor"
+  | _ -> failwith "FAILED template subscribe decoded as something else");
+  (* Wrong length, '=' inside, padding before the end, a char outside the
+     alphabet. *)
+  List.iter
+    (fun text ->
+      match
+        Wire.message_of_string
+          (Printf.sprintf
+             {|{"jsonrpc":"2.0","id":1,"method":"probe.upload_template","params":{"png":%S}}|}
+             text)
+      with
+      | _ -> failwith ("FAILED bad base64 decoded: " ^ text)
+      | exception Wire.Decode_error _ -> ())
+    [ "TWF"; "TW=u"; "TQ==TWFu"; "T!Fu" ];
+  print_endline "ok template upload"
+
+let check_probe_constructors () =
+  let box = { Wire.x = 0.; y = 0.; w = 1.; h = 1. } in
+  let spec = Wire.color_stats_probe ~id:"p" ~box ~delivery:Every in
+  if spec.kind <> "core.color_stats@1" || spec.template <> None then
+    failwith "FAILED color stats constructor";
+  (* Bytes of every value survive base64, whatever the padding. *)
+  List.iter
+    (fun png ->
+      let call = Wire.Upload_template { png } in
+      match
+        Wire.message_of_string
+          (Wire.string_of_message (Wire.Request { id = 1; call }))
+      with
+      | Wire.Request { call = c; _ } when c = call -> ()
+      | _ -> failwith "FAILED upload round trip")
+    [ ""; "\x00"; "\xff\xfe"; "PNG"; "\x89PNG\r\n" ];
+  print_endline "ok probe constructors and upload round trip"
+
 let () =
   let dir = contracts_dir () in
   let files =
@@ -88,7 +151,7 @@ let () =
     |> List.filter (fun f -> Filename.check_suffix f ".json")
     |> List.sort compare
   in
-  if List.length files < 14 then failwith "expected at least 14 golden files";
+  if List.length files < 18 then failwith "expected at least 18 golden files";
   List.iter (check_file dir (methods_by_id dir files)) files;
   (* Bad input names the field instead of crashing. *)
   (match
@@ -113,7 +176,9 @@ let () =
       (Wire.Frame { frame = { probes = [ ("p", Wire.Other _) ]; _ }; _ }) ->
       print_endline "ok other kind with color stats fields stays Other"
   | _ -> failwith "FAILED other kind decoded as color stats");
-  match frame_with {|{"mean":[1,2,3],"stddev":[1,2,3]}|} with
+  (match frame_with {|{"mean":[1,2,3],"stddev":[1,2,3]}|} with
   | _ -> failwith "FAILED probe result without kind decoded"
   | exception Wire.Decode_error e ->
-      Printf.printf "ok probe result without kind rejected: %s\n" e
+      Printf.printf "ok probe result without kind rejected: %s\n" e);
+  check_template_upload dir;
+  check_probe_constructors ()

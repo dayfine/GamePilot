@@ -7,6 +7,7 @@ The golden files are pretty-printed for reading (`tools/fmt_json.py`); on the wi
 one line.
 
 v1.1 adds the `load` counter to `frame` and `backend.load_state`, and a `kind` to every probe result.
+Template probes (`probe.upload_template`, `core.template_match@1`) came later under the same number.
 `hello` still says `protocol: 1`: both sides ship from this repo at one commit, so there is no v1 peer
 to tell apart.
 
@@ -38,11 +39,17 @@ to tell apart.
 |---|---|---|
 | `hello` | `protocol` (must be 1), `client` | `protocol`, `daemon`, `backend` {`kind`, `game_code`, `frame_rate`, `width`, `height`}, `probe_kinds` |
 | `backend.load_state` | `path` (a save state file; the daemon passes it to the backend unread) | `seq` after loading, the new `load` |
-| `subscribe` | `probes`: list of {`id`, `kind`, `box`, `delivery`} | `subscribed`: ids |
+| `probe.upload_template` | `png`: a PNG file, base64 | `template`: the lowercase hex SHA-256 of the PNG bytes |
+| `subscribe` | `probes`: list of {`id`, `kind`, `box`, `delivery`, and `template` for `core.template_match@1`} | `subscribed`: ids |
 | `submit` | `batch_id`, `commands`: list of {`press`: buttons, `hold_ms`, `cooldown_ms`} or {`wait_ms`} | `batch_id`, `start_seq` |
 | `cancel` | {} | `released_seq`: drops queued commands and releases all buttons |
 
 - `box` is normalized to the frame: `x`, `y`, `w`, `h` in 0..1.
+- `template`: the hash `probe.upload_template` returned on this connection; an unknown hash is
+  -32602. Uploads last until the client disconnects. Uploading the same bytes again returns the same
+  hash, so a client keeps its own bytes-to-hash table per connection and uploads each template once.
+  Uploading is its own method rather than a field of `subscribe` so that the daemon computes the hash
+  (CoreLib's SHA-256) and the client needs no hash code, and so a subscribe stays small.
 - `delivery`: `every` (one result per frame, a gap is an error) or `latest`.
 - Buttons (GBA): `A`, `B`, `Select`, `Start`, `Right`, `Left`, `Up`, `Down`, `R`, `L`.
 - Batches run in order, one after another. Times are rounded to whole frames by the backend.
@@ -62,6 +69,19 @@ decodes it by kind, not by shape.
 | Kind | Result |
 |---|---|
 | `core.color_stats@1` | `mean` [r, g, b], `stddev` [r, g, b] over the box, 0..255 |
+| `core.template_match@1` | `score`, `x`, `y`: the best placement of the template inside the box |
+
+`core.template_match@1` slides the template over every placement fully inside the box (which must be
+at least the template's size in pixels, else subscribe fails with -32602). `score` is the mean squared
+difference per pixel and channel at the best placement, divided by 255²: 0 for identical pixels, 1 when
+every channel is as far off as it can be (OpenCV `TM_SQDIFF` / (w·h·3·255²)). Lower is better; there is
+no threshold in the daemon. `x`, `y` are the top-left corner of that placement, normalized to the
+frame. The PNG is read as 8-bit RGB; an alpha channel is ignored. Plain `TM_SQDIFF_NORMED` is not
+used: it divides by the template's energy, so a flat dark template (a black text box) scores 1 on
+an exact match.
+
+There is no black-screen kind: `core.color_stats@1` gives the mean and stddev over a box, and a
+reader decides "black" from those numbers (low mean, low stddev) in OCaml.
 
 ## Errors
 

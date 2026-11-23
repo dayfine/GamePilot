@@ -2,11 +2,13 @@
 
 #include <algorithm>
 #include <cmath>
+#include <opencv2/imgproc.hpp>
 
 namespace gamepilot {
 
 const std::vector<std::string>& probe_kinds() {
-  static const std::vector<std::string> kinds = {std::string(kColorStatsKind)};
+  static const std::vector<std::string> kinds = {
+      std::string(kColorStatsKind), std::string(kTemplateMatchKind)};
   return kinds;
 }
 
@@ -42,6 +44,33 @@ ColorStats color_stats(const cv::Mat& bgr, const Box& box) {
     stats.stddev[static_cast<std::size_t>(c)] = stddev[2 - c];
   }
   return stats;
+}
+
+bool template_fits_box(const cv::Mat& template_bgr, const Box& box, int width,
+                       int height) {
+  const cv::Rect pixels = box_to_pixels(box, width, height);
+  return template_bgr.cols <= pixels.width &&
+         template_bgr.rows <= pixels.height;
+}
+
+TemplateMatch template_match(const cv::Mat& bgr, const cv::Mat& template_bgr,
+                             const Box& box) {
+  constexpr double kChannelMax = 255;
+  const cv::Rect pixels = box_to_pixels(box, bgr.cols, bgr.rows);
+  cv::Mat differences;
+  cv::matchTemplate(bgr(pixels), template_bgr, differences, cv::TM_SQDIFF);
+  double min_difference = 0;
+  cv::Point best;
+  cv::minMaxLoc(differences, &min_difference, nullptr, &best, nullptr);
+  const double samples =
+      static_cast<double>(template_bgr.total()) * template_bgr.channels();
+  TemplateMatch match;
+  // OpenCV may sum in the frequency domain and land a hair below 0.
+  match.score = std::clamp(
+      min_difference / (samples * kChannelMax * kChannelMax), 0.0, 1.0);
+  match.x = static_cast<double>(pixels.x + best.x) / bgr.cols;
+  match.y = static_cast<double>(pixels.y + best.y) / bgr.rows;
+  return match;
 }
 
 }  // namespace gamepilot

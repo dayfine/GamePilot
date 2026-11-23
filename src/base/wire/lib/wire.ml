@@ -104,7 +104,23 @@ let json_of_box { x; y; w; h } =
   `Assoc [ ("x", `Float x); ("y", `Float y); ("w", `Float w); ("h", `Float h) ]
 
 type delivery = Every | Latest
-type probe_spec = { id : string; kind : string; box : box; delivery : delivery }
+
+type probe_spec = {
+  id : string;
+  kind : string;
+  box : box;
+  delivery : delivery;
+  template : string option;
+}
+
+let color_stats_kind = "core.color_stats@1"
+let template_match_kind = "core.template_match@1"
+
+let color_stats_probe ~id ~box ~delivery =
+  { id; kind = color_stats_kind; box; delivery; template = None }
+
+let template_match_probe ~id ~box ~delivery ~template =
+  { id; kind = template_match_kind; box; delivery; template = Some template }
 
 let probe_spec_of_json j =
   let what = "probe" in
@@ -117,17 +133,20 @@ let probe_spec_of_json j =
       | "every" -> Every
       | "latest" -> Latest
       | s -> fail "probe.delivery: unknown value %S" s);
+    template =
+      Option.map (to_string "probe.template") (field_opt what "template" j);
   }
 
-let json_of_probe_spec { id; kind; box; delivery } =
+let json_of_probe_spec { id; kind; box; delivery; template } =
   `Assoc
-    [
-      ("id", `String id);
-      ("kind", `String kind);
-      ("box", json_of_box box);
-      ( "delivery",
-        `String (match delivery with Every -> "every" | Latest -> "latest") );
-    ]
+    ([
+       ("id", `String id);
+       ("kind", `String kind);
+       ("box", json_of_box box);
+       ( "delivery",
+         `String (match delivery with Every -> "every" | Latest -> "latest") );
+     ]
+    @ match template with Some t -> [ ("template", `String t) ] | None -> [])
 
 type rgb = { r : float; g : float; b : float }
 
@@ -141,9 +160,8 @@ let json_of_rgb { r; g; b } = `List [ `Float r; `Float g; `Float b ]
 
 type probe_result =
   | Color_stats of { mean : rgb; stddev : rgb }
+  | Template_match of { score : float; x : float; y : float }
   | Other of json
-
-let color_stats_kind = "core.color_stats@1"
 
 let probe_result_of_json j =
   let what = "probe result" in
@@ -154,6 +172,9 @@ let probe_result_of_json j =
           mean = rgb_of_json "probe.mean" (field what "mean" j);
           stddev = rgb_of_json "probe.stddev" (field what "stddev" j);
         }
+  | kind when kind = template_match_kind ->
+      let f = float_field what in
+      Template_match { score = f "score" j; x = f "x" j; y = f "y" j }
   | _ -> Other j
 
 let json_of_probe_result = function
@@ -163,6 +184,14 @@ let json_of_probe_result = function
           ("kind", `String color_stats_kind);
           ("mean", json_of_rgb mean);
           ("stddev", json_of_rgb stddev);
+        ]
+  | Template_match { score; x; y } ->
+      `Assoc
+        [
+          ("kind", `String template_match_kind);
+          ("score", `Float score);
+          ("x", `Float x);
+          ("y", `Float y);
         ]
   | Other j -> j
 
@@ -240,6 +269,7 @@ let json_of_error { code; message; data } =
 type call =
   | Hello of { protocol : int; client : string }
   | Load_state of { path : string }
+  | Upload_template of { png : string }
   | Subscribe of probe_spec list
   | Submit of { batch_id : string; commands : command list }
   | Cancel
@@ -259,6 +289,7 @@ type message =
 let method_name = function
   | Hello _ -> "hello"
   | Load_state _ -> "backend.load_state"
+  | Upload_template _ -> "probe.upload_template"
   | Subscribe _ -> "subscribe"
   | Submit _ -> "submit"
   | Cancel -> "cancel"
@@ -274,6 +305,10 @@ let call_of_json name params =
         }
   | "backend.load_state" ->
       Load_state { path = string_field what "path" params }
+  | "probe.upload_template" -> (
+      match Base64.decode (string_field what "png" params) with
+      | Some png -> Upload_template { png }
+      | None -> fail "%s.png: expected padded base64" what)
   | "subscribe" ->
       Subscribe (List.map probe_spec_of_json (list_field what "probes" params))
   | "submit" ->
@@ -290,6 +325,7 @@ let params_of_call = function
   | Hello { protocol; client } ->
       `Assoc [ ("protocol", `Int protocol); ("client", `String client) ]
   | Load_state { path } -> `Assoc [ ("path", `String path) ]
+  | Upload_template { png } -> `Assoc [ ("png", `String (Base64.encode png)) ]
   | Subscribe probes ->
       `Assoc [ ("probes", `List (List.map json_of_probe_spec probes)) ]
   | Submit { batch_id; commands } ->
@@ -406,6 +442,11 @@ let load_state_result_of_json j =
 
 let json_of_load_state_result { seq; load } =
   `Assoc [ ("seq", `Int seq); ("load", `Int load) ]
+
+let upload_template_result_of_json j =
+  string_field "probe.upload_template.result" "template" j
+
+let json_of_upload_template_result hash = `Assoc [ ("template", `String hash) ]
 
 let subscribe_result_of_json j =
   List.map

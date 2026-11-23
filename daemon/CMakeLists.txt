@@ -35,12 +35,14 @@ function(gamepilot_warnings target)
 endfunction()
 
 add_library(gamepilot_core STATIC
+  src/base64.cpp
   src/mgba_backend.cpp
   src/net.cpp
   src/probes.cpp
   src/rpc.cpp
   src/schedule.cpp
   src/server.cpp
+  src/template_store.cpp
 )
 target_include_directories(gamepilot_core PUBLIC src)
 target_include_directories(gamepilot_core SYSTEM PUBLIC ${OpenCV_INCLUDE_DIRS})

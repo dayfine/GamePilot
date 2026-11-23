@@ -82,9 +82,9 @@ void Server::step_frame() {
   if (client_.valid() && !probes_.empty()) {
     const cv::Mat frame = backend_.frame();
     const double t_ms = clock_.now_ms();
-    std::vector<std::pair<std::string, ColorStats>> results;
+    std::vector<std::pair<std::string, ProbeResult>> results;
     for (const ProbeSpec& probe : probes_) {
-      results.emplace_back(probe.id, color_stats(frame, probe.box));
+      results.emplace_back(probe.id, evaluate(probe, frame));
     }
     send(frame_notification(seq, loads_, t_ms, results));
   }
@@ -127,6 +127,7 @@ void Server::drop_client(const char* reason) {
                reason);
   client_.close();
   probes_.clear();
+  templates_.clear();
   schedule_.clear();
 }
 
@@ -197,15 +198,18 @@ pa::JsonObject Server::dispatch(const Request& request) {
       throw RpcError(kBackendError, "backend error", std::move(data));
     }
   }
+  if (method == "probe.upload_template") {
+    const UploadTemplateParams upload = decode_upload_template(request.params);
+    const std::optional<std::string> hash = templates_.add_png(upload.png);
+    if (!hash) {
+      throw RpcError(kInvalidParams, "png does not decode");
+    }
+    return upload_template_result(*hash);
+  }
   if (method == "subscribe") {
     SubscribeParams subscribe = decode_subscribe(request.params);
     for (const ProbeSpec& probe : subscribe.probes) {
-      if (!is_known_probe_kind(probe.kind)) {
-        pa::JsonObject data;
-        data["kind"] = probe.kind;
-        throw RpcError(kUnknownProbeKind, "unknown probe kind",
-                       std::move(data));
-      }
+      check_probe(probe);
     }
     std::vector<std::string> ids;
     for (ProbeSpec& probe : subscribe.probes) {
@@ -230,6 +234,37 @@ pa::JsonObject Server::dispatch(const Request& request) {
     return cancel_result(backend_.seq());
   }
   throw RpcError(kMethodNotFound, "unknown method: " + method);
+}
+
+void Server::check_probe(const ProbeSpec& probe) const {
+  if (!is_known_probe_kind(probe.kind)) {
+    pa::JsonObject data;
+    data["kind"] = probe.kind;
+    throw RpcError(kUnknownProbeKind, "unknown probe kind", std::move(data));
+  }
+  if (probe.kind != kTemplateMatchKind) {
+    return;
+  }
+  const cv::Mat* image = templates_.find(probe.template_hash);
+  if (image == nullptr) {
+    throw RpcError(kInvalidParams, "unknown template: " + probe.template_hash);
+  }
+  const BackendInfo& info = backend_.info();
+  if (!template_fits_box(*image, probe.box, info.width, info.height)) {
+    throw RpcError(kInvalidParams,
+                   "box is smaller than the template: " + probe.id);
+  }
+}
+
+ProbeResult Server::evaluate(const ProbeSpec& probe,
+                             const cv::Mat& frame) const {
+  if (probe.kind == kTemplateMatchKind) {
+    // check_probe found the template, and templates are only dropped
+    // together with the probes.
+    return template_match(frame, *templates_.find(probe.template_hash),
+                          probe.box);
+  }
+  return color_stats(frame, probe.box);
 }
 
 void Server::send(const pa::JsonValue& message) {
