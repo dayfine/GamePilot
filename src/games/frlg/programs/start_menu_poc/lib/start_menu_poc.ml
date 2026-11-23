@@ -25,18 +25,16 @@ let press_until button pred =
   | Effects.Holds m -> Some (Float.max 0. (m.t_ms -. done_.t_ms))
   | Effects.Timeout -> None
 
+let menu_open = Frlg_readers.Start_menu.start_menu_open
+let menu_closed m = not (menu_open m)
+
 let run ~state () =
   ignore (Effects.load_state state : int);
   ignore (Effects.subscribe [ Frlg_readers.Start_menu.probe ] : string list);
-  match
-    press_until Wire.Start (fun m -> Frlg_readers.Start_menu.start_menu_open m)
-  with
+  match press_until Wire.Start menu_open with
   | None -> Did_not_open
   | Some opened_ms -> (
-      match
-        press_until Wire.B (fun m ->
-            not (Frlg_readers.Start_menu.start_menu_open m))
-      with
+      match press_until Wire.B menu_closed with
       | None -> Did_not_close
       | Some closed_ms -> Passed { opened_ms; closed_ms })
 

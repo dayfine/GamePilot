@@ -28,9 +28,19 @@ jobs:
         run: opam exec -- dune build
       - working-directory: src
         run: opam exec -- dune test
+      - name: Build and test the OCaml linters (lint/)
+        if: runner.os == 'Linux'
+        working-directory: lint
+        run: |
+          opam exec -- dune build
+          opam exec -- dune test
+      - name: Run the OCaml linters on src/ and lint/
+        if: runner.os == 'Linux'
+        run: opam exec -- sh tools/lint_ocaml.sh
       - name: Check formatting (ocamlformat version from src/.ocamlformat)
         if: runner.os == 'Linux'
         working-directory: src
         run: |
           opam install --yes "ocamlformat=$(sed -n 's/^version *= *//p' .ocamlformat)"
           opam exec -- dune build @fmt
+          cd ../lint && opam exec -- dune build @fmt
