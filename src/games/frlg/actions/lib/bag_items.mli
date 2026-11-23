@@ -19,7 +19,8 @@ val display_name : string list -> string -> string option
 
 val pocket_of_item : string -> Frlg_readers.Bag_screen.pocket
 (** The pocket a slug's item sits in: Poké Balls for a name ending in ["-ball"],
-    else Items. (Key items and berries are not looked up yet.) *)
+    Key Items for a key item's name (["coin-case"]), else Items. (Berries are
+    not looked up yet.) *)
 
 val shown_rows : int
 (** Rows the list shows: 6. *)

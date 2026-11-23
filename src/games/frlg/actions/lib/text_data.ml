@@ -19,3 +19,8 @@ let move_table =
 let glyphs () = Lazy.force glyph_table
 let item_names () = Lazy.force item_table
 let move_names () = Lazy.force move_table
+
+let species_table =
+  lazy (load_data Text.Data_files.species_names_eng Text.Species_names.load)
+
+let species_names () = Lazy.force species_table

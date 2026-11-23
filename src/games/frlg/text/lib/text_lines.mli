@@ -27,6 +27,29 @@ val summary_move : int -> t
     on the list a battle opens to forget a move from (the same 28-pixel pitch,
     pokefirered pokemon_summary_screen.c). *)
 
+val summary_species : t
+(** The species on the summary's POKéMON INFO page (page 1), right of NAME:
+    pokefirered pokemon_summary_screen.c, [PrintInfoPage], at (47, 19) in the
+    right pane's window (15 tiles from the left, 2 from the top). Placed from
+    the source and read right on mGBA (each member of mg-02's start,
+    2026-11-23). *)
+
+val digit_width : int
+(** Every digit of the normal font is 6 pixels wide. *)
+
+val trainer_card_money_digit : int -> t
+(** Digit [k] of the money on the Trainer Card's front, counted from the right
+    (0: ones): pokefirered trainer_card.c, [PrintMoneyOnCard], right-aligns
+    ["¥<money>"] to end at x 136 of window 1 (at (8, 8)), at y 56. Read right on
+    mGBA ($25,014 and $29,114, 2026-11-23). *)
+
+val bag_message_digit : int -> t
+(** Digit [k] (from the left) of the bag message's second line, where the Coin
+    Case's ["Your COINS:\n<coins>"] (pokefirered strings.c [gText_CoinCase],
+    item_use.c [FieldUseFunc_CoinCase], left-aligned) prints its count: the
+    message window 5 of bag.c at (16, 120), the second line's glyphs at y 137.
+    Read right on mGBA (20 coins, 2026-11-23). *)
+
 (** {1 Template rows and the probe box} *)
 
 val template_top : int

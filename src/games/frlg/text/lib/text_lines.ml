@@ -37,6 +37,42 @@ let summary_move i =
     width = 75;
   }
 
+(* The info page's right pane (window left 15 tiles, top 2) prints the species
+   at (47, 19). *)
+let summary_species =
+  { id = "summary_species"; left = 167; indent = 2; glyph_top = 35; width = 72 }
+
+let digit_width = 6
+
+let digit_cell id k ~left ~glyph_top =
+  {
+    id = Printf.sprintf "%s.%d" id k;
+    left;
+    indent = 0;
+    glyph_top;
+    width = digit_width;
+  }
+
+(* The card's window starts at (8, 8); the money string (the yen sign, 8 wide,
+   then the digits) ends at x 136 of the window, the ones digit from 130. *)
+let card_ones_left = 138
+let card_money_top = 64
+
+let trainer_card_money_digit k =
+  digit_cell "card_money" k
+    ~left:(card_ones_left - (digit_width * k))
+    ~glyph_top:card_money_top
+
+(* The bag's message window 5 starts at (16, 120); its second line's glyphs
+   at y 137 (measured on mGBA by reading the Coin Case's count). *)
+let bag_message_left = 16
+let bag_message_second_top = 137
+
+let bag_message_digit k =
+  digit_cell "bag_message_digit" k
+    ~left:(bag_message_left + (digit_width * k))
+    ~glyph_top:bag_message_second_top
+
 let box t : Wire.box =
   let x = float (t.left - t.indent - slack)
   and y = float (t.glyph_top + template_top - slack) in

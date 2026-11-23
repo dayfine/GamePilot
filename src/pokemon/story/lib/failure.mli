@@ -27,13 +27,19 @@ type reason =
   | Not_at_end of { declared : Pose.grid; observed : Pose.observed option }
       (** Every event passed, but the player is not at the checkpoint's declared
           end ({!Checkpoint_end}), or the game cannot tell where they are. *)
+  | Unmet_postconditions of string list
+      (** Every event passed, but postconditions of the plan failed or could not
+          be read ({!Postcondition_check}): each as
+          ["coins: failed: expected 20, read 0"]. *)
 
 type t = {
   checkpoint_id : string;
   event_index : int;
-      (** From 0; the number of events for a {!Not_at_end}, which comes after
-          the last one. *)
-  event_id : string;  (** ["end"] for a {!Not_at_end}. *)
+      (** From 0; the number of events for a {!Not_at_end} or
+          {!Unmet_postconditions}, which come after the last one. *)
+  event_id : string;
+      (** ["end"] for a {!Not_at_end}, ["postconditions"] for
+          {!Unmet_postconditions}. *)
   reason : reason;
 }
 

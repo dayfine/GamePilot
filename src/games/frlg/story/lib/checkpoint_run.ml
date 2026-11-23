@@ -6,6 +6,7 @@ type options = {
   party : A.Party_roster.t;
   center : string option;
   gait : Frlg_overworld.Route_legs.gait;
+  end_check_only : bool;
   log : string -> unit;
 }
 
@@ -61,10 +62,20 @@ let config options world : A.Story_game.config =
     log = options.log;
   }
 
+(* End-check only: no events, and no end position (FireRed reckons it from
+   the walks, so with none it would be the start's). *)
+let to_run options ~end_at (plan : Story.Plan.t) =
+  if options.end_check_only then ({ plan.checkpoint with events = [] }, None)
+  else (plan.checkpoint, end_at)
+
 let run ?end_at options world (plan : Story.Plan.t) =
   Option.iter (fun s -> ignore (Effects.load_state s)) options.state;
   let game =
     A.Story_game.create (config options world) ~start:(start_of plan.checkpoint)
   in
+  let checkpoint, end_at = to_run options ~end_at plan in
+  let end_state =
+    (plan.postconditions, Postcondition_reads.observe ~log:options.log)
+  in
   Effects.with_probes Screen_facts.probes (fun () ->
-      Story.Runner.run ?end_at (A.Story_game.game game) plan.checkpoint)
+      Story.Runner.run ?end_at ~end_state (A.Story_game.game game) checkpoint)

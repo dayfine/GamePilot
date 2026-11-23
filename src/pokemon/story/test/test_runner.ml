@@ -183,4 +183,99 @@ passed|};
     };
   ]
 
-let () = Case_table.run "runner" cases
+(* A run whose plan promises Abra in the party and 20 coins, the game reading
+   [observed] (and logging that it read); the log after the last event. *)
+let promised : Plan.postconditions =
+  {
+    position = None;
+    party = Some (Party_includes [ "abra" ]);
+    items = [];
+    coins = Some 20;
+    money = None;
+    flags = [];
+  }
+
+let run_with_end_state ?end_at ?(promised = promised) observed =
+  let game, log = Scripted_game.make mart in
+  let observe _ =
+    game.log "read the end state";
+    observed
+  in
+  let result =
+    match Runner.run ?end_at ~end_state:(promised, observe) game checkpoint with
+    | Ok () -> "passed"
+    | Error failure -> "stopped: " ^ Failure.to_string failure
+  in
+  let lines = String.split_on_char '\n' (log ()) in
+  let after_events =
+    List.filteri
+      (fun i _ ->
+        i
+        > Option.get (List.find_index (( = ) "[Story] cp #4 leave: done") lines))
+      lines
+  in
+  String.concat "\n" (after_events @ [ result ])
+
+let with_abra coins =
+  {
+    Postcondition_check.nothing_read with
+    party = Some [ Some "pidgey"; Some "abra" ];
+    coins;
+  }
+
+let end_state_cases : Case_table.case list =
+  [
+    {
+      name = "postconditions read and held: passed";
+      input = (fun () -> run_with_end_state (with_abra (Some 20)));
+      expectation =
+        "read the end state\n\
+         [Postcondition] cp party: passed: pidgey, abra\n\
+         [Postcondition] cp coins: passed: 20\n\
+         [Postcondition] cp: 2 passed, 0 failed, 0 not checked: passed\n\
+         [Story] cp: done\n\
+         passed";
+    };
+    {
+      name = "a postcondition failed: stops, naming it, expected and read";
+      input =
+        (fun () ->
+          run_with_end_state
+            { (with_abra (Some 20)) with party = Some [ Some "pidgey" ] }
+          |> last_line);
+      expectation =
+        "stopped: cp event 5 (postconditions): postconditions unmet: party: \
+         failed: expected abra among the members, read pidgey";
+    };
+    {
+      name = "a postcondition the game could not read: stops too";
+      input = (fun () -> run_with_end_state (with_abra None) |> last_line);
+      expectation =
+        "stopped: cp event 5 (postconditions): postconditions unmet: coins: \
+         not checked: the game can't read it";
+    };
+    {
+      name = "a plan that states none: nothing read";
+      input =
+        (fun () ->
+          run_with_end_state
+            ~promised:{ promised with party = None; coins = None }
+            Postcondition_check.nothing_read);
+      expectation = "[Story] cp: done\npassed";
+    };
+    {
+      name = "the end position fails first: nothing read";
+      input =
+        (fun () ->
+          run_with_end_state
+            ~end_at:{ map = "Town"; tiles = [ tile 4 2 ]; facing = None }
+            (with_abra (Some 20)));
+      expectation =
+        "[Story] cp end Town (4, 2): failed: declared end at Town (4, 2), but \
+         the game reads no position\n\
+         stopped: cp event 5 (end): declared end at Town (4, 2), but the game \
+         reads no position";
+    };
+  ]
+
+let () = Case_table.run "runner" (cases @ end_state_cases)

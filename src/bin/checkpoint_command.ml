@@ -1,10 +1,11 @@
 (* gamepilot checkpoint PLAN.json [--state FILE] [--port N] [--log FILE]
-     [--party SPECIES,...] [--center TOWN] [--walk]
+     [--party SPECIES,...] [--center TOWN] [--walk] [--end-check-only]
    gamepilot replay checkpoint WIRELOG PLAN.json [the same flags]
 
    Runs one checkpoint of a FireRed plan through the story runner. The state
    is loaded first and again on a reload; the party is the one at the
-   checkpoint's start (FireRed reads no species yet). *)
+   checkpoint's start (FireRed reads no species yet). With --end-check-only
+   no event runs: the state is checked against the plan's postconditions. *)
 
 type flags = {
   state : string option;
@@ -13,11 +14,12 @@ type flags = {
   party : string;
   center : string option;
   walk : bool;
+  end_check_only : bool;
 }
 
 let usage =
   "  gamepilot checkpoint PLAN.json [--state FILE] [--port N] [--log FILE]\n\
-  \      [--party SPECIES,...] [--center TOWN] [--walk]\n\
+  \      [--party SPECIES,...] [--center TOWN] [--walk] [--end-check-only]\n\
   \  gamepilot replay checkpoint WIRELOG PLAN.json [same flags]\n"
 
 let defaults =
@@ -28,6 +30,7 @@ let defaults =
     party = "";
     center = None;
     walk = false;
+    end_check_only = false;
   }
 
 let rec parse flags = function
@@ -41,6 +44,8 @@ let rec parse flags = function
   | "--party" :: p :: rest -> parse { flags with party = p } rest
   | "--center" :: t :: rest -> parse { flags with center = Some t } rest
   | "--walk" :: rest -> parse { flags with walk = true } rest
+  | "--end-check-only" :: rest ->
+      parse { flags with end_check_only = true } rest
   | a :: _ -> Error ("unknown argument " ^ a)
 
 (* Every story line to stdout and, with --log, to the file. *)
@@ -60,6 +65,7 @@ let options flags : Frlg_story.Checkpoint_run.options =
     party = Frlg_actions.Party_roster.of_string flags.party;
     center = flags.center;
     gait = (if flags.walk then Walking else Running);
+    end_check_only = flags.end_check_only;
     log = logger flags.log_file;
   }
 

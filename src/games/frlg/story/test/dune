@@ -38,3 +38,34 @@
   gamepilot.story
   gamepilot.frlg_actions
   gamepilot.frlg_story))
+
+(rule
+ (copy ../../readers/test/fixtures/mgba.probes.jsonl mgba.probes.jsonl))
+
+(rule
+ (copy
+  ../../readers/test/fixtures/menus.mgba.probes.jsonl
+  menus.mgba.probes.jsonl))
+
+(rule
+ (copy ../../readers/test/fixtures/switch.probes.jsonl switch.probes.jsonl))
+
+(rule
+ (copy
+  ../../readers/test/fixtures/menus.switch.probes.jsonl
+  menus.switch.probes.jsonl))
+
+(test
+ (name test_postcondition_reads)
+ (modules test_postcondition_reads)
+ (deps
+  mgba.probes.jsonl
+  menus.mgba.probes.jsonl
+  switch.probes.jsonl
+  menus.switch.probes.jsonl)
+ (libraries
+  gamepilot.wire
+  gamepilot.case_table
+  gamepilot.story
+  gamepilot.frlg_story
+  frlg_overworld_fixtures))

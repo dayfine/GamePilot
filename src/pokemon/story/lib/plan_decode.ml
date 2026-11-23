@@ -189,6 +189,61 @@ let checkpoint ~where obj : Plan.checkpoint =
     events;
   }
 
+let money ~where obj : Plan.money =
+  only ~where [ "min"; "max" ] obj;
+  let min = F.int ~where "min" obj and max = F.int ~where "max" obj in
+  if min > max then F.fail "%smin %d is above max %d." where min max;
+  { min; max }
+
+let party ~where obj : Plan.party option =
+  let species key = Option.map (F.strings (where ^ key)) (F.find key obj) in
+  match (species "party", species "party_includes") with
+  | Some _, Some _ ->
+      F.fail "%sparty and party_includes: one or the other, not both." where
+  | Some list, None -> Some (Party_in_order list)
+  | None, Some list -> Some (Party_includes list)
+  | None, None -> None
+
+let no_postconditions : Plan.postconditions =
+  {
+    position = None;
+    party = None;
+    items = [];
+    coins = None;
+    money = None;
+    flags = [];
+  }
+
+let postconditions ~where obj : Plan.postconditions =
+  only ~where
+    [
+      "position"; "party"; "party_includes"; "items"; "coins"; "money"; "flags";
+    ]
+    obj;
+  let nested key read =
+    Option.map
+      (fun o -> read ~where:(where ^ key ^ ".") o)
+      (F.object_opt ~where key obj)
+  in
+  {
+    position = nested "position" grid_pose;
+    party = party ~where obj;
+    items = F.records ~where "items" obj item;
+    coins = optional ~where "coins" obj F.int;
+    money = nested "money" money;
+    flags =
+      Option.fold ~none:[]
+        ~some:(F.strings (where ^ "flags"))
+        (F.find "flags" obj);
+  }
+
+let metadata_postconditions ~where = function
+  | None -> no_postconditions
+  | Some metadata ->
+      Option.fold ~none:no_postconditions
+        ~some:(postconditions ~where:(where ^ "metadata.postconditions."))
+        (F.object_opt ~where:(where ^ "metadata.") "postconditions" metadata)
+
 let plan ~where obj : Plan.t =
   only ~where [ "format"; "game"; "checkpoint"; "execution"; "metadata" ] obj;
   let named = F.string ~where "format" obj in
@@ -196,14 +251,17 @@ let plan ~where obj : Plan.t =
     F.fail "%sformat is \"%s\", not %s." where named format;
   let inner = object_field ~where "checkpoint" obj in
   let inner_where = where ^ "checkpoint." in
+  let metadata, metadata_where =
+    match F.object_opt ~where:inner_where "metadata" inner with
+    | Some metadata -> (Some metadata, inner_where)
+    | None -> (F.object_opt ~where "metadata" obj, where)
+  in
   {
     game = F.string ~where "game" obj;
     checkpoint = checkpoint ~where:inner_where inner;
     execution = object_field ~where "execution" obj;
-    metadata =
-      (match F.object_opt ~where:inner_where "metadata" inner with
-      | Some metadata -> Some metadata
-      | None -> F.object_opt ~where "metadata" obj);
+    metadata;
+    postconditions = metadata_postconditions ~where:metadata_where metadata;
   }
 
 let decode ~source json =
