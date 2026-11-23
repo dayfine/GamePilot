@@ -17,19 +17,23 @@ type t = {
   mutable next_id : int;
   mutable next_batch : int;
   mutable latest : Wire.frame option;
+  mutable load : int;  (** from the last [backend.load_state] reply *)
   mutable now : float option;
   responses : (int, (Wire.json, Wire.error) result) Hashtbl.t;
   dones : (string, Wire.batch_done) Hashtbl.t;
 }
 
 (* Takes one event from the transport into the session; returns the frame if
-   the event was one. *)
+   the event was one. A frame taken before the last load shows another state
+   and is dropped. *)
 let pump t =
   match t.transport.recv () with
   | Message (Wire.Response { id; outcome }) ->
       Hashtbl.replace t.responses id outcome;
       None
-  | Message (Wire.Notification (Wire.Frame f)) ->
+  | Message (Wire.Notification (Wire.Frame { load; _ })) when load < t.load ->
+      None
+  | Message (Wire.Notification (Wire.Frame { frame = f; _ })) ->
       t.latest <- Some f;
       t.now <- Some f.t_ms;
       Some f
@@ -137,13 +141,13 @@ let handle t f =
           | Effects.Read -> answer (fun () -> t.latest)
           | Effects.Load_state path ->
               answer (fun () ->
-                  let seq =
+                  let r =
                     Wire.load_state_result_of_json
                       (call t (Wire.Load_state { path }))
                   in
-                  (* Frames from before the load describe another state. *)
+                  t.load <- r.load;
                   t.latest <- None;
-                  seq)
+                  r.seq)
           | Effects.Subscribe probes ->
               answer (fun () ->
                   Wire.subscribe_result_of_json (call t (Wire.Subscribe probes)))
@@ -157,6 +161,7 @@ let run transport f =
       next_id = 1;
       next_batch = 1;
       latest = None;
+      load = 0;
       now = None;
       responses = Hashtbl.create 8;
       dones = Hashtbl.create 8;

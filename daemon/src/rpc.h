@@ -105,14 +105,15 @@ pa::JsonValue result_message(const pa::JsonValue& id, pa::JsonObject result);
 pa::JsonValue error_message(const pa::JsonValue& id, const RpcError& error);
 
 pa::JsonObject hello_result(const BackendInfo& backend);
-pa::JsonObject load_state_result(std::int64_t seq);
+pa::JsonObject load_state_result(std::int64_t seq, std::int64_t load);
 pa::JsonObject subscribe_result(const std::vector<std::string>& ids);
 pa::JsonObject submit_result(const std::string& batch_id,
                              std::int64_t start_seq);
 pa::JsonObject cancel_result(std::int64_t released_seq);
 
+// `load`: how many backend.load_state calls succeeded before this frame.
 pa::JsonValue frame_notification(
-    std::int64_t seq, double t_ms,
+    std::int64_t seq, std::int64_t load, double t_ms,
     const std::vector<std::pair<std::string, ColorStats>>& results);
 pa::JsonValue batch_done_notification(const std::string& batch_id,
                                       std::int64_t seq, double t_ms);

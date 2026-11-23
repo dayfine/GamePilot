@@ -74,7 +74,7 @@ void check_requests(const std::map<std::string, pa::JsonValue>& files) {
 void check_encoders(const std::map<std::string, pa::JsonValue>& files) {
   const BackendInfo mgba{"mgba", "BPRE", 59.7275, 240, 160};
   CHECK(hello_result(mgba) == result_of(files.at("02-hello.response.json")));
-  CHECK(load_state_result(1200) ==
+  CHECK(load_state_result(1200, 1) ==
         result_of(files.at("04-load_state.response.json")));
   CHECK(subscribe_result({"menu_panel"}) ==
         result_of(files.at("06-subscribe.response.json")));
@@ -88,7 +88,7 @@ void check_encoders(const std::map<std::string, pa::JsonValue>& files) {
 
   const ColorStats stats{{248.1, 248.0, 247.9}, {6.2, 6.1, 6.3}};
   const pa::JsonValue frame =
-      frame_notification(1201, 20113.6, {{"menu_panel", stats}});
+      frame_notification(1201, 1, 20113.6, {{"menu_panel", stats}});
   CHECK(frame == files.at("07-frame.notification.json"));
   CHECK(batch_done_notification("b1", 1230, 20599.0) ==
         files.at("10-batch_done.notification.json"));
