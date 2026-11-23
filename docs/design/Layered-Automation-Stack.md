@@ -9,7 +9,7 @@ test.
 ## 1. Summary
 
 Keep the hard-won low-level parts of Arduino-Source (controller protocol, scheduler, image
-primitives), put them in a small Qt-free daemon with a JSON-RPC API, and write all game
+primitives), put them in a small daemon with a JSON-RPC API, and write all game
 logic in a separate OCaml/dune project. The daemon knows no game. Programs are typed data
 plus small readers and actions, run identically against the console, a replay of recorded
 measurements, or an in-process simulation.
@@ -38,7 +38,7 @@ until the new stack passes a measured gate (section 9).
 | D2 | Command model | Mirror the existing controller interface as timed batches (from code) |
 | Q5 | Existing C++ above primitives | None exposed: no program runner, no routine registry |
 | D3 | Game knowledge | No game-specific C++ in layers 1-2, including existing named detectors |
-| Q6 | Where layer 2 lives | New repo, one process, Qt-free from day one (own capture) |
+| Q6 | Where layer 2 lives | New repo, one process with its own capture, no GUI toolkit |
 | Q7 | Wire | JSON-RPC 2.0 over localhost TCP; pixels out of band |
 | D4 | Schema truth | OCaml types; checked-in golden messages that the C++ side must parse (*default*) |
 | Q8 | What the daemon returns | Measurements (raw numbers), not verdicts; "for now" |
@@ -61,16 +61,16 @@ capture timestamp; commands are timed against the same clock.
 
 What the code offers today:
 
-- `CoreLib` (`SerialPrograms/cmake/CoreLib.cmake`): 339 files, about 43k lines, no Qt,
+- `CoreLib` (`SerialPrograms/cmake/CoreLib.cmake`): 339 files, about 43k lines, no GUI,
   OpenCV, ONNX or Tesseract. The daemon includes upstream's cmake files for it unchanged. It contains the serial connection, the PABotBase2 protocol,
   controller scheduling and the Switch controllers, plus JSON and sockets. Already used by
   `SerialProgramsCommandLine`. Link it as is.
 - Controller interface (`NintendoSwitch_ProController.h`, `Controllers/Controller.h`):
   `issue_buttons/dpad/joystick(delay, hold, cooldown)`, `issue_barrier`, `issue_nop`,
   `wait_for_all`, `cancel_all_commands`, `replace_on_next_command`. The API mirrors this.
-- Video capture is entirely Qt Multimedia (`CommonFramework/VideoPipeline/Backends`). It is
-  not reused. The daemon gets its own `FrameSource`, first through OpenCV `VideoCapture`
-  (*unverified*; fallback is borrowing the Qt capture).
+- Video capture in Arduino-Source belongs to its GUI app (`CommonFramework/VideoPipeline/Backends`)
+  and is not reused. The daemon gets its own `FrameSource`, first through OpenCV `VideoCapture`
+  (*unverified*; fallback is borrowing Arduino-Source's capture backend).
 - Do not link `SerialProgramsLib`: it is the whole application.
 
 Backends behind the same contract: Switch (capture card + PABotBase2), mGBA (the fork
@@ -263,8 +263,8 @@ Week 0 spikes, with go/no-go:
 
 | Spike | Question | If it fails |
 |---|---|---|
-| Capture | OpenCV holds 1080p at full rate and low latency from the lab card | borrow PA's Qt capture |
-| Link | `CoreLib` plus OpenCV build into our own Qt-free binary on three OSes | carry a patched copy of the two cmake files |
+| Capture | OpenCV holds 1080p at full rate and low latency from the lab card | borrow Arduino-Source's capture backend |
+| Link | `CoreLib` plus OpenCV build into our own binary on three OSes | carry a patched copy of the two cmake files |
 | Latency | frame -> probe -> OCaml -> command on the wire, p99 under one frame (33 ms) | Q4 is wrong: stop and redesign before S1 (mGBA runs in lockstep, so S0 does not depend on it) |
 
 Then S0 + S1 in at most 5 weeks on one lane; other lanes keep the C++ track moving.

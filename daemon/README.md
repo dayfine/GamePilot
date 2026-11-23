@@ -1,6 +1,6 @@
 C++ daemon: one backend (frame source, input sink, frame clock), probes on OpenCV, and the v1
 JSON-RPC server (`contracts/v1`). `CoreLib` (from `third_party/Arduino-Source`, through its own
-cmake files) provides JSON and file I/O; Qt-free on Linux, macOS and Windows.
+cmake files) provides JSON and file I/O; it builds on Linux, macOS and Windows.
 
     cmake -S daemon -B daemon/build -G Ninja -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
