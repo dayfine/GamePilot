@@ -3,21 +3,20 @@ exception Divergence of string
 (* Each entry keeps its 1-based line number in the log file. *)
 type log = (int * Wire.log_line) array
 
+let json_of_string s =
+  try Yojson.Safe.from_string s
+  with Yojson.Json_error e -> raise (Wire.Decode_error e)
+
+let parse_line (n, s) =
+  match Wire.log_line_of_json (json_of_string s) with
+  | line -> (n, line)
+  | exception Wire.Decode_error e ->
+      raise (Wire.Decode_error (Printf.sprintf "wire log line %d: %s" n e))
+
 let log_of_lines lines =
   List.mapi (fun i s -> (i + 1, String.trim s)) lines
   |> List.filter (fun (_, s) -> s <> "")
-  |> List.map (fun (n, s) ->
-         let line =
-           try
-             Wire.log_line_of_json
-               (try Yojson.Safe.from_string s
-                with Yojson.Json_error e -> raise (Wire.Decode_error e))
-           with Wire.Decode_error e ->
-             raise
-               (Wire.Decode_error (Printf.sprintf "wire log line %d: %s" n e))
-         in
-         (n, line))
-  |> Array.of_list
+  |> List.map parse_line |> Array.of_list
 
 let log_of_file path =
   log_of_lines
@@ -44,6 +43,18 @@ let describe = function
         | _ -> "")
   | m -> Wire.string_of_message m
 
+(* The first field in which two requests of the same method differ. *)
+let differing_field (e : Wire.request) (a : Wire.request) =
+  match (e.call, a.call) with
+  | Wire.Subscribe ep, Wire.Subscribe ap when ep <> ap -> Some "probes"
+  | Wire.Upload_template ep, Wire.Upload_template ap when ep.png <> ap.png ->
+      Some "template"
+  | Wire.Submit ec, Wire.Submit ac when ec.commands <> ac.commands ->
+      Some "commands"
+  | Wire.Submit ec, Wire.Submit ac when ec.batch_id <> ac.batch_id ->
+      Some "batch id"
+  | _ -> if e.id <> a.id then Some "request id" else None
+
 (* [expected] is the log's client message at line [n], [actual] the program's. *)
 let check n ~expected ~actual =
   let mismatch what =
@@ -51,19 +62,10 @@ let check n ~expected ~actual =
       (describe actual) (describe expected)
   in
   match (expected, actual) with
-  | Wire.Request e, Wire.Request a -> (
+  | Wire.Request e, Wire.Request a ->
       if Wire.method_name e.call <> Wire.method_name a.call then
         mismatch "method";
-      match (e.call, a.call) with
-      | Wire.Subscribe ep, Wire.Subscribe ap when ep <> ap -> mismatch "probes"
-      | Wire.Upload_template ep, Wire.Upload_template ap when ep.png <> ap.png
-        ->
-          mismatch "template"
-      | Wire.Submit ec, Wire.Submit ac when ec.commands <> ac.commands ->
-          mismatch "commands"
-      | Wire.Submit ec, Wire.Submit ac when ec.batch_id <> ac.batch_id ->
-          mismatch "batch id"
-      | _ -> if e.id <> a.id then mismatch "request id")
+      Option.iter mismatch (differing_field e a)
   | _ -> mismatch "message"
 
 let is_dir dir ((_, l) : int * Wire.log_line) = l.dir = dir
@@ -76,55 +78,77 @@ let find_from (log : log) i p =
   in
   go i
 
-(* [next_in]: index of the next client message the program must send.
+(* Where the replay is in the log.
+   [next_in]: index of the next client message the program must send.
+   [next_out]: index of the next log entry to scan for daemon output.
+   [ran_out]: set when the program waits for daemon output but the recorded
+   client spoke first: the live run's wait ended there. The first time, the
+   wall clock jumps to infinity so a pending [await] times out (the reader did
+   not hold on the recorded frames); waiting again is a divergence.
    [timed_out]: set once a wait timed out at a recorded point; from then on the
    program follows its own failure path, so it need not send the rest. *)
-let transport (log : log) next_in timed_out : Session.transport =
-  (* Index of the next log entry to scan for daemon output. *)
-  let next_out = ref 0 in
-  (* Set when the program waits for daemon output but the recorded client spoke
-     first: the live run's wait ended there. The first time, the wall clock
-     jumps to infinity so a pending [await] times out (the reader did not hold
-     on the recorded frames); waiting again is a divergence. *)
-  let ran_out = ref false in
-  let send actual =
-    ran_out := false;
-    match find_from log !next_in (is_dir Wire.In) with
-    | None ->
-        diverge "program sent %s after the log's last client message"
-          (describe actual)
-    | Some i ->
-        let n, expected = log.(i) in
-        check n ~expected:expected.msg ~actual;
-        next_in := i + 1
-  in
-  let recv () =
-    match find_from log !next_out (is_dir Wire.Out) with
-    | None -> Session.Closed "end of wire log"
-    | Some i -> (
-        match find_from log !next_in (is_dir Wire.In) with
-        | Some j when j < i && not !ran_out ->
-            ran_out := true;
-            timed_out := true;
-            Session.Idle
-        | Some j when j < i ->
-            let n, l = log.(j) in
-            diverge
-              "wire log line %d: program waits for daemon output, but the \
-               recorded client sent %s first"
-              n (describe l.msg)
-        | _ ->
-            next_out := i + 1;
-            Session.Message (snd log.(i)).msg)
-  in
-  { send; recv; wall_ms = (fun () -> if !ran_out then infinity else 0.) }
+type cursor = {
+  log : log;
+  mutable next_in : int;
+  mutable next_out : int;
+  mutable ran_out : bool;
+  mutable timed_out : bool;
+}
+
+let next_client_message r = find_from r.log r.next_in (is_dir Wire.In)
+
+let send r actual =
+  r.ran_out <- false;
+  match next_client_message r with
+  | None ->
+      diverge "program sent %s after the log's last client message"
+        (describe actual)
+  | Some i ->
+      let n, expected = r.log.(i) in
+      check n ~expected:expected.msg ~actual;
+      r.next_in <- i + 1
+
+(* The program waits for daemon output, but the recorded client sent the
+   message at index [j] first. *)
+let client_spoke_first r j =
+  if r.ran_out then
+    let n, l = r.log.(j) in
+    diverge
+      "wire log line %d: program waits for daemon output, but the recorded \
+       client sent %s first"
+      n (describe l.msg)
+  else (
+    r.ran_out <- true;
+    r.timed_out <- true;
+    Session.Idle)
+
+(* Delivers the daemon output at index [i], unless the client spoke first. *)
+let deliver r i =
+  match next_client_message r with
+  | Some j when j < i -> client_spoke_first r j
+  | _ ->
+      r.next_out <- i + 1;
+      Session.Message (snd r.log.(i)).msg
+
+let recv r =
+  match find_from r.log r.next_out (is_dir Wire.Out) with
+  | None -> Session.Closed "end of wire log"
+  | Some i -> deliver r i
+
+let transport r : Session.transport =
+  {
+    send = send r;
+    recv = (fun () -> recv r);
+    wall_ms = (fun () -> if r.ran_out then infinity else 0.);
+  }
 
 let run log f =
-  let next_in = ref 0 in
-  let timed_out = ref false in
-  let result = Session.run (transport log next_in timed_out) f in
-  (match find_from log !next_in (is_dir Wire.In) with
-  | Some i when not !timed_out ->
+  let r =
+    { log; next_in = 0; next_out = 0; ran_out = false; timed_out = false }
+  in
+  let result = Session.run (transport r) f in
+  (match next_client_message r with
+  | Some i when not r.timed_out ->
       let n, l = log.(i) in
       diverge "wire log line %d: program ended without sending %s" n
         (describe l.msg)

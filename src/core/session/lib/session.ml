@@ -25,6 +25,8 @@ type t = {
       (** uploaded on this connection, by the MD5 of their PNG bytes *)
 }
 
+let protocol_error fmt = Printf.ksprintf (fun s -> raise (Protocol_error s)) fmt
+
 (* Takes one event from the transport into the session; returns the frame if
    the event was one. A frame taken before the last load shows another state
    and is dropped. *)
@@ -44,9 +46,7 @@ let pump t =
       t.now <- Some d.t_ms;
       None
   | Message (Wire.Request { call; _ }) ->
-      raise
-        (Protocol_error
-           (Printf.sprintf "daemon sent a %s request" (Wire.method_name call)))
+      protocol_error "daemon sent a %s request" (Wire.method_name call)
   | Idle -> None
   | Closed why -> raise (Effects.Disconnected why)
 
@@ -83,10 +83,8 @@ let hello t =
          (Wire.Hello { protocol = protocol_version; client = client_name }))
   in
   if r.protocol <> protocol_version then
-    raise
-      (Protocol_error
-         (Printf.sprintf "daemon speaks protocol %d, we speak %d" r.protocol
-            protocol_version))
+    protocol_error "daemon speaks protocol %d, we speak %d" r.protocol
+      protocol_version
 
 let next_batch_id t =
   let batch_id = Printf.sprintf "b%d" t.next_batch in
@@ -96,9 +94,7 @@ let next_batch_id t =
 let check_submitted batch_id result =
   let r = Wire.submit_result_of_json result in
   if r.batch_id <> batch_id then
-    raise
-      (Protocol_error
-         (Printf.sprintf "submit %s answered for batch %s" batch_id r.batch_id))
+    protocol_error "submit %s answered for batch %s" batch_id r.batch_id
 
 let submit t commands =
   let batch_id = next_batch_id t in
@@ -155,68 +151,87 @@ let upload_template t png =
       Hashtbl.replace t.templates key hash;
       hash
 
+(* One [await] call. [deadline] is in daemon time; without any frame yet, the
+   clock starts at the first one. [wall_deadline] catches stalled frames. *)
+type wait = {
+  pred : Wire.frame -> bool;
+  timeout : float;
+  wall_deadline : float;
+  mutable deadline : float option;
+}
+
+let frame_deadline w (f : Wire.frame) =
+  match w.deadline with
+  | Some d -> d
+  | None ->
+      let d = f.t_ms +. w.timeout in
+      w.deadline <- Some d;
+      d
+
+(* What the pumped event decides for the wait, if anything. *)
+let wait_verdict t w = function
+  | Some (f : Wire.frame) ->
+      if f.t_ms > frame_deadline w f then Some Effects.Timeout
+      else if w.pred f then Some (Effects.Holds f)
+      else None
+  | None ->
+      if t.transport.wall_ms () > w.wall_deadline then Some Effects.Timeout
+      else None
+
+let rec wait_for_frames t w =
+  match wait_verdict t w (pump t) with
+  | Some awaited -> awaited
+  | None -> wait_for_frames t w
+
 let await t pred timeout_ms =
   let timeout = float_of_int timeout_ms in
-  let wall_deadline = t.transport.wall_ms () +. timeout +. stall_slack_ms in
-  (* Without any frame yet, the clock starts at the first one. *)
-  let deadline = ref (Option.map (fun now -> now +. timeout) t.now) in
-  let rec loop () =
-    match pump t with
-    | Some (f : Wire.frame) ->
-        let d =
-          match !deadline with
-          | Some d -> d
-          | None ->
-              let d = f.t_ms +. timeout in
-              deadline := Some d;
-              d
-        in
-        if f.t_ms > d then Effects.Timeout
-        else if pred f then Effects.Holds f
-        else loop ()
-    | None ->
-        if t.transport.wall_ms () > wall_deadline then Effects.Timeout
-        else loop ()
+  let w =
+    {
+      pred;
+      timeout;
+      wall_deadline = t.transport.wall_ms () +. timeout +. stall_slack_ms;
+      deadline = Option.map (fun now -> now +. timeout) t.now;
+    }
   in
-  match t.latest with Some f when pred f -> Effects.Holds f | _ -> loop ()
+  match t.latest with
+  | Some f when pred f -> Effects.Holds f
+  | _ -> wait_for_frames t w
+
+let load_state t path =
+  let r = Wire.load_state_result_of_json (call t (Wire.Load_state { path })) in
+  t.load <- r.load;
+  t.latest <- None;
+  r.seq
+
+let subscribe t probes =
+  Wire.subscribe_result_of_json (call t (Wire.Subscribe probes))
+
+(* The session's answer to an effect, or [None] for effects it does not
+   handle. *)
+let answer : type a. t -> a Effect.t -> (unit -> a) option =
+ fun t eff ->
+  match eff with
+  | Effects.Submit commands -> Some (fun () -> submit t commands)
+  | Effects.Race (commands, stop) -> Some (fun () -> race t commands stop)
+  | Effects.Await (pred, timeout_ms) -> Some (fun () -> await t pred timeout_ms)
+  | Effects.Now -> Some (fun () -> Option.value t.now ~default:0.)
+  | Effects.Read -> Some (fun () -> t.latest)
+  | Effects.Load_state path -> Some (fun () -> load_state t path)
+  | Effects.Upload_template png -> Some (fun () -> upload_template t png)
+  | Effects.Subscribe probes -> Some (fun () -> subscribe t probes)
+  | _ -> None
+
+(* Errors go back into the program, so its own handlers see them. *)
+let resume k answer =
+  match answer () with
+  | x -> Effect.Deep.continue k x
+  | exception e -> Effect.Deep.discontinue k e
 
 let handle t f =
-  let open Effect.Deep in
-  try_with f ()
+  Effect.Deep.try_with f ()
     {
       effc =
-        (fun (type a) (eff : a Effect.t) ->
-          (* Errors go back into the program, so its own handlers see them. *)
-          let answer (v : unit -> a) =
-            Some
-              (fun (k : (a, _) continuation) ->
-                match v () with
-                | x -> continue k x
-                | exception e -> discontinue k e)
-          in
-          match eff with
-          | Effects.Submit commands -> answer (fun () -> submit t commands)
-          | Effects.Race (commands, stop) ->
-              answer (fun () -> race t commands stop)
-          | Effects.Await (pred, timeout_ms) ->
-              answer (fun () -> await t pred timeout_ms)
-          | Effects.Now -> answer (fun () -> Option.value t.now ~default:0.)
-          | Effects.Read -> answer (fun () -> t.latest)
-          | Effects.Load_state path ->
-              answer (fun () ->
-                  let r =
-                    Wire.load_state_result_of_json
-                      (call t (Wire.Load_state { path }))
-                  in
-                  t.load <- r.load;
-                  t.latest <- None;
-                  r.seq)
-          | Effects.Upload_template png ->
-              answer (fun () -> upload_template t png)
-          | Effects.Subscribe probes ->
-              answer (fun () ->
-                  Wire.subscribe_result_of_json (call t (Wire.Subscribe probes)))
-          | _ -> None);
+        (fun eff -> Option.map (fun answer k -> resume k answer) (answer t eff));
     }
 
 let run transport f =
