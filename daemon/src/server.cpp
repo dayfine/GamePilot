@@ -4,6 +4,8 @@
 #include <cmath>
 #include <cstdio>
 
+#include "probe_evaluation.h"
+
 namespace gamepilot {
 
 namespace {
@@ -84,7 +86,9 @@ void Server::step_frame() {
     const double t_ms = clock_.now_ms();
     std::vector<std::pair<std::string, ProbeResult>> results;
     for (const ProbeSpec& probe : probes_) {
-      results.emplace_back(probe.id, evaluate(probe, frame));
+      // subscribe checked each probe, and templates are only dropped together
+      // with the probes.
+      results.emplace_back(probe.id, evaluate_probe(probe, frame, templates_));
     }
     send(frame_notification(seq, loads_, t_ms, results));
   }
@@ -208,8 +212,9 @@ pa::JsonObject Server::dispatch(const Request& request) {
   }
   if (method == "subscribe") {
     SubscribeParams subscribe = decode_subscribe(request.params);
+    const BackendInfo& info = backend_.info();
     for (const ProbeSpec& probe : subscribe.probes) {
-      check_probe(probe);
+      check_probe(probe, templates_, info.width, info.height);
     }
     std::vector<std::string> ids;
     for (ProbeSpec& probe : subscribe.probes) {
@@ -234,37 +239,6 @@ pa::JsonObject Server::dispatch(const Request& request) {
     return cancel_result(backend_.seq());
   }
   throw RpcError(kMethodNotFound, "unknown method: " + method);
-}
-
-void Server::check_probe(const ProbeSpec& probe) const {
-  if (!is_known_probe_kind(probe.kind)) {
-    pa::JsonObject data;
-    data["kind"] = probe.kind;
-    throw RpcError(kUnknownProbeKind, "unknown probe kind", std::move(data));
-  }
-  if (probe.kind != kTemplateMatchKind) {
-    return;
-  }
-  const cv::Mat* image = templates_.find(probe.template_hash);
-  if (image == nullptr) {
-    throw RpcError(kInvalidParams, "unknown template: " + probe.template_hash);
-  }
-  const BackendInfo& info = backend_.info();
-  if (!template_fits_box(*image, probe.box, info.width, info.height)) {
-    throw RpcError(kInvalidParams,
-                   "box is smaller than the template: " + probe.id);
-  }
-}
-
-ProbeResult Server::evaluate(const ProbeSpec& probe,
-                             const cv::Mat& frame) const {
-  if (probe.kind == kTemplateMatchKind) {
-    // check_probe found the template, and templates are only dropped
-    // together with the probes.
-    return template_match(frame, *templates_.find(probe.template_hash),
-                          probe.box);
-  }
-  return color_stats(frame, probe.box);
 }
 
 void Server::send(const pa::JsonValue& message) {

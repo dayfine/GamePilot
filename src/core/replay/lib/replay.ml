@@ -56,6 +56,9 @@ let check n ~expected ~actual =
         mismatch "method";
       match (e.call, a.call) with
       | Wire.Subscribe ep, Wire.Subscribe ap when ep <> ap -> mismatch "probes"
+      | Wire.Upload_template ep, Wire.Upload_template ap when ep.png <> ap.png
+        ->
+          mismatch "template"
       | Wire.Submit ec, Wire.Submit ac when ec.commands <> ac.commands ->
           mismatch "commands"
       | Wire.Submit ec, Wire.Submit ac when ec.batch_id <> ac.batch_id ->

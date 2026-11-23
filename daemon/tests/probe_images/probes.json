@@ -1,0 +1,23 @@
+{
+  "probes": [
+    {
+      "id": "red_block",
+      "kind": "core.color_stats@1",
+      "box": {"x": 0.5, "y": 0.0, "w": 0.5, "h": 0.125},
+      "delivery": "every"
+    },
+    {
+      "id": "half_red",
+      "kind": "core.color_stats@1",
+      "box": {"x": 0.25, "y": 0.0, "w": 0.5, "h": 0.125},
+      "delivery": "every"
+    },
+    {
+      "id": "pattern",
+      "kind": "core.template_match@1",
+      "box": {"x": 0.5, "y": 0.25, "w": 0.5, "h": 0.75},
+      "delivery": "latest",
+      "template": "pattern.png"
+    }
+  ]
+}

@@ -9,8 +9,9 @@
     sent yet: that, or any mismatch, is a {!Divergence}.
 
     Compared fields: method and id for every request; probes for [subscribe];
-    commands, then batch id, for [submit]. [hello] and [backend.load_state]
-    params are not compared (client names and state paths vary by machine).
+    the PNG bytes (the base64 payload) for [probe.upload_template]; commands,
+    then batch id, for [submit]. [hello] and [backend.load_state] params are not
+    compared (client names and state paths vary by machine).
 
     Pure: no sockets, no clock, nothing written. *)
 

@@ -38,6 +38,7 @@ add_library(gamepilot_core STATIC
   src/base64.cpp
   src/mgba_backend.cpp
   src/net.cpp
+  src/probe_evaluation.cpp
   src/probes.cpp
   src/rpc.cpp
   src/schedule.cpp
@@ -56,6 +57,10 @@ add_executable(gamepilot_daemon src/main.cpp)
 target_link_libraries(gamepilot_daemon PRIVATE gamepilot_core)
 gamepilot_warnings(gamepilot_daemon)
 
+add_executable(probe_images src/probe_images.cpp)
+target_link_libraries(probe_images PRIVATE gamepilot_core)
+gamepilot_warnings(probe_images)
+
 enable_testing()
 foreach(test contracts_test probes_test)
   add_executable(${test} tests/${test}.cpp)
@@ -65,3 +70,8 @@ foreach(test contracts_test probes_test)
   gamepilot_warnings(${test})
   add_test(NAME ${test} COMMAND ${test})
 endforeach()
+
+add_test(NAME probe_images_test
+  COMMAND ${CMAKE_COMMAND} -DTOOL=$<TARGET_FILE:probe_images>
+          -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/probe_images_test.cmake
+  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/tests/probe_images)

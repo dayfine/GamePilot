@@ -43,8 +43,6 @@ class Server {
   void drop_client(const char* reason);
   void handle_line(const std::string& line);
   pa::JsonObject dispatch(const Request& request);
-  void check_probe(const ProbeSpec& probe) const;
-  ProbeResult evaluate(const ProbeSpec& probe, const cv::Mat& frame) const;
   void send(const pa::JsonValue& message);
   void log(const char* dir, const pa::JsonValue& message);
   void step_frame();

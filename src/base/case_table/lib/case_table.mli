@@ -1,5 +1,5 @@
 (** Runs a test's table of cases and reports each: a case passes when its input
-    gives its expectation. Shared by the grid libraries' tests. *)
+    gives its expectation. Shared by the tests of every layer. *)
 
 type case = {
   name : string;
