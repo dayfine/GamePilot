@@ -1,0 +1,5 @@
+(library
+ (name story)
+ (public_name gamepilot.story)
+ (modules_without_implementation plan game)
+ (libraries yojson gamepilot.grid_maps))

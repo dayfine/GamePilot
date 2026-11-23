@@ -1,0 +1,11 @@
+(tests
+ (names test_plan_decode test_runner test_repeat_until)
+ (modules
+  plan_files
+  plan_text
+  scripted_game
+  level_grind_world
+  test_plan_decode
+  test_runner
+  test_repeat_until)
+ (libraries gamepilot.case_table yojson gamepilot.grid_maps gamepilot.story))
