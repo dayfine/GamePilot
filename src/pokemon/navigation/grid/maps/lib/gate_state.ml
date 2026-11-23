@@ -29,3 +29,8 @@ let change_between ~before ~after =
 
 let equal a b =
   Names.equal a.opened b.opened && Names.equal a.switches_on b.switches_on
+
+let compare a b =
+  match Names.compare a.opened b.opened with
+  | 0 -> Names.compare a.switches_on b.switches_on
+  | order -> order
