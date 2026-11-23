@@ -11,6 +11,7 @@
      heldN, mailN  slot N's sprite carries the held-item or the mail icon
      summaryN      the summary screen on page N
      money         the money box
+     moverowN      a move being picked on the summary's move list, row N
      jpn           a Japanese game (the icons sit elsewhere: marks not read)
      none          none of these
 
@@ -108,6 +109,12 @@ let screen_readers =
       applies = everywhere;
       verdict = flag Money_box.money_box;
       expected = tagged "money";
+    };
+    {
+      reader = "move_list_row";
+      applies = everywhere;
+      verdict = (fun m -> optional (Move_list_cursor.row m));
+      expected = (fun tags -> optional (numbered "moverow" tags));
     };
   ]
 

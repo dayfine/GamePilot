@@ -56,6 +56,19 @@ let other_name read_move_name ~slot ~expect =
       | _ -> None)
   | _ -> None
 
+(* On the move menu: to [slot], then A unless its PP shows none left; then B
+   goes back to the action menu, as the game would after "There's no PP left
+   for this move!". *)
+let choose_move ~slot ~target : Battle_driver.move_result =
+  tap_all (Battle_cursor.move ~slot);
+  match Effects.read () with
+  | Some m when Move_pp.no_pp_left m ->
+      tap_all [ Wire.B ];
+      Refused
+  | _ ->
+      tap_all [ Wire.A ];
+      choose_target target
+
 let use_move read_move_name ~slot ~target ~expect : Battle_driver.move_result =
   tap_all Battle_cursor.fight;
   if not (shows Battle_screen.move_menu) then
@@ -65,13 +78,10 @@ let use_move read_move_name ~slot ~target ~expect : Battle_driver.move_result =
     | Some name ->
         tap_all [ Wire.B ];
         Other_move name
-    | None ->
-        tap_all (Battle_cursor.move ~slot @ [ Wire.A ]);
-        choose_target target
+    | None -> choose_move ~slot ~target
 
-(* The cursor read on another slot than [slot]. The reader knows a single
-   battle's list (one big box); a double battle's has two and reads [None],
-   which is not taken for a mismatch. *)
+(* The cursor read on another slot than [slot]; [None] (no slot read) is not
+   taken for a mismatch. *)
 let cursor_elsewhere ~slot =
   match Option.bind (Effects.read ()) Party_menu.selected_slot with
   | Some n -> n <> slot + 1
@@ -130,10 +140,15 @@ let use_item (item : Battle_driver.item) =
 
 let move_list m = Summary_screen.page m = Some moves_page
 
+(* A on the move list only with its cursor read on [slot]; else B, which
+   leaves the list for "Stop learning ...?", a {!Battle_driver.Move_learn}
+   again. *)
 let forget_move slot =
   tap_all [ Wire.A ];
-  if shows ~timeout_ms:list_timeout_ms move_list then
-    tap_all (Battle_cursor.down slot @ [ Wire.A ])
+  if shows ~timeout_ms:list_timeout_ms move_list then (
+    tap_all (Battle_cursor.down slot);
+    let on_slot m = Move_list_cursor.row m = Some slot in
+    tap_all [ (if shows on_slot then Wire.A else Wire.B) ])
 
 let answer_move_learn ~forget =
   match forget with None -> tap_all [ Wire.B ] | Some slot -> forget_move slot

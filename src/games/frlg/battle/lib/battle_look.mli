@@ -12,6 +12,10 @@ type facts = {
   party_list : bool;  (** the party list *)
   bag : bool;  (** the bag *)
   yes_no : bool;  (** a YES/NO box over the battle *)
+  arrow : bool;  (** the battle text's red arrow: the page waits for a button *)
+  evolution : bool;
+      (** the text box with no HP box, arrow or YES/NO: an evolution, or a
+          battle's text while it prints where no HP box reads *)
 }
 
 val nothing : facts
@@ -25,6 +29,8 @@ type screen =
   | Move_menu
   | Action_menu
   | Bag
+  | Text_arrow  (** battle text done, its arrow up *)
+  | Evolution  (** what an evolution shows: nothing may be pressed *)
   | Battle_text  (** the text box or an HP box: the battle runs on *)
   | No_battle
 
@@ -32,11 +38,9 @@ val classify : facts -> screen
 val screen_name : screen -> string
 
 val probes : Wire.probe_spec list
-(** The probes {!of_measurements} reads: the battle screen's, the party menu's,
-    the bag's and the summary screen's. *)
+(** The probes {!of_measurements} and {!Screen_driver} read: the battle
+    screen's, its YES/NO box's, arrow's and PP's, the dark corners', the party
+    menu's, the bag's, the summary screen's and its move list cursor's. *)
 
 val of_measurements : Effects.measurements -> facts
-(** The facts from {!Frlg_readers}. There is no reader for the battle's YES/NO
-    box yet (it needs a capture of one), so [yes_no] is always false: a prompt
-    reads as battle text, which gets B, and B answers NO ("Delete a move?": NO,
-    then "Stop learning?": B is YES, so the move is not learned). *)
+(** The facts from {!Frlg_readers}. *)
