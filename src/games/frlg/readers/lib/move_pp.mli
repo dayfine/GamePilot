@@ -16,7 +16,10 @@ val probes : Wire.probe_spec list
 
 val min_red_share : float
 (** Red ((180, 0, 0) to (255, 120, 120), around the fork's measured (225, 74,
-    27)) covers more than this share of the PP line (the fork's 0.01). *)
+    27)) covers more than this share of the PP line (the fork's 0.01). The
+    game's PP palette (graphics/interface/text_pp.pal) draws 0 PP in (238, 0,
+    0), inside the range; a quarter left is (255, 148, 0) and half (238, 222,
+    0), both outside it. *)
 
 (** {1 Reader} *)
 
