@@ -42,6 +42,6 @@ program's own failure. Waiting again past that point is a divergence.
 Closed in wire protocol v1.1 (`contracts/v1/README.md`): `frame` and the `backend.load_state` reply carry
 a `load` counter and the session drops frames from before the last load; responses stay unnamed (the
 client pairs them with requests by id, as JSON-RPC does); probe results carry their `kind`; replay
-reports a run that ends without sending every recorded request as a divergence naming the first one.
-With that last check, the broken reader in the dev loop above now reads as `Replay.Divergence("wire log
-line 30: program ended without sending submit (id 5) [press B ...]")` instead of `FAIL menu did not open`.
+reports a run that ends without sending every recorded request as a divergence naming the first one,
+unless one of its waits timed out at a recorded point (then the program is on its own failure path, so
+the broken reader above still reads as `FAIL menu did not open`).
