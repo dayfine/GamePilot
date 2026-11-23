@@ -67,7 +67,9 @@ let arrow_red m =
 let advance_arrow m = dialog_up m && arrow_red m
 let selection_dialog m = dialog_up m && white m selection_id
 
-let yes_no_cursor m =
-  if selection_dialog m then
+let yes_no_arrow m =
+  if white m selection_id then
     Option.map (fun row -> row = 0) (Cursor_column.row yes_no_arrow m)
   else None
+
+let yes_no_cursor m = if dialog_up m then yes_no_arrow m else None

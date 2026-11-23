@@ -86,6 +86,16 @@ let readers =
       expected = (fun tags -> if List.mem "choice" tags then "yes" else "none");
     };
     {
+      reader = "yes_no_arrow";
+      verdict =
+        (fun m ->
+          match Dialog.yes_no_arrow m with
+          | Some true -> "yes"
+          | Some false -> "no"
+          | None -> "none");
+      expected = (fun tags -> if List.mem "choice" tags then "yes" else "none");
+    };
+    {
       reader = "battle_text_box";
       verdict = flag Battle_screen.battle_text_box;
       expected = tagged "textbox";

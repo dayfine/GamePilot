@@ -47,11 +47,16 @@ val selection_dialog : Effects.measurements -> bool
     fork, the frame test of {!dialog_up} applies too: a white fade is not a
     question. *)
 
+val yes_no_arrow : Effects.measurements -> bool option
+(** The fork's [yes_no_cursor] (AutoStory/PokemonFRLG_AutoStoryActions) as it
+    is: the Yes/No box's white right margin and its selection arrow, [Some true]
+    on YES and [Some false] on NO, over any text box (a battle's teal one too:
+    the caught Pokemon's nickname question). *)
+
 val yes_no_cursor : Effects.measurements -> bool option
-(** The fork's [yes_no_cursor] (AutoStory/PokemonFRLG_AutoStoryActions): a
-    {!selection_dialog} whose selection arrow shows, [Some true] on YES and
-    [Some false] on NO; [None] with no Yes/No box or no clear arrow. The arrow
-    is read in the fork's YES and NO arrow boxes
-    (SelectionArrowDetector::arrow_box_for_position) by {!Cursor_column}.
-    Measured on mGBA (Route 16's Cut question): the arrow fills 0.21 of the YES
-    box, the NO box 0.06 (NO's N reaches into it). *)
+(** {!yes_no_arrow} over the white text box: a {!selection_dialog} whose
+    selection arrow shows, [Some true] on YES and [Some false] on NO; [None]
+    with no Yes/No box or no clear arrow. The arrow is read in the fork's YES
+    and NO arrow boxes (SelectionArrowDetector::arrow_box_for_position) by
+    {!Cursor_column}. Measured on mGBA (Route 16's Cut question): the arrow
+    fills 0.21 of the YES box, the NO box 0.06 (NO's N reaches into it). *)

@@ -93,20 +93,33 @@ let ball_chosen ~log () =
       M.close "the bag" Bag_screen.bag_open;
       false
 
-(* After the throw: the nickname question or anything but a battle (the
-   Pokedex page) is a catch, the action menu is a break-free; every fourth look
-   with neither presses B through the messages (wait_for_throw()). *)
+(* The fork's overworld_shows: START opens the start menu only on the
+   overworld; B closes it again. *)
+let start_menu_wait_ms = 1200
+let start_menu_close_ms = 600
+
+let overworld_shows () =
+  M.press ~cooldown_ms:start_menu_wait_ms Wire.Start;
+  match Effects.read () with
+  | Some m when Start_menu.start_menu_open m ->
+      M.press ~cooldown_ms:start_menu_close_ms Wire.B;
+      true
+  | Some _ | None -> false
+
+(* After the throw: the nickname question ("Give a nickname ...?", its Yes/No
+   arrow) or the overworld is a catch, the action menu is a break-free; every
+   fourth look with neither checks the overworld, then presses B through the
+   messages (wait_for_throw()). *)
 let rec wait_for_throw ~deadline polls : Capture.throw_end =
   if Effects.now () >= deadline then Throw_failed
   else
     match Effects.read () with
-    | Some m when Battle_yes_no.yes_no_box m -> Caught
+    | Some m when Option.is_some (Dialog.yes_no_arrow m) -> Caught
     | Some m when Battle_screen.battle_menu m -> Broke_free
-    | m when polls mod presses_per_check <> 0 ->
-        ignore (m : Effects.measurements option);
+    | _ when polls mod presses_per_check <> 0 ->
         wait throw_poll_ms;
         wait_for_throw ~deadline (polls + 1)
-    | Some m when not (Battle_screen.battle_shows m) -> Caught
+    | _ when overworld_shows () -> Caught
     | _ ->
         press_b ();
         wait_for_throw ~deadline (polls + 1)
@@ -117,7 +130,8 @@ let throw_ball ~log () : Capture.throw_end =
     (* A on the ball, then USE at the top of its menu: the throw. *)
     M.press ~cooldown_ms:throw_press_ms Wire.A;
     M.press ~cooldown_ms:throw_press_ms Wire.A;
-    wait_for_throw ~deadline:(Effects.now () +. float throw_timeout_ms) 1)
+    Effects.with_probes Dialog.yes_no_probes (fun () ->
+        wait_for_throw ~deadline:(Effects.now () +. float throw_timeout_ms) 1))
 
 (* B, the fork's mash, until no battle screen has shown for [finish_quiet_ms]:
    it answers the nickname NO and turns the messages and the Pokedex page. *)
