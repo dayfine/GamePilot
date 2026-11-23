@@ -28,6 +28,7 @@ clang++ -std=c++23 -O2 -ffp-contract=off -I"$FORK" -I"$SOURCE" -o "$WORK/generat
   "$SOURCE/Pokemon/Pokemon_Xoroshiro128Plus.cpp" \
   "$SOURCE/Pokemon/Pokemon_BdspRng.cpp" \
   "$SOURCE/PokemonBDSP/Programs/RngManipulation/PokemonBDSP_BlinkModel.cpp" \
+  "$SOURCE/PokemonBDSP/Programs/RngManipulation/PokemonBDSP_StateSolver.cpp" \
   "$FORK/Common/Cpp/PrettyPrint.cpp" \
   "$HERE/link_stubs.cpp"
 "$WORK/generate_golden" "$HERE/../fixtures"
