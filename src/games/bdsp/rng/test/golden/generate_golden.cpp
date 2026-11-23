@@ -828,6 +828,10 @@ void write_file(const std::string& path, void (*lines)(FILE*)){
 
 }
 
+//  In generate_golden_recovery.cpp.
+void advance_clock_golden(FILE* out);
+void rng_calibration_golden(FILE* out);
+
 int main(int argc, char** argv){
     if (argc != 2){
         std::fprintf(stderr, "usage: %s <fixtures folder>\n", argv[0]);
@@ -840,5 +844,7 @@ int main(int argc, char** argv){
     write_file(folder + "/state_solver.txt", state_solver_lines);
     write_file(folder + "/blink_extraction.txt", blink_extraction_lines);
     write_file(folder + "/reidentifier.txt", reidentifier_lines);
+    write_file(folder + "/advance_clock.txt", advance_clock_golden);
+    write_file(folder + "/rng_calibration.txt", rng_calibration_golden);
     return 0;
 }

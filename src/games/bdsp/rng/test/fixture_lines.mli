@@ -7,6 +7,10 @@ val hex : string -> int
 val hex32 : int -> string
 val float17 : float -> string
 
+val micros_since : from:float -> float -> string
+(** Whole microseconds from [from] to a time on the microsecond grid, as the C++
+    prints a [WallClock] difference. *)
+
 val check_op : record list -> string -> (string list -> string) -> unit
 (** [check_op records op compute] reports one case for all records of [op]: each
     record's [compute inputs] must equal its expected text. *)

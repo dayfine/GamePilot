@@ -26,6 +26,7 @@ trap 'rm -rf "$WORK"' EXIT
 
 clang++ -std=c++23 -O2 -ffp-contract=off -I"$FORK" -I"$SOURCE" -I"$FORK/3rdParty/opencv-4.12.0" -o "$WORK/generate_golden" \
   "$HERE/generate_golden.cpp" \
+  "$HERE/generate_golden_recovery.cpp" \
   "$SOURCE/Pokemon/Pokemon_Xorshift128.cpp" \
   "$SOURCE/Pokemon/Pokemon_Gf2Matrix.cpp" \
   "$SOURCE/Pokemon/Pokemon_Xoroshiro128Plus.cpp" \
@@ -33,6 +34,9 @@ clang++ -std=c++23 -O2 -ffp-contract=off -I"$FORK" -I"$SOURCE" -I"$FORK/3rdParty
   "$SOURCE/PokemonBDSP/Programs/RngManipulation/PokemonBDSP_BlinkModel.cpp" \
   "$SOURCE/PokemonBDSP/Programs/RngManipulation/PokemonBDSP_StateSolver.cpp" \
   "$SOURCE/PokemonBDSP/Programs/RngManipulation/PokemonBDSP_StateReidentifier.cpp" \
+  "$SOURCE/PokemonBDSP/Programs/RngManipulation/PokemonBDSP_AdvanceClock.cpp" \
+  "$SOURCE/PokemonBDSP/Programs/RngManipulation/PokemonBDSP_RngCalibration.cpp" \
+  "$SOURCE/Pokemon/Pokemon_StatsCalculation.cpp" \
   "$SOURCE/PokemonBDSP/Inference/Rng/PokemonBDSP_BlinkExtraction.cpp" \
   "$FORK/Common/Cpp/PrettyPrint.cpp" \
   "$HERE/link_stubs.cpp"

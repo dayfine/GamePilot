@@ -47,6 +47,11 @@ let hex32 = Printf.sprintf "%08x"
 
 (* Same text as C's "%.17g", which round-trips a double. *)
 let float17 = Printf.sprintf "%.17g"
+let micro = 1e6
+
+let micros_since ~from time =
+  Printf.sprintf "%.0f"
+    (Float.round (time *. micro) -. Float.round (from *. micro))
 
 (* Checks every record of [op] with [compute], reporting the count and the first
    mismatch as one case. *)
