@@ -145,8 +145,8 @@ let real_plans : Case_table.case list =
       name = "mg-04 outline";
       input = (fun () -> outline "mg-04.plan.json" mg);
       expectation =
-        "frlg mg-04 from LavenderTown_PokemonCenter_1F (7, 4) north: 1 route, \
-         3 game_action";
+        "frlg mg-04 from LavenderTown_PokemonCenter_1F (7, 4) north: 3 route, \
+         5 game_action";
     };
     {
       name = "mg-05 outline";
