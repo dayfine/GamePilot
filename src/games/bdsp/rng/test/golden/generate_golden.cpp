@@ -211,6 +211,18 @@ void bdsp_rng_lines(FILE* out){
             std::fprintf(out, "  hit %" PRIu64 " %s %s\n", hit.advances,
                 state_text(hit.state).c_str(), result_text(hit.result).c_str());
         }
+        //  PIDs that were shiny for the TSV and had a bit flipped to stop it
+        for (const std::string& name : {"starter", "locked_hidden_female"}){
+            BdspStaticSearcher flipped_searcher(seed, template_named(name), 0);
+            hits = flipped_searcher.scan(0, 60000,
+                [](const BdspPokemonResult& r){ return bdsp_is_shiny(r.pid ^ 0x10000000, 0); });
+            std::fprintf(out, "scan_unshinied %s %s 0 0 60000 : %zu\n",
+                state_text(seed).c_str(), name.c_str(), hits.size());
+            for (const BdspRngHit& hit : hits){
+                std::fprintf(out, "  hit %" PRIu64 " %s %s\n", hit.advances,
+                    state_text(hit.state).c_str(), result_text(hit.result).c_str());
+            }
+        }
         hits = searcher.scan(0, 2000,
             [](const BdspPokemonResult& r){ return r.nature == 3 && r.ivs.attack == 31; });
         std::fprintf(out, "scan_adamant_31atk %s starter 0 0 2000 : %zu\n", state_text(seed).c_str(), hits.size());

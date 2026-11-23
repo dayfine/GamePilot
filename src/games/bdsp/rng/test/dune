@@ -1,6 +1,6 @@
 (tests
- (names test_xorshift128)
- (modules fixture_lines test_xorshift128)
+ (names test_xorshift128 test_static_encounter)
+ (modules fixture_lines test_xorshift128 test_static_encounter)
  (deps
   (glob_files fixtures/*.txt))
  (libraries gamepilot.case_table gamepilot.bdsp_rng))
