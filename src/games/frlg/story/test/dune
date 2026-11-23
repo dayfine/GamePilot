@@ -7,11 +7,34 @@
 (rule
  (copy ../../programs/mail_glitch/plans/mg-03.plan.json mg-03.plan.json))
 
+(rule
+ (copy ../../programs/mail_glitch/plans/mg-04.plan.json mg-04.plan.json))
+
+(rule
+ (target mg04_walk_two_fled_battles.wire.jsonl)
+ (deps mg04_walk_two_fled_battles.wire.jsonl.gz)
+ (action
+  (with-stdout-to
+   %{target}
+   (run gzip -dc %{deps}))))
+
 (test
  (name test_checkpoint_run)
+ (modules test_checkpoint_run)
  (deps mg-01.plan.json mg-02.plan.json mg-03.plan.json)
  (libraries
   gamepilot.case_table
+  gamepilot.story
+  gamepilot.frlg_actions
+  gamepilot.frlg_story))
+
+(test
+ (name test_mg04_walk_replay)
+ (modules test_mg04_walk_replay)
+ (deps mg-04.plan.json mg04_walk_two_fled_battles.wire.jsonl)
+ (libraries
+  gamepilot.case_table
+  gamepilot.replay
   gamepilot.story
   gamepilot.frlg_actions
   gamepilot.frlg_story))
