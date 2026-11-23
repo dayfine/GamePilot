@@ -1,0 +1,6 @@
+(library
+ (name grid_robust_legs)
+ (public_name gamepilot.grid_robust_legs)
+ (flags
+  (:standard -open Grid_maps))
+ (libraries gamepilot.grid_maps gamepilot.grid_planning))

@@ -101,7 +101,7 @@ let of_json input = Map_file.of_string ~source_name:"Test.json" input
 
 (* Reads the case's map with [read_map] and checks each expectation. *)
 let run_case ~read_map { name; input; expectation } =
-  Check.report name
+  Case_table.report name
     (Result.bind (read_map input) (fun map ->
          Check.all
            (List.map

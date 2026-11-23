@@ -88,7 +88,7 @@ let unknown_kind =
   "failed": {"step": "s", "error": "e"}, "frame": "f.png"}|}
 
 let no_failed = {|{"checkpoint": "01.02", "faults": [], "frame": "f.png"}|}
-let case name input expectation = { Check.name; input; expectation }
+let case name input expectation = { Case_table.name; input; expectation }
 
 let cases =
   [
@@ -127,4 +127,4 @@ let cases =
       "error: console failure bad: failed is missing.";
   ]
 
-let () = Check.run "ConsoleFailure" cases
+let () = Case_table.run "ConsoleFailure" cases

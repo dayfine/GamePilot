@@ -147,11 +147,12 @@ let walk_north_onto_route_1 () =
   | None -> Error "nowhere"
 
 let () =
-  Check.report "every FRLG runtime map parses" (all_parse maps_dir);
-  Check.report "every BDSP runtime map parses" (all_parse (maps_dir_of "bdsp"));
+  Case_table.report "every FRLG runtime map parses" (all_parse maps_dir);
+  Case_table.report "every BDSP runtime map parses"
+    (all_parse (maps_dir_of "bdsp"));
   List.iter
     (Map_text.run_case ~read_map:(Map_file.load_runtime ~maps_dir))
     cases;
-  Check.report "north out of Pallet Town onto Route 1"
+  Case_table.report "north out of Pallet Town onto Route 1"
     (walk_north_onto_route_1 ());
-  Check.finish ()
+  Case_table.finish ()

@@ -32,7 +32,7 @@ let plan input =
 
 let run { name; input; expectation } =
   let legs = plan input in
-  Check.report name
+  Case_table.report name
     (Check.expect ~expected:expectation.says ~plan:(Toy_game.describe legs)
        (expectation.holds legs))
 
