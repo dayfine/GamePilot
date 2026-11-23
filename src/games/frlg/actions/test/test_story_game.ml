@@ -41,7 +41,7 @@ let react screen (p : S.press) =
     S.show screen ~at_ms:(p.at_ms + 200) S.Dialog;
     S.show screen ~at_ms:(p.at_ms + 1200) S.Overworld)
 
-let run start () =
+let run ?(checkpoint = checkpoint) start () =
   let screen = S.create ~react () in
   let config : Story_game.config =
     {
@@ -49,6 +49,9 @@ let run start () =
       gait = Walking;
       flee = ignore;
       flags = (fun _ -> false);
+      party = Party_roster.of_list [];
+      center = None;
+      reload = (fun () -> Ok ());
       log = ignore;
     }
   in
@@ -72,6 +75,17 @@ let house : Story.Pose.observed =
     faces = None;
   }
 
+let swap_event species : Story.Plan.event =
+  {
+    (event "swap"
+       (Game_action [ ("species", `String species); ("target_slot", `Int 1) ]))
+    with
+    action = Some "party_swap";
+  }
+
+let swap_checkpoint species =
+  { checkpoint with events = [ swap_event species ] }
+
 let case name input expectation = { Case_table.name; input; expectation }
 
 let () =
@@ -82,4 +96,8 @@ let () =
       case "no position to walk from" (run None)
         "test event 1 (out): position_unknown: no position to walk from; at \
          unknown; ";
+      case "a party swap of a species the party lacks presses nothing"
+        (run ~checkpoint:(swap_checkpoint "mr-mime") (Some house))
+        "test event 1 (swap): not_in_party: mr-mime is not in the party (); at \
+         PalletTown_PlayersHouse_1F (4, 6); ";
     ]

@@ -1,19 +1,36 @@
 (* An effect handler for the FRLG overworld and action tests, in place of a
    daemon: a clock of its own with one frame per ms, on which the screen is a
-   recorded mGBA frame's probes (the readers' fixtures), switched by a script
+   recorded frame's probes (the readers' fixtures: mGBA, and Switch captures
+   for the screens no mGBA recording has yet), switched by a script
    that reacts to each press. Like the walker's Scripted_interrupts, but the
    frames are real readers' input, so the code under test reads them through
    the FRLG readers. *)
 
-type screen = Overworld | Dialog | Battle | Black | Start_menu of int | Party
+type screen =
+  | Overworld
+  | Dialog
+  | Dialog_arrow  (** A text page done: its advance arrow shows. *)
+  | Question  (** A Yes/No box over the text box (a Switch capture). *)
+  | Battle
+  | Black
+  | Start_menu of int
+  | Party
+  | Member_menu  (** A party member's own menu over the party. *)
+  | Bag_items  (** The bag's Items pocket, cursor on the top row. *)
+  | Mart_list  (** A Mart's BUY list with the money box (a Switch capture). *)
 
 let screen_name = function
   | Overworld -> "overworld"
   | Dialog -> "dialog"
+  | Dialog_arrow -> "dialog arrow"
+  | Question -> "question"
   | Battle -> "battle"
   | Black -> "black"
   | Start_menu row -> Printf.sprintf "start menu row %d" row
   | Party -> "party"
+  | Member_menu -> "member menu"
+  | Bag_items -> "bag items"
+  | Mart_list -> "mart list"
 
 (* The fixture images each screen is read from; a screen merges the probes of
    every fixture file that has its image. *)
@@ -26,11 +43,21 @@ let image = function
   | Start_menu _ -> "mail-glitch-04/mg05-start-menu__start1.png"
   | Party ->
       "mail-glitch-04/mg05-party__party-slot1-members6-held1-held2-mail3.png"
+  | Dialog_arrow -> "screenshots-779/20261122-121507-17.04__dialog-arrow.png"
+  | Question -> "AdvanceWhiteDialogDetector/Eng-Select_False__dialog-choice.png"
+  | Member_menu -> "mail-glitch-04/mg05-mimien-menu__none.png"
+  | Bag_items -> "emu-1/20261122-024507-05.04__bag-items-row0.png"
+  | Mart_list -> "ItemListReader/MartBuyList_eng__money.png"
 
 (* Copied next to the test by its dune rules. *)
 let fixtures =
   List.concat_map Wire.read_image_probes
-    [ "mgba.probes.jsonl"; "menus.mgba.probes.jsonl" ]
+    [
+      "mgba.probes.jsonl";
+      "menus.mgba.probes.jsonl";
+      "switch.probes.jsonl";
+      "menus.switch.probes.jsonl";
+    ]
 
 let same_shot a b =
   (* The two fixture files name an image by different folders and tags. *)
