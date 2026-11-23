@@ -4,6 +4,7 @@ synopsis: "GamePilot programs"
 depends: [
   "ocaml" {>= "5.2"}
   "dune" {>= "3.16"}
+  "yojson" {>= "2.0"}
   "odoc" {with-doc}
 ]
 build: [
