@@ -8,6 +8,9 @@ type town = {
 
 type t = { columns : int; rows : int; towns : town list }
 
+(* pokefirered src/field_effect.c, FlyInFieldEffect_End: the player gets off
+   the bird turned south. *)
+let landing_facing = Grid_maps.Direction.South
 let asset = "src/games/frlg/assets/kanto_fly_towns.json"
 
 let tile ~where key obj : Grid_maps.Tile_pos.t =
@@ -26,7 +29,7 @@ let town i json =
       {
         at_map = J.string ~where "map" landing;
         at_tile = tile ~where "tile" landing;
-        faces = None;
+        faces = Some landing_facing;
       };
   }
 
