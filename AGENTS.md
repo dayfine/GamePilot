@@ -16,8 +16,13 @@ GamePilot automates games through three layers (design: `docs/design/Layered-Aut
 - **Programs use only our effect set** (`submit`, `await`, `race`, `now`, `read`), never an I/O
   library directly. The real handler is stdlib only.
 - **Swappable parts sit behind one boundary each**: I/O backend, probes, effect handler, RNG.
-- **Submodules are read-only.** `third_party/Arduino-Source` (fork `main`) and
-  `third_party/Packages`: never edit them here. Fix in the fork, then bump.
+- **Submodules are read-only.** `third_party/Arduino-Source` tracks the fork branch
+  `gamepilot/base` and `third_party/Packages` tracks upstream: never edit them here.
+- **`gamepilot/base` is the whole overlay**: fork `main` plus the fewest, smallest patches
+  GamePilot needs (today one: `CoreLib` exports its usage requirements). The daily sync
+  (`~/Projects/pa-tools/sync_branches.py`) merges fork `main` into it; it is never merged back.
+  A patch goes there as one commit with a message saying why GamePilot needs it, then the
+  submodule is bumped here. Prefer a change in GamePilot over a patch.
 - The daemon uses `CoreLib` only, through upstream's `SourceFiles.cmake` and `CoreLib.cmake`.
   Vision is OpenCV. Paths go through `Common/Cpp/Filesystem` (UTF-8 on Windows).
 - Nothing here is published upstream. PRs: `--repo dayfine/GamePilot --draft`.
