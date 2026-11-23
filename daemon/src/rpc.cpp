@@ -7,57 +7,58 @@ namespace gamepilot {
 
 namespace {
 
-const pa::JsonValue& require(const pa::JsonObject& params,
-                             const std::string& key) {
+const pa::JsonValue& require(const pa::JsonObject& params, const char* key) {
   const pa::JsonValue* value = params.get_value(key);
   if (value == nullptr) {
-    throw RpcError(kInvalidParams, "missing param: " + key);
+    throw RpcError(kInvalidParams, std::string("missing param: ") + key);
   }
   return *value;
 }
 
-std::string require_string(const pa::JsonObject& params,
-                           const std::string& key) {
+std::string require_string(const pa::JsonObject& params, const char* key) {
   const std::string* value = require(params, key).to_string();
   if (value == nullptr) {
-    throw RpcError(kInvalidParams, "param must be a string: " + key);
+    throw RpcError(kInvalidParams,
+                   std::string("param must be a string: ") + key);
   }
   return *value;
 }
 
-double require_number(const pa::JsonObject& params, const std::string& key) {
+double require_number(const pa::JsonObject& params, const char* key) {
   const pa::JsonValue& value = require(params, key);
   if (!value.is_float()) {
-    throw RpcError(kInvalidParams, "param must be a number: " + key);
+    throw RpcError(kInvalidParams,
+                   std::string("param must be a number: ") + key);
   }
   return value.to_double_default();
 }
 
-double optional_ms(const pa::JsonObject& params, const std::string& key) {
+double optional_ms(const pa::JsonObject& params, const char* key) {
   if (params.get_value(key) == nullptr) {
     return 0;
   }
   const double ms = require_number(params, key);
   if (!(ms >= 0)) {
-    throw RpcError(kInvalidParams, "param must be >= 0: " + key);
+    throw RpcError(kInvalidParams, std::string("param must be >= 0: ") + key);
   }
   return ms;
 }
 
 const pa::JsonArray& require_array(const pa::JsonObject& params,
-                                   const std::string& key) {
+                                   const char* key) {
   const pa::JsonArray* value = require(params, key).to_array();
   if (value == nullptr) {
-    throw RpcError(kInvalidParams, "param must be an array: " + key);
+    throw RpcError(kInvalidParams,
+                   std::string("param must be an array: ") + key);
   }
   return *value;
 }
 
 const pa::JsonObject& require_object(const pa::JsonValue& value,
-                                     const std::string& what) {
+                                     const char* what) {
   const pa::JsonObject* object = value.to_object();
   if (object == nullptr) {
-    throw RpcError(kInvalidParams, what + " must be an object");
+    throw RpcError(kInvalidParams, std::string(what) + " must be an object");
   }
   return *object;
 }
