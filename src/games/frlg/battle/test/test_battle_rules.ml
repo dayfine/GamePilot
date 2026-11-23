@@ -6,6 +6,8 @@ open Frlg_battle
 
 let f = Battle_look.nothing
 let text = { f with text_box = true; player_box = true; foe_box = true }
+let arrow = { text with arrow = true }
+let evolving = { f with text_box = true; evolution = true }
 
 let classify_cases : Case_table.case list =
   let case name facts expectation : Case_table.case =
@@ -34,6 +36,13 @@ let classify_cases : Case_table.case list =
     case "the party list over the bag"
       { f with party_list = true; bag = true }
       "party list";
+    case "the arrow under the level-up box: level up"
+      { text with level_up = true; arrow = true }
+      "level up";
+    case "the arrow on battle text" { text with arrow = true } "text arrow";
+    case "text with no HP box and no arrow: what an evolution shows"
+      { f with text_box = true; evolution = true }
+      "evolution";
   ]
 
 let step_name : Event_rule.step -> string = function
@@ -70,9 +79,15 @@ let rule_cases : Case_table.case list =
     case "a YES/NO with the player's box gone: use next"
       [ ({ f with yes_no = true; foe_box = true }, 100.) ]
       "use next";
-    case "battle text gets B only once it held 1.5 s since the last press"
-      [ (text, 500.); (text, 1500.); (text, 2000.); (text, 3000.) ]
-      "look, press B, look, press B";
+    case "the arrow gets B at once, then not again within 0.5 s"
+      [ (arrow, 500.); (arrow, 700.); (arrow, 1000.) ]
+      "press B, look, press B";
+    case "text with no arrow is left to run on until 6 s without a press"
+      [ (text, 1500.); (text, 5900.); (text, 6000.) ]
+      "look, look, press B";
+    case "an evolution never gets a press"
+      [ (evolving, 1000.); (evolving, 10000.); (evolving, 30000.) ]
+      "look, look, look";
     case "the level-up box gets A"
       [ ({ text with level_up = true }, 1500.) ]
       "press A";
@@ -87,7 +102,7 @@ let rule_cases : Case_table.case list =
       "look, look, look, battle over";
     case "a battle screen starts the 3 s over"
       [ (text, 100.); (f, 1000.); (text, 3000.); (f, 3500.); (f, 6000.) ]
-      "look, look, press B, look, look";
+      "look, look, look, look, look";
   ]
 
 let buttons bs = String.concat " " (List.map Wire.string_of_button bs)

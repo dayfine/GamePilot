@@ -8,14 +8,15 @@
     (pokefirered party_menu.c, battle_script_commands.c), and the next step
     waits for the screen to show the press worked.
 
-    Not read yet, for want of readers: the battle's YES/NO box (so
-    {!Battle_driver.Move_learn} and {!Battle_driver.Use_next} never come; see
-    {!Battle_look.of_measurements}), "no PP left" (so a move is never
-    {!Battle_driver.Refused}: the action menu comes back and asks again), and an
-    evolution after the battle, which a B on its text cancels. The party list
-    reader knows a single battle's layout; a double battle's list (two big
-    boxes) is not checked by slot and may not read as the party list at all
-    until a capture of one says. *)
+    The readers it acts on: the battle's YES/NO box ({!Battle_driver.Move_learn}
+    with the player's HP box up, {!Battle_driver.Use_next} without), the move
+    menu's PP in red ({!Battle_driver.Refused} before A), the battle text's
+    arrow (B only then; see {!Event_rule}), what an evolution shows (never B),
+    the party list in either layout, and the move list's cursor (A only on the
+    move to forget). Unverified for want of captures: the PP reader at 0 PP, the
+    evolution screen, the double battle's party list. A trainer's "Will ...
+    change POKéMON?" (the Shift battle style) reads as a move to learn: the
+    fork's lab plays with the Set style. *)
 
 val make :
   ?read_move_name:(Effects.measurements -> slot:int -> string option) ->

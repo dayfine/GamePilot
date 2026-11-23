@@ -1,4 +1,5 @@
 type mark = No_mark | Held_item | Mail
+type layout = Single | Double
 
 let mark_name = function
   | No_mark -> "none"
@@ -8,7 +9,9 @@ let mark_name = function
 let slots = 6
 let dialog_id = "party.dialog"
 let background_id = "party.background"
+let edge_id = "party.edge"
 let selected_id n = Printf.sprintf "party.selected%d" n
+let double_selected_id n = Printf.sprintf "party.double_selected%d" n
 let empty_id n = Printf.sprintf "party.empty%d" n
 let red_id n = Printf.sprintf "party.item_red%d" n
 let yellow_id n = Printf.sprintf "party.item_yellow%d" n
@@ -32,6 +35,25 @@ let selected_boxes : Wire.box list =
     { x = 0.985000; y = 0.530000; w = 0.003280; h = 0.099663 };
     { x = 0.985000; y = 0.675000; w = 0.003280; h = 0.099663 };
   ]
+
+(* A double battle's list (pokefirered data/party_menu.h,
+   sDoublePartyMenuWindowTemplate): slots 1 and 2 are big boxes on the left,
+   8-64 and 64-120 down, and slots 3 to 6 rows on the right, 8, 40, 72 and 104
+   down; the borders' edges where the single layout's are. Unverified: no
+   capture of the list in a double battle yet. *)
+let double_selected_boxes : Wire.box list =
+  [
+    { x = 0.035000; y = 0.187500; w = 0.003280; h = 0.070000 };
+    { x = 0.035000; y = 0.537500; w = 0.003280; h = 0.070000 };
+    { x = 0.985000; y = 0.080000; w = 0.003280; h = 0.099663 };
+    { x = 0.985000; y = 0.280000; w = 0.003280; h = 0.099663 };
+    { x = 0.985000; y = 0.480000; w = 0.003280; h = 0.099663 };
+    { x = 0.985000; y = 0.680000; w = 0.003280; h = 0.099663 };
+  ]
+
+(* Left of every box in both layouts: x 2-6 of the background, beside slot 1's
+   box of the single layout and slot 2's of the double one. *)
+let edge_box = Game_pixels.box { x = 2.; y = 80.; w = 4.; h = 40. }
 
 (* PartyEmptySlotDetector::box_for_slot, slots 2 to 6. *)
 let empty_boxes : Wire.box list =
@@ -73,6 +95,8 @@ let slot_probes n =
   let box = mark_box n in
   [
     Solid_color.probe ~id:(selected_id n) (List.nth selected_boxes (n - 1));
+    Solid_color.probe ~id:(double_selected_id n)
+      (List.nth double_selected_boxes (n - 1));
     Color_count.probe ~id:(red_id n) box item_red;
     Color_count.probe ~id:(yellow_id n) box item_yellow;
     Color_count.probe ~id:(mail_id n) box mail_lavender;
@@ -87,17 +111,31 @@ let probes =
   Solid_color.probe ~id:dialog_id { x = 0.028; y = 0.840; w = 0.705; h = 0.010 }
   :: Solid_color.probe ~id:background_id
        { x = 0.028; y = 0.500; w = 0.010; h = 0.250 }
+  :: Solid_color.probe ~id:edge_id edge_box
   :: List.concat_map slot_probes all_slots
 
-let party_menu m =
-  Solid_color.holds m dialog_id (fun s -> Solid_color.is_white s)
-  && Solid_color.holds m background_id
-       (Solid_color.is_solid ~ratio:teal ~max_distance
-          ~max_stddev_sum:max_teal_stddev_sum)
+let teal_at m id =
+  Solid_color.holds m id
+    (Solid_color.is_solid ~ratio:teal ~max_distance
+       ~max_stddev_sum:max_teal_stddev_sum)
+
+(* Slot 2's box of the double layout covers the single layout's background
+   probe; the edge left of it stays teal. *)
+let layout m =
+  if not (Solid_color.holds m dialog_id (fun s -> Solid_color.is_white s)) then
+    None
+  else if teal_at m background_id then Some Single
+  else if teal_at m edge_id then Some Double
+  else None
+
+let party_menu m = Option.is_some (layout m)
 
 let selected_slot m =
+  let id =
+    match layout m with Some Double -> double_selected_id | _ -> selected_id
+  in
   let orange_border n =
-    Solid_color.holds m (selected_id n)
+    Solid_color.holds m (id n)
       (Solid_color.is_solid ~ratio:orange ~max_distance
          ~max_stddev_sum:max_border_stddev_sum)
   in

@@ -13,6 +13,10 @@
 
 type mark = No_mark | Held_item | Mail
 
+(** The list's layout: one big box (slot 1) and five rows, or a double battle's
+    two big boxes (slots 1 and 2) and four rows. *)
+type layout = Single | Double
+
 val mark_name : mark -> string
 val probes : Wire.probe_spec list
 
@@ -41,14 +45,21 @@ val min_mail_lavender : float
 
 (** {1 Readers} *)
 
+val layout : Effects.measurements -> layout option
+(** The party menu's layout; [None] when it does not show. The double layout is
+    unverified: written from pokefirered's window templates, with no capture of
+    it yet. *)
+
 val party_menu : Effects.measurements -> bool
+(** Either layout shows. *)
 
 val selected_slot : Effects.measurements -> int option
-(** The slot with the orange border; [None] when no slot or more than one has
-    it. *)
+(** The slot with the orange border, in either layout; [None] when no slot or
+    more than one has it. *)
 
 val slot_empty : Effects.measurements -> int -> bool
-(** Slot 2 to 6 shows an empty frame. Slot 1 is never empty: false. *)
+(** Slot 2 to 6 shows an empty frame (the single layout's). Slot 1 is never
+    empty: false. *)
 
 val members : Effects.measurements -> int
 (** Slots before the first empty one (1 to 6). *)

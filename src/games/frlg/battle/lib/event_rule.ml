@@ -9,12 +9,14 @@ let start ~at_ms =
 
 type step = Report of Battle_driver.event | Press of Wire.button | Look
 
+let arrow_press_gap_ms = 500.
 let press_gap_ms = 1500.
+let stuck_text_ms = 6000.
 let over_after_ms = 3000.
 
-(* A press once the screen has held since the last one. *)
-let press_held state button ~at_ms =
-  if at_ms -. state.last_press_ms >= press_gap_ms then
+(* A press once the screen has held [gap_ms] since the last one. *)
+let press_held ?(gap_ms = press_gap_ms) state button ~at_ms =
+  if at_ms -. state.last_press_ms >= gap_ms then
     ({ state with last_press_ms = at_ms }, Press button)
   else (state, Look)
 
@@ -41,4 +43,7 @@ let next state (facts : Battle_look.facts) ~at_ms =
       in
       (seen, Report event)
   | Level_up -> press_held seen Wire.A ~at_ms
-  | Move_menu | Bag | Battle_text -> press_held seen Wire.B ~at_ms
+  | Move_menu | Bag -> press_held seen Wire.B ~at_ms
+  | Text_arrow -> press_held ~gap_ms:arrow_press_gap_ms seen Wire.B ~at_ms
+  | Evolution -> (seen, Look)
+  | Battle_text -> press_held ~gap_ms:stuck_text_ms seen Wire.B ~at_ms
