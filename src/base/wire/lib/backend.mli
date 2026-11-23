@@ -1,5 +1,5 @@
-(** The [hello] and [backend.load_state] results: what the daemon drives and
-    where its clock stands. *)
+(** The [hello], [backend.load_state] and [backend.save_*] results: what the
+    daemon drives and where its clock stands. *)
 
 type json = Yojson.Safe.t
 
@@ -32,3 +32,9 @@ type load_state_result = { seq : int; load : int }
 
 val load_state_result_of_json : json -> load_state_result
 val json_of_load_state_result : load_state_result -> json
+
+val save_result_of_json : json -> int
+(** [{"seq": n}], the answer to [backend.save_state] and [backend.save_frame].
+*)
+
+val json_of_save_result : int -> json

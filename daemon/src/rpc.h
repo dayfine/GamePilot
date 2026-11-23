@@ -68,6 +68,11 @@ struct LoadStateParams {
   std::string path;
 };
 
+// backend.save_state and backend.save_frame.
+struct SaveParams {
+  std::string path;
+};
+
 struct UploadTemplateParams {
   std::string png;  // the PNG bytes, decoded from base64
 };
@@ -109,6 +114,7 @@ Request decode_request(const pa::JsonValue& message);
 // Each throws RpcError kInvalidParams naming the bad field.
 HelloParams decode_hello(const pa::JsonObject& params);
 LoadStateParams decode_load_state(const pa::JsonObject& params);
+SaveParams decode_save(const pa::JsonObject& params);
 UploadTemplateParams decode_upload_template(const pa::JsonObject& params);
 SubscribeParams decode_subscribe(const pa::JsonObject& params);
 UnsubscribeParams decode_unsubscribe(const pa::JsonObject& params);
@@ -123,6 +129,7 @@ pa::JsonValue error_message(const pa::JsonValue& id, const RpcError& error);
 
 pa::JsonObject hello_result(const BackendInfo& backend);
 pa::JsonObject load_state_result(std::int64_t seq, std::int64_t load);
+pa::JsonObject save_result(std::int64_t seq);
 pa::JsonObject upload_template_result(const std::string& hash);
 pa::JsonObject subscribe_result(const std::vector<std::string>& ids);
 pa::JsonObject unsubscribe_result(const std::vector<std::string>& ids);

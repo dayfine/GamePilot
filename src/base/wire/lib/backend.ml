@@ -84,3 +84,6 @@ let load_state_result_of_json j =
 
 let json_of_load_state_result { seq; load } =
   `Assoc [ ("seq", `Int seq); ("load", `Int load) ]
+
+let save_result_of_json j = int_field "backend.save.result" "seq" j
+let json_of_save_result seq = `Assoc [ ("seq", `Int seq) ]

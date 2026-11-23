@@ -159,6 +159,11 @@ type error = Jsonrpc.error = {
 type call = Jsonrpc.call =
   | Hello of { protocol : int; client : string }
   | Load_state of { path : string }
+  | Save_state of { path : string }
+      (** Saves the emulator's state to [path] (a dev-loop op: a checkpoint's
+          end saved as the next one's start). *)
+  | Save_frame of { path : string }
+      (** Writes the current frame to [path] as a PNG (a failure frame). *)
   | Upload_template of { png : string }
       (** [png]: the PNG file's bytes (base64 on the wire). *)
   | Subscribe of probe_spec list
@@ -205,6 +210,12 @@ type load_state_result = Backend.load_state_result = { seq : int; load : int }
 
 val load_state_result_of_json : json -> load_state_result
 val json_of_load_state_result : load_state_result -> json
+
+val save_result_of_json : json -> int
+(** The [seq] of the frame a [backend.save_state] or [backend.save_frame] saved.
+*)
+
+val json_of_save_result : int -> json
 
 val upload_template_result_of_json : json -> string
 (** The template's hash: lowercase hex SHA-256 of the PNG bytes. *)

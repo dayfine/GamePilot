@@ -191,6 +191,10 @@ LoadStateParams decode_load_state(const pa::JsonObject& params) {
   return LoadStateParams{require_string(params, "path")};
 }
 
+SaveParams decode_save(const pa::JsonObject& params) {
+  return SaveParams{require_string(params, "path")};
+}
+
 UploadTemplateParams decode_upload_template(const pa::JsonObject& params) {
   std::optional<std::string> png = decode_base64(require_string(params, "png"));
   if (!png) {
@@ -352,6 +356,12 @@ pa::JsonObject load_state_result(std::int64_t seq, std::int64_t load) {
   pa::JsonObject result;
   result["seq"] = seq;
   result["load"] = load;
+  return result;
+}
+
+pa::JsonObject save_result(std::int64_t seq) {
+  pa::JsonObject result;
+  result["seq"] = seq;
   return result;
 }
 

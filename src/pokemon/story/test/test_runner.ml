@@ -25,6 +25,23 @@ let run script =
   in
   log () ^ "\n" ^ result
 
+let last_line text = text |> String.split_on_char '\n' |> List.rev |> List.hd
+
+(* A run with a declared end; the log's last three lines. *)
+let run_to_end script =
+  let game, log = Scripted_game.make script in
+  let end_at : Pose.grid =
+    { map = "Town"; tiles = [ tile 4 2 ]; facing = None }
+  in
+  let result =
+    match Runner.run ~end_at game checkpoint with
+    | Ok () -> "passed"
+    | Error failure -> "stopped: " ^ Failure.to_string failure
+  in
+  let lines = String.split_on_char '\n' (log ()) in
+  let tail = List.filteri (fun i _ -> i >= List.length lines - 2) lines in
+  String.concat "\n" (tail @ [ result ])
+
 let mart = { Scripted_game.script with actions = [ "mart" ] }
 
 let at_door facing : Pose.observed =
@@ -131,6 +148,38 @@ passed|};
           run { mart with read_after = [ ("to_door", at_door None) ] }
           |> String.split_on_char '\n' |> List.rev |> List.hd);
       expectation = "passed";
+    };
+    {
+      name = "the player at the declared end: holds";
+      input =
+        (fun () ->
+          run_to_end
+            {
+              mart with
+              read_after =
+                [ ("leave", { (at_door None) with at_tile = tile 4 2 }) ];
+            });
+      expectation =
+        "[Story] cp end Town (4, 2): holds\n[Story] cp: done\npassed";
+    };
+    {
+      name = "the player elsewhere at the end: stops at the end";
+      input =
+        (fun () ->
+          run_to_end { mart with read_after = [ ("leave", at_door None) ] });
+      expectation =
+        "[Story] cp #4 leave: done\n\
+         [Story] cp end Town (4, 2): failed: declared end at Town (4, 2), but \
+         the game reads Town (4, 0)\n\
+         stopped: cp event 5 (end): declared end at Town (4, 2), but the game \
+         reads Town (4, 0)";
+    };
+    {
+      name = "a game that cannot tell where the player ends: stops";
+      input = (fun () -> run_to_end mart |> last_line);
+      expectation =
+        "stopped: cp event 5 (end): declared end at Town (4, 2), but the game \
+         reads no position";
     };
   ]
 

@@ -220,6 +220,8 @@ let load_state t path =
   t.latest <- None;
   r.seq
 
+let save t request = Wire.save_result_of_json (call t request)
+
 (* The first frame after a subscribe carries every subscribed result. *)
 let first_results_timeout_ms = 1000
 
@@ -258,6 +260,10 @@ let answer : type a. t -> a Effect.t -> (unit -> a) option =
   | Effects.Now -> Some (fun () -> Option.value t.now ~default:0.)
   | Effects.Read -> Some (fun () -> t.latest)
   | Effects.Load_state path -> Some (fun () -> load_state t path)
+  | Effects.Save_state path ->
+      Some (fun () -> save t (Wire.Save_state { path }))
+  | Effects.Save_frame path ->
+      Some (fun () -> save t (Wire.Save_frame { path }))
   | Effects.Upload_template png -> Some (fun () -> upload_template t png)
   | Effects.Subscribe probes -> Some (fun () -> subscribe t probes)
   | Effects.Unsubscribe ids -> Some (fun () -> unsubscribe t ids)

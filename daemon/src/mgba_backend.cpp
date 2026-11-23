@@ -184,6 +184,12 @@ std::int64_t MgbaBackend::load_state(const std::string& path) {
   return seq_;
 }
 
+std::int64_t MgbaBackend::save_state(const std::string& path) {
+  // SAVE replies with the current frame and leaves the grant as it is.
+  parse_ok_frame(command("SAVE " + path));
+  return seq_;
+}
+
 void MgbaBackend::release() {
   if (!socket_.valid()) {
     return;

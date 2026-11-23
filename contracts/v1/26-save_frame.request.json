@@ -1,0 +1,8 @@
+{
+  "jsonrpc": "2.0",
+  "id": 12,
+  "method": "backend.save_frame",
+  "params": {
+    "path": "/Users/example/FRLGLab/gamepilot-runs/2026-11-23-mg-04/run-1/failure.png"
+  }
+}

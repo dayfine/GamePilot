@@ -20,6 +20,8 @@ let json_of_error { code; message; data } =
 type call =
   | Hello of { protocol : int; client : string }
   | Load_state of { path : string }
+  | Save_state of { path : string }
+  | Save_frame of { path : string }
   | Upload_template of { png : string }
   | Subscribe of Probe.probe_spec list
   | Unsubscribe of string list
@@ -41,6 +43,8 @@ type message =
 let method_name = function
   | Hello _ -> "hello"
   | Load_state _ -> "backend.load_state"
+  | Save_state _ -> "backend.save_state"
+  | Save_frame _ -> "backend.save_frame"
   | Upload_template _ -> "probe.upload_template"
   | Subscribe _ -> "subscribe"
   | Unsubscribe _ -> "unsubscribe"
@@ -73,6 +77,10 @@ let call_of_json name params =
   | "hello" -> hello_of_params what params
   | "backend.load_state" ->
       Load_state { path = string_field what "path" params }
+  | "backend.save_state" ->
+      Save_state { path = string_field what "path" params }
+  | "backend.save_frame" ->
+      Save_frame { path = string_field what "path" params }
   | "probe.upload_template" -> upload_template_of_params what params
   | "subscribe" ->
       Subscribe
@@ -85,7 +93,8 @@ let call_of_json name params =
 let params_of_call = function
   | Hello { protocol; client } ->
       `Assoc [ ("protocol", `Int protocol); ("client", `String client) ]
-  | Load_state { path } -> `Assoc [ ("path", `String path) ]
+  | Load_state { path } | Save_state { path } | Save_frame { path } ->
+      `Assoc [ ("path", `String path) ]
   | Upload_template { png } -> `Assoc [ ("png", `String (Base64.encode png)) ]
   | Subscribe probes ->
       `Assoc [ ("probes", `List (List.map Probe.json_of_probe_spec probes)) ]

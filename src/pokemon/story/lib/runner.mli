@@ -12,4 +12,12 @@
     game knows what its save already holds. The runner neither saves nor
     reloads: the caller (or {!Repeat_until}) decides that. *)
 
-val run : Game.t -> Plan.checkpoint -> (unit, Failure.t) result
+val run :
+  ?end_at:Pose.grid -> Game.t -> Plan.checkpoint -> (unit, Failure.t) result
+(** With [end_at] (the checkpoint's declared end, {!Checkpoint_end.declared}),
+    after the last event the player must read there, or the run fails with
+    {!Failure.Not_at_end} (also when the game cannot tell where they are),
+    logged as ["[Story] <checkpoint> end <pose>: holds"] or [": failed: ..."].
+    The C++ end check is [check_postconditions()] (map and tile) in
+    [Pokemon/AutoStory/Pokemon_StoryPostconditionCheck.cpp] on the fork's
+    [frlg/lean]. *)
