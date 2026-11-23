@@ -3,9 +3,11 @@
   "method": "frame",
   "params": {
     "seq": 1201,
+    "load": 1,
     "t_ms": 20113.6,
     "probes": {
       "menu_panel": {
+        "kind": "core.color_stats@1",
         "mean": [248.1, 248.0, 247.9],
         "stddev": [6.2, 6.1, 6.3]
       }

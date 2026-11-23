@@ -37,8 +37,11 @@ program's own failure. Waiting again past that point is a divergence.
 
 ## Open points found
 
-- Frames after `backend.load_state` cannot be told apart from frames already in flight before it; a
-  load counter in `frame` would fix it (programs agent, item 6).
-- Responses don't name their method; probe results don't name their kind (decoded by shape).
-- Replay does not yet check that the program sent every request the recorded run sent.
 - No `race` effect yet.
+
+Closed in wire protocol v1.1 (`contracts/v1/README.md`): `frame` and the `backend.load_state` reply carry
+a `load` counter and the session drops frames from before the last load; responses stay unnamed (the
+client pairs them with requests by id, as JSON-RPC does); probe results carry their `kind`; replay
+reports a run that ends without sending every recorded request as a divergence naming the first one,
+unless one of its waits timed out at a recorded point (then the program is on its own failure path, so
+the broken reader above still reads as `FAIL menu did not open`).
