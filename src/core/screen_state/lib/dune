@@ -1,0 +1,4 @@
+(library
+ (name screen_state)
+ (public_name gamepilot.screen_state)
+ (libraries gamepilot.wire))

@@ -194,3 +194,43 @@ let () =
   | exception Replay.Divergence e ->
       print_endline e;
       expect "missed stop -> divergence" (contains e "cancel (id 4)")
+
+(* [probe.upload_template]: each PNG goes up once per connection, and a replay
+   checks the bytes the program uploads against the recorded ones. *)
+
+let hash_a = String.make 64 'a'
+
+let upload_png_a =
+  [
+    {|{"dir":"in","t_ms":2,"msg":{"jsonrpc":"2.0","id":3,"method":"probe.upload_template","params":{"png":"cG5nLUE="}}}|};
+    Printf.sprintf
+      {|{"dir":"out","t_ms":2,"msg":{"jsonrpc":"2.0","id":3,"result":{"template":"%s"}}}|}
+      hash_a;
+  ]
+
+let upload_twice second () =
+  ignore (Effects.load_state "state.ss" : int);
+  let first = Effects.upload_template "png-A" in
+  (first, Effects.upload_template second)
+
+(* The second upload of the same bytes sends nothing (the log has one
+   request) and returns the first hash. *)
+let () =
+  let log = Replay.log_of_lines (hello @ upload_png_a) in
+  let first, second = Replay.run log (upload_twice "png-A") in
+  expect "same template twice -> one upload, same hash"
+    (first = hash_a && second = hash_a)
+
+(* A program that uploads other bytes than the live run did diverges. *)
+let () =
+  let log = Replay.log_of_lines (hello @ upload_png_a) in
+  match
+    Replay.run log (fun () ->
+        ignore (Effects.load_state "state.ss" : int);
+        Effects.upload_template "png-B")
+  with
+  | _ -> failwith "FAILED replay accepted an upload of other bytes"
+  | exception Replay.Divergence e ->
+      print_endline e;
+      expect "other template bytes -> divergence"
+        (contains e "line 5" && contains e "template differs")

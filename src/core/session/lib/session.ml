@@ -21,6 +21,8 @@ type t = {
   mutable now : float option;
   responses : (int, (Wire.json, Wire.error) result) Hashtbl.t;
   dones : (string, Wire.batch_done) Hashtbl.t;
+  templates : (Digest.t, Effects.template_hash) Hashtbl.t;
+      (** uploaded on this connection, by the MD5 of their PNG bytes *)
 }
 
 (* Takes one event from the transport into the session; returns the frame if
@@ -139,6 +141,20 @@ let race t commands stop =
       check_reply ();
       raced
 
+(* The daemon keeps uploads until the connection closes, so each PNG goes up
+   once. *)
+let upload_template t png =
+  let key = Digest.string png in
+  match Hashtbl.find_opt t.templates key with
+  | Some hash -> hash
+  | None ->
+      let hash =
+        Wire.upload_template_result_of_json
+          (call t (Wire.Upload_template { png }))
+      in
+      Hashtbl.replace t.templates key hash;
+      hash
+
 let await t pred timeout_ms =
   let timeout = float_of_int timeout_ms in
   let wall_deadline = t.transport.wall_ms () +. timeout +. stall_slack_ms in
@@ -195,6 +211,8 @@ let handle t f =
                   t.load <- r.load;
                   t.latest <- None;
                   r.seq)
+          | Effects.Upload_template png ->
+              answer (fun () -> upload_template t png)
           | Effects.Subscribe probes ->
               answer (fun () ->
                   Wire.subscribe_result_of_json (call t (Wire.Subscribe probes)))
@@ -212,6 +230,7 @@ let run transport f =
       now = None;
       responses = Hashtbl.create 8;
       dones = Hashtbl.create 8;
+      templates = Hashtbl.create 8;
     }
   in
   hello t;
