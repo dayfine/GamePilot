@@ -14,7 +14,7 @@ let default_max_interruptions = 5
 (* How soon after a hold starts a sign's message shows, at the latest, when the
    hold bumps into it: about two walking tiles, however fast the player moves.
    Running, 3 tiles were 399ms, and the Pallet Town sign spoke 353 to 726ms
-   into each hold south, which was held into it 6 times (console B,
+   into each hold south, which was held into it 6 times (Switch,
    2026-11-13 18:29, 12.03 pallet_shore). *)
 let blocked_message_window_ms = 800
 

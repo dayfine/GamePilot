@@ -42,18 +42,19 @@ GamePilot automates games through three layers (design: `docs/design/Layered-Aut
   (`data/games/<game>/maps`), never copied; a map change lands there first. A program's own
   checkpoint plans live with it (`games/<game>/programs/<program>/plans/`) and are refined here.
 - **`gamepilot/base` is the whole overlay**: fork `main` plus the fewest, smallest patches
-  GamePilot needs (today one: `CoreLib` exports its usage requirements). The daily sync
-  (`~/Projects/pa-tools/sync_branches.py`) merges fork `main` into it; it is never merged back.
+  GamePilot needs (today one: `CoreLib` exports its usage requirements). A daily sync
+  merges fork `main` into it; it is never merged back.
   A patch goes there as one commit with a message saying why GamePilot needs it, then the
   submodule is bumped here. Prefer a change in GamePilot over a patch.
 - The daemon uses `CoreLib` only, through upstream's `SourceFiles.cmake` and `CoreLib.cmake`.
   Vision is OpenCV. Paths go through `Common/Cpp/Filesystem` (UTF-8 on Windows).
 - Nothing here is published upstream. PRs: `--repo dayfine/GamePilot --draft`.
 - The FireRed ROM, its path and its hash never enter this repo or any log.
-- Console B is shared with the Arduino-Source lab app under the one-train rule (`lablock.sh`).
+- The Switch (a Switch with a capture card and a controller board) is shared with other
+  automation: only one program may drive the console at a time.
+- Machine-specific paths come from environment variables (`GAMEPILOT_*`, see `README.md`),
+  never from a home path in code, docs or tests.
 
 ## Agents
 
-Harness from `dayfine/agent-harness` (`.agents/`, `dev/lib/`, `bin/`). `pr-maintenance` and
-`reviewer` were imported from Arduino-Source's `agents` branch and still name its paths in places;
-adapt them before first use.
+Harness from `dayfine/agent-harness` (`.agents/rules/`, `dev/lib/`, `bin/`).

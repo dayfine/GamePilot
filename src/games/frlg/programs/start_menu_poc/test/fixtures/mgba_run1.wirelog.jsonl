@@ -1,6 +1,6 @@
 {"dir":"in","msg":{"id":1,"jsonrpc":"2.0","method":"hello","params":{"client":"gamepilot-programs/0.1","protocol":1}},"t_ms":1872.5}
 {"dir":"out","msg":{"id":1,"jsonrpc":"2.0","result":{"backend":{"frame_rate":59.7275,"game_code":"BPRE","game_size":{"height":160,"width":240},"height":160,"kind":"mgba","viewport":{"h":1.0,"w":1.0,"x":0.0,"y":0.0},"width":240},"daemon":"gamepilot-daemon/0.1","probe_kinds":["core.color_stats@1"],"protocol":1}},"t_ms":1872.5}
-{"dir":"in","msg":{"id":2,"jsonrpc":"2.0","method":"backend.load_state","params":{"path":"~/FRLGLab/mgba/gamepilot/states/overworld.ss"}},"t_ms":1872.6}
+{"dir":"in","msg":{"id":2,"jsonrpc":"2.0","method":"backend.load_state","params":{"path":"~/.local/share/gamepilot/states/overworld.ss"}},"t_ms":1872.6}
 {"dir":"out","msg":{"id":2,"jsonrpc":"2.0","result":{"load":1,"seq":59040}},"t_ms":1876.1}
 {"dir":"in","msg":{"id":3,"jsonrpc":"2.0","method":"subscribe","params":{"probes":[{"box":{"h":0.5,"w":0.04,"x":0.94,"y":0.05},"delivery":"every","id":"menu_panel","kind":"core.color_stats@1"}]}},"t_ms":1876.3}
 {"dir":"out","msg":{"id":3,"jsonrpc":"2.0","result":{"subscribed":["menu_panel"]}},"t_ms":1876.3}

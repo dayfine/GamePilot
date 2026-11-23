@@ -14,8 +14,9 @@ type outcome =
   | Did_not_close
 
 val default_state : string
-(** [overworld.ss] under [~/FRLGLab/mgba/gamepilot/states]; [~] is [HOME] or, on
-    Windows, [USERPROFILE]. *)
+(** [overworld.ss] under [$GAMEPILOT_STATES], else under
+    [~/.local/share/gamepilot/states]; [~] is [HOME] or, on Windows,
+    [USERPROFILE]. *)
 
 val timeout_ms : int
 (** Per await: 3000. *)

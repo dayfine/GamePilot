@@ -32,13 +32,13 @@ type t = {
 }
 
 val bdsp : t
-(** Brilliant Diamond and Shining Pearl, measured on console B. The camera
-    tilts, so a row takes longer than a column. D-pad taps move exactly a tile
-    each, while a held run overshoots about 3 tiles in 10 (2026-11-09,
-    Jubilife), so open legs are tapped. *)
+(** Brilliant Diamond and Shining Pearl, measured on a Switch. The camera tilts,
+    so a row takes longer than a column. D-pad taps move exactly a tile each,
+    while a held run overshoots about 3 tiles in 10 (2026-11-09, Jubilife), so
+    open legs are tapped. *)
 
 val frlg : t
-(** FireRed and LeafGreen, measured on console B: a walking tile is 16 frames,
+(** FireRed and LeafGreen, measured on a Switch: a walking tile is 16 frames,
     running 8, and a held leg stops where its time says, so open legs on foot
     are timed holds; on the Bicycle they are counted in taps, 40 ms at one per
     100 ms (at a 60 ms period one tap in 12 drops). The walker's holds count no
