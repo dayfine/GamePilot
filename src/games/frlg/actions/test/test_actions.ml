@@ -1,0 +1,80 @@
+(* Talk, Fly and a checkpoint through the story runner on FireRed's Game.t,
+   against a scripted screen read through the FRLG readers from recorded
+   mGBA frames (Scripted_screen). *)
+
+open Frlg_actions
+open Frlg_overworld_fixtures
+module S = Scripted_screen
+
+let outcome = function
+  | Ok () -> "ok"
+  | Error cause -> "failed " ^ Story.Failure.cause_to_string cause
+
+let run ?react f =
+  let screen = S.create ?react () in
+  let result = S.run screen f in
+  (screen, result)
+
+(* A presses: [dialog_ms] of text, then the overworld; [then_] after it. *)
+let talk_screen ?(then_ = S.Overworld) ~dialog_ms screen (p : S.press) =
+  if p.buttons = [ Wire.A ] then (
+    S.show screen ~at_ms:(p.at_ms + 200) S.Dialog;
+    S.show screen ~at_ms:(p.at_ms + 200 + dialog_ms) then_)
+
+let talk ?then_ () =
+  let screen, result =
+    run ~react:(talk_screen ?then_ ~dialog_ms:2000) (Talk.talk ~log:ignore)
+  in
+  Printf.sprintf "%s after %d ms; %s" (outcome result) screen.S.clock_ms
+    (S.presses_text screen)
+
+(* Start opens the menu on row [row]; A on POKEMON the party; the last A, on
+   the fly map, the warp's black, then the town. *)
+let fly_screen ~row ~fade screen (p : S.press) =
+  match p.buttons with
+  | [ Wire.Start ] -> S.show screen ~at_ms:(p.at_ms + 100) (S.Start_menu row)
+  | [ Wire.Up; Wire.Left ] -> S.show screen ~at_ms:p.at_ms S.Overworld
+  | [ Wire.A ] -> (
+      match S.screen_at screen p.at_ms with
+      | S.Start_menu _ -> S.show screen ~at_ms:(p.at_ms + 300) S.Party
+      | S.Overworld when fade ->
+          S.show screen ~at_ms:(p.at_ms + 500) S.Black;
+          S.show screen ~at_ms:(p.at_ms + 3000) S.Overworld
+      | _ -> ())
+  | _ -> ()
+
+let fly ?(row = 1) ?(fade = true) () =
+  let plan =
+    {
+      Fly.town =
+        Option.get
+          (Fly_towns.find (Result.get_ok (Fly_towns.load ())) "PewterCity");
+      slot = 3;
+      menu_row = 2;
+    }
+  in
+  let screen, result =
+    run ~react:(fly_screen ~row ~fade) (fun () -> Fly.fly ~log:ignore plan)
+  in
+  Printf.sprintf "%s; %s" (outcome result) (S.presses_text screen)
+
+let case name input expectation = { Case_table.name; input; expectation }
+
+let () =
+  Case_table.run "actions"
+    [
+      case "a talk ends once the overworld is quiet after the text" talk
+        "ok after 10180 ms; A, B x7";
+      case "a talk ends at the trainer's battle after it" (talk ~then_:S.Battle)
+        "ok after 3380 ms; A, B x2";
+      case "Fly: POKEMON, slot 3, FLY, the town, the landing" (fly ~row:1)
+        "ok; Start, A, down x2, A, down, A, up+left 3000, right x4, down x4, \
+         A, B x8";
+      case "Fly from a Start menu on its top row" (fly ~row:0)
+        "ok; Start, down, A, down x2, A, down, A, up+left 3000, right x4, down \
+         x4, A, B x8";
+      case "Fly with no warp: the settle times out" (fly ~fade:false)
+        "failed not_settled: fly to PewterCity: no fade or banner within 120 \
+         s, so we are not where the step goes (map mismatch).; Start, A, down \
+         x2, A, down, A, up+left 3000, right x4, down x4, A, B x89";
+    ]

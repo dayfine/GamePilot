@@ -1,0 +1,102 @@
+(* Walking planned routes against a scripted screen (Scripted_screen): the
+   behaviour of the fork's PokemonFRLG_OverworldWalk_Tests (a warp's fade
+   waited out, a wild battle fled and the leg to a wall walked again, a
+   trainer's battle after a message stops the walk, a warp with no fade
+   fails) on Pallet Town's maps, read through the FRLG readers from recorded
+   mGBA frames. *)
+
+open Frlg_overworld_fixtures
+open Frlg_world
+open Frlg_overworld
+module S = Frlg_overworld_fixtures.Scripted_screen
+
+let fled = ref 0
+
+(* Fleeing takes the screen back to the overworld. *)
+let walker screen log : Route_walk.t =
+  {
+    world = pallet;
+    gait = Walking;
+    flee =
+      (fun () ->
+        incr fled;
+        S.show screen ~at_ms:screen.S.clock_ms S.Overworld);
+    log = (fun line -> log := line :: !log);
+  }
+
+let target map tiles : Story.Pose.grid =
+  {
+    map;
+    tiles = List.map (fun (x, y) -> { Grid_maps.Tile_pos.x; y }) tiles;
+    facing = None;
+  }
+
+let at_text (at : Route_walk.at) =
+  place_text pallet at.place
+  ^ Option.fold ~none:""
+      ~some:(fun d -> " " ^ Grid_maps.Direction.name d)
+      at.facing
+
+(* Plans from [from] to [goal] and walks it on a screen that [react]s to the
+   presses; the outcome, then the presses. *)
+let walk ?react ~from goal () =
+  let screen = S.create ?react () in
+  let log = ref [] in
+  fled := 0;
+  let legs = Result.get_ok (Route_target.plan pallet ~from ~facing:None goal) in
+  let outcome =
+    S.run screen (fun () ->
+        Route_walk.walk (walker screen log) { place = from; facing = None } legs)
+  in
+  let outcome =
+    match outcome with
+    | Ok at -> "at " ^ at_text at
+    | Error cause -> "failed " ^ Story.Failure.cause_to_string cause
+  in
+  Printf.sprintf "%s; fled %d; %s" outcome !fled (S.presses_text screen)
+
+(* The black of a warp after the hold onto it, then the new map. *)
+let fade_after_hold screen (p : S.press) =
+  if S.holds_dpad p && p.hold_ms > 160 then (
+    let ends = p.at_ms + p.hold_ms in
+    S.show screen ~at_ms:(ends + 50) S.Black;
+    S.show screen ~at_ms:(ends + 450) S.Overworld)
+
+(* A screen [screen] shows [after_ms] into the first hold of [nth]. *)
+let during_hold ~nth ~after_ms what screen (p : S.press) =
+  if S.holds_dpad p && p.index = nth then
+    S.show screen ~at_ms:(p.at_ms + after_ms) what
+
+let in_house = place pallet "PalletTown_PlayersHouse_1F" 4 6
+let route1_top = place pallet "Route1" 12 5
+let case name input expectation = { Case_table.name; input; expectation }
+
+let () =
+  Case_table.run "route_walk"
+    [
+      case "out of the house: the exit mat's fade is waited out"
+        (walk ~react:fade_after_hold ~from:in_house
+           (target "PalletTown" [ (6, 8) ]))
+        "at PalletTown (6, 8) south; fled 0; down, down 667";
+      case "no fade after the hold onto the warp fails the walk"
+        (walk ~from:in_house (target "PalletTown" [ (6, 8) ]))
+        "failed no_warp_fade: no fade after the hold onto the warp; fled 0; \
+         down, down 667";
+      case "a wild battle in the grass is fled, and the leg walked on"
+        (walk
+           ~react:(during_hold ~nth:1 ~after_ms:1000 S.Battle)
+           ~from:(place pallet "Route1" 14 3)
+           (target "Route1" [ (14, 12) ]))
+        "at Route1 (14, 12) south; fled 1; down, down 2269 x2";
+      case "a message, then a trainer's battle: the walk stops"
+        (walk
+           ~react:(fun screen p ->
+             during_hold ~nth:1 ~after_ms:300 S.Dialog screen p;
+             if p.buttons = [ Wire.B ] then (
+               S.show screen ~at_ms:(p.at_ms + 100) S.Overworld;
+               S.show screen ~at_ms:(p.at_ms + 2000) S.Battle))
+           ~from:route1_top
+           (target "Route1" [ (7, 24) ]))
+        "failed trainer_battle: a battle started after a message on the \
+         overworld; fled 0; up, up 400, B";
+    ]

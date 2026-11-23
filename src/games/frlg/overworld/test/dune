@@ -1,0 +1,31 @@
+(library
+ (name frlg_overworld_fixtures)
+ (modules scripted_screen frlg_world)
+ (libraries
+  gamepilot.wire
+  gamepilot.effects
+  gamepilot.grid_maps
+  gamepilot.grid_planning
+  gamepilot.frlg_overworld))
+
+(rule
+ (copy ../../readers/test/fixtures/mgba.probes.jsonl mgba.probes.jsonl))
+
+(rule
+ (copy
+  ../../readers/test/fixtures/menus.mgba.probes.jsonl
+  menus.mgba.probes.jsonl))
+
+(tests
+ (names test_route_target test_route_walk)
+ (modules test_route_target test_route_walk)
+ (deps mgba.probes.jsonl menus.mgba.probes.jsonl)
+ (libraries
+  gamepilot.case_table
+  gamepilot.wire
+  gamepilot.effects
+  gamepilot.grid_maps
+  gamepilot.grid_planning
+  gamepilot.story
+  gamepilot.frlg_overworld
+  frlg_overworld_fixtures))

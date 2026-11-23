@@ -21,6 +21,13 @@ val battle_menu : Effects.measurements -> bool
 (** The action menu beside a short teal box (any language; Japanese has its own
     boxes). The Safari Zone's BALL / BAIT / ROCK / RUN menu is the same box. *)
 
+val player_box : Effects.measurements -> bool
+(** The player's HP box (bottom right): gone once the player's battler fainted.
+*)
+
+val foe_box : Effects.measurements -> bool
+(** The foe's HP box (top left). *)
+
 val hp_box : Effects.measurements -> bool
 (** The player's or the foe's HP box, on a battle background that is neither
     white nor the sand of a battle in a cave. *)
