@@ -20,4 +20,4 @@
   test_gate_state
   test_move_mechanics
   test_frlg_maps)
- (libraries yojson gamepilot.grid_maps))
+ (libraries gamepilot.case_table yojson gamepilot.grid_maps))

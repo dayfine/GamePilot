@@ -1,0 +1,3 @@
+(library
+ (name case_table)
+ (public_name gamepilot.case_table))

@@ -200,7 +200,7 @@ let same_as_v1 input v1_fields =
 
 let run_case { name; input; expectation } =
   let input = document input in
-  Check.report name
+  Case_table.report name
     (match (expectation, Map_file.parse ~source_name input) with
     | Parses, Ok _ -> Ok ()
     | Same_as_v1 v1_fields, Ok _ -> same_as_v1 input v1_fields
@@ -211,4 +211,4 @@ let run_case { name; input; expectation } =
 
 let () =
   List.iter run_case (pickup_cases @ format_cases @ position_cases @ group_cases);
-  Check.finish ()
+  Case_table.finish ()

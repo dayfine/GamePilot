@@ -169,6 +169,6 @@ let cases =
 let () =
   List.iter
     (fun { name; input; expectation } ->
-      Check.report name (Check.equal ~expected:expectation (input ())))
+      Case_table.report name (Check.equal ~expected:expectation (input ())))
     cases;
-  Check.finish ()
+  Case_table.finish ()

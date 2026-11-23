@@ -1,4 +1,4 @@
 (tests
  (names test_route_log test_leg_trace test_console_failure)
- (modules check test_route_log test_leg_trace test_console_failure)
- (libraries gamepilot.grid_maps gamepilot.grid_trace))
+ (modules test_route_log test_leg_trace test_console_failure)
+ (libraries gamepilot.case_table gamepilot.grid_maps gamepilot.grid_trace))

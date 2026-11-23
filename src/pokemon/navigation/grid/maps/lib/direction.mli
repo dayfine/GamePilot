@@ -14,3 +14,6 @@ val of_name : string -> t option
 
 val is_across : t -> bool
 (** East or west: along a row rather than a column. *)
+
+val opposite : t -> t
+(** The way back: north for south, east for west. *)
