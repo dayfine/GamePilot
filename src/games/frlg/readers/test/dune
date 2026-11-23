@@ -25,3 +25,14 @@
   gamepilot.case_table
   gamepilot.screen_state
   gamepilot.frlg_readers))
+
+(test
+ (name test_battle_readers)
+ (modules test_battle_readers)
+ (deps
+  (glob_files fixtures/*.jsonl))
+ (libraries
+  gamepilot.wire
+  gamepilot.effects
+  gamepilot.case_table
+  gamepilot.frlg_readers))

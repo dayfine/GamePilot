@@ -17,7 +17,7 @@ shots captures/summary-20261102/sm3_party.png|captures/sm3_party__party-slot1-me
 shots captures/summary-20261102/sm3_s1.png|captures/sm3_s1__summary1.png
 shots captures/summary-20261102/sm3_s2.png|captures/sm3_s2__summary2.png
 shots captures/summary-20261102/sm3_s3.png|captures/sm3_s3__summary3.png
-shots captures/summary-20261102/sm3_s3a.png|captures/sm3_s3a__summary3.png
+shots captures/summary-20261102/sm3_s3a.png|captures/sm3_s3a__summary3-moverow0.png
 shots captures/summary-20261102/sm3_sub.png|captures/sm3_sub__slot1-members1.png
 shots captures/pc-deposit-20261102/sv3_start.png|captures/sv3_start__start4.png
 shots captures/pc-deposit-20261102/sv4_q1.png|captures/sv4_q1__none.png
@@ -80,6 +80,9 @@ clt PokemonFRLG/StatsReader/Page2/scyther_1_eng.png|StatsReader/Page2/scyther_1_
 clt PokemonFRLG/StatsReader/Page2/venonat_1_eng.jpg|StatsReader/Page2/venonat_1_eng__summary2.png
 clt PokemonFRLG/SummaryMovesReader/Info_eng.png|SummaryMovesReader/Info_eng__summary1.png
 clt PokemonFRLG/SummaryMovesReader/KnownMoves_eng.png|SummaryMovesReader/KnownMoves_eng__summary3.png
-clt PokemonFRLG/SummaryMovesReader/MoveDetail_eng.png|SummaryMovesReader/MoveDetail_eng__summary3.png
+clt PokemonFRLG/SummaryMovesReader/MoveDetail_eng.png|SummaryMovesReader/MoveDetail_eng__summary3-moverow0.png
 clt PokemonFRLG/SummaryMovesReader/PartyMenu_eng.png|SummaryMovesReader/PartyMenu_eng__party-slot1-members1.png
 clt PokemonFRLG/SummaryMovesReader/Skills_eng.png|SummaryMovesReader/Skills_eng__summary2.png
+clt@5ea4c10bc1ef518a69395f12d6c53207a7f8a75c PokemonFRLG/AutoStoryBattle/SilphCo_GiovanniLeadFainted_True.png|AutoStoryBattle/SilphCo_GiovanniLeadFainted_True__party-slot1.png
+clt PokemonFRLG/TeachScreenReader/KnownMoves_eng.png|TeachScreenReader/KnownMoves_eng__summary3-moverow0.png
+shots captures/tmcase/12-forget-move-list.png|captures/tmcase-12-forget-move-list__summary3-moverow0.png

@@ -13,3 +13,11 @@ val probe : id:string -> Wire.box -> range -> Wire.probe_spec
 val share : Effects.measurements -> string -> float option
 (** The share of the box's pixels in range; [None] when the probe is missing or
     of another kind. *)
+
+val mean : Effects.measurements -> string -> Wire.rgb option
+(** The mean color of the box's pixels in range; [None] when none is, or the
+    probe is missing or of another kind. *)
+
+val red_excess : Wire.rgb -> float
+(** How far red stands above both green and blue: the smaller of r - g and r -
+    b. *)

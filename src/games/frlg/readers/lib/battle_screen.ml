@@ -95,6 +95,7 @@ let teal m id =
     (Solid_color.is_solid ~ratio:box_teal ~max_distance:teal_distance
        ~max_stddev_sum:teal_stddev)
 
+let teal_box = teal
 let white m id = holds m id (fun s -> Solid_color.is_white s)
 
 let battle_text_box m =

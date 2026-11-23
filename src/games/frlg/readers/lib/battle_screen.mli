@@ -11,6 +11,10 @@
 val probes : Wire.probe_spec list
 (** Every probe the readers need. *)
 
+val teal_box : Effects.measurements -> string -> bool
+(** The probe with this id ({!Solid_color.probe}) shows the text box's flat
+    teal, as the fork tests it. *)
+
 (** {1 Readers} *)
 
 val battle_text_box : Effects.measurements -> bool

@@ -9,9 +9,10 @@
 # CommandLineTests repo, for images not on its main), or shots (lab
 # screenshots, $FRLG_SHOTS_DIR, default ~/FRLGLab). The tagged name is what
 # the test reads its expectations from. Sets: screen (test_screen_readers.ml,
-# the write_probe_spec default) and menus (test_menu_readers.ml).
+# the write_probe_spec default), menus (test_menu_readers.ml) and battle
+# (test_battle_readers.ml).
 #
-#   sh games/frlg/readers/test/regen_fixtures.sh [screen|menus ...]
+#   sh games/frlg/readers/test/regen_fixtures.sh [screen|menus|battle ...]
 #
 # run from src/, with probe_images at $PROBE_IMAGES (default the repo's
 # daemon/build/probe_images). Switch captures use the fork's FRLG GAME_BOX as
@@ -68,7 +69,7 @@ regen() {
   probe "$set_name" mgba "$spec" "${prefix}mgba.probes.jsonl"
 }
 
-[ $# -gt 0 ] || set -- screen menus
+[ $# -gt 0 ] || set -- screen menus battle
 for set_name in "$@"; do
   regen "$set_name"
 done

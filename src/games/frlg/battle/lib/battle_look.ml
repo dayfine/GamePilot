@@ -10,6 +10,8 @@ type facts = {
   party_list : bool;
   bag : bool;
   yes_no : bool;
+  arrow : bool;
+  evolution : bool;
 }
 
 let nothing =
@@ -23,6 +25,8 @@ let nothing =
     party_list = false;
     bag = false;
     yes_no = false;
+    arrow = false;
+    evolution = false;
   }
 
 type screen =
@@ -32,11 +36,14 @@ type screen =
   | Move_menu
   | Action_menu
   | Bag
+  | Text_arrow
+  | Evolution
   | Battle_text
   | No_battle
 
 (* A YES/NO and the party list come over the battle screen, so they go first;
-   the move menu covers the action menu's place. *)
+   the move menu covers the action menu's place; the arrow and an evolution
+   are kinds of battle text. *)
 let order : ((facts -> bool) * screen) list =
   [
     ((fun f -> f.yes_no), Yes_no);
@@ -45,6 +52,8 @@ let order : ((facts -> bool) * screen) list =
     ((fun f -> f.move_menu), Move_menu);
     ((fun f -> f.action_menu), Action_menu);
     ((fun f -> f.bag), Bag);
+    ((fun f -> f.arrow), Text_arrow);
+    ((fun f -> f.evolution), Evolution);
     ((fun f -> f.text_box || f.player_box || f.foe_box), Battle_text);
   ]
 
@@ -60,12 +69,15 @@ let screen_name = function
   | Move_menu -> "move menu"
   | Action_menu -> "action menu"
   | Bag -> "bag"
+  | Text_arrow -> "text arrow"
+  | Evolution -> "evolution"
   | Battle_text -> "battle text"
   | No_battle -> "no battle"
 
 let probes =
-  Battle_screen.probes @ Party_menu.probes @ Bag_screen.probes
-  @ Summary_screen.probes
+  Battle_screen.probes @ Battle_yes_no.probes @ Battle_text_arrow.probes
+  @ Move_pp.probes @ Dark_corners.probes @ Party_menu.probes @ Bag_screen.probes
+  @ Summary_screen.probes @ Move_list_cursor.probes
 
 let of_measurements m =
   {
@@ -77,5 +89,7 @@ let of_measurements m =
     foe_box = Battle_screen.foe_box m;
     party_list = Party_menu.party_menu m;
     bag = Bag_screen.bag_open m;
-    yes_no = false;
+    yes_no = Battle_yes_no.yes_no_box m;
+    arrow = Battle_text_arrow.advance_arrow m;
+    evolution = Evolution_screen.evolution_shows m;
   }
