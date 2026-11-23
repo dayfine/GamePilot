@@ -1,0 +1,118 @@
+(* The screen driver's decisions on reader facts, with no screen: which screen
+   a look's facts make, what next_event does at each look (Event_rule), and
+   where the cursors go (Battle_cursor). *)
+
+open Frlg_battle
+
+let f = Battle_look.nothing
+let text = { f with text_box = true; player_box = true; foe_box = true }
+
+let classify_cases : Case_table.case list =
+  let case name facts expectation : Case_table.case =
+    {
+      name;
+      input = (fun () -> Battle_look.(screen_name (classify facts)));
+      expectation;
+    }
+  in
+  [
+    case "nothing: no battle" f "no battle";
+    case "an HP box alone: the battle runs on" { f with foe_box = true }
+      "battle text";
+    case "the action menu over the text box"
+      { text with action_menu = true }
+      "action menu";
+    case "the move menu where the action menu reads too"
+      { text with action_menu = true; move_menu = true }
+      "move menu";
+    case "the level-up box over the text box"
+      { text with level_up = true }
+      "level up";
+    case "a YES/NO over everything"
+      { text with yes_no = true; party_list = true }
+      "yes/no";
+    case "the party list over the bag"
+      { f with party_list = true; bag = true }
+      "party list";
+  ]
+
+let step_name : Event_rule.step -> string = function
+  | Report e -> Battle_driver.event_name e
+  | Press b -> "press " ^ Wire.string_of_button b
+  | Look -> "look"
+
+(* Looks at the given times from a start at 0; the steps they get. *)
+let steps looks () =
+  let _, names =
+    List.fold_left
+      (fun (state, names) (facts, at_ms) ->
+        let state, step = Event_rule.next state facts ~at_ms in
+        (state, step_name step :: names))
+      (Event_rule.start ~at_ms:0., [])
+      looks
+  in
+  String.concat ", " (List.rev names)
+
+let rule_cases : Case_table.case list =
+  let case name looks expectation : Case_table.case =
+    { name; input = steps looks; expectation }
+  in
+  [
+    case "the action menu is reported at once"
+      [ ({ text with action_menu = true }, 100.) ]
+      "action menu";
+    case "the party list the game opened: a switch-in"
+      [ ({ f with party_list = true }, 100.) ]
+      "switch-in";
+    case "a YES/NO with the player's box: a move to learn"
+      [ ({ text with yes_no = true }, 100.) ]
+      "move learn";
+    case "a YES/NO with the player's box gone: use next"
+      [ ({ f with yes_no = true; foe_box = true }, 100.) ]
+      "use next";
+    case "battle text gets B only once it held 1.5 s since the last press"
+      [ (text, 500.); (text, 1500.); (text, 2000.); (text, 3000.) ]
+      "look, press B, look, press B";
+    case "the level-up box gets A"
+      [ ({ text with level_up = true }, 1500.) ]
+      "press A";
+    case "a stray move menu gets B"
+      [ ({ text with move_menu = true }, 2000.) ]
+      "press B";
+    case "no battle before one showed: the opening is awaited"
+      [ (f, 1000.); (f, 5000.); (f, 20000.) ]
+      "look, look, look";
+    case "no battle for 3 s after one: over"
+      [ (text, 100.); (f, 1000.); (f, 3500.); (f, 4000.) ]
+      "look, look, look, battle over";
+    case "a battle screen starts the 3 s over"
+      [ (text, 100.); (f, 1000.); (text, 3000.); (f, 3500.); (f, 6000.) ]
+      "look, look, press B, look, look";
+  ]
+
+let buttons bs = String.concat " " (List.map Wire.string_of_button bs)
+
+let cursor_cases : Case_table.case list =
+  let case name presses expectation : Case_table.case =
+    { name; input = (fun () -> buttons presses); expectation }
+  in
+  [
+    case "move 0, top left" (Battle_cursor.move ~slot:0) "Left Up";
+    case "move 1, top right" (Battle_cursor.move ~slot:1) "Left Up Right";
+    case "move 2, bottom left" (Battle_cursor.move ~slot:2) "Left Up Down";
+    case "move 3, bottom right"
+      (Battle_cursor.move ~slot:3)
+      "Left Up Right Down";
+    case "the ally: one RIGHT past the user" (Battle_cursor.target Ally) "Right";
+    case "the foe on the right: one LEFT"
+      (Battle_cursor.target Foe_right)
+      "Left";
+    case "the foe on the left: where the cursor starts"
+      (Battle_cursor.target Foe_left)
+      "";
+  ]
+
+let () =
+  Case_table.run "battle look" classify_cases;
+  Case_table.run "event rule" rule_cases;
+  Case_table.run "battle cursor" cursor_cases

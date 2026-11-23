@@ -1,0 +1,9 @@
+(test
+ (name test_scripted_battle)
+ (modules test_scripted_battle)
+ (libraries gamepilot.case_table gamepilot.frlg_battle))
+
+(test
+ (name test_battle_rules)
+ (modules test_battle_rules)
+ (libraries gamepilot.wire gamepilot.case_table gamepilot.frlg_battle))
