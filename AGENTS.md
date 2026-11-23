@@ -29,6 +29,13 @@ GamePilot automates games through three layers (design: `docs/design/Layered-Aut
 - **Programs use only our effect set** (`submit`, `await`, `race`, `now`, `read`), never an I/O
   library directly. The real handler is stdlib only.
 - **Swappable parts sit behind one boundary each**: I/O backend, probes, effect handler, RNG.
+- **Port the C++ transparently.** A port of fork code keeps the C++ behaviour, steps, order and
+  timings, and each module's doc comment names the C++ file(s) it comes from, so a reader can lay the
+  two side by side. Improvements and reshaping come later, in their own PRs. Where we deliberately
+  differ (a missing reader, a new strategy), say so in the doc comment.
+- **Every checkpoint goes through the checkpoint runner** (`pokemon/story`) and its dev loop: run
+  from the checkpoint's start state, verify its end state, retry, record. Programs run in order
+  (mg-01 → mg-05), each tested on mGBA before it runs on the Switch.
 - **Submodules are read-only.** `third_party/Arduino-Source` tracks the fork branch
   `gamepilot/base`, `third_party/Packages` tracks upstream, and `third_party/PokemonSimulation`
   tracks its `main`: never edit them here. Maps are read from PokemonSimulation
