@@ -1,0 +1,1 @@
+{"jsonrpc":"2.0","id":3,"method":"subscribe","params":{"probes":[{"id":"menu_panel","kind":"core.color_stats@1","box":{"x":0.7,"y":0.02,"w":0.28,"h":0.5},"delivery":"every"}]}}

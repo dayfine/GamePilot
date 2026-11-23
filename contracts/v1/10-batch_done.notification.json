@@ -1,0 +1,1 @@
+{"jsonrpc":"2.0","method":"batch_done","params":{"batch_id":"b1","seq":1230,"t_ms":20599.0}}
