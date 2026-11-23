@@ -54,7 +54,7 @@ let () =
           match Fly_towns.find table "IndigoPlateau" with
           | Some t -> Story.Pose.observed_to_string t.landing
           | None -> "none")
-        "IndigoPlateau_Exterior (11, 7)";
+        "IndigoPlateau_Exterior (11, 7) south";
       case "a cell that is not [x, y]"
         (fun () ->
           bad
