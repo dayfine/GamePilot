@@ -1,10 +1,10 @@
 (* The text reader on real screenshots. The fixtures are the daemon's
    [probe_images] output for the specs write_text_probe_spec.exe writes (one
    per screen), over the images images.map names, each line trimmed to its best
-   candidates; the images stay out of the repo. Image paths start with their
-   source: switch_clt (the fork's CommandLineTests/PokemonFRLG), switch_lab
-   (Switch captures under ~/FRLGLab/captures) and mgba (mGBA frames under
-   ~/FRLGLab/mgba). regen_fixtures.sh makes them again. *)
+   candidates; CommandLineTests images stay in that repo. Image paths start
+   with their source: switch_clt (the fork's CommandLineTests/PokemonFRLG), switch_lab
+   (Switch captures under readers/test/images/switch) and mgba (mGBA frames
+   under readers/test/images/mgba). regen_fixtures.sh makes them again. *)
 
 open Frlg_text
 
