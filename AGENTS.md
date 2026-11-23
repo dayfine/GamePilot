@@ -27,7 +27,10 @@ GamePilot automates games through three layers (design: `docs/design/Layered-Aut
   library directly. The real handler is stdlib only.
 - **Swappable parts sit behind one boundary each**: I/O backend, probes, effect handler, RNG.
 - **Submodules are read-only.** `third_party/Arduino-Source` tracks the fork branch
-  `gamepilot/base` and `third_party/Packages` tracks upstream: never edit them here.
+  `gamepilot/base`, `third_party/Packages` tracks upstream, and `third_party/PokemonSimulation`
+  tracks its `main`: never edit them here. Maps are read from PokemonSimulation
+  (`data/games/<game>/maps`), never copied; a map change lands there first. A program's own
+  checkpoint plans live with it (`games/<game>/programs/<program>/plans/`) and are refined here.
 - **`gamepilot/base` is the whole overlay**: fork `main` plus the fewest, smallest patches
   GamePilot needs (today one: `CoreLib` exports its usage requirements). The daily sync
   (`~/Projects/pa-tools/sync_branches.py`) merges fork `main` into it; it is never merged back.
