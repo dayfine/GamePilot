@@ -2,6 +2,11 @@
 
 #include <array>
 #include <cmath>
+#include <optional>
+#include <type_traits>
+#include <variant>
+
+#include "base64.h"
 
 namespace gamepilot {
 
@@ -76,6 +81,26 @@ pa::JsonArray triple(const std::array<double, 3>& values) {
   return array;
 }
 
+pa::JsonObject probe_result_json(const ProbeResult& result) {
+  pa::JsonObject json;
+  std::visit(
+      [&json](const auto& value) {
+        using T = std::decay_t<decltype(value)>;
+        if constexpr (std::is_same_v<T, ColorStats>) {
+          json["kind"] = std::string(kColorStatsKind);
+          json["mean"] = triple(value.mean);
+          json["stddev"] = triple(value.stddev);
+        } else {
+          json["kind"] = std::string(kTemplateMatchKind);
+          json["score"] = round_to(value.score, 1e6);
+          json["x"] = round_to(value.x, 1e5);
+          json["y"] = round_to(value.y, 1e5);
+        }
+      },
+      result);
+  return json;
+}
+
 }  // namespace
 
 pa::JsonValue parse_message(const std::string& line) {
@@ -128,6 +153,14 @@ LoadStateParams decode_load_state(const pa::JsonObject& params) {
   return LoadStateParams{require_string(params, "path")};
 }
 
+UploadTemplateParams decode_upload_template(const pa::JsonObject& params) {
+  std::optional<std::string> png = decode_base64(require_string(params, "png"));
+  if (!png) {
+    throw RpcError(kInvalidParams, "png must be padded base64");
+  }
+  return UploadTemplateParams{std::move(*png)};
+}
+
 SubscribeParams decode_subscribe(const pa::JsonObject& params) {
   SubscribeParams subscribe;
   for (const pa::JsonValue& item : require_array(params, "probes")) {
@@ -148,6 +181,13 @@ SubscribeParams decode_subscribe(const pa::JsonObject& params) {
     if (spec.delivery != "every" && spec.delivery != "latest") {
       throw RpcError(kInvalidParams,
                      "delivery must be every or latest: " + spec.id);
+    }
+    const bool has_template = probe.get_value("template") != nullptr;
+    if (spec.kind == kTemplateMatchKind) {
+      spec.template_hash = require_string(probe, "template");
+    } else if (has_template) {
+      throw RpcError(kInvalidParams,
+                     "template is only for core.template_match@1: " + spec.id);
     }
     subscribe.probes.push_back(std::move(spec));
   }
@@ -243,6 +283,12 @@ pa::JsonObject load_state_result(std::int64_t seq, std::int64_t load) {
   return result;
 }
 
+pa::JsonObject upload_template_result(const std::string& hash) {
+  pa::JsonObject result;
+  result["template"] = hash;
+  return result;
+}
+
 pa::JsonObject subscribe_result(const std::vector<std::string>& ids) {
   pa::JsonArray list;
   for (const std::string& id : ids) {
@@ -269,14 +315,10 @@ pa::JsonObject cancel_result(std::int64_t released_seq) {
 
 pa::JsonValue frame_notification(
     std::int64_t seq, std::int64_t load, double t_ms,
-    const std::vector<std::pair<std::string, ColorStats>>& results) {
+    const std::vector<std::pair<std::string, ProbeResult>>& results) {
   pa::JsonObject probes;
-  for (const auto& [id, stats] : results) {
-    pa::JsonObject result;
-    result["kind"] = std::string(kColorStatsKind);
-    result["mean"] = triple(stats.mean);
-    result["stddev"] = triple(stats.stddev);
-    probes[id] = std::move(result);
+  for (const auto& [id, result] : results) {
+    probes[id] = probe_result_json(result);
   }
   pa::JsonObject params;
   params["seq"] = seq;

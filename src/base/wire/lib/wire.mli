@@ -25,14 +25,36 @@ type box = { x : float; y : float; w : float; h : float }
 
 type delivery = Every | Latest
 
-type probe_spec = { id : string; kind : string; box : box; delivery : delivery }
-(** [kind] is an open set, e.g. ["core.color_stats@1"]. *)
+type probe_spec = {
+  id : string;
+  kind : string;
+  box : box;
+  delivery : delivery;
+  template : string option;
+      (** [core.template_match@1] only: the hash [probe.upload_template]
+          returned on this connection. *)
+}
+(** [kind] is an open set, e.g. ["core.color_stats@1"]. Programs build specs
+    with the constructors below. *)
+
+val color_stats_probe : id:string -> box:box -> delivery:delivery -> probe_spec
+(** [core.color_stats@1]: mean and stddev over [box]. A black screen is this
+    probe with a reader's threshold; there is no daemon kind for it. *)
+
+val template_match_probe :
+  id:string -> box:box -> delivery:delivery -> template:string -> probe_spec
+(** [core.template_match@1]: the best placement of an uploaded template inside
+    [box]. [template] is the hash from {!upload_template_result_of_json}. *)
 
 type rgb = { r : float; g : float; b : float }
 
 (** Decoded by the result's [kind] field, not by its shape. *)
 type probe_result =
   | Color_stats of { mean : rgb; stddev : rgb }  (** [core.color_stats@1] *)
+  | Template_match of { score : float; x : float; y : float }
+      (** [core.template_match@1]: [score] is the mean squared difference per
+          pixel and channel over 255², 0 = identical, lower is better; [x], [y]
+          the placement's top-left corner, normalized to the frame. *)
   | Other of json  (** a kind this side does not know yet, kept verbatim *)
 
 type frame = { seq : int; t_ms : float; probes : (string * probe_result) list }
@@ -63,6 +85,8 @@ type error = { code : int; message : string; data : json option }
 type call =
   | Hello of { protocol : int; client : string }
   | Load_state of { path : string }
+  | Upload_template of { png : string }
+      (** [png]: the PNG file's bytes (base64 on the wire). *)
   | Subscribe of probe_spec list
   | Submit of { batch_id : string; commands : command list }
   | Cancel
@@ -105,6 +129,11 @@ type load_state_result = { seq : int; load : int }
 
 val load_state_result_of_json : json -> load_state_result
 val json_of_load_state_result : load_state_result -> json
+
+val upload_template_result_of_json : json -> string
+(** The template's hash: lowercase hex SHA-256 of the PNG bytes. *)
+
+val json_of_upload_template_result : string -> json
 val subscribe_result_of_json : json -> string list
 val json_of_subscribe_result : string list -> json
 val submit_result_of_json : json -> submit_result

@@ -24,7 +24,9 @@ runs on one thread: the client is served between frames.
 |---|---|
 | `src/backend.h` | the I/O boundary |
 | `src/mgba_backend.*` | mGBA through the bridge's line protocol |
-| `src/probes.*` | probe kinds (`core.color_stats@1`) |
+| `src/probes.*` | probe kinds (`core.color_stats@1`, `core.template_match@1`) |
+| `src/template_store.*` | uploaded templates, decoded and keyed by the SHA-256 of their PNG bytes |
+| `src/base64.*` | base64 decoding for template uploads |
 | `src/schedule.*` | command batches to key masks on exact frames |
 | `src/rpc.*` | v1 messages to and from structs |
 | `src/server.*` | the JSON-RPC server and the frame loop |
