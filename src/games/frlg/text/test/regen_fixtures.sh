@@ -6,8 +6,10 @@
 #
 # <screen> is one of write_text_probe_spec's screens, <backend> switch or mgba,
 # <root> clt (CommandLineTests, $COMMANDLINETESTS_DIR, default
-# ~/Projects/CommandLineTests) or shots (lab screenshots, $FRLG_SHOTS_DIR,
-# default ~/FRLGLab). The tagged name is what fixtures/expected.txt names.
+# ~/Projects/CommandLineTests) or repo (a file in this repository, given from
+# its root: lab captures live under games/frlg/readers/test/images/, shared
+# with the screen reader tests; that folder's regen_fixtures.sh says how to add
+# one). The tagged name is what fixtures/expected.txt names.
 #
 #   sh games/frlg/text/test/regen_fixtures.sh
 #
@@ -19,10 +21,10 @@
 set -eu
 
 CLT=${COMMANDLINETESTS_DIR:-$HOME/Projects/CommandLineTests}
-SHOTS=${FRLG_SHOTS_DIR:-$HOME/FRLGLab}
 KEEP_BEST=${KEEP_BEST:-4}
 HERE=$(cd "$(dirname "$0")" && pwd)
 SRC=$(cd "$HERE/../../../.." && pwd)
+REPO=$(cd "$SRC/.." && pwd)
 PROBE_IMAGES=${PROBE_IMAGES:-$SRC/../daemon/build/probe_images}
 SWITCH_VIEWPORT=0.09375,0.00462963,0.8125,0.962963
 WORK=$(mktemp -d)
@@ -57,7 +59,7 @@ probe() {
     mkdir -p "$WORK/images/$(dirname "$tagged")"
     case $3 in
     clt) cp "$CLT/$4" "$WORK/images/$tagged" ;;
-    shots) cp "$SHOTS/$4" "$WORK/images/$tagged" ;;
+    repo) cp "$REPO/$4" "$WORK/images/$tagged" ;;
     *) echo "unknown root $3" >&2 && exit 1 ;;
     esac
     images="$images $tagged"

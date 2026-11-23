@@ -13,7 +13,7 @@
    True/False the fork's tests read for that folder's detector; the tags add
    the other readers' answers. regen_fixtures.sh makes them again from the
    source images listed in screen.switch.map and screen.mgba.map (set
-   COMMANDLINETESTS_DIR and FRLG_SHOTS_DIR where those live). The Switch
+   COMMANDLINETESTS_DIR where that lives; lab frames are under images/). The Switch
    viewport is the fork's FRLG GAME_BOX: the picture inside the capture's side
    bars. *)
 
