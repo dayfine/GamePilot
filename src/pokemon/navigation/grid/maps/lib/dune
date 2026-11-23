@@ -1,0 +1,5 @@
+(library
+ (name grid_maps)
+ (public_name gamepilot.grid_maps)
+ (modules_without_implementation map_features map_gates)
+ (libraries yojson))

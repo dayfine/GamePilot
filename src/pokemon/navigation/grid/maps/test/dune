@@ -1,0 +1,23 @@
+(tests
+ (names
+  test_map_data
+  test_map_gates
+  test_map_errors
+  test_runtime_format
+  test_connected_maps
+  test_gate_state
+  test_move_mechanics
+  test_frlg_maps)
+ (modules
+  check
+  map_fixtures
+  map_text
+  test_map_data
+  test_map_gates
+  test_map_errors
+  test_runtime_format
+  test_connected_maps
+  test_gate_state
+  test_move_mechanics
+  test_frlg_maps)
+ (libraries yojson gamepilot.grid_maps))
