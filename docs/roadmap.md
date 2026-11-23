@@ -60,7 +60,7 @@ Follow fork #804's split (R20), not #781's monolith.
 | Item | Where |
 |---|---|
 | Overworld and menu actions: talk, Fly, mart, `use_item`, `give_bag_item`, `party_swap`, `buy_coins`, `redeem_prize_mon`, `ingame_trade`, `spin_for_encounter` | `src/games/frlg/actions` |
-| Battle driver (single and double, ally targeting, switch, move-learn prompt) and scripted battle runner | `src/games/frlg/battle` |
+| Battle driver (single and double, ally targeting, switch, move-learn prompt) and scripted battle runner (#28; YES/NO and out-of-PP readers, double party list and replay tests still to come) | `src/games/frlg/battle` |
 | Story engine: plan decoder (`pokesim-authored-checkpoint/1`), event runner, `repeat_until` (looped checkpoints that heal and save each round) | `src/pokemon/story` |
 
 ## Phase 4: the Mail Glitch on mGBA (S0)
