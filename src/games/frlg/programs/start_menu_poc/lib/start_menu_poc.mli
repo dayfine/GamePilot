@@ -1,7 +1,10 @@
 (** Program: open FireRed's Start menu and close it again.
 
-    load_state, subscribe {!Frlg_readers.Start_menu.probe}, press Start, await
-    the menu, press B, await it gone. Uses only the effects. *)
+    load_state, subscribe {!Menu_panel.probe}, press Start, await the menu,
+    press B, await it gone. Uses only the effects. *)
+
+module Menu_panel = Menu_panel
+(** The menu panel reader the recorded runs used. *)
 
 type outcome =
   | Passed of { opened_ms : float; closed_ms : float }

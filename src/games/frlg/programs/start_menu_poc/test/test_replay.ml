@@ -50,7 +50,7 @@ let () =
 let () =
   let waits_twice () =
     ignore (Effects.load_state state : int);
-    ignore (Effects.subscribe [ Frlg_readers.Start_menu.probe ] : string list);
+    ignore (Effects.subscribe [ Start_menu_poc.Menu_panel.probe ] : string list);
     let first = Effects.await ~timeout_ms:60_000 (fun _ -> false) in
     expect "await that never holds -> timeout at the recorded press"
       (first = Effects.Timeout);

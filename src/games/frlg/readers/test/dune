@@ -4,9 +4,15 @@
  (libraries yojson gamepilot.wire gamepilot.frlg_readers))
 
 (test
- (name test_start_menu)
- (modules test_start_menu)
- (libraries gamepilot.wire gamepilot.effects gamepilot.frlg_readers))
+ (name test_menu_readers)
+ (modules test_menu_readers)
+ (deps
+  (glob_files fixtures/*.jsonl))
+ (libraries
+  gamepilot.wire
+  gamepilot.effects
+  gamepilot.case_table
+  gamepilot.frlg_readers))
 
 (test
  (name test_screen_readers)
