@@ -130,14 +130,17 @@ pa::JsonObject submit_result(const std::string& batch_id,
                              std::int64_t start_seq);
 pa::JsonObject cancel_result(std::int64_t released_seq);
 
-// A frame notification's `probes` object: {id: result}.
+// One probe result as sent: its `kind` and fields, rounded.
+pa::JsonObject probe_result_json(const ProbeResult& result);
+
+// A `probes` object of every result: {id: result}.
 pa::JsonObject probe_results_json(
     const std::vector<std::pair<std::string, ProbeResult>>& results);
 
 // `load`: how many backend.load_state calls succeeded before this frame.
-pa::JsonValue frame_notification(
-    std::int64_t seq, std::int64_t load, double t_ms,
-    const std::vector<std::pair<std::string, ProbeResult>>& results);
+// `probes`: {id: result} for the results this frame carries (SentResults).
+pa::JsonValue frame_notification(std::int64_t seq, std::int64_t load,
+                                 double t_ms, pa::JsonObject probes);
 pa::JsonValue batch_done_notification(const std::string& batch_id,
                                       std::int64_t seq, double t_ms);
 

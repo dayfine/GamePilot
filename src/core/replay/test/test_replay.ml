@@ -282,3 +282,42 @@ let () =
   | exception Replay.Divergence e ->
       print_endline e;
       expect "other unsubscribe ids -> divergence" (contains e "ids differs")
+
+(* v1.4: a frame carries only the results that changed; the session keeps the
+   others, so a reader still sees every subscribed probe. *)
+let () =
+  let stats mean =
+    Printf.sprintf
+      {|{"kind":"core.color_stats@1","mean":[%d,0,0],"stddev":[0,0,0]}|} mean
+  in
+  let frame_with ~seq probes =
+    Printf.sprintf
+      {|{"dir":"out","t_ms":%d,"msg":{"jsonrpc":"2.0","method":"frame","params":{"seq":%d,"load":2,"t_ms":%d,"probes":{%s}}}}|}
+      seq seq seq probes
+  in
+  let log =
+    Replay.log_of_lines
+      (hello
+      @ [
+          frame_with ~seq:501
+            (Printf.sprintf {|"p":%s,"q":%s|} (stats 1) (stats 2));
+          frame_with ~seq:502 (Printf.sprintf {|"q":%s|} (stats 3));
+          frame_with ~seq:503 "";
+        ])
+  in
+  let red m id =
+    match Effects.probe m id with
+    | Some (Wire.Color_stats { mean; _ }) -> Some mean.r
+    | _ -> None
+  in
+  let third_frame () =
+    ignore (Effects.load_state "state.ss" : int);
+    Effects.await ~timeout_ms:1000 (fun m -> m.seq = 503)
+  in
+  expect "a frame keeps the results it does not repeat"
+    (match Replay.run log third_frame with
+    | Effects.Holds m ->
+        red m "p" = Some 1.
+        && red m "q" = Some 3.
+        && List.map fst m.probes = [ "p"; "q" ]
+    | Effects.Timeout -> false)

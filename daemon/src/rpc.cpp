@@ -114,6 +114,8 @@ pa::JsonArray triple(const std::array<double, 3>& values) {
   return array;
 }
 
+}  // namespace
+
 pa::JsonObject probe_result_json(const ProbeResult& result) {
   pa::JsonObject json;
   std::visit(
@@ -138,8 +140,6 @@ pa::JsonObject probe_result_json(const ProbeResult& result) {
       result);
   return json;
 }
-
-}  // namespace
 
 pa::JsonValue parse_message(const std::string& line) {
   pa::JsonValue value = pa::parse_json(line);
@@ -404,14 +404,13 @@ pa::JsonObject probe_results_json(
   return probes;
 }
 
-pa::JsonValue frame_notification(
-    std::int64_t seq, std::int64_t load, double t_ms,
-    const std::vector<std::pair<std::string, ProbeResult>>& results) {
+pa::JsonValue frame_notification(std::int64_t seq, std::int64_t load,
+                                 double t_ms, pa::JsonObject probes) {
   pa::JsonObject params;
   params["seq"] = seq;
   params["load"] = load;
   params["t_ms"] = round_to(t_ms, 10);
-  params["probes"] = probe_results_json(results);
+  params["probes"] = std::move(probes);
   pa::JsonObject message;
   message["jsonrpc"] = "2.0";
   message["method"] = "frame";

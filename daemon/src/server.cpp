@@ -86,7 +86,8 @@ void Server::step_frame() {
     for (const FrameProbe& probe : probes_) {
       results.emplace_back(probe.spec.id, evaluate_probe(probe, frame));
     }
-    send(frame_notification(seq, loads_, t_ms, results));
+    send(frame_notification(seq, loads_, t_ms,
+                            sent_results_.take_changed(results)));
   }
   for (const FinishedBatch& done : schedule_.take_finished(seq)) {
     if (client_.valid()) {
@@ -127,6 +128,7 @@ void Server::drop_client(const char* reason) {
                reason);
   client_.close();
   probes_.clear();
+  sent_results_.forget_all();
   templates_.clear();
   schedule_.clear();
 }
@@ -190,6 +192,7 @@ pa::JsonObject Server::dispatch(const Request& request) {
       schedule_.clear();
       sent_mask_.reset();
       rebase_pacing();
+      sent_results_.forget_all();
       loads_++;
       return load_state_result(seq, loads_);
     } catch (const BackendError& error) {
@@ -222,6 +225,7 @@ pa::JsonObject Server::dispatch(const Request& request) {
       });
       probes_.push_back(std::move(probe));
     }
+    sent_results_.forget_all();
     return subscribe_result(ids);
   }
   if (method == "unsubscribe") {
@@ -231,6 +235,7 @@ pa::JsonObject Server::dispatch(const Request& request) {
       if (std::erase_if(probes_, [&](const FrameProbe& probe) {
             return probe.spec.id == id;
           }) > 0) {
+        sent_results_.forget(id);
         removed.push_back(id);
       }
     }
