@@ -28,11 +28,12 @@ let rec json_equal (a : Yojson.Safe.t) (b : Yojson.Safe.t) =
       List.length x = List.length y && List.for_all2 json_equal x y
   | _ -> a = b
 
-(* Typed codecs for successful responses, by the method in the file name. *)
+(* Typed codecs for successful responses, by the method of the request with
+   the same id (responses do not name their method). *)
 let result_round_trips =
   [
     ("hello", fun j -> Wire.(json_of_hello_result (hello_result_of_json j)));
-    ( "load_state",
+    ( "backend.load_state",
       fun j -> Wire.(json_of_load_state_result (load_state_result_of_json j)) );
     ( "subscribe",
       fun j -> Wire.(json_of_subscribe_result (subscribe_result_of_json j)) );
@@ -40,16 +41,21 @@ let result_round_trips =
     ("cancel", fun j -> Wire.(json_of_cancel_result (cancel_result_of_json j)));
   ]
 
-(* "02-hello.response.json" -> "hello" *)
-let method_of_file file =
-  let base = Filename.chop_extension (Filename.chop_extension file) in
-  String.sub base 3 (String.length base - 3)
+let read_golden dir file =
+  Yojson.Safe.from_string
+    (In_channel.with_open_bin (Filename.concat dir file) In_channel.input_all)
 
-let check_file dir file =
-  let text =
-    In_channel.with_open_bin (Filename.concat dir file) In_channel.input_all
-  in
-  let golden = Yojson.Safe.from_string text in
+(* Request id -> method, from every golden request. *)
+let methods_by_id dir files =
+  List.filter_map
+    (fun file ->
+      match Wire.message_of_json (read_golden dir file) with
+      | Wire.Request { id; call } -> Some (id, Wire.method_name call)
+      | _ | (exception Wire.Decode_error _) -> None)
+    files
+
+let check_file dir methods file =
+  let golden = read_golden dir file in
   let reencoded =
     if Filename.check_suffix file ".line.json" then
       Wire.(json_of_log_line (log_line_of_json golden))
@@ -61,8 +67,12 @@ let check_file dir file =
          (Yojson.Safe.to_string golden)
          (Yojson.Safe.to_string reencoded));
   (match Wire.message_of_json golden with
-  | Wire.Response { outcome = Ok result; _ } -> (
-      let m = method_of_file file in
+  | Wire.Response { id; outcome = Ok result } -> (
+      let m =
+        match List.assoc_opt id methods with
+        | Some m -> m
+        | None -> failwith (Printf.sprintf "%s: no request with id %d" file id)
+      in
       match List.assoc_opt m result_round_trips with
       | None -> failwith (file ^ ": no typed result codec for " ^ m)
       | Some round_trip ->
@@ -79,12 +89,31 @@ let () =
     |> List.sort compare
   in
   if List.length files < 14 then failwith "expected at least 14 golden files";
-  List.iter (check_file dir) files;
+  List.iter (check_file dir (methods_by_id dir files)) files;
   (* Bad input names the field instead of crashing. *)
-  match
-    Wire.message_of_string
-      {|{"jsonrpc":"2.0","method":"frame","params":{"seq":"x"}}|}
-  with
+  (match
+     Wire.message_of_string
+       {|{"jsonrpc":"2.0","method":"frame","params":{"seq":"x"}}|}
+   with
   | _ -> failwith "bad frame decoded"
   | exception Wire.Decode_error e ->
-      Printf.printf "ok bad frame rejected: %s\n" e
+      Printf.printf "ok bad frame rejected: %s\n" e);
+  (* Probe results are decoded by kind: another kind with the same fields is
+     not color stats, and a result without a kind is an error. *)
+  let frame_with result =
+    Wire.message_of_string
+      (Printf.sprintf
+         {|{"jsonrpc":"2.0","method":"frame","params":{"seq":1,"load":0,"t_ms":0,"probes":{"p":%s}}}|}
+         result)
+  in
+  (match
+     frame_with {|{"kind":"core.other@1","mean":[1,2,3],"stddev":[1,2,3]}|}
+   with
+  | Wire.Notification
+      (Wire.Frame { frame = { probes = [ ("p", Wire.Other _) ]; _ }; _ }) ->
+      print_endline "ok other kind with color stats fields stays Other"
+  | _ -> failwith "FAILED other kind decoded as color stats");
+  match frame_with {|{"mean":[1,2,3],"stddev":[1,2,3]}|} with
+  | _ -> failwith "FAILED probe result without kind decoded"
+  | exception Wire.Decode_error e ->
+      Printf.printf "ok probe result without kind rejected: %s\n" e

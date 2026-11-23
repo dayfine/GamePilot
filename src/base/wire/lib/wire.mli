@@ -30,6 +30,7 @@ type probe_spec = { id : string; kind : string; box : box; delivery : delivery }
 
 type rgb = { r : float; g : float; b : float }
 
+(** Decoded by the result's [kind] field, not by its shape. *)
 type probe_result =
   | Color_stats of { mean : rgb; stddev : rgb }  (** [core.color_stats@1] *)
   | Other of json  (** a kind this side does not know yet, kept verbatim *)
@@ -69,10 +70,15 @@ type call =
 type request = { id : int; call : call }
 
 type response = { id : int; outcome : (json, error) result }
-(** A response does not name its method; decode [Ok] with the [*_result]
-    decoders below, chosen by the request it answers. *)
+(** A response does not name its method (JSON-RPC pairs it with its request by
+    [id]); decode [Ok] with the [*_result] decoder for that request's method. *)
 
-type notification = Frame of frame | Batch_done of batch_done
+type notification =
+  | Frame of { load : int; frame : frame }
+      (** [load]: how many [backend.load_state] calls had succeeded when the
+          daemon took the frame. Session bookkeeping, not a measurement, so it
+          stays out of {!frame}. *)
+  | Batch_done of batch_done
 
 type message =
   | Request of request
@@ -94,10 +100,11 @@ val string_of_message : message -> string
 val hello_result_of_json : json -> hello_result
 val json_of_hello_result : hello_result -> json
 
-val load_state_result_of_json : json -> int
-(** The [seq] after loading. *)
+type load_state_result = { seq : int; load : int }
+(** The [seq] after loading and the daemon's new [load] count. *)
 
-val json_of_load_state_result : int -> json
+val load_state_result_of_json : json -> load_state_result
+val json_of_load_state_result : load_state_result -> json
 val subscribe_result_of_json : json -> string list
 val json_of_subscribe_result : string list -> json
 val submit_result_of_json : json -> submit_result

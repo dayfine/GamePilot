@@ -86,7 +86,7 @@ void Server::step_frame() {
     for (const ProbeSpec& probe : probes_) {
       results.emplace_back(probe.id, color_stats(frame, probe.box));
     }
-    send(frame_notification(seq, t_ms, results));
+    send(frame_notification(seq, loads_, t_ms, results));
   }
   for (const FinishedBatch& done : schedule_.take_finished(seq)) {
     if (client_.valid()) {
@@ -189,7 +189,8 @@ pa::JsonObject Server::dispatch(const Request& request) {
       schedule_.clear();
       sent_mask_.reset();
       rebase_pacing();
-      return load_state_result(seq);
+      loads_++;
+      return load_state_result(seq, loads_);
     } catch (const BackendError& error) {
       pa::JsonObject data;
       data["detail"] = std::string(error.what());

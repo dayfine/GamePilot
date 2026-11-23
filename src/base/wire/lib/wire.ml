@@ -143,22 +143,27 @@ type probe_result =
   | Color_stats of { mean : rgb; stddev : rgb }
   | Other of json
 
-(* A frame does not repeat the probe kind, so the result's shape decides. *)
+let color_stats_kind = "core.color_stats@1"
+
 let probe_result_of_json j =
-  match
-    (field_opt "probe result" "mean" j, field_opt "probe result" "stddev" j)
-  with
-  | Some mean, Some stddev ->
+  let what = "probe result" in
+  match string_field what "kind" j with
+  | kind when kind = color_stats_kind ->
       Color_stats
         {
-          mean = rgb_of_json "probe.mean" mean;
-          stddev = rgb_of_json "probe.stddev" stddev;
+          mean = rgb_of_json "probe.mean" (field what "mean" j);
+          stddev = rgb_of_json "probe.stddev" (field what "stddev" j);
         }
   | _ -> Other j
 
 let json_of_probe_result = function
   | Color_stats { mean; stddev } ->
-      `Assoc [ ("mean", json_of_rgb mean); ("stddev", json_of_rgb stddev) ]
+      `Assoc
+        [
+          ("kind", `String color_stats_kind);
+          ("mean", json_of_rgb mean);
+          ("stddev", json_of_rgb stddev);
+        ]
   | Other j -> j
 
 type frame = { seq : int; t_ms : float; probes : (string * probe_result) list }
@@ -174,10 +179,11 @@ let frame_of_json j =
         (fields "frame.probes" (field what "probes" j));
   }
 
-let json_of_frame { seq; t_ms; probes } =
+let json_of_frame ~load { seq; t_ms; probes } =
   `Assoc
     [
       ("seq", `Int seq);
+      ("load", `Int load);
       ("t_ms", `Float t_ms);
       ( "probes",
         `Assoc (List.map (fun (id, r) -> (id, json_of_probe_result r)) probes)
@@ -240,7 +246,10 @@ type call =
 
 type request = { id : int; call : call }
 type response = { id : int; outcome : (json, error) result }
-type notification = Frame of frame | Batch_done of batch_done
+
+type notification =
+  | Frame of { load : int; frame : frame }
+  | Batch_done of batch_done
 
 type message =
   | Request of request
@@ -314,7 +323,9 @@ let message_of_json j =
       in
       Response { id; outcome }
   | None, Some (`String "frame") ->
-      Notification (Frame (frame_of_json (params ())))
+      let p = params () in
+      Notification
+        (Frame { load = int_field "frame" "load" p; frame = frame_of_json p })
   | None, Some (`String "batch_done") ->
       Notification (Batch_done (batch_done_of_json (params ())))
   | None, Some m -> fail "unknown notification %s" (Yojson.Safe.to_string m)
@@ -335,8 +346,9 @@ let json_of_message = function
       envelope [ ("id", `Int id); ("result", r) ]
   | Response { id; outcome = Error e } ->
       envelope [ ("id", `Int id); ("error", json_of_error e) ]
-  | Notification (Frame f) ->
-      envelope [ ("method", `String "frame"); ("params", json_of_frame f) ]
+  | Notification (Frame { load; frame }) ->
+      envelope
+        [ ("method", `String "frame"); ("params", json_of_frame ~load frame) ]
   | Notification (Batch_done d) ->
       envelope
         [ ("method", `String "batch_done"); ("params", json_of_batch_done d) ]
@@ -386,8 +398,14 @@ let json_of_hello_result { protocol; daemon; backend; probe_kinds } =
       ("probe_kinds", `List (List.map (fun k -> `String k) probe_kinds));
     ]
 
-let load_state_result_of_json j = int_field "backend.load_state.result" "seq" j
-let json_of_load_state_result seq = `Assoc [ ("seq", `Int seq) ]
+type load_state_result = { seq : int; load : int }
+
+let load_state_result_of_json j =
+  let what = "backend.load_state.result" in
+  { seq = int_field what "seq" j; load = int_field what "load" j }
+
+let json_of_load_state_result { seq; load } =
+  `Assoc [ ("seq", `Int seq); ("load", `Int load) ]
 
 let subscribe_result_of_json j =
   List.map
