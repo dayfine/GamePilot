@@ -20,7 +20,44 @@ let press button =
       cooldown_ms = 0;
     }
 
+(* After the landing's settle, how long the screen may take to show another
+   scene than the departure town before Fly fails: the settle has seen the
+   overworld quiet by then, so this only covers the look's lag. *)
+let left_departure_ms = 2000
+
+(* The overworld before the party opens: the scene Fly must leave. *)
+let departure () =
+  match
+    Effects.await ~timeout_ms:Menu_input.screen_timeout_ms (fun m ->
+        Option.is_some (Frlg_readers.Scene_signature.read m))
+  with
+  | Holds m -> Frlg_readers.Scene_signature.read m
+  | Timeout -> None
+
+(* The fork's landing judge (judge_fly_landing()): a fade and a quiet
+   overworld (the warp settle), then the screen no longer the departure
+   town's; its facing read has no reader here. *)
+let no_landing detail = Error (Story.Failure.cause "fly_no_landing" detail)
+
+let left_departure before =
+  match
+    Effects.await ~timeout_ms:left_departure_ms
+      (Frlg_readers.Scene_signature.left ~before)
+  with
+  | Holds _ -> true
+  | Timeout -> false
+
+let landed ~log plan departure =
+  let town = plan.town.Fly_towns.name in
+  match departure with
+  | None -> no_landing "no screen before the Fly"
+  | Some before when left_departure before ->
+      log ("Fly: landed in " ^ town ^ ".");
+      Ok ()
+  | Some _ -> no_landing (town ^ ": the screen still shows the departure town")
+
 let fly_steps ~log plan =
+  let departure = departure () in
   log
     (Printf.sprintf "Fly with slot %d, menu row %d, to %s (cell %d, %d)."
        plan.slot plan.menu_row plan.town.name plan.town.cell.x plan.town.cell.y);
@@ -29,9 +66,12 @@ let fly_steps ~log plan =
   | () ->
       ignore
         (Effects.submit (Fly_towns.cursor_presses plan.town @ [ press Wire.A ]));
-      Scene_looks.settle After_warp
-        ~label:("fly to " ^ plan.town.name)
-        ~battle_ends:false ~log
+      Result.bind
+        (Scene_looks.settle After_warp
+           ~label:("fly to " ^ plan.town.name)
+           ~battle_ends:false ~log)
+        (fun () -> landed ~log plan departure)
 
 let fly ~log plan =
-  Effects.with_probes Menu_input.probes (fun () -> fly_steps ~log plan)
+  Effects.with_probes (Menu_input.probes @ Frlg_readers.Scene_signature.probes)
+    (fun () -> fly_steps ~log plan)
