@@ -1,0 +1,11 @@
+(executable
+ (name gamepilot)
+ (public_name gamepilot)
+ (package gamepilot)
+ (libraries
+  gamepilot.wire
+  gamepilot.effects
+  gamepilot.replay
+  gamepilot.live
+  gamepilot.start_menu_poc
+  unix))

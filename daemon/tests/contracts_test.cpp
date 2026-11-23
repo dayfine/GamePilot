@@ -24,9 +24,6 @@ std::map<std::string, pa::JsonValue> load_contracts() {
       continue;
     }
     const std::string text = pa::file_to_string(path.string());
-    // One message per line: a golden file is one line (plus its final LF).
-    const auto newline = text.find('\n');
-    CHECK(newline == std::string::npos || newline + 1 == text.size());
     try {
       files.emplace(name, parse_message(text));
     } catch (const RpcError&) {

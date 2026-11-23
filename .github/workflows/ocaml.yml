@@ -1,0 +1,36 @@
+# harness: project
+name: OCaml
+on:
+  push:
+    branches: [main]
+  pull_request:
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Lint dune files and opam dependencies
+        shell: bash
+        run: sh tools/lint_dune.sh
+      - name: Check golden JSON formatting
+        if: runner.os == 'Linux'
+        run: python3 tools/fmt_json.py --check contracts/v1/*.json
+      - uses: ocaml/setup-ocaml@v3
+        with:
+          ocaml-compiler: "5.2"
+      - working-directory: src
+        run: opam install . --deps-only --yes
+      - working-directory: src
+        run: opam exec -- dune build
+      - working-directory: src
+        run: opam exec -- dune test
+      - name: Check formatting (ocamlformat version from src/.ocamlformat)
+        if: runner.os == 'Linux'
+        working-directory: src
+        run: |
+          opam install --yes "ocamlformat=$(sed -n 's/^version *= *//p' .ocamlformat)"
+          opam exec -- dune build @fmt

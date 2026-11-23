@@ -1,0 +1,4 @@
+(library
+ (name effects)
+ (public_name gamepilot.effects)
+ (libraries gamepilot.wire))

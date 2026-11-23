@@ -8,7 +8,7 @@ its reader is checked on a recorded run in under a second, with no emulator and 
 ```
 # mGBA instance with the bridge on port 47810 (see daemon/README.md)
 daemon/build/gamepilot_daemon --backend mgba --mgba-port 47810 --port 47900 --log run1.jsonl
-cd programs && dune exec -- gamepilot run start_menu_poc
+cd src && dune exec -- gamepilot run start_menu_poc
 start_menu_poc: PASS (open 50 ms, close 0 ms after batch_done)
 ```
 
@@ -17,12 +17,12 @@ Start, wait for the menu, B, wait for it to close) took 0.57 s wall clock. The d
 in lockstep at 59.7-60.1 frames/s with no frame gaps and no late key presses. The wire log has 40 lines.
 
 Probe values on the menu box (x 0.94 w 0.04, y 0.05 h 0.5): open mean ~251, stddev 10-13; closed
-mean ~[142, 204, 181], stddev ~[44, 40, 35]. Reader thresholds (`programs/frlg/start_menu.ml`):
+mean ~[142, 204, 181], stddev ~[44, 40, 35]. Reader thresholds (`src/games/frlg/readers/lib/start_menu.ml`):
 `min_white = 220.`, `max_stddev = 20.`
 
 ## Dev loop (stop rule 4)
 
-The recorded log is `programs/test/fixtures/mgba_run1.wirelog.jsonl` (home path replaced by `~`).
+The recorded log is `src/games/frlg/programs/start_menu_poc/test/fixtures/mgba_run1.wirelog.jsonl` (home path replaced by `~`).
 
 | Step | Result | Wall clock (edit + rebuild + replay) |
 |---|---|---|
