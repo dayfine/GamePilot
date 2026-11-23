@@ -312,6 +312,10 @@ Estimates here are rough judgments, not measurements.
 | R10 | Console B | GamePilot is one more lab process under the one-train rule (`lablock.sh`); the main session schedules windows |
 | R11 | Swappable parts | P1: anything that may be swapped (I/O backend, RNG, effect handler, probes) sits behind one boundary. No I/O survey or RNG library search up front |
 | R12 | FRLG RNG | Needed in S4; D6's OCaml rewrite starts there, PA's FRLG RNG as oracle |
-| R13 | Templates | Packages as a read-only submodule; new templates in `programs/<game>/assets/`; programs upload templates at probe registration (cached by hash); template readers get replay tests |
+| R13 | Templates | Packages as a read-only submodule; new templates in `src/games/<game>/assets/`; programs upload templates at probe registration (cached by hash); template readers get replay tests |
 | R14 | Manual control | pa-lab's MCP tools, mapped onto daemon calls by its second adapter, plus a hold state on the lease; no separate CLI |
 | R15 | Defaults | D3 strict; game identification is an OCaml reader run by `ensure_game`; the latency spike gates S1, not S0 |
+| R16 | OCaml layout | `src/` in `base/` (pure), `core/` (effects + handlers), `pokemon/` (navigation grid, story plans + engine), `games/<game>/{readers,actions,maps,story,programs/<program>}`; each library `lib/` + `test/`; the first real program is `games/frlg/programs/mail_glitch/` |
+| R17 | Naming | Names say what a thing does; no `helpers`, `utils`, `common`, `misc` |
+| R18 | Maps and plans | PokemonSimulation as a read-only submodule; maps and authored plans are read from it, never copied; the `mg-*` plans land there first |
+| R19 | Text reading | Open: font templates (exact on mGBA, no Tesseract) or OCR in the daemon; decided when the menu readers need it, behind the probe boundary either way |
