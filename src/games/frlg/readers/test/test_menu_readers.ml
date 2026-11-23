@@ -1,9 +1,7 @@
 (* The FRLG menu readers on real screenshots: Switch captures (CommandLineTests
    and console B) and native mGBA frames from the lab. The fixtures are the
-   daemon's [probe_images] output, as for test_screen_readers.ml, from
-
-     dune exec games/frlg/readers/test/write_probe_spec.exe -- menus
-
+   daemon's [probe_images] output, as for test_screen_readers.ml: run
+   [regen_fixtures.sh menus], which reads menus.switch.map and menus.mgba.map.
    Each image's name carries what it shows after "__", dash-separated:
 
      startN        the Start menu, its cursor on row N (0 at the top)

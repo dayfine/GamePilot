@@ -2,8 +2,8 @@
    daemon's offline [probe_images] tool: the screen facts' by default, the
    menu readers' with the argument [menus]. Boxes are relative to the game
    picture, so one spec serves every backend; [probe_images --viewport] says
-   where the picture sits in the images. See test_screen_readers.ml and
-   test_menu_readers.ml for how the fixtures are made from it. *)
+   where the picture sits in the images. regen_fixtures.sh makes the fixtures
+   with it. *)
 
 open Frlg_readers
 
