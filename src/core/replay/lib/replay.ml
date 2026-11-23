@@ -73,10 +73,10 @@ let find_from (log : log) i p =
   in
   go i
 
-let transport (log : log) : Session.transport =
-  (* Index of the next client message the program must send, and of the next
-     log entry to scan for daemon output. *)
-  let next_in = ref 0 and next_out = ref 0 in
+(* [next_in]: index of the next client message the program must send. *)
+let transport (log : log) next_in : Session.transport =
+  (* Index of the next log entry to scan for daemon output. *)
+  let next_out = ref 0 in
   (* Set when the program waits for daemon output but the recorded client spoke
      first: the live run's wait ended there. The first time, the wall clock
      jumps to infinity so a pending [await] times out (the reader did not hold
@@ -113,4 +113,13 @@ let transport (log : log) : Session.transport =
   in
   { send; recv; wall_ms = (fun () -> if !ran_out then infinity else 0.) }
 
-let run log f = Session.run (transport log) f
+let run log f =
+  let next_in = ref 0 in
+  let result = Session.run (transport log next_in) f in
+  (match find_from log !next_in (is_dir Wire.In) with
+  | Some i ->
+      let n, l = log.(i) in
+      diverge "wire log line %d: program ended without sending %s" n
+        (describe l.msg)
+  | None -> ());
+  result

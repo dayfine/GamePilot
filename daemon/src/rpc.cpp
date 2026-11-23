@@ -236,9 +236,10 @@ pa::JsonObject hello_result(const BackendInfo& backend) {
   return result;
 }
 
-pa::JsonObject load_state_result(std::int64_t seq) {
+pa::JsonObject load_state_result(std::int64_t seq, std::int64_t load) {
   pa::JsonObject result;
   result["seq"] = seq;
+  result["load"] = load;
   return result;
 }
 
@@ -267,17 +268,19 @@ pa::JsonObject cancel_result(std::int64_t released_seq) {
 }
 
 pa::JsonValue frame_notification(
-    std::int64_t seq, double t_ms,
+    std::int64_t seq, std::int64_t load, double t_ms,
     const std::vector<std::pair<std::string, ColorStats>>& results) {
   pa::JsonObject probes;
   for (const auto& [id, stats] : results) {
     pa::JsonObject result;
+    result["kind"] = std::string(kColorStatsKind);
     result["mean"] = triple(stats.mean);
     result["stddev"] = triple(stats.stddev);
     probes[id] = std::move(result);
   }
   pa::JsonObject params;
   params["seq"] = seq;
+  params["load"] = load;
   params["t_ms"] = round_to(t_ms, 10);
   params["probes"] = std::move(probes);
   pa::JsonObject message;

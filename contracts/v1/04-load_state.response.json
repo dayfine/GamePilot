@@ -2,6 +2,7 @@
   "jsonrpc": "2.0",
   "id": 2,
   "result": {
-    "seq": 1200
+    "seq": 1200,
+    "load": 1
   }
 }

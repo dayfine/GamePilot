@@ -62,6 +62,7 @@ class Server {
   double pace_base_ms_ = 0;
   std::int64_t pace_base_seq_ = 0;
   std::int64_t frames_stepped_ = 0;
+  std::int64_t loads_ = 0;  // successful backend.load_state calls
 };
 
 }  // namespace gamepilot
