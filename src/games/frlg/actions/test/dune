@@ -1,0 +1,21 @@
+(rule
+ (copy ../../readers/test/fixtures/mgba.probes.jsonl mgba.probes.jsonl))
+
+(rule
+ (copy
+  ../../readers/test/fixtures/menus.mgba.probes.jsonl
+  menus.mgba.probes.jsonl))
+
+(tests
+ (names test_fly_towns test_actions test_story_game)
+ (modules test_fly_towns test_actions test_story_game)
+ (deps mgba.probes.jsonl menus.mgba.probes.jsonl)
+ (libraries
+  yojson
+  gamepilot.case_table
+  gamepilot.wire
+  gamepilot.grid_maps
+  gamepilot.story
+  gamepilot.frlg_overworld
+  gamepilot.frlg_actions
+  frlg_overworld_fixtures))

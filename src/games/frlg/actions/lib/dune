@@ -1,0 +1,14 @@
+(library
+ (name frlg_actions)
+ (public_name gamepilot.frlg_actions)
+ (libraries
+  yojson
+  gamepilot.wire
+  gamepilot.effects
+  gamepilot.screen_state
+  gamepilot.grid_maps
+  gamepilot.grid_planning
+  gamepilot.story
+  gamepilot.frlg_readers
+  gamepilot.frlg_repo_files
+  gamepilot.frlg_overworld))

@@ -1,0 +1,13 @@
+(library
+ (name frlg_overworld)
+ (public_name gamepilot.frlg_overworld)
+ (libraries
+  gamepilot.wire
+  gamepilot.effects
+  gamepilot.screen_state
+  gamepilot.grid_maps
+  gamepilot.grid_planning
+  gamepilot.grid_trace
+  gamepilot.grid_walker
+  gamepilot.story
+  gamepilot.frlg_readers))
