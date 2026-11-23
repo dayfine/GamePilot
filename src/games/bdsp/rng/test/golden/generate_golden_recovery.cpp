@@ -586,6 +586,110 @@ void recovery_line(FILE* out, const RecoveryCase& c){
     std::fprintf(out, "\n");
 }
 
+//  ---- Re-anchoring ----
+
+struct CapturedLog : Logger{
+    std::string text;
+    void log(const std::string& msg, Color) override{
+        text += msg;
+    }
+    using Logger::log;
+};
+
+std::string event_list(const std::vector<BlinkEvent>& events){
+    std::string text = std::to_string(events.size());
+    char buffer[40];
+    for (const BlinkEvent& event : events){
+        std::snprintf(buffer, sizeof(buffer), " %.17g%c", event.seconds, event.type == BlinkType::Single ? 'S' : 'D');
+        text += buffer;
+    }
+    return text;
+}
+
+//  NPC "slot" of "npcs" from "seed", ticking every "period" seconds from
+//  "offset": its blinks over "ticks" ticks.
+std::vector<BlinkEvent> npc_events(const Xorshift128State& seed, uint8_t npcs, uint8_t slot, size_t ticks, double period, double offset){
+    std::vector<BlinkEvent> events;
+    std::vector<BlinkTick> blinks = generate_blink_ticks(Xorshift128(seed), ticks, npcs, slot);
+    for (size_t tick = 0; tick < blinks.size(); tick++){
+        if (blinks[tick].blinked){
+            BlinkEvent event;
+            event.seconds = offset + tick * period;
+            event.type = blinks[tick].type;
+            events.push_back(event);
+        }
+    }
+    return events;
+}
+
+//  "reanchor <state> <anchor stream> <blinks> <radius> <origin us> <clock: anchor
+//  us, advance, tick, npcs> <streams>": whether it re-anchored, the clock
+//  after (anchor time in ms from the origin) and what it logged.
+void reanchor_line(
+    FILE* out, const Xorshift128State& state, size_t anchor_stream, size_t blinks, uint64_t radius,
+    const std::vector<std::vector<BlinkEvent>>& streams, AdvanceClock clock
+){
+    const WallClock origin = at_us(CAPTURE_START_US);
+    BlinkRecovery recovery;
+    recovery.state = state;
+    recovery.anchor_stream = anchor_stream;
+    BlinkRecoveryConfig config;
+    config.reanchor_blinks = blinks;
+    config.reanchor_search_radius = radius;
+    std::fprintf(out, "reanchor %s %zu %zu %" PRIu64 " %" PRId64 " %" PRId64 " %" PRIu64 " %.17g %u %zu",
+        state_words(state).c_str(), anchor_stream, blinks, radius, CAPTURE_START_US,
+        us_of(clock.anchor_time), clock.anchor_advance, clock.tick_seconds, clock.npcs, streams.size());
+    for (const std::vector<BlinkEvent>& stream : streams){
+        std::fprintf(out, " %s", event_list(stream).c_str());
+    }
+    CapturedLog log;
+    bool ok = reanchor_absolute(recovery, streams, origin, config, clock, log);
+    std::fprintf(out, " : %d %" PRIu64 " %s | %s\n", ok ? 1 : 0, clock.anchor_advance,
+        micros(clock.anchor_time, origin).c_str(), log.text.c_str());
+}
+
+void reanchor_lines(FILE* out){
+    const Xorshift128State seed{0xdeadbeef, 0xcafebabe, 0x8badf00d, 0x0badc0de};
+    const double PERIOD = 1.0197;
+    //  Two NPCs watched for 600 ticks; the clock was anchored on stream 0's
+    //  blink at tick "anchor_tick" (advance 2 * tick).
+    std::vector<std::vector<BlinkEvent>> streams{
+        npc_events(seed, 2, 0, 600, PERIOD, 0.3),
+        npc_events(seed, 2, 1, 600, PERIOD, 0.37),
+    };
+    auto clock_at = [&](size_t tick, double tick_seconds, double late_seconds){
+        AdvanceClock clock;
+        clock.anchor_advance = 2 * tick;
+        clock.anchor_time = at_us(CAPTURE_START_US) + std::chrono::duration_cast<WallDuration>(
+            std::chrono::duration<double>(0.3 + tick * PERIOD + late_seconds));
+        clock.tick_seconds = tick_seconds;
+        clock.npcs = 2;
+        return clock;
+    };
+    reanchor_line(out, seed, 0, 6, 600, streams, clock_at(40, PERIOD, 0));
+    reanchor_line(out, seed, 1, 6, 600, streams, clock_at(40, PERIOD, 0));
+    reanchor_line(out, seed, 0, 6, 600, streams, clock_at(40, 1.017, 0));
+    reanchor_line(out, seed, 0, 6, 600, streams, clock_at(40, PERIOD, 0.8));
+    reanchor_line(out, seed, 0, 12, 600, streams, clock_at(40, 1.0201, -0.3));
+    reanchor_line(out, seed, 0, 6, 20, streams, clock_at(40, 1.03, 0));
+    reanchor_line(out, seed, 0, 6, 5, streams, clock_at(40, 1.03, 0));
+    reanchor_line(out, seed, 0, 1, 600, streams, clock_at(40, PERIOD, 0));
+    reanchor_line(out, seed, 2, 6, 600, streams, clock_at(40, PERIOD, 0));
+    reanchor_line(out, seed, 0, 600, 600, streams, clock_at(40, PERIOD, 0));
+    reanchor_line(out, {1, 2, 3, 4}, 0, 6, 600, streams, clock_at(40, PERIOD, 0));
+    std::vector<std::vector<BlinkEvent>> crowded = streams;
+    BlinkEvent echo = crowded[0].back();
+    echo.seconds += 0.3;
+    crowded[0].push_back(echo);
+    reanchor_line(out, seed, 0, 6, 600, crowded, clock_at(40, PERIOD, 0));
+    //  Fewer than six blinks on the stream, and an NPC count of zero.
+    std::vector<std::vector<BlinkEvent>> few{npc_events(seed, 2, 0, 30, PERIOD, 0.3)};
+    reanchor_line(out, seed, 0, 6, 600, few, clock_at(0, PERIOD, 0));
+    AdvanceClock no_npcs = clock_at(40, PERIOD, 0);
+    no_npcs.npcs = 0;
+    reanchor_line(out, seed, 0, 6, 600, streams, no_npcs);
+}
+
 
 void blink_recovery_lines(FILE* out){
     provisional_lines(out);
@@ -597,6 +701,7 @@ void blink_recovery_lines(FILE* out){
     recovery_line(out, {"foreign", seed, 2, 1100, {}, true, false});
     recovery_line(out, {"flat", seed, 2, 120, {}, false, true, 60});
     recovery_line(out, {"short", seed, 2, 150, {}, false, false});
+    reanchor_lines(out);
 }
 
 }

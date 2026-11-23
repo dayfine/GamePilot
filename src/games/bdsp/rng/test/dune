@@ -9,7 +9,8 @@
   test_advance_clock
   test_rng_calibration
   test_provisional_state
-  test_blink_recovery)
+  test_blink_recovery
+  test_blink_reanchor)
  (modules
   fixture_lines
   test_xorshift128
@@ -21,7 +22,8 @@
   test_advance_clock
   test_rng_calibration
   test_provisional_state
-  test_blink_recovery)
+  test_blink_recovery
+  test_blink_reanchor)
  (deps
   (glob_files fixtures/*.txt))
  (libraries gamepilot.case_table gamepilot.bdsp_rng))
