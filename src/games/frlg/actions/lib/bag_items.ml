@@ -144,20 +144,41 @@ let rec down_to candidates name presses =
       down_to candidates name (presses + 1)
   | _ -> M.fail "not_in_bag" (name ^ " did not come under the cursor")
 
-let select slug =
+(* The item's pocket, the names its rows can read (CANCEL ends the list) and
+   the item's own name there. *)
+let pocket_names slug =
   let pocket = pocket_of_item slug in
   let in_pocket =
     Text.Item_names.in_pocket (Text_data.item_names ()) (text_pocket pocket)
   in
-  let not_in_bag () =
-    M.fail "not_in_bag" (slug ^ " is not in " ^ Bag_screen.pocket_name pocket)
-  in
   match display_name in_pocket slug with
   | None -> M.fail ~repeats:true "unknown_item" (slug ^ " is no item name")
-  | Some name -> (
-      match find_from (cancel :: in_pocket) name 0 with
-      | None -> not_in_bag ()
-      | Some _ -> down_to (cancel :: in_pocket) name 0)
+  | Some name -> (pocket, cancel :: in_pocket, name)
+
+let select slug =
+  let pocket, candidates, name = pocket_names slug in
+  match find_from candidates name 0 with
+  | None ->
+      M.fail "not_in_bag" (slug ^ " is not in " ^ Bag_screen.pocket_name pocket)
+  | Some _ -> down_to candidates name 0
+
+let shown_row k = if taps_to_reveal k > 0 then shown_rows - 1 else k
+
+let list_row slug =
+  let _, candidates, name = pocket_names slug in
+  find_from candidates name 0
+
+let count_in_pocket slug =
+  match list_row slug with
+  | None -> Some 0
+  | Some k -> count_on_row (shown_row k)
+
+let read_count ~log slug =
+  open_pocket_top (pocket_of_item slug);
+  let count = count_in_pocket slug in
+  M.close "the bag" Bag_screen.bag_open;
+  M.settle_back ~label:("count " ^ slug) ~log;
+  count
 
 (* The item's own menu (USE or CHECK, GIVE, TOSS, CANCEL) hides the arrows. *)
 let item_menu m = Bag_screen.bag_open m && Bag_screen.pocket m = None

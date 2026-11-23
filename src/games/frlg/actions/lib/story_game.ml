@@ -283,12 +283,13 @@ let game t : Story.Game.t =
     game_actions =
       List.map (adopting t)
         (("fly", fly t)
-        :: ("grind", grind t)
-        :: ("capture", capture t)
-        :: ("lift_floor", lift t)
-        :: ("prepare_berry_pp", prepare_berry_pp t)
-        :: ("mail_glitch_double_battle", double_battle t)
-        :: List.map (cutting t) (Game_actions.handlers (action_context t)));
+         :: ("grind", grind t)
+         :: ("capture", capture t)
+         :: ("lift_floor", lift t)
+         :: ("prepare_berry_pp", prepare_berry_pp t)
+         :: ("mail_glitch_double_battle", double_battle t)
+         :: List.map (cutting t) (Game_actions.handlers (action_context t))
+        @ Mail_glitch_use.handlers ~log:t.config.log ~party:t.party);
     flag_holds = t.config.flags;
     position = (fun () -> t.at);
     heal = heal t;

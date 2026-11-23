@@ -23,6 +23,7 @@
   test_menu_actions
   test_grind
   test_mail_glitch_actions
+  test_mail_glitch_use
   test_lift_ride
   test_capture)
  (modules
@@ -33,6 +34,7 @@
   test_menu_actions
   test_grind
   test_mail_glitch_actions
+  test_mail_glitch_use
   test_lift_ride
   test_capture)
  (deps

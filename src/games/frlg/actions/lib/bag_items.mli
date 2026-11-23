@@ -36,6 +36,10 @@ val pocket_top : Frlg_readers.Bag_screen.pocket -> unit
 (** In the open bag (the Start menu's or a battle's BAG): to the pocket and its
     list's top row. Fails as [no_bag] or [no_pocket]. *)
 
+val to_top : unit -> unit
+(** In the open pocket: UP until the cursor reads on the list's top row (none
+    when it is there). Fails as [no_pocket]. *)
+
 val open_pocket_top : Frlg_readers.Bag_screen.pocket -> unit
 (** From the overworld: the bag open on the pocket (turned to by LEFT or RIGHT
     as its arrows read) with the cursor on the list's top row. Fails as [no_bag]
@@ -61,3 +65,20 @@ val select : string -> unit
     reading the rows, then DOWN until the cursor's own row reads its name (a
     lost tap is tapped again). Fails as [not_in_bag] when the item is not in the
     pocket. *)
+
+val list_row : string -> int option
+(** In the item's open pocket, from the list's top: its row in the list (from
+    0), the rows read down to it as {!select} reads them; [None] when the pocket
+    does not hold it. The list may be left scrolled. *)
+
+val count_in_pocket : string -> int option
+(** In the item's open pocket, from the list's top: its count, read on its row
+    once the rows are read down to it ({!count_on_row}); [Some 0] when the
+    pocket does not hold it, [None] when its count does not read. The cursor
+    stays where the reading left it. Fails as [unknown_item] for no item's slug.
+*)
+
+val read_count : log:(string -> unit) -> string -> int option
+(** From the overworld: the item's pocket opened ({!open_pocket_top}),
+    {!count_in_pocket}, the bag closed and the overworld settled. Not in the
+    fork, which has no bag count reader. *)

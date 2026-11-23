@@ -47,6 +47,17 @@ let swap ~log a b =
 
 let bag_or_party m = Bag_screen.bag_open m || Party_menu.party_menu m
 let is_mail item = String.ends_with ~suffix:"-mail" item
+let editor_yes m = Mail_editor.confirm_arrow m = Some true
+let mail_confirm_ms = 4000
+
+(* The C++ ItemDuplication's exit from the editor after its PLUS: the
+   editor's own Yes/No arrow on YES, then A. *)
+let confirm_mail () =
+  Effects.with_probes Mail_editor.probes (fun () ->
+      ignore
+        (M.await_screen ~timeout_ms:mail_confirm_ms ~code:"mail_no_confirm"
+           "the mail's Okay?" editor_yes));
+  M.press Wire.A
 
 let write_one_word () =
   Effects.submit [ Wire.Wait { wait_ms = mail_editor_wait_ms } ] |> ignore;
@@ -54,9 +65,23 @@ let write_one_word () =
     (fun _ -> M.press Wire.A ~cooldown_ms:easy_chat_press_ms)
     [ 1; 2; 3 ];
   M.press Wire.Start;
-  M.answer_yes ~code:"mail_no_confirm" "the mail's Okay?"
+  confirm_mail ()
 
 let switch_question_ms = 1500
+let message_or_question m = Dialog.advance_arrow m || Dialog.selection_dialog m
+
+(* "<member> is already holding <item>. Would you like to switch the two
+   items?" has a page before its question, which the C++ ItemDuplication
+   presses A through (its [item_description] wait); a "was given ... to hold"
+   message has no question after its page. *)
+let answer_switch () =
+  match Effects.await ~timeout_ms:switch_question_ms message_or_question with
+  | Timeout -> false
+  | Holds m when Dialog.selection_dialog m ->
+      M.answer_yes_if_asked ~timeout_ms:switch_question_ms
+  | Holds _ ->
+      M.press Wire.A;
+      M.answer_yes_if_asked ~timeout_ms:switch_question_ms
 
 (* After a berry is given the pouch shows again, over the bag. *)
 let bag_pouch_or_party m = bag_or_party m || Berry_pouch.shows_pouch m
@@ -70,8 +95,7 @@ let give ~log ~item ~slot =
     (M.await_screen ~code:"no_party" "the party to give to"
        Party_menu.party_menu);
   choose_slot slot;
-  if M.answer_yes_if_asked ~timeout_ms:switch_question_ms then
-    log "Bag: the member held an item; switched it.";
+  if answer_switch () then log "Bag: the member held an item; switched it.";
   if is_mail item then write_one_word ();
   Effects.with_probes Berry_pouch.probes (fun () ->
       M.close "the bag" bag_pouch_or_party);
