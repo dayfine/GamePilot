@@ -13,6 +13,9 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
+      - name: Fetch the PokemonSimulation submodule (maps read by tests)
+        shell: bash
+        run: git submodule update --init --depth 1 third_party/PokemonSimulation
       - name: Lint dune files and opam dependencies
         shell: bash
         run: sh tools/lint_dune.sh
