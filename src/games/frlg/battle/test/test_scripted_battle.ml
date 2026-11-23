@@ -11,16 +11,35 @@ type fake = {
   moves : Battle_driver.move_result list;  (** default [Chosen] *)
   switch_ok : bool;
   send_in_ok : bool;
+  offered : string option list;
+      (** the moves offered at each move learn, as read; default unread *)
 }
 
-let fake ?(moves = []) ?(switch_ok = true) ?(send_in_ok = true) events =
-  { events; moves; switch_ok; send_in_ok }
+let fake ?(moves = []) ?(switch_ok = true) ?(send_in_ok = true) ?(offered = [])
+    events =
+  { events; moves; switch_ok; send_in_ok; offered }
+
+(* The driver's answer from what the list shows. *)
+let learned offered : Battle_driver.learn -> Battle_driver.learned = function
+  | Keep_moves -> Not_learned { offered = None }
+  | Forget slot -> Learned { slot; move = offered }
+  | Forget_for { move; slot } -> (
+      match offered with
+      | Some m when m = move -> Learned { slot; move = offered }
+      | Some _ -> Not_learned { offered }
+      | None -> Unread "the move offered did not read")
+
+let learn_name : Battle_driver.learn -> string = function
+  | Keep_moves -> "keep moves"
+  | Forget s -> Printf.sprintf "forget %d" s
+  | Forget_for { move; slot } -> Printf.sprintf "forget %d for %s" slot move
 
 let take q ~default = Option.value (Queue.take_opt q) ~default
 
 let driver f calls : Battle_driver.t =
   let events = Queue.of_seq (List.to_seq f.events) in
   let moves = Queue.of_seq (List.to_seq f.moves) in
+  let offered = Queue.of_seq (List.to_seq f.offered) in
   let call s = calls := s :: !calls in
   {
     next_event = (fun ~timeout_ms:_ -> take events ~default:Timed_out);
@@ -45,11 +64,11 @@ let driver f calls : Battle_driver.t =
         call (Printf.sprintf "item %d" item.row);
         true);
     answer_move_learn =
-      (fun ~forget ->
+      (fun learn ->
+        let result = learned (take offered ~default:None) learn in
         call
-          (match forget with
-          | Some s -> Printf.sprintf "forget %d" s
-          | None -> "keep moves"));
+          (learn_name learn ^ " (" ^ Battle_driver.describe_learned result ^ ")");
+        result);
     answer_use_next = (fun yes -> call (if yes then "next yes" else "next no"));
   }
 
@@ -109,16 +128,41 @@ let double_battle_cases =
 let switch_grind =
   Battle_script.make ~opening:[ Switch 1 ]
     ~send_ins:[ { slot = 1; then_ = None } ]
-    ~forget:1
+    ~learn:(Forget_for { move = "recycle"; slot = 0 })
     (Attack { slots = [ 0; 1 ]; target = Default })
 
 let switch_grind_cases =
   [
     case "switch-grind: switch, a move out of PP rotates, the move learned"
-      (fake ~moves:[ Chosen; Refused ] (menus 4 @ [ Move_learn; Battle_over ]))
+      (fake ~moves:[ Chosen; Refused ] ~offered:[ Some "recycle" ]
+         (menus 4 @ [ Move_learn; Battle_over ]))
       switch_grind
-      "switch 1; move 0 default; move 0 default; move 1 default; forget 1 => \
-       over (4 menus, 0 send-ins, 1 refused, 1 prompts)";
+      "switch 1; move 0 default; move 0 default; move 1 default; forget 0 for \
+       recycle (learned recycle over move 0) => over (4 menus, 0 send-ins, 1 \
+       refused, 1 prompts, learned recycle)";
+    case "switch-grind: another move offered is not learned"
+      (fake
+         ~offered:[ Some "light-screen"; Some "reflect" ]
+         (menus 2 @ [ Move_learn; Move_learn; Battle_over ]))
+      switch_grind
+      "switch 1; move 0 default; forget 0 for recycle (not learned: \
+       light-screen); forget 0 for recycle (not learned: reflect) => over (2 \
+       menus, 0 send-ins, 0 refused, 2 prompts)";
+    case "switch-grind: an unread offer is asked again, then read"
+      (fake ~offered:[ None; Some "recycle" ]
+         [ Move_learn; Move_learn; Battle_over ])
+      switch_grind
+      "forget 0 for recycle (unread: the move offered did not read); forget 0 \
+       for recycle (learned recycle over move 0) => over (0 menus, 0 send-ins, \
+       0 refused, 2 prompts, learned recycle)";
+    case "switch-grind: an offer unread three times fails the battle"
+      (fake [ Move_learn; Move_learn; Move_learn; Battle_over ])
+      switch_grind
+      "forget 0 for recycle (unread: the move offered did not read); forget 0 \
+       for recycle (unread: the move offered did not read); forget 0 for \
+       recycle (unread: the move offered did not read) => failed: the move \
+       learn did not read 3 times: the move offered did not read (0 menus, 0 \
+       send-ins, 0 refused, 3 prompts)";
     case
       "switch-grind: the trainee faints first, the sweeper is sent in and \
        fights"
@@ -162,8 +206,8 @@ let other_cases =
     case "move learn: the moves kept when the script forgets none"
       (fake [ Move_learn; Move_learn; Battle_over ])
       (Battle_script.make Flee)
-      "keep moves; keep moves => over (0 menus, 0 send-ins, 0 refused, 2 \
-       prompts)";
+      "keep moves (not learned: unread move); keep moves (not learned: unread \
+       move) => over (0 menus, 0 send-ins, 0 refused, 2 prompts)";
     case "an item, then the fallback"
       (fake (menus 2 @ [ Battle_over ]))
       (Battle_script.make

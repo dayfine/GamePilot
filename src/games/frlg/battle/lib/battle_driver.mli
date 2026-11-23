@@ -53,6 +53,25 @@ type item = {
 }
 (** A bag item used from the action menu. *)
 
+(** The answer to "Delete a move to make room for ...?". *)
+type learn =
+  | Keep_moves  (** NO, then YES to "Stop learning ...?" *)
+  | Forget of int  (** YES, and this move (0-3) forgotten whatever is offered *)
+  | Forget_for of { move : string; slot : int }
+      (** YES; [slot] (0-3) forgotten only when the move offered, read on the
+          list to forget from (its fifth row), is [move] (a slug). Any other
+          move is backed out of and not learned. *)
+
+(** What came of a {!learn} answer. *)
+type learned =
+  | Learned of { slot : int; move : string option }
+      (** [slot] forgotten for the new move, [move] when it was read *)
+  | Not_learned of { offered : string option }
+      (** the moves kept; [offered] when it was read *)
+  | Unread of string
+      (** the move offered did not read, or the list's cursor did not: backed
+          out with NO to "Stop learning ...?", so the game asks again *)
+
 type t = {
   next_event : timeout_ms:int -> event;
       (** Plays the battle on (text, level-up boxes) until it asks for
@@ -73,12 +92,14 @@ type t = {
   use_item : item -> bool;
       (** From the action menu: BAG, the item, its target. False if the bag did
           not show the pocket or did not close. *)
-  answer_move_learn : forget:int option -> unit;
-      (** On {!Move_learn}: [Some slot] answers YES and forgets that move (0-3)
-          on the move list that opens; [None] answers NO (and to "Stop
-          learning?", which follows, B is YES). *)
+  answer_move_learn : learn -> learned;
+      (** On {!Move_learn}, the whole exchange: "Delete a move ...?", the list
+          to forget from, and "Stop learning ...?" when the move is not taken
+          (pokefirered battle_script_commands.c: YES there stops, NO or B asks
+          again). *)
   answer_use_next : bool -> unit;  (** On {!Use_next}: YES or NO. *)
 }
 
 val target_name : target -> string
+val describe_learned : learned -> string
 val event_name : event -> string

@@ -17,7 +17,7 @@ let driver events runs : Battle_driver.t =
     send_in = (fun ~slot:_ -> not_a_flee_verb ());
     run = (fun () -> incr runs);
     use_item = (fun _ -> not_a_flee_verb ());
-    answer_move_learn = (fun ~forget:_ -> not_a_flee_verb ());
+    answer_move_learn = (fun _ -> not_a_flee_verb ());
     answer_use_next = (fun _ -> not_a_flee_verb ());
   }
 

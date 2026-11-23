@@ -8,8 +8,8 @@
 
     - switch-grind (mg-04): [opening = [Switch 1]], [fallback = Attack] with the
       sweeper's moves, [send_ins = [{ slot = 1; then_ = None }]] in case the
-      trainee faints before the switch, [forget = Some learn_slot]; a second
-      faint, the sweeper's, finds no send-in left and fails the battle;
+      trainee faints before the switch, [learn = Forget_for { move; slot }]; a
+      second faint, the sweeper's, finds no send-in left and fails the battle;
     - faint-and-flee (mg-05's Berry holder): [fallback = Attack] with move 0,
       [send_ins = [{ slot = 1; then_ = Some Flee }]];
     - the double battle (mg-05): four opening commands (Knock Off on the ally, a
@@ -50,9 +50,7 @@ type t = {
   send_ins : send_in list;
       (** A switch-in past these fails the battle: a member fell that the script
           did not plan for. *)
-  forget : int option;
-      (** "Delete a move?": the move slot to forget for the new move, or [None]
-          to keep the moves. *)
+  learn : Battle_driver.learn;  (** "Delete a move to make room for ...?" *)
   use_next : bool;  (** "Use next POKéMON?" *)
   max_menus : int;  (** more action menus than this fail the battle *)
   event_timeout_ms : int;  (** the longest wait for the battle's next event *)
@@ -69,14 +67,14 @@ val default_event_timeout_ms : int
 val make :
   ?opening:command list ->
   ?send_ins:send_in list ->
-  ?forget:int ->
+  ?learn:Battle_driver.learn ->
   ?use_next:bool ->
   ?max_menus:int ->
   ?event_timeout_ms:int ->
   fallback ->
   t
-(** No opening, no send-ins, the moves kept, NO to "Use next POKéMON?", and the
-    defaults above. *)
+(** No opening, no send-ins, the moves kept ([Keep_moves]), NO to "Use next
+    POKéMON?", and the defaults above. *)
 
 val describe_command : command -> string
 (** ["move 2 (ally)"], ["switch to 3"], ["item row 0"], ["run"]. *)

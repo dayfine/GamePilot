@@ -12,4 +12,5 @@
   gamepilot.frlg_readers
   gamepilot.frlg_text
   gamepilot.frlg_repo_files
-  gamepilot.frlg_overworld))
+  gamepilot.frlg_overworld
+  gamepilot.frlg_battle))
