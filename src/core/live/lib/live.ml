@@ -3,6 +3,7 @@ let default_port = 47900
 (* How long the reader waits on the socket before reporting [Idle]. *)
 let idle_poll_s = 0.05
 let recv_chunk = 65536
+let ms_per_s = 1000.
 
 (* The queue between the reader thread and the program's thread. *)
 type queue = {
@@ -29,6 +30,12 @@ let pop q =
       done;
       Queue.pop q.events)
 
+let push_line q line =
+  match Wire.message_of_string line with
+  | m -> push q (Session.Message m)
+  | exception Wire.Decode_error e ->
+      push q (Session.Closed ("bad message from daemon: " ^ e))
+
 (* Splits [buf] at newlines; parses and pushes every complete line. *)
 let drain_lines q buf =
   let s = Buffer.contents buf in
@@ -37,33 +44,36 @@ let drain_lines q buf =
     | None -> start
     | Some nl ->
         let line = String.trim (String.sub s start (nl - start)) in
-        (if line <> "" then
-           match Wire.message_of_string line with
-           | m -> push q (Session.Message m)
-           | exception Wire.Decode_error e ->
-               push q (Session.Closed ("bad message from daemon: " ^ e)));
+        if line <> "" then push_line q line;
         go (nl + 1)
   in
   let consumed = go 0 in
   Buffer.clear buf;
   Buffer.add_string buf (String.sub s consumed (String.length s - consumed))
 
+(* Reads what the socket has; [false] once the daemon closed it. *)
+let receive fd q buf chunk =
+  match Unix.recv fd chunk 0 recv_chunk [] with
+  | 0 ->
+      push q (Session.Closed "daemon closed the connection");
+      false
+  | n ->
+      Buffer.add_subbytes buf chunk 0 n;
+      drain_lines q buf;
+      true
+
+(* Waits for data, reporting [Idle] after [idle_poll_s] without any. *)
+let read_ready fd q buf chunk =
+  match Unix.select [ fd ] [] [] idle_poll_s with
+  | [], _, _ ->
+      push_idle q;
+      true
+  | _ -> receive fd q buf chunk
+
 let reader fd q stop =
   let buf = Buffer.create recv_chunk and chunk = Bytes.create recv_chunk in
   let rec loop () =
-    if Atomic.get stop then ()
-    else
-      match Unix.select [ fd ] [] [] idle_poll_s with
-      | [], _, _ ->
-          push_idle q;
-          loop ()
-      | _ -> (
-          match Unix.recv fd chunk 0 recv_chunk [] with
-          | 0 -> push q (Session.Closed "daemon closed the connection")
-          | n ->
-              Buffer.add_subbytes buf chunk 0 n;
-              drain_lines q buf;
-              loop ())
+    if (not (Atomic.get stop)) && read_ready fd q buf chunk then loop ()
   in
   try loop ()
   with Unix.Unix_error (e, _, _) ->
@@ -102,7 +112,7 @@ let run ?(port = default_port) f =
     {
       Session.send;
       recv = (fun () -> pop q);
-      wall_ms = (fun () -> Unix.gettimeofday () *. 1000.);
+      wall_ms = (fun () -> Unix.gettimeofday () *. ms_per_s);
     }
   in
   Fun.protect
