@@ -268,7 +268,7 @@ void check_two_clients_and_the_lease() {
                         console.session, clock, SwitchOptions{});
   ServerOptions options;
   options.port = 47977;
-  Server server(backend, options);
+  Server server(backend, options, clock);
   std::atomic<bool> stop{false};
   std::thread serving([&] { server.run(stop); });
 
@@ -347,6 +347,96 @@ void check_two_clients_and_the_lease() {
   serving.join();
 }
 
+// The lines the client receives within `ms`, up to and with the first that
+// holds `needle`.
+std::vector<std::string> read_until(TestClient& client,
+                                    const std::string& needle, int ms) {
+  std::vector<std::string> lines;
+  for (int waited = 0; waited < ms; waited += 10) {
+    while (auto line = client.lines.next_line()) {
+      lines.push_back(*line);
+      if (line->find(needle) != std::string::npos) {
+        return lines;
+      }
+    }
+    if (poll_readable({&client.socket}, 10)[0]) {
+      const auto data = client.socket.receive_some();
+      if (!data) {
+        break;
+      }
+      client.lines.append(*data);
+    }
+  }
+  return lines;
+}
+
+double t_ms_of(const std::string& line) {
+  return parse_message(line)
+      .to_object()
+      ->get_object_throw("params")
+      .get_double_throw("t_ms");
+}
+
+// One clock: a frame's t_ms and the batch_done after it compare, however long
+// the board took to start before the server (console B, 2026-11-23: frames ran
+// 524 ms ahead of batch ends). And a cancel drops what the board was already
+// handed: the next press runs at once, not after the cancelled cooldown.
+void check_one_clock_and_cancel() {
+  const Clock clock;
+  test::FakeConsole console(clock);
+  SwitchBackend backend(console.board.screen(60, 0, cv::Size(64, 36)),
+                        console.session, clock, SwitchOptions{});
+  sleep_ms(300);
+  ServerOptions options;
+  options.port = 47978;
+  Server server(backend, options, clock);
+  std::atomic<bool> stop{false};
+  std::thread serving([&] { server.run(stop); });
+
+  TestClient client = connect_client(options.port);
+  call(client,
+       R"({"jsonrpc":"2.0","id":1,"method":"hello","params":{"protocol":1,"client":"clock-test"}})");
+  call(client,
+       R"({"jsonrpc":"2.0","id":2,"method":"subscribe","params":{"probes":[{"id":"p","kind":"core.color_stats@1","box":{"x":0,"y":0,"w":1,"h":1},"delivery":"every"}]}})");
+  call(client,
+       R"({"jsonrpc":"2.0","id":3,"method":"submit","params":{"batch_id":"b1","commands":[{"press":["A"],"hold_ms":50,"cooldown_ms":50}]}})");
+  const std::vector<std::string> lines =
+      read_until(client, "\"batch_done\"", 2000);
+  double frame_ms = -1;
+  for (const std::string& line : lines) {
+    if (line.find("\"method\":\"frame\"") != std::string::npos) {
+      frame_ms = t_ms_of(line);
+    }
+  }
+  CHECK(!lines.empty() && frame_ms >= 0);
+  if (!lines.empty() && frame_ms >= 0) {
+    const double done_ms = t_ms_of(lines.back());
+    CHECK(done_ms >= frame_ms - 1 && done_ms - frame_ms < 100);
+  }
+
+  call(client,
+       R"({"jsonrpc":"2.0","id":4,"method":"submit","params":{"batch_id":"b2","commands":[{"press":["A"],"hold_ms":50,"cooldown_ms":1000}]}})");
+  sleep_ms(150);
+  call(client, R"({"jsonrpc":"2.0","id":5,"method":"cancel","params":{}})");
+  const double cancelled_ms = clock.now_ms();
+  call(client,
+       R"({"jsonrpc":"2.0","id":6,"method":"submit","params":{"batch_id":"b3","commands":[{"press":["Down"],"hold_ms":50,"cooldown_ms":0}]}})");
+  sleep_ms(100);
+  const std::vector<BoardCommand> commands = console.board.commands();
+  // The only D-pad press of the test.
+  const auto down = std::find_if(
+      commands.rbegin(), commands.rend(), [](const BoardCommand& c) {
+        return c.message.buttons.button5 != 0;
+      });
+  CHECK(down != commands.rend());
+  if (down != commands.rend()) {
+    CHECK(down->start_ms - cancelled_ms < 100);
+  }
+
+  stop.store(true);
+  serving.join();
+}
+
 }  // namespace
 
 int main() {
@@ -357,5 +447,6 @@ int main() {
   check_video_replay();
   check_latency_harness();
   check_two_clients_and_the_lease();
+  check_one_clock_and_cancel();
   return TEST_RESULT();
 }

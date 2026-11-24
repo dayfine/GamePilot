@@ -93,7 +93,12 @@ struct WatchCost {
 
 class Server {
  public:
-  Server(Backend& backend, ServerOptions options);
+  // `clock` is the daemon's one clock: a live backend stamps its frames on
+  // it, and the server stamps batch ends, the wire log and the lease on it, so
+  // a frame's t_ms and a batch_done's compare (console B, 2026-11-23: a clock
+  // of the server's own started 524 ms after the backend's, and every wait
+  // after a batch lost that much).
+  Server(Backend& backend, ServerOptions options, const Clock& clock);
 
   // Serves until `stop` turns true. Throws BackendError if the backend fails
   // mid-frame.
@@ -153,7 +158,7 @@ class Server {
 
   Backend& backend_;
   ServerOptions options_;
-  Clock clock_;
+  const Clock& clock_;
   Socket listener_;
   std::vector<std::unique_ptr<ClientConnection>> clients_;
   int connections_ = 0;  // connections accepted so far
