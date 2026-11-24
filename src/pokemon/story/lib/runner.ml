@@ -38,23 +38,31 @@ let check_declared (game : Game.t) (event : Plan.event) =
       Error (Failure.Not_at_declared { declared; observed })
   | _ -> Ok ()
 
-let run_event (game : Game.t) line (event : Plan.event) =
+let run_event (game : Game.t) notify line (event : Plan.event) =
   game.log
     (line (if event.why = "" then "start" else "start (" ^ event.why ^ ")"));
+  notify Event_progress.Started;
   match dispatch game event with
   | exception error ->
-      game.log (line ("failed: " ^ Printexc.to_string error));
+      let reason = Printexc.to_string error in
+      game.log (line ("failed: " ^ reason));
+      notify (Event_progress.Failed reason);
       raise error
   | Error cause -> Error (Failure.Handler cause)
   | Ok () -> check_declared game event
 
-let log_end (game : Game.t) line = function
-  | Ok () -> game.log (line "done")
+let log_end (game : Game.t) notify line = function
+  | Ok () ->
+      game.log (line "done");
+      notify Event_progress.Passed
   | Error reason ->
-      game.log (line ("failed: " ^ Failure.reason_to_string reason))
+      let reason = Failure.reason_to_string reason in
+      game.log (line ("failed: " ^ reason));
+      notify (Event_progress.Failed reason)
 
-let step (game : Game.t) (checkpoint : Plan.checkpoint) index
+let step ~on_event (game : Game.t) (checkpoint : Plan.checkpoint) index
     (event : Plan.event) =
+  let notify = on_event index in
   let line text =
     Printf.sprintf "[Story] %s #%d %s: %s" checkpoint.checkpoint_id (index + 1)
       event.id text
@@ -62,10 +70,11 @@ let step (game : Game.t) (checkpoint : Plan.checkpoint) index
   match List.find_opt game.flag_holds event.skip_if with
   | Some flag ->
       game.log (line ("skipped (" ^ flag ^ ")"));
+      notify (Event_progress.Skipped flag);
       Ok ()
   | None ->
-      let result = run_event game line event in
-      log_end game line result;
+      let result = run_event game notify line event in
+      log_end game notify line result;
       Result.map_error (failure_at checkpoint index event) result
 
 (* The end check's verdict: [Ok] or the failure reason. *)
@@ -140,13 +149,15 @@ let finish (game : Game.t) checkpoint index ~end_at ~end_state =
     game.log ("[Story] " ^ checkpoint.Plan.checkpoint_id ^ ": done");
   checked
 
-let rec run_from (game : Game.t) checkpoint ~end_at ~end_state index = function
+let rec run_from ~on_event (game : Game.t) checkpoint ~end_at ~end_state index =
+  function
   | [] -> finish game checkpoint index ~end_at ~end_state
   | event :: rest ->
-      Result.bind (step game checkpoint index event) (fun () ->
-          run_from game checkpoint ~end_at ~end_state (index + 1) rest)
+      Result.bind (step ~on_event game checkpoint index event) (fun () ->
+          run_from ~on_event game checkpoint ~end_at ~end_state (index + 1) rest)
 
-let run ?end_at ?end_state (game : Game.t) (checkpoint : Plan.checkpoint) =
+let run ?end_at ?end_state ?(on_event = fun _ _ -> ()) (game : Game.t)
+    (checkpoint : Plan.checkpoint) =
   let id = checkpoint.checkpoint_id in
   match missing_handler game checkpoint with
   | Some failure ->
@@ -156,4 +167,4 @@ let run ?end_at ?end_state (game : Game.t) (checkpoint : Plan.checkpoint) =
       game.log
         (Printf.sprintf "[Story] %s: start, %d events" id
            (List.length checkpoint.events));
-      run_from game checkpoint ~end_at ~end_state 0 checkpoint.events
+      run_from ~on_event game checkpoint ~end_at ~end_state 0 checkpoint.events

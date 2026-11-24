@@ -321,3 +321,26 @@ let () =
         && red m "q" = Some 3.
         && List.map fst m.probes = [ "p"; "q" ]
     | Effects.Timeout -> false)
+
+(* A stopped run replays as it ran: the logged stop ends the program's wait
+   at the same point, and its watch notifications, which the daemon keeps off
+   the wire log, are not expected there. *)
+let () =
+  let log =
+    Replay.log_of_lines
+      (hello
+      @ [
+          frame ~seq:501 ~load:2;
+          {|{"dir":"out","t_ms":502,"msg":{"jsonrpc":"2.0","method":"stop","params":{"reason":"stopped by user"}}}|};
+          frame ~seq:503 ~load:2;
+        ])
+  in
+  let program () =
+    ignore (Effects.load_state "state.ss" : int);
+    Effects.show_log "[Story] waiting";
+    Effects.await ~timeout_ms:100_000 (fun _ -> false)
+  in
+  expect "a logged stop replays as Stop_requested"
+    (match Replay.run log program with
+    | _ -> false
+    | exception Effects.Stop_requested r -> r = "stopped by user")

@@ -16,6 +16,7 @@ val run :
   ?end_at:Pose.grid ->
   ?end_state:
     Plan.postconditions * (Plan.postconditions -> Postcondition_check.observed) ->
+  ?on_event:(int -> Event_progress.t -> unit) ->
   Game.t ->
   Plan.checkpoint ->
   (unit, Failure.t) result
@@ -33,4 +34,7 @@ val run :
     pass ({!Postcondition_check}); one failed or not read fails the run with
     {!Failure.Unmet_postconditions}. Each is logged as
     ["[Postcondition] <checkpoint> <what>: <verdict>: <detail>"] with a summary
-    line. A plan that states none reads nothing. *)
+    line. A plan that states none reads nothing.
+
+    [on_event index progress] hears each event (index from 0) start, pass, fail
+    or be skipped, next to its log line (the watch page's plan). *)

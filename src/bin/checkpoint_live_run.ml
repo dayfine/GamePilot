@@ -2,7 +2,10 @@
    logging to it, the checkpoint from its start state through
    Frlg_story.Checkpoint_run with its declared end, then the saves the outcome
    asks for (the failure frame and state, or a passing end) while the session
-   is still open, and the run's summary, KEEP and RESULTS.tsv row. *)
+   is still open, and the run's summary, KEEP and RESULTS.tsv row. The run
+   shows its plan and story lines on the daemon's watch page (Watch_report);
+   a Stop pressed there is a failure ("stopped by user") that repeats, so the
+   series stops too. *)
 
 open Story
 
@@ -15,6 +18,7 @@ type setup = {
   mode : Checkpoint_trials.mode;
   policy : Checkpoint_trials.policy;
   world : Frlg_overworld.Frlg_steps.world;
+  watch : Daemon_process.watch option;  (** the daemon's watch page, if any *)
 }
 
 type checkpoint = {
@@ -55,19 +59,29 @@ let options setup cp log : Frlg_story.Checkpoint_run.options =
     log;
   }
 
+(* The checkpoint, shown on the watch page as it runs; a Stop there ends it
+   at the event it was in. *)
+let checkpoint_outcome setup cp log =
+  let watch = Watch_report.create cp.plan.checkpoint in
+  match
+    Frlg_story.Checkpoint_run.run ?end_at:cp.end_at
+      ~on_event:(Watch_report.on_event watch)
+      (options setup cp log) setup.world cp.plan
+  with
+  | Ok () -> Passed
+  | Error failure -> of_failure failure
+  | exception (Effects.Disconnected _ as e) -> raise e
+  | exception Effects.Stop_requested reason ->
+      log ("[Run] " ^ reason);
+      let at = Option.value (Watch_report.current watch) ~default:"start" in
+      Failed { at; reason; repeats = true }
+  | exception e ->
+      Failed { at = "raised"; reason = Printexc.to_string e; repeats = false }
+
 (* In the session: the checkpoint, then the outcome's saves. *)
 let in_session setup cp record log () =
-  let outcome =
-    match
-      Frlg_story.Checkpoint_run.run ?end_at:cp.end_at (options setup cp log)
-        setup.world cp.plan
-    with
-    | Ok () -> Passed
-    | Error failure -> of_failure failure
-    | exception (Effects.Disconnected _ as e) -> raise e
-    | exception e ->
-        Failed { at = "raised"; reason = Printexc.to_string e; repeats = false }
-  in
+  let log = Watch_report.log log in
+  let outcome = checkpoint_outcome setup cp log in
   let path = Run_record.path record in
   (match outcome with
   | Failed _ ->
@@ -93,13 +107,15 @@ let live setup cp record log =
 
 let with_daemon setup record body =
   match
-    Daemon_process.start ~daemon:setup.daemon ~mgba_port:setup.mgba_port
-      ~port:setup.common.port
+    Daemon_process.start ?watch:setup.watch ~daemon:setup.daemon
+      ~mgba_port:setup.mgba_port ~port:setup.common.port
       ~wire_log:(Run_record.path record "wire.jsonl")
       ~out_file:(Run_record.path record "daemon.out")
+      ()
   with
   | Error reason -> Failed { at = "daemon"; reason; repeats = true }
   | Ok daemon ->
+      Daemon_process.announce_watch setup.watch;
       Fun.protect
         ~finally:(fun () -> Daemon_process.stop daemon)
         (fun () -> body daemon)

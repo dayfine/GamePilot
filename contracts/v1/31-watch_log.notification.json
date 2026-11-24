@@ -1,0 +1,7 @@
+{
+  "jsonrpc": "2.0",
+  "method": "watch.log",
+  "params": {
+    "line": "[Story] mg-01 #4 talk_clerk: start"
+  }
+}

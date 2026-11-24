@@ -51,6 +51,9 @@ Server::Server(Backend& backend, ServerOptions options)
     }
   }
   rebase_pacing();
+  if (options_.watch) {
+    start_watch();
+  }
 }
 
 void Server::rebase_pacing() {
@@ -115,10 +118,17 @@ void Server::run_lockstep(const std::atomic<bool>& stop) {
 
     const double now = clock_.now_ms();
     if (now - report_ms >= 10000) {
-      std::fprintf(stderr, "daemon: seq %lld, %.2f frames/s\n",
+      std::fprintf(stderr, "daemon: seq %lld, %.2f frames/s",
                    static_cast<long long>(backend_.seq()),
                    static_cast<double>(frames_stepped_ - report_frames) *
                        1000.0 / (now - report_ms));
+      if (watch_) {
+        std::fprintf(stderr, "; watch: %s, %lld frames sent, %.1f ms in all",
+                     watch_->has_viewers() ? "viewed" : "no viewer",
+                     static_cast<long long>(watch_cost_.frames_encoded),
+                     watch_cost_.ms);
+      }
+      std::fputs("\n", stderr);
       report_ms = now;
       report_frames = frames_stepped_;
     }
@@ -153,11 +163,20 @@ void Server::send_probe_results(std::int64_t seq, double t_ms) {
   }
   send(frame_notification(seq, loads_, t_ms,
                           sent_results_.take_changed(results)));
+  if (watch_ && watch_->has_viewers()) {
+    probed_frame_ = frame;
+    probed_seq_ = seq;
+    show_probes(seq, results);
+  }
 }
 
 void Server::serve_network(int timeout_ms) {
-  const auto readable =
-      poll_readable({&listener_, &client_, &observer_}, timeout_ms);
+  std::vector<const Socket*> sockets{&listener_, &client_, &observer_};
+  if (watch_) {
+    const auto page = watch_->sockets();
+    sockets.insert(sockets.end(), page.begin(), page.end());
+  }
+  const auto readable = poll_readable(sockets, timeout_ms);
   if (readable[0]) {
     accept_pending();
   }
@@ -166,6 +185,12 @@ void Server::serve_network(int timeout_ms) {
   }
   if (readable[2]) {
     read_observer();
+  }
+  if (watch_) {
+    const double start = clock_.now_ms();
+    watch_->serve(std::vector<bool>(readable.begin() + 3, readable.end()));
+    watch_cost_.ms += clock_.now_ms() - start;
+    watch_tick();
   }
 }
 
@@ -283,6 +308,9 @@ void Server::handle_line(const std::string& line) {
     } catch (const RpcError&) {
       log("in", pa::JsonValue(line));
       throw;
+    }
+    if (take_watch_note(message)) {
+      return;  // the page's, not the program's: kept off the wire log
     }
     log("in", message);
     Request request = decode_request(message);

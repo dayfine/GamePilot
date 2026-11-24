@@ -42,6 +42,18 @@ bright `response-ms` after a press starts, so it should report that plus up to o
 `daemon/tools/smoke_client.py --state <file.ss>` drives a running daemon: load a state, subscribe a
 `core.color_stats@1` box on the FireRed start menu, press Start, then B, and print the numbers.
 
+## The watch page
+
+    gamepilot_daemon ... [--watch-port 47901] [--listen 127.0.0.1]
+
+Either flag turns on the watch page (`docs/design/Watch-Page.md`): `http://127.0.0.1:47901/` shows
+the frame (a downscaled JPEG, at most 5 per second, only while a page asks) with the subscribed probe
+boxes and their results, the program's plan and log (`watch.plan`, `watch.log`, contracts v1.6),
+the `status` health (a heartbeat over 2 s old is red), and Stop: it releases every button and sends
+the program `stop`. `--listen 0.0.0.0` opens it to the network, which the daemon says when it starts.
+The page is `watch/watch.html`, compiled in. The 10 s rate line on mGBA adds what the page costs
+(frames sent, ms spent). `gamepilot checkpoints --watch` starts the runner's daemons with it.
+
 ## Probing saved images
 
 `probe_images` runs the same probes on PNG files, with no backend and no socket, so readers can be
@@ -73,7 +85,11 @@ picture whole and at 2x inside side bars give the same results.
 | `src/schedule.*` | command batches to key masks on exact frames |
 | `src/rpc.*` | v1 messages to and from structs |
 | `src/server.*` | the JSON-RPC server and the frame loop |
-| `src/net.*` | 127.0.0.1 TCP (POSIX and Winsock) |
+| `src/net.*` | TCP (POSIX and Winsock): 127.0.0.1 for programs, any address for the page |
+| `src/http.*` | the HTTP/1.1 and Server-Sent Events framing the watch page needs |
+| `src/watch_server.*` | the watch page's server: page, frame, event stream, Stop |
+| `src/server_watch.cpp` | what the server shows there, the program's notes, Stop |
+| `watch/watch.html` | the page (compiled in by `cmake/embed_watch_page.cmake`) |
 | `src/switch_backend.*` | the Switch: capture thread, ring reader, controller |
 | `src/video_capture.*` | frame sources: capture card and video replay (OpenCV `VideoCapture`) |
 | `src/frame_ring.*` | the bounded ring between the capture and server threads |

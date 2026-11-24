@@ -1,0 +1,7 @@
+{
+  "jsonrpc": "2.0",
+  "method": "stop",
+  "params": {
+    "reason": "stopped by user"
+  }
+}
