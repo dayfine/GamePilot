@@ -14,6 +14,9 @@
 #include "rpc.h"
 #include "run_journal.h"
 
+#define MINIZ_NO_ZLIB_COMPATIBLE_NAMES
+#include "miniz-3.1.1/miniz.h"
+
 using namespace gamepilot;
 namespace fs = pa::Filesystem;
 
@@ -200,6 +203,68 @@ void check_probe_timeline() {
         std::string::npos);
 }
 
+// `text` as a gzip file (RFC 1952 header, raw deflate, CRC-32 and size).
+std::string gzip(const std::string& text) {
+  mz_stream stream{};
+  CHECK(mz_deflateInit2(&stream, MZ_DEFAULT_COMPRESSION, MZ_DEFLATED,
+                        -MZ_DEFAULT_WINDOW_BITS, 9,
+                        MZ_DEFAULT_STRATEGY) == MZ_OK);
+  std::string body(mz_deflateBound(&stream, text.size()), '\0');
+  stream.next_in = reinterpret_cast<const unsigned char*>(text.data());
+  stream.avail_in = static_cast<unsigned int>(text.size());
+  stream.next_out = reinterpret_cast<unsigned char*>(body.data());
+  stream.avail_out = static_cast<unsigned int>(body.size());
+  CHECK(mz_deflate(&stream, MZ_FINISH) == MZ_STREAM_END);
+  body.resize(stream.total_out);
+  mz_deflateEnd(&stream);
+  // Magic, deflate, FNAME set, mtime, flags, OS; then the name.
+  std::string out("\x1f\x8b\x08\x08\0\0\0\0\0\x03wire.jsonl", 20);
+  out.push_back('\0');
+  out += body;
+  const auto le32 = [&](std::uint32_t v) {
+    for (int i = 0; i < 4; i++) {
+      out.push_back(static_cast<char>((v >> (8 * i)) & 0xff));
+    }
+  };
+  le32(static_cast<std::uint32_t>(mz_crc32(
+      MZ_CRC32_INIT, reinterpret_cast<const unsigned char*>(text.data()),
+      text.size())));
+  le32(static_cast<std::uint32_t>(text.size()));
+  return out;
+}
+
+// A packed wire log reads as the plain one; only the program's connection
+// (the first to speak) counts.
+void check_packed_timeline_of_the_program() {
+  fs::create_directories(kDir);
+  const auto frame = [](int conn, double t, int mean) {
+    return "{\"conn\":" + std::to_string(conn) +
+           ",\"dir\":\"out\",\"msg\":{\"jsonrpc\":\"2.0\",\"method\":"
+           "\"frame\",\"params\":{\"load\":0,\"probes\":{\"fade\":{\"kind\":"
+           "\"core.color_stats@1\",\"mean\":[" +
+           std::to_string(mean) + "," + std::to_string(mean) + "," +
+           std::to_string(mean) +
+           "],\"stddev\":[1,1,1]}},\"seq\":1,\"t_ms\":0}},\"t_ms\":" +
+           std::to_string(t) + "}\n";
+  };
+  std::string text = "{\"conn\":1,\"dir\":\"in\",\"msg\":{},\"t_ms\":1.0}\n";
+  // Many lines, so the packed stream spans several input chunks.
+  for (int i = 0; i < 20000; i++) {
+    text += frame(1, 100 + i * 10, 30 + (i / 1000));
+    text += frame(2, 105 + i * 10, 200);
+  }
+  write(kDir + "/wire.jsonl.gz", gzip(text));
+  write(kDir + "/wire.jsonl", text);
+  const std::string packed = probe_timeline_json(kDir + "/wire.jsonl.gz", 1000);
+  CHECK(packed == probe_timeline_json(kDir + "/wire.jsonl", 1000));
+  CHECK(packed.find("\"lines\":40001") != std::string::npos);
+  CHECK(packed.find("200.0") == std::string::npos);  // connection 2's frames
+  CHECK(packed.find("[990.0,30.0]") != std::string::npos);
+  write(kDir + "/bad.jsonl.gz", "not gzip");
+  CHECK(probe_timeline_json(kDir + "/bad.jsonl.gz", 1000).find("\"lines\":0") !=
+        std::string::npos);
+}
+
 void check_current_step() {
   struct Case {
     std::string name;
@@ -266,6 +331,7 @@ int main() {
   check_results();
   check_read_run();
   check_probe_timeline();
+  check_packed_timeline_of_the_program();
   check_current_step();
   check_journal();
   return TEST_RESULT();

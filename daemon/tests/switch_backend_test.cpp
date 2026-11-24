@@ -228,28 +228,40 @@ void check_latency_harness() {
         kResponseMs + report.frame_ms + 50);
 }
 
-// Writes one request line and reads one reply line.
-std::string call(Socket& socket, const std::string& line) {
-  CHECK(socket.send_all(line + "\n"));
+// One connection to the server and the lines it received but not yet read.
+struct TestClient {
+  Socket socket;
   LineBuffer lines;
+};
+
+TestClient connect_client(std::uint16_t port) {
+  return TestClient{connect_local(port), LineBuffer()};
+}
+
+// Writes one request line and reads up to its reply, skipping notifications.
+std::string call(TestClient& client, const std::string& line) {
+  CHECK(client.socket.send_all(line + "\n"));
   for (int i = 0; i < 200; i++) {
-    if (poll_readable({&socket}, 10)[0]) {
-      const auto data = socket.receive_some();
+    while (auto reply = client.lines.next_line()) {
+      if (reply->find("\"id\"") != std::string::npos) {
+        return *reply;
+      }
+    }
+    if (poll_readable({&client.socket}, 10)[0]) {
+      const auto data = client.socket.receive_some();
       if (!data) {
         break;
       }
-      lines.append(*data);
-      if (auto reply = lines.next_line()) {
-        return *reply;
-      }
+      client.lines.append(*data);
     }
   }
   return "";
 }
 
-// A client is connected; a second connection still gets `status`, and only
-// that.
-void check_status_while_serving() {
+// Two clients: both get `status`; the first to submit holds the input lease
+// and the other's input is refused, naming it, until it releases; reads need
+// no lease.
+void check_two_clients_and_the_lease() {
   const Clock clock;
   test::FakeConsole console(clock);
   SwitchBackend backend(console.board.screen(60, 0, cv::Size(64, 36)),
@@ -260,19 +272,26 @@ void check_status_while_serving() {
   std::atomic<bool> stop{false};
   std::thread serving([&] { server.run(stop); });
 
-  Socket client = connect_local(options.port);
+  TestClient client = connect_client(options.port);
   const std::string hello = call(
       client,
       R"({"jsonrpc":"2.0","id":1,"method":"hello","params":{"protocol":1,"client":"switch-test"}})");
   CHECK(hello.find("\"kind\":\"switch\"") != std::string::npos);
+  const std::string submitted = call(
+      client,
+      R"({"jsonrpc":"2.0","id":2,"method":"submit","params":{"batch_id":"b1","commands":[{"wait_ms":1}]}})");
+  CHECK(submitted.find("\"start_seq\"") != std::string::npos);
   sleep_ms(50);
 
-  Socket observer = connect_local(options.port);
+  TestClient other = connect_client(options.port);
   const pa::JsonValue status = parse_message(
-      call(observer, R"({"jsonrpc":"2.0","id":7,"method":"status"})"));
+      call(other, R"({"jsonrpc":"2.0","id":7,"method":"status"})"));
   const pa::JsonObject& result = status.to_object()->get_object_throw("result");
   CHECK(result.get_string_throw("backend") == "switch");
   CHECK(result.get_string_throw("client") == "switch-test");
+  CHECK(result.get_integer_throw("clients") == 2);
+  CHECK(result.get_object_throw("lease").get_string_throw("owner") ==
+        "switch-test");
   CHECK(result.get_string_throw("fidelity") == "latest");
   const pa::JsonArray& threads = result.get_array_throw("threads");
   CHECK(threads.size() == 2);
@@ -288,10 +307,41 @@ void check_status_while_serving() {
   }
   CHECK(result.get_object_throw("ring").get_integer_throw("capacity") == 8);
 
-  const std::string refused = call(
-      observer,
-      R"({"jsonrpc":"2.0","id":8,"method":"submit","params":{"batch_id":"x","commands":[]}})");
-  CHECK(refused.find("\"error\"") != std::string::npos);
+  const std::string submit_line =
+      R"({"jsonrpc":"2.0","id":8,"method":"submit","params":{"batch_id":"x","commands":[]}})";
+  const std::string refused = call(other, submit_line);
+  CHECK(refused.find("-32004") != std::string::npos);
+  CHECK(refused.find("input lease held by switch-test") != std::string::npos);
+  const std::string acquire_refused = call(
+      other,
+      R"({"jsonrpc":"2.0","id":9,"method":"lease.acquire","params":{"owner":"pad"}})");
+  CHECK(acquire_refused.find("-32004") != std::string::npos);
+
+  const std::string released = call(
+      client, R"({"jsonrpc":"2.0","id":3,"method":"lease.release","params":{}})");
+  CHECK(released.find("\"released\":true") != std::string::npos);
+  const std::string acquired = call(
+      other,
+      R"({"jsonrpc":"2.0","id":10,"method":"lease.acquire","params":{"owner":"pad","ttl_ms":5000}})");
+  CHECK(acquired.find("\"owner\":\"pad\"") != std::string::npos);
+  CHECK(call(other, submit_line).find("\"batch_id\":\"x\"") !=
+        std::string::npos);
+  CHECK(call(client,
+             R"({"jsonrpc":"2.0","id":4,"method":"cancel","params":{}})")
+            .find("held by pad") != std::string::npos);
+
+  // Reads need no lease.
+  const std::string subscribed = call(
+      client,
+      R"({"jsonrpc":"2.0","id":5,"method":"subscribe","params":{"probes":[{"id":"p","kind":"core.color_stats@1","box":{"x":0,"y":0,"w":1,"h":1},"delivery":"latest"}]}})");
+  CHECK(subscribed.find("\"subscribed\":[\"p\"]") != std::string::npos);
+
+  // The holder leaves: the lease is free again.
+  other.socket.close();
+  sleep_ms(50);
+  TestClient third = connect_client(options.port);
+  const std::string after = call(third, R"({"jsonrpc":"2.0","id":1,"method":"status"})");
+  CHECK(after.find("\"lease\":null") != std::string::npos);
 
   stop.store(true);
   serving.join();
@@ -306,6 +356,6 @@ int main() {
   check_gaps_and_stalled_capture();
   check_video_replay();
   check_latency_harness();
-  check_status_while_serving();
+  check_two_clients_and_the_lease();
   return TEST_RESULT();
 }

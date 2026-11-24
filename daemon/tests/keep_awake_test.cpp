@@ -25,6 +25,7 @@ struct Input {
   std::vector<double> inputs;
   std::optional<double> last_press_ms;  // the keep-awake's own last press
   bool batch_pending = false;           // when it asks
+  bool lease_held = false;              // a client holds the input lease
   double now_ms = 0;
 };
 
@@ -50,6 +51,9 @@ const std::vector<Case> kCases = {
      {.press = true}},
     {"a client batch pending or running: never",
      {.batch_pending = true, .now_ms = 10 * kIdleMs},
+     {.press = false}},
+    {"a client holds the input lease: never",
+     {.lease_held = true, .now_ms = 10 * kIdleMs},
      {.press = false}},
     {"a client submitted within the window: waits",
      {.inputs = {100000}, .now_ms = 100000 + kIdleMs - 1},
@@ -80,7 +84,8 @@ void check_cases() {
     for (const double t : c.input.inputs) {
       keep.input(t);
     }
-    const bool press = keep.due(c.input.now_ms, c.input.batch_pending);
+    const bool press = keep.due(c.input.now_ms, c.input.batch_pending,
+                                c.input.lease_held);
     if (press != c.expect.press) {
       std::fprintf(stderr, "case \"%s\": press %d, expected %d\n",
                    c.name.c_str(), press, c.expect.press);

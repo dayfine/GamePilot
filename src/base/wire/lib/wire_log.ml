@@ -2,7 +2,14 @@ open Json_fields
 
 type json = Yojson.Safe.t
 type direction = In | Out | Daemon
-type log_line = { dir : direction; t_ms : float; msg : Jsonrpc.message }
+
+type log_line = {
+  dir : direction;
+  t_ms : float;
+  conn : int option;
+  owner : string option;
+  msg : Jsonrpc.message;
+}
 
 let direction_of_string = function
   | "in" -> In
@@ -20,13 +27,16 @@ let log_line_of_json j =
   {
     dir = direction_of_string (string_field what "dir" j);
     t_ms = float_field what "t_ms" j;
+    conn = Option.map (to_int (what ^ ".conn")) (field_opt what "conn" j);
+    owner = Option.map (to_string (what ^ ".owner")) (field_opt what "owner" j);
     msg = Jsonrpc.message_of_json (field what "msg" j);
   }
 
-let json_of_log_line { dir; t_ms; msg } =
+let optional name f = Option.fold ~none:[] ~some:(fun v -> [ (name, f v) ])
+
+let json_of_log_line { dir; t_ms; conn; owner; msg } =
   `Assoc
-    [
-      ("dir", `String (string_of_direction dir));
-      ("t_ms", `Float t_ms);
-      ("msg", Jsonrpc.json_of_message msg);
-    ]
+    ([ ("dir", `String (string_of_direction dir)); ("t_ms", `Float t_ms) ]
+    @ optional "conn" (fun c -> `Int c) conn
+    @ optional "owner" (fun o -> `String o) owner
+    @ [ ("msg", Jsonrpc.json_of_message msg) ])

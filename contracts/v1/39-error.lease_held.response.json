@@ -1,0 +1,14 @@
+{
+  "jsonrpc": "2.0",
+  "id": 16,
+  "error": {
+    "code": -32004,
+    "message": "input lease held by ctl:bring-up",
+    "data": {
+      "owner": "ctl:bring-up",
+      "client": "gamepilot-ctl/0.1",
+      "held_ms": 4200,
+      "ttl_ms": 30000
+    }
+  }
+}

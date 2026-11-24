@@ -64,8 +64,8 @@ the live frame (an MJPEG stream, `/stream`, at most 30 frames a second, `--strea
 card's frame scaled to 1280 wide, `--stream-width`; encoded on a thread of its own and only while a
 viewer is connected; `/frame`, polled, when the stream fails) with the subscribed probe
 boxes and their results, the program's plan and log (`watch.plan`, `watch.log`, contracts v1.6) and
-its chain of checkpoints (`watch.run`, v1.7), the `status` health (a heartbeat over 2 s old is red), and Stop: it releases every button and sends
-the program `stop`. `--listen 0.0.0.0` opens it to the network, which the daemon says when it starts.
+its chain of checkpoints (`watch.run`, v1.7), the `status` health (a heartbeat over 2 s old is red;
+the input lease's holder), and Stop: it releases every button and sends every client `stop`. `--listen 0.0.0.0` opens it to the network, which the daemon says when it starts.
 Port 0 (for `--watch-port` and `--port`) binds a free port; the daemon prints both before its
 "listening" line. Stop takes the token (`--watch-token`, else a random one): the page served to
 this machine carries it, another machine's viewer needs `?token=` in the URL. With `--registry` the

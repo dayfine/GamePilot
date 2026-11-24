@@ -15,8 +15,9 @@ void KeepAwake::input(double now_ms) {
   }
 }
 
-bool KeepAwake::due(double now_ms, bool batch_pending) const {
-  return on() && !batch_pending && now_ms - last_input_ms_ >= options_.idle_ms;
+bool KeepAwake::due(double now_ms, bool batch_pending, bool lease_held) const {
+  return on() && !batch_pending && !lease_held &&
+         now_ms - last_input_ms_ >= options_.idle_ms;
 }
 
 std::vector<InputCommand> KeepAwake::press() const {

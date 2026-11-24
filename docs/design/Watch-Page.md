@@ -257,7 +257,10 @@ failure frame and recorded frames, never `wire.jsonl` as it is.
   (`probes.json`). It keeps the last 8 in memory while the file keeps its size. Measured on the
   lab Mac: a 68 MB, 76632-line mGBA log takes 0.6 s the first time, under 10 ms after, and gives
   about 1 MB of JSON for its 3275 probes (most of them template matches that ran once). The page
-  shows the 60 busiest probes that match its filter (`party.`, `dialog.`).
+  shows the 60 busiest probes that match its filter (`party.`, `dialog.`). It reads
+  `wire.jsonl.gz` the same way (miniz, which CoreLib builds) once the disk cleanup packed the log,
+  and keeps to the program's connection (the one that spoke first): another client's frames, such
+  as a `gamepilot ctl read`, are left out.
 
 ## Recording
 
@@ -285,17 +288,26 @@ frames either way. A GBA frame (mGBA with `--record`) is doubled to 480x320, abo
 
 Disk: about 150 MB an hour of Switch run. `~/BDSPLab/disk_gc.sh` handles run folders by age (a
 folder untouched for 14 days goes unless it holds KEEP, which every failing run does) and gzips
-every `*.jsonl` older than a day: that includes `frames/index.jsonl` and `watch_log.jsonl`,
-which the past-run page reads as plain files, so a run older than a day loses its scrubber, its
-timed log and its probe timeline once gzipped. `projects-gc` does not look at the runs folder.
+`wire.jsonl` once it is older than a day; it leaves `frames/index.jsonl` and `watch_log.jsonl`
+plain, since the past-run page reads them as they are. The probe timeline reads the gzipped wire
+log. `projects-gc` does not look at the runs folder.
 
 ## Keep-awake
 
 A Switch daemon presses B after 180 s with no input (`--keepawake SECONDS`, 0 = off; mGBA:
-off; `--keepawake-key`), only while no client batch is queued or running and no client submitted
-in that window, as a batch of its own whose `batch_done` goes to no client
+off; `--keepawake-key`), only while no client batch is queued or running, no client holds the input
+lease and no client submitted in that window, as a batch of its own whose `batch_done` goes to no client
 (`daemon/src/keep_awake.*`). Each press is a `daemon` line in the wire log
 (`contracts/v1/34-keepawake.line.json`), which replay skips. It replaces
-`~/BDSPLab/gp_keepawake.py`, which the one-client rule locked out (`docs/switch-bring-up.md`).
+`~/BDSPLab/gp_keepawake.py`, which the old one-client rule locked out (`docs/switch-bring-up.md`).
 
-Not yet: a Start button, the hold lease and pad (Control-UI step 3).
+## Input lease
+
+Any number of clients may connect to a daemon (contracts v1.9): a program, `gamepilot status`,
+`gamepilot ctl`. Reads are served to all of them; input (`submit`, `cancel`,
+`backend.load_state`) needs the input lease, which one connection holds at a time
+(`daemon/src/input_lease.*`). The health panel shows the holder: its owner (and client name when
+that differs) and since when it has held it, or "free"; and how many clients are connected.
+`gamepilot ctl` (`docs/switch-bring-up.md`) is how a person or a script drives by hand meanwhile.
+
+Not yet: a Start button and the pad on the page (Control-UI step 3).
