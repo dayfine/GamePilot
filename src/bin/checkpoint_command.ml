@@ -95,6 +95,9 @@ let handled handle run =
   | exception Effects.Disconnected e ->
       print_endline ("checkpoint: DISCONNECTED " ^ e);
       1
+  | exception Effects.Stop_requested reason ->
+      print_endline ("checkpoint: STOPPED " ^ reason);
+      1
   | exception Unix.Unix_error (e, f, _) ->
       Printf.printf "checkpoint: CONNECT FAILED %s: %s\n" f
         (Unix.error_message e);

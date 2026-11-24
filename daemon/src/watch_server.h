@@ -57,6 +57,8 @@ class WatchServer {
 
   // Whether a page has the event stream open.
   bool has_viewers() const;
+  // Whether a viewer joined since the last call (it has no status yet).
+  bool take_joined();
 
   // Each is one line of JSON, kept for new viewers and sent to the others.
   void set_info(std::string json);
@@ -86,6 +88,7 @@ class WatchServer {
   std::string plan_;
   std::string probes_;
   std::deque<std::string> log_;
+  bool joined_ = false;
 };
 
 // The page, compiled in from watch/watch.html (watch_page.cpp is generated).

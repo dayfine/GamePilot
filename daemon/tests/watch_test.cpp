@@ -130,6 +130,8 @@ void check_server() {
   CHECK(snapshot.find("event: plan\ndata: {\"p\":2}") != std::string::npos);
   CHECK(snapshot.find("\"s\":0") == std::string::npos);
   CHECK(server.has_viewers());
+  CHECK(server.take_joined());
+  CHECK(!server.take_joined());
 
   server.add_log("{\"line\":\"two\"}");
   server.broadcast("status", "{\"s\":1}");

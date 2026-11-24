@@ -39,6 +39,12 @@ bool WatchServer::has_viewers() const {
                      });
 }
 
+bool WatchServer::take_joined() {
+  const bool joined = joined_;
+  joined_ = false;
+  return joined;
+}
+
 void WatchServer::accept_viewer() {
   Socket socket = accept_client(listener_);
   if (socket.valid()) {
@@ -94,6 +100,7 @@ void WatchServer::respond(Connection& connection, const HttpRequest& request) {
 
 void WatchServer::start_stream(Connection& connection) {
   connection.streaming = true;
+  joined_ = true;
   std::string snapshot = event_stream_head();
   if (!info_.empty()) {
     snapshot += event_message("info", info_);

@@ -141,14 +141,15 @@ void Server::show_probes(
   watch_cost_.ms += clock_.now_ms() - start;
 }
 
-// Each loop pass: the health once a second, and an empty probe list once the
+// Each loop pass: the health once a second (and at once for a new viewer),
+// and an empty probe list once the
 // probes are gone (no frame shows them any more).
 void Server::watch_tick() {
   if (!watch_->has_viewers()) {
     return;
   }
   const double now = clock_.now_ms();
-  if (now - status_shown_ms_ >= kWatchStatusMs) {
+  if (watch_->take_joined() || now - status_shown_ms_ >= kWatchStatusMs) {
     watch_->broadcast("status",
                       to_line(pa::JsonValue(status_result(status()))));
     status_shown_ms_ = now;
