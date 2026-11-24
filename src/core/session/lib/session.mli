@@ -35,5 +35,5 @@ val run : transport -> (unit -> 'a) -> 'a
     daemon's [stop], every wait on the game ([submit], [race], [await], and the
     first results of a [subscribe]) raises [Effects.Stop_requested] into the
     program; plain requests (saves, [unsubscribe]) still run, so the program's
-    failure path works. [show_plan] and [show_log] go out as [watch.plan] and
-    [watch.log] notifications. *)
+    failure path works. [show_plan], [show_log] and [show_run] go out as
+    [watch.plan], [watch.log] and [watch.run] notifications. *)

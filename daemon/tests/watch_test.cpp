@@ -117,6 +117,8 @@ void check_server() {
 
   // Kept before a viewer came: it gets the latest of each, then live events.
   server.set_info("{\"i\":1}");
+  server.set_run("{\"r\":1}");
+  server.set_run("{\"r\":2}");
   server.set_plan("{\"p\":1}");
   server.set_plan("{\"p\":2}");
   server.add_log("{\"line\":\"one\"}");
@@ -126,6 +128,8 @@ void check_server() {
   const std::string snapshot = exchange(server, viewer, "\"one\"");
   CHECK(snapshot.starts_with("HTTP/1.1 200 OK"));
   CHECK(snapshot.find("event: info\ndata: {\"i\":1}") != std::string::npos);
+  CHECK(snapshot.find("{\"r\":1}") == std::string::npos);
+  CHECK(snapshot.find("event: run\ndata: {\"r\":2}") != std::string::npos);
   CHECK(snapshot.find("{\"p\":1}") == std::string::npos);
   CHECK(snapshot.find("event: plan\ndata: {\"p\":2}") != std::string::npos);
   CHECK(snapshot.find("\"s\":0") == std::string::npos);
