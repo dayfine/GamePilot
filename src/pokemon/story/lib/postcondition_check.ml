@@ -1,11 +1,18 @@
+type start = {
+  start_money : int option;
+  start_coins : int option;
+  start_items : (string * int) list;
+}
+
+let nothing_at_start =
+  { start_money = None; start_coins = None; start_items = [] }
+
 type observed = {
   party : string option list option;
   items : (string * int) list;
   coins : int option;
   money : int option;
-  start_money : int option;
-  start_coins : int option;
-  start_items : (string * int) list;
+  start : start;
   flags : (string * bool) list;
   knows : (string * string list) list;
   levels : (string * int) list;
@@ -18,9 +25,7 @@ let nothing_read =
     items = [];
     coins = None;
     money = None;
-    start_money = None;
-    start_coins = None;
-    start_items = [];
+    start = nothing_at_start;
     flags = [];
     knows = [];
     levels = [];
@@ -141,7 +146,7 @@ let check_item observed ({ bag_item; count } : Plan.bag_count) =
   | None -> not_read what
   | Some read ->
       check_count what count
-        ~start:(List.assoc_opt bag_item observed.start_items)
+        ~start:(List.assoc_opt bag_item observed.start.start_items)
         read
 
 let check_coins expected observed =
@@ -149,7 +154,7 @@ let check_coins expected observed =
   | None, _ -> []
   | Some _, None -> [ not_read "coins" ]
   | Some count, Some read ->
-      [ check_count "coins" count ~start:observed.start_coins read ]
+      [ check_count "coins" count ~start:observed.start.start_coins read ]
 
 let money_text money = Printf.sprintf "$%d" money
 
@@ -179,7 +184,7 @@ let check_spent amount ~start read =
       false
 
 let check_money (expected : Plan.money option) observed =
-  match (expected, observed.money, observed.start_money) with
+  match (expected, observed.money, observed.start.start_money) with
   | None, _, _ -> []
   | Some _, None, _ -> [ not_read "money" ]
   | Some (Money_range { min; max }), Some read, _ ->

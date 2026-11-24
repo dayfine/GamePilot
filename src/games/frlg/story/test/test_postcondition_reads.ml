@@ -99,16 +99,13 @@ let read_at_start items () =
         ];
     }
   in
-  let observed =
+  let start =
     S.run screen (fun () ->
-        Frlg_story.Postcondition_reads.at_start ~log:ignore promised
-          Story.Postcondition_check.nothing_read)
+        Frlg_story.Postcondition_reads.at_start ~log:ignore promised)
   in
   Printf.sprintf "%s; ends on %s"
     (String.concat ", "
-       (List.map
-          (fun (i, n) -> Printf.sprintf "%s %d" i n)
-          observed.start_items))
+       (List.map (fun (i, n) -> Printf.sprintf "%s %d" i n) start.start_items))
     (S.screen_name (S.screen_at screen screen.S.clock_ms))
 
 let read_level min () =

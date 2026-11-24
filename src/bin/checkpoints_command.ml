@@ -49,6 +49,14 @@
    --make-room MAP (the save's map) runs the generated checkpoint mg-00 first
    when the chain needs party room (Make_room_command).
 
+   --from-event ID|N [--to-event ID|N] (mGBA, testing, one checkpoint: --to
+   is --from unless given) runs that checkpoint from the save state kept at
+   the event's start (Story.Event_states: every mGBA run keeps one at each
+   event it reaches cleanly) to the given event or the last, the end checks
+   only when it runs the last. Its mode is "from-event" (run.json's
+   from_event and to_event): it never verifies the checkpoint nor saves its
+   end as the next start. The Switch has no save states: refused there.
+
    --preflight --from ID reads, from the save, what checkpoint ID's plan needs
    and prints a table (Preflight_command), its own run; exit 1 on a mismatch.
 
@@ -106,10 +114,32 @@ let preflight_setup plan_dir f backend ~from_id : Preflight_command.setup =
   let { states; runs_dir; daemon; _ } = f in
   { states; runs_dir; daemon; backend; info; watch = watch_of f }
 
+(* --from-event: testing by default, one checkpoint (--to is --from unless
+   given). *)
+let mode_and_to f ~from_id =
+  match f.from_event with
+  | None ->
+      let* to_id = required "--to" f.to_id in
+      let* mode = required "--mode" f.mode in
+      Ok (mode, to_id)
+  | Some _ ->
+      Ok
+        ( Option.value f.mode ~default:Checkpoint_trials.Testing,
+          Option.value f.to_id ~default:from_id )
+
+(* A partial run's own rules (Story.Event_range.check). *)
+let check_from_event f mode ~checkpoints =
+  match f.from_event with
+  | None -> Ok ()
+  | Some _ ->
+      Event_range.check ~mode ~keeps_states:(f.backend = "mgba") ~checkpoints
+
+let from_event f = Option.map (fun first -> (first, f.to_event)) f.from_event
+
 let run_series plan_dir f =
   let* from_id = required "--from" f.from_id in
-  let* to_id = required "--to" f.to_id in
-  let* mode = required "--mode" f.mode in
+  let* mode, to_id = mode_and_to f ~from_id in
+  let* () = check_from_event f mode ~checkpoints:1 in
   let* backend = daemon_backend f mode in
   let* plan_dir, from_id =
     Make_room_command.with_room ~plan_dir ~from_id f.make_room
@@ -118,6 +148,7 @@ let run_series plan_dir f =
   let* policy = Checkpoint_trials.policy ?runs:f.runs mode in
   let* ids = Plan_dir.checkpoint_ids plan_dir in
   let* selected, after = Plan_dir.select ids ~from_id ~to_id in
+  let* () = check_from_event f mode ~checkpoints:(List.length selected) in
   let* world = Frlg_story.Checkpoint_run.load_world () in
   Ok
     (Checkpoint_series.run ~plan_dir
@@ -135,6 +166,7 @@ let run_series plan_dir f =
          daemon_flags = f.daemon_flags;
          bound = ref None;
          save_after_pass = f.save_after_pass;
+         from_event = from_event f;
        }
        selected ~after)
 

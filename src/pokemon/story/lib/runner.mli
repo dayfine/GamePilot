@@ -17,6 +17,7 @@ val run :
   ?end_state:
     Plan.postconditions * (Plan.postconditions -> Postcondition_check.observed) ->
   ?on_event:(int -> Event_progress.t -> unit) ->
+  ?events:Event_range.t ->
   Game.t ->
   Plan.checkpoint ->
   (unit, Failure.t) result
@@ -37,4 +38,11 @@ val run :
     line. A plan that states none reads nothing.
 
     [on_event index progress] hears each event (index from 0) start, pass, fail
-    or be skipped, next to its log line (the watch page's plan). *)
+    or be skipped, next to its log line (the watch page's plan).
+
+    With [events], only those events run ({!Event_range}), numbered as in the
+    whole checkpoint; the start is logged as
+    ["[Story] <checkpoint>: start at #13 <event>, to #14 <event>, of 14 events"].
+    A range that stops before the last event checks neither [end_at] nor
+    [end_state] (logged as
+    ["... stopped after #<n> (--to-event): end not checked"]). *)

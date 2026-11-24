@@ -156,8 +156,7 @@ let at_start ~log (promised : Story.Plan.postconditions) =
     else None
   in
   let start_items = List.filter_map (item_count ~log) items in
-  fun (observed : Story.Postcondition_check.observed) ->
-    { observed with start_money; start_coins; start_items }
+  { Story.Postcondition_check.start_money; start_coins; start_items }
 
 let party_summary ~log =
   read ~log "party summary" (fun () -> Some (A.Party_summary.read_all ~log ()))

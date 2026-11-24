@@ -19,6 +19,10 @@ type flags = {
   save_after_pass : bool;  (** Switch: save in the game after a pass. *)
   preflight : bool;
   make_room : string option;  (** The save's map: room first (mg-00). *)
+  from_event : string option;
+      (** mGBA, testing: run from this event's kept state (Story.Event_range).
+      *)
+  to_event : string option;  (** ... to this event (else the last). *)
   common : Checkpoint_command.flags;
   watch : Daemon_process.watch option;
   daemon_flags : string list;
@@ -37,6 +41,7 @@ let usage =
   \      [--replay VIDEO] [--save-after-pass|--no-save-after-pass]\n\
   \      [--record|--no-record] [--keepawake SECONDS] [--speed S] [--make-room \
    MAP]\n\
+  \      [--from-event ID|N [--to-event ID|N]]   (mGBA, testing, one checkpoint)\n\
   \  gamepilot checkpoints PLAN_DIR|--program ID --preflight --from ID \
    [--backend ...]\n"
 
@@ -69,6 +74,8 @@ let defaults =
     save_after_pass = true;
     preflight = false;
     make_room = None;
+    from_event = None;
+    to_event = None;
     common = { Checkpoint_command.defaults with port = 0 };
     watch = None;
     daemon_flags = [];
@@ -129,6 +136,8 @@ let valued f name v =
           Some (Ok (common_flag f (fun c -> { c with grind_cap = Some n })))
       | _ -> Some (Error ("bad --grind-battles " ^ v)))
   | "--make-room" -> Some (Ok { f with make_room = Some v })
+  | "--from-event" -> Some (Ok { f with from_event = Some v })
+  | "--to-event" -> Some (Ok { f with to_event = Some v })
   | "--center" ->
       Some (Ok (common_flag f (fun c -> { c with center = Some v })))
   | "--keepawake" -> Some (int_flag name v (keepawake_flag f))
