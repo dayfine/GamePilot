@@ -6,10 +6,16 @@
     done, at most once per {!arrow_press_gap_ms} (a B before the arrow would
     skip nothing, and one that lands on a double battle's second action menu
     would take back the first battler's command). Text with no arrow is left to
-    run on; only if it stays {!stuck_text_ms} with an HP box up does it get a B.
-    What an evolution shows (the text box, no HP box, no arrow) never gets one:
-    any B cancels an evolution. B never answers YES. The battle is over once no
-    battle screen has shown for {!over_after_ms}, after one did. *)
+    run on; only if it stays {!stuck_text_ms} does it get a B, with an HP box up
+    or without one (a trainer's lines before and after the battle: Lea & Jed's
+    defeat text sat with no arrow until mg-05 testing 1 timed out). Only once a
+    level-up box has shown in this battle can that screen be an evolution, and
+    then it never gets a B: any B cancels an evolution. The fork's Mail Glitch
+    battle loop presses B on any battle text held 1.5 s (step_non_menu_
+    battle_frame(), Programs/MailGlitch/PokemonFRLG_MailGlitchBattle.cpp); its
+    AutoStory loop holds for an evolution only after a turn that attacked. B
+    never answers YES. The battle is over once no battle screen has shown for
+    {!over_after_ms}, after one did. *)
 
 type state
 
