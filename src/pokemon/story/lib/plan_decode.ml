@@ -202,6 +202,10 @@ let knows ~where obj : Plan.knows =
     moves = F.strings (where ^ "moves") (F.field ~where "moves" obj);
   }
 
+let level ~where obj : Plan.level =
+  only ~where [ "species"; "min" ] obj;
+  { species = F.string ~where "species" obj; min = F.int ~where "min" obj }
+
 let party ~where obj : Plan.party option =
   let species key = Option.map (F.strings (where ^ key)) (F.find key obj) in
   match (species "party", species "party_includes") with
@@ -220,6 +224,7 @@ let no_postconditions : Plan.postconditions =
     money = None;
     flags = [];
     knows = [];
+    levels = [];
   }
 
 let postconditions ~where obj : Plan.postconditions =
@@ -233,6 +238,7 @@ let postconditions ~where obj : Plan.postconditions =
       "money";
       "flags";
       "knows";
+      "levels";
     ]
     obj;
   let nested key read =
@@ -251,6 +257,7 @@ let postconditions ~where obj : Plan.postconditions =
         ~some:(F.strings (where ^ "flags"))
         (F.find "flags" obj);
     knows = F.records ~where "knows" obj knows;
+    levels = F.records ~where "levels" obj level;
   }
 
 let metadata_postconditions ~where = function

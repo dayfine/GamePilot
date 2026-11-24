@@ -144,12 +144,39 @@ let list_driver (b : fake_battle) calls : B.Battle_driver.t =
     answer_use_next = (fun _ -> ());
   }
 
-(* [cap]: the runner's --grind-battles; its "capped" log line is a call. *)
-let flow ?cap ~party ~known battles plan () =
+(* The log lines a flow shows as calls: the ends' (capped, reached, skipped);
+   with [~battle_lines], the per-battle ones too. *)
+let contains line part =
+  let n = String.length part in
+  let rec from i =
+    i + n <= String.length line && (String.sub line i n = part || from (i + 1))
+  in
+  from 0
+
+let shown ~battle_lines line =
+  String.starts_with ~prefix:"Grind: capped" line
+  || contains line " reached Lv "
+  || (contains line " already; skipped" && not (contains line " knows "))
+  || (battle_lines && String.starts_with ~prefix:"Grind: battle" line)
+
+(* [cap]: the runner's --grind-battles. [levels]: what the summary reads, one
+   per read, in order ([None]: not read); the last one again once used up. *)
+let flow ?cap ?(battle_lines = false) ?(levels = [ Some 9 ]) ~party ~known
+    battles plan () =
   let calls = ref [] in
   let call s = calls := s :: !calls in
   let party = ref (Party_roster.of_list party) in
   let battles = Queue.of_seq (List.to_seq battles) in
+  let levels = ref levels in
+  let read_level ~slot =
+    let level = List.hd !levels in
+    if List.tl !levels <> [] then levels := List.tl !levels;
+    call
+      (Printf.sprintf "Lv %s in %d"
+         (Option.fold ~none:"?" ~some:string_of_int level)
+         slot);
+    level
+  in
   let rig : Grind.rig =
     {
       slot_of = (fun s -> Party_roster.slot_of !party s);
@@ -157,6 +184,7 @@ let flow ?cap ~party ~known battles plan () =
         (fun ~slot ->
           call (Printf.sprintf "summary %d" slot);
           known);
+      level = read_level;
       swap =
         (fun a b ->
           call (Printf.sprintf "swap %d %d" a b);
@@ -182,9 +210,7 @@ let flow ?cap ~party ~known battles plan () =
                     };
                 }
           | Some b -> B.Scripted_battle.run (list_driver b calls) script);
-      log =
-        (fun line ->
-          if String.starts_with ~prefix:"Grind: capped" line then call line);
+      log = (fun line -> if shown ~battle_lines line then call line);
     }
   in
   let result =
@@ -196,6 +222,7 @@ let flow ?cap ~party ~known battles plan () =
   String.concat "; " (List.rev !calls) ^ " => " ^ result
 
 let party = [ "blastoise"; "mr-mime"; "farfetchd" ]
+let lv n = Some n
 
 (* Switch on turn 1, the sweeper's KO, a level up that offers a move. *)
 let won ?(offered = []) () =
@@ -223,62 +250,143 @@ let flows =
       "summary 3 => ok";
     case
       "MIMIEN: arranged, to the spot, a battle declining Light Screen, one \
-       learning Recycle"
-      (flow ~party ~known:[ "barrier"; "confusion" ]
+       learning Recycle at Lv 33"
+      (flow
+         ~levels:[ lv 31; lv 32; lv 33 ]
+         ~party ~known:[ "barrier"; "confusion" ]
          [
            won ~offered:[ Some "light-screen" ] ();
            won ~offered:[ Some "recycle" ] ();
          ]
          (plan mimien_args))
-      "summary 2; swap 2 1; go VictoryRoad_2F (45, 10) west; spin; switch 1; \
-       move 0; learn: not learned: light-screen; spin; switch 1; move 0; \
-       learn: learned recycle over move 0 => ok";
+      "summary 2; Lv 31 in 2; swap 2 1; go VictoryRoad_2F (45, 10) west; spin; \
+       switch 1; move 0; learn: not learned: light-screen; Lv 32 in 1; spin; \
+       switch 1; move 0; learn: learned recycle over move 0; Lv 33 in 1; \
+       Grind: mr-mime reached Lv 33 (target 33) in battle 2; learned recycle.; \
+       heal nurse at IndigoPlateau_PokemonCenter_1F (13, 12) north; go \
+       VictoryRoad_2F (45, 10) west => ok";
     case "Victory Road: the nurse after 7 battles, then back to the spot"
-      (flow ~party ~known:[]
+      (flow
+         ~levels:(List.init 9 (fun _ -> lv 9) @ [ lv 33 ])
+         ~party ~known:[]
          (List.init 8 (fun _ -> won ()) @ [ won ~offered:[ Some "recycle" ] () ])
          (plan mimien_args))
-      "summary 2; swap 2 1; go VictoryRoad_2F (45, 10) west; spin; switch 1; \
-       move 0; spin; switch 1; move 0; spin; switch 1; move 0; spin; switch 1; \
-       move 0; spin; switch 1; move 0; spin; switch 1; move 0; spin; switch 1; \
-       move 0; heal nurse at IndigoPlateau_PokemonCenter_1F (13, 12) north; go \
-       VictoryRoad_2F (45, 10) west; spin; switch 1; move 0; spin; switch 1; \
-       move 0; learn: learned recycle over move 0 => ok";
+      "summary 2; Lv 9 in 2; swap 2 1; go VictoryRoad_2F (45, 10) west; spin; \
+       switch 1; move 0; Lv 9 in 1; spin; switch 1; move 0; Lv 9 in 1; spin; \
+       switch 1; move 0; Lv 9 in 1; spin; switch 1; move 0; Lv 9 in 1; spin; \
+       switch 1; move 0; Lv 9 in 1; spin; switch 1; move 0; Lv 9 in 1; spin; \
+       switch 1; move 0; Lv 9 in 1; heal nurse at \
+       IndigoPlateau_PokemonCenter_1F (13, 12) north; go VictoryRoad_2F (45, \
+       10) west; spin; switch 1; move 0; Lv 9 in 1; spin; switch 1; move 0; \
+       learn: learned recycle over move 0; Lv 33 in 1; Grind: mr-mime reached \
+       Lv 33 (target 33) in battle 9; learned recycle.; heal nurse at \
+       IndigoPlateau_PokemonCenter_1F (13, 12) north; go VictoryRoad_2F (45, \
+       10) west => ok";
     case "out of battles"
       (flow ~party ~known:[] [ won (); won () ] tight)
-      "summary 2; swap 2 1; go VictoryRoad_2F (45, 10) west; spin; switch 1; \
-       move 0; spin; switch 1; move 0 => failed grind_out_of_battles: mr-mime \
-       did not learn recycle in 2 battles";
+      "summary 2; Lv 9 in 2; swap 2 1; go VictoryRoad_2F (45, 10) west; spin; \
+       switch 1; move 0; Lv 9 in 1; spin; switch 1; move 0; Lv 9 in 1 => \
+       failed grind_out_of_battles: mr-mime did not reach Lv 33 in 2 battles \
+       (Lv 9)";
     case "capped at 2: passes after battle 2, for testing"
       (flow ~cap:2 ~party ~known:[]
          [ won (); won (); won () ]
          (plan mimien_args))
-      "summary 2; swap 2 1; go VictoryRoad_2F (45, 10) west; spin; switch 1; \
-       move 0; spin; switch 1; move 0; Grind: capped at 2 battles for testing: \
-       mr-mime has not learned recycle => ok";
+      "summary 2; Lv 9 in 2; swap 2 1; go VictoryRoad_2F (45, 10) west; spin; \
+       switch 1; move 0; Lv 9 in 1; spin; switch 1; move 0; Lv 9 in 1; Grind: \
+       capped at 2 battles for testing: mr-mime is Lv 9, not 33 => ok";
     case "capped at 8 at Victory Road: the heal after 7 comes before battle 8"
       (flow ~cap:8 ~party ~known:[]
          (List.init 9 (fun _ -> won ()))
          (plan mimien_args))
-      "summary 2; swap 2 1; go VictoryRoad_2F (45, 10) west; spin; switch 1; \
-       move 0; spin; switch 1; move 0; spin; switch 1; move 0; spin; switch 1; \
-       move 0; spin; switch 1; move 0; spin; switch 1; move 0; spin; switch 1; \
-       move 0; heal nurse at IndigoPlateau_PokemonCenter_1F (13, 12) north; go \
-       VictoryRoad_2F (45, 10) west; spin; switch 1; move 0; Grind: capped at \
-       8 battles for testing: mr-mime has not learned recycle => ok";
+      "summary 2; Lv 9 in 2; swap 2 1; go VictoryRoad_2F (45, 10) west; spin; \
+       switch 1; move 0; Lv 9 in 1; spin; switch 1; move 0; Lv 9 in 1; spin; \
+       switch 1; move 0; Lv 9 in 1; spin; switch 1; move 0; Lv 9 in 1; spin; \
+       switch 1; move 0; Lv 9 in 1; spin; switch 1; move 0; Lv 9 in 1; spin; \
+       switch 1; move 0; Lv 9 in 1; heal nurse at \
+       IndigoPlateau_PokemonCenter_1F (13, 12) north; go VictoryRoad_2F (45, \
+       10) west; spin; switch 1; move 0; Lv 9 in 1; Grind: capped at 8 battles \
+       for testing: mr-mime is Lv 9, not 33 => ok";
     case "a cap above max_battles: running out still fails"
       (flow ~cap:5 ~party ~known:[] [ won (); won () ] tight)
-      "summary 2; swap 2 1; go VictoryRoad_2F (45, 10) west; spin; switch 1; \
-       move 0; spin; switch 1; move 0 => failed grind_out_of_battles: mr-mime \
-       did not learn recycle in 2 battles";
+      "summary 2; Lv 9 in 2; swap 2 1; go VictoryRoad_2F (45, 10) west; spin; \
+       switch 1; move 0; Lv 9 in 1; spin; switch 1; move 0; Lv 9 in 1 => \
+       failed grind_out_of_battles: mr-mime did not reach Lv 33 in 2 battles \
+       (Lv 9)";
     case "a failed battle fails the action"
       (flow ~party ~known:[]
          [ { events = [ B.Battle_driver.Action_menu ]; offered = [] } ]
          (plan mimien_args))
-      "summary 2; swap 2 1; go VictoryRoad_2F (45, 10) west; spin; switch 1 => \
-       failed grind_battle_failed: battle 1: no battle event within 60000 ms";
+      "summary 2; Lv 9 in 2; swap 2 1; go VictoryRoad_2F (45, 10) west; spin; \
+       switch 1 => failed grind_battle_failed: battle 1: no battle event \
+       within 60000 ms";
     case "the grinder missing"
       (flow ~party:[ "blastoise" ] ~known:[] [] (plan mimien_args))
       " => failed not_in_party: mr-mime is not in the party";
+  ]
+
+(* The C++'s stop logic (GrindRun::run()): the level read before the grind and
+   after each battle. *)
+let stops =
+  let mimien = plan mimien_args in
+  [
+    case "reached already: Lv 34 before the grind, no walk out"
+      (flow ~levels:[ lv 34 ] ~party ~known:[] [] mimien)
+      "summary 2; Lv 34 in 2; Grind: mr-mime is Lv 34, at least 33 already; \
+       skipped. => ok";
+    case "target reached mid-run without the move: ends there, healed"
+      (flow
+         ~levels:[ lv 32; lv 33 ]
+         ~party ~known:[]
+         [ won ~offered:[ Some "light-screen" ] (); won () ]
+         mimien)
+      "summary 2; Lv 32 in 2; swap 2 1; go VictoryRoad_2F (45, 10) west; spin; \
+       switch 1; move 0; learn: not learned: light-screen; Lv 33 in 1; Grind: \
+       mr-mime reached Lv 33 (target 33) in battle 1; did not learn recycle.; \
+       heal nurse at IndigoPlateau_PokemonCenter_1F (13, 12) north; go \
+       VictoryRoad_2F (45, 10) west => ok";
+    case "the move learned below the target level: fights on to it"
+      (flow
+         ~levels:[ lv 31; lv 32; lv 33 ]
+         ~party ~known:[]
+         [ won ~offered:[ Some "recycle" ] (); won (); won () ]
+         mimien)
+      "summary 2; Lv 31 in 2; swap 2 1; go VictoryRoad_2F (45, 10) west; spin; \
+       switch 1; move 0; learn: learned recycle over move 0; Lv 32 in 1; spin; \
+       switch 1; move 0; Lv 33 in 1; Grind: mr-mime reached Lv 33 (target 33) \
+       in battle 2; learned recycle.; heal nurse at \
+       IndigoPlateau_PokemonCenter_1F (13, 12) north; go VictoryRoad_2F (45, \
+       10) west => ok";
+    case "the cap first: Lv 33 would come in battle 3"
+      (flow ~cap:2
+         ~levels:[ lv 31; lv 31; lv 32; lv 33 ]
+         ~party ~known:[]
+         [ won (); won (); won () ]
+         mimien)
+      "summary 2; Lv 31 in 2; swap 2 1; go VictoryRoad_2F (45, 10) west; spin; \
+       switch 1; move 0; Lv 31 in 1; spin; switch 1; move 0; Lv 32 in 1; \
+       Grind: capped at 2 battles for testing: mr-mime is Lv 32, not 33 => ok";
+    case "unread before the grind: ends, no walk out"
+      (flow ~levels:[ None ] ~party ~known:[] [] mimien)
+      "summary 2; Lv ? in 2 => failed grind_level_unread: couldn't read \
+       mr-mime's level before the grind";
+    case "unread after a battle: ends there"
+      (flow ~levels:[ lv 31; None ] ~party ~known:[] [ won (); won () ] mimien)
+      "summary 2; Lv 31 in 2; swap 2 1; go VictoryRoad_2F (45, 10) west; spin; \
+       switch 1; move 0; Lv ? in 1 => failed grind_level_unread: couldn't read \
+       mr-mime's level after battle 1";
+    case "the battle's line: battle N of LIMIT, Lv L"
+      (flow ~battle_lines:true
+         ~levels:[ lv 32; lv 33 ]
+         ~party ~known:[]
+         [ won () ]
+         mimien)
+      "summary 2; Lv 32 in 2; swap 2 1; go VictoryRoad_2F (45, 10) west; spin; \
+       switch 1; move 0; Lv 33 in 1; Grind: battle 1 of 120, Lv 33 over (2 \
+       menus, 0 send-ins, 0 refused, 0 prompts).; Grind: mr-mime reached Lv 33 \
+       (target 33) in battle 1; did not learn recycle.; heal nurse at \
+       IndigoPlateau_PokemonCenter_1F (13, 12) north; go VictoryRoad_2F (45, \
+       10) west => ok";
   ]
 
 (* The default strategy's walks on all of FireRed's maps, as a run loads them:
@@ -379,4 +487,4 @@ let routes =
        IndigoPlateau_PokemonCenter_1F";
   ]
 
-let () = Case_table.run "grind" (decoding @ decisions @ flows @ routes)
+let () = Case_table.run "grind" (decoding @ decisions @ flows @ stops @ routes)

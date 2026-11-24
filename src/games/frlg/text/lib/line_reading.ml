@@ -68,8 +68,8 @@ let upload ?ink glyphs line text =
 let probes ?ink glyphs line candidates =
   List.map (upload ?ink glyphs line) candidates
 
-let read ?max_score glyphs line candidates =
-  let probes = probes glyphs line candidates in
+let read ?max_score ?ink glyphs line candidates =
+  let probes = probes ?ink glyphs line candidates in
   let ids = List.map (fun (p : Wire.probe_spec) -> p.id) probes in
   let all_there m = List.for_all (fun id -> Effects.probe m id <> None) ids in
   match

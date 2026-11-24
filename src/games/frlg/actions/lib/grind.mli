@@ -1,11 +1,17 @@
 (** The ["grind"] game action: level a party member with a {!Grind_plan} until
-    it has learned the goal's move. It first reads the member's moves and passes
-    at once when it knows the move already. Otherwise it puts the grinder in
-    party slot 1 and the sweeper in slot 2, goes to the strategy's spot, and
-    fights wild battles there (turning in place for each), healing every
-    [heal_every] battles and going back. It ends after the battle the move was
-    learned in, read on the list to forget from: FireRed has no level reader, so
-    the target level is not checked.
+    it reaches the goal's level. Ported from the fork's GRIND step ([GrindRun]
+    in Programs/AutoStory/PokemonFRLG_AutoStoryGrind.cpp, [frlg/lean]): the
+    member's level is read on its summary before the first battle and after each
+    one ({!Member_level}), an unread level ends the step, a level reached
+    already skips the walk out, and the step ends after the battle that reaches
+    the level, with one more heal (back on the spot).
+
+    Where it differs: it first reads the member's moves and passes at once when
+    it knows the goal's move already (GamePilot's). Battles are the switch trick
+    at the strategy's spot (turning in place for each), healing every
+    [heal_every] battles (FireRed has no HP or PP reader here, the C++'s
+    [needs_heal()]); a battle answers YES to the goal's move only. The level is
+    read in slot 1, where the grinder is put.
 
     The steps that press come as a {!rig}, so the loop runs on a fake in tests.
     Each step raises {!Menu_input.Action_failed} when it fails. *)
@@ -13,6 +19,8 @@
 type rig = {
   slot_of : string -> int option;  (** the species' party slot, from 1 *)
   known_moves : slot:int -> string list;  (** read on the summary *)
+  level : slot:int -> int option;
+      (** read on the summary; [None] when it did not read *)
   swap : int -> int -> unit;  (** two party slots trade places *)
   go_to : Story.Pose.grid -> unit;  (** walked to *)
   heal : Grind_plan.heal -> unit;  (** healed, then still at the heal place *)
@@ -22,9 +30,12 @@ type rig = {
 }
 
 val run : ?cap:int -> rig -> Grind_plan.t -> unit
-(** Fails as [not_in_party], [grind_battle_failed] (with the battle's reason) or
-    [grind_out_of_battles] after [max_battles]. With [cap] (testing: the
-    runner's [--grind-battles]) it ends, passing, after that many battles even
-    though the move was not learned, and logs
-    ["Grind: capped at N battles for testing"]; a [max_battles] below the cap
-    still fails. The C++ has no cap: its tests ran capped copies of the plan. *)
+(** Logs ["Grind: battle N of LIMIT, Lv L over (...)."] after each battle. Fails
+    as [not_in_party], [grind_level_unread] (before the grind or after a battle,
+    as the C++ ends with UNREAD or FAILED), [grind_battle_failed] (with the
+    battle's reason) or [grind_out_of_battles] after [max_battles] (the C++'s
+    OUT_OF_ENCOUNTERS). With [cap] (testing: the runner's [--grind-battles]) it
+    ends, passing, after that many battles below the target level, and logs
+    ["Grind: capped at N battles for testing: ... is Lv L, not T"]; a
+    [max_battles] below the cap still fails. The C++ has no cap: its tests ran
+    capped copies of the plan. *)

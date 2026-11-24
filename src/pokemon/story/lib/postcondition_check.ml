@@ -5,6 +5,7 @@ type observed = {
   money : int option;
   flags : (string * bool) list;
   knows : (string * string list) list;
+  levels : (string * int) list;
 }
 
 let nothing_read =
@@ -15,6 +16,7 @@ let nothing_read =
     money = None;
     flags = [];
     knows = [];
+    levels = [];
   }
 
 type verdict = Passed | Failed | Not_checked
@@ -132,6 +134,16 @@ let check_knows observed ({ species; moves } : Plan.knows) =
         ~read:(String.concat ", " read)
         (List.for_all (fun m -> List.mem m read) moves)
 
+let check_level observed ({ species; min } : Plan.level) =
+  let what = "level " ^ species in
+  match List.assoc_opt species observed.levels with
+  | None -> not_read what
+  | Some read ->
+      expected_read what
+        ~expected:(Printf.sprintf "at least Lv %d" min)
+        ~read:(Printf.sprintf "Lv %d" read)
+        (read >= min)
+
 let check (expected : Plan.postconditions) observed =
   List.concat
     [
@@ -141,6 +153,7 @@ let check (expected : Plan.postconditions) observed =
       check_money expected.money observed;
       List.map (check_flag observed) expected.flags;
       List.map (check_knows observed) expected.knows;
+      List.map (check_level observed) expected.levels;
     ]
 
 let unmet = List.filter (fun r -> r.verdict <> Passed)

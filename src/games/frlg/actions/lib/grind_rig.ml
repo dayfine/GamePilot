@@ -10,6 +10,7 @@ let make ~log ~party ~walk_to ~find_battle ~battle : Grind.rig =
   {
     slot_of = (fun species -> Party_roster.slot_of !party species);
     known_moves = (fun ~slot -> Summary_moves.read_known ~log ~slot);
+    level = (fun ~slot -> Member_level.read ~log ~slot);
     swap =
       (fun a b ->
         Party_actions.swap ~log a b;

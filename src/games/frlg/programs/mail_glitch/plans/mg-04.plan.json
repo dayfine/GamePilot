@@ -68,7 +68,7 @@
           "max_battles": 150
         },
         "declared_after": {"map": "VictoryRoad_2F", "tiles": [[45, 10]]},
-        "why": "switch-grind MIMIEN Lv 9 -> 33 at Victory Road 2F until it learns Recycle into Move 1 (PokemonSimulation PR #119: 77 battles, 11 heal trips, about 53 min); every other move is declined"
+        "why": "switch-grind MIMIEN Lv 9 -> 33 at Victory Road 2F (its level read after each battle) and teach Recycle into Move 1 (PokemonSimulation PR #119: 77 battles, 11 heal trips, about 53 min); every other move is declined"
       },
       {
         "id": "out_of_victory_road",
@@ -104,7 +104,7 @@
   "execution": {"menu": "full"},
   "metadata": {
     "phase": "testing",
-    "notes": "The real end, after the full grind: CH'DING knows Knock Off, MIMIEN Lv 33 knows Recycle (FireRed reads no level: Recycle comes at Lv 33, so knowing it stands for the level), the grind's swaps leave MIMIEN in slot 1 and Blastoise in slot 2, one Escape Rope used, and the money of mg-03's end (the nurse heals for free; wild battles pay nothing). A run with --grind-battles skips the knows postconditions and its end is not mg-05's start.",
+    "notes": "The real end, after the full grind: CH'DING knows Knock Off, MIMIEN at least Lv 33 (read on its summary) knows Recycle, the grind's swaps leave MIMIEN in slot 1 and Blastoise in slot 2, one Escape Rope used, and the money of mg-03's end (the nurse heals for free; wild battles pay nothing). A run with --grind-battles skips the knows and levels postconditions and its end is not mg-05's start.",
     "postconditions": {
       "party": ["mr-mime", "blastoise", "oddish", "pidgey", "rattata", "farfetchd"],
       "money": {"min": 21464, "max": 21464},
@@ -115,6 +115,9 @@
       "knows": [
         {"species": "farfetchd", "moves": ["knock-off"]},
         {"species": "mr-mime", "moves": ["recycle"]}
+      ],
+      "levels": [
+        {"species": "mr-mime", "min": 33}
       ]
     }
   }

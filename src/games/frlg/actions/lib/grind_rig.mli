@@ -1,7 +1,8 @@
 (** {!Grind}'s live rig, moved unchanged out of {!Story_game}: the party read
-    and swapped through the menus (the reckoned party kept in step), moves read
-    on the summary, walks and battles the story game's, and a heal that walks to
-    the nurse and talks to her, or steps on the heal pad. *)
+    and swapped through the menus (the reckoned party kept in step), moves and
+    the level read on the summary ({!Member_level}), walks and battles the story
+    game's, and a heal that walks to the nurse and talks to her, or steps on the
+    heal pad. *)
 
 val make :
   log:(string -> unit) ->

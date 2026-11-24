@@ -38,26 +38,35 @@ let member_moves ~log species slot =
     (fun moves -> (species, moves))
     (read ~log ("moves of " ^ species) body)
 
-(* Each promised member's moves, on its summary; the party read first when it
-   was not. *)
-let knows ~log party (promised : Story.Plan.knows list) =
-  let members =
-    match (promised, party) with
-    | [], _ -> None
-    | _, Some members -> Some members
-    | _, None ->
-        read ~log "party" (fun () -> Some (A.Party_species.read_all ~log))
-  in
-  let moves members ({ species; _ } : Story.Plan.knows) =
+let member_level ~log species slot =
+  Option.map
+    (fun level -> (species, level))
+    (read ~log ("level of " ^ species) (fun () ->
+         A.Member_level.read ~log ~slot))
+
+(* The party as read for the members promised: read when it was not, not when
+   no member is promised. *)
+let members ~log party ~promised =
+  match (promised, party) with
+  | false, _ -> None
+  | true, Some members -> Some members
+  | true, None ->
+      read ~log "party" (fun () -> Some (A.Party_species.read_all ~log))
+
+(* Each promised member's [read] on its summary, the member found by its
+   species in the party as read. *)
+let per_member ~log members species_of read_member promised =
+  let one members p =
+    let species = species_of p in
     match slot_of species members with
     | None ->
         log ("[Postcondition] " ^ species ^ " not in the party as read");
         None
-    | Some slot -> member_moves ~log species slot
+    | Some slot -> read_member ~log species slot
   in
   match members with
   | None -> []
-  | Some members -> List.filter_map (moves members) promised
+  | Some members -> List.filter_map (one members) promised
 
 let observe ~log (promised : Story.Plan.postconditions) :
     Story.Postcondition_check.observed =
@@ -85,7 +94,19 @@ let observe ~log (promised : Story.Plan.postconditions) :
           (read ~log ("item " ^ item) (fun () -> A.Bag_items.count ~log item)))
       promised.items
   in
-  let knows = knows ~log party promised.knows in
+  let members =
+    members ~log party ~promised:(promised.knows <> [] || promised.levels <> [])
+  in
+  let knows =
+    per_member ~log members
+      (fun (k : Story.Plan.knows) -> k.species)
+      member_moves promised.knows
+  in
+  let levels =
+    per_member ~log members
+      (fun (l : Story.Plan.level) -> l.species)
+      member_level promised.levels
+  in
   {
     Story.Postcondition_check.nothing_read with
     party;
@@ -93,4 +114,5 @@ let observe ~log (promised : Story.Plan.postconditions) :
     coins;
     money;
     knows;
+    levels;
   }

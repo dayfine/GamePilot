@@ -75,9 +75,14 @@ val probes :
     Raises [Invalid_argument] if a candidate cannot be drawn on the line. *)
 
 val read :
-  ?max_score:float -> Glyph_table.t -> Text_lines.t -> string list -> reading
+  ?max_score:float ->
+  ?ink:Wire.color_range ->
+  Glyph_table.t ->
+  Text_lines.t ->
+  string list ->
+  reading
 (** Uploads one template per candidate (the handler sends each distinct PNG once
     per connection), subscribes one probe per candidate, picks ({!pick}) from
-    the first frame that has them all, and unsubscribes them. Raises
-    [Invalid_argument] if a candidate cannot be drawn on the line, and [Failure]
-    if no such frame comes within a second. *)
+    the first frame that has them all, and unsubscribes them; [ink] as for
+    {!probes}. Raises [Invalid_argument] if a candidate cannot be drawn on the
+    line, and [Failure] if no such frame comes within a second. *)

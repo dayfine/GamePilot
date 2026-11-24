@@ -6,10 +6,11 @@
     ({!Frlg_actions.Trainer_card_money}) and each item's count by its row in the
     bag ({!Frlg_actions.Bag_items.count}), a member's moves by its summary
     ({!Frlg_actions.Summary_moves.read_known}, the member found in the party as
-    read). Not read (so not checked): story flags. A read that fails (a menu
-    that did not show, no Coin Case) is logged, leaves its postconditions not
-    read, and B is pressed through what it left open back to the overworld for
-    the next. *)
+    read), a member's level by its summary ({!Frlg_actions.Member_level}, found
+    the same way). Not read (so not checked): story flags. A read that fails (a
+    menu that did not show, no Coin Case) is logged, leaves its postconditions
+    not read, and B is pressed through what it left open back to the overworld
+    for the next. *)
 
 val observe :
   log:(string -> unit) ->
