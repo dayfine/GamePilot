@@ -1,8 +1,11 @@
 # The lock that lets one checkpoint run at a time use the GamePilot mGBA instance; sourced by
 # run/run_checkpoints_on_mgba.sh (and tested by run/test_run_lock.sh). The lock is a
-# directory, made with one atomic mkdir, holding an `owner` file: the holder's pid and command
-# line. A runner that finds it waits until it is gone, or until its holder's pid is dead (a stale
-# lock, taken over), or until its timeout.
+# directory holding an `owner` file: the holder's pid and command line. Whoever creates the
+# owner file (noclobber, so O_EXCL) holds the lock; mkdir's exit status alone is not enough, as
+# uutils mkdir (Ubuntu 26.04) can report success to two processes making the same directory.
+# The lock is removed by renaming it away first, so it is gone in one step. A runner that finds
+# it waits until it is gone, or until its holder's pid is dead (a stale lock, taken over), or
+# until its timeout.
 #
 #   run_lock_acquire DIR TIMEOUT OWNER   0 once held; 4 after TIMEOUT seconds (0: wait forever)
 #   run_lock_release DIR                 removes it when this shell ($$) holds it
@@ -13,6 +16,20 @@ run_lock_pid() {
     sed -n '1s/ .*//p' "$1/owner" 2>/dev/null
 }
 
+# 0 when this shell ($$) now holds lock [$1], as owner [$2].
+run_lock_take() {
+    mkdir -p "$1" 2>/dev/null
+    (set -C && printf '%s %s\n' "$$" "$2" >"$1/owner") 2>/dev/null
+}
+
+# Removes lock [$1] in one step: renamed away, then deleted.
+run_lock_remove() {
+    gone="$1.gone.$$"
+    if mv "$1" "$gone" 2>/dev/null; then
+        rm -rf "$gone"
+    fi
+}
+
 # Removes the lock when its holder is still [dead] (empty: it never wrote its owner file), under
 # a second short-lived lock, so two waiters can't both remove it and one of them a fresh lock.
 # A takeover lock left by a waiter that died inside it goes after [stuck] tries.
@@ -20,14 +37,14 @@ run_lock_clear_stale() {
     lock=$1
     dead=$2
     stuck=$3
-    if mkdir "$lock.takeover" 2>/dev/null; then
+    if (set -C && : >"$lock.takeover") 2>/dev/null; then
         if [ "$(run_lock_pid "$lock")" = "$dead" ]; then
             echo "[Lock] taking over the stale lock of pid ${dead:-?} (no longer running)"
-            rm -rf "$lock"
+            run_lock_remove "$lock"
         fi
-        rmdir "$lock.takeover"
+        rm -rf "$lock.takeover"
     elif [ "$stuck" -ge 5 ]; then
-        rmdir "$lock.takeover" 2>/dev/null || true
+        rm -rf "$lock.takeover"
     fi
 }
 
@@ -40,7 +57,7 @@ run_lock_acquire() {
     waited=0
     unowned=0
     told=""
-    while ! mkdir "$lock" 2>/dev/null; do
+    while ! run_lock_take "$lock" "$owner"; do
         pid=$(run_lock_pid "$lock")
         if [ -n "$pid" ] && ! kill -0 "$pid" 2>/dev/null; then
             run_lock_clear_stale "$lock" "$pid" "$unowned"
@@ -48,7 +65,7 @@ run_lock_acquire() {
             if [ -d "$lock" ]; then sleep 1; fi
             continue
         fi
-        # mkdir done, owner not written yet: its runner is starting, or died right there.
+        # Owner file made, pid not written yet: its runner is starting, or died right there.
         if [ -z "$pid" ]; then
             unowned=$((unowned + 1))
             if [ "$unowned" -ge 5 ]; then
@@ -70,14 +87,13 @@ run_lock_acquire() {
         sleep "$poll"
         waited=$((waited + poll))
     done
-    printf '%s %s\n' "$$" "$owner" >"$lock/owner"
     echo "[Lock] holding $lock"
 }
 
 run_lock_release() {
     lock=$1
     if [ "$(run_lock_pid "$lock")" = "$$" ]; then
-        rm -rf "$lock"
+        run_lock_remove "$lock"
         echo "[Lock] released"
     fi
 }
