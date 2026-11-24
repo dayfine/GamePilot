@@ -12,10 +12,10 @@ app (it saves its settings on exit). Nothing may hold the port or the card:
 **1. Devices.** The lab's names, then the card's index (enumerates, opens nothing):
 
     GAMEPILOT_LAB_PROFILE=".../SerialPrograms/Profiles/lab-B" gamepilot switch-devices
-    swift tools/list_capture_devices.swift    # INDEX: the line with id 0x1140000534d2109
+    swift tools/list_capture_devices.swift    # INDEX: the line with id 0x110000534d2109
 
-On 2026-11-23 these were serial port `/dev/cu.usbmodem5C940521411` and card id `0x1140000534d2109`
-("USB Video", a name three cards share, so pick by id).
+On 2026-11-23 these were serial port `/dev/cu.usbmodem5C940521411` and card id `0x110000534d2109`
+("USB Video", a name three cards share, so pick by id; on 2026-11-23 it was index 1, and index 0 showed console A. Check the frame shows FireRed).
 
 **2. Board handshake and mode check.** GamePilot drives the board as a Pro Controller in the mode the
 lab app keeps it in and never changes that mode:
