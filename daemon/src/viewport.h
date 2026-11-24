@@ -29,6 +29,14 @@ struct Viewport {
   int game_height = 0;
 };
 
+// The GBA picture in the Switch's GBA app (Nintendo Switch Online) on a
+// 1920x1080 capture: 1560 x 1040 frame pixels at (180, 5), 6.5 per game pixel,
+// black outside. The fork's FRLG GAME_BOX (PokemonFRLG_Settings.cpp), checked
+// on the lab's Switch captures by switch_geometry_test.
+// Every FRLG reader's box is in game pixels (readers' Game_pixels), so this is
+// the one table from GBA coordinates to the Switch frame.
+Viewport nso_gba_viewport();
+
 // Whether the box lies in 0..1 with w, h > 0.
 bool is_unit_box(const Box& box);
 

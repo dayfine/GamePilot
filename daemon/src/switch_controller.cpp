@@ -45,9 +45,6 @@ std::uint8_t dpad_position(int x, int y) {
 
 bool has(KeyMask keys, KeyMask bit) { return (keys & bit) != 0; }
 
-// The longest hold one command carries.
-constexpr std::uint32_t kMaxCommandMs = 65535;
-
 }  // namespace
 
 WiredState neutral_wired_state() {
@@ -94,70 +91,6 @@ WiredStateMessage wired_state_message(const WiredState& state,
   message.milliseconds = milliseconds;
   message.report = state;
   return message;
-}
-
-Pabb2Controller::Pabb2Controller(pa::UnreliableStreamSender& port,
-                                 std::uint32_t session_id)
-    // 24: the packet size PABotBase2CC_ReliableStreamConnection.cpp uses.
-    : sender_(port, 24, session_id) {}
-
-void Pabb2Controller::reset() {
-  std::lock_guard<std::mutex> guard(lock_);
-  sender_.send_reset();
-}
-
-bool Pabb2Controller::send_state(const WiredState& state,
-                                 std::uint32_t milliseconds) {
-  std::lock_guard<std::mutex> guard(lock_);
-  do {
-    const std::uint32_t chunk = std::min(milliseconds, kMaxCommandMs);
-    const WiredStateMessage message = wired_state_message(
-        state, static_cast<std::uint16_t>(chunk), next_command_id_);
-    if (!sender_.send_stream_all_or_nothing(&message, sizeof(message))) {
-      return false;
-    }
-    next_command_id_++;
-    milliseconds -= chunk;
-  } while (milliseconds > 0);
-  return true;
-}
-
-void Pabb2Controller::receive(const void* data, size_t bytes) {
-  std::lock_guard<std::mutex> guard(lock_);
-  parser_.push_bytes(*this, sender_.session_id(),
-                     static_cast<const std::uint8_t*>(data), bytes);
-}
-
-std::uint8_t Pabb2Controller::unacknowledged() const {
-  std::lock_guard<std::mutex> guard(lock_);
-  return sender_.slots_used();
-}
-
-void Pabb2Controller::on_packet(const pa::PABotBase2::PacketHeader* packet) {
-  if (packet->magic_number != PABB2_PacketParser_RESULT_VALID) {
-    return;
-  }
-  switch (packet->opcode) {
-    case PABB2_CONNECTION_OPCODE_RET_RESET:
-    case PABB2_CONNECTION_OPCODE_RET_STREAM_DATA:
-      sender_.remove(packet->seqnum);
-      return;
-    default:
-      return;
-  }
-}
-
-size_t RecordingSerialPort::unreliable_send(const void* data,
-                                            size_t bytes) noexcept {
-  const auto* begin = static_cast<const std::uint8_t*>(data);
-  std::lock_guard<std::mutex> guard(lock_);
-  writes_.push_back(Write{clock_.now_ms(), {begin, begin + bytes}});
-  return bytes;
-}
-
-std::vector<RecordingSerialPort::Write> RecordingSerialPort::writes() const {
-  std::lock_guard<std::mutex> guard(lock_);
-  return writes_;
 }
 
 }  // namespace gamepilot

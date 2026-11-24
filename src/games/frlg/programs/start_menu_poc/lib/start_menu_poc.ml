@@ -34,8 +34,8 @@ let press_until button pred =
 let menu_open = Menu_panel.start_menu_open
 let menu_closed m = not (menu_open m)
 
-let run ~state () =
-  ignore (Effects.load_state state : int);
+let run ?state () =
+  Option.iter (fun s -> ignore (Effects.load_state s : int)) state;
   ignore (Effects.subscribe [ Menu_panel.probe ] : string list);
   match press_until Wire.Start menu_open with
   | None -> Did_not_open
