@@ -18,16 +18,13 @@ let rec until_read deadline =
         (Effects.submit [ Wire.Wait { wait_ms = reread_ms } ] : Wire.batch_done);
       until_read deadline
 
-(* The item's own menu (USE, REGISTER, CANCEL) hides the pocket arrows; its
-   box covers the list's frame, so the bag itself does not read either. *)
-let item_menu m = Bag_screen.pocket m = None
 let menu_ready_ms = 500
 
 let read ~log =
   Bag_items.open_pocket_top Key_items;
   Bag_items.select "coin-case";
   M.press Wire.A;
-  ignore (M.await_screen ~code:"no_item_menu" "the Coin Case's menu" item_menu);
+  Bag_items.await_item_menu "the Coin Case's menu";
   (* The menu has no cursor reader: USE, its top row, once it is drawn. *)
   ignore
     (Effects.submit [ Wire.Wait { wait_ms = menu_ready_ms } ] : Wire.batch_done);

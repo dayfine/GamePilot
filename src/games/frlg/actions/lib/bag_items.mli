@@ -41,10 +41,15 @@ val open_pocket_top : Frlg_readers.Bag_screen.pocket -> unit
     as its arrows read) with the cursor on the list's top row. Fails as [no_bag]
     or [no_pocket]. *)
 
+val await_item_menu : string -> unit
+(** Waits for the selected item's action menu
+    ({!Frlg_readers.Bag_screen.item_menu}, its probe subscribed for the wait);
+    fails as [no_item_menu] naming [what]. *)
+
 val item_action : string -> int -> unit
 (** From the overworld: the item's pocket opened ({!open_pocket_top}), the item
     selected ({!select}), A, and once its menu shows (USE or CHECK or OPEN,
-    GIVE, TOSS, CANCEL: the pocket arrows hide), the action on this row (from 0)
+    GIVE, TOSS, CANCEL: {!await_item_menu}), the action on this row (from 0)
     chosen with A. Fails as {!open_pocket_top} and {!select} do, or as
     [no_item_menu]. *)
 

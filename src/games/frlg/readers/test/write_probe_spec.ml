@@ -9,9 +9,9 @@
 open Frlg_readers
 
 let menu_probes =
-  Start_menu.probes @ Bag_screen.probes @ Party_menu.probes
-  @ Summary_screen.probes @ Money_box.probes @ Move_list_cursor.probes
-  @ Member_menu.probes @ Berry_pouch_screen.probes
+  Start_menu.probes @ Bag_screen.probes @ Bag_screen.item_menu_probes
+  @ Party_menu.probes @ Summary_screen.probes @ Money_box.probes
+  @ Move_list_cursor.probes @ Member_menu.probes @ Berry_pouch_screen.probes
 
 let battle_probes =
   Battle_screen.probes @ Battle_yes_no.probes @ Battle_text_arrow.probes

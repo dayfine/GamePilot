@@ -181,13 +181,14 @@ let count ~log slug =
   M.settle_back ~label:"bag count" ~log;
   counted
 
-(* The item's own menu (USE or CHECK, GIVE, TOSS, CANCEL) hides the arrows. *)
-let item_menu m = Bag_screen.bag_open m && Bag_screen.pocket m = None
+let await_item_menu what =
+  Effects.with_probes Bag_screen.item_menu_probes (fun () ->
+      ignore (M.await_screen ~code:"no_item_menu" what Bag_screen.item_menu))
 
 let item_action item row =
   open_pocket_top (pocket_of_item item);
   select item;
   M.press Wire.A;
-  ignore (M.await_screen ~code:"no_item_menu" ("the menu of " ^ item) item_menu);
+  await_item_menu ("the menu of " ^ item);
   M.taps Wire.Down row;
   M.press Wire.A
