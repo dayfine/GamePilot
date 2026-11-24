@@ -57,9 +57,11 @@ let rec settled_rows previous reads =
       (Effects.submit [ Wire.Wait { wait_ms = reread_ms } ] : Wire.batch_done);
     settled_rows (Some rows) (reads + 1))
 
+let settled_rows () = List.filter_map Fun.id (settled_rows None 1)
+
 let read_page ~log ~slot () =
   open_moves_page slot;
-  let known = List.filter_map Fun.id (settled_rows None 1) in
+  let known = settled_rows () in
   log
     (Printf.sprintf "Summary: slot %d knows %s." slot (String.concat ", " known));
   M.close "the summary" (fun m -> Summary_screen.page m <> None);

@@ -1,6 +1,6 @@
 (** What a checkpoint's plan needs of the save before its first event, for the
     pre-flight ({!Preflight}): each party member an action names unless an
-    earlier event brings it, Cut's user knowing Cut, the money its purchases
+    earlier event brings it, some member knowing Cut, the money its purchases
     cost, the bag items it gives or uses, what the checkpoint before it
     promised, and the place. *)
 
@@ -9,10 +9,9 @@ type need =
   | Party_includes of { members : string list; slots : Story.Plan.slot list }
   | Member of { species : string; for_ : string }
       (** A member an event uses ([for_]: ["fly"]). *)
-  | Knows_move of { species : string; move : string; for_ : string }
-      (** A member that must know a field move: the one a [cut_tree] event names
-          (the game picks Cut's user itself; the plan names it for this check).
-      *)
+  | Knows_move of { move : string; for_ : string }
+      (** Some member knows this field move: a [cut_tree] event's Cut, which the
+          game lets any member that knows it use. *)
   | Money_at_least of { amount : int; for_ : string }
   | Money_between of { min : int; max : int }
   | Item_at_least of { item : string; count : int; for_ : string }

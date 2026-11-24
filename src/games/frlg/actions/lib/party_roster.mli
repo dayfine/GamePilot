@@ -37,3 +37,7 @@ val replace : t -> slot:int -> string -> t
 val add : t -> string -> t
 (** The species joins after the last member; a full party sends it to the PC, so
     the party stays as it was. *)
+
+val remove : t -> string -> t
+(** The first member of this species gone to the PC, the members after it moved
+    up; the party as it was when none is. *)

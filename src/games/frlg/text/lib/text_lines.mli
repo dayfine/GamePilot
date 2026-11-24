@@ -114,3 +114,21 @@ val slack : int
 
 val box : t -> Wire.box
 (** The probe box, normalized to the game picture. *)
+
+val pc_menu_row : int -> t
+(** Row [i] of the PC list ("BILL'S PC" on top) and of the storage menu
+    (WITHDRAW POKéMON, DEPOSIT POKéMON, ...): pokefirered's menus, measured on
+    console B's captures (CommandLineTests PcScreenReader) and mGBA frames. *)
+
+val pc_mon_menu_row : int -> t
+(** Row [i] (0-4) of a Pokémon's menu on the box screen: STORE, SUMMARY, MARK,
+    RELEASE, CANCEL. *)
+
+val pc_data_species : t
+(** The box screen's PKMN DATA species line, ["/ODDISH"]: window 0 at (0, 88)
+    prints it at (6, 14) (pokefirered [PrintDisplayMonInfo]), white with a dark
+    shadow: read with {!Line_reading.light_ink}. *)
+
+val pc_message : t
+(** The box screen's message ("Deposit in which BOX?", "The BOX is full."):
+    window 1 at (88, 136) prints at (0, 2) ([PrintStorageMessage]). *)

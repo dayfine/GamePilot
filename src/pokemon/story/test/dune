@@ -7,7 +7,8 @@
   test_postcondition_check
   test_chain_progress
   test_checkpoint_order
-  test_console_runs)
+  test_console_runs
+  test_room_policy)
  (modules
   plan_files
   plan_text
@@ -20,7 +21,8 @@
   test_postcondition_check
   test_chain_progress
   test_checkpoint_order
-  test_console_runs)
+  test_console_runs
+  test_room_policy)
  (libraries
   gamepilot.case_table
   yojson

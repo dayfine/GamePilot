@@ -70,15 +70,28 @@ let place setup id log =
       log ("[Preflight] " ^ e);
       None
 
-(* The party is always read: the chain's room needs it. *)
-let with_party (p : Story.Plan.postconditions) =
-  match p.party with
-  | Some _ -> p
-  | None ->
-      {
-        p with
-        party = Some (Story.Plan.Party_includes { members = []; slots = [] });
-      }
+(* The party is read on its summaries (species, level, moves): the room and
+   the field moves are judged on them. *)
+let without_party (p : Story.Plan.postconditions) = { p with party = None }
+
+let party_of (members : Story.Room_policy.member list) =
+  List.map
+    (fun (m : Story.Room_policy.member) ->
+      if m.species = "?" then None else Some m.species)
+    members
+
+let read_save setup id needs log =
+  let place = place setup id log in
+  let members = Frlg_story.Postcondition_reads.party_summary ~log in
+  let observed =
+    Frlg_story.Postcondition_reads.observe ~log
+      (without_party (Pf.to_read needs))
+  in
+  {
+    Pf.observed = { observed with party = Option.map party_of members };
+    place;
+    members;
+  }
 
 (* The frame where the pre-flight stopped; a refusal is logged, not fatal. *)
 let save_failure record log =
@@ -95,12 +108,7 @@ let session setup record id (needs, room) log () =
       save_failure record log;
       Stopped ("could not return to the save: " ^ e)
   | () ->
-      let place = place setup id log in
-      let observed =
-        Frlg_story.Postcondition_reads.observe ~log
-          (with_party (Pf.to_read needs))
-      in
-      let read = { Pf.observed; place } in
+      let read = read_save setup id needs log in
       let rows = Pf.compare needs read @ [ Pf.room room read ] in
       if not (Pf.passed rows) then save_failure record log;
       Rows rows

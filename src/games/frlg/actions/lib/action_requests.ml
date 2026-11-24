@@ -13,6 +13,7 @@ type t =
   | Spin_for_encounter of { max_batches : int }
   | Cut_tree of Grid_maps.Direction.t
   | Verify_mail_glitch of Action_args.member
+  | Pc_deposit of string list
 
 let default_spin_batches = 25
 
@@ -62,6 +63,10 @@ let readers stocks =
     ("cut_tree", fun ~where a -> Cut_tree (J.direction ~where "direction" a));
     ( "verify_mail_glitch",
       fun ~where a -> Verify_mail_glitch (Action_args.member ~where a) );
+    ( "pc_deposit",
+      fun ~where a ->
+        Pc_deposit (J.strings (where ^ "species") (J.field ~where "species" a))
+    );
   ]
 
 let names =
@@ -76,6 +81,7 @@ let names =
     "spin_for_encounter";
     "cut_tree";
     "verify_mail_glitch";
+    "pc_deposit";
   ]
 
 let decode stocks name args =
@@ -111,3 +117,4 @@ let to_string = function
       Printf.sprintf "spin for an encounter, %d batches at most" max_batches
   | Cut_tree d -> "cut the tree to the " ^ Grid_maps.Direction.name d
   | Verify_mail_glitch m -> "verify the mail glitch on " ^ member_text m
+  | Pc_deposit l -> "deposit " ^ String.concat ", " l ^ " at the PC"

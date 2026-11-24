@@ -113,6 +113,9 @@ let preflight id before read =
 let same = Some { F.tiles = 150; changed = 3 }
 
 (* The pre-flight's row for mg-02's Cut user. *)
+let summary slot species moves : Story.Room_policy.member =
+  { slot; species; level = Some 30; moves = Some moves }
+
 let cut_row read =
   let before = Some (plan "mg-01").postconditions in
   Preflight.compare (needs "mg-02" before) read
@@ -135,6 +138,7 @@ let preflight_cases =
           {
             observed = observed ~party:[ "blastoise"; "pidgey" ] ~money:25014 ();
             place = same;
+            members = None;
           })
       "pidgey in the party (fly): blastoise, pidgey: ok | money at least ¥4100 \
        (mart, buy_coins): ¥25014: ok | at the start, CeladonCity: 3 of 150 \
@@ -145,6 +149,7 @@ let preflight_cases =
           {
             observed = observed ~party:[ "blastoise" ] ~money:4000 ();
             place = same;
+            members = None;
           })
       "pidgey in the party (fly): blastoise: MISMATCH | money at least ¥4100 \
        (mart, buy_coins): ¥4000: MISMATCH | at the start, CeladonCity: 3 of \
@@ -155,41 +160,48 @@ let preflight_cases =
           {
             observed = observed ~party:[ "pidgey" ] ~money:25014 ();
             place = None;
+            members = None;
           })
       "pidgey in the party (fly): pidgey: ok | money at least ¥4100 (mart, \
        buy_coins): ¥25014: ok | at the start, CeladonCity: no kept start frame \
        to compare: NOT READ => stop";
-    case "preflight mg-02, mGBA: Rattata knows Cut"
+    case "preflight mg-02, mGBA: some member knows Cut (Rattata)"
       (fun () ->
         cut_row
           {
-            observed =
-              {
-                (observed
-                   ~party:[ "blastoise"; "rattata"; "oddish"; "pidgey"; "abra" ]
-                   ())
-                with
-                knows =
-                  [
-                    ("rattata", [ "tackle"; "tail-whip"; "hyper-fang"; "cut" ]);
-                  ];
-              };
+            observed = observed ~party:[ "blastoise"; "rattata" ] ();
             place = same;
+            members =
+              Some
+                [
+                  summary 1 "blastoise" [ "surf"; "bite" ];
+                  summary 2 "rattata" [ "tackle"; "hyper-fang"; "cut" ];
+                ];
           })
-      "rattata knows cut (cut_tree): rattata: tackle, tail-whip, hyper-fang, \
-       cut: ok";
-    case "preflight mg-02, console B: no Rattata, so no Cut user the plan names"
+      "a member knows cut (cut_tree): rattata knows cut: ok";
+    case "preflight mg-02, console B: no Rattata, Oddish knows Cut"
       (fun () ->
         cut_row
           {
-            observed =
-              observed
-                ~party:[ "blastoise"; "pidgey"; "oddish"; "lapras"; "abra" ]
-                ();
+            observed = observed ~party:[ "blastoise"; "oddish" ] ();
             place = same;
+            members =
+              Some
+                [
+                  summary 1 "blastoise" [ "surf"; "strength" ];
+                  summary 2 "oddish" [ "cut"; "absorb" ];
+                ];
           })
-      "rattata knows cut (cut_tree): not in the party: blastoise, pidgey, \
-       oddish, lapras, abra: MISMATCH";
+      "a member knows cut (cut_tree): oddish knows cut: ok";
+    case "preflight mg-02: nobody knows Cut"
+      (fun () ->
+        cut_row
+          {
+            observed = observed ~party:[ "blastoise" ] ();
+            place = same;
+            members = Some [ summary 1 "blastoise" [ "surf" ] ];
+          })
+      "a member knows cut (cut_tree): no member knows cut: MISMATCH";
     case "preflight mg-03: what mg-02 promised, exactly"
       (fun () ->
         let before = Some (plan "mg-02").postconditions in
@@ -197,29 +209,29 @@ let preflight_cases =
           (List.map
              (fun (r : Preflight.row) -> r.need)
              (Preflight.compare (needs "mg-03" before)
-                { observed = P.nothing_read; place = None })))
-      "party includes blastoise, rattata, pidgey, abra, farfetchd; pidgey in \
-       the party (fly); abra in the party (ingame_trade); rattata knows cut \
-       (cut_tree); money ¥25014..¥25014; money at least ¥3550 (mart); at the \
-       start, VermilionCity";
+                { observed = P.nothing_read; place = None; members = None })))
+      "party includes blastoise, pidgey, abra, farfetchd; pidgey in the party \
+       (fly); abra in the party (ingame_trade); a member knows cut (cut_tree); \
+       money ¥25014..¥25014; money at least ¥3550 (mart); at the start, \
+       VermilionCity";
   ]
 
 (* {1 Room in the party} *)
 
-let member ?moves species level =
-  { Party_room.species; level = Some level; moves }
+let member ?moves slot species level =
+  { Story.Room_policy.slot; species; level = Some level; moves }
 
 (* Console B's save on 2026-11-23: Pallet Town, after the Hall of Fame. The
    moves are what a plain run of FireRed would have them know; a real run
    reads them. *)
 let console_b =
   [
-    member "blastoise" 59 ~moves:[ "surf"; "strength"; "blizzard"; "bite" ];
-    member "eevee" 25 ~moves:[ "tackle"; "tail-whip"; "bite"; "quick-attack" ];
-    member "pidgey" 24 ~moves:[ "fly"; "gust"; "quick-attack"; "sand-attack" ];
-    member "oddish" 12 ~moves:[ "cut"; "absorb"; "poison-powder"; "acid" ];
-    member "lapras" 25 ~moves:[ "surf"; "sing"; "mist"; "body-slam" ];
-    member "magikarp" 5 ~moves:[ "splash" ];
+    member 1 "blastoise" 59 ~moves:[ "surf"; "strength"; "blizzard"; "bite" ];
+    member 2 "eevee" 25 ~moves:[ "tackle"; "tail-whip"; "bite"; "quick-attack" ];
+    member 3 "pidgey" 24 ~moves:[ "fly"; "gust"; "quick-attack"; "sand-attack" ];
+    member 4 "oddish" 12 ~moves:[ "cut"; "absorb"; "poison-powder"; "acid" ];
+    member 5 "lapras" 25 ~moves:[ "surf"; "sing"; "mist"; "body-slam" ];
+    member 6 "magikarp" 5 ~moves:[ "splash" ];
   ]
 
 let need = Party_room.chain_need chain
@@ -239,12 +251,12 @@ let room_cases =
       "abra mg-01, spearow mg-02; 2 free";
     case "room: the members the plans use or promise"
       (fun () -> String.concat ", " need.used)
-      "blastoise, pidgey, rattata";
+      "blastoise, pidgey";
     case
       "room: console B's full party: the lowest level that knows no field move \
        and is not used, twice"
       (fun () -> deposits console_b)
-      "deposit magikarp, eevee";
+      "deposit eevee, magikarp";
     case "room: four members: room enough"
       (fun () -> deposits (List.filteri (fun i _ -> i < 4) console_b))
       "room enough";
@@ -261,7 +273,10 @@ let room_cases =
   ]
 
 let room_row party =
-  let r = Preflight.room need { observed = observed ~party (); place = None } in
+  let r =
+    Preflight.room need
+      { observed = observed ~party (); place = None; members = None }
+  in
   Printf.sprintf "%s: %s: %s" r.need r.read
     (match r.verdict with
     | Ok -> "ok"

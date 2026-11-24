@@ -121,6 +121,16 @@
   gamepilot.frlg_actions))
 
 (test
+ (name test_make_room)
+ (modules test_make_room)
+ (libraries
+  yojson
+  gamepilot.case_table
+  gamepilot.story
+  gamepilot.frlg_actions
+  gamepilot.frlg_story))
+
+(test
  (name test_paced_patches)
  (modules test_paced_patches)
  (deps mg-02.plan.json mg-05a.plan.json)

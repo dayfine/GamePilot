@@ -32,8 +32,7 @@ let field_moves stocks plans =
     | N.Member { species; for_ }
       when List.mem for_ Frlg_story.Party_room.field_moves ->
         Some (Printf.sprintf "%s (%s)" for_ species)
-    | N.Knows_move { species; move; _ } ->
-        Some (Printf.sprintf "%s (%s)" move species)
+    | N.Knows_move { move; _ } -> Some (move ^ " (a member that knows it)")
     | _ -> None
   in
   List.concat_map

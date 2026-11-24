@@ -1,7 +1,11 @@
 module J = Grid_maps.Json_field
 module P = Story.Plan
 
-type need = { joins : (string * string) list; used : string list }
+type need = {
+  joins : (string * string) list;
+  used : string list;
+  moves : string list;
+}
 
 let party_size = 6
 let field_moves = [ "cut"; "fly"; "surf"; "strength" ]
@@ -23,11 +27,17 @@ let brought_keys = function
   | "ingame_trade" -> [ "receive" ]
   | _ -> []
 
+let field_move_users = Frlg_actions.Action_args.field_move_users
+
+(* A field move's user is any member that knows it ([moves]): the action
+   names none the plans use. *)
 let named ~where action args =
   let brought = brought_keys action in
-  List.filter_map
-    (fun k -> if List.mem k brought then None else J.string_opt ~where k args)
-    Frlg_actions.Action_args.member_keys
+  if List.mem_assoc action field_move_users then []
+  else
+    List.filter_map
+      (fun k -> if List.mem k brought then None else J.string_opt ~where k args)
+      Frlg_actions.Action_args.member_keys
 
 let event id (joins, used) (e : P.event) =
   match (e.kind, e.action) with
@@ -59,74 +69,76 @@ let traded (p : P.t) =
       | _ -> None)
     p.checkpoint.events
 
+(* The field moves the plans' events need some member to know. *)
+let needed_moves (p : P.t) =
+  List.filter_map
+    (fun (e : P.event) ->
+      match (e.kind, e.action) with
+      | Game_action _, Some action -> List.assoc_opt action field_move_users
+      | _ -> None)
+    p.checkpoint.events
+
 let chain_need plans =
   let joins, used = List.fold_left plan ([], []) plans in
   let brought = List.map fst joins @ List.concat_map traded plans in
   let used = List.sort_uniq compare used in
-  { joins; used = List.filter (fun s -> not (List.mem s brought)) used }
+  {
+    joins;
+    used = List.filter (fun s -> not (List.mem s brought)) used;
+    moves = List.sort_uniq compare (List.concat_map needed_moves plans);
+  }
 
 let free_needed need = List.length need.joins
 
-type member = {
-  species : string;
-  level : int option;
-  moves : string list option;
-}
+type member = Story.Room_policy.member
 
-(* Why a member stays, or [None] when it may go. *)
-let keeps need m =
-  if List.mem m.species need.used then Some "the plans use it"
-  else
-    match m.moves with
-    | None -> Some "its moves did not read"
-    | Some moves -> (
-        match List.filter (fun f -> List.mem f moves) field_moves with
-        | [] -> None
-        | f :: _ -> Some ("it knows " ^ f))
+let lead_stays = true
 
-let level_order a b =
-  compare
-    (Option.value a.level ~default:max_int)
-    (Option.value b.level ~default:max_int)
+let rules need : Story.Room_policy.rules =
+  {
+    party_size;
+    used = need.used;
+    field_moves;
+    needed_moves = need.moves;
+    lead_stays;
+  }
+
+let precondition need : Story.Room_policy.precondition =
+  { free_slots = free_needed need }
 
 let deposits need party =
-  let short = free_needed need - (party_size - List.length party) in
-  let may_go = List.filter (fun m -> keeps need m = None) party in
-  let kept =
-    List.filter_map
-      (fun m -> Option.map (fun why -> m.species ^ ": " ^ why) (keeps need m))
-      party
-  in
-  if short <= 0 then Ok []
-  else if List.length may_go < short then
-    Error
-      (Printf.sprintf "%d to deposit, %d may go; kept: %s" short
-         (List.length may_go) (String.concat "; " kept))
-  else
-    Ok
-      (List.filteri (fun i _ -> i < short) (List.stable_sort level_order may_go)
-      |> List.map (fun m -> m.species))
+  Result.map
+    (List.map (fun (d : Story.Room_policy.deposit) -> d.species))
+    (Story.Room_policy.choose (rules need) (precondition need) party)
 
-let unread species =
-  { species = Option.value species ~default:"?"; level = None; moves = None }
+let unread slot species : member =
+  {
+    slot = slot + 1;
+    species = Option.value species ~default:"?";
+    level = None;
+    moves = None;
+  }
 
 let joins_text need =
   String.concat ", " (List.map (fun (s, id) -> s ^ " " ^ id) need.joins)
 
-let party_read need party =
-  let free = Printf.sprintf "%d free" (party_size - List.length party) in
-  match deposits need (List.map unread party) with
+let party_read need members =
+  let free = Printf.sprintf "%d free" (party_size - List.length members) in
+  match deposits need members with
   | Ok [] -> (free, Some true)
   | Ok l -> (free ^ "; deposit " ^ String.concat ", " l, Some false)
   | Error why -> (free ^ "; " ^ why, Some false)
 
-let report need party =
+let report need ~members party =
   let text =
     Printf.sprintf "%d free party slots (%s)" (free_needed need)
       (joins_text need)
   in
-  match party with
-  | None -> (text, "party not read", None)
-  | Some party ->
-      let read, ok = party_read need party in
+  match (members, party) with
+  | Some members, _ ->
+      let read, ok = party_read need members in
       (text, read, ok)
+  | None, Some party ->
+      let read, ok = party_read need (List.mapi unread party) in
+      (text, read, ok)
+  | None, None -> (text, "party not read", None)

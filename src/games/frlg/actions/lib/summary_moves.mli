@@ -19,6 +19,16 @@ val open_summary : int -> unit
     its menu, until the info page (1) shows. In {!Frlg_readers.Summary_screen}'s
     probes. Fails as [no_party], [no_member_menu] or [no_summary]. *)
 
+val on_page : int -> Effects.measurements -> bool
+(** The summary shows this page. *)
+
+val page_turn_ms : int
+(** Between two RIGHT presses on the summary: 700 ms. *)
+
+val settled_rows : unit -> string list
+(** The open moves page's known moves once its rows settled (see {!read_known}).
+    Fails as [no_summary]. *)
+
 val read_known : log:(string -> unit) -> slot:int -> string list
 
 val reread_ms : int

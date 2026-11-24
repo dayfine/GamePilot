@@ -8,7 +8,8 @@
 #
 #   sh tools/run_checkpoints_on_switch.sh --program frlg.mail_glitch | PLAN_DIR \
 #       --from mg-01 --to mg-03 [--runs N] [--no-save-after-pass] [--no-preflight | --preflight-only] \
-#       [--no-watch] [--dry-run] [other `gamepilot checkpoints` flags, e.g. --party ...]
+#       [--no-watch] [--dry-run] [other `gamepilot checkpoints` flags, e.g. --party ...,
+#       --make-room PalletTown]
 #
 # --program takes a program registry id (`gamepilot programs` lists them); a plan folder in its
 # place still works.
@@ -50,7 +51,7 @@ console=${GAMEPILOT_LAB_CONSOLE:-B}
 lab_app=${GAMEPILOT_LAB_APP:-SerialPrograms.*--profile lab-B}
 
 usage() {
-    sed -n '9,11p' "$0" | sed 's/^# \{0,1\}//' >&2
+    sed -n '9,12p' "$0" | sed 's/^# \{0,1\}//' >&2
     exit 2
 }
 
@@ -65,7 +66,7 @@ if [ "$1" = --program ]; then
 fi
 plan_dir=$1
 shift
-dry_run="" watch=--watch preflight=--preflight save=--save-after-pass runs=1 from="" locked=""
+make_room="" dry_run="" watch=--watch preflight=--preflight save=--save-after-pass runs=1 from="" locked=""
 n=$#
 while [ $n -gt 0 ]; do
     a=$1
@@ -80,6 +81,7 @@ while [ $n -gt 0 ]; do
     --save-after-pass | --no-save-after-pass) save=$a; continue ;;
     --runs) runs=$1; shift; n=$((n - 1)); continue ;;
     --from) from=$1 ;;
+    --make-room) make_room=$1 ;;
     --watch | --watch-port | --listen) watch="" ;;
     esac
     set -- "$@" "$a"
@@ -209,7 +211,10 @@ step "$bin" bring-up --daemon "$daemon" $board_args $frames_args
 
 # shellcheck disable=SC2086
 set -- ${program_flag:+"$program_flag"} "$plan_dir" "$@" --backend switch $board_args $frames_args
-if [ -n "$preflight" ]; then
+if [ -n "$make_room" ] && [ "$preflight" = --preflight ]; then
+    # The pre-flight would stop on the room mg-00 is there to make; mg-00's end check reads it.
+    echo "[Preflight] skipped: --make-room $make_room runs mg-00 first when the party needs room"
+elif [ -n "$preflight" ]; then
     echo "[Preflight] $from"
     # shellcheck disable=SC2086
     step "$bin" checkpoints "$@" --preflight $watch
