@@ -125,6 +125,25 @@ void check_read_run() {
   CHECK(old_row.started_ms == old_row.ended_ms - 65000);
   CHECK(old_row.game.empty() && old_row.failure_frame && !old_row.recorded);
 
+  // A backfilled run.json (gamepilot runs --backfill) names the program only:
+  // the result and times still come from the fallbacks.
+  write(old_run + "/run.json",
+        "{\"run\":\"2026-11-23-mg-04-testing-2\",\"game\":\"frlg\","
+        "\"game_name\":\"FRLG\",\"program\":\"frlg.mail_glitch\","
+        "\"program_name\":\"Mail Glitch\",\"group\":\"FRLG / Glitches\","
+        "\"checkpoint\":\"mg-04\",\"mode\":\"testing\","
+        "\"backfilled\":true}\n");
+  const RunRow backfilled =
+      read_run(kDir, "2026-11-23-mg-04-testing-2", results_by_run(tsv));
+  CHECK(backfilled.program == "frlg.mail_glitch" &&
+        backfilled.program_name == "Mail Glitch" &&
+        backfilled.game_name == "FRLG" &&
+        backfilled.group == "FRLG / Glitches");
+  CHECK(backfilled.result == old_row.result &&
+        backfilled.started_ms == old_row.started_ms &&
+        backfilled.ended_ms == old_row.ended_ms);
+  fs::remove(old_run + "/run.json");
+
   const std::string new_run = kDir + "/2026-11-23-mg-07-testing-1";
   fs::create_directories(new_run + "/frames");
   write(new_run + "/run.json",

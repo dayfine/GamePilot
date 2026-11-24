@@ -55,16 +55,3 @@ let promised_before ~plan_dir id =
       Result.map
         (fun (plan : Plan.t) -> Some plan.postconditions)
         (load_plan ~plan_dir p)
-
-(* The game and program of a plan folder laid out as
-   .../games/<game>/programs/<program>/plans; empty strings otherwise. *)
-let program_of_dir dir =
-  let parts =
-    String.split_on_char '/' dir |> List.filter (fun p -> p <> "" && p <> ".")
-  in
-  let rec find = function
-    | "games" :: game :: "programs" :: program :: _ -> (game, program)
-    | _ :: rest -> find rest
-    | [] -> ("", "")
-  in
-  find parts

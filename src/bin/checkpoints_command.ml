@@ -5,9 +5,9 @@
      [--listen ADDR] [--backend mgba|switch --serial PORT --capture DEVICE]
 
    The checkpoint dev loop. A program's checkpoints are its plan files
-   (<ID>.plan.json in PLAN_DIR, in name order); each runs from its start state
-   (<states>/<ID>.start.ss), as many times as the mode's policy says
-   (Story.Checkpoint_trials), each run with its own daemon and run folder
+   (<ID>.plan.json in PLAN_DIR, in name order; --program ID in its place:
+   Programs_command); each runs from its start state (<states>/<ID>.start.ss),
+   as many times as the mode's policy says (Story.Checkpoint_trials), each run with its own daemon and run folder
    (Run_record). A run passes when every event passed and the player ends at
    the checkpoint's declared end (Story.Checkpoint_end) and the plan's
    postconditions hold (Story.Postcondition_check). With --end-check-only each
@@ -84,7 +84,7 @@ type flags = {
 }
 
 let usage =
-  "  gamepilot checkpoints PLAN_DIR --from ID --to ID --mode \
+  "  gamepilot checkpoints PLAN_DIR|--program ID --from ID --to ID --mode \
    testing|verification\n\
   \      [--runs N] [--states DIR] [--runs-dir DIR] [--daemon PATH]\n\
   \      [--mgba-port N] [--port N] [--party SPECIES,...] [--center TOWN] \
@@ -93,7 +93,8 @@ let usage =
   \      [--listen ADDR] [--backend mgba|switch --serial PORT --capture DEVICE]\n\
   \      [--replay VIDEO] [--save-after-pass|--no-save-after-pass]\n\
   \      [--record|--no-record] [--keepawake SECONDS]\n\
-  \  gamepilot checkpoints PLAN_DIR --preflight --from ID [--backend ...]\n"
+  \  gamepilot checkpoints PLAN_DIR|--program ID --preflight --from ID \
+   [--backend ...]\n"
 
 let home = Option.value (Sys.getenv_opt "HOME") ~default:"."
 
@@ -250,8 +251,8 @@ let daemon_backend f mode =
 
 (* What each run's run.json says of the series. *)
 let run_info plan_dir f ~from_id ~to_id : Run_record.info =
-  let game, program = Plan_dir.program_of_dir plan_dir in
-  { game; program; from_id; to_id; backend = f.backend }
+  let program = Program_registry.of_plan_dir plan_dir in
+  { program; from_id; to_id; backend = f.backend }
 
 let run_series plan_dir f =
   let* from_id = required "--from" f.from_id in

@@ -10,9 +10,10 @@
        summary.txt   one line: PASS, or FAIL with the step and the reason
        KEEP          on a failing run, so the disk GC keeps it (replay-test
                      candidate)
-       run.json      what the hub's runs list shows (game, program, the
-                     series' range, checkpoint, backend, mode, start), written
-                     at the start and again with the result at the end
+       run.json      what the hub's runs list shows (the program's game, id,
+                     name and group from the registry, the series' range,
+                     checkpoint, backend, mode, start), written at the start
+                     and again with the result at the end
        daemon.json, watch_plan.json, watch_run.json, watch_log.jsonl,
        frames/       the daemon's notes and recorded frames
                      (daemon/src/run_journal.h, frame_stream.h)
@@ -91,8 +92,8 @@ let copy_file ~src ~dst =
   Out_channel.with_open_bin dst (fun out -> Out_channel.output_string out bytes)
 
 type info = {
-  game : string;
-  program : string;
+  program : Program_registry.t option;
+      (** None: a plan folder of no program. *)
   from_id : string;
   to_id : string;
   backend : string;
@@ -104,8 +105,16 @@ type ending = { result : string; at : string; reason : string }
 
 let now_ms () = int_of_float (Unix.gettimeofday () *. 1000.)
 
+(* The program's run.json fields; empty game and program for none. *)
+let program_fields = function
+  | Some p -> Program_registry.run_fields p
+  | None -> [ ("game", ""); ("program", "") ]
+
 let run_json t info ~checkpoint ~mode ~started_ms ending =
   let s v = `String v in
+  let program =
+    List.map (fun (k, v) -> (k, s v)) (program_fields info.program)
+  in
   let ended =
     match ending with
     | None -> []
@@ -118,17 +127,15 @@ let run_json t info ~checkpoint ~mode ~started_ms ending =
         ]
   in
   `Assoc
-    ([
-       ("run", s t.name);
-       ("game", s info.game);
-       ("program", s info.program);
-       ("from", s info.from_id);
-       ("to", s info.to_id);
-       ("checkpoint", s checkpoint);
-       ("backend", s info.backend);
-       ("mode", s mode);
-       ("started_ms", `Int started_ms);
-     ]
+    ((("run", s t.name) :: program)
+    @ [
+        ("from", s info.from_id);
+        ("to", s info.to_id);
+        ("checkpoint", s checkpoint);
+        ("backend", s info.backend);
+        ("mode", s mode);
+        ("started_ms", `Int started_ms);
+      ]
     @ ended)
 
 (* run.json, at the start ([ending] None) and again at the end. *)
