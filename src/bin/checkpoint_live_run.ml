@@ -4,7 +4,7 @@
    asks for (the failure frame and state, or a passing end) while the session
    is still open, and the run's summary, KEEP and RESULTS.tsv row. The run
    shows the chain it is part of (Story.Chain_progress, through [progress]),
-   its plan and story lines on the daemon's watch page (Watch_report);
+   its plan and story lines on the daemon's watch page (Plan_watch);
    a Stop pressed there is a failure ("stopped by user") that repeats, so the
    series stops too. *)
 
@@ -84,10 +84,10 @@ let options setup cp log : Frlg_story.Checkpoint_run.options =
 (* The checkpoint, shown on the watch page as it runs; a Stop there ends it
    at the event it was in. With how it ended, for the console's steps. *)
 let checkpoint_outcome setup cp log =
-  let watch = Watch_report.create cp.plan.checkpoint in
+  let watch = Frlg_story.Plan_watch.create cp.plan.checkpoint in
   match
     Frlg_story.Checkpoint_run.run ?end_at:cp.end_at
-      ~on_event:(Watch_report.on_event watch)
+      ~on_event:(Frlg_story.Plan_watch.on_event watch)
       (options setup cp log) setup.world cp.plan
   with
   | Ok () -> (Passed, Console_runs.Passed)

@@ -5,6 +5,7 @@
   yojson
   gamepilot.wire
   gamepilot.effects
+  gamepilot.watch_report
   gamepilot.grid_maps
   gamepilot.story
   gamepilot.frlg_readers

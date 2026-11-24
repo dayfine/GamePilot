@@ -5,6 +5,7 @@
  (libraries
   gamepilot.wire
   gamepilot.effects
+  gamepilot.watch_report
   gamepilot.replay
   gamepilot.live
   gamepilot.start_menu_poc

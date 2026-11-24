@@ -8,7 +8,9 @@
    generated checkpoint mg-00 (Fly to the Center nearest MAP, the save's map,
    the deposit, out to the Fly landing) is written with the chain's plans
    (linked) into "<runs>/<ID>-make-room/plans", and the series runs from mg-00
-   there: it is judged, retried and saved like any checkpoint. *)
+   there: it is judged, retried and saved like any checkpoint. The party read
+   runs as a shadow plan (Frlg_story.Shadow_plan: soft_reset, read_party,
+   plan_deposit), so the watch page shows it as a checkpoint run. *)
 
 module Pf = Preflight_command
 module M = Frlg_story.Make_room
@@ -40,35 +42,6 @@ let ensure_start (setup : Pf.setup) from_id =
   | Daemon_process.Mgba _ when Sys.file_exists first -> Ok (copy_file first own)
   | Daemon_process.Mgba _ -> Error ("no start state " ^ first)
   | Daemon_process.Switch _ -> Ok ()
-
-exception Not_read
-
-let read_party (setup : Pf.setup) log () =
-  Pf.reload setup M.id log;
-  match Frlg_story.Postcondition_reads.party_summary ~log with
-  | Some members -> members
-  | None -> raise Not_read
-
-let read_live setup log port =
-  match Live.run ~port (read_party setup log) with
-  | members -> Ok members
-  | exception Not_read -> Error "the party's summaries did not read"
-  | exception Pf.Not_back e -> Error ("could not return to the save: " ^ e)
-  | exception Effects.Disconnected e -> Error ("disconnected: " ^ e)
-
-let party setup record log =
-  match
-    Daemon_process.start ?watch:setup.Pf.watch ~daemon:setup.daemon
-      ~backend:setup.backend ~port:0
-      ~wire_log:(Run_record.path record "wire.jsonl")
-      ~out_file:(Run_record.path record "daemon.out")
-      ~checkpoint:M.id ()
-  with
-  | Error e -> Error ("daemon: " ^ e)
-  | Ok d ->
-      Fun.protect
-        ~finally:(fun () -> Daemon_process.stop d)
-        (fun () -> read_live setup log d.port)
 
 let knows_fly (m : R.member) =
   Option.fold ~none:false ~some:(List.mem "fly") m.moves
@@ -134,6 +107,80 @@ let decide ~plan_dir ~at need (record : Run_record.t) say members =
     say (M.id ^ ": Fly to " ^ room.center.name ^ ", in " ^ dir);
     Ok (Some dir)
 
+let action f : Story.Game.game_action = fun _ _ -> f ()
+let failed code why = Error (Story.Failure.cause ~repeats:true code why)
+
+let soft_reset setup result log () =
+  match Pf.reload setup M.id log with
+  | () -> Ok ()
+  | exception Pf.Not_back e ->
+      result := Error ("could not return to the save: " ^ e);
+      failed "not_back" e
+
+let read_members members result log () =
+  match Frlg_story.Postcondition_reads.party_summary ~log with
+  | Some read ->
+      members := read;
+      Ok ()
+  | None ->
+      result := Error "the party's summaries did not read";
+      failed "not_read" "the party's summaries did not read"
+
+let plan_deposit decide members result say log () =
+  let both line =
+    say line;
+    log line
+  in
+  result := decide both !members;
+  Result.fold ~ok:(fun _ -> Ok ()) ~error:(failed "no_room") !result
+
+(* The shadow plan's steps (Frlg_story.Shadow_plan.make_room_steps); the
+   party read and the decision in [result]. *)
+let actions (setup : Pf.setup) decide result say log =
+  let members = ref [] in
+  [
+    ("soft_reset", action (soft_reset setup result log));
+    ("read_party", action (read_members members result log));
+    ("plan_deposit", action (plan_deposit decide members result say log));
+  ]
+
+let shadow_plan =
+  Frlg_story.Shadow_plan.plan ~id:M.id ~title:"make room: the party read"
+    Frlg_story.Shadow_plan.make_room_steps
+
+(* In the session: the shadow plan through the checkpoint runner, on the
+   page. *)
+let session setup world decide say log () =
+  let result = ref (Error "the party read did not finish") in
+  (match
+     Frlg_story.Plan_watch.run_shadow ~mode:"preflight" ~log world shadow_plan
+       (actions setup decide result say)
+   with
+  | Ok () -> ()
+  | Error f when Result.is_ok !result ->
+      result := Error (Story.Failure.to_string f)
+  | Error _ -> ());
+  !result
+
+let read_live setup world decide say log port =
+  match Live.run ~port (session setup world decide say log) with
+  | result -> result
+  | exception Effects.Disconnected e -> Error ("disconnected: " ^ e)
+
+let party setup world record decide say log =
+  match
+    Daemon_process.start ?watch:setup.Pf.watch ~daemon:setup.daemon
+      ~backend:setup.backend ~port:0
+      ~wire_log:(Run_record.path record "wire.jsonl")
+      ~out_file:(Run_record.path record "daemon.out")
+      ~checkpoint:M.id ()
+  with
+  | Error e -> Error ("daemon: " ^ e)
+  | Ok d ->
+      Fun.protect
+        ~finally:(fun () -> Daemon_process.stop d)
+        (fun () -> read_live setup world decide say log d.port)
+
 let ending = function
   | Ok _ -> Run_record.{ result = "pass"; at = ""; reason = "" }
   | Error why -> { result = "fail"; at = "make-room"; reason = why }
@@ -143,6 +190,7 @@ let prepare ~plan_dir ~from_id ~at (setup : Pf.setup) =
   let* plans = chain_plans ~plan_dir from_id in
   let need = Frlg_story.Party_room.chain_need plans in
   let* () = ensure_start setup from_id in
+  let* world = Frlg_story.Checkpoint_run.load_world () in
   let run =
     Run_record.start ~runs_dir:setup.runs_dir setup.info ~checkpoint:M.id
       ~mode:"preflight"
@@ -150,9 +198,9 @@ let prepare ~plan_dir ~from_id ~at (setup : Pf.setup) =
   let log, close = Run_record.story_log run.record in
   let lines = ref [] in
   let result =
-    Result.bind
-      (party setup run.record log)
-      (decide ~plan_dir ~at need run.record (say lines))
+    party setup world run.record
+      (decide ~plan_dir ~at need run.record)
+      (say lines) log
   in
   close ();
   Result.iter_error (say lines) result;

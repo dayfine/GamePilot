@@ -43,7 +43,17 @@ let parse_run_flags args =
    outcome's line and exit code. *)
 let program_outcome ?(after = ignore) handle state =
   let run () =
-    let outcome = Start_menu_poc.run ?state () in
+    let report = Watch_report.create ~checkpoint:"start_menu_poc" [ "run" ] in
+    Watch_report.start_run report ~mode:"run";
+    let outcome = Watch_report.step report "run" (Start_menu_poc.run ?state) in
+    let passed =
+      match outcome with Start_menu_poc.Passed _ -> true | _ -> false
+    in
+    if not passed then
+      Watch_report.set report 0 Wire.Watch.Failed
+        (Start_menu_poc.describe outcome);
+    Watch_report.log ignore (Start_menu_poc.describe outcome);
+    Watch_report.end_run report ~passed;
     after outcome;
     outcome
   in

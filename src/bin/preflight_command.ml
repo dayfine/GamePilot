@@ -8,8 +8,10 @@
    wire log and the story log go to a run folder ("<ID>-preflight"), with
    run.json (mode preflight), the table and the verdict in summary.txt, the
    RESULTS.tsv row and, on a mismatch or a failed reload, failure.png
-   (Run_record). With --watch its daemon's page is in the watch registry while
-   it runs, as a checkpoint run's. *)
+   (Run_record). It runs as a shadow plan (Frlg_story.Shadow_plan: soft_reset,
+   check_start, read_party, read_trainer_card, verdict) through the checkpoint
+   runner, so with --watch its daemon's page shows its steps, story lines and
+   run as a checkpoint run's (Frlg_story.Plan_watch). *)
 
 open Story
 module Pf = Frlg_story.Preflight
@@ -80,19 +82,6 @@ let party_of (members : Story.Room_policy.member list) =
       if m.species = "?" then None else Some m.species)
     members
 
-let read_save setup id needs log =
-  let place = place setup id log in
-  let members = Frlg_story.Postcondition_reads.party_summary ~log in
-  let observed =
-    Frlg_story.Postcondition_reads.observe ~log
-      (without_party (Pf.to_read needs))
-  in
-  {
-    Pf.observed = { observed with party = Option.map party_of members };
-    place;
-    members;
-  }
-
 (* The frame where the pre-flight stopped; a refusal is logged, not fatal. *)
 let save_failure record log =
   match Effects.save_frame (Run_record.path record "failure.png") with
@@ -102,16 +91,89 @@ let save_failure record log =
 
 type verdict = Rows of Pf.row list | Stopped of string
 
-let session setup record id (needs, room) log () =
+type reads = {
+  mutable place : Frlg_readers.Start_frame.difference option;
+  mutable members : Story.Room_policy.member list option;
+  mutable observed : Story.Postcondition_check.observed option;
+  mutable verdict : verdict;
+}
+
+let action f : Story.Game.game_action = fun _ _ -> f ()
+
+(* Back to the save: on a failure, its frame and the verdict. *)
+let soft_reset setup record id reads log () =
   match reload setup id log with
+  | () -> Ok ()
   | exception Not_back e ->
       save_failure record log;
-      Stopped ("could not return to the save: " ^ e)
-  | () ->
-      let read = read_save setup id needs log in
-      let rows = Pf.compare needs read @ [ Pf.room room read ] in
-      if not (Pf.passed rows) then save_failure record log;
-      Rows rows
+      reads.verdict <- Stopped ("could not return to the save: " ^ e);
+      Error (Failure.cause ~repeats:true "not_back" e)
+
+(* The table of what was read; a mismatch fails the step. *)
+let judge record (needs, room) reads log () =
+  let read =
+    {
+      Pf.observed =
+        (match reads.observed with
+        | Some o -> { o with party = Option.map party_of reads.members }
+        | None -> invalid_arg "verdict before read_trainer_card");
+      place = reads.place;
+      members = reads.members;
+    }
+  in
+  let rows = Pf.compare needs read @ [ Pf.room room read ] in
+  reads.verdict <- Rows rows;
+  if Pf.passed rows then Ok ()
+  else (
+    save_failure record log;
+    Error (Failure.cause "mismatch" "the save does not hold what it needs"))
+
+let check_start setup id reads log () =
+  reads.place <- place setup id log;
+  Ok ()
+
+let read_party reads log () =
+  reads.members <- Frlg_story.Postcondition_reads.party_summary ~log;
+  Ok ()
+
+let read_trainer_card needs reads log () =
+  reads.observed <-
+    Some
+      (Frlg_story.Postcondition_reads.observe ~log
+         (without_party (Pf.to_read needs)));
+  Ok ()
+
+(* The shadow plan's steps (Frlg_story.Shadow_plan.preflight_steps). The
+   party is read on its summaries (species, level, moves): the room and the
+   field moves are judged on them. *)
+let actions setup record id ((needs, _) as all) reads log =
+  [
+    ("soft_reset", action (soft_reset setup record id reads log));
+    ("check_start", action (check_start setup id reads log));
+    ("read_party", action (read_party reads log));
+    ("read_trainer_card", action (read_trainer_card needs reads log));
+    ("verdict", action (judge record all reads log));
+  ]
+
+let shadow_plan id =
+  Frlg_story.Shadow_plan.plan ~id ~title:("pre-flight of " ^ id)
+    Frlg_story.Shadow_plan.preflight_steps
+
+(* The pre-flight as a plan through the checkpoint runner, on the page. *)
+let session setup record id needs world log () =
+  let reads =
+    { place = None; members = None; observed = None; verdict = Stopped "" }
+  in
+  match
+    Frlg_story.Plan_watch.run_shadow ~mode:"preflight" ~log world
+      (shadow_plan id)
+      (actions setup record id needs reads)
+  with
+  | Ok () -> reads.verdict
+  | Error f -> (
+      match reads.verdict with
+      | Stopped "" -> Stopped (Failure.to_string f)
+      | v -> v)
 
 (* The table (none when nothing was read), the verdict line, the result. *)
 let ending_of id = function
@@ -142,13 +204,14 @@ let with_daemon setup record id body =
         ~finally:(fun () -> Daemon_process.stop daemon)
         (fun () -> body daemon)
 
-let in_daemon setup record id needs log (d : Daemon_process.t) =
-  match Live.run ~port:d.port (session setup record id needs log) with
+let in_daemon setup record id needs world log (d : Daemon_process.t) =
+  match Live.run ~port:d.port (session setup record id needs world log) with
   | verdict -> verdict
   | exception Effects.Disconnected e -> Stopped ("disconnected: " ^ e)
 
 let run ~plan_dir ~from_id setup =
   let* needs = needs ~plan_dir from_id in
+  let* world = Frlg_story.Checkpoint_run.load_world () in
   let run =
     Run_record.start ~runs_dir:setup.runs_dir setup.info ~checkpoint:from_id
       ~mode:"preflight"
@@ -157,7 +220,8 @@ let run ~plan_dir ~from_id setup =
   let log, close = Run_record.story_log record in
   print_endline ("[Preflight] " ^ record.dir);
   let verdict =
-    with_daemon setup record from_id (in_daemon setup record from_id needs log)
+    with_daemon setup record from_id
+      (in_daemon setup record from_id needs world log)
   in
   let table, line, ending = ending_of from_id verdict in
   Option.iter print_endline table;

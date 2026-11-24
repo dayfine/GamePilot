@@ -51,6 +51,7 @@ val capped_postconditions :
 val run :
   ?end_at:Story.Pose.grid ->
   ?on_event:(int -> Story.Event_progress.t -> unit) ->
+  ?actions:(string * Story.Game.game_action) list ->
   options ->
   Frlg_overworld.Frlg_steps.world ->
   Story.Plan.t ->
@@ -63,4 +64,5 @@ val run :
     postconditions ({!Story.Plan.postconditions}), read by
     {!Postcondition_reads}, must all pass, but for those
     {!capped_postconditions} skips (logged). [on_event] hears each event's
-    progress ({!Story.Runner.run}). *)
+    progress ({!Story.Runner.run}). [actions] are game actions of the caller's
+    own, ahead of FireRed's: a shadow plan's ({!Shadow_plan}). *)
