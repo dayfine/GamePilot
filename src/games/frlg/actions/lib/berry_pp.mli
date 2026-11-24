@@ -8,6 +8,12 @@
     [move] while it has PP, then with [backup_move].
 
     Where it differs, for want of readers:
+    - The fork finds each battle by turning in place ([spin_for_encounter()]),
+      reading the player's facing before each batch so no turn tap is a step.
+      With no facing reader, turning here stepped the player off the grass
+      (mg-05a testing 1: from Route 8 (45, 12) onto the path at (46, 12), then
+      no battle in 25 batches). The battles are paced for instead, one step
+      [pace] and back on grass tiles ({!Pacing}, the fork's capture method).
     - The fork reads the move's PP off the summary and counts it down, stopping
       after the battle its last PP goes in. With no PP digit reader here the
       move is used until the game refuses it ("There's no PP left for this
@@ -20,10 +26,18 @@
     - The fork's closing turn to the event's declared facing is left out (no
       facing reader): mg-05a's next event is a Fly. *)
 
-type plan = { species : string; move : string; backup_move : string }
+type plan = {
+  species : string;
+  move : string;
+  backup_move : string;
+  pace : Grid_maps.Direction.t;
+      (** The way the battles are paced for: one step from the start tile and
+          back ({!Pacing}). *)
+}
 
 val decode : Grid_maps.Json_field.obj -> (plan, Story.Failure.cause) result
-(** Args ["species"], ["move"] and ["backup_move"] (slugs). *)
+(** Args ["species"], ["move"] and ["backup_move"] (slugs), and ["pace"] (a
+    direction). *)
 
 val script : move_slot:int -> backup_slot:int -> Frlg_battle.Battle_script.t
 (** A wild battle: [move_slot] until the game refuses it, then [backup_slot]. *)
@@ -35,7 +49,7 @@ val max_battles : int
 type rig = {
   lead : unit -> string option;  (** the species in party slot 1 *)
   known_moves : slot:int -> string list;  (** read on the summary *)
-  find_battle : unit -> unit;  (** turned in place until a wild battle *)
+  find_battle : unit -> unit;  (** paced until a wild battle *)
   battle : Frlg_battle.Battle_script.t -> Frlg_battle.Scripted_battle.outcome;
   log : string -> unit;
 }

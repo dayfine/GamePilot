@@ -31,6 +31,16 @@ val stands_on :
   Grid_maps.Tile_pos.t
 (** The tile the player stands on, from the patch's tile. *)
 
+val spot_at :
+  pace:Grid_maps.Direction.t ->
+  patch:Grid_maps.Tile_pos.t ->
+  Grid_maps.Tile_pos.t ->
+  Grid_maps.Direction.t option ->
+  spot option
+(** The spot of a player reckoned on this tile, facing that way: on the patch,
+    one tile [pace] from it, or [None] (somewhere else: pacing would walk off).
+    The inverse of {!stands_on}. *)
+
 type steps = {
   step : unit -> bool;
       (** One step, {!way}: whether a battle's flash showed. *)

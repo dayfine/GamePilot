@@ -7,6 +7,7 @@ type heal = Nurse of Story.Pose.grid | Pad of Story.Pose.grid
 type strategy = {
   name : string;
   spot : Story.Pose.grid;
+  pace : Grid_maps.Direction.t;
   lead : lead;
   heal : heal;
   heal_every : int;
@@ -67,6 +68,7 @@ let strategy i json =
   {
     name = J.string ~where "name" obj;
     spot = pose ~where "spot" obj;
+    pace = J.direction ~where "pace" obj;
     lead = lead ~where obj;
     heal = heal ~where obj;
     heal_every = J.int ~where "heal_every" obj;

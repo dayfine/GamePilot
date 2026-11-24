@@ -185,4 +185,5 @@ let to_read needs : P.postconditions =
     flags = [];
     knows = List.filter_map knows_to_read needs;
     levels = [];
+    marks = None;
   }

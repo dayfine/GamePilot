@@ -8,6 +8,7 @@
      learn   a YES/NO beside the player's HP box: a move to learn
      nopp    the move menu, its PP red   nohp    the battle text box with no
              HP box, arrow or YES/NO: what an evolution shows
+     ally    a double battle's HP boxes on the player's side
      none    none of these
 
    Switch names keep their CommandLineTests folder and file name. *)
@@ -38,6 +39,7 @@ let readers =
       tag = "arrow";
     };
     { reader = "no_pp_left"; verdict = Move_pp.no_pp_left; tag = "nopp" };
+    { reader = "ally_boxes"; verdict = Battle_screen.ally_boxes; tag = "ally" };
     {
       reader = "evolution_shows";
       verdict = Evolution_screen.evolution_shows;

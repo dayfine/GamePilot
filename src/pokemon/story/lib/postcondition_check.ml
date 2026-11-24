@@ -6,6 +6,7 @@ type observed = {
   flags : (string * bool) list;
   knows : (string * string list) list;
   levels : (string * int) list;
+  marks : string list option;
 }
 
 let nothing_read =
@@ -17,6 +18,7 @@ let nothing_read =
     flags = [];
     knows = [];
     levels = [];
+    marks = None;
   }
 
 type verdict = Passed | Failed | Not_checked
@@ -160,6 +162,19 @@ let check_level observed ({ species; min } : Plan.level) =
         ~read:(Printf.sprintf "Lv %d" read)
         (read >= min)
 
+(* The promised slots only: a party with more members than promised marks
+   is checked on the slots named. *)
+let check_marks expected observed =
+  match (expected, observed.marks) with
+  | None, _ -> []
+  | Some _, None -> [ not_read "marks" ]
+  | Some marks, Some read ->
+      let shown = List.filteri (fun i _ -> i < List.length marks) read in
+      [
+        expected_read "marks" ~expected:(String.concat ", " marks)
+          ~read:(String.concat ", " shown) (shown = marks);
+      ]
+
 let check (expected : Plan.postconditions) observed =
   List.concat
     [
@@ -170,6 +185,7 @@ let check (expected : Plan.postconditions) observed =
       List.map (check_flag observed) expected.flags;
       List.map (check_knows observed) expected.knows;
       List.map (check_level observed) expected.levels;
+      check_marks expected.marks observed;
     ]
 
 let unmet = List.filter (fun r -> r.verdict <> Passed)

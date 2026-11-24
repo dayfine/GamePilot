@@ -171,3 +171,14 @@ let run rig plan =
   | B.Scripted_battle.Over _ as over ->
       rig.log ("Mail Glitch: Lea & Jed " ^ B.Scripted_battle.describe over);
       rig.after_battle ()
+
+let live_rig ~log ~species_at ~known_moves ~battle =
+  {
+    species_at;
+    known_moves;
+    start_battle = step_into_sight ~log;
+    restored = pp_restored;
+    battle;
+    after_battle = (fun () -> M.settle_back ~label:"after Lea & Jed" ~log);
+    log;
+  }

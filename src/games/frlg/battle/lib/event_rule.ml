@@ -1,11 +1,17 @@
 type state = {
   seen_battle : bool;
+  leveled_up : bool;
   last_press_ms : float;
   no_battle_since_ms : float option;
 }
 
 let start ~at_ms =
-  { seen_battle = false; last_press_ms = at_ms; no_battle_since_ms = None }
+  {
+    seen_battle = false;
+    leveled_up = false;
+    last_press_ms = at_ms;
+    no_battle_since_ms = None;
+  }
 
 type step = Report of Battle_driver.event | Press of Wire.button | Look
 
@@ -42,8 +48,9 @@ let next state (facts : Battle_look.facts) ~at_ms =
         else Battle_driver.Use_next
       in
       (seen, Report event)
-  | Level_up -> press_held seen Wire.A ~at_ms
+  | Level_up -> press_held { seen with leveled_up = true } Wire.A ~at_ms
   | Move_menu | Bag -> press_held seen Wire.B ~at_ms
   | Text_arrow -> press_held ~gap_ms:arrow_press_gap_ms seen Wire.B ~at_ms
-  | Evolution -> (seen, Look)
+  | Evolution when state.leveled_up -> (seen, Look)
+  | Evolution -> press_held ~gap_ms:stuck_text_ms seen Wire.B ~at_ms
   | Battle_text -> press_held ~gap_ms:stuck_text_ms seen Wire.B ~at_ms

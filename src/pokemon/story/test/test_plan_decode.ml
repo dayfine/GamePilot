@@ -305,6 +305,7 @@ let postconditions_text (plan : Plan.t) =
         (fun ({ species; min } : Plan.level) ->
           Printf.sprintf "%s at least Lv %d" species min)
         p.levels;
+      Option.fold ~none:[] ~some:(fun m -> [ "marks " ^ list m ]) p.marks;
     ]
   |> function
   | [] -> "none"
@@ -338,10 +339,10 @@ let postcondition_cases : Case_table.case list =
          money 25014 to 25014";
     };
     {
-      name = "mg-05 promises the party in its battle order";
+      name = "mg-05 promises MIMIEN, Pidgey and slots 1-3's marks";
       input = (fun () -> postconditions_text (load "mg-05.plan.json" mg));
       expectation =
-        "party in order farfetchd, blastoise, mr-mime, pidgey, rattata, oddish";
+        "party includes mr-mime, pidgey\nmarks held_item, none, held_item";
     };
     {
       name = "mg-03 promises MIMIEN for Abra, 2 Revives and an Escape Rope";
@@ -440,11 +441,58 @@ let postcondition_cases : Case_table.case list =
       expectation = post ^ "levels[0].min is missing.";
     };
     {
+      name = "mg-05a promises Blastoise's Leppa Berry and MIMIEN's mail";
+      input = (fun () -> postconditions_text (load "mg-05a.plan.json" mg));
+      expectation =
+        "party includes pidgey\n\
+         farfetchd in slot 1\n\
+         blastoise in slot 2\n\
+         mr-mime in slot 3\n\
+         item antidote x2\n\
+         item super-potion x3\n\
+         item retro-mail x1\n\
+         money 19164 to 19164\n\
+         marks held_item, held_item, mail";
+    };
+    {
+      name = "a mark no party shows";
+      input = (fun () -> with_postconditions {|{"marks": ["none", "berry"]}|});
+      expectation = post ^ "marks: berry is not held_item, mail or none.";
+    };
+    {
       name = "an unknown postcondition";
       input = (fun () -> with_postconditions {|{"badges": 3}|});
       expectation = post ^ "badges is not a known field.";
     };
   ]
 
+let retries_of metadata =
+  let text =
+    edited {|"title": "Test",|}
+      (Printf.sprintf {|"title": "Test", "metadata": %s,|} metadata)
+  in
+  match
+    Plan_decode.decode ~source:"base.plan.json" (Yojson.Safe.from_string text)
+  with
+  | Ok plan -> string_of_int plan.retries
+  | Error message -> message
+
+let retries_cases : Case_table.case list =
+  let case name input expectation : Case_table.case =
+    { name; input; expectation }
+  in
+  [
+    case "mg-05 retries the battle's luck 3 times"
+      (fun () -> string_of_int (load "mg-05.plan.json" mg).retries)
+      "3";
+    case "no retries field: none"
+      (fun () -> retries_of {|{"phase": "testing"}|})
+      "0";
+    case "negative retries are refused"
+      (fun () -> retries_of {|{"retries": -1}|})
+      (at ^ "metadata.retries is -1, not 0 or more.");
+  ]
+
 let () =
-  Case_table.run "plan_decode" (real_plans @ inline_plans @ postcondition_cases)
+  Case_table.run "plan_decode"
+    (real_plans @ inline_plans @ postcondition_cases @ retries_cases)

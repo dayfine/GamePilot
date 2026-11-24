@@ -101,6 +101,18 @@ type rig = {
   log : string -> unit;
 }
 
+val live_rig :
+  log:(string -> unit) ->
+  species_at:(int -> string option) ->
+  known_moves:(slot:int -> string list) ->
+  battle:
+    ((Frlg_battle.Battle_driver.t -> Frlg_battle.Battle_driver.t) ->
+    Frlg_battle.Battle_script.t ->
+    Frlg_battle.Scripted_battle.outcome) ->
+  rig
+(** The game's rig: {!step_into_sight}, {!pp_restored}, and the talk settle
+    after the battle. *)
+
 val run : rig -> plan -> unit
 (** Fails as [double_battle_wrong_party], [double_battle_missing_move],
     [double_battle_not_started], [double_battle_berry_not_consumed] or

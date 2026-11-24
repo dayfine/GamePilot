@@ -97,19 +97,6 @@ let ball_chosen ~log () =
       M.close "the bag" Bag_screen.bag_open;
       false
 
-(* The fork's overworld_shows: START opens the start menu only on the
-   overworld; B closes it again. *)
-let start_menu_wait_ms = 1200
-let start_menu_close_ms = 600
-
-let overworld_shows () =
-  M.press ~cooldown_ms:start_menu_wait_ms Wire.Start;
-  match Effects.read () with
-  | Some m when Start_menu.start_menu_open m ->
-      M.press ~cooldown_ms:start_menu_close_ms Wire.B;
-      true
-  | Some _ | None -> false
-
 (* After the throw: the nickname question ("Give a nickname ...?", its Yes/No
    arrow) or the overworld is a catch, the action menu is a break-free; every
    fourth look with neither checks the overworld, then presses B through the
@@ -123,7 +110,7 @@ let rec wait_for_throw ~deadline polls : Capture.throw_end =
     | _ when polls mod presses_per_check <> 0 ->
         wait throw_poll_ms;
         wait_for_throw ~deadline (polls + 1)
-    | _ when overworld_shows () -> Caught
+    | _ when Pacing_steps.overworld_shows () -> Caught
     | _ ->
         press_b ();
         wait_for_throw ~deadline (polls + 1)
@@ -166,7 +153,7 @@ let finish_catch ~log (destination : Capture.destination) =
    true)
 
 let find_encounter ~log ~pace spot () =
-  Pacing_steps.find_encounter ~log ~overworld_shows ~pace spot
+  Pacing_steps.find_encounter ~log ~pace spot
 
 let make ~log ~pace ~spot ~target : Capture.rig =
   let driver = B.Screen_driver.make () in

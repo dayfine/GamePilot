@@ -41,6 +41,7 @@ let party_promised : Story.Plan.postconditions =
     flags = [];
     knows = [];
     levels = [];
+    marks = None;
   }
 
 let observed_text (o : Story.Postcondition_check.observed) =

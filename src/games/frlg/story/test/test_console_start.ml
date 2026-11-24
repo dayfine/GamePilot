@@ -239,7 +239,7 @@ let room_cases =
       "abra mg-01, spearow mg-02; 2 free";
     case "room: the members the plans use or promise"
       (fun () -> String.concat ", " need.used)
-      "blastoise, oddish, pidgey, rattata";
+      "blastoise, pidgey, rattata";
     case
       "room: console B's full party: the lowest level that knows no field move \
        and is not used, twice"
@@ -255,8 +255,9 @@ let room_cases =
              (fun (m : Party_room.member) -> { m with moves = None })
              console_b))
       "stop: 2 to deposit, 0 may go; kept: blastoise: the plans use it; eevee: \
-       its moves did not read; pidgey: the plans use it; oddish: the plans use \
-       it; lapras: its moves did not read; magikarp: its moves did not read";
+       its moves did not read; pidgey: the plans use it; oddish: its moves did \
+       not read; lapras: its moves did not read; magikarp: its moves did not \
+       read";
   ]
 
 let room_row party =
@@ -274,8 +275,8 @@ let room_row_cases =
       (fun () -> room_row names)
       "2 free party slots (abra mg-01, spearow mg-02): 0 free; 2 to deposit, 0 \
        may go; kept: blastoise: the plans use it; eevee: its moves did not \
-       read; pidgey: the plans use it; oddish: the plans use it; lapras: its \
-       moves did not read; magikarp: its moves did not read: MISMATCH";
+       read; pidgey: the plans use it; oddish: its moves did not read; lapras: \
+       its moves did not read; magikarp: its moves did not read: MISMATCH";
     case "preflight room: four members: ok"
       (fun () -> room_row (List.filteri (fun i _ -> i < 4) names))
       "2 free party slots (abra mg-01, spearow mg-02): 2 free: ok";

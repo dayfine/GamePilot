@@ -1,37 +1,8 @@
 open Grid_maps
 module F = Json_field
+open Plan_fields
 
 let format = "pokesim-authored-checkpoint/1"
-
-(* Every reader takes [where], the prefix of the object's fields
-   ("f: checkpoint."), as Json_field does. *)
-
-let only ~where allowed (obj : F.obj) =
-  match List.find_opt (fun (key, _) -> not (List.mem key allowed)) obj with
-  | Some (key, _) -> F.fail "%s%s is not a known field." where key
-  | None -> ()
-
-let required ~where key obj = ignore (F.field ~where key obj)
-
-let object_field ~where key obj =
-  F.as_object (where ^ key) (F.field ~where key obj)
-
-let optional ~where key obj read =
-  Option.map (fun _ -> read ~where key obj) (F.find key obj)
-
-let tiles path : Yojson.Safe.t -> Tile_pos.t list = function
-  | `List items ->
-      List.mapi (fun i -> F.pair (Printf.sprintf "%s[%d]" path i)) items
-  | _ -> F.fail "%s is not an array." path
-
-let grid_pose ~where obj : Pose.grid =
-  only ~where [ "map"; "tiles"; "facing" ] obj;
-  {
-    map = F.string ~where "map" obj;
-    tiles =
-      Option.fold ~none:[] ~some:(tiles (where ^ "tiles")) (F.find "tiles" obj);
-    facing = optional ~where "facing" obj F.direction;
-  }
 
 let zone_pose ~where obj : Pose.zone =
   only ~where [ "place"; "spot"; "heading" ] obj;
@@ -59,10 +30,6 @@ let leg ~where obj : Plan.leg =
     direction = F.direction ~where "direction" obj;
     tiles = F.int ~where "tiles" obj;
   }
-
-let item ~where obj : Plan.item =
-  only ~where [ "item"; "quantity" ] obj;
-  { item = F.string ~where "item" obj; quantity = F.int ~where "quantity" obj }
 
 let list_of ~where key args read =
   required ~where key args;
@@ -189,75 +156,14 @@ let checkpoint ~where obj : Plan.checkpoint =
     events;
   }
 
-let money ~where obj : Plan.money =
-  only ~where [ "min"; "max" ] obj;
-  let min = F.int ~where "min" obj and max = F.int ~where "max" obj in
-  if min > max then F.fail "%smin %d is above max %d." where min max;
-  { min; max }
-
-let knows ~where obj : Plan.knows =
-  only ~where [ "species"; "moves" ] obj;
-  {
-    species = F.string ~where "species" obj;
-    moves = F.strings (where ^ "moves") (F.field ~where "moves" obj);
-  }
-
-let level ~where obj : Plan.level =
-  only ~where [ "species"; "min" ] obj;
-  { species = F.string ~where "species" obj; min = F.int ~where "min" obj }
-
-let no_postconditions : Plan.postconditions =
-  {
-    position = None;
-    party = None;
-    items = [];
-    coins = None;
-    money = None;
-    flags = [];
-    knows = [];
-    levels = [];
-  }
-
-let postconditions ~where obj : Plan.postconditions =
-  only ~where
-    [
-      "position";
-      "party";
-      "party_includes";
-      "party_slots";
-      "items";
-      "coins";
-      "money";
-      "flags";
-      "knows";
-      "levels";
-    ]
-    obj;
-  let nested key read =
-    Option.map
-      (fun o -> read ~where:(where ^ key ^ ".") o)
-      (F.object_opt ~where key obj)
-  in
-  {
-    position = nested "position" grid_pose;
-    party = Party_decode.party ~where obj;
-    items = F.records ~where "items" obj item;
-    coins = optional ~where "coins" obj F.int;
-    money = nested "money" money;
-    flags =
-      Option.fold ~none:[]
-        ~some:(F.strings (where ^ "flags"))
-        (F.find "flags" obj);
-    knows = F.records ~where "knows" obj knows;
-    levels = F.records ~where "levels" obj level;
-  }
-
-let metadata_postconditions ~where = function
-  | None -> no_postconditions
-  | Some metadata ->
-      Option.fold ~none:no_postconditions
-        ~some:(postconditions ~where:(where ^ "metadata.postconditions."))
-        (F.object_opt ~where:(where ^ "metadata.") "postconditions" metadata)
+(* The metadata's "retries": attempts of a run after its first fails. *)
+let retries ~where = function
+  | None -> 0
+  | Some metadata -> (
+      match optional ~where "retries" metadata F.int with
+      | None -> 0
+      | Some n when n >= 0 -> n
+      | Some n -> F.fail "%sretries is %d, not 0 or more." where n)
 
 let plan ~where obj : Plan.t =
   only ~where [ "format"; "game"; "checkpoint"; "execution"; "metadata" ] obj;
@@ -276,7 +182,9 @@ let plan ~where obj : Plan.t =
     checkpoint = checkpoint ~where:inner_where inner;
     execution = object_field ~where "execution" obj;
     metadata;
-    postconditions = metadata_postconditions ~where:metadata_where metadata;
+    postconditions =
+      Postcondition_decode.of_metadata ~where:metadata_where metadata;
+    retries = retries ~where:(metadata_where ^ "metadata.") metadata;
   }
 
 let decode ~source json =

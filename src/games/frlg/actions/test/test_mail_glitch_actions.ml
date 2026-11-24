@@ -66,7 +66,7 @@ let cause_or_ok = function
 let blastoise_moves = [ "surf"; "blizzard"; "bite"; "strength" ]
 
 let berry_args =
-  {|{"species": "blastoise", "move": "blizzard", "backup_move": "surf"}|}
+  {|{"species": "blastoise", "move": "blizzard", "backup_move": "surf", "pace": "west"}|}
 
 let berry_plan = Result.get_ok (Berry_pp.decode (obj berry_args))
 
@@ -109,8 +109,16 @@ let berry_pp_cases =
       (fun () ->
         cause_or_ok
           (Berry_pp.decode
-             (obj {|{"species": "blastoise", "move": "blizzard"}|})))
+             (obj
+                {|{"species": "blastoise", "move": "blizzard", "pace": "west"}|})))
       "bad_args: prepare_berry_pp: backup_move is missing.";
+    case "decode: no way to pace (turning in place drifted off the grass)"
+      (fun () ->
+        cause_or_ok
+          (Berry_pp.decode
+             (obj
+                {|{"species": "blastoise", "move": "blizzard", "backup_move": "surf"}|})))
+      "bad_args: prepare_berry_pp: pace is missing.";
     case "Blizzard until the game refuses it, then Surf; done after that battle"
       (drain [ won; won; ran_dry ])
       "summary 1; spin; move 1 default; spin; move 1 default; spin; move 1 \

@@ -235,19 +235,25 @@ let capped_note setup cp =
       Printf.sprintf " (grind capped at %d; skipped: %s)" cap
         (String.concat "; " (skipped cap))
 
-let summary setup cp n outcome =
+(* " attempt 2/4" when the plan allows retries. *)
+let attempt_note cp attempt =
+  if cp.plan.retries = 0 then ""
+  else Printf.sprintf " attempt %d/%d" attempt (cp.plan.retries + 1)
+
+let summary setup cp n ~attempt outcome =
+  let run = Printf.sprintf "%s run %d%s" cp.id n (attempt_note cp attempt) in
   let line =
     match outcome with
-    | Passed -> Printf.sprintf "PASS %s run %d" cp.id n
+    | Passed -> "PASS " ^ run
     | Failed { at; reason; _ } ->
-        Printf.sprintf "FAIL %s run %d at %s: %s" cp.id n at reason
+        Printf.sprintf "FAIL %s at %s: %s" run at reason
   in
   line ^ capped_note setup cp
 
 let mode_name setup = Checkpoint_trials.mode_to_string setup.mode
 
-let record_outcome setup cp (run : Run_record.run) n outcome =
-  let line = summary setup cp n outcome in
+let record_outcome setup cp (run : Run_record.run) n ~attempt outcome =
+  let line = summary setup cp n ~attempt outcome in
   print_endline ("[Run] " ^ run.record.dir ^ ": " ^ line);
   let ending : Run_record.ending =
     match outcome with
@@ -256,19 +262,25 @@ let record_outcome setup cp (run : Run_record.run) n outcome =
   in
   Run_record.finish ~runs_dir:setup.runs_dir run ~summary:line ending
 
-(* Run [n] of [cp]: its folder and how it ended. [progress] is the chain for
-   the watch page before the run ([None]) and after it. *)
-let run setup cp n ~progress =
+(* Attempt [attempt] of run [n] of [cp]: its folder and how it ended.
+   [progress] is the chain for the watch page before the attempt ([None]) and
+   after it. *)
+let run setup cp n ~attempt ~progress =
+  let attempts = cp.plan.retries + 1 in
   let run =
-    Run_record.start ~runs_dir:setup.runs_dir setup.info ~checkpoint:cp.id
+    Run_record.start
+      ?attempt:(if attempts > 1 then Some (attempt, attempts) else None)
+      ~runs_dir:setup.runs_dir setup.info ~checkpoint:cp.id
       ~mode:(mode_name setup)
   in
   let record = run.record in
   let log, close = Run_record.story_log record in
-  log (Printf.sprintf "[Run] %s run %d from %s" cp.id n cp.start_state);
+  log
+    (Printf.sprintf "[Run] %s run %d%s from %s" cp.id n
+       (attempt_note cp attempt) cp.start_state);
   let outcome =
     with_daemon setup record cp (live setup cp ~progress record log)
   in
   close ();
-  record_outcome setup cp run n outcome;
+  record_outcome setup cp run n ~attempt outcome;
   (record, outcome)

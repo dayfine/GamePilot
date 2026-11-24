@@ -11,6 +11,12 @@ let after_step ~pace spot =
 let stands_on ~pace spot tile =
   if spot.displaced then Grid_maps.Tile_pos.next tile pace else tile
 
+let spot_at ~pace ~patch tile facing =
+  if Grid_maps.Tile_pos.equal tile patch then Some (on_patch facing)
+  else if Grid_maps.Tile_pos.equal tile (Grid_maps.Tile_pos.next patch pace)
+  then Some { displaced = true; facing }
+  else None
+
 type steps = {
   step : unit -> bool;
   battle_shows : unit -> bool;
