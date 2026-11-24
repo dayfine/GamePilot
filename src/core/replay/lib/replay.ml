@@ -13,10 +13,21 @@ let parse_line (n, s) =
   | exception Wire.Decode_error e ->
       raise (Wire.Decode_error (Printf.sprintf "wire log line %d: %s" n e))
 
+(* The program's connection: the one of the log's first client line. Other
+   clients' lines (a [gamepilot ctl] reading the screen) are not the
+   program's. *)
+let program_lines (lines : (int * Wire.log_line) list) =
+  match List.find_opt (fun (_, (l : Wire.log_line)) -> l.dir = In) lines with
+  | None -> lines
+  | Some (_, first) ->
+      List.filter
+        (fun (_, (l : Wire.log_line)) -> l.dir = Daemon || l.conn = first.conn)
+        lines
+
 let log_of_lines lines =
   List.mapi (fun i s -> (i + 1, String.trim s)) lines
   |> List.filter (fun (_, s) -> s <> "")
-  |> List.map parse_line |> Array.of_list
+  |> List.map parse_line |> program_lines |> Array.of_list
 
 let log_of_file path =
   log_of_lines

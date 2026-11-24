@@ -1,0 +1,21 @@
+{
+  "dir": "in",
+  "t_ms": 30512.4,
+  "conn": 2,
+  "owner": "ctl:bring-up",
+  "msg": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "submit",
+    "params": {
+      "batch_id": "b1",
+      "commands": [
+        {
+          "press": ["A"],
+          "hold_ms": 100,
+          "cooldown_ms": 500
+        }
+      ]
+    }
+  }
+}

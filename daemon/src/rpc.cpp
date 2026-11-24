@@ -300,6 +300,21 @@ SubmitParams decode_submit(const pa::JsonObject& params) {
 
 CancelParams decode_cancel(const pa::JsonObject&) { return CancelParams{}; }
 
+LeaseAcquireParams decode_lease_acquire(const pa::JsonObject& params) {
+  LeaseAcquireParams lease;
+  lease.owner = require_string(params, "owner");
+  if (lease.owner.empty()) {
+    throw RpcError(kInvalidParams, "owner must not be empty");
+  }
+  if (params.get_value("ttl_ms") != nullptr) {
+    lease.ttl_ms = require_number(params, "ttl_ms");
+    if (!(lease.ttl_ms > 0)) {
+      throw RpcError(kInvalidParams, "ttl_ms must be positive");
+    }
+  }
+  return lease;
+}
+
 pa::JsonValue result_message(const pa::JsonValue& id, pa::JsonObject result) {
   pa::JsonObject message;
   message["jsonrpc"] = "2.0";
@@ -437,6 +452,12 @@ pa::JsonObject status_result(const DaemonStatus& status) {
   } else {
     result["client"] = pa::JsonValue();
   }
+  result["clients"] = status.clients;
+  if (status.lease) {
+    result["lease"] = lease_json(*status.lease, status.t_ms);
+  } else {
+    result["lease"] = pa::JsonValue();
+  }
   result["fidelity"] = status.fidelity;
   pa::JsonArray threads;
   for (const ThreadBeat& beat : status.health.threads) {
@@ -456,6 +477,32 @@ pa::JsonObject status_result(const DaemonStatus& status) {
   gaps["frames"] = status.health.gap_frames;
   result["gaps"] = std::move(gaps);
   return result;
+}
+
+pa::JsonObject lease_json(const LeaseHolder& holder, double now_ms) {
+  pa::JsonObject lease;
+  lease["owner"] = holder.owner;
+  lease["client"] = holder.client;
+  lease["held_ms"] = static_cast<std::int64_t>(now_ms - holder.since_ms);
+  lease["ttl_ms"] = static_cast<std::int64_t>(holder.ttl_ms);
+  return lease;
+}
+
+pa::JsonObject lease_acquire_result(const LeaseHolder& holder, double now_ms) {
+  pa::JsonObject result;
+  result["lease"] = lease_json(holder, now_ms);
+  return result;
+}
+
+pa::JsonObject lease_release_result(bool released) {
+  pa::JsonObject result;
+  result["released"] = released;
+  return result;
+}
+
+RpcError lease_refusal(const LeaseHolder& holder, double now_ms) {
+  return RpcError(kLeaseHeld, "input lease held by " + holder.owner,
+                  lease_json(holder, now_ms));
 }
 
 pa::JsonValue batch_done_notification(const std::string& batch_id,
@@ -492,10 +539,18 @@ pa::JsonValue keepawake_notification(const std::string& key, double idle_ms) {
   return message;
 }
 
-pa::JsonValue wire_log_line(const char* dir, double t_ms, pa::JsonValue msg) {
+pa::JsonValue wire_log_line(const char* dir, double t_ms, pa::JsonValue msg,
+                            std::optional<int> conn,
+                            const std::optional<std::string>& owner) {
   pa::JsonObject line;
   line["dir"] = dir;
   line["t_ms"] = round_to(t_ms, 10);
+  if (conn) {
+    line["conn"] = static_cast<std::int64_t>(*conn);
+  }
+  if (owner) {
+    line["owner"] = *owner;
+  }
   line["msg"] = std::move(msg);
   return line;
 }

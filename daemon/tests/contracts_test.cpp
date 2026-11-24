@@ -117,6 +117,44 @@ void check_requests(const std::map<std::string, pa::JsonValue>& files) {
 
   const Request status = decode_request(files.at("28-status.request.json"));
   CHECK(status.method == "status" && status.has_id);
+
+  const Request acquire =
+      decode_request(files.at("35-lease_acquire.request.json"));
+  CHECK(acquire.method == "lease.acquire");
+  const LeaseAcquireParams lease = decode_lease_acquire(acquire.params);
+  CHECK(lease.owner == "ctl:bring-up" && lease.ttl_ms == 30000);
+  const Request release =
+      decode_request(files.at("37-lease_release.request.json"));
+  CHECK(release.method == "lease.release");
+}
+
+// The lease's results and refusal reproduce the goldens; status shows the
+// holder.
+void check_lease(const std::map<std::string, pa::JsonValue>& files) {
+  const LeaseHolder holder{2, "ctl:bring-up", "gamepilot-ctl/0.1",
+                           1000,  1000,         30000};
+  CHECK(lease_acquire_result(holder, 1000) ==
+        result_of(files.at("36-lease_acquire.response.json")));
+  CHECK(lease_release_result(true) ==
+        result_of(files.at("38-lease_release.response.json")));
+  CHECK(error_message(pa::JsonValue(std::int64_t{16}),
+                      lease_refusal(holder, 5200)) ==
+        files.at("39-error.lease_held.response.json"));
+  pa::JsonObject no_ttl;
+  no_ttl["owner"] = "pad";
+  CHECK(decode_lease_acquire(no_ttl).ttl_ms == kDefaultLeaseTtlMs);
+  for (const double ttl : {0.0, -5.0}) {
+    pa::JsonObject bad;
+    bad["owner"] = "pad";
+    bad["ttl_ms"] = ttl;
+    bool threw = false;
+    try {
+      decode_lease_acquire(bad);
+    } catch (const RpcError& error) {
+      threw = error.code() == kInvalidParams;
+    }
+    CHECK(threw);
+  }
 }
 
 // The golden upload decodes to a 3x2 PNG whose hash is the golden response's.
@@ -162,6 +200,9 @@ void check_encoders(const std::map<std::string, pa::JsonValue>& files) {
   status.t_ms = 60012.5;
   status.backend = "switch";
   status.client = "gamepilot-programs/0.1";
+  status.clients = 2;
+  status.lease = LeaseHolder{1,   "gamepilot-programs/0.1",
+                             "gamepilot-programs/0.1", 212.5, 212.5, 60000};
   status.fidelity = "latest";
   status.health.threads = {ThreadBeat{"capture", 3601, 60010.2},
                            ThreadBeat{"server", 3599, 60011.9}};
@@ -173,6 +214,8 @@ void check_encoders(const std::map<std::string, pa::JsonValue>& files) {
         result_of(files.at("29-status.response.json")));
   status.client.reset();
   CHECK(status_result(status).get_value("client")->is_null());
+  status.lease.reset();
+  CHECK(status_result(status).get_value("lease")->is_null());
 
   CHECK(result_message(pa::JsonValue(std::int64_t{4}),
                        submit_result("b1", 1203)) ==
@@ -227,6 +270,12 @@ void check_encoders(const std::map<std::string, pa::JsonValue>& files) {
   CHECK(wire_log_line("daemon", 180412.5,
                       keepawake_notification("B", 180000)) ==
         files.at("34-keepawake.line.json"));
+  // An input line names its connection and the lease owner.
+  const pa::JsonValue& input_line =
+      files.at("40-wire_log.input_owner.line.json");
+  CHECK(wire_log_line("in", 30512.4,
+                      input_line.to_object()->get_value_throw("msg").clone(),
+                      2, std::string("ctl:bring-up")) == input_line);
 }
 
 // The first frame sends every result; a later one only the results that
@@ -353,9 +402,10 @@ void check_errors() {
 
 int main() {
   const auto files = load_contracts();
-  CHECK(files.size() == 34);
-  if (files.size() == 34) {
+  CHECK(files.size() == 40);
+  if (files.size() == 40) {
     check_requests(files);
+    check_lease(files);
     check_upload(files);
     check_encoders(files);
     check_changed_results(files);

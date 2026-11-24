@@ -1,9 +1,10 @@
 // Keeps an idle console awake: after `idle_ms` with no input, the daemon
 // presses a harmless key (B by default) as a batch of its own. It never
-// presses while a client's batch is queued or running, nor within `idle_ms`
-// of a client's submit, so it cannot land inside a program's input. It
+// presses while a client's batch is queued or running, while a client holds
+// the input lease (input_lease.h), nor within `idle_ms` of a client's submit,
+// so it cannot land inside a program's or a person's input. It
 // replaces a second client that pressed B (gp_keepawake.py), which the
-// daemon's one-client rule locked out.
+// daemon's old one-client rule locked out.
 //
 // The rule is here, the press is the server's: it asks `due` each loop pass
 // and, when it says yes, submits the press and calls `pressed`.
@@ -44,9 +45,9 @@ class KeepAwake {
   // A client submitted (or cancelled), or a batch is still queued or running.
   void input(double now_ms);
 
-  // Whether to press now: on, no batch queued or running, and `idle_ms`
-  // since the last input or press.
-  bool due(double now_ms, bool batch_pending) const;
+  // Whether to press now: on, no batch queued or running, no lease held, and
+  // `idle_ms` since the last input or press.
+  bool due(double now_ms, bool batch_pending, bool lease_held) const;
 
   // The press was submitted: the next one is `idle_ms` from now.
   void pressed(double now_ms) { last_input_ms_ = now_ms; }

@@ -86,9 +86,27 @@ window, so never inside a program's batch (`daemon/src/keep_awake.h`). Each pres
 line in the run's `wire.jsonl` (`"method":"keepawake"`, the key and the idle time) and a line in
 `daemon.out`. `--keepawake SECONDS` changes the wait (0 turns it off; `--keepawake-key KEY` the
 key, a GBA button name); `gamepilot checkpoints ... --keepawake N` passes it on. mGBA daemons
-have it off. It replaces `~/BDSPLab/gp_keepawake.py`, a second client the daemon's one-client
-rule refused ("busy: another client is connected"): an idle daemon holding console B now keeps
-it awake, and the script is no longer needed while one runs.
+have it off, and it never presses while a client holds the input lease. It replaces
+`~/BDSPLab/gp_keepawake.py`: an idle daemon holding console B keeps it awake.
+
+**Look at the console.** With a daemon holding console B (a run's, or an idle one, e.g. on port
+47920), `gamepilot ctl` looks and presses through it instead of the lab app and `labB.sh`. Any
+number of clients may connect; a press takes the daemon's input lease (contracts v1.9) and is
+refused, naming the holder, while a program or another person holds it. Reads need no lease:
+
+    gamepilot ctl --port 47920 status                 # health and who holds the lease
+    gamepilot ctl --port 47920 shot now.png           # the current frame
+    gamepilot ctl --port 47920 read start_menu        # open, cursor row, the rows' names
+    gamepilot ctl --port 47920 --owner me press A --hold 100 --wait 500
+    gamepilot ctl --port 47920 dpad DOWN 2
+    gamepilot ctl --port 47920 --owner me run steps.txt
+
+`run` takes labB.sh's lines (`press A 100 800`, `dpad DOWN 160 800`, `wait 1000`, `shot NAME`,
+`read READER`, `# comment`), holds the lease for the whole file, prints `ok N LINE` per line and
+stops at the first error. The readers (`gamepilot` with no arguments lists them): `start_menu`,
+`dialog`, `party_menu`, `summary` (species on the info page, moves on the moves page), `battle`,
+`yes_no`, `load_menu`, `bag`. Every press is in the daemon's wire log with its owner.
+`sh tools/test_ctl.sh` checks all of it against the fake board and a replayed capture.
 
 **Recording.** A Switch run's daemon also saves a 640-wide JPEG of the frame every second, and
 one at each story event and at a failure, into the run folder's `frames/` (`index.jsonl` lists

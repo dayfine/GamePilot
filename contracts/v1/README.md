@@ -1,4 +1,4 @@
-# Wire protocol v1.8
+# Wire protocol v1.9
 
 JSON-RPC 2.0 between the OCaml programs (client) and the daemon (server). The golden files in this
 folder are the spec: the daemon's tests parse every file and the OCaml tests decode and re-encode
@@ -21,6 +21,9 @@ v1.7 adds `watch.run` from the program (see Watch page): the chain of checkpoint
 A program that does not send it speaks v1.6.
 v1.8 adds each `watch.plan` event's `started_ms` and `ended_ms` (see Watch page). Both are optional,
 so a v1.7 plan is a valid v1.8 plan.
+v1.9 serves many clients and adds the input lease (see Input lease): `lease.acquire`,
+`lease.release`, error -32004, `status`'s `clients` and `lease`, and the wire log's `conn` and
+`owner`. A v1.8 program never names the lease: its first input takes it, so it works unchanged.
 v1.2 makes the daemon own where the game picture sits in the frame: `hello` gives the `viewport` and
 the `game_size`, probe boxes and template placements are relative to the picture, templates are in game
 pixels, and `core.color_count@1` is new.
@@ -30,10 +33,11 @@ size) every v1.1 message means the same in v1.2.
 
 ## Transport
 
-- TCP on `127.0.0.1`, default port 47900 (`--port`). One client at a time. While a client is
-  connected, one more connection is an observer: it gets answers to `status` and an error (-32600) for
-  any other request. A connection beyond that gets an error and is closed.
-  When the client disconnects, the daemon drops its probes and queued commands.
+- TCP on `127.0.0.1`, default port 47900 (`--port`). Up to 16 clients at a time; one more gets an
+  error (-32600) and is closed. Each connection has its own probes, templates and frames, and every
+  method is served to every connection except input, which needs the input lease (below).
+  When a client disconnects, the daemon drops its probes and templates, and its queued commands
+  when it held the lease.
 - One JSON object per line, LF-terminated, UTF-8, no embedded newlines.
 - Requests have an `id`; the daemon answers each with exactly one `result` or `error`.
   Notifications (`frame`, `batch_done`, `stop`; `watch.plan`, `watch.log` and `watch.run` from the
@@ -64,7 +68,9 @@ size) every v1.1 message means the same in v1.2.
 | `unsubscribe` | `ids`: probe ids | `unsubscribed`: the ids that were subscribed, now removed (others are ignored) |
 | `submit` | `batch_id`, `commands`: list of {`press`: buttons, `hold_ms`, `cooldown_ms`} or {`wait_ms`} | `batch_id`, `start_seq` |
 | `cancel` | {} | `released_seq`: drops queued commands and releases all buttons |
-| `status` | {} | `t_ms`, `backend` (its `kind`), `client` (the `hello` client name, or `null`), `fidelity`, `threads`, `ring`, `gaps` (below) |
+| `status` | {} | `t_ms`, `backend` (its `kind`), `client` (the lease holder's `hello` name, else the oldest connection's, or `null`), `clients` (connections now), `lease` (below, or `null`), `fidelity`, `threads`, `ring`, `gaps` (below) |
+| `lease.acquire` | `owner` (a label for people), optional `ttl_ms` (default 60000) | `lease` {`owner`, `client`, `held_ms`, `ttl_ms`} |
+| `lease.release` | {} | `released`: whether this connection held it |
 
 - `width`, `height`: the frame's size in pixels. `viewport` {`x`, `y`, `w`, `h`}: where the game
   picture sits in the frame, normalized to the frame. `game_size` {`width`, `height`}: the picture's
@@ -99,6 +105,25 @@ size) every v1.1 message means the same in v1.2.
   lost in them.
 - `fidelity`: `full` while an `every` probe is subscribed, else `latest`. Thread priority does not
   follow it yet.
+
+## Input lease
+
+`submit`, `cancel` and `backend.load_state` need the input lease; everything else (status,
+subscribe and frames, templates, saves) needs none, so any number of clients watch while one
+drives (`daemon/src/input_lease.h`).
+
+- A connection takes the free lease with `lease.acquire` (`35`, `36`) or implicitly with its first
+  input, owned then by its `hello` name with the default ttl. Every input and every
+  `lease.acquire` by the holder renews it; an acquire also sets a new owner and ttl.
+- Input or an acquire from anyone else gets error -32004 `input lease held by OWNER`, whose `data`
+  is the lease: `owner`, `client` (the holder's `hello` name), `held_ms` (since it took it),
+  `ttl_ms` (`39-error.lease_held.response.json`).
+- The lease ends when its connection disconnects (its queued commands are dropped and buttons
+  released), sends `lease.release` (`37`, `38`; queued commands run on), or sends no input for
+  `ttl_ms`. Batches still queued or running count as input, so a program's long batch keeps it.
+- Keep-awake never presses while a lease is held.
+- `stop` (watch page) goes to every client; `batch_done` only to the one that submitted it.
+- A `backend.save_frame` marks the recording's failure only from the holder, or with no holder.
 
 ## Live backends
 
@@ -218,7 +243,10 @@ reader decides "black" from those numbers (low mean, low stddev) in OCaml.
 
 The daemon writes every message it sends or receives, except the client's `watch.plan`,
 `watch.log` and `watch.run`, one per line (`14-wire_log.line.json`):
-`dir` (`in` = from the client, `out` = to the client), `t_ms`, `msg`. Replay reads this file.
+`dir` (`in` = from the client, `out` = to the client), `t_ms`, `conn` (the connection's number,
+from 1 in the order they came), `msg`; an input line also has `owner`, the lease's owner
+(`40-wire_log.input_owner.line.json`). Replay reads this file and follows the program's
+connection: the one of the log's first `in` line. A log from before v1.9 has no `conn`.
 A `daemon` line is the daemon's own act, sent to no one: its keep-awake press, a `keepawake`
 notification with the key and how long the console was idle (`34-keepawake.line.json`). Replay
 skips it.
