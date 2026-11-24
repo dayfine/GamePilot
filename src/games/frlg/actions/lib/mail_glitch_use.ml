@@ -60,7 +60,7 @@ let read_glitched_mail ~log ~slot ~word =
   Party_actions.give_to slot;
   M.answer_yes ~code:"no_switch_question" ~taken:editor_opening
     "the switch question";
-  Item_duplication.check_editor ~word;
+  Item_duplication.check_editor ~frame:"proof-a.png" ~word;
   log ("Mail: the editor reads " ^ word ^ " in field 1 (proof A).");
   M.press Wire.Start;
   Party_actions.confirm_mail ();

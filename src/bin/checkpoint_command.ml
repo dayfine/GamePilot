@@ -159,9 +159,10 @@ let live plan_file args =
     | Error _ -> Attached_run.save_failure run.record
   in
   let line, code =
-    run_with ~after
-      (Live.run ~port:flags.port)
-      plan_file { flags with log_file }
+    Effects.with_run_folder run.record.dir (fun () ->
+        run_with ~after
+          (Live.run ~port:flags.port)
+          plan_file { flags with log_file })
   in
   Attached_run.finish ~runs_dir run ~line ~code;
   Ok code

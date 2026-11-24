@@ -94,6 +94,17 @@ val save_frame : string -> int
 (** Writes the current frame to the path as a PNG; returns its [seq]. The
     checkpoint runner's failure frame. *)
 
+val with_run_folder : string -> (unit -> 'a) -> 'a
+(** [with_run_folder dir f] runs [f] with [dir] as the run folder that
+    {!save_run_frame} writes to, also when [f] raises. The runner calls it
+    around a run that keeps a folder (Run_record). *)
+
+val save_run_frame : string -> unit
+(** [save_run_frame name] writes the current frame into the run folder as
+    [name]: a step keeps the frame it judged (the Mail Glitch's proofs). Outside
+    {!with_run_folder} (tests, ctl) it does nothing; a refusal (an older daemon)
+    is skipped. *)
+
 val upload_template : string -> template_hash
 (** [upload_template png] registers a template from a PNG file's bytes and
     returns its hash. The handler sends each distinct PNG once per connection:

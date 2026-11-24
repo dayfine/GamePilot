@@ -88,7 +88,10 @@ let run_live (p : Program_registry.t) ~runs_dir ~port state =
     | Start_menu_poc.Passed _ -> ()
     | _ -> Attached_run.save_failure run.record
   in
-  let line, code = program_outcome ~after (Live.run ~port) state in
+  let line, code =
+    Effects.with_run_folder run.record.dir (fun () ->
+        program_outcome ~after (Live.run ~port) state)
+  in
   print_endline line;
   Attached_run.finish ~runs_dir run ~line ~code;
   code
