@@ -252,7 +252,7 @@ const SORT_KEYS = {
   program: (r) => r.program_name || r.program,
   checkpoint: (r) => r.checkpoint,
   backend: (r) => BACKEND_NAMES[r.backend] || r.backend,
-  mode: (r) => r.mode,
+  mode: (r) => r.mode || r.kind,
   result: (r) => r.result,
   start: (r) => r.started_ms,
   duration: (r) => r.started_ms && runEnd(r) ? runEnd(r) - r.started_ms : 0,
@@ -439,7 +439,7 @@ function renderHistory() {
     if (row.program_name) program.title = row.program + (row.group ? " · " + row.group : "");
     tr.append(name, game, program,
               rangeCell(row), el("td", "", BACKEND_NAMES[row.backend] || row.backend || "–"),
-              el("td", "", row.mode || "–"), resultCell(row),
+              el("td", "", row.mode || row.kind || "–"), resultCell(row),
               el("td", "num", when(row.started_ms)),
               el("td", "num", row.started_ms && end ? duration(end - row.started_ms) : "–"));
     body.append(tr);

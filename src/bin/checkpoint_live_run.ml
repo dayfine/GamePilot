@@ -244,41 +244,31 @@ let summary setup cp n outcome =
   in
   line ^ capped_note setup cp
 
-let run_json setup cp record ~started_ms ending =
-  Run_record.write_run_json record setup.info ~checkpoint:cp.id
-    ~mode:(Checkpoint_trials.mode_to_string setup.mode)
-    ~started_ms ending
+let mode_name setup = Checkpoint_trials.mode_to_string setup.mode
 
-let record_outcome setup cp record n ~started_ms outcome =
+let record_outcome setup cp (run : Run_record.run) n outcome =
   let line = summary setup cp n outcome in
-  print_endline ("[Run] " ^ record.Run_record.dir ^ ": " ^ line);
-  Run_record.write record "summary.txt" (line ^ "\n");
-  let result, at, reason =
+  print_endline ("[Run] " ^ run.record.dir ^ ": " ^ line);
+  let ending : Run_record.ending =
     match outcome with
-    | Passed -> ("pass", "", "")
-    | Failed { at; reason; _ } ->
-        Run_record.write record "KEEP" "a failing run\n";
-        ("fail", at, reason)
+    | Passed -> { result = "pass"; at = ""; reason = "" }
+    | Failed { at; reason; _ } -> { result = "fail"; at; reason }
   in
-  run_json setup cp record ~started_ms (Some { result; at; reason });
-  Run_record.append_result ~runs_dir:setup.runs_dir record ~checkpoint:cp.id
-    ~mode:(Checkpoint_trials.mode_to_string setup.mode)
-    ~result ~at ~reason
+  Run_record.finish ~runs_dir:setup.runs_dir run ~summary:line ending
 
 (* Run [n] of [cp]: its folder and how it ended. [progress] is the chain for
    the watch page before the run ([None]) and after it. *)
 let run setup cp n ~progress =
-  let record =
-    Run_record.create ~runs_dir:setup.runs_dir ~checkpoint:cp.id
-      ~mode:(Checkpoint_trials.mode_to_string setup.mode)
+  let run =
+    Run_record.start ~runs_dir:setup.runs_dir setup.info ~checkpoint:cp.id
+      ~mode:(mode_name setup)
   in
-  let started_ms = Run_record.now_ms () in
-  run_json setup cp record ~started_ms None;
+  let record = run.record in
   let log, close = Run_record.story_log record in
   log (Printf.sprintf "[Run] %s run %d from %s" cp.id n cp.start_state);
   let outcome =
     with_daemon setup record cp (live setup cp ~progress record log)
   in
   close ();
-  record_outcome setup cp record n ~started_ms outcome;
+  record_outcome setup cp run n outcome;
   (record, outcome)

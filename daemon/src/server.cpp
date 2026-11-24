@@ -54,7 +54,8 @@ Server::Server(Backend& backend, ServerOptions options, const Clock& clock)
   if (!options_.run_folder.empty()) {
     journal_.emplace(options_.run_folder,
                      DaemonRecord{backend_.info().kind, clock_zero_unix_ms,
-                                  record, options_.keepawake.idle_ms / 1000});
+                                  record, options_.keepawake.idle_ms / 1000},
+                     options_.checkpoint);
   }
   if (options_.watch) {
     start_watch();

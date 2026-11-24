@@ -44,6 +44,14 @@ void check_run_names() {
       {"no number", "2026-11-23-mg-07-testing", std::nullopt},
       {"no date", "mg-07-testing-1", std::nullopt},
       {"no checkpoint", "2026-11-23-testing-1", std::nullopt},
+      {"a pre-flight", "2026-11-23-mg-01-preflight-1",
+       RunName{"mg-01", "preflight"}},
+      {"the bring-up checks", "2026-11-23-switch-bring-up-2",
+       RunName{"switch", "bring-up"}},
+      {"one checkpoint", "2026-11-23-mg-04-single-1",
+       RunName{"mg-04", "single"}},
+      {"a one-shot program", "2026-11-23-frlg.start_menu_poc-run-1",
+       RunName{"frlg.start_menu_poc", "run"}},
   };
   for (const Case& c : cases) {
     if (parse_run_name(c.input) != c.expect) {
@@ -170,6 +178,68 @@ void check_read_run() {
   CHECK(rows[0].run == "2026-11-23-mg-07-testing-1" && rows[0].live &&
         rows[0].result == "running");
   CHECK(run_rows_json({}) == "[]");
+}
+
+// Folders with no run.json: a start from daemon.json, else the wire log's
+// first line, else the folder's mtime; an end from the wire log's last line;
+// result "unknown"; and they sort by that start, never all at the bottom.
+void check_fallbacks() {
+  const std::string dir = kDir + "/fallbacks";
+  fs::remove_all(dir);
+  const std::string wire_lines =
+      "{\"dir\":\"in\",\"msg\":{},\"t_ms\":1000.0}\n"
+      "{\"dir\":\"out\",\"msg\":{},\"t_ms\":61000.0}\n";
+  struct Case {
+    std::string name;  // also the folder's
+    bool daemon_json;
+    bool wire;
+    std::string kind;
+  };
+  const std::vector<Case> cases = {
+      {"2026-11-23-switch-idle", true, true, "daemon"},
+      {"2026-11-23-switch-bringup-poc", false, true, "daemon"},
+      {"2026-11-23-mg-01-preflight-1", true, false, "preflight"},
+      {"2026-11-23-empty", false, false, "daemon"},
+  };
+  for (const Case& c : cases) {
+    const std::string folder = dir + "/" + c.name;
+    fs::create_directories(folder);
+    if (c.daemon_json) {
+      write(folder + "/daemon.json",
+            "{\"backend\":\"switch\",\"clock_zero_unix_ms\":1795500000000}\n");
+    }
+    if (c.wire) {
+      write(folder + "/wire.jsonl", wire_lines);
+    }
+  }
+  for (const Case& c : cases) {
+    const std::string folder = dir + "/" + c.name;
+    const RunRow row = read_run(dir, c.name, {});
+    const std::int64_t wire_written = mtime_ms(folder + "/wire.jsonl");
+    const std::int64_t start = c.daemon_json ? 1795500000000
+                               : c.wire      ? wire_written - 60000
+                                             : mtime_ms(folder);
+    const std::int64_t end = c.daemon_json && c.wire ? 1795500061000
+                             : c.wire                ? wire_written
+                                                     : 0;
+    if (row.started_ms != start || row.ended_ms != end ||
+        row.result != "unknown" || row.kind != c.kind) {
+      std::fprintf(stderr, "read_run fallbacks: %s\n", c.name.c_str());
+    }
+    CHECK(start > 0);
+    CHECK(row.started_ms == start);
+    CHECK(row.ended_ms == end);
+    CHECK(row.result == "unknown");
+    CHECK(row.kind == c.kind);
+  }
+  // Newest first by start: the empty folder (made now) above the old ones.
+  const auto rows = list_runs(dir, "", {});
+  CHECK(rows.size() == cases.size());
+  CHECK(rows[0].run == "2026-11-23-empty" ||
+        rows[0].run == "2026-11-23-switch-bringup-poc");
+  for (std::size_t i = 1; i < rows.size(); i++) {
+    CHECK(rows[i - 1].started_ms >= rows[i].started_ms);
+  }
 }
 
 // One value a probe a second, the bucket's last, kept only when it changed;
@@ -342,6 +412,47 @@ void check_journal() {
         "{\"line\":\"b\",\"unix_ms\":1795500002000}\n");
 }
 
+// A daemon started by hand writes run.json (kind daemon) and its end; one a
+// runner started keeps the runner's run.json as it is.
+void check_journal_run_json() {
+  const DaemonRecord record{"switch", 1795500000000, false, 180};
+  struct Case {
+    std::string name;
+    std::string existing;  // run.json before the daemon; empty for none
+    std::string expect_prefix;  // run.json after it stopped
+  };
+  const std::vector<Case> cases = {
+      {"by-hand", "",
+       "{\"backend\":\"switch\",\"checkpoint\":\"idle\",\"ended_ms\":"},
+      {"runner", "{\"run\":\"runner\",\"kind\":\"checkpoints\"}\n",
+       "{\"run\":\"runner\",\"kind\":\"checkpoints\"}\n"},
+  };
+  for (const Case& c : cases) {
+    const std::string folder = kDir + "/journal-" + c.name;
+    fs::remove_all(folder);
+    fs::create_directories(folder);
+    if (!c.existing.empty()) {
+      write(folder + "/run.json", c.existing);
+    }
+    {
+      RunJournal journal(folder, record, "idle");
+      if (c.existing.empty()) {
+        CHECK(pa::file_to_string(folder + "/run.json") ==
+              daemon_run_json("journal-by-hand", record, "idle", 0) + "\n");
+      }
+    }
+    const std::string after = pa::file_to_string(folder + "/run.json");
+    if (!after.starts_with(c.expect_prefix)) {
+      std::fprintf(stderr, "journal run.json: %s: %s\n", c.name.c_str(),
+                   after.c_str());
+    }
+    CHECK(after.starts_with(c.expect_prefix));
+  }
+  CHECK(daemon_run_json("r", record, "idle", 0) ==
+        "{\"backend\":\"switch\",\"checkpoint\":\"idle\",\"kind\":"
+        "\"daemon\",\"run\":\"r\",\"started_ms\":1795500000000}");
+}
+
 }  // namespace
 
 int main() {
@@ -349,9 +460,11 @@ int main() {
   check_names_and_files();
   check_results();
   check_read_run();
+  check_fallbacks();
   check_probe_timeline();
   check_packed_timeline_of_the_program();
   check_current_step();
   check_journal();
+  check_journal_run_json();
   return TEST_RESULT();
 }

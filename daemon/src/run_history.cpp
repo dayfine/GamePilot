@@ -1,12 +1,15 @@
 #include "run_history.h"
 
 #include <algorithm>
+#include <chrono>
 #include <charconv>
 #include <cmath>
 #include <cstdio>
+#include <filesystem>
 #include <ctime>
 #include <initializer_list>
 #include <iterator>
+#include <system_error>
 #include <utility>
 
 #include "Common/Cpp/Filesystem/FileIO.h"
@@ -20,7 +23,8 @@ namespace {
 
 namespace fs = pa::Filesystem;
 
-constexpr std::string_view kModes[] = {"testing", "verification"};
+constexpr std::string_view kModes[] = {"testing", "verification", "preflight",
+                                       "single",  "run",          "bring-up"};
 // The date at the start of a run folder's name: "2026-11-23-".
 constexpr std::size_t kDatePrefix = 11;
 // How much of a file's end is read for its last line.
@@ -88,6 +92,7 @@ std::string result_of_summary(std::string_view summary) {
 void apply_run_json(RunRow& row, const pa::JsonObject& json) {
   for (const auto& [key, field] :
        std::initializer_list<std::pair<const char*, std::string RunRow::*>>{
+           {"kind", &RunRow::kind},
            {"game", &RunRow::game},
            {"game_name", &RunRow::game_name},
            {"program", &RunRow::program},
@@ -264,6 +269,34 @@ class TimelineBuilder {
   std::map<std::string, ProbeSeries> series_;
 };
 
+// The start and end from the wire log where the notes gave none: with the
+// clock's zero, its last line; else its span back from its last write (or
+// from RESULTS.tsv's end).
+void apply_wire_times(RunRow& row, const std::string& wire) {
+  const double last = wire_log_end_ms(wire);
+  if (last <= 0) {
+    return;
+  }
+  if (row.started_ms > 0) {
+    if (row.ended_ms == 0) {
+      row.ended_ms = row.started_ms + static_cast<std::int64_t>(last);
+    }
+    return;
+  }
+  if (row.ended_ms > 0) {
+    // RESULTS.tsv's end: back by how long the daemon ran.
+    row.started_ms = row.ended_ms - static_cast<std::int64_t>(last);
+    return;
+  }
+  // The log's last write is its last line; its first line came the log's
+  // span before.
+  row.ended_ms = mtime_ms(wire);
+  if (row.ended_ms > 0) {
+    row.started_ms = row.ended_ms - static_cast<std::int64_t>(
+                                        last - wire_log_start_ms(wire));
+  }
+}
+
 }  // namespace
 
 bool valid_run_name(std::string_view name) {
@@ -391,6 +424,32 @@ double wire_log_end_ms(const std::string& path) {
   return t;
 }
 
+double wire_log_start_ms(const std::string& path) {
+  const std::string head = head_of(path, kHeadBytes);
+  const std::size_t line_end = head.find('\n');
+  const std::string_view line = std::string_view(head).substr(0, line_end);
+  const std::size_t at = line.rfind("\"t_ms\":");
+  double t = 0;
+  if (at == std::string_view::npos ||
+      std::from_chars(line.data() + at + 7, line.data() + line.size(), t).ec !=
+          std::errc()) {
+    return 0;
+  }
+  return t;
+}
+
+std::int64_t mtime_ms(const std::string& path) {
+  std::error_code error;
+  const auto time =
+      std::filesystem::last_write_time(pa::Filesystem::Path(path).stdpath(), error);
+  if (error) {
+    return 0;
+  }
+  return std::chrono::duration_cast<std::chrono::milliseconds>(
+             std::chrono::file_clock::to_sys(time).time_since_epoch())
+      .count();
+}
+
 RunRow read_run(const std::string& runs_dir, const std::string& name,
                 const ResultRows& results) {
   const std::string dir = runs_dir + "/" + name;
@@ -429,15 +488,21 @@ RunRow read_run(const std::string& runs_dir, const std::string& name,
   if (row.backend.empty()) {
     row.backend = backend_of_output(head_of(dir + "/daemon.out", kHeadBytes));
   }
-  if (row.started_ms == 0 && row.ended_ms > 0) {
-    const double ran = wire_log_end_ms(dir + "/wire.jsonl");
-    if (ran > 0) {
-      row.started_ms = row.ended_ms - static_cast<std::int64_t>(ran);
-    }
-  }
+  apply_wire_times(row, dir + "/wire.jsonl");
   const pa::JsonValue run = pa::parse_json(text_of(dir + "/run.json"));
   if (const pa::JsonObject* object = run.to_object()) {
     apply_run_json(row, *object);
+  }
+  if (row.started_ms == 0) {
+    row.started_ms = mtime_ms(dir);
+  }
+  if (row.kind.empty()) {
+    row.kind = row.mode == "preflight"  ? "preflight"
+               : row.checkpoint.empty() ? "daemon"
+                                        : "checkpoints";
+  }
+  if (row.result.empty()) {
+    row.result = "unknown";
   }
   if (row.from.empty()) {
     row.from = row.checkpoint;
@@ -472,9 +537,10 @@ std::vector<RunRow> list_runs(const std::string& runs_dir,
     }
     rows.push_back(std::move(row));
   }
-  // Newest first; a run with no known start by its name (its date).
+  // Newest first (every row has a start: read_run's fallbacks end at the
+  // folder's mtime); the name breaks ties.
   std::sort(rows.begin(), rows.end(), [](const RunRow& a, const RunRow& b) {
-    if (a.started_ms != b.started_ms && a.started_ms > 0 && b.started_ms > 0) {
+    if (a.started_ms != b.started_ms) {
       return a.started_ms > b.started_ms;
     }
     return a.run > b.run;
@@ -485,6 +551,7 @@ std::vector<RunRow> list_runs(const std::string& runs_dir,
 std::string run_row_json(const RunRow& row) {
   pa::JsonObject json;
   json["run"] = row.run;
+  json["kind"] = row.kind;
   json["game"] = row.game;
   json["game_name"] = row.game_name;
   json["program"] = row.program;
