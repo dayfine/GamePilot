@@ -240,6 +240,23 @@ let give_to_slot_one () =
   Printf.sprintf "%s; %s; ends on %s" (outcome result) (S.presses_text screen)
     (S.screen_name (S.screen_at screen (screen.S.clock_ms + 200)))
 
+(* The item's menu shows; an A sooner than 500 ms after it is dropped (mGBA,
+   mg-04 testing run 7: USE 165 ms after the menu showed, and the Escape Rope
+   was never used), a later one on USE closes the bag for the rope. *)
+let use_from_item_menu () =
+  let react screen (p : S.press) =
+    if a p && p.at_ms >= 500 && S.screen_at screen p.at_ms = S.Item_menu then
+      S.show screen ~at_ms:(p.at_ms + 100) S.Black
+  in
+  let screen = S.create ~react () in
+  S.show screen ~at_ms:0 S.Item_menu;
+  let result =
+    S.run screen (fun () ->
+        Menu_input.run (fun () -> Bag_items.choose_in_item_menu "escape-rope" 0))
+  in
+  Printf.sprintf "%s; %s; ends on %s" (outcome result) (S.presses_text screen)
+    (S.screen_name (S.screen_at screen (screen.S.clock_ms + 200)))
+
 let trade () =
   run ~react:trade_screen (fun () -> Ingame_trade.trade ~log ~slot:3)
 
@@ -407,6 +424,8 @@ let () =
         "give to slot 1, already selected: the A waits for the party to take \
          input (mg-06 testing run 2)"
         give_to_slot_one "ok; A; ends on dialog arrow";
+      case "USE on an item's menu: the A waits for the menu to take it"
+        use_from_item_menu "ok; A; ends on black";
       case "trade: YES, slot 3, A through the trade" trade
         "ok; A x2, down x2, A x6, B x7";
       case

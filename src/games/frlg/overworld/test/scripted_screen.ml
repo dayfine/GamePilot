@@ -29,6 +29,9 @@ type screen =
       (** The bag's Items pocket, cursor on the top row, its list these items
           and counts (["REVIVE"], 2), then CANCEL: the text reader reads them
           and nothing else on the list's rows. *)
+  | Item_menu
+      (** An item's action menu over the bag (mGBA, mg-04 testing run 6: the
+          Escape Rope's USE, GIVE, TOSS, CANCEL). *)
   | Mart_list  (** A Mart's BUY list with the money box (a Switch capture). *)
   | Summary of string
       (** The summary's info page (a Switch capture) showing this species name
@@ -48,6 +51,7 @@ let screen_name = function
   | Party_after_recycle -> "party after recycle"
   | Member_menu row -> Printf.sprintf "member menu row %d" row
   | Bag_items _ -> "bag items"
+  | Item_menu -> "item menu"
   | Mart_list -> "mart list"
   | Summary name -> "summary " ^ name
 
@@ -70,6 +74,7 @@ let image = function
   | Question -> "AdvanceWhiteDialogDetector/Eng-Select_False__dialog-choice.png"
   | Member_menu _ -> "mail-glitch-04/mg05-mimien-menu__none.png"
   | Bag_items _ -> "emu-1/20261122-024507-05.04__bag-items-row0.png"
+  | Item_menu -> "mg04-escape-rope/item-menu-escape-rope__itemmenu.png"
   | Mart_list -> "ItemListReader/MartBuyList_eng__money.png"
   | Summary _ -> "captures/sm3_s1__summary1.png"
 
