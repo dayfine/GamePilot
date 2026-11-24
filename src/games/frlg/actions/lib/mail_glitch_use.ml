@@ -48,6 +48,12 @@ let read_glitched_mail ~log ~slot ~word =
   M.close "the bag" bag_or_party;
   M.settle_back ~label:"read glitched mail" ~log
 
+(* While an item moves, the list's cursor is hidden (pokefirered
+   [BeginMovingItemInPocket] sets LISTFIELD_CURSORKIND to 1) and a swap line
+   shows instead, which no reader reads: the taps are counted. UP past the
+   list's top does nothing, so a few more cover a lost tap. *)
+let extra_up_taps = 2
+
 let move_to_top ~log item =
   Bag_items.open_pocket_top (Bag_items.pocket_of_item item);
   (match Bag_items.list_row item with
@@ -58,8 +64,7 @@ let move_to_top ~log item =
       Bag_items.to_top ();
       Bag_items.select item;
       M.press Wire.Select;
-      M.taps Wire.Up k;
-      Bag_items.to_top ();
+      M.taps Wire.Up (k + extra_up_taps);
       M.press Wire.Select;
       Bag_items.to_top ();
       if Bag_items.list_row item <> Some 0 then

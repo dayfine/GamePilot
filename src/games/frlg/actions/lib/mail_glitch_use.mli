@@ -16,11 +16,11 @@
       (the C++ ItemDuplication's exit) back to the bag, closed. Fails as
       [mail_glitch_not_active] without confirming anything. Not in the fork.
     - ["move_item_to_top"], args ["item"]: in the item's pocket, SELECT on it,
-      UP to the list's top, SELECT (pokefirered item_menu.c,
-      [BeginMovingItemInPocket] and [Task_MoveItemInPocket_HandleInput]); then
-      the item must read on the top row. Nothing is pressed when it is there.
-      Fails as [item_not_on_top]. Not in the fork: the C++ ItemDuplication asks
-      the player to do it.
+      UP to the list's top (counted: the cursor hides while the item moves),
+      SELECT (pokefirered item_menu.c, [BeginMovingItemInPocket] and
+      [Task_MoveItemInPocket_HandleInput]); then the item must read on the top
+      row. Nothing is pressed when it is there. Fails as [item_not_on_top]. Not
+      in the fork: the C++ ItemDuplication asks the player to do it.
     - ["duplicate_item"], args ["species"] or ["target_slot"] (party slot 1, the
       C++'s), ["item"], ["count"], ["word"]: {!Item_duplication.run}. *)
 
