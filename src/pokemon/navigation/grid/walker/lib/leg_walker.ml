@@ -57,12 +57,16 @@ let hold walker ~hold_watchers (leg : Leg_spec.t) hold_ms =
       None
 
 (* Whether [leg], held again after an interrupt, was interrupted again soon:
-   something on the way that speaks, like a sign, stops every hold. *)
+   something on the way that speaks, like a sign, stops every hold. A wild
+   battle is luck, however soon it comes (two in a row on Route 8's grass,
+   Switch, 2026-11-24): it never says the way is blocked. *)
 let blocked (leg : Leg_spec.t) ~interruptions held =
   let window =
     max (leg.tile_ms * blocked_window_tiles) blocked_message_window_ms
   in
-  leg.stop_if_blocked && interruptions > 1 && held.elapsed_ms < window
+  leg.stop_if_blocked && interruptions > 1
+  && held.interrupt.kind <> Wild_battle
+  && held.elapsed_ms < window
 
 (* Whether [leg] stops at the interrupt just cleared: a blocked leg, or an
    open leg asked to stop at any. *)
