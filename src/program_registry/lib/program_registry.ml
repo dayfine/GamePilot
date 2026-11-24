@@ -55,7 +55,20 @@ let team_training =
     backends = [ Mgba; Switch ];
   }
 
-let all = [ start_menu_poc; mail_glitch; team_training ]
+let supplies =
+  {
+    id = "frlg.supplies";
+    game = frlg;
+    name = "Supplies";
+    group = [ "FRLG"; "Training" ];
+    description =
+      "Stocks what the duplication programs use: Retro Mail and Super Repels.";
+    doc = "docs/programs/frlg-supplies.md";
+    checkpoints = Some "src/games/frlg/programs/supplies/plans";
+    backends = [ Mgba; Switch ];
+  }
+
+let all = [ start_menu_poc; mail_glitch; supplies; team_training ]
 
 let short_id p =
   let prefix = p.game.game_id ^ "." in

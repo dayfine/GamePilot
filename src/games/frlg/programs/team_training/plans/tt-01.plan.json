@@ -6,7 +6,7 @@
   },
   "metadata": {
     "phase": "testing",
-    "notes": "Starts from the mg-06 save at Celadon Dept. Store 1F (6, 2): MIMIEN in slot 1 holding an Antidote, mail on slots 2-6, Pidgey knows Fly. Console B bag 2026-11-24: Retro Mail 2, no Rare Candy; $20,476. Rare Candy: 1 picked up, held by MIMIEN, +39 duplicated into the bag. Retro Mail: 2 + 40 - 39 = 3.",
+    "notes": "Starts at Celadon Dept. Store 1F (6, 2) with frlg.supplies su-01's stock: Retro Mail >= 99 (98 rounds + 1 kept on the row) and a Super Repel; the pre-flight checks both. MIMIEN in slot 1 (mail record), mail on slots 2-6, Pidgey knows Fly. Rare Candy: 1 picked up, held by MIMIEN, +98 duplicated into the bag.",
     "postconditions": {
       "party_slots": [
         {
@@ -17,21 +17,14 @@
       "items": [
         {
           "item": "rare-candy",
-          "gained": 39
-        },
-        {
-          "item": "retro-mail",
-          "gained": 1
+          "gained": 98
         }
-      ],
-      "money": {
-        "spent": 2000
-      }
+      ]
     }
   },
   "checkpoint": {
     "id": "tt-01",
-    "title": "Rare Candy farm: pick up Route 6's hidden Rare Candy, duplicate it with the Mail Glitch",
+    "title": "Rare Candy farm: pick up Route 6's hidden Rare Candy, duplicate it to 99",
     "start": {
       "map": "CeladonCity_DepartmentStore_1F",
       "tiles": [
@@ -71,6 +64,15 @@
           ],
           "facing": "south"
         }
+      },
+      {
+        "id": "super_repel",
+        "kind": "game_action",
+        "action": "use_item",
+        "args": {
+          "item": "super-repel"
+        },
+        "why": "No wild battles on the walk to the candy: one cut the walk short a tile (its position after a battle is reckoned), and A faced nothing (console B, 2026-11-24)."
       },
       {
         "id": "face_route6_rare_candy",
@@ -123,10 +125,10 @@
           ],
           "facing": "south"
         },
-        "why": "Fly back to Celadon for Retro Mail."
+        "why": "Back to Celadon, the save spot."
       },
       {
-        "id": "to_dept_store_lift",
+        "id": "to_save_spot",
         "kind": "route",
         "action": "run",
         "args": {
@@ -135,89 +137,10 @@
             "tiles": [
               [6, 2]
             ],
-            "facing": "north"
-          }
-        },
-        "why": "Stand below the Dept. Store elevator door (6, 1)."
-      },
-      {
-        "id": "lift_1f_to_4f",
-        "kind": "game_action",
-        "action": "lift_floor",
-        "args": {
-          "from": "1F",
-          "to": "4F"
-        },
-        "declared_after": {
-          "map": "CeladonCity_DepartmentStore_4F",
-          "tiles": [
-            [6, 2]
-          ],
-          "facing": "south"
-        },
-        "why": "Ride to 4F (Wise Man Gifts)."
-      },
-      {
-        "id": "to_4f_clerk",
-        "kind": "route",
-        "action": "run",
-        "args": {
-          "target": {
-            "map": "CeladonCity_DepartmentStore_4F",
-            "tiles": [
-              [3, 11]
-            ],
             "facing": "south"
           }
         },
-        "why": "Face the 4F clerk across the counter."
-      },
-      {
-        "id": "buy_retro_mail",
-        "kind": "game_action",
-        "action": "mart",
-        "args": {
-          "map": "CeladonCity_DepartmentStore_4F",
-          "items": [
-            {
-              "item": "retro-mail",
-              "quantity": 40
-            }
-          ]
-        },
-        "why": "One Retro Mail per duplication round: 40 rounds ($2000) for Blastoise 62 -> 100 (38 candies) and spares."
-      },
-      {
-        "id": "back_to_4f_lift",
-        "kind": "route",
-        "action": "run",
-        "args": {
-          "target": {
-            "map": "CeladonCity_DepartmentStore_4F",
-            "tiles": [
-              [6, 2]
-            ],
-            "facing": "north"
-          }
-        },
-        "why": "Back below the 4F elevator door."
-      },
-      {
-        "id": "lift_4f_to_1f",
-        "kind": "game_action",
-        "action": "lift_floor",
-        "args": {
-          "from": "4F",
-          "to": "1F"
-        },
-        "declared_after": {
-          "map": "CeladonCity_DepartmentStore_1F",
-          "tiles": [
-            [6, 2]
-          ],
-          "facing": "south"
-        },
-        "why": "Back to 1F, the checkpoint's start and save spot."
+        "why": "Back to the Dept. Store 1F save spot."
       },
       {
         "id": "give_rare_candy",
@@ -245,10 +168,10 @@
         "args": {
           "species": "mr-mime",
           "item": "rare-candy",
-          "count": 39,
+          "count": 98,
           "word": "ABRA"
         },
-        "why": "39 rounds: the held candy + 39 in the bag = 40."
+        "why": "98 rounds: the held candy + 98 in the bag = 99, more than the team needs now (Blastoise 62 -> 100 is 38), so later steps never run short."
       },
       {
         "id": "check_marks_after",

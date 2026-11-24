@@ -29,6 +29,9 @@
  (copy ../../programs/team_training/plans/tt-01.plan.json tt-01.plan.json))
 
 (rule
+ (copy ../../programs/supplies/plans/su-01.plan.json su-01.plan.json))
+
+(rule
  (target mg04_walk_two_fled_battles.wire.jsonl)
  (deps mg04_walk_two_fled_battles.wire.jsonl.gz)
  (action
@@ -49,7 +52,8 @@
   mg-05a.plan.json
   mg-05.plan.json
   mg-06.plan.json
-  tt-01.plan.json)
+  tt-01.plan.json
+  su-01.plan.json)
  (libraries
   gamepilot.table_test
   gamepilot.story

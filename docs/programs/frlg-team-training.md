@@ -7,7 +7,7 @@ with the glitched mail record, mail on slots 2-6). It runs on mGBA and on the Sw
 
 | Checkpoint | Content |
 |---|---|
-| tt-01 | Route 6's hidden Rare Candy, 40 Retro Mail at Celadon 4F, 39 duplication rounds: 40 candies |
+| tt-01 | Route 6's hidden Rare Candy (a Super Repel first), 98 duplication rounds: 99 candies |
 
 The leveling checkpoints follow once the `candy_level` action lands: Blastoise to Lv 100 as the lead,
 then the dex-collection catchers (Parasect with Spore, Haunter with Mean Look and Hypnosis).

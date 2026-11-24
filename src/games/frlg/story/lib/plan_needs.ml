@@ -99,6 +99,14 @@ let game_action stocks ~where action args acc =
   let acc =
     if List.mem action item_users then
       Option.fold ~none:acc ~some:(use_item action acc) (named "item")
+    else if action = "duplicate_item" then
+      (* A round gives one Retro Mail and starts only with two on the row
+         (Item_duplication.min_mail): count + 1 in the bag at the start. *)
+      let rounds = J.int ~where "count" args in
+      List.fold_left (use_item action) acc
+        (List.init
+           (rounds + A.Item_duplication.min_mail - 1)
+           (fun _ -> "retro-mail"))
     else if action = "pick_up_item" then
       Option.fold ~none:acc
         ~some:(fun item -> gain acc (item, 1))

@@ -4,7 +4,13 @@
   "checkpoint": {
     "id": "mg-04b",
     "title": "Grinding, part 2 (repeats): one round of MIMIEN's grind at Victory Road 2F, from the Indigo Plateau nurse and back to heal",
-    "start": {"map": "IndigoPlateau_PokemonCenter_1F", "tiles": [[13, 12]], "facing": "north"},
+    "start": {
+      "map": "IndigoPlateau_PokemonCenter_1F",
+      "tiles": [
+        [13, 12]
+      ],
+      "facing": "north"
+    },
     "events": [
       {
         "id": "grind_mimien_round",
@@ -21,12 +27,20 @@
           "max_battles": 150,
           "round": true
         },
-        "declared_after": {"map": "IndigoPlateau_PokemonCenter_1F", "tiles": [[13, 12]], "facing": "north"},
+        "declared_after": {
+          "map": "IndigoPlateau_PokemonCenter_1F",
+          "tiles": [
+            [13, 12]
+          ],
+          "facing": "north"
+        },
         "why": "one grind round: from the nurse to Victory Road 2F (45, 10), switch-grind MIMIEN up to heal_every (7) battles or until Lv 33 (Recycle into Move 1, every other move declined), back to the nurse and heal. PokemonSimulation PR #119: 77 battles, 11 heal trips, about 53 min in all"
       }
     ]
   },
-  "execution": {"menu": "full"},
+  "execution": {
+    "menu": "full"
+  },
   "metadata": {
     "phase": "testing",
     "notes": "A repeating checkpoint: each passing round is saved at the nurse, so a failure reloads the last round's save and only that round runs again. The rounds end once MIMIEN is at least Lv 33 and knows Recycle (read after each round); a run resumed from any round's save starts at the nurse. A round's checks hold on any save: the party, nothing spent, back at the nurse. The level never drops in the game and HP has no reader, so neither is checked.",
@@ -34,18 +48,32 @@
     "repeat": {
       "until": {
         "knows": [
-          {"species": "mr-mime", "moves": ["recycle"]}
+          {
+            "species": "mr-mime",
+            "moves": ["recycle"]
+          }
         ],
         "levels": [
-          {"species": "mr-mime", "min": 33}
+          {
+            "species": "mr-mime",
+            "min": 33
+          }
         ]
       },
       "max_rounds": 20
     },
     "postconditions": {
-      "position": {"map": "IndigoPlateau_PokemonCenter_1F", "tiles": [[13, 12]], "facing": "north"},
+      "position": {
+        "map": "IndigoPlateau_PokemonCenter_1F",
+        "tiles": [
+          [13, 12]
+        ],
+        "facing": "north"
+      },
       "party_includes": ["blastoise", "pidgey", "mr-mime", "farfetchd"],
-      "money": {"spent": 0}
+      "money": {
+        "spent": 0
+      }
     }
   }
 }
