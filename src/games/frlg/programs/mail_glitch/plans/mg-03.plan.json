@@ -117,6 +117,14 @@
     "menu": "full"
   },
   "metadata": {
-    "phase": "testing"
+    "phase": "testing",
+    "postconditions": {
+      "party": ["blastoise", "rattata", "oddish", "pidgey", "mr-mime", "farfetchd"],
+      "money": {"min": 21464, "max": 21464},
+      "items": [
+        {"item": "revive", "quantity": 2},
+        {"item": "escape-rope", "quantity": 3}
+      ]
+    }
   }
 }

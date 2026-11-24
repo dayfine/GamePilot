@@ -329,8 +329,17 @@ let postcondition_cases : Case_table.case list =
         "party in order farfetchd, blastoise, mr-mime, pidgey, rattata, oddish";
     };
     {
-      name = "a plan that states none";
+      name = "mg-03 promises MIMIEN for Abra, 2 Revives and an Escape Rope";
       input = (fun () -> postconditions_text (load "mg-03.plan.json" mg));
+      expectation =
+        "party in order blastoise, rattata, oddish, pidgey, mr-mime, farfetchd\n\
+         item revive x2\n\
+         item escape-rope x3\n\
+         money 21464 to 21464";
+    };
+    {
+      name = "a plan that states none";
+      input = (fun () -> postconditions_text (load "mg-04.plan.json" mg));
       expectation = "none";
     };
     {

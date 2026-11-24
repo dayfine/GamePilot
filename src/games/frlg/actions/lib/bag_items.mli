@@ -61,3 +61,12 @@ val select : string -> unit
     reading the rows, then DOWN until the cursor's own row reads its name (a
     lost tap is tapped again). Fails as [not_in_bag] when the item is not in the
     pocket. *)
+
+val count : log:(string -> unit) -> string -> int option
+(** From the overworld: the item's pocket opened ({!open_pocket_top}), its rows
+    read down to the item as {!select} reads them, the count on its row
+    ({!count_on_row}), then the bag closed and the talk settle. [Some 0] when
+    the list reaches CANCEL first; [None] when a row or the count did not read.
+    New for the end checks: the fork's [check_postconditions()] reads counts
+    with its own bag reader (Menus/PokemonFRLG_ItemListReader). Fails as
+    {!open_pocket_top}, or as [unknown_item] for a slug no item is named. *)
