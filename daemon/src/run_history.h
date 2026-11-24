@@ -2,9 +2,10 @@
 // finished run read it (watch_hub.h). One folder per run:
 //
 //   run.json         what the runner says of the run, written at its start and
-//                    again at its end: game, program, the series' range
-//                    (from, to), checkpoint, backend, mode, started_ms, and at
-//                    the end ended_ms, result, at, reason
+//                    again at its end: the registry's program (game,
+//                    game_name, program, program_name, group), the series'
+//                    range (from, to), checkpoint, backend, mode, started_ms,
+//                    and at the end ended_ms, result, at, reason
 //   daemon.json, watch_plan.json, watch_run.json, watch_log.jsonl
 //                    the daemon's notes (run_journal.h)
 //   frames/          recorded frames and their index (frame_stream.h)
@@ -14,7 +15,8 @@
 // A folder from before run.json falls back to its name
 // (<date>-<checkpoint>-<mode>-<n>), its RESULTS.tsv row, its daemon's first
 // output line (the backend) and the last wire.jsonl line (how long it ran).
-// Game and program are then unknown: the daemon has no game names.
+// Game and program are then unknown: the daemon has no game names
+// (`gamepilot runs --backfill` writes run.json for such folders).
 
 #pragma once
 
@@ -30,8 +32,11 @@ namespace gamepilot {
 
 struct RunRow {
   std::string run;  // the folder's name
-  std::string game;
+  std::string game;  // the registry's ids: frlg, frlg.mail_glitch
+  std::string game_name;
   std::string program;
+  std::string program_name;
+  std::string group;  // "FRLG / Glitches"
   std::string from;  // the series' first and last checkpoint
   std::string to;
   std::string checkpoint;

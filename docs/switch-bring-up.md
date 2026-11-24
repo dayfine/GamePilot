@@ -54,7 +54,7 @@ Expect `start_menu_poc: PASS`. Stop the daemon with Ctrl-C.
 **6. Pre-flight.** The save loaded, the player in the overworld. Set `GAMEPILOT_SWITCH_SERIAL`,
 `GAMEPILOT_SWITCH_CAPTURE` and `GAMEPILOT_LABLOCK` (the env file, `~/.config/gamepilot/env`), then:
 
-    sh tools/run_checkpoints_on_switch.sh src/games/frlg/programs/mail_glitch/plans \
+    sh tools/run_checkpoints_on_switch.sh --program frlg.mail_glitch \
         --from mg-01 --to mg-01 --preflight-only
 
 (or `gamepilot checkpoints ... --preflight --backend switch --serial PORT --capture INDEX`). It
@@ -72,7 +72,7 @@ the game's last save. A run that passes, its end checks included, is saved in th
 the next checkpoint starts from that save. A run that fails soft-resets to the last save and the
 series stops. A failed or stopped run never saves.
 
-    sh tools/run_checkpoints_on_switch.sh src/games/frlg/programs/mail_glitch/plans \
+    sh tools/run_checkpoints_on_switch.sh --program frlg.mail_glitch \
         --from mg-01 --to mg-01
 
 The script takes console B's lab lock, refuses while anything holds the serial port or the lab

@@ -1,4 +1,5 @@
 (* gamepilot runs [--runs-dir DIR]
+   gamepilot runs --backfill [--apply] [--runs-dir DIR] (Run_backfill)
 
    The live runs on this machine, as the hub lists them
    (docs/design/Watch-Page.md): every daemon's watch registry entry
@@ -9,7 +10,9 @@
 
 module R = Wire.Watch_registry
 
-let usage = "  gamepilot runs [--runs-dir DIR]\n"
+let usage =
+  "  gamepilot runs [--runs-dir DIR]\n\
+  \  gamepilot runs --backfill [--apply] [--runs-dir DIR]\n"
 
 (* Whether the process exists (EPERM: someone else's). Windows has no signal
    0 to send, so there every entry counts as alive. *)
@@ -137,7 +140,25 @@ let show runs_dir =
     (Watch_urls.url Watch_urls.local Watch_urls.hub_port);
   Ok 0
 
-let main = function
-  | [] -> show (Checkpoints_command.data_dir "GAMEPILOT_RUNS" "runs")
-  | [ "--runs-dir"; dir ] -> show dir
+type flags = { runs_dir : string; backfill : bool; apply : bool }
+
+let rec parse f = function
+  | [] -> Ok f
+  | "--runs-dir" :: dir :: rest -> parse { f with runs_dir = dir } rest
+  | "--backfill" :: rest -> parse { f with backfill = true } rest
+  | "--apply" :: rest -> parse { f with apply = true } rest
   | a :: _ -> Error ("unknown argument " ^ a)
+
+(* --backfill: run.json for old run folders (Run_backfill). *)
+let main args =
+  let runs_dir = Checkpoints_command.data_dir "GAMEPILOT_RUNS" "runs" in
+  match parse { runs_dir; backfill = false; apply = false } args with
+  | Error e -> Error e
+  | Ok { apply = true; backfill = false; _ } -> Error "--apply needs --backfill"
+  | Ok { backfill = true; runs_dir; apply } ->
+      let live =
+        live_entries (Filename.concat runs_dir ".watch")
+        |> List.map (fun (e : R.entry) -> Filename.basename e.run_folder)
+      in
+      Run_backfill.main ~apply ~live runs_dir
+  | Ok { runs_dir; _ } -> show runs_dir

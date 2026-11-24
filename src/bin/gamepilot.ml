@@ -1,18 +1,22 @@
 (* gamepilot run <program> [--port N] [--state PATH | --console]
    gamepilot replay <program> <wirelog>
    gamepilot checkpoint PLAN.json [flags] (Checkpoint_command)
-   gamepilot checkpoints PLAN_DIR [flags] (Checkpoints_command)
+   gamepilot checkpoints PLAN_DIR|--program ID [flags] (Checkpoints_command)
+   gamepilot programs (Programs_command)
    gamepilot status [--port N] (Status_command)
    gamepilot ctl [--port N] [--owner LABEL] COMMAND | run FILE (Ctl_command)
    gamepilot runs [--runs-dir DIR] (Runs_command)
-   gamepilot switch-devices [--profile DIR] (Switch_devices) *)
+   gamepilot switch-devices [--profile DIR] (Switch_devices)
+
+   <program> and --program take a registry id (Program_registry):
+   frlg.start_menu_poc, or start_menu_poc while no other game has one. *)
 
 let usage =
   "usage:\n\
   \  gamepilot run start_menu_poc [--port 47900] [--state PATH | --console]\n\
   \  gamepilot replay start_menu_poc WIRELOG\n" ^ Checkpoint_command.usage
-  ^ Checkpoints_command.usage ^ Status_command.usage ^ Ctl_command.usage
-  ^ Runs_command.usage ^ Switch_devices.usage
+  ^ Checkpoints_command.usage ^ Programs_command.usage ^ Status_command.usage
+  ^ Ctl_command.usage ^ Runs_command.usage ^ Switch_devices.usage
 
 let die msg =
   prerr_string msg;
@@ -56,22 +60,35 @@ let exit_with = function
   | Ok code -> exit code
   | Error e -> die (e ^ "\n" ^ usage)
 
+(* The one-shot program [id] names, run by [run]. *)
+let one_shot id run =
+  match Programs_command.one_shot id with
+  | Ok { id = "frlg.start_menu_poc"; _ } -> run ()
+  | Ok p -> die (p.id ^ " has no runner here\n")
+  | Error e -> die (e ^ "\n" ^ usage)
+
+let replay_start_menu wirelog () =
+  let log = Replay.log_of_file wirelog in
+  exit (run_program (Replay.run log) (Some Start_menu_poc.default_state))
+
 let () =
   match List.tl (Array.to_list Sys.argv) with
-  | "run" :: "start_menu_poc" :: flags ->
-      let port, state = parse_run_flags flags in
-      exit (run_program (Live.run ~port) state)
+  | "run" :: id :: flags ->
+      one_shot id (fun () ->
+          let port, state = parse_run_flags flags in
+          exit (run_program (Live.run ~port) state))
   | "checkpoint" :: plan :: flags ->
       exit_with (Checkpoint_command.live plan flags)
   | "status" :: flags -> exit_with (Status_command.main flags)
   | "ctl" :: args -> exit_with (Ctl_command.main args)
   | "runs" :: flags -> exit_with (Runs_command.main flags)
   | "switch-devices" :: flags -> exit_with (Switch_devices.main flags)
-  | "checkpoints" :: plan_dir :: flags ->
-      exit_with (Checkpoints_command.main plan_dir flags)
+  | "programs" :: flags -> exit_with (Programs_command.main flags)
+  | "checkpoints" :: args ->
+      exit_with
+        (Result.bind (Programs_command.plan_dir_of_args args)
+           (fun (plan_dir, flags) -> Checkpoints_command.main plan_dir flags))
   | "replay" :: "checkpoint" :: wirelog :: plan :: flags ->
       exit_with (Checkpoint_command.replay wirelog plan flags)
-  | [ "replay"; "start_menu_poc"; wirelog ] ->
-      let log = Replay.log_of_file wirelog in
-      exit (run_program (Replay.run log) (Some Start_menu_poc.default_state))
+  | [ "replay"; id; wirelog ] -> one_shot id (replay_start_menu wirelog)
   | _ -> die usage

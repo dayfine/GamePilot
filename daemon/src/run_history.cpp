@@ -89,7 +89,10 @@ void apply_run_json(RunRow& row, const pa::JsonObject& json) {
   for (const auto& [key, field] :
        std::initializer_list<std::pair<const char*, std::string RunRow::*>>{
            {"game", &RunRow::game},
+           {"game_name", &RunRow::game_name},
            {"program", &RunRow::program},
+           {"program_name", &RunRow::program_name},
+           {"group", &RunRow::group},
            {"from", &RunRow::from},
            {"to", &RunRow::to},
            {"checkpoint", &RunRow::checkpoint},
@@ -483,7 +486,10 @@ std::string run_row_json(const RunRow& row) {
   pa::JsonObject json;
   json["run"] = row.run;
   json["game"] = row.game;
+  json["game_name"] = row.game_name;
   json["program"] = row.program;
+  json["program_name"] = row.program_name;
+  json["group"] = row.group;
   json["from"] = row.from;
   json["to"] = row.to;
   json["checkpoint"] = row.checkpoint;

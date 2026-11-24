@@ -201,31 +201,46 @@ run's own copy.
 ## Runs list
 
 The hub's `/` lists the live runs (as before), then every run folder in `$GAMEPILOT_RUNS`
-(`GET /history.json`, `daemon/src/run_history.*`), newest first: run (linked to its page),
-game, program, checkpoints (the series' `from → to`, this run's own in bold), backend (mGBA,
+(`GET /history.json`, `daemon/src/run_history.*`), newest first by default: run (linked to its
+page), game, program (their registry names, the ids on hover), checkpoints (the series' `from → to`, this run's own in bold), backend (mGBA,
 Switch), mode, result (failed at where, the reason under the name and on hover), start time,
 duration; a "frames" tag on a recorded run.
 
 - **Where it comes from.** The runner writes `run.json` in each run folder at the start (run,
-  game, program, from, to, checkpoint, backend, mode, `started_ms`) and again at the end with
-  `ended_ms`, result, at and reason (`src/bin/run_record.ml`). Game and program come from the
-  plan folder's path (`games/<game>/programs/<program>/plans`). A folder from before `run.json`
-  falls back to its name (`<date>-<checkpoint>-<mode>-<n>`), its `RESULTS.tsv` row (result,
-  reason, end time), its daemon's first output line (backend) and its wire log's last `t_ms` (how
-  long it ran, so its start); game and program are unknown there, since the daemon knows no game
-  names.
-- **Filters**: game, program, backend, mode, result (each a list of the values the runs have),
+  game, `game_name`, program, `program_name`, group, from, to, checkpoint, backend, mode,
+  `started_ms`) and again at the end with `ended_ms`, result, at and reason
+  (`src/bin/run_record.ml`). The program is the registry's whose checkpoints folder the plan
+  folder is (`src/program_registry`, `docs/programs/README.md`): `game` and `program` are its ids
+  (`frlg`, `frlg.mail_glitch`), the others its names and group path (`FRLG / Glitches`). A folder
+  from before `run.json` falls back to its name (`<date>-<checkpoint>-<mode>-<n>`), its
+  `RESULTS.tsv` row (result, reason, end time), its daemon's first output line (backend) and its
+  wire log's last `t_ms` (how long it ran, so its start); game and program are unknown there,
+  since the daemon knows no game names, until `gamepilot runs --backfill --apply` writes a
+  `run.json` naming the program that has a plan for the folder's checkpoint (only the program
+  fields, so the rest still comes from the fallbacks; never in a folder that has one).
+- **Sort**: a click on a column's header sorts by it, a second click reverses. Text columns start
+  A to Z, Started and Duration newest and longest first; unknown values go last either way, and
+  ties go newest first. The default is Started, newest first.
+- **Group by program**: the toggle puts each program's runs under a heading (its name, group,
+  id and run count), the programs by name, unknown last, the sort inside each.
+- **Filters**: game, program, backend, mode, result (each a list of the values the runs have;
+  game and program by their names, from `run.json`: the hub reads them there rather than from a
+  copy of the registry built into the daemon, which knows no games, and a program with no run has
+  nothing to filter),
   a date range (since, until, local days) and a search over the run name and failure reason. They
   live in the URL's query, so a filtered list is a bookmark:
 
   | URL | shows |
   |---|---|
   | `/?backend=switch&result=fail` | failed Switch runs |
-  | `/?program=mail_glitch&mode=verification` | the program's verification runs |
+  | `/?program=frlg.mail_glitch&mode=verification` | the program's verification runs |
+  | `/?sort=duration&dir=desc&group=program` | each program's runs, longest first |
   | `/?since=2026-11-23&q=no_text` | runs since that day whose name or reason has `no_text` |
 
   The keys are `game`, `program`, `backend`, `mode`, `result` (`pass`, `fail`, `running`,
-  `(unknown)`), `since`, `until` (`yyyy-mm-dd`) and `q`. The list is polled every 5 s while the tab
+  `(unknown)`), `since`, `until` (`yyyy-mm-dd`), `q`, `sort` (`run`, `game`, `program`,
+  `checkpoint`, `backend`, `mode`, `result`, `start`, `duration`), `dir` (`asc`, `desc`) and
+  `group` (`program`). The list is polled every 5 s while the tab
   is visible; reading the folder takes about 10 ms for 90 runs.
 
 ## Past runs
