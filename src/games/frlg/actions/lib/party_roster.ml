@@ -43,3 +43,8 @@ let replace t ~slot species =
 
 let add t species =
   if size t >= Action_args.party_slots then t else t @ [ species ]
+
+let remove t species =
+  match slot_of t species with
+  | None -> t
+  | Some slot -> of_list (List.filteri (fun i _ -> i + 1 <> slot) (to_list t))

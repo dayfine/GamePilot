@@ -61,10 +61,16 @@ Expect `start_menu_poc: PASS`. Stop the daemon with Ctrl-C.
 soft-resets to the save, reads the party, money and items, compares the place with the frame
 kept at mg-01's start, and prints a NEED / READ / VERDICT table: Fly's user, the money the
 purchases cost, what the checkpoint before promised, and the free party slots the whole chain
-needs (Abra in mg-01, Spearow in mg-02: two). Any MISMATCH or NOT READ stops it. A full party
-names the members that could go to a PC (never one the plans use or one that knows Cut, Fly,
-Surf or Strength); depositing is by hand for now. The first run has no kept frame, so the place
-reads NOT READ until a pass keeps one.
+needs (Abra in mg-01, Spearow in mg-02: two). The party is read on each member's summary
+(species, level, moves), so a Cut the plans need passes when any member knows it. Any MISMATCH
+or NOT READ stops it. A full party names the members to deposit (Room_policy: never one the plans
+use, the lead, one that knows Cut, Fly, Surf or Strength, or the only one knowing a move the plans
+need; the lowest level first; never a release). For console B's save (Blastoise 59, Eevee 25,
+Pidgey 24, Oddish 12, Lapras 25, Magikarp 5) that is Eevee and Magikarp. The deposit itself is
+the `pc_deposit` game action (`{"species": ["eevee", "magikarp"]}`, facing a Center's PC at
+(11, 2)), tested on mGBA; `--make-room` does not run it yet, so for now walk to a Center's PC and
+run a one-event plan with it, then save. The first run has no kept frame, so the place reads NOT
+READ until a pass keeps one.
 
 **7. First checkpoint.** The policy on the Switch: each checkpoint runs once (`--runs 1`) from
 the game's last save. A run that passes, its end checks included, is saved in the game

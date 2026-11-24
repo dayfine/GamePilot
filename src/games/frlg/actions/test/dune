@@ -16,6 +16,7 @@
 
 (tests
  (names
+  test_pc_deposit_steps
   test_fly_towns
   test_actions
   test_story_game
@@ -30,6 +31,7 @@
   test_pacing
   test_console_actions)
  (modules
+  test_pc_deposit_steps
   test_fly_towns
   test_actions
   test_story_game

@@ -64,6 +64,9 @@ let body ctx (request : R.t) () =
   | Spin_for_encounter { max_batches } ->
       Spin_for_encounter.spin ~log ~facing:(facing ctx) ~max_batches
   | Cut_tree d -> Cut_tree.cut ~log d
+  | Pc_deposit species ->
+      Pc_deposit.deposit ~log species;
+      ctx.party := List.fold_left Party_roster.remove !(ctx.party) species
   | Verify_mail_glitch member ->
       Party_actions.verify_mail_glitch ~log
         ~who:(Action_args.member_to_string member)

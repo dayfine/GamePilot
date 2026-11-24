@@ -333,9 +333,7 @@ let postcondition_cases : Case_table.case list =
          and $25,014";
       input = (fun () -> postconditions_text (load "mg-01.plan.json" mg));
       expectation =
-        "party includes blastoise, rattata, pidgey, abra\n\
-         coins 20\n\
-         money 25014 to 25014";
+        "party includes blastoise, pidgey, abra\ncoins 20\nmoney 25014 to 25014";
     };
     {
       name = "mg-05 promises the party in its battle order";
@@ -347,7 +345,7 @@ let postcondition_cases : Case_table.case list =
       name = "mg-03 promises MIMIEN for Abra, 2 Revives and an Escape Rope";
       input = (fun () -> postconditions_text (load "mg-03.plan.json" mg));
       expectation =
-        "party includes blastoise, rattata, pidgey, mr-mime, farfetchd\n\
+        "party includes blastoise, pidgey, mr-mime, farfetchd\n\
          item revive x2\n\
          item escape-rope x3\n\
          money 21464 to 21464";
@@ -356,7 +354,7 @@ let postcondition_cases : Case_table.case list =
       name = "mg-04 promises the grind's moves and one rope used";
       input = (fun () -> postconditions_text (load "mg-04.plan.json" mg));
       expectation =
-        "party includes blastoise, rattata, pidgey, mr-mime, farfetchd\n\
+        "party includes blastoise, pidgey, mr-mime, farfetchd\n\
          item revive x2\n\
          item escape-rope x2\n\
          money 21464 to 21464\n\
