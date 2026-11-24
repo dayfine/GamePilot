@@ -140,6 +140,10 @@ void check_lease(const std::map<std::string, pa::JsonValue>& files) {
   CHECK(error_message(pa::JsonValue(std::int64_t{16}),
                       lease_refusal(holder, 5200)) ==
         files.at("39-error.lease_held.response.json"));
+  // A view-only backend's refusal.
+  CHECK(error_message(pa::JsonValue(std::int64_t{3}),
+                      view_only_refusal("view", "submit")) ==
+        files.at("41-error.view_only.response.json"));
   pa::JsonObject no_ttl;
   no_ttl["owner"] = "pad";
   CHECK(decode_lease_acquire(no_ttl).ttl_ms == kDefaultLeaseTtlMs);
@@ -402,8 +406,8 @@ void check_errors() {
 
 int main() {
   const auto files = load_contracts();
-  CHECK(files.size() == 40);
-  if (files.size() == 40) {
+  CHECK(files.size() == 41);
+  if (files.size() == 41) {
     check_requests(files);
     check_lease(files);
     check_upload(files);

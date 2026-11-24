@@ -505,6 +505,16 @@ RpcError lease_refusal(const LeaseHolder& holder, double now_ms) {
                   lease_json(holder, now_ms));
 }
 
+RpcError view_only_refusal(const std::string& backend,
+                           const std::string& method) {
+  pa::JsonObject data;
+  data["backend"] = backend;
+  data["method"] = method;
+  return RpcError(kBackendError,
+                  "the " + backend + " backend is view-only: it takes no input",
+                  std::move(data));
+}
+
 pa::JsonValue batch_done_notification(const std::string& batch_id,
                                       std::int64_t seq, double t_ms) {
   pa::JsonObject params;

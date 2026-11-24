@@ -10,11 +10,13 @@
 #pragma once
 
 #include <memory>
+#include <optional>
 #include <opencv2/core.hpp>
 #include <opencv2/videoio.hpp>
 #include <string>
 
 #include "clock.h"
+#include "view_source.h"
 
 namespace gamepilot {
 
@@ -28,6 +30,10 @@ class FrameSource {
 
   // Frames per second the source delivers.
   virtual double frame_rate() const = 0;
+
+  // Whether what it captures can be seen, for a source that can tell (a
+  // window: covered, hidden); nothing for the others.
+  virtual std::optional<SourceStatus> visibility() { return std::nullopt; }
 };
 
 struct CaptureCardConfig {

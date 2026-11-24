@@ -9,11 +9,12 @@
 //   GET  /frame      the current frame, PNG or JPEG (hooks.frame): the page's
 //                    fallback when the stream fails
 //   GET  /events     the event stream: `info` (the backend, as `hello` gives
-//                    it), `run`, `plan`, `log` (the backlog, then each line),
-//                    `probes` and `status`; a new viewer gets the latest of
-//                    each first
-//   GET  /summary.json  the latest run and plan, for the hub's list (any
-//                    origin may read it: the hub is on another port)
+//                    it), `run`, `plan`, `source`, `log` (the backlog, then
+//                    each line), `probes` and `status`; a new viewer gets the
+//                    latest of each first
+//   GET  /summary.json  the latest run and plan, and a view-only source's
+//                    `source` state, for the hub's list (any origin may read
+//                    it: the hub is on another port)
 //   POST /stop?token=T  stops the running program (hooks.stop)
 //
 // Stop takes the run's token: a page served to this machine carries it, a page
@@ -101,6 +102,9 @@ class WatchServer {
   void set_info(std::string json);
   void set_run(std::string json);
   void set_plan(std::string json);
+  // A view-only source's picture state (view_source.h); also in
+  // /summary.json once set.
+  void set_source(std::string json);
   void add_log(std::string json);
   void set_probes(std::string json);
   // Sent to the viewers and not kept.
@@ -129,6 +133,7 @@ class WatchServer {
   std::string info_;
   std::string run_;
   std::string plan_;
+  std::string source_;
   std::string probes_;
   std::deque<std::string> log_;
   bool joined_ = false;

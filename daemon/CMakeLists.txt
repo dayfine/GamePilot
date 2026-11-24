@@ -65,6 +65,7 @@ add_library(gamepilot_core STATIC
   src/input_lease.cpp
   src/keep_awake.cpp
   src/live_schedule.cpp
+  src/log_tail.cpp
   src/mgba_backend.cpp
   src/net.cpp
   src/press_latency.cpp
@@ -82,11 +83,27 @@ add_library(gamepilot_core STATIC
   src/switch_geometry.cpp
   src/template_store.cpp
   src/video_capture.cpp
+  src/view_backend.cpp
+  src/view_source.cpp
   src/viewport.cpp
   src/watch_hub.cpp
   src/watch_registry.cpp
   src/watch_server.cpp
 )
+# The window frame source: ScreenCaptureKit on macOS (Objective-C++), none
+# elsewhere (window_capture.h).
+if(APPLE)
+  enable_language(OBJCXX)
+  target_sources(gamepilot_core PRIVATE src/window_capture_mac.mm)
+  set_source_files_properties(src/window_capture_mac.mm PROPERTIES
+    COMPILE_OPTIONS "-fobjc-arc")
+  target_link_libraries(gamepilot_core PUBLIC
+    "-framework ScreenCaptureKit" "-framework CoreMedia"
+    "-framework CoreVideo" "-framework CoreGraphics" "-framework AppKit"
+    "-framework Foundation")
+else()
+  target_sources(gamepilot_core PRIVATE src/window_capture_none.cpp)
+endif()
 target_include_directories(gamepilot_core PUBLIC src)
 target_include_directories(gamepilot_core SYSTEM PUBLIC ${OpenCV_INCLUDE_DIRS})
 target_link_libraries(gamepilot_core PUBLIC CoreLib ${OpenCV_LIBS})
@@ -112,7 +129,8 @@ foreach(test board_session_test contracts_test input_lease_test keep_awake_test
              probes_test
              run_history_test
              switch_backend_test
-             switch_geometry_test watch_test watch_registry_test)
+             switch_geometry_test view_source_test watch_test
+             watch_registry_test)
   add_executable(${test} tests/${test}.cpp)
   target_link_libraries(${test} PRIVATE gamepilot_core)
   target_compile_definitions(${test} PRIVATE

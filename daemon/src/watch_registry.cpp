@@ -49,6 +49,12 @@ std::string registry_entry_json(const RegistryEntry& entry) {
   json["run_folder"] = entry.run_folder;
   json["checkpoint"] = entry.checkpoint;
   json["started_ms"] = entry.started_ms;
+  if (!entry.name.empty()) {
+    json["name"] = entry.name;
+  }
+  if (!entry.source.empty()) {
+    json["source"] = entry.source;
+  }
   return to_line(pa::JsonValue(std::move(json)));
 }
 
@@ -71,6 +77,8 @@ std::optional<RegistryEntry> parse_registry_entry(const std::string& json) {
     entry.run_folder = object->get_string_default("run_folder");
     entry.checkpoint = object->get_string_default("checkpoint");
     entry.started_ms = object->get_integer_default("started_ms");
+    entry.name = object->get_string_default("name");
+    entry.source = object->get_string_default("source");
     return entry;
   } catch (const pa::Exception&) {  // bad JSON, a missing field
     return std::nullopt;

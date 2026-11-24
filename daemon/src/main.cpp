@@ -22,6 +22,19 @@
 // (frame_stream.h): at most that many frames a second, a capture card's frame
 // scaled to that width unless the viewer asks for another (`/stream?w=`).
 //
+//   gamepilot_daemon --backend view (--window-pid PID | --window-app PATH)
+//   [--window-title T] [--crop x,y,w,h | --crop auto] [--stale-s 10]
+//   [--name NAME] [--source LABEL] [--tail-log FILE]
+//   gamepilot_daemon --backend view --replay VIDEO ...
+//
+// is view-only (view_backend.h): it shows another program's picture (an
+// app's window through ScreenCaptureKit on macOS, window_capture.h; or a
+// recorded video) on the watch page, cropped to the video, with no input, no
+// lease and no keep-awake: input methods answer an error. --name lists it in
+// the hub as /runs/NAME/ and --source says what it is (default "window");
+// the hub puts it under Watching and /live skips it. --tail-log follows
+// another program's log (read only) into the page's log.
+//
 //   gamepilot_daemon --hub --registry DIR [--watch-port 47901] [--listen ADDR]
 //
 // serves the hub (watch_hub.h), the list of live runs and each run's page
@@ -44,6 +57,7 @@
 #include <csignal>
 #include <cstdio>
 #include <cstdlib>
+#include <limits>
 #include <exception>
 #include <memory>
 #include <optional>
@@ -55,10 +69,13 @@
 #include "fake_switch.h"
 #include "mgba_backend.h"
 #include "net.h"
+#include "run_history.h"
 #include "server.h"
 #include "switch_backend.h"
 #include "switch_geometry.h"
+#include "view_backend.h"
 #include "watch_hub.h"
+#include "window_capture.h"
 
 #ifndef _WIN32
 #include <unistd.h>
@@ -87,6 +104,10 @@ int usage() {
       "         [--stream-width 1280] for the watch page\n"
       "       either with [--record | --no-record] [--keepawake SECONDS] "
       "[--keepawake-key B]\n"
+      "       gamepilot_daemon --backend view (--window-pid PID | "
+      "--window-app PATH | --replay VIDEO) [--window-title T]\n"
+      "         [--crop x,y,w,h | --crop auto] [--stale-s 10] [--name NAME] "
+      "[--source LABEL] [--tail-log FILE]\n"
       "       gamepilot_daemon --hub --registry DIR [--watch-port 47901] "
       "[--listen 127.0.0.1]\n",
       stderr);
@@ -124,6 +145,8 @@ struct Flags {
   bool hub = false;
   std::optional<bool> record;           // default: by backend
   std::optional<double> keepawake_s;    // default: by backend
+  gamepilot::WindowCaptureConfig window;
+  gamepilot::ViewOptions view;
 };
 
 // Recording and keep-awake are on by default on the Switch only: mGBA's runs
@@ -141,6 +164,20 @@ void backend_defaults(Flags& flags) {
 gamepilot::WatchOptions& watch_options(Flags& flags) {
   return flags.server.watch.emplace(
       flags.server.watch.value_or(gamepilot::WatchOptions{}));
+}
+
+// The view backend: one source (a window by pid or app, or a video), nothing
+// that drives a console.
+bool valid_view_flags(Flags& flags) {
+  const int sources = (flags.window.pid != 0 ? 1 : 0) +
+                      (flags.window.app_path.empty() ? 0 : 1) +
+                      (flags.replay.empty() ? 0 : 1);
+  if (flags.server.source.empty()) {
+    flags.server.source = flags.replay.empty() ? "window" : "video";
+  }
+  return sources == 1 && flags.capture.empty() && flags.serial.empty() &&
+         !flags.board_check && flags.capture_check.empty() &&
+         flags.server.keepawake.idle_ms == 0;
 }
 
 bool parse_flags(int argc, char** argv, Flags& flags) {
@@ -221,6 +258,42 @@ bool parse_flags(int argc, char** argv, Flags& flags) {
       if (gamepilot::button_mask(flags.server.keepawake.key) == 0) {
         return false;
       }
+    } else if (arg == "--window-pid" && has_value) {
+      long pid = 0;
+      if (!parse_in_range(argv[++i], 1, std::numeric_limits<int>::max(),
+                          pid)) {
+        return false;
+      }
+      flags.window.pid = pid;
+    } else if (arg == "--window-app" && has_value) {
+      flags.window.app_path = argv[++i];
+    } else if (arg == "--window-title" && has_value) {
+      flags.window.title = argv[++i];
+    } else if (arg == "--crop" && has_value) {
+      const std::string_view crop = argv[++i];
+      flags.view.find_crop = crop == "auto";
+      if (!flags.view.find_crop) {
+        flags.view.crop = gamepilot::parse_box(crop);
+        if (!flags.view.crop) {
+          return false;
+        }
+      }
+    } else if (arg == "--stale-s" && has_value) {
+      constexpr long kMaxStaleS = 3600;
+      long seconds = 0;
+      if (!parse_in_range(argv[++i], 1, kMaxStaleS, seconds)) {
+        return false;
+      }
+      flags.view.stale_after_ms = static_cast<double>(seconds) * 1000;
+    } else if (arg == "--name" && has_value) {
+      flags.server.name = argv[++i];
+      if (!gamepilot::valid_run_name(flags.server.name)) {
+        return false;
+      }
+    } else if (arg == "--source" && has_value) {
+      flags.server.source = argv[++i];
+    } else if (arg == "--tail-log" && has_value) {
+      flags.server.tail_log = argv[++i];
     } else if (arg == "--hub") {
       flags.hub = true;
     } else if (arg == "--fast") {
@@ -235,6 +308,9 @@ bool parse_flags(int argc, char** argv, Flags& flags) {
   backend_defaults(flags);
   if (flags.backend == "mgba") {
     return flags.mgba_port != 0;
+  }
+  if (flags.backend == "view") {
+    return valid_view_flags(flags);
   }
   if (flags.backend == "switch" && flags.board_check) {
     return flags.capture.empty() && flags.replay.empty();
@@ -277,6 +353,19 @@ int serve(gamepilot::Backend& backend, const gamepilot::ServerOptions& options,
     std::fprintf(stderr, "daemon: %s\n", error.what());
     return 1;
   }
+}
+
+int run_view(const Flags& flags) {
+  const gamepilot::Clock clock;
+  std::unique_ptr<gamepilot::FrameSource> source =
+      flags.replay.empty() ? gamepilot::open_window_capture(flags.window)
+                           : gamepilot::open_video_replay(flags.replay, clock);
+  gamepilot::ViewBackend backend(std::move(source), clock, flags.view);
+  std::fprintf(stderr,
+               "daemon: view-only %s, %dx%d at %.2f fps; no input is taken\n",
+               flags.server.source.c_str(), backend.info().width,
+               backend.info().height, backend.info().frame_rate);
+  return serve(backend, flags.server, clock);
 }
 
 int run_mgba(const Flags& flags) {
@@ -432,6 +521,9 @@ int main(int argc, char** argv) {
     }
     if (flags.backend == "mgba") {
       return run_mgba(flags);
+    }
+    if (flags.backend == "view") {
+      return run_view(flags);
     }
     if (flags.board_check) {
       return run_board_check(flags);

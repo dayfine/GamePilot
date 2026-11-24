@@ -17,7 +17,9 @@
 // the plan and log the program sends as notifications, and Stop. With a run
 // folder it keeps the notes there (run_journal.h) and, with `record`, records
 // the run's frames on the stream's worker (frame_stream.h). With keep-awake
-// on it presses a harmless key after a long idle (keep_awake.h).
+// on it presses a harmless key after a long idle (keep_awake.h). A view-only
+// backend (view_backend.h) gets no input at all: the page also shows its
+// picture's state and, with `tail_log`, another program's log.
 
 #pragma once
 
@@ -35,6 +37,7 @@
 #include "frame_stream.h"
 #include "input_lease.h"
 #include "keep_awake.h"
+#include "log_tail.h"
 #include "live_schedule.h"
 #include "net.h"
 #include "probe_evaluation.h"
@@ -64,6 +67,12 @@ struct ServerOptions {
   std::string run_folder;
   bool record = false;  // record frames into run_folder/frames
   KeepAwakeOptions keepawake;
+  // A view-only source's registry name and label (watch_registry.h).
+  std::string name;
+  std::string source;
+  // With a watch page: another program's log whose new lines go to the
+  // page's log (log_tail.h); empty = none.
+  std::string tail_log;
 };
 
 // Connections served at once; one more is refused.
@@ -149,6 +158,8 @@ class Server {
   WatchFrame watch_frame();
   void offer_stream_frame();
   void watch_tick();
+  void show_source();
+  void tail_log();
   FrameStream* stream();
   void note_plan(const pa::JsonObject& plan);
   void mark_failure();
@@ -191,6 +202,11 @@ class Server {
   bool probes_shown_ = false;  // the page shows a non-empty probe list
   double status_shown_ms_ = -1e9;
   WatchCost watch_cost_;
+  std::optional<SourceStatus> source_shown_;
+  cv::Size info_shown_;  // the frame size the page's `info` gives
+  double source_checked_ms_ = -1e9;
+  std::optional<LogTail> log_tail_;
+  double log_polled_ms_ = -1e9;
 
   std::optional<RunJournal> journal_;  // with a run folder
   // The stream's worker for recording when there is no watch page.

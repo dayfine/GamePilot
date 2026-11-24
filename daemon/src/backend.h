@@ -12,6 +12,7 @@
 #include <string>
 #include <vector>
 
+#include "view_source.h"
 #include "viewport.h"
 
 namespace gamepilot {
@@ -26,6 +27,9 @@ struct BackendInfo {
   int height = 0;
   Viewport viewport;  // the game picture in the frame, and its native size
   Timing timing = Timing::kLockstep;
+  // False for a view-only backend (view_backend.h): the server refuses input
+  // and the lease.
+  bool takes_input = true;
 };
 
 // GBA KEYINPUT bit order.
@@ -96,6 +100,10 @@ class Backend {
   virtual void drop_queued_keys();
 
   virtual BackendHealth health() const { return {}; }
+
+  // A view-only source's picture: live, stale or covered (view_source.h);
+  // nothing for a backend that drives its own game.
+  virtual std::optional<SourceStatus> source_status() { return std::nullopt; }
 };
 
 class BackendError : public std::runtime_error {
