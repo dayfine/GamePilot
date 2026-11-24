@@ -22,9 +22,11 @@ constexpr double kLitMean = 100;
 // How far the scaler's bleed reaches past the picture on the lab's captures
 // (lit columns from 176 where the picture starts at 180).
 constexpr int kBleedPixels = 4;
-// The lit span must cover this share of the picture each way (0.98 on the
-// darkest lab capture, a text box against the right edge).
-constexpr double kMinFill = 0.9;
+// The lit span must cover this share of the picture each way. A room smaller
+// than the screen leaves black all round it: Celadon Dept. Store's elevator
+// floor lit 0.87 x 0.75 of the picture (console B, 2026-11-24). Light outside
+// the box is what tells a wrong box; this only refuses a frame mostly dark.
+constexpr double kMinFill = 0.5;
 
 // The first and last index above kLitMean of a 1-D profile, or -1s.
 std::pair<int, int> lit_span(const cv::Mat& profile) {
