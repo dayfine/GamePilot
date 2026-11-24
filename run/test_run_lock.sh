@@ -22,19 +22,16 @@ check() {
 # A runner: takes the lock, notes its start and end in the shared log, holds it [hold] seconds.
 runner() {
     sh -c '
-
         . "$1/run/run_lock.sh"
         trap "run_lock_release \"$2\" >/dev/null" EXIT
         run_lock_acquire "$2" "$4" "runner $3" >/dev/null || exit $?
         echo "start $3" >>"$5"
         sleep "$6"
         echo "end $3" >>"$5"
-    ' runner "$root" "$lock" "$1" "$2" "$tmp/log" "$3" 2>>"$tmp/trace_$1"
+    ' runner "$root" "$lock" "$1" "$2" "$tmp/log" "$3"
 }
 
 # Two at once: the second starts only after the first ended.
-for round in $(seq 1 25); do
-: >"$tmp/log"; : >"$tmp/trace_a"; : >"$tmp/trace_b"
 runner a 0 2 &
 a=$!
 runner b 0 2 &
@@ -42,12 +39,6 @@ b=$!
 wait $a
 wait $b
 sequence=$(sed 's/ .*//' "$tmp/log" | tr '\n' ' ')
-if [ "$sequence" != "start end start end " ]; then
-echo "round $round"
-for t in "$tmp"/trace_a "$tmp"/trace_b; do echo "=== $t"; cat "$t"; done
-break
-fi
-done
 check "two runners take turns" "start end start end " "$sequence"
 check "the lock is gone after both" "no" "$([ -d "$lock" ] && echo yes || echo no)"
 
