@@ -92,3 +92,11 @@ val run :
     of each event the run reached cleanly ({!Story.Event_states.hear}), with
     what the run read at the checkpoint's start (or, on a partial run, what was
     kept). *)
+
+val goal_holds :
+  log:(string -> unit) -> id:string -> Story.Plan.postconditions -> bool
+(** In the effect context, from the overworld and back to it: whether a
+    repeating checkpoint's goal ({!Story.Plan.repeat}'s [until]) holds now, read
+    as postconditions are ({!Postcondition_reads}) and logged
+    (["[Goal] [Postcondition] mg-04b ..."]). A goal with nothing in it, or one
+    not read, does not hold. *)

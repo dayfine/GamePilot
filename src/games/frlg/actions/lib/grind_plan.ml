@@ -26,6 +26,7 @@ type t = {
   sweeper : string;
   sweeper_moves : int list;
   max_battles : int;
+  round : bool;
 }
 
 let default_strategy = "victory_road_2f"
@@ -137,6 +138,7 @@ let decode strategies obj =
       sweeper = J.string ~where "sweeper" obj;
       sweeper_moves = move_slot_list obj;
       max_battles = J.int ~where "max_battles" obj;
+      round = J.bool_or ~where ~default:false "round" obj;
     }
   with
   | t -> Ok t
@@ -163,3 +165,4 @@ let describe t =
   Printf.sprintf "%s to Lv %d for %s (into move %d) at %s, %s fighting"
     t.goal.species t.goal.target_level t.goal.learn_move (t.goal.learn_slot + 1)
     t.strategy.name t.sweeper
+  ^ if t.round then ", one round" else ""

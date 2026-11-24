@@ -48,7 +48,7 @@ let reached (plan : P.t) level = level >= plan.goal.target_level
 (* One battle at the spot, then the grinder's level read on its summary (the
    C++'s battle()): the level, and whether the goal's move was learned in it.
    The line says "battle N of LIMIT, Lv L" for the watch page. *)
-let fight ?cap rig (plan : P.t) script n =
+let fight ~limit rig (plan : P.t) script n =
   rig.find_battle ();
   match rig.battle script with
   | S.Failed { why; _ } ->
@@ -59,18 +59,20 @@ let fight ?cap rig (plan : P.t) script n =
           ~when_:(Printf.sprintf "after battle %d" n)
       in
       rig.log
-        (Printf.sprintf "Grind: battle %d of %d, Lv %d %s." n (limit ?cap plan)
-           level
+        (Printf.sprintf "Grind: battle %d of %d, Lv %d %s." n limit level
            (S.describe (S.Over summary)));
       (level, List.mem plan.goal.learn_move summary.learned)
 
-(* Reached: the C++ heals once more and ends back on the spot. *)
-let finish rig (plan : P.t) ~level ~n ~learned =
+let log_reached rig (plan : P.t) ~level ~n ~learned =
   rig.log
     (Printf.sprintf "Grind: %s reached Lv %d (target %d) in battle %d; %s %s."
        plan.goal.species level plan.goal.target_level n
        (if learned then "learned" else "did not learn")
-       plan.goal.learn_move);
+       plan.goal.learn_move)
+
+(* Reached: the C++ heals once more and ends back on the spot. *)
+let finish rig (plan : P.t) ~level ~n ~learned =
+  log_reached rig plan ~level ~n ~learned;
   heal_and_return rig plan
 
 type progress = { n : int; since_heal : int; level : int; learned : bool }
@@ -102,7 +104,9 @@ and heal_or_fight ?cap rig plan script p =
   if P.heal_due plan.strategy ~since_heal:p.since_heal then (
     heal_and_return rig plan;
     battles ?cap rig plan script { p with since_heal = 0 })
-  else after_battle ?cap rig plan script p (fight ?cap rig plan script p.n)
+  else
+    after_battle ?cap rig plan script p
+      (fight ~limit:(limit ?cap plan) rig plan script p.n)
 
 let grind ?cap rig (plan : P.t) ~level =
   put rig plan.goal.species ~at:grinder_slot;
@@ -127,6 +131,48 @@ let level_first ?cap rig (plan : P.t) ~at =
          plan.goal.species level plan.goal.target_level)
   else grind ?cap rig plan ~level
 
+(* {1 One round} GamePilot's: a round ends at the heal place, healed, so the
+   runner can save there after each one (mg-04b). *)
+
+let heal_at_end rig (plan : P.t) =
+  rig.log "Grind: heal.";
+  rig.heal plan.strategy.heal
+
+(* Battles [p.n ..] of the round, up to [limit], ending at the target level. *)
+let rec round_battles ~limit rig (plan : P.t) script p =
+  if p.n > limit then (
+    rig.log
+      (Printf.sprintf "Grind: round over after %d battles: %s is Lv %d, not %d"
+         limit plan.goal.species p.level plan.goal.target_level);
+    heal_at_end rig plan)
+  else after_round_battle ~limit rig plan script p
+
+and after_round_battle ~limit rig plan script p =
+  let level, learned_now = fight ~limit rig plan script p.n in
+  let learned = p.learned || learned_now in
+  if reached plan level then (
+    log_reached rig plan ~level ~n:p.n ~learned;
+    heal_at_end rig plan)
+  else
+    round_battles ~limit rig plan script { p with n = p.n + 1; level; learned }
+
+(* At the target level without the move: no later battle offers it. *)
+let move_missed (plan : P.t) level =
+  M.fail "grind_move_missed"
+    (Printf.sprintf "%s is Lv %d, at least %d, and does not know %s"
+       plan.goal.species level plan.goal.target_level plan.goal.learn_move)
+
+let round ?cap rig (plan : P.t) ~at =
+  let level = read_level rig plan ~slot:at ~when_:"before the round" in
+  if reached plan level then move_missed plan level;
+  put rig plan.goal.species ~at:grinder_slot;
+  put rig plan.sweeper ~at:sweeper_slot;
+  rig.go_to plan.strategy.spot;
+  let limit = min (limit ?cap plan) plan.strategy.heal_every in
+  rig.log (Printf.sprintf "Grind: a round of at most %d battles." limit);
+  round_battles ~limit rig plan (P.battle_script plan)
+    { n = 1; since_heal = 0; level; learned = false }
+
 (* The move known: GamePilot's skip, before the C++'s steps. *)
 let run ?cap rig (plan : P.t) =
   let at = slot rig plan.goal.species in
@@ -135,4 +181,5 @@ let run ?cap rig (plan : P.t) =
     rig.log
       (Printf.sprintf "Grind: %s knows %s already; skipped." plan.goal.species
          plan.goal.learn_move)
+  else if plan.round then round ?cap rig plan ~at
   else level_first ?cap rig plan ~at

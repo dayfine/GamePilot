@@ -4,6 +4,7 @@
   test_runner
   test_repeat_until
   test_checkpoint_trials
+  test_round_trials
   test_postcondition_check
   test_chain_progress
   test_checkpoint_order
@@ -19,6 +20,7 @@
   test_runner
   test_repeat_until
   test_checkpoint_trials
+  test_round_trials
   test_postcondition_check
   test_chain_progress
   test_checkpoint_order

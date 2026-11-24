@@ -10,3 +10,7 @@ val of_metadata :
 (** The postconditions in the plan's metadata ([where] its prefix, as
     ["f: checkpoint."]); all empty when there is no metadata or it states none.
 *)
+
+val postconditions :
+  where:string -> Grid_maps.Json_field.obj -> Plan.postconditions
+(** A postconditions object ([where] its prefix): also a repeat's [until]. *)

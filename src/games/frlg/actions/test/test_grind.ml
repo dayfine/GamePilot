@@ -52,6 +52,10 @@ let decoding =
     case "an unknown strategy"
       (decode (with_field "strategy" (`String "cerulean_cave") mimien_args))
       "bad_args: grind: strategy cerulean_cave is not in grind_strategies.json.";
+    case "one round: said so"
+      (decode (with_field "round" (`Bool true) mimien_args))
+      "mr-mime to Lv 33 for recycle (into move 1) at victory_road_2f, \
+       blastoise fighting, one round";
     case "a learn slot out of range"
       (decode (with_field "learn_slot" (`Int 5) mimien_args))
       "bad_args: grind: learn_slot is 5, not a move slot (1-4).";
@@ -155,6 +159,7 @@ let contains line part =
 
 let shown ~battle_lines line =
   String.starts_with ~prefix:"Grind: capped" line
+  || String.starts_with ~prefix:"Grind: round over" line
   || contains line " reached Lv "
   || (contains line " already; skipped" && not (contains line " knows "))
   || (battle_lines && String.starts_with ~prefix:"Grind: battle" line)
@@ -389,6 +394,60 @@ let stops =
        10) west => ok";
   ]
 
+(* One round (mg-04b's): from the nurse to the spot, heal_every battles or
+   until the goal, then back to the nurse to heal, ending there. *)
+let rounds =
+  let round = plan (with_field "round" (`Bool true) mimien_args) in
+  [
+    case "a round stops at heal_every (7 at Victory Road), ending at the nurse"
+      (flow
+         ~levels:[ lv 9 ]
+         ~party ~known:[]
+         (List.init 8 (fun _ -> won ()))
+         round)
+      "summary 2; Lv 9 in 2; swap 2 1; go VictoryRoad_2F (45, 10) west; spin; \
+       switch 1; move 0; Lv 9 in 1; spin; switch 1; move 0; Lv 9 in 1; spin; \
+       switch 1; move 0; Lv 9 in 1; spin; switch 1; move 0; Lv 9 in 1; spin; \
+       switch 1; move 0; Lv 9 in 1; spin; switch 1; move 0; Lv 9 in 1; spin; \
+       switch 1; move 0; Lv 9 in 1; Grind: round over after 7 battles: mr-mime \
+       is Lv 9, not 33; heal nurse at IndigoPlateau_PokemonCenter_1F (13, 12) \
+       north => ok";
+    case
+      "a round stops at the goal: Light Screen declined, Recycle learned in \
+       battle 2 at Lv 33"
+      (flow
+         ~levels:[ lv 31; lv 32; lv 33 ]
+         ~party ~known:[ "barrier" ]
+         [
+           won ~offered:[ Some "light-screen" ] ();
+           won ~offered:[ Some "recycle" ] ();
+           won ();
+         ]
+         round)
+      "summary 2; Lv 31 in 2; swap 2 1; go VictoryRoad_2F (45, 10) west; spin; \
+       switch 1; move 0; learn: not learned: light-screen; Lv 32 in 1; spin; \
+       switch 1; move 0; learn: learned recycle over move 0; Lv 33 in 1; \
+       Grind: mr-mime reached Lv 33 (target 33) in battle 2; learned recycle.; \
+       heal nurse at IndigoPlateau_PokemonCenter_1F (13, 12) north => ok";
+    case "the goal met already (a resumed run): no walk, still at the nurse"
+      (flow ~levels:[ lv 33 ] ~party ~known:[ "recycle" ] [] round)
+      "summary 2 => ok";
+    case "at the target level without the move: no round can teach it"
+      (flow ~levels:[ lv 33 ] ~party ~known:[ "barrier" ] [] round)
+      "summary 2; Lv 33 in 2 => failed grind_move_missed: mr-mime is Lv 33, at \
+       least 33, and does not know recycle";
+    case "capped at 2 for testing: 2 battles, then the nurse"
+      (flow ~cap:2
+         ~levels:[ lv 9 ]
+         ~party ~known:[]
+         [ won (); won (); won () ]
+         round)
+      "summary 2; Lv 9 in 2; swap 2 1; go VictoryRoad_2F (45, 10) west; spin; \
+       switch 1; move 0; Lv 9 in 1; spin; switch 1; move 0; Lv 9 in 1; Grind: \
+       round over after 2 battles: mr-mime is Lv 9, not 33; heal nurse at \
+       IndigoPlateau_PokemonCenter_1F (13, 12) north => ok";
+  ]
+
 (* The default strategy's walks on all of FireRed's maps, as a run loads them:
    the Victory Road 2F spot is reached by Route 23's top exit, a walk from
    Indigo Plateau with no Strength puzzle on the way. *)
@@ -487,4 +546,5 @@ let routes =
        IndigoPlateau_PokemonCenter_1F";
   ]
 
-let () = Table_test.run "grind" (decoding @ decisions @ flows @ stops @ routes)
+let () =
+  Table_test.run "grind" (decoding @ decisions @ flows @ stops @ rounds @ routes)

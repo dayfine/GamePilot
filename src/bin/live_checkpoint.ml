@@ -24,6 +24,9 @@ type setup = {
           asks for them again, so the page keeps its URL across runs. *)
   from_event : (string * string option) option;
       (** --from-event and --to-event: a partial run (Story.Event_range). *)
+  max_rounds : int option;
+      (** --max-rounds: a repeating checkpoint's rounds, in place of its plan's
+          (testing a few rounds). *)
 }
 
 type checkpoint = {
@@ -43,11 +46,13 @@ type checkpoint = {
 }
 
 type outcome =
-  | Passed
+  | Passed of { goal : bool option }
+      (** [goal]: whether a repeating checkpoint's goal holds after the run;
+          [None] for a checkpoint that does not repeat. *)
   | Failed of { at : string; reason : string; repeats : bool }
 
 let trial = function
-  | Passed -> Checkpoint_trials.Passed
+  | Passed _ -> Checkpoint_trials.Passed
   | Failed { at; repeats; _ } -> Checkpoint_trials.Failed { at; repeats }
 
 let of_failure (f : Failure.t) =

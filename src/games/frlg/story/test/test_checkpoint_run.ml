@@ -94,6 +94,25 @@ let capped cap file () =
     (List.length kept.knows) (List.length kept.levels)
     (match skipped with [] -> "none" | l -> String.concat "; " l)
 
+(* The grind's save point: mg-04a ends at mg-04b's start, and every round
+   (mg-04b) ends there too, where mg-04c starts. *)
+let grind_save_point () =
+  let start id =
+    match (plan (id ^ ".plan.json")).checkpoint.start with
+    | Some (Grid g) -> Story.Pose.grid_to_string g
+    | Some (Zone _) | None -> "not a tile"
+  in
+  let a = plan "mg-04a.plan.json" and b = plan "mg-04b.plan.json" in
+  let ends =
+    [
+      Story.Checkpoint_end.declared ~next:(Some b.checkpoint) a.checkpoint;
+      b.postconditions.position;
+    ]
+  in
+  String.concat "; "
+    (List.map (Option.fold ~none:"none" ~some:Story.Pose.grid_to_string) ends
+    @ [ start "mg-04b"; start "mg-04c" ])
+
 (* mg-03 run from its last event (heal_lavender, after buy_revives): the
    checkpoint's start reads as a whole run kept them beside the event's state
    (no Escape Rope at the start), read back from that file, and the end's read
@@ -175,16 +194,34 @@ let () =
         "lavender_mart_clerk 6; out_of_lavender_mart 1; return_to_tower_door \
          4; to_route8_cut_tree 9; to_route8_grass 1; face_route8_leppa_berry \
          2; return_to_route8_grass 3; to_route16_cut_tree 6; to_lea_and_jed 3";
-      case "mg-04"
-        (summary "mg-04.plan.json")
+      case "mg-04a"
+        (summary "mg-04a.plan.json")
         "frlg; from LavenderTown_PokemonCenter_1F (7, 4) north; missing: none";
-      case "mg-04's walks plan on the maps" (walks "mg-04.plan.json")
-        "to_tower_5f_patch 34; out_of_victory_road 2; to_mg05_start 4";
-      case "mg-04 uncapped: every postcondition checked"
-        (capped None "mg-04.plan.json")
+      case "mg-04a's walks plan on the maps" (walks "mg-04a.plan.json")
+        "to_tower_5f_patch 34; to_indigo_nurse 4";
+      case "mg-04b (the grind round)"
+        (summary "mg-04b.plan.json")
+        "frlg; from IndigoPlateau_PokemonCenter_1F (13, 12) north; missing: \
+         none";
+      case
+        "mg-04a's end, a round's end, the round's and mg-04c's start: the \
+         Indigo nurse"
+        grind_save_point
+        "IndigoPlateau_PokemonCenter_1F (13, 12) north; \
+         IndigoPlateau_PokemonCenter_1F (13, 12) north; \
+         IndigoPlateau_PokemonCenter_1F (13, 12) north; \
+         IndigoPlateau_PokemonCenter_1F (13, 12) north";
+      case "mg-04c"
+        (summary "mg-04c.plan.json")
+        "frlg; from IndigoPlateau_PokemonCenter_1F (13, 12) north; missing: \
+         none";
+      case "mg-04c's walks plan on the maps" (walks "mg-04c.plan.json")
+        "out_to_indigo_plateau 2; to_mg05_start 4";
+      case "mg-04c uncapped: every postcondition checked"
+        (capped None "mg-04c.plan.json")
         "knows checked: 2, levels checked: 1; skipped: none";
-      case "mg-04 capped at 8: the grind's moves skipped, saying so"
-        (capped (Some 8) "mg-04.plan.json")
+      case "mg-04c capped at 8: the grind's moves skipped, saying so"
+        (capped (Some 8) "mg-04c.plan.json")
         "knows checked: 0, levels checked: 0; skipped: knows farfetchd \
          knock-off (grind capped at 8); knows mr-mime recycle (grind capped at \
          8); level mr-mime at least 33 (grind capped at 8)";

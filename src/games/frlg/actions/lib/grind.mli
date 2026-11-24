@@ -40,4 +40,14 @@ val run : ?cap:int -> rig -> Grind_plan.t -> unit
     ends, passing, after that many battles below the target level, and logs
     ["Grind: capped at N battles for testing: ... is Lv L, not T"]; a
     [max_battles] below the cap still fails. The C++ has no cap: its tests ran
-    capped copies of the plan. *)
+    capped copies of the plan.
+
+    One round ({!Grind_plan.t.round}, GamePilot's, for mg-04b's repeating
+    checkpoint): from the heal place to the spot, at most [heal_every] battles
+    (fewer with [cap] or [max_battles]), stopping after the battle that reaches
+    the target level, then a heal that ends at the heal place, never back to the
+    spot, so the runner can save there. The goal's move is learned in whichever
+    battle offers it. It fails as [grind_move_missed] when the grinder starts
+    the round at the target level without the move (no later battle offers it),
+    and passes at once, walking nowhere, when the grinder knows the move
+    already. *)

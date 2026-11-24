@@ -128,6 +128,17 @@ type postconditions = {
     GamePilot's additions: the state a Mail Glitch checkpoint exists to change.
 *)
 
+type repeat = {
+  until : postconditions;
+      (** The goal, read after each passing round: the rounds end once it holds.
+      *)
+  max_rounds : int;  (** Rounds to run before giving up; at least 1. *)
+}
+(** The metadata's [repeat]: the checkpoint is a round that runs again (each
+    pass saved like any checkpoint's) until [until] holds. It starts and ends at
+    the same place, its save point: mg-04b's grind round, from the Indigo
+    Plateau nurse back to her. *)
+
 type t = {
   game : string;  (** The plan's [game], e.g. ["frlg"]. *)
   checkpoint : checkpoint;
@@ -142,4 +153,5 @@ type t = {
       (** The metadata's ["retries"] (default 0): how many more attempts a run
           of the checkpoint makes from its start after a failed one
           ({!Checkpoint_trials.attempts}). *)
+  repeat : repeat option;  (** The metadata's [repeat], if any. *)
 }

@@ -180,3 +180,10 @@ let run ?end_at ?on_event ?(actions = []) ?from_event ?keep_event_state options
       in
       Story.Runner.run ?end_at ~end_state:(checked, observe) ~on_event ?events
         game checkpoint)
+
+let goal_holds ~log ~id (goal : Story.Plan.postconditions) =
+  let module C = Story.Postcondition_check in
+  Effects.with_probes Screen_facts.probes (fun () ->
+      let results = C.check goal (Postcondition_reads.observe ~log goal) in
+      List.iter (fun line -> log ("[Goal] " ^ line)) (C.log_lines id results);
+      results <> [] && C.unmet results = [])

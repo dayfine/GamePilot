@@ -19,6 +19,7 @@ type flags = {
   save_after_pass : bool;  (** Switch: save in the game after a pass. *)
   preflight : bool;
   make_room : string option;  (** The save's map: room first (mg-00). *)
+  max_rounds : int option;  (** A repeating checkpoint's rounds, at most. *)
   from_event : string option;
       (** mGBA, testing: run from this event's kept state (Story.Event_range).
       *)
@@ -36,8 +37,9 @@ let usage =
   \      [--runs N] [--states DIR] [--runs-dir DIR] [--daemon PATH]\n\
   \      [--mgba-port N] [--port N] [--party SPECIES,...] [--center TOWN] \
    [--walk]\n\
-  \      [--end-check-only] [--grind-battles N] [--watch] [--watch-port N]\n\
-  \      [--listen ADDR] [--backend mgba|switch --serial PORT --capture DEVICE]\n\
+  \      [--end-check-only] [--grind-battles N] [--max-rounds N] [--watch]\n\
+  \      [--watch-port N] [--listen ADDR]\n\
+  \      [--backend mgba|switch --serial PORT --capture DEVICE]\n\
   \      [--replay VIDEO] [--save-after-pass|--no-save-after-pass]\n\
   \      [--record|--no-record] [--keepawake SECONDS] [--speed S] [--make-room \
    MAP]\n\
@@ -74,6 +76,7 @@ let defaults =
     save_after_pass = true;
     preflight = false;
     make_room = None;
+    max_rounds = None;
     from_event = None;
     to_event = None;
     common = { Checkpoint_command.defaults with port = 0 };
@@ -136,6 +139,10 @@ let valued f name v =
           Some (Ok (common_flag f (fun c -> { c with grind_cap = Some n })))
       | _ -> Some (Error ("bad --grind-battles " ^ v)))
   | "--make-room" -> Some (Ok { f with make_room = Some v })
+  | "--max-rounds" -> (
+      match int_of_string_opt v with
+      | Some n when n > 0 -> Some (Ok { f with max_rounds = Some n })
+      | _ -> Some (Error ("bad --max-rounds " ^ v)))
   | "--from-event" -> Some (Ok { f with from_event = Some v })
   | "--to-event" -> Some (Ok { f with to_event = Some v })
   | "--center" ->

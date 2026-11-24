@@ -26,6 +26,13 @@ val end_trial : t -> Checkpoint_trials.run -> now_ms:int -> t
     checkpoint passes, stays current for another run, or fails, and the
     checkpoints after it are skipped. *)
 
+val begin_rounds : t -> max_rounds:int -> t
+(** The current checkpoint repeats ({!Plan.repeat}): each run is a round, shown
+    as trial N of [max_rounds], and no run ends it; {!end_rounds} does. *)
+
+val end_rounds : t -> passed:bool -> now_ms:int -> t
+(** The rounds ended ({!Round_trials}): the checkpoint passed or failed. *)
+
 val fail_checkpoint : t -> now_ms:int -> t
 (** The current checkpoint could not run (its plan or start state is missing):
     failed, the rest skipped. *)
