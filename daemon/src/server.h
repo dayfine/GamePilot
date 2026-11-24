@@ -9,11 +9,16 @@
 //
 // One client at a time. A second connection is an observer: it may only ask
 // for `status`, so `gamepilot status` works while a program runs.
+//
+// With a watch page (ServerOptions::watch, server_watch.cpp) the loop also
+// serves its HTTP connections: the frame, the probes and the health from here,
+// the plan and log the program sends as notifications, and Stop.
 
 #pragma once
 
 #include <atomic>
 #include <cstdint>
+#include <memory>
 #include <optional>
 #include <string>
 #include <vector>
@@ -28,6 +33,7 @@
 #include "schedule.h"
 #include "sent_results.h"
 #include "template_store.h"
+#include "watch_server.h"
 
 namespace gamepilot {
 
@@ -35,7 +41,14 @@ struct ServerOptions {
   std::uint16_t port = 47900;
   bool fast =
       false;  // step as fast as the backend goes instead of at its frame rate
-  std::string log_path;  // wire log; empty = none
+  std::string log_path;               // wire log; empty = none
+  std::optional<WatchOptions> watch;  // the watch page; none = off
+};
+
+// What the watch page costs the frame loop, reported with the frame rate.
+struct WatchCost {
+  std::int64_t frames_encoded = 0;
+  double ms = 0;  // encoding frames and sending events
 };
 
 class Server {
@@ -45,6 +58,9 @@ class Server {
   // Serves until `stop` turns true. Throws BackendError if the backend fails
   // mid-frame.
   void run(const std::atomic<bool>& stop);
+
+  // The watch page's port, or 0 without one.
+  std::uint16_t watch_port() const;
 
  private:
   void run_lockstep(const std::atomic<bool>& stop);
@@ -63,6 +79,16 @@ class Server {
   void log(const char* dir, const pa::JsonValue& message);
   void step_frame();
   void rebase_pacing();
+
+  // The watch page (server_watch.cpp).
+  void start_watch();
+  bool take_watch_note(const pa::JsonValue& message);
+  bool stop_program();
+  std::string frame_jpeg();
+  void watch_tick();
+  void show_probes(
+      std::int64_t seq,
+      const std::vector<std::pair<std::string, ProbeResult>>& results);
 
   Backend& backend_;
   ServerOptions options_;
@@ -92,6 +118,16 @@ class Server {
   std::int64_t pace_base_seq_ = 0;
   std::int64_t frames_stepped_ = 0;
   std::int64_t loads_ = 0;  // successful backend.load_state calls
+
+  std::unique_ptr<WatchServer> watch_;
+  cv::Mat probed_frame_;  // the frame the probes last ran on
+  std::int64_t probed_seq_ = -1;
+  std::string frame_jpeg_;  // the last frame sent to the page
+  double frame_jpeg_ms_ = -1e9;
+  double probes_shown_ms_ = -1e9;
+  bool probes_shown_ = false;  // the page shows a non-empty probe list
+  double status_shown_ms_ = -1e9;
+  WatchCost watch_cost_;
 };
 
 }  // namespace gamepilot

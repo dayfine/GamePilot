@@ -69,7 +69,7 @@ let to_run options ~end_at (plan : Story.Plan.t) =
   if options.end_check_only then ({ plan.checkpoint with events = [] }, None)
   else (plan.checkpoint, end_at)
 
-let run ?end_at options world (plan : Story.Plan.t) =
+let run ?end_at ?on_event options world (plan : Story.Plan.t) =
   Option.iter (fun s -> ignore (Effects.load_state s)) options.state;
   let game =
     A.Story_game.create (config options world) ~start:(start_of plan.checkpoint)
@@ -79,4 +79,5 @@ let run ?end_at options world (plan : Story.Plan.t) =
     (plan.postconditions, Postcondition_reads.observe ~log:options.log)
   in
   Effects.with_probes Screen_facts.probes (fun () ->
-      Story.Runner.run ?end_at ~end_state (A.Story_game.game game) checkpoint)
+      Story.Runner.run ?end_at ~end_state ?on_event (A.Story_game.game game)
+        checkpoint)

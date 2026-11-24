@@ -1,0 +1,316 @@
+<!doctype html>
+<!--
+  gamepilot watch: the daemon's live page for one run (served as is by
+  daemon/src/watch_server.cpp; design in docs/design/Watch-Page.md).
+  Frame: GET /frame.jpg, polled at most 5 times a second while the tab is
+  visible. Everything else: the event stream GET /events (info, plan, log,
+  probes, status). Stop: POST /stop.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GamePilot Watch</title>
+<style>
+  :root {
+    --bg: #f6f7f9; --panel: #ffffff; --text: #1c2026; --muted: #69707a;
+    --line: #dfe3e8; --ok: #1f8a4c; --bad: #c62f2f; --cur: #1f6fd1;
+    --skip: #8a8f98; --box: #ffcc00;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #14171b; --panel: #1c2026; --text: #e6e9ed; --muted: #9aa3ad;
+      --line: #2d333b; --ok: #4cc27f; --bad: #ff6b6b; --cur: #6aa8ff;
+      --skip: #7d848e; --box: #ffd84d;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font: 14px/1.4 -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  header {
+    display: flex; align-items: center; gap: 12px; padding: 10px 16px;
+    border-bottom: 1px solid var(--line); background: var(--panel);
+  }
+  header h1 { font-size: 16px; margin: 0; }
+  #conn { color: var(--muted); font-size: 13px; }
+  #conn.down { color: var(--bad); font-weight: 600; }
+  #stop {
+    margin-left: auto; background: var(--bad); color: #fff; border: 0;
+    border-radius: 6px; padding: 8px 18px; font-size: 14px; font-weight: 600;
+    cursor: pointer;
+  }
+  #stop:disabled { opacity: 0.5; cursor: default; }
+  main {
+    display: grid; gap: 12px; padding: 12px 16px;
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+    grid-template-areas: "frame plan" "log health";
+  }
+  @media (max-width: 800px) {
+    main { grid-template-columns: minmax(0, 1fr);
+           grid-template-areas: "frame" "plan" "health" "log"; }
+  }
+  section {
+    background: var(--panel); border: 1px solid var(--line);
+    border-radius: 8px; padding: 10px 12px; min-width: 0;
+  }
+  section h2 {
+    font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em;
+    color: var(--muted); margin: 0 0 8px;
+  }
+  #frame-panel { grid-area: frame; }
+  #plan-panel { grid-area: plan; }
+  #log-panel { grid-area: log; }
+  #health-panel { grid-area: health; }
+  #screen { width: 100%; image-rendering: pixelated; background: #000;
+            border-radius: 4px; display: block; }
+  #frame-meta { color: var(--muted); font-size: 12px; margin-top: 4px; }
+  ol#plan { list-style: none; margin: 0; padding: 0; max-height: 420px;
+            overflow: auto; }
+  ol#plan li { display: grid; grid-template-columns: 22px 28px 1fr;
+               padding: 3px 0; border-bottom: 1px solid var(--line); }
+  ol#plan li:last-child { border-bottom: 0; }
+  .mark { font-weight: 700; text-align: center; }
+  .n { color: var(--muted); font-variant-numeric: tabular-nums; }
+  .detail { grid-column: 3; color: var(--muted); font-size: 12px;
+            overflow-wrap: anywhere; }
+  li.done .mark { color: var(--ok); }
+  li.current { background: color-mix(in srgb, var(--cur) 12%, transparent); }
+  li.current .mark, li.current .id { color: var(--cur); font-weight: 600; }
+  li.failed .mark, li.failed .detail { color: var(--bad); }
+  li.skipped .mark, li.skipped .id { color: var(--skip); }
+  #log { font: 12px/1.45 ui-monospace, Menlo, Consolas, monospace;
+         height: 320px; overflow: auto; white-space: pre-wrap;
+         overflow-wrap: anywhere; margin: 0; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  td, th { text-align: left; padding: 3px 6px 3px 0;
+           border-bottom: 1px solid var(--line); }
+  th { color: var(--muted); font-weight: 500; }
+  td.num { font-variant-numeric: tabular-nums; }
+  tr.stuck td { color: var(--bad); font-weight: 600; }
+  .empty { color: var(--muted); font-style: italic; }
+</style>
+</head>
+<body>
+<header>
+  <h1>GamePilot watch</h1>
+  <span id="conn">connecting…</span>
+  <button id="stop" type="button" title="Release all buttons and end the program">Stop</button>
+</header>
+<main>
+  <section id="frame-panel">
+    <h2>Live frame</h2>
+    <canvas id="screen" width="240" height="160"></canvas>
+    <div id="frame-meta">waiting for a frame</div>
+  </section>
+  <section id="plan-panel">
+    <h2 id="plan-title">Plan</h2>
+    <ol id="plan"><li class="empty">no plan yet: the program sends it when a checkpoint starts</li></ol>
+  </section>
+  <section id="log-panel">
+    <h2>Log</h2>
+    <pre id="log"></pre>
+  </section>
+  <section id="health-panel">
+    <h2>Health</h2>
+    <table id="health"><tbody><tr><td class="empty">waiting for the daemon's status</td></tr></tbody></table>
+  </section>
+</main>
+<script>
+"use strict";
+// The daemon's limit: a thread whose heartbeat is older than this is stuck
+// (the same rule as `gamepilot status`).
+const STUCK_MS = 2000;
+// The page asks for a frame at most this often; the daemon caps it too.
+const FRAME_MS = 200;
+const LOG_LINES = 2000;
+
+const $ = (id) => document.getElementById(id);
+const canvas = $("screen");
+const ctx = canvas.getContext("2d");
+let info = null;          // the backend, as `hello` describes it
+let probes = [];          // [{id, kind, box, result}]
+let lastImage = null;
+let lastPlan = null;
+let lastLogLine = "";
+let lastStatusAt = 0;
+
+function el(tag, cls, text) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text !== undefined) e.textContent = text;
+  return e;
+}
+
+// --- Frame and probe boxes ---------------------------------------------------
+
+function resultLabel(r) {
+  if (!r) return "";
+  const f = (x, d) => Number(x).toFixed(d);
+  switch (r.kind) {
+    case "core.color_stats@1":
+      return "μ " + r.mean.map((x) => f(x, 0)).join(",") + " σ " +
+             f((r.stddev[0] + r.stddev[1] + r.stddev[2]) / 3, 1);
+    case "core.template_match@1":
+      return "score " + f(r.score, 3);
+    case "core.color_count@1":
+      return "frac " + f(r.fraction, 3);
+    default:
+      return r.kind || "";
+  }
+}
+
+function draw() {
+  if (!lastImage) return;
+  if (canvas.width !== lastImage.naturalWidth) {
+    canvas.width = lastImage.naturalWidth;
+    canvas.height = lastImage.naturalHeight;
+  }
+  const W = canvas.width, H = canvas.height;
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(lastImage, 0, 0, W, H);
+  const vp = (info && info.backend && info.backend.viewport) || {x: 0, y: 0, w: 1, h: 1};
+  const scale = Math.max(1, W / 240);
+  ctx.lineWidth = Math.max(1, scale * 0.5);
+  ctx.font = Math.round(5 * scale) + "px ui-monospace, Menlo, monospace";
+  ctx.textBaseline = "bottom";
+  const box = getComputedStyle(document.documentElement).getPropertyValue("--box").trim();
+  for (const p of probes) {
+    const x = (vp.x + p.box.x * vp.w) * W, y = (vp.y + p.box.y * vp.h) * H;
+    const w = p.box.w * vp.w * W, h = p.box.h * vp.h * H;
+    ctx.strokeStyle = box;
+    ctx.strokeRect(x, y, w, h);
+    const label = p.id + "  " + resultLabel(p.result);
+    const tw = ctx.measureText(label).width + 4;
+    const ty = y > 7 * scale ? y : y + h + 7 * scale;
+    const tx = Math.max(0, Math.min(x, W - tw));
+    ctx.fillStyle = "rgba(0,0,0,0.7)";
+    ctx.fillRect(tx, ty - 6 * scale, tw, 6 * scale);
+    ctx.fillStyle = box;
+    ctx.fillText(label, tx + 2, ty);
+  }
+}
+
+function pollFrame() {
+  if (document.hidden) { setTimeout(pollFrame, 1000); return; }
+  const started = performance.now();
+  const img = new Image();
+  const next = () => setTimeout(pollFrame, Math.max(0, FRAME_MS - (performance.now() - started)));
+  img.onload = () => {
+    lastImage = img;
+    draw();
+    $("frame-meta").textContent = img.naturalWidth + "×" + img.naturalHeight +
+      (info ? " · " + info.backend.kind : "") + " · " + probes.length + " probes";
+    next();
+  };
+  img.onerror = () => setTimeout(pollFrame, 1000);
+  img.src = "frame.jpg?t=" + Date.now();
+}
+
+// --- Plan --------------------------------------------------------------------
+
+const MARKS = {done: "✓", current: "▶", failed: "✗", skipped: "–", pending: ""};
+
+function renderPlan() {
+  const plan = lastPlan;
+  if (!plan) return;
+  $("plan-title").textContent = "Plan · " + plan.checkpoint;
+  const list = $("plan");
+  list.replaceChildren();
+  plan.events.forEach((e, i) => {
+    const li = el("li", e.state);
+    li.append(el("span", "mark", MARKS[e.state] || ""), el("span", "n", "#" + (i + 1)),
+              el("span", "id", e.id));
+    let detail = e.detail;
+    if (e.state === "current" && !detail) detail = lastLogLine;
+    if (e.state === "skipped" && detail) detail = "skipped: " + detail;
+    if (detail) li.append(el("span", "detail", detail));
+    list.append(li);
+  });
+  const current = list.querySelector("li.current, li.failed");
+  if (current) current.scrollIntoView({block: "nearest"});
+}
+
+// --- Log ---------------------------------------------------------------------
+
+function addLog(line) {
+  const log = $("log");
+  const atBottom = log.scrollTop + log.clientHeight >= log.scrollHeight - 4;
+  log.append(line + "\n");
+  while (log.childNodes.length > LOG_LINES) log.removeChild(log.firstChild);
+  if (atBottom) log.scrollTop = log.scrollHeight;
+  lastLogLine = line;
+  if (lastPlan && lastPlan.events.some((e) => e.state === "current")) renderPlan();
+}
+
+// --- Health ------------------------------------------------------------------
+
+function row(cells, cls) {
+  const tr = el("tr", cls || "");
+  for (const [text, c] of cells) tr.append(el("td", c || "", text));
+  return tr;
+}
+
+function renderStatus(s) {
+  lastStatusAt = Date.now();
+  const body = el("tbody");
+  const head = el("tr");
+  for (const h of ["thread", "seq", "heartbeat age"]) head.append(el("th", "", h));
+  body.append(head);
+  for (const t of s.threads) {
+    const age = s.t_ms - t.t_ms;
+    body.append(row([[t.name], [String(t.seq), "num"],
+                     [age.toFixed(0) + " ms" + (age > STUCK_MS ? "  STUCK" : ""), "num"]],
+                    age > STUCK_MS ? "stuck" : ""));
+  }
+  body.append(row([["ring"], [s.ring.depth + " / " + s.ring.capacity, "num"], [""]]));
+  body.append(row([["gaps"], [s.gaps.count + " (" + s.gaps.frames + " frames)", "num"], [""]],
+                  s.gaps.count > 0 ? "stuck" : ""));
+  body.append(row([["client"], [s.client === null ? "none" : s.client], [""]]));
+  body.append(row([["fidelity"], [s.fidelity], [s.backend]]));
+  $("health").replaceChildren(body);
+}
+
+// The daemon sends status every second; none for 3 s means it is gone or stuck.
+setInterval(() => {
+  const conn = $("conn");
+  if (lastStatusAt && Date.now() - lastStatusAt > 3000) {
+    conn.textContent = "no status for " + ((Date.now() - lastStatusAt) / 1000).toFixed(0) + " s";
+    conn.className = "down";
+  }
+}, 1000);
+
+// --- Events ------------------------------------------------------------------
+
+function connect() {
+  const events = new EventSource("events");
+  const on = (name, f) => events.addEventListener(name, (m) => f(JSON.parse(m.data)));
+  events.onopen = () => { $("conn").textContent = "live"; $("conn").className = ""; };
+  events.onerror = () => { $("conn").textContent = "disconnected, retrying…"; $("conn").className = "down"; };
+  on("info", (d) => { info = d; draw(); });
+  on("plan", (d) => { lastPlan = d; renderPlan(); });
+  on("log", (d) => addLog(d.line));
+  on("probes", (d) => { probes = d.probes; draw(); });
+  on("status", (d) => { renderStatus(d); $("conn").textContent = "live"; $("conn").className = ""; });
+}
+
+$("stop").addEventListener("click", async () => {
+  if (!confirm("Stop the program? All buttons are released and the run ends as failed (stopped by user).")) return;
+  const button = $("stop");
+  button.disabled = true;
+  try {
+    const reply = await (await fetch("stop", {method: "POST"})).json();
+    addLog(reply.stopped ? "[Watch] Stop sent" : "[Watch] Stop: no program is connected");
+  } catch (e) {
+    addLog("[Watch] Stop failed: " + e);
+  } finally {
+    setTimeout(() => { button.disabled = false; }, 2000);
+  }
+});
+
+connect();
+pollFrame();
+</script>
+</body>
+</html>

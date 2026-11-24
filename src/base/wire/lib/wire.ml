@@ -113,6 +113,9 @@ type response = Jsonrpc.response = { id : int; outcome : (json, error) result }
 type notification = Jsonrpc.notification =
   | Frame of { load : int; frame : frame }
   | Batch_done of batch_done
+  | Watch_plan of Watch.plan
+  | Watch_log of string
+  | Stop of string
 
 type message = Jsonrpc.message =
   | Request of request
@@ -144,6 +147,7 @@ let json_of_submit_result = Command.json_of_submit_result
 let cancel_result_of_json = Command.cancel_result_of_json
 let json_of_cancel_result = Command.json_of_cancel_result
 
+module Watch = Watch
 module Daemon_status = Daemon_status
 
 type direction = Wire_log.direction = In | Out

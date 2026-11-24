@@ -1,5 +1,6 @@
-// Minimal blocking/non-blocking TCP on 127.0.0.1 for the daemon's
-// single-threaded loop. POSIX sockets on macOS/Linux, Winsock on Windows.
+// Minimal blocking/non-blocking TCP for the daemon's single-threaded loop:
+// the program's port on 127.0.0.1, the watch page's on an address the user
+// chose. POSIX sockets on macOS/Linux, Winsock on Windows.
 
 #pragma once
 
@@ -41,6 +42,14 @@ void init_sockets();
 
 // Listens on 127.0.0.1:port. Throws std::runtime_error on failure.
 Socket listen_local(std::uint16_t port);
+// Listens on an IPv4 address ("127.0.0.1", "0.0.0.0", ...) and port (0 = any
+// free port). Throws std::runtime_error on failure.
+Socket listen_tcp(const std::string& address, std::uint16_t port);
+// The port a listening socket is bound to.
+std::uint16_t local_port(const Socket& socket);
+// Makes a send on the socket give up after `ms` instead of blocking for as
+// long as the peer does not read.
+void set_send_timeout(const Socket& socket, int ms);
 // Accepts one pending connection (call after poll says the listener is
 // readable).
 Socket accept_client(const Socket& listener);

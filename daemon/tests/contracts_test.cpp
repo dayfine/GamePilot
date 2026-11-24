@@ -178,6 +178,15 @@ void check_encoders(const std::map<std::string, pa::JsonValue>& files) {
                        submit_result("b1", 1203)) ==
         files.at("09-submit.response.json"));
 
+  CHECK(stop_notification("stopped by user") ==
+        files.at("32-stop.notification.json"));
+  // The program's watch notes are notifications the daemon passes to the page.
+  for (const char* name :
+       {"30-watch_plan.notification.json", "31-watch_log.notification.json"}) {
+    const Request note = decode_request(files.at(name));
+    CHECK(!note.has_id && note.method.starts_with("watch."));
+  }
+
   const ColorStats stats{{248.1, 248.0, 247.9}, {6.2, 6.1, 6.3}};
   const pa::JsonValue frame = frame_notification(
       1201, 1, 20113.6, probe_results_json({{"menu_panel", stats}}));
@@ -339,8 +348,8 @@ void check_errors() {
 
 int main() {
   const auto files = load_contracts();
-  CHECK(files.size() == 29);
-  if (files.size() == 29) {
+  CHECK(files.size() == 32);
+  if (files.size() == 32) {
     check_requests(files);
     check_upload(files);
     check_encoders(files);

@@ -6,6 +6,9 @@
 //   gamepilot_daemon --backend switch (--replay VIDEO | --capture DEVICE)
 //   [--viewport x,y,w,h] [--port 47900] [--log f]
 //
+// Either takes [--watch-port 47901] [--listen ADDR] for the watch page
+// (watch_server.h): on 127.0.0.1 unless --listen opens it to the network.
+//
 // The switch backend's inputs go to FakeSwitch's board for now: the real
 // controller board needs its session handshake first (switch_controller.h).
 
@@ -35,7 +38,9 @@ int usage() {
       "usage: gamepilot_daemon --backend mgba --mgba-port N [--port 47900] "
       "[--log FILE] [--fast]\n"
       "       gamepilot_daemon --backend switch (--replay VIDEO | --capture "
-      "DEVICE) [--viewport x,y,w,h] [--port 47900] [--log FILE]\n",
+      "DEVICE) [--viewport x,y,w,h] [--port 47900] [--log FILE]\n"
+      "       either with [--watch-port 47901] [--listen 127.0.0.1] for the "
+      "watch page\n",
       stderr);
   return 2;
 }
@@ -85,6 +90,16 @@ bool parse_flags(int argc, char** argv, Flags& flags) {
       }
     } else if (arg == "--log" && has_value) {
       flags.server.log_path = argv[++i];
+    } else if (arg == "--watch-port" && has_value) {
+      auto& watch = flags.server.watch.emplace(
+          flags.server.watch.value_or(gamepilot::WatchOptions{}));
+      if (!parse_port(argv[++i], watch.port)) {
+        return false;
+      }
+    } else if (arg == "--listen" && has_value) {
+      auto& watch = flags.server.watch.emplace(
+          flags.server.watch.value_or(gamepilot::WatchOptions{}));
+      watch.listen = argv[++i];
     } else if (arg == "--fast") {
       flags.server.fast = true;
     } else {
@@ -107,6 +122,17 @@ int serve(gamepilot::Backend& backend,
   std::fprintf(stderr, "daemon: listening on 127.0.0.1:%u%s\n",
                static_cast<unsigned>(options.port),
                options.fast ? " (fast)" : "");
+  if (options.watch) {
+    std::fprintf(stderr, "daemon: watch page on http://%s:%u/\n",
+                 options.watch->listen.c_str(),
+                 static_cast<unsigned>(server.watch_port()));
+    if (options.watch->listen != "127.0.0.1") {
+      std::fprintf(stderr,
+                   "daemon: the watch page is open to the network (--listen "
+                   "%s): anyone who reaches it can watch and press Stop\n",
+                   options.watch->listen.c_str());
+    }
+  }
   try {
     server.run(g_stop);
     return 0;

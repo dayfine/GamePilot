@@ -33,6 +33,7 @@ val start_of : Story.Plan.checkpoint -> Story.Pose.observed option
 
 val run :
   ?end_at:Story.Pose.grid ->
+  ?on_event:(int -> Story.Event_progress.t -> unit) ->
   options ->
   Frlg_overworld.Frlg_steps.world ->
   Story.Plan.t ->
@@ -43,4 +44,5 @@ val run :
     [end_at], the player must end there ({!Story.Runner.run}); FireRed reads no
     position yet, so it is where the walks tracked the player. Then the plan's
     postconditions ({!Story.Plan.postconditions}), read by
-    {!Postcondition_reads}, must all pass. *)
+    {!Postcondition_reads}, must all pass. [on_event] hears each event's
+    progress ({!Story.Runner.run}). *)

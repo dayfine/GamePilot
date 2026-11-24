@@ -161,6 +161,8 @@ pa::JsonValue frame_notification(std::int64_t seq, std::int64_t load,
                                  double t_ms, pa::JsonObject probes);
 pa::JsonValue batch_done_notification(const std::string& batch_id,
                                       std::int64_t seq, double t_ms);
+// Tells the program someone pressed Stop on the watch page (contract v1.6).
+pa::JsonValue stop_notification(const std::string& reason);
 
 // One wire log line: {"dir": "in"|"out", "t_ms", "msg"}.
 pa::JsonValue wire_log_line(const char* dir, double t_ms, pa::JsonValue msg);
