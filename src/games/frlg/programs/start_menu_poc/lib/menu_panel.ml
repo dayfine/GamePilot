@@ -5,9 +5,11 @@ let probe =
     ~box:{ x = 0.94; y = 0.05; w = 0.04; h = 0.5 }
     ~delivery:Every
 
-(* The dev-loop knobs: the open panel measures about 248 with stddev under 7. *)
+(* The dev-loop knobs: the open panel measures about 248, with stddev under 7
+   on mGBA and about 23 on console B's capture (scaling and JPEG-like noise);
+   text-heavy white areas measure 40 and up. *)
 let min_white = 220.
-let max_stddev = 20.
+let max_stddev = 30.
 
 let start_menu_open m =
   match Effects.probe m probe_id with
