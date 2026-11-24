@@ -175,9 +175,9 @@
       "marks": ["held_item", "held_item", "mail"],
       "money": {"spent": 2300},
       "items": [
-        {"item": "antidote", "quantity": 2},
-        {"item": "super-potion", "quantity": 3},
-        {"item": "retro-mail", "quantity": 1}
+        {"item": "antidote", "gained": 2},
+        {"item": "super-potion", "gained": 3},
+        {"item": "retro-mail", "used": 1}
       ]
     }
   }
