@@ -31,6 +31,9 @@ jobs:
       - uses: ocaml/setup-ocaml@v3
         with:
           ocaml-compiler: "5.2"
+          # opam root/switch cache (on by default in v3) and dune's build cache.
+          cache: true
+          dune-cache: true
       - working-directory: src
         run: opam install . --deps-only --yes
       - working-directory: src

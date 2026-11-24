@@ -6,6 +6,28 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+# Compile through ccache when it is installed and no launcher was given. base_dir
+# is the repo root, so worktrees share cache entries. Arduino-Source's own
+# PA_USE_CCACHE is forced off below: it would conflict with this launcher.
+if(NOT CMAKE_CXX_COMPILER_LAUNCHER AND NOT MSVC)
+  find_program(GAMEPILOT_CCACHE ccache)
+  if(GAMEPILOT_CCACHE)
+    cmake_path(GET CMAKE_CURRENT_SOURCE_DIR PARENT_PATH _gamepilot_root)
+    execute_process(COMMAND "${GAMEPILOT_CCACHE}" --version
+                    OUTPUT_VARIABLE _gamepilot_ccache_version ERROR_QUIET)
+    string(REGEX MATCH "version ([0-9]+\\.[0-9]+)" _ "${_gamepilot_ccache_version}")
+    set(_gamepilot_launcher "${GAMEPILOT_CCACHE}")
+    # ccache 4.8+ takes settings on its command line.
+    if(CMAKE_MATCH_1 VERSION_GREATER_EQUAL 4.8)
+      list(APPEND _gamepilot_launcher "base_dir=${_gamepilot_root}")
+    endif()
+    message(STATUS "Using ccache: ${_gamepilot_launcher}")
+    set(CMAKE_C_COMPILER_LAUNCHER ${_gamepilot_launcher})
+    set(CMAKE_CXX_COMPILER_LAUNCHER ${_gamepilot_launcher})
+    set(CMAKE_OBJCXX_COMPILER_LAUNCHER ${_gamepilot_launcher})
+  endif()
+endif()
+
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 find_package(OpenCV REQUIRED COMPONENTS core imgproc imgcodecs videoio)
@@ -20,6 +42,7 @@ set(PA_CORE_ONLY ON CACHE BOOL "" FORCE)
 set(COMMAND_LINE_EXE OFF CACHE BOOL "" FORCE)
 set(PA_PYTHON_BINDINGS OFF CACHE BOOL "" FORCE)
 set(PA_ASSEMBLY_LISTINGS OFF CACHE BOOL "" FORCE)
+set(PA_USE_CCACHE OFF CACHE BOOL "" FORCE)
 add_subdirectory("${PA_SERIAL_PROGRAMS_DIR}" "${CMAKE_BINARY_DIR}/pa_core" EXCLUDE_FROM_ALL)
 # CoreLib's headers are third-party code here: keep our strict warnings off them.
 set_target_properties(CoreLib PROPERTIES SYSTEM TRUE)
