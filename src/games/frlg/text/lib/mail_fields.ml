@@ -32,13 +32,34 @@ let upload glyphs text =
       Line_reading.probe line text ~template:(Effects.upload_template png)
   | Error why -> invalid_arg why
 
-let read glyphs candidates =
+let uploaded glyphs candidates =
   let probes = List.map (upload glyphs) candidates in
   let ids = List.map (fun (p : Wire.probe_spec) -> p.id) probes in
-  let all_there m = List.for_all (fun id -> Effects.probe m id <> None) ids in
+  (probes, fun m -> List.for_all (fun id -> Effects.probe m id <> None) ids)
+
+let read glyphs candidates =
+  let probes, all_there = uploaded glyphs candidates in
   match
     Effects.with_probes probes (fun () ->
         Effects.await ~timeout_ms:frame_timeout_ms all_there)
   with
   | Holds m -> pick glyphs candidates m
   | Timeout -> failwith "no frame with the mail field's probes"
+
+let nothing : Line_reading.reading =
+  No_match { best = None; score = Float.infinity }
+
+let await_read glyphs candidates ~timeout_ms =
+  let probes, all_there = uploaded glyphs candidates in
+  let reads m =
+    all_there m
+    &&
+    match pick glyphs candidates m with Read _ -> true | No_match _ -> false
+  in
+  Effects.with_probes probes (fun () ->
+      match Effects.await ~timeout_ms reads with
+      | Holds m -> pick glyphs candidates m
+      | Timeout -> (
+          match Effects.read () with
+          | Some m when all_there m -> pick glyphs candidates m
+          | _ -> nothing))

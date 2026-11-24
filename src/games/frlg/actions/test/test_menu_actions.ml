@@ -224,6 +224,22 @@ let trade_screen screen (p : S.press) =
       show 7000 S.Overworld
   | _ -> ()
 
+(* The party to give to shows; an A sooner than 300 ms after it is dropped
+   (mGBA, mg-06 testing run 2), a later one on slot 1 shows the "already
+   holding" page. *)
+let give_to_slot_one () =
+  let react screen (p : S.press) =
+    if a p && p.at_ms >= 300 && S.screen_at screen p.at_ms = S.Party 1 then
+      S.show screen ~at_ms:(p.at_ms + 100) S.Dialog_arrow
+  in
+  let screen = S.create ~react () in
+  S.show screen ~at_ms:0 (S.Party 1);
+  let result =
+    S.run screen (fun () -> Menu_input.run (fun () -> Party_actions.give_to 1))
+  in
+  Printf.sprintf "%s; %s; ends on %s" (outcome result) (S.presses_text screen)
+    (S.screen_name (S.screen_at screen (screen.S.clock_ms + 200)))
+
 let trade () =
   run ~react:trade_screen (fun () -> Ingame_trade.trade ~log ~slot:3)
 
@@ -387,6 +403,10 @@ let () =
          to take taps (live run t5): 6 with 1"
         (swap ~slot:5 ~input_delay_ms:150 6 1)
         "ok; Start, A, down x2, A, down x2, A, up x6, A, B x6";
+      case
+        "give to slot 1, already selected: the A waits for the party to take \
+         input (mg-06 testing run 2)"
+        give_to_slot_one "ok; A; ends on dialog arrow";
       case "trade: YES, slot 3, A through the trade" trade
         "ok; A x2, down x2, A x6, B x7";
       case

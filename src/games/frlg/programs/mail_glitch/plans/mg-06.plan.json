@@ -1,0 +1,155 @@
+{
+  "format": "pokesim-authored-checkpoint/1",
+  "game": "frlg",
+  "checkpoint": {
+    "id": "mg-06",
+    "title": "Use the Mail Glitch: read the glitched mail, duplicate one Antidote",
+    "start": {"map": "Route16", "tiles": [[30, 6]], "facing": "north"},
+    "events": [
+      {
+        "id": "fly_celadon",
+        "kind": "game_action",
+        "action": "fly",
+        "args": {"town": "CeladonCity", "species": "pidgey"},
+        "declared_after": {"map": "CeladonCity", "tiles": [[48, 12]], "facing": "south"},
+        "why": "Fly from Route 16 to Celadon City's Pokemon Center landing tile (48, 12)"
+      },
+      {
+        "id": "to_dept_store_lift",
+        "kind": "route",
+        "action": "run",
+        "args": {"target": {"map": "CeladonCity_DepartmentStore_1F", "tiles": [[6, 2]], "facing": "north"}},
+        "why": "enter Celadon Dept Store 1F and stand below the elevator door (6, 1)"
+      },
+      {
+        "id": "lift_1f_to_4f",
+        "kind": "game_action",
+        "action": "lift_floor",
+        "args": {"from": "1F", "to": "4F"},
+        "declared_after": {"map": "CeladonCity_DepartmentStore_4F", "tiles": [[6, 2]], "facing": "south"},
+        "why": "ride the elevator to 4F (Wise Man Gifts)"
+      },
+      {
+        "id": "to_4f_clerk",
+        "kind": "route",
+        "action": "run",
+        "args": {"target": {"map": "CeladonCity_DepartmentStore_4F", "tiles": [[3, 11]], "facing": "south"}},
+        "why": "walk to face the 4F clerk (3, 13) across counter row 12"
+      },
+      {
+        "id": "buy_retro_mail",
+        "kind": "game_action",
+        "action": "mart",
+        "args": {"map": "CeladonCity_DepartmentStore_4F", "items": [{"item": "retro-mail", "quantity": 8}]},
+        "why": "buy 8 Retro Mail ($50 each): 5 to fill the party's mail records, 1 for proof A, 1 per duplication round, 1 spare (spec section 6)"
+      },
+      {
+        "id": "back_to_4f_lift",
+        "kind": "route",
+        "action": "run",
+        "args": {"target": {"map": "CeladonCity_DepartmentStore_4F", "tiles": [[6, 2]], "facing": "north"}},
+        "why": "return below the 4F elevator door (6, 1)"
+      },
+      {
+        "id": "lift_4f_to_1f",
+        "kind": "game_action",
+        "action": "lift_floor",
+        "args": {"from": "4F", "to": "1F"},
+        "declared_after": {"map": "CeladonCity_DepartmentStore_1F", "tiles": [[6, 2]], "facing": "south"},
+        "why": "ride the elevator back down to 1F"
+      },
+      {
+        "id": "arrange_slot1_mimien",
+        "kind": "game_action",
+        "action": "party_swap",
+        "args": {"species": "mr-mime", "target_slot": 1},
+        "why": "MIMIEN to party slot 1, where the C++ ItemDuplication gives (user decision 2 on PR #52)"
+      },
+      {
+        "id": "fill_mail_slot2",
+        "kind": "game_action",
+        "action": "give_bag_item",
+        "args": {"item": "retro-mail", "target_slot": 2},
+        "why": "slot 2 holds a Retro Mail with one word (ABRA): with mg-05's leaked record, the five fill every party mail record"
+      },
+      {
+        "id": "fill_mail_slot3",
+        "kind": "game_action",
+        "action": "give_bag_item",
+        "args": {"item": "retro-mail", "target_slot": 3},
+        "why": "slot 3 holds a Retro Mail with one word (ABRA): with mg-05's leaked record, the five fill every party mail record"
+      },
+      {
+        "id": "fill_mail_slot4",
+        "kind": "game_action",
+        "action": "give_bag_item",
+        "args": {"item": "retro-mail", "target_slot": 4},
+        "why": "slot 4 holds a Retro Mail with one word (ABRA): with mg-05's leaked record, the five fill every party mail record"
+      },
+      {
+        "id": "fill_mail_slot5",
+        "kind": "game_action",
+        "action": "give_bag_item",
+        "args": {"item": "retro-mail", "target_slot": 5},
+        "why": "slot 5 holds a Retro Mail with one word (ABRA): with mg-05's leaked record, the five fill every party mail record"
+      },
+      {
+        "id": "fill_mail_slot6",
+        "kind": "game_action",
+        "action": "give_bag_item",
+        "args": {"item": "retro-mail", "target_slot": 6},
+        "why": "slot 6 holds a Retro Mail with one word (ABRA): with mg-05's leaked record, the five fill every party mail record"
+      },
+      {
+        "id": "check_mail_marks",
+        "kind": "game_action",
+        "action": "check_party_marks",
+        "args": {"marks": ["held_item", "mail", "mail", "mail", "mail", "mail"]},
+        "why": "MIMIEN shows the held-item mark (its Leppa Berry), the other five the mail mark"
+      },
+      {
+        "id": "read_glitched_mail",
+        "kind": "game_action",
+        "action": "read_glitched_mail",
+        "args": {"species": "mr-mime", "word": "ABRA"},
+        "why": "proof A: Retro Mail given to MIMIEN opens its leaked record, which must read ABRA in field 1; blank or ??? stops the run"
+      },
+      {
+        "id": "give_dup_item",
+        "kind": "game_action",
+        "action": "give_bag_item",
+        "args": {"item": "antidote", "species": "mr-mime"},
+        "why": "MIMIEN holds the Antidote to copy (its Leppa Berry back to the pouch)"
+      },
+      {
+        "id": "retro_mail_to_top",
+        "kind": "game_action",
+        "action": "move_item_to_top",
+        "args": {"item": "retro-mail"},
+        "why": "Retro Mail on the Items pocket's top row, the C++ ItemDuplication's start state"
+      },
+      {
+        "id": "duplicate_item",
+        "kind": "game_action",
+        "action": "duplicate_item",
+        "args": {"species": "mr-mime", "item": "antidote", "count": 1, "word": "ABRA"},
+        "why": "proof B: one round of the C++ ItemDuplication loop; the Antidote count in the bag goes up by one"
+      },
+      {
+        "id": "check_marks_after",
+        "kind": "game_action",
+        "action": "check_party_marks",
+        "args": {"marks": ["held_item", "mail", "mail", "mail", "mail", "mail"]},
+        "why": "the five filler mails stay on the party (user decision 5), MIMIEN holds the Antidote"
+      }
+    ]
+  },
+  "execution": {
+    "menu": "full"
+  },
+  "metadata": {
+    "phase": "testing",
+    "notes": "Spec docs/mail-glitch-use.md (PR #52) and the user's decisions there. Starts from the fork's tested mg-05 mGBA save (Route 16 (30, 6), MIMIEN holding the recycled Leppa Berry, mail index 0, record 0 = ABRA). Bag at the start: Retro Mail 1, Antidote 2; $20,788. Retro Mail: 1 + 8 - 5 - 1 - 1 = 2. Antidote: 2 - 1 given to MIMIEN + 1 duplicated = 2 in the bag (3 in all).",
+    "postconditions": {"party": ["mr-mime", "blastoise", "farfetchd", "pidgey", "rattata", "oddish"], "items": [{"item": "antidote", "quantity": 2}, {"item": "retro-mail", "quantity": 2}], "money": {"min": 20388, "max": 20388}}
+  }
+}

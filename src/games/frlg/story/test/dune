@@ -17,6 +17,9 @@
  (copy ../../programs/mail_glitch/plans/mg-05.plan.json mg-05.plan.json))
 
 (rule
+ (copy ../../programs/mail_glitch/plans/mg-06.plan.json mg-06.plan.json))
+
+(rule
  (target mg04_walk_two_fled_battles.wire.jsonl)
  (deps mg04_walk_two_fled_battles.wire.jsonl.gz)
  (action
@@ -32,7 +35,8 @@
   mg-02.plan.json
   mg-03.plan.json
   mg-05a.plan.json
-  mg-05.plan.json)
+  mg-05.plan.json
+  mg-06.plan.json)
  (libraries
   gamepilot.case_table
   gamepilot.story
