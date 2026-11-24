@@ -145,12 +145,15 @@ let sand_or_white ~sand s =
 let plain_background m id ~sand =
   holds m id (fun s -> not (sand_or_white ~sand s))
 
-let player_box m =
+let player_box_left m =
   edge m "battle.player.left" ~light:true
-  && edge m "battle.player.right" ~light:false
-  && edge m "battle.player.top" ~light:true
   && edge m "battle.player.bottom" ~light:false
   && plain_background m "battle.player.background" ~sand:player_sand
+
+let player_box m =
+  player_box_left m
+  && edge m "battle.player.right" ~light:false
+  && edge m "battle.player.top" ~light:true
 
 let foe_box m =
   edge m "battle.foe.left" ~light:true

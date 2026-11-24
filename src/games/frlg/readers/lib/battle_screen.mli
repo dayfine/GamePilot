@@ -34,6 +34,11 @@ val player_box : Effects.measurements -> bool
 (** The player's HP box (bottom right): gone once the player's battler fainted.
 *)
 
+val player_box_left : Effects.measurements -> bool
+(** The left end of the player's HP box: its left and bottom edges and its
+    background, which a battle's YES/NO box, over the box's right end, leaves
+    showing ({!player_box} needs the right edge too). *)
+
 val foe_box : Effects.measurements -> bool
 (** The foe's HP box (top left). *)
 

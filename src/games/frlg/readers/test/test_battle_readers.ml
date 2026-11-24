@@ -5,6 +5,7 @@
    shows after "__", dash-separated:
 
      yesno   a battle's YES/NO box       arrow   the battle text's red arrow
+     learn   a YES/NO beside the player's HP box: a move to learn
      nopp    the move menu, its PP red   nohp    the battle text box with no
              HP box, arrow or YES/NO: what an evolution shows
      none    none of these
@@ -30,6 +31,7 @@ type reader = {
 let readers =
   [
     { reader = "yes_no_box"; verdict = Battle_yes_no.yes_no_box; tag = "yesno" };
+    { reader = "move_learn"; verdict = Battle_yes_no.move_learn; tag = "learn" };
     {
       reader = "advance_arrow";
       verdict = Battle_text_arrow.advance_arrow;

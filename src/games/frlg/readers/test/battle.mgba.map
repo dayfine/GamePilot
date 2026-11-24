@@ -36,3 +36,5 @@ repo src/games/frlg/readers/test/images/mgba/mail-glitch-04-inspect/pause-menu.p
 repo src/games/frlg/readers/test/images/mgba/mail-glitch-route16/battle-command.png|mail-glitch-route16/battle-command__none.png
 repo src/games/frlg/readers/test/images/mgba/mail-glitch-route16/entry-party.png|mail-glitch-route16/entry-party__none.png
 repo src/games/frlg/readers/test/images/mgba/mail-glitch-route16/refill-pp.png|mail-glitch-route16/refill-pp__none.png
+repo src/games/frlg/readers/test/images/mgba/victory-road-move-learn/delete-a-move.png|victory-road-move-learn/delete-a-move__yesno-learn.png
+repo src/games/frlg/readers/test/images/mgba/victory-road-move-learn/stop-learning.png|victory-road-move-learn/stop-learning__yesno-learn.png
