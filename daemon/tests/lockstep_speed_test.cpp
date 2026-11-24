@@ -256,6 +256,7 @@ void check_home_refused() {
 }  // namespace
 
 int main() {
+  init_sockets();
   for (const SpeedCase& c : kSpeedCases) {
     check_speed(c);
   }
