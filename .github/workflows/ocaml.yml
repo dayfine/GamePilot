@@ -16,16 +16,6 @@ jobs:
       - name: Fetch the PokemonSimulation submodule (maps read by tests)
         shell: bash
         run: git submodule update --init --depth 1 third_party/PokemonSimulation
-      # The one Packages file the tests read (move names), at the pinned
-      # commit; the whole repository is too large to fetch.
-      - name: Fetch Packages' BattleMovesOCR.json
-        shell: bash
-        run: |
-          sha=$(git ls-tree HEAD third_party/Packages | awk '{print $3}')
-          dir=third_party/Packages/Resources/PokemonFRLG
-          mkdir -p "$dir"
-          curl -fsSL -o "$dir/BattleMovesOCR.json" \
-            "https://raw.githubusercontent.com/PokemonAutomation/Packages/$sha/Resources/PokemonFRLG/BattleMovesOCR.json"
       - name: Lint dune files and opam dependencies
         shell: bash
         run: sh dev/lint/lint_dune.sh

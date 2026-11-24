@@ -22,10 +22,7 @@ let items = Item_names.load (required Data_files.item_names_eng)
 let tm_moves =
   Tm_moves.names (Tm_moves.load (required Data_files.tm_hm_moves_eng))
 
-let moves =
-  List.map snd
-    (Move_names.load ~language:"eng" (required Data_files.move_names))
-
+let moves = List.map snd (Move_names.load (required Data_files.move_names_eng))
 let rows n line = List.init n line
 
 let cells ~rows ~cells cell =

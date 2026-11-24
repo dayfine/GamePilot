@@ -1,12 +1,6 @@
 type t = (string * string) list
 
-let first_name (slug, names) =
-  match names with `List (`String n :: _) -> Some (slug, n) | _ -> None
-
-let of_json ~language json =
-  match Yojson.Safe.Util.member language json with
-  | `Assoc slugs -> List.filter_map first_name slugs
-  | _ -> failwith ("no move names for " ^ language)
-
-let load ~language path = of_json ~language (Yojson.Safe.from_file path)
+(* The same [<slug> <name>] lines as the species names file. *)
+let of_string = Species_names.of_string
+let load = Species_names.load
 let name t slug = List.assoc_opt slug t
