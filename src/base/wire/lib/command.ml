@@ -1,9 +1,24 @@
 open Json_fields
 
 type json = Yojson.Safe.t
-type button = A | B | Select | Start | Right | Left | Up | Down | R | L
 
-let all_buttons = [ A; B; Select; Start; Right; Left; Up; Down; R; L ]
+type button =
+  | A
+  | B
+  | Select
+  | Start
+  | Right
+  | Left
+  | Up
+  | Down
+  | R
+  | L
+  | Home
+  | X
+  | Y
+
+let all_buttons =
+  [ A; B; Select; Start; Right; Left; Up; Down; R; L; Home; X; Y ]
 
 let string_of_button = function
   | A -> "A"
@@ -16,6 +31,13 @@ let string_of_button = function
   | Down -> "Down"
   | R -> "R"
   | L -> "L"
+  | Home -> "Home"
+  | X -> "X"
+  | Y -> "Y"
+
+let switch_only = function
+  | Home | X | Y -> true
+  | A | B | Select | Start | Right | Left | Up | Down | R | L -> false
 
 let button_of_string s =
   List.find_opt (fun b -> string_of_button b = s) all_buttons

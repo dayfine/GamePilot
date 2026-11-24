@@ -15,7 +15,7 @@ let button_of_name name =
   | upper ->
       List.find_opt
         (fun b -> String.uppercase_ascii (Wire.string_of_button b) = upper)
-        Wire.[ A; B; Select; Start; Right; Left; Up; Down; R; L ]
+        Wire.[ A; B; Select; Start; Right; Left; Up; Down; R; L; Home; X; Y ]
 
 let ms what word =
   match int_of_string_opt word with

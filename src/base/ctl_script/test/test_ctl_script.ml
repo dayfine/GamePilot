@@ -47,7 +47,10 @@ let () =
       line "comment line" "# open the menu" "skip";
       line "comment after a command" "press START 100 800  # menu"
         "press Start hold 100 wait 800 x1";
-      line "unknown button" "press HOME" "error: unknown button \"HOME\"";
+      line "the Switch's HOME" "press HOME 100 1500"
+        "press Home hold 100 wait 1500 x1";
+      line "the Switch's X" "press x" "press X hold 100 wait 500 x1";
+      line "unknown button" "press ZR" "error: unknown button \"ZR\"";
       line "dpad needs a direction" "dpad A" "error: \"A\" is not a direction";
       line "dpad count of 0" "dpad UP 0" "error: dpad: N must be at least 1";
       line "not a number" "press A soon"
