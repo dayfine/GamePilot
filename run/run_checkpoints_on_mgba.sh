@@ -29,6 +29,7 @@
 #   GAMEPILOT_ROM       the FireRed ROM (else the one .gba file in GAMEPILOT_MGBA_DIR); its path
 #                       never enters the repo or a log
 #   GAMEPILOT_MGBA_APP  mGBA.app (/Applications/mGBA.app)
+#   GAMEPILOT_MGBA_SHOW  1 opens mGBA in front (default: hidden, in the background)
 #   GAMEPILOT_BIN       the gamepilot binary (src/_build/default/bin/gamepilot.exe; dune build first)
 set -eu
 root=$(cd "$(dirname "$0")/.." && pwd)
@@ -125,7 +126,13 @@ echo "states:   $GAMEPILOT_STATES"
 echo "runs:     $GAMEPILOT_RUNS"
 
 opened=1
-open -n "$app" --args -C audioSync=1 -C videoSync=0 -C fpsTarget=120 -C "savegamePath=$dir" \
+# -g -j: start in the background, hidden, so a run never takes the screen or the
+# focus (the bridge reads frames from the core, not the window). App Nap would
+# throttle a hidden app: `defaults write com.endrift.mgba-qt NSAppSleepDisabled
+# -bool YES` once per machine. GAMEPILOT_MGBA_SHOW=1 opens it in front instead.
+if [ "${GAMEPILOT_MGBA_SHOW:-0}" = 1 ]; then open_flags="-n"; else open_flags="-n -g -j"; fi
+# shellcheck disable=SC2086
+open $open_flags "$app" --args -C audioSync=1 -C videoSync=0 -C fpsTarget=120 -C "savegamePath=$dir" \
     --script "$dir/run_bridge.lua" "$rom"
 tries=0
 until lsof -nP -iTCP:$bridge_port -sTCP:LISTEN >/dev/null; do
