@@ -71,6 +71,7 @@ let body ctx (request : R.t) () =
       Party_actions.verify_mail_glitch ~log
         ~who:(Action_args.member_to_string member)
         ~slot:(resolve ctx member)
+  | Pick_up_item _ -> Menu_input.raise_error (Talk.talk ~log ())
 
 let perform ctx request = Menu_input.run (body ctx request)
 

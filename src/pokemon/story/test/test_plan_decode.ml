@@ -131,8 +131,8 @@ let real_plans : Table_test.case list =
       name = "mg-02 outline";
       input = (fun () -> outline "mg-02.plan.json" mg);
       expectation =
-        "frlg mg-02 from CeladonCity (39, 21) south: 7 route, 5 game_action, 1 \
-         talk, 1 scene";
+        "frlg mg-02 from CeladonCity (39, 21) south: 7 route, 6 game_action, 1 \
+         scene";
     };
     {
       name = "mg-03 outline";
@@ -166,8 +166,8 @@ let real_plans : Table_test.case list =
       name = "mg-05a outline";
       input = (fun () -> outline "mg-05a.plan.json" mg);
       expectation =
-        "frlg mg-05a from LavenderTown (18, 7) south: 9 route, 11 game_action, \
-         1 talk, 1 scene";
+        "frlg mg-05a from LavenderTown (18, 7) south: 9 route, 12 game_action, \
+         1 scene";
     };
     {
       name = "mg-05 outline";

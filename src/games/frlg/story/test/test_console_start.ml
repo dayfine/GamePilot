@@ -252,6 +252,21 @@ let preflight_cases =
       "party includes blastoise, pidgey, mr-mime, farfetchd; mr-mime in the \
        party (grind); blastoise in the party (grind); at the start, \
        IndigoPlateau_PokemonCenter_1F";
+    case
+      "preflight mg-05a: the Leppa Berry it picks up on Route 8 is no start \
+       need for its give_bag_item (console B, 2026-11-24)"
+      (fun () ->
+        let before = Some (plan "mg-04c").postconditions in
+        String.concat "; "
+          (List.map
+             (fun (r : Preflight.row) -> r.need)
+             (Preflight.compare (needs "mg-05a" before)
+                { observed = P.nothing_read; place = None; members = None })))
+      "party includes blastoise, pidgey, mr-mime, farfetchd; blastoise in the \
+       party (party_swap); pidgey in the party (fly); farfetchd in the party \
+       (party_swap); mr-mime in the party (party_swap); a member knows cut \
+       (cut_tree); money at least ¥2300 (mart); retro-mail at least x1 \
+       (give_bag_item); at the start, LavenderTown";
   ]
 
 (* {1 Room in the party} *)

@@ -78,7 +78,9 @@
       },
       {
         "id": "pickup_sitrus_berry",
-        "kind": "talk",
+        "kind": "game_action",
+        "action": "pick_up_item",
+        "args": {"item": "sitrus-berry"},
         "why": "pick up hidden Sitrus Berry at Route 6 (5, 5) (also creates Berry Pouch automatically)"
       },
       {
