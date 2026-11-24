@@ -94,13 +94,24 @@ let send_in ~slot =
       shows ~timeout_ms:list_timeout_ms Battle_screen.battle_shows
   | Unread | Stuck _ -> false
 
+(* Back from a refused switch: B through a message ("already in battle", "has
+   no energy left to battle!") and the list, then B again while the action
+   menu does not show, at most [back_taps] times, so the next look does
+   not take the list for one the game opened. *)
+let back_taps = 3
+
+let rec back_to_action_menu taps =
+  if taps > 0 && not (shows Battle_screen.battle_menu) then (
+    tap_all [ Wire.B ];
+    back_to_action_menu (taps - 1))
+
 let switch_to ~slot =
   tap_all Battle_cursor.pokemon;
   if not (shows ~timeout_ms:list_timeout_ms Party_menu.party_menu) then false
   else if send_in ~slot then true
   else (
-    (* A message ("already in battle") then the list: B through both. *)
     tap_all Wire.[ B; B ];
+    back_to_action_menu back_taps;
     false)
 
 let pocket_index : Bag_screen.pocket -> int = function

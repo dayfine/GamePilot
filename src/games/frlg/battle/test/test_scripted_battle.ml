@@ -129,6 +129,7 @@ let double_battle_cases =
 let switch_grind =
   Battle_script.make ~opening:[ Switch 1 ]
     ~send_ins:[ { slot = 1; then_ = None } ]
+    ~switch_refused:Flee
     ~learn:(Forget_for { move = "recycle"; slot = 0 })
     (Attack { slots = [ 0; 1 ]; target = Default })
 
@@ -176,6 +177,13 @@ let switch_grind_cases =
       switch_grind
       "switch 1; move 0 default; send 1 => failed: a member fainted and the \
        script sends in no more (2 menus, 1 send-ins, 0 refused, 0 prompts)";
+    case
+      "switch-grind: the sweeper fainted in an earlier battle (\"has no energy \
+       left to battle!\", mg-04b testing 6): the switch refused, RUN"
+      (fake ~switch_ok:false (menus 2 @ [ Battle_over ]))
+      switch_grind
+      "switch 1; run => over (2 menus, 0 send-ins, 0 refused, 0 prompts, 1 \
+       switch refused)";
     case "switch-grind: every move out of PP fails the battle"
       (fake ~moves:[ Refused; Refused ] (menus 4))
       switch_grind

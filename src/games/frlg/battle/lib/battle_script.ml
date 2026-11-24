@@ -15,6 +15,7 @@ type t = {
   opening : command list;
   fallback : fallback;
   send_ins : send_in list;
+  switch_refused : fallback option;
   learn : Battle_driver.learn;
   use_next : bool;
   max_menus : int;
@@ -24,10 +25,20 @@ type t = {
 let default_max_menus = 40
 let default_event_timeout_ms = 60_000
 
-let make ?(opening = []) ?(send_ins = []) ?(learn = Battle_driver.Keep_moves)
-    ?(use_next = false) ?(max_menus = default_max_menus)
+let make ?(opening = []) ?(send_ins = []) ?switch_refused
+    ?(learn = Battle_driver.Keep_moves) ?(use_next = false)
+    ?(max_menus = default_max_menus)
     ?(event_timeout_ms = default_event_timeout_ms) fallback =
-  { opening; fallback; send_ins; learn; use_next; max_menus; event_timeout_ms }
+  {
+    opening;
+    fallback;
+    send_ins;
+    switch_refused;
+    learn;
+    use_next;
+    max_menus;
+    event_timeout_ms;
+  }
 
 let describe_command = function
   | Move { slot; target; name } ->

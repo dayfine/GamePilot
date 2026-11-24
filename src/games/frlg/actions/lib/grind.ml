@@ -45,9 +45,27 @@ let read_level rig (plan : P.t) ~slot ~when_ =
 
 let reached (plan : P.t) level = level >= plan.goal.target_level
 
+(* What a battle left: the grinder's level, whether the goal's move was learned
+   in it, and whether the sweeper could not come in (fainted in an earlier
+   battle: "... has no energy left to battle!", mg-04b testing 6), so the lead
+   ran and the next battle waits for a heal. *)
+type fought = { level : int; learned_now : bool; sweeper_down : bool }
+
+let fought rig (plan : P.t) (summary : S.summary) ~level n =
+  let sweeper_down = summary.switches_refused > 0 in
+  if sweeper_down then
+    rig.log
+      (Printf.sprintf "Grind: battle %d: %s could not come in, ran." n
+         plan.sweeper);
+  {
+    level;
+    learned_now = List.mem plan.goal.learn_move summary.learned;
+    sweeper_down;
+  }
+
 (* One battle at the spot, then the grinder's level read on its summary (the
-   C++'s battle()): the level, and whether the goal's move was learned in it.
-   The line says "battle N of LIMIT, Lv L" for the watch page. *)
+   C++'s battle()). The line says "battle N of LIMIT, Lv L" for the watch
+   page. *)
 let fight ~limit rig (plan : P.t) script n =
   rig.find_battle ();
   match rig.battle script with
@@ -61,7 +79,7 @@ let fight ~limit rig (plan : P.t) script n =
       rig.log
         (Printf.sprintf "Grind: battle %d of %d, Lv %d %s." n limit level
            (S.describe (S.Over summary)));
-      (level, List.mem plan.goal.learn_move summary.learned)
+      fought rig plan summary ~level n
 
 let log_reached rig (plan : P.t) ~level ~n ~learned =
   rig.log
@@ -79,13 +97,16 @@ type progress = { n : int; since_heal : int; level : int; learned : bool }
 
 let capped ?cap p = match cap with Some c -> p.n > c | None -> false
 
-(* After a battle: the end when the level is reached, else the next. *)
-let rec after_battle ?cap rig plan script p (level, learned_now) =
+(* After a battle: the end when the level is reached, else the next, after a
+   heal when the sweeper is down. *)
+let rec after_battle ?cap rig plan script p { level; learned_now; sweeper_down }
+    =
   let learned = p.learned || learned_now in
   if reached plan level then finish rig plan ~level ~n:p.n ~learned
-  else
-    battles ?cap rig plan script
-      { n = p.n + 1; since_heal = p.since_heal + 1; level; learned }
+  else (
+    if sweeper_down then heal_and_return rig plan;
+    let since_heal = if sweeper_down then 0 else p.since_heal + 1 in
+    battles ?cap rig plan script { n = p.n + 1; since_heal; level; learned })
 
 (* Out of battles, capped, or on. *)
 and battles ?cap rig plan script p =
@@ -148,11 +169,12 @@ let rec round_battles ~limit rig (plan : P.t) script p =
   else after_round_battle ~limit rig plan script p
 
 and after_round_battle ~limit rig plan script p =
-  let level, learned_now = fight ~limit rig plan script p.n in
+  let { level; learned_now; sweeper_down } = fight ~limit rig plan script p.n in
   let learned = p.learned || learned_now in
   if reached plan level then (
     log_reached rig plan ~level ~n:p.n ~learned;
     heal_at_end rig plan)
+  else if sweeper_down then heal_at_end rig plan
   else
     round_battles ~limit rig plan script { p with n = p.n + 1; level; learned }
 

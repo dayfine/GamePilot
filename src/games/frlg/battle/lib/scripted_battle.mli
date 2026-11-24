@@ -6,6 +6,9 @@ type summary = {
   menus : int;  (** action menus answered *)
   send_ins : int;  (** members sent in after a faint *)
   refusals : int;  (** moves the game turned down *)
+  switches_refused : int;
+      (** switches the game turned down, under {!Battle_script.t}'s
+          [switch_refused] *)
   prompts : int;  (** YES/NO prompts answered *)
   learned : string list;  (** moves learned, as read; the latest first *)
   unread : int;  (** move learns whose move or cursor did not read *)
