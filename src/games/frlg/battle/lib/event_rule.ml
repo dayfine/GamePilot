@@ -38,7 +38,7 @@ let next state (facts : Battle_look.facts) ~at_ms =
   | Party_list -> (seen, Report Battle_driver.Switch_in)
   | Yes_no ->
       let event =
-        if facts.player_box then Battle_driver.Move_learn
+        if facts.move_learn then Battle_driver.Move_learn
         else Battle_driver.Use_next
       in
       (seen, Report event)

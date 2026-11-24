@@ -19,6 +19,10 @@ type t = {
       (** The steps (from 1) the game holds the player up a tile before, as
           FireRed does on a step onto a connected map: each makes a hold over it
           a tile longer. *)
+  slow_steps : int list;
+      (** The steps (from 1) the game moves the player slowly, as FireRed does
+          on rock stairs: each takes [slow_step_ms] instead of [tile_ms]. *)
+  slow_step_ms : int;
 }
 (** A straight leg, for a player standing still and facing its way. *)
 

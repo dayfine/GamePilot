@@ -73,8 +73,8 @@ let rule_cases : Case_table.case list =
     case "the party list the game opened: a switch-in"
       [ ({ f with party_list = true }, 100.) ]
       "switch-in";
-    case "a YES/NO with the player's box: a move to learn"
-      [ ({ text with yes_no = true }, 100.) ]
+    case "a YES/NO with the player's box beside it: a move to learn"
+      [ ({ text with yes_no = true; move_learn = true }, 100.) ]
       "move learn";
     case "a YES/NO with the player's box gone: use next"
       [ ({ f with yes_no = true; foe_box = true }, 100.) ]

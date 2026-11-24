@@ -4,7 +4,8 @@ val hold_ms : Leg_spec.t -> int -> int
 (** [hold_ms leg tiles]: how long to hold for the last [tiles] tiles of [leg].
     An open leg lets go half a tile before the last step would end, so the step
     under way finishes and no other starts; a leg to a wall is held two tiles
-    longer than it takes. Each stalled step among those tiles adds a tile. *)
+    longer than it takes. Each stalled step among those tiles adds a tile, each
+    slow step its extra time. *)
 
 val tiles_before_interrupt :
   Leg_spec.t -> elapsed_ms:int -> detection_delay_ms:int -> remaining:int -> int

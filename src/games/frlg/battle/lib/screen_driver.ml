@@ -151,9 +151,23 @@ let answer_stop_learning button ~then_ : Battle_driver.learned =
     then_)
   else Unread "no \"Stop learning?\" after the move list"
 
-(* B leaves the list; the game asks "Stop learning ...?". *)
-let leave_list button ~then_ =
+(* B leaves the list; the game asks "Stop learning ...?". A B the list does
+   not take (mGBA, Victory Road, mg-04 testing 14: one tap 1.5 s after the
+   list read, and the list stayed up for good) is tapped again while the list
+   still shows, at most [leave_list_taps] times: B on the list only leaves
+   it. *)
+let leave_list_taps = 3
+let list_left_ms = 1500
+
+let rec tap_off_list taps =
   tap_all [ Wire.B ];
+  if
+    taps > 1
+    && not (shows ~timeout_ms:list_left_ms (fun m -> not (move_list m)))
+  then tap_off_list (taps - 1)
+
+let leave_list button ~then_ =
+  tap_off_list leave_list_taps;
   answer_stop_learning button ~then_
 
 (* On the list, on its top row: down to [slot], A only with the cursor read

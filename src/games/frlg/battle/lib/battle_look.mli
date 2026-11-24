@@ -8,6 +8,8 @@ type facts = {
   text_box : bool;  (** the full-width teal text box *)
   level_up : bool;  (** the stats box after a level up *)
   player_box : bool;  (** the player's HP box *)
+  move_learn : bool;
+      (** a YES/NO with the player's HP box beside it: a move to learn *)
   foe_box : bool;  (** the foe's HP box *)
   party_list : bool;  (** the party list *)
   bag : bool;  (** the bag *)

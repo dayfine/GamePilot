@@ -183,7 +183,7 @@ let rec parse f = function
 
 let plan_suffix = ".plan.json"
 
-(* Checkpoint ids in the folder, in name order. *)
+(* Checkpoint ids in the folder, in run order ({!Story.Checkpoint_order}). *)
 let checkpoint_ids dir =
   match Sys.readdir dir with
   | names ->
@@ -191,7 +191,7 @@ let checkpoint_ids dir =
         (Array.to_list names
         |> List.filter (fun n -> Filename.check_suffix n plan_suffix)
         |> List.map (fun n -> Filename.chop_suffix n plan_suffix)
-        |> List.sort compare)
+        |> List.sort Story.Checkpoint_order.compare)
   | exception Sys_error e -> Error e
 
 let rec drop_until id = function

@@ -46,20 +46,27 @@ let turn_tap direction =
 let stalls (w : Frlg_steps.world) (step : _ Grid_planning.Leg.step) =
   step.connection && w.edge_stalls
 
-(* The tiles' time and the stalled steps (from 1) of [presses] presses from
-   the leg's start: a hop is two tiles, a step onto another map may stall. *)
+(* The step numbers (from 1) of a press's tiles that stall and that are slow:
+   a step onto another map may stall, a step on rock stairs is slow. *)
+let marks w place d (step : _ Grid_planning.Leg.step) tiles (stalled, slow) =
+  ( (if stalls w step then tiles :: stalled else stalled),
+    if Frlg_steps.slow_step w place d step.next then tiles :: slow else slow )
+
+(* The tiles' time and the stalled and slow steps of [presses] presses from
+   the leg's start: a hop is two tiles. *)
 let walked_tiles w (leg : Connected_maps.place Grid_planning.Leg.t) presses =
-  let rec go place i tiles stalled =
-    if i > presses then (tiles, List.rev stalled)
+  let d = leg.direction in
+  let rec go place i tiles ((stalled, slow) as marked) =
+    let finish extra = (tiles + extra, List.rev stalled, List.rev slow) in
+    if i > presses then finish 0
     else
-      match Frlg_steps.press w place leg.direction with
-      | None -> (tiles + presses - i + 1, List.rev stalled)
+      match Frlg_steps.press w place d with
+      | None -> finish (presses - i + 1)
       | Some step ->
-          let tiles = tiles + Frlg_steps.hop_tiles w place leg.direction in
-          let stalled = if stalls w step then tiles :: stalled else stalled in
-          go step.next (i + 1) tiles stalled
+          let tiles = tiles + Frlg_steps.hop_tiles w place d in
+          go step.next (i + 1) tiles (marks w place d step tiles marked)
   in
-  go leg.start 1 0 []
+  go leg.start 1 0 ([], [])
 
 let off_exit_mat (w : Frlg_steps.world) (place : Connected_maps.place) d =
   match Map_data.warp_at (Connected_maps.map w.maps place.map) place.tile with
@@ -71,7 +78,7 @@ let hold w gait ~facing (leg : Connected_maps.place Grid_planning.Leg.t) presses
   let map = Connected_maps.map w.Frlg_steps.maps leg.start.map in
   let running = gait = Running && map.allow_running in
   let gait = if running then mechanics.run else mechanics.walk in
-  let tiles, stalled_steps = walked_tiles w leg presses in
+  let tiles, stalled_steps, slow_steps = walked_tiles w leg presses in
   let spec =
     Grid_walker.Leg_spec.make ~to_wall
       ~tile_ms:(Move_mechanics.along gait.tile leg.direction)
@@ -79,7 +86,13 @@ let hold w gait ~facing (leg : Connected_maps.place Grid_planning.Leg.t) presses
   in
   Hold
     {
-      spec = { spec with stalled_steps };
+      spec =
+        {
+          spec with
+          stalled_steps;
+          slow_steps;
+          slow_step_ms = gait.slow_step_ms;
+        };
       running;
       warps = leg.warps;
       wild = leg.wild;
