@@ -105,6 +105,9 @@ let run ~log plan =
   let before = count_of plan.item in
   Bag_items.to_top ();
   rounds ~log plan;
+  ignore
+    (M.await_screen ~timeout_ms:wait_ms ~code:"no_bag"
+       "the bag after the rounds" (fun m -> Bag_screen.pocket m = Some Items));
   Bag_items.to_top ();
   let after = count_of plan.item in
   M.close "the bag" Bag_screen.bag_open;

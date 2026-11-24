@@ -168,10 +168,15 @@ let list_row slug =
   let _, candidates, name = pocket_names slug in
   find_from candidates name 0
 
+(* A list whose top row reads no name is not drawn yet (a fade back to the
+   bag): no count, rather than "not there" (mg-06 testing run 5 read 0 so). *)
 let count_in_pocket slug =
-  match list_row slug with
-  | None -> Some 0
-  | Some k -> count_on_row (shown_row k)
+  let _, candidates, _ = pocket_names slug in
+  if read_row candidates 0 = None then None
+  else
+    match list_row slug with
+    | None -> Some 0
+    | Some k -> count_on_row (shown_row k)
 
 let read_count ~log slug =
   open_pocket_top (pocket_of_item slug);

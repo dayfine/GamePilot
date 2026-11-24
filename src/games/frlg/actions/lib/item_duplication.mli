@@ -27,8 +27,9 @@
       within a frame, and the A the C++ presses as it sees it was dropped (mGBA,
       mg-06 testing run 4), so the fork's give wait
       ({!Party_actions.party_input_ms}) comes first.
-    - The item's count is read before and after the rounds, and must have gone
-      up by one per round (the C++ only counts its rounds). *)
+    - The item's count is read before and after the rounds (after them once the
+      pocket's arrows show again: the list redraws after the editor), and must
+      have gone up by one per round (the C++ only counts its rounds). *)
 
 val wait_ms : int
 (** Every wait of the C++'s loop: 4000. *)

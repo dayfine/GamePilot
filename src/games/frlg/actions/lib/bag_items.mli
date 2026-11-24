@@ -74,9 +74,9 @@ val list_row : string -> int option
 val count_in_pocket : string -> int option
 (** In the item's open pocket, from the list's top: its count, read on its row
     once the rows are read down to it ({!count_on_row}); [Some 0] when the
-    pocket does not hold it, [None] when its count does not read. The cursor
-    stays where the reading left it. Fails as [unknown_item] for no item's slug.
-*)
+    pocket does not hold it, [None] when its count does not read or the list's
+    top row reads no name (the list not drawn yet). The cursor stays where the
+    reading left it. Fails as [unknown_item] for no item's slug. *)
 
 val read_count : log:(string -> unit) -> string -> int option
 (** From the overworld: the item's pocket opened ({!open_pocket_top}),
