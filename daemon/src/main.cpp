@@ -2,7 +2,12 @@
 // backend.
 //
 //   gamepilot_daemon --backend mgba --mgba-port 47810 [--port 47900] [--log f]
-//   [--fast]
+//   [--fast | --speed S]
+//
+// --speed S steps mGBA S times its frame rate (0.25 to 16; the emulator must
+// not throttle itself: audio and video sync off). Presses, waits and the t_ms
+// of frames and batch_done stay in game time (protocol/v1/README.md, Clock
+// and frames), so a program runs the same at any speed.
 //   gamepilot_daemon --backend switch (--replay VIDEO | --capture DEVICE)
 //   [--serial PORT] [--viewport x,y,w,h] [--port 47900] [--log f]
 //   gamepilot_daemon --backend switch --serial PORT --board-check
@@ -90,7 +95,7 @@ extern "C" void on_signal(int) { g_stop.store(true); }
 int usage() {
   std::fputs(
       "usage: gamepilot_daemon --backend mgba --mgba-port N [--port 47900] "
-      "[--log FILE] [--fast]\n"
+      "[--log FILE] [--fast | --speed S]\n"
       "       gamepilot_daemon --backend switch (--replay VIDEO | --capture "
       "DEVICE) [--serial PORT] [--viewport x,y,w,h] [--port 47900] "
       "[--log FILE]\n"
@@ -130,6 +135,20 @@ bool parse_in_range(const char* text, long low, long high, long& value) {
   char* end = nullptr;
   value = std::strtol(text, &end, 10);
   return end != text && *end == '\0' && value >= low && value <= high;
+}
+
+// A lockstep speed: a number from 0.25 to 16.
+bool parse_speed(const char* text, double& speed) {
+  constexpr double kMinSpeed = 0.25;
+  constexpr double kMaxSpeed = 16;
+  char* end = nullptr;
+  const double value = std::strtod(text, &end);
+  if (end == text || *end != '\0' || !(value >= kMinSpeed) ||
+      !(value <= kMaxSpeed)) {
+    return false;
+  }
+  speed = value;
+  return true;
 }
 
 struct Flags {
@@ -298,6 +317,10 @@ bool parse_flags(int argc, char** argv, Flags& flags) {
       flags.hub = true;
     } else if (arg == "--fast") {
       flags.server.fast = true;
+    } else if (arg == "--speed" && has_value) {
+      if (!parse_speed(argv[++i], flags.server.speed)) {
+        return false;
+      }
     } else {
       return false;
     }
@@ -308,6 +331,10 @@ bool parse_flags(int argc, char** argv, Flags& flags) {
   backend_defaults(flags);
   if (flags.backend == "mgba") {
     return flags.mgba_port != 0;
+  }
+  // A live backend runs at its own rate.
+  if (flags.server.speed != 1) {
+    return false;
   }
   if (flags.backend == "view") {
     return valid_view_flags(flags);
@@ -323,6 +350,19 @@ bool parse_flags(int argc, char** argv, Flags& flags) {
     return flags.replay.empty() != flags.capture.empty();
   }
   return false;
+}
+
+// How the frames are paced, for the "listening" line.
+std::string pace_note(const gamepilot::ServerOptions& options) {
+  if (options.fast) {
+    return " (fast)";
+  }
+  if (options.speed == 1) {
+    return "";
+  }
+  char note[32];
+  std::snprintf(note, sizeof note, " (speed %gx)", options.speed);
+  return note;
 }
 
 // Serves until a signal; returns the exit status.
@@ -345,7 +385,7 @@ int serve(gamepilot::Backend& backend, const gamepilot::ServerOptions& options,
   }
   std::fprintf(stderr, "daemon: listening on 127.0.0.1:%u%s\n",
                static_cast<unsigned>(server.port()),
-               options.fast ? " (fast)" : "");
+               pace_note(options).c_str());
   try {
     server.run(g_stop);
     return 0;

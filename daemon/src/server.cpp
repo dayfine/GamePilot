@@ -38,6 +38,10 @@ Server::Server(Backend& backend, ServerOptions options, const Clock& clock)
       listener_(listen_local(options_.port)),
       schedule_(backend.info().frame_rate),
       keep_awake_(options_.keepawake, clock_.now_ms()) {
+  if (!(options_.speed > 0)) {
+    throw std::runtime_error("speed must be above 0");
+  }
+  game_zero_ms_ = clock_.now_ms();
   if (keep_awake_.on() && button_mask(keep_awake_.key()) == 0) {
     throw std::runtime_error("bad keep-awake key " + keep_awake_.key());
   }
@@ -175,8 +179,18 @@ void Server::run_live(const std::atomic<bool>& stop) {
   }
 }
 
+// Game time on a lockstep backend: the daemon clock when the server started
+// plus the frames stepped since at the backend's frame rate, so it runs
+// `speed` times as fast as the daemon clock and stops while the emulator
+// does.
+double Server::game_ms() const {
+  return game_zero_ms_ + static_cast<double>(frames_stepped_) * 1000.0 /
+                             backend_.info().frame_rate;
+}
+
 void Server::run_lockstep(const std::atomic<bool>& stop) {
-  const double frame_ms = 1000.0 / backend_.info().frame_rate;
+  const double frame_ms =
+      1000.0 / (backend_.info().frame_rate * options_.speed);
   double report_ms = clock_.now_ms();
   std::int64_t report_frames = 0;
   while (!stop.load()) {
@@ -236,9 +250,9 @@ void Server::step_frame() {
   const std::int64_t seq = backend_.step();
   frames_stepped_++;
   beat_ = ThreadBeat{"server", seq, clock_.now_ms()};
-  send_probe_results(seq, beat_.t_ms);
+  send_probe_results(seq, game_ms());
   for (const FinishedBatch& done : schedule_.take_finished(seq)) {
-    send_batch_done(done.batch_id, done.seq, clock_.now_ms());
+    send_batch_done(done.batch_id, done.seq, game_ms());
   }
 }
 

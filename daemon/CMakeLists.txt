@@ -126,7 +126,7 @@ gamepilot_warnings(press_latency)
 
 enable_testing()
 foreach(test board_session_test contracts_test input_lease_test keep_awake_test
-             probes_test
+             lockstep_speed_test probes_test
              run_history_test
              switch_backend_test
              switch_geometry_test view_source_test watch_test
