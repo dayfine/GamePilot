@@ -14,6 +14,7 @@ type t =
   | Cut_tree of Grid_maps.Direction.t
   | Verify_mail_glitch of Action_args.member
   | Pc_deposit of string list
+  | Pick_up_item of string
 
 let default_spin_batches = 25
 
@@ -67,6 +68,7 @@ let readers stocks =
       fun ~where a ->
         Pc_deposit (J.strings (where ^ "species") (J.field ~where "species" a))
     );
+    ("pick_up_item", fun ~where a -> Pick_up_item (J.string ~where "item" a));
   ]
 
 let names =
@@ -82,6 +84,7 @@ let names =
     "cut_tree";
     "verify_mail_glitch";
     "pc_deposit";
+    "pick_up_item";
   ]
 
 let decode stocks name args =
@@ -118,3 +121,4 @@ let to_string = function
   | Cut_tree d -> "cut the tree to the " ^ Grid_maps.Direction.name d
   | Verify_mail_glitch m -> "verify the mail glitch on " ^ member_text m
   | Pc_deposit l -> "deposit " ^ String.concat ", " l ^ " at the PC"
+  | Pick_up_item item -> "pick up " ^ item
