@@ -1,15 +1,17 @@
-(* gamepilot run <program> [--port N] [--state PATH]
+(* gamepilot run <program> [--port N] [--state PATH | --console]
    gamepilot replay <program> <wirelog>
    gamepilot checkpoint PLAN.json [flags] (Checkpoint_command)
    gamepilot checkpoints PLAN_DIR [flags] (Checkpoints_command)
    gamepilot status [--port N] (Status_command)
-   gamepilot runs [--runs-dir DIR] (Runs_command) *)
+   gamepilot runs [--runs-dir DIR] (Runs_command)
+   gamepilot switch-devices [--profile DIR] (Switch_devices) *)
 
 let usage =
   "usage:\n\
-  \  gamepilot run start_menu_poc [--port 47900] [--state PATH]\n\
+  \  gamepilot run start_menu_poc [--port 47900] [--state PATH | --console]\n\
   \  gamepilot replay start_menu_poc WIRELOG\n" ^ Checkpoint_command.usage
   ^ Checkpoints_command.usage ^ Status_command.usage ^ Runs_command.usage
+  ^ Switch_devices.usage
 
 let die msg =
   prerr_string msg;
@@ -22,15 +24,16 @@ let parse_run_flags args =
         match int_of_string_opt p with
         | Some p -> go p state rest
         | None -> die ("bad --port " ^ p ^ "\n" ^ usage))
-    | "--state" :: s :: rest -> go port s rest
+    | "--state" :: s :: rest -> go port (Some s) rest
+    | "--console" :: rest -> go port None rest
     | a :: _ -> die ("unknown argument " ^ a ^ "\n" ^ usage)
   in
-  go Live.default_port Start_menu_poc.default_state args
+  go Live.default_port (Some Start_menu_poc.default_state) args
 
 (* Runs the program under [handle]; prints the outcome line; returns the exit
    code. *)
 let run_program handle state =
-  match handle (Start_menu_poc.run ~state) with
+  match handle (Start_menu_poc.run ?state) with
   | outcome -> (
       print_endline (Start_menu_poc.describe outcome);
       match outcome with Start_menu_poc.Passed _ -> 0 | _ -> 1)
@@ -61,11 +64,12 @@ let () =
       exit_with (Checkpoint_command.live plan flags)
   | "status" :: flags -> exit_with (Status_command.main flags)
   | "runs" :: flags -> exit_with (Runs_command.main flags)
+  | "switch-devices" :: flags -> exit_with (Switch_devices.main flags)
   | "checkpoints" :: plan_dir :: flags ->
       exit_with (Checkpoints_command.main plan_dir flags)
   | "replay" :: "checkpoint" :: wirelog :: plan :: flags ->
       exit_with (Checkpoint_command.replay wirelog plan flags)
   | [ "replay"; "start_menu_poc"; wirelog ] ->
       let log = Replay.log_of_file wirelog in
-      exit (run_program (Replay.run log) Start_menu_poc.default_state)
+      exit (run_program (Replay.run log) (Some Start_menu_poc.default_state))
   | _ -> die usage

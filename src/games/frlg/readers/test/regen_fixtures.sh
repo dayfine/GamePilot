@@ -17,8 +17,8 @@
 #   sh games/frlg/readers/test/regen_fixtures.sh [screen|menus|battle ...]
 #
 # run from src/, with probe_images at $PROBE_IMAGES (default the repo's
-# daemon/build/probe_images). Switch captures use the fork's FRLG GAME_BOX as
-# the viewport; mGBA frames are the picture.
+# daemon/build/probe_images). Switch captures use the daemon's nso-gba viewport
+# (daemon/src/viewport.h, the fork's FRLG GAME_BOX); mGBA frames are the picture.
 #
 # To add a lab capture: copy the file byte-for-byte (no re-encode, no resize)
 # into images/<switch|mgba>/<folder named for what it shows or where it came
@@ -31,7 +31,7 @@ HERE=$(cd "$(dirname "$0")" && pwd)
 SRC=$(cd "$HERE/../../../.." && pwd)
 REPO=$(cd "$SRC/.." && pwd)
 PROBE_IMAGES=${PROBE_IMAGES:-$SRC/../daemon/build/probe_images}
-SWITCH_VIEWPORT=0.09375,0.00462963,0.8125,0.962963
+SWITCH_VIEWPORT=nso-gba
 WORK=$(mktemp -d)
 trap 'rm -rf "$WORK"' EXIT
 

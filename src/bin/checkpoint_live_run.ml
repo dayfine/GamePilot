@@ -14,7 +14,7 @@ type setup = {
   states : string;
   runs_dir : string;
   daemon : string;
-  mgba_port : int;
+  backend : Daemon_process.backend;
   common : Checkpoint_command.flags;
   mode : Checkpoint_trials.mode;
   policy : Checkpoint_trials.policy;
@@ -30,6 +30,8 @@ type checkpoint = {
   plan : Plan.t;
   end_at : Pose.grid option;
   start_state : string;
+      (** The save state it starts from on mGBA; on the Switch, the save the
+          console has loaded. *)
 }
 
 type outcome =
@@ -59,7 +61,10 @@ let save log what op =
 let options setup cp log : Frlg_story.Checkpoint_run.options =
   {
     (Checkpoint_command.options { setup.common with log_file = None }) with
-    state = Some cp.start_state;
+    state =
+      (match setup.backend with
+      | Mgba _ -> Some cp.start_state
+      | Switch _ -> None);
     log;
   }
 
@@ -116,8 +121,7 @@ let live setup cp ~progress record log (daemon : Daemon_process.t) =
         }
 
 let start_daemon setup record cp (port, watch) =
-  Daemon_process.start ?watch ~daemon:setup.daemon ~mgba_port:setup.mgba_port
-    ~port
+  Daemon_process.start ?watch ~daemon:setup.daemon ~backend:setup.backend ~port
     ~wire_log:(Run_record.path record "wire.jsonl")
     ~out_file:(Run_record.path record "daemon.out")
     ~checkpoint:cp.id ()

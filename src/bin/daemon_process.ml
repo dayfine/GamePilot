@@ -11,6 +11,18 @@ type t = {
   watch_port : int option;  (** the watch page's, as bound *)
 }
 
+(** What the daemon drives: mGBA through its bridge, or the Switch through the
+    controller board's serial port and the capture card (names as
+    [gamepilot switch-devices] prints them). *)
+type backend =
+  | Mgba of { port : int }
+  | Switch of { serial : string; capture : string }
+
+let backend_args = function
+  | Mgba { port } -> [ "--backend"; "mgba"; "--mgba-port"; string_of_int port ]
+  | Switch { serial; capture } ->
+      [ "--backend"; "switch"; "--serial"; serial; "--capture"; capture ]
+
 type watch = {
   listen : string;
       (** The address it binds: [127.0.0.1] unless the user opened it to the
@@ -96,22 +108,12 @@ let rec wait_ready t deadline =
     Unix.sleepf poll_interval_s;
     wait_ready t deadline)
 
-let start ?watch ~daemon ~mgba_port ~port ~wire_log ~out_file ~checkpoint () =
+let start ?watch ~daemon ~backend ~port ~wire_log ~out_file ~checkpoint () =
   let args =
-    Array.append
-      [|
-        daemon;
-        "--backend";
-        "mgba";
-        "--mgba-port";
-        string_of_int mgba_port;
-        "--port";
-        string_of_int port;
-        "--log";
-        wire_log;
-      |]
-      (Array.of_list
-         (watch_args ~checkpoint ~run_folder:(Filename.dirname out_file) watch))
+    Array.of_list
+      ((daemon :: backend_args backend)
+      @ [ "--port"; string_of_int port; "--log"; wire_log ]
+      @ watch_args ~checkpoint ~run_folder:(Filename.dirname out_file) watch)
   in
   let out =
     Unix.openfile out_file [ Unix.O_WRONLY; Unix.O_CREAT; Unix.O_TRUNC ] 0o644

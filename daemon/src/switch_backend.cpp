@@ -5,15 +5,8 @@
 
 namespace gamepilot {
 
-namespace {
-
-// How long queue_keys waits for acks to free the controller's window.
-constexpr double kAckWaitMs = 100;
-
-}  // namespace
-
 SwitchBackend::SwitchBackend(std::unique_ptr<FrameSource> source,
-                             Pabb2Controller& controller, const Clock& clock,
+                             BoardSession& controller, const Clock& clock,
                              SwitchOptions options)
     : source_(std::move(source)),
       controller_(controller),
@@ -65,15 +58,8 @@ std::optional<FrameStamp> SwitchBackend::next_frame(double timeout_ms) {
 
 void SwitchBackend::queue_keys(KeyMask mask, double ms) {
   const auto rounded = static_cast<std::uint32_t>(std::llround(ms));
-  const WiredState state = wired_state_for_keys(mask);
-  // The window frees as the board acks; give it that long.
-  const double deadline = clock_.now_ms() + kAckWaitMs;
-  while (!controller_.send_state(state, rounded)) {
-    if (clock_.now_ms() > deadline) {
-      throw BackendError("controller: the board acks nothing");
-    }
-    std::this_thread::sleep_for(std::chrono::milliseconds(1));
-  }
+  // Blocks while the board's command queue is full, as the C++ does.
+  controller_.send_state(pro_buttons_for_keys(mask), rounded);
 }
 
 void SwitchBackend::set_keys(KeyMask mask) {

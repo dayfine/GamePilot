@@ -15,21 +15,30 @@ The daemon holds the emulator in lockstep: before each frame it sends the frame'
 (`KEYS <seq> <mask>`), grants exactly one frame (`GRANT <seq+1>`), waits for it, and, while a probe is
 subscribed, reads that frame (`FRAME`) and sends one `frame` notification for it. Frames are paced to
 the backend's rate (59.7275 fps on the GBA); `--fast` steps as fast as the emulator goes. Everything
-runs on one thread: the client is served between frames.
+runs on one thread (the client is served between frames) except the watch page's stream encoder.
 
 ## The Switch backend
 
-    daemon/build/gamepilot_daemon --backend switch (--replay clip.avi | --capture DEVICE) \
-        [--viewport x,y,w,h] [--port 47900] [--log wire.jsonl]
+    daemon/build/gamepilot_daemon --backend switch (--replay clip.avi | --capture INDEX) \
+        [--serial PORT] [--viewport x,y,w,h] [--port 47900] [--log wire.jsonl]
+    daemon/build/gamepilot_daemon --backend switch --serial PORT --board-check
+    daemon/build/gamepilot_daemon --backend switch --capture INDEX --capture-check frame.png
 
 Live, not lockstep (a capture card cannot be paused): a capture thread reads frames at the source's
 rate, stamps each with a `seq` and the daemon clock, and pushes it into a bounded ring; the server
 thread probes each frame from the ring and hands timed key segments to the controller when they are
 due. A full ring drops its oldest frame, which the server counts as a gap. `--replay` plays a recorded
-video at its own frame rate; `--capture` opens a capture card through OpenCV (index or name; 1920x1080
-at 60 fps requested). The controller speaks CoreLib's PABotBase2 wire format (a wired controller state
-per press, in CoreLib-built packets), but for now to `FakeSwitch`, a fake board that acks every
-packet: the real board needs the session handshake first.
+video at its own frame rate; `--capture` opens a capture card through OpenCV (by index; 1920x1080 at
+60 fps requested). The GBA picture sits where `nso_gba_viewport()` (`src/viewport.h`) says: the one
+table from game pixels to the Switch frame, checked on the lab's captures.
+
+Inputs go to the PABotBase2 board on `--serial` (`src/board_session.h`): the session starts as the C++
+app starts it (DTR/RTS, the baud scan with resets, the link's version, packet size and buffer slots,
+then the board's queries), checks the board already runs NS1 Wired Pro Controller (the lab app's
+mode; it fails otherwise and never changes the mode), sends each state as a Pro Controller report
+through the board's command queue and asks its status once a second. Without `--serial` they go to `FakeSwitch`, a fake board that answers the same handshake.
+`--board-check` only starts the session (checking the mode) and prints what the board said; `--capture-check` saves one
+frame and checks the picture's geometry. First session on the console: `docs/switch-bring-up.md`.
 
 `status` (contracts v1.5) reports each thread's heartbeat, the ring, gaps, the client and the
 fidelity, also to a second connection while a program is connected; `gamepilot status` prints it and
@@ -38,6 +47,8 @@ marks a thread stuck when its heartbeat is over 2 s old.
 `press_latency --fake [--response-ms 50] [--fps 60] [--presses 20]` is the latency harness: it
 presses a button and times the first captured frame that changes. On `FakeSwitch` the screen turns
 bright `response-ms` after a press starts, so it should report that plus up to one frame.
+`press_latency --serial PORT --capture INDEX` runs it on the console (100 Start presses in the FRLG
+overworld) and passes when nothing is missed and p99 - median is under 50 ms.
 
 `daemon/tools/smoke_client.py --state <file.ss>` drives a running daemon: load a state, subscribe a
 `core.color_stats@1` box on the FireRed start menu, press Start, then B, and print the numbers.
@@ -45,11 +56,13 @@ bright `response-ms` after a press starts, so it should report that plus up to o
 ## The watch page
 
     gamepilot_daemon ... [--watch-port 47901] [--listen 127.0.0.1] [--watch-token T]
-        [--registry DIR] [--checkpoint ID] [--run-folder DIR]
+        [--registry DIR] [--checkpoint ID] [--run-folder DIR] [--stream-fps 30] [--stream-width 1280]
     gamepilot_daemon --hub --registry DIR [--watch-port 47901] [--listen 127.0.0.1]
 
 Either of the first two flags turns on the watch page (`docs/design/Watch-Page.md`): `http://127.0.0.1:47901/` shows
-the frame (a downscaled JPEG, at most 5 per second, only while a page asks) with the subscribed probe
+the live frame (an MJPEG stream, `/stream`, at most 30 frames a second, `--stream-fps`; a capture
+card's frame scaled to 1280 wide, `--stream-width`; encoded on a thread of its own and only while a
+viewer is connected; `/frame`, polled, when the stream fails) with the subscribed probe
 boxes and their results, the program's plan and log (`watch.plan`, `watch.log`, contracts v1.6) and
 its chain of checkpoints (`watch.run`, v1.7), the `status` health (a heartbeat over 2 s old is red), and Stop: it releases every button and sends
 the program `stop`. `--listen 0.0.0.0` opens it to the network, which the daemon says when it starts.
@@ -59,7 +72,8 @@ this machine carries it, another machine's viewer needs `?token=` in the URL. Wi
 daemon lists its page there (`<pid>.json`, removed on exit) for the hub: `--hub` serves the list of
 live runs (`watch/hub.html`) in a session of its own, and exits at once when its port is taken.
 The page is `watch/watch.html`, compiled in. The 10 s rate line on mGBA adds what the page costs
-(frames sent, ms spent). `gamepilot checkpoints --watch` starts the runner's daemons with it.
+the frame loop (stream viewers, frames polled, ms spent); the stream prints its own 10 s line
+(encodes/s, ms and bytes a frame, the slowest viewer's frames/s). `gamepilot checkpoints --watch` starts the runner's daemons with it.
 
 ## Probing saved images
 
@@ -100,7 +114,9 @@ picture whole and at 2x inside side bars give the same results.
 | `src/switch_backend.*` | the Switch: capture thread, ring reader, controller |
 | `src/video_capture.*` | frame sources: capture card and video replay (OpenCV `VideoCapture`) |
 | `src/frame_ring.*` | the bounded ring between the capture and server threads |
-| `src/switch_controller.*` | GBA keys to wired controller states, sent in CoreLib's PABotBase2 packets |
+| `src/switch_controller.*` | GBA keys to Pro Controller button reports (CoreLib's PABotBase2 message) |
+| `src/board_session.*` | the board's session as the C++ app starts it, on CoreLib's link and device handle |
+| `src/switch_geometry.*` | whether a capture shows the GBA picture where the viewport says |
 | `src/live_schedule.*` | command batches to key segments in wall time (live backends) |
 | `src/fake_switch.*` | a fake controller board and screen, for tests, the harness and console-free runs |
 | `src/press_latency*` | the latency harness and its `press_latency` command |

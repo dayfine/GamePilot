@@ -27,6 +27,10 @@ class Socket {
 
   // Writes all of `data`; returns false if the peer is gone.
   bool send_all(const std::string& data);
+  // Writes what the socket takes now of `size` bytes at `data` (on a
+  // non-blocking socket: 0 when its buffer is full). Empty optional = the
+  // peer is gone.
+  std::optional<std::size_t> send_some(const char* data, std::size_t size);
   // Reads what is available (blocks if nothing is). Empty optional = closed or
   // error.
   std::optional<std::string> receive_some();
@@ -52,6 +56,8 @@ bool peer_is_loopback(const Socket& socket);
 // Makes a send on the socket give up after `ms` instead of blocking for as
 // long as the peer does not read.
 void set_send_timeout(const Socket& socket, int ms);
+// Makes sends and receives on the socket return at once instead of waiting.
+void set_nonblocking(const Socket& socket);
 // Accepts one pending connection (call after poll says the listener is
 // readable).
 Socket accept_client(const Socket& listener);

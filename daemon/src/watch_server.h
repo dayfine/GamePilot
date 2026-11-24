@@ -4,7 +4,10 @@
 // sockets with the program's and calls `serve`.
 //
 //   GET  /           the page (watch/watch.html, compiled in)
-//   GET  /frame      the current frame, PNG or JPEG (hooks.frame)
+//   GET  /stream?w=W the live frame as MJPEG, up to W pixels wide
+//                    (frame_stream.h); view-only, like the page
+//   GET  /frame      the current frame, PNG or JPEG (hooks.frame): the page's
+//                    fallback when the stream fails
 //   GET  /events     the event stream: `info` (the backend, as `hello` gives
 //                    it), `run`, `plan`, `log` (the backlog, then each line),
 //                    `probes` and `status`; a new viewer gets the latest of
@@ -30,6 +33,7 @@
 #include <string_view>
 #include <vector>
 
+#include "frame_stream.h"
 #include "http.h"
 #include "net.h"
 
@@ -67,7 +71,8 @@ constexpr int kWatchSendTimeoutMs = 100;
 class WatchServer {
  public:
   // Throws std::runtime_error when it cannot listen.
-  WatchServer(const WatchOptions& options, WatchHooks hooks);
+  WatchServer(const WatchOptions& options, WatchHooks hooks,
+              StreamOptions stream = {});
 
   std::uint16_t port() const { return local_port(listener_); }
   const std::string& token() const { return token_; }
@@ -75,6 +80,9 @@ class WatchServer {
   // The sockets to poll; `serve` takes the flags poll gave for them.
   std::vector<const Socket*> sockets() const;
   void serve(const std::vector<bool>& readable);
+
+  // The live frame's stream: the frame loop offers it frames.
+  FrameStream& stream() { return stream_; }
 
   // Whether a page has the event stream open.
   bool has_viewers() const;
@@ -102,6 +110,7 @@ class WatchServer {
   void read(Connection& connection);
   void respond(Connection& connection, const HttpRequest& request);
   void start_stream(Connection& connection);
+  void start_frame_stream(Connection& connection, const HttpRequest& request);
   void stop(Connection& connection, const HttpRequest& request);
   void send(Connection& connection, const std::string& data);
 
@@ -115,6 +124,8 @@ class WatchServer {
   std::string probes_;
   std::deque<std::string> log_;
   bool joined_ = false;
+  StreamOptions stream_options_;
+  FrameStream stream_;
 };
 
 // The page, compiled in from watch/watch.html (watch_page.cpp is generated).

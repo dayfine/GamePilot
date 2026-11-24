@@ -8,6 +8,15 @@
 
 namespace gamepilot {
 
+Viewport nso_gba_viewport() {
+  // The fork's FRLG GAME_BOX as written (1560 x 1040 at (180, 5) of 1920 x
+  // 1080, to 1e-6); the reader fixtures are probed with exactly these numbers.
+  constexpr Box kGameBox{0.09375, 0.00462963, 0.8125, 0.962963};
+  constexpr int kGbaWidth = 240;
+  constexpr int kGbaHeight = 160;
+  return Viewport{kGameBox, kGbaWidth, kGbaHeight};
+}
+
 bool is_unit_box(const Box& box) {
   constexpr double kSlack = 1e-9;  // x + w of a box ending at 1, in floats
   return box.x >= 0 && box.y >= 0 && box.w > 0 && box.h > 0 &&
