@@ -66,10 +66,20 @@ needs (Abra in mg-01, Spearow in mg-02: two). The party is read on each member's
 or NOT READ stops it. A full party names the members to deposit (Room_policy: never one the plans
 use, the lead, one that knows Cut, Fly, Surf or Strength, or the only one knowing a move the plans
 need; the lowest level first; never a release). For console B's save (Blastoise 59, Eevee 25,
-Pidgey 24, Oddish 12, Lapras 25, Magikarp 5) that is Eevee and Magikarp. The deposit itself is
-the `pc_deposit` game action (`{"species": ["eevee", "magikarp"]}`, facing a Center's PC at
-(11, 2)), tested on mGBA; `--make-room` does not run it yet, so for now walk to a Center's PC and
-run a one-event plan with it, then save. The first run has no kept frame, so the place reads NOT
+Pidgey 24, Oddish 12, Lapras 25, Magikarp 5) that is Eevee and Magikarp. With `--make-room MAP` (MAP: the
+save's map, `PalletTown` for console B) the runner deposits them itself, as the generated
+checkpoint mg-00 before the chain: it reads the summaries, Flies to the Center nearest MAP on the
+fly map (Viridian from Pallet, which has none), walks to the PC, deposits with `pc_deposit`
+(members found by species; A only on BILL'S PC, DEPOSIT POKéMON and STORE, read first), and walks
+out to the Fly landing. Its end check re-reads the party (the members left, in order, so the free
+slots) and that a member still knows each needed field move; a pass is saved like any checkpoint.
+The script skips the pre-flight with `--make-room` (its room row would stop the run mg-00 is
+there for):
+
+    sh tools/run_checkpoints_on_switch.sh src/games/frlg/programs/mail_glitch/plans \
+        --from mg-01 --to mg-01 --make-room PalletTown
+
+The first run has no kept frame, so the place reads NOT
 READ until a pass keeps one.
 
 **7. First checkpoint.** The policy on the Switch: each checkpoint runs once (`--runs 1`) from

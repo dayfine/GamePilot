@@ -43,6 +43,12 @@
    party for the Switch's start check when no checkpoint before it promises
    one.
 
+   --make-room MAP (MAP: the save's map, e.g. PalletTown) reads the party's
+   summaries first and, when the chain from --from needs free slots it has not
+   got, runs the generated checkpoint mg-00 before it: Fly to the nearest
+   Center, the deposit the room policy picks, out to the Fly landing
+   (Make_room_command, Frlg_story.Make_room).
+
    --preflight --from ID reads, from the save, what checkpoint ID's plan needs
    and prints a table (Preflight_command); exit 1 on a mismatch.
 
@@ -76,6 +82,7 @@ type flags = {
   replay : string option;  (** A recorded video for a dry run (fake board). *)
   save_after_pass : bool;  (** Switch: save in the game after a pass. *)
   preflight : bool;
+  make_room : string option;  (** The save's map: room first (mg-00). *)
   common : Checkpoint_command.flags;
   watch : Daemon_process.watch option;
 }
@@ -89,6 +96,7 @@ let usage =
   \      [--end-check-only] [--grind-battles N] [--watch] [--watch-port N]\n\
   \      [--listen ADDR] [--backend mgba|switch --serial PORT --capture DEVICE]\n\
   \      [--replay VIDEO] [--save-after-pass|--no-save-after-pass]\n\
+  \      [--make-room MAP]\n\
   \  gamepilot checkpoints PLAN_DIR --preflight --from ID [--backend ...]\n"
 
 let home = Option.value (Sys.getenv_opt "HOME") ~default:"."
@@ -119,6 +127,7 @@ let defaults =
     replay = None;
     save_after_pass = true;
     preflight = false;
+    make_room = None;
     common = { Checkpoint_command.defaults with port = 0 };
     watch = None;
   }
@@ -162,6 +171,7 @@ let valued f name v =
       | Some n when n > 0 ->
           Some (Ok (common_flag f (fun c -> { c with grind_cap = Some n })))
       | _ -> Some (Error ("bad --grind-battles " ^ v)))
+  | "--make-room" -> Some (Ok { f with make_room = Some v })
   | "--center" ->
       Some (Ok (common_flag f (fun c -> { c with center = Some v })))
   | _ -> None
@@ -239,6 +249,10 @@ let run_series plan_dir f =
   let* to_id = required "--to" f.to_id in
   let* mode = required "--mode" f.mode in
   let* backend = daemon_backend f mode in
+  let* plan_dir, from_id =
+    Make_room_command.with_room ~plan_dir ~from_id f.make_room
+      { states = f.states; runs_dir = f.runs_dir; daemon = f.daemon; backend }
+  in
   let* policy = Checkpoint_trials.policy ?runs:f.runs mode in
   let* ids = Plan_dir.checkpoint_ids plan_dir in
   let* selected, after = Plan_dir.select ids ~from_id ~to_id in
