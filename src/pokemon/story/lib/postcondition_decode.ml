@@ -2,11 +2,21 @@ open Grid_maps
 module F = Json_field
 open Plan_fields
 
-let money ~where obj : Plan.money =
-  only ~where [ "min"; "max" ] obj;
+let money_range ~where obj : Plan.money =
   let min = F.int ~where "min" obj and max = F.int ~where "max" obj in
   if min > max then F.fail "%smin %d is above max %d." where min max;
-  { min; max }
+  Money_range { min; max }
+
+(* [where] ends in "money.": the error names the object. *)
+let money ~where obj : Plan.money =
+  only ~where [ "min"; "max"; "spent" ] obj;
+  let money = String.sub where 0 (String.length where - 1) in
+  let range = F.has "min" obj || F.has "max" obj in
+  match (F.has "spent" obj, range) with
+  | true, true -> F.fail "%s: give min and max, or spent, not both." money
+  | true, false -> Money_spent (F.int ~where "spent" obj)
+  | false, true -> money_range ~where obj
+  | false, false -> F.fail "%s: give min and max, or spent." money
 
 let knows ~where obj : Plan.knows =
   only ~where [ "species"; "moves" ] obj;

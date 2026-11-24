@@ -150,6 +150,6 @@
   "metadata": {
     "phase": "testing",
     "notes": "Spec docs/mail-glitch-use.md (PR #52) and the user's decisions there. Starts from the fork's tested mg-05 mGBA save (Route 16 (30, 6), MIMIEN holding the recycled Leppa Berry, mail index 0, record 0 = ABRA). Bag at the start: Retro Mail 1, Antidote 2; $20,788. Retro Mail: 1 + 8 - 5 - 1 - 1 = 2. Antidote: 2 - 1 given to MIMIEN + 1 duplicated = 2 in the bag (3 in all).",
-    "postconditions": {"party_includes": ["pidgey"], "party_slots": [{"slot": 1, "species": "mr-mime"}], "items": [{"item": "antidote", "quantity": 2}, {"item": "retro-mail", "quantity": 2}], "money": {"min": 20388, "max": 20388}}
+    "postconditions": {"party_includes": ["pidgey"], "party_slots": [{"slot": 1, "species": "mr-mime"}], "items": [{"item": "antidote", "quantity": 2}, {"item": "retro-mail", "quantity": 2}], "money": {"spent": 400}}
   }
 }

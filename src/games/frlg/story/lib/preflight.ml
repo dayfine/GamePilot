@@ -179,7 +179,7 @@ let to_read needs : P.postconditions =
        else None);
     items = List.map (fun item -> { P.item; quantity = 0 }) items;
     coins = None;
-    money = (if money then Some { P.min = 0; max = 0 } else None);
+    money = (if money then Some (P.Money_range { min = 0; max = 0 }) else None);
     flags = [];
     knows = [];
     levels = [];

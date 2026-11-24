@@ -129,9 +129,15 @@ let console_after setup cp log (outcome, kind) =
   | Ok () -> outcome
   | Error reason -> Failed { at = "save"; reason; repeats = true }
 
-let save_failure log path =
-  save log "failure.png" (fun () -> Effects.save_frame (path "failure.png"));
-  save log "failure.ss" (fun () -> Effects.save_state (path "failure.ss"))
+let save_op path file : Run_record.save -> unit -> int = function
+  | Frame -> fun () -> Effects.save_frame (path file)
+  | State -> fun () -> Effects.save_state (path file)
+
+(* The frame, and the state where the backend keeps states (not the Switch). *)
+let save_failure log path ~save_states =
+  List.iter
+    (fun (file, kind) -> save log file (save_op path file kind))
+    (Run_record.failure_saves ~save_states)
 
 (* In the session: the chain before and after this run, the checkpoint, then
    the outcome's saves. Each run has its own daemon, so each sends the chain
@@ -139,7 +145,7 @@ let save_failure log path =
 let emulator_run setup cp log path =
   let outcome, _ = checkpoint_outcome setup cp log in
   (match outcome with
-  | Failed _ -> save_failure log path
+  | Failed _ -> save_failure log path ~save_states:true
   | Passed when setup.policy.keeps_end ->
       save log "end.ss" (fun () -> Effects.save_state (path "end.ss"))
   | Passed -> ());
@@ -147,7 +153,9 @@ let emulator_run setup cp log path =
 
 let switch_run setup cp log path =
   let ((outcome, _) as ended) = console_run setup cp log in
-  (match outcome with Failed _ -> save_failure log path | Passed -> ());
+  (match outcome with
+  | Failed _ -> save_failure log path ~save_states:false
+  | Passed -> ());
   console_after setup cp log ended
 
 let in_session setup cp ~progress record log () =

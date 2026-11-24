@@ -207,4 +207,20 @@ let verdicts =
              |> fun l -> Yojson.Safe.to_string (`List l))
            expect)
 
-let () = Table_test.run "run_record" (paths @ names @ files @ facts @ verdicts)
+(* What a failed run saves: the state only where the backend keeps states. *)
+let failure_saves =
+  let saved save_states =
+    String.concat " " (List.map fst (R.failure_saves ~save_states))
+  in
+  [
+    case "a failure on mGBA: its frame and its state"
+      (fun () -> saved true)
+      "failure.png failure.ss";
+    case "a failure on the Switch: its frame only (no save states)"
+      (fun () -> saved false)
+      "failure.png";
+  ]
+
+let () =
+  Table_test.run "run_record"
+    (paths @ names @ files @ facts @ verdicts @ failure_saves)
