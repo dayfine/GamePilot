@@ -1,4 +1,4 @@
-(** Wire protocol v1.6 (contracts/v1): message types and their JSON codec.
+(** Wire protocol v1.9 (contracts/v1): message types and their JSON codec.
 
     The codec lives in one module per message family ([Command], [Probe],
     [Backend], [Jsonrpc], [Wire_log], [Probe_images]); this module re-exports

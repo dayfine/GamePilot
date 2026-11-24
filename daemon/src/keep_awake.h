@@ -4,7 +4,7 @@
 // the input lease (input_lease.h), nor within `idle_ms` of a client's submit,
 // so it cannot land inside a program's or a person's input. It
 // replaces a second client that pressed B (gp_keepawake.py), which the
-// daemon's one-client rule locked out.
+// daemon's old one-client rule locked out.
 //
 // The rule is here, the press is the server's: it asks `due` each loop pass
 // and, when it says yes, submits the press and calls `pressed`.
