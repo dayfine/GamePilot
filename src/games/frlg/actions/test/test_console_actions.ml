@@ -29,7 +29,8 @@ let combo (p : S.press) = List.length p.buttons = 4
 (* The reset shows black, then the title once the intro is past; A on the
    title shows the load menu; A on it (CONTINUE) black, then the recap; three
    B on the recap the overworld. [ignored] resets are not taken. *)
-let game ?(ignored = 0) ?(menu_on_save = false) ?(title_answers = true) () =
+let game ?(ignored = 0) ?(menu_on_save = false) ?(title_answers = true)
+    ?(black_after_ms = 200) () =
   let resets = ref 0 and recap_b = ref 0 in
   fun screen (p : S.press) ->
     let show d s = S.show screen ~at_ms:(p.at_ms + d) s in
@@ -44,8 +45,8 @@ let game ?(ignored = 0) ?(menu_on_save = false) ?(title_answers = true) () =
     | [ Wire.A ], S.Start_menu _ -> show 100 S.Question
     | [ Wire.A ], S.Title when title_answers -> show 600 S.Load_menu
     | [ Wire.A ], S.Load_menu ->
-        show 200 S.Black;
-        show 1500 S.Recap
+        show black_after_ms S.Black;
+        show (black_after_ms + 1300) S.Recap
     | [ Wire.B ], S.Recap ->
         incr recap_b;
         if !recap_b = 3 then show 300 S.Overworld
@@ -58,6 +59,9 @@ let reset_cases =
     ( "soft reset: the combo, SELECT through the intro, A at the title, \
        CONTINUE, B over the recap, the overworld",
       (fun () -> reset (game ())),
+      "ok; A+B+Select+Start 360, Select x15, A x3, B x14; ends on overworld" );
+    ( "soft reset: console B's CONTINUE goes black after 3.6 s (2026-11-23)",
+      (fun () -> reset (game ~black_after_ms:3600 ())),
       "ok; A+B+Select+Start 360, Select x15, A x3, B x14; ends on overworld" );
     ( "soft reset: a reset the game missed is tried again",
       (fun () -> reset (game ~ignored:1 ())),
