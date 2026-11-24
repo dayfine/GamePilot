@@ -12,8 +12,9 @@
     - ["read_glitched_mail"], args ["species"] or ["target_slot"], ["word"]:
       Retro Mail given to the member (as {!Party_actions.give} until the switch
       question, answered YES), the editor's field 1 read
-      ({!Frlg_text.Mail_fields}), and only if it reads ["word"], PLUS and YES
-      (the C++ ItemDuplication's exit) back to the bag, closed. Fails as
+      ({!Frlg_text.Mail_fields}, that frame kept in the run folder as
+      [proof-a.png]), and only if it reads ["word"], PLUS and YES (the C++
+      ItemDuplication's exit) back to the bag, closed. Fails as
       [mail_glitch_not_active] without confirming anything. Not in the fork.
     - ["move_item_to_top"], args ["item"]: in the item's pocket, SELECT on it,
       UP to the list's top (counted: the cursor hides while the item moves),

@@ -147,7 +147,8 @@ let in_session setup cp ~progress record log () =
 
 let live setup cp ~progress record log (daemon : Daemon_process.t) =
   match
-    Live.run ~port:daemon.port (in_session setup cp ~progress record log)
+    Effects.with_run_folder record.Run_record.dir (fun () ->
+        Live.run ~port:daemon.port (in_session setup cp ~progress record log))
   with
   | outcome -> outcome
   | exception Effects.Disconnected e ->

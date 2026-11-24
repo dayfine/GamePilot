@@ -15,6 +15,8 @@
                      pre-flight: its table, then the verdict)
        KEEP          on a failing run, so the disk GC keeps it
        failure.png   the frame at the failure (failure.ss its save state, mGBA)
+       proof-*.png   frames a step kept where it judged them
+                     (Effects.save_run_frame: the Mail Glitch's proofs)
        story.log, wire.jsonl, daemon.out, end.ss, daemon.json, frames/, ...
      RESULTS.tsv     one row per finished run, across all runs
 

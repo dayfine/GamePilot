@@ -44,6 +44,22 @@ let show_log line = Effect.perform (Show_log line)
 let show_run run = Effect.perform (Show_run run)
 let probe (m : measurements) id = List.assoc_opt id m.probes
 
+(* The folder of the run on this domain, if it keeps one. *)
+let run_folder = Domain.DLS.new_key (fun () -> None)
+
+let with_run_folder dir f =
+  let outer = Domain.DLS.get run_folder in
+  Domain.DLS.set run_folder (Some dir);
+  Fun.protect ~finally:(fun () -> Domain.DLS.set run_folder outer) f
+
+let save_run_frame name =
+  match Domain.DLS.get run_folder with
+  | None -> ()
+  | Some dir -> (
+      match save_frame (Filename.concat dir name) with
+      | (_ : int) -> ()
+      | exception Rpc_error _ -> ())
+
 (* The probe ids the [with_probes] calls running on this domain subscribed:
    an inner call leaves the ones an outer call holds to it. *)
 let held_ids = Domain.DLS.new_key (fun () -> [])
