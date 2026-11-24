@@ -8,12 +8,14 @@ let band : Wire.rgb = { r = 0.270; g = 0.338; b = 0.392 }
 let max_distance = 0.08
 let max_stddev_sum = 20.
 
-(* The list window's border columns at x 86 and 232, from y 16 (its upper
-   half: a menu or message lower down does not cover it); the band at y 4. *)
+(* The list window's border columns, two pixels wide at x 86-87 and 232-233,
+   sampled across their middle (a Switch capture blurs their outer edges),
+   from y 16 (its upper half: a menu or message lower down does not cover
+   it); the band at y 4. *)
 let boxes : (string * Wire.box * Wire.rgb) list =
   [
-    (left_id, Game_pixels.box { x = 86.; y = 16.; w = 1.; h = 40. }, border);
-    (right_id, Game_pixels.box { x = 232.; y = 16.; w = 1.; h = 40. }, border);
+    (left_id, Game_pixels.box { x = 86.5; y = 16.; w = 1.; h = 40. }, border);
+    (right_id, Game_pixels.box { x = 232.5; y = 16.; w = 1.; h = 40. }, border);
     (band_id, Game_pixels.box { x = 10.; y = 4.; w = 70.; h = 2. }, band);
   ]
 

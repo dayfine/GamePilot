@@ -57,6 +57,13 @@ let observe ~log expected =
 
 let frame_file ~states id = Filename.concat states (id ^ ".start.frame.json")
 
+let start_file ~states = function
+  | Some (Story.Pose.Grid { map; tiles = { x; y } :: _; _ }) ->
+      Some
+        (Filename.concat states
+           (Printf.sprintf "%s.%d_%d.start.frame.json" map x y))
+  | Some (Grid { tiles = []; _ } | Zone _) | None -> None
+
 let load_frame path =
   if not (Sys.file_exists path) then Ok None
   else

@@ -86,3 +86,4 @@ clt PokemonFRLG/SummaryMovesReader/Skills_eng.png|SummaryMovesReader/Skills_eng_
 clt@5ea4c10bc1ef518a69395f12d6c53207a7f8a75c PokemonFRLG/AutoStoryBattle/SilphCo_GiovanniLeadFainted_True.png|AutoStoryBattle/SilphCo_GiovanniLeadFainted_True__party-slot1.png
 clt PokemonFRLG/TeachScreenReader/KnownMoves_eng.png|TeachScreenReader/KnownMoves_eng__summary3-moverow0.png
 repo src/games/frlg/readers/test/images/switch/tmcase/12-forget-move-list.png|captures/tmcase-12-forget-move-list__summary3-moverow0.png
+repo src/games/frlg/readers/test/images/switch/console-b-20261124/pouch-leppa.png|console-b-20261124/pouch-leppa__pouch.png

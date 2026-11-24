@@ -2,6 +2,7 @@ type summary = {
   menus : int;
   send_ins : int;
   refusals : int;
+  switches_refused : int;
   prompts : int;
   learned : string list;
   unread : int;
@@ -14,6 +15,7 @@ type progress = {
   opening : Battle_script.command list;
   fallback : Battle_script.fallback;
   send_ins : Battle_script.send_in list;
+  switch_refused : Battle_script.fallback option;
   refused : int list;  (** move slots the game turned down *)
   summary : summary;
 }
@@ -30,13 +32,22 @@ let move_failed p ~slot : Battle_driver.move_result -> next = function
   | Other_move name -> fail p "move slot %d holds %s" slot name
   | Not_done why -> fail p "move %d: %s" slot why
 
+(* The game turned the switch down: the script's fallback for that from here,
+   or the end. *)
+let switch_refused p ~slot =
+  match p.switch_refused with
+  | None -> fail p "the switch to slot %d was refused" slot
+  | Some fallback ->
+      let s = p.summary in
+      let summary = { s with switches_refused = s.switches_refused + 1 } in
+      Continue { p with opening = []; fallback; summary }
+
 let command (driver : Battle_driver.t) p : Battle_script.command -> next =
   function
   | Move { slot; target; name } ->
       move_failed p ~slot (driver.use_move ~slot ~target ~expect:name)
   | Switch slot ->
-      if driver.switch_to ~slot then Continue p
-      else fail p "the switch to slot %d was refused" slot
+      if driver.switch_to ~slot then Continue p else switch_refused p ~slot
   | Item item ->
       if driver.use_item item then Continue p
       else fail p "the item in row %d was not used" item.row
@@ -131,6 +142,7 @@ let empty_summary =
     menus = 0;
     send_ins = 0;
     refusals = 0;
+    switches_refused = 0;
     prompts = 0;
     learned = [];
     unread = 0;
@@ -150,16 +162,19 @@ let run ?(log = ignore) (driver : Battle_driver.t) (script : Battle_script.t) =
       opening = script.opening;
       fallback = script.fallback;
       send_ins = script.send_ins;
+      switch_refused = script.switch_refused;
       refused = [];
       summary = empty_summary;
     }
 
 let describe_summary s =
-  Printf.sprintf "%d menus, %d send-ins, %d refused, %d prompts%s" s.menus
+  Printf.sprintf "%d menus, %d send-ins, %d refused, %d prompts%s%s" s.menus
     s.send_ins s.refusals s.prompts
     (match s.learned with
     | [] -> ""
     | moves -> ", learned " ^ String.concat " " (List.rev moves))
+    (if s.switches_refused = 0 then ""
+     else Printf.sprintf ", %d switch refused" s.switches_refused)
 
 let describe = function
   | Over s -> "over (" ^ describe_summary s ^ ")"

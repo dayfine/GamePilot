@@ -158,6 +158,7 @@ let battle_script t =
   in
   B.Battle_script.make ~opening
     ~send_ins:[ { slot = sweeper_slot; then_ = None } ]
+    ~switch_refused:Flee
     ~learn:(Forget_for { move = t.goal.learn_move; slot = t.goal.learn_slot })
     (Attack { slots = t.sweeper_moves; target = Default })
 

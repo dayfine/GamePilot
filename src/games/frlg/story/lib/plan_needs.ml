@@ -29,7 +29,7 @@ type acc = {
   brought : string list;
   money : (int * string) list;
   items : (string * string) list;  (** needed, one per use *)
-  bought : (string * int) list;
+  bought : (string * int) list;  (** bought or picked up, not yet used *)
   knows : (string * string) list;  (** field move, action; newest first *)
 }
 
@@ -61,6 +61,13 @@ let use_item action acc item =
       { acc with bought = (item, n - 1) :: List.remove_assoc item acc.bought }
   | _ -> { acc with items = (item, action) :: acc.items }
 
+let gain acc (item, quantity) =
+  let had = Option.value (List.assoc_opt item acc.bought) ~default:0 in
+  {
+    acc with
+    bought = (item, had + quantity) :: List.remove_assoc item acc.bought;
+  }
+
 let mart stocks ~where args acc =
   let t = A.Mart_plan.of_args stocks ~where args in
   let stock = Option.value (A.Mart_plan.stock stocks t.map) ~default:[] in
@@ -68,15 +75,10 @@ let mart stocks ~where args acc =
   let cost =
     List.fold_left (fun s (b : A.Mart_plan.buy) -> s + b.cost) 0 buys
   in
-  let add bought (l : A.Mart_plan.line) =
-    let had = Option.value (List.assoc_opt l.line_item bought) ~default:0 in
-    (l.line_item, had + l.quantity) :: List.remove_assoc l.line_item bought
+  let lines =
+    List.map (fun (l : A.Mart_plan.line) -> (l.line_item, l.quantity)) t.lines
   in
-  {
-    acc with
-    money = (cost, "mart") :: acc.money;
-    bought = List.fold_left add acc.bought t.lines;
-  }
+  List.fold_left gain { acc with money = (cost, "mart") :: acc.money } lines
 
 let use_members ~named action acc =
   List.fold_left
@@ -94,6 +96,10 @@ let game_action stocks ~where action args acc =
   let acc =
     if List.mem action item_users then
       Option.fold ~none:acc ~some:(use_item action acc) (named "item")
+    else if action = "pick_up_item" then
+      Option.fold ~none:acc
+        ~some:(fun item -> gain acc (item, 1))
+        (named "item")
     else acc
   in
   let acc =
