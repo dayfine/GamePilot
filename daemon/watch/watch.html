@@ -90,7 +90,9 @@
   #probe-filter { width: 100%; font: inherit; font-size: 13px; padding: 4px 6px;
                   border: 1px solid var(--line); border-radius: 6px;
                   background: var(--panel); color: var(--text); margin-bottom: 6px; }
-  #probe-scroll { max-height: 480px; overflow: auto; }
+  /* A fixed height: as the probe set changed between phases, a growing and
+     shrinking table shifted everything below it on a phone. */
+  #probe-scroll { height: min(480px, 45vh); overflow: auto; }
   #probe-table td { font-size: 12px; padding: 2px 4px 2px 0; }
   #probe-table td.pid { overflow-wrap: anywhere; }
   #probe-table td.val { font: 12px ui-monospace, Menlo, Consolas, monospace;
@@ -326,8 +328,11 @@ function boxRect(p, W, H) {
 
 // The whole multiple of the frame that fits the panel's width and 70% of the
 // window's height, or a fraction when even 1x does not.
+// The height is read once: a phone's window height changes as its address bar
+// shows and hides, which resized the frame and shifted the page under the reader.
+const stableHeight = window.innerHeight;
 function fitScale(w, h) {
-  const s = Math.min($("stage-wrap").clientWidth / w, window.innerHeight * 0.7 / h);
+  const s = Math.min($("stage-wrap").clientWidth / w, stableHeight * 0.7 / h);
   return s >= 1 ? Math.floor(s) : s;
 }
 
@@ -536,8 +541,16 @@ function renderPlan() {
   if (!plan) return;
   $("plan-title").textContent = "Plan · " + plan.checkpoint;
   renderEvents($("plan"), plan, true);
-  const current = $("plan").querySelector("li.current, li.failed");
-  if (current) current.scrollIntoView({block: "nearest"});
+  // Scroll only the plan's own list, never the page: scrollIntoView moved the
+  // whole window on a phone's one-column layout at every update.
+  const list = $("plan");
+  const current = list.querySelector("li.current, li.failed");
+  if (current && list.scrollHeight > list.clientHeight) {
+    const top = current.offsetTop - list.offsetTop;
+    if (top < list.scrollTop || top + current.offsetHeight > list.scrollTop + list.clientHeight) {
+      list.scrollTop = top - list.clientHeight / 3;
+    }
+  }
 }
 
 // --- Run: the chain of checkpoints -------------------------------------------
