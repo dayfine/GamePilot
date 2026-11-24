@@ -1,6 +1,6 @@
 module J = Grid_maps.Json_field
 
-type use = { member : Action_args.member; policy : Level_up.policy }
+type use = { member : Action_args.member; policy : Level_up_policy.policy }
 
 type goal = {
   use : use;
@@ -19,7 +19,7 @@ let move_rule ~where args =
   and replacing = J.string ~where "replacing" args in
   if learn = replacing then
     J.fail "%sreplacing is the move itself, %s" where learn;
-  { Level_up.learn; replacing }
+  { Level_up_policy.learn; replacing }
 
 let evolve ~where args =
   match J.find "evolve" args with
@@ -66,7 +66,7 @@ let describe_use u =
     (Action_args.member_to_string u.member)
     (match u.policy.rules with
     | [] -> "nothing offered"
-    | rules -> String.concat ", " (List.map Level_up.describe_rule rules))
+    | rules -> String.concat ", " (List.map Level_up_policy.describe_rule rules))
     (if u.policy.evolve then "evolve" else "no evolution")
 
 let describe_goal g =

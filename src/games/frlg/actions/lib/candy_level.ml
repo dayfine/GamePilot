@@ -1,6 +1,6 @@
 type rig = {
   level : slot:int -> int option;
-  candy : slot:int -> Level_up.policy -> Rare_candy.result;
+  candy : slot:int -> Level_up_policy.policy -> Rare_candy.result;
   member : slot:int -> Story.Room_policy.member option;
   log : string -> unit;
 }
@@ -9,7 +9,7 @@ type report = {
   candies : int;
   level : int;
   species : string;
-  learned : Level_up.move_rule list;
+  learned : Level_up_policy.move_rule list;
   declined : string option list;
   evolutions : Level_up.evolution list;
 }
@@ -22,7 +22,7 @@ let fail code fmt =
 (* The candies so far and what they did. *)
 type fed = {
   count : int;
-  learned : Level_up.move_rule list;
+  learned : Level_up_policy.move_rule list;
   declined : string option list;
   evolutions : Level_up.evolution list;
 }

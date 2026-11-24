@@ -73,8 +73,8 @@ type result =
   | Out_of_candies
   | Failed of string
 
-val run : rig -> Level_up.policy -> slot:int -> result
-(** One candy on the member in [slot]. *)
+val run : rig -> Level_up_policy.policy -> member:Level_up.member -> result
+(** One candy on the member: {!Level_up.run} with it alone. *)
 
 val describe : result -> string
 (** One line for the log. *)

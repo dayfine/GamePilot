@@ -1,11 +1,18 @@
-type move_rule = { learn : string; replacing : string }
-type policy = { rules : move_rule list; evolve : bool }
+module P = Level_up_policy
 
-let rule_for rules ~offered = List.find_opt (fun r -> r.learn = offered) rules
-let describe_rule r = r.learn ^ " over " ^ r.replacing
+type who = Slot of int | Species of string
 
-type look = Stats | Move_prompt | Forget_list | Evolving | Back | Timed_out
+type look =
+  | Exp of who option
+  | Stats of who option
+  | Move_prompt
+  | Forget_list
+  | Evolving of who option
+  | Back
+  | Timed_out
+
 type forget_list = { offered : string option; known : string option list }
+type scene = Continues | Ended
 
 type rig = {
   next : unit -> look;
@@ -14,46 +21,82 @@ type rig = {
   forget : int -> bool;
   leave_list : unit -> bool;
   decline : unit -> bool;
-  evolution : cancel:bool -> unit;
+  evolution : cancel:bool -> scene;
   log : string -> unit;
 }
 
+type member = { slot : int; species : string }
 type evolution = No_evolution | Evolved | Cancelled
 
 type outcome = {
+  member : member;
   levels : int;
-  learned : move_rule list;
+  learned : P.move_rule list;
   declined : string option list;
   evolution : evolution;
 }
 
-let max_looks = 40
+let max_looks = 200
 
 exception Stopped of string
 
 let stop why = raise (Stopped why)
 
-(* A run under way: what it has seen and answered. *)
+(* A run under way: each member's outcome so far, whose screens these are,
+   and whether an evolution scene is still going. *)
 type under_way = {
   rig : rig;
-  policy : policy;
-  mutable levels : int;
-  mutable learned : move_rule list;
-  mutable declined : string option list;
-  mutable evolution : evolution;
+  policies : P.t;
+  members : outcome array;
+  mutable current : int option;
+  mutable last_scene : int option;
+  mutable in_scene : bool;
 }
 
 let move_name = Option.value ~default:"an unread move"
+let name (o : outcome) = Printf.sprintf "slot %d" o.member.slot
 
-let declined r offered =
-  r.declined <- r.declined @ [ offered ];
-  r.rig.log ("Level up: declined " ^ move_name offered ^ ".")
+let find r who =
+  let at pred =
+    Seq.find
+      (fun i -> pred r.members.(i).member)
+      (Seq.init (Array.length r.members) Fun.id)
+  in
+  match who with
+  | Slot s -> at (fun m -> m.slot = s)
+  | Species s -> at (fun m -> m.species = s)
 
-let leave r offered why =
-  r.rig.log ("Level up: " ^ why ^ ".");
+let named r who ~or_else =
+  match Option.map (find r) who with
+  | Some (Some i) -> i
+  | Some None -> stop "a screen names a member not in the run"
+  | None -> or_else ()
+
+let current r =
+  match r.current with
+  | Some i -> i
+  | None -> stop "a question with no member levelled before it"
+
+let update r i f = r.members.(i) <- f r.members.(i)
+
+let policy r i =
+  let m = r.members.(i).member in
+  P.for_member r.policies ~slot:m.slot ~species:m.species
+
+let log r i fmt =
+  Printf.ksprintf
+    (fun s -> r.rig.log ("Level up: " ^ name r.members.(i) ^ ": " ^ s ^ "."))
+    fmt
+
+let declined r i offered =
+  update r i (fun o -> { o with declined = o.declined @ [ offered ] });
+  log r i "declined %s" (move_name offered)
+
+let leave r i offered why =
+  log r i "%s" why;
   if not (r.rig.leave_list ()) then
     stop "no \"Stop trying to teach?\" after the list";
-  declined r offered
+  declined r i offered
 
 let row_of known move =
   let rec find i = function
@@ -63,54 +106,78 @@ let row_of known move =
   in
   find 0 known
 
-let learn r rule known =
+let learn r i (rule : P.move_rule) known =
   match row_of known rule.replacing with
   | None ->
-      leave r (Some rule.learn)
-        (Printf.sprintf "%s does not read among the known moves" rule.replacing)
+      leave r i (Some rule.learn)
+        (rule.replacing ^ " does not read among the known moves")
   | Some row ->
       if not (r.rig.forget row) then
         stop (Printf.sprintf "the list's cursor did not read on move %d" row);
-      r.learned <- r.learned @ [ rule ];
-      r.rig.log ("Level up: learned " ^ describe_rule rule ^ ".")
+      update r i (fun o -> { o with learned = o.learned @ [ rule ] });
+      log r i "learned %s" (P.describe_rule rule)
 
 let on_list r =
+  let i = current r in
   let { offered; known } = r.rig.read_list () in
   match offered with
-  | None -> leave r None "the move offered did not read"
+  | None -> leave r i None "the move offered did not read"
   | Some move -> (
-      match rule_for r.policy.rules ~offered:move with
-      | Some rule -> learn r rule known
-      | None -> leave r offered ("no rule learns " ^ move))
+      match P.rule_for (policy r i).rules ~offered:move with
+      | Some rule -> learn r i rule known
+      | None -> leave r i offered ("no rule learns " ^ move))
 
 let prompt r =
-  if r.policy.rules = [] then (
+  let i = current r in
+  if (policy r i).rules = [] then (
     if not (r.rig.decline ()) then stop "no \"Stop trying to teach?\"";
-    declined r None)
+    declined r i None)
   else if r.rig.open_list () then on_list r
   else stop "the list to forget from did not show"
 
-(* The first scene decides; the scene shows again after a prompt it asks
-   and while "stopped evolving" prints, and is then only waited out. *)
-let evolving r =
-  match r.evolution with
-  | No_evolution when r.policy.evolve ->
-      r.evolution <- Evolved;
-      r.rig.log "Level up: evolving, let it run.";
-      r.rig.evolution ~cancel:false
-  | No_evolution ->
-      r.evolution <- Cancelled;
-      r.rig.log "Level up: evolving, cancelled with B.";
-      r.rig.evolution ~cancel:true
-  | Evolved | Cancelled -> r.rig.evolution ~cancel:false
+(* The next member in slot order that levelled, after the last scene's. *)
+let next_levelled r =
+  let after = Option.value r.last_scene ~default:(-1) in
+  let n = Array.length r.members in
+  match
+    Seq.find
+      (fun i -> r.members.(i).levels > 0)
+      (Seq.init (max 0 (n - after - 1)) (fun k -> after + 1 + k))
+  with
+  | Some i -> i
+  | None -> stop "an evolution with no member left that levelled"
+
+let next_exp r =
+  match r.current with
+  | None -> 0
+  | Some i -> (i + 1) mod Array.length r.members
+
+let first_or_current r = Option.value r.current ~default:0
+
+(* A scene starts when none is going; it is decided once, by its member's
+   policy, and is then only waited out. *)
+let evolving r who =
+  if not r.in_scene then (
+    let i = named r who ~or_else:(fun () -> next_levelled r) in
+    let evolve = (policy r i).evolve in
+    r.current <- Some i;
+    r.last_scene <- Some i;
+    update r i (fun o ->
+        { o with evolution = (if evolve then Evolved else Cancelled) });
+    log r i "evolving, %s" (if evolve then "let it run" else "cancelled with B");
+    r.in_scene <- r.rig.evolution ~cancel:(not evolve) = Continues)
+  else r.in_scene <- r.rig.evolution ~cancel:false = Continues
 
 let answer_look r = function
-  | Stats ->
-      r.levels <- r.levels + 1;
-      r.rig.log (Printf.sprintf "Level up: level %d of this run." r.levels)
+  | Exp who -> r.current <- Some (named r who ~or_else:(fun () -> next_exp r))
+  | Stats who ->
+      let i = named r who ~or_else:(fun () -> first_or_current r) in
+      r.current <- Some i;
+      update r i (fun o -> { o with levels = o.levels + 1 });
+      log r i "level %d of this run" r.members.(i).levels
   | Move_prompt -> prompt r
   | Forget_list -> on_list r
-  | Evolving -> evolving r
+  | Evolving who -> evolving r who
   | Back | Timed_out -> ()
 
 let rec answer r looks =
@@ -123,27 +190,25 @@ let rec answer r looks =
       answer_look r look;
       answer r (looks + 1)
 
-let run rig policy =
+let start member =
+  { member; levels = 0; learned = []; declined = []; evolution = No_evolution }
+
+let run rig policies ~members =
   let r =
     {
       rig;
-      policy;
-      levels = 0;
-      learned = [];
-      declined = [];
-      evolution = No_evolution;
+      policies;
+      members = Array.of_list (List.map start members);
+      current = None;
+      last_scene = None;
+      in_scene = false;
     }
   in
-  match answer r 0 with
-  | () ->
-      Ok
-        {
-          levels = r.levels;
-          learned = r.learned;
-          declined = r.declined;
-          evolution = r.evolution;
-        }
-  | exception Stopped why -> Error why
+  if members = [] then Error "no member to level"
+  else
+    match answer r 0 with
+    | () -> Ok (Array.to_list r.members)
+    | exception Stopped why -> Error why
 
 let evolution_name = function
   | No_evolution -> "none"
@@ -157,6 +222,6 @@ let names_or_none f = function
 let describe (o : outcome) =
   Printf.sprintf "%d level%s; learned %s; declined %s; evolution %s" o.levels
     (if o.levels = 1 then "" else "s")
-    (names_or_none (fun r -> r.learn) o.learned)
+    (names_or_none (fun (r : P.move_rule) -> r.learn) o.learned)
     (names_or_none move_name o.declined)
     (evolution_name o.evolution)

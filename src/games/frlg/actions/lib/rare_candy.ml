@@ -9,20 +9,23 @@ type rig = {
 
 type result = Used of Level_up.outcome | Out_of_candies | Failed of string
 
-let used rig policy =
-  match Level_up.run rig.level_up policy with
-  | Ok o ->
+let used rig policy member =
+  match
+    Level_up.run rig.level_up (Level_up_policy.only policy) ~members:[ member ]
+  with
+  | Ok [ o ] ->
       if o.levels = 0 then rig.log "Rare Candy: it had no effect.";
       rig.close_bag ();
       Used o
+  | Ok _ -> Failed "not one outcome for one member"
   | Error why -> Failed why
 
-let run rig policy ~slot =
-  rig.log (Printf.sprintf "Rare Candy: one on slot %d." slot);
-  match rig.open_candy ~slot with
+let run rig policy ~(member : Level_up.member) =
+  rig.log (Printf.sprintf "Rare Candy: one on slot %d." member.slot);
+  match rig.open_candy ~slot:member.slot with
   | No_candy -> Out_of_candies
   | Not_opened why -> Failed why
-  | Opened -> used rig policy
+  | Opened -> used rig policy member
 
 let describe = function
   | Used o -> "Rare Candy: " ^ Level_up.describe o ^ "."

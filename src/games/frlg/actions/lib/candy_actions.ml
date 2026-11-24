@@ -1,18 +1,28 @@
 module M = Menu_input
 
-let one_candy ~log ~slot policy =
+(* The member as the reckoned party has it; ["?"] when it does not. *)
+let member_at ~party ~slot : Level_up.member =
+  let species =
+    Option.value ~default:"?"
+      (List.nth_opt (Party_roster.to_list !party) (slot - 1))
+  in
+  { slot; species }
+
+let one_candy ~log ~party ~slot policy =
   Effects.with_probes Rare_candy_steps.probes (fun () ->
-      Rare_candy.run (Rare_candy_steps.make ~log) policy ~slot)
+      Rare_candy.run
+        (Rare_candy_steps.make ~log)
+        policy ~member:(member_at ~party ~slot))
 
 let member ~log ~slot =
   List.find_opt
     (fun (m : Story.Room_policy.member) -> m.slot = slot)
     (Party_summary.read_all ~log ())
 
-let rig ~log : Candy_level.rig =
+let rig ~log ~party : Candy_level.rig =
   {
     level = (fun ~slot -> Member_level.read ~log ~slot);
-    candy = (fun ~slot policy -> one_candy ~log ~slot policy);
+    candy = (fun ~slot policy -> one_candy ~log ~party ~slot policy);
     member = (fun ~slot -> member ~log ~slot);
     log;
   }
@@ -26,7 +36,7 @@ let after_evolution ~log ~party ~slot =
   | None -> log "Rare Candy: the evolved member's species did not read."
 
 let use_candy ~log ~party ~slot (use : Candy_plan.use) =
-  let result = one_candy ~log ~slot use.policy in
+  let result = one_candy ~log ~party ~slot use.policy in
   log (Rare_candy.describe result);
   match result with
   | Used o ->
@@ -38,7 +48,7 @@ let use_candy ~log ~party ~slot (use : Candy_plan.use) =
   | Failed why -> M.fail "rare_candy_failed" why
 
 let level ~log ~party ~slot goal =
-  match Candy_level.run (rig ~log) goal ~slot with
+  match Candy_level.run (rig ~log ~party) goal ~slot with
   | Ok r -> renamed ~party ~slot r.species
   | Error cause -> raise (M.Action_failed cause)
 

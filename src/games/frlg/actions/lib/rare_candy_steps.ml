@@ -3,10 +3,7 @@ module M = Menu_input
 
 let candy = "rare-candy"
 let use_row = 0
-
-let probes =
-  Party_dialogs.probes @ Frlg_battle.Battle_look.probes @ Dialog.probes
-
+let probes = Party_dialogs.probes @ Level_up_screens.probes @ Dialog.probes
 let known_moves = 4
 let look_ms = 250
 let still_ms = 1500
@@ -16,23 +13,18 @@ let list_timeout_ms = 8000
 let question_ms = 8000
 let evolution_hold_ms = 12_000
 let evolution_timeout_ms = 30_000
-
-(* The list to forget from: the summary's moves page with its cursor. *)
-let forget_list m =
-  Summary_screen.page m = Some Summary_moves.moves_page
-  && Move_list_cursor.row m <> None
-
-let question m = Party_dialogs.move_learn_box m || Battle_yes_no.yes_no_box m
 let in_bag m = Bag_screen.bag_open m && not (Bag_screen.item_menu m)
 
-let classify m : Level_up.look option =
-  if forget_list m then Some Forget_list
-  else if question m then Some Move_prompt
-  else if Party_dialogs.level_up_box m then Some Stats
-  else if in_bag m then Some Back
-  else if Evolution_screen.evolution_shows m then Some Evolving
-  else None
+let party_menu : Level_up_screens.context =
+  {
+    stats = Party_dialogs.level_up_box;
+    question = Party_dialogs.move_learn_box;
+    back = in_bag;
+  }
 
+let forget_list = Level_up_screens.forget_list
+let question = Level_up_screens.question party_menu
+let classify = Level_up_screens.classify party_menu
 let arrow m = Dialog.advance_arrow m || Battle_text_arrow.advance_arrow m
 let watched m = classify m <> None || arrow m
 let press_a () = M.press ~cooldown_ms:page_press_ms Wire.A
@@ -99,9 +91,9 @@ let rec through_stats presses =
 
 let next () =
   match next_look ~started:(Effects.now ()) ~quiet_since:None with
-  | Stats ->
+  | Stats who ->
       through_stats stats_presses;
-      Level_up.Stats
+      Level_up.Stats who
   | look -> look
 
 (* YES (the box's cursor starts there); the party then prints "Which move
@@ -171,12 +163,18 @@ let decline () =
 
 let not_evolving m = not (Evolution_screen.evolution_shows m)
 
-let evolution ~cancel =
+(* The scene goes on while a question, the list or a page with its arrow
+   shows; anything else (its fade out, the bag) ends it. *)
+let scene_goes_on m = question m || forget_list m || arrow m
+
+let evolution ~cancel : Level_up.scene =
   if cancel then
     ignore
       (Effects.submit
          [ M.hold ~hold_ms:evolution_hold_ms ~cooldown_ms:0 Wire.B ]);
-  ignore (shows ~timeout_ms:evolution_timeout_ms not_evolving)
+  match Effects.await ~timeout_ms:evolution_timeout_ms not_evolving with
+  | Holds m when scene_goes_on m -> Continues
+  | Holds _ | Timeout -> Ended
 
 let close_bag ~log () =
   M.close "the bag" Bag_screen.bag_open;

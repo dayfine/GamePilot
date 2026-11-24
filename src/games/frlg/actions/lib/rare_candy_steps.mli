@@ -5,7 +5,7 @@
     (Programs/RngManipulation/PokemonFRLG_RngNavigation.cpp) watches for it: the
     stats window and the party's YES/NO box ({!Frlg_readers.Party_dialogs}, its
     PartyLevelUpWatcher and PartyMoveLearnWatcher), the evolution scene
-    ({!Frlg_readers.Evolution_screen}, its BattleDialogWatcher) and the bag
+    ({!Level_up_screens}, its BattleDialogWatcher) and the bag
     ({!Frlg_readers.Bag_screen}, its BagWatcher). The list to forget from is
     worked as the battle's ({!Frlg_battle.Screen_driver}): read by
     {!Summary_moves}, its cursor by {!Frlg_readers.Move_list_cursor}.
@@ -23,13 +23,17 @@
     Run it inside {!Menu_input.run} with {!probes} subscribed. *)
 
 val probes : Wire.probe_spec list
-(** {!Frlg_readers.Party_dialogs}', the battle's ({!Frlg_battle.Battle_look})
-    and the white text box's ({!Frlg_readers.Dialog}). *)
+(** {!Frlg_readers.Party_dialogs}', the shared level-up screens'
+    ({!Level_up_screens.probes}) and the white text box's
+    ({!Frlg_readers.Dialog}). *)
+
+val party_menu : Level_up_screens.context
+(** The party menu's screens: its stats window and YES/NO box
+    ({!Frlg_readers.Party_dialogs}), and the bag (no item menu over it) where it
+    ends. *)
 
 val classify : Effects.measurements -> Level_up.look option
-(** The list to forget from, a YES/NO box (the party's or a battle's), the stats
-    window, the bag (no item menu over it), the evolution scene, in that order;
-    [None] for anything else (text, a fade). *)
+(** {!Level_up_screens.classify} on {!party_menu}. *)
 
 val still_ms : int
 (** 1500 ms. *)
