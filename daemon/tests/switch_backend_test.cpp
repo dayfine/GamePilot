@@ -1,6 +1,5 @@
-// The Switch backend without a console: the controller's bytes on the wire
-// against frames worked out by hand (tools: CRC-32C keyed by the session id),
-// the wall-time input schedule, the capture ring's gaps and heartbeat, a
+// The Switch backend without a console: the key mapping, the wall-time input
+// schedule, the capture ring's gaps and heartbeat, a
 // recorded clip played at its own rate, the latency harness on FakeSwitch, and
 // `status` from a second connection while a client is served.
 
@@ -20,7 +19,7 @@
 #include <vector>
 
 #include "check.h"
-#include "fake_switch.h"
+#include "fake_console.h"
 #include "live_schedule.h"
 #include "net.h"
 #include "press_latency.h"
@@ -31,11 +30,7 @@ using namespace gamepilot;
 
 namespace {
 
-using Bytes = std::vector<std::uint8_t>;
-
 constexpr KeyMask kA = 1u << 0;
-constexpr KeyMask kB = 1u << 1;
-constexpr KeyMask kStart = 1u << 3;
 constexpr KeyMask kRight = 1u << 4;
 constexpr KeyMask kLeft = 1u << 5;
 constexpr KeyMask kUp = 1u << 6;
@@ -45,48 +40,6 @@ void sleep_ms(int ms) {
   std::this_thread::sleep_for(std::chrono::milliseconds(ms));
 }
 
-// The board's RET_RESET for packet 0 of session 0x12345678 (u32 data 0),
-// CRC-32C keyed by the session id.
-const Bytes kResetAck = {0x81, 0x00, 0x0c, 0x41, 0x00, 0x00,
-                         0x00, 0x00, 0x3e, 0xac, 0xc4, 0xea};
-
-// Session 0x12345678: the reset (CRC keyed by 0xffffffff), then one 23-byte
-// stream packet per state command.
-void check_controller_bytes() {
-  const Clock clock;
-  RecordingSerialPort port(clock);
-  Pabb2Controller controller(port, 0x12345678);
-  controller.reset();
-  // CoreLib's PacketSender queues stream data only once the reset is acked
-  // (the C++ app waits for RET_RESET too).
-  CHECK(!controller.send_state(wired_state_for_keys(kA), 100));
-  controller.receive(kResetAck.data(), kResetAck.size());
-  CHECK(controller.unacknowledged() == 0);
-  CHECK(controller.send_state(wired_state_for_keys(kA), 100));
-  CHECK(controller.send_state(neutral_wired_state(), 50));
-  // Longer than one command holds: split at 65535 ms.
-  CHECK(controller.send_state(wired_state_for_keys(kB | kStart | kUp), 70000));
-
-  const std::vector<Bytes> expected = {
-      {0x81, 0x00, 0x0c, 0x01, 0x78, 0x56, 0x34, 0x12, 0xc6, 0xb0, 0x7c, 0x1e},
-      {0x81, 0x01, 0x17, 0x12, 0x00, 0x00, 0x0d, 0x00, 0x90, 0x00, 0x64, 0x00,
-       0x04, 0x00, 0x08, 0x80, 0x80, 0x80, 0x80, 0x7b, 0x4f, 0x7e, 0x29},
-      {0x81, 0x02, 0x17, 0x12, 0x0d, 0x00, 0x0d, 0x00, 0x90, 0x01, 0x32, 0x00,
-       0x00, 0x00, 0x08, 0x80, 0x80, 0x80, 0x80, 0x9d, 0x49, 0xfe, 0x0f},
-      {0x81, 0x03, 0x17, 0x12, 0x1a, 0x00, 0x0d, 0x00, 0x90, 0x02, 0xff, 0xff,
-       0x02, 0x02, 0x00, 0x80, 0x80, 0x80, 0x80, 0x85, 0xca, 0x93, 0x3b},
-      {0x81, 0x04, 0x17, 0x12, 0x27, 0x00, 0x0d, 0x00, 0x90, 0x03, 0x71, 0x11,
-       0x02, 0x02, 0x00, 0x80, 0x80, 0x80, 0x80, 0x5c, 0x32, 0x51, 0x40},
-  };
-  const auto writes = port.writes();
-  CHECK(writes.size() == expected.size());
-  for (std::size_t i = 0; i < std::min(writes.size(), expected.size()); i++) {
-    CHECK(writes[i].bytes == expected[i]);
-  }
-  // No stream packet acked: all four are still in the window.
-  CHECK(controller.unacknowledged() == 4);
-}
-
 void check_key_mapping() {
   const WiredState neutral = neutral_wired_state();
   CHECK(neutral.dpad_byte == 8 && neutral.left_joystick_x == 128);
@@ -94,25 +47,6 @@ void check_key_mapping() {
   CHECK(wired_state_for_keys(kDown | kLeft).dpad_byte == 5);
   // Opposite arrows cancel.
   CHECK(wired_state_for_keys(kUp | kDown).dpad_byte == 8);
-}
-
-// The fake board acks every packet, so the window empties again.
-void check_acks_free_the_window() {
-  const Clock clock;
-  FakeSwitch board(clock, 0x12345678);
-  Pabb2Controller controller(board, 0x12345678);
-  const auto attached = board.attach(controller);
-  controller.reset();
-  for (int i = 0; i < 300; i++) {
-    while (!controller.send_state(wired_state_for_keys(kA), 1)) {
-      sleep_ms(1);
-    }
-  }
-  for (int i = 0; i < 200 && controller.unacknowledged() > 0; i++) {
-    sleep_ms(1);
-  }
-  CHECK(controller.unacknowledged() == 0);
-  CHECK(board.commands().size() == 300);
 }
 
 void check_live_schedule() {
@@ -192,14 +126,12 @@ ThreadBeat capture_beat(const Backend& backend) {
 // A capture that stops delivering stops its heartbeat.
 void check_gaps_and_stalled_capture() {
   const Clock clock;
-  FakeSwitch board(clock, 1);
-  Pabb2Controller controller(board, 1);
-  const auto attached = board.attach(controller);
+  test::FakeConsole console(clock);
   auto owned = std::make_unique<GatedSource>(10);
   GatedSource& source = *owned;
   SwitchOptions options;
   options.ring_capacity = 3;
-  SwitchBackend backend(std::move(owned), controller, clock, options);
+  SwitchBackend backend(std::move(owned), console.session, clock, options);
   CHECK(backend.info().timing == Timing::kLive);
   CHECK(backend.info().width == 4 && backend.info().height == 4);
 
@@ -250,10 +182,8 @@ void check_video_replay() {
   }
 
   const Clock clock;
-  FakeSwitch board(clock, 1);
-  Pabb2Controller controller(board, 1);
-  const auto attached = board.attach(controller);
-  SwitchBackend backend(open_video_replay(clip, clock), controller, clock,
+  test::FakeConsole console(clock);
+  SwitchBackend backend(open_video_replay(clip, clock), console.session, clock,
                         SwitchOptions{});
   CHECK(backend.info().width == 1920 && backend.info().height == 1080);
   CHECK(std::abs(backend.info().frame_rate - kFps) < 0.01);
@@ -282,13 +212,10 @@ void check_video_replay() {
 
 void check_latency_harness() {
   const Clock clock;
-  FakeSwitch board(clock, 2);
-  Pabb2Controller controller(board, 2);
-  const auto attached = board.attach(controller);
-  controller.reset();
+  test::FakeConsole console(clock);
   constexpr double kResponseMs = 50;
-  SwitchBackend backend(board.screen(60, kResponseMs, cv::Size(64, 36)),
-                        controller, clock, SwitchOptions{});
+  SwitchBackend backend(console.board.screen(60, kResponseMs, cv::Size(64, 36)),
+                        console.session, clock, SwitchOptions{});
   PressLatencyPlan plan;
   plan.presses = 5;
   plan.settle_ms = 200;
@@ -324,11 +251,9 @@ std::string call(Socket& socket, const std::string& line) {
 // that.
 void check_status_while_serving() {
   const Clock clock;
-  FakeSwitch board(clock, 3);
-  Pabb2Controller controller(board, 3);
-  const auto attached = board.attach(controller);
-  SwitchBackend backend(board.screen(60, 0, cv::Size(64, 36)), controller,
-                        clock, SwitchOptions{});
+  test::FakeConsole console(clock);
+  SwitchBackend backend(console.board.screen(60, 0, cv::Size(64, 36)),
+                        console.session, clock, SwitchOptions{});
   ServerOptions options;
   options.port = 47977;
   Server server(backend, options);
@@ -376,9 +301,7 @@ void check_status_while_serving() {
 
 int main() {
   init_sockets();
-  check_controller_bytes();
   check_key_mapping();
-  check_acks_free_the_window();
   check_live_schedule();
   check_gaps_and_stalled_capture();
   check_video_replay();

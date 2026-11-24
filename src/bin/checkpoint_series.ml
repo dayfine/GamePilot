@@ -22,9 +22,13 @@ let next_plan ~plan_dir = function
   | Some n ->
       Result.map (fun (p : Plan.t) -> Some p.checkpoint) (load_plan ~plan_dir n)
 
+(* On the Switch the console holds the start: the save the user loaded. *)
 let start_state (setup : Run.setup) id =
   let path = Filename.concat setup.states (id ^ ".start.ss") in
-  if Sys.file_exists path then Ok path else Error ("no start state " ^ path)
+  match setup.backend with
+  | Daemon_process.Switch _ -> Ok "the console's loaded save"
+  | Mgba _ when Sys.file_exists path -> Ok path
+  | Mgba _ -> Error ("no start state " ^ path)
 
 (* The checkpoint [id], its end declared by [next]'s plan. *)
 let checkpoint ~plan_dir (setup : Run.setup) id ~next =

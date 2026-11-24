@@ -2,7 +2,7 @@
      [--runs N] [--states DIR] [--runs-dir DIR] [--daemon PATH]
      [--mgba-port N] [--port N] [--party SPECIES,...] [--center TOWN] [--walk]
      [--end-check-only] [--grind-battles N] [--watch] [--watch-port N]
-     [--listen ADDR]
+     [--listen ADDR] [--backend mgba|switch --serial PORT --capture DEVICE]
 
    The checkpoint dev loop. A program's checkpoints are its plan files
    (<ID>.plan.json in PLAN_DIR, in name order); each runs from its start state
@@ -26,6 +26,12 @@
    $GAMEPILOT_WATCH_LISTEN) opens both to the LAN; Stop then takes the series'
    token, which the URL printed for other devices carries. The program's port
    (--port) is a free one too unless given, so runs do not collide.
+
+   --backend switch runs on the Switch (docs/switch-bring-up.md): the daemon
+   drives the controller board on --serial and reads the capture card
+   --capture (gamepilot switch-devices prints the lab's). The console holds
+   the start, the save the user loaded, so there are no start states and
+   only --mode testing runs.
 
    --states defaults to $GAMEPILOT_STATES and --runs-dir to $GAMEPILOT_RUNS,
    else to $HOME/.local/share/gamepilot/{states,runs}.
@@ -51,6 +57,9 @@ type flags = {
   runs_dir : string;
   daemon : string;
   mgba_port : int;
+  backend : string;  (** mgba or switch *)
+  serial : string option;
+  capture : string option;
   common : Checkpoint_command.flags;
   watch : Daemon_process.watch option;
 }
@@ -62,7 +71,7 @@ let usage =
   \      [--mgba-port N] [--port N] [--party SPECIES,...] [--center TOWN] \
    [--walk]\n\
   \      [--end-check-only] [--grind-battles N] [--watch] [--watch-port N]\n\
-  \      [--listen ADDR]\n"
+  \      [--listen ADDR] [--backend mgba|switch --serial PORT --capture DEVICE]\n"
 
 let home = Option.value (Sys.getenv_opt "HOME") ~default:"."
 
@@ -86,6 +95,9 @@ let defaults =
     runs_dir = data_dir "GAMEPILOT_RUNS" "runs";
     daemon = "daemon/build/gamepilot_daemon";
     mgba_port = mgba_bridge_port;
+    backend = "mgba";
+    serial = None;
+    capture = None;
     common = { Checkpoint_command.defaults with port = 0 };
     watch = None;
   }
@@ -119,6 +131,9 @@ let valued f name v =
   | "--port" ->
       Some
         (int_flag name v (fun port -> common_flag f (fun c -> { c with port })))
+  | "--backend" -> Some (Ok { f with backend = v })
+  | "--serial" -> Some (Ok { f with serial = Some v })
+  | "--capture" -> Some (Ok { f with capture = Some v })
   | "--party" -> Some (Ok (common_flag f (fun c -> { c with party = v })))
   | "--grind-battles" -> (
       match int_of_string_opt v with
@@ -199,11 +214,24 @@ let required name = function
 
 let ( let* ) = Result.bind
 
+(* The daemon's backend from the flags; the Switch only in testing mode. *)
+let daemon_backend f mode =
+  match (f.backend, f.serial, f.capture, mode) with
+  | "mgba", None, None, _ -> Ok (Daemon_process.Mgba { port = f.mgba_port })
+  | "mgba", _, _, _ -> Error "--serial and --capture need --backend switch"
+  | "switch", Some serial, Some capture, Checkpoint_trials.Testing ->
+      Ok (Daemon_process.Switch { serial; capture })
+  | "switch", Some _, Some _, Verification ->
+      Error "--backend switch runs only --mode testing"
+  | "switch", _, _, _ -> Error "--backend switch needs --serial and --capture"
+  | b, _, _, _ -> Error ("bad --backend " ^ b)
+
 let main plan_dir args =
   let* f = parse defaults args in
   let* from_id = required "--from" f.from_id in
   let* to_id = required "--to" f.to_id in
   let* mode = required "--mode" f.mode in
+  let* backend = daemon_backend f mode in
   let* policy = Checkpoint_trials.policy ?runs:f.runs mode in
   let* ids = checkpoint_ids plan_dir in
   let* selected, after = select ids ~from_id ~to_id in
@@ -222,7 +250,7 @@ let main plan_dir args =
          states = f.states;
          runs_dir = f.runs_dir;
          daemon = f.daemon;
-         mgba_port = f.mgba_port;
+         backend;
          common = f.common;
          mode;
          policy;

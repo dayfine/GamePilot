@@ -1,7 +1,7 @@
 (** Program: open FireRed's Start menu and close it again.
 
-    load_state, subscribe {!Menu_panel.probe}, press Start, await the menu,
-    press B, await it gone. Uses only the effects. *)
+    load_state (when given one), subscribe {!Menu_panel.probe}, press Start,
+    await the menu, press B, await it gone. Uses only the effects. *)
 
 module Menu_panel = Menu_panel
 (** The menu panel reader the recorded runs used. *)
@@ -21,7 +21,8 @@ val default_state : string
 val timeout_ms : int
 (** Per await: 3000. *)
 
-val run : state:string -> unit -> outcome
+val run : ?state:string -> unit -> outcome
+(** Without [state], from the screen as it is (the Switch, in the overworld). *)
 
 val describe : outcome -> string
 (** One line. *)

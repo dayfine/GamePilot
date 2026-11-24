@@ -131,9 +131,8 @@ void check_color_count() {
 
 void check_viewport() {
   // A 1920x1080 capture with the 240x160 picture inside side bars, as the
-  // fork's FRLG GAME_BOX puts it.
-  const Viewport switch_capture{Box{0.09375, 0.00462963, 0.8125, 0.962963}, 240,
-                                160};
+  // Switch's GBA app shows it.
+  const Viewport switch_capture = nso_gba_viewport();
   const Box whole = picture_box_to_frame(switch_capture, Box{0, 0, 1, 1});
   CHECK(box_to_pixels(whole, 1920, 1080) == cv::Rect(180, 5, 1560, 1040));
   const Box right_half =

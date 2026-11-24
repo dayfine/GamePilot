@@ -18,15 +18,15 @@
 #include "backend.h"
 #include "clock.h"
 #include "frame_ring.h"
-#include "switch_controller.h"
+#include "board_session.h"
 #include "video_capture.h"
 
 namespace gamepilot {
 
 struct SwitchOptions {
-  // Where the game picture sits in the frame; by default the fork's FRLG
-  // GAME_BOX on a 1080p capture, a GBA picture of 240x160.
-  Viewport viewport{Box{0.09375, 0.00462963, 0.8125, 0.962963}, 240, 160};
+  // Where the game picture sits in the frame: by default the GBA picture in
+  // the Switch's GBA app (viewport.h).
+  Viewport viewport = nso_gba_viewport();
   std::size_t ring_capacity = 8;
 };
 
@@ -35,7 +35,7 @@ class SwitchBackend : public Backend {
   // Reads the first frame (for the frame size) and starts the capture thread.
   // Throws BackendError if the source gives no frame.
   SwitchBackend(std::unique_ptr<FrameSource> source,
-                Pabb2Controller& controller, const Clock& clock,
+                BoardSession& controller, const Clock& clock,
                 SwitchOptions options);
   ~SwitchBackend() override;
 
@@ -58,7 +58,7 @@ class SwitchBackend : public Backend {
   void capture_loop();
 
   std::unique_ptr<FrameSource> source_;
-  Pabb2Controller& controller_;
+  BoardSession& controller_;
   const Clock& clock_;
   BackendInfo info_;
   FrameRing ring_;
