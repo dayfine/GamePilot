@@ -130,18 +130,17 @@ let with_daemon setup record body =
 (* With --grind-battles: " (grind capped at N; skipped: ...)", so a capped
    pass is never taken for a full one. *)
 let capped_note setup cp =
+  let skipped cap =
+    snd
+      (Frlg_story.Checkpoint_run.capped_postconditions ~grind_cap:(Some cap)
+         cp.plan)
+  in
   match setup.common.grind_cap with
   | None -> ""
-  | Some cap -> (
-      match
-        snd
-          (Frlg_story.Checkpoint_run.capped_postconditions ~grind_cap:(Some cap)
-             cp.plan)
-      with
-      | [] -> Printf.sprintf " (grind capped at %d)" cap
-      | skipped ->
-          Printf.sprintf " (grind capped at %d; skipped: %s)" cap
-            (String.concat "; " skipped))
+  | Some cap when skipped cap = [] -> Printf.sprintf " (grind capped at %d)" cap
+  | Some cap ->
+      Printf.sprintf " (grind capped at %d; skipped: %s)" cap
+        (String.concat "; " (skipped cap))
 
 let summary setup cp n outcome =
   let line =
