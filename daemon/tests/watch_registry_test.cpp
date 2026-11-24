@@ -112,11 +112,11 @@ void check_hub() {
   CHECK(hub_recent_json("", 2) == "[]");
   CHECK(hub_recent_json("time\trun\n", 2) == "[]");
 
-  const WatchHub hub(HubOptions{"127.0.0.1", 0, kDir, ""});
+  const WatchHub hub(HubOptions{"127.0.0.1", 0, kDir, "", ""});
   CHECK(hub.port() != 0);
   bool taken = false;
   try {
-    const WatchHub second(HubOptions{"127.0.0.1", hub.port(), kDir, ""});
+    const WatchHub second(HubOptions{"127.0.0.1", hub.port(), kDir, "", ""});
   } catch (const std::runtime_error&) {
     taken = true;
   }
@@ -164,7 +164,7 @@ void check_hub_pass_through() {
   RegistryEntry own = entry(own_pid(), "mg-07");
   own.port = run.port();
   const RegistryFile file(kDir, own);
-  WatchHub hub(HubOptions{"127.0.0.1", 0, kDir, ""});
+  WatchHub hub(HubOptions{"127.0.0.1", 0, kDir, "", ""});
   const std::string base = "/runs/2026-11-23-mg-07-testing-1/";
 
   const std::string page =
@@ -199,6 +199,43 @@ void check_hub_pass_through() {
             .find("is not live") != std::string::npos);
 }
 
+// A finished run's folder under /runs/NAME/: its page from the hub's build,
+// its row, its files (never the wire log, never outside the folder), and the
+// runs list.
+void check_hub_past_run() {
+  const std::string runs = kDir + "-runs";
+  fs::remove_all(runs);
+  const std::string folder = runs + "/2026-11-23-mg-06-testing-1";
+  fs::create_directories(folder);
+  {
+    pa::FileIO log(folder + "/story.log",
+                   pa::FileMode::WRITE | pa::FileMode::BINARY);
+    log.write(std::string("[Story] mg-06: start, 1 events\n"));
+    pa::FileIO wire(folder + "/wire.jsonl",
+                    pa::FileMode::WRITE | pa::FileMode::BINARY);
+    wire.write(std::string("{\"dir\":\"in\",\"msg\":{},\"t_ms\":5.0}\n"));
+  }
+  WatchServer idle(WatchOptions{"127.0.0.1", 0, ""},
+                   WatchHooks{[] { return WatchFrame{}; }, [] { return false; }});
+  WatchHub hub(HubOptions{"127.0.0.1", 0, runs + "/.watch", "", runs});
+  const std::string base = "/runs/2026-11-23-mg-06-testing-1/";
+  const auto get = [&](const std::string& path, const std::string& want) {
+    return hub_request(hub, idle, "GET " + path + " HTTP/1.1\r\n\r\n", want);
+  };
+  CHECK(get(base, "</html>").find("GamePilot Run") != std::string::npos);
+  CHECK(get(base + "record.json", "}").find("\"checkpoint\":\"mg-06\"") !=
+        std::string::npos);
+  CHECK(get(base + "files/story.log", "events\n").ends_with("1 events\n"));
+  CHECK(get(base + "files/wire.jsonl", "\n\n").starts_with("HTTP/1.1 404"));
+  CHECK(get(base + "files/../../x", "\n\n").starts_with("HTTP/1.1 404"));
+  CHECK(get("/runs/../x/", "\n\n").starts_with("HTTP/1.1 404"));
+  CHECK(get(base + "probes.json", "}}").find("\"lines\":1") !=
+        std::string::npos);
+  CHECK(get(base + "events", "\n\n").starts_with("HTTP/1.1 404"));
+  CHECK(get("/history.json", "]").find("2026-11-23-mg-06-testing-1") !=
+        std::string::npos);
+}
+
 }  // namespace
 
 int main() {
@@ -208,6 +245,7 @@ int main() {
   check_stale_entries();
   check_hub();
   check_hub_pass_through();
+  check_hub_past_run();
   fs::remove_all(kDir);
   return TEST_RESULT();
 }

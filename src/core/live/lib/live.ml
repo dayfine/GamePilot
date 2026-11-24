@@ -85,7 +85,7 @@ let rec send_all fd b off len =
     let n = Unix.send fd b off len [] in
     send_all fd b (off + n) (len - n)
 
-let run ?(port = default_port) f =
+let run ?(port = default_port) ?client ?lease f =
   (* A closed socket must raise, not kill the process (no SIGPIPE on Windows). *)
   (try Sys.set_signal Sys.sigpipe Sys.Signal_ignore
    with Invalid_argument _ -> ());
@@ -120,4 +120,4 @@ let run ?(port = default_port) f =
       Atomic.set stop true;
       Thread.join thread;
       Unix.close fd)
-    (fun () -> Session.run transport f)
+    (fun () -> Session.run ?client ?lease transport f)

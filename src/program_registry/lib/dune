@@ -1,0 +1,4 @@
+(library
+ (name program_registry)
+ (public_name gamepilot.program_registry)
+ (libraries gamepilot.frlg_repo_files))

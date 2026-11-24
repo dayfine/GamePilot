@@ -14,6 +14,7 @@
 #include "Common/Cpp/Json/JsonObject.h"
 #include "Common/Cpp/Json/JsonValue.h"
 #include "backend.h"
+#include "input_lease.h"
 #include "probes.h"
 #include "schedule.h"
 
@@ -32,6 +33,7 @@ enum ErrorCode : int {
   kUnknownProbeKind = -32001,
   kBackendError = -32002,
   kProtocolMismatch = -32003,
+  kLeaseHeld = -32004,  // input while another connection holds the lease
 };
 
 class RpcError : public std::runtime_error {
@@ -105,11 +107,20 @@ struct SubmitParams {
 
 struct CancelParams {};
 
+struct LeaseAcquireParams {
+  std::string owner;
+  double ttl_ms = kDefaultLeaseTtlMs;
+};
+
 // The daemon's health, for `status`.
 struct DaemonStatus {
   double t_ms = 0;
   std::string backend;                // BackendInfo::kind
-  std::optional<std::string> client;  // the connected client's hello name
+  // The lease holder's hello name, else the oldest connection's that said
+  // hello.
+  std::optional<std::string> client;
+  std::int64_t clients = 0;  // connections now
+  std::optional<LeaseHolder> lease;
   std::string fidelity;               // "full" while an `every` probe is
                                       // subscribed, else "latest"
   BackendHealth health;  // threads: the backend's, then the server's
@@ -130,6 +141,7 @@ SubscribeParams decode_subscribe(const pa::JsonObject& params);
 UnsubscribeParams decode_unsubscribe(const pa::JsonObject& params);
 SubmitParams decode_submit(const pa::JsonObject& params);
 CancelParams decode_cancel(const pa::JsonObject& params);
+LeaseAcquireParams decode_lease_acquire(const pa::JsonObject& params);
 
 // GBA button name ("A", "Start", ...) to its KEYINPUT bit; 0 if unknown.
 KeyMask button_mask(const std::string& name);
@@ -147,6 +159,13 @@ pa::JsonObject submit_result(const std::string& batch_id,
                              std::int64_t start_seq);
 pa::JsonObject cancel_result(std::int64_t released_seq);
 pa::JsonObject status_result(const DaemonStatus& status);
+// The lease as `lease.acquire`, `status` and a refusal show it: {owner,
+// client, held_ms, ttl_ms}.
+pa::JsonObject lease_json(const LeaseHolder& holder, double now_ms);
+pa::JsonObject lease_acquire_result(const LeaseHolder& holder, double now_ms);
+pa::JsonObject lease_release_result(bool released);
+// The refusal of input while `holder` holds the lease (kLeaseHeld).
+RpcError lease_refusal(const LeaseHolder& holder, double now_ms);
 
 // One probe result as sent: its `kind` and fields, rounded.
 pa::JsonObject probe_result_json(const ProbeResult& result);
@@ -163,9 +182,17 @@ pa::JsonValue batch_done_notification(const std::string& batch_id,
                                       std::int64_t seq, double t_ms);
 // Tells the program someone pressed Stop on the watch page (contract v1.6).
 pa::JsonValue stop_notification(const std::string& reason);
+// The daemon's keep-awake press (keep_awake.h), for the wire log's `daemon`
+// line: the key and how long the console was idle.
+pa::JsonValue keepawake_notification(const std::string& key, double idle_ms);
 
-// One wire log line: {"dir": "in"|"out", "t_ms", "msg"}.
-pa::JsonValue wire_log_line(const char* dir, double t_ms, pa::JsonValue msg);
+// One wire log line: {"dir": "in"|"out"|"daemon", "t_ms", "msg"}, with the
+// connection's number (`conn`) on its messages and the lease owner (`owner`)
+// on an input it sent.
+pa::JsonValue wire_log_line(
+    const char* dir, double t_ms, pa::JsonValue msg,
+    std::optional<int> conn = std::nullopt,
+    const std::optional<std::string>& owner = std::nullopt);
 
 // Compact one-line JSON.
 std::string to_line(const pa::JsonValue& value);

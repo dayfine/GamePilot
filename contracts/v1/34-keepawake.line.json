@@ -1,0 +1,12 @@
+{
+  "dir": "daemon",
+  "t_ms": 180412.5,
+  "msg": {
+    "jsonrpc": "2.0",
+    "method": "keepawake",
+    "params": {
+      "key": "B",
+      "idle_ms": 180000
+    }
+  }
+}

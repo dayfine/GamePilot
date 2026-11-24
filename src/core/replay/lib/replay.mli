@@ -13,6 +13,9 @@
     then batch id, for [submit]. [hello] and [backend.load_state] params are not
     compared (client names and state paths vary by machine).
 
+    A log of a daemon that served several clients replays the program's
+    connection only: the one that sent the log's first client message.
+
     Pure: no sockets, no clock, nothing written. *)
 
 exception Divergence of string

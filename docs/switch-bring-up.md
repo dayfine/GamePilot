@@ -54,7 +54,7 @@ Expect `start_menu_poc: PASS`. Stop the daemon with Ctrl-C.
 **6. Pre-flight.** The save loaded, the player in the overworld. Set `GAMEPILOT_SWITCH_SERIAL`,
 `GAMEPILOT_SWITCH_CAPTURE` and `GAMEPILOT_LABLOCK` (the env file, `~/.config/gamepilot/env`), then:
 
-    sh tools/run_checkpoints_on_switch.sh src/games/frlg/programs/mail_glitch/plans \
+    sh tools/run_checkpoints_on_switch.sh --program frlg.mail_glitch \
         --from mg-01 --to mg-01 --preflight-only
 
 (or `gamepilot checkpoints ... --preflight --backend switch --serial PORT --capture INDEX`). It
@@ -72,7 +72,7 @@ the game's last save. A run that passes, its end checks included, is saved in th
 the next checkpoint starts from that save. A run that fails soft-resets to the last save and the
 series stops. A failed or stopped run never saves.
 
-    sh tools/run_checkpoints_on_switch.sh src/games/frlg/programs/mail_glitch/plans \
+    sh tools/run_checkpoints_on_switch.sh --program frlg.mail_glitch \
         --from mg-01 --to mg-01
 
 The script takes console B's lab lock, refuses while anything holds the serial port or the lab
@@ -80,9 +80,45 @@ app runs, runs steps 2, 3 and 6, then the checkpoint with the watch page, and st
 and releases the lock on every exit, Ctrl-C included. `--dry-run` runs all of it on the fakes
 (fake board, a replayed frame, a scratch lock) without touching the console.
 
+**Keep-awake.** A Switch daemon keeps the console awake by itself: after 180 s with no input
+it presses B, only while no client batch is queued or running and no client submitted in that
+window, so never inside a program's batch (`daemon/src/keep_awake.h`). Each press is a `daemon`
+line in the run's `wire.jsonl` (`"method":"keepawake"`, the key and the idle time) and a line in
+`daemon.out`. `--keepawake SECONDS` changes the wait (0 turns it off; `--keepawake-key KEY` the
+key, a GBA button name); `gamepilot checkpoints ... --keepawake N` passes it on. mGBA daemons
+have it off, and it never presses while a client holds the input lease. It replaces
+`~/BDSPLab/gp_keepawake.py`: an idle daemon holding console B keeps it awake.
+
+**Look at the console.** With a daemon holding console B (a run's, or an idle one, e.g. on port
+47920), `gamepilot ctl` looks and presses through it instead of the lab app and `labB.sh`. Any
+number of clients may connect; a press takes the daemon's input lease (contracts v1.9) and is
+refused, naming the holder, while a program or another person holds it. Reads need no lease:
+
+    gamepilot ctl --port 47920 status                 # health and who holds the lease
+    gamepilot ctl --port 47920 shot now.png           # the current frame
+    gamepilot ctl --port 47920 read start_menu        # open, cursor row, the rows' names
+    gamepilot ctl --port 47920 --owner me press A --hold 100 --wait 500
+    gamepilot ctl --port 47920 dpad DOWN 2
+    gamepilot ctl --port 47920 --owner me run steps.txt
+
+`run` takes labB.sh's lines (`press A 100 800`, `dpad DOWN 160 800`, `wait 1000`, `shot NAME`,
+`read READER`, `# comment`), holds the lease for the whole file, prints `ok N LINE` per line and
+stops at the first error. The readers (`gamepilot` with no arguments lists them): `start_menu`,
+`dialog`, `party_menu`, `summary` (species on the info page, moves on the moves page), `battle`,
+`yes_no`, `load_menu`, `bag`. Every press is in the daemon's wire log with its owner.
+`sh tools/test_ctl.sh` checks all of it against the fake board and a replayed capture.
+
+**Recording.** A Switch run's daemon also saves a 640-wide JPEG of the frame every second, and
+one at each story event and at a failure, into the run folder's `frames/` (`index.jsonl` lists
+them with the step and time; `--no-record` turns it off). About 41 KB a frame, so about 150 MB
+an hour of console time. The hub's page of the finished run scrubs through them
+(`docs/design/Watch-Page.md`, Past runs).
+
 **When it fails on the Switch.** The run folder (`$GAMEPILOT_RUNS/<date>-<id>-testing-N`) has
-`failure.png` and the story log; the console is back at the last save. Look at the failure
-frame first, fix, then rerun the same command: it starts from that save. A run that failed in
+`failure.png`, the recorded frames and the story log, all on the run's page in the hub
+(`http://HOST:47901/runs/<folder>/`); the console is back at the last save. Look at the failure
+frame first (the page's "failure" button jumps there, with the frames before it), fix, then
+rerun the same command: it starts from that save. A run that failed in
 the soft reset itself (`soft_reset_failed`, `soft_reset_not_taken`) leaves the game wherever it
 stopped: look at the screen, B out of any menu, and rerun. Never answer YES to "There is already
 a saved file" by hand unless the checkpoint just passed.

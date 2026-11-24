@@ -16,6 +16,8 @@ type call =
   | Submit of { batch_id : string; commands : Command.command list }
   | Cancel
   | Status
+  | Lease_acquire of { owner : string; ttl_ms : int option }
+  | Lease_release
 
 type request = { id : int; call : call }
 type response = { id : int; outcome : (json, error) result }
@@ -27,6 +29,7 @@ type notification =
   | Watch_log of string
   | Watch_run of Watch_run.t
   | Stop of string
+  | Keepawake of { key : string; idle_ms : int }
 
 type message =
   | Request of request

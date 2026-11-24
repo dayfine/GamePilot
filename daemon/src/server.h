@@ -7,17 +7,23 @@
 // probes it the same way, and hands timed key segments to the controller when
 // they are due.
 //
-// One client at a time. A second connection is an observer: it may only ask
-// for `status`, so `gamepilot status` works while a program runs.
+// Any number of clients (up to kMaxClients). Each has its own probes,
+// templates and frames; reads are served to all of them. Input (submit,
+// cancel, backend.load_state) needs the input lease (input_lease.h): one
+// connection at a time drives, the others watch or are refused.
 //
 // With a watch page (ServerOptions::watch, server_watch.cpp) the loop also
 // serves its HTTP connections: the frame, the probes and the health from here,
-// the plan and log the program sends as notifications, and Stop.
+// the plan and log the program sends as notifications, and Stop. With a run
+// folder it keeps the notes there (run_journal.h) and, with `record`, records
+// the run's frames on the stream's worker (frame_stream.h). With keep-awake
+// on it presses a harmless key after a long idle (keep_awake.h).
 
 #pragma once
 
 #include <atomic>
 #include <cstdint>
+#include <deque>
 #include <memory>
 #include <optional>
 #include <string>
@@ -26,10 +32,14 @@
 #include "Common/Cpp/Filesystem/FileIO.h"
 #include "backend.h"
 #include "clock.h"
+#include "frame_stream.h"
+#include "input_lease.h"
+#include "keep_awake.h"
 #include "live_schedule.h"
 #include "net.h"
 #include "probe_evaluation.h"
 #include "rpc.h"
+#include "run_journal.h"
 #include "schedule.h"
 #include "sent_results.h"
 #include "template_store.h"
@@ -49,7 +59,27 @@ struct ServerOptions {
   // and what the entry says about the run.
   std::string registry;
   std::string checkpoint;
+  // The run's folder: its notes (run_journal.h) and recorded frames go there;
+  // empty = none.
   std::string run_folder;
+  bool record = false;  // record frames into run_folder/frames
+  KeepAwakeOptions keepawake;
+};
+
+// Connections served at once; one more is refused.
+constexpr std::size_t kMaxClients = 16;
+
+// One client's connection and what it set up on it.
+struct ClientConnection {
+  int number = 0;  // from 1, in the order connections came
+  Socket socket;
+  LineBuffer lines;
+  std::optional<std::string> name;  // from its hello
+  std::vector<FrameProbe> probes;
+  // Results sent since its last subscribe or a load: a frame sends only the
+  // ones that changed, the first frame after either sends all.
+  SentResults sent_results;
+  TemplateStore templates;
 };
 
 // What the watch page costs the frame loop, reported with the frame rate.
@@ -63,7 +93,12 @@ struct WatchCost {
 
 class Server {
  public:
-  Server(Backend& backend, ServerOptions options);
+  // `clock` is the daemon's one clock: a live backend stamps its frames on
+  // it, and the server stamps batch ends, the wire log and the lease on it, so
+  // a frame's t_ms and a batch_done's compare (console B, 2026-11-23: a clock
+  // of the server's own started 524 ms after the backend's, and every wait
+  // after a batch lost that much).
+  Server(Backend& backend, ServerOptions options, const Clock& clock);
 
   // Serves until `stop` turns true. Throws BackendError if the backend fails
   // mid-frame.
@@ -78,19 +113,32 @@ class Server {
 
  private:
   void run_lockstep(const std::atomic<bool>& stop);
+  void keep_awake();
+  bool batch_pending() const;
+  void send_batch_done(const std::string& batch_id, std::int64_t seq,
+                       double t_ms);
   void run_live(const std::atomic<bool>& stop);
   void serve_network(int timeout_ms);
   void accept_pending();
-  void read_client();
-  void read_observer();
-  void drop_client(const char* reason);
-  void handle_line(const std::string& line);
-  void handle_observer_line(const std::string& line);
+  void read_client(ClientConnection& client);
+  void drop_client(ClientConnection& client, const char* reason);
+  void handle_line(ClientConnection& client, const std::string& line);
+  std::optional<std::string> take_lease(ClientConnection& client,
+                                        const std::string& method);
+  void clear_input();
+  // The connection whose probes the watch page shows: the oldest with any.
+  const ClientConnection* watched_client() const;
   DaemonStatus status() const;
   void send_probe_results(std::int64_t seq, double t_ms);
-  pa::JsonObject dispatch(const Request& request);
-  void send(const pa::JsonValue& message);
-  void log(const char* dir, const pa::JsonValue& message);
+  pa::JsonObject dispatch(ClientConnection& client, const Request& request);
+  pa::JsonObject dispatch_probes(ClientConnection& client,
+                                 const Request& request);
+  pa::JsonObject dispatch_input(ClientConnection& client,
+                                const Request& request);
+  void send(ClientConnection& client, const pa::JsonValue& message);
+  void log(const char* dir, const pa::JsonValue& message,
+           std::optional<int> conn = std::nullopt,
+           const std::optional<std::string>& owner = std::nullopt);
   void step_frame();
   void rebase_pacing();
 
@@ -101,26 +149,25 @@ class Server {
   WatchFrame watch_frame();
   void offer_stream_frame();
   void watch_tick();
+  FrameStream* stream();
+  void note_plan(const pa::JsonObject& plan);
+  void mark_failure();
   void show_probes(
-      std::int64_t seq,
+      std::int64_t seq, const std::vector<FrameProbe>& probes,
       const std::vector<std::pair<std::string, ProbeResult>>& results);
 
   Backend& backend_;
   ServerOptions options_;
-  Clock clock_;
+  const Clock& clock_;
   Socket listener_;
-  Socket client_;
-  LineBuffer client_lines_;
-  std::optional<std::string> client_name_;  // from its hello
-  Socket observer_;
-  LineBuffer observer_lines_;
+  std::vector<std::unique_ptr<ClientConnection>> clients_;
+  int connections_ = 0;  // connections accepted so far
   pa::FileIO wire_log_;
 
-  std::vector<FrameProbe> probes_;
-  // Results sent since the last subscribe or load: a frame sends only the
-  // ones that changed, the first frame after either sends all.
-  SentResults sent_results_;
-  TemplateStore templates_;
+  InputLease lease_;
+  // Submitted batches not yet done, in order: id and connection number, so
+  // each batch_done goes to the client that submitted it.
+  std::deque<std::pair<std::string, int>> batch_owners_;
   InputSchedule schedule_;      // lockstep
   LiveSchedule live_schedule_;  // live
   std::optional<KeyMask> sent_mask_;
@@ -144,6 +191,13 @@ class Server {
   bool probes_shown_ = false;  // the page shows a non-empty probe list
   double status_shown_ms_ = -1e9;
   WatchCost watch_cost_;
+
+  std::optional<RunJournal> journal_;  // with a run folder
+  // The stream's worker for recording when there is no watch page.
+  std::unique_ptr<FrameStream> record_stream_;
+  PlanStep step_;  // the plan's current event, for recorded frames
+  double failure_marked_ms_ = -1e9;
+  KeepAwake keep_awake_;
 };
 
 }  // namespace gamepilot

@@ -6,9 +6,12 @@
 # daemons stopped (which releases the keys and closes the port and the card) and the lab lock
 # released, also on a failure or Ctrl-C.
 #
-#   sh tools/run_checkpoints_on_switch.sh src/games/frlg/programs/mail_glitch/plans \
+#   sh tools/run_checkpoints_on_switch.sh --program frlg.mail_glitch | PLAN_DIR \
 #       --from mg-01 --to mg-03 [--runs N] [--no-save-after-pass] [--no-preflight | --preflight-only] \
 #       [--no-watch] [--dry-run] [other `gamepilot checkpoints` flags, e.g. --party ...]
+#
+# --program takes a program registry id (`gamepilot programs` lists them); a plan folder in its
+# place still works.
 #
 # Policy (docs/switch-bring-up.md): each checkpoint runs once (--runs 1) from the game's last
 # save, which a soft reset returns to; a run that passes, its end checks included, is saved in
@@ -53,6 +56,13 @@ usage() {
 
 # Our flags out; the rest go to `gamepilot checkpoints`.
 [ $# -gt 0 ] || usage
+# The program: --program ID, else the plan folder.
+program_flag=""
+if [ "$1" = --program ]; then
+    [ $# -gt 1 ] || usage
+    program_flag=--program
+    shift
+fi
 plan_dir=$1
 shift
 dry_run="" watch=--watch preflight=--preflight save=--save-after-pass runs=1 from="" locked=""
@@ -113,7 +123,7 @@ if [ -z "$locked" ]; then
     if [ -n "$lock_cmd" ]; then
         # shellcheck disable=SC2086
         exec $lock_cmd -c "$console" run gamepilot-switch -- \
-            sh "$0" "$plan_dir" --locked ${dry_run:+--dry-run} --runs "$runs" "$save" \
+            sh "$0" ${program_flag:+"$program_flag"} "$plan_dir" --locked ${dry_run:+--dry-run} --runs "$runs" "$save" \
             ${preflight:---no-preflight} ${watch:---no-watch} "$@"
     fi
     echo "[Dry run] no GAMEPILOT_LABLOCK: running without a lab lock"
@@ -191,19 +201,18 @@ step() {
 }
 
 cd "$root"
-echo "[Bring-up] the board"
-# shellcheck disable=SC2086
-step "$daemon" --backend switch $board_args --board-check
-echo "[Bring-up] one frame and its geometry"
+# The board's mode, one frame and its geometry: a run of their own (gamepilot bring-up), listed on
+# the hub like the others.
 mkdir -p "$GAMEPILOT_RUNS"
 # shellcheck disable=SC2086
-step "$daemon" --backend switch $frames_args --capture-check "$GAMEPILOT_RUNS/bring-up-frame.png"
+step "$bin" bring-up --daemon "$daemon" $board_args $frames_args
 
 # shellcheck disable=SC2086
-set -- "$plan_dir" "$@" --backend switch $board_args $frames_args
+set -- ${program_flag:+"$program_flag"} "$plan_dir" "$@" --backend switch $board_args $frames_args
 if [ -n "$preflight" ]; then
     echo "[Preflight] $from"
-    step "$bin" checkpoints "$@" --preflight
+    # shellcheck disable=SC2086
+    step "$bin" checkpoints "$@" --preflight $watch
     [ "$preflight" != --preflight-only ] || exit 0
 fi
 echo "[Checkpoints] --runs $runs $save"

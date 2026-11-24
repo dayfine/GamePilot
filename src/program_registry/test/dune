@@ -1,0 +1,7 @@
+(test
+ (name test_program_registry)
+ (libraries
+  gamepilot.case_table
+  gamepilot.story
+  gamepilot.frlg_story
+  gamepilot.program_registry))

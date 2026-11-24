@@ -1,4 +1,4 @@
-(** Wire protocol v1.6 (contracts/v1): message types and their JSON codec.
+(** Wire protocol v1.9 (contracts/v1): message types and their JSON codec.
 
     The codec lives in one module per message family ([Command], [Probe],
     [Backend], [Jsonrpc], [Wire_log], [Probe_images]); this module re-exports
@@ -171,7 +171,11 @@ type call = Jsonrpc.call =
       (** probe ids; the daemon stops measuring them *)
   | Submit of { batch_id : string; commands : command list }
   | Cancel
-  | Status  (** the daemon's health; answered on an observer connection too *)
+  | Status  (** the daemon's health; served to every client *)
+  | Lease_acquire of { owner : string; ttl_ms : int option }
+      (** takes the input lease for this connection, or renews it; [ttl_ms]
+          defaults to the daemon's (60 s) *)
+  | Lease_release
 
 type request = Jsonrpc.request = { id : int; call : call }
 
@@ -198,6 +202,10 @@ type notification = Jsonrpc.notification =
       (** From the daemon: someone pressed Stop on the watch page (the reason).
           The daemon has already cancelled the queued commands and released
           every button; the program ends at its next wait. *)
+  | Keepawake of { key : string; idle_ms : int }
+      (** In the wire log only (a [Daemon] line), never sent: the daemon pressed
+          [key] to keep the console awake after [idle_ms] with no input
+          (daemon/src/keep_awake.h). *)
 
 type message = Jsonrpc.message =
   | Request of request
@@ -261,15 +269,23 @@ module Watch_registry = Watch_registry
 module Daemon_status = Daemon_status
 (** The [status] result: decode it with [Daemon_status.of_json]. *)
 
+module Lease = Lease
+(** The input lease: [lease.acquire] and [lease.release] results, refusals. *)
+
 (** {1 Wire log} *)
 
 type direction = Wire_log.direction =
   | In  (** from the client *)
   | Out  (** to the client *)
+  | Daemon
+      (** the daemon's own act, sent to no one: its keep-awake press. Replay
+          skips it. *)
 
 type log_line = Wire_log.log_line = {
   dir : direction;
   t_ms : float;
+  conn : int option;
+  owner : string option;
   msg : message;
 }
 

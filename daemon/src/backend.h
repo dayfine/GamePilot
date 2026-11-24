@@ -90,6 +90,11 @@ class Backend {
   // queued.
   virtual void queue_keys(KeyMask mask, double ms);
 
+  // Live backends only. Drops the inputs queued with queue_keys() that have
+  // not run yet and cuts short the one running, so a cancel takes effect now
+  // rather than after the device has played out the queue.
+  virtual void drop_queued_keys();
+
   virtual BackendHealth health() const { return {}; }
 };
 
@@ -103,6 +108,10 @@ inline std::optional<FrameStamp> Backend::next_frame(double) {
 }
 
 inline void Backend::queue_keys(KeyMask, double) {
+  throw BackendError(info().kind + " is not a live backend");
+}
+
+inline void Backend::drop_queued_keys() {
   throw BackendError(info().kind + " is not a live backend");
 }
 

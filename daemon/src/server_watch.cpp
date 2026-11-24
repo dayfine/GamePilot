@@ -93,8 +93,23 @@ bool Server::take_watch_note(const pa::JsonValue& message) {
     return false;
   }
   const pa::JsonObject* params = object->get_object("params");
-  if (watch_ && params != nullptr) {
-    std::string json = to_line(pa::JsonValue(params->clone()));
+  if (params == nullptr) {
+    return true;
+  }
+  std::string json = to_line(pa::JsonValue(params->clone()));
+  if (journal_) {
+    if (*method == "watch.plan") {
+      journal_->plan(json);
+    } else if (*method == "watch.run") {
+      journal_->chain(json);
+    } else {
+      journal_->log_line(*params, static_cast<double>(unix_now_ms()));
+    }
+  }
+  if (*method == "watch.plan") {
+    note_plan(*params);
+  }
+  if (watch_) {
     if (*method == "watch.plan") {
       watch_->set_plan(std::move(json));
     } else if (*method == "watch.run") {
@@ -106,19 +121,50 @@ bool Server::take_watch_note(const pa::JsonValue& message) {
   return true;
 }
 
+// A new current event: recorded frames belong to it from now on, and its
+// first frame is recorded at once (a failed event's as the failure). Between
+// two events (none current) the frames stay with the last one.
+void Server::note_plan(const pa::JsonObject& plan) {
+  const PlanStep step = current_step(plan);
+  FrameStream* frames = stream();
+  if (step.id.empty() || step == step_ || frames == nullptr) {
+    return;
+  }
+  step_ = step;
+  frames->set_step(step.id);
+  if (step.failed) {
+    mark_failure();
+  } else {
+    frames->mark(kRecordStep);
+  }
+}
+
+// One recorded failure frame per failure: the failed event and the
+// failure.png the runner then saves are the same moment.
+void Server::mark_failure() {
+  constexpr double kSameFailureMs = 5000;
+  const double now = clock_.now_ms();
+  FrameStream* frames = stream();
+  if (frames == nullptr || now - failure_marked_ms_ < kSameFailureMs) {
+    return;
+  }
+  failure_marked_ms_ = now;
+  frames->mark(kRecordFailure);
+}
+
 // Stop on the page: release every button now, then tell the program, which
 // ends at its next wait. False when no program is connected.
 bool Server::stop_program() {
-  schedule_.clear();
-  live_schedule_.clear();
-  backend_.set_keys(0);
-  sent_mask_ = KeyMask{0};
+  clear_input();
+  const bool connected = !clients_.empty();
   std::fprintf(stderr, "daemon: stop pressed on the watch page%s\n",
-               client_.valid() ? "" : " (no program connected)");
-  if (!client_.valid()) {
+               connected ? "" : " (no program connected)");
+  if (!connected) {
     return false;
   }
-  send(stop_notification("stopped by user"));
+  for (auto& client : clients_) {
+    send(*client, stop_notification("stopped by user"));
+  }
   pa::JsonObject line;
   line["line"] = "[Watch] Stop pressed: buttons released, program told";
   watch_->add_log(to_line(pa::JsonValue(std::move(line))));
@@ -146,18 +192,18 @@ WatchFrame Server::watch_frame() {
 }
 
 void Server::show_probes(
-    std::int64_t seq,
+    std::int64_t seq, const std::vector<FrameProbe>& probes,
     const std::vector<std::pair<std::string, ProbeResult>>& results) {
   const double start = clock_.now_ms();
   if (start - probes_shown_ms_ < kWatchFrameMs) {
     return;
   }
   pa::JsonArray list;
-  for (std::size_t i = 0; i < probes_.size() && i < results.size(); i++) {
+  for (std::size_t i = 0; i < probes.size() && i < results.size(); i++) {
     pa::JsonObject probe;
-    probe["id"] = probes_[i].spec.id;
-    probe["kind"] = probes_[i].spec.kind;
-    probe["box"] = box_json(probes_[i].spec.box);
+    probe["id"] = probes[i].spec.id;
+    probe["kind"] = probes[i].spec.kind;
+    probe["box"] = box_json(probes[i].spec.box);
     probe["result"] = probe_result_json(results[i].second);
     list.push_back(std::move(probe));
   }
@@ -165,7 +211,7 @@ void Server::show_probes(
   shown["seq"] = seq;
   shown["probes"] = std::move(list);
   watch_->set_probes(to_line(pa::JsonValue(std::move(shown))));
-  probes_shown_ = !probes_.empty();
+  probes_shown_ = !probes.empty();
   probes_shown_ms_ = start;
   watch_cost_.ms += clock_.now_ms() - start;
 }
@@ -174,15 +220,15 @@ void Server::show_probes(
 // current (no extra read: mGBA's costs a bridge round trip), else the
 // backend's. The stream encodes it on its own thread.
 void Server::offer_stream_frame() {
-  FrameStream& stream = watch_->stream();
+  FrameStream& frames = *stream();
   const std::int64_t seq = backend_.seq();
   const double now = clock_.now_ms();
-  if (!stream.wants_frame(seq, now)) {
+  if (!frames.wants_frame(seq, now)) {
     return;
   }
   try {
     const bool probed = !probed_frame_.empty() && probed_seq_ == seq;
-    stream.offer(probed ? probed_frame_ : backend_.frame(), seq, now);
+    frames.offer(probed ? probed_frame_ : backend_.frame(), seq, now);
   } catch (const BackendError& error) {
     std::fprintf(stderr, "daemon: stream frame: %s\n", error.what());
   }
@@ -203,7 +249,7 @@ void Server::watch_tick() {
                       to_line(pa::JsonValue(status_result(status()))));
     status_shown_ms_ = now;
   }
-  if (probes_shown_ && (probes_.empty() || !client_.valid())) {
+  if (probes_shown_ && watched_client() == nullptr) {
     watch_->set_probes("{\"seq\":" + std::to_string(backend_.seq()) +
                        ",\"probes\":[]}");
     probes_shown_ = false;

@@ -22,6 +22,10 @@ type setup = {
   watch : Daemon_process.watch option;  (** the daemon's watch page, if any *)
   save_after_pass : bool;
       (** On the Switch: save in the game after a pass (Story.Console_runs). *)
+  info : Run_record.info;  (** For each run's run.json. *)
+  daemon_flags : string list;
+      (** The daemon's recording and keep-awake flags, as the user gave them
+          (the daemon's defaults otherwise: on for the Switch, off for mGBA). *)
   bound : (int * int option) option ref;
       (** The ports the series' last daemon bound (program, page): the next one
           asks for them again, so the page keeps its URL across runs. *)
@@ -174,7 +178,8 @@ let live setup cp ~progress record log (daemon : Daemon_process.t) =
         }
 
 let start_daemon setup record cp (port, watch) =
-  Daemon_process.start ?watch ~daemon:setup.daemon ~backend:setup.backend ~port
+  Daemon_process.start ?watch ~flags:setup.daemon_flags ~daemon:setup.daemon
+    ~backend:setup.backend ~port
     ~wire_log:(Run_record.path record "wire.jsonl")
     ~out_file:(Run_record.path record "daemon.out")
     ~checkpoint:cp.id ()
@@ -245,29 +250,30 @@ let summary setup cp n ~attempt outcome =
   in
   line ^ capped_note setup cp
 
-let record_outcome setup cp record n ~attempt outcome =
+let mode_name setup = Checkpoint_trials.mode_to_string setup.mode
+
+let record_outcome setup cp (run : Run_record.run) n ~attempt outcome =
   let line = summary setup cp n ~attempt outcome in
-  print_endline ("[Run] " ^ record.Run_record.dir ^ ": " ^ line);
-  Run_record.write record "summary.txt" (line ^ "\n");
-  let result, at, reason =
+  print_endline ("[Run] " ^ run.record.dir ^ ": " ^ line);
+  let ending : Run_record.ending =
     match outcome with
-    | Passed -> ("pass", "", "")
-    | Failed { at; reason; _ } ->
-        Run_record.write record "KEEP" "a failing run\n";
-        ("fail", at, reason)
+    | Passed -> { result = "pass"; at = ""; reason = "" }
+    | Failed { at; reason; _ } -> { result = "fail"; at; reason }
   in
-  Run_record.append_result ~runs_dir:setup.runs_dir record ~checkpoint:cp.id
-    ~mode:(Checkpoint_trials.mode_to_string setup.mode)
-    ~result ~at ~reason
+  Run_record.finish ~runs_dir:setup.runs_dir run ~summary:line ending
 
 (* Attempt [attempt] of run [n] of [cp]: its folder and how it ended.
    [progress] is the chain for the watch page before the attempt ([None]) and
    after it. *)
 let run setup cp n ~attempt ~progress =
-  let record =
-    Run_record.create ~runs_dir:setup.runs_dir ~checkpoint:cp.id
-      ~mode:(Checkpoint_trials.mode_to_string setup.mode)
+  let attempts = cp.plan.retries + 1 in
+  let run =
+    Run_record.start
+      ?attempt:(if attempts > 1 then Some (attempt, attempts) else None)
+      ~runs_dir:setup.runs_dir setup.info ~checkpoint:cp.id
+      ~mode:(mode_name setup)
   in
+  let record = run.record in
   let log, close = Run_record.story_log record in
   log
     (Printf.sprintf "[Run] %s run %d%s from %s" cp.id n
@@ -276,5 +282,5 @@ let run setup cp n ~attempt ~progress =
     with_daemon setup record cp (live setup cp ~progress record log)
   in
   close ();
-  record_outcome setup cp record n ~attempt outcome;
+  record_outcome setup cp run n ~attempt outcome;
   (record, outcome)

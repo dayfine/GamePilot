@@ -11,6 +11,8 @@ GamePilot automates games through three layers (design: `docs/design/Layered-Aut
   - `core/`: the effects programs use (`effects`) and their handlers (`session`, `live`, `replay`).
   - `pokemon/`: code shared by Pokemon games (navigation grid, story plans and their engine).
   - `games/<game>/`: `readers/`, `actions/`, `maps/`, `story/`, and `programs/<program>/`.
+  - `program_registry/`: every program's descriptor (game, group, name, doc, checkpoints folder,
+    backends), as PA/CC's program list. A new program registers there (`docs/programs/README.md`).
   - `bin/`: the `gamepilot` command.
 - `contracts/`: golden JSON-RPC messages both sides must parse. The only thing they share.
   Formatted by `tools/fmt_json.py` (one key per line, lists of scalars inline).

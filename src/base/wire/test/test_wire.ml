@@ -51,6 +51,10 @@ let result_round_trips =
     );
     ("submit", fun j -> Wire.(json_of_submit_result (submit_result_of_json j)));
     ("cancel", fun j -> Wire.(json_of_cancel_result (cancel_result_of_json j)));
+    ( "lease.acquire",
+      fun j -> Wire.Lease.(json_of_acquire_result (acquire_result_of_json j)) );
+    ( "lease.release",
+      fun j -> Wire.Lease.(json_of_release_result (release_result_of_json j)) );
   ]
 
 let read_golden dir file =

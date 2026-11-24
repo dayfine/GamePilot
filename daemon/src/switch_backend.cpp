@@ -62,6 +62,8 @@ void SwitchBackend::queue_keys(KeyMask mask, double ms) {
   controller_.send_state(pro_buttons_for_keys(mask), rounded);
 }
 
+void SwitchBackend::drop_queued_keys() { controller_.cancel_queued(); }
+
 void SwitchBackend::set_keys(KeyMask mask) {
   queue_keys(mask, 1000.0 / info_.frame_rate);
 }

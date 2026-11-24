@@ -4,11 +4,10 @@ let stall_slack_ms = 1000.
 let client_name = "gamepilot-programs/0.1"
 let protocol_version = 1
 
-let hello t =
+let hello ~client t =
   let r =
     Wire.hello_result_of_json
-      (call t
-         (Wire.Hello { protocol = protocol_version; client = client_name }))
+      (call t (Wire.Hello { protocol = protocol_version; client }))
   in
   if r.protocol <> protocol_version then
     protocol_error "daemon speaks protocol %d, we speak %d" r.protocol
@@ -208,7 +207,14 @@ let handle t f =
         (fun eff -> Option.map (fun answer k -> resume k answer) (answer t eff));
     }
 
-let run transport f =
+let acquire_lease t (owner, ttl_ms) =
+  ignore
+    (Wire.Lease.acquire_result_of_json
+       (call t (Wire.Lease_acquire { owner; ttl_ms }))
+      : Wire.Lease.t)
+
+let run ?(client = client_name) ?lease transport f =
   let t = create transport in
-  hello t;
+  hello ~client t;
+  Option.iter (acquire_lease t) lease;
   handle t f
