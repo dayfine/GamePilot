@@ -1,7 +1,9 @@
-(** The party's species by slot, as the game reckons it. FireRed has no reader
-    for a member's species yet, so the program states the party at the
-    checkpoint's start and the actions that change it (a swap, a trade, a prize)
-    update it, as the overworld reckons the player's position. *)
+(** The party's species by slot, as the game reckons it: read from the members'
+    summaries ({!Party_species}) before the first action that finds a member by
+    its species, or stated (a test, [--party] on one checkpoint), and then
+    updated by the actions that change it (a swap, a trade, a prize), as the
+    overworld reckons the player's position. Reading it, not taking a declared
+    party, keeps a member's slot right on a save whose other members differ. *)
 
 type t
 (** Slot 1 first; at most six members. *)
@@ -9,6 +11,10 @@ type t
 val of_list : string list -> t
 (** Species slugs (["pidgey"]), slot 1 first. Raises [Invalid_argument] for more
     than six. *)
+
+val of_read : string option list -> t
+(** A party as {!Party_species.read_all} read it; a member whose species did not
+    read is ["?"], which no species finds. *)
 
 val of_string : string -> t
 (** A comma-separated list: ["blastoise,pidgey,abra"]; [""] is no party. *)

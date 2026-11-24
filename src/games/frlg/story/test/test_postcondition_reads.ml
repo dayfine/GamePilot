@@ -34,7 +34,7 @@ let party_screen ?(lost_b = 0) () =
 let party_promised : Story.Plan.postconditions =
   {
     position = None;
-    party = Some (Party_includes [ "abra" ]);
+    party = Some (Party_includes { members = [ "abra" ]; slots = [] });
     items = [];
     coins = None;
     money = None;

@@ -27,7 +27,11 @@ let case name promised observed expectation : Case_table.case =
 
 let mg01_party = [ "blastoise"; "rattata"; "oddish"; "pidgey"; "abra" ]
 let in_order = { nothing with party = Some (Party_in_order mg01_party) }
-let includes l = { nothing with party = Some (Party_includes l) }
+
+let includes ?(slots = []) l =
+  { nothing with party = Some (Party_includes { members = l; slots }) }
+
+let slot slot species = { Plan.slot; species }
 let party members = { read with party = Some members }
 let money min max = { nothing with money = Some { min; max } }
 
@@ -63,6 +67,21 @@ let party_cases =
     case "party includes, missing but a member unread" (includes [ "abra" ])
       (party [ Some "blastoise"; None ])
       "party: not checked: read blastoise, ?";
+    case "party includes with a slot: console B's fillers pass"
+      (includes [ "pidgey" ] ~slots:[ slot 1 "mr-mime" ])
+      (party
+         (some
+            [ "mr-mime"; "blastoise"; "eevee"; "pidgey"; "oddish"; "lapras" ]))
+      "party: passed: mr-mime, blastoise, eevee, pidgey, oddish, lapras";
+    case "party includes with a slot: the member elsewhere fails"
+      (includes [ "pidgey" ] ~slots:[ slot 1 "mr-mime" ])
+      (party (some [ "blastoise"; "mr-mime"; "pidgey" ]))
+      "party: failed: expected pidgey among the members, mr-mime in slot 1, \
+       read blastoise, mr-mime, pidgey";
+    case "party slots alone: a party too short for the slot fails"
+      (includes [] ~slots:[ slot 3 "mr-mime" ])
+      (party (some [ "farfetchd"; "blastoise" ]))
+      "party: failed: expected mr-mime in slot 3, read farfetchd, blastoise";
     case "party not read" in_order read
       "party: not checked: the game can't read it";
   ]

@@ -67,6 +67,9 @@ let save log what op =
 let options setup cp log : Frlg_story.Checkpoint_run.options =
   {
     (Checkpoint_command.options { setup.common with log_file = None }) with
+    (* Each checkpoint of the series reads its party: --party is only the
+       first start's, for the Switch's start check (Console_session). *)
+    party = None;
     state =
       (match setup.backend with
       | Mgba _ -> Some cp.start_state

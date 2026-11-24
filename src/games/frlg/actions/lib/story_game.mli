@@ -17,14 +17,19 @@
     below the floor's lift door, and after any other event that passes, game
     actions included, the player is taken to be where its [declared_after] says
     when that names one tile (the fork's StoryStepRunner). The party is reckoned
-    too ({!Party_roster}), from the config's. *)
+    too ({!Party_roster}), from the config's or, when the config states none,
+    from the members' summaries read before the first action that finds a member
+    by its species ({!Party_reading}). *)
 
 type config = {
   world : Frlg_overworld.Frlg_steps.world;
   gait : Frlg_overworld.Route_legs.gait;
   flee : unit -> unit;  (** Runs from a wild battle, back to the overworld. *)
   flags : string -> bool;
-  party : Party_roster.t;  (** The party at the checkpoint's start. *)
+  party : Party_roster.t option;
+      (** The party at the checkpoint's start; [None]: read from the game before
+          the first action that finds a member by its species
+          ({!Action_args.picks_member}). *)
   grind_cap : int option;
       (** Testing: every ["grind"] ends, passing, after this many battles
           ({!Grind.run}'s [cap]). *)
