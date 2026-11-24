@@ -9,6 +9,7 @@ type screen =
           from the BDSP-last capture by swapping tiles 0 and 1 *)
   | Home_bdsp_last  (** HOME, BDSP played last, the cursor on it *)
   | Home_on_fire_red  (** HOME, BDSP played last, the cursor on FireRed *)
+  | Home_dimmed  (** HOME, dimmed after a while untouched *)
   | User_select
   | Black  (** a launch's loading screen: every probe black *)
   | Intro  (** the Game Freak logo *)
@@ -18,6 +19,7 @@ let screen_name = function
   | Home_fire_red_last -> "HOME (FireRed last)"
   | Home_bdsp_last -> "HOME (BDSP last)"
   | Home_on_fire_red -> "HOME (cursor on FireRed)"
+  | Home_dimmed -> "HOME (dimmed)"
   | User_select -> "user select"
   | Black -> "black"
   | Intro -> "intro"
@@ -53,6 +55,7 @@ let probes = function
       swap "home.tile0" "home.tile1" (capture "home-cursor-on-last-played")
   | Home_bdsp_last -> capture "home-cursor-on-last-played"
   | Home_on_fire_red -> capture "home-cursor-on-firered"
+  | Home_dimmed -> capture "home-dimmed"
   | User_select -> capture "user-select"
   | Black -> black_probes
   | Intro -> capture "launch-game-freak-intro"

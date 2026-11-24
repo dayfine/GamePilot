@@ -27,7 +27,7 @@ let await_home () =
   | Timeout -> Error "the HOME menu did not show"
 
 let park_from ~log = function
-  | H.Home _ ->
+  | H.Home _ | Home_dimmed ->
       log "[Park] already on HOME";
       Ok ()
   | User_select ->
@@ -98,8 +98,15 @@ let from_home ~log ~cursor ~game_tile =
       press Wire.A;
       until_game ~log ~launched:false
 
-let resume_from ~log = function
+let rec resume_from ~log = function
   | H.Elsewhere -> Ok Already_in_game
+  | Home_dimmed ->
+      log "[Resume] HOME dimmed: B to light it";
+      press Wire.B;
+      let* () = await_home () in
+      let screen = screen () in
+      log ("[Resume] " ^ H.to_string screen);
+      resume_from ~log screen
   | User_select ->
       press Wire.A;
       until_game ~log ~launched:true

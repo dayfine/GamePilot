@@ -6,7 +6,8 @@ module S = Scripted_home
 
 (* HOME zooms out of the game; A on FireRed's tile resumes it when it was
    played last (it still runs), or opens the user select when it was not; A
-   there boots it: black, then the intro. [home_ignored] HOME presses do
+   there boots it: black, then the intro. Any press wakes a dimmed HOME, and
+   does nothing else. [home_ignored] HOME presses do
    nothing. *)
 let console ?(home_ignored = 0) ?(a_ignored = false) () =
   let homes = ref 0 in
@@ -17,6 +18,7 @@ let console ?(home_ignored = 0) ?(a_ignored = false) () =
         incr homes;
         if !homes > home_ignored then show 600 S.Home_fire_red_last
     | Wire.B, S.User_select -> show 300 S.Home_bdsp_last
+    | _, S.Home_dimmed -> show 300 S.Home_fire_red_last
     | Wire.Right, S.Home_bdsp_last -> show 200 S.Home_on_fire_red
     | Wire.A, S.Home_fire_red_last when not a_ignored -> show 800 S.Game
     | Wire.A, S.Home_on_fire_red -> show 800 S.User_select
@@ -59,6 +61,9 @@ let () =
       case "park: already on HOME, nothing (HOME there would resume)"
         (park S.Home_bdsp_last (console ()))
         "ok; no press; ends on HOME (BDSP last)";
+      case "park: HOME dimmed, nothing"
+        (park S.Home_dimmed (console ()))
+        "ok; no press; ends on HOME (dimmed)";
       case "park: the user select, B back to HOME"
         (park S.User_select (console ()))
         "ok; B; ends on HOME (BDSP last)";
@@ -73,6 +78,9 @@ let () =
       case "resume: the cursor already on FireRed's tile, no Right"
         (resume S.Home_on_fire_red (console ()))
         "ok, launched the game; A, A; ends on intro";
+      case "resume: HOME dimmed, B wakes it, A resumes FireRed"
+        (resume S.Home_dimmed (console ()))
+        "ok, resumed the suspended game; B, A; ends on game";
       case "resume: already in the game, nothing"
         (resume S.Game (console ()))
         "ok, already in the game; no press; ends on game";

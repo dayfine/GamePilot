@@ -2,6 +2,7 @@ type tile_color = { min : int * int * int; max : int * int * int }
 
 type t =
   | Home of { cursor : int option; game_tile : int option }
+  | Home_dimmed
   | User_select
   | Elsewhere
 
@@ -148,12 +149,14 @@ let home_theme g =
   else if total > white_min_sum then Some true
   else None
 
-let home_detail g =
-  sum (g "home.close_game_top").stddev >= min_detail_stddev
-  && sum (g "home.top").stddev <= max_flat_stddev
-  && sum (g "home.bottom_icons").stddev >= min_icons_stddev
-  && sum (g "home.iconrow_icons").stddev >= min_detail_stddev
-  && sum (g "home.game_slot").stddev >= min_detail_stddev
+(* The detail limits scale with the picture's brightness: [scale] 1 lit. *)
+let home_detail ~scale g =
+  let at_least id limit = sum (g id).stddev >= limit *. scale in
+  at_least "home.close_game_top" min_detail_stddev
+  && sum (g "home.top").stddev <= max_flat_stddev *. scale
+  && at_least "home.bottom_icons" min_icons_stddev
+  && at_least "home.iconrow_icons" min_detail_stddev
+  && at_least "home.game_slot" min_detail_stddev
 
 let home_flat g white =
   let row = g "home.bottom_row" and right = g "home.iconrow_right" in
@@ -167,7 +170,19 @@ let home_flat g white =
 let is_home g =
   match home_theme g with
   | None -> false
-  | Some white -> home_detail g && home_flat g white
+  | Some white -> home_detail ~scale:1. g && home_flat g white
+
+(* Dimmed, the dark theme's grey (51 a channel lit) reads 8 on console B: a
+   flat band between black and the lit grey, the detail limits scaled by it.
+   A black picture (a launch) is below the band. *)
+let dark_lit_sum = 153.
+let dimmed_min_sum = 15.
+let dimmed_max_sum = 100.
+
+let is_home_dimmed g =
+  let total = sum (g "home.bottom_row").mean in
+  total >= dimmed_min_sum && total < dimmed_max_sum && home_flat g false
+  && home_detail ~scale:(total /. dark_lit_sum) g
 
 (* StartGameUserSelectDetector_Switch1::detect. *)
 let user_grey_min = 50.
@@ -206,6 +221,7 @@ let home m =
 
 let classify m g =
   if is_home g then home m
+  else if is_home_dimmed g then Home_dimmed
   else if is_user_select g then User_select
   else Elsewhere
 
@@ -227,5 +243,6 @@ let to_string = function
   | Home { cursor; game_tile } ->
       Printf.sprintf "HOME (cursor on tile %s, the game's tile %s)"
         (tile cursor) (tile game_tile)
+  | Home_dimmed -> "HOME, dimmed (tiles not read)"
   | User_select -> "the user select"
   | Elsewhere -> "not HOME"
