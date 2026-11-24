@@ -25,7 +25,10 @@ type screen =
   | Member_menu of int
       (** A party member's own menu over the party (SUMMARY, SWITCH, MAIL,
           CANCEL), its cursor on this row from 0. *)
-  | Bag_items  (** The bag's Items pocket, cursor on the top row. *)
+  | Bag_items of (string * int) list
+      (** The bag's Items pocket, cursor on the top row, its list these items
+          and counts (["REVIVE"], 2), then CANCEL: the text reader reads them
+          and nothing else on the list's rows. *)
   | Mart_list  (** A Mart's BUY list with the money box (a Switch capture). *)
   | Summary of string
       (** The summary's info page (a Switch capture) showing this species name
@@ -44,7 +47,7 @@ let screen_name = function
   | Party slot -> Printf.sprintf "party slot %d" slot
   | Party_after_recycle -> "party after recycle"
   | Member_menu row -> Printf.sprintf "member menu row %d" row
-  | Bag_items -> "bag items"
+  | Bag_items _ -> "bag items"
   | Mart_list -> "mart list"
   | Summary name -> "summary " ^ name
 
@@ -66,7 +69,7 @@ let image = function
   | Dialog_arrow -> "screenshots-779/20261122-121507-17.04__dialog-arrow.png"
   | Question -> "AdvanceWhiteDialogDetector/Eng-Select_False__dialog-choice.png"
   | Member_menu _ -> "mail-glitch-04/mg05-mimien-menu__none.png"
-  | Bag_items -> "emu-1/20261122-024507-05.04__bag-items-row0.png"
+  | Bag_items _ -> "emu-1/20261122-024507-05.04__bag-items-row0.png"
   | Mart_list -> "ItemListReader/MartBuyList_eng__money.png"
   | Summary _ -> "captures/sm3_s1__summary1.png"
 
@@ -268,9 +271,29 @@ let move_cursor t (p : press) =
 let species_line = "summary_species/"
 let far_off = 0.3
 
+(* The bag list's lines: each item's name ("bag.<row>/<NAME>"), CANCEL after
+   them, and its count's digits, ones first ("bag_count.<row>.<k>/<digit>"). *)
+let bag_lines items =
+  let names = List.map fst items @ [ "CANCEL" ] in
+  let name_ids = List.mapi (Printf.sprintf "bag.%d/%s") names in
+  let digit_ids row (_, count) =
+    let digits = string_of_int count in
+    let n = String.length digits in
+    List.init n (fun k ->
+        Printf.sprintf "bag_count.%d.%d/%c" row k digits.[n - 1 - k])
+  in
+  name_ids @ List.concat (List.mapi digit_ids items)
+
+let text_line id =
+  String.starts_with ~prefix:species_line id
+  || String.starts_with ~prefix:"bag" id
+
 let text_result screen id =
   let shown =
-    match screen with Summary name -> id = species_line ^ name | _ -> false
+    match screen with
+    | Summary name -> id = species_line ^ name
+    | Bag_items items -> List.mem id (bag_lines items)
+    | _ -> false
   in
   ( id,
     Wire.Template_match
@@ -278,10 +301,7 @@ let text_result screen id =
 
 let text_probes t screen =
   List.filter_map
-    (fun id ->
-      if String.starts_with ~prefix:species_line id then
-        Some (text_result screen id)
-      else None)
+    (fun id -> if text_line id then Some (text_result screen id) else None)
     t.subscribed
 
 let frame t : Wire.frame =
