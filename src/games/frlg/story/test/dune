@@ -102,6 +102,7 @@
  (name test_console_start)
  (modules test_console_start)
  (deps
+  tt-01.plan.json
   mg-01.plan.json
   mg-02.plan.json
   mg-03.plan.json

@@ -175,6 +175,23 @@ let preflight_cases =
       "pidgey in the party (fly): pidgey: ok | money at least ¥4100 (mart, \
        buy_coins): ¥25014: ok | at the start, CeladonCity: no kept start frame \
        to compare: NOT READ => stop";
+    case
+      "preflight tt-01, console B: no Rare Candy yet, the picked-up one is \
+       duplicated"
+      (fun () ->
+        preflight "tt-01" None
+          {
+            observed =
+              observed
+                ~party:[ "mr-mime"; "blastoise"; "pidgey" ]
+                ~money:20476 ();
+            place = same;
+            members = None;
+          })
+      "pidgey in the party (fly): mr-mime, blastoise, pidgey: ok | mr-mime in \
+       the party (give_bag_item): mr-mime, blastoise, pidgey: ok | money at \
+       least ¥2000 (mart): ¥20476: ok | at the start, \
+       CeladonCity_DepartmentStore_1F: 3 of 150 tiles changed: ok => go";
     case "preflight mg-02, mGBA: some member knows Cut (Rattata)"
       (fun () ->
         cut_row
