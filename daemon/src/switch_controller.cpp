@@ -1,22 +1,30 @@
 #include "switch_controller.h"
 
-#include <algorithm>
 #include <array>
+#include <utility>
 
 namespace gamepilot {
 
 namespace {
 
-// Switch button bits (NintendoSwitch_ControllerButtons.h, Button) and D-pad
-// positions (DpadPosition) the GBA keys map to.
-constexpr std::uint16_t kSwitchB = 1u << 1;
-constexpr std::uint16_t kSwitchA = 1u << 2;
-constexpr std::uint16_t kSwitchL = 1u << 4;
-constexpr std::uint16_t kSwitchR = 1u << 5;
-constexpr std::uint16_t kSwitchMinus = 1u << 8;
-constexpr std::uint16_t kSwitchPlus = 1u << 9;
-constexpr std::uint8_t kDpadNone = 8;
-constexpr std::uint8_t kStickCentre = 128;
+// Report 0x30's button bits as populate_report_buttons() sets them.
+// button3: the right side.
+constexpr std::uint8_t kProB = 1u << 2;
+constexpr std::uint8_t kProA = 1u << 3;
+constexpr std::uint8_t kProR = 1u << 6;
+// button4: the shared buttons.
+constexpr std::uint8_t kProMinus = 1u << 0;
+constexpr std::uint8_t kProPlus = 1u << 1;
+// button5: the left side, the D-pad as execute_state() splits it.
+constexpr std::uint8_t kProDown = 1u << 0;
+constexpr std::uint8_t kProUp = 1u << 1;
+constexpr std::uint8_t kProRight = 1u << 2;
+constexpr std::uint8_t kProLeft = 1u << 3;
+constexpr std::uint8_t kProL = 1u << 6;
+
+// A centred stick: 2048 on both 12-bit axes, as encode_joystick() packs it
+// and execute_state() initialises it.
+constexpr std::array<std::uint8_t, 3> kStickCentre = {0x00, 0x08, 0x80};
 
 // GBA KEYINPUT bits (rpc.cpp, button_mask).
 constexpr KeyMask kGbaA = 1u << 0;
@@ -30,66 +38,49 @@ constexpr KeyMask kGbaDown = 1u << 7;
 constexpr KeyMask kGbaR = 1u << 8;
 constexpr KeyMask kGbaL = 1u << 9;
 
-// The DpadPosition for a direction, x and y each -1, 0 or 1 (y down), as the
-// C++'s execute_state() merges it.
-std::uint8_t dpad_position(int x, int y) {
-  // Rows: y = -1, 0, 1; columns: x = -1, 0, 1.
-  static constexpr std::array<std::array<std::uint8_t, 3>, 3> kPositions = {{
-      {7, 0, 1},          // up-left, up, up-right
-      {6, kDpadNone, 2},  // left, none, right
-      {5, 4, 3},          // down-left, down, down-right
-  }};
-  return kPositions[static_cast<std::size_t>(y + 1)]
-                   [static_cast<std::size_t>(x + 1)];
-}
-
 bool has(KeyMask keys, KeyMask bit) { return (keys & bit) != 0; }
+
+void set_if(std::uint8_t& byte, bool on, std::uint8_t bit) {
+  if (on) {
+    byte = static_cast<std::uint8_t>(byte | bit);
+  }
+}
 
 }  // namespace
 
-WiredState neutral_wired_state() {
-  WiredState state{};
-  state.dpad_byte = kDpadNone;
-  state.left_joystick_x = kStickCentre;
-  state.left_joystick_y = kStickCentre;
-  state.right_joystick_x = kStickCentre;
-  state.right_joystick_y = kStickCentre;
-  return state;
+ProButtons neutral_pro_buttons() {
+  ProButtons buttons{};
+  for (std::size_t i = 0; i < kStickCentre.size(); i++) {
+    buttons.left_joystick[i] = kStickCentre[i];
+    buttons.right_joystick[i] = kStickCentre[i];
+  }
+  return buttons;
 }
 
-WiredState wired_state_for_keys(KeyMask keys) {
-  std::uint16_t buttons = 0;
-  const std::array<std::pair<KeyMask, std::uint16_t>, 6> kMap = {{
-      {kGbaA, kSwitchA},
-      {kGbaB, kSwitchB},
-      {kGbaL, kSwitchL},
-      {kGbaR, kSwitchR},
-      {kGbaStart, kSwitchPlus},
-      {kGbaSelect, kSwitchMinus},
-  }};
-  for (const auto& [gba, sw] : kMap) {
-    if (has(keys, gba)) {
-      buttons = static_cast<std::uint16_t>(buttons | sw);
-    }
-  }
+ProButtons pro_buttons_for_keys(KeyMask keys) {
+  ProButtons buttons = neutral_pro_buttons();
+  set_if(buttons.button3, has(keys, kGbaA), kProA);
+  set_if(buttons.button3, has(keys, kGbaB), kProB);
+  set_if(buttons.button3, has(keys, kGbaR), kProR);
+  set_if(buttons.button4, has(keys, kGbaStart), kProPlus);
+  set_if(buttons.button4, has(keys, kGbaSelect), kProMinus);
+  set_if(buttons.button5, has(keys, kGbaL), kProL);
   const int x = (has(keys, kGbaRight) ? 1 : 0) - (has(keys, kGbaLeft) ? 1 : 0);
   const int y = (has(keys, kGbaDown) ? 1 : 0) - (has(keys, kGbaUp) ? 1 : 0);
-  WiredState state = neutral_wired_state();
-  state.buttons0 = static_cast<std::uint8_t>(buttons);
-  state.buttons1 = static_cast<std::uint8_t>(buttons >> 8);
-  state.dpad_byte = dpad_position(x, y);
-  return state;
+  set_if(buttons.button5, y > 0, kProDown);
+  set_if(buttons.button5, y < 0, kProUp);
+  set_if(buttons.button5, x > 0, kProRight);
+  set_if(buttons.button5, x < 0, kProLeft);
+  return buttons;
 }
 
-WiredStateMessage wired_state_message(const WiredState& state,
-                                      std::uint16_t milliseconds,
-                                      std::uint8_t id) {
-  WiredStateMessage message{};
+ProButtonsMessage pro_buttons_message(const ProButtons& buttons,
+                                      std::uint16_t milliseconds) {
+  ProButtonsMessage message{};
   message.message_bytes = sizeof(message);
-  message.opcode = PABB2_MESSAGE_CMD_NS_WIRED_CONTROLLER_STATE;
-  message.id = id;
+  message.opcode = PABB2_MESSAGE_CMD_NS1_OEM_CONTROLLER_BUTTONS;
   message.milliseconds = milliseconds;
-  message.report = state;
+  message.buttons = buttons;
   return message;
 }
 
