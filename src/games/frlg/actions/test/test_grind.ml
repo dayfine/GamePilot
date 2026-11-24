@@ -111,6 +111,7 @@ let decisions =
 type fake_battle = {
   events : B.Battle_driver.event list;
   offered : string option list;
+  switch_ok : bool;  (** false: the sweeper fainted, the game refuses it *)
 }
 
 let list_driver (b : fake_battle) calls : B.Battle_driver.t =
@@ -127,7 +128,7 @@ let list_driver (b : fake_battle) calls : B.Battle_driver.t =
     switch_to =
       (fun ~slot ->
         call (Printf.sprintf "switch %d" slot);
-        true);
+        b.switch_ok);
     send_in =
       (fun ~slot ->
         call (Printf.sprintf "send %d" slot);
@@ -160,6 +161,7 @@ let contains line part =
 let shown ~battle_lines line =
   String.starts_with ~prefix:"Grind: capped" line
   || String.starts_with ~prefix:"Grind: round over" line
+  || contains line " could not come in"
   || contains line " reached Lv "
   || (contains line " already; skipped" && not (contains line " knows "))
   || (battle_lines && String.starts_with ~prefix:"Grind: battle" line)
@@ -209,6 +211,7 @@ let flow ?cap ?(battle_lines = false) ?(levels = [ Some 9 ]) ~party ~known
                       menus = 0;
                       send_ins = 0;
                       refusals = 0;
+                      switches_refused = 0;
                       prompts = 0;
                       learned = [];
                       unread = 0;
@@ -238,6 +241,16 @@ let won ?(offered = []) () =
       @ learns
       @ [ B.Battle_driver.Battle_over ];
     offered;
+    switch_ok = true;
+  }
+
+(* The sweeper fainted in the battle before (mg-04b testing 6, battle 4): the
+   game refuses the switch, the lead runs. *)
+let sweeper_down =
+  {
+    events = B.Battle_driver.[ Action_menu; Action_menu; Battle_over ];
+    offered = [];
+    switch_ok = false;
   }
 
 let chding =
@@ -320,11 +333,27 @@ let flows =
        (Lv 9)";
     case "a failed battle fails the action"
       (flow ~party ~known:[]
-         [ { events = [ B.Battle_driver.Action_menu ]; offered = [] } ]
+         [
+           {
+             events = [ B.Battle_driver.Action_menu ];
+             offered = [];
+             switch_ok = true;
+           };
+         ]
          (plan mimien_args))
       "summary 2; Lv 9 in 2; swap 2 1; go VictoryRoad_2F (45, 10) west; spin; \
        switch 1 => failed grind_battle_failed: battle 1: no battle event \
        within 60000 ms";
+    case "the sweeper refused (fainted): run, heal, back to the spot, on"
+      (flow ~cap:3 ~party ~known:[]
+         [ won (); sweeper_down; won () ]
+         (plan mimien_args))
+      "summary 2; Lv 9 in 2; swap 2 1; go VictoryRoad_2F (45, 10) west; spin; \
+       switch 1; move 0; Lv 9 in 1; spin; switch 1; run; Lv 9 in 1; Grind: \
+       battle 2: blastoise could not come in, ran.; heal nurse at \
+       IndigoPlateau_PokemonCenter_1F (13, 12) north; go VictoryRoad_2F (45, \
+       10) west; spin; switch 1; move 0; Lv 9 in 1; Grind: capped at 3 battles \
+       for testing: mr-mime is Lv 9, not 33 => ok";
     case "the grinder missing"
       (flow ~party:[ "blastoise" ] ~known:[] [] (plan mimien_args))
       " => failed not_in_party: mr-mime is not in the party";
@@ -436,6 +465,18 @@ let rounds =
       (flow ~levels:[ lv 33 ] ~party ~known:[ "barrier" ] [] round)
       "summary 2; Lv 33 in 2 => failed grind_move_missed: mr-mime is Lv 33, at \
        least 33, and does not know recycle";
+    case
+      "the sweeper refused (fainted in battle 4, mg-04b testing 6): run, the \
+       round ends at the nurse"
+      (flow
+         ~levels:[ lv 12 ]
+         ~party ~known:[]
+         [ won (); sweeper_down; won () ]
+         round)
+      "summary 2; Lv 12 in 2; swap 2 1; go VictoryRoad_2F (45, 10) west; spin; \
+       switch 1; move 0; Lv 12 in 1; spin; switch 1; run; Lv 12 in 1; Grind: \
+       battle 2: blastoise could not come in, ran.; heal nurse at \
+       IndigoPlateau_PokemonCenter_1F (13, 12) north => ok";
     case "capped at 2 for testing: 2 battles, then the nurse"
       (flow ~cap:2
          ~levels:[ lv 9 ]
