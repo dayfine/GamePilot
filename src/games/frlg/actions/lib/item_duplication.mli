@@ -4,7 +4,8 @@
     row, the member in party slot 1 holding the item to copy. One round
     ({!round}), each wait 4 s:
     + the selection arrow on the top row (Retro Mail); A, DOWN, A: GIVE;
-    + slot 1's held-item mark; A (300 ms after);
+    + slot 1's held-item mark; A (300 ms after), 400 ms after the mark here
+      (below);
     + the "already holding" message's advance arrow; A;
     + the Yes/No box's arrow on YES; A; 500 ms;
     + PLUS (START); the editor's Yes/No arrow on YES; A; 300 ms. Each press is
@@ -22,6 +23,10 @@
       "Detect '???' screen?" as a TODO), and no round starts with fewer than
       {!min_mail} Retro Mail on the top row (at 0 the row goes and A would act
       on the next item).
+    - The party takes no A for a moment after it shows: GamePilot sees the mark
+      within a frame, and the A the C++ presses as it sees it was dropped (mGBA,
+      mg-06 testing run 4), so the fork's give wait
+      ({!Party_actions.party_input_ms}) comes first.
     - The item's count is read before and after the rounds, and must have gone
       up by one per round (the C++ only counts its rounds). *)
 

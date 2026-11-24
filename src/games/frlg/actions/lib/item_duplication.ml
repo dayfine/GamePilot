@@ -61,6 +61,7 @@ let round ~word =
   press Wire.Down;
   press Wire.A;
   wait "no_held_item" "slot 1's held item" slot_one_holds;
+  pause Party_actions.party_input_ms;
   press ~cooldown_ms:after_slot_ms Wire.A;
   wait "no_item_message" "the held item's message" Dialog.advance_arrow;
   press Wire.A;

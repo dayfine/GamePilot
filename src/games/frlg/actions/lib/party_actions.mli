@@ -40,6 +40,10 @@ val give : log:(string -> unit) -> item:string -> slot:int -> unit
     {!mail_editor_wait_ms} and confirmed by {!confirm_mail}. A berry comes from
     the Berry Pouch ({!Berry_pouch.choose_give}). *)
 
+val party_input_ms : int
+(** 400: the fork's wait after the party to give to shows, before its presses.
+*)
+
 val give_to : int -> unit
 (** After GIVE: the party read, the fork's 400 ms (an earlier A is dropped),
     then the slot chosen ({!choose_slot}). Fails as [no_party]. *)
