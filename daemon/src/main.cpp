@@ -13,6 +13,9 @@
 // network; port 0 (here and for --port) picks a free one, which the daemon
 // prints. With [--registry DIR] [--checkpoint ID] [--run-folder DIR] the page
 // is listed in the watch registry (watch_registry.h) while it is up.
+// [--stream-fps 30] [--stream-width 1280] set the page's live frame
+// (frame_stream.h): at most that many frames a second, a capture card's frame
+// scaled to that width unless the viewer asks for another (`/stream?w=`).
 //
 //   gamepilot_daemon --hub --registry DIR [--watch-port 47901] [--listen ADDR]
 //
@@ -71,8 +74,9 @@ int usage() {
       "--capture-check PNG\n"
       "       either with [--watch-port 47901] [--listen 127.0.0.1] "
       "[--watch-token T]\n"
-      "         [--registry DIR] [--checkpoint ID] [--run-folder DIR] for the "
-      "watch page\n"
+      "         [--registry DIR] [--checkpoint ID] [--run-folder DIR] "
+      "[--stream-fps 30]\n"
+      "         [--stream-width 1280] for the watch page\n"
       "       gamepilot_daemon --hub --registry DIR [--watch-port 47901] "
       "[--listen 127.0.0.1]\n",
       stderr);
@@ -88,6 +92,13 @@ bool parse_port(const char* text, std::uint16_t& port) {
   }
   port = static_cast<std::uint16_t>(value);
   return true;
+}
+
+// A whole number in [low, high].
+bool parse_in_range(const char* text, long low, long high, long& value) {
+  char* end = nullptr;
+  value = std::strtol(text, &end, 10);
+  return end != text && *end == '\0' && value >= low && value <= high;
 }
 
 struct Flags {
@@ -151,6 +162,20 @@ bool parse_flags(int argc, char** argv, Flags& flags) {
       if (!gamepilot::valid_watch_token(watch_options(flags).token)) {
         return false;
       }
+    } else if (arg == "--stream-fps" && has_value) {
+      constexpr long kMaxStreamFps = 60;
+      long fps = 0;
+      if (!parse_in_range(argv[++i], 1, kMaxStreamFps, fps)) {
+        return false;
+      }
+      flags.server.stream.fps = static_cast<double>(fps);
+    } else if (arg == "--stream-width" && has_value) {
+      long width = 0;
+      if (!parse_in_range(argv[++i], gamepilot::kStreamMinWidth,
+                          gamepilot::kStreamMaxWidth, width)) {
+        return false;
+      }
+      flags.server.stream.width = static_cast<int>(width);
     } else if (arg == "--registry" && has_value) {
       flags.server.registry = argv[++i];
     } else if (arg == "--checkpoint" && has_value) {

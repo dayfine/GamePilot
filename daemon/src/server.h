@@ -44,6 +44,7 @@ struct ServerOptions {
       false;  // step as fast as the backend goes instead of at its frame rate
   std::string log_path;               // wire log; empty = none
   std::optional<WatchOptions> watch;  // the watch page; none = off
+  StreamOptions stream;               // its live frame
   // With a watch page: the registry folder its entry goes to (empty = none),
   // and what the entry says about the run.
   std::string registry;
@@ -55,7 +56,9 @@ struct ServerOptions {
 struct WatchCost {
   std::int64_t frames_encoded = 0;
   std::int64_t frame_bytes = 0;  // all frames encoded, in bytes
-  double ms = 0;                 // encoding frames and sending events
+  // Encoding /frame, sending events and handing frames to the stream (whose
+  // encoding is on its own thread and reported by it).
+  double ms = 0;
 };
 
 class Server {
@@ -96,6 +99,7 @@ class Server {
   bool take_watch_note(const pa::JsonValue& message);
   bool stop_program();
   WatchFrame watch_frame();
+  void offer_stream_frame();
   void watch_tick();
   void show_probes(
       std::int64_t seq,

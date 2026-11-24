@@ -56,6 +56,7 @@ add_library(gamepilot_core STATIC
   src/base64.cpp
   src/board_session.cpp
   src/fake_switch.cpp
+  src/frame_stream.cpp
   src/frame_ring.cpp
   src/http.cpp
   src/live_schedule.cpp

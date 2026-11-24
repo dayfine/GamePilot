@@ -1,5 +1,6 @@
 #include "net.h"
 
+#include <cerrno>
 #include <stdexcept>
 
 #ifdef _WIN32
@@ -7,6 +8,7 @@
 #include <ws2tcpip.h>
 #else
 #include <arpa/inet.h>
+#include <fcntl.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <poll.h>
@@ -100,6 +102,28 @@ bool Socket::send_all(const std::string& data) {
     sent += static_cast<std::size_t>(n);
   }
   return true;
+}
+
+std::optional<std::size_t> Socket::send_some(const char* data,
+                                             std::size_t size) {
+#ifdef _WIN32
+  const int n = ::send(native(handle_), data,
+                       static_cast<int>(size > 1u << 30 ? 1u << 30 : size), 0);
+  const bool would_block = n < 0 && WSAGetLastError() == WSAEWOULDBLOCK;
+#elif defined(MSG_NOSIGNAL)
+  const auto n = ::send(native(handle_), data, size, MSG_NOSIGNAL);
+  const bool would_block = n < 0 && (errno == EAGAIN || errno == EWOULDBLOCK);
+#else
+  const auto n = ::send(native(handle_), data, size, 0);
+  const bool would_block = n < 0 && (errno == EAGAIN || errno == EWOULDBLOCK);
+#endif
+  if (would_block) {
+    return 0;
+  }
+  if (n <= 0) {
+    return std::nullopt;
+  }
+  return static_cast<std::size_t>(n);
 }
 
 std::optional<std::string> Socket::receive_some() {
@@ -199,6 +223,16 @@ void set_send_timeout(const Socket& socket, int ms) {
 #endif
   setsockopt(native(socket.handle()), SOL_SOCKET, SO_SNDTIMEO,
              reinterpret_cast<const char*>(&timeout), sizeof(timeout));
+}
+
+void set_nonblocking(const Socket& socket) {
+#ifdef _WIN32
+  u_long on = 1;
+  ioctlsocket(native(socket.handle()), FIONBIO, &on);
+#else
+  const int flags = fcntl(native(socket.handle()), F_GETFL, 0);
+  fcntl(native(socket.handle()), F_SETFL, flags | O_NONBLOCK);
+#endif
 }
 
 Socket accept_client(const Socket& listener) {

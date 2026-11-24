@@ -65,8 +65,10 @@ std::string Server::watch_token() const {
 // The page, and its entry in the registry so the hub lists it.
 void Server::start_watch() {
   watch_ = std::make_unique<WatchServer>(
-      *options_.watch, WatchHooks{[this] { return watch_frame(); },
-                                  [this] { return stop_program(); }});
+      *options_.watch,
+      WatchHooks{[this] { return watch_frame(); },
+                 [this] { return stop_program(); }},
+      options_.stream);
   watch_->set_info(to_line(pa::JsonValue(hello_result(backend_.info()))));
   if (!options_.registry.empty()) {
     registry_entry_.emplace(
@@ -168,10 +170,30 @@ void Server::show_probes(
   watch_cost_.ms += clock_.now_ms() - start;
 }
 
-// Each loop pass: the health once a second (and at once for a new viewer),
+// The live stream's frame, when it wants one: the probed frame when it is
+// current (no extra read: mGBA's costs a bridge round trip), else the
+// backend's. The stream encodes it on its own thread.
+void Server::offer_stream_frame() {
+  FrameStream& stream = watch_->stream();
+  const std::int64_t seq = backend_.seq();
+  const double now = clock_.now_ms();
+  if (!stream.wants_frame(seq, now)) {
+    return;
+  }
+  try {
+    const bool probed = !probed_frame_.empty() && probed_seq_ == seq;
+    stream.offer(probed ? probed_frame_ : backend_.frame(), seq, now);
+  } catch (const BackendError& error) {
+    std::fprintf(stderr, "daemon: stream frame: %s\n", error.what());
+  }
+  watch_cost_.ms += clock_.now_ms() - now;
+}
+
+// Each loop pass: the stream's frame, the health once a second (and at once for a new viewer),
 // and an empty probe list once the
 // probes are gone (no frame shows them any more).
 void Server::watch_tick() {
+  offer_stream_frame();
   if (!watch_->has_viewers()) {
     return;
   }

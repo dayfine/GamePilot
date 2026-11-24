@@ -126,8 +126,10 @@ void Server::run_lockstep(const std::atomic<bool>& stop) {
         const std::int64_t frames = watch_cost_.frames_encoded;
         std::fprintf(
             stderr,
-            "; watch: %s, %lld frames sent (%lld bytes each), %.1f ms in all",
+            "; watch: %s, %d on the stream, %lld frames polled (%lld bytes "
+            "each), %.1f ms in all",
             watch_->has_viewers() ? "viewed" : "no viewer",
+            watch_->stream().viewers(),
             static_cast<long long>(frames),
             static_cast<long long>(
                 frames > 0 ? watch_cost_.frame_bytes / frames : 0),
@@ -168,7 +170,7 @@ void Server::send_probe_results(std::int64_t seq, double t_ms) {
   }
   send(frame_notification(seq, loads_, t_ms,
                           sent_results_.take_changed(results)));
-  if (watch_ && watch_->has_viewers()) {
+  if (watch_ && (watch_->has_viewers() || watch_->stream().viewers() > 0)) {
     probed_frame_ = frame;
     probed_seq_ = seq;
     show_probes(seq, results);

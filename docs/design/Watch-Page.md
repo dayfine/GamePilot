@@ -10,7 +10,8 @@ failed, skipped), the story log, the daemon's health, and a Stop button. It is s
 ```
                  frame, probes, status (the daemon has them)
  browser  <-- GET /events (Server-Sent Events) ---------------+
-          <-- GET /frame (polled, <= 5/s) --------------------+-- daemon (server loop)
+          <-- GET /stream (MJPEG, <= 30/s) -------------------+-- daemon (server loop;
+          <-- GET /frame (fallback, polled, <= 5/s) ----------+    stream worker thread)
           --- POST /stop ------------------------------------>+      |  ^
                                                                     |  | watch.plan, watch.log
                                      stop (notification) ---------->+  | (notifications, not in
@@ -50,15 +51,54 @@ failed, skipped), the story log, the daemon's health, and a Stop button. It is s
 
 - One process owns the pixels. A second reader of the capture card (OBS, another program) is not
   possible, and the daemon already decodes each frame for its probes.
-- Frames are pulled, not pushed: the page asks for `/frame` after it drew the last one, and the
-  daemon encodes at most one frame per 200 ms (the probed frame when it is current, so mGBA needs
-  no extra bridge read) and only when asked, so without a page nothing is encoded. Probe overlays
-  are sent at most every 200 ms and status once a second, only while a page has the stream open.
+- **The frame is a live MJPEG stream** (`daemon/src/frame_stream.*`): `GET /stream` answers
+  `multipart/x-mixed-replace`, and the page's `<img src="stream">` shows each part as it comes, up
+  to 30 frames a second (`--stream-fps`). The frame loop only hands over the frame (shared, not
+  copied: the probed frame when it is current, so mGBA needs no extra bridge read) at most that
+  often and only while a viewer is connected; a worker thread of its own encodes it once per width
+  the viewers asked for, shared by all of them, and sends it with non-blocking writes. A viewer
+  still taking the last frame skips the new one: frames are dropped for a slow viewer, never
+  queued, and one that takes nothing for 10 s is dropped. Without a viewer nothing is read or
+  encoded. The worker prints a 10 s line while a viewer is connected (encodes/s, ms and bytes per
+  frame, the slowest viewer's frames/s). WebRTC would carry video better but needs new
+  dependencies; MJPEG needs none, and every browser shows it in an `<img>`.
+- When the stream fails the page polls `/frame` instead (at most one frame per 200 ms, PNG or JPEG
+  as before) and tries the stream again after 15 s; it opens it again for each new daemon (its
+  `info` event) and closes it while the tab is hidden. Probe overlays
+  are sent at most every 200 ms and status once a second, only while a page has the event stream open.
   A viewer that does not take an event within 100 ms is dropped, so a slow browser cannot stall
   lockstep pacing. The daemon's 10 s rate line adds the watch's own time.
-- Small frames go out lossless: the GBA's 240x160 is a PNG (pixel art blurs in JPEG), a capture
-  card's frame is scaled to 640x360 and sent as JPEG. The page shows the frame at a whole multiple
-  that fits, pixelated, and the lockstep 10 s rate line gives the bytes per frame.
+- MJPEG cannot carry PNG, so a GBA frame (240x160) is doubled with nearest-neighbour pixels and
+  sent as JPEG at quality 90 with full colour resolution (4:4:4): each game pixel covers 2x2
+  pixels, JPEG's 8x8 blocks hold whole game pixels, and text edges stay clean (1x at quality 95
+  rang around letters; 3x and 4x cost twice the bytes for no visible gain). A capture card's
+  frame is scaled to 1280x720 (`--stream-width`; the page asks for 960 with `?w=960` on a
+  window narrower than 700 px) at quality 80: bilinear, since area averaging cost 6 ms of CPU a
+  frame at 1080p to 720p and looks the same on game screens (a whole factor, 1080p to 960, still
+  averages). `/frame` still sends a GBA frame as PNG and a capture card's at 640x360.
+- The page sizes the frame from the backend's frame size (`info`), not from the image received,
+  so the frame keeps its size whether it comes from the stream (scaled) or `/frame`, and the probe
+  canvas sits on it at any size: a GBA frame at a whole multiple that fits, pixelated (the doubled
+  image stays sharp at every multiple), a capture card's at the fraction that fits.
+
+  Measured on the lab Mac, Switch backend replaying a clip (60 fps H.264, 4 probes
+  subscribed), one daemon at a time, 30 s per row, process CPU from `ps`; fps is what each viewer
+  received (curl, or headless Chrome on the page):
+
+  | clip | viewers | encode ms/frame | bytes/frame | per viewer | daemon CPU | fps |
+  |---|---|---|---|---|---|---|
+  | 1920x1080 | 0 | - | - | - | 23% | - |
+  | 1920x1080 | 1 (1280 wide) | 1.6 | 115 KB | 3.4 MB/s | 37% | 30.3 |
+  | 1920x1080 | 3 (1280 wide) | 1.6 | 115 KB | 3.4 MB/s | 35% | 30.3 |
+  | 1920x1080 | 1 (960 wide) | 1.0 | 76 KB | 2.3 MB/s | 23-30% | 30.3 |
+  | 1920x1080 | Chrome, desktop / phone | 1.5 / 1.0 | 115 / 76 KB | | | 30.2 / 30.3 |
+  | 240x160 | 0 | - | - | - | 2% | - |
+  | 240x160 | 1 | 0.6 | 50 KB | 1.5 MB/s | 10% | 30.5 |
+  | 240x160 | 3 | 0.6 | 50 KB | 1.4 MB/s | 10% | 30.5 |
+  | 240x160 | Chrome | 0.6 | 48 KB | | | 30.5 |
+
+  The baseline is the replay's video decoding and the probes. Three viewers cost what one does:
+  the frame is encoded once.
 - The probe boxes are drawn on a canvas over the frame at the displayed size, never into the frame,
   so labels stay sharp. A program may subscribe 80+ probes, so the page shows only the boxes whose
   value changed in the last second by default (Off / Changed / All, kept in the browser), a label
