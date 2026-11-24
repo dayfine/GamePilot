@@ -25,3 +25,16 @@ val member : where:string -> Grid_maps.Json_field.obj -> member
 
 val member_to_string : member -> string
 (** ["mr-mime"] or ["slot 3"]. *)
+
+val member_keys : string list
+(** The args that name a party member an action uses or brings: ["species"],
+    ["sweeper"], ["knock_off_species"], ["recycle_species"]. *)
+
+val field_move_users : (string * string) list
+(** The actions whose member the game picks itself, by the field move it must
+    know: [cut_tree] (Cut). Their ["species"] names that member for the
+    pre-flight only. *)
+
+val picks_member : action:string -> Grid_maps.Json_field.obj -> bool
+(** The action finds a member by its species in the party: its args name one
+    ({!member_keys}) and the game does not pick it ({!field_move_users}). *)

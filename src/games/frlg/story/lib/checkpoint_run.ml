@@ -3,7 +3,7 @@ module A = Frlg_actions
 
 type options = {
   state : string option;
-  party : A.Party_roster.t;
+  party : A.Party_roster.t option;
   center : string option;
   grind_cap : int option;
   gait : Frlg_overworld.Route_legs.gait;

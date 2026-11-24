@@ -41,7 +41,7 @@ let replayed_walk () =
   let options : Checkpoint_run.options =
     {
       state = Some start_state;
-      party = Frlg_actions.Party_roster.of_string "";
+      party = Some (Frlg_actions.Party_roster.of_string "");
       center = None;
       grind_cap = None;
       gait = Running;

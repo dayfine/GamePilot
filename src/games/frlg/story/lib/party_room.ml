@@ -6,9 +6,6 @@ type need = { joins : (string * string) list; used : string list }
 let party_size = 6
 let field_moves = [ "cut"; "fly"; "surf"; "strength" ]
 
-let member_keys =
-  [ "species"; "sweeper"; "knock_off_species"; "recycle_species" ]
-
 (* The members an action brings, and the arg keys naming them. *)
 let joining ~where action args =
   match action with
@@ -30,7 +27,7 @@ let named ~where action args =
   let brought = brought_keys action in
   List.filter_map
     (fun k -> if List.mem k brought then None else J.string_opt ~where k args)
-    member_keys
+    Frlg_actions.Action_args.member_keys
 
 let event id (joins, used) (e : P.event) =
   match (e.kind, e.action) with
@@ -42,7 +39,9 @@ let event id (joins, used) (e : P.event) =
 
 let promised (p : P.postconditions) =
   match p.party with
-  | Some (P.Party_in_order l | P.Party_includes l) -> l
+  | Some (P.Party_in_order l) -> l
+  | Some (P.Party_includes { members; slots }) ->
+      members @ List.map (fun (s : P.slot) -> s.species) slots
   | None -> []
 
 let plan acc (p : P.t) =
