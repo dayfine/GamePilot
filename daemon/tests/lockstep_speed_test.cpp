@@ -152,6 +152,17 @@ class TestClient {
   std::map<std::int64_t, double> frames_;
 };
 
+// Runs the server until `stop`; an exception it throws fails the test
+// instead of ending the process.
+void serve(Server& server, const std::atomic<bool>& stop) {
+  try {
+    server.run(stop);
+  } catch (const std::exception& error) {
+    std::fprintf(stderr, "server: %s\n", error.what());
+    CHECK(false);
+  }
+}
+
 double wall_ms_since(std::chrono::steady_clock::time_point start) {
   return std::chrono::duration<double, std::milli>(
              std::chrono::steady_clock::now() - start)
@@ -166,7 +177,7 @@ void check_speed(const SpeedCase& c) {
   options.speed = c.input.speed;
   Server server(backend, options, clock);
   std::atomic<bool> stop{false};
-  std::thread serving([&] { server.run(stop); });
+  std::thread serving([&] { serve(server, stop); });
   try {
     TestClient client(server.port());
     client.call(1, "hello", R"({"protocol":1,"client":"speed-test"})");
@@ -221,7 +232,7 @@ void check_home_refused() {
   options.port = 0;
   Server server(backend, options, clock);
   std::atomic<bool> stop{false};
-  std::thread serving([&] { server.run(stop); });
+  std::thread serving([&] { serve(server, stop); });
   try {
     TestClient client(server.port());
     client.call(1, "hello", R"({"protocol":1,"client":"home-test"})");
