@@ -13,17 +13,25 @@ type options = {
 
 let maps_dir = "third_party/PokemonSimulation/data/games/frlg/maps"
 
+let load_rock_stairs () =
+  let asset = Frlg_overworld.Rock_stairs.asset in
+  match Frlg_repo_files.Repo_files.locate asset with
+  | Some file -> Frlg_overworld.Rock_stairs.load file
+  | None -> Error (asset ^ " not found from the working directory")
+
 let load_all dir =
   let load name = Grid_maps.Map_file.load_runtime ~maps_dir:dir name in
   let rec all acc = function
     | [] -> Ok (List.rev acc)
     | name :: rest -> Result.bind (load name) (fun m -> all (m :: acc) rest)
   in
-  Result.map
-    (fun maps ->
-      Frlg_overworld.Frlg_steps.world ~edge_stalls:false
-        (Grid_maps.Connected_maps.create maps))
-    (all [] (Grid_maps.Map_file.runtime_names ~maps_dir:dir))
+  let world rock_stairs maps =
+    Frlg_overworld.Frlg_steps.world ~edge_stalls:false ~rock_stairs
+      (Grid_maps.Connected_maps.create maps)
+  in
+  let names = Grid_maps.Map_file.runtime_names ~maps_dir:dir in
+  Result.bind (load_rock_stairs ()) (fun rock_stairs ->
+      Result.map (world rock_stairs) (all [] names))
 
 let load_world () =
   match Frlg_repo_files.Repo_files.locate maps_dir with

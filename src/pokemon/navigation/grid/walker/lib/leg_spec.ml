@@ -6,6 +6,8 @@ type t = {
   stop_on_interrupt : bool;
   stop_if_blocked : bool;
   stalled_steps : int list;
+  slow_steps : int list;
+  slow_step_ms : int;
 }
 
 let make ?(to_wall = false) ~tile_ms direction tiles =
@@ -17,6 +19,8 @@ let make ?(to_wall = false) ~tile_ms direction tiles =
     stop_on_interrupt = false;
     stop_if_blocked = false;
     stalled_steps = [];
+    slow_steps = [];
+    slow_step_ms = tile_ms;
   }
 
 let to_string leg =

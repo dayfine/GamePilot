@@ -18,7 +18,14 @@ type step_tap = { hold_ms : int; release_ms : int }
 (** A tap that takes one step: the press, and the release before the next press.
     Their sum is the time per tapped tile. *)
 
-type gait = { tile : tile_time; tap : step_tap; open_legs : open_leg_press }
+type gait = {
+  tile : tile_time;
+  tap : step_tap;
+  open_legs : open_leg_press;
+  slow_step_ms : int;
+      (** A step the game slows down, as FRLG does on rock stairs; the tile time
+          in a game or gait that has none. *)
+}
 (** One way of moving: walking, running or riding. A game's taps differ by gait
     (FRLG's Bicycle taps far faster than its walk). *)
 
@@ -42,4 +49,7 @@ val frlg : t
     running 8, and a held leg stops where its time says, so open legs on foot
     are timed holds; on the Bicycle they are counted in taps, 40 ms at one per
     100 ms (at a 60 ms period one tap in 12 drops). The walker's holds count no
-    start delay. *)
+    start delay. A slow step on rock stairs took 23 frames walking and 11 to 12
+    running on mGBA (2026-11-23; the game's own movement, so the console's too):
+    400 and 200 ms put a hold's end half a tile past its last step's start, as
+    for other steps. The Bicycle's is not measured. *)

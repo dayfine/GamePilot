@@ -39,9 +39,16 @@ type world = {
       (** Whether the game holds the player up a tile on each step onto a
           connected map while it loads the map (the fork's
           [RouteStep::connection_steps], measured on console B, 2026-11-03). On
-          mGBA it does not: the fork's run of 2026-11-23 held "west 11" from
-          Celadon City onto Route 16 for 10.5 tiles and ended on its tile, and
-          ours, held a tile longer for the stall, ended a tile past it. *)
+          mGBA it does not (2026-11-23, frame by frame from save states, the
+          player's tile read from RAM): every step over Celadon City / Route 16
+          (west and east), Lavender Town / Route 8 (west and east), Lavender
+          Town / Route 10 (north and south) and Indigo Plateau / Route 23 (north
+          and south) took its normal 8 frames running or 16 walking, plus at
+          most one frame, the same as a step inside a map. The Indigo Plateau
+          walk that ended short was the rock stairs ({!rock_stairs}), not the
+          edge. *)
+  rock_stairs : Rock_stairs.t;
+      (** The tiles a step north off or south onto is slow ({!slow_step}). *)
   cut : Gate_state.t;
       (** The cut trees cut since the last map change ({!with_tree_cut}): their
           gates open and their trees gone, as the fork's [tree_cut] opens them
@@ -51,10 +58,11 @@ type world = {
 val world :
   ?hidden:(Map_features.map_object -> bool) ->
   ?edge_stalls:bool ->
+  ?rock_stairs:Rock_stairs.t ->
   Connected_maps.t ->
   world
 (** Every object shown, {!default_costs}, edges that stall (the console), no
-    tree cut. *)
+    rock stairs unless given, no tree cut. *)
 
 val with_tree_cut : world -> Connected_maps.place -> world option
 (** The world with the cut tree on that tile cut: the fork's [tree_cut]
@@ -85,6 +93,12 @@ val sign_ahead : world -> Connected_maps.place -> Direction.t -> bool
 val walked_out_onto : world -> Connected_maps.place -> bool
 (** Whether a warp that leaves the player on the place came out of a doorway
     above it, which the game walks the player out of before it takes input. *)
+
+val slow_step :
+  world -> Connected_maps.place -> Direction.t -> Connected_maps.place -> bool
+(** [slow_step w place d next]: whether the step from [place] to [next] going
+    [d] is slow: north off a rock stair or south onto one (pokefirered's
+    [PlayerIsMovingOnRockStairs]). *)
 
 val hop_tiles : world -> Connected_maps.place -> Direction.t -> int
 (** Tiles one press moves the player: 2 over a ledge, else 1. *)

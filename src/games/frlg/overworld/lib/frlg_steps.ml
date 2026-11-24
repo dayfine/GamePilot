@@ -10,15 +10,18 @@ type world = {
   hidden : Map_features.map_object -> bool;
   costs : costs;
   edge_stalls : bool;
+  rock_stairs : Rock_stairs.t;
   cut : Gate_state.t;
 }
 
-let world ?(hidden = fun _ -> false) ?(edge_stalls = true) maps =
+let world ?(hidden = fun _ -> false) ?(edge_stalls = true)
+    ?(rock_stairs = Rock_stairs.none) maps =
   {
     maps;
     hidden;
     costs = default_costs;
     edge_stalls;
+    rock_stairs;
     cut = Gate_state.new_game;
   }
 
@@ -257,6 +260,15 @@ let walked_out_onto w (place : Connected_maps.place) =
   let map = map_of w place in
   let doorway = Tile_pos.next place.tile North in
   Grid.contains map.tiles doorway && walks_out map doorway
+
+let on_rock_stair w (place : Connected_maps.place) =
+  Rock_stairs.on w.rock_stairs ~map:(map_of w place).name place.tile
+
+let slow_step w place (d : Direction.t) next =
+  match d with
+  | North -> on_rock_stair w place
+  | South -> on_rock_stair w next
+  | East | West -> false
 
 let hop_tiles w (place : Connected_maps.place) d =
   let map = map_of w place in
