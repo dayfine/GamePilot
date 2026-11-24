@@ -52,6 +52,10 @@ type read = {
 type verdict = Ok | Mismatch | Not_read
 type row = { need : string; read : string; verdict : verdict }
 
+val describe : need -> string
+(** The need as the table's NEED column and the user guides (docs/guide/) say
+    it: ["money at least ¥4100 (buy_coins)"]. *)
+
 val compare : need list -> read -> row list
 
 val room : Party_room.need -> read -> row

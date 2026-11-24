@@ -57,6 +57,15 @@ GamePilot automates games through three layers (design: `docs/design/Layered-Aut
 - Machine-specific paths come from environment variables (`GAMEPILOT_*`, see `README.md`),
   never from a home path in code, docs or tests.
 
+## User guides
+
+A new or changed program updates its guide. Every registered program has a player's page in
+`docs/guide/<program id>.md` (`docs/guide/README.md`): hand-written prose around blocks generated
+from the registry and the plans. After changing a program's plans, its descriptor or its commands,
+run `cd src && opam exec -- dune exec -- gamepilot guide --write` and reread the prose around the
+blocks. CI runs `gamepilot guide --check`, which fails on a missing page, a stale block (any plan
+change makes its checkpoints block stale) or a skeleton's unfinished `TODO(guide)`.
+
 ## Agents
 
 Harness from `dayfine/agent-harness` (`.agents/rules/`, `dev/lib/`, `.agents/checks/`).

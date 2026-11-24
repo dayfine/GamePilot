@@ -3,6 +3,7 @@
    gamepilot checkpoint PLAN.json [flags] (Checkpoint_command)
    gamepilot checkpoints PLAN_DIR|--program ID [flags] (Checkpoints_command)
    gamepilot programs (Programs_command)
+   gamepilot guide PROGRAM | --write | --check (Guide_command)
    gamepilot status [--port N] (Status_command)
    gamepilot ctl [--port N] [--owner LABEL] COMMAND | run FILE (Ctl_command)
    gamepilot runs [--runs-dir DIR] (Runs_command)
@@ -20,9 +21,9 @@ let usage =
   \  gamepilot run start_menu_poc [--port 47900] [--state PATH | --console] \
    [--runs-dir DIR]\n\
   \  gamepilot replay start_menu_poc WIRELOG\n" ^ Checkpoint_command.usage
-  ^ Checkpoints_command.usage ^ Programs_command.usage ^ Status_command.usage
-  ^ Ctl_command.usage ^ Runs_command.usage ^ Switch_devices.usage
-  ^ Bring_up_command.usage ^ Console_park_command.usage
+  ^ Checkpoints_command.usage ^ Programs_command.usage ^ Guide_command.usage
+  ^ Status_command.usage ^ Ctl_command.usage ^ Runs_command.usage
+  ^ Switch_devices.usage ^ Bring_up_command.usage ^ Console_park_command.usage
 
 let die msg =
   prerr_string msg;
@@ -129,6 +130,7 @@ let () =
   | "bring-up" :: flags -> exit_with (Bring_up_command.main flags)
   | "console" :: args -> exit_with (Console_park_command.main args)
   | "programs" :: flags -> exit_with (Programs_command.main flags)
+  | "guide" :: args -> exit_with (Guide_command.main args)
   | "checkpoints" :: args ->
       exit_with
         (Result.bind (Programs_command.plan_dir_of_args args)
