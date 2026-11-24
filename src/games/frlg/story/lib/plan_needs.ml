@@ -143,13 +143,20 @@ let count_use l (item, for_) =
   | Some (n, f) -> (item, (n + 1, f)) :: List.remove_assoc item l
   | None -> (item, (1, for_)) :: l
 
+(* A count promised before: an exact count or a floor carries over; a gain
+   says nothing of the save's count. *)
+let promised_count ({ bag_item = item; count } : P.bag_count) =
+  match count with
+  | Count_exactly count -> Some (Item_exactly { item; count })
+  | Count_at_least count ->
+      Some (Item_at_least { item; count; for_ = "promised before" })
+  | Count_gained _ -> None
+
 let item_needs before acc =
-  let exactly (i : P.item) =
-    Item_exactly { item = i.item; count = i.quantity }
-  in
   let promised =
     Option.fold ~none:[]
-      ~some:(fun (p : P.postconditions) -> List.map exactly p.items)
+      ~some:(fun (p : P.postconditions) ->
+        List.filter_map promised_count p.items)
       before
   in
   let counted = List.fold_left count_use [] (List.rev acc.items) in

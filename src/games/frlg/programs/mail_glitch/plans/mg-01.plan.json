@@ -153,7 +153,7 @@
     "phase": "testing",
     "postconditions": {
       "party_includes": ["blastoise", "pidgey", "abra"],
-      "coins": 20,
+      "coins": {"gained": 20},
       "money": {"spent": 4100}
     }
   }

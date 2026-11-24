@@ -81,6 +81,20 @@ type money =
           than at the start): what the checkpoint's purchases cost, whatever
           money the save started with. *)
 
+(** How many of a thing (a bag item, Game Corner coins) a checkpoint promises. A
+    count copied from one save holds on that save only: a checkpoint that buys
+    or uses something promises what it changed ({!Count_gained}), and one whose
+    later checkpoints need a stock promises a floor ({!Count_at_least}). *)
+type count =
+  | Count_exactly of int  (** Exactly this many. *)
+  | Count_gained of int
+      (** Exactly this many more than at the checkpoint's start (negative: this
+          many used), whatever the save started with. *)
+  | Count_at_least of int  (** At least this many. *)
+
+type bag_count = { bag_item : string; count : count }
+(** A count of the bag item [bag_item] (a slug). *)
+
 type knows = { species : string; moves : string list }
 (** The party member of this species (a slug; the first such member) knows each
     of these moves (slugs). *)
@@ -94,8 +108,8 @@ type postconditions = {
       (** Where the checkpoint ends; unset, the end is the next checkpoint's
           start ({!Checkpoint_end}). *)
   party : party option;
-  items : item list;  (** Each item's count in the bag, exactly. *)
-  coins : int option;  (** Game Corner coins, exactly. *)
+  items : bag_count list;  (** Each item's count in the bag. *)
+  coins : count option;  (** Game Corner coins. *)
   money : money option;
   flags : string list;  (** Story flags (named by the game) that must be set. *)
   knows : knows list;  (** Moves members must know. *)

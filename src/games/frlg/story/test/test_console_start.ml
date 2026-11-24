@@ -225,6 +225,33 @@ let preflight_cases =
       "party includes blastoise, pidgey, abra, farfetchd; pidgey in the party \
        (fly); abra in the party (ingame_trade); a member knows cut (cut_tree); \
        money at least ¥3550 (mart); at the start, VermilionCity";
+    case
+      "preflight mg-04a: mg-03's Revives and Escape Rope gained are no start \
+       need (console B held 5 ropes, not mGBA's 3); its own rope is"
+      (fun () ->
+        let before = Some (plan "mg-03").postconditions in
+        String.concat "; "
+          (List.map
+             (fun (r : Preflight.row) -> r.need)
+             (Preflight.compare (needs "mg-04a" before)
+                { observed = P.nothing_read; place = None; members = None })))
+      "party includes blastoise, pidgey, mr-mime, farfetchd; farfetchd in the \
+       party (grind); blastoise in the party (grind); pidgey in the party \
+       (fly); escape-rope at least x1 (use_item); at the start, \
+       LavenderTown_PokemonCenter_1F";
+    case
+      "preflight mg-04b (a grind round, resumed from any round's save): what \
+       mg-04a promised, MIMIEN and Blastoise, at the Indigo nurse"
+      (fun () ->
+        let before = Some (plan "mg-04a").postconditions in
+        String.concat "; "
+          (List.map
+             (fun (r : Preflight.row) -> r.need)
+             (Preflight.compare (needs "mg-04b" before)
+                { observed = P.nothing_read; place = None; members = None })))
+      "party includes blastoise, pidgey, mr-mime, farfetchd; mr-mime in the \
+       party (grind); blastoise in the party (grind); at the start, \
+       IndigoPlateau_PokemonCenter_1F";
   ]
 
 (* {1 Room in the party} *)
