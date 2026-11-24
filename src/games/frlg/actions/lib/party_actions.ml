@@ -45,17 +45,6 @@ let swap ~log a b =
   M.close "the party" Party_menu.party_menu;
   M.settle_back ~label:"party swap" ~log
 
-(* The item's own menu (USE or CHECK, GIVE, TOSS, CANCEL) hides the arrows. *)
-let item_menu m = Bag_screen.bag_open m && Bag_screen.pocket m = None
-
-let item_menu_row row item =
-  Bag_items.open_pocket_top (Bag_items.pocket_of_item item);
-  Bag_items.select item;
-  M.press Wire.A;
-  ignore (M.await_screen ~code:"no_item_menu" ("the menu of " ^ item) item_menu);
-  M.taps Wire.Down row;
-  M.press Wire.A
-
 let bag_or_party m = Bag_screen.bag_open m || Party_menu.party_menu m
 let is_mail item = String.ends_with ~suffix:"-mail" item
 
@@ -69,11 +58,14 @@ let write_one_word () =
 
 let switch_question_ms = 1500
 
+(* After a berry is given the pouch shows again, over the bag. *)
+let bag_pouch_or_party m = bag_or_party m || Berry_pouch.shows_pouch m
+let give_row = 1
+
 let give ~log ~item ~slot =
-  if String.ends_with ~suffix:"-berry" item then
-    M.fail ~repeats:true "not_implemented" "giving a berry (the Berry Pouch)";
   log (Printf.sprintf "Bag: give %s to slot %d." item slot);
-  item_menu_row 1 item;
+  if Berry_pouch.is_berry item then Berry_pouch.choose_give item
+  else Bag_items.item_action item give_row;
   ignore
     (M.await_screen ~code:"no_party" "the party to give to"
        Party_menu.party_menu);
@@ -81,14 +73,15 @@ let give ~log ~item ~slot =
   if M.answer_yes_if_asked ~timeout_ms:switch_question_ms then
     log "Bag: the member held an item; switched it.";
   if is_mail item then write_one_word ();
-  M.close "the bag" bag_or_party;
+  Effects.with_probes Berry_pouch.probes (fun () ->
+      M.close "the bag" bag_pouch_or_party);
   M.settle_back ~label:("give " ^ item) ~log
 
 let warps item = item = "escape-rope"
 
 let use ~log ~item ~slot =
   log ("Bag: use " ^ item ^ ".");
-  item_menu_row 0 item;
+  Bag_items.item_action item 0;
   match slot with
   | Some slot ->
       ignore
@@ -107,3 +100,30 @@ let use ~log ~item ~slot =
       with
       | Ok () -> ()
       | Error cause -> raise (M.Action_failed cause))
+
+let party_settle_ms = 800
+
+let verified_line who slot =
+  Printf.sprintf
+    "MailGlitch: verified! %s (slot %d) holds the recycled Berry (Mail Glitch \
+     active)."
+    who slot
+
+let not_active who slot mark =
+  Printf.sprintf "%s (slot %d) shows %s, not a held item icon, after Recycle"
+    who slot
+    (Party_menu.mark_name mark)
+
+let verified ~log ~who ~slot (mark : Party_menu.mark) =
+  match mark with
+  | Held_item -> log (verified_line who slot)
+  | other -> M.fail "mail_glitch_not_active" (not_active who slot other)
+
+let verify_mail_glitch ~log ~who ~slot =
+  open_party ();
+  Effects.submit [ Wire.Wait { wait_ms = party_settle_ms } ] |> ignore;
+  let m = M.await_screen ~code:"no_party" "the party" Party_menu.party_menu in
+  let mark = Party_menu.mark m slot in
+  M.close "the party" Party_menu.party_menu;
+  M.settle_back ~label:"verify mail glitch" ~log;
+  verified ~log ~who ~slot mark

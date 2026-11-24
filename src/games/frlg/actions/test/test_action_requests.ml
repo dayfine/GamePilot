@@ -73,6 +73,9 @@ let decoding =
     case "cut_tree"
       (decode "cut_tree" {|{"direction": "north"}|})
       "cut the tree to the north";
+    case "verify_mail_glitch"
+      (decode "verify_mail_glitch" {|{"species": "mr-mime"}|})
+      "verify the mail glitch on mr-mime";
     case "an action FireRed does not have"
       (decode "switch_grind" "{}")
       "unknown_action: switch_grind";

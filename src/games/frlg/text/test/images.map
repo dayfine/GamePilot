@@ -33,3 +33,15 @@ summary_moves mgba repo src/games/frlg/readers/test/images/mgba/grind-2026-11-23
 summary_moves mgba repo src/games/frlg/readers/test/images/mgba/grind-2026-11-23/mimien-moves.png|mgba/grind-mimien-moves.png
 battle_opening mgba repo src/games/frlg/readers/test/images/mgba/mail-glitch-route16/wild-spearow.png|mgba/mail-glitch-route16/wild-spearow.png
 battle_opening mgba repo src/games/frlg/readers/test/images/mgba/mail-glitch-route16/wild-doduo.png|mgba/mail-glitch-route16/wild-doduo.png
+bag_counts switch clt PokemonFRLG/Bag/Items_Scrolled_True.png|switch_clt/Bag/Items_Scrolled_True.png
+bag_counts switch clt PokemonFRLG/Bag/Items_Top_True.png|switch_clt/Bag/Items_Top_True.png
+bag_counts switch clt PokemonFRLG/Bag/Items_Potion_Girl_True.png|switch_clt/Bag/Items_Potion_Girl_True.png
+bag_counts mgba repo src/games/frlg/readers/test/images/mgba/mail-glitch-route16/items.png|mgba/route16-items.png
+bag_counts mgba repo src/games/frlg/readers/test/images/mgba/mail-glitch-route16/items-page2.png|mgba/route16-items-page2.png
+bag_counts mgba repo src/games/frlg/readers/test/images/mgba/mail-glitch-route16/items-page3.png|mgba/route16-items-page3.png
+bag_counts mgba repo src/games/frlg/readers/test/images/mgba/mail-glitch-route16/pouch.png|mgba/route16-pouch.png
+berry_pouch_numbers mgba repo src/games/frlg/readers/test/images/mgba/mail-glitch-route16/pouch.png|mgba/route16-pouch.png
+mail_editor mgba repo src/games/frlg/readers/test/images/mgba/mail-editor/editor-abra.png|mgba/mail-editor-abra.png
+mail_editor mgba repo src/games/frlg/readers/test/images/mgba/mail-editor/editor-blank.png|mgba/mail-editor-blank.png
+mail_editor mgba repo src/games/frlg/readers/test/images/mgba/mail-glitch-route16/items.png|mgba/route16-items.png
+mail_editor mgba repo src/games/frlg/readers/test/images/mgba/mail-glitch-route16/final-party.png|mgba/route16-final-party.png

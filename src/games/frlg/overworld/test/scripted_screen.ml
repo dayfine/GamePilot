@@ -16,7 +16,12 @@ type screen =
   | Flash  (** A wild battle's flash: the overworld with its middle darkened. *)
   | Black
   | Start_menu of int  (** Its cursor on this row, from 0. *)
-  | Party of int  (** This slot (from 1) selected. *)
+  | Party of int
+      (** This slot (from 1) selected; MIMIEN (slot 3) holds Retro Mail, as
+          before mg-05's battle. *)
+  | Party_after_recycle
+      (** The party after mg-05's Recycle (mGBA, Route 16, 2026-11-23), slot 1
+          selected: MIMIEN (slot 3) shows the held-item mark, not mail. *)
   | Member_menu of int
       (** A party member's own menu over the party (SUMMARY, SWITCH, MAIL,
           CANCEL), its cursor on this row from 0. *)
@@ -37,6 +42,7 @@ let screen_name = function
   | Black -> "black"
   | Start_menu row -> Printf.sprintf "start menu row %d" row
   | Party slot -> Printf.sprintf "party slot %d" slot
+  | Party_after_recycle -> "party after recycle"
   | Member_menu row -> Printf.sprintf "member menu row %d" row
   | Bag_items -> "bag items"
   | Mart_list -> "mart list"
@@ -55,6 +61,8 @@ let image = function
   | Start_menu _ -> "mail-glitch-04/mg05-start-menu__start1.png"
   | Party _ ->
       "mail-glitch-04/mg05-party__party-slot1-members6-held1-held2-mail3.png"
+  | Party_after_recycle ->
+      "mail-glitch-route16/final-party__party-slot1-members6-held1-held3.png"
   | Dialog_arrow -> "screenshots-779/20261122-121507-17.04__dialog-arrow.png"
   | Question -> "AdvanceWhiteDialogDetector/Eng-Select_False__dialog-choice.png"
   | Member_menu _ -> "mail-glitch-04/mg05-mimien-menu__none.png"

@@ -85,6 +85,45 @@ let bag_message_digit k =
     ~left:(bag_message_left + (digit_width * k))
     ~glyph_top:bag_message_second_top
 
+let small_digit_width = 5
+
+let small_digit_cell id ~left ~glyph_top =
+  { id; left; indent = 0; glyph_top; width = small_digit_width }
+
+let list_row_top row = list_first_top + (list_row_pitch * row)
+
+(* The list window starts at x 88; the count prints at x 110 as "×" (8 wide)
+   and three digit cells. *)
+let count_ones_left = 216
+
+let bag_count_digit row k =
+  small_digit_cell
+    (Printf.sprintf "bag_count.%d.%d" row k)
+    ~left:(count_ones_left - (small_digit_width * k))
+    ~glyph_top:(list_row_top row)
+
+(* The label at x 97: the No symbol (8 wide), CLEAR 1, then the digits. *)
+let berry_number_left = 106
+
+let berry_pouch_number_digit row k =
+  small_digit_cell
+    (Printf.sprintf "pouch_number.%d.%d" row k)
+    ~left:(berry_number_left + (small_digit_width * k))
+    ~glyph_top:(list_row_top row)
+
+(* The phrase window at x 24; a row's first word after CLEAR 17. *)
+let mail_field_one_left = 41
+let mail_first_row_top = 2
+
+let mail_field_one ~width =
+  {
+    id = "mail_field.1";
+    left = mail_field_one_left;
+    indent = 0;
+    glyph_top = mail_first_row_top;
+    width;
+  }
+
 let box t : Wire.box =
   let x = float (t.left - t.indent - slack)
   and y = float (t.glyph_top + template_top - slack) in
