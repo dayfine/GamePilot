@@ -6,6 +6,8 @@
 
      startN        the Start menu, its cursor on row N (0 at the top)
      bag           the bag; items, keyitems, balls its pocket; rowN its cursor
+     maileditor    the Easy Chat mail editor
+     mailyes, mailno  its Yes/No, the arrow on YES or NO
      itemmenu      an item's own menu (USE or CHECK, GIVE, TOSS, CANCEL) over
                    the bag
      pouch         the Berry Pouch
@@ -144,6 +146,23 @@ let screen_readers =
 let inner_readers =
   [
     {
+      reader = "mail_editor_yes_no";
+      applies =
+        (fun tags ->
+          has "maileditor" tags || has "mailyes" tags || has "mailno" tags);
+      verdict =
+        (fun m ->
+          match Mail_editor.confirm_arrow m with
+          | Some true -> "yes"
+          | Some false -> "no"
+          | None -> "none");
+      expected =
+        (fun tags ->
+          if has "mailyes" tags then "yes"
+          else if has "mailno" tags then "no"
+          else "none");
+    };
+    {
       reader = "bag_pocket";
       applies = (fun tags -> expected_pocket tags <> "none");
       verdict =
@@ -188,6 +207,9 @@ let known_misreads =
   [
     (* A Key Items action menu covers the bag's grey shadow, as in the fork. *)
     ("bag_open", "captures/tmcase-04-tmcase-after-A__bag-itemmenu.png", "false");
+    (* The mail editor's orange frame and pale panel pass for page 3's. *)
+    ("summary_page", "mail-editor/editor-abra__maileditor.png", "3");
+    ("summary_page", "mail-editor/editor-blank__maileditor.png", "3");
   ]
 
 let expectation r image =
