@@ -12,7 +12,10 @@
 //
 // With a watch page (ServerOptions::watch, server_watch.cpp) the loop also
 // serves its HTTP connections: the frame, the probes and the health from here,
-// the plan and log the program sends as notifications, and Stop.
+// the plan and log the program sends as notifications, and Stop. With a run
+// folder it keeps the notes there (run_journal.h) and, with `record`, records
+// the run's frames on the stream's worker (frame_stream.h). With keep-awake
+// on it presses a harmless key after a long idle (keep_awake.h).
 
 #pragma once
 
@@ -26,10 +29,13 @@
 #include "Common/Cpp/Filesystem/FileIO.h"
 #include "backend.h"
 #include "clock.h"
+#include "frame_stream.h"
+#include "keep_awake.h"
 #include "live_schedule.h"
 #include "net.h"
 #include "probe_evaluation.h"
 #include "rpc.h"
+#include "run_journal.h"
 #include "schedule.h"
 #include "sent_results.h"
 #include "template_store.h"
@@ -49,7 +55,11 @@ struct ServerOptions {
   // and what the entry says about the run.
   std::string registry;
   std::string checkpoint;
+  // The run's folder: its notes (run_journal.h) and recorded frames go there;
+  // empty = none.
   std::string run_folder;
+  bool record = false;  // record frames into run_folder/frames
+  KeepAwakeOptions keepawake;
 };
 
 // What the watch page costs the frame loop, reported with the frame rate.
@@ -78,6 +88,10 @@ class Server {
 
  private:
   void run_lockstep(const std::atomic<bool>& stop);
+  void keep_awake();
+  bool batch_pending() const;
+  void send_batch_done(const std::string& batch_id, std::int64_t seq,
+                       double t_ms);
   void run_live(const std::atomic<bool>& stop);
   void serve_network(int timeout_ms);
   void accept_pending();
@@ -101,6 +115,9 @@ class Server {
   WatchFrame watch_frame();
   void offer_stream_frame();
   void watch_tick();
+  FrameStream* stream();
+  void note_plan(const pa::JsonObject& plan);
+  void mark_failure();
   void show_probes(
       std::int64_t seq,
       const std::vector<std::pair<std::string, ProbeResult>>& results);
@@ -144,6 +161,13 @@ class Server {
   bool probes_shown_ = false;  // the page shows a non-empty probe list
   double status_shown_ms_ = -1e9;
   WatchCost watch_cost_;
+
+  std::optional<RunJournal> journal_;  // with a run folder
+  // The stream's worker for recording when there is no watch page.
+  std::unique_ptr<FrameStream> record_stream_;
+  PlanStep step_;  // the plan's current event, for recorded frames
+  double failure_marked_ms_ = -1e9;
+  KeepAwake keep_awake_;
 };
 
 }  // namespace gamepilot

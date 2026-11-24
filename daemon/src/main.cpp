@@ -13,6 +13,11 @@
 // network; port 0 (here and for --port) picks a free one, which the daemon
 // prints. With [--registry DIR] [--checkpoint ID] [--run-folder DIR] the page
 // is listed in the watch registry (watch_registry.h) while it is up.
+// [--record | --no-record] records the run's frames into DIR/frames (on by
+// default for the switch backend with a run folder, off for mgba);
+// [--keepawake SECONDS] [--keepawake-key B] presses that key after SECONDS
+// with no input, never during a client's batch (keep_awake.h; default 180 on
+// the switch backend, 0 = off, off for mgba).
 // [--stream-fps 30] [--stream-width 1280] set the page's live frame
 // (frame_stream.h): at most that many frames a second, a capture card's frame
 // scaled to that width unless the viewer asks for another (`/stream?w=`).
@@ -80,6 +85,8 @@ int usage() {
       "         [--registry DIR] [--checkpoint ID] [--run-folder DIR] "
       "[--stream-fps 30]\n"
       "         [--stream-width 1280] for the watch page\n"
+      "       either with [--record | --no-record] [--keepawake SECONDS] "
+      "[--keepawake-key B]\n"
       "       gamepilot_daemon --hub --registry DIR [--watch-port 47901] "
       "[--listen 127.0.0.1]\n",
       stderr);
@@ -115,7 +122,21 @@ struct Flags {
   gamepilot::SwitchOptions switch_options;
   gamepilot::ServerOptions server;
   bool hub = false;
+  std::optional<bool> record;           // default: by backend
+  std::optional<double> keepawake_s;    // default: by backend
 };
+
+// Recording and keep-awake are on by default on the Switch only: mGBA's runs
+// are short and its frames come back from save states.
+constexpr double kSwitchKeepAwakeS = 180;
+constexpr long kMaxKeepAwakeS = 24 * 3600;
+
+void backend_defaults(Flags& flags) {
+  const bool console = flags.backend == "switch";
+  flags.server.record = flags.record.value_or(console);
+  flags.server.keepawake.idle_ms =
+      flags.keepawake_s.value_or(console ? kSwitchKeepAwakeS : 0) * 1000;
+}
 
 gamepilot::WatchOptions& watch_options(Flags& flags) {
   return flags.server.watch.emplace(
@@ -185,6 +206,21 @@ bool parse_flags(int argc, char** argv, Flags& flags) {
       flags.server.checkpoint = argv[++i];
     } else if (arg == "--run-folder" && has_value) {
       flags.server.run_folder = argv[++i];
+    } else if (arg == "--record") {
+      flags.record = true;
+    } else if (arg == "--no-record") {
+      flags.record = false;
+    } else if (arg == "--keepawake" && has_value) {
+      long seconds = 0;
+      if (!parse_in_range(argv[++i], 0, kMaxKeepAwakeS, seconds)) {
+        return false;
+      }
+      flags.keepawake_s = static_cast<double>(seconds);
+    } else if (arg == "--keepawake-key" && has_value) {
+      flags.server.keepawake.key = argv[++i];
+      if (gamepilot::button_mask(flags.server.keepawake.key) == 0) {
+        return false;
+      }
     } else if (arg == "--hub") {
       flags.hub = true;
     } else if (arg == "--fast") {
@@ -196,6 +232,7 @@ bool parse_flags(int argc, char** argv, Flags& flags) {
   if (flags.hub) {
     return flags.backend.empty() && !flags.server.registry.empty();
   }
+  backend_defaults(flags);
   if (flags.backend == "mgba") {
     return flags.mgba_port != 0;
   }
@@ -349,6 +386,7 @@ int run_hub(const Flags& flags) {
   options.registry = flags.server.registry;
   // The registry is $GAMEPILOT_RUNS/.watch; the runs' results sit beside it.
   options.results = flags.server.registry + "/../RESULTS.tsv";
+  options.runs = flags.server.registry + "/..";
   if (flags.server.watch) {
     options.listen = flags.server.watch->listen;
     options.port = flags.server.watch->port;

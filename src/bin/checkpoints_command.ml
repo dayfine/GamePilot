@@ -27,6 +27,7 @@
    token, which the URL printed for other devices carries. The program's port
    (--port) is a free one too unless given, so runs do not collide.
 
+   --record/--no-record, --keepawake SECONDS: each run's daemon's (Watch-Page.md).
    --backend switch runs on the Switch (docs/switch-bring-up.md): the daemon
    drives the controller board on --serial and reads the capture card
    --capture (gamepilot switch-devices prints the lab's); --replay VIDEO
@@ -78,6 +79,8 @@ type flags = {
   preflight : bool;
   common : Checkpoint_command.flags;
   watch : Daemon_process.watch option;
+  daemon_flags : string list;
+      (** --record, --no-record, --keepawake N: passed to each run's daemon. *)
 }
 
 let usage =
@@ -89,6 +92,7 @@ let usage =
   \      [--end-check-only] [--grind-battles N] [--watch] [--watch-port N]\n\
   \      [--listen ADDR] [--backend mgba|switch --serial PORT --capture DEVICE]\n\
   \      [--replay VIDEO] [--save-after-pass|--no-save-after-pass]\n\
+  \      [--record|--no-record] [--keepawake SECONDS]\n\
   \  gamepilot checkpoints PLAN_DIR --preflight --from ID [--backend ...]\n"
 
 let home = Option.value (Sys.getenv_opt "HOME") ~default:"."
@@ -121,6 +125,7 @@ let defaults =
     preflight = false;
     common = { Checkpoint_command.defaults with port = 0 };
     watch = None;
+    daemon_flags = [];
   }
 
 let common_flag f c = { f with common = c f.common }
@@ -135,6 +140,12 @@ let mode_flag f m =
   match Checkpoint_trials.mode_of_string m with
   | Some mode -> Ok { f with mode = Some mode }
   | None -> Error ("bad --mode " ^ m)
+
+let keepawake_flag f seconds =
+  {
+    f with
+    daemon_flags = f.daemon_flags @ [ "--keepawake"; string_of_int seconds ];
+  }
 
 (* One flag with its value, or [None] for a flag that takes none or an
    unknown one. *)
@@ -164,6 +175,7 @@ let valued f name v =
       | _ -> Some (Error ("bad --grind-battles " ^ v)))
   | "--center" ->
       Some (Ok (common_flag f (fun c -> { c with center = Some v })))
+  | "--keepawake" -> Some (int_flag name v (keepawake_flag f))
   | _ -> None
 
 (* The page by default: on a free port, $GAMEPILOT_WATCH_LISTEN or this machine
@@ -199,6 +211,8 @@ let rec parse f = function
   | "--no-save-after-pass" :: rest ->
       parse { f with save_after_pass = false } rest
   | "--preflight" :: rest -> parse { f with preflight = true } rest
+  | (("--record" | "--no-record") as flag) :: rest ->
+      parse { f with daemon_flags = f.daemon_flags @ [ flag ] } rest
   | "--walk" :: rest ->
       parse (common_flag f (fun c -> { c with walk = true })) rest
   | "--end-check-only" :: rest ->
@@ -234,6 +248,11 @@ let daemon_backend f mode =
          dry run on the fake board)"
   | b, _, _, _, _ -> Error ("bad --backend " ^ b)
 
+(* What each run's run.json says of the series. *)
+let run_info plan_dir f ~from_id ~to_id : Run_record.info =
+  let game, program = Plan_dir.program_of_dir plan_dir in
+  { game; program; from_id; to_id; backend = f.backend }
+
 let run_series plan_dir f =
   let* from_id = required "--from" f.from_id in
   let* to_id = required "--to" f.to_id in
@@ -263,6 +282,8 @@ let run_series plan_dir f =
          policy;
          world;
          watch;
+         info = run_info plan_dir f ~from_id ~to_id;
+         daemon_flags = f.daemon_flags;
          bound = ref None;
          save_after_pass = f.save_after_pass;
        }

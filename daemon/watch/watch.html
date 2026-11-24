@@ -15,8 +15,12 @@
   Runs sidebar: the hub's runs.json and recent.json (watch_hub.h), polled
   every few seconds; opened through the hub (/runs/NAME/) it is the same
   origin, opened on the run's own port it asks the hub on port 47901. When
-  this run leaves the registry the page says so and links to the newest live
-  run; the next checkpoint of the same series (same port) is followed.
+  this run leaves the registry the page says so and links to its record and
+  the newest live run; the next checkpoint of the same series (same port) is
+  followed. Finished runs in the sidebar link to their record (run.html).
+  Through the hub this page comes from the hub's own build, whatever the run
+  daemon's age: the run supplies only data (events, stream, frame, summary,
+  stop).
 -->
 <html lang="en">
 <head>
@@ -279,6 +283,7 @@
 <div id="side-backdrop" hidden></div>
 <div id="ended" role="status" hidden>
   <span id="ended-text">This run has ended.</span>
+  <a id="ended-record" href="./">Open its record</a>
   <a id="ended-newest" href="/live">Go to the newest live run</a>
   <button id="ended-close" type="button">Close</button>
 </div>
@@ -961,7 +966,7 @@ function renderSide(live, summaries, recent) {
   const liveNames = new Set(live.map((r) => r.run));
   for (const row of (recent || []).filter((x) => !liveNames.has(x.run)).slice(0, 12)) {
     const pass = row.result === "pass";
-    recentList.append(sideItem(null, row.run === runName,
+    recentList.append(sideItem(runPath(row.run), row.run === runName,
       (pass ? "✓ " : "✗ ") + (row.checkpoint || row.run) + (row.mode ? " · " + row.mode : ""),
       endedAt(row.time) + (pass ? "" : " · " + (row.at || row.result)),
       pass ? "pass" : "fail", row.run + (row.reason ? "\n" + row.reason : "")));
@@ -993,6 +998,7 @@ function checkEnded(live, recent) {
   $("ended-text").textContent = "This run has ended" +
     (row ? (row.result === "pass" ? ": passed." : ": failed" + (row.at ? " at " + row.at : "") + ".") : ".");
   $("ended-newest").hidden = !live.length;
+  $("ended-record").href = runPath(runName);
   $("ended").hidden = false;
   $("conn").textContent = "run ended";
   $("conn").className = "down";

@@ -80,9 +80,27 @@ app runs, runs steps 2, 3 and 6, then the checkpoint with the watch page, and st
 and releases the lock on every exit, Ctrl-C included. `--dry-run` runs all of it on the fakes
 (fake board, a replayed frame, a scratch lock) without touching the console.
 
+**Keep-awake.** A Switch daemon keeps the console awake by itself: after 180 s with no input
+it presses B, only while no client batch is queued or running and no client submitted in that
+window, so never inside a program's batch (`daemon/src/keep_awake.h`). Each press is a `daemon`
+line in the run's `wire.jsonl` (`"method":"keepawake"`, the key and the idle time) and a line in
+`daemon.out`. `--keepawake SECONDS` changes the wait (0 turns it off; `--keepawake-key KEY` the
+key, a GBA button name); `gamepilot checkpoints ... --keepawake N` passes it on. mGBA daemons
+have it off. It replaces `~/BDSPLab/gp_keepawake.py`, a second client the daemon's one-client
+rule refused ("busy: another client is connected"): an idle daemon holding console B now keeps
+it awake, and the script is no longer needed while one runs.
+
+**Recording.** A Switch run's daemon also saves a 640-wide JPEG of the frame every second, and
+one at each story event and at a failure, into the run folder's `frames/` (`index.jsonl` lists
+them with the step and time; `--no-record` turns it off). About 41 KB a frame, so about 150 MB
+an hour of console time. The hub's page of the finished run scrubs through them
+(`docs/design/Watch-Page.md`, Past runs).
+
 **When it fails on the Switch.** The run folder (`$GAMEPILOT_RUNS/<date>-<id>-testing-N`) has
-`failure.png` and the story log; the console is back at the last save. Look at the failure
-frame first, fix, then rerun the same command: it starts from that save. A run that failed in
+`failure.png`, the recorded frames and the story log, all on the run's page in the hub
+(`http://HOST:47901/runs/<folder>/`); the console is back at the last save. Look at the failure
+frame first (the page's "failure" button jumps there, with the frames before it), fix, then
+rerun the same command: it starts from that save. A run that failed in
 the soft reset itself (`soft_reset_failed`, `soft_reset_not_taken`) leaves the game wherever it
 stopped: look at the screen, B out of any menu, and rerun. Never answer YES to "There is already
 a saved file" by hand unless the checkpoint just passed.

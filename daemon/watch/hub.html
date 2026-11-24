@@ -7,6 +7,12 @@
   state come from that run's /summary.json, through the hub too. recent.json
   lists the latest finished runs (RESULTS.tsv). Links are relative, so a LAN
   viewer's links stay on the LAN address.
+
+  All runs: history.json lists every run folder (run.json, else the folder's
+  name and its RESULTS.tsv row), newest first, each linking to its page
+  (runs/NAME/: the live page while it runs, its record after). The filters
+  live in the URL's query (game, program, backend, mode, result, since,
+  until, q), so a filtered list can be bookmarked: ?backend=switch&result=fail.
 -->
 <html lang="en">
 <head>
@@ -59,6 +65,28 @@
   .failed { color: var(--bad); }
   .passed { color: var(--ok); }
   .empty { color: var(--muted); font-style: italic; }
+  .filters { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 8px; align-items: end; }
+  .filters label { display: flex; flex-direction: column; font-size: 12px; color: var(--muted); gap: 2px; }
+  .filters select, .filters input {
+    font: inherit; font-size: 13px; color: var(--text); background: var(--panel);
+    border: 1px solid var(--line); border-radius: 6px; padding: 4px 6px; min-height: 30px;
+  }
+  .filters input[type=search] { min-width: 180px; }
+  .filters button { font: inherit; font-size: 13px; background: var(--panel); color: var(--text);
+    border: 1px solid var(--line); border-radius: 6px; padding: 4px 10px; min-height: 30px; cursor: pointer; }
+  #count { color: var(--muted); font-size: 12px; margin-left: auto; align-self: center; }
+  .range b { color: var(--text); }
+  .range { color: var(--muted); }
+  td .why { white-space: normal; max-width: 26em; }
+  td.reason { white-space: normal; max-width: 28em; color: var(--muted); font-size: 12px; }
+  .running { color: var(--cur); }
+  .tag { font-size: 11px; color: var(--muted); border: 1px solid var(--line); border-radius: 4px;
+         padding: 0 4px; margin-left: 4px; font-weight: 400; }
+  @media (max-width: 700px) {
+    .filters label { flex: 1 1 40%; }
+    .filters input[type=search] { min-width: 0; }
+    td.reason { max-width: 16em; }
+  }
 </style>
 </head>
 <body>
@@ -75,12 +103,24 @@
       <tbody id="runs"><tr><td class="empty" colspan="6">loading the live runs</td></tr></tbody>
     </table>
   </section>
-  <h2>Recent finished runs</h2>
+  <h2>All runs</h2>
+  <form class="filters" id="filters" onsubmit="return false">
+    <label>Game<select name="game"></select></label>
+    <label>Program<select name="program"></select></label>
+    <label>Backend<select name="backend"></select></label>
+    <label>Mode<select name="mode"></select></label>
+    <label>Result<select name="result"></select></label>
+    <label>Since<input type="date" name="since"></label>
+    <label>Until<input type="date" name="until"></label>
+    <label>Search<input type="search" name="q" placeholder="run name or failure reason"></label>
+    <button type="button" id="clear">Clear</button>
+    <span id="count"></span>
+  </form>
   <section>
     <table>
-      <thead><tr><th>Run</th><th>Checkpoint</th><th>Mode</th><th>Result</th>
-        <th>Ended</th></tr></thead>
-      <tbody id="recent"><tr><td class="empty" colspan="5">loading</td></tr></tbody>
+      <thead><tr><th>Run</th><th>Game</th><th>Program</th><th>Checkpoints</th><th>Backend</th>
+        <th>Mode</th><th>Result</th><th>Started</th><th>Duration</th></tr></thead>
+      <tbody id="history"><tr><td class="empty" colspan="9">loading</td></tr></tbody>
     </table>
   </section>
 </main>
@@ -172,29 +212,168 @@ function render(entries) {
   }
 }
 
-function renderRecent(rows) {
-  const body = $("recent");
+// --- All runs ------------------------------------------------------------------
+
+const FILTERS = ["game", "program", "backend", "mode", "result", "since", "until", "q"];
+const CHOICES = ["game", "program", "backend", "mode", "result"];
+const UNKNOWN = "(unknown)";
+const BACKEND_NAMES = {mgba: "mGBA", switch: "Switch"};
+let allRuns = [];
+
+function filterValues() {
+  const form = $("filters");
+  const values = {};
+  for (const name of FILTERS) values[name] = form.elements[name].value;
+  return values;
+}
+
+// The filters from the URL (?backend=switch&result=fail), once at load.
+function readQuery() {
+  const query = new URLSearchParams(location.search);
+  const form = $("filters");
+  for (const name of FILTERS) {
+    const v = query.get(name);
+    if (v === null) continue;
+    if (form.elements[name].tagName === "SELECT") {
+      const select = form.elements[name];
+      if (![...select.options].some((o) => o.value === v)) select.append(new Option(v, v));
+    }
+    form.elements[name].value = v;
+  }
+}
+
+function writeQuery() {
+  const query = new URLSearchParams();
+  for (const [k, v] of Object.entries(filterValues())) if (v) query.set(k, v);
+  const text = query.toString();
+  replaceUrl(location.pathname + (text ? "?" + text : ""));
+}
+function replaceUrl(url) {
+  try { window.history.replaceState(null, "", url); } catch (e) {}
+}
+
+// Each choice filter offers the values the runs have, keeping the chosen one.
+function fillChoices() {
+  const form = $("filters");
+  for (const name of CHOICES) {
+    const select = form.elements[name];
+    const chosen = select.value;
+    const values = new Set(allRuns.map((r) => r[name] || UNKNOWN));
+    if (chosen) values.add(chosen);
+    const label = (v) => name === "backend" ? (BACKEND_NAMES[v] || v) : v;
+    select.replaceChildren(new Option("all", ""),
+      ...[...values].sort().map((v) => new Option(label(v), v)));
+    select.value = chosen;
+  }
+}
+
+// Local midnight of a yyyy-mm-dd input.
+function dayStart(text) {
+  const [y, m, d] = text.split("-").map(Number);
+  return new Date(y, m - 1, d).getTime();
+}
+
+function matches(row, f) {
+  for (const name of CHOICES) {
+    if (f[name] && (row[name] || UNKNOWN) !== f[name]) return false;
+  }
+  const t = row.started_ms || row.ended_ms;
+  if (f.since && (!t || t < dayStart(f.since))) return false;
+  if (f.until && (!t || t >= dayStart(f.until) + 86400000)) return false;
+  if (f.q) {
+    const q = f.q.toLowerCase();
+    const text = (row.run + " " + row.reason + " " + row.at).toLowerCase();
+    if (!text.includes(q)) return false;
+  }
+  return true;
+}
+
+// "Nov 23 21:31", or "21:31" today.
+function when(ms) {
+  if (!ms) return "–";
+  const d = new Date(ms);
+  const hm = d.toLocaleTimeString([], {hour: "2-digit", minute: "2-digit", hour12: false});
+  return d.toDateString() === new Date().toDateString() ? "today " + hm :
+    d.toLocaleDateString([], {month: "short", day: "numeric"}) + " " + hm;
+}
+
+// from → to, the run's own checkpoint in bold.
+function rangeCell(row) {
+  const td = el("td", "range");
+  const part = (id) => id === row.checkpoint ? el("b", "", id) : document.createTextNode(id || "–");
+  if (!row.from || row.from === row.to) {
+    td.append(part(row.checkpoint || row.from));
+  } else {
+    td.append(part(row.from), " → ", part(row.to));
+    if (row.checkpoint !== row.from && row.checkpoint !== row.to) {
+      td.append(" (", el("b", "", row.checkpoint), ")");
+    }
+  }
+  return td;
+}
+
+function resultCell(row) {
+  if (row.result === "running") return el("td", "running", "running");
+  if (row.result === "pass") return el("td", "passed", "passed");
+  if (row.result === "fail") {
+    const td = el("td", "failed", "failed" + (row.at ? " at " + row.at : ""));
+    if (row.reason) td.title = row.reason;
+    return td;
+  }
+  return el("td", "muted", row.result || "–");
+}
+
+function renderHistory() {
+  const body = $("history");
+  const f = filterValues();
+  const rows = allRuns.filter((r) => matches(r, f));
   body.replaceChildren();
-  const live = new Set(entries.map((r) => r.run));
-  for (const row of rows.filter((x) => !live.has(x.run))) {
-    const pass = row.result === "pass";
-    const result = el("td", pass ? "passed" : "failed",
-                      pass ? "passed" : "failed" + (row.at ? " at " + row.at : ""));
-    if (row.reason) result.title = row.reason;
+  for (const row of rows) {
     const tr = el("tr");
-    tr.append(el("td", "", row.run), el("td", "", row.checkpoint || "–"),
-              el("td", "", row.mode || "–"), result,
-              el("td", "num", (row.time || "").replace("T", " ")));
+    const name = el("td");
+    const link = el("a", "", row.run);
+    link.href = runUrl(row.run);
+    name.append(link);
+    if (row.recorded) name.append(el("span", "tag", "frames"));
+    if (row.result === "fail" && row.reason) name.append(el("div", "muted why", row.reason.slice(0, 90)));
+    const end = row.live ? Date.now() : row.ended_ms;
+    tr.append(name, el("td", "", row.game || "–"), el("td", "", row.program || "–"),
+              rangeCell(row), el("td", "", BACKEND_NAMES[row.backend] || row.backend || "–"),
+              el("td", "", row.mode || "–"), resultCell(row),
+              el("td", "num", when(row.started_ms)),
+              el("td", "num", row.started_ms && end ? duration(end - row.started_ms) : "–"));
     body.append(tr);
   }
-  if (!body.childElementCount) {
-    const td = el("td", "empty", "no finished runs yet");
-    td.colSpan = 5;
+  if (!rows.length) {
+    const td = el("td", "empty", allRuns.length ? "no run matches the filters" : "no runs yet");
+    td.colSpan = 9;
     const tr = el("tr");
     tr.append(td);
     body.append(tr);
   }
+  $("count").textContent = rows.length + " of " + allRuns.length + " runs";
 }
+
+async function pollHistory() {
+  if (!document.hidden) {
+    try {
+      const reply = await fetch("history.json", {cache: "no-store"});
+      allRuns = await reply.json();
+      fillChoices();
+      renderHistory();
+    } catch (e) {}
+  }
+  setTimeout(pollHistory, HISTORY_POLL_MS);
+}
+const HISTORY_POLL_MS = 5000;
+
+$("filters").addEventListener("input", () => { writeQuery(); renderHistory(); });
+$("clear").addEventListener("click", () => {
+  for (const name of FILTERS) $("filters").elements[name].value = "";
+  writeQuery();
+  renderHistory();
+});
+readQuery();
 
 let entries = [];
 async function poll() {
@@ -202,8 +381,6 @@ async function poll() {
     const reply = await fetch("runs.json", {cache: "no-store"});
     entries = await reply.json();
     await Promise.all(entries.map((r) => fetchSummary(r.run)));
-    fetch("recent.json", {cache: "no-store"}).then((r) => r.json()).then(renderRecent)
-      .catch(() => {});
     $("conn").textContent = entries.length + " live run" + (entries.length === 1 ? "" : "s");
     $("conn").className = "";
   } catch (e) {
@@ -214,6 +391,7 @@ async function poll() {
   setTimeout(poll, POLL_MS);
 }
 poll();
+pollHistory();
 </script>
 </body>
 </html>

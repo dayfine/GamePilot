@@ -117,6 +117,7 @@ type notification = Jsonrpc.notification =
   | Watch_log of string
   | Watch_run of Watch_run.t
   | Stop of string
+  | Keepawake of { key : string; idle_ms : int }
 
 type message = Jsonrpc.message =
   | Request of request
@@ -153,7 +154,7 @@ module Watch_run = Watch_run
 module Watch_registry = Watch_registry
 module Daemon_status = Daemon_status
 
-type direction = Wire_log.direction = In | Out
+type direction = Wire_log.direction = In | Out | Daemon
 
 type log_line = Wire_log.log_line = {
   dir : direction;

@@ -2,13 +2,17 @@
 
 #include <algorithm>
 #include <charconv>
+#include <cmath>
 #include <chrono>
 #include <cstdio>
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
 #include <utility>
 
+#include "Common/Cpp/Filesystem/FileIO.h"
+#include "Common/Cpp/Filesystem/Filesystem.h"
 #include "http.h"
+#include "rpc.h"
 
 namespace gamepilot {
 
@@ -34,7 +38,33 @@ constexpr auto kIdleWait = std::chrono::milliseconds(500);
 constexpr double kStalledMs = 10000;
 constexpr double kReportMs = 10000;
 
+// The digits of a recorded frame's file name: a million frames is 11 days at
+// one a second.
+constexpr int kRecordDigits = 6;
+constexpr std::string_view kRecordIndex = "index.jsonl";
+
 }  // namespace
+
+std::string recorded_frame_file(std::int64_t n) {
+  std::string digits = std::to_string(n);
+  if (digits.size() < kRecordDigits) {
+    digits.insert(0, kRecordDigits - digits.size(), '0');
+  }
+  return digits + ".jpg";
+}
+
+std::string recorded_frame_json(const RecordedFrame& frame) {
+  pa::JsonObject json;
+  json["n"] = frame.n;
+  json["file"] = recorded_frame_file(frame.n);
+  json["seq"] = frame.seq;
+  json["t_ms"] = std::round(frame.t_ms * 10) / 10;
+  json["unix_ms"] = static_cast<std::int64_t>(frame.unix_ms);
+  json["step"] = frame.step;
+  json["why"] = frame.why;
+  json["bytes"] = frame.bytes;
+  return to_line(pa::JsonValue(std::move(json)));
+}
 
 std::string encode_stream_frame(const cv::Mat& frame, int width) {
   std::vector<unsigned char> bytes;
@@ -104,20 +134,47 @@ bool FrameStream::add_viewer(Socket socket, int width) {
   return true;
 }
 
+void FrameStream::record_to(RecordOptions options) {
+  pa::Filesystem::create_directories(options.dir);
+  record_ = std::move(options);
+}
+
+void FrameStream::mark(std::string_view why) {
+  if (record_ && mark_ != kRecordFailure) {
+    mark_ = std::string(why);
+  }
+}
+
 bool FrameStream::wants_frame(std::int64_t seq, double now_ms) const {
-  return viewer_count_.load() > 0 && seq != offered_seq_ &&
-         now_ms - offered_ms_ >= 1000.0 / options_.fps - kOfferSlackMs;
+  const bool record_due =
+      record_ && (!mark_.empty() || now_ms - recorded_ms_ >= record_->every_ms);
+  return record_due ||
+         (viewer_count_.load() > 0 && seq != offered_seq_ &&
+          now_ms - offered_ms_ >= 1000.0 / options_.fps - kOfferSlackMs);
 }
 
 void FrameStream::offer(const cv::Mat& frame, std::int64_t seq,
                         double now_ms) {
   offered_ms_ = now_ms;
   offered_seq_ = seq;
+  RecordJob job;
+  if (record_ &&
+      (!mark_.empty() || now_ms - recorded_ms_ >= record_->every_ms)) {
+    job = RecordJob{true, now_ms, step_,
+                    mark_.empty() ? std::string(kRecordTick) : mark_};
+    recorded_ms_ = now_ms;
+    mark_.clear();
+  }
   {
     std::lock_guard<std::mutex> lock(mutex_);
     latest_ = frame;
     latest_seq_ = seq;
     fresh_ = true;
+    // A frame due for recording that the worker has not taken yet: the new
+    // one is recorded in its place.
+    if (job.due || !record_job_.due) {
+      record_job_ = std::move(job);
+    }
   }
   wake_.notify_one();
 }
@@ -143,18 +200,25 @@ void FrameStream::work() {
     joining_.clear();
     cv::Mat frame;
     std::int64_t seq = -1;
+    RecordJob job;
     if (fresh_) {
       frame = latest_;
       latest_ = cv::Mat();
       seq = latest_seq_;
       fresh_ = false;
+      job = std::move(record_job_);
+      record_job_ = RecordJob{};
     }
     lock.unlock();
     if (!frame.empty()) {
       encode(frame, seq);
+      if (job.due) {
+        record(frame, seq, job);
+      }
     }
     busy = send_to_viewers();
     report(clock_.now_ms());
+    report_record(clock_.now_ms());
     lock.lock();
   }
 }
@@ -163,6 +227,67 @@ void FrameStream::work() {
 // every width, so it is encoded once.
 int FrameStream::part_key(int width) const {
   return frame_cols_ <= kSmallFrameWidth ? 0 : std::min(width, frame_cols_);
+}
+
+// On the worker: the frame as a 640-wide JPEG in frames/, and its line in the
+// index. A frame that cannot be written is reported once and skipped.
+void FrameStream::record(const cv::Mat& frame, std::int64_t seq,
+                         const RecordJob& job) {
+  const double start = clock_.now_ms();
+  const std::string jpeg = encode_stream_frame(frame, record_->width);
+  RecordedFrame line{++recorded_n_,
+                     seq,
+                     job.t_ms,
+                     record_->clock_zero_unix_ms + job.t_ms,
+                     job.step,
+                     job.why,
+                     static_cast<std::int64_t>(jpeg.size())};
+  pa::FileIO image;
+  pa::FileIO index;
+  const bool written =
+      image.open(record_->dir + "/" + recorded_frame_file(line.n),
+                 pa::FileMode::WRITE | pa::FileMode::BINARY) &&
+      image.write(jpeg) == jpeg.size() &&
+      index.open(record_->dir + "/" + std::string(kRecordIndex),
+                 pa::FileMode::APPEND | pa::FileMode::BINARY) &&
+      index.write(recorded_frame_json(line) + "\n") > 0;
+  if (!written) {
+    if (!record_warned_) {
+      record_warned_ = true;
+      std::fprintf(stderr, "daemon: record: cannot write frame %lld in %s\n",
+                   static_cast<long long>(line.n), record_->dir.c_str());
+    }
+    recorded_n_--;
+    return;
+  }
+  recorded_++;
+  record_encode_ms_ += clock_.now_ms() - start;
+  recorded_bytes_ += line.bytes;
+}
+
+// Every minute while recording: what it costs and how fast it fills the disk.
+void FrameStream::report_record(double now_ms) {
+  constexpr double kRecordReportMs = 60000;
+  constexpr double kMsPerHour = 3600000;
+  constexpr double kBytesPerMb = 1e6;
+  if (!record_ || now_ms - record_report_ms_ < kRecordReportMs) {
+    return;
+  }
+  const double span = now_ms - record_report_ms_;
+  record_report_ms_ = now_ms;
+  if (recorded_ > 0) {
+    std::fprintf(
+        stderr,
+        "daemon: record: %lld frames in %.0f s, %.2f ms and %lld bytes each "
+        "(encode and write, on the stream's thread); %.0f MB/hour\n",
+        static_cast<long long>(recorded_), span / 1000.0,
+        record_encode_ms_ / static_cast<double>(recorded_),
+        static_cast<long long>(recorded_bytes_ / recorded_),
+        static_cast<double>(recorded_bytes_) / kBytesPerMb * kMsPerHour / span);
+  }
+  recorded_ = 0;
+  record_encode_ms_ = 0;
+  recorded_bytes_ = 0;
 }
 
 void FrameStream::encode(const cv::Mat& frame, std::int64_t seq) {

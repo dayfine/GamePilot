@@ -198,6 +198,10 @@ type notification = Jsonrpc.notification =
       (** From the daemon: someone pressed Stop on the watch page (the reason).
           The daemon has already cancelled the queued commands and released
           every button; the program ends at its next wait. *)
+  | Keepawake of { key : string; idle_ms : int }
+      (** In the wire log only (a [Daemon] line), never sent: the daemon pressed
+          [key] to keep the console awake after [idle_ms] with no input
+          (daemon/src/keep_awake.h). *)
 
 type message = Jsonrpc.message =
   | Request of request
@@ -266,6 +270,9 @@ module Daemon_status = Daemon_status
 type direction = Wire_log.direction =
   | In  (** from the client *)
   | Out  (** to the client *)
+  | Daemon
+      (** the daemon's own act, sent to no one: its keep-awake press. Replay
+          skips it. *)
 
 type log_line = Wire_log.log_line = {
   dir : direction;
