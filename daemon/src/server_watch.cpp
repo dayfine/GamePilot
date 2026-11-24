@@ -155,16 +155,16 @@ void Server::mark_failure() {
 // Stop on the page: release every button now, then tell the program, which
 // ends at its next wait. False when no program is connected.
 bool Server::stop_program() {
-  schedule_.clear();
-  live_schedule_.clear();
-  backend_.set_keys(0);
-  sent_mask_ = KeyMask{0};
+  clear_input();
+  const bool connected = !clients_.empty();
   std::fprintf(stderr, "daemon: stop pressed on the watch page%s\n",
-               client_.valid() ? "" : " (no program connected)");
-  if (!client_.valid()) {
+               connected ? "" : " (no program connected)");
+  if (!connected) {
     return false;
   }
-  send(stop_notification("stopped by user"));
+  for (auto& client : clients_) {
+    send(*client, stop_notification("stopped by user"));
+  }
   pa::JsonObject line;
   line["line"] = "[Watch] Stop pressed: buttons released, program told";
   watch_->add_log(to_line(pa::JsonValue(std::move(line))));
@@ -192,18 +192,18 @@ WatchFrame Server::watch_frame() {
 }
 
 void Server::show_probes(
-    std::int64_t seq,
+    std::int64_t seq, const std::vector<FrameProbe>& probes,
     const std::vector<std::pair<std::string, ProbeResult>>& results) {
   const double start = clock_.now_ms();
   if (start - probes_shown_ms_ < kWatchFrameMs) {
     return;
   }
   pa::JsonArray list;
-  for (std::size_t i = 0; i < probes_.size() && i < results.size(); i++) {
+  for (std::size_t i = 0; i < probes.size() && i < results.size(); i++) {
     pa::JsonObject probe;
-    probe["id"] = probes_[i].spec.id;
-    probe["kind"] = probes_[i].spec.kind;
-    probe["box"] = box_json(probes_[i].spec.box);
+    probe["id"] = probes[i].spec.id;
+    probe["kind"] = probes[i].spec.kind;
+    probe["box"] = box_json(probes[i].spec.box);
     probe["result"] = probe_result_json(results[i].second);
     list.push_back(std::move(probe));
   }
@@ -211,7 +211,7 @@ void Server::show_probes(
   shown["seq"] = seq;
   shown["probes"] = std::move(list);
   watch_->set_probes(to_line(pa::JsonValue(std::move(shown))));
-  probes_shown_ = !probes_.empty();
+  probes_shown_ = !probes.empty();
   probes_shown_ms_ = start;
   watch_cost_.ms += clock_.now_ms() - start;
 }
@@ -249,7 +249,7 @@ void Server::watch_tick() {
                       to_line(pa::JsonValue(status_result(status()))));
     status_shown_ms_ = now;
   }
-  if (probes_shown_ && (probes_.empty() || !client_.valid())) {
+  if (probes_shown_ && watched_client() == nullptr) {
     watch_->set_probes("{\"seq\":" + std::to_string(backend_.seq()) +
                        ",\"probes\":[]}");
     probes_shown_ = false;

@@ -86,7 +86,10 @@ std::string run_rows_json(const std::vector<RunRow>& rows);
 bool servable_run_file(std::string_view path);
 std::string_view run_file_type(std::string_view path);
 
-// The probe values over a run from its wire.jsonl, read a chunk at a time:
+// The probe values over a run from its wire.jsonl (or wire.jsonl.gz: a path
+// ending in .gz is read through gzip), read a chunk at a time, from the
+// program's connection only (the one that spoke first; other clients' frames,
+// such as a `gamepilot ctl read`, are left out):
 // one number per probe (color_stats: the mean of its channel means;
 // color_count: fraction; template_match: score), the last value in each
 // `bucket_ms` of daemon time, kept only when it changed. JSON:

@@ -1,0 +1,9 @@
+{
+  "jsonrpc": "2.0",
+  "id": 14,
+  "method": "lease.acquire",
+  "params": {
+    "owner": "ctl:bring-up",
+    "ttl_ms": 30000
+  }
+}

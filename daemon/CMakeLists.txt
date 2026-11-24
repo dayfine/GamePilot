@@ -60,7 +60,9 @@ add_library(gamepilot_core STATIC
   src/fake_switch.cpp
   src/frame_stream.cpp
   src/frame_ring.cpp
+  src/gzip_reader.cpp
   src/http.cpp
+  src/input_lease.cpp
   src/keep_awake.cpp
   src/live_schedule.cpp
   src/mgba_backend.cpp
@@ -106,7 +108,8 @@ target_link_libraries(press_latency PRIVATE gamepilot_core)
 gamepilot_warnings(press_latency)
 
 enable_testing()
-foreach(test board_session_test contracts_test keep_awake_test probes_test
+foreach(test board_session_test contracts_test input_lease_test keep_awake_test
+             probes_test
              run_history_test
              switch_backend_test
              switch_geometry_test watch_test watch_registry_test)

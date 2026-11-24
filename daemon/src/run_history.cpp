@@ -11,6 +11,7 @@
 
 #include "Common/Cpp/Filesystem/FileIO.h"
 #include "Common/Cpp/Filesystem/Filesystem.h"
+#include "gzip_reader.h"
 #include "rpc.h"
 
 namespace gamepilot {
@@ -148,12 +149,32 @@ void flush_bucket(ProbeSeries& series) {
   series.pending.reset();
 }
 
+// A wire log line's connection number (`conn`), none on a line without one
+// (a log from before many clients, or the daemon's own).
+std::optional<std::int64_t> line_conn(std::string_view text) {
+  constexpr std::string_view kConn = "\"conn\":";
+  const std::size_t at = text.find(kConn);
+  std::int64_t conn = 0;
+  if (at == std::string_view::npos ||
+      std::from_chars(text.data() + at + kConn.size(),
+                      text.data() + text.size(), conn)
+              .ec != std::errc()) {
+    return std::nullopt;
+  }
+  return conn;
+}
+
 class TimelineBuilder {
  public:
   explicit TimelineBuilder(double bucket_ms) : bucket_ms_(bucket_ms) {}
 
   void line(std::string_view text) {
     lines_++;
+    if (!program_seen_ &&
+        text.find("\"dir\":\"in\"") != std::string_view::npos) {
+      program_seen_ = true;
+      program_conn_ = line_conn(text);
+    }
     const std::size_t t_at = text.rfind("\"t_ms\":");
     if (t_at != std::string_view::npos) {
       double t = 0;
@@ -166,7 +187,8 @@ class TimelineBuilder {
     }
     // Only frames with results; most lines are frames with none.
     if (text.find("\"method\":\"frame\"") == std::string_view::npos ||
-        text.find("\"probes\":{}") != std::string_view::npos) {
+        text.find("\"probes\":{}") != std::string_view::npos ||
+        (program_seen_ && line_conn(text) != program_conn_)) {
       return;
     }
     const pa::JsonValue value = pa::parse_json(std::string(text));
@@ -230,6 +252,9 @@ class TimelineBuilder {
 
  private:
   double bucket_ms_;
+  // The program's connection: that of the log's first `in` line.
+  bool program_seen_ = false;
+  std::optional<std::int64_t> program_conn_;
   std::int64_t lines_ = 0;
   double t0_ = 1e300;
   double t1_ = -1e300;
@@ -518,11 +543,17 @@ std::string_view run_file_type(std::string_view path) {
 std::string probe_timeline_json(const std::string& wire_log, double bucket_ms) {
   TimelineBuilder builder(bucket_ms);
   pa::FileIO file;
-  if (file.open(wire_log, pa::FileMode::READ | pa::FileMode::BINARY)) {
+  GzipReader gzip;
+  const bool gzipped = wire_log.ends_with(".gz");
+  const bool opened =
+      gzipped ? gzip.open(wire_log)
+              : file.open(wire_log, pa::FileMode::READ | pa::FileMode::BINARY);
+  if (opened) {
     std::string buffer;
     std::string chunk(kChunkBytes, '\0');
     while (true) {
-      const std::size_t n = file.read(chunk.data(), chunk.size());
+      const std::size_t n = gzipped ? gzip.read(chunk.data(), chunk.size())
+                                    : file.read(chunk.data(), chunk.size());
       buffer.append(chunk.data(), n);
       std::size_t start = 0;
       while (true) {

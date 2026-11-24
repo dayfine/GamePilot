@@ -407,9 +407,14 @@ bool WatchHub::respond_run(Connection& connection, const HttpRequest& request,
   return true;
 }
 
-// The run's probe timeline, kept while its wire log keeps its size.
+// The run's probe timeline, kept while its wire log keeps its size: from
+// wire.jsonl, or wire.jsonl.gz once the disk cleanup packed it.
 std::string WatchHub::probe_timeline(const std::string& folder) {
-  const std::string wire = folder + "/wire.jsonl";
+  std::string wire = folder + "/wire.jsonl";
+  if (!pa::Filesystem::exists(wire) &&
+      pa::Filesystem::exists(wire + ".gz")) {
+    wire += ".gz";
+  }
   std::error_code error;
   const std::uintmax_t size = pa::Filesystem::file_size(wire, error);
   if (error) {
