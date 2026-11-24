@@ -125,5 +125,5 @@ GitHub issue each:
   [dex collection, FireRed exclusives first](roadmap/frlg-dex-exclusives.md).
 - [SwSh: story to the DLC](roadmap/swsh-dlc-access.md).
 - [BDSP legendary RNG](roadmap/bdsp-legendary-rng.md) and [BDSP Underground mining](roadmap/bdsp-underground-mining.md).
-- [SV isolated shiny hunts](roadmap/sv-isolated-shiny.md) and [SV Treasures of Ruin](roadmap/sv-ruinous-legendaries.md).
+- [SV isolated shiny hunts](roadmap/sv-isolated-shiny.md) and [SV Snacksworth legendaries](roadmap/sv-snacksworth-legendaries.md).
 - [PLZA story port](roadmap/plza-autostory-port.md).
