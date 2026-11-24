@@ -65,7 +65,9 @@ let path_cases =
       (fun () ->
         Event_states.path ~states:"/s" ~checkpoint:"mg-02" ~index:12
           ~event_id:"trade_chding")
-      "/s/mg-02.events/13-trade_chding.ss";
+      (Filename.concat
+         (Filename.concat "/s" "mg-02.events")
+         "13-trade_chding.ss");
     case "the first event"
       (fun () -> Event_states.file ~index:0 ~event_id:"to_route16_cut_tree")
       "01-to_route16_cut_tree.ss";

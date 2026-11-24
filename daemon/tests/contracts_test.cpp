@@ -198,8 +198,14 @@ void check_upload(const std::map<std::string, pa::JsonValue>& files) {
 }
 
 void check_encoders(const std::map<std::string, pa::JsonValue>& files) {
-  const BackendInfo mgba{"mgba", "BPRE", 59.7275,
-                         240,    160,    Viewport{Box{0, 0, 1, 1}, 240, 160}};
+  const BackendInfo mgba{.kind = "mgba",
+                         .game_code = "BPRE",
+                         .frame_rate = 59.7275,
+                         .width = 240,
+                         .height = 160,
+                         .viewport = Viewport{Box{0, 0, 1, 1}, 240, 160},
+                         .timing = Timing::kLockstep,
+                         .takes_input = true};
   CHECK(hello_result(mgba) == result_of(files.at("02-hello.response.json")));
   CHECK(load_state_result(1200, 1) ==
         result_of(files.at("04-load_state.response.json")));

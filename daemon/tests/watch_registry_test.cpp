@@ -49,7 +49,7 @@ void check_entry_json() {
   const auto viewed = parse_registry_entry(registry_entry_json(view));
   CHECK(viewed && viewed->name == "pacc-maxlair-A" &&
         viewed->source == "pacc-window");
-  for (const std::string& bad :
+  for (const char* bad :
        {"", "not json", "[1]", "{\"port\":47950}", "{\"pid\":1}",
         "{\"pid\":1,\"port\":0}", "{\"pid\":0,\"port\":47950}",
         "{\"pid\":1,\"port\":70000}"}) {
