@@ -98,17 +98,17 @@ let read_row candidates row =
   | Read { text; _ } -> Some text
   | No_match _ -> None
 
-type found = Found of int | Absent | Unread
+type found = Found of { index : int; row : int } | Absent | Unread
 
 (* Reads list rows from [k] on (the first six by their screen row, then each
-   one tap further on the bottom row) until the item ([Found] with its screen
-   row) or the list's end ([Absent]); [Unread] for a row that did not read. *)
+   one tap further on the bottom row) until the item ([Found] with its list
+   index and screen row) or the list's end ([Absent]); [Unread] for a row that did not read. *)
 let rec find_from candidates name k =
   let taps = taps_to_reveal k in
   M.taps Wire.Down (taps - taps_to_reveal (k - 1));
   let row = if taps > 0 then shown_rows - 1 else k in
   match read_row candidates row with
-  | Some text when text = name -> Found row
+  | Some text when text = name -> Found { index = k; row }
   | Some text when text = cancel -> Absent
   | Some _ when k < max_list_rows -> find_from candidates name (k + 1)
   | _ -> Unread
@@ -169,7 +169,7 @@ let count ~log slug =
   open_pocket_top pocket;
   let counted =
     match find_from candidates name 0 with
-    | Found row -> count_on_row row
+    | Found { row; _ } -> count_on_row row
     | Absent -> Some 0
     | Unread -> None
   in
@@ -181,13 +181,27 @@ let count ~log slug =
   M.settle_back ~label:"bag count" ~log;
   counted
 
-(* The item's own menu (USE or CHECK, GIVE, TOSS, CANCEL) hides the arrows. *)
-let item_menu m = Bag_screen.bag_open m && Bag_screen.pocket m = None
+let list_row slug =
+  let _, candidates, name = pocket_names slug in
+  match find_from candidates name 0 with
+  | Found { index; _ } -> Some index
+  | Absent | Unread -> None
+
+(* A row that reads no name (the list not drawn yet, after the mail editor) is
+   no count, not "not there" (mg-06 testing run 5 read 0 so). *)
+let count_in_pocket slug =
+  let _, candidates, name = pocket_names slug in
+  match find_from candidates name 0 with
+  | Found { row; _ } -> count_on_row row
+  | Absent -> Some 0
+  | Unread -> None
 
 let item_action item row =
   open_pocket_top (pocket_of_item item);
   select item;
   M.press Wire.A;
-  ignore (M.await_screen ~code:"no_item_menu" ("the menu of " ^ item) item_menu);
+  ignore
+    (M.await_screen ~code:"no_item_menu" ("the menu of " ^ item)
+       Bag_screen.item_menu);
   M.taps Wire.Down row;
   M.press Wire.A

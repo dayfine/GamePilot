@@ -36,6 +36,10 @@ val pocket_top : Frlg_readers.Bag_screen.pocket -> unit
 (** In the open bag (the Start menu's or a battle's BAG): to the pocket and its
     list's top row. Fails as [no_bag] or [no_pocket]. *)
 
+val to_top : unit -> unit
+(** In the open pocket: UP until the cursor reads on the list's top row (none
+    when it is there). Fails as [no_pocket]. *)
+
 val open_pocket_top : Frlg_readers.Bag_screen.pocket -> unit
 (** From the overworld: the bag open on the pocket (turned to by LEFT or RIGHT
     as its arrows read) with the cursor on the list's top row. Fails as [no_bag]
@@ -70,3 +74,13 @@ val count : log:(string -> unit) -> string -> int option
     New for the end checks: the fork's [check_postconditions()] reads counts
     with its own bag reader (Menus/PokemonFRLG_ItemListReader). Fails as
     {!open_pocket_top}, or as [unknown_item] for a slug no item is named. *)
+
+val list_row : string -> int option
+(** In the item's open pocket, from the list's top: its row in the list (from
+    0), the rows read down to it as {!select} reads them; [None] when the pocket
+    does not hold it or a row does not read. The list may be left scrolled. *)
+
+val count_in_pocket : string -> int option
+(** {!count} in the open pocket, from the list's top: [Some 0] when the list
+    reaches CANCEL first, [None] when a row or the count does not read. The
+    cursor stays where the reading left it. *)
