@@ -6,6 +6,7 @@
 #include <cstdio>
 #include <ctime>
 #include <initializer_list>
+#include <iterator>
 #include <utility>
 
 #include "Common/Cpp/Filesystem/FileIO.h"
@@ -137,8 +138,11 @@ struct ProbeSeries {
 };
 
 void flush_bucket(ProbeSeries& series) {
-  if (series.pending && (series.points.empty() ||
-                         series.points.back().second != series.pending->second)) {
+  const bool changed =
+      series.pending &&
+      (series.points.empty() ||
+       series.points.back().second != series.pending->second);
+  if (changed) {
     series.points.push_back(*series.pending);
   }
   series.pending.reset();
@@ -304,24 +308,31 @@ ResultRows results_by_run(std::string_view results_tsv) {
 }
 
 std::int64_t local_time_ms(std::string_view text) {
-  int year = 0;
-  int month = 0;
-  int day = 0;
-  int hour = 0;
-  int minute = 0;
-  int second = 0;
-  const std::string copy(text);
-  if (std::sscanf(copy.c_str(), "%4d-%2d-%2dT%2d:%2d:%2d", &year, &month, &day,
-                  &hour, &minute, &second) != 6) {
+  // "YYYY-MM-DDTHH:MM:SS": each field at its place.
+  constexpr std::size_t kLength = 19;
+  constexpr std::pair<std::size_t, std::size_t> kFields[] = {
+      {0, 4}, {5, 2}, {8, 2}, {11, 2}, {14, 2}, {17, 2}};
+  if (text.size() < kLength || text[4] != '-' || text[7] != '-' ||
+      text[10] != 'T' || text[13] != ':' || text[16] != ':') {
     return 0;
   }
+  int values[6] = {};
+  for (std::size_t i = 0; i < std::size(kFields); i++) {
+    const std::string_view field =
+        text.substr(kFields[i].first, kFields[i].second);
+    if (!all_digits(field) ||
+        std::from_chars(field.data(), field.data() + field.size(), values[i])
+                .ec != std::errc()) {
+      return 0;
+    }
+  }
   std::tm tm{};
-  tm.tm_year = year - 1900;
-  tm.tm_mon = month - 1;
-  tm.tm_mday = day;
-  tm.tm_hour = hour;
-  tm.tm_min = minute;
-  tm.tm_sec = second;
+  tm.tm_year = values[0] - 1900;
+  tm.tm_mon = values[1] - 1;
+  tm.tm_mday = values[2];
+  tm.tm_hour = values[3];
+  tm.tm_min = values[4];
+  tm.tm_sec = values[5];
   tm.tm_isdst = -1;
   const std::time_t time = std::mktime(&tm);
   return time == static_cast<std::time_t>(-1)

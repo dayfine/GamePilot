@@ -19,7 +19,8 @@ namespace fs = pa::Filesystem;
 
 namespace {
 
-const std::string kDir = std::string(GAMEPILOT_TEST_OUTPUT_DIR) + "/run_history";
+const std::string kDir =
+    std::string(GAMEPILOT_TEST_OUTPUT_DIR) + "/run_history";
 
 void write(const std::string& path, const std::string& text) {
   pa::FileIO file(path, pa::FileMode::WRITE | pa::FileMode::BINARY);
@@ -238,7 +239,8 @@ void check_journal() {
   fs::remove_all(folder);
   fs::create_directories(folder);
   {
-    RunJournal journal(folder, DaemonRecord{"switch", 1795500000000, true, 180});
+    RunJournal journal(folder,
+                       DaemonRecord{"switch", 1795500000000, true, 180});
     journal.plan("{\"events\":[]}");
     journal.plan("{\"events\":[1]}");
     journal.log_line(*pa::parse_json("{\"line\":\"[Story] a\"}").to_object(),
@@ -249,7 +251,8 @@ void check_journal() {
   CHECK(pa::file_to_string(folder + "/daemon.json") ==
         "{\"backend\":\"switch\",\"clock_zero_unix_ms\":1795500000000,"
         "\"keepawake_s\":180.0,\"record\":true}\n");
-  CHECK(pa::file_to_string(folder + "/watch_plan.json") == "{\"events\":[1]}\n");
+  CHECK(pa::file_to_string(folder + "/watch_plan.json") ==
+        "{\"events\":[1]}\n");
   CHECK(pa::file_to_string(folder + "/watch_log.jsonl") ==
         "{\"line\":\"[Story] a\",\"unix_ms\":1795500001000}\n"
         "{\"line\":\"b\",\"unix_ms\":1795500002000}\n");
