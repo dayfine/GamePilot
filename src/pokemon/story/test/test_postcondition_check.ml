@@ -12,6 +12,7 @@ let nothing : Plan.postconditions =
     coins = None;
     money = None;
     flags = [];
+    knows = [];
   }
 
 let read = C.nothing_read
@@ -108,6 +109,24 @@ let count_cases =
     case "nothing promised, nothing checked" nothing (party []) "";
   ]
 
+let mimien_recycle =
+  { nothing with knows = [ { species = "mr-mime"; moves = [ "recycle" ] } ] }
+
+let knows_cases =
+  [
+    case "MIMIEN knows Recycle (mg-04's goal)" mimien_recycle
+      {
+        read with
+        knows = [ ("mr-mime", [ "recycle"; "barrier"; "confusion"; "-" ]) ];
+      }
+      "knows mr-mime: passed: recycle, barrier, confusion, -";
+    case "MIMIEN without Recycle" mimien_recycle
+      { read with knows = [ ("mr-mime", [ "barrier"; "confusion" ]) ] }
+      "knows mr-mime: failed: expected recycle, read barrier, confusion";
+    case "MIMIEN's moves not read" mimien_recycle read
+      "knows mr-mime: not checked: the game can't read it";
+  ]
+
 let log name promised observed : Case_table.case =
   {
     name;
@@ -150,4 +169,5 @@ let log_cases : Case_table.case list =
   ]
 
 let () =
-  Case_table.run "postcondition_check" (party_cases @ count_cases @ log_cases)
+  Case_table.run "postcondition_check"
+    (party_cases @ count_cases @ knows_cases @ log_cases)

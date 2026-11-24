@@ -195,6 +195,13 @@ let money ~where obj : Plan.money =
   if min > max then F.fail "%smin %d is above max %d." where min max;
   { min; max }
 
+let knows ~where obj : Plan.knows =
+  only ~where [ "species"; "moves" ] obj;
+  {
+    species = F.string ~where "species" obj;
+    moves = F.strings (where ^ "moves") (F.field ~where "moves" obj);
+  }
+
 let party ~where obj : Plan.party option =
   let species key = Option.map (F.strings (where ^ key)) (F.find key obj) in
   match (species "party", species "party_includes") with
@@ -212,12 +219,20 @@ let no_postconditions : Plan.postconditions =
     coins = None;
     money = None;
     flags = [];
+    knows = [];
   }
 
 let postconditions ~where obj : Plan.postconditions =
   only ~where
     [
-      "position"; "party"; "party_includes"; "items"; "coins"; "money"; "flags";
+      "position";
+      "party";
+      "party_includes";
+      "items";
+      "coins";
+      "money";
+      "flags";
+      "knows";
     ]
     obj;
   let nested key read =
@@ -235,6 +250,7 @@ let postconditions ~where obj : Plan.postconditions =
       Option.fold ~none:[]
         ~some:(F.strings (where ^ "flags"))
         (F.find "flags" obj);
+    knows = F.records ~where "knows" obj knows;
   }
 
 let metadata_postconditions ~where = function

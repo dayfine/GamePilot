@@ -6,9 +6,16 @@
 #   sh tools/run_checkpoints_on_mgba.sh src/games/frlg/programs/mail_glitch/plans \
 #       --from mg-01 --to mg-03 --mode verification
 #
-# Refuses (exit 3) when the instance or its bridge port is already in use: another run owns it.
+# One run at a time: the runner takes the lock $GAMEPILOT_RUNS/.lock (tools/run_lock.sh) and waits,
+# saying who holds it, while another runner does; a lock whose holder died is taken over. Once it
+# holds the lock it also waits while the instance or its bridge port is still in use (a runner
+# without the lock). Exit 4 when --lock-timeout SECONDS ran out first (default: wait for ever).
 # The daemons pick free ports (one per run), so runs on other backends do not collide with this
-# one. GAMEPILOT_WATCH_LISTEN=0.0.0.0 in the env file opens the watch pages to the LAN.
+# one.
+#
+# The run's watch page is served (`--watch` is passed unless an argument already sets the page or
+# `--no-watch` turns it off). GAMEPILOT_WATCH_LISTEN=0.0.0.0 in the env file opens the watch
+# pages to the LAN.
 #
 # Settings come from the environment. A machine can keep them in an env file (sh syntax, one
 # `export NAME=value` per line), read first if it exists; variables already set win over it.
@@ -49,15 +56,37 @@ if [ -z "$rom" ]; then
     fi
 fi
 
-if pgrep -f "$instance" >/dev/null || lsof -nP -iTCP:$bridge_port -sTCP:LISTEN >/dev/null; then
-    echo "the GamePilot mGBA instance or port $bridge_port is in use; not sharing it" >&2
-    exit 3
-fi
 [ -x "$bin" ] || { echo "no $bin: run dune build in src/" >&2; exit 2; }
-echo "mGBA dir: $dir"
-echo "states:   $GAMEPILOT_STATES"
-echo "runs:     $GAMEPILOT_RUNS"
 
+# The runner's own flags out, --watch in unless the page is set or turned off.
+lock_timeout=0
+watch=--watch
+n=$#
+while [ $n -gt 0 ]; do
+    a=$1
+    shift
+    n=$((n - 1))
+    case $a in
+    --lock-timeout)
+        lock_timeout=$1
+        shift
+        n=$((n - 1))
+        continue
+        ;;
+    --no-watch)
+        watch=""
+        continue
+        ;;
+    --watch | --watch-port | --listen) watch="" ;;
+    esac
+    set -- "$@" "$a"
+done
+if [ -n "$watch" ]; then
+    set -- "$@" "$watch"
+fi
+
+. "$root/tools/run_lock.sh"
+lock=$GAMEPILOT_RUNS/.lock
 close_mgba() {
     pids=$(pgrep -f "$instance" || true)
     if [ -n "$pids" ]; then
@@ -65,9 +94,35 @@ close_mgba() {
         echo "closed mGBA ($instance)"
     fi
 }
-trap close_mgba EXIT
+# Closes only an instance this runner opened.
+opened=""
+on_exit() {
+    if [ -n "$opened" ]; then
+        close_mgba
+    fi
+    run_lock_release "$lock"
+}
+trap on_exit EXIT
 trap 'exit 130' INT TERM
+run_lock_acquire "$lock" "$lock_timeout" "$0 $*" || exit $?
 
+waited=0
+while pgrep -f "$instance" >/dev/null || lsof -nP -iTCP:$bridge_port -sTCP:LISTEN >/dev/null; do
+    if [ $waited -eq 0 ]; then
+        echo "[Lock] waiting: the GamePilot mGBA instance or port $bridge_port is in use"
+    fi
+    if [ "$lock_timeout" -gt 0 ] && [ $waited -ge "$lock_timeout" ]; then
+        echo "[Lock] gave up after ${lock_timeout}s: the instance is still in use" >&2
+        exit 4
+    fi
+    sleep 2
+    waited=$((waited + 2))
+done
+echo "mGBA dir: $dir"
+echo "states:   $GAMEPILOT_STATES"
+echo "runs:     $GAMEPILOT_RUNS"
+
+opened=1
 open -n "$app" --args -C audioSync=1 -C videoSync=0 -C fpsTarget=120 -C "savegamePath=$dir" \
     --script "$dir/run_bridge.lua" "$rom"
 tries=0

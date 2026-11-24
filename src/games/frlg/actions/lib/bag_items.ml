@@ -196,12 +196,23 @@ let count_in_pocket slug =
   | Absent -> Some 0
   | Unread -> None
 
+(* After the item's menu shows, before its presses: an A sooner is dropped
+   (mGBA, mg-04 testing run 7: USE 165 ms after it showed). Coin_case's wait,
+   measured the same way. *)
+let item_menu_input_ms = 500
+
+let choose_in_item_menu item row =
+  ignore
+    (M.await_screen ~code:"no_item_menu" ("the menu of " ^ item)
+       Bag_screen.item_menu);
+  ignore
+    (Effects.submit [ Wire.Wait { wait_ms = item_menu_input_ms } ]
+      : Wire.batch_done);
+  M.taps Wire.Down row;
+  M.press Wire.A
+
 let item_action item row =
   open_pocket_top (pocket_of_item item);
   select item;
   M.press Wire.A;
-  ignore
-    (M.await_screen ~code:"no_item_menu" ("the menu of " ^ item)
-       Bag_screen.item_menu);
-  M.taps Wire.Down row;
-  M.press Wire.A
+  choose_in_item_menu item row

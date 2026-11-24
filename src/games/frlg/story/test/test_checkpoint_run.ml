@@ -86,6 +86,13 @@ let walks file () =
 
 let case name input expectation = { Case_table.name; input; expectation }
 
+(* What a run checks and skips with --grind-battles [cap]. *)
+let capped cap file () =
+  let p = plan file in
+  let kept, skipped = Checkpoint_run.capped_postconditions ~grind_cap:cap p in
+  Printf.sprintf "knows checked: %d; skipped: %s" (List.length kept.knows)
+    (match skipped with [] -> "none" | l -> String.concat "; " l)
+
 let () =
   Case_table.run "checkpoint_run"
     [
@@ -116,6 +123,18 @@ let () =
         "lavender_mart_clerk 6; out_of_lavender_mart 1; return_to_tower_door \
          4; to_route8_cut_tree 9; to_route8_grass 1; face_route8_leppa_berry \
          2; return_to_route8_grass 3; to_route16_cut_tree 6; to_lea_and_jed 3";
+      case "mg-04"
+        (summary "mg-04.plan.json")
+        "frlg; from LavenderTown_PokemonCenter_1F (7, 4) north; missing: none";
+      case "mg-04's walks plan on the maps" (walks "mg-04.plan.json")
+        "to_tower_5f_patch 34; out_of_victory_road 2; to_mg05_start 4";
+      case "mg-04 uncapped: every postcondition checked"
+        (capped None "mg-04.plan.json")
+        "knows checked: 2; skipped: none";
+      case "mg-04 capped at 8: the grind's moves skipped, saying so"
+        (capped (Some 8) "mg-04.plan.json")
+        "knows checked: 0; skipped: knows farfetchd knock-off (grind capped at \
+         8); knows mr-mime recycle (grind capped at 8)";
       case "mg-05"
         (summary "mg-05.plan.json")
         "frlg; from Route16 (30, 7) north; missing: none";

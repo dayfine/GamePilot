@@ -45,6 +45,11 @@ val open_pocket_top : Frlg_readers.Bag_screen.pocket -> unit
     as its arrows read) with the cursor on the list's top row. Fails as [no_bag]
     or [no_pocket]. *)
 
+val choose_in_item_menu : string -> int -> unit
+(** Once the item's menu shows ({!Frlg_readers.Bag_screen.item_menu}) and 500 ms
+    later (it drops an A sooner), the action on this row (from 0) chosen with A.
+    Fails as [no_item_menu]. *)
+
 val item_action : string -> int -> unit
 (** From the overworld: the item's pocket opened ({!open_pocket_top}), the item
     selected ({!select}), A, and once its menu shows (USE or CHECK or OPEN,

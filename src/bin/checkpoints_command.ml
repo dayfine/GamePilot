@@ -1,7 +1,8 @@
 (* gamepilot checkpoints PLAN_DIR --from ID --to ID --mode testing|verification
      [--runs N] [--states DIR] [--runs-dir DIR] [--daemon PATH]
      [--mgba-port N] [--port N] [--party SPECIES,...] [--center TOWN] [--walk]
-     [--end-check-only] [--watch] [--watch-port N] [--listen ADDR]
+     [--end-check-only] [--grind-battles N] [--watch] [--watch-port N]
+     [--listen ADDR]
 
    The checkpoint dev loop. A program's checkpoints are its plan files
    (<ID>.plan.json in PLAN_DIR, in name order); each runs from its start state
@@ -13,6 +14,10 @@
    run checks its start state against the postconditions and runs no event. The loop goes to the
    next checkpoint only after this one passed; in verification mode the last
    passing run's end becomes the next checkpoint's start state.
+
+   --grind-battles N (testing) ends each grind, passing, after N battles: the
+   run's summary says "grind capped at N" and which postconditions it skipped,
+   and its end is never saved as the next checkpoint's start.
 
    --watch serves the run's watch page (the daemon's, docs/design/Watch-Page.md)
    on a free port (--watch-port fixes it), the same for every run of the
@@ -56,7 +61,8 @@ let usage =
   \      [--runs N] [--states DIR] [--runs-dir DIR] [--daemon PATH]\n\
   \      [--mgba-port N] [--port N] [--party SPECIES,...] [--center TOWN] \
    [--walk]\n\
-  \      [--end-check-only] [--watch] [--watch-port N] [--listen ADDR]\n"
+  \      [--end-check-only] [--grind-battles N] [--watch] [--watch-port N]\n\
+  \      [--listen ADDR]\n"
 
 let home = Option.value (Sys.getenv_opt "HOME") ~default:"."
 
@@ -114,6 +120,11 @@ let valued f name v =
       Some
         (int_flag name v (fun port -> common_flag f (fun c -> { c with port })))
   | "--party" -> Some (Ok (common_flag f (fun c -> { c with party = v })))
+  | "--grind-battles" -> (
+      match int_of_string_opt v with
+      | Some n when n > 0 ->
+          Some (Ok (common_flag f (fun c -> { c with grind_cap = Some n })))
+      | _ -> Some (Error ("bad --grind-battles " ^ v)))
   | "--center" ->
       Some (Ok (common_flag f (fun c -> { c with center = Some v })))
   | _ -> None

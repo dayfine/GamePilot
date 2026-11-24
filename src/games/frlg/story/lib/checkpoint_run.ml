@@ -5,6 +5,7 @@ type options = {
   state : string option;
   party : A.Party_roster.t;
   center : string option;
+  grind_cap : int option;
   gait : Frlg_overworld.Route_legs.gait;
   end_check_only : bool;
   log : string -> unit;
@@ -58,6 +59,7 @@ let config options world : A.Story_game.config =
     flee = Flee_wild.flee ~log:options.log;
     flags = (fun _ -> false);
     party = options.party;
+    grind_cap = options.grind_cap;
     center = options.center;
     reload = reload options.state;
     log = options.log;
@@ -69,15 +71,33 @@ let to_run options ~end_at (plan : Story.Plan.t) =
   if options.end_check_only then ({ plan.checkpoint with events = [] }, None)
   else (plan.checkpoint, end_at)
 
+let capped_postconditions ~grind_cap (plan : Story.Plan.t) =
+  let p = plan.postconditions in
+  match grind_cap with
+  | None -> (p, [])
+  | Some cap ->
+      let skipped ({ species; moves } : Story.Plan.knows) =
+        Printf.sprintf "knows %s %s (grind capped at %d)" species
+          (String.concat ", " moves) cap
+      in
+      ({ p with knows = [] }, List.map skipped p.knows)
+
 let run ?end_at ?on_event options world (plan : Story.Plan.t) =
   Option.iter (fun s -> ignore (Effects.load_state s)) options.state;
   let game =
     A.Story_game.create (config options world) ~start:(start_of plan.checkpoint)
   in
   let checkpoint, end_at = to_run options ~end_at plan in
-  let end_state =
-    (plan.postconditions, Postcondition_reads.observe ~log:options.log)
+  let checked, skipped =
+    capped_postconditions ~grind_cap:options.grind_cap plan
   in
+  List.iter
+    (fun s ->
+      options.log
+        (Printf.sprintf "[Postcondition] %s %s: skipped"
+           plan.checkpoint.checkpoint_id s))
+    skipped;
+  let end_state = (checked, Postcondition_reads.observe ~log:options.log) in
   Effects.with_probes Screen_facts.probes (fun () ->
       Story.Runner.run ?end_at ~end_state ?on_event (A.Story_game.game game)
         checkpoint)

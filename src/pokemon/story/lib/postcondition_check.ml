@@ -4,10 +4,18 @@ type observed = {
   coins : int option;
   money : int option;
   flags : (string * bool) list;
+  knows : (string * string list) list;
 }
 
 let nothing_read =
-  { party = None; items = []; coins = None; money = None; flags = [] }
+  {
+    party = None;
+    items = [];
+    coins = None;
+    money = None;
+    flags = [];
+    knows = [];
+  }
 
 type verdict = Passed | Failed | Not_checked
 type result = { what : string; verdict : verdict; detail : string }
@@ -115,6 +123,15 @@ let check_flag observed flag =
         ~read:(if set then "set" else "clear")
         set
 
+let check_knows observed ({ species; moves } : Plan.knows) =
+  let what = "knows " ^ species in
+  match List.assoc_opt species observed.knows with
+  | None -> not_read what
+  | Some read ->
+      expected_read what ~expected:(String.concat ", " moves)
+        ~read:(String.concat ", " read)
+        (List.for_all (fun m -> List.mem m read) moves)
+
 let check (expected : Plan.postconditions) observed =
   List.concat
     [
@@ -123,6 +140,7 @@ let check (expected : Plan.postconditions) observed =
       check_coins expected.coins observed;
       check_money expected.money observed;
       List.map (check_flag observed) expected.flags;
+      List.map (check_knows observed) expected.knows;
     ]
 
 let unmet = List.filter (fun r -> r.verdict <> Passed)

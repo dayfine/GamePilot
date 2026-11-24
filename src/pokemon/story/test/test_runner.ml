@@ -193,6 +193,7 @@ let promised : Plan.postconditions =
     coins = Some 20;
     money = None;
     flags = [];
+    knows = [];
   }
 
 let run_with_end_state ?end_at ?(promised = promised) observed =

@@ -51,6 +51,7 @@ let run ?(world = Frlg_world.pallet) ?(react = react) ?(checkpoint = checkpoint)
       flee = ignore;
       flags = (fun _ -> false);
       party = Party_roster.of_list party;
+      grind_cap = None;
       center = None;
       reload = (fun () -> Ok ());
       log = ignore;
@@ -103,6 +104,23 @@ let done_trade : Story.Plan.event =
              map = "PalletTown_PlayersHouse_1F";
              tiles = [ { x = 3; y = 5 } ];
              facing = Some North;
+           });
+  }
+
+(* The trade declared on the tile the player stands on, with no facing: the
+   facing reckoned before it stays (mg-04 testing run 9: Fly's landing facing
+   south was lost to its declared tile, and the walk after it led with a turn
+   tap). *)
+let done_trade_no_facing : Story.Plan.event =
+  {
+    done_trade with
+    declared_after =
+      Some
+        (Grid
+           {
+             map = "PalletTown_PlayersHouse_1F";
+             tiles = [ { x = 4; y = 6 } ];
+             facing = None;
            });
   }
 
@@ -165,6 +183,14 @@ let () =
            ~checkpoint:{ checkpoint with events = [ done_trade ] }
            ~party:[ "farfetchd" ] (Some house))
         "ok; at PalletTown_PlayersHouse_1F (3, 5) north; ";
+      case
+        "a declared tile with no facing, where the player stands, keeps the \
+         facing"
+        (run
+           ~checkpoint:{ checkpoint with events = [ done_trade_no_facing ] }
+           ~party:[ "farfetchd" ]
+           (Some { house with faces = Some South }))
+        "ok; at PalletTown_PlayersHouse_1F (4, 6) south; ";
       case
         "after a Cut the player stands on the tree's tile, and the walk on \
          goes through it"

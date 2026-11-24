@@ -56,3 +56,4 @@ repo src/games/frlg/readers/test/images/mgba/mail-glitch-route16/bag.png|mail-gl
 repo src/games/frlg/readers/test/images/mgba/mail-glitch-use/item-menu-mail.png|mail-glitch-use/item-menu-mail__itemmenu.png
 repo src/games/frlg/readers/test/images/mgba/mail-editor/editor-abra.png|mail-editor/editor-abra__maileditor.png
 repo src/games/frlg/readers/test/images/mgba/mail-editor/editor-blank.png|mail-editor/editor-blank__maileditor.png
+repo src/games/frlg/readers/test/images/mgba/mg04-escape-rope/item-menu-escape-rope.png|mg04-escape-rope/item-menu-escape-rope__itemmenu.png

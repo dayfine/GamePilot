@@ -1,11 +1,14 @@
 (* gamepilot checkpoint PLAN.json [--state FILE] [--port N] [--log FILE]
      [--party SPECIES,...] [--center TOWN] [--walk] [--end-check-only]
+     [--grind-battles N]
    gamepilot replay checkpoint WIRELOG PLAN.json [the same flags]
 
    Runs one checkpoint of a FireRed plan through the story runner. The state
    is loaded first and again on a reload; the party is the one at the
    checkpoint's start (FireRed reads no species yet). With --end-check-only
-   no event runs: the state is checked against the plan's postconditions. *)
+   no event runs: the state is checked against the plan's postconditions.
+   --grind-battles N (testing) ends each grind, passing, after N battles and
+   skips the plan's moves postconditions (Frlg_story.Checkpoint_run). *)
 
 type flags = {
   state : string option;
@@ -15,11 +18,13 @@ type flags = {
   center : string option;
   walk : bool;
   end_check_only : bool;
+  grind_cap : int option;
 }
 
 let usage =
   "  gamepilot checkpoint PLAN.json [--state FILE] [--port N] [--log FILE]\n\
   \      [--party SPECIES,...] [--center TOWN] [--walk] [--end-check-only]\n\
+  \      [--grind-battles N]\n\
   \  gamepilot replay checkpoint WIRELOG PLAN.json [same flags]\n"
 
 let defaults =
@@ -31,6 +36,7 @@ let defaults =
     center = None;
     walk = false;
     end_check_only = false;
+    grind_cap = None;
   }
 
 let rec parse flags = function
@@ -46,6 +52,10 @@ let rec parse flags = function
   | "--walk" :: rest -> parse { flags with walk = true } rest
   | "--end-check-only" :: rest ->
       parse { flags with end_check_only = true } rest
+  | "--grind-battles" :: n :: rest -> (
+      match int_of_string_opt n with
+      | Some cap when cap > 0 -> parse { flags with grind_cap = Some cap } rest
+      | _ -> Error ("bad --grind-battles " ^ n))
   | a :: _ -> Error ("unknown argument " ^ a)
 
 (* Every story line to stdout and, with --log, to the file. *)
@@ -64,6 +74,7 @@ let options flags : Frlg_story.Checkpoint_run.options =
     state = flags.state;
     party = Frlg_actions.Party_roster.of_string flags.party;
     center = flags.center;
+    grind_cap = flags.grind_cap;
     gait = (if flags.walk then Walking else Running);
     end_check_only = flags.end_check_only;
     log = logger flags.log_file;
