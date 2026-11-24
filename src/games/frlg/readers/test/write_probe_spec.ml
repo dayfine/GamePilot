@@ -1,7 +1,7 @@
 (* Prints the [subscribe] params of a set of FRLG reader probes, for the
    daemon's offline [probe_images] tool: the screen facts' by default, the
    menu readers' with the argument [menus], the battle prompts' with
-   [battle]. Boxes are relative to the game
+   [battle], the PC's with [pc]. Boxes are relative to the game
    picture, so one spec serves every backend; [probe_images --viewport] says
    where the picture sits in the images. regen_fixtures.sh makes the fixtures
    with it. *)
@@ -22,6 +22,7 @@ let () =
     match Sys.argv with
     | [| _; "menus" |] -> menu_probes
     | [| _; "battle" |] -> battle_probes
+    | [| _; "pc" |] -> Pc_screen.probes
     | _ ->
         Screen_facts.probes @ Scene_signature.probes @ Dialog.yes_no_probes
         @ Load_menu.probes

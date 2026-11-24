@@ -36,3 +36,14 @@
   gamepilot.effects
   gamepilot.case_table
   gamepilot.frlg_readers))
+
+(test
+ (name test_pc_readers)
+ (modules test_pc_readers)
+ (deps
+  (glob_files fixtures/*.jsonl))
+ (libraries
+  gamepilot.wire
+  gamepilot.effects
+  gamepilot.case_table
+  gamepilot.frlg_readers))
