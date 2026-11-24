@@ -37,6 +37,7 @@ let party_promised : Story.Plan.postconditions =
     coins = None;
     money = None;
     flags = [];
+    knows = [];
   }
 
 let observed_text (o : Story.Postcondition_check.observed) =

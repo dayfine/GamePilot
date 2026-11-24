@@ -9,6 +9,10 @@ type options = {
           reload. *)
   party : Frlg_actions.Party_roster.t;  (** The party at the start. *)
   center : string option;  (** The town whose Center heals between rounds. *)
+  grind_cap : int option;
+      (** Testing: each grind ends, passing, after this many battles, and the
+          [moves] postconditions (the grind's goal) are skipped, logged as such.
+          A capped run's end is not the next checkpoint's start. *)
   gait : Frlg_overworld.Route_legs.gait;
   end_check_only : bool;
       (** Run no events: the start state's postconditions checked alone (the end
@@ -31,6 +35,14 @@ val check_plan : Story.Plan.t -> (unit, string) result
 val start_of : Story.Plan.checkpoint -> Story.Pose.observed option
 (** The checkpoint's [start] when it names one tile. *)
 
+val capped_postconditions :
+  grind_cap:int option ->
+  Story.Plan.t ->
+  Story.Plan.postconditions * string list
+(** The postconditions a run checks, and the ones it skips, one line each
+    (["knows mr-mime recycle (grind capped at 8)"]): with a grind cap, the
+    [knows] ones, a grind's goal a capped grind does not reach; none without. *)
+
 val run :
   ?end_at:Story.Pose.grid ->
   ?on_event:(int -> Story.Event_progress.t -> unit) ->
@@ -44,5 +56,6 @@ val run :
     [end_at], the player must end there ({!Story.Runner.run}); FireRed reads no
     position yet, so it is where the walks tracked the player. Then the plan's
     postconditions ({!Story.Plan.postconditions}), read by
-    {!Postcondition_reads}, must all pass. [on_event] hears each event's
+    {!Postcondition_reads}, must all pass, but for those
+    {!capped_postconditions} skips (logged). [on_event] hears each event's
     progress ({!Story.Runner.run}). *)

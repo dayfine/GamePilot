@@ -6,6 +6,7 @@ type config = {
   flee : unit -> unit;
   flags : string -> bool;
   party : Party_roster.t;
+  grind_cap : int option;
   center : string option;
   reload : unit -> (unit, Story.Failure.cause) result;
   log : string -> unit;
@@ -117,16 +118,6 @@ let heal t () =
       Result.bind (walk_to t front) (fun () ->
           Menu_input.run (Heal_and_save.heal_at_nurse ~log:t.config.log))
 
-let heal_at t : Grind_plan.heal -> unit =
-  let log = t.config.log in
-  function
-  | Nurse front ->
-      Menu_input.raise_error (walk_to t front);
-      Heal_and_save.heal_at_nurse ~log ()
-  | Pad pad ->
-      Menu_input.raise_error (walk_to t pad);
-      Menu_input.settle_back ~label:"heal pad" ~log
-
 let faced t =
   Option.value
     (Option.bind t.at (fun at -> at.faces))
@@ -150,28 +141,17 @@ let battle_on t wrap script =
 
 let battle t script = battle_on t Fun.id script
 
-let grind_rig t : Grind.rig =
-  let log = t.config.log in
-  {
-    slot_of = (fun species -> Party_roster.slot_of !(t.party) species);
-    known_moves = (fun ~slot -> Summary_moves.read_known ~log ~slot);
-    swap =
-      (fun a b ->
-        Party_actions.swap ~log a b;
-        t.party := Party_roster.swap !(t.party) a b);
-    go_to = (fun pose -> Menu_input.raise_error (walk_to t pose));
-    heal = heal_at t;
-    find_battle = find_battle t;
-    battle = battle t;
-    log;
-  }
+let grind_rig t =
+  Grind_rig.make ~log:t.config.log ~party:t.party ~walk_to:(walk_to t)
+    ~find_battle:(find_battle t) ~battle:(battle t)
 
 let grind t (_ : Story.Plan.event) args =
+  let cap = t.config.grind_cap in
   match Grind_plan.load_strategies () with
   | Error e -> Error (Story.Failure.cause ~repeats:true "no_grind_strategies" e)
   | Ok strategies ->
       Result.bind (Grind_plan.decode strategies args) (fun plan ->
-          Menu_input.run (fun () -> Grind.run (grind_rig t) plan))
+          Menu_input.run (fun () -> Grind.run ?cap (grind_rig t) plan))
 
 (* The catches that went to the party join it; the player stands where the
    pacing left them: the patch's tile, or one tile [pace] from it. *)

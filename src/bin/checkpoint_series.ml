@@ -70,13 +70,25 @@ let keep_end (setup : Run.setup) id ~next runs =
         print_endline ("[Checkpoints] saved the end as " ^ dst))
       else print_endline ("[Checkpoints] no end.ss in " ^ record.dir)
 
+(* A capped grind's end is not the next checkpoint's start: never saved. *)
+let keep_uncapped_end (setup : Run.setup) id ~next runs =
+  match setup.common.grind_cap with
+  | Some cap ->
+      Printf.printf
+        "[Checkpoints] grind capped at %d: the end is not saved as the next \
+         start state\n\
+         %!"
+        cap
+  | None -> keep_end setup id ~next runs
+
 (* Whether [cp] passed, after running it until its policy decided. *)
 let decide (setup : Run.setup) (cp : Run.checkpoint) ~next =
   match runs_of setup cp [] with
   | Checkpoint_trials.Checkpoint_passed { passes; runs }, done_runs ->
-      Printf.printf "[Checkpoints] %s: passed (%d of %d runs)\n%!" cp.id passes
-        runs;
-      if setup.policy.keeps_end then keep_end setup cp.id ~next done_runs;
+      Printf.printf "[Checkpoints] %s: passed (%d of %d runs)%s\n%!" cp.id
+        passes runs (Run.capped_note setup cp);
+      if setup.policy.keeps_end then
+        keep_uncapped_end setup cp.id ~next done_runs;
       true
   | Checkpoint_trials.Stopped why, _ ->
       Printf.printf "[Checkpoints] %s: stopped: %s\n%!" cp.id why;

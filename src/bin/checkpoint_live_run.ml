@@ -120,13 +120,33 @@ let with_daemon setup record body =
         ~finally:(fun () -> Daemon_process.stop daemon)
         (fun () -> body daemon)
 
-let summary cp n = function
-  | Passed -> Printf.sprintf "PASS %s run %d" cp.id n
-  | Failed { at; reason; _ } ->
-      Printf.sprintf "FAIL %s run %d at %s: %s" cp.id n at reason
+(* With --grind-battles: " (grind capped at N; skipped: ...)", so a capped
+   pass is never taken for a full one. *)
+let capped_note setup cp =
+  match setup.common.grind_cap with
+  | None -> ""
+  | Some cap -> (
+      match
+        snd
+          (Frlg_story.Checkpoint_run.capped_postconditions ~grind_cap:(Some cap)
+             cp.plan)
+      with
+      | [] -> Printf.sprintf " (grind capped at %d)" cap
+      | skipped ->
+          Printf.sprintf " (grind capped at %d; skipped: %s)" cap
+            (String.concat "; " skipped))
+
+let summary setup cp n outcome =
+  let line =
+    match outcome with
+    | Passed -> Printf.sprintf "PASS %s run %d" cp.id n
+    | Failed { at; reason; _ } ->
+        Printf.sprintf "FAIL %s run %d at %s: %s" cp.id n at reason
+  in
+  line ^ capped_note setup cp
 
 let record_outcome setup cp record n outcome =
-  let line = summary cp n outcome in
+  let line = summary setup cp n outcome in
   print_endline ("[Run] " ^ record.Run_record.dir ^ ": " ^ line);
   Run_record.write record "summary.txt" (line ^ "\n");
   let result, at, reason =

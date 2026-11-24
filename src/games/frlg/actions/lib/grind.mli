@@ -21,6 +21,10 @@ type rig = {
   log : string -> unit;
 }
 
-val run : rig -> Grind_plan.t -> unit
+val run : ?cap:int -> rig -> Grind_plan.t -> unit
 (** Fails as [not_in_party], [grind_battle_failed] (with the battle's reason) or
-    [grind_out_of_battles] after [max_battles]. *)
+    [grind_out_of_battles] after [max_battles]. With [cap] (testing: the
+    runner's [--grind-battles]) it ends, passing, after that many battles even
+    though the move was not learned, and logs
+    ["Grind: capped at N battles for testing"]; a [max_battles] below the cap
+    still fails. The C++ has no cap: its tests ran capped copies of the plan. *)

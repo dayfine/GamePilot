@@ -41,31 +41,40 @@ let fight rig (plan : P.t) script n =
         (Printf.sprintf "Grind: battle %d %s." n (S.describe (S.Over summary)));
       List.mem plan.goal.learn_move summary.learned
 
-let rec battles rig plan script ~n ~since_heal =
+let rec battles ?cap rig plan script ~n ~since_heal =
+  let capped = match cap with Some c -> n > c | None -> false in
   if n > plan.P.max_battles then
     M.fail "grind_out_of_battles"
       (Printf.sprintf "%s did not learn %s in %d battles" plan.goal.species
          plan.goal.learn_move plan.max_battles)
+  else if capped then
+    rig.log
+      (Printf.sprintf
+         "Grind: capped at %d battles for testing: %s has not learned %s"
+         (n - 1) plan.goal.species plan.goal.learn_move)
   else if P.heal_due plan.strategy ~since_heal then (
     heal_and_return rig plan;
-    battles rig plan script ~n ~since_heal:0)
+    battles ?cap rig plan script ~n ~since_heal:0)
   else if fight rig plan script n then
     rig.log
       (Printf.sprintf "Grind: %s learned %s in battle %d (Lv %d expected)."
          plan.goal.species plan.goal.learn_move n plan.goal.target_level)
-  else battles rig plan script ~n:(n + 1) ~since_heal:(since_heal + 1)
+  else battles ?cap rig plan script ~n:(n + 1) ~since_heal:(since_heal + 1)
 
-let grind rig (plan : P.t) =
+let grind ?cap rig (plan : P.t) =
   rig.log ("Grind: " ^ P.describe plan ^ ".");
   put rig plan.goal.species ~at:grinder_slot;
   put rig plan.sweeper ~at:sweeper_slot;
   rig.go_to plan.strategy.spot;
-  battles rig plan (P.battle_script plan) ~n:1 ~since_heal:0
+  Option.iter
+    (fun c -> rig.log (Printf.sprintf "Grind: at most %d battles (testing)." c))
+    cap;
+  battles ?cap rig plan (P.battle_script plan) ~n:1 ~since_heal:0
 
-let run rig (plan : P.t) =
+let run ?cap rig (plan : P.t) =
   let known = rig.known_moves ~slot:(slot rig plan.goal.species) in
   if P.met plan.goal ~known then
     rig.log
       (Printf.sprintf "Grind: %s knows %s already; skipped." plan.goal.species
          plan.goal.learn_move)
-  else grind rig plan
+  else grind ?cap rig plan

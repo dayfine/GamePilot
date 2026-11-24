@@ -19,6 +19,9 @@ jobs:
       - name: Lint dune files and opam dependencies
         shell: bash
         run: sh tools/lint_dune.sh
+      - name: Test the mGBA runner's lock
+        if: runner.os != 'Windows'
+        run: sh tools/test_run_lock.sh
       - name: Check golden JSON formatting
         if: runner.os == 'Linux'
         run: python3 tools/fmt_json.py --check contracts/v1/*.json

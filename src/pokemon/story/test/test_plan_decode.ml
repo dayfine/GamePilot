@@ -292,6 +292,10 @@ let postconditions_text (plan : Plan.t) =
           [ Printf.sprintf "money %d to %d" min max ])
         p.money;
       (if p.flags = [] then [] else [ "flags " ^ list p.flags ]);
+      List.map
+        (fun ({ species; moves } : Plan.knows) ->
+          Printf.sprintf "%s knows %s" species (list moves))
+        p.knows;
     ]
   |> function
   | [] -> "none"
@@ -338,9 +342,15 @@ let postcondition_cases : Case_table.case list =
          money 21464 to 21464";
     };
     {
-      name = "a plan that states none";
+      name = "mg-04 promises the grind's moves, its swaps and one rope used";
       input = (fun () -> postconditions_text (load "mg-04.plan.json" mg));
-      expectation = "none";
+      expectation =
+        "party in order mr-mime, blastoise, oddish, pidgey, rattata, farfetchd\n\
+         item revive x2\n\
+         item escape-rope x2\n\
+         money 21464 to 21464\n\
+         farfetchd knows knock-off\n\
+         mr-mime knows recycle";
     };
     {
       name = "every postcondition, PokemonSimulation's and ours";
@@ -349,14 +359,16 @@ let postcondition_cases : Case_table.case list =
           with_postconditions
             {|{"position": {"map": "Town", "tiles": [[3, 4]]}, "party_includes": ["abra", "abra"],
                "items": [{"item": "retro-mail", "quantity": 2}], "coins": 20,
-               "money": {"min": 100, "max": 200}, "flags": ["got_coin_case"]}|});
+               "money": {"min": 100, "max": 200}, "flags": ["got_coin_case"],
+               "knows": [{"species": "mr-mime", "moves": ["recycle"]}]}|});
       expectation =
         "position Town (3, 4)\n\
          party includes abra, abra\n\
          item retro-mail x2\n\
          coins 20\n\
          money 100 to 200\n\
-         flags got_coin_case";
+         flags got_coin_case\n\
+         mr-mime knows recycle";
     };
     {
       name = "party in order and party_includes, not both";

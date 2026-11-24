@@ -144,7 +144,8 @@ let list_driver (b : fake_battle) calls : B.Battle_driver.t =
     answer_use_next = (fun _ -> ());
   }
 
-let flow ~party ~known battles plan () =
+(* [cap]: the runner's --grind-battles; its "capped" log line is a call. *)
+let flow ?cap ~party ~known battles plan () =
   let calls = ref [] in
   let call s = calls := s :: !calls in
   let party = ref (Party_roster.of_list party) in
@@ -181,11 +182,13 @@ let flow ~party ~known battles plan () =
                     };
                 }
           | Some b -> B.Scripted_battle.run (list_driver b calls) script);
-      log = ignore;
+      log =
+        (fun line ->
+          if String.starts_with ~prefix:"Grind: capped" line then call line);
     }
   in
   let result =
-    match Grind.run rig plan with
+    match Grind.run ?cap rig plan with
     | () -> "ok"
     | exception Menu_input.Action_failed c ->
         "failed " ^ Story.Failure.cause_to_string c
@@ -242,6 +245,28 @@ let flows =
        move 0; learn: learned recycle over move 0 => ok";
     case "out of battles"
       (flow ~party ~known:[] [ won (); won () ] tight)
+      "summary 2; swap 2 1; go VictoryRoad_2F (45, 10) west; spin; switch 1; \
+       move 0; spin; switch 1; move 0 => failed grind_out_of_battles: mr-mime \
+       did not learn recycle in 2 battles";
+    case "capped at 2: passes after battle 2, for testing"
+      (flow ~cap:2 ~party ~known:[]
+         [ won (); won (); won () ]
+         (plan mimien_args))
+      "summary 2; swap 2 1; go VictoryRoad_2F (45, 10) west; spin; switch 1; \
+       move 0; spin; switch 1; move 0; Grind: capped at 2 battles for testing: \
+       mr-mime has not learned recycle => ok";
+    case "capped at 8 at Victory Road: the heal after 7 comes before battle 8"
+      (flow ~cap:8 ~party ~known:[]
+         (List.init 9 (fun _ -> won ()))
+         (plan mimien_args))
+      "summary 2; swap 2 1; go VictoryRoad_2F (45, 10) west; spin; switch 1; \
+       move 0; spin; switch 1; move 0; spin; switch 1; move 0; spin; switch 1; \
+       move 0; spin; switch 1; move 0; spin; switch 1; move 0; spin; switch 1; \
+       move 0; heal nurse at IndigoPlateau_PokemonCenter_1F (13, 12) north; go \
+       VictoryRoad_2F (45, 10) west; spin; switch 1; move 0; Grind: capped at \
+       8 battles for testing: mr-mime has not learned recycle => ok";
+    case "a cap above max_battles: running out still fails"
+      (flow ~cap:5 ~party ~known:[] [ won (); won () ] tight)
       "summary 2; swap 2 1; go VictoryRoad_2F (45, 10) west; spin; switch 1; \
        move 0; spin; switch 1; move 0 => failed grind_out_of_battles: mr-mime \
        did not learn recycle in 2 battles";

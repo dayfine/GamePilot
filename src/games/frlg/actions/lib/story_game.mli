@@ -25,6 +25,9 @@ type config = {
   flee : unit -> unit;  (** Runs from a wild battle, back to the overworld. *)
   flags : string -> bool;
   party : Party_roster.t;  (** The party at the checkpoint's start. *)
+  grind_cap : int option;
+      (** Testing: every ["grind"] ends, passing, after this many battles
+          ({!Grind.run}'s [cap]). *)
   center : string option;
       (** The town whose Pokémon Center heals between loop rounds
           (["LavenderTown"]); [None]: heal fails as [not_implemented]. *)

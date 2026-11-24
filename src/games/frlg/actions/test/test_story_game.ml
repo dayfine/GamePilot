@@ -51,6 +51,7 @@ let run ?(world = Frlg_world.pallet) ?(react = react) ?(checkpoint = checkpoint)
       flee = ignore;
       flags = (fun _ -> false);
       party = Party_roster.of_list party;
+      grind_cap = None;
       center = None;
       reload = (fun () -> Ok ());
       log = ignore;

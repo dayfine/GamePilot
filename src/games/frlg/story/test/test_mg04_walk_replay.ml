@@ -19,7 +19,18 @@ let start_state = "mg04_start.ss"
 let walk_plan () =
   let p = Result.get_ok (Story.Plan_decode.load "mg-04.plan.json") in
   let first = List.hd p.checkpoint.events in
-  { p with checkpoint = { p.checkpoint with events = [ first ] } }
+  {
+    p with
+    checkpoint = { p.checkpoint with events = [ first ] };
+    postconditions =
+      {
+        p.postconditions with
+        party = None;
+        money = None;
+        items = [];
+        knows = [];
+      };
+  }
 
 let fled line = String.starts_with ~prefix:"Wild battle: fled" line
 
@@ -31,6 +42,7 @@ let replayed_walk () =
       state = Some start_state;
       party = Frlg_actions.Party_roster.of_string "";
       center = None;
+      grind_cap = None;
       gait = Running;
       end_check_only = false;
       log = (fun line -> lines := line :: !lines);
