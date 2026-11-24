@@ -6,3 +6,7 @@ type t =
   | Passed
   | Skipped of string  (** the [skip_if] flag that held *)
   | Failed of string  (** the reason, as logged *)
+
+val to_watch : t -> Wire.Watch.event_state * string
+(** The event's state on the watch page and its detail (a failure's reason, the
+    flag a skip held on). *)

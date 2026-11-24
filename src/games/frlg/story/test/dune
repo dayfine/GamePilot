@@ -141,3 +141,13 @@
   gamepilot.frlg_overworld
   gamepilot.frlg_actions
   gamepilot.frlg_story))
+
+(test
+ (name test_plan_watch)
+ (modules test_plan_watch)
+ (libraries
+  gamepilot.table_test
+  gamepilot.wire
+  gamepilot.effects
+  gamepilot.story
+  gamepilot.frlg_story))

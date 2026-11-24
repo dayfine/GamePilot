@@ -122,7 +122,9 @@ let run_with ?(after = ignore) handle plan_file flags =
   | Error e -> ("checkpoint: " ^ e, 2)
   | Ok (plan, world, options) ->
       let body () =
-        let result = Frlg_story.Checkpoint_run.run options world plan in
+        let result =
+          Frlg_story.Plan_watch.run ~mode:"single" options world plan
+        in
         after result;
         result
       in

@@ -93,7 +93,11 @@ let capped_postconditions ~grind_cap (plan : Story.Plan.t) =
       ( { p with knows = []; levels = [] },
         List.map skipped_knows p.knows @ List.map skipped_level p.levels )
 
-let run ?end_at ?on_event options world (plan : Story.Plan.t) =
+(* The game with the caller's own actions first (a shadow plan's). *)
+let with_actions actions (game : Story.Game.t) =
+  { game with game_actions = actions @ game.game_actions }
+
+let run ?end_at ?on_event ?(actions = []) options world (plan : Story.Plan.t) =
   Option.iter (fun s -> ignore (Effects.load_state s)) options.state;
   let game =
     A.Story_game.create (config options world) ~start:(start_of plan.checkpoint)
@@ -110,5 +114,6 @@ let run ?end_at ?on_event options world (plan : Story.Plan.t) =
     skipped;
   let end_state = (checked, Postcondition_reads.observe ~log:options.log) in
   Effects.with_probes Screen_facts.probes (fun () ->
-      Story.Runner.run ?end_at ~end_state ?on_event (A.Story_game.game game)
+      Story.Runner.run ?end_at ~end_state ?on_event
+        (with_actions actions (A.Story_game.game game))
         checkpoint)
