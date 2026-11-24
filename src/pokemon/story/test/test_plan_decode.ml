@@ -408,7 +408,7 @@ let postcondition_cases : Case_table.case list =
          item super-potion x3\n\
          item retro-mail x1\n\
          money 19164 to 19164\n\
-         marks none, held_item, mail, none, none, none";
+         marks held_item, held_item, mail, none, none, none";
     };
     {
       name = "a mark no party shows";

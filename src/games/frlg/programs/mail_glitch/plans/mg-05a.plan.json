@@ -168,10 +168,10 @@
   },
   "metadata": {
     "phase": "testing",
-    "notes": "Ported unchanged from the fork's tested PlanData/mg-05a.plan.json (Route 16 run on mGBA, 2026-11-23). The fork splits mg-05 in two so the double battle retries from a save one tile outside Lea's sightline: mg-05a buys medicine, picks up Route 8's hidden Leppa Berry, uses up Blastoise's Blizzard PP in wild battles, flies to Celadon, cuts Route 16's tree, walks to (30, 7) and arranges the party and its held items. The postconditions check the party order, each slot's held-item mark on the party menu (Blastoise the Leppa Berry, MIMIEN the Retro Mail), the bag's new medicine and one Retro Mail left of two, and the money after the Mart ($21,464 - $2,300); not that Blizzard is at 0 PP (no PP digit reader). The fork turns in place for the wild battles; GamePilot paces west and back from (45, 12), see Paced_battle.",
+    "notes": "Ported unchanged from the fork's tested PlanData/mg-05a.plan.json (Route 16 run on mGBA, 2026-11-23). The fork splits mg-05 in two so the double battle retries from a save one tile outside Lea's sightline: mg-05a buys medicine, picks up Route 8's hidden Leppa Berry, uses up Blastoise's Blizzard PP in wild battles, flies to Celadon, cuts Route 16's tree, walks to (30, 7) and arranges the party and its held items. The postconditions check the party order, each slot's held-item mark on the party menu (CH'DING's own item, as the C++ run's party shows, Blastoise the Leppa Berry, MIMIEN the Retro Mail), the bag's new medicine and one Retro Mail left of two, and the money after the Mart ($21,464 - $2,300); not that Blizzard is at 0 PP (no PP digit reader). The fork turns in place for the wild battles; GamePilot paces west and back from (45, 12), see Paced_battle.",
     "postconditions": {
       "party": ["farfetchd", "blastoise", "mr-mime", "pidgey", "rattata", "oddish"],
-      "marks": ["none", "held_item", "mail", "none", "none", "none"],
+      "marks": ["held_item", "held_item", "mail", "none", "none", "none"],
       "money": {"min": 19164, "max": 19164},
       "items": [
         {"item": "antidote", "quantity": 2},
