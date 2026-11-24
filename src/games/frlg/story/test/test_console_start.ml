@@ -159,20 +159,20 @@ let preflight_cases =
 
 (* {1 Room in the party} *)
 
-let member ?moves species level =
-  { Party_room.species; level = Some level; moves }
+let member ?moves slot species level =
+  { Story.Room_policy.slot; species; level = Some level; moves }
 
 (* Console B's save on 2026-11-23: Pallet Town, after the Hall of Fame. The
    moves are what a plain run of FireRed would have them know; a real run
    reads them. *)
 let console_b =
   [
-    member "blastoise" 59 ~moves:[ "surf"; "strength"; "blizzard"; "bite" ];
-    member "eevee" 25 ~moves:[ "tackle"; "tail-whip"; "bite"; "quick-attack" ];
-    member "pidgey" 24 ~moves:[ "fly"; "gust"; "quick-attack"; "sand-attack" ];
-    member "oddish" 12 ~moves:[ "cut"; "absorb"; "poison-powder"; "acid" ];
-    member "lapras" 25 ~moves:[ "surf"; "sing"; "mist"; "body-slam" ];
-    member "magikarp" 5 ~moves:[ "splash" ];
+    member 1 "blastoise" 59 ~moves:[ "surf"; "strength"; "blizzard"; "bite" ];
+    member 2 "eevee" 25 ~moves:[ "tackle"; "tail-whip"; "bite"; "quick-attack" ];
+    member 3 "pidgey" 24 ~moves:[ "fly"; "gust"; "quick-attack"; "sand-attack" ];
+    member 4 "oddish" 12 ~moves:[ "cut"; "absorb"; "poison-powder"; "acid" ];
+    member 5 "lapras" 25 ~moves:[ "surf"; "sing"; "mist"; "body-slam" ];
+    member 6 "magikarp" 5 ~moves:[ "splash" ];
   ]
 
 let need = Party_room.chain_need chain
@@ -197,7 +197,7 @@ let room_cases =
       "room: console B's full party: the lowest level that knows no field move \
        and is not used, twice"
       (fun () -> deposits console_b)
-      "deposit magikarp, eevee";
+      "deposit eevee, magikarp";
     case "room: four members: room enough"
       (fun () -> deposits (List.filteri (fun i _ -> i < 4) console_b))
       "room enough";
