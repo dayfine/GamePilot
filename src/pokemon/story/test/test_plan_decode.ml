@@ -335,7 +335,8 @@ let postcondition_cases : Case_table.case list =
       name = "mg-05 promises the party in its battle order";
       input = (fun () -> postconditions_text (load "mg-05.plan.json" mg));
       expectation =
-        "party in order farfetchd, blastoise, mr-mime, pidgey, rattata, oddish";
+        "party in order farfetchd, blastoise, mr-mime, pidgey, rattata, oddish\n\
+         marks held_item, none, held_item, none, none, none";
     };
     {
       name = "mg-03 promises MIMIEN for Abra, 2 Revives and an Escape Rope";
