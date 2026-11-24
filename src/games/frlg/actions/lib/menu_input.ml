@@ -69,7 +69,6 @@ let close_to_overworld ~label ~log =
 
 let max_pages = 8
 let question m = Option.is_some (Dialog.yes_no_cursor m)
-let page_or_question m = question m || Dialog.advance_arrow m
 let question_input_ms = 300
 let answer_cooldown_ms = 800
 
@@ -80,17 +79,26 @@ let answer_yes_to m =
 
 let page_press_ms = 600
 
-let rec answer_yes_from page ~code what =
-  let m = await_screen ~code what page_or_question in
-  if question m then answer_yes_to m
-  else if page > max_pages then fail code (what ^ " did not show")
-  else (
-    press ~cooldown_ms:page_press_ms Wire.A;
-    answer_yes_from (page + 1) ~code what)
+(* One look, one move: Screen_state.Choice_talk on the FRLG readers. *)
+let choice_look ~taken m : Screen_state.Choice_talk.look =
+  { choice = question m; page = Dialog.advance_arrow m; past_choice = taken m }
 
-let answer_yes ~code what =
+let rec answer_yes_from page ~code ~taken what =
+  let move m =
+    Screen_state.Choice_talk.move ~pressed:(page > 1) (choice_look ~taken m)
+  in
+  let m = await_screen ~code what (fun m -> move m <> Wait) in
+  match move m with
+  | Pick -> answer_yes_to m
+  | Answered | Wait -> ()
+  | Next_page when page > max_pages -> fail code (what ^ " did not show")
+  | Next_page ->
+      press ~cooldown_ms:page_press_ms Wire.A;
+      answer_yes_from (page + 1) ~code ~taken what
+
+let answer_yes ~code ~taken what =
   Effects.with_probes Dialog.yes_no_probes (fun () ->
-      answer_yes_from 1 ~code what)
+      answer_yes_from 1 ~code ~taken what)
 
 let answer_if_asked ~timeout_ms () =
   match Effects.await ~timeout_ms question with

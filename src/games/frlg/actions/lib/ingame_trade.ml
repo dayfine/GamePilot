@@ -23,7 +23,8 @@ let held_for ms reader =
 let trade ~log ~slot =
   log (Printf.sprintf "Trade: offer slot %d." slot);
   M.press Wire.A;
-  M.answer_yes ~code:"trade_no_question" "the trader's offer";
+  M.answer_yes ~code:"trade_no_question" ~taken:Party_menu.party_menu
+    "the trader's offer";
   ignore
     (M.await_screen ~timeout_ms:party_timeout_ms ~code:"trade_no_party"
        "the party to trade from" Party_menu.party_menu);

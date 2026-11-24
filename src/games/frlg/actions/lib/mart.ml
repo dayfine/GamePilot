@@ -21,7 +21,8 @@ let buy_one ~log cursor (b : Mart_plan.buy) =
   M.taps Wire.Right right;
   M.taps Wire.Up up;
   M.press Wire.A;
-  M.answer_yes ~code:"mart_no_confirm" ("the price of " ^ b.buy_item);
+  M.answer_yes ~code:"mart_no_confirm" ~taken:list_back
+    ("the price of " ^ b.buy_item);
   M.press_until ~code:"mart_not_back" "the BUY list" Wire.A
     ~cooldown_ms:M.screen_timeout_ms list_back;
   log

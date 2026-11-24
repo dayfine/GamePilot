@@ -90,12 +90,22 @@ val question_input_ms : int
 val answer_cooldown_ms : int
 (** The fork's wait after its answer: 800 ms. *)
 
-val answer_yes : code:string -> string -> unit
-(** After a talk: A on each look at a page with the advance arrow until the
-    Yes/No box shows with its arrow ({!Dialog.yes_no_cursor}), then YES as the
-    fork's [answer_yes_no] answers it: UP if the arrow is on NO, A
-    {!question_input_ms} after the box showed, then {!answer_cooldown_ms}. Fails
-    as [code] with ["<what> did not show"] when no page or question comes. *)
+val answer_yes :
+  code:string -> taken:(Effects.measurements -> bool) -> string -> unit
+(** After a talk, one look at a time, by what the screen shows: the Yes/No box
+    with its arrow ({!Dialog.yes_no_cursor}) gets YES as the fork's
+    [answer_yes_no] answers it (UP if the arrow is on NO, A {!question_input_ms}
+    after the box showed, then {!answer_cooldown_ms}); a page with the advance
+    arrow gets an A; once one of those A presses has gone in, the screen [taken]
+    reads (what YES leads to) ends it too, as that A took YES. Fails as [code]
+    with ["<what> did not show"] when no page, question or [taken] screen comes.
+
+    The A on a page races the question: red text (a woman's) reads as the arrow
+    while it prints, and on console B a frame shows the game 160-335 ms late, so
+    the last page's A can land on the Yes/No box as it draws (mg-02 testing,
+    2026-11-24: Elyssa's offer, YES taken, the party up, the question never
+    seen). YES is the box's default, so the [taken] screen means YES. The moves
+    are {!Screen_state.Choice_talk}'s. *)
 
 val answer_yes_if_asked : timeout_ms:int -> bool
 (** YES to a Yes/No box that shows within [timeout_ms], answered as
