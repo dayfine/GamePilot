@@ -1,10 +1,10 @@
-// The watch page's HTTP server: the page itself, the current frame as a JPEG,
+// The watch page's HTTP server: the page itself, the current frame as an image,
 // a Server-Sent Events stream of what the run is doing, and Stop. It runs
 // inside the daemon's server loop (no thread of its own): the loop polls its
 // sockets with the program's and calls `serve`.
 //
 //   GET  /           the page (watch/watch.html, compiled in)
-//   GET  /frame.jpg  the current frame, downscaled (hooks.frame_jpeg)
+//   GET  /frame      the current frame, PNG or JPEG (hooks.frame)
 //   GET  /events     the event stream: `info` (the backend, as `hello` gives
 //                    it), `plan`, `log` (the backlog, then each line), `probes`
 //                    and `status`; a new viewer gets the latest of each first
@@ -33,8 +33,14 @@ struct WatchOptions {
   std::uint16_t port = 47901;        // 0 = any free port (tests)
 };
 
+// An encoded frame and its media type ("image/png", "image/jpeg").
+struct WatchFrame {
+  std::string type;
+  std::string bytes;
+};
+
 struct WatchHooks {
-  std::function<std::string()> frame_jpeg;  // the current frame, encoded
+  std::function<WatchFrame()> frame;  // the current frame, encoded
   std::function<bool()> stop;  // stops the program; false when none runs
 };
 

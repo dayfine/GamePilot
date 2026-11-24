@@ -10,7 +10,7 @@ health, and a Stop button. It is step 1 and part of step 2 of `Control-UI.md`.
 ```
                  frame, probes, status (the daemon has them)
  browser  <-- GET /events (Server-Sent Events) ---------------+
-          <-- GET /frame.jpg (polled, <= 5/s) ----------------+-- daemon (server loop)
+          <-- GET /frame (polled, <= 5/s) --------------------+-- daemon (server loop)
           --- POST /stop ------------------------------------>+      |  ^
                                                                     |  | watch.plan, watch.log
                                      stop (notification) ---------->+  | (notifications, not in
@@ -37,12 +37,20 @@ health, and a Stop button. It is step 1 and part of step 2 of `Control-UI.md`.
 
 - One process owns the pixels. A second reader of the capture card (OBS, another program) is not
   possible, and the daemon already decodes each frame for its probes.
-- Frames are pulled, not pushed: the page asks for `/frame.jpg` after it drew the last one, and the
+- Frames are pulled, not pushed: the page asks for `/frame` after it drew the last one, and the
   daemon encodes at most one frame per 200 ms (the probed frame when it is current, so mGBA needs
   no extra bridge read) and only when asked, so without a page nothing is encoded. Probe overlays
   are sent at most every 200 ms and status once a second, only while a page has the stream open.
   A viewer that does not take an event within 100 ms is dropped, so a slow browser cannot stall
   lockstep pacing. The daemon's 10 s rate line adds the watch's own time.
+- Small frames go out lossless: the GBA's 240x160 is a PNG (pixel art blurs in JPEG), a capture
+  card's frame is scaled to 640x360 and sent as JPEG. The page shows the frame at a whole multiple
+  that fits, pixelated, and the lockstep 10 s rate line gives the bytes per frame.
+- The probe boxes are drawn on a canvas over the frame at the displayed size, never into the frame,
+  so labels stay sharp. A program may subscribe 80+ probes, so the page shows only the boxes whose
+  value changed in the last second by default (Off / Changed / All, kept in the browser), a label
+  only for the box under the pointer (or tapped), and every value in a table beside the frame,
+  filtered by name prefix (`party.`, `bag.`, ...).
 - The wire log and replay stay as they are: the program's watch notes are never logged, and the
   replay handler drops them when the program sends them. Only `stop` is logged (it changes what
   the program does), so a stopped run replays to the same stop.
