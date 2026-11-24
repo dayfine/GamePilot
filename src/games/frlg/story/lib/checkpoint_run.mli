@@ -49,10 +49,24 @@ val capped_postconditions :
     [knows] and [levels] ones, a grind's goal a capped grind does not reach;
     none without. *)
 
+type from_event = {
+  range : Story.Event_range.t;
+  start_reads : Story.Event_states.start_reads;
+      (** What the run that kept the first event's state read at the
+          checkpoint's start ({!Story.Event_states}). *)
+}
+(** A partial run: its events, from a state kept at the first one's start. *)
+
+type keep_event_state =
+  index:int -> Story.Plan.event -> Story.Event_states.start_reads -> unit
+(** Keeps the state at an event's start, with the checkpoint's start reads. *)
+
 val run :
   ?end_at:Story.Pose.grid ->
   ?on_event:(int -> Story.Event_progress.t -> unit) ->
   ?actions:(string * Story.Game.game_action) list ->
+  ?from_event:from_event ->
+  ?keep_event_state:keep_event_state ->
   options ->
   Frlg_overworld.Frlg_steps.world ->
   Story.Plan.t ->
@@ -67,4 +81,11 @@ val run :
     the money read before the first event, {!Postcondition_reads.start_money}),
     but for those {!capped_postconditions} skips (logged). [on_event] hears each
     event's progress ({!Story.Runner.run}). [actions] are game actions of the
-    caller's own, ahead of FireRed's: a shadow plan's ({!Shadow_plan}). *)
+    caller's own, ahead of FireRed's: a shadow plan's ({!Shadow_plan}).
+
+    With [from_event], only its events run ({!Story.Runner.run}), from
+    [options.state], the state kept at the first one's start; a promise of the
+    money spent is checked against the start money kept with that state, not
+    re-read (logged). [keep_event_state] is called at the start of each event
+    the run reached cleanly ({!Story.Event_states.hear}), with what the run read
+    at the checkpoint's start (or, on a partial run, what was kept). *)

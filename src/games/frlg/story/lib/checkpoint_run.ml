@@ -97,7 +97,45 @@ let capped_postconditions ~grind_cap (plan : Story.Plan.t) =
 let with_actions actions (game : Story.Game.t) =
   { game with game_actions = actions @ game.game_actions }
 
-let run ?end_at ?on_event ?(actions = []) options world (plan : Story.Plan.t) =
+type from_event = {
+  range : Story.Event_range.t;
+  start_reads : Story.Event_states.start_reads;
+}
+
+type keep_event_state =
+  index:int -> Story.Plan.event -> Story.Event_states.start_reads -> unit
+
+let kept_money_line =
+  Printf.sprintf
+    "[Postcondition] the money at the checkpoint's start, kept with the \
+     event's state: $%d"
+
+let log_kept_money options money =
+  Option.iter (fun m -> options.log (kept_money_line m)) money
+
+(* The money at the checkpoint's start for a spent promise: read now, or kept
+   with the event's state on a partial run. *)
+let start_money options ~from_event checked =
+  match from_event with
+  | _ when options.end_check_only -> None
+  | Some { start_reads; _ } ->
+      log_kept_money options start_reads.Story.Event_states.start_money;
+      start_reads.start_money
+  | None -> Postcondition_reads.start_money ~log:options.log checked
+
+(* [on_event], and the state kept at each event reached cleanly. *)
+let keeping_states ?on_event ~keep ~first (checkpoint : Story.Plan.checkpoint)
+    reads =
+  let tracker = Story.Event_states.tracker ~first in
+  fun index progress ->
+    (match keep with
+    | Some keep when Story.Event_states.hear tracker index progress ->
+        keep ~index (List.nth checkpoint.events index) reads
+    | _ -> ());
+    Option.iter (fun f -> f index progress) on_event
+
+let run ?end_at ?on_event ?(actions = []) ?from_event ?keep_event_state options
+    world (plan : Story.Plan.t) =
   Option.iter (fun s -> ignore (Effects.load_state s)) options.state;
   let game =
     A.Story_game.create (config options world) ~start:(start_of plan.checkpoint)
@@ -113,17 +151,21 @@ let run ?end_at ?on_event ?(actions = []) options world (plan : Story.Plan.t) =
            plan.checkpoint.checkpoint_id s))
     skipped;
   Effects.with_probes Screen_facts.probes (fun () ->
-      let start_money =
-        if options.end_check_only then None
-        else Postcondition_reads.start_money ~log:options.log checked
-      in
+      let start_money = start_money options ~from_event checked in
       let observe promised =
         {
           (Postcondition_reads.observe ~log:options.log promised) with
           start_money;
         }
       in
-      let end_state = (checked, observe) in
-      Story.Runner.run ?end_at ~end_state ?on_event
+      let events = Option.map (fun f -> f.range) from_event in
+      let first =
+        Option.fold ~none:0 ~some:(fun r -> r.Story.Event_range.first) events
+      in
+      let on_event =
+        keeping_states ?on_event ~keep:keep_event_state ~first checkpoint
+          { Story.Event_states.start_money }
+      in
+      Story.Runner.run ?end_at ~end_state:(checked, observe) ~on_event ?events
         (with_actions actions (A.Story_game.game game))
         checkpoint)

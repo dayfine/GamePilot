@@ -25,12 +25,23 @@ let start_state (setup : Run.setup) id =
   | Mgba _ when Sys.file_exists path -> Ok path
   | Mgba _ -> Error ("no start state " ^ path)
 
+(* The whole checkpoint from its start state, or a partial run from its first
+   event's kept state. *)
+let start_and_partial (setup : Run.setup) id (plan : Plan.t) =
+  match setup.from_event with
+  | None -> Result.map (fun s -> (s, None)) (start_state setup id)
+  | Some events ->
+      Result.map
+        (fun (state, partial) -> (state, Some partial))
+        (Event_state_files.partial ~states:setup.states ~checkpoint:id
+           plan.checkpoint events)
+
 (* The checkpoint [id], its end declared by [next]'s plan. *)
 let checkpoint ~plan_dir (setup : Run.setup) id ~next =
   let* plan = load_plan ~plan_dir id in
   let next_id = next in
   let* next = next_plan ~plan_dir next in
-  let* start_state = start_state setup id in
+  let* start_state, partial = start_and_partial setup id plan in
   let* before = Plan_dir.promised_before ~plan_dir id in
   Ok
     {
@@ -39,6 +50,7 @@ let checkpoint ~plan_dir (setup : Run.setup) id ~next =
       start_state;
       before;
       next_id;
+      partial;
       end_at =
         (match plan.postconditions.position with
         | Some position -> Some position
@@ -141,7 +153,7 @@ let decide (setup : Run.setup) (cp : Run.checkpoint) chain ~next =
   | Checkpoint_trials.Checkpoint_passed { passes; runs }, done_runs ->
       Printf.printf "[Checkpoints] %s: passed (%d of %d runs)%s\n%!" cp.id
         passes runs (Run.capped_note setup cp);
-      if setup.policy.keeps_end then
+      if Event_range.keeps_end (Run.partial_range cp) setup.policy then
         keep_uncapped_end setup cp.id ~next done_runs;
       true
   | Checkpoint_trials.Stopped why, _ ->

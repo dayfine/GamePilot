@@ -9,56 +9,7 @@
    series stops too. *)
 
 open Story
-
-type setup = {
-  states : string;
-  runs_dir : string;
-  daemon : string;
-  backend : Daemon_process.backend;
-  common : Checkpoint_command.flags;
-  mode : Checkpoint_trials.mode;
-  policy : Checkpoint_trials.policy;
-  world : Frlg_overworld.Frlg_steps.world;
-  watch : Daemon_process.watch option;  (** the daemon's watch page, if any *)
-  save_after_pass : bool;
-      (** On the Switch: save in the game after a pass (Story.Console_runs). *)
-  info : Run_record.info;  (** For each run's run.json. *)
-  daemon_flags : string list;
-      (** The daemon's recording and keep-awake flags, as the user gave them
-          (the daemon's defaults otherwise: on for the Switch, off for mGBA). *)
-  bound : (int * int option) option ref;
-      (** The ports the series' last daemon bound (program, page): the next one
-          asks for them again, so the page keeps its URL across runs. *)
-}
-
-type checkpoint = {
-  id : string;  (** The plan file's name, e.g. ["mg-04"]. *)
-  plan : Plan.t;
-  end_at : Pose.grid option;
-  start_state : string;
-      (** The save state it starts from on mGBA; on the Switch, the save the
-          console has loaded. *)
-  before : Plan.postconditions option;
-      (** What the checkpoint before it promised, if any: the start check's
-          party. *)
-  next_id : string option;  (** The checkpoint after it, if any. *)
-}
-
-type outcome =
-  | Passed
-  | Failed of { at : string; reason : string; repeats : bool }
-
-let trial = function
-  | Passed -> Checkpoint_trials.Passed
-  | Failed { at; repeats; _ } -> Checkpoint_trials.Failed { at; repeats }
-
-let of_failure (f : Failure.t) =
-  Failed
-    {
-      at = Printf.sprintf "#%d %s" (f.event_index + 1) f.event_id;
-      reason = Failure.reason_to_string f.reason;
-      repeats = Failure.repeats f;
-    }
+include Live_checkpoint
 
 (* A save the daemon may refuse (an older daemon, a bad path): logged, not
    fatal. *)
@@ -81,6 +32,13 @@ let options setup cp log : Frlg_story.Checkpoint_run.options =
     log;
   }
 
+(* On mGBA, the state at each event's start (Event_state_files). *)
+let keep_event_state setup cp log =
+  match setup.backend with
+  | Mgba _ ->
+      Some (Event_state_files.keep ~states:setup.states ~checkpoint:cp.id ~log)
+  | Switch _ -> None
+
 (* The checkpoint, shown on the watch page as it runs; a Stop there ends it
    at the event it was in. With how it ended, for the console's steps. *)
 let checkpoint_outcome setup cp log =
@@ -88,6 +46,8 @@ let checkpoint_outcome setup cp log =
   match
     Frlg_story.Checkpoint_run.run ?end_at:cp.end_at
       ~on_event:(Frlg_story.Plan_watch.on_event watch)
+      ?from_event:cp.partial
+      ?keep_event_state:(keep_event_state setup cp log)
       (options setup cp log) setup.world cp.plan
   with
   | Ok () -> (Passed, Console_runs.Passed)
@@ -146,7 +106,7 @@ let emulator_run setup cp log path =
   let outcome, _ = checkpoint_outcome setup cp log in
   (match outcome with
   | Failed _ -> save_failure log path ~save_states:true
-  | Passed when setup.policy.keeps_end ->
+  | Passed when Event_range.keeps_end (partial_range cp) setup.policy ->
       save log "end.ss" (fun () -> Effects.save_state (path "end.ss"))
   | Passed -> ());
   outcome
@@ -248,8 +208,18 @@ let attempt_note cp attempt =
   if cp.plan.retries = 0 then ""
   else Printf.sprintf " attempt %d/%d" attempt (cp.plan.retries + 1)
 
+(* " from #13 trade_chding to #14 exit_...", so a partial pass is never taken
+   for a whole one. *)
+let partial_note cp =
+  match events cp with
+  | None -> ""
+  | Some (first, last) -> Printf.sprintf " from %s to %s (partial)" first last
+
 let summary setup cp n ~attempt outcome =
-  let run = Printf.sprintf "%s run %d%s" cp.id n (attempt_note cp attempt) in
+  let run =
+    Printf.sprintf "%s run %d%s%s" cp.id n (attempt_note cp attempt)
+      (partial_note cp)
+  in
   let line =
     match outcome with
     | Passed -> "PASS " ^ run
@@ -258,7 +228,10 @@ let summary setup cp n ~attempt outcome =
   in
   line ^ capped_note setup cp
 
-let mode_name setup = Checkpoint_trials.mode_to_string setup.mode
+let mode_name setup cp =
+  match cp.partial with
+  | Some _ -> Event_range.mode_name
+  | None -> Checkpoint_trials.mode_to_string setup.mode
 
 let record_outcome setup cp (run : Run_record.run) n ~attempt outcome =
   let line = summary setup cp n ~attempt outcome in
@@ -278,8 +251,8 @@ let run setup cp n ~attempt ~progress =
   let run =
     Run_record.start
       ?attempt:(if attempts > 1 then Some (attempt, attempts) else None)
-      ~runs_dir:setup.runs_dir setup.info ~checkpoint:cp.id
-      ~mode:(mode_name setup)
+      ?events:(events cp) ~runs_dir:setup.runs_dir setup.info ~checkpoint:cp.id
+      ~mode:(mode_name setup cp)
   in
   let record = run.record in
   let log, close = Run_record.story_log record in

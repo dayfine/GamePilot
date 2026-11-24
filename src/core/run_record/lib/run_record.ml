@@ -110,7 +110,15 @@ let kind_name = function
 
 (* The modes a run folder's name may end in, before its number. *)
 let modes =
-  [ "testing"; "verification"; "preflight"; "single"; "run"; "bring-up" ]
+  [
+    "testing";
+    "verification";
+    "from-event";
+    "preflight";
+    "single";
+    "run";
+    "bring-up";
+  ]
 
 let date_length = String.length "2026-11-23"
 let is_number s = s <> "" && String.for_all (fun c -> c >= '0' && c <= '9') s
@@ -161,6 +169,7 @@ type run = {
   mode : string;
   started_ms : int;
   attempt : (int * int) option;
+  events : (string * string) option;
 }
 
 let program_fields = function
@@ -181,6 +190,11 @@ let attempt_fields = function
   | None -> []
   | Some (n, of_) -> [ ("attempt", `Int n); ("attempts", `Int of_) ]
 
+let events_fields = function
+  | None -> []
+  | Some (first, last) ->
+      [ ("from_event", `String first); ("to_event", `String last) ]
+
 let run_json run ~ended_ms ending =
   let s v = `String v in
   let info = run.info in
@@ -197,17 +211,17 @@ let run_json run ~ended_ms ending =
         ("mode", s run.mode);
         ("started_ms", `Int run.started_ms);
       ]
-    @ attempt_fields run.attempt
+    @ attempt_fields run.attempt @ events_fields run.events
     @ ended_fields ~ended_ms ending)
 
 let write_run_json run ending =
   write run.record "run.json"
     (Yojson.Safe.to_string (run_json run ~ended_ms:(now_ms ()) ending) ^ "\n")
 
-let start ?attempt ~runs_dir info ~checkpoint ~mode =
+let start ?attempt ?events ~runs_dir info ~checkpoint ~mode =
   let record = create ~runs_dir ~checkpoint ~mode in
   let run =
-    { record; info; checkpoint; mode; started_ms = now_ms (); attempt }
+    { record; info; checkpoint; mode; started_ms = now_ms (); attempt; events }
   in
   write_run_json run None;
   run

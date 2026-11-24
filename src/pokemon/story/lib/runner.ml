@@ -149,14 +149,36 @@ let finish (game : Game.t) checkpoint index ~end_at ~end_state =
     game.log ("[Story] " ^ checkpoint.Plan.checkpoint_id ^ ": done");
   checked
 
-let rec run_from ~on_event (game : Game.t) checkpoint ~end_at ~end_state index =
-  function
-  | [] -> finish game checkpoint index ~end_at ~end_state
-  | event :: rest ->
-      Result.bind (step ~on_event game checkpoint index event) (fun () ->
-          run_from ~on_event game checkpoint ~end_at ~end_state (index + 1) rest)
+(* A partial run that stops before the last event checks no end: the player
+   is not there. *)
+let finish_partial (game : Game.t) checkpoint index =
+  game.log
+    (Printf.sprintf
+       "[Story] %s: stopped after #%d (--to-event): end not checked"
+       checkpoint.Plan.checkpoint_id index);
+  Ok ()
 
-let run ?end_at ?end_state ?(on_event = fun _ _ -> ()) (game : Game.t)
+let rec run_from ~on_event (game : Game.t) checkpoint ~ends index = function
+  | [] -> (
+      match ends with
+      | Some (end_at, end_state) ->
+          finish game checkpoint index ~end_at ~end_state
+      | None -> finish_partial game checkpoint index)
+  | (i, event) :: rest ->
+      Result.bind (step ~on_event game checkpoint i event) (fun () ->
+          run_from ~on_event game checkpoint ~ends (i + 1) rest)
+
+let start_line (checkpoint : Plan.checkpoint) = function
+  | None ->
+      Printf.sprintf "[Story] %s: start, %d events" checkpoint.checkpoint_id
+        (List.length checkpoint.events)
+  | Some range ->
+      let first, last = Event_range.describe range checkpoint.events in
+      Printf.sprintf "[Story] %s: start at %s, to %s, of %d events"
+        checkpoint.checkpoint_id first last
+        (List.length checkpoint.events)
+
+let run ?end_at ?end_state ?(on_event = fun _ _ -> ()) ?events (game : Game.t)
     (checkpoint : Plan.checkpoint) =
   let id = checkpoint.checkpoint_id in
   match missing_handler game checkpoint with
@@ -164,7 +186,14 @@ let run ?end_at ?end_state ?(on_event = fun _ _ -> ()) (game : Game.t)
       game.log ("[Story] " ^ id ^ ": not started: " ^ Failure.to_string failure);
       Error failure
   | None ->
-      game.log
-        (Printf.sprintf "[Story] %s: start, %d events" id
-           (List.length checkpoint.events));
-      run_from ~on_event game checkpoint ~end_at ~end_state 0 checkpoint.events
+      game.log (start_line checkpoint events);
+      let range =
+        Option.value events ~default:{ Event_range.first = 0; last = None }
+      in
+      let ends =
+        if Event_range.reaches_end range checkpoint.events then
+          Some (end_at, end_state)
+        else None
+      in
+      run_from ~on_event game checkpoint ~ends range.first
+        (Event_range.select range checkpoint.events)
