@@ -95,11 +95,12 @@ void save_png(const std::string& path, const cv::Mat& frame) {
   if (!cv::imencode(".png", frame, bytes)) {
     throw BackendError("cannot encode the frame as PNG");
   }
-  try {
-    PokemonAutomation::string_to_file(path,
-                                      std::string(bytes.begin(), bytes.end()));
-  } catch (const PokemonAutomation::Exception& e) {
-    throw BackendError("cannot write " + path + ": " + e.message());
+  // Binary: pa::string_to_file adds a BOM and CRLFs, which break a PNG.
+  PokemonAutomation::FileIO file;
+  if (!file.open(path, PokemonAutomation::FileMode::WRITE |
+                           PokemonAutomation::FileMode::BINARY) ||
+      file.write(bytes.data(), bytes.size()) != bytes.size()) {
+    throw BackendError("cannot write " + path);
   }
 }
 

@@ -80,9 +80,22 @@ void check_wrong_geometry() {
              .ok);
 }
 
+// A saved frame reads back pixel for pixel: the file is the PNG's bytes, with
+// no text-file BOM or line-ending changes (#72's --capture-check wrote both).
+void check_save_png_round_trip() {
+  cv::Mat frame(64, 64, CV_8UC3);
+  cv::randu(frame, cv::Scalar::all(0), cv::Scalar::all(255));
+  const std::string path = std::string(GAMEPILOT_TEST_OUTPUT_DIR) + "/save_png_test.png";
+  save_png(path, frame);
+  const cv::Mat read = cv::imread(path, cv::IMREAD_COLOR);
+  CHECK(!read.empty() && read.size() == frame.size() &&
+        cv::norm(read, frame, cv::NORM_INF) == 0);
+}
+
 }  // namespace
 
 int main() {
+  check_save_png_round_trip();
   check_viewport_pixels();
   check_frlg_captures();
   check_wrong_geometry();
