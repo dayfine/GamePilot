@@ -10,12 +10,7 @@ open Story
 module Run = Checkpoint_live_run
 
 let ( let* ) = Result.bind
-let plan_file ~plan_dir id = Filename.concat plan_dir (id ^ ".plan.json")
-
-let load_plan ~plan_dir id =
-  let* plan = Plan_decode.load (plan_file ~plan_dir id) in
-  let* () = Frlg_story.Checkpoint_run.check_plan plan in
-  Ok plan
+let load_plan = Plan_dir.load_plan
 
 let next_plan ~plan_dir = function
   | None -> Ok None
@@ -26,20 +21,24 @@ let next_plan ~plan_dir = function
 let start_state (setup : Run.setup) id =
   let path = Filename.concat setup.states (id ^ ".start.ss") in
   match setup.backend with
-  | Daemon_process.Switch _ -> Ok "the console's loaded save"
+  | Daemon_process.Switch _ -> Ok "the console's last save"
   | Mgba _ when Sys.file_exists path -> Ok path
   | Mgba _ -> Error ("no start state " ^ path)
 
 (* The checkpoint [id], its end declared by [next]'s plan. *)
 let checkpoint ~plan_dir (setup : Run.setup) id ~next =
   let* plan = load_plan ~plan_dir id in
+  let next_id = next in
   let* next = next_plan ~plan_dir next in
   let* start_state = start_state setup id in
+  let* before = Plan_dir.promised_before ~plan_dir id in
   Ok
     {
       Run.id;
       plan;
       start_state;
+      before;
+      next_id;
       end_at =
         (match plan.postconditions.position with
         | Some position -> Some position

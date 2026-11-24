@@ -5,7 +5,7 @@ type config = {
   gait : Route_legs.gait;
   flee : unit -> unit;
   flags : string -> bool;
-  party : Party_roster.t;
+  party : Party_roster.t option;
   grind_cap : int option;
   center : string option;
   reload : unit -> (unit, Story.Failure.cause) result;
@@ -17,10 +17,18 @@ type t = {
   mutable at : Story.Pose.observed option;
   mutable world : Frlg_steps.world;
   party : Party_roster.t ref;
+  reading : Party_reading.t;
 }
 
 let create config ~start =
-  { config; at = start; world = config.world; party = ref config.party }
+  let reading = Party_reading.create ~log:config.log config.party in
+  {
+    config;
+    at = start;
+    world = config.world;
+    party = Party_reading.roster reading;
+    reading;
+  }
 
 let party t = !(t.party)
 
@@ -282,7 +290,8 @@ let game t : Story.Game.t =
     walk_route = (fun _ route -> regrowing t (fun () -> walk_to t route.target));
     run_builtin = run_builtin t;
     game_actions =
-      List.map (adopting t)
+      List.map
+        (fun a -> Party_reading.guard t.reading (adopting t a))
         (("fly", fly t)
         :: ("grind", grind t)
         :: ("capture", capture t)

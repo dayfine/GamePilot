@@ -47,10 +47,14 @@ let url ?token host port =
   Printf.sprintf "http://%s:%d/%s" host port
     (match token with Some t -> "?token=" ^ t | None -> "")
 
+(* The hub's address that always opens the newest live run: one to bookmark. *)
+let live_url host = Printf.sprintf "http://%s:%d/live" host hub_port
+
 (* The page's address for this machine and, listening beyond it, for others. *)
 let print ~listen ~token ~port =
-  Printf.printf "[Watch] this run: %s\n[Watch] all runs: %s\n" (url local port)
-    (url local hub_port);
+  Printf.printf
+    "[Watch] this run: %s\n[Watch] all runs: %s (newest live run: %s)\n"
+    (url local port) (url local hub_port) (live_url local);
   if listen <> local then (
     let host =
       if listen = "0.0.0.0" then
@@ -59,7 +63,7 @@ let print ~listen ~token ~port =
     in
     Printf.printf
       "[Watch] from another device (with Stop): %s\n\
-       [Watch] all runs from another device: %s\n\
+       [Watch] all runs from another device: %s (newest live run: %s)\n\
        [Watch] anyone on the network can watch; Stop needs the token above\n"
-      (url ~token host port) (url host hub_port);
+      (url ~token host port) (url host hub_port) (live_url host);
     flush stdout)

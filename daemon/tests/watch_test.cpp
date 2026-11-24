@@ -29,6 +29,8 @@ void check_request_heads() {
   CHECK(second && second->method == "POST" && second->path == "/stop");
   CHECK(second->query.empty());
   CHECK(buffer.empty());
+  CHECK(header_value(first->headers, "host") == "x");
+  CHECK(header_value(first->headers, "Hos").empty());
 
   CHECK(query_value("token=abc", "token") == "abc");
   CHECK(query_value("t=1&token=abc&x=2", "token") == "abc");
@@ -154,6 +156,15 @@ void check_stop_token() {
   CHECK(server.token() == "tok123");
   const std::string page = request(server, "GET / HTTP/1.1\r\n\r\n", "</html>");
   CHECK(page.find("name=\"gamepilot-token\" content=\"tok123\"") !=
+        std::string::npos);
+
+  // A page the hub passes on for another machine has no token, though the
+  // hub connects from this one.
+  const std::string relayed = request(
+      server,
+      "GET / HTTP/1.1\r\nHost: h\r\nx-gamepilot-viewer:  remote \r\n\r\n",
+      "</html>");
+  CHECK(relayed.find("name=\"gamepilot-token\" content=\"\"") !=
         std::string::npos);
 
   for (const std::string head : {"POST /stop HTTP/1.1\r\n\r\n",

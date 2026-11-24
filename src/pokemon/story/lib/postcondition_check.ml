@@ -62,16 +62,31 @@ let in_order expected members =
   else expected_read what ~expected:"" ~read true
 
 (* Each species needs as many members as the list names it. *)
-let includes expected members =
+let missing_members expected members =
+  List.filter
+    (fun s -> count_of s members < count_of s (List.map Option.some expected))
+    (List.sort_uniq compare expected)
+
+let wrong_slots slots members =
+  List.filter
+    (fun ({ slot; species } : Plan.slot) ->
+      List.nth_opt members (slot - 1) <> Some (Some species))
+    slots
+
+let slot_text ({ slot; species } : Plan.slot) =
+  Printf.sprintf "%s in slot %d" species slot
+
+let includes_text expected slots =
+  String.concat ", "
+    ((if expected = [] then []
+      else [ String.concat ", " expected ^ " among the members" ])
+    @ List.map slot_text slots)
+
+let includes expected slots members =
   let what = "party" and read = party_text members in
-  let missing =
-    List.filter
-      (fun s -> count_of s members < count_of s (List.map Option.some expected))
-      (List.sort_uniq compare expected)
-  in
-  let expected_text = String.concat ", " expected ^ " among the members" in
-  match missing with
-  | [] -> expected_read what ~expected:expected_text ~read true
+  let expected_text = includes_text expected slots in
+  match (missing_members expected members, wrong_slots slots members) with
+  | [], [] -> expected_read what ~expected:expected_text ~read true
   | _ when unread members > 0 ->
       { what; verdict = Not_checked; detail = "read " ^ read }
   | _ -> expected_read what ~expected:expected_text ~read false
@@ -81,7 +96,8 @@ let check_party (expected : Plan.party option) observed =
   | None, _ -> []
   | Some _, None -> [ not_read "party" ]
   | Some (Party_in_order list), Some members -> [ in_order list members ]
-  | Some (Party_includes list), Some members -> [ includes list members ]
+  | Some (Party_includes { members = list; slots }), Some members ->
+      [ includes list slots members ]
 
 let check_item observed ({ item; quantity } : Plan.item) =
   let what = "item " ^ item in

@@ -39,6 +39,10 @@ val press : ?cooldown_ms:int -> Wire.button -> unit
 val taps : Wire.button -> int -> unit
 (** [n] cursor taps of the button; none for [n <= 0]. *)
 
+val mash : Wire.button -> int -> unit
+(** The fork's [pbf_mash_button] for [ms]: a tap ({!tap_hold_ms} then
+    {!tap_release_ms}) every 320 ms for that long. *)
+
 val moves : from:int -> to_:int -> unit
 (** Taps down (or up) that move a menu cursor from row [from] to row [to_], for
     a menu with no cursor reader (a Mart's list); the others move by reading

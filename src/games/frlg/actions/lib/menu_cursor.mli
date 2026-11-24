@@ -38,6 +38,12 @@ val choose :
 (** {!move_to}, then A until [taken] holds (the screen the row opens). Fails as
     [code]. *)
 
+val open_start_menu : unit -> unit
+(** START until the Start menu shows. Fails as [no_start_menu]. *)
+
+val start_menu_taken : Effects.measurements -> bool
+(** The menu closed, or a text box shows: the row's A was taken. *)
+
 val open_start_menu_row : int -> unit
 (** START until the Start menu shows, then {!choose} the row (from 0 at the top)
     until the menu closes or a text box shows. Fails as [no_start_menu]. *)

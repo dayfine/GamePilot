@@ -15,7 +15,20 @@ struct HttpRequest {
   std::string method;  // "GET", "POST", ...
   std::string path;    // without the query string
   std::string query;   // after the '?', empty when none
+  std::string headers;  // the header lines as they came, CRLF-separated
 };
+
+// The value of header `name` (any case) in `headers`, trimmed; empty when it
+// is missing.
+std::string header_value(std::string_view headers, std::string_view name);
+
+// The header the hub (watch_hub.h) adds to a request it passes on to a run's
+// page for a browser on another machine: the hub itself connects from
+// loopback, so without it the run would take that browser for a local one and
+// hand it Stop's token. The hub writes every head it passes on itself, so a
+// browser cannot set or drop it.
+constexpr std::string_view kViewerHeader = "X-GamePilot-Viewer";
+constexpr std::string_view kRemoteViewer = "remote";
 
 // A head longer than this is refused (no page sends one).
 constexpr std::size_t kMaxRequestHead = 8192;

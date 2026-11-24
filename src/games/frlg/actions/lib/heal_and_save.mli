@@ -1,7 +1,6 @@
 (** The Pokémon Center nurse and the Start menu's SAVE, the story's [heal] and
-    [save] (the fork's heal_at_pokecenter and save in PokemonFRLG_Navigation).
-    The save waits on each page and question; the heal mashes as the fork's
-    does. *)
+    [save] (the fork's heal_at_pokecenter in PokemonFRLG_Navigation, and
+    {!Game_save}). The heal mashes as the fork's does. *)
 
 val nurse_front : Story.Pose.grid
 (** Where the player talks to the nurse on any Center's ground floor (the map is
@@ -32,13 +31,5 @@ val mash_a_ms : int
 val mash_b_ms : int
 (** 5 s, the fork's. *)
 
-val save_row : int
-(** SAVE on the full Start menu: 4. *)
-
-val overwrite_question_ms : int
-(** How long the second question (overwrite the save there?) may take to come
-    after the first YES: 3 s. *)
-
 val save : log:(string -> unit) -> unit -> unit
-(** START, SAVE, YES, YES again if the game asks to overwrite, then the talk
-    settle once it has saved. Fails as [no_start_menu] or [save_no_question]. *)
+(** The in-game save, {!Game_save.save} (the fork's [save_game()]). *)
