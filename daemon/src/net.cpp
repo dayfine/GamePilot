@@ -184,8 +184,16 @@ Socket listen_tcp(const std::string& address, std::uint16_t port) {
   }
   Socket result(wrap(socket));
   int one = 1;
+#ifdef _WIN32
+  // Windows' SO_REUSEADDR lets a second socket bind a port in use; this
+  // option refuses that, as bind does elsewhere.
+  setsockopt(socket, SOL_SOCKET, SO_EXCLUSIVEADDRUSE,
+             reinterpret_cast<const char*>(&one), sizeof(one));
+#else
+  // Rebind at once after a restart, past the old socket's TIME_WAIT.
   setsockopt(socket, SOL_SOCKET, SO_REUSEADDR,
              reinterpret_cast<const char*>(&one), sizeof(one));
+#endif
   const std::string where = address + ":" + std::to_string(port);
   if (::bind(socket, reinterpret_cast<const sockaddr*>(&bound),
              sizeof(bound)) != 0) {
