@@ -9,7 +9,14 @@
    summaries before the first action that finds a member by its species. With --end-check-only
    no event runs: the state is checked against the plan's postconditions.
    --grind-battles N (testing) ends each grind, passing, after N battles and
-   skips the plan's moves postconditions (Frlg_story.Checkpoint_run). *)
+   skips the plan's moves postconditions (Frlg_story.Checkpoint_run).
+
+   A live run gets a run folder in --runs-dir ($GAMEPILOT_RUNS) with
+   run.json (kind checkpoint, mode single), story.log, summary.txt, the
+   RESULTS.tsv row and failure.png on a failure (Attached_run); the wire log
+   is the daemon's own. *)
+
+let ( let* ) = Result.bind
 
 type flags = {
   state : string option;
@@ -23,7 +30,8 @@ type flags = {
 }
 
 let usage =
-  "  gamepilot checkpoint PLAN.json [--state FILE] [--port N] [--log FILE]\n\
+  "  gamepilot checkpoint PLAN.json [--state FILE] [--port N] [--log FILE] \
+   [--runs-dir DIR]\n\
   \      [--party SPECIES,...] [--center TOWN] [--walk] [--end-check-only]\n\
   \      [--grind-battles N]\n\
   \  gamepilot replay checkpoint WIRELOG PLAN.json [same flags]\n"
@@ -83,56 +91,81 @@ let options flags : Frlg_story.Checkpoint_run.options =
     log = logger flags.log_file;
   }
 
-let ( let* ) = Result.bind
-
 let prepare plan_file flags =
   let* plan = Story.Plan_decode.load plan_file in
   let* () = Frlg_story.Checkpoint_run.check_plan plan in
   let* world = Frlg_story.Checkpoint_run.load_world () in
   Ok (plan, world, options flags)
 
+(* The outcome's line and exit code. *)
 let report = function
-  | Ok () ->
-      print_endline "checkpoint: PASSED";
-      0
-  | Error failure ->
-      print_endline ("checkpoint: FAILED " ^ Story.Failure.to_string failure);
-      1
+  | Ok () -> ("checkpoint: PASSED", 0)
+  | Error failure -> ("checkpoint: FAILED " ^ Story.Failure.to_string failure, 1)
 
 (* The checkpoint under [handle], its failures from the handler reported. *)
-let handled handle run =
+let outcome handle run =
   match handle run with
   | result -> report result
-  | exception Replay.Divergence e ->
-      print_endline ("checkpoint: DIVERGED " ^ e);
-      1
-  | exception Effects.Disconnected e ->
-      print_endline ("checkpoint: DISCONNECTED " ^ e);
-      1
+  | exception Replay.Divergence e -> ("checkpoint: DIVERGED " ^ e, 1)
+  | exception Effects.Disconnected e -> ("checkpoint: DISCONNECTED " ^ e, 1)
   | exception Effects.Stop_requested reason ->
-      print_endline ("checkpoint: STOPPED " ^ reason);
-      1
+      ("checkpoint: STOPPED " ^ reason, 1)
   | exception Unix.Unix_error (e, f, _) ->
-      Printf.printf "checkpoint: CONNECT FAILED %s: %s\n" f
-        (Unix.error_message e);
-      1
+      ( Printf.sprintf "checkpoint: CONNECT FAILED %s: %s" f
+          (Unix.error_message e),
+        1 )
 
-(* Runs the checkpoint under [handle]; the exit code. *)
-let run handle plan_file flags =
+(* Runs the checkpoint under [handle], [after] its result in the session;
+   the outcome's line (printed) and exit code. *)
+let run_with ?(after = ignore) handle plan_file flags =
   match prepare plan_file flags with
-  | Error e ->
-      prerr_endline ("checkpoint: " ^ e);
-      2
+  | Error e -> ("checkpoint: " ^ e, 2)
   | Ok (plan, world, options) ->
-      handled handle (fun () ->
-          Frlg_story.Checkpoint_run.run options world plan)
+      let body () =
+        let result = Frlg_story.Checkpoint_run.run options world plan in
+        after result;
+        result
+      in
+      let line, code = outcome handle body in
+      print_endline line;
+      (line, code)
 
+let label plan_file =
+  let base = Filename.basename plan_file in
+  Option.value
+    (Filename.chop_suffix_opt ~suffix:".plan.json" base)
+    ~default:(Filename.remove_extension base)
+
+(* On the daemon at --port, in a run folder of its own (Attached_run): its
+   story log unless --log names another. *)
 let live plan_file args =
-  Result.map
-    (fun flags -> run (Live.run ~port:flags.port) plan_file flags)
-    (parse defaults args)
+  let* runs_dir, args = Attached_run.runs_dir_flag args in
+  let* flags = parse defaults args in
+  let id = label plan_file in
+  let run =
+    Attached_run.start ~runs_dir ~kind:Checkpoint
+      ~program:(Program_registry.of_plan_dir (Filename.dirname plan_file))
+      ~label:id ~mode:"single"
+  in
+  let log_file =
+    Some
+      (Option.value flags.log_file
+         ~default:(Run_record.path run.record "story.log"))
+  in
+  let after = function
+    | Ok () -> ()
+    | Error _ -> Attached_run.save_failure run.record
+  in
+  let line, code =
+    run_with ~after
+      (Live.run ~port:flags.port)
+      plan_file { flags with log_file }
+  in
+  Attached_run.finish ~runs_dir run ~line ~code;
+  Ok code
 
 let replay wirelog plan_file args =
   Result.map
-    (fun flags -> run (Replay.run (Replay.log_of_file wirelog)) plan_file flags)
+    (fun flags ->
+      snd (run_with (Replay.run (Replay.log_of_file wirelog)) plan_file flags))
     (parse defaults args)

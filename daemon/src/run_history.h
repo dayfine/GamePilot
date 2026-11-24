@@ -12,11 +12,14 @@
 //   story.log, summary.txt, failure.png, wire.jsonl, daemon.out
 //   ../RESULTS.tsv   one row per finished run
 //
-// A folder from before run.json falls back to its name
-// (<date>-<checkpoint>-<mode>-<n>), its RESULTS.tsv row, its daemon's first
-// output line (the backend) and the last wire.jsonl line (how long it ran).
-// Game and program are then unknown: the daemon has no game names
-// (`gamepilot runs --backfill` writes run.json for such folders).
+// A folder without run.json falls back to its name
+// (<date>-<checkpoint>-<mode>-<n>), its RESULTS.tsv row and its daemon's first
+// output line (the backend). Its start is daemon.json's clock_zero_unix_ms,
+// else the first wire.jsonl line (the log's span back from its last write),
+// else the folder's mtime; its end the last wire.jsonl line; its result
+// "unknown". So every row has a start and sorts by it. Game and program are
+// then unknown: the daemon has no game names (`gamepilot runs --backfill`
+// writes run.json for such folders).
 
 #pragma once
 
@@ -32,6 +35,8 @@ namespace gamepilot {
 
 struct RunRow {
   std::string run;  // the folder's name
+  // checkpoints, checkpoint, program, preflight, bring-up, daemon
+  std::string kind;
   std::string game;  // the registry's ids: frlg, frlg.mail_glitch
   std::string game_name;
   std::string program;
@@ -42,10 +47,10 @@ struct RunRow {
   std::string checkpoint;
   std::string backend;  // mgba, switch; empty = unknown
   std::string mode;
-  std::string result;  // pass, fail, running; empty = unknown
+  std::string result;  // pass, fail, running, unknown
   std::string at;      // where it failed
   std::string reason;
-  std::int64_t started_ms = 0;  // Unix ms; 0 = unknown
+  std::int64_t started_ms = 0;  // Unix ms
   std::int64_t ended_ms = 0;
   bool live = false;
   bool recorded = false;  // has frames/
@@ -55,7 +60,8 @@ struct RunRow {
 // A run folder's name: no path parts, nothing hidden.
 bool valid_run_name(std::string_view name);
 
-// "<YYYY-MM-DD>-<checkpoint>-<testing|verification>-<n>": checkpoint, mode.
+// "<YYYY-MM-DD>-<checkpoint>-<mode>-<n>": checkpoint, mode (testing,
+// verification, preflight, single, run, bring-up: Run_record's).
 struct RunName {
   std::string checkpoint;
   std::string mode;
@@ -72,6 +78,11 @@ std::int64_t local_time_ms(std::string_view text);
 
 // The t_ms of a wire log's last line (how long the daemon ran); 0 when none.
 double wire_log_end_ms(const std::string& path);
+// The t_ms of a wire log's first line; 0 when none.
+double wire_log_start_ms(const std::string& path);
+
+// A file's or folder's last change, Unix ms; 0 when it has none.
+std::int64_t mtime_ms(const std::string& path);
 
 // One run folder, `run.json` first, then the fallbacks.
 RunRow read_run(const std::string& runs_dir, const std::string& name,
