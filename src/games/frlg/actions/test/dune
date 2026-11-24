@@ -24,7 +24,8 @@
   test_grind
   test_mail_glitch_actions
   test_lift_ride
-  test_capture)
+  test_capture
+  test_pacing)
  (modules
   test_fly_towns
   test_actions
@@ -34,7 +35,8 @@
   test_grind
   test_mail_glitch_actions
   test_lift_ride
-  test_capture)
+  test_capture
+  test_pacing)
  (deps
   mgba.probes.jsonl
   menus.mgba.probes.jsonl
