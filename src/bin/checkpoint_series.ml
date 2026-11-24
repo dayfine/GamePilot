@@ -47,6 +47,36 @@ let checkpoint ~plan_dir (setup : Run.setup) id ~next =
 
 let now_ms () = int_of_float (Unix.gettimeofday () *. 1000.)
 
+let attempt_of : Run.outcome -> Checkpoint_trials.attempt = function
+  | Passed -> Attempt_passed
+  | Failed { at; reason; repeats } -> Attempt_failed { at; reason; repeats }
+
+(* Run [n] of [cp]: attempts from its start until Checkpoint_trials.attempts
+   decides; the last attempt's folder and the run's outcome, noted in that
+   folder's summary.txt. *)
+let rec attempts setup cp n ~progress tried =
+  let attempt = List.length tried + 1 in
+  let record, outcome = Run.run setup cp n ~attempt ~progress in
+  let tried = tried @ [ attempt_of outcome ] in
+  let decided why outcome =
+    if cp.Run.plan.retries > 0 then (
+      let line =
+        Printf.sprintf "%s run %d: %s after %d of %d attempts" cp.id n why
+          attempt (cp.plan.retries + 1)
+      in
+      print_endline ("[Checkpoints] " ^ line);
+      Run_record.append record "summary.txt" (line ^ "\n"));
+    (record, outcome)
+  in
+  match Checkpoint_trials.attempts ~retries:cp.plan.retries tried with
+  | Attempt_again -> attempts setup cp n ~progress tried
+  | Run_passed -> decided "passed" outcome
+  | Run_failed _ when cp.plan.retries = 0 -> (record, outcome)
+  | Run_failed { at; repeats; why } ->
+      let reason = match outcome with Failed f -> f.reason | Passed -> "" in
+      decided ("failed: " ^ why)
+        (Run.Failed { at; reason = why ^ ": " ^ reason; repeats })
+
 (* One run of [cp], [chain] updated around it. *)
 let trial setup cp n chain =
   chain := Chain_progress.begin_trial !chain;
@@ -59,7 +89,7 @@ let trial setup cp n chain =
           (Chain_progress.end_trial started r ~now_ms)
           ~now_ms
   in
-  let ((_, outcome) as run) = Run.run setup cp n ~progress in
+  let ((_, outcome) as run) = attempts setup cp n ~progress [] in
   chain :=
     Chain_progress.end_trial started (Run.trial outcome) ~now_ms:(now_ms ());
   run

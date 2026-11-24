@@ -466,5 +466,33 @@ let postcondition_cases : Case_table.case list =
     };
   ]
 
+let retries_of metadata =
+  let text =
+    edited {|"title": "Test",|}
+      (Printf.sprintf {|"title": "Test", "metadata": %s,|} metadata)
+  in
+  match
+    Plan_decode.decode ~source:"base.plan.json" (Yojson.Safe.from_string text)
+  with
+  | Ok plan -> string_of_int plan.retries
+  | Error message -> message
+
+let retries_cases : Case_table.case list =
+  let case name input expectation : Case_table.case =
+    { name; input; expectation }
+  in
+  [
+    case "mg-05 retries the battle's luck 3 times"
+      (fun () -> string_of_int (load "mg-05.plan.json" mg).retries)
+      "3";
+    case "no retries field: none"
+      (fun () -> retries_of {|{"phase": "testing"}|})
+      "0";
+    case "negative retries are refused"
+      (fun () -> retries_of {|{"retries": -1}|})
+      (at ^ "metadata.retries is -1, not 0 or more.");
+  ]
+
 let () =
-  Case_table.run "plan_decode" (real_plans @ inline_plans @ postcondition_cases)
+  Case_table.run "plan_decode"
+    (real_plans @ inline_plans @ postcondition_cases @ retries_cases)

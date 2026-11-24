@@ -119,4 +119,8 @@ type t = {
       (** The plan's phase, verification and postconditions, kept as written. *)
   postconditions : postconditions;
       (** The metadata's postconditions, read; all empty when it states none. *)
+  retries : int;
+      (** The metadata's ["retries"] (default 0): how many more attempts a run
+          of the checkpoint makes from its start after a failed one
+          ({!Checkpoint_trials.attempts}). *)
 }

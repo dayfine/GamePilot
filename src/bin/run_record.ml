@@ -53,6 +53,11 @@ let write t file text =
   Out_channel.with_open_bin (path t file) (fun out ->
       Out_channel.output_string out text)
 
+let append t file text =
+  Out_channel.with_open_gen
+    [ Open_wronly; Open_creat; Open_append; Open_binary ] 0o644 (path t file)
+    (fun out -> Out_channel.output_string out text)
+
 (* A logger to stdout and story.log; closed by the returned function. *)
 let story_log t =
   let out = open_out (path t "story.log") in

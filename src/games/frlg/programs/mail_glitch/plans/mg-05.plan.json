@@ -28,6 +28,7 @@
   },
   "metadata": {
     "phase": "testing",
+    "retries": 3,
     "notes": "Ported from the fork's tested PlanData/mg-05.plan.json (Route 16 run on mGBA, 2026-11-23; passed on its third attempt from the save before Lea & Jed). Ends with MIMIEN (Lv 33) holding the recycled Leppa Berry: the Mail Glitch is active. The postconditions check MIMIEN and Pidgey are in the party and slots 1-3's held-item marks: CH'DING keeps its own item, Blastoise ate its Leppa Berry, MIMIEN holds the recycled one where its mail was (the C++ run's final party shows the same); verify_mail_glitch reads MIMIEN's mark first.",
     "postconditions": {
       "party_includes": ["mr-mime", "pidgey"],

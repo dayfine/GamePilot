@@ -156,6 +156,15 @@ let checkpoint ~where obj : Plan.checkpoint =
     events;
   }
 
+(* The metadata's "retries": attempts of a run after its first fails. *)
+let retries ~where = function
+  | None -> 0
+  | Some metadata -> (
+      match optional ~where "retries" metadata F.int with
+      | None -> 0
+      | Some n when n >= 0 -> n
+      | Some n -> F.fail "%sretries is %d, not 0 or more." where n)
+
 let plan ~where obj : Plan.t =
   only ~where [ "format"; "game"; "checkpoint"; "execution"; "metadata" ] obj;
   let named = F.string ~where "format" obj in
@@ -175,6 +184,7 @@ let plan ~where obj : Plan.t =
     metadata;
     postconditions =
       Postcondition_decode.of_metadata ~where:metadata_where metadata;
+    retries = retries ~where:(metadata_where ^ "metadata.") metadata;
   }
 
 let decode ~source json =

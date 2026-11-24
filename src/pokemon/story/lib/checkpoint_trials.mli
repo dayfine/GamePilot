@@ -55,3 +55,34 @@ val verdict : policy -> run list -> verdict
 (** The verdict after these runs (oldest first): stopped when the last two
     failed at the same step or the last one repeats, passed or stopped once
     every run ran, else run again. *)
+
+(** {1 Attempts within a run}
+
+    A run whose plan allows retries ({!Plan.t.retries}) is up to [retries + 1]
+    attempts, each from the checkpoint's start (mGBA reloads the start state;
+    the Switch goes back to its last save and checks the start, as every run
+    does). The run passes when an attempt passes, all postconditions holding;
+    verification counts the run once, its attempts inside it. For a checkpoint
+    whose outcome depends on battle luck (mg-05: Knock Off on the partner). Not
+    in the fork, whose [verify_checkpoint()] has no retries. *)
+
+type attempt = Attempt_passed | Attempt_failed of failure
+
+and failure = {
+  at : string;  (** Where it failed, as {!run}'s [at]. *)
+  reason : string;  (** Why, e.g. ["mail_glitch_not_active: ..."]. *)
+  repeats : bool;  (** Another attempt would fail the same way. *)
+}
+
+type attempt_verdict =
+  | Attempt_again
+  | Run_passed
+  | Run_failed of { at : string; repeats : bool; why : string }
+      (** [repeats]: the run's failure is not luck, so verification stops: the
+          last attempt's failure repeats, or every attempt (more than one)
+          failed at the same step for the same reason. *)
+
+val attempts : retries:int -> attempt list -> attempt_verdict
+(** The run's verdict after these attempts (oldest first): passed at the first
+    pass, failed at once on a failure that repeats or when [retries + 1]
+    attempts failed, else another attempt. *)
