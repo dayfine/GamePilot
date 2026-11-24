@@ -300,6 +300,7 @@ let postconditions_text (plan : Plan.t) =
         (fun ({ species; min } : Plan.level) ->
           Printf.sprintf "%s at least Lv %d" species min)
         p.levels;
+      Option.fold ~none:[] ~some:(fun m -> [ "marks " ^ list m ]) p.marks;
     ]
   |> function
   | [] -> "none"
@@ -397,6 +398,22 @@ let postcondition_cases : Case_table.case list =
       input =
         (fun () -> with_postconditions {|{"levels": [{"species": "mr-mime"}]}|});
       expectation = post ^ "levels[0].min is missing.";
+    };
+    {
+      name = "mg-05a promises Blastoise's Leppa Berry and MIMIEN's mail";
+      input = (fun () -> postconditions_text (load "mg-05a.plan.json" mg));
+      expectation =
+        "party in order farfetchd, blastoise, mr-mime, pidgey, rattata, oddish\n\
+         item antidote x2\n\
+         item super-potion x3\n\
+         item retro-mail x1\n\
+         money 19164 to 19164\n\
+         marks none, held_item, mail, none, none, none";
+    };
+    {
+      name = "a mark no party shows";
+      input = (fun () -> with_postconditions {|{"marks": ["none", "berry"]}|});
+      expectation = post ^ "marks: berry is not held_item, mail or none.";
     };
     {
       name = "an unknown postcondition";

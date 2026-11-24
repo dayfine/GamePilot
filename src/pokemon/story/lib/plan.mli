@@ -91,13 +91,16 @@ type postconditions = {
   knows : knows list;  (** Moves members must know. *)
   levels : level list;
       (** Levels members must have reached, e.g. MIMIEN at least Lv 33. *)
+  marks : string list option;
+      (** Each party slot's held-item mark, slot 1 first: ["held_item"],
+          ["mail"] or ["none"] (a slot left out is not checked). *)
 }
 (** What must hold once the checkpoint is done, from the plan's
     [metadata.postconditions]. [position], [items] and [flags] are
     PokemonSimulation's ([read_metadata] in
     [src/pokesim/story/checkpoint_wire.py]) and the C++'s ([StoryPostconditions]
     in [Pokemon/AutoStory/Types/Pokemon_StoryPostconditions.h], fork
-    [frlg/lean]); [party], [coins], [money], [knows] and [levels] are
+    [frlg/lean]); [party], [coins], [money], [knows], [levels] and [marks] are
     GamePilot's additions: the state a Mail Glitch checkpoint exists to change.
 *)
 

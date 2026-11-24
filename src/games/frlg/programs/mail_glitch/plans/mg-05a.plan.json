@@ -92,7 +92,7 @@
         "id": "use_up_blizzard_pp",
         "kind": "game_action",
         "action": "prepare_berry_pp",
-        "args": {"species": "blastoise", "move": "blizzard", "backup_move": "surf"},
+        "args": {"species": "blastoise", "move": "blizzard", "backup_move": "surf", "pace": "west"},
         "declared_after": {"map": "Route8", "tiles": [[45, 12]], "facing": "west"},
         "why": "Use up Blizzard PP so Leppa is consumed after the opening turn."
       },
@@ -168,7 +168,16 @@
   },
   "metadata": {
     "phase": "testing",
-    "notes": "Ported unchanged from the fork's tested PlanData/mg-05a.plan.json (Route 16 run on mGBA, 2026-11-23). The fork splits mg-05 in two so the double battle retries from a save one tile outside Lea's sightline: mg-05a buys medicine, picks up Route 8's hidden Leppa Berry, uses up Blastoise's Blizzard PP in wild battles, flies to Celadon, cuts Route 16's tree, walks to (30, 7) and arranges the party and its held items. Held items do not read yet: the postconditions check the party order only, not that Blastoise holds the Leppa Berry and MIMIEN the Retro Mail, nor that Blizzard is at 0 PP.",
-    "postconditions": {"party": ["farfetchd", "blastoise", "mr-mime", "pidgey", "rattata", "oddish"]}
+    "notes": "Ported unchanged from the fork's tested PlanData/mg-05a.plan.json (Route 16 run on mGBA, 2026-11-23). The fork splits mg-05 in two so the double battle retries from a save one tile outside Lea's sightline: mg-05a buys medicine, picks up Route 8's hidden Leppa Berry, uses up Blastoise's Blizzard PP in wild battles, flies to Celadon, cuts Route 16's tree, walks to (30, 7) and arranges the party and its held items. The postconditions check the party order, each slot's held-item mark on the party menu (Blastoise the Leppa Berry, MIMIEN the Retro Mail), the bag's new medicine and one Retro Mail left of two, and the money after the Mart ($21,464 - $2,300); not that Blizzard is at 0 PP (no PP digit reader). The fork turns in place for the wild battles; GamePilot paces west and back from (45, 12), see Paced_battle.",
+    "postconditions": {
+      "party": ["farfetchd", "blastoise", "mr-mime", "pidgey", "rattata", "oddish"],
+      "marks": ["none", "held_item", "mail", "none", "none", "none"],
+      "money": {"min": 19164, "max": 19164},
+      "items": [
+        {"item": "antidote", "quantity": 2},
+        {"item": "super-potion", "quantity": 3},
+        {"item": "retro-mail", "quantity": 1}
+      ]
+    }
   }
 }

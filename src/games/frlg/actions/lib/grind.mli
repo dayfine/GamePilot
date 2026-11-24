@@ -8,10 +8,12 @@
 
     Where it differs: it first reads the member's moves and passes at once when
     it knows the goal's move already (GamePilot's). Battles are the switch trick
-    at the strategy's spot (turning in place for each), healing every
-    [heal_every] battles (FireRed has no HP or PP reader here, the C++'s
-    [needs_heal()]); a battle answers YES to the goal's move only. The level is
-    read in slot 1, where the grinder is put.
+    at the strategy's spot (paced for, one step and back, {!Pacing}, where the
+    C++ turns in place reading the facing: GamePilot has no facing reader, and
+    turning blind stepped off the grass on mGBA), healing every [heal_every]
+    battles (FireRed has no HP or PP reader here, the C++'s [needs_heal()]); a
+    battle answers YES to the goal's move only. The level is read in slot 1,
+    where the grinder is put.
 
     The steps that press come as a {!rig}, so the loop runs on a fake in tests.
     Each step raises {!Menu_input.Action_failed} when it fails. *)
@@ -24,7 +26,7 @@ type rig = {
   swap : int -> int -> unit;  (** two party slots trade places *)
   go_to : Story.Pose.grid -> unit;  (** walked to *)
   heal : Grind_plan.heal -> unit;  (** healed, then still at the heal place *)
-  find_battle : unit -> unit;  (** turned in place until a wild battle starts *)
+  find_battle : unit -> unit;  (** paced until a wild battle starts *)
   battle : Frlg_battle.Battle_script.t -> Frlg_battle.Scripted_battle.outcome;
   log : string -> unit;
 }

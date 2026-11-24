@@ -126,16 +126,16 @@ let heal t () =
       Result.bind (walk_to t front) (fun () ->
           Menu_input.run (Heal_and_save.heal_at_nurse ~log:t.config.log))
 
-let faced t =
-  Option.value
-    (Option.bind t.at (fun at -> at.faces))
-    ~default:Grid_maps.Direction.North
+(* The player's reckoned pose; an action that needs it fails without. *)
+let current t =
+  match t.at with
+  | Some at -> at
+  | None -> Menu_input.fail "position_unknown" "no position to pace from"
 
-(* Turning ends facing a way the spin does not report. *)
-let find_battle t () =
-  Spin_for_encounter.spin ~log:t.config.log ~facing:(faced t)
-    ~max_batches:Action_requests.default_spin_batches;
-  t.at <- Option.map (fun at -> { at with Story.Pose.faces = None }) t.at
+let find_battle t ~pace ~patch () =
+  Paced_battle.find ~log:t.config.log ~pace ~patch
+    ~stands:(fun at -> t.at <- Some at)
+    (current t)
 
 let screen_driver () =
   Frlg_battle.Screen_driver.make ~read_offered_move:Summary_moves.read_offered
@@ -149,9 +149,12 @@ let battle_on t wrap script =
 
 let battle t script = battle_on t Fun.id script
 
-let grind_rig t =
+(* Grind_plan reads a spot's one tile. *)
+let grind_rig t (plan : Grind_plan.t) =
+  let patch = List.hd plan.strategy.spot.tiles in
+  let find_battle = find_battle t ~pace:plan.strategy.pace ~patch in
   Grind_rig.make ~log:t.config.log ~party:t.party ~walk_to:(walk_to t)
-    ~find_battle:(find_battle t) ~battle:(battle t)
+    ~find_battle ~battle:(battle t)
 
 let grind t (_ : Story.Plan.event) args =
   let cap = t.config.grind_cap in
@@ -159,7 +162,7 @@ let grind t (_ : Story.Plan.event) args =
   | Error e -> Error (Story.Failure.cause ~repeats:true "no_grind_strategies" e)
   | Ok strategies ->
       Result.bind (Grind_plan.decode strategies args) (fun plan ->
-          Menu_input.run (fun () -> Grind.run ?cap (grind_rig t) plan))
+          Menu_input.run (fun () -> Grind.run ?cap (grind_rig t plan) plan))
 
 (* The catches that went to the party join it; the player stands where the
    pacing left them: the patch's tile, or one tile [pace] from it. *)
@@ -196,18 +199,26 @@ let capture t (_ : Story.Plan.event) args =
 let known_moves t ~slot = Summary_moves.read_known ~log:t.config.log ~slot
 let species_at t slot = List.nth_opt (Party_roster.to_list !(t.party)) (slot - 1)
 
-let prepare_berry_pp t (_ : Story.Plan.event) args =
+(* The battles paced for from the tile the action starts on, and the player
+   back on it afterwards, facing [pace] (mg-05a declares it so). *)
+let run_berry_pp t (plan : Berry_pp.plan) () =
+  let start = current t in
   let rig : Berry_pp.rig =
     {
       lead = (fun () -> species_at t 1);
       known_moves = known_moves t;
-      find_battle = find_battle t;
+      find_battle = find_battle t ~pace:plan.pace ~patch:start.at_tile;
       battle = battle t;
       log = t.config.log;
     }
   in
+  Berry_pp.run rig plan;
+  Menu_input.raise_error
+    (walk_to t (Paced_battle.back_on_patch ~pace:plan.pace start))
+
+let prepare_berry_pp t (_ : Story.Plan.event) args =
   Result.bind (Berry_pp.decode args) (fun plan ->
-      Menu_input.run (fun () -> Berry_pp.run rig plan))
+      Menu_input.run (run_berry_pp t plan))
 
 let double_battle t (_ : Story.Plan.event) args =
   let log = t.config.log in

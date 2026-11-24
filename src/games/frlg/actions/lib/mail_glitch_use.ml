@@ -8,6 +8,11 @@ let mark_of_name : string -> Party_menu.mark option = function
   | "none" -> Some No_mark
   | _ -> None
 
+let name_of_mark : Party_menu.mark -> string = function
+  | Held_item -> "held_item"
+  | Mail -> "mail"
+  | No_mark -> "none"
+
 let mismatch ~read slot mark =
   let shown = read slot in
   if shown = mark then None
@@ -21,15 +26,24 @@ let marks_mismatch expected ~read =
   List.mapi (fun i mark -> (i + 1, mark)) expected
   |> List.find_map (fun (slot, mark) -> mismatch ~read slot mark)
 
-let check_marks ~log expected =
+let read_marks ~log =
   Party_actions.open_party ();
   ignore
     (Effects.submit [ Wire.Wait { wait_ms = Party_actions.party_settle_ms } ]);
   let m = M.await_screen ~code:"no_party" "the party" Party_menu.party_menu in
-  let mismatch = marks_mismatch expected ~read:(Party_menu.mark m) in
+  let marks =
+    List.init (Party_menu.members m) (fun i -> Party_menu.mark m (i + 1))
+  in
   M.close "the party" Party_menu.party_menu;
   M.settle_back ~label:"party marks" ~log;
-  match mismatch with
+  marks
+
+let check_marks ~log expected =
+  let marks = read_marks ~log in
+  let read slot =
+    Option.value ~default:Party_menu.No_mark (List.nth_opt marks (slot - 1))
+  in
+  match marks_mismatch expected ~read with
   | None -> log "Party: the marks are as expected."
   | Some detail -> M.fail "party_marks_wrong" detail
 

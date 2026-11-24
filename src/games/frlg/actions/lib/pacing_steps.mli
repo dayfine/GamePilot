@@ -13,13 +13,13 @@
       trainer's battle is not ported. Route 16's patch has none in sight.
     - No debug image of a screen that is neither the overworld nor a battle. *)
 
+val overworld_shows : unit -> bool
+(** The fork's overworld_shows(): START opens the Start menu only on the
+    overworld, and B closes it again. *)
+
 val find_encounter :
-  log:(string -> unit) ->
-  overworld_shows:(unit -> bool) ->
-  pace:Grid_maps.Direction.t ->
-  Pacing.spot ref ->
-  bool
+  log:(string -> unit) -> pace:Grid_maps.Direction.t -> Pacing.spot ref -> bool
 (** From the overworld, in the patch, from [spot] (which each step updates, so
     the next search starts where this one left the player): steps until a wild
-    battle starts, {!Pacing.max_steps} at most. [overworld_shows] is the
-    START-menu check (the fork's overworld_shows()). *)
+    battle starts, {!Pacing.max_steps} at most; {!overworld_shows} tells a
+    battle that ended from one still showing. *)

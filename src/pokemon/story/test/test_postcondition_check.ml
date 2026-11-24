@@ -14,6 +14,7 @@ let nothing : Plan.postconditions =
     flags = [];
     knows = [];
     levels = [];
+    marks = None;
   }
 
 let read = C.nothing_read
@@ -145,6 +146,21 @@ let level_cases =
       "level mr-mime: not checked: the game can't read it";
   ]
 
+let mg05a_marks = { nothing with marks = Some [ "none"; "held_item"; "mail" ] }
+
+let marks_cases =
+  [
+    case "Blastoise holds the berry, MIMIEN the mail (mg-05a's end)" mg05a_marks
+      { read with marks = Some [ "none"; "held_item"; "mail"; "none" ] }
+      "marks: passed: none, held_item, mail";
+    case "MIMIEN without its mail" mg05a_marks
+      { read with marks = Some [ "none"; "held_item"; "none" ] }
+      "marks: failed: expected none, held_item, mail, read none, held_item, \
+       none";
+    case "the marks not read" mg05a_marks read
+      "marks: not checked: the game can't read it";
+  ]
+
 let log name promised observed : Case_table.case =
   {
     name;
@@ -188,4 +204,5 @@ let log_cases : Case_table.case list =
 
 let () =
   Case_table.run "postcondition_check"
-    (party_cases @ count_cases @ knows_cases @ level_cases @ log_cases)
+    (party_cases @ count_cases @ knows_cases @ level_cases @ marks_cases
+   @ log_cases)

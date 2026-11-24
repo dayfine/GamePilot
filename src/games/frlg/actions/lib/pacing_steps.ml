@@ -36,7 +36,20 @@ let fight_trainer () =
   Menu_input.fail "pace_trainer"
     "a trainer spoke during pacing; their battle is not ported"
 
-let steps ~log ~overworld_shows ~pace spot : Pacing.steps =
+(* The fork's overworld_shows: START opens the start menu only on the
+   overworld; B closes it again. *)
+let start_menu_wait_ms = 1200
+let start_menu_close_ms = 600
+
+let overworld_shows () =
+  Menu_input.press ~cooldown_ms:start_menu_wait_ms Wire.Start;
+  match Effects.read () with
+  | Some m when Start_menu.start_menu_open m ->
+      Menu_input.press ~cooldown_ms:start_menu_close_ms Wire.B;
+      true
+  | Some _ | None -> false
+
+let steps ~log ~pace spot : Pacing.steps =
   {
     step = step ~pace spot;
     battle_shows = reads Battle_screen.battle_shows;
@@ -46,8 +59,7 @@ let steps ~log ~overworld_shows ~pace spot : Pacing.steps =
     log;
   }
 
-let find_encounter ~log ~overworld_shows ~pace spot =
+let find_encounter ~log ~pace spot =
   Effects.with_probes Ow.Walk_interrupts.probes (fun () ->
-      Pacing.pace_until_battle
-        (steps ~log ~overworld_shows ~pace spot)
+      Pacing.pace_until_battle (steps ~log ~pace spot)
         ~max_steps:Pacing.max_steps)
