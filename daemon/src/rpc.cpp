@@ -481,6 +481,17 @@ pa::JsonValue stop_notification(const std::string& reason) {
   return message;
 }
 
+pa::JsonValue keepawake_notification(const std::string& key, double idle_ms) {
+  pa::JsonObject params;
+  params["key"] = key;
+  params["idle_ms"] = static_cast<std::int64_t>(idle_ms);
+  pa::JsonObject message;
+  message["jsonrpc"] = "2.0";
+  message["method"] = "keepawake";
+  message["params"] = std::move(params);
+  return message;
+}
+
 pa::JsonValue wire_log_line(const char* dir, double t_ms, pa::JsonValue msg) {
   pa::JsonObject line;
   line["dir"] = dir;

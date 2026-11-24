@@ -39,6 +39,7 @@ type notification =
   | Watch_log of string
   | Watch_run of Watch_run.t
   | Stop of string
+  | Keepawake of { key : string; idle_ms : int }
 
 type message =
   | Request of request
@@ -140,6 +141,13 @@ let frame_notification_of_json j =
   let p = params j in
   Frame { load = int_field "frame" "load" p; frame = Probe.frame_of_json p }
 
+let keepawake_of_json p =
+  Keepawake
+    {
+      key = string_field "keepawake" "key" p;
+      idle_ms = int_field "keepawake" "idle_ms" p;
+    }
+
 let notification_of_json m j =
   match m with
   | `String "frame" -> Notification (frame_notification_of_json j)
@@ -152,6 +160,7 @@ let notification_of_json m j =
   | `String "watch.run" ->
       Notification (Watch_run (Watch_run.of_json (params j)))
   | `String "stop" -> Notification (Stop (Watch.reason_of_json (params j)))
+  | `String "keepawake" -> Notification (keepawake_of_json (params j))
   | m -> fail "unknown notification %s" (Yojson.Safe.to_string m)
 
 let message_of_json j =
@@ -183,6 +192,11 @@ let json_of_notification = function
       [ ("method", `String "watch.run"); ("params", Watch_run.to_json run) ]
   | Stop reason ->
       [ ("method", `String "stop"); ("params", Watch.json_of_reason reason) ]
+  | Keepawake { key; idle_ms } ->
+      [
+        ("method", `String "keepawake");
+        ("params", `Assoc [ ("key", `String key); ("idle_ms", `Int idle_ms) ]);
+      ]
 
 let json_of_request { id; call } =
   [

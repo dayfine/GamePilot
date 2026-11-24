@@ -49,16 +49,19 @@ function(embed_page page function header)
 endfunction()
 embed_page(watch.html watch_page watch_server.h)
 embed_page(hub.html hub_page watch_hub.h)
+embed_page(run.html run_page watch_hub.h)
 
 add_library(gamepilot_core STATIC
   "${CMAKE_CURRENT_BINARY_DIR}/watch_page.cpp"
   "${CMAKE_CURRENT_BINARY_DIR}/hub_page.cpp"
+  "${CMAKE_CURRENT_BINARY_DIR}/run_page.cpp"
   src/base64.cpp
   src/board_session.cpp
   src/fake_switch.cpp
   src/frame_stream.cpp
   src/frame_ring.cpp
   src/http.cpp
+  src/keep_awake.cpp
   src/live_schedule.cpp
   src/mgba_backend.cpp
   src/net.cpp
@@ -66,6 +69,8 @@ add_library(gamepilot_core STATIC
   src/probe_evaluation.cpp
   src/probes.cpp
   src/rpc.cpp
+  src/run_history.cpp
+  src/run_journal.cpp
   src/schedule.cpp
   src/sent_results.cpp
   src/server.cpp
@@ -101,7 +106,9 @@ target_link_libraries(press_latency PRIVATE gamepilot_core)
 gamepilot_warnings(press_latency)
 
 enable_testing()
-foreach(test board_session_test contracts_test probes_test switch_backend_test
+foreach(test board_session_test contracts_test keep_awake_test probes_test
+             run_history_test
+             switch_backend_test
              switch_geometry_test watch_test watch_registry_test)
   add_executable(${test} tests/${test}.cpp)
   target_link_libraries(${test} PRIVATE gamepilot_core)

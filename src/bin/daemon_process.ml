@@ -45,19 +45,18 @@ type watch = {
 
 let flag_pairs pairs = List.concat_map (fun (name, v) -> [ name; v ]) pairs
 
-let page_flags ~checkpoint ~run_folder w =
+let page_flags ~checkpoint w =
   [
     ("--watch-port", string_of_int w.port);
     ("--listen", w.listen);
     ("--watch-token", w.token);
     ("--registry", w.registry);
     ("--checkpoint", checkpoint);
-    ("--run-folder", run_folder);
   ]
 
-let watch_args ~checkpoint ~run_folder watch =
+let watch_args ~checkpoint watch =
   Option.fold ~none:[]
-    ~some:(fun w -> flag_pairs (page_flags ~checkpoint ~run_folder w))
+    ~some:(fun w -> flag_pairs (page_flags ~checkpoint w))
     watch
 
 let ready_line = "daemon: listening on"
@@ -119,12 +118,18 @@ let rec wait_ready t deadline =
     Unix.sleepf poll_interval_s;
     wait_ready t deadline)
 
-let start ?watch ~daemon ~backend ~port ~wire_log ~out_file ~checkpoint () =
+(* The run folder always: the daemon keeps the run's notes there and, when
+   recording, its frames (Watch-Page.md, Past runs). [flags] are the user's
+   --record, --no-record and --keepawake, as given. *)
+let start ?watch ?(flags = []) ~daemon ~backend ~port ~wire_log ~out_file
+    ~checkpoint () =
   let args =
     Array.of_list
       ((daemon :: backend_args backend)
       @ [ "--port"; string_of_int port; "--log"; wire_log ]
-      @ watch_args ~checkpoint ~run_folder:(Filename.dirname out_file) watch)
+      @ [ "--run-folder"; Filename.dirname out_file ]
+      @ watch_args ~checkpoint watch
+      @ flags)
   in
   let out =
     Unix.openfile out_file [ Unix.O_WRONLY; Unix.O_CREAT; Unix.O_TRUNC ] 0o644

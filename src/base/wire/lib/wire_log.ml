@@ -1,15 +1,19 @@
 open Json_fields
 
 type json = Yojson.Safe.t
-type direction = In | Out
+type direction = In | Out | Daemon
 type log_line = { dir : direction; t_ms : float; msg : Jsonrpc.message }
 
 let direction_of_string = function
   | "in" -> In
   | "out" -> Out
-  | s -> fail "wire log line: dir %S is neither in nor out" s
+  | "daemon" -> Daemon
+  | s -> fail "wire log line: dir %S is not in, out or daemon" s
 
-let string_of_direction = function In -> "in" | Out -> "out"
+let string_of_direction = function
+  | In -> "in"
+  | Out -> "out"
+  | Daemon -> "daemon"
 
 let log_line_of_json j =
   let what = "wire log line" in
