@@ -50,11 +50,16 @@ let check_marks ~log expected =
 let mail = "retro-mail"
 let bag_or_party m = Bag_screen.bag_open m || Party_menu.party_menu m
 
+(* After YES the party fades to the mail editor: once a page's A went in, no
+   text box means YES was taken. *)
+let editor_opening m = not (Dialog.dialog_up m)
+
 let read_glitched_mail ~log ~slot ~word =
   log (Printf.sprintf "Mail: give Retro Mail to slot %d, read the mail." slot);
   Bag_items.item_action mail Party_actions.give_row;
   Party_actions.give_to slot;
-  M.answer_yes ~code:"no_switch_question" "the switch question";
+  M.answer_yes ~code:"no_switch_question" ~taken:editor_opening
+    "the switch question";
   Item_duplication.check_editor ~word;
   log ("Mail: the editor reads " ^ word ^ " in field 1 (proof A).");
   M.press Wire.Start;

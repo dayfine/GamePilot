@@ -143,7 +143,9 @@ let slow_page () =
   in
   run ~react (fun () ->
       Menu_input.press Wire.A;
-      Menu_input.answer_yes ~code:"no_question" "the offer")
+      Menu_input.answer_yes ~code:"no_question"
+        ~taken:(fun _ -> false)
+        "the offer")
 
 (* Each A shows the next group of screens, each a delay after the press. *)
 let on_each_a groups =
@@ -283,6 +285,63 @@ let trade_fade_screen screen (p : S.press) =
 
 let trade_fade () =
   run ~react:trade_fade_screen (fun () -> Ingame_trade.trade ~log ~slot:3)
+
+(* A talk on console B, whose frames show the game [capture_latencies_ms]
+   late, where the last page's A lands on the Yes/No box as it draws (mg-02
+   testing, 2026-11-24, Elyssa): the talk's A shows page 1, A on it page 2,
+   whose red text reads as the arrow while it prints; the box draws
+   [print_ms] after that A, and an A from then on takes YES (its default) and
+   shows [after_yes]. Times are the game's; each screen shows the press's
+   latency later. [rest] scripts what follows. *)
+let print_ms = 700
+let latencies = [ 160; 335 ]
+
+let latent_talk ~after_yes ?(rest = fun _ _ -> ()) () =
+  let pages = ref 0 and asked_at = ref max_int and answered = ref false in
+  fun screen (p : S.press) ->
+    let late = S.latency_of screen p in
+    let show d s = S.show screen ~at_ms:(p.at_ms + d + late) s in
+    match !pages with
+    | _ when !answered -> rest screen p
+    | _ when not (a p) -> ()
+    | _ when p.at_ms >= !asked_at ->
+        answered := true;
+        List.iter (fun (d, s) -> show d s) after_yes
+    | 0 ->
+        pages := 1;
+        show 200 S.Dialog_arrow
+    | 1 ->
+        pages := 2;
+        asked_at := p.at_ms + print_ms;
+        show 100 S.Dialog_arrow;
+        show print_ms S.Question
+    | _ -> ()
+
+let run_latent react body =
+  let screen = S.create ~react ~capture_latencies_ms:latencies () in
+  let result = S.run screen (fun () -> Menu_input.run body) in
+  Printf.sprintf "%s; %s" (outcome result) (S.presses_text screen)
+
+(* After the party: A on a slot, the trade (black), the trader's text, the
+   overworld. *)
+let after_party screen (p : S.press) =
+  let show d s = S.show screen ~at_ms:(p.at_ms + d) s in
+  match S.screen_at screen p.at_ms with
+  | S.Party _ when a p ->
+      show 100 S.Black;
+      show 5000 S.Dialog;
+      show 7000 S.Overworld
+  | _ -> ()
+
+let trade_yes_taken () =
+  run_latent
+    (latent_talk ~after_yes:[ (300, S.Party 1) ] ~rest:after_party ())
+    (fun () -> Ingame_trade.trade ~log ~slot:3)
+
+let cut_yes_taken () =
+  run_latent
+    (latent_talk ~after_yes:[ (100, S.Dialog); (1600, S.Overworld) ] ())
+    (fun () -> Cut_tree.cut ~log Grid_maps.Direction.North)
 
 (* A wild battle starts [after_ms] into the spin. *)
 let spin ~after_ms () =
@@ -434,6 +493,14 @@ let () =
         "trade: a white box for a frame in the scene's fade is not the \
          trader's text"
         trade_fade "ok; A x2, down x2, A x4, B x7";
+      case
+        "trade on console B: the last page's A takes YES as the box draws, the \
+         party shows (mg-02 testing 2026-11-24)"
+        trade_yes_taken "ok; A x3, down x2, A x6, B x7";
+      case
+        "cut on console B: the last page's A takes YES as the box draws, the \
+         Cut runs"
+        cut_yes_taken "ok; up, A x3, B x5, up";
       case "spin: a battle in the first batch" (spin ~after_ms:1500)
         "ok; 12 turns";
       case "spin: no battle in two batches" (spin ~after_ms:100000)

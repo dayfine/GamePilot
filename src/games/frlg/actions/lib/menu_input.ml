@@ -69,7 +69,6 @@ let close_to_overworld ~label ~log =
 
 let max_pages = 8
 let question m = Option.is_some (Dialog.yes_no_cursor m)
-let page_or_question m = question m || Dialog.advance_arrow m
 let question_input_ms = 300
 let answer_cooldown_ms = 800
 
@@ -80,17 +79,32 @@ let answer_yes_to m =
 
 let page_press_ms = 600
 
-let rec answer_yes_from page ~code what =
-  let m = await_screen ~code what page_or_question in
-  if question m then answer_yes_to m
-  else if page > max_pages then fail code (what ^ " did not show")
-  else (
-    press ~cooldown_ms:page_press_ms Wire.A;
-    answer_yes_from (page + 1) ~code what)
+(* What a look at the screen asks of {!answer_yes}, from what it shows and
+   whether an A of ours has gone in since the talk: the follow-on screen of
+   YES counts only then, as only our A can have taken YES. *)
+type answer_step = Answer | Taken | Next_page | Look
 
-let answer_yes ~code what =
+let answer_step ~pressed ~taken m =
+  if question m then Answer
+  else if pressed && taken m then Taken
+  else if Dialog.advance_arrow m then Next_page
+  else Look
+
+let rec answer_yes_from page ~code ~taken what =
+  let pressed = page > 1 in
+  let step m = answer_step ~pressed ~taken m in
+  let m = await_screen ~code what (fun m -> step m <> Look) in
+  match step m with
+  | Answer -> answer_yes_to m
+  | Taken | Look -> ()
+  | Next_page when page > max_pages -> fail code (what ^ " did not show")
+  | Next_page ->
+      press ~cooldown_ms:page_press_ms Wire.A;
+      answer_yes_from (page + 1) ~code ~taken what
+
+let answer_yes ~code ~taken what =
   Effects.with_probes Dialog.yes_no_probes (fun () ->
-      answer_yes_from 1 ~code what)
+      answer_yes_from 1 ~code ~taken what)
 
 let answer_if_asked ~timeout_ms () =
   match Effects.await ~timeout_ms question with

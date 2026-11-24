@@ -64,10 +64,17 @@ let to_prize_choices () =
    no Abra). *)
 let prize_question_wait_ms = 1200
 
+(* After YES the prize comes with "<player> obtained <mon>!" and the nickname
+   question, which a page's A that took YES must not answer: no screen tells
+   it from the clerk's own pages, so nothing counts as taken. The clerk's blue
+   arrow is unread anyway, so no page gets an A here. *)
+let prize_given _ = false
+
 let redeem_prize_mon ~log slot =
   log (Printf.sprintf "Game Corner: redeem prize row %d." slot);
   to_prize_choices ();
   M.taps Wire.Down slot;
   M.press Wire.A ~cooldown_ms:prize_question_wait_ms;
-  M.answer_yes ~code:"prize_no_question" "the prize's question";
+  M.answer_yes ~code:"prize_no_question" ~taken:prize_given
+    "the prize's question";
   M.settle_back ~label:"redeem prize" ~log

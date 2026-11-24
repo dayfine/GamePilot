@@ -9,7 +9,9 @@
     on one frame as the fork's WhiteDialogWatcher: the scene's fade into its
     blue box passes through colours that read as the white box for a frame or
     two (mGBA, 2026-11-23), and the settle then met the blue box, which reads as
-    a battle. *)
+    a battle. The party showing before the question was seen is YES taken by the
+    last page's A ({!Menu_input.answer_yes}): the slot is chosen as after the
+    question (mg-02 testing on console B, 2026-11-24). *)
 
 val trade_presses : int
 (** A presses through the trade before failing: 45, as the fork. *)
