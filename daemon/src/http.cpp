@@ -6,6 +6,8 @@ namespace gamepilot {
 
 namespace {
 
+constexpr std::string_view kPartBoundary = "gamepilot-frame";
+
 std::string_view reason_phrase(int status) {
   switch (status) {
     case 200:
@@ -16,6 +18,8 @@ std::string_view reason_phrase(int status) {
       return "Not Found";
     case 405:
       return "Method Not Allowed";
+    case 503:
+      return "Service Unavailable";
     default:
       return "Error";
   }
@@ -85,6 +89,27 @@ std::string query_value(std::string_view query, std::string_view name) {
 std::string event_stream_head() {
   return "HTTP/1.1 200 OK\r\nContent-Type: text/event-stream\r\n"
          "Cache-Control: no-store\r\nConnection: keep-alive\r\n\r\n";
+}
+
+std::string multipart_stream_head() {
+  std::string head =
+      "HTTP/1.1 200 OK\r\nContent-Type: multipart/x-mixed-replace; "
+      "boundary=";
+  head += kPartBoundary;
+  head += "\r\nCache-Control: no-store\r\nConnection: close\r\n\r\n";
+  return head;
+}
+
+std::string multipart_part(std::string_view content_type,
+                           std::string_view body) {
+  std::string part = "--";
+  part += kPartBoundary;
+  part += "\r\nContent-Type: ";
+  part += content_type;
+  part += "\r\nContent-Length: " + std::to_string(body.size()) + "\r\n\r\n";
+  part += body;
+  part += "\r\n";
+  return part;
 }
 
 std::string event_message(std::string_view name, std::string_view data) {

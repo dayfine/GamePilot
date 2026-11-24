@@ -2,9 +2,11 @@
 <!--
   gamepilot watch: the daemon's live page for one run (served as is by
   daemon/src/watch_server.cpp; design in docs/design/Watch-Page.md).
-  Frame: GET /frame (PNG for small frames, JPEG for large), polled at most
-  5 times a second while the tab is visible. Probe boxes are drawn on a
-  canvas over it at display resolution, not into the frame. Everything else: the event stream GET /events (info, run, plan,
+  Frame: an <img> on GET /stream (MJPEG, up to 30 frames a second, 1280 px
+  wide or 960 on a phone) while the tab is visible; when the stream fails it
+  polls GET /frame (PNG or JPEG) 5 times a second and tries the stream again
+  later. Probe boxes are drawn on a canvas over it at display resolution, not
+  into the frame. Everything else: the event stream GET /events (info, run, plan,
   log, probes, status). Stop: POST /stop?token=T, with the run's token: the
   daemon puts it in the gamepilot-token meta tag for a viewer on its own
   machine; elsewhere it comes from this page's ?token=, and without one the
@@ -75,7 +77,8 @@
   #stage-wrap { flex: 1 1 320px; min-width: 0; }
   #stage { position: relative; background: #000; border-radius: 4px;
            display: inline-block; vertical-align: top; }
-  #screen { image-rendering: pixelated; display: block; }
+  #screen { display: block; }
+  #stage.pixel #screen { image-rendering: pixelated; }
   #overlay { position: absolute; inset: 0; width: 100%; height: 100%; }
   #frame-meta { color: var(--muted); font-size: 12px; margin-top: 4px; }
   .toolbar { display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
@@ -170,7 +173,7 @@
     <div id="frame-body">
       <div id="stage-wrap">
         <div id="stage">
-          <canvas id="screen" width="240" height="160"></canvas>
+          <img id="screen" alt="live frame" width="240" height="160">
           <canvas id="overlay"></canvas>
         </div>
         <div id="frame-meta">waiting for a frame</div>
@@ -213,19 +216,24 @@
 // The daemon's limit: a thread whose heartbeat is older than this is stuck
 // (the same rule as `gamepilot status`).
 const STUCK_MS = 2000;
-// The page asks for a frame at most this often; the daemon caps it too.
+// Polling /frame (when the stream fails): at most this often; the daemon caps
+// it too. The stream is tried again after STREAM_RETRY_MS.
 const FRAME_MS = 200;
+const STREAM_RETRY_MS = 15000;
+// Narrower windows than this (phones) ask for a 960 px stream, else 1280.
+const PHONE_WIDTH = 700;
 const LOG_LINES = 2000;
 
 const $ = (id) => document.getElementById(id);
 // Stop's token: from the URL, else the one the daemon put in for this machine.
 const TOKEN = new URLSearchParams(location.search).get("token") ||
   document.querySelector('meta[name="gamepilot-token"]').content;
-const canvas = $("screen");
-const ctx = canvas.getContext("2d");
+const screen = $("screen");
 let info = null;          // the backend, as `hello` describes it
 let probes = [];          // [{id, kind, box, result}]
-let lastImage = null;
+// The backend's frame size: the layout and the boxes go by it, not by the
+// image received (the stream's is scaled), so the frame keeps its size.
+let frameW = 240, frameH = 160;
 let lastPlan = null;
 let lastLogLine = "";
 let lastStatusAt = 0;
@@ -239,8 +247,9 @@ function el(tag, cls, text) {
 
 // --- Frame and probe boxes ---------------------------------------------------
 //
-// The frame is drawn at its own resolution and scaled by CSS (pixelated, at a
-// whole multiple when it fits); the boxes and labels go on a canvas over it at
+// The frame is an <img> sized by CSS from the backend's frame size (a GBA
+// frame pixelated, at a whole multiple when it fits; the image the stream
+// sends is twice the GBA's size, so every whole multiple stays sharp); the boxes and labels go on a canvas over it at
 // the displayed size, so text stays sharp. Mode: off, changed (probes whose
 // value changed in the last second) or all; a label shows only for the box
 // under the pointer (or tapped), and the table lists every value.
@@ -285,6 +294,7 @@ function takeProbes(list) {
   }
   renderProbeTable();
   drawOverlay();
+  showFrameMeta();
 }
 
 function resultLabel(r) {
@@ -336,19 +346,17 @@ function fitScale(w, h) {
   return s >= 1 ? Math.floor(s) : s;
 }
 
-function drawFrame() {
-  if (!lastImage) return;
-  const w = lastImage.width, h = lastImage.height;
-  if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }
-  ctx.drawImage(lastImage, 0, 0);
-  scale = fitScale(w, h);
-  canvas.style.width = w * scale + "px";
-  canvas.style.height = h * scale + "px";
+function layoutFrame() {
+  scale = fitScale(frameW, frameH);
+  screen.style.width = frameW * scale + "px";
+  screen.style.height = frameH * scale + "px";
+  $("stage").classList.toggle("pixel", frameW <= 320);
   drawOverlay();
+  showFrameMeta();
 }
 
 function drawOverlay() {
-  const W = canvas.width, H = canvas.height;
+  const W = frameW, H = frameH;
   const dw = W * scale, dh = H * scale, dpr = window.devicePixelRatio || 1;
   if (overlay.width !== Math.round(dw * dpr) || overlay.height !== Math.round(dh * dpr)) {
     overlay.width = Math.round(dw * dpr);
@@ -388,7 +396,7 @@ function probeAt(x, y) {
   let best = null, bestArea = Infinity;
   for (const p of probes) {
     if (!matches(p) || mode === "off" || (mode === "changed" && !recent(p.id))) continue;
-    const r = boxRect(p, canvas.width, canvas.height);
+    const r = boxRect(p, frameW, frameH);
     if (x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h && r.w * r.h < bestArea) {
       best = p.id; bestArea = r.w * r.h;
     }
@@ -415,33 +423,65 @@ for (const b of document.querySelectorAll(".modes button")) {
   b.addEventListener("click", () => setMode(b.dataset.mode));
 }
 $("probe-filter").addEventListener("input", () => { renderProbeTable(); drawOverlay(); });
-window.addEventListener("resize", drawFrame);
+window.addEventListener("resize", layoutFrame);
 setMode(mode);
 
-async function pollFrame() {
-  if (document.hidden) { setTimeout(pollFrame, 1000); return; }
-  const started = performance.now();
-  try {
-    const reply = await fetch("frame?t=" + Date.now(), {cache: "no-store"});
-    if (!reply.ok) throw new Error("HTTP " + reply.status);
-    const blob = await reply.blob();
-    const image = await createImageBitmap(blob);
-    if (lastImage && lastImage.close) lastImage.close();
-    lastImage = image;
-    drawFrame();
-    // Changed marks fade with time, not only with new probe results.
-    renderProbeTable();
-    const kind = (blob.type.split("/")[1] || "").toUpperCase();
-    $("frame-meta").textContent = image.width + "×" + image.height + " " + kind + " · " +
-      (blob.size / 1024).toFixed(1) + " KB · shown at " +
-      (Number.isInteger(scale) ? scale + "×" : scale.toFixed(2) + "×") +
-      (info ? " · " + info.backend.kind : "") + " · " + probes.length + " probes";
-  } catch (e) {
-    setTimeout(pollFrame, 1000);
-    return;
-  }
-  setTimeout(pollFrame, Math.max(0, FRAME_MS - (performance.now() - started)));
+// The frame's source: "stream" (MJPEG on the <img>), "poll" (/frame after
+// the stream failed) or "off" (the tab is hidden: nothing is fetched).
+let source = "off";
+let pollTimer = 0, retryTimer = 0;
+
+function streamUrl() {
+  const width = window.innerWidth < PHONE_WIDTH ? 960 : 1280;
+  return "stream?w=" + width + "&t=" + Date.now();
 }
+
+function setSource(next) {
+  source = next;
+  clearTimeout(pollTimer);
+  clearTimeout(retryTimer);
+  if (next === "stream") {
+    screen.src = streamUrl();
+  } else if (next === "poll") {
+    pollTimer = setTimeout(pollFrame, FRAME_MS);
+    retryTimer = setTimeout(() => setSource("stream"), STREAM_RETRY_MS);
+  } else {
+    screen.removeAttribute("src");  // closes the stream
+  }
+  showFrameMeta();
+}
+
+function pollFrame() {
+  if (source === "poll") screen.src = "frame?t=" + Date.now();
+}
+
+// A polled frame asks for the next; the stream fires this once, at its first
+// part.
+screen.addEventListener("load", () => {
+  if (source === "poll") pollTimer = setTimeout(pollFrame, FRAME_MS);
+});
+screen.addEventListener("error", () => {
+  if (source === "stream") setSource("poll");
+  else if (source === "poll") pollTimer = setTimeout(pollFrame, 1000);
+});
+document.addEventListener("visibilitychange", () => {
+  setSource(document.hidden ? "off" : "stream");
+});
+
+function showFrameMeta() {
+  const how = source === "stream" ? "live (MJPEG)" :
+              source === "poll" ? "polled (stream failed, retrying)" : "paused";
+  $("frame-meta").textContent = frameW + "×" + frameH + " " + how + " · shown at " +
+    (Number.isInteger(scale) ? scale + "×" : scale.toFixed(2) + "×") +
+    (info ? " · " + info.backend.kind : "") + " · " + probes.length + " probes";
+}
+
+// Changed marks fade with time, not only with new probe results.
+setInterval(() => {
+  if (document.hidden) return;
+  renderProbeTable();
+  drawOverlay();
+}, FRAME_MS);
 
 // --- Plan --------------------------------------------------------------------
 
@@ -688,7 +728,15 @@ function connect() {
   const on = (name, f) => events.addEventListener(name, (m) => f(JSON.parse(m.data)));
   events.onopen = () => { $("conn").textContent = "live"; $("conn").className = ""; };
   events.onerror = () => { $("conn").textContent = "disconnected, retrying…"; $("conn").className = "down"; };
-  on("info", (d) => { info = d; drawFrame(); });
+  // A new daemon (each checkpoint has its own): its frame size, and the
+  // stream again, since the last one ended with the old daemon.
+  on("info", (d) => {
+    info = d;
+    frameW = d.backend.width || frameW;
+    frameH = d.backend.height || frameH;
+    layoutFrame();
+    if (!document.hidden) setSource("stream");
+  });
   on("run", (d) => { lastRun = d; runAt = Date.now(); renderRun(); });
   on("plan", (d) => {
     lastPlan = d;
@@ -720,8 +768,8 @@ $("stop").addEventListener("click", async () => {
   }
 });
 
-connect();
-pollFrame();
+layoutFrame();
+connect();  // its `info` starts the stream
 </script>
 </body>
 </html>

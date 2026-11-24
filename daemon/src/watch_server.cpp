@@ -46,10 +46,13 @@ bool valid_watch_token(std::string_view token) {
          });
 }
 
-WatchServer::WatchServer(const WatchOptions& options, WatchHooks hooks)
+WatchServer::WatchServer(const WatchOptions& options, WatchHooks hooks,
+                         StreamOptions stream)
     : listener_(listen_tcp(options.listen, options.port)),
       token_(options.token.empty() ? new_watch_token() : options.token),
-      hooks_(std::move(hooks)) {
+      hooks_(std::move(hooks)),
+      stream_options_(stream),
+      stream_(stream) {
   if (!valid_watch_token(token_)) {
     throw std::runtime_error("bad watch token");
   }
@@ -125,6 +128,10 @@ void WatchServer::respond(Connection& connection, const HttpRequest& request) {
     start_stream(connection);
     return;
   }
+  if (get && request.path == "/stream") {
+    start_frame_stream(connection, request);
+    return;
+  }
   if (get && request.path == "/") {
     send(connection,
          http_response(200, "text/html; charset=utf-8",
@@ -142,6 +149,7 @@ void WatchServer::respond(Connection& connection, const HttpRequest& request) {
     stop(connection, request);
   } else if (request.path == "/stop" || request.path == "/" ||
              request.path == "/frame" || request.path == "/events" ||
+             request.path == "/stream" ||
              request.path == "/summary.json") {
     send(connection, http_response(405, "text/plain", "method not allowed\n"));
   } else {
@@ -183,6 +191,23 @@ void WatchServer::start_stream(Connection& connection) {
     snapshot += event_message("probes", probes_);
   }
   send(connection, snapshot);
+}
+
+// The stream's head here, then the socket goes to the stream's worker, which
+// sends the frames.
+void WatchServer::start_frame_stream(Connection& connection,
+                                     const HttpRequest& request) {
+  if (stream_.viewers() >= kStreamMaxViewers) {
+    send(connection, http_response(503, "text/plain", "too many viewers\n"));
+    connection.socket.close();
+    return;
+  }
+  send(connection, multipart_stream_head());
+  if (connection.socket.valid()) {
+    stream_.add_viewer(
+        std::move(connection.socket),
+        stream_width(query_value(request.query, "w"), stream_options_.width));
+  }
 }
 
 void WatchServer::send(Connection& connection, const std::string& data) {

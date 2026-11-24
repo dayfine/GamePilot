@@ -1,8 +1,12 @@
 // The watch page's HTTP pieces: request heads, responses, event framing, and
 // the server end to end over loopback (page, frame, event stream with its
-// snapshot, the hub's summary, Stop and its token, errors).
+// snapshot, the MJPEG stream, the hub's summary, Stop and its token, errors).
 
+#include <chrono>
+#include <cstddef>
+#include <opencv2/imgcodecs.hpp>
 #include <string>
+#include <thread>
 #include <vector>
 
 #include "check.h"
@@ -68,6 +72,34 @@ void check_framing() {
   // data line, which the browser joins back with a newline.
   CHECK(event_message("x", "a\nb") == "event: x\ndata: a\ndata: b\n\n");
   CHECK(event_stream_head().find("text/event-stream") != std::string::npos);
+  CHECK(multipart_stream_head().find(
+            "multipart/x-mixed-replace; boundary=gamepilot-frame\r\n") !=
+        std::string::npos);
+  CHECK(multipart_part("image/jpeg", "JPG") ==
+        "--gamepilot-frame\r\nContent-Type: image/jpeg\r\n"
+        "Content-Length: 3\r\n\r\nJPG\r\n");
+}
+
+// A GBA frame is doubled (pixel art stays sharp in JPEG); a capture card's is
+// scaled down to the width asked for, never up.
+void check_stream_encoding() {
+  const cv::Mat gba(160, 240, CV_8UC3, cv::Scalar(10, 200, 30));
+  const std::string small = encode_stream_frame(gba, 1280);
+  const cv::Mat small_image = cv::imdecode(
+      std::vector<unsigned char>(small.begin(), small.end()), cv::IMREAD_COLOR);
+  CHECK(small_image.cols == 480 && small_image.rows == 320);
+
+  const cv::Mat capture(1080, 1920, CV_8UC3, cv::Scalar(90, 90, 90));
+  const std::string large = encode_stream_frame(capture, 960);
+  const cv::Mat large_image = cv::imdecode(
+      std::vector<unsigned char>(large.begin(), large.end()), cv::IMREAD_COLOR);
+  CHECK(large_image.cols == 960 && large_image.rows == 540);
+
+  CHECK(stream_width("", 1280) == 1280);
+  CHECK(stream_width("x", 1280) == 1280);
+  CHECK(stream_width("960", 1280) == 960);
+  CHECK(stream_width("1000", 1280) == 992);
+  CHECK(stream_width("99999", 1280) == kStreamMaxWidth);
 }
 
 // Serves until the client has `want` in what it received (or gives up).
@@ -223,15 +255,63 @@ void check_server() {
   CHECK(!server.has_viewers());
 }
 
+// A viewer of /stream gets the head, then each frame offered as a JPEG part;
+// one that leaves is dropped.
+void check_frame_stream() {
+  WatchServer server(WatchOptions{"127.0.0.1", 0, ""},
+                     WatchHooks{[] { return WatchFrame{}; }, [] { return false; }},
+                     StreamOptions{30, 640});
+  CHECK(!server.stream().wants_frame(1, 0));  // no viewer
+  Socket viewer = connect_local(server.port());
+  viewer.send_all("GET /stream?w=640 HTTP/1.1\r\n\r\n");
+  const std::string head = exchange(server, viewer, "\r\n\r\n");
+  CHECK(head.find("multipart/x-mixed-replace") != std::string::npos);
+  CHECK(server.stream().viewers() == 1);
+  CHECK(server.stream().wants_frame(1, 0));
+
+  const cv::Mat capture(1080, 1920, CV_8UC3, cv::Scalar(0, 0, 255));
+  server.stream().offer(capture, 1, 0);
+  CHECK(!server.stream().wants_frame(1, 100));  // the same frame
+  CHECK(!server.stream().wants_frame(2, 10));   // too soon
+  CHECK(server.stream().wants_frame(2, 40));
+  std::string part;
+  for (int round = 0; round < 100 && !part.ends_with("\xff\xd9\r\n");
+       round++) {
+    if (poll_readable({&viewer}, 20)[0]) {
+      const auto data = viewer.receive_some();
+      if (!data) {
+        break;
+      }
+      part += *data;
+    }
+  }
+  CHECK(part.starts_with("--gamepilot-frame\r\nContent-Type: image/jpeg\r\n"));
+  const std::size_t body = part.find("\r\n\r\n") + 4;
+  const cv::Mat image = cv::imdecode(
+      std::vector<unsigned char>(part.begin() + static_cast<std::ptrdiff_t>(body),
+                                 part.end() - 2),
+      cv::IMREAD_COLOR);
+  CHECK(image.cols == 640 && image.rows == 360);
+
+  viewer.close();
+  for (int round = 0; round < 50 && server.stream().viewers() > 0; round++) {
+    server.stream().offer(capture, 2 + round, 0);
+    std::this_thread::sleep_for(std::chrono::milliseconds(20));
+  }
+  CHECK(server.stream().viewers() == 0);
+}
+
 }  // namespace
 
 int main() {
   init_sockets();
   check_request_heads();
   check_framing();
+  check_stream_encoding();
   check_tokens();
   check_stop_token();
   check_summary();
   check_server();
+  check_frame_stream();
   return TEST_RESULT();
 }

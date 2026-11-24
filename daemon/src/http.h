@@ -38,6 +38,14 @@ std::string query_value(std::string_view query, std::string_view name);
 // The head of a text/event-stream response; events follow it.
 std::string event_stream_head();
 
+// The head of a multipart/x-mixed-replace response (an MJPEG stream): each
+// part replaces the last in the browser's <img>.
+std::string multipart_stream_head();
+
+// One part of that stream: its head, then `body`.
+std::string multipart_part(std::string_view content_type,
+                           std::string_view body);
+
 // One event: `event: name` and `data` (each of its lines as a `data:` line).
 std::string event_message(std::string_view name, std::string_view data);
 
