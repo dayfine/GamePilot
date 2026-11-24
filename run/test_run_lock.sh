@@ -33,6 +33,8 @@ runner() {
 }
 
 # Two at once: the second starts only after the first ended.
+for round in $(seq 1 25); do
+: >"$tmp/log"; : >"$tmp/trace_a"; : >"$tmp/trace_b"
 runner a 0 2 &
 a=$!
 runner b 0 2 &
@@ -40,8 +42,13 @@ b=$!
 wait $a
 wait $b
 sequence=$(sed 's/ .*//' "$tmp/log" | tr '\n' ' ')
+if [ "$sequence" != "start end start end " ]; then
+echo "round $round"
+for t in "$tmp"/trace_a "$tmp"/trace_b; do echo "=== $t"; cat "$t"; done
+break
+fi
+done
 check "two runners take turns" "start end start end " "$sequence"
-for t in "$tmp"/trace_a "$tmp"/trace_b; do echo "=== $t"; cat "$t"; done; ls -l /bin/sh; date +%s.%N
 check "the lock is gone after both" "no" "$([ -d "$lock" ] && echo yes || echo no)"
 
 # A dead holder's lock is taken over.
