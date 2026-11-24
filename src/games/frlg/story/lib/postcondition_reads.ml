@@ -11,11 +11,16 @@ let back_to_overworld ~log =
   | Error cause ->
       log ("[Postcondition] not back: " ^ Story.Failure.cause_to_string cause)
 
-(* One read in the menu actions' probes; [None] when it failed. *)
-let read ~log what body =
+(* One read in the menu actions' probes; [None] when it failed, but [absent]
+   when it failed for want of the item it reads. *)
+let read ?absent ~log what body =
   let value = ref None in
   match A.Menu_input.run (fun () -> value := body ()) with
   | Ok () -> !value
+  | Error { code = "not_in_bag"; _ } when absent <> None ->
+      log (Printf.sprintf "[Postcondition] %s: not in the bag" what);
+      back_to_overworld ~log;
+      absent
   | Error cause ->
       log
         (Printf.sprintf "[Postcondition] %s not read: %s" what
@@ -68,10 +73,10 @@ let per_member ~log members species_of read_member promised =
   | None -> []
   | Some members -> List.filter_map (one members) promised
 
-let item_count ~log ({ item; _ } : Story.Plan.item) =
+let item_count ~log ({ bag_item; _ } : Story.Plan.bag_count) =
   Option.map
-    (fun count -> (item, count))
-    (read ~log ("item " ^ item) (fun () -> A.Bag_items.count ~log item))
+    (fun count -> (bag_item, count))
+    (read ~log ("item " ^ bag_item) (fun () -> A.Bag_items.count ~log bag_item))
 
 let party_marks ~log () =
   Some
@@ -124,12 +129,35 @@ let observe ~log (promised : Story.Plan.postconditions) :
     marks;
   }
 
-let start_money ~log (promised : Story.Plan.postconditions) =
-  match promised.money with
-  | Some (Money_spent _) ->
-      log "[Postcondition] the money at the start:";
+let gained : Story.Plan.count -> bool = function
+  | Count_gained _ -> true
+  | Count_exactly _ | Count_at_least _ -> false
+
+let at_start ~log (promised : Story.Plan.postconditions) =
+  let spent =
+    match promised.money with Some (Money_spent _) -> true | _ -> false
+  and coins = Option.fold ~none:false ~some:gained promised.coins
+  and items =
+    List.filter
+      (fun (b : Story.Plan.bag_count) -> gained b.count)
+      promised.items
+  in
+  if spent || coins || items <> [] then
+    log "[Postcondition] at the start, for what the checkpoint changes:";
+  let start_money =
+    if spent then
       read ~log "money at the start" (fun () -> A.Trainer_card_money.read ~log)
-  | Some (Money_range _) | None -> None
+    else None
+  in
+  let start_coins =
+    (* No Coin Case yet (mg-01 gets it): no coins. *)
+    if coins then
+      read ~absent:0 ~log "coins at the start" (fun () -> A.Coin_case.read ~log)
+    else None
+  in
+  let start_items = List.filter_map (item_count ~log) items in
+  fun (observed : Story.Postcondition_check.observed) ->
+    { observed with start_money; start_coins; start_items }
 
 let party_summary ~log =
   read ~log "party summary" (fun () -> Some (A.Party_summary.read_all ~log ()))

@@ -113,15 +113,12 @@ let run ?end_at ?on_event ?(actions = []) options world (plan : Story.Plan.t) =
            plan.checkpoint.checkpoint_id s))
     skipped;
   Effects.with_probes Screen_facts.probes (fun () ->
-      let start_money =
-        if options.end_check_only then None
-        else Postcondition_reads.start_money ~log:options.log checked
+      let with_start =
+        if options.end_check_only then Fun.id
+        else Postcondition_reads.at_start ~log:options.log checked
       in
       let observe promised =
-        {
-          (Postcondition_reads.observe ~log:options.log promised) with
-          start_money;
-        }
+        with_start (Postcondition_reads.observe ~log:options.log promised)
       in
       let end_state = (checked, observe) in
       Story.Runner.run ?end_at ~end_state ?on_event

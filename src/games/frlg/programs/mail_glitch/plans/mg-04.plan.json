@@ -109,8 +109,8 @@
       "party_includes": ["blastoise", "pidgey", "mr-mime", "farfetchd"],
       "money": {"spent": 0},
       "items": [
-        {"item": "revive", "quantity": 2},
-        {"item": "escape-rope", "quantity": 2}
+        {"item": "revive", "gained": 0},
+        {"item": "escape-rope", "used": 1}
       ],
       "knows": [
         {"species": "farfetchd", "moves": ["knock-off"]},

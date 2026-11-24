@@ -69,8 +69,8 @@ let items_promised : Story.Plan.postconditions =
     party = None;
     items =
       [
-        { item = "revive"; quantity = 2 };
-        { item = "escape-rope"; quantity = 3 };
+        { bag_item = "revive"; count = Count_exactly 2 };
+        { bag_item = "escape-rope"; count = Count_exactly 3 };
       ];
   }
 
@@ -83,6 +83,32 @@ let read_items items () =
   Printf.sprintf "%s; ends on %s"
     (String.concat ", "
        (List.map (fun (i, n) -> Printf.sprintf "%s %d" i n) observed.items))
+    (S.screen_name (S.screen_at screen screen.S.clock_ms))
+
+(* At the start, only what a change is promised on: the Escape Ropes gained,
+   not the Revives' exact count. *)
+let read_at_start items () =
+  let screen = S.create ~react:(bag_screen items) () in
+  let promised =
+    {
+      items_promised with
+      items =
+        [
+          { bag_item = "revive"; count = Count_exactly 2 };
+          { bag_item = "escape-rope"; count = Count_gained 1 };
+        ];
+    }
+  in
+  let observed =
+    S.run screen (fun () ->
+        Frlg_story.Postcondition_reads.at_start ~log:ignore promised
+          Story.Postcondition_check.nothing_read)
+  in
+  Printf.sprintf "%s; ends on %s"
+    (String.concat ", "
+       (List.map
+          (fun (i, n) -> Printf.sprintf "%s %d" i n)
+          observed.start_items))
     (S.screen_name (S.screen_at screen screen.S.clock_ms))
 
 let read_level min () =
@@ -111,6 +137,11 @@ let cases : Table_test.case list =
       name = "an item the list ends without counts 0, not unread";
       input = read_items [ ("ESCAPE ROPE", 3) ];
       expectation = "revive 0, escape-rope 3; ends on overworld";
+    };
+    {
+      name = "at the start, only the items promised as gained";
+      input = read_at_start [ ("REVIVE", 2); ("ESCAPE ROPE", 4) ];
+      expectation = "escape-rope 4; ends on overworld";
     };
     {
       name = "the party's species, slot 1 first, back on the overworld";

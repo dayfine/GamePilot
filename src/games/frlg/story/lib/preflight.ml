@@ -177,7 +177,8 @@ let to_read needs : P.postconditions =
     party =
       (if party then Some (P.Party_includes { members = []; slots = [] })
        else None);
-    items = List.map (fun item -> { P.item; quantity = 0 }) items;
+    items =
+      List.map (fun bag_item -> { P.bag_item; count = P.Count_exactly 0 }) items;
     coins = None;
     money = (if money then Some (P.Money_range { min = 0; max = 0 }) else None);
     flags = [];

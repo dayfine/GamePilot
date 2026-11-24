@@ -268,6 +268,12 @@ let inline_plans : Table_test.case list =
   ]
 
 (* A plan's postconditions, one per line; "none" when it states none. *)
+let count_text : Plan.count -> string = function
+  | Count_exactly n -> Printf.sprintf "x%d" n
+  | Count_gained n when n < 0 -> Printf.sprintf "used %d" (-n)
+  | Count_gained n -> Printf.sprintf "gained %d" n
+  | Count_at_least n -> Printf.sprintf "at least %d" n
+
 let postconditions_text (plan : Plan.t) =
   let p = plan.postconditions in
   let list = String.concat ", " in
@@ -286,12 +292,10 @@ let postconditions_text (plan : Plan.t) =
                slots
       | None -> []);
       List.map
-        (fun ({ item; quantity } : Plan.item) ->
-          Printf.sprintf "item %s x%d" item quantity)
+        (fun ({ bag_item; count } : Plan.bag_count) ->
+          Printf.sprintf "item %s %s" bag_item (count_text count))
         p.items;
-      Option.fold ~none:[]
-        ~some:(fun c -> [ Printf.sprintf "coins %d" c ])
-        p.coins;
+      Option.fold ~none:[] ~some:(fun c -> [ "coins " ^ count_text c ]) p.coins;
       Option.fold ~none:[]
         ~some:(function
           | Plan.Money_range { min; max } ->
@@ -333,10 +337,12 @@ let postcondition_cases : Table_test.case list =
     {
       name =
         "mg-01 promises the members the plans use (Abra among them), 20 coins \
-         and $4,100 spent";
+         gained and $4,100 spent";
       input = (fun () -> postconditions_text (load "mg-01.plan.json" mg));
       expectation =
-        "party includes blastoise, pidgey, abra\ncoins 20\nmoney spent 4100";
+        "party includes blastoise, pidgey, abra\n\
+         coins gained 20\n\
+         money spent 4100";
     };
     {
       name = "mg-05 promises MIMIEN, Pidgey and slots 1-3's marks";
@@ -349,8 +355,8 @@ let postcondition_cases : Table_test.case list =
       input = (fun () -> postconditions_text (load "mg-03.plan.json" mg));
       expectation =
         "party includes blastoise, pidgey, mr-mime, farfetchd\n\
-         item revive x2\n\
-         item escape-rope x3\n\
+         item revive gained 2\n\
+         item escape-rope gained 1\n\
          money spent 3550";
     };
     {
@@ -358,8 +364,8 @@ let postcondition_cases : Table_test.case list =
       input = (fun () -> postconditions_text (load "mg-04.plan.json" mg));
       expectation =
         "party includes blastoise, pidgey, mr-mime, farfetchd\n\
-         item revive x2\n\
-         item escape-rope x2\n\
+         item revive gained 0\n\
+         item escape-rope used 1\n\
          money spent 0\n\
          farfetchd knows knock-off\n\
          mr-mime knows recycle\n\
@@ -371,8 +377,8 @@ let postcondition_cases : Table_test.case list =
       expectation =
         "party includes pidgey\n\
          mr-mime in slot 1\n\
-         item antidote x2\n\
-         item retro-mail x2\n\
+         item antidote gained 0\n\
+         item retro-mail gained 1\n\
          money spent 400";
     };
     {
@@ -389,7 +395,7 @@ let postcondition_cases : Table_test.case list =
         "position Town (3, 4)\n\
          party includes abra, abra\n\
          item retro-mail x2\n\
-         coins 20\n\
+         coins x20\n\
          money 100 to 200\n\
          flags got_coin_case\n\
          mr-mime knows recycle\n\
@@ -465,11 +471,45 @@ let postcondition_cases : Table_test.case list =
          farfetchd in slot 1\n\
          blastoise in slot 2\n\
          mr-mime in slot 3\n\
-         item antidote x2\n\
-         item super-potion x3\n\
-         item retro-mail x1\n\
+         item antidote gained 2\n\
+         item super-potion gained 3\n\
+         item retro-mail used 1\n\
          money spent 2300\n\
          marks held_item, held_item, mail";
+    };
+    {
+      name = "counts gained, used and at least, and coins gained";
+      input =
+        (fun () ->
+          with_postconditions
+            {|{"items": [{"item": "escape-rope", "gained": 1}, {"item": "retro-mail", "used": 1},
+                         {"item": "revive", "at_least": 2}], "coins": {"gained": 20}}|});
+      expectation =
+        "item escape-rope gained 1\n\
+         item retro-mail used 1\n\
+         item revive at least 2\n\
+         coins gained 20";
+    };
+    {
+      name = "an item with a quantity and a gain";
+      input =
+        (fun () ->
+          with_postconditions
+            {|{"items": [{"item": "escape-rope", "quantity": 3, "gained": 1}]}|});
+      expectation =
+        post ^ "items[0]: give one of quantity, gained, used, at_least.";
+    };
+    {
+      name = "an item with no count";
+      input =
+        (fun () -> with_postconditions {|{"items": [{"item": "escape-rope"}]}|});
+      expectation =
+        post ^ "items[0]: give one of quantity, gained, used, at_least.";
+    };
+    {
+      name = "coins as an object with no count";
+      input = (fun () -> with_postconditions {|{"coins": {}}|});
+      expectation = post ^ "coins: give one of exactly, gained, used, at_least.";
     };
     {
       name = "a mark no party shows";
