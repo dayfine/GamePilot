@@ -23,6 +23,10 @@
 # The daemons pick free ports (one per run), so runs on other backends do not collide with this
 # one.
 #
+# --speed S runs the game S times as fast (default 1): mGBA starts with audio and video sync off,
+# so it never throttles itself, and the daemon steps it at S x 59.7275 frames a second. Presses,
+# waits and timeouts stay in game time (protocol/v1/README.md, Clock and frames).
+#
 # The run's watch page is served (`--watch` is passed unless an argument already sets the page or
 # `--no-watch` turns it off). GAMEPILOT_WATCH_LISTEN=0.0.0.0 in the env file opens the watch
 # pages to the LAN.
@@ -71,6 +75,7 @@ fi
 
 # The runner's own flags out, --watch in unless the page is set or turned off.
 lock_timeout=0
+speed=1
 watch=--watch
 n=$#
 while [ $n -gt 0 ]; do
@@ -88,12 +93,25 @@ while [ $n -gt 0 ]; do
         watch=""
         continue
         ;;
+    --speed)
+        speed=$1
+        shift
+        n=$((n - 1))
+        continue
+        ;;
     --watch | --watch-port | --listen) watch="" ;;
     esac
     set -- "$@" "$a"
 done
 if [ -n "$watch" ]; then
     set -- "$@" "$watch"
+fi
+# At 1x mGBA paces itself by its audio, as before; faster, the daemon paces it.
+if [ "$speed" = 1 ]; then
+    sync="-C audioSync=1 -C videoSync=0 -C fpsTarget=120"
+else
+    sync="-C audioSync=0 -C videoSync=0"
+    set -- "$@" --speed "$speed"
 fi
 
 . "$root/run/run_lock.sh"
@@ -132,6 +150,7 @@ done
 echo "mGBA dir: $dir"
 echo "states:   $GAMEPILOT_STATES"
 echo "runs:     $GAMEPILOT_RUNS"
+echo "speed:    ${speed}x"
 
 opened=1
 # -g -j: start in the background, hidden, so a run never takes the screen or the
@@ -140,7 +159,7 @@ opened=1
 # -bool YES` once per machine. GAMEPILOT_MGBA_SHOW=1 opens it in front instead.
 if [ "${GAMEPILOT_MGBA_SHOW:-0}" = 1 ]; then open_flags="-n"; else open_flags="-n -g -j"; fi
 # shellcheck disable=SC2086
-open $open_flags "$app" --args -C audioSync=1 -C videoSync=0 -C fpsTarget=120 -C "savegamePath=$dir" \
+open $open_flags "$app" --args $sync -C "savegamePath=$dir" \
     --script "$dir/run_bridge.lua" "$rom"
 tries=0
 until lsof -nP -iTCP:$bridge_port -sTCP:LISTEN >/dev/null; do

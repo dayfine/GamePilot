@@ -122,8 +122,8 @@
       "party_includes": ["blastoise", "pidgey", "mr-mime", "farfetchd"],
       "money": {"spent": 3550},
       "items": [
-        {"item": "revive", "quantity": 2},
-        {"item": "escape-rope", "quantity": 3}
+        {"item": "revive", "gained": 2},
+        {"item": "escape-rope", "gained": 1}
       ]
     }
   }

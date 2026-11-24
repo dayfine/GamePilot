@@ -94,6 +94,50 @@ let capped cap file () =
     (List.length kept.knows) (List.length kept.levels)
     (match skipped with [] -> "none" | l -> String.concat "; " l)
 
+(* mg-03 run from its last event (heal_lavender, after buy_revives): the
+   checkpoint's start reads as a whole run kept them beside the event's state
+   (no Escape Rope at the start), read back from that file, and the end's read
+   after the purchase (one rope). [kept_ropes] is the start count kept. *)
+let from_last_event ~kept_ropes () =
+  let p = plan "mg-03.plan.json" in
+  let events = p.checkpoint.events in
+  let range =
+    Result.get_ok
+      (Story.Event_range.resolve events ~from_event:"heal_lavender"
+         ~to_event:None)
+  in
+  let kept : Story.Event_states.kept =
+    {
+      start =
+        {
+          start_money = Some 29202;
+          start_coins = None;
+          start_items = [ ("revive", 0); ("escape-rope", kept_ropes) ];
+        };
+      at = None;
+    }
+  in
+  let kept =
+    Result.get_ok
+      (Story.Event_states.kept_of_json (Story.Event_states.kept_to_json kept))
+  in
+  let observed =
+    {
+      Story.Postcondition_check.nothing_read with
+      items = [ ("revive", 2); ("escape-rope", 1) ];
+      start = kept.start;
+    }
+  in
+  let rope =
+    List.find
+      (fun (r : Story.Postcondition_check.result) ->
+        r.what = "item escape-rope")
+      (Story.Postcondition_check.check p.postconditions observed)
+  in
+  Printf.sprintf "%s: %s"
+    (Story.Event_range.label events range.first)
+    (Story.Postcondition_check.result_to_string rope)
+
 let () =
   Table_test.run "checkpoint_run"
     [
@@ -117,6 +161,13 @@ let () =
       case "mg-03's walks plan on the maps" (walks "mg-03.plan.json")
         "to_route2_cut_tree 3; to_route2_reyley 8; exit_route2_house 3; \
          to_lavender_mart 7; to_lavender_nurse 8";
+      case "mg-03 from its last event: the rope gained from the kept start"
+        (from_last_event ~kept_ropes:0)
+        "#11 heal_lavender: item escape-rope: passed: gained 1 (0 to 1)";
+      case "re-read at that event (after the purchase), it would read gained 0"
+        (from_last_event ~kept_ropes:1)
+        "#11 heal_lavender: item escape-rope: failed: expected gained 1, read \
+         gained 0 (1 to 1)";
       case "mg-05a"
         (summary "mg-05a.plan.json")
         "frlg; from LavenderTown (18, 7) south; missing: none";

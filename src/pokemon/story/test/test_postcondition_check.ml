@@ -37,8 +37,32 @@ let party members = { read with party = Some members }
 let money min max = { nothing with money = Some (Money_range { min; max }) }
 let spent n = { nothing with money = Some (Money_spent n) }
 
+let items count =
+  { nothing with items = [ { bag_item = "escape-rope"; count } ] }
+
+let exactly n = items (Count_exactly n)
+let gained n = items (Count_gained n)
+
+let ropes ?start now =
+  {
+    read with
+    items = [ ("escape-rope", now) ];
+    start =
+      {
+        C.nothing_at_start with
+        start_items =
+          Option.fold ~none:[] ~some:(fun n -> [ ("escape-rope", n) ]) start;
+      };
+  }
+
+let coins count = { nothing with coins = Some count }
+
 let money_from start now =
-  { read with start_money = Some start; money = Some now }
+  {
+    read with
+    start = { C.nothing_at_start with start_money = Some start };
+    money = Some now;
+  }
 
 let party_cases =
   [
@@ -93,25 +117,54 @@ let party_cases =
 
 let count_cases =
   [
-    case "an item count as read"
-      { nothing with items = [ { item = "retro-mail"; quantity = 2 } ] }
-      { read with items = [ ("retro-mail", 2) ] }
-      "item retro-mail: passed: 2";
-    case "an item count off"
-      { nothing with items = [ { item = "retro-mail"; quantity = 2 } ] }
-      { read with items = [ ("retro-mail", 0) ] }
-      "item retro-mail: failed: expected 2, read 0";
-    case "an item not read"
-      { nothing with items = [ { item = "retro-mail"; quantity = 2 } ] }
-      read "item retro-mail: not checked: the game can't read it";
-    case "coins as read"
-      { nothing with coins = Some 20 }
+    case "an item count as read" (exactly 2) (ropes 2)
+      "item escape-rope: passed: 2";
+    case "an item count off" (exactly 2) (ropes 0)
+      "item escape-rope: failed: expected 2, read 0";
+    case "an item not read" (exactly 2) read
+      "item escape-rope: not checked: the game can't read it";
+    case "mg-03 on console B: 1 Escape Rope bought (4 to 5)" (gained 1)
+      (ropes ~start:4 5) "item escape-rope: passed: gained 1 (4 to 5)";
+    case "mg-03 on mGBA: 1 Escape Rope bought (2 to 3)" (gained 1)
+      (ropes ~start:2 3) "item escape-rope: passed: gained 1 (2 to 3)";
+    case "mg-03 on console B against mGBA's count (the old false fail)"
+      (exactly 3) (ropes ~start:4 5)
+      "item escape-rope: failed: expected 3, read 5";
+    case "gained more than promised" (gained 1) (ropes ~start:2 5)
+      "item escape-rope: failed: expected gained 1, read gained 3 (2 to 5)";
+    case "used as promised (mg-04's Escape Rope)" (gained (-1))
+      (ropes ~start:5 4) "item escape-rope: passed: used 1 (5 to 4)";
+    case "used none of what was promised" (gained (-1)) (ropes ~start:5 5)
+      "item escape-rope: failed: expected used 1, read gained 0 (5 to 5)";
+    case "gained, the count at the start not read" (gained 1) (ropes 5)
+      "item escape-rope: not checked: the count at the start was not read";
+    case "gained, the count at the end not read" (gained 1)
+      {
+        read with
+        start = { C.nothing_at_start with start_items = [ ("escape-rope", 4) ] };
+      }
+      "item escape-rope: not checked: the game can't read it";
+    case "at least, with more" (items (Count_at_least 2)) (ropes 5)
+      "item escape-rope: passed: 5";
+    case "at least, with fewer" (items (Count_at_least 2)) (ropes 1)
+      "item escape-rope: failed: expected at least 2, read 1";
+    case "coins as read" (coins (Count_exactly 20))
       { read with coins = Some 20 }
       "coins: passed: 20";
-    case "coins not spent on the prize"
-      { nothing with coins = Some 20 }
+    case "coins not spent on the prize" (coins (Count_exactly 20))
       { read with coins = Some 200 }
       "coins: failed: expected 20, read 200";
+    case "mg-01's coins on a save that had some: gained 20 (50 to 70)"
+      (coins (Count_gained 20))
+      {
+        read with
+        start = { C.nothing_at_start with start_coins = Some 50 };
+        coins = Some 70;
+      }
+      "coins: passed: gained 20 (50 to 70)";
+    case "coins gained, the start not read" (coins (Count_gained 20))
+      { read with coins = Some 20 }
+      "coins: not checked: the count at the start was not read";
     case "money exactly" (money 25014 25014)
       { read with money = Some 25014 }
       "money: passed: $25014";
@@ -137,7 +190,7 @@ let count_cases =
       { read with money = Some 25102 }
       "money: not checked: the money at the start was not read";
     case "spent, the money at the end not read" (spent 4100)
-      { read with start_money = Some 29202 }
+      { read with start = { C.nothing_at_start with start_money = Some 29202 } }
       "money: not checked: the game can't read it";
     case "a flag no game reads"
       { nothing with flags = [ "got_coin_case" ] }
@@ -214,7 +267,7 @@ let log_cases : Table_test.case list =
       (log "the log: one line each and a failed summary"
          {
            in_order with
-           coins = Some 20;
+           coins = Some (Count_exactly 20);
            money = Some (Money_range { min = 1; max = 1 });
          }
          { (party (some mg01_party)) with coins = Some 200 })
@@ -230,7 +283,7 @@ let log_cases : Table_test.case list =
       (log "the log: incomplete when none failed and one was not read"
          {
            nothing with
-           coins = Some 20;
+           coins = Some (Count_exactly 20);
            money = Some (Money_range { min = 1; max = 1 });
          }
          { read with coins = Some 20 })

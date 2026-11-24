@@ -215,6 +215,20 @@ let preflight_cases =
       "party includes blastoise, pidgey, abra, farfetchd; pidgey in the party \
        (fly); abra in the party (ingame_trade); a member knows cut (cut_tree); \
        money at least ¥3550 (mart); at the start, VermilionCity";
+    case
+      "preflight mg-04: mg-03's Revives and Escape Rope gained are no start \
+       need (console B held 5 ropes, not mGBA's 3); its own rope is"
+      (fun () ->
+        let before = Some (plan "mg-03").postconditions in
+        String.concat "; "
+          (List.map
+             (fun (r : Preflight.row) -> r.need)
+             (Preflight.compare (needs "mg-04" before)
+                { observed = P.nothing_read; place = None; members = None })))
+      "party includes blastoise, pidgey, mr-mime, farfetchd; farfetchd in the \
+       party (grind); blastoise in the party (grind); pidgey in the party \
+       (fly); mr-mime in the party (grind); escape-rope at least x1 \
+       (use_item); at the start, LavenderTown_PokemonCenter_1F";
   ]
 
 (* {1 Room in the party} *)

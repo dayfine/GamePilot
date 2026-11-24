@@ -21,7 +21,8 @@ type options = {
       (** Run no events: the start state's postconditions checked alone (the end
           position too is not checked: FireRed reckons it from the walks). A
           live check that a state holds what a checkpoint promises; a promise of
-          the money spent is not checked (no start read). *)
+          a change (the money spent, coins or items gained) is not checked (no
+          start read). *)
   log : string -> unit;
 }
 
@@ -77,16 +78,17 @@ val run :
     [end_at], the player must end there ({!Story.Runner.run}); FireRed reads no
     position yet, so it is where the walks tracked the player. Then the plan's
     postconditions ({!Story.Plan.postconditions}), read by
-    {!Postcondition_reads}, must all pass (a promise of the money spent against
-    the money read before the first event, {!Postcondition_reads.start_money}),
-    but for those {!capped_postconditions} skips (logged). [on_event] hears each
-    event's progress ({!Story.Runner.run}). [actions] are game actions of the
-    caller's own, ahead of FireRed's: a shadow plan's ({!Shadow_plan}).
+    {!Postcondition_reads}, must all pass (a promise of a change against the
+    count read before the first event, {!Postcondition_reads.at_start}), but for
+    those {!capped_postconditions} skips (logged). [on_event] hears each event's
+    progress ({!Story.Runner.run}). [actions] are game actions of the caller's
+    own, ahead of FireRed's: a shadow plan's ({!Shadow_plan}).
 
     With [from_event], only its events run ({!Story.Runner.run}), from
-    [options.state], the state kept at the first one's start; a promise of the
-    money spent is checked against the start money kept with that state, not
-    re-read (logged), and the walks start where the run that kept it reckoned
-    the player to stand. [keep_event_state] is called at the start of each event
-    the run reached cleanly ({!Story.Event_states.hear}), with what the run read
-    at the checkpoint's start (or, on a partial run, what was kept). *)
+    [options.state], the state kept at the first one's start; a promise of a
+    change is checked against the start reads kept with that state, never
+    re-read at the event (logged), and the walks start where the run that kept
+    it reckoned the player to stand. [keep_event_state] is called at the start
+    of each event the run reached cleanly ({!Story.Event_states.hear}), with
+    what the run read at the checkpoint's start (or, on a partial run, what was
+    kept). *)

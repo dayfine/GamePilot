@@ -13,7 +13,7 @@ let is_other_state ~index ~keep name =
   && name <> Filename.basename (kept_path keep)
   && (Filename.check_suffix name ".ss" || Filename.check_suffix name ".json")
 
-type kept = { start_money : int option; at : Pose.observed option }
+type kept = { start : Postcondition_check.start; at : Pose.observed option }
 
 let pose_to_json (p : Pose.observed) =
   `Assoc
@@ -27,12 +27,16 @@ let pose_to_json (p : Pose.observed) =
     ]
 
 let option_json f = function Some v -> f v | None -> `Null
+let int_json n = `Int n
 
-let kept_to_json r =
+let kept_to_json { start; at } =
   `Assoc
     [
-      ("start_money", option_json (fun n -> `Int n) r.start_money);
-      ("at", option_json pose_to_json r.at);
+      ("start_money", option_json int_json start.start_money);
+      ("start_coins", option_json int_json start.start_coins);
+      ( "start_items",
+        `Assoc (List.map (fun (i, n) -> (i, int_json n)) start.start_items) );
+      ("at", option_json pose_to_json at);
     ]
 
 let facing_of = function
@@ -49,19 +53,35 @@ let pose_of_json = function
       | _ -> Error "at: not a map and a tile")
   | _ -> Error "at: not an object"
 
-let money_of_json = function
-  | Some (`Int n) -> Ok (Some n)
-  | Some `Null | None -> Ok None
-  | Some _ -> Error "start_money is not a number"
+let count_of_json name = function
+  | `Int n -> Ok (Some n)
+  | `Null -> Ok None
+  | _ -> Error (name ^ " is not a number")
 
 let field fields name = Option.value (List.assoc_opt name fields) ~default:`Null
 let ( let* ) = Result.bind
 
+let rec items_read = function
+  | [] -> Ok []
+  | (item, `Int n) :: rest ->
+      let* rest = items_read rest in
+      Ok ((item, n) :: rest)
+  | (item, _) :: _ -> Error ("start_items: " ^ item ^ " is not a number")
+
+(* Each item's count at the start; none in a file kept before items were. *)
+let items_of_json = function
+  | `Null -> Ok []
+  | `Assoc items -> items_read items
+  | _ -> Error "start_items is not an object"
+
 let kept_of_json = function
   | `Assoc fields ->
-      let* start_money = money_of_json (List.assoc_opt "start_money" fields) in
+      let count name = count_of_json name (field fields name) in
+      let* start_money = count "start_money" in
+      let* start_coins = count "start_coins" in
+      let* start_items = items_of_json (field fields "start_items") in
       let* at = pose_of_json (field fields "at") in
-      Ok { start_money; at }
+      Ok { start = { start_money; start_coins; start_items }; at }
   | _ -> Error "what is kept is not an object"
 
 let missing ~checkpoint ~label ~path =

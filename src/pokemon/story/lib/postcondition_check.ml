@@ -1,9 +1,18 @@
+type start = {
+  start_money : int option;
+  start_coins : int option;
+  start_items : (string * int) list;
+}
+
+let nothing_at_start =
+  { start_money = None; start_coins = None; start_items = [] }
+
 type observed = {
   party : string option list option;
   items : (string * int) list;
   coins : int option;
   money : int option;
-  start_money : int option;
+  start : start;
   flags : (string * bool) list;
   knows : (string * string list) list;
   levels : (string * int) list;
@@ -16,7 +25,7 @@ let nothing_read =
     items = [];
     coins = None;
     money = None;
-    start_money = None;
+    start = nothing_at_start;
     flags = [];
     knows = [];
     levels = [];
@@ -101,23 +110,51 @@ let check_party (expected : Plan.party option) observed =
   | Some (Party_includes { members = list; slots }), Some members ->
       [ includes list slots members ]
 
-let check_item observed ({ item; quantity } : Plan.item) =
-  let what = "item " ^ item in
-  match List.assoc_opt item observed.items with
+let delta_text n =
+  if n < 0 then Printf.sprintf "used %d" (-n) else Printf.sprintf "gained %d" n
+
+(* Passed: "gained 1 (4 to 5)"; failed: "expected gained 1, read gained 3 (2
+   to 5)". *)
+let check_gained what n ~start read =
+  let from_to = Printf.sprintf "(%d to %d)" start read in
+  expected_read what ~expected:(delta_text n)
+    ~read:(delta_text (read - start) ^ " " ^ from_to)
+    (read - start = n)
+
+let start_not_read what =
+  {
+    what;
+    verdict = Not_checked;
+    detail = "the count at the start was not read";
+  }
+
+let check_count what (count : Plan.count) ~start read =
+  match (count, start) with
+  | Count_exactly n, _ ->
+      expected_read what ~expected:(string_of_int n) ~read:(string_of_int read)
+        (read = n)
+  | Count_at_least n, _ ->
+      expected_read what
+        ~expected:(Printf.sprintf "at least %d" n)
+        ~read:(string_of_int read) (read >= n)
+  | Count_gained _, None -> start_not_read what
+  | Count_gained n, Some start -> check_gained what n ~start read
+
+let check_item observed ({ bag_item; count } : Plan.bag_count) =
+  let what = "item " ^ bag_item in
+  match List.assoc_opt bag_item observed.items with
   | None -> not_read what
-  | Some count ->
-      expected_read what ~expected:(string_of_int quantity)
-        ~read:(string_of_int count) (count = quantity)
+  | Some read ->
+      check_count what count
+        ~start:(List.assoc_opt bag_item observed.start.start_items)
+        read
 
 let check_coins expected observed =
   match (expected, observed.coins) with
   | None, _ -> []
   | Some _, None -> [ not_read "coins" ]
-  | Some coins, Some read ->
-      [
-        expected_read "coins" ~expected:(string_of_int coins)
-          ~read:(string_of_int read) (read = coins);
-      ]
+  | Some count, Some read ->
+      [ check_count "coins" count ~start:observed.start.start_coins read ]
 
 let money_text money = Printf.sprintf "$%d" money
 
@@ -147,7 +184,7 @@ let check_spent amount ~start read =
       false
 
 let check_money (expected : Plan.money option) observed =
-  match (expected, observed.money, observed.start_money) with
+  match (expected, observed.money, observed.start.start_money) with
   | None, _, _ -> []
   | Some _, None, _ -> [ not_read "money" ]
   | Some (Money_range { min; max }), Some read, _ ->

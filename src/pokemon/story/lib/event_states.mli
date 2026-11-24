@@ -5,9 +5,11 @@
     only when it reached that event cleanly: every event it ran before it passed
     or was skipped.
 
-    Beside each state, [<n>-<event>.start.json] keeps what the run read at the
-    checkpoint's start: a postcondition that depends on the start (the money
-    spent) is checked against the checkpoint's start, not re-read at the event,
+    Beside each state, [<n>-<event>.json] keeps what the run read at the
+    checkpoint's start (the money, coins and items a promise of a change needs,
+    {!Postcondition_check.start}) and where the player was reckoned to stand: a
+    postcondition that depends on the start (money spent, an item gained or
+    used) is checked against the checkpoint's start, never re-read at the event,
     so a partial run checks the same promise a whole run does. Not in the fork.
 *)
 
@@ -30,14 +32,17 @@ val is_other_state : index:int -> keep:string -> string -> bool
     [keep] is saved: a renamed event leaves one state per number. *)
 
 type kept = {
-  start_money : int option;
-      (** The money at the checkpoint's start, when a promise of the money spent
-          needs it. *)
+  start : Postcondition_check.start;
+      (** What the run read at the checkpoint's start for the promises of a
+          change. *)
   at : Pose.observed option;  (** Where the player was reckoned to stand. *)
 }
 
 val kept_to_json : kept -> Yojson.Safe.t
+
 val kept_of_json : Yojson.Safe.t -> (kept, string) result
+(** A file kept before the coins and items were (only [start_money]) reads with
+    none of them read at the start, so their promises are not checked. *)
 
 val missing : checkpoint:string -> label:string -> path:string -> string
 (** No state for the event yet: says so and names the run that would make one.

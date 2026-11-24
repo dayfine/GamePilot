@@ -18,6 +18,43 @@ let money ~where obj : Plan.money =
   | false, true -> money_range ~where obj
   | false, false -> F.fail "%s: give min and max, or spent." money
 
+(* The keys naming a count: one of them, with how each reads. *)
+let count_keys exact =
+  [
+    (exact, fun n -> Plan.Count_exactly n);
+    ("gained", fun n -> Plan.Count_gained n);
+    ("used", fun n -> Plan.Count_gained (-n));
+    ("at_least", fun n -> Plan.Count_at_least n);
+  ]
+
+(* [where] ends in a dot: the error names the object. *)
+let count ~where ~exact obj =
+  let keys = count_keys exact in
+  match List.filter (fun (key, _) -> F.has key obj) keys with
+  | [ (key, of_int) ] -> of_int (F.int ~where key obj)
+  | _ ->
+      F.fail "%s: give one of %s."
+        (String.sub where 0 (String.length where - 1))
+        (String.concat ", " (List.map fst keys))
+
+let bag_count ~where obj : Plan.bag_count =
+  only ~where [ "item"; "quantity"; "gained"; "used"; "at_least" ] obj;
+  {
+    bag_item = F.string ~where "item" obj;
+    count = count ~where ~exact:"quantity" obj;
+  }
+
+(* A number, exactly that many; or an object with a count. *)
+let coins ~where obj =
+  match F.find "coins" obj with
+  | None -> None
+  | Some (`Int n) -> Some (Plan.Count_exactly n)
+  | Some value ->
+      let where = where ^ "coins." in
+      let obj = F.as_object where value in
+      only ~where [ "exactly"; "gained"; "used"; "at_least" ] obj;
+      Some (count ~where ~exact:"exactly" obj)
+
 let knows ~where obj : Plan.knows =
   only ~where [ "species"; "moves" ] obj;
   {
@@ -78,8 +115,8 @@ let postconditions ~where obj : Plan.postconditions =
   {
     position = nested "position" grid_pose;
     party = Party_decode.party ~where obj;
-    items = F.records ~where "items" obj item;
-    coins = optional ~where "coins" obj F.int;
+    items = F.records ~where "items" obj bag_count;
+    coins = coins ~where obj;
     money = nested "money" money;
     flags =
       Option.fold ~none:[]
