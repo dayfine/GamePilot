@@ -365,10 +365,10 @@ let redeem_list_lingers () =
   Printf.sprintf "%s; %s" (outcome result)
     (if !taken then "the prize taken" else "the prize declined")
 
-let case name input expectation = { Case_table.name; input; expectation }
+let case name input expectation = { Table_test.name; input; expectation }
 
 let () =
-  Case_table.run "menu_actions"
+  Table_test.run "menu_actions"
     [
       case "mart: BUY and the row once the clerk's box and list take them"
         (mart_buy ~menu_ms:1500) "ok; A x2, down, A, up, A x2, B x6";

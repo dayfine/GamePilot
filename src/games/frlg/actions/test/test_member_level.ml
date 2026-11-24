@@ -6,7 +6,7 @@ open Frlg_actions
 module S = Frlg_overworld_fixtures.Scripted_screen
 module B = Frlg_battle
 
-let case name input expectation = { Case_table.name; input; expectation }
+let case name input expectation = { Table_test.name; input; expectation }
 
 (* START opens the menu on POKéMON; A on it the party; A on a slot its menu;
    A on SUMMARY (row 0) the summary, at the next of [levels] (the last one
@@ -125,7 +125,7 @@ let grind levels () =
     (outcome result) (ends_on screen)
 
 let () =
-  Case_table.run "member_level"
+  Table_test.run "member_level"
     [
       case "Lv 33 on the summary, back on the overworld"
         (read_level [ Some 33 ]) "ok, Lv 33; ends on overworld";

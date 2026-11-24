@@ -1,4 +1,4 @@
-// Wire protocol v1 (contracts/v1): JSON-RPC 2.0 messages decoded into plain
+// Wire protocol v1 (protocol/v1): JSON-RPC 2.0 messages decoded into plain
 // structs and encoded back. No I/O here.
 
 #pragma once

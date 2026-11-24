@@ -4,7 +4,7 @@
 
 module R = Run_record
 
-let case name input expectation = { Case_table.name; input; expectation }
+let case name input expectation = { Table_test.name; input; expectation }
 let mail_glitch = [ ("game", "frlg"); ("program", "frlg.mail_glitch") ]
 
 let info kind ~program ~from_id ~to_id ~backend : R.info =
@@ -207,4 +207,4 @@ let verdicts =
              |> fun l -> Yojson.Safe.to_string (`List l))
            expect)
 
-let () = Case_table.run "run_record" (paths @ names @ files @ facts @ verdicts)
+let () = Table_test.run "run_record" (paths @ names @ files @ facts @ verdicts)

@@ -54,7 +54,7 @@ let run_case { name; input = before, after; expectation } =
   let expected_after =
     { after with opened = Names.union before.opened after.opened }
   in
-  Case_table.report name
+  Table_test.report name
     (Check.all
        [
          (fun () ->
@@ -66,4 +66,4 @@ let run_case { name; input = before, after; expectation } =
 
 let () =
   List.iter run_case cases;
-  Case_table.finish ()
+  Table_test.finish ()

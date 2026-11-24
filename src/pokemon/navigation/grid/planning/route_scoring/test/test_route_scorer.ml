@@ -5,7 +5,7 @@
 open Grid_route_scoring
 open Toy_score_map
 
-let case name input expectation = { Case_table.name; input; expectation }
+let case name input expectation = { Table_test.name; input; expectation }
 
 let taps_time () =
   let got =
@@ -175,4 +175,4 @@ let cases =
       "FAIL: may end on (2, 0), off the goal";
   ]
 
-let () = Case_table.run "Route_scorer" cases
+let () = Table_test.run "Route_scorer" cases

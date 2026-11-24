@@ -22,7 +22,7 @@ let run ?(limits = limits) ?(target = 10) script =
 let grind = Level_grind_world.script
 let lost = Failure.cause "blacked_out" "the lead fainted"
 
-let cases : Case_table.case list =
+let cases : Table_test.case list =
   [
     {
       name = "goal already met: no round runs";
@@ -133,4 +133,4 @@ stopped: save failed in round 2: save_not_confirmed: no saved text|};
     };
   ]
 
-let () = Case_table.run "repeat_until" cases
+let () = Table_test.run "repeat_until" cases

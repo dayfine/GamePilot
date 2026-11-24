@@ -13,7 +13,7 @@ let costed ?(costs = Robust_costs.default) rows legs () =
   string_of_int (Robust_planner.cost ~costs (model rows) ~from:[ pos 0 0 ] legs)
 
 let case name input expectation =
-  { Case_table.name; input; expectation = string_of_int expectation }
+  { Table_test.name; input; expectation = string_of_int expectation }
 
 let d = Robust_costs.default
 
@@ -65,4 +65,4 @@ let cases =
       (8 + 2 + (2 * 4));
   ]
 
-let () = Case_table.run "Robust_planner.cost" cases
+let () = Table_test.run "Robust_planner.cost" cases

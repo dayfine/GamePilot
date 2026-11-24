@@ -5,7 +5,7 @@
 
 open Frlg_actions
 
-let case name input expectation = { Case_table.name; input; expectation }
+let case name input expectation = { Table_test.name; input; expectation }
 let stocks = Result.get_ok (Mart_plan.load ())
 
 let decode name json () =
@@ -163,4 +163,4 @@ let others =
       "north east south west north";
   ]
 
-let () = Case_table.run "action_requests" (decoding @ mart @ roster @ others)
+let () = Table_test.run "action_requests" (decoding @ mart @ roster @ others)

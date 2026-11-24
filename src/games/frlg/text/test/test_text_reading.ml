@@ -122,11 +122,11 @@ let print_accuracy () =
 
 let () =
   print_accuracy ();
-  Case_table.run "text_reading"
+  Table_test.run "text_reading"
     (List.map
        (fun e ->
          {
-           Case_table.name = e.image ^ " " ^ e.line;
+           Table_test.name = e.image ^ " " ^ e.line;
            input = (fun () -> reading e);
            expectation = e.reads;
          })

@@ -11,9 +11,9 @@ code point (hex), and each row has <width> pixels: '.' background,
 '#' text, 's' shadow. Latin glyphs advance by their width; the game adds no
 letter spacing (RenderText in src/text.c).
 
-    python3 tools/extract_frlg_font_glyphs.py ~/Projects/pokefirered \
+    python3 src/games/frlg/assets/extract/extract_frlg_font_glyphs.py ~/Projects/pokefirered \
         > src/games/frlg/assets/font_latin_normal.glyphs
-    python3 tools/extract_frlg_font_glyphs.py ~/Projects/pokefirered small \
+    python3 src/games/frlg/assets/extract/extract_frlg_font_glyphs.py ~/Projects/pokefirered small \
         > src/games/frlg/assets/font_latin_small.glyphs
 
 The fonts (DecompressGlyph_Normal and DecompressGlyph_Small in src/text.c):
@@ -101,7 +101,7 @@ def main(decomp, font):
     widths = glyph_widths(decomp + "/src/text.c", table)
     chars = charmap_chars(decomp + "/charmap.txt")
     cells_per_row = len(pixels[0]) // cell_width
-    print("# FRLG %s Latin glyphs, made by tools/extract_frlg_font_glyphs.py" % name)
+    print("# FRLG %s Latin glyphs, made by src/games/frlg/assets/extract/extract_frlg_font_glyphs.py" % name)
     print("# from pret/pokefirered: <code> <width> <codepoint> <rows> (see the script)")
     extras = [(char, 0x100 + symbol) for symbol, char in EXTRA_SYMBOLS]
     for char, code in sorted(chars, key=lambda entry: entry[1]) + extras:

@@ -158,4 +158,4 @@ let risk_cases =
 
 let () =
   List.iter run (weight_cases @ risk_cases);
-  Case_table.finish ()
+  Table_test.finish ()

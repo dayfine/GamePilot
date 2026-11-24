@@ -29,7 +29,7 @@ GamePilot stands on these projects, used as read-only submodules under `third_pa
 
 ## Running on mGBA
 
-`tools/run_checkpoints_on_mgba.sh` starts mGBA, runs `gamepilot checkpoints` against it and closes it
+`run/run_checkpoints_on_mgba.sh` starts mGBA, runs `gamepilot checkpoints` against it and closes it
 again. It takes its paths from the environment, or from `~/.config/gamepilot/env` (one
 `export NAME=value` per line; `GAMEPILOT_ENV_FILE` names another file), and prints the ones in use:
 
@@ -63,7 +63,7 @@ Network > Firewall > Options lists it afterwards). A rebuilt daemon may ask agai
 
 - The maps come from [PokemonSimulation](https://github.com/dayfine/PokemonSimulation) (MIT).
 - The game data, font glyphs, item and species names are derived from the
-  [pret/pokefirered](https://github.com/pret/pokefirered) decompilation (`tools/extract_frlg_*.py`).
+  [pret/pokefirered](https://github.com/pret/pokefirered) decompilation (`src/games/frlg/assets/extract/extract_frlg_*.py`).
 - The test screenshots are captures of the games, kept for testing the readers.
 - Pokémon is © Nintendo, Game Freak and Creatures. This project is not affiliated with or endorsed
   by them.

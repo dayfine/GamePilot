@@ -118,7 +118,7 @@ let read_level min () =
           (Story.Postcondition_check.check promised observed)))
     (S.screen_name (S.screen_at screen screen.S.clock_ms))
 
-let cases : Case_table.case list =
+let cases : Table_test.case list =
   [
     {
       name = "each item's count read on its row of the bag";
@@ -161,4 +161,4 @@ let cases : Case_table.case list =
     };
   ]
 
-let () = Case_table.run "postcondition_reads" cases
+let () = Table_test.run "postcondition_reads" cases

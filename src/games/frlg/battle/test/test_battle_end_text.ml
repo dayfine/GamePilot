@@ -7,7 +7,7 @@
 
 open Frlg_battle
 
-let case name input expectation = { Case_table.name; input; expectation }
+let case name input expectation = { Table_test.name; input; expectation }
 
 let defeat_line =
   lazy
@@ -62,4 +62,4 @@ let cases =
       "look, press B, look, press B, look, battle over";
   ]
 
-let () = Case_table.run "battle end text" cases
+let () = Table_test.run "battle end text" cases

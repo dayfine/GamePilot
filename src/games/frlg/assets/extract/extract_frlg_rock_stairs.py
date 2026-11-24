@@ -8,7 +8,7 @@ data/layouts/layouts.json) and its tilesets' metatile behaviours from a
 pret/pokefirered checkout through `git show` (a sparse checkout works) and
 prints one line per map with rock stairs: <map> <x>,<y> ...
 
-    python3 tools/extract_frlg_rock_stairs.py ~/Projects/pokefirered \
+    python3 src/games/frlg/assets/extract/extract_frlg_rock_stairs.py ~/Projects/pokefirered \
         > src/games/frlg/assets/rock_stairs.txt
 """
 
@@ -86,7 +86,7 @@ def main(decomp):
     }
     attribute_paths = tileset_attributes(decomp)
     cache = {}
-    print("# FRLG rock stairs, made by tools/extract_frlg_rock_stairs.py from pret/pokefirered")
+    print("# FRLG rock stairs, made by src/games/frlg/assets/extract/extract_frlg_rock_stairs.py from pret/pokefirered")
     print("# (MB_ROCK_STAIRS metatiles of each map's layout): <map> <x>,<y> ...")
     for path in sorted(p for p in files(decomp, "data/maps") if p.endswith("/map.json")):
         header = json.loads(show(decomp, path))

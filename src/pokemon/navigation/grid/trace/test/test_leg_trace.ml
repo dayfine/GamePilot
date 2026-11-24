@@ -67,7 +67,7 @@ let battle_on_the_way tracer =
   Leg_tracer.end_leg tracer [ tile "Route 202" 20 27 ] Wall;
   Leg_tracer.end_event tracer
 
-let case name input expectation = { Case_table.name; input; expectation }
+let case name input expectation = { Table_test.name; input; expectation }
 
 let cases =
   [
@@ -115,4 +115,4 @@ let cases =
        202\",20,27]],\"end_kind\":\"wall\",\"event\":\"to_catch_grass\",\"interrupts\":[\"wild_battle\"],\"known\":\"wall\",\"leg\":1,\"ms\":900,\"planned_end\":[],\"tiles\":4}\n";
   ]
 
-let () = Case_table.run "LegTrace" cases
+let () = Table_test.run "LegTrace" cases

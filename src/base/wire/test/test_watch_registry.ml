@@ -24,7 +24,7 @@ let summary text =
     (match s.run with Some r -> r.mode | None -> "none")
     (match s.plan with Some p -> p.checkpoint | None -> "none")
 
-let cases : Case_table.case list =
+let cases : Table_test.case list =
   [
     {
       name = "an entry as the daemon writes it";
@@ -56,4 +56,4 @@ let cases : Case_table.case list =
     };
   ]
 
-let () = Case_table.run "watch_registry" cases
+let () = Table_test.run "watch_registry" cases

@@ -1,4 +1,4 @@
-// gamepilot_daemon: serves the v1 wire protocol (contracts/v1) over one
+// gamepilot_daemon: serves the v1 wire protocol (protocol/v1) over one
 // backend.
 //
 //   gamepilot_daemon --backend mgba --mgba-port 47810 [--port 47900] [--log f]
@@ -37,7 +37,7 @@
 // --capture-check saves one captured frame and checks the GBA picture sits
 // where nso_gba_viewport() says (switch_geometry.h). Without --serial, and
 // with --replay in place of --capture, both check the fakes: a dry run
-// (tools/run_checkpoints_on_switch.sh --dry-run). Bring-up:
+// (run/run_checkpoints_on_switch.sh --dry-run). Bring-up:
 // docs/switch-bring-up.md.
 
 #include <atomic>

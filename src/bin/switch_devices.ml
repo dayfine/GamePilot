@@ -11,7 +11,7 @@
    card's AVFoundation unique id), and in GlobalSettings.DEVICE_ALIASES each
    card's name. OpenCV opens a card by index, not by id or name (two cards may
    share a name), so the index is looked up on the console with
-   tools/list_capture_devices.swift. *)
+   daemon/tools/list_capture_devices.swift. *)
 
 let usage = "  gamepilot switch-devices [--profile DIR]\n"
 let settings_file = [ "UserSettings"; "SerialPrograms-Settings.json" ]
@@ -78,7 +78,8 @@ let print_devices json ~serial ~camera =
   print_newline ();
   Printf.printf
     "daemon flags: --backend switch --serial %s --capture INDEX\n\
-     INDEX: the line of `swift tools/list_capture_devices.swift` with id %s\n"
+     INDEX: the line of `swift daemon/tools/list_capture_devices.swift` with \
+     id %s\n"
     (serial_path serial) camera
 
 let devices dir =

@@ -13,7 +13,7 @@ let target ?facing map tiles : Story.Pose.grid =
 let plan ~from goal () =
   legs_text pallet (Route_target.plan pallet ~from ~facing:None goal)
 
-let case name input expectation = { Case_table.name; input; expectation }
+let case name input expectation = { Table_test.name; input; expectation }
 let celadon_names = [ "CeladonCity"; "Route16" ]
 
 (* mg-02's "west 11" from Celadon City (4, 24) onto Route 16 (41, 14): how
@@ -51,7 +51,7 @@ let past_cut_tree ~cut () =
        (target ~facing:East "Route16" [ (35, 6) ]))
 
 let () =
-  Case_table.run "route_target"
+  Table_test.run "route_target"
     [
       case "out of the house: the exit mat warps, the door walks the player out"
         (plan

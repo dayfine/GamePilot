@@ -3,8 +3,8 @@
     movement (pokefirered's [PlayerIsMovingOnRockStairs] in
     src/field_player_avatar.c); east or west it does not. The tiles come from
     src/games/frlg/assets/rock_stairs.txt, which
-    tools/extract_frlg_rock_stairs.py writes from the decomp's layouts, as the
-    PokemonSimulation maps do not mark them.
+    src/games/frlg/assets/extract/extract_frlg_rock_stairs.py writes from the
+    decomp's layouts, as the PokemonSimulation maps do not mark them.
 
     Measured on mGBA (2026-11-23, Indigo Plateau's stairs at rows 14, 16 and 18
     and Route 23's row 0): a slow step takes 11 frames running (8 otherwise) and

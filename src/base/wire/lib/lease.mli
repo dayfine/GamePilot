@@ -1,5 +1,5 @@
-(** The input lease (contracts/v1, v1.9): one connection at a time may send
-    input ([submit], [cancel], [backend.load_state]). A connection takes it with
+(** The input lease (protocol/v1, v1.9): one connection at a time may send input
+    ([submit], [cancel], [backend.load_state]). A connection takes it with
     [lease.acquire] or its first input; it ends on disconnect, [lease.release],
     or [ttl_ms] with no input. Anyone else's input is refused with {!held_code},
     naming the holder. *)

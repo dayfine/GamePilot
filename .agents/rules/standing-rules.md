@@ -6,7 +6,7 @@ harness: template
 
 Rules that hold for every dispatch of an agent go in its definition, once,
 under the heading below. The dispatcher's brief then carries only the task
-(`agent-liveness.md` §Keep briefs short). `bin/agent-standing-rules-check.sh`
+(`agent-liveness.md` §Keep briefs short). `.agents/checks/agent-standing-rules-check.sh`
 fails when a listed agent's definition loses the block or one of its
 required phrases; `.agents/standing-rules.conf` lists which agents need which
 roles.
@@ -20,7 +20,7 @@ checker looks for verbatim** (listed under each block).
 ```markdown
 ## Standing rules — the dispatch brief does not repeat these
 
-<!-- standing-rules: pinned by bin/agent-standing-rules-check.sh -->
+<!-- standing-rules: pinned by .agents/checks/agent-standing-rules-check.sh -->
 The dispatcher's brief carries only the task: the issue or PR and its tip SHA, the scope or the delta
 since the last review, the prior review's location, and the rework iteration. The rules below apply
 without being restated.

@@ -8,7 +8,7 @@
 # offending file paths if anything is missing or malformed.
 #
 # Run from the consuming project's root:
-#   sh bin/agent-harness-check.sh
+#   sh .agents/checks/agent-harness-check.sh
 #
 # Exit code: 0 on success, 1 on any violation.
 #
@@ -48,10 +48,10 @@ $found"
 done
 
 SH_YML_FILES=""
-for d in ".github/workflows" "dev/lib" "bin"; do
+for d in ".github/workflows" "dev/lib" ".agents/checks"; do
   if [ -d "$REPO_ROOT/$d" ]; then
     set +e
-    if [ "$d" = "bin" ]; then
+    if [ "$d" = ".agents/checks" ]; then
       found=$(find "$REPO_ROOT/$d" -maxdepth 1 -type f \( -name "*.sh" -o -name "*.yml" -o ! -name "*.*" \) ! -name "test-*.sh" 2>/dev/null)
     else
       found=$(find "$REPO_ROOT/$d" -maxdepth 1 -type f \( -name "*.sh" -o -name "*.yml" \) ! -name "test-*.sh" 2>/dev/null)

@@ -101,14 +101,14 @@ let decoded text =
 
 let error name (find, replacement) expectation =
   {
-    Case_table.name;
+    Table_test.name;
     input = (fun () -> decoded (edited find replacement));
     expectation;
   }
 
 let at = "base.plan.json: checkpoint."
 
-let real_plans : Case_table.case list =
+let real_plans : Table_test.case list =
   [
     {
       name = "every PokemonSimulation FireRed plan";
@@ -193,7 +193,7 @@ let real_plans : Case_table.case list =
     };
   ]
 
-let inline_plans : Case_table.case list =
+let inline_plans : Table_test.case list =
   [
     {
       name = "built-in args typed, fallbacks filled in";
@@ -326,7 +326,7 @@ let with_postconditions json =
 
 let post = at ^ "metadata.postconditions."
 
-let postcondition_cases : Case_table.case list =
+let postcondition_cases : Table_test.case list =
   [
     {
       name =
@@ -475,8 +475,8 @@ let retries_of metadata =
   | Ok plan -> string_of_int plan.retries
   | Error message -> message
 
-let retries_cases : Case_table.case list =
-  let case name input expectation : Case_table.case =
+let retries_cases : Table_test.case list =
+  let case name input expectation : Table_test.case =
     { name; input; expectation }
   in
   [
@@ -492,5 +492,5 @@ let retries_cases : Case_table.case list =
   ]
 
 let () =
-  Case_table.run "plan_decode"
+  Table_test.run "plan_decode"
     (real_plans @ inline_plans @ postcondition_cases @ retries_cases)

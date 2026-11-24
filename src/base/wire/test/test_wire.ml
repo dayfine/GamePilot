@@ -1,14 +1,14 @@
-(* Decodes and re-encodes every golden file in contracts/v1; the result must be
+(* Decodes and re-encodes every golden file in protocol/v1; the result must be
    the same JSON value (number spelling and key order aside). *)
 
-(* contracts/ sits outside the dune project, so find it from the build dir. *)
-let contracts_dir () =
+(* protocol/ sits outside the dune project, so find it from the build dir. *)
+let protocol_dir () =
   let rec up dir =
-    let candidate = Filename.concat (Filename.concat dir "contracts") "v1" in
+    let candidate = Filename.concat (Filename.concat dir "protocol") "v1" in
     if Sys.file_exists candidate && Sys.is_directory candidate then candidate
     else
       let parent = Filename.dirname dir in
-      if parent = dir then failwith "contracts/v1 not found above the test dir"
+      if parent = dir then failwith "protocol/v1 not found above the test dir"
       else up parent
   in
   up (Sys.getcwd ())
@@ -259,7 +259,7 @@ let check_daemon_status dir =
   print_endline "ok daemon status"
 
 let () =
-  let dir = contracts_dir () in
+  let dir = protocol_dir () in
   let files =
     Sys.readdir dir |> Array.to_list
     |> List.filter (fun f -> Filename.check_suffix f ".json")

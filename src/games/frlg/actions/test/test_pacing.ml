@@ -5,7 +5,7 @@
 
 open Frlg_actions
 
-let case name input expectation = { Case_table.name; input; expectation }
+let case name input expectation = { Table_test.name; input; expectation }
 
 (* What follows a step: a battle's flash, a battle whose flash was missed, a
    trainer's message, or nothing. *)
@@ -125,4 +125,4 @@ let spot_cases =
     case "the path the turning drifted onto" (spot_at (46, 12)) "off the patch";
   ]
 
-let () = Case_table.run "pacing" (cases @ spot_cases)
+let () = Table_test.run "pacing" (cases @ spot_cases)

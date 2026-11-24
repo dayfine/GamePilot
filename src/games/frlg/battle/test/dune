@@ -1,17 +1,17 @@
 (test
  (name test_scripted_battle)
  (modules test_scripted_battle)
- (libraries gamepilot.case_table gamepilot.frlg_battle))
+ (libraries gamepilot.table_test gamepilot.frlg_battle))
 
 (test
  (name test_battle_rules)
  (modules test_battle_rules)
- (libraries gamepilot.wire gamepilot.case_table gamepilot.frlg_battle))
+ (libraries gamepilot.wire gamepilot.table_test gamepilot.frlg_battle))
 
 (test
  (name test_wild_flee)
  (modules test_wild_flee)
- (libraries gamepilot.case_table gamepilot.frlg_battle))
+ (libraries gamepilot.table_test gamepilot.frlg_battle))
 
 (rule
  (copy
@@ -25,5 +25,5 @@
  (libraries
   gamepilot.wire
   gamepilot.effects
-  gamepilot.case_table
+  gamepilot.table_test
   gamepilot.frlg_battle))

@@ -1,4 +1,4 @@
-# FRLG TM and HM moves, made by tools/extract_frlg_tm_moves.py from
+# FRLG TM and HM moves, made by src/games/frlg/assets/extract/extract_frlg_tm_moves.py from
 # pret/pokefirered src/data/items.json and src/data/text/move_names.h:
 # <item> <move name>
 TM01 FOCUS PUNCH

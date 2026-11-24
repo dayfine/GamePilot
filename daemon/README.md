@@ -1,5 +1,5 @@
 C++ daemon: one backend (frame source, input sink, frame clock), probes on OpenCV, and the v1
-JSON-RPC server (`contracts/v1`). `CoreLib` (from `third_party/Arduino-Source`, through its own
+JSON-RPC server (`protocol/v1`). `CoreLib` (from `third_party/Arduino-Source`, through its own
 cmake files) provides JSON and file I/O; it builds on Linux, macOS and Windows.
 
     cmake -S daemon -B daemon/build -G Ninja -DCMAKE_BUILD_TYPE=Release \
@@ -83,7 +83,7 @@ built and tested from saved screenshots (mGBA shots, CommandLineTests images):
     daemon/build/probe_images --spec probes.json [--viewport x,y,w,h] [--game-size WxH] \
         shot1.png [shot2.png ...] > results.jsonl
 
-The spec file is the `subscribe` params (`{"probes": [...]}`, `contracts/v1`); a
+The spec file is the `subscribe` params (`{"probes": [...]}`, `protocol/v1`); a
 `core.template_match@1` probe's `template` is a PNG path, relative to the spec file, instead of an
 uploaded hash. Each image gives one line `{"image": path, "probes": {id: result}}`, the `probes` of a
 `frame` notification. Boxes are relative to the game picture and templates are in game pixels, as on

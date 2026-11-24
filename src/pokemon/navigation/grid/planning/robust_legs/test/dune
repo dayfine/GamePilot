@@ -2,7 +2,7 @@
  (names test_robust_plan test_robust_cost test_from_step_model)
  (modules robust_toy test_robust_plan test_robust_cost test_from_step_model)
  (libraries
-  gamepilot.case_table
+  gamepilot.table_test
   gamepilot.grid_maps
   gamepilot.grid_planning
   gamepilot.grid_robust_legs))

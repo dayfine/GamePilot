@@ -95,13 +95,13 @@ let measured gait ~ends (map, x, y) d starts () =
 
 let case name test n =
   {
-    Case_table.name;
+    Table_test.name;
     input = test;
     expectation = Printf.sprintf "all %d holds land" n;
   }
 
 let () =
-  Case_table.run "edge_steps"
+  Table_test.run "edge_steps"
     [
       case "Celadon City west onto Route 16"
         (measured Running ~ends:("Route16", 38, 14) ("CeladonCity", 5, 24) West

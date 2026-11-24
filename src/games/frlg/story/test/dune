@@ -38,7 +38,7 @@
   mg-05.plan.json
   mg-06.plan.json)
  (libraries
-  gamepilot.case_table
+  gamepilot.table_test
   gamepilot.story
   gamepilot.frlg_actions
   gamepilot.frlg_story))
@@ -48,7 +48,7 @@
  (modules test_mg04_walk_replay)
  (deps mg-04.plan.json mg04_walk_two_fled_battles.wire.jsonl)
  (libraries
-  gamepilot.case_table
+  gamepilot.table_test
   gamepilot.replay
   gamepilot.story
   gamepilot.frlg_actions
@@ -80,7 +80,7 @@
   menus.switch.probes.jsonl)
  (libraries
   gamepilot.wire
-  gamepilot.case_table
+  gamepilot.table_test
   gamepilot.story
   gamepilot.frlg_story
   frlg_overworld_fixtures))
@@ -99,7 +99,7 @@
  (libraries
   yojson
   gamepilot.wire
-  gamepilot.case_table
+  gamepilot.table_test
   gamepilot.story
   gamepilot.frlg_readers
   gamepilot.frlg_actions
@@ -115,7 +115,7 @@
   mg-04.plan.json
   mg-06.plan.json)
  (libraries
-  gamepilot.case_table
+  gamepilot.table_test
   gamepilot.grid_maps
   gamepilot.story
   gamepilot.frlg_actions))
@@ -125,7 +125,7 @@
  (modules test_make_room)
  (libraries
   yojson
-  gamepilot.case_table
+  gamepilot.table_test
   gamepilot.story
   gamepilot.frlg_actions
   gamepilot.frlg_story))
@@ -135,7 +135,7 @@
  (modules test_paced_patches)
  (deps mg-02.plan.json mg-05a.plan.json)
  (libraries
-  gamepilot.case_table
+  gamepilot.table_test
   gamepilot.grid_maps
   gamepilot.story
   gamepilot.frlg_overworld

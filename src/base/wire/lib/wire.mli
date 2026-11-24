@@ -1,10 +1,10 @@
-(** Wire protocol v1.9 (contracts/v1): message types and their JSON codec.
+(** Wire protocol v1.9 (protocol/v1): message types and their JSON codec.
 
     The codec lives in one module per message family ([Command], [Probe],
     [Backend], [Jsonrpc], [Wire_log], [Probe_images]); this module re-exports
     it.
 
-    One JSON object per line. The golden files in [contracts/v1] are the spec;
+    One JSON object per line. The golden files in [protocol/v1] are the spec;
     [test/test_wire.ml] decodes and re-encodes every one of them. *)
 
 type json = Yojson.Safe.t

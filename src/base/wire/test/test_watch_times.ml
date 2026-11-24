@@ -19,7 +19,7 @@ let event ?started ?ended state =
 let plan events = { checkpoint = "mg-01"; events }
 let live = Some 5000
 
-let cases : Case_table.case list =
+let cases : Table_test.case list =
   [
     {
       name = "stamp: a pending event has no times";
@@ -125,4 +125,4 @@ let cases : Case_table.case list =
     };
   ]
 
-let () = Case_table.run "watch_times" cases
+let () = Table_test.run "watch_times" cases

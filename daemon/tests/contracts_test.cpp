@@ -1,4 +1,4 @@
-// Every contracts/v1 golden file parses with the daemon's JSON layer; requests
+// Every protocol/v1 golden file parses with the daemon's JSON layer; requests
 // decode into the daemon's structs; the daemon's encoders reproduce the golden
 // results and notifications.
 

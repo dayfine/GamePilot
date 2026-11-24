@@ -1,5 +1,5 @@
 # The lock that lets one checkpoint run at a time use the GamePilot mGBA instance; sourced by
-# tools/run_checkpoints_on_mgba.sh (and tested by tools/test_run_lock.sh). The lock is a
+# run/run_checkpoints_on_mgba.sh (and tested by run/test_run_lock.sh). The lock is a
 # directory, made with one atomic mkdir, holding an `owner` file: the holder's pid and command
 # line. A runner that finds it waits until it is gone, or until its holder's pid is dead (a stale
 # lock, taken over), or until its timeout.

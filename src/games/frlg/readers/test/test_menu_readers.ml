@@ -229,7 +229,7 @@ let cases backend images =
       List.map
         (fun (image, probes) ->
           {
-            Case_table.name = Printf.sprintf "%s %s: %s" backend r.reader image;
+            Table_test.name = Printf.sprintf "%s %s: %s" backend r.reader image;
             input = (fun () -> r.verdict (measurements probes));
             expectation = expectation r image;
           })
@@ -261,5 +261,5 @@ let () =
       [ "switch"; "mgba" ]
   in
   List.iter (fun (backend, images) -> print_tally backend images) backends;
-  Case_table.run "menu readers"
+  Table_test.run "menu readers"
     (List.concat_map (fun (backend, images) -> cases backend images) backends)

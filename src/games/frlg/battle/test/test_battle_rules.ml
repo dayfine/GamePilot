@@ -9,8 +9,8 @@ let text = { f with text_box = true; player_box = true; foe_box = true }
 let arrow = { text with arrow = true }
 let evolving = { f with text_box = true; evolution = true }
 
-let classify_cases : Case_table.case list =
-  let case name facts expectation : Case_table.case =
+let classify_cases : Table_test.case list =
+  let case name facts expectation : Table_test.case =
     {
       name;
       input = (fun () -> Battle_look.(screen_name (classify facts)));
@@ -62,8 +62,8 @@ let steps looks () =
   in
   String.concat ", " (List.rev names)
 
-let rule_cases : Case_table.case list =
-  let case name looks expectation : Case_table.case =
+let rule_cases : Table_test.case list =
+  let case name looks expectation : Table_test.case =
     { name; input = steps looks; expectation }
   in
   [
@@ -117,8 +117,8 @@ let rule_cases : Case_table.case list =
 
 let buttons bs = String.concat " " (List.map Wire.string_of_button bs)
 
-let cursor_cases : Case_table.case list =
-  let case name presses expectation : Case_table.case =
+let cursor_cases : Table_test.case list =
+  let case name presses expectation : Table_test.case =
     { name; input = (fun () -> buttons presses); expectation }
   in
   [
@@ -138,6 +138,6 @@ let cursor_cases : Case_table.case list =
   ]
 
 let () =
-  Case_table.run "battle look" classify_cases;
-  Case_table.run "event rule" rule_cases;
-  Case_table.run "battle cursor" cursor_cases
+  Table_test.run "battle look" classify_cases;
+  Table_test.run "event rule" rule_cases;
+  Table_test.run "battle cursor" cursor_cases

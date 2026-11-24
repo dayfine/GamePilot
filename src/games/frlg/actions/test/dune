@@ -52,7 +52,7 @@
   menus.switch.probes.jsonl)
  (libraries
   yojson
-  gamepilot.case_table
+  gamepilot.table_test
   gamepilot.wire
   gamepilot.grid_maps
   gamepilot.story

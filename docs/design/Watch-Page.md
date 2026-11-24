@@ -313,7 +313,7 @@ A Switch daemon presses B after 180 s with no input (`--keepawake SECONDS`, 0 = 
 off; `--keepawake-key`), only while no client batch is queued or running, no client holds the input
 lease and no client submitted in that window, as a batch of its own whose `batch_done` goes to no client
 (`daemon/src/keep_awake.*`). Each press is a `daemon` line in the wire log
-(`contracts/v1/34-keepawake.line.json`), which replay skips. It replaces
+(`protocol/v1/34-keepawake.line.json`), which replay skips. It replaces
 `~/BDSPLab/gp_keepawake.py`, which the old one-client rule locked out (`docs/switch-bring-up.md`).
 
 ## Input lease

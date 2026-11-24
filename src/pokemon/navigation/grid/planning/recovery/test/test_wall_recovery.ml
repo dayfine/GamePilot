@@ -183,16 +183,16 @@ let corner_cases =
 let () =
   List.iter
     (fun case ->
-      Case_table.report case.name
+      Table_test.report case.name
         (check_first ~show:string_of_int case
            (Corridor_anchors.find_anchors ~max_holds:case.max_holds case.context
               case.positions)))
     corridor_cases;
   List.iter
     (fun case ->
-      Case_table.report case.name
+      Table_test.report case.name
         (check_first ~show:Tile_pos.to_string case
            (Corner_anchors.find_anchors ~max_holds:case.max_holds case.context
               case.positions)))
     corner_cases;
-  Case_table.finish ()
+  Table_test.finish ()

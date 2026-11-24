@@ -6,7 +6,7 @@
 open Frlg_actions
 module B = Frlg_battle
 
-let case name input expectation = { Case_table.name; input; expectation }
+let case name input expectation = { Table_test.name; input; expectation }
 let strategies = Result.get_ok (Grind_plan.load_strategies ())
 let obj json = Grid_maps.Json_field.as_object "" (Yojson.Safe.from_string json)
 
@@ -487,4 +487,4 @@ let routes =
        IndigoPlateau_PokemonCenter_1F";
   ]
 
-let () = Case_table.run "grind" (decoding @ decisions @ flows @ stops @ routes)
+let () = Table_test.run "grind" (decoding @ decisions @ flows @ stops @ routes)

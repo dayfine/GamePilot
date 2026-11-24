@@ -12,7 +12,7 @@ app (it saves its settings on exit). Nothing may hold the port or the card:
 **1. Devices.** The lab's names, then the card's index (enumerates, opens nothing):
 
     GAMEPILOT_LAB_PROFILE=".../SerialPrograms/Profiles/lab-B" gamepilot switch-devices
-    swift tools/list_capture_devices.swift    # INDEX: the line with id 0x110000534d2109
+    swift daemon/tools/list_capture_devices.swift    # INDEX: the line with id 0x110000534d2109
 
 On 2026-11-23 these were serial port `/dev/cu.usbmodem5C940521411` and card id `0x110000534d2109`
 ("USB Video", a name three cards share, so pick by id; on 2026-11-23 it was index 1, and index 0 showed console A. Check the frame shows FireRed).
@@ -54,7 +54,7 @@ Expect `start_menu_poc: PASS`. Stop the daemon with Ctrl-C.
 **6. Pre-flight.** The save loaded, the player in the overworld. Set `GAMEPILOT_SWITCH_SERIAL`,
 `GAMEPILOT_SWITCH_CAPTURE` and `GAMEPILOT_LABLOCK` (the env file, `~/.config/gamepilot/env`), then:
 
-    sh tools/run_checkpoints_on_switch.sh --program frlg.mail_glitch \
+    sh run/run_checkpoints_on_switch.sh --program frlg.mail_glitch \
         --from mg-01 --to mg-01 --preflight-only
 
 (or `gamepilot checkpoints ... --preflight --backend switch --serial PORT --capture INDEX`). It
@@ -76,7 +76,7 @@ slots) and that a member still knows each needed field move; a pass is saved lik
 The script skips the pre-flight with `--make-room` (its room row would stop the run mg-00 is
 there for):
 
-    sh tools/run_checkpoints_on_switch.sh src/games/frlg/programs/mail_glitch/plans \
+    sh run/run_checkpoints_on_switch.sh src/games/frlg/programs/mail_glitch/plans \
         --from mg-01 --to mg-01 --make-room PalletTown
 
 The first run has no kept frame, so the place reads NOT
@@ -88,7 +88,7 @@ the game's last save. A run that passes, its end checks included, is saved in th
 the next checkpoint starts from that save. A run that fails soft-resets to the last save and the
 series stops. A failed or stopped run never saves.
 
-    sh tools/run_checkpoints_on_switch.sh --program frlg.mail_glitch \
+    sh run/run_checkpoints_on_switch.sh --program frlg.mail_glitch \
         --from mg-01 --to mg-01
 
 The script takes console B's lab lock, refuses while anything holds the serial port or the lab
@@ -122,7 +122,7 @@ refused, naming the holder, while a program or another person holds it. Reads ne
 stops at the first error. The readers (`gamepilot` with no arguments lists them): `start_menu`,
 `dialog`, `party_menu`, `summary` (species on the info page, moves on the moves page), `battle`,
 `yes_no`, `load_menu`, `bag`. Every press is in the daemon's wire log with its owner.
-`sh tools/test_ctl.sh` checks all of it against the fake board and a replayed capture.
+`sh run/test_ctl.sh` checks all of it against the fake board and a replayed capture.
 
 **Recording.** A Switch run's daemon also saves a 640-wide JPEG of the frame every second, and
 one at each story event and at a failure, into the run folder's `frames/` (`index.jsonl` lists

@@ -1,4 +1,4 @@
-# FRLG rock stairs, made by tools/extract_frlg_rock_stairs.py from pret/pokefirered
+# FRLG rock stairs, made by src/games/frlg/assets/extract/extract_frlg_rock_stairs.py from pret/pokefirered
 # (MB_ROCK_STAIRS metatiles of each map's layout): <map> <x>,<y> ...
 BirthIsland_Exterior 15,17 15,18 15,19
 CeruleanCave_1F 33,4 10,9 19,11 24,13 5,18 14,18

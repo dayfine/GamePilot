@@ -14,13 +14,13 @@ let describe_rule (r : Settle.rule) =
 
 let rule_case name kind expectation =
   {
-    Case_table.name;
+    Table_test.name;
     input = (fun () -> describe_rule (Settle.rule kind));
     expectation;
   }
 
 let () =
-  Case_table.run "Settle.rule"
+  Table_test.run "Settle.rule"
     [
       rule_case "a talk waits out 5 s of quiet" Talk
         "warp=false quiet=5000ms calm=15000ms still=screen still look=1200ms \
@@ -100,7 +100,7 @@ let run_pressing rule ?(flee = true) script =
 
 let run_case name ?flee rule script expectation =
   {
-    Case_table.name;
+    Table_test.name;
     input = (fun () -> run_pressing rule ?flee script);
     expectation;
   }
@@ -114,7 +114,7 @@ let before_battle =
 let short = { talk with look_every_ms = 1000; cap_ms = 3000 }
 
 let () =
-  Case_table.run "Settle.run"
+  Table_test.run "Settle.run"
     [
       run_case "a talk presses B while quiet, until 5 s of it" talk [ quiet ]
         "quiet; presses BBBBB";
@@ -177,10 +177,10 @@ let watched_door ~watch_battles =
   { door with look_every_ms = 400; watch_battles }
 
 let watch_case name rule script expectation =
-  { Case_table.name; input = (fun () -> run_watching rule script); expectation }
+  { Table_test.name; input = (fun () -> run_watching rule script); expectation }
 
 let () =
-  Case_table.run "Settle.run, watching"
+  Table_test.run "Settle.run, watching"
     [
       (* Quiet from 50 ms into the first look: 1 s of it by the third look's
          end (1200 ms), not the fourth (1600 ms, 1 s from the first look's

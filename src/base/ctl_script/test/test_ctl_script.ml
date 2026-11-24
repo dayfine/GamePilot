@@ -15,13 +15,13 @@ let show = function
 
 let line name text expectation =
   {
-    Case_table.name;
+    Table_test.name;
     input = (fun () -> show (Ctl_script.parse_line text));
     expectation;
   }
 
 let () =
-  Case_table.run "ctl_script"
+  Table_test.run "ctl_script"
     [
       line "labB press: button, hold, wait" "press A 100 800"
         "press A hold 100 wait 800 x1";
@@ -59,7 +59,7 @@ let () =
       line "unknown command" "tap A" "error: unknown command \"tap A\"";
       line "shot without a name" "shot" "error: unknown command \"shot\"";
       {
-        Case_table.name = "a press is its batch, once per tap";
+        Table_test.name = "a press is its batch, once per tap";
         input =
           (fun () ->
             match Ctl_script.parse_line "dpad DOWN 2" with
@@ -69,7 +69,7 @@ let () =
         expectation = "2";
       };
       {
-        Case_table.name = "only presses and waits need the lease";
+        Table_test.name = "only presses and waits need the lease";
         input =
           (fun () ->
             String.concat " "

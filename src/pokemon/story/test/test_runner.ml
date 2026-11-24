@@ -47,7 +47,7 @@ let mart = { Scripted_game.script with actions = [ "mart" ] }
 let at_door facing : Pose.observed =
   { at_map = "Town"; at_tile = tile 4 0; faces = facing }
 
-let cases : Case_table.case list =
+let cases : Table_test.case list =
   [
     {
       name = "every event in order, each logged with its why";
@@ -226,7 +226,7 @@ let with_abra coins =
     coins;
   }
 
-let end_state_cases : Case_table.case list =
+let end_state_cases : Table_test.case list =
   [
     {
       name = "postconditions read and held: passed";
@@ -281,4 +281,4 @@ let end_state_cases : Case_table.case list =
     };
   ]
 
-let () = Case_table.run "runner" (cases @ end_state_cases)
+let () = Table_test.run "runner" (cases @ end_state_cases)

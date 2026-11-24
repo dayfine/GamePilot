@@ -3,7 +3,7 @@
 JSON-RPC 2.0 between the OCaml programs (client) and the daemon (server). The golden files in this
 folder are the spec: the daemon's tests parse every file and the OCaml tests decode and re-encode
 every file. Change a file here first, then both sides.
-The golden files are pretty-printed for reading (`tools/fmt_json.py`); on the wire each message is
+The golden files are pretty-printed for reading (`dev/lint/fmt_json.py`); on the wire each message is
 one line.
 
 v1.1 adds the `load` counter to `frame` and `backend.load_state`, and a `kind` to every probe result.

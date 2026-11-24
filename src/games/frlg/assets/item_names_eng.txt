@@ -1,4 +1,4 @@
-# FRLG English item names, made by tools/extract_frlg_item_names.py
+# FRLG English item names, made by src/games/frlg/assets/extract/extract_frlg_item_names.py
 # from pret/pokefirered src/data/items.json: <pocket> <name>
 poke_balls MASTER BALL
 poke_balls ULTRA BALL

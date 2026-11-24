@@ -63,7 +63,7 @@ let replayed_walk () =
     (List.length (List.filter fled !lines))
 
 let () =
-  Case_table.run "mg04_walk_replay"
+  Table_test.run "mg04_walk_replay"
     [
       {
         name = "Lavender Center to Tower 5F, two wild battles fled";

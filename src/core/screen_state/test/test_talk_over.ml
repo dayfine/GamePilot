@@ -36,7 +36,7 @@ let first_beat rule beats want =
 
 let case name ?(rule = Talk_over.default_rule) beats want expectation =
   {
-    Case_table.name;
+    Table_test.name;
     input = (fun () -> first_beat rule beats want);
     expectation;
   }
@@ -45,7 +45,7 @@ let default = Talk_over.default_rule
 let short_calm = { default with calm_ms = 1000 }
 
 let () =
-  Case_table.run "Talk_over"
+  Table_test.run "Talk_over"
     [
       case "5 s of quiet ends it" (repeat quiet 8) "done" "done at beat 5";
       case "a box restarts the quiet"

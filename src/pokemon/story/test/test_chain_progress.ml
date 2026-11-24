@@ -46,7 +46,7 @@ let pass_once id = [ Begin id; Trial; End Passed ]
 let t = Checkpoint_trials.Testing
 let v = Checkpoint_trials.Verification
 
-let cases : Case_table.case list =
+let cases : Table_test.case list =
   [
     {
       name = "before the first checkpoint: all pending, no trial";
@@ -124,4 +124,4 @@ let cases : Case_table.case list =
     };
   ]
 
-let () = Case_table.run "chain_progress" cases
+let () = Table_test.run "chain_progress" cases

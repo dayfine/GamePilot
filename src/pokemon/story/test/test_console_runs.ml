@@ -9,7 +9,7 @@ let steps l =
   | [] -> "nothing"
   | l -> String.concat ", " (List.map C.step_name l)
 
-let case name input expectation = { Case_table.name; input; expectation }
+let case name input expectation = { Table_test.name; input; expectation }
 let after save outcome () = steps (C.after_run ~save_after_pass:save outcome)
 
 let cases =
@@ -39,4 +39,4 @@ let cases =
       (C.outcome_name C.Failed_event);
   ]
 
-let () = Case_table.run "console runs" cases
+let () = Table_test.run "console runs" cases

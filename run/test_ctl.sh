@@ -4,7 +4,7 @@
 # reads without the lease, presses with it, a refusal naming the holder while another client holds
 # it, the lease ending with its client, the wire log's owner, shots and script errors.
 # Needs the daemon built (daemon/build, or GAMEPILOT_DAEMON), `dune build` in src, and ffmpeg:
-#   sh tools/test_ctl.sh
+#   sh run/test_ctl.sh
 set -eu
 root=$(cd "$(dirname "$0")/.." && pwd)
 daemon=${GAMEPILOT_DAEMON:-$root/daemon/build/gamepilot_daemon}

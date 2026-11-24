@@ -84,7 +84,7 @@ let walks file () =
   in
   String.concat "; " (List.rev out)
 
-let case name input expectation = { Case_table.name; input; expectation }
+let case name input expectation = { Table_test.name; input; expectation }
 
 (* What a run checks and skips with --grind-battles [cap]. *)
 let capped cap file () =
@@ -95,7 +95,7 @@ let capped cap file () =
     (match skipped with [] -> "none" | l -> String.concat "; " l)
 
 let () =
-  Case_table.run "checkpoint_run"
+  Table_test.run "checkpoint_run"
     [
       case "mg-01"
         (summary "mg-01.plan.json")

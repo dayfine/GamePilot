@@ -7,7 +7,7 @@ open Frlg_actions
 module B = Frlg_battle
 module D = B.Battle_driver
 
-let case name input expectation = { Case_table.name; input; expectation }
+let case name input expectation = { Table_test.name; input; expectation }
 let obj json = Grid_maps.Json_field.as_object "" (Yojson.Safe.from_string json)
 
 (* A battle as the list driver plays it: the events it reports, and the result
@@ -222,4 +222,4 @@ let double_battle_cases =
   ]
 
 let () =
-  Case_table.run "mail_glitch_actions" (berry_pp_cases @ double_battle_cases)
+  Table_test.run "mail_glitch_actions" (berry_pp_cases @ double_battle_cases)

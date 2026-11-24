@@ -135,12 +135,12 @@ A dispatch brief carries only the task: the issue or PR, the tip SHA, the
 scope or the delta since the last review, the prior review's location and
 the rework iteration. Target about 0.5 KB. Everything that is true for every
 dispatch of that agent belongs in its definition's standing-rules block,
-which `bin/agent-standing-rules-check.sh` keeps from going missing.
+which `.agents/checks/agent-standing-rules-check.sh` keeps from going missing.
 
 ## What a reviewer can check
 
 - **L1.** Every dispatched agent definition carries the standing-rules
-  block (`bin/agent-standing-rules-check.sh`).
+  block (`.agents/checks/agent-standing-rules-check.sh`).
 - **L2.** No script or brief added in the diff contains an uncapped
   `until … done` or `while true` wait loop.
 - **L3.** A dispatch brief does not restate the standing rules.

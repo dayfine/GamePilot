@@ -23,7 +23,7 @@ let some = List.map Option.some
 let check promised observed =
   String.concat "\n" (List.map C.result_to_string (C.check promised observed))
 
-let case name promised observed expectation : Case_table.case =
+let case name promised observed expectation : Table_test.case =
   { name; input = (fun () -> check promised observed); expectation }
 
 let mg01_party = [ "blastoise"; "rattata"; "oddish"; "pidgey"; "abra" ]
@@ -180,7 +180,7 @@ let marks_cases =
       "marks: not checked: the game can't read it";
   ]
 
-let log name promised observed : Case_table.case =
+let log name promised observed : Table_test.case =
   {
     name;
     input =
@@ -189,7 +189,7 @@ let log name promised observed : Case_table.case =
     expectation = "";
   }
 
-let log_cases : Case_table.case list =
+let log_cases : Table_test.case list =
   [
     {
       (log "the log: one line each and a failed summary"
@@ -222,6 +222,6 @@ let log_cases : Case_table.case list =
   ]
 
 let () =
-  Case_table.run "postcondition_check"
+  Table_test.run "postcondition_check"
     (party_cases @ count_cases @ knows_cases @ level_cases @ marks_cases
    @ log_cases)

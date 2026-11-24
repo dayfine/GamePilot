@@ -1,5 +1,5 @@
 (** A game font as data: each character's glyph, drawn from pokefirered's font
-    graphics by [tools/extract_frlg_font_glyphs.py] into
+    graphics by [src/games/frlg/assets/extract/extract_frlg_font_glyphs.py] into
     [games/frlg/assets/font_latin_<font>.glyphs]: the normal font (names,
     messages) and the small one (the bag's counts, the Berry Pouch's numbers).
     One table per font serves every Western language; Japanese would be more

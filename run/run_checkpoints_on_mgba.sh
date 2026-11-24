@@ -3,12 +3,12 @@
 # (the instance stays closed whenever nothing runs on it). Arguments go to
 # `gamepilot checkpoints` as they are, e.g.:
 #
-#   sh tools/run_checkpoints_on_mgba.sh --program frlg.mail_glitch \
+#   sh run/run_checkpoints_on_mgba.sh --program frlg.mail_glitch \
 #       --from mg-01 --to mg-03 --mode verification
 #
 # A plan folder in place of --program ID still works (`gamepilot checkpoints PLAN_DIR ...`).
 #
-# One run at a time: the runner takes the lock $GAMEPILOT_RUNS/.lock (tools/run_lock.sh) and waits,
+# One run at a time: the runner takes the lock $GAMEPILOT_RUNS/.lock (run/run_lock.sh) and waits,
 # saying who holds it, while another runner does; a lock whose holder died is taken over. Once it
 # holds the lock it also waits while the instance or its bridge port is still in use (a runner
 # without the lock). Exit 4 when --lock-timeout SECONDS ran out first (default: wait for ever).
@@ -87,7 +87,7 @@ if [ -n "$watch" ]; then
     set -- "$@" "$watch"
 fi
 
-. "$root/tools/run_lock.sh"
+. "$root/run/run_lock.sh"
 lock=$GAMEPILOT_RUNS/.lock
 close_mgba() {
     pids=$(pgrep -f "$instance" || true)

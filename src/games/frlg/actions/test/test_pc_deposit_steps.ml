@@ -39,7 +39,7 @@ let store species cursor =
     look Box_chooser;
   ]
 
-let case name input expectation : Case_table.case = { name; input; expectation }
+let case name input expectation : Table_test.case = { name; input; expectation }
 
 let cases =
   [
@@ -97,4 +97,4 @@ let cases =
        in 10 looks";
   ]
 
-let () = Case_table.run "pc deposit steps" cases
+let () = Table_test.run "pc deposit steps" cases
