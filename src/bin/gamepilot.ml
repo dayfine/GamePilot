@@ -16,8 +16,7 @@ let usage =
   \  gamepilot run start_menu_poc [--port 47900] [--state PATH | --console]\n\
   \  gamepilot replay start_menu_poc WIRELOG\n" ^ Checkpoint_command.usage
   ^ Checkpoints_command.usage ^ Programs_command.usage ^ Status_command.usage
-  ^ Ctl_command.usage
-  ^ Runs_command.usage ^ Switch_devices.usage
+  ^ Ctl_command.usage ^ Runs_command.usage ^ Switch_devices.usage
 
 let die msg =
   prerr_string msg;
