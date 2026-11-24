@@ -79,4 +79,6 @@ let handler ctx name (_ : Story.Plan.event) args =
       let stocks = Result.value stocks ~default:Mart_plan.empty in
       Result.bind (R.decode stocks name args) (perform ctx)
 
-let handlers ctx = List.map (fun name -> (name, handler ctx name)) R.names
+let handlers ctx =
+  List.map (fun name -> (name, handler ctx name)) R.names
+  @ Mail_glitch_use.handlers ~log:ctx.log ~party:ctx.party

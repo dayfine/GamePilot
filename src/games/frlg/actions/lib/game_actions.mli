@@ -15,4 +15,5 @@ val perform : context -> Action_requests.t -> (unit, Story.Failure.cause) result
     in the party already passes without a press (it ran before this save). *)
 
 val handlers : context -> (string * Story.Game.game_action) list
-(** One handler per {!Action_requests.names}: decode, then {!perform}. *)
+(** One handler per {!Action_requests.names}: decode, then {!perform}; then
+    mg-06's ({!Mail_glitch_use.handlers}). *)
