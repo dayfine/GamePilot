@@ -79,24 +79,18 @@ let answer_yes_to m =
 
 let page_press_ms = 600
 
-(* What a look at the screen asks of {!answer_yes}, from what it shows and
-   whether an A of ours has gone in since the talk: the follow-on screen of
-   YES counts only then, as only our A can have taken YES. *)
-type answer_step = Answer | Taken | Next_page | Look
-
-let answer_step ~pressed ~taken m =
-  if question m then Answer
-  else if pressed && taken m then Taken
-  else if Dialog.advance_arrow m then Next_page
-  else Look
+(* One look, one move: Screen_state.Choice_talk on the FRLG readers. *)
+let choice_look ~taken m : Screen_state.Choice_talk.look =
+  { choice = question m; page = Dialog.advance_arrow m; past_choice = taken m }
 
 let rec answer_yes_from page ~code ~taken what =
-  let pressed = page > 1 in
-  let step m = answer_step ~pressed ~taken m in
-  let m = await_screen ~code what (fun m -> step m <> Look) in
-  match step m with
-  | Answer -> answer_yes_to m
-  | Taken | Look -> ()
+  let move m =
+    Screen_state.Choice_talk.move ~pressed:(page > 1) (choice_look ~taken m)
+  in
+  let m = await_screen ~code what (fun m -> move m <> Wait) in
+  match move m with
+  | Pick -> answer_yes_to m
+  | Answered | Wait -> ()
   | Next_page when page > max_pages -> fail code (what ^ " did not show")
   | Next_page ->
       press ~cooldown_ms:page_press_ms Wire.A;

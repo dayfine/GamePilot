@@ -104,7 +104,8 @@ val answer_yes :
     while it prints, and on console B a frame shows the game 160-335 ms late, so
     the last page's A can land on the Yes/No box as it draws (mg-02 testing,
     2026-11-24: Elyssa's offer, YES taken, the party up, the question never
-    seen). YES is the box's default, so the [taken] screen means YES. *)
+    seen). YES is the box's default, so the [taken] screen means YES. The moves
+    are {!Screen_state.Choice_talk}'s. *)
 
 val answer_yes_if_asked : timeout_ms:int -> bool
 (** YES to a Yes/No box that shows within [timeout_ms], answered as
