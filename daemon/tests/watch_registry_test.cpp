@@ -89,8 +89,11 @@ void check_stale_entries() {
   pa::string_to_file(kDir + "/junk.json", "{");
   pa::string_to_file(kDir + "/notes.txt",
                      registry_entry_json(entry(own_pid(), "mg-09")));
-  pa::string_to_file(kDir + "/1.json", registry_entry_json(entry(7, "b")));
-  pa::string_to_file(kDir + "/2.json", registry_entry_json(entry(5, "a")));
+  // Dead pids too: low pids like 5 and 7 are kernel threads on Linux.
+  pa::string_to_file(kDir + "/1.json",
+                     registry_entry_json(entry(kDead + 7, "b")));
+  pa::string_to_file(kDir + "/2.json",
+                     registry_entry_json(entry(kDead + 5, "a")));
   const RegistryFile own(kDir, entry(own_pid(), "mg-04"));
 
   const auto live = live_entries(kDir);
@@ -98,7 +101,8 @@ void check_stale_entries() {
 
   // In pid order; `alive` decides what is stale.
   const auto all = live_entries(kDir, [](std::int64_t) { return true; });
-  CHECK(all.size() == 4 && all[0].pid == 5 && all[1].pid == 7);
+  CHECK(all.size() == 4 && all[0].pid == own_pid() && all[1].pid == kDead &&
+        all[2].pid == kDead + 5 && all[3].pid == kDead + 7);
 }
 
 void check_hub() {
