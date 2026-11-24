@@ -162,12 +162,16 @@ let box t : Wire.box =
    168, the capitals from y 45; PKMN DATA's window 0 at (0, 88) prints
    "/<species>" at (6, 14); the box screen's message window 1 at (88, 136)
    prints at (0, 2). *)
+let pc_row_pitch = 16
+let pc_menu_first_top = 10
+let pc_mon_menu_first_top = 42
+
 let pc_menu_row i =
   {
     id = Printf.sprintf "pc_menu.%d" i;
     left = 16;
     indent = 2;
-    glyph_top = 10 + (16 * i);
+    glyph_top = pc_menu_first_top + (pc_row_pitch * i);
     width = 104;
   }
 
@@ -176,7 +180,7 @@ let pc_mon_menu_row i =
     id = Printf.sprintf "pc_mon_menu.%d" i;
     left = 168;
     indent = 2;
-    glyph_top = 42 + (16 * i);
+    glyph_top = pc_mon_menu_first_top + (pc_row_pitch * i);
     width = 60;
   }
 

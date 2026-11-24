@@ -30,15 +30,14 @@ let knows move (m : member) =
   Option.fold ~none:false ~some:(List.mem move) m.moves
 
 (* A needed move no other member of the party knows. *)
-let only_knower rules party (m : member) =
-  List.find_opt
-    (fun move ->
-      knows move m
-      && not
-           (List.exists
-              (fun (o : member) -> o.slot <> m.slot && knows move o)
-              party))
-    rules.needed_moves
+let others party (m : member) =
+  List.filter (fun (o : member) -> o.slot <> m.slot) party
+
+let only_one_knowing party (m : member) move =
+  knows move m && not (List.exists (knows move) (others party m))
+
+let only_knower rules party m =
+  List.find_opt (only_one_knowing party m) rules.needed_moves
 
 let keeps rules party (m : member) =
   if List.mem m.species rules.used then Some "the plans use it"
@@ -63,47 +62,38 @@ let kept_text rules party =
 
 (* One member at a time, the lowest level that may go from what is left: the
    second of two members knowing a needed move stays. *)
+let may_go rules party = List.filter (fun m -> keeps rules party m = None) party
+
+(* One member at a time, the lowest level that may go from what is left: the
+   second of two members knowing a needed move stays. *)
 let rec pick rules party short chosen =
   if short = 0 then Some chosen
   else
-    match
-      List.sort level_order
-        (List.filter (fun m -> keeps rules party m = None) party)
-    with
+    match List.sort level_order (may_go rules party) with
     | [] -> None
-    | m :: _ ->
-        pick rules
-          (List.filter (fun (o : member) -> o.slot <> m.slot) party)
-          (short - 1) (m :: chosen)
+    | m :: _ -> pick rules (others party m) (short - 1) (m :: chosen)
 
 let to_deposit (m : member) = { slot = m.slot; species = m.species }
+let by_slot (a : deposit) (b : deposit) = compare a.slot b.slot
+
+let refusal rules members short =
+  Printf.sprintf "%d to deposit, %d may go; kept: %s" short
+    (List.length (may_go rules members))
+    (String.concat "; " (kept_text rules members))
 
 let choose rules (p : precondition) members =
   let short = p.free_slots - free_slots rules (List.length members) in
-  let may_go = List.filter (fun m -> keeps rules members m = None) members in
   if short <= 0 then Ok []
   else
     match pick rules members short [] with
-    | Some chosen ->
-        Ok
-          (List.sort
-             (fun (a : deposit) (b : deposit) -> compare a.slot b.slot)
-             (List.map to_deposit chosen))
-    | None ->
-        Error
-          (Printf.sprintf "%d to deposit, %d may go; kept: %s" short
-             (List.length may_go)
-             (String.concat "; " (kept_text rules members)))
+    | Some chosen -> Ok (List.sort by_slot (List.map to_deposit chosen))
+    | None -> Error (refusal rules members short)
+
+let deposit_text (d : deposit) = Printf.sprintf "%s (slot %d)" d.species d.slot
 
 let plan_to_string = function
   | [] -> "nothing to deposit"
-  | plan ->
-      "deposit "
-      ^ String.concat ", "
-          (List.map
-             (fun (d : deposit) ->
-               Printf.sprintf "%s (slot %d)" d.species d.slot)
-             plan)
+  | plan -> "deposit " ^ String.concat ", " (List.map deposit_text plan)
 
 let member_to_string (m : member) =
   let level =

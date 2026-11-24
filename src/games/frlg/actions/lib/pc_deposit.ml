@@ -2,7 +2,9 @@ open Frlg_readers
 module Steps = Pc_deposit_steps
 module Text = Frlg_text
 
-let max_presses n = 80 + (40 * max 0 (n - 1))
+let first_presses = 80
+let more_presses = 40
+let max_presses n = first_presses + (more_presses * max 0 (n - 1))
 let overworld_confirm_ms = 800
 let messages = [ "Deposit in which BOX?"; "The BOX is full." ]
 let mon_menu_rows = [ "STORE"; "SUMMARY"; "MARK"; "RELEASE"; "CANCEL" ]
@@ -67,16 +69,23 @@ let look () : Steps.look =
       && text Text.Text_lines.pc_message messages = Some "The BOX is full.";
   }
 
+(* The fork's ConsolePcStorageActions::press(). *)
+let hold_ms = 160
+let button_cooldown_ms = 640
+let dpad_cooldown_ms = 320
+let wait_ms = 500
+
 let press (p : Steps.press) =
-  let hold b ms = Menu_input.hold ~hold_ms:160 ~cooldown_ms:ms b in
+  let button b = Menu_input.hold ~hold_ms ~cooldown_ms:button_cooldown_ms b in
+  let dpad b = Menu_input.hold ~hold_ms ~cooldown_ms:dpad_cooldown_ms b in
   let commands =
     match p with
-    | A -> [ hold Wire.A 640 ]
-    | B -> [ hold Wire.B 640 ]
-    | Up -> [ hold Wire.Up 320 ]
-    | Down -> [ hold Wire.Down 320 ]
-    | Right -> [ hold Wire.Right 320 ]
-    | Wait | Done | Fail _ -> [ Wire.Wait { wait_ms = 500 } ]
+    | A -> [ button Wire.A ]
+    | B -> [ button Wire.B ]
+    | Up -> [ dpad Wire.Up ]
+    | Down -> [ dpad Wire.Down ]
+    | Right -> [ dpad Wire.Right ]
+    | Wait | Done | Fail _ -> [ Wire.Wait { wait_ms } ]
   in
   ignore (Effects.submit commands : Wire.batch_done)
 

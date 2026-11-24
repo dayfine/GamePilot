@@ -17,20 +17,22 @@ let pc_list_rows = 4
 let party_panel_rows = 7
 let mon_menu_rows = 5
 let yes_no_rows = 2
-let gba x y w h = Game_pixels.box { x; y; w; h }
+let gba (b : Wire.box) = Game_pixels.box b
 
-(* The fork's patches, each plain on its screen (see the .mli). *)
+(* The fork's patches, each plain on its screen (see the .mli), in GBA
+   pixels. *)
 let patches =
   [
-    ("pc.list", gba 100. 58. 20. 14.);
-    ("pc.storage", gba 128. 58. 18. 30.);
-    ("pc.data_panel", gba 3. 100. 4. 40.);
-    ("pc.mon_menu", gba 205. 72. 25. 14.);
-    ("pc.yes_no", gba 200. 86. 32. 4.);
-    ("pc.chooser", gba 160. 68. 30. 18.);
-    ("pc.party_panel", gba 122. 96. 12. 36.);
-    ("pc.message", gba 10. 148. 160. 4.);
-    ("pc.game", gba 0. 0. 240. 160.);
+    ("pc.list", gba { x = 100.; y = 58.; w = 20.; h = 14. });
+    ("pc.storage", gba { x = 128.; y = 58.; w = 18.; h = 30. });
+    ("pc.data_panel", gba { x = 3.; y = 100.; w = 4.; h = 40. });
+    ("pc.mon_menu", gba { x = 205.; y = 72.; w = 25.; h = 14. });
+    ("pc.yes_no", gba { x = 200.; y = 86.; w = 32.; h = 4. });
+    ("pc.chooser", gba { x = 160.; y = 68.; w = 30.; h = 18. });
+    ("pc.party_panel", gba { x = 122.; y = 96.; w = 12.; h = 36. });
+    ("pc.message", gba { x = 10.; y = 148.; w = 160.; h = 4. });
+    ( "pc.game",
+      gba { x = 0.; y = 0.; w = Game_pixels.width; h = Game_pixels.height } );
   ]
 
 (* The share of an arrow's box an arrow darkens (0.31 to 0.37 measured; text
@@ -50,29 +52,61 @@ let dark : Color_count.range =
 let white : Color_count.range =
   { low = { r = 235; g = 235; b = 235 }; high = { r = 255; g = 255; b = 255 } }
 
-(* An arrow column: [rows] boxes 7 by 10 from (x, y), [step] apart. *)
-let column name ~x ~y ~step rows =
+type column = { left : float; top : float; step : float }
+(** An arrow column: boxes {!arrow} wide and high from (left, top), [step]
+    apart. *)
+
+let arrow : Wire.box = { x = 0.; y = 0.; w = 7.; h = 10. }
+
+let column name (c : column) rows =
   List.init rows (fun row ->
       ( Printf.sprintf "pc.%s.row%d" name row,
-        gba x (y +. (step *. float_of_int row)) 7. 10. ))
+        gba { arrow with x = c.left; y = c.top +. (c.step *. float_of_int row) }
+      ))
 
-let pc_rows = column "menu" ~x:9. ~y:12. ~step:16. storage_menu_rows
-let mon_rows = column "mon" ~x:159. ~y:44. ~step:16. mon_menu_rows
-let yes_no_rows_boxes = column "yes_no" ~x:191. ~y:91. ~step:14. yes_no_rows
+let pc_column = { left = 9.; top = 12.; step = 16. }
+let mon_column = { left = 159.; top = 44.; step = 16. }
+let yes_no_column = { left = 191.; top = 91.; step = 14. }
+let pc_rows = column "menu" pc_column storage_menu_rows
+let mon_rows = column "mon" mon_column mon_menu_rows
+let yes_no_rows_boxes = column "yes_no" yes_no_column yes_no_rows
 
 (* The party panel's slot under the hand: the lead's hand area above its box;
-   a right slot's above and on its box, 24 apart (the top one cut by the
+   a right slot's above and on its box, [pitch] apart (the top one cut by the
    screen's top); CANCEL's above CANCEL. *)
+type hands = {
+  lead : Wire.box;
+  right_x : float;
+  pitch : float;
+  first_bottom : float;
+  reach : float;
+  cancel : Wire.box;
+}
+
+let hands =
+  {
+    lead = { x = 92.; y = 36.; w = 28.; h = 26. };
+    right_x = 138.;
+    pitch = 24.;
+    first_bottom = 11.;
+    reach = 25.;
+    cancel = { x = 138.; y = 118.; w = 28.; h = 24. };
+  }
+
+let right_slots = 5
+
 let hand_areas =
   let right slot =
-    let bottom = (24. *. float_of_int (slot - 1)) +. 11. in
-    let top = Float.max 0. (bottom -. 25.) in
-    gba 138. top 28. (bottom -. top)
+    let bottom =
+      (hands.pitch *. float_of_int (slot - 1)) +. hands.first_bottom
+    in
+    let top = Float.max 0. (bottom -. hands.reach) in
+    gba { x = hands.right_x; y = top; w = hands.lead.w; h = bottom -. top }
   in
   List.mapi
     (fun i b -> (Printf.sprintf "pc.hand%d" i, b))
-    ((gba 92. 36. 28. 26. :: List.init 5 (fun i -> right (i + 1)))
-    @ [ gba 138. 118. 28. 24. ])
+    ((gba hands.lead :: List.init right_slots (fun i -> right (i + 1)))
+    @ [ gba hands.cancel ])
 
 let probes =
   List.map (fun (id, b) -> Solid_color.probe ~id b) patches
@@ -108,23 +142,48 @@ let party_panel_cursor m =
   in
   best
 
+type solid = { ratio : Wire.rgb; max_distance : float; max_stddev_sum : float }
+(** A patch's flat color: its channel shares and the fork's tolerances. *)
+
+let solid c =
+  Solid_color.is_solid ~ratio:c.ratio ~max_distance:c.max_distance
+    ~max_stddev_sum:c.max_stddev_sum
+
+let chooser_yellow =
+  {
+    ratio = { r = 0.445; g = 0.390; b = 0.165 };
+    max_distance = 0.08;
+    max_stddev_sum = 30.;
+  }
+
+let party_teal =
+  {
+    ratio = { r = 0.137; g = 0.426; b = 0.437 };
+    max_distance = 0.10;
+    max_stddev_sum = 80.;
+  }
+
+let data_panel_lilac =
+  {
+    ratio = { r = 0.311; g = 0.319; b = 0.370 };
+    max_distance = 0.06;
+    max_stddev_sum = 80.;
+  }
+
+type white_box = { min_sum : float; max_stddev_sum : float }
+
+(* The message box: white, with its text in the patch. *)
+let message : white_box = { min_sum = 500.; max_stddev_sum = 40. }
+
 let box_screen m =
   if is_white m "pc.mon_menu" then
     { screen = Mon_menu; cursor = arrow_row m mon_rows }
   else if is_white m "pc.yes_no" then
     { screen = Yes_no; cursor = arrow_row m yes_no_rows_boxes }
-  else if
-    holds m "pc.chooser"
-      (Solid_color.is_solid
-         ~ratio:{ r = 0.445; g = 0.390; b = 0.165 }
-         ~max_distance:0.08 ~max_stddev_sum:30.)
-  then { screen = Box_chooser; cursor = None }
-  else if
-    holds m "pc.party_panel"
-      (Solid_color.is_solid
-         ~ratio:{ r = 0.137; g = 0.426; b = 0.437 }
-         ~max_distance:0.10 ~max_stddev_sum:80.)
-  then { screen = Party_panel; cursor = party_panel_cursor m }
+  else if holds m "pc.chooser" (solid chooser_yellow) then
+    { screen = Box_chooser; cursor = None }
+  else if holds m "pc.party_panel" (solid party_teal) then
+    { screen = Party_panel; cursor = party_panel_cursor m }
   else { screen = Box_grid; cursor = None }
 
 let other = { screen = Other; cursor = None }
@@ -140,25 +199,23 @@ let menus m =
       })
     (arrow_row m (first rows pc_rows))
 
+let text_or_overworld m =
+  if
+    holds m "pc.message"
+      (Solid_color.is_white ~min_sum:message.min_sum
+         ~max_stddev_sum:message.max_stddev_sum)
+  then { screen = Text; cursor = None }
+  else if Start_menu.start_menu_open m then other
+  else { screen = Overworld; cursor = None }
+
 let read m =
   if holds m "pc.game" (fun s -> Solid_color.sum s.mean < dark_screen) then
     other
-  else if
-    holds m "pc.data_panel"
-      (Solid_color.is_solid
-         ~ratio:{ r = 0.311; g = 0.319; b = 0.370 }
-         ~max_distance:0.06 ~max_stddev_sum:80.)
-  then box_screen m
+  else if holds m "pc.data_panel" (solid data_panel_lilac) then box_screen m
   else
     match if is_white m "pc.list" then menus m else None with
     | Some v -> v
-    | None ->
-        if
-          holds m "pc.message"
-            (Solid_color.is_white ~min_sum:500. ~max_stddev_sum:40.)
-        then { screen = Text; cursor = None }
-        else if Start_menu.start_menu_open m then other
-        else { screen = Overworld; cursor = None }
+    | None -> text_or_overworld m
 
 let screen_name = function
   | Overworld -> "overworld"
