@@ -8,9 +8,10 @@
 # types; the fork's vendored OpenCV headers satisfy it and nothing links them.
 #
 # BlinkRecovery.cpp also holds the video and controller loops, whose symbols
-# nothing here defines; -dead_strip (Apple's linker) drops those functions, as
-# the generator calls only the pure ones (update_provisional,
-# build_blink_streams, reanchor_absolute).
+# (and the sample log they write) nothing here defines; -dead_strip (Apple's
+# linker) drops those functions, as the generator calls only the pure ones
+# (update_provisional, solve_blink_window, build_blink_streams,
+# reanchor_absolute).
 #
 # -ffp-contract=off keeps every float operation rounded as written. Clang on
 # arm64 otherwise fuses BlinkModel's "f * min + (1 - f) * max" into an FMA and
@@ -20,7 +21,7 @@
 #
 # FORK is an Arduino-Source checkout with the BDSP RNG code (default
 # ~/Projects/wt/dev-bdsp; the fixtures in this folder came from its commit
-# c23af4605). Commit the regenerated fixtures with the fork commit used.
+# 1f5ee2a09). Commit the regenerated fixtures with the fork commit used.
 set -eu
 
 FORK=${FORK:-$HOME/Projects/wt/dev-bdsp}

@@ -5,13 +5,14 @@
     blink. A pure step: each {!poll} takes the watchers' samples so far and says
     what the loop decided.
 
-    Port of the decision logic of [recover_state_from_blinks] in the fork's
+    Port of the decision logic of [recover_state_from_blinks] and
+    [solve_blink_window] in the fork's
     [PokemonBDSP/Programs/RngManipulation/PokemonBDSP_BlinkRecovery.{h,cpp}]
     (R21: same checks in the same order, same thresholds, same messages). Left
     to the caller, which owns the video and the clock: the poll wait, the
-    keep-awake nudges, the progress display and logs, and the watchers, so the
-    window trimming the C++ does on them comes back as
-    {!outcome.discard_before}. {!Blink_reanchor} ports [reanchor_absolute];
+    keep-awake nudges, the progress display, the sample log and the watchers, so
+    the window slide the C++ does on them ([discard_blinks_before]) comes back
+    as {!outcome.discard_before}. {!Blink_reanchor} ports [reanchor_absolute];
     [hold_and_reanchor], the scene waits and the watcher setup are not ported.
     Times are seconds as a [float]; the C++'s per-watcher thresholds, frozen
     together on the first solve, become one option. *)
@@ -71,9 +72,11 @@ type decision =
 type outcome = {
   decision : decision;
   events : int option;  (** Rolls in the streams, once they were built. *)
-  discard_before : float option list;
-      (** Per watcher: drop its samples older than this before the next poll
-          ([EyeBlinkWatcher::discard_before]). *)
+  discard_before : float option;
+      (** Every watcher drops its samples older than this before the next poll
+          ([EyeBlinkWatcher::discard_before]): the window slides to the newest
+          [window_events] blinks, after the solve and only while no state is
+          held. *)
 }
 
 type t

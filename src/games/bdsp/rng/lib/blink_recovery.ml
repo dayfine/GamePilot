@@ -53,7 +53,7 @@ type decision =
 type outcome = {
   decision : decision;
   events : int option;
-  discard_before : float option list;
+  discard_before : float option;
 }
 
 type t = {
@@ -183,18 +183,21 @@ let solve_pass loop streams ~origin ~thresholds ~events ~period_seconds =
   in
   (loop, decision)
 
-(* [trim_to_window]: while no state is held, each watcher keeps its newest
-   [window_events / watchers] blinks, from a second before the oldest of them. *)
-let discard_cuts config streams ~origin =
-  let keep = config.window_events / List.length streams in
-  List.map
-    (fun stream ->
-      let count = List.length stream in
-      if count <= keep then None
-      else
-        let oldest : blink_event = List.nth stream (count - keep) in
-        Some (Advance_clock.plus_seconds origin (oldest.seconds -. 1.0)))
-    streams
+(* [window_start]: one cut for every watcher, a second before the oldest of the
+   newest [window_events] blinks across all of them, so no stream reads blinks
+   cut from it as rolls that did not blink. *)
+let window_start config streams ~origin =
+  let seconds =
+    List.concat_map
+      (List.map (fun (event : blink_event) -> event.seconds))
+      streams
+    |> List.sort compare
+  in
+  let count = List.length seconds in
+  if count <= config.window_events then None
+  else
+    let oldest_kept = List.nth seconds (count - config.window_events) in
+    Some (Advance_clock.plus_seconds origin (oldest_kept -. 1.0))
 
 (* A watcher's blink is new when it is over a second after the newest seen. *)
 let seen_blink newest_blink newest =
@@ -221,16 +224,15 @@ let longest streams =
 
 let minimum_blinks = 3
 
-(* The checks between a fresh blink and a solve, in the C++'s order. *)
-let ready loop streams ~events ~fresh =
+(* [solve_window_once]'s checks before a solve, in the C++'s order. *)
+let ready loop streams ~events =
   let longest = longest streams in
   let confirming =
     match loop.provisional.held with
     | Some held -> events < held.events + loop.config.confirmation_events
     | None -> false
   in
-  if not fresh then Error Not_fresh
-  else if List.length longest < minimum_blinks then Error Too_few_blinks
+  if List.length longest < minimum_blinks then Error Too_few_blinks
   else
     match fit_tick_period longest with
     | Some fit when fit.period_seconds > 0.0 ->
@@ -238,6 +240,23 @@ let ready loop streams ~events ~fresh =
         else if events < loop.config.min_rolls_to_try then Error Too_few_rolls
         else Ok fit.period_seconds
     | _ -> Error No_tick_fit
+
+(* [solve_blink_window]: one solve, then the window slides, only while no state
+   is held: a state is confirmed against the same oldest blink it was solved
+   from. *)
+let solve_blink_window loop streams ~origin ~thresholds ~events =
+  let loop, decision =
+    match ready loop streams ~events with
+    | Error waiting -> (loop, Keep_collecting waiting)
+    | Ok period_seconds ->
+        solve_pass loop streams ~origin ~thresholds ~events ~period_seconds
+  in
+  let discard_before =
+    match loop.provisional.held with
+    | None -> window_start loop.config streams ~origin
+    | Some _ -> None
+  in
+  (loop, decision, discard_before)
 
 let streams_pass loop matches ~origin ~thresholds =
   let streams =
@@ -249,42 +268,30 @@ let streams_pass loop matches ~origin ~thresholds =
   let events =
     List.fold_left (fun total stream -> total + List.length stream) 0 streams
   in
-  let discard_before =
-    if loop.provisional.held = None then
-      discard_cuts loop.config streams ~origin
-    else List.map (fun _ -> None) streams
-  in
   let refreshed =
     List.map2
       (fun newest_blink stream -> refresh newest_blink stream ~origin)
       loop.newest_blinks streams
   in
   let loop = { loop with newest_blinks = List.map fst refreshed } in
-  let fresh = List.exists snd refreshed in
-  let loop, decision =
-    match ready loop streams ~events ~fresh with
-    | Error waiting -> (loop, Keep_collecting waiting)
-    | Ok period_seconds ->
-        solve_pass loop streams ~origin ~thresholds ~events ~period_seconds
+  let loop, decision, discard_before =
+    if List.exists snd refreshed then
+      solve_blink_window loop streams ~origin ~thresholds ~events
+    else (loop, Keep_collecting Not_fresh, None)
   in
   (loop, { decision; events = Some events; discard_before })
 
-let no_streams loop decision =
-  {
-    decision;
-    events = None;
-    discard_before = List.map (fun _ -> None) loop.newest_blinks;
-  }
+let no_streams decision = { decision; events = None; discard_before = None }
 
 let thresholds_pass loop matches ~origin =
   match Recovery_thresholds.thresholds loop.thresholds matches with
   | thresholds, None ->
-      ({ loop with thresholds }, no_streams loop (Keep_collecting No_threshold))
+      ({ loop with thresholds }, no_streams (Keep_collecting No_threshold))
   | state, Some thresholds ->
       streams_pass { loop with thresholds = state } matches ~origin ~thresholds
 
 let poll loop ~now matches =
   match (gave_up loop ~now, origin_of matches) with
-  | Some reason, _ -> (loop, no_streams loop (Gave_up reason))
-  | None, None -> (loop, no_streams loop (Keep_collecting No_samples))
+  | Some reason, _ -> (loop, no_streams (Gave_up reason))
+  | None, None -> (loop, no_streams (Keep_collecting No_samples))
   | None, Some origin -> thresholds_pass loop matches ~origin

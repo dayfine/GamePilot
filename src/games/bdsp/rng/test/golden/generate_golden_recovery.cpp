@@ -255,7 +255,7 @@ void provisional_lines(FILE* out){
 //  recover_state_from_blinks waits on video, so RecoveryPoll below is its loop
 //  body copied with the waits, the display, the logging and the keep-awake
 //  nudges taken out and the watchers replaced by sample buffers. Everything
-//  else it calls (update_provisional, build_blink_streams, the extraction, the
+//  else it calls (solve_blink_window, build_blink_streams, the extraction, the
 //  grid, the solver) is the fork's own code, linked in.
 
 const int64_t CAPTURE_START_US = 1763900000000000;
@@ -291,24 +291,43 @@ struct RecoveryPoll{
         , start(now)
     {}
 
-    //  trim_to_window, with EyeBlinkWatcher::discard_before on a buffer.
-    static void trim(
+    //  discard_blinks_before, with EyeBlinkWatcher::discard_before on a buffer.
+    static void discard(
         std::vector<std::vector<BlinkMatchSample>>& buffers,
-        const std::vector<std::vector<BlinkEvent>>& streams,
-        WallClock origin, size_t keep
+        WallClock origin, double seconds
     ){
-        for (size_t c = 0; c < streams.size(); c++){
-            if (streams[c].size() <= keep){
-                continue;
-            }
-            double seconds = streams[c][streams[c].size() - keep].seconds - 1.0;
-            WallClock keep_from = origin + std::chrono::duration_cast<WallDuration>(
-                std::chrono::duration<double>(seconds)
-            );
-            auto first = std::lower_bound(buffers[c].begin(), buffers[c].end(), keep_from,
+        WallClock keep_from = origin + std::chrono::duration_cast<WallDuration>(
+            std::chrono::duration<double>(seconds)
+        );
+        for (std::vector<BlinkMatchSample>& buffer : buffers){
+            auto first = std::lower_bound(buffer.begin(), buffer.end(), keep_from,
                 [](const BlinkMatchSample& sample, WallClock cutoff){ return sample.timestamp < cutoff; });
-            buffers[c].erase(buffers[c].begin(), first);
+            buffer.erase(buffer.begin(), first);
         }
+    }
+
+    //  Why solve_blink_window's pass was not attempted: its checks, in its
+    //  order, for the fixture's text only.
+    std::string waiting(const std::vector<std::vector<BlinkEvent>>& streams, size_t events) const{
+        const std::vector<BlinkEvent>* longest = &streams[0];
+        for (const std::vector<BlinkEvent>& stream : streams){
+            if (stream.size() > longest->size()){
+                longest = &stream;
+            }
+        }
+        if (longest->size() < 3){
+            return "too_few_blinks";
+        }
+        if (!(fit_tick_period(*longest).period_seconds > 0)){
+            return "no_tick_fit";
+        }
+        if (provisional.held && events < provisional.events + config.confirmation_events){
+            return "confirming";
+        }
+        if (events < config.min_rolls_to_try){
+            return "too_few_rolls";
+        }
+        return "";
     }
 
     bool thresholds_for(const std::vector<std::vector<BlinkMatchSample>>& matches, std::vector<double>& thresholds){
@@ -360,17 +379,10 @@ struct RecoveryPoll{
         std::vector<std::vector<BlinkEvent>> streams = build_blink_streams(matches, thresholds, origin);
 
         size_t events = 0;
-        const std::vector<BlinkEvent>* longest = &streams[0];
         for (const std::vector<BlinkEvent>& stream : streams){
             events += stream.size();
-            if (stream.size() > longest->size()){
-                longest = &stream;
-            }
         }
         events_out = (long long)events;
-        if (!provisional.held){
-            trim(buffers, streams, origin, config.window_events / streams.size());
-        }
         bool fresh = false;
         for (size_t w = 0; w < streams.size(); w++){
             if (streams[w].empty()){
@@ -387,52 +399,29 @@ struct RecoveryPoll{
         if (!fresh){
             return "not_fresh";
         }
-        if (longest->size() < 3){
-            return "too_few_blinks";
-        }
-        TickFit fit = fit_tick_period(*longest);
-        if (!(fit.period_seconds > 0)){
-            return "no_tick_fit";
-        }
-        if (provisional.held && events < provisional.events + config.confirmation_events){
-            return "confirming";
-        }
-        if (events < config.min_rolls_to_try){
-            return "too_few_rolls";
-        }
 
-        std::vector<uint8_t> slots(streams.size());
-        for (uint8_t c = 0; c < (uint8_t)streams.size(); c++){
-            slots[c] = c;
+        const std::string reason = waiting(streams, events);
+        const BlinkWindowPass pass = solve_blink_window(streams, config, provisional);
+        if (pass.attempted != reason.empty()){
+            std::fprintf(stderr, "generate_golden: waiting() disagrees with solve_blink_window\n");
+            std::abort();
         }
-        BlinkSolveResult solved;
-        std::vector<uint8_t> winning_slots;
-        for (size_t attempt = 0; attempt < streams.size(); attempt++){
-            std::vector<BlinkSample> samples;
-            std::string failure;
-            if (build_samples(streams, slots, fit.period_seconds, samples, failure)){
-                BlinkSolveResult attempt_result = solve_state_from_samples(samples, nullptr);
-                if (attempt_result.success){
-                    solved = attempt_result;
-                    winning_slots = slots;
-                    break;
-                }
-            }
-            std::rotate(slots.begin(), slots.begin() + 1, slots.end());
+        if (pass.discard_before.has_value()){
+            discard(buffers, origin, *pass.discard_before);
         }
-        failed_solves = solved.success ? 0 : failed_solves + 1;
-        if (solved.success && frozen_thresholds[0] <= 0){
+        if (!pass.attempted){
+            return reason;
+        }
+        failed_solves = pass.solved.success ? 0 : failed_solves + 1;
+        if (pass.solved.success && frozen_thresholds[0] <= 0){
             frozen_thresholds = thresholds;
         }
-        const ProvisionalStep step = update_provisional(
-            provisional, solved.success, solved.state, events, config.confirmation_events
-        );
-        switch (step){
+        switch (pass.step){
         case ProvisionalStep::KEEP_COLLECTING:
             return "unsolved";
         case ProvisionalStep::PROVISIONAL:
         case ProvisionalStep::CHANGED:
-            return std::string(step_text(step)) + " " + state_words(solved.state) + " " + std::to_string(events);
+            return std::string(step_text(pass.step)) + " " + state_words(pass.solved.state) + " " + std::to_string(events);
         case ProvisionalStep::DROPPED:
             return "dropped";
         case ProvisionalStep::CONFIRMED:
@@ -442,20 +431,20 @@ struct RecoveryPoll{
         uint64_t anchor_advance = 0;
         double anchor_seconds = 0;
         size_t anchor_stream = 0;
-        if (!last_blink_anchor(streams, winning_slots, fit.period_seconds, anchor_advance, anchor_seconds, anchor_stream)){
+        if (!last_blink_anchor(streams, pass.slots, pass.period_seconds, anchor_advance, anchor_seconds, anchor_stream)){
             return "gave_up reason=the RNG state was found but no blink could anchor the clock";
         }
         WallClock anchor_time = origin + std::chrono::duration_cast<WallDuration>(
             std::chrono::duration<double>(anchor_seconds)
         );
         char buffer[512];
-        std::snprintf(buffer, sizeof(buffer), "confirmed %s %zu slots", state_words(solved.state).c_str(), events);
+        std::snprintf(buffer, sizeof(buffer), "confirmed %s %zu slots", state_words(pass.solved.state).c_str(), events);
         std::string text = buffer;
-        for (uint8_t slot : winning_slots){
+        for (uint8_t slot : pass.slots){
             text += " " + std::to_string(slot);
         }
         std::snprintf(buffer, sizeof(buffer), " anchor %zu %" PRIu64 " %s %.17g %u thresholds",
-            anchor_stream, anchor_advance, micros(anchor_time, start).c_str(), fit.period_seconds, config.npcs);
+            anchor_stream, anchor_advance, micros(anchor_time, start).c_str(), pass.period_seconds, config.npcs);
         text += buffer;
         for (double threshold : frozen_thresholds){
             std::snprintf(buffer, sizeof(buffer), " %.17g", threshold);

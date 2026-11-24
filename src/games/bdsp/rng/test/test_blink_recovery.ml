@@ -100,19 +100,19 @@ let arrive feed ~now_us =
     feed.frames
   |> Array.to_list
 
-let discard feed cuts =
-  List.iteri
-    (fun w cut ->
-      Option.iter
-        (fun cut ->
+let discard feed cut =
+  Option.iter
+    (fun cut ->
+      Array.iteri
+        (fun w _ ->
           while
             feed.first.(w) < feed.next.(w)
             && timestamp feed feed.first.(w) < cut
           do
             feed.first.(w) <- feed.first.(w) + 1
           done)
-        cut)
-    cuts
+        feed.first)
+    cut
 
 let finished : Blink_recovery.decision -> bool = function
   | Confirmed _ | Gave_up _ -> true
