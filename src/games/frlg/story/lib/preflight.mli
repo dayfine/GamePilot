@@ -7,9 +7,9 @@
     ¥1000 for each 50 Game Corner coins); each bag item an action gives or uses
     that no earlier purchase brought. When the checkpoint before it promises a
     state (its postconditions: the members it names and the slots it pins, the
-    money as a range (not what it spent), item counts), that is needed too,
-    exactly. And the place: the frame kept at the checkpoint's start
-    ({!Start_check}).
+    money as a range (not what it spent), item counts and floors (not what it
+    gained or used)), that is needed too, as promised. And the place: the frame
+    kept at the checkpoint's start ({!Start_check}).
 
     GamePilot's own: the fork checks the save's place on the save card and its
     StoryPreflight only the program's settings. *)

@@ -190,7 +190,7 @@ let promised : Plan.postconditions =
     position = None;
     party = Some (Party_includes { members = [ "abra" ]; slots = [] });
     items = [];
-    coins = Some 20;
+    coins = Some (Count_exactly 20);
     money = None;
     flags = [];
     knows = [];
