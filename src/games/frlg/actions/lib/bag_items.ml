@@ -98,17 +98,20 @@ let read_row candidates row =
   | Read { text; _ } -> Some text
   | No_match _ -> None
 
+type found = Found of { index : int; row : int } | Absent | Unread
+
 (* Reads list rows from [k] on (the first six by their screen row, then each
-   one tap further on the bottom row) until the item or the list's end. *)
+   one tap further on the bottom row) until the item ([Found] with its list
+   index and screen row) or the list's end ([Absent]); [Unread] for a row that did not read. *)
 let rec find_from candidates name k =
   let taps = taps_to_reveal k in
   M.taps Wire.Down (taps - taps_to_reveal (k - 1));
   let row = if taps > 0 then shown_rows - 1 else k in
   match read_row candidates row with
-  | Some text when text = name -> Some k
-  | Some text when text <> cancel && k < max_list_rows ->
-      find_from candidates name (k + 1)
-  | _ -> None
+  | Some text when text = name -> Found { index = k; row }
+  | Some text when text = cancel -> Absent
+  | Some _ when k < max_list_rows -> find_from candidates name (k + 1)
+  | _ -> Unread
 
 let max_count_digits = 3
 
@@ -144,8 +147,7 @@ let rec down_to candidates name presses =
       down_to candidates name (presses + 1)
   | _ -> M.fail "not_in_bag" (name ^ " did not come under the cursor")
 
-(* The item's pocket, the names its rows can read (CANCEL ends the list) and
-   the item's own name there. *)
+(* The pocket's names (CANCEL first) and the slug's own among them. *)
 let pocket_names slug =
   let pocket = pocket_of_item slug in
   let in_pocket =
@@ -158,32 +160,41 @@ let pocket_names slug =
 let select slug =
   let pocket, candidates, name = pocket_names slug in
   match find_from candidates name 0 with
-  | None ->
+  | Found _ -> down_to candidates name 0
+  | Absent | Unread ->
       M.fail "not_in_bag" (slug ^ " is not in " ^ Bag_screen.pocket_name pocket)
-  | Some _ -> down_to candidates name 0
 
-let shown_row k = if taps_to_reveal k > 0 then shown_rows - 1 else k
+let count ~log slug =
+  let pocket, candidates, name = pocket_names slug in
+  open_pocket_top pocket;
+  let counted =
+    match find_from candidates name 0 with
+    | Found { row; _ } -> count_on_row row
+    | Absent -> Some 0
+    | Unread -> None
+  in
+  log
+    (match counted with
+    | Some n -> Printf.sprintf "Bag: %d %s." n slug
+    | None -> Printf.sprintf "Bag: the count of %s did not read." slug);
+  M.close "the bag" Bag_screen.bag_open;
+  M.settle_back ~label:"bag count" ~log;
+  counted
 
 let list_row slug =
   let _, candidates, name = pocket_names slug in
-  find_from candidates name 0
+  match find_from candidates name 0 with
+  | Found { index; _ } -> Some index
+  | Absent | Unread -> None
 
-(* A list whose top row reads no name is not drawn yet (a fade back to the
-   bag): no count, rather than "not there" (mg-06 testing run 5 read 0 so). *)
+(* A row that reads no name (the list not drawn yet, after the mail editor) is
+   no count, not "not there" (mg-06 testing run 5 read 0 so). *)
 let count_in_pocket slug =
-  let _, candidates, _ = pocket_names slug in
-  if read_row candidates 0 = None then None
-  else
-    match list_row slug with
-    | None -> Some 0
-    | Some k -> count_on_row (shown_row k)
-
-let read_count ~log slug =
-  open_pocket_top (pocket_of_item slug);
-  let count = count_in_pocket slug in
-  M.close "the bag" Bag_screen.bag_open;
-  M.settle_back ~label:("count " ^ slug) ~log;
-  count
+  let _, candidates, name = pocket_names slug in
+  match find_from candidates name 0 with
+  | Found { row; _ } -> count_on_row row
+  | Absent -> Some 0
+  | Unread -> None
 
 let item_action item row =
   open_pocket_top (pocket_of_item item);

@@ -106,6 +106,9 @@ let () =
       case "mg-03"
         (summary "mg-03.plan.json")
         "frlg; from VermilionCity (19, 18) south; missing: none";
+      case "mg-03's walks plan on the maps" (walks "mg-03.plan.json")
+        "to_route2_cut_tree 3; to_route2_reyley 8; exit_route2_house 3; \
+         to_lavender_mart 7; to_lavender_nurse 8";
       case "mg-05a"
         (summary "mg-05a.plan.json")
         "frlg; from LavenderTown (18, 7) south; missing: none";

@@ -66,19 +66,21 @@ val select : string -> unit
     lost tap is tapped again). Fails as [not_in_bag] when the item is not in the
     pocket. *)
 
+val count : log:(string -> unit) -> string -> int option
+(** From the overworld: the item's pocket opened ({!open_pocket_top}), its rows
+    read down to the item as {!select} reads them, the count on its row
+    ({!count_on_row}), then the bag closed and the talk settle. [Some 0] when
+    the list reaches CANCEL first; [None] when a row or the count did not read.
+    New for the end checks: the fork's [check_postconditions()] reads counts
+    with its own bag reader (Menus/PokemonFRLG_ItemListReader). Fails as
+    {!open_pocket_top}, or as [unknown_item] for a slug no item is named. *)
+
 val list_row : string -> int option
 (** In the item's open pocket, from the list's top: its row in the list (from
     0), the rows read down to it as {!select} reads them; [None] when the pocket
-    does not hold it. The list may be left scrolled. *)
+    does not hold it or a row does not read. The list may be left scrolled. *)
 
 val count_in_pocket : string -> int option
-(** In the item's open pocket, from the list's top: its count, read on its row
-    once the rows are read down to it ({!count_on_row}); [Some 0] when the
-    pocket does not hold it, [None] when its count does not read or the list's
-    top row reads no name (the list not drawn yet). The cursor stays where the
-    reading left it. Fails as [unknown_item] for no item's slug. *)
-
-val read_count : log:(string -> unit) -> string -> int option
-(** From the overworld: the item's pocket opened ({!open_pocket_top}),
-    {!count_in_pocket}, the bag closed and the overworld settled. Not in the
-    fork, which has no bag count reader. *)
+(** {!count} in the open pocket, from the list's top: [Some 0] when the list
+    reaches CANCEL first, [None] when a row or the count does not read. The
+    cursor stays where the reading left it. *)

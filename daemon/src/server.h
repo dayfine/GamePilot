@@ -48,6 +48,7 @@ struct ServerOptions {
 // What the watch page costs the frame loop, reported with the frame rate.
 struct WatchCost {
   std::int64_t frames_encoded = 0;
+  std::int64_t frame_bytes = 0;  // all frames encoded, in bytes
   double ms = 0;  // encoding frames and sending events
 };
 
@@ -84,7 +85,7 @@ class Server {
   void start_watch();
   bool take_watch_note(const pa::JsonValue& message);
   bool stop_program();
-  std::string frame_jpeg();
+  WatchFrame watch_frame();
   void watch_tick();
   void show_probes(
       std::int64_t seq,
@@ -122,8 +123,8 @@ class Server {
   std::unique_ptr<WatchServer> watch_;
   cv::Mat probed_frame_;  // the frame the probes last ran on
   std::int64_t probed_seq_ = -1;
-  std::string frame_jpeg_;  // the last frame sent to the page
-  double frame_jpeg_ms_ = -1e9;
+  WatchFrame frame_shown_;  // the last frame sent to the page
+  double frame_shown_ms_ = -1e9;
   double probes_shown_ms_ = -1e9;
   bool probes_shown_ = false;  // the page shows a non-empty probe list
   double status_shown_ms_ = -1e9;

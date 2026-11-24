@@ -44,8 +44,9 @@ let observe ~log (promised : Story.Plan.postconditions) :
   let items =
     List.filter_map
       (fun ({ item; _ } : Story.Plan.item) ->
-        read ~log ("item " ^ item) (fun () -> A.Bag_items.read_count ~log item)
-        |> Option.map (fun count -> (item, count)))
+        Option.map
+          (fun count -> (item, count))
+          (read ~log ("item " ^ item) (fun () -> A.Bag_items.count ~log item)))
       promised.items
   in
   { Story.Postcondition_check.nothing_read with party; items; coins; money }

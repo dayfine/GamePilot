@@ -2,8 +2,9 @@
 <!--
   gamepilot watch: the daemon's live page for one run (served as is by
   daemon/src/watch_server.cpp; design in docs/design/Watch-Page.md).
-  Frame: GET /frame.jpg, polled at most 5 times a second while the tab is
-  visible. Everything else: the event stream GET /events (info, plan, log,
+  Frame: GET /frame (PNG for small frames, JPEG for large), polled at most
+  5 times a second while the tab is visible. Probe boxes are drawn on a
+  canvas over it at display resolution, not into the frame. Everything else: the event stream GET /events (info, plan, log,
   probes, status). Stop: POST /stop.
 -->
 <html lang="en">
@@ -45,7 +46,7 @@
   main {
     display: grid; gap: 12px; padding: 12px 16px;
     grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
-    grid-template-areas: "frame plan" "log health";
+    grid-template-areas: "frame frame" "plan log" "health log";
   }
   @media (max-width: 800px) {
     main { grid-template-columns: minmax(0, 1fr);
@@ -63,14 +64,38 @@
   #plan-panel { grid-area: plan; }
   #log-panel { grid-area: log; }
   #health-panel { grid-area: health; }
-  #screen { width: 100%; image-rendering: pixelated; background: #000;
-            border-radius: 4px; display: block; }
+  #frame-body { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-start; }
+  #stage-wrap { flex: 1 1 320px; min-width: 0; }
+  #stage { position: relative; background: #000; border-radius: 4px;
+           display: inline-block; vertical-align: top; }
+  #screen { image-rendering: pixelated; display: block; }
+  #overlay { position: absolute; inset: 0; width: 100%; height: 100%; }
   #frame-meta { color: var(--muted); font-size: 12px; margin-top: 4px; }
+  .toolbar { display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
+             flex-wrap: wrap; }
+  .modes { display: inline-flex; border: 1px solid var(--line); border-radius: 6px;
+           overflow: hidden; }
+  .modes button { background: var(--panel); color: var(--text); border: 0;
+                  padding: 4px 10px; font: inherit; font-size: 13px; cursor: pointer; }
+  .modes button + button { border-left: 1px solid var(--line); }
+  .modes button[aria-pressed="true"] { background: var(--cur); color: #fff; }
+  #probe-side { flex: 0 1 300px; min-width: 220px; }
+  #probe-filter { width: 100%; font: inherit; font-size: 13px; padding: 4px 6px;
+                  border: 1px solid var(--line); border-radius: 6px;
+                  background: var(--panel); color: var(--text); margin-bottom: 6px; }
+  #probe-scroll { max-height: 480px; overflow: auto; }
+  #probe-table td { font-size: 12px; padding: 2px 4px 2px 0; }
+  #probe-table td.pid { overflow-wrap: anywhere; }
+  #probe-table td.val { font: 12px ui-monospace, Menlo, Consolas, monospace;
+                        white-space: nowrap; }
+  #probe-table td.chg { width: 14px; color: var(--box); text-align: center; }
+  #probe-table tr.hot td { background: color-mix(in srgb, var(--cur) 14%, transparent); }
   ol#plan { list-style: none; margin: 0; padding: 0; max-height: 420px;
             overflow: auto; }
   ol#plan li { display: grid; grid-template-columns: 22px 28px 1fr;
                padding: 3px 0; border-bottom: 1px solid var(--line); }
   ol#plan li:last-child { border-bottom: 0; }
+  ol#plan li.empty { display: block; }
   .mark { font-weight: 700; text-align: center; }
   .n { color: var(--muted); font-variant-numeric: tabular-nums; }
   .detail { grid-column: 3; color: var(--muted); font-size: 12px;
@@ -101,8 +126,31 @@
 <main>
   <section id="frame-panel">
     <h2>Live frame</h2>
-    <canvas id="screen" width="240" height="160"></canvas>
-    <div id="frame-meta">waiting for a frame</div>
+    <div class="toolbar">
+      <span>Boxes</span>
+      <span class="modes" role="group" aria-label="Probe boxes">
+        <button type="button" data-mode="off">Off</button>
+        <button type="button" data-mode="changed" title="Only probes whose value changed in the last second">Changed</button>
+        <button type="button" data-mode="all">All</button>
+      </span>
+    </div>
+    <div id="frame-body">
+      <div id="stage-wrap">
+        <div id="stage">
+          <canvas id="screen" width="240" height="160"></canvas>
+          <canvas id="overlay"></canvas>
+        </div>
+        <div id="frame-meta">waiting for a frame</div>
+      </div>
+      <div id="probe-side">
+        <input id="probe-filter" type="search" list="probe-prefixes"
+               placeholder="filter probes by prefix (party., bag., …)">
+        <datalist id="probe-prefixes"></datalist>
+        <div id="probe-scroll">
+          <table id="probe-table"><tbody><tr><td class="empty">no probes subscribed</td></tr></tbody></table>
+        </div>
+      </div>
+    </div>
   </section>
   <section id="plan-panel">
     <h2 id="plan-title">Plan</h2>
@@ -144,6 +192,54 @@ function el(tag, cls, text) {
 }
 
 // --- Frame and probe boxes ---------------------------------------------------
+//
+// The frame is drawn at its own resolution and scaled by CSS (pixelated, at a
+// whole multiple when it fits); the boxes and labels go on a canvas over it at
+// the displayed size, so text stays sharp. Mode: off, changed (probes whose
+// value changed in the last second) or all; a label shows only for the box
+// under the pointer (or tapped), and the table lists every value.
+
+const CHANGED_MS = 1000;
+const MODES = ["off", "changed", "all"];
+const overlay = $("overlay");
+const octx = overlay.getContext("2d");
+let mode = "changed";
+try { const m = localStorage.getItem("watch.mode"); if (MODES.includes(m)) mode = m; } catch (e) {}
+const changedAt = new Map();   // probe id -> time its label last changed
+const lastLabel = new Map();   // probe id -> its last label
+let hovered = null;            // probe id under the pointer or row
+let pinned = null;             // probe id tapped
+let scale = 1;                 // displayed pixels per frame pixel
+
+const recent = (id) => performance.now() - (changedAt.get(id) || -1e9) < CHANGED_MS;
+const filterText = () => $("probe-filter").value.trim();
+const matches = (p) => p.id.startsWith(filterText());
+
+function setMode(m) {
+  mode = m;
+  try { localStorage.setItem("watch.mode", m); } catch (e) {}
+  for (const b of document.querySelectorAll(".modes button")) {
+    b.setAttribute("aria-pressed", String(b.dataset.mode === m));
+  }
+  drawOverlay();
+}
+
+function takeProbes(list) {
+  const now = performance.now();
+  for (const p of list) {
+    const label = resultLabel(p.result);
+    if (lastLabel.has(p.id) && lastLabel.get(p.id) !== label) changedAt.set(p.id, now);
+    lastLabel.set(p.id, label);
+  }
+  probes = list;
+  const prefixes = new Set(list.map((p) => p.id.split(".")[0] + "."));
+  const options = $("probe-prefixes");
+  if (options.childElementCount !== prefixes.size) {
+    options.replaceChildren(...[...prefixes].sort().map((x) => { const o = el("option"); o.value = x; return o; }));
+  }
+  renderProbeTable();
+  drawOverlay();
+}
 
 function resultLabel(r) {
   if (!r) return "";
@@ -161,51 +257,141 @@ function resultLabel(r) {
   }
 }
 
-function draw() {
-  if (!lastImage) return;
-  if (canvas.width !== lastImage.naturalWidth) {
-    canvas.width = lastImage.naturalWidth;
-    canvas.height = lastImage.naturalHeight;
+function renderProbeTable() {
+  const body = el("tbody");
+  for (const p of probes.filter(matches)) {
+    const tr = el("tr", p.id === hovered || p.id === pinned ? "hot" : "");
+    tr.append(el("td", "chg", recent(p.id) ? "●" : ""), el("td", "pid", p.id),
+              el("td", "val", lastLabel.get(p.id) || ""));
+    tr.addEventListener("mouseenter", () => { hovered = p.id; drawOverlay(); });
+    tr.addEventListener("mouseleave", () => { hovered = null; drawOverlay(); });
+    body.append(tr);
   }
-  const W = canvas.width, H = canvas.height;
-  ctx.imageSmoothingEnabled = false;
-  ctx.drawImage(lastImage, 0, 0, W, H);
-  const vp = (info && info.backend && info.backend.viewport) || {x: 0, y: 0, w: 1, h: 1};
-  const scale = Math.max(1, W / 240);
-  ctx.lineWidth = Math.max(1, scale * 0.5);
-  ctx.font = Math.round(5 * scale) + "px ui-monospace, Menlo, monospace";
-  ctx.textBaseline = "bottom";
-  const box = getComputedStyle(document.documentElement).getPropertyValue("--box").trim();
-  for (const p of probes) {
-    const x = (vp.x + p.box.x * vp.w) * W, y = (vp.y + p.box.y * vp.h) * H;
-    const w = p.box.w * vp.w * W, h = p.box.h * vp.h * H;
-    ctx.strokeStyle = box;
-    ctx.strokeRect(x, y, w, h);
-    const label = p.id + "  " + resultLabel(p.result);
-    const tw = ctx.measureText(label).width + 4;
-    const ty = y > 7 * scale ? y : y + h + 7 * scale;
-    const tx = Math.max(0, Math.min(x, W - tw));
-    ctx.fillStyle = "rgba(0,0,0,0.7)";
-    ctx.fillRect(tx, ty - 6 * scale, tw, 6 * scale);
-    ctx.fillStyle = box;
-    ctx.fillText(label, tx + 2, ty);
+  if (!body.childElementCount) {
+    body.append(row([[probes.length ? "no probe matches the filter" : "no probes subscribed", "empty"]]));
   }
+  $("probe-table").replaceChildren(body);
 }
 
-function pollFrame() {
+// A probe's box in displayed pixels.
+function boxRect(p, W, H) {
+  const vp = (info && info.backend && info.backend.viewport) || {x: 0, y: 0, w: 1, h: 1};
+  return {x: (vp.x + p.box.x * vp.w) * W * scale, y: (vp.y + p.box.y * vp.h) * H * scale,
+          w: p.box.w * vp.w * W * scale, h: p.box.h * vp.h * H * scale};
+}
+
+// The whole multiple of the frame that fits the panel's width and 70% of the
+// window's height, or a fraction when even 1x does not.
+function fitScale(w, h) {
+  const s = Math.min($("stage-wrap").clientWidth / w, window.innerHeight * 0.7 / h);
+  return s >= 1 ? Math.floor(s) : s;
+}
+
+function drawFrame() {
+  if (!lastImage) return;
+  const w = lastImage.width, h = lastImage.height;
+  if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }
+  ctx.drawImage(lastImage, 0, 0);
+  scale = fitScale(w, h);
+  canvas.style.width = w * scale + "px";
+  canvas.style.height = h * scale + "px";
+  drawOverlay();
+}
+
+function drawOverlay() {
+  const W = canvas.width, H = canvas.height;
+  const dw = W * scale, dh = H * scale, dpr = window.devicePixelRatio || 1;
+  if (overlay.width !== Math.round(dw * dpr) || overlay.height !== Math.round(dh * dpr)) {
+    overlay.width = Math.round(dw * dpr);
+    overlay.height = Math.round(dh * dpr);
+  }
+  octx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  octx.clearRect(0, 0, dw, dh);
+  const color = getComputedStyle(document.documentElement).getPropertyValue("--box").trim();
+  const focus = hovered || pinned;
+  const shown = probes.filter((p) => p.id === focus ||
+    (mode !== "off" && matches(p) && (mode === "all" || recent(p.id))));
+  octx.lineWidth = 1.5;
+  for (const p of shown) {
+    const r = boxRect(p, W, H);
+    octx.strokeStyle = p.id === focus ? "#ffffff" : color;
+    octx.globalAlpha = p.id === focus || recent(p.id) ? 1 : 0.55;
+    octx.strokeRect(r.x + 0.75, r.y + 0.75, Math.max(1, r.w - 1.5), Math.max(1, r.h - 1.5));
+  }
+  octx.globalAlpha = 1;
+  const p = probes.find((q) => q.id === focus);
+  if (!p) return;
+  const r = boxRect(p, W, H);
+  const text = p.id + "  " + (lastLabel.get(p.id) || "");
+  octx.font = "12px ui-monospace, Menlo, Consolas, monospace";
+  octx.textBaseline = "middle";
+  const tw = octx.measureText(text).width + 8, th = 18;
+  const ty = r.y >= th + 2 ? r.y - th - 2 : Math.min(dh - th, r.y + r.h + 2);
+  const tx = Math.max(0, Math.min(r.x, dw - tw));
+  octx.fillStyle = "rgba(0,0,0,0.8)";
+  octx.fillRect(tx, ty, tw, th);
+  octx.fillStyle = color;
+  octx.fillText(text, tx + 4, ty + th / 2);
+}
+
+// The smallest shown box under a point (in displayed pixels).
+function probeAt(x, y) {
+  let best = null, bestArea = Infinity;
+  for (const p of probes) {
+    if (!matches(p) || mode === "off" || (mode === "changed" && !recent(p.id))) continue;
+    const r = boxRect(p, canvas.width, canvas.height);
+    if (x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h && r.w * r.h < bestArea) {
+      best = p.id; bestArea = r.w * r.h;
+    }
+  }
+  return best;
+}
+
+function pointer(e) {
+  const b = overlay.getBoundingClientRect();
+  return probeAt(e.clientX - b.left, e.clientY - b.top);
+}
+overlay.addEventListener("mousemove", (e) => {
+  const id = pointer(e);
+  if (id !== hovered) { hovered = id; drawOverlay(); renderProbeTable(); }
+});
+overlay.addEventListener("mouseleave", () => { hovered = null; drawOverlay(); renderProbeTable(); });
+overlay.addEventListener("click", (e) => {
+  const id = pointer(e);
+  pinned = id === pinned ? null : id;
+  drawOverlay();
+  renderProbeTable();
+});
+for (const b of document.querySelectorAll(".modes button")) {
+  b.addEventListener("click", () => setMode(b.dataset.mode));
+}
+$("probe-filter").addEventListener("input", () => { renderProbeTable(); drawOverlay(); });
+window.addEventListener("resize", drawFrame);
+setMode(mode);
+
+async function pollFrame() {
   if (document.hidden) { setTimeout(pollFrame, 1000); return; }
   const started = performance.now();
-  const img = new Image();
-  const next = () => setTimeout(pollFrame, Math.max(0, FRAME_MS - (performance.now() - started)));
-  img.onload = () => {
-    lastImage = img;
-    draw();
-    $("frame-meta").textContent = img.naturalWidth + "×" + img.naturalHeight +
+  try {
+    const reply = await fetch("frame?t=" + Date.now(), {cache: "no-store"});
+    if (!reply.ok) throw new Error("HTTP " + reply.status);
+    const blob = await reply.blob();
+    const image = await createImageBitmap(blob);
+    if (lastImage && lastImage.close) lastImage.close();
+    lastImage = image;
+    drawFrame();
+    // Changed marks fade with time, not only with new probe results.
+    renderProbeTable();
+    const kind = (blob.type.split("/")[1] || "").toUpperCase();
+    $("frame-meta").textContent = image.width + "×" + image.height + " " + kind + " · " +
+      (blob.size / 1024).toFixed(1) + " KB · shown at " +
+      (Number.isInteger(scale) ? scale + "×" : scale.toFixed(2) + "×") +
       (info ? " · " + info.backend.kind : "") + " · " + probes.length + " probes";
-    next();
-  };
-  img.onerror = () => setTimeout(pollFrame, 1000);
-  img.src = "frame.jpg?t=" + Date.now();
+  } catch (e) {
+    setTimeout(pollFrame, 1000);
+    return;
+  }
+  setTimeout(pollFrame, Math.max(0, FRAME_MS - (performance.now() - started)));
 }
 
 // --- Plan --------------------------------------------------------------------
@@ -288,10 +474,10 @@ function connect() {
   const on = (name, f) => events.addEventListener(name, (m) => f(JSON.parse(m.data)));
   events.onopen = () => { $("conn").textContent = "live"; $("conn").className = ""; };
   events.onerror = () => { $("conn").textContent = "disconnected, retrying…"; $("conn").className = "down"; };
-  on("info", (d) => { info = d; draw(); });
+  on("info", (d) => { info = d; drawFrame(); });
   on("plan", (d) => { lastPlan = d; renderPlan(); });
   on("log", (d) => addLog(d.line));
-  on("probes", (d) => { probes = d.probes; draw(); });
+  on("probes", (d) => takeProbes(d.probes));
   on("status", (d) => { renderStatus(d); $("conn").textContent = "live"; $("conn").className = ""; });
 }
 
