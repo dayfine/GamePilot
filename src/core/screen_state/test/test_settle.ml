@@ -129,6 +129,10 @@ let () =
         "quiet; presses BBBBBBBB";
       run_case "people walking about do not hold a door's settle up" door
         [ people_walking ] "quiet; presses BBBBB";
+      run_case
+        "someone walking about the whole time does not hold a closed menu's \
+         settle up (calm)"
+        (Settle.rule Menu_closed) [ people_walking ] "quiet; presses BBBBBBBBB";
       run_case "a wild battle is fled and the settle goes on" door
         [ quiet; battle; quiet ] "quiet; presses BFBBBBB";
       run_case "a battle not fled ends it" ~flee:false before_battle

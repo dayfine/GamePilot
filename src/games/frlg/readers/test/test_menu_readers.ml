@@ -207,9 +207,6 @@ let known_misreads =
   [
     (* A Key Items action menu covers the bag's grey shadow, as in the fork. *)
     ("bag_open", "captures/tmcase-04-tmcase-after-A__bag-itemmenu.png", "false");
-    (* The mail editor's orange frame and pale panel pass for page 3's. *)
-    ("summary_page", "mail-editor/editor-abra__maileditor.png", "3");
-    ("summary_page", "mail-editor/editor-blank__maileditor.png", "3");
   ]
 
 let expectation r image =
@@ -251,6 +248,30 @@ let print_tally backend images =
         (List.length images))
     readers
 
+(* Victory Road 2F's cave floor under all three summary marks, as mGBA read it
+   after the grind's level read (mg-04b, 2026-11-24): one flat pale colour that
+   passes for tan and for white at once. *)
+let cave_floor =
+  let floor : Wire.rgb = { r = 206.; g = 181.; b = 156. } in
+  let flat : Wire.rgb = { r = 0.; g = 0.; b = 0. } in
+  measurements
+    (List.map
+       (fun id -> (id, Wire.Color_stats { mean = floor; stddev = flat }))
+       [ "summary.page1"; "summary.page2"; "summary.page3" ])
+
+let floors =
+  [
+    {
+      Table_test.name =
+        "summary_page: Victory Road's cave floor is no summary page";
+      input =
+        (fun () ->
+          Option.fold ~none:"none" ~some:string_of_int
+            (Summary_screen.page cave_floor));
+      expectation = "none";
+    };
+  ]
+
 let () =
   let backends =
     List.map
@@ -262,4 +283,5 @@ let () =
   in
   List.iter (fun (backend, images) -> print_tally backend images) backends;
   Table_test.run "menu readers"
-    (List.concat_map (fun (backend, images) -> cases backend images) backends)
+    (floors
+    @ List.concat_map (fun (backend, images) -> cases backend images) backends)
