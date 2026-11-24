@@ -9,12 +9,16 @@ cmake files) provides JSON and file I/O; it builds on Linux, macOS and Windows.
 
 Run it against an mGBA instance with the MgbaLink bridge (`lab/mgba/bridge.lua`, paced mode):
 
-    daemon/build/gamepilot_daemon --backend mgba --mgba-port 47810 [--port 47900] [--log wire.jsonl] [--fast]
+    daemon/build/gamepilot_daemon --backend mgba --mgba-port 47810 [--port 47900] [--log wire.jsonl] [--fast | --speed S]
 
 The daemon holds the emulator in lockstep: before each frame it sends the frame's keys
 (`KEYS <seq> <mask>`), grants exactly one frame (`GRANT <seq+1>`), waits for it, and, while a probe is
 subscribed, reads that frame (`FRAME`) and sends one `frame` notification for it. Frames are paced to
-the backend's rate (59.7275 fps on the GBA); `--fast` steps as fast as the emulator goes. Everything
+the backend's rate (59.7275 fps on the GBA); `--speed S` paces them at S times that rate, and
+`--fast` steps as fast as the emulator goes (mGBA must not throttle itself for either: audio and video
+sync off, as `run/run_checkpoints_on_mgba.sh --speed S` starts it). Presses and waits are whole
+frames, and a `frame`'s or `batch_done`'s `t_ms` is game time (contracts v1.10), so a program's
+timing means the same at any speed. Everything
 runs on one thread (the client is served between frames) except the watch page's stream encoder.
 
 ## The Switch backend
