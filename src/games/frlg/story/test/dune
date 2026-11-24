@@ -129,3 +129,15 @@
   gamepilot.story
   gamepilot.frlg_actions
   gamepilot.frlg_story))
+
+(test
+ (name test_paced_patches)
+ (modules test_paced_patches)
+ (deps mg-02.plan.json mg-05a.plan.json)
+ (libraries
+  gamepilot.case_table
+  gamepilot.grid_maps
+  gamepilot.story
+  gamepilot.frlg_overworld
+  gamepilot.frlg_actions
+  gamepilot.frlg_story))

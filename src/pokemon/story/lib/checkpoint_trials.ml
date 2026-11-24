@@ -60,3 +60,40 @@ let verdict policy runs =
       Stopped
         (Printf.sprintf "%d of %d runs passed, %d needed" (passes runs)
            (List.length runs) policy.passes_needed)
+
+type attempt = Attempt_passed | Attempt_failed of failure
+and failure = { at : string; reason : string; repeats : bool }
+
+type attempt_verdict =
+  | Attempt_again
+  | Run_passed
+  | Run_failed of { at : string; repeats : bool; why : string }
+
+let same_failure a b = a.at = b.at && a.reason = b.reason
+
+let all_failed_alike = function
+  | Attempt_failed first :: rest ->
+      List.for_all
+        (function
+          | Attempt_failed f -> same_failure f first | Attempt_passed -> false)
+        rest
+  | _ -> false
+
+let out_of_attempts attempts (last : failure) =
+  let n = List.length attempts in
+  let alike = n > 1 && all_failed_alike attempts in
+  let why =
+    if alike then
+      Printf.sprintf "failed the same way on all %d attempts: %s" n last.reason
+    else Printf.sprintf "failed on all %d attempts" n
+  in
+  Run_failed { at = last.at; repeats = alike || last.repeats; why }
+
+let attempts ~retries attempts =
+  match List.rev attempts with
+  | [] -> Attempt_again
+  | Attempt_passed :: _ -> Run_passed
+  | Attempt_failed f :: _ when f.repeats ->
+      Run_failed { at = f.at; repeats = true; why = "the failure repeats" }
+  | Attempt_failed _ :: _ when List.length attempts <= retries -> Attempt_again
+  | Attempt_failed f :: _ -> out_of_attempts attempts f

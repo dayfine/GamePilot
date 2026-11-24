@@ -23,6 +23,9 @@ val path : t -> string -> string
 val write : t -> string -> string -> unit
 (** Writes a file in the folder. *)
 
+val append : t -> string -> string -> unit
+(** [append t file text] adds [text] at the end of the run folder's [file]. *)
+
 val story_log : t -> (string -> unit) * (unit -> unit)
 (** A logger to stdout and story.log, and what closes it. *)
 
@@ -65,13 +68,22 @@ type run = {
   checkpoint : string;
   mode : string;
   started_ms : int;
+  attempt : (int * int) option;
+      (** Attempt [n] of [m] of a checkpoint run whose plan allows retries:
+          run.json's ["attempt"] and ["attempts"]. *)
 }
 (** A started run. *)
 
 val run_json : run -> ended_ms:int -> ending option -> Yojson.Safe.t
 (** run.json: without the end fields while [None]. *)
 
-val start : runs_dir:string -> info -> checkpoint:string -> mode:string -> run
+val start :
+  ?attempt:int * int ->
+  runs_dir:string ->
+  info ->
+  checkpoint:string ->
+  mode:string ->
+  run
 (** The run's folder ({!create}) and its run.json. *)
 
 val finish : runs_dir:string -> run -> summary:string -> ending -> unit

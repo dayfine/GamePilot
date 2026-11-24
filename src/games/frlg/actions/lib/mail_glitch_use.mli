@@ -27,6 +27,14 @@
 val mark_of_name : string -> Frlg_readers.Party_menu.mark option
 (** ["held_item"], ["mail"], ["none"]. *)
 
+val name_of_mark : Frlg_readers.Party_menu.mark -> string
+(** The inverse of {!mark_of_name}: a plan's name for the mark. *)
+
+val read_marks : log:(string -> unit) -> Frlg_readers.Party_menu.mark list
+(** The party opened, read after {!Party_actions.party_settle_ms}, each member's
+    mark from slot 1 ({!Frlg_readers.Party_menu.members} of them), the party
+    closed: [check_party_marks]'s read, also the [marks] postcondition's. *)
+
 val marks_mismatch :
   Frlg_readers.Party_menu.mark list ->
   read:(int -> Frlg_readers.Party_menu.mark) ->

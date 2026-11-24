@@ -61,6 +61,11 @@ let create ~runs_dir ~checkpoint ~mode =
 
 let path t file = Filename.concat t.dir file
 
+let append t file text =
+  Out_channel.with_open_gen
+    [ Open_wronly; Open_creat; Open_append; Open_binary ]
+    file_perm (path t file) (fun out -> Out_channel.output_string out text)
+
 let write t file text =
   Out_channel.with_open_bin (path t file) (fun out ->
       Out_channel.output_string out text)
@@ -155,6 +160,7 @@ type run = {
   checkpoint : string;
   mode : string;
   started_ms : int;
+  attempt : (int * int) option;
 }
 
 let program_fields = function
@@ -170,6 +176,10 @@ let ended_fields ~ended_ms = function
         ("at", `String e.at);
         ("reason", `String e.reason);
       ]
+
+let attempt_fields = function
+  | None -> []
+  | Some (n, of_) -> [ ("attempt", `Int n); ("attempts", `Int of_) ]
 
 let run_json run ~ended_ms ending =
   let s v = `String v in
@@ -187,15 +197,18 @@ let run_json run ~ended_ms ending =
         ("mode", s run.mode);
         ("started_ms", `Int run.started_ms);
       ]
+    @ attempt_fields run.attempt
     @ ended_fields ~ended_ms ending)
 
 let write_run_json run ending =
   write run.record "run.json"
     (Yojson.Safe.to_string (run_json run ~ended_ms:(now_ms ()) ending) ^ "\n")
 
-let start ~runs_dir info ~checkpoint ~mode =
+let start ?attempt ~runs_dir info ~checkpoint ~mode =
   let record = create ~runs_dir ~checkpoint ~mode in
-  let run = { record; info; checkpoint; mode; started_ms = now_ms () } in
+  let run =
+    { record; info; checkpoint; mode; started_ms = now_ms (); attempt }
+  in
   write_run_json run None;
   run
 

@@ -68,6 +68,16 @@ let per_member ~log members species_of read_member promised =
   | None -> []
   | Some members -> List.filter_map (one members) promised
 
+let item_count ~log ({ item; _ } : Story.Plan.item) =
+  Option.map
+    (fun count -> (item, count))
+    (read ~log ("item " ^ item) (fun () -> A.Bag_items.count ~log item))
+
+let party_marks ~log () =
+  Some
+    (List.map A.Mail_glitch_use.name_of_mark
+       (A.Mail_glitch_use.read_marks ~log))
+
 let observe ~log (promised : Story.Plan.postconditions) :
     Story.Postcondition_check.observed =
   let when_promised promised what body =
@@ -86,14 +96,7 @@ let observe ~log (promised : Story.Plan.postconditions) :
     when_promised (promised.money <> None) "money" (fun () ->
         A.Trainer_card_money.read ~log)
   in
-  let items =
-    List.filter_map
-      (fun ({ item; _ } : Story.Plan.item) ->
-        Option.map
-          (fun count -> (item, count))
-          (read ~log ("item " ^ item) (fun () -> A.Bag_items.count ~log item)))
-      promised.items
-  in
+  let items = List.filter_map (item_count ~log) promised.items in
   let members =
     members ~log party ~promised:(promised.knows <> [] || promised.levels <> [])
   in
@@ -107,6 +110,9 @@ let observe ~log (promised : Story.Plan.postconditions) :
       (fun (l : Story.Plan.level) -> l.species)
       member_level promised.levels
   in
+  let marks =
+    when_promised (promised.marks <> None) "marks" (party_marks ~log)
+  in
   {
     Story.Postcondition_check.nothing_read with
     party;
@@ -115,6 +121,7 @@ let observe ~log (promised : Story.Plan.postconditions) :
     money;
     knows;
     levels;
+    marks;
   }
 
 let party_summary ~log =

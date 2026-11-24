@@ -2,7 +2,12 @@ module J = Grid_maps.Json_field
 module M = Menu_input
 module S = Frlg_battle.Scripted_battle
 
-type plan = { species : string; move : string; backup_move : string }
+type plan = {
+  species : string;
+  move : string;
+  backup_move : string;
+  pace : Grid_maps.Direction.t;
+}
 
 let decode =
   Action_args.decode ~action:"prepare_berry_pp" (fun ~where args ->
@@ -10,6 +15,7 @@ let decode =
         species = J.string ~where "species" args;
         move = J.string ~where "move" args;
         backup_move = J.string ~where "backup_move" args;
+        pace = J.direction ~where "pace" args;
       })
 
 let script ~move_slot ~backup_slot =

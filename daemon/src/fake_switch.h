@@ -113,6 +113,7 @@ class FakeSwitch : public BoardPort {
   void board_loop();
   void on_message(const std::uint8_t* message, std::size_t bytes);
   void finish_due_commands(double now);
+  void cancel_queued(double now);
   double next_finish_ms() const;
 
   const Clock& clock_;

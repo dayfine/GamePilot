@@ -19,7 +19,10 @@ type heal =
 
 type strategy = {
   name : string;
-  spot : Story.Pose.grid;  (** the one tile the player turns on for battles *)
+  spot : Story.Pose.grid;  (** the grass tile battles are paced from *)
+  pace : Grid_maps.Direction.t;
+      (** the way paced, one step and back: the tile that way is grass too
+          ({!Pacing}) *)
   lead : lead;
   heal : heal;
   heal_every : int;

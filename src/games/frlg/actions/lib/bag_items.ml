@@ -135,9 +135,10 @@ let cursor_text candidates =
    row, says where it is. A tap the bag did not take is tapped again. *)
 let tap_down_from row =
   M.taps Wire.Down 1;
+  let module Steps = Frlg_menu_cursor.Cursor_steps in
   ignore
-    (Effects.await ~timeout_ms:Frlg_menu_cursor.Cursor_steps.tap_timeout_ms
-       (fun m -> Bag_screen.cursor_row m <> Some row))
+    (Effects.await ~timeout_ms:Steps.tap_timeout_ms
+       (Steps.moved_from Bag_screen.cursor_row row))
 
 let rec down_to candidates name presses =
   match cursor_text candidates with

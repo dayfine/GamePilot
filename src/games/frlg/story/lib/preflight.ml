@@ -183,4 +183,5 @@ let to_read needs : P.postconditions =
     flags = [];
     knows = [];
     levels = [];
+    marks = None;
   }

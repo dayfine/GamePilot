@@ -18,6 +18,7 @@ let party_only party : Story.Plan.postconditions =
     flags = [];
     knows = [];
     levels = [];
+    marks = None;
   }
 
 let place what verdict detail = Some { P.what; verdict; detail }

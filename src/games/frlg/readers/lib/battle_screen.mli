@@ -42,9 +42,16 @@ val player_box_left : Effects.measurements -> bool
 val foe_box : Effects.measurements -> bool
 (** The foe's HP box (top left). *)
 
+val ally_boxes : Effects.measurements -> bool
+(** Either of a double battle's two HP boxes on the player's side (right of the
+    middle, one above the other), which sit where {!player_box} does not look.
+    Not in the fork, whose Mail Glitch battle loop has no evolution hold to tell
+    them from. Measured on mGBA only. *)
+
 val hp_box : Effects.measurements -> bool
 (** The player's or the foe's HP box, on a battle background that is neither
-    white nor the sand of a battle in a cave. *)
+    white nor the sand of a battle in a cave, or a double battle's
+    {!ally_boxes}. *)
 
 val move_menu : Effects.measurements -> bool
 (** The move menu: a white moves box and a white PP box with the dark frame

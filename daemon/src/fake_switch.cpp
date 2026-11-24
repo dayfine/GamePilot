@@ -361,6 +361,9 @@ void FakeSwitch::on_message(const std::uint8_t* message, std::size_t bytes) {
         mode_ = read_u32(message + sizeof(PB2::MessageHeader));
       }
       return;
+    case PABB2_MESSAGE_OPCODE_CQ_CANCEL:
+      cancel_queued(clock_.now_ms());
+      return;
     case PABB2_MESSAGE_CMD_NS1_OEM_CONTROLLER_BUTTONS:
       if (bytes == sizeof(ProButtonsMessage) &&
           mode_ == kWiredProControllerMode) {
@@ -394,6 +397,19 @@ void FakeSwitch::on_message(const std::uint8_t* message, std::size_t bytes) {
   std::memcpy(out.data(), &reply, sizeof(reply));
   out.insert(out.end(), data.begin(), data.end());
   link_->send_message(out.data(), out.size());
+}
+
+// The firmware's cancel: the running state stops now, the queued ones never
+// run, and none is reported finished (the host forgot them when it sent the
+// cancel). Under lock_.
+void FakeSwitch::cancel_queued(double now) {
+  while (commands_.size() > finished_ && commands_.back().start_ms >= now) {
+    commands_.pop_back();
+  }
+  if (commands_.size() > finished_) {
+    commands_.back().end_ms = std::min(commands_.back().end_ms, now);
+  }
+  finished_ = commands_.size();
 }
 
 double FakeSwitch::next_finish_ms() const {

@@ -52,6 +52,7 @@ class SwitchBackend : public Backend {
 
   std::optional<FrameStamp> next_frame(double timeout_ms) override;
   void queue_keys(KeyMask mask, double ms) override;
+  void drop_queued_keys() override;
   BackendHealth health() const override;
 
  private:

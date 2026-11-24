@@ -103,4 +103,26 @@ let cases =
       "false: east, west, east";
   ]
 
-let () = Case_table.run "pacing" cases
+(* mg-05a testing 1: the PP drain turned in place on Route 8 (45, 12) and ended
+   on the path at (46, 12), where no battle comes. A tile off the patch is no
+   spot to pace from. *)
+let spot_at tile () =
+  let tile = { Grid_maps.Tile_pos.x = fst tile; y = snd tile } in
+  match
+    Pacing.spot_at ~pace:West ~patch:{ x = 45; y = 12 } tile (Some East)
+  with
+  | None -> "off the patch"
+  | Some { displaced; facing } ->
+      Printf.sprintf "displaced %b, facing %s" displaced
+        (Option.fold ~none:"?" ~some:Grid_maps.Direction.name facing)
+
+let spot_cases =
+  [
+    case "on the patch" (spot_at (45, 12)) "displaced false, facing east";
+    case "one tile the pace's way"
+      (spot_at (44, 12))
+      "displaced true, facing east";
+    case "the path the turning drifted onto" (spot_at (46, 12)) "off the patch";
+  ]
+
+let () = Case_table.run "pacing" (cases @ spot_cases)

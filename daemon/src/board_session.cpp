@@ -362,4 +362,22 @@ void BoardSession::send_state(const ProButtons& buttons,
   }
 }
 
+void BoardSession::cancel_queued() {
+  if (device_ == nullptr) {
+    throw BackendError("board: not connected");
+  }
+  PB2::CommandQueueManager& queue = device_->command_queue();
+  if (queue.send_cancel() ==
+      PB2::CommandQueueManager::SUPPRESSED_DUPLICATE) {
+    return;  // nothing queued, or a cancel already on its way
+  }
+  try {
+    if (!queue.wait_for_cancel(timings_.answer)) {
+      throw BackendError("board: the cancel was not taken");
+    }
+  } catch (const pa::Exception& e) {
+    throw BackendError("board: " + e.message());
+  }
+}
+
 }  // namespace gamepilot

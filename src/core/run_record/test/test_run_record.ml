@@ -17,6 +17,7 @@ let run_of info ~name ~checkpoint ~mode : R.run =
     checkpoint;
     mode;
     started_ms = 1000;
+    attempt = None;
   }
 
 let json run ending =
@@ -42,6 +43,18 @@ let paths =
         ~name:"r" ~checkpoint:"mg-02" ~mode:"verification",
       fail,
       {|{"run":"r","kind":"checkpoints","game":"frlg","program":"frlg.mail_glitch","from":"mg-01","to":"mg-03","checkpoint":"mg-02","backend":"mgba","mode":"verification","started_ms":1000,"ended_ms":2000,"result":"fail","at":"#2 talk","reason":"no_text"}|}
+    );
+    ( "attempt 2 of 4 of a run with retries, failed",
+      {
+        (run_of
+           (info Checkpoints ~program:mail_glitch ~from_id:"mg-05"
+              ~to_id:"mg-05" ~backend:"mgba")
+           ~name:"r" ~checkpoint:"mg-05" ~mode:"verification")
+        with
+        attempt = Some (2, 4);
+      },
+      fail,
+      {|{"run":"r","kind":"checkpoints","game":"frlg","program":"frlg.mail_glitch","from":"mg-05","to":"mg-05","checkpoint":"mg-05","backend":"mgba","mode":"verification","started_ms":1000,"attempt":2,"attempts":4,"ended_ms":2000,"result":"fail","at":"#2 talk","reason":"no_text"}|}
     );
     ( "the pre-flight",
       run_of

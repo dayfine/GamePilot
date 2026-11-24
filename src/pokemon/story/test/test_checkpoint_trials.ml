@@ -108,4 +108,43 @@ let cases : Case_table.case list =
     };
   ]
 
-let () = Case_table.run "checkpoint_trials" cases
+let attempts_text retries list =
+  match attempts ~retries list with
+  | Attempt_again -> "again"
+  | Run_passed -> "passed"
+  | Run_failed { at; repeats; why } ->
+      Printf.sprintf "failed at %s (%s)%s" at why
+        (if repeats then ", stops verification" else "")
+
+let lost =
+  Attempt_failed
+    { at = "#2 verify"; reason = "mail_glitch_not_active"; repeats = false }
+
+let broke =
+  Attempt_failed { at = "#1 battle"; reason = "timeout"; repeats = false }
+
+let attempt_cases : Case_table.case list =
+  let case name ~retries list expectation : Case_table.case =
+    { name; input = (fun () -> attempts_text retries list); expectation }
+  in
+  [
+    case "no retries: a pass passes" ~retries:0 [ Attempt_passed ] "passed";
+    case "no retries: one failure fails the run, not hard" ~retries:0 [ lost ]
+      "failed at #2 verify (failed on all 1 attempts)";
+    case "a failure with retries left: again" ~retries:3 [ lost ] "again";
+    case "a pass after a failure passes the run" ~retries:3
+      [ lost; Attempt_passed ] "passed";
+    case "a failure that repeats ends the run at once" ~retries:3
+      [ Attempt_failed { at = "start"; reason = "stopped"; repeats = true } ]
+      "failed at start (the failure repeats), stops verification";
+    case "different failures on every attempt: failed, not hard" ~retries:2
+      [ lost; broke; lost ] "failed at #2 verify (failed on all 3 attempts)";
+    case "the same step and reason on every attempt: failed hard" ~retries:2
+      [ lost; lost; lost ]
+      "failed at #2 verify (failed the same way on all 3 attempts: \
+       mail_glitch_not_active), stops verification";
+  ]
+
+let () =
+  Case_table.run "checkpoint_trials" cases;
+  Case_table.run "checkpoint attempts" attempt_cases
