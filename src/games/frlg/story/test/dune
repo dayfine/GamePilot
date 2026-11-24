@@ -104,3 +104,18 @@
   gamepilot.frlg_readers
   gamepilot.frlg_actions
   gamepilot.frlg_story))
+
+(test
+ (name test_party_members)
+ (modules test_party_members)
+ (deps
+  mg-01.plan.json
+  mg-02.plan.json
+  mg-03.plan.json
+  mg-04.plan.json
+  mg-06.plan.json)
+ (libraries
+  gamepilot.case_table
+  gamepilot.grid_maps
+  gamepilot.story
+  gamepilot.frlg_actions))

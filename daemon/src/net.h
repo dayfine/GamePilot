@@ -34,6 +34,9 @@ class Socket {
   // Reads what is available (blocks if nothing is). Empty optional = closed or
   // error.
   std::optional<std::string> receive_some();
+  // Reads what is available now into `data`, up to `size` bytes (on a
+  // non-blocking socket: 0 when nothing is). Empty optional = closed or error.
+  std::optional<std::size_t> receive_some(char* data, std::size_t size);
 
   static constexpr std::intptr_t kInvalid = -1;
 
@@ -68,6 +71,20 @@ Socket connect_local(std::uint16_t port);
 // Returns one flag per socket; an invalid socket is never readable.
 std::vector<bool> poll_readable(const std::vector<const Socket*>& sockets,
                                 int timeout_ms);
+
+// What to wait for on one socket, and what poll found.
+struct PollWant {
+  const Socket* socket = nullptr;
+  bool read = false;
+  bool write = false;
+};
+struct PollReady {
+  bool readable = false;  // also when the peer closed or failed
+  bool writable = false;
+};
+// Waits up to `timeout_ms` for any of `wants`; one result per want.
+std::vector<PollReady> poll_sockets(const std::vector<PollWant>& wants,
+                                    int timeout_ms);
 
 // Splits a byte stream into LF-terminated lines (a CR before the LF is
 // dropped).

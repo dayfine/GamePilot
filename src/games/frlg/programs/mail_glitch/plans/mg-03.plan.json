@@ -31,7 +31,8 @@
         "kind": "game_action",
         "action": "cut_tree",
         "args": {
-          "direction": "south"
+          "direction": "south",
+          "species": "rattata"
         },
         "declared_after": {"map": "Route2", "tiles": [[11, 13]], "facing": "south"},
         "why": "cut Route 2 tree (11, 13) to reach Route 2 House without Diglett's Cave"
@@ -119,7 +120,7 @@
   "metadata": {
     "phase": "testing",
     "postconditions": {
-      "party": ["blastoise", "rattata", "oddish", "pidgey", "mr-mime", "farfetchd"],
+      "party_includes": ["blastoise", "rattata", "pidgey", "mr-mime", "farfetchd"],
       "money": {"min": 21464, "max": 21464},
       "items": [
         {"item": "revive", "quantity": 2},

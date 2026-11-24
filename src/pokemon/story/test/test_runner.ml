@@ -188,7 +188,7 @@ passed|};
 let promised : Plan.postconditions =
   {
     position = None;
-    party = Some (Party_includes [ "abra" ]);
+    party = Some (Party_includes { members = [ "abra" ]; slots = [] });
     items = [];
     coins = Some 20;
     money = None;

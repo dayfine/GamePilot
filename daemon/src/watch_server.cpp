@@ -133,9 +133,11 @@ void WatchServer::respond(Connection& connection, const HttpRequest& request) {
     return;
   }
   if (get && request.path == "/") {
-    send(connection,
-         http_response(200, "text/html; charset=utf-8",
-                       page_with_token(connection.local ? token_ : "")));
+    const bool local = connection.local &&
+                       header_value(request.headers, kViewerHeader) !=
+                           kRemoteViewer;
+    send(connection, http_response(200, "text/html; charset=utf-8",
+                                   page_with_token(local ? token_ : "")));
   } else if (get && request.path == "/frame") {
     const WatchFrame frame = hooks_.frame();
     send(connection, http_response(200, frame.type, frame.bytes));

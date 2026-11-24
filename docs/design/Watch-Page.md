@@ -129,14 +129,59 @@ wants one place to find them.
 - **The hub.** `gamepilot_daemon --hub` serves one page on the fixed port 47901
   (`daemon/src/watch_hub.*`, `watch/hub.html`, the same HTTP pieces, no new dependency): the live
   runs from the registry (`/runs.json`), each with its checkpoint, mode and trial from that run's
-  `/summary.json` (its latest `watch.run` and `watch.plan`, fetched by the browser from the run's
-  port), elapsed time and what it is doing, linking to the run's page. Links use the address the hub
-  was opened with, so a LAN viewer gets LAN links. The runner starts the hub when nothing answers on
-  47901, in a session of its own, so it outlives the run; a second one exits at once. `gamepilot
-  runs` prints the same list in the terminal.
+  `/summary.json` (its latest `watch.run` and `watch.plan`), elapsed time and what it is doing,
+  and the latest finished runs from `RESULTS.tsv` beside the registry (`/recent.json`). The runner
+  starts the hub when nothing answers on 47901, in a session of its own, so it outlives the run; a
+  second one exits at once. `gamepilot runs` prints the same list in the terminal.
+- **Stable URLs.** The hub serves each live run's page under the run folder's name, on its own
+  port, so a URL can be read, typed and bookmarked:
+
+  | URL | what it is |
+  |---|---|
+  | `http://HOST:47901/` | all runs: live, then recent finished ones |
+  | `http://HOST:47901/runs/2026-11-23-mg-07-testing-1/` | that run's page (`?token=T` for Stop from another device) |
+  | `http://HOST:47901/live` | redirects to the newest live run (keeps `?token=`) |
+  | `http://HOST:47901/live/mg-07` | the newest live run of checkpoint mg-07 |
+
+  `/live` with no live run shows a page that looks again every 5 s, so a bookmark of it waits for
+  the next run. A run that is not live any more answers "has ended or not started yet". The runner
+  prints the `/live` URL beside the hub's.
+- **The hub passes a run through.** Everything under `/runs/NAME/` (the page, `events`, `stream`,
+  `frame`, `summary.json`, `POST stop`) goes to the run's port on loopback with a head the hub
+  writes itself, and the answer streams back as it comes, read 64 KB at a time and written as soon
+  as the browser takes it: the event stream and the MJPEG stream are not buffered. The run's
+  socket is not read while 256 KB wait for the browser, so a slow browser makes the run drop
+  frames for it, as a slow direct viewer does. The run's own port keeps working as before.
+
+  Measured on the lab Mac with two Switch replay daemons (1920x1080 60 fps clip, 1280 wide
+  stream) and the hub, 30 s per row:
+
+  | viewer | fps | MB/s | daemon CPU | hub CPU |
+  |---|---|---|---|---|
+  | curl on the run's port | 30.6 | 3.53 | 22-49% | - |
+  | curl through the hub | 30.4 | 3.52 | 22-43% | 0.04 s in 30 s (0.13%) |
+  | Chrome through the hub (desktop page) | 30.4 | 3.5 | | 0.04 s in 27 s |
+- **The runs sidebar.** Every run page has a sidebar (the ☰ button): live runs first, newest
+  first, with checkpoint, backend, elapsed time and state, then the latest finished runs (pass or
+  fail, when, where it failed; the reason on hover), the current run highlighted. It polls the hub's
+  `runs.json` and `recent.json` every 3 s while the tab is visible. Finished runs are listed, not
+  linked: no page shows a finished run's record yet. On a wide window it is a column beside the
+  page, open unless closed (kept in the browser); on a phone it is a drawer over the page, closed
+  until opened, so the frame keeps its place. Its rows have fixed heights, and the page's layout
+  does not depend on it, so updates move nothing (#65/#70). Opened on the run's own port, the
+  page asks the hub on port 47901 (`?hub=N` for another), which answers `runs.json` and
+  `recent.json` to any origin; without a hub the sidebar says "Hub not running".
+- **When a run ends.** When the page's run leaves the registry, a notice at the bottom (fixed, so
+  nothing moves) says it ended, with its result from `RESULTS.tsv` when it is there, and links to
+  `/live`. The page stops fetching its frame and hides Stop. The next checkpoint of a series takes
+  the run's port again: a page opened through the hub follows it to its new `/runs/NAME/`; one
+  opened on the port reconnects as before.
 - **Stop's token.** `POST /stop` needs `?token=T`, one random token per series, which the runner
   passes to each daemon (`--watch-token`). The daemon puts it in the page it serves to a viewer on
-  its own machine (the `gamepilot-token` meta tag), so local Stop works as before; a page served to
+  its own machine (the `gamepilot-token` meta tag), so local Stop works as before. Through the hub
+  the run sees the hub's loopback connection, so the hub adds `X-GamePilot-Viewer: remote` for a
+  browser on another machine and the run leaves the token out (the hub writes every head it passes
+  on, so a browser cannot set or drop that header); a page served to
   another machine has none and shows "read-only" instead of Stop, unless its URL carries
   `?token=T`. With `--listen` beyond localhost the runner prints that URL, with the machine's LAN
   address, for the user's other device.

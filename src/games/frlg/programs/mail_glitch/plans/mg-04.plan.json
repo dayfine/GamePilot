@@ -104,9 +104,9 @@
   "execution": {"menu": "full"},
   "metadata": {
     "phase": "testing",
-    "notes": "The real end, after the full grind: CH'DING knows Knock Off, MIMIEN at least Lv 33 (read on its summary) knows Recycle, the grind's swaps leave MIMIEN in slot 1 and Blastoise in slot 2, one Escape Rope used, and the money of mg-03's end (the nurse heals for free; wild battles pay nothing). A run with --grind-battles skips the knows and levels postconditions and its end is not mg-05's start.",
+    "notes": "The real end, after the full grind: CH'DING knows Knock Off, MIMIEN at least Lv 33 (read on its summary) knows Recycle, one Escape Rope used, and the money of mg-03's end (the nurse heals for free; wild battles pay nothing). A run with --grind-battles skips the knows and levels postconditions and its end is not mg-05's start.",
     "postconditions": {
-      "party": ["mr-mime", "blastoise", "oddish", "pidgey", "rattata", "farfetchd"],
+      "party_includes": ["blastoise", "rattata", "pidgey", "mr-mime", "farfetchd"],
       "money": {"min": 21464, "max": 21464},
       "items": [
         {"item": "revive", "quantity": 2},

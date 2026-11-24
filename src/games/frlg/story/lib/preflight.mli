@@ -2,21 +2,26 @@
     console, does the loaded save hold what that checkpoint's plan needs? The
     needs come from the plan's args: each party member an action names (Fly's
     user, a grind's member and sweeper, a swap's member, ...) unless an earlier
-    event of the plan brings it (a capture, a trade); the money its purchases
-    cost (a Mart's prices from the stock table, ¥1000 for each 50 Game Corner
-    coins); each bag item an action gives or uses that no earlier purchase
-    brought. When the checkpoint before it promises a state (its postconditions:
-    the party in order, the money, item counts), that is needed too, exactly.
-    And the place: the frame kept at the checkpoint's start ({!Start_check}).
+    event of the plan brings it (a capture, a trade), and Cut's user knowing
+    Cut; the money its purchases cost (a Mart's prices from the stock table,
+    ¥1000 for each 50 Game Corner coins); each bag item an action gives or uses
+    that no earlier purchase brought. When the checkpoint before it promises a
+    state (its postconditions: the members it names and the slots it pins, the
+    money, item counts), that is needed too, exactly. And the place: the frame
+    kept at the checkpoint's start ({!Start_check}).
 
     GamePilot's own: the fork checks the save's place on the save card and its
     StoryPreflight only the program's settings. *)
 
-type need =
+type need = Plan_needs.need =
   | Party_in_order of string list
-  | Party_includes of string list
+  | Party_includes of { members : string list; slots : Story.Plan.slot list }
   | Member of { species : string; for_ : string }
       (** A member an event uses ([for_]: ["fly"]). *)
+  | Knows_move of { species : string; move : string; for_ : string }
+      (** A member that must know a field move: the one a [cut_tree] event names
+          (the game picks Cut's user itself; the plan names it for this check).
+      *)
   | Money_at_least of { amount : int; for_ : string }
   | Money_between of { min : int; max : int }
   | Item_at_least of { item : string; count : int; for_ : string }

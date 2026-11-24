@@ -1,12 +1,25 @@
 // The hub: one page at a fixed port (47901) that lists the live runs from the
-// watch registry (watch_registry.h) and links to each run's own page. It is
-// the daemon started with `--hub`, no backend, serving only HTTP with the same
-// pieces as the watch page (http.h, net.h):
+// watch registry (watch_registry.h) and serves each run's own page under a
+// path named for the run, so a run's URL is readable and on the same port. It
+// is the daemon started with `--hub`, no backend, serving only HTTP with the
+// same pieces as the watch page (http.h, net.h):
 //
-//   GET /            the page (watch/hub.html, compiled in): the runs, each
-//                    with its checkpoint, mode and trial (from the run's
-//                    /summary.json), elapsed time and state
-//   GET /runs.json   the live registry entries
+//   GET /              the page (watch/hub.html, compiled in): the runs, each
+//                      with its checkpoint, mode and trial (from the run's
+//                      /summary.json), elapsed time and state
+//   GET /runs.json     the live registry entries
+//   GET /recent.json   the latest finished runs (RESULTS.tsv), newest first
+//   /runs/NAME/...     the run's own page, passed through to its port: the
+//                      page, /events, /stream, /frame, /summary.json and
+//                      POST /stop?token=T. NAME is the run folder's name.
+//   GET /live          redirects to the newest live run's page; /live/CP to
+//                      the newest live run of checkpoint CP. With none, a page
+//                      that looks again every few seconds.
+//
+// Passing a run through streams it: what the run sends goes to the browser as
+// it comes (no buffering of the event stream or the MJPEG stream), and a
+// browser that does not take it holds the run's socket, so the run drops
+// frames for it as it does for a slow direct viewer.
 //
 // The runner starts it when nothing listens on its port, so one runs per
 // machine; a second one finds the port taken and exits.
@@ -19,6 +32,7 @@
 #include <string_view>
 #include <vector>
 
+#include "http.h"
 #include "net.h"
 #include "watch_registry.h"
 
@@ -28,11 +42,19 @@ struct HubOptions {
   std::string listen = "127.0.0.1";
   std::uint16_t port = 47901;
   std::string registry;  // the registry folder
+  std::string results;   // the runs' RESULTS.tsv; empty = none
 };
+
+// A run's name in its hub path: its folder's name, or pid-N without one.
+std::string hub_run_name(const RegistryEntry& entry);
 
 // The entries as /runs.json gives them: the run folder's name only, so its
 // path stays on this machine.
 std::string hub_runs_json(const std::vector<RegistryEntry>& entries);
+
+// RESULTS.tsv's last `limit` rows, newest first, as /recent.json gives them:
+// one object per row keyed by the header's column names.
+std::string hub_recent_json(std::string_view results_tsv, std::size_t limit);
 
 class WatchHub {
  public:
@@ -43,15 +65,26 @@ class WatchHub {
 
   // Serves until `stop` turns true.
   void run(const std::atomic<bool>& stop);
+  // Waits up to `timeout_ms` for sockets, then serves what is ready.
+  void serve_once(int timeout_ms);
 
  private:
   struct Connection {
-    Socket socket;
+    Socket client;
     std::string request;
+    bool local = false;      // the browser is on this machine
+    Socket upstream;         // the run's page, once passed through
+    std::string to_client;   // from the run, not yet taken by the browser
+    std::size_t sent = 0;    // of to_client
+    bool proxying = false;
   };
 
-  void serve(const std::vector<bool>& readable);
   void read(Connection& connection);
+  void respond(Connection& connection, const HttpRequest& request);
+  void pass_through(Connection& connection, const RegistryEntry& entry,
+                    const HttpRequest& request, std::string_view path);
+  void pump(Connection& connection);
+  void flush(Connection& connection);
 
   HubOptions options_;
   Socket listener_;

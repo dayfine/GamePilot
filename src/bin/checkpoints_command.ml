@@ -37,6 +37,12 @@
    (--save-after-pass, the default; --no-save-after-pass), a failed one
    soft-resets back to the last save (Story.Console_runs, Console_session).
 
+   Each run reads the party from the members' summaries before its first
+   action that finds a member by its species, so a save whose other members
+   differ keeps every slot right; --party only states the first checkpoint's
+   party for the Switch's start check when no checkpoint before it promises
+   one.
+
    --preflight --from ID reads, from the save, what checkpoint ID's plan needs
    and prints a table (Preflight_command); exit 1 on a mismatch.
 

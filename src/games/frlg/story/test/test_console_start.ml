@@ -112,6 +112,21 @@ let preflight id before read =
 
 let same = Some { F.tiles = 150; changed = 3 }
 
+(* The pre-flight's row for mg-02's Cut user. *)
+let cut_row read =
+  let before = Some (plan "mg-01").postconditions in
+  Preflight.compare (needs "mg-02" before) read
+  |> List.filter_map (fun (r : Preflight.row) ->
+         if String.ends_with ~suffix:"(cut_tree)" r.need then
+           Some
+             (Printf.sprintf "%s: %s: %s" r.need r.read
+                (match r.verdict with
+                | Ok -> "ok"
+                | Mismatch -> "MISMATCH"
+                | Not_read -> "NOT READ"))
+         else None)
+  |> String.concat " | "
+
 let preflight_cases =
   [
     case "preflight mg-01: Fly's user, the purchases' money and the place"
@@ -144,6 +159,37 @@ let preflight_cases =
       "pidgey in the party (fly): pidgey: ok | money at least ¥4100 (mart, \
        buy_coins): ¥25014: ok | at the start, CeladonCity: no kept start frame \
        to compare: NOT READ => stop";
+    case "preflight mg-02, mGBA: Rattata knows Cut"
+      (fun () ->
+        cut_row
+          {
+            observed =
+              {
+                (observed
+                   ~party:[ "blastoise"; "rattata"; "oddish"; "pidgey"; "abra" ]
+                   ())
+                with
+                knows =
+                  [
+                    ("rattata", [ "tackle"; "tail-whip"; "hyper-fang"; "cut" ]);
+                  ];
+              };
+            place = same;
+          })
+      "rattata knows cut (cut_tree): rattata: tackle, tail-whip, hyper-fang, \
+       cut: ok";
+    case "preflight mg-02, console B: no Rattata, so no Cut user the plan names"
+      (fun () ->
+        cut_row
+          {
+            observed =
+              observed
+                ~party:[ "blastoise"; "pidgey"; "oddish"; "lapras"; "abra" ]
+                ();
+            place = same;
+          })
+      "rattata knows cut (cut_tree): not in the party: blastoise, pidgey, \
+       oddish, lapras, abra: MISMATCH";
     case "preflight mg-03: what mg-02 promised, exactly"
       (fun () ->
         let before = Some (plan "mg-02").postconditions in
@@ -152,9 +198,10 @@ let preflight_cases =
              (fun (r : Preflight.row) -> r.need)
              (Preflight.compare (needs "mg-03" before)
                 { observed = P.nothing_read; place = None })))
-      "party includes farfetchd; pidgey in the party (fly); abra in the party \
-       (ingame_trade); money ¥25014..¥25014; money at least ¥3550 (mart); at \
-       the start, VermilionCity";
+      "party includes blastoise, rattata, pidgey, abra, farfetchd; pidgey in \
+       the party (fly); abra in the party (ingame_trade); rattata knows cut \
+       (cut_tree); money ¥25014..¥25014; money at least ¥3550 (mart); at the \
+       start, VermilionCity";
   ]
 
 (* {1 Room in the party} *)

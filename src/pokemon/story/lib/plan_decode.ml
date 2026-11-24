@@ -206,15 +206,6 @@ let level ~where obj : Plan.level =
   only ~where [ "species"; "min" ] obj;
   { species = F.string ~where "species" obj; min = F.int ~where "min" obj }
 
-let party ~where obj : Plan.party option =
-  let species key = Option.map (F.strings (where ^ key)) (F.find key obj) in
-  match (species "party", species "party_includes") with
-  | Some _, Some _ ->
-      F.fail "%sparty and party_includes: one or the other, not both." where
-  | Some list, None -> Some (Party_in_order list)
-  | None, Some list -> Some (Party_includes list)
-  | None, None -> None
-
 let no_postconditions : Plan.postconditions =
   {
     position = None;
@@ -233,6 +224,7 @@ let postconditions ~where obj : Plan.postconditions =
       "position";
       "party";
       "party_includes";
+      "party_slots";
       "items";
       "coins";
       "money";
@@ -248,7 +240,7 @@ let postconditions ~where obj : Plan.postconditions =
   in
   {
     position = nested "position" grid_pose;
-    party = party ~where obj;
+    party = Party_decode.party ~where obj;
     items = F.records ~where "items" obj item;
     coins = optional ~where "coins" obj F.int;
     money = nested "money" money;

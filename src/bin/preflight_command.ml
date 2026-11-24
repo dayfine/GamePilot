@@ -68,7 +68,11 @@ let place setup id log =
 let with_party (p : Story.Plan.postconditions) =
   match p.party with
   | Some _ -> p
-  | None -> { p with party = Some (Story.Plan.Party_includes []) }
+  | None ->
+      {
+        p with
+        party = Some (Story.Plan.Party_includes { members = []; slots = [] });
+      }
 
 let session setup id (needs, room) log () =
   reload setup id log;

@@ -64,9 +64,14 @@ type checkpoint = {
 type party =
   | Party_in_order of string list
       (** Exactly these species (slugs, ["abra"]), slot 1 first. *)
-  | Party_includes of string list
-      (** Each of these species somewhere in the party (a species named twice
-          needs two members). *)
+  | Party_includes of { members : string list; slots : slot list }
+      (** Each of [members] somewhere in the party (a species named twice needs
+          two members), and each of [slots] in its slot: only the members the
+          plans use and only the positions they depend on, so a save whose other
+          members differ keeps the promise. *)
+
+and slot = { slot : int; species : string }
+(** The member in party slot [slot] (from 1) is of [species] (a slug). *)
 
 type money = { min : int; max : int }
 (** Money from [min] to [max], both included. *)
