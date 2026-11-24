@@ -40,6 +40,8 @@ const std::vector<std::string> kFrlgCaptures = {
     "tmcase/07-tm-use-party.png",
     "tmcase/12-forget-move-list.png",
     "tmcase/16-summary-moves-after-teach.png",
+    // A small room, black all round it (bring-up at mg-06's end).
+    "console-b-20261124/dark-room-dept-store.png",
 };
 
 // The picture is 1560 x 1040 at (180, 5) of a 1080p frame: 6.5 frame pixels
@@ -75,6 +77,15 @@ void check_wrong_geometry() {
   frame(cv::Rect(0, 0, 1900, 1080))
       .copyTo(shifted(cv::Rect(20, 0, 1900, 1080)));
   CHECK(!check_geometry(shifted, picture).ok);
+  // The picture shrunk to 40% inside the box: mostly dark, refused.
+  const cv::Rect box = box_to_pixels(picture, 1920, 1080);
+  cv::Mat small;
+  cv::resize(frame(box), small, cv::Size(), 0.4, 0.4);
+  cv::Mat shrunk = cv::Mat::zeros(frame.size(), frame.type());
+  small.copyTo(shrunk(cv::Rect(box.x + (box.width - small.cols) / 2,
+                               box.y + (box.height - small.rows) / 2,
+                               small.cols, small.rows)));
+  CHECK(!check_geometry(shrunk, picture).ok);
   // Nothing on screen.
   CHECK(!check_geometry(cv::Mat::zeros(frame.size(), frame.type()), picture)
              .ok);
