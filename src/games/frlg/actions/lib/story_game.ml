@@ -56,11 +56,19 @@ let walk_to t (target : Story.Pose.grid) =
       Error (Story.Failure.cause "position_unknown" "no position to walk from")
   | Some at -> walk_from t at target
 
-(* After an event that passed: its declared pose, when it names one tile. *)
+(* After an event that passed: its declared pose, when it names one tile. A
+   pose with no facing on the tile already reckoned keeps the facing reckoned
+   (a Fly's landing faces south). *)
 let adopt_declared t (event : Story.Plan.event) =
+  let kept map tile =
+    match t.at with
+    | Some at when at.at_map = map && at.at_tile = tile -> at.faces
+    | _ -> None
+  in
   match event.declared_after with
   | Some (Grid { map; tiles = [ tile ]; facing }) ->
-      t.at <- Some { at_map = map; at_tile = tile; faces = facing }
+      let faces = if facing = None then kept map tile else facing in
+      t.at <- Some { at_map = map; at_tile = tile; faces }
   | _ -> ()
 
 let builtin t (event : Story.Plan.event) =
