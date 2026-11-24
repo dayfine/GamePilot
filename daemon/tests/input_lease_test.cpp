@@ -21,9 +21,9 @@ struct Step {
   Act act = Act::kInput;
   int connection = 1;
   double now_ms = 0;
-  std::string owner;     // kAcquire
-  double ttl_ms = 1000;  // kAcquire
-  bool busy = false;     // kExpire: the holder's batches are pending
+  std::string owner = {};  // kAcquire
+  double ttl_ms = 1000;     // kAcquire
+  bool busy = false;        // kExpire: the holder's batches are pending
 };
 
 struct Input {
@@ -32,7 +32,7 @@ struct Input {
 
 struct Expectation {
   std::optional<int> holder;  // its connection; none = free
-  std::string owner;
+  std::string owner = {};
   double since_ms = 0;
   // Per step: refused (acquire, input) or did nothing (release).
   std::vector<bool> refused;

@@ -298,7 +298,8 @@ std::string gzip(const std::string& text) {
   CHECK(mz_deflateInit2(&stream, MZ_DEFAULT_COMPRESSION, MZ_DEFLATED,
                         -MZ_DEFAULT_WINDOW_BITS, 9,
                         MZ_DEFAULT_STRATEGY) == MZ_OK);
-  std::string body(mz_deflateBound(&stream, text.size()), '\0');
+  std::string body(
+      mz_deflateBound(&stream, static_cast<mz_ulong>(text.size())), '\0');
   stream.next_in = reinterpret_cast<const unsigned char*>(text.data());
   stream.avail_in = static_cast<unsigned int>(text.size());
   stream.next_out = reinterpret_cast<unsigned char*>(body.data());

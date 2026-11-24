@@ -24,7 +24,7 @@ let tm_moves =
 
 let moves =
   List.map snd
-    (Move_names.load ~language:"eng" (required Data_files.move_names))
+    (Move_names.load (required (Data_files.move_names ~language:"eng")))
 
 let rows n line = List.init n line
 

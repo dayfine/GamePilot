@@ -31,6 +31,7 @@ ViewBackend::ViewBackend(std::unique_ptr<FrameSource> source,
   }
   first = cropped(first);
   info_ = BackendInfo{.kind = "view",
+                      .game_code = "",
                       .frame_rate = source_->frame_rate(),
                       .width = first.cols,
                       .height = first.rows,

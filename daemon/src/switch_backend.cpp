@@ -16,9 +16,14 @@ SwitchBackend::SwitchBackend(std::unique_ptr<FrameSource> source,
   if (!source_->read(first) || first.empty()) {
     throw BackendError("the frame source gave no frame");
   }
-  info_ = BackendInfo{"switch",     "",         source_->frame_rate(),
-                      first.cols,   first.rows, options.viewport,
-                      Timing::kLive};
+  info_ = BackendInfo{.kind = "switch",
+                      .game_code = "",
+                      .frame_rate = source_->frame_rate(),
+                      .width = first.cols,
+                      .height = first.rows,
+                      .viewport = options.viewport,
+                      .timing = Timing::kLive,
+                      .takes_input = true};
   const double t_ms = clock_.now_ms();
   captured_seq_.store(1);
   captured_t_ms_.store(t_ms);

@@ -445,8 +445,13 @@ std::int64_t mtime_ms(const std::string& path) {
   if (error) {
     return 0;
   }
+  // file_clock::to_sys is missing from MSVC's library; shift by the two
+  // clocks' current offset instead (exact to well under a millisecond).
+  const auto system_time = std::chrono::system_clock::now() +
+                           std::chrono::duration_cast<std::chrono::system_clock::duration>(
+                               time - std::filesystem::file_time_type::clock::now());
   return std::chrono::duration_cast<std::chrono::milliseconds>(
-             std::chrono::file_clock::to_sys(time).time_since_epoch())
+             system_time.time_since_epoch())
       .count();
 }
 

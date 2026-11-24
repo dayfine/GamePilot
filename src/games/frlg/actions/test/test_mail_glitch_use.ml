@@ -126,6 +126,6 @@ let () =
         (args "read_glitched_mail" {|{"species": "mr-mime"}|})
         "bad_args: read_glitched_mail: word is missing.";
       case "proof A saves the frame it judged" editor_frames
-        "mail_glitch_not_active: no mail editor reading ABRA; saved \
-         run/proof-a.png";
+        ("mail_glitch_not_active: no mail editor reading ABRA; saved "
+        ^ Filename.concat "run" "proof-a.png");
     ]
