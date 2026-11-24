@@ -39,10 +39,7 @@ let bag_or_party m = Bag_screen.bag_open m || Party_menu.party_menu m
 let read_glitched_mail ~log ~slot ~word =
   log (Printf.sprintf "Mail: give Retro Mail to slot %d, read the mail." slot);
   Bag_items.item_action mail Party_actions.give_row;
-  ignore
-    (M.await_screen ~code:"no_party" "the party to give to"
-       Party_menu.party_menu);
-  Party_actions.choose_slot slot;
+  Party_actions.give_to slot;
   M.answer_yes ~code:"no_switch_question" "the switch question";
   Item_duplication.check_editor ~word;
   log ("Mail: the editor reads " ^ word ^ " in field 1 (proof A).");

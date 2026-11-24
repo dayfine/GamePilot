@@ -87,14 +87,23 @@ let answer_switch () =
 let bag_pouch_or_party m = bag_or_party m || Berry_pouch.shows_pouch m
 let give_row = 1
 
+(* The fork's wait after the party shows, before its presses: an A that comes
+   sooner is dropped (mGBA, mg-06 testing run 2: slot 1, already selected,
+   needs no tap before the A). *)
+let party_input_ms = 400
+
+let give_to slot =
+  ignore
+    (M.await_screen ~code:"no_party" "the party to give to"
+       Party_menu.party_menu);
+  ignore (Effects.submit [ Wire.Wait { wait_ms = party_input_ms } ]);
+  choose_slot slot
+
 let give ~log ~item ~slot =
   log (Printf.sprintf "Bag: give %s to slot %d." item slot);
   if Berry_pouch.is_berry item then Berry_pouch.choose_give item
   else Bag_items.item_action item give_row;
-  ignore
-    (M.await_screen ~code:"no_party" "the party to give to"
-       Party_menu.party_menu);
-  choose_slot slot;
+  give_to slot;
   if answer_switch () then log "Bag: the member held an item; switched it.";
   if is_mail item then write_one_word ();
   Effects.with_probes Berry_pouch.probes (fun () ->
