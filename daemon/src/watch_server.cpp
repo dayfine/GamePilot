@@ -82,15 +82,16 @@ void WatchServer::respond(Connection& connection, const HttpRequest& request) {
   if (get && request.path == "/") {
     send(connection,
          http_response(200, "text/html; charset=utf-8", watch_page()));
-  } else if (get && request.path == "/frame.jpg") {
-    send(connection, http_response(200, "image/jpeg", hooks_.frame_jpeg()));
+  } else if (get && request.path == "/frame") {
+    const WatchFrame frame = hooks_.frame();
+    send(connection, http_response(200, frame.type, frame.bytes));
   } else if (request.method == "POST" && request.path == "/stop") {
     const bool stopped = hooks_.stop();
     send(connection,
          http_response(200, "application/json",
                        stopped ? "{\"stopped\":true}" : "{\"stopped\":false}"));
   } else if (request.path == "/stop" || request.path == "/" ||
-             request.path == "/frame.jpg" || request.path == "/events") {
+             request.path == "/frame" || request.path == "/events") {
     send(connection, http_response(405, "text/plain", "method not allowed\n"));
   } else {
     send(connection, http_response(404, "text/plain", "not found\n"));

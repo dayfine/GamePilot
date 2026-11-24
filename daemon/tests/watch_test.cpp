@@ -88,7 +88,7 @@ std::string request(WatchServer& server, const std::string& head,
 void check_server() {
   int stops = 0;
   WatchServer server(WatchOptions{"127.0.0.1", 0},
-                     WatchHooks{[] { return std::string("JPEGBYTES"); },
+                     WatchHooks{[] { return WatchFrame{"image/png", "PNGBYTES"}; },
                                 [&stops] {
                                   stops++;
                                   return true;
@@ -102,9 +102,9 @@ void check_server() {
   CHECK(page.find("GamePilot") != std::string::npos);
 
   const std::string frame =
-      request(server, "GET /frame.jpg?t=1 HTTP/1.1\r\n\r\n", "JPEGBYTES");
-  CHECK(frame.find("image/jpeg") != std::string::npos);
-  CHECK(frame.ends_with("JPEGBYTES"));
+      request(server, "GET /frame?t=1 HTTP/1.1\r\n\r\n", "PNGBYTES");
+  CHECK(frame.find("image/png") != std::string::npos);
+  CHECK(frame.ends_with("PNGBYTES"));
 
   CHECK(request(server, "GET /nothing HTTP/1.1\r\n\r\n", "\r\n\r\n")
             .starts_with("HTTP/1.1 404"));
