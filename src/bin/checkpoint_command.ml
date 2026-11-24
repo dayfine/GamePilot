@@ -4,8 +4,9 @@
    gamepilot replay checkpoint WIRELOG PLAN.json [the same flags]
 
    Runs one checkpoint of a FireRed plan through the story runner. The state
-   is loaded first and again on a reload; the party is the one at the
-   checkpoint's start (FireRed reads no species yet). With --end-check-only
+   is loaded first and again on a reload; --party states the party at the
+   checkpoint's start; without it the party is read from the members'
+   summaries before the first action that finds a member by its species. With --end-check-only
    no event runs: the state is checked against the plan's postconditions.
    --grind-battles N (testing) ends each grind, passing, after N battles and
    skips the plan's moves postconditions (Frlg_story.Checkpoint_run). *)
@@ -72,7 +73,9 @@ let logger = function
 let options flags : Frlg_story.Checkpoint_run.options =
   {
     state = flags.state;
-    party = Frlg_actions.Party_roster.of_string flags.party;
+    party =
+      (if flags.party = "" then None
+       else Some (Frlg_actions.Party_roster.of_string flags.party));
     center = flags.center;
     grind_cap = flags.grind_cap;
     gait = (if flags.walk then Walking else Running);

@@ -27,7 +27,8 @@
   test_mail_glitch_use
   test_lift_ride
   test_capture
-  test_pacing)
+  test_pacing
+  test_console_actions)
  (modules
   test_fly_towns
   test_actions
@@ -40,7 +41,8 @@
   test_mail_glitch_use
   test_lift_ride
   test_capture
-  test_pacing)
+  test_pacing
+  test_console_actions)
  (deps
   mgba.probes.jsonl
   menus.mgba.probes.jsonl

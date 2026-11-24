@@ -219,3 +219,6 @@ reader decides "black" from those numbers (low mean, low stddev) in OCaml.
 The daemon writes every message it sends or receives, except the client's `watch.plan`,
 `watch.log` and `watch.run`, one per line (`14-wire_log.line.json`):
 `dir` (`in` = from the client, `out` = to the client), `t_ms`, `msg`. Replay reads this file.
+A `daemon` line is the daemon's own act, sent to no one: its keep-awake press, a `keepawake`
+notification with the key and how long the console was idle (`34-keepawake.line.json`). Replay
+skips it.

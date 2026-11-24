@@ -278,7 +278,12 @@ let postconditions_text (plan : Plan.t) =
         p.position;
       (match p.party with
       | Some (Party_in_order l) -> [ "party in order " ^ list l ]
-      | Some (Party_includes l) -> [ "party includes " ^ list l ]
+      | Some (Party_includes { members; slots }) ->
+          ("party includes " ^ list members)
+          :: List.map
+               (fun ({ slot; species } : Plan.slot) ->
+                 Printf.sprintf "%s in slot %d" species slot)
+               slots
       | None -> []);
       List.map
         (fun ({ item; quantity } : Plan.item) ->
@@ -323,10 +328,12 @@ let post = at ^ "metadata.postconditions."
 let postcondition_cases : Case_table.case list =
   [
     {
-      name = "mg-01 promises Abra, 20 coins and $25,014";
+      name =
+        "mg-01 promises the members the plans use (Abra among them), 20 coins \
+         and $25,014";
       input = (fun () -> postconditions_text (load "mg-01.plan.json" mg));
       expectation =
-        "party in order blastoise, rattata, oddish, pidgey, abra\n\
+        "party includes blastoise, rattata, pidgey, abra\n\
          coins 20\n\
          money 25014 to 25014";
     };
@@ -340,22 +347,32 @@ let postcondition_cases : Case_table.case list =
       name = "mg-03 promises MIMIEN for Abra, 2 Revives and an Escape Rope";
       input = (fun () -> postconditions_text (load "mg-03.plan.json" mg));
       expectation =
-        "party in order blastoise, rattata, oddish, pidgey, mr-mime, farfetchd\n\
+        "party includes blastoise, rattata, pidgey, mr-mime, farfetchd\n\
          item revive x2\n\
          item escape-rope x3\n\
          money 21464 to 21464";
     };
     {
-      name = "mg-04 promises the grind's moves, its swaps and one rope used";
+      name = "mg-04 promises the grind's moves and one rope used";
       input = (fun () -> postconditions_text (load "mg-04.plan.json" mg));
       expectation =
-        "party in order mr-mime, blastoise, oddish, pidgey, rattata, farfetchd\n\
+        "party includes blastoise, rattata, pidgey, mr-mime, farfetchd\n\
          item revive x2\n\
          item escape-rope x2\n\
          money 21464 to 21464\n\
          farfetchd knows knock-off\n\
          mr-mime knows recycle\n\
          mr-mime at least Lv 33";
+    };
+    {
+      name = "mg-06 promises MIMIEN in slot 1, where the duplication gives";
+      input = (fun () -> postconditions_text (load "mg-06.plan.json" mg));
+      expectation =
+        "party includes pidgey\n\
+         mr-mime in slot 1\n\
+         item antidote x2\n\
+         item retro-mail x2\n\
+         money 20388 to 20388";
     };
     {
       name = "every postcondition, PokemonSimulation's and ours";
@@ -385,6 +402,30 @@ let postcondition_cases : Case_table.case list =
             {|{"party": ["abra"], "party_includes": ["abra"]}|});
       expectation =
         post ^ "party and party_includes: one or the other, not both.";
+    };
+    {
+      name = "party_includes with the slots a plan depends on";
+      input =
+        (fun () ->
+          with_postconditions
+            {|{"party_includes": ["pidgey"], "party_slots": [{"slot": 1, "species": "mr-mime"}]}|});
+      expectation = "party includes pidgey\nmr-mime in slot 1";
+    };
+    {
+      name = "party_slots with party, which names every slot";
+      input =
+        (fun () ->
+          with_postconditions
+            {|{"party": ["abra"], "party_slots": [{"slot": 1, "species": "abra"}]}|});
+      expectation = post ^ "party_slots goes with party_includes, not party.";
+    };
+    {
+      name = "a party slot past six";
+      input =
+        (fun () ->
+          with_postconditions
+            {|{"party_slots": [{"slot": 7, "species": "abra"}]}|});
+      expectation = post ^ "party_slots[0].slot 7 is not a party slot (1-6).";
     };
     {
       name = "money min above max";

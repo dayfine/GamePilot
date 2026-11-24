@@ -20,6 +20,12 @@ type setup = {
   policy : Checkpoint_trials.policy;
   world : Frlg_overworld.Frlg_steps.world;
   watch : Daemon_process.watch option;  (** the daemon's watch page, if any *)
+  save_after_pass : bool;
+      (** On the Switch: save in the game after a pass (Story.Console_runs). *)
+  info : Run_record.info;  (** For each run's run.json. *)
+  daemon_flags : string list;
+      (** The daemon's recording and keep-awake flags, as the user gave them
+          (the daemon's defaults otherwise: on for the Switch, off for mGBA). *)
   bound : (int * int option) option ref;
       (** The ports the series' last daemon bound (program, page): the next one
           asks for them again, so the page keeps its URL across runs. *)
@@ -32,6 +38,10 @@ type checkpoint = {
   start_state : string;
       (** The save state it starts from on mGBA; on the Switch, the save the
           console has loaded. *)
+  before : Plan.postconditions option;
+      (** What the checkpoint before it promised, if any: the start check's
+          party. *)
+  next_id : string option;  (** The checkpoint after it, if any. *)
 }
 
 type outcome =
@@ -61,6 +71,9 @@ let save log what op =
 let options setup cp log : Frlg_story.Checkpoint_run.options =
   {
     (Checkpoint_command.options { setup.common with log_file = None }) with
+    (* Each checkpoint of the series reads its party: --party is only the
+       first start's, for the Switch's start check (Console_session). *)
+    party = None;
     state =
       (match setup.backend with
       | Mgba _ -> Some cp.start_state
@@ -69,7 +82,7 @@ let options setup cp log : Frlg_story.Checkpoint_run.options =
   }
 
 (* The checkpoint, shown on the watch page as it runs; a Stop there ends it
-   at the event it was in. *)
+   at the event it was in. With how it ended, for the console's steps. *)
 let checkpoint_outcome setup cp log =
   let watch = Watch_report.create cp.plan.checkpoint in
   match
@@ -77,32 +90,76 @@ let checkpoint_outcome setup cp log =
       ~on_event:(Watch_report.on_event watch)
       (options setup cp log) setup.world cp.plan
   with
-  | Ok () -> Passed
-  | Error failure -> of_failure failure
+  | Ok () -> (Passed, Console_runs.Passed)
+  | Error failure ->
+      (of_failure failure, Console_runs.outcome_of_failure failure.reason)
   | exception (Effects.Disconnected _ as e) -> raise e
   | exception Effects.Stop_requested reason ->
       log ("[Run] " ^ reason);
       let at = Option.value (Watch_report.current watch) ~default:"start" in
-      Failed { at; reason; repeats = true }
+      (Failed { at; reason; repeats = true }, Stopped)
   | exception e ->
-      Failed { at = "raised"; reason = Printexc.to_string e; repeats = false }
+      ( Failed { at = "raised"; reason = Printexc.to_string e; repeats = false },
+        Failed_event )
+
+let frame_path setup id =
+  Frlg_story.Start_check.frame_file ~states:setup.states id
+
+(* On the Switch: back to the last save and the start check, then the run. *)
+let console_run setup cp log =
+  let roster =
+    Frlg_actions.Party_roster.(to_list (of_string setup.common.party))
+  in
+  let party = Console_session.start_party ~roster cp.before in
+  match
+    Console_session.before ~log ~frame_path:(frame_path setup cp.id) party
+  with
+  | Error reason ->
+      log ("[Console] " ^ reason);
+      (Failed { at = "start"; reason; repeats = true }, Console_runs.Stopped)
+  | Ok () -> checkpoint_outcome setup cp log
+
+(* On the Switch, once the failure frame is saved: the steps after the run. *)
+let console_after setup cp log (outcome, kind) =
+  let steps =
+    Console_runs.after_run ~save_after_pass:setup.save_after_pass kind
+  in
+  let next_frame = Option.map (frame_path setup) cp.next_id in
+  match Console_session.after ~log ~next_frame steps with
+  | Ok () -> outcome
+  | Error reason -> Failed { at = "save"; reason; repeats = true }
+
+let save_failure log path =
+  save log "failure.png" (fun () -> Effects.save_frame (path "failure.png"));
+  save log "failure.ss" (fun () -> Effects.save_state (path "failure.ss"))
 
 (* In the session: the chain before and after this run, the checkpoint, then
    the outcome's saves. Each run has its own daemon, so each sends the chain
    for a page that is watching it. *)
-let in_session setup cp ~progress record log () =
-  let log = Watch_report.log log in
-  Effects.show_run (progress None);
-  let outcome = checkpoint_outcome setup cp log in
-  Effects.show_run (progress (Some (trial outcome)));
-  let path = Run_record.path record in
+let emulator_run setup cp log path =
+  let outcome, _ = checkpoint_outcome setup cp log in
   (match outcome with
-  | Failed _ ->
-      save log "failure.png" (fun () -> Effects.save_frame (path "failure.png"));
-      save log "failure.ss" (fun () -> Effects.save_state (path "failure.ss"))
+  | Failed _ -> save_failure log path
   | Passed when setup.policy.keeps_end ->
       save log "end.ss" (fun () -> Effects.save_state (path "end.ss"))
   | Passed -> ());
+  outcome
+
+let switch_run setup cp log path =
+  let ((outcome, _) as ended) = console_run setup cp log in
+  (match outcome with Failed _ -> save_failure log path | Passed -> ());
+  console_after setup cp log ended
+
+let in_session setup cp ~progress record log () =
+  let log = Watch_report.log log in
+  Effects.show_run (progress None);
+  let path = Run_record.path record in
+  let outcome =
+    match setup.backend with
+    | Mgba _ -> emulator_run setup cp log path
+    | Switch _ -> switch_run setup cp log path
+  in
+  Effects.show_run (progress (Some (trial outcome)));
   outcome
 
 let live setup cp ~progress record log (daemon : Daemon_process.t) =
@@ -121,7 +178,8 @@ let live setup cp ~progress record log (daemon : Daemon_process.t) =
         }
 
 let start_daemon setup record cp (port, watch) =
-  Daemon_process.start ?watch ~daemon:setup.daemon ~backend:setup.backend ~port
+  Daemon_process.start ?watch ~flags:setup.daemon_flags ~daemon:setup.daemon
+    ~backend:setup.backend ~port
     ~wire_log:(Run_record.path record "wire.jsonl")
     ~out_file:(Run_record.path record "daemon.out")
     ~checkpoint:cp.id ()
@@ -186,7 +244,12 @@ let summary setup cp n outcome =
   in
   line ^ capped_note setup cp
 
-let record_outcome setup cp record n outcome =
+let run_json setup cp record ~started_ms ending =
+  Run_record.write_run_json record setup.info ~checkpoint:cp.id
+    ~mode:(Checkpoint_trials.mode_to_string setup.mode)
+    ~started_ms ending
+
+let record_outcome setup cp record n ~started_ms outcome =
   let line = summary setup cp n outcome in
   print_endline ("[Run] " ^ record.Run_record.dir ^ ": " ^ line);
   Run_record.write record "summary.txt" (line ^ "\n");
@@ -197,6 +260,7 @@ let record_outcome setup cp record n outcome =
         Run_record.write record "KEEP" "a failing run\n";
         ("fail", at, reason)
   in
+  run_json setup cp record ~started_ms (Some { result; at; reason });
   Run_record.append_result ~runs_dir:setup.runs_dir record ~checkpoint:cp.id
     ~mode:(Checkpoint_trials.mode_to_string setup.mode)
     ~result ~at ~reason
@@ -208,11 +272,13 @@ let run setup cp n ~progress =
     Run_record.create ~runs_dir:setup.runs_dir ~checkpoint:cp.id
       ~mode:(Checkpoint_trials.mode_to_string setup.mode)
   in
+  let started_ms = Run_record.now_ms () in
+  run_json setup cp record ~started_ms None;
   let log, close = Run_record.story_log record in
   log (Printf.sprintf "[Run] %s run %d from %s" cp.id n cp.start_state);
   let outcome =
     with_daemon setup record cp (live setup cp ~progress record log)
   in
   close ();
-  record_outcome setup cp record n outcome;
+  record_outcome setup cp record n ~started_ms outcome;
   (record, outcome)

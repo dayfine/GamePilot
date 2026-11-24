@@ -1,5 +1,6 @@
 #include "http.h"
 
+#include <algorithm>
 #include <stdexcept>
 
 namespace gamepilot {
@@ -12,6 +13,8 @@ std::string_view reason_phrase(int status) {
   switch (status) {
     case 200:
       return "OK";
+    case 302:
+      return "Found";
     case 403:
       return "Forbidden";
     case 404:
@@ -50,9 +53,40 @@ std::optional<HttpRequest> take_request_head(std::string& buffer) {
     throw std::invalid_argument("bad request target: " + target);
   }
   const std::size_t mark = target.find('?');
+  const std::size_t line_end = head.find("\r\n");
   return HttpRequest{
       line.substr(0, first), target.substr(0, mark),
-      mark == std::string::npos ? std::string() : target.substr(mark + 1)};
+      mark == std::string::npos ? std::string() : target.substr(mark + 1),
+      line_end == std::string::npos ? std::string()
+                                    : head.substr(line_end + 2)};
+}
+
+std::string header_value(std::string_view headers, std::string_view name) {
+  const auto lower = [](char c) {
+    return c >= 'A' && c <= 'Z' ? static_cast<char>(c - 'A' + 'a') : c;
+  };
+  while (!headers.empty()) {
+    const std::size_t end = headers.find("\r\n");
+    const std::string_view line = headers.substr(0, end);
+    const std::size_t colon = line.find(':');
+    if (colon == name.size() &&
+        std::equal(name.begin(), name.end(), line.begin(),
+                   [&](char a, char b) { return lower(a) == lower(b); })) {
+      std::string_view value = line.substr(colon + 1);
+      while (!value.empty() && (value.front() == ' ' || value.front() == '\t')) {
+        value.remove_prefix(1);
+      }
+      while (!value.empty() && (value.back() == ' ' || value.back() == '\t')) {
+        value.remove_suffix(1);
+      }
+      return std::string(value);
+    }
+    if (end == std::string_view::npos) {
+      break;
+    }
+    headers.remove_prefix(end + 2);
+  }
+  return {};
 }
 
 std::string http_response(int status, std::string_view content_type,

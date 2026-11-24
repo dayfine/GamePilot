@@ -18,7 +18,8 @@
 //
 // Stop takes the run's token: a page served to this machine carries it, a page
 // served to another one does not, so a LAN viewer watches read-only unless its
-// URL has `?token=T` (the runner prints that URL).
+// URL has `?token=T` (the runner prints that URL). Through the hub, the hub's
+// kViewerHeader says which kind of viewer asked.
 //
 // What the stream carries is the server's to set; this class only keeps the
 // latest of each and sends it.
@@ -50,6 +51,13 @@ std::string new_watch_token();
 // Whether `token` may be a watch token: 1 to 64 letters, digits, '-' or '_'
 // (it goes into the page and URLs as it is).
 bool valid_watch_token(std::string_view token);
+
+// The page with Stop's token in its `gamepilot-token` meta tag; without one
+// the page is read-only. The hub serves its own build of the page the same
+// way, with the token the run put in the page it served the hub.
+std::string page_with_token(std::string_view token);
+// The token in a served page's meta tag; empty when it has none.
+std::string page_token(std::string_view page);
 
 // An encoded frame and its media type ("image/png", "image/jpeg").
 struct WatchFrame {

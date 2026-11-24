@@ -10,6 +10,12 @@
        summary.txt   one line: PASS, or FAIL with the step and the reason
        KEEP          on a failing run, so the disk GC keeps it (replay-test
                      candidate)
+       run.json      what the hub's runs list shows (game, program, the
+                     series' range, checkpoint, backend, mode, start), written
+                     at the start and again with the result at the end
+       daemon.json, watch_plan.json, watch_run.json, watch_log.jsonl,
+       frames/       the daemon's notes and recorded frames
+                     (daemon/src/run_journal.h, frame_stream.h)
      RESULTS.tsv     one row per run, across all runs
 
    The C++ writes its failure screenshot to Screenshots/AutoStory/failures
@@ -83,3 +89,51 @@ let append_result ~runs_dir t ~checkpoint ~mode ~result ~at ~reason =
 let copy_file ~src ~dst =
   let bytes = In_channel.with_open_bin src In_channel.input_all in
   Out_channel.with_open_bin dst (fun out -> Out_channel.output_string out bytes)
+
+type info = {
+  game : string;
+  program : string;
+  from_id : string;
+  to_id : string;
+  backend : string;
+}
+(** What run.json says of a run besides its outcome: the program it belongs to
+    and the series it is part of. *)
+
+type ending = { result : string; at : string; reason : string }
+
+let now_ms () = int_of_float (Unix.gettimeofday () *. 1000.)
+
+let run_json t info ~checkpoint ~mode ~started_ms ending =
+  let s v = `String v in
+  let ended =
+    match ending with
+    | None -> []
+    | Some e ->
+        [
+          ("ended_ms", `Int (now_ms ()));
+          ("result", s e.result);
+          ("at", s e.at);
+          ("reason", s e.reason);
+        ]
+  in
+  `Assoc
+    ([
+       ("run", s t.name);
+       ("game", s info.game);
+       ("program", s info.program);
+       ("from", s info.from_id);
+       ("to", s info.to_id);
+       ("checkpoint", s checkpoint);
+       ("backend", s info.backend);
+       ("mode", s mode);
+       ("started_ms", `Int started_ms);
+     ]
+    @ ended)
+
+(* run.json, at the start ([ending] None) and again at the end. *)
+let write_run_json t info ~checkpoint ~mode ~started_ms ending =
+  write t "run.json"
+    (Yojson.Safe.to_string
+       (run_json t info ~checkpoint ~mode ~started_ms ending)
+    ^ "\n")

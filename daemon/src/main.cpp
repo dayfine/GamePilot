@@ -13,14 +13,20 @@
 // network; port 0 (here and for --port) picks a free one, which the daemon
 // prints. With [--registry DIR] [--checkpoint ID] [--run-folder DIR] the page
 // is listed in the watch registry (watch_registry.h) while it is up.
+// [--record | --no-record] records the run's frames into DIR/frames (on by
+// default for the switch backend with a run folder, off for mgba);
+// [--keepawake SECONDS] [--keepawake-key B] presses that key after SECONDS
+// with no input, never during a client's batch (keep_awake.h; default 180 on
+// the switch backend, 0 = off, off for mgba).
 // [--stream-fps 30] [--stream-width 1280] set the page's live frame
 // (frame_stream.h): at most that many frames a second, a capture card's frame
 // scaled to that width unless the viewer asks for another (`/stream?w=`).
 //
 //   gamepilot_daemon --hub --registry DIR [--watch-port 47901] [--listen ADDR]
 //
-// serves the hub (watch_hub.h), the list of live runs, in its own session so
-// the terminal that started it can close; exits 0 at once when its port is
+// serves the hub (watch_hub.h), the list of live runs and each run's page
+// under /runs/NAME/ (recent finished ones from DIR/../RESULTS.tsv), in its own
+// session so the terminal that started it can close; exits 0 at once when its port is
 // taken (a hub already runs).
 //
 // The switch backend's inputs go to the controller board on --serial (its
@@ -28,9 +34,11 @@
 // Controller: the board must already run NS1 Wired Pro Controller, a mode the
 // daemon never changes), else to FakeSwitch's board. --board-check only starts
 // the session (checking the mode), prints what the board said and exits;
-// --capture-check saves one captured frame
-// and checks the GBA picture sits where nso_gba_viewport() says
-// (switch_geometry.h). Bring-up: docs/switch-bring-up.md.
+// --capture-check saves one captured frame and checks the GBA picture sits
+// where nso_gba_viewport() says (switch_geometry.h). Without --serial, and
+// with --replay in place of --capture, both check the fakes: a dry run
+// (tools/run_checkpoints_on_switch.sh --dry-run). Bring-up:
+// docs/switch-bring-up.md.
 
 #include <atomic>
 #include <csignal>
@@ -69,14 +77,16 @@ int usage() {
       "       gamepilot_daemon --backend switch (--replay VIDEO | --capture "
       "DEVICE) [--serial PORT] [--viewport x,y,w,h] [--port 47900] "
       "[--log FILE]\n"
-      "       gamepilot_daemon --backend switch --serial PORT --board-check\n"
-      "       gamepilot_daemon --backend switch --capture DEVICE "
-      "--capture-check PNG\n"
+      "       gamepilot_daemon --backend switch [--serial PORT] --board-check\n"
+      "       gamepilot_daemon --backend switch (--capture DEVICE | --replay "
+      "VIDEO) --capture-check PNG\n"
       "       either with [--watch-port 47901] [--listen 127.0.0.1] "
       "[--watch-token T]\n"
       "         [--registry DIR] [--checkpoint ID] [--run-folder DIR] "
       "[--stream-fps 30]\n"
       "         [--stream-width 1280] for the watch page\n"
+      "       either with [--record | --no-record] [--keepawake SECONDS] "
+      "[--keepawake-key B]\n"
       "       gamepilot_daemon --hub --registry DIR [--watch-port 47901] "
       "[--listen 127.0.0.1]\n",
       stderr);
@@ -112,7 +122,21 @@ struct Flags {
   gamepilot::SwitchOptions switch_options;
   gamepilot::ServerOptions server;
   bool hub = false;
+  std::optional<bool> record;           // default: by backend
+  std::optional<double> keepawake_s;    // default: by backend
 };
+
+// Recording and keep-awake are on by default on the Switch only: mGBA's runs
+// are short and its frames come back from save states.
+constexpr double kSwitchKeepAwakeS = 180;
+constexpr long kMaxKeepAwakeS = 24 * 3600;
+
+void backend_defaults(Flags& flags) {
+  const bool console = flags.backend == "switch";
+  flags.server.record = flags.record.value_or(console);
+  flags.server.keepawake.idle_ms =
+      flags.keepawake_s.value_or(console ? kSwitchKeepAwakeS : 0) * 1000;
+}
 
 gamepilot::WatchOptions& watch_options(Flags& flags) {
   return flags.server.watch.emplace(
@@ -182,6 +206,21 @@ bool parse_flags(int argc, char** argv, Flags& flags) {
       flags.server.checkpoint = argv[++i];
     } else if (arg == "--run-folder" && has_value) {
       flags.server.run_folder = argv[++i];
+    } else if (arg == "--record") {
+      flags.record = true;
+    } else if (arg == "--no-record") {
+      flags.record = false;
+    } else if (arg == "--keepawake" && has_value) {
+      long seconds = 0;
+      if (!parse_in_range(argv[++i], 0, kMaxKeepAwakeS, seconds)) {
+        return false;
+      }
+      flags.keepawake_s = static_cast<double>(seconds);
+    } else if (arg == "--keepawake-key" && has_value) {
+      flags.server.keepawake.key = argv[++i];
+      if (gamepilot::button_mask(flags.server.keepawake.key) == 0) {
+        return false;
+      }
     } else if (arg == "--hub") {
       flags.hub = true;
     } else if (arg == "--fast") {
@@ -193,15 +232,16 @@ bool parse_flags(int argc, char** argv, Flags& flags) {
   if (flags.hub) {
     return flags.backend.empty() && !flags.server.registry.empty();
   }
+  backend_defaults(flags);
   if (flags.backend == "mgba") {
     return flags.mgba_port != 0;
   }
   if (flags.backend == "switch" && flags.board_check) {
-    return !flags.serial.empty() && flags.capture.empty() &&
-           flags.replay.empty();
+    return flags.capture.empty() && flags.replay.empty();
   }
   if (flags.backend == "switch" && !flags.capture_check.empty()) {
-    return !flags.capture.empty() && flags.serial.empty();
+    return flags.replay.empty() != flags.capture.empty() &&
+           flags.serial.empty();
   }
   if (flags.backend == "switch") {
     return flags.replay.empty() != flags.capture.empty();
@@ -264,20 +304,34 @@ gamepilot::BoardInfo start_board(gamepilot::BoardSession& session) {
   return info;
 }
 
+// With no --serial, FakeSwitch's board: a dry run of the check.
 int run_board_check(const Flags& flags) {
-  gamepilot::SerialBoardPort port(flags.serial);
   gamepilot::BoardLog log;
+  if (flags.serial.empty()) {
+    const gamepilot::Clock clock;
+    gamepilot::FakeSwitch board(clock);
+    gamepilot::BoardSession session(board, log);
+    start_board(session);
+    return 0;
+  }
+  gamepilot::SerialBoardPort port(flags.serial);
   gamepilot::BoardSession session(port, log);
   start_board(session);
   return 0;
 }
 
 int run_capture_check(const Flags& flags) {
+  const gamepilot::Clock clock;
+  // With --replay, the video's first frame: a dry run of the check.
   const std::unique_ptr<gamepilot::FrameSource> source =
-      gamepilot::open_capture_card({.device = flags.capture});
+      flags.replay.empty()
+          ? gamepilot::open_capture_card({.device = flags.capture})
+          : gamepilot::open_video_replay(flags.replay, clock);
+  const std::string& from =
+      flags.replay.empty() ? flags.capture : flags.replay;
   cv::Mat frame;
   if (!source->read(frame) || frame.empty()) {
-    std::fprintf(stderr, "daemon: no frame from %s\n", flags.capture.c_str());
+    std::fprintf(stderr, "daemon: no frame from %s\n", from.c_str());
     return 1;
   }
   gamepilot::save_png(flags.capture_check, frame);
@@ -330,6 +384,9 @@ int run_switch(const Flags& flags) {
 int run_hub(const Flags& flags) {
   gamepilot::HubOptions options;
   options.registry = flags.server.registry;
+  // The registry is $GAMEPILOT_RUNS/.watch; the runs' results sit beside it.
+  options.results = flags.server.registry + "/../RESULTS.tsv";
+  options.runs = flags.server.registry + "/..";
   if (flags.server.watch) {
     options.listen = flags.server.watch->listen;
     options.port = flags.server.watch->port;

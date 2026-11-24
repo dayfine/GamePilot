@@ -7,7 +7,9 @@ type options = {
   state : string option;
       (** A save state of the checkpoint's start, loaded first and again on
           reload. *)
-  party : Frlg_actions.Party_roster.t;  (** The party at the start. *)
+  party : Frlg_actions.Party_roster.t option;
+      (** The party at the start; [None]: read from the game when an action
+          first needs it ({!Frlg_actions.Story_game.config}). *)
   center : string option;  (** The town whose Center heals between rounds. *)
   grind_cap : int option;
       (** Testing: each grind ends, passing, after this many battles, and the

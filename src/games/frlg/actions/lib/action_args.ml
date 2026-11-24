@@ -25,3 +25,12 @@ let member ~where args =
 let member_to_string = function
   | Species s -> s
   | Slot n -> Printf.sprintf "slot %d" n
+
+let member_keys =
+  [ "species"; "sweeper"; "knock_off_species"; "recycle_species" ]
+
+let field_move_users = [ ("cut_tree", "cut") ]
+
+let picks_member ~action args =
+  (not (List.mem_assoc action field_move_users))
+  && List.exists (fun key -> J.has key args) member_keys

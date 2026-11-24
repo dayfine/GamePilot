@@ -223,6 +223,10 @@ void check_encoders(const std::map<std::string, pa::JsonValue>& files) {
   // The wire log line round-trips through the daemon's one-line encoding.
   CHECK(parse_message(to_line(files.at("14-wire_log.line.json"))) ==
         files.at("14-wire_log.line.json"));
+  // The keep-awake press, the daemon's own line.
+  CHECK(wire_log_line("daemon", 180412.5,
+                      keepawake_notification("B", 180000)) ==
+        files.at("34-keepawake.line.json"));
 }
 
 // The first frame sends every result; a later one only the results that
@@ -349,8 +353,8 @@ void check_errors() {
 
 int main() {
   const auto files = load_contracts();
-  CHECK(files.size() == 33);
-  if (files.size() == 33) {
+  CHECK(files.size() == 34);
+  if (files.size() == 34) {
     check_requests(files);
     check_upload(files);
     check_encoders(files);

@@ -163,6 +163,9 @@ pa::JsonValue batch_done_notification(const std::string& batch_id,
                                       std::int64_t seq, double t_ms);
 // Tells the program someone pressed Stop on the watch page (contract v1.6).
 pa::JsonValue stop_notification(const std::string& reason);
+// The daemon's keep-awake press (keep_awake.h), for the wire log's `daemon`
+// line: the key and how long the console was idle.
+pa::JsonValue keepawake_notification(const std::string& key, double idle_ms);
 
 // One wire log line: {"dir": "in"|"out", "t_ms", "msg"}.
 pa::JsonValue wire_log_line(const char* dir, double t_ms, pa::JsonValue msg);

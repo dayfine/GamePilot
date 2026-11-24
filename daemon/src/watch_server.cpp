@@ -13,8 +13,8 @@ constexpr std::size_t kMaxTokenLength = 64;
 constexpr std::string_view kTokenSlot = "name=\"gamepilot-token\" content=\"\"";
 constexpr std::string_view kNoStop = "{\"stopped\":false,\"error\":\"token\"}";
 
-// The page with Stop's token in its `gamepilot-token` meta tag; without one
-// the page is read-only.
+}  // namespace
+
 std::string page_with_token(std::string_view token) {
   std::string page(watch_page());
   const std::size_t slot = page.find(kTokenSlot);
@@ -24,7 +24,20 @@ std::string page_with_token(std::string_view token) {
   return page;
 }
 
-}  // namespace
+std::string page_token(std::string_view page) {
+  constexpr std::string_view kOpen = "name=\"gamepilot-token\" content=\"";
+  const std::size_t at = page.find(kOpen);
+  if (at == std::string_view::npos) {
+    return {};
+  }
+  const std::size_t start = at + kOpen.size();
+  const std::size_t end = page.find('"', start);
+  if (end == std::string_view::npos) {
+    return {};
+  }
+  const std::string token(page.substr(start, end - start));
+  return valid_watch_token(token) ? token : std::string();
+}
 
 std::string new_watch_token() {
   std::random_device random;
@@ -133,9 +146,11 @@ void WatchServer::respond(Connection& connection, const HttpRequest& request) {
     return;
   }
   if (get && request.path == "/") {
-    send(connection,
-         http_response(200, "text/html; charset=utf-8",
-                       page_with_token(connection.local ? token_ : "")));
+    const bool local = connection.local &&
+                       header_value(request.headers, kViewerHeader) !=
+                           kRemoteViewer;
+    send(connection, http_response(200, "text/html; charset=utf-8",
+                                   page_with_token(local ? token_ : "")));
   } else if (get && request.path == "/frame") {
     const WatchFrame frame = hooks_.frame();
     send(connection, http_response(200, frame.type, frame.bytes));

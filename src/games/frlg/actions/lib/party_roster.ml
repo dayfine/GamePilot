@@ -5,6 +5,8 @@ let of_list species =
     invalid_arg "Party_roster.of_list: more than six members"
   else species
 
+let of_read species = of_list (List.map (Option.value ~default:"?") species)
+
 let of_string text =
   String.split_on_char ',' text
   |> List.map String.trim

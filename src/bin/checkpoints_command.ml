@@ -27,11 +27,25 @@
    token, which the URL printed for other devices carries. The program's port
    (--port) is a free one too unless given, so runs do not collide.
 
+   --record/--no-record, --keepawake SECONDS: each run's daemon's (Watch-Page.md).
    --backend switch runs on the Switch (docs/switch-bring-up.md): the daemon
    drives the controller board on --serial and reads the capture card
-   --capture (gamepilot switch-devices prints the lab's). The console holds
-   the start, the save the user loaded, so there are no start states and
-   only --mode testing runs.
+   --capture (gamepilot switch-devices prints the lab's); --replay VIDEO
+   alone, without --serial, is a dry run on the daemon's fake board. The
+   game's own save is the start, so there are no start states and only --mode
+   testing runs: before each run the runner soft-resets to the last save and
+   checks the start; a run that passes is saved in the game
+   (--save-after-pass, the default; --no-save-after-pass), a failed one
+   soft-resets back to the last save (Story.Console_runs, Console_session).
+
+   Each run reads the party from the members' summaries before its first
+   action that finds a member by its species, so a save whose other members
+   differ keeps every slot right; --party only states the first checkpoint's
+   party for the Switch's start check when no checkpoint before it promises
+   one.
+
+   --preflight --from ID reads, from the save, what checkpoint ID's plan needs
+   and prints a table (Preflight_command); exit 1 on a mismatch.
 
    --states defaults to $GAMEPILOT_STATES and --runs-dir to $GAMEPILOT_RUNS,
    else to $HOME/.local/share/gamepilot/{states,runs}.
@@ -60,8 +74,13 @@ type flags = {
   backend : string;  (** mgba or switch *)
   serial : string option;
   capture : string option;
+  replay : string option;  (** A recorded video for a dry run (fake board). *)
+  save_after_pass : bool;  (** Switch: save in the game after a pass. *)
+  preflight : bool;
   common : Checkpoint_command.flags;
   watch : Daemon_process.watch option;
+  daemon_flags : string list;
+      (** --record, --no-record, --keepawake N: passed to each run's daemon. *)
 }
 
 let usage =
@@ -71,7 +90,10 @@ let usage =
   \      [--mgba-port N] [--port N] [--party SPECIES,...] [--center TOWN] \
    [--walk]\n\
   \      [--end-check-only] [--grind-battles N] [--watch] [--watch-port N]\n\
-  \      [--listen ADDR] [--backend mgba|switch --serial PORT --capture DEVICE]\n"
+  \      [--listen ADDR] [--backend mgba|switch --serial PORT --capture DEVICE]\n\
+  \      [--replay VIDEO] [--save-after-pass|--no-save-after-pass]\n\
+  \      [--record|--no-record] [--keepawake SECONDS]\n\
+  \  gamepilot checkpoints PLAN_DIR --preflight --from ID [--backend ...]\n"
 
 let home = Option.value (Sys.getenv_opt "HOME") ~default:"."
 
@@ -98,8 +120,12 @@ let defaults =
     backend = "mgba";
     serial = None;
     capture = None;
+    replay = None;
+    save_after_pass = true;
+    preflight = false;
     common = { Checkpoint_command.defaults with port = 0 };
     watch = None;
+    daemon_flags = [];
   }
 
 let common_flag f c = { f with common = c f.common }
@@ -114,6 +140,12 @@ let mode_flag f m =
   match Checkpoint_trials.mode_of_string m with
   | Some mode -> Ok { f with mode = Some mode }
   | None -> Error ("bad --mode " ^ m)
+
+let keepawake_flag f seconds =
+  {
+    f with
+    daemon_flags = f.daemon_flags @ [ "--keepawake"; string_of_int seconds ];
+  }
 
 (* One flag with its value, or [None] for a flag that takes none or an
    unknown one. *)
@@ -134,6 +166,7 @@ let valued f name v =
   | "--backend" -> Some (Ok { f with backend = v })
   | "--serial" -> Some (Ok { f with serial = Some v })
   | "--capture" -> Some (Ok { f with capture = Some v })
+  | "--replay" -> Some (Ok { f with replay = Some v })
   | "--party" -> Some (Ok (common_flag f (fun c -> { c with party = v })))
   | "--grind-battles" -> (
       match int_of_string_opt v with
@@ -142,6 +175,7 @@ let valued f name v =
       | _ -> Some (Error ("bad --grind-battles " ^ v)))
   | "--center" ->
       Some (Ok (common_flag f (fun c -> { c with center = Some v })))
+  | "--keepawake" -> Some (int_flag name v (keepawake_flag f))
   | _ -> None
 
 (* The page by default: on a free port, $GAMEPILOT_WATCH_LISTEN or this machine
@@ -173,6 +207,12 @@ let valued f name v =
 let rec parse f = function
   | [] -> Ok f
   | "--watch" :: rest -> parse (watch_flag f Fun.id) rest
+  | "--save-after-pass" :: rest -> parse { f with save_after_pass = true } rest
+  | "--no-save-after-pass" :: rest ->
+      parse { f with save_after_pass = false } rest
+  | "--preflight" :: rest -> parse { f with preflight = true } rest
+  | (("--record" | "--no-record") as flag) :: rest ->
+      parse { f with daemon_flags = f.daemon_flags @ [ flag ] } rest
   | "--walk" :: rest ->
       parse (common_flag f (fun c -> { c with walk = true })) rest
   | "--end-check-only" :: rest ->
@@ -180,33 +220,6 @@ let rec parse f = function
   | name :: v :: rest when Option.is_some (valued f name v) ->
       Result.bind (Option.get (valued f name v)) (fun f -> parse f rest)
   | a :: _ -> Error ("unknown argument " ^ a)
-
-let plan_suffix = ".plan.json"
-
-(* Checkpoint ids in the folder, in run order ({!Story.Checkpoint_order}). *)
-let checkpoint_ids dir =
-  match Sys.readdir dir with
-  | names ->
-      Ok
-        (Array.to_list names
-        |> List.filter (fun n -> Filename.check_suffix n plan_suffix)
-        |> List.map (fun n -> Filename.chop_suffix n plan_suffix)
-        |> List.sort Story.Checkpoint_order.compare)
-  | exception Sys_error e -> Error e
-
-let rec drop_until id = function
-  | [] -> []
-  | x :: rest as all -> if x = id then all else drop_until id rest
-
-(* [from_id .. to_id] and the id after [to_id], if any. *)
-let select ids ~from_id ~to_id =
-  let from = drop_until from_id ids in
-  match (from, drop_until to_id from) with
-  | [], _ -> Error ("no checkpoint " ^ from_id)
-  | _, [] -> Error ("no checkpoint " ^ to_id ^ " at or after " ^ from_id)
-  | _, _ :: after ->
-      let n = List.length from - List.length after in
-      Ok (List.filteri (fun i _ -> i < n) from, List.nth_opt after 0)
 
 let required name = function
   | Some v -> Ok v
@@ -216,25 +229,38 @@ let ( let* ) = Result.bind
 
 (* The daemon's backend from the flags; the Switch only in testing mode. *)
 let daemon_backend f mode =
-  match (f.backend, f.serial, f.capture, mode) with
-  | "mgba", None, None, _ -> Ok (Daemon_process.Mgba { port = f.mgba_port })
-  | "mgba", _, _, _ -> Error "--serial and --capture need --backend switch"
-  | "switch", Some serial, Some capture, Checkpoint_trials.Testing ->
-      Ok (Daemon_process.Switch { serial; capture })
-  | "switch", Some _, Some _, Verification ->
+  match (f.backend, f.serial, f.capture, f.replay, mode) with
+  | "mgba", None, None, None, _ ->
+      Ok (Daemon_process.Mgba { port = f.mgba_port })
+  | "mgba", _, _, _, _ ->
+      Error "--serial, --capture and --replay need --backend switch"
+  | "switch", _, _, _, Checkpoint_trials.Verification ->
       Error "--backend switch runs only --mode testing"
-  | "switch", _, _, _ -> Error "--backend switch needs --serial and --capture"
-  | b, _, _, _ -> Error ("bad --backend " ^ b)
+  | "switch", Some serial, Some capture, None, Testing ->
+      Ok
+        (Daemon_process.Switch
+           { serial = Some serial; frames = Capture capture })
+  | "switch", None, None, Some video, Testing ->
+      Ok (Daemon_process.Switch { serial = None; frames = Replay video })
+  | "switch", _, _, _, _ ->
+      Error
+        "--backend switch needs --serial and --capture, or --replay alone (a \
+         dry run on the fake board)"
+  | b, _, _, _, _ -> Error ("bad --backend " ^ b)
 
-let main plan_dir args =
-  let* f = parse defaults args in
+(* What each run's run.json says of the series. *)
+let run_info plan_dir f ~from_id ~to_id : Run_record.info =
+  let game, program = Plan_dir.program_of_dir plan_dir in
+  { game; program; from_id; to_id; backend = f.backend }
+
+let run_series plan_dir f =
   let* from_id = required "--from" f.from_id in
   let* to_id = required "--to" f.to_id in
   let* mode = required "--mode" f.mode in
   let* backend = daemon_backend f mode in
   let* policy = Checkpoint_trials.policy ?runs:f.runs mode in
-  let* ids = checkpoint_ids plan_dir in
-  let* selected, after = select ids ~from_id ~to_id in
+  let* ids = Plan_dir.checkpoint_ids plan_dir in
+  let* selected, after = Plan_dir.select ids ~from_id ~to_id in
   let* world = Frlg_story.Checkpoint_run.load_world () in
   (* --runs-dir may come after --watch. *)
   let watch =
@@ -256,6 +282,18 @@ let main plan_dir args =
          policy;
          world;
          watch;
+         info = run_info plan_dir f ~from_id ~to_id;
+         daemon_flags = f.daemon_flags;
          bound = ref None;
+         save_after_pass = f.save_after_pass;
        }
        selected ~after)
+
+let main plan_dir args =
+  let* f = parse defaults args in
+  if f.preflight then
+    let* from_id = required "--from" f.from_id in
+    let* backend = daemon_backend f Checkpoint_trials.Testing in
+    Preflight_command.run ~plan_dir ~from_id
+      { states = f.states; runs_dir = f.runs_dir; daemon = f.daemon; backend }
+  else run_series plan_dir f

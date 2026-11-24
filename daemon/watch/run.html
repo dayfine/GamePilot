@@ -1,0 +1,603 @@
+<!doctype html>
+<!--
+  gamepilot run record: one finished run, served by the hub under
+  runs/NAME/ once the run is no longer live (daemon/src/watch_hub.cpp;
+  design in docs/design/Watch-Page.md, "Past runs").
+
+  Everything comes from the run's folder through the hub, relative to this
+  page: record.json (the run's row: result, reason, range, backend, times),
+  files/watch_plan.json (each event with its times), files/watch_log.jsonl
+  (each story line with its time; files/story.log for older runs, no times),
+  files/daemon.json (when the daemon clock read 0, to put the probe timeline
+  on the same Unix time as the rest), files/frames/index.jsonl and the
+  recorded frames, files/failure.png, and probes.json: the probe values over
+  the run, which the hub summarizes from wire.jsonl (never sent whole).
+
+  The scrubber moves one time through everything: the recorded frame at it,
+  the story line at it, each probe's value at it, a cursor on the timeline.
+  ?t=S opens the page S seconds into the run.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GamePilot Run</title>
+<style>
+  :root {
+    --bg: #f6f7f9; --panel: #ffffff; --text: #1c2026; --muted: #69707a;
+    --line: #dfe3e8; --ok: #1f8a4c; --bad: #c62f2f; --cur: #1f6fd1;
+    --skip: #8a8f98; --spark: #1f6fd1; --hl: #fff4c2;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #14171b; --panel: #1c2026; --text: #e6e9ed; --muted: #9aa3ad;
+      --line: #2d333b; --ok: #4cc27f; --bad: #ff6b6b; --cur: #6aa8ff;
+      --skip: #7d848e; --spark: #6aa8ff; --hl: #3a3420;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font: 14px/1.4 -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  header {
+    display: flex; align-items: center; gap: 12px; padding: 10px 16px; flex-wrap: wrap;
+    border-bottom: 1px solid var(--line); background: var(--panel);
+  }
+  header h1 { font-size: 16px; margin: 0; overflow-wrap: anywhere; }
+  header nav { margin-left: auto; display: flex; gap: 12px; }
+  a { color: var(--cur); text-decoration: none; font-weight: 600; }
+  a:hover { text-decoration: underline; }
+  main { padding: 12px 16px; display: grid; gap: 12px;
+         grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); }
+  @media (max-width: 900px) { main { grid-template-columns: minmax(0, 1fr); } }
+  section {
+    background: var(--panel); border: 1px solid var(--line);
+    border-radius: 8px; padding: 10px 12px; min-width: 0;
+  }
+  .wide { grid-column: 1 / -1; }
+  h2 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em;
+       color: var(--muted); margin: 0 0 8px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  h2 .right { margin-left: auto; text-transform: none; letter-spacing: 0; font-weight: 400; }
+  .muted { color: var(--muted); }
+  .passed { color: var(--ok); }
+  .failed { color: var(--bad); }
+  #result { display: flex; flex-wrap: wrap; gap: 6px 18px; align-items: baseline; }
+  #verdict { font-size: 18px; font-weight: 700; }
+  #reason { flex-basis: 100%; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .facts { display: flex; flex-wrap: wrap; gap: 4px 18px; color: var(--muted); font-size: 13px; }
+  .facts b { color: var(--text); font-weight: 600; }
+  #failure-box { margin-top: 10px; }
+  #failure-box img { max-width: 100%; max-height: 360px; border: 1px solid var(--line);
+                     border-radius: 4px; image-rendering: pixelated; }
+  #viewer img { width: 100%; height: auto; display: block; background: #000; border-radius: 4px;
+                aspect-ratio: 16 / 9; object-fit: contain; }
+  #frame[hidden] { display: none; }
+  #scrub { width: 100%; margin: 8px 0 4px; }
+  #scrub-meta { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums;
+                display: flex; gap: 10px; flex-wrap: wrap; }
+  #scrub-meta b { color: var(--text); }
+  .buttons { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
+  button { font: inherit; font-size: 13px; background: var(--panel); color: var(--text);
+           border: 1px solid var(--line); border-radius: 6px; padding: 4px 10px; min-height: 30px;
+           cursor: pointer; }
+  #log-at { margin-top: 8px; font: 12px/1.4 ui-monospace, Menlo, monospace; white-space: pre-wrap;
+            overflow-wrap: anywhere; min-height: 4.2em; }
+  #log-at .now { background: var(--hl); }
+  #events { list-style: none; margin: 0; padding: 0; }
+  #events li { display: grid; grid-template-columns: 1.6em 1fr auto; gap: 6px; padding: 4px 0;
+               border-bottom: 1px solid var(--line); cursor: pointer; }
+  #events li:last-child { border-bottom: 0; }
+  #events li.at { background: var(--hl); }
+  #events .id { overflow-wrap: anywhere; }
+  #events .detail { grid-column: 2 / 4; font-size: 12px; color: var(--muted); overflow-wrap: anywhere; }
+  #events .t { font-variant-numeric: tabular-nums; color: var(--muted); font-size: 12px; }
+  .s-done .mark { color: var(--ok); } .s-failed .mark, .s-failed .id { color: var(--bad); }
+  .s-skipped .mark, .s-skipped .id { color: var(--skip); } .s-current .mark { color: var(--cur); }
+  #probe-filter { font: inherit; font-size: 13px; color: var(--text); background: var(--panel);
+                  border: 1px solid var(--line); border-radius: 6px; padding: 3px 6px; width: 12em; }
+  #timeline { max-height: 520px; overflow-y: auto; }
+  .probe { display: grid; grid-template-columns: minmax(8em, 14em) minmax(0, 1fr) 5em; gap: 8px;
+           align-items: center; height: 26px; }
+  .probe .pid { font: 12px ui-monospace, Menlo, monospace; overflow: hidden; text-overflow: ellipsis;
+                white-space: nowrap; }
+  .probe canvas { width: 100%; height: 22px; cursor: crosshair; display: block; }
+  .probe .v { font: 12px ui-monospace, Menlo, monospace; text-align: right;
+              font-variant-numeric: tabular-nums; }
+  @media (max-width: 600px) {
+    .probe { grid-template-columns: minmax(6em, 9em) minmax(0, 1fr) 4em; }
+  }
+  #log { font: 12px/1.45 ui-monospace, Menlo, monospace; max-height: 480px; overflow: auto;
+         margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+  #log div { padding: 0 4px; border-radius: 3px; }
+  #log div.timed { cursor: pointer; }
+  #log div.now { background: var(--hl); }
+  #log .lt { color: var(--muted); margin-right: 8px; }
+  .note { color: var(--muted); font-style: italic; }
+</style>
+</head>
+<body>
+<header>
+  <h1 id="title">Run</h1>
+  <nav><a href="../../">All runs</a><a href="../../live">Newest live run</a></nav>
+</header>
+<main>
+  <section class="wide">
+    <div id="result"><span id="verdict" class="muted">loading…</span>
+      <span id="where"></span><div id="reason" class="muted"></div></div>
+    <div class="facts" id="facts"></div>
+    <div id="failure-box" hidden><h2>Failure frame</h2>
+      <a id="failure-link" href="files/failure.png"><img id="failure" alt="the frame at the failure"></a></div>
+  </section>
+
+  <section id="viewer">
+    <h2>Recorded frames <span class="right muted" id="frame-count"></span></h2>
+    <img id="frame" alt="the recorded frame at the scrubber's time">
+    <input id="scrub" type="range" min="0" max="0" value="0" aria-label="time in the run">
+    <div id="scrub-meta"><span id="scrub-time">–</span><span id="scrub-step"></span></div>
+    <div class="buttons">
+      <button type="button" id="prev" title="previous frame (←)">◀ frame</button>
+      <button type="button" id="next" title="next frame (→)">frame ▶</button>
+      <button type="button" id="prev-step" title="previous step">◀ step</button>
+      <button type="button" id="next-step" title="next step">step ▶</button>
+      <button type="button" id="to-failure" hidden>failure</button>
+    </div>
+    <div id="log-at"></div>
+  </section>
+
+  <section>
+    <h2>Plan <span class="right muted" id="plan-total"></span></h2>
+    <ul id="events"><li class="note">loading</li></ul>
+  </section>
+
+  <section class="wide">
+    <h2>Probe values over the run
+      <input id="probe-filter" type="search" placeholder="filter: party., dialog." aria-label="probe filter">
+      <span class="right muted" id="timeline-note">reading wire.jsonl on the hub…</span></h2>
+    <div id="timeline"></div>
+  </section>
+
+  <section class="wide">
+    <h2>Story log <span class="right muted" id="log-note"></span></h2>
+    <div id="log"></div>
+  </section>
+</main>
+<script>
+"use strict";
+const $ = (id) => document.getElementById(id);
+
+function el(tag, cls, text) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text !== undefined) e.textContent = text;
+  return e;
+}
+
+// "4:05" or "1:02:09".
+function duration(ms) {
+  const s = Math.max(0, Math.round(ms / 1000));
+  const two = (n) => String(n).padStart(2, "0");
+  const h = Math.floor(s / 3600), m = Math.floor(s / 60) % 60;
+  return (h ? h + ":" + two(m) : String(m)) + ":" + two(s % 60);
+}
+
+function clock(ms) {
+  return new Date(ms).toLocaleTimeString([], {hour12: false});
+}
+
+async function getJson(url) {
+  const reply = await fetch(url, {cache: "no-store"});
+  if (!reply.ok) throw new Error(url + ": " + reply.status);
+  return reply.json();
+}
+async function getText(url) {
+  const reply = await fetch(url, {cache: "no-store"});
+  if (!reply.ok) throw new Error(url + ": " + reply.status);
+  return reply.text();
+}
+const jsonLines = (text) => text.split("\n").filter((l) => l.trim()).map((l) => JSON.parse(l));
+
+// The run's data; times are Unix ms (`zero` puts the daemon's clock on it).
+const data = {record: null, plan: null, log: [], timedLog: false, frames: [],
+              probes: null, zero: null};
+// The scrubber's time and its range.
+let now = 0, t0 = 0, t1 = 0;
+
+const BACKEND_NAMES = {mgba: "mGBA", switch: "Switch"};
+
+function renderRecord(r) {
+  document.title = r.run + " · GamePilot Run";
+  $("title").textContent = r.run;
+  const verdict = $("verdict");
+  verdict.textContent = r.result === "pass" ? "Passed" : r.result === "fail" ? "Failed" :
+    r.result === "running" ? "Running" : "No result";
+  verdict.className = r.result === "pass" ? "passed" : r.result === "fail" ? "failed" : "muted";
+  $("where").textContent = r.at ? "at " + r.at : "";
+  $("reason").textContent = r.reason || "";
+  const facts = $("facts");
+  facts.replaceChildren();
+  const fact = (label, value) => {
+    if (!value) return;
+    const span = el("span", "", label + " ");
+    span.append(el("b", "", value));
+    facts.append(span);
+  };
+  fact("game", r.game);
+  fact("program", r.program);
+  fact("checkpoints", r.from && r.from !== r.to ? r.from + " → " + r.to + " (this: " +
+       r.checkpoint + ")" : r.checkpoint);
+  fact("backend", BACKEND_NAMES[r.backend] || r.backend);
+  fact("mode", r.mode);
+  fact("started", r.started_ms ? new Date(r.started_ms).toLocaleString([], {hour12: false}) : "");
+  fact("duration", r.started_ms && r.ended_ms ? duration(r.ended_ms - r.started_ms) : "");
+  if (r.failure_frame) {
+    $("failure").src = "files/failure.png";
+    $("failure-box").hidden = false;
+  }
+  if (r.result === "running") {
+    $("verdict").append(" ", Object.assign(el("a", "", "open the live page"), {href: "./"}));
+  }
+}
+
+// --- Plan -----------------------------------------------------------------------
+
+const MARKS = {done: "✓", failed: "✗", skipped: "–", current: "▸", pending: "·"};
+
+// Older runs have no watch_plan.json: their events from story.log's
+// "[Story] CP #N ID: VERDICT" lines, without times.
+function planFromLog(lines) {
+  const events = [];
+  for (const {line} of lines) {
+    const m = /^\[Story\] \S+ #(\d+) (\S+): (\w+)/.exec(line);
+    if (!m) continue;
+    const i = Number(m[1]) - 1;
+    const state = m[3] === "start" ? "current" : m[3] === "passed" || m[3] === "done" ? "done" :
+      m[3] === "skipped" ? "skipped" : m[3] === "failed" ? "failed" : null;
+    if (!state) continue;
+    events[i] = Object.assign(events[i] || {id: m[2], detail: ""}, {state});
+  }
+  return {events: events.filter(Boolean)};
+}
+
+function renderPlan() {
+  const list = $("events");
+  list.replaceChildren();
+  const plan = data.plan;
+  if (!plan || !plan.events.length) {
+    list.append(el("li", "note", "no plan recorded"));
+    return;
+  }
+  let first = null, last = null;
+  plan.events.forEach((e, i) => {
+    const li = el("li", "s-" + e.state);
+    li.dataset.i = i;
+    const t = e.started_ms != null && e.ended_ms != null ? duration(e.ended_ms - e.started_ms) :
+      e.started_ms != null ? "…" : "";
+    li.append(el("span", "mark", MARKS[e.state] || "·"), el("span", "id", "#" + (i + 1) + " " + e.id),
+              el("span", "t", t));
+    if (e.detail) li.append(el("span", "detail", e.detail));
+    if (e.started_ms != null) {
+      li.title = "started " + clock(e.started_ms);
+      li.addEventListener("click", () => seek(e.started_ms));
+      if (first === null || e.started_ms < first) first = e.started_ms;
+      const end = e.ended_ms != null ? e.ended_ms : e.started_ms;
+      if (last === null || end > last) last = end;
+    }
+    list.append(li);
+  });
+  $("plan-total").textContent = first !== null ? "total " + duration(last - first) :
+    "no times (older run)";
+}
+
+function markPlan() {
+  const plan = data.plan;
+  if (!plan) return;
+  for (const li of $("events").children) {
+    const e = plan.events[li.dataset.i];
+    li.classList.toggle("at", !!e && e.started_ms != null && e.started_ms <= now &&
+      (e.ended_ms == null || now < e.ended_ms));
+  }
+}
+
+// --- Log ------------------------------------------------------------------------
+
+function renderLog() {
+  const box = $("log");
+  box.replaceChildren();
+  for (const [i, entry] of data.log.entries()) {
+    const div = el("div", entry.unix_ms ? "timed" : "");
+    div.dataset.i = i;
+    if (entry.unix_ms) {
+      div.append(el("span", "lt", clock(entry.unix_ms)));
+      div.addEventListener("click", () => seek(entry.unix_ms));
+    }
+    div.append(entry.line);
+    box.append(div);
+  }
+  if (!data.log.length) box.append(el("div", "note", "no story log"));
+  $("log-note").textContent = data.log.length + " lines" +
+    (data.timedLog ? "" : " · no times (older run): the scrubber cannot follow it");
+}
+
+// The last log line at or before `t`.
+function logIndexAt(t) {
+  let found = -1;
+  for (let i = 0; i < data.log.length; i++) {
+    if (data.log[i].unix_ms && data.log[i].unix_ms <= t) found = i;
+    else if (data.log[i].unix_ms > t) break;
+  }
+  return found;
+}
+
+let shownLog = -1;
+function markLog(scrollLog) {
+  const i = data.timedLog ? logIndexAt(now) : -1;
+  const box = $("log-at");
+  box.replaceChildren();
+  if (i >= 0) {
+    for (let k = Math.max(0, i - 2); k <= i; k++) {
+      box.append(el("div", k === i ? "now" : "", data.log[k].line));
+    }
+  } else {
+    box.append(el("div", "note", data.timedLog ? "before the first story line" :
+      "the story log has no times for this run"));
+  }
+  if (i === shownLog) return;
+  const rows = $("log").children;
+  if (shownLog >= 0 && rows[shownLog]) rows[shownLog].classList.remove("now");
+  shownLog = i;
+  if (i >= 0 && rows[i]) {
+    rows[i].classList.add("now");
+    if (scrollLog) {
+      const box2 = $("log");
+      box2.scrollTop = rows[i].offsetTop - box2.offsetTop - box2.clientHeight / 2;
+    }
+  }
+}
+
+// --- Frames and the scrubber ----------------------------------------------------
+
+function frameIndexAt(t) {
+  const f = data.frames;
+  let lo = 0, hi = f.length - 1, found = 0;
+  while (lo <= hi) {
+    const mid = (lo + hi) >> 1;
+    if (f[mid].unix_ms <= t) { found = mid; lo = mid + 1; } else hi = mid - 1;
+  }
+  return found;
+}
+
+let shownFrame = -1;
+function showFrame() {
+  if (!data.frames.length) return;
+  const i = frameIndexAt(now);
+  const f = data.frames[i];
+  if (i !== shownFrame) {
+    shownFrame = i;
+    $("frame").src = "files/frames/" + f.file;
+  }
+  $("scrub-step").replaceChildren(el("b", "", f.step || "–"),
+    " · frame " + (i + 1) + " of " + data.frames.length + (f.why !== "tick" ? " · " + f.why : ""));
+}
+
+function seek(t, opts) {
+  now = Math.min(Math.max(t, t0), t1);
+  const scrub = $("scrub");
+  if (Number(scrub.value) !== Math.round(now - t0)) scrub.value = Math.round(now - t0);
+  $("scrub-time").textContent = (data.zero !== null || data.frames.length ?
+    clock(now) + " · " : "") + duration(now - t0) + " into the run";
+  showFrame();
+  markLog(!(opts && opts.fromLog));
+  markPlan();
+  drawTimeline();
+}
+
+function setRange() {
+  const times = [];
+  if (data.frames.length) times.push(data.frames[0].unix_ms, data.frames[data.frames.length - 1].unix_ms);
+  if (data.probes && data.probes.lines && data.zero !== null) {
+    times.push(data.zero + data.probes.t0_ms, data.zero + data.probes.t1_ms);
+  }
+  for (const e of (data.plan ? data.plan.events : [])) {
+    if (e.started_ms != null) times.push(e.started_ms);
+    if (e.ended_ms != null) times.push(e.ended_ms);
+  }
+  if (data.timedLog && data.log.length) times.push(data.log[0].unix_ms, data.log[data.log.length - 1].unix_ms);
+  if (!times.length && data.probes && data.probes.lines) times.push(data.probes.t0_ms, data.probes.t1_ms);
+  if (!times.length) return;
+  t0 = Math.min(...times);
+  t1 = Math.max(...times);
+  $("scrub").max = Math.max(0, Math.round(t1 - t0));
+}
+
+function stepTimes() {
+  const s = new Set();
+  for (const e of (data.plan ? data.plan.events : [])) if (e.started_ms != null) s.add(e.started_ms);
+  return [...s].sort((a, b) => a - b);
+}
+
+$("scrub").addEventListener("input", (e) => seek(t0 + Number(e.target.value)));
+$("prev").addEventListener("click", () => stepFrame(-1));
+$("next").addEventListener("click", () => stepFrame(1));
+$("prev-step").addEventListener("click", () => {
+  const before = stepTimes().filter((t) => t < now - 1);
+  if (before.length) seek(before[before.length - 1]);
+});
+$("next-step").addEventListener("click", () => {
+  const after = stepTimes().find((t) => t > now + 1);
+  if (after !== undefined) seek(after);
+});
+$("to-failure").addEventListener("click", () => {
+  const f = data.frames.find((x) => x.why === "failure");
+  if (f) seek(f.unix_ms);
+});
+function stepFrame(d) {
+  if (data.frames.length) {
+    const i = Math.min(Math.max(frameIndexAt(now) + d, 0), data.frames.length - 1);
+    seek(data.frames[i].unix_ms);
+  } else {
+    seek(now + d * 1000);
+  }
+}
+document.addEventListener("keydown", (e) => {
+  if (e.target.tagName === "INPUT" && e.target.type !== "range") return;
+  if (e.key === "ArrowLeft") { stepFrame(-1); e.preventDefault(); }
+  if (e.key === "ArrowRight") { stepFrame(1); e.preventDefault(); }
+});
+
+// --- Probe timeline -------------------------------------------------------------
+
+let probeRows = [];
+
+// A probe's value at daemon time `t`: its last point at or before it.
+function valueAt(points, t) {
+  let lo = 0, hi = points.length - 1, found = -1;
+  while (lo <= hi) {
+    const mid = (lo + hi) >> 1;
+    if (points[mid][0] <= t) { found = mid; lo = mid + 1; } else hi = mid - 1;
+  }
+  return found < 0 ? null : points[found][1];
+}
+
+const toDaemon = (t) => data.zero !== null ? t - data.zero : t;
+const fromDaemon = (t) => data.zero !== null ? t + data.zero : t;
+
+// A run may have thousands of probes (template matches that ran once): the
+// first MAX_PROBE_ROWS that match the filter get a row, busiest first.
+const MAX_PROBE_ROWS = 60;
+let probeIds = [];
+
+function buildTimeline() {
+  const probes = data.probes ? data.probes.probes : {};
+  // The busiest first: a probe that changed often says more than one that
+  // ran once.
+  probeIds = Object.keys(probes).sort((a, b) =>
+    probes[b].points.length - probes[a].points.length || (a < b ? -1 : 1));
+  filterTimeline();
+}
+
+function probeRow(id, probe) {
+  const row = el("div", "probe");
+  const canvas = el("canvas");
+  const value = el("span", "v");
+  row.append(el("span", "pid", id), canvas, value);
+  row.title = id + " (" + probe.kind + ")";
+  canvas.addEventListener("click", (e) => {
+    const r = canvas.getBoundingClientRect();
+    seek(t0 + (e.clientX - r.left) / r.width * (t1 - t0));
+  });
+  return {id, row, canvas, value, points: probe.points};
+}
+
+function filterTimeline() {
+  const filter = $("probe-filter").value.trim();
+  try { localStorage.setItem("run.probeFilter", filter); } catch (e) {}
+  const box = $("timeline");
+  box.replaceChildren();
+  const ids = probeIds.filter((id) => !filter || id.includes(filter));
+  probeRows = ids.slice(0, MAX_PROBE_ROWS).map((id) => probeRow(id, data.probes.probes[id]));
+  for (const p of probeRows) box.append(p.row);
+  if (!probeIds.length) {
+    box.append(el("div", "note", data.probes ? "no probe values in this run's wire log" : ""));
+  } else if (ids.length > MAX_PROBE_ROWS) {
+    box.append(el("div", "note", (ids.length - MAX_PROBE_ROWS) + " more probes: filter by name"));
+  } else if (!ids.length) {
+    box.append(el("div", "note", "no probe matches the filter"));
+  }
+  drawTimeline();
+}
+$("probe-filter").addEventListener("input", filterTimeline);
+
+function drawTimeline() {
+  const css = getComputedStyle(document.documentElement);
+  const spark = css.getPropertyValue("--spark").trim();
+  const cursor = css.getPropertyValue("--bad").trim();
+  const span = Math.max(1, t1 - t0);
+  for (const p of probeRows) {
+    const c = p.canvas;
+    const w = c.clientWidth, h = c.clientHeight, dpr = window.devicePixelRatio || 1;
+    if (!w) continue;
+    if (c.width !== Math.round(w * dpr)) { c.width = Math.round(w * dpr); c.height = Math.round(h * dpr); }
+    const ctx = c.getContext("2d");
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, w, h);
+    let lo = Infinity, hi = -Infinity;
+    for (const [, v] of p.points) { lo = Math.min(lo, v); hi = Math.max(hi, v); }
+    const range = hi - lo || 1;
+    ctx.strokeStyle = spark;
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    let prevY = null;
+    for (const [t, v] of p.points) {
+      const x = (fromDaemon(t) - t0) / span * w;
+      const y = h - 2 - (v - lo) / range * (h - 4);
+      if (prevY === null) ctx.moveTo(x, y); else { ctx.lineTo(x, prevY); ctx.lineTo(x, y); }
+      prevY = y;
+    }
+    if (prevY !== null) ctx.lineTo(w, prevY);
+    ctx.stroke();
+    const x = (now - t0) / span * w;
+    ctx.fillStyle = cursor;
+    ctx.fillRect(Math.round(x), 0, 1, h);
+    const v = valueAt(p.points, toDaemon(now));
+    p.value.textContent = v === null ? "–" : String(v);
+  }
+}
+window.addEventListener("resize", () => drawTimeline());
+
+// --- Load -----------------------------------------------------------------------
+
+async function load() {
+  try {
+    data.record = await getJson("record.json");
+    renderRecord(data.record);
+  } catch (e) {
+    $("verdict").textContent = "no record of this run";
+    return;
+  }
+  const [plan, logText, storyText, daemon, framesText] = await Promise.all([
+    getJson("files/watch_plan.json").catch(() => null),
+    getText("files/watch_log.jsonl").catch(() => ""),
+    getText("files/story.log").catch(() => ""),
+    getJson("files/daemon.json").catch(() => null),
+    getText("files/frames/index.jsonl").catch(() => ""),
+  ]);
+  const timed = logText.trim() ? jsonLines(logText) : [];
+  data.timedLog = timed.length > 0;
+  data.log = data.timedLog ? timed :
+    storyText.split("\n").filter((l) => l !== "").map((line) => ({line}));
+  data.plan = plan || planFromLog(data.log);
+  data.zero = daemon && daemon.clock_zero_unix_ms ? daemon.clock_zero_unix_ms : null;
+  data.frames = framesText.trim() ? jsonLines(framesText) : [];
+  $("frame-count").textContent = data.frames.length ? data.frames.length + " frames" :
+    "not recorded (mGBA runs record with --record)";
+  $("frame").hidden = !data.frames.length;
+  $("to-failure").hidden = !data.frames.some((f) => f.why === "failure");
+  try { $("probe-filter").value = localStorage.getItem("run.probeFilter") || ""; } catch (e) {}
+  renderPlan();
+  renderLog();
+  setRange();
+  // ?t=S opens the run S seconds in; else at its failure, else its end.
+  const at = Number(new URLSearchParams(location.search).get("t"));
+  const failure = data.frames.find((f) => f.why === "failure");
+  seek(at > 0 ? t0 + at * 1000 : failure ? failure.unix_ms : t1);
+  // The timeline last: the hub reads the whole wire log for it once.
+  const started = performance.now();
+  const hadRange = t1 > t0;
+  try {
+    data.probes = await getJson("probes.json");
+    const n = Object.keys(data.probes.probes).length;
+    $("timeline-note").textContent = n + " probes, " + data.probes.lines + " wire lines, " +
+      "one value a second (" + Math.round(performance.now() - started) + " ms)" +
+      (data.zero === null ? " · daemon time" : "");
+  } catch (e) {
+    $("timeline-note").textContent = "no wire log";
+  }
+  setRange();
+  buildTimeline();
+  seek(hadRange ? now : t1);
+}
+load();
+</script>
+</body>
+</html>

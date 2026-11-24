@@ -20,7 +20,8 @@
         "kind": "game_action",
         "action": "cut_tree",
         "args": {
-          "direction": "north"
+          "direction": "north",
+          "species": "rattata"
         },
         "declared_after": {"map": "Route16", "tiles": [[41, 11]], "facing": "north"},
         "why": "cut the Route 16 tree to access the north grass patch"
@@ -143,7 +144,7 @@
   "metadata": {
     "phase": "testing",
     "postconditions": {
-      "party_includes": ["farfetchd"],
+      "party_includes": ["blastoise", "rattata", "pidgey", "abra", "farfetchd"],
       "money": {"min": 25014, "max": 25014}
     }
   }
