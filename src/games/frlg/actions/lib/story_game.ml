@@ -134,16 +134,10 @@ let heal t () =
       Result.bind (walk_to t front) (fun () ->
           Menu_input.run (Heal_and_save.heal_at_nurse ~log:t.config.log))
 
-(* The player's reckoned pose; an action that needs it fails without. *)
-let current t =
-  match t.at with
-  | Some at -> at
-  | None -> Menu_input.fail "position_unknown" "no position to pace from"
-
 let find_battle t ~pace ~patch () =
   Paced_battle.find ~log:t.config.log ~pace ~patch
     ~stands:(fun at -> t.at <- Some at)
-    (current t)
+    (Paced_battle.reckoned t.at)
 
 let screen_driver () =
   Frlg_battle.Screen_driver.make ~read_offered_move:Summary_moves.read_offered
@@ -157,9 +151,11 @@ let battle_on t wrap script =
 
 let battle t script = battle_on t Fun.id script
 
-(* Grind_plan reads a spot's one tile. *)
 let grind_rig t (plan : Grind_plan.t) =
-  let patch = List.hd plan.strategy.spot.tiles in
+  let patch =
+    List.hd plan.strategy.spot.tiles
+    (* Grind_plan reads one *)
+  in
   let find_battle = find_battle t ~pace:plan.strategy.pace ~patch in
   Grind_rig.make ~log:t.config.log ~party:t.party ~walk_to:(walk_to t)
     ~find_battle ~battle:(battle t)
@@ -210,7 +206,7 @@ let species_at t slot = List.nth_opt (Party_roster.to_list !(t.party)) (slot - 1
 (* The battles paced for from the tile the action starts on, and the player
    back on it afterwards, facing [pace] (mg-05a declares it so). *)
 let run_berry_pp t (plan : Berry_pp.plan) () =
-  let start = current t in
+  let start = Paced_battle.reckoned t.at in
   let rig : Berry_pp.rig =
     {
       lead = (fun () -> species_at t 1);
@@ -229,18 +225,9 @@ let prepare_berry_pp t (_ : Story.Plan.event) args =
       Menu_input.run (run_berry_pp t plan))
 
 let double_battle t (_ : Story.Plan.event) args =
-  let log = t.config.log in
-  let rig : Mail_glitch_battle.rig =
-    {
-      species_at = species_at t;
-      known_moves = known_moves t;
-      start_battle = Mail_glitch_battle.step_into_sight ~log;
-      restored = Mail_glitch_battle.pp_restored;
-      battle = battle_on t;
-      after_battle =
-        (fun () -> Menu_input.settle_back ~label:"after Lea & Jed" ~log);
-      log;
-    }
+  let rig =
+    Mail_glitch_battle.live_rig ~log:t.config.log ~species_at:(species_at t)
+      ~known_moves:(known_moves t) ~battle:(battle_on t)
   in
   Result.bind (Mail_glitch_battle.decode args) (fun plan ->
       Menu_input.run (fun () -> Mail_glitch_battle.run rig plan))

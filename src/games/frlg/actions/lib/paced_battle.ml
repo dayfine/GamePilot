@@ -1,3 +1,7 @@
+let reckoned = function
+  | Some at -> at
+  | None -> Menu_input.fail "position_unknown" "no position to pace from"
+
 let off_patch ~patch (at : Story.Pose.observed) =
   Menu_input.fail "off_patch"
     (Printf.sprintf "%s is not the patch %s or next to it"

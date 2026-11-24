@@ -12,6 +12,9 @@
     12), then no battle in 25 batches); pacing keeps the player on two known
     grass tiles. *)
 
+val reckoned : Story.Pose.observed option -> Story.Pose.observed
+(** The player's reckoned pose; fails as [position_unknown] without one. *)
+
 val find :
   log:(string -> unit) ->
   pace:Grid_maps.Direction.t ->
