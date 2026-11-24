@@ -130,6 +130,7 @@ In-process pipeline and the rule on each edge:
 | probes -> client | ordered, bounded; a slow client sees a gap in `seq`, never silent loss |
 | client -> scheduler | ordered, reliable, never dropped |
 | OCR / model requests | separate pool, request/reply, never stalls per-frame results |
+| daemon -> watch page | pulled frames (at most 5 per second, only while a page is open) and events; a slow viewer is dropped, never waited for; never in the wire log (`Watch-Page.md`) |
 
 When ML is worth it: only for a target with no fixed pixels, meaning an object in a 3D
 world under a free camera. In the repo that is SV Area Zero navigation and one LZA hunt.
@@ -321,4 +322,5 @@ Estimates here are rough judgments, not measurements.
 | R18 | Maps and plans | PokemonSimulation as a read-only submodule: maps are read from it, never copied. Program plans live with the program and are refined there: `mg-01..05` copied from fork #781 (`31dce02b8`) into `src/games/frlg/programs/mail_glitch/plans/` |
 | R20 | Mail Glitch shape | Follow fork #804's split instead of #781's monolith: `pokemon/story` gets `repeat_until` (idempotent looped checkpoints); `games/frlg/actions` gets the shared actions (`party_swap`, `give_bag_item`, `buy_coins`, `redeem_prize_mon`, `ingame_trade`, `spin_for_encounter`); `games/frlg/battle` gets a driver (single + double, ally targeting) under a scripted battle runner; `programs/mail_glitch` keeps only its table and sequence |
 | R21 | Porting and order | User 2026-11-23: everything runs on the Switch in the end, after mGBA testing. Ports from the fork are transparent (same behaviour, steps and timings; each module names its C++ source); refactors come later. Programs go in order (mg-01 → mg-05) through the checkpoint runner, with the C++ AutoStory dev loop (start states per checkpoint, end-state verification, retries, failure records) carried over. |
+| R22 | Watching a run | User 2026-11-23, option A: the daemon serves one HTML/JS page (frame with probe boxes, plan, log, health, Stop) on its own port, localhost unless `--listen`; the program publishes plan and log as notifications and honours `stop` at its next wait (`Watch-Page.md`) |
 | R19 | Text reading | FRLG: font templates, no OCR. Glyphs and widths come from pokefirered's font graphics; a reader draws each dictionary candidate (item, move names; per-language dictionaries as in Arduino-Source) and scores it with `core.template_match@1`, which the daemon scales from game pixels (v1.2). Two glyph sets cover all six FRLG languages (Western, Japanese); English data first. OCR only for a future game with a large character set |

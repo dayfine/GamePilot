@@ -471,6 +471,16 @@ pa::JsonValue batch_done_notification(const std::string& batch_id,
   return message;
 }
 
+pa::JsonValue stop_notification(const std::string& reason) {
+  pa::JsonObject params;
+  params["reason"] = reason;
+  pa::JsonObject message;
+  message["jsonrpc"] = "2.0";
+  message["method"] = "stop";
+  message["params"] = std::move(params);
+  return message;
+}
+
 pa::JsonValue wire_log_line(const char* dir, double t_ms, pa::JsonValue msg) {
   pa::JsonObject line;
   line["dir"] = dir;

@@ -7,12 +7,12 @@
     wire log. Both see the same scheduler, so a replay takes the same decisions
     the live run took. *)
 
-type event =
+type event = Client_connection.event =
   | Message of Wire.message
   | Idle  (** nothing arrived for a while; lets [await] check the wall clock *)
   | Closed of string  (** no more messages, with the reason *)
 
-type transport = {
+type transport = Client_connection.transport = {
   send : Wire.message -> unit;
   recv : unit -> event;  (** blocks until the next event *)
   wall_ms : unit -> float;
@@ -31,4 +31,9 @@ val client_name : string
 
 val run : transport -> (unit -> 'a) -> 'a
 (** Sends [hello], then runs the program with the effects handled. Raises
-    [Effects.Rpc_error], [Effects.Disconnected] or [Protocol_error]. *)
+    [Effects.Rpc_error], [Effects.Disconnected] or [Protocol_error]. After the
+    daemon's [stop], every wait on the game ([submit], [race], [await], and the
+    first results of a [subscribe]) raises [Effects.Stop_requested] into the
+    program; plain requests (saves, [unsubscribe]) still run, so the program's
+    failure path works. [show_plan] and [show_log] go out as [watch.plan] and
+    [watch.log] notifications. *)

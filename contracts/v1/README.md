@@ -1,4 +1,4 @@
-# Wire protocol v1.5
+# Wire protocol v1.6
 
 JSON-RPC 2.0 between the OCaml programs (client) and the daemon (server). The golden files in this
 folder are the spec: the daemon's tests parse every file and the OCaml tests decode and re-encode
@@ -15,6 +15,8 @@ v1.4 frame, so older wire logs replay unchanged.
 v1.5 adds `status` (the daemon's health: thread heartbeats, capture ring, gaps, client, fidelity),
 answered also on a second connection while a client is served, and the live `switch` backend (see
 Live backends).
+v1.6 adds the watch page's three notifications (see Watch page): `watch.plan` and `watch.log` from
+the program, `stop` from the daemon. A program that sends neither and never gets a stop speaks v1.5.
 v1.2 makes the daemon own where the game picture sits in the frame: `hello` gives the `viewport` and
 the `game_size`, probe boxes and template placements are relative to the picture, templates are in game
 pixels, and `core.color_count@1` is new.
@@ -30,7 +32,8 @@ size) every v1.1 message means the same in v1.2.
   When the client disconnects, the daemon drops its probes and queued commands.
 - One JSON object per line, LF-terminated, UTF-8, no embedded newlines.
 - Requests have an `id`; the daemon answers each with exactly one `result` or `error`.
-  Notifications (`frame`, `batch_done`) have no `id`.
+  Notifications (`frame`, `batch_done`, `stop`; `watch.plan` and `watch.log` from the client)
+  have no `id`.
 - Responses do not name their method: JSON-RPC 2.0 ties a response to its request by `id`, and the
   client already holds each pending request by id, so a method name in the result would only repeat
   it (and could disagree with it).
@@ -119,6 +122,22 @@ no save states). The game picture sits inside the frame (`viewport`, by default 
   numbers, so a still screen sends nothing; the rounding is not coarsened for this, because a probe
   whose numbers change does so because its pixels did.
 - `batch_done`: `batch_id`, `seq`, `t_ms` once the batch's last command (including its cooldown) ended.
+- `stop`: `reason` (`32-stop.notification.json`). Someone pressed Stop on the watch page. The daemon
+  has already dropped the queued commands and released every button (as `cancel` does; queued
+  batches get no `batch_done`). The program ends at its next wait and may still make requests on its
+  way out (save the failure frame and state, unsubscribe).
+
+## Watch page
+
+The program tells the daemon what only it knows, for the daemon's watch page
+(`docs/design/Watch-Page.md`). Both are notifications from the client (no `id`, no answer), and the
+daemon keeps them out of the wire log; without a watch page it drops them.
+
+- `watch.plan`: `checkpoint`, `events`: list of {`id`, `state`, `detail`}
+  (`30-watch_plan.notification.json`). Every event of the running checkpoint, each time one changes.
+  `state` is `pending`, `current`, `done`, `failed` or `skipped`; `detail` is a failure's reason,
+  the flag a skip held on, or empty.
+- `watch.log`: `line` (`31-watch_log.notification.json`): one story log line.
 
 ## Probe kinds
 
@@ -180,5 +199,6 @@ reader decides "black" from those numbers (low mean, low stddev) in OCaml.
 
 ## Wire log
 
-The daemon writes every message it sends or receives, one per line (`14-wire_log.line.json`):
+The daemon writes every message it sends or receives, except the client's `watch.plan` and
+`watch.log`, one per line (`14-wire_log.line.json`):
 `dir` (`in` = from the client, `out` = to the client), `t_ms`, `msg`. Replay reads this file.

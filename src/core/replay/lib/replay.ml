@@ -99,7 +99,14 @@ type cursor = {
 
 let next_client_message r = find_from r.log r.next_in (is_dir Wire.In)
 
-let send r actual =
+(* The program's watch notifications are not in the wire log (the daemon keeps
+   them out), so the replay drops them too. *)
+let rec send r actual =
+  match actual with
+  | Wire.Notification (Wire.Watch_plan _ | Wire.Watch_log _) -> ()
+  | _ -> send_logged r actual
+
+and send_logged r actual =
   r.ran_out <- false;
   match next_client_message r with
   | None ->

@@ -5,6 +5,12 @@ type raced = Finished of Wire.batch_done | Stopped of measurements
 
 exception Rpc_error of Wire.error
 exception Disconnected of string
+exception Stop_requested of string
+
+let () =
+  Printexc.register_printer (function
+    | Stop_requested reason -> Some reason
+    | _ -> None)
 
 type _ Effect.t +=
   | Submit : Wire.command list -> Wire.batch_done Effect.t
@@ -18,6 +24,8 @@ type _ Effect.t +=
   | Upload_template : string -> template_hash Effect.t
   | Subscribe : Wire.probe_spec list -> string list Effect.t
   | Unsubscribe : string list -> string list Effect.t
+  | Show_plan : Wire.Watch.plan -> unit Effect.t
+  | Show_log : string -> unit Effect.t
 
 let submit commands = Effect.perform (Submit commands)
 let await ~timeout_ms pred = Effect.perform (Await (pred, timeout_ms))
@@ -30,6 +38,8 @@ let save_frame path = Effect.perform (Save_frame path)
 let upload_template png = Effect.perform (Upload_template png)
 let subscribe probes = Effect.perform (Subscribe probes)
 let unsubscribe ids = Effect.perform (Unsubscribe ids)
+let show_plan plan = Effect.perform (Show_plan plan)
+let show_log line = Effect.perform (Show_log line)
 let probe (m : measurements) id = List.assoc_opt id m.probes
 
 (* The probe ids the [with_probes] calls running on this domain subscribed:

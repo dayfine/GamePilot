@@ -1,0 +1,34 @@
+{
+  "jsonrpc": "2.0",
+  "method": "watch.plan",
+  "params": {
+    "checkpoint": "mg-01",
+    "events": [
+      {
+        "id": "ready",
+        "state": "done",
+        "detail": ""
+      },
+      {
+        "id": "talk_coin_case_man",
+        "state": "failed",
+        "detail": "no_text: the text box did not open"
+      },
+      {
+        "id": "walk_to_mart",
+        "state": "skipped",
+        "detail": "has_coin_case"
+      },
+      {
+        "id": "talk_clerk",
+        "state": "current",
+        "detail": ""
+      },
+      {
+        "id": "save",
+        "state": "pending",
+        "detail": ""
+      }
+    ]
+  }
+}

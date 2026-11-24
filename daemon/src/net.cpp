@@ -128,7 +128,13 @@ void init_sockets() {
 #endif
 }
 
-Socket listen_local(std::uint16_t port) {
+Socket listen_tcp(const std::string& address, std::uint16_t port) {
+  sockaddr_in bound{};
+  bound.sin_family = AF_INET;
+  bound.sin_port = htons(port);
+  if (inet_pton(AF_INET, address.c_str(), &bound.sin_addr) != 1) {
+    throw std::runtime_error("not an IPv4 address: " + address);
+  }
   const NativeSocket socket = ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
   if (socket == kNativeInvalid) {
     throw std::runtime_error("socket() failed");
@@ -137,16 +143,45 @@ Socket listen_local(std::uint16_t port) {
   int one = 1;
   setsockopt(socket, SOL_SOCKET, SO_REUSEADDR,
              reinterpret_cast<const char*>(&one), sizeof(one));
-  const sockaddr_in address = loopback(port);
-  if (::bind(socket, reinterpret_cast<const sockaddr*>(&address),
-             sizeof(address)) != 0) {
-    throw std::runtime_error("cannot bind 127.0.0.1:" + std::to_string(port));
+  const std::string where = address + ":" + std::to_string(port);
+  if (::bind(socket, reinterpret_cast<const sockaddr*>(&bound),
+             sizeof(bound)) != 0) {
+    throw std::runtime_error("cannot bind " + where);
   }
-  if (::listen(socket, 4) != 0) {
-    throw std::runtime_error("cannot listen on 127.0.0.1:" +
-                             std::to_string(port));
+  if (::listen(socket, 8) != 0) {
+    throw std::runtime_error("cannot listen on " + where);
   }
   return result;
+}
+
+Socket listen_local(std::uint16_t port) {
+  return listen_tcp("127.0.0.1", port);
+}
+
+std::uint16_t local_port(const Socket& socket) {
+  sockaddr_in address{};
+#ifdef _WIN32
+  int size = sizeof(address);
+#else
+  socklen_t size = sizeof(address);
+#endif
+  if (getsockname(native(socket.handle()),
+                  reinterpret_cast<sockaddr*>(&address), &size) != 0) {
+    return 0;
+  }
+  return ntohs(address.sin_port);
+}
+
+void set_send_timeout(const Socket& socket, int ms) {
+#ifdef _WIN32
+  const DWORD timeout = static_cast<DWORD>(ms);
+#else
+  timeval timeout{};
+  timeout.tv_sec = ms / 1000;
+  timeout.tv_usec = (ms % 1000) * 1000;
+#endif
+  setsockopt(native(socket.handle()), SOL_SOCKET, SO_SNDTIMEO,
+             reinterpret_cast<const char*>(&timeout), sizeof(timeout));
 }
 
 Socket accept_client(const Socket& listener) {
