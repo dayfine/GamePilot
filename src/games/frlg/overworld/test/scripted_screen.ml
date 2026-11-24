@@ -39,6 +39,9 @@ type screen =
   | Summary_at of string * int
       (** The same page showing this species name and this level in its top
           left: the species line and the level's digit cells read them. *)
+  | Title  (** The title screen, "PRESS START" (mGBA). *)
+  | Load_menu  (** CONTINUE over NEW GAME after the title (mGBA). *)
+  | Recap  (** "Previously on your quest" after CONTINUE (mGBA). *)
 
 let screen_name = function
   | Overworld -> "overworld"
@@ -58,6 +61,9 @@ let screen_name = function
   | Mart_list -> "mart list"
   | Summary name -> "summary " ^ name
   | Summary_at (name, level) -> Printf.sprintf "summary %s Lv %d" name level
+  | Title -> "title"
+  | Load_menu -> "load menu"
+  | Recap -> "recap"
 
 (* The fixture images each screen is read from; a screen merges the probes of
    every fixture file that has its image. *)
@@ -81,6 +87,9 @@ let image = function
   | Item_menu -> "mg04-escape-rope/item-menu-escape-rope__itemmenu.png"
   | Mart_list -> "ItemListReader/MartBuyList_eng__money.png"
   | Summary _ | Summary_at _ -> "captures/sm3_s1__summary1.png"
+  | Title -> "mail-glitch-04/continue__none.png"
+  | Load_menu -> "mail-glitch-04/save-select__loadmenu.png"
+  | Recap -> "mail-glitch-04/location__none.png"
 
 (* Copied next to the test by its dune rules. *)
 let fixtures =
@@ -168,8 +177,17 @@ let border_on ~slot probes =
    bottom. *)
 let member_menu_rows = 4
 
+(* The recorded "overworld" frame (mail-glitch-04/overworld.png) is the load
+   menu, as its screen fixture's tag says: it stands in for an overworld only
+   for the readers that subscribe there, so its load-menu probes are dropped. *)
+let not_load_menu = function
+  | Overworld | Flash ->
+      List.filter (fun (id, _) ->
+          not (String.starts_with ~prefix:"load_menu." id))
+  | _ -> Fun.id
+
 let screen_probes screen =
-  let p = find_probes screen in
+  let p = not_load_menu screen (find_probes screen) in
   match screen with
   | Flash -> List.map darken p
   | Start_menu row -> arrow_on ~prefix:"start_menu" ~row p
@@ -299,8 +317,16 @@ let level_lines level =
   |> List.of_seq
   |> List.mapi (Printf.sprintf "summary_level.%d/%c")
 
+(* The full Start menu's names, row by row ("start_menu_name.<row>/<NAME>");
+   row 3, the player's name, reads as none. *)
+let start_menu_lines =
+  List.mapi
+    (Printf.sprintf "start_menu_name.%d/%s")
+    [ "POKéDEX"; "POKéMON"; "BAG"; "-"; "SAVE"; "OPTION"; "EXIT" ]
+
 let text_line id =
-  String.starts_with ~prefix:species_line id
+  String.starts_with ~prefix:"start_menu_name" id
+  || String.starts_with ~prefix:species_line id
   || String.starts_with ~prefix:"bag" id
   || String.starts_with ~prefix:"summary_level" id
 
@@ -311,6 +337,7 @@ let text_result screen id =
     | Summary_at (name, level) ->
         id = species_line ^ name || List.mem id (level_lines level)
     | Bag_items items -> List.mem id (bag_lines items)
+    | Start_menu _ -> List.mem id start_menu_lines
     | _ -> false
   in
   ( id,

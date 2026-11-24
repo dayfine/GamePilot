@@ -19,6 +19,7 @@ let screens =
     "berry_pouch_numbers";
     "summary_level";
     "mail_editor";
+    "start_menu";
   ]
 
 let glyphs =
@@ -36,6 +37,8 @@ let line_of_id id =
   and small line = (line, Number_reading.small_max_score) in
   match String.split_on_char '.' id with
   | [ "bag"; i ] -> normal (Text_lines.bag_row (int_of_string i))
+  | [ "start_menu_name"; i ] ->
+      normal (Text_lines.start_menu_row (int_of_string i))
   | [ "tm_case"; i ] -> normal (Text_lines.tm_case_row (int_of_string i))
   | [ "summary_move"; i ] -> normal (Text_lines.summary_move (int_of_string i))
   | [ "battle_message"; i ] ->

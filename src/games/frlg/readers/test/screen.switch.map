@@ -61,3 +61,6 @@ clt PokemonFRLG/WildEncounterReader/eng_unown_p.png|WildEncounterReader/eng_unow
 clt PokemonFRLG/WildEncounterReader/eng_unown_qu.jpg|WildEncounterReader/eng_unown_qu__textbox-battle.jpg
 clt PokemonFRLG/WildEncounterReader/eng_unown_s.png|WildEncounterReader/eng_unown_s__textbox-battle.png
 clt PokemonFRLG/WildEncounterReader/fra_snorlax.jpg|WildEncounterReader/fra_snorlax__textbox-battle.jpg
+repo src/games/frlg/readers/test/images/switch/console-b-20261123/load-menu.png|console-b-20261123/load-menu__loadmenu.png
+repo src/games/frlg/readers/test/images/switch/console-b-20261123/save-overwrite.png|console-b-20261123/save-overwrite__dialog-choice.png
+repo src/games/frlg/readers/test/images/switch/console-b-20261123/pallet-overworld.png|console-b-20261123/pallet-overworld__none.png

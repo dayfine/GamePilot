@@ -84,3 +84,23 @@
   gamepilot.story
   gamepilot.frlg_story
   frlg_overworld_fixtures))
+
+(test
+ (name test_console_start)
+ (modules test_console_start)
+ (deps
+  mg-01.plan.json
+  mg-02.plan.json
+  mg-03.plan.json
+  mg-04.plan.json
+  mg-05a.plan.json
+  mg-05.plan.json
+  mg-06.plan.json)
+ (libraries
+  yojson
+  gamepilot.wire
+  gamepilot.case_table
+  gamepilot.story
+  gamepilot.frlg_readers
+  gamepilot.frlg_actions
+  gamepilot.frlg_story))

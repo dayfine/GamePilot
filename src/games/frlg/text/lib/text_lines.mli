@@ -34,6 +34,13 @@ val battle_message : int -> t
     7): its capitals from x 10, rows from 125, three below the cell's top as on
     the bag's list. *)
 
+val start_menu_row : int -> t
+(** Row [i] (0..6) of the Start menu's names (POKéDEX, POKéMON, BAG, the
+    player's, SAVE, OPTION, EXIT on the full menu). Measured on mGBA
+    (mail-glitch-04 pause-menu.png, 2026-11-23): the capitals' top at y 11 + 15
+    i (glyph cell top 3 above), the names from x 184, the window's right edge at
+    x 234. *)
+
 val summary_species : t
 (** The species on the summary's POKéMON INFO page (page 1), right of NAME:
     pokefirered pokemon_summary_screen.c, [PrintInfoPage], at (47, 19) in the

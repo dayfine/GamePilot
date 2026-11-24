@@ -7,6 +7,7 @@
      choice  a Yes/No box above it     textbox a battle's teal text box
      menu    the battle action menu    battle  any battle screen
      black, white  a fade              dark    black corners, lit middle
+     loadmenu  the load menu (CONTINUE)
      none    none of these
 
    Switch names keep their CommandLineTests folder and file name, whose
@@ -109,6 +110,11 @@ let readers =
       reader = "dark_corners";
       verdict = flag Dark_corners.dark_corners;
       expected = tagged "dark";
+    };
+    {
+      reader = "load_menu";
+      verdict = flag Load_menu.load_menu_open;
+      expected = tagged "loadmenu";
     };
     {
       reader = "facts";
