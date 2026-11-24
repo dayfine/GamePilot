@@ -65,7 +65,8 @@ void Server::start_watch() {
   watch_->set_info(to_line(pa::JsonValue(hello_result(backend_.info()))));
 }
 
-// A `watch.plan` or `watch.log` notification from the program: the page's,
+// A `watch.plan`, `watch.run` or `watch.log` notification from the program:
+// the page's,
 // so it never reaches dispatch or the wire log. Without a page it is dropped.
 bool Server::take_watch_note(const pa::JsonValue& message) {
   const pa::JsonObject* object = message.to_object();
@@ -73,8 +74,8 @@ bool Server::take_watch_note(const pa::JsonValue& message) {
     return false;
   }
   const std::string* method = object->get_string("method");
-  if (method == nullptr ||
-      (*method != "watch.plan" && *method != "watch.log")) {
+  if (method == nullptr || (*method != "watch.plan" && *method != "watch.run" &&
+                            *method != "watch.log")) {
     return false;
   }
   const pa::JsonObject* params = object->get_object("params");
@@ -82,6 +83,8 @@ bool Server::take_watch_note(const pa::JsonValue& message) {
     std::string json = to_line(pa::JsonValue(params->clone()));
     if (*method == "watch.plan") {
       watch_->set_plan(std::move(json));
+    } else if (*method == "watch.run") {
+      watch_->set_run(std::move(json));
     } else {
       watch_->add_log(std::move(json));
     }

@@ -53,6 +53,7 @@ type _ Effect.t +=
   | Unsubscribe : string list -> string list Effect.t
   | Show_plan : Wire.Watch.plan -> unit Effect.t
   | Show_log : string -> unit Effect.t
+  | Show_run : Wire.Watch_run.t -> unit Effect.t
 
 (** {1 Ops} *)
 
@@ -124,6 +125,9 @@ val show_plan : Wire.Watch.plan -> unit
 
 val show_log : string -> unit
 (** One story log line. *)
+
+val show_run : Wire.Watch_run.t -> unit
+(** The chain of checkpoints and the current one's trials. *)
 
 (** {1 Helpers for readers} *)
 

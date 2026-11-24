@@ -2,8 +2,8 @@
 
 `gamepilot checkpoints ... --watch` opens a page for watching one run live, the same on mGBA and
 the Switch, from any browser: the game frame with the subscribed probe boxes and their latest
-results, the checkpoint's events (done, current, failed, skipped), the story log, the daemon's
-health, and a Stop button. It is step 1 and part of step 2 of `Control-UI.md`.
+results, the chain of checkpoints the run goes through, the checkpoint's events (done, current,
+failed, skipped), the story log, the daemon's health, and a Stop button. It is step 1 and part of step 2 of `Control-UI.md`.
 
 ## Data flow
 
@@ -26,6 +26,14 @@ health, and a Stop button. It is step 1 and part of step 2 of `Control-UI.md`.
   notifications (`watch.plan`, `watch.log`, contract v1.6) sent through the `show_plan`/`show_log`
   effects. Notifications need no answer, so they cost the program nothing but a write. The daemon
   keeps the latest plan and the last 1000 lines for a page that connects later.
+- **The chain is the runner's** (`watch.run`, contract v1.7): `gamepilot checkpoints --from --to`
+  sends every checkpoint's state and time, the mode and the current checkpoint's trial (2 of 3, 1
+  pass) at the start and the end of each run (`Story.Chain_progress`). Each run has its own daemon,
+  so the page's stream reconnects between runs and gets the chain again. The page shows it as a Run
+  strip of chips above the plan and keeps each checkpoint's last plan in its own memory, so clicking
+  a finished checkpoint shows its events at its end; the daemon keeps only the latest of each. The
+  current event shows how long the page has seen it running (the plan carries no start times) and,
+  for a grind, the battle count and goal from the grind's log lines.
 - **Stop goes back through the daemon**: it clears the queued commands and releases every button at
   once, then sends `stop` to the program. The session marks itself stopped, and the program's next
   wait on the game (`submit`, `race`, `await`) raises `Effects.Stop_requested`. Plain requests still
