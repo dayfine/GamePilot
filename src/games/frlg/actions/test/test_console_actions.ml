@@ -172,16 +172,16 @@ let save_cases =
   ]
 
 let () =
-  Case_table.run "console actions"
+  Table_test.run "console actions"
     (List.map
        (fun (name, input, expectation) ->
-         { Case_table.name; input; expectation })
+         { Table_test.name; input; expectation })
        reset_cases
     @ List.map
         (fun (name, screens, expectation) ->
-          { Case_table.name; input = (fun () -> steps screens); expectation })
+          { Table_test.name; input = (fun () -> steps screens); expectation })
         dialog_cases
     @ List.map
         (fun (name, input, expectation) ->
-          { Case_table.name; input; expectation })
+          { Table_test.name; input; expectation })
         save_cases)

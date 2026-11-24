@@ -10,8 +10,8 @@ section 13 (R1-R20). This file says what is built in what order. Mark each item 
 |---|---|---|
 | Layout and naming (R16, R17) | `src/` | #5 merged |
 | PokemonSimulation submodule, `mg-*` plans copied (R18) | `third_party/`, `games/frlg/programs/mail_glitch/plans/` | #6 merged |
-| **OCaml linters** (see below) | `lint/` | run in `dune test` and CI before any large port lands |
-| Contract v1.1: load counter in `frame`, method in responses, probe kind in results; replay checks every recorded request was sent | `contracts/`, `daemon/`, `src/base/wire`, `src/core/replay` | both sides pass the golden files; PoC passes live again |
+| **OCaml linters** (see below) | `dev/lint/` | run in `dune test` and CI before any large port lands |
+| Contract v1.1: load counter in `frame`, method in responses, probe kind in results; replay checks every recorded request was sent | `protocol/`, `daemon/`, `src/base/wire`, `src/core/replay` | both sides pass the golden files; PoC passes live again |
 
 ### Linters
 
@@ -24,7 +24,7 @@ ported code is written to them instead of fixed afterwards:
   `core` and `base`, a game on `pokemon`, `core` and `base`, a program on its own game; `bin` on anything;
 - one exceptions file with a reason per entry.
 
-They go in `lint/` as their own dune project, driven by a config file (roots, thresholds, layer
+They go in `dev/lint/` as their own dune project, driven by a config file (roots, thresholds, layer
 table), with nothing GamePilot-specific in the code. Moving them to a shared repo (for example
 `dayfine/ocaml-lint`, used by trading too) is then a `git subtree split` with no code change; that
 happens when trading agrees to consume it.

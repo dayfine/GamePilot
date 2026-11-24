@@ -29,7 +29,7 @@ def main(args):
         want = fmt(json.loads(text)) + "\n"
         if text != want:
             if check:
-                print(f"{path}: not formatted (run tools/fmt_json.py {path})")
+                print(f"{path}: not formatted (run dev/lint/fmt_json.py {path})")
                 bad = 1
             else:
                 with open(path, "w") as f:

@@ -7,7 +7,7 @@
 # is safe only while each definition still carries them. This check fails when
 # a listed agent's definition loses the block or a required phrase.
 #
-# usage: sh bin/agent-standing-rules-check.sh [ROOT]
+# usage: sh .agents/checks/agent-standing-rules-check.sh [ROOT]
 #   ROOT defaults to the current directory. Reads ROOT/.agents/standing-rules.conf
 #   (lines: <agent> <role>...; roles all|build|review) and checks
 #   ROOT/.agents/agents/<agent>.md. No conf file: nothing to check, exit 0.

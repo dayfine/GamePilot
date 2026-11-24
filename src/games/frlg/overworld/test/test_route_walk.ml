@@ -91,10 +91,10 @@ let flash_after_release screen (p : S.press) =
 
 let in_house = place pallet "PalletTown_PlayersHouse_1F" 4 6
 let route1_top = place pallet "Route1" 12 5
-let case name input expectation = { Case_table.name; input; expectation }
+let case name input expectation = { Table_test.name; input; expectation }
 
 let () =
-  Case_table.run "route_walk"
+  Table_test.run "route_walk"
     [
       case "out of the house: the exit mat's fade is waited out"
         (walk ~react:fade_after_hold ~from:in_house

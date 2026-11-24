@@ -6,7 +6,7 @@
 
 open Frlg_story
 
-let case name input expectation = { Case_table.name; input; expectation }
+let case name input expectation = { Table_test.name; input; expectation }
 let world = lazy (Result.get_ok (Checkpoint_run.load_world ()))
 
 let kind map tile =
@@ -73,4 +73,4 @@ let cases =
       "Route8 (45, 12) grass, (44, 12) grass";
   ]
 
-let () = Case_table.run "paced_patches" cases
+let () = Table_test.run "paced_patches" cases

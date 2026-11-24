@@ -44,4 +44,4 @@ let cases =
 
 let () =
   List.iter (run_case ~read_map:of_json) cases;
-  Case_table.finish ()
+  Table_test.finish ()

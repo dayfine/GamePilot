@@ -55,7 +55,7 @@ let choose ?(rules = rules) ?(need = two_free) members () =
   | Ok plan -> R.plan_to_string plan
   | Error e -> "stop: " ^ e
 
-let case name input expectation : Case_table.case = { name; input; expectation }
+let case name input expectation : Table_test.case = { name; input; expectation }
 let first n l = List.filteri (fun i _ -> i < n) l
 
 let cases =
@@ -134,4 +134,4 @@ let cases =
       "magikarp Lv 5 (splash)";
   ]
 
-let () = Case_table.run "room policy" cases
+let () = Table_test.run "room policy" cases

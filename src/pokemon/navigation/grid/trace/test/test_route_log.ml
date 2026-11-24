@@ -33,7 +33,7 @@ let bdsp_legs =
   ]
 
 let frlg_legs = [ { Route_leg.leg = north_open; after = frlg_north } ]
-let case name input expectation = { Case_table.name; input; expectation }
+let case name input expectation = { Table_test.name; input; expectation }
 
 let leg_cases =
   [
@@ -119,4 +119,4 @@ let end_cases =
       "To the grass: arrived at Route 202 (20, 25).";
   ]
 
-let () = Case_table.run "RouteLog" (leg_cases @ plan_cases @ end_cases)
+let () = Table_test.run "RouteLog" (leg_cases @ plan_cases @ end_cases)

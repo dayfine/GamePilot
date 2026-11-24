@@ -39,7 +39,7 @@ let end_of ?next events =
 let route_to_door =
   {|{"id": "to_door", "kind": "route", "args": {"target": {"map": "Town", "tiles": [[4, 0]]}}}|}
 
-let cases : Case_table.case list =
+let cases : Table_test.case list =
   [
     {
       name = "verification: 2 of 3 passes the checkpoint";
@@ -123,8 +123,8 @@ let lost =
 let broke =
   Attempt_failed { at = "#1 battle"; reason = "timeout"; repeats = false }
 
-let attempt_cases : Case_table.case list =
-  let case name ~retries list expectation : Case_table.case =
+let attempt_cases : Table_test.case list =
+  let case name ~retries list expectation : Table_test.case =
     { name; input = (fun () -> attempts_text retries list); expectation }
   in
   [
@@ -146,5 +146,5 @@ let attempt_cases : Case_table.case list =
   ]
 
 let () =
-  Case_table.run "checkpoint_trials" cases;
-  Case_table.run "checkpoint attempts" attempt_cases
+  Table_test.run "checkpoint_trials" cases;
+  Table_test.run "checkpoint attempts" attempt_cases

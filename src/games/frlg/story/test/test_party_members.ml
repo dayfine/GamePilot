@@ -6,7 +6,7 @@
 
 open Frlg_actions
 
-let case name input expectation = { Case_table.name; input; expectation }
+let case name input expectation = { Table_test.name; input; expectation }
 
 let plan id =
   match Story.Plan_decode.load (id ^ ".plan.json") with
@@ -129,4 +129,4 @@ let picking =
        duplicate_item";
   ]
 
-let () = Case_table.run "party members" (slots @ picking)
+let () = Table_test.run "party members" (slots @ picking)

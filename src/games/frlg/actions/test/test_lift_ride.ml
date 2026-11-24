@@ -53,13 +53,13 @@ let ride ~dims () =
   in
   Printf.sprintf "%s; %s" (outcome result) (S.presses_text screen)
 
-let case name input expectation = { Case_table.name; input; expectation }
+let case name input expectation = { Table_test.name; input; expectation }
 
 let presses_case name ~from ~to_ expected =
   case name (fun () -> presses ~from ~to_) expected
 
 let () =
-  Case_table.run "lift_ride"
+  Table_test.run "lift_ride"
     [
       presses_case "B2F to B4F: one down" ~from:"B2F" ~to_:"B4F" "1 south";
       presses_case "B4F to B1F: two down past EXIT" ~from:"B4F" ~to_:"B1F"

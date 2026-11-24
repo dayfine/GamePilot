@@ -1,5 +1,5 @@
 (** Replay handler: runs a program against a recorded wire log
-    ([contracts/v1/14-wire_log.line.json] format) instead of the daemon.
+    ([protocol/v1/14-wire_log.line.json] format) instead of the daemon.
 
     Daemon output ([dir = out]) is fed to the program in log order: frames,
     [batch_done] notifications and responses. Each message the program sends

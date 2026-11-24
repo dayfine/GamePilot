@@ -51,7 +51,7 @@ until the new stack passes a measured gate (section 9).
 | D7 | OCaml layering | measurements -> facts -> logic; replay injects measurements, sim injects facts |
 | Q13 | Program style | Direct-style kernel and actions; checkpoints and stories as typed data |
 | D8 | Effects | Programs depend only on our own small effect set, never on an I/O library directly |
-| Q14 | Agents/MCP | Extend pa-lab with a second channel adapter; `contracts/v1` is the spec |
+| Q14 | Agents/MCP | Extend pa-lab with a second channel adapter; `protocol/v1` is the spec |
 | Q15 | Budget | Week 0 spikes, then S0+S1 in at most 5 weeks on one lane, with stop rules |
 
 ## 3. Layer 1: I/O
@@ -288,7 +288,7 @@ Estimates here are rough judgments, not measurements.
 - Recordings: the wire log plus a frame-ring dump on failure, under the existing lab disk
   GC.
 - Repo: `dayfine/GamePilot`, private, with `daemon/` (C++) and `programs/` (dune),
-  `contracts/` and `docs/`; Arduino-Source (fork `main`) and Packages as read-only
+  `protocol/` and `docs/`; Arduino-Source (fork `main`) and Packages as read-only
   submodules. Nothing is edited inside a submodule; fixes go to the fork and arrive by a
   bump.
 

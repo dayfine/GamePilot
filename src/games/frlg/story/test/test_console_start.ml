@@ -16,7 +16,7 @@ let chain =
   List.map plan
     [ "mg-01"; "mg-02"; "mg-03"; "mg-04"; "mg-05a"; "mg-05"; "mg-06" ]
 
-let case name input expectation = { Case_table.name; input; expectation }
+let case name input expectation = { Table_test.name; input; expectation }
 
 (* {1 The start check} *)
 
@@ -298,5 +298,5 @@ let room_row_cases =
   ]
 
 let () =
-  Case_table.run "console start"
+  Table_test.run "console start"
     (start_cases @ preflight_cases @ room_cases @ room_row_cases)

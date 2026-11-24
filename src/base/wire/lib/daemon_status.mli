@@ -1,4 +1,4 @@
-(** The [status] result (contracts/v1, v1.5): the daemon's health, and which of
+(** The [status] result (protocol/v1, v1.5): the daemon's health, and which of
     its threads count as stuck. *)
 
 type json = Yojson.Safe.t

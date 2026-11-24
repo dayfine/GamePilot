@@ -6,7 +6,7 @@
 # daemons stopped (which releases the keys and closes the port and the card) and the lab lock
 # released, also on a failure or Ctrl-C.
 #
-#   sh tools/run_checkpoints_on_switch.sh --program frlg.mail_glitch | PLAN_DIR \
+#   sh run/run_checkpoints_on_switch.sh --program frlg.mail_glitch | PLAN_DIR \
 #       --from mg-01 --to mg-03 [--runs N] [--no-save-after-pass] [--no-preflight | --preflight-only] \
 #       [--no-watch] [--dry-run] [other `gamepilot checkpoints` flags, e.g. --party ...,
 #       --make-room PalletTown]
@@ -25,11 +25,11 @@
 # place of the capture card, a lab lock of its own in a scratch lab folder, and the device checks
 # against a scratch serial file. It needs ffmpeg to make the replay (or GAMEPILOT_DRY_RUN_VIDEO).
 #
-# Settings come from the environment, an env file first (as tools/run_checkpoints_on_mgba.sh):
+# Settings come from the environment, an env file first (as run/run_checkpoints_on_mgba.sh):
 #
 #   GAMEPILOT_ENV_FILE        the env file ($HOME/.config/gamepilot/env)
 #   GAMEPILOT_SWITCH_SERIAL   the board's serial port (gamepilot switch-devices)
-#   GAMEPILOT_SWITCH_CAPTURE  the capture card's index (swift tools/list_capture_devices.swift)
+#   GAMEPILOT_SWITCH_CAPTURE  the capture card's index (swift daemon/tools/list_capture_devices.swift)
 #   GAMEPILOT_LABLOCK         the lab's lablock.sh (one user of a lab console at a time)
 #   GAMEPILOT_LAB_CONSOLE     the console's lock name (B)
 #   GAMEPILOT_LAB_APP         a pgrep -f pattern for the lab app that drives the console and holds
@@ -104,7 +104,7 @@ if [ -n "$dry_run" ]; then
 else
     lablock=${GAMEPILOT_LABLOCK:?set GAMEPILOT_LABLOCK to the lab\'s lablock.sh}
     serial=${GAMEPILOT_SWITCH_SERIAL:?set GAMEPILOT_SWITCH_SERIAL (gamepilot switch-devices)}
-    capture=${GAMEPILOT_SWITCH_CAPTURE:?set GAMEPILOT_SWITCH_CAPTURE (tools/list_capture_devices.swift)}
+    capture=${GAMEPILOT_SWITCH_CAPTURE:?set GAMEPILOT_SWITCH_CAPTURE (daemon/tools/list_capture_devices.swift)}
     serial_check=$serial
 fi
 

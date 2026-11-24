@@ -31,7 +31,7 @@ let model =
        ~held_at:(fun p direction -> at rows (Tile_pos.next p direction) = '#'))
 
 let held p direction () = string_of_bool (model.held_at p direction)
-let case name input expectation = { Case_table.name; input; expectation }
+let case name input expectation = { Table_test.name; input; expectation }
 
 let cases =
   [
@@ -47,4 +47,4 @@ let cases =
       "south 1 to wall: (0, 1); east 4 to wall: (4, 1); north 1 to wall: (4, 0)";
   ]
 
-let () = Case_table.run "Robust_model.of_step_model" cases
+let () = Table_test.run "Robust_model.of_step_model" cases

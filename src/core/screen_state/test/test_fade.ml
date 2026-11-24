@@ -13,10 +13,10 @@ let checkerboard a b =
        ~stddev:(grey (Float.abs (a -. b) /. 2.)))
 
 let case name (a, b) expectation =
-  { Case_table.name; input = (fun () -> checkerboard a b); expectation }
+  { Table_test.name; input = (fun () -> checkerboard a b); expectation }
 
 let () =
-  Case_table.run "Fade.of_color_stats"
+  Table_test.run "Fade.of_color_stats"
     [
       case "black" (0., 0.) "black fade";
       case "a cave mouth's dim fade (60 a channel)" (60., 60.) "black fade";

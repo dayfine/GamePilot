@@ -10,7 +10,7 @@
    A failed capture check keeps its frame as failure.png. Without --serial the
    board check runs on the daemon's fake board; --replay in place of
    --capture checks a video's first frame: a dry run
-   (tools/run_checkpoints_on_switch.sh). Exit 1 when a check fails. *)
+   (run/run_checkpoints_on_switch.sh). Exit 1 when a check fails. *)
 
 type flags = {
   daemon : string;

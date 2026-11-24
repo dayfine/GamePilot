@@ -104,4 +104,4 @@ let cases =
 
 let () =
   List.iter run cases;
-  Case_table.finish ()
+  Table_test.finish ()

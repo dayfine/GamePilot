@@ -6,7 +6,7 @@ names come from a pret/pokefirered checkout's src/data/items.json. One line per
 item: <pocket> <name>, where <pocket> is items, key_items, poke_balls, tm_case
 or berry_pouch and <name> is the rest of the line as the bag shows it.
 
-    python3 tools/extract_frlg_item_names.py ~/Projects/pokefirered \
+    python3 src/games/frlg/assets/extract/extract_frlg_item_names.py ~/Projects/pokefirered \
         > src/games/frlg/assets/item_names_eng.txt
 """
 
@@ -26,7 +26,7 @@ PLACEHOLDER = "{"  # names the game fills in at run time (Emerald's POKéBLOCK C
 
 def main(decomp):
     items = json.load(open(decomp + "/src/data/items.json", encoding="utf-8"))["items"]
-    print("# FRLG English item names, made by tools/extract_frlg_item_names.py")
+    print("# FRLG English item names, made by src/games/frlg/assets/extract/extract_frlg_item_names.py")
     print("# from pret/pokefirered src/data/items.json: <pocket> <name>")
     seen = set()
     for item in items:

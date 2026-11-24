@@ -24,7 +24,7 @@
   test_console_runs
   test_room_policy)
  (libraries
-  gamepilot.case_table
+  gamepilot.table_test
   yojson
   gamepilot.wire
   gamepilot.grid_maps

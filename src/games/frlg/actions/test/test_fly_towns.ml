@@ -33,10 +33,10 @@ let bad json =
   | Ok _ -> "parsed"
   | Error e -> e
 
-let case name input expectation = { Case_table.name; input; expectation }
+let case name input expectation = { Table_test.name; input; expectation }
 
 let () =
-  Case_table.run "fly_towns"
+  Table_test.run "fly_towns"
     [
       case "every town's cell is on the fly map" cells_on_map "";
       case "no two towns share a cell"

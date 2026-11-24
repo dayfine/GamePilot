@@ -61,7 +61,7 @@
    (STORY_LEFT_WHERE_FAILED in PokemonFRLG_AutoStory.cpp), here as failure.ss.
    Not ported yet: retries inside a run (StoryGame::attempts_per_checkpoint
    with reload), the reproduction phase, the overlay log. mGBA itself is
-   started and closed around the command by tools/run_checkpoints_on_mgba.sh. *)
+   started and closed around the command by run/run_checkpoints_on_mgba.sh. *)
 
 open Story
 module R = Program_registry

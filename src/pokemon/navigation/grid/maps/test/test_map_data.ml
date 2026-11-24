@@ -257,13 +257,13 @@ let door_cases =
   ]
 
 let run_door_case { door_name; from = pos, direction; tiles } =
-  Case_table.report
+  Table_test.report
     ("tiles_to_door: " ^ door_name)
     (Check.equal "tiles" ~expected:(string_of_int tiles)
        (string_of_int (Map_data.tiles_to_door corridor pos direction)))
 
 let () =
   List.iter (run_case ~read_map:of_json) cases;
-  Case_table.report "glyphs round-trip" (glyphs_round_trip ());
+  Table_test.report "glyphs round-trip" (glyphs_round_trip ());
   List.iter run_door_case door_cases;
-  Case_table.finish ()
+  Table_test.finish ()

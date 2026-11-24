@@ -1,4 +1,4 @@
-# FRLG English species names, made by tools/extract_frlg_species_names.py
+# FRLG English species names, made by src/games/frlg/assets/extract/extract_frlg_species_names.py
 # from pret/pokefirered src/data/text/species_names.h: <slug> <name>
 bulbasaur BULBASAUR
 ivysaur IVYSAUR

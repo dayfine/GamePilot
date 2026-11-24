@@ -33,7 +33,7 @@
   switch.probes.jsonl
   menus.switch.probes.jsonl)
  (libraries
-  gamepilot.case_table
+  gamepilot.table_test
   gamepilot.wire
   gamepilot.effects
   gamepilot.grid_maps

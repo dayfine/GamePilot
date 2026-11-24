@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Smoke client for gamepilot_daemon (contracts/v1).
+"""Smoke client for gamepilot_daemon (protocol/v1).
 
 hello -> backend.load_state -> subscribe a core.color_stats@1 box -> submit Start ->
 watch frames -> submit B -> watch frames, printing mean/stddev per phase.

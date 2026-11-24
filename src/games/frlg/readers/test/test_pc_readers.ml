@@ -40,14 +40,14 @@ let cases backend images =
   List.map
     (fun (image, probes) ->
       {
-        Case_table.name = Printf.sprintf "%s pc screen: %s" backend image;
+        Table_test.name = Printf.sprintf "%s pc screen: %s" backend image;
         input = (fun () -> tag (Pc_screen.read (measurements probes)));
         expectation = String.concat "-" (tags image);
       })
     images
 
 let () =
-  Case_table.run "pc readers"
+  Table_test.run "pc readers"
     (List.concat_map
        (fun backend ->
          cases backend

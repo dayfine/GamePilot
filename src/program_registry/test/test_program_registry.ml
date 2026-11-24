@@ -4,7 +4,7 @@
 
 module R = Program_registry
 
-let case name input expectation = { Case_table.name; input; expectation }
+let case name input expectation = { Table_test.name; input; expectation }
 let ids () = List.map (fun (p : R.t) -> p.id) R.all
 
 let duplicates () =
@@ -56,7 +56,7 @@ let plan_count () =
 let id_of = function Some (p : R.t) -> p.id | None -> "none"
 
 let () =
-  Case_table.run "program_registry"
+  Table_test.run "program_registry"
     [
       case "ids are unique" duplicates "";
       case "every doc exists" (missing (fun p -> Some p.doc)) "";

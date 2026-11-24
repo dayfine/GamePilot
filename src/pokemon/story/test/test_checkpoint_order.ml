@@ -3,10 +3,10 @@
 let sorted ids () =
   String.concat ", " (List.sort Story.Checkpoint_order.compare ids)
 
-let case name input expectation = { Case_table.name; input; expectation }
+let case name input expectation = { Table_test.name; input; expectation }
 
 let () =
-  Case_table.run "checkpoint_order"
+  Table_test.run "checkpoint_order"
     [
       case
         "mail glitch: mg-05a before mg-05 (mg-04 testing 15 ended at mg-05's \

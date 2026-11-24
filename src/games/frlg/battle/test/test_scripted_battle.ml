@@ -80,7 +80,7 @@ let played f script () =
   in
   calls ^ " => " ^ Scripted_battle.describe outcome
 
-let case name f script expectation : Case_table.case =
+let case name f script expectation : Table_test.case =
   { name; input = played f script; expectation }
 
 let menus n = List.init n (fun _ -> Battle_driver.Action_menu)
@@ -233,5 +233,5 @@ let other_cases =
   ]
 
 let () =
-  Case_table.run "scripted battle"
+  Table_test.run "scripted battle"
     (double_battle_cases @ switch_grind_cases @ other_cases)

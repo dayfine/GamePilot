@@ -1,7 +1,7 @@
 #!/bin/sh
-# Tests tools/run_lock.sh with real processes: two runners never hold the lock at once, a waiter
+# Tests run/run_lock.sh with real processes: two runners never hold the lock at once, a waiter
 # gets it when the holder exits, a stale lock (dead holder) is taken over, and a timeout gives up
-# with exit 4. Needs no emulator: sh tools/test_run_lock.sh
+# with exit 4. Needs no emulator: sh run/test_run_lock.sh
 set -eu
 root=$(cd "$(dirname "$0")/.." && pwd)
 tmp=$(mktemp -d)
@@ -22,7 +22,7 @@ check() {
 # A runner: takes the lock, notes its start and end in the shared log, holds it [hold] seconds.
 runner() {
     sh -c '
-        . "$1/tools/run_lock.sh"
+        . "$1/run/run_lock.sh"
         trap "run_lock_release \"$2\" >/dev/null" EXIT
         run_lock_acquire "$2" "$4" "runner $3" >/dev/null || exit $?
         echo "start $3" >>"$5"

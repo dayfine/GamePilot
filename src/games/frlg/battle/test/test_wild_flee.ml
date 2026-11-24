@@ -31,11 +31,11 @@ let fled events () =
     ((Wild_flee.describe outcome :: List.rev !lines)
     @ [ Printf.sprintf "%d RUNs pressed" !runs ])
 
-let case name input expectation = { Case_table.name; input; expectation }
+let case name input expectation = { Table_test.name; input; expectation }
 let menus n = List.init n (fun _ -> Battle_driver.Action_menu)
 
 let () =
-  Case_table.run "wild_flee"
+  Table_test.run "wild_flee"
     [
       case "RUN on the action menu, then the battle is over"
         (fled [ Action_menu; Battle_over ])

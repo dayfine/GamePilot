@@ -145,7 +145,7 @@ let late_interrupts () =
 let blocked ?tile_ms script tiles =
   walked script { (wall_leg ?tile_ms South tiles) with stop_if_blocked = true }
 
-let cases : Case_table.case list =
+let cases : Table_test.case list =
   [
     {
       name = "hold times";
@@ -277,4 +277,4 @@ let cases : Case_table.case list =
     };
   ]
 
-let () = Case_table.run "leg walker" cases
+let () = Table_test.run "leg walker" cases

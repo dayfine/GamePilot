@@ -63,10 +63,10 @@ let fly ?(row = 1) ?(fade = true) ?(lands = S.Town) ?(black_ms = 2500) () =
   in
   Printf.sprintf "%s; %s" (outcome result) (S.presses_text screen)
 
-let case name input expectation = { Case_table.name; input; expectation }
+let case name input expectation = { Table_test.name; input; expectation }
 
 let () =
-  Case_table.run "actions"
+  Table_test.run "actions"
     [
       case "a talk ends once the overworld is quiet after the text" talk
         "ok after 10180 ms; A, B x7";

@@ -35,10 +35,10 @@ let party_to ?(input_delay_ms = 0) ?capture_latencies_ms ?react ~from slot () =
   in
   Printf.sprintf "%s; %s" (outcome result) (S.presses_text screen)
 
-let case name input expectation = { Case_table.name; input; expectation }
+let case name input expectation = { Table_test.name; input; expectation }
 
 let () =
-  Case_table.run "cursor_steps"
+  Table_test.run "cursor_steps"
     [
       case "already there: nothing pressed" (party_to ~from:2 2) "reached; ";
       case "down from the remembered slot" (party_to ~from:2 5)

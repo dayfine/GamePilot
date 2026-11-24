@@ -5,7 +5,7 @@
 
 open Frlg_actions
 
-let case name input expectation = { Case_table.name; input; expectation }
+let case name input expectation = { Table_test.name; input; expectation }
 let obj json = Grid_maps.Json_field.as_object "" (Yojson.Safe.from_string json)
 
 let decode json () =
@@ -169,4 +169,4 @@ let reading =
       "Wild SPEAROW appeared!";
   ]
 
-let () = Case_table.run "capture" (decoding @ decisions @ reading)
+let () = Table_test.run "capture" (decoding @ decisions @ reading)

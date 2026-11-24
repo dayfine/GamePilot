@@ -73,10 +73,10 @@ let plan () =
                k.species ^ " " ^ String.concat "+" k.moves)
              p.postconditions.knows)
 
-let case name input expectation : Case_table.case = { name; input; expectation }
+let case name input expectation : Table_test.case = { name; input; expectation }
 
 let () =
-  Case_table.run "make room"
+  Table_test.run "make room"
     [
       case "Pallet Town: Viridian (Pallet has no Center)" (nearest "PalletTown")
         "ViridianCity";

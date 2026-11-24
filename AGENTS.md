@@ -14,20 +14,20 @@ GamePilot automates games through three layers (design: `docs/design/Layered-Aut
   - `program_registry/`: every program's descriptor (game, group, name, doc, checkpoints folder,
     backends), as PA/CC's program list. A new program registers there (`docs/programs/README.md`).
   - `bin/`: the `gamepilot` command.
-- `contracts/`: golden JSON-RPC messages both sides must parse. The only thing they share.
-  Formatted by `tools/fmt_json.py` (one key per line, lists of scalars inline).
+- `protocol/`: golden JSON-RPC messages both sides must parse. The only thing they share.
+  Formatted by `dev/lint/fmt_json.py` (one key per line, lists of scalars inline).
 
 ## Hard rules
 
 - **Names say what a thing is or does.** No catch-all modules or folders (`helpers`, `utils`, `common`, `misc`):
   a function with no obvious home gets a module named for its job. The C++ folder names on the
   fork are a guide where they are informative.
-- **OCaml passes `sh tools/lint_ocaml.sh`** (`lint/`, configured by `tools/ocaml_lint.conf`): function
+- **OCaml passes `sh dev/lint/lint_ocaml.sh`** (`dev/lint/`, configured by `dev/lint/ocaml_lint.conf`): function
   length, nesting, magic numbers, file length, `.mli` for every `lib/` module, layer boundaries;
-  complexity is advisory. Waive only in `tools/ocaml_lint_exceptions.conf`, with a reason.
+  complexity is advisory. Waive only in `dev/lint/ocaml_lint_exceptions.conf`, with a reason.
 - **No C in OCaml.** No `foreign_stubs`, `foreign_archives`, `extra_objects` or `ctypes` in any
-  `dune` file (`tools/lint_dune.sh`). Every opam dependency is listed in
-  `tools/opam-allowlist.txt`. The Windows CI build is the real gate.
+  `dune` file (`dev/lint/lint_dune.sh`). Every opam dependency is listed in
+  `dev/lint/opam-allowlist.txt`. The Windows CI build is the real gate.
 - **Programs use only our effect set** (`submit`, `await`, `race`, `now`, `read`), never an I/O
   library directly. The real handler is stdlib only.
 - **Swappable parts sit behind one boundary each**: I/O backend, probes, effect handler, RNG.
@@ -59,4 +59,4 @@ GamePilot automates games through three layers (design: `docs/design/Layered-Aut
 
 ## Agents
 
-Harness from `dayfine/agent-harness` (`.agents/rules/`, `dev/lib/`, `bin/`).
+Harness from `dayfine/agent-harness` (`.agents/rules/`, `dev/lib/`, `.agents/checks/`).

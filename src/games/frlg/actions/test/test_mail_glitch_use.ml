@@ -6,7 +6,7 @@ open Frlg_actions
 module P = Frlg_readers.Party_menu
 module L = Frlg_text.Line_reading
 
-let case name input expectation = { Case_table.name; input; expectation }
+let case name input expectation = { Table_test.name; input; expectation }
 let obj json = Grid_maps.Json_field.as_object "" (Yojson.Safe.from_string json)
 let read text : L.reading = Read { text; score = 0.1 }
 
@@ -47,7 +47,7 @@ let args name json () =
   | Error c -> Story.Failure.cause_to_string c
 
 let () =
-  Case_table.run "mail_glitch_use"
+  Table_test.run "mail_glitch_use"
     [
       case "the editor reads the word" (verdict (read "ABRA")) "ok";
       case "a blank field: the glitched record is gone"

@@ -164,10 +164,10 @@ let cut_screen screen (p : S.press) =
 let below_tree : Story.Pose.observed =
   { at_map = "Route16"; at_tile = { x = 41; y = 12 }; faces = Some North }
 
-let case name input expectation = { Case_table.name; input; expectation }
+let case name input expectation = { Table_test.name; input; expectation }
 
 let () =
-  Case_table.run "story_game"
+  Table_test.run "story_game"
     [
       case "a route out of the house, then a talk" (run (Some house))
         "ok; at PalletTown (6, 8) south; down, down 667, A, B x6";

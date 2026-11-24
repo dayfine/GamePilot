@@ -5,7 +5,7 @@
 // daemon's --capture takes the index. Lists only: opens no device, so it is
 // safe while the lab app uses a card.
 //
-//   swift tools/list_capture_devices.swift
+//   swift daemon/tools/list_capture_devices.swift
 import AVFoundation
 
 var types: [AVCaptureDevice.DeviceType] = [.builtInWideAngleCamera]

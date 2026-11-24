@@ -1,6 +1,7 @@
 (** The moves FRLG's TMs and HMs teach, as the TM case shows them, from the file
-    [tools/extract_frlg_tm_moves.py] writes. A TM case row shows one of these
-    names, so they are its candidates rather than every move. *)
+    [src/games/frlg/assets/extract/extract_frlg_tm_moves.py] writes. A TM case
+    row shows one of these names, so they are its candidates rather than every
+    move. *)
 
 type t
 

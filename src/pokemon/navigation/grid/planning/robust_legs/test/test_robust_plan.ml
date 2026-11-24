@@ -12,7 +12,7 @@ let planned ?wraps ?costs rows ~from ~goal () =
     (Robust_planner.plan ?costs (model ?wraps rows) ~from
        ~at_goal:(Tile_pos.equal goal))
 
-let case name input expectation = { Case_table.name; input; expectation }
+let case name input expectation = { Table_test.name; input; expectation }
 let d = Robust_costs.default
 let gather_rows = [ "....."; "#...#" ]
 let lined_up = [ ".##"; "..."; "..."; ".##"; ".##" ]
@@ -162,4 +162,4 @@ let cases =
       "south 1 open: (0, 1); east 5 to wall: (5, 1); west 2 open: (3, 1)";
   ]
 
-let () = Case_table.run "Robust_planner.plan" cases
+let () = Table_test.run "Robust_planner.plan" cases
