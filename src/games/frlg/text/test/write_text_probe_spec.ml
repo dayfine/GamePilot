@@ -62,6 +62,11 @@ let screens =
       cells ~rows:7 ~cells:3 Text_lines.bag_count_digit,
       Number_reading.digits,
       dark );
+    ( "summary_level",
+      glyphs,
+      List.init Summary_level.max_digits Text_lines.summary_level_digit,
+      Number_reading.digits,
+      Summary_level.ink );
     ( "berry_pouch_numbers",
       small_glyphs,
       cells ~rows:7 ~cells:2 Text_lines.berry_pouch_number_digit,

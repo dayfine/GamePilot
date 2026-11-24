@@ -194,6 +194,7 @@ let promised : Plan.postconditions =
     money = None;
     flags = [];
     knows = [];
+    levels = [];
   }
 
 let run_with_end_state ?end_at ?(promised = promised) observed =

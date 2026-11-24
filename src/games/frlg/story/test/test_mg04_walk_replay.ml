@@ -29,6 +29,7 @@ let walk_plan () =
         money = None;
         items = [];
         knows = [];
+        levels = [];
       };
   }
 

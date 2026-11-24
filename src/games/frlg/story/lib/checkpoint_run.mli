@@ -11,8 +11,9 @@ type options = {
   center : string option;  (** The town whose Center heals between rounds. *)
   grind_cap : int option;
       (** Testing: each grind ends, passing, after this many battles, and the
-          [moves] postconditions (the grind's goal) are skipped, logged as such.
-          A capped run's end is not the next checkpoint's start. *)
+          [knows] and [levels] postconditions (the grind's goal) are skipped,
+          logged as such. A capped run's end is not the next checkpoint's start.
+      *)
   gait : Frlg_overworld.Route_legs.gait;
   end_check_only : bool;
       (** Run no events: the start state's postconditions checked alone (the end
@@ -40,8 +41,10 @@ val capped_postconditions :
   Story.Plan.t ->
   Story.Plan.postconditions * string list
 (** The postconditions a run checks, and the ones it skips, one line each
-    (["knows mr-mime recycle (grind capped at 8)"]): with a grind cap, the
-    [knows] ones, a grind's goal a capped grind does not reach; none without. *)
+    (["knows mr-mime recycle (grind capped at 8)"],
+    ["level mr-mime at least 33 (grind capped at 8)"]): with a grind cap, the
+    [knows] and [levels] ones, a grind's goal a capped grind does not reach;
+    none without. *)
 
 val run :
   ?end_at:Story.Pose.grid ->

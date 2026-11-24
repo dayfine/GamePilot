@@ -13,6 +13,7 @@ let nothing : Plan.postconditions =
     money = None;
     flags = [];
     knows = [];
+    levels = [];
   }
 
 let read = C.nothing_read
@@ -127,6 +128,23 @@ let knows_cases =
       "knows mr-mime: not checked: the game can't read it";
   ]
 
+let mimien_33 = { nothing with levels = [ { species = "mr-mime"; min = 33 } ] }
+
+let level_cases =
+  [
+    case "MIMIEN at Lv 33 (mg-04's goal)" mimien_33
+      { read with levels = [ ("mr-mime", 33) ] }
+      "level mr-mime: passed: Lv 33";
+    case "MIMIEN above it" mimien_33
+      { read with levels = [ ("mr-mime", 34) ] }
+      "level mr-mime: passed: Lv 34";
+    case "MIMIEN below it" mimien_33
+      { read with levels = [ ("mr-mime", 32) ] }
+      "level mr-mime: failed: expected at least Lv 33, read Lv 32";
+    case "MIMIEN's level not read" mimien_33 read
+      "level mr-mime: not checked: the game can't read it";
+  ]
+
 let log name promised observed : Case_table.case =
   {
     name;
@@ -170,4 +188,4 @@ let log_cases : Case_table.case list =
 
 let () =
   Case_table.run "postcondition_check"
-    (party_cases @ count_cases @ knows_cases @ log_cases)
+    (party_cases @ count_cases @ knows_cases @ level_cases @ log_cases)

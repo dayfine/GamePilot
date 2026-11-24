@@ -85,6 +85,16 @@ let bag_message_digit k =
     ~left:(bag_message_left + (digit_width * k))
     ~glyph_top:bag_message_second_top
 
+(* The level in the summary's top left, on every page: "Lv" (10 wide) at x 4,
+   then the digits, left-aligned (measured on mGBA). *)
+let summary_level_left = 14
+let summary_level_top = 18
+
+let summary_level_digit k =
+  digit_cell "summary_level" k
+    ~left:(summary_level_left + (digit_width * k))
+    ~glyph_top:summary_level_top
+
 let small_digit_width = 5
 
 let small_digit_cell id ~left ~glyph_top =

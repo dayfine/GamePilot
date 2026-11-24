@@ -30,7 +30,8 @@ type strategy = {
 type goal = {
   species : string;  (** the grinder, a slug *)
   target_level : int;
-      (** the level the move comes at: logged, not read (no level reader) *)
+      (** the level the move comes at: the grind ends once the grinder's level,
+          read after each battle, reaches it *)
   learn_move : string;  (** a slug; the goal is met once the grinder knows it *)
   learn_slot : int;  (** the move (0-3) it replaces *)
 }

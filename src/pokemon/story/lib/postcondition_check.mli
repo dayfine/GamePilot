@@ -26,6 +26,9 @@ type observed = {
   knows : (string * string list) list;
       (** Each species whose moves were read, and the moves; one left out was
           not read. *)
+  levels : (string * int) list;
+      (** Each species whose level was read, and the level; one left out was not
+          read. *)
 }
 
 val nothing_read : observed
@@ -41,9 +44,9 @@ type result = {
 }
 
 val check : Plan.postconditions -> observed -> result list
-(** The party, then each item, the coins, the money, each flag and each member's
-    moves, in that order; a postcondition the plan leaves out gives no result.
-*)
+(** The party, then each item, the coins, the money, each flag, each member's
+    moves and each member's level, in that order; a postcondition the plan
+    leaves out gives no result. *)
 
 val unmet : result list -> result list
 (** The results that failed or were not checked. *)

@@ -76,11 +76,14 @@ let capped_postconditions ~grind_cap (plan : Story.Plan.t) =
   match grind_cap with
   | None -> (p, [])
   | Some cap ->
-      let skipped ({ species; moves } : Story.Plan.knows) =
-        Printf.sprintf "knows %s %s (grind capped at %d)" species
-          (String.concat ", " moves) cap
+      let capped what = Printf.sprintf "%s (grind capped at %d)" what cap in
+      let skipped_knows ({ species; moves } : Story.Plan.knows) =
+        capped (Printf.sprintf "knows %s %s" species (String.concat ", " moves))
+      and skipped_level ({ species; min } : Story.Plan.level) =
+        capped (Printf.sprintf "level %s at least %d" species min)
       in
-      ({ p with knows = [] }, List.map skipped p.knows)
+      ( { p with knows = []; levels = [] },
+        List.map skipped_knows p.knows @ List.map skipped_level p.levels )
 
 let run ?end_at ?on_event options world (plan : Story.Plan.t) =
   Option.iter (fun s -> ignore (Effects.load_state s)) options.state;
