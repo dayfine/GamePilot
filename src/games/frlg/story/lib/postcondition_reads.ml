@@ -124,5 +124,12 @@ let observe ~log (promised : Story.Plan.postconditions) :
     marks;
   }
 
+let start_money ~log (promised : Story.Plan.postconditions) =
+  match promised.money with
+  | Some (Money_spent _) ->
+      log "[Postcondition] the money at the start:";
+      read ~log "money at the start" (fun () -> A.Trainer_card_money.read ~log)
+  | Some (Money_range _) | None -> None
+
 let party_summary ~log =
   read ~log "party summary" (fun () -> Some (A.Party_summary.read_all ~log ()))

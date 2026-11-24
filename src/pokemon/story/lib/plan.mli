@@ -73,8 +73,13 @@ type party =
 and slot = { slot : int; species : string }
 (** The member in party slot [slot] (from 1) is of [species] (a slug). *)
 
-type money = { min : int; max : int }
-(** Money from [min] to [max], both included. *)
+type money =
+  | Money_range of { min : int; max : int }
+      (** Money from [min] to [max], both included. *)
+  | Money_spent of int
+      (** Exactly this much less than at the checkpoint's start (negative: more
+          than at the start): what the checkpoint's purchases cost, whatever
+          money the save started with. *)
 
 type knows = { species : string; moves : string list }
 (** The party member of this species (a slug; the first such member) knows each

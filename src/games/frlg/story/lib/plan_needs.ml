@@ -128,7 +128,8 @@ let party_needs before acc =
 let money_needs before acc =
   let promised =
     match before with
-    | Some { P.money = Some { min; max }; _ } -> [ Money_between { min; max } ]
+    | Some { P.money = Some (Money_range { min; max }); _ } ->
+        [ Money_between { min; max } ]
     | _ -> []
   in
   let total = List.fold_left (fun s (n, _) -> s + n) 0 acc.money in

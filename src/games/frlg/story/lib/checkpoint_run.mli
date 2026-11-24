@@ -20,7 +20,8 @@ type options = {
   end_check_only : bool;
       (** Run no events: the start state's postconditions checked alone (the end
           position too is not checked: FireRed reckons it from the walks). A
-          live check that a state holds what a checkpoint promises. *)
+          live check that a state holds what a checkpoint promises; a promise of
+          the money spent is not checked (no start read). *)
   log : string -> unit;
 }
 
@@ -62,7 +63,8 @@ val run :
     [end_at], the player must end there ({!Story.Runner.run}); FireRed reads no
     position yet, so it is where the walks tracked the player. Then the plan's
     postconditions ({!Story.Plan.postconditions}), read by
-    {!Postcondition_reads}, must all pass, but for those
-    {!capped_postconditions} skips (logged). [on_event] hears each event's
-    progress ({!Story.Runner.run}). [actions] are game actions of the caller's
-    own, ahead of FireRed's: a shadow plan's ({!Shadow_plan}). *)
+    {!Postcondition_reads}, must all pass (a promise of the money spent against
+    the money read before the first event, {!Postcondition_reads.start_money}),
+    but for those {!capped_postconditions} skips (logged). [on_event] hears each
+    event's progress ({!Story.Runner.run}). [actions] are game actions of the
+    caller's own, ahead of FireRed's: a shadow plan's ({!Shadow_plan}). *)

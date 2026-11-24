@@ -3,6 +3,7 @@ type observed = {
   items : (string * int) list;
   coins : int option;
   money : int option;
+  start_money : int option;
   flags : (string * bool) list;
   knows : (string * string list) list;
   levels : (string * int) list;
@@ -15,6 +16,7 @@ let nothing_read =
     items = [];
     coins = None;
     money = None;
+    start_money = None;
     flags = [];
     knows = [];
     levels = [];
@@ -119,20 +121,47 @@ let check_coins expected observed =
 
 let money_text money = Printf.sprintf "$%d" money
 
-let range_text ({ min; max } : Plan.money) =
+let range_text min max =
   if min = max then money_text min
   else Printf.sprintf "%s to %s" (money_text min) (money_text max)
 
+let check_range ~min ~max read =
+  expected_read "money" ~expected:(range_text min max) ~read:(money_text read)
+    (min <= read && read <= max)
+
+(* Passed: "spent $4100 ($29202 to $25102)"; failed: "expected spent $4100,
+   read spent $4188 ($29202 to $25014)". *)
+let check_spent amount ~start read =
+  let spent = start - read in
+  let from_to = Printf.sprintf "(%s to %s)" (money_text start) (money_text read)
+  and spent_text n = "spent " ^ money_text n in
+  if spent = amount then
+    {
+      what = "money";
+      verdict = Passed;
+      detail = spent_text spent ^ " " ^ from_to;
+    }
+  else
+    expected_read "money" ~expected:(spent_text amount)
+      ~read:(spent_text spent ^ " " ^ from_to)
+      false
+
 let check_money (expected : Plan.money option) observed =
-  match (expected, observed.money) with
-  | None, _ -> []
-  | Some _, None -> [ not_read "money" ]
-  | Some range, Some read ->
+  match (expected, observed.money, observed.start_money) with
+  | None, _, _ -> []
+  | Some _, None, _ -> [ not_read "money" ]
+  | Some (Money_range { min; max }), Some read, _ ->
+      [ check_range ~min ~max read ]
+  | Some (Money_spent _), Some _, None ->
       [
-        expected_read "money" ~expected:(range_text range)
-          ~read:(money_text read)
-          (range.min <= read && read <= range.max);
+        {
+          what = "money";
+          verdict = Not_checked;
+          detail = "the money at the start was not read";
+        };
       ]
+  | Some (Money_spent amount), Some read, Some start ->
+      [ check_spent amount ~start read ]
 
 let check_flag observed flag =
   let what = "flag " ^ flag in
