@@ -1,4 +1,4 @@
-# Wire protocol v1.6
+# Wire protocol v1.7
 
 JSON-RPC 2.0 between the OCaml programs (client) and the daemon (server). The golden files in this
 folder are the spec: the daemon's tests parse every file and the OCaml tests decode and re-encode
@@ -17,6 +17,8 @@ answered also on a second connection while a client is served, and the live `swi
 Live backends).
 v1.6 adds the watch page's three notifications (see Watch page): `watch.plan` and `watch.log` from
 the program, `stop` from the daemon. A program that sends neither and never gets a stop speaks v1.5.
+v1.7 adds `watch.run` from the program (see Watch page): the chain of checkpoints a run goes through.
+A program that does not send it speaks v1.6.
 v1.2 makes the daemon own where the game picture sits in the frame: `hello` gives the `viewport` and
 the `game_size`, probe boxes and template placements are relative to the picture, templates are in game
 pixels, and `core.color_count@1` is new.
@@ -32,7 +34,8 @@ size) every v1.1 message means the same in v1.2.
   When the client disconnects, the daemon drops its probes and queued commands.
 - One JSON object per line, LF-terminated, UTF-8, no embedded newlines.
 - Requests have an `id`; the daemon answers each with exactly one `result` or `error`.
-  Notifications (`frame`, `batch_done`, `stop`; `watch.plan` and `watch.log` from the client)
+  Notifications (`frame`, `batch_done`, `stop`; `watch.plan`, `watch.log` and `watch.run` from the
+  client)
   have no `id`.
 - Responses do not name their method: JSON-RPC 2.0 ties a response to its request by `id`, and the
   client already holds each pending request by id, so a method name in the result would only repeat
@@ -138,6 +141,15 @@ daemon keeps them out of the wire log; without a watch page it drops them.
   `state` is `pending`, `current`, `done`, `failed` or `skipped`; `detail` is a failure's reason,
   the flag a skip held on, or empty.
 - `watch.log`: `line` (`31-watch_log.notification.json`): one story log line.
+- `watch.run`: `mode`, `trial`, `trials`, `passes`, `fails`, `started_ms`, `checkpoints`: list of
+  {`id`, `state`, `elapsed_ms`} (`33-watch_run.notification.json`). The chain the program runs
+  (`gamepilot checkpoints --from --to`), sent at the start and the end of each run. `state` is
+  `pending`, `current`, `passed`, `failed` or `skipped` (not run because an earlier one failed);
+  `elapsed_ms` is the time spent on that checkpoint over all its runs, up to the message for the
+  current one. `mode` is `testing` or `verification`; `trial` is the current checkpoint's run (1-based)
+  out of the `trials` its policy allows, `passes` and `fails` its runs so far. `started_ms` is when the
+  chain started, Unix time in milliseconds. The daemon keeps the latest, like the plan. Each run
+  has its own daemon, so the program sends it again at every run's start.
 
 ## Probe kinds
 
@@ -199,6 +211,6 @@ reader decides "black" from those numbers (low mean, low stddev) in OCaml.
 
 ## Wire log
 
-The daemon writes every message it sends or receives, except the client's `watch.plan` and
-`watch.log`, one per line (`14-wire_log.line.json`):
+The daemon writes every message it sends or receives, except the client's `watch.plan`,
+`watch.log` and `watch.run`, one per line (`14-wire_log.line.json`):
 `dir` (`in` = from the client, `out` = to the client), `t_ms`, `msg`. Replay reads this file.

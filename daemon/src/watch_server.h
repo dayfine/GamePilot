@@ -6,8 +6,9 @@
 //   GET  /           the page (watch/watch.html, compiled in)
 //   GET  /frame      the current frame, PNG or JPEG (hooks.frame)
 //   GET  /events     the event stream: `info` (the backend, as `hello` gives
-//                    it), `plan`, `log` (the backlog, then each line), `probes`
-//                    and `status`; a new viewer gets the latest of each first
+//                    it), `run`, `plan`, `log` (the backlog, then each line),
+//                    `probes` and `status`; a new viewer gets the latest of
+//                    each first
 //   POST /stop       stops the running program (hooks.stop)
 //
 // What the stream carries is the server's to set; this class only keeps the
@@ -68,6 +69,7 @@ class WatchServer {
 
   // Each is one line of JSON, kept for new viewers and sent to the others.
   void set_info(std::string json);
+  void set_run(std::string json);
   void set_plan(std::string json);
   void add_log(std::string json);
   void set_probes(std::string json);
@@ -91,6 +93,7 @@ class WatchServer {
   WatchHooks hooks_;
   std::vector<Connection> connections_;
   std::string info_;
+  std::string run_;
   std::string plan_;
   std::string probes_;
   std::deque<std::string> log_;
