@@ -112,8 +112,35 @@ let give ~log ~item ~slot =
 
 let warps item = item = "escape-rope"
 
-let use ~log ~item ~slot =
-  log ("Bag: use " ^ item ^ ".");
+(* The overworld before the bag opens: the scene the warp leaves. *)
+let departure () =
+  match
+    Effects.await ~timeout_ms:M.screen_timeout_ms (fun m ->
+        Option.is_some (Scene_signature.read m))
+  with
+  | Holds m -> Scene_signature.read m
+  | Timeout -> None
+
+(* The settle from the item's USE on, its frames watched from that press: the
+   warp may be over before a look (mg-04a testing run 1 on console B). Another
+   scene than the departure's on the overworld proves it as a fade does. *)
+let settle_warp ~log ~item before =
+  let use_a = Bag_items.item_action_press item 0 in
+  let arrived =
+    Option.map (fun before -> Scene_signature.left ~before) before
+  in
+  match
+    Scene_looks.settle After_warp ?arrived ~start:[ use_a ]
+      ~label:("use " ^ item) ~battle_ends:false ~log
+  with
+  | Ok () -> ()
+  | Error cause -> raise (M.Action_failed cause)
+
+let use_warp ~log ~item =
+  Effects.with_probes Scene_signature.probes (fun () ->
+      settle_warp ~log ~item (departure ()))
+
+let use_on ~log ~item ~slot =
   Bag_items.item_action item 0;
   match slot with
   | Some slot ->
@@ -123,16 +150,14 @@ let use ~log ~item ~slot =
       choose_slot slot;
       M.close "the bag" bag_or_party;
       M.settle_back ~label:("use " ^ item) ~log
-  | None when not (warps item) ->
+  | None ->
       M.close "the bag" bag_or_party;
       M.settle_back ~label:("use " ^ item) ~log
-  | None -> (
-      match
-        Scene_looks.settle After_warp ~label:("use " ^ item) ~battle_ends:false
-          ~log
-      with
-      | Ok () -> ()
-      | Error cause -> raise (M.Action_failed cause))
+
+let use ~log ~item ~slot =
+  log ("Bag: use " ^ item ^ ".");
+  if warps item && Option.is_none slot then use_warp ~log ~item
+  else use_on ~log ~item ~slot
 
 let party_settle_ms = 800
 

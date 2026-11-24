@@ -80,7 +80,11 @@ let console_run setup cp log =
   in
   let party = Console_session.start_party ~roster cp.before in
   match
-    Console_session.before ~log ~frame_path:(frame_path setup cp.id) party
+    Console_session.before ~log ~frame_path:(frame_path setup cp.id)
+      ~start_path:
+        (Frlg_story.Start_check.start_file ~states:setup.states
+           cp.plan.checkpoint.start)
+      party
   with
   | Error reason ->
       log ("[Console] " ^ reason);

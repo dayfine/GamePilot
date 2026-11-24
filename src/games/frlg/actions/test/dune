@@ -30,7 +30,8 @@
   test_lift_ride
   test_capture
   test_pacing
-  test_console_actions)
+  test_console_actions
+  test_warp_settle)
  (modules
   test_pc_deposit_steps
   test_fly_towns
@@ -46,7 +47,8 @@
   test_lift_ride
   test_capture
   test_pacing
-  test_console_actions)
+  test_console_actions
+  test_warp_settle)
  (deps
   mgba.probes.jsonl
   menus.mgba.probes.jsonl

@@ -202,18 +202,29 @@ let count_in_pocket slug =
    measured the same way. *)
 let item_menu_input_ms = 500
 
-let choose_in_item_menu item row =
+let to_item_menu_row item row =
   ignore
     (M.await_screen ~code:"no_item_menu" ("the menu of " ^ item)
        Bag_screen.item_menu);
   ignore
     (Effects.submit [ Wire.Wait { wait_ms = item_menu_input_ms } ]
       : Wire.batch_done);
-  M.taps Wire.Down row;
+  M.taps Wire.Down row
+
+let choose_in_item_menu item row =
+  to_item_menu_row item row;
   M.press Wire.A
 
-let item_action item row =
+let action_a =
+  Wire.Press
+    { buttons = [ Wire.A ]; hold_ms = M.button_hold_ms; cooldown_ms = 0 }
+
+let item_action_press item row =
   open_pocket_top (pocket_of_item item);
   select item;
   M.press Wire.A;
-  choose_in_item_menu item row
+  to_item_menu_row item row;
+  action_a
+
+let item_action item row =
+  ignore (Effects.submit [ item_action_press item row ] : Wire.batch_done)

@@ -62,15 +62,27 @@ let reload setup id log =
       | Ok () -> ()
       | Error c -> raise (Not_back (Failure.cause_to_string c)))
 
-let place setup id log =
-  let frame = C.read_frame () in
-  match C.load_frame (C.frame_file ~states:setup.states id) with
-  | Ok (Some reference) ->
-      Option.map (Frlg_readers.Start_frame.compare ~reference) frame
-  | Ok None -> None
+let load_kept log path =
+  match C.load_frame path with
+  | Ok frame -> frame
   | Error e ->
       log ("[Preflight] " ^ e);
       None
+
+(* The frame kept under the id, else the one kept at the plan's start (a
+   renamed or split checkpoint's). *)
+let kept setup id start log =
+  match load_kept log (C.frame_file ~states:setup.states id) with
+  | Some frame -> Some frame
+  | None ->
+      Option.bind (C.start_file ~states:setup.states start) (load_kept log)
+
+let place setup id start log =
+  let frame = C.read_frame () in
+  match kept setup id start log with
+  | Some reference ->
+      Option.map (Frlg_readers.Start_frame.compare ~reference) frame
+  | None -> None
 
 (* The party is read on its summaries (species, level, moves): the room and
    the field moves are judged on them. *)
@@ -128,8 +140,8 @@ let judge record (needs, room) reads log () =
     save_failure record log;
     Error (Failure.cause "mismatch" "the save does not hold what it needs"))
 
-let check_start setup id reads log () =
-  reads.place <- place setup id log;
+let check_start setup id start reads log () =
+  reads.place <- place setup id start log;
   Ok ()
 
 let read_party reads log () =
@@ -146,10 +158,10 @@ let read_trainer_card needs reads log () =
 (* The shadow plan's steps (Frlg_story.Shadow_plan.preflight_steps). The
    party is read on its summaries (species, level, moves): the room and the
    field moves are judged on them. *)
-let actions setup record id ((needs, _) as all) reads log =
+let actions setup record id start ((needs, _) as all) reads log =
   [
     ("soft_reset", action (soft_reset setup record id reads log));
-    ("check_start", action (check_start setup id reads log));
+    ("check_start", action (check_start setup id start reads log));
     ("read_party", action (read_party reads log));
     ("read_trainer_card", action (read_trainer_card needs reads log));
     ("verdict", action (judge record all reads log));
@@ -160,14 +172,14 @@ let shadow_plan id =
     Frlg_story.Shadow_plan.preflight_steps
 
 (* The pre-flight as a plan through the checkpoint runner, on the page. *)
-let session setup record id needs world log () =
+let session setup record id start needs world log () =
   let reads =
     { place = None; members = None; observed = None; verdict = Stopped "" }
   in
   match
     Frlg_story.Plan_watch.run_shadow ~mode:"preflight" ~log world
       (shadow_plan id)
-      (actions setup record id needs reads)
+      (actions setup record id start needs reads)
   with
   | Ok () -> reads.verdict
   | Error f -> (
@@ -204,13 +216,17 @@ let with_daemon setup record id body =
         ~finally:(fun () -> Daemon_process.stop daemon)
         (fun () -> body daemon)
 
-let in_daemon setup record id needs world log (d : Daemon_process.t) =
-  match Live.run ~port:d.port (session setup record id needs world log) with
+let in_daemon setup record id start needs world log (d : Daemon_process.t) =
+  match
+    Live.run ~port:d.port (session setup record id start needs world log)
+  with
   | verdict -> verdict
   | exception Effects.Disconnected e -> Stopped ("disconnected: " ^ e)
 
 let run ~plan_dir ~from_id setup =
   let* needs = needs ~plan_dir from_id in
+  let* plan = Plan_dir.load_plan ~plan_dir from_id in
+  let start = plan.checkpoint.start in
   let* world = Frlg_story.Checkpoint_run.load_world () in
   let run =
     Run_record.start ~runs_dir:setup.runs_dir setup.info ~checkpoint:from_id
@@ -221,7 +237,7 @@ let run ~plan_dir ~from_id setup =
   print_endline ("[Preflight] " ^ record.dir);
   let verdict =
     with_daemon setup record from_id
-      (in_daemon setup record from_id needs world log)
+      (in_daemon setup record from_id start needs world log)
   in
   let table, line, ending = ending_of from_id verdict in
   Option.iter print_endline table;

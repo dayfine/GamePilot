@@ -7,8 +7,8 @@
 type kind =
   | Talk  (** text and scenes pressed through, then the overworld quiet *)
   | After_warp
-      (** as [Talk], but a warp (a map change) must come first: a fade, or the
-          far map's banner *)
+      (** as [Talk], but a warp (a map change) must come first: a fade, the far
+          map's banner, or a read that the player arrived *)
   | Door
       (** after a door or a way through with no text to come: the fade back up
           and a short still spell around the player, people walking about
@@ -46,9 +46,12 @@ type look = {
 
 type io = {
   look : unit -> look;  (** the screen now *)
-  press : Talk_over.press -> wait_ms:int -> unit;
+  press : Talk_over.press -> wait_ms:int -> look option;
       (** answers a look, then waits [wait_ms]; a game that only watches just
-          waits *)
+          waits. Returns the first frame of the wait that showed a warp
+          ({!Facts.shows_warp}), if one did: a whole warp (fade out, black, fade
+          in) is over in under a second, so the next look alone can miss it
+          (mg-04a testing run 1 on console B, 2026-11-24: the Escape Rope's). *)
   flee_battle : unit -> bool;
       (** a battle started: flees a wild one and returns true, or returns false
           for one that ends the settle (a trainer's after their talk) *)
@@ -62,6 +65,8 @@ type ending =
   | Battle of string  (** a battle [flee_battle] did not flee *)
   | Timed_out of string  (** the cap: the step fails; the string says why *)
 
-val run : rule -> label:string -> io -> ending
+val run : ?seen:look -> rule -> label:string -> io -> ending
 (** Looks and presses until [rule] says the game has settled, a battle ends it,
-    or the cap. [label] names the step in the log and the failure. *)
+    or the cap. [label] names the step in the log and the failure. [seen]: a
+    frame before the first look that showed a warp, watched while the press that
+    starts the step ran. *)

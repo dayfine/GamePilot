@@ -34,6 +34,12 @@ val frame_file : states:string -> string -> string
 (** [<states>/<id>.start.frame.json]: where the runner keeps checkpoint [id]'s
     start frame. *)
 
+val start_file : states:string -> Story.Pose.declared option -> string option
+(** [<states>/<map>.<x>_<y>.start.frame.json] for a start on tiles (its first):
+    the frame kept at that start under any checkpoint's id, so a checkpoint
+    renamed or split off (mg-04 to mg-04a) finds the frame kept where it starts.
+    [None] for no start, a whole map or a zone. *)
+
 val load_frame : string -> (Frlg_readers.Start_frame.t option, string) result
 (** [Ok None] when the file does not exist. *)
 

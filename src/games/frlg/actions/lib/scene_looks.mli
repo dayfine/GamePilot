@@ -21,22 +21,32 @@ val max_still_change : float
 
 val io :
   ?menu_open:(Effects.measurements -> bool) ->
+  ?arrived:(Effects.measurements -> bool) ->
   flee_battle:(unit -> bool) ->
   log:(string -> unit) ->
   unit ->
   Screen_state.Settle.io
 (** A fresh settle's looks and presses. Each [io] keeps its own last look. A
     look on which [menu_open] holds (default never) is no free control: a menu
-    with no box and no fade (the party, a summary) is not the overworld. *)
+    with no box and no fade (the party, a summary) is not the overworld. A look
+    of the overworld (no fade, box or battle) on which [arrived] holds (default
+    never) is the arrival read. Each press watches every frame of its wait and
+    returns the first that showed a warp. *)
 
 val settle :
   ?menu_open:(Effects.measurements -> bool) ->
+  ?arrived:(Effects.measurements -> bool) ->
+  ?start:Wire.command list ->
   Screen_state.Settle.kind ->
   label:string ->
   battle_ends:bool ->
   log:(string -> unit) ->
   (unit, Story.Failure.cause) result
-(** Runs the settle of that kind with {!probes} subscribed, fleeing no battle:
-    [Ok] once quiet, or when a battle starts if [battle_ends] (a trainer's after
-    their talk, which the plan's next event fights); else a battle fails as
-    [battle]. The cap fails as [not_settled]. *)
+(** Runs the settle of that kind with {!probes} subscribed, fleeing no battle.
+    [start] (default none): the presses that start the step (the item's USE),
+    run once the probes are subscribed with every frame watched, so a warp that
+    begins during them counts. [arrived]: as for {!io}; its readers' probes are
+    the caller's to subscribe. The settle ends [Ok] once quiet, or when a battle
+    starts if [battle_ends] (a trainer's after their talk, which the plan's next
+    event fights); else a battle fails as [battle]. The cap fails as
+    [not_settled]. *)

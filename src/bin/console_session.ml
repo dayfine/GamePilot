@@ -30,25 +30,42 @@ let load_frame ~log path =
       log ("[Start] " ^ e);
       None
 
-(* After the reload: the frame first kept as the start's when none was. *)
-let start_check ~log ~frame_path party =
-  let expected = { C.party; frame = load_frame ~log frame_path } in
+(* The frame kept under the checkpoint's id, else the one kept at its start. *)
+let kept_frame ~log ~frame_path ~start_path =
+  match (load_frame ~log frame_path, start_path) with
+  | Some frame, _ -> Some frame
+  | None, Some path ->
+      let frame = load_frame ~log path in
+      if Option.is_some frame then
+        log "[Start] no frame kept for this id; the one kept at its start";
+      frame
+  | None, None -> None
+
+(* Keeps the frame read as the file's when the file has none. *)
+let keep_missing ~log frame path =
+  if not (Sys.file_exists path) then C.write_frame ~log path frame
+
+let keep_all ~log ~frame_path ~start_path frame =
+  List.iter (keep_missing ~log frame) (frame_path :: Option.to_list start_path)
+
+(* After the reload: the frame first kept as the start's (by id and by start)
+   when none was. *)
+let start_check ~log ~frame_path ~start_path party =
+  let expected = { C.party; frame = kept_frame ~log ~frame_path ~start_path } in
   let observed = C.observe ~log expected in
   let results = C.check expected observed in
   log_results log results;
   match C.mismatches results with
   | [] ->
-      (match (expected.frame, observed.frame_read) with
-      | None, Some frame -> C.write_frame ~log frame_path frame
-      | _ -> ());
+      Option.iter (keep_all ~log ~frame_path ~start_path) observed.frame_read;
       Ok ()
   | l -> Error ("not at the checkpoint's start: " ^ String.concat "; " l)
 
-let before ~log ~frame_path party =
+let before ~log ~frame_path ~start_path party =
   log "[Console] back to the last save";
   match Frlg_actions.Soft_reset.return_to_save ~log () with
   | Error c -> Error ("could not return to the last save: " ^ cause c)
-  | Ok () -> start_check ~log ~frame_path party
+  | Ok () -> start_check ~log ~frame_path ~start_path party
 
 let return_to_save ~log =
   match Frlg_actions.Soft_reset.return_to_save ~log () with
