@@ -1,5 +1,7 @@
 #include "server.h"
 
+#include "switch_geometry.h"
+
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
@@ -14,19 +16,6 @@ RpcError backend_error(const std::exception& error) {
   pa::JsonObject data;
   data["detail"] = std::string(error.what());
   return RpcError(kBackendError, "backend error", std::move(data));
-}
-
-// Writes `frame` to `path` as a PNG. Throws BackendError.
-void write_png(const cv::Mat& frame, const std::string& path) {
-  std::vector<unsigned char> png;
-  if (!cv::imencode(".png", frame, png)) {
-    throw BackendError("cannot encode the frame as PNG");
-  }
-  pa::FileIO file;
-  if (!file.open(path, pa::FileMode::WRITE | pa::FileMode::BINARY) ||
-      file.write(png.data(), png.size()) != png.size()) {
-    throw BackendError("cannot write " + path);
-  }
 }
 
 // A frame this far behind its slot is not caught up; pacing restarts from now.
@@ -372,7 +361,7 @@ pa::JsonObject Server::dispatch(const Request& request) {
   if (method == "backend.save_frame") {
     const SaveParams save = decode_save(request.params);
     try {
-      write_png(backend_.frame(), save.path);
+      save_png(save.path, backend_.frame());
       return save_result(backend_.seq());
     } catch (const BackendError& error) {
       throw backend_error(error);
