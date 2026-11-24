@@ -1,12 +1,6 @@
 module J = Grid_maps.Json_field
 
-type move_rule = { learn : string; replacing : string }
-
-type use = {
-  member : Action_args.member;
-  rules : move_rule list;
-  evolve : bool;
-}
+type use = { member : Action_args.member; policy : Level_up.policy }
 
 type goal = {
   use : use;
@@ -25,17 +19,19 @@ let move_rule ~where args =
   and replacing = J.string ~where "replacing" args in
   if learn = replacing then
     J.fail "%sreplacing is the move itself, %s" where learn;
-  { learn; replacing }
+  { Level_up.learn; replacing }
+
+let evolve ~where args =
+  match J.find "evolve" args with
+  | Some (`Bool b) -> b
+  | Some _ -> J.fail "%sevolve is not true or false" where
+  | None -> J.fail "%sevolve is missing" where
 
 let read_use ~where args =
+  let rules = J.records ~where "learn" args move_rule in
   {
     member = Action_args.member ~where args;
-    rules = J.records ~where "learn" args move_rule;
-    evolve =
-      (match J.find "evolve" args with
-      | Some (`Bool b) -> b
-      | Some _ -> J.fail "%sevolve is not true or false" where
-      | None -> J.fail "%sevolve is missing" where);
+    policy = { rules; evolve = evolve ~where args };
   }
 
 let in_range ~where name ~low ~high args =
@@ -64,16 +60,14 @@ let read_goal ~where args =
 
 let decode_use args = Action_args.decode ~action:"use_rare_candy" read_use args
 let decode_goal args = Action_args.decode ~action:"candy_level" read_goal args
-let rule_for rules ~offered = List.find_opt (fun r -> r.learn = offered) rules
-let describe_rule r = r.learn ^ " over " ^ r.replacing
 
 let describe_use u =
   Printf.sprintf "%s, learn %s, %s"
     (Action_args.member_to_string u.member)
-    (match u.rules with
+    (match u.policy.rules with
     | [] -> "nothing offered"
-    | rules -> String.concat ", " (List.map describe_rule rules))
-    (if u.evolve then "evolve" else "no evolution")
+    | rules -> String.concat ", " (List.map Level_up.describe_rule rules))
+    (if u.policy.evolve then "evolve" else "no evolution")
 
 let describe_goal g =
   Printf.sprintf "%s to Lv %d (at most %d candies)%s%s" (describe_use g.use)

@@ -1,7 +1,7 @@
-(** The Rare Candy actions as data: whom a candy goes to, which offered moves it
-    learns and over what, and whether it may evolve ({!use}); and a leveling
-    goal on top of that ({!goal}). Pure: {!Rare_candy} and {!Candy_level} run
-    them.
+(** The Rare Candy actions as data: whom a candy goes to and what its level
+    brings is answered with ({!Level_up.policy}: which offered moves it learns
+    and over what, whether it may evolve), and a leveling goal on top of that
+    ({!goal}). Pure: {!Rare_candy} and {!Candy_level} run them.
 
     A move is learned only where a rule names it: the game asks "Should a move
     be deleted and replaced with ...?" only when the member knows four moves
@@ -9,16 +9,7 @@
     offered while a slot is free is learned by the game without asking
     (pokefirered party_menu.c, [MonTryLearningNewMove] giving it at once). *)
 
-type move_rule = {
-  learn : string;  (** the move offered, a slug *)
-  replacing : string;  (** the known move it is learned over, a slug *)
-}
-
-type use = {
-  member : Action_args.member;
-  rules : move_rule list;  (** in the plan's order; the first match is taken *)
-  evolve : bool;  (** let an evolution run; else cancel it with B *)
-}
+type use = { member : Action_args.member; policy : Level_up.policy }
 
 type goal = {
   use : use;
@@ -44,9 +35,6 @@ val decode_goal : Grid_maps.Json_field.obj -> (goal, Story.Failure.cause) result
 (** ["candy_level"]'s args: {!decode_use}'s, ["target_level"] (2-100), and the
     optional ["expect_species"], ["expect_moves"] (a list of slugs) and
     ["max_candies"] (1-99, default {!default_max_candies}). *)
-
-val rule_for : move_rule list -> offered:string -> move_rule option
-(** The first rule that learns the move offered. *)
 
 val describe_use : use -> string
 (** One line: ["gastly, learn mean-look over lick, evolve"]. *)

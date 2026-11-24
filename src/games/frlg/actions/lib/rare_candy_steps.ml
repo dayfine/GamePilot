@@ -25,11 +25,11 @@ let forget_list m =
 let question m = Party_dialogs.move_learn_box m || Battle_yes_no.yes_no_box m
 let in_bag m = Bag_screen.bag_open m && not (Bag_screen.item_menu m)
 
-let classify m : Rare_candy.look option =
+let classify m : Level_up.look option =
   if forget_list m then Some Forget_list
   else if question m then Some Move_prompt
-  else if Party_dialogs.level_up_box m then Some Level_up
-  else if in_bag m then Some In_bag
+  else if Party_dialogs.level_up_box m then Some Stats
+  else if in_bag m then Some Back
   else if Evolution_screen.evolution_shows m then Some Evolving
   else None
 
@@ -63,7 +63,7 @@ let still_since m ~quiet_since =
   else Some (Option.value quiet_since ~default:(Effects.now ()))
 
 let rec next_look ~started ~quiet_since =
-  if timed_out started then Rare_candy.Timed_out
+  if timed_out started then Level_up.Timed_out
   else
     match Effects.await ~timeout_ms:look_ms watched with
     | Holds m -> on_look m ~started
@@ -83,17 +83,26 @@ and quiet ~started ~quiet_since =
       next_look ~started ~quiet_since:None
   | since -> next_look ~started ~quiet_since:since
 
-let next () =
-  match Effects.read () with
-  | Some m when Party_dialogs.level_up_box m ->
-      press_a ();
-      Rare_candy.Level_up
-  | _ -> next_look ~started:(Effects.now ()) ~quiet_since:None
-
 let shows ~timeout_ms pred =
   match Effects.await ~timeout_ms pred with
   | Effects.Holds _ -> true
   | Timeout -> false
+
+(* Page 1, page 2, then the window closes: A while it shows, at most one per
+   page and one lost. *)
+let stats_presses = 3
+
+let rec through_stats presses =
+  if presses > 0 && shows ~timeout_ms:look_ms Party_dialogs.level_up_box then (
+    press_a ();
+    through_stats (presses - 1))
+
+let next () =
+  match next_look ~started:(Effects.now ()) ~quiet_since:None with
+  | Stats ->
+      through_stats stats_presses;
+      Level_up.Stats
+  | look -> look
 
 (* YES (the box's cursor starts there); the party then prints "Which move
    should be forgotten?" and waits for A, the evolution scene fades to the
@@ -114,7 +123,7 @@ let open_list () =
   in
   on_until (Effects.now () +. float_of_int list_timeout_ms)
 
-let read_list () : Rare_candy.forget_list =
+let read_list () : Level_up.forget_list =
   {
     offered = Summary_moves.read_offered ();
     known = List.init known_moves Summary_moves.read_row;
@@ -173,16 +182,13 @@ let close_bag ~log () =
   M.close "the bag" Bag_screen.bag_open;
   M.settle_back ~label:"rare candy" ~log
 
+let level_up_rig ~log : Level_up.rig =
+  { next; open_list; read_list; forget; leave_list; decline; evolution; log }
+
 let make ~log : Rare_candy.rig =
   {
     open_candy = open_candy ~log;
-    next;
-    open_list;
-    read_list;
-    forget;
-    leave_list;
-    decline;
-    evolution;
+    level_up = level_up_rig ~log;
     close_bag = close_bag ~log;
     log;
   }

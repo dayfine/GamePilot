@@ -1,6 +1,6 @@
 type rig = {
   level : slot:int -> int option;
-  candy : slot:int -> Candy_plan.use -> Rare_candy.result;
+  candy : slot:int -> Level_up.policy -> Rare_candy.result;
   member : slot:int -> Story.Room_policy.member option;
   log : string -> unit;
 }
@@ -9,9 +9,9 @@ type report = {
   candies : int;
   level : int;
   species : string;
-  learned : Candy_plan.move_rule list;
+  learned : Level_up.move_rule list;
   declined : string option list;
-  evolutions : Rare_candy.evolution list;
+  evolutions : Level_up.evolution list;
 }
 
 exception Ended of Story.Failure.cause
@@ -22,14 +22,14 @@ let fail code fmt =
 (* The candies so far and what they did. *)
 type fed = {
   count : int;
-  learned : Candy_plan.move_rule list;
+  learned : Level_up.move_rule list;
   declined : string option list;
-  evolutions : Rare_candy.evolution list;
+  evolutions : Level_up.evolution list;
 }
 
 let start = { count = 0; learned = []; declined = []; evolutions = [] }
 
-let add fed (o : Rare_candy.outcome) =
+let add fed (o : Level_up.outcome) =
   {
     count = fed.count + 1;
     learned = fed.learned @ o.learned;
@@ -48,12 +48,12 @@ let candy rig (goal : Candy_plan.goal) ~slot ~level fed =
   if fed.count >= goal.max_candies then
     fail "max_candies" "%d candies used and slot %d is Lv %d, not %d" fed.count
       slot level goal.target_level;
-  match rig.candy ~slot goal.use with
+  match rig.candy ~slot goal.use.policy with
   | Out_of_candies ->
       fail "out_of_candies" "no Rare Candy left: slot %d is Lv %d, not %d" slot
         level goal.target_level
   | Failed why -> fail "rare_candy_failed" "%s" why
-  | Used o when not o.levelled ->
+  | Used o when o.levels = 0 ->
       fail "no_effect" "the candy did not take on slot %d (Lv %d)" slot level
   | Used o -> add fed o
 

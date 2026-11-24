@@ -1,4 +1,4 @@
-(* The Rare Candy actions: their args (pure), one candy's decisions on a fake
+(* The Rare Candy actions: their args (pure), the level-up decisions and one candy on a fake
    rig that answers each step from a script and records the steps, and the
    leveling loop on a fake that counts candies. *)
 
@@ -50,147 +50,163 @@ let decoding =
   ]
 
 (* The fake game: the looks [next] answers in order, the list each opened
-   list shows in order, whether the candy is there. *)
+   list shows in order, whether the candy is there. Its level-up rig serves
+   any context; [Back] is wherever the context ends. *)
 type game = {
-  mutable looks : Rare_candy.look list;
-  mutable lists : Rare_candy.forget_list list;
+  mutable looks : Level_up.look list;
+  mutable lists : Level_up.forget_list list;
   has_candy : bool;
   mutable trace : string list;
 }
 
 let note g s = g.trace <- s :: g.trace
 
-let pop_look g () : Rare_candy.look =
+let pop_look g () : Level_up.look =
   match g.looks with
   | [] -> Timed_out
   | l :: rest ->
       g.looks <- rest;
       l
 
-let pop_list g () : Rare_candy.forget_list =
+let pop_list g () : Level_up.forget_list =
   match g.lists with
   | [] -> { offered = None; known = [] }
   | l :: rest ->
       g.lists <- rest;
       l
 
-let rig g : Rare_candy.rig =
+let noted g step result () =
+  note g step;
+  result
+
+let level_up_rig g : Level_up.rig =
+  {
+    next = pop_look g;
+    open_list = noted g "yes" true;
+    read_list = pop_list g;
+    forget = (fun row -> noted g (Printf.sprintf "forget %d" row) true ());
+    leave_list = noted g "leave" true;
+    decline = noted g "no" true;
+    evolution = (fun ~cancel -> note g (if cancel then "hold B" else "wait"));
+    log = ignore;
+  }
+
+let candy_rig g : Rare_candy.rig =
   {
     open_candy =
       (fun ~slot ->
         note g (Printf.sprintf "open %d" slot);
         if g.has_candy then Opened else No_candy);
-    next = pop_look g;
-    open_list =
-      (fun () ->
-        note g "yes";
-        true);
-    read_list = pop_list g;
-    forget =
-      (fun row ->
-        note g (Printf.sprintf "forget %d" row);
-        true);
-    leave_list =
-      (fun () ->
-        note g "leave";
-        true);
-    decline =
-      (fun () ->
-        note g "no";
-        true);
-    evolution = (fun ~cancel -> note g (if cancel then "hold B" else "wait"));
+    level_up = level_up_rig g;
     close_bag = (fun () -> note g "close");
     log = ignore;
   }
 
 let known = [ Some "lick"; Some "hypnosis"; Some "spite"; Some "curse" ]
-let offer move : Rare_candy.forget_list = { offered = Some move; known }
-let rule learn replacing : Candy_plan.move_rule = { learn; replacing }
+let offer move : Level_up.forget_list = { offered = Some move; known }
+let rule learn replacing : Level_up.move_rule = { learn; replacing }
 
-let use ?(rules = []) ?(evolve = false) () : Candy_plan.use =
-  { member = Slot 1; rules; evolve }
+let policy ?(rules = []) ?(evolve = false) () : Level_up.policy =
+  { rules; evolve }
 
-let play ?(has_candy = true) ?(lists = []) looks use () =
-  let g = { looks; lists; has_candy; trace = [] } in
-  let result = Rare_candy.run (rig g) use ~slot:1 in
-  Rare_candy.describe result ^ " ["
-  ^ String.concat ", " (List.rev g.trace)
-  ^ "]"
+let traced g text = text ^ " [" ^ String.concat ", " (List.rev g.trace) ^ "]"
+
+let settle ?(lists = []) looks policy () =
+  let g = { looks; lists; has_candy = true; trace = [] } in
+  traced g
+    (match Level_up.run (level_up_rig g) policy with
+    | Ok o -> Level_up.describe o
+    | Error why -> "failed: " ^ why)
 
 let mean_look = [ rule "mean-look" "lick" ]
 
-let decisions =
+let level_ups =
   [
     case "a level, nothing more"
-      (play [ Level_up; Level_up; In_bag ] (use ()))
-      "Rare Candy: levelled up; learned none; declined none; evolution none. \
-       [open 1, close]";
+      (settle [ Stats; Back ] (policy ()))
+      "1 level; learned none; declined none; evolution none []";
     case "a move learned over the rule's move"
-      (play
+      (settle
          ~lists:[ offer "mean-look" ]
-         [ Level_up; Move_prompt; In_bag ]
-         (use ~rules:mean_look ()))
-      "Rare Candy: levelled up; learned mean-look; declined none; evolution \
-       none. [open 1, yes, forget 0, close]";
+         [ Stats; Move_prompt; Back ]
+         (policy ~rules:mean_look ()))
+      "1 level; learned mean-look; declined none; evolution none [yes, forget \
+       0]";
     case "no rules: declined at the prompt"
-      (play [ Level_up; Move_prompt; In_bag ] (use ()))
-      "Rare Candy: levelled up; learned none; declined an unread move; \
-       evolution none. [open 1, no, close]";
+      (settle [ Stats; Move_prompt; Back ] (policy ()))
+      "1 level; learned none; declined an unread move; evolution none [no]";
     case "a move no rule names: the list left"
-      (play
+      (settle
          ~lists:[ offer "night-shade" ]
-         [ Level_up; Move_prompt; In_bag ]
-         (use ~rules:mean_look ()))
-      "Rare Candy: levelled up; learned none; declined night-shade; evolution \
-       none. [open 1, yes, leave, close]";
+         [ Stats; Move_prompt; Back ]
+         (policy ~rules:mean_look ()))
+      "1 level; learned none; declined night-shade; evolution none [yes, leave]";
     case "two moves at one level: one learned, one declined"
-      (play
+      (settle
          ~lists:[ offer "night-shade"; offer "mean-look" ]
-         [ Level_up; Move_prompt; Move_prompt; In_bag ]
-         (use ~rules:mean_look ()))
-      "Rare Candy: levelled up; learned mean-look; declined night-shade; \
-       evolution none. [open 1, yes, leave, yes, forget 0, close]";
+         [ Stats; Move_prompt; Move_prompt; Back ]
+         (policy ~rules:mean_look ()))
+      "1 level; learned mean-look; declined night-shade; evolution none [yes, \
+       leave, yes, forget 0]";
+    case "two levels in a row, each with its prompt (a battle's shape)"
+      (settle
+         ~lists:[ offer "night-shade"; offer "mean-look" ]
+         [ Stats; Move_prompt; Stats; Move_prompt; Evolving; Back ]
+         (policy ~rules:mean_look ~evolve:true ()))
+      "2 levels; learned mean-look; declined night-shade; evolution evolved \
+       [yes, leave, yes, forget 0, wait]";
     case "the rule's move to replace not known: declined"
-      (play
+      (settle
          ~lists:[ offer "spore" ]
-         [ Level_up; Move_prompt; In_bag ]
-         (use ~rules:[ rule "spore" "scratch" ] ()))
-      "Rare Candy: levelled up; learned none; declined spore; evolution none. \
-       [open 1, yes, leave, close]";
+         [ Stats; Move_prompt; Back ]
+         (policy ~rules:[ rule "spore" "scratch" ] ()))
+      "1 level; learned none; declined spore; evolution none [yes, leave]";
     case "the offered move unread: the list left"
-      (play
+      (settle
          ~lists:[ { offered = None; known } ]
-         [ Level_up; Move_prompt; In_bag ]
-         (use ~rules:mean_look ()))
-      "Rare Candy: levelled up; learned none; declined an unread move; \
-       evolution none. [open 1, yes, leave, close]";
+         [ Stats; Move_prompt; Back ]
+         (policy ~rules:mean_look ()))
+      "1 level; learned none; declined an unread move; evolution none [yes, \
+       leave]";
     case "a list opened by a stray A"
-      (play
+      (settle
          ~lists:[ offer "mean-look" ]
-         [ Level_up; Forget_list; In_bag ]
-         (use ~rules:mean_look ()))
-      "Rare Candy: levelled up; learned mean-look; declined none; evolution \
-       none. [open 1, forget 0, close]";
+         [ Stats; Forget_list; Back ]
+         (policy ~rules:mean_look ()))
+      "1 level; learned mean-look; declined none; evolution none [forget 0]";
     case "an evolution let run, then its move asked"
-      (play
+      (settle
          ~lists:[ offer "mean-look" ]
-         [ Level_up; Evolving; Move_prompt; Evolving; In_bag ]
-         (use ~rules:mean_look ~evolve:true ()))
-      "Rare Candy: levelled up; learned mean-look; declined none; evolution \
-       evolved. [open 1, wait, yes, forget 0, wait, close]";
+         [ Stats; Evolving; Move_prompt; Evolving; Back ]
+         (policy ~rules:mean_look ~evolve:true ()))
+      "1 level; learned mean-look; declined none; evolution evolved [wait, \
+       yes, forget 0, wait]";
     case "an evolution cancelled once, then waited out"
-      (play [ Level_up; Evolving; Evolving; In_bag ] (use ()))
-      "Rare Candy: levelled up; learned none; declined none; evolution \
-       cancelled. [open 1, hold B, wait, close]";
-    case "a Lv 100 member: no level-up"
-      (play [ In_bag ] (use ()))
-      "Rare Candy: no effect; learned none; declined none; evolution none. \
+      (settle [ Stats; Evolving; Evolving; Back ] (policy ()))
+      "1 level; learned none; declined none; evolution cancelled [hold B, wait]";
+    case "nothing shows"
+      (settle [ Stats ] (policy ()))
+      "failed: nothing to answer showed []";
+  ]
+
+let candy ?(has_candy = true) looks () =
+  let g = { looks; lists = []; has_candy; trace = [] } in
+  traced g
+    (Rare_candy.describe (Rare_candy.run (candy_rig g) (policy ()) ~slot:1))
+
+let candies =
+  [
+    case "a candy that took"
+      (candy [ Stats; Back ])
+      "Rare Candy: 1 level; learned none; declined none; evolution none. [open \
+       1, close]";
+    case "a Lv 100 member: no effect" (candy [ Back ])
+      "Rare Candy: 0 levels; learned none; declined none; evolution none. \
        [open 1, close]";
     case "out of candies"
-      (play ~has_candy:false [] (use ()))
+      (candy ~has_candy:false [])
       "Rare Candy: none left in the bag. [open 1]";
-    case "nothing shows"
-      (play [ Level_up ] (use ()))
+    case "a level-up that failed: the bag left open" (candy [ Stats ])
       "Rare Candy: failed: nothing to answer showed. [open 1]";
   ]
 
@@ -221,7 +237,7 @@ let level_rig t : Candy_level.rig =
           t.used <- t.used + 1;
           Used
             {
-              levelled = true;
+              levels = 1;
               learned = [];
               declined = [];
               evolution = No_evolution;
@@ -235,7 +251,7 @@ let level_rig t : Candy_level.rig =
 
 let goal ?(species = None) ?(moves = []) target : Candy_plan.goal =
   {
-    use = use ();
+    use = { member = Slot 1; policy = policy () };
     target_level = target;
     species;
     moves;
@@ -277,4 +293,4 @@ let leveling =
       "moves_missing: slot 1 knows hypnosis, not mean-look (0 used)";
   ]
 
-let () = Table_test.run "rare candy" (decoding @ decisions @ leveling)
+let () = Table_test.run "rare candy" (decoding @ level_ups @ candies @ leveling)

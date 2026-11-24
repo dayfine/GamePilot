@@ -16,7 +16,7 @@ type rig = {
   level : slot:int -> int option;
       (** From the overworld: the member's level on its summary; [None] when it
           did not read. *)
-  candy : slot:int -> Candy_plan.use -> Rare_candy.result;
+  candy : slot:int -> Level_up.policy -> Rare_candy.result;
       (** One candy, from the overworld back to it ({!Rare_candy.run}). *)
   member : slot:int -> Story.Room_policy.member option;
       (** From the overworld: the member's summary read (species, level, moves);
@@ -28,9 +28,9 @@ type report = {
   candies : int;
   level : int;  (** read before the summary check *)
   species : string;  (** read on the summary at the end *)
-  learned : Candy_plan.move_rule list;
+  learned : Level_up.move_rule list;
   declined : string option list;
-  evolutions : Rare_candy.evolution list;  (** each evolution met, in order *)
+  evolutions : Level_up.evolution list;  (** each evolution met, in order *)
 }
 
 val run :

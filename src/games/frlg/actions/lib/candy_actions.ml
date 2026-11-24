@@ -1,8 +1,8 @@
 module M = Menu_input
 
-let one_candy ~log ~slot use =
+let one_candy ~log ~slot policy =
   Effects.with_probes Rare_candy_steps.probes (fun () ->
-      Rare_candy.run (Rare_candy_steps.make ~log) use ~slot)
+      Rare_candy.run (Rare_candy_steps.make ~log) policy ~slot)
 
 let member ~log ~slot =
   List.find_opt
@@ -12,7 +12,7 @@ let member ~log ~slot =
 let rig ~log : Candy_level.rig =
   {
     level = (fun ~slot -> Member_level.read ~log ~slot);
-    candy = (fun ~slot use -> one_candy ~log ~slot use);
+    candy = (fun ~slot policy -> one_candy ~log ~slot policy);
     member = (fun ~slot -> member ~log ~slot);
     log;
   }
@@ -25,15 +25,15 @@ let after_evolution ~log ~party ~slot =
   | Some m -> renamed ~party ~slot m.species
   | None -> log "Rare Candy: the evolved member's species did not read."
 
-let use_candy ~log ~party ~slot use =
-  let result = one_candy ~log ~slot use in
+let use_candy ~log ~party ~slot (use : Candy_plan.use) =
+  let result = one_candy ~log ~slot use.policy in
   log (Rare_candy.describe result);
   match result with
   | Used o ->
       (match Member_level.read ~log ~slot with
       | Some l -> log (Printf.sprintf "Rare Candy: slot %d is Lv %d." slot l)
       | None -> log "Rare Candy: the level did not read.");
-      if o.evolution = Evolved then after_evolution ~log ~party ~slot
+      if o.evolution = Level_up.Evolved then after_evolution ~log ~party ~slot
   | Out_of_candies -> M.fail "out_of_candies" "no Rare Candy in the bag"
   | Failed why -> M.fail "rare_candy_failed" why
 
