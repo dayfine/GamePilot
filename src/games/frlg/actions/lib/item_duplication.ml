@@ -38,12 +38,13 @@ let counted plan ~before ~after =
       (Printf.sprintf "%s: %d before, %d after %d round(s)" plan.item before
          after plan.rounds)
 
-let check_editor ~word =
+let check_editor ~frame ~word =
   let reading =
     Text.Mail_fields.await_read (Text_data.glyphs ())
       [ word; Text.Mail_fields.unknown_word; Text.Mail_fields.blank ]
       ~timeout_ms:wait_ms
   in
+  Effects.save_run_frame frame;
   Option.iter (M.fail "mail_glitch_not_active") (editor_verdict ~word reading)
 
 let mail_on_top m = Bag_screen.cursor_row m = Some 0
@@ -55,7 +56,7 @@ let slot_one_holds m =
 let yes m = Dialog.yes_no_cursor m = Some true
 let editor_yes m = Mail_editor.confirm_arrow m = Some true
 
-let round ~word =
+let round ~frame ~word =
   wait "no_mail_arrow" "the selection arrow on Retro Mail" mail_on_top;
   press Wire.A;
   press Wire.Down;
@@ -69,7 +70,7 @@ let round ~word =
       wait "no_switch_question" "the switch question" yes);
   press Wire.A;
   pause editor_load_ms;
-  check_editor ~word;
+  check_editor ~frame ~word;
   press Wire.Start;
   Effects.with_probes Mail_editor.probes (fun () ->
       wait "no_mail_confirmation" "the mail's Yes/No" editor_yes);
@@ -93,7 +94,7 @@ let mail_left () =
 let rounds ~log plan =
   for i = 1 to plan.rounds do
     mail_left ();
-    round ~word:plan.word;
+    round ~frame:(Printf.sprintf "proof-a-round%d.png" i) ~word:plan.word;
     log (Printf.sprintf "Duplication: round %d of %d done." i plan.rounds)
   done
 
@@ -110,6 +111,7 @@ let run ~log plan =
        "the bag after the rounds" (fun m -> Bag_screen.pocket m = Some Items));
   Bag_items.to_top ();
   let after = count_of plan.item in
+  Effects.save_run_frame "proof-b.png";
   M.close "the bag" Bag_screen.bag_open;
   M.settle_back ~label:"duplication" ~log;
   log (Printf.sprintf "Duplication: %s %d -> %d." plan.item before after);

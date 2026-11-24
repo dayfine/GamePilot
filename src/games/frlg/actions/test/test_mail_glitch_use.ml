@@ -46,6 +46,49 @@ let args name json () =
   | Ok () -> "ok"
   | Error c -> Story.Failure.cause_to_string c
 
+(* Proof A keeps the frame it judged: here the editor never reads (every wait
+   times out), and its frame is saved in the run folder before the step
+   fails. *)
+let editor_frames () =
+  let saved = ref [] in
+  let check () =
+    Effects.with_run_folder "run" (fun () ->
+        Menu_input.run (fun () ->
+            Item_duplication.check_editor ~frame:"proof-a.png" ~word:"ABRA"))
+  in
+  let result =
+    Effect.Deep.match_with check ()
+      {
+        retc = Fun.id;
+        exnc = raise;
+        effc =
+          (fun (type a) (eff : a Effect.t) ->
+            let answer (v : a) =
+              Some
+                (fun (k : (a, _) Effect.Deep.continuation) ->
+                  Effect.Deep.continue k v)
+            in
+            match eff with
+            | Effects.Upload_template _ -> answer "hash"
+            | Effects.Subscribe probes ->
+                answer (List.map (fun (p : Wire.probe_spec) -> p.id) probes)
+            | Effects.Unsubscribe ids -> answer ids
+            | Effects.Await _ -> answer Effects.Timeout
+            | Effects.Read -> answer None
+            | Effects.Now -> answer 0.
+            | Effects.Save_frame path ->
+                saved := path :: !saved;
+                answer 1
+            | _ -> None);
+      }
+  in
+  let ended =
+    match result with
+    | Ok () -> "ok"
+    | Error c -> Story.Failure.cause_to_string c
+  in
+  Printf.sprintf "%s; saved %s" ended (String.concat ", " (List.rev !saved))
+
 let () =
   Table_test.run "mail_glitch_use"
     [
@@ -82,4 +125,7 @@ let () =
       case "read_glitched_mail needs the word"
         (args "read_glitched_mail" {|{"species": "mr-mime"}|})
         "bad_args: read_glitched_mail: word is missing.";
+      case "proof A saves the frame it judged" editor_frames
+        "mail_glitch_not_active: no mail editor reading ABRA; saved \
+         run/proof-a.png";
     ]

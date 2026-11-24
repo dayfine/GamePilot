@@ -50,20 +50,22 @@ val editor_verdict :
 val counted : plan -> before:int -> after:int -> string option
 (** [None] when the count went up by [rounds]; else the failure's detail. *)
 
-val check_editor : word:string -> unit
+val check_editor : frame:string -> word:string -> unit
 (** The editor's field 1 read until a candidate (the word, ["???"], blank)
-    reads, for up to {!wait_ms}; anything but the word fails as
+    reads, for up to {!wait_ms}, and that frame kept in the run folder as
+    [frame] ({!Effects.save_run_frame}); anything but the word fails as
     [mail_glitch_not_active] ({!editor_verdict}). *)
 
-val round : word:string -> unit
+val round : frame:string -> word:string -> unit
 (** One round of the C++'s loop, from the bag with the cursor on Retro Mail at
-    the top. Fails as [no_mail_arrow], [no_held_item], [no_item_message],
-    [no_switch_question], [mail_glitch_not_active] (the editor's word) or
-    [no_mail_confirmation]. *)
+    the top; the editor's frame is kept as [frame]. Fails as [no_mail_arrow],
+    [no_held_item], [no_item_message], [no_switch_question],
+    [mail_glitch_not_active] (the editor's word) or [no_mail_confirmation]. *)
 
 val run : log:(string -> unit) -> plan -> unit
 (** From the overworld: the Items pocket at its top, Retro Mail checked on its
-    top row, the item's count read, the rounds (each after the Retro Mail
-    guard), the count read again, the bag closed. Fails as {!round} does, or as
-    [retro_mail_not_on_top], [retro_mail_low], [count_not_read] or
+    top row, the item's count read, the rounds (each after the Retro Mail guard;
+    round [i]'s editor kept as [proof-a-round<i>.png]), the count read again
+    (that frame kept as [proof-b.png]), the bag closed. Fails as {!round} does,
+    or as [retro_mail_not_on_top], [retro_mail_low], [count_not_read] or
     [duplication_failed]. *)
