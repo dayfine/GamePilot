@@ -173,7 +173,7 @@
       "party_includes": ["pidgey"],
       "party_slots": [{"slot": 1, "species": "farfetchd"}, {"slot": 2, "species": "blastoise"}, {"slot": 3, "species": "mr-mime"}],
       "marks": ["held_item", "held_item", "mail"],
-      "money": {"min": 19164, "max": 19164},
+      "money": {"spent": 2300},
       "items": [
         {"item": "antidote", "quantity": 2},
         {"item": "super-potion", "quantity": 3},

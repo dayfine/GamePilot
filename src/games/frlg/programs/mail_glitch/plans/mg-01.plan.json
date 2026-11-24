@@ -154,7 +154,7 @@
     "postconditions": {
       "party_includes": ["blastoise", "pidgey", "abra"],
       "coins": 20,
-      "money": {"min": 25014, "max": 25014}
+      "money": {"spent": 4100}
     }
   }
 }

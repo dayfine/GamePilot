@@ -219,4 +219,10 @@ let finish ~runs_dir run ~summary ending =
   append_result ~runs_dir run.record ~checkpoint:run.checkpoint ~mode:run.mode
     ~result:ending.result ~at:ending.at ~reason:ending.reason
 
+type save = Frame | State
+
+let failure_saves ~save_states =
+  ("failure.png", Frame)
+  :: (if save_states then [ ("failure.ss", State) ] else [])
+
 module Folder_facts = Folder_facts

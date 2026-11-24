@@ -202,7 +202,9 @@ let preflight_cases =
             members = Some [ summary 1 "blastoise" [ "surf" ] ];
           })
       "a member knows cut (cut_tree): no member knows cut: MISMATCH";
-    case "preflight mg-03: what mg-02 promised, exactly"
+    case
+      "preflight mg-03: what mg-02 promised, exactly (its money spent is no \
+       start need)"
       (fun () ->
         let before = Some (plan "mg-02").postconditions in
         String.concat "; "
@@ -212,8 +214,7 @@ let preflight_cases =
                 { observed = P.nothing_read; place = None; members = None })))
       "party includes blastoise, pidgey, abra, farfetchd; pidgey in the party \
        (fly); abra in the party (ingame_trade); a member knows cut (cut_tree); \
-       money ¥25014..¥25014; money at least ¥3550 (mart); at the start, \
-       VermilionCity";
+       money at least ¥3550 (mart); at the start, VermilionCity";
   ]
 
 (* {1 Room in the party} *)

@@ -293,8 +293,10 @@ let postconditions_text (plan : Plan.t) =
         ~some:(fun c -> [ Printf.sprintf "coins %d" c ])
         p.coins;
       Option.fold ~none:[]
-        ~some:(fun ({ min; max } : Plan.money) ->
-          [ Printf.sprintf "money %d to %d" min max ])
+        ~some:(function
+          | Plan.Money_range { min; max } ->
+              [ Printf.sprintf "money %d to %d" min max ]
+          | Money_spent n -> [ Printf.sprintf "money spent %d" n ])
         p.money;
       (if p.flags = [] then [] else [ "flags " ^ list p.flags ]);
       List.map
@@ -331,10 +333,10 @@ let postcondition_cases : Table_test.case list =
     {
       name =
         "mg-01 promises the members the plans use (Abra among them), 20 coins \
-         and $25,014";
+         and $4,100 spent";
       input = (fun () -> postconditions_text (load "mg-01.plan.json" mg));
       expectation =
-        "party includes blastoise, pidgey, abra\ncoins 20\nmoney 25014 to 25014";
+        "party includes blastoise, pidgey, abra\ncoins 20\nmoney spent 4100";
     };
     {
       name = "mg-05 promises MIMIEN, Pidgey and slots 1-3's marks";
@@ -349,7 +351,7 @@ let postcondition_cases : Table_test.case list =
         "party includes blastoise, pidgey, mr-mime, farfetchd\n\
          item revive x2\n\
          item escape-rope x3\n\
-         money 21464 to 21464";
+         money spent 3550";
     };
     {
       name = "mg-04 promises the grind's moves and one rope used";
@@ -358,7 +360,7 @@ let postcondition_cases : Table_test.case list =
         "party includes blastoise, pidgey, mr-mime, farfetchd\n\
          item revive x2\n\
          item escape-rope x2\n\
-         money 21464 to 21464\n\
+         money spent 0\n\
          farfetchd knows knock-off\n\
          mr-mime knows recycle\n\
          mr-mime at least Lv 33";
@@ -371,7 +373,7 @@ let postcondition_cases : Table_test.case list =
          mr-mime in slot 1\n\
          item antidote x2\n\
          item retro-mail x2\n\
-         money 20388 to 20388";
+         money spent 400";
     };
     {
       name = "every postcondition, PokemonSimulation's and ours";
@@ -433,6 +435,23 @@ let postcondition_cases : Table_test.case list =
       expectation = post ^ "money.min 5 is above max 4.";
     };
     {
+      name = "money spent";
+      input = (fun () -> with_postconditions {|{"money": {"spent": 4100}}|});
+      expectation = "money spent 4100";
+    };
+    {
+      name = "money spent and a range";
+      input =
+        (fun () ->
+          with_postconditions {|{"money": {"spent": 4100, "min": 1, "max": 2}}|});
+      expectation = post ^ "money: give min and max, or spent, not both.";
+    };
+    {
+      name = "money with neither a range nor spent";
+      input = (fun () -> with_postconditions {|{"money": {}}|});
+      expectation = post ^ "money: give min and max, or spent.";
+    };
+    {
       name = "a level without its min";
       input =
         (fun () -> with_postconditions {|{"levels": [{"species": "mr-mime"}]}|});
@@ -449,7 +468,7 @@ let postcondition_cases : Table_test.case list =
          item antidote x2\n\
          item super-potion x3\n\
          item retro-mail x1\n\
-         money 19164 to 19164\n\
+         money spent 2300\n\
          marks held_item, held_item, mail";
     };
     {

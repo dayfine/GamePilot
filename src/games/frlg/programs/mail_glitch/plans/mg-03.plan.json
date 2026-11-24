@@ -120,7 +120,7 @@
     "phase": "testing",
     "postconditions": {
       "party_includes": ["blastoise", "pidgey", "mr-mime", "farfetchd"],
-      "money": {"min": 21464, "max": 21464},
+      "money": {"spent": 3550},
       "items": [
         {"item": "revive", "quantity": 2},
         {"item": "escape-rope", "quantity": 3}

@@ -90,5 +90,12 @@ val finish : runs_dir:string -> run -> summary:string -> ending -> unit
 (** summary.txt, KEEP on a failure, run.json with the result, the RESULTS.tsv
     row. *)
 
+type save = Frame | State
+
+val failure_saves : save_states:bool -> (string * save) list
+(** What a failed run saves in its folder: failure.png, the frame, and
+    failure.ss, the save state, where the backend keeps states (mGBA; the Switch
+    has none). *)
+
 module Folder_facts = Folder_facts
 (** What an old folder says of its run (gamepilot runs --backfill). *)

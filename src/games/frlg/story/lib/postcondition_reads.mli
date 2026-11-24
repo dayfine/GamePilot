@@ -18,6 +18,13 @@ val observe :
   Story.Plan.postconditions ->
   Story.Postcondition_check.observed
 
+val start_money :
+  log:(string -> unit) -> Story.Plan.postconditions -> int option
+(** For a promise of the money spent ({!Story.Plan.Money_spent}): the money on
+    the Trainer Card at the checkpoint's start, read as at its end, from the
+    overworld and back to it. [None], reading nothing, for any other promise;
+    [None] too when the read failed. *)
+
 val party_summary : log:(string -> unit) -> Story.Room_policy.member list option
 (** Every member's species, level and moves ({!Frlg_actions.Party_summary}),
     from the overworld and back to it; [None] when the read failed. *)

@@ -144,7 +144,7 @@
     "phase": "testing",
     "postconditions": {
       "party_includes": ["blastoise", "pidgey", "abra", "farfetchd"],
-      "money": {"min": 25014, "max": 25014}
+      "money": {"spent": 0}
     }
   }
 }

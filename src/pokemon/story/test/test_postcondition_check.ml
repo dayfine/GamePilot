@@ -34,7 +34,11 @@ let includes ?(slots = []) l =
 
 let slot slot species = { Plan.slot; species }
 let party members = { read with party = Some members }
-let money min max = { nothing with money = Some { min; max } }
+let money min max = { nothing with money = Some (Money_range { min; max }) }
+let spent n = { nothing with money = Some (Money_spent n) }
+
+let money_from start now =
+  { read with start_money = Some start; money = Some now }
 
 let party_cases =
   [
@@ -120,6 +124,21 @@ let count_cases =
     case "money below a range" (money 100 200)
       { read with money = Some 99 }
       "money: failed: expected $100 to $200, read $99";
+    case "spent as promised (mg-01 on the Switch: $29202 to $25102)"
+      (spent 4100) (money_from 29202 25102)
+      "money: passed: spent $4100 ($29202 to $25102)";
+    case "spent as promised (mg-01 on mGBA: $29114 to $25014)" (spent 4100)
+      (money_from 29114 25014) "money: passed: spent $4100 ($29114 to $25014)";
+    case "spent more than promised" (spent 4100) (money_from 29202 25014)
+      "money: failed: expected spent $4100, read spent $4188 ($29202 to $25014)";
+    case "spent nothing, as promised" (spent 0) (money_from 25014 25014)
+      "money: passed: spent $0 ($25014 to $25014)";
+    case "spent, the money at the start not read" (spent 4100)
+      { read with money = Some 25102 }
+      "money: not checked: the money at the start was not read";
+    case "spent, the money at the end not read" (spent 4100)
+      { read with start_money = Some 29202 }
+      "money: not checked: the game can't read it";
     case "a flag no game reads"
       { nothing with flags = [ "got_coin_case" ] }
       read "flag got_coin_case: not checked: the game can't read it";
@@ -193,7 +212,11 @@ let log_cases : Table_test.case list =
   [
     {
       (log "the log: one line each and a failed summary"
-         { in_order with coins = Some 20; money = Some { min = 1; max = 1 } }
+         {
+           in_order with
+           coins = Some 20;
+           money = Some (Money_range { min = 1; max = 1 });
+         }
          { (party (some mg01_party)) with coins = Some 200 })
       with
       expectation =
@@ -205,7 +228,11 @@ let log_cases : Table_test.case list =
     };
     {
       (log "the log: incomplete when none failed and one was not read"
-         { nothing with coins = Some 20; money = Some { min = 1; max = 1 } }
+         {
+           nothing with
+           coins = Some 20;
+           money = Some (Money_range { min = 1; max = 1 });
+         }
          { read with coins = Some 20 })
       with
       expectation =
