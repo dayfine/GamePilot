@@ -64,9 +64,7 @@ let read_page ~log ~slot () =
   let known = settled_rows () in
   log
     (Printf.sprintf "Summary: slot %d knows %s." slot (String.concat ", " known));
-  M.close "the summary" (fun m -> Summary_screen.page m <> None);
-  M.close "the party" Party_menu.party_menu;
-  M.settle_back ~label:"summary" ~log;
+  M.close_to_overworld ~label:"summary" ~log;
   known
 
 let read_known ~log ~slot =

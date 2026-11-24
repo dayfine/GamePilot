@@ -20,10 +20,17 @@ val max_still_change : float
     below which it counts as still: 3. *)
 
 val io :
-  flee_battle:(unit -> bool) -> log:(string -> unit) -> Screen_state.Settle.io
-(** A fresh settle's looks and presses. Each [io] keeps its own last look. *)
+  ?menu_open:(Effects.measurements -> bool) ->
+  flee_battle:(unit -> bool) ->
+  log:(string -> unit) ->
+  unit ->
+  Screen_state.Settle.io
+(** A fresh settle's looks and presses. Each [io] keeps its own last look. A
+    look on which [menu_open] holds (default never) is no free control: a menu
+    with no box and no fade (the party, a summary) is not the overworld. *)
 
 val settle :
+  ?menu_open:(Effects.measurements -> bool) ->
   Screen_state.Settle.kind ->
   label:string ->
   battle_ends:bool ->

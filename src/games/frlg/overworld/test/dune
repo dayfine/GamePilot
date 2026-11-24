@@ -1,6 +1,6 @@
 (library
  (name frlg_overworld_fixtures)
- (modules scripted_screen frlg_world)
+ (modules scripted_screen scripted_party frlg_world)
  (libraries
   gamepilot.wire
   gamepilot.effects

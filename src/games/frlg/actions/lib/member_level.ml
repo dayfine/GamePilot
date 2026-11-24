@@ -23,9 +23,7 @@ let read_page ~log ~slot () =
     (Printf.sprintf "Summary: slot %d is %s." slot
        (Option.fold ~none:"at an unread level" ~some:(Printf.sprintf "Lv %d")
           level));
-  M.close "the summary" (fun m -> Summary_screen.page m <> None);
-  M.close "the party" Party_menu.party_menu;
-  M.settle_back ~label:"summary" ~log;
+  M.close_to_overworld ~label:"summary" ~log;
   level
 
 let read ~log ~slot =

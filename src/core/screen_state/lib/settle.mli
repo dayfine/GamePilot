@@ -13,6 +13,11 @@ type kind =
       (** after a door or a way through with no text to come: the fade back up
           and a short still spell around the player, people walking about
           ignored *)
+  | Menu_closed
+      (** after a menu (the party, a summary) is backed out of, with no text to
+          come: B until the overworld shows still and with no box for 0.5 s,
+          looking every 0.3 s, at most 15 s; the talk's 5 s quiet is for a scene
+          that may go on *)
 
 type rule = {
   judge : Talk_over.rule;  (** what ends it *)

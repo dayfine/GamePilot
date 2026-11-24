@@ -33,6 +33,9 @@ let () =
       rule_case "a door waits 1 s of the player still, looking often" Door
         "warp=false quiet=1000ms calm=2500ms still=player still look=200ms \
          cap=120000ms";
+      rule_case "a closed menu waits 0.5 s of quiet, looking often" Menu_closed
+        "warp=false quiet=500ms calm=2500ms still=screen still look=300ms \
+         cap=15000ms";
     ]
 
 let quiet =

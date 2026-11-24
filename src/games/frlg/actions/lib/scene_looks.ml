@@ -14,11 +14,12 @@ let middle m =
 let moved (a : Wire.rgb) (b : Wire.rgb) =
   Float.abs (a.r -. b.r) +. Float.abs (a.g -. b.g) +. Float.abs (a.b -. b.b)
 
-let facts ~last m : Screen_state.Facts.t =
+let facts ~menu_open ~last m : Screen_state.Facts.t =
   let seen = Screen_facts.of_measurements m in
   let free_control =
     seen.fade = No_fade && (not seen.dialog) && (not seen.battle)
-    && not (Start_menu.start_menu_open m)
+    && (not (Start_menu.start_menu_open m))
+    && not (menu_open m)
   in
   let screen_still =
     match (last, middle m) with
@@ -27,7 +28,7 @@ let facts ~last m : Screen_state.Facts.t =
   in
   { seen with free_control; screen_still }
 
-let look last () : Screen_state.Settle.look =
+let look ~menu_open last () : Screen_state.Settle.look =
   match Effects.read () with
   | None ->
       {
@@ -36,7 +37,7 @@ let look last () : Screen_state.Settle.look =
         since_ms = None;
       }
   | Some m ->
-      let facts = facts ~last:!last m in
+      let facts = facts ~menu_open ~last:!last m in
       last := middle m;
       { facts; at_ms = m.t_ms; since_ms = None }
 
@@ -46,12 +47,13 @@ let press_b () =
 let press (_ : Screen_state.Talk_over.press) ~wait_ms =
   ignore (Effects.submit [ press_b (); Wire.Wait { wait_ms } ])
 
-let io ~flee_battle ~log : Screen_state.Settle.io =
+let io ?(menu_open = fun _ -> false) ~flee_battle ~log () :
+    Screen_state.Settle.io =
   let last = ref None in
-  { look = look last; press; flee_battle; log }
+  { look = look ~menu_open last; press; flee_battle; log }
 
-let settle kind ~label ~battle_ends ~log =
-  let io = io ~flee_battle:(fun () -> false) ~log in
+let settle ?menu_open kind ~label ~battle_ends ~log =
+  let io = io ?menu_open ~flee_battle:(fun () -> false) ~log () in
   match
     Effects.with_probes probes (fun () ->
         Screen_state.Settle.run (Screen_state.Settle.rule kind) ~label io)
