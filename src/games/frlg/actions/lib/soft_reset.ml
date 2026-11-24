@@ -8,7 +8,11 @@ let title_mash_ms = 1000
 let title_wait_ms = 5000
 let menu_settle_ms = 500
 let continue_release_ms = 320
-let enter_game_wait_ms = 3000
+
+(* The fork's ENTER_GAME_WAIT0 default is 3000 ms; console B's lab-B profile
+   sets it far higher, and its CONTINUE went black after 3.6 s (2026-11-23).
+   The wait ends as soon as black shows, so a long limit costs nothing. *)
+let enter_game_wait_ms = 10_000
 let recap_mash_ms = 3000
 let attempts = 5
 

@@ -12,7 +12,10 @@ type thread = {
 type t = {
   t_ms : float;  (** when the daemon answered *)
   backend : string;
-  client : string option;  (** the connected client's [hello] name *)
+  client : string option;
+      (** the lease holder's [hello] name, else the oldest connection's *)
+  clients : int;  (** connections now *)
+  lease : Lease.t option;  (** who may send input; [None] = free *)
   fidelity : string;  (** ["full"] or ["latest"] *)
   threads : thread list;
   ring_depth : int;

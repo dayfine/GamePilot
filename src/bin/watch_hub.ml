@@ -52,3 +52,15 @@ let ensure ~daemon (watch : Daemon_process.watch) =
     in
     spawn ~daemon watch out;
     Unix.close out)
+
+(* A run's page, listed in the registry beside [runs_dir] (--runs-dir may
+   come after --watch), with the hub started if none runs. *)
+let for_runs_dir ~daemon ~runs_dir watch =
+  let watch =
+    Option.map
+      (fun w ->
+        { w with Daemon_process.registry = Filename.concat runs_dir ".watch" })
+      watch
+  in
+  Option.iter (ensure ~daemon) watch;
+  watch

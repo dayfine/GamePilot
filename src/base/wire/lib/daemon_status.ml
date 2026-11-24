@@ -7,6 +7,8 @@ type t = {
   t_ms : float;
   backend : string;
   client : string option;
+  clients : int;  (** connections now *)
+  lease : Lease.t option;  (** who may send input; [None] = free *)
   fidelity : string;
   threads : thread list;
   ring_depth : int;
@@ -38,6 +40,11 @@ let of_json j =
     t_ms = float_field what "t_ms" j;
     backend = string_field what "backend" j;
     client = client_of_json (field what "client" j);
+    clients = int_field what "clients" j;
+    lease =
+      (match field what "lease" j with
+      | `Null -> None
+      | l -> Some (Lease.of_json l));
     fidelity = string_field what "fidelity" j;
     threads = List.map thread_of_json (list_field what "threads" j);
     ring_depth = int_field (what ^ ".ring") "depth" ring;
@@ -52,6 +59,8 @@ let to_json s =
       ("t_ms", `Float s.t_ms);
       ("backend", `String s.backend);
       ("client", match s.client with Some c -> `String c | None -> `Null);
+      ("clients", `Int s.clients);
+      ("lease", match s.lease with Some l -> Lease.to_json l | None -> `Null);
       ("fidelity", `String s.fidelity);
       ("threads", `List (List.map json_of_thread s.threads));
       ( "ring",

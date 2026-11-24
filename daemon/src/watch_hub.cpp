@@ -1,11 +1,16 @@
 #include "watch_hub.h"
 
 #include <algorithm>
+#include <set>
+#include <system_error>
 #include <stdexcept>
 #include <utility>
 
 #include "Common/Cpp/Filesystem/FileIO.h"
+#include "Common/Cpp/Filesystem/Filesystem.h"
 #include "rpc.h"
+#include "run_history.h"
+#include "watch_server.h"
 
 namespace gamepilot {
 
@@ -26,6 +31,10 @@ constexpr std::size_t kMaxPending = 256 * 1024;
 constexpr std::size_t kRecentRuns = 20;
 // How often the "no live run" page looks again.
 constexpr int kWaitRefreshS = 5;
+// The probe timeline's resolution: one value per probe per second.
+constexpr double kTimelineBucketMs = 1000;
+// Timelines kept in memory.
+constexpr std::size_t kTimelinesKept = 8;
 
 constexpr std::string_view kRunsPrefix = "/runs/";
 constexpr std::string_view kLive = "/live";
@@ -182,7 +191,8 @@ void WatchHub::run(const std::atomic<bool>& stop) {
 void WatchHub::serve_once(int timeout_ms) {
   std::vector<PollWant> wants{PollWant{&listener_, true, false}};
   for (const Connection& connection : connections_) {
-    const bool pending = connection.sent < connection.to_client.size();
+    const bool pending = connection.sent < connection.to_client.size() &&
+                         !(connection.page && connection.upstream.valid());
     wants.push_back(PollWant{&connection.client, true, pending});
     wants.push_back(PollWant{&connection.upstream,
                              connection.to_client.size() < kMaxPending, false});
@@ -255,6 +265,8 @@ void WatchHub::respond(Connection& connection, const HttpRequest& request) {
     const std::string name(rest.substr(0, slash));
     if (slash == std::string_view::npos) {
       response = redirect(with_query(std::string(path) + "/", request.query));
+    } else if (!valid_run_name(name)) {
+      response = http_response(404, "text/plain", "no such run\n");
     } else {
       const auto entries = live_entries(options_.registry);
       const auto entry =
@@ -262,18 +274,15 @@ void WatchHub::respond(Connection& connection, const HttpRequest& request) {
                        [&](const RegistryEntry& e) {
                          return hub_run_name(e) == name;
                        });
-      if (entry != entries.end()) {
-        pass_through(connection, *entry, request, rest.substr(slash));
+      const RegistryEntry* live = entry != entries.end() ? &*entry : nullptr;
+      if (respond_run(connection, request, name, rest.substr(slash), live)) {
         return;
       }
-      response =
-          rest.substr(slash) == "/"
-              ? http_response(404, "text/html; charset=utf-8",
-                              notice_page("Run " + name +
-                                              " is not live: it has ended "
-                                              "or not started yet.",
-                                          /*refresh=*/false))
-              : http_response(404, "text/plain", "run not live\n");
+      if (live != nullptr) {
+        pass_through(connection, *live, request, rest.substr(slash));
+        return;
+      }
+      response = http_response(404, "text/plain", "run not live\n");
     }
   } else if (!get) {
     response = http_response(405, "text/plain", "method not allowed\n");
@@ -283,13 +292,21 @@ void WatchHub::respond(Connection& connection, const HttpRequest& request) {
     response = http_response(200, "application/json",
                              hub_runs_json(live_entries(options_.registry)),
                              kAnyOrigin);
-  } else if (path == "/recent.json") {
-    std::string tsv;
-    if (!options_.results.empty()) {
-      pa::file_to_string(options_.results, tsv);
+  } else if (path == "/history.json") {
+    std::set<std::string> live;
+    for (const RegistryEntry& entry : live_entries(options_.registry)) {
+      live.insert(hub_run_name(entry));
     }
-    response = http_response(200, "application/json",
-                             hub_recent_json(tsv, kRecentRuns), kAnyOrigin);
+    response = http_response(
+        200, "application/json",
+        options_.runs.empty()
+            ? std::string("[]")
+            : run_rows_json(list_runs(options_.runs, results_text(), live)),
+        kAnyOrigin);
+  } else if (path == "/recent.json") {
+    response =
+        http_response(200, "application/json",
+                      hub_recent_json(results_text(), kRecentRuns), kAnyOrigin);
   } else if (path == kLive || path == std::string(kLive) + "/" ||
              path.starts_with(std::string(kLive) + "/")) {
     const std::string_view checkpoint =
@@ -314,6 +331,105 @@ void WatchHub::respond(Connection& connection, const HttpRequest& request) {
   }
   connection.client.send_all(response);
   connection.client.close();
+}
+
+std::string WatchHub::results_text() const {
+  std::string tsv;
+  if (!options_.results.empty()) {
+    pa::file_to_string(options_.results, tsv);
+  }
+  return tsv;
+}
+
+// What the hub answers itself under /runs/NAME/: the page (the live one from
+// its own build while the run is live, else the finished run's), the run's
+// row, its probe timeline and its folder's files. Anything else goes on to a
+// live run.
+bool WatchHub::respond_run(Connection& connection, const HttpRequest& request,
+                           const std::string& name, std::string_view rest,
+                           const RegistryEntry* live) {
+  constexpr std::string_view kFiles = "/files/";
+  const bool get = request.method == "GET";
+  const std::string folder =
+      live != nullptr && !live->run_folder.empty()
+          ? live->run_folder
+      : options_.runs.empty() ? std::string()
+                              : options_.runs + "/" + name;
+  const bool exists = !folder.empty() && pa::Filesystem::is_directory(folder);
+  std::string response;
+  if (get && rest == "/" && live != nullptr && connection.local) {
+    // The run's own page is fetched for its token only: what is sent is this
+    // build's page (pump).
+    connection.page = true;
+    pass_through(connection, *live, request, rest);
+    return true;
+  } else if (get && rest == "/" && live != nullptr) {
+    response = http_response(200, "text/html; charset=utf-8",
+                             page_with_token(""));
+  } else if (get && rest == "/" && exists) {
+    response = http_response(200, "text/html; charset=utf-8", run_page());
+  } else if (get && rest == "/") {
+    response = http_response(
+        404, "text/html; charset=utf-8",
+        notice_page("Run " + name +
+                        " is not live and has no record here: it has not "
+                        "started yet, or its folder is gone.",
+                    /*refresh=*/false));
+  } else if (get && rest == "/record.json" && exists) {
+    RunRow row = read_run(folder.substr(0, folder.find_last_of("/\\")), name,
+                          results_by_run(results_text()));
+    if (live != nullptr) {
+      row.live = true;
+      row.result = "running";
+      row.ended_ms = 0;
+    }
+    response = http_response(200, "application/json", run_row_json(row));
+  } else if (get && rest == "/probes.json" && exists) {
+    response = http_response(200, "application/json", probe_timeline(folder));
+  } else if (get && rest.starts_with(kFiles) && exists) {
+    const std::string_view file = rest.substr(kFiles.size());
+    std::string body;
+    if (servable_run_file(file) &&
+        pa::file_to_string(folder + "/" + std::string(file), body)) {
+      response = http_response(200, run_file_type(file), body,
+                               "Cache-Control: no-cache\r\n");
+    } else {
+      response = http_response(404, "text/plain", "no such file\n");
+    }
+  } else if (live == nullptr) {
+    response = http_response(get ? 404 : 405, "text/plain",
+                             get ? "run not live\n" : "method not allowed\n");
+  } else {
+    return false;
+  }
+  connection.client.send_all(response);
+  connection.client.close();
+  return true;
+}
+
+// The run's probe timeline, kept while its wire log keeps its size: from
+// wire.jsonl, or wire.jsonl.gz once the disk cleanup packed it.
+std::string WatchHub::probe_timeline(const std::string& folder) {
+  std::string wire = folder + "/wire.jsonl";
+  if (!pa::Filesystem::exists(wire) &&
+      pa::Filesystem::exists(wire + ".gz")) {
+    wire += ".gz";
+  }
+  std::error_code error;
+  const std::uintmax_t size = pa::Filesystem::file_size(wire, error);
+  if (error) {
+    return probe_timeline_json(wire, kTimelineBucketMs);
+  }
+  const auto kept = timelines_.find(folder);
+  if (kept != timelines_.end() && kept->second.first == size) {
+    return kept->second.second;
+  }
+  std::string json = probe_timeline_json(wire, kTimelineBucketMs);
+  if (timelines_.size() >= kTimelinesKept && kept == timelines_.end()) {
+    timelines_.erase(timelines_.begin());
+  }
+  timelines_[folder] = {size, json};
+  return json;
 }
 
 // The request goes on to the run with a head the hub writes itself (the
@@ -357,6 +473,13 @@ void WatchHub::pump(Connection& connection) {
     const auto n = connection.upstream.receive_some(buffer, sizeof(buffer));
     if (!n) {
       connection.upstream.close();  // the run answered in full or left
+      if (connection.page) {
+        // This build's page, with the token from the run's.
+        connection.to_client = http_response(
+            200, "text/html; charset=utf-8",
+            page_with_token(page_token(connection.to_client)));
+        connection.sent = 0;
+      }
       break;
     }
     if (*n == 0) {
@@ -368,6 +491,9 @@ void WatchHub::pump(Connection& connection) {
 }
 
 void WatchHub::flush(Connection& connection) {
+  if (connection.page && connection.upstream.valid()) {
+    return;  // the run's page is not sent: pump replaces it when it is whole
+  }
   std::string& pending = connection.to_client;
   while (connection.sent < pending.size()) {
     const auto n = connection.client.send_some(

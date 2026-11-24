@@ -5,7 +5,11 @@
    party, money and bag items the first checkpoint's plan needs and the place
    (against the start frame kept there), read with the existing readers and
    printed as a table. Exit 1 on a mismatch or a need not read. Its daemon's
-   wire log and the story log go to a run folder ("<ID>-preflight"). *)
+   wire log and the story log go to a run folder ("<ID>-preflight"), with
+   run.json (mode preflight), the table and the verdict in summary.txt, the
+   RESULTS.tsv row and, on a mismatch or a failed reload, failure.png
+   (Run_record). With --watch its daemon's page is in the watch registry while
+   it runs, as a checkpoint run's. *)
 
 open Story
 module Pf = Frlg_story.Preflight
@@ -16,6 +20,8 @@ type setup = {
   runs_dir : string;
   daemon : string;
   backend : Daemon_process.backend;
+  info : Run_record.info;
+  watch : Daemon_process.watch option;
 }
 
 let ( let* ) = Result.bind
@@ -87,51 +93,78 @@ let read_save setup id needs log =
     members;
   }
 
-let session setup id (needs, room) log () =
-  reload setup id log;
-  let read = read_save setup id needs log in
-  Pf.compare needs read @ [ Pf.room room read ]
+(* The frame where the pre-flight stopped; a refusal is logged, not fatal. *)
+let save_failure record log =
+  match Effects.save_frame (Run_record.path record "failure.png") with
+  | (_ : int) -> log "[Preflight] saved failure.png"
+  | exception Effects.Rpc_error e ->
+      log ("[Preflight] could not save failure.png: " ^ e.message)
 
-let report id rows =
-  print_endline (Pf.table rows);
-  let ok = Pf.passed rows in
-  Printf.printf "[Preflight] %s: %s\n%!" id
-    (if ok then "the save holds what it needs" else "MISMATCH: not starting");
-  if ok then 0 else 1
+type verdict = Rows of Pf.row list | Stopped of string
 
-let stopped id why =
-  Printf.printf "[Preflight] %s: %s\n%!" id why;
-  1
+let session setup record id (needs, room) log () =
+  match reload setup id log with
+  | exception Not_back e ->
+      save_failure record log;
+      Stopped ("could not return to the save: " ^ e)
+  | () ->
+      let read = read_save setup id needs log in
+      let rows = Pf.compare needs read @ [ Pf.room room read ] in
+      if not (Pf.passed rows) then save_failure record log;
+      Rows rows
+
+(* The table (none when nothing was read), the verdict line, the result. *)
+let ending_of id = function
+  | Rows rows when Pf.passed rows ->
+      ( Some (Pf.table rows),
+        id ^ ": the save holds what it needs",
+        Run_record.{ result = "pass"; at = ""; reason = "" } )
+  | Rows rows ->
+      ( Some (Pf.table rows),
+        id ^ ": MISMATCH: not starting",
+        { result = "fail"; at = "preflight"; reason = "mismatch" } )
+  | Stopped why ->
+      ( None,
+        id ^ ": " ^ why,
+        { result = "fail"; at = "preflight"; reason = why } )
 
 let with_daemon setup record id body =
   match
-    Daemon_process.start ~daemon:setup.daemon ~backend:setup.backend ~port:0
+    Daemon_process.start ?watch:setup.watch ~daemon:setup.daemon
+      ~backend:setup.backend ~port:0
       ~wire_log:(Run_record.path record "wire.jsonl")
       ~out_file:(Run_record.path record "daemon.out")
       ~checkpoint:id ()
   with
-  | Error e -> stopped id ("daemon: " ^ e)
+  | Error e -> Stopped ("daemon: " ^ e)
   | Ok daemon ->
       Fun.protect
         ~finally:(fun () -> Daemon_process.stop daemon)
         (fun () -> body daemon)
 
-let in_daemon setup id needs log (d : Daemon_process.t) =
-  match Live.run ~port:d.port (session setup id needs log) with
-  | rows -> report id rows
-  | exception Not_back e -> stopped id ("could not return to the save: " ^ e)
-  | exception Effects.Disconnected e -> stopped id ("disconnected: " ^ e)
+let in_daemon setup record id needs log (d : Daemon_process.t) =
+  match Live.run ~port:d.port (session setup record id needs log) with
+  | verdict -> verdict
+  | exception Effects.Disconnected e -> Stopped ("disconnected: " ^ e)
 
 let run ~plan_dir ~from_id setup =
   let* needs = needs ~plan_dir from_id in
-  let record =
-    Run_record.create ~runs_dir:setup.runs_dir ~checkpoint:from_id
+  let run =
+    Run_record.start ~runs_dir:setup.runs_dir setup.info ~checkpoint:from_id
       ~mode:"preflight"
   in
+  let record = run.record in
   let log, close = Run_record.story_log record in
   print_endline ("[Preflight] " ^ record.dir);
-  let result =
-    with_daemon setup record from_id (in_daemon setup from_id needs log)
+  let verdict =
+    with_daemon setup record from_id (in_daemon setup record from_id needs log)
   in
+  let table, line, ending = ending_of from_id verdict in
+  Option.iter print_endline table;
+  Printf.printf "[Preflight] %s\n%!" line;
   close ();
-  Ok result
+  let summary =
+    String.concat "\n" (Option.to_list table @ [ "PREFLIGHT " ^ line ])
+  in
+  Run_record.finish ~runs_dir:setup.runs_dir run ~summary ending;
+  Ok (if ending.result = "pass" then 0 else 1)

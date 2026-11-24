@@ -71,6 +71,7 @@ let take_notification t = function
       None
   | Wire.Watch_plan _ | Wire.Watch_log _ | Wire.Watch_run _ ->
       protocol_error "daemon sent a program's watch notification"
+  | Wire.Keepawake _ -> protocol_error "daemon sent its own wire log line"
 
 (* A frame taken before the last load shows another state and is dropped. *)
 let pump t =

@@ -106,6 +106,8 @@ type call = Jsonrpc.call =
   | Submit of { batch_id : string; commands : command list }
   | Cancel
   | Status
+  | Lease_acquire of { owner : string; ttl_ms : int option }
+  | Lease_release
 
 type request = Jsonrpc.request = { id : int; call : call }
 type response = Jsonrpc.response = { id : int; outcome : (json, error) result }
@@ -117,6 +119,7 @@ type notification = Jsonrpc.notification =
   | Watch_log of string
   | Watch_run of Watch_run.t
   | Stop of string
+  | Keepawake of { key : string; idle_ms : int }
 
 type message = Jsonrpc.message =
   | Request of request
@@ -152,12 +155,15 @@ module Watch = Watch
 module Watch_run = Watch_run
 module Watch_registry = Watch_registry
 module Daemon_status = Daemon_status
+module Lease = Lease
 
-type direction = Wire_log.direction = In | Out
+type direction = Wire_log.direction = In | Out | Daemon
 
 type log_line = Wire_log.log_line = {
   dir : direction;
   t_ms : float;
+  conn : int option;
+  owner : string option;
   msg : message;
 }
 

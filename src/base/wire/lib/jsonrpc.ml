@@ -28,6 +28,8 @@ type call =
   | Submit of { batch_id : string; commands : Command.command list }
   | Cancel
   | Status
+  | Lease_acquire of { owner : string; ttl_ms : int option }
+  | Lease_release
 
 type request = { id : int; call : call }
 type response = { id : int; outcome : (json, error) result }
@@ -39,6 +41,7 @@ type notification =
   | Watch_log of string
   | Watch_run of Watch_run.t
   | Stop of string
+  | Keepawake of { key : string; idle_ms : int }
 
 type message =
   | Request of request
@@ -56,6 +59,8 @@ let method_name = function
   | Submit _ -> "submit"
   | Cancel -> "cancel"
   | Status -> "status"
+  | Lease_acquire _ -> "lease.acquire"
+  | Lease_release -> "lease.release"
 
 let hello_of_params what params =
   Hello
@@ -68,6 +73,14 @@ let upload_template_of_params what params =
   match Base64.decode (string_field what "png" params) with
   | Some png -> Upload_template { png }
   | None -> fail "%s.png: expected padded base64" what
+
+let lease_acquire_of_params what params =
+  let ttl_ms = field_opt what "ttl_ms" params in
+  Lease_acquire
+    {
+      owner = string_field what "owner" params;
+      ttl_ms = Option.map (to_int (what ^ ".ttl_ms")) ttl_ms;
+    }
 
 let submit_of_params what params =
   Submit
@@ -95,6 +108,8 @@ let call_of_json name params =
   | "submit" -> submit_of_params what params
   | "cancel" -> Cancel
   | "status" -> Status
+  | "lease.acquire" -> lease_acquire_of_params what params
+  | "lease.release" -> Lease_release
   | m -> fail "unknown method %S" m
 
 let params_of_call = function
@@ -112,7 +127,12 @@ let params_of_call = function
           ("batch_id", `String batch_id);
           ("commands", `List (List.map Command.json_of_command commands));
         ]
-  | Cancel | Status -> `Assoc []
+  | Lease_acquire { owner; ttl_ms } ->
+      `Assoc
+        (("owner", `String owner)
+        :: Option.fold ~none:[] ~some:(fun ms -> [ ("ttl_ms", `Int ms) ]) ttl_ms
+        )
+  | Cancel | Status | Lease_release -> `Assoc []
 
 let check_version j =
   match field_opt "message" "jsonrpc" j with
@@ -140,6 +160,13 @@ let frame_notification_of_json j =
   let p = params j in
   Frame { load = int_field "frame" "load" p; frame = Probe.frame_of_json p }
 
+let keepawake_of_json p =
+  Keepawake
+    {
+      key = string_field "keepawake" "key" p;
+      idle_ms = int_field "keepawake" "idle_ms" p;
+    }
+
 let notification_of_json m j =
   match m with
   | `String "frame" -> Notification (frame_notification_of_json j)
@@ -152,6 +179,7 @@ let notification_of_json m j =
   | `String "watch.run" ->
       Notification (Watch_run (Watch_run.of_json (params j)))
   | `String "stop" -> Notification (Stop (Watch.reason_of_json (params j)))
+  | `String "keepawake" -> Notification (keepawake_of_json (params j))
   | m -> fail "unknown notification %s" (Yojson.Safe.to_string m)
 
 let message_of_json j =
@@ -183,6 +211,11 @@ let json_of_notification = function
       [ ("method", `String "watch.run"); ("params", Watch_run.to_json run) ]
   | Stop reason ->
       [ ("method", `String "stop"); ("params", Watch.json_of_reason reason) ]
+  | Keepawake { key; idle_ms } ->
+      [
+        ("method", `String "keepawake");
+        ("params", `Assoc [ ("key", `String key); ("idle_ms", `Int idle_ms) ]);
+      ]
 
 let json_of_request { id; call } =
   [

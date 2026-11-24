@@ -52,6 +52,13 @@ std::string new_watch_token();
 // (it goes into the page and URLs as it is).
 bool valid_watch_token(std::string_view token);
 
+// The page with Stop's token in its `gamepilot-token` meta tag; without one
+// the page is read-only. The hub serves its own build of the page the same
+// way, with the token the run put in the page it served the hub.
+std::string page_with_token(std::string_view token);
+// The token in a served page's meta tag; empty when it has none.
+std::string page_token(std::string_view page);
+
 // An encoded frame and its media type ("image/png", "image/jpeg").
 struct WatchFrame {
   std::string type;

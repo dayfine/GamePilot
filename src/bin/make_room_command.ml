@@ -58,7 +58,8 @@ let read_live setup log port =
 
 let party setup record log =
   match
-    Daemon_process.start ~daemon:setup.Pf.daemon ~backend:setup.backend ~port:0
+    Daemon_process.start ?watch:setup.Pf.watch ~daemon:setup.daemon
+      ~backend:setup.backend ~port:0
       ~wire_log:(Run_record.path record "wire.jsonl")
       ~out_file:(Run_record.path record "daemon.out")
       ~checkpoint:M.id ()
@@ -117,30 +118,47 @@ let write_plans ~plan_dir dir room =
     (M.plan_json room);
   Ok ()
 
-let prepare ~plan_dir ~from_id ~at (setup : Pf.setup) =
-  let* plans = chain_plans ~plan_dir from_id in
-  let need = Frlg_story.Party_room.chain_need plans in
-  let* () = ensure_start setup from_id in
-  let record =
-    Run_record.create ~runs_dir:setup.runs_dir ~checkpoint:from_id
-      ~mode:"make-room"
-  in
-  let log, close = Run_record.story_log record in
-  let members = party setup record log in
-  close ();
-  let* members = members in
-  List.iter
-    (fun m -> print_endline ("[Make room] " ^ R.member_to_string m))
-    members;
+let say lines line =
+  print_endline ("[Make room] " ^ line);
+  lines := line :: !lines
+
+(* The party read, the policy's pick and mg-00's plans in [record]. *)
+let decide ~plan_dir ~at need (record : Run_record.t) say members =
+  List.iter (fun m -> say (R.member_to_string m)) members;
   let* deposits, room = room ~at need members in
-  print_endline ("[Make room] " ^ R.plan_to_string deposits);
+  say (R.plan_to_string deposits);
   if deposits = [] then Ok None
   else
     let dir = Filename.concat record.dir "plans" in
     let* () = write_plans ~plan_dir dir room in
-    print_endline
-      ("[Make room] " ^ M.id ^ ": Fly to " ^ room.center.name ^ ", in " ^ dir);
+    say (M.id ^ ": Fly to " ^ room.center.name ^ ", in " ^ dir);
     Ok (Some dir)
+
+let ending = function
+  | Ok _ -> Run_record.{ result = "pass"; at = ""; reason = "" }
+  | Error why -> { result = "fail"; at = "make-room"; reason = why }
+
+(* A pre-flight run of mg-00's own ("<date>-mg-00-preflight-<n>"). *)
+let prepare ~plan_dir ~from_id ~at (setup : Pf.setup) =
+  let* plans = chain_plans ~plan_dir from_id in
+  let need = Frlg_story.Party_room.chain_need plans in
+  let* () = ensure_start setup from_id in
+  let run =
+    Run_record.start ~runs_dir:setup.runs_dir setup.info ~checkpoint:M.id
+      ~mode:"preflight"
+  in
+  let log, close = Run_record.story_log run.record in
+  let lines = ref [] in
+  let result =
+    Result.bind
+      (party setup run.record log)
+      (decide ~plan_dir ~at need run.record (say lines))
+  in
+  close ();
+  Result.iter_error (say lines) result;
+  let summary = String.concat "\n" (List.rev !lines) in
+  Run_record.finish ~runs_dir:setup.runs_dir run ~summary (ending result);
+  result
 
 (* --make-room: mg-00 first when the party needs room, from its plan dir. *)
 let with_room ~plan_dir ~from_id make_room setup =

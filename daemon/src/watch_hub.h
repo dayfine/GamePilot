@@ -4,14 +4,29 @@
 // is the daemon started with `--hub`, no backend, serving only HTTP with the
 // same pieces as the watch page (http.h, net.h):
 //
-//   GET /              the page (watch/hub.html, compiled in): the runs, each
-//                      with its checkpoint, mode and trial (from the run's
-//                      /summary.json), elapsed time and state
+//   GET /              the page (watch/hub.html, compiled in): the live runs,
+//                      each with its checkpoint, mode and trial (from the
+//                      run's /summary.json), elapsed time and state; then
+//                      every run in the runs folder, with filters kept in the
+//                      URL's query (Watch-Page.md, Runs list)
 //   GET /runs.json     the live registry entries
 //   GET /recent.json   the latest finished runs (RESULTS.tsv), newest first
-//   /runs/NAME/...     the run's own page, passed through to its port: the
-//                      page, /events, /stream, /frame, /summary.json and
+//   GET /history.json  every run folder (run_history.h), newest first
+//   GET /runs/NAME/    the run's page from the hub's own build: the live page
+//                      (watch/watch.html) while the run is live, with the
+//                      token the run gives its local viewers; the page of a
+//                      finished run (watch/run.html) after
+//   GET /runs/NAME/record.json, /probes.json, /files/PATH
+//                      a run's row, its probe timeline (from wire.jsonl, read
+//                      a chunk at a time and kept while the file is
+//                      unchanged), and its folder's servable files
+//                      (run_history.h: notes, log, failure frame, recorded
+//                      frames)
+//   /runs/NAME/...     anything else while the run is live goes to its port:
+//                      /events, /stream, /frame, /summary.json and
 //                      POST /stop?token=T. NAME is the run folder's name.
+//                      Only data comes from the run, so a page from the
+//                      hub's newer build works with an older run daemon.
 //   GET /live          redirects to the newest live run's page; /live/CP to
 //                      the newest live run of checkpoint CP. With none, a page
 //                      that looks again every few seconds.
@@ -28,6 +43,8 @@
 
 #include <atomic>
 #include <cstdint>
+#include <map>
+#include <utility>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -43,6 +60,7 @@ struct HubOptions {
   std::uint16_t port = 47901;
   std::string registry;  // the registry folder
   std::string results;   // the runs' RESULTS.tsv; empty = none
+  std::string runs;      // the runs folder; empty = none
 };
 
 // A run's name in its hub path: its folder's name, or pid-N without one.
@@ -77,10 +95,19 @@ class WatchHub {
     std::string to_client;   // from the run, not yet taken by the browser
     std::size_t sent = 0;    // of to_client
     bool proxying = false;
+    // Passing the run's page: it is kept whole for its token, then this
+    // build's page goes to the browser in its place.
+    bool page = false;
   };
 
   void read(Connection& connection);
   void respond(Connection& connection, const HttpRequest& request);
+  // A /runs/NAME/... request; false when it goes on to the live run.
+  bool respond_run(Connection& connection, const HttpRequest& request,
+                   const std::string& name, std::string_view rest,
+                   const RegistryEntry* live);
+  std::string probe_timeline(const std::string& name);
+  std::string results_text() const;
   void pass_through(Connection& connection, const RegistryEntry& entry,
                     const HttpRequest& request, std::string_view path);
   void pump(Connection& connection);
@@ -89,9 +116,13 @@ class WatchHub {
   HubOptions options_;
   Socket listener_;
   std::vector<Connection> connections_;
+  // Probe timelines by run, with the wire log's size they were read at.
+  std::map<std::string, std::pair<std::uintmax_t, std::string>> timelines_;
 };
 
 // The page, compiled in from watch/hub.html (hub_page.cpp is generated).
 std::string_view hub_page();
+// A finished run's page, from watch/run.html (run_page.cpp is generated).
+std::string_view run_page();
 
 }  // namespace gamepilot
