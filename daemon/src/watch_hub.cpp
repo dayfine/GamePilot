@@ -353,7 +353,8 @@ bool WatchHub::respond_run(Connection& connection, const HttpRequest& request,
   const std::string folder =
       live != nullptr && !live->run_folder.empty()
           ? live->run_folder
-          : (options_.runs.empty() ? std::string() : options_.runs + "/" + name);
+      : options_.runs.empty() ? std::string()
+                              : options_.runs + "/" + name;
   const bool exists = !folder.empty() && pa::Filesystem::is_directory(folder);
   std::string response;
   if (get && rest == "/" && live != nullptr && connection.local) {
@@ -370,8 +371,9 @@ bool WatchHub::respond_run(Connection& connection, const HttpRequest& request,
   } else if (get && rest == "/") {
     response = http_response(
         404, "text/html; charset=utf-8",
-        notice_page("Run " + name + " is not live and has no record here: it "
-                                    "has not started yet, or its folder is gone.",
+        notice_page("Run " + name +
+                        " is not live and has no record here: it has not "
+                        "started yet, or its folder is gone.",
                     /*refresh=*/false));
   } else if (get && rest == "/record.json" && exists) {
     RunRow row = read_run(folder.substr(0, folder.find_last_of("/\\")), name,

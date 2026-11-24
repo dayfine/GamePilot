@@ -224,7 +224,8 @@ void check_encoders(const std::map<std::string, pa::JsonValue>& files) {
   CHECK(parse_message(to_line(files.at("14-wire_log.line.json"))) ==
         files.at("14-wire_log.line.json"));
   // The keep-awake press, the daemon's own line.
-  CHECK(wire_log_line("daemon", 180412.5, keepawake_notification("B", 180000)) ==
+  CHECK(wire_log_line("daemon", 180412.5,
+                      keepawake_notification("B", 180000)) ==
         files.at("34-keepawake.line.json"));
 }
 
