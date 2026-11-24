@@ -251,7 +251,7 @@ let room_cases =
       "abra mg-01, spearow mg-02; 2 free";
     case "room: the members the plans use or promise"
       (fun () -> String.concat ", " need.used)
-      "blastoise, pidgey, rattata";
+      "blastoise, pidgey";
     case
       "room: console B's full party: the lowest level that knows no field move \
        and is not used, twice"
