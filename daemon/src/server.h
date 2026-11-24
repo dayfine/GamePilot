@@ -55,6 +55,9 @@ struct ServerOptions {
   std::uint16_t port = 47900;
   bool fast =
       false;  // step as fast as the backend goes instead of at its frame rate
+  // A lockstep backend steps `speed` times its frame rate (ignored with
+  // `fast`); frame and batch_done t_ms stay game time (server.cpp).
+  double speed = 1;
   std::string log_path;               // wire log; empty = none
   std::optional<WatchOptions> watch;  // the watch page; none = off
   StreamOptions stream;               // its live frame
@@ -122,6 +125,7 @@ class Server {
 
  private:
   void run_lockstep(const std::atomic<bool>& stop);
+  double game_ms() const;
   void keep_awake();
   bool batch_pending() const;
   void send_batch_done(const std::string& batch_id, std::int64_t seq,
@@ -190,6 +194,7 @@ class Server {
   double pace_base_ms_ = 0;
   std::int64_t pace_base_seq_ = 0;
   std::int64_t frames_stepped_ = 0;
+  double game_zero_ms_ = 0;
   std::int64_t loads_ = 0;  // successful backend.load_state calls
 
   std::unique_ptr<WatchServer> watch_;

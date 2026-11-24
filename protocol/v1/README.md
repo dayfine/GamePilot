@@ -1,4 +1,4 @@
-# Wire protocol v1.9
+# Wire protocol v1.10
 
 JSON-RPC 2.0 between the OCaml programs (client) and the daemon (server). The golden files in this
 folder are the spec: the daemon's tests parse every file and the OCaml tests decode and re-encode
@@ -24,6 +24,9 @@ so a v1.7 plan is a valid v1.8 plan.
 v1.9 serves many clients and adds the input lease (see Input lease): `lease.acquire`,
 `lease.release`, error -32004, `status`'s `clients` and `lease`, and the wire log's `conn` and
 `owner`. A v1.8 program never names the lease: its first input takes it, so it works unchanged.
+v1.10 makes `t_ms` of `frame` and `batch_done` game time on a lockstep backend (see Clock and frames),
+so the daemon can run mGBA faster than real time (`--speed`). No message changes; at 1x game time
+keeps pace with the daemon clock, so a v1.9 program runs unchanged.
 v1.2 makes the daemon own where the game picture sits in the frame: `hello` gives the `viewport` and
 the `game_size`, probe boxes and template placements are relative to the picture, templates are in game
 pixels, and `core.color_count@1` is new.
@@ -55,7 +58,13 @@ size) every v1.1 message means the same in v1.2.
   first). Every `frame` carries the `load` it was taken under, and the `backend.load_state` reply gives
   the new one. A client ignores frames whose `load` is older than the last reply's: they were in flight
   before the load and show another state.
-- `t_ms`: daemon monotonic clock in milliseconds since the daemon started (float).
+- `t_ms`: milliseconds (float) since the daemon started. On a live backend (the Switch) and in
+  `status`, the lease and the wire log's own `t_ms` it is the daemon's monotonic clock. On a lockstep
+  backend (mGBA), `frame` and `batch_done` carry game time: the daemon clock when it started plus
+  the frames stepped since, at the backend's `frame_rate`. The daemon steps the emulator at
+  `--speed` times that rate (1 by default), so game time runs that many times as fast as the daemon
+  clock, and stops while the emulator does. A client times its waits and timeouts on `frame` `t_ms`
+  and so means game time at every speed; presses and `wait_ms` are frames already (below).
 
 ## Methods
 

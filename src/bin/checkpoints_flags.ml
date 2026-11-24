@@ -23,7 +23,8 @@ type flags = {
   common : Checkpoint_command.flags;
   watch : Daemon_process.watch option;
   daemon_flags : string list;
-      (** --record, --no-record, --keepawake N: passed to each run's daemon. *)
+      (** --record, --no-record, --keepawake N, --speed S: passed to each run's
+          daemon. *)
 }
 
 let usage =
@@ -36,7 +37,8 @@ let usage =
   \      [--watch-port N] [--listen ADDR]\n\
   \      [--backend mgba|switch --serial PORT --capture DEVICE]\n\
   \      [--replay VIDEO] [--save-after-pass|--no-save-after-pass]\n\
-  \      [--record|--no-record] [--keepawake SECONDS] [--make-room MAP]\n\
+  \      [--record|--no-record] [--keepawake SECONDS] [--speed S] [--make-room \
+   MAP]\n\
   \  gamepilot checkpoints PLAN_DIR|--program ID --preflight --from ID \
    [--backend ...]\n"
 
@@ -88,6 +90,15 @@ let mode_flag f m =
   | Some mode -> Ok { f with mode = Some mode }
   | None -> Error ("bad --mode " ^ m)
 
+(* mGBA only (the daemon refuses it on a live backend): the daemon steps the
+   emulator S times its frame rate; the program's times stay game time
+   (protocol/v1/README.md). *)
+let speed_flag f text =
+  match float_of_string_opt text with
+  | Some s when s > 0. ->
+      Ok { f with daemon_flags = f.daemon_flags @ [ "--speed"; text ] }
+  | _ -> Error ("bad --speed " ^ text)
+
 let keepawake_flag f seconds =
   {
     f with
@@ -128,6 +139,7 @@ let valued f name v =
   | "--center" ->
       Some (Ok (common_flag f (fun c -> { c with center = Some v })))
   | "--keepawake" -> Some (int_flag name v (keepawake_flag f))
+  | "--speed" -> Some (speed_flag f v)
   | _ -> None
 
 (* The page by default: on a free port, $GAMEPILOT_WATCH_LISTEN or this machine

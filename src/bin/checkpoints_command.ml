@@ -36,6 +36,8 @@
    repeat.max_rounds; with --grind-battles, reaching it passes.
 
    --record/--no-record, --keepawake SECONDS: each run's daemon's (Watch-Page.md).
+   --speed S (mGBA): the daemon steps the emulator S times as fast; waits and
+   timeouts stay game time.
    --backend switch runs on the Switch (docs/switch-bring-up.md): the daemon
    drives the controller board on --serial and reads the capture card
    --capture (gamepilot switch-devices prints the lab's); --replay VIDEO
