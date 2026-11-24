@@ -1,4 +1,4 @@
-# Wire protocol v1.7
+# Wire protocol v1.8
 
 JSON-RPC 2.0 between the OCaml programs (client) and the daemon (server). The golden files in this
 folder are the spec: the daemon's tests parse every file and the OCaml tests decode and re-encode
@@ -19,6 +19,8 @@ v1.6 adds the watch page's three notifications (see Watch page): `watch.plan` an
 the program, `stop` from the daemon. A program that sends neither and never gets a stop speaks v1.5.
 v1.7 adds `watch.run` from the program (see Watch page): the chain of checkpoints a run goes through.
 A program that does not send it speaks v1.6.
+v1.8 adds each `watch.plan` event's `started_ms` and `ended_ms` (see Watch page). Both are optional,
+so a v1.7 plan is a valid v1.8 plan.
 v1.2 makes the daemon own where the game picture sits in the frame: `hello` gives the `viewport` and
 the `game_size`, probe boxes and template placements are relative to the picture, templates are in game
 pixels, and `core.color_count@1` is new.
@@ -136,10 +138,13 @@ The program tells the daemon what only it knows, for the daemon's watch page
 (`docs/design/Watch-Page.md`). Both are notifications from the client (no `id`, no answer), and the
 daemon keeps them out of the wire log; without a watch page it drops them.
 
-- `watch.plan`: `checkpoint`, `events`: list of {`id`, `state`, `detail`}
-  (`30-watch_plan.notification.json`). Every event of the running checkpoint, each time one changes.
-  `state` is `pending`, `current`, `done`, `failed` or `skipped`; `detail` is a failure's reason,
-  the flag a skip held on, or empty.
+- `watch.plan`: `checkpoint`, `events`: list of {`id`, `state`, `detail`, `started_ms`?,
+  `ended_ms`?} (`30-watch_plan.notification.json`). Every event of the running checkpoint, each time
+  one changes. `state` is `pending`, `current`, `done`, `failed` or `skipped`; `detail` is a
+  failure's reason, the flag a skip held on, or empty. `started_ms` is when the event last started
+  and `ended_ms` when it ended, Unix time in milliseconds, each present once known: a pending event
+  has neither, the current one only `started_ms`, a skipped one both, equal (it took no time). The
+  page shows each finished event's time, the current one's so far and the checkpoint's total.
 - `watch.log`: `line` (`31-watch_log.notification.json`): one story log line.
 - `watch.run`: `mode`, `trial`, `trials`, `passes`, `fails`, `started_ms`, `checkpoints`: list of
   {`id`, `state`, `elapsed_ms`} (`33-watch_run.notification.json`). The chain the program runs

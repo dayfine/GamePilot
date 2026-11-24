@@ -7,22 +7,29 @@
       {
         "id": "ready",
         "state": "done",
-        "detail": ""
+        "detail": "",
+        "started_ms": 1795435200000,
+        "ended_ms": 1795435204200
       },
       {
         "id": "talk_coin_case_man",
         "state": "failed",
-        "detail": "no_text: the text box did not open"
+        "detail": "no_text: the text box did not open",
+        "started_ms": 1795435204200,
+        "ended_ms": 1795435219800
       },
       {
         "id": "walk_to_mart",
         "state": "skipped",
-        "detail": "has_coin_case"
+        "detail": "has_coin_case",
+        "started_ms": 1795435219800,
+        "ended_ms": 1795435219800
       },
       {
         "id": "talk_clerk",
         "state": "current",
-        "detail": ""
+        "detail": "",
+        "started_ms": 1795435219800
       },
       {
         "id": "save",

@@ -33,6 +33,7 @@
 #include "schedule.h"
 #include "sent_results.h"
 #include "template_store.h"
+#include "watch_registry.h"
 #include "watch_server.h"
 
 namespace gamepilot {
@@ -43,13 +44,18 @@ struct ServerOptions {
       false;  // step as fast as the backend goes instead of at its frame rate
   std::string log_path;               // wire log; empty = none
   std::optional<WatchOptions> watch;  // the watch page; none = off
+  // With a watch page: the registry folder its entry goes to (empty = none),
+  // and what the entry says about the run.
+  std::string registry;
+  std::string checkpoint;
+  std::string run_folder;
 };
 
 // What the watch page costs the frame loop, reported with the frame rate.
 struct WatchCost {
   std::int64_t frames_encoded = 0;
   std::int64_t frame_bytes = 0;  // all frames encoded, in bytes
-  double ms = 0;  // encoding frames and sending events
+  double ms = 0;                 // encoding frames and sending events
 };
 
 class Server {
@@ -60,8 +66,12 @@ class Server {
   // mid-frame.
   void run(const std::atomic<bool>& stop);
 
+  // The program's port (`options.port`, or the one picked for 0).
+  std::uint16_t port() const { return local_port(listener_); }
   // The watch page's port, or 0 without one.
   std::uint16_t watch_port() const;
+  // Stop's token on the watch page, empty without one.
+  std::string watch_token() const;
 
  private:
   void run_lockstep(const std::atomic<bool>& stop);
@@ -121,6 +131,7 @@ class Server {
   std::int64_t loads_ = 0;  // successful backend.load_state calls
 
   std::unique_ptr<WatchServer> watch_;
+  std::optional<RegistryFile> registry_entry_;  // while the page is up
   cv::Mat probed_frame_;  // the frame the probes last ran on
   std::int64_t probed_seq_ = -1;
   WatchFrame frame_shown_;  // the last frame sent to the page

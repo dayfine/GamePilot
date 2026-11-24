@@ -15,8 +15,12 @@
    passing run's end becomes the next checkpoint's start state.
 
    --watch serves the run's watch page (the daemon's, docs/design/Watch-Page.md)
-   on 127.0.0.1:47901; --watch-port moves it, --listen 0.0.0.0 opens it to the
-   LAN.
+   on a free port (--watch-port fixes it), the same for every run of the
+   series, lists it in the watch registry ($GAMEPILOT_RUNS/.watch) and starts
+   the hub (Watch_hub, 127.0.0.1:47901) if none runs. --listen 0.0.0.0 (or
+   $GAMEPILOT_WATCH_LISTEN) opens both to the LAN; Stop then takes the series'
+   token, which the URL printed for other devices carries. The program's port
+   (--port) is a free one too unless given, so runs do not collide.
 
    --states defaults to $GAMEPILOT_STATES and --runs-dir to $GAMEPILOT_RUNS,
    else to $HOME/.local/share/gamepilot/{states,runs}.
@@ -52,7 +56,7 @@ let usage =
   \      [--runs N] [--states DIR] [--runs-dir DIR] [--daemon PATH]\n\
   \      [--mgba-port N] [--port N] [--party SPECIES,...] [--center TOWN] \
    [--walk]\n\
-  \      [--end-check-only] [--watch] [--watch-port 47901] [--listen ADDR]\n"
+  \      [--end-check-only] [--watch] [--watch-port N] [--listen ADDR]\n"
 
 let home = Option.value (Sys.getenv_opt "HOME") ~default:"."
 
@@ -76,7 +80,7 @@ let defaults =
     runs_dir = data_dir "GAMEPILOT_RUNS" "runs";
     daemon = "daemon/build/gamepilot_daemon";
     mgba_port = mgba_bridge_port;
-    common = Checkpoint_command.defaults;
+    common = { Checkpoint_command.defaults with port = 0 };
     watch = None;
   }
 
@@ -114,9 +118,19 @@ let valued f name v =
       Some (Ok (common_flag f (fun c -> { c with center = Some v })))
   | _ -> None
 
+(* The page by default: on a free port, $GAMEPILOT_WATCH_LISTEN or this machine
+   only, a new token, the registry beside the runs. *)
+let default_watch runs_dir =
+  {
+    Daemon_process.listen = Watch_urls.default_listen ();
+    port = 0;
+    token = Watch_urls.new_token ();
+    registry = Filename.concat runs_dir ".watch";
+  }
+
 (* --watch-port and --listen imply --watch. *)
 let watch_flag f set =
-  let w = Option.value f.watch ~default:Daemon_process.local_watch in
+  let w = Option.value f.watch ~default:(default_watch f.runs_dir) in
   { f with watch = Some (set w) }
 
 let watch_port f port = watch_flag f (fun w -> { w with Daemon_process.port })
@@ -183,6 +197,14 @@ let main plan_dir args =
   let* ids = checkpoint_ids plan_dir in
   let* selected, after = select ids ~from_id ~to_id in
   let* world = Frlg_story.Checkpoint_run.load_world () in
+  (* --runs-dir may come after --watch. *)
+  let watch =
+    Option.map
+      (fun w ->
+        { w with Daemon_process.registry = Filename.concat f.runs_dir ".watch" })
+      f.watch
+  in
+  Option.iter (Watch_hub.ensure ~daemon:f.daemon) watch;
   Ok
     (Checkpoint_series.run ~plan_dir
        {
@@ -194,6 +216,7 @@ let main plan_dir args =
          mode;
          policy;
          world;
-         watch = f.watch;
+         watch;
+         bound = ref None;
        }
        selected ~after)

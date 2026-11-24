@@ -58,11 +58,23 @@ WatchFrame encode_frame(const cv::Mat& frame) {
 
 std::uint16_t Server::watch_port() const { return watch_ ? watch_->port() : 0; }
 
+std::string Server::watch_token() const {
+  return watch_ ? watch_->token() : std::string();
+}
+
+// The page, and its entry in the registry so the hub lists it.
 void Server::start_watch() {
   watch_ = std::make_unique<WatchServer>(
       *options_.watch, WatchHooks{[this] { return watch_frame(); },
                                   [this] { return stop_program(); }});
   watch_->set_info(to_line(pa::JsonValue(hello_result(backend_.info()))));
+  if (!options_.registry.empty()) {
+    registry_entry_.emplace(
+        options_.registry,
+        RegistryEntry{own_pid(), watch_->port(), options_.watch->listen,
+                      backend_.info().kind, options_.run_folder,
+                      options_.checkpoint, unix_now_ms()});
+  }
 }
 
 // A `watch.plan`, `watch.run` or `watch.log` notification from the program:

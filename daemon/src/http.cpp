@@ -10,6 +10,8 @@ std::string_view reason_phrase(int status) {
   switch (status) {
     case 200:
       return "OK";
+    case 403:
+      return "Forbidden";
     case 404:
       return "Not Found";
     case 405:
@@ -43,19 +45,41 @@ std::optional<HttpRequest> take_request_head(std::string& buffer) {
   if (!target.starts_with('/')) {
     throw std::invalid_argument("bad request target: " + target);
   }
-  return HttpRequest{line.substr(0, first), target.substr(0, target.find('?'))};
+  const std::size_t mark = target.find('?');
+  return HttpRequest{
+      line.substr(0, first), target.substr(0, mark),
+      mark == std::string::npos ? std::string() : target.substr(mark + 1)};
 }
 
 std::string http_response(int status, std::string_view content_type,
-                          std::string_view body) {
+                          std::string_view body,
+                          std::string_view extra_headers) {
   std::string out = "HTTP/1.1 " + std::to_string(status) + " ";
   out += reason_phrase(status);
   out += "\r\nContent-Type: ";
   out += content_type;
   out += "\r\nContent-Length: " + std::to_string(body.size());
-  out += "\r\nCache-Control: no-store\r\nConnection: close\r\n\r\n";
+  out += "\r\nCache-Control: no-store\r\nConnection: close\r\n";
+  out += extra_headers;
+  out += "\r\n";
   out += body;
   return out;
+}
+
+std::string query_value(std::string_view query, std::string_view name) {
+  while (!query.empty()) {
+    const std::size_t amp = query.find('&');
+    const std::string_view pair = query.substr(0, amp);
+    const std::size_t eq = pair.find('=');
+    if (eq != std::string_view::npos && pair.substr(0, eq) == name) {
+      return std::string(pair.substr(eq + 1));
+    }
+    if (amp == std::string_view::npos) {
+      break;
+    }
+    query.remove_prefix(amp + 1);
+  }
+  return {};
 }
 
 std::string event_stream_head() {

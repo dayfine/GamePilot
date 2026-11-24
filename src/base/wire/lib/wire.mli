@@ -255,6 +255,9 @@ module Watch = Watch
 module Watch_run = Watch_run
 (** The watch page's plan and log notifications. *)
 
+module Watch_registry = Watch_registry
+(** The registry of live watch pages ([gamepilot runs]). *)
+
 module Daemon_status = Daemon_status
 (** The [status] result: decode it with [Daemon_status.of_json]. *)
 

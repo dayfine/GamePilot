@@ -172,6 +172,23 @@ std::uint16_t local_port(const Socket& socket) {
   return ntohs(address.sin_port);
 }
 
+bool peer_is_loopback(const Socket& socket) {
+  sockaddr_in address{};
+#ifdef _WIN32
+  int size = sizeof(address);
+#else
+  socklen_t size = sizeof(address);
+#endif
+  if (getpeername(native(socket.handle()),
+                  reinterpret_cast<sockaddr*>(&address), &size) != 0 ||
+      address.sin_family != AF_INET) {
+    return false;
+  }
+  constexpr std::uint32_t kLoopbackNet = 0x7f000000;  // 127.0.0.0/8
+  constexpr std::uint32_t kNetMask = 0xff000000;
+  return (ntohl(address.sin_addr.s_addr) & kNetMask) == kLoopbackNet;
+}
+
 void set_send_timeout(const Socket& socket, int ms) {
 #ifdef _WIN32
   const DWORD timeout = static_cast<DWORD>(ms);

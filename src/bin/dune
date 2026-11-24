@@ -11,4 +11,5 @@
   gamepilot.story
   gamepilot.frlg_actions
   gamepilot.frlg_story
-  unix))
+  unix
+  yojson))

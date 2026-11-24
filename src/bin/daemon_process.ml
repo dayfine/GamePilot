@@ -1,42 +1,44 @@
 (* The daemon for one checkpoint run: started with its wire log in the run's
    folder, stopped (SIGTERM, which it handles by closing cleanly) after the
    run. One daemon per run gives each run its own wire log, which
-   [gamepilot replay checkpoint] replays as it is. *)
+   [gamepilot replay checkpoint] replays as it is. Port 0 lets the daemon pick
+   a free one; [t] has the ports it bound, read from its output. *)
 
-type t = { pid : int; out_file : string }
+type t = {
+  pid : int;
+  out_file : string;
+  port : int;  (** the program's, as bound *)
+  watch_port : int option;  (** the watch page's, as bound *)
+}
 
-type watch = { listen : string; port : int }
-(** The daemon's watch page: the address it binds ([127.0.0.1] unless the user
-    opened it to the LAN) and its port. *)
+type watch = {
+  listen : string;
+      (** The address it binds: [127.0.0.1] unless the user opened it to the
+          LAN. *)
+  port : int;  (** 0: any free port. *)
+  token : string;  (** Stop's (Watch_urls.new_token), the same for a series. *)
+  registry : string;  (** The watch registry folder ($GAMEPILOT_RUNS/.watch). *)
+}
 
-let default_watch_port = 47901
-let local_watch = { listen = "127.0.0.1"; port = default_watch_port }
+let flag_pairs pairs = List.concat_map (fun (name, v) -> [ name; v ]) pairs
 
-let watch_args = function
-  | None -> [||]
-  | Some { listen; port } ->
-      [| "--watch-port"; string_of_int port; "--listen"; listen |]
+let page_flags ~checkpoint ~run_folder w =
+  [
+    ("--watch-port", string_of_int w.port);
+    ("--listen", w.listen);
+    ("--watch-token", w.token);
+    ("--registry", w.registry);
+    ("--checkpoint", checkpoint);
+    ("--run-folder", run_folder);
+  ]
 
-let watch_url { listen; port } =
-  let host =
-    if listen = "0.0.0.0" then "<this machine's address>" else listen
-  in
-  Printf.sprintf "http://%s:%d/" host port
-
-let lan_warning listen =
-  Printf.sprintf
-    "[Watch] listening on %s: anyone on the network can watch the run and \
-     press Stop"
-    listen
-
-(* Says where the page is; on every interface, loudly: the page has Stop. *)
-let announce_watch = function
-  | None -> ()
-  | Some w ->
-      print_endline ("[Watch] the run's page: " ^ watch_url w);
-      if w.listen <> "127.0.0.1" then print_endline (lan_warning w.listen)
+let watch_args ~checkpoint ~run_folder watch =
+  Option.fold ~none:[]
+    ~some:(fun w -> flag_pairs (page_flags ~checkpoint ~run_folder w))
+    watch
 
 let ready_line = "daemon: listening on"
+let watch_line = "daemon: watch page on http://"
 let ready_timeout_s = 15.
 let poll_interval_s = 0.1
 
@@ -45,12 +47,33 @@ let file_text path =
   | text -> text
   | exception Sys_error _ -> ""
 
-let contains text part =
+(* Where [part] starts in [text]. *)
+let find text part =
   let n = String.length part in
   let rec at i =
-    i + n <= String.length text && (String.sub text i n = part || at (i + 1))
+    if i + n > String.length text then None
+    else if String.sub text i n = part then Some i
+    else at (i + 1)
   in
   at 0
+
+let contains text part = Option.is_some (find text part)
+let is_digit c = c >= '0' && c <= '9'
+
+(* The port after the last ':' on [prefix]'s line: "...127.0.0.1:47950". *)
+let port_after text prefix =
+  let ( let* ) = Option.bind in
+  let* i = find text prefix in
+  let line_end =
+    Option.value
+      (String.index_from_opt text i '\n')
+      ~default:(String.length text)
+  in
+  let line = String.sub text i (line_end - i) in
+  let* colon = String.rindex_opt line ':' in
+  let rest = String.sub line (colon + 1) (String.length line - colon - 1) in
+  int_of_string_opt
+    (String.of_seq (Seq.take_while is_digit (String.to_seq rest)))
 
 let exited pid =
   match Unix.waitpid [ Unix.WNOHANG ] pid with
@@ -61,7 +84,10 @@ let exited pid =
 (* Waits for the daemon's "listening" line in its output file. *)
 let rec wait_ready t deadline =
   let out = file_text t.out_file in
-  if contains out ready_line then Ok t
+  if contains out ready_line then
+    match port_after out ready_line with
+    | Some port -> Ok { t with port; watch_port = port_after out watch_line }
+    | None -> Error ("the daemon gave no port: " ^ String.trim out)
   else if exited t.pid then Error ("the daemon exited: " ^ String.trim out)
   else if Unix.gettimeofday () > deadline then (
     Unix.kill t.pid Sys.sigterm;
@@ -70,7 +96,7 @@ let rec wait_ready t deadline =
     Unix.sleepf poll_interval_s;
     wait_ready t deadline)
 
-let start ?watch ~daemon ~mgba_port ~port ~wire_log ~out_file () =
+let start ?watch ~daemon ~mgba_port ~port ~wire_log ~out_file ~checkpoint () =
   let args =
     Array.append
       [|
@@ -84,7 +110,8 @@ let start ?watch ~daemon ~mgba_port ~port ~wire_log ~out_file () =
         "--log";
         wire_log;
       |]
-      (watch_args watch)
+      (Array.of_list
+         (watch_args ~checkpoint ~run_folder:(Filename.dirname out_file) watch))
   in
   let out =
     Unix.openfile out_file [ Unix.O_WRONLY; Unix.O_CREAT; Unix.O_TRUNC ] 0o644
@@ -92,7 +119,9 @@ let start ?watch ~daemon ~mgba_port ~port ~wire_log ~out_file () =
   match Unix.create_process daemon args Unix.stdin out out with
   | pid ->
       Unix.close out;
-      wait_ready { pid; out_file } (Unix.gettimeofday () +. ready_timeout_s)
+      wait_ready
+        { pid; out_file; port; watch_port = None }
+        (Unix.gettimeofday () +. ready_timeout_s)
   | exception Unix.Unix_error (e, _, _) ->
       Unix.close out;
       Error (daemon ^ ": " ^ Unix.error_message e)
