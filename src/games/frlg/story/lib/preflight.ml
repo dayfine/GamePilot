@@ -4,7 +4,7 @@ type need = Plan_needs.need =
   | Party_in_order of string list
   | Party_includes of { members : string list; slots : P.slot list }
   | Member of { species : string; for_ : string }
-  | Knows_move of { species : string; move : string; for_ : string }
+  | Knows_move of { move : string; for_ : string }
   | Money_at_least of { amount : int; for_ : string }
   | Money_between of { min : int; max : int }
   | Item_at_least of { item : string; count : int; for_ : string }
@@ -17,6 +17,7 @@ let needs = Plan_needs.needs
 type read = {
   observed : Story.Postcondition_check.observed;
   place : Frlg_readers.Start_frame.difference option;
+  members : Story.Room_policy.member list option;
 }
 
 type verdict = Ok | Mismatch | Not_read
@@ -51,22 +52,21 @@ let includes_text members slots =
   "party includes " ^ species_list (members @ List.map slot_text slots)
 
 (* Its moves as read; a member not in the party read is a mismatch. *)
-let knows_row (read : read) species move for_ =
-  let need = Printf.sprintf "%s knows %s (%s)" species move for_ in
-  match (List.assoc_opt species read.observed.knows, read.observed.party) with
-  | Some moves, _ ->
-      {
-        need;
-        read = species ^ ": " ^ species_list moves;
-        verdict = of_bool (List.mem move moves);
-      }
-  | None, Some members when not (has members species) ->
-      {
-        need;
-        read = "not in the party: " ^ party_text (Some members);
-        verdict = Mismatch;
-      }
-  | None, _ -> { need; read = "not read"; verdict = Not_read }
+let knows (move : string) (m : Story.Room_policy.member) =
+  Option.fold ~none:false ~some:(List.mem move) m.moves
+
+let unread_moves (m : Story.Room_policy.member) = m.moves = None
+
+let knows_row (read : read) move for_ =
+  let need = Printf.sprintf "a member knows %s (%s)" move for_ in
+  match read.members with
+  | None -> { need; read = "not read"; verdict = Not_read }
+  | Some members -> (
+      match List.find_opt (knows move) members with
+      | Some m -> { need; read = m.species ^ " knows " ^ move; verdict = Ok }
+      | None when List.exists unread_moves members ->
+          { need; read = "moves not read"; verdict = Not_read }
+      | None -> { need; read = "no member knows " ^ move; verdict = Mismatch })
 
 let with_money (read : read) need test =
   match read.observed.money with
@@ -121,13 +121,15 @@ let row read = function
   | Item_exactly { item; count } ->
       with_item read item (Printf.sprintf "%s x%d" item count) (fun n ->
           n = count)
-  | Knows_move { species; move; for_ } -> knows_row read species move for_
+  | Knows_move { move; for_ } -> knows_row read move for_
   | Place map -> place_row read map
 
 let compare needs read = List.map (row read) needs
 
 let room need read =
-  let need_text, read_text, ok = Party_room.report need read.observed.party in
+  let need_text, read_text, ok =
+    Party_room.report need ~members:read.members read.observed.party
+  in
   let verdict =
     match ok with Some true -> Ok | Some false -> Mismatch | None -> Not_read
   in
@@ -149,10 +151,6 @@ let table rows =
   String.concat "\n"
     (line "NEED" "READ" "VERDICT"
     :: List.map (fun r -> line r.need r.read (verdict_text r.verdict)) rows)
-
-let knows_to_read = function
-  | Knows_move { species; move; _ } -> Some { P.species; moves = [ move ] }
-  | _ -> None
 
 let to_read needs : P.postconditions =
   let party =
@@ -183,6 +181,6 @@ let to_read needs : P.postconditions =
     coins = None;
     money = (if money then Some { P.min = 0; max = 0 } else None);
     flags = [];
-    knows = List.filter_map knows_to_read needs;
+    knows = [];
     levels = [];
   }

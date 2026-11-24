@@ -9,6 +9,9 @@ type need = {
   joins : (string * string) list;
       (** Each member that joins, with the checkpoint it joins in, in order. *)
   used : string list;  (** Species the plans use or promise in the party. *)
+  moves : string list;
+      (** Field moves the plans' events need some member to know (Cut for a
+          [cut_tree]). *)
 }
 
 val party_size : int
@@ -38,8 +41,12 @@ val deposits : need -> member list -> (string list, string) result
     free: [Ok []] when they are; [Error] naming the members kept and why when
     too few may go. *)
 
-val report : need -> string option list option -> string * string * bool option
-(** The pre-flight's row for a party read (species by slot): the need, what was
-    read and the deposits it would take, and whether there is room ([None]: the
-    party did not read). Moves are not read there, so only members the plans
-    name are known; every other member stays. *)
+val report :
+  need ->
+  members:member list option ->
+  string option list option ->
+  string * string * bool option
+(** The pre-flight's row: the need, what was read and the deposits it would
+    take, and whether there is room ([None]: the party did not read). Judged on
+    [members] (species, level, moves) when read; else on the party's species,
+    where only members the plans name are known and every other member stays. *)

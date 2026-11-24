@@ -18,10 +18,9 @@ type need = Plan_needs.need =
   | Party_includes of { members : string list; slots : Story.Plan.slot list }
   | Member of { species : string; for_ : string }
       (** A member an event uses ([for_]: ["fly"]). *)
-  | Knows_move of { species : string; move : string; for_ : string }
-      (** A member that must know a field move: the one a [cut_tree] event names
-          (the game picks Cut's user itself; the plan names it for this check).
-      *)
+  | Knows_move of { move : string; for_ : string }
+      (** Some member knows this field move: a [cut_tree] event's Cut, which the
+          game lets any member that knows it use. *)
   | Money_at_least of { amount : int; for_ : string }
   | Money_between of { min : int; max : int }
   | Item_at_least of { item : string; count : int; for_ : string }
@@ -42,6 +41,10 @@ type read = {
   place : Frlg_readers.Start_frame.difference option;
       (** The frame after the load against the one kept at the start; [None]
           when none was kept or the frame did not read. *)
+  members : Story.Room_policy.member list option;
+      (** Each member's species, level and moves on its summary
+          ({!Frlg_actions.Party_summary}): the field moves and the room are
+          judged on them. [None] when not read. *)
 }
 
 type verdict = Ok | Mismatch | Not_read

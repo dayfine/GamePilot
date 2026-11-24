@@ -116,3 +116,6 @@ let observe ~log (promised : Story.Plan.postconditions) :
     knows;
     levels;
   }
+
+let party_summary ~log =
+  read ~log "party summary" (fun () -> Some (A.Party_summary.read_all ~log ()))

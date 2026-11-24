@@ -5,6 +5,9 @@
     [StatsReader::read_level()]). Opened the way {!Summary_moves} opens it; only
     the level is read. *)
 
+val read_shown : unit -> int option
+(** The level on the open summary page; [None] when it does not read. *)
+
 val read : log:(string -> unit) -> slot:int -> int option
 (** From the overworld: the party, the member in [slot] (from 1), SUMMARY, the
     info page's level read until two reads {!Summary_moves.reread_ms} apart

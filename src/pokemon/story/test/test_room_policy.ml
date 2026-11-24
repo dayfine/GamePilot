@@ -11,6 +11,7 @@ let rules : R.rules =
     party_size = 6;
     used = [ "blastoise"; "oddish"; "pidgey"; "rattata" ];
     field_moves = frlg_field_moves;
+    needed_moves = [ "cut" ];
     lead_stays = true;
   }
 
@@ -72,7 +73,7 @@ let cases =
     case "the lead stays though no plan names it"
       (choose ~rules:{ rules with used = [] } ~need:{ free_slots = 6 } console_b)
       "stop: 6 to deposit, 2 may go; kept: blastoise: it leads; pidgey: it \
-       knows fly; oddish: it knows cut; lapras: it knows surf";
+       knows fly; oddish: only it knows cut; lapras: it knows surf";
     case "lead_stays off: the lead may go"
       (choose
          ~rules:{ rules with lead_stays = false }
@@ -83,6 +84,27 @@ let cases =
                  (fun s -> (s, Some 30, Some [ "tackle" ]))
                  [ "blastoise"; "oddish"; "pidgey"; "rattata"; "pidgey" ])))
       "deposit magikarp (slot 1)";
+    case "a needed move outside the game's list: the only knower stays"
+      (choose
+         ~rules:{ rules with field_moves = []; needed_moves = [ "cut" ] }
+         ~need:{ free_slots = 2 } console_b)
+      "deposit eevee (slot 2), magikarp (slot 6)";
+    case "two members know Cut: one may go, the other then stays"
+      (choose
+         ~rules:
+           { rules with used = []; field_moves = []; needed_moves = [ "cut" ] }
+         ~need:{ free_slots = 4 }
+         (party
+            [
+              ("blastoise", Some 59, Some [ "surf" ]);
+              ("oddish", Some 12, Some [ "cut" ]);
+              ("paras", Some 10, Some [ "cut" ]);
+              ("magikarp", Some 5, Some [ "splash" ]);
+              ("eevee", Some 25, Some [ "tackle" ]);
+              ("lapras", Some 25, Some [ "sing" ]);
+            ]))
+      "deposit paras (slot 3), magikarp (slot 4), eevee (slot 5), lapras (slot \
+       6)";
     case "moves not read: the member stays"
       (choose
          (List.map (fun (m : R.member) -> { m with moves = None }) console_b))

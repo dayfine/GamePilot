@@ -5,6 +5,8 @@
     - never a member the plans use (a species an action names or a promised
       party lists);
     - never one that knows a field move (the game's list, {!rules.field_moves});
+    - never the only member that knows a move the plans need
+      ({!rules.needed_moves}), whatever the game's list;
     - never the lead, when the plans need it ({!rules.lead_stays}): battles send
       it out first;
     - never one whose moves were not read;
@@ -22,6 +24,9 @@ type rules = {
   party_size : int;  (** The game's party size: 6. *)
   used : string list;  (** Species the plans use or promise. *)
   field_moves : string list;  (** Moves a member keeps its place for. *)
+  needed_moves : string list;
+      (** Moves the plans need some member to know: the only member that knows
+          one stays. *)
   lead_stays : bool;  (** The member in slot 1 stays. *)
 }
 
@@ -45,8 +50,8 @@ val free_slots : rules -> int -> int
 val holds : rules -> precondition -> int -> bool
 (** Whether a party of this many members meets the precondition. *)
 
-val keeps : rules -> member -> string option
-(** Why the member stays, or [None] when it may go. *)
+val keeps : rules -> member list -> member -> string option
+(** Why the member of this party stays, or [None] when it may go. *)
 
 val choose : rules -> precondition -> member list -> (plan, string) result
 (** The deposits that meet the precondition: [Ok []] when it holds already;

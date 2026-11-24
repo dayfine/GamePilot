@@ -16,3 +16,7 @@ val observe :
   log:(string -> unit) ->
   Story.Plan.postconditions ->
   Story.Postcondition_check.observed
+
+val party_summary : log:(string -> unit) -> Story.Room_policy.member list option
+(** Every member's species, level and moves ({!Frlg_actions.Party_summary}),
+    from the overworld and back to it; [None] when the read failed. *)

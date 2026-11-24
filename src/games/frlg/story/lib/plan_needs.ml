@@ -6,7 +6,7 @@ type need =
   | Party_in_order of string list
   | Party_includes of { members : string list; slots : P.slot list }
   | Member of { species : string; for_ : string }
-  | Knows_move of { species : string; move : string; for_ : string }
+  | Knows_move of { move : string; for_ : string }
   | Money_at_least of { amount : int; for_ : string }
   | Money_between of { min : int; max : int }
   | Item_at_least of { item : string; count : int; for_ : string }
@@ -30,8 +30,7 @@ type acc = {
   money : (int * string) list;
   items : (string * string) list;  (** needed, one per use *)
   bought : (string * int) list;
-  knows : (string * string * string) list;
-      (** species, field move, action; newest first *)
+  knows : (string * string) list;  (** field move, action; newest first *)
 }
 
 let empty =
@@ -44,18 +43,13 @@ let empty =
     knows = [];
   }
 
-(* The game picks Cut's user itself: the member a cut_tree event names must
-   know Cut. *)
+(* The game lets any member that knows Cut cut: some member must know it. *)
 let field_move_users = A.Action_args.field_move_users
 
-let field_move ~where action args acc =
+let field_move action acc =
   let move = List.assoc action field_move_users in
-  match J.string_opt ~where "species" args with
-  | Some species
-    when not (List.exists (fun (s, m, _) -> s = species && m = move) acc.knows)
-    ->
-      { acc with knows = (species, move, action) :: acc.knows }
-  | _ -> acc
+  if List.mem_assoc move acc.knows then acc
+  else { acc with knows = (move, action) :: acc.knows }
 
 let use_member action acc species =
   if List.mem species acc.brought || List.mem_assoc species acc.members then acc
@@ -94,8 +88,7 @@ let use_members ~named action acc =
 let game_action stocks ~where action args acc =
   let named key = J.string_opt ~where key args in
   let acc =
-    if List.mem_assoc action field_move_users then
-      field_move ~where action args acc
+    if List.mem_assoc action field_move_users then field_move action acc
     else use_members ~named action acc
   in
   let acc =
@@ -130,9 +123,7 @@ let party_needs before acc =
   in
   promised
   @ List.rev_map (fun (species, for_) -> Member { species; for_ }) acc.members
-  @ List.rev_map
-      (fun (species, move, for_) -> Knows_move { species; move; for_ })
-      acc.knows
+  @ List.rev_map (fun (move, for_) -> Knows_move { move; for_ }) acc.knows
 
 let money_needs before acc =
   let promised =
