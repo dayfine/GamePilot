@@ -1,5 +1,5 @@
-# FRLG English move names, made by src/games/frlg/assets/extract/extract_frlg_move_names.py
-# from pret/pokefirered src/data/text/move_names.h: <slug> <name>
+# FRLG move names (eng), made by src/games/frlg/assets/extract/extract_frlg_move_names.py
+# from Packages Resources/PokemonFRLG/BattleMovesOCR.json: <slug> <name>
 pound POUND
 karate-chop KARATE CHOP
 double-slap DOUBLESLAP

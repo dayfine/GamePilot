@@ -1,43 +1,31 @@
 #!/usr/bin/env python3
-"""Writes the English FRLG move names, for the FRLG text reader.
+"""Writes the FRLG move names per language, for the FRLG text reader.
 
-Reads src/data/text/move_names.h from a pret/pokefirered checkout (a sparse
-checkout works through `git show`, see below) and prints one line per move:
-<slug> <name>, where <slug> is the MOVE_ constant in lowercase with dashes
-(MOVE_KARATE_CHOP: karate-chop, the plans' slugs) and <name> the rest of the
-line as the game shows it (KARATE CHOP). Four constants keep Gen 3 spellings
-the slugs elsewhere (Packages, PokemonSimulation's battle_data_export.py) do
-not; they get those slugs. MOVE_NONE's placeholder is left out.
+Reads Packages' Resources/PokemonFRLG/BattleMovesOCR.json
+({language: {slug: [names]}}) and writes one file per language it has,
+src/games/frlg/assets/move_names_<language>.txt: <slug> <name> per line, the
+slug's first name, in the JSON's order. Run it from the repo root after the
+Packages submodule moves:
 
-    python3 src/games/frlg/assets/extract/extract_frlg_move_names.py ~/Projects/pokefirered \
-        > src/games/frlg/assets/move_names_eng.txt
+    python3 src/games/frlg/assets/extract/extract_frlg_move_names.py third_party/Packages
 """
 
-import re
-import subprocess
+import json
 import sys
 
-ENTRY = re.compile(r'\[MOVE_(\w+)\]\s*= _\("([^"]*)"\)')
-SOURCE = "src/data/text/move_names.h"
-SLUGS = {
-    "FAINT_ATTACK": "feint-attack",
-    "HI_JUMP_KICK": "high-jump-kick",
-    "SMELLING_SALT": "smelling-salts",
-    "VICE_GRIP": "vise-grip",
-}
+SOURCE = "Resources/PokemonFRLG/BattleMovesOCR.json"
+OUTPUT = "src/games/frlg/assets/move_names_%s.txt"
 
 
-def main(decomp):
-    text = subprocess.run(
-        ["git", "-C", decomp, "show", "HEAD:" + SOURCE], capture_output=True, check=True, text=True
-    ).stdout
-    print("# FRLG English move names, made by src/games/frlg/assets/extract/extract_frlg_move_names.py")
-    print("# from pret/pokefirered %s: <slug> <name>" % SOURCE)
-    for constant, name in ENTRY.findall(text):
-        if constant == "NONE":
-            continue
-        slug = SLUGS.get(constant, constant.lower().replace("_", "-"))
-        print("%s %s" % (slug, name))
+def main(packages):
+    with open(packages + "/" + SOURCE, encoding="utf-8") as f:
+        languages = json.load(f)
+    for language, moves in languages.items():
+        with open(OUTPUT % language, "w", encoding="utf-8", newline="\n") as out:
+            out.write("# FRLG move names (%s), made by src/games/frlg/assets/extract/extract_frlg_move_names.py\n" % language)
+            out.write("# from Packages %s: <slug> <name>\n" % SOURCE)
+            for slug, names in moves.items():
+                out.write("%s %s\n" % (slug, names[0]))
 
 
 if __name__ == "__main__":

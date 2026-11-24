@@ -15,7 +15,10 @@ let item_table =
   lazy (load_data Text.Data_files.item_names_eng Text.Item_names.load)
 
 let move_table =
-  lazy (load_data Text.Data_files.move_names_eng Text.Move_names.load)
+  lazy
+    (load_data
+       (Text.Data_files.move_names ~language:"eng")
+       Text.Move_names.load)
 
 let glyphs () = Lazy.force glyph_table
 let small_glyphs () = Lazy.force small_glyph_table
