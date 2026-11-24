@@ -14,7 +14,17 @@ let plan id =
 
 let chain =
   List.map plan
-    [ "mg-01"; "mg-02"; "mg-03"; "mg-04"; "mg-05a"; "mg-05"; "mg-06" ]
+    [
+      "mg-01";
+      "mg-02";
+      "mg-03";
+      "mg-04a";
+      "mg-04b";
+      "mg-04c";
+      "mg-05a";
+      "mg-05";
+      "mg-06";
+    ]
 
 let case name input expectation = { Table_test.name; input; expectation }
 

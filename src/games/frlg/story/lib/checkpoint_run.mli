@@ -68,3 +68,11 @@ val run :
     but for those {!capped_postconditions} skips (logged). [on_event] hears each
     event's progress ({!Story.Runner.run}). [actions] are game actions of the
     caller's own, ahead of FireRed's: a shadow plan's ({!Shadow_plan}). *)
+
+val goal_holds :
+  log:(string -> unit) -> id:string -> Story.Plan.postconditions -> bool
+(** In the effect context, from the overworld and back to it: whether a
+    repeating checkpoint's goal ({!Story.Plan.repeat}'s [until]) holds now, read
+    as postconditions are ({!Postcondition_reads}) and logged
+    (["[Goal] [Postcondition] mg-04b ..."]). A goal with nothing in it, or one
+    not read, does not hold. *)

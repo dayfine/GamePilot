@@ -29,6 +29,9 @@ type setup = {
   bound : (int * int option) option ref;
       (** The ports the series' last daemon bound (program, page): the next one
           asks for them again, so the page keeps its URL across runs. *)
+  max_rounds : int option;
+      (** --max-rounds: a repeating checkpoint's rounds, in place of its plan's
+          (testing a few rounds). *)
 }
 
 type checkpoint = {
@@ -45,11 +48,13 @@ type checkpoint = {
 }
 
 type outcome =
-  | Passed
+  | Passed of { goal : bool option }
+      (** [goal]: whether a repeating checkpoint's goal holds after the run;
+          [None] for a checkpoint that does not repeat. *)
   | Failed of { at : string; reason : string; repeats : bool }
 
 let trial = function
-  | Passed -> Checkpoint_trials.Passed
+  | Passed _ -> Checkpoint_trials.Passed
   | Failed { at; repeats; _ } -> Checkpoint_trials.Failed { at; repeats }
 
 let of_failure (f : Failure.t) =
@@ -81,6 +86,13 @@ let options setup cp log : Frlg_story.Checkpoint_run.options =
     log;
   }
 
+(* After a passing round of a repeating checkpoint: whether its goal holds. *)
+let goal_after cp log =
+  Option.map
+    (fun (r : Plan.repeat) ->
+      Frlg_story.Checkpoint_run.goal_holds ~log ~id:cp.id r.until)
+    cp.plan.repeat
+
 (* The checkpoint, shown on the watch page as it runs; a Stop there ends it
    at the event it was in. With how it ended, for the console's steps. *)
 let checkpoint_outcome setup cp log =
@@ -90,7 +102,7 @@ let checkpoint_outcome setup cp log =
       ~on_event:(Frlg_story.Plan_watch.on_event watch)
       (options setup cp log) setup.world cp.plan
   with
-  | Ok () -> (Passed, Console_runs.Passed)
+  | Ok () -> (Passed { goal = goal_after cp log }, Console_runs.Passed)
   | Error failure ->
       (of_failure failure, Console_runs.outcome_of_failure failure.reason)
   | exception (Effects.Disconnected _ as e) -> raise e
@@ -146,16 +158,17 @@ let emulator_run setup cp log path =
   let outcome, _ = checkpoint_outcome setup cp log in
   (match outcome with
   | Failed _ -> save_failure log path ~save_states:true
-  | Passed when setup.policy.keeps_end ->
+  | Passed _ when setup.policy.keeps_end || cp.plan.repeat <> None ->
+      (* A round's end is the next round's start. *)
       save log "end.ss" (fun () -> Effects.save_state (path "end.ss"))
-  | Passed -> ());
+  | Passed _ -> ());
   outcome
 
 let switch_run setup cp log path =
   let ((outcome, _) as ended) = console_run setup cp log in
   (match outcome with
   | Failed _ -> save_failure log path ~save_states:false
-  | Passed -> ());
+  | Passed _ -> ());
   console_after setup cp log ended
 
 let in_session setup cp ~progress record log () =
@@ -228,31 +241,16 @@ let with_daemon setup record cp body =
         ~finally:(fun () -> Daemon_process.stop daemon)
         (fun () -> body daemon)
 
-(* With --grind-battles: " (grind capped at N; skipped: ...)", so a capped
-   pass is never taken for a full one. *)
 let capped_note setup cp =
-  let skipped cap =
-    snd
-      (Frlg_story.Checkpoint_run.capped_postconditions ~grind_cap:(Some cap)
-         cp.plan)
-  in
-  match setup.common.grind_cap with
-  | None -> ""
-  | Some cap when skipped cap = [] -> Printf.sprintf " (grind capped at %d)" cap
-  | Some cap ->
-      Printf.sprintf " (grind capped at %d; skipped: %s)" cap
-        (String.concat "; " (skipped cap))
-
-(* " attempt 2/4" when the plan allows retries. *)
-let attempt_note cp attempt =
-  if cp.plan.retries = 0 then ""
-  else Printf.sprintf " attempt %d/%d" attempt (cp.plan.retries + 1)
+  Run_line.capped_note ~grind_cap:setup.common.grind_cap cp.plan
 
 let summary setup cp n ~attempt outcome =
-  let run = Printf.sprintf "%s run %d%s" cp.id n (attempt_note cp attempt) in
+  let run =
+    Run_line.run_name cp.id cp.plan n ^ Run_line.attempt_note cp.plan attempt
+  in
   let line =
     match outcome with
-    | Passed -> "PASS " ^ run
+    | Passed { goal } -> "PASS " ^ run ^ Run_line.goal_note goal
     | Failed { at; reason; _ } ->
         Printf.sprintf "FAIL %s at %s: %s" run at reason
   in
@@ -265,7 +263,7 @@ let record_outcome setup cp (run : Run_record.run) n ~attempt outcome =
   print_endline ("[Run] " ^ run.record.dir ^ ": " ^ line);
   let ending : Run_record.ending =
     match outcome with
-    | Passed -> { result = "pass"; at = ""; reason = "" }
+    | Passed _ -> { result = "pass"; at = ""; reason = "" }
     | Failed { at; reason; _ } -> { result = "fail"; at; reason }
   in
   Run_record.finish ~runs_dir:setup.runs_dir run ~summary:line ending
@@ -284,8 +282,10 @@ let run setup cp n ~attempt ~progress =
   let record = run.record in
   let log, close = Run_record.story_log record in
   log
-    (Printf.sprintf "[Run] %s run %d%s from %s" cp.id n
-       (attempt_note cp attempt) cp.start_state);
+    (Printf.sprintf "[Run] %s%s from %s"
+       (Run_line.run_name cp.id cp.plan n)
+       (Run_line.attempt_note cp.plan attempt)
+       cp.start_state);
   let outcome =
     with_daemon setup record cp (live setup cp ~progress record log)
   in

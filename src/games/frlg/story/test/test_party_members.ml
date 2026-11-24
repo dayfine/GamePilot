@@ -28,7 +28,7 @@ let mgba = function
   | "mg-01" -> [ "blastoise"; "rattata"; "oddish"; "pidgey" ]
   | "mg-03" ->
       [ "blastoise"; "rattata"; "oddish"; "pidgey"; "abra"; "farfetchd" ]
-  | "mg-04" ->
+  | "mg-04a" ->
       [ "blastoise"; "rattata"; "oddish"; "pidgey"; "mr-mime"; "farfetchd" ]
   | "mg-06" ->
       [ "farfetchd"; "blastoise"; "mr-mime"; "pidgey"; "rattata"; "oddish" ]
@@ -38,7 +38,7 @@ let console_b = function
   | "mg-01" -> [ "blastoise"; "pidgey"; "oddish"; "lapras" ]
   | "mg-03" ->
       [ "blastoise"; "pidgey"; "oddish"; "lapras"; "abra"; "farfetchd" ]
-  | "mg-04" ->
+  | "mg-04a" ->
       [ "blastoise"; "pidgey"; "oddish"; "lapras"; "mr-mime"; "farfetchd" ]
   | "mg-06" ->
       [ "farfetchd"; "blastoise"; "mr-mime"; "pidgey"; "oddish"; "lapras" ]
@@ -84,8 +84,8 @@ let slots =
       both "mg-03 the trade's Abra"
         (fun s -> members s "mg-03" "trade_mimien")
         ~mgba:"abra slot 5" ~console_b:"abra slot 5";
-      both "mg-04 the grind's member and sweeper"
-        (fun s -> members s "mg-04" "grind_chding_knock_off")
+      both "mg-04a the grind's member and sweeper"
+        (fun s -> members s "mg-04a" "grind_chding_knock_off")
         ~mgba:"farfetchd slot 6, blastoise slot 1"
         ~console_b:"farfetchd slot 6, blastoise slot 1";
       both "mg-06 MIMIEN to slot 1"

@@ -127,3 +127,10 @@ let run ?end_at ?on_event ?(actions = []) options world (plan : Story.Plan.t) =
       Story.Runner.run ?end_at ~end_state ?on_event
         (with_actions actions (A.Story_game.game game))
         checkpoint)
+
+let goal_holds ~log ~id (goal : Story.Plan.postconditions) =
+  let module C = Story.Postcondition_check in
+  Effects.with_probes Screen_facts.probes (fun () ->
+      let results = C.check goal (Postcondition_reads.observe ~log goal) in
+      List.iter (fun line -> log ("[Goal] " ^ line)) (C.log_lines id results);
+      results <> [] && C.unmet results = [])

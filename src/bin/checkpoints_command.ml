@@ -27,6 +27,14 @@
    token, which the URL printed for other devices carries. The program's port
    (--port) is a free one too unless given, so runs do not collide.
 
+   A repeating checkpoint (its plan's metadata.repeat: mg-04b, the grind
+   round) runs round after round, each one run with its attempts, each passing
+   round saved (on the Switch in the game, on mGBA as the next round's start
+   state), until its goal (repeat.until), read after each passing round,
+   holds; then the series goes on. A round's failure soft-resets to the last
+   round's save. --max-rounds N runs at most N rounds in place of the plan's
+   repeat.max_rounds; with --grind-battles, reaching it passes.
+
    --record/--no-record, --keepawake SECONDS: each run's daemon's (Watch-Page.md).
    --backend switch runs on the Switch (docs/switch-bring-up.md): the daemon
    drives the controller board on --serial and reads the capture card
@@ -133,6 +141,7 @@ let run_series plan_dir f =
          daemon_flags = f.daemon_flags;
          bound = ref None;
          save_after_pass = f.save_after_pass;
+         max_rounds = f.max_rounds;
        }
        selected ~after)
 

@@ -15,6 +15,7 @@ type t = {
   entries : entry list;
   runs : Trials.run list;  (** The current checkpoint's, oldest first. *)
   running : bool;
+  max_rounds : int option;  (** The current checkpoint's, when it repeats. *)
 }
 
 let create ~mode ~policy ~started_ms ids =
@@ -26,6 +27,7 @@ let create ~mode ~policy ~started_ms ids =
     entries = List.map pending ids;
     runs = [];
     running = false;
+    max_rounds = None;
   }
 
 let update_current t f =
@@ -40,7 +42,13 @@ let begin_checkpoint t id ~now_ms =
     if e.id = id then { e with state = W.Current; since_ms = Some now_ms }
     else e
   in
-  { t with entries = List.map start t.entries; runs = []; running = false }
+  {
+    t with
+    entries = List.map start t.entries;
+    runs = [];
+    running = false;
+    max_rounds = None;
+  }
 
 let begin_trial t = { t with running = true }
 
@@ -64,9 +72,17 @@ let finish t state ~now_ms =
 let end_trial t run ~now_ms =
   let t = { t with runs = t.runs @ [ run ]; running = false } in
   match Trials.verdict t.policy t.runs with
+  | _ when t.max_rounds <> None -> t
   | Trials.Run_again -> t
   | Trials.Checkpoint_passed _ -> finish t W.Passed ~now_ms
   | Trials.Stopped _ -> finish t W.Failed ~now_ms
+
+let begin_rounds t ~max_rounds = { t with max_rounds = Some max_rounds }
+
+let end_rounds t ~passed ~now_ms =
+  finish { t with running = false }
+    (if passed then W.Passed else W.Failed)
+    ~now_ms
 
 let fail_checkpoint t ~now_ms =
   finish { t with running = false } W.Failed ~now_ms
@@ -80,7 +96,7 @@ let to_wire t ~now_ms =
   {
     W.mode = Trials.mode_to_string t.mode;
     trial = (List.length t.runs + if t.running then 1 else 0);
-    trials = t.policy.runs;
+    trials = Option.value t.max_rounds ~default:t.policy.runs;
     passes = count (fun r -> r = Trials.Passed) t.runs;
     fails = count (fun r -> r <> Trials.Passed) t.runs;
     started_ms = t.started_ms;

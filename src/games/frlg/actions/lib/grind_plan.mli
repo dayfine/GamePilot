@@ -46,6 +46,9 @@ type t = {
   sweeper_moves : int list;
       (** its move slots (0-3), the next one taken when one runs dry *)
   max_battles : int;  (** more battles than this fail the action *)
+  round : bool;
+      (** one round only ({!Grind.run}): from the heal place to the spot, at
+          most [heal_every] battles, and back to heal *)
 }
 
 val default_strategy : string
@@ -60,8 +63,8 @@ val decode :
   strategy list -> Grid_maps.Json_field.obj -> (t, Story.Failure.cause) result
 (** The action's args: ["species"], ["target_level"], ["learn_move"],
     ["learn_slot"] (from 1), ["sweeper"], ["sweeper_moves"] (from 1),
-    ["max_battles"], and ["strategy"] (default {!default_strategy}). [bad_args]
-    naming the field. *)
+    ["max_battles"], ["strategy"] (default {!default_strategy}) and ["round"]
+    (default [false]). [bad_args] naming the field. *)
 
 val met : goal -> known:string list -> bool
 (** The grinder knows the move. *)

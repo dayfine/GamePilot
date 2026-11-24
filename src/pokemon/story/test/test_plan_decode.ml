@@ -142,11 +142,25 @@ let real_plans : Table_test.case list =
          1 heal";
     };
     {
-      name = "mg-04 outline";
-      input = (fun () -> outline "mg-04.plan.json" mg);
+      name = "mg-04a outline";
+      input = (fun () -> outline "mg-04a.plan.json" mg);
       expectation =
-        "frlg mg-04 from LavenderTown_PokemonCenter_1F (7, 4) north: 3 route, \
-         5 game_action";
+        "frlg mg-04a from LavenderTown_PokemonCenter_1F (7, 4) north: 2 route, \
+         3 game_action, 1 heal";
+    };
+    {
+      name = "mg-04b outline: one grind round";
+      input = (fun () -> outline "mg-04b.plan.json" mg);
+      expectation =
+        "frlg mg-04b from IndigoPlateau_PokemonCenter_1F (13, 12) north: 1 \
+         game_action";
+    };
+    {
+      name = "mg-04c outline";
+      input = (fun () -> outline "mg-04c.plan.json" mg);
+      expectation =
+        "frlg mg-04c from IndigoPlateau_PokemonCenter_1F (13, 12) north: 2 \
+         route, 1 game_action";
     };
     {
       name = "mg-05a outline";
@@ -354,12 +368,28 @@ let postcondition_cases : Table_test.case list =
          money spent 3550";
     };
     {
-      name = "mg-04 promises the grind's moves and one rope used";
-      input = (fun () -> postconditions_text (load "mg-04.plan.json" mg));
+      name = "mg-04a promises Knock Off and one rope used";
+      input = (fun () -> postconditions_text (load "mg-04a.plan.json" mg));
       expectation =
         "party includes blastoise, pidgey, mr-mime, farfetchd\n\
          item revive x2\n\
          item escape-rope x2\n\
+         money spent 0\n\
+         farfetchd knows knock-off";
+    };
+    {
+      name = "a grind round (mg-04b) promises what holds on any save";
+      input = (fun () -> postconditions_text (load "mg-04b.plan.json" mg));
+      expectation =
+        "position IndigoPlateau_PokemonCenter_1F (13, 12) north\n\
+         party includes blastoise, pidgey, mr-mime, farfetchd\n\
+         money spent 0";
+    };
+    {
+      name = "mg-04c promises the grind's moves";
+      input = (fun () -> postconditions_text (load "mg-04c.plan.json" mg));
+      expectation =
+        "party includes blastoise, pidgey, mr-mime, farfetchd\n\
          money spent 0\n\
          farfetchd knows knock-off\n\
          mr-mime knows recycle\n\
@@ -510,6 +540,51 @@ let retries_cases : Table_test.case list =
       (at ^ "metadata.retries is -1, not 0 or more.");
   ]
 
+let repeat_text (plan : Plan.t) =
+  match plan.repeat with
+  | None -> "no repeat"
+  | Some { until; max_rounds } ->
+      Printf.sprintf "at most %d rounds, until:\n%s" max_rounds
+        (postconditions_text { plan with postconditions = until })
+
+let repeat_of metadata =
+  let text =
+    edited {|"title": "Test",|}
+      (Printf.sprintf {|"title": "Test", "metadata": %s,|} metadata)
+  in
+  match
+    Plan_decode.decode ~source:"base.plan.json" (Yojson.Safe.from_string text)
+  with
+  | Ok plan -> repeat_text plan
+  | Error message -> message
+
+let repeat_cases : Table_test.case list =
+  let case name input expectation : Table_test.case =
+    { name; input; expectation }
+  in
+  [
+    case "mg-04b repeats until MIMIEN is Lv 33 and knows Recycle"
+      (fun () -> repeat_text (load "mg-04b.plan.json" mg))
+      "at most 20 rounds, until:\nmr-mime knows recycle\nmr-mime at least Lv 33";
+    case "mg-04b retries each round twice"
+      (fun () -> string_of_int (load "mg-04b.plan.json" mg).retries)
+      "2";
+    case "no repeat field: none"
+      (fun () -> repeat_of {|{"phase": "testing"}|})
+      "no repeat";
+    case "max_rounds below 1 is refused"
+      (fun () -> repeat_of {|{"repeat": {"until": {}, "max_rounds": 0}}|})
+      (at ^ "metadata.repeat.max_rounds is 0, not 1 or more.");
+    case "until is required"
+      (fun () -> repeat_of {|{"repeat": {"max_rounds": 3}}|})
+      (at ^ "metadata.repeat.until is missing.");
+    case "an unknown goal field is refused"
+      (fun () ->
+        repeat_of {|{"repeat": {"until": {"badges": 3}, "max_rounds": 3}}|})
+      (at ^ "metadata.repeat.until.badges is not a known field.");
+  ]
+
 let () =
   Table_test.run "plan_decode"
-    (real_plans @ inline_plans @ postcondition_cases @ retries_cases)
+    (real_plans @ inline_plans @ postcondition_cases @ retries_cases
+   @ repeat_cases)

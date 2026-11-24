@@ -165,6 +165,24 @@ let retries ~where = function
       | Some n when n >= 0 -> n
       | Some n -> F.fail "%sretries is %d, not 0 or more." where n)
 
+let repeat_of ~where obj : Plan.repeat =
+  only ~where [ "until"; "max_rounds" ] obj;
+  let max_rounds = F.int ~where "max_rounds" obj in
+  if max_rounds < 1 then
+    F.fail "%smax_rounds is %d, not 1 or more." where max_rounds;
+  let until = object_field ~where "until" obj in
+  {
+    until = Postcondition_decode.postconditions ~where:(where ^ "until.") until;
+    max_rounds;
+  }
+
+(* The metadata's "repeat": {"until": postconditions, "max_rounds": n}. *)
+let repeat ~where metadata =
+  Option.bind metadata (fun m ->
+      Option.map
+        (repeat_of ~where:(where ^ "repeat."))
+        (F.object_opt ~where "repeat" m))
+
 let plan ~where obj : Plan.t =
   only ~where [ "format"; "game"; "checkpoint"; "execution"; "metadata" ] obj;
   let named = F.string ~where "format" obj in
@@ -185,6 +203,7 @@ let plan ~where obj : Plan.t =
     postconditions =
       Postcondition_decode.of_metadata ~where:metadata_where metadata;
     retries = retries ~where:(metadata_where ^ "metadata.") metadata;
+    repeat = repeat ~where:(metadata_where ^ "metadata.") metadata;
   }
 
 let decode ~source json =
