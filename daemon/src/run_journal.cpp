@@ -3,6 +3,9 @@
 #include <cstdio>
 #include <utility>
 
+#include "Common/Cpp/Filesystem/Filesystem.h"
+#include "watch_registry.h"
+
 namespace gamepilot {
 
 std::string daemon_record_json(const DaemonRecord& record) {
@@ -12,6 +15,20 @@ std::string daemon_record_json(const DaemonRecord& record) {
       static_cast<std::int64_t>(record.clock_zero_unix_ms);
   json["record"] = record.record;
   json["keepawake_s"] = record.keepawake_s;
+  return to_line(pa::JsonValue(std::move(json)));
+}
+
+std::string daemon_run_json(const std::string& run, const DaemonRecord& record,
+                            const std::string& label, std::int64_t ended_ms) {
+  pa::JsonObject json;
+  json["run"] = run;
+  json["kind"] = "daemon";
+  json["backend"] = record.backend;
+  json["checkpoint"] = label;
+  json["started_ms"] = static_cast<std::int64_t>(record.clock_zero_unix_ms);
+  if (ended_ms > 0) {
+    json["ended_ms"] = ended_ms;
+  }
   return to_line(pa::JsonValue(std::move(json)));
 }
 
@@ -35,13 +52,29 @@ PlanStep current_step(const pa::JsonObject& plan) {
   return {};
 }
 
-RunJournal::RunJournal(std::string folder, const DaemonRecord& record)
-    : folder_(std::move(folder)) {
+RunJournal::RunJournal(std::string folder, const DaemonRecord& record,
+                       std::string label)
+    : folder_(std::move(folder)), record_(record), label_(std::move(label)) {
   write("daemon.json", daemon_record_json(record) + "\n");
+  if (!pa::Filesystem::exists(folder_ + "/run.json")) {
+    owns_run_json_ = true;
+    write("run.json", daemon_run_json(run_name(), record_, label_, 0) + "\n");
+  }
   if (!log_.open(folder_ + "/watch_log.jsonl",
                  pa::FileMode::APPEND | pa::FileMode::BINARY)) {
     warn("watch_log.jsonl");
   }
+}
+
+RunJournal::~RunJournal() {
+  if (owns_run_json_) {
+    write("run.json",
+          daemon_run_json(run_name(), record_, label_, unix_now_ms()) + "\n");
+  }
+}
+
+std::string RunJournal::run_name() const {
+  return pa::Filesystem::Path(folder_).filename().string();
 }
 
 void RunJournal::plan(const std::string& json) {

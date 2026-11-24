@@ -201,19 +201,18 @@ step() {
 }
 
 cd "$root"
-echo "[Bring-up] the board"
-# shellcheck disable=SC2086
-step "$daemon" --backend switch $board_args --board-check
-echo "[Bring-up] one frame and its geometry"
+# The board's mode, one frame and its geometry: a run of their own (gamepilot bring-up), listed on
+# the hub like the others.
 mkdir -p "$GAMEPILOT_RUNS"
 # shellcheck disable=SC2086
-step "$daemon" --backend switch $frames_args --capture-check "$GAMEPILOT_RUNS/bring-up-frame.png"
+step "$bin" bring-up --daemon "$daemon" $board_args $frames_args
 
 # shellcheck disable=SC2086
 set -- ${program_flag:+"$program_flag"} "$plan_dir" "$@" --backend switch $board_args $frames_args
 if [ -n "$preflight" ]; then
     echo "[Preflight] $from"
-    step "$bin" checkpoints "$@" --preflight
+    # shellcheck disable=SC2086
+    step "$bin" checkpoints "$@" --preflight $watch
     [ "$preflight" != --preflight-only ] || exit 0
 fi
 echo "[Checkpoints] --runs $runs $save"

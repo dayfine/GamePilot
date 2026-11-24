@@ -45,7 +45,7 @@
    one.
 
    --preflight --from ID reads, from the save, what checkpoint ID's plan needs
-   and prints a table (Preflight_command); exit 1 on a mismatch.
+   and prints a table (Preflight_command), its own run; exit 1 on a mismatch.
 
    --states defaults to $GAMEPILOT_STATES and --runs-dir to $GAMEPILOT_RUNS,
    else to $HOME/.local/share/gamepilot/{states,runs}.
@@ -61,6 +61,7 @@
    started and closed around the command by tools/run_checkpoints_on_mgba.sh. *)
 
 open Story
+module R = Program_registry
 
 type flags = {
   from_id : string option;
@@ -249,10 +250,13 @@ let daemon_backend f mode =
          dry run on the fake board)"
   | b, _, _, _, _ -> Error ("bad --backend " ^ b)
 
-(* What each run's run.json says of the series. *)
-let run_info plan_dir f ~from_id ~to_id : Run_record.info =
-  let program = Program_registry.of_plan_dir plan_dir in
-  { program; from_id; to_id; backend = f.backend }
+(* What each run's run.json says of the series (or the pre-flight). *)
+let run_info plan_dir f kind ~from_id ~to_id : Run_record.info =
+  let program = Attached_run.program_fields (R.of_plan_dir plan_dir) in
+  { kind; program; from_id; to_id; backend = f.backend }
+
+let watch_of f =
+  Watch_hub.for_runs_dir ~daemon:f.daemon ~runs_dir:f.runs_dir f.watch
 
 let run_series plan_dir f =
   let* from_id = required "--from" f.from_id in
@@ -263,14 +267,6 @@ let run_series plan_dir f =
   let* ids = Plan_dir.checkpoint_ids plan_dir in
   let* selected, after = Plan_dir.select ids ~from_id ~to_id in
   let* world = Frlg_story.Checkpoint_run.load_world () in
-  (* --runs-dir may come after --watch. *)
-  let watch =
-    Option.map
-      (fun w ->
-        { w with Daemon_process.registry = Filename.concat f.runs_dir ".watch" })
-      f.watch
-  in
-  Option.iter (Watch_hub.ensure ~daemon:f.daemon) watch;
   Ok
     (Checkpoint_series.run ~plan_dir
        {
@@ -282,19 +278,22 @@ let run_series plan_dir f =
          mode;
          policy;
          world;
-         watch;
-         info = run_info plan_dir f ~from_id ~to_id;
+         watch = watch_of f;
+         info = run_info plan_dir f Checkpoints ~from_id ~to_id;
          daemon_flags = f.daemon_flags;
          bound = ref None;
          save_after_pass = f.save_after_pass;
        }
        selected ~after)
 
+let preflight plan_dir f =
+  let* from_id = required "--from" f.from_id in
+  let* backend = daemon_backend f Checkpoint_trials.Testing in
+  let info = run_info plan_dir f Preflight ~from_id ~to_id:from_id in
+  let { states; runs_dir; daemon; _ } = f in
+  Preflight_command.run ~plan_dir ~from_id
+    { states; runs_dir; daemon; backend; info; watch = watch_of f }
+
 let main plan_dir args =
   let* f = parse defaults args in
-  if f.preflight then
-    let* from_id = required "--from" f.from_id in
-    let* backend = daemon_backend f Checkpoint_trials.Testing in
-    Preflight_command.run ~plan_dir ~from_id
-      { states = f.states; runs_dir = f.runs_dir; daemon = f.daemon; backend }
-  else run_series plan_dir f
+  if f.preflight then preflight plan_dir f else run_series plan_dir f
