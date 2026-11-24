@@ -101,8 +101,9 @@ let checkpoint_outcome setup cp log =
     Frlg_story.Checkpoint_run.run ?end_at:cp.end_at
       ~on_event:(Frlg_story.Plan_watch.on_event watch)
       (options setup cp log) setup.world cp.plan
+    |> Result.map (fun () -> goal_after cp log)
   with
-  | Ok () -> (Passed { goal = goal_after cp log }, Console_runs.Passed)
+  | Ok goal -> (Passed { goal }, Console_runs.Passed)
   | Error failure ->
       (of_failure failure, Console_runs.outcome_of_failure failure.reason)
   | exception (Effects.Disconnected _ as e) -> raise e
