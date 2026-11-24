@@ -6,7 +6,9 @@
 #   sh tools/run_checkpoints_on_mgba.sh src/games/frlg/programs/mail_glitch/plans \
 #       --from mg-01 --to mg-03 --mode verification
 #
-# Refuses (exit 3) when the instance or the daemon port is already in use: another run owns it.
+# Refuses (exit 3) when the instance or its bridge port is already in use: another run owns it.
+# The daemons pick free ports (one per run), so runs on other backends do not collide with this
+# one. GAMEPILOT_WATCH_LISTEN=0.0.0.0 in the env file opens the watch pages to the LAN.
 #
 # Settings come from the environment. A machine can keep them in an env file (sh syntax, one
 # `export NAME=value` per line), read first if it exists; variables already set win over it.
@@ -35,7 +37,6 @@ export GAMEPILOT_RUNS="${GAMEPILOT_RUNS:-$data/runs}"
 app=${GAMEPILOT_MGBA_APP:-/Applications/mGBA.app}
 bin=${GAMEPILOT_BIN:-$root/src/_build/default/bin/gamepilot.exe}
 bridge_port=47810
-daemon_port=47900
 # The trailing space keeps the pattern from matching a longer savegamePath.
 instance="savegamePath=$dir "
 
@@ -48,9 +49,8 @@ if [ -z "$rom" ]; then
     fi
 fi
 
-if pgrep -f "$instance" >/dev/null || lsof -nP -iTCP:$daemon_port -sTCP:LISTEN >/dev/null \
-    || lsof -nP -iTCP:$bridge_port -sTCP:LISTEN >/dev/null; then
-    echo "the GamePilot mGBA instance or port $daemon_port/$bridge_port is in use; not sharing it" >&2
+if pgrep -f "$instance" >/dev/null || lsof -nP -iTCP:$bridge_port -sTCP:LISTEN >/dev/null; then
+    echo "the GamePilot mGBA instance or port $bridge_port is in use; not sharing it" >&2
     exit 3
 fi
 [ -x "$bin" ] || { echo "no $bin: run dune build in src/" >&2; exit 2; }

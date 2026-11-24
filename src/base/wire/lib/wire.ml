@@ -150,6 +150,7 @@ let json_of_cancel_result = Command.json_of_cancel_result
 
 module Watch = Watch
 module Watch_run = Watch_run
+module Watch_registry = Watch_registry
 module Daemon_status = Daemon_status
 
 type direction = Wire_log.direction = In | Out

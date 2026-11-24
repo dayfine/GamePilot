@@ -47,6 +47,8 @@ Socket listen_local(std::uint16_t port);
 Socket listen_tcp(const std::string& address, std::uint16_t port);
 // The port a listening socket is bound to.
 std::uint16_t local_port(const Socket& socket);
+// Whether a connected socket's peer is on this machine (127.0.0.0/8).
+bool peer_is_loopback(const Socket& socket);
 // Makes a send on the socket give up after `ms` instead of blocking for as
 // long as the peer does not read.
 void set_send_timeout(const Socket& socket, int ms);

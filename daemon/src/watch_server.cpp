@@ -1,14 +1,59 @@
 #include "watch_server.h"
 
 #include <algorithm>
+#include <random>
 #include <stdexcept>
 #include <utility>
 
 namespace gamepilot {
 
+namespace {
+
+constexpr std::size_t kMaxTokenLength = 64;
+constexpr std::string_view kTokenSlot = "name=\"gamepilot-token\" content=\"\"";
+constexpr std::string_view kNoStop = "{\"stopped\":false,\"error\":\"token\"}";
+
+// The page with Stop's token in its `gamepilot-token` meta tag; without one
+// the page is read-only.
+std::string page_with_token(std::string_view token) {
+  std::string page(watch_page());
+  const std::size_t slot = page.find(kTokenSlot);
+  if (slot != std::string::npos && !token.empty()) {
+    page.insert(slot + kTokenSlot.size() - 1, token);
+  }
+  return page;
+}
+
+}  // namespace
+
+std::string new_watch_token() {
+  std::random_device random;
+  std::uniform_int_distribution<int> digit(0, 15);
+  constexpr std::string_view kHex = "0123456789abcdef";
+  constexpr int kDigits = 32;
+  std::string token;
+  for (int i = 0; i < kDigits; i++) {
+    token += kHex[static_cast<std::size_t>(digit(random))];
+  }
+  return token;
+}
+
+bool valid_watch_token(std::string_view token) {
+  return !token.empty() && token.size() <= kMaxTokenLength &&
+         std::all_of(token.begin(), token.end(), [](char c) {
+           return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'z') ||
+                  (c >= 'A' && c <= 'Z') || c == '-' || c == '_';
+         });
+}
+
 WatchServer::WatchServer(const WatchOptions& options, WatchHooks hooks)
     : listener_(listen_tcp(options.listen, options.port)),
-      hooks_(std::move(hooks)) {}
+      token_(options.token.empty() ? new_watch_token() : options.token),
+      hooks_(std::move(hooks)) {
+  if (!valid_watch_token(token_)) {
+    throw std::runtime_error("bad watch token");
+  }
+}
 
 std::vector<const Socket*> WatchServer::sockets() const {
   std::vector<const Socket*> sockets{&listener_};
@@ -49,7 +94,8 @@ void WatchServer::accept_viewer() {
   Socket socket = accept_client(listener_);
   if (socket.valid()) {
     set_send_timeout(socket, kWatchSendTimeoutMs);
-    connections_.push_back(Connection{std::move(socket), {}, false});
+    const bool local = peer_is_loopback(socket);
+    connections_.push_back(Connection{std::move(socket), {}, false, local});
   }
 }
 
@@ -81,22 +127,40 @@ void WatchServer::respond(Connection& connection, const HttpRequest& request) {
   }
   if (get && request.path == "/") {
     send(connection,
-         http_response(200, "text/html; charset=utf-8", watch_page()));
+         http_response(200, "text/html; charset=utf-8",
+                       page_with_token(connection.local ? token_ : "")));
   } else if (get && request.path == "/frame") {
     const WatchFrame frame = hooks_.frame();
     send(connection, http_response(200, frame.type, frame.bytes));
+  } else if (get && request.path == "/summary.json") {
+    const std::string body =
+        "{\"run\":" + (run_.empty() ? std::string("null") : run_) +
+        ",\"plan\":" + (plan_.empty() ? std::string("null") : plan_) + "}";
+    send(connection, http_response(200, "application/json", body,
+                                   "Access-Control-Allow-Origin: *\r\n"));
   } else if (request.method == "POST" && request.path == "/stop") {
-    const bool stopped = hooks_.stop();
-    send(connection,
-         http_response(200, "application/json",
-                       stopped ? "{\"stopped\":true}" : "{\"stopped\":false}"));
+    stop(connection, request);
   } else if (request.path == "/stop" || request.path == "/" ||
-             request.path == "/frame" || request.path == "/events") {
+             request.path == "/frame" || request.path == "/events" ||
+             request.path == "/summary.json") {
     send(connection, http_response(405, "text/plain", "method not allowed\n"));
   } else {
     send(connection, http_response(404, "text/plain", "not found\n"));
   }
   connection.socket.close();
+}
+
+// Only with the run's token: the page has it when it was served to this
+// machine or its URL carried it.
+void WatchServer::stop(Connection& connection, const HttpRequest& request) {
+  if (query_value(request.query, "token") != token_) {
+    send(connection, http_response(403, "application/json", kNoStop));
+    return;
+  }
+  const bool stopped = hooks_.stop();
+  send(connection,
+       http_response(200, "application/json",
+                     stopped ? "{\"stopped\":true}" : "{\"stopped\":false}"));
 }
 
 void WatchServer::start_stream(Connection& connection) {

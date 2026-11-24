@@ -5,13 +5,17 @@
   Frame: GET /frame (PNG for small frames, JPEG for large), polled at most
   5 times a second while the tab is visible. Probe boxes are drawn on a
   canvas over it at display resolution, not into the frame. Everything else: the event stream GET /events (info, run, plan,
-  log, probes, status). Stop: POST /stop. The Run strip keeps each checkpoint's
-  last plan in memory, so a finished one's events can be looked at again.
+  log, probes, status). Stop: POST /stop?token=T, with the run's token: the
+  daemon puts it in the gamepilot-token meta tag for a viewer on its own
+  machine; elsewhere it comes from this page's ?token=, and without one the
+  page is read-only. The Run strip keeps each checkpoint's last plan in
+  memory, so a finished one's events (and their times) can be looked at again.
 -->
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="gamepilot-token" content="">
 <title>GamePilot Watch</title>
 <style>
   :root {
@@ -44,6 +48,7 @@
     cursor: pointer;
   }
   #stop:disabled { opacity: 0.5; cursor: default; }
+  #readonly { margin-left: auto; color: var(--muted); font-size: 13px; }
   main {
     display: grid; gap: 12px; padding: 12px 16px;
     grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
@@ -94,8 +99,12 @@
   #probe-table tr.hot td { background: color-mix(in srgb, var(--cur) 14%, transparent); }
   ol.plan { list-style: none; margin: 0; padding: 0; max-height: 420px;
             overflow: auto; }
-  ol.plan li { display: grid; grid-template-columns: 22px 28px 1fr;
+  ol.plan li { display: grid; grid-template-columns: 22px 28px 1fr auto;
                padding: 3px 0; border-bottom: 1px solid var(--line); }
+  ol.plan li .t { grid-column: 4; grid-row: 1; padding-left: 8px; color: var(--muted);
+                  font-variant-numeric: tabular-nums; }
+  ol.plan li.total { font-weight: 600; border-top: 1px solid var(--line); }
+  ol.plan li.total .t { color: var(--text); }
   ol.plan li:last-child { border-bottom: 0; }
   ol.plan li.empty { display: block; }
   #run-meta { color: var(--muted); margin-bottom: 8px; font-variant-numeric: tabular-nums; }
@@ -143,6 +152,7 @@
   <h1>GamePilot watch</h1>
   <span id="conn">connecting…</span>
   <button id="stop" type="button" title="Release all buttons and end the program">Stop</button>
+  <span id="readonly" hidden title="Open the URL with ?token=… (the runner prints it) to get Stop">read-only</span>
 </header>
 <main>
   <section id="frame-panel">
@@ -206,6 +216,9 @@ const FRAME_MS = 200;
 const LOG_LINES = 2000;
 
 const $ = (id) => document.getElementById(id);
+// Stop's token: from the URL, else the one the daemon put in for this machine.
+const TOKEN = new URLSearchParams(location.search).get("token") ||
+  document.querySelector('meta[name="gamepilot-token"]').content;
 const canvas = $("screen");
 const ctx = canvas.getContext("2d");
 let info = null;          // the backend, as `hello` describes it
@@ -437,9 +450,30 @@ function duration(ms) {
   return (h ? h + ":" + two(m) : String(m)) + ":" + two(s % 60);
 }
 
-// The current event: since when this page has seen it current (the plan has
-// no start times, so a page opened mid-event counts from then), and the
-// grind's progress from its log lines (Frlg_actions.Grind).
+// An event's time: a finished one's from its start to its end, the current
+// one's so far (`now`; null for a plan that is not live). Null without times
+// (a program before v1.8) or before it started. The same rule as
+// Wire.Watch.event_ms.
+function eventMs(e, now) {
+  if (e.started_ms == null) return null;
+  if (e.ended_ms != null) return e.ended_ms - e.started_ms;
+  return e.state === "current" && now != null ? now - e.started_ms : null;
+}
+
+// The checkpoint's time: from its first event's start to `now` while an event
+// runs (a live plan), else to its last end. Wire.Watch.plan_ms.
+function planMs(plan, now) {
+  const starts = plan.events.filter((e) => e.started_ms != null).map((e) => e.started_ms);
+  if (!starts.length) return null;
+  const ends = plan.events.filter((e) => e.ended_ms != null).map((e) => e.ended_ms);
+  const running = plan.events.some((e) => e.state === "current" && e.ended_ms == null);
+  const end = running && now != null ? now : (ends.length ? Math.max(...ends) : null);
+  return end == null ? null : end - Math.min(...starts);
+}
+
+// The current event: since when this page has seen it current (a program
+// before v1.8 sends no start times, so a page opened mid-event counts from
+// then), and the grind's progress from its log lines (Frlg_actions.Grind).
 let currentKey = null;
 let currentSince = 0;
 let grind = null;   // {goal, battle, heal}
@@ -460,8 +494,8 @@ function grindLine(line) {
   if (/Grind: heal\./.test(line)) grind.heal = true;
 }
 
-function currentDetail() {
-  const parts = [duration(Date.now() - currentSince)];
+function currentDetail(timed) {
+  const parts = timed ? [] : [duration(Date.now() - currentSince)];
   if (grind) {
     if (grind.battle) parts.push("battle " + grind.battle + (grind.heal ? ", healing" : ""));
     if (grind.goal) parts.push(grind.goal);
@@ -471,20 +505,30 @@ function currentDetail() {
   return parts.join(" · ");
 }
 
-// A plan's events into a list; the live plan shows the current event's time
-// and progress.
+// A plan's events into a list, each with its time, and the checkpoint's total
+// below; the live plan shows the current event's time so far and progress.
 function renderEvents(list, plan, live) {
+  const now = live ? Date.now() : null;
   list.replaceChildren();
   plan.events.forEach((e, i) => {
     const li = el("li", e.state);
     li.append(el("span", "mark", MARKS[e.state] || ""), el("span", "n", "#" + (i + 1)),
               el("span", "id", e.id));
+    const ms = eventMs(e, now);
+    if (ms != null) li.append(el("span", "t", duration(ms)));
     let detail = e.detail;
-    if (live && e.state === "current" && !detail) detail = currentDetail();
+    if (live && e.state === "current" && !detail) detail = currentDetail(ms != null);
     if (e.state === "skipped" && detail) detail = "skipped: " + detail;
     if (detail) li.append(el("span", "detail", detail));
     list.append(li);
   });
+  const total = planMs(plan, now);
+  if (total != null) {
+    const li = el("li", "total");
+    li.append(el("span", "mark", ""), el("span", "n", ""), el("span", "id", "total"),
+              el("span", "t", duration(total)));
+    list.append(li);
+  }
 }
 
 function renderPlan() {
@@ -641,13 +685,17 @@ function connect() {
   on("status", (d) => { renderStatus(d); $("conn").textContent = "live"; $("conn").className = ""; });
 }
 
+$("stop").hidden = !TOKEN;
+$("readonly").hidden = !!TOKEN;
 $("stop").addEventListener("click", async () => {
   if (!confirm("Stop the program? All buttons are released and the run ends as failed (stopped by user).")) return;
   const button = $("stop");
   button.disabled = true;
   try {
-    const reply = await (await fetch("stop", {method: "POST"})).json();
-    addLog(reply.stopped ? "[Watch] Stop sent" : "[Watch] Stop: no program is connected");
+    const response = await fetch("stop?token=" + encodeURIComponent(TOKEN), {method: "POST"});
+    const reply = await response.json();
+    addLog(response.status === 403 ? "[Watch] Stop refused: this page's token is not the run's" :
+           reply.stopped ? "[Watch] Stop sent" : "[Watch] Stop: no program is connected");
   } catch (e) {
     addLog("[Watch] Stop failed: " + e);
   } finally {

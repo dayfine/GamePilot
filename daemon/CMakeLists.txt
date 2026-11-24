@@ -34,18 +34,25 @@ function(gamepilot_warnings target)
   endif()
 endfunction()
 
-# The watch page, compiled in as bytes: the daemon serves it as it is.
-set(WATCH_PAGE "${CMAKE_CURRENT_SOURCE_DIR}/watch/watch.html")
-set(WATCH_PAGE_CPP "${CMAKE_CURRENT_BINARY_DIR}/watch_page.cpp")
-add_custom_command(
-  OUTPUT "${WATCH_PAGE_CPP}"
-  COMMAND ${CMAKE_COMMAND} -DINPUT=${WATCH_PAGE} -DOUTPUT=${WATCH_PAGE_CPP}
-          -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/embed_watch_page.cmake"
-  DEPENDS "${WATCH_PAGE}" "${CMAKE_CURRENT_SOURCE_DIR}/cmake/embed_watch_page.cmake"
-  VERBATIM)
+# The watch page and the hub's, compiled in as bytes: the daemon serves them
+# as they are.
+function(embed_page page function header)
+  add_custom_command(
+    OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/${function}.cpp"
+    COMMAND ${CMAKE_COMMAND} -DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/watch/${page}
+            -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/${function}.cpp
+            -DFUNCTION=${function} -DHEADER=${header}
+            -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/embed_watch_page.cmake"
+    DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/watch/${page}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/cmake/embed_watch_page.cmake"
+    VERBATIM)
+endfunction()
+embed_page(watch.html watch_page watch_server.h)
+embed_page(hub.html hub_page watch_hub.h)
 
 add_library(gamepilot_core STATIC
-  "${WATCH_PAGE_CPP}"
+  "${CMAKE_CURRENT_BINARY_DIR}/watch_page.cpp"
+  "${CMAKE_CURRENT_BINARY_DIR}/hub_page.cpp"
   src/base64.cpp
   src/fake_switch.cpp
   src/frame_ring.cpp
@@ -66,6 +73,8 @@ add_library(gamepilot_core STATIC
   src/template_store.cpp
   src/video_capture.cpp
   src/viewport.cpp
+  src/watch_hub.cpp
+  src/watch_registry.cpp
   src/watch_server.cpp
 )
 target_include_directories(gamepilot_core PUBLIC src)
@@ -89,7 +98,8 @@ target_link_libraries(press_latency PRIVATE gamepilot_core)
 gamepilot_warnings(press_latency)
 
 enable_testing()
-foreach(test contracts_test probes_test switch_backend_test watch_test)
+foreach(test contracts_test probes_test switch_backend_test watch_test
+             watch_registry_test)
   add_executable(${test} tests/${test}.cpp)
   target_link_libraries(${test} PRIVATE gamepilot_core)
   target_compile_definitions(${test} PRIVATE

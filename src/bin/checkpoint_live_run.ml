@@ -20,6 +20,9 @@ type setup = {
   policy : Checkpoint_trials.policy;
   world : Frlg_overworld.Frlg_steps.world;
   watch : Daemon_process.watch option;  (** the daemon's watch page, if any *)
+  bound : (int * int option) option ref;
+      (** The ports the series' last daemon bound (program, page): the next one
+          asks for them again, so the page keeps its URL across runs. *)
 }
 
 type checkpoint = {
@@ -97,9 +100,9 @@ let in_session setup cp ~progress record log () =
   | Passed -> ());
   outcome
 
-let live setup cp ~progress record log =
+let live setup cp ~progress record log (daemon : Daemon_process.t) =
   match
-    Live.run ~port:setup.common.port (in_session setup cp ~progress record log)
+    Live.run ~port:daemon.port (in_session setup cp ~progress record log)
   with
   | outcome -> outcome
   | exception Effects.Disconnected e ->
@@ -112,17 +115,45 @@ let live setup cp ~progress record log =
           repeats = true;
         }
 
-let with_daemon setup record body =
-  match
-    Daemon_process.start ?watch:setup.watch ~daemon:setup.daemon
-      ~mgba_port:setup.mgba_port ~port:setup.common.port
-      ~wire_log:(Run_record.path record "wire.jsonl")
-      ~out_file:(Run_record.path record "daemon.out")
-      ()
-  with
+let start_daemon setup record cp (port, watch) =
+  Daemon_process.start ?watch ~daemon:setup.daemon ~mgba_port:setup.mgba_port
+    ~port
+    ~wire_log:(Run_record.path record "wire.jsonl")
+    ~out_file:(Run_record.path record "daemon.out")
+    ~checkpoint:cp.id ()
+
+(* The ports the last daemon bound, else the flags' (0: any); the flags' when
+   those are taken now. *)
+let start_sticky setup record cp =
+  let asked = (setup.common.port, setup.watch) in
+  let again =
+    match !(setup.bound) with
+    | None -> asked
+    | Some (port, page) ->
+        let keep (w : Daemon_process.watch) =
+          { w with port = Option.value page ~default:w.port }
+        in
+        (port, Option.map keep setup.watch)
+  in
+  match start_daemon setup record cp again with
+  | Error _ when again <> asked -> start_daemon setup record cp asked
+  | started -> started
+
+(* Prints the page's URLs when they are new: at the first run, or when the
+   last run's ports were taken. *)
+let announce setup (daemon : Daemon_process.t) =
+  let bound = Some (daemon.port, daemon.watch_port) in
+  (match (setup.watch, daemon.watch_port) with
+  | Some w, Some port when !(setup.bound) <> bound ->
+      Watch_urls.print ~listen:w.listen ~token:w.token ~port
+  | _ -> ());
+  setup.bound := bound
+
+let with_daemon setup record cp body =
+  match start_sticky setup record cp with
   | Error reason -> Failed { at = "daemon"; reason; repeats = true }
   | Ok daemon ->
-      Daemon_process.announce_watch setup.watch;
+      announce setup daemon;
       Fun.protect
         ~finally:(fun () -> Daemon_process.stop daemon)
         (fun () -> body daemon)
@@ -157,7 +188,7 @@ let run setup cp n ~progress =
   let log, close = Run_record.story_log record in
   log (Printf.sprintf "[Run] %s run %d from %s" cp.id n cp.start_state);
   let outcome =
-    with_daemon setup record (fun _daemon -> live setup cp ~progress record log)
+    with_daemon setup record cp (live setup cp ~progress record log)
   in
   close ();
   record_outcome setup cp record n outcome;
