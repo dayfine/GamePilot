@@ -41,12 +41,12 @@ void sleep_ms(int ms) {
 }
 
 void check_key_mapping() {
-  const WiredState neutral = neutral_wired_state();
-  CHECK(neutral.dpad_byte == 8 && neutral.left_joystick_x == 128);
-  CHECK(wired_state_for_keys(kUp | kRight).dpad_byte == 1);
-  CHECK(wired_state_for_keys(kDown | kLeft).dpad_byte == 5);
+  // Report 0x30's byte 5: Down, Up, Right, Left in bits 0-3.
+  CHECK(pro_buttons_for_keys(kUp | kRight).button5 == 0x06);
+  CHECK(pro_buttons_for_keys(kDown | kLeft).button5 == 0x09);
   // Opposite arrows cancel.
-  CHECK(wired_state_for_keys(kUp | kDown).dpad_byte == 8);
+  CHECK(pro_buttons_for_keys(kUp | kDown).button5 == 0);
+  CHECK(pro_buttons_for_keys(kLeft | kRight | kA).button5 == 0);
 }
 
 void check_live_schedule() {

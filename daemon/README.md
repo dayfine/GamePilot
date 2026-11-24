@@ -34,10 +34,10 @@ table from game pixels to the Switch frame, checked on the lab's captures.
 
 Inputs go to the PABotBase2 board on `--serial` (`src/board_session.h`): the session starts as the C++
 app starts it (DTR/RTS, the baud scan with resets, the link's version, packet size and buffer slots,
-then the board's queries), puts the board in the wired controller mode, sends each state through the
-board's command queue, asks its status once a second, and on exit gives the board back the mode it
-found. Without `--serial` they go to `FakeSwitch`, a fake board that answers the same handshake.
-`--board-check` only starts the session and prints what the board said; `--capture-check` saves one
+then the board's queries), checks the board already runs NS1 Wired Pro Controller (the lab app's
+mode; it fails otherwise and never changes the mode), sends each state as a Pro Controller report
+through the board's command queue and asks its status once a second. Without `--serial` they go to `FakeSwitch`, a fake board that answers the same handshake.
+`--board-check` only starts the session (checking the mode) and prints what the board said; `--capture-check` saves one
 frame and checks the picture's geometry. First session on the console: `docs/switch-bring-up.md`.
 
 `status` (contracts v1.5) reports each thread's heartbeat, the ring, gaps, the client and the
@@ -111,7 +111,7 @@ picture whole and at 2x inside side bars give the same results.
 | `src/switch_backend.*` | the Switch: capture thread, ring reader, controller |
 | `src/video_capture.*` | frame sources: capture card and video replay (OpenCV `VideoCapture`) |
 | `src/frame_ring.*` | the bounded ring between the capture and server threads |
-| `src/switch_controller.*` | GBA keys to wired controller states (CoreLib's PABotBase2 message) |
+| `src/switch_controller.*` | GBA keys to Pro Controller button reports (CoreLib's PABotBase2 message) |
 | `src/board_session.*` | the board's session as the C++ app starts it, on CoreLib's link and device handle |
 | `src/switch_geometry.*` | whether a capture shows the GBA picture where the viewport says |
 | `src/live_schedule.*` | command batches to key segments in wall time (live backends) |

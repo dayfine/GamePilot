@@ -1,8 +1,8 @@
 // The board's session against FakeSwitch's board: the handshake in the C++
-// app's order, the controller mode change and its restore, the baud rate
+// app's order, the controller mode check (never a change), the baud rate
 // scan, a lost ack and a lost answer (both retransmitted), a board that never
-// answers or speaks another protocol, and a state command's bytes as the board
-// reads them.
+// answers or speaks another protocol, and the Pro Controller commands' bytes
+// as the board reads them.
 
 #include "board_session.h"
 
@@ -25,7 +25,14 @@ namespace {
 using Bytes = std::vector<std::uint8_t>;
 using pa::ControllerType;
 
+// GBA keys (rpc.cpp, button_mask).
 constexpr KeyMask kA = 1u << 0;
+constexpr KeyMask kB = 1u << 1;
+constexpr KeyMask kSelect = 1u << 2;
+constexpr KeyMask kStart = 1u << 3;
+constexpr KeyMask kUp = 1u << 6;
+constexpr KeyMask kR = 1u << 8;
+constexpr KeyMask kL = 1u << 9;
 constexpr std::uint32_t kWiredController = 0x1000;
 constexpr std::uint32_t kWiredProController = 0x1100;
 
@@ -51,7 +58,7 @@ std::vector<BoardCommand> wait_for_commands(const FakeSwitch& board,
   return board.commands();
 }
 
-Bytes message_bytes(const WiredStateMessage& message) {
+Bytes message_bytes(const ProButtonsMessage& message) {
   Bytes bytes(sizeof(message));
   std::memcpy(bytes.data(), &message, sizeof(message));
   return bytes;
@@ -59,9 +66,9 @@ Bytes message_bytes(const WiredStateMessage& message) {
 
 // The board in NS1 Wired Pro Controller mode, as on console B: the session
 // asks as the lab app's log of that board shows (protocol, id, firmware, name,
-// logging flag, controller list, queue size, mode), changes the mode, and
-// connects again.
-void check_handshake_and_mode_change() {
+// logging flag, controller list, queue size, mode) and leaves the mode as it
+// is.
+void check_handshake() {
   const Clock clock;
   FakeSwitch board(clock);
   BoardLog log(/*quiet=*/true);
@@ -74,11 +81,10 @@ void check_handshake_and_mode_change() {
   CHECK(info.firmware_version == 2026092800);
   CHECK(info.device_name == "PABotBase2-ESP32-S3");
   CHECK(info.controllers.size() == 7);
-  CHECK(info.mode_found == ControllerType::NintendoSwitch_WiredProController);
-  CHECK(info.mode == ControllerType::NintendoSwitch_WiredController);
-  CHECK(board.mode() == kWiredController);
+  CHECK(info.mode == ControllerType::NintendoSwitch_WiredProController);
+  CHECK(board.mode() == kWiredProController);
 
-  const std::vector<std::pair<std::uint8_t, std::uint8_t>> connect = {
+  const std::vector<std::pair<std::uint8_t, std::uint8_t>> expected = {
       {PABB2_MESSAGE_OPCODE_PROTOCOL_VERSION, 0},
       {PABB2_MESSAGE_OPCODE_DEVICE_IDENTIFIER, 1},
       {PABB2_MESSAGE_OPCODE_FIRMWARE_VERSION, 2},
@@ -88,9 +94,6 @@ void check_handshake_and_mode_change() {
       {PABB2_MESSAGE_OPCODE_CQ_CAPACITY, 5},
       {PABB2_MESSAGE_OPCODE_READ_CONTROLLER_MODE, 6},
   };
-  std::vector<std::pair<std::uint8_t, std::uint8_t>> expected = connect;
-  expected.emplace_back(PABB2_MESSAGE_OPCODE_CHANGE_CONTROLLER_MODE, 0);
-  expected.insert(expected.end(), connect.begin(), connect.end());
   // Status requests follow once the session runs.
   std::vector<std::pair<std::uint8_t, std::uint8_t>> sent;
   for (const BoardMessage& message : board.messages()) {
@@ -99,9 +102,30 @@ void check_handshake_and_mode_change() {
     }
   }
   CHECK(sent == expected);
+}
 
-  session.restore_mode();
-  CHECK(board.mode() == kWiredProController);
+// A board in another mode (here the generic Wired Controller): start() fails
+// with a message naming both modes, and never asks for a mode change.
+void check_other_mode_fails() {
+  const Clock clock;
+  FakeBoardProfile wired;
+  wired.mode = kWiredController;
+  FakeSwitch board(clock, wired);
+  BoardLog log(/*quiet=*/true);
+  BoardSession session(board, log, quick_timings());
+  std::string error;
+  try {
+    session.start();
+  } catch (const BackendError& e) {
+    error = e.what();
+  }
+  CHECK(error.find("NS1: Wired Controller") != std::string::npos);
+  CHECK(error.find("NS1: Wired Pro Controller") != std::string::npos);
+  CHECK(board.mode() == kWiredController);
+  for (const BoardMessage& message : board.messages()) {
+    CHECK(message.opcode != PABB2_MESSAGE_OPCODE_CHANGE_CONTROLLER_MODE);
+    CHECK(message.opcode != PABB2_MESSAGE_OPCODE_RESET_TO_CONTROLLER);
+  }
 }
 
 // The status thread asks once a second; the board says the console sees the
@@ -124,22 +148,6 @@ void check_status() {
   }
 }
 
-// None leaves the board's mode alone (--board-check).
-void check_keep_mode() {
-  const Clock clock;
-  FakeSwitch board(clock);
-  BoardLog log(/*quiet=*/true);
-  BoardSession session(board, log, quick_timings());
-  const BoardInfo info = session.start(ControllerType::None);
-  CHECK(info.mode == ControllerType::NintendoSwitch_WiredProController);
-  CHECK(board.mode() == kWiredProController);
-  for (const BoardMessage& message : board.messages()) {
-    CHECK(message.opcode != PABB2_MESSAGE_OPCODE_CHANGE_CONTROLLER_MODE);
-  }
-  session.restore_mode();
-  CHECK(board.mode() == kWiredProController);
-}
-
 // A board at 115200 answers on the second baud rate tried.
 void check_baud_scan() {
   const Clock clock;
@@ -151,31 +159,45 @@ void check_baud_scan() {
   CHECK(session.start().baud_rate == 115200);
 }
 
-// One A press for 100 ms, as the board reads the command: length 13, opcode
-// 0x90, queue id 0, 100 ms, then the report (A is bit 2 of buttons0, the D-pad
-// at rest is 8, the sticks centred at 0x80).
+// The commands as the board reads them: length 16, opcode 0x97, the queue's
+// id, the hold in ms, then report 0x30's buttons (bytes 3-5), both sticks
+// centred (00 08 80) and the vibrator byte. The expected bytes come from an
+// independent encoder (Python struct over the report layout in dekuNukem's
+// bluetooth_hid_notes.md), not from this code.
 void check_state_bytes() {
   const Clock clock;
   FakeSwitch board(clock);
   BoardLog log(/*quiet=*/true);
   BoardSession session(board, log, quick_timings());
   session.start();
-  session.send_state(wired_state_for_keys(kA), 100);
-  const std::vector<BoardCommand> commands = wait_for_commands(board, 1);
-  CHECK(commands.size() == 1);
-  if (commands.size() == 1) {
-    const Bytes expected = {0x0d, 0x00, 0x90, 0x00, 0x64, 0x00, 0x04,
-                            0x00, 0x08, 0x80, 0x80, 0x80, 0x80};
-    CHECK(message_bytes(commands[0].message) == expected);
-  }
-  // A hold past 65535 ms goes in two commands, as execute_state() splits it.
-  session.send_state(neutral_wired_state(), 70000);
-  const std::vector<BoardCommand> split = wait_for_commands(board, 3);
-  CHECK(split.size() == 3);
-  if (split.size() == 3) {
-    CHECK(split[1].message.milliseconds == 65535);
-    CHECK(split[2].message.milliseconds == 4465);
-    CHECK(split[1].id == 1 && split[2].id == 2);
+  session.send_state(neutral_pro_buttons(), 0);  // release(): a reset
+  session.send_state(pro_buttons_for_keys(kA), 100);
+  session.send_state(pro_buttons_for_keys(kUp), 500);
+  session.send_state(pro_buttons_for_keys(kStart | kB), 80);
+  session.send_state(pro_buttons_for_keys(kL | kR | kSelect), 40);
+  // A hold past 65535 ms goes in two commands, as issue_report() splits it.
+  session.send_state(pro_buttons_for_keys(kA), 70000);
+  const std::vector<Bytes> expected = {
+      {0x10, 0x00, 0x97, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x08,
+       0x80, 0x00, 0x08, 0x80, 0x00},
+      {0x10, 0x00, 0x97, 0x01, 0x64, 0x00, 0x08, 0x00, 0x00, 0x00, 0x08,
+       0x80, 0x00, 0x08, 0x80, 0x00},
+      {0x10, 0x00, 0x97, 0x02, 0xf4, 0x01, 0x00, 0x00, 0x02, 0x00, 0x08,
+       0x80, 0x00, 0x08, 0x80, 0x00},
+      {0x10, 0x00, 0x97, 0x03, 0x50, 0x00, 0x04, 0x02, 0x00, 0x00, 0x08,
+       0x80, 0x00, 0x08, 0x80, 0x00},
+      {0x10, 0x00, 0x97, 0x04, 0x28, 0x00, 0x40, 0x01, 0x40, 0x00, 0x08,
+       0x80, 0x00, 0x08, 0x80, 0x00},
+      {0x10, 0x00, 0x97, 0x05, 0xff, 0xff, 0x08, 0x00, 0x00, 0x00, 0x08,
+       0x80, 0x00, 0x08, 0x80, 0x00},
+      {0x10, 0x00, 0x97, 0x06, 0x71, 0x11, 0x08, 0x00, 0x00, 0x00, 0x08,
+       0x80, 0x00, 0x08, 0x80, 0x00},
+  };
+  const std::vector<BoardCommand> commands =
+      wait_for_commands(board, expected.size());
+  CHECK(commands.size() == expected.size());
+  for (std::size_t i = 0; i < commands.size() && i < expected.size(); i++) {
+    CHECK(message_bytes(commands[i].message) == expected[i]);
   }
 }
 
@@ -192,7 +214,7 @@ void check_lost_ack_retransmits() {
   session.start();
   CHECK(board.retransmits_received() == 0);
   board.drop_next_sends(1);
-  session.send_state(wired_state_for_keys(kA), 10);
+  session.send_state(pro_buttons_for_keys(kA), 10);
   for (int i = 0; i < 300 && board.retransmits_received() == 0; i++) {
     sleep_ms(10);
   }
@@ -202,7 +224,7 @@ void check_lost_ack_retransmits() {
   // Lose the next ack and the finished report behind it.
   board.drop_next_sends(2);
   for (int i = 0; i < 5; i++) {
-    session.send_state(wired_state_for_keys(kA), 10);
+    session.send_state(pro_buttons_for_keys(kA), 10);
   }
   const std::vector<BoardCommand> commands = wait_for_commands(board, 6);
   CHECK(commands.size() == 6);
@@ -221,13 +243,13 @@ void check_lost_handshake_answers() {
     FakeSwitch board(clock);
     BoardSession session(board, log, quick_timings());
     board.drop_next_sends(1);
-    CHECK(session.start(ControllerType::None).link_protocol == 2026061800);
+    CHECK(session.start().link_protocol == 2026061800);
   }
   {
     FakeSwitch board(clock);
     BoardSession session(board, log, quick_timings());
     board.drop_sends_after(1, 1);  // the reset's ack goes, the version's not
-    CHECK(session.start(ControllerType::None).link_protocol == 2026061800);
+    CHECK(session.start().link_protocol == 2026061800);
   }
 }
 
@@ -261,29 +283,14 @@ void check_errors() {
     }
     CHECK(threw);
   }
-  {
-    FakeBoardProfile no_wired;
-    no_wired.controllers = {0x0, 0x1100};
-    FakeSwitch board(clock, no_wired);
-    BoardSession session(board, log, quick_timings());
-    bool threw = false;
-    try {
-      session.start();
-    } catch (const BackendError& error) {
-      threw = std::string(error.what()).find("does not offer") !=
-              std::string::npos;
-    }
-    CHECK(threw);
-    CHECK(board.mode() == kWiredProController);
-  }
 }
 
 }  // namespace
 
 int main() {
-  check_handshake_and_mode_change();
+  check_handshake();
+  check_other_mode_fails();
   check_status();
-  check_keep_mode();
   check_baud_scan();
   check_state_bytes();
   check_lost_ack_retransmits();

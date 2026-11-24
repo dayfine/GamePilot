@@ -8,8 +8,8 @@
 
 #include "Common/Cpp/Exceptions.h"
 #include "Common/PABotBase2/PABotBase2_MessageProtocol.h"
-#include "Common/SerialPABotBase/SerialPABotBase_Protocol_IDs.h"
 #include "Common/PABotBase2/ReliableConnectionLayer/PABotBase2_PacketProtocol.h"
+#include "Common/SerialPABotBase/SerialPABotBase_Protocol_IDs.h"
 #include "Controllers/ControllerTypeStrings.h"
 #include "backend.h"
 
@@ -24,7 +24,14 @@ namespace {
 constexpr std::uint32_t kOpenBaudRate = 115200;
 constexpr std::uint32_t kBaudRates[] = {921600, 115200};
 constexpr auto kResetTimeout = pa::Milliseconds(100);
-constexpr auto kModeAckTimeout = pa::Milliseconds(500);
+
+// The only mode GamePilot drives the board in.
+constexpr pa::ControllerType kProControllerMode =
+    pa::ControllerType::NintendoSwitch_WiredProController;
+
+// OemController_Status' bit the console sets once it takes the controller
+// (update_status(): "Connected" when ready).
+constexpr std::uint8_t kStatusReady = 1u << 1;
 
 // The longest hold one command carries.
 constexpr std::uint32_t kMaxCommandMs = 65535;
@@ -83,16 +90,11 @@ void BoardLog::log(const std::string& message, pa::Color) {
 }
 
 std::string describe(const BoardInfo& info) {
-  std::string text = info.device_name + ", firmware " +
-                     std::to_string(info.firmware_version) + ", link " +
-                     std::to_string(info.link_protocol) + ", messages " +
-                     std::to_string(info.device_protocol) + ", " +
-                     std::to_string(info.baud_rate) + " baud, mode " +
-                     mode_name(info.mode);
-  if (info.mode_found != info.mode) {
-    text += " (was " + mode_name(info.mode_found) + ")";
-  }
-  return text;
+  return info.device_name + ", firmware " +
+         std::to_string(info.firmware_version) + ", link " +
+         std::to_string(info.link_protocol) + ", messages " +
+         std::to_string(info.device_protocol) + ", " +
+         std::to_string(info.baud_rate) + " baud, mode " + mode_name(info.mode);
 }
 
 BoardSession::BoardSession(BoardPort& port, pa::Logger& logger,
@@ -150,21 +152,30 @@ void BoardSession::update_status() {
   std::memcpy(&header, response.data(), sizeof(header));
   std::lock_guard<std::mutex> guard(status_lock_);
   status_.answered = true;
-  // Only the wired controllers carry the connected bit.
-  if (header.data != PABB_CID_NintendoSwitch_WiredController &&
-      header.data != PABB_CID_NintendoSwitch2_WiredController) {
-    status_.connected = false;
-    return;
+  // Only the OEM controllers carry their status.
+  switch (header.data) {
+    case PABB_CID_NintendoSwitch_WiredProController:
+    case PABB_CID_NintendoSwitch_WiredLeftJoycon:
+    case PABB_CID_NintendoSwitch_WiredRightJoycon:
+    case PABB_CID_NintendoSwitch_WirelessProController:
+    case PABB_CID_NintendoSwitch_WirelessLeftJoycon:
+    case PABB_CID_NintendoSwitch_WirelessRightJoycon:
+      break;
+    default:
+      status_.connected = false;
+      return;
   }
   constexpr std::size_t kExpected =
       sizeof(PB2::Message_u32) +
-      sizeof(pabb_NintendoSwitch_WiredController_Status);
+      sizeof(pa::NintendoSwitch::OemController_Status);
   if (response.size() != kExpected) {
     throw BackendError("board: status of the wrong size " +
                        std::to_string(response.size()));
   }
-  status_.connected =
-      (static_cast<std::uint8_t>(response[sizeof(PB2::Message_u32)]) & 1) != 0;
+  pa::NintendoSwitch::OemController_Status controller{};
+  std::memcpy(&controller, response.data() + sizeof(PB2::Message_u32),
+              sizeof(controller));
+  status_.connected = (controller.status & kStatusReady) != 0;
 }
 
 void BoardSession::status_loop() {
@@ -320,37 +331,20 @@ void BoardSession::connect() {
   }
 }
 
-BoardInfo BoardSession::start(pa::ControllerType mode) {
+BoardInfo BoardSession::start() {
   connect();
-  info_.mode_found = info_.mode;
-  if (mode == pa::ControllerType::None || info_.mode == mode) {
-    start_status_thread();
-    return info_;
-  }
-  if (std::find(info_.controllers.begin(), info_.controllers.end(), mode) ==
-      info_.controllers.end()) {
-    throw BackendError("board: does not offer " + mode_name(mode));
-  }
-  logger_.log("Changing the controller mode from " + mode_name(info_.mode) +
-              " to " + mode_name(mode));
-  if (!device_->try_set_controller_type(mode, false)) {
-    throw BackendError("board: the mode change was not sent");
-  }
-  // The C++ drops the connection at once; waiting for the ack makes sure the
-  // board has the request before we reconnect.
-  link_->wait_for_pending(kModeAckTimeout);
-  const pa::ControllerType found = info_.mode_found;
-  connect();
-  info_.mode_found = found;
-  if (info_.mode != mode) {
-    throw BackendError("board: still in " + mode_name(info_.mode) +
-                       " after asking for " + mode_name(mode));
+  if (info_.mode != kProControllerMode) {
+    throw BackendError(
+        "board: runs " + mode_name(info_.mode) + ", not " +
+        mode_name(kProControllerMode) +
+        "; GamePilot never changes the mode: pick that controller in the lab "
+        "app's panel");
   }
   start_status_thread();
   return info_;
 }
 
-void BoardSession::send_state(const WiredState& state,
+void BoardSession::send_state(const ProButtons& buttons,
                               std::uint32_t milliseconds) {
   if (device_ == nullptr) {
     throw BackendError("board: not connected");
@@ -358,30 +352,13 @@ void BoardSession::send_state(const WiredState& state,
   try {
     do {
       const std::uint32_t chunk = std::min(milliseconds, kMaxCommandMs);
-      WiredStateMessage message =
-          wired_state_message(state, static_cast<std::uint16_t>(chunk), 0);
+      ProButtonsMessage message =
+          pro_buttons_message(buttons, static_cast<std::uint16_t>(chunk));
       device_->command_queue().send_command(nullptr, message);
       milliseconds -= chunk;
     } while (milliseconds > 0);
   } catch (const pa::Exception& e) {
     throw BackendError("board: " + e.message());
-  }
-}
-
-void BoardSession::restore_mode() noexcept {
-  if (device_ == nullptr || info_.mode == info_.mode_found ||
-      info_.mode_found == pa::ControllerType::None) {
-    return;
-  }
-  stop_status_thread();
-  logger_.log("Restoring the controller mode " + mode_name(info_.mode_found));
-  try {
-    if (device_->try_set_controller_type(info_.mode_found, false) &&
-        link_->wait_for_pending(kModeAckTimeout)) {
-      info_.mode = info_.mode_found;
-    }
-  } catch (const pa::Exception&) {
-    logger_.log("Restoring the mode failed: the link is closed");
   }
 }
 

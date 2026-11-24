@@ -21,10 +21,11 @@
 // taken (a hub already runs).
 //
 // The switch backend's inputs go to the controller board on --serial (its
-// session started as the C++ app starts it, board_session.h, in the wired
-// controller mode, the board's own mode restored on exit), else to FakeSwitch's
-// board. --board-check only starts the session, prints what the board said
-// and exits, leaving its mode alone; --capture-check saves one captured frame
+// session started as the C++ app starts it, board_session.h, as a Pro
+// Controller: the board must already run NS1 Wired Pro Controller, a mode the
+// daemon never changes), else to FakeSwitch's board. --board-check only starts
+// the session (checking the mode), prints what the board said and exits;
+// --capture-check saves one captured frame
 // and checks the GBA picture sits where nso_gba_viewport() says
 // (switch_geometry.h). Bring-up: docs/switch-bring-up.md.
 
@@ -228,9 +229,8 @@ int run_mgba(const Flags& flags) {
 }
 
 // Starts the board's session on --serial: prints what it said, or throws.
-gamepilot::BoardInfo start_board(gamepilot::BoardSession& session,
-                                 gamepilot::pa::ControllerType mode) {
-  const gamepilot::BoardInfo info = session.start(mode);
+gamepilot::BoardInfo start_board(gamepilot::BoardSession& session) {
+  const gamepilot::BoardInfo info = session.start();
   std::fprintf(stderr, "daemon: board %s; %s\n",
                gamepilot::describe(info).c_str(),
                gamepilot::describe(
@@ -243,7 +243,7 @@ int run_board_check(const Flags& flags) {
   gamepilot::SerialBoardPort port(flags.serial);
   gamepilot::BoardLog log;
   gamepilot::BoardSession session(port, log);
-  start_board(session, gamepilot::pa::ControllerType::None);
+  start_board(session);
   return 0;
 }
 
@@ -291,23 +291,13 @@ int run_switch(const Flags& flags) {
   if (flags.serial.empty()) {
     gamepilot::FakeSwitch board(clock);
     gamepilot::BoardSession session(board, log);
-    start_board(session,
-                gamepilot::pa::ControllerType::NintendoSwitch_WiredController);
+    start_board(session);
     return serve_switch(flags, clock, session, "a fake controller board");
   }
   gamepilot::SerialBoardPort port(flags.serial);
   gamepilot::BoardSession session(port, log);
-  start_board(session,
-              gamepilot::pa::ControllerType::NintendoSwitch_WiredController);
-  int status = 1;
-  try {
-    status = serve_switch(flags, clock, session, flags.serial.c_str());
-  } catch (...) {
-    session.restore_mode();
-    throw;
-  }
-  session.restore_mode();
-  return status;
+  start_board(session);
+  return serve_switch(flags, clock, session, flags.serial.c_str());
 }
 
 // The hub, in a session of its own (no terminal's Ctrl-C or hangup reaches

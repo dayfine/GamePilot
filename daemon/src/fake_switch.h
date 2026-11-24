@@ -9,8 +9,9 @@
 // stream retransmitted every 50 ms (run_send_events()). Its packets are built
 // by CoreLib's PacketSender, as the firmware's are. The message layer answers
 // the queries PABotBase2_DeviceHandle.cpp makes, in the shapes it reads
-// (RET_U32 / RET_DATA with the request's id), takes the controller mode, and
-// runs wired controller states back to back as the firmware's command queue
+// (RET_U32 / RET_DATA with the request's id), takes a controller mode change
+// (which the session never sends), and in NS1 Wired Pro Controller mode runs
+// Pro Controller button reports back to back as the firmware's command queue
 // does, reporting each as finished (CQ_COMMAND_FINISHED) when it ends. The
 // firmware's own message layer is not in Arduino-Source, so these answers come
 // from the C++ side that reads them and from the lab app's log of console B's
@@ -57,7 +58,7 @@ struct FakeBoardProfile {
                                             0x1100, 0x1101, 0x1102};
   std::uint32_t command_queue = 255;
   std::uint32_t mode = 0x1100;
-  bool console_sees_controller = true;  // the wired status' connected bit
+  bool console_sees_controller = true;  // the status' ready bit
 };
 
 // One state command as the fake board ran it.
@@ -65,7 +66,7 @@ struct BoardCommand {
   double start_ms = 0;  // daemon clock
   double end_ms = 0;
   std::uint8_t id = 0;
-  WiredStateMessage message{};
+  ProButtonsMessage message{};
 };
 
 // One message the host sent, as the board read it.

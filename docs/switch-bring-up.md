@@ -17,12 +17,15 @@ app (it saves its settings on exit). Nothing may hold the port or the card:
 On 2026-11-23 these were serial port `/dev/cu.usbmodem5C940521411` and card id `0x1140000534d2109`
 ("USB Video", a name three cards share, so pick by id).
 
-**2. Board handshake** (leaves the board's mode alone):
+**2. Board handshake and mode check.** GamePilot drives the board as a Pro Controller in the mode the
+lab app keeps it in and never changes that mode:
 
     daemon/build/gamepilot_daemon --backend switch --serial PORT --board-check
 
 Expect `board PABotBase2-ESP32-S3, firmware 2026092800, link 2026061800, messages 2026061805,
-921600 baud, mode NS1: Wired Pro Controller`, as the lab app's log shows that board.
+921600 baud, mode NS1: Wired Pro Controller`, as the lab app's log shows that board. A board in
+another mode fails here (`board: runs ..., not NS1: Wired Pro Controller`): pick the Wired Pro
+Controller in the lab-B app's panel, quit it again and rerun.
 
 **3. One frame and its geometry.** FRLG on screen in the GBA app:
 
@@ -31,9 +34,8 @@ Expect `board PABotBase2-ESP32-S3, firmware 2026092800, link 2026061800, message
 Expect `1920x1080 at 60.00 fps` and `geometry ok: picture 1560x1040 at (180, 5)`; look at
 `frame.png`. A wrong picture box means fixing `nso_gba_viewport()` before anything else.
 
-**4. Press and see it.** Player in the overworld, start menu closed. This puts the board in the wired
-controller mode (the lab app uses the Wired Pro Controller one) and back afterwards; if the board line
-says the console does not see the controller, press A on the Switch's controller screen and rerun.
+**4. Press and see it.** Player in the overworld, start menu closed. If the board line says the
+console does not see the controller, press A on the Switch's controller screen and rerun.
 
     daemon/build/press_latency --serial PORT --capture INDEX --presses 100
 
@@ -55,10 +57,9 @@ The console has no save states: the run starts from the loaded save and its `end
 `failure.ss` are not written (the log says so); `failure.png` is.
 
 **7. Hand console B back.** Stop every daemon and harness (Ctrl-C, or `kill -TERM`; they release the
-keys, put the board back in the mode they found and close the port and the card), then check:
+keys and close the port and the card; the board's mode was never changed), then check:
 
     pgrep -fl 'gamepilot_daemon|press_latency'    # prints nothing
     lsof /dev/cu.usbmodem5C940521411              # prints nothing
 
-Relaunch the lab-B app as usual, check its log reads `Mode = NS1: Wired Pro Controller` (else pick
-that controller in its panel), and turn keepawake back on.
+Relaunch the lab-B app as usual and turn keepawake back on.

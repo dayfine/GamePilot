@@ -59,7 +59,7 @@ std::optional<FrameStamp> SwitchBackend::next_frame(double timeout_ms) {
 void SwitchBackend::queue_keys(KeyMask mask, double ms) {
   const auto rounded = static_cast<std::uint32_t>(std::llround(ms));
   // Blocks while the board's command queue is full, as the C++ does.
-  controller_.send_state(wired_state_for_keys(mask), rounded);
+  controller_.send_state(pro_buttons_for_keys(mask), rounded);
 }
 
 void SwitchBackend::set_keys(KeyMask mask) {

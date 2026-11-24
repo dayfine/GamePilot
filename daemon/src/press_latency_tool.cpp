@@ -8,11 +8,12 @@
 // --fake runs it on FakeSwitch: its screen turns bright `response-ms` after a
 // press starts on the board, so the result should be that plus up to one
 // frame. With --serial and --capture it runs on the console: the board's
-// session (board_session.h, wired controller mode, the board's mode restored
-// after) and the capture card. It presses Start by default, in the FRLG
-// overworld: the start menu opens and closes at once, and the harness looks
-// at the menu's side of the GBA picture. Exits 0 when nothing was missed and
-// the spread (p99 - median) is under --gate-ms (PR #44, F4).
+// session (board_session.h, as a Pro Controller in the board's NS1 Wired Pro
+// Controller mode, which it never changes) and the capture card. It presses
+// Start by default, in the FRLG overworld: the start menu opens and closes at
+// once, and the harness looks at the menu's side of the GBA picture. Exits 0
+// when nothing was missed and the spread (p99 - median) is under --gate-ms (PR
+// #44, F4).
 
 #include <cstdio>
 #include <cstdlib>
@@ -98,27 +99,18 @@ int run_console(gamepilot::PressLatencyPlan plan, const std::string& serial,
               gamepilot::describe(
                   session.first_status(gamepilot::pa::Milliseconds(2000)))
                   .c_str());
-  int status = 1;
-  try {
-    const gamepilot::SwitchOptions options;
-    gamepilot::SwitchBackend backend(
-        gamepilot::open_capture_card({.device = capture}), session, clock,
-        options);
-    plan.box =
-        gamepilot::picture_box_to_frame(options.viewport, kStartMenuSide);
-    const gamepilot::PressLatencyReport result =
-        gamepilot::measure_press_latency(backend, clock, plan);
-    backend.release();
-    std::printf("press_latency (console: %dx%d at %.2f fps, frame %.1f ms)\n",
-                backend.info().width, backend.info().height,
-                backend.info().frame_rate, result.frame_ms);
-    status = report(plan, result, gate_ms);
-  } catch (...) {
-    session.restore_mode();
-    throw;
-  }
-  session.restore_mode();
-  return status;
+  const gamepilot::SwitchOptions options;
+  gamepilot::SwitchBackend backend(
+      gamepilot::open_capture_card({.device = capture}), session, clock,
+      options);
+  plan.box = gamepilot::picture_box_to_frame(options.viewport, kStartMenuSide);
+  const gamepilot::PressLatencyReport result =
+      gamepilot::measure_press_latency(backend, clock, plan);
+  backend.release();
+  std::printf("press_latency (console: %dx%d at %.2f fps, frame %.1f ms)\n",
+              backend.info().width, backend.info().height,
+              backend.info().frame_rate, result.frame_ms);
+  return report(plan, result, gate_ms);
 }
 
 }  // namespace

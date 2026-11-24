@@ -6,13 +6,11 @@
 // DTR/RTS steps and the ESP32 bootloader recovery), try_connect_to_device()
 // (the baud rates, each tried with a 100 ms reset), open_serial_connection()
 // (the link's version, packet size and buffer slots) and
-// open_device_connection() (the board's queries). The controller mode is
-// chosen as ControllerSession::set_controller() (Controllers/
-// ControllerSession.cpp) does it: when the board runs another mode, ask for
-// ours, drop the connection and connect again. States go out as
-// PABotBase2_WiredController::execute_state() (NintendoSwitch/Controllers/
-// PABotBase2/NintendoSwitch_PABotBase2_WiredController.cpp) sends them, in
-// commands of at most 65535 ms through the board's command queue.
+// open_device_connection() (the board's queries). States go out as
+// PABotBase2_ProController::execute_state() and
+// PABotBase2_OemController::issue_report() (NintendoSwitch/Controllers/
+// PABotBase2/) send them, in commands of at most 65535 ms through the board's
+// command queue.
 //
 // Not ported, but used as they are from CoreLib: the reliable link
 // (PABotBase2CC_ReliableStreamConnection.cpp: reset, the version check,
@@ -22,18 +20,28 @@
 //
 // While connected, a thread asks the board for its status once a second, as
 // ControllerStatusThread (Controllers/ControllerStatusThread.h) does through
-// PABotBase2_WiredController::update_status(): REQUEST_STATUS, answered with
-// the mode and whether the console sees the controller. Besides the status,
-// that traffic is what wakes the link's retransmit thread: CoreLib's link only
-// wakes it on an incoming ack, so a lost packet waits for the next one.
+// PABotBase2_OemController::update_status(): REQUEST_STATUS, answered with
+// the mode and the controller's status (ready: the console sees it). Besides
+// the status, that traffic is what wakes the link's retransmit thread:
+// CoreLib's link only wakes it on an incoming ack, so a lost packet waits for
+// the next one.
+//
+// The board's controller mode is only read, never set: start() fails unless
+// the board already runs NS1 Wired Pro Controller, the mode the lab app keeps
+// it in. So none of the C++'s mode change is ported
+// (ControllerSession::set_controller(), and
+// PABotBase2_OemController::run_preconnect_configure(), which the C++ runs
+// only right before a mode change to write the controller's colours).
 //
 // Where this differs from the C++: the port is opened by the caller
-// (SerialBoardPort); auto_select_controller_from_boot() is not run (we name
-// the mode); the handshake's link requests wait at most 1 s for their answer
-// and the connection is tried twice (the C++ waits forever: with no other
-// traffic a lost answer is never asked again); a 0 ms state is still sent (release() needs the board to drop
-// its keys), where execute_state() sends nothing; and restore_mode() puts the
-// board back in the mode start() found, so the lab app finds it as it was.
+// (SerialBoardPort); auto_select_controller_from_boot() is not run; the
+// handshake's link requests wait at most 1 s for their answer and the
+// connection is tried twice (the C++ waits forever: with no other traffic a
+// lost answer is never asked again); a 0 ms state is still sent (release()
+// needs the board to drop its keys), where issue_report() sends nothing; the
+// status thread does not read the controller's colours (update_status() reads
+// them once, for its status line) and logs nothing of the console's rumble or
+// disconnect messages.
 
 #pragma once
 
@@ -42,8 +50,8 @@
 #include <cstdint>
 #include <memory>
 #include <mutex>
-#include <thread>
 #include <string>
+#include <thread>
 #include <vector>
 
 #include "Common/Cpp/Concurrency/Backends/ThreadPool_Default.h"
@@ -106,7 +114,6 @@ struct BoardInfo {
   std::uint32_t firmware_version = 0;
   std::string device_name;
   std::vector<pa::ControllerType> controllers;
-  pa::ControllerType mode_found = pa::ControllerType::None;
   pa::ControllerType mode = pa::ControllerType::None;
 };
 
@@ -114,8 +121,8 @@ std::string describe(const BoardInfo& info);
 
 // The board's last status answer.
 struct BoardStatus {
-  bool answered = false;  // at least one status came back
-  bool connected = false;  // the console sees the controller
+  bool answered = false;   // at least one status came back
+  bool connected = false;  // the console sees the controller (ready)
   std::string error;       // why the status thread stopped, if it did
 };
 
@@ -142,18 +149,14 @@ class BoardSession {
   BoardSession(const BoardSession&) = delete;
   BoardSession& operator=(const BoardSession&) = delete;
 
-  // Connects and puts the board in `mode` (None: leaves its mode). Throws
+  // Connects and checks the board runs NS1 Wired Pro Controller. Throws
   // BackendError when the board does not answer, speaks another protocol or
-  // will not take the mode.
-  BoardInfo start(pa::ControllerType mode =
-                      pa::ControllerType::NintendoSwitch_WiredController);
+  // runs another mode (left as it is).
+  BoardInfo start();
 
-  // Holds `state` for `milliseconds` after the states sent before it. Blocks
-  // while the board's command queue is full.
-  void send_state(const WiredState& state, std::uint32_t milliseconds);
-
-  // Asks the board for the mode start() found, when start() changed it.
-  void restore_mode() noexcept;
+  // Holds `buttons` for `milliseconds` after the states sent before it.
+  // Blocks while the board's command queue is full.
+  void send_state(const ProButtons& buttons, std::uint32_t milliseconds);
 
   BoardStatus status() const;
 

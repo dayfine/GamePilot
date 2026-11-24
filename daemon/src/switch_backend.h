@@ -1,8 +1,8 @@
 // Backend for a Switch: a frame source (capture card or recorded video) and a
-// PABotBase2 wired controller. Live, not lockstep: a capture thread reads
-// frames at the source's rate, stamps each with a seq and the daemon clock,
-// and pushes it into the FrameRing; the server thread takes frames from the
-// ring (next_frame) and sends inputs (queue_keys). Design: PR #44, 5.3.
+// PABotBase2 board as a Pro Controller. Live, not lockstep: a capture thread
+// reads frames at the source's rate, stamps each with a seq and the daemon
+// clock, and pushes it into the FrameRing; the server thread takes frames from
+// the ring (next_frame) and sends inputs (queue_keys). Design: PR #44, 5.3.
 //
 // What each thread touches: the capture thread owns the source and its
 // heartbeat; the server thread owns the current frame and the controller. The
@@ -16,9 +16,9 @@
 #include <thread>
 
 #include "backend.h"
+#include "board_session.h"
 #include "clock.h"
 #include "frame_ring.h"
-#include "board_session.h"
 #include "video_capture.h"
 
 namespace gamepilot {

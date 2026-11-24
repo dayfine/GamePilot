@@ -1,5 +1,5 @@
-// A started session with FakeSwitch's board, in the wired controller mode, for
-// tests that need a controller but not the board itself.
+// A started session with FakeSwitch's board, in NS1 Wired Pro Controller mode,
+// for tests that need a controller but not the board itself.
 
 #pragma once
 

@@ -17,14 +17,21 @@ namespace {
 // (PABB2_ReliableConnectionFW_POLL_MS).
 constexpr double kRetransmitMs = 50;
 
-constexpr std::uint32_t kWiredControllerMode = 0x1000;
+constexpr std::uint32_t kWiredProControllerMode = 0x1100;
+
+// OemController_Status' bits (connected, ready, paired) and player 1's light,
+// as a paired Pro Controller the console took reports them.
+constexpr std::uint8_t kStatusConnected = 1u << 0;
+constexpr std::uint8_t kStatusReady = 1u << 1;
+constexpr std::uint8_t kStatusPaired = 1u << 2;
+constexpr std::uint8_t kPlayer1Light = 0x01;
 
 constexpr std::uint8_t kDark = 16;
 constexpr std::uint8_t kBright = 240;
 
-bool is_pressed(const WiredState& state) {
-  const WiredState neutral = neutral_wired_state();
-  return std::memcmp(&state, &neutral, sizeof(state)) != 0;
+bool is_pressed(const ProButtons& buttons) {
+  const ProButtons neutral = neutral_pro_buttons();
+  return std::memcmp(&buttons, &neutral, sizeof(buttons)) != 0;
 }
 
 std::uint32_t read_u32(const std::uint8_t* bytes) {
@@ -325,12 +332,18 @@ void FakeSwitch::on_message(const std::uint8_t* message, std::size_t bytes) {
       reply.data = mode_;
       break;
     case PABB2_MESSAGE_OPCODE_REQUEST_STATUS:
-      // The mode, then the wired controller's status byte (bit 0: the
-      // console sees it).
+      // The mode, then the Pro Controller's status (OemController_Status).
       reply.opcode = PABB2_MESSAGE_OPCODE_RET_U32_DATA;
       reply.data = mode_;
-      if (mode_ == kWiredControllerMode) {
-        data.push_back(profile_.console_sees_controller ? 1 : 0);
+      if (mode_ == kWiredProControllerMode) {
+        pa::NintendoSwitch::OemController_Status status{};
+        status.status = profile_.console_sees_controller
+                            ? (kStatusConnected | kStatusReady | kStatusPaired)
+                            : kStatusPaired;
+        status.player_lights =
+            profile_.console_sees_controller ? kPlayer1Light : 0;
+        data.resize(sizeof(status));
+        std::memcpy(data.data(), &status, sizeof(status));
         reply.message_bytes =
             static_cast<std::uint16_t>(sizeof(reply) + data.size());
       }
@@ -348,9 +361,10 @@ void FakeSwitch::on_message(const std::uint8_t* message, std::size_t bytes) {
         mode_ = read_u32(message + sizeof(PB2::MessageHeader));
       }
       return;
-    case PABB2_MESSAGE_CMD_NS_WIRED_CONTROLLER_STATE:
-      if (bytes == sizeof(WiredStateMessage) && mode_ == kWiredControllerMode) {
-        WiredStateMessage command;
+    case PABB2_MESSAGE_CMD_NS1_OEM_CONTROLLER_BUTTONS:
+      if (bytes == sizeof(ProButtonsMessage) &&
+          mode_ == kWiredProControllerMode) {
+        ProButtonsMessage command;
         std::memcpy(&command, message, sizeof(command));
         const double now = clock_.now_ms();
         const double start =
@@ -463,7 +477,7 @@ bool FakeSwitch::pressed_at(double t_ms) const {
   std::lock_guard<std::mutex> guard(lock_);
   for (auto it = commands_.rbegin(); it != commands_.rend(); ++it) {
     if (it->start_ms <= t_ms) {
-      return t_ms < it->end_ms && is_pressed(it->message.report);
+      return t_ms < it->end_ms && is_pressed(it->message.buttons);
     }
   }
   return false;
