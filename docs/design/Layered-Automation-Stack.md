@@ -307,7 +307,7 @@ Estimates here are rough judgments, not measurements.
 | R3 | Image primitives | Probes on OpenCV; only `CoreLib` from PA via upstream's cmake files |
 | R4 | S0 backend | mGBA through the existing `lab/mgba/bridge.lua` protocol, unchanged (the daemon is a second client), plus replay of the recorded wire log |
 | R5 | S0/S1 checkpoints | The Mail Glitch checkpoints of fork #781, after it lands. mGBA has a save per checkpoint (story to `20.05`; `mail-glitch-test/` for `mg-*`); the Switch save is post-game |
-| R6 | Repo | `dayfine/GamePilot`; harness from `dayfine/agent-harness` plus the fork's `codex-dispatch` and `cpp-style-review` skills. Console iteration has a hard stop: when the same step fails twice in a row, stop and diagnose before another run |
+| R6 | Repo | `dayfine/GamePilot`; harness from `dayfine/agent-harness` (tool-neutral: `AGENTS.md` and `.agents/`). Console iteration has a hard stop: when the same step fails twice in a row, stop and diagnose before another run |
 | R7 | C++ | One small daemon, glue only (about 2k lines): no thresholds, state machines or game names. `daemon/` and `programs/` are fully separate, each with its own build, lint and CI; `clang-format`, strict warnings, PA's `Filesystem` wrappers for paths |
 | R8 | Real effect handler | OCaml stdlib only (`Unix` sockets, one reader thread, a queue, a small scheduler); OCaml 5.2+ pinned in CI on three OSes; Eio later is a handler swap (D8) |
 | R9 | Gates | Pass rate on mGBA; timing on the Switch in testing mode; `mg-05` too, after mGBA (user, 2026-11-23) |

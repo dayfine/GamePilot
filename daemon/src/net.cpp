@@ -140,6 +140,25 @@ std::optional<std::string> Socket::receive_some() {
   return std::string(buffer, static_cast<std::size_t>(n));
 }
 
+std::optional<std::size_t> Socket::receive_some(char* data,
+                                                std::size_t size) {
+#ifdef _WIN32
+  const int n = ::recv(native(handle_), data,
+                       static_cast<int>(size > 1u << 30 ? 1u << 30 : size), 0);
+  const bool would_block = n < 0 && WSAGetLastError() == WSAEWOULDBLOCK;
+#else
+  const auto n = ::recv(native(handle_), data, size, 0);
+  const bool would_block = n < 0 && (errno == EAGAIN || errno == EWOULDBLOCK);
+#endif
+  if (would_block) {
+    return 0;
+  }
+  if (n <= 0) {
+    return std::nullopt;
+  }
+  return static_cast<std::size_t>(n);
+}
+
 void init_sockets() {
 #ifdef _WIN32
   static const bool started = [] {
@@ -269,25 +288,28 @@ Socket connect_local(std::uint16_t port) {
   return result;
 }
 
-std::vector<bool> poll_readable(const std::vector<const Socket*>& sockets,
-                                int timeout_ms) {
+std::vector<PollReady> poll_sockets(const std::vector<PollWant>& wants,
+                                    int timeout_ms) {
 #ifdef _WIN32
   std::vector<WSAPOLLFD> fds;
 #else
   std::vector<pollfd> fds;
 #endif
   std::vector<std::size_t> index;
-  for (std::size_t i = 0; i < sockets.size(); i++) {
-    if (sockets[i] != nullptr && sockets[i]->valid()) {
+  for (std::size_t i = 0; i < wants.size(); i++) {
+    const PollWant& want = wants[i];
+    if (want.socket != nullptr && want.socket->valid() &&
+        (want.read || want.write)) {
       fds.push_back({});
-      fds.back().fd = native(sockets[i]->handle());
-      fds.back().events = POLLIN;
+      fds.back().fd = native(want.socket->handle());
+      fds.back().events = static_cast<short>((want.read ? POLLIN : 0) |
+                                             (want.write ? POLLOUT : 0));
       index.push_back(i);
     }
   }
-  std::vector<bool> readable(sockets.size(), false);
+  std::vector<PollReady> ready(wants.size());
   if (fds.empty()) {
-    return readable;
+    return ready;
   }
 #ifdef _WIN32
   const int n = WSAPoll(fds.data(), static_cast<ULONG>(fds.size()), timeout_ms);
@@ -295,12 +317,26 @@ std::vector<bool> poll_readable(const std::vector<const Socket*>& sockets,
   const int n = ::poll(fds.data(), static_cast<nfds_t>(fds.size()), timeout_ms);
 #endif
   if (n <= 0) {
-    return readable;
+    return ready;
   }
   for (std::size_t k = 0; k < fds.size(); k++) {
-    if ((fds[k].revents & (POLLIN | POLLHUP | POLLERR)) != 0) {
-      readable[index[k]] = true;
-    }
+    const auto events = fds[k].revents;
+    ready[index[k]].readable = (events & (POLLIN | POLLHUP | POLLERR)) != 0;
+    ready[index[k]].writable = (events & (POLLOUT | POLLERR)) != 0;
+  }
+  return ready;
+}
+
+std::vector<bool> poll_readable(const std::vector<const Socket*>& sockets,
+                                int timeout_ms) {
+  std::vector<PollWant> wants;
+  for (const Socket* socket : sockets) {
+    wants.push_back(PollWant{socket, true, false});
+  }
+  const std::vector<PollReady> ready = poll_sockets(wants, timeout_ms);
+  std::vector<bool> readable(sockets.size(), false);
+  for (std::size_t i = 0; i < ready.size(); i++) {
+    readable[i] = ready[i].readable;
   }
   return readable;
 }

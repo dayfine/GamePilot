@@ -19,8 +19,9 @@
 //
 //   gamepilot_daemon --hub --registry DIR [--watch-port 47901] [--listen ADDR]
 //
-// serves the hub (watch_hub.h), the list of live runs, in its own session so
-// the terminal that started it can close; exits 0 at once when its port is
+// serves the hub (watch_hub.h), the list of live runs and each run's page
+// under /runs/NAME/ (recent finished ones from DIR/../RESULTS.tsv), in its own
+// session so the terminal that started it can close; exits 0 at once when its port is
 // taken (a hub already runs).
 //
 // The switch backend's inputs go to the controller board on --serial (its
@@ -346,6 +347,8 @@ int run_switch(const Flags& flags) {
 int run_hub(const Flags& flags) {
   gamepilot::HubOptions options;
   options.registry = flags.server.registry;
+  // The registry is $GAMEPILOT_RUNS/.watch; the runs' results sit beside it.
+  options.results = flags.server.registry + "/../RESULTS.tsv";
   if (flags.server.watch) {
     options.listen = flags.server.watch->listen;
     options.port = flags.server.watch->port;
