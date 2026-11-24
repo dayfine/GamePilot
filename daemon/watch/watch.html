@@ -481,7 +481,7 @@ function planMs(plan, now) {
 // then), and the grind's progress from its log lines (Frlg_actions.Grind).
 let currentKey = null;
 let currentSince = 0;
-let grind = null;   // {goal, battle, heal}
+let grind = null;   // {goal, battle, level, heal}
 
 function trackCurrent(plan) {
   const i = plan.events.findIndex((e) => e.state === "current");
@@ -491,18 +491,22 @@ function trackCurrent(plan) {
 
 function grindLine(line) {
   const goal = line.match(/Grind: (.+? to Lv \d+ for [^(]+?) \(/);
-  const battle = line.match(/Grind: battle (\d+) /);
+  const battle = line.match(/Grind: battle (\d+) (?:of \d+, Lv (\d+))?/);
   if (!goal && !battle && !/Grind: heal\./.test(line)) return;
-  grind = grind || {goal: "", battle: 0, heal: false};
+  grind = grind || {goal: "", battle: 0, level: 0, heal: false};
   if (goal) grind.goal = goal[1];
-  if (battle) { grind.battle = Number(battle[1]); grind.heal = false; }
+  if (battle) {
+    grind.battle = Number(battle[1]);
+    if (battle[2]) grind.level = Number(battle[2]);
+    grind.heal = false;
+  }
   if (/Grind: heal\./.test(line)) grind.heal = true;
 }
 
 function currentDetail(timed) {
   const parts = timed ? [] : [duration(Date.now() - currentSince)];
   if (grind) {
-    if (grind.battle) parts.push("battle " + grind.battle + (grind.heal ? ", healing" : ""));
+    if (grind.battle) parts.push("battle " + grind.battle + (grind.level ? ", Lv " + grind.level : "") + (grind.heal ? ", healing" : ""));
     if (grind.goal) parts.push(grind.goal);
   } else if (lastLogLine) {
     parts.push(lastLogLine);

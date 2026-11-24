@@ -75,6 +75,10 @@ type knows = { species : string; moves : string list }
 (** The party member of this species (a slug; the first such member) knows each
     of these moves (slugs). *)
 
+type level = { species : string; min : int }
+(** The party member of this species (a slug; the first such member) is at least
+    at this level. *)
+
 type postconditions = {
   position : Pose.grid option;
       (** Where the checkpoint ends; unset, the end is the next checkpoint's
@@ -84,17 +88,18 @@ type postconditions = {
   coins : int option;  (** Game Corner coins, exactly. *)
   money : money option;
   flags : string list;  (** Story flags (named by the game) that must be set. *)
-  knows : knows list;
-      (** Moves members must know: where a level-up move stands for the level
-          (FireRed reads no level), e.g. MIMIEN knows Recycle at Lv 33. *)
+  knows : knows list;  (** Moves members must know. *)
+  levels : level list;
+      (** Levels members must have reached, e.g. MIMIEN at least Lv 33. *)
 }
 (** What must hold once the checkpoint is done, from the plan's
     [metadata.postconditions]. [position], [items] and [flags] are
     PokemonSimulation's ([read_metadata] in
     [src/pokesim/story/checkpoint_wire.py]) and the C++'s ([StoryPostconditions]
     in [Pokemon/AutoStory/Types/Pokemon_StoryPostconditions.h], fork
-    [frlg/lean]); [party], [coins], [money] and [knows] are GamePilot's
-    additions: the state a Mail Glitch checkpoint exists to change. *)
+    [frlg/lean]); [party], [coins], [money], [knows] and [levels] are
+    GamePilot's additions: the state a Mail Glitch checkpoint exists to change.
+*)
 
 type t = {
   game : string;  (** The plan's [game], e.g. ["frlg"]. *)

@@ -296,6 +296,10 @@ let postconditions_text (plan : Plan.t) =
         (fun ({ species; moves } : Plan.knows) ->
           Printf.sprintf "%s knows %s" species (list moves))
         p.knows;
+      List.map
+        (fun ({ species; min } : Plan.level) ->
+          Printf.sprintf "%s at least Lv %d" species min)
+        p.levels;
     ]
   |> function
   | [] -> "none"
@@ -350,7 +354,8 @@ let postcondition_cases : Case_table.case list =
          item escape-rope x2\n\
          money 21464 to 21464\n\
          farfetchd knows knock-off\n\
-         mr-mime knows recycle";
+         mr-mime knows recycle\n\
+         mr-mime at least Lv 33";
     };
     {
       name = "every postcondition, PokemonSimulation's and ours";
@@ -360,7 +365,8 @@ let postcondition_cases : Case_table.case list =
             {|{"position": {"map": "Town", "tiles": [[3, 4]]}, "party_includes": ["abra", "abra"],
                "items": [{"item": "retro-mail", "quantity": 2}], "coins": 20,
                "money": {"min": 100, "max": 200}, "flags": ["got_coin_case"],
-               "knows": [{"species": "mr-mime", "moves": ["recycle"]}]}|});
+               "knows": [{"species": "mr-mime", "moves": ["recycle"]}],
+               "levels": [{"species": "mr-mime", "min": 33}]}|});
       expectation =
         "position Town (3, 4)\n\
          party includes abra, abra\n\
@@ -368,7 +374,8 @@ let postcondition_cases : Case_table.case list =
          coins 20\n\
          money 100 to 200\n\
          flags got_coin_case\n\
-         mr-mime knows recycle";
+         mr-mime knows recycle\n\
+         mr-mime at least Lv 33";
     };
     {
       name = "party in order and party_includes, not both";
@@ -384,6 +391,12 @@ let postcondition_cases : Case_table.case list =
       input =
         (fun () -> with_postconditions {|{"money": {"min": 5, "max": 4}}|});
       expectation = post ^ "money.min 5 is above max 4.";
+    };
+    {
+      name = "a level without its min";
+      input =
+        (fun () -> with_postconditions {|{"levels": [{"species": "mr-mime"}]}|});
+      expectation = post ^ "levels[0].min is missing.";
     };
     {
       name = "an unknown postcondition";

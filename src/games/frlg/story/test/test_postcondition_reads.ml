@@ -5,6 +5,7 @@
 module S = Frlg_overworld_fixtures.Scripted_screen
 
 let names = [ "BLASTOISE"; "RATTATA"; "ODDISH"; "PIDGEY"; "ABRA"; "PIDGEY" ]
+let levels = [ 52; 20; 18; 21; 33; 12 ]
 
 (* START opens the menu on POKéMON; A on it the party; A on a slot its menu;
    A on SUMMARY (row 0) the slot's species. B steps back one screen: from the
@@ -22,8 +23,9 @@ let party_screen ?(lost_b = 0) () =
         slot := s;
         show (S.Member_menu 0)
     | [ Wire.A ], S.Member_menu 0 ->
-        show (S.Summary (List.nth names (!slot - 1)))
-    | [ Wire.B ], S.Summary _ -> show (S.Member_menu 0)
+        show
+          (S.Summary_at (List.nth names (!slot - 1), List.nth levels (!slot - 1)))
+    | [ Wire.B ], (S.Summary _ | S.Summary_at _) -> show (S.Member_menu 0)
     | [ Wire.B ], S.Member_menu _ when !dropped < lost_b -> incr dropped
     | [ Wire.B ], S.Member_menu _ -> show (S.Party !slot)
     | [ Wire.B ], S.Party _ -> show S.Overworld
@@ -38,6 +40,7 @@ let party_promised : Story.Plan.postconditions =
     money = None;
     flags = [];
     knows = [];
+    levels = [];
   }
 
 let observed_text (o : Story.Postcondition_check.observed) =
@@ -99,6 +102,21 @@ let read_items items () =
        (List.map (fun (i, n) -> Printf.sprintf "%s %d" i n) observed.items))
     (S.screen_name (S.screen_at screen screen.S.clock_ms))
 
+let read_level min () =
+  let screen = S.create ~react:(party_screen ()) () in
+  let promised =
+    { party_promised with party = None; levels = [ { species = "abra"; min } ] }
+  in
+  let observed =
+    S.run screen (fun () ->
+        Frlg_story.Postcondition_reads.observe ~log:ignore promised)
+  in
+  Printf.sprintf "%s; ends on %s"
+    (String.concat "; "
+       (List.map Story.Postcondition_check.result_to_string
+          (Story.Postcondition_check.check promised observed)))
+    (S.screen_name (S.screen_at screen screen.S.clock_ms))
+
 let cases : Case_table.case list =
   [
     {
@@ -122,6 +140,18 @@ let cases : Case_table.case list =
       input = read_party ~lost_b:1;
       expectation =
         "blastoise, rattata, oddish, pidgey, abra, pidgey; ends on overworld";
+    };
+    {
+      name = "a member's level: the party read for its slot, then its summary";
+      input = read_level 33;
+      expectation = "level abra: passed: Lv 33; ends on overworld";
+    };
+    {
+      name = "a member below its level";
+      input = read_level 34;
+      expectation =
+        "level abra: failed: expected at least Lv 34, read Lv 33; ends on \
+         overworld";
     };
     {
       name = "nothing promised, nothing read";

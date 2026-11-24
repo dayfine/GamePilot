@@ -17,6 +17,7 @@ let screens =
     "battle_opening";
     "bag_counts";
     "berry_pouch_numbers";
+    "summary_level";
     "mail_editor";
   ]
 
@@ -28,7 +29,8 @@ let glyphs =
 (* The mail editor's field: each candidate on a line of its own width. *)
 let mail_field = "mail_field.1"
 
-(* A line and the score its reader allows: small-font digits have their own. *)
+(* A line and the score its reader allows: small-font digits and the summary's
+   level have their own. *)
 let line_of_id id =
   let normal line = (line, Line_reading.max_score)
   and small line = (line, Number_reading.small_max_score) in
@@ -44,6 +46,8 @@ let line_of_id id =
       small
         (Text_lines.berry_pouch_number_digit (int_of_string row)
            (int_of_string k))
+  | [ "summary_level"; k ] ->
+      (Text_lines.summary_level_digit (int_of_string k), Summary_level.max_score)
   | _ -> failwith ("line id " ^ id)
 
 type expectation = {

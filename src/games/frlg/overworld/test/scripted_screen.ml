@@ -36,6 +36,9 @@ type screen =
   | Summary of string
       (** The summary's info page (a Switch capture) showing this species name
           (["ABRA"]): the text reader's species line reads it and no other. *)
+  | Summary_at of string * int
+      (** The same page showing this species name and this level in its top
+          left: the species line and the level's digit cells read them. *)
 
 let screen_name = function
   | Overworld -> "overworld"
@@ -54,6 +57,7 @@ let screen_name = function
   | Item_menu -> "item menu"
   | Mart_list -> "mart list"
   | Summary name -> "summary " ^ name
+  | Summary_at (name, level) -> Printf.sprintf "summary %s Lv %d" name level
 
 (* The fixture images each screen is read from; a screen merges the probes of
    every fixture file that has its image. *)
@@ -76,7 +80,7 @@ let image = function
   | Bag_items _ -> "emu-1/20261122-024507-05.04__bag-items-row0.png"
   | Item_menu -> "mg04-escape-rope/item-menu-escape-rope__itemmenu.png"
   | Mart_list -> "ItemListReader/MartBuyList_eng__money.png"
-  | Summary _ -> "captures/sm3_s1__summary1.png"
+  | Summary _ | Summary_at _ -> "captures/sm3_s1__summary1.png"
 
 (* Copied next to the test by its dune rules. *)
 let fixtures =
@@ -289,14 +293,23 @@ let bag_lines items =
   in
   name_ids @ List.concat (List.mapi digit_ids items)
 
+(* The level's digit cells, from the left ("summary_level.<k>/<digit>"). *)
+let level_lines level =
+  String.to_seq (string_of_int level)
+  |> List.of_seq
+  |> List.mapi (Printf.sprintf "summary_level.%d/%c")
+
 let text_line id =
   String.starts_with ~prefix:species_line id
   || String.starts_with ~prefix:"bag" id
+  || String.starts_with ~prefix:"summary_level" id
 
 let text_result screen id =
   let shown =
     match screen with
     | Summary name -> id = species_line ^ name
+    | Summary_at (name, level) ->
+        id = species_line ^ name || List.mem id (level_lines level)
     | Bag_items items -> List.mem id (bag_lines items)
     | _ -> false
   in

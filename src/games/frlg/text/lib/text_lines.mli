@@ -57,6 +57,15 @@ val bag_message_digit : int -> t
     message window 5 of bag.c at (16, 120), the second line's glyphs at y 137.
     Read right on mGBA (20 coins, 2026-11-23). *)
 
+val summary_level_digit : int -> t
+(** Digit [k] (from the left) of the level in the summary's top left, shown on
+    every page: white with a dark shadow on the header's lilac (teal on the info
+    page), after the 10-pixel "Lv" glyph at x 4, so the first digit starts at x
+    14 with its cell's top at y 18. The box of the fork's
+    PokemonFRLG_StatsReader ([m_box_level], English and the other Latin
+    languages but Spanish) holds it. Measured on mGBA (MIMIEN Lv 9, Lv 50,
+    2026-11-23); read with {!Summary_level.ink}. *)
+
 val small_digit_width : int
 (** Every digit (and the space) of the small font is 5 pixels wide. *)
 

@@ -26,14 +26,17 @@ let on_page p m = Summary_screen.page m = Some p
 let summary_opening m =
   Option.is_some (Summary_screen.page m) || not (Party_actions.member_menu m)
 
-let open_moves_page slot =
+let open_summary slot =
   Party_actions.open_party ();
   Party_actions.on_member_menu slot (fun () ->
       Party_actions.choose_member_row Member_menu.summary_row
         ~taken:summary_opening);
   ignore
     (M.await_screen ~timeout_ms:summary_timeout_ms ~code:"no_summary"
-       "the summary" (on_page 1));
+       "the summary" (on_page 1))
+
+let open_moves_page slot =
+  open_summary slot;
   (* Each page slides in; RIGHT again until the moves page reads. *)
   M.press_until ~max_presses:(2 * moves_page) ~code:"no_summary"
     "the moves page" Wire.Right ~cooldown_ms:page_turn_ms (on_page moves_page)

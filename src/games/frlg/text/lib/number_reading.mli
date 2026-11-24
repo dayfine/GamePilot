@@ -15,15 +15,18 @@ val small_max_score : float
 
 val read_cells :
   ?max_score:float ->
+  ?ink:Wire.color_range ->
   Glyph_table.t ->
   (int -> Text_lines.t) ->
   max_cells:int ->
   string list
 (** The digits read in cells 0, 1, ... up to [max_cells], stopping at the first
-    cell that shows none. *)
+    cell that shows none; [ink] as for {!Line_reading.read} (dark text by
+    default). *)
 
 val read_left_aligned :
   ?max_score:float ->
+  ?ink:Wire.color_range ->
   Glyph_table.t ->
   (int -> Text_lines.t) ->
   max_cells:int ->
@@ -32,6 +35,7 @@ val read_left_aligned :
 
 val read_right_aligned :
   ?max_score:float ->
+  ?ink:Wire.color_range ->
   Glyph_table.t ->
   (int -> Text_lines.t) ->
   max_cells:int ->
