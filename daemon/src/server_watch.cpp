@@ -70,12 +70,17 @@ void Server::start_watch() {
                  [this] { return stop_program(); }},
       options_.stream);
   watch_->set_info(to_line(pa::JsonValue(hello_result(backend_.info()))));
+  info_shown_ = {backend_.info().width, backend_.info().height};
   if (!options_.registry.empty()) {
     registry_entry_.emplace(
         options_.registry,
         RegistryEntry{own_pid(), watch_->port(), options_.watch->listen,
                       backend_.info().kind, options_.run_folder,
-                      options_.checkpoint, unix_now_ms()});
+                      options_.checkpoint, unix_now_ms(), options_.name,
+                      options_.source});
+  }
+  if (!options_.tail_log.empty()) {
+    log_tail_.emplace(options_.tail_log);
   }
 }
 
@@ -235,11 +240,55 @@ void Server::offer_stream_frame() {
   watch_cost_.ms += clock_.now_ms() - now;
 }
 
+// A view-only source's state, once a second: to the page (and its summary)
+// when it changes, and to stderr. Its frame size may change too (the crop
+// found, the window resized): the page gets a new `info` then.
+void Server::show_source() {
+  const double now = clock_.now_ms();
+  if (now - source_checked_ms_ < kWatchStatusMs) {
+    return;
+  }
+  source_checked_ms_ = now;
+  const cv::Size size(backend_.info().width, backend_.info().height);
+  if (size != info_shown_) {
+    info_shown_ = size;
+    watch_->set_info(to_line(pa::JsonValue(hello_result(backend_.info()))));
+  }
+  const std::optional<SourceStatus> status = backend_.source_status();
+  if (!status || status == source_shown_) {
+    return;
+  }
+  if (!source_shown_ || source_shown_->state != status->state) {
+    std::fprintf(stderr, "daemon: source %s%s%s\n",
+                 source_state_name(status->state),
+                 status->detail.empty() ? "" : ": ", status->detail.c_str());
+  }
+  source_shown_ = status;
+  watch_->set_source(source_status_json(*status));
+}
+
+// The followed log's new lines, a few times a second, as the page's log.
+void Server::tail_log() {
+  constexpr double kTailEveryMs = 250;
+  const double now = clock_.now_ms();
+  if (!log_tail_ || now - log_polled_ms_ < kTailEveryMs) {
+    return;
+  }
+  log_polled_ms_ = now;
+  for (std::string& text : log_tail_->poll()) {
+    pa::JsonObject line;
+    line["line"] = std::move(text);
+    watch_->add_log(to_line(pa::JsonValue(std::move(line))));
+  }
+}
+
 // Each loop pass: the stream's frame, the health once a second (and at once for a new viewer),
 // and an empty probe list once the
 // probes are gone (no frame shows them any more).
 void Server::watch_tick() {
   offer_stream_frame();
+  show_source();
+  tail_log();
   if (!watch_->has_viewers()) {
     return;
   }

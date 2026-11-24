@@ -23,6 +23,11 @@ struct RegistryEntry {
   std::string run_folder;       // the run's folder; empty when none was given
   std::string checkpoint;       // the checkpoint it runs; empty when none
   std::int64_t started_ms = 0;  // when the daemon started, Unix ms
+  // A view-only source's (view_backend.h): its hub name (/runs/NAME/, else
+  // the run folder's name) and what it shows ("pacc-window"); both empty for
+  // our own runs. Older readers ignore them.
+  std::string name = {};
+  std::string source = {};
 };
 
 std::string registry_entry_json(const RegistryEntry& entry);

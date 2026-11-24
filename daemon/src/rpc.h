@@ -166,6 +166,9 @@ pa::JsonObject lease_acquire_result(const LeaseHolder& holder, double now_ms);
 pa::JsonObject lease_release_result(bool released);
 // The refusal of input while `holder` holds the lease (kLeaseHeld).
 RpcError lease_refusal(const LeaseHolder& holder, double now_ms);
+// The refusal of `method` (input or lease.acquire) by a view-only backend
+// (kBackendError, data {backend, method}).
+RpcError view_only_refusal(const std::string& backend, const std::string& method);
 
 // One probe result as sent: its `kind` and fields, rounded.
 pa::JsonObject probe_result_json(const ProbeResult& result);

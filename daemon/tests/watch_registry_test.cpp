@@ -40,6 +40,15 @@ void check_entry_json() {
         read->listen == "127.0.0.1" && read->backend == "mgba" &&
         read->run_folder == written.run_folder && read->checkpoint == "mg-02" &&
         read->started_ms == 1795435200000);
+  // Our own runs write no name or source; a view-only source writes both.
+  CHECK(registry_entry_json(written).find("\"name\"") == std::string::npos);
+  CHECK(read && read->name.empty() && read->source.empty());
+  RegistryEntry view = written;
+  view.name = "pacc-maxlair-A";
+  view.source = "pacc-window";
+  const auto viewed = parse_registry_entry(registry_entry_json(view));
+  CHECK(viewed && viewed->name == "pacc-maxlair-A" &&
+        viewed->source == "pacc-window");
   for (const std::string& bad :
        {"", "not json", "[1]", "{\"port\":47950}", "{\"pid\":1}",
         "{\"pid\":1,\"port\":0}", "{\"pid\":0,\"port\":47950}",
@@ -236,6 +245,34 @@ void check_hub_past_run() {
         std::string::npos);
 }
 
+// A view-only source in the registry: listed under its name with its
+// source, its page passed through, and never /live's newest run.
+void check_hub_sources() {
+  fs::remove_all(kDir);
+  WatchServer source(WatchOptions{"127.0.0.1", 0, ""},
+                     WatchHooks{[] { return WatchFrame{}; },
+                                [] { return false; }});
+  source.set_source("{\"state\":\"stale\",\"detail\":\"x\"}");
+  RegistryEntry view = entry(own_pid(), "");
+  view.port = source.port();
+  view.backend = "view";
+  view.run_folder.clear();
+  view.name = "pacc-maxlair-A";
+  view.source = "pacc-window";
+  const RegistryFile file(kDir, view);
+  WatchHub hub(HubOptions{"127.0.0.1", 0, kDir, "", ""});
+  const auto get = [&](const std::string& path, const std::string& want) {
+    return hub_request(hub, source, "GET " + path + " HTTP/1.1\r\n\r\n",
+                       want);
+  };
+  const std::string runs = get("/runs.json", "]");
+  CHECK(runs.find("\"run\":\"pacc-maxlair-A\"") != std::string::npos);
+  CHECK(runs.find("\"source\":\"pacc-window\"") != std::string::npos);
+  CHECK(get("/runs/pacc-maxlair-A/summary.json", "}}")
+            .find("\"source\":{\"state\":\"stale\"") != std::string::npos);
+  CHECK(get("/live", "</html>").starts_with("HTTP/1.1 404"));
+}
+
 }  // namespace
 
 int main() {
@@ -246,6 +283,7 @@ int main() {
   check_hub();
   check_hub_pass_through();
   check_hub_past_run();
+  check_hub_sources();
   fs::remove_all(kDir);
   return TEST_RESULT();
 }

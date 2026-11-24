@@ -29,7 +29,9 @@
 //                      hub's newer build works with an older run daemon.
 //   GET /live          redirects to the newest live run's page; /live/CP to
 //                      the newest live run of checkpoint CP. With none, a page
-//                      that looks again every few seconds.
+//                      that looks again every few seconds. External sources
+//                      (an entry with a `source`: a view-only daemon watching
+//                      another program) are listed but never /live.
 //
 // Passing a run through streams it: what the run sends goes to the browser as
 // it comes (no buffering of the event stream or the MJPEG stream), and a
@@ -63,7 +65,8 @@ struct HubOptions {
   std::string runs;      // the runs folder; empty = none
 };
 
-// A run's name in its hub path: its folder's name, or pid-N without one.
+// A run's name in its hub path: the entry's `name` (a view-only source's),
+// else its folder's name, else pid-N.
 std::string hub_run_name(const RegistryEntry& entry);
 
 // The entries as /runs.json gives them: the run folder's name only, so its

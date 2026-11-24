@@ -135,6 +135,12 @@ when it was submitted. `backend.load_state` and `backend.save_state` answer -320
 no save states). The game picture sits inside the frame (`viewport`, by default the fork's FRLG
 `GAME_BOX`); GBA buttons map to the Switch's GBA app: Start is Plus, Select is Minus.
 
+The `view` backend is live too, and view-only: its frames come from a picture another program owns
+(an app's window), cropped to the video, so `viewport` is the whole frame and `game_size` the
+frame's size. It takes no input: `submit`, `cancel`, `backend.load_state` and `lease.acquire` answer
+-32002 with `data` {`backend`, `method`} (`41-error.view_only.response.json`); reads, probes and
+`status` work as on any backend. No new message: a client that never drives one needs no change.
+
 ## Notifications
 
 - `frame`: `seq`, `load`, `t_ms`, `probes` {id: result}. One per frame while any probe is subscribed,

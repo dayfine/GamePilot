@@ -75,6 +75,25 @@ The page is `watch/watch.html`, compiled in. The 10 s rate line on mGBA adds wha
 the frame loop (stream viewers, frames polled, ms spent); the stream prints its own 10 s line
 (encodes/s, ms and bytes a frame, the slowest viewer's frames/s). `gamepilot checkpoints --watch` starts the runner's daemons with it.
 
+## View-only sources
+
+    gamepilot_daemon --backend view --window-pid PID [--window-title T] [--crop auto | --crop x,y,w,h] \
+        [--stale-s 10] [--name NAME] [--source LABEL] [--tail-log FILE] --watch-port 0 --registry DIR
+    gamepilot_daemon --backend view --window-app /Applications/X/X.app ...
+    gamepilot_daemon --backend view --replay clip.mp4 ...
+
+Shows another program's picture on the watch page with nothing sent anywhere (`src/view_backend.h`):
+no controller, no lease, no keep-awake; `submit`, `cancel`, `backend.load_state` and
+`lease.acquire` answer -32002 (`protocol/v1/41-error.view_only.response.json`). On macOS the frames
+come from one app window through ScreenCaptureKit (`src/window_capture_mac.mm`; the terminal that
+starts it needs Screen Recording), at most 30 a second; other platforms build without it. `--crop
+auto` finds the video in the window (its edges, or the 16:9 area whose pixels change) and shows the
+whole window until it does; `--crop` takes a box of the window. Once a second the page and
+`/summary.json` get the picture's `source` state: `live`, `stale` (unchanged for `--stale-s`) or
+`covered` (no part of the window shows, so its app stops painting it; a strip is enough). `--name`
+lists it in the hub as `/runs/NAME/` under Watching (`/live` skips it); `--tail-log` follows the
+other program's log, read only, into the page's log.
+
 ## Probing saved images
 
 `probe_images` runs the same probes on PNG files, with no backend and no socket, so readers can be
@@ -113,6 +132,10 @@ picture whole and at 2x inside side bars give the same results.
 | `watch/watch.html` | the page (compiled in by `cmake/embed_watch_page.cmake`) |
 | `src/switch_backend.*` | the Switch: capture thread, ring reader, controller |
 | `src/video_capture.*` | frame sources: capture card and video replay (OpenCV `VideoCapture`) |
+| `src/view_backend.*` | the view-only backend: a source's frames, cropped, with no input |
+| `src/view_source.*` | the picture's state (live, stale, covered) and where the video sits in a window |
+| `src/window_capture*` | one app window as a frame source (ScreenCaptureKit on macOS) |
+| `src/log_tail.*` | another program's log, followed for the page |
 | `src/frame_ring.*` | the bounded ring between the capture and server threads |
 | `src/switch_controller.*` | GBA keys to Pro Controller button reports (CoreLib's PABotBase2 message) |
 | `src/board_session.*` | the board's session as the C++ app starts it, on CoreLib's link and device handle |

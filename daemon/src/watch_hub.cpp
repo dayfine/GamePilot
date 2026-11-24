@@ -91,12 +91,14 @@ std::string notice_page(std::string_view text, bool refresh) {
   return page;
 }
 
-// The newest live entry, of `checkpoint` when it is not empty.
+// The newest live run of ours, of `checkpoint` when it is not empty: an
+// external source (a view-only daemon) is watched, not run, so /live skips it.
 const RegistryEntry* newest(const std::vector<RegistryEntry>& entries,
                             std::string_view checkpoint) {
   const RegistryEntry* best = nullptr;
   for (const RegistryEntry& entry : entries) {
-    if ((checkpoint.empty() || entry.checkpoint == checkpoint) &&
+    if (entry.source.empty() &&
+        (checkpoint.empty() || entry.checkpoint == checkpoint) &&
         (best == nullptr || entry.started_ms > best->started_ms)) {
       best = &entry;
     }
@@ -132,6 +134,9 @@ std::vector<std::string> split(std::string_view line, char separator) {
 }  // namespace
 
 std::string hub_run_name(const RegistryEntry& entry) {
+  if (valid_run_name(entry.name)) {
+    return entry.name;
+  }
   const std::string name = folder_name(entry.run_folder);
   return name.empty() ? "pid-" + std::to_string(entry.pid) : name;
 }
@@ -146,6 +151,7 @@ std::string hub_runs_json(const std::vector<RegistryEntry>& entries) {
     run["run"] = hub_run_name(entry);
     run["checkpoint"] = entry.checkpoint;
     run["started_ms"] = entry.started_ms;
+    run["source"] = entry.source;
     list.push_back(std::move(run));
   }
   return to_line(pa::JsonValue(std::move(list)));

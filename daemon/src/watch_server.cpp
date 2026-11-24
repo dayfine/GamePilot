@@ -157,7 +157,8 @@ void WatchServer::respond(Connection& connection, const HttpRequest& request) {
   } else if (get && request.path == "/summary.json") {
     const std::string body =
         "{\"run\":" + (run_.empty() ? std::string("null") : run_) +
-        ",\"plan\":" + (plan_.empty() ? std::string("null") : plan_) + "}";
+        ",\"plan\":" + (plan_.empty() ? std::string("null") : plan_) +
+        (source_.empty() ? std::string() : ",\"source\":" + source_) + "}";
     send(connection, http_response(200, "application/json", body,
                                    "Access-Control-Allow-Origin: *\r\n"));
   } else if (request.method == "POST" && request.path == "/stop") {
@@ -198,6 +199,9 @@ void WatchServer::start_stream(Connection& connection) {
   }
   if (!plan_.empty()) {
     snapshot += event_message("plan", plan_);
+  }
+  if (!source_.empty()) {
+    snapshot += event_message("source", source_);
   }
   for (const std::string& line : log_) {
     snapshot += event_message("log", line);
@@ -248,6 +252,11 @@ void WatchServer::set_info(std::string json) {
 void WatchServer::set_run(std::string json) {
   run_ = std::move(json);
   broadcast("run", run_);
+}
+
+void WatchServer::set_source(std::string json) {
+  source_ = std::move(json);
+  broadcast("source", source_);
 }
 
 void WatchServer::set_plan(std::string json) {

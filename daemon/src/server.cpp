@@ -95,7 +95,7 @@ bool Server::batch_pending() const {
 // (keep_awake.h). Each press
 // is in the wire log as a `daemon` line.
 void Server::keep_awake() {
-  if (!keep_awake_.on()) {
+  if (!keep_awake_.on() || !backend_.info().takes_input) {
     return;
   }
   const double now = clock_.now_ms();
@@ -352,6 +352,9 @@ void Server::clear_input() {
   schedule_.clear();
   live_schedule_.clear();
   batch_owners_.clear();
+  if (!backend_.info().takes_input) {
+    return;
+  }
   if (backend_.info().timing == Timing::kLive) {
     backend_.drop_queued_keys();
   }
@@ -415,11 +418,16 @@ DaemonStatus Server::status() const {
 }
 
 // Input methods need the lease: the client takes it or is refused. Returns
-// the owner the wire log names on the line, none for other methods.
+// the owner the wire log names on the line, none for other methods. A
+// view-only backend refuses input and the lease to everyone.
 std::optional<std::string> Server::take_lease(ClientConnection& client,
                                               const std::string& method) {
-  if (method != "submit" && method != "cancel" &&
-      method != "backend.load_state") {
+  const bool input = method == "submit" || method == "cancel" ||
+                     method == "backend.load_state";
+  if (!backend_.info().takes_input && (input || method == "lease.acquire")) {
+    throw view_only_refusal(backend_.info().kind, method);
+  }
+  if (!input) {
     return std::nullopt;
   }
   const double now = clock_.now_ms();
