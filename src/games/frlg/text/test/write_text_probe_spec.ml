@@ -50,6 +50,11 @@ let screens =
       rows 6 Text_lines.bag_row,
       Item_names.in_pocket items Key_items @ [ "CANCEL" ],
       dark );
+    ( "start_menu",
+      glyphs,
+      rows 7 Text_lines.start_menu_row,
+      [ "POKéDEX"; "POKéMON"; "BAG"; "SAVE"; "OPTION"; "EXIT"; "RETIRE" ],
+      dark );
     ("tm_case", glyphs, rows 5 Text_lines.tm_case_row, tm_moves, dark);
     ("summary_moves", glyphs, rows 4 Text_lines.summary_move, moves, dark);
     ( "battle_opening",

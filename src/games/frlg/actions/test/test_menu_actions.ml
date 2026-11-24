@@ -72,11 +72,13 @@ let heal_unread_question () =
 
 let heal_no_dialog () = run (Heal_and_save.heal_at_nurse ~log)
 
-(* START opens the menu on row 1; A on SAVE asks. *)
+(* START opens the menu on row 1, B on it closes it; A on SAVE asks. *)
 let save_screen screen (p : S.press) =
-  if p.buttons = [ Wire.Start ] then
-    S.show screen ~at_ms:(p.at_ms + 100) (S.Start_menu 1)
-  else talk ~page:false ~after_ms:2000 screen p
+  match (p.buttons, S.screen_at screen p.at_ms) with
+  | [ Wire.Start ], _ -> S.show screen ~at_ms:(p.at_ms + 100) (S.Start_menu 1)
+  | [ Wire.B ], S.Start_menu _ ->
+      S.show screen ~at_ms:(p.at_ms + 100) S.Overworld
+  | _ -> talk ~page:false ~after_ms:2000 screen p
 
 let save () = run ~react:save_screen (Heal_and_save.save ~log)
 
@@ -376,8 +378,8 @@ let () =
         heal_unread_question "ok; overworld";
       case "heal: no text box after A fails" heal_no_dialog
         "failed heal_no_dialog: the nurse's text did not show; A x20";
-      case "save: START, down to SAVE, YES, saved" save
-        "ok; Start, down x3, A x2, B x5";
+      case "save: START, down to SAVE, YES, saved, START and B to confirm" save
+        "ok; Start, down x3, A x2, Start, B";
       case "cut: the turn, A, the page, YES" cut "ok; up, A x3, B x6, up";
       case "redeem: the page, Abra's row, YES" redeem "ok; A x4, B x6";
       case "redeem: YES once the question has replaced the prize list"

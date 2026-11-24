@@ -49,6 +49,18 @@ let battle_message i =
     width = 208;
   }
 
+let start_menu_pitch = 15
+let start_menu_first_top = 8
+
+let start_menu_row i =
+  {
+    id = Printf.sprintf "start_menu_name.%d" i;
+    left = 184;
+    indent = 2;
+    glyph_top = start_menu_first_top + (start_menu_pitch * i);
+    width = 50;
+  }
+
 (* The info page's right pane (window left 15 tiles, top 2) prints the species
    at (47, 19). *)
 let summary_species =

@@ -11,17 +11,28 @@ type t = {
   watch_port : int option;  (** the watch page's, as bound *)
 }
 
+(** Where the Switch's frames come from: the capture card, or a recorded video
+    (a dry run). *)
+type frames = Capture of string | Replay of string
+
 (** What the daemon drives: mGBA through its bridge, or the Switch through the
     controller board's serial port and the capture card (names as
-    [gamepilot switch-devices] prints them). *)
+    [gamepilot switch-devices] prints them). With no serial port the daemon
+    sends the presses to its fake board: a dry run. *)
 type backend =
   | Mgba of { port : int }
-  | Switch of { serial : string; capture : string }
+  | Switch of { serial : string option; frames : frames }
+
+let frames_args = function
+  | Capture device -> [ "--capture"; device ]
+  | Replay video -> [ "--replay"; video ]
 
 let backend_args = function
   | Mgba { port } -> [ "--backend"; "mgba"; "--mgba-port"; string_of_int port ]
-  | Switch { serial; capture } ->
-      [ "--backend"; "switch"; "--serial"; serial; "--capture"; capture ]
+  | Switch { serial; frames } ->
+      [ "--backend"; "switch" ]
+      @ Option.fold ~none:[] ~some:(fun s -> [ "--serial"; s ]) serial
+      @ frames_args frames
 
 type watch = {
   listen : string;

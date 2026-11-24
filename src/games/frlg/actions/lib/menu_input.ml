@@ -37,6 +37,8 @@ let taps button n =
   let tap = hold ~hold_ms:tap_hold_ms ~cooldown_ms:tap_release_ms button in
   if n > 0 then ignore (Effects.submit (List.init n (fun _ -> tap)))
 
+let mash button ms = taps button (ms / (tap_hold_ms + tap_release_ms))
+
 let moves ~from ~to_ =
   if to_ >= from then taps Wire.Down (to_ - from) else taps Wire.Up (from - to_)
 

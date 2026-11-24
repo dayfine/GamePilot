@@ -1,0 +1,73 @@
+(* The checkpoint runner's steps on a console without save states (the
+   Switch), around each run, as Story.Console_runs decides them: back to the
+   last save (Frlg_actions.Soft_reset) and the start check
+   (Frlg_story.Start_check) before; after, the in-game save and the next
+   start's frame for a pass (Frlg_actions.Game_save), back to the last save for
+   a failure. In the effect context. *)
+
+open Story
+module C = Frlg_story.Start_check
+
+let log_results log results =
+  List.iter
+    (fun r -> log ("[Start] " ^ Postcondition_check.result_to_string r))
+    results
+
+(* The party a checkpoint starts with: the one the checkpoint before it
+   promised, else the roster given with --party. *)
+let start_party ~roster (before : Plan.postconditions option) =
+  match (before, roster) with
+  | Some { party = Some p; _ }, _ -> Some p
+  | _, [] -> None
+  | _, roster -> Some (Plan.Party_in_order roster)
+
+let cause = Failure.cause_to_string
+
+let load_frame ~log path =
+  match C.load_frame path with
+  | Ok frame -> frame
+  | Error e ->
+      log ("[Start] " ^ e);
+      None
+
+(* After the reload: the frame first kept as the start's when none was. *)
+let start_check ~log ~frame_path party =
+  let expected = { C.party; frame = load_frame ~log frame_path } in
+  let observed = C.observe ~log expected in
+  let results = C.check expected observed in
+  log_results log results;
+  match C.mismatches results with
+  | [] ->
+      (match (expected.frame, observed.frame_read) with
+      | None, Some frame -> C.write_frame ~log frame_path frame
+      | _ -> ());
+      Ok ()
+  | l -> Error ("not at the checkpoint's start: " ^ String.concat "; " l)
+
+let before ~log ~frame_path party =
+  log "[Console] back to the last save";
+  match Frlg_actions.Soft_reset.return_to_save ~log () with
+  | Error c -> Error ("could not return to the last save: " ^ cause c)
+  | Ok () -> start_check ~log ~frame_path party
+
+let return_to_save ~log =
+  match Frlg_actions.Soft_reset.return_to_save ~log () with
+  | Ok () -> log "[Console] back at the last save"
+  | Error c -> log ("[Console] could not return to the last save: " ^ cause c)
+
+let step ~log ~next_frame = function
+  | Console_runs.Return_to_save -> Ok (return_to_save ~log)
+  | Keep_start_frame -> Ok (Option.iter (C.keep_frame ~log) next_frame)
+  | Save_in_game ->
+      Result.map_error
+        (fun c -> "the in-game save failed: " ^ cause c)
+        (Frlg_actions.Game_save.save_game ~log ())
+
+(* Runs the steps; [Error] when the save failed (no step after it runs). *)
+let after ~log ~next_frame steps =
+  List.fold_left
+    (fun done_ s ->
+      Result.bind done_ (fun () ->
+          log ("[Console] " ^ Console_runs.step_name s);
+          step ~log ~next_frame s))
+    (Ok ()) steps

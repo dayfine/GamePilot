@@ -28,9 +28,11 @@
 // Controller: the board must already run NS1 Wired Pro Controller, a mode the
 // daemon never changes), else to FakeSwitch's board. --board-check only starts
 // the session (checking the mode), prints what the board said and exits;
-// --capture-check saves one captured frame
-// and checks the GBA picture sits where nso_gba_viewport() says
-// (switch_geometry.h). Bring-up: docs/switch-bring-up.md.
+// --capture-check saves one captured frame and checks the GBA picture sits
+// where nso_gba_viewport() says (switch_geometry.h). Without --serial, and
+// with --replay in place of --capture, both check the fakes: a dry run
+// (tools/run_checkpoints_on_switch.sh --dry-run). Bring-up:
+// docs/switch-bring-up.md.
 
 #include <atomic>
 #include <csignal>
@@ -69,9 +71,9 @@ int usage() {
       "       gamepilot_daemon --backend switch (--replay VIDEO | --capture "
       "DEVICE) [--serial PORT] [--viewport x,y,w,h] [--port 47900] "
       "[--log FILE]\n"
-      "       gamepilot_daemon --backend switch --serial PORT --board-check\n"
-      "       gamepilot_daemon --backend switch --capture DEVICE "
-      "--capture-check PNG\n"
+      "       gamepilot_daemon --backend switch [--serial PORT] --board-check\n"
+      "       gamepilot_daemon --backend switch (--capture DEVICE | --replay "
+      "VIDEO) --capture-check PNG\n"
       "       either with [--watch-port 47901] [--listen 127.0.0.1] "
       "[--watch-token T]\n"
       "         [--registry DIR] [--checkpoint ID] [--run-folder DIR] "
@@ -197,11 +199,11 @@ bool parse_flags(int argc, char** argv, Flags& flags) {
     return flags.mgba_port != 0;
   }
   if (flags.backend == "switch" && flags.board_check) {
-    return !flags.serial.empty() && flags.capture.empty() &&
-           flags.replay.empty();
+    return flags.capture.empty() && flags.replay.empty();
   }
   if (flags.backend == "switch" && !flags.capture_check.empty()) {
-    return !flags.capture.empty() && flags.serial.empty();
+    return flags.replay.empty() != flags.capture.empty() &&
+           flags.serial.empty();
   }
   if (flags.backend == "switch") {
     return flags.replay.empty() != flags.capture.empty();
@@ -264,20 +266,34 @@ gamepilot::BoardInfo start_board(gamepilot::BoardSession& session) {
   return info;
 }
 
+// With no --serial, FakeSwitch's board: a dry run of the check.
 int run_board_check(const Flags& flags) {
-  gamepilot::SerialBoardPort port(flags.serial);
   gamepilot::BoardLog log;
+  if (flags.serial.empty()) {
+    const gamepilot::Clock clock;
+    gamepilot::FakeSwitch board(clock);
+    gamepilot::BoardSession session(board, log);
+    start_board(session);
+    return 0;
+  }
+  gamepilot::SerialBoardPort port(flags.serial);
   gamepilot::BoardSession session(port, log);
   start_board(session);
   return 0;
 }
 
 int run_capture_check(const Flags& flags) {
+  const gamepilot::Clock clock;
+  // With --replay, the video's first frame: a dry run of the check.
   const std::unique_ptr<gamepilot::FrameSource> source =
-      gamepilot::open_capture_card({.device = flags.capture});
+      flags.replay.empty()
+          ? gamepilot::open_capture_card({.device = flags.capture})
+          : gamepilot::open_video_replay(flags.replay, clock);
+  const std::string& from =
+      flags.replay.empty() ? flags.capture : flags.replay;
   cv::Mat frame;
   if (!source->read(frame) || frame.empty()) {
-    std::fprintf(stderr, "daemon: no frame from %s\n", flags.capture.c_str());
+    std::fprintf(stderr, "daemon: no frame from %s\n", from.c_str());
     return 1;
   }
   gamepilot::save_png(flags.capture_check, frame);
