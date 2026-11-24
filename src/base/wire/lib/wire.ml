@@ -16,9 +16,13 @@ type button = Command.button =
   | Down
   | R
   | L
+  | Home
+  | X
+  | Y
 
 let string_of_button = Command.string_of_button
 let button_of_string = Command.button_of_string
+let switch_only = Command.switch_only
 
 type command = Command.command =
   | Press of { buttons : button list; hold_ms : int; cooldown_ms : int }

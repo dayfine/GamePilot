@@ -431,6 +431,17 @@ DaemonStatus Server::status() const {
   return status;
 }
 
+void Server::refuse_switch_buttons(const SubmitParams& submit) const {
+  if (backend_.info().kind == "switch") {
+    return;
+  }
+  for (const InputCommand& command : submit.commands) {
+    if ((command.buttons & kSwitchOnlyKeys) != 0) {
+      throw switch_button_refusal(backend_.info().kind, command.buttons);
+    }
+  }
+}
+
 // Input methods need the lease: the client takes it or is refused. Returns
 // the owner the wire log names on the line, none for other methods. A
 // view-only backend refuses input and the lease to everyone.
@@ -614,6 +625,7 @@ pa::JsonObject Server::dispatch_input(ClientConnection& client,
   }
   if (method == "submit") {
     const SubmitParams submit = decode_submit(request.params);
+    refuse_switch_buttons(submit);
     keep_awake_.input(clock_.now_ms());
     batch_owners_.emplace_back(submit.batch_id, client.number);
     if (backend_.info().timing == Timing::kLive) {

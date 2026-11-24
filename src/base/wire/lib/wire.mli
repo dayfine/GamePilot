@@ -1,4 +1,4 @@
-(** Wire protocol v1.9 (protocol/v1): message types and their JSON codec.
+(** Wire protocol v1.11 (protocol/v1): message types and their JSON codec.
 
     The codec lives in one module per message family ([Command], [Probe],
     [Backend], [Jsonrpc], [Wire_log], [Probe_images]); this module re-exports
@@ -26,9 +26,15 @@ type button = Command.button =
   | Down
   | R
   | L
+  | Home
+  | X
+  | Y
 
 val string_of_button : button -> string
 val button_of_string : string -> button option
+
+val switch_only : button -> bool
+(** [Home], [X] and [Y]: buttons only the Switch backend takes (v1.11). *)
 
 type command = Command.command =
   | Press of { buttons : button list; hold_ms : int; cooldown_ms : int }

@@ -2,8 +2,9 @@
      --replay VIDEO) [--runs-dir DIR]
 
    The Switch's bring-up checks (docs/switch-bring-up.md) as a run of their
-   own: the daemon's --board-check (the board's mode) and --capture-check (one
-   frame and where the GBA picture sits), each run to its end, in a run folder
+   own: the daemon's --board-check (the board's mode), the game resumed when
+   the console was parked on HOME (Console_park_command), and --capture-check
+   (one frame and where the GBA picture sits), each run to its end, in a run folder
    (<date>-switch-bring-up-<n>, Run_record) with run.json (kind bring-up),
    both checks' output in daemon.out, the frame (frame.png, also
    $GAMEPILOT_RUNS/bring-up-frame.png), summary.txt and the RESULTS.tsv row.
@@ -52,12 +53,27 @@ let check ~daemon ~out args =
   Unix.close fd;
   status = Unix.WEXITED 0
 
-let ending ~board ~capture : Run_record.ending =
-  match (board, capture) with
-  | true, true -> { result = "pass"; at = ""; reason = "" }
-  | false, _ ->
+(* The console parked on HOME (Console_park_command) is back in the game
+   before the capture check, which needs the game picture. A daemon of its
+   own, its output in the run folder. *)
+let resume f frames ~dir =
+  print_endline "[Bring-up] resume the game if HOME is on screen";
+  Console_park_command.with_daemon ~daemon:f.daemon ~serial:f.serial ~frames
+    ~log_dir:dir `Resume
+  = 0
+
+let ending ~board ~resumed ~capture : Run_record.ending =
+  match (board, resumed, capture) with
+  | true, true, true -> { result = "pass"; at = ""; reason = "" }
+  | false, _, _ ->
       { result = "fail"; at = "board"; reason = "the board check failed" }
-  | true, false ->
+  | true, false, _ ->
+      {
+        result = "fail";
+        at = "resume";
+        reason = "the game did not come back from HOME";
+      }
+  | true, true, false ->
       { result = "fail"; at = "capture"; reason = "the capture check failed" }
 
 let summary (e : Run_record.ending) =
@@ -93,13 +109,14 @@ let run f frames =
     Option.fold ~none:[] ~some:(fun s -> [ "--serial"; s ]) f.serial
   in
   let board = check ~daemon:f.daemon ~out (serial @ [ "--board-check" ]) in
+  let resumed = board && resume f frames ~dir:run.record.dir in
   let capture =
-    board
+    resumed
     && check ~daemon:f.daemon ~out
          (Daemon_process.frames_args frames
          @ [ "--capture-check"; Run_record.path run.record "frame.png" ])
   in
-  let e = ending ~board ~capture in
+  let e = ending ~board ~resumed ~capture in
   keep_frame run ~runs_dir:f.runs_dir ~passed:(e.result = "pass");
   print_endline ("[Bring-up] " ^ summary e);
   Run_record.finish ~runs_dir:f.runs_dir run ~summary:(summary e) e;

@@ -1,10 +1,28 @@
 (** Button commands, their batches, and the [submit] and [cancel] results. *)
 
 type json = Yojson.Safe.t
-type button = A | B | Select | Start | Right | Left | Up | Down | R | L
+
+type button =
+  | A
+  | B
+  | Select
+  | Start
+  | Right
+  | Left
+  | Up
+  | Down
+  | R
+  | L
+  | Home  (** The Switch only, as are [X] and [Y] (protocol v1.11). *)
+  | X
+  | Y
 
 val string_of_button : button -> string
 val button_of_string : string -> button option
+
+val switch_only : button -> bool
+(** [Home], [X] and [Y]: the daemon refuses them on any backend but the Switch.
+*)
 
 type command =
   | Press of { buttons : button list; hold_ms : int; cooldown_ms : int }

@@ -111,6 +111,19 @@ void check_requests(const std::map<std::string, pa::JsonValue>& files) {
         batch.commands[0].cooldown_ms == 100);
   CHECK(batch.commands[1].is_wait && batch.commands[1].wait_ms == 250);
 
+  // The Switch's Home, and its refusal by a backend without it.
+  const SubmitParams home = decode_submit(
+      decode_request(files.at("42-submit.home.request.json")).params);
+  CHECK(home.commands.size() == 1 &&
+        home.commands[0].buttons == button_mask("Home") &&
+        (home.commands[0].buttons & kSwitchOnlyKeys) != 0);
+  CHECK((button_mask("X") | button_mask("Y")) ==
+        (kSwitchOnlyKeys & ~button_mask("Home")));
+  CHECK((button_mask("L") & kSwitchOnlyKeys) == 0);
+  CHECK(error_message(pa::JsonValue(std::int64_t{42}),
+                      switch_button_refusal("mgba", button_mask("Home"))) ==
+        files.at("43-error.switch_button.response.json"));
+
   const Request cancel = decode_request(files.at("12-cancel.request.json"));
   CHECK(cancel.method == "cancel");
   decode_cancel(cancel.params);
@@ -406,7 +419,7 @@ void check_errors() {
 
 int main() {
   const auto files = load_contracts();
-  CHECK(files.size() == 41);
+  CHECK(files.size() == 43);
   if (files.size() == 41) {
     check_requests(files);
     check_lease(files);

@@ -1,4 +1,4 @@
-# Wire protocol v1.10
+# Wire protocol v1.11
 
 JSON-RPC 2.0 between the OCaml programs (client) and the daemon (server). The golden files in this
 folder are the spec: the daemon's tests parse every file and the OCaml tests decode and re-encode
@@ -27,6 +27,9 @@ v1.9 serves many clients and adds the input lease (see Input lease): `lease.acqu
 v1.10 makes `t_ms` of `frame` and `batch_done` game time on a lockstep backend (see Clock and frames),
 so the daemon can run mGBA faster than real time (`--speed`). No message changes; at 1x game time
 keeps pace with the daemon clock, so a v1.9 program runs unchanged.
+v1.11 adds the Switch's own buttons `Home`, `X` and `Y` to `submit` (see Methods), for parking the
+console on the HOME menu; a backend that is not the Switch refuses them with -32602
+(`43-error.switch_button.response.json`). A v1.10 program never names them.
 v1.2 makes the daemon own where the game picture sits in the frame: `hello` gives the `viewport` and
 the `game_size`, probe boxes and template placements are relative to the picture, templates are in game
 pixels, and `core.color_count@1` is new.
@@ -98,6 +101,9 @@ size) every v1.1 message means the same in v1.2.
   again replaces it. Each probe costs time on every frame, so a reader unsubscribes the probes it no
   longer reads.
 - Buttons (GBA): `A`, `B`, `Select`, `Start`, `Right`, `Left`, `Up`, `Down`, `R`, `L`.
+  The Switch only: `Home`, `X`, `Y` (`42-submit.home.request.json`). A press of one on another
+  backend is refused, as a whole batch, with -32602 and `data` {`backend`, `button`}: mGBA and the
+  view backend have no such button (the view backend refuses every input anyway, -32002).
 - Batches run in order, one after another. Times are rounded to whole frames by the backend.
 - `backend.load_state` also drops queued commands and releases all buttons, as `cancel` does;
   queued batches then get no `batch_done`.
@@ -142,7 +148,8 @@ wall time: a batch starts when submitted (or when the queued ones end), each pre
 its milliseconds as given, without rounding to frames, and `start_seq` is the last frame captured
 when it was submitted. `backend.load_state` and `backend.save_state` answer -32002 (a console has
 no save states). The game picture sits inside the frame (`viewport`, by default the fork's FRLG
-`GAME_BOX`); GBA buttons map to the Switch's GBA app: Start is Plus, Select is Minus.
+`GAME_BOX`); GBA buttons map to the Switch's GBA app: Start is Plus, Select is Minus; `Home`, `X`
+and `Y` are the controller's own.
 
 The `view` backend is live too, and view-only: its frames come from a picture another program owns
 (an app's window), cropped to the video, so `viewport` is the whole frame and `game_size` the

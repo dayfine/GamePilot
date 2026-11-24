@@ -86,6 +86,15 @@ class TestClient {
 
   pa::JsonObject call(int id, const std::string& method,
                       const std::string& params) {
+    const pa::JsonObject answer = request(id, method, params);
+    const pa::JsonObject* result = answer.get_object("result");
+    CHECK(result != nullptr);
+    return result != nullptr ? result->clone() : pa::JsonObject();
+  }
+
+  // The whole answer to a request: its result or its error.
+  pa::JsonObject request(int id, const std::string& method,
+                         const std::string& params) {
     const std::string line = R"({"jsonrpc":"2.0","id":)" + std::to_string(id) +
                              R"(,"method":")" + method +
                              R"(","params":)" + params + "}";
@@ -94,9 +103,7 @@ class TestClient {
       const pa::JsonValue message = next();
       const pa::JsonObject& object = *message.to_object();
       if (object.get_integer_default("id", -1) == id) {
-        const pa::JsonObject* result = object.get_object("result");
-        CHECK(result != nullptr);
-        return result != nullptr ? result->clone() : pa::JsonObject();
+        return object.clone();
       }
     }
   }
@@ -205,11 +212,42 @@ void check_speed(const SpeedCase& c) {
   serving.join();
 }
 
+// mGBA has no Home: a press of it is refused, naming the button, and runs
+// nothing.
+void check_home_refused() {
+  const Clock clock;
+  FakeLockstep backend;
+  ServerOptions options;
+  options.port = 0;
+  Server server(backend, options, clock);
+  std::atomic<bool> stop{false};
+  std::thread serving([&] { server.run(stop); });
+  try {
+    TestClient client(server.port());
+    client.call(1, "hello", R"({"protocol":1,"client":"home-test"})");
+    const pa::JsonObject answer = client.request(
+        2, "submit",
+        R"({"batch_id":"h","commands":[{"press":["Home"],"hold_ms":50,"cooldown_ms":50}]})");
+    const pa::JsonObject* error = answer.get_object("error");
+    CHECK(
+        error != nullptr &&
+        error->get_integer_default("code") == kInvalidParams &&
+        error->get_object_throw("data").get_string_throw("button") == "Home" &&
+        error->get_object_throw("data").get_string_throw("backend") == "mgba");
+  } catch (const std::exception& error) {
+    std::fprintf(stderr, "home refused: %s\n", error.what());
+    CHECK(false);
+  }
+  stop.store(true);
+  serving.join();
+}
+
 }  // namespace
 
 int main() {
   for (const SpeedCase& c : kSpeedCases) {
     check_speed(c);
   }
+  check_home_refused();
   return TEST_RESULT();
 }

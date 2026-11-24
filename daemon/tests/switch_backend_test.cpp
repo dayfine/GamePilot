@@ -47,6 +47,10 @@ void check_key_mapping() {
   // Opposite arrows cancel.
   CHECK(pro_buttons_for_keys(kUp | kDown).button5 == 0);
   CHECK(pro_buttons_for_keys(kLeft | kRight | kA).button5 == 0);
+  // Home in byte 4 bit 4; X and Y in byte 3 bits 1 and 0, beside A.
+  CHECK(pro_buttons_for_keys(button_mask("Home")).button4 == 0x10);
+  CHECK(pro_buttons_for_keys(button_mask("X") | kA).button3 == 0x0a);
+  CHECK(pro_buttons_for_keys(button_mask("Y")).button3 == 0x01);
 }
 
 void check_live_schedule() {
@@ -347,6 +351,36 @@ void check_two_clients_and_the_lease() {
   serving.join();
 }
 
+// A submitted Home reaches the fake board as the Pro Controller's Home.
+void check_home_press() {
+  const Clock clock;
+  test::FakeConsole console(clock);
+  SwitchBackend backend(console.board.screen(60, 0, cv::Size(64, 36)),
+                        console.session, clock, SwitchOptions{});
+  ServerOptions options;
+  options.port = 47976;
+  Server server(backend, options, clock);
+  std::atomic<bool> stop{false};
+  std::thread serving([&] { server.run(stop); });
+
+  TestClient client = connect_client(options.port);
+  call(
+      client,
+      R"({"jsonrpc":"2.0","id":1,"method":"hello","params":{"protocol":1,"client":"home-test"}})");
+  const std::string submitted = call(
+      client,
+      R"({"jsonrpc":"2.0","id":2,"method":"submit","params":{"batch_id":"h","commands":[{"press":["Home"],"hold_ms":40,"cooldown_ms":10}]}})");
+  CHECK(submitted.find("\"batch_id\":\"h\"") != std::string::npos);
+  sleep_ms(200);
+  bool home = false;
+  for (const BoardCommand& command : console.board.commands()) {
+    home = home || command.message.buttons.button4 == 0x10;
+  }
+  CHECK(home);
+  stop = true;
+  serving.join();
+}
+
 // The lines the client receives within `ms`, up to and with the first that
 // holds `needle`.
 std::vector<std::string> read_until(TestClient& client,
@@ -394,12 +428,15 @@ void check_one_clock_and_cancel() {
   std::thread serving([&] { server.run(stop); });
 
   TestClient client = connect_client(options.port);
-  call(client,
-       R"({"jsonrpc":"2.0","id":1,"method":"hello","params":{"protocol":1,"client":"clock-test"}})");
-  call(client,
-       R"({"jsonrpc":"2.0","id":2,"method":"subscribe","params":{"probes":[{"id":"p","kind":"core.color_stats@1","box":{"x":0,"y":0,"w":1,"h":1},"delivery":"every"}]}})");
-  call(client,
-       R"({"jsonrpc":"2.0","id":3,"method":"submit","params":{"batch_id":"b1","commands":[{"press":["A"],"hold_ms":50,"cooldown_ms":50}]}})");
+  call(
+      client,
+      R"({"jsonrpc":"2.0","id":1,"method":"hello","params":{"protocol":1,"client":"clock-test"}})");
+  call(
+      client,
+      R"({"jsonrpc":"2.0","id":2,"method":"subscribe","params":{"probes":[{"id":"p","kind":"core.color_stats@1","box":{"x":0,"y":0,"w":1,"h":1},"delivery":"every"}]}})");
+  call(
+      client,
+      R"({"jsonrpc":"2.0","id":3,"method":"submit","params":{"batch_id":"b1","commands":[{"press":["A"],"hold_ms":50,"cooldown_ms":50}]}})");
   const std::vector<std::string> lines =
       read_until(client, "\"batch_done\"", 2000);
   double frame_ms = -1;
@@ -447,6 +484,7 @@ int main() {
   check_video_replay();
   check_latency_harness();
   check_two_clients_and_the_lease();
+  check_home_press();
   check_one_clock_and_cancel();
   return TEST_RESULT();
 }

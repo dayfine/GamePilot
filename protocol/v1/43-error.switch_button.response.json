@@ -1,0 +1,12 @@
+{
+  "jsonrpc": "2.0",
+  "id": 42,
+  "error": {
+    "code": -32602,
+    "message": "Home is a Switch button: the mgba backend has no Home",
+    "data": {
+      "backend": "mgba",
+      "button": "Home"
+    }
+  }
+}

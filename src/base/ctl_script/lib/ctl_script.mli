@@ -1,9 +1,10 @@
 (** The commands of [gamepilot ctl], one per line of a script or one from the
     command line, in the lab's labB.sh format: [press A 100 800] (button, hold
     ms, wait ms after the release), [dpad DOWN 160 800], [shot NAME], [wait MS];
-    [#] starts a comment. Buttons are the daemon's GBA buttons (protocol/v1),
-    any case; PLUS and MINUS name Start and Select as the Switch's GBA app maps
-    them. *)
+    [#] starts a comment. Buttons are the daemon's (protocol/v1), any case: the
+    GBA buttons, PLUS and MINUS naming Start and Select as the Switch's GBA app
+    maps them, and the Switch's own HOME, X and Y, which only the Switch backend
+    takes. *)
 
 type step =
   | Press of { button : Wire.button; hold_ms : int; wait_ms : int; times : int }
