@@ -6,7 +6,8 @@
    lease (contracts v1.9) as [--owner] and is refused, naming the holder, while
    someone else holds it; reads (shot, read, status) need no lease. COMMAND and
    FILE's lines are Ctl_script's (labB.sh's format). [run] prints [ok N LINE]
-   per line and stops at the first error. Every press is in the daemon's wire
+   per line and stops at the first error. [park] and [resume] park the Switch
+   on its HOME menu and resume FireRed from it (Console_park_command). Every press is in the daemon's wire
    log with its owner. *)
 
 let default_owner = "ctl"
@@ -16,6 +17,7 @@ let usage =
   "  gamepilot ctl [--port N] [--owner LABEL] press A [--hold 100] [--wait \
    500] | dpad UP [N]\n\
   \      | wait MS | shot FILE.png | read READER | status\n\
+  \      | park | resume  (the Switch: HOME menu and back to FireRed)\n\
   \  gamepilot ctl [--port N] [--owner LABEL] run FILE\n\
   \    readers:\n" ^ Ctl_readers.usage ()
 
@@ -114,6 +116,10 @@ let main args =
   | Error e -> Error e
   | Ok (_, []) -> Error "ctl: no command"
   | Ok (f, [ "status" ]) -> Status_command.show f.port
+  | Ok (f, [ "park" ]) ->
+      Ok (Console_park_command.on_port ~port:f.port ~owner:f.owner `Park)
+  | Ok (f, [ "resume" ]) ->
+      Ok (Console_park_command.on_port ~port:f.port ~owner:f.owner `Resume)
   | Ok (f, [ "run"; file ]) -> (
       match parse_script (read_lines file) with
       | Ok steps -> Ok (run_steps f steps)

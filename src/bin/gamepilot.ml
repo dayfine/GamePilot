@@ -9,6 +9,8 @@
    gamepilot switch-devices [--profile DIR] (Switch_devices)
    gamepilot bring-up [--serial PORT] (--capture DEVICE | --replay VIDEO)
      (Bring_up_command)
+   gamepilot console park|resume [--serial PORT] (--capture DEVICE | --replay
+     VIDEO) (Console_park_command)
 
    <program> and --program take a registry id (Program_registry):
    frlg.start_menu_poc, or start_menu_poc while no other game has one. *)
@@ -20,7 +22,7 @@ let usage =
   \  gamepilot replay start_menu_poc WIRELOG\n" ^ Checkpoint_command.usage
   ^ Checkpoints_command.usage ^ Programs_command.usage ^ Status_command.usage
   ^ Ctl_command.usage ^ Runs_command.usage ^ Switch_devices.usage
-  ^ Bring_up_command.usage
+  ^ Bring_up_command.usage ^ Console_park_command.usage
 
 let die msg =
   prerr_string msg;
@@ -122,6 +124,7 @@ let () =
   | "runs" :: flags -> exit_with (Runs_command.main flags)
   | "switch-devices" :: flags -> exit_with (Switch_devices.main flags)
   | "bring-up" :: flags -> exit_with (Bring_up_command.main flags)
+  | "console" :: args -> exit_with (Console_park_command.main args)
   | "programs" :: flags -> exit_with (Programs_command.main flags)
   | "checkpoints" :: args ->
       exit_with

@@ -4,7 +4,8 @@
 # bring-up checks (the board's mode, one frame and its geometry), the pre-flight of the loaded
 # save, then the checkpoints with --backend switch, and always hands the console back: the
 # daemons stopped (which releases the keys and closes the port and the card) and the lab lock
-# released, also on a failure or Ctrl-C.
+# released, also on a failure or Ctrl-C. The console is parked on the HOME menu at the release
+# (gamepilot console park) and the bring-up resumes the game from it before its frame check.
 #
 #   sh run/run_checkpoints_on_switch.sh --program frlg.mail_glitch | PLAN_DIR \
 #       --from mg-01 --to mg-03 [--runs N] [--no-save-after-pass] [--no-preflight | --preflight-only] \
@@ -53,7 +54,7 @@ console=${GAMEPILOT_LAB_CONSOLE:-B}
 lab_app=${GAMEPILOT_LAB_APP:-SerialPrograms.*--profile lab-B}
 
 usage() {
-    sed -n '9,12p' "$0" | sed 's/^# \{0,1\}//' >&2
+    sed -n '10,13p' "$0" | sed 's/^# \{0,1\}//' >&2
     exit 2
 }
 
@@ -186,6 +187,18 @@ release() {
             sleep 0.2
             tries=$((tries + 1))
         done
+    fi
+    # Park the console on HOME (the game suspended where the run left it; the next run's soft
+    # reset goes back to the last save anyway), then hand it back.
+    if [ -n "$dry_run" ]; then
+        echo "[Park] dry run: skipped (the replay never shows HOME)"
+    elif ! pgrep -f "$pattern" >/dev/null; then
+        # shellcheck disable=SC2086
+        if ! "$bin" console park --daemon "$daemon" $board_args $frames_args \
+            --log-dir "$GAMEPILOT_RUNS"; then
+            echo "[Park] the console is not on HOME: check it before leaving it idle" >&2
+            status=1
+        fi
     fi
     if pgrep -f "$pattern" >/dev/null; then
         echo "[Release] a daemon is still running: pgrep -fl gamepilot_daemon" >&2

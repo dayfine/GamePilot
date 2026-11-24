@@ -15,6 +15,7 @@
   gamepilot.frlg_actions
   gamepilot.frlg_readers
   gamepilot.ctl_script
+  gamepilot.switch_home
   gamepilot.frlg_story
   unix
   yojson))

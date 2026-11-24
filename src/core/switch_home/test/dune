@@ -1,0 +1,20 @@
+(executable
+ (name write_probe_spec)
+ (modules write_probe_spec fire_red_spec)
+ (libraries yojson gamepilot.wire gamepilot.switch_home))
+
+(rule
+ (copy fire_red.ml fire_red_spec.ml))
+
+(rule
+ (copy fixtures/switch.probes.jsonl switch.probes.jsonl))
+
+(tests
+ (names test_home_screen test_console_park)
+ (modules test_home_screen test_console_park fire_red scripted_home)
+ (deps switch.probes.jsonl)
+ (libraries
+  gamepilot.wire
+  gamepilot.effects
+  gamepilot.table_test
+  gamepilot.switch_home))
