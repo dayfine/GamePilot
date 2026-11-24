@@ -22,6 +22,7 @@ type t = {
   first_fade : Fade.t;  (** the first fade seen *)
   fade_showing : Fade.t;  (** the one the last look showed *)
   banner : bool;
+  arrived : bool;
   quiet_since : float option;
   calm_since : float option;
 }
@@ -32,11 +33,13 @@ let create rule =
     first_fade = No_fade;
     fade_showing = No_fade;
     banner = false;
+    arrived = false;
     quiet_since = None;
     calm_since = None;
   }
 
-let warped t = (not t.rule.warp) || t.first_fade <> No_fade || t.banner
+let warped t =
+  (not t.rule.warp) || t.first_fade <> No_fade || t.banner || t.arrived
 
 (* Since when a condition has held, given that it holds now or not. *)
 let held_since holds since ~at_ms =
@@ -62,6 +65,7 @@ let observe_scene t (f : Facts.t) ~at_ms =
       first_fade = (if f.fade <> No_fade then f.fade else t.first_fade);
       fade_showing = f.fade;
       banner = t.banner || f.banner;
+      arrived = t.arrived || f.arrived;
     }
   in
   (* A fade is never calm: a game may read a black frame as the overworld with
@@ -94,6 +98,7 @@ let describe t =
     | first, _ -> [ Fade.name first ^ " still down" ]
   in
   let banner = if t.banner then [ "banner read" ] else [] in
-  match fade @ banner with
+  let arrived = if t.arrived then [ "arrival read" ] else [] in
+  match fade @ banner @ arrived with
   | [] -> "no fade or banner"
   | parts -> String.concat ", " parts

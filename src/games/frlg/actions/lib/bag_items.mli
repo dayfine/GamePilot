@@ -57,6 +57,11 @@ val item_action : string -> int -> unit
     chosen with A. Fails as {!open_pocket_top} and {!select} do, or as
     [no_item_menu]. *)
 
+val item_action_press : string -> int -> Wire.command
+(** As {!item_action} up to the action's A, which it returns unpressed: for a
+    step whose settle watches the frames from that press on (the Escape Rope's
+    USE starts its warp). *)
+
 val count_on_row : int -> int option
 (** The count on shown list row [row] (0..5; the Berry Pouch's 0..6, the same
     column), read digit by digit in the small font

@@ -5,6 +5,9 @@
 type t = {
   fade : Fade.t;
   banner : bool;  (** the location banner of the map the step expects *)
+  arrived : bool;
+      (** a read of where the step goes holds (the overworld, another scene than
+          the one it left): proof of a warp, as a fade or the banner is *)
   dialog : bool;  (** a dialogue box shows *)
   battle : bool;  (** a battle shows (its menu, its HUD or its opening) *)
   free_control : bool;  (** the overworld, with the player in control *)
@@ -14,3 +17,6 @@ type t = {
 
 val none : t
 (** Nothing seen: no fade, every flag false. *)
+
+val shows_warp : t -> bool
+(** A fade, the banner or the arrival read: a sign the warp happened. *)
