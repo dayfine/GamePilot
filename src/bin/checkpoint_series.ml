@@ -3,7 +3,8 @@
    exit code. In verification mode a passing checkpoint's last passing end
    becomes the next checkpoint's start state, the one before kept beside it.
    StoryEngine::run_checkpoints() and verify_checkpoint() on the fork's
-   frlg/lean; see Checkpoints_command. *)
+   frlg/lean; see Checkpoints_command. The chain's progress (Chain_progress)
+   goes to the watch page from each run. *)
 
 open Story
 module Run = Checkpoint_live_run
@@ -41,15 +42,35 @@ let checkpoint ~plan_dir (setup : Run.setup) id ~next =
         | None -> Checkpoint_end.declared ~next plan.checkpoint);
     }
 
+let now_ms () = int_of_float (Unix.gettimeofday () *. 1000.)
+
+(* One run of [cp], [chain] updated around it. *)
+let trial setup cp n chain =
+  chain := Chain_progress.begin_trial !chain;
+  let started = !chain in
+  let progress = function
+    | None -> Chain_progress.to_wire started ~now_ms:(now_ms ())
+    | Some r ->
+        let now_ms = now_ms () in
+        Chain_progress.to_wire
+          (Chain_progress.end_trial started r ~now_ms)
+          ~now_ms
+  in
+  let ((_, outcome) as run) = Run.run setup cp n ~progress in
+  chain :=
+    Chain_progress.end_trial started (Run.trial outcome) ~now_ms:(now_ms ());
+  run
+
 (* Runs [cp] until the policy decides; the verdict and the runs, oldest
    first. *)
-let rec runs_of setup cp runs =
+let rec runs_of setup cp chain runs =
   match
     Checkpoint_trials.verdict setup.Run.policy
       (List.map (fun (_, o) -> Run.trial o) runs)
   with
   | Checkpoint_trials.Run_again ->
-      runs_of setup cp (runs @ [ Run.run setup cp (List.length runs + 1) ])
+      let run = trial setup cp (List.length runs + 1) chain in
+      runs_of setup cp chain (runs @ [ run ])
   | verdict -> (verdict, runs)
 
 (* The last passing run's end.ss as [next]'s start (or [id].end.ss). *)
@@ -82,8 +103,8 @@ let keep_uncapped_end (setup : Run.setup) id ~next runs =
   | None -> keep_end setup id ~next runs
 
 (* Whether [cp] passed, after running it until its policy decided. *)
-let decide (setup : Run.setup) (cp : Run.checkpoint) ~next =
-  match runs_of setup cp [] with
+let decide (setup : Run.setup) (cp : Run.checkpoint) chain ~next =
+  match runs_of setup cp chain [] with
   | Checkpoint_trials.Checkpoint_passed { passes; runs }, done_runs ->
       Printf.printf "[Checkpoints] %s: passed (%d of %d runs)%s\n%!" cp.id
         passes runs (Run.capped_note setup cp);
@@ -95,17 +116,28 @@ let decide (setup : Run.setup) (cp : Run.checkpoint) ~next =
       false
   | Checkpoint_trials.Run_again, _ -> false
 
-let one ~plan_dir setup id ~next =
+let one ~plan_dir setup id chain ~next =
+  chain := Chain_progress.begin_checkpoint !chain id ~now_ms:(now_ms ());
   match checkpoint ~plan_dir setup id ~next with
-  | Ok cp -> decide setup cp ~next
+  | Ok cp -> decide setup cp chain ~next
   | Error e ->
       print_endline ("[Checkpoints] " ^ id ^ ": " ^ e);
+      chain := Chain_progress.fail_checkpoint !chain ~now_ms:(now_ms ());
       false
 
-let rec run ~plan_dir setup ids ~after =
+let rec chain_from ~plan_dir setup ids chain ~after =
   match ids with
   | [] -> 0
   | id :: rest ->
       let next = match rest with n :: _ -> Some n | [] -> after in
-      if one ~plan_dir setup id ~next then run ~plan_dir setup rest ~after
+      if one ~plan_dir setup id chain ~next then
+        chain_from ~plan_dir setup rest chain ~after
       else 1
+
+let run ~plan_dir (setup : Run.setup) ids ~after =
+  let chain =
+    ref
+      (Chain_progress.create ~mode:setup.mode ~policy:setup.policy
+         ~started_ms:(now_ms ()) ids)
+  in
+  chain_from ~plan_dir setup ids chain ~after

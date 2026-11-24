@@ -4,7 +4,8 @@
   test_runner
   test_repeat_until
   test_checkpoint_trials
-  test_postcondition_check)
+  test_postcondition_check
+  test_chain_progress)
  (modules
   plan_files
   plan_text
@@ -14,5 +15,11 @@
   test_runner
   test_repeat_until
   test_checkpoint_trials
-  test_postcondition_check)
- (libraries gamepilot.case_table yojson gamepilot.grid_maps gamepilot.story))
+  test_postcondition_check
+  test_chain_progress)
+ (libraries
+  gamepilot.case_table
+  yojson
+  gamepilot.wire
+  gamepilot.grid_maps
+  gamepilot.story))

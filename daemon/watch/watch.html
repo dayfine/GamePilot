@@ -4,8 +4,9 @@
   daemon/src/watch_server.cpp; design in docs/design/Watch-Page.md).
   Frame: GET /frame (PNG for small frames, JPEG for large), polled at most
   5 times a second while the tab is visible. Probe boxes are drawn on a
-  canvas over it at display resolution, not into the frame. Everything else: the event stream GET /events (info, plan, log,
-  probes, status). Stop: POST /stop.
+  canvas over it at display resolution, not into the frame. Everything else: the event stream GET /events (info, run, plan,
+  log, probes, status). Stop: POST /stop. The Run strip keeps each checkpoint's
+  last plan in memory, so a finished one's events can be looked at again.
 -->
 <html lang="en">
 <head>
@@ -46,11 +47,11 @@
   main {
     display: grid; gap: 12px; padding: 12px 16px;
     grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
-    grid-template-areas: "frame frame" "plan log" "health log";
+    grid-template-areas: "frame frame" "run run" "plan log" "health log";
   }
   @media (max-width: 800px) {
     main { grid-template-columns: minmax(0, 1fr);
-           grid-template-areas: "frame" "plan" "health" "log"; }
+           grid-template-areas: "frame" "run" "plan" "health" "log"; }
   }
   section {
     background: var(--panel); border: 1px solid var(--line);
@@ -61,6 +62,7 @@
     color: var(--muted); margin: 0 0 8px;
   }
   #frame-panel { grid-area: frame; }
+  #run-panel { grid-area: run; }
   #plan-panel { grid-area: plan; }
   #log-panel { grid-area: log; }
   #health-panel { grid-area: health; }
@@ -90,12 +92,31 @@
                         white-space: nowrap; }
   #probe-table td.chg { width: 14px; color: var(--box); text-align: center; }
   #probe-table tr.hot td { background: color-mix(in srgb, var(--cur) 14%, transparent); }
-  ol#plan { list-style: none; margin: 0; padding: 0; max-height: 420px;
+  ol.plan { list-style: none; margin: 0; padding: 0; max-height: 420px;
             overflow: auto; }
-  ol#plan li { display: grid; grid-template-columns: 22px 28px 1fr;
+  ol.plan li { display: grid; grid-template-columns: 22px 28px 1fr;
                padding: 3px 0; border-bottom: 1px solid var(--line); }
-  ol#plan li:last-child { border-bottom: 0; }
-  ol#plan li.empty { display: block; }
+  ol.plan li:last-child { border-bottom: 0; }
+  ol.plan li.empty { display: block; }
+  #run-meta { color: var(--muted); margin-bottom: 8px; font-variant-numeric: tabular-nums; }
+  #run-meta b { color: var(--text); font-weight: 600; }
+  ol#chain { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { display: inline-flex; align-items: baseline; gap: 6px; font: inherit; font-size: 13px;
+          border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px;
+          background: var(--panel); color: var(--muted); cursor: default; }
+  .chip .t { font-size: 12px; font-variant-numeric: tabular-nums; }
+  .chip.passed { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 45%, var(--line)); }
+  .chip.failed { color: var(--bad); border-color: color-mix(in srgb, var(--bad) 45%, var(--line)); }
+  .chip.skipped { color: var(--skip); text-decoration: line-through; }
+  .chip.current { color: var(--cur); border-color: var(--cur); font-weight: 600;
+                  background: color-mix(in srgb, var(--cur) 12%, transparent); }
+  .chip.open { cursor: pointer; }
+  .chip.open:hover, .chip.shown { outline: 2px solid color-mix(in srgb, var(--cur) 50%, transparent); }
+  #past { margin-top: 10px; border-top: 1px solid var(--line); padding-top: 8px; }
+  #past-head { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+  #past-head button { margin-left: auto; font: inherit; font-size: 12px; background: var(--panel);
+                      color: var(--text); border: 1px solid var(--line); border-radius: 6px;
+                      padding: 2px 8px; cursor: pointer; }
   .mark { font-weight: 700; text-align: center; }
   .n { color: var(--muted); font-variant-numeric: tabular-nums; }
   .detail { grid-column: 3; color: var(--muted); font-size: 12px;
@@ -152,9 +173,19 @@
       </div>
     </div>
   </section>
+  <section id="run-panel">
+    <h2>Run</h2>
+    <div id="run-meta">no chain yet: <code>gamepilot checkpoints</code> sends it when a run starts</div>
+    <ol id="chain"></ol>
+    <div id="past" hidden>
+      <div id="past-head"><span id="past-title"></span>
+        <button id="past-close" type="button">Close</button></div>
+      <ol id="past-plan" class="plan"></ol>
+    </div>
+  </section>
   <section id="plan-panel">
     <h2 id="plan-title">Plan</h2>
-    <ol id="plan"><li class="empty">no plan yet: the program sends it when a checkpoint starts</li></ol>
+    <ol id="plan" class="plan"><li class="empty">no plan yet: the program sends it when a checkpoint starts</li></ol>
   </section>
   <section id="log-panel">
     <h2>Log</h2>
@@ -396,27 +427,148 @@ async function pollFrame() {
 
 // --- Plan --------------------------------------------------------------------
 
-const MARKS = {done: "✓", current: "▶", failed: "✗", skipped: "–", pending: ""};
+const MARKS = {done: "✓", passed: "✓", current: "▶", failed: "✗", skipped: "–", pending: ""};
 
-function renderPlan() {
-  const plan = lastPlan;
-  if (!plan) return;
-  $("plan-title").textContent = "Plan · " + plan.checkpoint;
-  const list = $("plan");
+// "4:05" or "1:02:09".
+function duration(ms) {
+  const s = Math.max(0, Math.floor(ms / 1000));
+  const two = (n) => String(n).padStart(2, "0");
+  const h = Math.floor(s / 3600), m = Math.floor(s / 60) % 60;
+  return (h ? h + ":" + two(m) : String(m)) + ":" + two(s % 60);
+}
+
+// The current event: since when this page has seen it current (the plan has
+// no start times, so a page opened mid-event counts from then), and the
+// grind's progress from its log lines (Frlg_actions.Grind).
+let currentKey = null;
+let currentSince = 0;
+let grind = null;   // {goal, battle, heal}
+
+function trackCurrent(plan) {
+  const i = plan.events.findIndex((e) => e.state === "current");
+  const key = i < 0 ? null : plan.checkpoint + "#" + i;
+  if (key !== currentKey) { currentKey = key; currentSince = Date.now(); grind = null; }
+}
+
+function grindLine(line) {
+  const goal = line.match(/Grind: (.+? to Lv \d+ for [^(]+?) \(/);
+  const battle = line.match(/Grind: battle (\d+) /);
+  if (!goal && !battle && !/Grind: heal\./.test(line)) return;
+  grind = grind || {goal: "", battle: 0, heal: false};
+  if (goal) grind.goal = goal[1];
+  if (battle) { grind.battle = Number(battle[1]); grind.heal = false; }
+  if (/Grind: heal\./.test(line)) grind.heal = true;
+}
+
+function currentDetail() {
+  const parts = [duration(Date.now() - currentSince)];
+  if (grind) {
+    if (grind.battle) parts.push("battle " + grind.battle + (grind.heal ? ", healing" : ""));
+    if (grind.goal) parts.push(grind.goal);
+  } else if (lastLogLine) {
+    parts.push(lastLogLine);
+  }
+  return parts.join(" · ");
+}
+
+// A plan's events into a list; the live plan shows the current event's time
+// and progress.
+function renderEvents(list, plan, live) {
   list.replaceChildren();
   plan.events.forEach((e, i) => {
     const li = el("li", e.state);
     li.append(el("span", "mark", MARKS[e.state] || ""), el("span", "n", "#" + (i + 1)),
               el("span", "id", e.id));
     let detail = e.detail;
-    if (e.state === "current" && !detail) detail = lastLogLine;
+    if (live && e.state === "current" && !detail) detail = currentDetail();
     if (e.state === "skipped" && detail) detail = "skipped: " + detail;
     if (detail) li.append(el("span", "detail", detail));
     list.append(li);
   });
-  const current = list.querySelector("li.current, li.failed");
+}
+
+function renderPlan() {
+  const plan = lastPlan;
+  if (!plan) return;
+  $("plan-title").textContent = "Plan · " + plan.checkpoint;
+  renderEvents($("plan"), plan, true);
+  const current = $("plan").querySelector("li.current, li.failed");
   if (current) current.scrollIntoView({block: "nearest"});
 }
+
+// --- Run: the chain of checkpoints -------------------------------------------
+//
+// `run` comes at the start and the end of each run of a checkpoint (each run
+// has its own daemon, so the stream reconnects in between). Each checkpoint's
+// last plan stays here, so a finished one's events can be shown again.
+
+const plans = new Map();   // checkpoint id -> its last plan
+let lastRun = null;
+let runAt = 0;             // when lastRun came (Date.now())
+let pastId = null;         // the finished checkpoint shown below the chain
+
+function elapsed(c) {
+  return c.elapsed_ms + (c.state === "current" ? Date.now() - runAt : 0);
+}
+
+function renderRun() {
+  const run = lastRun;
+  if (!run) return;
+  const cur = run.checkpoints.find((c) => c.state === "current");
+  const total = cur ? Date.now() - run.started_ms : runAt - run.started_ms;
+  const meta = $("run-meta");
+  meta.replaceChildren(el("b", "", run.mode), " · ");
+  if (cur) {
+    meta.append(el("b", "", cur.id), " trial " + run.trial + " of " + run.trials + " · " +
+                run.passes + " passed, " + run.fails + " failed · ");
+  } else {
+    const failed = run.checkpoints.find((c) => c.state === "failed");
+    meta.append(el("b", "", failed ? "stopped at " + failed.id : "chain done"), " · ");
+  }
+  meta.append("total " + duration(total));
+  const chain = $("chain");
+  chain.replaceChildren();
+  for (const c of run.checkpoints) {
+    const finished = c.state === "passed" || c.state === "failed";
+    const open = finished && plans.has(c.id);
+    const chip = el(open ? "button" : "span", "chip " + c.state + (open ? " open" : "") +
+                    (c.id === pastId ? " shown" : ""));
+    if (open) chip.type = "button";
+    chip.title = open ? "Show " + c.id + "'s events at its end" : c.state;
+    chip.append((MARKS[c.state] ? MARKS[c.state] + " " : "") + c.id);
+    let note = "";
+    if (c.state === "current") {
+      note = run.trial + "/" + run.trials + ", " + run.passes + " pass" +
+             (run.passes === 1 ? "" : "es") + " · " + duration(elapsed(c));
+    } else if (finished) {
+      note = duration(elapsed(c));
+    }
+    if (note) chip.append(el("span", "t", note));
+    if (open) chip.addEventListener("click", () => showPast(c.id === pastId ? null : c.id));
+    const li = el("li");
+    li.append(chip);
+    chain.append(li);
+  }
+}
+
+function showPast(id) {
+  pastId = id;
+  $("past").hidden = !id;
+  if (id) {
+    const plan = plans.get(id);
+    const state = lastRun.checkpoints.find((c) => c.id === id);
+    $("past-title").textContent = id + " · " + (state ? state.state : "") + " · its events at its end";
+    renderEvents($("past-plan"), plan, false);
+  }
+  renderRun();
+}
+$("past-close").addEventListener("click", () => showPast(null));
+
+// Times tick between messages.
+setInterval(() => {
+  renderRun();
+  if (lastPlan && currentKey) renderPlan();
+}, 1000);
 
 // --- Log ---------------------------------------------------------------------
 
@@ -427,6 +579,7 @@ function addLog(line) {
   while (log.childNodes.length > LOG_LINES) log.removeChild(log.firstChild);
   if (atBottom) log.scrollTop = log.scrollHeight;
   lastLogLine = line;
+  grindLine(line);
   if (lastPlan && lastPlan.events.some((e) => e.state === "current")) renderPlan();
 }
 
@@ -475,7 +628,14 @@ function connect() {
   events.onopen = () => { $("conn").textContent = "live"; $("conn").className = ""; };
   events.onerror = () => { $("conn").textContent = "disconnected, retrying…"; $("conn").className = "down"; };
   on("info", (d) => { info = d; drawFrame(); });
-  on("plan", (d) => { lastPlan = d; renderPlan(); });
+  on("run", (d) => { lastRun = d; runAt = Date.now(); renderRun(); });
+  on("plan", (d) => {
+    lastPlan = d;
+    plans.set(d.checkpoint, d);
+    trackCurrent(d);
+    renderPlan();
+    if (d.checkpoint === pastId) showPast(pastId);
+  });
   on("log", (d) => addLog(d.line));
   on("probes", (d) => takeProbes(d.probes));
   on("status", (d) => { renderStatus(d); $("conn").textContent = "live"; $("conn").className = ""; });

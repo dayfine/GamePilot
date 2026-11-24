@@ -182,7 +182,8 @@ void check_encoders(const std::map<std::string, pa::JsonValue>& files) {
         files.at("32-stop.notification.json"));
   // The program's watch notes are notifications the daemon passes to the page.
   for (const char* name :
-       {"30-watch_plan.notification.json", "31-watch_log.notification.json"}) {
+       {"30-watch_plan.notification.json", "31-watch_log.notification.json",
+        "33-watch_run.notification.json"}) {
     const Request note = decode_request(files.at(name));
     CHECK(!note.has_id && note.method.starts_with("watch."));
   }
@@ -348,8 +349,8 @@ void check_errors() {
 
 int main() {
   const auto files = load_contracts();
-  CHECK(files.size() == 32);
-  if (files.size() == 32) {
+  CHECK(files.size() == 33);
+  if (files.size() == 33) {
     check_requests(files);
     check_upload(files);
     check_encoders(files);

@@ -3,7 +3,8 @@
    Frlg_story.Checkpoint_run with its declared end, then the saves the outcome
    asks for (the failure frame and state, or a passing end) while the session
    is still open, and the run's summary, KEEP and RESULTS.tsv row. The run
-   shows its plan and story lines on the daemon's watch page (Watch_report);
+   shows the chain it is part of (Story.Chain_progress, through [progress]),
+   its plan and story lines on the daemon's watch page (Watch_report);
    a Stop pressed there is a failure ("stopped by user") that repeats, so the
    series stops too. *)
 
@@ -78,10 +79,14 @@ let checkpoint_outcome setup cp log =
   | exception e ->
       Failed { at = "raised"; reason = Printexc.to_string e; repeats = false }
 
-(* In the session: the checkpoint, then the outcome's saves. *)
-let in_session setup cp record log () =
+(* In the session: the chain before and after this run, the checkpoint, then
+   the outcome's saves. Each run has its own daemon, so each sends the chain
+   for a page that is watching it. *)
+let in_session setup cp ~progress record log () =
   let log = Watch_report.log log in
+  Effects.show_run (progress None);
   let outcome = checkpoint_outcome setup cp log in
+  Effects.show_run (progress (Some (trial outcome)));
   let path = Run_record.path record in
   (match outcome with
   | Failed _ ->
@@ -92,8 +97,10 @@ let in_session setup cp record log () =
   | Passed -> ());
   outcome
 
-let live setup cp record log =
-  match Live.run ~port:setup.common.port (in_session setup cp record log) with
+let live setup cp ~progress record log =
+  match
+    Live.run ~port:setup.common.port (in_session setup cp ~progress record log)
+  with
   | outcome -> outcome
   | exception Effects.Disconnected e ->
       Failed { at = "session"; reason = "disconnected: " ^ e; repeats = false }
@@ -160,8 +167,9 @@ let record_outcome setup cp record n outcome =
     ~mode:(Checkpoint_trials.mode_to_string setup.mode)
     ~result ~at ~reason
 
-(* Run [n] of [cp]: its folder and how it ended. *)
-let run setup cp n =
+(* Run [n] of [cp]: its folder and how it ended. [progress] is the chain for
+   the watch page before the run ([None]) and after it. *)
+let run setup cp n ~progress =
   let record =
     Run_record.create ~runs_dir:setup.runs_dir ~checkpoint:cp.id
       ~mode:(Checkpoint_trials.mode_to_string setup.mode)
@@ -169,7 +177,7 @@ let run setup cp n =
   let log, close = Run_record.story_log record in
   log (Printf.sprintf "[Run] %s run %d from %s" cp.id n cp.start_state);
   let outcome =
-    with_daemon setup record (fun _daemon -> live setup cp record log)
+    with_daemon setup record (fun _daemon -> live setup cp ~progress record log)
   in
   close ();
   record_outcome setup cp record n outcome;

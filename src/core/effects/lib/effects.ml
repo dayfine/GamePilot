@@ -26,6 +26,7 @@ type _ Effect.t +=
   | Unsubscribe : string list -> string list Effect.t
   | Show_plan : Wire.Watch.plan -> unit Effect.t
   | Show_log : string -> unit Effect.t
+  | Show_run : Wire.Watch_run.t -> unit Effect.t
 
 let submit commands = Effect.perform (Submit commands)
 let await ~timeout_ms pred = Effect.perform (Await (pred, timeout_ms))
@@ -40,6 +41,7 @@ let subscribe probes = Effect.perform (Subscribe probes)
 let unsubscribe ids = Effect.perform (Unsubscribe ids)
 let show_plan plan = Effect.perform (Show_plan plan)
 let show_log line = Effect.perform (Show_log line)
+let show_run run = Effect.perform (Show_run run)
 let probe (m : measurements) id = List.assoc_opt id m.probes
 
 (* The probe ids the [with_probes] calls running on this domain subscribed:

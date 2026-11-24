@@ -48,8 +48,8 @@ bright `response-ms` after a press starts, so it should report that plus up to o
 
 Either flag turns on the watch page (`docs/design/Watch-Page.md`): `http://127.0.0.1:47901/` shows
 the frame (a downscaled JPEG, at most 5 per second, only while a page asks) with the subscribed probe
-boxes and their results, the program's plan and log (`watch.plan`, `watch.log`, contracts v1.6),
-the `status` health (a heartbeat over 2 s old is red), and Stop: it releases every button and sends
+boxes and their results, the program's plan and log (`watch.plan`, `watch.log`, contracts v1.6) and
+its chain of checkpoints (`watch.run`, v1.7), the `status` health (a heartbeat over 2 s old is red), and Stop: it releases every button and sends
 the program `stop`. `--listen 0.0.0.0` opens it to the network, which the daemon says when it starts.
 The page is `watch/watch.html`, compiled in. The 10 s rate line on mGBA adds what the page costs
 (frames sent, ms spent). `gamepilot checkpoints --watch` starts the runner's daemons with it.

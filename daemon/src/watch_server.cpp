@@ -106,6 +106,9 @@ void WatchServer::start_stream(Connection& connection) {
   if (!info_.empty()) {
     snapshot += event_message("info", info_);
   }
+  if (!run_.empty()) {
+    snapshot += event_message("run", run_);
+  }
   if (!plan_.empty()) {
     snapshot += event_message("plan", plan_);
   }
@@ -136,6 +139,11 @@ void WatchServer::broadcast(std::string_view event, std::string_view json) {
 void WatchServer::set_info(std::string json) {
   info_ = std::move(json);
   broadcast("info", info_);
+}
+
+void WatchServer::set_run(std::string json) {
+  run_ = std::move(json);
+  broadcast("run", run_);
 }
 
 void WatchServer::set_plan(std::string json) {
