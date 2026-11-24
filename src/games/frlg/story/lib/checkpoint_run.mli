@@ -51,14 +51,14 @@ val capped_postconditions :
 
 type from_event = {
   range : Story.Event_range.t;
-  start_reads : Story.Event_states.start_reads;
+  kept : Story.Event_states.kept;
       (** What the run that kept the first event's state read at the
           checkpoint's start ({!Story.Event_states}). *)
 }
 (** A partial run: its events, from a state kept at the first one's start. *)
 
 type keep_event_state =
-  index:int -> Story.Plan.event -> Story.Event_states.start_reads -> unit
+  index:int -> Story.Plan.event -> Story.Event_states.kept -> unit
 (** Keeps the state at an event's start, with the checkpoint's start reads. *)
 
 val run :
@@ -86,6 +86,7 @@ val run :
     With [from_event], only its events run ({!Story.Runner.run}), from
     [options.state], the state kept at the first one's start; a promise of the
     money spent is checked against the start money kept with that state, not
-    re-read (logged). [keep_event_state] is called at the start of each event
+    re-read (logged), and the walks start where the run that kept it reckoned
+    the player to stand. [keep_event_state] is called at the start of each event
     the run reached cleanly ({!Story.Event_states.hear}), with what the run read
     at the checkpoint's start (or, on a partial run, what was kept). *)

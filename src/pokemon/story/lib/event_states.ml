@@ -4,32 +4,65 @@ let file ~index ~event_id = Printf.sprintf "%02d-%s.ss" (index + 1) event_id
 let path ~states ~checkpoint ~index ~event_id =
   Filename.concat (dir ~states ~checkpoint) (file ~index ~event_id)
 
-let start_reads_path state = Filename.remove_extension state ^ ".start.json"
+let kept_path state = Filename.remove_extension state ^ ".json"
 
 let is_other_state ~index ~keep name =
   let prefix = Printf.sprintf "%02d-" (index + 1) in
   String.starts_with ~prefix name
   && name <> keep
-  && name <> Filename.basename (start_reads_path keep)
-  && (Filename.check_suffix name ".ss"
-     || Filename.check_suffix name ".start.json")
+  && name <> Filename.basename (kept_path keep)
+  && (Filename.check_suffix name ".ss" || Filename.check_suffix name ".json")
 
-type start_reads = { start_money : int option }
+type kept = { start_money : int option; at : Pose.observed option }
 
-let start_reads_to_json r =
+let pose_to_json (p : Pose.observed) =
   `Assoc
     [
-      ( "start_money",
-        match r.start_money with Some n -> `Int n | None -> `Null );
+      ("map", `String p.at_map);
+      ("tile", `List [ `Int p.at_tile.x; `Int p.at_tile.y ]);
+      ( "facing",
+        match p.faces with
+        | Some d -> `String (Grid_maps.Direction.name d)
+        | None -> `Null );
     ]
 
-let start_reads_of_json = function
-  | `Assoc fields -> (
-      match List.assoc_opt "start_money" fields with
-      | Some (`Int n) -> Ok { start_money = Some n }
-      | Some `Null | None -> Ok { start_money = None }
-      | Some _ -> Error "start_money is not a number")
-  | _ -> Error "the start reads are not an object"
+let option_json f = function Some v -> f v | None -> `Null
+
+let kept_to_json r =
+  `Assoc
+    [
+      ("start_money", option_json (fun n -> `Int n) r.start_money);
+      ("at", option_json pose_to_json r.at);
+    ]
+
+let facing_of = function
+  | `String name -> Grid_maps.Direction.of_name name
+  | _ -> None
+
+let pose_of_json = function
+  | `Null -> Ok None
+  | `Assoc f -> (
+      match (List.assoc_opt "map" f, List.assoc_opt "tile" f) with
+      | Some (`String at_map), Some (`List [ `Int x; `Int y ]) ->
+          let faces = Option.bind (List.assoc_opt "facing" f) facing_of in
+          Ok (Some { Pose.at_map; at_tile = { x; y }; faces })
+      | _ -> Error "at: not a map and a tile")
+  | _ -> Error "at: not an object"
+
+let money_of_json = function
+  | Some (`Int n) -> Ok (Some n)
+  | Some `Null | None -> Ok None
+  | Some _ -> Error "start_money is not a number"
+
+let field fields name = Option.value (List.assoc_opt name fields) ~default:`Null
+let ( let* ) = Result.bind
+
+let kept_of_json = function
+  | `Assoc fields ->
+      let* start_money = money_of_json (List.assoc_opt "start_money" fields) in
+      let* at = pose_of_json (field fields "at") in
+      Ok { start_money; at }
+  | _ -> Error "what is kept is not an object"
 
 let missing ~checkpoint ~label ~path =
   Printf.sprintf

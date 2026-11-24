@@ -69,24 +69,23 @@ let path_cases =
     case "the first event"
       (fun () -> Event_states.file ~index:0 ~event_id:"to_route16_cut_tree")
       "01-to_route16_cut_tree.ss";
-    case "its start reads beside it"
-      (fun () ->
-        Event_states.start_reads_path "/s/mg-02.events/13-trade_chding.ss")
-      "/s/mg-02.events/13-trade_chding.start.json";
+    case "what is kept beside it"
+      (fun () -> Event_states.kept_path "/s/mg-02.events/13-trade_chding.ss")
+      "/s/mg-02.events/13-trade_chding.json";
     case "pruned: the same number under an old id, not the kept one or others"
       (fun () ->
         [
           "13-trade_chding.ss";
-          "13-trade_chding.start.json";
+          "13-trade_chding.json";
           "13-trade.ss";
-          "13-trade.start.json";
+          "13-trade.json";
           "12-to_vermilion_elyssa.ss";
           "13-trade.ss.tmp";
         ]
         |> List.filter
              (Event_states.is_other_state ~index:12 ~keep:"13-trade_chding.ss")
         |> String.concat ", ")
-      "13-trade.ss, 13-trade.start.json";
+      "13-trade.ss, 13-trade.json";
   ]
 
 (* The events whose state a run keeps, as numbers from 1, hearing [heard]. *)
@@ -245,27 +244,47 @@ let spent_from ~start =
   |> List.map Postcondition_check.result_to_string
   |> String.concat "\n"
 
-let round_trip reads =
-  Event_states.start_reads_to_json reads
-  |> Event_states.start_reads_of_json
-  |> Result.map (fun (r : Event_states.start_reads) -> r.start_money)
+(* What is kept, written and read back. *)
+let round_trip kept =
+  match Event_states.kept_of_json (Event_states.kept_to_json kept) with
+  | Error e -> e
+  | Ok { start_money; at } ->
+      let money =
+        Option.fold ~none:"no money" ~some:(Printf.sprintf "$%d") start_money
+      in
+      let pose (p : Pose.observed) =
+        Printf.sprintf "%s (%d, %d) %s" p.at_map p.at_tile.x p.at_tile.y
+          (Option.fold ~none:"?" ~some:Grid_maps.Direction.name p.faces)
+      in
+      money ^ ", " ^ Option.fold ~none:"nowhere" ~some:pose at
 
-let start_reads_cases =
+(* mg-02 #14's start: in Vermilion House 2 after the trade. *)
+let house2 : Pose.observed =
+  {
+    at_map = "VermilionCity_House2";
+    at_tile = { x = 4; y = 4 };
+    faces = Some North;
+  }
+
+let kept_cases =
   [
-    case "the checkpoint's start money, kept with the state, read back"
+    case "the checkpoint's start money and the reckoned pose, read back"
+      (fun () -> round_trip { start_money = Some 29202; at = Some house2 })
+      ("$29202, VermilionCity_House2 (4, 4) " ^ Grid_maps.Direction.name North);
+    case "no start money (no spent promise), the pose unknown"
+      (fun () -> round_trip { start_money = None; at = None })
+      "no money, nowhere";
+    case "a facing the game could not tell"
       (fun () ->
-        match round_trip { start_money = Some 29202 } with
-        | Ok (Some n) -> string_of_int n
-        | Ok None -> "none"
-        | Error e -> e)
-      "29202";
-    case "no start money kept (no spent promise)"
+        round_trip
+          { start_money = None; at = Some { house2 with faces = None } })
+      "no money, VermilionCity_House2 (4, 4) ?";
+    case "not an object"
       (fun () ->
-        match round_trip { start_money = None } with
-        | Ok None -> "none"
-        | Ok (Some n) -> string_of_int n
+        match Event_states.kept_of_json (`Int 1) with
+        | Ok _ -> "read"
         | Error e -> e)
-      "none";
+      "what is kept is not an object";
     case "spent, checked from the event against the checkpoint's start"
       (fun () -> spent_from ~start:(Some 29202))
       "money: passed: spent $4100 ($29202 to $25102)";
@@ -276,4 +295,4 @@ let start_reads_cases =
 
 let () =
   Table_test.run "event states"
-    (range_cases @ path_cases @ which_cases @ partial_cases @ start_reads_cases)
+    (range_cases @ path_cases @ which_cases @ partial_cases @ kept_cases)

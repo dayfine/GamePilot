@@ -99,11 +99,11 @@ let with_actions actions (game : Story.Game.t) =
 
 type from_event = {
   range : Story.Event_range.t;
-  start_reads : Story.Event_states.start_reads;
+  kept : Story.Event_states.kept;
 }
 
 type keep_event_state =
-  index:int -> Story.Plan.event -> Story.Event_states.start_reads -> unit
+  index:int -> Story.Plan.event -> Story.Event_states.kept -> unit
 
 let kept_money_line =
   Printf.sprintf
@@ -118,19 +118,26 @@ let log_kept_money options money =
 let start_money options ~from_event checked =
   match from_event with
   | _ when options.end_check_only -> None
-  | Some { start_reads; _ } ->
-      log_kept_money options start_reads.Story.Event_states.start_money;
-      start_reads.start_money
+  | Some { kept; _ } ->
+      log_kept_money options kept.Story.Event_states.start_money;
+      kept.start_money
   | None -> Postcondition_reads.start_money ~log:options.log checked
 
-(* [on_event], and the state kept at each event reached cleanly. *)
+(* Where the player stands at the first event: the checkpoint's start, or on
+   a partial run where the run that kept the state reckoned them. *)
+let start_pose (plan : Story.Plan.t) = function
+  | Some { kept; _ } -> kept.Story.Event_states.at
+  | None -> start_of plan.checkpoint
+
+(* [on_event], and the state kept at each event reached cleanly with what
+   [kept ()] says then. *)
 let keeping_states ?on_event ~keep ~first (checkpoint : Story.Plan.checkpoint)
-    reads =
+    kept =
   let tracker = Story.Event_states.tracker ~first in
   fun index progress ->
     (match keep with
     | Some keep when Story.Event_states.hear tracker index progress ->
-        keep ~index (List.nth checkpoint.events index) reads
+        keep ~index (List.nth checkpoint.events index) (kept ())
     | _ -> ());
     Option.iter (fun f -> f index progress) on_event
 
@@ -138,7 +145,8 @@ let run ?end_at ?on_event ?(actions = []) ?from_event ?keep_event_state options
     world (plan : Story.Plan.t) =
   Option.iter (fun s -> ignore (Effects.load_state s)) options.state;
   let game =
-    A.Story_game.create (config options world) ~start:(start_of plan.checkpoint)
+    A.Story_game.create (config options world)
+      ~start:(start_pose plan from_event)
   in
   let checkpoint, end_at = to_run options ~end_at plan in
   let checked, skipped =
@@ -162,10 +170,10 @@ let run ?end_at ?on_event ?(actions = []) ?from_event ?keep_event_state options
       let first =
         Option.fold ~none:0 ~some:(fun r -> r.Story.Event_range.first) events
       in
+      let game = with_actions actions (A.Story_game.game game) in
       let on_event =
         keeping_states ?on_event ~keep:keep_event_state ~first checkpoint
-          { Story.Event_states.start_money }
+          (fun () -> { Story.Event_states.start_money; at = game.position () })
       in
       Story.Runner.run ?end_at ~end_state:(checked, observe) ~on_event ?events
-        (with_actions actions (A.Story_game.game game))
-        checkpoint)
+        game checkpoint)

@@ -7,9 +7,9 @@ open Story
 module Run = Frlg_story.Checkpoint_run
 
 let write_reads path reads =
-  Out_channel.with_open_bin (Event_states.start_reads_path path) (fun out ->
+  Out_channel.with_open_bin (Event_states.kept_path path) (fun out ->
       Out_channel.output_string out
-        (Yojson.Safe.to_string (Event_states.start_reads_to_json reads) ^ "\n"))
+        (Yojson.Safe.to_string (Event_states.kept_to_json reads) ^ "\n"))
 
 (* The older states of event [index] under another id. *)
 let prune dir ~index ~keep =
@@ -38,12 +38,12 @@ let keep ~states ~checkpoint ~log : Run.keep_event_state =
         (Printf.sprintf "[Run] could not keep the state at %s: %s" event.id
            e.message)
 
-let read_reads path =
-  let file = Event_states.start_reads_path path in
-  if not (Sys.file_exists file) then Ok { Event_states.start_money = None }
+let read_kept ~missing path =
+  let file = Event_states.kept_path path in
+  if not (Sys.file_exists file) then Error missing
   else
     match Yojson.Safe.from_file file with
-    | json -> Event_states.start_reads_of_json json
+    | json -> Event_states.kept_of_json json
     | exception Yojson.Json_error e -> Error (file ^ ": " ^ e)
 
 (* The kept state of [from_event]'s first event and the partial run from it. *)
@@ -57,8 +57,8 @@ let partial ~states ~checkpoint (plan : Plan.checkpoint) (from_event, to_event)
     Event_states.path ~states ~checkpoint ~index:first ~event_id:event.id
   in
   let label = Event_range.label plan.events first in
-  if not (Sys.file_exists path) then
-    Error (Event_states.missing ~checkpoint ~label ~path)
+  let missing = Event_states.missing ~checkpoint ~label ~path in
+  if not (Sys.file_exists path) then Error missing
   else
-    let* start_reads = read_reads path in
-    Ok (path, { Run.range; start_reads })
+    let* kept = read_kept ~missing path in
+    Ok (path, { Run.range; kept })
