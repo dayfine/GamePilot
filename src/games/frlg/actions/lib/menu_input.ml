@@ -50,6 +50,23 @@ let await_screen ?(timeout_ms = screen_timeout_ms) ~code what reader =
 let settle_back ~label ~log =
   raise_error (Scene_looks.settle Talk ~label ~battle_ends:false ~log)
 
+(* The menus a party read goes through: none has a box or a fade the settle's
+   look tells from the overworld. *)
+let party_menus m =
+  Party_menu.party_menu m
+  || Option.is_some (Member_menu.cursor_row m)
+  || Option.is_some (Summary_screen.page m)
+
+let settle_menu_closed ~label ~log () =
+  Scene_looks.settle ~menu_open:party_menus Menu_closed ~label
+    ~battle_ends:false ~log
+
+let close_to_overworld ~label ~log =
+  raise_error
+    (Effects.with_probes
+       (Member_menu.probes @ Summary_screen.probes)
+       (settle_menu_closed ~label ~log))
+
 let max_pages = 8
 let question m = Option.is_some (Dialog.yes_no_cursor m)
 let page_or_question m = question m || Dialog.advance_arrow m

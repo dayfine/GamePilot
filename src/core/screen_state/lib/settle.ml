@@ -1,4 +1,4 @@
-type kind = Talk | After_warp | Door
+type kind = Talk | After_warp | Door | Menu_closed
 
 type rule = {
   judge : Talk_over.rule;
@@ -39,12 +39,35 @@ let door_judge =
     still = Player;
   }
 
+(* A menu closed to the overworld: no text or scene comes after it, so a short
+   quiet ends it (a fade-in is never still), looking often. *)
+let menu_quiet_ms = 500
+let menu_calm_ms = 2500
+let menu_look_every_ms = 300
+
+(* Out of the deepest menu (a summary) is three screens and their fades. *)
+let menu_cap_ms = 15_000
+
+let menu_judge =
+  {
+    Talk_over.default_rule with
+    calm_ms = menu_calm_ms;
+    quiet_ms = menu_quiet_ms;
+  }
+
 let rule = function
   | Talk -> talk_rule
   | After_warp ->
       { talk_rule with judge = { talk_rule.judge with warp = true } }
   | Door ->
       { talk_rule with judge = door_judge; look_every_ms = door_look_every_ms }
+  | Menu_closed ->
+      {
+        talk_rule with
+        judge = menu_judge;
+        look_every_ms = menu_look_every_ms;
+        cap_ms = menu_cap_ms;
+      }
 
 type look = { facts : Facts.t; at_ms : float; since_ms : float option }
 

@@ -39,6 +39,15 @@ type screen =
   | Summary_at of string * int
       (** The same page showing this species name and this level in its top
           left: the species line and the level's digit cells read them. *)
+  | Summary_page of {
+      page : int;  (** 1 (info), 2 (skills) or 3 (moves) *)
+      species : string;  (** [""]: the info page's text not drawn yet *)
+      level : int;
+      moves : string list;  (** names (["SURF"]), on the moves page *)
+    }
+      (** A member's summary on this page (Switch captures of each page): the
+          info page's species line and level cells read [species] and [level],
+          the moves page's rows [moves]. *)
   | Title  (** The title screen, "PRESS START" (mGBA). *)
   | Load_menu  (** CONTINUE over NEW GAME after the title (mGBA). *)
   | Recap  (** "Previously on your quest" after CONTINUE (mGBA). *)
@@ -61,6 +70,8 @@ let screen_name = function
   | Mart_list -> "mart list"
   | Summary name -> "summary " ^ name
   | Summary_at (name, level) -> Printf.sprintf "summary %s Lv %d" name level
+  | Summary_page { page; species; level; _ } ->
+      Printf.sprintf "summary page %d %s Lv %d" page species level
   | Title -> "title"
   | Load_menu -> "load menu"
   | Recap -> "recap"
@@ -87,6 +98,8 @@ let image = function
   | Item_menu -> "mg04-escape-rope/item-menu-escape-rope__itemmenu.png"
   | Mart_list -> "ItemListReader/MartBuyList_eng__money.png"
   | Summary _ | Summary_at _ -> "captures/sm3_s1__summary1.png"
+  | Summary_page { page; _ } ->
+      Printf.sprintf "captures/sm3_s%d__summary%d.png" page page
   | Title -> "mail-glitch-04/continue__none.png"
   | Load_menu -> "mail-glitch-04/save-select__loadmenu.png"
   | Recap -> "mail-glitch-04/location__none.png"
@@ -277,6 +290,11 @@ let shown_since t ms =
 let start_menu_rows = 7
 let party_slots = 6
 
+(* How late the frames show what this press did. *)
+let latency_of t (p : press) =
+  let latencies = t.capture_latencies_ms in
+  List.nth latencies (p.index mod List.length latencies)
+
 (* UP or DOWN on a menu with a cursor moves it a row (no wrap), once the menu
    has shown {!input_delay_ms}: the game drops a tap before. *)
 let move_cursor t (p : press) =
@@ -294,8 +312,7 @@ let move_cursor t (p : press) =
         Some (Member_menu (clamp 0 (member_menu_rows - 1) (row + step)))
     | _ -> None
   in
-  let latencies = t.capture_latencies_ms in
-  let latency = List.nth latencies (p.index mod List.length latencies) in
+  let latency = latency_of t p in
   match moved with
   | Some s when step <> 0 && taken -> show t ~at_ms:(p.at_ms + 1 + latency) s
   | _ -> ()
@@ -332,8 +349,12 @@ let start_menu_lines =
     (Printf.sprintf "start_menu_name.%d/%s")
     [ "POKéDEX"; "POKéMON"; "BAG"; "-"; "SAVE"; "OPTION"; "EXIT" ]
 
+(* The moves page's rows ("summary_move.<row>/<NAME>"). *)
+let move_lines moves = List.mapi (Printf.sprintf "summary_move.%d/%s") moves
+
 let text_line id =
   String.starts_with ~prefix:"start_menu_name" id
+  || String.starts_with ~prefix:"summary_move" id
   || String.starts_with ~prefix:species_line id
   || String.starts_with ~prefix:"bag" id
   || String.starts_with ~prefix:"summary_level" id
@@ -344,6 +365,9 @@ let text_result screen id =
     | Summary name -> id = species_line ^ name
     | Summary_at (name, level) ->
         id = species_line ^ name || List.mem id (level_lines level)
+    | Summary_page { page = 1; species; level; _ } when species <> "" ->
+        id = species_line ^ species || List.mem id (level_lines level)
+    | Summary_page { page = 3; moves; _ } -> List.mem id (move_lines moves)
     | Bag_items items -> List.mem id (bag_lines items)
     | Start_menu _ -> List.mem id start_menu_lines
     | _ -> false

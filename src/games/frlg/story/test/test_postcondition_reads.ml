@@ -3,33 +3,15 @@
    to it, and a plan that promises nothing reads nothing. *)
 
 module S = Frlg_overworld_fixtures.Scripted_screen
+module Party = Frlg_overworld_fixtures.Scripted_party
 
 let names = [ "BLASTOISE"; "RATTATA"; "ODDISH"; "PIDGEY"; "ABRA"; "PIDGEY" ]
 let levels = [ 52; 20; 18; 21; 33; 12 ]
 
-(* START opens the menu on POKéMON; A on it the party; A on a slot its menu;
-   A on SUMMARY (row 0) the slot's species. B steps back one screen: from the
-   summary to the member's menu, from the menu to the party, from the party to
-   the overworld. [lost_b] B presses on the member's menu after the summary
-   are dropped (the menu still drawing). *)
-let party_screen ?(lost_b = 0) () =
-  let slot = ref 1 and dropped = ref 0 in
-  fun screen (p : S.press) ->
-    let show s = S.show screen ~at_ms:(p.at_ms + 200) s in
-    match (p.buttons, S.screen_at screen p.at_ms) with
-    | [ Wire.Start ], _ -> show (S.Start_menu 1)
-    | [ Wire.A ], S.Start_menu 1 -> show (S.Party 1)
-    | [ Wire.A ], S.Party s ->
-        slot := s;
-        show (S.Member_menu 0)
-    | [ Wire.A ], S.Member_menu 0 ->
-        show
-          (S.Summary_at (List.nth names (!slot - 1), List.nth levels (!slot - 1)))
-    | [ Wire.B ], (S.Summary _ | S.Summary_at _) -> show (S.Member_menu 0)
-    | [ Wire.B ], S.Member_menu _ when !dropped < lost_b -> incr dropped
-    | [ Wire.B ], S.Member_menu _ -> show (S.Party !slot)
-    | [ Wire.B ], S.Party _ -> show S.Overworld
-    | _ -> ()
+(* The party on its summaries (Scripted_party). [lost_b] B presses on the
+   member's menu after the summary are dropped (the menu still drawing). *)
+let party_screen ?lost_b () =
+  Party.react ?lost_b (List.map2 (fun n l -> Party.member n l) names levels)
 
 let party_promised : Story.Plan.postconditions =
   {

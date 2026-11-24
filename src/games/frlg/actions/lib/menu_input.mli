@@ -62,6 +62,12 @@ val settle_back : label:string -> log:(string -> unit) -> unit
 (** The talk settle ({!Scene_looks.settle}) back to a quiet overworld: B through
     the rest of a menu's or a talk's text. Fails as its cause. *)
 
+val close_to_overworld : label:string -> log:(string -> unit) -> unit
+(** From the party, a member's menu or a summary, as the settle's [Menu_closed]
+    rule closes it ({!Screen_state.Settle.rule}): B until the overworld shows
+    with none of these menus, still for 0.5 s; not the talk's 5 s quiet, as no
+    text comes after a menu. Fails as its cause. *)
+
 val max_pages : int
 (** A presses {!answer_yes} gives the pages before the question must show: 8. *)
 

@@ -24,6 +24,7 @@
   test_menu_actions
   test_grind
   test_member_level
+  test_party_summary
   test_mail_glitch_actions
   test_mail_glitch_use
   test_lift_ride
@@ -39,6 +40,7 @@
   test_menu_actions
   test_grind
   test_member_level
+  test_party_summary
   test_mail_glitch_actions
   test_mail_glitch_use
   test_lift_ride
