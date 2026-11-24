@@ -344,3 +344,32 @@ let () =
     (match Replay.run log program with
     | _ -> false
     | exception Effects.Stop_requested r -> r = "stopped by user")
+
+(* A daemon that served two clients logs both; the replay follows the program
+   (the connection that spoke first) and skips the other's lines, frames
+   included. *)
+let () =
+  let on conn line =
+    "{\"conn\":" ^ string_of_int conn ^ ","
+    ^ String.sub line 1 (String.length line - 1)
+  in
+  let ctl_status =
+    {|{"dir":"in","t_ms":1,"msg":{"jsonrpc":"2.0","id":1,"method":"status","params":{}}}|}
+  in
+  let log =
+    Replay.log_of_lines
+      (List.map (on 1) hello
+      @ [
+          on 2 ctl_status;
+          on 2 (frame ~seq:7777 ~load:2);
+          on 1 (frame ~seq:502 ~load:2);
+        ])
+  in
+  let first_frame () =
+    ignore (Effects.load_state "state.ss" : int);
+    Effects.await ~timeout_ms:1000 (fun _ -> true)
+  in
+  expect "replay follows the program's connection"
+    (match Replay.run log first_frame with
+    | Effects.Holds m -> m.seq = 502
+    | Effects.Timeout -> false)

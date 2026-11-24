@@ -10,6 +10,8 @@
   gamepilot.start_menu_poc
   gamepilot.story
   gamepilot.frlg_actions
+  gamepilot.frlg_readers
+  gamepilot.ctl_script
   gamepilot.frlg_story
   unix
   yojson))

@@ -497,8 +497,11 @@ pa::JsonObject Server::dispatch(ClientConnection& client,
     const SaveParams save = decode_save(request.params);
     try {
       save_png(save.path, backend_.frame());
-      // The frame a failure saves (failure.png) is recorded too.
-      mark_failure();
+      // The frame a failure saves (failure.png) is recorded too; a shot by a
+      // client that does not drive (`gamepilot ctl shot`) is no failure.
+      if (!lease_.holder() || lease_.held_by(client.number)) {
+        mark_failure();
+      }
       return save_result(backend_.seq());
     } catch (const BackendError& error) {
       throw backend_error(error);

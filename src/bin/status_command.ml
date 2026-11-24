@@ -2,8 +2,8 @@
 
    Asks a running daemon for its health ([status], contracts v1.5) and prints
    it: per thread its last frame and how long ago it showed life, marked STUCK
-   past Wire.Daemon_status.stuck_limit_ms; the capture ring; gaps; the client.
-   It connects as an observer, so it works while a program is connected.
+   past Wire.Daemon_status.stuck_limit_ms; the capture ring; gaps; the client
+   and who holds the input lease. Any client may ask, also while a program runs.
    Exit code 0 when nothing is stuck, 1 when something is. *)
 
 let usage = "  gamepilot status [--port N]\n"
@@ -31,9 +31,14 @@ let thread_line (s : Wire.Daemon_status.t) (th : Wire.Daemon_status.thread) =
   Printf.sprintf "  %-8s seq %d, %.0f ms ago: %s" th.name th.seq age verdict
 
 let report (s : Wire.Daemon_status.t) =
-  Printf.printf "daemon: %s backend, client %s, fidelity %s\n" s.backend
+  Printf.printf "daemon: %s backend, client %s (%d connected), fidelity %s\n"
+    s.backend
     (Option.value s.client ~default:"none")
-    s.fidelity;
+    s.clients s.fidelity;
+  Printf.printf "  input lease: %s\n"
+    (match s.lease with
+    | Some lease -> Wire.Lease.describe lease
+    | None -> "free");
   List.iter (fun th -> print_endline (thread_line s th)) s.threads;
   Printf.printf "  ring %d/%d, gaps %d (%d frames)\n" s.ring_depth
     s.ring_capacity s.gaps s.gap_frames

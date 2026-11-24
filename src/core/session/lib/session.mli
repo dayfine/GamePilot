@@ -29,8 +29,16 @@ val stall_slack_ms : float
 val client_name : string
 (** Sent in [hello]. *)
 
-val run : transport -> (unit -> 'a) -> 'a
-(** Sends [hello], then runs the program with the effects handled. Raises
+val run :
+  ?client:string ->
+  ?lease:string * int option ->
+  transport ->
+  (unit -> 'a) ->
+  'a
+(** Sends [hello] (as [client], default {!client_name}), takes the input lease
+    when [lease] gives its owner and ttl (contracts v1.9: else the first input
+    takes it, owned by [client]; a refusal raises [Effects.Rpc_error] before the
+    program starts), then runs the program with the effects handled. Raises
     [Effects.Rpc_error], [Effects.Disconnected] or [Protocol_error]. After the
     daemon's [stop], every wait on the game ([submit], [race], [await], and the
     first results of a [subscribe]) raises [Effects.Stop_requested] into the

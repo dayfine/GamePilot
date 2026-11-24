@@ -3,6 +3,7 @@
    gamepilot checkpoint PLAN.json [flags] (Checkpoint_command)
    gamepilot checkpoints PLAN_DIR [flags] (Checkpoints_command)
    gamepilot status [--port N] (Status_command)
+   gamepilot ctl [--port N] [--owner LABEL] COMMAND | run FILE (Ctl_command)
    gamepilot runs [--runs-dir DIR] (Runs_command)
    gamepilot switch-devices [--profile DIR] (Switch_devices) *)
 
@@ -10,8 +11,8 @@ let usage =
   "usage:\n\
   \  gamepilot run start_menu_poc [--port 47900] [--state PATH | --console]\n\
   \  gamepilot replay start_menu_poc WIRELOG\n" ^ Checkpoint_command.usage
-  ^ Checkpoints_command.usage ^ Status_command.usage ^ Runs_command.usage
-  ^ Switch_devices.usage
+  ^ Checkpoints_command.usage ^ Status_command.usage ^ Ctl_command.usage
+  ^ Runs_command.usage ^ Switch_devices.usage
 
 let die msg =
   prerr_string msg;
@@ -63,6 +64,7 @@ let () =
   | "checkpoint" :: plan :: flags ->
       exit_with (Checkpoint_command.live plan flags)
   | "status" :: flags -> exit_with (Status_command.main flags)
+  | "ctl" :: args -> exit_with (Ctl_command.main args)
   | "runs" :: flags -> exit_with (Runs_command.main flags)
   | "switch-devices" :: flags -> exit_with (Switch_devices.main flags)
   | "checkpoints" :: plan_dir :: flags ->
