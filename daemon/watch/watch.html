@@ -12,6 +12,11 @@
   machine; elsewhere it comes from this page's ?token=, and without one the
   page is read-only. The Run strip keeps each checkpoint's last plan in
   memory, so a finished one's events (and their times) can be looked at again.
+  Runs sidebar: the hub's runs.json and recent.json (watch_hub.h), polled
+  every few seconds; opened through the hub (/runs/NAME/) it is the same
+  origin, opened on the run's own port it asks the hub on port 47901. When
+  this run leaves the registry the page says so and links to the newest live
+  run; the next checkpoint of the same series (same port) is followed.
 -->
 <html lang="en">
 <head>
@@ -51,6 +56,56 @@
   }
   #stop:disabled { opacity: 0.5; cursor: default; }
   #readonly { margin-left: auto; color: var(--muted); font-size: 13px; }
+  #side-toggle { background: var(--panel); color: var(--text); border: 1px solid var(--line);
+                 border-radius: 6px; padding: 4px 9px; font-size: 16px; line-height: 1;
+                 cursor: pointer; }
+  /* The runs sidebar: a column beside the page on a wide window (closable),
+     a drawer over it on a phone (closed until opened). Its rows have fixed
+     heights, so updates never move the page. */
+  #shell { display: flex; align-items: flex-start; }
+  #shell > main { flex: 1 1 auto; min-width: 0; }
+  #side { flex: 0 0 250px; width: 250px; position: sticky; top: 0; max-height: 100vh;
+          overflow: auto; padding: 12px 0 12px 16px; }
+  body.side-closed #side { display: none; }
+  #side h2 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em;
+             color: var(--muted); margin: 4px 0 6px; display: flex; gap: 6px; }
+  #side h2 a { margin-left: auto; font-weight: 500; text-transform: none; letter-spacing: 0;
+               color: var(--cur); text-decoration: none; }
+  #side ul { list-style: none; margin: 0 0 14px; padding: 0; }
+  #side li { border: 1px solid transparent; border-radius: 6px; }
+  #side li a, #side li .row { display: block; padding: 5px 8px; color: var(--text);
+                              text-decoration: none; }
+  #side li a:hover { background: color-mix(in srgb, var(--cur) 8%, transparent); border-radius: 6px; }
+  #side li.here { border-color: var(--cur);
+                  background: color-mix(in srgb, var(--cur) 12%, transparent); }
+  #side .l1, #side .l2 { display: block; white-space: nowrap; overflow: hidden;
+                         text-overflow: ellipsis; }
+  #side .l1 { font-weight: 600; }
+  #side .l2 { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+  #side .pass { color: var(--ok); }
+  #side .fail { color: var(--bad); }
+  #side .note { color: var(--muted); font-size: 12px; padding: 0 8px; }
+  #side-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 19; }
+  @media (max-width: 800px) {
+    #side { position: fixed; top: 0; bottom: 0; left: 0; width: min(300px, 85vw);
+            max-height: none; z-index: 20; background: var(--bg); padding: 12px;
+            border-right: 1px solid var(--line); transform: translateX(-105%);
+            transition: transform 0.2s; }
+    body.side-closed #side { display: block; }
+    body.side-open #side { transform: none; }
+  }
+  @media (min-width: 801px) { #side-backdrop { display: none; } }
+  /* Fixed at the bottom, so it never moves the page. */
+  #ended { position: fixed; left: 16px; right: 16px; bottom: 16px; z-index: 18;
+           max-width: 560px; margin: 0 auto; background: var(--panel);
+           border: 1px solid var(--line); border-left: 4px solid var(--cur);
+           border-radius: 8px; padding: 10px 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+           display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+  #ended[hidden] { display: none; }
+  #ended a { color: var(--cur); font-weight: 600; text-decoration: none; }
+  #ended button { margin-left: auto; font: inherit; font-size: 12px; background: var(--panel);
+                  color: var(--text); border: 1px solid var(--line); border-radius: 6px;
+                  padding: 2px 8px; cursor: pointer; }
   main {
     display: grid; gap: 12px; padding: 12px 16px;
     grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
@@ -154,11 +209,20 @@
 </head>
 <body>
 <header>
+  <button id="side-toggle" type="button" aria-controls="side" aria-expanded="false"
+          title="Runs">☰</button>
   <h1>GamePilot watch</h1>
   <span id="conn">connecting…</span>
   <button id="stop" type="button" title="Release all buttons and end the program">Stop</button>
   <span id="readonly" hidden title="Open the URL with ?token=… (the runner prints it) to get Stop">read-only</span>
 </header>
+<div id="shell">
+<nav id="side" aria-label="Runs">
+  <h2>Live runs <a id="side-hub" href="/">all runs</a></h2>
+  <ul id="side-live"><li><span class="row note">loading…</span></li></ul>
+  <h2>Recent</h2>
+  <ul id="side-recent"></ul>
+</nav>
 <main>
   <section id="frame-panel">
     <h2>Live frame</h2>
@@ -173,7 +237,7 @@
     <div id="frame-body">
       <div id="stage-wrap">
         <div id="stage">
-          <img id="screen" alt="live frame" width="240" height="160">
+          <img id="screen" alt="" width="240" height="160">
           <canvas id="overlay"></canvas>
         </div>
         <div id="frame-meta">waiting for a frame</div>
@@ -211,6 +275,13 @@
     <table id="health"><tbody><tr><td class="empty">waiting for the daemon's status</td></tr></tbody></table>
   </section>
 </main>
+</div>
+<div id="side-backdrop" hidden></div>
+<div id="ended" role="status" hidden>
+  <span id="ended-text">This run has ended.</span>
+  <a id="ended-newest" href="/live">Go to the newest live run</a>
+  <button id="ended-close" type="button">Close</button>
+</div>
 <script>
 "use strict";
 // The daemon's limit: a thread whose heartbeat is older than this is stuck
@@ -465,7 +536,8 @@ screen.addEventListener("error", () => {
   else if (source === "poll") pollTimer = setTimeout(pollFrame, 1000);
 });
 document.addEventListener("visibilitychange", () => {
-  setSource(document.hidden ? "off" : "stream");
+  // A run that ended behind the hub has no stream any more.
+  setSource(document.hidden || (viaHub && endedShown) ? "off" : "stream");
 });
 
 function showFrameMeta() {
@@ -715,7 +787,7 @@ function renderStatus(s) {
 // The daemon sends status every second; none for 3 s means it is gone or stuck.
 setInterval(() => {
   const conn = $("conn");
-  if (lastStatusAt && Date.now() - lastStatusAt > 3000) {
+  if (lastStatusAt && Date.now() - lastStatusAt > 3000 && !endedShown) {
     conn.textContent = "no status for " + ((Date.now() - lastStatusAt) / 1000).toFixed(0) + " s";
     conn.className = "down";
   }
@@ -768,8 +840,196 @@ $("stop").addEventListener("click", async () => {
   }
 });
 
+// --- Runs sidebar --------------------------------------------------------------
+//
+// The hub's live runs (each with its checkpoint, elapsed time and state from
+// its /summary.json) and the latest finished runs, polled while the tab is
+// visible. This run is found by its name in the URL (/runs/NAME/), or by its
+// port when the page was opened on the run's own port.
+
+const SIDE_POLL_MS = 3000;
+// The hub's port, for a page opened on the run's own port (?hub=N for a hub
+// started on another one).
+const HUB_PORT = Number(new URLSearchParams(location.search).get("hub")) || 47901;
+const PHONE_LAYOUT = window.matchMedia("(max-width: 800px)");
+const viaHub = location.pathname.match(/^(.*)\/runs\/([^/]+)\/$/);
+const HUB = viaHub ? location.origin + viaHub[1] + "/" :
+  location.protocol + "//" + location.hostname + ":" + HUB_PORT + "/";
+let runName = viaHub ? decodeURIComponent(viaHub[2]) : null;
+let runPort = viaHub ? null : Number(location.port);
+let wasLive = false;
+let endedShown = false;
+
+const runPath = (name) => HUB + "runs/" + encodeURIComponent(name) + "/";
+
+// Wide window: open unless closed before (kept); phone: a closed drawer.
+function setSide(open, keep) {
+  const phone = PHONE_LAYOUT.matches;
+  document.body.classList.toggle("side-open", phone && open);
+  document.body.classList.toggle("side-closed", !phone && !open);
+  $("side-backdrop").hidden = !(phone && open);
+  $("side-toggle").setAttribute("aria-expanded", String(open));
+  if (keep && !phone) {
+    try { localStorage.setItem("watch.side", open ? "open" : "closed"); } catch (e) {}
+  }
+  if (!phone) layoutFrame();
+}
+function sideOpen() {
+  return PHONE_LAYOUT.matches ? document.body.classList.contains("side-open") :
+    !document.body.classList.contains("side-closed");
+}
+function initialSide() {
+  let kept = null;
+  try { kept = localStorage.getItem("watch.side"); } catch (e) {}
+  setSide(!PHONE_LAYOUT.matches && kept !== "closed", false);
+}
+$("side-toggle").addEventListener("click", () => setSide(!sideOpen(), true));
+$("side-backdrop").addEventListener("click", () => setSide(false, false));
+PHONE_LAYOUT.addEventListener("change", initialSide);
+$("side-hub").href = HUB;
+$("ended-newest").href = HUB + "live";
+$("ended-close").addEventListener("click", () => { $("ended").hidden = true; });
+
+// What a live run is doing: its plan's current (or failed) event, else its
+// chain (the hub page's rule).
+function runState(summary) {
+  const plan = summary && summary.plan;
+  const run = summary && summary.run;
+  if (plan) {
+    const i = plan.events.findIndex((e) => e.state === "current" || e.state === "failed");
+    if (i >= 0) {
+      const e = plan.events[i];
+      return [(e.state === "failed" ? "failed at " : "") + "#" + (i + 1) + " " + e.id,
+              e.state === "failed" ? "fail" : ""];
+    }
+  }
+  if (run) {
+    const failed = run.checkpoints.find((c) => c.state === "failed");
+    if (failed) return ["stopped at " + failed.id, "fail"];
+    if (!run.checkpoints.some((c) => c.state === "current")) return ["chain done", "pass"];
+  }
+  return ["starting", ""];
+}
+
+// "21:31", or "Nov 22 21:31" before today (RESULTS.tsv's local time).
+function endedAt(time) {
+  const d = new Date(time);
+  if (isNaN(d)) return time || "";
+  const hm = d.toLocaleTimeString([], {hour: "2-digit", minute: "2-digit", hour12: false});
+  return d.toDateString() === new Date().toDateString() ? hm :
+    d.toLocaleDateString([], {month: "short", day: "numeric"}) + " " + hm;
+}
+
+function sideItem(href, here, l1, l2, cls, title) {
+  const li = el("li", here ? "here" : "");
+  const box = el(href ? "a" : "span", "row");
+  if (href) box.href = href;
+  if (title) box.title = title;
+  box.append(el("span", "l1 " + (cls || ""), l1), el("span", "l2", l2));
+  li.append(box);
+  return li;
+}
+
+function noteItem(text) {
+  const li = el("li");
+  li.append(el("span", "row note", text));
+  return li;
+}
+
+function renderSide(live, summaries, recent) {
+  const liveList = $("side-live");
+  liveList.replaceChildren();
+  if (!live) {
+    liveList.append(sideItem(null, false, "Hub not running",
+      "open " + HUB + " once a run starts it", "", ""));
+    $("side-recent").replaceChildren();
+    return;
+  }
+  for (const r of [...live].sort((a, b) => b.started_ms - a.started_ms)) {
+    const summary = summaries.get(r.run);
+    const run = summary && summary.run;
+    const current = run && run.checkpoints.find((c) => c.state === "current");
+    const started = run ? run.started_ms : r.started_ms;
+    const [state, cls] = runState(summary);
+    liveList.append(sideItem(runPath(r.run), r.run === runName,
+      (current ? current.id : r.checkpoint || r.run) + " · " + r.backend,
+      duration(Date.now() - started) + " · " + state, cls, r.run));
+  }
+  if (!live.length) liveList.append(noteItem("no live runs"));
+  const recentList = $("side-recent");
+  recentList.replaceChildren();
+  const liveNames = new Set(live.map((r) => r.run));
+  for (const row of (recent || []).filter((x) => !liveNames.has(x.run)).slice(0, 12)) {
+    const pass = row.result === "pass";
+    recentList.append(sideItem(null, row.run === runName,
+      (pass ? "✓ " : "✗ ") + (row.checkpoint || row.run) + (row.mode ? " · " + row.mode : ""),
+      endedAt(row.time) + (pass ? "" : " · " + (row.at || row.result)),
+      pass ? "pass" : "fail", row.run + (row.reason ? "\n" + row.reason : "")));
+  }
+  if (!recentList.childElementCount) recentList.append(noteItem("none yet"));
+}
+
+// This run left the registry: say so (with its result when RESULTS.tsv has
+// it), stop fetching its frame, and follow the series' next run (it takes
+// the same port) when the page came through the hub.
+function checkEnded(live, recent) {
+  const mine = live.find((r) => runName ? r.run === runName : r.port === runPort);
+  if (mine) {
+    runName = mine.run;
+    runPort = mine.port;
+    wasLive = true;
+    document.title = (mine.checkpoint || mine.run) + " · GamePilot Watch";
+    if (endedShown) { endedShown = false; $("ended").hidden = true; }
+    return;
+  }
+  if (!wasLive && !viaHub) return;
+  if (viaHub) {
+    const next = runPort && live.find((r) => r.port === runPort);
+    if (next) { location.replace(runPath(next.run) + location.search); return; }
+  }
+  if (endedShown) return;
+  endedShown = true;
+  const row = (recent || []).find((x) => x.run === runName);
+  $("ended-text").textContent = "This run has ended" +
+    (row ? (row.result === "pass" ? ": passed." : ": failed" + (row.at ? " at " + row.at : "") + ".") : ".");
+  $("ended-newest").hidden = !live.length;
+  $("ended").hidden = false;
+  $("conn").textContent = "run ended";
+  $("conn").className = "down";
+  if (viaHub) {
+    setSource("off");
+    $("stop").hidden = true;
+  }
+}
+
+async function getJson(url) {
+  const reply = await fetch(url, {cache: "no-store"});
+  if (!reply.ok) throw new Error(url + ": " + reply.status);
+  return reply.json();
+}
+
+async function pollSide() {
+  if (!document.hidden) {
+    let live = null, recent = null;
+    const summaries = new Map();
+    try {
+      [live, recent] = await Promise.all([getJson(HUB + "runs.json"),
+                                          getJson(HUB + "recent.json").catch(() => [])]);
+      await Promise.all(live.map((r) => getJson(runPath(r.run) + "summary.json")
+        .then((s) => summaries.set(r.run, s)).catch(() => {})));
+    } catch (e) {
+      live = null;
+    }
+    if (live) checkEnded(live, recent);
+    renderSide(live, summaries, recent);
+  }
+  setTimeout(pollSide, SIDE_POLL_MS);
+}
+
+initialSide();
 layoutFrame();
 connect();  // its `info` starts the stream
+pollSide();
 </script>
 </body>
 </html>

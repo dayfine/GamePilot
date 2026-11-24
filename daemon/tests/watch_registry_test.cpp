@@ -12,6 +12,7 @@
 #include "check.h"
 #include "net.h"
 #include "watch_hub.h"
+#include "watch_server.h"
 
 using namespace gamepilot;
 namespace pa = PokemonAutomation;
@@ -98,16 +99,104 @@ void check_hub() {
   CHECK(json.find("/runs/") == std::string::npos);
   CHECK(json.find("\"port\":47950") != std::string::npos);
   CHECK(hub_runs_json({}) == "[]");
+  RegistryEntry no_folder = entry(12, "mg-05");
+  no_folder.run_folder.clear();
+  CHECK(hub_run_name(no_folder) == "pid-12");
 
-  const WatchHub hub(HubOptions{"127.0.0.1", 0, kDir});
+  // Newest first, keyed by the header; CRLF and a missing last field are fine.
+  const std::string recent = hub_recent_json(
+      "time\trun\tresult\r\nt1\tr1\tpass\r\nt2\tr2\tfail\r\nt3\tr3\n", 2);
+  CHECK(recent ==
+        "[{\"run\":\"r3\",\"time\":\"t3\"},"
+        "{\"result\":\"fail\",\"run\":\"r2\",\"time\":\"t2\"}]");
+  CHECK(hub_recent_json("", 2) == "[]");
+  CHECK(hub_recent_json("time\trun\n", 2) == "[]");
+
+  const WatchHub hub(HubOptions{"127.0.0.1", 0, kDir, ""});
   CHECK(hub.port() != 0);
   bool taken = false;
   try {
-    const WatchHub second(HubOptions{"127.0.0.1", hub.port(), kDir});
+    const WatchHub second(HubOptions{"127.0.0.1", hub.port(), kDir, ""});
   } catch (const std::runtime_error&) {
     taken = true;
   }
   CHECK(taken);
+}
+
+// The hub and a run's page, served in turns until `want` came or the hub
+// closed the connection.
+std::string through_hub(WatchHub& hub, WatchServer& run, Socket& client,
+                        const std::string& want) {
+  std::string received;
+  for (int round = 0; round < 100 && received.find(want) == std::string::npos;
+       round++) {
+    hub.serve_once(5);
+    run.serve(poll_readable(run.sockets(), 5));
+    if (poll_readable({&client}, 5)[0]) {
+      const auto data = client.receive_some();
+      if (!data) {
+        break;
+      }
+      received += *data;
+    }
+  }
+  return received;
+}
+
+std::string hub_request(WatchHub& hub, WatchServer& run,
+                        const std::string& head, const std::string& want) {
+  Socket client = connect_local(hub.port());
+  client.send_all(head);
+  return through_hub(hub, run, client, want);
+}
+
+// A run's page under /runs/NAME/: the page with its token for this machine,
+// Stop, the event stream as it comes, and /live's redirects.
+void check_hub_pass_through() {
+  fs::remove_all(kDir);
+  int stops = 0;
+  WatchServer run(WatchOptions{"127.0.0.1", 0, "t0"},
+                  WatchHooks{[] { return WatchFrame{"image/png", "P"}; },
+                             [&stops] {
+                               stops++;
+                               return true;
+                             }});
+  RegistryEntry own = entry(own_pid(), "mg-07");
+  own.port = run.port();
+  const RegistryFile file(kDir, own);
+  WatchHub hub(HubOptions{"127.0.0.1", 0, kDir, ""});
+  const std::string base = "/runs/2026-11-23-mg-07-testing-1/";
+
+  const std::string page =
+      hub_request(hub, run, "GET " + base + " HTTP/1.1\r\n\r\n", "</html>");
+  CHECK(page.starts_with("HTTP/1.1 200 OK"));
+  CHECK(page.find("content=\"t0\"") != std::string::npos);
+  CHECK(hub_request(hub, run,
+                    "POST " + base + "stop?token=t0 HTTP/1.1\r\n\r\n", "}")
+            .ends_with("{\"stopped\":true}"));
+  CHECK(stops == 1);
+
+  Socket viewer = connect_local(hub.port());
+  viewer.send_all("GET " + base + "events HTTP/1.1\r\n\r\n");
+  CHECK(through_hub(hub, run, viewer, "\r\n\r\n")
+            .find("text/event-stream") != std::string::npos);
+  run.add_log("{\"line\":\"one\"}");
+  CHECK(through_hub(hub, run, viewer, "\"one\"").find("event: log") !=
+        std::string::npos);
+
+  const std::string moved = hub_request(
+      hub, run, "GET /runs/2026-11-23-mg-07-testing-1?token=t0 HTTP/1.1\r\n\r\n",
+      "\r\n\r\n");
+  CHECK(moved.find("Location: " + base + "?token=t0\r\n") != std::string::npos);
+  for (const std::string live : {"/live", "/live/", "/live/mg-07"}) {
+    CHECK(hub_request(hub, run, "GET " + live + " HTTP/1.1\r\n\r\n",
+                      "\r\n\r\n")
+              .find("Location: " + base + "\r\n") != std::string::npos);
+  }
+  CHECK(hub_request(hub, run, "GET /live/mg-99 HTTP/1.1\r\n\r\n", "</html>")
+            .starts_with("HTTP/1.1 404"));
+  CHECK(hub_request(hub, run, "GET /runs/gone/ HTTP/1.1\r\n\r\n", "</html>")
+            .find("is not live") != std::string::npos);
 }
 
 }  // namespace
@@ -118,6 +207,7 @@ int main() {
   check_entry_file();
   check_stale_entries();
   check_hub();
+  check_hub_pass_through();
   fs::remove_all(kDir);
   return TEST_RESULT();
 }
