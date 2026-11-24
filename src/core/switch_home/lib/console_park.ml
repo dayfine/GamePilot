@@ -71,13 +71,27 @@ let move_cursor ~log ~cursor k =
   | Timeout -> Error "the cursor did not reach the game's tile"
 
 (* After A: the user select gets A (the highlighted user), until a picture
-   that is neither HOME, the user select nor black. *)
+   that is neither HOME, the user select nor black, for [steady_ms]: HOME's
+   zoom after A passes such frames before the user select shows (console B,
+   2026-11-24, FireRed closed: read as resumed). *)
 let in_game m = H.read m = H.Elsewhere && not (H.black m)
+let steady_ms = 1500.
+
+(* [in_game] since [steady_ms] ago, the user select (before a launch) at once. *)
+let game_or_user_select ~launched =
+  let since = ref None in
+  fun (m : Effects.measurements) ->
+    if in_game m then (
+      let start = Option.value !since ~default:m.t_ms in
+      since := Some start;
+      m.t_ms -. start >= steady_ms)
+    else (
+      since := None;
+      (not launched) && H.read m = H.User_select)
 
 let rec until_game ~log ~launched =
   match
-    Effects.await ~timeout_ms:launch_wait_ms (fun m ->
-        in_game m || ((not launched) && H.read m = H.User_select))
+    Effects.await ~timeout_ms:launch_wait_ms (game_or_user_select ~launched)
   with
   | Timeout -> Error "the game did not show after A on HOME"
   | Holds m when in_game m -> Ok (if launched then Launched else Resumed)

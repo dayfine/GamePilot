@@ -9,7 +9,7 @@ module S = Scripted_home
    there boots it: black, then the intro. Any press wakes a dimmed HOME, and
    does nothing else. [home_ignored] HOME presses do
    nothing. *)
-let console ?(home_ignored = 0) ?(a_ignored = false) () =
+let console ?(home_ignored = 0) ?(a_ignored = false) ?(closed = false) () =
   let homes = ref 0 in
   fun t b screen ->
     let show after s = S.show t ~after s in
@@ -20,6 +20,10 @@ let console ?(home_ignored = 0) ?(a_ignored = false) () =
     | Wire.B, S.User_select -> show 300 S.Home_bdsp_last
     | _, S.Home_dimmed -> show 300 S.Home_fire_red_last
     | Wire.Right, S.Home_bdsp_last -> show 200 S.Home_on_fire_red
+    | Wire.A, S.Home_fire_red_last when closed ->
+        (* HOME's zoom passes a frame that is neither HOME nor black. *)
+        show 300 S.Game;
+        show 1200 S.User_select
     | Wire.A, S.Home_fire_red_last when not a_ignored -> show 800 S.Game
     | Wire.A, S.Home_on_fire_red -> show 800 S.User_select
     | Wire.A, S.User_select ->
@@ -75,6 +79,11 @@ let () =
          user select, black, the intro"
         (resume S.Home_bdsp_last (console ()))
         "ok, launched the game; Right, A, A; ends on intro";
+      case
+        "resume: FireRed closed on its tile, a passing frame before the user \
+         select is not the game (console B, 2026-11-24)"
+        (resume S.Home_fire_red_last (console ~closed:true ()))
+        "ok, launched the game; A, A; ends on intro";
       case "resume: the cursor already on FireRed's tile, no Right"
         (resume S.Home_on_fire_red (console ()))
         "ok, launched the game; A, A; ends on intro";
