@@ -29,6 +29,7 @@
   test_mail_glitch_use
   test_lift_ride
   test_capture
+  test_rare_candy
   test_pacing
   test_console_actions
   test_warp_settle)
@@ -46,6 +47,7 @@
   test_mail_glitch_use
   test_lift_ride
   test_capture
+  test_rare_candy
   test_pacing
   test_console_actions
   test_warp_settle)

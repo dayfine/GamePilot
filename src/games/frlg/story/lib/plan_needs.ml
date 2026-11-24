@@ -21,6 +21,10 @@ let brings action =
   | _ -> []
 
 let item_users = [ "give_bag_item"; "use_item"; "duplicate_item" ]
+
+(* The Rare Candy actions need one candy at least; how many more a
+   [candy_level] eats depends on the member's level. *)
+let candy_users = [ "use_rare_candy"; "candy_level" ]
 let yen_per_coin = 20
 
 type acc = {
@@ -96,6 +100,7 @@ let game_action stocks ~where action args acc =
   let acc =
     if List.mem action item_users then
       Option.fold ~none:acc ~some:(use_item action acc) (named "item")
+    else if List.mem action candy_users then use_item action acc "rare-candy"
     else if action = "pick_up_item" then
       Option.fold ~none:acc
         ~some:(fun item -> gain acc (item, 1))

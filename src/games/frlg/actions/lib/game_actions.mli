@@ -16,4 +16,5 @@ val perform : context -> Action_requests.t -> (unit, Story.Failure.cause) result
 
 val handlers : context -> (string * Story.Game.game_action) list
 (** One handler per {!Action_requests.names}: decode, then {!perform}; then
-    mg-06's ({!Mail_glitch_use.handlers}). *)
+    mg-06's ({!Mail_glitch_use.handlers}) and the Rare Candy ones
+    ({!Candy_actions.handlers}). *)
