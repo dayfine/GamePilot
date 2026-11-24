@@ -97,7 +97,7 @@ let () =
   let plan =
     {
       Wire.Watch.checkpoint = "mg-01";
-      events = [ { id = "ready"; state = Current; detail = "" } ];
+      events = [ { (Wire.Watch.pending "ready") with state = Current } ];
     }
   in
   Session.run transport (fun () ->

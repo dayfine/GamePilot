@@ -33,3 +33,9 @@ val read : Glyph_table.t -> string list -> Line_reading.reading
 (** Uploads each candidate's template, subscribes them, picks from the first
     frame with them all, and unsubscribes. Raises [Failure] if no such frame
     comes within a second. *)
+
+val await_read :
+  Glyph_table.t -> string list -> timeout_ms:int -> Line_reading.reading
+(** As {!read}, but from the first frame on which a candidate reads, for an
+    editor still opening; after [timeout_ms], the last frame's reading (or
+    [No_match] when no frame had the probes). *)

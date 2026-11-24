@@ -1,6 +1,6 @@
 (* What a checkpoint run shows on the watch page: its events with their states
-   (each change sends the whole plan, a few hundred bytes) and every story
-   line. In the effect context only. *)
+   and times (each change sends the whole plan, a few hundred bytes) and every
+   story line. In the effect context only. *)
 
 open Story
 module W = Wire.Watch
@@ -12,9 +12,7 @@ let show t =
     { W.checkpoint = t.checkpoint; events = Array.to_list t.events }
 
 let create (checkpoint : Plan.checkpoint) =
-  let pending (e : Plan.event) =
-    { W.id = e.id; state = Pending; detail = "" }
-  in
+  let pending (e : Plan.event) = W.pending e.id in
   let t =
     {
       checkpoint = checkpoint.checkpoint_id;
@@ -33,7 +31,9 @@ let state_of = function
 let on_event t index progress =
   if index >= 0 && index < Array.length t.events then (
     let state, detail = state_of progress in
-    t.events.(index) <- { (t.events.(index)) with state; detail };
+    (* Wall time, not the daemon clock: the page shows it across daemons. *)
+    let now_ms = int_of_float (Unix.gettimeofday () *. 1000.) in
+    t.events.(index) <- W.stamp ~now_ms t.events.(index) state detail;
     show t)
 
 (* The running event as the runner names it in a failure: "#3 talk_clerk". *)

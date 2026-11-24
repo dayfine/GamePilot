@@ -14,6 +14,7 @@ namespace gamepilot {
 struct HttpRequest {
   std::string method;  // "GET", "POST", ...
   std::string path;    // without the query string
+  std::string query;   // after the '?', empty when none
 };
 
 // A head longer than this is refused (no page sends one).
@@ -24,9 +25,15 @@ constexpr std::size_t kMaxRequestHead = 8192;
 // have none. Throws std::invalid_argument on a malformed or oversized head.
 std::optional<HttpRequest> take_request_head(std::string& buffer);
 
-// A complete response with `body`, closing the connection.
+// A complete response with `body`, closing the connection. `extra_headers`
+// are whole header lines, each ending in CRLF.
 std::string http_response(int status, std::string_view content_type,
-                          std::string_view body);
+                          std::string_view body,
+                          std::string_view extra_headers = {});
+
+// The value of `name` in a query string ("a=1&token=x"), as it is (the
+// watch page's values need no decoding); empty when it is missing.
+std::string query_value(std::string_view query, std::string_view name);
 
 // The head of a text/event-stream response; events follow it.
 std::string event_stream_head();

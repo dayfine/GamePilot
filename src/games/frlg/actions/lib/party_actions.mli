@@ -34,9 +34,28 @@ val swap : log:(string -> unit) -> int -> int -> unit
 
 val give : log:(string -> unit) -> item:string -> slot:int -> unit
 (** The item from its pocket, GIVE (row 1 of its menu, mail's too), the member;
-    a held item is switched for it (YES). Mail opens its Easy Chat editor, where
-    one word is written and confirmed ({!mail_editor_wait_ms}: no reader for the
-    editor). A berry comes from the Berry Pouch ({!Berry_pouch.choose_give}). *)
+    a held item is switched for it (the "already holding" page pressed through,
+    then YES; the fork answers a question it reads once 1200 ms after the A).
+    Mail opens its Easy Chat editor, where one word is written after
+    {!mail_editor_wait_ms} and confirmed by {!confirm_mail}. A berry comes from
+    the Berry Pouch ({!Berry_pouch.choose_give}). *)
+
+val party_input_ms : int
+(** 400: the fork's wait after the party to give to shows, before its presses.
+*)
+
+val give_to : int -> unit
+(** After GIVE: the party read, the fork's 400 ms (an earlier A is dropped),
+    then the slot chosen ({!choose_slot}). Fails as [no_party]. *)
+
+val give_row : int
+(** GIVE on an item's menu: row 1. *)
+
+val confirm_mail : unit -> unit
+(** After PLUS in the mail editor: its Yes/No arrow on YES
+    ({!Frlg_readers.Mail_editor}, 4 s), then A, as the C++ ItemDuplication
+    confirms; the fork's give presses A after 1200 ms. Fails as
+    [mail_no_confirm]. *)
 
 val mail_editor_wait_ms : int
 (** The Easy Chat editor opening: 2500, the fork's measured wait. *)

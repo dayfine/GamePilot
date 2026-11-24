@@ -41,9 +41,23 @@ again. It takes its paths from the environment, or from `~/.config/gamepilot/env
 | `GAMEPILOT_STATES` | checkpoint start states, `<ID>.start.ss` | `~/.local/share/gamepilot/states` |
 | `GAMEPILOT_RUNS` | run records, one folder per run | `~/.local/share/gamepilot/runs` |
 | `GAMEPILOT_BIN` | the `gamepilot` binary | `src/_build/default/bin/gamepilot.exe` |
+| `GAMEPILOT_WATCH_LISTEN` | the watch pages' address; `0.0.0.0` opens them to the LAN | `127.0.0.1` |
 
 `gamepilot checkpoints` reads `GAMEPILOT_STATES` and `GAMEPILOT_RUNS` too (`--states` and
 `--runs-dir` override them). No ROM is included in or needed by this repository; bring your own.
+
+## Watching runs
+
+`gamepilot checkpoints ... --watch` gives each run its own page (`docs/design/Watch-Page.md`) on a
+free port and prints its URL, with the hub's: `http://127.0.0.1:47901/` lists every live run on
+this machine and links to each page. `gamepilot runs` lists the same in the terminal.
+
+To watch from a phone or another computer, put `export GAMEPILOT_WATCH_LISTEN=0.0.0.0` in
+`~/.config/gamepilot/env` (or pass `--listen 0.0.0.0`). The runner then also prints the run's LAN
+URL with `?token=...`: open that one to get Stop; the hub and a page without the token are
+read-only. On macOS with the firewall on, the first run asks "Do you want the application
+gamepilot_daemon to accept incoming network connections?": choose Allow (System Settings >
+Network > Firewall > Options lists it afterwards). A rebuilt daemon may ask again.
 
 ## Sources
 

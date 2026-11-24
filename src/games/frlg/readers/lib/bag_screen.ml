@@ -39,14 +39,6 @@ let solid_boxes : (string * Wire.box * Wire.rgb) list =
 let left_arrow = Game_pixels.box { x = 0.; y = 64.; w = 12.; h = 16. }
 let right_arrow = Game_pixels.box { x = 64.; y = 64.; w = 16.; h = 16. }
 
-(* Inside an item's action menu, between its first two rows (USE or CHECK at
-   y 93-99, GIVE at y 111-117): the menu's white, where the list shows its
-   cream, item names and counts, and a message its text. Measured on mGBA
-   (mg-04 testing run 6's Escape Rope menu: the border at x 169, y 81; the
-   white from x 174 to 233). *)
-let item_menu_id = "bag.item_menu"
-let item_menu_box = Game_pixels.box { x = 200.; y = 102.; w = 30.; h = 6. }
-
 let arrow_red : Color_count.range =
   { low = { r = 180; g = 0; b = 0 }; high = { r = 255; g = 120; b = 60 } }
 
@@ -77,25 +69,12 @@ let probes =
     ]
   @ Cursor_column.probes cursor
 
-let item_menu_probes = [ Solid_color.probe ~id:item_menu_id item_menu_box ]
-
 let bag_open m =
   List.for_all
     (fun (id, _, ratio) ->
       Solid_color.holds m id
         (Solid_color.is_solid ~ratio ~max_distance ~max_stddev_sum))
     solid_boxes
-
-(* The boxes along the top: an item's action menu never covers them. *)
-let top_boxes =
-  List.filter (fun (id, _, _) -> id = underline_id || id = top_id) solid_boxes
-
-let solid m boxes =
-  List.for_all
-    (fun (id, _, ratio) ->
-      Solid_color.holds m id
-        (Solid_color.is_solid ~ratio ~max_distance ~max_stddev_sum))
-    boxes
 
 let arrow m id =
   Option.fold ~none:false
@@ -111,10 +90,17 @@ let pocket m =
     | true, false -> Some Poke_balls
     | false, false -> None
 
+let cursor_row m = if bag_open m then Cursor_column.row cursor m else None
+
+let solid m (id, _, ratio) =
+  Solid_color.holds m id
+    (Solid_color.is_solid ~ratio ~max_distance ~max_stddev_sum)
+
 let item_menu m =
-  solid m top_boxes
-  && Solid_color.holds m item_menu_id (fun s -> Solid_color.is_white s)
+  let right, others =
+    List.partition (fun (id, _, _) -> id = right_id) solid_boxes
+  in
+  List.for_all (solid m) others
+  && (not (List.exists (solid m) right))
   && (not (arrow m left_arrow_id))
   && not (arrow m right_arrow_id)
-
-let cursor_row m = if bag_open m then Cursor_column.row cursor m else None

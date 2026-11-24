@@ -8,11 +8,14 @@
 #
 # One run at a time: the runner takes the lock $GAMEPILOT_RUNS/.lock (tools/run_lock.sh) and waits,
 # saying who holds it, while another runner does; a lock whose holder died is taken over. Once it
-# holds the lock it also waits while the instance or a port is still in use (a runner without the
-# lock). Exit 4 when --lock-timeout SECONDS ran out first (default: wait for ever).
+# holds the lock it also waits while the instance or its bridge port is still in use (a runner
+# without the lock). Exit 4 when --lock-timeout SECONDS ran out first (default: wait for ever).
+# The daemons pick free ports (one per run), so runs on other backends do not collide with this
+# one.
 #
-# The run's watch page is served at http://127.0.0.1:47901/ (`--watch` is passed unless an
-# argument already sets the page or `--no-watch` turns it off).
+# The run's watch page is served (`--watch` is passed unless an argument already sets the page or
+# `--no-watch` turns it off). GAMEPILOT_WATCH_LISTEN=0.0.0.0 in the env file opens the watch
+# pages to the LAN.
 #
 # Settings come from the environment. A machine can keep them in an env file (sh syntax, one
 # `export NAME=value` per line), read first if it exists; variables already set win over it.
@@ -41,7 +44,6 @@ export GAMEPILOT_RUNS="${GAMEPILOT_RUNS:-$data/runs}"
 app=${GAMEPILOT_MGBA_APP:-/Applications/mGBA.app}
 bin=${GAMEPILOT_BIN:-$root/src/_build/default/bin/gamepilot.exe}
 bridge_port=47810
-daemon_port=47900
 # The trailing space keeps the pattern from matching a longer savegamePath.
 instance="savegamePath=$dir "
 
@@ -105,10 +107,9 @@ trap 'exit 130' INT TERM
 run_lock_acquire "$lock" "$lock_timeout" "$0 $*" || exit $?
 
 waited=0
-while pgrep -f "$instance" >/dev/null || lsof -nP -iTCP:$daemon_port -sTCP:LISTEN >/dev/null \
-    || lsof -nP -iTCP:$bridge_port -sTCP:LISTEN >/dev/null; do
+while pgrep -f "$instance" >/dev/null || lsof -nP -iTCP:$bridge_port -sTCP:LISTEN >/dev/null; do
     if [ $waited -eq 0 ]; then
-        echo "[Lock] waiting: the GamePilot mGBA instance or port $daemon_port/$bridge_port is in use"
+        echo "[Lock] waiting: the GamePilot mGBA instance or port $bridge_port is in use"
     fi
     if [ "$lock_timeout" -gt 0 ] && [ $waited -ge "$lock_timeout" ]; then
         echo "[Lock] gave up after ${lock_timeout}s: the instance is still in use" >&2
