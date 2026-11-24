@@ -113,3 +113,17 @@ mg-05 runs on the Switch too, after mGBA (user, 2026-11-23; it was mGBA only bef
   emulator and no C++ rebuild. If that stops being true, fix that first.
 - Every live failure becomes a replay test before the fix.
 - No patch on `gamepilot/base` and no new opam dependency without the user.
+
+## After the Mail Glitch
+
+The plans that follow S0/S1 have one page each under [`docs/roadmap/`](roadmap/README.md) and one
+GitHub issue each:
+
+- FRLG after the Elite Four ([parent page](roadmap/frlg-post-e4.md)): [Rare Candies and leveling](roadmap/frlg-rare-candy-leveling.md),
+  [Sevii Islands](roadmap/frlg-sevii-islands.md), [ACE balls](roadmap/frlg-ace-balls.md),
+  [legendaries](roadmap/frlg-legendaries.md), [Wild and Static RNG port](roadmap/frlg-rng-port.md),
+  [dex collection, FireRed exclusives first](roadmap/frlg-dex-exclusives.md).
+- [SwSh: story to the DLC](roadmap/swsh-dlc-access.md).
+- [BDSP legendary RNG](roadmap/bdsp-legendary-rng.md) and [BDSP Underground mining](roadmap/bdsp-underground-mining.md).
+- [SV isolated shiny hunts](roadmap/sv-isolated-shiny.md) and [SV Snacksworth legendaries](roadmap/sv-snacksworth-legendaries.md).
+- [PLZA story port](roadmap/plza-autostory-port.md).
