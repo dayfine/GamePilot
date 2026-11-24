@@ -50,10 +50,24 @@ val capped_postconditions :
     [knows] and [levels] ones, a grind's goal a capped grind does not reach;
     none without. *)
 
+type from_event = {
+  range : Story.Event_range.t;
+  kept : Story.Event_states.kept;
+      (** What the run that kept the first event's state read at the
+          checkpoint's start ({!Story.Event_states}). *)
+}
+(** A partial run: its events, from a state kept at the first one's start. *)
+
+type keep_event_state =
+  index:int -> Story.Plan.event -> Story.Event_states.kept -> unit
+(** Keeps the state at an event's start, with the checkpoint's start reads. *)
+
 val run :
   ?end_at:Story.Pose.grid ->
   ?on_event:(int -> Story.Event_progress.t -> unit) ->
   ?actions:(string * Story.Game.game_action) list ->
+  ?from_event:from_event ->
+  ?keep_event_state:keep_event_state ->
   options ->
   Frlg_overworld.Frlg_steps.world ->
   Story.Plan.t ->
@@ -68,7 +82,16 @@ val run :
     count read before the first event, {!Postcondition_reads.at_start}), but for
     those {!capped_postconditions} skips (logged). [on_event] hears each event's
     progress ({!Story.Runner.run}). [actions] are game actions of the caller's
-    own, ahead of FireRed's: a shadow plan's ({!Shadow_plan}). *)
+    own, ahead of FireRed's: a shadow plan's ({!Shadow_plan}).
+
+    With [from_event], only its events run ({!Story.Runner.run}), from
+    [options.state], the state kept at the first one's start; a promise of a
+    change is checked against the start reads kept with that state, never
+    re-read at the event (logged), and the walks start where the run that kept
+    it reckoned the player to stand. [keep_event_state] is called at the start
+    of each event the run reached cleanly ({!Story.Event_states.hear}), with
+    what the run read at the checkpoint's start (or, on a partial run, what was
+    kept). *)
 
 val goal_holds :
   log:(string -> unit) -> id:string -> Story.Plan.postconditions -> bool

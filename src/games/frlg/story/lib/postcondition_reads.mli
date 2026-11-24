@@ -21,15 +21,13 @@ val observe :
 val at_start :
   log:(string -> unit) ->
   Story.Plan.postconditions ->
-  Story.Postcondition_check.observed ->
-  Story.Postcondition_check.observed
+  Story.Postcondition_check.start
 (** Reads now, at the checkpoint's start, what a promise of a change needs: the
     money for a promise of the money spent ({!Story.Plan.Money_spent}), the
     coins and each item promised as gained ({!Story.Plan.Count_gained}), each as
     at the end, from the overworld and back to it; nothing for a plan with no
-    such promise. With no Coin Case in the bag the coins at the start are 0.
-    Gives what sets those start reads on the end's read; a read that failed
-    stays unread, so its promise is not checked. *)
+    such promise. With no Coin Case in the bag the coins at the start are 0. A
+    read that failed stays unread, so its promise is not checked. *)
 
 val party_summary : log:(string -> unit) -> Story.Room_policy.member list option
 (** Every member's species, level and moves ({!Frlg_actions.Party_summary}),

@@ -18,6 +18,7 @@ let run_of info ~name ~checkpoint ~mode : R.run =
     mode;
     started_ms = 1000;
     attempt = None;
+    events = None;
   }
 
 let json run ending =
@@ -55,6 +56,18 @@ let paths =
       },
       fail,
       {|{"run":"r","kind":"checkpoints","game":"frlg","program":"frlg.mail_glitch","from":"mg-05","to":"mg-05","checkpoint":"mg-05","backend":"mgba","mode":"verification","started_ms":1000,"attempt":2,"attempts":4,"ended_ms":2000,"result":"fail","at":"#2 talk","reason":"no_text"}|}
+    );
+    ( "a partial run from an event: its mode and range",
+      {
+        (run_of
+           (info Checkpoints ~program:mail_glitch ~from_id:"mg-02"
+              ~to_id:"mg-02" ~backend:"mgba")
+           ~name:"r" ~checkpoint:"mg-02" ~mode:"from-event")
+        with
+        events = Some ("#13 trade_chding", "#14 exit_vermilion_house2");
+      },
+      Some { R.result = "pass"; at = ""; reason = "" },
+      {|{"run":"r","kind":"checkpoints","game":"frlg","program":"frlg.mail_glitch","from":"mg-02","to":"mg-02","checkpoint":"mg-02","backend":"mgba","mode":"from-event","started_ms":1000,"from_event":"#13 trade_chding","to_event":"#14 exit_vermilion_house2","ended_ms":2000,"result":"pass","at":"","reason":""}|}
     );
     ( "the pre-flight",
       run_of
@@ -96,6 +109,7 @@ let names =
   [
     ("a series' run", "2026-11-23-mg-05a-verification-12", "mg-05a verification");
     ("the pre-flight", "2026-11-23-mg-01-preflight-1", "mg-01 preflight");
+    ("a partial run", "2026-11-24-mg-02-from-event-1", "mg-02 from-event");
     ("the bring-up checks", "2026-11-23-switch-bring-up-2", "switch bring-up");
     ( "a one-shot program",
       "2026-11-23-frlg.start_menu_poc-run-1",

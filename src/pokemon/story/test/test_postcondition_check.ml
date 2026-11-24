@@ -47,14 +47,22 @@ let ropes ?start now =
   {
     read with
     items = [ ("escape-rope", now) ];
-    start_items =
-      Option.fold ~none:[] ~some:(fun n -> [ ("escape-rope", n) ]) start;
+    start =
+      {
+        C.nothing_at_start with
+        start_items =
+          Option.fold ~none:[] ~some:(fun n -> [ ("escape-rope", n) ]) start;
+      };
   }
 
 let coins count = { nothing with coins = Some count }
 
 let money_from start now =
-  { read with start_money = Some start; money = Some now }
+  {
+    read with
+    start = { C.nothing_at_start with start_money = Some start };
+    money = Some now;
+  }
 
 let party_cases =
   [
@@ -131,7 +139,10 @@ let count_cases =
     case "gained, the count at the start not read" (gained 1) (ropes 5)
       "item escape-rope: not checked: the count at the start was not read";
     case "gained, the count at the end not read" (gained 1)
-      { read with start_items = [ ("escape-rope", 4) ] }
+      {
+        read with
+        start = { C.nothing_at_start with start_items = [ ("escape-rope", 4) ] };
+      }
       "item escape-rope: not checked: the game can't read it";
     case "at least, with more" (items (Count_at_least 2)) (ropes 5)
       "item escape-rope: passed: 5";
@@ -145,7 +156,11 @@ let count_cases =
       "coins: failed: expected 20, read 200";
     case "mg-01's coins on a save that had some: gained 20 (50 to 70)"
       (coins (Count_gained 20))
-      { read with start_coins = Some 50; coins = Some 70 }
+      {
+        read with
+        start = { C.nothing_at_start with start_coins = Some 50 };
+        coins = Some 70;
+      }
       "coins: passed: gained 20 (50 to 70)";
     case "coins gained, the start not read" (coins (Count_gained 20))
       { read with coins = Some 20 }
@@ -175,7 +190,7 @@ let count_cases =
       { read with money = Some 25102 }
       "money: not checked: the money at the start was not read";
     case "spent, the money at the end not read" (spent 4100)
-      { read with start_money = Some 29202 }
+      { read with start = { C.nothing_at_start with start_money = Some 29202 } }
       "money: not checked: the game can't read it";
     case "a flag no game reads"
       { nothing with flags = [ "got_coin_case" ] }

@@ -16,15 +16,7 @@
     postcondition not checked as well as a failed one (the C++'s
     [all_passed()]), so a promise nobody read never passes. *)
 
-type observed = {
-  party : string option list option;
-      (** Each member's species slug, slot 1 first; [None] for a member whose
-          species did not read. [None] when the party was not read. *)
-  items : (string * int) list;
-      (** Each item read and its count in the bag (0: read, not there). An item
-          left out was not read. *)
-  coins : int option;
-  money : int option;
+type start = {
   start_money : int option;
       (** The money read at the checkpoint's start, for a {!Plan.Money_spent}
           promise; [None] when not read. *)
@@ -34,6 +26,23 @@ type observed = {
   start_items : (string * int) list;
       (** Each item read at the checkpoint's start, for a {!Plan.Count_gained}
           promise, and its count; one left out was not read. *)
+}
+(** What a promise of a change is checked against: the counts read before the
+    checkpoint's first event. *)
+
+val nothing_at_start : start
+
+type observed = {
+  party : string option list option;
+      (** Each member's species slug, slot 1 first; [None] for a member whose
+          species did not read. [None] when the party was not read. *)
+  items : (string * int) list;
+      (** Each item read and its count in the bag (0: read, not there). An item
+          left out was not read. *)
+  coins : int option;
+  money : int option;
+  start : start;
+      (** What was read at the checkpoint's start, for a promise of a change. *)
   flags : (string * bool) list;
       (** Each flag read and whether it is set; one left out was not read. *)
   knows : (string * string list) list;

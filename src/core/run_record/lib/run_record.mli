@@ -32,8 +32,8 @@ val story_log : t -> (string -> unit) * (unit -> unit)
 val copy_file : src:string -> dst:string -> unit
 
 val modes : string list
-(** The modes a folder's name may end in: testing, verification, preflight,
-    single, run, bring-up. *)
+(** The modes a folder's name may end in: testing, verification, from-event,
+    preflight, single, run, bring-up. *)
 
 val parse_name : string -> (string * string) option
 (** ["<date>-<label>-<mode>-<n>"]: the label (a checkpoint, a program) and the
@@ -71,6 +71,10 @@ type run = {
   attempt : (int * int) option;
       (** Attempt [n] of [m] of a checkpoint run whose plan allows retries:
           run.json's ["attempt"] and ["attempts"]. *)
+  events : (string * string) option;
+      (** A partial run's first and last event (["#13 trade_chding"]), mode
+          ["from-event"]: run.json's ["from_event"] and ["to_event"]. Such a run
+          never verifies its checkpoint. *)
 }
 (** A started run. *)
 
@@ -79,6 +83,7 @@ val run_json : run -> ended_ms:int -> ending option -> Yojson.Safe.t
 
 val start :
   ?attempt:int * int ->
+  ?events:string * string ->
   runs_dir:string ->
   info ->
   checkpoint:string ->

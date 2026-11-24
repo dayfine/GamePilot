@@ -20,6 +20,8 @@
 # fails soft-resets back to the last save and the series stops, for a fix and a rerun from that
 # save. A failed or stopped run never saves.
 #
+# --from-event is refused: the Switch has no save states (run/run_checkpoints_on_mgba.sh has it).
+#
 # --dry-run runs the whole script on the fakes, touching no console: the daemon's fake controller
 # board (no --serial) and a replay of a recorded frame (--replay, docs: daemon/src/main.cpp) in
 # place of the capture card, a lab lock of its own in a scratch lab folder, and the device checks
@@ -73,6 +75,11 @@ while [ $n -gt 0 ]; do
     shift
     n=$((n - 1))
     case $a in
+    --from-event | --to-event)
+        echo "$a: the Switch has no save states, so a checkpoint runs from the game's save;" \
+            "run from an event on mGBA (run/run_checkpoints_on_mgba.sh --from-event ...)" >&2
+        exit 2
+        ;;
     --dry-run) dry_run=1; continue ;;
     --locked) locked=1; continue ;;
     --no-watch) watch=""; continue ;;
