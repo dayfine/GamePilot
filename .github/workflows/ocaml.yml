@@ -22,6 +22,9 @@ jobs:
       - name: Test the mGBA runner's lock
         if: runner.os != 'Windows'
         run: sh run/test_run_lock.sh
+      - name: Test the dune test failure report (dev/ci/)
+        if: runner.os == 'Linux'
+        run: sh dev/ci/test_report_test_failures.sh
       - name: Check golden JSON formatting
         if: runner.os == 'Linux'
         run: python3 dev/lint/fmt_json.py --check protocol/v1/*.json
@@ -33,13 +36,24 @@ jobs:
       - working-directory: src
         run: opam exec -- dune build
       - working-directory: src
-        run: opam exec -- dune test
+        shell: bash
+        run: |
+          set +e
+          opam exec -- dune test 2>&1 | tee dune-test.log
+          status=${PIPESTATUS[0]}
+          if [ "$status" -ne 0 ]; then sh ../dev/ci/report_test_failures.sh dune-test.log; fi
+          exit "$status"
       - name: Build and test the OCaml linters (dev/lint/)
         if: runner.os == 'Linux'
         working-directory: dev/lint
+        shell: bash
         run: |
           opam exec -- dune build
-          opam exec -- dune test
+          set +e
+          opam exec -- dune test 2>&1 | tee dune-test.log
+          status=${PIPESTATUS[0]}
+          if [ "$status" -ne 0 ]; then sh ../ci/report_test_failures.sh dune-test.log; fi
+          exit "$status"
       - name: Run the OCaml linters on src/ and dev/lint/
         if: runner.os == 'Linux'
         run: opam exec -- sh dev/lint/lint_ocaml.sh
