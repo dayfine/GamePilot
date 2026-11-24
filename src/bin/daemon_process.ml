@@ -5,6 +5,37 @@
 
 type t = { pid : int; out_file : string }
 
+type watch = { listen : string; port : int }
+(** The daemon's watch page: the address it binds ([127.0.0.1] unless the user
+    opened it to the LAN) and its port. *)
+
+let default_watch_port = 47901
+let local_watch = { listen = "127.0.0.1"; port = default_watch_port }
+
+let watch_args = function
+  | None -> [||]
+  | Some { listen; port } ->
+      [| "--watch-port"; string_of_int port; "--listen"; listen |]
+
+let watch_url { listen; port } =
+  let host =
+    if listen = "0.0.0.0" then "<this machine's address>" else listen
+  in
+  Printf.sprintf "http://%s:%d/" host port
+
+let lan_warning listen =
+  Printf.sprintf
+    "[Watch] listening on %s: anyone on the network can watch the run and \
+     press Stop"
+    listen
+
+(* Says where the page is; on every interface, loudly: the page has Stop. *)
+let announce_watch = function
+  | None -> ()
+  | Some w ->
+      print_endline ("[Watch] the run's page: " ^ watch_url w);
+      if w.listen <> "127.0.0.1" then print_endline (lan_warning w.listen)
+
 let ready_line = "daemon: listening on"
 let ready_timeout_s = 15.
 let poll_interval_s = 0.1
@@ -39,19 +70,21 @@ let rec wait_ready t deadline =
     Unix.sleepf poll_interval_s;
     wait_ready t deadline)
 
-let start ~daemon ~mgba_port ~port ~wire_log ~out_file =
+let start ?watch ~daemon ~mgba_port ~port ~wire_log ~out_file () =
   let args =
-    [|
-      daemon;
-      "--backend";
-      "mgba";
-      "--mgba-port";
-      string_of_int mgba_port;
-      "--port";
-      string_of_int port;
-      "--log";
-      wire_log;
-    |]
+    Array.append
+      [|
+        daemon;
+        "--backend";
+        "mgba";
+        "--mgba-port";
+        string_of_int mgba_port;
+        "--port";
+        string_of_int port;
+        "--log";
+        wire_log;
+      |]
+      (watch_args watch)
   in
   let out =
     Unix.openfile out_file [ Unix.O_WRONLY; Unix.O_CREAT; Unix.O_TRUNC ] 0o644

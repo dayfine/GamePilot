@@ -27,11 +27,6 @@ let menu_tap = M.hold ~hold_ms:M.tap_hold_ms ~cooldown_ms:M.tap_release_ms
 let tap buttons =
   ignore (Effects.submit (List.map menu_tap buttons) : Wire.batch_done)
 
-let find_encounter ~log ~facing ~max_batches () =
-  match Spin_for_encounter.spin ~log ~facing:(facing ()) ~max_batches with
-  | () -> true
-  | exception M.Action_failed _ -> false
-
 let opening_line species =
   "Wild " ^ String.uppercase_ascii species ^ " appeared!"
 
@@ -76,9 +71,13 @@ let read_encounter ~target (driver : B.Battle_driver.t) () =
         ("the wild battle's action menu did not show: "
         ^ B.Battle_driver.event_name event)
 
+(* The pacing counts its taps: one lost to the battle's exit would put it a
+   tile off, so the overworld settles first (wait_out_battle_exit()). *)
 let flee ~log driver () =
   match B.Wild_flee.run driver ~log with
-  | Fled _ -> true
+  | Fled _ ->
+      M.settle_back ~label:"after the flee" ~log;
+      true
   | Not_fled why ->
       log ("Capture: " ^ why);
       false
@@ -166,10 +165,13 @@ let finish_catch ~log (destination : Capture.destination) =
   (M.settle_back ~label:"after the catch" ~log;
    true)
 
-let make ~log ~facing ~target ~max_spin_batches : Capture.rig =
+let find_encounter ~log ~pace spot () =
+  Pacing_steps.find_encounter ~log ~overworld_shows ~pace spot
+
+let make ~log ~pace ~spot ~target : Capture.rig =
   let driver = B.Screen_driver.make () in
   {
-    find_encounter = find_encounter ~log ~facing ~max_batches:max_spin_batches;
+    find_encounter = find_encounter ~log ~pace spot;
     read_encounter = read_encounter ~target driver;
     flee = flee ~log driver;
     throw_ball = throw_ball ~log;

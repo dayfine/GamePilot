@@ -217,6 +217,28 @@ let give_to_slot_one () =
 let trade () =
   run ~react:trade_screen (fun () -> Ingame_trade.trade ~log ~slot:3)
 
+(* mg-02 testing run 2 (this branch): the trade scene's fade into its blue box
+   read as the white text box for a frame or two; the settle after it then met
+   the blue box ("Bye-bye, SPEAROW!"), which reads as a battle. Here the box
+   (Battle) takes three A presses before the trader's text. *)
+let trade_fade_screen screen (p : S.press) =
+  let show d s = S.show screen ~at_ms:(p.at_ms + d) s in
+  match S.screen_at screen p.at_ms with
+  | S.Overworld when a p -> show 200 S.Question
+  | S.Question when a p -> show 300 (S.Party 1)
+  | S.Party _ when a p ->
+      show 100 S.Black;
+      show 1500 S.Dialog;
+      show 1530 S.Battle
+  | S.Battle when a p ->
+      if List.length screen.S.presses >= 8 then (
+        show 200 S.Dialog;
+        show 2000 S.Overworld)
+  | _ -> ()
+
+let trade_fade () =
+  run ~react:trade_fade_screen (fun () -> Ingame_trade.trade ~log ~slot:3)
+
 (* A wild battle starts [after_ms] into the spin. *)
 let spin ~after_ms () =
   run_on
@@ -358,6 +380,10 @@ let () =
         give_to_slot_one "ok; A; ends on dialog arrow";
       case "trade: YES, slot 3, A through the trade" trade
         "ok; A x2, down x2, A x6, B x7";
+      case
+        "trade: a white box for a frame in the scene's fade is not the \
+         trader's text"
+        trade_fade "ok; A x2, down x2, A x4, B x7";
       case "spin: a battle in the first batch" (spin ~after_ms:1500)
         "ok; 12 turns";
       case "spin: no battle in two batches" (spin ~after_ms:100000)

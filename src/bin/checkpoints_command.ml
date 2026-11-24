@@ -1,7 +1,7 @@
 (* gamepilot checkpoints PLAN_DIR --from ID --to ID --mode testing|verification
      [--runs N] [--states DIR] [--runs-dir DIR] [--daemon PATH]
      [--mgba-port N] [--port N] [--party SPECIES,...] [--center TOWN] [--walk]
-     [--end-check-only]
+     [--end-check-only] [--watch] [--watch-port N] [--listen ADDR]
 
    The checkpoint dev loop. A program's checkpoints are its plan files
    (<ID>.plan.json in PLAN_DIR, in name order); each runs from its start state
@@ -13,6 +13,10 @@
    run checks its start state against the postconditions and runs no event. The loop goes to the
    next checkpoint only after this one passed; in verification mode the last
    passing run's end becomes the next checkpoint's start state.
+
+   --watch serves the run's watch page (the daemon's, docs/design/Watch-Page.md)
+   on 127.0.0.1:47901; --watch-port moves it, --listen 0.0.0.0 opens it to the
+   LAN.
 
    --states defaults to $GAMEPILOT_STATES and --runs-dir to $GAMEPILOT_RUNS,
    else to $HOME/.local/share/gamepilot/{states,runs}.
@@ -39,6 +43,7 @@ type flags = {
   daemon : string;
   mgba_port : int;
   common : Checkpoint_command.flags;
+  watch : Daemon_process.watch option;
 }
 
 let usage =
@@ -47,7 +52,7 @@ let usage =
   \      [--runs N] [--states DIR] [--runs-dir DIR] [--daemon PATH]\n\
   \      [--mgba-port N] [--port N] [--party SPECIES,...] [--center TOWN] \
    [--walk]\n\
-  \      [--end-check-only]\n"
+  \      [--end-check-only] [--watch] [--watch-port 47901] [--listen ADDR]\n"
 
 let home = Option.value (Sys.getenv_opt "HOME") ~default:"."
 
@@ -72,6 +77,7 @@ let defaults =
     daemon = "daemon/build/gamepilot_daemon";
     mgba_port = mgba_bridge_port;
     common = Checkpoint_command.defaults;
+    watch = None;
   }
 
 let common_flag f c = { f with common = c f.common }
@@ -108,8 +114,25 @@ let valued f name v =
       Some (Ok (common_flag f (fun c -> { c with center = Some v })))
   | _ -> None
 
+(* --watch-port and --listen imply --watch. *)
+let watch_flag f set =
+  let w = Option.value f.watch ~default:Daemon_process.local_watch in
+  { f with watch = Some (set w) }
+
+let watch_port f port = watch_flag f (fun w -> { w with Daemon_process.port })
+
+let watch_valued f name v =
+  match name with
+  | "--watch-port" -> Some (int_flag name v (watch_port f))
+  | "--listen" -> Some (Ok (watch_flag f (fun w -> { w with listen = v })))
+  | _ -> None
+
+let valued f name v =
+  match watch_valued f name v with Some r -> Some r | None -> valued f name v
+
 let rec parse f = function
   | [] -> Ok f
+  | "--watch" :: rest -> parse (watch_flag f Fun.id) rest
   | "--walk" :: rest ->
       parse (common_flag f (fun c -> { c with walk = true })) rest
   | "--end-check-only" :: rest ->
@@ -171,5 +194,6 @@ let main plan_dir args =
          mode;
          policy;
          world;
+         watch = f.watch;
        }
        selected ~after)

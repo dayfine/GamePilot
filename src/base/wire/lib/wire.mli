@@ -1,4 +1,4 @@
-(** Wire protocol v1.5 (contracts/v1): message types and their JSON codec.
+(** Wire protocol v1.6 (contracts/v1): message types and their JSON codec.
 
     The codec lives in one module per message family ([Command], [Probe],
     [Backend], [Jsonrpc], [Wire_log], [Probe_images]); this module re-exports
@@ -185,6 +185,16 @@ type notification = Jsonrpc.notification =
           daemon took the frame. Session bookkeeping, not a measurement, so it
           stays out of {!frame}. *)
   | Batch_done of batch_done
+  | Watch_plan of Watch.plan
+      (** From the program: its checkpoint's events and their states, for the
+          watch page. The daemon keeps it off the wire log. *)
+  | Watch_log of string
+      (** From the program: one story log line, for the watch page; off the wire
+          log too. *)
+  | Stop of string
+      (** From the daemon: someone pressed Stop on the watch page (the reason).
+          The daemon has already cancelled the queued commands and released
+          every button; the program ends at its next wait. *)
 
 type message = Jsonrpc.message =
   | Request of request
@@ -236,6 +246,9 @@ val cancel_result_of_json : json -> int
 (** The [released_seq]. *)
 
 val json_of_cancel_result : int -> json
+
+module Watch = Watch
+(** The watch page's plan and log notifications. *)
 
 module Daemon_status = Daemon_status
 (** The [status] result: decode it with [Daemon_status.of_json]. *)

@@ -1,5 +1,6 @@
-(** The JSON-RPC 2.0 envelope: calls by method, responses by id, and the [frame]
-    and [batch_done] notifications. *)
+(** The JSON-RPC 2.0 envelope: calls by method, responses by id, and the
+    notifications: [frame], [batch_done] and [stop] from the daemon,
+    [watch.plan] and [watch.log] from the program. *)
 
 type json = Yojson.Safe.t
 type error = { code : int; message : string; data : json option }
@@ -22,6 +23,9 @@ type response = { id : int; outcome : (json, error) result }
 type notification =
   | Frame of { load : int; frame : Probe.frame }
   | Batch_done of Command.batch_done
+  | Watch_plan of Watch.plan
+  | Watch_log of string
+  | Stop of string
 
 type message =
   | Request of request

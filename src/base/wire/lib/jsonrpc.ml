@@ -35,6 +35,9 @@ type response = { id : int; outcome : (json, error) result }
 type notification =
   | Frame of { load : int; frame : Probe.frame }
   | Batch_done of Command.batch_done
+  | Watch_plan of Watch.plan
+  | Watch_log of string
+  | Stop of string
 
 type message =
   | Request of request
@@ -141,6 +144,11 @@ let notification_of_json m j =
   | `String "frame" -> Notification (frame_notification_of_json j)
   | `String "batch_done" ->
       Notification (Batch_done (Command.batch_done_of_json (params j)))
+  | `String "watch.plan" ->
+      Notification (Watch_plan (Watch.plan_of_json (params j)))
+  | `String "watch.log" ->
+      Notification (Watch_log (Watch.line_of_json (params j)))
+  | `String "stop" -> Notification (Stop (Watch.reason_of_json (params j)))
   | m -> fail "unknown notification %s" (Yojson.Safe.to_string m)
 
 let message_of_json j =
@@ -164,6 +172,12 @@ let json_of_notification = function
         ("method", `String "batch_done");
         ("params", Command.json_of_batch_done d);
       ]
+  | Watch_plan plan ->
+      [ ("method", `String "watch.plan"); ("params", Watch.json_of_plan plan) ]
+  | Watch_log line ->
+      [ ("method", `String "watch.log"); ("params", Watch.json_of_line line) ]
+  | Stop reason ->
+      [ ("method", `String "stop"); ("params", Watch.json_of_reason reason) ]
 
 let json_of_request { id; call } =
   [

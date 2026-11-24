@@ -53,7 +53,8 @@ OCaml program  ──JSON-RPC (contracts)────┘
 ## Order
 
 1. Observe page: MJPEG video, probe boxes and values, wire events. Useful right away for building
-   the FRLG readers (Phase 2).
+   the FRLG readers (Phase 2). Built as the watch page (`Watch-Page.md`), with polled JPEG frames
+   and Server-Sent Events instead of MJPEG and a WebSocket.
 2. Run panel: the `status` notification and checkpoint results.
 3. Pad and lease.
 4. Recorded runs: frame recording and the scrubber.
