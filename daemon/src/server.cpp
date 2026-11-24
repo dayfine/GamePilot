@@ -123,10 +123,15 @@ void Server::run_lockstep(const std::atomic<bool>& stop) {
                    static_cast<double>(frames_stepped_ - report_frames) *
                        1000.0 / (now - report_ms));
       if (watch_) {
-        std::fprintf(stderr, "; watch: %s, %lld frames sent, %.1f ms in all",
-                     watch_->has_viewers() ? "viewed" : "no viewer",
-                     static_cast<long long>(watch_cost_.frames_encoded),
-                     watch_cost_.ms);
+        const std::int64_t frames = watch_cost_.frames_encoded;
+        std::fprintf(
+            stderr,
+            "; watch: %s, %lld frames sent (%lld bytes each), %.1f ms in all",
+            watch_->has_viewers() ? "viewed" : "no viewer",
+            static_cast<long long>(frames),
+            static_cast<long long>(
+                frames > 0 ? watch_cost_.frame_bytes / frames : 0),
+            watch_cost_.ms);
       }
       std::fputs("\n", stderr);
       report_ms = now;

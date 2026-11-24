@@ -19,9 +19,14 @@ constexpr double kWatchFrameMs = 200;
 // The health panel's refresh.
 constexpr double kWatchStatusMs = 1000;
 // Frames wider than this are scaled down before encoding (a 1080p capture
-// goes to 640x360; the GBA's 240x160 is sent as it is).
+// goes to 640x360) and sent as JPEG.
 constexpr int kWatchFrameWidth = 640;
 constexpr int kWatchJpegQuality = 85;
+// Frames this wide or less (the GBA's 240x160) are sent as they are, as PNG:
+// pixel art blurs in JPEG. Full compression keeps a GBA frame to 2-26 KB, about
+// 1 ms to encode at 5 frames a second.
+constexpr int kWatchLosslessWidth = 320;
+constexpr int kWatchPngCompression = 9;
 
 pa::JsonObject box_json(const Box& box) {
   pa::JsonObject json;
@@ -32,16 +37,21 @@ pa::JsonObject box_json(const Box& box) {
   return json;
 }
 
-std::string encode_jpeg(const cv::Mat& frame) {
+WatchFrame encode_frame(const cv::Mat& frame) {
+  std::vector<unsigned char> bytes;
+  if (frame.cols <= kWatchLosslessWidth) {
+    cv::imencode(".png", frame, bytes,
+                 {cv::IMWRITE_PNG_COMPRESSION, kWatchPngCompression});
+    return {"image/png", std::string(bytes.begin(), bytes.end())};
+  }
   cv::Mat scaled = frame;
   if (frame.cols > kWatchFrameWidth) {
     const double scale = static_cast<double>(kWatchFrameWidth) / frame.cols;
     cv::resize(frame, scaled, cv::Size(), scale, scale, cv::INTER_AREA);
   }
-  std::vector<unsigned char> jpeg;
-  cv::imencode(".jpg", scaled, jpeg,
+  cv::imencode(".jpg", scaled, bytes,
                {cv::IMWRITE_JPEG_QUALITY, kWatchJpegQuality});
-  return std::string(jpeg.begin(), jpeg.end());
+  return {"image/jpeg", std::string(bytes.begin(), bytes.end())};
 }
 
 }  // namespace
@@ -50,7 +60,7 @@ std::uint16_t Server::watch_port() const { return watch_ ? watch_->port() : 0; }
 
 void Server::start_watch() {
   watch_ = std::make_unique<WatchServer>(
-      *options_.watch, WatchHooks{[this] { return frame_jpeg(); },
+      *options_.watch, WatchHooks{[this] { return watch_frame(); },
                                   [this] { return stop_program(); }});
   watch_->set_info(to_line(pa::JsonValue(hello_result(backend_.info()))));
 }
@@ -98,22 +108,24 @@ bool Server::stop_program() {
   return true;
 }
 
-// The current frame as a JPEG, encoded at most every kWatchFrameMs: the
-// frame the probes last ran on when it is current, else the backend's.
-std::string Server::frame_jpeg() {
+// The current frame, encoded at most every kWatchFrameMs: the frame the
+// probes last ran on when it is current, else the backend's.
+WatchFrame Server::watch_frame() {
   const double now = clock_.now_ms();
-  if (!frame_jpeg_.empty() && now - frame_jpeg_ms_ < kWatchFrameMs) {
-    return frame_jpeg_;
+  if (!frame_shown_.bytes.empty() && now - frame_shown_ms_ < kWatchFrameMs) {
+    return frame_shown_;
   }
   try {
     const bool probed = !probed_frame_.empty() && probed_seq_ == backend_.seq();
-    frame_jpeg_ = encode_jpeg(probed ? probed_frame_ : backend_.frame());
-    frame_jpeg_ms_ = now;
+    frame_shown_ = encode_frame(probed ? probed_frame_ : backend_.frame());
+    frame_shown_ms_ = now;
     watch_cost_.frames_encoded++;
+    watch_cost_.frame_bytes +=
+        static_cast<std::int64_t>(frame_shown_.bytes.size());
   } catch (const BackendError& error) {
     std::fprintf(stderr, "daemon: watch frame: %s\n", error.what());
   }
-  return frame_jpeg_;
+  return frame_shown_;
 }
 
 void Server::show_probes(
