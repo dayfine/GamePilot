@@ -216,6 +216,9 @@ type press = {
 type t = {
   input_delay_ms : int;
       (** A menu takes no cursor tap until it has shown this long. *)
+  capture_latency_ms : int;
+      (** A cursor move reaches the frames this long after its tap, as the
+          Switch's capture card shows it (console B: hundreds of ms). *)
   mutable clock_ms : int;
   mutable seq : int;
   mutable shows : (int * screen) list;  (** From a time on, newest first. *)
@@ -225,9 +228,11 @@ type t = {
       (** Probe ids the code under test subscribed, for the text lines. *)
 }
 
-let create ?(react = fun _ _ -> ()) ?(input_delay_ms = 0) () =
+let create ?(react = fun _ _ -> ()) ?(input_delay_ms = 0)
+    ?(capture_latency_ms = 0) () =
   {
     input_delay_ms;
+    capture_latency_ms;
     clock_ms = 0;
     seq = 0;
     shows = [ (0, Overworld) ];
@@ -289,7 +294,8 @@ let move_cursor t (p : press) =
     | _ -> None
   in
   match moved with
-  | Some s when step <> 0 && taken -> show t ~at_ms:(p.at_ms + 1) s
+  | Some s when step <> 0 && taken ->
+      show t ~at_ms:(p.at_ms + 1 + t.capture_latency_ms) s
   | _ -> ()
 
 (* A text line's template probe ("<line>/<text>"): a perfect match for the

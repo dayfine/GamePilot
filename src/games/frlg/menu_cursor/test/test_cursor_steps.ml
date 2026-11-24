@@ -17,8 +17,8 @@ let tap b =
        [ Wire.Press { buttons = [ b ]; hold_ms = 80; cooldown_ms = 240 } ]
       : Wire.batch_done)
 
-let party_to ?(input_delay_ms = 0) ~from slot () =
-  let screen = S.create ~input_delay_ms () in
+let party_to ?(input_delay_ms = 0) ?(capture_latency_ms = 0) ~from slot () =
+  let screen = S.create ~input_delay_ms ~capture_latency_ms () in
   S.show screen ~at_ms:0 (S.Party from);
   let result =
     S.run screen (fun () ->
@@ -38,6 +38,11 @@ let () =
       case "a tap the list drops while it slides in is tapped again"
         (party_to ~input_delay_ms:300 ~from:5 6)
         "reached; down x2";
+      case
+        "console B's capture shows a move 700 ms late: one tap per row, no \
+         overshoot (2026-11-23)"
+        (party_to ~capture_latency_ms:700 ~from:2 5)
+        "reached; down x3";
       case "no party: unread, nothing pressed"
         (fun () ->
           let screen = S.create () in
