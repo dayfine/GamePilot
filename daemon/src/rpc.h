@@ -143,8 +143,13 @@ SubmitParams decode_submit(const pa::JsonObject& params);
 CancelParams decode_cancel(const pa::JsonObject& params);
 LeaseAcquireParams decode_lease_acquire(const pa::JsonObject& params);
 
-// GBA button name ("A", "Start", ...) to its KEYINPUT bit; 0 if unknown.
+// Button name ("A", "Start", ..., "Home") to its KeyMask bit; 0 if unknown.
 KeyMask button_mask(const std::string& name);
+
+// The refusal of a press of a Switch-only button (kSwitchOnlyKeys, named by
+// the first one in `mask`) by a backend that is not the Switch
+// (kInvalidParams, data {backend, button}).
+RpcError switch_button_refusal(const std::string& backend, KeyMask mask);
 
 pa::JsonValue result_message(const pa::JsonValue& id, pa::JsonObject result);
 pa::JsonValue error_message(const pa::JsonValue& id, const RpcError& error);

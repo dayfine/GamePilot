@@ -32,8 +32,10 @@ struct BackendInfo {
   bool takes_input = true;
 };
 
-// GBA KEYINPUT bit order.
+// GBA KEYINPUT bit order (A, B, Select, Start, Right, Left, Up, Down, R, L in
+// bits 0-9), then the buttons only the Switch has: Home, X, Y in bits 10-12.
 using KeyMask = std::uint16_t;
+constexpr KeyMask kSwitchOnlyKeys = 0x7u << 10;
 
 // A thread's last sign of life: the last frame it handled and when.
 struct ThreadBeat {

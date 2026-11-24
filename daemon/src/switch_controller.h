@@ -9,8 +9,9 @@
 // NintendoSwitch_PABotBase2_ProController.h) and
 // PABotBase2_OemController::populate_report_buttons() and issue_report()
 // (NintendoSwitch_PABotBase2_OemController.cpp), for the buttons and D-pad the
-// GBA keys use. Left out: the sticks (always centred), the gyro (always off, so
-// the C++ also sends the buttons-only report) and the rumble.
+// GBA keys use, and Home, X and Y. Left out: the sticks (always centred), the
+// gyro (always off, so the C++ also sends the buttons-only report) and the
+// rumble.
 
 #pragma once
 
@@ -33,7 +34,8 @@ ProButtons neutral_pro_buttons();
 
 // The Pro Controller report for GBA keys as the Switch's GBA app reads them:
 // A, B, L, R as themselves, Start as Plus, Select as Minus, the arrows as the
-// D-pad (populate_report_buttons() and execute_state()'s split D-pad).
+// D-pad (populate_report_buttons() and execute_state()'s split D-pad); the
+// Switch-only keys (kSwitchOnlyKeys) as Home, X and Y.
 // Opposite arrows cancel: the C++'s D-pad is one position, which cannot hold
 // both.
 ProButtons pro_buttons_for_keys(KeyMask keys);

@@ -259,15 +259,39 @@ UnsubscribeParams decode_unsubscribe(const pa::JsonObject& params) {
   return unsubscribe;
 }
 
+namespace {
+
+// The buttons by KeyMask bit (backend.h).
+constexpr std::array<const char*, 13> kButtons = {
+    "A",    "B", "Select", "Start", "Right", "Left", "Up",
+    "Down", "R", "L",      "Home",  "X",     "Y"};
+
+}  // namespace
+
 KeyMask button_mask(const std::string& name) {
-  static constexpr std::array<const char*, 10> kButtons = {
-      "A", "B", "Select", "Start", "Right", "Left", "Up", "Down", "R", "L"};
   for (std::size_t bit = 0; bit < kButtons.size(); bit++) {
     if (name == kButtons[bit]) {
       return static_cast<KeyMask>(1u << bit);
     }
   }
   return 0;
+}
+
+RpcError switch_button_refusal(const std::string& backend, KeyMask mask) {
+  std::string button;
+  for (std::size_t bit = 0; bit < kButtons.size(); bit++) {
+    if ((mask & kSwitchOnlyKeys & (1u << bit)) != 0) {
+      button = kButtons[bit];
+      break;
+    }
+  }
+  pa::JsonObject data;
+  data["backend"] = backend;
+  data["button"] = button;
+  return RpcError(kInvalidParams,
+                  button + " is a Switch button: the " + backend +
+                      " backend has no " + button,
+                  std::move(data));
 }
 
 SubmitParams decode_submit(const pa::JsonObject& params) {

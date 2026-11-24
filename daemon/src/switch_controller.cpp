@@ -9,12 +9,15 @@ namespace {
 
 // Report 0x30's button bits as populate_report_buttons() sets them.
 // button3: the right side.
+constexpr std::uint8_t kProY = 1u << 0;
+constexpr std::uint8_t kProX = 1u << 1;
 constexpr std::uint8_t kProB = 1u << 2;
 constexpr std::uint8_t kProA = 1u << 3;
 constexpr std::uint8_t kProR = 1u << 6;
 // button4: the shared buttons.
 constexpr std::uint8_t kProMinus = 1u << 0;
 constexpr std::uint8_t kProPlus = 1u << 1;
+constexpr std::uint8_t kProHome = 1u << 4;
 // button5: the left side, the D-pad as execute_state() splits it.
 constexpr std::uint8_t kProDown = 1u << 0;
 constexpr std::uint8_t kProUp = 1u << 1;
@@ -37,6 +40,10 @@ constexpr KeyMask kGbaUp = 1u << 6;
 constexpr KeyMask kGbaDown = 1u << 7;
 constexpr KeyMask kGbaR = 1u << 8;
 constexpr KeyMask kGbaL = 1u << 9;
+// The Switch-only buttons above them (kSwitchOnlyKeys).
+constexpr KeyMask kHome = 1u << 10;
+constexpr KeyMask kX = 1u << 11;
+constexpr KeyMask kY = 1u << 12;
 
 bool has(KeyMask keys, KeyMask bit) { return (keys & bit) != 0; }
 
@@ -62,8 +69,11 @@ ProButtons pro_buttons_for_keys(KeyMask keys) {
   set_if(buttons.button3, has(keys, kGbaA), kProA);
   set_if(buttons.button3, has(keys, kGbaB), kProB);
   set_if(buttons.button3, has(keys, kGbaR), kProR);
+  set_if(buttons.button3, has(keys, kX), kProX);
+  set_if(buttons.button3, has(keys, kY), kProY);
   set_if(buttons.button4, has(keys, kGbaStart), kProPlus);
   set_if(buttons.button4, has(keys, kGbaSelect), kProMinus);
+  set_if(buttons.button4, has(keys, kHome), kProHome);
   set_if(buttons.button5, has(keys, kGbaL), kProL);
   const int x = (has(keys, kGbaRight) ? 1 : 0) - (has(keys, kGbaLeft) ? 1 : 0);
   const int y = (has(keys, kGbaDown) ? 1 : 0) - (has(keys, kGbaUp) ? 1 : 0);
