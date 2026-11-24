@@ -1,0 +1,264 @@
+{
+  "format": "pokesim-authored-checkpoint/1",
+  "game": "frlg",
+  "execution": {
+    "menu": "full"
+  },
+  "metadata": {
+    "phase": "testing",
+    "notes": "Starts from the mg-06 save at Celadon Dept. Store 1F (6, 2): MIMIEN in slot 1 holding an Antidote, mail on slots 2-6, Pidgey knows Fly. Console B bag 2026-11-24: Retro Mail 2, no Rare Candy; $20,476. Rare Candy: 1 picked up, held by MIMIEN, +39 duplicated into the bag. Retro Mail: 2 + 40 - 39 = 3.",
+    "postconditions": {
+      "party_slots": [
+        {
+          "slot": 1,
+          "species": "mr-mime"
+        }
+      ],
+      "items": [
+        {
+          "item": "rare-candy",
+          "gained": 39
+        },
+        {
+          "item": "retro-mail",
+          "gained": 1
+        }
+      ],
+      "money": {
+        "spent": 2000
+      }
+    }
+  },
+  "checkpoint": {
+    "id": "tt-01",
+    "title": "Rare Candy farm: pick up Route 6's hidden Rare Candy, duplicate it with the Mail Glitch",
+    "start": {
+      "map": "CeladonCity_DepartmentStore_1F",
+      "tiles": [
+        [6, 2]
+      ],
+      "facing": "south"
+    },
+    "events": [
+      {
+        "id": "out_of_dept_store",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "CeladonCity",
+            "tiles": [
+              [11, 15]
+            ],
+            "facing": "south"
+          }
+        },
+        "why": "Leave the Dept. Store by its west door (11, 14) to fly."
+      },
+      {
+        "id": "fly_vermilion",
+        "kind": "game_action",
+        "action": "fly",
+        "args": {
+          "town": "VermilionCity",
+          "species": "pidgey"
+        },
+        "why": "Fly to Vermilion City; Route 6 is its north connection.",
+        "declared_after": {
+          "map": "VermilionCity",
+          "tiles": [
+            [15, 7]
+          ],
+          "facing": "south"
+        }
+      },
+      {
+        "id": "face_route6_rare_candy",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "Route6",
+            "tiles": [
+              [19, 6]
+            ],
+            "facing": "north"
+          }
+        },
+        "why": "Face the hidden Rare Candy at (19, 5), up the gap in the ledges at (19, 7)."
+      },
+      {
+        "id": "pick_up_rare_candy",
+        "kind": "game_action",
+        "action": "pick_up_item",
+        "args": {
+          "item": "rare-candy"
+        },
+        "why": "The one Rare Candy the duplication copies."
+      },
+      {
+        "id": "clear_rare_candy_text",
+        "kind": "scene",
+        "declared_after": {
+          "map": "Route6",
+          "tiles": [
+            [19, 6]
+          ],
+          "facing": "north"
+        },
+        "why": "Clear the hidden item dialog."
+      },
+      {
+        "id": "fly_celadon",
+        "kind": "game_action",
+        "action": "fly",
+        "args": {
+          "town": "CeladonCity",
+          "species": "pidgey"
+        },
+        "declared_after": {
+          "map": "CeladonCity",
+          "tiles": [
+            [48, 12]
+          ],
+          "facing": "south"
+        },
+        "why": "Fly back to Celadon for Retro Mail."
+      },
+      {
+        "id": "to_dept_store_lift",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "CeladonCity_DepartmentStore_1F",
+            "tiles": [
+              [6, 2]
+            ],
+            "facing": "north"
+          }
+        },
+        "why": "Stand below the Dept. Store elevator door (6, 1)."
+      },
+      {
+        "id": "lift_1f_to_4f",
+        "kind": "game_action",
+        "action": "lift_floor",
+        "args": {
+          "from": "1F",
+          "to": "4F"
+        },
+        "declared_after": {
+          "map": "CeladonCity_DepartmentStore_4F",
+          "tiles": [
+            [6, 2]
+          ],
+          "facing": "south"
+        },
+        "why": "Ride to 4F (Wise Man Gifts)."
+      },
+      {
+        "id": "to_4f_clerk",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "CeladonCity_DepartmentStore_4F",
+            "tiles": [
+              [3, 11]
+            ],
+            "facing": "south"
+          }
+        },
+        "why": "Face the 4F clerk across the counter."
+      },
+      {
+        "id": "buy_retro_mail",
+        "kind": "game_action",
+        "action": "mart",
+        "args": {
+          "map": "CeladonCity_DepartmentStore_4F",
+          "items": [
+            {
+              "item": "retro-mail",
+              "quantity": 40
+            }
+          ]
+        },
+        "why": "One Retro Mail per duplication round: 40 rounds ($2000) for Blastoise 62 -> 100 (38 candies) and spares."
+      },
+      {
+        "id": "back_to_4f_lift",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "CeladonCity_DepartmentStore_4F",
+            "tiles": [
+              [6, 2]
+            ],
+            "facing": "north"
+          }
+        },
+        "why": "Back below the 4F elevator door."
+      },
+      {
+        "id": "lift_4f_to_1f",
+        "kind": "game_action",
+        "action": "lift_floor",
+        "args": {
+          "from": "4F",
+          "to": "1F"
+        },
+        "declared_after": {
+          "map": "CeladonCity_DepartmentStore_1F",
+          "tiles": [
+            [6, 2]
+          ],
+          "facing": "south"
+        },
+        "why": "Back to 1F, the checkpoint's start and save spot."
+      },
+      {
+        "id": "give_rare_candy",
+        "kind": "game_action",
+        "action": "give_bag_item",
+        "args": {
+          "item": "rare-candy",
+          "species": "mr-mime"
+        },
+        "why": "MIMIEN (slot 1, the glitched mail record) holds the item to copy; its Antidote is switched back to the bag."
+      },
+      {
+        "id": "retro_mail_to_top",
+        "kind": "game_action",
+        "action": "move_item_to_top",
+        "args": {
+          "item": "retro-mail"
+        },
+        "why": "duplicate_item gives the top row's Retro Mail."
+      },
+      {
+        "id": "duplicate_rare_candy",
+        "kind": "game_action",
+        "action": "duplicate_item",
+        "args": {
+          "species": "mr-mime",
+          "item": "rare-candy",
+          "count": 39,
+          "word": "ABRA"
+        },
+        "why": "39 rounds: the held candy + 39 in the bag = 40."
+      },
+      {
+        "id": "check_marks_after",
+        "kind": "game_action",
+        "action": "check_party_marks",
+        "args": {
+          "marks": ["held_item", "mail", "mail", "mail", "mail", "mail"]
+        },
+        "why": "The glitch's mail records are intact after the rounds."
+      }
+    ]
+  }
+}

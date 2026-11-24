@@ -233,4 +233,10 @@ let () =
         "frlg; from Route16 (30, 6) north; missing: none";
       case "mg-06's walks plan on the maps" (walks "mg-06.plan.json")
         "to_dept_store_lift 7; to_4f_clerk 3; back_to_4f_lift 3";
+      case "tt-01"
+        (summary "tt-01.plan.json")
+        "frlg; from CeladonCity_DepartmentStore_1F (6, 2) south; missing: none";
+      case "tt-01's walks plan on the maps" (walks "tt-01.plan.json")
+        "out_of_dept_store 3; face_route6_rare_candy 10; to_dept_store_lift 7; \
+         to_4f_clerk 3; back_to_4f_lift 3";
     ]
