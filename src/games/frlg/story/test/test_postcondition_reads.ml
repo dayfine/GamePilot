@@ -64,8 +64,52 @@ let nothing_promised () =
   Printf.sprintf "%s; %d presses" (observed_text observed)
     (List.length screen.S.presses)
 
+(* START opens the menu on POKéMON; A on BAG (row 2) the Items pocket with
+   [items] on its list; B from the bag back to the menu, from the menu to the
+   overworld. *)
+let bag_screen items screen (p : S.press) =
+  let show s = S.show screen ~at_ms:(p.at_ms + 200) s in
+  match (p.buttons, S.screen_at screen p.at_ms) with
+  | [ Wire.Start ], _ -> show (S.Start_menu 0)
+  | [ Wire.A ], S.Start_menu 2 -> show (S.Bag_items items)
+  | [ Wire.B ], S.Bag_items _ -> show (S.Start_menu 2)
+  | [ Wire.B ], S.Start_menu _ -> show S.Overworld
+  | _ -> ()
+
+let items_promised : Story.Plan.postconditions =
+  {
+    party_promised with
+    party = None;
+    items =
+      [
+        { item = "revive"; quantity = 2 };
+        { item = "escape-rope"; quantity = 3 };
+      ];
+  }
+
+let read_items items () =
+  let screen = S.create ~react:(bag_screen items) () in
+  let observed =
+    S.run screen (fun () ->
+        Frlg_story.Postcondition_reads.observe ~log:ignore items_promised)
+  in
+  Printf.sprintf "%s; ends on %s"
+    (String.concat ", "
+       (List.map (fun (i, n) -> Printf.sprintf "%s %d" i n) observed.items))
+    (S.screen_name (S.screen_at screen screen.S.clock_ms))
+
 let cases : Case_table.case list =
   [
+    {
+      name = "each item's count read on its row of the bag";
+      input = read_items [ ("POTION", 4); ("REVIVE", 2); ("ESCAPE ROPE", 13) ];
+      expectation = "revive 2, escape-rope 13; ends on overworld";
+    };
+    {
+      name = "an item the list ends without counts 0, not unread";
+      input = read_items [ ("ESCAPE ROPE", 3) ];
+      expectation = "revive 0, escape-rope 3; ends on overworld";
+    };
     {
       name = "the party's species, slot 1 first, back on the overworld";
       input = read_party;

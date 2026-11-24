@@ -5,11 +5,20 @@ let nurse_front : Story.Pose.grid =
   { map = ""; tiles = [ { x = 7; y = 4 } ]; facing = Some North }
 
 let center_map town = town ^ "_PokemonCenter_1F"
+let dialog_press_ms = 340
+let dialog_presses = 20
+let mash_a_ms = 8000
+let mash_b_ms = 5000
+
+(* The fork's mash: a tap each [tap_hold_ms + tap_release_ms] for [ms]. *)
+let mash button ms = M.taps button (ms / (M.tap_hold_ms + M.tap_release_ms))
 
 let heal_at_nurse ~log () =
   log "Center: heal at the nurse.";
-  M.press Wire.A;
-  M.answer_yes ~code:"heal_no_question" "the nurse's question";
+  M.press_until ~max_presses:dialog_presses ~code:"heal_no_dialog"
+    "the nurse's text" Wire.A ~cooldown_ms:dialog_press_ms Dialog.dialog_up;
+  mash Wire.A mash_a_ms;
+  mash Wire.B mash_b_ms;
   M.settle_back ~label:"heal" ~log
 
 let save_row = 4

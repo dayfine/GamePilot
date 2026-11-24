@@ -40,11 +40,37 @@ let log = ignore
 let heal () =
   run ~react:(talk ~page:true ~after_ms:3000) (Heal_and_save.heal_at_nurse ~log)
 
-let heal_no_question () =
-  run
-    ~react:(fun screen p ->
-      if a p then S.show screen ~at_ms:(p.at_ms + 200) S.Dialog)
+(* The nurse as mGBA showed her (mg-03 testing run 1, Lavender Center): her
+   Yes/No box is not where the question reader looks, so her pages and her
+   question read as text boxes only. A on the overworld starts her talk, A on
+   a page shows the next, the fourth A (YES) heals and the overworld comes
+   back after [healing_ms]; B on any of her boxes ends the talk. *)
+let healing_ms = 3000
+
+let nurse_screen () =
+  let pages = ref 0 in
+  fun screen (p : S.press) ->
+    let show d s = S.show screen ~at_ms:(p.at_ms + d) s in
+    match (p.buttons, S.screen_at screen p.at_ms) with
+    | [ Wire.A ], S.Overworld ->
+        pages := 1;
+        show 200 S.Dialog_arrow
+    | [ Wire.A ], S.Dialog_arrow when !pages < 3 ->
+        incr pages;
+        show 100 S.Dialog;
+        show 300 S.Dialog_arrow
+    | [ Wire.A ], S.Dialog_arrow ->
+        show 100 S.Dialog;
+        show (100 + healing_ms) S.Overworld
+    | [ Wire.B ], (S.Dialog | S.Dialog_arrow) -> show 100 S.Overworld
+    | _ -> ()
+
+let heal_unread_question () =
+  run_on ~react:(nurse_screen ())
+    (fun screen -> S.screen_name (S.screen_at screen screen.S.clock_ms))
     (Heal_and_save.heal_at_nurse ~log)
+
+let heal_no_dialog () = run (Heal_and_save.heal_at_nurse ~log)
 
 (* START opens the menu on row 1; A on SAVE asks. *)
 let save_screen screen (p : S.press) =
@@ -311,9 +337,12 @@ let () =
     [
       case "mart: BUY and the row once the clerk's box and list take them"
         (mart_buy ~menu_ms:1500) "ok; A x2, down, A, up, A x2, B x6";
-      case "heal: a page, YES, the healing, back" heal "ok; A x3, B x7";
-      case "heal: a text box with no question fails" heal_no_question
-        "failed heal_no_question: the nurse's question did not show; A";
+      case "heal: A to her text, A mashed 8 s, B mashed 5 s, the settle" heal
+        "ok; A x26, B x20";
+      case "heal: a Yes/No box the question reader misses still heals"
+        heal_unread_question "ok; overworld";
+      case "heal: no text box after A fails" heal_no_dialog
+        "failed heal_no_dialog: the nurse's text did not show; A x20";
       case "save: START, down to SAVE, YES, saved" save
         "ok; Start, down x3, A x2, B x5";
       case "cut: the turn, A, the page, YES" cut "ok; up, A x3, B x6, up";
