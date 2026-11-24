@@ -250,9 +250,9 @@ bool parse_flags(int argc, char** argv, Flags& flags) {
 }
 
 // Serves until a signal; returns the exit status.
-int serve(gamepilot::Backend& backend,
-          const gamepilot::ServerOptions& options) {
-  gamepilot::Server server(backend, options);
+int serve(gamepilot::Backend& backend, const gamepilot::ServerOptions& options,
+          const gamepilot::Clock& clock) {
+  gamepilot::Server server(backend, options, clock);
   // The watch line first: the runner reads both ports once it sees
   // "listening".
   if (options.watch) {
@@ -280,12 +280,13 @@ int serve(gamepilot::Backend& backend,
 }
 
 int run_mgba(const Flags& flags) {
+  const gamepilot::Clock clock;
   gamepilot::MgbaBackend backend(flags.mgba_port);
   std::fprintf(
       stderr, "daemon: mgba bridge on %u, game %s, held at frame %lld\n",
       static_cast<unsigned>(flags.mgba_port), backend.info().game_code.c_str(),
       static_cast<long long>(backend.seq()));
-  const int status = serve(backend, flags.server);
+  const int status = serve(backend, flags.server, clock);
   std::fprintf(stderr,
                "daemon: stopped at frame %lld; %lld KEYS applied late\n",
                static_cast<long long>(backend.seq()),
@@ -359,7 +360,7 @@ int serve_switch(const Flags& flags, const gamepilot::Clock& clock,
                                     : flags.replay.c_str(),
                backend.info().width, backend.info().height,
                backend.info().frame_rate, inputs);
-  const int status = serve(backend, flags.server);
+  const int status = serve(backend, flags.server, clock);
   backend.release();
   return status;
 }

@@ -31,9 +31,10 @@ constexpr double kLivePollMs = 5;
 
 }  // namespace
 
-Server::Server(Backend& backend, ServerOptions options)
+Server::Server(Backend& backend, ServerOptions options, const Clock& clock)
     : backend_(backend),
       options_(std::move(options)),
+      clock_(clock),
       listener_(listen_local(options_.port)),
       schedule_(backend.info().frame_rate),
       keep_awake_(options_.keepawake, clock_.now_ms()) {
@@ -342,11 +343,17 @@ void Server::accept_pending() {
   clients_.push_back(std::move(client));
 }
 
-// Drops queued commands and releases every button.
+// Drops queued commands and releases every button. A live backend's device
+// also drops what it was handed already: on console B a cancelled batch's
+// 1000 ms cooldown, already on the board, delayed the next taps by 800 ms
+// (2026-11-23).
 void Server::clear_input() {
   schedule_.clear();
   live_schedule_.clear();
   batch_owners_.clear();
+  if (backend_.info().timing == Timing::kLive) {
+    backend_.drop_queued_keys();
+  }
   backend_.set_keys(0);
   sent_mask_ = KeyMask{0};
 }

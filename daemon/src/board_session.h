@@ -158,6 +158,12 @@ class BoardSession {
   // Blocks while the board's command queue is full.
   void send_state(const ProButtons& buttons, std::uint32_t milliseconds);
 
+  // Drops the states sent that have not run yet and stops the one running
+  // (the board's CQ_CANCEL, as the C++ controller's cancel_all_commands()),
+  // waiting until the board has taken the cancel. Throws BackendError when
+  // it does not.
+  void cancel_queued();
+
   BoardStatus status() const;
 
   // Waits up to `timeout` for the first status answer; returns the status.
