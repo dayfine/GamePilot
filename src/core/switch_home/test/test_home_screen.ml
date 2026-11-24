@@ -21,6 +21,8 @@ let () =
         "HOME (cursor on tile 0, the game's tile 1)";
       case "HOME, the cursor moved onto FireRed" "home-cursor-on-firered"
         "HOME (cursor on tile 1, the game's tile 1)";
+      case "HOME dimmed after a while untouched" "home-dimmed"
+        "HOME, dimmed (tiles not read)";
       case "the user select over a dimmed HOME" "user-select" "the user select";
       case "the Game Freak intro after a launch" "launch-game-freak-intro"
         "not HOME";
