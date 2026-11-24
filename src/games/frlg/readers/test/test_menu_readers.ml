@@ -6,6 +6,8 @@
 
      startN        the Start menu, its cursor on row N (0 at the top)
      bag           the bag; items, keyitems, balls its pocket; rowN its cursor
+     itemmenu      an item's own menu (USE or CHECK, GIVE, TOSS, CANCEL) over
+                   the bag
      pouch         the Berry Pouch
      party         the party menu (its message box not covered)
      slotN         slot N (1-6) selected        membersN  N slots filled
@@ -96,6 +98,12 @@ let screen_readers =
       expected = tagged "bag";
     };
     {
+      reader = "bag_item_menu";
+      applies = everywhere;
+      verdict = flag Bag_screen.item_menu;
+      expected = tagged "itemmenu";
+    };
+    {
       reader = "party_menu";
       applies = everywhere;
       verdict = flag Party_menu.party_menu;
@@ -179,7 +187,7 @@ let readers = screen_readers @ inner_readers
 let known_misreads =
   [
     (* A Key Items action menu covers the bag's grey shadow, as in the fork. *)
-    ("bag_open", "captures/tmcase-04-tmcase-after-A__bag.png", "false");
+    ("bag_open", "captures/tmcase-04-tmcase-after-A__bag-itemmenu.png", "false");
   ]
 
 let expectation r image =

@@ -47,7 +47,11 @@ let check_editor ~word =
   Option.iter (M.fail "mail_glitch_not_active") (editor_verdict ~word reading)
 
 let mail_on_top m = Bag_screen.cursor_row m = Some 0
-let slot_one_holds m = Party_menu.mark m 1 = Party_menu.Held_item
+
+(* The mark only where the party shows: the bag's pixels there are no mark. *)
+let slot_one_holds m =
+  Party_menu.party_menu m && Party_menu.mark m 1 = Party_menu.Held_item
+
 let yes m = Dialog.yes_no_cursor m = Some true
 let editor_yes m = Mail_editor.confirm_arrow m = Some true
 

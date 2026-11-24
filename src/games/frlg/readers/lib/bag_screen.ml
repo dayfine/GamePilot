@@ -91,3 +91,16 @@ let pocket m =
     | false, false -> None
 
 let cursor_row m = if bag_open m then Cursor_column.row cursor m else None
+
+let solid m (id, _, ratio) =
+  Solid_color.holds m id
+    (Solid_color.is_solid ~ratio ~max_distance ~max_stddev_sum)
+
+let item_menu m =
+  let right, others =
+    List.partition (fun (id, _, _) -> id = right_id) solid_boxes
+  in
+  List.for_all (solid m) others
+  && (not (List.exists (solid m) right))
+  && (not (arrow m left_arrow_id))
+  && not (arrow m right_arrow_id)

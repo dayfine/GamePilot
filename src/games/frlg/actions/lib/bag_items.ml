@@ -180,13 +180,12 @@ let read_count ~log slug =
   M.settle_back ~label:("count " ^ slug) ~log;
   count
 
-(* The item's own menu (USE or CHECK, GIVE, TOSS, CANCEL) hides the arrows. *)
-let item_menu m = Bag_screen.bag_open m && Bag_screen.pocket m = None
-
 let item_action item row =
   open_pocket_top (pocket_of_item item);
   select item;
   M.press Wire.A;
-  ignore (M.await_screen ~code:"no_item_menu" ("the menu of " ^ item) item_menu);
+  ignore
+    (M.await_screen ~code:"no_item_menu" ("the menu of " ^ item)
+       Bag_screen.item_menu);
   M.taps Wire.Down row;
   M.press Wire.A

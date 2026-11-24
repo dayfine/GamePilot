@@ -14,8 +14,9 @@
     - The waits use our readers: the top row's arrow is
       {!Frlg_readers.Bag_screen.cursor_row} (the fork's item list rows, where
       the C++ watches its own box over the same row), the held item
-      {!Frlg_readers.Party_menu.mark}, the message {!Frlg_readers.Dialog}'s
-      advance arrow and Yes/No, the editor's Yes/No {!Frlg_readers.Mail_editor}.
+      {!Frlg_readers.Party_menu.mark} once the party shows, the message
+      {!Frlg_readers.Dialog}'s advance arrow and Yes/No, the editor's Yes/No
+      {!Frlg_readers.Mail_editor}.
     - Two guards the C++ leaves out (docs/mail-glitch-use.md, section 4): the
       editor's field 1 must read the expected word before PLUS (the C++ has
       "Detect '???' screen?" as a TODO), and no round starts with fewer than

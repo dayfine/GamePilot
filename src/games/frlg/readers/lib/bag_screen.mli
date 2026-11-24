@@ -28,6 +28,11 @@ val min_arrow_share : float
 
 val bag_open : Effects.measurements -> bool
 
+val item_menu : Effects.measurements -> bool
+(** An item's own menu shows over the bag: the bag's shadow, underline and top
+    frame show, but not the list's right frame, which the menu covers, nor
+    either pocket arrow (they hide). *)
+
 val pocket : Effects.measurements -> pocket option
 (** While the bag shows; [None] for no arrow either side. *)
 

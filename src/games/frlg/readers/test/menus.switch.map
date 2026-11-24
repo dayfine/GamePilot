@@ -24,7 +24,7 @@ repo src/games/frlg/readers/test/images/switch/pc-deposit-20261102/sv4_q1.png|ca
 repo src/games/frlg/readers/test/images/switch/tmcase/01-bag-items.png|captures/tmcase-01-bag-items__bag-items-row0.png
 repo src/games/frlg/readers/test/images/switch/tmcase/02-bag-key-items.png|captures/tmcase-02-bag-key-items__bag-keyitems-row0.png
 repo src/games/frlg/readers/test/images/switch/tmcase/03-key-items-tmcase-selected.png|captures/tmcase-03-key-items-tmcase-selected__bag-keyitems-row1.png
-repo src/games/frlg/readers/test/images/switch/tmcase/04-tmcase-after-A.png|captures/tmcase-04-tmcase-after-A__bag.png
+repo src/games/frlg/readers/test/images/switch/tmcase/04-tmcase-after-A.png|captures/tmcase-04-tmcase-after-A__bag-itemmenu.png
 repo src/games/frlg/readers/test/images/switch/tmcase/05-tmcase-list.png|captures/tmcase-05-tmcase-list__none.png
 repo src/games/frlg/readers/test/images/switch/tmcase/07-tm-use-party.png|captures/tmcase-07-tm-use-party__party-slot1-members1.png
 repo src/games/frlg/readers/test/images/switch/tmcase/16-summary-moves-after-teach.png|captures/tmcase-16-summary-moves-after-teach__summary3.png
