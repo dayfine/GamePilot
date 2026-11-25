@@ -1,5 +1,5 @@
 module Towns = Frlg_actions.Fly_towns
-module R = Checkpoints.Room_policy
+module R = Checkpoints_run.Room_policy
 
 let id = "mg-00"
 let center_map town = town ^ "_PokemonCenter_1F"

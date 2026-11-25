@@ -3,7 +3,7 @@ module J = Grid_maps.Json_field
 type town = {
   name : string;
   cell : Grid_maps.Tile_pos.t;
-  landing : Checkpoints.Pose.observed;
+  landing : Checkpoints_plan.Pose.observed;
 }
 
 type t = { columns : int; rows : int; towns : town list }

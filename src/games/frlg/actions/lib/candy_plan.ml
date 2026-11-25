@@ -21,7 +21,7 @@ let ( let* ) = Result.bind
    cannot check is checked after, here, as a Result. *)
 let bad_args fmt =
   Printf.ksprintf
-    (fun e -> Error (Checkpoints.Failure.cause ~repeats:true "bad_args" e))
+    (fun e -> Error (Checkpoints_run.Failure.cause ~repeats:true "bad_args" e))
     fmt
 
 (* The fields as read, before the checks; [where] names each in a message. *)

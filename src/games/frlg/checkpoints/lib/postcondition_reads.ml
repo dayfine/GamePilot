@@ -11,7 +11,7 @@ let back_to_overworld ~log =
   | Error cause ->
       log
         ("[Postcondition] not back: "
-        ^ Checkpoints.Failure.cause_to_string cause)
+        ^ Checkpoints_run.Failure.cause_to_string cause)
 
 (* One read in the menu actions' probes; [None] when it failed, but [absent]
    when it failed for want of the item it reads. *)
@@ -26,7 +26,7 @@ let read ?absent ~log what body =
   | Error cause ->
       log
         (Printf.sprintf "[Postcondition] %s not read: %s" what
-           (Checkpoints.Failure.cause_to_string cause));
+           (Checkpoints_run.Failure.cause_to_string cause));
       back_to_overworld ~log;
       None
 
@@ -75,7 +75,7 @@ let per_member ~log members species_of read_member promised =
   | None -> []
   | Some members -> List.filter_map (one members) promised
 
-let item_count ~log ({ bag_item; _ } : Checkpoints.Plan.bag_count) =
+let item_count ~log ({ bag_item; _ } : Checkpoints_plan.Plan.bag_count) =
   Option.map
     (fun count -> (bag_item, count))
     (read ~log ("item " ^ bag_item) (fun () -> A.Bag_items.count ~log bag_item))
@@ -85,8 +85,8 @@ let party_marks ~log () =
     (List.map A.Mail_glitch_use.name_of_mark
        (A.Mail_glitch_use.read_marks ~log))
 
-let observe ~log (promised : Checkpoints.Plan.postconditions) :
-    Checkpoints.Postcondition_check.observed =
+let observe ~log (promised : Checkpoints_plan.Plan.postconditions) :
+    Checkpoints_run.Postcondition_check.observed =
   let when_promised promised what body =
     if promised then read ~log what body else None
   in
@@ -109,19 +109,19 @@ let observe ~log (promised : Checkpoints.Plan.postconditions) :
   in
   let knows =
     per_member ~log members
-      (fun (k : Checkpoints.Plan.knows) -> k.species)
+      (fun (k : Checkpoints_plan.Plan.knows) -> k.species)
       member_moves promised.knows
   in
   let levels =
     per_member ~log members
-      (fun (l : Checkpoints.Plan.level) -> l.species)
+      (fun (l : Checkpoints_plan.Plan.level) -> l.species)
       member_level promised.levels
   in
   let marks =
     when_promised (promised.marks <> None) "marks" (party_marks ~log)
   in
   {
-    Checkpoints.Postcondition_check.nothing_read with
+    Checkpoints_run.Postcondition_check.nothing_read with
     party;
     items;
     coins;
@@ -131,17 +131,17 @@ let observe ~log (promised : Checkpoints.Plan.postconditions) :
     marks;
   }
 
-let gained : Checkpoints.Plan.count -> bool = function
+let gained : Checkpoints_plan.Plan.count -> bool = function
   | Count_gained _ -> true
   | Count_exactly _ | Count_at_least _ -> false
 
-let at_start ~log (promised : Checkpoints.Plan.postconditions) =
+let at_start ~log (promised : Checkpoints_plan.Plan.postconditions) =
   let spent =
     match promised.money with Some (Money_spent _) -> true | _ -> false
   and coins = Option.fold ~none:false ~some:gained promised.coins
   and items =
     List.filter
-      (fun (b : Checkpoints.Plan.bag_count) -> gained b.count)
+      (fun (b : Checkpoints_plan.Plan.bag_count) -> gained b.count)
       promised.items
   in
   if spent || coins || items <> [] then
@@ -158,7 +158,7 @@ let at_start ~log (promised : Checkpoints.Plan.postconditions) =
     else None
   in
   let start_items = List.filter_map (item_count ~log) items in
-  { Checkpoints.Postcondition_check.start_money; start_coins; start_items }
+  { Checkpoints_run.Postcondition_check.start_money; start_coins; start_items }
 
 let party_summary ~log =
   read ~log "party summary" (fun () -> Some (A.Party_summary.read_all ~log ()))

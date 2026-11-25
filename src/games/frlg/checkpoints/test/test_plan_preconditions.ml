@@ -33,7 +33,7 @@ let judged json card () =
   | Ok needs ->
       let read : Preflight.read =
         {
-          observed = Checkpoints.Postcondition_check.nothing_read;
+          observed = Checkpoints_run.Postcondition_check.nothing_read;
           place = None;
           members = None;
           card;

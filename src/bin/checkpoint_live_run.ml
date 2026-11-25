@@ -3,12 +3,14 @@
    Frlg_checkpoints.Checkpoint_run with its declared end, then the saves the outcome
    asks for (the failure frame and state, or a passing end) while the session
    is still open, and the run's summary, KEEP and RESULTS.tsv row. The run
-   shows the chain it is part of (Checkpoints.Chain_progress, through [progress]),
+   shows the chain it is part of (Checkpoints_series.Chain_progress, through [progress]),
    its plan and story lines on the daemon's watch page (Plan_watch);
    a Stop pressed there is a failure ("stopped by user") that repeats, so the
    series stops too. *)
 
-open Checkpoints
+open Checkpoints_plan
+open Checkpoints_run
+open Checkpoints_series
 include Live_checkpoint
 
 (* A save the daemon may refuse (an older daemon, a bad path): logged, not

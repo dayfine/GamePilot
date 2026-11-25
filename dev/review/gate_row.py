@@ -130,8 +130,22 @@ def next_action(ci, struct, owner=None, conflicting=False):
     return "run qc-structural"
 
 
+# REST file statuses, as the changeType names `gh pr view --json files` uses.
+REST_CHANGE = {"added": "ADDED", "removed": "DELETED", "renamed": "RENAMED"}
+
+
+def rest_files(lines):
+    """The PR's files from REST lines ({path, status} per line), in the `gh pr view` shape."""
+    rows = [json.loads(line) for line in lines if line.strip()]
+    return [{"path": r["path"], "changeType": REST_CHANGE.get(r["status"], "MODIFIED")}
+            for r in rows]
+
+
 def main():
     pr = json.load(sys.stdin)
+    if len(sys.argv) > 1:
+        with open(sys.argv[1]) as f:
+            pr["files"] = rest_files(f)
     ci, struct = ci_state(pr), struct_state(pr)
     conflicting = pr.get("mergeable") == "CONFLICTING"
     step = next_action(ci, struct, owner_reason(pr), conflicting)

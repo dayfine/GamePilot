@@ -53,7 +53,7 @@ let outcome f =
   match f () with
   | () -> "ok"
   | exception Menu_input.Action_failed c ->
-      "failed " ^ Checkpoints.Failure.cause_to_string c
+      "failed " ^ Checkpoints_run.Failure.cause_to_string c
 
 let recorded f =
   let calls = ref [] in
@@ -63,7 +63,7 @@ let recorded f =
 
 let cause_or_ok = function
   | Ok _ -> "ok"
-  | Error c -> Checkpoints.Failure.cause_to_string c
+  | Error c -> Checkpoints_run.Failure.cause_to_string c
 
 (* prepare_berry_pp *)
 

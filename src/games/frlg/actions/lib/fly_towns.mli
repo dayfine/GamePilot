@@ -6,7 +6,7 @@ type town = {
   name : string;  (** The map's name, as a plan names it (["CeladonCity"]). *)
   cell : Grid_maps.Tile_pos.t;
       (** Presses right and down from the map's top-left corner. *)
-  landing : Checkpoints.Pose.observed;
+  landing : Checkpoints_plan.Pose.observed;
       (** Facing south, as every Fly lands the player; a walk from it needs no
           turn tap first, which would be a step when the player already faces
           the leg's way. *)

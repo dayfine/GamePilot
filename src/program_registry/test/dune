@@ -2,6 +2,5 @@
  (name test_program_registry)
  (libraries
   gamepilot.table_test
-  gamepilot.checkpoints
   gamepilot.frlg_checkpoints
   gamepilot.program_registry))

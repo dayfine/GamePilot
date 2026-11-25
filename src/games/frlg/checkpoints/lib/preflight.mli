@@ -20,7 +20,7 @@ type need = Plan_needs.need =
   | Party_in_order of string list
   | Party_includes of {
       members : string list;
-      slots : Checkpoints.Plan.slot list;
+      slots : Checkpoints_plan.Plan.slot list;
     }
   | Member of { species : string; for_ : string }
       (** A member an event uses ([for_]: ["fly"]). *)
@@ -40,19 +40,19 @@ type need = Plan_needs.need =
 
 val needs :
   Frlg_actions.Mart_plan.stocks ->
-  before:Checkpoints.Plan.postconditions option ->
-  Checkpoints.Plan.t ->
+  before:Checkpoints_plan.Plan.postconditions option ->
+  Checkpoints_plan.Plan.t ->
   need list
 (** What the save must hold for the plan's first event, in the table's order:
     the party, the money, the items, the place. Raises
     {!Grid_maps.Json_field.Invalid} for a plan arg that does not read. *)
 
 type read = {
-  observed : Checkpoints.Postcondition_check.observed;
+  observed : Checkpoints_run.Postcondition_check.observed;
   place : Frlg_readers.Start_frame.difference option;
       (** The frame after the load against the one kept at the start; [None]
           when none was kept or the frame did not read. *)
-  members : Checkpoints.Room_policy.member list option;
+  members : Checkpoints_run.Room_policy.member list option;
       (** Each member's species, level and moves on its summary
           ({!Frlg_actions.Party_summary}): the field moves and the room are
           judged on them. [None] when not read. *)
@@ -82,7 +82,7 @@ val passed : row list -> bool
 val table : row list -> string
 (** A text table: NEED, READ, OK / MISMATCH / NOT READ, one row a line. *)
 
-val declared : Checkpoints.Plan.t -> (need list, string) result
+val declared : Checkpoints_plan.Plan.t -> (need list, string) result
 (** The plan's declared preconditions ({!Plan_preconditions.needs}): checked
     before the derived {!needs}. *)
 
@@ -90,5 +90,5 @@ val reads_card : need list -> bool
 (** A need is judged on the Trainer Card's badges or stars: the pre-flight reads
     them. *)
 
-val to_read : need list -> Checkpoints.Plan.postconditions
+val to_read : need list -> Checkpoints_plan.Plan.postconditions
 (** What {!Postcondition_reads.observe} must read for these needs. *)

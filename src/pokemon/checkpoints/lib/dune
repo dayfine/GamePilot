@@ -1,5 +1,0 @@
-(library
- (name checkpoints)
- (public_name gamepilot.checkpoints)
- (modules_without_implementation plan game)
- (libraries yojson gamepilot.wire gamepilot.grid_maps))

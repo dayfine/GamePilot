@@ -12,7 +12,7 @@
     ({!Frlg_readers.Trainer_card_front.badge_names}); [hall_of_fame] takes
     [true] (the Hall of Fame entered). Both are read off the Trainer Card. *)
 
-val needs : Checkpoints.Plan.t -> (Plan_needs.need list, string) result
+val needs : Checkpoints_plan.Plan.t -> (Plan_needs.need list, string) result
 (** The plan's declared preconditions as needs: [[]] when it declares none.
     [Error] naming the field for a field not known, a count out of range, a
     badge not known, or a value of the wrong type. *)

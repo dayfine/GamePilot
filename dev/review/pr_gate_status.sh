@@ -7,15 +7,21 @@
 #   sh dev/review/pr_gate_status.sh            every open PR
 #   sh dev/review/pr_gate_status.sh 25 26      these PRs
 # GAMEPILOT_REPO overrides the repository (default dayfine/GamePilot).
+# The file list comes from the REST API, paged: `gh pr view --json files` stops at 100 files,
+# which hid a large refactor's structural changes.
 set -eu
 here=$(cd "$(dirname "$0")" && pwd)
 repo=${GAMEPILOT_REPO:-dayfine/GamePilot}
 if [ $# -eq 0 ]; then
     set -- $(gh pr list --repo "$repo" --state open --limit 100 --json number --jq '.[].number')
 fi
+files=$(mktemp)
+trap 'rm -f "$files"' EXIT
 printf 'PR\tCI\tSTRUCT\tNEXT\tTITLE\n'
 for pr in "$@"; do
+    gh api --paginate "repos/$repo/pulls/$pr/files?per_page=100" \
+        --jq '.[] | {path: .filename, status: .status}' >"$files"
     gh pr view "$pr" --repo "$repo" \
-        --json number,title,headRefOid,files,reviews,statusCheckRollup,mergeable |
-        python3 -I "$here/gate_row.py"
+        --json number,title,headRefOid,reviews,statusCheckRollup,mergeable |
+        python3 -I "$here/gate_row.py" "$files"
 done

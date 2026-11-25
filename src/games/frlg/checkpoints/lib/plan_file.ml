@@ -24,7 +24,7 @@ let decode ~source json =
       (Frlg_places.Place_table.routes places)
       ~source json
   in
-  Checkpoints.Plan_decode.decode ~source json
+  Checkpoints_plan.Plan_decode.decode ~source json
 
 let load path =
   Result.bind

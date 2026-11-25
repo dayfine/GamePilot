@@ -86,4 +86,10 @@ check "a conflict with main comes first" "merge main" \
     "$(pr "$code" "$red" "" | sed 's/^{/{"mergeable": "CONFLICTING", /' | column 4)"
 check "two reworks go to the user" "user review (reworked twice)" \
     "$(pr "$code" "$green" "$(review "$old" NEEDS_REWORK), $(review "$old" NEEDS_REWORK), $(review "$tip" APPROVED)" | column 4)"
+rest=$(mktemp)
+printf '%s\n' '{"path": "src/a.ml", "status": "modified"}' \
+    '{"path": "src/x/lib/dune", "status": "removed"}' >"$rest"
+check "the REST file list replaces the view's" "user review (module deleted: src/x/lib/dune)" \
+    "$(pr "$code" "$green" "$(review "$tip" APPROVED)" | python3 -I "$here/gate_row.py" "$rest" | cut -f 4)"
+rm -f "$rest"
 exit $failures

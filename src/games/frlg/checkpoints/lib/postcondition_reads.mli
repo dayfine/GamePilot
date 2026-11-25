@@ -1,5 +1,5 @@
 (** FireRed's reader of a plan's postconditions
-    ({!Checkpoints.Postcondition_check}): what the plan states, each read
+    ({!Checkpoints_run.Postcondition_check}): what the plan states, each read
     through its own menu from the overworld and back to it in control. The
     party's species by the summary ({!Frlg_actions.Party_species}), the coins by
     the Coin Case ({!Frlg_actions.Coin_case}), the money by the Trainer Card
@@ -15,23 +15,23 @@
 
 val observe :
   log:(string -> unit) ->
-  Checkpoints.Plan.postconditions ->
-  Checkpoints.Postcondition_check.observed
+  Checkpoints_plan.Plan.postconditions ->
+  Checkpoints_run.Postcondition_check.observed
 
 val at_start :
   log:(string -> unit) ->
-  Checkpoints.Plan.postconditions ->
-  Checkpoints.Postcondition_check.start
+  Checkpoints_plan.Plan.postconditions ->
+  Checkpoints_run.Postcondition_check.start
 (** Reads now, at the checkpoint's start, what a promise of a change needs: the
-    money for a promise of the money spent ({!Checkpoints.Plan.Money_spent}),
-    the coins and each item promised as gained
-    ({!Checkpoints.Plan.Count_gained}), each as at the end, from the overworld
-    and back to it; nothing for a plan with no such promise. With no Coin Case
-    in the bag the coins at the start are 0. A read that failed stays unread, so
-    its promise is not checked. *)
+    money for a promise of the money spent
+    ({!Checkpoints_plan.Plan.Money_spent}), the coins and each item promised as
+    gained ({!Checkpoints_plan.Plan.Count_gained}), each as at the end, from the
+    overworld and back to it; nothing for a plan with no such promise. With no
+    Coin Case in the bag the coins at the start are 0. A read that failed stays
+    unread, so its promise is not checked. *)
 
 val party_summary :
-  log:(string -> unit) -> Checkpoints.Room_policy.member list option
+  log:(string -> unit) -> Checkpoints_run.Room_policy.member list option
 (** Every member's species, level and moves ({!Frlg_actions.Party_summary}),
     from the overworld and back to it; [None] when the read failed. *)
 

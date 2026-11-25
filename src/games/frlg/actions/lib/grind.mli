@@ -24,7 +24,7 @@ type game_steps = {
   level : slot:int -> int option;
       (** read on the summary; [None] when it did not read *)
   swap : int -> int -> unit;  (** two party slots trade places *)
-  go_to : Checkpoints.Pose.grid -> unit;  (** walked to *)
+  go_to : Checkpoints_plan.Pose.grid -> unit;  (** walked to *)
   heal : Grind_plan.heal -> unit;  (** healed, then still at the heal place *)
   find_battle : unit -> unit;  (** paced until a wild battle starts *)
   battle : Frlg_battle.Battle_script.t -> Frlg_battle.Scripted_battle.outcome;

@@ -14,7 +14,7 @@
 
 module Pf = Preflight_command
 module M = Frlg_checkpoints.Make_room
-module R = Checkpoints.Room_policy
+module R = Checkpoints_run.Room_policy
 module Pr = Frlg_checkpoints.Party_room
 module Cr = Frlg_checkpoints.Checkpoint_run
 
@@ -103,8 +103,10 @@ let decide ~plan_dir ~at need (record : Run_record.t) say members =
     say (M.id ^ ": Fly to " ^ room.center.name ^ ", in " ^ dir);
     Ok (Some dir)
 
-let action f : Checkpoints.Game.game_action = fun _ _ -> f ()
-let failed code why = Error (Checkpoints.Failure.cause ~repeats:true code why)
+let action f : Checkpoints_run.Game.game_action = fun _ _ -> f ()
+
+let failed code why =
+  Error (Checkpoints_run.Failure.cause ~repeats:true code why)
 
 let soft_reset setup result log () =
   match Pf.reload setup M.id log with
@@ -155,7 +157,7 @@ let session setup world decide say log () =
    with
   | Ok () -> ()
   | Error f when Result.is_ok !result ->
-      result := Error (Checkpoints.Failure.to_string f)
+      result := Error (Checkpoints_run.Failure.to_string f)
   | Error _ -> ());
   !result
 
