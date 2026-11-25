@@ -64,8 +64,9 @@ let scene_with_start_window steps (event : Plan.event) (args : Json_field.obj) =
       bad_args event "the only arg is start_window_ms, a positive number of ms"
 
 (* The fork's scene with "press_a_first": A through the prompt first
-   (press_through_prompt), then the plain scene. *)
-let scene_through_prompt steps =
+   (press_through_prompt), then the scene; with "stop_at_choice", to the
+   choice. *)
+let through_prompt steps config =
   let walk = Story_steps.walk_game_steps steps in
   Plza_walk.Talk_prompt.press_through
     {
@@ -74,7 +75,14 @@ let scene_through_prompt steps =
       log = walk.log;
       log_detail = walk.log_detail;
     };
-  Scene_machine.run steps "scene" Scene_machine.default
+  Scene_machine.run steps "scene" config
+
+let scene_through_prompt steps (event : Plan.event) (args : Json_field.obj) =
+  match args with
+  | [] -> through_prompt steps Scene_machine.default
+  | [ ("stop_at_choice", `Bool true) ] ->
+      through_prompt steps { Scene_machine.default with stop_at_choice = true }
+  | _ -> bad_args event "the only arg is stop_at_choice, true"
 
 let game_actions ~reload steps =
   List.map
@@ -93,7 +101,7 @@ let game_actions ~reload steps =
       ("choose_1", no_args (fun steps -> Choose_row.run steps 1));
       ("scene_to_battle", no_args scene_to_battle);
       ("scene_with_start_window", scene_with_start_window);
-      ("scene_through_prompt", no_args scene_through_prompt);
+      ("scene_through_prompt", scene_through_prompt);
       ("story_battle", no_args Story_battle.run);
     ]
 

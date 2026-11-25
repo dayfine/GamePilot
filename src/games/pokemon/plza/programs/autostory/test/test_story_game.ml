@@ -251,6 +251,32 @@ let clerk ?(lost = false) c =
               | Some _ -> party c)))
   | _ -> party c
 
+(* 02.05: the lobby's party bar; the elevator's A prompt once the stick was
+   held 2 s, until A; "Which floor?" until A, the choice until A, the ride's
+   black fade 1.5 s, the party bar on 2F; Room 202's A prompt once the stick
+   was held 4 s, until A, a black fade 1.5 s, the party bar. [lost]: no
+   elevator prompt. *)
+let room_202 c =
+  match C.stick_reached c 4000 with
+  | None -> party c
+  | Some p -> (
+      match C.nth_after c Wire.A ~after:p 0 with
+      | None -> { (party c) with interact_prompt = true }
+      | Some a when since c a < 1500.0 -> black c
+      | Some _ -> party c)
+
+let elevator ?(lost = false) c =
+  match C.stick_reached c 2000 with
+  | Some e when not lost -> (
+      let a n = C.nth_after c Wire.A ~after:e n in
+      match (a 0, a 1, a 2) with
+      | None, _, _ -> { (party c) with interact_prompt = true }
+      | Some _, None, _ -> text c
+      | Some _, Some a1, None -> choice c ~after:a1
+      | Some _, Some _, Some r when since c r < 1500.0 -> black c
+      | Some _, Some _, Some _ -> room_202 c)
+  | _ -> party c
+
 let outcome checkpoint screen =
   let c = C.create () in
   reloaded := false;
@@ -581,6 +607,30 @@ let cases =
       (result "02.04" (clerk ~lost:true))
       "02.04 event 1 (to_front_counter): walk_no_end: to_front_counter: no \
        talk started within 1000 ms after the last leg";
+    case "02.05: the elevator, 2F, Room 202"
+      (fun () ->
+        let r, c = outcome "02.05" elevator in
+        String.concat "\n"
+          (r
+          :: List.filter
+               (fun line ->
+                 List.exists
+                   (fun prefix -> String.starts_with ~prefix line)
+                   [ "[PLZA] to_"; "[PLZA] choose"; "[PLZA scene] done" ])
+               (C.lines c)))
+      "passed\n\
+       [PLZA] to_lobby_elevator: the end event after 2000 ms of the last leg.\n\
+       [PLZA] to_lobby_elevator: ended on: player_can_move, interact_prompt\n\
+       [PLZA scene] done on choice.\n\
+       [PLZA] choose_0: row 0 of 2 highlighted\n\
+       [PLZA scene] done on control.\n\
+       [PLZA] to_room_202: the end event after 2000 ms of the last leg.\n\
+       [PLZA] to_room_202: ended on: player_can_move, interact_prompt\n\
+       [PLZA scene] done on control.";
+    case "02.05 lost: no elevator prompt"
+      (result "02.05" (elevator ~lost:true))
+      "02.05 event 1 (to_lobby_elevator): walk_no_end: to_lobby_elevator: no \
+       end event within 3363 ms of the last leg";
     case "the walk is walked before 03.03, run after"
       (fun () ->
         Printf.sprintf "%b %b"

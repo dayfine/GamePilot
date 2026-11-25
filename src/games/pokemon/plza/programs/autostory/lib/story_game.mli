@@ -24,7 +24,8 @@
     - [scene_with_start_window], the fork's [scene] with [start_window_ms]
       (control before any scene waits that long for one), its one arg;
     - [scene_through_prompt], the fork's [scene] with [press_a_first: true]: A
-      on the prompt until the game takes it, then the scene, no args;
+      on the prompt until the game takes it, then the scene; its one optional
+      arg [stop_at_choice: true] (the fork's) stops at the choice;
     - [story_battle] ({!Plza_story.Story_battle}), no args;
     - the game's [walk] ({!Plza_walk.Walk}), walked rather than run before 03.03
       (the fork's [RUN_FROM], before dash is unlocked); its [end] ["talk"] or
