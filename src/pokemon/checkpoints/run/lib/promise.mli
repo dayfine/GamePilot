@@ -15,6 +15,8 @@
     ([docs/design/Engine-Boundary.md], migration step 4) moves it to
     [src/engine/checkpoints/promise]. *)
 
+(** How one promise came out: it held, it did not, or it could not be checked.
+*)
 type verdict = Passed | Failed | Not_checked
 
 type result = {
@@ -24,12 +26,15 @@ type result = {
       (** What was read when it passed; ["expected X, read Y"] when it failed;
           why it was not checked. *)
 }
+(** One promise's outcome: what was promised, its verdict, and a detail to log.
+*)
 
 val judge : string -> expected:string -> read:string -> bool -> result
 (** [judge what ~expected ~read holds]: passed with [read] as its detail when
     [holds], else failed with ["expected X, read Y"]. *)
 
 val not_checked : string -> why:string -> result
+(** Not checked, with [why] as its detail. *)
 
 val not_read : string -> result
 (** Not checked: ["the game can't read it"]. *)

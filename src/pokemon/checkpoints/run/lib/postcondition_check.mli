@@ -61,6 +61,7 @@ type observed = {
 
 val nothing_read : observed
 
+(** {!Promise.verdict}. *)
 type verdict = Promise.verdict = Passed | Failed | Not_checked
 
 type result = Promise.result = {

@@ -42,7 +42,6 @@ type result = Promise.result = {
   detail : string;
 }
 
-let expected_read = Promise.judge
 let not_read = Promise.not_read
 let member_text = Option.value ~default:"?"
 let party_text members = String.concat ", " (List.map member_text members)
@@ -59,9 +58,9 @@ let in_order expected members =
   if
     List.compare_lengths expected members <> 0
     || List.exists2 differs expected members
-  then expected_read what ~expected:(String.concat ", " expected) ~read false
+  then Promise.judge what ~expected:(String.concat ", " expected) ~read false
   else if unread members > 0 then Promise.not_checked what ~why:("read " ^ read)
-  else expected_read what ~expected:"" ~read true
+  else Promise.judge what ~expected:"" ~read true
 
 (* Each species needs as many members as the list names it. *)
 let missing_members expected members =
@@ -88,9 +87,9 @@ let includes expected slots members =
   let what = "party" and read = party_text members in
   let expected_text = includes_text expected slots in
   match (missing_members expected members, wrong_slots slots members) with
-  | [], [] -> expected_read what ~expected:expected_text ~read true
+  | [], [] -> Promise.judge what ~expected:expected_text ~read true
   | _ when unread members > 0 -> Promise.not_checked what ~why:("read " ^ read)
-  | _ -> expected_read what ~expected:expected_text ~read false
+  | _ -> Promise.judge what ~expected:expected_text ~read false
 
 let check_party (expected : Plan.party option) observed =
   match (expected, observed.party) with
@@ -136,7 +135,7 @@ let check_flag observed flag =
   match List.assoc_opt flag observed.flags with
   | None -> not_read what
   | Some set ->
-      expected_read what ~expected:"set"
+      Promise.judge what ~expected:"set"
         ~read:(if set then "set" else "clear")
         set
 
@@ -145,7 +144,7 @@ let check_knows observed ({ species; moves } : Plan.knows) =
   match List.assoc_opt species observed.knows with
   | None -> not_read what
   | Some read ->
-      expected_read what ~expected:(String.concat ", " moves)
+      Promise.judge what ~expected:(String.concat ", " moves)
         ~read:(String.concat ", " read)
         (List.for_all (fun m -> List.mem m read) moves)
 
@@ -154,7 +153,7 @@ let check_level observed ({ species; min } : Plan.level) =
   match List.assoc_opt species observed.levels with
   | None -> not_read what
   | Some read ->
-      expected_read what
+      Promise.judge what
         ~expected:(Printf.sprintf "at least Lv %d" min)
         ~read:(Printf.sprintf "Lv %d" read)
         (read >= min)
@@ -168,7 +167,7 @@ let check_marks expected observed =
   | Some marks, Some read ->
       let shown = List.filteri (fun i _ -> i < List.length marks) read in
       [
-        expected_read "marks" ~expected:(String.concat ", " marks)
+        Promise.judge "marks" ~expected:(String.concat ", " marks)
           ~read:(String.concat ", " shown) (shown = marks);
       ]
 
