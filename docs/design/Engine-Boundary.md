@@ -108,6 +108,10 @@ game's own kinds were renamed its actions the same day, also unchanged: `KIND` a
 `ACTION` and `Action`, `Own_kind` `Pokemon_action`, the plan's `Own` and `Game_action` `Game` and
 `Named_action`, and the event's `action` field `way` (its JSON key stays `"action"`).
 
+What follows is one `GAME_RULES` per family, as built. How a game builds its rules from shared
+pieces (a pose, action sets, promises), so that FRLG, PLZA and Octopath 0 each take only the parts
+they use and FRLG's own actions stop being raw JSON, is `Composable-Rules.md`.
+
 | Part | Engine signature | Pokémon | Toy game | Used by | Holds |
 |---|---|---|---|---|---|
 | Rules | `Engine_rules.GAME_RULES` | `Pokemon_rules` | `Toy_rules` | everything | values and `matches`, `check` |
