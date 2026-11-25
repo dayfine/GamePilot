@@ -1,6 +1,6 @@
 module J = Json_field
-module P = Pokemon_checkpoints.Plan
-module Postconditions = Pokemon_checkpoints.Postconditions
+module P = Pokemon_engine.Plan
+module Postconditions = Pokemon_engine.Postconditions
 module A = Frlg_actions
 
 type need =

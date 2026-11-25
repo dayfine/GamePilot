@@ -1,6 +1,0 @@
-(library
- (name plza_saved)
- (public_name gamepilot.plza_saved)
- (libraries yojson gamepilot.engine_saved gamepilot.plza_rules)
- (preprocess
-  (pps ppx_deriving_yojson)))

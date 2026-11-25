@@ -24,12 +24,12 @@ val islands : (string * string list) list
 val trip_of_args :
   from:string option ->
   Json_field.obj ->
-  (trip, Pokemon_checkpoints.Failure.cause) result
+  (trip, Pokemon_engine.Failure.cause) result
 (** A ["ferry"] action's ["to"], sailed from the harbor the player stands in
     ([from], the reckoned map); [bad_args] when that harbor's list is not read
     or does not have the island. *)
 
-val arrival : trip -> Pokemon_checkpoints.Pose.observed
+val arrival : trip -> Pokemon_engine.Pose.observed
 (** Where the crossing leaves the player: (8, 5) of the island's harbor, above
     its sailor (sSeagallopSpawnLocations), facing south. *)
 
@@ -44,6 +44,6 @@ val run :
   log:(string -> unit) ->
   from:string option ->
   Json_field.obj ->
-  (Pokemon_checkpoints.Pose.observed, Pokemon_checkpoints.Failure.cause) result
+  (Pokemon_engine.Pose.observed, Pokemon_engine.Failure.cause) result
 (** The ["ferry"] action: {!trip_of_args}, then {!sail}; its {!arrival} when it
     passed. *)

@@ -19,7 +19,7 @@ type viewport = Nso_gba | Native
 
 (** The rules a program's checkpoint plans are written over, which pick the
     library that loads and runs them. [Pokemon_grid]: the Pokémon grid rules
-    (Pokemon_checkpoints, the FRLG runner). *)
+    (Pokemon_engine, the FRLG runner). *)
 type rules = Pokemon_grid
 
 type switch_home = {

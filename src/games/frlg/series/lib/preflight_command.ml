@@ -13,7 +13,7 @@
    runner, so with --watch its daemon's page shows its steps, story lines and
    run as a checkpoint run's (Frlg_checkpoints.Plan_watch). *)
 
-open Pokemon_checkpoints
+open Pokemon_engine
 module Pf = Frlg_checkpoints.Preflight
 module C = Frlg_checkpoints.Start_check
 
@@ -89,7 +89,7 @@ let place setup id start log =
 
 (* The party is read on its summaries (species, level, moves): the room and
    the field moves are judged on them. *)
-let without_party (p : Pokemon_checkpoints.Postconditions.t) =
+let without_party (p : Pokemon_engine.Postconditions.t) =
   { p with party = None }
 
 let party_of (members : Room_policy.member list) =
@@ -110,12 +110,12 @@ type verdict = Rows of Pf.row list | Stopped of string
 type reads = {
   mutable place : Frlg_readers.Start_frame.difference option;
   mutable members : Room_policy.member list option;
-  mutable observed : Pokemon_checkpoints.Postcondition_check.observed option;
+  mutable observed : Pokemon_engine.Postcondition_check.observed option;
   mutable card : Frlg_readers.Trainer_card_front.t option;
   mutable verdict : verdict;
 }
 
-let action f : Pokemon_checkpoints.Game.game_action = fun _ _ -> f ()
+let action f : Pokemon_engine.Game.game_action = fun _ _ -> f ()
 
 (* Back to the save: on a failure, its frame and the verdict. *)
 let soft_reset setup record id reads log () =

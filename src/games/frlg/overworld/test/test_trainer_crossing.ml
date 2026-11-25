@@ -12,7 +12,7 @@ module Trainer_sight = Frlg_overworld.Trainer_sight
 let names = [ "ThreeIsland_BondBridge"; "ThreeIsland_BerryForest" ]
 let w = mgba_world names
 
-let goal map (x, y) facing : Pokemon_checkpoints.Pose.grid =
+let goal map (x, y) facing : Pokemon_engine.Pose.grid =
   { map; tiles = [ { x; y } ]; facing }
 
 let plan ~from:(map, x, y, facing) goal =
@@ -86,7 +86,7 @@ let walk_with ?react ~from:(map, x, y, facing) goal () =
         with
         | Ok at -> "at " ^ place_text w at.place
         | Error cause ->
-            "failed " ^ Pokemon_checkpoints.Failure.cause_to_string cause)
+            "failed " ^ Pokemon_engine.Failure.cause_to_string cause)
   in
   String.concat "\n"
     (Printf.sprintf "%s; fought %d; %s" outcome !fought (S.presses_text screen)

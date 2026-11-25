@@ -23,7 +23,7 @@ let arrival ~from ~to_ () =
 
 let outcome = function
   | Ok () -> "ok"
-  | Error cause -> "failed " ^ Pokemon_checkpoints.Failure.cause_to_string cause
+  | Error cause -> "failed " ^ Pokemon_engine.Failure.cause_to_string cause
 
 (* Store 1F to 4F. The step through the lift door fades to black and back; the
    last step south, off the lift's arrival tile, dims into the floor picked,

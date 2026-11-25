@@ -1,7 +1,7 @@
 (* A program's plan folder (Engine_series.Plan_folder) with FRLG's plans
    loaded from it, and the plan before one. *)
 
-open Pokemon_checkpoints
+open Pokemon_engine
 include Engine_series.Plan_folder
 
 let ( let* ) = Result.bind
