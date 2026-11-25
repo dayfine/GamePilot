@@ -1,0 +1,10 @@
+(library
+ (name program_engine)
+ (public_name gamepilot.program_engine)
+ (libraries
+  gamepilot.engine_rules
+  gamepilot.engine_plan
+  gamepilot.engine_plan_format
+  gamepilot.engine_text
+  gamepilot.engine_run
+  gamepilot.engine_event_snapshot))

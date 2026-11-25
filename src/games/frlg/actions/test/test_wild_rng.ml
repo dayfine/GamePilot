@@ -19,7 +19,7 @@ let decode json () =
         t.species t.location t.tid t.sid t.seeds t.frame_model t.min_advance
         t.max_advance
         (Capture_plan.describe t.capture)
-  | Error c -> Pokemon_checkpoints.Failure.cause_to_string c
+  | Error c -> Pokemon_engine.Failure.cause_to_string c
 
 let decoding =
   [

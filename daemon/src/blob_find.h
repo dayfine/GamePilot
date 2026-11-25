@@ -33,6 +33,9 @@ struct FindSpec {
   std::optional<double> margin;  // game pixels: report each blob's stray
   std::string template_hash;     // non-empty: report each blob's score
   std::string shape_hash;        // non-empty: report each blob's overlap
+  // Score each blob's box with the pixels outside the filter's range black,
+  // as the fork's filter_by_mask before a match (MoveEffectivenessSymbol).
+  bool masked = false;
 };
 
 // A FindSpec mapped onto frames of one size.
@@ -47,6 +50,7 @@ struct FrameFind {
   double y_scale = 1;
   cv::Mat template_bgra;  // the template as uploaded, with alpha; or empty
   cv::Mat shape;          // 8-bit, 255 on the shape's pixels; or empty
+  bool masked = false;    // score the box with out-of-range pixels black
 };
 
 // Maps a spec onto frames whose game pixels are x_scale by y_scale frame

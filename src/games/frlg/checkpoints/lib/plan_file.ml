@@ -24,7 +24,7 @@ let decode ~source json =
       (Frlg_places.Place_table.routes places)
       ~source json
   in
-  Pokemon_checkpoints.Plan_decode.decode ~source json
+  Pokemon_engine.Plan_decode.decode ~source json
 
 let load path =
   Result.bind

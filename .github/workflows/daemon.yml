@@ -25,7 +25,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        # macOS runners are the slow queue: a PR stacked on another branch
+        # runs Ubuntu and Windows only, since it is pushed again (and runs on
+        # all three) once its base merges and it is based on main.
+        os: ${{ fromJSON((github.event_name != 'pull_request' || github.base_ref == 'main') && '["ubuntu-latest", "macos-latest", "windows-latest"]' || '["ubuntu-latest", "windows-latest"]') }}
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4

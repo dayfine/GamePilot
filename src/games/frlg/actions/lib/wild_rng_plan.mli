@@ -21,7 +21,7 @@ type t = {
       (** the species, the ball, the balls; its encounters are the attempts *)
 }
 
-val decode : Json_field.obj -> (t, Pokemon_checkpoints.Failure.cause) result
+val decode : Json_field.obj -> (t, Pokemon_engine.Failure.cause) result
 (** ["species"], ["location"] (["route_10"]), ["tid"], ["sid"] (0..65535),
     ["seeds"], ["frame_model"] (["mgba"]), ["advances"] ([[min, max]], default
     [[900, 4000]]), ["ball"] (["poke-ball"]), ["balls"] (5), ["attempts"] (1).

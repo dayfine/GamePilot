@@ -27,8 +27,16 @@ let menu_tap = M.hold ~hold_ms:M.tap_hold_ms ~cooldown_ms:M.tap_release_ms
 let tap buttons =
   ignore (Effects.submit (List.map menu_tap buttons) : Wire.batch_done)
 
-let opening_line species =
-  "Wild " ^ String.uppercase_ascii species ^ " appeared!"
+(* The name as the game shows it, from pret's species_names.h: the slug
+   uppercased is not it for NIDORAN♂, NIDORAN♀, MR. MIME or FARFETCH'D (mGBA,
+   2026-11-25: Route 3's Nidoran never read). *)
+let shown_name names species =
+  match List.assoc_opt species names with
+  | Some name -> name
+  | None -> String.uppercase_ascii species
+
+let opening_line names species =
+  "Wild " ^ shown_name names species ^ " appeared!"
 
 let line = Text.Text_lines.battle_message 0
 
@@ -49,18 +57,50 @@ let await_opening reads =
   in
   match awaited with Holds m -> reads m | Timeout -> None
 
-(* The opening message's line once it reads, its page waits (the arrow) or the
-   action menu shows: whichever comes first. *)
-let read_opening species =
-  let lines = List.map (fun s -> (opening_line s, s)) species in
+let opening_probes candidates =
+  Text.Line_reading.probes ~ink:Text.Line_reading.light_ink
+    (Text_data.glyphs ()) line candidates
+
+(* The lines of these species, each with its slug. *)
+let opening_lines species =
+  let names = Text_data.species_names () in
+  List.map (fun s -> (opening_line names s, s)) species
+
+let any_species_ms = 1000
+
+(* The species whose line the page shows, every species a candidate. *)
+let read_page_species () =
+  let lines = opening_lines (List.map fst (Text_data.species_names ())) in
   let candidates = List.map fst lines in
-  let probes =
-    Text.Line_reading.probes ~ink:Text.Line_reading.light_ink
-      (Text_data.glyphs ()) line candidates
+  let shown m = reads_opening candidates m in
+  let awaited () =
+    Effects.await ~timeout_ms:any_species_ms (fun m -> Option.is_some (shown m))
   in
-  Effects.with_probes probes (fun () ->
-      await_opening (reads_opening candidates))
-  |> Option.map (fun text -> List.assoc text lines)
+  match Effects.with_probes (opening_probes candidates) awaited with
+  | Holds m -> Option.bind (shown m) (fun text -> List.assoc_opt text lines)
+  | Timeout -> None
+
+(* The opening's page, waiting for its button, read with every species a
+   candidate: a foe that is not one of the plan's (Route 3's Spearow and Pidgey)
+   reads too. One look, not a watch while the line prints: hundreds of probes
+   on every frame would slow the daemon. *)
+let read_any_species () =
+  match Effects.read () with
+  | Some m when Battle_text_arrow.advance_arrow m -> read_page_species ()
+  | Some _ | None -> None
+
+(* The opening message's line once it reads, its page waits (the arrow) or the
+   action menu shows: whichever comes first. A page that waits without the
+   plan's species on it is read again for any species. *)
+let read_opening species =
+  let lines = opening_lines species in
+  let candidates = List.map fst lines in
+  match
+    Effects.with_probes (opening_probes candidates) (fun () ->
+        await_opening (reads_opening candidates))
+  with
+  | Some text -> List.assoc_opt text lines
+  | None -> read_any_species ()
 
 let mark_timeout_ms = 2000
 let mark_measured m = Option.is_some (Caught_mark.read m)
@@ -115,16 +155,35 @@ let ball_chosen ~log ball () =
       M.close "the bag" Bag_screen.bag_open;
       false
 
+(* The player's HP box by its left end: the whole box bobs in and out of its
+   probes with the battler, its left end does not. *)
+let player_down m =
+  Battle_screen.battle_text_box m
+  && Battle_screen.foe_box m
+  && not (Battle_screen.player_box_left m)
+
+let player_down_ms = 1000
+
+(* The look holds [player_down_ms]: not a frame between two screens. *)
+let player_fainted () =
+  match
+    Effects.await ~timeout_ms:player_down_ms (fun m -> not (player_down m))
+  with
+  | Holds _ -> false
+  | Timeout -> true
+
 (* After the throw: the nickname question ("Give a nickname ...?", its Yes/No
-   arrow) or the overworld is a catch, the action menu is a break-free; every
-   fourth look with neither checks the overworld, then presses B through the
-   messages (wait_for_throw()). *)
+   arrow) or the overworld is a catch, the action menu is a break-free, and the
+   foe's HP box over the battle's text without the player's is the player's
+   Pokemon fainted; every fourth look with none of them checks the overworld,
+   then presses B through the messages (wait_for_throw()). *)
 let rec wait_for_throw ~deadline polls : Capture.throw_end =
   if Effects.now () >= deadline then Throw_failed
   else
     match Effects.read () with
     | Some m when Option.is_some (Dialog.yes_no_arrow m) -> Caught
     | Some m when Battle_screen.battle_menu m -> Broke_free
+    | Some m when player_down m && player_fainted () -> Player_fainted
     | _ when polls mod presses_per_check <> 0 ->
         wait throw_poll_ms;
         wait_for_throw ~deadline (polls + 1)

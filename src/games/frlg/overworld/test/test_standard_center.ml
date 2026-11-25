@@ -47,7 +47,7 @@ let added () =
 
 let walk ~from:(map, x, y, facing) (tx, ty, goal_facing) () =
   let w = world_with_rooms () in
-  let goal : Pokemon_checkpoints.Pose.grid =
+  let goal : Pokemon_engine.Pose.grid =
     {
       map = "CinnabarIsland_PokemonCenter_1F";
       tiles = [ { x = tx; y = ty } ];

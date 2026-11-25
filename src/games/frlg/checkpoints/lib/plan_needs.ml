@@ -1,6 +1,6 @@
 module J = Json_field
-module P = Pokemon_checkpoints.Plan
-module Postconditions = Pokemon_checkpoints.Postconditions
+module P = Pokemon_engine.Plan
+module Postconditions = Pokemon_engine.Postconditions
 module A = Frlg_actions
 
 type need =
@@ -10,6 +10,7 @@ type need =
       slots : Postconditions.slot list;
     }
   | Member of { species : string; for_ : string }
+  | No_mail of { species : string; for_ : string }
   | Knows_move of { move : string; for_ : string }
   | Money_at_least of { amount : int; for_ : string }
   | Money_between of { min : int; max : int }
@@ -46,6 +47,8 @@ type acc = {
   items : (string * string) list;  (** needed, one per use *)
   bought : (string * int) list;  (** bought or picked up, not yet used *)
   knows : (string * string) list;  (** field move, action; newest first *)
+  deposits : (string * string) list;
+      (** the save's members stored, with the action; newest first *)
 }
 
 let empty =
@@ -56,6 +59,7 @@ let empty =
     items = [];
     bought = [];
     knows = [];
+    deposits = [];
   }
 
 (* The game lets any member that knows Cut cut: some member must know it. *)
@@ -69,6 +73,12 @@ let field_move action acc =
 let use_member action acc species =
   if List.mem species acc.brought || List.mem_assoc species acc.members then acc
   else { acc with members = (species, action) :: acc.members }
+
+(* A member the save holds, stored: it must hold no Mail. *)
+let deposit action acc species =
+  if List.mem species acc.brought || List.mem_assoc species acc.deposits then
+    acc
+  else { acc with deposits = (species, action) :: acc.deposits }
 
 let use_item action acc item =
   match List.assoc_opt item acc.bought with
@@ -107,8 +117,10 @@ let game_action stocks ~where action args acc =
   let acc =
     if List.mem_assoc action field_move_users then field_move action acc
     else if action = "pc_deposit" then
-      List.fold_left (use_member action) acc
-        (A.Action_args.deposited_species ~where args)
+      let species = A.Action_args.deposited_species ~where args in
+      List.fold_left (deposit action)
+        (List.fold_left (use_member action) acc species)
+        species
     else use_members ~named action acc
   in
   let acc =
@@ -160,6 +172,7 @@ let party_needs before acc =
   in
   promised
   @ List.rev_map (fun (species, for_) -> Member { species; for_ }) acc.members
+  @ List.rev_map (fun (species, for_) -> No_mail { species; for_ }) acc.deposits
   @ List.rev_map (fun (move, for_) -> Knows_move { move; for_ }) acc.knows
 
 let money_needs before acc =

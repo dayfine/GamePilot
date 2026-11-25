@@ -1,4 +1,4 @@
-open Pokemon_checkpoints
+open Pokemon_engine
 
 let of_last_event (event : Plan.event) =
   match (event.declared_after, event.kind) with

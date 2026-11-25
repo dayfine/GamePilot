@@ -33,9 +33,11 @@ struct BackendInfo {
 };
 
 // GBA KEYINPUT bit order (A, B, Select, Start, Right, Left, Up, Down, R, L in
-// bits 0-9), then the buttons only the Switch has: Home, X, Y in bits 10-12.
-using KeyMask = std::uint16_t;
-constexpr KeyMask kSwitchOnlyKeys = 0x7u << 10;
+// bits 0-9), then the buttons only the Switch has: Home, X, Y, ZL, ZR, Plus,
+// Minus in bits 10-16. On the Switch, Start and Select are the GBA app's names
+// for Plus and Minus and press the same buttons.
+using KeyMask = std::uint32_t;
+constexpr KeyMask kSwitchOnlyKeys = 0x7Fu << 10;
 
 // A stick's tilt as CoreLib's JoystickPosition (SerialPrograms/Source/
 // Controllers/Joystick.h): x and y in -1..1, +x right, +y up; 0, 0 is centred.
@@ -120,6 +122,12 @@ class Backend {
   // not run yet and cuts short the one running, so a cancel takes effect now
   // rather than after the device has played out the queue.
   virtual void drop_queued_keys();
+
+  // Live backends only. As drop_queued_keys(), but the input running keeps
+  // running until the next queue_keys() replaces it, with no release between
+  // (the board's CQ_REPLACE_ON_NEXT, as the C++ controller's
+  // replace_on_next_command()). Defaults to drop_queued_keys().
+  virtual void replace_queued_keys() { drop_queued_keys(); }
 
   virtual BackendHealth health() const { return {}; }
 

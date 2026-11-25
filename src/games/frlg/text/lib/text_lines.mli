@@ -166,5 +166,7 @@ val pc_data_species : t
     shadow: read with {!Line_reading.light_ink}. *)
 
 val pc_message : t
-(** The box screen's message ("Deposit in which BOX?", "The BOX is full."):
-    window 1 at (88, 136) prints at (0, 2) ([PrintStorageMessage]). *)
+(** The box screen's message ("Deposit in which BOX?", "The BOX is full.",
+    "Please remove the MAIL."): window 1 at (88, 136) prints at (0, 2)
+    ([PrintStorageMessage]). The messages are matched in English: another
+    language's game needs its own text. *)
