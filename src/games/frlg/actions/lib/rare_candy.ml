@@ -1,13 +1,20 @@
 type opened = Opened | No_candy | Not_opened of string
 
 type driver = {
-  open_candy : slot:int -> opened;
+  open_candy : slot:int -> (opened, Story.Failure.cause) result;
   level_up : Level_up.driver;
-  close_bag : unit -> unit;
+  close_bag : unit -> (unit, Story.Failure.cause) result;
   log : string -> unit;
 }
 
-type result = Used of Level_up.outcome | Out_of_candies | Failed of string
+type result =
+  | Used of Level_up.outcome
+  | Out_of_candies
+  | Failed of string
+  | Stopped of Story.Failure.cause
+
+let closed driver o =
+  match driver.close_bag () with Ok () -> Used o | Error c -> Stopped c
 
 let used driver policy member =
   match
@@ -17,19 +24,20 @@ let used driver policy member =
   with
   | Ok [ o ] ->
       if o.levels = 0 then driver.log "Rare Candy: it had no effect.";
-      driver.close_bag ();
-      Used o
+      closed driver o
   | Ok _ -> Failed "not one outcome for one member"
   | Error why -> Failed why
 
 let run driver policy ~(member : Level_up.member) =
   driver.log (Printf.sprintf "Rare Candy: one on slot %d." member.slot);
   match driver.open_candy ~slot:member.slot with
-  | No_candy -> Out_of_candies
-  | Not_opened why -> Failed why
-  | Opened -> used driver policy member
+  | Error c -> Stopped c
+  | Ok No_candy -> Out_of_candies
+  | Ok (Not_opened why) -> Failed why
+  | Ok Opened -> used driver policy member
 
 let describe = function
   | Used o -> "Rare Candy: " ^ Level_up.describe o ^ "."
   | Out_of_candies -> "Rare Candy: none left in the bag."
   | Failed why -> "Rare Candy: failed: " ^ why ^ "."
+  | Stopped c -> "Rare Candy: " ^ Story.Failure.cause_to_string c ^ "."

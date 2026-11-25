@@ -29,19 +29,30 @@ let arrow m = Dialog.advance_arrow m || Battle_text_arrow.advance_arrow m
 let watched m = classify m <> None || arrow m
 let press_a () = M.press ~cooldown_ms:page_press_ms Wire.A
 
-let open_candy ~log ~slot : Rare_candy.opened =
-  match Bag_items.item_action candy use_row with
-  | () ->
-      ignore
-        (M.await_screen ~code:"no_party" "the party to use it on"
-           Party_menu.party_menu);
-      Party_actions.choose_slot slot;
-      Opened
-  | exception M.Action_failed { Story.Failure.code = "not_in_bag"; _ } ->
-      M.close "the bag" Bag_screen.bag_open;
-      M.settle_back ~label:"no rare candy" ~log;
-      No_candy
-  | exception M.Action_failed c -> Not_opened (Story.Failure.cause_to_string c)
+(* The menu steps below fail by raising Menu_input.Action_failed (main's
+   contract); each is run through Menu_step.result, which turns that into a
+   Result, until main's steps are converted in their own PR. *)
+let to_party ~slot () =
+  ignore
+    (M.await_screen ~code:"no_party" "the party to use it on"
+       Party_menu.party_menu);
+  Party_actions.choose_slot slot
+
+let closed_without_candy ~log () =
+  M.close "the bag" Bag_screen.bag_open;
+  M.settle_back ~label:"no rare candy" ~log
+
+let open_candy ~log ~slot : (Rare_candy.opened, Story.Failure.cause) result =
+  match Menu_step.result (fun () -> Bag_items.item_action candy use_row) with
+  | Ok () ->
+      Result.map
+        (fun () -> Rare_candy.Opened)
+        (Menu_step.result (to_party ~slot))
+  | Error { Story.Failure.code = "not_in_bag"; _ } ->
+      Result.map
+        (fun () -> Rare_candy.No_candy)
+        (Menu_step.result (closed_without_candy ~log))
+  | Error c -> Ok (Not_opened (Story.Failure.cause_to_string c))
 
 (* A message with no arrow ("... was elevated to Lv. 51.", "... learned
    ...!") waits for A once printed. A is pressed only after it has shown
@@ -177,8 +188,9 @@ let evolution ~cancel : Level_up.scene =
   | Holds _ | Timeout -> Ended
 
 let close_bag ~log () =
-  M.close "the bag" Bag_screen.bag_open;
-  M.settle_back ~label:"rare candy" ~log
+  Menu_step.result (fun () ->
+      M.close "the bag" Bag_screen.bag_open;
+      M.settle_back ~label:"rare candy" ~log)
 
 let level_up_driver ~log : Level_up.driver =
   { next; open_list; read_list; forget; leave_list; decline; evolution; log }

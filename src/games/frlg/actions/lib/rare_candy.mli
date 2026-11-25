@@ -58,12 +58,13 @@ type opened =
   | Not_opened of string  (** why *)
 
 type driver = {
-  open_candy : slot:int -> opened;
+  open_candy : slot:int -> (opened, Story.Failure.cause) result;
       (** From the overworld: the bag, the Rare Candy, USE, the slot (from 1).
-      *)
+          [Error] when a menu step after the candy's USE fails, as its cause. *)
   level_up : Level_up.driver;
       (** The party menu's: {!Level_up.Back} is the bag. *)
-  close_bag : unit -> unit;  (** From the bag, back to the overworld. *)
+  close_bag : unit -> (unit, Story.Failure.cause) result;
+      (** From the bag, back to the overworld; [Error] as {!open_candy}. *)
   log : string -> unit;
 }
 
@@ -72,6 +73,8 @@ type result =
       (** [levels] is 0 when the candy had no effect (a Lv 100 member) *)
   | Out_of_candies
   | Failed of string
+  | Stopped of Story.Failure.cause
+      (** a menu step of the driver's failed, as this cause *)
 
 val run : driver -> Level_up_policy.policy -> member:Level_up.member -> result
 (** One candy on the member: {!Level_up.run} with it alone. *)

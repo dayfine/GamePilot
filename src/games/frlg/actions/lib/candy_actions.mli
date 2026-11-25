@@ -6,7 +6,7 @@
 
     ["use_rare_candy"] logs the level read after the candy ({!Member_level}),
     the moves it learned and declined and the evolution. It fails as
-    [out_of_candies] or [rare_candy_failed]. *)
+    [out_of_candies] or [rare_candy_failed], or as a menu step's cause. *)
 
 val handlers :
   log:(string -> unit) ->

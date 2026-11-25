@@ -20,7 +20,8 @@
     - A cancel holds B for {!evolution_hold_ms} from the scene's first look: the
       game stops the evolution while B alone is held as the sprites cycle.
 
-    Run it inside {!Menu_input.run} with {!probes} subscribed. *)
+    Run it with {!Menu_input.probes} and {!probes} subscribed. Its menu steps
+    fail as a Result ({!Menu_step}), not by raising. *)
 
 val probes : Wire.probe_spec list
 (** {!Frlg_readers.Party_dialogs}', the shared level-up screens'

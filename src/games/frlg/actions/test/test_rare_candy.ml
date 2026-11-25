@@ -56,9 +56,9 @@ let candy_driver ~has_candy g : Rare_candy.driver =
     open_candy =
       (fun ~slot ->
         note g (Printf.sprintf "open %d" slot);
-        if has_candy then Opened else No_candy);
+        Ok (if has_candy then Rare_candy.Opened else No_candy));
     level_up = driver g;
-    close_bag = (fun () -> note g "close");
+    close_bag = (fun () -> Ok (note g "close"));
     log = ignore;
   }
 
@@ -99,10 +99,10 @@ let level_driver t : Candy_level.driver =
     level =
       (fun ~slot:_ ->
         match t.levels with
-        | [] -> None
+        | [] -> Ok None
         | l :: rest ->
             t.levels <- rest;
-            l);
+            Ok l);
     candy =
       (fun ~slot:_ _ ->
         if t.candies = 0 then Out_of_candies
@@ -119,8 +119,14 @@ let level_driver t : Candy_level.driver =
             }));
     member =
       (fun ~slot ->
-        Some
-          { slot; species = t.species; level = Some 64; moves = Some t.moves });
+        Ok
+          (Some
+             {
+               slot;
+               species = t.species;
+               level = Some 64;
+               moves = Some t.moves;
+             }));
     log = ignore;
   }
 
