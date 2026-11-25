@@ -6,7 +6,15 @@ open Pokemon_checkpoints
 
 let plan_suffix = ".plan.json"
 
-(* Checkpoint ids in the folder, in run order ({!Checkpoint_order}). *)
+(* The folder's program's order: name order for PLZA, whose 03.02b follows
+   03.02; split parts first ({!Checkpoint_order}) otherwise. *)
+let order dir =
+  match Program_registry.of_plan_dir dir with
+  | Some { checkpoint_order = Name_order; _ } -> String.compare
+  | Some { checkpoint_order = Parts_first; _ } | None ->
+      Checkpoint_order.compare
+
+(* Checkpoint ids in the folder, in run order. *)
 let checkpoint_ids dir =
   match Sys.readdir dir with
   | names ->
@@ -14,7 +22,7 @@ let checkpoint_ids dir =
         (Array.to_list names
         |> List.filter (fun n -> Filename.check_suffix n plan_suffix)
         |> List.map (fun n -> Filename.chop_suffix n plan_suffix)
-        |> List.sort Checkpoint_order.compare)
+        |> List.sort (order dir))
   | exception Sys_error e -> Error e
 
 let rec drop_until id = function

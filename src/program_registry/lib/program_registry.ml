@@ -1,5 +1,6 @@
 type backend = Mgba | Switch
 type viewport = Nso_gba | Native
+type checkpoint_order = Parts_first | Name_order
 type game = { game_id : string; game_name : string }
 
 type t = {
@@ -12,6 +13,7 @@ type t = {
   checkpoints : string option;
   backends : backend list;
   viewport : viewport;
+  checkpoint_order : checkpoint_order;
 }
 
 let frlg = { game_id = "frlg"; game_name = "Pokémon FireRed/LeafGreen" }
@@ -29,6 +31,7 @@ let mail_glitch =
     checkpoints = Some "src/games/frlg/programs/mail_glitch/plans";
     backends = [ Mgba; Switch ];
     viewport = Nso_gba;
+    checkpoint_order = Parts_first;
   }
 
 let start_menu_poc =
@@ -43,6 +46,7 @@ let start_menu_poc =
     checkpoints = None;
     backends = [ Mgba ];
     viewport = Nso_gba;
+    checkpoint_order = Parts_first;
   }
 
 let team_training =
@@ -58,6 +62,7 @@ let team_training =
     checkpoints = Some "src/games/frlg/programs/team_training/plans";
     backends = [ Mgba; Switch ];
     viewport = Nso_gba;
+    checkpoint_order = Parts_first;
   }
 
 let supplies =
@@ -72,6 +77,7 @@ let supplies =
     checkpoints = Some "src/games/frlg/programs/supplies/plans";
     backends = [ Mgba; Switch ];
     viewport = Nso_gba;
+    checkpoint_order = Parts_first;
   }
 
 let sevii_story =
@@ -87,6 +93,7 @@ let sevii_story =
     checkpoints = Some "src/games/frlg/programs/sevii_story/plans";
     backends = [ Mgba ];
     viewport = Nso_gba;
+    checkpoint_order = Parts_first;
   }
 
 let plza = { game_id = "plza"; game_name = "Pokémon Legends: Z-A" }
@@ -104,6 +111,7 @@ let autostory =
     checkpoints = Some "src/games/pokemon/plza/programs/autostory/plans";
     backends = [ Switch ];
     viewport = Native;
+    checkpoint_order = Name_order;
   }
 
 let all =

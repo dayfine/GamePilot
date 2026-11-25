@@ -43,14 +43,14 @@ cd src && opam exec -- dune exec -- gamepilot checkpoints --program plza.autosto
 | 02.06 | Main Mission 02: the night in Room 202 |
 | 02.07 | Main Mission 02: the first evening to Main Mission 03 |
 | 03.01 | Down to the lobby |
-| 03.02b | Battle Taunie |
 | 03.02 | Out of Hotel Z |
+| 03.02b | Battle Taunie |
+| 03.03 | To the rock pile scene |
 | 03.03b | Up the ladder to the rooftop scene |
 | 03.03c | Off the roof to Station Front |
-| 03.03 | To the rock pile scene |
 | 03.04 | Pokemon Center, the Pokedex |
 
-<!-- plans: 630d6c8f0804 -->
+<!-- plans: 32bda021430c -->
 <!-- /generated -->
 
 ## When it stops

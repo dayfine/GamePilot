@@ -17,6 +17,14 @@ type backend = Mgba | Switch
     (FRLG); [Native]: a full-screen Switch game, the whole frame. *)
 type viewport = Nso_gba | Native
 
+(** How a program's checkpoint ids order its chain. [Parts_first]: a checkpoint
+    split in two runs its lettered part first, [cp-05a] then [cp-05], as the
+    FRLG fork splits them (Engine_series.Checkpoint_order). [Name_order]: plain
+    name order, where a lettered id continues the bare one: PLZA's 01.00b,
+    03.02b and 03.03b, 03.03c follow 01.00a, 03.02 and 03.03 (the PLZA fork's
+    StoryData rows, its plan sources saying where each starts). *)
+type checkpoint_order = Parts_first | Name_order
+
 type game = {
   game_id : string;  (** ["frlg"], as plans and the games/ folder name it. *)
   game_name : string;
@@ -35,6 +43,7 @@ type t = {
   backends : backend list;
   viewport : viewport;
       (** The Switch's game picture, which every daemon of its runs takes. *)
+  checkpoint_order : checkpoint_order;
 }
 
 val all : t list
