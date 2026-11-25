@@ -88,7 +88,8 @@ on frames and returns raw results with no judgment.
 | `color_stats` | mean RGB, stddev over a box | microseconds |
 | `rmsd_prev` | difference against the previous frame | about a millisecond |
 | `template` | match score against a template at a box | milliseconds |
-| `find` | fixed pipeline: colour filter -> waterfill -> size filter -> template; list of boxes with scores | milliseconds |
+| `line_shares` | share of a box's pixels passing linear channel comparisons, per row and per column (`core.line_shares@1`) | microseconds |
+| `find` | fixed pipeline: colour filter -> waterfill -> size filter -> template; list of boxes with scores (`core.find@1`: also a blob's stray share and its overlap with a shape) | milliseconds |
 | `ocr` (on request) | text | tens to hundreds of milliseconds |
 | `model` (on request) | boxes, labels, scores | tens of milliseconds |
 

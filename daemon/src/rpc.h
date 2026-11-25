@@ -14,6 +14,7 @@
 #include "Common/Cpp/Json/JsonObject.h"
 #include "Common/Cpp/Json/JsonValue.h"
 #include "backend.h"
+#include "blob_find.h"
 #include "input_lease.h"
 #include "probes.h"
 #include "schedule.h"
@@ -90,6 +91,10 @@ struct ProbeSpec {
   std::optional<ColorRange> ink;
   // core.color_count@1 only.
   ColorRange color_range;
+  // core.line_shares@1 only: what a counted pixel passes.
+  PixelTest pixel_test;
+  // core.find@1 only.
+  std::optional<FindSpec> find;
 };
 
 struct SubscribeParams {

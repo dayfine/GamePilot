@@ -29,43 +29,54 @@ type probe_spec = {
   template : string option;
   ink : color_range option;
   color_range : color_range option;
+  test : Line_shares.test;
+  find : Blob_find.params option;
 }
 
 let color_stats_kind = "core.color_stats@1"
 let template_match_kind = "core.template_match@1"
 let color_count_kind = "core.color_count@1"
+let line_shares_kind = "core.line_shares@1"
+let find_kind = "core.find@1"
 
-let color_stats_probe ~id ~box ~delivery =
+let bare ~id ~kind ~box ~delivery =
   {
     id;
-    kind = color_stats_kind;
+    kind;
     box;
     delivery;
     template = None;
     ink = None;
     color_range = None;
+    test = [];
+    find = None;
   }
+
+let color_stats_probe ~id ~box ~delivery =
+  bare ~id ~kind:color_stats_kind ~box ~delivery
 
 let template_match_probe ?ink ~id ~box ~delivery ~template () =
   {
-    id;
-    kind = template_match_kind;
-    box;
-    delivery;
+    (bare ~id ~kind:template_match_kind ~box ~delivery) with
     template = Some template;
     ink;
-    color_range = None;
   }
 
 let color_count_probe ~id ~box ~delivery ~min ~max =
   {
-    id;
-    kind = color_count_kind;
-    box;
-    delivery;
-    template = None;
-    ink = None;
+    (bare ~id ~kind:color_count_kind ~box ~delivery) with
     color_range = Some { min; max };
+  }
+
+let line_shares_probe ~id ~box ~delivery ~test =
+  if test = [] then Error ("core.line_shares@1 needs a comparison: " ^ id)
+  else Ok { (bare ~id ~kind:line_shares_kind ~box ~delivery) with test }
+
+let find_probe ?template ~id ~box ~delivery params =
+  {
+    (bare ~id ~kind:find_kind ~box ~delivery) with
+    template;
+    find = Some params;
   }
 
 let channels_of_json what j =
@@ -106,33 +117,54 @@ let json_of_ink = function
   | Some range -> [ ("ink", `Assoc (color_range_fields range)) ]
   | None -> []
 
+let test_of_json j =
+  match field_opt "probe" "test" j with
+  | Some test -> Line_shares.test_of_json "probe.test" test
+  | None -> []
+
+let find_of_json kind j =
+  if kind = find_kind then Some (Blob_find.params_of_json "probe" j) else None
+
 let probe_spec_of_json j =
   let what = "probe" in
+  let kind = string_field what "kind" j in
   {
     id = string_field what "id" j;
-    kind = string_field what "kind" j;
+    kind;
     box = box_of_json (field what "box" j);
     delivery = delivery_of_string (string_field what "delivery" j);
     template =
       Option.map (to_string "probe.template") (field_opt what "template" j);
     ink = ink_of_json j;
     color_range = color_range_of_json what j;
+    test = test_of_json j;
+    find = find_of_json kind j;
   }
 
 let json_of_template = function
   | Some t -> [ ("template", `String t) ]
   | None -> []
 
-let json_of_probe_spec { id; kind; box; delivery; template; ink; color_range } =
+let json_of_test = function
+  | [] -> []
+  | test -> [ ("test", Line_shares.json_of_test test) ]
+
+let json_of_find = function
+  | Some params -> Blob_find.params_fields params
+  | None -> []
+
+let json_of_probe_spec p =
   `Assoc
     ([
-       ("id", `String id);
-       ("kind", `String kind);
-       ("box", json_of_box box);
-       ("delivery", `String (string_of_delivery delivery));
+       ("id", `String p.id);
+       ("kind", `String p.kind);
+       ("box", json_of_box p.box);
+       ("delivery", `String (string_of_delivery p.delivery));
      ]
-    @ json_of_template template @ json_of_ink ink
-    @ json_of_color_range color_range)
+    @ json_of_template p.template
+    @ json_of_ink p.ink
+    @ json_of_color_range p.color_range
+    @ json_of_test p.test @ json_of_find p.find)
 
 type rgb = { r : float; g : float; b : float }
 
@@ -148,6 +180,8 @@ type probe_result =
   | Color_stats of { mean : rgb; stddev : rgb }
   | Template_match of { score : float; x : float; y : float }
   | Color_count of { fraction : float; mean : rgb option }
+  | Line_shares of Line_shares.t
+  | Find of { blobs : Blob_find.blob list }
   | Other of json
 
 let color_stats_of_json what j =
@@ -177,6 +211,9 @@ let probe_result_of_json j =
   | kind when kind = color_stats_kind -> color_stats_of_json what j
   | kind when kind = template_match_kind -> template_match_of_json what j
   | kind when kind = color_count_kind -> color_count_of_json what j
+  | kind when kind = line_shares_kind ->
+      Line_shares (Line_shares.of_json what j)
+  | kind when kind = find_kind -> Find { blobs = Blob_find.of_json what j }
   | _ -> Other j
 
 let json_of_color_stats ~mean ~stddev =
@@ -208,6 +245,8 @@ let json_of_probe_result = function
   | Color_stats { mean; stddev } -> json_of_color_stats ~mean ~stddev
   | Template_match { score; x; y } -> json_of_template_match ~score ~x ~y
   | Color_count { fraction; mean } -> json_of_color_count ~fraction ~mean
+  | Line_shares shares -> Line_shares.to_json shares
+  | Find { blobs } -> Blob_find.to_json blobs
   | Other j -> j
 
 let probes_of_json what j =

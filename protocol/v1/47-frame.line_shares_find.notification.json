@@ -1,0 +1,35 @@
+{
+  "jsonrpc": "2.0",
+  "method": "frame",
+  "params": {
+    "seq": 5120,
+    "load": 0,
+    "t_ms": 85337.2,
+    "probes": {
+      "controls_hint.glyph": {
+        "kind": "core.line_shares@1",
+        "rows": [0.375, 0.5, 0.25, 0.25, 0.5, 0.375, 0.25],
+        "columns": [0.142857, 0.428571, 0.571429, 0.428571, 0.285714, 0.428571, 0.428571, 0.142857]
+      },
+      "advance_arrow": {
+        "kind": "core.find@1",
+        "blobs": [
+          {
+            "filter": 1,
+            "x": 1418.0,
+            "y": 982.0,
+            "w": 32.0,
+            "h": 20.0,
+            "fill": 0.359375,
+            "stray": 0.0,
+            "overlap": 0.585443
+          }
+        ]
+      },
+      "choice_arrow": {
+        "kind": "core.find@1",
+        "blobs": []
+      }
+    }
+  }
+}

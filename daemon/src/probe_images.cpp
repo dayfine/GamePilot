@@ -7,8 +7,9 @@
 //                [--game-size WxH] image.png [image.png ...]
 //
 // The spec file holds the `subscribe` params ({"probes": [...]}); a
-// core.template_match@1 probe's `template` is a PNG path, relative to the spec
-// file's folder, that the tool uploads to its own template store.
+// core.template_match@1 probe's `template`, and a core.find@1 probe's
+// `template` and `shape`, are PNG paths, relative to the spec file's folder,
+// that the tool uploads to its own template store.
 // --viewport is where the game picture sits in every image, normalized
 // (default the whole image, as on mGBA; a Switch capture has side bars, and
 // nso-gba is the Switch's GBA app as the daemon's switch backend sees it;
@@ -81,18 +82,27 @@ std::vector<gp::ProbeSpec> load_probes(const std::string& spec_path,
   std::vector<gp::ProbeSpec> probes = gp::decode_subscribe(*params).probes;
   const pa::Filesystem::Path folder =
       pa::Filesystem::Path(spec_path).parent_path();
-  for (gp::ProbeSpec& probe : probes) {
-    if (probe.kind != gp::kTemplateMatchKind) {
-      continue;
+  // Uploads the PNG at `path` (relative to the spec's folder) and puts its
+  // hash in its place; an empty path stays empty.
+  const auto upload = [&](std::string& path) {
+    if (path.empty()) {
+      return;
     }
-    const std::string png_path =
-        (folder / pa::Filesystem::Path(probe.template_hash)).string();
+    const std::string png_path = (folder / pa::Filesystem::Path(path)).string();
     const std::optional<std::string> hash =
         templates.add_png(pa::file_to_string(png_path));
     if (!hash) {
       throw InputError{png_path + ": not a PNG"};
     }
-    probe.template_hash = *hash;
+    path = *hash;
+  };
+  for (gp::ProbeSpec& probe : probes) {
+    if (probe.kind == gp::kTemplateMatchKind) {
+      upload(probe.template_hash);
+    } else if (probe.find) {
+      upload(probe.find->template_hash);
+      upload(probe.find->shape_hash);
+    }
   }
   return probes;
 }

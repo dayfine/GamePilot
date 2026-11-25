@@ -21,6 +21,6 @@
         "height": 160
       }
     },
-    "probe_kinds": ["core.color_stats@1", "core.template_match@1", "core.color_count@1"]
+    "probe_kinds": ["core.color_stats@1", "core.template_match@1", "core.color_count@1", "core.line_shares@1", "core.find@1"]
   }
 }
