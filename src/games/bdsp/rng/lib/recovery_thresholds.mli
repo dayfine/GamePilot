@@ -8,8 +8,11 @@
     its per-watcher frozen values, all set at once, are one option. *)
 
 type t
+(** Each watcher's latest estimate and how many samples it came from, and the
+    frozen thresholds once there are some. *)
 
 val start : watchers:int -> t
+(** [watchers] watchers with no estimate yet, nothing frozen. *)
 
 val thresholds :
   t -> Blink_extraction.match_sample list list -> t * float list option
@@ -21,3 +24,5 @@ val freeze : t -> float list -> t
 (** Freezes these thresholds unless some already are. *)
 
 val frozen : t -> float list option
+(** The frozen thresholds, one per watcher in order, or [None] before the first
+    solve. *)

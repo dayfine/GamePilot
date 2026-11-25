@@ -39,9 +39,14 @@ val expected_stats :
 (** [bdsp_expected_stats]: the stats a Pokemon with these IVs and nature shows
     at [level] with no EVs. *)
 
-type starter = Turtwig | Chimchar | Piplup
+type starter =
+  | Turtwig
+  | Chimchar
+  | Piplup
+      (** The three Sinnoh starters, whose stats the hit calibration reads. *)
 
 val starter_base_stats : starter -> int per_stat
+(** The starter's base stats, as the C++ lists them. *)
 
 type observed = {
   nature : int option;
@@ -57,7 +62,13 @@ val consistent_with : Static_encounter.pokemon -> observed -> bool
 (** Every reading that was taken matches the generated Pokemon. *)
 
 type hit = { advance : int; offset : int  (** From the intended advance. *) }
-type miss = { candidates : int; reason : string }
+(** The advance the press landed on. *)
+
+type miss = {
+  candidates : int;  (** Advances in range that fit the reading: 0 or 2+. *)
+  reason : string;  (** The C++'s [failure_reason]. *)
+}
+(** Why no single advance was found. *)
 
 val identify_hit_advance :
   Xorshift128.state ->

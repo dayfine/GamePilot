@@ -17,6 +17,7 @@ type t = { held : held option; failed_solves : int }
     state is held. *)
 
 val empty : t
+(** No state held, no failed solves: where a recovery starts. *)
 
 type step =
   | Keep_collecting
