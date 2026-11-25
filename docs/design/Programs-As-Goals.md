@@ -5,8 +5,8 @@ Mail and 5 Super Repels, tt-01 always picks up Route 6's Rare Candy. This note p
 state a goal (what the save should hold when they finish), take a checked configuration, check their
 preconditions, and get their plans partly generated from data. It answers the three review threads
 on #25 (Supplies' configuration, Team Training's checkpoints, the repeated "go to Dept. Store 4F")
-and is for review before any code. The choices below are recommendations; the open questions are at
-the end.
+and is for review before any code. The decisions from its review (2026-11-24) are listed at the end,
+with the two questions still open.
 
 ## Words
 
