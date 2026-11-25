@@ -228,8 +228,12 @@
   gamepilot.pokemon_engine
   gamepilot.frlg_checkpoints))
 
+; print_plans also reads PokemonSimulation's FireRed plans, outside this dune
+; project where dune cannot see them change: (universe) reruns the rule every
+; build, so the dune cache never hands back a listing of older plans.
 (rule
  (deps
+  (universe)
   (glob_files_rec ../../programs/*.plan.json))
  (action
   (with-stdout-to
