@@ -114,8 +114,8 @@ val live_game_steps :
     Frlg_battle.Battle_script.t ->
     Frlg_battle.Scripted_battle.outcome) ->
   game_steps
-(** The game's game steps: {!step_into_sight}, {!pp_restored}, and the talk
-    settle after the battle. *)
+(** The live game steps, read from the screen: {!step_into_sight},
+    {!pp_restored}, and the talk settle after the battle. *)
 
 val run : game_steps -> plan -> unit
 (** Fails as [double_battle_wrong_party], [double_battle_missing_move],

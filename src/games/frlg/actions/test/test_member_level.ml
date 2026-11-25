@@ -55,7 +55,7 @@ let read_level levels () =
     (ends_on screen)
 
 (* Switch on turn 1, the sweeper's KO: the battle is over. *)
-let fake_battle_game_steps calls : B.Battle.game_steps =
+let fake_won_battle_game_steps calls : B.Battle.game_steps =
   let events =
     Queue.of_seq
       (List.to_seq B.Battle.[ Action_menu; Action_menu; Battle_over ])
@@ -110,7 +110,7 @@ let grind levels () =
       find_battle = (fun () -> call "spin");
       battle =
         (fun script ->
-          B.Scripted_battle.run (fake_battle_game_steps calls) script);
+          B.Scripted_battle.run (fake_won_battle_game_steps calls) script);
       log =
         (fun line ->
           if
