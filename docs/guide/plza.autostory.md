@@ -21,7 +21,7 @@ Choices" screen. Nothing else is read from the save. The Switch's capture must b
 <!-- generated:commands -->
 ```sh
 # the Switch: each checkpoint once, from where the console is
-cd src && opam exec -- dune exec -- gamepilot checkpoints --program plza.autostory --from 01.00b --to 03.02 --mode testing --backend switch --serial PORT --capture DEVICE \
+cd src && opam exec -- dune exec -- gamepilot checkpoints --program plza.autostory --from 01.00b --to 03.03 --mode testing --backend switch --serial PORT --capture DEVICE \
     --watch
 ```
 <!-- /generated -->
@@ -45,8 +45,9 @@ cd src && opam exec -- dune exec -- gamepilot checkpoints --program plza.autosto
 | 03.01 | Down to the lobby |
 | 03.02b | Battle Taunie |
 | 03.02 | Out of Hotel Z |
+| 03.03 | To the rock pile scene |
 
-<!-- plans: a206f6cd3a8a -->
+<!-- plans: 1e029f55e485 -->
 <!-- /generated -->
 
 ## When it stops
@@ -64,13 +65,17 @@ battle is already up. Started in the night alley after Andi (the party bar up, n
 
 ## Known limits
 
-Only 01.00b to 03.02b so far. 01.02's chase, 01.03's walk to Chikorita and the walks of 02.01 to
-03.02b are timed stick legs with no map, so they can miss; the chase then stops on Ryon's
+Only 01.00b to 03.03 so far. 01.02's chase, 01.03's walk to Chikorita and the walks of 02.01 to
+03.03 are timed stick legs with no map, so they can miss; the chase then stops on Ryon's
 A prompt (`scene_ended_in_control`), the walk to Chikorita with `walk_no_end`, and the Battle Zone
 walk with `scene_ended_in_control` when Brigitte's talk never starts. In 02.02, a walk to the
 blocked street that misses fails with `walk_no_end` (no black fade), one to the gate that misses
 its A prompt with `walk_no_end`, and the passage walk that misses Hotel Z leaves its scene to fail
-with `scene_never_started` after 45 s. From 02.03 on, a walk that never reaches its A prompt
+with `scene_never_started` after 45 s. A walk with no end followed by a plain scene (03.03's gate walk before the rock
+pile) passes even when it misses, since the scene ends on control; the next checkpoint then fails.
+From 03.03 on, walks run (B held, each leg for its walk time over 1.65), as the fork does; the
+earlier ones walk, since running was checked on the console only from there. From 02.03 on, a walk
+that never reaches its A prompt
 (a door, the clerk, the elevator, the bed) fails with `walk_no_end`. The starter is always Chikorita. The
 battle holds ZL and picks the most effective move from the symbols it shows; the move is pressed
 with ZL still held. A battle that never sees them fails with `battle_failed` after 2 minutes, and

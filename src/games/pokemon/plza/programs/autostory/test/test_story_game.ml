@@ -417,6 +417,27 @@ let quartiere_verde ?(lost = false) c =
               | Some t -> taunie_battles c ~t)))
   | _ -> party c
 
+(* 03.03: Taunie's text until two A, the party bar; the rock pile's text once
+   the stick was held 4 s (the gate walk runs: 7 s of walk is 4.2 s held with
+   B), until two A, then the party bar. [lost]: no rock pile scene. *)
+let rock_pile ?(lost = false) c =
+  match C.nth_after c Wire.A ~after:0.0 1 with
+  | None -> text c
+  | Some _ -> (
+      match C.stick_reached c 4000 with
+      | Some r when not lost -> (
+          match C.nth_after c Wire.A ~after:r 1 with
+          | None -> text c
+          | Some _ -> party c)
+      | _ -> party c)
+
+(* The inputs that held B with the stick. *)
+let runs (c : C.t) =
+  List.length
+    (List.filter
+       (fun (i : C.input) -> i.stick_ms > 0 && List.mem Wire.B i.buttons)
+       c.inputs)
+
 let outcome checkpoint screen =
   let c = C.create () in
   reloaded := false;
@@ -896,6 +917,26 @@ let cases =
       (result "03.02b" (quartiere_verde ~lost:true))
       "03.02b event 1 (to_plaza_scene_prompt): walk_no_end: \
        to_plaza_scene_prompt: no end event within 9023 ms of the last leg";
+    case "03.03: Taunie runs off, the gate walk runs with B, the rock pile"
+      (fun () ->
+        let r, c = outcome "03.03" rock_pile in
+        String.concat "\n"
+          ((r ^ Printf.sprintf ", %d run" (runs c))
+          :: List.filter
+               (fun line ->
+                 List.exists
+                   (fun prefix -> String.starts_with ~prefix line)
+                   [ "[PLZA] through"; "[PLZA scene] done" ])
+               (C.lines c)))
+      "passed, 1 run\n\
+       [PLZA scene] done on control.\n\
+       [PLZA] through_hotel_gate: legs done, screen now: dialog_box, \
+       advance_arrow\n\
+       [PLZA scene] done on control.";
+    case
+      "03.03 lost: no rock pile scene, yet it passes (the fork's plain scene)"
+      (result "03.03" (rock_pile ~lost:true))
+      "passed";
     case "the walk is walked before 03.03, run after"
       (fun () ->
         Printf.sprintf "%b %b"
