@@ -21,6 +21,10 @@
       game stops the evolution while B alone is held as the sprites cycle.
     - The bag closes through its fade ({!Menu_input.close_through_fades}): no B
       while the overworld's fade-in is still coming up.
+    - The bag counts as open only with a pocket's arrows on screen, which the
+      C++ bag check does not read: the dim uniform frame of the item-use
+      animation passed the bag check alone, and the candy's next A then landed
+      on the "no effect" text or pressed through an evolution.
 
     Run it with {!Menu_input.probes} and {!probes} subscribed. Its menu steps
     fail as a Result ({!Menu_step}), not by raising. *)

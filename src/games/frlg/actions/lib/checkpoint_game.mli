@@ -1,5 +1,5 @@
-(** FireRed's story {!Pokemon_checkpoints.Game.t}: [route] and [ready] events
-    planned and walked ({!Frlg_overworld}), a [step] onto a scene's tile
+(** FireRed's story {!Pokemon_engine.Game.t}: [route] and [ready] events planned
+    and walked ({!Frlg_overworld}), a [step] onto a scene's tile
     ({!Frlg_overworld.Route_walk.step}), [talk], [answer] and [scene] settled
     ({!Talk}), [train]'s trainer battles in a row ({!Trainer_battles}), a
     [battle] a talk or scene started ({!Scene_battle}), [heal] and [save] events
@@ -42,17 +42,17 @@ type config = {
   center : string option;
       (** The town whose Pokémon Center heals between loop rounds
           (["LavenderTown"]); [None]: heal fails as [not_implemented]. *)
-  reload : unit -> (unit, Pokemon_checkpoints.Failure.cause) result;
+  reload : unit -> (unit, Pokemon_engine.Failure.cause) result;
       (** Back to the checkpoint's start state. *)
   log : string -> unit;
 }
 
 type t
 
-val create : config -> start:Pokemon_checkpoints.Pose.observed option -> t
+val create : config -> start:Pokemon_engine.Pose.observed option -> t
 (** [start]: where the player stands at the checkpoint's start, if known. *)
 
-val game : t -> Pokemon_checkpoints.Game.t
+val game : t -> Pokemon_engine.Game.t
 
 val party : t -> Party_roster.t
 (** The party as reckoned now. *)

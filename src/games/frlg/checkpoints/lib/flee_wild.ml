@@ -15,5 +15,4 @@ let flee ~log () =
         M.run (flee_body ~log))
   with
   | Ok () -> ()
-  | Error c ->
-      failwith ("flee: " ^ Pokemon_checkpoints.Failure.cause_to_string c)
+  | Error c -> failwith ("flee: " ^ Pokemon_engine.Failure.cause_to_string c)

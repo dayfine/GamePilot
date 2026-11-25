@@ -54,8 +54,6 @@ val probes : Wire.probe_spec list
 (** The load menu's, the screen facts', the Start menu's and the YES/NO's. *)
 
 val return_to_save :
-  log:(string -> unit) ->
-  unit ->
-  (unit, Pokemon_checkpoints.Failure.cause) result
+  log:(string -> unit) -> unit -> (unit, Pokemon_engine.Failure.cause) result
 (** Up to {!attempts} resets; [Error] [soft_reset_failed] (repeats) after the
     last. *)

@@ -9,9 +9,9 @@
     - The species is read off the battle's first message,
       ["Wild SPEAROW appeared!"], drawn in the game's font
       ({!Frlg_text.Line_reading}), not by OCR of the foe's HP box, whose small
-      font GamePilot has no glyphs for: only the target's line is a candidate
-      (an uncaught target's: the patch's species), so any other species reads as
-      unread.
+      font GamePilot has no glyphs for: the target's line is the candidate (an
+      uncaught target's: the patch's species) while the line prints, and every
+      species once its page waits, so another species reads too.
     - New: on the action menu, the foe's caught mark is read
       ({!Frlg_readers.Caught_mark}), and the ball thrown is the plan's. *)
 
@@ -29,8 +29,20 @@ val finish_quiet_ms : int
 val finish_timeout_ms : int
 (** 30 s for them, as mash_until_overworld(). *)
 
-val opening_line : string -> string
-(** ["Wild SPEAROW appeared!"] for ["spearow"]. *)
+val player_down : Effects.measurements -> bool
+(** The player's Pokemon fainted: the battle's text box over the foe's HP box,
+    the player's HP box gone ("... fainted!", "Use next POKéMON?"). After a
+    catch the foe's box is gone too; after a break-free the player's is back. A
+    throw that shows it for {!player_down_ms} ends [Player_fainted], before a B
+    can answer "Use next POKéMON?" NO and run (mGBA, 2026-11-25, Victory Road:
+    the run away read as a catch, the Yes/No box unread). *)
+
+val player_down_ms : int
+(** 1 s. *)
+
+val opening_line : Frlg_text.Species_names.t -> string -> string
+(** ["Wild SPEAROW appeared!"] for ["spearow"], ["Wild NIDORAN♂ appeared!"] for
+    ["nidoran-m"]: the name as the game shows it. *)
 
 val mark_timeout_ms : int
 (** 2 s for the caught mark's probes to measure on the action menu; a mark not

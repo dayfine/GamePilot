@@ -1,0 +1,27 @@
+(library
+ (name frlg_series)
+ (public_name gamepilot.frlg_series)
+ (flags
+  (:standard -open Live_run))
+ (libraries
+  gamepilot.effects
+  gamepilot.json_field
+  gamepilot.guide_page
+  gamepilot.watch_report
+  gamepilot.replay
+  gamepilot.live
+  gamepilot.live_run
+  gamepilot.run_record
+  gamepilot.engine_run
+  gamepilot.engine_series
+  gamepilot.pokemon_engine
+  gamepilot.checkpoint_end
+  gamepilot.room_policy
+  gamepilot.checkpoints_series
+  gamepilot.checkpoints_flags
+  gamepilot.pokemon_flags
+  gamepilot.frlg_overworld
+  gamepilot.frlg_actions
+  gamepilot.frlg_readers
+  gamepilot.frlg_checkpoints
+  unix))

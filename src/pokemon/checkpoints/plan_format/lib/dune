@@ -1,0 +1,11 @@
+(library
+ (name pokemon_plan_format)
+ (public_name gamepilot.pokemon_plan_format)
+ (libraries
+  yojson
+  gamepilot.grid_geometry
+  gamepilot.grid_maps
+  gamepilot.json_field
+  gamepilot.engine_postcondition
+  gamepilot.engine_plan_format
+  gamepilot.pokemon_rules))

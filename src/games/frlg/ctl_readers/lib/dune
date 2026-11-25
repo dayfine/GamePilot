@@ -1,0 +1,8 @@
+(library
+ (name frlg_ctl_readers)
+ (public_name gamepilot.frlg_ctl_readers)
+ (libraries
+  gamepilot.effects
+  gamepilot.ctl_script
+  gamepilot.frlg_readers
+  gamepilot.frlg_actions))

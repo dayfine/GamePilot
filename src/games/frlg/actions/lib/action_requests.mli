@@ -32,7 +32,7 @@ val decode :
   Mart_plan.stocks ->
   string ->
   Json_field.obj ->
-  (t, Pokemon_checkpoints.Failure.cause) result
+  (t, Pokemon_engine.Failure.cause) result
 (** The action of that name with its args; [bad_args] naming the field, or
     [unknown_action]. The args:
     - [mart]: see {!Mart_plan.t}.

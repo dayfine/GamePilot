@@ -25,4 +25,4 @@ not an object
 an item count that is not a number
   error: start_items: potion is not a number
 a pose with no map
-  error: Pokemon_saved.observed.at_map
+  error: Pokemon_event_snapshot.observed.at_map

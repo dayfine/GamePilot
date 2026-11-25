@@ -38,18 +38,18 @@ let strategy name () =
 (* The plan's paced events, each from the tile the event before it names. *)
 let plan_patches file () =
   let p = Result.get_ok (Frlg_checkpoints.Plan_file.load file) in
-  let named (e : Pokemon_checkpoints.Plan.event) =
+  let named (e : Pokemon_engine.Plan.event) =
     match (e.kind, e.declared_after) with
     | Game (Route r), _ -> Some r.target
     | _, Some (Grid g) -> Some g
     | _ -> None
   in
-  let paced (before, out) (e : Pokemon_checkpoints.Plan.event) =
+  let paced (before, out) (e : Pokemon_engine.Plan.event) =
     let out =
       match (e.kind, e.way, before) with
       | Named_action args, Some ("capture" | "prepare_berry_pp"), Some g ->
           let pace = Grid_maps.Grid_field.direction ~where:"" "pace" args in
-          patch g.Pokemon_checkpoints.Pose.map (List.hd g.tiles) pace :: out
+          patch g.Pokemon_engine.Pose.map (List.hd g.tiles) pace :: out
       | _ -> out
     in
     (Option.fold ~none:before ~some:Option.some (named e), out)
