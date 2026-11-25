@@ -7,6 +7,14 @@
     Not read: the party bar ([PLAYER_CAN_MOVE]), the battle HUD and the "mission
     complete" card, which have no reader yet; each reads as not shown. *)
 
+(** A move's effectiveness symbol under ZL, weakest first (the fork's
+    [MoveEffectivenessSymbol]). *)
+type effectiveness =
+  | No_effect
+  | Not_very_effective
+  | Effective
+  | Super_effective
+
 type t = {
   at_ms : float;  (** When the frame was read, on the daemon's clock. *)
   home_menu : bool;  (** The Switch HOME menu, not the game. *)
@@ -23,6 +31,13 @@ type t = {
   tutorial_card : bool;
   interact_prompt : bool;
       (** An A prompt (["(A) Talk"]) with no text box: [INTERACT_PROMPT]. *)
+  battle : bool;  (** The battle HUD: [BATTLE_STARTED]. *)
+  story_dialog : bool;
+      (** A dialogue box as [StoryDialogDetector] reads it by default (the white
+          box with its arrow, blue or teal): the end of a story battle. *)
+  moves : effectiveness option list;
+      (** The four moves' symbols (top, left, right, bottom) while ZL is held;
+          empty when not read. *)
   confirm_row : int option;
       (** On the new game's Confirm Choices: the highlighted row. *)
 }
@@ -57,6 +72,13 @@ val platform_hint : t -> bool
 
 val card_shows : t -> bool
 (** CARD_SHOWS: a tutorial card. *)
+
+val scene_under_way : t -> bool
+(** The scene machine's [scene_under_way]: text, a choice, a battle or a card;
+    else, with no sign of control, a fade or a moving screen. *)
+
+val moves_shown : t -> bool
+(** A move effectiveness symbol shows: ZL locked on. *)
 
 val describe : t -> string
 (** What shows, as the fork's [describe_look] lists it ("black fade, text box,

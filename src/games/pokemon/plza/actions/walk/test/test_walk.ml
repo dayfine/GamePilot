@@ -60,6 +60,8 @@ let screen ?(still = false) ?(fade_black = false) ?(fade_white = false)
     advance_arrow = arrow;
     player_can_move = party;
     controls_hint = hint;
+    interact_prompt = false;
+    scene_under_way = false;
   }
 
 let platform at = screen ~hint:true at

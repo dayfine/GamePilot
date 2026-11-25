@@ -12,6 +12,8 @@ let until = function
   | None -> []
   | Some Scene -> [ "until scene" ]
   | Some (Event e) -> [ "until " ^ end_event_name e ]
+  | Some (Talk { after_legs }) ->
+      [ (if after_legs then "into a talk after the legs" else "into a talk") ]
 
 let walk { move; until = u; earliest_end_ms } =
   String.concat " "

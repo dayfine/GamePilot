@@ -1,4 +1,4 @@
-(* 01.00b, 01.01 and 01.02 run through the engine (Plza_checkpoints.Runner) with
+(* 01.00b to 01.03 run through the engine (Plza_checkpoints.Runner) with
    Story_game's handlers on a scripted console (Fake_console): the plans
    decode, every event reaches its handler, and each handler's presses move a
    game that answers them as the console did. Also the failures: a walk whose
@@ -111,6 +111,40 @@ let pancham ?(lost = false) c =
           | None -> choice c ~after:b3
           | Some a when C.nth_after c Wire.A ~after:a 1 = None -> text c
           | Some _ -> prompt c))
+
+(* 01.03: Urbain's prompt (control) until the stick was held 600 ms; then
+   Chikorita's prompt until A; text until one more A, the choice until A, a
+   tutorial card until A, then the battle HUD with the move symbols (left
+   super effective) until a move; then Andi's text until two A, then the
+   prompt. [no_symbols]: ZL never brings up the symbols. *)
+let battle ?(no_symbols = false) c =
+  {
+    (look c) with
+    battle = true;
+    moves =
+      (if no_symbols then []
+       else [ Some L.Effective; Some L.Super_effective; None; Some L.No_effect ]);
+  }
+
+let andi c ~after =
+  match C.nth_after c Wire.A ~after 1 with
+  | None -> { (text c) with story_dialog = true }
+  | Some _ -> prompt c
+
+let starter ?no_symbols c =
+  match C.stick_reached c 600 with
+  | None -> prompt c
+  | Some w -> (
+      let a n = C.nth_after c Wire.A ~after:w n in
+      match (a 0, a 1, a 2, a 3) with
+      | None, _, _, _ -> prompt c
+      | Some _, None, _, _ -> text c
+      | Some _, Some _, None, _ -> choice c ~after:w
+      | Some _, Some _, Some _, None -> { (look c) with tutorial_card = true }
+      | Some _, Some _, Some _, Some a4 -> (
+          match C.nth_after c Wire.Y ~after:a4 0 with
+          | None -> battle ?no_symbols c
+          | Some y -> andi c ~after:y))
 
 let outcome checkpoint screen =
   let c = C.create () in
@@ -254,6 +288,38 @@ let cases =
       "01.02 event 2 (pancham_cornered): scene_ended_in_control: scene: the \
        scene ended in control, the party bar up 5000 ms with nothing busy \
        (expecting the choice box, the controls hint).";
+    case "01.03: to Chikorita's prompt, through the cards, Andi beaten"
+      (fun () ->
+        let r, c = outcome "01.03" starter in
+        String.concat "\n"
+          (r
+          :: List.filter
+               (fun line ->
+                 List.exists
+                   (fun prefix -> String.starts_with ~prefix line)
+                   [
+                     "[PLZA] approach_starter";
+                     "[PLZA] story_battle";
+                     "[PLZA scene] done";
+                   ])
+               (C.lines c)))
+      "passed\n\
+       [PLZA] approach_starter: the A prompt held 1000 ms with nothing busy: \
+       control.\n\
+       [PLZA] approach_starter: A on the A prompt after 600 ms of the last leg \
+       started a talk.\n\
+       [PLZA] approach_starter: started on: dialog_box, advance_arrow\n\
+       [PLZA scene] done on battle.\n\
+       [PLZA] story_battle: Move Effectiveness: Top: Effective; Left: Super \
+       Effective; Right: (Unable to Detect); Bottom: No Effect;\n\
+       [PLZA] story_battle: Picking Move: Left\n\
+       [PLZA] story_battle: a dialogue box after the attacks: the battle is \
+       over.\n\
+       [PLZA scene] done on control.";
+    case "01.03 no symbols: ZL never locks on in the battle"
+      (result "01.03" (starter ~no_symbols:true))
+      "01.03 event 3 (andi_battle): battle_failed: fight_story_battle(): no \
+       dialogue after the battle within the timeout.";
     case "the walk is walked before 03.03, run after"
       (fun () ->
         Printf.sprintf "%b %b"

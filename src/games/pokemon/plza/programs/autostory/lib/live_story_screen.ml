@@ -29,6 +29,12 @@ let home m =
   | Home _ | Home_dimmed | User_select -> true
   | Elsewhere -> false
 
+let effectiveness : Move_symbols.symbol -> L.effectiveness = function
+  | No_effect -> No_effect
+  | Not_very_effective -> Not_very_effective
+  | Effective -> Effective
+  | Super_effective -> Super_effective
+
 let look_of ~still (m : Effects.measurements) : L.t =
   let s = Story_screen.read m in
   {
@@ -48,6 +54,9 @@ let look_of ~still (m : Effects.measurements) : L.t =
     autosave = s.autosave;
     tutorial_card = s.tutorial_card;
     interact_prompt = s.interact_prompt;
+    battle = s.battle;
+    story_dialog = s.story_dialog;
+    moves = List.map (Option.map effectiveness) s.moves;
     confirm_row = Confirm_choices.read m;
   }
 
@@ -69,6 +78,13 @@ let game_steps ~picture:_ ~log ~log_detail : Plza_story.Story_steps.game_steps =
   {
     submit = (fun c -> ignore (Effects.submit [ c ] : Wire.batch_done));
     read_screen = read_screen last;
+    race =
+      (fun c check ->
+        match
+          Effects.race [ c ] ~stop:(fun m -> check (look_of ~still:false m))
+        with
+        | Stopped m -> Some (look_of ~still:false m)
+        | Finished _ -> None);
     log;
     log_detail;
   }

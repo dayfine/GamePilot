@@ -13,3 +13,15 @@ val probes : picture:Wire.box -> assets:Blob_assets.t -> Wire.probe_spec list
 
 val shown : Effects.measurements -> bool
 (** An A button shows in the box; [false] when the probe is missing. *)
+
+val probes_over :
+  picture:Wire.box ->
+  assets:Blob_assets.t ->
+  id:string ->
+  Native_box.t ->
+  Wire.probe_spec list
+(** The same A-button probe over another box, named [id]: the battle HUD's
+    ["A: Select Move"] hint ({!Battle_hud}). *)
+
+val shown_over : Effects.measurements -> string -> bool
+(** An A button shows in the probe [id]'s box. *)

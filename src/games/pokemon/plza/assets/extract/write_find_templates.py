@@ -42,6 +42,19 @@ MATCHERS = {
     "button_a": (
         "PokemonLZA/Buttons/ButtonA.png",
         0xFF808008, 0xFFFFFFFF, 100),
+    # PokemonLZA_MoveEffectivenessSymbol.cpp's MoveEffectivenessSymbolMatcher.
+    "move_no_effect": (
+        "PokemonLZA/MoveEffectiveness/MoveEffectiveness-NoEffect.png",
+        0xFFE0E0E0, 0xFFFFFFFF, 100),
+    "move_not_very_effective": (
+        "PokemonLZA/MoveEffectiveness/MoveEffectiveness-NotVeryEffective.png",
+        0xFFE0E0E0, 0xFFFFFFFF, 100),
+    "move_effective": (
+        "PokemonLZA/MoveEffectiveness/MoveEffectiveness-Normal.png",
+        0xFFE0E0E0, 0xFFFFFFFF, 100),
+    "move_super_effective": (
+        "PokemonLZA/MoveEffectiveness/MoveEffectiveness-SuperEffective.png",
+        0xFFE0E0E0, 0xFFFFFFFF, 100),
 }
 
 SHAPE_WIDTH = 2560

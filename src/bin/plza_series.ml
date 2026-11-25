@@ -63,6 +63,10 @@ let upload_from dir =
   let* choice_arrow = up f.choice_arrow in
   let* advance_chevron_shape = up f.advance_chevron_shape in
   let* button_a = up f.button_a in
+  let* move_no_effect = up f.move_no_effect in
+  let* move_not_very_effective = up f.move_not_very_effective in
+  let* move_effective = up f.move_effective in
+  let* move_super_effective = up f.move_super_effective in
   Ok
     {
       Assets.dialog_white_arrow;
@@ -71,6 +75,10 @@ let upload_from dir =
       choice_arrow;
       advance_chevron_shape;
       button_a;
+      move_no_effect;
+      move_not_very_effective;
+      move_effective;
+      move_super_effective;
     }
 
 (* Each template, uploaded to the daemon: its hash. *)

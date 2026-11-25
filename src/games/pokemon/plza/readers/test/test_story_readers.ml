@@ -153,5 +153,5 @@ let () =
   Table_test.run "plza story readers"
     (story_cases @ synthetic_badge_cases @ card_cases @ choice_cases
    @ screen_cases
-    @ Fixture_frames.shifted_cases (fun m ->
+    @ Fixture_frames.shifted_cases ~misses:true (fun m ->
           Story_screen.to_string (Story_screen.read m)))

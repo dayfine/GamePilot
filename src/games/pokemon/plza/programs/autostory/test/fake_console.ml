@@ -32,6 +32,12 @@ let steps c screen : Plza_story.Story_steps.game_steps =
       (fun () ->
         c.now <- c.now +. frame_ms;
         screen c);
+    race =
+      (fun command check ->
+        submit c command;
+        c.now <- c.now +. frame_ms;
+        let look = screen c in
+        if check look then Some look else None);
     log;
     log_detail = log;
   }

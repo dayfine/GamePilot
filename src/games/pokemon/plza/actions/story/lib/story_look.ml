@@ -1,3 +1,9 @@
+type effectiveness =
+  | No_effect
+  | Not_very_effective
+  | Effective
+  | Super_effective
+
 type t = {
   at_ms : float;
   home_menu : bool;
@@ -12,6 +18,9 @@ type t = {
   autosave : bool;
   tutorial_card : bool;
   interact_prompt : bool;
+  battle : bool;
+  story_dialog : bool;
+  moves : effectiveness option list;
   confirm_row : int option;
 }
 
@@ -30,6 +39,9 @@ let empty ~at_ms =
     autosave = false;
     tutorial_card = false;
     interact_prompt = false;
+    battle = false;
+    story_dialog = false;
+    moves = [];
     confirm_row = None;
   }
 
@@ -50,12 +62,20 @@ let overworld_free l =
 let platform_hint l = l.controls_hint && (not l.dialog_box) && not l.autosave
 let card_shows l = l.tutorial_card
 
+let scene_under_way l =
+  if text_shows l || l.choice_box || l.battle || l.tutorial_card then true
+  else if hud_shows l then false
+  else fade_shows l || not l.screen_still
+
+let moves_shown l = List.exists Option.is_some l.moves
+
 let flags l =
   [
     (l.fade_black, "black fade");
     (l.fade_white, "white fade");
     (l.dialog_box, "text box");
     (l.choice_box, "choice box");
+    (l.battle, "battle");
     (l.interact_prompt, "A prompt");
     (l.screen_still, "still");
     (l.controls_hint, "controls hint");
@@ -81,4 +101,6 @@ let to_walk_screen l : Plza_walk.Walk_screen.t =
     advance_arrow = l.advance_arrow;
     player_can_move = false;
     controls_hint = l.controls_hint;
+    interact_prompt = l.interact_prompt;
+    scene_under_way = scene_under_way l;
   }

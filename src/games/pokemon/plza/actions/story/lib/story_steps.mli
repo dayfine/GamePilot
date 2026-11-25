@@ -8,6 +8,10 @@ type game_steps = {
       (** Send one input and return once it is done. *)
   read_screen : unit -> Story_look.t;
       (** Read the screen once the inputs are done. *)
+  race : Wire.command -> (Story_look.t -> bool) -> Story_look.t option;
+      (** Send one input and watch the screen while it runs: the first read on
+          which the check holds (the input is then cut short, every button
+          released), or [None] once the input is done. *)
   log : string -> unit;  (** A line for the log and the watch page. *)
   log_detail : string -> unit;  (** A line for the log alone. *)
 }

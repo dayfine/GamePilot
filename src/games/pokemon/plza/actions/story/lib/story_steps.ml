@@ -3,6 +3,7 @@ module Failure = Engine_run.Failure
 type game_steps = {
   submit : Wire.command -> unit;
   read_screen : unit -> Story_look.t;
+  race : Wire.command -> (Story_look.t -> bool) -> Story_look.t option;
   log : string -> unit;
   log_detail : string -> unit;
 }

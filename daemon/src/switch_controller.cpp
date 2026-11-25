@@ -26,6 +26,7 @@ constexpr std::uint8_t kProUp = 1u << 1;
 constexpr std::uint8_t kProRight = 1u << 2;
 constexpr std::uint8_t kProLeft = 1u << 3;
 constexpr std::uint8_t kProL = 1u << 6;
+constexpr std::uint8_t kProZL = 1u << 7;
 
 // A centred stick: 2048 on both 12-bit axes, as encode_joystick() packs it
 // and execute_state() initialises it.
@@ -46,6 +47,7 @@ constexpr KeyMask kGbaL = 1u << 9;
 constexpr KeyMask kHome = 1u << 10;
 constexpr KeyMask kX = 1u << 11;
 constexpr KeyMask kY = 1u << 12;
+constexpr KeyMask kZL = 1u << 13;
 
 // encode_joystick()'s range for the Pro Controller
 // (PABotBase2_ProController's JOYSTICK_MIN_THRESHOLD and _MAX_THRESHOLD): the
@@ -149,6 +151,7 @@ ProButtons pro_buttons_for_keys(KeyMask keys) {
   set_if(buttons.button4, has(keys, kGbaSelect), kProMinus);
   set_if(buttons.button4, has(keys, kHome), kProHome);
   set_if(buttons.button5, has(keys, kGbaL), kProL);
+  set_if(buttons.button5, has(keys, kZL), kProZL);
   const int x = (has(keys, kGbaRight) ? 1 : 0) - (has(keys, kGbaLeft) ? 1 : 0);
   const int y = (has(keys, kGbaDown) ? 1 : 0) - (has(keys, kGbaUp) ? 1 : 0);
   set_if(buttons.button5, y > 0, kProDown);

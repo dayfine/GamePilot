@@ -14,6 +14,10 @@ type t = {
   advance_arrow : bool;  (** The advance chevron, with a box or without. *)
   player_can_move : bool;  (** The party bar. *)
   controls_hint : bool;  (** The tutorial's controls hint, ["(L) Move"]. *)
+  interact_prompt : bool;  (** An A prompt (["(A) Talk"]), no text box. *)
+  scene_under_way : bool;
+      (** The scene machine's [scene_under_way]: text, a box, a battle or a
+          card, or (with no sign of control) a fade or a moving screen. *)
 }
 (** One screen read. *)
 

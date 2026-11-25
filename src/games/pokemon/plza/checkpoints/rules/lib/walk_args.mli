@@ -39,6 +39,10 @@ type end_event = Fade_white | Fade_black | Dialog
 type until =
   | Scene  (** A scene takes control (text, a box or a fade). *)
   | Event of end_event
+  | Talk of { after_legs : bool }
+      (** The fork's ["talk"]: A on the A prompt the walk reaches starts a talk.
+          [after_legs] (a plan's ["talk_after_legs"], the fork's [to_starter]):
+          prompts are passed until every leg is walked. *)
 
 type t = {
   move : move;

@@ -8,6 +8,9 @@ type t = {
   tutorial_card : bool;
   choice_rows : Choice_rows.t option;
   interact_prompt : bool;
+  battle : bool;
+  story_dialog : bool;
+  moves : Move_symbols.symbol option list;
 }
 
 let fade_id = "story_screen.fade"
@@ -27,6 +30,8 @@ let probes ~picture ~assets =
       Autosave_badge.probes ~picture;
       Tutorial_card.probes ~picture;
       Interact_prompt.probes ~picture ~assets;
+      Battle_hud.probes ~picture ~assets;
+      Move_symbols.probes ~picture ~assets;
     ]
 
 let fade m =
@@ -52,6 +57,9 @@ let read m =
     tutorial_card = Tutorial_card.shown m;
     choice_rows = (if choice then rows else None);
     interact_prompt = boxes && (not box) && Interact_prompt.shown m;
+    battle = boxes && Battle_hud.shown m;
+    story_dialog = Dialog_box.shown ~white:Box_and_arrow m;
+    moves = Move_symbols.read m;
   }
 
 let to_string t =
@@ -73,6 +81,9 @@ let to_string t =
         flag "autosave" t.autosave;
         flag "tutorial card" t.tutorial_card;
         flag "A prompt" t.interact_prompt;
+        flag "battle" t.battle;
+        flag "story dialog" t.story_dialog;
+        (if List.exists Option.is_some t.moves then [ "move symbols" ] else []);
       ]
   in
   if shown = [] then "nothing" else String.concat ", " shown

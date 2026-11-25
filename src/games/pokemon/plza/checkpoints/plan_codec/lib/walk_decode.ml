@@ -18,11 +18,14 @@ let legs ~where args =
 
 let not_an_end where =
   F.fail
-    "%send must be \"fade_white\", \"fade_black\", \"dialog\", or \"scene\"."
+    "%send must be \"fade_white\", \"fade_black\", \"dialog\", \"talk\", \
+     \"talk_after_legs\" or \"scene\"."
     where
 
 let until_of_word ~where word =
   if word = until_scene then Scene
+  else if word = "talk" then Talk { after_legs = false }
+  else if word = "talk_after_legs" then Talk { after_legs = true }
   else
     match end_event_of_name word with
     | Some event -> Event event
@@ -34,7 +37,8 @@ let until ~where args =
 let earliest_end_ms ~where args until =
   match (optional ~where "earliest_end_ms" args F.int, until) with
   | None, _ -> 0
-  | Some _, None -> F.fail "%searliest_end_ms needs an \"end\"." where
+  | Some _, (None | Some (Talk _)) ->
+      F.fail "%searliest_end_ms needs an \"end\" other than a talk." where
   | Some ms, Some _ -> ms
 
 let style ~where args =

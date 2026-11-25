@@ -5,10 +5,18 @@ module Failure = Engine_run.Failure
 type config = {
   end_on_black_fade : bool;
   stop_at_choice : bool;
+  stop_at_battle : bool;
   button : Wire.button;
 }
 
-let default = { end_on_black_fade = false; stop_at_choice = false; button = A }
+let default =
+  {
+    end_on_black_fade = false;
+    stop_at_choice = false;
+    stop_at_battle = false;
+    button = A;
+  }
+
 let control_hold_ms = 1000.0
 let control_instead_hold_ms = 5000.0
 let text_a_again_ms = 2000.0
@@ -17,13 +25,17 @@ let press_hold_ms = S.press_hold_ms
 let press_release_ms = S.press_release_ms
 let timeout_ms = 360_000
 let short_timeout_ms = 120_000
+let battle_timeout_ms = 90_000
 
 type screen =
+  | Battle
+  | Locked_on
   | Fade
   | Black_fade_end
   | Choice_end
   | Choice
   | Text
+  | Lock_on
   | Card
   | Ended_in_control
   | Control
@@ -31,11 +43,14 @@ type screen =
   | Other
 
 let name = function
+  | Battle -> "battle"
+  | Locked_on -> "locked_on"
   | Fade -> "fade"
   | Black_fade_end -> "black_fade"
   | Choice_end -> "choice"
   | Choice -> "choice_top_row"
   | Text -> "text"
+  | Lock_on -> "lock_on"
   | Card -> "card"
   | Ended_in_control -> "ended_in_control"
   | Control -> "control"
@@ -43,7 +58,9 @@ let name = function
   | Other -> "other"
 
 let terminal = function
-  | Black_fade_end | Choice_end | Ended_in_control | Control -> true
+  | Battle | Locked_on | Black_fade_end | Choice_end | Ended_in_control
+  | Control ->
+      true
   | _ -> false
 
 (* The last A on text with stop_at_choice and the button A: when, and whether
@@ -58,25 +75,24 @@ type timeline = {
   mutable control_instead_since : float option;
   mutable black_fades : int;
   mutable text_a : text_a option;
+  lock : Lock_on.state;
 }
 
 let held since ~hold_ms (l : L.t) =
   match since with Some t -> l.at_ms -. t >= hold_ms | None -> false
 
-let scene_under_way (l : L.t) =
-  if L.text_shows l || l.choice_box || l.tutorial_card then true
-  else if L.hud_shows l then false
-  else L.fade_shows l || not l.screen_still
-
-(* Not when stopping at a choice: the talk shows control between lines. *)
-let party_bar_is_control config = not config.stop_at_choice
+(* Not when stopping at a choice or a battle: the talk shows control between
+   lines. *)
+let party_bar_is_control config =
+  not (config.stop_at_choice || config.stop_at_battle)
 
 let ends_machine config (l : L.t) =
   if party_bar_is_control config then L.control_shows l
   else l.controls_hint && not l.dialog_box
 
 let expected_end config =
-  (if config.stop_at_choice then "the choice box, " else "")
+  (if config.stop_at_battle then "the battle HUD, " else "")
+  ^ (if config.stop_at_choice then "the choice box, " else "")
   ^
   if party_bar_is_control config then
     "the controls hint, the party bar or the A prompt"
@@ -88,14 +104,20 @@ let classify_control tl (l : L.t) =
     Ended_in_control
   else Control_showing
 
+let classify_rest tl (l : L.t) =
+  if L.card_shows l then Card
+  else if L.control_shows l then classify_control tl l
+  else Other
+
 let classify config tl (l : L.t) =
-  if L.fade_shows l then
+  if config.stop_at_battle && l.battle then Battle
+  else if tl.lock.locked_on then Locked_on
+  else if L.fade_shows l then
     if config.end_on_black_fade && l.fade_black then Black_fade_end else Fade
   else if l.choice_box then if config.stop_at_choice then Choice_end else Choice
   else if L.text_shows l then Text
-  else if L.card_shows l then Card
-  else if L.control_shows l then classify_control tl l
-  else Other
+  else if config.stop_at_battle && Lock_on.due tl.lock l then Lock_on
+  else classify_rest tl l
 
 let choice_button steps (l : L.t) =
   match l.choice_rows with
@@ -129,8 +151,11 @@ let text_button config tl (l : L.t) =
   else if L.hud_shows l || tl.overworld_seen then Some Wire.B
   else Some config.button
 
+(* None after a battle's fade (A there is a move) or with stop_at_choice (an
+   A in flight as the choice opens takes its top row). *)
 let other_button config tl =
-  if config.stop_at_choice then None
+  if config.stop_at_choice || (config.stop_at_battle && tl.lock.after_fade) then
+    None
   else if tl.overworld_seen then Some Wire.B
   else Some config.button
 
@@ -145,16 +170,20 @@ let button steps config tl screen (l : L.t) =
 let since_while on since (l : L.t) =
   if on then Some (Option.value since ~default:l.at_ms) else None
 
-let record config tl screen (l : L.t) =
-  (match screen with
+let record_text_a config tl screen (l : L.t) =
+  match screen with
   | Text when config.stop_at_choice && config.button = Wire.A ->
       if text_a_due tl l then
         tl.text_a <- Some { at = l.at_ms; arrow = l.advance_arrow }
   | Text -> ()
-  | _ -> tl.text_a <- None);
+  | _ -> tl.text_a <- None
+
+let record config tl screen (l : L.t) =
+  Lock_on.record tl.lock ~tried:(screen = Lock_on) l;
+  record_text_a config tl screen l;
   if l.fade_black then tl.black_fades <- tl.black_fades + 1;
   tl.overworld_seen <- tl.overworld_seen || (tl.scene_seen && L.control_shows l);
-  tl.scene_seen <- tl.scene_seen || scene_under_way l;
+  tl.scene_seen <- tl.scene_seen || L.scene_under_way l;
   tl.control_since <- since_while (ends_machine config l) tl.control_since l;
   tl.control_instead_since <-
     since_while
@@ -179,7 +208,8 @@ let log_look steps label ~start last screen tl (l : L.t) =
          readings))
 
 let timeout_of config =
-  if config.stop_at_choice || config.button = Wire.B then short_timeout_ms
+  if config.stop_at_battle then battle_timeout_ms
+  else if config.stop_at_choice || config.button = Wire.B then short_timeout_ms
   else timeout_ms
 
 let timed_out config label =
@@ -211,9 +241,11 @@ let new_timeline () =
     control_instead_since = None;
     black_fades = 0;
     text_a = None;
+    lock = Lock_on.new_state ();
   }
 
-let act steps screen = function
+let act steps label tl screen = function
+  | _ when screen = Lock_on -> Lock_on.run tl.lock steps label
   | Some b ->
       S.press steps b ~hold_ms:press_hold_ms ~release_ms:press_release_ms
   | None -> if not (terminal screen) then S.wait steps poll_ms
@@ -233,7 +265,7 @@ let run steps label config =
       let b = button steps config tl screen look in
       record config tl screen look;
       log_look steps label ~start last screen tl look;
-      act steps screen b;
+      act steps label tl screen b;
       if terminal screen then outcome steps config label screen
       else if look.at_ms -. start >= float_of_int limit || looks >= max_looks
       then Error (timed_out config label)

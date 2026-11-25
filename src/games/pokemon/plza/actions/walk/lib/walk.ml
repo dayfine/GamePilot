@@ -163,21 +163,107 @@ let walk_last_leg steps ~walk_only move ~check =
   slice_last_leg steps ~walk_only move ~check ~budget
     (Last_leg_hold.start budget)
 
-let walk_to_end steps ~walk_only walk move ~until ~earliest_end_ms =
-  let check =
-    match until with
-    | Scene -> Last_leg_end.check_scene steps.log walk
-    | Event event ->
-        Last_leg_end.check_end_event ~log:steps.log ~log_detail:steps.log_detail
-          walk event ~earliest_end_ms
+let talk_game_steps steps : Talk_prompt.game_steps =
+  {
+    submit = steps.submit;
+    read_screen = steps.read_screen;
+    log = steps.log;
+    log_detail = steps.log_detail;
+  }
+
+(* How long a walk into a talk looks for the prompt after its last leg. *)
+let talk_tail_ms = 1000
+let talk_poll_ms = 250
+let talk_retry_gap_ms = 1000
+
+let talk_at_prompt steps walk ~held_ms =
+  Talk_prompt.talk (talk_game_steps steps) walk ~held_ms
+
+let prompt_steady steps walk =
+  let steady =
+    (steps.read_screen ()).interact_prompt
+    && Talk_prompt.steady (talk_game_steps steps)
   in
-  match walk_last_leg steps ~walk_only move ~check with
+  if steady then
+    steps.log
+      (Printf.sprintf "[PLZA] %s: the A prompt shows before the walk: no walk."
+         walk);
+  steady
+
+(* Only a walk of one straight leg to the first A prompt ahead. *)
+let prompt_before_walking steps walk move =
+  match move.legs with
+  | [ { angle_deg = 0.0; _ } ] -> prompt_steady steps walk
+  | _ -> false
+
+let no_talk walk =
+  Failure.cause "walk_no_end"
+    (Printf.sprintf "%s: no talk started within %d ms after the last leg" walk
+       talk_tail_ms)
+
+(* After the legs: up to 1 s of reads for the prompt, A on it. *)
+let rec talk_tail steps walk ~held_ms tail =
+  if tail >= talk_tail_ms then Error (no_talk walk)
+  else if not (steps.read_screen ()).interact_prompt then (
+    steps.submit (Walk_inputs.wait talk_poll_ms);
+    talk_tail steps walk ~held_ms (tail + talk_poll_ms))
+  else
+    match talk_at_prompt steps walk ~held_ms with
+    | Some ended -> ended
+    | None -> talk_tail steps walk ~held_ms (tail + talk_retry_gap_ms)
+
+let talk_check steps walk ~after_legs (screen : Walk_screen.t) ~held_ms :
+    Last_leg_end.verdict =
+  if after_legs || not screen.interact_prompt then Walk_on
+  else
+    match talk_at_prompt steps walk ~held_ms with
+    | Some (Ok ()) -> Ended
+    | Some (Error cause) -> Failed cause
+    | None -> Walk_on
+
+(* The fork's walk_into_talk. *)
+let walk_into_talk steps ~walk_only walk move ~after_legs =
+  let early =
+    if prompt_before_walking steps walk move then
+      talk_at_prompt steps walk ~held_ms:0
+    else None
+  in
+  match early with
+  | Some ended -> ended
+  | None -> (
+      match
+        walk_last_leg steps ~walk_only move
+          ~check:(talk_check steps walk ~after_legs)
+      with
+      | Error failure -> Error failure
+      | Ok (Ended outcome) -> outcome
+      | Ok (Spent hold) ->
+          talk_tail steps walk ~held_ms:(Last_leg_hold.sliced_ms hold) 0)
+
+let end_check steps walk ~earliest_end_ms = function
+  | Scene -> Last_leg_end.check_scene steps.log walk
+  | Event event ->
+      Last_leg_end.check_end_event ~log:steps.log ~log_detail:steps.log_detail
+        walk event ~earliest_end_ms
+  | Talk _ -> fun _ ~held_ms:_ -> Last_leg_end.Walk_on
+
+let walk_to_event steps ~walk_only walk move ~until ~earliest_end_ms =
+  match
+    walk_last_leg steps ~walk_only move
+      ~check:(end_check steps walk ~earliest_end_ms until)
+  with
   | Error failure -> Error failure
   | Ok (Ended outcome) -> outcome
   | Ok (Spent hold) ->
       Error
         (Last_leg_end.timed_out walk until
            ~elapsed_ms:(Last_leg_hold.elapsed_ms hold))
+
+let walk_to_end steps ~walk_only walk move ~until ~earliest_end_ms =
+  match until with
+  | Talk { after_legs } -> walk_into_talk steps ~walk_only walk move ~after_legs
+  | Scene | Event _ ->
+      walk_to_event steps ~walk_only walk move ~until ~earliest_end_ms
 
 let free_control_game_steps steps =
   {

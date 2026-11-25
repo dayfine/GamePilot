@@ -23,5 +23,25 @@
     "fill": 0.373355,
     "height": 19,
     "width": 32
+  },
+  "move_effective": {
+    "fill": 0.392662,
+    "height": 61,
+    "width": 63
+  },
+  "move_no_effect": {
+    "fill": 0.4128,
+    "height": 50,
+    "width": 50
+  },
+  "move_not_very_effective": {
+    "fill": 0.352142,
+    "height": 58,
+    "width": 66
+  },
+  "move_super_effective": {
+    "fill": 0.327365,
+    "height": 66,
+    "width": 66
   }
 }

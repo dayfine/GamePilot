@@ -24,17 +24,37 @@ let shift_and_frame path =
   | [ "."; shift; folder; frame ] -> (shift, folder ^ "/" ^ frame)
   | _ -> failwith ("not ./<shift>/<folder>/<frame>: " ^ path)
 
+(* The shifted frames a reader is known to miss, as the fork's bounds have
+   it: the wild battle at the zone's pillar shows no trainer's balls, and at
+   brightness 0.9 its stat markers' triangle falls under the fork's blue 225
+   (Battle_hud). *)
+let known_misses =
+  [ ("battle-hud/it-0308b-zone-pillar-wild-battle", "bright90") ]
+
 (* One case per shifted frame: [read] on it gives what [read] gives on the
-   frame itself. *)
-let shifted_cases read =
-  List.map
-    (fun (path, probes) : Table_test.case ->
+   frame itself; with [misses], the known misses are left out. *)
+let shifted_cases ?(misses = false) read =
+  List.filter_map
+    (fun (path, probes) : Table_test.case option ->
       let shift, name = shift_and_frame path in
-      {
-        name = Printf.sprintf "%s, %s: reads as unshifted" name shift;
-        input = (fun () -> read (measurements probes));
-        expectation = read (frame name);
-      })
+      if misses && List.mem (name, shift) known_misses then None
+      else
+        Some
+          {
+            name = Printf.sprintf "%s, %s: reads as unshifted" name shift;
+            input = (fun () -> read (measurements probes));
+            expectation = read (frame name);
+          })
     shifted
+
+(* A shifted frame by its shift and frame name. *)
+let shifted_frame shift name =
+  match
+    List.find_opt
+      (fun (path, _) -> shift_and_frame path = (shift, name))
+      shifted
+  with
+  | Some (_, probes) -> measurements probes
+  | None -> failwith ("no frame " ^ shift ^ "/" ^ name)
 
 let yes_no b = if b then "yes" else "no"

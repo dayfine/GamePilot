@@ -19,6 +19,7 @@ type button = Command.button =
   | Home
   | X
   | Y
+  | ZL
 
 let string_of_button = Command.string_of_button
 let button_of_string = Command.button_of_string

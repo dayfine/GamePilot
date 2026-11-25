@@ -11,6 +11,10 @@ type t = {
   choice_arrow : string;  (** the arrow at a choice box's row *)
   advance_chevron_shape : string;  (** the chevron's V *)
   button_a : string;  (** the A button of a prompt ("A Talk") *)
+  move_no_effect : string;  (** a move's effectiveness symbols under ZL *)
+  move_not_very_effective : string;
+  move_effective : string;
+  move_super_effective : string;
 }
 (** One path or file name for each template and shape the readers match. *)
 

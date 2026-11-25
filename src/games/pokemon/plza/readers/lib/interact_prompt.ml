@@ -34,10 +34,13 @@ let button_a : Blob_template.t =
     fill_upper = 1.25;
   }
 
-let probes ~picture ~(assets : Blob_assets.t) =
+let probes_over ~picture ~(assets : Blob_assets.t) ~id area =
   Find_probe.probe ~template:assets.button_a ~picture ~id area
     (Wire.Blob_find.params ~filters:ranges ~min_area
        ~min_size:(min_side, min_side) ())
 
-let shown m =
+let shown_over m id =
   List.exists (Blob_template.matches button_a ~max_score) (Find_probe.read m id)
+
+let probes ~picture ~assets = probes_over ~picture ~assets ~id area
+let shown m = shown_over m id

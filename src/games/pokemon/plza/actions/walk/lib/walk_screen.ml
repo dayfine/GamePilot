@@ -8,6 +8,8 @@ type t = {
   advance_arrow : bool;
   player_can_move : bool;
   controls_hint : bool;
+  interact_prompt : bool;
+  scene_under_way : bool;
 }
 
 let empty ~at_ms =
@@ -21,6 +23,8 @@ let empty ~at_ms =
     advance_arrow = false;
     player_can_move = false;
     controls_hint = false;
+    interact_prompt = false;
+    scene_under_way = false;
   }
 
 let fade_shows l = l.fade_black || l.fade_white
@@ -51,6 +55,7 @@ let fields l =
     ("advance_arrow", l.advance_arrow);
     ("player_can_move", l.player_can_move);
     ("controls_hint", l.controls_hint);
+    ("interact_prompt", l.interact_prompt);
   ]
 
 let set_name (name, on) = if on then Some name else None

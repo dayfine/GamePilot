@@ -1,5 +1,5 @@
 (** PLZA's AutoStory as a game of the checkpoint engine ({!Plza_checkpoints}):
-    the handlers 01.00b's to 01.02's plans use, over {!Plza_story.Story_steps}.
+    the handlers 01.00b's to 01.03's plans use, over {!Plza_story.Story_steps}.
     The fork's action table (PokemonLZA_AutoStoryActionTable.cpp, [plza/lean])
     for these actions:
 
@@ -19,8 +19,15 @@
       action here, as the engine's scene takes no args), with an optional
       [button], ["A"] (when absent) or ["B"];
     - [choose_0] and [choose_1] ({!Plza_story.Choose_row}), no args;
+    - [scene_to_battle], the fork's [scene] with [battle_start: true] (to the
+      battle HUD, with the lock-on), no args;
+    - [story_battle] ({!Plza_story.Story_battle}), no args;
     - the game's [walk] ({!Plza_walk.Walk}), walked rather than run before 03.03
-      (the fork's [RUN_FROM], before dash is unlocked).
+      (the fork's [RUN_FROM], before dash is unlocked); its [end] ["talk"] or
+      ["talk_after_legs"] (the fork's [end: "talk"], and with [to_starter])
+      walks into a talk. The fork's [Starter] option (Totodile's or Tepig's legs
+      in place of the plan's) is not ported: the plan walks to Chikorita, the
+      fork's default.
 
     PLZA reads no position and no flag, and saves only by autosave: [save]
     fails; [reload] is the caller's (back to the latest autosave). *)

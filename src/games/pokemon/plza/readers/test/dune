@@ -14,12 +14,16 @@
   test_dialog_readers
   test_story_readers
   test_confirm_choices
-  test_interact_prompt)
+  test_interact_prompt
+  test_battle_hud
+  test_move_symbols)
  (modules
   test_dialog_readers
   test_story_readers
   test_confirm_choices
   test_interact_prompt
+  test_battle_hud
+  test_move_symbols
   fixture_frames)
  (deps switch.probes.jsonl switch.shifted.probes.jsonl)
  (libraries gamepilot.wire gamepilot.table_test gamepilot.plza_readers))

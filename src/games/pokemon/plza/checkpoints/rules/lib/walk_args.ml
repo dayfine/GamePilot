@@ -2,7 +2,7 @@ type leg = { angle_deg : float; walk_ms : int }
 type style = Face_then_walk | Steer
 type move = { legs : leg list; style : style; wait_before_ms : int }
 type end_event = Fade_white | Fade_black | Dialog
-type until = Scene | Event of end_event
+type until = Scene | Event of end_event | Talk of { after_legs : bool }
 type t = { move : move; until : until option; earliest_end_ms : int }
 
 (* In the order the C++ lists them. *)

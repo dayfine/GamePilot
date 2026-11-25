@@ -48,6 +48,11 @@ let scene_to_choice steps (event : Plan.event) (args : Json_field.obj) =
   | [ ("button", `String "B") ] -> to_choice Wire.B
   | _ -> bad_args event "the only arg is button, \"A\" or \"B\""
 
+(* The fork's scene with "battle_start": to the battle HUD. *)
+let scene_to_battle steps =
+  Scene_machine.run steps "scene"
+    { Scene_machine.default with stop_at_battle = true }
+
 let game_actions ~reload steps =
   List.map
     (fun (name, action) -> (name, action steps))
@@ -63,6 +68,8 @@ let game_actions ~reload steps =
       ("scene_to_choice", scene_to_choice);
       ("choose_0", no_args (fun steps -> Choose_row.run steps 0));
       ("choose_1", no_args (fun steps -> Choose_row.run steps 1));
+      ("scene_to_battle", no_args scene_to_battle);
+      ("story_battle", no_args Story_battle.run);
     ]
 
 let scene steps (event : Plan.event) =

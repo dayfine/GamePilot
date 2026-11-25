@@ -23,6 +23,12 @@ type t = {
   choice_rows : Choice_rows.t option;  (** only with a choice box *)
   interact_prompt : bool;
       (** an A prompt ({!Interact_prompt}), with no fade and no text box *)
+  battle : bool;  (** the battle HUD ({!Battle_hud}), with no fade *)
+  story_dialog : bool;
+      (** a dialogue box as the fork's default [StoryDialogDetector] reads it:
+          the white box with its arrow, or the blue or teal box *)
+  moves : Move_symbols.symbol option list;
+      (** the four moves' effectiveness symbols ({!Move_symbols}) *)
 }
 (** What one frame shows. *)
 
