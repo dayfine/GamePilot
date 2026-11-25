@@ -27,7 +27,9 @@ let rec seen steps shows n =
 
 let holds steps flag =
   match List.assoc_opt flag flags with
-  | Some shows -> seen steps shows reads
+  | Some shows ->
+      Plza_story.Screen_wake.run steps;
+      seen steps shows reads
   | None ->
       S.(steps.log)
         (Printf.sprintf "[PLZA] unknown skip_if flag %S: does not hold." flag);

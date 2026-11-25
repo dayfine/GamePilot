@@ -61,4 +61,6 @@ with ZL still held. A battle that never sees them fails with `battle_failed` aft
 a lost battle reads as won (the talk after it looks the same), so the scene after it then fails. The
 party bar and "mission complete" are not read: after Andi, the scene ends only on the controls hint
 or an A prompt. The name and language on Confirm Choices are not checked. The
-daemon's keep-awake is off for this program: its B would back out of the new game's menus.
+daemon's keep-awake nudges the right stick for this program, not B, which would back out of the new
+game's menus; and each checkpoint wakes the screen with the right stick before it reads it, since a
+dimmed screen reads as nothing.

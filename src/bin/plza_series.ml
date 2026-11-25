@@ -11,8 +11,9 @@
    every later run of the same checkpoint first goes back to the latest
    autosave (Plza_autostory.Game_reload), which 01.00b cannot (its start is
    no save): its second run is refused. A passing checkpoint hands the
-   console to the next one as it ends. Its daemons run with keep-awake off
-   (keepawake_off). The watch page shows each run's plan, its events moving
+   console to the next one as it ends. Its daemons keep the console awake with
+   the right stick (keepawake_stick), and each checkpoint wakes the screen
+   before it reads it (Plza_story.Screen_wake). The watch page shows each run's plan, its events moving
    with the runner (Story_game.run_watched), and the run. *)
 
 open Engine_run
@@ -23,10 +24,12 @@ module Assets = Plza_readers.Blob_assets
 let ( let* ) = Result.bind
 
 (* The daemon's keep-awake presses B after 180 s idle on the Switch; B backs
-   out of PLZA's new-game menus (console B, 2026-11-25), so PLZA's daemons run
-   without it. A --keepawake given on the command line comes after, and the
-   daemon takes the last. *)
-let keepawake_off = [ "--keepawake"; "0" ]
+   out of PLZA's new-game menus (console B, 2026-11-25), so PLZA's daemons
+   nudge the right stick instead, which only turns the camera in the field and
+   does nothing in a dialogue, a menu or a battle. Off, an idle console dimmed
+   its screen, which reads as nothing (01.03's run 2). A --keepawake-key given
+   on the command line comes after, and the daemon takes the last. *)
+let keepawake_stick = [ "--keepawake-key"; "RStick" ]
 
 type outcome =
   | Passed
@@ -123,6 +126,8 @@ let run_checkpoint ~log ~picture ~reload report (plan : P.Plan.t) =
   let steps =
     Story.Live_story_screen.game_steps ~picture ~log ~log_detail:log
   in
+  (* A console idle between runs dims its screen; nothing reads on it. *)
+  Plza_story.Screen_wake.run steps;
   let game =
     Story.Story_game.make steps ~checkpoint_id:plan.checkpoint.checkpoint_id
       ~reload:(reload_cause ~log ~picture)
@@ -268,7 +273,7 @@ let run_series ~plan_dir (f : Checkpoints_flags.flags) ~backend ~viewport =
         { kind = Checkpoints; program; from_id; to_id; backend = f.backend };
       daemon_flags =
         Daemon_process.viewport_args backend viewport
-        @ keepawake_off @ f.daemon_flags;
+        @ keepawake_stick @ f.daemon_flags;
       watch =
         Watch_hub.for_runs_dir ~daemon:f.daemon ~runs_dir:f.runs_dir f.watch;
     }

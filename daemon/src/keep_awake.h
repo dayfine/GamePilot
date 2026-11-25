@@ -20,10 +20,22 @@
 
 namespace gamepilot {
 
+// The key: a button, or kRightStickKey, a nudge of the right stick (the
+// Switch only). PLZA's daemons use the stick: a button is not harmless in
+// every PLZA state (B backs out of the new game's menus, A answers), while
+// the right stick only turns the camera in the field and does nothing in a
+// dialogue, a menu or a battle's HUD; and a console left idle with no
+// keep-awake dims its screen, which then reads as nothing (console B,
+// 2026-11-25, 01.03's run 2).
 struct KeepAwakeOptions {
   double idle_ms = 0;  // 0 = off
   std::string key = "B";
 };
+
+constexpr std::string_view kRightStickKey = "RStick";
+
+// Whether `key` names a keep-awake key: a button, or kRightStickKey.
+bool keep_awake_key(const std::string& key);
 
 // The keep-awake press's batch id: its batch_done is not sent to a client.
 constexpr std::string_view kKeepAwakeBatch = "daemon.keepawake";

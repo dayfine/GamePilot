@@ -30,6 +30,9 @@ type t = {
   dones : (string, Wire.batch_done) Hashtbl.t;
   templates : (Digest.t, Effects.template_hash) Hashtbl.t;
       (** uploaded on this connection, by the MD5 of their PNG bytes *)
+  mutable held : string option;
+      (** the batch a [Race_held] stopped and left running, until a [Replace]
+          takes its place *)
 }
 
 val create : transport -> t

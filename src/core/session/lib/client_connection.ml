@@ -19,6 +19,7 @@ type t = {
   responses : (int, (Wire.json, Wire.error) result) Hashtbl.t;
   dones : (string, Wire.batch_done) Hashtbl.t;
   templates : (Digest.t, Effects.template_hash) Hashtbl.t;
+  mutable held : string option;
 }
 
 let create transport =
@@ -33,6 +34,7 @@ let create transport =
     responses = Hashtbl.create 8;
     dones = Hashtbl.create 8;
     templates = Hashtbl.create 8;
+    held = None;
   }
 
 let protocol_error fmt = Printf.ksprintf (fun s -> raise (Protocol_error s)) fmt

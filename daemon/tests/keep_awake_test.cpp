@@ -100,6 +100,13 @@ void check_press() {
   CHECK(press.size() == 1 && press[0].buttons == button_mask("B") &&
         press[0].hold_ms == kKeepAwakeHoldMs &&
         press[0].cooldown_ms == kKeepAwakeCooldownMs && !press[0].is_wait);
+  // RStick: the right stick tilted, no button.
+  const KeepAwake nudge(KeepAwakeOptions{kIdleMs, "RStick"}, 0);
+  const std::vector<InputCommand> tilt = nudge.press();
+  CHECK(tilt.size() == 1 && tilt[0].buttons == 0 && tilt[0].right_stick &&
+        tilt[0].right_stick->x == 1 && !tilt[0].left_stick);
+  CHECK(keep_awake_key("RStick") && keep_awake_key("B") &&
+        !keep_awake_key("Q"));
 }
 
 }  // namespace

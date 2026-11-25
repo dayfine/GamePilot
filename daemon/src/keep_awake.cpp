@@ -20,9 +20,17 @@ bool KeepAwake::due(double now_ms, bool batch_pending, bool lease_held) const {
          now_ms - last_input_ms_ >= options_.idle_ms;
 }
 
+bool keep_awake_key(const std::string& key) {
+  return key == kRightStickKey || button_mask(key) != 0;
+}
+
 std::vector<InputCommand> KeepAwake::press() const {
   InputCommand command;
-  command.buttons = button_mask(options_.key);
+  if (options_.key == kRightStickKey) {
+    command.right_stick = StickPosition{1, 0};
+  } else {
+    command.buttons = button_mask(options_.key);
+  }
   command.hold_ms = kKeepAwakeHoldMs;
   command.cooldown_ms = kKeepAwakeCooldownMs;
   return {command};

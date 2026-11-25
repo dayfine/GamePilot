@@ -74,22 +74,24 @@ let race_ending t commands stop after =
 let race t commands stop =
   race_ending t commands stop (fun batch_id _ -> cancel_batch t batch_id)
 
-(* Cancels the stopped batch into [commands]; that batch's [batch_done] ends
-   the op. *)
-let cancel_into t batch_id commands =
-  let next = next_batch_id t in
-  let cancel = Wire.Cancel_then { batch_id = next; commands } in
-  ignore (Wire.cancel_result_of_json (call t cancel) : int);
-  Hashtbl.remove t.dones batch_id;
-  let done_ () =
-    check_stop t;
-    take t.dones next ()
-  in
-  ignore (pump_until t done_ : Wire.batch_done)
+(* Cancels the held batch into [commands]; that batch's [batch_done] ends the
+   op. With none held, the commands are a plain submit. *)
+let replace t commands =
+  match t.held with
+  | None -> submit t commands
+  | Some held ->
+      t.held <- None;
+      let next = next_batch_id t in
+      let cancel = Wire.Cancel_then { batch_id = next; commands } in
+      ignore (Wire.cancel_result_of_json (call t cancel) : int);
+      Hashtbl.remove t.dones held;
+      pump_until t (fun () ->
+          check_stop t;
+          take t.dones next ())
 
-let race_then t commands stop then_ =
-  race_ending t commands stop (fun batch_id f ->
-      cancel_into t batch_id (then_ f))
+(* The stopped batch runs on until [replace]. *)
+let race_held t commands stop =
+  race_ending t commands stop (fun batch_id _ -> t.held <- Some batch_id)
 
 (* The daemon keeps uploads until the connection closes, so each PNG goes up
    once. *)
@@ -195,8 +197,9 @@ let answer : type a. t -> a Effect.t -> (unit -> a) option =
   match eff with
   | Effects.Submit commands -> Some (fun () -> submit t commands)
   | Effects.Race (commands, stop) -> Some (fun () -> race t commands stop)
-  | Effects.Race_then (commands, stop, then_) ->
-      Some (fun () -> race_then t commands stop then_)
+  | Effects.Race_held (commands, stop) ->
+      Some (fun () -> race_held t commands stop)
+  | Effects.Replace commands -> Some (fun () -> replace t commands)
   | Effects.Await (pred, timeout_ms) -> Some (fun () -> await t pred timeout_ms)
   | Effects.Now -> Some (fun () -> Option.value t.now ~default:0.)
   | Effects.Read -> Some (fun () -> t.latest)

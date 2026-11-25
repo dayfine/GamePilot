@@ -1,6 +1,9 @@
 (* Effects.race_then: the first frame on which [stop] holds sends one cancel
    with [then] (the commands [then_] made from that frame), no plain cancel,
-   and the op returns once that batch's batch_done arrives. *)
+   and the op returns once that batch's batch_done arrives. [then_] runs in the
+   program: a log it performs reaches the session (console B, 2026-11-25: run
+   3 of 01.03 died on Effect.Unhandled(Show_log) when [then_] ran inside the
+   session's handler). *)
 
 let expect name ok =
   if ok then Printf.printf "ok %s\n" name else failwith ("FAILED " ^ name)
@@ -62,7 +65,10 @@ let () =
     Session.run transport (fun () ->
         Effects.race_then hold
           ~stop:(fun m -> m.seq >= 3)
-          ~then_:(fun m -> if m.seq = 3 then move else []))
+          ~then_:(fun m ->
+            (* A log from inside the branch: it must reach the run's handler. *)
+            Effects.show_log "picking the move";
+            if m.seq = 3 then move else []))
   in
   expect "stopped on the third frame"
     (match raced with Effects.Stopped m -> m.seq = 3 | Finished _ -> false);
@@ -74,4 +80,10 @@ let () =
         | _ -> None)
       (calls !sent)
   in
-  expect "one cancel, with the move as its then" (cancels = [ Some move ])
+  expect "one cancel, with the move as its then" (cancels = [ Some move ]);
+  expect "the branch's log went out as a watch log"
+    (List.exists
+       (function
+         | Wire.Notification (Wire.Watch_log "picking the move") -> true
+         | _ -> false)
+       !sent)

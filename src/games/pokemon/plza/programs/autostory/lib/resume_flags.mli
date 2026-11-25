@@ -8,7 +8,8 @@
       fade or the battle HUD shows (not free control in the battle area);
     - ["battle_shows"]: the battle HUD shows.
 
-    Each is read over 1 s (five reads 250 ms apart): any read showing it holds.
-    An unknown flag is logged and does not hold. *)
+    The screen is woken first ({!Plza_story.Screen_wake}): a dimmed one reads as
+    nothing. Each is read over 1 s (five reads 250 ms apart): any read showing
+    it holds. An unknown flag is logged and does not hold. *)
 
 val holds : Plza_story.Story_steps.game_steps -> string -> bool
