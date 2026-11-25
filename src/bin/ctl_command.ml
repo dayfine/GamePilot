@@ -9,8 +9,10 @@
    per line and stops at the first error. [park] and [resume] park the Switch
    on its HOME menu and resume FireRed from it, [close-game] and [start-game]
    close the running game and start one from a HOME tile (the fork's
-   NintendoSwitch_GameEntry steps) (Console_park_command). Every press is in the daemon's wire
-   log with its owner. *)
+   NintendoSwitch_GameEntry steps) (Console_park_command), [delete-save] goes
+   to a game's red Delete Save Data button and [delete-save --confirm] presses
+   it (Delete_save_command). Every press is in the daemon's wire log with its
+   owner. *)
 
 let default_owner = "ctl"
 let client = "gamepilot-ctl/0.1"
@@ -21,9 +23,10 @@ let usage =
   \      | wait MS | shot FILE.png | read READER | status\n\
   \      | park | resume  (the Switch: HOME menu and back to FireRed)\n\
   \      | close-game | start-game TILE  (the Switch, from HOME: close the\n\
-  \        running game; start the game on TILE, 1 the first, 0 the cursor's)\n\
-  \  gamepilot ctl [--port N] [--owner LABEL] run FILE\n\
-  \    readers:\n" ^ Ctl_readers.usage ()
+  \        running game; start the game on TILE, 1 the first, 0 the cursor's)\n"
+  ^ Delete_save_command.usage_line
+  ^ "  gamepilot ctl [--port N] [--owner LABEL] run FILE\n    readers:\n"
+  ^ Ctl_readers.usage ()
 
 type flags = { port : int; owner : string }
 
@@ -137,6 +140,8 @@ let main args =
   | Ok (f, [ "close-game" ]) ->
       Ok (Console_park_command.on_port ~port:f.port ~owner:f.owner `Close_game)
   | Ok (f, [ "start-game"; tile ]) -> start_game f tile
+  | Ok (f, "delete-save" :: args) ->
+      Delete_save_command.main ~port:f.port ~owner:f.owner args
   | Ok (f, [ "run"; file ]) -> (
       match parse_script (read_lines file) with
       | Ok steps -> Ok (run_steps f steps)
