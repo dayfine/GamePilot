@@ -13,6 +13,8 @@
     - [exceptions FILE]: the exceptions file (see {!Lint_exceptions}).
     - [no_exceptions DIR] (repeatable): a tree whose non-test [.ml] files may
       not raise or catch exceptions (see {!No_exceptions}).
+    - [interface_docs DIR] (repeatable): a tree whose library [.mli] files
+      document every type, constructor and value (see {!Interface_docs}).
     - [max_function_lines N], [max_function_avg_depth F],
       [max_function_depth N], [max_file_avg_depth F], [max_file_lines N],
       [max_interface_lines N], [complexity_advisory N]: thresholds.
@@ -35,6 +37,7 @@
       (see {!Doc_listing}). *)
 
 type layer = { name : string; pattern : string list }
+(** A [layer] line: the layer's name and its directory pattern, split on [/]. *)
 
 type family = { layer : string; var : string; members : string list }
 (** The values of [var] whose placements may link [layer]. *)
@@ -46,6 +49,7 @@ type t = {
   library_dir : string;
   exceptions_file : string option;
   no_exceptions_roots : string list;
+  interface_docs_roots : string list;
   max_function_lines : int;
   max_function_avg_depth : float;
   max_function_depth : int;
@@ -61,6 +65,7 @@ type t = {
   doc_listing : string list;
       (** Registration values a doc comment may not list ({!Doc_listing}). *)
 }
+(** Every setting of a config file, each key as described above. *)
 
 val default : t
 (** Thresholds from [dayfine/trading]; no roots, no layers. *)
