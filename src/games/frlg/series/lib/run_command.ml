@@ -135,6 +135,12 @@ let check_from_event f mode ~checkpoints =
   | Some _ ->
       Event_range.check ~mode ~keeps_states:(f.backend = "mgba") ~checkpoints
 
+(* Each run's daemon: the program's --viewport, then the user's flags. *)
+let daemons f backend ~viewport =
+  Series_daemons.create ~daemon:f.daemon ~backend ~port:f.port
+    ~flags:(Daemon_process.viewport_args backend viewport @ f.daemon_flags)
+    ~watch:(watch_of f)
+
 let from_event f = Option.map (fun first -> (first, f.to_event)) f.from_event
 
 let run_series program plan_dir (f : Pokemon_flags.flags) =
@@ -157,17 +163,13 @@ let run_series program plan_dir (f : Pokemon_flags.flags) =
        {
          states = f.states;
          runs_dir = f.runs_dir;
-         daemon = f.daemon;
          backend;
          common = { f.game.common with port = f.port };
          mode;
          policy;
          world;
-         watch = watch_of f;
          info = run_info program plan_dir f Checkpoints ~from_id ~to_id;
-         daemon_flags =
-           Daemon_process.viewport_args backend viewport @ f.daemon_flags;
-         bound = ref None;
+         daemons = daemons f backend ~viewport;
          save_after_pass = f.save_after_pass;
          max_rounds = f.max_rounds;
          from_event = from_event f;
