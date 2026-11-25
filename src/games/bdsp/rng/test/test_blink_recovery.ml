@@ -184,4 +184,4 @@ let without_name (r : Fixture_lines.record) =
 
 let () =
   Fixture_lines.check_op (List.map without_name records) "recover" recover;
-  Case_table.finish ()
+  Table_test.finish ()

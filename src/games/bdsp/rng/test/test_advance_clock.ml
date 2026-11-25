@@ -34,4 +34,4 @@ let time_of_advance inputs =
 let () =
   Fixture_lines.check_op records "advance_at" advance_at;
   Fixture_lines.check_op records "time_of_advance" time_of_advance;
-  Case_table.finish ()
+  Table_test.finish ()

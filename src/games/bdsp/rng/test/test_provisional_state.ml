@@ -46,4 +46,4 @@ let provisional = function
 
 let () =
   Fixture_lines.check_op records "provisional" provisional;
-  Case_table.finish ()
+  Table_test.finish ()

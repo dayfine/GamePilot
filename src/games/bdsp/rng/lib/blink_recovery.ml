@@ -106,9 +106,12 @@ let origin_of matches =
 let solve_attempt streams ~slots ~period_seconds =
   match Blink_grid.build_samples streams ~slots ~period_seconds with
   | Error _ -> None
-  | Ok samples ->
-      let result = State_solver.solve_state_from_samples samples in
-      if result.success then Some (result.state, slots) else None
+  | Ok samples -> (
+      (* [build_samples] starts at advance zero and sorts by advance, so the
+         solver's precondition [Error] cannot happen here. *)
+      match State_solver.solve_state_from_samples samples with
+      | Ok result when result.success -> Some (result.state, slots)
+      | Ok _ | Error _ -> None)
 
 let rotate = function [] -> [] | first :: rest -> rest @ [ first ]
 

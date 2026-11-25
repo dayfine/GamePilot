@@ -117,4 +117,4 @@ let () =
   Fixture_lines.check_op records "expected_stats" expected_stats;
   Fixture_lines.check_op records "identify" identify;
   Fixture_lines.check_op records "advances_between" advances_between;
-  Case_table.finish ()
+  Table_test.finish ()

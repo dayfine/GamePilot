@@ -79,4 +79,4 @@ let reanchor = function
 
 let () =
   Fixture_lines.check_op records "reanchor" reanchor;
-  Case_table.finish ()
+  Table_test.finish ()
