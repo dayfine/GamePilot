@@ -14,10 +14,14 @@
     the badges, the Hall of Fame), read off the Trainer Card. And the place: the
     frame kept at the checkpoint's start ({!Start_check}).
 
+    The needs are {!Need}s, collected by {!Plan_needs} and
+    {!Plan_preconditions}; {!Need_check} judges each on what was read, and
+    {!Need_reads} says what to read. This module joins them into the table.
+
     GamePilot's own: the fork checks the save's place on the save card and its
     StoryPreflight only the program's settings. *)
 
-type need = Plan_needs.need =
+type need = Need.t =
   | Party_in_order of string list
   | Party_includes of {
       members : string list;
@@ -68,7 +72,7 @@ val needs :
     that do not decode. Raises {!Json_field.Invalid} for a plan arg that does
     not read. *)
 
-type read = {
+type read = Need_check.read = {
   observed : Pokemon_engine.Postcondition_check.observed;
   place : Frlg_readers.Start_frame.difference option;
       (** The frame after the load against the one kept at the start; [None]
@@ -82,16 +86,22 @@ type read = {
           ({!Frlg_actions.Trainer_card_badges}); [None] when not read. *)
 }
 
-type verdict = Ok | Mismatch | Not_read
-type row = { need : string; read : string; verdict : verdict }
+type verdict = Need_check.verdict =
+  | Ok
+  | Mismatch
+  | Not_read  (** {!Need_check.verdict}. *)
+
+type row = Need_check.row = { need : string; read : string; verdict : verdict }
+(** {!Need_check.row}. *)
 
 val describe : need -> string
-(** {!Plan_needs.describe}: the need as the table's NEED column says it. *)
+(** {!Need.describe}: the need as the table's NEED column says it. *)
 
 val asks_something : need -> bool
-(** {!Plan_needs.asks_something}. *)
+(** {!Need.asks_something}. *)
 
 val compare : need list -> read -> row list
+(** Each need judged on the read ({!Need_check.row}), in order. *)
 
 val room : Party_room.need -> read -> row
 (** The chain's free party slots ({!Party_room}) against the party read:
@@ -106,8 +116,7 @@ val table : row list -> string
 (** A text table: NEED, READ, OK / MISMATCH / NOT READ, one row a line. *)
 
 val reads_card : need list -> bool
-(** A need is judged on the Trainer Card's badges or stars: the pre-flight reads
-    them. *)
+(** {!Need_reads.reads_card}. *)
 
 val to_read : need list -> Pokemon_engine.Postconditions.t
-(** What {!Postcondition_reads.observe} must read for these needs. *)
+(** {!Need_reads.to_read}. *)

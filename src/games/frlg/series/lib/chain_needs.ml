@@ -17,7 +17,7 @@ let load_plans dir =
 
 (* "fly (pidgey)" for each field move a plan uses, without repeats. *)
 let field_moves stocks plans =
-  let module N = Frlg_checkpoints.Plan_needs in
+  let module N = Frlg_checkpoints.Need in
   let field_move = function
     | N.Member { species; for_ }
       when List.mem for_ Frlg_checkpoints.Party_room.field_moves ->
@@ -26,7 +26,9 @@ let field_moves stocks plans =
     | _ -> None
   in
   List.concat_map
-    (fun plan -> List.filter_map field_move (N.needs stocks ~before:None plan))
+    (fun plan ->
+      List.filter_map field_move
+        (Frlg_checkpoints.Plan_needs.needs stocks ~before:None plan))
     plans
   |> List.sort_uniq compare
 

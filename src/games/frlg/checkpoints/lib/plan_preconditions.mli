@@ -15,7 +15,7 @@
     species caught (0 to 386: Oak's National Dex asks for 60). All are read off
     the Trainer Card (pokefirered src/trainer_card.c). *)
 
-val needs : Pokemon_engine.Plan.t -> (Plan_needs.need list, string) result
+val needs : Pokemon_engine.Plan.t -> (Need.t list, string) result
 (** The plan's declared preconditions as needs: [[]] when it declares none.
     [Error] naming the field for a field not known, a count out of range, a
     badge not known, or a value of the wrong type. *)

@@ -146,14 +146,13 @@ let decode_cases =
 let asks_cases =
   let asks expected need =
     case
-      ("asks: " ^ Plan_needs.describe need)
-      (fun () ->
-        if Plan_needs.asks_something need then "something" else "nothing")
+      ("asks: " ^ Need.describe need)
+      (fun () -> if Need.asks_something need then "something" else "nothing")
       expected
   in
   List.map (asks "nothing")
     [
-      Plan_needs.Money_at_least { amount = 0; for_ = "buy" };
+      Need.Money_at_least { amount = 0; for_ = "buy" };
       Item_at_least { item = "retro-mail"; count = 0; for_ = "give" };
       Badges_at_least 0;
       Caught_at_least 0;
@@ -163,7 +162,7 @@ let asks_cases =
     ]
   @ List.map (asks "something")
       [
-        Plan_needs.Money_at_least { amount = 1; for_ = "buy" };
+        Need.Money_at_least { amount = 1; for_ = "buy" };
         Item_at_least { item = "retro-mail"; count = 99; for_ = "give" };
         Item_exactly { item = "retro-mail"; count = 0 };
         Badges_at_least 8;

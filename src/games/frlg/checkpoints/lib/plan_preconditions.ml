@@ -19,24 +19,24 @@ let all_ok results =
       Ok (x :: rest))
     results (Ok [])
 
-let badges : Yojson.Safe.t -> (Plan_needs.need, string) result = function
+let badges : Yojson.Safe.t -> (Need.t, string) result = function
   | `Int n when n >= 0 && n <= List.length Card.badge_names ->
-      Ok (Plan_needs.Badges_at_least n)
+      Ok (Need.Badges_at_least n)
   | `Int n -> Error (Printf.sprintf "%s.badges: %d is not 0 to 8" where n)
   | `List names ->
       let* names = all_ok (List.map badge_name names) in
-      Ok (Plan_needs.Badges names)
+      Ok (Need.Badges names)
   | _ -> Error (where ^ ".badges: a count or a list of badge names")
 
-let hall_of_fame : Yojson.Safe.t -> (Plan_needs.need, string) result = function
-  | `Bool true -> Ok Plan_needs.Hall_of_fame
+let hall_of_fame : Yojson.Safe.t -> (Need.t, string) result = function
+  | `Bool true -> Ok Need.Hall_of_fame
   | _ -> Error (where ^ ".hall_of_fame: only true")
 
 (* At most the National Pokédex's 386 (pokefirered include/constants/species.h). *)
 let max_caught = 386
 
-let caught : Yojson.Safe.t -> (Plan_needs.need, string) result = function
-  | `Int n when n >= 0 && n <= max_caught -> Ok (Plan_needs.Caught_at_least n)
+let caught : Yojson.Safe.t -> (Need.t, string) result = function
+  | `Int n when n >= 0 && n <= max_caught -> Ok (Need.Caught_at_least n)
   | `Int n ->
       Error (Printf.sprintf "%s.caught: %d is not 0 to %d" where n max_caught)
   | _ -> Error (where ^ ".caught: a count of species caught")
