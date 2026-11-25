@@ -1,13 +1,10 @@
 # Dex Collection
 
-Catches wild Pokemon your Pokedex has not caught yet, to raise its count toward the 60 that
-Professor Oak asks for before he gives you the National Pokedex. So far it works one patch of grass:
-Route 10's, just north of its Pokemon Center, where Voltorb, Spearow and Ekans live. It first buys 10
-Ultra Balls at the Indigo Plateau's Pokemon Center (¥12,000), then walks into the grass, runs from
-every Pokemon you have caught already and catches the ones you have not. It tells them apart by the
-little Poke Ball the game draws next to a wild Pokemon's HP bar when its kind is already caught. It
-reads your Pokedex count off the Trainer Card before and after. Both checkpoints start and end at
-Route 10's Pokemon Center nurse, so fly there first.
+Catches wild Pokemon your Pokedex has not caught yet, toward the 60 Professor Oak asks for before
+he gives you the National Pokedex.
+
+So far it works one patch of grass: Route 10's, just north of its Pokemon Center, where Voltorb,
+Spearow and Ekans live. It reads your Pokedex count off the Trainer Card before and after.
 
 <!-- generated:backends -->
 Runs on: mGBA.
@@ -15,9 +12,12 @@ Runs on: mGBA.
 
 ## Before you start
 
+- Fly to Route 10's Pokemon Center: both checkpoints start and end at its nurse.
+- Bring ¥12,000 for 10 Ultra Balls at the Indigo Plateau's Pokemon Center.
+
 <!-- generated:needs -->
-- 0 free party slots
 - pidgey in the party (fly)
+- the thunder badge (fly)
 - money at least ¥12000 (all the purchases)
 - at the start, Route10_PokemonCenter_1F
 <!-- /generated -->
@@ -27,7 +27,7 @@ Runs on: mGBA.
 <!-- generated:commands -->
 ```sh
 # mGBA: each checkpoint three times from its start state, two must pass
-sh run/run_checkpoints_on_mgba.sh --program frlg.dex_collection --from 01-ultra-balls --to 02-route10-new-species --mode verification
+sh run/run_checkpoints_on_mgba.sh frlg.dex_collection --from 01-ultra-balls --to 02-route10-new-species --mode verification
 ```
 <!-- /generated -->
 
@@ -42,12 +42,16 @@ sh run/run_checkpoints_on_mgba.sh --program frlg.dex_collection --from 01-ultra-
 <!-- plans: 3607e220ccc3 -->
 <!-- /generated -->
 
+In the grass it runs from every Pokemon you have caught already and catches the ones you have not.
+It tells them apart by the little Poke Ball the game draws next to a wild Pokemon's HP bar when its
+kind is already caught.
+
 ## When it stops
 
 <!-- generated:preflight -->
 | Resume from | The pre-flight checks |
 |---|---|
-| 01-ultra-balls | pidgey in the party (fly); money at least ¥12000 (mart); at the start, Route10_PokemonCenter_1F |
+| 01-ultra-balls | pidgey in the party (fly); the thunder badge (fly); money at least ¥12000 (mart); at the start, Route10_PokemonCenter_1F |
 | 02-route10-new-species | ultra-ball at least x1 (capture); at the start, Route10_PokemonCenter_1F |
 <!-- /generated -->
 

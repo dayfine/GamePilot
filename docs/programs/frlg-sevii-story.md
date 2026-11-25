@@ -1,9 +1,12 @@
 # Sevii Story (FRLG)
 
 Registry id `frlg.sevii_story`, group FRLG / Story (`src/program_registry`). It plays the Sevii
-Islands story from a save past the Hall of Fame (roadmap `docs/roadmap/frlg-sevii-islands.md`). Its
-first checkpoint declares the save's eight badges and the Hall of Fame as preconditions, read off the
-Trainer Card. It runs on mGBA.
+Islands story from a save that has beaten Blaine (roadmap `docs/roadmap/frlg-sevii-islands.md`). Its
+first checkpoint declares the game's own gate for Bill's trip, the Volcano Badge, as its precondition,
+read off the Trainer Card: Blaine's win sets it and starts Bill's scene (pokefirered
+`CinnabarIsland_Gym_EventScript_DefeatedBlaine`), and nothing on the trip checks the Hall of Fame
+but one line of Celio's scene. Celio asks for the Ruby only once the National Dex is on
+(`OneIsland_PokemonCenter_1F_EventScript_Celio`): that is the later stages' gate. It runs on mGBA.
 
 The program ends when Cerulean Cave opens: Celio takes the Sapphire and the guard leaves
 (`FLAG_HIDE_CERULEAN_CAVE_GUARD`). The roadmap plans the checkpoints after 03, read from pret:

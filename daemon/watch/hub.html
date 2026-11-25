@@ -232,7 +232,7 @@ function render(all) {
   const body = $("runs");
   body.replaceChildren();
   if (!entries.length) {
-    const td = el("td", "empty", "no live runs: gamepilot checkpoints --watch starts one");
+    const td = el("td", "empty", "no live runs: gamepilot run --watch starts one");
     td.colSpan = 6;
     const tr = el("tr");
     tr.append(td);

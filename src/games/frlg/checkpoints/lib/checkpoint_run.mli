@@ -1,7 +1,7 @@
 (** Runs one checkpoint of a FireRed plan live: the start state loaded (when
     given), the overworld's probes subscribed, then the plan's events through
     {!Pokemon_engine.Runner} with FireRed's {!Frlg_actions.Checkpoint_game}.
-    What [gamepilot checkpoint] runs, and replays from its wire log. *)
+    What [gamepilot run --plan] runs, and replays from its wire log. *)
 
 type options = {
   state : string option;

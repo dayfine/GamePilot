@@ -1,7 +1,7 @@
-(** [gamepilot checkpoints PLAN_DIR --preflight --from ID]: the pre-flight of a
-    save (Frlg_checkpoints.Preflight). Back to the last save, then what the
-    first checkpoint's plan needs and the place read and printed as a table, in
-    a run folder of its own ("<ID>-preflight"), run as a shadow plan
+(** [gamepilot run PLAN_DIR --preflight --from ID]: the pre-flight of a save
+    (Frlg_checkpoints.Preflight). Back to the last save, then what the first
+    checkpoint's plan needs and the place read and printed as a table, in a run
+    folder of its own ("<ID>-preflight"), run as a shadow plan
     (Frlg_checkpoints.Shadow_plan) through the checkpoint runner. *)
 
 type setup = {

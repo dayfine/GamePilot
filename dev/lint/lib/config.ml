@@ -19,6 +19,7 @@ type t = {
   allowed : (string * string list) list;
   families : family list;
   never_links : (string list * string list) list;
+  doc_listing : string list;
 }
 
 let default =
@@ -40,6 +41,7 @@ let default =
     allowed = [];
     families = [];
     never_links = [];
+    doc_listing = [];
   }
 
 let words line =
@@ -101,6 +103,8 @@ let apply_line c = function
   | "never_links" :: pattern :: (_ :: _ as libs) ->
       let rule = (String.split_on_char '/' pattern, libs) in
       Ok { c with never_links = c.never_links @ [ rule ] }
+  | "doc_listing" :: (_ :: _ as values) ->
+      Ok { c with doc_listing = c.doc_listing @ values }
   | [ key; v ] -> set_threshold c key v
   | key :: _ -> Error (Printf.sprintf "malformed '%s' line" key)
   | [] -> Ok c
