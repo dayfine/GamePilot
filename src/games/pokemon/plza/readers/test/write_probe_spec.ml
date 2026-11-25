@@ -8,9 +8,7 @@ let native : Wire.box = { x = 0.; y = 0.; w = 1.; h = 1. }
 let () =
   let assets = Plza_readers.Blob_assets.file_names in
   let call =
-    Wire.Subscribe
-      (Plza_readers.Dialog_box.probes ~picture:native ~assets
-      @ Plza_readers.Advance_arrow.probes ~picture:native ~assets)
+    Wire.Subscribe (Plza_readers.Story_screen.probes ~picture:native ~assets)
   in
   let request = Wire.json_of_message (Request { id = 1; call }) in
   print_endline

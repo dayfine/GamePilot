@@ -10,7 +10,7 @@
  (copy fixtures/switch.shifted.probes.jsonl switch.shifted.probes.jsonl))
 
 (tests
- (names test_dialog_readers)
- (modules test_dialog_readers fixture_frames)
+ (names test_dialog_readers test_story_readers)
+ (modules test_dialog_readers test_story_readers fixture_frames)
  (deps switch.probes.jsonl switch.shifted.probes.jsonl)
  (libraries gamepilot.wire gamepilot.table_test gamepilot.plza_readers))
