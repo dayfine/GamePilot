@@ -7,6 +7,7 @@ module type POSE_TEXT = sig
   type t
 
   val pose : t -> string
+  (** The pose as the [position] line prints it. *)
 end
 
 (** A set of promises' text. *)

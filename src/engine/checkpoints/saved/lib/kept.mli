@@ -28,7 +28,10 @@ module type AT = sig
   type t
 
   val to_yojson : t -> Yojson.Safe.t
+  (** The pose as the file's ["at"] value. *)
+
   val of_yojson : Yojson.Safe.t -> (t, string) result
+  (** What {!to_yojson} wrote, or why it cannot be read. *)
 end
 
 (** The saved file over the start reads [Start] and the observed pose [At]. *)

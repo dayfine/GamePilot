@@ -8,6 +8,7 @@ module type POSE_DECODE = sig
   type t
 
   val pose_of_plan : where:string -> Json_field.obj -> (t, string) result
+  (** The pose the [position] object writes; [where] names it in errors. *)
 end
 
 (** A set of promises' plan decoder. *)
