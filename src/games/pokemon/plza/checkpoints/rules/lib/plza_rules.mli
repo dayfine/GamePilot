@@ -33,3 +33,9 @@ end
 module Postconditions : sig
   include Engine_rules.POSTCONDITIONS with type t = unit and type reads = unit
 end
+
+val ends_at : Action.t -> Pose.t option
+(** [None]: a PLZA walk is timed legs, with no target. *)
+
+val position : Postconditions.t -> Pose.t option
+(** [None]: PLZA promises nothing. *)
