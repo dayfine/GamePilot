@@ -120,6 +120,8 @@ let to_walk_screen l : Plza_walk.Walk_screen.t =
     interact_prompt = l.interact_prompt;
     scene_under_way = scene_under_way l;
     minimap_arrow = l.minimap_arrow;
+    map_pin =
+      Option.map (fun { x; y } : Plza_walk.Map_leg.point -> { x; y }) l.map_pin;
   }
 
 let wild_battle_on t = t.run_prompt || t.alert_eye

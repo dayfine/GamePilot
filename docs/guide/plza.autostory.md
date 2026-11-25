@@ -84,17 +84,20 @@ and passes. Each run keeps its log, wire log and a `failure.png` in its run fold
 
 ## Known limits
 
-03.07 to 03.11 have their plans; 03.07 and 03.10 are ported in full. 03.08, 03.08a, 03.08b and
-03.11 stop loudly before they press anything (`no handler`): their catches (`catch_in_zone`), 03.08b's
-way out of the zone by its map (`run_out_of_zone_1`, `check_out_of_zone_1`) and Mable's research
-reward (`claim_mable_research_reward`, which opens the main menu) are not ported yet. 03.07's
+03.07 to 03.11 have their plans; 03.07, 03.08b and 03.10 are ported in full. 03.08, 03.08a and 03.11
+stop loudly before they press anything (`no handler`): their catches (`catch_in_zone`) and Mable's
+research reward (`claim_mable_research_reward`, which opens the main menu) are not ported yet. 03.07's
 catches throw a ball (ZL to lock on, ZL and ZR to aim) and pass the lines after it with A: Fletchling
 is caught when its tutorial card shows (`no_catch` after 6 throws), and when a throw breaks out into a
 battle (the Run prompt, or the alert eye over a wild Pokémon) it is weakened with three attacks
 first. Bunnelby is weakened, then caught, up to 6 rounds (`still_a_target`); when nothing locks on
 and the battle is still up, the camera sweeps right to find it. The Run prompt's reader has not seen
-a console frame yet. The start checks of 03.08 to 03.09 name the wild zone, the party count or the A
-prompt, which nothing reads yet (`start_signature_unread`). A walk with a heading (03.09's first)
+a console frame yet. 03.08b leaves Wild Zone 1 by its map: it opens the map (+) for the pin, turns by
+the minimap's arrow and runs (B held) onto the far gate's line and down it to the gate's A prompt, up
+to 3 runs (`gate_not_reached`, or `map_pin_not_read`); after A Leave it opens the map again and fails
+with `in_wild_zone` if the pin is still in the zone. The start checks from 03.08 on name the wild zone
+(the map is opened for the pin), the party count (the party bar's filled slots) or the A prompt, and
+every field named must read the same (`chain_off_start`). A walk with a heading (03.09's first)
 turns to it by the minimap's arrow first, up to 4 turns (`heading_missed`), and stops with
 `arrow_unread` when no arrow shows for 40 s. 03.10 starts in the lab's lobby, where 03.09 ends.
 

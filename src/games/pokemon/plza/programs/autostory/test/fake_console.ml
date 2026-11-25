@@ -24,7 +24,8 @@ let submit c (command : Wire.command) =
 
 let frame_ms = 33.0
 
-let steps c screen : Plza_story.Story_steps.game_steps =
+let steps ?(party = fun _ -> None) c screen : Plza_story.Story_steps.game_steps
+    =
   let log line = c.lines <- line :: c.lines in
   {
     submit = submit c;
@@ -57,6 +58,10 @@ let steps c screen : Plza_story.Story_steps.game_steps =
           List.iter (submit c) (next look);
           Some look)
         else None);
+    read_party_slots =
+      (fun () ->
+        c.now <- c.now +. (2. *. frame_ms);
+        party c);
     log;
     log_detail = log;
   }
@@ -70,6 +75,11 @@ let presses c b =
 (* The [n]th press of [b] (from 0) after [after], if sent. *)
 let nth_after c b ~after n =
   List.nth_opt (List.filter (fun t -> t > after) (presses c b)) n
+
+let last_press c b =
+  List.find_map
+    (fun i -> if List.mem b i.buttons then Some i.at_ms else None)
+    c.inputs
 
 (* How long the stick has been held in all, and when that reached [ms]. *)
 let stick_reached c ms =

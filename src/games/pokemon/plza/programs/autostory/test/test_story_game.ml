@@ -541,11 +541,12 @@ let contains part line =
 let at_arch c = { (party c) with minimap = Some "03.03-start" }
 
 (* The start check of [checkpoint]'s plan on [screen], with its log lines. *)
-let start_check ?execution checkpoint screen () =
+let start_check ?execution ?party checkpoint screen () =
   let c = C.create () in
   let execution = Option.value execution ~default:(plan checkpoint).execution in
+  let party = Option.map (fun n _ -> Some n) party in
   let r =
-    Plza_autostory.Start_signature.check (C.steps c screen)
+    Plza_autostory.Start_signature.check (C.steps ?party c screen)
       ~checkpoint_id:checkpoint execution
   in
   String.concat "\n"
@@ -642,6 +643,35 @@ let tutorial ~max_throws steps =
 
 let battle ~max_rounds steps =
   Plza_story.Catches.battle_then_catch steps ~max_rounds
+
+(* Wild Zone 1 with the map open (+ since the last B) on [pin], its arrow
+   reading [facing]. *)
+let map_open c =
+  match (C.last_press c Wire.Start, C.last_press c Wire.B) with
+  | Some s, Some b -> s > b
+  | Some _, None -> true
+  | None, _ -> false
+
+let in_zone ?(facing = 270.) ~pin c =
+  if map_open c then
+    { (look c) with map_pin = Some { x = fst pin; y = snd pin } }
+  else { (party c) with minimap_arrow = Some facing }
+
+(* 03.08b: on the gate's line at (379, 250), facing the gate (264). B held 1 s or more
+   brings up the gate's A prompt; A leaves (a black fade for 1.5 s), then the
+   street outside, where the map opens on its centre (401, 225). *)
+let leave_zone c =
+  let held_b =
+    List.fold_left
+      (fun ms (i : C.input) ->
+        if List.mem Wire.B i.buttons then ms + i.stick_ms else ms)
+      0 c.C.inputs
+  in
+  match C.last_press c Wire.A with
+  | Some a when c.now < a +. 1500. -> { (look c) with fade_black = true }
+  | Some _ -> in_zone ~facing:264. ~pin:(401., 225.) c
+  | None when held_b >= 1000 && not (map_open c) -> prompt c
+  | None -> in_zone ~facing:264. ~pin:(379., 250.) c
 
 (* 03.07's run to the gate on [screen]: its result and log. *)
 let gate_run ?(timeout_ms = 8000) screen () =
@@ -1236,20 +1266,20 @@ let cases =
     case "03.03's start check at the arch: the minimap reads 03.03-start"
       (start_check "03.03" at_arch)
       "ok\n\
-       [Checkpoint] 03.03: START CHECKED: the screen reads (minimap \
-       03.03-start), its start is (minimap 03.03-start)";
+       [Checkpoint] 03.03: START CHECKED: the screen reads (no talk prompt, \
+       minimap 03.03-start), its start is (minimap 03.03-start)";
     case "03.03's start check elsewhere: chain_off_start"
       (start_check "03.03" party)
       "chain_off_start: the run is not at 03.03's start: the screen reads (no \
-       minimap), its start is (minimap 03.03-start)\n\
-       [Checkpoint] 03.03: START CHECK FAILED: the screen reads (no minimap), \
-       its start is (minimap 03.03-start)";
+       talk prompt), its start is (minimap 03.03-start)\n\
+       [Checkpoint] 03.03: START CHECK FAILED: the screen reads (no talk \
+       prompt), its start is (minimap 03.03-start)";
     case "03.04's start check at its end, outside the Center: passed"
       (start_check "03.04" outside_center)
       "ok\n\
-       [Checkpoint] 03.04: START CHECKED (at its end): the screen reads \
-       (minimap 03.06-start), its start is (minimap 03.04-start) or its end \
-       (minimap 03.06-start)";
+       [Checkpoint] 03.04: START CHECKED (at its end): the screen reads (no \
+       talk prompt, minimap 03.06-start), its start is (minimap 03.04-start) \
+       or its end (minimap 03.06-start)";
     case "03.04 resumed outside the Center: every event skipped"
       (fun () -> skips "03.04" outside_center)
       "passed\n\
@@ -1259,35 +1289,44 @@ let cases =
     case "03.04's end check outside the Center: passed"
       (end_check "03.04" outside_center)
       "ok\n\
-       [Checkpoint] 03.04: END CHECKED: the screen reads (minimap \
-       03.06-start), its end is (minimap 03.06-start)";
+       [Checkpoint] 03.04: END CHECKED: the screen reads (no talk prompt, \
+       minimap 03.06-start), its end is (minimap 03.06-start)";
     case
       "03.04's end check inside the Center (Urbain's line): end_off_signature"
       (end_check "03.04" party)
       "end_off_signature: 03.04 passed its events but did not end at its end: \
-       the screen reads (no minimap), its end is (minimap 03.06-start)\n\
-       [Checkpoint] 03.04: END CHECK FAILED: the screen reads (no minimap), \
-       its end is (minimap 03.06-start)";
+       the screen reads (no talk prompt), its end is (minimap 03.06-start)\n\
+       [Checkpoint] 03.04: END CHECK FAILED: the screen reads (no talk \
+       prompt), its end is (minimap 03.06-start)";
     case "03.03's end check: none named, nothing read" (end_check "03.03" party)
       "ok";
     case "03.04's start check at the arch: chain_off_start, the wrong minimap"
       (start_check "03.04" at_arch)
-      "chain_off_start: the run is not at 03.04's start: the screen reads \
-       (minimap 03.03-start), its start is (minimap 03.04-start) or its end \
-       (minimap 03.06-start)\n\
-       [Checkpoint] 03.04: START CHECK FAILED: the screen reads (minimap \
-       03.03-start), its start is (minimap 03.04-start) or its end (minimap \
-       03.06-start)";
+      "chain_off_start: the run is not at 03.04's start: the screen reads (no \
+       talk prompt, minimap 03.03-start), its start is (minimap 03.04-start) \
+       or its end (minimap 03.06-start)\n\
+       [Checkpoint] 03.04: START CHECK FAILED: the screen reads (no talk \
+       prompt, minimap 03.03-start), its start is (minimap 03.04-start) or its \
+       end (minimap 03.06-start)";
     case "03.02's start: no signature, unchecked"
       (start_check "03.02" party)
       "ok\n\
        [Checkpoint] 03.02: START UNCHECKED: its plan names no start signature";
-    case "a start signature naming the party: refused, nothing reads it"
-      (start_check
+    case "a start signature naming the party: the party count reads it"
+      (start_check ~party:1
          ~execution:[ ("start_signature", `Assoc [ ("party", `Int 1) ]) ]
          "03.03" at_arch)
-      "start_signature_unread: 03.03: its start signature is not one minimap \
-       ({\"minimap\": \"<name>\"}): only the minimap is read here";
+      "ok\n\
+       [Checkpoint] 03.03: START CHECKED: the screen reads (no talk prompt, \
+       party 1, minimap 03.03-start), its start is (party 1)";
+    case "a start signature with another field: refused"
+      (start_check
+         ~execution:
+           [ ("start_signature", `Assoc [ ("weather", `String "sun") ]) ]
+         "03.03" at_arch)
+      "start_signature_unread: 03.03: its start signature has \"weather\": its \
+       fields are talk_prompt and wild_zone (true or false), party (a count) \
+       and minimap (a recorded name)";
     case "a start signature naming an unrecorded minimap: refused"
       (start_check
          ~execution:
@@ -1321,8 +1360,8 @@ let cases =
       (start_check "03.06" (fun c ->
            { (party c) with minimap = Some "03.06-start" }))
       "ok\n\
-       [Checkpoint] 03.06: START CHECKED: the screen reads (minimap \
-       03.06-start), its start is (minimap 03.06-start)";
+       [Checkpoint] 03.06: START CHECKED: the screen reads (no talk prompt, \
+       minimap 03.06-start), its start is (minimap 03.06-start)";
     case "03.07's run to the gate: B held to the A prompt" (gate_run gate)
       "ok, 18 run\n[PLZA] run_to_gate: the gate's A prompt: reached the gate";
     case "03.07's run to the gate, a day/night change: runs again"
@@ -1378,26 +1417,84 @@ let cases =
       (refused "03.08")
       "03.08 event 1 (catch_more_species): no handler for game action \
        \"catch_in_zone\"; 0 inputs";
-    case "03.08's start signature (the wild zone, a party of 3): not read"
-      (start_check "03.08" party)
-      "start_signature_unread: 03.08: its start signature is not one minimap \
-       ({\"minimap\": \"<name>\"}): only the minimap is read here";
+    case "03.08's start: at Taunie's rocks with a party of 3"
+      (start_check ~party:3 "03.08" (in_zone ~pin:(476., 224.)))
+      "ok\n\
+       [PLZA] map pin: (476, 224)\n\
+       [Checkpoint] 03.08: START CHECKED: the screen reads (no talk prompt, in \
+       a wild zone, party 3), its start is (in a wild zone, party 3)";
+    case "03.08's start out of the zone: chain_off_start"
+      (start_check ~party:3 "03.08" (in_zone ~pin:(401., 224.)))
+      "chain_off_start: the run is not at 03.08's start: the screen reads (no \
+       talk prompt, not in a wild zone, party 3), its start is (in a wild \
+       zone, party 3)\n\
+       [PLZA] map pin: (401, 224)\n\
+       [Checkpoint] 03.08: START CHECK FAILED: the screen reads (no talk \
+       prompt, not in a wild zone, party 3), its start is (in a wild zone, \
+       party 3)";
     case "03.08a is refused before it presses: catch_in_zone is not ported"
       (refused "03.08a")
       "03.08a event 1 (catch_fifth_species): no handler for game action \
        \"catch_in_zone\"; 0 inputs";
-    case "03.08b is refused before it presses: its way out is not ported"
-      (refused "03.08b")
-      "03.08b event 1 (zone_1_to_far_gate): no handler for game action \
-       \"run_out_of_zone_1\"; 0 inputs";
+    case "03.08b: down the gate's line to the A prompt, out, checked"
+      (fun () ->
+        let r, c = outcome "03.08b" leave_zone in
+        String.concat "\n" (r :: C.lines c))
+      "passed\n\
+       [Story] 03.08b: start, 3 events\n\
+       [Story] 03.08b #1 zone_1_to_far_gate: start (one map read, then B held: \
+       onto the gate's line when off it (runs in off the line hit a pillar), \
+       and down the road to the far gate's A prompt; a wild battle does not \
+       stop it, leaving ends it)\n\
+       [PLZA] map pin: (379, 250)\n\
+       [PLZA] face_heading: the arrow reads 264.0 deg, 264 wanted: -0.3 off\n\
+       [PLZA] run_to_gate: the gate's A prompt: reached the gate\n\
+       [Story] 03.08b #1 zone_1_to_far_gate: done\n\
+       [Story] 03.08b #2 leave_zone_1: start (A Leave, out on the street)\n\
+       [PLZA scene] start, expecting the controls hint, the party bar or the A \
+       prompt.\n\
+       [PLZA scene] fade at 0.0s: black fade, black fade 1\n\
+       [PLZA scene] fade at 0.3s: black fade, black fade 2\n\
+       [PLZA scene] fade at 0.6s: black fade, black fade 3\n\
+       [PLZA scene] fade at 0.8s: black fade, black fade 4\n\
+       [PLZA scene] fade at 1.1s: black fade, black fade 5\n\
+       [PLZA scene] fade at 1.4s: black fade, black fade 6\n\
+       [PLZA scene] control_showing at 1.7s: party bar\n\
+       [PLZA scene] control at 2.8s: party bar\n\
+       [PLZA scene] done on control.\n\
+       [Story] 03.08b #2 leave_zone_1: done\n\
+       [Story] 03.08b #3 out_of_zone_1: start (confirm the map pin is out of \
+       Wild Zone 1 before chaining into 03.09)\n\
+       [PLZA] map pin: (401, 225)\n\
+       [PLZA] out of Wild Zone 1: the map pin reads (401, 225)\n\
+       [Story] 03.08b #3 out_of_zone_1: done\n\
+       [Story] 03.08b: done";
+    case "03.08b with no gate prompt: three runs, then gate_not_reached"
+      (fun () ->
+        let r, c = outcome "03.08b" (in_zone ~facing:264. ~pin:(379., 250.)) in
+        String.concat "\n"
+          (r
+          :: List.filter
+               (fun l -> contains "run_out_of_zone_1" l || contains "map pin" l)
+               (C.lines c)))
+      "03.08b event 1 (zone_1_to_far_gate): gate_not_reached: no gate A prompt \
+       in 5000 ms of running\n\
+       [PLZA] map pin: (379, 250)\n\
+       [PLZA] map pin: (379, 250)\n\
+       [PLZA] run_out_of_zone_1: no prompt on run 1, again from (379, 250)\n\
+       [PLZA] map pin: (379, 250)\n\
+       [PLZA] run_out_of_zone_1: no prompt on run 2, again from (379, 250)";
     case "03.09 with no minimap arrow: the walk's heading fails before any leg"
       (refused "03.09")
       "03.09 event 1 (to_research_lab): arrow_unread: no minimap arrow within \
        40 s; 0 inputs";
-    case "03.09's start signature (a party of 5, out of the zone): not read"
-      (start_check "03.09" party)
-      "start_signature_unread: 03.09: its start signature is not one minimap \
-       ({\"minimap\": \"<name>\"}): only the minimap is read here";
+    case "03.09's start: out of the zone with a party of 5"
+      (start_check ~party:5 "03.09" (in_zone ~pin:(401., 225.)))
+      "ok\n\
+       [PLZA] map pin: (401, 225)\n\
+       [Checkpoint] 03.09: START CHECKED: the screen reads (no talk prompt, \
+       not in a wild zone, party 5), its start is (not in a wild zone, party \
+       5)";
     case "03.10: the lab's elevator to 3F"
       (fun () ->
         let r, c = outcome "03.10" lab_elevator in

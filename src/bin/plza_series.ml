@@ -6,7 +6,7 @@
    engine, Plza_checkpoints.Runner): each run its own daemon (the program's
    viewport, native) and run folder, as Checkpoint_live_run for FireRed, but
    without save states or an in-game save: PLZA saves by autosave. A plan's
-   start signature (its minimap) is checked before each run
+   start signature (minimap, party count, A prompt, wild zone) is checked before each run
    (Plza_autostory.Start_signature). The series' first run starts where the
    console is, put there by hand (01.00b on the new game's Confirm Choices,
    01.01 on the platform); every later run of the same checkpoint first goes

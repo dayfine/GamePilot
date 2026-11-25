@@ -1,28 +1,33 @@
-(** A checkpoint's start and end checks by the minimap. The start check: the
-    plan's [execution.start_signature], as the fork checks it before a chained
+(** A checkpoint's start and end checks. The start check: the plan's
+    [execution.start_signature], as the fork checks it before a chained
     checkpoint and after a reload ([check_live_start] and [reload_into] in
-    PokemonLZA_AutoStoryGame.cpp, [read_start_signature] in
-    PokemonLZA_AutoStory.cpp, [plza/lean]): the screen read up to 20 times, 500
-    ms apart, until the same minimap ({!Plza_readers.Minimap}) has read 3 times
-    in a row; it must be the one the signature names. Nothing is pressed.
+    PokemonLZA_AutoStoryGame.cpp; [read_start_signature], [read_start_position]
+    in PokemonLZA_AutoStory.cpp; [read_start_screen] in
+    PokemonLZA_AutoStoryScreenEvents.cpp; [start_confirmed] in
+    PokemonLZA_AutoStoryStarts.cpp; [plza/lean]).
+
+    A signature names any of [talk_prompt] (an A prompt shows), [wild_zone] (the
+    map's pin is in Wild Zone 1), [party] (the party bar's filled slots) and
+    [minimap] (a recorded minimap). The screen is read up to 20 times, 500 ms
+    apart, until the same read (the A prompt, the party count and the minimap;
+    nothing during a fade or a text box) has come 3 times in a row. With
+    [wild_zone] named, the map is then opened for the pin
+    ({!Plza_walk.Map_walk.read_pin}). Every field the signature names must read
+    the same. Nothing is pressed but the map's buttons.
 
     - no signature: logged as START UNCHECKED, and the run goes on, as the
       fork's;
-    - the minimap of the plan's [execution.end_signature] instead: passed, as at
-      its end (a reload past the checkpoint's own autosave lands there, and its
-      events skip there by [skip_if]);
-    - another minimap read, or no minimap agreed on: [chain_off_start], which
-      repeats;
-    - a signature naming anything but one recorded minimap ([talk_prompt],
-      [party], [wild_zone], or a name with no recording):
-      [start_signature_unread], which repeats. The fork reads those too; no plan
-      here names one yet.
+    - the plan's [execution.end_signature] read instead: passed, as at its end
+      (a reload past the checkpoint's own autosave lands there, and its events
+      skip there by [skip_if]);
+    - anything else, or no read agreed on: [chain_off_start], which repeats;
+    - a signature with another field, an unrecorded minimap, or nothing:
+      [start_signature_unread], which repeats.
 
-    Where it differs: the fork's read agrees on the whole signature (the A
-    prompt, the party count and the minimap); this reads the minimap only. The
-    end signature is ours: the fork checks no end (it only notes whether its
-    autosave showed), and 03.04 passed on Urbain's one line inside the Center
-    (console B, 2026-11-25). *)
+    Where it differs: the end signature is ours: the fork checks no end (it only
+    notes whether its autosave showed), and 03.04 passed on Urbain's one line
+    inside the Center (console B, 2026-11-25). The party count takes two frames
+    here ({!Plza_readers.Party_slots}). *)
 
 val check :
   Plza_story.Story_steps.game_steps ->
@@ -35,6 +40,6 @@ val check_end :
   checkpoint_id:string ->
   Json_field.obj ->
   (unit, Engine_run.Failure.cause) result
-(** After the last event: the minimap the plan's [execution.end_signature]
-    names, read as the start's is, or [end_off_signature] (a retry reloads). No
-    end signature: [Ok], nothing read. *)
+(** After the last event: the plan's [execution.end_signature], read as the
+    start's is, or [end_off_signature] (a retry reloads). No end signature:
+    [Ok], nothing read. *)

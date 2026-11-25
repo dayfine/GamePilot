@@ -25,6 +25,10 @@ type game_steps = {
       (** As [race], but the read that ends the input replaces it with the
           inputs the last function gives (no button released between: ZL held
           through the move), done before it returns. *)
+  read_party_slots : unit -> int option;
+      (** Count the party bar's filled slots on the latest screen: its cards on
+          one frame, its bars on the next ({!Plza_readers.Party_slots}); [None]
+          with no bar or none filled. *)
   log : string -> unit;  (** A line for the log and the watch page. *)
   log_detail : string -> unit;  (** A line for the log alone. *)
 }

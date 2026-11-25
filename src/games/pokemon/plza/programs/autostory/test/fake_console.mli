@@ -14,11 +14,18 @@ type t = {
 val create : unit -> t
 
 val steps :
-  t -> (t -> Plza_story.Story_look.t) -> Plza_story.Story_steps.game_steps
-(** The story steps on it; each read advances 33 ms then asks the screen. *)
+  ?party:(t -> int option) ->
+  t ->
+  (t -> Plza_story.Story_look.t) ->
+  Plza_story.Story_steps.game_steps
+(** The story steps on it; each read advances 33 ms then asks the screen. A
+    party count advances two reads and asks [party] (default: none read). *)
 
 val nth_after : t -> Wire.button -> after:float -> int -> float option
 (** The [n]th press of the button (from 0) ended after [after]. *)
+
+val last_press : t -> Wire.button -> float option
+(** When the last press of the button ended. *)
 
 val stick_reached : t -> int -> float option
 (** When the stick, held in all, reached that many ms. *)

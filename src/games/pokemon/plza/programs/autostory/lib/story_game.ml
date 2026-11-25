@@ -113,38 +113,59 @@ let run_to_gate_ms = 8000
 let run_to_gate steps ~timeout_ms =
   Plza_walk.Gate_run.run (Story_steps.walk_game_steps steps) ~timeout_ms
 
+(* The plan's timeout for each run at the far gate (plza-03.08b.plan.json). *)
+let run_out_of_zone_1_ms = 5000
+
+let run_out_of_zone_1 steps ~timeout_ms =
+  Plza_walk.Map_walk.run_out_of_zone_one
+    (Story_steps.walk_game_steps steps)
+    ~timeout_ms
+
+let check_out_of_zone_1 steps =
+  Plza_walk.Map_walk.check_out_of_zone_one (Story_steps.walk_game_steps steps)
+
 (* The fork's counts (PokemonLZA_AutoStoryConsoleActions.cpp). *)
 let max_throws = 6
 let max_rounds = 6
 
+(* Wild Zone 1's actions, from 03.07 on. *)
+let zone_actions =
+  [
+    ("run_to_gate", timed run_to_gate ~default:run_to_gate_ms);
+    ( "catch_tutorial",
+      no_args (fun steps -> Catches.catch_tutorial steps ~max_throws) );
+    ( "battle_then_catch",
+      no_args (fun steps -> Catches.battle_then_catch steps ~max_rounds) );
+    ("run_out_of_zone_1", timed run_out_of_zone_1 ~default:run_out_of_zone_1_ms);
+    ("check_out_of_zone_1", no_args check_out_of_zone_1);
+  ]
+
+(* The story's own actions, up to 03.06. *)
+let story_actions ~reload =
+  [
+    ("confirm_new_game", no_args New_game_confirm.run);
+    ( "opening_to_platform",
+      timed Platform_wait.opening_to_platform ~default:opening_to_platform_ms );
+    ( "wait_for_platform",
+      timed (platform_or_reload ~reload) ~default:wait_for_platform_ms );
+    ("set_text_speed_fast", no_args Text_speed.run);
+    ("plus_skip", no_args Plus_skip.run);
+    ("scene_to_choice", scene_to_choice);
+    ("choose_0", no_args (fun steps -> Choose_row.run steps 0));
+    ("choose_1", no_args (fun steps -> Choose_row.run steps 1));
+    ("scene_to_battle", no_args scene_to_battle);
+    ("scene_with_start_window", scene_with_start_window);
+    ("scene_through_prompt", scene_through_prompt);
+    ("story_battle", no_args Story_battle.run);
+    ("talk_through_map_screen", no_args Map_talk.run);
+    ( "climb_ladder",
+      no_args (fun steps -> Plza_walk.Ladder_climb.run (talk_steps steps)) );
+  ]
+
 let game_actions ~reload steps =
   List.map
     (fun (name, action) -> (name, action steps))
-    [
-      ("confirm_new_game", no_args New_game_confirm.run);
-      ( "opening_to_platform",
-        timed Platform_wait.opening_to_platform ~default:opening_to_platform_ms
-      );
-      ( "wait_for_platform",
-        timed (platform_or_reload ~reload) ~default:wait_for_platform_ms );
-      ("set_text_speed_fast", no_args Text_speed.run);
-      ("plus_skip", no_args Plus_skip.run);
-      ("scene_to_choice", scene_to_choice);
-      ("choose_0", no_args (fun steps -> Choose_row.run steps 0));
-      ("choose_1", no_args (fun steps -> Choose_row.run steps 1));
-      ("scene_to_battle", no_args scene_to_battle);
-      ("scene_with_start_window", scene_with_start_window);
-      ("scene_through_prompt", scene_through_prompt);
-      ("story_battle", no_args Story_battle.run);
-      ("talk_through_map_screen", no_args Map_talk.run);
-      ("run_to_gate", timed run_to_gate ~default:run_to_gate_ms);
-      ( "catch_tutorial",
-        no_args (fun steps -> Catches.catch_tutorial steps ~max_throws) );
-      ( "battle_then_catch",
-        no_args (fun steps -> Catches.battle_then_catch steps ~max_rounds) );
-      ( "climb_ladder",
-        no_args (fun steps -> Plza_walk.Ladder_climb.run (talk_steps steps)) );
-    ]
+    (story_actions ~reload @ zone_actions)
 
 let scene steps (event : Plan.event) =
   match event.way with

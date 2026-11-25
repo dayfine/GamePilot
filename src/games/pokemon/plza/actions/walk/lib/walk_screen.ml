@@ -11,6 +11,7 @@ type t = {
   interact_prompt : bool;
   scene_under_way : bool;
   minimap_arrow : float option;
+  map_pin : Map_leg.point option;
 }
 
 let empty ~at_ms =
@@ -27,6 +28,7 @@ let empty ~at_ms =
     interact_prompt = false;
     scene_under_way = false;
     minimap_arrow = None;
+    map_pin = None;
   }
 
 let fade_shows l = l.fade_black || l.fade_white

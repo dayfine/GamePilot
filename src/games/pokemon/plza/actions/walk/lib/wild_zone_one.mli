@@ -32,6 +32,9 @@ val exit_legs : Map_leg.point -> Map_leg.point list
     (bearing 270 within 8: a run 20 off it ended on a pillar, 2026-11-17), else
     the run-up (375, 252) first. *)
 
+val point_text : Map_leg.point -> string
+(** "(401, 224)". *)
+
 val out_of_zone_reads : int
 (** 2: the pin reads {!check_out} takes at most. *)
 

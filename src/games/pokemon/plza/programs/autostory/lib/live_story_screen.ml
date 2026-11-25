@@ -100,7 +100,25 @@ let race_then c check next =
        ~stop:(fun m -> check (look_of_frame m))
        ~then_:(fun m -> next (look_of_frame m)))
 
-let game_steps ~picture:_ ~log ~log_detail : Plza_story.Story_steps.game_steps =
+(* The second frame of a party count: the bars' tests made from the first
+   frame's cards, subscribed for one read. *)
+let count_bars ~picture ~sent_out cards =
+  Effects.with_probes (Party_slots.bar_probes ~picture cards) (fun () ->
+      Option.bind (fresh ()) (fun m ->
+          Option.map (Party_slots.filled ~sent_out) (Party_slots.bars m)))
+
+let read_party_slots ~picture () =
+  let count m =
+    match Party_slots.cards m with
+    | Some cards when Party_bar.shown m ->
+        count_bars ~picture ~sent_out:(Party_marker.down_slot m) cards
+    | Some _ | None -> None
+  in
+  match Option.bind (fresh ()) count with
+  | Some n when n > 0 -> Some n
+  | Some _ | None -> None
+
+let game_steps ~picture ~log ~log_detail : Plza_story.Story_steps.game_steps =
   let last = ref None in
   {
     submit = (fun c -> ignore (Effects.submit [ c ] : Wire.batch_done));
@@ -109,6 +127,7 @@ let game_steps ~picture:_ ~log ~log_detail : Plza_story.Story_steps.game_steps =
     race;
     race_batch;
     race_then;
+    read_party_slots = read_party_slots ~picture;
     log;
     log_detail;
   }

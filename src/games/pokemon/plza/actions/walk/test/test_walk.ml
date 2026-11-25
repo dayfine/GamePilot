@@ -63,6 +63,7 @@ let screen ?(still = false) ?(fade_black = false) ?(fade_white = false)
     interact_prompt = false;
     scene_under_way = false;
     minimap_arrow = None;
+    map_pin = None;
   }
 
 let platform at = screen ~hint:true at
