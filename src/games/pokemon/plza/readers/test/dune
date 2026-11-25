@@ -3,15 +3,6 @@
  (modules write_probe_spec)
  (libraries yojson gamepilot.wire gamepilot.plza_readers))
 
-(rule
- (copy fixtures/switch.probes.jsonl switch.probes.jsonl))
-
-(rule
- (copy fixtures/switch.shifted.probes.jsonl switch.shifted.probes.jsonl))
-
-(rule
- (copy fixtures/switch.second.probes.jsonl switch.second.probes.jsonl))
-
 (tests
  (names
   test_dialog_readers
@@ -45,7 +36,5 @@
   test_main_menu
   fixture_frames)
  (deps
-  switch.probes.jsonl
-  switch.shifted.probes.jsonl
-  switch.second.probes.jsonl)
+  (glob_files fixtures/*.probes.jsonl))
  (libraries gamepilot.wire gamepilot.table_test gamepilot.plza_readers))

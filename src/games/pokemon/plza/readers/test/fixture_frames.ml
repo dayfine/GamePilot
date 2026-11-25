@@ -1,16 +1,28 @@
 (* The recorded probe results of the PLZA frames (regen_fixture.sh), as the
-   measurements a reader takes: fixtures/switch.probes.jsonl by frame
+   measurements a reader takes: fixtures/<folder>.probes.jsonl by frame
    ("<folder>/<frame>", no extension), every shifted frame of
-   fixtures/switch.shifted.probes.jsonl (one shift per frame) with the frame
+   fixtures/<folder>.shifted.probes.jsonl (one shift per frame) with the frame
    it shifts, and each frame's second read
-   (fixtures/switch.second.probes.jsonl). *)
+   (fixtures/<folder>.second.probes.jsonl). One file of each kind per image
+   folder, so regenerating one folder rewrites only its own files. *)
 
-let frames = Wire.read_image_probes "switch.probes.jsonl"
-let shifted = Wire.read_image_probes "switch.shifted.probes.jsonl"
+(* Every fixtures/<folder><kind>.probes.jsonl, [kind] "" (the frames),
+   ".shifted" or ".second", in file name order. *)
+let fixtures kind =
+  Sys.readdir "fixtures" |> Array.to_list |> List.sort String.compare
+  |> List.filter (fun file ->
+         match Filename.chop_suffix_opt ~suffix:".probes.jsonl" file with
+         | Some stem -> Filename.extension stem = kind
+         | None -> false)
+  |> List.concat_map (fun file ->
+         Wire.read_image_probes (Filename.concat "fixtures" file))
+
+let frames = fixtures ""
+let shifted = fixtures ".shifted"
 let measurements probes : Wire.frame = { seq = 1; t_ms = 0.; probes }
 
-(* fixtures/switch.second.probes.jsonl: a two-frame read's second frame. *)
-let seconds = Wire.read_image_probes "switch.second.probes.jsonl"
+(* fixtures/<folder>.second.probes.jsonl: a two-frame read's second frame. *)
+let seconds = fixtures ".second"
 
 (* "./<folder>/<frame>.<ext>" to "<folder>/<frame>". *)
 let frame_name path =
@@ -21,7 +33,7 @@ let frame_name path =
 let frame name =
   match List.find_opt (fun (path, _) -> frame_name path = name) frames with
   | Some (_, probes) -> measurements probes
-  | None -> failwith ("no frame " ^ name ^ " in switch.probes.jsonl")
+  | None -> failwith ("no frame " ^ name ^ " in fixtures/*.probes.jsonl")
 
 let second name =
   Option.map

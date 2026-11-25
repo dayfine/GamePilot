@@ -1,6 +1,6 @@
 (* The party count (PokemonLZA_PartyBarDetector.cpp's filled slots) on the
-   fork's frames: each frame's cards from switch.probes.jsonl, its bars from
-   switch.second.probes.jsonl (probed with tests made from those cards,
+   fork's frames: each frame's cards from <folder>.probes.jsonl, its bars from
+   <folder>.second.probes.jsonl (probed with tests made from those cards,
    as a live count's second frame). The fork's cases: five filled with slot
    0 selected, sent out, or over bright ground; one filled in Hotel Z's lobby
    and at its elevator's prompt. *)
