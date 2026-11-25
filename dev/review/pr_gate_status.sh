@@ -3,7 +3,7 @@
 #   PR  CI  STRUCT  NEXT  TITLE
 # CI is pass / fail / pending / none; STRUCT is the qc-structural verdict at the PR's tip: ok /
 # rework / stale(<sha>) / none / skip (docs-only). NEXT is fix CI / wait for CI /
-# run qc-structural / rework / user review. dev/review/gate_row.py reads the verdicts.
+# run qc-structural / rework / merge (structural: reason) / user review. dev/review/gate_row.py reads the verdicts.
 #   sh dev/review/pr_gate_status.sh            every open PR
 #   sh dev/review/pr_gate_status.sh 25 26      these PRs
 # GAMEPILOT_REPO overrides the repository (default dayfine/GamePilot).
