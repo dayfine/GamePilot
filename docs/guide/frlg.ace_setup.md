@@ -64,7 +64,7 @@ Glitch 08-activate-and-verify ends in, walked out of the Dept. Store (Fly works 
 | 01-buy-magikarp | Below the Route 4 Pokemon Center's PC with a party member holding no Mail in slot 6: from anywhere outdoors, fly there, put the member holding no Mail in the PC, and buy a Magikarp from the salesman, or, when Magikarp is already seen, withdraw a Pokemon from the PC |
 | 02-write-ace-mail | The ? Mail written BULK UP / CAPABLE / KARATE CHOP / MAGIKARP: species 0x0351 in Box 3 slot 1 |
 
-<!-- plans: 66326b74af96 -->
+<!-- plans: 3cab548301f6 -->
 <!-- /generated -->
 
 In plain words:

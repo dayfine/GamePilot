@@ -42,13 +42,15 @@ val holds : log:(string -> unit) -> string -> bool
 (** Reads the condition from the game, in the effect context, from the
     overworld; logs ["[Skip] pokedex_seen:magikarp: seen."]. *)
 
-val remembered : (string -> bool) -> string -> bool
-(** [remembered read]: [read], asked at most once per condition; later asks get
-    the first answer. *)
+val remembered : (string -> 'a) -> string -> 'a
+(** [remembered read]: [read], asked at most once per key (a condition, a
+    species); later asks get the first answer. *)
 
 val read_once : log:(string -> unit) -> string -> bool
-(** {!holds}, read from the game at most once per condition: a checkpoint run
-    asks for a fresh one, so a condition is read before its first event and
-    keeps that answer to the end of the run. One read instead of one per event,
-    and an event that changes the answer (buying the Magikarp a later event's
-    [pokedex_seen:magikarp] names) does not skip the events after it. *)
+(** {!holds}, each species' Pokédex entry read from the game at most once: a
+    checkpoint run asks for a fresh one, so a species is read before the first
+    event whose condition names it and keeps that answer to the end of the run;
+    [pokedex_seen:magikarp] and [pokedex_not_seen:magikarp] share the one read.
+    One read instead of one per event, and an event that changes the answer
+    (buying the Magikarp a later event's [pokedex_seen:magikarp] names) does not
+    skip the events after it. *)

@@ -40,17 +40,16 @@ let answer ~seen = function
         ^ "), so not skipped",
         false )
 
-let read_pokedex ~log condition p =
-  let what, holds =
-    answer ~seen:p.seen (Pokedex_entry_steps.read ~log p.species)
-  in
-  log (Printf.sprintf "[Skip] %s: %s." condition what);
-  holds
-
-let holds ~log condition =
+(* [entry] reads the species' Pokédex entry. *)
+let condition_holds ~log ~entry condition =
   match pokedex_condition condition with
-  | Some p -> read_pokedex ~log condition p
+  | Some p ->
+      let what, holds = answer ~seen:p.seen (entry p.species) in
+      log (Printf.sprintf "[Skip] %s: %s." condition what);
+      holds
   | None -> false
+
+let holds ~log = condition_holds ~log ~entry:(Pokedex_entry_steps.read ~log)
 
 let remembered read =
   let answers = Hashtbl.create 4 in
@@ -62,4 +61,5 @@ let remembered read =
         Hashtbl.replace answers condition holds;
         holds
 
-let read_once ~log = remembered (holds ~log)
+let read_once ~log =
+  condition_holds ~log ~entry:(remembered (Pokedex_entry_steps.read ~log))

@@ -49,7 +49,7 @@
         "kind": "game_action",
         "action": "pc_withdraw",
         "args": {},
-        "why": "When Magikarp is already seen (the purchase is skipped, and the salesman sells one Magikarp per save): the first Pokemon in the box the PC opens on joins the party in slot 6. Out of the PC its mail index is 0xFF (pokefirered BoxMonToMon), so it is the member the ? Mail needs, whatever its species. Here, before the purchase, so both skip conditions are answered before the Pokedex changes.",
+        "why": "When Magikarp is already seen (the purchase is skipped, and the salesman sells one Magikarp per save): the first Pokemon in the box the PC opens on joins the party in slot 6. Out of the PC its mail index is 0xFF (pokefirered BoxMonToMon), so it is the member the ? Mail needs, whatever its species. Here, at the PC the player already faces; its skip condition shares the purchase's one Pokedex read, made before anything is bought.",
         "skip_if": ["pokedex_not_seen:magikarp"]
       },
       {
