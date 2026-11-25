@@ -64,3 +64,11 @@ val settle :
     [Ok] once quiet, or when a battle starts if [battle_ends] (a trainer's after
     their talk, which the plan's next event fights); else a battle fails as
     [battle]. The cap fails as [not_settled]. *)
+
+val until_battle :
+  label:string ->
+  log:(string -> unit) ->
+  (unit, Pokemon_checkpoints.Failure.cause) result
+(** The talk settle through a scene's text until a battle starts: a trainer's
+    next battle, after the lines between two of them. Fails as [no_battle] when
+    the overworld goes quiet first, and as [not_settled] at the cap. *)
