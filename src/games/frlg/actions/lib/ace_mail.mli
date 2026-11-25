@@ -44,8 +44,9 @@ type box_view = {
 (** The box screen as read ({!Frlg_readers.Pc_box_screen}), [None] where a
     reading did not come. *)
 
+(** What the box screen says about the checked slot. *)
 type verdict =
-  | As_asked
+  | As_asked  (** Box 3, and the slot occupied or empty as the check asks. *)
   | Wrong of string  (** Why the slot is not as asked. *)
   | Unread of string  (** Which reading did not come. *)
 
