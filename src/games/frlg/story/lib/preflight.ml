@@ -57,8 +57,7 @@ let knows (move : string) (m : Story.Room_policy.member) =
 
 let unread_moves (m : Story.Room_policy.member) = m.moves = None
 
-let knows_row (read : read) move for_ =
-  let need = Printf.sprintf "a member knows %s (%s)" move for_ in
+let knows_row (read : read) ~need move =
   match read.members with
   | None -> { need; read = "not read"; verdict = Not_read }
   | Some members -> (
@@ -84,8 +83,7 @@ let with_item (read : read) item need test =
         verdict = of_bool (test n);
       }
 
-let place_row read map =
-  let need = "at the start, " ^ map in
+let place_row read ~need =
   match read.place with
   | None ->
       { need; read = "no kept start frame to compare"; verdict = Not_read }
@@ -97,32 +95,39 @@ let place_row read map =
         verdict = of_bool (F.same_place d);
       }
 
-let row read = function
-  | Party_in_order l ->
-      with_party read
-        ("party " ^ species_list l)
-        (fun m -> m = List.map Option.some l)
-  | Party_includes { members; slots } ->
-      with_party read (includes_text members slots) (fun m ->
-          List.for_all (has m) members && List.for_all (in_slot m) slots)
+let describe = function
+  | Party_in_order l -> "party " ^ species_list l
+  | Party_includes { members; slots } -> includes_text members slots
   | Member { species; for_ } ->
-      with_party read (Printf.sprintf "%s in the party (%s)" species for_)
-        (fun m -> has m species)
+      Printf.sprintf "%s in the party (%s)" species for_
   | Money_at_least { amount; for_ } ->
-      with_money read (Printf.sprintf "money at least ¥%d (%s)" amount for_)
-        (fun m -> m >= amount)
-  | Money_between { min; max } ->
-      with_money read (Printf.sprintf "money ¥%d..¥%d" min max) (fun m ->
-          m >= min && m <= max)
+      Printf.sprintf "money at least ¥%d (%s)" amount for_
+  | Money_between { min; max } -> Printf.sprintf "money ¥%d..¥%d" min max
   | Item_at_least { item; count; for_ } ->
-      with_item read item
-        (Printf.sprintf "%s at least x%d (%s)" item count for_) (fun n ->
-          n >= count)
+      Printf.sprintf "%s at least x%d (%s)" item count for_
+  | Item_exactly { item; count } -> Printf.sprintf "%s x%d" item count
+  | Knows_move { move; for_ } ->
+      Printf.sprintf "a member knows %s (%s)" move for_
+  | Place map -> "at the start, " ^ map
+
+let row read need =
+  let text = describe need in
+  match need with
+  | Party_in_order l ->
+      with_party read text (fun m -> m = List.map Option.some l)
+  | Party_includes { members; slots } ->
+      with_party read text (fun m ->
+          List.for_all (has m) members && List.for_all (in_slot m) slots)
+  | Member { species; _ } -> with_party read text (fun m -> has m species)
+  | Money_at_least { amount; _ } -> with_money read text (fun m -> m >= amount)
+  | Money_between { min; max } ->
+      with_money read text (fun m -> m >= min && m <= max)
+  | Item_at_least { item; count; _ } ->
+      with_item read item text (fun n -> n >= count)
   | Item_exactly { item; count } ->
-      with_item read item (Printf.sprintf "%s x%d" item count) (fun n ->
-          n = count)
-  | Knows_move { move; for_ } -> knows_row read move for_
-  | Place map -> place_row read map
+      with_item read item text (fun n -> n = count)
+  | Knows_move { move; _ } -> knows_row read ~need:text move
+  | Place _ -> place_row read ~need:text
 
 let compare needs read = List.map (row read) needs
 
