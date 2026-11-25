@@ -1209,6 +1209,10 @@ let cases =
       (start_check "03.08" party)
       "start_signature_unread: 03.08: its start signature is not one minimap \
        ({\"minimap\": \"<name>\"}): only the minimap is read here";
+    case "03.08a is refused before it presses: catch_in_zone is not ported"
+      (refused "03.08a")
+      "03.08a event 1 (catch_fifth_species): no handler for game action \
+       \"catch_in_zone\"; 0 inputs";
     case "the walk is walked before 03.03, run after"
       (fun () ->
         Printf.sprintf "%b %b"
