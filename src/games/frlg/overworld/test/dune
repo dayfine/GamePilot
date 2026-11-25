@@ -54,7 +54,7 @@
   gamepilot.grid_geometry
   gamepilot.grid_maps
   gamepilot.grid_planning
-  gamepilot.pokemon_checkpoints
+  gamepilot.pokemon_engine
   gamepilot.frlg_overworld
   frlg_overworld_fixtures))
 

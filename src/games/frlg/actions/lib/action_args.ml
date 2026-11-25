@@ -6,7 +6,7 @@ let decode ~action read args =
   match read ~where:(action ^ ": ") args with
   | value -> Ok value
   | exception J.Invalid e ->
-      Error (Pokemon_checkpoints.Failure.cause ~repeats:true "bad_args" e)
+      Error (Pokemon_engine.Failure.cause ~repeats:true "bad_args" e)
 
 let party_slots = 6
 
@@ -30,6 +30,33 @@ let member_keys =
   [ "species"; "sweeper"; "knock_off_species"; "recycle_species" ]
 
 let field_move_users = [ ("cut_tree", "cut") ]
+
+(* The badge each HM needs outside battle, by field move: pret pokefirered
+   src/party_menu.c (FLAG_BADGE01_GET + the field move, from
+   include/constants/party_menu.h: Flash 0 to Waterfall 6), the overworld
+   prompts in data/scripts/field_moves.inc (Cut, Rock Smash, Strength) and
+   src/field_control_avatar.c (Surf, Waterfall). *)
+let field_move_badges =
+  [
+    ("flash", "boulder");
+    ("cut", "cascade");
+    ("fly", "thunder");
+    ("strength", "rainbow");
+    ("surf", "soul");
+    ("rock_smash", "marsh");
+    ("waterfall", "volcano");
+  ]
+
+(* The field move an action uses outside battle: Cut's users, and Fly, whose
+   member the plan still names by species. *)
+let field_move_of action =
+  match List.assoc_opt action field_move_users with
+  | Some move -> Some move
+  | None -> if action = "fly" then Some "fly" else None
+
+let badge_needed action =
+  Option.bind (field_move_of action) (fun m ->
+      List.assoc_opt m field_move_badges)
 
 let picks_member ~action args =
   action = "capture"

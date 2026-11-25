@@ -28,7 +28,7 @@ type t = {
   world : Frlg_steps.world;
   gait : Route_legs.gait;
   flee : unit -> unit;  (** Runs from a wild battle, back to the overworld. *)
-  fight_trainer : unit -> (unit, Pokemon_checkpoints.Failure.cause) result;
+  fight_trainer : unit -> (unit, Pokemon_engine.Failure.cause) result;
       (** Plays the battle of a trainer who saw the player, from their text to
           the overworld after it. *)
   watch_trainers : bool;
@@ -63,14 +63,13 @@ val walk :
   t ->
   at ->
   Connected_maps.place Grid_planning.Leg.t list ->
-  (at, Pokemon_checkpoints.Failure.cause) result
+  (at, Pokemon_engine.Failure.cause) result
 (** Walks the legs from [at], with {!Walk_interrupts.probes} subscribed. Fails
     with [route_unsupported] (an action leg), [leg_blocked], [interrupted],
     [no_warp_fade], [fade_stuck], [trainer_battle], [message_stuck], or as
     [fight_trainer] fails. *)
 
-val step :
-  t -> at -> Direction.t -> (at, Pokemon_checkpoints.Failure.cause) result
+val step : t -> at -> Direction.t -> (at, Pokemon_engine.Failure.cause) result
 (** One step toward the direction from [at]: a turn tap if the player faces
     another way, then the D-pad held one tile at a walk, with no interrupt
     watched. For the step onto a tile that sets off a scene (a coord event, as

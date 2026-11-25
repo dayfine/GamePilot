@@ -1,6 +1,6 @@
 module J = Json_field
-module P = Pokemon_checkpoints.Plan
-module Postconditions = Pokemon_checkpoints.Postconditions
+module P = Pokemon_engine.Plan
+module Postconditions = Pokemon_engine.Postconditions
 module A = Frlg_actions
 
 type need =
@@ -40,29 +40,6 @@ let item_users = [ "give_bag_item"; "use_item" ]
 let candy_users = [ "use_rare_candy"; "candy_level" ]
 let yen_per_coin = 20
 
-(* The badge each HM needs outside battle, by field move: pret pokefirered
-   src/party_menu.c (FLAG_BADGE01_GET + the field move, from
-   include/constants/party_menu.h: Flash 0 to Waterfall 6), the overworld
-   prompts in data/scripts/field_moves.inc (Cut, Rock Smash, Strength) and
-   src/field_control_avatar.c (Surf, Waterfall). *)
-let field_move_badges =
-  [
-    ("flash", "boulder");
-    ("cut", "cascade");
-    ("fly", "thunder");
-    ("strength", "rainbow");
-    ("surf", "soul");
-    ("rock_smash", "marsh");
-    ("waterfall", "volcano");
-  ]
-
-(* The field move an action uses outside battle: Cut's users, and Fly, whose
-   member the plan still names by species. *)
-let field_move_of action =
-  match List.assoc_opt action A.Action_args.field_move_users with
-  | Some move -> Some move
-  | None -> if action = "fly" then Some "fly" else None
-
 type acc = {
   members : (string * string) list;
       (** needed, with the action; newest first *)
@@ -97,10 +74,7 @@ let field_move action acc =
   else { acc with knows = (move, action) :: acc.knows }
 
 let use_badge action acc =
-  match
-    Option.bind (field_move_of action) (fun m ->
-        List.assoc_opt m field_move_badges)
-  with
+  match A.Action_args.badge_needed action with
   | Some badge when not (List.mem_assoc badge acc.badges) ->
       { acc with badges = (badge, action) :: acc.badges }
   | _ -> acc
@@ -262,3 +236,46 @@ let needs stocks ~before (plan : P.t) =
   in
   party_needs before acc @ money_needs before acc @ item_needs before acc
   @ place
+
+let species_list l = String.concat ", " l
+
+let slot_text ({ slot; species } : Postconditions.slot) =
+  Printf.sprintf "%s in slot %d" species slot
+
+let includes_text members slots =
+  "party includes " ^ species_list (members @ List.map slot_text slots)
+
+let describe = function
+  | Party_in_order l -> "party " ^ species_list l
+  | Party_includes { members; slots } -> includes_text members slots
+  | Member { species; for_ } ->
+      Printf.sprintf "%s in the party (%s)" species for_
+  | No_mail { species; for_ } ->
+      Printf.sprintf "%s holds no Mail (%s)" species for_
+  | Money_at_least { amount; for_ } ->
+      Printf.sprintf "money at least ¥%d (%s)" amount for_
+  | Money_between { min; max } -> Printf.sprintf "money ¥%d..¥%d" min max
+  | Item_at_least { item; count; for_ } ->
+      Printf.sprintf "%s at least x%d (%s)" item count for_
+  | Item_exactly { item; count } -> Printf.sprintf "%s x%d" item count
+  | Knows_move { move; for_ } ->
+      Printf.sprintf "a member knows %s (%s)" move for_
+  | Badge { badge; for_ } -> Printf.sprintf "the %s badge (%s)" badge for_
+  | Place map -> "at the start, " ^ map
+  | Badges_at_least n -> Printf.sprintf "at least %d badges" n
+  | Badges [ badge ] -> Printf.sprintf "the %s badge" badge
+  | Badges names -> "badges " ^ String.concat ", " names
+  | Hall_of_fame -> "the Hall of Fame entered"
+  | Caught_at_least n -> Printf.sprintf "at least %d species caught" n
+
+let asks_something = function
+  | Party_in_order l | Badges l -> l <> []
+  | Party_includes { members; slots } -> members <> [] || slots <> []
+  | Money_at_least { amount = n; _ }
+  | Item_at_least { count = n; _ }
+  | Badges_at_least n
+  | Caught_at_least n ->
+      n > 0
+  | Member _ | No_mail _ | Knows_move _ | Badge _ | Money_between _
+  | Item_exactly _ | Place _ | Hall_of_fame ->
+      true

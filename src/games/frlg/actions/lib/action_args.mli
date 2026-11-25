@@ -11,7 +11,7 @@ val decode :
   action:string ->
   (where:string -> Json_field.obj -> 'a) ->
   Json_field.obj ->
-  ('a, Pokemon_checkpoints.Failure.cause) result
+  ('a, Pokemon_engine.Failure.cause) result
 (** Runs the reader on the args with ["<action>: "] as [where]. *)
 
 val party_slots : int
@@ -34,6 +34,14 @@ val field_move_users : (string * string) list
 (** The actions whose member the game picks itself, by the field move it must
     know: [cut_tree] (Cut). Their ["species"] names that member for the
     pre-flight only. *)
+
+val field_move_badges : (string * string) list
+(** The badge each HM needs outside battle, by field move: [("fly", "thunder")]
+    and the six others, from pret pokefirered [src/party_menu.c]. *)
+
+val badge_needed : string -> string option
+(** The badge the game checks before this action's field move: Cut's users
+    ({!field_move_users}) and [fly]; [None] for an action with no field move. *)
 
 val deposited_species : where:string -> Json_field.obj -> string list
 (** [pc_deposit]'s ["species"]: a list, every member it stores, in order; [[]]

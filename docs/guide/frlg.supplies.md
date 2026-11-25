@@ -1,15 +1,20 @@
 # Supplies
 
-Stocks the items other programs use up, so they can check a count instead of shopping themselves:
-100 Retro Mail from the Celadon Dept. Store 4F (the Mail Glitch's item duplication spends one per
-copy) and 5 Super Repels from the Lavender Mart. It starts and ends at the Dept. Store 1F save spot
-and costs ¥7,500. The list is fixed for now; a configurable shopping list is planned.
+Stocks the items other programs use up, so they can check a count instead of shopping themselves.
+
+It buys a fixed list for now (a configurable shopping list is planned), for ¥7,500:
+
+- 100 Retro Mail from the Celadon Dept. Store 4F: the Mail Glitch's item duplication spends one per
+  copy.
+- 5 Super Repels from the Lavender Mart.
 
 <!-- generated:backends -->
 Runs on: mGBA, the Switch (in its GBA app).
 <!-- /generated -->
 
 ## Before you start
+
+Save at the Celadon Dept. Store 1F save spot: the run starts and ends there.
 
 <!-- generated:needs -->
 - pidgey in the party (fly)

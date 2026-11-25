@@ -51,7 +51,7 @@ and the generated guide blocks do not print it.
 - Bad: `- 0 free party slots` in a guide's `needs` block.
 - Good: the line left out; `- 2 free party slots (joining: ...)` when slots are needed.
 - Find: the generator (`src/games/frlg/series/lib/guide_tables.ml`,
-  `Frlg_checkpoints.Preflight.asks_something`)
+  `Frlg_checkpoints.Plan_needs.asks_something`)
   leaves them out and CI's `gamepilot guide --check` fails on a stale block. A new kind of need
   must say in `asks_something` when it asks nothing. Recipe for leftovers:
   `grep -rnE '^- 0 |x0\b|¥0\b|at least 0' docs/guide`.
@@ -446,7 +446,7 @@ Find the gate in pret pokefirered (the script or the C that checks it) and cite 
 - Find: recipe, then judgment on each hit (is the count or the Hall of Fame what the game checks?):
   `grep -rnE '"(badges|hall_of_fame)": *(true|[0-9])' src/games/*/programs/*/plans`;
   for field moves, `grep -rnE '"action": "(fly|surf|strength|rock_smash|waterfall|cut_tree|flash)"' src/games/*/programs/*/plans`
-  checked against `field_move_badges` in `src/games/frlg/checkpoints/lib/plan_needs.ml`, and
+  checked against `field_move_badges` in `src/games/frlg/actions/lib/action_args.ml`, and
   `grep -rnE 'in the party \((fly|surf|strength|cut)' docs/guide` for an HM need by species (R3).
 
 ## AGENTS.md hard rules no lint checks yet

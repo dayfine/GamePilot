@@ -1,16 +1,19 @@
 # Team Training
 
 Turns one Rare Candy into 99 with the Mail Glitch's item duplication, for levelling the team.
-It needs the glitch active (the end of [Mail Glitch](frlg.mail_glitch.md)), MIMIEN in slot 1 and at
-least 99 Retro Mail in the bag (run [Supplies](frlg.supplies.md) first). It flies to Vermilion,
-picks up Route 6's hidden Rare Candy under a Super Repel, flies back to the Celadon Dept. Store 1F
-and duplicates it. Using the candies is a later checkpoint.
+
+It flies to Vermilion, picks up Route 6's hidden Rare Candy under a Super Repel, flies back to the
+Celadon Dept. Store 1F and duplicates it. Using the candies is a later checkpoint.
 
 <!-- generated:backends -->
 Runs on: mGBA, the Switch (in its GBA app).
 <!-- /generated -->
 
 ## Before you start
+
+- The glitch active: the end of [Mail Glitch](frlg.mail_glitch.md).
+- MIMIEN in slot 1.
+- At least 99 Retro Mail in the bag: run [Supplies](frlg.supplies.md) first.
 
 <!-- generated:needs -->
 - pidgey in the party (fly)

@@ -4,7 +4,7 @@
    Glitch chain needs in the party (Party_room). Plans are 01-celadon-setup..08-activate-and-verify. *)
 
 open Frlg_checkpoints
-module P = Pokemon_checkpoints.Postcondition_check
+module P = Pokemon_engine.Postcondition_check
 module F = Frlg_readers.Start_frame
 
 let plan id =
@@ -44,7 +44,7 @@ let frame ?(changed = 0) () =
   | Ok f -> f
   | Error e -> failwith e
 
-let party l = Some (Pokemon_checkpoints.Postconditions.Party_in_order l)
+let party l = Some (Pokemon_engine.Postconditions.Party_in_order l)
 let read l = Some (List.map Option.some l)
 
 let start_check expected observed =
@@ -136,7 +136,7 @@ let summary slot species moves : Room_policy.member =
 let cut_row read =
   let before =
     Some
-      (Pokemon_checkpoints.Postconditions.stated
+      (Pokemon_engine.Postconditions.stated
          (plan "01-celadon-setup").postconditions)
   in
   Preflight.compare (needs "02-trade-farfetchd" before) read
@@ -287,7 +287,7 @@ let preflight_cases =
       (fun () ->
         let before =
           Some
-            (Pokemon_checkpoints.Postconditions.stated
+            (Pokemon_engine.Postconditions.stated
                (plan "02-trade-farfetchd").postconditions)
         in
         String.concat "; "
@@ -312,7 +312,7 @@ let preflight_cases =
       (fun () ->
         let before =
           Some
-            (Pokemon_checkpoints.Postconditions.stated
+            (Pokemon_engine.Postconditions.stated
                (plan "03-trade-mr-mime").postconditions)
         in
         String.concat "; "
@@ -337,7 +337,7 @@ let preflight_cases =
       (fun () ->
         let before =
           Some
-            (Pokemon_checkpoints.Postconditions.stated
+            (Pokemon_engine.Postconditions.stated
                (plan "04-grind-farfetchd").postconditions)
         in
         String.concat "; "
@@ -360,7 +360,7 @@ let preflight_cases =
       (fun () ->
         let before =
           Some
-            (Pokemon_checkpoints.Postconditions.stated
+            (Pokemon_engine.Postconditions.stated
                (plan "06-grind-return").postconditions)
         in
         String.concat "; "
