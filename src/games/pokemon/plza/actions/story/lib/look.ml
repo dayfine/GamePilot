@@ -124,6 +124,7 @@ let to_walk_screen l : Plza_walk.Screen.t =
     controls_hint = l.controls_hint;
     interact_prompt = l.interact_prompt;
     scene_under_way = scene_under_way l;
+    battle = l.battle;
     minimap_arrow = l.minimap_arrow;
     map_pin =
       Option.map (fun { x; y } : Plza_walk.Map_leg.point -> { x; y }) l.map_pin;

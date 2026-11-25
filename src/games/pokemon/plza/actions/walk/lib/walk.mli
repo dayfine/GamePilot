@@ -15,12 +15,14 @@
     to run ({!Inputs.Run}); [walk_only] walks it, as before dash is unlocked
     (01.01).
 
-    Not ported yet: with a story battle ahead in the checkpoint, the fork stops
-    a walk on two battle HUD reads and goes on at the battle
-    (PokemonLZA_AutoStoryActionTable.cpp). No walk to 03.11 met a battle on
-    console B; here such a walk ends as it would without one. *)
+    With a story battle ahead in the checkpoint ([battle_ahead]), as the fork's
+    walk action (PokemonLZA_AutoStoryActionTable.cpp, fork PR 725 on its
+    plza/lean branch): the battle HUD before the walk, on two reads in a row of
+    its last leg, or after a failed walk is [battle_on_screen] ({!Battle_stop}),
+    and the caller goes on at the battle. The map walks ({!Map_walk}) do not
+    stop on a battle, as the fork's do not. *)
 
-type game_steps = {
+type game_steps = Leg_play.game_steps = {
   submit : Wire.command -> unit;
       (** Send one input and return once it is done. *)
   read_screen : unit -> Screen.t;  (** Read the screen. *)
@@ -39,24 +41,36 @@ val play_legs :
 val walk_to_end :
   game_steps ->
   walk_only:bool ->
+  stop_on_battle:bool ->
   string ->
   Plza_rules.Walk_args.move ->
   until:Plza_rules.Walk_args.until ->
   earliest_end_ms:int ->
   outcome
-(** [walk_to_end steps ~walk_only walk move ~until ~earliest_end_ms]: plays all
-    but the last leg's walk, then holds the last leg in slices of up to 250 ms,
-    reading the screen after each, until [until] shows (an end event seen before
-    [earliest_end_ms] of the leg was passed on the way) or a black fade ends it
-    (a scene takes over). The leg's time is the budget: [walk_no_end] after it
-    with no end event, [walk_no_scene] when control stayed free. With
-    {!Plza_rules.Walk_args.Scene}, two busy reads in a row (text, a box or a
-    fade) end it. *)
+(** [walk_to_end steps ~walk_only ~stop_on_battle walk move ~until
+     ~earliest_end_ms]: plays all but the last leg's walk, then holds the last
+    leg in slices of up to 250 ms, reading the screen after each, until [until]
+    shows (an end event seen before [earliest_end_ms] of the leg was passed on
+    the way) or a black fade ends it (a scene takes over). The leg's time is the
+    budget: [walk_no_end] after it with no end event, [walk_no_scene] when
+    control stayed free. With {!Plza_rules.Walk_args.Scene}, two busy reads in a
+    row (text, a box or a fade) end it. With [stop_on_battle] (a story battle
+    ahead), the battle HUD on two reads in a row, in the slices or in a talk's
+    reads after them, stops the walk there: [battle_on_screen], logged with the
+    time held. *)
 
 val run_event :
-  game_steps -> walk_only:bool -> string -> Plza_rules.Walk_args.t -> outcome
-(** A walk event: the wait before, then {!Free_control_wait.wait}, then
-    {!walk_to_end} with an end, or {!play_legs} without one, then the final
-    screen logged. A walk with a heading faces it first, once control is free
-    ({!Face_heading}), as the fork's walk step does
-    (PokemonLZA_AutoStoryActionTable.cpp). *)
+  game_steps ->
+  walk_only:bool ->
+  battle_ahead:bool ->
+  string ->
+  Plza_rules.Walk_args.t ->
+  outcome
+(** A walk event: with [battle_ahead], [battle_on_screen] at once when the
+    battle HUD shows ({!Battle_stop.showing}); then the wait before, then
+    {!Free_control_wait.wait}, then {!walk_to_end} with an end, or {!play_legs}
+    without one, then the final screen logged. A walk with a heading faces it
+    first, once control is free ({!Face_heading}), as the fork's walk step does
+    (PokemonLZA_AutoStoryActionTable.cpp). With [battle_ahead], the last leg
+    stops on the battle HUD, and a failed walk with the HUD showing after it is
+    [battle_on_screen]. *)

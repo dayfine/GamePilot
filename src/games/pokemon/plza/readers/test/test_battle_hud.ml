@@ -66,6 +66,40 @@ let cases =
     case "tutorial-cards/it-menu-no-card" "no";
   ]
 
+(* 01.03's battle with Andi on console B (2026-11-25, 640x360 run frames
+   scaled up): the story screen through a loss and on Andi's line after a
+   win. The loss shows a black fade between the battle and the next line, the
+   win none: that fade is what tells them apart (Battle). As the lead faints
+   (1 HP left) nothing reads: at 360p the trainer's balls and the hint are too
+   blurred for the fork's bounds, and the HP bar's trough is darker than its
+   grey. Urbain's heal reads as a dialogue box while its text types out (no
+   arrow yet): once its arrow shows it reads as the fork's story dialogue, as
+   a won battle's line does, so a fight that missed the fade would take the
+   heal for a win. *)
+let story frame expectation : Table_test.case =
+  {
+    name = frame ^ ": the story screen";
+    input =
+      (fun () ->
+        Story_screen.to_string
+          {
+            (Story_screen.read (Fixture_frames.frame frame)) with
+            minimap = None;
+          });
+    expectation;
+  }
+
+let loss_and_win_cases =
+  [
+    story "battle-hud/en-0103-lost-lead-fainting-129-360p" "nothing";
+    part_case "battle-hud/en-0103-lost-lead-fainting-129-360p"
+      "no (hint no, panel no, markers no, trainer no)";
+    story "battle-hud/en-0103-lost-black-fade-135-360p" "black fade";
+    story "battle-hud/en-0103-lost-urbain-heal-141-360p" "dialog box";
+    story "battle-hud/en-0103-won-andi-line-075-360p"
+      "dialog box, advance arrow, story dialog";
+  ]
+
 let () =
   Table_test.run "battle_hud"
-    (cases @ Fixture_frames.shifted_cases ~misses:true read)
+    (cases @ loss_and_win_cases @ Fixture_frames.shifted_cases ~misses:true read)

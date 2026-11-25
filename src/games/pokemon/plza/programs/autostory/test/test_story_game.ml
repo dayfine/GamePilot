@@ -3,7 +3,7 @@
    decode, every event reaches its handler, and each handler's presses move a
    game that answers them as the console did. Also the failures: a walk whose
    white fade never shows (lost), a start that is not Confirm Choices, a
-   platform never seen. And what the watch page is sent (Story_game.run_watched):
+   platform never seen, a story battle lost (a black fade after the attacks). And what the watch page is sent (Story_game.run_watched):
    the plan at each event's change and the run. *)
 
 open Plza_checkpoints
@@ -162,6 +162,24 @@ let rematch c =
       { (text c) with story_dialog = true }
   | None -> { (look c) with tutorial_card = true }
   | Some a3 -> in_battle ~after:a3 c
+
+(* 01.03 lost: the battle with the symbols until a move; then the lead
+   faints (3 s with nothing read, as console B's frame 129 reads at 360p),
+   a black fade for [fade_ms], then Urbain's heal line for good. *)
+let starter_lost ~fade_ms c =
+  let lost ~after =
+    match C.nth_after c Wire.Y ~after 0 with
+    | None -> battle c
+    | Some y when since c y < 3000.0 -> look c
+    | Some y when since c y < 3000.0 +. fade_ms -> black c
+    | Some _ -> { (text c) with story_dialog = true }
+  in
+  match C.stick_reached c 600 with
+  | None -> prompt c
+  | Some w -> (
+      match C.nth_after c Wire.A ~after:w 3 with
+      | None -> starter c
+      | Some a4 -> lost ~after:a4)
 
 (* 02.01: the alley's party bar until the stick was held 16.75 s; then
    Brigitte's text until two A, the battle HUD until a move, her speech until
@@ -379,28 +397,36 @@ let map_talk c ~y =
           | Some _, None -> text c
           | Some _, Some _ -> party c))
 
-(* 03.02b's battles after Taunie's prompt [t]: her text until two A, the
-   battle HUD until a move; "We're not done" until two A, the card until A,
-   the HUD until a second move; then the map talk. *)
-let taunie_battles c ~t =
-  let y n = C.nth_after c Wire.Y ~after:t n in
-  match (C.nth_after c Wire.A ~after:t 2, y 0, y 1) with
-  | None, _, _ -> text c
-  | Some _, None, _ -> battle c
-  | Some _, Some y0, None -> (
+(* 03.02b's battles from the battle HUD after [after]: the HUD until a move;
+   "We're not done" until two A, the card until A, the HUD until a second
+   move; then the map talk. *)
+let taunie_from_battle c ~after =
+  let y n = C.nth_after c Wire.Y ~after n in
+  match (y 0, y 1) with
+  | None, _ -> battle c
+  | Some y0, None -> (
       match
         (C.nth_after c Wire.A ~after:y0 1, C.nth_after c Wire.A ~after:y0 2)
       with
       | None, _ -> { (text c) with story_dialog = true }
       | Some _, None -> { (look c) with tutorial_card = true }
       | Some _, Some _ -> battle c)
-  | Some _, Some _, Some y1 -> map_talk c ~y:y1
+  | Some _, Some y1 -> map_talk c ~y:y1
+
+(* 03.02b's battles after Taunie's prompt [t]: her text until two A, then
+   the battles. *)
+let taunie_battles c ~t =
+  match C.nth_after c Wire.A ~after:t 2 with
+  | None -> text c
+  | Some _ -> taunie_from_battle c ~after:t
 
 (* 03.02b: the plaza's party bar, the scene's A prompt once the stick was held
    4 s, until A; a black fade 1.5 s, the Smart Rotom card until A, the party
    bar at the arch; Taunie's A prompt once the stick was held 7 s, until A;
-   then her battles. [lost]: no scene prompt. *)
-let quartiere_verde ?(lost = false) c =
+   then her battles. [lost]: no scene prompt. [battle_mid_walk]: her battle
+   starts 2 s into the walk to her (the HUD, no talk), as 03.02b's did on
+   console B (2026-11-19). *)
+let quartiere_verde ?(lost = false) ?(battle_mid_walk = false) c =
   match C.stick_reached c 4000 with
   | Some p when not lost -> (
       match C.nth_after c Wire.A ~after:p 0 with
@@ -408,6 +434,10 @@ let quartiere_verde ?(lost = false) c =
       | Some a when since c a < 1500.0 -> black c
       | Some a when C.nth_after c Wire.A ~after:a 0 = None ->
           { (look c) with tutorial_card = true }
+      | Some _ when battle_mid_walk -> (
+          match C.stick_reached c 6000 with
+          | None -> party c
+          | Some w -> taunie_from_battle c ~after:w)
       | Some _ -> (
           match C.stick_reached c 7000 with
           | None -> party c
@@ -511,7 +541,7 @@ let lab_elevator ?(lost = false) c =
           | Some _ -> party c))
   | _ -> party c
 
-let outcome checkpoint screen =
+let run checkpoint screen =
   let c = C.create () in
   reloaded := false;
   let steps = C.steps c screen in
@@ -521,10 +551,31 @@ let outcome checkpoint screen =
     Ok ()
   in
   let game =
-    Plza_autostory.Story_game.make steps ~checkpoint_id:checkpoint ~reload
+    Plza_autostory.Story_game.make steps
+      ~checkpoint:(plan checkpoint).checkpoint ~reload
   in
-  let result = Runner.run game (plan checkpoint).checkpoint in
+  (Runner.run game (plan checkpoint).checkpoint, c)
+
+let outcome checkpoint screen =
+  let result, c = run checkpoint screen in
   ((match result with Ok () -> "passed" | Error f -> Failure.to_string f), c)
+
+(* The run's end and whether its failure repeats: a failure that does not is
+   tried again from the last autosave (Runs, Checkpoint_trials). *)
+let tried checkpoint screen =
+  let result, c = run checkpoint screen in
+  ( (match result with
+    | Ok () -> "passed"
+    | Error f ->
+        Printf.sprintf "%s; repeats %s" (Failure.to_string f)
+          (if Failure.repeats f then "yes" else "no")),
+    c )
+
+(* The story battle's log lines. *)
+let battle_lines c =
+  List.filter
+    (fun l -> String.starts_with ~prefix:"[PLZA] story_battle" l)
+    (C.lines c)
 
 let result checkpoint screen () = fst (outcome checkpoint screen)
 
@@ -541,11 +592,11 @@ let new_game_given ?(given = true) () =
   let steps = C.steps (C.create ()) look in
   let game =
     if given then
-      Plza_autostory.Story_game.make ~new_game steps ~checkpoint_id:"01.00a"
-        ~reload:(fun () -> Ok ())
+      Plza_autostory.Story_game.make ~new_game steps
+        ~checkpoint:(plan "01.00a").checkpoint ~reload:(fun () -> Ok ())
     else
-      Plza_autostory.Story_game.make steps ~checkpoint_id:"01.00a"
-        ~reload:(fun () -> Ok ())
+      Plza_autostory.Story_game.make steps
+        ~checkpoint:(plan "01.00a").checkpoint ~reload:(fun () -> Ok ())
   in
   match Runner.run game (plan "01.00a").checkpoint with
   | Ok () -> "passed: " ^ !choices
@@ -823,7 +874,7 @@ let watched checkpoint screen () =
       reloaded := false;
       let game =
         Plza_autostory.Story_game.make (C.steps c screen)
-          ~checkpoint_id:checkpoint ~reload:(fun () -> Ok ())
+          ~checkpoint:(plan checkpoint).checkpoint ~reload:(fun () -> Ok ())
       in
       let report = Plan_watch.create (plan checkpoint).checkpoint in
       ignore
@@ -940,6 +991,27 @@ let cases =
        [Story] 01.03 #2 andi_battle_start: skipped (battle_shows)\n\
        [PLZA] story_battle: Picking Move: Left\n\
        [Story] 01.03: done";
+    case
+      "01.03 lost: the lead faints, a black fade, Urbain's heal: battle_lost, \
+       tried again"
+      (fun () ->
+        let r, c = tried "01.03" (starter_lost ~fade_ms:2000.0) in
+        String.concat "\n" (r :: battle_lines c))
+      "01.03 event 3 (andi_battle): battle_lost: a black fade after the \
+       attacks: the lead fainted (the heal and the rematch follow); repeats no\n\
+       [PLZA] story_battle: Move Effectiveness: Top: Effective; Left: Super \
+       Effective; Right: (Unable to Detect); Bottom: No Effect;\n\
+       [PLZA] story_battle: Picking Move: Left\n\
+       [PLZA] story_battle: a black fade after the attacks: the battle is lost.";
+    (* A fade shorter than the fight's reads (one per attack, 1.25 s or
+       more apart) goes unseen: the heal's line reads as the won battle's,
+       and the next scene waits for control that never comes, still tried
+       again but 360 s later. *)
+    case "01.03 lost with a fade the reads miss (0.5 s): the next scene fails"
+      (fun () -> fst (tried "01.03" (starter_lost ~fade_ms:500.0)))
+      "01.03 event 4 (after_andi): scene_timeout: scene: Did not finish within \
+       360 s (expecting the controls hint, the party bar or the A prompt).; \
+       repeats no";
     case
       "01.03 resumed at Urbain's heal: the walk skipped, the scene to the HUD"
       (fun () -> skips "01.03" rematch)
@@ -1216,6 +1288,71 @@ let cases =
        [PLZA] story_battle: Picking Move: Left\n\
        [PLZA] talk_through_map_screen: the party bar held: back in the \
        overworld";
+    case
+      "03.02b, Taunie's battle mid-walk: the walk stops on the HUD, the run \
+       goes on at the battle (fork PR 725)"
+      (fun () ->
+        let r, c = outcome "03.02b" (quartiere_verde ~battle_mid_walk:true) in
+        String.concat "\n"
+          (r
+          :: List.filter
+               (fun line ->
+                 List.exists
+                   (fun prefix -> String.starts_with ~prefix line)
+                   [
+                     "[PLZA] to_taunie";
+                     "[Event]";
+                     "[Story] 03.02b #3";
+                     "[Story] 03.02b #4";
+                     "[Story] 03.02b #5";
+                     "[PLZA] story_battle: Picking";
+                   ])
+               (C.lines c)))
+      "passed\n\
+       [Story] 03.02b #3 to_taunie: start (on through the arch to Taunie's \"A \
+       Talk\", A on it. not planned: no tile grid in Lumiose)\n\
+       [PLZA] to_taunie: battle HUD showed after 2250 ms of the last leg: \
+       stopping walk.\n\
+       [Event] 03.02b: battle on screen during to_taunie: jumping to \
+       battle_totodile, skipping taunie_battle_start\n\
+       [Story] 03.02b #3 to_taunie: done\n\
+       [Story] 03.02b #4 taunie_battle_start: start (A through her talk and \
+       challenge (no A hint, subtitles without a box) to the battle HUD)\n\
+       [Story] 03.02b #4 taunie_battle_start: done\n\
+       [Story] 03.02b #5 battle_totodile: start (beat Totodile, until \"We're \
+       not done just yet!\")\n\
+       [PLZA] story_battle: Picking Move: Left\n\
+       [Story] 03.02b #5 battle_totodile: done\n\
+       [PLZA] story_battle: Picking Move: Left";
+    case
+      "03.02b's jump, its battles skipped by their skip_if: the next event \
+       runs again"
+      (fun () ->
+        let cp = (plan "03.02b").checkpoint in
+        let ev id = List.find (fun (e : Plan.event) -> e.id = id) cp.events in
+        let lines = ref [] in
+        let jump =
+          Plza_autostory.Battle_jump.make cp ~log:(fun l ->
+              lines := l :: !lines)
+        in
+        let ran id =
+          match
+            Plza_autostory.Battle_jump.run jump (ev id) (fun () ->
+                lines := ("ran " ^ id) :: !lines;
+                Ok ())
+          with
+          | Ok () -> ()
+          | Error _ -> lines := "failed" :: !lines
+        in
+        ignore
+          (Plza_autostory.Battle_jump.after jump (ev "to_taunie")
+             (Error Plza_walk.Battle_stop.battle_on_screen));
+        ran "taunie_battle_start";
+        ran "after_taunie_battle";
+        String.concat "\n" (List.rev !lines))
+      "[Event] 03.02b: battle on screen during to_taunie: jumping to \
+       battle_totodile, skipping taunie_battle_start\n\
+       ran after_taunie_battle";
     case "03.02b lost: no plaza scene prompt"
       (result "03.02b" (quartiere_verde ~lost:true))
       "03.02b event 1 (to_plaza_scene_prompt): walk_no_end: \

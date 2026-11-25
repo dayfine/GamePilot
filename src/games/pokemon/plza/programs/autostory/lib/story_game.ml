@@ -223,25 +223,46 @@ let builtin steps (event : Plan.event) =
         (Failure.cause ~repeats:true "no_handler"
            (event.id ^ ": PLZA runs no talk, answer or save event"))
 
-let walk steps ~checkpoint_id (event : Plan.event) (own : Plza_rules.Action.t) =
+let walk steps ~checkpoint_id ~jump (event : Plan.event)
+    (own : Plza_rules.Action.t) =
+  let walk_steps = Steps.walk_game_steps steps in
+  let walk_only = walk_only checkpoint_id in
+  let battle_ahead = Battle_jump.battle_ahead jump event in
   match own with
   | Walk args ->
-      Plza_walk.Walk.run_event
-        (Steps.walk_game_steps steps)
-        ~walk_only:(walk_only checkpoint_id) event.id args
+      Battle_jump.after jump event
+        (Plza_walk.Walk.run_event walk_steps ~walk_only ~battle_ahead event.id
+           args)
 
-let make ?(new_game = no_new_game) steps ~checkpoint_id ~reload : Game.t =
+(* Every handler runs through the jump to a story battle. *)
+let jumping jump (name, action) =
+  ( name,
+    fun event args -> Battle_jump.run jump event (fun () -> action event args)
+  )
+
+let own_through jump steps ~checkpoint_id event own =
+  Battle_jump.run jump event (fun () ->
+      walk steps ~checkpoint_id ~jump event own)
+
+let builtin_through jump steps event =
+  Battle_jump.run jump event (fun () -> builtin steps event)
+
+let no_save () =
+  Error (Failure.cause ~repeats:true "no_save" "PLZA saves by autosave only")
+
+let make ?(new_game = no_new_game) steps ~(checkpoint : Plan.checkpoint) ~reload
+    : Game.t =
+  let checkpoint_id = checkpoint.checkpoint_id in
+  let jump = Battle_jump.make checkpoint ~log:steps.Steps.log in
   {
-    run_own = walk steps ~checkpoint_id;
-    run_builtin = builtin steps;
-    game_actions = game_actions ~new_game ~reload steps;
+    run_own = own_through jump steps ~checkpoint_id;
+    run_builtin = builtin_through jump steps;
+    game_actions =
+      List.map (jumping jump) (game_actions ~new_game ~reload steps);
     flag_holds = Resume_flags.holds steps;
     position = (fun () -> None);
     between_rounds = (fun () -> Ok ());
-    save =
-      (fun () ->
-        Error
-          (Failure.cause ~repeats:true "no_save" "PLZA saves by autosave only"));
+    save = no_save;
     reload;
     log = steps.log;
   }
