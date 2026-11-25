@@ -151,7 +151,6 @@
   08-activate-and-verify.plan.json)
  (libraries
   gamepilot.table_test
-  gamepilot.grid_maps
   gamepilot.json_field
   gamepilot.pokemon_checkpoints
   gamepilot.frlg_actions
