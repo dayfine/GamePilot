@@ -2,8 +2,7 @@
    and runner line goes to one log, handlers fail where the script says, and
    the player is read where the script puts them after each event. *)
 
-open Checkpoints_plan
-open Checkpoints_run
+open Pokemon_checkpoints
 
 type script = {
   fails : (string * Failure.cause) list;
@@ -35,12 +34,14 @@ let make script =
   in
   let game : Game.t =
     {
-      walk_route = (fun event _ -> handle "walk" event);
+      run_own =
+        (fun event -> function
+          | Route _ -> handle "walk" event | _ -> handle "builtin" event);
       run_builtin = handle "builtin";
       game_actions = List.map action script.actions;
       flag_holds = (fun flag -> List.mem flag script.flags);
       position = (fun () -> List.assoc_opt !last script.read_after);
-      heal = chore "heal";
+      between_rounds = chore "heal";
       save = chore "save";
       reload = chore "reload";
       log;

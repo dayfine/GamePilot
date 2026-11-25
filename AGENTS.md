@@ -9,13 +9,16 @@ GamePilot automates games through three layers (design: `docs/design/Layered-Aut
   `<name>/test`.
   - `base/`: pure, game-agnostic code with no effects (`wire`: the protocol codec).
   - `core/`: the effects programs use (`effects`) and their handlers (`session`, `live`, `replay`).
-  - `engine/`: the game-agnostic checkpoint engine (`docs/design/Engine-Boundary.md`): `checkpoints/`
-    `expand` (plan JSON rewrites), `run` (trials, event progress) and `series` (chains, order,
-    rounds). It names no game, grid or Pokémon type; a game family plugs its own in.
-  - `pokemon/`: code shared by Pokemon games (navigation grid, checkpoint plans and their runner).
-    `checkpoints/` holds four libraries. A plan file passes through `expand` (rewrites raw plan
-    JSON; the game calls it at load) and then `plan` (types, decoding). The libraries depend one
-    way, `plan` -> `run` (one checkpoint) -> `series` (a chain of checkpoints); `expand` stands alone.
+  - `engine/`: the game-agnostic checkpoint engine (`docs/design/Engine-Boundary.md`). Its
+    `checkpoints/` libraries: `terms` (`GAME_TERMS`, what a game family gives the engine),
+    `promise` (promises, counts, money), `plan` (types, decoding, text), `run` (one checkpoint:
+    handlers, trials, event progress), `series` (chains, order, rounds), `expand` (plan JSON
+    rewrites) and `make` (`Engine_checkpoints.Make`, the engine applied to a family's terms). It
+    names no game, grid or Pokémon type.
+  - `pokemon/`: code shared by Pokemon games: the navigation grid, and in `checkpoints/` the
+    Pokémon terms (`terms`: grid poses, own kinds, postconditions), the engine applied to them
+    (`plan`: `Pokemon_checkpoints`), the end-state check and room policy (`run`), console runs
+    (`series`) and place-route rewrites (`expand`).
   - `games/<game>/`: `readers/`, `actions/`, `maps/`, `checkpoints/`, and `programs/<program>/`.
   - `program_registry/`: every program's descriptor (game, group, name, doc, checkpoints folder,
     backends), as PA/CC's program list. A new program registers there (`docs/programs/README.md`).
@@ -52,7 +55,7 @@ GamePilot automates games through three layers (design: `docs/design/Layered-Aut
   timings, and each module's doc comment names the C++ file(s) it comes from, so a reader can lay the
   two side by side. Improvements and reshaping come later, in their own PRs. Where we deliberately
   differ (a missing reader, a new strategy), say so in the doc comment.
-- **Every checkpoint goes through the checkpoint runner** (`pokemon/checkpoints/run`) and its dev loop: run
+- **Every checkpoint goes through the checkpoint runner** (`engine/checkpoints/run`) and its dev loop: run
   from the checkpoint's start state, verify its end state, retry, record. Programs run in order
   (01-celadon-setup → 08-activate-and-verify), each tested on mGBA before it runs on the Switch.
   A game with no emulator (PLZA, Sword/Shield, Octopath 0) is tested instead by its reader and

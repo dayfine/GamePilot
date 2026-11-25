@@ -16,6 +16,10 @@ type obj = (string * Yojson.Safe.t) list
 val fail : ('a, unit, string, 'b) format4 -> 'a
 (** Raises {!Invalid} with the formatted message. *)
 
+val catch : (unit -> 'a) -> ('a, string) result
+(** What the reading returns, or the message of the {!Invalid} it raised: a
+    decoder made of these readers, as a [Result]. *)
+
 val item_where : string -> string -> int -> string
 (** [item_where where key i] is the prefix for item [i] of list [key]:
     ["<where><key>[<i>]."]. *)

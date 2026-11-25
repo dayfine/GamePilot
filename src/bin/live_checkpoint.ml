@@ -2,8 +2,7 @@
    series' setup, the checkpoint, and how the run ended. *)
 
 open Engine_run
-open Checkpoints_plan
-open Checkpoints_run
+open Pokemon_checkpoints
 
 type setup = {
   states : string;
@@ -26,8 +25,8 @@ type setup = {
       (** The ports the series' last daemon bound (program, page): the next one
           asks for them again, so the page keeps its URL across runs. *)
   from_event : (string * string option) option;
-      (** --from-event and --to-event: a partial run
-          (Checkpoints_run.Event_range). *)
+      (** --from-event and --to-event: a partial run (Engine_run.Event_range).
+      *)
   max_rounds : int option;
       (** --max-rounds: a repeating checkpoint's rounds, in place of its plan's
           (testing a few rounds). *)
@@ -40,7 +39,7 @@ type checkpoint = {
   start_state : string;
       (** The save state it starts from on mGBA; on the Switch, the save the
           console has loaded. *)
-  before : Plan.postconditions option;
+  before : Postconditions.t option;
       (** What the checkpoint before it promised, if any: the start check's
           party. *)
   next_id : string option;  (** The checkpoint after it, if any. *)
@@ -76,5 +75,7 @@ let partial_range cp =
 (* A partial run's first and last event, as run.json gives them. *)
 let events cp =
   Option.map
-    (fun range -> Event_range.describe range cp.plan.checkpoint.events)
+    (fun range ->
+      Engine_run.Event_range.describe range
+        (List.map (fun (e : Plan.event) -> e.id) cp.plan.checkpoint.events))
     (partial_range cp)
