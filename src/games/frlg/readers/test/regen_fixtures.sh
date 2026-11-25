@@ -12,7 +12,9 @@
 # map that names them). The tagged name is what the test reads its
 # expectations from. Sets: screen (test_screen_readers.ml,
 # the write_probe_spec default), menus (test_menu_readers.ml) and battle
-# (test_battle_readers.ml).
+# (test_battle_readers.ml); pc (test_pc_readers.ml) and card
+# (test_card_readers.ml) are made only when named. A set with no map for a
+# backend (card has no Switch capture yet) skips that backend.
 #
 #   sh games/frlg/readers/test/regen_fixtures.sh [screen|menus|battle ...]
 #
@@ -55,6 +57,7 @@ probe() {
   set_name=$1 backend=$2 spec=$3 fixture=$4
   shift 4
   map=$HERE/$set_name.$backend.map
+  [ -f "$map" ] || return 0
   stage "$map" "$WORK/$set_name.$backend"
   images=$(cut -d'|' -f2 "$map")
   # shellcheck disable=SC2086
