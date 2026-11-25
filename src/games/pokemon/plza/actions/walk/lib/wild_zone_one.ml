@@ -9,6 +9,11 @@ let rocks =
    stops on an obstacle at about (467, 226) 3 runs in 5 (2026-11-18/19);
    through here the heading to the spot keeps south of it. The fork keeps it
    in PokemonLZA_AutoStoryCatches.cpp. *)
+let rocks_radius = 8.
+
+let near_rocks (pin : point) =
+  Float.hypot (pin.x -. rocks.pin.x) (pin.y -. rocks.pin.y) <= rocks_radius
+
 let road_entry =
   { name = "the road entry"; pin = { x = 456.; y = 231. }; stop_radius = 0. }
 

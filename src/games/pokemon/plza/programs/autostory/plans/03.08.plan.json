@@ -4,6 +4,7 @@
   "execution": {
     "start_signature": {
       "wild_zone": true,
+      "near_rocks": true,
       "party": 3
     }
   },

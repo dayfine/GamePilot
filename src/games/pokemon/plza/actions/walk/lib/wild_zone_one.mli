@@ -5,6 +5,13 @@
 val rocks : Map_leg.waypoint
 (** Taunie's rocks (476, 224), where 03.08 starts. *)
 
+val rocks_radius : float
+(** 8: how far from {!rocks} a pin still reads as on them, as the fork's catch
+    checks its start (PokemonLZA_AutoStoryCatches.cpp). *)
+
+val near_rocks : Map_leg.point -> bool
+(** The pin within {!rocks_radius} of {!rocks}. *)
+
 val road_entry : Map_leg.waypoint
 (** Off the rocks onto the road, on the way to {!spot_100}. *)
 
