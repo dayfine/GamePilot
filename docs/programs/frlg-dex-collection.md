@@ -16,7 +16,7 @@ It runs on mGBA.
 | 06-retro-mail | Fly to Celadon: 110 Retro Mail at the Dept. Store's 4F; back to Indigo's nurse |
 | 07-copy-candies-and-balls | At Indigo's nurse: the Mail Glitch copies 40 more Rare Candies and 90 more Ultra Balls (Victory Road takes about 7 a catch) |
 | 08-victory-road-rest | A round from Indigo's nurse: 2 more Victory Road species a round, until the count holds the nine |
-| 09-viridian-forest | Fly to Pewter: Farfetch'd and Raticate to the PC, then Viridian Forest's Caterpie, Weedle, Kakuna, Metapod, Pikachu; candies evolve the two that joined; Pewter's nurse |
+| 09-viridian-forest | Fly to Pewter, Route 2 into Viridian Forest: Caterpie, Weedle, Kakuna, Metapod, Pikachu; Pewter's nurse |
 | 10-route3-east-grass | Fly to Route 4, Route 3's east grass: 3 of Nidoran (male), Mankey, Jigglypuff, Nidoran (female); Route 4's nurse |
 | 11-route8-grass | Fly to Lavender, cut into Route 8's grass: Meowth, Growlithe; Lavender's nurse |
 | 12-power-plant | Fly to Route 10, surf to the Power Plant: Magnemite, Magneton, Electabuzz; Route 10's nurse |

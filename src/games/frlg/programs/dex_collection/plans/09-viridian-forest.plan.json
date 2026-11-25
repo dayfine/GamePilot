@@ -3,7 +3,7 @@
   "game": "frlg",
   "checkpoint": {
     "id": "09-viridian-forest",
-    "title": "From Indigo Plateau's nurse: fly to Pewter, two members to the PC, Viridian Forest's five new species, candies evolve the two that joined, Pewter's nurse",
+    "title": "From Indigo Plateau's nurse: fly to Pewter, catch Viridian Forest's five new species, back to Pewter's nurse",
     "start": {
       "map": "IndigoPlateau_PokemonCenter_1F",
       "tiles": [
@@ -49,36 +49,6 @@
           "species": "pidgeot"
         },
         "why": "Pewter City: Route 2 runs south from it to Viridian Forest's north gate."
-      },
-      {
-        "id": "to_pewter_pc",
-        "kind": "route",
-        "action": "run",
-        "args": {
-          "target": {
-            "map": "PewterCity_PokemonCenter_1F",
-            "tiles": [
-              [
-                11,
-                2
-              ]
-            ],
-            "facing": "north"
-          }
-        },
-        "why": "Into Pewter's Center, below its PC (11, 1)."
-      },
-      {
-        "id": "deposit",
-        "kind": "game_action",
-        "action": "pc_deposit",
-        "args": {
-          "species": [
-            "farfetchd",
-            "raticate"
-          ]
-        },
-        "why": "Two slots free, so the forest's first two catches join the party for the candies."
       },
       {
         "id": "to_forest",
@@ -127,30 +97,6 @@
         "why": "Back up Route 2 to Pewter's nurse, where the next checkpoint starts."
       },
       {
-        "id": "candy_slot5",
-        "kind": "game_action",
-        "action": "candy_level",
-        "args": {
-          "target_slot": 5,
-          "target_level": 10,
-          "evolve": true,
-          "max_candies": 9
-        },
-        "why": "The first catch to Lv 10: Caterpie and Metapod evolve into Butterfree, Weedle and Kakuna into Beedrill (pret src/data/pokemon/evolution.h); Pikachu stays."
-      },
-      {
-        "id": "candy_slot6",
-        "kind": "game_action",
-        "action": "candy_level",
-        "args": {
-          "target_slot": 6,
-          "target_level": 10,
-          "evolve": true,
-          "max_candies": 9
-        },
-        "why": "The second catch the same way."
-      },
-      {
         "id": "caught_after",
         "kind": "game_action",
         "action": "read_caught",
@@ -164,10 +110,10 @@
   },
   "metadata": {
     "phase": "testing",
-    "notes": "Farfetch'd and Raticate go to the PC; the first two catches join the party, the rest go to the PC. Two catches of one line (Caterpie and Metapod) give one evolution. From 25 caught after 08: five catches and one or two evolutions, at least 31.",
+    "notes": "The party is full, so the catches go to Bill's PC. Every member but MIMIEN holds the glitch's Mail, which the PC will not store, so none of them can make room.",
     "postconditions": {
       "caught": {
-        "at_least": 31
+        "gained": 5
       }
     }
   }

@@ -125,22 +125,18 @@ caught gained 2
 at most 4 rounds, until:
 caught at least 25
 == dex_collection/plans/09-viridian-forest.plan.json
-frlg 09-viridian-forest from IndigoPlateau_PokemonCenter_1F (13, 12) north: 7 game_action, 4 route, 1 heal
+frlg 09-viridian-forest from IndigoPlateau_PokemonCenter_1F (13, 12) north: 4 game_action, 3 route, 1 heal
 caught_before: [read_caught] game_action {}
 out_of_indigo: [run] route to IndigoPlateau_Exterior (11, 7) south
 fly_pewter: [fly] game_action {"town":"PewterCity","species":"pidgeot"}
-to_pewter_pc: [run] route to PewterCity_PokemonCenter_1F (11, 2) north
-deposit: [pc_deposit] game_action {"species":["farfetchd","raticate"]}
 to_forest: [run] route to ViridianForest (5, 13) east
 catch_forest: [capture] game_action {"uncaught":["caterpie","weedle","kakuna","metapod","pikachu"],"catches":5,"encounters":150,"balls":20,"ball":"ultra-ball","pace":"east"}
 heal_pewter.walk: [run] route to PewterCity_PokemonCenter_1F (7, 4) north
 heal_pewter: heal
-candy_slot5: [candy_level] game_action {"target_slot":5,"target_level":10,"evolve":true,"max_candies":9}
-candy_slot6: [candy_level] game_action {"target_slot":6,"target_level":10,"evolve":true,"max_candies":9}
 caught_after: [read_caught] game_action {}
 retries 0
 postconditions:
-caught at least 31
+caught gained 5
 no repeat
 == dex_collection/plans/10-route3-east-grass.plan.json
 frlg 10-route3-east-grass from PewterCity_PokemonCenter_1F (7, 4) north: 4 game_action, 3 route, 1 heal
