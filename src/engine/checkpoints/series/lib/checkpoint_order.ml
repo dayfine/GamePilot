@@ -1,8 +1,8 @@
 let is_letter c = c >= 'a' && c <= 'z'
 let is_digit c = c >= '0' && c <= '9'
 
-(* The id without its trailing letters, and the letters; ["mg-05a"] is
-   ("mg-05", "a"). Letters count only after a digit. *)
+(* The id without its trailing letters, and the letters; ["cp-05a"] is
+   ("cp-05", "a"). Letters count only after a digit. *)
 let split id =
   let rec start i =
     if i > 0 && is_letter id.[i - 1] then start (i - 1) else i

@@ -1,14 +1,15 @@
-(** The checkpoint runner's rules for a repeating checkpoint ({!Plan.repeat}):
-    after each round, run another, go on (the goal holds) or stop. A round is
-    one run of the checkpoint, its attempts inside it
-    ({!Checkpoint_trials.attempts}); each passing round is saved like any
-    checkpoint, so a failed attempt goes back to the last round's save. The goal
-    is read after each passing round.
+(** The checkpoint runner's rules for a repeating checkpoint (the plan's
+    [repeat]): after each round, run another, go on (the goal holds) or stop. A
+    round is one run of the checkpoint, its attempts inside it
+    ({!Engine_run.Checkpoint_trials.attempts}); each passing round is saved like
+    any checkpoint, so a failed attempt goes back to the last round's save. The
+    goal is read after each passing round.
 
-    {!Repeat_until} is the same loop inside one session, with the game's own
-    heal, save and reload as chores; this one decides between the series' runs
-    (each with its own daemon), where the round's plan heals and the runner
-    saves. GamePilot's own: the fork has no repeating checkpoint. *)
+    {!Engine_run.Repeat_until} is the same loop inside one session, with the
+    game's own between-rounds step (Pokémon: heal), save and reload as chores;
+    this one decides between the series' runs (each with its own daemon), where
+    the round's plan heals and the runner saves. GamePilot's own: the fork has
+    no repeating checkpoint. *)
 
 type round =
   | Round_passed of { goal_met : bool }
