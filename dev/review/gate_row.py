@@ -85,7 +85,9 @@ def owner_reason(pr):
     if len(reworks) >= 2:
         return "reworked twice"
     design = [f["path"] for f in files if f["path"].startswith("docs/design/")]
-    return structural_reason(files) or ("design doc: " + design[0] if design else None)
+    if design:
+        return "design doc: " + design[0]
+    return structural_reason(files)
 
 
 def docs_only(files):
