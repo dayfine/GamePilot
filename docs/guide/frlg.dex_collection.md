@@ -15,8 +15,8 @@ Runs on: mGBA.
 
 ## Before you start
 
-- Save anywhere outdoors in Kanto: 01 flies to Indigo Plateau for Ultra Balls, then to Route 10's
-  Pokemon Center; each catch starts and ends outdoors.
+- Save anywhere outdoors in Kanto: 01 flies to Indigo Plateau for Ultra Balls and ends outside its
+  Center; each catch starts and ends outdoors.
 - Bring ¥12,000 for 10 Ultra Balls at the Indigo Plateau's Pokemon Center.
 - The party's last Pokemon must know Sweet Scent, the game's sound must be Mono and its button
   mode Help, as [Wild RNG](frlg.wild_rng.md) says. Its plans hold your trainer ID and secret ID.
@@ -24,7 +24,7 @@ Runs on: mGBA.
   as the sixth member, is checked for the shiny star and goes to the PC.
 
 <!-- generated:needs -->
-- 3 free party slots (joining: voltorb in 02-shiny-voltorb, ekans in 03-shiny-ekans, drowzee in 04-shiny-drowzee)
+- 3 free party slots (joining: voltorb in 02-shiny-voltorb, drowzee in 03-shiny-drowzee, ekans in 04-shiny-ekans)
 - rattata in the party (pc_deposit)
 - rattata holds no Mail (pc_deposit)
 - a member knows fly (fly)
@@ -38,7 +38,7 @@ Runs on: mGBA.
 <!-- generated:commands -->
 ```sh
 # mGBA: each checkpoint three times from its start state, two must pass
-sh run/run_checkpoints_on_mgba.sh frlg.dex_collection --from 01-ultra-balls --to 04-shiny-drowzee --mode verification
+sh run/run_checkpoints_on_mgba.sh frlg.dex_collection --from 01-ultra-balls --to 04-shiny-ekans --mode verification
 ```
 <!-- /generated -->
 
@@ -47,12 +47,12 @@ sh run/run_checkpoints_on_mgba.sh frlg.dex_collection --from 01-ultra-balls --to
 <!-- generated:checkpoints -->
 | Checkpoint | What its plan does |
 |---|---|
-| 01-ultra-balls | From anywhere outdoors: Ultra Balls at Indigo Plateau, then out of Route 10's Pokemon Center |
+| 01-ultra-balls | From anywhere outdoors: Ultra Balls at Indigo Plateau, healed, outdoors |
 | 02-shiny-voltorb | From anywhere outdoors: a shiny Voltorb in Route 10's grass by the wild RNG, stored in the PC, back to the nurse |
-| 03-shiny-ekans | From anywhere outdoors: a shiny Ekans in Route 10's grass by the wild RNG, stored in the PC, back to the nurse |
-| 04-shiny-drowzee | From anywhere outdoors: a shiny Drowzee in Route 11's grass by the wild RNG, stored in the PC, back to the nurse |
+| 03-shiny-drowzee | From anywhere outdoors: a shiny Drowzee in Route 11's grass by the wild RNG, stored in the PC, back to the nurse |
+| 04-shiny-ekans | From anywhere outdoors: a shiny Ekans in Route 10's grass by the wild RNG, stored in the PC, back to the nurse |
 
-<!-- plans: 1ce8a54de339 -->
+<!-- plans: 78f6260344ac -->
 <!-- /generated -->
 
 
@@ -63,8 +63,8 @@ sh run/run_checkpoints_on_mgba.sh frlg.dex_collection --from 01-ultra-balls --to
 |---|---|
 | 01-ultra-balls | a member knows fly (fly); the thunder badge (fly); money at least ¥12000 (mart); at the start, anywhere outdoors where Fly works |
 | 02-shiny-voltorb | rattata in the party (pc_deposit); rattata holds no Mail (pc_deposit); a member knows fly (fly); the thunder badge (fly); ultra-ball at least x1 (wild_rng); at the start, anywhere outdoors where Fly works |
-| 03-shiny-ekans | a member knows fly (fly); the thunder badge (fly); ultra-ball at least x1 (wild_rng); at the start, anywhere outdoors where Fly works |
-| 04-shiny-drowzee | a member knows fly (fly); the thunder badge (fly); ultra-ball at least x1 (wild_rng); at the start, anywhere outdoors where Fly works |
+| 03-shiny-drowzee | a member knows fly (fly); the thunder badge (fly); ultra-ball at least x1 (wild_rng); at the start, anywhere outdoors where Fly works |
+| 04-shiny-ekans | a member knows fly (fly); the thunder badge (fly); ultra-ball at least x1 (wild_rng); at the start, anywhere outdoors where Fly works |
 <!-- /generated -->
 
 ## Known limits
@@ -75,6 +75,9 @@ sh run/run_checkpoints_on_mgba.sh frlg.dex_collection --from 01-ultra-balls --to
   this chain. Started from another save, a catch misses: the checkpoint fails before saving
   (`wild_rng_not_shiny`).
 - Three species so far, in grass only. Fishing, surfing, static encounters and gifts come later.
+- A catch started where its Fly lands (outside that route's Center) fails at once: Fly to the town
+  the player stands in lands where it took off, which the fly action takes for no landing. The
+  order of the checkpoints never flies twice in a row to one town.
 - A catch already in the Pokedex is not skipped yet: it is caught again, shiny.
 - It never weakens a Pokemon before throwing: Ultra Balls catch these three often enough at full HP.
 

@@ -2,7 +2,7 @@
   "format": "gamepilot-checkpoint/1",
   "game": "frlg",
   "checkpoint": {
-    "id": "04-shiny-drowzee",
+    "id": "03-shiny-drowzee",
     "title": "From anywhere outdoors: a shiny Drowzee in Route 11's grass by the wild RNG, stored in the PC, back to the nurse",
     "start": {"anywhere": "outdoors"},
     "events": [
@@ -45,7 +45,7 @@
           "balls": 5,
           "attempts": 1
         },
-        "why": "A shiny Drowzee, the soonest of the table for TID 33002 and SID 9011 (read once from the save's memory). seed_offset 4: what this checkpoint's grass save (the save file's 143th) adds to the table's seeds on mGBA, measured from it. The party's last member knows Sweet Scent."
+        "why": "A shiny Drowzee, the soonest of the table for TID 33002 and SID 9011 (read once from the save's memory). seed_offset 4: what this checkpoint's grass save (the save file's save number 141) adds to the table's seeds on mGBA, measured from it. The party's last member knows Sweet Scent."
       },
       {
         "id": "save_catch",

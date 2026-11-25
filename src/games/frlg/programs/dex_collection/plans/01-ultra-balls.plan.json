@@ -3,7 +3,7 @@
   "game": "frlg",
   "checkpoint": {
     "id": "01-ultra-balls",
-    "title": "From anywhere outdoors: Ultra Balls at Indigo Plateau, then out of Route 10's Pokemon Center",
+    "title": "From anywhere outdoors: Ultra Balls at Indigo Plateau, healed, outdoors",
     "start": {"anywhere": "outdoors"},
     "events": [
       {
@@ -32,38 +32,24 @@
         "why": "10 Ultra Balls ($12,000): at full HP one catches an Ekans about two times in three, a Voltorb or a Drowzee one in two."
       },
       {
+        "fragment": "heal_at",
+        "args": {"town": "indigo_plateau"},
+        "id": "heal_indigo",
+        "why": "Healed at the nurse beside the clerk."
+      },
+      {
         "id": "out_of_indigo",
         "kind": "route",
         "action": "run",
         "args": {"target": {"map": "IndigoPlateau_Exterior", "tiles": [[11, 7]], "facing": "south"}},
-        "why": "Out of the Center to fly."
-      },
-      {
-        "id": "fly_route10",
-        "kind": "game_action",
-        "action": "fly",
-        "args": {"town": "Route10"},
-        "why": "Back to Route 10's Center, where the catches start."
-      },
-      {
-        "fragment": "heal_at",
-        "args": {"town": "route10"},
-        "id": "heal_route10",
-        "why": "Healed at Route 10's nurse, the catches' home Center."
-      },
-      {
-        "id": "out_of_center",
-        "kind": "route",
-        "action": "run",
-        "args": {"target": {"place": "route10_center_outside"}},
-        "why": "Outdoors, where each catch starts."
+        "why": "Outdoors, where each catch starts: none of them flies to Indigo Plateau, and Fly to the town the player stands in lands where it took off, which the fly action takes for no landing."
       }
     ]
   },
   "execution": {"menu": "full"},
   "metadata": {
     "phase": "testing",
-    "notes": "Starts anywhere outdoors in Kanto and ends outside Route 10's Pokemon Center, healed: the dex collection's home Center (Route 10 is a fly point; its grass is 15 tiles north). The bag's Poke Balls (8 on the Sevii save) catch Voltorb about one time in four.",
+    "notes": "Starts anywhere outdoors in Kanto and ends outside Indigo Plateau's Pokemon Center, healed. The bag's Poke Balls (8 on the Sevii save) catch Voltorb about one time in four.",
     "postconditions": {
       "items": [{"item": "ultra-ball", "gained": 10}],
       "money": {"spent": 12000}
