@@ -102,6 +102,12 @@ game's actions, what a checkpoint promises and its check) are plain values, with
 and no text. Each format turns them into bytes or words at one edge only, so the plan types, the
 runner, its failures and the checks never see JSON or build a string. A lint rule enforces it.
 
+**Names to come** (user, 2026-11-25; `Composable-Rules.md`, "Names"): `Engine_checkpoints.Make`
+becomes `Program_engine.Make (Rules) (Plan_format) (Event_snapshot)`; `*_plan_codec` becomes
+`*_plan_format`, `*_saved` `*_event_snapshot`, the instances `*_engine`; `Rules_text` goes, each
+rules part printing itself; `src/engine/checkpoints/` loses its `checkpoints` level. This section
+describes the code as it is until those PRs land.
+
 The rules were first called terms (`Engine_terms.TERMS`, `Pokemon_terms`, `Terms_text`); they were
 renamed `Engine_rules.GAME_RULES`, `Pokemon_rules` and `Rules_text` on 2026-11-25, unchanged. The
 game's own kinds were renamed its actions the same day, also unchanged: `KIND` and `Kind` became
@@ -110,6 +116,10 @@ game's own kinds were renamed its actions the same day, also unchanged: `KIND` a
 the same day `kind_of_plan` became `action_of_plan`, `TEXT.kind` `action`, `Kind_decode` and
 `Kind_text` `Pokemon_action_decode` and `Pokemon_action_text`, and the planner's `Leg.action`
 `Leg.special_step`.
+
+What follows is one `GAME_RULES` per family, as built. How a game builds its rules from shared
+pieces (a pose, action sets, promises), so that FRLG, PLZA and Octopath 0 each take only the parts
+they use and FRLG's own actions stop being raw JSON, is `Composable-Rules.md`.
 
 | Part | Engine signature | Pokémon | Toy game | Used by | Holds |
 |---|---|---|---|---|---|
