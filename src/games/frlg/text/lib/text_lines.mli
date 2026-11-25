@@ -57,6 +57,14 @@ val trainer_card_money_digit : int -> t
     ["¥<money>"] to end at x 136 of window 1 (at (8, 8)), at y 56. Read right on
     mGBA ($25,014 and $29,114, 2026-11-23). *)
 
+val trainer_card_dex_digit : int -> t
+(** Digit [k] of the Pokédex count on the Trainer Card's front, counted from the
+    right (0: ones): pokefirered src/trainer_card.c right-aligns the count of
+    species caught to end at x 136 of window 1, at y 72, so the ones digit
+    starts at x 138 of the picture, as the money's does, two rows of 16 pixels
+    lower. The count is the Kanto Pokédex's until the National Pokédex is
+    enabled, then the National one's; 3 digits at most. *)
+
 val bag_message_digit : int -> t
 (** Digit [k] (from the left) of the bag message's second line, where the Coin
     Case's ["Your COINS:\n<coins>"] (pokefirered strings.c [gText_CoinCase],

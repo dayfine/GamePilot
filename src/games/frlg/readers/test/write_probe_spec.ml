@@ -17,7 +17,7 @@ let menu_probes =
 
 let battle_probes =
   Battle_screen.probes @ Battle_yes_no.probes @ Battle_text_arrow.probes
-  @ Move_pp.probes @ Dark_corners.probes
+  @ Move_pp.probes @ Dark_corners.probes @ Caught_mark.probes
 
 let () =
   let probes =

@@ -87,6 +87,14 @@ let trainer_card_money_digit k =
     ~left:(card_ones_left - (digit_width * k))
     ~glyph_top:card_money_top
 
+(* The Pokedex count: window y 72, 16 below the money's 56. *)
+let card_dex_top = 80
+
+let trainer_card_dex_digit k =
+  digit_cell "card_dex" k
+    ~left:(card_ones_left - (digit_width * k))
+    ~glyph_top:card_dex_top
+
 (* The bag's message window 5 starts at (16, 120); its second line's glyphs
    at y 137 (measured on mGBA by reading the Coin Case's count). *)
 let bag_message_left = 16
