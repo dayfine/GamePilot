@@ -54,10 +54,13 @@ type t = {
 val none : t
 (** Nothing promised: what a plan that states no postconditions promises. *)
 
-val checked_at_end : t -> bool
-(** Whether the runner reads and checks them after the end position: a party,
-    items, coins, money or flags promised (moves, levels and marks alone are not
-    read at the end). *)
+val stated : t option -> t
+(** A plan's postconditions: {!none} when it states none. *)
+
+val at_end : t -> t option
+(** What the runner reads and checks after the end position: [None] unless a
+    party, items, coins, money or flags are promised (moves, levels and marks
+    alone are not read at the end). *)
 
 val text : t -> string list
 (** One line per promise: ["position CeladonCity (39, 21) south"],

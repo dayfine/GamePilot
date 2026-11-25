@@ -24,7 +24,7 @@ type observed = {
 }
 (** Where a game reads the player to be. *)
 
-val matches : grid -> observed -> bool
+val grid_matches : grid -> observed -> bool
 (** The map is the pose's, the tile one of its tiles (any, when it lists none),
     and the facing its facing when both the pose and the reading know it. *)
 

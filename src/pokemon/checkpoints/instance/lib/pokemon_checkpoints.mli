@@ -20,3 +20,6 @@ module Postconditions = Pokemon_terms.Postconditions
 module Postcondition_check = Pokemon_terms.Postcondition_check
 (** {!Pokemon_terms.Postcondition_check}: those promises checked against what
     the game read. *)
+
+module Saved = Pokemon_terms.Saved
+(** {!Pokemon_terms.Saved}: what a run keeps beside an event's save state. *)

@@ -5,8 +5,8 @@
     handler. Then, per event: it is skipped when a flag its [skip_if] names
     holds; otherwise its handler runs, and once it passes, the game's position
     (when it can tell) must match its [declared_after]
-    ({!Engine_terms.GAME_TERMS.matches}). The first event that fails stops the
-    run. Each event's start (with its [why]), skip, end and failure is logged as
+    ({!Engine_terms.POSE.matches}). The first event that fails stops the run.
+    Each event's start (with its [why]), skip, end and failure is logged as
     ["[Story] <checkpoint> #<n> <event>: ..."]. A handler that raises is logged
     as failed and the exception passes through.
 
@@ -19,8 +19,8 @@ open Engine_plan
 (** The runner over the game's terms. *)
 module Make (T : Engine_terms.GAME_TERMS) : sig
   val run :
-    ?end_at:T.pose ->
-    ?end_state:T.promises * (T.promises -> T.reads) ->
+    ?end_at:T.Pose.t ->
+    ?end_state:T.Promises.t * (T.Promises.t -> T.Promises.reads) ->
     ?on_event:(int -> Event_progress.t -> unit) ->
     ?events:Event_range.t ->
     Game.Make(T).t ->
@@ -36,11 +36,11 @@ module Make (T : Engine_terms.GAME_TERMS) : sig
 
       With [end_state] (the plan's promises and the game's reader of them), once
       the end position holds the game reads what the plan promises and every one
-      must pass ({!Engine_terms.GAME_TERMS.check}); one failed or not read fails
+      must pass ({!Engine_terms.PROMISES.check}); one failed or not read fails
       the run with {!Failure.Make.Unmet_postconditions}. Each is logged as
       ["[Postcondition] <checkpoint> <what>: <verdict>: <detail>"] with a
-      summary line. Promises the game does not check at the end
-      ({!Engine_terms.GAME_TERMS.checked_at_end}) read nothing.
+      summary line. Without [end_state] (a plan that states no postconditions,
+      or none the game checks at the end) nothing is read.
 
       [on_event index progress] hears each event (index from 0) start, pass,
       fail or be skipped, next to its log line (the watch page's plan).

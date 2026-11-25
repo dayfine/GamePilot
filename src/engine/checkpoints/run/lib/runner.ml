@@ -41,7 +41,8 @@ module Make (T : Engine_terms.GAME_TERMS) = struct
   (* The event's declared_after against where the game reads the player. *)
   let check_declared (game : Game.t) (event : Plan.event) =
     match (event.declared_after, game.position ()) with
-    | Some declared, Some observed when not (T.matches declared observed) ->
+    | Some declared, Some observed when not (T.Pose.matches declared observed)
+      ->
         Error (Failure.Not_at_declared { declared; observed })
     | _ -> Ok ()
 
@@ -87,14 +88,14 @@ module Make (T : Engine_terms.GAME_TERMS) = struct
   (* The end check's verdict: [Ok] or the failure reason. *)
   let end_verdict (game : Game.t) declared =
     match game.position () with
-    | Some observed when T.matches declared observed -> Ok ()
+    | Some observed when T.Pose.matches declared observed -> Ok ()
     | observed -> Error (Failure.Not_at_end { declared; observed })
 
   (* After the last event: the player stands at [declared]. *)
   let check_end (game : Game.t) (checkpoint : Plan.checkpoint) index declared =
     let id = checkpoint.checkpoint_id in
     let line text =
-      Printf.sprintf "[Story] %s end %s: %s" id (T.pose_text declared) text
+      Printf.sprintf "[Story] %s end %s: %s" id (T.Pose.text declared) text
     in
     let verdict = end_verdict game declared in
     game.log
@@ -123,7 +124,7 @@ module Make (T : Engine_terms.GAME_TERMS) = struct
   (* After the end position: the plan's postconditions, read and checked. *)
   let check_postconditions (game : Game.t) (checkpoint : Plan.checkpoint) index
       (promised, observe) =
-    let results = T.check promised (observe promised) in
+    let results = T.Promises.check promised (observe promised) in
     List.iter game.log
       (Promise.log_lines ~tag:"Postcondition" checkpoint.checkpoint_id results);
     match Promise.unmet results with
@@ -135,9 +136,8 @@ module Make (T : Engine_terms.GAME_TERMS) = struct
     | Some declared -> check_end game checkpoint index declared
 
   let check_end_state game checkpoint index = function
-    | Some ((promised, _) as checks) when T.checked_at_end promised ->
-        check_postconditions game checkpoint index checks
-    | _ -> Ok ()
+    | Some checks -> check_postconditions game checkpoint index checks
+    | None -> Ok ()
 
   let finish (game : Game.t) checkpoint index ~end_at ~end_state =
     let checked =

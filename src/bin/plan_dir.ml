@@ -54,5 +54,6 @@ let promised_before ~plan_dir id =
   | None -> Ok None
   | Some p ->
       Result.map
-        (fun (plan : Plan.t) -> Some plan.postconditions)
+        (fun (plan : Plan.t) ->
+          Some (Postconditions.stated plan.postconditions))
         (load_plan ~plan_dir p)

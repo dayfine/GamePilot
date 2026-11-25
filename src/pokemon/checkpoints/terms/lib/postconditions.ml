@@ -33,9 +33,14 @@ let none =
     marks = None;
   }
 
-let checked_at_end p =
-  p.party <> None || p.items <> [] || p.coins <> None || p.money <> None
-  || p.flags <> []
+let stated = Option.value ~default:none
+
+let at_end p =
+  if
+    p.party <> None || p.items <> [] || p.coins <> None || p.money <> None
+    || p.flags <> []
+  then Some p
+  else None
 
 let list = String.concat ", "
 let count_text = Engine_promise.Count.text

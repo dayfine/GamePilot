@@ -56,7 +56,7 @@ let checkpoint ~plan_dir (setup : Run.setup) id ~next =
       next_id;
       partial;
       end_at =
-        (match plan.postconditions.position with
+        (match Option.bind plan.postconditions (fun p -> p.position) with
         | Some position -> Some position
         | None -> Checkpoint_end.declared ~next plan.checkpoint);
     }

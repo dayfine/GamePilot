@@ -56,6 +56,9 @@ let plan () =
   with
   | Error e -> "error: " ^ e
   | Ok p ->
+      let promised =
+        Pokemon_checkpoints.Postconditions.stated p.postconditions
+      in
       String.concat "; "
         (List.map
            (fun (e : Pokemon_checkpoints.Plan.event) ->
@@ -64,9 +67,9 @@ let plan () =
       ^ " | ends "
       ^ Option.fold ~none:"?"
           ~some:(fun (g : Pokemon_checkpoints.Pose.grid) -> g.map)
-          p.postconditions.position
+          promised.position
       ^ " | party "
-      ^ (match p.postconditions.party with
+      ^ (match promised.party with
         | Some (Party_in_order l) -> String.concat ", " l
         | _ -> "?")
       ^ " | knows "
@@ -74,7 +77,7 @@ let plan () =
           (List.map
              (fun (k : Pokemon_checkpoints.Postconditions.knows) ->
                k.species ^ " " ^ String.concat "+" k.moves)
-             p.postconditions.knows)
+             promised.knows)
 
 let case name input expectation : Table_test.case = { name; input; expectation }
 

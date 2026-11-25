@@ -34,15 +34,15 @@ module Make (T : Engine_terms.GAME_TERMS) : sig
     | No_handler of string
         (** The game has no handler for this game action; found before any event
             runs. *)
-    | Not_at_declared of { declared : T.pose; observed : T.observed }
+    | Not_at_declared of { declared : T.Pose.t; observed : T.Pose.observed }
         (** The event passed, but the game reads the player somewhere other than
             its [declared_after]. *)
-    | Not_at_end of { declared : T.pose; observed : T.observed option }
+    | Not_at_end of { declared : T.Pose.t; observed : T.Pose.observed option }
         (** Every event passed, but the player is not at the checkpoint's
             declared end, or the game cannot tell where they are. *)
     | Unmet_postconditions of string list
         (** Every event passed, but promises of the plan failed or could not be
-            read ({!Engine_terms.GAME_TERMS.check}): each as
+            read ({!Engine_terms.PROMISES.check}): each as
             ["coins: failed: expected 20, read 0"]. *)
 
   type t = {

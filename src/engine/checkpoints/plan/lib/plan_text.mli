@@ -4,8 +4,8 @@
 
 (** The game's plans as text. *)
 module Make (T : Engine_terms.GAME_TERMS) : sig
-  val pose : T.pose -> string
-  (** {!Engine_terms.GAME_TERMS.pose_text}: ["CeladonCity (48, 12) south"]. *)
+  val pose : T.Pose.t -> string
+  (** {!Engine_terms.POSE.text}: ["CeladonCity (48, 12) south"]. *)
 
   val kind : Plan.Make(T).kind -> string
   (** The kind with its typed args: ["answer no"],
