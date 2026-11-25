@@ -1,10 +1,11 @@
 # Sevii Story
 
-Plays the Sevii Islands story after the Hall of Fame: Bill's trip to One Island, the Meteorite
+Plays the Sevii Islands story after the Cinnabar Gym: Bill's trip to One Island, the Meteorite
 errand and Lostelle's rescue, back to Cinnabar Island.
 
-So far it ends when Bill goes home, before the National Pokedex. "What happens" below lists each
-checkpoint.
+So far it ends when Bill goes home, before the National Pokedex. Your save must have turned Bill
+down when he asked after the Cinnabar Gym, so that he still waits in the Center. "What happens"
+below lists each checkpoint.
 
 <!-- generated:backends -->
 Runs on: mGBA.
@@ -13,10 +14,10 @@ Runs on: mGBA.
 ## Before you start
 
 <!-- generated:needs -->
-- at least 8 badges
-- the Hall of Fame entered
+- the volcano badge
 - pidgey in the party (fly)
 - blastoise in the party (party_swap)
+- the thunder badge (fly)
 - super-repel at least x2 (use_item)
 - at the start, CeladonCity_DepartmentStore_1F
 <!-- /generated -->
@@ -50,7 +51,7 @@ sh run/run_checkpoints_on_mgba.sh frlg.sevii_story --from 01-to-one-island --to 
 | 05-berry-forest | Bond Bridge's trainers, the Berry Forest and Lostelle's Hypno; home to the Game Corner |
 | 06-back-to-cinnabar | The Meteorite for a Moon Stone; Bill's goodbye on One Island and the Seagallop to Cinnabar |
 
-<!-- plans: e316e535ccf5 -->
+<!-- plans: 20cd4230b56e -->
 <!-- /generated -->
 
 ## When it stops
@@ -58,7 +59,7 @@ sh run/run_checkpoints_on_mgba.sh frlg.sevii_story --from 01-to-one-island --to 
 <!-- generated:preflight -->
 | Resume from | The pre-flight checks |
 |---|---|
-| 01-to-one-island | at least 8 badges; the Hall of Fame entered; pidgey in the party (fly); at the start, CeladonCity_DepartmentStore_1F |
+| 01-to-one-island | the volcano badge; pidgey in the party (fly); the thunder badge (fly); at the start, CeladonCity_DepartmentStore_1F |
 | 02-to-two-island | tri-pass at least x1 (promised before); at the start, OneIsland_PokemonCenter_1F |
 | 03-to-three-island | meteorite at least x1 (promised before); at the start, TwoIsland |
 | 04-three-island-bikers | blastoise in the party (party_swap); meteorite at least x1 (promised before); at the start, ThreeIsland_Harbor |

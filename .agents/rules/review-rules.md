@@ -424,6 +424,31 @@ Code reads game text and assets from files committed in this repo, one per langu
 - Good: `src/games/frlg/text/assets/move_names.<lang>.json` committed, loaded per language.
 - Find: recipe: `grep -rn 'Packages' --include='*.ml' --include=dune src | grep -v '/test/'`.
 
+## From the review of #146 (review rules catalog, 2026-11-25)
+
+### R24 A precondition names the game's own gate, not a proxy
+
+A checkpoint's preconditions (declared in `metadata.preconditions` or derived from its events) name
+what the game itself checks: a specific badge, a story flag, a key item. Never a proxy that
+happened to hold on the save the plan was written from: a badge count, the Hall of Fame, a species.
+Find the gate in pret pokefirered (the script or the C that checks it) and cite it.
+
+- Why: the user's call while reviewing the rules catalog (2026-11-25, in a working session),
+  paraphrased: what Sevii part 1 really needs is the Fire-type badge, and what lets us fly is a
+  specific badge; those are the more specific and likely the correct checks for some checkpoints.
+- Bad: Sevii 01 with `"preconditions": {"badges": 8, "hall_of_fame": true}`; a `fly` event that
+  needs only `pidgey in the party (fly)`.
+- Good: `"preconditions": {"badges": ["volcano"]}` (Blaine's win sets `FLAG_BADGE07_GET` and
+  starts Bill's scene: `data/maps/CinnabarIsland_Gym/scripts.inc`); a `fly` event needing
+  `the thunder badge (fly)` beside its member (`src/party_menu.c`: an HM outside battle needs
+  `FLAG_BADGE01_GET` + its field move: Flash Boulder, Cut Cascade, Fly Thunder, Strength Rainbow,
+  Surf Soul, Rock Smash Marsh, Waterfall Volcano; `Frlg_checkpoints.Plan_needs` derives it).
+- Find: recipe, then judgment on each hit (is the count or the Hall of Fame what the game checks?):
+  `grep -rnE '"(badges|hall_of_fame)": *(true|[0-9])' src/games/*/programs/*/plans`;
+  for field moves, `grep -rnE '"action": "(fly|surf|strength|rock_smash|waterfall|cut_tree|flash)"' src/games/*/programs/*/plans`
+  checked against `field_move_badges` in `src/games/frlg/actions/lib/action_args.ml`, and
+  `grep -rnE 'in the party \((fly|surf|strength|cut)' docs/guide` for an HM need by species (R3).
+
 ## AGENTS.md hard rules no lint checks yet
 
 Each is stated in `AGENTS.md` (the name below is its bold lead); the auditor runs the recipe and

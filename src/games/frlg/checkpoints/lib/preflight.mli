@@ -32,6 +32,9 @@ type need = Plan_needs.need =
   | Knows_move of { move : string; for_ : string }
       (** Some member knows this field move: a [cut_tree] event's Cut, which the
           game lets any member that knows it use. *)
+  | Badge of { badge : string; for_ : string }
+      (** The badge a field move needs outside battle ([for_]: the action),
+          judged on the Trainer Card. *)
   | Money_at_least of { amount : int; for_ : string }
   | Money_between of { min : int; max : int }
   | Item_at_least of { item : string; count : int; for_ : string }
