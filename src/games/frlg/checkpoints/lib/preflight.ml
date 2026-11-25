@@ -237,9 +237,13 @@ let to_read needs : P.postconditions =
       (if party then Some (P.Party_includes { members = []; slots = [] })
        else None);
     items =
-      List.map (fun bag_item -> { P.bag_item; count = P.Count_exactly 0 }) items;
+      List.map
+        (fun bag_item -> { P.bag_item; count = Engine_promise.Count.Exactly 0 })
+        items;
     coins = None;
-    money = (if money then Some (P.Money_range { min = 0; max = 0 }) else None);
+    money =
+      (if money then Some (Engine_promise.Money.Range { min = 0; max = 0 })
+       else None);
     flags = [];
     knows = [];
     levels = [];

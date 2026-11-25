@@ -74,9 +74,10 @@ let () =
         (people "CinnabarIsland_PokemonCenter_1F")
         "nurse (7, 2), cooltrainer_f (2, 4), gentleman (9, 7), youngster (14, \
          6), bill (11, 5)";
-      case "another Center: the nurse alone"
+      case "Pewter's people, as pret lists them"
         (people "PewterCity_PokemonCenter_1F")
-        "nurse (7, 2)";
+        "nurse (7, 2), jigglypuff (2, 2), gentleman (4, 8), youngster (1, 2), \
+         woman_1 (13, 2), gba_kid (10, 7), gba_kid (14, 6)";
       case "One Island's Center has its own layout" not_standard
         "OneIsland_PokemonCenter_1F does not use LAYOUT_POKEMON_CENTER_1F";
       case "Cinnabar's door brings its Center's room in" added "true";

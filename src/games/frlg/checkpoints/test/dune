@@ -164,6 +164,7 @@
  (modules test_make_room)
  (libraries
   yojson
+  gamepilot.grid_maps
   gamepilot.table_test
   gamepilot.checkpoints_plan
   gamepilot.checkpoints_run
@@ -221,3 +222,25 @@
   gamepilot.checkpoints_run
   gamepilot.frlg_readers
   gamepilot.frlg_checkpoints))
+
+(executable
+ (name print_plans)
+ (modules print_plans)
+ (libraries
+  gamepilot.repo_io
+  gamepilot.checkpoints_plan
+  gamepilot.plan_text
+  gamepilot.frlg_checkpoints))
+
+(rule
+ (deps
+  (glob_files_rec ../../programs/*.plan.json))
+ (action
+  (with-stdout-to
+   plans.txt
+   (run ./print_plans.exe ../../programs))))
+
+(rule
+ (alias runtest)
+ (action
+  (diff plans.golden plans.txt)))

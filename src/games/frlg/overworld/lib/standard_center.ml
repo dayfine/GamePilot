@@ -30,7 +30,8 @@ let is_standard name = List.mem name centers
 (* The fork's CENTER_ROOM_JSON (Overworld/PokemonFRLG_CodedRooms.cpp) in the
    runtime map format: LAYOUT_POKEMON_CENTER_1F's collision and elevation from
    pokefirered data/layouts/PokemonCenter_1F/map.bin at ce6406d8, the nurse
-   and the PC's stand; %s are the name, the points, the warps and the people. *)
+   and the PC's stand; %s are the name, the points, the warps and the other
+   people (Center_people). *)
 let room_text : (_, unit, string) format =
   {|{
   "format": "pokesim-runtime-map/2",
@@ -58,40 +59,33 @@ let room_text : (_, unit, string) format =
      "source_script": "%s_EventScript_Nurse"}%s]
 }|}
 
-(* The fork's people (pokemon_center_room()), with their pret scripts
-   (pokefirered data/maps/<Center>/map.json); Bill is ours, hidden until the
-   story frees him after Blaine: the fork's story never meets him there. *)
-let cinnabar_people =
-  {|,
-    {"name": "cooltrainer_f", "coord": [2, 4], "wander": {"min": [1, 4], "max": [3, 4]},
-     "source_script": "CinnabarIsland_PokemonCenter_1F_EventScript_CooltrainerF"},
-    {"name": "gentleman", "coord": [9, 7], "wander": {"min": [8, 6], "max": [10, 8]},
-     "source_script": "CinnabarIsland_PokemonCenter_1F_EventScript_Gentleman"},
-    {"name": "youngster", "coord": [14, 6], "facing": "west",
-     "source_script": "CinnabarIsland_PokemonCenter_1F_EventScript_Youngster"},
-    {"name": "bill", "coord": [11, 5], "facing": "south",
-     "hide_flag": "FLAG_HIDE_CINNABAR_POKECENTER_BILL",
-     "source_script": "CinnabarIsland_PokemonCenter_1F_EventScript_Bill"}|}
-
-let saffron_people =
-  {|,
-    {"name": "woman_3", "coord": [4, 4], "wander": {"min": [3, 3], "max": [5, 5]},
-     "source_script": "SaffronCity_PokemonCenter_1F_EventScript_Woman3"},
-    {"name": "youngster", "coord": [9, 6], "wander": {"min": [9, 5], "max": [9, 7]},
-     "source_script": "SaffronCity_PokemonCenter_1F_EventScript_Youngster"},
-    {"name": "gentleman", "coord": [14, 6], "facing": "west",
-     "source_script": "SaffronCity_PokemonCenter_1F_EventScript_Gentleman"}|}
-
 let town_of center =
   match String.index_opt center '_' with
   | Some i -> String.sub center 0 i
   | None -> center
 
+let tile (t : Tile_pos.t) = Printf.sprintf "[%d, %d]" t.x t.y
+let field key = Option.fold ~none:"" ~some:(Printf.sprintf {|, "%s": "%s"|} key)
+
+let motion_json : Center_people.motion -> string = function
+  | Faces d -> Printf.sprintf {|, "facing": "%s"|} (Direction.name d)
+  | Turns -> ""
+  | Wanders { min; max } ->
+      Printf.sprintf {|, "wander": {"min": %s, "max": %s}|} (tile min)
+        (tile max)
+
+(* A person of Center_people in the runtime map format. *)
+let person_json (p : Center_people.person) =
+  Printf.sprintf
+    {|,
+    {"name": "%s", "coord": %s%s%s%s}|}
+    p.name (tile p.at) (motion_json p.motion)
+    (field "hide_flag" p.hide_flag)
+    (field "source_script" p.script)
+
 let people center =
-  match town_of center with
-  | "CinnabarIsland" -> cinnabar_people
-  | "SaffronCity" -> saffron_people
-  | _ -> ""
+  String.concat ""
+    (List.map person_json (Center_people.of_town (town_of center)))
 
 let sevii =
   [

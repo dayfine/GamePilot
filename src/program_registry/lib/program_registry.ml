@@ -68,7 +68,21 @@ let supplies =
     backends = [ Mgba; Switch ];
   }
 
-let all = [ start_menu_poc; mail_glitch; supplies; team_training ]
+let sevii_story =
+  {
+    id = "frlg.sevii_story";
+    game = frlg;
+    name = "Sevii Story";
+    group = [ "FRLG"; "Story" ];
+    description =
+      "Plays the Sevii Islands story after the Hall of Fame, starting with \
+       Bill's trip to One Island.";
+    doc = "docs/programs/frlg-sevii-story.md";
+    checkpoints = Some "src/games/frlg/programs/sevii_story/plans";
+    backends = [ Mgba ];
+  }
+
+let all = [ start_menu_poc; mail_glitch; supplies; team_training; sevii_story ]
 
 let short_id p =
   let prefix = p.game.game_id ^ "." in
