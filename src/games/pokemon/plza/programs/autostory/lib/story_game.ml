@@ -124,6 +124,7 @@ let game_actions ~reload steps =
       ("scene_with_start_window", scene_with_start_window);
       ("scene_through_prompt", scene_through_prompt);
       ("story_battle", no_args Story_battle.run);
+      ("talk_through_map_screen", no_args Map_talk.run);
     ]
 
 let scene steps (event : Plan.event) =

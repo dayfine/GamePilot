@@ -364,6 +364,59 @@ let hotel_door ?(lost = false) c =
       | Some _ -> party c)
   | _ -> party c
 
+(* 03.02b after Tepig's move [y]: Taunie's speech until A, the Map & Missions
+   card until A, the map until B, her talk until B, then the party bar. *)
+let map_talk c ~y =
+  match C.nth_after c Wire.A ~after:y 0 with
+  | None -> { (text c) with story_dialog = true }
+  | Some a -> (
+      match C.nth_after c Wire.A ~after:a 0 with
+      | None -> { (look c) with tutorial_card = true }
+      | Some card -> (
+          let b n = C.nth_after c Wire.B ~after:card n in
+          match (b 0, b 1) with
+          | None, _ -> look c
+          | Some _, None -> text c
+          | Some _, Some _ -> party c))
+
+(* 03.02b's battles after Taunie's prompt [t]: her text until two A, the
+   battle HUD until a move; "We're not done" until two A, the card until A,
+   the HUD until a second move; then the map talk. *)
+let taunie_battles c ~t =
+  let y n = C.nth_after c Wire.Y ~after:t n in
+  match (C.nth_after c Wire.A ~after:t 2, y 0, y 1) with
+  | None, _, _ -> text c
+  | Some _, None, _ -> battle c
+  | Some _, Some y0, None -> (
+      match
+        (C.nth_after c Wire.A ~after:y0 1, C.nth_after c Wire.A ~after:y0 2)
+      with
+      | None, _ -> { (text c) with story_dialog = true }
+      | Some _, None -> { (look c) with tutorial_card = true }
+      | Some _, Some _ -> battle c)
+  | Some _, Some _, Some y1 -> map_talk c ~y:y1
+
+(* 03.02b: the plaza's party bar, the scene's A prompt once the stick was held
+   4 s, until A; a black fade 1.5 s, the Smart Rotom card until A, the party
+   bar at the arch; Taunie's A prompt once the stick was held 7 s, until A;
+   then her battles. [lost]: no scene prompt. *)
+let quartiere_verde ?(lost = false) c =
+  match C.stick_reached c 4000 with
+  | Some p when not lost -> (
+      match C.nth_after c Wire.A ~after:p 0 with
+      | None -> { (party c) with interact_prompt = true }
+      | Some a when since c a < 1500.0 -> black c
+      | Some a when C.nth_after c Wire.A ~after:a 0 = None ->
+          { (look c) with tutorial_card = true }
+      | Some _ -> (
+          match C.stick_reached c 7000 with
+          | None -> party c
+          | Some w -> (
+              match C.nth_after c Wire.A ~after:w 0 with
+              | None -> { (party c) with interact_prompt = true }
+              | Some t -> taunie_battles c ~t)))
+  | _ -> party c
+
 let outcome checkpoint screen =
   let c = C.create () in
   reloaded := false;
@@ -809,6 +862,40 @@ let cases =
       "03.02 event 2 (leave_hotel_z): prompt_not_seen: scene: no A prompt to \
        press through: free control with nothing to take A (the walk before it \
        stopped short?)";
+    case "03.02b: the plaza scene, Taunie's two battles, the map talk"
+      (fun () ->
+        let r, c = outcome "03.02b" quartiere_verde in
+        String.concat "\n"
+          (r
+          :: List.filter
+               (fun line ->
+                 List.exists
+                   (fun prefix -> String.starts_with ~prefix line)
+                   [
+                     "[PLZA] to_";
+                     "[PLZA] story_battle: Picking";
+                     "[PLZA] talk_through";
+                     "[PLZA scene] done";
+                   ])
+               (C.lines c)))
+      "passed\n\
+       [PLZA] to_plaza_scene_prompt: the end event after 4000 ms of the last \
+       leg.\n\
+       [PLZA] to_plaza_scene_prompt: ended on: player_can_move, interact_prompt\n\
+       [PLZA scene] done on control.\n\
+       [PLZA] to_taunie: A on the A prompt after 3000 ms of the last leg \
+       started a talk.\n\
+       [PLZA] to_taunie: started on: dialog_box, advance_arrow\n\
+       [PLZA scene] done on battle.\n\
+       [PLZA] story_battle: Picking Move: Left\n\
+       [PLZA scene] done on battle.\n\
+       [PLZA] story_battle: Picking Move: Left\n\
+       [PLZA] talk_through_map_screen: the party bar held: back in the \
+       overworld";
+    case "03.02b lost: no plaza scene prompt"
+      (result "03.02b" (quartiere_verde ~lost:true))
+      "03.02b event 1 (to_plaza_scene_prompt): walk_no_end: \
+       to_plaza_scene_prompt: no end event within 9023 ms of the last leg";
     case "the walk is walked before 03.03, run after"
       (fun () ->
         Printf.sprintf "%b %b"
