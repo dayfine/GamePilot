@@ -58,6 +58,7 @@ val pow : t -> int -> t
 (** [pow m n] is [m] to the [n]th power by squaring ([n >= 0]). *)
 
 val is_zero : vec -> bool
+(** Whether every bit is clear. *)
 
 type solution = {
   consistent : bool;
