@@ -76,14 +76,16 @@ GamePilot automates games through three layers (design: `docs/design/Layered-Aut
 
 ## PR gate loop
 
-Each PR goes through, in order: **CI green → qc-structural at the tip → the user's structure
-review when the PR changes structure → squash merge**.
+Each PR goes through, in order: **CI green → qc-structural at the tip → squash merge**. A design
+doc, or a PR reworked twice, waits for the user's review instead. A PR that changes structure merges
+on its APPROVED verdict like any other (user, 2026-11-24); the main session holds one now and then
+for the user to spot check.
 
 - A PR changes structure when it adds, deletes or renames a library module or a `dune` file under
   `src/`; changes the `.mli` of a library shared across games (`src/base`, `src/core`,
   `src/pokemon`); changes a format (the plan, goal or places format, `protocol/`, a `*_decode.ml`);
   or has had two NEEDS_REWORK verdicts. Rename-only PRs count, and so do design docs (`docs/design/`).
-  Any other PR merges on green CI and an APPROVED verdict at its tip.
+  The gate marks these `merge (structural: <reason>)`, so they are easy to pick for a spot check.
 
 - qc-structural (`.agents/agents/qc-structural.md`, rows in
   `.agents/rules/qc-structural-authority.md`) runs only on green CI. It posts its verdict as a
@@ -92,7 +94,7 @@ review when the PR changes structure → squash merge**.
 - A verdict holds for the SHA it names. A rework commit invalidates it: review the new tip.
 - Docs-only PRs (every file `.md` or under `docs/`) skip qc-structural; CI is still required.
 - `sh dev/review/pr_gate_status.sh [PR...]` prints each open PR's CI, verdict (ok / rework /
-  stale(<sha>) / none / skip) and next step (`merge`, or `user review (<reason>)`).
+  stale(<sha>) / none / skip) and next step (`merge`, `merge (structural: <reason>)`, or `user review (<reason>)`).
   `sh dev/review/format_only_changes.sh` lists files changed only in formatting; CI prints the same list as warnings.
 
 ## User guides
