@@ -1,0 +1,8 @@
+(library
+ (name pokemon_text)
+ (public_name gamepilot.pokemon_text)
+ (libraries
+  gamepilot.grid_geometry
+  gamepilot.engine_postcondition
+  gamepilot.engine_text
+  gamepilot.pokemon_terms))

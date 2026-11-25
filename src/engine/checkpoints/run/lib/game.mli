@@ -6,18 +6,18 @@
 open Engine_plan
 
 (** The game's handlers over its terms. *)
-module Make (T : Engine_terms.GAME_TERMS) : sig
+module Make (T : Engine_terms.TERMS) (Raw : Plan.RAW) : sig
   type outcome = (unit, Failure.cause) result
   (** How a handler came out: [Error] with the game's cause. *)
 
-  type game_action = Plan.Make(T).event -> Json_field.obj -> outcome
+  type game_action = Plan.Make(T)(Raw).event -> Raw.t -> outcome
   (** Runs one game action with the event's args, which the handler reads (and
       rejects with a {!Failure.cause} when they are wrong). *)
 
   type t = {
-    run_own : Plan.Make(T).event -> T.Kind.t -> outcome;
+    run_own : Plan.Make(T)(Raw).event -> T.Kind.t -> outcome;
         (** An event of one of the game's own kinds, with its args. *)
-    run_builtin : Plan.Make(T).event -> outcome;
+    run_builtin : Plan.Make(T)(Raw).event -> outcome;
         (** An event of the engine's other kinds ([talk], [answer], [scene],
             [save]), told apart by [event.kind]. *)
     game_actions : (string * game_action) list;

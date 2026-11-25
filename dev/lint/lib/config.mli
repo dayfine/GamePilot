@@ -26,7 +26,10 @@
     - [family LAYER VAR VALUE...] (repeatable): a placement that binds [VAR] may
       link layer [LAYER] only when its value is one of the [VALUE]s, so
       [family shared game a b] lets games [a] and [b] use layer [shared], and no
-      other game. Placements that do not bind [VAR] are not restricted. *)
+      other game. Placements that do not bind [VAR] are not restricted.
+    - [never_links PATTERN LIB...] (repeatable): a dune directory matching
+      [PATTERN] (as for [layer]) links none of the [LIB]s, directly or through a
+      library of the scanned tree it links (see {!Never_links}). *)
 
 type layer = { name : string; pattern : string list }
 
@@ -50,6 +53,8 @@ type t = {
   layers : layer list;
   allowed : (string * string list) list;
   families : family list;
+  never_links : (string list * string list) list;
+      (** Each rule's directory pattern and the libraries it never links. *)
 }
 
 val default : t

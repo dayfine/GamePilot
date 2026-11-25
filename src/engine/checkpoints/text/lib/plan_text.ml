@@ -1,7 +1,8 @@
-module Make (T : Engine_terms.GAME_TERMS) = struct
-  module Plan = Plan.Make (T)
+module Make (T : Engine_terms.TERMS) (X : Terms_text.TEXT with module T = T) =
+struct
+  module Plan = Engine_plan.Plan.Make (T) (Engine_plan_codec.Raw_json)
 
-  let pose = T.Pose.text
+  let pose = X.pose
 
   let kind : Plan.kind -> string = function
     | Talk -> "talk"
@@ -9,7 +10,7 @@ module Make (T : Engine_terms.GAME_TERMS) = struct
     | Scene -> "scene"
     | Save -> "save"
     | Game_action args -> "game_action " ^ Yojson.Safe.to_string (`Assoc args)
-    | Own own -> T.Kind.text own
+    | Own own -> X.kind own
 
   let event (e : Plan.event) =
     let action =
@@ -55,11 +56,10 @@ module Make (T : Engine_terms.GAME_TERMS) = struct
             (kind_counts plan.checkpoint.events)))
 
   let lines_text = function [] -> "none" | lines -> String.concat "\n" lines
-  let promises_text promises = lines_text (T.Postconditions.text promises)
+  let promises_text promises = lines_text (X.postconditions promises)
 
   let postconditions (plan : Plan.t) =
-    lines_text
-      (Option.fold ~none:[] ~some:T.Postconditions.text plan.postconditions)
+    lines_text (Option.fold ~none:[] ~some:X.postconditions plan.postconditions)
 
   let repeat (plan : Plan.t) =
     match plan.repeat with

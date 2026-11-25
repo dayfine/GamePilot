@@ -1,6 +1,7 @@
 (** Reads a checkpoint plan file ([gamepilot-checkpoint/1], or its old name
-    [pokesim-authored-checkpoint/1]) into a {!Plan.Make.t}, with the game's
-    poses, kinds and promises read by its terms ({!Engine_terms.GAME_TERMS}).
+    [pokesim-authored-checkpoint/1]) into an {!Engine_plan.Plan.Make.t}, with
+    the game's poses, kinds and promises read by its codec
+    ({!Plan_codec.PLAN_CODEC}).
 
     It is as strict as PokemonSimulation's reader on the record: unknown fields,
     kinds and built-in args, missing required fields, malformed poses and
@@ -17,13 +18,18 @@ val old_format : string
     it, still read as {!format}. *)
 
 (** The decoder of the game's plans. *)
-module Make (T : Engine_terms.GAME_TERMS) : sig
+module Make
+    (T : Engine_terms.TERMS)
+    (_ : Plan_codec.PLAN_CODEC with module T = T) : sig
   val format : string
   (** {!Plan_decode.format}. *)
 
-  val decode : source:string -> Yojson.Safe.t -> (Plan.Make(T).t, string) result
+  val decode :
+    source:string ->
+    Yojson.Safe.t ->
+    (Engine_plan.Plan.Make(T)(Raw_json).t, string) result
   (** The plan in the JSON; [source] names it in errors (the file name). *)
 
-  val load : string -> (Plan.Make(T).t, string) result
+  val load : string -> (Engine_plan.Plan.Make(T)(Raw_json).t, string) result
   (** The plan in the file at the path, named by its base name in errors. *)
 end

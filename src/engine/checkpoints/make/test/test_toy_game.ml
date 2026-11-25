@@ -1,7 +1,7 @@
-(* The engine over a toy game with zones and no grid (Toy_terms): its plans
-   decode with the toy's poses, kinds and promises, the runner sends each kind
-   to its handler and checks zones and promises, and what a run keeps and
-   loops works on the toy's types. *)
+(* The engine over a toy game with zones and no grid (Toy_terms, Toy_codec,
+   Toy_text, Toy_saved): its plans decode with the toy's poses, kinds and
+   promises, the runner sends each kind to its handler and checks zones and
+   promises, and what a run keeps and loops works on the toy's types. *)
 
 open Toy_game
 open Toy_checkpoints
@@ -99,8 +99,7 @@ let toy_game ?(after = []) ?(flags = []) () =
   in
   let game : Game.t =
     {
-      run_own =
-        (fun event own -> handled ("own " ^ Toy_terms.Kind.text own) event);
+      run_own = (fun event own -> handled ("own " ^ Toy_text.kind own) event);
       run_builtin = (fun event -> handled ("builtin " ^ event.id) event);
       game_actions = [ ("beg", fun event _ -> handled "action beg" event) ];
       flag_holds = (fun flag -> List.mem flag flags);
@@ -177,22 +176,22 @@ let run_cases =
       "[Postcondition] cf gold: passed: gained 30 (50 to 80)";
   ]
 
-let kept : Toy_terms.Saved.t = { start = Some 50; at = Some (at "Forest" None) }
+let kept : Toy_saved.t = { start = Some 50; at = Some (at "Forest" None) }
 
 let kept_cases =
   [
     case "what is kept beside a state: the toy's start reads and zone"
-      (fun () -> Yojson.Safe.to_string (Toy_terms.Saved.to_json kept))
+      (fun () -> Yojson.Safe.to_string (Toy_saved.to_yojson kept))
       {|{"start_gold":50,"at":{"place":"Forest","spot":null}}|};
     case "what is kept reads back as written"
       (fun () ->
-        match Toy_terms.Saved.of_json (Toy_terms.Saved.to_json kept) with
+        match Toy_saved.of_yojson (Toy_saved.to_yojson kept) with
         | Ok back -> string_of_bool (back = kept)
         | Error e -> e)
       "true";
     case "a kept zone the toy cannot read: named under at"
       (fun () ->
-        match Toy_terms.Saved.of_json (`Assoc [ ("at", `Int 1) ]) with
+        match Toy_saved.of_yojson (`Assoc [ ("at", `Int 1) ]) with
         | Ok _ -> "read"
         | Error e -> e)
       "at: not a place";

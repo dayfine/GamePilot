@@ -1,11 +1,12 @@
-(** Pokémon's terms for the checkpoint engine ({!Engine_terms.GAME_TERMS}): a
-    plan's pose is a tile pose (or a zone, decoded and never checked), the game
-    reads the player on a map tile, the own kinds are the grid walks, battles,
-    healing and shopping ({!Own_kind}), a checkpoint promises a party, items,
-    coins, money, flags, moves, levels and marks ({!Postconditions}), and a run
-    keeps the counts read at the checkpoint's start and the tile the player
-    stood on beside an event's state. The family applies the engine to them
-    once: [Pokemon_checkpoints]. *)
+(** Pokémon's rules for the checkpoint engine ({!Engine_terms.TERMS}): a plan's
+    pose is a tile pose (or a zone, never checked), the game reads the player on
+    a map tile, the own kinds are the grid walks, battles, healing and shopping
+    ({!Own_kind}), and a checkpoint promises a party, items, coins, money,
+    flags, moves, levels and marks ({!Postconditions}), checked by
+    {!Postcondition_check}. Pure: how a plan writes them is
+    [Pokemon_plan_codec], how a log prints them [Pokemon_text], and what a run
+    keeps [Pokemon_saved]. The family applies the engine to the four once:
+    [Pokemon_checkpoints]. *)
 
 (** {!Pose}: where a plan says the player stands (a tile pose, or a zone that
     holds wherever the player is), and where the game reads them. *)
@@ -25,11 +26,10 @@ module Postcondition_check = Postcondition_check
 *)
 
 module Kind : Engine_terms.KIND with type t = Own_kind.t
-(** The Pokémon event kinds, as the engine reads and prints them. *)
+(** The Pokémon event kinds, as the engine carries them. *)
 
-(** {!Postconditions}: what a Pokémon checkpoint promises, read
-    ({!Postcondition_decode}) and checked against what the game read
-    ({!Postcondition_check}). *)
+(** {!Postconditions}: what a Pokémon checkpoint promises, and its check against
+    what the game read ({!Postcondition_check}). *)
 module Postconditions : sig
   include module type of struct
     include Postconditions
@@ -39,19 +39,4 @@ module Postconditions : sig
     Engine_terms.POSTCONDITIONS
       with type t := t
        and type reads = Postcondition_check.observed
-end
-
-(** What a Pokémon run keeps beside an event's save state, as
-    [<n>-<event>.json]: [start_money], [start_coins], [start_items]
-    ({!Postcondition_check.start_to_json}) and [at] ({!Pose.observed_to_json},
-    or [null]). *)
-module Saved : sig
-  type t = {
-    start : Postcondition_check.start;
-        (** What the run read at the checkpoint's start for the promises of a
-            change. *)
-    at : Pose.observed option;  (** Where the player was reckoned to stand. *)
-  }
-
-  include Engine_terms.SAVED with type t := t
 end

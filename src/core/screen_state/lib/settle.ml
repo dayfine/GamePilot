@@ -40,7 +40,8 @@ let door_judge =
   }
 
 (* A menu closed to the overworld: no text or scene comes after it, so a short
-   quiet ends it (a fade-in is never still), looking often. *)
+   quiet ends it, looking often. A game whose fade-in can hold still (FireRed's
+   dim spell) reports no free control until it is over. *)
 let menu_quiet_ms = 500
 let menu_calm_ms = 2500
 let menu_look_every_ms = 300
