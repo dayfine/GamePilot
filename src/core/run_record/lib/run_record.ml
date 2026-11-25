@@ -1,7 +1,7 @@
 (* What a run leaves on disk, under the runs folder ($GAMEPILOT_RUNS, else
    ~/.local/share/gamepilot/runs). Every run path writes its folder through
-   [start] and [finish]: a checkpoint series' runs (gamepilot checkpoints), the
-   pre-flight, one checkpoint (gamepilot checkpoint), a one-shot program
+   [start] and [finish]: a checkpoint series' runs (gamepilot run), the
+   pre-flight, one checkpoint (gamepilot run --plan), a one-shot program
    (gamepilot run) and the Switch's bring-up checks (gamepilot bring-up). A
    daemon started by hand with --run-folder writes a run.json of its own
    (daemon/src/run_journal.h, kind "daemon").

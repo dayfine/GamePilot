@@ -1,4 +1,4 @@
-# Wire protocol v1.17
+# Wire protocol v1.18
 
 JSON-RPC 2.0 between the OCaml programs (client) and the daemon (server). The golden files in this
 folder are the spec: the daemon's tests parse every file and the OCaml tests decode and re-encode
@@ -39,6 +39,9 @@ the share of a box's pixels passing a test of linear channel comparisons per row
 and `core.find@1`, blobs found by the fork's fixed pipeline (colour filter, waterfill, size filter,
 scores) (`46-subscribe.line_shares_find.request.json`, `47-frame.line_shares_find.notification.json`).
 `hello` lists both. A v1.12 program never subscribes them.
+v1.18 adds `LStick`, the Switch's left stick click, to `submit` (`52-submit.lstick.request.json`):
+the Switch keyboard's Shift, which PLZA's new game presses before a capital letter of the name. A
+backend that is not the Switch refuses it as it does `Home`. A v1.17 program never names it.
 v1.17 adds the Switch's `Plus` and `Minus` to `submit` (`51-submit.plus.request.json`), the
 Switch's own names for those buttons, which a Switch-native game's program uses (PLZA's cutscene
 skip holds Plus); a backend that is not the Switch refuses them as it does `Home`. `Start` and
@@ -126,8 +129,9 @@ size) every v1.1 message means the same in v1.2.
   again replaces it. Each probe costs time on every frame, so a reader unsubscribes the probes it no
   longer reads.
 - Buttons (GBA): `A`, `B`, `Select`, `Start`, `Right`, `Left`, `Up`, `Down`, `R`, `L`.
-  The Switch only: `Home`, `X`, `Y`, `ZL`, `ZR`, `Plus`, `Minus` (`42-submit.home.request.json`,
-  `51-submit.plus.request.json`); on the Switch, `Start` and `Select` press Plus and Minus. A press of one on another
+  The Switch only: `Home`, `X`, `Y`, `ZL`, `ZR`, `Plus`, `Minus`, `LStick` (the left stick's click)
+  (`42-submit.home.request.json`, `51-submit.plus.request.json`, `52-submit.lstick.request.json`);
+  on the Switch, `Start` and `Select` press Plus and Minus. A press of one on another
   backend is refused, as a whole batch, with -32602 and `data` {`backend`, `button`}: mGBA and the
   view backend have no such button (the view backend refuses every input anyway, -32002).
 - Sticks (the Switch only, `44-submit.sticks.request.json`): `left_stick` and `right_stick` are each
@@ -234,7 +238,7 @@ daemon keeps them out of the wire log; without a watch page it drops them.
 - `watch.log`: `line` (`31-watch_log.notification.json`): one story log line.
 - `watch.run`: `mode`, `trial`, `trials`, `passes`, `fails`, `started_ms`, `checkpoints`: list of
   {`id`, `state`, `elapsed_ms`} (`33-watch_run.notification.json`). The chain the program runs
-  (`gamepilot checkpoints --from --to`), sent at the start and the end of each run. `state` is
+  (`gamepilot run --from --to`), sent at the start and the end of each run. `state` is
   `pending`, `current`, `passed`, `failed` or `skipped` (not run because an earlier one failed);
   `elapsed_ms` is the time spent on that checkpoint over all its runs, up to the message for the
   current one. `mode` is `testing` or `verification`; `trial` is the current checkpoint's run (1-based)

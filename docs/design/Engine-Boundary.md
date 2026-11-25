@@ -89,7 +89,7 @@ library only because the map decoders came first.
 | `bin/` | A | names no game module but in `bin/checkpoint_families.ml`, which picks a family's libraries by the registry's `rules` (FRLG's `games/frlg/series`, its ctl readers, `start_menu_poc`); per-game data (delete-save icons, the lab console's panel and HOME tile) is the registry's |
 | `dev/lint/ocaml_lint.conf` | mixed | layer `game` may use `pokemon`: nothing stops a non-Pokémon game from using Pokémon code |
 | `daemon/src/viewport.h` | G | only `nso_gba_viewport` (240 x 160 inside the Switch frame); a native Switch game is the whole 1920 x 1080 frame |
-| `Wire.command` | A | buttons, waits and both analog sticks (protocol v1.12); no ZL/ZR |
+| `Wire.command` | A | buttons (ZL, ZR, Plus and Minus by protocol v1.17, the left stick's click LStick from v1.18), waits and both analog sticks (v1.12) |
 
 In short: the skeleton (run order, skips, trials, rounds, chains, fragments, the watch page, the
 records) is agnostic already. The grid and Pokémon parts are three types (where the player is, the

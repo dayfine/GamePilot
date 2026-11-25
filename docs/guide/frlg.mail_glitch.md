@@ -1,19 +1,19 @@
 # Mail Glitch: activation (FireRed)
 
-This program sets up and triggers the Mail Glitch on a post-game FireRed save, then uses it once to
-copy an item. This page covers the whole run, checkpoints 01-celadon-setup to
-08-activate-and-verify. The last one triggers the glitch and, in the same checkpoint, proves it by
-copying one item before anything is saved; the copying has its own page:
-[Item duplication](frlg.mail_glitch.item_duplication.md).
+Turns on the Mail Glitch on a post-game FireRed save, then copies one item with it.
 
-How the glitch works, step by step: the Pomeg Letterbombers'
-[Mail Glitch notes](https://pomeg-letterbombers.github.io/pokemon-ace-notes/mail-glitch/).
+This page covers 01-celadon-setup to 08-activate-and-verify; the item copy that ends 08 has its
+own page, [Item duplication](frlg.mail_glitch.item_duplication.md). How the glitch works:
+the Pomeg Letterbombers' [Mail Glitch notes](https://pomeg-letterbombers.github.io/pokemon-ace-notes/mail-glitch/).
 
-**What you get.** After the battle in 08-activate-and-verify your Mr. Mime (MIMIEN, from an
-in-game trade) holds a Leppa Berry where its mail used to be, and one of the party's mail slots is
-"leaked": the game thinks it is in use, but no Pokémon holds it. That leaked slot is what makes item duplication work. Along the way
-you also get the Coin Case, CH'DING (a traded Farfetch'd that knows Knock Off) and MIMIEN at level 33
-or more with Recycle.
+**What you get:**
+
+- After 08's battle, Mr. Mime (MIMIEN, from an in-game trade) holding a Leppa Berry where its mail
+  used to be.
+- One "leaked" party mail slot: the game thinks it is in use, but no Pokémon holds it. Item
+  duplication needs it.
+- On the way: the Coin Case, CH'DING (a traded Farfetch'd that knows Knock Off), and MIMIEN at
+  level 33 or more with Recycle.
 
 **Coming next** (not on `main` yet): Supplies (`frlg.supplies`) and Team Training
 (`frlg.team_training`) use the glitch to duplicate Rare Candies.
@@ -45,6 +45,8 @@ What the plans need, as the pre-flight checks it (generated from the plans):
 - pidgey in the party (fly)
 - blastoise in the party (grind)
 - a member knows cut (cut_tree)
+- the thunder badge (fly)
+- the cascade badge (cut_tree)
 - money at least ¥10350 (all the purchases)
 - poke-ball at least x1 (capture)
 - at the start, CeladonCity
@@ -57,17 +59,17 @@ lead, or one that knows a field move.
 ## Running it
 
 Build first (`cd src && opam exec -- dune build`; on the Switch, also the daemon), and set the
-`GAMEPILOT_*` variables described in the repository's `README.md` (mGBA) and
+`GAMEPILOT_*` variables described in [Running on mGBA](../mgba.md) (mGBA) and
 `docs/switch-bring-up.md` (the Switch).
 
 <!-- generated:commands 01-celadon-setup..08-activate-and-verify -->
 ```sh
 # mGBA: each checkpoint three times from its start state, two must pass
-sh run/run_checkpoints_on_mgba.sh --program frlg.mail_glitch --from 01-celadon-setup --to 08-activate-and-verify --mode verification
+sh run/run_checkpoints_on_mgba.sh frlg.mail_glitch --from 01-celadon-setup --to 08-activate-and-verify --mode verification
 
 # the Switch: check the save first, then run (each checkpoint once, saved when it passes)
-sh run/run_checkpoints_on_switch.sh --program frlg.mail_glitch --from 01-celadon-setup --to 08-activate-and-verify --preflight-only
-sh run/run_checkpoints_on_switch.sh --program frlg.mail_glitch --from 01-celadon-setup --to 08-activate-and-verify
+sh run/run_checkpoints_on_switch.sh frlg.mail_glitch --from 01-celadon-setup --to 08-activate-and-verify --preflight-only
+sh run/run_checkpoints_on_switch.sh frlg.mail_glitch --from 01-celadon-setup --to 08-activate-and-verify
 ```
 <!-- /generated -->
 
@@ -102,29 +104,30 @@ steps and its log, and stop it.
 <!-- plans: e280cf67989c -->
 <!-- /generated -->
 
-In plain words:
+In plain words, beyond the table:
 
-1. **01-celadon-setup, Celadon.** Flies to Celadon, gets the Coin Case in the restaurant, buys two Retro Mail
-   on the Department Store's 4th floor, buys 200 coins and trades them for an Abra.
-2. **02-trade-farfetchd, CH'DING.** Cuts into Route 16's grass and catches a Spearow, picks up the hidden Sitrus
-   Berry on Route 6, and trades the Spearow for CH'DING in Vermilion.
-3. **03-trade-mr-mime, MIMIEN.** Trades Abra for MIMIEN on Route 2, buys Revives and an Escape Rope in
-   Lavender, and heals.
-4. **04-grind-farfetchd to 06-grind-return, grinding.** Makes sure CH'DING knows Knock Off (it usually does already),
-   then flies to Indigo Plateau and trains MIMIEN on Victory Road 2F, switching it out for Blastoise
-   in each battle, until it reaches level 33 and learns Recycle (into its first move slot). 05-grind-mr-mime
-   is one round: from the Indigo Plateau nurse, up to 7 battles, back to heal. It repeats until
-   MIMIEN is ready. Then the program flies back to Lavender.
-5. **07-glitch-prep, preparation.** Buys medicine, picks up the hidden Leppa Berry on Route 8, uses up
-   Blastoise's Blizzard PP in wild battles, flies to Celadon and walks up Route 16 to just outside
-   the trainers' view. It puts CH'DING, Blastoise and MIMIEN in slots 1 to 3, and gives Blastoise
+1. **01-celadon-setup.** The Coin Case is in the restaurant. It buys two Retro Mail, and 200 coins
+   for an Abra.
+2. **02-trade-farfetchd.** The Spearow comes from Route 16's grass, behind a Cut tree; the Sitrus
+   Berry is hidden.
+3. **03-trade-mr-mime.** Lavender's Mart also sells the Escape Rope; the program heals there.
+4. **04-grind-farfetchd to 06-grind-return, grinding.** CH'DING usually knows Knock Off already.
+   MIMIEN trains on Victory Road 2F, switching out for Blastoise in each battle, until level 33
+   and Recycle (in its first move slot).
+5. **05-grind-mr-mime** is one round: up to 7 battles from the Indigo Plateau nurse and back. It
+   repeats until MIMIEN is ready.
+6. **07-glitch-prep.** Buys medicine, picks up the hidden Leppa Berry on Route 8 and uses up
+   Blastoise's Blizzard PP in wild battles. Then it flies to Celadon and walks up Route 16 to just
+   outside the trainers' view.
+7. **07-glitch-prep, the party.** CH'DING, Blastoise and MIMIEN go to slots 1 to 3. Blastoise gets
    the Leppa Berry and MIMIEN a Retro Mail with one word on it.
-6. **08-activate-and-verify, the glitch.** The double battle against Lea & Jed: Blastoise eats its
-   Leppa Berry, MIMIEN switches into its place, CH'DING knocks off MIMIEN's mail, and MIMIEN uses
-   Recycle to get the berry back. The program checks that MIMIEN shows a held item, then, without
-   saving, goes straight on to read the glitched mail and copy one Antidote
-   ([Item duplication](frlg.mail_glitch.item_duplication.md)). The game is saved only once the copy
-   has worked, so a save right after the battle never exists.
+8. **08-activate-and-verify, the battle.** Against Lea & Jed, Blastoise eats its Leppa Berry and
+   MIMIEN switches in. CH'DING knocks off MIMIEN's mail, and MIMIEN uses Recycle to get the berry
+   back.
+9. **08-activate-and-verify, the check.** MIMIEN must show a held item. Without saving, the program
+   reads the glitched mail and copies one Antidote
+   ([Item duplication](frlg.mail_glitch.item_duplication.md)). It saves only once the copy has
+   worked, so there is never a save right after the battle.
 
 ## How long it takes
 
@@ -143,7 +146,7 @@ To carry on, fix the cause if there is one (a member missing, not enough money),
 command with `--from` set to the checkpoint that failed:
 
 ```sh
-sh run/run_checkpoints_on_switch.sh --program frlg.mail_glitch --from 05-grind-mr-mime --to 08-activate-and-verify
+sh run/run_checkpoints_on_switch.sh frlg.mail_glitch --from 05-grind-mr-mime --to 08-activate-and-verify
 ```
 
 On the Switch the game is back at its last save, which is the failed checkpoint's start. On mGBA
@@ -157,14 +160,14 @@ checkpoint before it promised:
 <!-- generated:preflight 01-celadon-setup..08-activate-and-verify -->
 | Resume from | The pre-flight checks |
 |---|---|
-| 01-celadon-setup | pidgey in the party (fly); money at least ¥4100 (mart, buy_coins); at the start, CeladonCity |
-| 02-trade-farfetchd | party includes blastoise, pidgey, abra; pidgey in the party (fly); a member knows cut (cut_tree); poke-ball at least x1 (capture); at the start, CeladonCity |
-| 03-trade-mr-mime | party includes blastoise, pidgey, abra, farfetchd; pidgey in the party (fly); abra in the party (ingame_trade); a member knows cut (cut_tree); money at least ¥3550 (mart); at the start, VermilionCity |
-| 04-grind-farfetchd | party includes blastoise, pidgey, mr-mime, farfetchd; farfetchd in the party (grind); blastoise in the party (grind); pidgey in the party (fly); escape-rope at least x1 (use_item); at the start, LavenderTown_PokemonCenter_1F |
+| 01-celadon-setup | pidgey in the party (fly); the thunder badge (fly); money at least ¥4100 (mart, buy_coins); at the start, CeladonCity |
+| 02-trade-farfetchd | party includes blastoise, pidgey, abra; pidgey in the party (fly); a member knows cut (cut_tree); the cascade badge (cut_tree); the thunder badge (fly); poke-ball at least x1 (capture); at the start, CeladonCity |
+| 03-trade-mr-mime | party includes blastoise, pidgey, abra, farfetchd; pidgey in the party (fly); abra in the party (ingame_trade); a member knows cut (cut_tree); the thunder badge (fly); the cascade badge (cut_tree); money at least ¥3550 (mart); at the start, VermilionCity |
+| 04-grind-farfetchd | party includes blastoise, pidgey, mr-mime, farfetchd; farfetchd in the party (grind); blastoise in the party (grind); pidgey in the party (fly); the thunder badge (fly); escape-rope at least x1 (use_item); at the start, LavenderTown_PokemonCenter_1F |
 | 05-grind-mr-mime | party includes blastoise, pidgey, mr-mime, farfetchd; mr-mime in the party (grind); blastoise in the party (grind); at the start, IndigoPlateau_PokemonCenter_1F |
-| 06-grind-return | party includes blastoise, pidgey, mr-mime, farfetchd; pidgey in the party (fly); at the start, IndigoPlateau_PokemonCenter_1F |
-| 07-glitch-prep | party includes blastoise, pidgey, mr-mime, farfetchd; blastoise in the party (party_swap); pidgey in the party (fly); farfetchd in the party (party_swap); mr-mime in the party (party_swap); a member knows cut (cut_tree); money at least ¥2300 (mart); retro-mail at least x1 (give_bag_item); at the start, LavenderTown |
-| 08-activate-and-verify | party includes pidgey, farfetchd in slot 1, blastoise in slot 2, mr-mime in slot 3; blastoise in the party (mail_glitch_double_battle); farfetchd in the party (mail_glitch_double_battle); mr-mime in the party (mail_glitch_double_battle); pidgey in the party (fly); money at least ¥400 (mart); antidote at least x1 (give_bag_item); at the start, Route16 |
+| 06-grind-return | party includes blastoise, pidgey, mr-mime, farfetchd; pidgey in the party (fly); the thunder badge (fly); at the start, IndigoPlateau_PokemonCenter_1F |
+| 07-glitch-prep | party includes blastoise, pidgey, mr-mime, farfetchd; blastoise in the party (party_swap); pidgey in the party (fly); farfetchd in the party (party_swap); mr-mime in the party (party_swap); a member knows cut (cut_tree); the cascade badge (cut_tree); the thunder badge (fly); money at least ¥2300 (mart); retro-mail at least x1 (give_bag_item); at the start, LavenderTown |
+| 08-activate-and-verify | party includes pidgey, farfetchd in slot 1, blastoise in slot 2, mr-mime in slot 3; blastoise in the party (mail_glitch_double_battle); farfetchd in the party (mail_glitch_double_battle); mr-mime in the party (mail_glitch_double_battle); pidgey in the party (fly); the thunder badge (fly); money at least ¥400 (mart); antidote at least x1 (give_bag_item); at the start, Route16 |
 <!-- /generated -->
 
 If the run failed during the soft reset itself, the game is left where it stopped: look at the

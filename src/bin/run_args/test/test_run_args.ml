@@ -1,0 +1,64 @@
+(* Run_args: gamepilot run's args and the old commands' forms. *)
+
+let folders = [ "plans"; "src/games/frlg/programs/mail_glitch/plans" ]
+let is_plan_folder d = List.mem d folders
+let show = function Ok t -> Run_args.command_line t | Error e -> "error: " ^ e
+let run args () = show (Run_args.parse ~is_plan_folder args)
+
+let old command args () =
+  match Run_args.of_old_command command args with
+  | None -> "none"
+  | Some r -> show r
+
+let case name input expectation = { Table_test.name; input; expectation }
+
+let () =
+  Table_test.run "run_args"
+    [
+      case "a one-shot program"
+        (run [ "frlg.start_menu_poc"; "--console" ])
+        "gamepilot run frlg.start_menu_poc --console";
+      case "a chain with its flags"
+        (run [ "frlg.mail_glitch"; "--from"; "mg-01"; "--mode"; "testing" ])
+        "gamepilot run frlg.mail_glitch --from mg-01 --mode testing";
+      case "--program anywhere"
+        (run [ "--from"; "a"; "--program"; "frlg.mail_glitch"; "--to"; "b" ])
+        "gamepilot run frlg.mail_glitch --from a --to b";
+      case "a plan folder"
+        (run [ "plans"; "--preflight" ])
+        "gamepilot run plans --preflight";
+      case "--plan anywhere"
+        (run [ "--port"; "1"; "--plan"; "a.plan.json" ])
+        "gamepilot run --plan a.plan.json --port 1";
+      case "--plan and --program"
+        (run [ "--plan"; "a.json"; "--program"; "x" ])
+        "error: --plan and --program: give one";
+      case "--plan with no file" (run [ "--plan" ])
+        "error: --plan needs a value";
+      case "nothing to run"
+        (run [ "--from"; "a" ])
+        "error: a program id, a plan folder or --plan FILE is required";
+      case "no args" (run [])
+        "error: a program id, a plan folder or --plan FILE is required";
+      case "quoted where the shell needs it"
+        (run [ "x"; "--party"; "MR. MIME,FARFETCH'D" ])
+        "gamepilot run x --party 'MR. MIME,FARFETCH'\\''D'";
+      case "checkpoints --program"
+        (old "checkpoints" [ "--program"; "frlg.mail_glitch"; "--from"; "a" ])
+        "gamepilot run frlg.mail_glitch --from a";
+      case "checkpoints PLAN_DIR"
+        (old "checkpoints" [ "some/dir"; "--from"; "a" ])
+        "gamepilot run some/dir --from a";
+      case "checkpoint PLAN"
+        (old "checkpoint" [ "a.plan.json"; "--walk" ])
+        "gamepilot run --plan a.plan.json --walk";
+      case "checkpoint with no plan" (old "checkpoint" [])
+        "error: a plan file is required";
+      case "another command" (old "status" []) "none";
+      case "the notice"
+        (fun () ->
+          Run_args.old_command_notice "checkpoints"
+            { target = Program "frlg.mail_glitch"; flags = [ "--from"; "a" ] })
+        "gamepilot checkpoints is now gamepilot run: gamepilot run \
+         frlg.mail_glitch --from a";
+    ]
