@@ -9,7 +9,7 @@
 
     Not read here: the Switch HOME menu ({!Switch_home.Home_screen}); whether
     the screen is still (the fork compares the frame with the one before, which
-    no probe does yet); the party bar's D-pad marker ({!Party_bar}). *)
+    no probe does yet). *)
 
 type t = {
   fade : Screen_state.Fade.t;
@@ -33,6 +33,9 @@ type t = {
   party_bar : bool;
       (** the overworld party bar ({!Party_bar}), with no fade and no text box:
           the fork's [PLAYER_CAN_MOVE] *)
+  minimap : string option;
+      (** the recorded minimap the top-left one matches ({!Minimap}), with no
+          fade and no text box, as the fork reads a start signature *)
 }
 (** What one frame shows. *)
 

@@ -158,4 +158,6 @@ let () =
     (story_cases @ synthetic_badge_cases @ card_cases @ choice_cases
    @ screen_cases
     @ Fixture_frames.shifted_cases ~misses:true (fun m ->
-          Story_screen.to_string (Story_screen.read m)))
+          (* The shifted fixture has no minimap cells (write_probe_spec.ml). *)
+          Story_screen.to_string { (Story_screen.read m) with minimap = None })
+    )

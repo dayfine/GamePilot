@@ -19,6 +19,7 @@ type t = {
   tutorial_card : bool;
   interact_prompt : bool;
   party_bar : bool;
+  minimap : string option;
   battle : bool;
   story_dialog : bool;
   moves : effectiveness option list;
@@ -41,6 +42,7 @@ let empty ~at_ms =
     tutorial_card = false;
     interact_prompt = false;
     party_bar = false;
+    minimap = None;
     battle = false;
     story_dialog = false;
     moves = [];

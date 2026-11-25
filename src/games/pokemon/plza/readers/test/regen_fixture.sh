@@ -8,7 +8,8 @@
 # shifted as another capture card might show them, by
 # dev/reader_fixtures/shift_frame.py (brightness times 0.9 and 1.1, one channel
 # plus or minus 12, 10% toward mid-grey), named <shift>/<folder>/<frame>.png:
-# the jpg frames are decoded to png first, so a shift adds no JPEG loss.
+# the jpg frames are decoded to png first, so a shift adds no JPEG loss. The
+# shifted frames are probed without the minimap's cells (write_probe_spec.ml).
 # The Python steps need Pillow ($SHIFT_PYTHON, default python3; e.g.
 # "uv run --with pillow python3").
 #
@@ -28,6 +29,8 @@ mkdir "$work/spec" "$work/frames" "$work/lossless" "$work/shifted"
 cp "$SRC/games/pokemon/plza/assets/templates/"*.png "$work/spec/"
 (cd "$SRC" && dune exec games/pokemon/plza/readers/test/write_probe_spec.exe) \
     >"$work/spec/probes.json"
+(cd "$SRC" && dune exec games/pokemon/plza/readers/test/write_probe_spec.exe \
+    -- --no-minimap) >"$work/spec/shifted.probes.json"
 cp -R "$HERE/images/switch/." "$work/frames/"
 $SHIFT_PYTHON "$HERE/draw_synthetic_frames.py" "$work/frames"
 (cd "$work/frames" && "$PROBE_IMAGES" --spec "$work/spec/probes.json" \
@@ -41,5 +44,5 @@ for path in sys.argv[2:]:
     Image.open(path).convert("RGB").save(out)
 ' "$work/lossless" ./*/*)
 (cd "$work/lossless" && $SHIFT_PYTHON "$SHIFT_FRAME" "$work/shifted" ./*/*.png)
-(cd "$work/shifted" && "$PROBE_IMAGES" --spec "$work/spec/probes.json" \
+(cd "$work/shifted" && "$PROBE_IMAGES" --spec "$work/spec/shifted.probes.json" \
     --viewport native ./*/*/*.png) >"$HERE/fixtures/switch.shifted.probes.jsonl"

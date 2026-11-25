@@ -33,6 +33,9 @@ type t = {
       (** An A prompt (["(A) Talk"]) with no text box: [INTERACT_PROMPT]. *)
   party_bar : bool;
       (** The overworld party bar with no text box: [PLAYER_CAN_MOVE]. *)
+  minimap : string option;
+      (** The recorded minimap the top-left one matches
+          ({!Plza_readers.Minimap}), as the fork's start signature reads it. *)
   battle : bool;  (** The battle HUD: [BATTLE_STARTED]. *)
   story_dialog : bool;
       (** A dialogue box as [StoryDialogDetector] reads it by default (the white
