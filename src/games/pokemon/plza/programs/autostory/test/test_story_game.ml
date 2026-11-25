@@ -567,6 +567,12 @@ let gate_after_night c =
       | Some g when g > d -> { (party c) with interact_prompt = true }
       | _ -> party c)
 
+(* A checkpoint the runner refuses before its first input: its result and
+   how many inputs went out. *)
+let refused checkpoint () =
+  let r, c = outcome checkpoint party in
+  Printf.sprintf "%s; %d inputs" r (List.length c.C.inputs)
+
 (* The run's skips, its moves and its end. *)
 let skips checkpoint screen =
   let r, c = outcome checkpoint screen in
@@ -1195,6 +1201,14 @@ let cases =
         Printf.sprintf "%s; %d inputs" r (List.length c.C.inputs))
       "03.07 event 3 (catch_fletchling): no handler for game action \
        \"catch_tutorial\"; 0 inputs";
+    case "03.08 is refused before it presses: catch_in_zone is not ported"
+      (refused "03.08")
+      "03.08 event 1 (catch_more_species): no handler for game action \
+       \"catch_in_zone\"; 0 inputs";
+    case "03.08's start signature (the wild zone, a party of 3): not read"
+      (start_check "03.08" party)
+      "start_signature_unread: 03.08: its start signature is not one minimap \
+       ({\"minimap\": \"<name>\"}): only the minimap is read here";
     case "the walk is walked before 03.03, run after"
       (fun () ->
         Printf.sprintf "%b %b"
