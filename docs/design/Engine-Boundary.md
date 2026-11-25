@@ -305,11 +305,13 @@ the groups run in parallel inside, in order between.
 | 5 | `Game_commands.S` and `bin/` over it; FireRed's module out of `bin/` | S | 4 |
 | 6 | `Roll`: outcome, budget, verdict, scripted-game tests | S | 4 (parallel with 5) |
 | 7 | `Console_start` and `Console_runs` over it; FireRed's binding | S | 5 |
-| 8 | Daemon: a native Switch viewport (and, if needed, a stick command in `protocol/`) | S if protocol | any time |
+| 8 | Daemon: a native Switch viewport (8a, `--viewport native`) and both sticks on `press` (8b, `protocol/`). Claimed by the PLZA port (2026-11-25) | 8b | any time |
 | 9 | `games/octopath0` skeleton, registry entry, readers for the beg result; program 1 | S | 6, 7, 8 |
-| 10 | Zone walks and landmark readers; program 2's `Cat_battle` and plans | S (format) | 9 |
+| 10 | Zone walks and landmark readers. First user: PLZA 01.01 (`plza-autostory-port.md`); then program 2's `Cat_battle` and plans | S (format) | 4, 8 |
 
 1, 3 and 8 can start at once; 5 and 6 run side by side after 4. Program 1 does not wait for 10.
+PLZA 01.01 is the first game on the engine after 4 and the first user of 8 and 10, before Octopath 0:
+its C++ steps and timings passed on the console, so a failure points at the engine, not the game.
 
 ## 5. Open questions
 
@@ -322,11 +324,12 @@ the groups run in parallel inside, in order between.
 3. **Which save slot is GamePilot's?** Recommendation: one slot named in the goal file; the runner
    saves and reloads only that slot, and refuses a run whose slot is unset. The player's other slots are
    never written.
-4. **How is a game without an emulator tested before the Switch?** The rule "mGBA before the Switch"
-   cannot apply. Recommendation: scripted-game and wire-log replay tests in CI, then three
-   testing-mode runs on the console; AGENTS.md says so for games with no emulator.
-5. **D-pad or stick?** The wire has buttons only. Recommendation: use the D-pad if Octopath 0 walks
-   on it (check by hand first); add a `stick` command to `protocol/` only if it does not.
+4. **How is a game without an emulator tested before the Switch?** Decided (user, 2026-11-25):
+   reader and game tests, a scripted run (a lost walk included) and a wire-log replay in CI, then
+   three console passes in a row; AGENTS.md says so.
+5. **D-pad or stick?** Decided (user, 2026-11-25): `press` takes optional `left_stick` and
+   `right_stick` ([x, y] in -1..1, centred when absent), since PLZA walks, runs (B with the stick)
+   and needs both. Octopath 0 may still walk on the D-pad.
 6. **Roll confidence.** Recommendation: 0.99 by default (152 attempts at 3%, about one to two hours
    at 30-60 s each), with the attempt cap settable in the goal file; a spent budget stops and reports
    the observed rate.
