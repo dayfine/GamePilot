@@ -176,7 +176,14 @@ void check_requests(const std::map<std::string, pa::JsonValue>& files) {
 
   const Request cancel = decode_request(files.at("12-cancel.request.json"));
   CHECK(cancel.method == "cancel");
-  decode_cancel(cancel.params);
+  CHECK(!decode_cancel(cancel.params).then);
+  const Request then =
+      decode_request(files.at("48-cancel.then.request.json"));
+  const CancelParams replaced = decode_cancel(then.params);
+  CHECK(replaced.then && replaced.then->batch_id == "move" &&
+        replaced.then->commands.size() == 2 &&
+        replaced.then->commands[0].buttons ==
+            (button_mask("ZL") | button_mask("X")));
 
   const Request status = decode_request(files.at("28-status.request.json"));
   CHECK(status.method == "status" && status.has_id);
@@ -549,7 +556,7 @@ int main() {
   const auto files = load_contracts();
   // One per protocol/v1 golden file. The checks below index files by name,
   // so they run only when every one is there.
-  constexpr std::size_t kGoldenFiles = 47;
+  constexpr std::size_t kGoldenFiles = 48;
   CHECK(files.size() == kGoldenFiles);
   if (files.size() == kGoldenFiles) {
     check_requests(files);

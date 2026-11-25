@@ -73,18 +73,29 @@ let read_screen last () =
       last := cells;
       look_of ~still m
 
+let look_of_frame m = look_of ~still:false m
+
+let raced = function
+  | Effects.Stopped m -> Some (look_of_frame m)
+  | Finished _ -> None
+
+let race c check =
+  raced (Effects.race [ c ] ~stop:(fun m -> check (look_of_frame m)))
+
+let race_then c check next =
+  raced
+    (Effects.race_then [ c ]
+       ~stop:(fun m -> check (look_of_frame m))
+       ~then_:(fun m -> next (look_of_frame m)))
+
 let game_steps ~picture:_ ~log ~log_detail : Plza_story.Story_steps.game_steps =
   let last = ref None in
   {
     submit = (fun c -> ignore (Effects.submit [ c ] : Wire.batch_done));
+    submit_batch = (fun cs -> ignore (Effects.submit cs : Wire.batch_done));
     read_screen = read_screen last;
-    race =
-      (fun c check ->
-        match
-          Effects.race [ c ] ~stop:(fun m -> check (look_of ~still:false m))
-        with
-        | Stopped m -> Some (look_of ~still:false m)
-        | Finished _ -> None);
+    race;
+    race_then;
     log;
     log_detail;
   }

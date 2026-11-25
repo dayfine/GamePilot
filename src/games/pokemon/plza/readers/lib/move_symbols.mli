@@ -7,9 +7,10 @@
     templates (their Packages images, cropped as the fork does); the best score
     under 150 names the move's symbol.
 
-    Where we differ: the fork scores a blob's box with the pixels outside the
-    colour range blacked out; the daemon scores the box as it is. Under a symbol
-    the button is dark, so the two are close; the 150 bound is wide. *)
+    Each blob's box is scored with the pixels outside its range black, as the
+    fork's [filter_by_mask] does ([masked], protocol v1.15): unmasked, the grey
+    inside a ring and the pavement around it kept every console frame over 230.
+    On console B's 01.03 frames Tackle's ring scores 110 to 116. *)
 
 (** A move's symbol, weakest first: the fork's [MoveEffectivenessSymbol]. *)
 type symbol = No_effect | Not_very_effective | Effective | Super_effective

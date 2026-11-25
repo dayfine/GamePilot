@@ -239,6 +239,10 @@ type call = Jsonrpc.call =
       (** probe ids; the daemon stops measuring them *)
   | Submit of { batch_id : string; commands : command list }
   | Cancel
+  | Cancel_then of { batch_id : string; commands : command list }
+      (** (v1.15) [cancel] with [then]: drops the queued commands with no
+          release and starts this batch in their place, the buttons both hold
+          staying held (the fork's command dispatched over a running one) *)
   | Status  (** the daemon's health; served to every client *)
   | Lease_acquire of { owner : string; ttl_ms : int option }
       (** takes the input lease for this connection, or renews it; [ttl_ms]

@@ -27,6 +27,7 @@ type call =
   | Unsubscribe of string list
   | Submit of { batch_id : string; commands : Command.command list }
   | Cancel
+  | Cancel_then of { batch_id : string; commands : Command.command list }
   | Status
   | Lease_acquire of { owner : string; ttl_ms : int option }
   | Lease_release
@@ -57,7 +58,7 @@ let method_name = function
   | Subscribe _ -> "subscribe"
   | Unsubscribe _ -> "unsubscribe"
   | Submit _ -> "submit"
-  | Cancel -> "cancel"
+  | Cancel | Cancel_then _ -> "cancel"
   | Status -> "status"
   | Lease_acquire _ -> "lease.acquire"
   | Lease_release -> "lease.release"
@@ -90,6 +91,14 @@ let submit_of_params what params =
         List.map Command.command_of_json (list_field what "commands" params);
     }
 
+let cancel_of_params what params =
+  match field_opt what "then" params with
+  | None -> Cancel
+  | Some then_ -> (
+      match submit_of_params (what ^ ".then") then_ with
+      | Submit { batch_id; commands } -> Cancel_then { batch_id; commands }
+      | _ -> Cancel)
+
 let call_of_json name params =
   let what = name ^ ".params" in
   match name with
@@ -106,11 +115,18 @@ let call_of_json name params =
         (List.map Probe.probe_spec_of_json (list_field what "probes" params))
   | "unsubscribe" -> Unsubscribe (string_list_field what "ids" params)
   | "submit" -> submit_of_params what params
-  | "cancel" -> Cancel
+  | "cancel" -> cancel_of_params what params
   | "status" -> Status
   | "lease.acquire" -> lease_acquire_of_params what params
   | "lease.release" -> Lease_release
   | m -> fail "unknown method %S" m
+
+let submit_params batch_id commands =
+  `Assoc
+    [
+      ("batch_id", `String batch_id);
+      ("commands", `List (List.map Command.json_of_command commands));
+    ]
 
 let params_of_call = function
   | Hello { protocol; client } ->
@@ -121,12 +137,9 @@ let params_of_call = function
   | Subscribe probes ->
       `Assoc [ ("probes", `List (List.map Probe.json_of_probe_spec probes)) ]
   | Unsubscribe ids -> `Assoc [ ("ids", json_of_strings ids) ]
-  | Submit { batch_id; commands } ->
-      `Assoc
-        [
-          ("batch_id", `String batch_id);
-          ("commands", `List (List.map Command.json_of_command commands));
-        ]
+  | Submit { batch_id; commands } -> submit_params batch_id commands
+  | Cancel_then { batch_id; commands } ->
+      `Assoc [ ("then", submit_params batch_id commands) ]
   | Lease_acquire { owner; ttl_ms } ->
       `Assoc
         (("owner", `String owner)

@@ -76,6 +76,10 @@ let log_moves steps (look : L.t) =
     ("[PLZA] story_battle: Move Effectiveness:"
     ^ String.concat "" (List.map2 move_text move_names (four look.moves)))
 
+(* The move in place of the watch's ZL, ZL still held: the move's button
+   with ZL for 160 ms, ZL alone to 800 ms, then 200 ms released (the fork's
+   ssf_press_button(ZL, 0, 800, 200) beside pbf_press_button(move, 160,
+   320)). *)
 let attack steps (look : L.t) =
   log_moves steps look;
   let buttons =
@@ -88,34 +92,36 @@ let attack steps (look : L.t) =
         S.(steps.log) "[PLZA] story_battle: No moves available.";
         [ Wire.ZL ]
   in
-  S.(steps.submit) (Wire.press ~hold_ms:move_hold_ms ~cooldown_ms:0 buttons);
-  S.(steps.submit)
-    (Wire.press
-       ~hold_ms:(zl_hold_ms - move_hold_ms)
-       ~cooldown_ms:zl_release_ms [ Wire.ZL ])
+  [
+    Wire.press ~hold_ms:move_hold_ms ~cooldown_ms:0 buttons;
+    Wire.press
+      ~hold_ms:(zl_hold_ms - move_hold_ms)
+      ~cooldown_ms:zl_release_ms [ Wire.ZL ];
+  ]
 
-(* The camera turned left, ZL mashed: the fork's run_lock_recovery. *)
+(* The camera turned left while ZL is mashed, for 1 s: the fork's
+   run_lock_recovery (the right stick held from the mash's start). *)
 let recover steps =
   S.(steps.log) "[PLZA] story_battle: Failed to lock on. Rotating camera...";
-  (match Wire.stick (-1.) 0. with
-  | Ok left ->
-      S.(steps.submit)
-        (Wire.press ~right_stick:left ~hold_ms:recovery_ms ~cooldown_ms:0 [])
-  | Error _ -> ());
-  for _ = 1 to recovery_ms / (2 * mash_ms) do
-    S.(steps.submit)
-      (Wire.press ~hold_ms:mash_ms ~cooldown_ms:mash_ms [ Wire.ZL ])
-  done
+  let right_stick = Result.to_option (Wire.stick (-1.) 0.) in
+  let tap buttons =
+    Wire.press ?right_stick ~hold_ms:mash_ms ~cooldown_ms:0 buttons
+  in
+  S.(steps.submit_batch)
+    (List.concat
+       (List.init
+          (recovery_ms / (2 * mash_ms))
+          (fun _ -> [ tap [ Wire.ZL ]; tap [] ])))
 
-(* One attack: whether the symbols showed and a move went. *)
+(* One attack: ZL held up to 1 s for the symbols, the move replacing that
+   hold as they show; whether a move went. *)
 let attempt_one_attack steps misses =
   match
-    S.(steps.race)
+    S.(steps.race_then)
       (Wire.press ~hold_ms:watch_ms ~cooldown_ms:0 [ Wire.ZL ])
-      L.moves_shown
+      L.moves_shown (attack steps)
   with
-  | Some look ->
-      attack steps look;
+  | Some _ ->
       misses := 0;
       true
   | None ->

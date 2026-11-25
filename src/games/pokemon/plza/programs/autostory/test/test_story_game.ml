@@ -146,6 +146,21 @@ let starter ?no_symbols c =
           | None -> battle ?no_symbols c
           | Some y -> andi c ~after:y))
 
+(* 01.03 again after a lost battle: inside the battle (its HUD until a move),
+   or Urbain's heal and Andi's challenge (text until two A, the tutorial card
+   until A, then the battle). *)
+let in_battle ~after c =
+  match C.nth_after c Wire.Y ~after 0 with
+  | None -> battle c
+  | Some y -> andi c ~after:y
+
+let rematch c =
+  match C.nth_after c Wire.A ~after:0.0 2 with
+  | None when C.nth_after c Wire.A ~after:0.0 1 = None ->
+      { (text c) with story_dialog = true }
+  | None -> { (look c) with tutorial_card = true }
+  | Some a3 -> in_battle ~after:a3 c
+
 let outcome checkpoint screen =
   let c = C.create () in
   reloaded := false;
@@ -162,6 +177,24 @@ let outcome checkpoint screen =
   ((match result with Ok () -> "passed" | Error f -> Failure.to_string f), c)
 
 let result checkpoint screen () = fst (outcome checkpoint screen)
+
+(* Whether [part] is in [line]. *)
+let contains part line =
+  let n = String.length part in
+  let rec at i =
+    i + n <= String.length line && (String.sub line i n = part || at (i + 1))
+  in
+  at 0
+
+(* The run's skips, its moves and its end. *)
+let skips checkpoint screen =
+  let r, c = outcome checkpoint screen in
+  let kept line =
+    contains ": skipped (" line
+    || String.starts_with ~prefix:"[PLZA] story_battle: Picking" line
+    || line = "[Story] " ^ checkpoint ^ ": done"
+  in
+  String.concat "\n" (r :: List.filter kept (C.lines c))
 
 module W = Wire.Watch
 
@@ -320,6 +353,20 @@ let cases =
       (result "01.03" (starter ~no_symbols:true))
       "01.03 event 3 (andi_battle): battle_failed: fight_story_battle(): no \
        dialogue after the battle within the timeout.";
+    case "01.03 resumed inside Andi's battle: the walk and the scene skipped"
+      (fun () -> skips "01.03" (in_battle ~after:0.0))
+      "passed\n\
+       [Story] 01.03 #1 approach_starter: skipped (talk_or_battle_shows)\n\
+       [Story] 01.03 #2 andi_battle_start: skipped (battle_shows)\n\
+       [PLZA] story_battle: Picking Move: Left\n\
+       [Story] 01.03: done";
+    case
+      "01.03 resumed at Urbain's heal: the walk skipped, the scene to the HUD"
+      (fun () -> skips "01.03" rematch)
+      "passed\n\
+       [Story] 01.03 #1 approach_starter: skipped (talk_or_battle_shows)\n\
+       [PLZA] story_battle: Picking Move: Left\n\
+       [Story] 01.03: done";
     case "the walk is walked before 03.03, run after"
       (fun () ->
         Printf.sprintf "%b %b"

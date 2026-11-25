@@ -93,7 +93,13 @@ void add_blobs(const cv::Mat& area_bgr, const cv::Mat& mask, int filter,
       blob.stray = stray_share(mask, box, area, *find.margin);
     }
     if (!find.template_bgra.empty()) {
-      blob.score = template_rmsd(area_bgr(box), find.template_bgra);
+      if (find.masked) {
+        cv::Mat scored = cv::Mat::zeros(box.size(), area_bgr.type());
+        area_bgr(box).copyTo(scored, mask(box));
+        blob.score = template_rmsd(scored, find.template_bgra);
+      } else {
+        blob.score = template_rmsd(area_bgr(box), find.template_bgra);
+      }
     }
     if (!find.shape.empty()) {
       cv::Mat own;
@@ -123,6 +129,7 @@ FrameFind map_find(const FindSpec& spec, double x_scale, double y_scale,
   find.x_scale = x_scale;
   find.y_scale = y_scale;
   find.template_bgra = template_bgra;
+  find.masked = spec.masked;
   if (!shape_bgra.empty()) {
     find.shape = opaque_mask(shape_bgra);
   }

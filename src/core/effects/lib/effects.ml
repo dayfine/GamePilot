@@ -16,6 +16,11 @@ type _ Effect.t +=
   | Submit : Wire.command list -> Wire.batch_done Effect.t
   | Await : (measurements -> bool) * int -> awaited Effect.t
   | Race : Wire.command list * (measurements -> bool) -> raced Effect.t
+  | Race_then :
+      Wire.command list
+      * (measurements -> bool)
+      * (measurements -> Wire.command list)
+      -> raced Effect.t
   | Now : float Effect.t
   | Read : measurements option Effect.t
   | Load_state : string -> int Effect.t
@@ -31,6 +36,10 @@ type _ Effect.t +=
 let submit commands = Effect.perform (Submit commands)
 let await ~timeout_ms pred = Effect.perform (Await (pred, timeout_ms))
 let race commands ~stop = Effect.perform (Race (commands, stop))
+
+let race_then commands ~stop ~then_ =
+  Effect.perform (Race_then (commands, stop, then_))
+
 let now () = Effect.perform Now
 let read () = Effect.perform Read
 let load_state path = Effect.perform (Load_state path)

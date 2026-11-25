@@ -366,10 +366,37 @@ void check_chevron() {
 
 }  // namespace
 
+// masked: the blob's box scored with the pixels outside the range black, as
+// the fork's filter_by_mask. A red ring around a grey centre scores 0 against
+// a ring on black only when masked.
+void check_masked_score() {
+  cv::Mat frame(6, 6, CV_8UC3, cv::Scalar(0, 0, 0));
+  frame(cv::Rect(1, 1, 4, 4)).setTo(cv::Scalar(0, 0, 255));
+  frame(cv::Rect(2, 2, 2, 2)).setTo(cv::Scalar(128, 128, 128));
+  cv::Mat ring(4, 4, CV_8UC3, cv::Scalar(0, 0, 255));
+  ring(cv::Rect(1, 1, 2, 2)).setTo(cv::Scalar(0, 0, 0));
+  cv::Mat ring_bgra;
+  cv::cvtColor(ring, ring_bgra, cv::COLOR_BGR2BGRA);
+  FindSpec spec;
+  spec.filters.push_back(ColorRange{{200, 0, 0}, {255, 50, 50}});
+  spec.min_area = 2;
+  const FindResult plain = find_blobs(frame, cv::Rect(0, 0, 6, 6),
+                                      map_find(spec, 1, 1, ring_bgra, cv::Mat()));
+  spec.masked = true;
+  const FindResult masked = find_blobs(
+      frame, cv::Rect(0, 0, 6, 6), map_find(spec, 1, 1, ring_bgra, cv::Mat()));
+  CHECK(plain.blobs.size() == 1 && masked.blobs.size() == 1);
+  if (plain.blobs.size() == 1 && masked.blobs.size() == 1) {
+    CHECK(*plain.blobs[0].score > 10);
+    CHECK(near(*masked.blobs[0].score, 0, 1e-6));
+  }
+}
+
 int main() {
   check_passes();
   check_line_shares();
   check_find();
+  check_masked_score();
   check_template_rmsd();
   check_shape_overlap();
   check_controls_hint_rows();

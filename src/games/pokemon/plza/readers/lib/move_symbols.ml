@@ -55,7 +55,7 @@ let id slot symbol =
 let symbol_probe ~picture ~assets (slot, area) symbol =
   Find_probe.probe ~template:(template assets symbol) ~picture
     ~id:(id slot symbol) area
-    (Wire.Blob_find.params ~filters:ranges ~min_area ())
+    (Wire.Blob_find.params ~filters:ranges ~min_area ~masked:true ())
 
 let probes ~picture ~assets =
   List.concat_map

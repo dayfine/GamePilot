@@ -15,10 +15,10 @@
     Y, right A, bottom B; the first of equals) is pressed 160 ms with ZL still
     held (ZL 800 ms in all, then 200 ms released). Without them, 250 ms
     released, and from the third miss in a row the camera turns left (right
-    stick 1 s) and ZL is mashed 1 s.
+    stick) while ZL is mashed, 1 s.
 
-    Where we differ: the fork holds ZL from the watch straight into the move;
-    the wire cuts the watch's hold short when the symbols show (every button
-    released), so ZL is pressed again with the move a frame or two later. *)
+    The move replaces the watch's ZL hold with no release between (protocol
+    v1.15, [cancel] with [then]), as the fork dispatches it over the running
+    hold. *)
 
 val run : Story_steps.game_steps -> Story_steps.outcome

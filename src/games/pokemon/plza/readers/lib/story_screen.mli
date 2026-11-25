@@ -18,6 +18,8 @@ type t = {
   choice_box : bool;
   advance_arrow : bool;
   controls_hint : bool;
+      (** not in battle: the battle's own hint ("ZL: Focus on a Pokémon") sits
+          where the controls hint does and can read as it *)
   autosave : bool;
   tutorial_card : bool;
   choice_rows : Choice_rows.t option;  (** only with a choice box *)

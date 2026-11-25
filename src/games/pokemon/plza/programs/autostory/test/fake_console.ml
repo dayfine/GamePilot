@@ -28,6 +28,7 @@ let steps c screen : Plza_story.Story_steps.game_steps =
   let log line = c.lines <- line :: c.lines in
   {
     submit = submit c;
+    submit_batch = List.iter (submit c);
     read_screen =
       (fun () ->
         c.now <- c.now +. frame_ms;
@@ -38,6 +39,15 @@ let steps c screen : Plza_story.Story_steps.game_steps =
         c.now <- c.now +. frame_ms;
         let look = screen c in
         if check look then Some look else None);
+    race_then =
+      (fun command check next ->
+        submit c command;
+        c.now <- c.now +. frame_ms;
+        let look = screen c in
+        if check look then (
+          List.iter (submit c) (next look);
+          Some look)
+        else None);
     log;
     log_detail = log;
   }

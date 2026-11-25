@@ -115,6 +115,12 @@ class Backend {
   // rather than after the device has played out the queue.
   virtual void drop_queued_keys();
 
+  // Live backends only. As drop_queued_keys(), but the input running keeps
+  // running until the next queue_keys() replaces it, with no release between
+  // (the board's CQ_REPLACE_ON_NEXT, as the C++ controller's
+  // replace_on_next_command()). Defaults to drop_queued_keys().
+  virtual void replace_queued_keys() { drop_queued_keys(); }
+
   virtual BackendHealth health() const { return {}; }
 
   // A view-only source's picture: live, stale or covered (view_source.h);

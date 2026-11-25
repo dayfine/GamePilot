@@ -241,6 +241,12 @@ FindSpec require_find(const pa::JsonObject& probe,
   if (probe.get_value("shape") != nullptr) {
     find.shape_hash = require_string(probe, "shape");
   }
+  if (const pa::JsonValue* masked = probe.get_value("masked")) {
+    if (!masked->is_boolean()) {
+      throw RpcError(kInvalidParams, "masked must be a boolean: " + probe_id);
+    }
+    find.masked = masked->to_boolean_default();
+  }
   return find;
 }
 
@@ -530,7 +536,13 @@ SubmitParams decode_submit(const pa::JsonObject& params) {
   return submit;
 }
 
-CancelParams decode_cancel(const pa::JsonObject&) { return CancelParams{}; }
+CancelParams decode_cancel(const pa::JsonObject& params) {
+  CancelParams cancel;
+  if (params.get_value("then") != nullptr) {
+    cancel.then = decode_submit(require_object(*params.get_value("then"), "then"));
+  }
+  return cancel;
+}
 
 LeaseAcquireParams decode_lease_acquire(const pa::JsonObject& params) {
   LeaseAcquireParams lease;

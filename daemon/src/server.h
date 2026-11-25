@@ -139,6 +139,7 @@ class Server {
   std::optional<std::string> take_lease(ClientConnection& client,
                                         const std::string& method);
   void clear_input();
+  void replace_input();
   // Throws switch_button_refusal() when a press names a Switch-only button,
   // or switch_stick_refusal() when it tilts a stick, and the backend is not
   // the Switch.

@@ -575,6 +575,31 @@ void check_one_clock_and_cancel() {
     CHECK(down->start_ms - cancelled_ms < 100);
   }
 
+  // A cancel with `then` (v1.15): ZL held, then ZL with X in its place, with
+  // no release between (the board's replace-on-next).
+  call(client,
+       R"({"jsonrpc":"2.0","id":7,"method":"submit","params":{"batch_id":"b4","commands":[{"press":["ZL"],"hold_ms":2000,"cooldown_ms":0}]}})");
+  sleep_ms(200);
+  call(client,
+       R"({"jsonrpc":"2.0","id":8,"method":"cancel","params":{"then":{"batch_id":"b5","commands":[{"press":["ZL","X"],"hold_ms":160,"cooldown_ms":0}]}}})");
+  const std::vector<std::string> replaced =
+      read_until(client, "\"b5\"", 2000);
+  CHECK(!replaced.empty());
+  const std::vector<BoardCommand> held = console.board.commands();
+  const auto x = std::find_if(
+      held.begin(), held.end(), [](const BoardCommand& c) {
+        return (c.message.buttons.button3 & 0x02) != 0;
+      });
+  CHECK(x != held.end() && x != held.begin());
+  if (x != held.end() && x != held.begin()) {
+    const BoardCommand& zl = *(x - 1);
+    CHECK((zl.message.buttons.button5 & 0x80) != 0);
+    CHECK((x->message.buttons.button5 & 0x80) != 0);
+    // The ZL hold ended where ZL with X started: no state between.
+    CHECK(std::abs(zl.end_ms - x->start_ms) < 1);
+    CHECK(x->start_ms - zl.start_ms < 1000);
+  }
+
   stop.store(true);
   serving.join();
 }

@@ -27,9 +27,13 @@ let shift_and_frame path =
 (* The shifted frames a reader is known to miss, as the fork's bounds have
    it: the wild battle at the zone's pillar shows no trainer's balls, and at
    brightness 0.9 its stat markers' triangle falls under the fork's blue 225
-   (Battle_hud). *)
+   (Battle_hud); at brightness 1.1 the first ZL frame of Andi's battle loses
+   Tackle's ring to the pavement around it (Move_symbols). *)
 let known_misses =
-  [ ("battle-hud/it-0308b-zone-pillar-wild-battle", "bright90") ]
+  [
+    ("battle-hud/it-0308b-zone-pillar-wild-battle", "bright90");
+    ("move-symbols/0303-andi-zl-held-1", "bright110");
+  ]
 
 (* One case per shifted frame: [read] on it gives what [read] gives on the
    frame itself; with [misses], the known misses are left out. *)

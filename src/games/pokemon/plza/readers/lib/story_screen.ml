@@ -47,17 +47,18 @@ let read m =
   let choice =
     boxes && (Choice_arrow.shown m || (box && Option.is_some rows))
   in
+  let battle = boxes && Battle_hud.shown m in
   {
     fade;
     dialog_box = box || choice;
     choice_box = choice;
     advance_arrow = Advance_arrow.shown m;
-    controls_hint = Controls_hint.shown m;
+    controls_hint = (not battle) && Controls_hint.shown m;
     autosave = Autosave_badge.shown m;
     tutorial_card = Tutorial_card.shown m;
     choice_rows = (if choice then rows else None);
     interact_prompt = boxes && (not box) && Interact_prompt.shown m;
-    battle = boxes && Battle_hud.shown m;
+    battle;
     story_dialog = Dialog_box.shown ~white:Box_and_arrow m;
     moves = Move_symbols.read m;
   }

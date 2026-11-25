@@ -6,7 +6,7 @@
   },
   "metadata": {
     "phase": "testing",
-    "source": "played from a new game; starts in the battle area, where 01.02 ends; the fork's plza-01.03.plan.json (plza/lean)",
+    "source": "played from a new game; starts in the battle area, where 01.02 ends, or inside Andi's battle or its talk after a lost one (skip_if reads the screen); the fork's plza-01.03.plan.json (plza/lean)",
     "postconditions": {}
   },
   "checkpoint": {
@@ -20,6 +20,7 @@
         "id": "approach_starter",
         "kind": "walk",
         "why": "to Chikorita's \"A Talk\" prompt (the fork's default starter) and A on it. not planned: no tile grid in Lumiose",
+        "skip_if": ["talk_or_battle_shows"],
         "args": {
           "legs": [[-66, 600]],
           "style": "steer",
@@ -30,7 +31,8 @@
         "id": "andi_battle_start",
         "kind": "game_action",
         "action": "scene_to_battle",
-        "why": "choose it (top choice), through the battle tutorial cards to the battle HUD"
+        "why": "choose it (top choice), through the battle tutorial cards to the battle HUD; after a lost battle, Urbain's heal and Andi's challenge to it",
+        "skip_if": ["battle_shows"]
       },
       {
         "id": "andi_battle",
