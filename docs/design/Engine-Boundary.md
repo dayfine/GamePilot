@@ -98,9 +98,10 @@ game's actions, what a checkpoint promises) and the code that reads, prints and 
 ## 2. Layout: a game's rules apart from its formats
 
 A game's rules and its formats are separate libraries. The rules (where the player stands, the
-game's actions, what a checkpoint promises and its check) are plain values, with no JSON
-and no text. Each format turns them into bytes or words at one edge only, so the plan types, the
-runner, its failures and the checks never see JSON or build a string. A lint rule enforces it.
+game's actions, what a checkpoint promises and its check) are plain values with no JSON, and each
+part prints itself (`to_string`, `to_lines`), purely. Each format turns them into bytes at one edge
+only, so the plan types, the runner, its failures and the checks never see JSON. A lint rule
+enforces it.
 
 The rules were first called terms (`Engine_terms.TERMS`, `Pokemon_terms`, `Terms_text`); they were
 renamed `Engine_rules.GAME_RULES`, `Pokemon_rules` and `Rules_text` on 2026-11-25, unchanged. The
@@ -112,13 +113,16 @@ the same day `kind_of_plan` became `action_of_plan`, `TEXT.kind` `action`, `Kind
 `Leg.special_step`. Then (`Composable-Rules.md`, step 0) `Engine_checkpoints.Make` became
 `Program_engine.Make`, `*_plan_codec` and `PLAN_CODEC` `*_plan_format` and `PLAN_FORMAT`, `*_saved`
 and `Event_states.SAVED` `*_event_snapshot` and `Event_snapshot.SNAPSHOT`, `Pokemon_checkpoints`
-`Pokemon_engine`, and `src/engine/checkpoints/` lost its `checkpoints` level, unchanged.
+`Pokemon_engine`, and `src/engine/checkpoints/` lost its `checkpoints` level, unchanged. In step
+0b each `*_text` folded into its rules module (`Pose_text.grid` became `Pose.grid_to_string`,
+`TEXT.pose` `Pose.to_string`, `TEXT.observed` `Pose.observed_to_string`, `TEXT.action`
+`Action.to_string`, `TEXT.postconditions` `Postconditions.to_lines`), `Rules_text.TEXT`,
+`Pokemon_text` and `Toy_text` went, and `Make` took three arguments; every plan prints the same.
 
 | Part | Engine signature | Pokémon | Toy game | Used by | Holds |
 |---|---|---|---|---|---|
-| Rules | `Engine_rules.GAME_RULES` | `Pokemon_rules` | `Toy_rules` | everything | values and `matches`, `check` |
+| Rules | `Engine_rules.GAME_RULES` | `Pokemon_rules` | `Toy_rules` | everything | values and `matches`, `check`, `to_string`, `to_lines` |
 | Plan format | `Plan_format.PLAN_FORMAT` | `Pokemon_plan_format` | `Toy_plan_format` | `Plan_decode` only | hand-written JSON readers |
-| Text | `Rules_text.TEXT` | `Pokemon_text` | `Toy_text` | `Plan_text`, `Failure_text`, `Run_text` | printers |
 | Event snapshot | `Event_snapshot.SNAPSHOT` | `Pokemon_event_snapshot` | `Toy_event_snapshot` | `Event_snapshot` only | derived JSON (`ppx_deriving_yojson`) |
 
 ### The rules
@@ -130,14 +134,18 @@ module type POSE = sig
   type t                    (* where a plan says the player stands: a grid pose, a zone *)
   type observed             (* where the game reads the player *)
   val matches : t -> observed -> bool
+  val to_string : t -> string
+  val observed_to_string : observed -> string
 end
 module type ACTION = sig
   type t                    (* the game's actions, with their args: route, battle; walk, rest *)
+  val to_string : t -> string
 end
 module type POSTCONDITIONS = sig
   type t                    (* metadata.postconditions, a repeat's until *)
   type reads                (* what the game read for them, start reads included *)
   val check : t -> reads -> Engine_postcondition.Postcondition.result list
+  val to_lines : t -> string list
 end
 module type GAME_RULES = sig
   module Pose : POSE
@@ -179,15 +187,6 @@ module type PLAN_FORMAT = sig
     where:string -> Json_field.obj -> (T.Postconditions.t, string) result
 end
 
-(* text/lib/rules_text.mli: only Plan_text, Failure_text and Run_text call these *)
-module type TEXT = sig
-  module T : Engine_rules.GAME_RULES
-  val pose : T.Pose.t -> string
-  val observed : T.Pose.observed -> string
-  val action : T.Action.t -> string
-  val postconditions : T.Postconditions.t -> string list
-end
-
 (* event_snapshot/lib/event_snapshot.mli: only Event_snapshot calls these *)
 module type SNAPSHOT = sig
   type t                    (* the start reads and where the player was reckoned to stand *)
@@ -200,8 +199,10 @@ end
   `01-celadon-setup.plan.json: checkpoint.events[1].args.target.map is missing.` Every reader takes
   `where`, the field prefix, and the engine's `Plan_decode` passes any kind name it does not know to
   `action_of_plan`. The plan format did not change.
-- **Text, at the edges.** Plain nouns returning strings. `Plan_text` prints a decoded plan (the
-  golden plan test compares it), and `Failure_text` and `Run_text` print what the runner kept.
+- **Text, beside each type.** Each part of the rules prints itself, purely: `Pose.to_string`,
+  `Pose.observed_to_string`, `Action.to_string`, `Postconditions.to_lines`. `Plan_text` prints a
+  decoded plan with them (the golden plan test compares it), and `Failure_text` and `Run_text` print
+  what the runner kept.
 - **Event snapshot, derived.** A machine writes and reads `<n>-<event>.json` beside each event state, so its
   JSON is derived with `[@@deriving yojson]`. The derivation sits in `Pokemon_event_snapshot` and
   `Toy_event_snapshot`, on copies of the rules' types (`type observed = Pose.observed = { ... } [@@deriving yojson]`), so
@@ -210,7 +211,7 @@ end
 
 **Naming.** The hand-written plan side is `*_of_plan` (`pose_of_plan`, the Pokémon decoders in
 `Pose_decode`, `Pokemon_action_decode`, `Postcondition_decode`, `Party_decode`); the derived snapshot
-side keeps the ppx's `to_yojson` / `of_yojson`; text is the noun it prints (`pose`, `action`).
+side keeps the ppx's `to_yojson` / `of_yojson`; text is `to_string` (`to_lines` for promises).
 
 ### The functor
 
@@ -218,12 +219,11 @@ side keeps the ppx's `to_yojson` / `of_yojson`; text is the noun it prints (`pos
 module Make
     (T : Engine_rules.GAME_RULES)
     (C : Engine_plan_format.Plan_format.PLAN_FORMAT with module T = T)
-    (X : Engine_text.Rules_text.TEXT with module T = T)
     (S : Engine_event_snapshot.Event_snapshot.SNAPSHOT) : sig
   module Plan            (* Plan.Make (T) (Raw_json) *)
   module Plan_decode     (* over C *)
-  module Plan_text       (* over X *)
-  module Failure         (* Failure.Make (T), and Failure_text over X *)
+  module Plan_text       (* over T's printing *)
+  module Failure         (* Failure.Make (T), and Failure_text over T *)
   module Game            (* the handlers: run_own, run_builtin, game_actions, flag_holds,
                             position, between_rounds, save, reload, log *)
   module Runner          (* run ?end_at ?end_state ?on_event ?events; its lines printed to game.log *)
@@ -233,13 +233,13 @@ end
 ```
 
 `T` stands alone and comes first so that every module inside is applied to the same path `T`: the
-plan's types are then one type for the decoder, the text and the runner, and `C` and `X` are pinned
-to it by `with module T = T`. Were the rules a part of one big game module, each format would drag
-the others along, and the rules libraries could not be kept free of JSON and text. `S` needs no `T`:
+plan's types are then one type for the decoder, the text and the runner, and `C` is pinned to it by
+`with module T = T`. Were the rules a part of one big game module, each format would drag the other
+along, and the rules libraries could not be kept free of JSON. `S` needs no `T`:
 what it keeps is the game's own record.
 
 Pokémon applies it once, `Pokemon_engine = Make (Pokemon_rules) (Pokemon_plan_format)
-(Pokemon_text) (Pokemon_event_snapshot)`, and FireRed uses that. The engine's tests apply it to the
+(Pokemon_event_snapshot)`, and FireRed uses that. The engine's tests apply it to the
 toy game (`program_engine/test`: zones, no grid, gold and flags), which is what proves the boundary.
 
 ### Failures and log lines carry values
@@ -269,7 +269,7 @@ of the libraries, directly or through any library of the tree, however deep:
 | Directory | Never links |
 |---|---|
 | `src/engine/{rules,postcondition,plan,run}/lib` | `yojson`, `json_field`, `wire`, `engine_plan_format`, `engine_text`, `engine_event_snapshot` |
-| `src/pokemon/checkpoints/rules/lib` | the same, and `pokemon_plan_format`, `pokemon_text`, `pokemon_event_snapshot` |
+| `src/pokemon/checkpoints/rules/lib` | the same, and `pokemon_plan_format`, `pokemon_event_snapshot` |
 
 The layers stay one-way as before: `allow engine engine core base`, `allow pokemon pokemon engine
 core base`, and a game uses `pokemon` only when its family lists it (`family pokemon game frlg`), so
@@ -287,10 +287,10 @@ src/engine/
   run/                          Game, Runner, Failure, Log_line, Repeat_until, Checkpoint_trials,
                                 Event_range, Event_progress
   plan_format/                  PLAN_FORMAT, Plan_decode, Plan_fields, Raw_json
-  text/                         TEXT, Plan_text, Failure_text, Run_text
+  text/                         Plan_text, Failure_text, Run_text
   event_snapshot/               SNAPSHOT, Event_snapshot
   program_engine/               Program_engine.Make; test/: the toy game (Toy_rules, Toy_plan_format,
-                                Toy_text, Toy_event_snapshot, Toy_engine)
+                                Toy_event_snapshot, Toy_engine)
   series/                       Chain_progress, Checkpoint_order, Round_trials
   expand/                       Plan_json, Table_decode, Fragment_table, Fragment_calls
 src/pokemon/navigation/grid/geometry/   Grid_geometry: Tile_pos, Direction (pure; the rules use it)
@@ -298,8 +298,6 @@ src/pokemon/checkpoints/
   rules/                        Pokemon_rules: Pose, Pokemon_action, Postconditions, Postcondition_check
   plan_format/                  Pokemon_plan_format: Pose_decode, Pokemon_action_decode,
                                 Postcondition_decode, Party_decode
-  text/                         Pokemon_text: Pose_text, Pokemon_action_text,
-                                Postconditions_text
   event_snapshot/               Pokemon_event_snapshot
   instance/                     Pokemon_engine = Program_engine.Make (...)
   checkpoint_end/               Checkpoint_end: the declared end as a grid pose

@@ -5,5 +5,4 @@
   gamepilot.program_engine
   gamepilot.pokemon_rules
   gamepilot.pokemon_plan_format
-  gamepilot.pokemon_text
   gamepilot.pokemon_event_snapshot))
