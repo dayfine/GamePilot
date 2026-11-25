@@ -52,6 +52,15 @@ void check_key_mapping() {
   CHECK(pro_buttons_for_keys(button_mask("Home")).button4 == 0x10);
   CHECK(pro_buttons_for_keys(button_mask("X") | kA).button3 == 0x0a);
   CHECK(pro_buttons_for_keys(button_mask("Y")).button3 == 0x01);
+  // ZL in byte 5 bit 7, beside L.
+  CHECK(pro_buttons_for_keys(button_mask("ZL")).button5 == 0x80);
+  // Plus and Minus (v1.17) are the GBA app's Start and Select: byte 4 bits 1
+  // and 0.
+  CHECK(pro_buttons_for_keys(button_mask("Plus")).button4 == 0x02);
+  CHECK(pro_buttons_for_keys(button_mask("Minus")).button4 == 0x01);
+  CHECK(pro_buttons_for_keys(button_mask("Start")).button4 == 0x02);
+  // ZR in byte 3 bit 7, beside R.
+  CHECK(pro_buttons_for_keys(button_mask("ZR")).button3 == 0x80);
 }
 
 bool axes_are(const std::uint8_t (&bytes)[3], std::uint16_t x,
@@ -573,8 +582,63 @@ void check_one_clock_and_cancel() {
     CHECK(down->start_ms - cancelled_ms < 100);
   }
 
+  // A cancel with `then` (v1.15): ZL held, then ZL with X in its place, with
+  // no release between (the board's replace-on-next).
+  call(
+      client,
+      R"({"jsonrpc":"2.0","id":7,"method":"submit","params":{"batch_id":"b4","commands":[{"press":["ZL"],"hold_ms":2000,"cooldown_ms":0}]}})");
+  sleep_ms(200);
+  call(
+      client,
+      R"({"jsonrpc":"2.0","id":8,"method":"cancel","params":{"then":{"batch_id":"b5","commands":[{"press":["ZL","X"],"hold_ms":160,"cooldown_ms":0}]}}})");
+  const std::vector<std::string> replaced = read_until(client, "\"b5\"", 2000);
+  CHECK(!replaced.empty());
+  const std::vector<BoardCommand> held = console.board.commands();
+  const auto x =
+      std::find_if(held.begin(), held.end(), [](const BoardCommand& c) {
+        return (c.message.buttons.button3 & 0x02) != 0;
+      });
+  CHECK(x != held.end() && x != held.begin());
+  if (x != held.end() && x != held.begin()) {
+    const BoardCommand& zl = *(x - 1);
+    CHECK((zl.message.buttons.button5 & 0x80) != 0);
+    CHECK((x->message.buttons.button5 & 0x80) != 0);
+    // The ZL hold ended where ZL with X started: no state between.
+    CHECK(std::abs(zl.end_ms - x->start_ms) < 1);
+    CHECK(x->start_ms - zl.start_ms < 1000);
+  }
+
   stop.store(true);
   serving.join();
+}
+
+// The server takes the keep-awake keys the --keepawake-key flag does: a
+// button, or RStick (keep_awake.h); anything else stops it at the start.
+// bdd5a03's server checked buttons only and refused RStick on console B.
+void check_keep_awake_keys() {
+  const Clock clock;
+  test::FakeConsole console(clock);
+  SwitchBackend backend(console.board.screen(60, 0, cv::Size(64, 36)),
+                        console.session, clock, SwitchOptions{});
+  bool started = true;
+  ServerOptions options;
+  options.port = 47979;
+  options.keepawake = KeepAwakeOptions{180000, "RStick"};
+  try {
+    const Server server(backend, options, clock);
+  } catch (const std::exception&) {
+    started = false;
+  }
+  CHECK(started);
+  bool refused = false;
+  options.port = 47980;
+  options.keepawake = KeepAwakeOptions{180000, "Q"};
+  try {
+    const Server server(backend, options, clock);
+  } catch (const std::exception&) {
+    refused = true;
+  }
+  CHECK(refused);
 }
 
 }  // namespace
@@ -591,5 +655,6 @@ int main() {
   check_home_press();
   check_stick_run();
   check_one_clock_and_cancel();
+  check_keep_awake_keys();
   return TEST_RESULT();
 }

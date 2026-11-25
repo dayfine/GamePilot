@@ -2,19 +2,15 @@
      (--capture DEVICE | --replay VIDEO) [--log-dir DIR]
    gamepilot ctl [--port N] [--owner LABEL] park|resume
 
-   Parks the Switch on its HOME menu, or resumes FireRed from there
-   (Switch_home.Console_park). [console] starts a daemon of its own on the
-   board and the card, as run/run_checkpoints_on_switch.sh does at its start
-   and its release, with its wire log and output in --log-dir (the temp
+   Parks the Switch on its HOME menu, or resumes the lab console's game from
+   there (Switch_home.Console_park; the game's tile:
+   Program_registry.lab_game_of_env). [console] starts a daemon of its own on
+   the board and the card, as run/run_checkpoints_on_switch.sh does at its
+   start and its release, with its wire log and output in --log-dir (the temp
    folder); [ctl park] and [ctl resume] use a running daemon (the idle one)
    under the input lease. Exit 1 when the console did not end where asked. *)
 
 module P = Switch_home.Console_park
-
-(* FireRed's tile on HOME: its orange background and Charizard, 0.41 of the
-   art; the other tiles on console B 0.05 at most (2026-11-24). *)
-let fire_red_tile : Switch_home.Home_screen.tile_color =
-  { min = (200, 40, 0); max = (255, 170, 100) }
 
 let client = "gamepilot-console/0.1"
 
@@ -24,15 +20,15 @@ let usage =
 
 let log line = print_endline line
 
-let park ~picture =
-  match P.park ~log ~picture fire_red_tile with
+let park ~tile ~picture =
+  match P.park ~log ~picture tile with
   | Ok () -> true
   | Error e ->
       log ("[Park] failed: " ^ e);
       false
 
-let resume ~picture =
-  match P.resume ~log ~picture fire_red_tile with
+let resume ~tile ~picture =
+  match P.resume ~log ~picture tile with
   | Ok r ->
       log ("[Resume] " ^ P.resumed_to_string r);
       true
@@ -40,7 +36,7 @@ let resume ~picture =
       log ("[Resume] failed: " ^ e);
       false
 
-(* Switch_home.Game_entry's steps, FireRed's tile colour for the HOME
+(* Switch_home.Game_entry's steps, the game's tile colour for the HOME
    reader. *)
 let entry_step name result =
   match result with
@@ -51,40 +47,63 @@ let entry_step name result =
       log ("[" ^ name ^ "] failed: " ^ e);
       false
 
-let close_game ~picture =
-  entry_step "Close game"
-    (Switch_home.Game_entry.close_game ~log ~picture fire_red_tile)
+let close_game ~tile ~picture =
+  entry_step "Close game" (Switch_home.Game_entry.close_game ~log ~picture tile)
 
-let start_game ~picture slot =
+let start_game ~tile ~picture slot =
   entry_step "Start game"
     (Switch_home.Game_entry.start_game ~log ~picture ~game_slot:slot
-       ~user_slot:0 fire_red_tile)
+       ~user_slot:0 tile)
 
-(* Park, resume, close or start in the effect context, over the game picture
-   the daemon's hello reports; whether it ended where asked. *)
-let act which (backend : Wire.backend) =
+(* Switch_home.Delete_save's two steps (Delete_save_command). *)
+let delete_save ~tile ~picture game =
+  entry_step "Delete save"
+    (Switch_home.Delete_save.to_caution ~log ~picture tile game)
+
+let delete_save_confirm ~picture =
+  entry_step "Delete save, confirm"
+    (Switch_home.Delete_save.confirm ~log ~picture)
+
+(* Park, resume, close, start or delete a save in the effect context, over the
+   game picture the daemon's hello reports; whether it ended where asked. *)
+let act ~tile which (backend : Wire.backend) =
   let picture = backend.viewport in
   match which with
-  | `Park -> park ~picture
-  | `Resume -> resume ~picture
-  | `Close_game -> close_game ~picture
-  | `Start_game slot -> start_game ~picture slot
+  | `Park -> park ~tile ~picture
+  | `Resume -> resume ~tile ~picture
+  | `Close_game -> close_game ~tile ~picture
+  | `Start_game slot -> start_game ~tile ~picture slot
+  | `Delete_save game -> delete_save ~tile ~picture game
+  | `Delete_save_confirm -> delete_save_confirm ~picture
 
 let name = function
   | `Park -> "park"
   | `Resume -> "resume"
   | `Close_game -> "close-game"
   | `Start_game _ -> "start-game"
+  | `Delete_save _ -> "delete-save"
+  | `Delete_save_confirm -> "delete-save-confirm"
 
 let owner which = "console:" ^ name which
 
-let on_port ~port ~owner:o which =
-  match Live.run_with_backend ~port ~client ~lease:(o, None) (act which) with
+(* The step on the daemon at [port] for the game's tile. *)
+let on_tile ~port ~owner:o which tile =
+  match
+    Live.run_with_backend ~port ~client ~lease:(o, None) (act ~tile which)
+  with
   | true -> 0
   | false -> 1
   | exception Unix.Unix_error (e, _, _) ->
       log ("no daemon: " ^ Unix.error_message e);
       1
+
+(* The step for the lab console's game (Program_registry.lab_game_of_env). *)
+let on_port ~port ~owner which =
+  match Program_registry.lab_game_of_env () with
+  | Error e ->
+      log ("[Console] " ^ e);
+      1
+  | Ok (_, home) -> on_tile ~port ~owner which home.home_tile
 
 (* A daemon of its own on the board and the card for the step. *)
 let with_daemon ~daemon ~serial ~frames ~log_dir which =

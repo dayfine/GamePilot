@@ -19,7 +19,7 @@ module Pose : sig
 end
 
 module Pokemon_action = Pokemon_action
-(** {!Pokemon_action}: the Pokémon actions, the game's own event kinds. *)
+(** {!Pokemon_action}: the Pokémon actions, the game's event kinds. *)
 
 module Postcondition_check = Postcondition_check
 (** {!Postcondition_check}: those promises checked against what the game read.
@@ -40,3 +40,10 @@ module Postconditions : sig
       with type t := t
        and type reads = Postcondition_check.observed
 end
+
+val ends_at : Action.t -> Pose.t option
+(** Where an action says it leaves the player: a [route]'s or [ready]'s target;
+    [None] for every other action. *)
+
+val position : Postconditions.t -> Pose.t option
+(** The promised end [position], as a grid pose. *)

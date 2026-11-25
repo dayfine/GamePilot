@@ -236,13 +236,18 @@ let look_once state =
       let state, step = Event_rule.next state facts ~at_ms:m.t_ms in
       (state, carry_out step)
 
-let next_event ~timeout_ms =
+(* A move learn's YES/NO may be a trainer's switch offer: its text says. *)
+let told_apart is_switch_offer : Battle.event -> Battle.event = function
+  | Move_learn when is_switch_offer () -> Switch_offer
+  | event -> event
+
+let next_event is_switch_offer ~timeout_ms =
   let deadline = Effects.now () +. float_of_int timeout_ms in
   let rec loop state =
     if Effects.now () > deadline then Battle.Timed_out
     else
       match look_once state with
-      | _, Some event -> event
+      | _, Some event -> told_apart is_switch_offer event
       | state, None -> loop state
   in
   loop (Event_rule.start ~at_ms:(Effects.now ()))
@@ -255,11 +260,12 @@ let run () =
   ignore (shows (fun m -> not (Battle_screen.battle_menu m)) : bool)
 
 let no_reader () = None
+let never () = false
 
-let make ?read_move_name ?(read_offered_move = no_reader) () : Battle.game_steps
-    =
+let make ?read_move_name ?(read_offered_move = no_reader)
+    ?(is_switch_offer = never) () : Battle.game_steps =
   {
-    next_event;
+    next_event = next_event is_switch_offer;
     use_move = use_move read_move_name;
     switch_to;
     send_in;

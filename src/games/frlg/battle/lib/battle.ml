@@ -5,6 +5,7 @@ type event =
   | Switch_in
   | Move_learn
   | Use_next
+  | Switch_offer
   | Battle_over
   | Timed_out
 
@@ -52,6 +53,7 @@ let event_name = function
   | Switch_in -> "switch-in"
   | Move_learn -> "move learn"
   | Use_next -> "use next"
+  | Switch_offer -> "switch offer"
   | Battle_over -> "battle over"
   | Timed_out -> "timed out"
 

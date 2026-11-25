@@ -1,6 +1,6 @@
 type leg = { direction : Grid_geometry.Direction.t; tiles : int }
 type item = { item : string; quantity : int }
-type route = { target : Pose.grid; fight_wild : bool }
+type route = { target : Pose.grid; fight_wild : bool; fight_trainers : bool }
 
 type t =
   | New_game

@@ -25,6 +25,10 @@ let to_float what = function
   | `Float f -> f
   | _ -> fail "%s: expected a number" what
 
+let to_bool what = function
+  | `Bool b -> b
+  | _ -> fail "%s: expected a boolean" what
+
 let to_string what = function
   | `String s -> s
   | _ -> fail "%s: expected a string" what

@@ -49,14 +49,16 @@ let items_of_yojson = function
 type file = {
   start_money : int option;
   start_coins : int option;
+  start_caught : int option;
   start_items : (string * int) list;
       [@to_yojson items_to_yojson] [@of_yojson items_of_yojson]
   at : observed option;
 }
 [@@deriving yojson { strict = false }]
 
-let to_yojson { start = { start_money; start_coins; start_items }; at } =
-  file_to_yojson { start_money; start_coins; start_items; at }
+let to_yojson
+    { start = { start_money; start_coins; start_caught; start_items }; at } =
+  file_to_yojson { start_money; start_coins; start_caught; start_items; at }
 
 (* A field left out reads as not read: a file kept before the coins and
    items were has only [start_money] and [at]. [@default] would read it too,
@@ -65,6 +67,7 @@ let unread =
   [
     ("start_money", `Null);
     ("start_coins", `Null);
+    ("start_caught", `Null);
     ("start_items", `Assoc []);
     ("at", `Null);
   ]
@@ -73,8 +76,8 @@ let with_unread fields =
   fields
   @ List.filter (fun (name, _) -> not (List.mem_assoc name fields)) unread
 
-let of_file { start_money; start_coins; start_items; at } =
-  { start = { start_money; start_coins; start_items }; at }
+let of_file { start_money; start_coins; start_caught; start_items; at } =
+  { start = { start_money; start_coins; start_caught; start_items }; at }
 
 let of_yojson = function
   | `Assoc fields ->

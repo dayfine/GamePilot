@@ -3,7 +3,8 @@
     earlier event brings it, some member knowing Cut, the money its purchases
     cost, the bag items it gives or uses that no earlier purchase or pickup
     ([pick_up_item]) of its own brought (a Rare Candy for [use_rare_candy] and
-    [candy_level]), what the checkpoint before it promised, and the place. *)
+    [candy_level], one of its ball for [capture]), what the checkpoint before it
+    promised, and the place. *)
 
 type need =
   | Party_in_order of string list
@@ -26,6 +27,9 @@ type need =
       *)
   | Badges of string list  (** Each of these badges, by name. *)
   | Hall_of_fame  (** The Hall of Fame entered: a star on the card. *)
+  | Caught_at_least of int
+      (** At least this many species caught, the Trainer Card's Pokédex count
+          ({!Plan_preconditions}: [caught]). *)
 
 val needs :
   Frlg_actions.Mart_plan.stocks ->
