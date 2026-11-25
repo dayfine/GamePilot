@@ -41,5 +41,6 @@ let read ~log =
     | None -> "Coin Case: the count did not read.");
   M.press Wire.B;
   M.close "the bag" Bag_screen.bag_open;
+  M.await_fade_in ~code:"not_closed" "the overworld after the bag";
   M.settle_back ~label:"coin case" ~log;
   coins

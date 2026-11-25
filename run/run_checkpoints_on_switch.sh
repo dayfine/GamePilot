@@ -15,9 +15,10 @@
 # --program takes a program registry id (`gamepilot programs` lists them); a plan folder in its
 # place still works.
 #
-# --viewport is where the game picture sits in the capture, for the bring-up's frame check and
-# every run's daemon (daemon/src/viewport.h): nso-gba, the default, is FRLG in the GBA app;
-# native is a full-screen Switch game (Legends Z-A).
+# Where the game picture sits in the capture, for the bring-up's frame check and every run's
+# daemon (daemon/src/viewport.h), comes from the program's registry descriptor (nso-gba: FRLG in
+# the GBA app; native: a full-screen Switch game, Legends Z-A). --viewport is for a plan folder no
+# program registers; given with a program, it must match the program's.
 #
 # Policy (docs/switch-bring-up.md): each checkpoint runs once (--runs 1) from the game's last
 # save, which a soft reset returns to; a run that passes, its end checks included, is saved in
@@ -232,7 +233,8 @@ cd "$root"
 # the hub like the others.
 mkdir -p "$GAMEPILOT_RUNS"
 # shellcheck disable=SC2086
-step "$bin" bring-up --daemon "$daemon" $board_args $frames_args ${viewport:+--viewport "$viewport"}
+step "$bin" bring-up --daemon "$daemon" $board_args $frames_args ${viewport:+--viewport "$viewport"} \
+    ${program_flag:+--program "$plan_dir"}
 
 # shellcheck disable=SC2086
 set -- ${program_flag:+"$program_flag"} "$plan_dir" "$@" --backend switch $board_args $frames_args \

@@ -7,7 +7,7 @@ picks up Route 6's hidden Rare Candy under a Super Repel, flies back to the Cela
 and duplicates it. Using the candies is a later checkpoint.
 
 <!-- generated:backends -->
-Runs on: mGBA, the Switch.
+Runs on: mGBA, the Switch (in its GBA app).
 <!-- /generated -->
 
 ## Before you start

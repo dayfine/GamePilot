@@ -89,7 +89,7 @@ library only because the map decoders came first.
 | `bin/` | mixed | 13 files name `Frlg_*`: plan loading, the live checkpoint, console save steps, pre-flight, make-room, guides |
 | `dev/lint/ocaml_lint.conf` | mixed | layer `game` may use `pokemon`: nothing stops a non-Pokémon game from using Pokémon code |
 | `daemon/src/viewport.h` | G | only `nso_gba_viewport` (240 x 160 inside the Switch frame); a native Switch game is the whole 1920 x 1080 frame |
-| `Wire.command` | A | buttons and waits; no analog stick, no ZL/ZR |
+| `Wire.command` | A | buttons, waits and both analog sticks (protocol v1.12); no ZL/ZR |
 
 In short: the skeleton (run order, skips, trials, rounds, chains, fragments, the watch page, the
 records) is agnostic already. The grid and Pokémon parts are three types (where the player is, the

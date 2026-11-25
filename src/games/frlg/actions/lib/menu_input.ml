@@ -25,13 +25,10 @@ let screen_timeout_ms = 3000
 let press ?(cooldown_ms = 0) button =
   ignore
     (Effects.submit
-       [
-         Wire.Press
-           { buttons = [ button ]; hold_ms = button_hold_ms; cooldown_ms };
-       ])
+       [ Wire.press ~hold_ms:button_hold_ms ~cooldown_ms [ button ] ])
 
 let hold ~hold_ms ~cooldown_ms button =
-  Wire.Press { buttons = [ button ]; hold_ms; cooldown_ms }
+  Wire.press ~hold_ms ~cooldown_ms [ button ]
 
 let taps button n =
   let tap = hold ~hold_ms:tap_hold_ms ~cooldown_ms:tap_release_ms button in
@@ -49,6 +46,22 @@ let await_screen ?(timeout_ms = screen_timeout_ms) ~code what reader =
 
 let settle_back ~label ~log =
   raise_error (Scene_looks.settle Talk ~label ~battle_ends:false ~log)
+
+module Fade_in = Frlg_overworld.Warp_fade_in
+
+(* A menu's close: its fade out, the black, the dim spell, the steps up and
+   the still spell after them take about 2 s (110 frames). *)
+let fade_in_timeout_ms = 5000
+
+let fade_in_over watch ~code what =
+  let came_up m =
+    Fade_in.watch_frame watch m;
+    Fade_in.came_up watch
+  in
+  await_screen ~timeout_ms:fade_in_timeout_ms ~code what came_up
+
+let await_fade_in ~code what =
+  ignore (fade_in_over (Fade_in.watch ()) ~code what)
 
 (* The menus a party read goes through: none has a box or a fade the settle's
    look tells from the overworld. *)
@@ -116,8 +129,7 @@ let press_until ?(max_presses = default_max_presses) ~code what button
     ~cooldown_ms reader =
   let presses =
     List.init max_presses (fun _ ->
-        Wire.Press
-          { buttons = [ button ]; hold_ms = button_hold_ms; cooldown_ms })
+        Wire.press ~hold_ms:button_hold_ms ~cooldown_ms [ button ])
   in
   let holds = match Effects.read () with Some m -> reader m | None -> false in
   if not holds then
@@ -136,3 +148,35 @@ let close_press_ms = 500
 let close what reader =
   press_until ~code:"not_closed" (what ^ " closed") Wire.B
     ~cooldown_ms:close_press_ms (fun m -> not (reader m))
+
+(* The editor, the party and the bag: each closes through a fade of its own. *)
+let max_faded_closes = 3
+let fade_start_ms = 1000
+
+let open_now reader =
+  match Effects.read () with Some m -> reader m | None -> false
+
+(* Whether a fade shows within fade_start_ms, [watch] fed every frame. *)
+let fade_starts watch =
+  let started m =
+    Fade_in.watch_frame watch m;
+    Fade_in.fading watch || Fade_in.came_up watch
+  in
+  match Effects.await ~timeout_ms:fade_start_ms started with
+  | Holds _ -> true
+  | Timeout -> false
+
+let rec close_faded_from closes what reader =
+  let opened = open_now reader in
+  close what reader;
+  let watch = Fade_in.watch () in
+  if opened || fade_starts watch then
+    let m =
+      fade_in_over watch ~code:"not_closed" ("the screen after " ^ what)
+    in
+    if reader m then
+      if closes >= max_faded_closes then
+        fail "not_closed" (what ^ " did not close")
+      else close_faded_from (closes + 1) what reader
+
+let close_through_fades what reader = close_faded_from 1 what reader

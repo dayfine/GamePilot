@@ -99,4 +99,18 @@ std::optional<Box> parse_box(std::string_view text) {
   return box;
 }
 
+std::optional<Viewport> parse_viewport(std::string_view text,
+                                       const Viewport& base) {
+  if (const std::optional<Viewport> named = named_viewport(text)) {
+    return named;
+  }
+  const std::optional<Box> picture = parse_box(text);
+  if (!picture) {
+    return std::nullopt;
+  }
+  Viewport viewport = base;
+  viewport.picture = *picture;
+  return viewport;
+}
+
 }  // namespace gamepilot

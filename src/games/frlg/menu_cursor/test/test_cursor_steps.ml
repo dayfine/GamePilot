@@ -13,8 +13,7 @@ let outcome = function
 
 let tap b =
   ignore
-    (Effects.submit
-       [ Wire.Press { buttons = [ b ]; hold_ms = 80; cooldown_ms = 240 } ]
+    (Effects.submit [ Wire.press ~hold_ms:80 ~cooldown_ms:240 [ b ] ]
       : Wire.batch_done)
 
 let unread_at_ms = 330

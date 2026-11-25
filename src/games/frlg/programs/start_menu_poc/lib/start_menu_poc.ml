@@ -19,9 +19,11 @@ let states_dir () =
 
 let default_state = Filename.concat (states_dir ()) "overworld.ss"
 let timeout_ms = 3000
+let press_hold_ms = 100
+let press_cooldown_ms = 100
 
 let press button =
-  Wire.Press { buttons = [ button ]; hold_ms = 100; cooldown_ms = 100 }
+  Wire.press ~hold_ms:press_hold_ms ~cooldown_ms:press_cooldown_ms [ button ]
 
 (* Presses [button], then waits for [pred]; returns ms from batch_done to the
    frame where it held. *)

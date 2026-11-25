@@ -173,7 +173,7 @@ let redeem ?(page = S.Dialog_arrow) () =
 
 (* START opens the menu on [start_row]; A on POKéMON the party, its cursor on
    [slot]; A on a slot opens its menu; A on SWITCH and on the second slot
-   keep the party. The cursors move as the presses move them, once a menu has
+   keep the party; B on it the overworld, through a black fade. The cursors move as the presses move them, once a menu has
    shown [input_delay_ms]. *)
 let swap_screen ~start_row ~slot () =
   let switching = ref false and chosen = ref slot in
@@ -189,16 +189,20 @@ let swap_screen ~start_row ~slot () =
     | [ Wire.A ], S.Member_menu 1 ->
         switching := true;
         show (S.Party !chosen)
-    | [ Wire.B ], S.Party _ -> show S.Overworld
+    | [ Wire.B ], S.Party _ ->
+        show S.Black;
+        S.show screen ~at_ms:(p.at_ms + 800) S.Overworld
     | _ -> ()
 
-(* START, POKéMON shows [party]; B on it the overworld. *)
+(* START, POKéMON shows [party]; B on it the overworld, through a black fade. *)
 let verify_screen party screen (p : S.press) =
   let show s = S.show screen ~at_ms:(p.at_ms + 100) s in
   match (p.buttons, S.screen_at screen p.at_ms) with
   | [ Wire.Start ], _ -> show (S.Start_menu 1)
   | [ Wire.A ], S.Start_menu 1 -> show party
-  | [ Wire.B ], (S.Party _ | S.Party_after_recycle) -> show S.Overworld
+  | [ Wire.B ], (S.Party _ | S.Party_after_recycle) ->
+      show S.Black;
+      S.show screen ~at_ms:(p.at_ms + 800) S.Overworld
   | _ -> ()
 
 let verify party () =
@@ -491,6 +495,14 @@ let () =
             [ "leppa-berry"; "oran-berry"; "sitrus-berry"; "retro-mail" ]
           |> String.concat " ")
         "6 7 10 none";
+      (* As after a held item is switched: no reader reads the party behind
+         its message, and no fade comes until a press. *)
+      case "a close with nothing open and no fade: no B, nothing waited for"
+        (fun () ->
+          run (fun () ->
+              Menu_input.close_through_fades "the bag"
+                Frlg_readers.Bag_screen.bag_open))
+        "ok; ";
       case "verify_mail_glitch: MIMIEN shows the held-item mark after Recycle"
         (verify S.Party_after_recycle)
         "ok; Start, A, B x6";

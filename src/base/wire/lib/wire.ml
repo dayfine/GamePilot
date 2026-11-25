@@ -24,9 +24,21 @@ let string_of_button = Command.string_of_button
 let button_of_string = Command.button_of_string
 let switch_only = Command.switch_only
 
+type stick = Command.stick
+
+let stick = Command.stick
+
 type command = Command.command =
-  | Press of { buttons : button list; hold_ms : int; cooldown_ms : int }
+  | Press of {
+      buttons : button list;
+      left_stick : stick option;
+      right_stick : stick option;
+      hold_ms : int;
+      cooldown_ms : int;
+    }
   | Wait of { wait_ms : int }
+
+let press = Command.press
 
 type box = Probe.box = { x : float; y : float; w : float; h : float }
 type delivery = Probe.delivery = Every | Latest

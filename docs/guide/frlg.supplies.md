@@ -6,7 +6,7 @@ copy) and 5 Super Repels from the Lavender Mart. It starts and ends at the Dept.
 and costs ¥7,500. The list is fixed for now; a configurable shopping list is planned.
 
 <!-- generated:backends -->
-Runs on: mGBA, the Switch.
+Runs on: mGBA, the Switch (in its GBA app).
 <!-- /generated -->
 
 ## Before you start
