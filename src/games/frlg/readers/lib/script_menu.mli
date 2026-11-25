@@ -28,4 +28,6 @@ val seagallop_islands : t
     harbor (pokefirered EventScript_ChooseDestFromOneIsland and
     ...FromTwoIsland: [multichoice 19, 6], MULTICHOICE_ISLAND_23 and _13). THREE
     ISLAND is the widest row of both, so the window is 11 tiles wide, moved left
-    to end by tile 28: its inside starts at tile (18, 7). Three rows. *)
+    to end by tile 28: its inside starts at tile (18, 7). Three rows. The width
+    and left edge come from the English text width of "THREE ISLAND", so another
+    language moves the window and the arrow column. *)
