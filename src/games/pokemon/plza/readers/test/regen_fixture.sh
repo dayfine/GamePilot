@@ -14,7 +14,8 @@
 # every frame would be about 85 MB.
 # The fork's 1080p captures are kept at 640x360 where every reader test still
 # passes on them, at 1280x720 where one does not, and at 1080p (JPEG quality
-# 80) where 720p fails too; the scaled frames' arrow bearings moved by up to 6
+# 80) where 720p fails too, and as captured where the daemon's blob_find_test
+# reads them at 1080p (arrival-to-ad's 0001, 0033 and 0040); the scaled frames' arrow bearings moved by up to 6
 # degrees (the fork's tolerance is 10), their expectations with them.
 # Also fixtures/switch.second.probes.jsonl: every frame again, probed by what
 # a two-frame read subscribes from what the frame shows (write_probe_spec.exe
