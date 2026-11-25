@@ -65,11 +65,25 @@ OCaml function per program that writes ordinary plans; the runner, pre-flight, e
 (#28) and the watch page see plans exactly as they do now, and the generated plans are kept in the
 run's folder so a run can be read and replayed later.
 
-**Where the configuration lives.** Each configurable program has a default configuration file beside
-its plans (`src/games/<game>/programs/<program>/config.json`) and a description of its fields in its
-registry entry (name, type, default, one line of help), so `gamepilot programs` can print them. A run
-takes `--config FILE` and repeated `--set field=value` over the defaults; `run.json` records the
-configuration used. The Control UI can offer the same fields later.
+**Where the configuration lives.** A run takes a goal file (`--goal FILE`); flags such as
+`--set field=value` are shorthand decoded into the same value, so both get the same types and
+errors. Each configurable program has one OCaml record for its configuration and one decoder over
+`Json_field` that returns a `Result`; the registry entry holds the defaults. Errors give the path,
+what was expected, what was read and a suggestion where there is one:
+
+```
+members[2].level: expected 1..100, got 101
+members[0].species: "blastoize" is not a species; did you mean "blastoise"?
+members[1]: gloom is not in the party (party: mr-mime, blastoise, ...)
+```
+
+Checks run in two passes: the file pass (shape, ranges, names) before anything starts, the game
+pass (party, bag) at the start of the run, refusing as in section 2. `gamepilot goal describe
+<program>` prints the fields, types, ranges, defaults and an example, from the same field
+definitions the decoder uses; `gamepilot goal check FILE` checks a file without running. Tests pin
+the text of each kind of error. No hand-kept JSON Schema and no ppx: neither gives the domain checks,
+and a JSON Schema can be printed from the field definitions later if an editor needs one. `run.json`
+records the configuration used, and the run's folder keeps a copy of the goal file.
 
 **Checked against game data, before the console is touched.** Supplies' configuration is a list of
 (item, count):
@@ -131,10 +145,27 @@ existing `Lift_ride` code, and the only new code is the expansion (a pure functi
 plan, tested without a game). Fly stays an explicit event in the first step; expanding "place in
 another town" into Fly + walk is the same mechanism and can follow once the lift case has run.
 
-The table lives in GamePilot (`src/games/frlg/assets/kanto_places.json`), since the names are our
-automation's, not the map's; a test checks every place against PokemonSimulation's map (the tile is
-walkable, the facing points at an NPC or door where the name says so). Maps are still read from
-PokemonSimulation, never copied.
+The table lives in GamePilot (`src/games/frlg/places/`). Where an object is (the nurse, a door, a
+hidden item) is map data and stays in PokemonSimulation: a place names the object by its id there
+and adds only what is ours, the tile we stand on to use it, the facing, and names such as
+`dept_store_1f_save`. A test checks that every place resolves on PokemonSimulation's maps and that
+its stand tile can be walked to. An object missing from PokemonSimulation's objects (a hidden item,
+say) gets its tile in the table, marked as not in the maps yet, and a follow-up there. Coordinates
+are never copied from the maps.
+
+**Fragments and checkpoint templates.** Two units of reuse, nested:
+
+- A **fragment** is a named run of events with parameters (`go_to(place)`, `heal_at(town)`,
+  `fly_and_walk(town, place)`, `buy(items, mart)`), expanded at load time like the place expansion
+  above. It has no save of its own: if it fails halfway, the checkpoint around it runs again.
+- A **checkpoint template** is a checkpoint with parameters (`stock(items)`, `get_one(item, spots)`,
+  `duplicate(item, n)`, `candy_level(members)`): a start, a checked end, needs and provides, and its
+  own save, so a run resumes there. Templates are built from fragments; a program is a chain of
+  templates; a hand-written plan may use fragments directly.
+
+Only checkpoints save and only events touch the game, so the runner, the logs and the watch page see
+plain events, as now. Fragments and templates are data; OCaml generators only where a value is
+computed (a shopping list, a round count).
 
 ## 4. Checkpoints that skip and fall back
 
@@ -160,41 +191,65 @@ Configuration: the targets (`[ { "species": "blastoise", "level": 100 } ]`) and 
 candies the targets need from the levels read at the pre-flight, plus the margin ("dup more than
 needed"). If all four spots are empty, tt-01 fails and says so; no mart sells Rare Candies.
 
-## 5. Migration, one concern per PR
+## 5. Level-ups are decided before the run
+
+Every program that levels a member (`candy_level`, `grind`, the Mail Glitch grind round) meets two
+prompts it cannot leave to chance: an evolution scene, and "X is trying to learn Y" when four moves
+are known. The answers are worked out before the run, never on the spot.
+
+- The goal states the end state per member: the level, the species (evolve or not) and the moves
+  it knows at the end.
+- A generator reads the member's moves in-game at the start, steps through the levels with
+  FireRed's learnsets, evolutions and the rule that an HM cannot be forgotten, and writes the
+  `Level_up_policy` (#26) and the postconditions it predicts.
+- The run is refused before it starts when a target move is never offered in that range, when the
+  only move that could be replaced is an HM, or when the species cannot be reached by level-up.
+- The learnset, evolution and HM data is extracted in PokemonSimulation, from pokefirered at the
+  revision its `pret.json` already pins, and only read here. A hand-written policy is for tests.
+
+The policy and every prompt's answer go into the run's log ("rattata: cancelled evolution",
+"pidgeotto: declined gust"). Cancelling an evolution holds B before the scene starts, so it waits for
+an evolution scene reader; until then a step that would evolve a member against its goal refuses.
+
+## 6. Migration, one concern per PR
 
 Each step runs on mGBA (3 passes from its start state) before console B, and leaves every existing
-plan working.
+plan working. The structure comes first, so that other programs can be written in parallel on it.
 
-1. **Places.** The table, route targets that name a place, the expansion with the lift case. mg-01,
-   mg-06 and su-01 rewritten to use it; a test checks that each expands to the same walks, rides and
-   end poses as today's hand-written plan. mGBA: su-01 and mg-06 once each, then su-01 on the Switch.
-2. **Program configuration.** Registry field descriptions, `config.json`, `--config`/`--set`, the
-   configuration in `run.json`. No program uses it yet except a test.
-3. **Configurable Supplies.** The checked item list, mart choice and generator, the Dept. Store 2F in
-   the stock table. su-01 becomes the default configuration's generated plan; a test checks that it
-   equals today's su-01. mGBA: the default and one two-mart list.
-4. **Checkpoint skip and alternatives** in `pokemon/story`, and `pick_up_item`'s `no_item`. Tested with
-   a scripted game, no plan changes.
-5. **Team Training in three checkpoints** (after #26): tt-01 to tt-03 as above. mGBA from a save with
-   the candy, one without it, and one where Route 6's candy is already gone.
-6. **Preconditions name their provider.** Programs declare what they provide; a refused pre-flight
-   prints the provider's command line. Automatic chaining stays a later question.
+1. **Rename `story` to `checkpoints`**, and the plan format from `pokesim-authored-checkpoint/1`
+   to GamePilot's own name, with the old name still decoded. Moves only.
+2. **Rename what deciding modules take to `game_steps`** (`rig`, `Battle_driver`, `Screen_driver`),
+   with the naming rule in `AGENTS.md`. Renames only.
+3. **Learnsets, evolutions and HMs** extracted in PokemonSimulation.
+4. **Places and fragments.** The table, route targets that name a place, the expansion with the
+   lift case. mg-01, mg-06, su-01 and tt-01 use them; a test checks that each expands to the same
+   walks, rides and end poses as today's hand-written plan.
+5. **Goals.** The typed decoder, `goal describe` and `goal check`, the goal in `run.json`. Then
+   configurable Supplies (the checked item list, mart choice and generator, the Dept. Store 2F in the
+   stock table; a test checks that the default goal generates today's su-01), and Team Training's goal
+   generating its plans and its level-up policy.
+6. **Checkpoint skip, alternatives and needs/provides** in `checkpoints`, and `pick_up_item`'s
+   `no_item`. Tested with a scripted game. Then Team Training in three checkpoints as above, on mGBA
+   from a save with the candy, one without it, and one where Route 6's candy is already gone.
+7. **Readers from the mGBA level-up run**: the evolution scene, the move prompt in battle, the
+   candy's "used on" screen, the faint screens.
 
-## Open questions
+Exceptions in library code become `Result`, one per PR, in between.
 
-1. **Plan format.** A route target that names a place, `skip_when` and `alternatives` are additions
-   to PokemonSimulation's plan format. Recommendation: GamePilot's additions for now, as `knows`,
-   `money` and `marks` were, expanded or read only here; propose them to PokemonSimulation once they
-   have run on the console.
-2. **Where the places table lives.** Recommendation: GamePilot, checked against PokemonSimulation's
-   maps by a test; move it to PokemonSimulation if its tools need the names.
-3. **May a generator read the save?** Team Training's candy count depends on current levels.
-   Recommendation: yes, only through the pre-flight's reads, and the generated plans are saved with
-   the run so the run can still be replayed.
-4. **Failed precondition: refuse or chain?** Recommendation: refuse with the provider's command line
-   first; chaining behind a flag later.
-5. **The Fly badge.** No reader yet. Recommendation: take "a member knows Fly" as enough for now
-   (FRLG asks for the Thunder Badge, and every save we run is well past it), and add the Trainer
-   Card badge reader when a program runs on an earlier save.
-6. **Mart choice.** A fixed preference list (Celadon first) or the cheapest trip worked out from Fly
-   towns? Recommendation: the fixed list; the configuration may name a mart to override it.
+## Decisions (review, 2026-11-24)
+
+1. **Plan format.** GamePilot owns it, renamed from `pokesim-authored-checkpoint/1` with the old
+   name decoded as an alias. PokemonSimulation is the source of maps only.
+2. **Goal to checkpoints.** A fixed chain with skips for now; each checkpoint records what it needs
+   and provides. A planner that chains them comes much later. Checkpoints and small runs of steps
+   must be reusable and composable (section 3).
+3. **Unit of reuse.** Fragments inside checkpoint templates (section 3).
+4. **Failed precondition.** Refuse before the first event, naming what is missing and which
+   checkpoint provides it, with the same check on every backend. Chaining later, on the same
+   needs and provides.
+5. **Places.** GamePilot's table, pointing at PokemonSimulation's map objects (section 3).
+6. **Configuration.** A goal file per run, one typed decoder per program, precise errors (section 1).
+7. **Level-ups.** Decided before the run from the goal and FireRed's data (section 5).
+
+Still open: the Fly badge (take "a member knows Fly" as enough until a program runs on an earlier
+save), and mart choice (a fixed preference list, Celadon first, unless the goal names a mart).
