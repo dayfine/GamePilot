@@ -17,6 +17,7 @@
 (tests
  (names
   test_pc_deposit_steps
+  test_pc_withdraw_steps
   test_fly_towns
   test_fly_user
   test_actions
@@ -45,6 +46,7 @@
   test_pokedex_entry)
  (modules
   test_pc_deposit_steps
+  test_pc_withdraw_steps
   test_fly_towns
   test_fly_user
   test_actions

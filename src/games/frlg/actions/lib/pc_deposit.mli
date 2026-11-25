@@ -16,6 +16,14 @@ val deposit : log:(string -> unit) -> string list -> unit
 (** Stores these species (slugs) in the first boxes with room, and is back on
     the overworld. Fails as [pc_deposit] naming the screen and why. *)
 
+val label : Frlg_readers.Pc_screen.view -> string option
+(** The text of the cursor's row on the PC list, the storage menu or a Pokémon's
+    menu (STORE or WITHDRAW first), when it reads. *)
+
+val species_shown : unit -> string option
+(** The species slug PKMN DATA shows (["/MAGIKARP"]), on any box screen, when it
+    reads. *)
+
 val look : unit -> Pc_deposit_steps.look
 (** One look at the PC's screen: the view, the cursor row's label, PKMN DATA's
     species on the party panel, "The BOX is full.". A frame that reads as the

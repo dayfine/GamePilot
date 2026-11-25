@@ -9,7 +9,10 @@ let overworld_confirm_ms = 800
 let box_full = "The BOX is full."
 let remove_mail = "Please remove the MAIL."
 let messages = [ "Deposit in which BOX?"; box_full; remove_mail ]
-let mon_menu_rows = [ "STORE"; "SUMMARY"; "MARK"; "RELEASE"; "CANCEL" ]
+
+(* A deposit's first row is STORE, a withdraw's WITHDRAW. *)
+let mon_menu_rows =
+  [ "STORE"; "WITHDRAW"; "SUMMARY"; "MARK"; "RELEASE"; "CANCEL" ]
 
 let menu_rows =
   [
@@ -87,6 +90,7 @@ let press (p : Steps.press) =
     | B -> [ button Wire.B ]
     | Up -> [ dpad Wire.Up ]
     | Down -> [ dpad Wire.Down ]
+    | Left -> [ dpad Wire.Left ]
     | Right -> [ dpad Wire.Right ]
     | Wait | Done | Fail _ -> [ Wire.Wait { wait_ms } ]
   in

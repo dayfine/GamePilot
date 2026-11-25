@@ -3,7 +3,7 @@
   "game": "frlg",
   "checkpoint": {
     "id": "01-buy-magikarp",
-    "title": "Magikarp in the party, below the Route 4 Pokemon Center's PC: from anywhere outdoors, fly there; unless Magikarp is already seen, a free slot made at the PC and a Magikarp bought from the salesman",
+    "title": "Below the Route 4 Pokemon Center's PC with a party member holding no Mail in slot 6: from anywhere outdoors, fly there, put the member holding no Mail in the PC, and buy a Magikarp from the salesman, or, when Magikarp is already seen, withdraw a Pokemon from the PC",
     "start": {
       "anywhere": "outdoors"
     },
@@ -42,8 +42,15 @@
         "args": {
           "member": "holding_no_mail"
         },
-        "why": "A free party slot for the Magikarp, the member the ? Mail is opened for. The PC refuses a member holding Mail, so this stores the one holding none (on the Mail Glitch save the other five hold the filler mails). Skipped when Magikarp is already seen: it holds no Mail itself and would be the one stored.",
-        "skip_if": ["pokedex_seen:magikarp"]
+        "why": "A free party slot for the member the ? Mail is opened for. The PC refuses a member holding Mail, so this stores the one holding none (on the Mail Glitch save the other five hold the filler mails; MIMIEN, holding none, still has its stale mail index 0, so it cannot be that member)."
+      },
+      {
+        "id": "withdraw",
+        "kind": "game_action",
+        "action": "pc_withdraw",
+        "args": {},
+        "why": "When Magikarp is already seen (the purchase is skipped, and the salesman sells one Magikarp per save): the first Pokemon in the box the PC opens on joins the party in slot 6. Out of the PC its mail index is 0xFF (pokefirered BoxMonToMon), so it is the member the ? Mail needs, whatever its species. Here, before the purchase, so both skip conditions are answered before the Pokedex changes.",
+        "skip_if": ["pokedex_not_seen:magikarp"]
       },
       {
         "id": "to_salesman",
@@ -70,7 +77,7 @@
           "yes": true
         },
         "once_per_save": true,
-        "why": "YES: $500, Magikarp Lv 5 joins the party in slot 6, seen and caught in the Pokedex. It is also the member with mail index 0xFF the ? Mail needs. Skipped, with the talk, when Magikarp is already seen: the end check still asks for it in slot 6.",
+        "why": "YES: $500, Magikarp Lv 5 joins the party in slot 6, seen and caught in the Pokedex. New to the party, its mail index is 0xFF: the member the ? Mail needs. Skipped, with the talk, when Magikarp is already seen: the withdraw gave slot 6 its member.",
         "skip_if": ["pokedex_seen:magikarp"]
       },
       {
@@ -104,7 +111,7 @@
             "place": "route4_center_pc"
           }
         },
-        "why": "Back below the Center's PC, facing it: where 02 starts, bought or not (with the purchase skipped the player is already there)."
+        "why": "Back below the Center's PC, facing it: where 02 starts, bought or withdrawn (after a withdraw the player is already there)."
       }
     ]
   },
@@ -114,18 +121,12 @@
   "metadata": {
     "phase": "testing",
     "retries": 3,
-    "notes": "Starts anywhere outdoors where Fly works, such as outside the Celadon Dept. Store, where frlg.mail_glitch's 08-activate-and-verify leaves the player. What the Post-E4 ACE route (pomeg-letterbombers' FRLG non-JPN Post-E4 route) needs, and how this checkpoint meets it: the Mail Glitch active (all six party mail records taken), the game cleared (the MOVE 1 and MOVE 2 word groups unlock with FLAG_SYS_GAME_CLEAR, pret easy_chat.c), Magikarp seen for the word MAGIKARP, and a party member whose mail index is 0xFF to give the Retro Mail to (pret GiveMailToMon finds no free record and leaves the index as it was, so the editor opens mail[0xFF]). The Magikarp bought here is both: seen, and new to the party with index 0xFF. It needs a free party slot, so a member not holding Mail goes to the PC first. Depositing MIMIEN also ends its stale index 0: later item duplication gives mail to a 0xFF member and reads the ? Mail's words, not ABRA.",
+    "notes": "Starts anywhere outdoors where Fly works, such as outside the Celadon Dept. Store, where frlg.mail_glitch's 08-activate-and-verify leaves the player. What the Post-E4 ACE route (pomeg-letterbombers' FRLG non-JPN Post-E4 route) needs, and how this checkpoint meets it: the Mail Glitch active (all six party mail records taken), the game cleared (the MOVE 1 and MOVE 2 word groups unlock with FLAG_SYS_GAME_CLEAR, pret easy_chat.c), Magikarp seen for the word MAGIKARP, and a party member whose mail index is 0xFF to give the Retro Mail to (pret GiveMailToMon finds no free record and leaves the index as it was, so the editor opens mail[0xFF]). The Magikarp bought here is both: seen, and new to the party with index 0xFF. It needs a free party slot, so a member not holding Mail goes to the PC first. Depositing MIMIEN also ends its stale index 0: later item duplication gives mail to a 0xFF member and reads the ? Mail's words, not ABRA. On a save where Magikarp is already seen (bought before: the salesman sells once), the purchase is skipped and a Pokemon is withdrawn from the PC instead, any species: withdrawn, its index is 0xFF too. The end check reads the party's marks: the five members holding the filler Mail, and slot 6 holding nothing (02 gives it the Retro Mail, which needs an empty hand); a withdrawn Pokemon holding an item fails it.",
     "preconditions": {
       "hall_of_fame": true
     },
     "postconditions": {
-      "party_includes": ["magikarp"],
-      "party_slots": [
-        {
-          "slot": 6,
-          "species": "magikarp"
-        }
-      ]
+      "marks": ["mail", "mail", "mail", "mail", "mail", "none"]
     }
   }
 }

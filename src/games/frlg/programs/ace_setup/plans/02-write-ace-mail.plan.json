@@ -48,7 +48,7 @@
             }
           ]
         },
-        "why": "Retro Mail to the Magikarp (mail index 0xFF, every party mail record taken) opens the ? Mail, mail[0xFF], which lies on Box 3 slot 1. The four words make its personality 0x162E2753 and OT ID 0x2A812402: the slot decrypts as species 0x0351. MAGIKARP from the POK\u00e9MON group (0x15), not POK\u00e9MON2."
+        "why": "Retro Mail to slot 6, the member 01 bought or withdrew (mail index 0xFF, every party mail record taken) opens the ? Mail, mail[0xFF], which lies on Box 3 slot 1. The four words make its personality 0x162E2753 and OT ID 0x2A812402: the slot decrypts as species 0x0351. MAGIKARP from the POK\u00e9MON group (0x15), not POK\u00e9MON2."
       },
       {
         "id": "box3_slot1_ace",
@@ -71,14 +71,9 @@
   "metadata": {
     "phase": "testing",
     "retries": 3,
-    "notes": "The irreversible step: confirming the ? Mail writes Box 3 slot 1. Its start state (01-buy-magikarp's end, below the Route 4 Center's PC) is the backup: on mGBA the run starts from it every time, and on the Switch nothing is saved until every check passed. Words from pomeg-letterbombers' FRLG non-JPN Post-E4 route (English). The Retro Mail is spent and the Magikarp ends holding nothing (the give fails half way, as in the duplication). Checked on mGBA from RAM (not by the program): Box 3 slot 1 personality 0x162E2753, OT ID 0x2A812402, species 0x0351.",
+    "notes": "The irreversible step: confirming the ? Mail writes Box 3 slot 1. Its start state (01-buy-magikarp's end, below the Route 4 Center's PC) is the backup: on mGBA the run starts from it every time, and on the Switch nothing is saved until every check passed. Words from pomeg-letterbombers' FRLG non-JPN Post-E4 route (English). The Retro Mail is spent and slot 6 ends holding nothing (the give fails half way, as in the duplication). Checked on mGBA from RAM (not by the program): Box 3 slot 1 personality 0x162E2753, OT ID 0x2A812402, species 0x0351.",
     "postconditions": {
-      "party_slots": [
-        {
-          "slot": 6,
-          "species": "magikarp"
-        }
-      ],
+      "marks": ["mail", "mail", "mail", "mail", "mail", "none"],
       "items": [
         {
           "item": "retro-mail",

@@ -27,7 +27,17 @@ type look = {
       *)
 }
 
-type press = A | B | Up | Down | Right | Wait | Done | Fail of string
+type press =
+  | A
+  | B
+  | Up
+  | Down
+  | Left  (** Only in a withdraw ({!Pc_withdraw_steps}). *)
+  | Right
+  | Wait
+  | Done
+  | Fail of string
+
 type t
 
 val start : string list -> t

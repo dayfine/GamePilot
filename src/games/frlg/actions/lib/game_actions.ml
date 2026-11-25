@@ -96,6 +96,9 @@ let body ctx (request : R.t) () =
       let species = deposited ctx deposit in
       Pc_deposit.deposit ~log species;
       ctx.party := List.fold_left Party_roster.remove !(ctx.party) species
+  | Pc_withdraw ->
+      let species = Pc_withdraw.withdraw ~log in
+      ctx.party := Party_roster.add !(ctx.party) species
   | Verify_mail_glitch member ->
       Party_actions.verify_mail_glitch ~log
         ~who:(Action_args.member_to_string member)

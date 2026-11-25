@@ -1,39 +1,53 @@
 let pokedex_seen = "pokedex_seen"
-let prefix = pokedex_seen ^ ":"
+let pokedex_not_seen = "pokedex_not_seen"
 
-(* The species a pokedex_seen condition names. *)
-let pokedex_species condition =
+type pokedex = { species : string; seen : bool }
+
+let after prefix condition =
+  let prefix = prefix ^ ":" in
   if String.starts_with ~prefix condition then
     let n = String.length prefix in
     Some (String.sub condition n (String.length condition - n))
   else None
+
+(* The species a Pokédex condition names, and whether it holds when the
+   species is seen. *)
+let pokedex_condition condition =
+  match (after pokedex_seen condition, after pokedex_not_seen condition) with
+  | Some species, _ -> Some { species; seen = true }
+  | None, Some species -> Some { species; seen = false }
+  | None, None -> None
+
+let reads_pokedex condition = pokedex_condition condition <> None
 
 let unknown condition slug =
   Error
     (Printf.sprintf "skip_if %s: %s is no Kanto Pokedex species" condition slug)
 
 let check species condition =
-  match pokedex_species condition with
+  match pokedex_condition condition with
   | None -> Ok ()
-  | Some slug when Pokedex_entry.number_of species slug = None ->
-      unknown condition slug
+  | Some p when Pokedex_entry.number_of species p.species = None ->
+      unknown condition p.species
   | Some _ -> Ok ()
 
-let said = function
-  | Ok (Pokedex_entry.(Seen | Caught) as e) -> (Pokedex_entry.entry_name e, true)
-  | Ok Not_seen -> ("not seen", false)
+let answer ~seen = function
+  | Ok (Pokedex_entry.(Seen | Caught) as e) -> (Pokedex_entry.entry_name e, seen)
+  | Ok Not_seen -> ("not seen", not seen)
   | Error cause ->
       ( "not read ("
         ^ Pokemon_engine.Failure.cause_to_string cause
         ^ "), so not skipped",
         false )
 
-let seen ~log condition slug =
-  let what, holds = said (Pokedex_entry_steps.read ~log slug) in
+let read_pokedex ~log condition p =
+  let what, holds =
+    answer ~seen:p.seen (Pokedex_entry_steps.read ~log p.species)
+  in
   log (Printf.sprintf "[Skip] %s: %s." condition what);
   holds
 
 let holds ~log condition =
-  match pokedex_species condition with
-  | Some slug -> seen ~log condition slug
+  match pokedex_condition condition with
+  | Some p -> read_pokedex ~log condition p
   | None -> false
