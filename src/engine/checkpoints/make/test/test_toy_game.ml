@@ -1,13 +1,16 @@
-(* The engine over a toy game with zones and no grid (Toy_rules, Toy_codec,
-   Toy_text, Toy_saved): its plans decode with the toy's poses, kinds and
-   promises, the runner sends each kind to its handler and checks zones and
-   promises, and what a run keeps and loops works on the toy's types. *)
+(* The engine over a toy game built from the engine's pieces, with zones and
+   no grid (Toy_rules, Toy_codec, Toy_text, Toy_saved): its plans decode with
+   the toy's zones, action sets and promises, the runner sends each action to
+   its handler and checks zones and promises, and what a run keeps and loops
+   works on the toy's types. Test_toy_pieces tests the pieces' own parts. *)
 
 open Toy_game
 open Toy_checkpoints
 
 let toy_plan ?(start = {|{"place": "Village", "spot": "inn"}|})
-    ?(postconditions = {|{"gold": 30, "flags": ["met_cat"]}|}) events =
+    ?(postconditions =
+      {|{"position": {"place": "Forest"}, "gold": 30, "flags": ["met_cat"]}|})
+    events =
   Printf.sprintf
     {|{"format": "gamepilot-checkpoint/1", "game": "toy", "execution": {},
        "checkpoint": {"id": "cf", "title": "Cat farm", "start": %s,
@@ -27,7 +30,8 @@ let beg =
   {|{"id": "beg", "kind": "game_action", "action": "beg", "args": {"item": "bell"}}|}
 
 let rest = {|{"id": "sleep", "kind": "rest", "skip_if": ["rested"]}|}
-let events = [ walk; talk; answer; beg; rest ]
+let buy = {|{"id": "bell", "kind": "buy", "args": {"item": "bell"}}|}
+let events = [ walk; talk; answer; beg; rest; buy ]
 
 let decode text =
   Plan_decode.decode ~source:"toy.plan.json" (Yojson.Safe.from_string text)
@@ -45,18 +49,21 @@ let decode_cases =
       "a toy plan's outline: a zone start, the toy's actions and the engine's \
        kinds"
       (fun () -> Plan_text.outline (plan ()))
-      "toy cf from Village/inn: 1 walk, 1 talk, 1 answer, 1 game_action, 1 rest";
+      "toy cf from Village/inn: 1 walk, 1 talk, 1 answer, 1 game_action, 1 \
+       rest, 1 buy";
     case "a walk: the toy's walk action, with a zone declared after"
       (event "into_forest")
       "into_forest: walk north until forest_sign => Forest";
     case "an answer: the engine's kind" (event "agree") "agree: answer no";
     case "a game action: its args as written" (event "beg")
       {|beg: [beg] game_action {"item":"bell"}|};
-    case "a rest: the toy's rest action, without args" (event "sleep")
+    case "a rest: the toy's inn set, without args" (event "sleep")
       "sleep: rest skip_if rested";
-    case "the toy's promises"
+    case "a buy: the toy's inn set, with its item" (event "bell")
+      "bell: buy bell";
+    case "the toy's promises: the position first, then the toy's"
       (fun () -> Plan_text.postconditions (plan ()))
-      "gold gained 30\nflags met_cat";
+      "position Forest\ngold gained 30\nflags met_cat";
     case "no postconditions: the toy's none"
       (fun () ->
         decoded Plan_text.postconditions
@@ -67,7 +74,7 @@ let decode_cases =
         decoded Plan_text.outline
           (toy_plan [ {|{"id": "x", "kind": "route"}|} ]))
       {|toy.plan.json: checkpoint.events[0].kind "route" is not a story event kind.|};
-    case "an unknown arg of the toy's walk action, named by the toy's decoder"
+    case "an unknown arg of the toy's walk action, named by its set's decoder"
       (fun () ->
         decoded Plan_text.outline
           (toy_plan
@@ -79,6 +86,12 @@ let decode_cases =
       (fun () ->
         decoded Plan_text.outline (toy_plan ~start:{|{"map": "Town"}|} [ talk ]))
       "toy.plan.json: checkpoint.start.map is not a known field.";
+    case "a promised position that is not a zone: the zone's decoder names it"
+      (fun () ->
+        decoded Plan_text.outline
+          (toy_plan ~postconditions:{|{"position": {"map": "Town"}}|} [ talk ]))
+      "toy.plan.json: checkpoint.metadata.postconditions.position.map is not a \
+       known field.";
     case "a promise the toy cannot read"
       (fun () ->
         decoded Plan_text.outline
@@ -134,6 +147,20 @@ let reads gold_now : Toy_rules.Postconditions.reads =
 
 let promised () = Option.get (plan ()).postconditions
 
+(* The zone a plan's postconditions promise, as the runner's declared end. *)
+let promised_position ?at () =
+  let plan =
+    match at with
+    | None -> plan ()
+    | Some zone ->
+        Result.get_ok
+          (decode
+             (toy_plan
+                ~postconditions:(Printf.sprintf {|{"position": %s}|} zone)
+                events))
+  in
+  Toy_rules.position (Option.get plan.postconditions)
+
 let run_cases =
   [
     case "each kind goes to its handler; a skipped one runs nothing"
@@ -144,7 +171,8 @@ let run_cases =
       "own walk north until forest_sign\n\
        builtin greet\n\
        builtin agree\n\
-       action beg";
+       action beg\n\
+       own buy bell";
     case "a zone declared after, where the player stands: passed"
       (fun () -> outcome ~after:forest ())
       "passed";
@@ -157,7 +185,17 @@ let run_cases =
       "passed";
     case "the declared end zone, elsewhere: the end fails"
       (fun () -> outcome ~after:forest ~end_at:(at "Village" (Some "inn")) ())
-      "cf event 6 (end): declared end at Village/inn, but the game reads Forest";
+      "cf event 7 (end): declared end at Village/inn, but the game reads Forest";
+    case
+      "the promised zone as the declared end, where the player stands: passed"
+      (fun () -> outcome ~after:forest ?end_at:(promised_position ()) ())
+      "passed";
+    case "the promised zone as the declared end, elsewhere: the end fails"
+      (fun () ->
+        outcome ~after:forest
+          ?end_at:(promised_position ~at:{|{"place": "Village"}|} ())
+          ())
+      "cf event 7 (end): declared end at Village, but the game reads Forest";
     case "the toy's promises, held: passed"
       (fun () ->
         outcome ~after:forest ~end_state:(promised (), fun _ -> reads 80) ())
@@ -165,7 +203,7 @@ let run_cases =
     case "the toy's promises, unmet: the run fails naming them"
       (fun () ->
         outcome ~after:forest ~end_state:(promised (), fun _ -> reads 70) ())
-      "cf event 6 (postconditions): postconditions unmet: gold: failed: \
+      "cf event 7 (postconditions): postconditions unmet: gold: failed: \
        expected gained 30, read gained 20 (50 to 70)";
     case "the promises' log line"
       (fun () ->
@@ -178,7 +216,8 @@ let run_cases =
       "[Postcondition] cf gold: passed: gained 30 (50 to 80)";
   ]
 
-let kept : Toy_saved.t = { start = Some 50; at = Some (at "Forest" None) }
+let kept : Toy_saved.t =
+  { Engine_saved.Kept.start = Some 50; at = Some (at "Forest" None) }
 
 let kept_cases =
   [
@@ -191,12 +230,19 @@ let kept_cases =
         | Ok back -> string_of_bool (back = kept)
         | Error e -> e)
       "true";
+    case "an older file without the start reads: the start unread"
+      (fun () ->
+        match Toy_saved.of_yojson (`Assoc [ ("at", `Null) ]) with
+        | Ok { start = None; at = None } -> "unread, nowhere"
+        | Ok _ -> "read"
+        | Error e -> e)
+      "unread, nowhere";
     case "a kept zone the toy cannot read: the derived reader names its type"
       (fun () ->
         match Toy_saved.of_yojson (`Assoc [ ("at", `Int 1) ]) with
         | Ok _ -> "read"
         | Error e -> e)
-      "Toy_saved.pose";
+      "Zone_saved.t";
   ]
 
 (* Two rounds until the goal holds: the toy's between-rounds runs after each. *)

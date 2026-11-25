@@ -48,4 +48,32 @@ module type GAME_RULES = sig
   module Pose : POSE
   module Action : ACTION
   module Postconditions : POSTCONDITIONS
+
+  val ends_at : Action.t -> Pose.t option
+  (** Where an action says it leaves the player (a route's target), or [None]
+      when it says nothing: a checkpoint's declared end, failing a declared pose
+      after its last event. *)
+
+  val position : Postconditions.t -> Pose.t option
+  (** The end position the promises name, if any: preferred over the declared
+      end. *)
 end
+
+(** {2 Pieces}
+
+    A game's rules are written by hand from pieces: a pose, action sets and a
+    set of promises ([docs/design/Composable-Rules.md]). These are the engine's;
+    each brings its plan codec, text and saved parts in those libraries. *)
+
+module Story_action = Story_action
+(** {!Story_action}: talk, answer, scene and save. *)
+
+module Command_step = Command_step
+(** {!Command_step}: a command's step, by name. *)
+
+module Zone_pose = Zone_pose
+(** {!Zone_pose}: a place, and maybe a spot in it. *)
+
+module Promises = Promises
+(** {!Promises}: a position plus a family's promises
+    ({!Promises.With_position}). *)
