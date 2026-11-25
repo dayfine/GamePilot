@@ -22,7 +22,10 @@ failed, skipped), the story log, the daemon's health, and a Stop button. It is s
 - **The daemon serves the page** (`daemon/src/watch_server.*`, `server_watch.cpp`): a small HTTP
   server on its own port (`--watch-port`; the runner asks for a free one), polled by the same loop as
   the program's socket, no thread of its own. It already holds the frame, the probes and the health; the page is
-  one HTML/JS file (`daemon/watch/watch.html`) compiled in and served as is. No new dependency.
+  one HTML file (`daemon/watch/watch.html`) with its scripts (`watch_*.js`, by job) and style
+  (`watch.css`) beside it, plain files with no build step, compiled in and served as they are. They are classic scripts
+  loaded in order into one global scope, so a file uses at load time only what the files before it
+  define. No new dependency.
 - **The program publishes what only it knows**: the plan's states and its story lines, as two
   notifications (`watch.plan`, `watch.log`, contract v1.6) sent through the `show_plan`/`show_log`
   effects. Notifications need no answer, so they cost the program nothing but a write. The daemon
