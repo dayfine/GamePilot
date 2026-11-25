@@ -88,22 +88,14 @@
         "why": "Route 3 (FireRed, pret src/data/wild_encounters.json): Nidoran (male) 14%, Mankey and Jigglypuff 10% each, Nidoran (female) 1%, the rest Spearow and Pidgey, Lv 6 to 8."
       },
       {
-        "id": "back_on_patch",
-        "kind": "route",
-        "action": "run",
+        "id": "fly_route4_back",
+        "kind": "game_action",
+        "action": "fly",
         "args": {
-          "target": {
-            "map": "Route3",
-            "tiles": [
-              [
-                74,
-                10
-              ]
-            ],
-            "facing": "north"
-          }
+          "town": "Route4",
+          "species": "pidgeot"
         },
-        "why": "Back onto the patch's tile against the wall behind it: a pacing step that did not move the player leaves the reckoned tile one off, and a step into the wall puts the two together again before the walk out."
+        "why": "Fly out from the grass: a capture's pacing can leave the player a tile or two off the reckoned one, and Fly lands on a known tile, where the walk to the nurse starts."
       },
       {
         "fragment": "heal_at",

@@ -123,22 +123,14 @@
         "why": "Route 8 (FireRed, pret src/data/wild_encounters.json): Meowth 30%, Growlithe 20%, Pidgey 30% and Ekans 20%, Lv 15 to 20."
       },
       {
-        "id": "back_on_patch",
-        "kind": "route",
-        "action": "run",
+        "id": "fly_lavender_back",
+        "kind": "game_action",
+        "action": "fly",
         "args": {
-          "target": {
-            "map": "Route8",
-            "tiles": [
-              [
-                39,
-                9
-              ]
-            ],
-            "facing": "north"
-          }
+          "town": "LavenderTown",
+          "species": "pidgeot"
         },
-        "why": "Back onto the patch's tile against the wall behind it: a pacing step that did not move the player leaves the reckoned tile one off, and a step into the wall puts the two together again before the walk out."
+        "why": "Fly out from the grass: a capture's pacing can leave the player a tile or two off the reckoned one, and Fly lands on a known tile, where the walk to the nurse starts."
       },
       {
         "fragment": "heal_at",

@@ -79,6 +79,16 @@
         "why": "Route 15 (FireRed, pret src/data/wild_encounters.json): Oddish 35%, Venonat 30%, Pidgey 20%, Ditto, Pidgeotto and Gloom 5% each, Lv 22 to 30."
       },
       {
+        "id": "fly_fuchsia_back",
+        "kind": "game_action",
+        "action": "fly",
+        "args": {
+          "town": "FuchsiaCity",
+          "species": "pidgeot"
+        },
+        "why": "Fly back to Fuchsia from Route 15's grass: Fly lands on a known tile, wherever the pacing left the player."
+      },
+      {
         "id": "to_route18_grass",
         "kind": "route",
         "action": "run",
@@ -114,24 +124,6 @@
         "why": "Route 18 (FireRed): Doduo 35%, Spearow 30%, Raticate and Fearow 15% each, Rattata 5%, Lv 20 to 29."
       },
       {
-        "id": "out_to_fly",
-        "kind": "route",
-        "action": "run",
-        "args": {
-          "target": {
-            "map": "FuchsiaCity",
-            "tiles": [
-              [
-                25,
-                32
-              ]
-            ],
-            "facing": "south"
-          }
-        },
-        "why": "Back to Fuchsia to fly: its Center has no map yet."
-      },
-      {
         "id": "fly_route10",
         "kind": "game_action",
         "action": "fly",
@@ -139,7 +131,7 @@
           "town": "Route10",
           "species": "pidgeot"
         },
-        "why": "Back to Route 10's Center."
+        "why": "Fly from Route 18's grass straight to Route 10's Center: Fly lands on a known tile, wherever the pacing left the player."
       },
       {
         "fragment": "heal_at",

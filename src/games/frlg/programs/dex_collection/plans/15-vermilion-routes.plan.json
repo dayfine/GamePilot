@@ -78,6 +78,16 @@
         "why": "Route 11 (FireRed, pret src/data/wild_encounters.json): Ekans 40%, Spearow 35%, Drowzee 25%, Lv 11 to 17."
       },
       {
+        "id": "fly_vermilion_back",
+        "kind": "game_action",
+        "action": "fly",
+        "args": {
+          "town": "VermilionCity",
+          "species": "pidgeot"
+        },
+        "why": "Fly back to Vermilion from Route 11's grass: Fly lands on a known tile, wherever the pacing left the player; Route 6's pond is north of the city."
+      },
+      {
         "id": "to_route6_pond",
         "kind": "route",
         "action": "run",
