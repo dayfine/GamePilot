@@ -32,7 +32,8 @@ end
 (* A route's or ready's target, as the declared end reads it today. *)
 let ends_at : Action.t -> Pose.t option = function
   | Route { target; _ } | Ready target -> Some (Grid target)
-  | New_game | Options | Legs _ | Step _ | Battle _ | Train _ | Heal | Shop _ ->
+  | New_game | Game_settings | Legs _ | Step _ | Battle _ | Train _ | Heal
+  | Shop _ ->
       None
 
 let position (p : Postconditions.t) =

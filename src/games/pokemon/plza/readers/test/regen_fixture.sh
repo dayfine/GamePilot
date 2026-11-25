@@ -21,13 +21,14 @@
 # Also fixtures/<folder>.second.probes.jsonl: every frame again, probed by what
 # a two-frame read subscribes from what the frame shows (write_probe_spec.exe
 # --second): the party bars' tests made from its cards, the caught mark's box
-# above its plate.
+# above its plate. And fixtures/<folder>.shifted.second.probes.jsonl likewise
+# for every shifted frame, from its own first read.
 # The Python steps need Pillow ($SHIFT_PYTHON, default python3; e.g.
 # "uv run --with pillow python3").
 #
 #   sh games/pokemon/plza/readers/test/regen_fixture.sh [FOLDER...]
 #
-# remakes the named folders' three files (e.g. party-bar, synthetic), or with
+# remakes the named folders' four files (e.g. party-bar, synthetic), or with
 # no FOLDER every folder's (dropping the files of folders no longer there).
 # Run from src/, with probe_images at $PROBE_IMAGES (default the repo's
 # daemon/build/probe_images).
@@ -66,6 +67,22 @@ folder_frames() {
     done
 }
 
+# second_reads FIXTURE FRAMES OUT: each frame's second read, as FIXTURE's
+# first reads ask for it, its frames under FRAMES.
+second_reads() {
+    rm -rf "$work/second"
+    mkdir "$work/second"
+    (cd "$SRC" && dune exec games/pokemon/plza/readers/test/write_probe_spec.exe \
+        -- --second "$1" "$work/second")
+    : >"$3"
+    find "$work/second" -name '*.json' | sort | while read -r spec; do
+        rel=${spec#"$work/second/"}
+        frame=$(cd "$2" && ls "./${rel%.json}".* | head -n 1)
+        (cd "$2" && "$PROBE_IMAGES" --spec "$spec" --viewport native \
+            "$frame") >>"$3"
+    done
+}
+
 regen_folder() {
     folder=$1
     if [ "$folder" = synthetic ]; then
@@ -76,16 +93,8 @@ regen_folder() {
     frames=$(cd "$work/frames" && folder_frames "$folder")
     (cd "$work/frames" && "$PROBE_IMAGES" --spec "$work/spec/probes.json" \
         --viewport native $frames) >"$FIXTURES/$folder.probes.jsonl"
-    (cd "$SRC" && dune exec games/pokemon/plza/readers/test/write_probe_spec.exe \
-        -- --second "$FIXTURES/$folder.probes.jsonl" "$work/second")
-    : >"$FIXTURES/$folder.second.probes.jsonl"
-    for spec in "$work/second/$folder"/*.json; do
-        if [ ! -e "$spec" ]; then continue; fi
-        rel=${spec#"$work/second/"}
-        frame=$(cd "$work/frames" && ls "./${rel%.json}".* | head -n 1)
-        (cd "$work/frames" && "$PROBE_IMAGES" --spec "$spec" --viewport native \
-            "$frame") >>"$FIXTURES/$folder.second.probes.jsonl"
-    done
+    second_reads "$FIXTURES/$folder.probes.jsonl" "$work/frames" \
+        "$FIXTURES/$folder.second.probes.jsonl"
     (cd "$work/frames" && $SHIFT_PYTHON -c '
 import os, sys
 from PIL import Image
@@ -99,6 +108,8 @@ for path in sys.argv[2:]:
     (cd "$work/shifted" && "$PROBE_IMAGES" \
         --spec "$work/spec/shifted.probes.json" --viewport native \
         ./*/"$folder"/*.png) >"$FIXTURES/$folder.shifted.probes.jsonl"
+    second_reads "$FIXTURES/$folder.shifted.probes.jsonl" "$work/shifted" \
+        "$FIXTURES/$folder.shifted.second.probes.jsonl"
 }
 
 for folder in "$@"; do

@@ -1,4 +1,4 @@
 (library
  (name pokemon_flags)
  (public_name gamepilot.pokemon_flags)
- (libraries gamepilot.live gamepilot.checkpoints_flags))
+ (libraries gamepilot.live gamepilot.run_flags))

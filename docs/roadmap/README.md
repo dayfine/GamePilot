@@ -19,7 +19,7 @@ issue tracks the work, the page holds the plan. Slices S2-S4 are the ones in
 | C. BDSP legendary RNG | [bdsp-legendary-rng.md](bdsp-legendary-rng.md) | [#18](https://github.com/dayfine/GamePilot/issues/18) | S2 | yes |
 | D. BDSP Underground mining | [bdsp-underground-mining.md](bdsp-underground-mining.md) | [#19](https://github.com/dayfine/GamePilot/issues/19) | new | no |
 | E. SV isolated shiny hunts | [sv-isolated-shiny.md](sv-isolated-shiny.md) | [#20](https://github.com/dayfine/GamePilot/issues/20) | S3 | yes (research + prototype) |
-| F. SV Snacksworth legendaries | [sv-snacksworth-legendaries.md](sv-snacksworth-legendaries.md) | [#21](https://github.com/dayfine/GamePilot/issues/21) | S3 | yes (PokemonSimulation #78) |
+| F. SV Snacksworth legendaries | [sv-snacksworth-legendaries.md](sv-snacksworth-legendaries.md) | [#21](https://github.com/dayfine/GamePilot/issues/21) | S3 | yes (research: [plan](sv-snacksworth/plan.md), [routes](sv-snacksworth/routes.md)) |
 | G. PLZA story port | [plza-autostory-port.md](plza-autostory-port.md) | [#22](https://github.com/dayfine/GamePilot/issues/22) | new | yes (C++ code) |
 
 Rules every item follows (from `docs/roadmap.md` and R21): ports are transparent (same behaviour and

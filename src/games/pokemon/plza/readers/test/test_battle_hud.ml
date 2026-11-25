@@ -68,11 +68,11 @@ let cases =
 
 (* 01.03's battle with Andi on console B (2026-11-25, 640x360 run frames
    scaled up): the story screen through a loss and on Andi's line after a
-   win. The loss shows a black fade between the battle and the next line, the
-   win none: that fade is what tells them apart (Battle). As the lead faints
-   (1 HP left) nothing reads: at 360p the trainer's balls and the hint are too
-   blurred for the fork's bounds, and the HP bar's trough is darker than its
-   grey. Urbain's heal reads as a dialogue box while its text types out (no
+   win. The loss shows a black fade between the battle and the next line; a
+   win can show one too (03.02b), so the lead's HP before it tells them apart
+   (Battle, hp_cases below). As the lead faints (1 HP left) the HUD does not
+   read: at 360p the trainer's balls and the hint are too blurred for the
+   fork's bounds, and the HP bar's trough is darker than its grey. Urbain's heal reads as a dialogue box while its text types out (no
    arrow yet): once its arrow shows it reads as the fork's story dialogue, as
    a won battle's line does, so a fight that missed the fade would take the
    heal for a win. *)
@@ -100,6 +100,45 @@ let loss_and_win_cases =
       "dialog box, advance arrow, story dialog";
   ]
 
+(* The lead's HP bar (Battle_hud.lead_hp) on 640x360 run frames: 03.02b's
+   Totodile beaten, the lead at 21/25 the read before the black fade into
+   Taunie's line (French, console B, 2026-11-25) and at 21/23 (English, the
+   run that passed); 01.03's loss, the lead at 1/19 (frame 126) and fainting
+   (129); Tepig's battle at 1080p with a yellow bar. With no badge, none. *)
+let hp m =
+  Option.fold ~none:"none" ~some:(Printf.sprintf "%.2f") (Battle_hud.lead_hp m)
+
+let hp_case frame expectation : Table_test.case =
+  {
+    name = frame ^ ": the lead's HP";
+    input = (fun () -> hp (Fixture_frames.frame frame));
+    expectation;
+  }
+
+let hp_cases =
+  [
+    hp_case "battle-hud/fr-0302b-won-before-fade-063-360p" "0.89";
+    hp_case "battle-hud/en-0302b-won-before-fade-061-360p" "0.89";
+    hp_case "battle-hud/en-0103-lost-lead-1hp-126-360p" "0.04";
+    hp_case "battle-hud/en-0103-lost-lead-fainting-129-360p" "0.04";
+    hp_case "battle-hud/es-0302b-tepig-battle-low-hp" "0.48";
+    hp_case "battle-hud/en-0103-lost-black-fade-135-360p" "none";
+    hp_case "battle-hud/en-0103-won-andi-line-075-360p" "none";
+  ]
+
+(* Whether the lead's HP reads at or under Battle's bound for a lost battle
+   (0.1), on every shifted frame as on the frame itself: the evidence of a
+   loss. (A bar read on a frame with none, as the main menu's frame 058 at
+   brightness 1.1, is no evidence.) *)
+let near_empty m =
+  match Battle_hud.lead_hp m with
+  | Some h when h <= 0.1 -> "near empty"
+  | Some _ | None -> "no loss evidence"
+
 let () =
   Table_test.run "battle_hud"
-    (cases @ loss_and_win_cases @ Fixture_frames.shifted_cases ~misses:true read)
+    (cases @ loss_and_win_cases @ hp_cases
+    @ Fixture_frames.shifted_cases ~misses:true read
+    @ List.map
+        (fun (c : Table_test.case) -> { c with name = c.name ^ " (lead HP)" })
+        (Fixture_frames.shifted_cases near_empty))

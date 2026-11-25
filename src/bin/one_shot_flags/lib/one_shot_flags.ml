@@ -2,7 +2,7 @@
    --watch the run's daemon is a checkpoint run's (Daemon_process, Watch_hub,
    Watch_urls), stopped after the run by its caller (Daemon_run.with_daemon). *)
 
-module F = Checkpoints_flags
+module F = Run_flags
 
 (* The program's own flags: the save state to load, none for --console. *)
 let game_flags default_state : string option F.game_flags =
