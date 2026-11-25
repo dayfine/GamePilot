@@ -139,7 +139,7 @@ let live ~program_fields plan_file args =
   let* run =
     Attached_run.start ~runs_dir ~kind:Checkpoint
       ~program:(program_fields (Filename.dirname plan_file))
-      ~label:id ~mode:"single"
+      ~label:id ~mode:"single" ()
   in
   let log_file =
     Some

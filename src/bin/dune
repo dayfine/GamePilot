@@ -23,6 +23,7 @@
   gamepilot.frlg_series
   gamepilot.checkpoints_flags
   gamepilot.run_args
+  gamepilot.one_shot_flags
   gamepilot.pokemon_flags
   unix
   yojson))
