@@ -8,6 +8,8 @@ type reader = Ctl_script.reader = {
   doc : string;
   read : unit -> (string * string) list;
 }
+(** A reader [read NAME] runs (Ctl_script.reader), re-exported so the table's
+    records can be written here. *)
 
 val all : reader list
 (** start_menu, dialog, party_menu, summary, battle, yes_no, load_menu, bag,

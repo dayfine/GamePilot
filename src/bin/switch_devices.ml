@@ -15,9 +15,6 @@
 
 let usage = "  gamepilot switch-devices [--profile DIR]\n"
 let settings_file = [ "UserSettings"; "SerialPrograms-Settings.json" ]
-
-(* The panel whose console setup the lab runs its console with. *)
-let panel = Program_registry.lab_console.panel
 let utf8_bom = "\xef\xbb\xbf"
 
 let read_settings dir =
@@ -82,8 +79,12 @@ let print_devices json ~serial ~camera =
      id %s\n"
     (serial_path serial) camera
 
+(* The lab console's game's panel (Program_registry.lab_game_of_env): its
+   console setup is the one the lab runs the console with. *)
 let devices dir =
   let ( let* ) = Result.bind in
+  let* _, home = Program_registry.lab_game_of_env () in
+  let panel = home.lab_panel in
   let* json = read_settings dir in
   let setup = [ "99-Panels"; panel; "ConsoleSetup" ] in
   match

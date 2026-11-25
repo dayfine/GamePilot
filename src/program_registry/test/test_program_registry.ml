@@ -67,6 +67,12 @@ let missing_icons () =
          if R.locate path = None then Some (key ^ ": " ^ path) else None)
   |> String.concat ", "
 
+(* The lab game an id (or none) picks, or its error. *)
+let lab_game_text id =
+  match R.lab_game id with
+  | Ok (g, home) -> g.game_id ^ " " ^ home.title ^ " " ^ home.lab_panel
+  | Error e -> "error: " ^ e
+
 let id_of = function Some (p : R.t) -> p.id | None -> "none"
 
 let () =
@@ -78,6 +84,18 @@ let () =
         (missing (fun p -> p.checkpoints))
         "";
       case "every delete-save icon exists" missing_icons "";
+      case "lab game: none given, the one with Switch HOME data"
+        (fun () -> lab_game_text None)
+        "frlg FireRed PokemonFRLG:AutoStory";
+      case "lab game: by id"
+        (fun () -> lab_game_text (Some "frlg"))
+        "frlg FireRed PokemonFRLG:AutoStory";
+      case "lab game: a game with no Switch HOME data"
+        (fun () -> lab_game_text (Some "plza"))
+        "error: plza has no Switch HOME data; games with it: frlg";
+      case "lab game: an unknown id"
+        (fun () -> lab_game_text (Some "bdsp"))
+        "error: no game bdsp; games with Switch HOME data: frlg";
       case "the mail glitch folder has plans" plan_count "true";
       case "every plan decodes and checks" bad_plans "";
       case "find by id"

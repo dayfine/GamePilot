@@ -22,6 +22,17 @@ type viewport = Nso_gba | Native
     (Pokemon_checkpoints, the FRLG runner). *)
 type rules = Pokemon_grid
 
+type switch_home = {
+  title : string;  (** As the ctl usage names it: ["FireRed"]. *)
+  home_tile : Switch_home.Home_screen.tile_color;
+  lab_panel : string;  (** ["PokemonFRLG:AutoStory"]. *)
+}
+(** A game on the lab's Switch: the title the HOME steps (park, resume,
+    close-game, start-game, delete-save) go back to and look for by its tile's
+    colour, and the lab app's program panel whose console setup has the
+    controller board and capture card it runs with ([gamepilot switch-devices]).
+*)
+
 type game = {
   game_id : string;  (** ["frlg"], as plans and the games/ folder name it. *)
   game_name : string;
@@ -29,17 +40,9 @@ type game = {
       (** Its Switch titles' icons on their "Delete Save Data for <user>" page
           (Switch_home.Delete_save), each a repo path, by the key
           [gamepilot ctl delete-save] takes: [firered] for FRLG. *)
+  switch_home : switch_home option;
+      (** [None] while none of its HOME tiles was measured. *)
 }
-
-type lab_console = {
-  title : string;  (** The game it is parked from and resumes: ["FireRed"]. *)
-  panel : string;
-  home_tile : Switch_home.Home_screen.tile_color;
-}
-(** The lab's console as GamePilot drives it: the lab app's program panel whose
-    console setup has its controller board and capture card
-    ([gamepilot switch-devices]), and the colour of the game tile its HOME steps
-    look for (park, resume, close-game, start-game and delete-save). *)
 
 type t = {
   id : string;  (** [<game>.<program>]: ["frlg.mail_glitch"]. *)
@@ -61,8 +64,13 @@ val games : game list
 (** Every game with a program or a Switch title GamePilot knows, PLZA (no
     program yet) first, as [gamepilot ctl delete-save] lists their keys. *)
 
-val lab_console : lab_console
-(** FRLG's: the FRLG AutoStory panel and FireRed's tile. *)
+val lab_game : string option -> (game * switch_home, string) result
+(** The game the lab's console runs, by its id; with none, the one game that has
+    Switch HOME data. An unknown id, a game without it, or (no id) not exactly
+    one such game is an error naming the ids to pick from. *)
+
+val lab_game_of_env : unit -> (game * switch_home, string) result
+(** {!lab_game} of $GAMEPILOT_LAB_GAME (unset or empty: none). *)
 
 val all : t list
 (** By game, then group, then name. *)

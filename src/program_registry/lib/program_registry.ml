@@ -2,16 +2,17 @@ type backend = Mgba | Switch
 type viewport = Nso_gba | Native
 type rules = Pokemon_grid
 
+type switch_home = {
+  title : string;
+  home_tile : Switch_home.Home_screen.tile_color;
+  lab_panel : string;
+}
+
 type game = {
   game_id : string;
   game_name : string;
   delete_save_icons : (string * string) list;
-}
-
-type lab_console = {
-  title : string;
-  panel : string;
-  home_tile : Switch_home.Home_screen.tile_color;
+  switch_home : switch_home option;
 }
 
 type t = {
@@ -27,6 +28,14 @@ type t = {
   rules : rules;
 }
 
+(* FireRed's tile on HOME: its orange background and Charizard, 0.41 of the
+   art; the other tiles on console B 0.05 at most (2026-11-24). RGB, each
+   bound 0 to 255. *)
+let fire_red_tile : Switch_home.Home_screen.tile_color =
+  let red_from = 200 and green_from = 40 in
+  let full = 255 and green_to = 170 and blue_to = 100 in
+  { min = (red_from, green_from, 0); max = (full, green_to, blue_to) }
+
 (* Each icon is 82x82 frame pixels of the 90 px icon at (90, 30) on its
    "Delete Save Data for <user>" page, 4 px in. No FireRed page was captured:
    firered's is the game list's 135 px icon (game-list-za-first.png, at (157,
@@ -38,6 +47,13 @@ let frlg =
     game_name = "Pokémon FireRed/LeafGreen";
     delete_save_icons =
       [ ("firered", "src/games/frlg/assets/delete-save-icon-firered.png") ];
+    switch_home =
+      Some
+        {
+          title = "FireRed";
+          home_tile = fire_red_tile;
+          lab_panel = "PokemonFRLG:AutoStory";
+        };
   }
 
 (* plza's icon is cut from console B's capture of that page
@@ -48,24 +64,40 @@ let plza =
     game_name = "Pokémon Legends: Z-A";
     delete_save_icons =
       [ ("plza", "src/games/pokemon/plza/assets/delete-save-icon.png") ];
+    switch_home = None;
   }
 
 let games = [ plza; frlg ]
+let with_home (g : game) = Option.map (fun h -> (g, h)) g.switch_home
 
-(* FireRed's tile on HOME: its orange background and Charizard, 0.41 of the
-   art; the other tiles on console B 0.05 at most (2026-11-24). RGB, each
-   bound 0 to 255. *)
-let fire_red_tile : Switch_home.Home_screen.tile_color =
-  let red_from = 200 and green_from = 40 in
-  let full = 255 and green_to = 170 and blue_to = 100 in
-  { min = (red_from, green_from, 0); max = (full, green_to, blue_to) }
+let home_ids () =
+  String.concat ", "
+    (List.map
+       (fun ((g : game), _) -> g.game_id)
+       (List.filter_map with_home games))
 
-let lab_console =
-  {
-    title = "FireRed";
-    panel = "PokemonFRLG:AutoStory";
-    home_tile = fire_red_tile;
-  }
+let by_id id =
+  match List.find_opt (fun g -> g.game_id = id) games with
+  | None ->
+      Error ("no game " ^ id ^ "; games with Switch HOME data: " ^ home_ids ())
+  | Some g ->
+      Option.to_result
+        ~none:(id ^ " has no Switch HOME data; games with it: " ^ home_ids ())
+        (with_home g)
+
+let only_one () =
+  match List.filter_map with_home games with
+  | [ one ] -> Ok one
+  | _ ->
+      Error ("set GAMEPILOT_LAB_GAME to the lab console's game: " ^ home_ids ())
+
+let lab_game = function Some id -> by_id id | None -> only_one ()
+
+let lab_game_of_env () =
+  lab_game
+    (match Sys.getenv_opt "GAMEPILOT_LAB_GAME" with
+    | Some "" | None -> None
+    | id -> id)
 
 let mail_glitch =
   {
