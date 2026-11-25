@@ -21,7 +21,9 @@
     opens; here the cursor is read first (the fork: "the keyboard remembers the
     cursor between uses, so read it"), and only when no cursor reads is "1"
     assumed, as the script did, with a log line. The script's keyboard test knew
-    only the dark theme's grey keys; the light theme's grey counts too. *)
+    only the dark theme's grey keys; the light theme's grey counts too. Read on
+    console B's code keyboard (2026-11-25: dark, empty, cursor on "1"; I, O and
+    Z greyed as the layout says), also shifted. *)
 
 type key = { row : int; col : int }
 (** A key: row 0 the digits, column 0 the leftmost. *)

@@ -72,48 +72,52 @@ let open_internet_list ~log =
   log "The Internet gift list is active.";
   Ok ()
 
-(* wait_mg_card_and_dismiss: 15 reads, 2 s apart. *)
-let card_wait_ms = 2000
-let card_reads = 15
-
-let dismiss_card ~log =
-  let rec go n =
-    if n >= card_reads then
-      Error "no gift card in 30 s: the gift may be received; nothing saved"
-    else (
-      Switch_home.Switch_presses.wait card_wait_ms;
-      match Effects.read () with
-      | Some m when S.card m ->
-          log "Gift received.";
-          T.press card_ok;
-          Ok ()
-      | Some _ | None -> go (n + 1))
-  in
-  go 0
-
-let claim_ms = 8000
-
-(* The list, read for 3 s at most without a press: A would take the selected
-   gift. *)
-let list_read_ms = 3000
-
-(* The held value is compared frame to frame, so it is unit; the last frame
-   is kept beside it. *)
-let read_list () =
+(* [check] held for [hold_ms] within [timeout_ms], with no press; the last
+   frame read. The held value is compared frame to frame, so it is unit; the
+   last frame is kept beside it. *)
+let held_read ~timeout_ms ~what ~describe check =
   let last = ref None in
-  let active m =
+  let watch m =
     last := Some m;
-    if S.list_active m then Some () else None
+    if check m then Some () else None
   in
   match
-    Switch_home.Held_screen.wait_for ~timeout_ms:list_read_ms
-      (Switch_home.Held_screen.held hold_ms active)
+    Switch_home.Held_screen.wait_for ~timeout_ms
+      (Switch_home.Held_screen.held hold_ms watch)
   with
   | Some () -> Option.to_result ~none:"no frame" !last
   | None ->
-      Error
-        ("no active gift list: "
-        ^ Option.fold ~none:"no frame" ~some:S.describe !last)
+      Error (what ^ ": " ^ Option.fold ~none:"no frame" ~some:describe !last)
+
+(* wait_mg_card_and_dismiss's 30 s; the list read for 3 s, the keyboard 5. *)
+let card_wait_ms = 30_000
+let list_read_ms = 3000
+let keyboard_read_ms = 5000
+
+let await_card () =
+  Result.map ignore
+    (held_read ~timeout_ms:card_wait_ms ~describe:S.describe
+       ~what:"no gift card in 30 s (the gift may be received; nothing saved)"
+       S.card)
+
+let read_list () =
+  held_read ~timeout_ms:list_read_ms ~describe:S.describe
+    ~what:"no active gift list" S.list_active
+
+let await_list () = Result.map ignore (read_list ())
+
+let await_keyboard () =
+  Result.map ignore
+    (held_read ~timeout_ms:keyboard_read_ms ~describe:S.describe
+       ~what:"no code keyboard" K.shown)
+
+let dismiss_card ~log =
+  let* () = await_card () in
+  log "Gift received.";
+  T.press card_ok;
+  Ok ()
+
+let claim_ms = 8000
 
 let gift_row m =
   match (S.selected_item m, S.gift_item m) with

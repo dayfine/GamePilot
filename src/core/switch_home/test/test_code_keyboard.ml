@@ -2,12 +2,15 @@
    lab script's type_code_cmds prints them (plza_claim_and_bank.sh, run on
    these codes: D-pad as R/L/U/D, A), and the reader on PLZA's name keyboard
    (the same system keyboard, light theme, cursor on "1": console B's
-   Japanese capture and the fork's German one, images/keyboard), with their
+   Japanese capture and the fork's German one, images/keyboard) and on the
+   code keyboard itself (dark theme, empty, cursor on "1": console B's
+   Mystery Gift code entry, 2026-11-25), with their
    colors shifted as well (fixtures/code_keyboard.shifted.probes.jsonl). The
    dark HOME menu and the user select pass the script's dark-grey test and
    show a cyan cursor of their own, so they read as the keyboard: the steps
    look for it only right after Mystery Gift's code entry, where neither
-   shows. Brightened by 1.1, the light keys clip to white and are not read. *)
+   shows. Brightened by 1.1, the light keys clip to white and are not read;
+   the dark ones still are. *)
 
 open Switch_home
 module K = Code_keyboard
@@ -48,8 +51,11 @@ let unshifted image =
 let is_keyboard image = String.ends_with ~suffix:"-cursor-on-1.png" image
 
 let expected image =
-  if String.starts_with ~prefix:"./bright110/" image then
-    "no keyboard, cursor (0, 0)"
+  (* A light keyboard's grey clips past 250 at 1.1 times as bright. *)
+  if
+    String.starts_with ~prefix:"./bright110/" image
+    && List.mem "light" (String.split_on_char '-' image)
+  then "no keyboard, cursor (0, 0)"
   else text (List.assoc (unshifted image) fixtures)
 
 let shifted_cases =
@@ -80,6 +86,9 @@ let () =
          "keyboard, cursor (0, 0)";
        case "PLZA's German name keyboard"
          (read "de-name-light-cursor-on-1")
+         "keyboard, cursor (0, 0)";
+       case "PLZA's code keyboard (dark, empty), console B"
+         (read "plza-code-dark-cursor-on-1")
          "keyboard, cursor (0, 0)";
        case "HOME (dark), its tile cursor"
          (read "home-cursor-on-last-played")

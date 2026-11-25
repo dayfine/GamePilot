@@ -4,11 +4,13 @@
    Pokémon and an empty sixth card) reads its row and cards; console B's
    Internet gift list (images/mystery-gift, 2026-11-25: four gifts, the cursor
    on the first, Vivillon the 4th) reads as the active list with its gift on
-   item 4; both also shifted (fixtures/gifts.shifted.probes.jsonl). The same
+   item 4; its two cards (Vivillon's, the shiny Xerneas's) read as a card;
+   all also shifted (fixtures/gifts.shifted.probes.jsonl). The white fade
+   before a card, the receive animation and the code keyboard read as
+   nothing. The same
    list dimmed by the Switch after an idle (gift-list-dimmed, about 30%
    brightness) must read as nothing: a dim screen is no screen we know. No
-   other capture reads as the menu, the list or a gift's card. No capture of a card
-   exists, so nothing reads one positively yet. *)
+   other capture reads as the menu, the list or a gift's card. *)
 
 open Plza_readers
 module R = Main_menu_row
@@ -57,10 +59,17 @@ let list_read =
    card"
 
 let same a b = Filename.remove_extension a = Filename.remove_extension b
+let card_read = "no menu; cards ......; no gift list; gift card"
+
+let cards_shown =
+  [
+    "./mystery-gift/card-vivillon.png"; "./mystery-gift/card-shiny-xerneas.png";
+  ]
 
 let expected path =
   if same path menu then menu_text
   else if same path gift_list then list_read
+  else if List.exists (same path) cards_shown then card_read
   else "nothing"
 
 let read probes = if nothing probes then "nothing" else text probes

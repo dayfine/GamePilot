@@ -3,13 +3,18 @@
     2026-11-20), its [mg_list_active] and [mg_card] tests on the 1080p frame:
 
     - the gift's card's white header: (0.30, 0.26, 0.40, 0.05), over 0.70 of it
-      white (every channel over 230);
+      white (here every channel 200 or over; the script's over 230 loses it on a
+      capture card 0.9 as bright);
     - the bottom text box, dark blue (red under 45, green under 70, blue 66 to
       144): its share of (0.26, 0.80, 0.48, 0.12).
 
     The card (a gift received) shows when its header does and over 0.60 of the
     bottom is dark blue. The script read them with numpy; here one
-    [core.color_count@1] probe a box.
+    [core.color_count@1] probe a box. On console B's two cards (2026-11-25,
+    Vivillon's and the shiny Xerneas's) the header reads 0.83 and 0.90 white and
+    the box 0.95 blue; the white fade before a card (header 1.00, box 0.00) and
+    the receive animation (0.04, 0.00) are no card, nor is the list (0.70,
+    0.18).
 
     New here, measured on console B's Internet gift list (2026-11-25, four
     gifts, the cursor on the first): the list's items, 84 pixels apart from y
@@ -23,8 +28,7 @@
     shows it (white on grey), matched in each item's name window (576, 554 + 84
     (k - 3), 436, 62); the script took the 4th item by its place. The name
     scores 0.000 on its own item and 0.088 at least on the other three and the
-    empty rows, also shifted (0.003 at most on its own). The card's tests are
-    the script's, untested here (no capture of a card yet). *)
+    empty rows, also shifted (0.003 at most on its own). *)
 
 val items : int
 (** 6: the rows the list shows. *)

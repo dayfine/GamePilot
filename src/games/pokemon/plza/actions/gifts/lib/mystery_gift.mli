@@ -10,8 +10,9 @@
       the gift list is active, 25 at most ([wait_mg_list]).
     - {!choose_gift}: Down three times to the 4th gift (Vivillon, Poké Ball
       Pattern), A (8 s).
-    - {!leave_card}: the card, read every 2 s for 30 s, then A (3 s)
-      ([wait_mg_card_and_dismiss]); B (1.5 s) and A (2 s): "stop for now?", yes.
+    - {!leave_card}: the card, read for 1 s within 30 s, then A (3 s)
+      ([wait_mg_card_and_dismiss], which read every 2 s); B (1.5 s) and A (2 s):
+      "stop for now?", yes.
     - {!open_keyboard}: Down, A (2 s); A (2 s) until the keyboard opens, 25 at
       most ([wait_mg_keyboard]).
     - {!claim_code}: the code typed; + (5 s); the list again; A (8 s) on the
@@ -42,6 +43,16 @@ val choose_gift : log:(string -> unit) -> (unit, string) result
 val leave_card : log:(string -> unit) -> (unit, string) result
 val open_keyboard : log:(string -> unit) -> (unit, string) result
 val dismiss_card : log:(string -> unit) -> (unit, string) result
+
+val await_list : unit -> (unit, string) result
+(** The gift list read for 1 s within 3 s, no press. *)
+
+val await_card : unit -> (unit, string) result
+(** A gift's card read for 1 s within 30 s, no press: the white fade and the
+    receive animation before it are not the card. *)
+
+val await_keyboard : unit -> (unit, string) result
+(** The code keyboard read for 1 s within 5 s, no press. *)
 
 val claim_code :
   log:(string -> unit) -> picture:Wire.box -> string -> (unit, string) result

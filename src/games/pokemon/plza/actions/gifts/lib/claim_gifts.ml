@@ -102,16 +102,37 @@ let chosen ~log ~picture ~tile ~code span =
     (drop_to span.from
        (steps ~log ~picture ~tile ~code ~code_only:span.code_only))
 
-let stopped ~log span =
-  Option.iter
-    (fun at -> log (Printf.sprintf "Stopped on %s, as asked." at))
+(* The screen at a point, read with no press, where a reader knows it. *)
+let read_at = function
+  | "gift-list" -> Some G.await_list
+  | "card" | "code-card" -> Some G.await_card
+  | "keyboard" -> Some G.await_keyboard
+  | _ -> None
+
+let confirm ~log ~verb at =
+  match read_at at with
+  | Some read ->
+      let* () = read () in
+      Ok (log (Printf.sprintf "%s %s, read." verb at))
+  | None -> Ok (log (Printf.sprintf "%s %s, not read (no reader yet)." verb at))
+
+let stop ~log span =
+  Option.fold ~none:(Ok ())
+    ~some:(fun at ->
+      Result.map_error
+        (fun e -> Printf.sprintf "the stop %s did not show: %s" at e)
+        (confirm ~log ~verb:"Stopped on" at))
     span.stop_at
+
+let start ~log span =
+  Result.map_error
+    (fun e -> Printf.sprintf "the start %s does not show: %s" span.from e)
+    (confirm ~log ~verb:"Starting on" span.from)
 
 let run ~log ~picture ~assets ~gift_name ~tile ~span ~code =
   let* () = check span in
-  let* () =
-    Effects.with_probes (G.probes ~picture ~assets ~gift_name) (fun () ->
-        Switch_home.Stick_wake.run ();
-        run_all (chosen ~log ~picture ~tile ~code span))
-  in
-  Ok (stopped ~log span)
+  Effects.with_probes (G.probes ~picture ~assets ~gift_name) (fun () ->
+      Switch_home.Stick_wake.run ();
+      let* () = start ~log span in
+      let* () = run_all (chosen ~log ~picture ~tile ~code span) in
+      stop ~log span)

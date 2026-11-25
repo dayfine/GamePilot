@@ -101,6 +101,6 @@ let () =
          Down";
       case "not the list (the main menu): no press" (run menu)
         "error: no active gift list: items white 0.14 0.00 0.00 0.18 0.13 \
-         0.00; names 0.126 0.103 0.099 0.112 0.122 0.107; card header 0.19, \
+         0.00; names 0.126 0.103 0.099 0.112 0.122 0.107; card header 0.22, \
          text box 0.01; no press";
     ]
