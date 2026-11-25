@@ -42,10 +42,12 @@ val needs :
   Frlg_actions.Mart_plan.stocks ->
   before:Checkpoints_plan.Plan.postconditions option ->
   Checkpoints_plan.Plan.t ->
-  need list
+  (need list, string) result
 (** What the save must hold for the plan's first event, in the table's order:
-    the party, the money, the items, the place. Raises
-    {!Grid_maps.Json_field.Invalid} for a plan arg that does not read. *)
+    the plan's declared preconditions ({!Plan_preconditions.needs}), then the
+    party, the money, the items, the place. [Error] for declared preconditions
+    that do not decode. Raises {!Grid_maps.Json_field.Invalid} for a plan arg
+    that does not read. *)
 
 type read = {
   observed : Checkpoints_run.Postcondition_check.observed;
@@ -81,10 +83,6 @@ val passed : row list -> bool
 
 val table : row list -> string
 (** A text table: NEED, READ, OK / MISMATCH / NOT READ, one row a line. *)
-
-val declared : Checkpoints_plan.Plan.t -> (need list, string) result
-(** The plan's declared preconditions ({!Plan_preconditions.needs}): checked
-    before the derived {!needs}. *)
 
 val reads_card : need list -> bool
 (** A need is judged on the Trainer Card's badges or stars: the pre-flight reads

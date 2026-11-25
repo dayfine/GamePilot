@@ -20,6 +20,14 @@ let rec until_read deadline =
         (Effects.submit [ Wire.Wait { wait_ms = reread_ms } ] : Wire.batch_done);
       until_read deadline
 
+let close ~log =
+  M.press Wire.B;
+  ignore
+    (M.await_screen ~timeout_ms:read_timeout_ms ~code:"not_closed"
+       "the Start menu after the card" Start_menu.start_menu_open);
+  M.close "the Start menu" Start_menu.start_menu_open;
+  M.settle_back ~label:"trainer card" ~log
+
 let read ~log =
   Menu_cursor.open_start_menu_row player_row;
   let money = until_read (Effects.now () +. float read_timeout_ms) in
@@ -27,10 +35,5 @@ let read ~log =
     (match money with
     | Some m -> Printf.sprintf "Trainer Card: money $%d." m
     | None -> "Trainer Card: the money did not read.");
-  M.press Wire.B;
-  ignore
-    (M.await_screen ~timeout_ms:read_timeout_ms ~code:"not_closed"
-       "the Start menu after the card" Start_menu.start_menu_open);
-  M.close "the Start menu" Start_menu.start_menu_open;
-  M.settle_back ~label:"trainer card" ~log;
+  close ~log;
   money

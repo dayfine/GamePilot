@@ -136,14 +136,11 @@ let chain_need (room : Frlg_checkpoints.Party_room.need) =
    state where it starts. *)
 let chain_lines stocks ~before (loaded : Checkpoints_plan.Plan.t list) =
   let room = Frlg_checkpoints.Party_room.chain_need loaded in
-  let one = as_one_plan loaded in
-  let* declared = Frlg_checkpoints.Preflight.declared one in
-  let derived =
-    List.filter_map (chain_need room)
-      (Frlg_checkpoints.Preflight.needs stocks ~before one)
+  let* needs =
+    Frlg_checkpoints.Preflight.needs stocks ~before (as_one_plan loaded)
   in
   let line n = "- " ^ Frlg_checkpoints.Preflight.describe n in
-  Ok (room_line room :: List.map line (declared @ derived))
+  Ok (room_line room :: List.map line (List.filter_map (chain_need room) needs))
 
 let needs p arg =
   let* plans = plans_of p in
@@ -162,10 +159,11 @@ let needs_text needs =
 let preflight_row stocks plans id =
   let* plan = Plan_dir.load_plan ~plan_dir:plans.dir id in
   let* before = Plan_dir.promised_before ~plan_dir:plans.dir id in
-  let* declared = Frlg_checkpoints.Preflight.declared plan in
   match Frlg_checkpoints.Preflight.needs stocks ~before plan with
   | needs ->
-      Ok (Printf.sprintf "| %s | %s |" id (needs_text (declared @ needs)))
+      Result.map
+        (fun needs -> Printf.sprintf "| %s | %s |" id (needs_text needs))
+        needs
   | exception Grid_maps.Json_field.Invalid e -> Error e
 
 let preflight p arg =

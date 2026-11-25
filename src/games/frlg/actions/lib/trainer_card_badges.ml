@@ -1,5 +1,4 @@
 open Frlg_readers
-module M = Menu_input
 module Card = Trainer_card_front
 
 type game_steps = {
@@ -42,14 +41,6 @@ let wait ms =
 
 let look () = Option.bind (Effects.read ()) Card.read
 
-let close_card ~log () =
-  M.press Wire.B;
-  ignore
-    (M.await_screen ~timeout_ms:read_timeout_ms ~code:"not_closed"
-       "the Start menu after the card" Start_menu.start_menu_open);
-  M.close "the Start menu" Start_menu.start_menu_open;
-  M.settle_back ~label:"trainer card" ~log
-
 let console_game_steps ~log =
   {
     open_card =
@@ -57,7 +48,7 @@ let console_game_steps ~log =
     look;
     wait;
     now_ms = Effects.now;
-    close_card = close_card ~log;
+    close_card = (fun () -> Trainer_card_money.close ~log);
     log;
   }
 

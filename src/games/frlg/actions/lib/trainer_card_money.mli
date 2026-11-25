@@ -10,11 +10,14 @@ val player_row : int
 val max_digits : int
 (** 6: money stops at 999,999. *)
 
+val close : log:(string -> unit) -> unit
+(** From the open card back to the overworld: B back to the Start menu, the menu
+    closed, the talk settle. Fails as [not_closed]. *)
+
 val read : log:(string -> unit) -> int option
 (** From the overworld: the card opened, its money read until it shows (the card
-    fades in and flips; {!read_timeout_ms}), B back to the Start menu, the menu
-    closed, the talk settle. [None] when no money read in time. Fails as
-    [no_start_menu] or [not_closed]. *)
+    fades in and flips; {!read_timeout_ms}), then {!close}. [None] when no money
+    read in time. Fails as [no_start_menu] or [not_closed]. *)
 
 val read_timeout_ms : int
 (** 6 s. *)

@@ -11,9 +11,9 @@ type game_steps = {
   look : unit -> Frlg_readers.Trainer_card_front.t option;
       (** The front as it reads now; [None] while it does not show. *)
   wait : int -> unit;  (** Wait this many ms. *)
-  now_ms : unit -> float;
+  now_ms : unit -> float;  (** The clock, in ms. *)
   close_card : unit -> unit;  (** Back to the overworld. *)
-  log : string -> unit;
+  log : string -> unit;  (** Where {!read_with} logs the read. *)
 }
 (** The steps in the game this module takes; {!read_with} decides. *)
 
@@ -33,8 +33,8 @@ val read_with : game_steps -> Frlg_readers.Trainer_card_front.t option
 val console_game_steps : log:(string -> unit) -> game_steps
 (** In the effect context, in the menu actions' probes ({!Menu_input.run}):
     START and the player's row, a look on the latest frame, B to the Start menu,
-    the menu closed and the talk settle, as {!Trainer_card_money.read} closes
-    it. Fails as [no_start_menu] or [not_closed]. *)
+    the menu closed and the talk settle ({!Trainer_card_money.close}). Fails as
+    [no_start_menu] or [not_closed]. *)
 
 val read : log:(string -> unit) -> Frlg_readers.Trainer_card_front.t option
 (** {!read_with} on {!console_game_steps}, with the reader's probes subscribed.

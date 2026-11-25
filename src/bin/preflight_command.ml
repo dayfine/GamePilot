@@ -30,7 +30,6 @@ let ( let* ) = Result.bind
 
 let needs ~plan_dir from_id =
   let* plan = Plan_dir.load_plan ~plan_dir from_id in
-  let* declared = Pf.declared plan in
   let* before = Plan_dir.promised_before ~plan_dir from_id in
   let* stocks = Frlg_actions.Mart_plan.load () in
   let* ids = Plan_dir.checkpoint_ids plan_dir in
@@ -46,7 +45,7 @@ let needs ~plan_dir from_id =
   match
     (Pf.needs stocks ~before plan, Frlg_checkpoints.Party_room.chain_need plans)
   with
-  | needs, room -> Ok (declared @ needs, room)
+  | needs, room -> Result.map (fun needs -> (needs, room)) needs
   | exception Grid_maps.Json_field.Invalid e -> Error e
 
 exception Not_back of string

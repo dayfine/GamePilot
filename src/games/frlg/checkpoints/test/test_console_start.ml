@@ -97,7 +97,10 @@ let start_cases =
 let stocks =
   match Frlg_actions.Mart_plan.load () with Ok s -> s | Error e -> failwith e
 
-let needs id before = Preflight.needs stocks ~before (plan id)
+let needs id before =
+  match Preflight.needs stocks ~before (plan id) with
+  | Ok needs -> needs
+  | Error e -> failwith e
 
 let observed ?party ?money ?(items = []) () =
   {

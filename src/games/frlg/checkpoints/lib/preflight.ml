@@ -14,8 +14,12 @@ type need = Plan_needs.need =
   | Badges of string list
   | Hall_of_fame
 
-(* The args naming a member the action uses, and those naming one it brings. *)
-let needs = Plan_needs.needs
+(* The declared preconditions first: the save's state the plan's goal implies,
+   before what its events' args need. *)
+let needs stocks ~before plan =
+  Result.map
+    (fun declared -> declared @ Plan_needs.needs stocks ~before plan)
+    (Plan_preconditions.needs plan)
 
 type read = {
   observed : Checkpoints_run.Postcondition_check.observed;
@@ -201,8 +205,6 @@ let table rows =
   String.concat "\n"
     (line "NEED" "READ" "VERDICT"
     :: List.map (fun r -> line r.need r.read (verdict_text r.verdict)) rows)
-
-let declared = Plan_preconditions.needs
 
 let reads_card =
   List.exists (function
