@@ -7,33 +7,10 @@ type step =
 
 let default_hold_ms = 100
 let default_wait_ms = 500
-
-let buttons =
-  Wire.
-    [
-      A;
-      B;
-      Select;
-      Start;
-      Right;
-      Left;
-      Up;
-      Down;
-      R;
-      L;
-      Home;
-      X;
-      Y;
-      ZL;
-      ZR;
-      Plus;
-      Minus;
-    ]
-
 let named upper b = String.uppercase_ascii (Wire.string_of_button b) = upper
 
 let button_of_name name =
-  List.find_opt (named (String.uppercase_ascii name)) buttons
+  List.find_opt (named (String.uppercase_ascii name)) Wire.all_buttons
 
 let ms what word =
   match int_of_string_opt word with

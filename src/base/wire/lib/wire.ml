@@ -24,6 +24,7 @@ type button = Command.button =
   | Plus
   | Minus
 
+let all_buttons = Command.all_buttons
 let string_of_button = Command.string_of_button
 let button_of_string = Command.button_of_string
 let switch_only = Command.switch_only

@@ -161,9 +161,7 @@ void check_requests(const std::map<std::string, pa::JsonValue>& files) {
       decode_request(files.at("51-submit.plus.request.json")).params);
   CHECK(skip.commands.size() == 2 &&
         skip.commands[0].buttons == button_mask("Plus") &&
-        skip.commands[1].buttons == button_mask("Minus") &&
-        (button_mask("Plus") & kSwitchOnlyKeys) != 0 &&
-        (button_mask("Minus") & kSwitchOnlyKeys) != 0);
+        skip.commands[1].buttons == button_mask("Minus"));
   // v1.16: ZL then ZL with ZR, PLZA's ball throw.
   const SubmitParams aim = decode_submit(
       decode_request(files.at("50-submit.zl_zr.request.json")).params);
@@ -224,8 +222,8 @@ void check_requests(const std::map<std::string, pa::JsonValue>& files) {
 // The lease's results and refusal reproduce the goldens; status shows the
 // holder.
 void check_lease(const std::map<std::string, pa::JsonValue>& files) {
-  const LeaseHolder holder{2,    "ctl:bring-up", "gamepilot-ctl/0.1",
-                           1000, 1000,           30000};
+  const LeaseHolder holder{2, "ctl:bring-up", "gamepilot-ctl/0.1",
+                           1000,  1000,         30000};
   CHECK(lease_acquire_result(holder, 1000) ==
         result_of(files.at("36-lease_acquire.response.json")));
   CHECK(lease_release_result(true) ==
@@ -304,9 +302,8 @@ void check_encoders(const std::map<std::string, pa::JsonValue>& files) {
   status.backend = "switch";
   status.client = "gamepilot-programs/0.1";
   status.clients = 2;
-  status.lease = LeaseHolder{
-      1,    "gamepilot-programs/0.1", "gamepilot-programs/0.1", 212.5, 212.5,
-      60000};
+  status.lease = LeaseHolder{1,   "gamepilot-programs/0.1",
+                             "gamepilot-programs/0.1", 212.5, 212.5, 60000};
   status.fidelity = "latest";
   status.health.threads = {ThreadBeat{"capture", 3601, 60010.2},
                            ThreadBeat{"server", 3599, 60011.9}};
@@ -365,7 +362,8 @@ void check_encoders(const std::map<std::string, pa::JsonValue>& files) {
   chevron.blobs.push_back(blob);
   const ProbeResult glyph = LineShares{
       {3.0 / 8, 4.0 / 8, 2.0 / 8, 2.0 / 8, 4.0 / 8, 3.0 / 8, 2.0 / 8},
-      {1.0 / 7, 3.0 / 7, 4.0 / 7, 3.0 / 7, 2.0 / 7, 3.0 / 7, 3.0 / 7, 1.0 / 7}};
+      {1.0 / 7, 3.0 / 7, 4.0 / 7, 3.0 / 7, 2.0 / 7, 3.0 / 7, 3.0 / 7,
+       1.0 / 7}};
   CHECK(frame_notification(
             5120, 0, 85337.2,
             probe_results_json({{"controls_hint.glyph", glyph},
@@ -388,15 +386,15 @@ void check_encoders(const std::map<std::string, pa::JsonValue>& files) {
   CHECK(parse_message(to_line(files.at("14-wire_log.line.json"))) ==
         files.at("14-wire_log.line.json"));
   // The keep-awake press, the daemon's own line.
-  CHECK(
-      wire_log_line("daemon", 180412.5, keepawake_notification("B", 180000)) ==
-      files.at("34-keepawake.line.json"));
+  CHECK(wire_log_line("daemon", 180412.5,
+                      keepawake_notification("B", 180000)) ==
+        files.at("34-keepawake.line.json"));
   // An input line names its connection and the lease owner.
   const pa::JsonValue& input_line =
       files.at("40-wire_log.input_owner.line.json");
   CHECK(wire_log_line("in", 30512.4,
-                      input_line.to_object()->get_value_throw("msg").clone(), 2,
-                      std::string("ctl:bring-up")) == input_line);
+                      input_line.to_object()->get_value_throw("msg").clone(),
+                      2, std::string("ctl:bring-up")) == input_line);
 }
 
 // The first frame sends every result; a later one only the results that

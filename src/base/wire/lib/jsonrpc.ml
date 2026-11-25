@@ -97,7 +97,7 @@ let cancel_of_params what params =
   | Some then_ -> (
       match submit_of_params (what ^ ".then") then_ with
       | Submit { batch_id; commands } -> Cancel_then { batch_id; commands }
-      | _ -> Cancel)
+      | _ -> fail "%s.then: not a batch" what)
 
 let call_of_json name params =
   let what = name ^ ".params" in

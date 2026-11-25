@@ -34,6 +34,9 @@ type button = Command.button =
   | Plus
   | Minus
 
+val all_buttons : button list
+(** Every button, in the daemon's bit order (protocol/v1). *)
+
 val string_of_button : button -> string
 val button_of_string : string -> button option
 
