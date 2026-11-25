@@ -129,7 +129,7 @@ let config options world : A.Checkpoint_game.config =
     world;
     gait = options.gait;
     flee = Flee_wild.flee ~log:options.log;
-    flags = A.Skip_conditions.holds ~log:options.log;
+    flags = A.Skip_conditions.read_once ~log:options.log;
     party = options.party;
     grind_cap = options.grind_cap;
     center = options.center;
