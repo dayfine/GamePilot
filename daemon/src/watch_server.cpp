@@ -5,6 +5,8 @@
 #include <stdexcept>
 #include <utility>
 
+#include "watch_assets.h"
+
 namespace gamepilot {
 
 namespace {
@@ -145,12 +147,17 @@ void WatchServer::respond(Connection& connection, const HttpRequest& request) {
     start_frame_stream(connection, request);
     return;
   }
+  // The page's scripts and styles, beside it (watch_assets.h).
+  const auto asset = watch_asset(std::string_view(request.path).substr(1));
   if (get && request.path == "/") {
     const bool local = connection.local &&
                        header_value(request.headers, kViewerHeader) !=
                            kRemoteViewer;
     send(connection, http_response(200, "text/html; charset=utf-8",
                                    page_with_token(local ? token_ : "")));
+  } else if (get && asset) {
+    send(connection, http_response(200, asset->type, asset->bytes,
+                                   "Cache-Control: no-cache\r\n"));
   } else if (get && request.path == "/frame") {
     const WatchFrame frame = hooks_.frame();
     send(connection, http_response(200, frame.type, frame.bytes));
@@ -166,7 +173,7 @@ void WatchServer::respond(Connection& connection, const HttpRequest& request) {
   } else if (request.path == "/stop" || request.path == "/" ||
              request.path == "/frame" || request.path == "/events" ||
              request.path == "/stream" ||
-             request.path == "/summary.json") {
+             request.path == "/summary.json" || asset) {
     send(connection, http_response(405, "text/plain", "method not allowed\n"));
   } else {
     send(connection, http_response(404, "text/plain", "not found\n"));

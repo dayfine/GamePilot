@@ -1,6 +1,7 @@
 // The watch page's HTTP pieces: request heads, responses, event framing, and
-// the server end to end over loopback (page, frame, event stream with its
-// snapshot, the MJPEG stream, the hub's summary, Stop and its token, errors).
+// the server end to end over loopback (page and its scripts and styles, frame,
+// event stream with its snapshot, the MJPEG stream, the hub's summary, Stop and
+// its token, errors).
 
 #include <chrono>
 #include <cstddef>
@@ -12,6 +13,8 @@
 #include "check.h"
 #include "http.h"
 #include "net.h"
+#include "page_assets.h"
+#include "watch_assets.h"
 #include "watch_server.h"
 
 using namespace gamepilot;
@@ -216,6 +219,26 @@ void check_server() {
   CHECK(page.starts_with("HTTP/1.1 200 OK"));
   CHECK(page.find("text/html") != std::string::npos);
   CHECK(page.find("GamePilot") != std::string::npos);
+
+  // Its scripts and styles, beside it, each with its type.
+  const std::vector<std::string> assets = test::page_assets(watch_page());
+  CHECK(assets.size() > 2);
+  for (const std::string& name : assets) {
+    const auto asset = watch_asset(name);
+    CHECK(asset && asset->type == test::asset_type(name));
+    if (!asset) {
+      continue;
+    }
+    const std::string reply =
+        request(server, "GET /" + name + " HTTP/1.1\r\n\r\n",
+                std::string(asset->bytes.substr(asset->bytes.size() - 32)));
+    CHECK(reply.starts_with("HTTP/1.1 200 OK"));
+    CHECK(reply.find("Content-Type: " + std::string(asset->type) + "\r\n") !=
+          std::string::npos);
+    CHECK(reply.ends_with(asset->bytes));
+  }
+  CHECK(request(server, "POST /watch.js HTTP/1.1\r\n\r\n", "\r\n\r\n")
+            .starts_with("HTTP/1.1 405"));
 
   const std::string frame =
       request(server, "GET /frame?t=1 HTTP/1.1\r\n\r\n", "PNGBYTES");

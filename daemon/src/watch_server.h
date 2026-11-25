@@ -4,6 +4,8 @@
 // sockets with the program's and calls `serve`.
 //
 //   GET  /           the page (watch/watch.html, compiled in)
+//   GET  /NAME       its scripts and styles (watch_assets.h: watch.css,
+//                    watch_frame.js, ...)
 //   GET  /stream?w=W the live frame as MJPEG, up to W pixels wide
 //                    (frame_stream.h); view-only, like the page
 //   GET  /frame      the current frame, PNG or JPEG (hooks.frame): the page's
