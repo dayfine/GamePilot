@@ -315,6 +315,41 @@ let room_door ?(lost = false) c =
           | Some _ -> party c))
   | _ -> party c
 
+(* 03.01: the room's party bar; the door's A prompt once the stick was held
+   2 s, until A; a black fade 1.5 s, the 2F hall's party bar; the elevator's A
+   prompt once the stick was held 4.2 s, until A; "Which floor?" until A, the
+   choice until A, the ride's black fade 1.5 s; the lobby's text until two A,
+   Alton's choice until A, text until one more A, then the party bar.
+   [lost]: no door prompt. *)
+let lobby_scene c ~ride =
+  let a n = C.nth_after c Wire.A ~after:ride n in
+  match (a 1, a 2, a 3) with
+  | None, _, _ -> text c
+  | Some a2, None, _ -> choice c ~after:a2
+  | Some _, Some _, None -> text c
+  | Some _, Some _, Some _ -> party c
+
+let down_to_lobby c =
+  match C.stick_reached c 4200 with
+  | None -> party c
+  | Some e -> (
+      let a n = C.nth_after c Wire.A ~after:e n in
+      match (a 0, a 1, a 2) with
+      | None, _, _ -> { (party c) with interact_prompt = true }
+      | Some _, None, _ -> text c
+      | Some _, Some a1, None -> choice c ~after:a1
+      | Some _, Some _, Some r when since c r < 1500.0 -> black c
+      | Some _, Some _, Some r -> lobby_scene c ~ride:r)
+
+let out_of_room ?(lost = false) c =
+  match C.stick_reached c 2000 with
+  | Some d when not lost -> (
+      match C.nth_after c Wire.A ~after:d 0 with
+      | None -> { (party c) with interact_prompt = true }
+      | Some a when since c a < 1500.0 -> black c
+      | Some _ -> down_to_lobby c)
+  | _ -> party c
+
 let outcome checkpoint screen =
   let c = C.create () in
   reloaded := false;
@@ -711,6 +746,35 @@ let cases =
       (result "02.07" (room_door ~lost:true))
       "02.07 event 1 (to_room_door): walk_no_end: to_room_door: no end event \
        within 2231 ms of the last leg";
+    case "03.01: out of Room 202, the elevator, the lobby"
+      (fun () ->
+        let r, c = outcome "03.01" out_of_room in
+        String.concat "\n"
+          (r
+          :: List.filter
+               (fun line ->
+                 List.exists
+                   (fun prefix -> String.starts_with ~prefix line)
+                   [
+                     "[PLZA] to_";
+                     "[PLZA] out";
+                     "[PLZA] choose";
+                     "[PLZA scene] done";
+                   ])
+               (C.lines c)))
+      "passed\n\
+       [PLZA] out_of_room_202: the end event after 1000 ms of the last leg.\n\
+       [PLZA] out_of_room_202: ended on: player_can_move, interact_prompt\n\
+       [PLZA scene] done on control.\n\
+       [PLZA] to_2f_elevator: the end event after 2000 ms of the last leg.\n\
+       [PLZA] to_2f_elevator: ended on: player_can_move, interact_prompt\n\
+       [PLZA scene] done on choice.\n\
+       [PLZA] choose_0: row 0 of 2 highlighted\n\
+       [PLZA scene] done on control.";
+    case "03.01 lost: no door prompt"
+      (result "03.01" (out_of_room ~lost:true))
+      "03.01 event 1 (out_of_room_202): walk_no_end: out_of_room_202: no end \
+       event within 1099 ms of the last leg";
     case "the walk is walked before 03.03, run after"
       (fun () ->
         Printf.sprintf "%b %b"
