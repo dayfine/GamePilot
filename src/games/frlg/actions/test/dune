@@ -18,6 +18,7 @@
  (names
   test_pc_deposit_steps
   test_fly_towns
+  test_fly_user
   test_actions
   test_checkpoint_game
   test_action_requests
@@ -43,6 +44,7 @@
  (modules
   test_pc_deposit_steps
   test_fly_towns
+  test_fly_user
   test_actions
   test_checkpoint_game
   test_action_requests

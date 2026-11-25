@@ -46,7 +46,9 @@ let next_member () =
     (M.await_screen ~code:"no_summary" "the next member's info page"
        (Summary_moves.on_page info_page))
 
-let read_party read () =
+(* The party opened, then the first member's summary on its info page; the
+   number of members the party shows. *)
+let open_first_summary () =
   Party_actions.open_party ();
   let shown =
     M.await_screen ~code:"no_party" "the party" Party_menu.party_menu
@@ -58,17 +60,24 @@ let read_party read () =
     (M.await_screen ~timeout_ms:summary_timeout_ms ~code:"no_summary"
        "the summary"
        (Summary_moves.on_page info_page));
-  let rec go slot n acc =
-    if slot > n then List.rev acc
-    else (
-      if slot > 1 then next_member ();
-      let r = read slot in
-      go (slot + 1) n (r :: acc))
-  in
-  go 1 (Party_menu.members shown) []
+  Party_menu.members shown
 
-let each_member ~label ~log read =
+(* [read] on each member from [slot] on, the reads so far in [acc], newest
+   first. *)
+let rec visit ~stop read slot n acc =
+  if slot > n then List.rev acc else visit_member ~stop read slot n acc
+
+and visit_member ~stop read slot n acc =
+  if slot > 1 then next_member ();
+  let r = read slot in
+  if stop r then List.rev (r :: acc)
+  else visit ~stop read (slot + 1) n (r :: acc)
+
+let until_member ~label ~log ~stop read =
   Effects.with_probes Summary_screen.probes (fun () ->
-      let members = read_party read () in
+      let members = visit ~stop read 1 (open_first_summary ()) [] in
       M.close_to_overworld ~label ~log;
       members)
+
+let each_member ~label ~log read =
+  until_member ~label ~log ~stop:(fun _ -> false) read

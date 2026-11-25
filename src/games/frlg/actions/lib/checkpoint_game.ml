@@ -130,10 +130,19 @@ let lands t at outcome =
   if Result.is_ok outcome then t.at <- Some at;
   outcome
 
+(* The plan's slot, else the first member that knows Fly, read. *)
+let fly_user t (request : Fly_args.request) =
+  match request.user with
+  | Some user -> Ok user
+  | None -> Fly_user.read ~log:t.config.log
+
 let fly t (_ : Pokemon_engine.Plan.event) args =
-  match Fly_args.decode (party t) args with
+  match Fly_args.decode args with
   | Error e -> Error (Failure.cause ~repeats:true "bad_args" e)
-  | Ok plan -> Fly.fly ~log:t.config.log plan |> lands t plan.town.landing
+  | Ok request ->
+      Result.bind (fly_user t request) (fun user ->
+          let plan = Fly_args.plan request user in
+          Fly.fly ~log:t.config.log plan |> lands t plan.town.landing)
 
 let lift t (_ : Pokemon_engine.Plan.event) args =
   Result.bind (Lift_ride.ride_of_args args) (fun ride ->

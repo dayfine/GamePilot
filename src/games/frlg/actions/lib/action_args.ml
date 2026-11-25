@@ -29,7 +29,7 @@ let member_to_string = function
 let member_keys =
   [ "species"; "sweeper"; "knock_off_species"; "recycle_species" ]
 
-let field_move_users = [ ("cut_tree", "cut") ]
+let field_move_users = [ ("cut_tree", "cut"); ("fly", "fly") ]
 
 (* The badge each HM needs outside battle, by field move: pret pokefirered
    src/party_menu.c (FLAG_BADGE01_GET + the field move, from
@@ -47,19 +47,12 @@ let field_move_badges =
     ("waterfall", "volcano");
   ]
 
-(* The field move an action uses outside battle: Cut's users, and Fly, whose
-   member the plan still names by species. *)
-let field_move_of action =
-  match List.assoc_opt action field_move_users with
-  | Some move -> Some move
-  | None -> if action = "fly" then Some "fly" else None
-
 let badge_needed action =
-  Option.bind (field_move_of action) (fun m ->
+  Option.bind (List.assoc_opt action field_move_users) (fun m ->
       List.assoc_opt m field_move_badges)
 
 let picks_member ~action args =
-  action = "capture"
+  action = "capture" || action = "pc_deposit"
   || (not (List.mem_assoc action field_move_users))
      && List.exists (fun key -> J.has key args) member_keys
 

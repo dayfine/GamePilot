@@ -9,6 +9,7 @@ type need = Plan_needs.need =
     }
   | Member of { species : string; for_ : string }
   | No_mail of { species : string; for_ : string }
+  | Holding_no_mail of { for_ : string }
   | Knows_move of { move : string; for_ : string }
   | Badge of { badge : string; for_ : string }
   | Money_at_least of { amount : int; for_ : string }
@@ -97,6 +98,18 @@ let no_mail_row read ~need species =
         verdict = of_bool (mark <> mail);
       }
 
+let first_without_mail marks =
+  let mail = Frlg_actions.Mail_glitch_use.name_of_mark Mail in
+  List.find_index (fun m -> m <> mail) marks
+
+let holding_no_mail_row (read : read) ~need =
+  match Option.map first_without_mail read.observed.marks with
+  | None -> { need; read = "not read"; verdict = Not_read }
+  | Some None -> { need; read = "every member holds Mail"; verdict = Mismatch }
+  | Some (Some i) ->
+      let read = Printf.sprintf "slot %d holds no Mail" (i + 1) in
+      { need; read; verdict = Ok }
+
 let with_money (read : read) need test =
   match read.observed.money with
   | None -> { need; read = "not read"; verdict = Not_read }
@@ -183,6 +196,7 @@ let row read need =
           List.for_all (has m) members && List.for_all (in_slot m) slots)
   | Member { species; _ } -> with_party read text (fun m -> has m species)
   | No_mail { species; _ } -> no_mail_row read ~need:text species
+  | Holding_no_mail _ -> holding_no_mail_row read ~need:text
   | Money_at_least { amount; _ } -> with_money read text (fun m -> m >= amount)
   | Money_between { min; max } ->
       with_money read text (fun m -> m >= min && m <= max)
@@ -248,7 +262,10 @@ let reads_party = function
 
 let to_read needs : Postconditions.t =
   let party = List.exists reads_party needs
-  and marks = List.exists (function No_mail _ -> true | _ -> false) needs
+  and marks =
+    List.exists
+      (function No_mail _ | Holding_no_mail _ -> true | _ -> false)
+      needs
   and money =
     List.exists
       (function Money_at_least _ | Money_between _ -> true | _ -> false)

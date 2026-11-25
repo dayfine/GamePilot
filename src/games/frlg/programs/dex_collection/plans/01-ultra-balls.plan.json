@@ -10,7 +10,7 @@
         "id": "fly_indigo",
         "kind": "game_action",
         "action": "fly",
-        "args": {"town": "IndigoPlateau", "species": "pidgey"},
+        "args": {"town": "IndigoPlateau"},
         "declared_after": {"map": "IndigoPlateau_Exterior", "tiles": [[11, 7]], "facing": "south"},
         "why": "Indigo Plateau's Center has the only Mart counter near a fly point that sells Ultra Balls."
       },
@@ -42,7 +42,7 @@
         "id": "fly_route10",
         "kind": "game_action",
         "action": "fly",
-        "args": {"town": "Route10", "species": "pidgey"},
+        "args": {"town": "Route10"},
         "why": "Back to Route 10's Center, where the catches start."
       },
       {

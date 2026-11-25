@@ -25,7 +25,7 @@
         "id": "fly_celadon",
         "kind": "game_action",
         "action": "fly",
-        "args": {"town": "CeladonCity", "species": "pidgey"},
+        "args": {"town": "CeladonCity"},
         "declared_after": {"map": "CeladonCity", "tiles": [[48, 12]], "facing": "south"},
         "why": "Fly from Route 16 to Celadon City's Pokemon Center landing tile (48, 12)"
       },
@@ -150,6 +150,6 @@
     "phase": "testing",
     "retries": 3,
     "notes": "One checkpoint for the fork's mg-05 and mg-06 (user, 2026-11-24): the state right after the glitch battle is never saved on the Switch, so the only save after the battle is this one, after the duplication proved the glitch works. A retry starts again from one tile outside Lea's sightline (07-glitch-prep's end), where the battle's luck gets 3 tries as the fork's mg-05 did. The battle (ported from the fork's tested PlanData/mg-05.plan.json, Route 16 run on mGBA, 2026-11-23) steps north into Lea's sightline and ends on (30, 6) facing north with MIMIEN (Lv 33) holding the recycled Leppa Berry; verify_mail_glitch reads MIMIEN's held-item mark, and the Fly from (30, 6) follows. The rest: spec docs/mail-glitch-use.md (PR #52) and the user's decisions there. The fork's mg-05 mGBA save after the battle (Route 16 (30, 6), mail index 0, record 0 = ABRA) had Retro Mail 1, Antidote 2 and $20,788, $1,624 more than 07-glitch-prep's end ($21,464 - $2,300): Lea & Jed's prize. Retro Mail: 1 + 8 - 5 - 1 - 1 = 2. Antidote: 2 - 1 given to MIMIEN + 1 duplicated = 2 in the bag (3 in all). Money: $400 for the mail less the $1,624 prize, $1,224 more than at the start. Dropped from the fork's mg-05 postconditions: slots 1-3's held-item marks (held_item, none, held_item), which the mail given to slots 2-6 changes; the checkpoint checks the marks after (held_item, then five mail) itself.",
-    "postconditions": {"party_includes": ["mr-mime", "pidgey"], "party_slots": [{"slot": 1, "species": "mr-mime"}], "items": [{"item": "antidote", "gained": 0}, {"item": "retro-mail", "gained": 1}], "money": {"spent": -1224}}
+    "postconditions": {"party_includes": ["mr-mime"], "party_slots": [{"slot": 1, "species": "mr-mime"}], "items": [{"item": "antidote", "gained": 0}, {"item": "retro-mail", "gained": 1}], "money": {"spent": -1224}}
   }
 }

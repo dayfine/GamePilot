@@ -60,15 +60,13 @@ let room ~at need members =
   in
   let* center = M.nearest_center towns ~maps at in
   let* deposits = R.choose (Pr.rules need) (Pr.precondition need) members in
-  let* fly_user =
-    Option.to_result ~none:"no member knows Fly"
-      (List.find_opt knows_fly members)
+  let* () =
+    if List.exists knows_fly members then Ok () else Error "no member knows Fly"
   in
   Ok
     ( deposits,
       {
         M.center;
-        fly_user = fly_user.species;
         deposits;
         party = members;
         needed_moves = List.sort_uniq compare ("fly" :: need.Pr.moves);
