@@ -76,8 +76,8 @@ let type_finding ~path (td : type_declaration) =
 let type_findings ~path (td : type_declaration) =
   let type_doc = doc td.ptype_attributes in
   let own = if type_doc = "" then [ type_finding ~path td ] else [] in
-  match td.ptype_kind with
-  | Ptype_variant cds ->
+  match (td.ptype_kind, td.ptype_manifest) with
+  | Ptype_variant cds, None ->
       own @ List.concat_map (constructor_findings ~path type_doc) cds
   | _ -> own
 

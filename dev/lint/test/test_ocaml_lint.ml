@@ -416,6 +416,9 @@ let () =
           \  | A\n\
           \  | B\n\
           \  | C  (** Its own. *)\n"));
+  case "interface_docs: a re-export's constructors are documented at the source"
+    ~expect:[]
+    (checks (docs "(** M's, re-exported. *)\ntype t = M.t = A | B\n"));
   case "interface_docs: a longer word does not name a constructor"
     ~expect:[ "constructor Time has no doc comment (R11)" ]
     (messages (docs "(** Timeouts. *)\ntype t = Time\n"));
