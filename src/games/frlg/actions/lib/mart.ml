@@ -16,11 +16,22 @@ let list_back m = Money_box.money_box m && not (Dialog.dialog_up m)
 
 let buy_one ~log cursor (b : Mart_plan.buy) =
   M.moves ~from:cursor ~to_:b.row;
-  M.press Wire.A ~cooldown_ms:how_many_wait_ms;
+  (* Both A's until their screen shows: the list back from a purchase took no
+     A for a moment (the quantity's UP taps then moved the cursor to POKé
+     DOLL), and the quantity box dropped its A once (it stayed on x01); mGBA,
+     su-01 verification, 2026-11-24. *)
+  M.press_until ~max_presses:3 ~code:"mart_no_quantity" "the quantity box"
+    Wire.A ~cooldown_ms:how_many_wait_ms Dialog.dialog_up;
+  (* The box takes taps only once its text is out: taps sent as the text box
+     showed were dropped (40 of 100 Retro Mail bought). *)
+  ignore (Effects.submit [ Wire.Wait { wait_ms = how_many_wait_ms } ]);
   let right, up = Mart_plan.quantity_presses b.buy_quantity in
   M.taps Wire.Right right;
   M.taps Wire.Up up;
-  M.press Wire.A;
+  Effects.with_probes Dialog.yes_no_probes (fun () ->
+      M.press_until ~max_presses:3 ~code:"mart_no_confirm"
+        ("the price of " ^ b.buy_item) Wire.A ~cooldown_ms:how_many_wait_ms
+        (fun m -> Dialog.yes_no_cursor m <> None));
   M.answer_yes ~code:"mart_no_confirm" ~taken:list_back
     ("the price of " ^ b.buy_item);
   M.press_until ~code:"mart_not_back" "the BUY list" Wire.A
