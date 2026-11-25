@@ -50,6 +50,20 @@ let await_screen ?(timeout_ms = screen_timeout_ms) ~code what reader =
 let settle_back ~label ~log =
   raise_error (Scene_looks.settle Talk ~label ~battle_ends:false ~log)
 
+module Fade_in = Frlg_overworld.Warp_fade_in
+
+(* A menu's close: its fade out, the black, the dim spell, the steps up and
+   the still spell after them take about 2 s (110 frames). *)
+let fade_in_timeout_ms = 5000
+
+let await_fade_in ~code what =
+  let watch = Fade_in.watch () in
+  let came_up m =
+    Fade_in.watch_frame watch m;
+    Fade_in.came_up watch
+  in
+  ignore (await_screen ~timeout_ms:fade_in_timeout_ms ~code what came_up)
+
 (* The menus a party read goes through: none has a box or a fade the settle's
    look tells from the overworld. *)
 let party_menus m =

@@ -179,6 +179,7 @@ let count ~log slug =
     | Some n -> Printf.sprintf "Bag: %d %s." n slug
     | None -> Printf.sprintf "Bag: the count of %s did not read." slug);
   M.close "the bag" Bag_screen.bag_open;
+  M.await_fade_in ~code:"not_closed" "the overworld after the bag";
   M.settle_back ~label:"bag count" ~log;
   counted
 

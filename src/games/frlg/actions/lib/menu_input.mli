@@ -62,6 +62,17 @@ val settle_back : label:string -> log:(string -> unit) -> unit
 (** The talk settle ({!Scene_looks.settle}) back to a quiet overworld: B through
     the rest of a menu's or a talk's text. Fails as its cause. *)
 
+val fade_in_timeout_ms : int
+(** How long {!await_fade_in} waits: 5 s. *)
+
+val await_fade_in : code:string -> string -> unit
+(** After a press that closes a menu through a black fade (the bag, the Trainer
+    Card): every frame watched ({!Frlg_overworld.Warp_fade_in.watch}) until the
+    fade has shown and its fade-in is over, so that the next B lands on a screen
+    that takes it. A look alone reads the dim spell as the overworld (no fade)
+    and the steps up as a screen that moves. Fails as [code] with
+    ["<what> did not show"] after {!fade_in_timeout_ms}. *)
+
 val close_to_overworld : label:string -> log:(string -> unit) -> unit
 (** From the party, a member's menu or a summary, as the settle's [Menu_closed]
     rule closes it ({!Screen_state.Settle.rule}): B until the overworld shows

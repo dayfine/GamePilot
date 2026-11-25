@@ -63,3 +63,6 @@ val watch_frame : watch -> Effects.measurements -> unit
 
 val fading : watch -> bool
 (** A fade showed and its fade-in is not over yet. *)
+
+val came_up : watch -> bool
+(** A fade showed and its fade-in is over, with no fade since. *)

@@ -22,6 +22,7 @@ let rec until_read deadline =
 
 let close ~log =
   M.press Wire.B;
+  M.await_fade_in ~code:"not_closed" "the overworld after the card";
   ignore
     (M.await_screen ~timeout_ms:read_timeout_ms ~code:"not_closed"
        "the Start menu after the card" Start_menu.start_menu_open);
