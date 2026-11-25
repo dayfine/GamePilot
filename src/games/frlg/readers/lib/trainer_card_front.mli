@@ -14,10 +14,12 @@
     save gets before the Hall of Fame but the last.
 
     Thresholds come from renders of pret's graphics (palettes as mGBA shows
-    them), which match the one mGBA frame of the card in the lab (emu-1, no
-    badge, no star) to the pixel; the Switch's colors are not measured yet. *)
+    them), which match the lab's mGBA frame of the card with no badge and no
+    star to the pixel; real mGBA frames of a post-League save (8 badges, 1 star)
+    read as such. The Switch's colors are not measured yet. *)
 
 val probes : Wire.probe_spec list
+(** Every probe {!front_shown} and {!read} need. *)
 
 val badge_names : string list
 (** The eight badges in slot order, as plans name them: ["boulder"],
