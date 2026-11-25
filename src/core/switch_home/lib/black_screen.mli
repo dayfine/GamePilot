@@ -6,4 +6,9 @@
     100 at most and their stddev 10 at most. *)
 
 val probes : picture:Wire.box -> Wire.probe_spec list
+(** The one probe {!shown} needs, for a game picture at [picture] in the frame
+    (the [hello]'s viewport). *)
+
 val shown : Effects.measurements -> bool
+(** The box is black: its channels' means summing to 100 at most, their stddevs
+    to 10 at most. [false] when the probe is missing. *)

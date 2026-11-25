@@ -19,6 +19,11 @@ let probes ~picture =
         (Picture_box.clipped ~picture frame_box))
     frame_boxes
 
+(* Headroom on console B's captures (test/images, with their shifted
+   versions): the one popup capture, in the dark theme (there is no white one),
+   reads its top's means summing to 225 (204 to 246 shifted) against 300, the
+   least margin 54 at brightness x1.1; its top and left stddevs 0 against 20;
+   its text row's stddev 72 at least against 50. *)
 let grey_max_sum = 300.
 let white_above_sum = 500.
 let max_flat_stddev = 20.

@@ -25,33 +25,25 @@ let console ?(running = true) () =
         show 4000 S.Intro
     | _ -> ()
 
+(* A popup A never closes: it shows again. *)
+let popup_stays t b screen =
+  match (b, screen) with
+  | Wire.X, S.Home_fire_red_last -> S.show t ~after:300 S.Close_popup
+  | Wire.A, S.Close_popup -> S.show t ~after:100 S.Close_popup
+  | _ -> ()
+
+(* A user select A never gets past: it shows again. *)
+let user_select_stays t b screen =
+  match (b, screen) with
+  | Wire.A, (S.Home_on_fire_red | S.User_select) ->
+      S.show t ~after:300 S.User_select
+  | _ -> ()
+
 let picture = Fire_red.nso_gba_picture
 
-(* The presses, runs of one button counted. *)
-let presses_text t =
-  let rec runs acc = function
-    | [] -> List.rev acc
-    | b :: rest -> (
-        match acc with
-        | (b', n) :: acc' when b = b' -> runs ((b, n + 1) :: acc') rest
-        | _ -> runs ((b, 1) :: acc) rest)
-  in
-  match runs [] (List.rev t.S.presses) with
-  | [] -> "no press"
-  | l ->
-      String.concat ", "
-        (List.map
-           (fun (b, n) -> if n = 1 then b else Printf.sprintf "%s x%d" b n)
-           l)
-
 let run start react body () =
-  let t = S.create ~start react in
-  let outcome =
-    S.run t (fun () ->
-        match body () with Ok () -> "ok" | Error e -> "error: " ^ e)
-  in
-  Printf.sprintf "%s; %s; ends on %s" outcome (presses_text t)
-    (S.screen_name (S.screen_at t t.S.clock_ms))
+  S.play ~presses:S.presses_counted ~start react (fun () ->
+      match body () with Ok () -> "ok" | Error e -> "error: " ^ e)
 
 let close () = Game_entry.close_game ~log:ignore ~picture Fire_red.tile
 
@@ -75,6 +67,16 @@ let () =
       case "close: never HOME, an error after its rounds"
         (run S.Game (fun _ _ _ -> ()) close)
         "error: Unable to find Switch Home; Home x10; ends on game";
+      case
+        "close: a popup that never closes, an error after 20 rounds (HOME, \
+         then 19 A)"
+        (run S.Home_fire_red_last popup_stays close)
+        "error: the game did not close in 20 rounds; X x13, A x19; ends on the \
+         close popup";
+      case "start: a user select A never gets past, an error after 10 rounds"
+        (run S.Home_on_fire_red user_select_stays (start ~game_slot:0))
+        "error: start_game_from_home_with_inference(): Failed to start game.; \
+         B x4, A x11; ends on user select";
       case
         "start: B until HOME, HOME and Right to tile 2, A, A on the user \
          select, until its black"

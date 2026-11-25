@@ -2,6 +2,11 @@ open Solid_color
 
 let id = "start_game.black"
 let frame_box : Wire.box = { x = 0.1; y = 0.15; w = 0.8; h = 0.7 }
+
+(* Headroom on console B's captures (test/images, with their shifted
+   versions): the capture card's black reads 21 (14 to 57 shifted) against
+   100, its stddev 0 against 10; every other capture's stddev is 52 at
+   least. *)
 let max_rgb_sum = 100.
 let max_stddev_sum = 10.
 

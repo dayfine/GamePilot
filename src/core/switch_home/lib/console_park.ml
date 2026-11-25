@@ -12,9 +12,7 @@ let home_wait_ms = 5000
 let launch_wait_ms = 60_000
 
 let press ?(hold_ms = tap_hold_ms) ?(cooldown_ms = tap_release_ms) b =
-  ignore
-    (Effects.submit [ Wire.press ~hold_ms ~cooldown_ms [ b ] ]
-      : Wire.batch_done)
+  Switch_presses.press ~hold_ms ~cooldown_ms b
 
 let screen () =
   match Effects.read () with Some m -> H.read m | None -> H.Elsewhere

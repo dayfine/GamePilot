@@ -180,3 +180,28 @@ let run t f =
 
 let presses_text t =
   match List.rev t.presses with [] -> "no press" | l -> String.concat ", " l
+
+(* The presses, a run of one button counted ("X x13"). *)
+let presses_counted t =
+  let rec runs acc = function
+    | [] -> List.rev acc
+    | b :: rest -> (
+        match acc with
+        | (b', n) :: acc' when b = b' -> runs ((b, n + 1) :: acc') rest
+        | _ -> runs ((b, 1) :: acc) rest)
+  in
+  match runs [] (List.rev t.presses) with
+  | [] -> "no press"
+  | l ->
+      String.concat ", "
+        (List.map
+           (fun (b, n) -> if n = 1 then b else Printf.sprintf "%s x%d" b n)
+           l)
+
+(* Runs [body] on a console from [start]: its outcome, the presses and the
+   screen it ends on. *)
+let play ?(presses = presses_text) ~start react body =
+  let t = create ~start react in
+  let outcome = run t body in
+  Printf.sprintf "%s; %s; ends on %s" outcome (presses t)
+    (screen_name (screen_at t t.clock_ms))

@@ -29,7 +29,8 @@ let screen_of m =
     | User_select -> Some User_select
     | Elsewhere -> None
 
-let only s m = if screen_of m = Some s then Some () else None
+(* Watches for one screen: [Some ()] while it shows. *)
+let screen_is s m = if screen_of m = Some s then Some () else None
 
 (* ensure_at_home: up to 10 tries of 5 s for HOME, HOME pressed after each. *)
 let home_wait_ms = 5000
@@ -39,7 +40,7 @@ let rec ensure_at_home ~log attempts =
   if attempts >= home_retries then Error "Unable to find Switch Home"
   else
     match
-      wait_for ~timeout_ms:home_wait_ms (held watcher_hold_ms (only Home))
+      wait_for ~timeout_ms:home_wait_ms (held watcher_hold_ms (screen_is Home))
     with
     | Some () ->
         log "Home detected.";
@@ -157,7 +158,7 @@ let settle_ms = 100
 let start_rounds = 10
 
 let b_until_home () =
-  let home = held watcher_hold_ms (only Home) in
+  let home = held watcher_hold_ms (screen_is Home) in
   match
     Effects.race (P.mash_presses Wire.B b_until_home_ms) ~stop:(fun m ->
         Option.is_some (home m))
@@ -181,8 +182,8 @@ type after_a = Black | Home_again | User_select_shown
 
 (* The round's watchers, the black one kept across rounds (run_until). *)
 let after_a_watch ~black =
-  let home = held home_again_hold_ms (only Home)
-  and user = held watcher_hold_ms (only User_select) in
+  let home = held home_again_hold_ms (screen_is Home)
+  and user = held watcher_hold_ms (screen_is User_select) in
   fun m ->
     let b = black m and h = home m and u = user m in
     match (b, h, u) with
