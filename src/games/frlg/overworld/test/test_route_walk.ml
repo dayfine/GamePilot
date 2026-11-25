@@ -28,14 +28,14 @@ let walker screen log : Route_walk.t =
 let target map tiles : Pokemon_checkpoints.Pose.grid =
   {
     map;
-    tiles = List.map (fun (x, y) -> { Grid_maps.Tile_pos.x; y }) tiles;
+    tiles = List.map (fun (x, y) -> { Grid_geometry.Tile_pos.x; y }) tiles;
     facing = None;
   }
 
 let at_text (at : Route_walk.at) =
   place_text pallet at.place
   ^ Option.fold ~none:""
-      ~some:(fun d -> " " ^ Grid_maps.Direction.name d)
+      ~some:(fun d -> " " ^ Grid_geometry.Direction.name d)
       at.facing
 
 (* Plans from [from] to [goal] and walks it on a screen that [react]s to the

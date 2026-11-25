@@ -30,7 +30,7 @@ type plan = {
   species : string;
   move : string;
   backup_move : string;
-  pace : Grid_maps.Direction.t;
+  pace : Grid_geometry.Direction.t;
       (** The way the battles are paced for: one step from the start tile and
           back ({!Pacing}). *)
 }

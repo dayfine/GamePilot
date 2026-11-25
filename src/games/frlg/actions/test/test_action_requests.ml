@@ -159,7 +159,8 @@ let others =
     case "spin: five turns clockwise from west"
       (fun () ->
         String.concat " "
-          (List.map Grid_maps.Direction.name (Spin_for_encounter.turns West 5)))
+          (List.map Grid_geometry.Direction.name
+             (Spin_for_encounter.turns West 5)))
       "north east south west north";
   ]
 

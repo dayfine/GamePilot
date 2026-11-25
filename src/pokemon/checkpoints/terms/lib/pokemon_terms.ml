@@ -1,5 +1,4 @@
 module Own_kind = Own_kind
-module Postconditions = Postconditions
 module Postcondition_check = Postcondition_check
 
 module Pose = struct
@@ -16,8 +15,9 @@ module Kind = struct
   type t = Own_kind.t
 end
 
-module Promises = struct
-  type t = Postconditions.t
+module Postconditions = struct
+  include Postconditions
+
   type reads = Postcondition_check.observed
 
   let check = Postcondition_check.check

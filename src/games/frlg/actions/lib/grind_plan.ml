@@ -10,7 +10,7 @@ type heal =
 type strategy = {
   name : string;
   spot : Pokemon_checkpoints.Pose.grid;
-  pace : Grid_maps.Direction.t;
+  pace : Grid_geometry.Direction.t;
   lead : lead;
   heal : heal;
   heal_every : int;
@@ -35,7 +35,7 @@ type t = {
 let default_strategy = "victory_road_2f"
 let asset = "src/games/frlg/assets/grind_strategies.json"
 
-let tile ~where obj : Grid_maps.Tile_pos.t =
+let tile ~where obj : Grid_geometry.Tile_pos.t =
   match J.field ~where "tile" obj with
   | `List [ `Int x; `Int y ] -> { x; y }
   | _ -> J.fail "%stile is not [x, y]." where

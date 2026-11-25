@@ -41,9 +41,9 @@ module Make (T : Engine_terms.TERMS) : sig
     | Not_at_end of { declared : T.Pose.t; observed : T.Pose.observed option }
         (** Every event passed, but the player is not at the checkpoint's
             declared end, or the game cannot tell where they are. *)
-    | Unmet_postconditions of Engine_promise.Promise.result list
+    | Unmet_postconditions of Engine_postcondition.Postcondition.result list
         (** Every event passed, but these promises of the plan failed or could
-            not be read ({!Engine_terms.PROMISES.check}). *)
+            not be read ({!Engine_terms.POSTCONDITIONS.check}). *)
 
   type t = {
     checkpoint_id : string;

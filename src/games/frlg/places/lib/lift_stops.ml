@@ -15,7 +15,7 @@ let stop lift (exit : Pokemon_checkpoints.Pose.grid) floor =
     lift;
     floor;
     map = exit.map;
-    door = { map = exit.map; tile; facing = Some Grid_maps.Direction.North };
+    door = { map = exit.map; tile; facing = Some Grid_geometry.Direction.North };
     exit = { map = exit.map; tile; facing = exit.facing };
   }
 

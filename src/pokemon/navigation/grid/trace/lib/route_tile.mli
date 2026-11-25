@@ -1,7 +1,7 @@
 (** A tile of a named map, as the route log writes it: ["Route 202 (23, 25)"].
 *)
 
-type t = { map : string; pos : Grid_maps.Tile_pos.t }
+type t = { map : string; pos : Grid_geometry.Tile_pos.t }
 
 val to_string : t -> string
 (** ["Route 202 (23, 25)"]. *)

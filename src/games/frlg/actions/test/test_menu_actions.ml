@@ -84,7 +84,7 @@ let save () = run ~react:save_screen (Heal_and_save.save ~log)
 
 let cut () =
   run ~react:(talk ~page:true ~after_ms:1500) (fun () ->
-      Cut_tree.cut ~log Grid_maps.Direction.North)
+      Cut_tree.cut ~log Grid_geometry.Direction.North)
 
 (* The Cut talk, its question dropping presses for its first
    [question_input_ms]: A then answers YES, B answers NO, each ending the talk.
@@ -119,7 +119,7 @@ let cut_slow_question () =
         | None -> presses
       in
       Printf.sprintf "%s; answered %s" before_b !answer)
-    (fun () -> Cut_tree.cut ~log Grid_maps.Direction.North)
+    (fun () -> Cut_tree.cut ~log Grid_geometry.Direction.North)
 
 (* A talk whose page drops an A for its first [page_input_ms] (the A only
    hurries the text): a later A shows the question, YES ends it. *)
@@ -345,7 +345,7 @@ let trade_yes_taken () =
 let cut_yes_taken () =
   run_latent
     (latent_talk ~after_yes:[ (100, S.Dialog); (1600, S.Overworld) ] ())
-    (fun () -> Cut_tree.cut ~log Grid_maps.Direction.North)
+    (fun () -> Cut_tree.cut ~log Grid_geometry.Direction.North)
 
 (* A wild battle starts [after_ms] into the spin. *)
 let spin ~after_ms () =

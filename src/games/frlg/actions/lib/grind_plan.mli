@@ -22,7 +22,7 @@ type strategy = {
   name : string;
   spot : Pokemon_checkpoints.Pose.grid;
       (** the grass tile battles are paced from *)
-  pace : Grid_maps.Direction.t;
+  pace : Grid_geometry.Direction.t;
       (** the way paced, one step and back: the tile that way is grass too
           ({!Pacing}) *)
   lead : lead;

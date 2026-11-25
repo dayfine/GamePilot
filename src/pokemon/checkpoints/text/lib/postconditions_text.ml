@@ -2,7 +2,7 @@ open Pokemon_terms
 open Postconditions
 
 let list = String.concat ", "
-let count_text = Engine_promise.Count.text
+let count_text = Engine_postcondition.Count.text
 
 let slot_text ({ slot; species } : slot) =
   Printf.sprintf "%s in slot %d" species slot
@@ -31,7 +31,7 @@ let text p =
       party_text p.party;
       List.map bag_count_text p.items;
       some (fun c -> "coins " ^ count_text c) p.coins;
-      some Engine_promise.Money.text p.money;
+      some Engine_postcondition.Money.text p.money;
       (if p.flags = [] then [] else [ "flags " ^ list p.flags ]);
       List.map knows_text p.knows;
       List.map level_text p.levels;

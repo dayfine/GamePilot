@@ -4,7 +4,7 @@
 
 type town = {
   name : string;  (** The map's name, as a plan names it (["CeladonCity"]). *)
-  cell : Grid_maps.Tile_pos.t;
+  cell : Grid_geometry.Tile_pos.t;
       (** Presses right and down from the map's top-left corner. *)
   landing : Pokemon_checkpoints.Pose.observed;
       (** Facing south, as every Fly lands the player; a walk from it needs no

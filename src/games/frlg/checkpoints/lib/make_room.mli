@@ -13,7 +13,7 @@ val id : string
 val center_map : string -> string
 (** ["ViridianCity"] -> ["ViridianCity_PokemonCenter_1F"]. *)
 
-val pc_front : Grid_maps.Tile_pos.t
+val pc_front : Grid_geometry.Tile_pos.t
 (** (11, 2), facing north: below the PC (11, 1) on a standard Center's ground
     floor ({!Frlg_overworld.Standard_center.pc_front}). *)
 

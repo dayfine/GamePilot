@@ -3,5 +3,5 @@
  (public_name gamepilot.pokemon_terms)
  (libraries
   gamepilot.grid_geometry
-  gamepilot.engine_promise
+  gamepilot.engine_postcondition
   gamepilot.engine_terms))

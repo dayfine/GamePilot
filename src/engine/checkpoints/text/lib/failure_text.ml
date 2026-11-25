@@ -17,7 +17,7 @@ struct
     | Unmet_postconditions unmet ->
         "postconditions unmet: "
         ^ String.concat "; "
-            (List.map Engine_promise.Promise.result_to_string unmet)
+            (List.map Engine_postcondition.Postcondition.result_to_string unmet)
 
   let to_string (failure : Failure.t) =
     Printf.sprintf "%s event %d (%s): %s" failure.checkpoint_id

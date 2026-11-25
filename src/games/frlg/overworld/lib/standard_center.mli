@@ -35,6 +35,7 @@
       [Frlg_checkpoints.Make_room] uses it. *)
 
 open Grid_maps
+open Grid_geometry
 
 val centers : string list
 (** The 17 maps that use the shared layout, by name. *)

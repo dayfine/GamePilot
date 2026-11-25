@@ -20,6 +20,6 @@ module type PLAN_CODEC = sig
       args are its errors), or [None] when the name is not one of the game's. *)
 
   val postconditions_of_plan :
-    where:string -> Json_field.obj -> (T.Promises.t, string) result
+    where:string -> Json_field.obj -> (T.Postconditions.t, string) result
   (** A [postconditions] or [until] object. *)
 end

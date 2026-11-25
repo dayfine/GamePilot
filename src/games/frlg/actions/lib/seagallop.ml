@@ -31,7 +31,7 @@ let trip_of_args ~from args =
   | Some from, Ok to_ -> trip_on from to_
 
 (* sSeagallopSpawnLocations: (8, 5) of every Sevii harbor. *)
-let landing : Grid_maps.Tile_pos.t = { x = 8; y = 5 }
+let landing : Grid_geometry.Tile_pos.t = { x = 8; y = 5 }
 
 let arrival trip : Pokemon_checkpoints.Pose.observed =
   { at_map = trip.to_ ^ "_Harbor"; at_tile = landing; faces = Some South }

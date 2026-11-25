@@ -1,11 +1,11 @@
-# Engine boundary: the checkpoint engine apart from Pokémon (draft, 2026-11-24)
+# Engine boundary: the checkpoint engine apart from Pokémon (draft, 2026-11-25)
 
 GamePilot's checkpoint engine (program, goal, checkpoints, plan, event, inputs: `Programs-As-Goals.md`)
 lives under `src/pokemon/checkpoints`, and much of it is Pokémon- or grid-specific. A second game,
 not a Pokémon one and without a tile grid, is coming soon: Octopath Traveler 0 on the Switch. This
-note says what is game-agnostic today, what moves where, how a game plugs in its own parts, and the
-few new concepts the first two Octopath programs need. It is for review before any code; every move
-is its own PR later, and nothing here is ported ahead of a program that needs it.
+note says what was game-agnostic before the move (section 1), the engine's layout as built and how a
+game plugs in its own parts (section 2), and the few new concepts the first two Octopath programs
+need. Every move is its own PR, and nothing here is ported ahead of a program that needs it.
 
 Settled and not reopened here: the levels from program down to inputs, and only checkpoints save;
 needs and provides refuse before the first event; typed goal files; the places table and fragments
@@ -29,6 +29,7 @@ emulator state (both: there is no emulator for this game), and walks without til
 
 ## 1. Inventory
 
+What the move started from: the files as they stood under `src/pokemon/checkpoints` before step 4.
 **A** game-agnostic as it is; **G** tied to the tile grid; **P** tied to Pokémon; **mixed** says
 which part is which. `Grid_maps` is `src/pokemon/navigation/grid/maps`.
 
@@ -94,91 +95,227 @@ In short: the skeleton (run order, skips, trials, rounds, chains, fragments, the
 records) is agnostic already. The grid and Pokémon parts are three types (where the player is, the
 game's own event kinds, what a checkpoint promises) and the code that reads, prints and checks them.
 
-## 2. Layout
+## 2. Layout: a game's rules apart from its formats
 
-```
-src/base/json_field/         Json_field, moved from Grid_maps; its grid readers stay as Grid_maps.Grid_field
-src/base/repo_io/            library repo_io: Repo_files, Json_file, moved from games/frlg
-src/engine/checkpoints/
-  terms/                     GAME_TERMS: the signature a game fills (below)
-  plan/                      Make: event, checkpoint, plan skeleton, decode skeleton, Count, Money
-  promise/                   result, verdict, log_lines, count and money checks (from Postcondition_check)
-  run/                       Make: Game, Runner, Failure, Checkpoint_end, Event_states, Repeat_until;
-                             Checkpoint_trials, Event_range, Event_progress, Roll (new)
-  series/                    Chain_progress, Checkpoint_order, Round_trials, Console_runs, Console_start (new)
-  expand/                    Plan_json, Table_decode, Fragment_table, Fragment_calls
-src/pokemon/checkpoints/
-  terms/                     Pokemon_terms: grid pose, Pokémon kinds, Pokémon postconditions, their decoders
-  plan/ run/                 Pokemon_checkpoints = Engine_checkpoints.Make (Pokemon_terms); Room_policy
-  expand/                    Place_routes (grid, lifts)
-  plan_text/                 Pokémon kinds and postconditions as text
-src/games/frlg/              unchanged, but opens Pokemon_checkpoints
-src/games/octopath0/         section 3d
-```
+A game's rules and its formats are separate libraries. The rules (where the player stands, the
+game's own event kinds, what a checkpoint promises and its check) are plain values, with no JSON
+and no text. Each format turns them into bytes or words at one edge only, so the plan types, the
+runner, its failures and the checks never see JSON or build a string. A lint rule enforces it.
 
-Dependencies stay one-way: `base <- core <- engine <- pokemon <- games/<pokemon game>`, and
-`base <- core <- engine <- games/octopath0`. The lint gets an `engine` layer and game families:
-`allow engine engine core base`, `allow pokemon pokemon engine core base`, and a game may use
-`pokemon` only when it is listed as a Pokémon game (`family pokemon game frlg`: the family, the path variable naming the game, then its members), so `octopath0` cannot.
+| Part | Engine signature | Pokémon | Toy game | Used by | Holds |
+|---|---|---|---|---|---|
+| Rules | `Engine_terms.TERMS` | `Pokemon_terms` | `Toy_terms` | everything | values and `matches`, `check` |
+| Plan format | `Plan_codec.PLAN_CODEC` | `Pokemon_plan_codec` | `Toy_codec` | `Plan_decode` only | hand-written JSON readers |
+| Text | `Terms_text.TEXT` | `Pokemon_text` | `Toy_text` | `Plan_text`, `Failure_text`, `Run_text` | printers |
+| Saved | `Event_states.SAVED` | `Pokemon_saved` | `Toy_saved` | `Event_states` only | derived JSON (`ppx_deriving_yojson`) |
 
-### How a game plugs in
+### The rules
 
-The engine needs three types from a game and a few functions over them:
+`src/engine/checkpoints/terms/lib/engine_terms.mli`:
 
 ```ocaml
-module type GAME_TERMS = sig
-  type pose          (* where a plan says the player stands: a grid pose, a zone *)
-  type observed      (* where the game reads the player *)
-  type own_kind      (* the game's built-in events: route, battle, heal; walk, rest *)
-  type promises      (* what a checkpoint promises beyond the engine's items, money, flags *)
-  type reads         (* what the game read of the save for those promises *)
-  type start_reads   (* read at a checkpoint's start, for a promise of a change *)
-  val pose : where:string -> Json_field.obj -> (pose, string) result
-  val own_kind : string -> (where:string -> Json_field.obj -> (own_kind, string) result) option
-      (* the decoder of a kind name, [None] when the name is not this game's *)
-  val promises : where:string -> Json_field.obj -> (promises, string) result
-  val matches : pose -> observed -> bool
-  val check : promises -> start:start_reads -> reads -> Promise.result list
-  val pose_text : pose -> string
-  val observed_text : observed -> string
-  val own_kind_text : own_kind -> string
-  val start_reads_to_json : start_reads -> Yojson.Safe.t      (* kept beside an event state *)
-  val start_reads_of_json : Yojson.Safe.t -> (start_reads, string) result
+module type POSE = sig
+  type t                    (* where a plan says the player stands: a grid pose, a zone *)
+  type observed             (* where the game reads the player *)
+  val matches : t -> observed -> bool
+end
+module type KIND = sig
+  type t                    (* the game's own kinds with their args: route, battle; walk, rest *)
+end
+module type POSTCONDITIONS = sig
+  type t                    (* metadata.postconditions, a repeat's until *)
+  type reads                (* what the game read for them, start reads included *)
+  val check : t -> reads -> Engine_postcondition.Postcondition.result list
+end
+module type TERMS = sig
+  module Pose : POSE
+  module Kind : KIND
+  module Postconditions : POSTCONDITIONS
 end
 ```
 
-The reads themselves happen in the game's handlers (`Game.t` gains `read_promises : T.promises ->
-T.reads`, as FireRed's `Postcondition_reads` does now); the engine only orders and logs them.
-
-`Engine_checkpoints.Make (T)` gives `Plan`, `Plan_decode`, `Game`, `Runner`, `Failure`,
-`Event_states` and `Repeat_until` over `T`'s types; the engine's own kinds are `Talk`, `Answer`,
-`Scene`, `Save`, `Game_action` and `Own of T.own_kind`. The plan format does not change: a kind name
-the engine does not know goes to `T.own_kind`. Pokémon applies it once (`Pokemon_checkpoints`), and
-the engine's tests apply it to a toy game with zone poses and no grid, which is what proves the
-boundary. The handlers stay a record (`Game.t`): `walk_route` and `run_builtin` become one
-`run_own : Plan.event -> T.own_kind -> outcome`, and `heal` becomes `between_rounds`.
-
-The pieces are already the repo's patterns: a record of what the game does (`Game.t`, the
-`game_steps` of deciding modules), data tables for places and fragments, decoders that return
-`Result`. The question is only how the engine's types get the game's.
-
-| | Functor over `GAME_TERMS` (recommended) | Type parameters | Extensible variants |
+| Game | `Pose.t` / `observed` | `Kind.t` | `Postconditions.t` / `reads` |
 |---|---|---|---|
-| Shape | `Make (T)` once per game family | `('pose, 'kind, 'promises) Plan.t`, and so on | `type own_kind += Route of ...`, decoders registered by name |
-| Engine signatures | plain (`Plan.event`) inside the functor | two or three type variables in every signature that names a plan, failure or game | plain |
-| Game code | concrete types, exhaustive matches | concrete, but annotations everywhere | a catch-all case in every match; a kind can be missed |
-| Wiring | one application per family | none | registration at start-up, against the registry's "a plain list" rule |
-| Cost | functor `.mli`s and error messages are heavier to read; one large move PR | many small signature edits, noisy for every reader forever | least churn now, weakest checking later |
+| Pokémon | `Grid of grid \| Zone of zone` (a zone holds anywhere) / map and tile (`Grid_geometry`) | `Own_kind.t`: new game, options, route, ready, legs, step, battle, train, heal, shop | party, items, coins, money, flags, moves, levels, marks / `Postcondition_check.observed` (with `start`) |
+| Toy | `{ place; spot }` / the same | `Walk`, `Rest` | gold (`Count.t`), flags / gold now and at the start, flags set |
 
-The functor wins because the game's types appear in a dozen engine modules but are chosen once per
-game: one application keeps the engine's signatures readable and the game's matches exhaustive.
-Type parameters are the fallback if the functor's `.mli`s prove too hard to read; extensible variants
-are not proposed. Keeping the game's parts as raw JSON (as `Game_action` args are) is the fourth
-option, rejected: errors would show at run time, not when the plan loads.
+`check` takes the reads alone: what the game read at the checkpoint's start is part of `reads`. The
+game reads its postconditions through a function handed to the runner with them
+(`Runner.run ?end_state:(postconditions, read)`, FireRed's `Postcondition_reads`); the engine orders
+the check and logs it. A plan holds its postconditions as an option, and the runner reads the end
+state only when given one. The engine owns no promise fields: a plan's `postconditions` is one
+object, the game's, decoded once with its known fields checked, and logged in the game's order. What
+the engine gives instead are parts in `postcondition/`: `Postcondition` (result, verdict, log lines),
+`Count` and `Money` (a value, floor, range or change from the start, and their checks).
 
-`bin/` picks a game by the registry's `game_id` and calls that game's command module, a first-class
-module of one signature (`Game_commands.S`: load plans, build `Game.t`, the console start of section
-3b, the pre-flight). FireRed's is today's code moved out of `bin/`.
+The plan's types are `Engine_plan.Plan.Make (T) (Raw)`: the engine's kinds `Talk`, `Answer`,
+`Scene`, `Save`, `Game_action of Raw.t` and `Own of T.Kind.t`. `Raw` is what the plan keeps unread
+(a game action's args, `execution`, `metadata`); the engine applies it to `Raw_json` from the codec
+library, so `plan/` itself links no JSON.
+
+### Each format on its own
+
+```ocaml
+(* plan_codec/lib/plan_codec.mli: only Plan_decode calls these *)
+module type PLAN_CODEC = sig
+  module T : Engine_terms.TERMS
+  val pose_of_plan : where:string -> Json_field.obj -> (T.Pose.t, string) result
+  val kind_of_plan :
+    string -> (where:string -> Json_field.obj -> (T.Kind.t, string) result) option
+      (* [None]: the kind name is not this game's *)
+  val postconditions_of_plan :
+    where:string -> Json_field.obj -> (T.Postconditions.t, string) result
+end
+
+(* text/lib/terms_text.mli: only Plan_text, Failure_text and Run_text call these *)
+module type TEXT = sig
+  module T : Engine_terms.TERMS
+  val pose : T.Pose.t -> string
+  val observed : T.Pose.observed -> string
+  val kind : T.Kind.t -> string
+  val postconditions : T.Postconditions.t -> string list
+end
+
+(* saved/lib/event_states.mli: only Event_states calls these *)
+module type SAVED = sig
+  type t                    (* the start reads and where the player was reckoned to stand *)
+  val to_yojson : t -> Yojson.Safe.t
+  val of_yojson : Yojson.Safe.t -> (t, string) result
+end
+```
+
+- **Plan codec, hand-written.** A plan is written by hand, so a bad one must say where:
+  `01-celadon-setup.plan.json: checkpoint.events[1].args.target.map is missing.` Every reader takes
+  `where`, the field prefix, and the engine's `Plan_decode` passes any kind name it does not know to
+  `kind_of_plan`. The plan format did not change.
+- **Text, at the edges.** Plain nouns returning strings. `Plan_text` prints a decoded plan (the
+  golden plan test compares it), and `Failure_text` and `Run_text` print what the runner kept.
+- **Saved, derived.** A machine writes and reads `<n>-<event>.json` beside each event state, so its
+  JSON is derived with `[@@deriving yojson]`. The derivation sits in `Pokemon_saved` and `Toy_saved`,
+  on copies of the rules' types (`type observed = Pose.observed = { ... } [@@deriving yojson]`), so
+  the terms libraries need no ppx. A bad file's error names the type or field
+  (`Pokemon_saved.observed.at_map`); older files with fewer fields still load.
+
+**Naming.** The hand-written plan side is `*_of_plan` (`pose_of_plan`, the Pokémon decoders in
+`Pose_decode`, `Kind_decode`, `Postcondition_decode`, `Party_decode`); the derived saved side keeps
+the ppx's `to_yojson` / `of_yojson`; text is the noun it prints (`pose`, `kind`).
+
+### The functor
+
+```ocaml
+module Make
+    (T : Engine_terms.TERMS)
+    (C : Engine_plan_codec.Plan_codec.PLAN_CODEC with module T = T)
+    (X : Engine_text.Terms_text.TEXT with module T = T)
+    (S : Engine_saved.Event_states.SAVED) : sig
+  module Plan            (* Plan.Make (T) (Raw_json) *)
+  module Plan_decode     (* over C *)
+  module Plan_text       (* over X *)
+  module Failure         (* Failure.Make (T), and Failure_text over X *)
+  module Game            (* the handlers: run_own, run_builtin, game_actions, flag_holds,
+                            position, between_rounds, save, reload, log *)
+  module Runner          (* run ?end_at ?end_state ?on_event ?events; its lines printed to game.log *)
+  module Event_states    (* the state files, and Make (S) for what is kept beside them *)
+  module Repeat_until    (* a looped checkpoint, and stop_to_string *)
+end
+```
+
+`T` stands alone and comes first so that every module inside is applied to the same path `T`: the
+plan's types are then one type for the decoder, the text and the runner, and `C` and `X` are pinned
+to it by `with module T = T`. Were the rules a part of one big game module, each format would drag
+the others along, and the rules libraries could not be kept free of JSON and text. `S` needs no `T`:
+what it keeps is the game's own record.
+
+Pokémon applies it once, `Pokemon_checkpoints = Make (Pokemon_terms) (Pokemon_plan_codec)
+(Pokemon_text) (Pokemon_saved)`, and FireRed uses that. The engine's tests apply it to the toy game
+(`make/test`: zones, no grid, gold and flags), which is what proves the boundary.
+
+### Failures and log lines carry values
+
+The runner never formats a game's term. A failure keeps the poses and results as values, and a log
+line is a list of parts:
+
+```ocaml
+type reason =                                     (* Failure.Make (T) *)
+  | Handler of cause | No_handler of string
+  | Not_at_declared of { declared : T.Pose.t; observed : T.Pose.observed }
+  | Not_at_end of { declared : T.Pose.t; observed : T.Pose.observed option }
+  | Unmet_postconditions of Postcondition.result list
+
+type part = Text of string | Pose of T.Pose.t     (* Log_line.Make (T) *)
+          | Reason of Failure.Make(T).reason | Failure of Failure.Make(T).t
+```
+
+Text is made at the edge: `Make`'s `Runner` prints each line with `Run_text.line` to `game.log`, and
+`Failure.to_string` is `Failure_text`'s. A test can match a failure's pose without parsing a string.
+
+### The lint rule
+
+`never_links DIR LIB...` in `dev/lint/ocaml_lint.conf` fails a `dune` stanza in `DIR` that links one
+of the libraries, directly or through any library of the tree, however deep:
+
+| Directory | Never links |
+|---|---|
+| `src/engine/checkpoints/{terms,postcondition,plan,run}/lib` | `yojson`, `json_field`, `wire`, `engine_plan_codec`, `engine_text`, `engine_saved` |
+| `src/pokemon/checkpoints/terms/lib` | the same, and `pokemon_plan_codec`, `pokemon_text`, `pokemon_saved` |
+
+The layers stay one-way as before: `allow engine engine core base`, `allow pokemon pokemon engine
+core base`, and a game uses `pokemon` only when its family lists it (`family pokemon game frlg`), so
+`octopath0` cannot.
+
+### Folders
+
+```
+src/base/json_field/            Json_field: field readers returning Result
+src/base/repo_io/               Repo_files, Json_file
+src/engine/checkpoints/
+  terms/                        Engine_terms: POSE, KIND, POSTCONDITIONS, TERMS
+  postcondition/                Postcondition, Count, Money
+  plan/                         Plan.Make (T) (Raw): types only
+  run/                          Game, Runner, Failure, Log_line, Repeat_until, Checkpoint_trials,
+                                Event_range, Event_progress
+  plan_codec/                   PLAN_CODEC, Plan_decode, Plan_fields, Raw_json
+  text/                         TEXT, Plan_text, Failure_text, Run_text
+  saved/                        SAVED, Event_states
+  make/                         Engine_checkpoints.Make; test/: the toy game (Toy_terms, Toy_codec,
+                                Toy_text, Toy_saved, Toy_checkpoints)
+  series/                       Chain_progress, Checkpoint_order, Round_trials
+  expand/                       Plan_json, Table_decode, Fragment_table, Fragment_calls
+src/pokemon/navigation/grid/geometry/   Grid_geometry: Tile_pos, Direction (pure; the terms use it)
+src/pokemon/checkpoints/
+  terms/                        Pokemon_terms: Pose, Own_kind, Postconditions, Postcondition_check
+  plan_codec/                   Pokemon_plan_codec: Pose_decode, Kind_decode, Postcondition_decode,
+                                Party_decode
+  text/                         Pokemon_text: Pose_text, Kind_text, Postconditions_text
+  saved/                        Pokemon_saved
+  instance/                     Pokemon_checkpoints = Engine_checkpoints.Make (...)
+  checkpoint_end/               Checkpoint_end: the declared end as a grid pose
+  room_policy/                  Room_policy: party room and the PC
+  series/                       Console_runs, until Console_start (section 3b) moves it to the engine
+  expand/                       Place_routes (grid, lifts)
+src/games/frlg/                 opens Pokemon_checkpoints
+src/games/octopath0/            section 3d
+```
+
+`Checkpoint_end` stays in Pokémon: the declared end is a grid pose from the next start, the last
+route or ready target, or a `position` promise; the runner takes it as `?end_at:T.Pose.t`.
+`Event_range` takes event ids, not events, so it is a plain module.
+
+### Why a functor
+
+| | Functor (chosen) | Type parameters | Extensible variants |
+|---|---|---|---|
+| Shape | `Make (T) (C) (X) (S)` once per family | `('pose, 'kind, 'promises) Plan.t`, and so on | `type own_kind += ...`, decoders registered by name |
+| Engine signatures | plain inside the functor | two or three type variables wherever a plan, failure or game is named | plain |
+| Game code | concrete types, exhaustive matches | concrete, annotations everywhere | a catch-all case in every match |
+| Cost | heavier `.mli`s and errors | noisy signatures for every reader | weakest checking |
+
+Keeping the game's parts as raw JSON (as `Game_action` args are) is rejected: errors would show at
+run time, not when the plan loads.
+
+`bin/` will pick a game by the registry's `game_id` and call that game's command module, a
+first-class module of one signature (`Game_commands.S`: load plans, build `Game.t`, the console start
+of section 3b, the pre-flight). FireRed's is today's code moved out of `bin/`.
 
 ## 3. New engine concepts
 
@@ -235,7 +372,7 @@ type game_steps = {
   return_to_save : slot:int option -> (unit, Failure.cause) result;
       (* FireRed: soft reset, CONTINUE, recap. Octopath 0: its load from the menu or title *)
   save_in_game : slot:int option -> (unit, Failure.cause) result;
-  check_start : unit -> Promise.result list;  (* FireRed: kept frame and party; Octopath 0: zone read *)
+  check_start : unit -> Postcondition.result list;  (* FireRed: kept frame and party; Octopath 0: zone read *)
   relaunch : unit -> (unit, string) result;
       (* the fallback when [return_to_save] fails: close from HOME and start the game (switch_home) *)
 }
@@ -300,8 +437,8 @@ the groups run in parallel inside, in order between.
 |---|---|---|---|
 | 1 | `Json_field` to `src/base/json_field`; `Repo_files`, `Json_file` to `src/base/repo_io`. Moves only | S | |
 | 2 | The `engine` layer and game families in the lint config; `src/engine/checkpoints/expand` gets the four agnostic expand modules; `series` gets `Chain_progress`, `Checkpoint_order`, `Round_trials`; `run` gets `Checkpoint_trials`, `Event_progress`. Moves only | S | 1 |
-| 3 | `Promise`: the agnostic half of `Postcondition_check` | S | 1 (parallel with 2) |
-| 4 | `GAME_TERMS` and `Engine_checkpoints.Make`; `Pokemon_terms`; the rest of `plan` and `run` moved; a toy-game test with zones. Golden test: every plan in the repo prints the same `Plan_text` before and after | S | 2, 3 |
+| 3 | `Postcondition` (first named `Promise`): the agnostic half of `Postcondition_check` | S | 1 (parallel with 2) |
+| 4 | `Engine_terms.TERMS`, the three formats (`PLAN_CODEC`, `TEXT`, `SAVED`) and `Engine_checkpoints.Make`; Pokémon's terms, codec, text and saved; the rest of `plan` and `run` moved; a toy-game test with zones. Golden test: every plan in the repo prints the same `Plan_text` before and after | S | 2, 3 |
 | 5 | `Game_commands.S` and `bin/` over it; FireRed's module out of `bin/` | S | 4 |
 | 6 | `Roll`: outcome, budget, verdict, scripted-game tests | S | 4 (parallel with 5) |
 | 7 | `Console_start` and `Console_runs` over it; FireRed's binding | S | 5 |
@@ -315,8 +452,8 @@ its C++ steps and timings passed on the console, so a failure points at the engi
 
 ## 5. Open questions
 
-1. **Functor or type parameters for the game's types?** Recommendation: the functor, applied once per
-   game family; type parameters if its `.mli`s prove hard to read in PR 4.
+1. **Functor or type parameters for the game's types?** Decided: the functor, applied once per game
+   family over its rules and its three formats (section 2).
 2. **Does reloading the save reroll the Beg?** Recommendation: measure before coding `vary`: 20 reloads
    with no change, then 20 with a wait. If the result never changes without a wait, `vary` is a wait
    drawn through the RNG boundary (so replays repeat it), as the fork's soft reset spreads frames with

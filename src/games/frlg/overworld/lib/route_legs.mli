@@ -4,6 +4,7 @@
     [turns_first()]). Pure. *)
 
 open Grid_maps
+open Grid_geometry
 
 type gait =
   | Walking

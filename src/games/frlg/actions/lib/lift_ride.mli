@@ -41,7 +41,7 @@ val ride_of_args :
   Json_field.obj -> (ride, Pokemon_checkpoints.Failure.cause) result
 (** A ["lift_floor"] action's ["from"] and ["to"]; [bad_args] otherwise. *)
 
-type presses = { direction : Grid_maps.Direction.t; count : int }
+type presses = { direction : Grid_geometry.Direction.t; count : int }
 
 val menu_presses : ride -> presses
 (** The fewest D-pad presses that move the cursor from [from] to [to_]. A

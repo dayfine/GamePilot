@@ -18,8 +18,9 @@ open Engine_expand
 
 type spot = {
   map : string;
-  tile : Grid_maps.Tile_pos.t;
-  facing : Grid_maps.Direction.t option;  (** [None]: any way, or not known. *)
+  tile : Grid_geometry.Tile_pos.t;
+  facing : Grid_geometry.Direction.t option;
+      (** [None]: any way, or not known. *)
 }
 (** Where the player stands, or where a route ends. *)
 

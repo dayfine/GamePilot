@@ -12,6 +12,7 @@
     rather than guess. *)
 
 open Grid_maps
+open Grid_geometry
 
 type t = {
   world : Frlg_steps.world;

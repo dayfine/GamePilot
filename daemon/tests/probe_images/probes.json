@@ -26,6 +26,25 @@
       "delivery": "every",
       "min": [200, 0, 0],
       "max": [255, 50, 50]
+    },
+    {
+      "id": "red_rows",
+      "kind": "core.line_shares@1",
+      "box": {"x": 0.0, "y": 0.0, "w": 1.0, "h": 0.125},
+      "delivery": "every",
+      "test": [
+        {"weights": [1, 0, 0], "op": ">=", "value": 200},
+        {"weights": [1, -1, 0], "op": ">", "value": 150}
+      ]
+    },
+    {
+      "id": "red_blobs",
+      "kind": "core.find@1",
+      "box": {"x": 0.0, "y": 0.0, "w": 1.0, "h": 1.0},
+      "delivery": "every",
+      "filters": [{"min": [200, 0, 0], "max": [255, 50, 50]}],
+      "min_area": 1,
+      "margin": 1
     }
   ]
 }

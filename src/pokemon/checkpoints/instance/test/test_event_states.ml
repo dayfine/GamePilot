@@ -6,7 +6,7 @@
 
 open Engine_run
 open Pokemon_checkpoints
-open Engine_promise
+open Engine_postcondition
 
 let case name input expectation = { Table_test.name; input; expectation }
 
@@ -263,7 +263,7 @@ let round_trip kept =
       in
       let pose (p : Pose.observed) =
         Printf.sprintf "%s (%d, %d) %s" p.at_map p.at_tile.x p.at_tile.y
-          (Option.fold ~none:"?" ~some:Grid_maps.Direction.name p.faces)
+          (Option.fold ~none:"?" ~some:Grid_geometry.Direction.name p.faces)
       in
       money ^ coins ^ items ^ ", " ^ Option.fold ~none:"nowhere" ~some:pose at
 
@@ -282,7 +282,8 @@ let kept_cases =
   [
     case "the checkpoint's start money and the reckoned pose, read back"
       (fun () -> round_trip { start = money (Some 29202); at = Some house2 })
-      ("$29202, VermilionCity_House2 (4, 4) " ^ Grid_maps.Direction.name North);
+      ("$29202, VermilionCity_House2 (4, 4) "
+      ^ Grid_geometry.Direction.name North);
     case "no start money (no spent promise), the pose unknown"
       (fun () -> round_trip { start = money None; at = None })
       "no money, nowhere";
@@ -326,6 +327,13 @@ let kept_cases =
       (fun () ->
         match Saved.of_yojson (`Int 1) with Ok _ -> "read" | Error e -> e)
       "what is kept is not an object";
+    case "a kept pose with no map: the derived reader names the field"
+      (fun () ->
+        let pose = [ ("tile", `List [ `Int 4; `Int 4 ]); ("facing", `Null) ] in
+        match Saved.of_yojson (`Assoc [ ("at", `Assoc pose) ]) with
+        | Ok _ -> "read"
+        | Error e -> e)
+      "Pokemon_saved.observed.at_map";
     case "spent, checked from the event against the checkpoint's start"
       (fun () -> spent_from ~start:(Some 29202))
       "money: passed: spent $4100 ($29202 to $25102)";

@@ -1,4 +1,4 @@
-# Wire protocol v1.12
+# Wire protocol v1.13
 
 JSON-RPC 2.0 between the OCaml programs (client) and the daemon (server). The golden files in this
 folder are the spec: the daemon's tests parse every file and the OCaml tests decode and re-encode
@@ -34,6 +34,11 @@ v1.12 adds the Switch's analog sticks to `submit`'s press: optional `left_stick`
 (see Methods), held with the press's buttons, for walking and running in a 3D game; a backend that
 is not the Switch refuses them with -32602 (`45-error.switch_stick.response.json`). Both are
 optional and absent means centred, so every v1.11 press means the same in v1.12.
+v1.13 adds two probe kinds for the fork's PLZA detectors (see Probe kinds): `core.line_shares@1`,
+the share of a box's pixels passing a test of linear channel comparisons per row and per column,
+and `core.find@1`, blobs found by the fork's fixed pipeline (colour filter, waterfill, size filter,
+scores) (`46-subscribe.line_shares_find.request.json`, `47-frame.line_shares_find.notification.json`).
+`hello` lists both. A v1.12 program never subscribes them.
 v1.2 makes the daemon own where the game picture sits in the frame: `hello` gives the `viewport` and
 the `game_size`, probe boxes and template placements are relative to the picture, templates are in game
 pixels, and `core.color_count@1` is new.
@@ -80,7 +85,7 @@ size) every v1.1 message means the same in v1.2.
 | `hello` | `protocol` (must be 1), `client` | `protocol`, `daemon`, `backend` {`kind`, `game_code`, `frame_rate`, `width`, `height`, `viewport`, `game_size`}, `probe_kinds` |
 | `backend.load_state` | `path` (a save state file; the daemon passes it to the backend unread) | `seq` after loading, the new `load` |
 | `probe.upload_template` | `png`: a PNG file, base64 | `template`: the lowercase hex SHA-256 of the PNG bytes |
-| `subscribe` | `probes`: list of {`id`, `kind`, `box`, `delivery`, and `template` (and optionally `ink`) for `core.template_match@1`, `min` and `max` for `core.color_count@1`} | `subscribed`: ids |
+| `subscribe` | `probes`: list of {`id`, `kind`, `box`, `delivery`, and `template` (and optionally `ink`) for `core.template_match@1`, `min` and `max` for `core.color_count@1`, `test` for `core.line_shares@1`, `filters`, `min_area` and the optional `max_area`, `min_size`, `max_size`, `margin`, `template`, `shape` for `core.find@1`} | `subscribed`: ids |
 | `unsubscribe` | `ids`: probe ids | `unsubscribed`: the ids that were subscribed, now removed (others are ignored) |
 | `submit` | `batch_id`, `commands`: list of {`press`: buttons, optional `left_stick` and `right_stick`, `hold_ms`, `cooldown_ms`} or {`wait_ms`} | `batch_id`, `start_seq` |
 | `cancel` | {} | `released_seq`: drops queued commands and releases all buttons |
@@ -230,6 +235,8 @@ decodes it by kind, not by shape.
 | `core.color_stats@1` | `mean` [r, g, b], `stddev` [r, g, b] over the box, 0..255 |
 | `core.template_match@1` | `score`, `x`, `y`: the best placement of the template inside the box |
 | `core.color_count@1` | `fraction`, `mean` [r, g, b] or `null`: the box's pixels inside a color range |
+| `core.line_shares@1` | `rows`, `columns`: the share of each row's and each column's pixels passing a test |
+| `core.find@1` | `blobs`: list of {`filter`, `x`, `y`, `w`, `h`, `fill`, and `stray`, `score`, `overlap` when asked} |
 
 `core.template_match@1` takes the template in game pixels (a GBA tile is 8x8 whatever the capture).
 The daemon scales it to the frame by the viewport's pixels per game pixel (each axis: viewport size in
@@ -265,6 +272,52 @@ ends included. `fraction` is that count over the box's pixel count (0..1). `mean
 mean of those pixels, 0..255, and `null` (present, not omitted) when no pixel is in range, so every
 result has the same fields. Like the other kinds it has no threshold: the reader decides from the
 numbers (the fork's advance arrow: `mean` red far above green and blue).
+
+`core.line_shares@1` takes `test`, a non-empty list of comparisons {`weights`: [r, g, b] integers,
+`op`: `>`, `>=`, `<` or `<=`, `value`: an integer}; a pixel passes when every comparison
+`weights[0]·r + weights[1]·g + weights[2]·b op value` holds (else -32602 for a bad one). `rows` holds
+one share per frame row of the box, top to bottom (the pixels passing over the row's width), and
+`columns` one per frame column, left to right; both rounded to 1e-6. These are the fork's PLZA
+PixelShares tests (`PokemonLZA_PixelShares.cpp`, `PokemonLZA_ControlsHintDetector.cpp`), which compare
+channels with each other (sky blue is b > 200, g > 160 and b > r + 60), so no `min`..`max` range can
+say them. The fork slides each such box over a range of offsets one line at a time; one probe over
+the whole range gives the share of every offset's box as the mean of its rows (a vertical slide) or
+columns (a horizontal one), and the reader does the search and keeps the thresholds. Rows and columns
+are frame pixels: at 1x (mGBA, the native Switch viewport) they are game pixels.
+
+`core.find@1` runs a fixed pipeline over the box: per range of `filters` (a non-empty list of
+{`min`, `max`}, each [r, g, b] as for `core.color_count@1`) a mask of the pixels in it, then its
+4-connected blobs (the fork's waterfill fills left, right, up and down), then a size filter, then
+the scores asked for. It mirrors `match_template_by_waterfill` (`CommonTools/Images/
+WaterfillUtilities.cpp`) and `WaterfillTemplateMatcher` with `ExactImageMatcher`
+(`CommonTools/ImageMatch/`). Sizes are in game pixels, as the fork's are in 1080p pixels:
+`min_area` (at least 1) and `max_area` bound a blob's pixels, scaled to the frame by both axes' frame
+pixels per game pixel and truncated, as the fork scales by the frame's height over 1080; `min_size`
+and `max_size`, [w, h], bound its box, both ends included. Every blob that passes is reported, in
+filter order, so a reader filters by size to keep the list short.
+
+- `filter`: the index of the range that made the blob. `x`, `y`, `w`, `h`: its bounding box in game
+  pixels of the picture (not normalized: the fork's size tests are in pixels, and a fraction would
+  round a 26-pixel width to 25.99), rounded to 1e-3. `fill`: its pixels over its box's
+  (`WaterfillObject::area_ratio`).
+- `margin` (game pixels, scaled by the height and rounded): `stray`, the filter's pixels within
+  that margin around the blob's box (inside the probe's box) that are not the blob's, over the blob's
+  pixels (AdvanceArrowDetector's stray share, `PokemonLZA_StoryDialogDetector.cpp`).
+- `template` (a hash from `probe.upload_template`): `score`, `ExactImageMatcher::rmsd` of the blob's
+  box (all its pixels, not just the blob's) against the template, rounded to 1e-3. The box is resized
+  to the template's size (nearest neighbour at pixel centres, as the fork's Qt `scaled()`), the
+  template's colours scaled per channel by the ratio of the box's mean to the template's over the
+  template's opaque pixels (alpha 128 or more; the ratio kept in 0.85..1.15), and the score is the
+  square root of the mean over those pixels of the summed squared channel differences: 0 for
+  identical pixels, at most 441.7, lower is better. The template is used as uploaded, alpha
+  included, at its own size: upload the fork's template already cut to its largest blob, as
+  `WaterfillTemplateMatcher` cuts it. The fork's aspect and area-ratio gates are the reader's, from
+  `w`, `h` and `fill`.
+- `shape` (a hash): `overlap`, the blob's pixels against the shape's opaque pixels (alpha 128 or
+  more) sampled at the centres of the blob's box's pixels: pixels in both over pixels in either.
+  AdvanceArrowDetector tests the chevron by this overlap with a V (`v_match`), a test of the blob's
+  own pixels that a colour score cannot make; the reader uploads the V drawn large, and the overlap
+  then equals the fork's to the shape's resolution.
 
 There is no black-screen kind: `core.color_stats@1` gives the mean and stddev over a box, and a
 reader decides "black" from those numbers (low mean, low stddev) in OCaml.

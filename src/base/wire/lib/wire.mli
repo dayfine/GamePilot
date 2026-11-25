@@ -1,4 +1,4 @@
-(** Wire protocol v1.12 (protocol/v1): message types and their JSON codec.
+(** Wire protocol v1.13 (protocol/v1): message types and their JSON codec.
 
     The codec lives in one module per message family ([Command], [Probe],
     [Backend], [Jsonrpc], [Wire_log], [Probe_images]); this module re-exports
@@ -83,12 +83,14 @@ type probe_spec = Probe.probe_spec = {
   box : box;
   delivery : delivery;
   template : string option;
-      (** [core.template_match@1] only: the hash [probe.upload_template]
-          returned on this connection. *)
+      (** [core.template_match@1] and [core.find@1] only: the hash
+          [probe.upload_template] returned on this connection. *)
   ink : color_range option;
       (** [core.template_match@1] only: compare the masks of the pixels in this
           range instead of the colors. *)
   color_range : color_range option;  (** [core.color_count@1] only *)
+  test : Line_shares.test;  (** [core.line_shares@1] only; else [[]] *)
+  find : Blob_find.params option;  (** [core.find@1] only *)
 }
 (** [kind] is an open set, e.g. ["core.color_stats@1"]. Programs build specs
     with the constructors below. *)
@@ -122,6 +124,33 @@ val color_count_probe :
 (** [core.color_count@1]: the share of [box]'s pixels whose every channel lies
     in [min..max] (inclusive), and their mean color. *)
 
+module Line_shares = Line_shares
+(** [core.line_shares@1]'s pixel test and result. *)
+
+module Blob_find = Blob_find
+(** [core.find@1]'s params and blobs. *)
+
+val line_shares_probe :
+  id:string ->
+  box:box ->
+  delivery:delivery ->
+  test:Line_shares.test ->
+  (probe_spec, string) result
+(** [core.line_shares@1]: the share of [box]'s pixels passing every comparison
+    of [test], per row and per column of the box's frame pixels; [Error] for an
+    empty test. *)
+
+val find_probe :
+  ?template:string ->
+  id:string ->
+  box:box ->
+  delivery:delivery ->
+  Blob_find.params ->
+  probe_spec
+(** [core.find@1]: the blobs in [box] that pass the params' filters, with the
+    scores they ask for; [template] (an uploaded hash, used at its own size with
+    its alpha) asks for each blob's [score]. *)
+
 type rgb = Probe.rgb = { r : float; g : float; b : float }
 
 (** Decoded by the result's [kind] field, not by its shape. *)
@@ -135,6 +164,12 @@ type probe_result = Probe.probe_result =
   | Color_count of { fraction : float; mean : rgb option }
       (** [core.color_count@1]: pixels in range over pixels in the box, and the
           mean of those in range ([None] when there are none). *)
+  | Line_shares of Line_shares.t
+      (** [core.line_shares@1]: each row's and each column's share of the box's
+          pixels passing the probe's test. *)
+  | Find of { blobs : Blob_find.blob list }
+      (** [core.find@1]: the blobs that passed the probe's filters, with the
+          scores its params asked for; [[]] when none did. *)
   | Other of json  (** a kind this side does not know yet, kept verbatim *)
 
 type frame = Probe.frame = {

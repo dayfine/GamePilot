@@ -16,7 +16,7 @@ module Make (T : Engine_terms.TERMS) = struct
     | No_handler of string
     | Not_at_declared of { declared : T.Pose.t; observed : T.Pose.observed }
     | Not_at_end of { declared : T.Pose.t; observed : T.Pose.observed option }
-    | Unmet_postconditions of Engine_promise.Promise.result list
+    | Unmet_postconditions of Engine_postcondition.Postcondition.result list
 
   type t = {
     checkpoint_id : string;

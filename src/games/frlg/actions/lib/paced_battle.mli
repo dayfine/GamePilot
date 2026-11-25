@@ -18,8 +18,8 @@ val reckoned :
 
 val find :
   log:(string -> unit) ->
-  pace:Grid_maps.Direction.t ->
-  patch:Grid_maps.Tile_pos.t ->
+  pace:Grid_geometry.Direction.t ->
+  patch:Grid_geometry.Tile_pos.t ->
   stands:(Pokemon_checkpoints.Pose.observed -> unit) ->
   Pokemon_checkpoints.Pose.observed ->
   unit
@@ -30,7 +30,7 @@ val find :
 *)
 
 val back_on_patch :
-  pace:Grid_maps.Direction.t ->
+  pace:Grid_geometry.Direction.t ->
   Pokemon_checkpoints.Pose.observed ->
   Pokemon_checkpoints.Pose.grid
 (** The patch the player started on, facing [pace]: where an action that paced

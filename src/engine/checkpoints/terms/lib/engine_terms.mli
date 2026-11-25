@@ -30,7 +30,7 @@ module type KIND = sig
 end
 
 (** What a checkpoint promises, and its check. *)
-module type PROMISES = sig
+module type POSTCONDITIONS = sig
   type t
   (** What a checkpoint promises once its events are done: the plan's
       [metadata.postconditions], and a repeat's [until]. *)
@@ -39,7 +39,7 @@ module type PROMISES = sig
   (** What the game read for those promises, with what it read at the
       checkpoint's start for a promise of a change. *)
 
-  val check : t -> reads -> Engine_promise.Promise.result list
+  val check : t -> reads -> Engine_postcondition.Postcondition.result list
   (** One result per promise, in the order they are logged. *)
 end
 
@@ -47,5 +47,5 @@ end
 module type TERMS = sig
   module Pose : POSE
   module Kind : KIND
-  module Promises : PROMISES
+  module Postconditions : POSTCONDITIONS
 end

@@ -1,5 +1,5 @@
 open Frlg_readers
-module D = Grid_maps.Direction
+module D = Grid_geometry.Direction
 module M = Menu_input
 
 type lift = Rocket_hideout | Dept_store
@@ -9,8 +9,8 @@ let menu = function
   | Rocket_hideout -> [ "B1F"; "B2F"; "B4F"; "EXIT" ]
   | Dept_store -> [ "5F"; "4F"; "3F"; "2F"; "1F"; "EXIT" ]
 
-let below_door map (tile : Grid_maps.Tile_pos.t) : Pokemon_checkpoints.Pose.grid
-    =
+let below_door map (tile : Grid_geometry.Tile_pos.t) :
+    Pokemon_checkpoints.Pose.grid =
   { map; tiles = [ tile ]; facing = Some D.South }
 
 (* RocketHideout_Elevator's setdynamicwarp lands on each floor's lift door,

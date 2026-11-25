@@ -18,7 +18,7 @@ let trip ~from to_ () =
   | Ok t ->
       let at = Seagallop.arrival t in
       Printf.sprintf "row %d; lands %s %s" t.row at.at_map
-        (Grid_maps.Tile_pos.to_string at.at_tile)
+        (Grid_geometry.Tile_pos.to_string at.at_tile)
 
 (* The list shows after the talk's A; each DOWN moves its arrow a row; A on a
    row closes it into "All aboard", the black of the crossing and the harbor. *)

@@ -13,7 +13,7 @@ type t =
   | Redeem_prize_mon of int
   | Ingame_trade of { offer : string; receive : string option }
   | Spin_for_encounter of { max_batches : int }
-  | Cut_tree of Grid_maps.Direction.t
+  | Cut_tree of Grid_geometry.Direction.t
   | Verify_mail_glitch of Action_args.member
   | Pc_deposit of string list
   | Pick_up_item of string

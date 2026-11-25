@@ -2,6 +2,7 @@
    file says, and the case shape the map tests share. *)
 
 open Grid_maps
+open Grid_geometry
 open Map_features
 open Map_gates
 

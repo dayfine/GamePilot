@@ -4,6 +4,7 @@
    Pokemon_MapData_Tests.cpp. *)
 
 open Grid_maps
+open Grid_geometry
 open Map_features
 open Map_fixtures
 open Map_text

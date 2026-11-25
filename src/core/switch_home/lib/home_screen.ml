@@ -6,42 +6,30 @@ type t =
   | User_select
   | Elsewhere
 
-(* The GBA picture in the frame (daemon/src/viewport.h, nso_gba_viewport). *)
-let picture_x = 0.09375
-let picture_y = 0.00462963
-let picture_w = 0.8125
-let picture_h = 0.962963
+open Solid_color
 
-(* A whole-frame box (the fork's) as a box in the picture, clipped to it. *)
-let in_picture ({ x; y; w; h } : Wire.box) : Wire.box =
-  let x0 = Float.max x picture_x and y0 = Float.max y picture_y in
-  let x1 = Float.min (x +. w) (picture_x +. picture_w)
-  and y1 = Float.min (y +. h) (picture_y +. picture_h) in
-  {
-    x = (x0 -. picture_x) /. picture_w;
-    y = (y0 -. picture_y) /. picture_h;
-    w = (x1 -. x0) /. picture_w;
-    h = (y1 -. y0) /. picture_h;
-  }
-
-let stats_boxes =
+(* The fork's boxes, in the whole frame. *)
+let frame_boxes : (string * Wire.box) list =
   [
     (* HomeMenuDetector *)
-    ( "home.top",
-      in_picture { x = 0.510223; y = 0.019835; w = 0.441450; h = 0.034711 } );
-    ("home.iconrow_right", in_picture { x = 0.85; y = 0.70; w = 0.13; h = 0.15 });
-    ("home.iconrow_icons", in_picture { x = 0.20; y = 0.70; w = 0.60; h = 0.15 });
-    ("home.bottom_row", in_picture { x = 0.10; y = 0.92; w = 0.10; h = 0.05 });
-    ("home.bottom_icons", in_picture { x = 0.70; y = 0.92; w = 0.28; h = 0.05 });
-    ("home.game_slot", in_picture { x = 0.08; y = 0.25; w = 0.10; h = 0.38 });
+    ("home.top", { x = 0.510223; y = 0.019835; w = 0.441450; h = 0.034711 });
+    ("home.iconrow_right", { x = 0.85; y = 0.70; w = 0.13; h = 0.15 });
+    ("home.iconrow_icons", { x = 0.20; y = 0.70; w = 0.60; h = 0.15 });
+    ("home.bottom_row", { x = 0.10; y = 0.92; w = 0.10; h = 0.05 });
+    ("home.bottom_icons", { x = 0.70; y = 0.92; w = 0.28; h = 0.05 });
+    ("home.game_slot", { x = 0.08; y = 0.25; w = 0.10; h = 0.38 });
     ( "home.close_game_top",
-      in_picture { x = 0.226358; y = 0.272648; w = 0.407445; h = 0.033989 } );
+      { x = 0.226358; y = 0.272648; w = 0.407445; h = 0.033989 } );
     (* StartGameUserSelectDetector_Switch1 *)
-    ("user.top_row", in_picture { x = 0.50; y = 0.47; w = 0.45; h = 0.05 });
-    ("user.mid_row", in_picture { x = 0.10; y = 0.55; w = 0.80; h = 0.02 });
-    ("user.user_slot", in_picture { x = 0.45; y = 0.55; w = 0.10; h = 0.35 });
+    ("user.top_row", { x = 0.50; y = 0.47; w = 0.45; h = 0.05 });
+    ("user.mid_row", { x = 0.10; y = 0.55; w = 0.80; h = 0.02 });
+    ("user.user_slot", { x = 0.45; y = 0.55; w = 0.10; h = 0.35 });
   ]
 
+(* HomeMenuDetector's user icons: the avatar at its left lies outside the GBA
+   picture, so the box is read only when it is whole in the picture. *)
+let user_icons_id = "home.user_icons"
+let user_icons_box : Wire.box = { x = 0.05; y = 0.05; w = 0.2; h = 0.08 }
 let picture_id = "home.picture"
 let tiles = 4
 
@@ -75,73 +63,42 @@ let cursor_min = (0, cursor_min_green, cursor_min_blue)
 let cursor_max = (cursor_max_red, channel_max, channel_max)
 let tile_x k = tile_left +. (tile_pitch *. float_of_int k)
 
-let tile_probes (color : tile_color) k =
-  [
-    Wire.color_count_probe ~id:(cursor_id k)
-      ~box:
-        (in_picture
-           { x = tile_x k; y = cursor_y; w = tile_inner_w; h = cursor_h })
-      ~delivery:Every ~min:cursor_min ~max:cursor_max;
-    Wire.color_count_probe ~id:(art_id k)
-      ~box:(in_picture { x = tile_x k; y = art_y; w = tile_inner_w; h = art_h })
-      ~delivery:Every ~min:color.min ~max:color.max;
-  ]
+let count_probe ~picture ~id ~min ~max frame_box =
+  Option.map
+    (fun box -> Wire.color_count_probe ~id ~box ~delivery:Every ~min ~max)
+    (Picture_box.clipped ~picture frame_box)
 
-let probes color =
-  Wire.color_stats_probe ~id:picture_id
-    ~box:{ x = 0.; y = 0.; w = 1.; h = 1. }
-    ~delivery:Every
-  :: List.map
-       (fun (id, box) -> Wire.color_stats_probe ~id ~box ~delivery:Every)
-       stats_boxes
-  @ List.concat_map (tile_probes color) (List.init tiles Fun.id)
+let tile_probes ~picture (color : tile_color) k =
+  List.filter_map Fun.id
+    [
+      count_probe ~picture ~id:(cursor_id k) ~min:cursor_min ~max:cursor_max
+        { x = tile_x k; y = cursor_y; w = tile_inner_w; h = cursor_h };
+      count_probe ~picture ~id:(art_id k) ~min:color.min ~max:color.max
+        { x = tile_x k; y = art_y; w = tile_inner_w; h = art_h };
+    ]
 
-type stats = { mean : Wire.rgb; stddev : Wire.rgb }
+let stats_probe id box = Wire.color_stats_probe ~id ~box ~delivery:Every
 
-let stats m id =
-  match Effects.probe m id with
-  | Some (Wire.Color_stats { mean; stddev }) -> Some { mean; stddev }
-  | Some (Wire.Template_match _ | Wire.Color_count _ | Wire.Other _) | None ->
-      None
+let probes ~picture color =
+  stats_probe picture_id { x = 0.; y = 0.; w = 1.; h = 1. }
+  :: List.filter_map
+       (fun (id, frame_box) ->
+         Option.map (stats_probe id) (Picture_box.clipped ~picture frame_box))
+       frame_boxes
+  @ Option.to_list
+      (Option.map
+         (stats_probe user_icons_id)
+         (Picture_box.whole ~picture user_icons_box))
+  @ List.concat_map (tile_probes ~picture color) (List.init tiles Fun.id)
 
 let fraction m id =
   match Effects.probe m id with
   | Some (Wire.Color_count { fraction; _ }) -> fraction
-  | Some (Wire.Color_stats _ | Wire.Template_match _ | Wire.Other _) | None ->
+  | Some
+      ( Wire.Color_stats _ | Wire.Template_match _ | Wire.Line_shares _
+      | Wire.Find _ | Wire.Other _ )
+  | None ->
       0.
-
-let sum (c : Wire.rgb) = c.r +. c.g +. c.b
-
-let distance (a : Wire.rgb) (b : Wire.rgb) =
-  let d x y = (x -. y) *. (x -. y) in
-  Float.sqrt (d a.r b.r +. d a.g b.g +. d a.b b.b)
-
-(* SolidColorTest's is_white and is_grey with their default stddev limit. *)
-let solid_max_stddev = 10.
-let white_max_distance = 0.08
-let grey_max_distance = 0.1
-let hue_min_sum = 100.
-let white_min_sum = 500.
-let channels = 3.
-
-let share_distance (c : Wire.rgb) =
-  let total = sum c in
-  if total <= 0. then Float.infinity
-  else
-    let third = 1. /. channels in
-    let d x = (x /. total) -. third in
-    Float.sqrt ((d c.r *. d c.r) +. (d c.g *. d c.g) +. (d c.b *. d c.b))
-
-let is_white s =
-  sum s.mean >= white_min_sum
-  && sum s.stddev <= solid_max_stddev
-  && share_distance s.mean <= white_max_distance
-
-let is_grey ~min_sum ~max_sum s =
-  let total = sum s.mean in
-  total >= min_sum && total <= max_sum
-  && sum s.stddev <= solid_max_stddev
-  && (total < hue_min_sum || share_distance s.mean <= grey_max_distance)
 
 let dark_max_sum = 200.
 let max_flat_stddev = 20.
@@ -149,8 +106,8 @@ let min_icons_stddev = 10.
 let min_detail_stddev = 50.
 let max_same_color = 20.
 
-(* HomeMenuDetector::detect_only, its boxes clipped and the user icon left
-   out. *)
+(* HomeMenuDetector::detect_only, its boxes clipped to the picture and the
+   user icons read only when probed (whole in the picture). *)
 let home_theme g =
   let row = g "home.bottom_row" in
   let total = sum row.mean in
@@ -159,9 +116,15 @@ let home_theme g =
   else None
 
 (* The detail limits scale with the picture's brightness: [scale] 1 lit. *)
-let home_detail ~scale g =
+let min_user_icons_stddev = 40.
+
+let home_detail ~scale ~icons g =
   let at_least id limit = sum (g id).stddev >= limit *. scale in
-  at_least "home.close_game_top" min_detail_stddev
+  let icons_detailed (s : stats) =
+    sum s.stddev >= min_user_icons_stddev *. scale
+  in
+  Option.fold ~none:true ~some:icons_detailed icons
+  && at_least "home.close_game_top" min_detail_stddev
   && sum (g "home.top").stddev <= max_flat_stddev *. scale
   && at_least "home.bottom_icons" min_icons_stddev
   && at_least "home.iconrow_icons" min_detail_stddev
@@ -176,10 +139,10 @@ let home_flat g white =
   && distance row.mean right.mean <= max_same_color
   && distance (g "home.top").mean row.mean <= max_same_color
 
-let is_home g =
+let is_home ~icons g =
   match home_theme g with
   | None -> false
-  | Some white -> home_detail ~scale:1. g && home_flat g white
+  | Some white -> home_detail ~scale:1. ~icons g && home_flat g white
 
 (* Dimmed, the dark theme's grey (51 a channel lit) reads 8 on console B: a
    flat band between black and the lit grey, the detail limits scaled by it.
@@ -195,10 +158,10 @@ let dark_lit_sum = 153.
 let dimmed_min_sum = 8.
 let dimmed_max_sum = 100.
 
-let is_home_dimmed g =
+let is_home_dimmed ~icons g =
   let total = sum (g "home.bottom_row").mean in
   total >= dimmed_min_sum && total < dimmed_max_sum && home_flat g false
-  && home_detail ~scale:(total /. dark_lit_sum) g
+  && home_detail ~scale:(total /. dark_lit_sum) ~icons g
 
 (* StartGameUserSelectDetector_Switch1::detect. *)
 let user_grey_min = 50.
@@ -237,13 +200,14 @@ let home m =
     }
 
 let classify m g =
-  if is_home g then home m
-  else if is_home_dimmed g then Home_dimmed
+  let icons = stats m user_icons_id in
+  if is_home ~icons g then home m
+  else if is_home_dimmed ~icons g then Home_dimmed
   else if is_user_select g then User_select
   else Elsewhere
 
 let read m =
-  let all = List.map (fun (id, _) -> (id, stats m id)) stats_boxes in
+  let all = List.map (fun (id, _) -> (id, stats m id)) frame_boxes in
   if List.exists (fun (_, s) -> Option.is_none s) all then Elsewhere
   else classify m (fun id -> Option.get (List.assoc id all))
 

@@ -28,7 +28,7 @@
  (libraries
   gamepilot.table_test
   yojson
-  gamepilot.grid_maps
+  gamepilot.grid_geometry
   gamepilot.pokemon_checkpoints
   gamepilot.engine_run
   plan_files))

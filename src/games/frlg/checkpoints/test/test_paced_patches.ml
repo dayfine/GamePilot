@@ -22,10 +22,10 @@ let kind map tile =
 
 let patch map tile pace =
   Printf.sprintf "%s %s %s, %s %s" map
-    (Grid_maps.Tile_pos.to_string tile)
+    (Grid_geometry.Tile_pos.to_string tile)
     (kind map tile)
-    (Grid_maps.Tile_pos.to_string (Grid_maps.Tile_pos.next tile pace))
-    (kind map (Grid_maps.Tile_pos.next tile pace))
+    (Grid_geometry.Tile_pos.to_string (Grid_geometry.Tile_pos.next tile pace))
+    (kind map (Grid_geometry.Tile_pos.next tile pace))
 
 let strategy name () =
   let s =

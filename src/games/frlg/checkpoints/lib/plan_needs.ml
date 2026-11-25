@@ -176,10 +176,11 @@ let count_use l (item, for_) =
    says nothing of the save's count. *)
 let promised_count ({ bag_item = item; count } : Postconditions.bag_count) =
   match count with
-  | Engine_promise.Count.Exactly count -> Some (Item_exactly { item; count })
-  | Engine_promise.Count.At_least count ->
+  | Engine_postcondition.Count.Exactly count ->
+      Some (Item_exactly { item; count })
+  | Engine_postcondition.Count.At_least count ->
       Some (Item_at_least { item; count; for_ = "promised before" })
-  | Engine_promise.Count.Gained _ -> None
+  | Engine_postcondition.Count.Gained _ -> None
 
 let item_needs before acc =
   let promised =

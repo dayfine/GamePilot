@@ -1,4 +1,4 @@
-open Grid_maps
+open Grid_geometry
 
 type action = Walk | Surf | Face | Open_gate | Press_switch
 type leg_end = Open | Wall | Warp

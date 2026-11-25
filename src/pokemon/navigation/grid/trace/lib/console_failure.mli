@@ -22,7 +22,7 @@ type fade = Unseen | Black | Dim | White
 
 type overrun = {
   step : string;
-  direction : Grid_maps.Direction.t;
+  direction : Grid_geometry.Direction.t;
   tiles : int;  (** 1 when the file leaves it out. *)
   fade : fade;  (** [Unseen] when the file leaves it out. *)
   far_pose_of : string option;
@@ -51,7 +51,7 @@ type fault =
       (** The [index]th hold of [step]'s walk (from 1) moved [tiles] fewer than
           it was held for, with nothing on screen: the walker took the move as
           seen. *)
-  | Person_stands of { name : string; tile : Grid_maps.Tile_pos.t }
+  | Person_stands of { name : string; tile : Grid_geometry.Tile_pos.t }
       (** [name], a person of the map (who wanders or stays put), stood on
           [tile]. *)
 
@@ -63,7 +63,7 @@ val fault_kind_name : fault -> string
 type t = {
   name : string;
   checkpoint : string;
-  start : (Route_tile.t * Grid_maps.Direction.t) option;
+  start : (Route_tile.t * Grid_geometry.Direction.t) option;
       (** Where the run starts and which way it faces, if not on the
           checkpoint's start. *)
   faults : fault list;

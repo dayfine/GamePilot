@@ -28,14 +28,14 @@ module Make (T : Engine_terms.TERMS) (Raw : RAW) = struct
     events : event list;
   }
 
-  type repeat = { until : T.Promises.t; max_rounds : int }
+  type repeat = { until : T.Postconditions.t; max_rounds : int }
 
   type t = {
     game : string;
     checkpoint : checkpoint;
     execution : Raw.t;
     metadata : Raw.t option;
-    postconditions : T.Promises.t option;
+    postconditions : T.Postconditions.t option;
     retries : int;
     repeat : repeat option;
   }

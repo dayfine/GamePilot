@@ -4,7 +4,7 @@
 module R = Checkpoints_expand.Place_routes
 
 let spot map x y facing : R.spot =
-  { map; tile = { x; y }; facing = Grid_maps.Direction.of_name facing }
+  { map; tile = { x; y }; facing = Grid_geometry.Direction.of_name facing }
 
 let place = function
   | "door" -> Ok (spot "Town" 4 0 "north")
