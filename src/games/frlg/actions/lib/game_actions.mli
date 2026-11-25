@@ -16,6 +16,6 @@ val perform :
     in the party already passes without a press (it ran before this save). *)
 
 val handlers : context -> (string * Pokemon_engine.Game.game_action) list
-(** One handler per {!Action_requests.names}: decode, then {!perform}; then
-    mg-06's ({!Mail_glitch_use.handlers}) and the Rare Candy ones
-    ({!Candy_actions.handlers}). *)
+(** Every FireRed game action a plan can name, by its name: the shared ones
+    ({!Action_requests.names}: decode, then {!perform}) and those of the FireRed
+    action modules. *)

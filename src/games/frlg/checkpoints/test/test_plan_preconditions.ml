@@ -140,6 +140,36 @@ let decode_cases =
       "true false";
   ]
 
+(* Whether each need asks anything of the save: one case per need, named by its
+   text, so a regression names the need that changed (review rule R2). *)
+let asks_cases =
+  let asks expected need =
+    case
+      ("asks: " ^ Plan_needs.describe need)
+      (fun () ->
+        if Plan_needs.asks_something need then "something" else "nothing")
+      expected
+  in
+  List.map (asks "nothing")
+    [
+      Plan_needs.Money_at_least { amount = 0; for_ = "buy" };
+      Item_at_least { item = "retro-mail"; count = 0; for_ = "give" };
+      Badges_at_least 0;
+      Caught_at_least 0;
+      Badges [];
+      Party_in_order [];
+      Party_includes { members = []; slots = [] };
+    ]
+  @ List.map (asks "something")
+      [
+        Plan_needs.Money_at_least { amount = 1; for_ = "buy" };
+        Item_at_least { item = "retro-mail"; count = 99; for_ = "give" };
+        Item_exactly { item = "retro-mail"; count = 0 };
+        Badges_at_least 8;
+        Member { species = "pidgey"; for_ = "fly" };
+        No_mail { species = "mr-mime"; for_ = "trade" };
+      ]
+
 let eight =
   "8 badges (boulder, cascade, thunder, rainbow, soul, marsh, volcano, earth), \
    1 star"
@@ -193,4 +223,5 @@ let judge_cases =
         ~go:"stop";
     ]
 
-let () = Table_test.run "plan preconditions" (decode_cases @ judge_cases)
+let () =
+  Table_test.run "plan preconditions" (decode_cases @ asks_cases @ judge_cases)

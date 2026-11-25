@@ -44,3 +44,13 @@ val needs :
 (** What the save must hold for the plan's first event, in the table's order:
     the party, the money, the items, the place. Raises {!Json_field.Invalid} for
     a plan arg that does not read. *)
+
+val describe : need -> string
+(** The need as the pre-flight's NEED column ({!Preflight}) and the user guides
+    (docs/guide/) say it: ["money at least ¥4100 (buy_coins)"]. *)
+
+val asks_something : need -> bool
+(** False for a need any save meets: money or an item at least 0, at least 0
+    badges or species caught, an empty party order, badge list or [includes].
+    The user guides leave these out (review rule R2,
+    [.agents/rules/review-rules.md]). *)

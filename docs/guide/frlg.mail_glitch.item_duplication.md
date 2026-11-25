@@ -43,7 +43,6 @@ need:
 What the plan needs, as the pre-flight checks it (generated from the plan):
 
 <!-- generated:needs 08-activate-and-verify -->
-- 0 free party slots
 - party includes pidgey, farfetchd in slot 1, blastoise in slot 2, mr-mime in slot 3
 - blastoise in the party (mail_glitch_double_battle)
 - farfetchd in the party (mail_glitch_double_battle)

@@ -225,3 +225,44 @@ let needs stocks ~before (plan : P.t) =
   in
   party_needs before acc @ money_needs before acc @ item_needs before acc
   @ place
+
+let species_list l = String.concat ", " l
+
+let slot_text ({ slot; species } : Postconditions.slot) =
+  Printf.sprintf "%s in slot %d" species slot
+
+let includes_text members slots =
+  "party includes " ^ species_list (members @ List.map slot_text slots)
+
+let describe = function
+  | Party_in_order l -> "party " ^ species_list l
+  | Party_includes { members; slots } -> includes_text members slots
+  | Member { species; for_ } ->
+      Printf.sprintf "%s in the party (%s)" species for_
+  | No_mail { species; for_ } ->
+      Printf.sprintf "%s holds no Mail (%s)" species for_
+  | Money_at_least { amount; for_ } ->
+      Printf.sprintf "money at least ¥%d (%s)" amount for_
+  | Money_between { min; max } -> Printf.sprintf "money ¥%d..¥%d" min max
+  | Item_at_least { item; count; for_ } ->
+      Printf.sprintf "%s at least x%d (%s)" item count for_
+  | Item_exactly { item; count } -> Printf.sprintf "%s x%d" item count
+  | Knows_move { move; for_ } ->
+      Printf.sprintf "a member knows %s (%s)" move for_
+  | Place map -> "at the start, " ^ map
+  | Badges_at_least n -> Printf.sprintf "at least %d badges" n
+  | Badges names -> "badges " ^ String.concat ", " names
+  | Hall_of_fame -> "the Hall of Fame entered"
+  | Caught_at_least n -> Printf.sprintf "at least %d species caught" n
+
+let asks_something = function
+  | Party_in_order l | Badges l -> l <> []
+  | Party_includes { members; slots } -> members <> [] || slots <> []
+  | Money_at_least { amount = n; _ }
+  | Item_at_least { count = n; _ }
+  | Badges_at_least n
+  | Caught_at_least n ->
+      n > 0
+  | Member _ | No_mail _ | Knows_move _ | Money_between _ | Item_exactly _
+  | Place _ | Hall_of_fame ->
+      true

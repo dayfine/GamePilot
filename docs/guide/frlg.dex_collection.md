@@ -16,7 +16,6 @@ Runs on: mGBA.
 - Bring ¥12,000 for 10 Ultra Balls at the Indigo Plateau's Pokemon Center.
 
 <!-- generated:needs -->
-- 0 free party slots
 - pidgey in the party (fly)
 - money at least ¥12000 (all the purchases)
 - at the start, Route10_PokemonCenter_1F
