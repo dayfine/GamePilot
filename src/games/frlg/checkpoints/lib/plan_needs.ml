@@ -12,6 +12,7 @@ type need =
   | Member of { species : string; for_ : string }
   | No_mail of { species : string; for_ : string }
   | Knows_move of { move : string; for_ : string }
+  | Badge of { badge : string; for_ : string }
   | Money_at_least of { amount : int; for_ : string }
   | Money_between of { min : int; max : int }
   | Item_at_least of { item : string; count : int; for_ : string }
@@ -47,6 +48,7 @@ type acc = {
   items : (string * string) list;  (** needed, one per use *)
   bought : (string * int) list;  (** bought or picked up, not yet used *)
   knows : (string * string) list;  (** field move, action; newest first *)
+  badges : (string * string) list;  (** badge, action; newest first *)
   deposits : (string * string) list;
       (** the save's members stored, with the action; newest first *)
 }
@@ -59,6 +61,7 @@ let empty =
     items = [];
     bought = [];
     knows = [];
+    badges = [];
     deposits = [];
   }
 
@@ -69,6 +72,12 @@ let field_move action acc =
   let move = List.assoc action field_move_users in
   if List.mem_assoc move acc.knows then acc
   else { acc with knows = (move, action) :: acc.knows }
+
+let use_badge action acc =
+  match A.Action_args.badge_needed action with
+  | Some badge when not (List.mem_assoc badge acc.badges) ->
+      { acc with badges = (badge, action) :: acc.badges }
+  | _ -> acc
 
 let use_member action acc species =
   if List.mem species acc.brought || List.mem_assoc species acc.members then acc
@@ -114,6 +123,7 @@ let use_members ~named action acc =
 
 let game_action stocks ~where action args acc =
   let named key = J.string_opt ~where key args in
+  let acc = use_badge action acc in
   let acc =
     if List.mem_assoc action field_move_users then field_move action acc
     else if action = "pc_deposit" then
@@ -174,6 +184,7 @@ let party_needs before acc =
   @ List.rev_map (fun (species, for_) -> Member { species; for_ }) acc.members
   @ List.rev_map (fun (species, for_) -> No_mail { species; for_ }) acc.deposits
   @ List.rev_map (fun (move, for_) -> Knows_move { move; for_ }) acc.knows
+  @ List.rev_map (fun (badge, for_) -> Badge { badge; for_ }) acc.badges
 
 let money_needs before acc =
   let promised =
@@ -249,8 +260,10 @@ let describe = function
   | Item_exactly { item; count } -> Printf.sprintf "%s x%d" item count
   | Knows_move { move; for_ } ->
       Printf.sprintf "a member knows %s (%s)" move for_
+  | Badge { badge; for_ } -> Printf.sprintf "the %s badge (%s)" badge for_
   | Place map -> "at the start, " ^ map
   | Badges_at_least n -> Printf.sprintf "at least %d badges" n
+  | Badges [ badge ] -> Printf.sprintf "the %s badge" badge
   | Badges names -> "badges " ^ String.concat ", " names
   | Hall_of_fame -> "the Hall of Fame entered"
   | Caught_at_least n -> Printf.sprintf "at least %d species caught" n
@@ -263,6 +276,6 @@ let asks_something = function
   | Badges_at_least n
   | Caught_at_least n ->
       n > 0
-  | Member _ | No_mail _ | Knows_move _ | Money_between _ | Item_exactly _
-  | Place _ | Hall_of_fame ->
+  | Member _ | No_mail _ | Knows_move _ | Badge _ | Money_between _
+  | Item_exactly _ | Place _ | Hall_of_fame ->
       true

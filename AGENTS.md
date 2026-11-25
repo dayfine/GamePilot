@@ -14,14 +14,14 @@ GamePilot automates games through three layers (design: `docs/design/Layered-Aut
   - `engine/`: the game-agnostic program engine (`docs/design/Engine-Boundary.md`), one library
     per folder: `rules` (`GAME_RULES`, what a game family gives the engine), `postcondition`
     (promises, counts, money), `plan` (types), `plan_format` (how a plan file is read), `text`
-    (printing), `event_snapshot` (what a run keeps beside each event's save state), `run` (one
-    checkpoint: handlers, trials, event progress), `series` (chains, order, rounds), `expand` (plan
-    JSON rewrites), `flags` (`gamepilot run`' flags, a game's own carried along) and
-    `program_engine` (`Program_engine.Make`, the engine applied to a family's rules). It names no
-    game, grid or Pokémon type.
+    (plans, failures and log lines printed), `event_snapshot` (what a run keeps beside each
+    event's save state), `run` (one checkpoint: handlers, trials, event progress), `series`
+    (chains, order, rounds), `expand` (plan JSON rewrites), `flags` (`gamepilot run`'s flags, a
+    game's own carried along) and `program_engine` (`Program_engine.Make`, the engine applied to
+    a family's rules). It names no game, grid or Pokémon type.
   - `pokemon/`: code shared by Pokemon games: the navigation grid, and in `checkpoints/` the
     Pokémon rules (`rules`: grid poses, Pokémon actions, postconditions), their plan format
-    (`plan_format`), printing (`text`) and event snapshot (`event_snapshot`), the engine applied to them
+    (`plan_format`) and event snapshot (`event_snapshot`), the engine applied to them
     (`instance`: `Pokemon_engine`), the declared end of a checkpoint (`checkpoint_end`), who
     goes to the PC when a chain needs party room (`room_policy`), console runs
     (`series`), place-route rewrites (`expand`) and the Pokémon flags of `gamepilot run` (`flags`).
@@ -106,7 +106,11 @@ for the user to spot check.
   COMMENT review: `Reviewed SHA: <sha>` on line 1, `## Verdict` then `APPROVED` or `NEEDS_REWORK`.
   Its FLAGs are questions for the user and do not block.
 - A verdict holds for the SHA it names. A rework commit invalidates it: review the new tip.
-- Docs-only PRs (every file `.md` or under `docs/`) skip qc-structural; CI is still required.
+- Docs-only PRs (every file `.md` or under `docs/`) skip qc-structural. CI is still required, but
+  a PR of prose only (every file a `.md` added or changed in place, outside `docs/guide/` and
+  `.agents/`) needs only the `review-tools` check: no build reads such a file's text (user,
+  2026-11-25). A guide page waits for the builds (`gamepilot guide --check`), an agent's rules for
+  Harness Check, and a deleted or renamed page for the builds (the registry's docs must exist).
 - `sh dev/review/pr_gate_status.sh [PR...]` prints each open PR's CI, verdict (ok / rework /
   stale(<sha>) / none / skip) and next step (`merge`, `merge (structural: <reason>)`, or `user review (<reason>)`).
   `sh dev/review/format_only_changes.sh` lists files changed only in formatting; CI prints the same list as warnings.

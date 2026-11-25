@@ -29,3 +29,8 @@ type t =
   | Train of int  (** Fight this many trainer battles. *)
   | Heal
   | Shop of item list
+
+val to_string : t -> string
+(** The action with its typed args, its name first:
+    ["route to Town (4, 0) north"], ["battle (may lose)"],
+    ["shop 2 retro-mail"]. *)

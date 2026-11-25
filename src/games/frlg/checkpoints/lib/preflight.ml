@@ -10,6 +10,7 @@ type need = Plan_needs.need =
   | Member of { species : string; for_ : string }
   | No_mail of { species : string; for_ : string }
   | Knows_move of { move : string; for_ : string }
+  | Badge of { badge : string; for_ : string }
   | Money_at_least of { amount : int; for_ : string }
   | Money_between of { min : int; max : int }
   | Item_at_least of { item : string; count : int; for_ : string }
@@ -189,6 +190,7 @@ let row read need =
   | Item_exactly { item; count } ->
       with_item read item text (fun n -> n = count)
   | Knows_move { move; _ } -> knows_row read ~need:text move
+  | Badge { badge; _ } -> badges_row read ~need:text [ badge ]
   | Place _ -> place_row read ~need:text
   | Badges_at_least n -> badge_count_row read ~need:text n
   | Badges names -> badges_row read ~need:text names
@@ -225,7 +227,7 @@ let table rows =
 
 let reads_card =
   List.exists (function
-    | Badges_at_least _ | Badges _ | Hall_of_fame -> true
+    | Badges_at_least _ | Badges _ | Badge _ | Hall_of_fame -> true
     | _ -> false)
 
 (* An item or the money named only so that it is read (to_read). *)

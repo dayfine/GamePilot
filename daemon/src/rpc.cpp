@@ -545,6 +545,8 @@ CancelParams decode_cancel(const pa::JsonObject& params) {
   return cancel;
 }
 
+void decode_reset(const pa::JsonObject&) {}
+
 LeaseAcquireParams decode_lease_acquire(const pa::JsonObject& params) {
   LeaseAcquireParams lease;
   lease.owner = require_string(params, "owner");

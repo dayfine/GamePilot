@@ -4,19 +4,18 @@
     modules, whose types carry the family's poses, kinds and promises
     ([docs/design/Engine-Boundary.md], section 2).
 
-    The family gives four modules. [T] is its rules, which the runner, the
-    failures and the checks use alone; the other three are the formats, each
-    bound to [T] and each used by one edge only: [C] by {!Make.Plan_decode}, [X]
-    by {!Make.Plan_text} and the printed log and failures, [S] by
-    {!Make.Event_snapshot}. [T] comes first and on its own so that every module
-    here is applied to the same path [T]: the plan's types are then the same for
-    the decoder, the text and the runner. *)
+    The family gives three modules. [T] is its rules, which the runner, the
+    failures and the checks use alone, and which print themselves for
+    {!Make.Plan_text} and the printed log and failures; the other two are the
+    formats, each used by one edge only: [C] (bound to [T]) by
+    {!Make.Plan_decode}, [S] by {!Make.Event_snapshot}. [T] comes first and on
+    its own so that every module here is applied to the same path [T]: the
+    plan's types are then the same for the decoder, the text and the runner. *)
 
 (** The engine's modules over [T]. *)
 module Make
     (T : Engine_rules.GAME_RULES)
     (C : Engine_plan_format.Plan_format.PLAN_FORMAT with module T = T)
-    (X : Engine_text.Rules_text.TEXT with module T = T)
     (S : Engine_event_snapshot.Event_snapshot.SNAPSHOT) : sig
   (** {!Engine_plan.Plan.Make}: the plan's types, a game action's args the
       plan's JSON ({!Engine_plan_format.Raw_json}). *)
@@ -31,7 +30,7 @@ module Make
 
   (** {!Engine_text.Plan_text.Make}: a plan as text. *)
   module Plan_text : module type of struct
-    include Engine_text.Plan_text.Make (T) (X)
+    include Engine_text.Plan_text.Make (T)
   end
 
   (** {!Engine_run.Failure.Make}: why a run stopped, and
@@ -42,7 +41,7 @@ module Make
     end
 
     include module type of struct
-      include Engine_text.Failure_text.Make (T) (X)
+      include Engine_text.Failure_text.Make (T)
     end
   end
 

@@ -19,10 +19,11 @@ val start :
   label:string ->
   mode:string ->
   unit ->
-  Run_record.run
+  (Run_record.run, string) result
 (** The run's folder, started and printed. [program]: run.json's program fields
     (Program_registry.run_fields), [] for no program. [backend]: run.json's
-    (mgba or switch) when the run starts its own daemon; unknown by default. *)
+    (mgba or switch) when the run starts its own daemon; unknown by default.
+    [Error] when the folder cannot be made. *)
 
 val save_failure : Run_record.t -> unit
 (** The frame now, in the session, as the run's failure.png; a refusal (an older

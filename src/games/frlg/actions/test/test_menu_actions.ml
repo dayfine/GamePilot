@@ -265,6 +265,42 @@ let use_from_item_menu () =
   Printf.sprintf "%s; %s; ends on %s" (outcome result) (S.presses_text screen)
     (S.screen_name (S.screen_at screen (screen.S.clock_ms + 200)))
 
+(* The bag from the Start menu as mGBA at 1x showed it (ace-02 verification
+   run 9, 2026-11-25): A on BAG fades to black, the Items pocket reads (arrows,
+   cursor on RETRO MAIL) [bag_reads_ms] after that A while it still fades in,
+   and the bag takes input only from [bag_input_ms] on, once its fade is over:
+   an A sooner is dropped. A on the item's menu 500 ms after it shows (GIVE)
+   opens the party. *)
+let bag_reads_ms = 900
+let bag_input_ms = 960
+
+let bag_from_start_menu screen (p : S.press) =
+  let show d s = S.show screen ~at_ms:(p.at_ms + d) s in
+  match (p.buttons, S.screen_at screen p.at_ms) with
+  | [ Wire.Start ], S.Overworld -> show 200 (S.Start_menu 0)
+  | [ Wire.A ], S.Start_menu 2 ->
+      show 100 S.Black;
+      show bag_reads_ms (S.Bag_items [ ("RETRO MAIL", 2) ])
+  | [ Wire.A ], S.Bag_items _
+    when p.at_ms - S.shown_since screen p.at_ms >= bag_input_ms - bag_reads_ms
+    ->
+      show 100 S.Item_menu
+  | [ Wire.A ], S.Item_menu when p.at_ms - S.shown_since screen p.at_ms >= 500
+    ->
+      show 100 (S.Party 1)
+  | _ -> ()
+
+let give_from_bag () =
+  let screen = S.create ~react:bag_from_start_menu () in
+  let result =
+    S.run screen (fun () ->
+        Menu_input.run (fun () ->
+            Bag_items.item_action "retro-mail"
+              (Party_actions.give_row "retro-mail")))
+  in
+  Printf.sprintf "%s; %s; ends on %s" (outcome result) (S.presses_text screen)
+    (S.screen_name (S.screen_at screen (screen.S.clock_ms + 200)))
+
 let trade () =
   run ~react:trade_screen (fun () -> Ingame_trade.trade ~log ~slot:3)
 
@@ -528,6 +564,10 @@ let () =
         give_to_slot_one "ok; A; ends on dialog arrow";
       case "USE on an item's menu: the A waits for the menu to take it"
         use_from_item_menu "ok; A; ends on black";
+      case
+        "GIVE from the bag: the A on the item waits for the bag's fade-in \
+         (ace-02 verification run 9, 1x: an A as the pocket read was dropped)"
+        give_from_bag "ok; Start, down x2, A x2, down, A; ends on party slot 1";
       case "trade: YES, slot 3, A through the trade" trade
         "ok; A x2, down x2, A x6, B x7";
       case

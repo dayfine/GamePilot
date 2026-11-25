@@ -1,4 +1,4 @@
-(* gamepilot run <program>|PLAN_DIR [flags]: a one-shot
+(* gamepilot run <program>|DIR/PLANS|--plan-dir DIR [flags]: a one-shot
      program ([--state PATH | --console], on a daemon up on --port N or, with
      --watch, its own: One_shot_flags) or a chain of checkpoints
      (Checkpoint_families)
@@ -103,16 +103,20 @@ let backend_name (f : One_shot_flags.t) =
 
 (* Live, in a run folder of its own (Attached_run). *)
 let run_live (p : Program_registry.t) one_shot (f : One_shot_flags.t) =
-  let run =
+  match
     Attached_run.start ?backend:(backend_name f) ~runs_dir:f.runs_dir
       ~kind:Program
       ~program:(Program_registry.run_fields p)
       ~label:p.id ~mode:"run" ()
-  in
-  let line, code = on_daemon one_shot f run.record in
-  print_endline line;
-  Attached_run.finish ~runs_dir:f.runs_dir run ~line ~code;
-  code
+  with
+  | Error e ->
+      print_endline (p.id ^ ": " ^ e);
+      1
+  | Ok run ->
+      let line, code = on_daemon one_shot f run.record in
+      print_endline line;
+      Attached_run.finish ~runs_dir:f.runs_dir run ~line ~code;
+      code
 
 let exit_with = function
   | Ok code -> exit code
@@ -138,8 +142,6 @@ let run (args : Run_args.t) =
   | Program id -> run_registered id args.flags
   | Plan_folder dir -> Checkpoint_families.main dir args.flags
   | Plan plan -> Checkpoint_families.checkpoint plan args.flags
-
-let is_plan_folder d = Sys.file_exists d && Sys.is_directory d
 
 (* The one-shot program [id] names, run by [run]. *)
 let one_shot id run =
@@ -167,8 +169,7 @@ let () =
   | "run" :: args when List.mem "--help" args ->
       print_string usage;
       exit 0
-  | "run" :: args ->
-      exit_with (Result.bind (Run_args.parse ~is_plan_folder args) run)
+  | "run" :: args -> exit_with (Result.bind (Run_args.parse args) run)
   | (("checkpoints" | "checkpoint") as command) :: args -> (
       match Run_args.of_old_command command args with
       | Some parsed -> old_command command parsed

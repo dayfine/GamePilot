@@ -3,14 +3,16 @@
   test_lcg
   test_pokemon_generation
   test_wild_encounter
-  test_seeds_database)
+  test_seeds_database
+  test_rng_timings)
  (modules
   fixture_lines
   search_fixture
   test_lcg
   test_pokemon_generation
   test_wild_encounter
-  test_seeds_database)
+  test_seeds_database
+  test_rng_timings)
  (deps
   (glob_files fixtures/*.txt))
  (libraries gamepilot.table_test gamepilot.frlg_rng))

@@ -138,6 +138,12 @@ let load_state t path =
   t.latest <- None;
   r.seq
 
+let reset t =
+  let r = Wire.load_state_result_of_json (call t Wire.Reset) in
+  t.load <- r.load;
+  t.latest <- None;
+  r.seq
+
 let save t request = Wire.save_result_of_json (call t request)
 
 (* The first frame after a subscribe carries every subscribed result. *)
@@ -178,6 +184,7 @@ let answer : type a. t -> a Effect.t -> (unit -> a) option =
   | Effects.Now -> Some (fun () -> Option.value t.now ~default:0.)
   | Effects.Read -> Some (fun () -> t.latest)
   | Effects.Load_state path -> Some (fun () -> load_state t path)
+  | Effects.Reset -> Some (fun () -> reset t)
   | Effects.Save_state path ->
       Some (fun () -> save t (Wire.Save_state { path }))
   | Effects.Save_frame path ->

@@ -48,6 +48,7 @@ What the plan needs, as the pre-flight checks it (generated from the plan):
 - farfetchd in the party (mail_glitch_double_battle)
 - mr-mime in the party (mail_glitch_double_battle)
 - pidgey in the party (fly)
+- the thunder badge (fly)
 - money at least ¥400 (all the purchases)
 - antidote at least x1 (give_bag_item)
 - at the start, Route16
@@ -113,7 +114,7 @@ the same command, which fights the battle again. On mGBA the start state is unto
 <!-- generated:preflight 08-activate-and-verify -->
 | Resume from | The pre-flight checks |
 |---|---|
-| 08-activate-and-verify | party includes pidgey, farfetchd in slot 1, blastoise in slot 2, mr-mime in slot 3; blastoise in the party (mail_glitch_double_battle); farfetchd in the party (mail_glitch_double_battle); mr-mime in the party (mail_glitch_double_battle); pidgey in the party (fly); money at least ¥400 (mart); antidote at least x1 (give_bag_item); at the start, Route16 |
+| 08-activate-and-verify | party includes pidgey, farfetchd in slot 1, blastoise in slot 2, mr-mime in slot 3; blastoise in the party (mail_glitch_double_battle); farfetchd in the party (mail_glitch_double_battle); mr-mime in the party (mail_glitch_double_battle); pidgey in the party (fly); the thunder badge (fly); money at least ¥400 (mart); antidote at least x1 (give_bag_item); at the start, Route16 |
 <!-- /generated -->
 
 If the proof step stopped the run (a blank editor or `???`), the battle did not turn the glitch on:

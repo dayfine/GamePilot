@@ -1,4 +1,4 @@
-# Wire protocol v1.18
+# Wire protocol v1.19
 
 JSON-RPC 2.0 between the OCaml programs (client) and the daemon (server). The golden files in this
 folder are the spec: the daemon's tests parse every file and the OCaml tests decode and re-encode
@@ -39,6 +39,9 @@ the share of a box's pixels passing a test of linear channel comparisons per row
 and `core.find@1`, blobs found by the fork's fixed pipeline (colour filter, waterfill, size filter,
 scores) (`46-subscribe.line_shares_find.request.json`, `47-frame.line_shares_find.notification.json`).
 `hello` lists both. A v1.12 program never subscribes them.
+v1.19 adds `backend.reset` (see Methods): mGBA's power switch, answered like `backend.load_state`
+(`53-reset.request.json`, `54-reset.response.json`), for the FRLG RNG programs' hard reset. A
+v1.18 program never sends it.
 v1.18 adds `LStick`, the Switch's left stick click, to `submit` (`52-submit.lstick.request.json`):
 the Switch keyboard's Shift, which PLZA's new game presses before a capital letter of the name. A
 backend that is not the Switch refuses it as it does `Home`. A v1.17 program never names it.
@@ -84,9 +87,10 @@ size) every v1.1 message means the same in v1.2.
 ## Clock and frames
 
 - `seq`: frame number from the backend. On mGBA it is the emulator frame (`emu:currentFrame()`).
-  It only grows, except across `backend.load_state`, whose reply gives the new `seq`.
-- `load`: how many `backend.load_state` calls have succeeded since the daemon started (0 before the
-  first). Every `frame` carries the `load` it was taken under, and the `backend.load_state` reply gives
+  It only grows, except across `backend.load_state` and `backend.reset`, whose replies give the new
+  `seq` (after a reset mGBA counts from 0 again).
+- `load`: how many `backend.load_state` and `backend.reset` calls have succeeded since the daemon
+  started (0 before the first). Every `frame` carries the `load` it was taken under, and the `backend.load_state` reply gives
   the new one. A client ignores frames whose `load` is older than the last reply's: they were in flight
   before the load and show another state.
 - `t_ms`: milliseconds (float) since the daemon started. On a live backend (the Switch) and in
@@ -103,6 +107,7 @@ size) every v1.1 message means the same in v1.2.
 |---|---|---|
 | `hello` | `protocol` (must be 1), `client` | `protocol`, `daemon`, `backend` {`kind`, `game_code`, `frame_rate`, `width`, `height`, `viewport`, `game_size`}, `probe_kinds` |
 | `backend.load_state` | `path` (a save state file; the daemon passes it to the backend unread) | `seq` after loading, the new `load` |
+| `backend.reset` | {} | `seq` after the reset, the new `load`: the machine restarts as from its power switch and boots from its cartridge save, held at its first frame until the next `submit` (or `cancel`), so that batch starts on the reset's frame (mGBA: the core's reset) |
 | `probe.upload_template` | `png`: a PNG file, base64 | `template`: the lowercase hex SHA-256 of the PNG bytes |
 | `subscribe` | `probes`: list of {`id`, `kind`, `box`, `delivery`, and `template` (and optionally `ink`) for `core.template_match@1`, `min` and `max` for `core.color_count@1`, `test` for `core.line_shares@1`, `filters`, `min_area` and the optional `max_area`, `min_size`, `max_size`, `margin`, `template`, `shape`, `masked` for `core.find@1`} | `subscribed`: ids |
 | `unsubscribe` | `ids`: probe ids | `unsubscribed`: the ids that were subscribed, now removed (others are ignored) |
@@ -148,7 +153,8 @@ size) every v1.1 message means the same in v1.2.
   `stick`} (the first one named): the GBA has no stick, and a press that silently dropped its tilt
   would report a walk that never happened. The view backend refuses every input (-32002).
 - Batches run in order, one after another. Times are rounded to whole frames by the backend.
-- `backend.load_state` also drops queued commands and releases all buttons, as `cancel` does;
+- `backend.load_state` and `backend.reset` also drop queued commands and release all buttons, as
+  `cancel` does;
   queued batches then get no `batch_done`.
 
 `status` (`29-status.response.json`):
@@ -166,7 +172,7 @@ size) every v1.1 message means the same in v1.2.
 
 ## Input lease
 
-`submit`, `cancel` and `backend.load_state` need the input lease; everything else (status,
+`submit`, `cancel`, `backend.load_state` and `backend.reset` need the input lease; everything else (status,
 subscribe and frames, templates, saves) needs none, so any number of clients watch while one
 drives (`daemon/src/input_lease.h`).
 
@@ -189,14 +195,14 @@ The `switch` backend (`hello` `backend.kind`) is live: the capture card is not p
 captured frames from 1, and `t_ms` of a `frame` is when the frame was captured. Commands are timed in
 wall time: a batch starts when submitted (or when the queued ones end), each press and wait runs for
 its milliseconds as given, without rounding to frames, and `start_seq` is the last frame captured
-when it was submitted. `backend.load_state` and `backend.save_state` answer -32002 (a console has
-no save states). The game picture sits inside the frame (`viewport`, by default the fork's FRLG
+when it was submitted. `backend.load_state`, `backend.save_state` and `backend.reset` answer -32002 (a console has
+no save states, and its hard reset is closing and starting the game from HOME). The game picture sits inside the frame (`viewport`, by default the fork's FRLG
 `GAME_BOX`); GBA buttons map to the Switch's GBA app: Start is Plus, Select is Minus; `Home`, `X`
 and `Y` are the controller's own, and so are `left_stick` and `right_stick`.
 
 The `view` backend is live too, and view-only: its frames come from a picture another program owns
 (an app's window), cropped to the video, so `viewport` is the whole frame and `game_size` the
-frame's size. It takes no input: `submit`, `cancel`, `backend.load_state` and `lease.acquire` answer
+frame's size. It takes no input: `submit`, `cancel`, `backend.load_state`, `backend.reset` and `lease.acquire` answer
 -32002 with `data` {`backend`, `method`} (`41-error.view_only.response.json`); reads, probes and
 `status` work as on any backend. No new message: a client that never drives one needs no change.
 

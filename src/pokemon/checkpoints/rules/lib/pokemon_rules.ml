@@ -13,6 +13,8 @@ end
 
 module Action = struct
   type t = Pokemon_action.t
+
+  let to_string = Pokemon_action.to_string
 end
 
 module Postconditions = struct

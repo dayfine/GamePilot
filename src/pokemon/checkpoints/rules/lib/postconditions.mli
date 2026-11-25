@@ -64,3 +64,9 @@ val at_end : t -> t option
 (** What the runner reads and checks after the end position: [None] unless a
     party, items, coins, a caught count, money or flags are promised (moves,
     levels and marks alone are not read at the end). *)
+
+val to_lines : t -> string list
+(** One line per promise: ["position CeladonCity (39, 21) south"],
+    ["party includes blastoise, pidgey"], ["coins gained 20"],
+    ["money spent 4100"], ["flags a, b"], ["mr-mime knows psychic"],
+    ["mr-mime at least Lv 33"], ["marks mail, none"]. *)

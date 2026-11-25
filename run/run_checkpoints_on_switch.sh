@@ -7,13 +7,14 @@
 # released, also on a failure or Ctrl-C. The console is parked on the HOME menu at the release
 # (gamepilot console park) and the bring-up resumes the game from it before its frame check.
 #
-#   sh run/run_checkpoints_on_switch.sh PROGRAM | --program PROGRAM | PLAN_DIR \
+#   sh run/run_checkpoints_on_switch.sh PROGRAM | --program PROGRAM | DIR/PLANS | --plan-dir DIR \
 #       --from 01-celadon-setup --to 03-trade-mr-mime [--runs N] [--no-save-after-pass] [--no-preflight | --preflight-only] \
 #       [--no-watch] [--dry-run] [--viewport nso-gba|native] [other `gamepilot run` flags,
 #       e.g. --party ..., --make-room PalletTown]
 #
 # PROGRAM is a program registry id (`gamepilot programs` lists them), e.g. frlg.mail_glitch; a
-# plan folder in its place still works.
+# plan folder in its place still works, given as a path (with a /) or --plan-dir DIR. A bare name
+# is always a program id, as for `gamepilot run`.
 #
 # Where the game picture sits in the capture, for the bring-up's frame check and every run's
 # daemon (daemon/src/viewport.h), comes from the program's registry descriptor (nso-gba: FRLG in
@@ -65,17 +66,21 @@ usage() {
 
 # Our flags out; the rest go to `gamepilot run`.
 [ $# -gt 0 ] || usage
-# The program: --program ID or an id, else the plan folder.
-program_flag=""
-if [ "$1" = --program ]; then
+# The target, as `gamepilot run` reads it: --program ID or a bare name, a program id; --plan-dir
+# DIR or a path (with a /), a plan folder.
+target_flag=--program
+case $1 in
+--program | --plan-dir)
     [ $# -gt 1 ] || usage
-    program_flag=--program
+    target_flag=$1
     shift
-elif [ ! -d "$1" ]; then
-    program_flag=--program
-fi
-plan_dir=$1
+    ;;
+*/*) target_flag=--plan-dir ;;
+esac
+target=$1
 shift
+program=""
+[ "$target_flag" = --plan-dir ] || program=$target
 make_room="" dry_run="" viewport="" watch=--watch preflight=--preflight save=--save-after-pass runs=1 from="" locked=""
 n=$#
 while [ $n -gt 0 ]; do
@@ -141,7 +146,7 @@ if [ -z "$locked" ]; then
     if [ -n "$lock_cmd" ]; then
         # shellcheck disable=SC2086
         exec $lock_cmd -c "$console" run gamepilot-switch -- \
-            sh "$0" ${program_flag:+"$program_flag"} "$plan_dir" --locked ${dry_run:+--dry-run} --runs "$runs" "$save" \
+            sh "$0" "$target_flag" "$target" --locked ${dry_run:+--dry-run} --runs "$runs" "$save" \
             ${viewport:+--viewport "$viewport"} ${preflight:---no-preflight} ${watch:---no-watch} "$@"
     fi
     echo "[Dry run] no GAMEPILOT_LABLOCK: running without a lab lock"
@@ -236,10 +241,10 @@ cd "$root"
 mkdir -p "$GAMEPILOT_RUNS"
 # shellcheck disable=SC2086
 step "$bin" bring-up --daemon "$daemon" $board_args $frames_args ${viewport:+--viewport "$viewport"} \
-    ${program_flag:+--program "$plan_dir"}
+    ${program:+--program "$program"}
 
 # shellcheck disable=SC2086
-set -- ${program_flag:+"$program_flag"} "$plan_dir" "$@" --backend switch $board_args $frames_args \
+set -- "$target_flag" "$target" "$@" --backend switch $board_args $frames_args \
     ${viewport:+--viewport "$viewport"}
 if [ -n "$make_room" ] && [ "$preflight" = --preflight ]; then
     # The pre-flight would stop on the room 00-make-room is there to make; 00-make-room's end check reads it.

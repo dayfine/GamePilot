@@ -14,7 +14,8 @@
 #
 # runs 02-trade-farfetchd from that state (testing, a partial run: never a verification, never a next start).
 #
-# A plan folder in place of the program id, or --program ID, still works (`gamepilot run PLAN_DIR ...`).
+# A plan folder in place of the program id works too: a path (`gamepilot run ./plans ...`) or
+# --plan-dir DIR. A bare name is always a program id.
 #
 # A one-shot program (`frlg.start_menu_poc`) runs in its own daemon with its page, as a
 # checkpoint does.
