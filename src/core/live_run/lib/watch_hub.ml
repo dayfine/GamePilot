@@ -5,6 +5,9 @@
 
 let connect_timeout_s = 0.5
 
+(* rw-r--r--: the hub's output file. *)
+let out_perm = 0o644
+
 (* Whether something accepts connections on the hub's port. *)
 let running () =
   let socket = Unix.socket Unix.PF_INET Unix.SOCK_STREAM 0 in
@@ -48,7 +51,7 @@ let ensure ~daemon (watch : Daemon_process.watch) =
       Unix.openfile
         (Filename.concat watch.registry "hub.out")
         [ Unix.O_WRONLY; Unix.O_CREAT; Unix.O_APPEND ]
-        0o644
+        out_perm
     in
     spawn ~daemon watch out;
     Unix.close out)

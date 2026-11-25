@@ -17,6 +17,11 @@ type backend = Mgba | Switch
     (FRLG); [Native]: a full-screen Switch game, the whole frame. *)
 type viewport = Nso_gba | Native
 
+(** The rules a program's checkpoint plans are written over, which pick the
+    library that loads and runs them. [Pokemon_grid]: the Pokémon grid rules
+    (Pokemon_checkpoints, the FRLG runner). *)
+type rules = Pokemon_grid
+
 type game = {
   game_id : string;  (** ["frlg"], as plans and the games/ folder name it. *)
   game_name : string;
@@ -35,6 +40,7 @@ type t = {
   backends : backend list;
   viewport : viewport;
       (** The Switch's game picture, which every daemon of its runs takes. *)
+  rules : rules;  (** What its plans are written over. *)
 }
 
 val all : t list

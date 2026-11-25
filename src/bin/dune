@@ -2,7 +2,10 @@
  (name gamepilot)
  (public_name gamepilot)
  (package gamepilot)
+ (flags
+  (:standard -open Live_run))
  (libraries
+  gamepilot.live_run
   gamepilot.wire
   gamepilot.json_field
   gamepilot.effects

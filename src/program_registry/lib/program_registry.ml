@@ -1,5 +1,6 @@
 type backend = Mgba | Switch
 type viewport = Nso_gba | Native
+type rules = Pokemon_grid
 type game = { game_id : string; game_name : string }
 
 type t = {
@@ -12,6 +13,7 @@ type t = {
   checkpoints : string option;
   backends : backend list;
   viewport : viewport;
+  rules : rules;
 }
 
 let frlg = { game_id = "frlg"; game_name = "Pokémon FireRed/LeafGreen" }
@@ -29,6 +31,7 @@ let mail_glitch =
     checkpoints = Some "src/games/frlg/programs/mail_glitch/plans";
     backends = [ Mgba; Switch ];
     viewport = Nso_gba;
+    rules = Pokemon_grid;
   }
 
 let start_menu_poc =
@@ -43,6 +46,7 @@ let start_menu_poc =
     checkpoints = None;
     backends = [ Mgba ];
     viewport = Nso_gba;
+    rules = Pokemon_grid;
   }
 
 let team_training =
@@ -58,6 +62,7 @@ let team_training =
     checkpoints = Some "src/games/frlg/programs/team_training/plans";
     backends = [ Mgba; Switch ];
     viewport = Nso_gba;
+    rules = Pokemon_grid;
   }
 
 let supplies =
@@ -72,6 +77,7 @@ let supplies =
     checkpoints = Some "src/games/frlg/programs/supplies/plans";
     backends = [ Mgba; Switch ];
     viewport = Nso_gba;
+    rules = Pokemon_grid;
   }
 
 let sevii_story =
@@ -87,6 +93,7 @@ let sevii_story =
     checkpoints = Some "src/games/frlg/programs/sevii_story/plans";
     backends = [ Mgba ];
     viewport = Nso_gba;
+    rules = Pokemon_grid;
   }
 
 let dex_collection =
@@ -102,6 +109,7 @@ let dex_collection =
     checkpoints = Some "src/games/frlg/programs/dex_collection/plans";
     backends = [ Mgba ];
     viewport = Nso_gba;
+    rules = Pokemon_grid;
   }
 
 let all =

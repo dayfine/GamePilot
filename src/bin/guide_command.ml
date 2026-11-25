@@ -59,7 +59,10 @@ let write path text =
 
 let block p name arg =
   let marker = Guide_page.start_marker name arg in
-  match Guide_blocks.generate p { name; arg; body = "" } with
+  match
+    Guide_blocks.generate ~guide:Checkpoint_families.guide p
+      { name; arg; body = "" }
+  with
   | Ok body -> marker ^ "\n" ^ body ^ "\n" ^ Guide_page.end_marker ^ "\n"
   | Error e -> "<!-- " ^ name ^ ": " ^ e ^ " -->\n"
 
@@ -98,7 +101,9 @@ let refill dir name =
   let* filled =
     Result.map_error
       (fun e -> name ^ ": " ^ e)
-      (Guide_page.fill (Guide_blocks.generate p) text)
+      (Guide_page.fill
+         (Guide_blocks.generate ~guide:Checkpoint_families.guide p)
+         text)
   in
   Ok (text, filled)
 
