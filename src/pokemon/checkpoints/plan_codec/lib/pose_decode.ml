@@ -1,4 +1,4 @@
-open Pokemon_terms
+open Pokemon_rules
 open Grid_maps
 open Grid_geometry
 open Engine_plan_codec.Plan_fields

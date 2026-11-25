@@ -3,7 +3,7 @@
     rest: unknown fields and malformed values raise {!Json_field.Invalid} naming
     the field. *)
 
-open Pokemon_terms
+open Pokemon_rules
 
 val mark_names : string list
 (** The marks a party slot may promise: ["held_item"], ["mail"], ["none"]. *)

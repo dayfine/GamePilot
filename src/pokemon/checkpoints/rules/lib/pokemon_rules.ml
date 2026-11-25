@@ -1,4 +1,4 @@
-module Own_kind = Own_kind
+module Pokemon_action = Pokemon_action
 module Postcondition_check = Postcondition_check
 
 module Pose = struct
@@ -11,8 +11,8 @@ module Pose = struct
     match pose with Grid grid -> grid_matches grid observed | Zone _ -> true
 end
 
-module Kind = struct
-  type t = Own_kind.t
+module Action = struct
+  type t = Pokemon_action.t
 end
 
 module Postconditions = struct

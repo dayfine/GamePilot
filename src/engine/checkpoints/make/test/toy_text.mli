@@ -1,3 +1,3 @@
-(** How the toy prints its rules ({!Toy_terms}). *)
+(** How the toy prints its rules ({!Toy_rules}). *)
 
-include Engine_text.Terms_text.TEXT with module T = Toy_terms
+include Engine_text.Rules_text.TEXT with module T = Toy_rules
