@@ -1,0 +1,16 @@
+(tests
+ (names
+  test_lcg
+  test_pokemon_generation
+  test_wild_encounter
+  test_seeds_database)
+ (modules
+  fixture_lines
+  search_fixture
+  test_lcg
+  test_pokemon_generation
+  test_wild_encounter
+  test_seeds_database)
+ (deps
+  (glob_files fixtures/*.txt))
+ (libraries gamepilot.table_test gamepilot.frlg_rng))
