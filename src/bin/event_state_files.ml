@@ -9,7 +9,7 @@ module Run = Frlg_checkpoints.Checkpoint_run
 let write_reads path reads =
   Out_channel.with_open_bin (Event_states.kept_path path) (fun out ->
       Out_channel.output_string out
-        (Yojson.Safe.to_string (Saved.to_json reads) ^ "\n"))
+        (Yojson.Safe.to_string (Saved.to_yojson reads) ^ "\n"))
 
 (* The older states of event [index] under another id. *)
 let prune dir ~index ~keep =
@@ -43,7 +43,7 @@ let read_kept ~missing path =
   if not (Sys.file_exists file) then Error missing
   else
     match Yojson.Safe.from_file file with
-    | json -> Saved.of_json json
+    | json -> Saved.of_yojson json
     | exception Yojson.Json_error e -> Error (file ^ ": " ^ e)
 
 (* The kept state of [from_event]'s first event and the partial run from it. *)

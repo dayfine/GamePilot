@@ -10,7 +10,7 @@ let known ~where allowed obj =
   Engine_plan.Plan_fields.known_fields_only ~where allowed obj
 
 module Pose = struct
-  type t = { place : string; spot : string option }
+  type t = { place : string; spot : string option } [@@deriving yojson]
   type observed = t
 
   let decode ~where obj =
@@ -28,20 +28,6 @@ module Pose = struct
 
   let text p = match p.spot with Some s -> p.place ^ "/" ^ s | None -> p.place
   let observed_text = text
-
-  let to_json p =
-    `Assoc
-      [
-        ("place", `String p.place);
-        ("spot", Option.fold ~none:`Null ~some:(fun s -> `String s) p.spot);
-      ]
-
-  let of_json = function
-    | `Assoc [ ("place", `String place); ("spot", `String spot) ] ->
-        Ok { place; spot = Some spot }
-    | `Assoc [ ("place", `String place); ("spot", `Null) ] ->
-        Ok { place; spot = None }
-    | _ -> Error "not a place"
 end
 
 module Kind = struct
@@ -111,35 +97,6 @@ module Postconditions = struct
 end
 
 module Saved = struct
-  type t = { start : int option; at : Pose.t option }
-
-  let ( let* ) = Result.bind
-
-  let to_json { start; at } =
-    `Assoc
-      [
-        ("start_gold", Option.fold ~none:`Null ~some:(fun n -> `Int n) start);
-        ("at", Option.fold ~none:`Null ~some:Pose.to_json at);
-      ]
-
-  let start_of_json fields =
-    match List.assoc_opt "start_gold" fields with
-    | Some (`Int n) -> Ok (Some n)
-    | Some `Null | None -> Ok None
-    | Some _ -> Error "start_gold is not a number"
-
-  let at_of_json = function
-    | `Null -> Ok None
-    | json ->
-        Result.map_error (fun e -> "at: " ^ e) (Pose.of_json json)
-        |> Result.map Option.some
-
-  let of_json = function
-    | `Assoc fields ->
-        let* start = start_of_json fields in
-        let* at =
-          at_of_json (Option.value (List.assoc_opt "at" fields) ~default:`Null)
-        in
-        Ok { start; at }
-    | _ -> Error "what is kept is not an object"
+  type t = { start : int option; [@key "start_gold"] at : Pose.t option }
+  [@@deriving yojson]
 end

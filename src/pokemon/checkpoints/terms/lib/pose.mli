@@ -37,10 +37,11 @@ val observed_to_string : observed -> string
 val declared_to_string : declared -> string
 (** A grid pose as {!grid_to_string}, a zone as ["zone <place>"]. *)
 
-val observed_to_json : observed -> Yojson.Safe.t
+val observed_to_yojson : observed -> Yojson.Safe.t
 (** [{"map": "CeladonCity", "tile": [48, 12], "facing": "south"}], the facing
     [null] when unknown. *)
 
-val observed_of_json : Yojson.Safe.t -> (observed, string) result
-(** What {!observed_to_json} wrote: ["not a map and a tile"] or
-    ["not an object"] else. *)
+val observed_of_yojson : Yojson.Safe.t -> (observed, string) result
+(** What {!observed_to_yojson} wrote ([[@@deriving yojson]]); an error names the
+    type or the missing field (["Pose.observed.at_map"]), a tile not [[x, y]] is
+    ["tile: not [x, y]"], and a facing it cannot read is unknown. *)

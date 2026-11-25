@@ -7,4 +7,6 @@
   gamepilot.json_field
   gamepilot.engine_postcondition
   gamepilot.engine_terms
-  gamepilot.engine_plan))
+  gamepilot.engine_plan)
+ (preprocess
+  (pps ppx_deriving_yojson)))

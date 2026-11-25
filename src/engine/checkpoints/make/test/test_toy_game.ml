@@ -182,20 +182,20 @@ let kept : Toy_terms.Saved.t = { start = Some 50; at = Some (at "Forest" None) }
 let kept_cases =
   [
     case "what is kept beside a state: the toy's start reads and zone"
-      (fun () -> Yojson.Safe.to_string (Toy_terms.Saved.to_json kept))
+      (fun () -> Yojson.Safe.to_string (Toy_terms.Saved.to_yojson kept))
       {|{"start_gold":50,"at":{"place":"Forest","spot":null}}|};
     case "what is kept reads back as written"
       (fun () ->
-        match Toy_terms.Saved.of_json (Toy_terms.Saved.to_json kept) with
+        match Toy_terms.Saved.of_yojson (Toy_terms.Saved.to_yojson kept) with
         | Ok back -> string_of_bool (back = kept)
         | Error e -> e)
       "true";
-    case "a kept zone the toy cannot read: named under at"
+    case "a kept zone the toy cannot read: the derived reader names its type"
       (fun () ->
-        match Toy_terms.Saved.of_json (`Assoc [ ("at", `Int 1) ]) with
+        match Toy_terms.Saved.of_yojson (`Assoc [ ("at", `Int 1) ]) with
         | Ok _ -> "read"
         | Error e -> e)
-      "at: not a place";
+      "Toy_terms.Pose.t";
   ]
 
 (* Two rounds until the goal holds: the toy's between-rounds runs after each. *)

@@ -9,11 +9,30 @@ type grid = {
 type zone = { place : string; spot : string option; heading : int option }
 type declared = Grid of grid | Zone of zone
 
+(* A tile is kept as [[x, y]], a facing by its name; a facing the run cannot
+   read back is unknown, as when the game could not tell. *)
+let tile_to_json (t : Tile_pos.t) = `List [ `Int t.x; `Int t.y ]
+
+let tile_of_json : Yojson.Safe.t -> (Tile_pos.t, string) result = function
+  | `List [ `Int x; `Int y ] -> Ok { x; y }
+  | _ -> Error "tile: not [x, y]"
+
+let facing_to_json = function
+  | Some d -> `String (Direction.name d)
+  | None -> `Null
+
+let facing_of_json = function
+  | `String name -> Ok (Direction.of_name name)
+  | _ -> Ok None
+
 type observed = {
-  at_map : string;
+  at_map : string; [@key "map"]
   at_tile : Tile_pos.t;
+      [@key "tile"] [@to_yojson tile_to_json] [@of_yojson tile_of_json]
   faces : Direction.t option;
+      [@key "facing"] [@to_yojson facing_to_json] [@of_yojson facing_of_json]
 }
+[@@deriving yojson { strict = false }]
 
 let grid_matches pose observed =
   let tile_ok =
@@ -43,25 +62,3 @@ let observed_to_string observed =
 let declared_to_string = function
   | Grid grid -> grid_to_string grid
   | Zone { place; _ } -> "zone " ^ place
-
-let observed_to_json p =
-  `Assoc
-    [
-      ("map", `String p.at_map);
-      ("tile", `List [ `Int p.at_tile.x; `Int p.at_tile.y ]);
-      ( "facing",
-        match p.faces with
-        | Some d -> `String (Direction.name d)
-        | None -> `Null );
-    ]
-
-let facing_of = function `String name -> Direction.of_name name | _ -> None
-
-let observed_of_json = function
-  | `Assoc f -> (
-      match (List.assoc_opt "map" f, List.assoc_opt "tile" f) with
-      | Some (`String at_map), Some (`List [ `Int x; `Int y ]) ->
-          let faces = Option.bind (List.assoc_opt "facing" f) facing_of in
-          Ok { at_map; at_tile = { x; y }; faces }
-      | _ -> Error "not a map and a tile")
-  | _ -> Error "not an object"

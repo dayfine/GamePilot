@@ -42,9 +42,11 @@ module Postconditions : sig
 end
 
 (** What a Pokémon run keeps beside an event's save state, as
-    [<n>-<event>.json]: [start_money], [start_coins], [start_items]
-    ({!Postcondition_check.start_to_json}) and [at] ({!Pose.observed_to_json},
-    or [null]). *)
+    [<n>-<event>.json]: [start_money] and [start_coins] (a number or [null]),
+    [start_items] (an object of counts) and [at] ({!Pose.observed_to_yojson}, or
+    [null]), derived ([[@@deriving yojson]]). A field left out reads as not
+    read: a file kept before the coins and items were has only [start_money] and
+    [at]. *)
 module Saved : sig
   type t = {
     start : Postcondition_check.start;

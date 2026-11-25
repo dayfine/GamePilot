@@ -7,7 +7,9 @@
   gamepilot.engine_postcondition
   gamepilot.engine_terms
   gamepilot.engine_plan
-  gamepilot.engine_checkpoints))
+  gamepilot.engine_checkpoints)
+ (preprocess
+  (pps ppx_deriving_yojson)))
 
 (test
  (name test_toy_game)

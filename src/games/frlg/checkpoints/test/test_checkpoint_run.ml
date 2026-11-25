@@ -152,8 +152,8 @@ let from_last_event ~kept_ropes () =
   in
   let kept =
     Result.get_ok
-      (Pokemon_checkpoints.Saved.of_json
-         (Pokemon_checkpoints.Saved.to_json kept))
+      (Pokemon_checkpoints.Saved.of_yojson
+         (Pokemon_checkpoints.Saved.to_yojson kept))
   in
   let observed =
     {

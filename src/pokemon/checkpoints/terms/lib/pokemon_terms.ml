@@ -42,25 +42,57 @@ end
 module Saved = struct
   type t = { start : Postcondition_check.start; at : Pose.observed option }
 
+  let items_to_yojson items =
+    `Assoc (List.map (fun (i, n) -> (i, `Int n)) items)
+
   let ( let* ) = Result.bind
 
-  let to_json { start; at } =
-    `Assoc
-      (Postcondition_check.start_to_json start
-      @ [ ("at", Option.fold ~none:`Null ~some:Pose.observed_to_json at) ])
+  let rec items_read = function
+    | [] -> Ok []
+    | (item, `Int n) :: rest ->
+        let* rest = items_read rest in
+        Ok ((item, n) :: rest)
+    | (item, _) :: _ -> Error ("start_items: " ^ item ^ " is not a number")
 
-  let at_of_json = function
-    | `Null -> Ok None
-    | json ->
-        Result.map_error (fun e -> "at: " ^ e) (Pose.observed_of_json json)
-        |> Result.map Option.some
+  let items_of_yojson = function
+    | `Assoc items -> items_read items
+    | _ -> Error "start_items is not an object"
 
-  let of_json = function
+  (* The file: the counts read at the start beside the pose, in one object
+     (each item's count an object of counts). [t] nests the counts under
+     [start] and the file keeps them flat, so the file is its own record. *)
+  type file = {
+    start_money : int option;
+    start_coins : int option;
+    start_items : (string * int) list;
+        [@to_yojson items_to_yojson] [@of_yojson items_of_yojson]
+    at : Pose.observed option;
+  }
+  [@@deriving yojson { strict = false }]
+
+  let to_yojson { start = { start_money; start_coins; start_items }; at } =
+    file_to_yojson { start_money; start_coins; start_items; at }
+
+  (* A field left out reads as not read: a file kept before the coins and
+     items were has only [start_money] and [at]. [@default] would read it too,
+     but would also leave the unread fields out of every file written. *)
+  let unread =
+    [
+      ("start_money", `Null);
+      ("start_coins", `Null);
+      ("start_items", `Assoc []);
+      ("at", `Null);
+    ]
+
+  let with_unread fields =
+    fields
+    @ List.filter (fun (name, _) -> not (List.mem_assoc name fields)) unread
+
+  let of_file { start_money; start_coins; start_items; at } =
+    { start = { start_money; start_coins; start_items }; at }
+
+  let of_yojson = function
     | `Assoc fields ->
-        let* start = Postcondition_check.start_of_json fields in
-        let* at =
-          at_of_json (Option.value (List.assoc_opt "at" fields) ~default:`Null)
-        in
-        Ok { start; at }
+        Result.map of_file (file_of_yojson (`Assoc (with_unread fields)))
     | _ -> Error "what is kept is not an object"
 end

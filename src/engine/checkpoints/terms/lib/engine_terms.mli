@@ -76,11 +76,13 @@ module type SAVED = sig
       (the money before a purchase), and where the player was reckoned to stand.
   *)
 
-  val to_json : t -> Yojson.Safe.t
-  (** The [<n>-<event>.json] kept beside the state. *)
+  val to_yojson : t -> Yojson.Safe.t
+  (** The [<n>-<event>.json] kept beside the state. The names are those
+      [[@@deriving yojson]] (ppx_deriving_yojson) gives, so a game whose file is
+      its record derives both. *)
 
-  val of_json : Yojson.Safe.t -> (t, string) result
-  (** What {!to_json} wrote. *)
+  val of_yojson : Yojson.Safe.t -> (t, string) result
+  (** What {!to_yojson} wrote. *)
 end
 
 (** The terms a game family gives the engine. *)
