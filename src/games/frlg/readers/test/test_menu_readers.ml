@@ -20,6 +20,7 @@
      memberN       a member's menu over the party, its cursor on row N (0 is
                    SUMMARY at the top)
      levelupN      a Rare Candy's level-up stats window on page N
+     seagallopN    the Seagallop sailor's list of islands, its arrow on row N
      partyyesno    the party menu's YES/NO box (a move to delete, or to stop
                    teaching)
      jpn           a Japanese game (the icons sit elsewhere: marks not read)
@@ -151,6 +152,14 @@ let screen_readers =
       expected = tagged "partyyesno";
     };
     {
+      reader = "seagallop_row";
+      applies = everywhere;
+      verdict =
+        (fun m ->
+          optional (Script_menu.cursor_row Script_menu.seagallop_islands m));
+      expected = (fun tags -> optional (numbered "seagallop" tags));
+    };
+    {
       reader = "member_menu_row";
       applies = everywhere;
       verdict = (fun m -> optional (Member_menu.cursor_row m));
@@ -222,6 +231,12 @@ let known_misreads =
   [
     (* A Key Items action menu covers the bag's grey shadow, as in the fork. *)
     ("bag_open", "captures/tmcase-04-tmcase-after-A__bag-itemmenu.png", "false");
+    (* One Island's harbor, with no bag open: its grey quay passes for the
+       bag's shadow, underline and top frame (mGBA, sevii 02, 2026-11-25). Its
+       actions read it only after A on a bag item. *)
+    ("bag_item_menu", "seagallop-one-island/sailor-text__none.png", "true");
+    ("bag_item_menu", "seagallop-one-island/list-row0__seagallop0.png", "true");
+    ("bag_item_menu", "seagallop-one-island/after-b__none.png", "true");
   ]
 
 let expectation r image =
