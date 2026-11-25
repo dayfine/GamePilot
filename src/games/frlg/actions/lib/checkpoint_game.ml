@@ -177,7 +177,7 @@ let grind t (_ : Pokemon_checkpoints.Plan.event) args =
 (* The catches that went to the party join it; the player stands where the
    pacing left them: the patch's tile, or one tile [pace] from it. *)
 let after_capture t (plan : Capture_plan.t) (spot : Pacing.spot) result =
-  t.party := Capture.party_after !(t.party) plan result;
+  t.party := Capture.party_after !(t.party) result;
   let stands (at : Pokemon_checkpoints.Pose.observed) =
     let at_tile = Pacing.stands_on ~pace:plan.pace spot at.at_tile in
     { at with at_tile; faces = spot.facing }
@@ -188,9 +188,7 @@ let run_capture t (plan : Capture_plan.t) () =
   let log = t.config.log in
   log ("Capture: " ^ Capture_plan.describe plan ^ ".");
   let spot = ref (Pacing.on_patch (Option.bind t.at (fun at -> at.faces))) in
-  let game_steps =
-    Capture_steps.make ~log ~pace:plan.pace ~spot ~target:plan.species
-  in
+  let game_steps = Capture_steps.make ~log ~spot plan in
   let result =
     Effects.with_probes Frlg_battle.Battle_look.probes (fun () ->
         Capture.run game_steps plan ~party:(Party_roster.size !(t.party)))

@@ -41,4 +41,6 @@ val deposited_species : where:string -> Json_field.obj -> string list
 
 val picks_member : action:string -> Json_field.obj -> bool
 (** The action finds a member by its species in the party: its args name one
-    ({!member_keys}) and the game does not pick it ({!field_move_users}). *)
+    ({!member_keys}) and the game does not pick it ({!field_move_users}); or it
+    is a capture, which counts the party to know whether a catch joins it or
+    goes to the PC. *)
