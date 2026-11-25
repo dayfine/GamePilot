@@ -45,8 +45,16 @@ let read path =
 let hex text = int_of_string ("0x" ^ text)
 let hex32 = Printf.sprintf "%08x"
 
-(* Same text as C's "%.17g", which round-trips a double. *)
-let float17 = Printf.sprintf "%.17g"
+(* Same text as C's "%.17g", which round-trips a double. The Windows C
+   runtime writes the exponent with at least three digits ("1e-006"); the
+   golden vectors, like C99, use two ("1e-06"), so a leading zero of a
+   three-digit exponent is dropped. *)
+let float17 x =
+  let text = Printf.sprintf "%.17g" x in
+  match String.index_opt text 'e' with
+  | Some at when String.length text - at = 5 && text.[at + 2] = '0' ->
+      String.sub text 0 (at + 2) ^ String.sub text (at + 3) 2
+  | _ -> text
 
 (* Checks every record of [op] with [compute], reporting the count and the first
    mismatch as one case. *)
