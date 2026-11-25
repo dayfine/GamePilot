@@ -12,14 +12,15 @@ Runs on: mGBA.
 
 ## Before you start
 
-- Fly to Route 10's Pokemon Center: both checkpoints start and end at its nurse.
+- Save anywhere outdoors in Kanto: 01 flies to Indigo Plateau, then to Route 10's Pokemon Center,
+  where 02 starts and ends at its nurse.
 - Bring ¥12,000 for 10 Ultra Balls at the Indigo Plateau's Pokemon Center.
 
 <!-- generated:needs -->
 - a member knows fly (fly)
 - the thunder badge (fly)
 - money at least ¥12000 (all the purchases)
-- at the start, Route10_PokemonCenter_1F
+- at the start, anywhere outdoors where Fly works
 <!-- /generated -->
 
 ## Running it
@@ -36,10 +37,10 @@ sh run/run_checkpoints_on_mgba.sh frlg.dex_collection --from 01-ultra-balls --to
 <!-- generated:checkpoints -->
 | Checkpoint | What its plan does |
 |---|---|
-| 01-ultra-balls | From Route 10's Pokemon Center: Ultra Balls at Indigo Plateau, then back |
+| 01-ultra-balls | From anywhere outdoors: Ultra Balls at Indigo Plateau, then to Route 10's Pokemon Center |
 | 02-route10-new-species | Route 10's north grass: catch two species the Pokedex has not caught, back to the nurse |
 
-<!-- plans: 07d7686a672e -->
+<!-- plans: a6dda378aabe -->
 <!-- /generated -->
 
 In the grass it runs from every Pokemon you have caught already and catches the ones you have not.
@@ -51,7 +52,7 @@ kind is already caught.
 <!-- generated:preflight -->
 | Resume from | The pre-flight checks |
 |---|---|
-| 01-ultra-balls | a member knows fly (fly); the thunder badge (fly); money at least ¥12000 (mart); at the start, Route10_PokemonCenter_1F |
+| 01-ultra-balls | a member knows fly (fly); the thunder badge (fly); money at least ¥12000 (mart); at the start, anywhere outdoors where Fly works |
 | 02-route10-new-species | ultra-ball at least x1 (capture); at the start, Route10_PokemonCenter_1F |
 <!-- /generated -->
 

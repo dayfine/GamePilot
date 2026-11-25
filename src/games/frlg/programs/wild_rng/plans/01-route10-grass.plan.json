@@ -3,8 +3,8 @@
   "game": "frlg",
   "checkpoint": {
     "id": "01-route10-grass",
-    "title": "From Cinnabar: fly to Route 10, a party slot free in the Center's PC, into the north grass, saved",
-    "start": {"map": "CinnabarIsland", "tiles": [[21, 7]], "facing": "south"},
+    "title": "From anywhere outdoors: fly to Route 10, a party slot free in the Center's PC, into the north grass, saved",
+    "start": {"anywhere": "outdoors"},
     "events": [
       {
         "id": "fly_route10",
@@ -46,6 +46,6 @@
   "execution": {"menu": "full"},
   "metadata": {
     "phase": "testing",
-    "notes": "Starts from sevii_story's 06-back-to-cinnabar end. The mGBA seed table (rng_seeds_mgba_route10_save.json) was measured from this checkpoint's end save."
+    "notes": "Starts anywhere outdoors in Kanto, where Fly reaches Route 10 (sevii_story's 06-back-to-cinnabar ends on Cinnabar). The mGBA seed table (rng_seeds_mgba_route10_save.json) was measured from this checkpoint's end save."
   }
 }

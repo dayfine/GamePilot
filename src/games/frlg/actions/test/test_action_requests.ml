@@ -76,6 +76,11 @@ let decoding =
     case "pc_deposit: the member holding no Mail"
       (decode "pc_deposit" {|{"member": "holding_no_mail"}|})
       "deposit the member holding no Mail at the PC";
+    case "pc_deposit: species and a role together"
+      (decode "pc_deposit"
+         {|{"member": "holding_no_mail", "species": ["mr-mime"]}|})
+      "bad_args: pc_deposit: species and member: name the members or their \
+       role, not both.";
     case "pc_deposit: a member role it does not know"
       (decode "pc_deposit" {|{"member": "the_lead"}|})
       "bad_args: pc_deposit: member is the_lead, not holding_no_mail.";

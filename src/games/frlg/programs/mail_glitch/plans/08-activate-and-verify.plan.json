@@ -133,6 +133,13 @@
         "action": "check_party_marks",
         "args": {"marks": ["held_item", "mail", "mail", "mail", "mail", "mail"]},
         "why": "the five filler mails stay on the party (user decision 5), MIMIEN holds the Antidote"
+      },
+      {
+        "id": "out_of_dept_store",
+        "kind": "route",
+        "action": "run",
+        "args": {"target": {"place": "celadon_dept_store_west_door_outside"}},
+        "why": "out by the west door: the program ends outdoors, where the next one (frlg.supplies) flies from"
       }
     ]
   },

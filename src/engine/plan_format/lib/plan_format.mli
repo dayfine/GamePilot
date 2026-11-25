@@ -11,7 +11,13 @@ module type PLAN_FORMAT = sig
   module T : Engine_rules.GAME_RULES
 
   val pose_of_plan : where:string -> Json_field.obj -> (T.Pose.t, string) result
-  (** A [start] or [declared_after] object. *)
+  (** A [declared_after] object: where an event leaves the player. *)
+
+  val start_of_plan :
+    where:string -> Json_field.obj -> (T.Pose.t, string) result
+  (** A checkpoint's [start] object. It may say more than {!pose_of_plan}: a
+      game can let a start be a class of places it recognises (anywhere
+      outdoors) where an event's pose names one place. *)
 
   val action_of_plan :
     string ->

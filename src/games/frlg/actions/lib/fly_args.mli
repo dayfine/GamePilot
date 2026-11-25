@@ -8,7 +8,8 @@ type request = {
 
 val decode : Json_field.obj -> (request, string) result
 (** A ["fly"] action's args: ["town"] (a town of {!Fly_towns.load}) and,
-    optionally, the Fly user's ["slot"] (from 1) and ["menu_row"]. *)
+    optionally, the Fly user's ["slot"] (from 1) and ["menu_row"]. A ["species"]
+    is refused: the user is any member that knows Fly. *)
 
 val plan : request -> Fly_user.user -> Fly.plan
 (** The Fly to the request's town by this user. *)

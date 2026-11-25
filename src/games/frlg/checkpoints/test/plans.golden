@@ -1,7 +1,6 @@
 == dex_collection/plans/01-ultra-balls.plan.json
-frlg 01-ultra-balls from Route10_PokemonCenter_1F (7, 4) north: 4 route, 3 game_action, 1 heal
-out_of_center: [run] route to Route10 (13, 21) south
-fly_indigo: [fly] game_action {"town":"IndigoPlateau"}
+frlg 01-ultra-balls from anywhere outdoors: 3 game_action, 3 route, 1 heal
+fly_indigo: [fly] game_action {"town":"IndigoPlateau"} => IndigoPlateau_Exterior (11, 7) south
 to_clerk: [run] route to IndigoPlateau_PokemonCenter_1F (2, 7) west
 buy_ultra_balls: [mart] game_action {"map":"IndigoPlateau_PokemonCenter_1F","items":[{"item":"ultra-ball","quantity":10}]}
 out_of_indigo: [run] route to IndigoPlateau_Exterior (11, 7) south
@@ -26,7 +25,7 @@ postconditions:
 none
 no repeat
 == mail_glitch/plans/01-celadon-setup.plan.json
-frlg 01-celadon-setup from CeladonCity (48, 12) south: 6 game_action, 7 route, 1 talk, 1 scene
+frlg 01-celadon-setup from anywhere outdoors: 6 game_action, 7 route, 1 talk, 1 scene
 fly_celadon: [fly] game_action {"town":"CeladonCity"} => CeladonCity (48, 12) south
 to_coin_case_man: [run] route to CeladonCity_Restaurant (2, 2) west
 talk_coin_case_man: talk
@@ -165,7 +164,7 @@ money spent 2300
 marks held_item, held_item, mail
 no repeat
 == mail_glitch/plans/08-activate-and-verify.plan.json
-frlg 08-activate-and-verify from Route16 (30, 7) north: 18 game_action, 3 route
+frlg 08-activate-and-verify from Route16 (30, 7) north: 18 game_action, 4 route
 activate_mail_glitch_battle: [mail_glitch_double_battle] game_action {"knock_off_species":"farfetchd","recycle_species":"mr-mime","sweeper":"blastoise","depleted_move":"blizzard","step_direction":"north"} => Route16 (30, 6) north
 verify_mail_glitch: [verify_mail_glitch] game_action {"species":"mr-mime"}
 fly_celadon: [fly] game_action {"town":"CeladonCity"} => CeladonCity (48, 12) south
@@ -187,6 +186,7 @@ give_dup_item: [give_bag_item] game_action {"item":"antidote","species":"mr-mime
 retro_mail_to_top: [move_item_to_top] game_action {"item":"retro-mail"}
 duplicate_item: [duplicate_item] game_action {"species":"mr-mime","item":"antidote","count":1,"word":"ABRA"}
 check_marks_after: [check_party_marks] game_action {"marks":["held_item","mail","mail","mail","mail","mail"]}
+out_of_dept_store: [run] route to CeladonCity (11, 15) south
 retries 3
 postconditions:
 party includes mr-mime
@@ -196,8 +196,7 @@ item retro-mail gained 1
 money spent -1224
 no repeat
 == sevii_story/plans/01-to-one-island.plan.json
-frlg 01-to-one-island from CeladonCity_DepartmentStore_1F (6, 2) south: 2 route, 1 game_action, 1 answer, 1 scene
-out_of_dept_store: [run] route to CeladonCity (11, 15) south
+frlg 01-to-one-island from anywhere outdoors: 1 game_action, 1 route, 1 answer, 1 scene
 fly_cinnabar: [fly] game_action {"town":"CinnabarIsland"} => CinnabarIsland (14, 12) south
 to_bill: [run] route to CinnabarIsland_PokemonCenter_1F (10, 5) east
 sail_with_bill: answer yes
@@ -276,7 +275,12 @@ item meteorite x0
 item moon-stone gained 1
 no repeat
 == supplies/plans/su-01.plan.json
-frlg su-01 from CeladonCity_DepartmentStore_1F (6, 2) south: 7 route, 6 game_action
+frlg su-01 from anywhere outdoors: 6 game_action, 6 route
+fly_lavender: [fly] game_action {"town":"LavenderTown"} => LavenderTown (6, 6) south
+lavender_mart_clerk: [run] route to LavenderTown_Mart (4, 3) west
+buy_super_repels: [mart] game_action {"map":"LavenderTown_Mart","items":[{"item":"super-repel","quantity":5}]}
+out_of_lavender_mart: [run] route to LavenderTown (20, 16) south
+fly_celadon: [fly] game_action {"town":"CeladonCity"} => CeladonCity (48, 12) south
 to_4f_clerk: [run] route to CeladonCity_DepartmentStore_1F (6, 2) north
 to_4f_clerk.lift: [lift_floor] game_action {"from":"1F","to":"4F"} => CeladonCity_DepartmentStore_4F (6, 2) south
 to_4f_clerk.walk: [run] route to CeladonCity_DepartmentStore_4F (3, 11) south
@@ -284,12 +288,6 @@ buy_retro_mail: [mart] game_action {"map":"CeladonCity_DepartmentStore_4F","item
 out_of_dept_store: [run] route to CeladonCity_DepartmentStore_4F (6, 2) north
 out_of_dept_store.lift: [lift_floor] game_action {"from":"4F","to":"1F"} => CeladonCity_DepartmentStore_1F (6, 2) south
 out_of_dept_store.walk: [run] route to CeladonCity (11, 15) south
-fly_lavender: [fly] game_action {"town":"LavenderTown"} => LavenderTown (6, 6) south
-lavender_mart_clerk: [run] route to LavenderTown_Mart (4, 3) west
-buy_super_repels: [mart] game_action {"map":"LavenderTown_Mart","items":[{"item":"super-repel","quantity":5}]}
-out_of_lavender_mart: [run] route to LavenderTown (20, 16) south
-fly_celadon: [fly] game_action {"town":"CeladonCity"} => CeladonCity (48, 12) south
-to_save_spot: [run] route to CeladonCity_DepartmentStore_1F (6, 2) south
 retries 0
 postconditions:
 item retro-mail gained 100
@@ -297,8 +295,7 @@ item super-repel gained 5
 money spent 7500
 no repeat
 == team_training/plans/tt-01.plan.json
-frlg tt-01 from CeladonCity_DepartmentStore_1F (6, 2) south: 3 route, 8 game_action, 1 scene
-out_of_dept_store: [run] route to CeladonCity (11, 15) south
+frlg tt-01 from anywhere outdoors: 8 game_action, 3 route, 1 scene
 fly_vermilion: [fly] game_action {"town":"VermilionCity"} => VermilionCity (15, 7) south
 super_repel: [use_item] game_action {"item":"super-repel"}
 face_route6_rare_candy: [run] route to Route6 (19, 6) north
@@ -310,13 +307,14 @@ give_rare_candy: [give_bag_item] game_action {"item":"rare-candy","species":"mr-
 retro_mail_to_top: [move_item_to_top] game_action {"item":"retro-mail"}
 duplicate_rare_candy: [duplicate_item] game_action {"species":"mr-mime","item":"rare-candy","count":98,"word":"ABRA"}
 check_marks_after: [check_party_marks] game_action {"marks":["held_item","mail","mail","mail","mail","mail"]}
+out_of_dept_store: [run] route to CeladonCity (11, 15) south
 retries 0
 postconditions:
 mr-mime in slot 1
 item rare-candy gained 98
 no repeat
 == wild_rng/plans/01-route10-grass.plan.json
-frlg 01-route10-grass from CinnabarIsland (21, 7) south: 3 game_action, 2 route
+frlg 01-route10-grass from anywhere outdoors: 3 game_action, 2 route
 fly_route10: [fly] game_action {"town":"Route10"}
 to_pc: [run] route to Route10_PokemonCenter_1F (11, 2) north
 deposit_member: [pc_deposit] game_action {"member":"holding_no_mail"}

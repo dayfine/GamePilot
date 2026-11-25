@@ -6,7 +6,7 @@
   },
   "metadata": {
     "phase": "testing",
-    "notes": "Stocks what the duplication programs use: Retro Mail (one per round, Celadon 4F, $50) and Super Repels (Lavender, $500) for walks that must not be cut by wild battles. Starts and ends at Celadon Dept. Store 1F (6, 2), the save spot frlg.team_training starts from.",
+    "notes": "Stocks what the duplication programs use: Retro Mail (one per round, Celadon 4F, $50) and Super Repels (Lavender, $500) for walks that must not be cut by wild battles. Starts anywhere outdoors in Kanto and ends outside the Dept. Store's west door, outdoors, where frlg.team_training starts.",
     "postconditions": {
       "items": [
         {
@@ -27,50 +27,9 @@
     "id": "su-01",
     "title": "Stock 100 Retro Mail (Celadon 4F) and 5 Super Repels (Lavender)",
     "start": {
-      "map": "CeladonCity_DepartmentStore_1F",
-      "tiles": [
-        [6, 2]
-      ],
-      "facing": "south"
+      "anywhere": "outdoors"
     },
     "events": [
-      {
-        "id": "to_4f_clerk",
-        "kind": "route",
-        "action": "run",
-        "args": {
-          "target": {"place": "celadon_dept_store_4f_clerk"}
-        },
-        "why": "Up the lift to face the 4F clerk across the counter."
-      },
-      {
-        "id": "buy_retro_mail",
-        "kind": "game_action",
-        "action": "mart",
-        "args": {
-          "map": "CeladonCity_DepartmentStore_4F",
-          "items": [
-            {
-              "item": "retro-mail",
-              "quantity": 50
-            },
-            {
-              "item": "retro-mail",
-              "quantity": 50
-            }
-          ]
-        },
-        "why": "One Retro Mail per duplication round: 100, as 50 + 50 (the quantity box stops at 99; a second line of 1 left the box on x01 with its A dropped, mGBA su-01 verification)."
-      },
-      {
-        "id": "out_of_dept_store",
-        "kind": "route",
-        "action": "run",
-        "args": {
-          "target": {"place": "celadon_dept_store_west_door_outside"}
-        },
-        "why": "Down the lift and out by the west door, to fly."
-      },
       {
         "id": "fly_lavender",
         "kind": "game_action",
@@ -134,16 +93,44 @@
           ],
           "facing": "south"
         },
-        "why": "Back to Celadon."
+        "why": "Celadon's Dept. Store sells Retro Mail on 4F."
       },
       {
-        "id": "to_save_spot",
+        "id": "to_4f_clerk",
         "kind": "route",
         "action": "run",
         "args": {
-          "target": {"place": "celadon_dept_store_1f_save"}
+          "target": {"place": "celadon_dept_store_4f_clerk"}
         },
-        "why": "End at the Dept. Store 1F save spot, team training's start."
+        "why": "Up the lift to face the 4F clerk across the counter."
+      },
+      {
+        "id": "buy_retro_mail",
+        "kind": "game_action",
+        "action": "mart",
+        "args": {
+          "map": "CeladonCity_DepartmentStore_4F",
+          "items": [
+            {
+              "item": "retro-mail",
+              "quantity": 50
+            },
+            {
+              "item": "retro-mail",
+              "quantity": 50
+            }
+          ]
+        },
+        "why": "One Retro Mail per duplication round: 100, as 50 + 50 (the quantity box stops at 99; a second line of 1 left the box on x01 with its A dropped, mGBA su-01 verification)."
+      },
+      {
+        "id": "out_of_dept_store",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {"place": "celadon_dept_store_west_door_outside"}
+        },
+        "why": "Down the lift and out by the west door: the checkpoint ends outdoors, where frlg.team_training flies from."
       }
     ]
   }

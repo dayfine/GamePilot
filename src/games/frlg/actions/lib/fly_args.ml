@@ -26,8 +26,17 @@ let town_named name =
         ~none:(name ^ " is no Fly destination")
         (Fly_towns.find towns name))
 
+(* The user is any member that knows Fly: a plan names none. *)
+let no_species args =
+  if Json_field.has "species" args then
+    Json_field.fail
+      "%sspecies: a Fly uses the first member that knows Fly; give a slot to \
+       pick one."
+      where
+
 let decode args =
   match
+    no_species args;
     let name = Json_field.string ~where "town" args in
     (name, user args)
   with

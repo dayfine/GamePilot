@@ -3,14 +3,38 @@
  (modules write_probe_spec)
  (libraries yojson gamepilot.wire gamepilot.plza_readers))
 
-(rule
- (copy fixtures/switch.probes.jsonl switch.probes.jsonl))
-
-(rule
- (copy fixtures/switch.shifted.probes.jsonl switch.shifted.probes.jsonl))
-
 (tests
- (names test_dialog_readers test_story_readers)
- (modules test_dialog_readers test_story_readers fixture_frames)
- (deps switch.probes.jsonl switch.shifted.probes.jsonl)
+ (names
+  test_dialog_readers
+  test_story_readers
+  test_confirm_choices
+  test_interact_prompt
+  test_battle_hud
+  test_move_symbols
+  test_party_bar
+  test_minimap
+  test_wild_battle_readers
+  test_minimap_arrow
+  test_map_pin
+  test_party_slots
+  test_lock_plate
+  test_main_menu)
+ (modules
+  test_dialog_readers
+  test_story_readers
+  test_confirm_choices
+  test_interact_prompt
+  test_battle_hud
+  test_move_symbols
+  test_party_bar
+  test_minimap
+  test_wild_battle_readers
+  test_minimap_arrow
+  test_map_pin
+  test_party_slots
+  test_lock_plate
+  test_main_menu
+  fixture_frames)
+ (deps
+  (glob_files fixtures/*.probes.jsonl))
  (libraries gamepilot.wire gamepilot.table_test gamepilot.plza_readers))

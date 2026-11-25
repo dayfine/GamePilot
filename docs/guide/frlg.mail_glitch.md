@@ -49,7 +49,7 @@ What the plans need, as the pre-flight checks it (generated from the plans):
 - the cascade badge (cut_tree)
 - money at least ¥10350 (all the purchases)
 - poke-ball at least x1 (capture)
-- at the start, CeladonCity
+- at the start, anywhere outdoors where Fly works
 <!-- /generated -->
 
 On the Switch, the pre-flight reads your save and checks this list before the first checkpoint
@@ -101,7 +101,7 @@ steps and its log, and stop it.
 | 07-glitch-prep | Prepare Leppa and Retro Mail for Lea & Jed on Route 16 |
 | 08-activate-and-verify | Turn the Mail Glitch on against Lea & Jed on Route 16, read the glitched mail, duplicate one Antidote |
 
-<!-- plans: 69759df7b5e0 -->
+<!-- plans: 7542b40f9e77 -->
 <!-- /generated -->
 
 In plain words, beyond the table:
@@ -160,7 +160,7 @@ checkpoint before it promised:
 <!-- generated:preflight 01-celadon-setup..08-activate-and-verify -->
 | Resume from | The pre-flight checks |
 |---|---|
-| 01-celadon-setup | a member knows fly (fly); the thunder badge (fly); money at least ¥4100 (mart, buy_coins); at the start, CeladonCity |
+| 01-celadon-setup | a member knows fly (fly); the thunder badge (fly); money at least ¥4100 (mart, buy_coins); at the start, anywhere outdoors where Fly works |
 | 02-trade-farfetchd | party includes blastoise, abra; a member knows cut (cut_tree); a member knows fly (fly); the cascade badge (cut_tree); the thunder badge (fly); poke-ball at least x1 (capture); at the start, CeladonCity |
 | 03-trade-mr-mime | party includes blastoise, abra, farfetchd; abra in the party (ingame_trade); a member knows fly (fly); a member knows cut (cut_tree); the thunder badge (fly); the cascade badge (cut_tree); money at least ¥3550 (mart); at the start, VermilionCity |
 | 04-grind-farfetchd | party includes blastoise, mr-mime, farfetchd; farfetchd in the party (grind); blastoise in the party (grind); a member knows fly (fly); the thunder badge (fly); escape-rope at least x1 (use_item); at the start, LavenderTown_PokemonCenter_1F |

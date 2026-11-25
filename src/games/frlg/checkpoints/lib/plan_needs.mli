@@ -38,6 +38,10 @@ type need =
   | Item_at_least of { item : string; count : int; for_ : string }
   | Item_exactly of { item : string; count : int }
   | Place of string  (** The checkpoint's start map. *)
+  | Anywhere_start of Pokemon_engine.Pose.place_class
+      (** The checkpoint starts anywhere in the class (outdoors). FireRed does
+          not read the map: the pre-flight lets it pass, and the first Fly
+          checks it (the game will not fly indoors). *)
   | Badges_at_least of int
       (** At least this many badges ({!Plan_preconditions}: [badges] a count).
       *)

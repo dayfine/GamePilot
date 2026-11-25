@@ -23,6 +23,9 @@ let holding_no_mail = "holding_no_mail"
 
 let pc_deposit ~where args =
   match J.string_opt ~where "member" args with
+  | Some _ when J.has "species" args ->
+      J.fail "%sspecies and member: name the members or their role, not both."
+        where
   | Some m when m = holding_no_mail -> Pc_deposit Holding_no_mail
   | Some m -> J.fail "%smember is %s, not %s." where m holding_no_mail
   | None ->

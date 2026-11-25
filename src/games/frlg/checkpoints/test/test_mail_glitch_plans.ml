@@ -46,8 +46,8 @@ let records : Table_test.case list =
       name = "01-celadon-setup outline";
       input = (fun () -> outline "01-celadon-setup.plan.json");
       expectation =
-        "frlg 01-celadon-setup from CeladonCity (48, 12) south: 6 game_action, \
-         7 route, 1 talk, 1 scene";
+        "frlg 01-celadon-setup from anywhere outdoors: 6 game_action, 7 route, \
+         1 talk, 1 scene";
     };
     {
       name = "a place route, expanded: the lift ride FireRed adds";
@@ -102,7 +102,7 @@ let records : Table_test.case list =
       input = (fun () -> outline "08-activate-and-verify.plan.json");
       expectation =
         "frlg 08-activate-and-verify from Route16 (30, 7) north: 18 \
-         game_action, 3 route";
+         game_action, 4 route";
     };
     {
       name = "a route's typed target";

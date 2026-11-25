@@ -176,8 +176,8 @@ let preflight_cases =
       "a member knows fly (fly): pidgey knows fly: ok | the thunder badge \
        (fly): 8 badges (boulder, cascade, thunder, rainbow, soul, marsh, \
        volcano, earth), no star: ok | money at least ¥4100 (mart, buy_coins): \
-       ¥25014: ok | at the start, CeladonCity: 3 of 150 tiles changed: ok => \
-       go";
+       ¥25014: ok | at the start, anywhere outdoors where Fly works: not read: \
+       the first Fly checks it: ok => go";
     case
       "preflight 01-celadon-setup: no Fly user, no Thunder Badge and too \
        little money stop"
@@ -192,23 +192,26 @@ let preflight_cases =
       "a member knows fly (fly): no member knows fly: MISMATCH | the thunder \
        badge (fly): 2 badges (boulder, cascade), no star; missing thunder: \
        MISMATCH | money at least ¥4100 (mart, buy_coins): ¥4000: MISMATCH | at \
-       the start, CeladonCity: 3 of 150 tiles changed: ok => stop";
+       the start, anywhere outdoors where Fly works: not read: the first Fly \
+       checks it: ok => stop";
     case
-      "preflight 01-celadon-setup: no kept frame: the place is not read, which \
-       stops"
+      "preflight 02-trade-farfetchd: no kept frame: the place is not read, \
+       which stops"
       (fun () ->
-        preflight "01-celadon-setup" None
+        Preflight.compare
+          (needs "02-trade-farfetchd" None)
           {
-            observed = observed ~party:[ "pidgey" ] ~money:25014 ();
+            observed = observed ~party:[ "rattata" ] ();
             place = None;
-            card = badges 8;
-            members = members [ "pidgey" ];
-          })
-      "a member knows fly (fly): pidgey knows fly: ok | the thunder badge \
-       (fly): 8 badges (boulder, cascade, thunder, rainbow, soul, marsh, \
-       volcano, earth), no star: ok | money at least ¥4100 (mart, buy_coins): \
-       ¥25014: ok | at the start, CeladonCity: no kept start frame to compare: \
-       NOT READ => stop";
+            card = None;
+            members = None;
+          }
+        |> List.filter_map (fun (r : Preflight.row) ->
+               if String.starts_with ~prefix:"at the start" r.need then
+                 Some (r.need ^ ": " ^ r.read)
+               else None)
+        |> String.concat " | ")
+      "at the start, CeladonCity: no kept start frame to compare";
     case
       "preflight tt-01, console B: the picked-up Rare Candy is duplicated; its \
        Retro Mail and Super Repel come from su-01"
@@ -230,8 +233,8 @@ let preflight_cases =
        (fly): 8 badges (boulder, cascade, thunder, rainbow, soul, marsh, \
        volcano, earth), no star: ok | super-repel at least x1 (use_item): \
        super-repel x2: ok | retro-mail at least x99 (duplicate_item): \
-       retro-mail x100: ok | at the start, CeladonCity_DepartmentStore_1F: 3 \
-       of 150 tiles changed: ok => go";
+       retro-mail x100: ok | at the start, anywhere outdoors where Fly works: \
+       not read: the first Fly checks it: ok => go";
     case "preflight 02-trade-farfetchd, mGBA: some member knows Cut (Rattata)"
       (fun () ->
         cut_row
