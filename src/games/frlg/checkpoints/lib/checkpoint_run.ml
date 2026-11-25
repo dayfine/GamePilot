@@ -76,8 +76,34 @@ let check_menu (plan : Pokemon_engine.Plan.t) =
       Error ("execution.menu " ^ Yojson.Safe.to_string menu ^ " is not \"full\"")
   | game, _ -> Error ("the plan is for " ^ game ^ ", not frlg")
 
+(* Each skip_if condition FireRed reads names what it reads: the species
+   names are loaded only for a plan with a pokedex_seen condition. *)
+let read_species () =
+  let file = Frlg_text.Data_files.species_names_eng in
+  match Frlg_text.Data_files.locate file with
+  | Some path -> Ok (Frlg_text.Species_names.load path)
+  | None -> Error (file ^ " not found")
+
+let check_all species conditions =
+  List.fold_left
+    (fun ok c -> Result.bind ok (fun () -> A.Skip_conditions.check species c))
+    (Ok ()) conditions
+
+let check_skip_conditions (checkpoint : Pokemon_engine.Plan.checkpoint) =
+  let conditions =
+    List.concat_map
+      (fun (e : Pokemon_engine.Plan.event) -> e.skip_if)
+      checkpoint.events
+  in
+  let pokedex = String.starts_with ~prefix:A.Skip_conditions.pokedex_seen in
+  if List.exists pokedex conditions then
+    Result.bind (read_species ()) (fun species -> check_all species conditions)
+  else Ok ()
+
 let check_plan (plan : Pokemon_engine.Plan.t) =
-  Result.bind (check_menu plan) (fun () -> check_start plan.checkpoint)
+  Result.bind (check_menu plan) (fun () ->
+      Result.bind (check_start plan.checkpoint) (fun () ->
+          check_skip_conditions plan.checkpoint))
 
 let start_of (checkpoint : Pokemon_engine.Plan.checkpoint) =
   match checkpoint.start with
@@ -102,7 +128,7 @@ let config options world : A.Checkpoint_game.config =
     world;
     gait = options.gait;
     flee = Flee_wild.flee ~log:options.log;
-    flags = (fun _ -> false);
+    flags = A.Skip_conditions.holds ~log:options.log;
     party = options.party;
     grind_cap = options.grind_cap;
     center = options.center;
