@@ -21,6 +21,8 @@ The program ends when Cerulean Cave opens: Celio takes the Sapphire and the guar
 | 01-to-one-island | Fly to Cinnabar, YES to Bill in the Pokemon Center: out with him, the Seagallop, One Island, Celio's Tri-Pass |
 | 02-to-two-island | Bill's Meteorite errand: One Island's harbor, the Seagallop to Two Island, outside the Joyful Game Corner |
 | 03-to-three-island | The Joyful Game Corner's owner asks the player to find Lostelle; the Seagallop to Three Island's harbor |
+| 04-three-island-bikers | North through Three Island's port (storage back on); the Bikers' scene and its four trainer battles |
+| 05-berry-forest | Healed at Three Island's Center; west over Bond Bridge past its trainers, the Berry Forest to Lostelle, her Hypno, and home to the Joyful Game Corner |
 
 The game decides the first trip. Bill offers it when you leave Cinnabar Gym with the seventh badge;
 a player who said no finds him waiting in the Cinnabar Pokemon Center, even after the Hall of Fame
@@ -73,7 +75,70 @@ the maps still count as standing where the map puts them.
 
 03 sails from Two Island's harbor to Three Island (the second row of the sailor's list, below ONE
 ISLAND) and ends at Three Island's harbor (8, 5), facing south. North of the harbor is Three
-Island's port, which turns PC storage back on, and the Bikers: four trainer battles in a row
-(pokefirered `ThreeIsland_EventScript_BattleBikersScene`), the next checkpoint, which needs trainer
-battles. After that come Celio's Ruby and Sapphire errands and the legendary birds, from the
-walkthrough drafts.
+Island's port, which turns PC storage back on (`ThreeIsland_Port_OnTransition`), and the town
+with the Bikers.
+
+04 walks through the port into town and stops below the Bikers at (8, 28). Two rows of coord events
+cross the street: row 27 runs the boss's intro once 03's scene has set `VAR_MAP_SCENE_THREE_ISLAND`
+to 2, row 26 the battles once the intro has set it to 3. Their text shows the moment the player
+lands, so each row is reached with a `step` event, which holds one tile and watches nothing; a walk
+would take the text for a message on its way and press B, and B answers the Biker's question NO.
+The intro is a `scene`. On (8, 26) a Biker comes down and asks "You wanna make something of it or
+what?": an `answer` YES, whose settle now stops at the battle it starts, as a `talk`'s does. Then
+one `train` event with 4 battles fights the three Biker goons and Cue Ball Paxton
+(`Frlg_actions.Trainer_battles`): it presses the lines between battles through, each battle's lead
+attacks with its moves in slot order, and the lines after the last battle are settled to a quiet
+overworld. A fainted lead fails the event as `battle_lost`.
+
+The party leads with BLASTOISE (Lv 60, Surf) for this: a `party_swap` first. On mGBA, with MIMIEN
+(Lv 33) in slot 1, every battle opened on it, since Gen 3 puts the party back in order after a
+battle, and it fainted in the second one. The Bikers' Pokemon are Lv 37 to 39 Koffing, Grimer,
+Weezing and Muk, and Surf takes most of them in one hit, so the party is not healed before the
+scene: there is no free control between its battles anyway. The save plays with the Set battle
+style; under Shift, a trainer's "Will ... change POKéMON?" is read by its text (`Switch_offer`)
+and answered NO. 04 ends on (8, 26) facing north with the Bikers gone and $3,196 more: 740, 760,
+760 and 936 (pokefirered: 4 x the last Pokemon's level x the class's base, Biker 5, Cue Ball 6).
+
+05 heals at Three Island's Center first, since 04 does not, then walks west out of town. The
+Bikers stood in the street north of the scene's rows; their scene removed them for good, and no
+walk reaches their tiles before it, so `Frlg_overworld.Scene_removed_people` leaves them off the
+maps, as `Scene_only_people` does the Game Corner's Biker. Two Super Repels from the bag keep the
+wild Pokemon away: BLASTOISE (Lv 60) leads, above them all. Without them a wild battle on an open
+leg in the bridge's grass left the walk reckoned a tile ahead of the player, who went on into a
+pocket of grass off the way. A Super Repel lasts 200 steps and the game refuses another while one
+works. The first, used at the Center, carries the walk over the bridge and has some 30 steps
+left at the forest's mat; the walk paces row 39 by the mat, clear of the grass, wall to wall four
+times (57 steps), and uses the second there, for the 190 or so steps to Lostelle. Each wears off
+on a leg held to a wall, which walks on after the message.
+
+Bond Bridge (`ThreeIsland_BondBridge`) has seven trainers, and two cannot both be walked around
+(a reachability pass over the map and their sight): Aroma Lady Violet at (68, 10) looks west two
+tiles over the only way from the east half, and Aroma Lady Nikki wanders a 3 by 3 box round
+(27, 10) looking every way five tiles. The planner keeps off a standing trainer's line where it
+can (the twins Joy and Meg's double battle is walked around) and treats the rest as open. On a
+route event with `"fight_trainers": true` (05's `over_bond_bridge`; off by default, for saves that
+have beaten the maps' trainers), a leg that steps onto a tile a trainer not beaten may see is
+walked a piece at a time
+(`Frlg_overworld.Trainer_crossing`): each piece ends on such a tile, then the walk waits for the
+trainer's "!", walk up and text, as long as the fork's `trainer_full_watch()` (1.5 s, a walking tile
+for each tile of sight, 1 s). A text is the trainer's: its battle is fought as a `train` battle
+(`Trainer_battles`), the trainer is beaten for the rest of the walk, and the walk is planned again
+from that tile round where the trainer may now stand (the tile beside the player toward each
+tile they may have looked from). The fork instead holds the whole leg and finds the player again
+from the stop's timing; a wanderer may see the player from more than one tile, so here the tile is
+fixed before anyone speaks.
+
+In the Berry Forest (`ThreeIsland_BerryForest`) the walk goes from the south mat round the
+forest to (4, 9), below Lostelle. Her script (pokefirered
+`ThreeIsland_BerryForest_EventScript_Lostelle`) speaks, looks round and starts a wild battle with
+a Hypno Lv 30 (`setwildbattle`, `dowildbattle`), whose outcome it does not check. The `talk`
+stops at the battle, and a `battle` event (`Frlg_actions.Scene_battle`) fights it with the lead's
+moves in slot order. Then a `scene`: Lostelle gives an Iapapa Berry, sets `FLAG_RESCUED_LOSTELLE`,
+and the game warps the player to the Joyful Game Corner (6, 6), turned north, where her father's
+thanks run at once (`TwoIsland_JoyfulGameCorner_EventScript_FoundLostelleScene`). 05 ends there.
+
+06 talks to the owner, who takes the Meteorite (Celio's VAR 2) and gives a Moon Stone, then sails
+back to One Island for Bill's goodbye. The two islanders by Three Island's street hide once
+Lostelle is home (`ThreeIsland_EventScript_HideAntiBikers`).
+
+After that come Celio's Ruby and Sapphire errands, from the roadmap.
