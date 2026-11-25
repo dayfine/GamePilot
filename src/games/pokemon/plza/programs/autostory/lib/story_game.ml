@@ -63,6 +63,15 @@ let scene_with_start_window steps (event : Plan.event) (args : Json_field.obj) =
   | _ ->
       bad_args event "the only arg is start_window_ms, a positive number of ms"
 
+let talk_steps steps : Plza_walk.Talk_prompt.game_steps =
+  let walk = Story_steps.walk_game_steps steps in
+  {
+    submit = walk.submit;
+    read_screen = walk.read_screen;
+    log = walk.log;
+    log_detail = walk.log_detail;
+  }
+
 (* Free control with no A prompt, on two reads 300 ms apart: nothing for A
    to take. *)
 let no_prompt_gap_ms = 300
@@ -86,16 +95,9 @@ let prompt_not_seen =
    (press_through_prompt), then the scene; with "stop_at_choice", to the
    choice. *)
 let through_prompt steps config =
-  let walk = Story_steps.walk_game_steps steps in
   if prompt_missing steps then prompt_not_seen
   else (
-    Plza_walk.Talk_prompt.press_through
-      {
-        submit = walk.submit;
-        read_screen = walk.read_screen;
-        log = walk.log;
-        log_detail = walk.log_detail;
-      };
+    Plza_walk.Talk_prompt.press_through (talk_steps steps);
     Scene_machine.run steps "scene" config)
 
 let scene_through_prompt steps (event : Plan.event) (args : Json_field.obj) =
@@ -125,6 +127,8 @@ let game_actions ~reload steps =
       ("scene_through_prompt", scene_through_prompt);
       ("story_battle", no_args Story_battle.run);
       ("talk_through_map_screen", no_args Map_talk.run);
+      ( "climb_ladder",
+        no_args (fun steps -> Plza_walk.Ladder_climb.run (talk_steps steps)) );
     ]
 
 let scene steps (event : Plan.event) =

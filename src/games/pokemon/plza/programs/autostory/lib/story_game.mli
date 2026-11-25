@@ -31,6 +31,7 @@
       its scene then ends on control, passing a walk that stopped short;
     - [story_battle] ({!Plza_story.Story_battle}), no args;
     - [talk_through_map_screen] ({!Plza_story.Map_talk}), no args;
+    - [climb_ladder] ({!Plza_walk.Ladder_climb}), no args;
     - the game's [walk] ({!Plza_walk.Walk}), walked rather than run before 03.03
       (the fork's [RUN_FROM], before dash is unlocked); its [end] ["talk"] or
       ["talk_after_legs"] (the fork's [end: "talk"], and with [to_starter])

@@ -438,6 +438,24 @@ let runs (c : C.t) =
        (fun (i : C.input) -> i.stick_ms > 0 && List.mem Wire.B i.buttons)
        c.inputs)
 
+(* 03.03b: the party bar; the ladder's A prompt once the stick was held 5.5 s
+   (the side street's run, 8 s over 1.65, then the steps along the wall),
+   until A; the rooftop's text once the stick was held 12 s, until two A, then
+   the party bar. [lost]: no ladder prompt. *)
+let ladder ?(lost = false) c =
+  match C.stick_reached c 5500 with
+  | Some l when not lost -> (
+      match C.nth_after c Wire.A ~after:l 0 with
+      | None -> { (party c) with interact_prompt = true }
+      | Some _ -> (
+          match C.stick_reached c 12_000 with
+          | None -> party c
+          | Some r -> (
+              match C.nth_after c Wire.A ~after:r 1 with
+              | None -> text c
+              | Some _ -> party c)))
+  | _ -> party c
+
 let outcome checkpoint screen =
   let c = C.create () in
   reloaded := false;
@@ -937,6 +955,25 @@ let cases =
       "03.03 lost: no rock pile scene, yet it passes (the fork's plain scene)"
       (result "03.03" (rock_pile ~lost:true))
       "passed";
+    case "03.03b: the side street, the ladder, the rooftop"
+      (fun () ->
+        let r, c = outcome "03.03b" ladder in
+        String.concat "\n"
+          (r
+          :: List.filter
+               (fun line ->
+                 List.exists
+                   (fun prefix -> String.starts_with ~prefix line)
+                   [ "[PLZA] side"; "[PLZA] climb"; "[PLZA scene] done" ])
+               (C.lines c)))
+      "passed\n\
+       [PLZA] side_street_to_wall: legs done, screen now: player_can_move\n\
+       [PLZA] climb_ladder: Climb Up after 2 steps along the wall\n\
+       [PLZA scene] done on control.";
+    case "03.03b lost: no ladder prompt along the wall"
+      (result "03.03b" (ladder ~lost:true))
+      "03.03b event 2 (climb_ladder): ladder_not_found: no Climb Up prompt \
+       stepping along the wall";
     case "the walk is walked before 03.03, run after"
       (fun () ->
         Printf.sprintf "%b %b"

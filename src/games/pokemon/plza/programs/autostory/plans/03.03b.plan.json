@@ -1,0 +1,41 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "plza",
+  "execution": {
+    "save": "autosave",
+    "autosave_step": "rooftop_scene"
+  },
+  "metadata": {
+    "phase": "testing",
+    "source": "played from a new game; starts at the rock pile autosave on the side street (where a reload lands), Taunie gone; ends at the game's autosave in the rooftop scene; starts where 03.03 ends; the fork's plza-03.03b.plan.json (plza/lean)",
+    "postconditions": {}
+  },
+  "checkpoint": {
+    "id": "03.03b",
+    "title": "Up the ladder to the rooftop scene",
+    "start": {
+      "place": "LumioseCity"
+    },
+    "events": [
+      {
+        "id": "side_street_to_wall",
+        "kind": "walk",
+        "why": "down the side street and across to the wall; ends in control against it. not planned: no tile grid in Lumiose",
+        "args": {
+          "legs": [[0, 8000]]
+        }
+      },
+      {
+        "id": "climb_ladder",
+        "kind": "game_action",
+        "action": "climb_ladder",
+        "why": "step along the wall until Climb Up shows, A, hold up"
+      },
+      {
+        "id": "rooftop_scene",
+        "kind": "scene",
+        "why": "Taunie on the roof"
+      }
+    ]
+  }
+}
