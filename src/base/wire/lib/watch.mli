@@ -4,10 +4,20 @@
     notification when someone pressed Stop there. *)
 
 type json = Yojson.Safe.t
-type event_state = Pending | Current | Done | Failed | Skipped
+(** A decoded JSON value: a notification's params. *)
+
+(** Where an event of the checkpoint stands. *)
+type event_state =
+  | Pending  (** not started yet *)
+  | Current  (** running now *)
+  | Done  (** finished as planned *)
+  | Failed  (** it failed; its [detail] says why *)
+  | Skipped
+      (** not run, because the game already held its result; its [detail] names
+          the flag that showed it *)
 
 type plan_event = {
-  id : string;
+  id : string;  (** the event's id in the plan *)
   state : event_state;
   detail : string;
       (** A failure's reason, the flag a skip held on, else empty. *)
@@ -15,8 +25,12 @@ type plan_event = {
       (** When it last started, Unix ms (v1.8); none while pending. *)
   ended_ms : int option;  (** When it ended, Unix ms (v1.8); none until then. *)
 }
+(** One event of the checkpoint's plan, as the watch page lists it: its state
+    and its times. *)
 
 type plan = { checkpoint : string; events : plan_event list }
+(** A [watch.plan] notification: the checkpoint's id and its events, in plan
+    order. *)
 
 val pending : string -> plan_event
 (** An event that has not started. *)
@@ -37,14 +51,20 @@ val plan_ms : now_ms:int option -> plan -> int option
     while an event runs. The watch page's [planMs]. *)
 
 val plan_of_json : json -> plan
+(** A [watch.plan] notification's params; a missing field or an unknown state is
+    a [Decode_error]. *)
+
 val json_of_plan : plan -> json
+(** A [watch.plan] notification's params, as {!plan_of_json} reads them. *)
 
 val line_of_json : json -> string
 (** A [watch.log] notification's line. *)
 
 val json_of_line : string -> json
+(** A [watch.log] notification's params for this line. *)
 
 val reason_of_json : json -> string
 (** A [stop] notification's reason. *)
 
 val json_of_reason : string -> json
+(** A [stop] notification's params for this reason. *)

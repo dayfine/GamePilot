@@ -62,3 +62,24 @@ kind is already caught.
   new and stops out of encounters. Other routes come next.
 - It never weakens a Pokemon before throwing: Ultra Balls catch these three often enough at full HP.
 - With six in the party, catches go to Bill's PC; it never gives a nickname.
+
+## How it works
+
+The first usable slice of the collector in `docs/roadmap/frlg-dex-exclusives.md` (issue #15, step
+5): wild catches, not shiny, toward the 60 caught the National Pokedex needs (Sevii checkpoint 07,
+`docs/roadmap/frlg-sevii-islands.md`). Both checkpoints start and end at Route 10's nurse.
+
+**A new species.** FireRed draws a Poke Ball on a wild foe's HP box when its species is caught
+(`Frlg_readers.Caught_mark`), so the catch checkpoint never opens the Pokedex. It reads the count of
+species caught off the Trainer Card (`read_caught`) before and after. On the Mail Glitch save (10
+caught, Spearow among them), 02 catches Voltorb and Ekans: 12 caught.
+
+**Next.**
+
+- More routes, one checkpoint each from a Center with its map in PokemonSimulation: Routes 24 and
+  25 from Cerulean (Weedle, Caterpie, Kakuna, Metapod; Cerulean's two wandering NPCs need a route
+  around them), Route 8 from Lavender (Meowth, Growlithe, Ekans; behind Cut trees), Routes 12 to 15
+  (Venonat, Gloom, Ditto, Pidgeotto). Celadon's Center has no map yet.
+- A `caught` postcondition and precondition (the Trainer Card's count), so Sevii 07 can require 60,
+  and a repeat round that runs until it holds.
+- The Pokedex list reader and navigation, the catalog and the planner of the roadmap's collector.

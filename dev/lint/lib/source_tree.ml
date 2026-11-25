@@ -25,9 +25,13 @@ let in_test_dir (c : Config.t) path =
 let in_library_dir (c : Config.t) path =
   Filename.basename (Filename.dirname path) = c.library_dir
 
+let under_any roots path =
+  List.exists (fun dir -> String.starts_with ~prefix:(dir ^ "/") path) roots
+
 let under_no_exceptions_root (c : Config.t) path =
-  List.exists
-    (fun dir -> String.starts_with ~prefix:(dir ^ "/") path)
-    c.no_exceptions_roots
+  under_any c.no_exceptions_roots path
+
+let under_interface_docs_root (c : Config.t) path =
+  under_any c.interface_docs_roots path
 
 let read path = In_channel.with_open_bin path In_channel.input_all

@@ -1,3 +1,17 @@
 (library
  (name ocaml_lint)
  (libraries compiler-libs.common))
+
+; Parsetree.constant became a record in OCaml 5.3 (string_constant.mli).
+
+(rule
+ (enabled_if
+  (>= %{ocaml_version} 5.3))
+ (action
+  (copy string_constant_5_3.ml.in string_constant.ml)))
+
+(rule
+ (enabled_if
+  (< %{ocaml_version} 5.3))
+ (action
+  (copy string_constant_5_2.ml.in string_constant.ml)))

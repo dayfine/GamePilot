@@ -2,6 +2,7 @@
     in [probe.upload_template]. *)
 
 val encode : string -> string
+(** The padded standard base64 of these bytes. *)
 
 val decode : string -> string option
 (** [None] unless the text is padded standard base64. *)

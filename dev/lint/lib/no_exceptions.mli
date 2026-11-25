@@ -7,3 +7,4 @@
     inside the standard library ([List.hd], [Option.get]) are not flagged. *)
 
 val check : Parsed_source.t -> Finding.t list
+(** One finding per raise, catch or exception declaration, at its line. *)
