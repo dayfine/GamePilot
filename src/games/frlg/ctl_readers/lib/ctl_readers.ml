@@ -1,5 +1,5 @@
-(* The readers [gamepilot ctl read NAME] runs once on the current frame: the
-   FRLG screen readers (games/frlg/readers) and the text readers the actions
+(* The FRLG readers [gamepilot ctl read NAME] runs once on the current frame:
+   the screen readers (games/frlg/readers) and the text readers the actions
    use (Start_menu_names, Party_species, Summary_moves), each subscribed for
    one frame and printed as [field: value] lines. Nothing here presses a
    button. *)
@@ -7,7 +7,7 @@
 module R = Frlg_readers
 module A = Frlg_actions
 
-type reader = {
+type reader = Ctl_script.reader = {
   name : string;
   doc : string;
   read : unit -> (string * string) list;
@@ -160,9 +160,3 @@ let all =
       read = trainer_card;
     };
   ]
-
-let find name = List.find_opt (fun r -> r.name = name) all
-
-let usage () =
-  String.concat ""
-    (List.map (fun r -> Printf.sprintf "    %-11s %s\n" r.name r.doc) all)

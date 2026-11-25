@@ -1,6 +1,6 @@
 // core.find@1 and core.line_shares@1: on synthetic frames, and on PLZA console
 // frames from CommandLineTests (PokemonLZA/AutoStoryDetectors/ArrivalToAd at
-// ee10083, copied under src/games/pokemon/plza/readers/test/images/switch). The real
+// ee10083, copied under src/games/plza/readers/test/images/switch). The real
 // frames check that the probes' numbers give back what the fork's detectors
 // compute on the same pixels: PixelShares' share_of over a box slid row by
 // row or column by column, and AdvanceArrowDetector's blob tests

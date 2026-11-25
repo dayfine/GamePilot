@@ -1,85 +1,122 @@
 (* Each family of checkpoint rules (Program_registry.rules) and its library's
-   entry points: how gamepilot checkpoints runs its series and how its guide
-   lists its checkpoints and the commands that run them. The one place under
-   bin/ that picks a family; a program no registry entry names is over the
-   Pokémon grid rules. *)
+   entry points: how gamepilot checkpoints runs its series, how gamepilot
+   checkpoint runs or replays one plan, how its guide lists its checkpoints,
+   their needs and the commands that run them, and what gamepilot programs
+   says a chain needs; the readers gamepilot ctl read runs; and the one-shot
+   programs gamepilot run and replay run. The one place under bin/ that picks
+   a family; a program no registry entry names is over the Pokémon grid
+   rules. *)
 
 module R = Program_registry
+module Grid = Frlg_series
 module Plza = Plza_series.Runs
-module Plza_flags = Plza_series.Flags
 
 let ( let* ) = Result.bind
 
-type t = {
-  run_series : string -> Checkpoints_flags.flags -> (int, string) result;
-      (** The series from a plan folder, with the command's flags. *)
-  guide : Guide_blocks.rules_guide;
+(* A one-shot program (gamepilot run, gamepilot replay): its label in the run's
+   lines and on the watch page, the save state it loads unless --console, and
+   a run: whether it passed and its line. In the effect context. *)
+type one_shot = {
+  label : string;
+  default_state : string;
+  run : state:string option -> bool * string;
 }
 
-let plza_flags plan_dir (f : Checkpoints_flags.flags) ~from_id ~to_id :
-    Plza_flags.t =
+type t = {
+  run_series : string -> string list -> (int, string) result;
+      (** The series from a plan folder, with the command's args. *)
+  run_checkpoint : string -> string list -> (int, string) result;
+      (** One plan file on a running daemon, with the command's flags. *)
+  replay_checkpoint : string -> string -> string list -> (int, string) result;
+      (** One plan file replayed from a wire log. *)
+  guide : Guide_blocks.rules_guide;
+  chain_needs : string -> (string, string) result;
+      (** What a plan folder's chain needs of the save, in one line (gamepilot
+          programs). *)
+  ctl_readers : Ctl_script.reader list;  (** What gamepilot ctl read runs. *)
+  one_shots : (string * one_shot) list;  (** By program id. *)
+}
+
+(* run.json's program fields for a plan folder; none for no program. *)
+let program_fields plan_dir =
+  Option.fold ~none:[] ~some:R.run_fields (R.of_plan_dir plan_dir)
+
+(* The Switch daemons' --viewport: the program's, which a --viewport given
+   must match. *)
+let viewport plan_dir (f : _ Checkpoints_flags.flags) =
+  R.check_viewport (R.of_plan_dir plan_dir) f.viewport
+
+let grid_series plan_dir args =
+  let* f = Pokemon_flags.parse Pokemon_flags.defaults args in
+  Grid.Checkpoints_command.run_grid
+    ~program:{ fields = program_fields; viewport = viewport plan_dir f }
+    plan_dir f
+
+(* The Pokémon grid rules' guide. *)
+let grid_guide : Guide_blocks.rules_guide =
   {
-    from_id;
-    to_id;
-    runs = f.runs;
-    runs_dir = f.runs_dir;
-    daemon = f.daemon;
-    backend_name = f.backend;
-    watch = f.watch;
-    daemon_flags = f.daemon_flags;
-    program = Attached_run.program_fields (R.of_plan_dir plan_dir);
+    rows = Grid.Guide_tables.rows;
+    needs = Grid.Guide_tables.needs;
+    preflight = Grid.Guide_tables.preflight;
+    commands = Guide_blocks.grid_commands;
+    order = Engine_series.Checkpoint_order.compare;
   }
 
-(* PLZA's checkpoints (Plza_series): the Switch only, testing. *)
-let plza_series plan_dir (f : Checkpoints_flags.flags) =
-  let* () =
-    Plza_flags.takes
-      {
-        mode = f.mode;
-        preflight = f.preflight;
-        from_event = f.from_event;
-        to_event = f.to_event;
-      }
-  in
-  let* from_id = Checkpoints_flags.required "--from" f.from_id in
-  let* to_id = Checkpoints_flags.required "--to" f.to_id in
-  let* backend =
-    Checkpoints_command.daemon_backend f Engine_run.Checkpoint_trials.Testing
-  in
-  let* viewport = Checkpoints_command.viewport plan_dir f in
-  let* ids = Plan_dir.checkpoint_ids plan_dir in
-  let* selected, _ = Plan_dir.select ids ~from_id ~to_id in
-  Plza.run_series ~plan_dir
-    (plza_flags plan_dir f ~from_id ~to_id)
-    ~backend ~viewport selected
+let start_menu_poc =
+  {
+    label = "start_menu_poc";
+    default_state = Start_menu_poc.default_state;
+    run =
+      (fun ~state ->
+        let outcome = Start_menu_poc.run ?state () in
+        ( (match outcome with Start_menu_poc.Passed _ -> true | _ -> false),
+          Start_menu_poc.describe outcome ));
+  }
 
-let plza_row ~plan_dir id =
-  Result.map
-    (fun (plan : Plza_checkpoints.Plan.t) ->
-      Printf.sprintf "| %s | %s |" plan.checkpoint.checkpoint_id
-        (Guide_blocks.cell plan.checkpoint.title))
-    (Plza.load_plan ~plan_dir id)
+(* The Pokémon grid rules' entry points. *)
+let grid =
+  {
+    run_series = grid_series;
+    run_checkpoint = Grid.Checkpoint_command.live ~program_fields;
+    replay_checkpoint = Grid.Checkpoint_command.replay;
+    guide = grid_guide;
+    chain_needs = Grid.Chain_needs.needs;
+    ctl_readers = Frlg_ctl_readers.Ctl_readers.all;
+    one_shots = [ ("frlg.start_menu_poc", start_menu_poc) ];
+  }
 
-(* PLZA runs through gamepilot checkpoints itself. *)
-let plza_commands (_ : R.t) ~args =
-  String.concat "\n"
-    [
-      "# the Switch: each checkpoint once, from where the console is";
-      "cd src && opam exec -- dune exec -- gamepilot checkpoints " ^ args
-      ^ " --mode testing --backend switch --serial PORT --capture DEVICE \\";
-      "    --watch";
-    ]
+let plza_series plan_dir args =
+  let* f = Plza_series.Flags.parse args in
+  Plza.run_series ~program:(program_fields plan_dir)
+    ~viewport:(viewport plan_dir f) plan_dir args
+
+let no_stated what ~plan_dir:_ _ = Error ("PLZA's plans state no " ^ what)
 
 let plza_guide : Guide_blocks.rules_guide =
   {
-    rows = (fun ~plan_dir ids -> Guide_blocks.collect (plza_row ~plan_dir) ids);
-    commands = plza_commands;
+    rows = Plza_series.Guide_tables.rows;
+    needs = no_stated "needs";
+    preflight = no_stated "pre-flight";
+    commands = (fun _ ~args -> Plza_series.Guide_tables.commands ~args);
+    order = Plza.checkpoint_order;
   }
 
-let of_rules = function
-  | R.Pokemon_grid ->
-      { run_series = Checkpoints_command.run_grid; guide = Guide_blocks.grid }
-  | R.Plza_story -> { run_series = plza_series; guide = plza_guide }
+(* PLZA's story rules' entry points: a series of whole checkpoints on the
+   Switch; no plan runs alone, and the plans state no chain needs. *)
+let plza =
+  {
+    run_series = plza_series;
+    run_checkpoint =
+      (fun _ _ -> Error "PLZA runs whole series only: gamepilot checkpoints");
+    replay_checkpoint = (fun _ _ _ -> Error "PLZA has no checkpoint replay yet");
+    guide = plza_guide;
+    chain_needs = (fun _ -> Error "PLZA's plans state no chain needs");
+    ctl_readers = [];
+    one_shots = [];
+  }
+
+let all = [ grid; plza ]
+let of_rules = function R.Pokemon_grid -> grid | R.Plza_story -> plza
 
 let of_program (p : R.t option) =
   of_rules (match p with Some p -> p.rules | None -> R.Pokemon_grid)
@@ -87,5 +124,25 @@ let of_program (p : R.t option) =
 let guide (p : R.t) = (of_program (Some p)).guide
 
 let main plan_dir args =
-  let* f = Checkpoints_flags.parse Checkpoints_flags.defaults args in
-  (of_program (R.of_plan_dir plan_dir)).run_series plan_dir f
+  (of_program (R.of_plan_dir plan_dir)).run_series plan_dir args
+
+(* gamepilot checkpoint's usage: the grid rules', the only family that runs a
+   plan file alone. *)
+let usage = Grid.Checkpoint_command.usage
+
+(* gamepilot checkpoints' usage: the grid rules' flags. *)
+let checkpoints_usage = Pokemon_flags.usage
+let of_plan_file plan = of_program (R.of_plan_dir (Filename.dirname plan))
+let checkpoint plan args = (of_plan_file plan).run_checkpoint plan args
+
+let replay_checkpoint wirelog plan args =
+  (of_plan_file plan).replay_checkpoint wirelog plan args
+
+(* Every family's readers: gamepilot ctl names no program. *)
+let ctl_readers = List.concat_map (fun f -> f.ctl_readers) all
+
+let ctl_reader name =
+  List.find_opt (fun (r : Ctl_script.reader) -> r.name = name) ctl_readers
+
+(* The one-shot program's runner, if its family has one. *)
+let one_shot (p : R.t) = List.assoc_opt p.id (of_program (Some p)).one_shots

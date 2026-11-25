@@ -54,6 +54,11 @@ void check_key_mapping() {
   CHECK(pro_buttons_for_keys(button_mask("Y")).button3 == 0x01);
   // ZL in byte 5 bit 7, beside L.
   CHECK(pro_buttons_for_keys(button_mask("ZL")).button5 == 0x80);
+  // Plus and Minus (v1.17) are the GBA app's Start and Select: byte 4 bits 1
+  // and 0.
+  CHECK(pro_buttons_for_keys(button_mask("Plus")).button4 == 0x02);
+  CHECK(pro_buttons_for_keys(button_mask("Minus")).button4 == 0x01);
+  CHECK(pro_buttons_for_keys(button_mask("Start")).button4 == 0x02);
   // ZR in byte 3 bit 7, beside R.
   CHECK(pro_buttons_for_keys(button_mask("ZR")).button3 == 0x80);
 }
