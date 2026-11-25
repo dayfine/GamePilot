@@ -33,6 +33,8 @@
     - [story_battle] ({!Plza_story.Story_battle}), no args;
     - [talk_through_map_screen] ({!Plza_story.Map_talk}), no args;
     - [climb_ladder] ({!Plza_walk.Ladder_climb}), no args;
+    - [run_to_gate] ({!Plza_walk.Gate_run}), with an optional [timeout_ms] (8 s,
+      the fork's);
     - the game's [walk] ({!Plza_walk.Walk}), walked rather than run before 03.03
       (the fork's [RUN_FROM], before dash is unlocked); its [end] ["talk"] or
       ["talk_after_legs"] (the fork's [end: "talk"], and with [to_starter])

@@ -21,7 +21,7 @@ Choices" screen. Nothing else is read from the save. The Switch's capture must b
 <!-- generated:commands -->
 ```sh
 # the Switch: each checkpoint once, from where the console is
-cd src && opam exec -- dune exec -- gamepilot checkpoints --program plza.autostory --from 01.00b --to 03.06 --mode testing --backend switch --serial PORT --capture DEVICE \
+cd src && opam exec -- dune exec -- gamepilot checkpoints --program plza.autostory --from 01.00b --to 03.07 --mode testing --backend switch --serial PORT --capture DEVICE \
     --watch
 ```
 <!-- /generated -->
@@ -50,8 +50,9 @@ cd src && opam exec -- dune exec -- gamepilot checkpoints --program plza.autosto
 | 03.03c | Off the roof to Station Front |
 | 03.04 | Pokemon Center, the Pokedex |
 | 03.06 | To the Wild Zones card |
+| 03.07 | Into Wild Zone 1: first catches |
 
-<!-- plans: be9e373e6d80 -->
+<!-- plans: 073cc16bae83 -->
 <!-- /generated -->
 
 ## When it stops
@@ -73,6 +74,8 @@ always reloads its autosave when it follows 03.03c, since its timed legs assume 
 
 ## Known limits
 
+03.07 has its plan but is refused before it presses anything (`no handler`): its two catches,
+`catch_tutorial` and `battle_then_catch`, are not ported yet. Its run to the gate is.
 Only 01.00b to 03.06 so far. 01.02's chase, 01.03's walk to Chikorita and the walks of 02.01 to
 03.06 are timed stick legs with no map, so they can miss; the chase then stops on Ryon's
 A prompt (`scene_ended_in_control`), the walk to Chikorita with `walk_no_end`, and the Battle Zone

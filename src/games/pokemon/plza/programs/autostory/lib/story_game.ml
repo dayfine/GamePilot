@@ -107,6 +107,12 @@ let scene_through_prompt steps (event : Plan.event) (args : Json_field.obj) =
       through_prompt steps { Scene_machine.default with stop_at_choice = true }
   | _ -> bad_args event "the only arg is stop_at_choice, true"
 
+(* The fork's console action timeout for run_to_gate. *)
+let run_to_gate_ms = 8000
+
+let run_to_gate steps ~timeout_ms =
+  Plza_walk.Gate_run.run (Story_steps.walk_game_steps steps) ~timeout_ms
+
 let game_actions ~reload steps =
   List.map
     (fun (name, action) -> (name, action steps))
@@ -127,6 +133,7 @@ let game_actions ~reload steps =
       ("scene_through_prompt", scene_through_prompt);
       ("story_battle", no_args Story_battle.run);
       ("talk_through_map_screen", no_args Map_talk.run);
+      ("run_to_gate", timed run_to_gate ~default:run_to_gate_ms);
       ( "climb_ladder",
         no_args (fun steps -> Plza_walk.Ladder_climb.run (talk_steps steps)) );
     ]

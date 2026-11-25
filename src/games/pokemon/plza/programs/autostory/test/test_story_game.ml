@@ -536,6 +536,37 @@ let start_check ?execution checkpoint screen () =
      | Error e -> Engine_run.Failure.cause_to_string e)
     :: C.lines c)
 
+(* 03.07's run to the gate on [screen]: its result and log. *)
+let gate_run ?(timeout_ms = 8000) screen () =
+  let c = C.create () in
+  let r =
+    Plza_walk.Gate_run.run
+      (Plza_story.Story_steps.walk_game_steps (C.steps c screen))
+      ~timeout_ms
+  in
+  String.concat "\n"
+    ((match r with
+     | Ok () -> Printf.sprintf "ok, %d run" (runs c)
+     | Error e -> Engine_run.Failure.cause_to_string e)
+    :: C.lines c)
+
+(* The gate's A prompt once the stick was held 4.3 s. *)
+let gate c =
+  match C.stick_reached c 4300 with
+  | None -> party c
+  | Some _ -> { (party c) with interact_prompt = true }
+
+(* A day/night change 2 s into the run: 1.5 s of nothing, then the bar; the
+   gate 4.3 s into the second run. *)
+let gate_after_night c =
+  match C.stick_reached c 2000 with
+  | None -> party c
+  | Some d when since c d < 1500.0 -> look c
+  | Some d -> (
+      match C.stick_reached c 6300 with
+      | Some g when g > d -> { (party c) with interact_prompt = true }
+      | _ -> party c)
+
 (* The run's skips, its moves and its end. *)
 let skips checkpoint screen =
   let r, c = outcome checkpoint screen in
@@ -1149,6 +1180,21 @@ let cases =
       "ok\n\
        [Checkpoint] 03.06: START CHECKED: the screen reads (minimap \
        03.06-start), its start is (minimap 03.06-start)";
+    case "03.07's run to the gate: B held to the A prompt" (gate_run gate)
+      "ok, 18 run\n[PLZA] run_to_gate: the gate's A prompt: reached the gate";
+    case "03.07's run to the gate, a day/night change: runs again"
+      (gate_run gate_after_night)
+      "ok, 26 run\n\
+       [PLZA] run_to_gate: a day/night change while running\n\
+       [PLZA] run_to_gate: the gate's A prompt: reached the gate";
+    case "03.07's run to the gate, no prompt: gate_not_reached" (gate_run party)
+      "gate_not_reached: no gate A prompt in 8000 ms of running";
+    case "03.07 is refused before it presses: its catches are not ported"
+      (fun () ->
+        let r, c = outcome "03.07" gate in
+        Printf.sprintf "%s; %d inputs" r (List.length c.C.inputs))
+      "03.07 event 3 (catch_fletchling): no handler for game action \
+       \"catch_tutorial\"; 0 inputs";
     case "the walk is walked before 03.03, run after"
       (fun () ->
         Printf.sprintf "%b %b"
