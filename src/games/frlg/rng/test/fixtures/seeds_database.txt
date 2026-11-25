@@ -1,0 +1,241 @@
+delays : 30473 30488 30504 30520 30537 30555 30572 30587 30603 30620 30637 30653 30672 30688 30705 30720 30737 30754 30770 30788 30804 30820 30838 30854 30871 30887 30903 30920 30937 30953 30970 30987 31003 31021 31038 31054 31073 31088 31104 31138 31153 31171 31186 31205 31221 31236 31253 31271 31286 31303 31321 31338 31353 31371 31387 31402 31419 31453 31470 31488 31503 31521 31536 31554 31571 31587 31603 31622 31638 31654 31672 31686 31703 31719 31737 31771 31788 31803 31820 31837 31855 31869 31885 31904 31919 31936 31955 31971 31986 32004 32022 32036 32053 32086 32104 32120 32137 32155 32171 32186 32203 32220 32238 32254 32272 32287 32303 32321 32338 32353 32371 32404 32421 32436 32453 32472 32487 32503 32521 32537 32554 32571 32587 32604 32621 32635 32655 32672 32690 32722 32738 32754 32771 32787 32804 32820 32838 32853 32871 32888 32904 32921 32937 32953 32970 32986 33001 33037 33053 33069 33088 33105 33121 33137 33154 33170 33187 33204 33221 33237 33254 33270 33288 33304 33321 33355 33370 33390 33405 33421 33437 33453 33470 33488 33504 33521 33537 33553 33572 33586 33603 33621 33638 33669 33688 33703 33721 33737 33754 33769 33786 33803 33821 33836 33855 33871 33888 33904 33921 33937 33955 33986 34004 34021 34039 34055 34070 34088 34104 34118 34136 34154 34170 34189 34203 34220 34237 34254 34270 34304 34320 34338 34353 34370 34387 34406 34419 34437 34454 34471 34488 34503 34521 34537 34554 34570 34586 34619 34637 34656 34669 34685 34704 34720 34737 34753 34771 34788 34805 34820 34837 34854 34870 34888 34904 34937 34954 34971 34986 35004 35020 35038 35054 35070 35088 35103 35120 35136 35154 35169 35187 35204 35220 35253 35271 35285 35304 35320 35338 35354 35369 35386 35403 35420 35436 35454 35471 35486 35503 35521 35537 35569 35588 35604 35623 35637 35654 35670 35687 35703
+column 0 : Mono / Help / A
+seeds 0 : 11C7 4064 95CA D4DE 1E1B 924D CF23 1702 5FD4 A91A EDDE 3C31 84D4 CE40 13AF 5C46 A2F2 5217 7D40 C657 0F3F 58AF A23D 051C 3027 7DD0 C78D 1181 5969 A301 09A5 391B D6AF 20CC 69E9 AFB3 ED64 3696 73F9 B694 FF59 4893 C893 F492 3DA9 8667 D000 199A 77A1 AABC 280C 70FE B573 02F2 8084 A533 ED1E 3595 7E92 C7B4 1168 5A4B A2C5 E5A7 22AC 6B9A B5E3 F98D 9C28 E665 2EC0 7899 B574 FEB4 2A5D 583D A149 E97C 9A27 CB4C 17F0 545B AD9B F39F 3DDD 89F7 1B38 5B1D A1B2 EB27 5650 9208 DA72 2702 6D10 A8BF FF9B 4D06 92F7 BF41 0C02 519F 9B16 1A9D 9B03 E475 2CEE 7604 9532 DA3C 27ED 5603 834C CAE4 13AE BB23 F61D 3F46 8925 D1B4 1B05 74EE 02FB 47A6 9621 DEB6 1C92 7ABE B1BC FB70 4428 8D5F D69B 2082 69B2 B261 F41F 3258 71E8 C458 7E94 C6E5 0FFA 5945 9770 ED56 2BC8 7449 9D17 E692 2F56 ABD7 C934 16D1 6084 A9E0 F1E3 3B8A D939 1BD2 58B6 A180 E013 284B 7170 BAB6 0019 4D36 966D E06B 28ED 7245 A02C CE94 1786 60F7 4E71 9AA3 E563 2B1C 5E24 B592 026F 47E4 8942 CAAC 102B 5A2D CA76 0630 4A80 A295 DD7D 27C8 BD05 0E2D 3B73 90CD C4D1 0C0D 68C5 9B87 E4C7 2E6B 7702 BFE5 090D 52D4 9B91 C3F2 BDB2 0611 4223 77D6 C0F0 0AD0 51CD 91B0 F5C3 24EE 6D39 B639 FF4A 447A 91C9 F3AC 22E8 6A85 B3DB FCFC 9BB5 E590 36B1 557B 87AC D076 62A4 8D1C DADA 2474 6DB6 B6E2 FEF4 63A6 91DA DAE6 2434 6D4E 3571 5AF7 A3F7 E8F0 29FD 72C2 BD76 055C 4DDD 90B3 CDC8 16A6 5FC4 A92F F25F 3B91 856D CE11 6CE0 B592 FF23 2828 4ADF 93D2 DD2E 88B7 BF3F 0AC1 534B 9CA9 E607 2FDF 6D97 C1B7 0383 41C5 DE77 56C0 84CB CDDA 0A6B 53E4 9D78 E459 2CBF 75ED A0B5 EE95 3762 8093 01CB 3825
+column 1 : Mono / Help / START
+seeds 1 : 11BF 405C 95C2 D4D6 1E13 9245 CF1B 16FA 5FCC A91C EDD1 3C29 84D0 CE3F 13A7 5C3E A2EA 521A 7D40 C648 0F37 58AD A241 0506 301D 7DCF C78E 117A 596A A2F9 0999 3913 D6B5 20C4 69E1 AFB4 ED5C 3694 73F8 B68C FF53 4893 C88B F481 3D97 865F D002 1992 778B AAB5 2804 70F6 B579 02EA 807B A532 ED1F 3589 7E8A C7AC 1158 5A45 A2B9 E59F 22AA 6B92 B5E3 F97B 9C2E E65D 2EAF 789B B56C FEA4 2A55 5824 A142 E968 9A1F CB3D 17E0 544B ADA3 F397 3DCC 89E7 1B30 5B07 A1AA EB15 5647 91F7 DA6A 26F1 6CFD A8B9 FF8A 4D04 92E6 BF2B 0C05 5197 9B0E 1A8B 9AFB E46D 2CDB 75F6 9520 DA2B 27D5 55F4 8344 CADB 13A6 BB25 F61D 3F36 891D D1AC 1AF4 74ED 02F3 4797 9619 DEAA 1C8A 7AB6 B1BC FB68 4426 8D61 D693 2073 69A3 B24F F421 3250 71E0 C450 7E8C C6D0 0FF9 593D 975F ED45 2BB9 7441 9D08 E67C 2F45 ABC6 C92C 16C9 6075 A9D8 F1D3 3B90 D931 1BBF 58A7 A181 E00B 284A 7168 BAA7 0011 4D2E 9673 E071 28EE 723D A02C CE87 177E 60E5 4E5F 9A93 E55B 2B14 5E1D B58A 0267 47E3 8939 CA94 1019 5A1C CA66 061C 4A78 A28D DD75 27CA BCFD 0E25 3B6B 90C3 C4BB 0C05 68BB 9B6E E4B7 2E63 76FA BFDD 0905 52CC 9B98 C3E9 BDA4 0612 4217 77D5 C0E8 0AD6 51C5 91AD F5BB 24ED 6D39 B62F FF38 4474 91B9 F3AD 22D9 6A7D B3D3 FCF3 9BAD E588 36B2 5573 87AB D06E 629D 8D1D DAD1 2467 6DB0 B6DB FEF4 63A9 91D4 DADB 242E 6D44 3569 5AF1 A3EF E8E8 29EB 72AC BD6E 0554 4DD4 90B3 CDC0 1690 5FBC A91D F257 3B90 855D CE02 6CCE B58A FF29 2820 4ACD 93C2 DD2A 88AF BF3E 0AB9 5343 9CAD E5FF 2FD7 6D8F C1B1 037D 41BD DE6E 56C2 84C2 CDE2 0A5D 53E6 9D62 E44B 2CB1 75D8 A0B6 EE8D 375B 8081 01CD 381B
+column 2 : Stereo / Help / A
+seeds 2 : 11C7 4096 95C1 D4DE 1E34 924D CF34 170B 5FD4 A91A EDDE 3C51 84E2 CE40 13AF 5C6D A2F2 5250 7D7C C687 0F34 58E8 A277 0558 3063 7E11 C7C6 11BF 59AC A33D 09DC 3956 D6B3 210A 6A19 AFB3 ED64 3696 73F9 B694 FF59 4893 C8CD F4BD 3DDB 8670 D03B 19D5 77A3 AAC4 280C 70FE B573 02F2 80BD A5AF ED62 35B0 7EB3 C7D3 1178 5A64 A2C4 E5C6 22AC 6B9B B60B F98C 9C2E E685 2EC0 78B9 B56D FEAC 2A5D 5857 A164 E97C 9A41 CB4C 17F0 546E ADAA F396 3DEF 89F8 1B40 5B12 A1B2 EB27 566B 9228 DA6B 2702 6D10 A8BF FF9B 4D1E 9318 BF41 0C02 51A7 9B16 1AD5 9B34 E49F 2D0F 761D 9549 DA4D 27FE 5603 836C CAEF 13AE BB23 F625 3F3E 8939 D1BE 1B01 750F 02FB 47A6 9639 DEB6 1CAB 7AC1 B1BC FB91 4428 8D5F D69B 209B 69D3 B257 F427 3258 71E8 C458 7EAA C6D6 0FF3 5945 9770 ED6F 2BE9 7453 9D17 E692 2F56 AC11 C966 1703 60D1 AA33 F204 3BB3 D943 1BE9 58BF A180 E03B 2852 7169 BAB6 0034 4D3D 966D E08B 28F5 7248 A046 CE8F 1786 6111 4E71 9AC3 E55D 2B1C 5E24 B59E 028A 47E4 8942 CAAC 102B 5A46 CA68 0661 4A80 A2D1 DDBF 2803 BD3F 0E6D 3B73 9141 C502 0C0D 6905 9BB1 E4F9 2EAC 7721 BFF7 092D 52ED 9BB8 C3F1 BDD2 0611 4224 77D6 C0F0 0AF0 5208 91F5 F607 252F 6D67 B64C FF69 449F 91E1 F3B5 2307 6A85 B3E1 FCFC 9BB5 E5B3 36F8 55AA 87E6 D0B2 62BC 8D3E DAF9 2486 6DDA B709 FEF4 63A6 91D4 DAE6 242E 6D40 35B0 5B30 A42A E92A 2A11 72D3 BDB8 0578 4DDD 90D3 CDC8 16A6 5FC4 A925 F25F 3B91 8587 CE13 6CFD B592 FF31 2841 4ADF 93D2 DD4B 88A9 BF3F 0AE9 5345 9CB5 E607 2FF7 6DBC C1B9 0383 41C5 DE90 56F9 8508 CE1C 0A5D 5426 9DB5 E459 2CBF 75ED A0B5 EE95 3762 8093 0206 3855
+find_seed 0000 0 0 : none
+find_seed 0000 0 3 : none
+find_seed 0000 0 10 : none
+find_seed 0000 1 0 : none
+find_seed 0000 1 3 : none
+find_seed 0000 1 10 : none
+find_seed 0024 0 0 : none
+find_seed 0024 0 3 : none
+find_seed 0024 0 10 : none
+find_seed 0024 1 0 : none
+find_seed 0024 1 3 : none
+find_seed 0024 1 10 : none
+find_seed ffff 0 0 : none
+find_seed ffff 0 3 : none
+find_seed ffff 0 10 : none
+find_seed ffff 1 0 : none
+find_seed ffff 1 3 : none
+find_seed ffff 1 10 : none
+find_seed 11c7 0 0 : 0 30473 0 0 0 Help | 11c7 | Mono / Help / A
+find_seed 11c7 0 3 : 0 30473 0 0 0 Help | 11c7 4064 95ca d4de | Mono / Help / A
+find_seed 11c7 0 10 : 0 30473 0 0 0 Help | 11c7 4064 95ca d4de 1e1b 924d cf23 1702 5fd4 a91a edde | Mono / Help / A
+find_seed 11c7 1 0 : 0 30473 0 0 1 Help | 11c7 | Stereo / Help / A
+find_seed 11c7 1 3 : 0 30473 0 0 1 Help | 11c7 4096 95c1 d4de | Stereo / Help / A
+find_seed 11c7 1 10 : 0 30473 0 0 1 Help | 11c7 4096 95c1 d4de 1e34 924d cf34 170b 5fd4 a91a edde | Stereo / Help / A
+find_seed 11a3 0 0 : 0 30473 0 1 0 Help | 11a3 | Mono / Help / A
+find_seed 11a3 0 3 : 0 30473 0 1 0 Help | 11a3 4040 95a6 d4ba | Mono / Help / A
+find_seed 11a3 0 10 : 0 30473 0 1 0 Help | 11a3 4040 95a6 d4ba 1df7 9229 ceff 16de 5fb0 a8f6 edba | Mono / Help / A
+find_seed 11a3 1 0 : 0 30473 0 1 1 Help | 11a3 | Stereo / Help / A
+find_seed 11a3 1 3 : 0 30473 0 1 1 Help | 11a3 4072 959d d4ba | Stereo / Help / A
+find_seed 11a3 1 10 : 0 30473 0 1 1 Help | 11a3 4072 959d d4ba 1e10 9229 cf10 16e7 5fb0 a8f6 edba | Stereo / Help / A
+find_seed 4064 0 0 : 0 30488 0 0 0 Help | 4064 | Mono / Help / A
+find_seed 4064 0 3 : 1 30488 0 0 0 Help | 11c7 4064 95ca d4de 1e1b | Mono / Help / A
+find_seed 4064 0 10 : 1 30488 0 0 0 Help | 11c7 4064 95ca d4de 1e1b 924d cf23 1702 5fd4 a91a edde 3c31 | Mono / Help / A
+find_seed 4064 1 0 : none
+find_seed 4064 1 3 : none
+find_seed 4064 1 10 : none
+find_seed 4040 0 0 : 0 30488 0 1 0 Help | 4040 | Mono / Help / A
+find_seed 4040 0 3 : 1 30488 0 1 0 Help | 11a3 4040 95a6 d4ba 1df7 | Mono / Help / A
+find_seed 4040 0 10 : 1 30488 0 1 0 Help | 11a3 4040 95a6 d4ba 1df7 9229 ceff 16de 5fb0 a8f6 edba 3c0d | Mono / Help / A
+find_seed 4040 1 0 : none
+find_seed 4040 1 3 : none
+find_seed 4040 1 10 : none
+find_seed 1702 0 0 : 0 30587 0 0 0 Help | 1702 | Mono / Help / A
+find_seed 1702 0 3 : 3 30587 0 0 0 Help | 1e1b 924d cf23 1702 5fd4 a91a edde | Mono / Help / A
+find_seed 1702 0 10 : 7 30587 0 0 0 Help | 11c7 4064 95ca d4de 1e1b 924d cf23 1702 5fd4 a91a edde 3c31 84d4 ce40 13af 5c46 a2f2 5217 | Mono / Help / A
+find_seed 1702 1 0 : none
+find_seed 1702 1 3 : none
+find_seed 1702 1 10 : none
+find_seed 16de 0 0 : 0 30587 0 1 0 Help | 16de | Mono / Help / A
+find_seed 16de 0 3 : 3 30587 0 1 0 Help | 1df7 9229 ceff 16de 5fb0 a8f6 edba | Mono / Help / A
+find_seed 16de 0 10 : 7 30587 0 1 0 Help | 11a3 4040 95a6 d4ba 1df7 9229 ceff 16de 5fb0 a8f6 edba 3c0d 84b0 ce1c 138b 5c22 a2ce 51f3 | Mono / Help / A
+find_seed 16de 1 0 : none
+find_seed 16de 1 3 : none
+find_seed 16de 1 10 : none
+find_seed 2f56 0 0 : 0 33088 0 0 0 Help | 2f56 | Mono / Help / A
+find_seed 2f56 0 3 : 3 33088 0 0 0 Help | 7449 9d17 e692 2f56 abd7 c934 16d1 | Mono / Help / A
+find_seed 2f56 0 10 : 10 33088 0 0 0 Help | 7e94 c6e5 0ffa 5945 9770 ed56 2bc8 7449 9d17 e692 2f56 abd7 c934 16d1 6084 a9e0 f1e3 3b8a d939 1bd2 58b6 | Mono / Help / A
+find_seed 2f56 1 0 : 0 33088 0 0 1 Help | 2f56 | Stereo / Help / A
+find_seed 2f56 1 3 : 3 33088 0 0 1 Help | 7453 9d17 e692 2f56 ac11 c966 1703 | Stereo / Help / A
+find_seed 2f56 1 10 : 10 33088 0 0 1 Help | 7eaa c6d6 0ff3 5945 9770 ed6f 2be9 7453 9d17 e692 2f56 ac11 c966 1703 60d1 aa33 f204 3bb3 d943 1be9 58bf | Stereo / Help / A
+find_seed 2f32 0 0 : 0 33088 0 1 0 Help | 2f32 | Mono / Help / A
+find_seed 2f32 0 3 : 3 33088 0 1 0 Help | 7425 9cf3 e66e 2f32 abb3 c910 16ad | Mono / Help / A
+find_seed 2f32 0 10 : 10 33088 0 1 0 Help | 7e70 c6c1 0fd6 5921 974c ed32 2ba4 7425 9cf3 e66e 2f32 abb3 c910 16ad 6060 a9bc f1bf 3b66 d915 1bae 5892 | Mono / Help / A
+find_seed 2f32 1 0 : 0 33088 0 1 1 Help | 2f32 | Stereo / Help / A
+find_seed 2f32 1 3 : 3 33088 0 1 1 Help | 742f 9cf3 e66e 2f32 abed c942 16df | Stereo / Help / A
+find_seed 2f32 1 10 : 10 33088 0 1 1 Help | 7e86 c6b2 0fcf 5921 974c ed4b 2bc5 742f 9cf3 e66e 2f32 abed c942 16df 60ad aa0f f1e0 3b8f d91f 1bc5 589b | Stereo / Help / A
+find_seed 01cb 0 0 : 0 35687 0 0 0 Help | 01cb | Mono / Help / A
+find_seed 01cb 0 3 : 3 35687 0 0 0 Help | ee95 3762 8093 01cb 3825 | Mono / Help / A
+find_seed 01cb 0 10 : 10 35687 0 0 0 Help | 0a6b 53e4 9d78 e459 2cbf 75ed a0b5 ee95 3762 8093 01cb 3825 | Mono / Help / A
+find_seed 01cb 1 0 : none
+find_seed 01cb 1 3 : none
+find_seed 01cb 1 10 : none
+find_seed 01a7 0 0 : 0 35687 0 1 0 Help | 01a7 | Mono / Help / A
+find_seed 01a7 0 3 : 3 35687 0 1 0 Help | ee71 373e 806f 01a7 3801 | Mono / Help / A
+find_seed 01a7 0 10 : 10 35687 0 1 0 Help | 0a47 53c0 9d54 e435 2c9b 75c9 a091 ee71 373e 806f 01a7 3801 | Mono / Help / A
+find_seed 01a7 1 0 : none
+find_seed 01a7 1 3 : none
+find_seed 01a7 1 10 : none
+find_seed 3825 0 0 : 0 35703 0 0 0 Help | 3825 | Mono / Help / A
+find_seed 3825 0 3 : 3 35703 0 0 0 Help | 3762 8093 01cb 3825 | Mono / Help / A
+find_seed 3825 0 10 : 10 35703 0 0 0 Help | 53e4 9d78 e459 2cbf 75ed a0b5 ee95 3762 8093 01cb 3825 | Mono / Help / A
+find_seed 3825 1 0 : none
+find_seed 3825 1 3 : none
+find_seed 3825 1 10 : none
+find_seed 3801 0 0 : 0 35703 0 1 0 Help | 3801 | Mono / Help / A
+find_seed 3801 0 3 : 3 35703 0 1 0 Help | 373e 806f 01a7 3801 | Mono / Help / A
+find_seed 3801 0 10 : 10 35703 0 1 0 Help | 53c0 9d54 e435 2c9b 75c9 a091 ee71 373e 806f 01a7 3801 | Mono / Help / A
+find_seed 3801 1 0 : none
+find_seed 3801 1 3 : none
+find_seed 3801 1 10 : none
+find_seed 11bf 0 0 : 0 30473 1 0 0 Help | 11bf | Mono / Help / START
+find_seed 11bf 0 3 : 0 30473 1 0 0 Help | 11bf 405c 95c2 d4d6 | Mono / Help / START
+find_seed 11bf 0 10 : 0 30473 1 0 0 Help | 11bf 405c 95c2 d4d6 1e13 9245 cf1b 16fa 5fcc a91c edd1 | Mono / Help / START
+find_seed 11bf 1 0 : 0 30920 0 0 1 Help | 11bf | Stereo / Help / A
+find_seed 11bf 1 3 : 3 30920 0 0 1 Help | 3063 7e11 c7c6 11bf 59ac a33d 09dc | Stereo / Help / A
+find_seed 11bf 1 10 : 10 30920 0 0 1 Help | 5250 7d7c c687 0f34 58e8 a277 0558 3063 7e11 c7c6 11bf 59ac a33d 09dc 3956 d6b3 210a 6a19 afb3 ed64 3696 | Stereo / Help / A
+find_seed 119b 0 0 : 0 30473 1 1 0 Help | 119b | Mono / Help / START
+find_seed 119b 0 3 : 0 30473 1 1 0 Help | 119b 4038 959e d4b2 | Mono / Help / START
+find_seed 119b 0 10 : 0 30473 1 1 0 Help | 119b 4038 959e d4b2 1def 9221 cef7 16d6 5fa8 a8f8 edad | Mono / Help / START
+find_seed 119b 1 0 : 0 30920 0 1 1 Help | 119b | Stereo / Help / A
+find_seed 119b 1 3 : 3 30920 0 1 1 Help | 303f 7ded c7a2 119b 5988 a319 09b8 | Stereo / Help / A
+find_seed 119b 1 10 : 10 30920 0 1 1 Help | 522c 7d58 c663 0f10 58c4 a253 0534 303f 7ded c7a2 119b 5988 a319 09b8 3932 d68f 20e6 69f5 af8f ed40 3672 | Stereo / Help / A
+find_seed 405c 0 0 : 0 30488 1 0 0 Help | 405c | Mono / Help / START
+find_seed 405c 0 3 : 1 30488 1 0 0 Help | 11bf 405c 95c2 d4d6 1e13 | Mono / Help / START
+find_seed 405c 0 10 : 1 30488 1 0 0 Help | 11bf 405c 95c2 d4d6 1e13 9245 cf1b 16fa 5fcc a91c edd1 3c29 | Mono / Help / START
+find_seed 405c 1 0 : none
+find_seed 405c 1 3 : none
+find_seed 405c 1 10 : none
+find_seed 4038 0 0 : 0 30488 1 1 0 Help | 4038 | Mono / Help / START
+find_seed 4038 0 3 : 1 30488 1 1 0 Help | 119b 4038 959e d4b2 1def | Mono / Help / START
+find_seed 4038 0 10 : 1 30488 1 1 0 Help | 119b 4038 959e d4b2 1def 9221 cef7 16d6 5fa8 a8f8 edad 3c05 | Mono / Help / START
+find_seed 4038 1 0 : none
+find_seed 4038 1 3 : none
+find_seed 4038 1 10 : none
+find_seed 16fa 0 0 : 0 30587 1 0 0 Help | 16fa | Mono / Help / START
+find_seed 16fa 0 3 : 3 30587 1 0 0 Help | 1e13 9245 cf1b 16fa 5fcc a91c edd1 | Mono / Help / START
+find_seed 16fa 0 10 : 7 30587 1 0 0 Help | 11bf 405c 95c2 d4d6 1e13 9245 cf1b 16fa 5fcc a91c edd1 3c29 84d0 ce3f 13a7 5c3e a2ea 521a | Mono / Help / START
+find_seed 16fa 1 0 : none
+find_seed 16fa 1 3 : none
+find_seed 16fa 1 10 : none
+find_seed 16d6 0 0 : 0 30587 1 1 0 Help | 16d6 | Mono / Help / START
+find_seed 16d6 0 3 : 3 30587 1 1 0 Help | 1def 9221 cef7 16d6 5fa8 a8f8 edad | Mono / Help / START
+find_seed 16d6 0 10 : 7 30587 1 1 0 Help | 119b 4038 959e d4b2 1def 9221 cef7 16d6 5fa8 a8f8 edad 3c05 84ac ce1b 1383 5c1a a2c6 51f6 | Mono / Help / START
+find_seed 16d6 1 0 : none
+find_seed 16d6 1 3 : none
+find_seed 16d6 1 10 : none
+find_seed 2f45 0 0 : 0 33088 1 0 0 Help | 2f45 | Mono / Help / START
+find_seed 2f45 0 3 : 3 33088 1 0 0 Help | 7441 9d08 e67c 2f45 abc6 c92c 16c9 | Mono / Help / START
+find_seed 2f45 0 10 : 10 33088 1 0 0 Help | 7e8c c6d0 0ff9 593d 975f ed45 2bb9 7441 9d08 e67c 2f45 abc6 c92c 16c9 6075 a9d8 f1d3 3b90 d931 1bbf 58a7 | Mono / Help / START
+find_seed 2f45 1 0 : none
+find_seed 2f45 1 3 : none
+find_seed 2f45 1 10 : none
+find_seed 2f21 0 0 : 0 33088 1 1 0 Help | 2f21 | Mono / Help / START
+find_seed 2f21 0 3 : 3 33088 1 1 0 Help | 741d 9ce4 e658 2f21 aba2 c908 16a5 | Mono / Help / START
+find_seed 2f21 0 10 : 10 33088 1 1 0 Help | 7e68 c6ac 0fd5 5919 973b ed21 2b95 741d 9ce4 e658 2f21 aba2 c908 16a5 6051 a9b4 f1af 3b6c d90d 1b9b 5883 | Mono / Help / START
+find_seed 2f21 1 0 : none
+find_seed 2f21 1 3 : none
+find_seed 2f21 1 10 : none
+find_seed 01cd 0 0 : 0 35687 1 0 0 Help | 01cd | Mono / Help / START
+find_seed 01cd 0 3 : 3 35687 1 0 0 Help | ee8d 375b 8081 01cd 381b | Mono / Help / START
+find_seed 01cd 0 10 : 10 35687 1 0 0 Help | 0a5d 53e6 9d62 e44b 2cb1 75d8 a0b6 ee8d 375b 8081 01cd 381b | Mono / Help / START
+find_seed 01cd 1 0 : none
+find_seed 01cd 1 3 : none
+find_seed 01cd 1 10 : none
+find_seed 01a9 0 0 : 0 35687 1 1 0 Help | 01a9 | Mono / Help / START
+find_seed 01a9 0 3 : 3 35687 1 1 0 Help | ee69 3737 805d 01a9 37f7 | Mono / Help / START
+find_seed 01a9 0 10 : 10 35687 1 1 0 Help | 0a39 53c2 9d3e e427 2c8d 75b4 a092 ee69 3737 805d 01a9 37f7 | Mono / Help / START
+find_seed 01a9 1 0 : none
+find_seed 01a9 1 3 : none
+find_seed 01a9 1 10 : none
+find_seed 381b 0 0 : 0 35703 1 0 0 Help | 381b | Mono / Help / START
+find_seed 381b 0 3 : 3 35703 1 0 0 Help | 375b 8081 01cd 381b | Mono / Help / START
+find_seed 381b 0 10 : 10 35703 1 0 0 Help | 53e6 9d62 e44b 2cb1 75d8 a0b6 ee8d 375b 8081 01cd 381b | Mono / Help / START
+find_seed 381b 1 0 : none
+find_seed 381b 1 3 : none
+find_seed 381b 1 10 : none
+find_seed 37f7 0 0 : 0 35703 1 1 0 Help | 37f7 | Mono / Help / START
+find_seed 37f7 0 3 : 3 35703 1 1 0 Help | 3737 805d 01a9 37f7 | Mono / Help / START
+find_seed 37f7 0 10 : 10 35703 1 1 0 Help | 53c2 9d3e e427 2c8d 75b4 a092 ee69 3737 805d 01a9 37f7 | Mono / Help / START
+find_seed 37f7 1 0 : none
+find_seed 37f7 1 3 : none
+find_seed 37f7 1 10 : none
+find_seed 11c7 0 0 : 0 30473 0 0 0 Help | 11c7 | Mono / Help / A
+find_seed 11c7 0 3 : 0 30473 0 0 0 Help | 11c7 4064 95ca d4de | Mono / Help / A
+find_seed 11c7 0 10 : 0 30473 0 0 0 Help | 11c7 4064 95ca d4de 1e1b 924d cf23 1702 5fd4 a91a edde | Mono / Help / A
+find_seed 11c7 1 0 : 0 30473 0 0 1 Help | 11c7 | Stereo / Help / A
+find_seed 11c7 1 3 : 0 30473 0 0 1 Help | 11c7 4096 95c1 d4de | Stereo / Help / A
+find_seed 11c7 1 10 : 0 30473 0 0 1 Help | 11c7 4096 95c1 d4de 1e34 924d cf34 170b 5fd4 a91a edde | Stereo / Help / A
+find_seed 11a3 0 0 : 0 30473 0 1 0 Help | 11a3 | Mono / Help / A
+find_seed 11a3 0 3 : 0 30473 0 1 0 Help | 11a3 4040 95a6 d4ba | Mono / Help / A
+find_seed 11a3 0 10 : 0 30473 0 1 0 Help | 11a3 4040 95a6 d4ba 1df7 9229 ceff 16de 5fb0 a8f6 edba | Mono / Help / A
+find_seed 11a3 1 0 : 0 30473 0 1 1 Help | 11a3 | Stereo / Help / A
+find_seed 11a3 1 3 : 0 30473 0 1 1 Help | 11a3 4072 959d d4ba | Stereo / Help / A
+find_seed 11a3 1 10 : 0 30473 0 1 1 Help | 11a3 4072 959d d4ba 1e10 9229 cf10 16e7 5fb0 a8f6 edba | Stereo / Help / A
+find_seed 4096 0 0 : none
+find_seed 4096 0 3 : none
+find_seed 4096 0 10 : none
+find_seed 4096 1 0 : 0 30488 0 0 1 Help | 4096 | Stereo / Help / A
+find_seed 4096 1 3 : 1 30488 0 0 1 Help | 11c7 4096 95c1 d4de 1e34 | Stereo / Help / A
+find_seed 4096 1 10 : 1 30488 0 0 1 Help | 11c7 4096 95c1 d4de 1e34 924d cf34 170b 5fd4 a91a edde 3c51 | Stereo / Help / A
+find_seed 4072 0 0 : none
+find_seed 4072 0 3 : none
+find_seed 4072 0 10 : none
+find_seed 4072 1 0 : 0 30488 0 1 1 Help | 4072 | Stereo / Help / A
+find_seed 4072 1 3 : 1 30488 0 1 1 Help | 11a3 4072 959d d4ba 1e10 | Stereo / Help / A
+find_seed 4072 1 10 : 1 30488 0 1 1 Help | 11a3 4072 959d d4ba 1e10 9229 cf10 16e7 5fb0 a8f6 edba 3c2d | Stereo / Help / A
+find_seed 170b 0 0 : none
+find_seed 170b 0 3 : none
+find_seed 170b 0 10 : none
+find_seed 170b 1 0 : 0 30587 0 0 1 Help | 170b | Stereo / Help / A
+find_seed 170b 1 3 : 3 30587 0 0 1 Help | 1e34 924d cf34 170b 5fd4 a91a edde | Stereo / Help / A
+find_seed 170b 1 10 : 7 30587 0 0 1 Help | 11c7 4096 95c1 d4de 1e34 924d cf34 170b 5fd4 a91a edde 3c51 84e2 ce40 13af 5c6d a2f2 5250 | Stereo / Help / A
+find_seed 16e7 0 0 : none
+find_seed 16e7 0 3 : none
+find_seed 16e7 0 10 : none
+find_seed 16e7 1 0 : 0 30587 0 1 1 Help | 16e7 | Stereo / Help / A
+find_seed 16e7 1 3 : 3 30587 0 1 1 Help | 1e10 9229 cf10 16e7 5fb0 a8f6 edba | Stereo / Help / A
+find_seed 16e7 1 10 : 7 30587 0 1 1 Help | 11a3 4072 959d d4ba 1e10 9229 cf10 16e7 5fb0 a8f6 edba 3c2d 84be ce1c 138b 5c49 a2ce 522c | Stereo / Help / A
+find_seed 2f56 0 0 : 0 33088 0 0 0 Help | 2f56 | Mono / Help / A
+find_seed 2f56 0 3 : 3 33088 0 0 0 Help | 7449 9d17 e692 2f56 abd7 c934 16d1 | Mono / Help / A
+find_seed 2f56 0 10 : 10 33088 0 0 0 Help | 7e94 c6e5 0ffa 5945 9770 ed56 2bc8 7449 9d17 e692 2f56 abd7 c934 16d1 6084 a9e0 f1e3 3b8a d939 1bd2 58b6 | Mono / Help / A
+find_seed 2f56 1 0 : 0 33088 0 0 1 Help | 2f56 | Stereo / Help / A
+find_seed 2f56 1 3 : 3 33088 0 0 1 Help | 7453 9d17 e692 2f56 ac11 c966 1703 | Stereo / Help / A
+find_seed 2f56 1 10 : 10 33088 0 0 1 Help | 7eaa c6d6 0ff3 5945 9770 ed6f 2be9 7453 9d17 e692 2f56 ac11 c966 1703 60d1 aa33 f204 3bb3 d943 1be9 58bf | Stereo / Help / A
+find_seed 2f32 0 0 : 0 33088 0 1 0 Help | 2f32 | Mono / Help / A
+find_seed 2f32 0 3 : 3 33088 0 1 0 Help | 7425 9cf3 e66e 2f32 abb3 c910 16ad | Mono / Help / A
+find_seed 2f32 0 10 : 10 33088 0 1 0 Help | 7e70 c6c1 0fd6 5921 974c ed32 2ba4 7425 9cf3 e66e 2f32 abb3 c910 16ad 6060 a9bc f1bf 3b66 d915 1bae 5892 | Mono / Help / A
+find_seed 2f32 1 0 : 0 33088 0 1 1 Help | 2f32 | Stereo / Help / A
+find_seed 2f32 1 3 : 3 33088 0 1 1 Help | 742f 9cf3 e66e 2f32 abed c942 16df | Stereo / Help / A
+find_seed 2f32 1 10 : 10 33088 0 1 1 Help | 7e86 c6b2 0fcf 5921 974c ed4b 2bc5 742f 9cf3 e66e 2f32 abed c942 16df 60ad aa0f f1e0 3b8f d91f 1bc5 589b | Stereo / Help / A
+find_seed 0206 0 0 : none
+find_seed 0206 0 3 : none
+find_seed 0206 0 10 : none
+find_seed 0206 1 0 : 0 35687 0 0 1 Help | 0206 | Stereo / Help / A
+find_seed 0206 1 3 : 3 35687 0 0 1 Help | ee95 3762 8093 0206 3855 | Stereo / Help / A
+find_seed 0206 1 10 : 10 35687 0 0 1 Help | 0a5d 5426 9db5 e459 2cbf 75ed a0b5 ee95 3762 8093 0206 3855 | Stereo / Help / A
+find_seed 01e2 0 0 : none
+find_seed 01e2 0 3 : none
+find_seed 01e2 0 10 : none
+find_seed 01e2 1 0 : 0 35687 0 1 1 Help | 01e2 | Stereo / Help / A
+find_seed 01e2 1 3 : 3 35687 0 1 1 Help | ee71 373e 806f 01e2 3831 | Stereo / Help / A
+find_seed 01e2 1 10 : 10 35687 0 1 1 Help | 0a39 5402 9d91 e435 2c9b 75c9 a091 ee71 373e 806f 01e2 3831 | Stereo / Help / A
+find_seed 3855 0 0 : none
+find_seed 3855 0 3 : none
+find_seed 3855 0 10 : none
+find_seed 3855 1 0 : 0 35703 0 0 1 Help | 3855 | Stereo / Help / A
+find_seed 3855 1 3 : 3 35703 0 0 1 Help | 3762 8093 0206 3855 | Stereo / Help / A
+find_seed 3855 1 10 : 10 35703 0 0 1 Help | 5426 9db5 e459 2cbf 75ed a0b5 ee95 3762 8093 0206 3855 | Stereo / Help / A
+find_seed 3831 0 0 : none
+find_seed 3831 0 3 : none
+find_seed 3831 0 10 : none
+find_seed 3831 1 0 : 0 35703 0 1 1 Help | 3831 | Stereo / Help / A
+find_seed 3831 1 3 : 3 35703 0 1 1 Help | 373e 806f 01e2 3831 | Stereo / Help / A
+find_seed 3831 1 10 : 10 35703 0 1 1 Help | 5402 9d91 e435 2c9b 75c9 a091 ee71 373e 806f 01e2 3831 | Stereo / Help / A
