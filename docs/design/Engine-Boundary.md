@@ -98,7 +98,7 @@ game's own event kinds, what a checkpoint promises) and the code that reads, pri
 
 ```
 src/base/json_field/         Json_field, moved from Grid_maps; its grid readers stay as Grid_maps.Grid_field
-src/base/repo_files/         library repo_io: Repo_files, Json_file, moved from games/frlg
+src/base/repo_io/            library repo_io: Repo_files, Json_file, moved from games/frlg
 src/engine/checkpoints/
   terms/                     GAME_TERMS: the signature a game fills (below)
   plan/                      Make: event, checkpoint, plan skeleton, decode skeleton, Count, Money
@@ -298,7 +298,7 @@ the groups run in parallel inside, in order between.
 
 | # | PR | S | After |
 |---|---|---|---|
-| 1 | `Json_field` to `src/base/json_field`; `Repo_files`, `Json_file` to `src/base/repo_files`. Moves only | S | |
+| 1 | `Json_field` to `src/base/json_field`; `Repo_files`, `Json_file` to `src/base/repo_io`. Moves only | S | |
 | 2 | The `engine` layer and game families in the lint config; `src/engine/checkpoints/expand` gets the four agnostic expand modules; `series` gets `Chain_progress`, `Checkpoint_order`, `Round_trials`; `run` gets `Checkpoint_trials`, `Event_progress`. Moves only | S | 1 |
 | 3 | `Promise`: the agnostic half of `Postcondition_check` | S | 1 (parallel with 2) |
 | 4 | `GAME_TERMS` and `Engine_checkpoints.Make`; `Pokemon_terms`; the rest of `plan` and `run` moved; a toy-game test with zones. Golden test: every plan in the repo prints the same `Plan_text` before and after | S | 2, 3 |

@@ -1,11 +1,12 @@
-(** Reading typed fields of a map file's JSON, naming the field in errors.
+(** Reading typed fields of a JSON object, naming the field in errors.
 
     Every reader takes [where], the file and the path to the object being read,
     written as a prefix the field name follows: ["Test.json: "] for the top
     level, ["Test.json: warps[2]."] inside a list item. A field that is missing
     or of the wrong type raises {!Invalid} with a message such as
-    ["Test.json: warps[2].x is missing."]. The map readers raise it and
-    {!Map_data.parse} turns it into an [Error]. *)
+    ["Test.json: warps[2].x is missing."]. A caller's decoder turns it into an
+    [Error] (the grid's map reader does). Readers of grid types are in
+    [Grid_maps.Grid_field]. *)
 
 exception Invalid of string
 
