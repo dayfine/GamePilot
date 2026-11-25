@@ -18,7 +18,7 @@
 
 let ( let* ) = Result.bind
 
-type flags = {
+type flags = Pokemon_flags.checkpoint_flags = {
   state : string option;
   port : int;
   log_file : string option;
@@ -36,17 +36,7 @@ let usage =
   \      [--grind-battles N]\n\
   \  gamepilot replay checkpoint WIRELOG PLAN.json [same flags]\n"
 
-let defaults =
-  {
-    state = None;
-    port = Live.default_port;
-    log_file = None;
-    party = "";
-    center = None;
-    walk = false;
-    end_check_only = false;
-    grind_cap = None;
-  }
+let defaults = Pokemon_flags.checkpoint_defaults
 
 let rec parse flags = function
   | [] -> Ok flags
@@ -140,14 +130,15 @@ let label plan_file =
     ~default:(Filename.remove_extension base)
 
 (* On the daemon at --port, in a run folder of its own (Attached_run): its
-   story log unless --log names another. *)
-let live plan_file args =
+   story log unless --log names another. [program_fields]: run.json's program
+   fields for a plan folder. *)
+let live ~program_fields plan_file args =
   let* runs_dir, args = Attached_run.runs_dir_flag args in
   let* flags = parse defaults args in
   let id = label plan_file in
   let run =
     Attached_run.start ~runs_dir ~kind:Checkpoint
-      ~program:(Program_registry.of_plan_dir (Filename.dirname plan_file))
+      ~program:(program_fields (Filename.dirname plan_file))
       ~label:id ~mode:"single"
   in
   let log_file =
