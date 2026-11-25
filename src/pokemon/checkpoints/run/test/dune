@@ -19,7 +19,7 @@
   gamepilot.table_test
   yojson
   gamepilot.grid_maps
-  gamepilot.checkpoints_plan
+  gamepilot.pokemon_checkpoints
   gamepilot.engine_run
   gamepilot.checkpoints_run
   plan_files))

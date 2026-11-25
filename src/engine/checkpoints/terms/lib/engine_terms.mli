@@ -10,6 +10,7 @@
     (["f: checkpoint.events[2].args."]), as {!Json_field} readers do, and return
     an [Error] naming the field. *)
 
+(** The terms a game family gives the engine. *)
 module type GAME_TERMS = sig
   type pose
   (** Where a plan says the player stands: a checkpoint's [start], an event's

@@ -22,7 +22,7 @@ type flags = {
   max_rounds : int option;  (** A repeating checkpoint's rounds, at most. *)
   from_event : string option;
       (** mGBA, testing: run from this event's kept state
-          (Checkpoints_run.Event_range). *)
+          (Engine_run.Event_range). *)
   to_event : string option;  (** ... to this event (else the last). *)
   common : Checkpoint_command.flags;
   watch : Daemon_process.watch option;

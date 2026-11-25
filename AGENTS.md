@@ -12,7 +12,10 @@ GamePilot automates games through three layers (design: `docs/design/Layered-Aut
   - `engine/`: the game-agnostic checkpoint engine (`docs/design/Engine-Boundary.md`): `checkpoints/`
     `expand` (plan JSON rewrites), `run` (trials, event progress) and `series` (chains, order,
     rounds). It names no game, grid or Pokémon type; a game family plugs its own in.
-  - `pokemon/`: code shared by Pokemon games (navigation grid, checkpoint plans and their runner).
+  - `engine/`: the game-agnostic checkpoint engine (plans, runner, series), applied to a game
+    family's terms (`Engine_checkpoints.Make`, `docs/design/Engine-Boundary.md`).
+  - `pokemon/`: code shared by Pokemon games (navigation grid, the Pokemon terms and the engine
+    applied to them).
     `checkpoints/` holds four libraries. A plan file passes through `expand` (rewrites raw plan
     JSON; the game calls it at load) and then `plan` (types, decoding). The libraries depend one
     way, `plan` -> `run` (one checkpoint) -> `series` (a chain of checkpoints); `expand` stands alone.
@@ -52,7 +55,7 @@ GamePilot automates games through three layers (design: `docs/design/Layered-Aut
   timings, and each module's doc comment names the C++ file(s) it comes from, so a reader can lay the
   two side by side. Improvements and reshaping come later, in their own PRs. Where we deliberately
   differ (a missing reader, a new strategy), say so in the doc comment.
-- **Every checkpoint goes through the checkpoint runner** (`pokemon/checkpoints/run`) and its dev loop: run
+- **Every checkpoint goes through the checkpoint runner** (`engine/checkpoints/run`) and its dev loop: run
   from the checkpoint's start state, verify its end state, retry, record. Programs run in order
   (01-celadon-setup → 08-activate-and-verify), each tested on mGBA before it runs on the Switch.
 - **Submodules are read-only.** `third_party/Arduino-Source` tracks the fork branch

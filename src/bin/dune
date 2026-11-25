@@ -15,7 +15,7 @@
   gamepilot.run_record
   gamepilot.engine_run
   gamepilot.engine_series
-  gamepilot.checkpoints_plan
+  gamepilot.pokemon_checkpoints
   gamepilot.checkpoints_run
   gamepilot.checkpoints_series
   gamepilot.frlg_actions

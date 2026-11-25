@@ -4,7 +4,7 @@
    Glitch chain needs in the party (Party_room). Plans are 01-celadon-setup..08-activate-and-verify. *)
 
 open Frlg_checkpoints
-module P = Checkpoints_run.Postcondition_check
+module P = Pokemon_checkpoints.Postcondition_check
 module F = Frlg_readers.Start_frame
 
 let plan id =
@@ -44,7 +44,7 @@ let frame ?(changed = 0) () =
   | Ok f -> f
   | Error e -> failwith e
 
-let party l = Some (Checkpoints_plan.Plan.Party_in_order l)
+let party l = Some (Pokemon_checkpoints.Postconditions.Party_in_order l)
 let read l = Some (List.map Option.some l)
 
 let start_check expected observed =

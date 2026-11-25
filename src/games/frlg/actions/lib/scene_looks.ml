@@ -94,5 +94,5 @@ let settle ?menu_open ?arrived ?(start = []) kind ~label ~battle_ends ~log =
       log (label ^ ": a battle starts, " ^ what);
       Ok ()
   | Battle what ->
-      Error (Checkpoints_run.Failure.cause "battle" (label ^ ": " ^ what))
-  | Timed_out why -> Error (Checkpoints_run.Failure.cause "not_settled" why)
+      Error (Pokemon_checkpoints.Failure.cause "battle" (label ^ ": " ^ what))
+  | Timed_out why -> Error (Pokemon_checkpoints.Failure.cause "not_settled" why)

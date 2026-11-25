@@ -34,7 +34,7 @@ let use_a = Wire.Press { buttons = [ Wire.A ]; hold_ms = 160; cooldown_ms = 0 }
 
 let outcome = function
   | Ok () -> "ok"
-  | Error cause -> "failed " ^ Checkpoints_run.Failure.cause_to_string cause
+  | Error cause -> "failed " ^ Pokemon_checkpoints.Failure.cause_to_string cause
 
 (* The settle from the USE on, with the departure read on the overworld
    before the bag when [arrival]. The text is the outcome, what proved the
