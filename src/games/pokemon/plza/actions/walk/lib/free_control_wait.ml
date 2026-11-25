@@ -6,6 +6,9 @@ type game_steps = {
   log : string -> unit;
 }
 
+let screen_game_steps ~submit ~read_screen ~log =
+  { read_screen; wait = (fun ms -> submit (Walk_inputs.wait ms)); log }
+
 (* The timeout: only a stuck game gets this far; free control confirms in
    about 0.5 s (two reads). *)
 let free_control_wait_ms = 30000

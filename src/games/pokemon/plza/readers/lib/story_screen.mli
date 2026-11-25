@@ -33,6 +33,8 @@ type t = {
   party_bar : bool;
       (** the overworld party bar ({!Party_bar}), with no fade and no text box:
           the fork's [PLAYER_CAN_MOVE] *)
+  map_pin : Map_pin.point option;
+      (** the player's pin on the full map ({!Map_pin}) *)
   minimap_arrow : float option;
       (** the bearing of the minimap's arrow ({!Minimap_arrow}), degrees *)
   run_prompt : bool;  (** a wild battle's Run prompt ({!Run_prompt}) *)

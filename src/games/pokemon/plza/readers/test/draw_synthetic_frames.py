@@ -4,6 +4,7 @@ PokemonLZA_Detectors_Tests.cpp build them. Also our own frames of the move
 effectiveness symbols under ZL, which no console capture in CommandLineTests
 shows: the four symbols' Packages images (4K-sized), halved and laid over a
 dark button in the four moves' boxes (PokemonLZA_MoveEffectivenessSymbol.cpp).
+The map pin and caught mark frames are PokemonLZA_Detectors_Tests.cpp's.
 
   python3 draw_synthetic_frames.py OUT
 
@@ -89,6 +90,45 @@ def move_symbols(symbols):
     return image
 
 
+# The map pin reader's frames: squares on the zone's green, at map points
+# (the frame over 2.4).
+ZONE_GREEN = 0xFF98EFAD
+ARROW_BLUE = 0xFF00A0FF
+CONE_BLUE = 0xFF5EC9EA
+
+
+def map_with(squares):
+    image = solid(ZONE_GREEN)
+    for x, y, side, argb in squares:
+        cx, cy = int(x * 2.4), int(y * 2.4)
+        fill(image, cx - side // 2, cy - side // 2, cx + side // 2, cy + side // 2, argb)
+    return image
+
+
+# The caught mark reader's frames: a lock-on name plate's green bar, the
+# player's HP bar, the gender mark and the caught mark's Poke Ball.
+PLATE_GREEN = 0xFF2DC673
+GENDER_ORANGE = 0xFFFF7644
+BALL_RED = 0xFFFF6B6E
+BRIGHT_GRASS = 0xFF44A050
+DARK_GROUND = 0xFF303030
+
+
+def plate(ground, plate_bar=False, player_bar=False, gender=False, ball=False):
+    image = solid(ground)
+    if plate_bar:
+        fill(image, 950, 515, 1058, 533, PLATE_GREEN)
+    if player_bar:
+        fill(image, 990, 560, 1053, 572, PLATE_GREEN)
+    if gender:
+        fill(image, 1020, 430, 1044, 454, GENDER_ORANGE)
+        fill(image, 1028, 438, 1036, 446, WHITE)
+    if ball:
+        fill(image, 1056, 430, 1080, 442, BALL_RED)
+        fill(image, 1056, 442, 1080, 454, WHITE)
+    return image
+
+
 FRAMES = {
     # DIALOG_CASES' "a black frame".
     "black": lambda: solid(0xFF000000),
@@ -110,6 +150,20 @@ FRAMES = {
         ["SuperEffective", "NoEffect", "Normal", "NotVeryEffective"]),
     "moves-two-blank": lambda: move_symbols(["Normal", None, None, "Normal"]),
     "moves-no-symbols": lambda: move_symbols([None, None, None, None]),
+    # The map pin cases.
+    "map-arrow-and-cone": lambda: map_with(
+        [(350, 215, 40, CONE_BLUE), (370, 230, 24, ARROW_BLUE)]),
+    "map-cone-only": lambda: map_with([(350, 215, 40, CONE_BLUE)]),
+    "map-arrow-outside-window": lambda: map_with([(100, 100, 24, ARROW_BLUE)]),
+    "map-arrow-speck": lambda: map_with([(400, 230, 6, ARROW_BLUE)]),
+    # The caught mark cases.
+    "plate-and-player-bar-on-grass": lambda: plate(
+        BRIGHT_GRASS, plate_bar=True, player_bar=True),
+    "plate-gender-mark-only": lambda: plate(DARK_GROUND, plate_bar=True, gender=True),
+    "plate-gender-and-ball-marks": lambda: plate(
+        DARK_GROUND, plate_bar=True, gender=True, ball=True),
+    "player-bar-alone": lambda: plate(DARK_GROUND, player_bar=True),
+    "bright-grass-alone": lambda: plate(BRIGHT_GRASS),
 }
 
 

@@ -94,9 +94,9 @@ battle (the Run prompt, or the alert eye over a wild Pokémon) it is weakened wi
 first. Bunnelby is weakened, then caught, up to 6 rounds (`still_a_target`); when nothing locks on
 and the battle is still up, the camera sweeps right to find it. The Run prompt's reader has not seen
 a console frame yet. The start checks of 03.08 to 03.09 name the wild zone, the party count or the A
-prompt, which nothing reads yet (`start_signature_unread`). 03.09's first walk faces a heading by the
-minimap's arrow, which nothing reads either (`heading_unread`, before any leg). 03.10 starts in the
-lab's lobby, where 03.09 ends.
+prompt, which nothing reads yet (`start_signature_unread`). A walk with a heading (03.09's first)
+turns to it by the minimap's arrow first, up to 4 turns (`heading_missed`), and stops with
+`arrow_unread` when no arrow shows for 40 s. 03.10 starts in the lab's lobby, where 03.09 ends.
 
 Only 01.00b to 03.07 so far. 01.02's chase, 01.03's walk to Chikorita and the walks of 02.01 to
 03.06 are timed stick legs with no map, so they can miss; the chase then stops on Ryon's

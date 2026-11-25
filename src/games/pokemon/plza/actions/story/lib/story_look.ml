@@ -4,6 +4,8 @@ type effectiveness =
   | Effective
   | Super_effective
 
+type map_point = { x : float; y : float }
+
 type t = {
   at_ms : float;
   home_menu : bool;
@@ -19,6 +21,7 @@ type t = {
   tutorial_card : bool;
   interact_prompt : bool;
   party_bar : bool;
+  map_pin : map_point option;
   minimap_arrow : float option;
   run_prompt : bool;
   alert_eye : bool;
@@ -46,6 +49,7 @@ let empty ~at_ms =
     interact_prompt = false;
     party_bar = false;
     minimap = None;
+    map_pin = None;
     minimap_arrow = None;
     run_prompt = false;
     alert_eye = false;
@@ -115,6 +119,7 @@ let to_walk_screen l : Plza_walk.Walk_screen.t =
     controls_hint = l.controls_hint;
     interact_prompt = l.interact_prompt;
     scene_under_way = scene_under_way l;
+    minimap_arrow = l.minimap_arrow;
   }
 
 let wild_battle_on t = t.run_prompt || t.alert_eye

@@ -15,6 +15,10 @@ type effectiveness =
   | Effective
   | Super_effective
 
+type map_point = { x : float; y : float }
+(** A point on the full map, which is the frame scaled to 800 x 450 (the fork's
+    MapPoint). *)
+
 type t = {
   at_ms : float;  (** When the frame was read, on the daemon's clock. *)
   home_menu : bool;  (** The Switch HOME menu, not the game. *)
@@ -33,6 +37,9 @@ type t = {
       (** An A prompt (["(A) Talk"]) with no text box: [INTERACT_PROMPT]. *)
   party_bar : bool;
       (** The overworld party bar with no text box: [PLAYER_CAN_MOVE]. *)
+  map_pin : map_point option;
+      (** The player's pin on the full map, when it is open
+          ({!Plza_readers.Map_pin}). *)
   minimap_arrow : float option;
       (** The bearing the minimap's arrow points, degrees clockwise from up
           ({!Plza_readers.Minimap_arrow}), the fork's [get_facing_direction]. *)

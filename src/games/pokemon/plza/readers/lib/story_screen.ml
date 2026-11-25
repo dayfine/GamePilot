@@ -12,6 +12,7 @@ type t = {
   story_dialog : bool;
   moves : Move_symbols.symbol option list;
   party_bar : bool;
+  map_pin : Map_pin.point option;
   minimap_arrow : float option;
   run_prompt : bool;
   alert_eye : bool;
@@ -41,6 +42,7 @@ let probes ~picture ~assets =
       Minimap.probes ~picture;
       Run_prompt.probes ~picture ~assets;
       Minimap_arrow.probes ~picture;
+      Map_pin.probes ~picture;
       Alert_eye.probes ~picture ~assets;
     ]
 
@@ -72,6 +74,7 @@ let read m =
     story_dialog = Dialog_box.shown ~white:Box_and_arrow m;
     moves = Move_symbols.read m;
     party_bar = boxes && (not box) && Party_bar.shown m;
+    map_pin = Map_pin.read m;
     minimap_arrow = Minimap_arrow.read m;
     run_prompt = Run_prompt.shown m;
     alert_eye = Alert_eye.shown m;

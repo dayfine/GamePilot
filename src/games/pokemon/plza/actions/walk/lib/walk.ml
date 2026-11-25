@@ -278,18 +278,16 @@ let walk_to_end steps ~walk_only walk move ~until ~earliest_end_ms =
   | Scene | Event _ ->
       walk_to_event steps ~walk_only walk move ~until ~earliest_end_ms
 
-let free_control_game_steps steps =
-  {
-    Free_control_wait.read_screen = steps.read_screen;
-    wait = (fun ms -> steps.submit (Walk_inputs.wait ms));
-    log = steps.log;
-  }
-
 let run_event steps ~walk_only walk (args : Plza_rules.Walk_args.t) =
   if args.move.wait_before_ms > 0 then
     steps.submit (Walk_inputs.wait args.move.wait_before_ms);
-  let* () = Free_control_wait.wait (free_control_game_steps steps) walk in
-  let* () = Walk_heading.check walk args.heading_deg in
+  let { submit; read_screen; log; log_detail } = steps in
+  let free = Free_control_wait.screen_game_steps ~submit ~read_screen ~log in
+  let* () = Free_control_wait.wait free walk in
+  let face = Face_heading.screen_game_steps ~submit ~read_screen ~log_detail in
+  let* () =
+    Option.fold ~none:(Ok ()) ~some:(Face_heading.face face) args.heading_deg
+  in
   match args.until with
   | Some until ->
       walk_to_end steps ~walk_only walk args.move ~until

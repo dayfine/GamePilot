@@ -52,14 +52,10 @@ val walk_to_end :
     {!Plza_rules.Walk_args.Scene}, two busy reads in a row (text, a box or a
     fade) end it. *)
 
-val free_control_game_steps : game_steps -> Free_control_wait.game_steps
-(** The walk's steps, as the wait for free control takes them. *)
-
 val run_event :
   game_steps -> walk_only:bool -> string -> Plza_rules.Walk_args.t -> outcome
 (** A walk event: the wait before, then {!Free_control_wait.wait}, then
     {!walk_to_end} with an end, or {!play_legs} and {!log_final_screen} without
-    one. A walk with a heading fails [heading_unread] (which repeats) once
-    control is free, before any leg: the fork faces it by the minimap's arrow
-    ([face_heading], PokemonLZA_AutoStoryWalks.cpp, [plza/lean]), which no
-    reader here reads. *)
+    one. A walk with a heading faces it first, once control is free
+    ({!Face_heading}), as the fork's [walk_step]
+    (PokemonLZA_AutoStoryActionTable.cpp, [plza/lean]). *)

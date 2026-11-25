@@ -1,5 +1,6 @@
-(test
- (name test_story_game)
+(tests
+ (names test_story_game test_catch_plan)
+ (modules test_story_game test_catch_plan fake_console)
  (deps
   (glob_files ../plans/*.plan.json))
  (libraries

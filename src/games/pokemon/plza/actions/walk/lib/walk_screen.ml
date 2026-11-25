@@ -10,6 +10,7 @@ type t = {
   controls_hint : bool;
   interact_prompt : bool;
   scene_under_way : bool;
+  minimap_arrow : float option;
 }
 
 let empty ~at_ms =
@@ -25,6 +26,7 @@ let empty ~at_ms =
     controls_hint = false;
     interact_prompt = false;
     scene_under_way = false;
+    minimap_arrow = None;
   }
 
 let fade_shows l = l.fade_black || l.fade_white

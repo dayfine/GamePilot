@@ -62,6 +62,7 @@ let screen ?(still = false) ?(fade_black = false) ?(fade_white = false)
     controls_hint = hint;
     interact_prompt = false;
     scene_under_way = false;
+    minimap_arrow = None;
   }
 
 let platform at = screen ~hint:true at
@@ -270,8 +271,10 @@ let until_cases =
 
 (* --- free control, and the walk event --- *)
 
-let can_walk steps =
-  Free_control_wait.wait (Walk.free_control_game_steps steps) "walk"
+let can_walk { Walk.submit; read_screen; log; _ } =
+  Free_control_wait.wait
+    (Free_control_wait.screen_game_steps ~submit ~read_screen ~log)
+    "walk"
 
 let reads_every_poll n make =
   List.init n (fun i -> make (float_of_int (i * 250)))

@@ -56,6 +56,10 @@ let look_of ~still (m : Effects.measurements) : L.t =
     interact_prompt = s.interact_prompt;
     party_bar = s.party_bar;
     minimap = s.minimap;
+    map_pin =
+      Option.map
+        (fun ({ x; y } : Map_pin.point) : L.map_point -> { x; y })
+        s.map_pin;
     minimap_arrow = s.minimap_arrow;
     run_prompt = s.run_prompt;
     alert_eye = s.alert_eye;

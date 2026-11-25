@@ -21,6 +21,13 @@ type game_steps = {
 }
 (** What the wait reads and does in the game. *)
 
+val screen_game_steps :
+  submit:(Wire.command -> unit) ->
+  read_screen:(unit -> Walk_screen.t) ->
+  log:(string -> unit) ->
+  game_steps
+(** The steps of a walk, its waits sent as inputs. *)
+
 val wait : game_steps -> string -> (unit, Engine_run.Failure.cause) result
 (** [wait steps walk]: [Ok] once control is free; [walk_not_free] after 30 s
     without it (naming what was last busy), or [game_not_running] (which

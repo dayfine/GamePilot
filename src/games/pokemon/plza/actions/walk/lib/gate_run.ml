@@ -49,11 +49,11 @@ let rec attempt steps ~timeout_ms n =
       Ok ()
   | Day_night when n + 1 < runs ->
       steps.log "[PLZA] run_to_gate: a day/night change while running";
-      let* () =
-        Free_control_wait.wait
-          (Walk.free_control_game_steps steps)
-          "run_to_gate"
+      let { Walk.submit; read_screen; log; _ } = steps in
+      let free =
+        Free_control_wait.screen_game_steps ~submit ~read_screen ~log
       in
+      let* () = Free_control_wait.wait free "run_to_gate" in
       attempt steps ~timeout_ms (n + 1)
   | Day_night | Out_of_time -> Error (not_reached timeout_ms)
 
