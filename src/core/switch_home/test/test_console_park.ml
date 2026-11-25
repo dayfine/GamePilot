@@ -55,22 +55,21 @@ let scrolled ?left_to_fire_red ?right_to_fire_red () =
 
 let times n b = List.init n (fun _ -> b)
 let log = ignore
-
-let run start react body =
-  let t = S.create ~start react in
-  let outcome = S.run t body in
-  Printf.sprintf "%s; %s; ends on %s" outcome (S.presses_text t)
-    (S.screen_name (S.screen_at t t.S.clock_ms))
+let run start react body = S.play ~start react body
 
 let park start react () =
   run start react (fun () ->
-      match Console_park.park ~log Fire_red.tile with
+      match
+        Console_park.park ~log ~picture:Fire_red.nso_gba_picture Fire_red.tile
+      with
       | Ok () -> "ok"
       | Error e -> "error: " ^ e)
 
 let resume start react () =
   run start react (fun () ->
-      match Console_park.resume ~log Fire_red.tile with
+      match
+        Console_park.resume ~log ~picture:Fire_red.nso_gba_picture Fire_red.tile
+      with
       | Ok r -> "ok, " ^ Console_park.resumed_to_string r
       | Error e -> "error: " ^ e)
 
