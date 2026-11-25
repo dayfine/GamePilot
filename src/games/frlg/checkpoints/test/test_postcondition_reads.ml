@@ -52,14 +52,16 @@ let nothing_promised () =
     (List.length screen.S.presses)
 
 (* START opens the menu on POKéMON; A on BAG (row 2) the Items pocket with
-   [items] on its list; B from the bag back to the menu, from the menu to the
-   overworld. *)
+   [items] on its list; B from the bag through a black fade back to the menu,
+   from the menu to the overworld. *)
 let bag_screen items screen (p : S.press) =
-  let show s = S.show screen ~at_ms:(p.at_ms + 200) s in
+  let show ?(after_ms = 200) s = S.show screen ~at_ms:(p.at_ms + after_ms) s in
   match (p.buttons, S.screen_at screen p.at_ms) with
   | [ Wire.Start ], _ -> show (S.Start_menu 0)
   | [ Wire.A ], S.Start_menu 2 -> show (S.Bag_items items)
-  | [ Wire.B ], S.Bag_items _ -> show (S.Start_menu 2)
+  | [ Wire.B ], S.Bag_items _ ->
+      show S.Black;
+      show ~after_ms:800 (S.Start_menu 2)
   | [ Wire.B ], S.Start_menu _ -> show S.Overworld
   | _ -> ()
 

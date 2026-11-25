@@ -49,6 +49,28 @@ let held_at frames presses =
   let up = Printf.sprintf "up from frame %d" (last_fading + 1) in
   Printf.sprintf "B at %s; %s" (String.concat ", " (List.map held presses)) up
 
+(* A watch fed every frame of a menu's close, from its closing press on: the
+   first frame by which the fade has shown and its fade-in is over, and at
+   each of [presses] (the frames the run sent a B on) whether it had. *)
+let came_up_at frames presses =
+  let w = Warp_fade_in.watch () in
+  let up =
+    List.map
+      (fun (m : Effects.measurements) ->
+        Warp_fade_in.watch_frame w m;
+        Warp_fade_in.came_up w)
+      frames
+  in
+  let first =
+    match List.find_index Fun.id up with
+    | Some i -> Printf.sprintf "up at frame %d" i
+    | None -> "never up"
+  in
+  let at i =
+    Printf.sprintf "%d %s" i (if List.nth up i then "after" else "before")
+  in
+  Printf.sprintf "%s; B at %s" first (String.concat ", " (List.map at presses))
+
 let held_still n (lit : Effects.measurements) =
   List.init n (fun i -> { lit with seq = i; t_ms = float_of_int i *. frame_ms })
 
@@ -93,6 +115,25 @@ let () =
             (frames "fixtures/summary_close.fade.jsonl")
             [ 27; 54; 81; 108 ])
         "B at 27 held, 54 held, 81 pressed, 108 pressed; up from frame 75";
+      (* 04-grind-farfetchd testing run 2 (2026-11-24), before this rule: the
+         Trainer Card's B at frame 1 fades the card out; black from 18, dim
+         and still at 51 from 49, up in steps from 85 to 526 by 97, with the
+         Start menu open. The B that closes the menu came at 93, in the
+         steps, and was lost; the one at 132 closed it. *)
+      case "a closed Trainer Card: up once its fade-in is over"
+        (fun () ->
+          came_up_at
+            (frames "fixtures/trainer_card_close.fade.jsonl")
+            [ 1; 93; 132 ])
+        "up at frame 109; B at 1 before, 93 before, 132 after";
+      (* The same run's bag count: the bag's B at frame 0, the talk settle's
+         first B at 4 (the bag fading out), black from 11, dim at 51 from 46,
+         up in steps from 80 to 526 by 92. The settle's B at 85 was lost; the
+         one at 166 closed the Start menu. *)
+      case "a closed bag: up once its fade-in is over"
+        (fun () ->
+          came_up_at (frames "fixtures/bag_close.fade.jsonl") [ 0; 4; 85; 166 ])
+        "up at frame 104; B at 0 before, 4 before, 85 before, 166 after";
       case "a screen that never changes is up after 1 s"
         (fun () ->
           over_at
