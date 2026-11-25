@@ -77,8 +77,15 @@ let round ~frame ~word =
   press Wire.A;
   pause after_confirm_ms
 
+(* The item's count in its own pocket, from the Items pocket and back to it:
+   an Ultra Ball is counted on the Poke Balls pocket. *)
 let count_of item =
-  match Bag_items.count_in_pocket item with
+  let pocket = Bag_items.pocket_of_item item in
+  let away = pocket <> Frlg_readers.Bag_screen.Items in
+  if away then Bag_items.pocket_top pocket;
+  let n = Bag_items.count_in_pocket item in
+  if away then Bag_items.pocket_top Items;
+  match n with
   | Some n -> n
   | None -> M.fail "count_not_read" (item ^ "'s count did not read")
 
