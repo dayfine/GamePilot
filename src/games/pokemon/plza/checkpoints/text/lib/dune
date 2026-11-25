@@ -1,0 +1,4 @@
+(library
+ (name plza_text)
+ (public_name gamepilot.plza_text)
+ (libraries gamepilot.engine_text gamepilot.plza_terms))
