@@ -7,7 +7,7 @@ module Pose : sig
   type t = { place : string; spot : string option }
   (** A place, and maybe a spot in it. *)
 
-  include Engine_terms.POSE with type t := t and type observed = t
+  include Engine_rules.POSE with type t := t and type observed = t
 end
 
 (** The toy's own kinds. *)
@@ -17,7 +17,7 @@ module Kind : sig
         (** Hold a direction until a landmark shows. *)
     | Rest  (** Rest at an inn. *)
 
-  include Engine_terms.KIND with type t := t
+  include Engine_rules.KIND with type t := t
 end
 
 (** What a toy checkpoint promises. *)
@@ -28,5 +28,5 @@ module Postconditions : sig
   type reads = { gold_now : int option; start : int option; set : string list }
   (** The gold now and at the start, and the flags set. *)
 
-  include Engine_terms.POSTCONDITIONS with type t := t and type reads := reads
+  include Engine_rules.POSTCONDITIONS with type t := t and type reads := reads
 end

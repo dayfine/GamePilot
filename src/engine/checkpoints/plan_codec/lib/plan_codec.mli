@@ -1,4 +1,4 @@
-(** How a game's plans write its rules ({!Engine_terms.TERMS}): the readers
+(** How a game's plans write its rules ({!Engine_rules.GAME_RULES}): the readers
     {!Plan_decode} calls for a pose, one of the game's kinds and a promise. Only
     plan decoding uses them; the runner and the checks never see JSON.
 
@@ -8,7 +8,7 @@
 
 (** A game's plan readers, over its rules [T]. *)
 module type PLAN_CODEC = sig
-  module T : Engine_terms.TERMS
+  module T : Engine_rules.GAME_RULES
 
   val pose_of_plan : where:string -> Json_field.obj -> (T.Pose.t, string) result
   (** A [start] or [declared_after] object. *)

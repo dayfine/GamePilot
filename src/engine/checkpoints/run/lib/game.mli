@@ -5,8 +5,8 @@
 
 open Engine_plan
 
-(** The game's handlers over its terms. *)
-module Make (T : Engine_terms.TERMS) (Raw : Plan.RAW) : sig
+(** The game's handlers over its rules. *)
+module Make (T : Engine_rules.GAME_RULES) (Raw : Plan.RAW) : sig
   type outcome = (unit, Failure.cause) result
   (** How a handler came out: [Error] with the game's cause. *)
 

@@ -1,6 +1,6 @@
 open Engine_postcondition
 
-module Make (T : Engine_terms.TERMS) (Raw : Engine_plan.Plan.RAW) = struct
+module Make (T : Engine_rules.GAME_RULES) (Raw : Engine_plan.Plan.RAW) = struct
   module Plan = Engine_plan.Plan.Make (T) (Raw)
   module Game = Game.Make (T) (Raw)
   module Failure = Failure.Make (T)

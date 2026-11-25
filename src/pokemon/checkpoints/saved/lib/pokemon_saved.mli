@@ -4,9 +4,9 @@
     object of counts) and [at] ({!observed_to_yojson}, or [null]). A field left
     out reads as not read: a file kept before the coins and items were has only
     [start_money] and [at]. The JSON is derived here, on a copy of the rules'
-    types, so {!Pokemon_terms} links no JSON. *)
+    types, so {!Pokemon_rules} links no JSON. *)
 
-open Pokemon_terms
+open Pokemon_rules
 
 type t = {
   start : Postcondition_check.start;

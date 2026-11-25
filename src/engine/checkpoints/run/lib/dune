@@ -3,5 +3,5 @@
  (public_name gamepilot.engine_run)
  (libraries
   gamepilot.engine_postcondition
-  gamepilot.engine_terms
+  gamepilot.engine_rules
   gamepilot.engine_plan))

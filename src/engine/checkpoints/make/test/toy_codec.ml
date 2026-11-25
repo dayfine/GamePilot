@@ -1,5 +1,5 @@
-open Toy_terms
-module T = Toy_terms
+open Toy_rules
+module T = Toy_rules
 module F = Json_field
 
 let known ~where allowed obj =

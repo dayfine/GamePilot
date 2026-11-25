@@ -1,6 +1,6 @@
 open Engine_plan
 
-module Make (T : Engine_terms.TERMS) (Raw : Plan.RAW) = struct
+module Make (T : Engine_rules.GAME_RULES) (Raw : Plan.RAW) = struct
   type outcome = (unit, Failure.cause) result
   type game_action = Plan.Make(T)(Raw).event -> Raw.t -> outcome
 

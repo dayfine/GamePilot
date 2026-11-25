@@ -1,6 +1,6 @@
-(** The Pokémon event kinds ({!Pokemon_terms.Own_kind}) as text. *)
+(** The Pokémon event kinds ({!Pokemon_rules.Own_kind}) as text. *)
 
-open Pokemon_terms
+open Pokemon_rules
 
 val text : Own_kind.t -> string
 (** The kind with its typed args, its name first:

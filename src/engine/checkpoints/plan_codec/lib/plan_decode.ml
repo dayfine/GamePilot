@@ -10,7 +10,7 @@ let ok_or_fail = function
   | Error message -> F.fail "%s" message
 
 module Make
-    (T : Engine_terms.TERMS)
+    (T : Engine_rules.GAME_RULES)
     (C : Plan_codec.PLAN_CODEC with module T = T) =
 struct
   module Plan = Engine_plan.Plan.Make (T) (Raw_json)

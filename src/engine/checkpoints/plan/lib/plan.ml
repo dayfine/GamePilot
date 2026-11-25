@@ -2,7 +2,7 @@ module type RAW = sig
   type t
 end
 
-module Make (T : Engine_terms.TERMS) (Raw : RAW) = struct
+module Make (T : Engine_rules.GAME_RULES) (Raw : RAW) = struct
   type kind =
     | Talk
     | Answer of bool

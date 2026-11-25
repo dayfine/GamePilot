@@ -3,7 +3,7 @@
     checkpoint promises ([docs/design/Engine-Boundary.md], section 2). Pure: no
     JSON and no text. How a plan writes them is the game's
     {!Engine_plan_codec.Plan_codec.PLAN_CODEC}, how a log prints them its
-    {!Engine_text.Terms_text.TEXT}, and what a run keeps on disk its
+    {!Engine_text.Rules_text.TEXT}, and what a run keeps on disk its
     {!Engine_saved.Event_states.SAVED}; the engine is applied to all four once
     per game family ([Engine_checkpoints.Make]). *)
 
@@ -44,7 +44,7 @@ module type POSTCONDITIONS = sig
 end
 
 (** The rules a game family gives the engine. *)
-module type TERMS = sig
+module type GAME_RULES = sig
   module Pose : POSE
   module Kind : KIND
   module Postconditions : POSTCONDITIONS

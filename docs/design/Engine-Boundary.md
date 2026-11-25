@@ -102,16 +102,19 @@ game's own event kinds, what a checkpoint promises and its check) are plain valu
 and no text. Each format turns them into bytes or words at one edge only, so the plan types, the
 runner, its failures and the checks never see JSON or build a string. A lint rule enforces it.
 
+The rules were first called terms (`Engine_terms.TERMS`, `Pokemon_terms`, `Terms_text`); they were
+renamed `Engine_rules.GAME_RULES`, `Pokemon_rules` and `Rules_text` on 2026-11-25, unchanged.
+
 | Part | Engine signature | Pokémon | Toy game | Used by | Holds |
 |---|---|---|---|---|---|
-| Rules | `Engine_terms.TERMS` | `Pokemon_terms` | `Toy_terms` | everything | values and `matches`, `check` |
+| Rules | `Engine_rules.GAME_RULES` | `Pokemon_rules` | `Toy_rules` | everything | values and `matches`, `check` |
 | Plan format | `Plan_codec.PLAN_CODEC` | `Pokemon_plan_codec` | `Toy_codec` | `Plan_decode` only | hand-written JSON readers |
-| Text | `Terms_text.TEXT` | `Pokemon_text` | `Toy_text` | `Plan_text`, `Failure_text`, `Run_text` | printers |
+| Text | `Rules_text.TEXT` | `Pokemon_text` | `Toy_text` | `Plan_text`, `Failure_text`, `Run_text` | printers |
 | Saved | `Event_states.SAVED` | `Pokemon_saved` | `Toy_saved` | `Event_states` only | derived JSON (`ppx_deriving_yojson`) |
 
 ### The rules
 
-`src/engine/checkpoints/terms/lib/engine_terms.mli`:
+`src/engine/checkpoints/rules/lib/engine_rules.mli`:
 
 ```ocaml
 module type POSE = sig
@@ -127,7 +130,7 @@ module type POSTCONDITIONS = sig
   type reads                (* what the game read for them, start reads included *)
   val check : t -> reads -> Engine_postcondition.Postcondition.result list
 end
-module type TERMS = sig
+module type GAME_RULES = sig
   module Pose : POSE
   module Kind : KIND
   module Postconditions : POSTCONDITIONS
@@ -158,7 +161,7 @@ library, so `plan/` itself links no JSON.
 ```ocaml
 (* plan_codec/lib/plan_codec.mli: only Plan_decode calls these *)
 module type PLAN_CODEC = sig
-  module T : Engine_terms.TERMS
+  module T : Engine_rules.GAME_RULES
   val pose_of_plan : where:string -> Json_field.obj -> (T.Pose.t, string) result
   val kind_of_plan :
     string -> (where:string -> Json_field.obj -> (T.Kind.t, string) result) option
@@ -167,9 +170,9 @@ module type PLAN_CODEC = sig
     where:string -> Json_field.obj -> (T.Postconditions.t, string) result
 end
 
-(* text/lib/terms_text.mli: only Plan_text, Failure_text and Run_text call these *)
+(* text/lib/rules_text.mli: only Plan_text, Failure_text and Run_text call these *)
 module type TEXT = sig
-  module T : Engine_terms.TERMS
+  module T : Engine_rules.GAME_RULES
   val pose : T.Pose.t -> string
   val observed : T.Pose.observed -> string
   val kind : T.Kind.t -> string
@@ -193,7 +196,7 @@ end
 - **Saved, derived.** A machine writes and reads `<n>-<event>.json` beside each event state, so its
   JSON is derived with `[@@deriving yojson]`. The derivation sits in `Pokemon_saved` and `Toy_saved`,
   on copies of the rules' types (`type observed = Pose.observed = { ... } [@@deriving yojson]`), so
-  the terms libraries need no ppx. A bad file's error names the type or field
+  the rules libraries need no ppx. A bad file's error names the type or field
   (`Pokemon_saved.observed.at_map`); older files with fewer fields still load.
 
 **Naming.** The hand-written plan side is `*_of_plan` (`pose_of_plan`, the Pokémon decoders in
@@ -204,9 +207,9 @@ the ppx's `to_yojson` / `of_yojson`; text is the noun it prints (`pose`, `kind`)
 
 ```ocaml
 module Make
-    (T : Engine_terms.TERMS)
+    (T : Engine_rules.GAME_RULES)
     (C : Engine_plan_codec.Plan_codec.PLAN_CODEC with module T = T)
-    (X : Engine_text.Terms_text.TEXT with module T = T)
+    (X : Engine_text.Rules_text.TEXT with module T = T)
     (S : Engine_saved.Event_states.SAVED) : sig
   module Plan            (* Plan.Make (T) (Raw_json) *)
   module Plan_decode     (* over C *)
@@ -226,7 +229,7 @@ to it by `with module T = T`. Were the rules a part of one big game module, each
 the others along, and the rules libraries could not be kept free of JSON and text. `S` needs no `T`:
 what it keeps is the game's own record.
 
-Pokémon applies it once, `Pokemon_checkpoints = Make (Pokemon_terms) (Pokemon_plan_codec)
+Pokémon applies it once, `Pokemon_checkpoints = Make (Pokemon_rules) (Pokemon_plan_codec)
 (Pokemon_text) (Pokemon_saved)`, and FireRed uses that. The engine's tests apply it to the toy game
 (`make/test`: zones, no grid, gold and flags), which is what proves the boundary.
 
@@ -256,8 +259,8 @@ of the libraries, directly or through any library of the tree, however deep:
 
 | Directory | Never links |
 |---|---|
-| `src/engine/checkpoints/{terms,postcondition,plan,run}/lib` | `yojson`, `json_field`, `wire`, `engine_plan_codec`, `engine_text`, `engine_saved` |
-| `src/pokemon/checkpoints/terms/lib` | the same, and `pokemon_plan_codec`, `pokemon_text`, `pokemon_saved` |
+| `src/engine/checkpoints/{rules,postcondition,plan,run}/lib` | `yojson`, `json_field`, `wire`, `engine_plan_codec`, `engine_text`, `engine_saved` |
+| `src/pokemon/checkpoints/rules/lib` | the same, and `pokemon_plan_codec`, `pokemon_text`, `pokemon_saved` |
 
 The layers stay one-way as before: `allow engine engine core base`, `allow pokemon pokemon engine
 core base`, and a game uses `pokemon` only when its family lists it (`family pokemon game frlg`), so
@@ -269,7 +272,7 @@ core base`, and a game uses `pokemon` only when its family lists it (`family pok
 src/base/json_field/            Json_field: field readers returning Result
 src/base/repo_io/               Repo_files, Json_file
 src/engine/checkpoints/
-  terms/                        Engine_terms: POSE, KIND, POSTCONDITIONS, TERMS
+  rules/                        Engine_rules: POSE, KIND, POSTCONDITIONS, GAME_RULES
   postcondition/                Postcondition, Count, Money
   plan/                         Plan.Make (T) (Raw): types only
   run/                          Game, Runner, Failure, Log_line, Repeat_until, Checkpoint_trials,
@@ -277,13 +280,13 @@ src/engine/checkpoints/
   plan_codec/                   PLAN_CODEC, Plan_decode, Plan_fields, Raw_json
   text/                         TEXT, Plan_text, Failure_text, Run_text
   saved/                        SAVED, Event_states
-  make/                         Engine_checkpoints.Make; test/: the toy game (Toy_terms, Toy_codec,
+  make/                         Engine_checkpoints.Make; test/: the toy game (Toy_rules, Toy_codec,
                                 Toy_text, Toy_saved, Toy_checkpoints)
   series/                       Chain_progress, Checkpoint_order, Round_trials
   expand/                       Plan_json, Table_decode, Fragment_table, Fragment_calls
-src/pokemon/navigation/grid/geometry/   Grid_geometry: Tile_pos, Direction (pure; the terms use it)
+src/pokemon/navigation/grid/geometry/   Grid_geometry: Tile_pos, Direction (pure; the rules use it)
 src/pokemon/checkpoints/
-  terms/                        Pokemon_terms: Pose, Own_kind, Postconditions, Postcondition_check
+  rules/                        Pokemon_rules: Pose, Own_kind, Postconditions, Postcondition_check
   plan_codec/                   Pokemon_plan_codec: Pose_decode, Kind_decode, Postcondition_decode,
                                 Party_decode
   text/                         Pokemon_text: Pose_text, Kind_text, Postconditions_text
@@ -411,8 +414,8 @@ needs one.
 
 ```
 src/games/octopath0/
-  checkpoints/   Octopath0_terms (zone pose, own kinds: walk, rest, battle round; promises:
-                 levels, equipped), Octopath0_checkpoints = Make (Octopath0_terms), Game.t,
+  checkpoints/   Octopath0_rules (zone pose, own kinds: walk, rest, battle round; promises:
+                 levels, equipped), Octopath0_checkpoints = Make (Octopath0_rules), Game.t,
                  Console_start.game_steps, pre-flight
   readers/       beg result, enemy names (the cat), zone name, prompt, menus, load menu
   actions/       beg, walk (pushes until a landmark), rest_at_inn, shop, equip
@@ -438,7 +441,7 @@ the groups run in parallel inside, in order between.
 | 1 | `Json_field` to `src/base/json_field`; `Repo_files`, `Json_file` to `src/base/repo_io`. Moves only | S | |
 | 2 | The `engine` layer and game families in the lint config; `src/engine/checkpoints/expand` gets the four agnostic expand modules; `series` gets `Chain_progress`, `Checkpoint_order`, `Round_trials`; `run` gets `Checkpoint_trials`, `Event_progress`. Moves only | S | 1 |
 | 3 | `Postcondition` (first named `Promise`): the agnostic half of `Postcondition_check` | S | 1 (parallel with 2) |
-| 4 | `Engine_terms.TERMS`, the three formats (`PLAN_CODEC`, `TEXT`, `SAVED`) and `Engine_checkpoints.Make`; Pokémon's terms, codec, text and saved; the rest of `plan` and `run` moved; a toy-game test with zones. Golden test: every plan in the repo prints the same `Plan_text` before and after | S | 2, 3 |
+| 4 | `Engine_rules.GAME_RULES`, the three formats (`PLAN_CODEC`, `TEXT`, `SAVED`) and `Engine_checkpoints.Make`; Pokémon's rules, codec, text and saved; the rest of `plan` and `run` moved; a toy-game test with zones. Golden test: every plan in the repo prints the same `Plan_text` before and after | S | 2, 3 |
 | 5 | `Game_commands.S` and `bin/` over it; FireRed's module out of `bin/` | S | 4 |
 | 6 | `Roll`: outcome, budget, verdict, scripted-game tests | S | 4 (parallel with 5) |
 | 7 | `Console_start` and `Console_runs` over it; FireRed's binding | S | 5 |

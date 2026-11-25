@@ -1,8 +1,8 @@
 (** A checkpoint plan ([gamepilot-checkpoint/1], owned by GamePilot; once
     PokemonSimulation's [pokesim-authored-checkpoint/1]): the stretch of story
     between two saves, as a list of events, over a game's rules
-    ({!Engine_terms.TERMS}). Types only, and pure: [Engine_plan_codec] reads
-    them from a plan file.
+    ({!Engine_rules.GAME_RULES}). Types only, and pure: [Engine_plan_codec]
+    reads them from a plan file.
 
     The engine's own kinds ([talk], [answer], [scene], [save], [game_action])
     are typed here; every other kind is the game's ([Own]). A [game_action]'s
@@ -16,7 +16,7 @@ module type RAW = sig
 end
 
 (** The plan's types over the game's rules. *)
-module Make (T : Engine_terms.TERMS) (Raw : RAW) : sig
+module Make (T : Engine_rules.GAME_RULES) (Raw : RAW) : sig
   (** What an event does, with its args. *)
   type kind =
     | Talk

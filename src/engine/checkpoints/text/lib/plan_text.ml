@@ -1,4 +1,6 @@
-module Make (T : Engine_terms.TERMS) (X : Terms_text.TEXT with module T = T) =
+module Make
+    (T : Engine_rules.GAME_RULES)
+    (X : Rules_text.TEXT with module T = T) =
 struct
   module Plan = Engine_plan.Plan.Make (T) (Engine_plan_codec.Raw_json)
 
