@@ -31,7 +31,7 @@ val busy_with : t -> string option
 (** What keeps the player busy (["text waiting for A"], ["a text box"],
     ["a fade"]); [None] when nothing does. *)
 
-val shows : Plza_terms.Walk_args.end_event -> t -> bool
+val shows : Plza_rules.Walk_args.end_event -> t -> bool
 (** Whether the screen shows a walk's end event. *)
 
 val describe : t -> string
