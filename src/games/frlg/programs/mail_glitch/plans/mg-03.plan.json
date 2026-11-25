@@ -98,17 +98,9 @@
         "why": "buy 2 Revives for exact maxHP / 2 Berry HP setup on Route 8"
       },
       {
-        "id": "to_lavender_nurse",
-        "kind": "route",
-        "action": "run",
-        "args": {
-          "target": {"map": "LavenderTown_PokemonCenter_1F", "tiles": [[7, 4]], "facing": "north"}
-        },
-        "why": "walk to Lavender Pokemon Center nurse"
-      },
-      {
         "id": "heal_lavender",
-        "kind": "heal",
+        "fragment": "heal_at",
+        "args": {"town": "lavender"},
         "why": "full HP/PP before Pokemon Tower 5F switch-training"
       }
     ]

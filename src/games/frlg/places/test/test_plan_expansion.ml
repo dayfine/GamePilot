@@ -1,5 +1,6 @@
-(* FireRed's lift step in the place expansion: a place on another floor of the
-   Dept. Store is reached by the lift, from inside the store or outside it. *)
+(* FireRed's tables in the plan expansion: a place on another floor of the
+   Dept. Store is reached by the lift, from inside the store or outside it;
+   heal_at looks its town's nurse up in the towns. *)
 
 let plan_text ~start events =
   Printf.sprintf
@@ -33,10 +34,16 @@ let up_to_4f =
    CeladonCity_DepartmentStore_4F (6, 2) south\n\
    clerk.walk: [run] route to CeladonCity_DepartmentStore_4F (3, 11) south"
 
+let heal_at town =
+  Printf.sprintf
+    {|{"id": "heal", "fragment": "heal_at", "args": {"town": "%s"}, "why": "full HP"}|}
+    town
+
+let lavender = {|{"map": "LavenderTown", "tiles": [[6, 6]], "facing": "south"}|}
 let case name input expectation = { Table_test.name; input; expectation }
 
 let () =
-  Table_test.run "lift_routes"
+  Table_test.run "plan_expansion"
     [
       case "a place on the floor the player is on: one route"
         (expanded ~start:at_1f [ route "save" "celadon_dept_store_1f_save" ])
@@ -71,4 +78,11 @@ let () =
           down: [run] route to CeladonCity_DepartmentStore_4F (6, 2) north\n\
           down.lift: [lift_floor] game_action {\"from\":\"4F\",\"to\":\"1F\"} \
           => CeladonCity_DepartmentStore_1F (6, 2) south");
+      case "heal_at: the walk to the town's nurse, then the heal"
+        (expanded ~start:lavender [ heal_at "lavender" ])
+        "heal.walk: [run] route to LavenderTown_PokemonCenter_1F (7, 4) north\n\
+         heal: heal";
+      case "heal_at an unknown town suggests the nearest"
+        (expanded ~start:lavender [ heal_at "lavendar" ])
+        "t: checkpoint.events[0]: no town \"lavendar\"; did you mean lavender?";
     ]

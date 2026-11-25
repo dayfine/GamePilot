@@ -29,7 +29,7 @@ type place = {
 (** One named spot of the table. *)
 
 type t
-(** The loaded table: its places by name, in the file's order. *)
+(** The loaded table: its places by name, in the file's order, and its towns. *)
 
 val format : string
 (** ["gamepilot-places/1"]. *)
@@ -46,6 +46,9 @@ val load : unit -> (t, string) result
 val places : t -> place list
 (** In the file's order. *)
 
+val towns : t -> Towns.t
+(** The table's [towns] section. *)
+
 val find : t -> string -> (place, string) result
 (** The place of that name; an unknown name's error suggests the nearest. *)
 
@@ -55,3 +58,7 @@ val spot : place -> Checkpoints_expand.Place_routes.spot
 val routes : t -> Checkpoints_expand.Place_routes.game
 (** FireRed's answers to the place expansion: the table's places, and the lift
     rides ({!Lift_stops.ride}). *)
+
+val resolve : t -> Checkpoints_expand.Fragment_calls.resolve
+(** FireRed's answers to a fragment's placeholders: a ["town"] parameter's key,
+    nurse, Fly name or mart ({!Towns.field}). *)

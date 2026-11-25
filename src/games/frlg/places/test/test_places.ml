@@ -57,6 +57,34 @@ let reachable (p : Place_table.place) =
   then None
   else Some (p.name ^ ": no walk from a warp of its map or the maps it joins")
 
+(* Every town's Fly name is a town Fly knows. *)
+let towns_fly () =
+  let fly = Result.get_ok (Frlg_actions.Fly_towns.load ()) in
+  let towns = Towns.towns (Place_table.towns table) in
+  match
+    List.filter
+      (fun (t : Towns.town) -> Frlg_actions.Fly_towns.find fly t.fly = None)
+      towns
+  with
+  | [] -> Printf.sprintf "%d towns, all pass" (List.length towns)
+  | l ->
+      String.concat ", "
+        (List.map (fun (t : Towns.town) -> t.key ^ ": " ^ t.fly) l)
+
+(* Every town's nurse and mart places are named with its key: one spelling per
+   town. *)
+let towns_prefix () =
+  let towns = Towns.towns (Place_table.towns table) in
+  let named (t : Towns.town) place =
+    String.starts_with ~prefix:(t.key ^ "_") place
+  in
+  let wrong (t : Towns.town) =
+    List.filter (fun p -> not (named t p)) (t.nurse :: Option.to_list t.mart)
+  in
+  match List.concat_map wrong towns with
+  | [] -> Printf.sprintf "%d towns, all pass" (List.length towns)
+  | l -> String.concat ", " l
+
 let find name () =
   match Place_table.find table name with
   | Ok p ->
@@ -81,10 +109,19 @@ let () =
     [
       case "every place's object is in the maps, usable from its stand tile"
         (fun () -> failures resolves)
-        "10 places, all pass";
+        "12 places, all pass";
       case "every place's stand tile is walked to from a warp"
         (fun () -> failures reachable)
-        "10 places, all pass";
+        "12 places, all pass";
+      case "every town's Fly name is one Fly knows" towns_fly
+        "2 towns, all pass";
+      case "every town's nurse and mart start with the town's key" towns_prefix
+        "2 towns, all pass";
+      case "a town whose nurse is not a place"
+        (parse
+           {|{"format": "gamepilot-places/1", "game": "frlg", "places": {},
+              "towns": {"x": {"nurse": "x_nurse", "fly": "X"}}}|})
+        "t.json: towns.x.nurse x_nurse is not a place of the table.";
       case "a place's spot"
         (find "celadon_dept_store_4f_clerk")
         "CeladonCity_DepartmentStore_4F (3, 11)";

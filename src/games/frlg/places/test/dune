@@ -9,12 +9,13 @@
   gamepilot.checkpoints_expand
   gamepilot.frlg_repo_files
   gamepilot.frlg_overworld
+  gamepilot.frlg_actions
   gamepilot.frlg_places
   gamepilot.frlg_checkpoints))
 
 (test
- (name test_lift_routes)
- (modules test_lift_routes)
+ (name test_plan_expansion)
+ (modules test_plan_expansion)
  (libraries
   yojson
   gamepilot.table_test

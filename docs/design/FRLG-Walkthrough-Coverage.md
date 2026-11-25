@@ -26,13 +26,16 @@ for deciding what to build next; nothing here runs.
   `partial`. The tables below and the ranking are counted from these. They were counted before #39 and #40, so
   `heal_at` still shows as missing.
 - Route targets name a **place** (`"place": "erika_front"`), next to the map, tile and facing.
-  Places and the `go_to` / `heal_at` fragments now exist (#39, #40: `src/games/frlg/places/`,
-  `src/games/frlg/fragments/`); a program built from a draft adds its places to that table. Tiles are derived, never typed in: an npc's, item's
+  Places and the `heal_at` fragment now exist (#39, #40): the expansion is
+  `src/pokemon/checkpoints/expand/`, FireRed's data `src/games/frlg/places/places.json` (places and
+  towns) and `src/games/frlg/fragments/fragments.json`; a program built from a draft adds its places
+  to that table. Tiles are derived, never typed in: an npc's, item's
   or warp's coord in PokemonSimulation's runtime maps (submodule pin) and the open tile beside it.
   Where that is not possible (the map is missing, the spot is a script trigger, the tile is not open)
   the target has a `"todo": "TODO: ..."` instead of tiles: 167 TODO strings in all.
 - Not decodable today: the drafts' `"kind": "fragment"` (#40 writes a call as
-  `{"id": ..., "fragment": "heal_at", "args": {"town": "lavendertown"}}`; `fight_trainer`, `buy` and
+  `{"id": ..., "fragment": "heal_at", "args": {"town": "lavender"}}`, a town by its key in the
+  places table's `towns`; `fight_trainer`, `buy` and
   `e4_room` do not exist yet) and
   game actions that do not exist yet (`teach`, `static_encounter`, `surf`, `push_boulder`, `ferry`,
   ...). `battle` events carry `opponent` and `policy` args the decoder does not read yet.
@@ -420,7 +423,7 @@ missing, so `heal_at` there has no map to walk:
 
 | Fragment / template | Uses | Note |
 |---|---|---|
-| route to a place (`go_to`) | 62 (43) | exists (#39, #40); of 142 route events, the rest are TODO targets |
+| route to a place (`{"place": ...}` target) | 62 (43) | exists (#39, #40); of 142 route events, the rest are TODO targets |
 | `heal_at(town)` | 13 (13), plus 6 `heal` | exists (#40); and 20 `heal` events in the authored chain |
 | `fight_trainer(map, trainer)` | 9 (5) | blocking trainers; the authored chain's 50 `step` events are the same idea |
 | `fly` then a walk (`fly_and_walk`) | 5 (5) | of 6 Flys; grows once Fly is taught in wt-10f |
