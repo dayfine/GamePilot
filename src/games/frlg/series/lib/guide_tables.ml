@@ -72,11 +72,11 @@ let as_one_plan (loaded : Pokemon_engine.Plan.t list) =
 (* A member that joins on the way (a Game Corner prize, a capture) is not the
    save's; the money is said once for all the purchases. *)
 let chain_need (room : Frlg_checkpoints.Party_room.need) =
-  let module Pf = Frlg_checkpoints.Need in
+  let module Need = Frlg_checkpoints.Need in
   function
-  | Pf.Member { species; _ } when List.mem_assoc species room.joins -> None
-  | Pf.Money_at_least { amount; _ } ->
-      Some (Pf.Money_at_least { amount; for_ = "all the purchases" })
+  | Need.Member { species; _ } when List.mem_assoc species room.joins -> None
+  | Need.Money_at_least { amount; _ } ->
+      Some (Need.Money_at_least { amount; for_ = "all the purchases" })
   | n -> Some n
 
 (* The chain's declared preconditions are its first checkpoint's: the save's
