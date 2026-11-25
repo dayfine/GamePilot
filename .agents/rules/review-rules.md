@@ -231,7 +231,7 @@ and text read from the game screen names its language risk. (qc-structural row S
 - Find: lint `interface_docs` (`dev/lint/ocaml_lint.conf`, `interface_docs src`): every `type`,
   `val`, variant constructor and `exception` in a `lib/` `.mli` needs a doc comment the compiler
   attaches to it (right before or after, no blank line between); a constructor may instead be
-  named in its type's doc, and a record documented only through its fields is a finding. Files
+  named in its type's doc (a re-exported variant's are documented where defined), and a record documented only through its fields is a finding. Files
   with gaps on the day it landed are waived file by file in `dev/lint/ocaml_lint_exceptions.conf`
   (a list that only shrinks), so in a waived file, new items are judgment: run the check with the
   file's line removed. Whether a doc says what a thing means, and the language risk of screen
