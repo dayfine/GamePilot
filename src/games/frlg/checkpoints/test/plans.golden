@@ -180,6 +180,16 @@ retries 0
 postconditions:
 item tri-pass at least 1
 no repeat
+== sevii_story/plans/02-to-two-island.plan.json
+frlg 02-to-two-island from OneIsland_PokemonCenter_1F (14, 7) north: 2 route, 1 game_action
+to_harbor_sailor: [run] route to OneIsland_Harbor (8, 5) south
+sail_two_island: [ferry] game_action {"to":"TwoIsland"}
+to_game_corner: [run] route to TwoIsland (39, 10) east
+retries 0
+postconditions:
+position TwoIsland (39, 10) east
+item meteorite at least 1
+no repeat
 == supplies/plans/su-01.plan.json
 frlg su-01 from CeladonCity_DepartmentStore_1F (6, 2) south: 7 route, 6 game_action
 to_4f_clerk: [run] route to CeladonCity_DepartmentStore_1F (6, 2) north
