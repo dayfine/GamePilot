@@ -61,6 +61,10 @@ let () =
        case "HOME dimmed after a while untouched" "home-dimmed"
          "HOME, dimmed (tiles not read)";
        case "the user select over a dimmed HOME" "user-select" "the user select";
+       case
+         "the capture card's black between two game screens, inside the dimmed \
+          band: its flat boxes are not a dimmed HOME"
+         "black-between-game-screens" "not HOME, black";
        case "the Game Freak intro after a launch" "launch-game-freak-intro"
          "not HOME";
        case "FireRed's load menu" "firered-load-menu" "not HOME";
