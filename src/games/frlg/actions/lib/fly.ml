@@ -13,12 +13,7 @@ let to_fly_map plan =
       : Wire.batch_done)
 
 let press button =
-  Wire.Press
-    {
-      buttons = [ button ];
-      hold_ms = Menu_input.button_hold_ms;
-      cooldown_ms = 0;
-    }
+  Wire.press ~hold_ms:Menu_input.button_hold_ms ~cooldown_ms:0 [ button ]
 
 (* The fork's TAKEOFF_TIMEOUT: the fade after the town's A (none: the town
    is not one Fly goes to), and LANDING_TIMEOUT: the flight and the landing,

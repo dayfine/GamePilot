@@ -19,7 +19,7 @@ let button_of : Direction.t -> Wire.button = function
   | West -> Left
 
 let mover direction hold_ms =
-  [ Wire.Press { buttons = [ button_of direction ]; hold_ms; cooldown_ms = 0 } ]
+  [ Wire.press ~hold_ms ~cooldown_ms:0 [ button_of direction ] ]
 
 (* The scripted interrupt: a wild battle unless [kind] says otherwise (a sign's
    message is a [Dialogue]). *)

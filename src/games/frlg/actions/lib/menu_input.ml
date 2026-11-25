@@ -25,13 +25,10 @@ let screen_timeout_ms = 3000
 let press ?(cooldown_ms = 0) button =
   ignore
     (Effects.submit
-       [
-         Wire.Press
-           { buttons = [ button ]; hold_ms = button_hold_ms; cooldown_ms };
-       ])
+       [ Wire.press ~hold_ms:button_hold_ms ~cooldown_ms [ button ] ])
 
 let hold ~hold_ms ~cooldown_ms button =
-  Wire.Press { buttons = [ button ]; hold_ms; cooldown_ms }
+  Wire.press ~hold_ms ~cooldown_ms [ button ]
 
 let taps button n =
   let tap = hold ~hold_ms:tap_hold_ms ~cooldown_ms:tap_release_ms button in
@@ -116,8 +113,7 @@ let press_until ?(max_presses = default_max_presses) ~code what button
     ~cooldown_ms reader =
   let presses =
     List.init max_presses (fun _ ->
-        Wire.Press
-          { buttons = [ button ]; hold_ms = button_hold_ms; cooldown_ms })
+        Wire.press ~hold_ms:button_hold_ms ~cooldown_ms [ button ])
   in
   let holds = match Effects.read () with Some m -> reader m | None -> false in
   if not holds then

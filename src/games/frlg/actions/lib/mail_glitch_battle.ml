@@ -89,7 +89,7 @@ let check_before_first_switch check (game_steps : B.Battle.game_steps) =
 
 (* The fork's battle taps: D-pad 140 ms held, 260 ms after; A 160 ms. *)
 let tap ?(hold_ms = 140) ?(cooldown_ms = 260) buttons =
-  let press b = Wire.Press { buttons = [ b ]; hold_ms; cooldown_ms } in
+  let press b = Wire.press ~hold_ms ~cooldown_ms [ b ] in
   ignore (Effects.submit (List.map press buttons) : Wire.batch_done)
 
 let move_menu_timeout_ms = 4000

@@ -156,7 +156,7 @@ BackendHealth ViewBackend::health() const {
 }
 
 void ViewBackend::set_keys(KeyMask) { refuse("keys"); }
-void ViewBackend::queue_keys(KeyMask, double) { refuse("keys"); }
+void ViewBackend::queue_keys(KeyMask, const Sticks&, double) { refuse("keys"); }
 void ViewBackend::drop_queued_keys() {}
 std::int64_t ViewBackend::step() { refuse("frames are not stepped"); }
 std::int64_t ViewBackend::load_state(const std::string&) {

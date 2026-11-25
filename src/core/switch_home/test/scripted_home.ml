@@ -115,7 +115,7 @@ let submit t commands : Wire.batch_done =
   List.iter
     (fun (c : Wire.command) ->
       match c with
-      | Press { buttons; hold_ms; cooldown_ms } ->
+      | Press { buttons; hold_ms; cooldown_ms; _ } ->
           List.iter
             (fun b ->
               t.presses <- Wire.string_of_button b :: t.presses;
