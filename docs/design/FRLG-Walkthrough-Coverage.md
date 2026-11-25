@@ -5,9 +5,10 @@ does ("Walkthrough:Pokémon FireRed and LeafGreen", Parts 1 to 20), checkpoint b
 which game actions, readers and fragments each checkpoint needs that GamePilot does not have. It is
 for deciding what to build next; nothing here runs.
 
-- **Drafts**: `docs/drafts/frlg-walkthrough/part-NN/wt-NNx.plan.json`, 61 checkpoints (13 optional) for
-  Parts 2 and 7 to 20, in the plan shape of `src/games/frlg/programs/*/plans/`
-  (`gamepilot-checkpoint/1`). `places.json` lists the 66 places they name.
+- **Drafts**: 61 checkpoint plans (13 optional) for Parts 2 and 7 to 20, in the plan shape of
+  `src/games/frlg/programs/*/plans/` (`gamepilot-checkpoint/1`), with the 66 places they name. They
+  are kept out of this note, in a reference PR (branch `docs/frlg-walkthrough-plan-drafts`), for
+  future program PRs to start from; the tables below are counted from them.
 - **Parts 1 to 8** are mostly drafted already: PokemonSimulation's `data/story/frlg-authored/`
   holds the fork's FRLG AutoStory plans 00.01 to 00.29 (new game to Lavender Town). They are listed
   here with what GamePilot lacks to run them; they are not copied.
@@ -22,13 +23,17 @@ for deciding what to build next; nothing here runs.
   `bag: hm03`, `party: lapras`, `flag: FLAG_...` (pret's flag names; GamePilot reads no flags, so a
   flag is checked through what it changes: a badge, a bag item, an npc gone).
 - `metadata.needs`: every capability the plan uses that FireRed lacks, with `missing` or
-  `partial`. The tables below and the ranking are counted from these.
-- Route targets name a **place** (`"place": "erika_front"`) as section 3 of Programs-As-Goals
-  proposes, next to the map, tile and facing. Tiles are derived, never typed in: an npc's, item's
+  `partial`. The tables below and the ranking are counted from these. They were counted before #39 and #40, so
+  `heal_at` still shows as missing.
+- Route targets name a **place** (`"place": "erika_front"`), next to the map, tile and facing.
+  Places and the `go_to` / `heal_at` fragments now exist (#39, #40: `src/games/frlg/places/`,
+  `src/games/frlg/fragments/`); a program built from a draft adds its places to that table. Tiles are derived, never typed in: an npc's, item's
   or warp's coord in PokemonSimulation's runtime maps (submodule pin) and the open tile beside it.
   Where that is not possible (the map is missing, the spot is a script trigger, the tile is not open)
   the target has a `"todo": "TODO: ..."` instead of tiles: 167 TODO strings in all.
-- New, not decodable today: `"kind": "fragment"` (`heal_at`, `fight_trainer`, `buy`, `e4_room`) and
+- Not decodable today: the drafts' `"kind": "fragment"` (#40 writes a call as
+  `{"id": ..., "fragment": "heal_at", "args": {"town": "lavendertown"}}`; `fight_trainer`, `buy` and
+  `e4_room` do not exist yet) and
   game actions that do not exist yet (`teach`, `static_encounter`, `surf`, `push_boulder`, `ferry`,
   ...). `battle` events carry `opponent` and `policy` args the decoder does not read yet.
 - Trainers whose lines a walk may cross are named in the event's `why`, from PokemonSimulation's
@@ -222,7 +227,8 @@ reversed) if Seafoam's boulders come late.
 
 ### Part 14: One, Two and Three Island
 
-The Seagallop ferry, a Center with its nurse elsewhere (One Island's (5, 2)), four battles in a row,
+The Seagallop ferry, a Center whose nurse stands elsewhere (One Island's nurse is at (5, 2), stand
+(5, 4)), four battles in a row,
 and scenes that move the player between islands.
 
 | Checkpoint | Start | Goal facts | Exists | Missing |
@@ -299,18 +305,18 @@ first.
 
 | # | Capability | Drafts (required) | Authored 00.xx (of 35) | Total | First part | Size | Note |
 |---|---|---|---|---|---|---|---|
-| 1 | `battle`: `battle`: a trainer battle to its end | 33 (27) | 14 | 47 | 1-8 (authored), 2 | M | plan kind exists; FireRed runs only scripted battles (grind, Mail Glitch). Needs a default policy: lead's best move, switch on faint, lose = fail |
+| 1 | `battle`: a trainer battle to its end | 33 (27) | 14 | 47 | 1-8 (authored), 2 | M | plan kind exists; FireRed runs only scripted battles (grind, Mail Glitch). Needs a default policy: lead's best move, switch on faint, lose = fail |
 | 2 | `battle_policy`: battle policy per opponent (type matchups, switching, status cures) | 21 (18) | 0 | 21 | 2 | L | gyms, rivals, bosses, Elite Four |
 | 3 | `trainer_interrupt`: fight a trainer who stops a walk, then resume | 20 (18) | 0 | 20 | 7 | M | Walk_interrupts raises Trainer_battle and the walk ends; routes with unavoidable lines need it |
-| 4 | `step`: `step`, `trainer_line`, `trainer_wait` | 0 (0) | 18 | 18 | 1-8 (authored) | S | plan kind exists; the fork's trainer approach steps |
-| 5 | `legs`: `legs` (walk legs as written) | 0 (0) | 17 | 17 | 1-8 (authored) | S | plan kind exists |
-| 6 | `heal_at`: `heal_at(town)` fragment | 13 (12) | 0 | 13 | 2 | S | Programs-As-Goals section 3; heal exists, the fragment and places table do not |
+| 4 | `step`, `trainer_line`, `trainer_wait` | 0 (0) | 18 | 18 | 1-8 (authored) | S | plan kind exists; the fork's trainer approach steps |
+| 5 | `legs` (walk legs as written) | 0 (0) | 17 | 17 | 1-8 (authored) | S | plan kind exists |
+| 6 | `heal_at(town)` fragment | 13 (12) | 0 | 13 | 2 | S | exists in #40 (open); counted as the plans that would call it |
 | 7 | `surf`: Surf: start on water, walk water in the planner | 10 (7) | 0 | 10 | 12 | L | Water is a wall in Frlg_steps |
-| 8 | `answer`: `answer` (yes/no) | 6 (6) | 3 | 9 | 1-8 (authored), 10 | S | plan kind exists; FireRed's builtin returns not_implemented |
-| 9 | `teach`: `teach` (TM/HM) | 4 (4) | 5 | 9 | 1-8 (authored), 10 | M | the fork has it (authored 00.14, 00.23) |
+| 8 | `answer` (yes/no) | 6 (6) | 3 | 9 | 1-8 (authored), 10 | S | plan kind exists; FireRed's builtin returns not_implemented |
+| 9 | `teach` (TM/HM) | 4 (4) | 5 | 9 | 1-8 (authored), 10 | M | the fork has it (authored 00.14, 00.23) |
 | 10 | `static_encounter`: static encounter: talk-started battle to catch or defeat | 8 (6) | 0 | 8 | 9 | M | Snorlax, the birds, Mewtwo, Marowak, Hypno; `capture` covers wild grass only |
 | 11 | `story_gates`: story gates in FireRed's planner (Card Key doors, Mansion switch, Victory Road, hidden stairs) | 6 (6) | 0 | 6 | 9 | M | Gate_state and the gates tables exist; Frlg_steps treats G as a wall except cut trees |
-| 12 | `ferry`: `ferry`: Seagallop to an island | 6 (6) | 0 | 6 | 13 | M | talk to the sailor, pick from a list; Bill's scenes |
+| 12 | `ferry`: Seagallop to an island | 6 (6) | 0 | 6 | 13 | M | talk to the sailor, pick from a list; Bill's scenes |
 | 13 | `fight_trainer`: `fight_trainer(map, trainer)` fragment: step into the line from PokemonSimulation's npcs, battle | 5 (5) | 0 | 5 | 9 | M | the fork's trainer_line / trainer_wait steps, made data-driven |
 | 14 | `strength`: Strength: push boulders, boulder positions as walk state | 5 (3) | 0 | 5 | 12 | L | boulders are npcs in PokemonSimulation; the fork has AutoStoryBoulders |
 | 15 | `item_heal`: `heal_party_items`: Full Restore / Revive between battles | 5 (4) | 0 | 5 | 17 | M | reads HP and faints; use_item on a member exists |
@@ -319,27 +325,27 @@ first.
 | 18 | `soft_reset_retry`: save before, soft reset and retry a one-chance battle | 4 (2) | 0 | 4 | 12 | S | Soft_reset exists as a module, not as a checkpoint policy |
 | 19 | `rock_smash`: Rock Smash | 4 (2) | 0 | 4 | 14 | S | like cut_tree; a wild battle may start |
 | 20 | `story_grind`: the fork's story `grind` / `grind_check` args | 0 (0) | 3 | 3 | 1-8 (authored) | M | GamePilot's grind takes grind_strategies.json spots |
-| 21 | `gift_pokemon`: `gift_pokemon`: receive, decline the nickname, room in the party | 3 (1) | 0 | 3 | 11 | S | Make_room exists |
+| 21 | `gift_pokemon`: receive, decline the nickname, room in the party | 3 (1) | 0 | 3 | 11 | S | Make_room exists |
 | 22 | `fall_holes`: holes and drops in the planner | 3 (3) | 0 | 3 | 12 | S | H glyphs and drop warps are in the maps |
 | 23 | `fly_sevii`: Fly to the Sevii Islands | 3 (3) | 0 | 3 | 18 | S | the Fly map's second page; island landings |
 | 24 | `gift_screens`: `close_trainer_card`, `leave_gift_summary` | 0 (0) | 2 | 2 | 1-8 (authored) | S | RNG side steps |
-| 25 | `new_game`: `new_game` / `options` | 0 (0) | 2 | 2 | 1-8 (authored) | S | Part 1 only |
+| 25 | `new_game` / `options` | 0 (0) | 2 | 2 | 1-8 (authored) | S | Part 1 only |
 | 26 | `dex_count_reader`: Pokedex caught count (Trainer Card) | 2 (0) | 0 | 2 | 7 | S | gates Flash, Exp. Share, National Dex |
 | 27 | `elevator`: elevators other than Celadon's (Rocket Hideout, Silph Co.) | 2 (2) | 0 | 2 | 9 | S | lift_floor generalised; elevator maps not in PokemonSimulation |
-| 28 | `card_key_door`: `card_key_door` | 2 (2) | 0 | 2 | 11 | S | face the door, A; sets the gate open |
-| 29 | `fossil`: `fossil` (Mt. Moon's choice) | 0 (0) | 1 | 1 | 1-8 (authored) | S |  |
-| 30 | `trash_cans`: `trash_cans` (Vermilion Gym) | 0 (0) | 1 | 1 | 1-8 (authored) | M | the switch pair search |
-| 31 | `pc`: `pc` (withdraw / deposit by slot and box) | 0 (0) | 1 | 1 | 1-8 (authored) | S | pc_deposit exists |
-| 32 | `shop`: `shop` kind (authored marts) | 0 (0) | 1 | 1 | 1-8 (authored) | S | `mart` exists with other args |
+| 28 | `card_key_door` | 2 (2) | 0 | 2 | 11 | S | face the door, A; sets the gate open |
+| 29 | `fossil` (Mt. Moon's choice) | 0 (0) | 1 | 1 | 1-8 (authored) | S |  |
+| 30 | `trash_cans` (Vermilion Gym) | 0 (0) | 1 | 1 | 1-8 (authored) | M | the switch pair search |
+| 31 | `pc` (withdraw / deposit by slot and box) | 0 (0) | 1 | 1 | 1-8 (authored) | S | pc_deposit exists |
+| 32 | `shop` kind (authored marts) | 0 (0) | 1 | 1 | 1-8 (authored) | S | `mart` exists with other args |
 | 33 | `fight_wild_on_walk`: fight wild battles on a walk (`fight_wild`) | 1 (1) | 0 | 1 | 9 | S | route arg exists; the fork fights, GamePilot flees |
-| 34 | `check_object`: `check_object`: A on a sign, poster or switch | 1 (1) | 0 | 1 | 9 | S | talk covers it if the reader accepts no-dialog outcomes |
+| 34 | `check_object`: A on a sign, poster or switch | 1 (1) | 0 | 1 | 9 | S | talk covers it if the reader accepts no-dialog outcomes |
 | 35 | `safari`: Safari Zone: entry, the Safari battle menu (Run), the step count | 1 (1) | 0 | 1 | 10 | M |  |
 | 36 | `bike`: the Bicycle: get on, ride, Cycling Road's slope | 1 (1) | 0 | 1 | 10 | M | Move_mechanics has no FireRed bike gait |
-| 37 | `use_key_item`: `use_key_item` (Bicycle) | 1 (1) | 0 | 1 | 10 | S | register or use from the bag |
+| 37 | `use_key_item` (Bicycle) | 1 (1) | 0 | 1 | 10 | S | register or use from the bag |
 | 38 | `step_budget`: a walk's step count against a budget | 1 (1) | 0 | 1 | 10 | S | Safari's 600 steps |
-| 39 | `mansion_switch`: `mansion_switch` (statue: yes) | 1 (1) | 0 | 1 | 13 | S | flips the Mansion switch state |
+| 39 | `mansion_switch` (statue: yes) | 1 (1) | 0 | 1 | 13 | S | flips the Mansion switch state |
 | 40 | `ledge_drop`: balcony drops (Mansion) | 1 (1) | 0 | 1 | 13 | S | ledges are planned; check the balcony is one |
-| 41 | `gym_quiz`: `gym_quiz` (Cinnabar) | 1 (1) | 0 | 1 | 13 | S | answer per machine from pret's scripts |
+| 41 | `gym_quiz` (Cinnabar) | 1 (1) | 0 | 1 | 13 | S | answer per machine from pret's scripts |
 | 42 | `consecutive_battles`: `train` kind: battles back to back | 1 (1) | 0 | 1 | 14 | S | plan kind exists; over `battle` |
 | 43 | `buy`: `buy(items, mart)` fragment | 1 (1) | 0 | 1 | 16 | S | over `mart` |
 | 44 | `long_scene`: long scenes (Hall of Fame, credits) and Continue | 1 (1) | 0 | 1 | 17 | S |  |
@@ -348,6 +354,14 @@ first.
 | 47 | `field_move_menu`: field move from the party menu (Cut on the Braille door) | 1 (1) | 0 | 1 | 18 | S |  |
 | 48 | `roamer`: roamer hunt | 1 (0) | 0 | 1 | 20 | M |  |
 | 49 | `e4_room`: `e4_room(member)` checkpoint template | 1 (0) | 0 | 1 | 20 | S | made from wt-17 |
+
+**The next program** after the structure work is the Sevii Islands story with the three
+legendary birds (Moltres on Mt. Ember, Articuno in Seafoam, Zapdos in the Power Plant), from a
+post-Elite Four save: Parts 18 and 19 of this note, with the birds of Parts 12, 14 and 15. Its preconditions are read off the
+Trainer Card (badges), and its first checkpoint flies to Vermilion for the Seagallop. Its drafts
+(`sb-01` to `sb-10`) are the most complete in the drafts PR. It needs, from the list below:
+`static_encounter` with the soft-reset retry, `ferry`, Surf, Strength, Rock Smash, holes, spinners,
+`battle` with a policy, and a Trainer Card reader.
 
 **Top ten**, in the order that unblocks the most:
 
@@ -359,8 +373,9 @@ first.
    (type data from pret, when to switch, when to heal).
 4. Trainers met on a walk (20): fight the battle `Walk_interrupts.Trainer_battle` stops for, then
    re-plan from where it left the player. Routes 8, 12 to 15, 18 and every cave need it.
-5. Places and `heal_at` (13 drafts, and the 20 `heal` events of the authored chain): the
-   Programs-As-Goals step 4; 62 route targets already name a place.
+5. Places and `heal_at` (13 drafts, and the 20 `heal` events of the authored chain): built in #39
+   and #40 (Programs-As-Goals step 4). What is left is data: a place per Center from Celadon on
+   (their maps are missing too) and per draft target; 62 route targets already name one.
 6. Surf (10): water in FireRed's step model, the "Want to Surf?" prompt, landing. From Part 12 on,
    most checkpoints cross water.
 7. `teach` and `answer` (9 each): small, and the fork has both.
@@ -388,7 +403,8 @@ first.
 - **Safari Zone.** Its own battle menu (Ball, Bait, Rock, Run), 600 steps, the PA's time-up warp.
 - **Silph Co.** Pads (step-on warps, likely planned already), Card Key doors (gates), the elevator
   (map missing).
-- **Sevii.** The ferry, Fly's second page, Centers whose nurse is not at (7, 2), Sevii marts missing
+- **Sevii.** The ferry, Fly's second page, Centers whose nurse stands elsewhere (each Center's stand
+  tile is its own place: Lavender (7, 4), Indigo Plateau (13, 12), One Island (5, 4)), Sevii marts missing
   from `kanto_mart_stocks.json`.
 - **Item healing.** The Elite Four and the long caves need Full Restores and Revives used on
   members by HP, not the nurse.
@@ -404,8 +420,8 @@ missing, so `heal_at` there has no map to walk:
 
 | Fragment / template | Uses | Note |
 |---|---|---|
-| route to a place (`go_to`) | 62 (43) | of 142 route events; the rest are TODO targets |
-| `heal_at(town)` | 13 (13), plus 6 `heal` | and 20 `heal` events in the authored chain |
+| route to a place (`go_to`) | 62 (43) | exists (#39, #40); of 142 route events, the rest are TODO targets |
+| `heal_at(town)` | 13 (13), plus 6 `heal` | exists (#40); and 20 `heal` events in the authored chain |
 | `fight_trainer(map, trainer)` | 9 (5) | blocking trainers; the authored chain's 50 `step` events are the same idea |
 | `fly` then a walk (`fly_and_walk`) | 5 (5) | of 6 Flys; grows once Fly is taught in wt-10f |
 | `ferry(island)` | 6 (6) | Sevii |
