@@ -25,7 +25,7 @@ Runs on: mGBA.
 - money at least ¥12000 (all the purchases)
 - retro-mail at least x82 (duplicate_item)
 - rare-candy at least x4 (give_bag_item)
-- ultra-ball at least x2 (capture)
+- ultra-ball at least x4 (capture)
 - at the start, Route10_PokemonCenter_1F
 <!-- /generated -->
 
@@ -34,7 +34,7 @@ Runs on: mGBA.
 <!-- generated:commands -->
 ```sh
 # mGBA: each checkpoint three times from its start state, two must pass
-sh run/run_checkpoints_on_mgba.sh --program frlg.dex_collection --from 01-ultra-balls --to 13-vermilion-routes --mode verification
+sh run/run_checkpoints_on_mgba.sh --program frlg.dex_collection --from 01-ultra-balls --to 16-fuchsia-routes --mode verification
 ```
 <!-- /generated -->
 
@@ -56,8 +56,11 @@ sh run/run_checkpoints_on_mgba.sh --program frlg.dex_collection --from 01-ultra-
 | 11-mansion | From Route 10's nurse: fly to Cinnabar, catch the Pokemon Mansion's new species on 1F, fly back to Route 10's nurse |
 | 12-route10-river | Route 10's nurse: surf on the river east of the Center, catch a Tentacool, back to the nurse |
 | 13-vermilion-routes | From Route 10's nurse: fly to Vermilion, Drowzee in Route 11's grass, Psyduck on Route 6's pond, back to Vermilion's nurse |
+| 14-magikarp-salesman | From Vermilion's nurse: fly to Route 4, buy the salesman's Magikarp, Route 4's nurse |
+| 15-eevee | From Route 4's nurse: fly to Celadon, take the Eevee on the Condominiums' roof, fly to Route 10's nurse |
+| 16-fuchsia-routes | From Route 10's nurse: fly to Fuchsia, Venonat and Ditto in Route 15's grass, Doduo and Fearow in Route 18's, fly to Route 10's nurse |
 
-<!-- plans: 9e304174c001 -->
+<!-- plans: b5b0d7a3e36c -->
 <!-- /generated -->
 
 ## When it stops
@@ -78,6 +81,9 @@ sh run/run_checkpoints_on_mgba.sh --program frlg.dex_collection --from 01-ultra-
 | 11-mansion | pidgeot in the party (fly); ultra-ball at least x1 (capture); at the start, Route10_PokemonCenter_1F |
 | 12-route10-river | ultra-ball at least x1 (capture); at the start, Route10_PokemonCenter_1F |
 | 13-vermilion-routes | pidgeot in the party (fly); ultra-ball at least x2 (capture); at the start, Route10_PokemonCenter_1F |
+| 14-magikarp-salesman | pidgeot in the party (fly); at the start, VermilionCity_PokemonCenter_1F |
+| 15-eevee | pidgeot in the party (fly); at the start, Route4_PokemonCenter_1F |
+| 16-fuchsia-routes | pidgeot in the party (fly); ultra-ball at least x2 (capture); at the start, Route10_PokemonCenter_1F |
 <!-- /generated -->
 
 ## Known limits
