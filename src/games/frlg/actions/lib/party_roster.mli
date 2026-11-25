@@ -25,7 +25,8 @@ val size : t -> int
 val slot_of : t -> string -> int option
 (** The first slot (from 1) holding the species. *)
 
-val resolve : t -> Action_args.member -> (int, Checkpoints.Failure.cause) result
+val resolve :
+  t -> Action_args.member -> (int, Checkpoints_run.Failure.cause) result
 (** A member's slot; a species not in the party fails as [not_in_party]. *)
 
 val swap : t -> int -> int -> t

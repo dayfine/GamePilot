@@ -10,7 +10,7 @@
     not stop the run, as in the fork; a mismatch stops it. *)
 
 type expected = {
-  party : Checkpoints.Plan.party option;
+  party : Checkpoints_plan.Plan.party option;
   frame : Frlg_readers.Start_frame.t option;
       (** The frame kept when the runner last saved at this start. *)
 }
@@ -20,10 +20,11 @@ type observed = {
   frame_read : Frlg_readers.Start_frame.t option;
 }
 
-val check : expected -> observed -> Checkpoints.Postcondition_check.result list
+val check :
+  expected -> observed -> Checkpoints_run.Postcondition_check.result list
 (** The party, then the place; nothing for what [expected] leaves out. *)
 
-val mismatches : Checkpoints.Postcondition_check.result list -> string list
+val mismatches : Checkpoints_run.Postcondition_check.result list -> string list
 (** The failed results, one line each; empty: the run may start. *)
 
 val observe : log:(string -> unit) -> expected -> observed
@@ -35,7 +36,7 @@ val frame_file : states:string -> string -> string
     start frame. *)
 
 val start_file :
-  states:string -> Checkpoints.Pose.declared option -> string option
+  states:string -> Checkpoints_plan.Pose.declared option -> string option
 (** [<states>/<map>.<x>_<y>.start.frame.json] for a start on tiles (its first):
     the frame kept at that start under any checkpoint's id, so a checkpoint
     renamed or split off (mg-04 to mg-04a) finds the frame kept where it starts.

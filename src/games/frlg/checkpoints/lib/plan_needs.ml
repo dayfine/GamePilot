@@ -1,5 +1,5 @@
 module J = Grid_maps.Json_field
-module P = Checkpoints.Plan
+module P = Checkpoints_plan.Plan
 module A = Frlg_actions
 
 type need =

@@ -1,5 +1,5 @@
 module J = Grid_maps.Json_field
-module P = Checkpoints.Plan
+module P = Checkpoints_plan.Plan
 
 type need = {
   joins : (string * string) list;
@@ -90,11 +90,11 @@ let chain_need plans =
 
 let free_needed need = List.length need.joins
 
-type member = Checkpoints.Room_policy.member
+type member = Checkpoints_run.Room_policy.member
 
 let lead_stays = true
 
-let rules need : Checkpoints.Room_policy.rules =
+let rules need : Checkpoints_run.Room_policy.rules =
   {
     party_size;
     used = need.used;
@@ -103,13 +103,13 @@ let rules need : Checkpoints.Room_policy.rules =
     lead_stays;
   }
 
-let precondition need : Checkpoints.Room_policy.precondition =
+let precondition need : Checkpoints_run.Room_policy.precondition =
   { free_slots = free_needed need }
 
 let deposits need party =
   Result.map
-    (List.map (fun (d : Checkpoints.Room_policy.deposit) -> d.species))
-    (Checkpoints.Room_policy.choose (rules need) (precondition need) party)
+    (List.map (fun (d : Checkpoints_run.Room_policy.deposit) -> d.species))
+    (Checkpoints_run.Room_policy.choose (rules need) (precondition need) party)
 
 let unread slot species : member =
   {

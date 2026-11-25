@@ -1,7 +1,8 @@
 (* What one live run of a checkpoint is given (Checkpoint_live_run): the
    series' setup, the checkpoint, and how the run ended. *)
 
-open Checkpoints
+open Checkpoints_plan
+open Checkpoints_run
 
 type setup = {
   states : string;
@@ -15,7 +16,7 @@ type setup = {
   watch : Daemon_process.watch option;  (** the daemon's watch page, if any *)
   save_after_pass : bool;
       (** On the Switch: save in the game after a pass
-          (Checkpoints.Console_runs). *)
+          (Checkpoints_series.Console_runs). *)
   info : Run_record.info;  (** For each run's run.json. *)
   daemon_flags : string list;
       (** The daemon's recording and keep-awake flags, as the user gave them
@@ -24,8 +25,8 @@ type setup = {
       (** The ports the series' last daemon bound (program, page): the next one
           asks for them again, so the page keeps its URL across runs. *)
   from_event : (string * string option) option;
-      (** --from-event and --to-event: a partial run (Checkpoints.Event_range).
-      *)
+      (** --from-event and --to-event: a partial run
+          (Checkpoints_run.Event_range). *)
   max_rounds : int option;
       (** --max-rounds: a repeating checkpoint's rounds, in place of its plan's
           (testing a few rounds). *)

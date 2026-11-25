@@ -84,7 +84,7 @@ let party =
 (* The pre-flight's steps, scripted: [back] the return to the save,
    [verdict] the table's. *)
 let actions ~back ~verdict log =
-  let step f : Checkpoints.Game.game_action = fun _ _ -> f () in
+  let step f : Checkpoints_run.Game.game_action = fun _ _ -> f () in
   let ok () = Ok () in
   [
     ("soft_reset", step back);
@@ -101,7 +101,7 @@ let preflight ~back ~verdict () =
   ignore
     (Plan_watch.run_shadow ~mode:"preflight" ~log:ignore (Lazy.force world) plan
        (actions ~back ~verdict)
-      : (unit, Checkpoints.Failure.t) result)
+      : (unit, Checkpoints_run.Failure.t) result)
 
 let plan_line states =
   "plan mg-01: "
@@ -142,7 +142,8 @@ let full_party_pass =
       ])
 
 let not_back =
-  Error (Checkpoints.Failure.cause ~repeats:true "not_back" "no start state")
+  Error
+    (Checkpoints_run.Failure.cause ~repeats:true "not_back" "no start state")
 
 let last n text =
   let lines = String.split_on_char '\n' text in
@@ -181,7 +182,7 @@ let () =
               (shown
                  (preflight ~back:Result.ok ~verdict:(fun () ->
                       Error
-                        (Checkpoints.Failure.cause "mismatch"
+                        (Checkpoints_run.Failure.cause "mismatch"
                            "the save does not hold what it needs")))));
         expectation =
           plan_line

@@ -7,7 +7,8 @@
   gamepilot.effects
   gamepilot.watch_report
   gamepilot.grid_maps
-  gamepilot.checkpoints
+  gamepilot.checkpoints_plan
+  gamepilot.checkpoints_run
   gamepilot.frlg_readers
   gamepilot.frlg_battle
   gamepilot.frlg_repo_files

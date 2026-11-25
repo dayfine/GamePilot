@@ -16,5 +16,5 @@ val make_room_steps : string list
 (** ["soft_reset"], ["read_party"], ["plan_deposit"] (the room policy's pick and
     mg-00's plans). *)
 
-val plan : id:string -> title:string -> string list -> Checkpoints.Plan.t
+val plan : id:string -> title:string -> string list -> Checkpoints_plan.Plan.t
 (** A checkpoint [id] whose events are game actions named by these ids. *)

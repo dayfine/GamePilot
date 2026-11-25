@@ -36,7 +36,7 @@ type plan = {
 }
 
 val decode :
-  Grid_maps.Json_field.obj -> (plan, Checkpoints.Failure.cause) result
+  Grid_maps.Json_field.obj -> (plan, Checkpoints_run.Failure.cause) result
 (** Args ["species"], ["move"] and ["backup_move"] (slugs), and ["pace"] (a
     direction). *)
 

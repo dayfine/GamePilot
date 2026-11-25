@@ -14,9 +14,9 @@ let handled =
       (Frlg_actions.Mail_glitch_use.handlers ~log:ignore
          ~party:(ref (Frlg_actions.Party_roster.of_list [])))
 
-let missing (p : Checkpoints.Plan.t) =
+let missing (p : Checkpoints_plan.Plan.t) =
   List.filter_map
-    (fun (e : Checkpoints.Plan.event) ->
+    (fun (e : Checkpoints_plan.Plan.event) ->
       match (e.kind, e.action) with
       | Game_action _, Some name when not (List.mem name handled) -> Some name
       | _ -> None)
@@ -29,7 +29,7 @@ let summary file () =
     match Checkpoint_run.check_plan p with Ok () -> "frlg" | Error e -> e
   in
   let start =
-    Option.fold ~none:"no start" ~some:Checkpoints.Pose.observed_to_string
+    Option.fold ~none:"no start" ~some:Checkpoints_plan.Pose.observed_to_string
       (Checkpoint_run.start_of p.checkpoint)
   in
   let missing =
@@ -39,12 +39,17 @@ let summary file () =
 
 (* Where the player stands after an event that names it, as the story game
    reckons it: a walk's target, a lift ride's exit, a single declared tile. *)
-let reckoned (e : Checkpoints.Plan.event) : Checkpoints.Pose.observed option =
-  let of_grid (g : Checkpoints.Pose.grid) =
+let reckoned (e : Checkpoints_plan.Plan.event) :
+    Checkpoints_plan.Pose.observed option =
+  let of_grid (g : Checkpoints_plan.Pose.grid) =
     match g.tiles with
     | [ tile ] ->
         Some
-          { Checkpoints.Pose.at_map = g.map; at_tile = tile; faces = g.facing }
+          {
+            Checkpoints_plan.Pose.at_map = g.map;
+            at_tile = tile;
+            faces = g.facing;
+          }
     | _ -> None
   in
   match (e.kind, e.action) with
@@ -60,10 +65,10 @@ let reckoned (e : Checkpoints.Plan.event) : Checkpoints.Pose.observed option =
 let walks file () =
   let p = plan file in
   let world = Result.get_ok (Checkpoint_run.load_world ()) in
-  let step (at, out) (e : Checkpoints.Plan.event) =
+  let step (at, out) (e : Checkpoints_plan.Plan.event) =
     let out =
       match (e.kind, at) with
-      | Route r, Some (at : Checkpoints.Pose.observed) ->
+      | Route r, Some (at : Checkpoints_plan.Pose.observed) ->
           let legs =
             Result.bind (Frlg_overworld.Route_target.place_of world at)
               (fun from ->
@@ -100,19 +105,20 @@ let capped cap file () =
 let grind_save_point () =
   let start id =
     match (plan (id ^ ".plan.json")).checkpoint.start with
-    | Some (Grid g) -> Checkpoints.Pose.grid_to_string g
+    | Some (Grid g) -> Checkpoints_plan.Pose.grid_to_string g
     | Some (Zone _) | None -> "not a tile"
   in
   let a = plan "mg-04a.plan.json" and b = plan "mg-04b.plan.json" in
   let ends =
     [
-      Checkpoints.Checkpoint_end.declared ~next:(Some b.checkpoint) a.checkpoint;
+      Checkpoints_run.Checkpoint_end.declared ~next:(Some b.checkpoint)
+        a.checkpoint;
       b.postconditions.position;
     ]
   in
   String.concat "; "
     (List.map
-       (Option.fold ~none:"none" ~some:Checkpoints.Pose.grid_to_string)
+       (Option.fold ~none:"none" ~some:Checkpoints_plan.Pose.grid_to_string)
        ends
     @ [ start "mg-04b"; start "mg-04c" ])
 
@@ -125,10 +131,10 @@ let from_last_event ~kept_ropes () =
   let events = p.checkpoint.events in
   let range =
     Result.get_ok
-      (Checkpoints.Event_range.resolve events ~from_event:"heal_lavender"
+      (Checkpoints_run.Event_range.resolve events ~from_event:"heal_lavender"
          ~to_event:None)
   in
-  let kept : Checkpoints.Event_states.kept =
+  let kept : Checkpoints_run.Event_states.kept =
     {
       start =
         {
@@ -141,25 +147,25 @@ let from_last_event ~kept_ropes () =
   in
   let kept =
     Result.get_ok
-      (Checkpoints.Event_states.kept_of_json
-         (Checkpoints.Event_states.kept_to_json kept))
+      (Checkpoints_run.Event_states.kept_of_json
+         (Checkpoints_run.Event_states.kept_to_json kept))
   in
   let observed =
     {
-      Checkpoints.Postcondition_check.nothing_read with
+      Checkpoints_run.Postcondition_check.nothing_read with
       items = [ ("revive", 2); ("escape-rope", 1) ];
       start = kept.start;
     }
   in
   let rope =
     List.find
-      (fun (r : Checkpoints.Postcondition_check.result) ->
+      (fun (r : Checkpoints_run.Postcondition_check.result) ->
         r.what = "item escape-rope")
-      (Checkpoints.Postcondition_check.check p.postconditions observed)
+      (Checkpoints_run.Postcondition_check.check p.postconditions observed)
   in
   Printf.sprintf "%s: %s"
-    (Checkpoints.Event_range.label events range.first)
-    (Checkpoints.Postcondition_check.result_to_string rope)
+    (Checkpoints_run.Event_range.label events range.first)
+    (Checkpoints_run.Postcondition_check.result_to_string rope)
 
 let () =
   Table_test.run "checkpoint_run"
