@@ -1,4 +1,4 @@
 (library
  (name checkpoints_expand)
  (public_name gamepilot.checkpoints_expand)
- (libraries yojson gamepilot.grid_maps gamepilot.engine_expand))
+ (libraries yojson gamepilot.grid_geometry gamepilot.engine_expand))

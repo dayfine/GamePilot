@@ -2,7 +2,7 @@
    Pokemon_WallRecovery_Tests.cpp; game adapters keep the real forest and mine
    cases. *)
 
-open Grid_maps
+open Grid_geometry
 open Grid_recovery
 
 type hold = { direction : Direction.t; tiles : int }

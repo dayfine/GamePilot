@@ -1,4 +1,5 @@
 open Grid_maps
+open Grid_geometry
 
 let mat : Tile_pos.t = { x = 7; y = 8 }
 let nurse_front : Tile_pos.t = { x = 7; y = 4 }

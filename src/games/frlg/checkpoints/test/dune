@@ -175,6 +175,7 @@
  (deps 02-trade-farfetchd.plan.json 07-glitch-prep.plan.json)
  (libraries
   gamepilot.table_test
+  gamepilot.grid_geometry
   gamepilot.grid_maps
   gamepilot.json_field
   gamepilot.pokemon_checkpoints

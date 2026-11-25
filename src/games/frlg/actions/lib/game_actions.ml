@@ -3,7 +3,7 @@ module R = Action_requests
 type context = {
   log : string -> unit;
   party : Party_roster.t ref;
-  facing : unit -> Grid_maps.Direction.t option;
+  facing : unit -> Grid_geometry.Direction.t option;
   stocks : unit -> (Mart_plan.stocks, string) result;
 }
 
@@ -44,7 +44,8 @@ let trade ctx offer receive =
       ctx.party :=
         Party_roster.replace party ~slot (Option.value receive ~default:"?")
 
-let facing ctx = Option.value (ctx.facing ()) ~default:Grid_maps.Direction.North
+let facing ctx =
+  Option.value (ctx.facing ()) ~default:Grid_geometry.Direction.North
 
 let body ctx (request : R.t) () =
   let log = ctx.log in

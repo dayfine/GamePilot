@@ -1,5 +1,6 @@
 open Pokemon_terms
 open Grid_maps
+open Grid_geometry
 open Engine_plan_codec.Plan_fields
 module F = Json_field
 

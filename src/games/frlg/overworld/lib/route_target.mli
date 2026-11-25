@@ -3,6 +3,7 @@
     {!Frlg_steps} and the shared leg planner. Pure. *)
 
 open Grid_maps
+open Grid_geometry
 
 val place_of :
   Frlg_steps.world ->

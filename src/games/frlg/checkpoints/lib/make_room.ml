@@ -11,7 +11,7 @@ let town_of_map (t : Towns.t) map =
       map = town.name || String.starts_with ~prefix:(town.name ^ "_") map)
     t.towns
 
-let distance (a : Grid_maps.Tile_pos.t) (b : Grid_maps.Tile_pos.t) =
+let distance (a : Grid_geometry.Tile_pos.t) (b : Grid_geometry.Tile_pos.t) =
   ((a.x - b.x) * (a.x - b.x)) + ((a.y - b.y) * (a.y - b.y))
 
 (* A Center Make_room can walk: its coded room, with the PC at pc_front. *)
@@ -39,7 +39,7 @@ type room = {
   needed_moves : string list;
 }
 
-let pose map (tile : Grid_maps.Tile_pos.t) facing =
+let pose map (tile : Grid_geometry.Tile_pos.t) facing =
   `Assoc
     [
       ("map", `String map);

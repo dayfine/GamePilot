@@ -5,7 +5,8 @@ let batch_turns = 24
 let turn_hold_ms = 30
 let turn_release_ms = 100
 
-let clockwise : Grid_maps.Direction.t -> Grid_maps.Direction.t = function
+let clockwise : Grid_geometry.Direction.t -> Grid_geometry.Direction.t =
+  function
   | North -> East
   | East -> South
   | South -> West

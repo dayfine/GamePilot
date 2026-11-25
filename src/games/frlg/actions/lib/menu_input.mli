@@ -136,7 +136,7 @@ val press_until :
     before each press and while it runs); at most [max_presses] (default 45),
     then fails as [code]. *)
 
-val dpad : Grid_maps.Direction.t -> Wire.button
+val dpad : Grid_geometry.Direction.t -> Wire.button
 (** The D-pad button of a direction. *)
 
 val hold : hold_ms:int -> cooldown_ms:int -> Wire.button -> Wire.command

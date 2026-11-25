@@ -263,7 +263,7 @@ let round_trip kept =
       in
       let pose (p : Pose.observed) =
         Printf.sprintf "%s (%d, %d) %s" p.at_map p.at_tile.x p.at_tile.y
-          (Option.fold ~none:"?" ~some:Grid_maps.Direction.name p.faces)
+          (Option.fold ~none:"?" ~some:Grid_geometry.Direction.name p.faces)
       in
       money ^ coins ^ items ^ ", " ^ Option.fold ~none:"nowhere" ~some:pose at
 
@@ -282,7 +282,8 @@ let kept_cases =
   [
     case "the checkpoint's start money and the reckoned pose, read back"
       (fun () -> round_trip { start = money (Some 29202); at = Some house2 })
-      ("$29202, VermilionCity_House2 (4, 4) " ^ Grid_maps.Direction.name North);
+      ("$29202, VermilionCity_House2 (4, 4) "
+      ^ Grid_geometry.Direction.name North);
     case "no start money (no spent promise), the pose unknown"
       (fun () -> round_trip { start = money None; at = None })
       "no money, nowhere";

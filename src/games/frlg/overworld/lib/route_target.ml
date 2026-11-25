@@ -1,4 +1,5 @@
 open Grid_maps
+open Grid_geometry
 module Pose = Pokemon_checkpoints.Pose
 module Pose_text = Pokemon_checkpoints.Pose_text
 

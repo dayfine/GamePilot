@@ -1,19 +1,20 @@
-type spot = { displaced : bool; facing : Grid_maps.Direction.t option }
+type spot = { displaced : bool; facing : Grid_geometry.Direction.t option }
 
 let on_patch facing = { displaced = false; facing }
 
 let way ~pace spot =
-  if spot.displaced then Grid_maps.Direction.opposite pace else pace
+  if spot.displaced then Grid_geometry.Direction.opposite pace else pace
 
 let after_step ~pace spot =
   { displaced = not spot.displaced; facing = Some (way ~pace spot) }
 
 let stands_on ~pace spot tile =
-  if spot.displaced then Grid_maps.Tile_pos.next tile pace else tile
+  if spot.displaced then Grid_geometry.Tile_pos.next tile pace else tile
 
 let spot_at ~pace ~patch tile facing =
-  if Grid_maps.Tile_pos.equal tile patch then Some (on_patch facing)
-  else if Grid_maps.Tile_pos.equal tile (Grid_maps.Tile_pos.next patch pace)
+  if Grid_geometry.Tile_pos.equal tile patch then Some (on_patch facing)
+  else if
+    Grid_geometry.Tile_pos.equal tile (Grid_geometry.Tile_pos.next patch pace)
   then Some { displaced = true; facing }
   else None
 

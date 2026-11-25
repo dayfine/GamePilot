@@ -1,7 +1,7 @@
 open Grid_trace
 
 type t = {
-  mover : Grid_maps.Direction.t -> int -> Wire.command list;
+  mover : Grid_geometry.Direction.t -> int -> Wire.command list;
   interrupts : Leg_interrupt.t list;
   log : string -> unit;
   tracer : Leg_tracer.t option;

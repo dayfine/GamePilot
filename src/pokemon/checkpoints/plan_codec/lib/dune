@@ -3,6 +3,7 @@
  (public_name gamepilot.pokemon_plan_codec)
  (libraries
   yojson
+  gamepilot.grid_geometry
   gamepilot.grid_maps
   gamepilot.json_field
   gamepilot.engine_promise

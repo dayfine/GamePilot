@@ -7,7 +7,7 @@ type plan = {
   recycle_species : string;
   sweeper : string;
   depleted_move : string;
-  step_direction : Grid_maps.Direction.t;
+  step_direction : Grid_geometry.Direction.t;
 }
 
 let decode =
@@ -134,7 +134,7 @@ let step_into_sight ~log direction =
 type game_steps = {
   species_at : int -> string option;
   known_moves : slot:int -> string list;
-  start_battle : Grid_maps.Direction.t -> unit;
+  start_battle : Grid_geometry.Direction.t -> unit;
   restored : slot:int -> unit -> bool;
   battle :
     (B.Battle.game_steps -> B.Battle.game_steps) ->

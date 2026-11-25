@@ -57,7 +57,7 @@ module Interrupt : sig
 end
 
 type plan = {
-  direction : Grid_maps.Direction.t;
+  direction : Grid_geometry.Direction.t;
   tiles : int;
   end_kind : End_kind.t;
   ends : Route_tile.t list;
@@ -65,7 +65,7 @@ type plan = {
 }
 (** What a leg is planned to do. *)
 
-val plan : Grid_maps.Direction.t -> int -> End_kind.t -> plan
+val plan : Grid_geometry.Direction.t -> int -> End_kind.t -> plan
 (** A plan that does not say where it ends. *)
 
 type t = {

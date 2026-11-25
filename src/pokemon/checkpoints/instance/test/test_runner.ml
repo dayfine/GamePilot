@@ -4,7 +4,7 @@
 open Pokemon_checkpoints
 open Engine_promise
 
-let tile x y : Grid_maps.Tile_pos.t = { x; y }
+let tile x y : Grid_geometry.Tile_pos.t = { x; y }
 
 let events =
   [

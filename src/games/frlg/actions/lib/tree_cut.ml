@@ -2,7 +2,7 @@ let cut world (at : Pokemon_checkpoints.Pose.observed) direction =
   let on_tree =
     {
       Pokemon_checkpoints.Pose.at_map = at.at_map;
-      at_tile = Grid_maps.Tile_pos.next at.at_tile direction;
+      at_tile = Grid_geometry.Tile_pos.next at.at_tile direction;
       faces = Some direction;
     }
   in

@@ -2,7 +2,7 @@
    tiles, map names with spaces) and FRLG-style single tiles. Ported from
    Pokemon_RouteLog_Tests.cpp. *)
 
-open Grid_maps
+open Grid_geometry
 open Grid_trace
 
 let tile map x y = { Route_tile.map; pos = { Tile_pos.x; y } }

@@ -2,7 +2,7 @@
    PokemonFRLG_OverworldRoute_Tests (doors, exit mats, ledges, map edges)
    on Pallet Town, the player's house and Route 1. *)
 
-open Grid_maps
+open Grid_geometry
 open Frlg_overworld_fixtures
 open Frlg_world
 module Route_target = Frlg_overworld.Route_target

@@ -4,6 +4,7 @@
  (libraries
   yojson
   gamepilot.table_test
+  gamepilot.grid_geometry
   gamepilot.grid_maps
   gamepilot.checkpoints_expand
   gamepilot.repo_io

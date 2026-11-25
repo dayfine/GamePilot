@@ -2,7 +2,7 @@ module J = Json_field
 
 type town = {
   name : string;
-  cell : Grid_maps.Tile_pos.t;
+  cell : Grid_geometry.Tile_pos.t;
   landing : Pokemon_checkpoints.Pose.observed;
 }
 
@@ -10,10 +10,10 @@ type t = { columns : int; rows : int; towns : town list }
 
 (* pokefirered src/field_effect.c, FlyInFieldEffect_End: the player gets off
    the bird turned south. *)
-let landing_facing = Grid_maps.Direction.South
+let landing_facing = Grid_geometry.Direction.South
 let asset = "src/games/frlg/assets/kanto_fly_towns.json"
 
-let tile ~where key obj : Grid_maps.Tile_pos.t =
+let tile ~where key obj : Grid_geometry.Tile_pos.t =
   match J.field ~where key obj with
   | `List [ `Int x; `Int y ] -> { x; y }
   | _ -> J.fail "%s%s is not [x, y]." where key

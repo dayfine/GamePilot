@@ -2,7 +2,7 @@
    object_event but the nurse and the invisible Pokemon Journals, its graphics
    as its name, and its movement type as its motion. *)
 
-open Grid_maps
+open Grid_geometry
 
 type motion =
   | Faces of Direction.t

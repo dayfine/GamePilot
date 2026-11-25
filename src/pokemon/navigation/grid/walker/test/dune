@@ -5,6 +5,6 @@
   gamepilot.wire
   gamepilot.effects
   gamepilot.table_test
-  gamepilot.grid_maps
+  gamepilot.grid_geometry
   gamepilot.grid_trace
   gamepilot.grid_walker))

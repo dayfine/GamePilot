@@ -557,9 +557,9 @@ let first_hold from target () =
         Frlg_overworld.Route_legs.move_of w Running ~facing:from.faces leg
       with
       | Ok (Hold { turn_first; _ }) ->
-          Grid_maps.Direction.name leg.direction
+          Grid_geometry.Direction.name leg.direction
           ^ if turn_first then ", turn tap first" else ", no turn tap"
-      | Ok (Turn d) -> "turn " ^ Grid_maps.Direction.name d
+      | Ok (Turn d) -> "turn " ^ Grid_geometry.Direction.name d
       | Error e -> "error: " ^ e)
 
 let routes =

@@ -21,7 +21,7 @@ type game = {
 let note g s = g.trace <- s :: g.trace
 
 let step g ~pace () =
-  note g (Grid_maps.Direction.name (Pacing.way ~pace !(g.spot)));
+  note g (Grid_geometry.Direction.name (Pacing.way ~pace !(g.spot)));
   g.spot := Pacing.after_step ~pace !(g.spot);
   g.shown <-
     (match g.afters with
@@ -78,7 +78,7 @@ let two_searches () =
 let stands_after afters () =
   let g = new_game () in
   ignore (search g afters : bool);
-  Grid_maps.Tile_pos.to_string
+  Grid_geometry.Tile_pos.to_string
     (Pacing.stands_on ~pace:East !(g.spot) { x = 35; y = 6 })
 
 let cases =
@@ -107,14 +107,14 @@ let cases =
    on the path at (46, 12), where no battle comes. A tile off the patch is no
    spot to pace from. *)
 let spot_at tile () =
-  let tile = { Grid_maps.Tile_pos.x = fst tile; y = snd tile } in
+  let tile = { Grid_geometry.Tile_pos.x = fst tile; y = snd tile } in
   match
     Pacing.spot_at ~pace:West ~patch:{ x = 45; y = 12 } tile (Some East)
   with
   | None -> "off the patch"
   | Some { displaced; facing } ->
       Printf.sprintf "displaced %b, facing %s" displaced
-        (Option.fold ~none:"?" ~some:Grid_maps.Direction.name facing)
+        (Option.fold ~none:"?" ~some:Grid_geometry.Direction.name facing)
 
 let spot_cases =
   [

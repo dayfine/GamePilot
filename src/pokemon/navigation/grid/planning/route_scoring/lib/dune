@@ -2,5 +2,5 @@
  (name grid_route_scoring)
  (public_name gamepilot.grid_route_scoring)
  (flags
-  (:standard -open Grid_maps))
- (libraries gamepilot.grid_maps))
+  (:standard -open Grid_maps -open Grid_geometry))
+ (libraries gamepilot.grid_geometry gamepilot.grid_maps))

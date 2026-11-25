@@ -2,6 +2,7 @@
    place's stand tile can use it. *)
 
 open Grid_maps
+open Grid_geometry
 open Frlg_places
 
 let ( let* ) = Result.bind

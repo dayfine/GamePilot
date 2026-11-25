@@ -15,6 +15,7 @@
     holes, elevation, and gates the story opens. *)
 
 open Grid_maps
+open Grid_geometry
 
 type costs = {
   grass : int;  (** On top of a tile, for a step into tall grass. *)

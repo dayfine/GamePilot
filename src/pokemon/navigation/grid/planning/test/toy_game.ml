@@ -4,7 +4,7 @@
    wall to stop against), 'v' entered only going south, 'W' a warp to the
    tile marked 'X'. Off the rows is wall. *)
 
-open Grid_maps
+open Grid_geometry
 open Grid_planning
 
 let grass_cost = 5

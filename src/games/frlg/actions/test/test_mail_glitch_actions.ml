@@ -165,7 +165,8 @@ let double ?(restored = true) ?(party = party) battle () =
             (fun ~slot ->
               call (Printf.sprintf "summary %d" slot);
               moves_of slot);
-          start_battle = (fun d -> call ("step " ^ Grid_maps.Direction.name d));
+          start_battle =
+            (fun d -> call ("step " ^ Grid_geometry.Direction.name d));
           restored =
             (fun ~slot () ->
               call (Printf.sprintf "pp %d" slot);
