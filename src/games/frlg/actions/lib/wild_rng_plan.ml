@@ -20,10 +20,7 @@ let default_advances = (default_min_advance, default_max_advance)
 let default_attempts = 1
 let max_attempts = 99
 let assets = "src/games/frlg/assets/"
-
-let encounter_slots =
-  "third_party/Packages/Resources/PokemonFRLG/EncounterSlotsFR.json"
-
+let encounter_slots = assets ^ "encounter_slots_firered.json"
 let column = "Mono / Help / A"
 
 let frame_models =

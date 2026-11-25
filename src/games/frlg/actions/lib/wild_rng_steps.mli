@@ -1,15 +1,14 @@
 (** What the ["wild_rng"] action does in the game: the hard reset and the blind
     presses that pick the seed and reach the advance, then the catch's summary.
 
-    Ported from the fork's [reset_and_perform_blind_sequence] for the Sweet
-    Scent target
-    ([PokemonFRLG/Programs/RngManipulation/ PokemonFRLG_BlindNavigation.cpp]:
-    [set_seed_after_delay] with no blackout button and A,
-    [load_game_after_delay], [use_sweet_scent]), the same presses and waits, as
-    one batch from the reset. The fork's hard reset closes and relaunches the
-    game; here it is {!Effects.reset} (mGBA's power switch). The fork's shiny
-    check is the shiny sound in battle; GamePilot has no audio, so the catch's
-    summary is read instead ({!Frlg_readers.Shiny_star}). *)
+    Ported from the fork's reset and blind sequence for the Sweet Scent target
+    in [PokemonFRLG/Programs/RngManipulation/PokemonFRLG_BlindNavigation.cpp]
+    (the seed set with A and no button held, the save loaded, Sweet Scent used),
+    the same presses and waits, as one batch from the reset. The fork's hard
+    reset closes and relaunches the game; here it is {!Effects.reset} (mGBA's
+    power switch). The fork's shiny check is the shiny sound in battle;
+    GamePilot has no audio, so the catch's summary is read instead
+    ({!Frlg_readers.Shiny_star}). *)
 
 val blind_presses : Frlg_rng.Rng_timings.t -> Wire.command list
 (** From the reset: the title screen's wait, A held 3 s (the seed), the continue
@@ -23,6 +22,8 @@ val find_encounter :
     {!battle_timeout_ms}. *)
 
 val battle_timeout_ms : int
+(** 20 s: how long after the last press the wild battle's screen may take to
+    show before the attempt fails. *)
 
 val game_steps :
   log:(string -> unit) ->

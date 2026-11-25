@@ -33,6 +33,7 @@ Each save also needs its own seed table (below).
 - pidgey in the party (fly)
 - mr-mime in the party (pc_deposit)
 - mr-mime holds no Mail (pc_deposit)
+- the thunder badge (fly)
 - poke-ball at least x1 (wild_rng)
 - at the start, CinnabarIsland
 <!-- /generated -->
@@ -42,7 +43,7 @@ Each save also needs its own seed table (below).
 <!-- generated:commands -->
 ```sh
 # mGBA: each checkpoint three times from its start state, two must pass
-sh run/run_checkpoints_on_mgba.sh --program frlg.wild_rng --from 01-route10-grass --to 02-shiny-ekans --mode verification
+sh run/run_checkpoints_on_mgba.sh frlg.wild_rng --from 01-route10-grass --to 02-shiny-ekans --mode verification
 ```
 <!-- /generated -->
 
@@ -62,7 +63,7 @@ sh run/run_checkpoints_on_mgba.sh --program frlg.wild_rng --from 01-route10-gras
 <!-- generated:preflight -->
 | Resume from | The pre-flight checks |
 |---|---|
-| 01-route10-grass | pidgey in the party (fly); mr-mime in the party (pc_deposit); mr-mime holds no Mail (pc_deposit); at the start, CinnabarIsland |
+| 01-route10-grass | pidgey in the party (fly); mr-mime in the party (pc_deposit); mr-mime holds no Mail (pc_deposit); the thunder badge (fly); at the start, CinnabarIsland |
 | 02-shiny-ekans | poke-ball at least x1 (wild_rng); at the start, Route10 |
 <!-- /generated -->
 

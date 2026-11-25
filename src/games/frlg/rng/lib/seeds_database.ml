@@ -1,5 +1,5 @@
-(* Port of SeedsDatabase (PokemonFRLG/Programs/RngManipulation/
-   PokemonFRLG_SeedsDatabase.cpp) without the JSON file reading. *)
+(* Port of PokemonFRLG/Programs/RngManipulation/PokemonFRLG_SeedsDatabase.cpp,
+   without the JSON file reading. *)
 
 type sound = Mono | Stereo
 type seed_button = A | Start | L

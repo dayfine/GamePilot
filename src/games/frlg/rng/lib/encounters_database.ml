@@ -1,4 +1,4 @@
-(* Port of EncountersDatabase (PokemonFRLG_EncountersDatabase.cpp). *)
+(* Port of PokemonFRLG_EncountersDatabase.cpp. *)
 
 type t = (string * (string * Wild_encounter.slot array) list) list
 
