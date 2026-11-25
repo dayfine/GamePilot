@@ -37,7 +37,9 @@ let shift_and_frame path =
    frames: at brightness 0.9 Zone 20's bar loses its last empty slot to the
    dark ground (Party_bar), and the translucent eye of Zone 6, the bar's first
    frame (51 under the bound 60 unshifted), scores over 60 with blue up or
-   green down 12 (Alert_eye). *)
+   green down 12 (Alert_eye); and 03.07's Bunnelby battle (a 640x360 run
+   frame scaled up) loses the hints under the party bar at brightness 1.1
+   (Controls_hint). *)
 let known_misses =
   [
     ("battle-hud/it-0308b-zone-pillar-wild-battle", "bright90");
@@ -45,6 +47,7 @@ let known_misses =
     ("alert-eye/zone-20-dedenne-alakazam-alert-true", "bright90");
     ("alert-eye/zone-6-translucent-1-true", "bplus12");
     ("alert-eye/zone-6-translucent-1-true", "gminus12");
+    ("alert-eye/en-0307-bunnelby-battle-113-360p", "bright110");
   ]
 
 (* One case per shifted frame: [read] on it gives what [read] gives on the

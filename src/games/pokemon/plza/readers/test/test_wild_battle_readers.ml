@@ -1,7 +1,9 @@
 (* The wild battle's readers, the catches' [wild_battle_on]: the alert eye
    (PokemonLZA_AlertEyeDetector.cpp) on ten of the fork's AlertEyeDetector
    frames (CommandLineTests, PokemonLZA/AlertEyeDetector, png kept as jpg) and
-   03.08b's wild battle at the zone's pillar; the Run prompt
+   03.08b's wild battle at the zone's pillar, and 03.07's Bunnelby battle (a
+   640x360 run frame of console B scaled up, 2026-11-25: 44.5; the frame
+   after the catch reads none). The Run prompt
    (PokemonLZA_RunFromBattleDetector.cpp), which the fork has no test frame
    of, on none. Every other story frame reads neither. Every frame shifted
    reads as unshifted, but for the known misses (Fixture_frames).
@@ -13,7 +15,8 @@
    without it scores 69.3 at least, shifted or not (03.01's arrival text
    box). The Run prompt (bound 80): no frame shows it, and a blob of its shape
    on one scores 81.7 at least, shifted or not (Parla's talk prompt), so its
-   bound is unchecked against a frame with it: console B is to capture one. *)
+   bound is unchecked against a frame with it. 03.07's tutorial battles show
+   no Run prompt (console B, 2026-11-25): the alert eye is what reads them. *)
 
 open Plza_readers
 
@@ -45,6 +48,7 @@ let eye_frames =
     "alert-eye/zone-6-initial-eye-1-true";
     "alert-eye/zone-6-translucent-1-true";
     "battle-hud/it-0308b-zone-pillar-wild-battle";
+    "alert-eye/en-0307-bunnelby-battle-113-360p";
   ]
 
 let name_of path = Fixture_frames.frame_name path
