@@ -493,6 +493,24 @@ let wild_zones_card ?(lost = false) c =
       | Some _, Some _ -> party c)
   | _ -> party c
 
+(* 03.10: the lobby's party bar; the elevator's A prompt once the stick was
+   held 0.8 s (the run: 1.5 s of walk), until A; the attendant's question
+   until A, the floors until A (3F after Down), the ride's text until two B,
+   then the party bar. [lost]: no elevator prompt. *)
+let lab_elevator ?(lost = false) c =
+  match C.stick_reached c 800 with
+  | Some e when not lost -> (
+      let a n = C.nth_after c Wire.A ~after:e n in
+      match (a 0, a 1, a 2) with
+      | None, _, _ -> { (party c) with interact_prompt = true }
+      | Some _, None, _ -> text c
+      | Some _, Some q, None -> choice c ~after:q
+      | Some _, Some _, Some r -> (
+          match C.nth_after c Wire.B ~after:r 1 with
+          | None -> text c
+          | Some _ -> party c))
+  | _ -> party c
+
 let outcome checkpoint screen =
   let c = C.create () in
   reloaded := false;
@@ -1226,6 +1244,27 @@ let cases =
       (start_check "03.09" party)
       "start_signature_unread: 03.09: its start signature is not one minimap \
        ({\"minimap\": \"<name>\"}): only the minimap is read here";
+    case "03.10: the lab's elevator to 3F"
+      (fun () ->
+        let r, c = outcome "03.10" lab_elevator in
+        String.concat "\n"
+          (r
+          :: List.filter
+               (fun line ->
+                 List.exists
+                   (fun prefix -> String.starts_with ~prefix line)
+                   [ "[PLZA] to_"; "[PLZA] choose"; "[PLZA scene] done" ])
+               (C.lines c)))
+      "passed\n\
+       [PLZA] to_lab_elevator: the end event after 1500 ms of the last leg.\n\
+       [PLZA] to_lab_elevator: ended on: player_can_move, interact_prompt\n\
+       [PLZA scene] done on choice.\n\
+       [PLZA] choose_1: row 0 of 2 highlighted\n\
+       [PLZA scene] done on control.";
+    case "03.10 lost: no elevator prompt"
+      (result "03.10" (lab_elevator ~lost:true))
+      "03.10 event 1 (to_lab_elevator): walk_no_end: to_lab_elevator: no end \
+       event within 1538 ms of the last leg";
     case "the walk is walked before 03.03, run after"
       (fun () ->
         Printf.sprintf "%b %b"

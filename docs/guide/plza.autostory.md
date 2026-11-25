@@ -21,7 +21,7 @@ Choices" screen. Nothing else is read from the save. The Switch's capture must b
 <!-- generated:commands -->
 ```sh
 # the Switch: each checkpoint once, from where the console is
-cd src && opam exec -- dune exec -- gamepilot checkpoints --program plza.autostory --from 01.00b --to 03.09 --mode testing --backend switch --serial PORT --capture DEVICE \
+cd src && opam exec -- dune exec -- gamepilot checkpoints --program plza.autostory --from 01.00b --to 03.10 --mode testing --backend switch --serial PORT --capture DEVICE \
     --watch
 ```
 <!-- /generated -->
@@ -55,8 +55,9 @@ cd src && opam exec -- dune exec -- gamepilot checkpoints --program plza.autosto
 | 03.08a | Wild Zone 1: fifth species |
 | 03.08b | Out of Wild Zone 1's far gate |
 | 03.09 | From Wild Zone 1's gate into the Research Lab |
+| 03.10 | Up the Research Lab's elevator to the Director's Office |
 
-<!-- plans: 11cb86675144 -->
+<!-- plans: 0cc4b8cba809 -->
 <!-- /generated -->
 
 ## When it stops
@@ -84,7 +85,7 @@ zone by its map (`run_out_of_zone_1`, `check_out_of_zone_1`) are not ported yet.
 to the gate is. The start checks of 03.08 to 03.08b name the wild zone, the party count or the A
 prompt, which nothing reads yet (`start_signature_unread`), and so do 03.09's. 03.09's first walk
 faces a heading by the minimap's arrow, which nothing reads yet either (`heading_unread`, before any
-leg).
+leg). 03.10 is ported in full; it starts in the lab's lobby, where 03.09 ends.
 
 Only 01.00b to 03.06 so far. 01.02's chase, 01.03's walk to Chikorita and the walks of 02.01 to
 03.06 are timed stick legs with no map, so they can miss; the chase then stops on Ryon's
