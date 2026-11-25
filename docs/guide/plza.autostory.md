@@ -131,8 +131,10 @@ Catching:
 
 - The Run prompt's reader has not seen a console frame yet.
 - 03.07: `no_catch` after 6 throws at Fletchling, `still_a_target` after 6 rounds at Bunnelby.
-- 03.08 must start on Taunie's rocks: `rocks_not_left`.
-- 03.08 and 03.08a: `short_of_species` when the party does not grow after 12 throws.
+- 03.08 must start on Taunie's rocks: its start check reloads once when it is not, and
+  `rocks_not_left` is the catch's own check of the same.
+- 03.08 and 03.08a: `short_of_species` when the party does not grow after 12 throws, on each of
+  their three attempts.
 
 Readers:
 
