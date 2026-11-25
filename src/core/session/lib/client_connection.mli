@@ -33,6 +33,8 @@ type t = {
   mutable held : string option;
       (** the batch a [Race_held] stopped and left running, until a [Replace]
           takes its place *)
+  queued : (string, unit) Hashtbl.t;
+      (** the batches an [Effects.Queue] sent: their [batch_done] is dropped *)
 }
 
 val create : transport -> t

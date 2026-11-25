@@ -32,6 +32,13 @@ let submit t commands =
       check_stop t;
       take t.dones batch_id ())
 
+(* Returns once the daemon accepted the batch; its end is not waited for. *)
+let queue t commands =
+  let batch_id = next_batch_id t in
+  check_stop t;
+  Hashtbl.replace t.queued batch_id ();
+  check_submitted batch_id (call t (Wire.Submit { batch_id; commands }))
+
 (* Cancels the batch [race] stopped. Its [batch_done] can still arrive before
    the cancel's reply (it was on its way); after the reply none can, so the one
    that came is dropped there. *)
@@ -200,6 +207,7 @@ let answer : type a. t -> a Effect.t -> (unit -> a) option =
   | Effects.Race_held (commands, stop) ->
       Some (fun () -> race_held t commands stop)
   | Effects.Replace commands -> Some (fun () -> replace t commands)
+  | Effects.Queue commands -> Some (fun () -> queue t commands)
   | Effects.Await (pred, timeout_ms) -> Some (fun () -> await t pred timeout_ms)
   | Effects.Now -> Some (fun () -> Option.value t.now ~default:0.)
   | Effects.Read -> Some (fun () -> t.latest)

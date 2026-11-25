@@ -87,3 +87,31 @@ let () =
          | Wire.Notification (Wire.Watch_log "picking the move") -> true
          | _ -> false)
        !sent)
+
+(* Effects.queue: a submit answered with no wait for its batch_done; the
+   next queued at once, and a later submit waits for its own batch_done only.
+   The fake daemon ends no submitted batch by itself, so a queue that waited
+   would hang here. *)
+let () =
+  let transport, sent = fake_daemon () in
+  let zl ms = [ Wire.press ~hold_ms:ms ~cooldown_ms:0 [ Wire.ZL ] ] in
+  let seen =
+    Session.run transport (fun () ->
+        Effects.queue (zl 1000);
+        let m = Effects.await ~timeout_ms:100 (fun m -> m.seq >= 2) in
+        Effects.queue (zl 1000);
+        m)
+  in
+  expect "queue: reads while the batch runs"
+    (match seen with Effects.Holds m -> m.seq = 2 | Timeout -> false);
+  let submits =
+    List.filter_map
+      (function Wire.Submit { commands; _ } -> Some commands | _ -> None)
+      (calls !sent)
+  in
+  expect "queue: two submits, no cancel"
+    (submits = [ zl 1000; zl 1000 ]
+    && not
+         (List.exists
+            (function Wire.Cancel | Wire.Cancel_then _ -> true | _ -> false)
+            (calls !sent)))

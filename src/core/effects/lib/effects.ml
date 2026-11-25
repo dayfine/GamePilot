@@ -18,6 +18,7 @@ type _ Effect.t +=
   | Race : Wire.command list * (measurements -> bool) -> raced Effect.t
   | Race_held : Wire.command list * (measurements -> bool) -> raced Effect.t
   | Replace : Wire.command list -> Wire.batch_done Effect.t
+  | Queue : Wire.command list -> unit Effect.t
   | Now : float Effect.t
   | Read : measurements option Effect.t
   | Load_state : string -> int Effect.t
@@ -42,6 +43,7 @@ let race_then commands ~stop ~then_ =
       ignore (Effect.perform (Replace (then_ m)) : Wire.batch_done);
       raced
 
+let queue commands = Effect.perform (Queue commands)
 let now () = Effect.perform Now
 let read () = Effect.perform Read
 let load_state path = Effect.perform (Load_state path)

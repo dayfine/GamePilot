@@ -45,6 +45,7 @@ type _ Effect.t +=
   | Race : Wire.command list * (measurements -> bool) -> raced Effect.t
   | Race_held : Wire.command list * (measurements -> bool) -> raced Effect.t
   | Replace : Wire.command list -> Wire.batch_done Effect.t
+  | Queue : Wire.command list -> unit Effect.t
   | Now : float Effect.t
   | Read : measurements option Effect.t
   | Load_state : string -> int Effect.t
@@ -88,6 +89,16 @@ val race_then :
     that batch is done. Two effects, [Race_held] (stop and leave the batch
     running) then [Replace], so [then_] runs in the program's own context and
     may perform effects (a log line), which a handler's own code could not. *)
+
+val queue : Wire.command list -> unit
+(** Queues one batch after the running and queued ones, as {!submit} does, but
+    returns once the daemon accepted it, not at its end; its [batch_done] is
+    dropped. The program reads and decides while it runs and queues the next
+    before it ends: a button held at one batch's end and the next one's start
+    stays held, as the fork's commands queued on the controller while the
+    program reads ([pbf_controller_state] then a snapshot; the PLZA catches'
+    [HeldZl], PokemonLZA_AutoStoryCatches.cpp, [plza/lean]). A later {!submit}
+    or {!race} queues after it too; a stop's cancel drops it. *)
 
 val now : unit -> float
 (** Daemon clock in ms: the [t_ms] of the newest frame or [batch_done] seen. *)

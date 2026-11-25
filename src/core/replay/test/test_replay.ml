@@ -407,3 +407,44 @@ let () =
   expect "run_with_backend: the recorded hello's viewport"
     (backend.kind = "mgba" && backend.viewport.w = 1.
    && backend.game_width = 240)
+
+(* [queue]: the program queues a ZL hold, reads a frame while it runs, then
+   queues the next hold before it ends; neither waits for a batch_done, and
+   the queued batches' batch_done do not end a later submit. *)
+let () =
+  let zl ms = [ Wire.press ~hold_ms:ms ~cooldown_ms:0 [ ZL ] ] in
+  let submit ~id ~batch ~ms =
+    [
+      Printf.sprintf
+        {|{"dir":"in","t_ms":2,"msg":{"jsonrpc":"2.0","id":%d,"method":"submit","params":{"batch_id":"%s","commands":[{"press":["ZL"],"hold_ms":%d,"cooldown_ms":0}]}}}|}
+        id batch ms;
+      Printf.sprintf
+        {|{"dir":"out","t_ms":2,"msg":{"jsonrpc":"2.0","id":%d,"result":{"batch_id":"%s","start_seq":501}}}|}
+        id batch;
+    ]
+  in
+  let log =
+    Replay.log_of_lines
+      (hello
+      @ submit ~id:3 ~batch:"b1" ~ms:1000
+      @ [ frame ~seq:560 ~load:2 ]
+      @ submit ~id:4 ~batch:"b2" ~ms:1000
+      @ submit ~id:5 ~batch:"b3" ~ms:100
+      @ [
+          batch_done ~batch_id:"b1" ~seq:620;
+          batch_done ~batch_id:"b2" ~seq:680;
+          batch_done ~batch_id:"b3" ~seq:686;
+        ])
+  in
+  let program () =
+    ignore (Effects.load_state "state.ss" : int);
+    Effects.queue (zl 1000);
+    let read = Effects.await ~timeout_ms:1000 (fun m -> m.seq >= 560) in
+    Effects.queue (zl 1000);
+    let d = Effects.submit (zl 100) in
+    (read, d.batch_id)
+  in
+  expect "queue: read while held, the next queued, a submit ends on its own"
+    (match Replay.run log program with
+    | Effects.Holds m, "b3" -> m.seq = 560
+    | _ -> false)
