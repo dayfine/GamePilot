@@ -78,8 +78,19 @@ let pocket_top pocket =
   turn_to pocket;
   to_top ()
 
+(* After A on BAG, before the bag is looked at: the fork's 1300 ms
+   ([open_bag_from_overworld()] in PokemonFRLG_Navigation.cpp, its A's
+   cooldown). The pocket reads while the bag still fades in, and the bag drops
+   input until its fade is over: on mGBA at 1x (ace-02 verification run 9) the
+   pocket read 900 ms after the A, the fade ended at 960 ms, and an A on the top
+   row's item as it read was lost. A tap that comes first (a pocket turn, UP or
+   DOWN) is tapped again, but the item's A is not. We count from the Start
+   menu's close, which cuts the A's own cooldown, not from its release. *)
+let bag_open_ms = 1300
+
 let open_pocket_top pocket =
   Menu_cursor.open_start_menu_row bag_row;
+  ignore (Effects.submit [ Wire.Wait { wait_ms = bag_open_ms } ]);
   pocket_top pocket
 
 let text_pocket : Bag_screen.pocket -> Text.Item_names.pocket = function

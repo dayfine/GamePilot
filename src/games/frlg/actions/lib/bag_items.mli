@@ -42,8 +42,11 @@ val to_top : unit -> unit
 
 val open_pocket_top : Frlg_readers.Bag_screen.pocket -> unit
 (** From the overworld: the bag open on the pocket (turned to by LEFT or RIGHT
-    as its arrows read) with the cursor on the list's top row. Fails as [no_bag]
-    or [no_pocket]. *)
+    as its arrows read) with the cursor on the list's top row. The bag is looked
+    at only 1300 ms after the Start menu takes A on BAG, as the fork's
+    [open_bag_from_overworld()] (PokemonFRLG_Navigation.cpp) waits: the pocket
+    reads while the bag still fades in, and the bag drops input until the fade
+    is over. Fails as [no_bag] or [no_pocket]. *)
 
 val choose_in_item_menu : string -> int -> unit
 (** Once the item's menu shows ({!Frlg_readers.Bag_screen.item_menu}) and 500 ms
