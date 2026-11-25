@@ -20,13 +20,15 @@
 
 namespace gamepilot {
 
-// The key: a button, or kRightStickKey, a nudge of the right stick (the
-// Switch only). PLZA's daemons use the stick: a button is not harmless in
-// every PLZA state (B backs out of the new game's menus, A answers), while
-// the right stick only turns the camera in the field and does nothing in a
-// dialogue, a menu or a battle's HUD; and a console left idle with no
-// keep-awake dims its screen, which then reads as nothing (console B,
-// 2026-11-25, 01.03's run 2).
+// The key: a button, or kRightStickKey, a nudge of the right stick up then
+// down (the Switch only). PLZA's daemons use the stick: a button is not
+// harmless in every PLZA state (B backs out of the new game's menus, A
+// answers), while the right stick only moves the camera in the field and does
+// nothing in a dialogue, a menu or a battle's HUD; and a console left idle
+// with no keep-awake dims its screen, which then reads as nothing (console B,
+// 2026-11-25, 01.03's run 2). Up and down, not sideways: a sideways nudge
+// turned the camera, and PLZA's walk legs are aimed from where it looks
+// (02.01's run 1 walked into the alley's crates).
 struct KeepAwakeOptions {
   double idle_ms = 0;  // 0 = off
   std::string key = "B";

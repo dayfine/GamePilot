@@ -65,6 +65,9 @@ a lost battle reads as won (the talk after it looks the same), so the scene afte
 party bar is read from its empty last slot, so a full party of six would not show it; "mission
 complete" is not read. After Brigitte, a scene that never starts within 45 s fails with
 `scene_never_started`. The name and language on Confirm Choices are not checked. The
-daemon's keep-awake nudges the right stick for this program, not B, which would back out of the new
-game's menus; and each checkpoint wakes the screen with the right stick before it reads it, since a
-dimmed screen reads as nothing.
+daemon's keep-awake nudges the right stick up and down for this program, not B, which would back out
+of the new game's menus; and each checkpoint wakes the screen the same way before it reads it, since a
+dimmed screen reads as nothing. Up and down, never sideways: the walks' legs are aimed from where the
+camera looks, so they need it behind the player as the checkpoint starts (after 01.03's scenes, or
+after a reload). A checkpoint that follows a passing one starts where it ended, with no reload; only
+a retry reloads.

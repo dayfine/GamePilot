@@ -26,7 +26,9 @@ let ( let* ) = Result.bind
 (* The daemon's keep-awake presses B after 180 s idle on the Switch; B backs
    out of PLZA's new-game menus (console B, 2026-11-25), so PLZA's daemons
    nudge the right stick instead, which only turns the camera in the field and
-   does nothing in a dialogue, a menu or a battle. Off, an idle console dimmed
+   does nothing in a dialogue, a menu or a battle (up then down, so the
+   camera's heading never moves: walk legs are aimed from it). Off, an idle
+   console dimmed
    its screen, which reads as nothing (01.03's run 2). A --keepawake-key given
    on the command line comes after, and the daemon takes the last. *)
 let keepawake_stick = [ "--keepawake-key"; "RStick" ]
@@ -228,14 +230,16 @@ let trial = function
   | Passed -> Checkpoint_trials.Passed
   | Failed { at; repeats; _ } -> Checkpoint_trials.Failed { at; repeats }
 
-(* Runs [plan] until the policy decides; whether it passed. [first]: the
-   series has run nothing yet. *)
-let rec runs_of setup plan ~first done_ =
+(* Runs [plan] until the policy decides; whether it passed. Its first run
+   starts where the console is: the series' start, put there by hand, or
+   where the checkpoint before it ended (the fork chains 01.03 into 02.01
+   with no reload either; a reload there cost 40 s and turned the camera). *)
+let rec runs_of setup plan done_ =
   match Checkpoint_trials.verdict setup.policy (List.map trial done_) with
   | Checkpoint_trials.Run_again ->
-      let reload = not (first && done_ = []) in
+      let reload = done_ <> [] in
       let outcome = run setup plan (List.length done_ + 1) ~reload in
-      runs_of setup plan ~first (done_ @ [ outcome ])
+      runs_of setup plan (done_ @ [ outcome ])
   | Checkpoint_passed { passes; runs } ->
       Printf.printf "[Checkpoints] %s: passed (%d of %d runs)\n%!"
         plan.checkpoint.checkpoint_id passes runs;
@@ -245,13 +249,11 @@ let rec runs_of setup plan ~first done_ =
         plan.checkpoint.checkpoint_id why;
       false
 
-let rec chain ~plan_dir setup ~first = function
+let rec chain ~plan_dir setup = function
   | [] -> Ok 0
   | id :: rest ->
       let* plan = load_plan ~plan_dir id in
-      if runs_of setup plan ~first [] then
-        chain ~plan_dir setup ~first:false rest
-      else Ok 1
+      if runs_of setup plan [] then chain ~plan_dir setup rest else Ok 1
 
 let run_series ~plan_dir (f : Checkpoints_flags.flags) ~backend ~viewport =
   let* from_id = Checkpoints_flags.required "--from" f.from_id in
@@ -278,4 +280,4 @@ let run_series ~plan_dir (f : Checkpoints_flags.flags) ~backend ~viewport =
         Watch_hub.for_runs_dir ~daemon:f.daemon ~runs_dir:f.runs_dir f.watch;
     }
   in
-  chain ~plan_dir setup ~first:true selected
+  chain ~plan_dir setup selected
