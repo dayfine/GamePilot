@@ -60,7 +60,9 @@ let run_frames t ~ms ~shows_at stop =
 let batch_ms commands =
   List.fold_left
     (fun total -> function
-      | Wire.Press { hold_ms; cooldown_ms; _ } -> total + hold_ms + cooldown_ms
+      | Wire.Press { hold_ms; cooldown_ms; _ }
+      | Wire.Press_with_sticks { hold_ms; cooldown_ms; _ } ->
+          total + hold_ms + cooldown_ms
       | Wire.Wait { wait_ms } -> total + wait_ms)
     0 commands
 

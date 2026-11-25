@@ -1,4 +1,4 @@
-(** Wire protocol v1.11 (protocol/v1): message types and their JSON codec.
+(** Wire protocol v1.12 (protocol/v1): message types and their JSON codec.
 
     The codec lives in one module per message family ([Command], [Probe],
     [Backend], [Jsonrpc], [Wire_log], [Probe_images]); this module re-exports
@@ -36,8 +36,20 @@ val button_of_string : string -> button option
 val switch_only : button -> bool
 (** [Home], [X] and [Y]: buttons only the Switch backend takes (v1.11). *)
 
+type stick = Command.stick
+(** A stick's tilt (x, y) in -1..1: +x right, +y up (v1.12). *)
+
+val stick : float -> float -> (stick, string) result
+
 type command = Command.command =
   | Press of { buttons : button list; hold_ms : int; cooldown_ms : int }
+  | Press_with_sticks of {
+      buttons : button list;
+      left_stick : stick option;
+      right_stick : stick option;
+      hold_ms : int;
+      cooldown_ms : int;
+    }  (** the Switch's sticks too (v1.12); [None] is centred *)
   | Wait of { wait_ms : int }
 
 type box = Probe.box = { x : float; y : float; w : float; h : float }

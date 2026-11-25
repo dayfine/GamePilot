@@ -61,7 +61,8 @@ struct FakeBoardProfile {
   bool console_sees_controller = true;  // the status' ready bit
 };
 
-// One state command as the fake board ran it.
+// One state command as the fake board ran it: its buttons and both sticks
+// as the report carries them (pro_stick_axes() reads a stick back).
 struct BoardCommand {
   double start_ms = 0;  // daemon clock
   double end_ms = 0;

@@ -161,7 +161,7 @@ void Server::run_live(const std::atomic<bool>& stop) {
     serve_network(0);
     double now = clock_.now_ms();
     for (const KeySegment& segment : live_schedule_.take_due(now)) {
-      backend_.queue_keys(segment.keys, segment.ms);
+      backend_.queue_keys(segment.keys, segment.sticks, segment.ms);
     }
     const double next =
         live_schedule_.next_event_ms().value_or(now + kMaxPollMs);
@@ -431,13 +431,19 @@ DaemonStatus Server::status() const {
   return status;
 }
 
-void Server::refuse_switch_buttons(const SubmitParams& submit) const {
+void Server::refuse_switch_input(const SubmitParams& submit) const {
   if (backend_.info().kind == "switch") {
     return;
   }
   for (const InputCommand& command : submit.commands) {
     if ((command.buttons & kSwitchOnlyKeys) != 0) {
       throw switch_button_refusal(backend_.info().kind, command.buttons);
+    }
+    if (command.left_stick.has_value()) {
+      throw switch_stick_refusal(backend_.info().kind, "left_stick");
+    }
+    if (command.right_stick.has_value()) {
+      throw switch_stick_refusal(backend_.info().kind, "right_stick");
     }
   }
 }
@@ -625,7 +631,7 @@ pa::JsonObject Server::dispatch_input(ClientConnection& client,
   }
   if (method == "submit") {
     const SubmitParams submit = decode_submit(request.params);
-    refuse_switch_buttons(submit);
+    refuse_switch_input(submit);
     keep_awake_.input(clock_.now_ms());
     batch_owners_.emplace_back(submit.batch_id, client.number);
     if (backend_.info().timing == Timing::kLive) {

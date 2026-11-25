@@ -403,7 +403,8 @@ let rec run_frames t ms stop =
 
 let start_command t (command : Wire.command) =
   match command with
-  | Press { buttons; hold_ms; cooldown_ms } ->
+  | Press { buttons; hold_ms; cooldown_ms }
+  | Press_with_sticks { buttons; hold_ms; cooldown_ms; _ } ->
       let press =
         { buttons; at_ms = t.clock_ms; hold_ms; index = List.length t.presses }
       in

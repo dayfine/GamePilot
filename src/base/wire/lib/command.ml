@@ -42,8 +42,23 @@ let switch_only = function
 let button_of_string s =
   List.find_opt (fun b -> string_of_button b = s) all_buttons
 
+type stick = float * float
+
+let in_range v = v >= -1. && v <= 1.
+
+let stick x y =
+  if in_range x && in_range y then Ok (x, y)
+  else Error (Printf.sprintf "stick (%g, %g): x and y must be in -1..1" x y)
+
 type command =
   | Press of { buttons : button list; hold_ms : int; cooldown_ms : int }
+  | Press_with_sticks of {
+      buttons : button list;
+      left_stick : stick option;
+      right_stick : stick option;
+      hold_ms : int;
+      cooldown_ms : int;
+    }
   | Wait of { wait_ms : int }
 
 let pressed_button v =
@@ -52,13 +67,27 @@ let pressed_button v =
   | Some b -> b
   | None -> fail "command.press: unknown button %S" s
 
+let stick_of_json name v =
+  let what = "command." ^ name in
+  match to_list what v with
+  | [ x; y ] -> (
+      match stick (to_float what x) (to_float what y) with
+      | Ok s -> s
+      | Error e -> fail "%s: %s" what e)
+  | _ -> fail "%s: expected [x, y]" what
+
+let stick_field name j =
+  Option.map (stick_of_json name) (field_opt "command" name j)
+
 let press_of_json press j =
-  Press
-    {
-      buttons = List.map pressed_button (to_list "command.press" press);
-      hold_ms = int_field "command" "hold_ms" j;
-      cooldown_ms = int_field "command" "cooldown_ms" j;
-    }
+  let buttons = List.map pressed_button (to_list "command.press" press) in
+  let hold_ms = int_field "command" "hold_ms" j in
+  let cooldown_ms = int_field "command" "cooldown_ms" j in
+  match (stick_field "left_stick" j, stick_field "right_stick" j) with
+  | None, None -> Press { buttons; hold_ms; cooldown_ms }
+  | left_stick, right_stick ->
+      Press_with_sticks
+        { buttons; left_stick; right_stick; hold_ms; cooldown_ms }
 
 let command_of_json j =
   match field_opt "command" "press" j with
@@ -76,9 +105,27 @@ let json_of_press buttons ~hold_ms ~cooldown_ms =
       ("cooldown_ms", `Int cooldown_ms);
     ]
 
+let json_of_stick (x, y) = `List [ `Float x; `Float y ]
+
+let json_of_press_with_sticks buttons ~left_stick ~right_stick ~hold_ms
+    ~cooldown_ms =
+  let stick name = Option.map (fun s -> (name, json_of_stick s)) in
+  `Assoc
+    (List.concat
+       [
+         [ ("press", json_of_buttons buttons) ];
+         Option.to_list (stick "left_stick" left_stick);
+         Option.to_list (stick "right_stick" right_stick);
+         [ ("hold_ms", `Int hold_ms); ("cooldown_ms", `Int cooldown_ms) ];
+       ])
+
 let json_of_command = function
   | Press { buttons; hold_ms; cooldown_ms } ->
       json_of_press buttons ~hold_ms ~cooldown_ms
+  | Press_with_sticks { buttons; left_stick; right_stick; hold_ms; cooldown_ms }
+    ->
+      json_of_press_with_sticks buttons ~left_stick ~right_stick ~hold_ms
+        ~cooldown_ms
   | Wait { wait_ms } -> `Assoc [ ("wait_ms", `Int wait_ms) ]
 
 type batch_done = { batch_id : string; seq : int; t_ms : float }

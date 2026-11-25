@@ -22,7 +22,8 @@ let distinct key =
 let presses town =
   Fly_towns.cursor_presses (Option.get (Fly_towns.find table town))
   |> List.map (function
-       | Wire.Press { buttons; hold_ms; _ } ->
+       | Wire.Press { buttons; hold_ms; _ }
+       | Wire.Press_with_sticks { buttons; hold_ms; _ } ->
            String.concat "+" (List.map Wire.string_of_button buttons)
            ^ " " ^ string_of_int hold_ms
        | Wire.Wait { wait_ms } -> "wait " ^ string_of_int wait_ms)

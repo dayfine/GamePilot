@@ -373,3 +373,28 @@ let () =
     (match Replay.run log first_frame with
     | Effects.Holds m -> m.seq = 502
     | Effects.Timeout -> false)
+
+(* v1.12: a press with sticks shows them when it diverges from the log. *)
+let () =
+  let log = Replay.log_of_lines (hello @ submit_b1) in
+  let up = Result.get_ok (Wire.stick 0. 1.) in
+  let run () =
+    ignore (Effects.load_state "state.ss" : int);
+    Effects.submit
+      [
+        Wire.Press_with_sticks
+          {
+            buttons = [ B ];
+            left_stick = Some up;
+            right_stick = None;
+            hold_ms = 500;
+            cooldown_ms = 0;
+          };
+      ]
+  in
+  match Replay.run log run with
+  | _ -> failwith "FAILED a stick press replayed as the recorded Up press"
+  | exception Replay.Divergence e ->
+      print_endline e;
+      expect "stick press -> divergence naming the stick"
+        (contains e "press B left 0,1 hold 500")

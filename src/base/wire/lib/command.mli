@@ -24,8 +24,25 @@ val switch_only : button -> bool
 (** [Home], [X] and [Y]: the daemon refuses them on any backend but the Switch.
 *)
 
+type stick = private float * float
+(** A stick's tilt [(x, y)], each in -1..1, as CoreLib's [JoystickPosition]: [x]
+    +1 is right, [y] +1 is up, [(0., 0.)] centred (protocol v1.12). *)
+
+val stick : float -> float -> (stick, string) result
+(** [stick x y]; an error when [x] or [y] is outside -1..1 or not a number. *)
+
 type command =
   | Press of { buttons : button list; hold_ms : int; cooldown_ms : int }
+  | Press_with_sticks of {
+      buttons : button list;  (** may be empty *)
+      left_stick : stick option;
+      right_stick : stick option;
+      hold_ms : int;
+      cooldown_ms : int;
+    }
+      (** A [press] that also tilts the Switch's sticks for [hold_ms]: a stick
+          left out ([None]) is centred, both are centred in the cooldown. The
+          daemon refuses it on any backend but the Switch. *)
   | Wait of { wait_ms : int }
 
 val command_of_json : json -> command
