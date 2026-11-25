@@ -1,0 +1,3 @@
+(library
+ (name bdsp_rng)
+ (public_name gamepilot.bdsp_rng))

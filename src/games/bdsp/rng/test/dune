@@ -1,0 +1,10 @@
+(tests
+ (names test_xorshift128 test_static_encounter test_blink_model)
+ (modules
+  fixture_lines
+  test_xorshift128
+  test_static_encounter
+  test_blink_model)
+ (deps
+  (glob_files fixtures/*.txt))
+ (libraries gamepilot.table_test gamepilot.bdsp_rng))
