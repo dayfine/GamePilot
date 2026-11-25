@@ -32,3 +32,6 @@ val start_marker : string -> string option -> string
 (** ["<!-- generated:NAME ARG -->"], for a page's first draft. *)
 
 val end_marker : string
+
+val cell : string -> string
+(** Text as a Markdown table cell: every pipe escaped, so none ends the cell. *)
