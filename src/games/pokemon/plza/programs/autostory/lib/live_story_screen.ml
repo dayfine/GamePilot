@@ -107,6 +107,28 @@ let count_bars ~picture ~sent_out cards =
       Option.bind (fresh ()) (fun m ->
           Option.map (Party_slots.filled ~sent_out) (Party_slots.bars m)))
 
+(* The caught mark over [bar], on the next frame. *)
+let caught_mark ~picture bar =
+  Effects.with_probes (Lock_plate.mark_probes ~picture bar) (fun () ->
+      Option.bind (fresh ()) (fun m -> Lock_plate.caught m bar))
+
+let target_of ~picture bar : Plza_story.Catch_plan.target =
+  let x, y = Lock_plate.centre bar in
+  { x; y; caught = caught_mark ~picture bar }
+
+(* The plate's bar on one frame, the caught mark over it on the next. *)
+let read_lock_target ~picture () =
+  Option.map (target_of ~picture) (Option.bind (fresh ()) Lock_plate.bar)
+
+(* No input until the clock reaches [at]; the queued inputs run on. *)
+let wait_until at =
+  let left = int_of_float (Float.ceil (at -. Effects.now ())) in
+  if left > 0 then
+    ignore
+      (Effects.await ~timeout_ms:(left + fresh_frame_ms)
+         (fun (m : Effects.measurements) -> m.t_ms >= at)
+        : Effects.awaited)
+
 let read_party_slots ~picture () =
   let count m =
     match Party_slots.cards m with
@@ -127,6 +149,10 @@ let game_steps ~picture ~log ~log_detail : Plza_story.Story_steps.game_steps =
     race;
     race_batch;
     race_then;
+    queue = Effects.queue;
+    now = Effects.now;
+    wait_until;
+    read_lock_target = read_lock_target ~picture;
     read_party_slots = read_party_slots ~picture;
     log;
     log_detail;

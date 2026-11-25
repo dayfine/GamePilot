@@ -136,6 +136,9 @@ let zone_actions =
       no_args (fun steps -> Catches.catch_tutorial steps ~max_throws) );
     ( "battle_then_catch",
       no_args (fun steps -> Catches.battle_then_catch steps ~max_rounds) );
+    ( "catch_in_zone",
+      no_args (fun steps ->
+          Zone_catch.run steps ~max_throws:Zone_catch.max_throws) );
     ("run_out_of_zone_1", timed run_out_of_zone_1 ~default:run_out_of_zone_1_ms);
     ("check_out_of_zone_1", no_args check_out_of_zone_1);
   ]

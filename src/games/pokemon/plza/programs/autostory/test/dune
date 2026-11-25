@@ -1,6 +1,6 @@
 (tests
- (names test_story_game test_catch_plan)
- (modules test_story_game test_catch_plan fake_console)
+ (names test_story_game test_catch_plan test_zone_catch)
+ (modules test_story_game test_catch_plan test_zone_catch fake_console)
  (deps
   (glob_files ../plans/*.plan.json))
  (libraries
@@ -9,5 +9,7 @@
   gamepilot.effects
   gamepilot.table_test
   gamepilot.plza_story
+  gamepilot.plza_walk
+  gamepilot.engine_run
   gamepilot.plza_checkpoints
   gamepilot.plza_autostory))

@@ -1413,10 +1413,10 @@ let cases =
       "still_a_target: a target still locks on after 2 rounds\n\
        [PLZA] battle_then_catch: round 1: 3 attacks landed, then a throw\n\
        [PLZA] battle_then_catch: round 2: 3 attacks landed, then a throw";
-    case "03.08 is refused before it presses: catch_in_zone is not ported"
+    case "03.08 with no map pin: rocks_not_left, after the map's + and B"
       (refused "03.08")
-      "03.08 event 1 (catch_more_species): no handler for game action \
-       \"catch_in_zone\"; 0 inputs";
+      "03.08 event 1 (catch_more_species): rocks_not_left: the pin at the \
+       start was not read, not within 8 of (476, 224); 2 inputs";
     case "03.08's start: at Taunie's rocks with a party of 3"
       (start_check ~party:3 "03.08" (in_zone ~pin:(476., 224.)))
       "ok\n\
@@ -1432,10 +1432,10 @@ let cases =
        [Checkpoint] 03.08: START CHECK FAILED: the screen reads (no talk \
        prompt, not in a wild zone, party 3), its start is (in a wild zone, \
        party 3)";
-    case "03.08a is refused before it presses: catch_in_zone is not ported"
+    case "03.08a with no party bar read: the fourth's way, rocks_not_left"
       (refused "03.08a")
-      "03.08a event 1 (catch_fifth_species): no handler for game action \
-       \"catch_in_zone\"; 0 inputs";
+      "03.08a event 1 (catch_fifth_species): rocks_not_left: the pin at the \
+       start was not read, not within 8 of (476, 224); 2 inputs";
     case "03.08b: down the gate's line to the A prompt, out, checked"
       (fun () ->
         let r, c = outcome "03.08b" leave_zone in

@@ -12,6 +12,10 @@ type game_steps = {
     (Story_look.t -> bool) ->
     (Story_look.t -> Wire.command list) ->
     Story_look.t option;
+  queue : Wire.command list -> unit;
+  now : unit -> float;
+  wait_until : float -> unit;
+  read_lock_target : unit -> Catch_plan.target option;
   read_party_slots : unit -> int option;
   log : string -> unit;
   log_detail : string -> unit;

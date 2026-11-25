@@ -84,9 +84,15 @@ and passes. Each run keeps its log, wire log and a `failure.png` in its run fold
 
 ## Known limits
 
-03.07 to 03.11 have their plans; 03.07, 03.08b and 03.10 are ported in full. 03.08, 03.08a and 03.11
-stop loudly before they press anything (`no handler`): their catches (`catch_in_zone`) and Mable's
-research reward (`claim_mable_research_reward`, which opens the main menu) are not ported yet. 03.07's
+03.07 to 03.11 have their plans; all but 03.11 are ported. 03.11 stops loudly before it presses
+anything (`no handler`): Mable's research reward (`claim_mable_research_reward`, which opens the main
+menu) is not ported yet. 03.08 and 03.08a catch the fourth and fifth species: the party bar's count
+picks the spot (from Taunie's rocks to the 100 spot by the map for the fourth, `rocks_not_left` when
+the run does not start on the rocks; the 80 spot for the fifth), the camera sweeps until ZL locks on,
+up to 4 plates are read by flicking right and the nearest not marked caught is chosen and stepped
+toward, ZL held from the lock-on through the throw. 12 throws at most; a throw that breaks out is
+fought (three attacks) before the next, and a species already caught that attacks is fought off.
+They fail with `short_of_species` when the party bar does not reach the count. 03.07's
 catches throw a ball (ZL to lock on, ZL and ZR to aim) and pass the lines after it with A: Fletchling
 is caught when its tutorial card shows (`no_catch` after 6 throws), and when a throw breaks out into a
 battle (the Run prompt, or the alert eye over a wild Pokémon) it is weakened with three attacks
