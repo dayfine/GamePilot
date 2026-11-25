@@ -19,6 +19,8 @@ let orange : Wire.rgb = { r = 0.558; g = 0.333; b = 0.109 }
 let yellow : Wire.rgb = { r = 0.445; g = 0.393; b = 0.162 }
 let max_distance = 0.25
 let max_stddev_sum = 20.
+let max_shadow_distance = 0.1
+let min_box_sum = 200.
 
 let solid_boxes : (string * Wire.box * Wire.rgb) list =
   [
@@ -96,11 +98,25 @@ let solid m (id, _, ratio) =
   Solid_color.holds m id
     (Solid_color.is_solid ~ratio ~max_distance ~max_stddev_sum)
 
+(* Not in the fork: One Island's harbor, with no bag open, passes the three
+   boxes at [max_distance], its sea (74, 136, 223) for the shadow's grey; a
+   near-black box, its hue unstable, passes for orange or yellow once a capture
+   shifts one channel. So the item menu holds the shadow to the grey nearer, and
+   each box to a least brightness. *)
+let grey_shadow m =
+  Solid_color.holds m shadow_id
+    (Solid_color.is_solid ~ratio:grey ~max_distance:max_shadow_distance
+       ~max_stddev_sum)
+
+let lit m (id, _, _) =
+  Solid_color.holds m id (fun s -> Solid_color.sum s.mean >= min_box_sum)
+
 let item_menu m =
   let right, others =
     List.partition (fun (id, _, _) -> id = right_id) solid_boxes
   in
-  List.for_all (solid m) others
+  List.for_all (fun box -> solid m box && lit m box) others
+  && grey_shadow m
   && (not (List.exists (solid m) right))
   && (not (arrow m left_arrow_id))
   && not (arrow m right_arrow_id)
