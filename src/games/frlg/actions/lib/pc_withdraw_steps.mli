@@ -56,10 +56,12 @@ val withdrawn : t -> string option
 (** The species moved into the party, once the game took it. *)
 
 val withdraw_row : string
-(** ["WITHDRAW POKéMON"]. *)
+(** ["WITHDRAW POKéMON"], matched in English: another language's game needs its
+    own label. *)
 
 val mon_withdraw_row : string
-(** ["WITHDRAW"]: a box Pokémon's menu's first row. *)
+(** ["WITHDRAW"]: a box Pokémon's menu's first row, matched in English as
+    {!withdraw_row}. *)
 
 val box_slots : int
 (** 30: six columns, five rows (pokefirered [IN_BOX_COUNT]). *)

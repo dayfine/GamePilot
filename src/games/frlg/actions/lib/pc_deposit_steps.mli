@@ -27,6 +27,8 @@ type look = {
       *)
 }
 
+(** The button a PC step presses next, a wait, or the walk done or failed (and
+    why). *)
 type press =
   | A
   | B
