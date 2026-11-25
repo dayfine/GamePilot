@@ -63,19 +63,40 @@ let scene_with_start_window steps (event : Plan.event) (args : Json_field.obj) =
   | _ ->
       bad_args event "the only arg is start_window_ms, a positive number of ms"
 
+(* Free control with no A prompt, on two reads 300 ms apart: nothing for A
+   to take. *)
+let no_prompt_gap_ms = 300
+
+let no_prompt (l : Story_look.t) =
+  Story_look.control_shows l && not l.interact_prompt
+
+let prompt_missing steps =
+  no_prompt (steps.Story_steps.read_screen ())
+  &&
+  (Story_steps.wait steps no_prompt_gap_ms;
+   no_prompt (steps.read_screen ()))
+
+let prompt_not_seen =
+  Error
+    (Failure.cause "prompt_not_seen"
+       "scene: no A prompt to press through: free control with nothing to take \
+        A (the walk before it stopped short?)")
+
 (* The fork's scene with "press_a_first": A through the prompt first
    (press_through_prompt), then the scene; with "stop_at_choice", to the
    choice. *)
 let through_prompt steps config =
   let walk = Story_steps.walk_game_steps steps in
-  Plza_walk.Talk_prompt.press_through
-    {
-      submit = walk.submit;
-      read_screen = walk.read_screen;
-      log = walk.log;
-      log_detail = walk.log_detail;
-    };
-  Scene_machine.run steps "scene" config
+  if prompt_missing steps then prompt_not_seen
+  else (
+    Plza_walk.Talk_prompt.press_through
+      {
+        submit = walk.submit;
+        read_screen = walk.read_screen;
+        log = walk.log;
+        log_detail = walk.log_detail;
+      };
+    Scene_machine.run steps "scene" config)
 
 let scene_through_prompt steps (event : Plan.event) (args : Json_field.obj) =
   match args with

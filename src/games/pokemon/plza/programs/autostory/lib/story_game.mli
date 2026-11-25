@@ -25,7 +25,10 @@
       (control before any scene waits that long for one), its one arg;
     - [scene_through_prompt], the fork's [scene] with [press_a_first: true]: A
       on the prompt until the game takes it, then the scene; its one optional
-      arg [stop_at_choice: true] (the fork's) stops at the choice;
+      arg [stop_at_choice: true] (the fork's) stops at the choice. Where it
+      differs: free control with no A prompt on two reads 300 ms apart fails
+      [prompt_not_seen] before any A, where the fork presses A on nothing and
+      its scene then ends on control, passing a walk that stopped short;
     - [story_battle] ({!Plza_story.Story_battle}), no args;
     - the game's [walk] ({!Plza_walk.Walk}), walked rather than run before 03.03
       (the fork's [RUN_FROM], before dash is unlocked); its [end] ["talk"] or

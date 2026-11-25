@@ -350,6 +350,20 @@ let out_of_room ?(lost = false) c =
       | Some _ -> down_to_lobby c)
   | _ -> party c
 
+(* 03.02: the lobby's party bar, the front door's A prompt once the stick was
+   held 5 s, until A; a black fade 1.5 s, the Main Menu card until A, then the
+   party bar outside. [lost]: no door prompt, and A on nothing. *)
+let hotel_door ?(lost = false) c =
+  match C.stick_reached c 5000 with
+  | Some d when not lost -> (
+      match C.nth_after c Wire.A ~after:d 0 with
+      | None -> { (party c) with interact_prompt = true }
+      | Some a when since c a < 1500.0 -> black c
+      | Some a when C.nth_after c Wire.A ~after:a 0 = None ->
+          { (look c) with tutorial_card = true }
+      | Some _ -> party c)
+  | _ -> party c
+
 let outcome checkpoint screen =
   let c = C.create () in
   reloaded := false;
@@ -775,6 +789,26 @@ let cases =
       (result "03.01" (out_of_room ~lost:true))
       "03.01 event 1 (out_of_room_202): walk_no_end: out_of_room_202: no end \
        event within 1099 ms of the last leg";
+    case "03.02: across the lobby, A Leave, the Main Menu card"
+      (fun () ->
+        let r, c = outcome "03.02" hotel_door in
+        String.concat "\n"
+          (r
+          :: List.filter
+               (fun line ->
+                 List.exists
+                   (fun prefix -> String.starts_with ~prefix line)
+                   [ "[PLZA] to_"; "[PLZA] press"; "[PLZA scene] done" ])
+               (C.lines c)))
+      "passed\n\
+       [PLZA] to_hotel_front_door: legs done, screen now: player_can_move, \
+       interact_prompt\n\
+       [PLZA scene] done on control.";
+    case "03.02 lost: no front door prompt"
+      (result "03.02" (hotel_door ~lost:true))
+      "03.02 event 2 (leave_hotel_z): prompt_not_seen: scene: no A prompt to \
+       press through: free control with nothing to take A (the walk before it \
+       stopped short?)";
     case "the walk is walked before 03.03, run after"
       (fun () ->
         Printf.sprintf "%b %b"

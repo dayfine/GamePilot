@@ -21,7 +21,7 @@ Choices" screen. Nothing else is read from the save. The Switch's capture must b
 <!-- generated:commands -->
 ```sh
 # the Switch: each checkpoint once, from where the console is
-cd src && opam exec -- dune exec -- gamepilot checkpoints --program plza.autostory --from 01.00b --to 03.01 --mode testing --backend switch --serial PORT --capture DEVICE \
+cd src && opam exec -- dune exec -- gamepilot checkpoints --program plza.autostory --from 01.00b --to 03.02 --mode testing --backend switch --serial PORT --capture DEVICE \
     --watch
 ```
 <!-- /generated -->
@@ -43,8 +43,9 @@ cd src && opam exec -- dune exec -- gamepilot checkpoints --program plza.autosto
 | 02.06 | Main Mission 02: the night in Room 202 |
 | 02.07 | Main Mission 02: the first evening to Main Mission 03 |
 | 03.01 | Down to the lobby |
+| 03.02 | Out of Hotel Z |
 
-<!-- plans: 0398a5765425 -->
+<!-- plans: 83dda277b924 -->
 <!-- /generated -->
 
 ## When it stops
@@ -62,8 +63,8 @@ battle is already up. Started in the night alley after Andi (the party bar up, n
 
 ## Known limits
 
-Only 01.00b to 03.01 so far. 01.02's chase, 01.03's walk to Chikorita and the walks of 02.01 to
-03.01 are timed stick legs with no map, so they can miss; the chase then stops on Ryon's
+Only 01.00b to 03.02 so far. 01.02's chase, 01.03's walk to Chikorita and the walks of 02.01 to
+03.02 are timed stick legs with no map, so they can miss; the chase then stops on Ryon's
 A prompt (`scene_ended_in_control`), the walk to Chikorita with `walk_no_end`, and the Battle Zone
 walk with `scene_ended_in_control` when Brigitte's talk never starts. In 02.02, a walk to the
 blocked street that misses fails with `walk_no_end` (no black fade), one to the gate that misses
