@@ -22,6 +22,8 @@ let walker screen log : Route_walk.t =
       (fun () ->
         incr fled;
         screen.S.shows <- [ (screen.S.clock_ms, S.Overworld) ]);
+    fight_trainer = (fun () -> Ok ());
+    watch_trainers = false;
     log = (fun line -> log := line :: !log);
   }
 

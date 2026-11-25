@@ -44,14 +44,6 @@ let trade ctx offer receive =
       ctx.party :=
         Party_roster.replace party ~slot (Option.value receive ~default:"?")
 
-let read_caught ~log at_least =
-  match (Trainer_card_caught.read ~log, at_least) with
-  | None, _ -> Menu_input.fail "caught_unread" "the Pokedex count did not read"
-  | Some n, Some least when n < least ->
-      Menu_input.fail "caught_short"
-        (Printf.sprintf "%d species caught, not at least %d" n least)
-  | Some _, _ -> ()
-
 let facing ctx =
   Option.value (ctx.facing ()) ~default:Grid_geometry.Direction.North
 
@@ -81,7 +73,6 @@ let body ctx (request : R.t) () =
         ~who:(Action_args.member_to_string member)
         ~slot:(resolve ctx member)
   | Pick_up_item _ -> Menu_input.raise_error (Talk.pick_up ~log ())
-  | Read_caught { at_least } -> read_caught ~log at_least
 
 let perform ctx request = Menu_input.run (body ctx request)
 
