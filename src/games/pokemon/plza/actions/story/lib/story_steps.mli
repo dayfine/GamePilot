@@ -14,6 +14,9 @@ type game_steps = {
       (** Send one input and watch the screen while it runs: the first read on
           which the check holds (the input is then cut short, every button
           released), or [None] once the input is done. *)
+  race_batch :
+    Wire.command list -> (Story_look.t -> bool) -> Story_look.t option;
+      (** As [race], over inputs sent as one batch (each runs into the next). *)
   race_then :
     Wire.command ->
     (Story_look.t -> bool) ->

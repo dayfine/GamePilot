@@ -113,6 +113,10 @@ let run_to_gate_ms = 8000
 let run_to_gate steps ~timeout_ms =
   Plza_walk.Gate_run.run (Story_steps.walk_game_steps steps) ~timeout_ms
 
+(* The fork's counts (PokemonLZA_AutoStoryConsoleActions.cpp). *)
+let max_throws = 6
+let max_rounds = 6
+
 let game_actions ~reload steps =
   List.map
     (fun (name, action) -> (name, action steps))
@@ -134,6 +138,10 @@ let game_actions ~reload steps =
       ("story_battle", no_args Story_battle.run);
       ("talk_through_map_screen", no_args Map_talk.run);
       ("run_to_gate", timed run_to_gate ~default:run_to_gate_ms);
+      ( "catch_tutorial",
+        no_args (fun steps -> Catches.catch_tutorial steps ~max_throws) );
+      ( "battle_then_catch",
+        no_args (fun steps -> Catches.battle_then_catch steps ~max_rounds) );
       ( "climb_ladder",
         no_args (fun steps -> Plza_walk.Ladder_climb.run (talk_steps steps)) );
     ]

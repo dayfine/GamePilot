@@ -22,3 +22,10 @@
     hold. *)
 
 val run : Story_steps.game_steps -> Story_steps.outcome
+
+val attempt_one_attack : Story_steps.game_steps -> int ref -> bool
+(** One attack of the fight ([TrainerBattleState::attempt_one_attack]): ZL held
+    up to 1 s for the move symbols, the most effective move pressed as they
+    show. Whether a move went. [misses] counts the misses in a row (reset on a
+    move); from the third, the camera turns left while ZL is mashed. The
+    catches' [weaken_target] keeps its own count ({!Catches}). *)

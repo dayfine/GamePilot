@@ -84,17 +84,21 @@ and passes. Each run keeps its log, wire log and a `failure.png` in its run fold
 
 ## Known limits
 
-03.07 to 03.11 have their plans, but only 03.10 is ported in full; the others stop loudly before
-they press anything. 03.07, 03.08, 03.08a, 03.08b and 03.11 are refused (`no handler`): their
-catches (`catch_tutorial`, `battle_then_catch`, `catch_in_zone`), 03.08b's way out of the zone by
-its map (`run_out_of_zone_1`, `check_out_of_zone_1`) and Mable's research reward
-(`claim_mable_research_reward`, which opens the main menu) are not ported yet; 03.07's run to the
-gate is. The start checks of 03.08 to 03.09 name the wild zone, the party count or the A prompt,
-which nothing reads yet (`start_signature_unread`). 03.09's first walk faces a heading by the
+03.07 to 03.11 have their plans; 03.07 and 03.10 are ported in full. 03.08, 03.08a, 03.08b and
+03.11 stop loudly before they press anything (`no handler`): their catches (`catch_in_zone`), 03.08b's
+way out of the zone by its map (`run_out_of_zone_1`, `check_out_of_zone_1`) and Mable's research
+reward (`claim_mable_research_reward`, which opens the main menu) are not ported yet. 03.07's
+catches throw a ball (ZL to lock on, ZL and ZR to aim) and pass the lines after it with A: Fletchling
+is caught when its tutorial card shows (`no_catch` after 6 throws), and when a throw breaks out into a
+battle (the Run prompt, or the alert eye over a wild Pokémon) it is weakened with three attacks
+first. Bunnelby is weakened, then caught, up to 6 rounds (`still_a_target`); when nothing locks on
+and the battle is still up, the camera sweeps right to find it. The Run prompt's reader has not seen
+a console frame yet. The start checks of 03.08 to 03.09 name the wild zone, the party count or the A
+prompt, which nothing reads yet (`start_signature_unread`). 03.09's first walk faces a heading by the
 minimap's arrow, which nothing reads either (`heading_unread`, before any leg). 03.10 starts in the
 lab's lobby, where 03.09 ends.
 
-Only 01.00b to 03.06 so far. 01.02's chase, 01.03's walk to Chikorita and the walks of 02.01 to
+Only 01.00b to 03.07 so far. 01.02's chase, 01.03's walk to Chikorita and the walks of 02.01 to
 03.06 are timed stick legs with no map, so they can miss; the chase then stops on Ryon's
 A prompt (`scene_ended_in_control`), the walk to Chikorita with `walk_no_end`, and the Battle Zone
 walk with `scene_ended_in_control` when Brigitte's talk never starts. In 02.02, a walk to the

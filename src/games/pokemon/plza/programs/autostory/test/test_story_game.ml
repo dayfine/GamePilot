@@ -570,6 +570,79 @@ let end_check checkpoint screen () =
 (* Outside the Center, where 03.04 ends and 03.06 starts. *)
 let outside_center c = { (party c) with minimap = Some "03.06-start" }
 
+(* The ball throws so far: each holds ZR once. *)
+let throws (c : C.t) =
+  List.length
+    (List.filter (fun (i : C.input) -> List.mem Wire.ZR i.buttons) c.inputs)
+
+(* Under ZL the move symbols show; a move's button lands it. *)
+let zl_held (c : C.t) =
+  match c.inputs with i :: _ -> List.mem Wire.ZL i.buttons | [] -> false
+
+let wild_battle ?(symbols = true) c =
+  {
+    (party c) with
+    run_prompt = true;
+    moves =
+      (if symbols && zl_held c then [ Some L.Effective; None; None; None ]
+       else []);
+  }
+
+(* The tutorial card after the catching throw until A, then the party bar. *)
+let caught c =
+  let rec throw_end n = function
+    | [] -> 0.
+    | (i : C.input) :: rest ->
+        if List.mem Wire.ZR i.buttons then
+          if n = 0 then i.at_ms else throw_end (n - 1) rest
+        else throw_end n rest
+  in
+  match C.nth_after c Wire.A ~after:(throw_end 0 c.inputs) 0 with
+  | None -> { (look c) with tutorial_card = true }
+  | Some _ -> party c
+
+(* 03.07's Fletchling: the throw [catch_on] (from 1) catches it; the ones
+   before break out into a wild battle. *)
+let fletchling ~catch_on c =
+  let n = throws c in
+  if n >= catch_on then caught c else if n >= 1 then wild_battle c else party c
+
+(* 03.07's Bunnelby, in battle from the start: the first throw catches it,
+   or with [breaks_out] the first breaks out out of sight (no symbols until
+   the camera sweeps: ZL with D-pad up) and the second catches it. *)
+let bunnelby ?(breaks_out = false) (c : C.t) =
+  let swept =
+    List.exists
+      (fun (i : C.input) ->
+        List.mem Wire.Up i.buttons && List.mem Wire.ZL i.buttons)
+      c.inputs
+  in
+  match throws c with
+  | 0 -> wild_battle c
+  | 1 when breaks_out -> wild_battle ~symbols:swept c
+  | _ -> party c
+
+(* A catch on [screen]: its result and log. *)
+let catch run screen () =
+  let c = C.create () in
+  let r = run (C.steps c screen) in
+  String.concat "\n"
+    ((match r with
+     | Ok () -> Printf.sprintf "ok, %d throws" (throws c)
+     | Error e -> Engine_run.Failure.cause_to_string e)
+    :: List.filter
+         (fun line ->
+           List.exists
+             (fun p -> String.starts_with ~prefix:p line)
+             [ "[PLZA] catch"; "[PLZA] battle"; "[PLZA] weaken" ])
+         (C.lines c))
+
+let tutorial ~max_throws steps =
+  Plza_story.Catches.catch_tutorial steps ~max_throws
+
+let battle ~max_rounds steps =
+  Plza_story.Catches.battle_then_catch steps ~max_rounds
+
 (* 03.07's run to the gate on [screen]: its result and log. *)
 let gate_run ?(timeout_ms = 8000) screen () =
   let c = C.create () in
@@ -1259,12 +1332,48 @@ let cases =
        [PLZA] run_to_gate: the gate's A prompt: reached the gate";
     case "03.07's run to the gate, no prompt: gate_not_reached" (gate_run party)
       "gate_not_reached: no gate A prompt in 8000 ms of running";
-    case "03.07 is refused before it presses: its catches are not ported"
+    case "03.07 with no Fletchling to catch: no_catch after 6 throws"
       (fun () ->
         let r, c = outcome "03.07" gate in
-        Printf.sprintf "%s; %d inputs" r (List.length c.C.inputs))
-      "03.07 event 3 (catch_fletchling): no handler for game action \
-       \"catch_tutorial\"; 0 inputs";
+        Printf.sprintf "%s; %d throws" r (throws c))
+      "03.07 event 3 (catch_fletchling): no_catch: no tutorial card after 6 \
+       throws; 6 throws";
+    case "03.07's Fletchling: caught on the first throw"
+      (catch (tutorial ~max_throws:6) (fletchling ~catch_on:1))
+      "ok, 1 throws\n[PLZA] catch_tutorial: caught on throw 1";
+    case "03.07's Fletchling breaks out once: weakened, caught on the second"
+      (catch (tutorial ~max_throws:6) (fletchling ~catch_on:2))
+      "ok, 2 throws\n\
+       [PLZA] catch_tutorial: throw 1 broke out into a battle: 3 attacks landed\n\
+       [PLZA] catch_tutorial: caught on throw 2";
+    case "03.07's Fletchling never caught: no_catch"
+      (catch (tutorial ~max_throws:2) (fletchling ~catch_on:3))
+      "no_catch: no tutorial card after 2 throws\n\
+       [PLZA] catch_tutorial: throw 1 broke out into a battle: 3 attacks landed";
+    case "03.07's Bunnelby: weakened, caught, nothing left to lock on"
+      (catch (battle ~max_rounds:6) bunnelby)
+      "ok, 1 throws\n\
+       [PLZA] battle_then_catch: round 1: 3 attacks landed, then a throw\n\
+       [PLZA] weaken_target: no lock-on twice: D-pad up to send the partner out\n\
+       [PLZA] weaken_target: no lock-on twice: D-pad up to send the partner out\n\
+       [PLZA] battle_then_catch: nothing to lock on in round 2: caught";
+    case "03.07's Bunnelby breaks out out of sight: the camera sweep finds it"
+      (catch (battle ~max_rounds:6) (bunnelby ~breaks_out:true))
+      "ok, 2 throws\n\
+       [PLZA] battle_then_catch: round 1: 3 attacks landed, then a throw\n\
+       [PLZA] weaken_target: no lock-on twice: D-pad up to send the partner out\n\
+       [PLZA] weaken_target: no lock-on twice: D-pad up to send the partner out\n\
+       [PLZA] battle_then_catch: nothing to lock on in round 2, still in \
+       battle: sweeping camera\n\
+       [PLZA] battle_then_catch: round 2: 0 attacks landed, then a throw\n\
+       [PLZA] weaken_target: no lock-on twice: D-pad up to send the partner out\n\
+       [PLZA] weaken_target: no lock-on twice: D-pad up to send the partner out\n\
+       [PLZA] battle_then_catch: nothing to lock on in round 3: caught";
+    case "03.07's Bunnelby never caught: still_a_target"
+      (catch (battle ~max_rounds:2) wild_battle)
+      "still_a_target: a target still locks on after 2 rounds\n\
+       [PLZA] battle_then_catch: round 1: 3 attacks landed, then a throw\n\
+       [PLZA] battle_then_catch: round 2: 3 attacks landed, then a throw";
     case "03.08 is refused before it presses: catch_in_zone is not ported"
       (refused "03.08")
       "03.08 event 1 (catch_more_species): no handler for game action \
