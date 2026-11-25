@@ -6,11 +6,6 @@
 open Pokemon_checkpoints
 module Run = Frlg_checkpoints.Checkpoint_run
 
-let write_reads path reads =
-  Out_channel.with_open_bin (Event_states.kept_path path) (fun out ->
-      Out_channel.output_string out
-        (Yojson.Safe.to_string (Saved.to_json reads) ^ "\n"))
-
 (* The older states of event [index] under another id. *)
 let prune dir ~index ~keep =
   Sys.readdir dir |> Array.to_list
@@ -28,7 +23,7 @@ let keep ~states ~checkpoint ~log : Run.keep_event_state =
   match Effects.save_state tmp with
   | (_ : int) ->
       Sys.rename tmp path;
-      write_reads path reads;
+      Event_states.write_kept path reads;
       prune dir ~index ~keep:(Filename.basename path);
       log
         ("[Run] kept the state at "
@@ -37,14 +32,6 @@ let keep ~states ~checkpoint ~log : Run.keep_event_state =
       log
         (Printf.sprintf "[Run] could not keep the state at %s: %s" event.id
            e.message)
-
-let read_kept ~missing path =
-  let file = Event_states.kept_path path in
-  if not (Sys.file_exists file) then Error missing
-  else
-    match Yojson.Safe.from_file file with
-    | json -> Saved.of_json json
-    | exception Yojson.Json_error e -> Error (file ^ ": " ^ e)
 
 (* The kept state of [from_event]'s first event and the partial run from it. *)
 let partial ~states ~checkpoint (plan : Plan.checkpoint) (from_event, to_event)
@@ -61,5 +48,5 @@ let partial ~states ~checkpoint (plan : Plan.checkpoint) (from_event, to_event)
   let missing = Event_states.missing ~checkpoint ~label ~path in
   if not (Sys.file_exists path) then Error missing
   else
-    let* kept = read_kept ~missing path in
+    let* kept = Event_states.read_kept ~missing path in
     Ok (path, { Run.range; kept })

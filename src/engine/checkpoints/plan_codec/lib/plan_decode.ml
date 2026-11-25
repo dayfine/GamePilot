@@ -9,13 +9,16 @@ let ok_or_fail = function
   | Ok value -> value
   | Error message -> F.fail "%s" message
 
-module Make (T : Engine_terms.GAME_TERMS) = struct
-  module Plan = Plan.Make (T)
+module Make
+    (T : Engine_terms.TERMS)
+    (C : Plan_codec.PLAN_CODEC with module T = T) =
+struct
+  module Plan = Engine_plan.Plan.Make (T) (Raw_json)
 
   let format = format
 
   let pose path value =
-    ok_or_fail (T.Pose.decode ~where:(path ^ ".") (F.as_object path value))
+    ok_or_fail (C.pose_of_plan ~where:(path ^ ".") (F.as_object path value))
 
   let list_of ~where key args read =
     required ~where key args;
@@ -46,7 +49,7 @@ module Make (T : Engine_terms.GAME_TERMS) = struct
     let name = F.string ~where "kind" obj in
     let args = Option.value ~default:[] (F.object_opt ~where "args" obj) in
     let args_where = where ^ "args." in
-    match (name, engine_kind name, T.Kind.decode name) with
+    match (name, engine_kind name, C.kind_of_plan name) with
     | "game_action", _, _ when action = None ->
         F.fail "%saction is missing: a game_action names its action." where
     | "game_action", _, _ -> Plan.Game_action args
@@ -130,7 +133,7 @@ module Make (T : Engine_terms.GAME_TERMS) = struct
         | Some n when n >= 0 -> n
         | Some n -> F.fail "%sretries is %d, not 0 or more." where n)
 
-  let promises ~where obj = ok_or_fail (T.Postconditions.decode ~where obj)
+  let promises ~where obj = ok_or_fail (C.postconditions_of_plan ~where obj)
 
   let repeat_of ~where obj : Plan.repeat =
     known_fields_only ~where [ "until"; "max_rounds" ] obj;

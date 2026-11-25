@@ -1,10 +1,14 @@
-module Make (T : Engine_terms.GAME_TERMS) = struct
+module type RAW = sig
+  type t
+end
+
+module Make (T : Engine_terms.TERMS) (Raw : RAW) = struct
   type kind =
     | Talk
     | Answer of bool
     | Scene
     | Save
-    | Game_action of Json_field.obj
+    | Game_action of Raw.t
     | Own of T.Kind.t
 
   type event = {
@@ -29,8 +33,8 @@ module Make (T : Engine_terms.GAME_TERMS) = struct
   type t = {
     game : string;
     checkpoint : checkpoint;
-    execution : Json_field.obj;
-    metadata : Json_field.obj option;
+    execution : Raw.t;
+    metadata : Raw.t option;
     postconditions : T.Postconditions.t option;
     retries : int;
     repeat : repeat option;

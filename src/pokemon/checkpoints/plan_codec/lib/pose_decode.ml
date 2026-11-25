@@ -1,5 +1,6 @@
+open Pokemon_terms
 open Grid_maps
-open Engine_plan.Plan_fields
+open Engine_plan_codec.Plan_fields
 module F = Json_field
 
 let tiles path : Yojson.Safe.t -> Tile_pos.t list = function

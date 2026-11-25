@@ -1,8 +1,4 @@
 (library
  (name engine_plan)
  (public_name gamepilot.engine_plan)
- (libraries
-  yojson
-  gamepilot.json_field
-  gamepilot.engine_postcondition
-  gamepilot.engine_terms))
+ (libraries gamepilot.engine_terms))
