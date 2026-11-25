@@ -9,7 +9,7 @@ open Frlg_actions
 let case name input expectation = { Table_test.name; input; expectation }
 
 let plan id =
-  match Checkpoints.Plan_decode.load (id ^ ".plan.json") with
+  match Frlg_checkpoints.Plan_file.load (id ^ ".plan.json") with
   | Ok p -> p
   | Error e -> failwith e
 

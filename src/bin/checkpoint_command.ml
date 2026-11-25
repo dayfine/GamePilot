@@ -92,7 +92,7 @@ let options flags : Frlg_checkpoints.Checkpoint_run.options =
   }
 
 let prepare plan_file flags =
-  let* plan = Checkpoints.Plan_decode.load plan_file in
+  let* plan = Frlg_checkpoints.Plan_file.load plan_file in
   let* () = Frlg_checkpoints.Checkpoint_run.check_plan plan in
   let* world = Frlg_checkpoints.Checkpoint_run.load_world () in
   Ok (plan, world, options flags)

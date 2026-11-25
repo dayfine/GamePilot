@@ -38,15 +38,9 @@
         "kind": "route",
         "action": "run",
         "args": {
-          "target": {
-            "map": "CeladonCity",
-            "tiles": [
-              [11, 15]
-            ],
-            "facing": "south"
-          }
+          "target": {"place": "dept_store_west_door_outside"}
         },
-        "why": "Leave the Dept. Store by its west door (11, 14) to fly."
+        "why": "Leave the Dept. Store by its west door to fly."
       },
       {
         "id": "fly_vermilion",
@@ -79,15 +73,9 @@
         "kind": "route",
         "action": "run",
         "args": {
-          "target": {
-            "map": "Route6",
-            "tiles": [
-              [19, 6]
-            ],
-            "facing": "north"
-          }
+          "target": {"place": "route6_hidden_rare_candy"}
         },
-        "why": "Face the hidden Rare Candy at (19, 5), up the gap in the ledges at (19, 7)."
+        "why": "Face Route 6's hidden Rare Candy, up the gap in the ledges."
       },
       {
         "id": "pick_up_rare_candy",
@@ -132,13 +120,7 @@
         "kind": "route",
         "action": "run",
         "args": {
-          "target": {
-            "map": "CeladonCity_DepartmentStore_1F",
-            "tiles": [
-              [6, 2]
-            ],
-            "facing": "south"
-          }
+          "target": {"place": "dept_store_1f_save"}
         },
         "why": "Back to the Dept. Store 1F save spot."
       },

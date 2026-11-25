@@ -96,7 +96,7 @@ steps and its log, and stop it.
 | mg-05a | Prepare Leppa and Retro Mail for Lea & Jed on Route 16 |
 | mg-05 | Route 16 Mail Glitch against Lea & Jed with Blastoise and a Leppa Berry |
 
-<!-- plans: 535c7924e6b9 -->
+<!-- plans: db5775c1ba02 -->
 <!-- /generated -->
 
 In plain words:

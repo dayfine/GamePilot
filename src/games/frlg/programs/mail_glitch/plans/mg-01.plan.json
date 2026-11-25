@@ -22,9 +22,9 @@
         "kind": "route",
         "action": "run",
         "args": {
-          "target": {"map": "CeladonCity_Restaurant", "tiles": [[2, 2]], "facing": "west"}
+          "target": {"place": "restaurant_coin_case_man"}
         },
-        "why": "enter Celadon Restaurant (37, 29) and walk to face CoinCaseMan at (1, 2)"
+        "why": "into Celadon Restaurant to face CoinCaseMan"
       },
       {
         "id": "talk_coin_case_man",
@@ -38,33 +38,13 @@
         "why": "clear the Coin Case dialog back to overworld"
       },
       {
-        "id": "to_dept_store_lift",
-        "kind": "route",
-        "action": "run",
-        "args": {
-          "target": {"map": "CeladonCity_DepartmentStore_1F", "tiles": [[6, 2]], "facing": "north"}
-        },
-        "why": "exit Restaurant, enter Celadon Dept Store 1F, and stand below the elevator door (6, 1)"
-      },
-      {
-        "id": "lift_1f_to_4f",
-        "kind": "game_action",
-        "action": "lift_floor",
-        "args": {
-          "from": "1F",
-          "to": "4F"
-        },
-        "declared_after": {"map": "CeladonCity_DepartmentStore_4F", "tiles": [[6, 2]], "facing": "south"},
-        "why": "ride the Dept Store elevator from 1F to 4F (Wise Man Gifts)"
-      },
-      {
         "id": "to_4f_clerk",
         "kind": "route",
         "action": "run",
         "args": {
-          "target": {"map": "CeladonCity_DepartmentStore_4F", "tiles": [[3, 11]], "facing": "south"}
+          "target": {"place": "dept_store_4f_clerk"}
         },
-        "why": "walk to face the 4F clerk (3, 13) across counter row 12"
+        "why": "up the Dept Store lift to face the 4F clerk (Wise Man Gifts) across the counter"
       },
       {
         "id": "buy_retro_mail",
@@ -79,33 +59,13 @@
         "why": "buy 2 Retro Mail ($50 each) for MIMIEN and backup"
       },
       {
-        "id": "back_to_4f_lift",
-        "kind": "route",
-        "action": "run",
-        "args": {
-          "target": {"map": "CeladonCity_DepartmentStore_4F", "tiles": [[6, 2]], "facing": "north"}
-        },
-        "why": "return to below 4F elevator door (6, 1)"
-      },
-      {
-        "id": "lift_4f_to_1f",
-        "kind": "game_action",
-        "action": "lift_floor",
-        "args": {
-          "from": "4F",
-          "to": "1F"
-        },
-        "declared_after": {"map": "CeladonCity_DepartmentStore_1F", "tiles": [[6, 2]], "facing": "south"},
-        "why": "ride the elevator back down to 1F"
-      },
-      {
         "id": "to_coins_clerk",
         "kind": "route",
         "action": "run",
         "args": {
-          "target": {"map": "CeladonCity_GameCorner", "tiles": [[6, 4]], "facing": "north"}
+          "target": {"place": "game_corner_coins_clerk"}
         },
-        "why": "exit Dept Store, enter Game Corner (34, 21), and stand across counter from CoinsClerk (6, 2)"
+        "why": "down the lift, out of the Dept Store, into the Game Corner to face CoinsClerk across the counter"
       },
       {
         "id": "buy_200_coins",
@@ -121,9 +81,9 @@
         "kind": "route",
         "action": "run",
         "args": {
-          "target": {"map": "CeladonCity_GameCorner_PrizeRoom", "tiles": [[4, 4]], "facing": "north"}
+          "target": {"place": "prize_room_mon_clerk"}
         },
-        "why": "exit Game Corner, enter Prize Room (39, 20), and stand facing PrizeClerkMons (4, 2)"
+        "why": "out of the Game Corner, into the Prize Room to face PrizeClerkMons"
       },
       {
         "id": "redeem_abra",
@@ -139,9 +99,9 @@
         "kind": "route",
         "action": "run",
         "args": {
-          "target": {"map": "CeladonCity", "tiles": [[39, 21]], "facing": "south"}
+          "target": {"place": "celadon_prize_room_outside"}
         },
-        "why": "exit Prize Room onto Celadon City (39, 21) and save"
+        "why": "out of the Prize Room onto Celadon City, to save"
       }
     ]
   },

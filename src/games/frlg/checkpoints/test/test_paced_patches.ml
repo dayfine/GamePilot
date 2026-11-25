@@ -37,7 +37,7 @@ let strategy name () =
 
 (* The plan's paced events, each from the tile the event before it names. *)
 let plan_patches file () =
-  let p = Result.get_ok (Checkpoints.Plan_decode.load file) in
+  let p = Result.get_ok (Frlg_checkpoints.Plan_file.load file) in
   let named (e : Checkpoints.Plan.event) =
     match (e.kind, e.declared_after) with
     | Route r, _ -> Some r.target

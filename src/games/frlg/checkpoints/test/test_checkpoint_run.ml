@@ -5,7 +5,7 @@
 
 open Frlg_checkpoints
 
-let plan file = Result.get_ok (Checkpoints.Plan_decode.load file)
+let plan file = Result.get_ok (Frlg_checkpoints.Plan_file.load file)
 
 let handled =
   "fly" :: "lift_floor" :: "capture" :: "grind" :: "prepare_berry_pp"
@@ -168,8 +168,8 @@ let () =
         (summary "mg-01.plan.json")
         "frlg; from CeladonCity (48, 12) south; missing: none";
       case "mg-01's walks plan on the maps" (walks "mg-01.plan.json")
-        "to_coin_case_man 8; to_dept_store_lift 11; to_4f_clerk 3; \
-         back_to_4f_lift 3; to_coins_clerk 10; to_prize_clerk 5; \
+        "to_coin_case_man 8; to_4f_clerk 11; to_4f_clerk.walk 3; \
+         to_coins_clerk 3; to_coins_clerk.walk 10; to_prize_clerk 5; \
          exit_prize_room 1";
       case "mg-02"
         (summary "mg-02.plan.json")
@@ -236,14 +236,14 @@ let () =
         (summary "mg-06.plan.json")
         "frlg; from Route16 (30, 6) north; missing: none";
       case "mg-06's walks plan on the maps" (walks "mg-06.plan.json")
-        "to_dept_store_lift 7; to_4f_clerk 3; back_to_4f_lift 3";
+        "to_4f_clerk 7; to_4f_clerk.walk 3; to_1f_save_spot 3";
       case "su-01"
         (summary "su-01.plan.json")
         "frlg; from CeladonCity_DepartmentStore_1F (6, 2) south; missing: none";
       case "su-01's walks plan on the maps" (walks "su-01.plan.json")
-        "to_dept_store_lift 1; to_4f_clerk 3; back_to_4f_lift 3; \
-         out_of_dept_store 3; lavender_mart_clerk 7; out_of_lavender_mart 1; \
-         to_save_spot 8";
+        "to_4f_clerk 1; to_4f_clerk.walk 3; out_of_dept_store 3; \
+         out_of_dept_store.walk 3; lavender_mart_clerk 7; out_of_lavender_mart \
+         1; to_save_spot 8";
       case "tt-01"
         (summary "tt-01.plan.json")
         "frlg; from CeladonCity_DepartmentStore_1F (6, 2) south; missing: none";

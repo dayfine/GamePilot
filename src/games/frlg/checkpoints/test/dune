@@ -140,7 +140,8 @@
   gamepilot.table_test
   gamepilot.grid_maps
   gamepilot.checkpoints
-  gamepilot.frlg_actions))
+  gamepilot.frlg_actions
+  gamepilot.frlg_checkpoints))
 
 (test
  (name test_make_room)
