@@ -1,21 +1,8 @@
-(* A plan's run on the watch page (Watch_report): its events as the steps,
-   moved by the runner's progress. *)
+(* A plan's run on the watch page (Watch_report): the engine's
+   (Pokemon_engine.Plan_watch), with FireRed's runs around it. *)
 
-let create (checkpoint : Pokemon_engine.Plan.checkpoint) =
-  Watch_report.create ~checkpoint:checkpoint.checkpoint_id
-    (List.map (fun (e : Pokemon_engine.Plan.event) -> e.id) checkpoint.events)
-
-(* The event's state on the page and its detail (a failure's reason, the flag
-   a skip held on). *)
-let to_watch : string Engine_run.Event_progress.t -> _ = function
-  | Started -> (Wire.Watch.Current, "")
-  | Passed -> (Wire.Watch.Done, "")
-  | Skipped flag -> (Wire.Watch.Skipped, flag)
-  | Failed reason -> (Wire.Watch.Failed, reason)
-
-let on_event report index progress =
-  let state, detail = to_watch progress in
-  Watch_report.set report index state detail
+let create = Pokemon_engine.Plan_watch.create
+let on_event = Pokemon_engine.Plan_watch.on_event
 
 (* The options of a run that loads no state: the plan's own events go back to
    the save. *)

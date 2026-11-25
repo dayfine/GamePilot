@@ -33,6 +33,8 @@ struct
         checkpoint
   end
 
+  module Plan_watch = Engine_watch.Plan_watch.Make (T) (Raw)
+
   module Event_snapshot = struct
     include Engine_event_snapshot.Event_snapshot
     include Engine_event_snapshot.Event_snapshot.Make (S)

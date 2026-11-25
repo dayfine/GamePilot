@@ -7,4 +7,5 @@
   gamepilot.engine_plan_format
   gamepilot.engine_text
   gamepilot.engine_run
+  gamepilot.engine_watch
   gamepilot.engine_event_snapshot))
