@@ -43,20 +43,20 @@ struct
         if named = name then Some (allowed, read) else None)
       engine_kinds
 
-  let own_kind read ~where args = Plan.Own (ok_or_fail (read ~where args))
+  let game_kind read ~where args = Plan.Game (ok_or_fail (read ~where args))
 
-  let kind ~where obj action : Plan.kind =
+  let kind ~where obj way : Plan.kind =
     let name = F.string ~where "kind" obj in
     let args = Option.value ~default:[] (F.object_opt ~where "args" obj) in
     let args_where = where ^ "args." in
     match (name, engine_kind name, C.kind_of_plan name) with
-    | "game_action", _, _ when action = None ->
+    | "game_action", _, _ when way = None ->
         F.fail "%saction is missing: a game_action names its action." where
-    | "game_action", _, _ -> Plan.Game_action args
+    | "game_action", _, _ -> Plan.Named_action args
     | _, Some (allowed, read), _ ->
         known_fields_only ~where:args_where allowed args;
         read ~where:args_where args
-    | _, None, Some read -> own_kind read ~where:args_where args
+    | _, None, Some read -> game_kind read ~where:args_where args
     | _, None, None ->
         F.fail "%skind \"%s\" is not a story event kind." where name
 
@@ -75,15 +75,15 @@ struct
       obj;
     let id = F.string ~where "id" obj in
     if id = "" then F.fail "%sid is empty." where;
-    let action =
+    let way =
       match F.string_opt ~where "action" obj with
       | Some "" -> None
       | named -> named
     in
     {
       id;
-      kind = kind ~where obj action;
-      action;
+      kind = kind ~where obj way;
+      way;
       why = Option.value ~default:"" (F.string_opt ~where "why" obj);
       skip_if =
         Option.fold ~none:[]

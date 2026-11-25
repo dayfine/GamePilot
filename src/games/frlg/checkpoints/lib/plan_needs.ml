@@ -137,8 +137,8 @@ let game_action stocks ~where action args acc =
   { acc with brought = brought @ acc.brought }
 
 let event stocks acc (e : P.event) =
-  match (e.kind, e.action) with
-  | Game_action args, Some action ->
+  match (e.kind, e.way) with
+  | Named_action args, Some action ->
       game_action stocks ~where:(e.id ^ ": ") action args acc
   | _ -> acc
 

@@ -1,8 +1,8 @@
-(** The Pokémon event kinds ({!Pokemon_rules.Own_kind}) as text. *)
+(** The Pokémon actions ({!Pokemon_rules.Pokemon_action}) as text. *)
 
 open Pokemon_rules
 
-val text : Own_kind.t -> string
+val text : Pokemon_action.t -> string
 (** The kind with its typed args, its name first:
     ["route to Town (4, 0) north"], ["battle (may lose)"],
     ["shop 2 retro-mail"]. *)

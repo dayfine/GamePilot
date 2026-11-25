@@ -5,7 +5,7 @@ module Make (T : Engine_rules.GAME_RULES) (Raw : Plan.RAW) = struct
   type game_action = Plan.Make(T)(Raw).event -> Raw.t -> outcome
 
   type t = {
-    run_own : Plan.Make(T)(Raw).event -> T.Kind.t -> outcome;
+    run_own : Plan.Make(T)(Raw).event -> T.Action.t -> outcome;
     run_builtin : Plan.Make(T)(Raw).event -> outcome;
     game_actions : (string * game_action) list;
     flag_holds : string -> bool;

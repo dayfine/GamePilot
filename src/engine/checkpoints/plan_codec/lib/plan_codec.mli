@@ -15,9 +15,10 @@ module type PLAN_CODEC = sig
 
   val kind_of_plan :
     string ->
-    (where:string -> Json_field.obj -> (T.Kind.t, string) result) option
-  (** The reader of the kind of that name, given the event's [args] (unknown
-      args are its errors), or [None] when the name is not one of the game's. *)
+    (where:string -> Json_field.obj -> (T.Action.t, string) result) option
+  (** The reader of the game's action of that [kind], given the event's [args]
+      (unknown args are its errors), or [None] when the name is not one of the
+      game's. *)
 
   val postconditions_of_plan :
     where:string -> Json_field.obj -> (T.Postconditions.t, string) result

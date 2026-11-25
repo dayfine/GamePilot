@@ -37,7 +37,7 @@ which part is which. `Grid_maps` is `src/pokemon/navigation/grid/maps`.
 
 | File | | What ties it |
 |---|---|---|
-| `plan.mli` | mixed | A: `event` (id, action, why, `skip_if`, `once_per_save`), `checkpoint`, `t` (game, execution, metadata, retries, repeat), `count`, `money`, `Talk`, `Answer`, `Scene`, `Save`, `Game_action`. G: `leg`, `route`, `Route`, `Ready`, `Legs`, `Step` (`Grid_maps.Direction`). P: `party`, `slot`, `knows`, `level`, `marks`, `coins`, and the built-ins `Battle`, `Train`, `Heal`, `Shop`, `New_game`, `Options` as FireRed runs them |
+| `plan.mli` | mixed | A: `event` (id, way, why, `skip_if`, `once_per_save`), `checkpoint`, `t` (game, execution, metadata, retries, repeat), `count`, `money`, `Talk`, `Answer`, `Scene`, `Save`, `Named_action`. G: `leg`, `route`, `Route`, `Ready`, `Legs`, `Step` (`Grid_maps.Direction`). P: `party`, `slot`, `knows`, `level`, `marks`, `coins`, and the built-ins `Battle`, `Train`, `Heal`, `Shop`, `New_game`, `Options` as FireRed runs them |
 | `pose.ml` | mixed | G: `grid` (map, tiles, facing), `observed` (map, tile), `matches`. A: `zone` (place, spot, heading), already decoded and never used |
 | `plan_decode.ml` | mixed | A: format names, strictness, unique ids, the event loop. G and P: the kind table and its args, grid poses |
 | `plan_fields.ml` | mixed | A: field readers. G: `grid_pose`; P: `item` |
@@ -103,7 +103,10 @@ and no text. Each format turns them into bytes or words at one edge only, so the
 runner, its failures and the checks never see JSON or build a string. A lint rule enforces it.
 
 The rules were first called terms (`Engine_terms.TERMS`, `Pokemon_terms`, `Terms_text`); they were
-renamed `Engine_rules.GAME_RULES`, `Pokemon_rules` and `Rules_text` on 2026-11-25, unchanged.
+renamed `Engine_rules.GAME_RULES`, `Pokemon_rules` and `Rules_text` on 2026-11-25, unchanged. The
+game's own kinds were renamed its actions the same day, also unchanged: `KIND` and `Kind` became
+`ACTION` and `Action`, `Own_kind` `Pokemon_action`, the plan's `Own` and `Game_action` `Game` and
+`Named_action`, and the event's `action` field `way` (its JSON key stays `"action"`).
 
 | Part | Engine signature | Pokémon | Toy game | Used by | Holds |
 |---|---|---|---|---|---|
@@ -122,8 +125,8 @@ module type POSE = sig
   type observed             (* where the game reads the player *)
   val matches : t -> observed -> bool
 end
-module type KIND = sig
-  type t                    (* the game's own kinds with their args: route, battle; walk, rest *)
+module type ACTION = sig
+  type t                    (* the game's actions, its own kinds, with their args: route, battle; walk, rest *)
 end
 module type POSTCONDITIONS = sig
   type t                    (* metadata.postconditions, a repeat's until *)
@@ -132,14 +135,14 @@ module type POSTCONDITIONS = sig
 end
 module type GAME_RULES = sig
   module Pose : POSE
-  module Kind : KIND
+  module Action : ACTION
   module Postconditions : POSTCONDITIONS
 end
 ```
 
-| Game | `Pose.t` / `observed` | `Kind.t` | `Postconditions.t` / `reads` |
+| Game | `Pose.t` / `observed` | `Action.t` | `Postconditions.t` / `reads` |
 |---|---|---|---|
-| Pokémon | `Grid of grid \| Zone of zone` (a zone holds anywhere) / map and tile (`Grid_geometry`) | `Own_kind.t`: new game, options, route, ready, legs, step, battle, train, heal, shop | party, items, coins, money, flags, moves, levels, marks / `Postcondition_check.observed` (with `start`) |
+| Pokémon | `Grid of grid \| Zone of zone` (a zone holds anywhere) / map and tile (`Grid_geometry`) | `Pokemon_action.t`: new game, options, route, ready, legs, step, battle, train, heal, shop | party, items, coins, money, flags, moves, levels, marks / `Postcondition_check.observed` (with `start`) |
 | Toy | `{ place; spot }` / the same | `Walk`, `Rest` | gold (`Count.t`), flags / gold now and at the start, flags set |
 
 `check` takes the reads alone: what the game read at the checkpoint's start is part of `reads`. The
@@ -152,7 +155,7 @@ the engine gives instead are parts in `postcondition/`: `Postcondition` (result,
 `Count` and `Money` (a value, floor, range or change from the start, and their checks).
 
 The plan's types are `Engine_plan.Plan.Make (T) (Raw)`: the engine's kinds `Talk`, `Answer`,
-`Scene`, `Save`, `Game_action of Raw.t` and `Own of T.Kind.t`. `Raw` is what the plan keeps unread
+`Scene`, `Save`, `Named_action of Raw.t` and `Game of T.Action.t`. `Raw` is what the plan keeps unread
 (a game action's args, `execution`, `metadata`); the engine applies it to `Raw_json` from the codec
 library, so `plan/` itself links no JSON.
 
@@ -164,7 +167,7 @@ module type PLAN_CODEC = sig
   module T : Engine_rules.GAME_RULES
   val pose_of_plan : where:string -> Json_field.obj -> (T.Pose.t, string) result
   val kind_of_plan :
-    string -> (where:string -> Json_field.obj -> (T.Kind.t, string) result) option
+    string -> (where:string -> Json_field.obj -> (T.Action.t, string) result) option
       (* [None]: the kind name is not this game's *)
   val postconditions_of_plan :
     where:string -> Json_field.obj -> (T.Postconditions.t, string) result
@@ -175,7 +178,7 @@ module type TEXT = sig
   module T : Engine_rules.GAME_RULES
   val pose : T.Pose.t -> string
   val observed : T.Pose.observed -> string
-  val kind : T.Kind.t -> string
+  val kind : T.Action.t -> string
   val postconditions : T.Postconditions.t -> string list
 end
 
@@ -272,7 +275,7 @@ core base`, and a game uses `pokemon` only when its family lists it (`family pok
 src/base/json_field/            Json_field: field readers returning Result
 src/base/repo_io/               Repo_files, Json_file
 src/engine/checkpoints/
-  rules/                        Engine_rules: POSE, KIND, POSTCONDITIONS, GAME_RULES
+  rules/                        Engine_rules: POSE, ACTION, POSTCONDITIONS, GAME_RULES
   postcondition/                Postcondition, Count, Money
   plan/                         Plan.Make (T) (Raw): types only
   run/                          Game, Runner, Failure, Log_line, Repeat_until, Checkpoint_trials,
@@ -286,7 +289,7 @@ src/engine/checkpoints/
   expand/                       Plan_json, Table_decode, Fragment_table, Fragment_calls
 src/pokemon/navigation/grid/geometry/   Grid_geometry: Tile_pos, Direction (pure; the rules use it)
 src/pokemon/checkpoints/
-  rules/                        Pokemon_rules: Pose, Own_kind, Postconditions, Postcondition_check
+  rules/                        Pokemon_rules: Pose, Pokemon_action, Postconditions, Postcondition_check
   plan_codec/                   Pokemon_plan_codec: Pose_decode, Kind_decode, Postcondition_decode,
                                 Party_decode
   text/                         Pokemon_text: Pose_text, Kind_text, Postconditions_text
@@ -308,12 +311,12 @@ route or ready target, or a `position` promise; the runner takes it as `?end_at:
 
 | | Functor (chosen) | Type parameters | Extensible variants |
 |---|---|---|---|
-| Shape | `Make (T) (C) (X) (S)` once per family | `('pose, 'kind, 'promises) Plan.t`, and so on | `type own_kind += ...`, decoders registered by name |
+| Shape | `Make (T) (C) (X) (S)` once per family | `('pose, 'kind, 'promises) Plan.t`, and so on | `type action += ...`, decoders registered by name |
 | Engine signatures | plain inside the functor | two or three type variables wherever a plan, failure or game is named | plain |
 | Game code | concrete types, exhaustive matches | concrete, annotations everywhere | a catch-all case in every match |
 | Cost | heavier `.mli`s and errors | noisy signatures for every reader | weakest checking |
 
-Keeping the game's parts as raw JSON (as `Game_action` args are) is rejected: errors would show at
+Keeping the game's parts as raw JSON (as `Named_action` args are) is rejected: errors would show at
 run time, not when the plan loads.
 
 `bin/` will pick a game by the registry's `game_id` and call that game's command module, a
@@ -390,7 +393,7 @@ the Switch today (`Event_range.check`).
 `Pose.zone` (place, spot, heading) already decodes and is never checked. Octopath 0's own walk:
 
 ```ocaml
-(* games/octopath0, an own_kind *)
+(* games/octopath0, one of its actions *)
 type push = { toward : Direction8.t; hold_ms : int }   (* D-pad, or the stick if needed *)
 type walk = {
   pushes : push list;           (* as written in the plan or the places table, never planned *)
@@ -414,7 +417,7 @@ needs one.
 
 ```
 src/games/octopath0/
-  checkpoints/   Octopath0_rules (zone pose, own kinds: walk, rest, battle round; promises:
+  checkpoints/   Octopath0_rules (zone pose, actions: walk, rest, battle round; promises:
                  levels, equipped), Octopath0_checkpoints = Make (Octopath0_rules), Game.t,
                  Console_start.game_steps, pre-flight
   readers/       beg result, enemy names (the cat), zone name, prompt, menus, load menu

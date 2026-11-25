@@ -35,7 +35,7 @@ shapes the pieces both later games use.
 - **Scope.** Checkpoint 01.01 (the platform to MAIN MISSION 01), the cut of fork #754: `wait_for_platform`,
   `set_text_speed_fast`, `walk`, `scene`, `plus_skip`. 01.00 (new game) and 01.02 are later decisions.
 - **Engine.** `games/plza` links `src/engine` only, through its own `Plza_rules` (zone poses, its own
-  kinds), after Engine-Boundary PR 4. Readers, actions and the plan file can come before it; nothing
+  actions), after Engine-Boundary PR 4. Readers, actions and the plan file can come before it; nothing
   touches `src/engine` or `src/pokemon/checkpoints` meanwhile. `walk`'s timed legs stay PLZA's own JSON
   until a second game needs the same shape. `plza` joins `family pokemon` in its own PR when battles
   and catches are ported (moves, types, party).

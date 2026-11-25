@@ -11,13 +11,11 @@ struct
     | Answer yes -> if yes then "answer yes" else "answer no"
     | Scene -> "scene"
     | Save -> "save"
-    | Game_action args -> "game_action " ^ Yojson.Safe.to_string (`Assoc args)
-    | Own own -> X.kind own
+    | Named_action args -> "game_action " ^ Yojson.Safe.to_string (`Assoc args)
+    | Game action -> X.kind action
 
   let event (e : Plan.event) =
-    let action =
-      Option.fold ~none:"" ~some:(fun a -> "[" ^ a ^ "] ") e.action
-    in
+    let way = Option.fold ~none:"" ~some:(fun a -> "[" ^ a ^ "] ") e.way in
     let after =
       Option.fold ~none:"" ~some:(fun p -> " => " ^ pose p) e.declared_after
     in
@@ -25,7 +23,7 @@ struct
       if e.skip_if = [] then "" else " skip_if " ^ String.concat "," e.skip_if
     in
     let once = if e.once_per_save then " once_per_save" else "" in
-    Printf.sprintf "%s: %s%s%s%s%s" e.id action (kind e.kind) after skip once
+    Printf.sprintf "%s: %s%s%s%s%s" e.id way (kind e.kind) after skip once
 
   let event_named (plan : Plan.t) id =
     match
@@ -35,7 +33,7 @@ struct
     | None -> "no event " ^ id
 
   let kind_name : Plan.kind -> string = function
-    | Game_action _ -> "game_action"
+    | Named_action _ -> "game_action"
     | other -> List.hd (String.split_on_char ' ' (kind other))
 
   let bump k (k', n) = if k' = k then (k', n + 1) else (k', n)

@@ -1,5 +1,5 @@
 open Pokemon_rules
-open Own_kind
+open Pokemon_action
 open Engine_plan_codec.Plan_fields
 module F = Json_field
 

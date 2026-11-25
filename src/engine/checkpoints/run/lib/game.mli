@@ -1,7 +1,7 @@
 (** What a game supplies to run its plans: a handler for the engine's kinds and
-    one for its own, one per game action it implements, and its checkpoint save
-    and reload. Handlers run in the program's effect context (they press buttons
-    and read the screen); the runner only orders them. *)
+    one for the game's actions, one per game action it implements, and its
+    checkpoint save and reload. Handlers run in the program's effect context
+    (they press buttons and read the screen); the runner only orders them. *)
 
 open Engine_plan
 
@@ -15,8 +15,8 @@ module Make (T : Engine_rules.GAME_RULES) (Raw : Plan.RAW) : sig
       rejects with a {!Failure.cause} when they are wrong). *)
 
   type t = {
-    run_own : Plan.Make(T)(Raw).event -> T.Kind.t -> outcome;
-        (** An event of one of the game's own kinds, with its args. *)
+    run_own : Plan.Make(T)(Raw).event -> T.Action.t -> outcome;
+        (** An event of one of the game's actions ([Game]), with its args. *)
     run_builtin : Plan.Make(T)(Raw).event -> outcome;
         (** An event of the engine's other kinds ([talk], [answer], [scene],
             [save]), told apart by [event.kind]. *)

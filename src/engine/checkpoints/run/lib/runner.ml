@@ -17,8 +17,8 @@ module Make (T : Engine_rules.GAME_RULES) (Raw : Engine_plan.Plan.RAW) = struct
 
   (* The name of the game action the event needs and the game lacks. *)
   let missing_action (game : Game.t) (event : Plan.event) =
-    match (event.kind, event.action) with
-    | Game_action _, Some name when not (List.mem_assoc name game.game_actions)
+    match (event.kind, event.way) with
+    | Named_action _, Some name when not (List.mem_assoc name game.game_actions)
       ->
         Some name
     | _ -> None
@@ -33,9 +33,9 @@ module Make (T : Engine_rules.GAME_RULES) (Raw : Engine_plan.Plan.RAW) = struct
       (List.mapi (missing_at game checkpoint) checkpoint.events)
 
   let dispatch (game : Game.t) (event : Plan.event) =
-    match (event.kind, event.action) with
-    | Own own, _ -> game.run_own event own
-    | Game_action args, Some name ->
+    match (event.kind, event.way) with
+    | Game action, _ -> game.run_own event action
+    | Named_action args, Some name ->
         (List.assoc name game.game_actions) event args
     | _ -> game.run_builtin event
 

@@ -82,11 +82,11 @@ let adopt_declared t (event : Pokemon_checkpoints.Plan.event) =
 let builtin t (event : Pokemon_checkpoints.Plan.event) =
   let log = t.config.log in
   match event.kind with
-  | Own (Ready pose) -> walk_to t pose
+  | Game (Ready pose) -> walk_to t pose
   | Talk -> Talk.talk ~log ()
   | Answer yes -> Talk.answer ~log ~yes ()
   | Scene -> Talk.scene ~log ()
-  | Own Heal -> Menu_input.run (Heal_and_save.heal_at_nurse ~log)
+  | Game Heal -> Menu_input.run (Heal_and_save.heal_at_nurse ~log)
   | Save -> Menu_input.run (Heal_and_save.save ~log)
   | _ ->
       not_implemented

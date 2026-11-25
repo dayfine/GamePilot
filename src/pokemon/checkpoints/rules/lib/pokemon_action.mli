@@ -1,7 +1,7 @@
-(** The event kinds Pokémon games run beside the engine's own: walks on the tile
-    grid, battles, healing, shopping, and the opening's new game and options, as
-    FireRed runs them. Each kind's args are typed here; [Kind_decode] fills in
-    the format's fallbacks. *)
+(** The Pokémon actions, the event kinds Pokémon games run beside the engine's
+    own: walks on the tile grid, battles, healing, shopping, and the opening's
+    new game and options, as FireRed runs them. Each kind's args are typed here;
+    [Kind_decode] fills in the format's fallbacks. *)
 
 type leg = { direction : Grid_geometry.Direction.t; tiles : int }
 (** A straight walk of [tiles] tiles. *)
@@ -13,7 +13,7 @@ type route = { target : Pose.grid; fight_wild : bool }
 (** A planned walk to [target]; [fight_wild] fights wild encounters on the way
     instead of running. *)
 
-(** A Pokémon event kind, with its args. *)
+(** A Pokémon action, with its args. *)
 type t =
   | New_game
   | Options

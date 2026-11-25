@@ -2,7 +2,7 @@
     plans by {!Pokemon_plan_codec}, printed by {!Pokemon_text} and kept beside
     an event's state by {!Pokemon_saved}. The plans, handlers, runner, failures,
     event states and repeats every Pokémon game uses, with grid poses, Pokémon
-    kinds and Pokémon promises in their types, and those rules' own modules
+    actions and Pokémon promises in their types, and those rules' own modules
     beside them. *)
 
 include module type of struct
@@ -15,8 +15,8 @@ module Pose = Pokemon_rules.Pose
 (** {!Pokemon_rules.Pose}: where a plan says the player stands, and where
     FireRed reads them. *)
 
-module Own_kind = Pokemon_rules.Own_kind
-(** {!Pokemon_rules.Own_kind}: the Pokémon event kinds. *)
+module Pokemon_action = Pokemon_rules.Pokemon_action
+(** {!Pokemon_rules.Pokemon_action}: the Pokémon actions. *)
 
 module Postconditions = Pokemon_rules.Postconditions
 (** {!Pokemon_rules.Postconditions}: what a Pokémon checkpoint promises. *)

@@ -8,13 +8,13 @@ module Make (T : Engine_rules.GAME_RULES) (Raw : RAW) = struct
     | Answer of bool
     | Scene
     | Save
-    | Game_action of Raw.t
-    | Own of T.Kind.t
+    | Named_action of Raw.t
+    | Game of T.Action.t
 
   type event = {
     id : string;
     kind : kind;
-    action : string option;
+    way : string option;
     why : string;
     skip_if : string list;
     declared_after : T.Pose.t option;
