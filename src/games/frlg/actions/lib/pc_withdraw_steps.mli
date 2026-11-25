@@ -15,14 +15,17 @@
     over the emptied slot), B through "Continue BOX operations?" (B is NO), the
     storage menu and the PC list to the overworld, seen twice.
 
-    Which Pokémon: the first the hand finds, any species. A box Pokémon holds no
-    Mail (the PC takes none that does), and once withdrawn its mail index is
-    0xFF (pokefirered [BoxMonToMon], src/pokemon.c, sets [MON_DATA_MAIL] to
-    [MAIL_NONE]). Its held item is not read: a plan that needs it to hold
-    nothing checks the party's marks after. A slot whose panel shows something
-    but no species (an egg) is passed. Fails when no box Pokémon is found in the
-    box, when a message comes after WITHDRAW ("Your party's full!"), or as
-    {!Pc_deposit_steps} on a screen that does not settle. *)
+    Which Pokémon: the first the hand finds holding nothing, any species. A box
+    Pokémon holds no Mail (the PC takes none that does), and once withdrawn its
+    mail index is 0xFF (pokefirered [BoxMonToMon], src/pokemon.c, sets
+    [MON_DATA_MAIL] to [MAIL_NONE]). One holding an item (PKMN DATA prints its
+    name) is passed: Retro Mail given to it would ask to switch items. A slot
+    whose panel shows something but no species (an egg) is passed, and so is one
+    whose item line did not read. A Pokémon's menu gets three looks to read its
+    cursor and first row (its first frame did not read on mGBA). Fails when no
+    box Pokémon holding nothing is found in the box, when a message comes after
+    WITHDRAW ("Your party's full!"), or as {!Pc_deposit_steps} on a screen that
+    does not settle. *)
 
 type look = {
   view : Frlg_readers.Pc_screen.view;
@@ -32,6 +35,9 @@ type look = {
   panel_empty : bool option;
       (** PKMN DATA is flat: the hand is over an empty slot
           ({!Frlg_readers.Pc_box_screen.panel_occupied}). *)
+  holds_item : bool option;
+      (** PKMN DATA's held-item line has text
+          ({!Frlg_readers.Pc_box_screen.holds_item}). *)
 }
 (** One look at the PC's screen: the view, the cursor row's label, and on a box
     screen PKMN DATA's species and whether it is blank. *)

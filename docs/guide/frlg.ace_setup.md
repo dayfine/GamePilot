@@ -5,7 +5,8 @@ glitch Pokémon the ACE payloads run through (species 0x0351, from pomeg-letterb
 route) in Box 3 slot 1. The second half, the execution program, is not written yet.
 
 **What you get.** A male Lv 100 Pokémon with a ? picture and a garbled name in Box 3 slot 1, a
-Magikarp in your party (seen in the Pokédex), and one party member moved to the PC.
+Magikarp seen in the Pokédex, and one party member moved to the PC for a Magikarp (bought) or, if
+Magikarp was seen already, for the first Pokémon in the PC.
 
 <!-- generated:backends -->
 Runs on: mGBA.
@@ -22,9 +23,12 @@ What the save needs:
 - Magikarp seen, for the word MAGIKARP. The program buys one ($500) unless the Pokédex already
   has it seen.
 - A party member whose mail index is 0xFF (it has not held Mail since it joined), to receive the
-  Retro Mail so the ? Mail opens. The bought Magikarp is that member.
+  Retro Mail so the ? Mail opens. The bought Magikarp is that member; when Magikarp is already
+  seen, the program withdraws the first Pokémon holding nothing in the PC's box instead (any
+  species), which is one too.
 - A free party slot for it: the program puts the member holding no Mail in the PC.
-- A member that knows Fly, a Retro Mail in the bag, and $500.
+- A member that knows Fly, a Retro Mail in the bag, and $500 (or, with Magikarp seen, a Pokémon
+  in the box the PC opens on).
 - Standing anywhere outdoors where Fly works, such as outside the Dept. Store where Mail Glitch 08
   ends.
 
@@ -48,28 +52,30 @@ sh run/run_checkpoints_on_mgba.sh frlg.ace_setup --from 01-buy-magikarp --to 02-
 ```
 <!-- /generated -->
 
-On mGBA the start state is `01-buy-magikarp.start.ss` in `GAMEPILOT_STATES`: a copy of the state Mail
-Glitch 08-activate-and-verify ends in.
+On mGBA the start state is `01-buy-magikarp.start.ss` in `GAMEPILOT_STATES`: the state Mail
+Glitch 08-activate-and-verify ends in, walked out of the Dept. Store (Fly works only outdoors).
+`02-write-ace-mail.start.ss` is 01's end, below the Route 4 Center's PC.
 
 ## What happens
 
 <!-- generated:checkpoints -->
 | Checkpoint | What its plan does |
 |---|---|
-| 01-buy-magikarp | Magikarp in the party, below the Route 4 Pokemon Center's PC: from anywhere outdoors, fly there; unless Magikarp is already seen, a free slot made at the PC and a Magikarp bought from the salesman |
+| 01-buy-magikarp | Below the Route 4 Pokemon Center's PC with a party member holding no Mail in slot 6: from anywhere outdoors, fly there, put the member holding no Mail in the PC, and buy a Magikarp from the salesman, or, when Magikarp is already seen, withdraw a Pokemon from the PC |
 | 02-write-ace-mail | The ? Mail written BULK UP / CAPABLE / KARATE CHOP / MAGIKARP: species 0x0351 in Box 3 slot 1 |
 
-<!-- plans: afc804990159 -->
+<!-- plans: 66326b74af96 -->
 <!-- /generated -->
 
 In plain words:
 
-1. Flies to the Route 4 Pokémon Center, puts MIMIEN in the PC and buys a Magikarp from the man
-   by the door ($500), then walks back to the PC. The Magikarp joins the party, and with it
-   Magikarp counts as seen. When the Pokédex already has Magikarp seen, it stops at the PC: no
-   deposit, no purchase.
+1. Flies to the Route 4 Pokémon Center and puts MIMIEN in the PC. Then it buys a Magikarp from
+   the man by the door ($500) and walks back to the PC: the Magikarp joins the party in slot 6,
+   and with it Magikarp counts as seen. When the Pokédex already has Magikarp seen (the man sells
+   only one per save), it withdraws the first Pokémon holding nothing from the PC's box into slot 6 instead. Either
+   way it checks that slots 1-5 hold Mail and slot 6 holds nothing.
 2. Opens the PC and checks that Box 3 slot 1 is empty.
-3. Gives the Magikarp a Retro Mail. Every party mail record is in use, so the game opens the
+3. Gives slot 6 a Retro Mail. Every party mail record is in use, so the game opens the
    "? Mail", nine fields of `???`. It writes `BULK UP / CAPABLE / KARATE CHOP / MAGIKARP`, reads
    every word back, and only then confirms. This is the step that cannot be undone.
 4. Opens the PC again: Box 3 slot 1 now shows a male Lv 100 Pokémon.
@@ -81,8 +87,8 @@ About four minutes on mGBA at normal speed.
 ## When it stops
 
 Nothing is confirmed until every word reads right, and on mGBA every run starts again from the
-saved start state, so a stopped run changes nothing. The second checkpoint's start state (after
-the Magikarp) is the backup from before the ? Mail.
+saved start state, so a stopped run changes nothing. The second checkpoint's start state (below
+the PC, slot 6 filled) is the backup from before the ? Mail.
 
 <!-- generated:preflight 01-buy-magikarp -->
 | Resume from | The pre-flight checks |
@@ -93,8 +99,8 @@ the Magikarp) is the backup from before the ? Mail.
 ## Known limits
 
 - mGBA only for now; English FireRed (proven on version 1.1).
-- A save with Magikarp seen but not in party slot 6 skips the purchase and then fails 01's end
-  check: put a Magikarp that has never held Mail in slot 6 first.
+- With Magikarp seen, the withdrawn Pokémon is the first holding nothing in the box the PC
+  opens on (PKMN DATA names its item otherwise); other boxes are not looked in.
 - With MIMIEN in the PC, the Mail Glitch's item duplication goes through the ? Mail: its editor
   shows BULK UP, not ABRA.
 - Box 3 is told by its default Desert wallpaper; a changed wallpaper stops the check.
@@ -119,10 +125,13 @@ which lists only the species seen; MOVE 1 and MOVE 2 unlock with the game cleare
 **Why a member goes to the PC.** On the Mail Glitch save five members hold the filler mails and
 MIMIEN still points at the leaked record 0, so no member has index 0xFF and the party is full. The
 PC refuses a member holding Mail, so MIMIEN is the one deposited, and its stale index ends there.
+A Pokémon that comes out of the PC gets index 0xFF (pret `BoxMonToMon`), so when no Magikarp is
+for sale a withdrawn one serves.
 
 **The pieces.** `Easy_chat_entry` writes words into the mail editor: the cursor goes down a row
 at a time until its row shows the word, and each field is read back. The word lists are
-`Frlg_text.Easy_chat_words`, extracted from pret. `Pc_box` walks from the PC to the MOVE POKéMON
+`Frlg_text.Easy_chat_words`, extracted from pret. `Pc_withdraw` walks the box's slots until PKMN
+DATA names a species and no item, and withdraws it. `Pc_box` walks from the PC to the MOVE POKéMON
 box screen and back, one look at a time. `Ace_mail`'s `check_box_slot` moves the hand to the slot
 and reads the box: its wallpaper, the PKMN DATA panel, the level and the male mark.
 

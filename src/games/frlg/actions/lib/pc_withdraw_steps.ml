@@ -6,13 +6,15 @@ type look = {
   label : string option;
   species : string option;
   panel_empty : bool option;
+  holds_item : bool option;
 }
 
 type phase =
   | Opening of { booted : bool; boot_looks : int }
   | Browsing of { slot : int; blank_looks : int }
       (** The hand on this slot of the walk (0..29). *)
-  | Choosing of string  (** A on the slot: its menu is coming. *)
+  | Choosing of { species : string; menu_looks : int }
+      (** A on the slot: its menu is coming. *)
   | Withdrawing of string  (** A on WITHDRAW. *)
   | Leaving of { species : string; overworld_seen : bool }
 
@@ -27,6 +29,10 @@ let max_looks = 120
 (* Looks at a slot whose panel shows something but no species, before the
    hand moves on: the panel may still be drawing. *)
 let blank_reads = 2
+
+(* Looks at a Pokémon's menu before its cursor and first row read: the first
+   frame of the menu did not on mGBA (2026-11-25). *)
+let menu_reads = 3
 let start = { phase = Opening { booted = false; boot_looks = 0 }; others = 0 }
 
 let withdrawn t =
@@ -67,21 +73,28 @@ let move_from k : D.press =
 let on_box_screen (l : look) =
   match l.view.screen with Box_grid | Overworld -> true | _ -> false
 
-let browsing t ~slot ~blank_looks (l : look) : t * D.press =
-  match l.species with
-  | _ when not (on_box_screen l) -> (t, Wait)
-  | Some species -> go t (Choosing species) A
-  | None when l.panel_empty <> Some true && blank_looks + 1 < blank_reads ->
-      go t (Browsing { slot; blank_looks = blank_looks + 1 }) Wait
-  | None when slot + 1 >= box_slots ->
-      (t, Fail "no Pokemon in the box the PC opened on")
-  | None ->
-      go t (Browsing { slot = slot + 1; blank_looks = 0 }) (move_from slot)
+let next_slot t slot =
+  if slot + 1 >= box_slots then
+    (t, D.Fail "no Pokemon holding nothing in the box the PC opened on")
+  else go t (Browsing { slot = slot + 1; blank_looks = 0 }) (move_from slot)
 
-let choosing t species (l : look) : t * D.press =
+let browsing t ~slot ~blank_looks (l : look) : t * D.press =
+  match (l.species, l.holds_item) with
+  | _ when not (on_box_screen l) -> (t, Wait)
+  | Some species, Some false -> go t (Choosing { species; menu_looks = 0 }) A
+  | Some _, Some true -> next_slot t slot
+  | _ when l.panel_empty <> Some true && blank_looks + 1 < blank_reads ->
+      go t (Browsing { slot; blank_looks = blank_looks + 1 }) Wait
+  | _ -> next_slot t slot
+
+let choosing t ~species ~menu_looks (l : look) : t * D.press =
   match (l.view.screen, l.view.cursor) with
   | Mon_menu, Some 0 when l.label = Some mon_withdraw_row ->
       go t (Withdrawing species) A
+  | Mon_menu, Some _ when l.label <> None ->
+      (t, Fail "the Pokemon's menu is not on WITHDRAW")
+  | Mon_menu, _ when menu_looks + 1 < menu_reads ->
+      go t (Choosing { species; menu_looks = menu_looks + 1 }) Wait
   | Mon_menu, _ -> (t, Fail "the Pokemon's menu is not on WITHDRAW")
   | Text, _ -> (t, Fail "a message instead of the Pokemon's menu")
   | _ -> (t, Wait)
@@ -104,7 +117,7 @@ let on_screen t (l : look) =
   match t.phase with
   | Opening { booted; boot_looks } -> opening t ~booted ~boot_looks l
   | Browsing { slot; blank_looks } -> browsing t ~slot ~blank_looks l
-  | Choosing species -> choosing t species l
+  | Choosing { species; menu_looks } -> choosing t ~species ~menu_looks l
   | Withdrawing species -> withdrawing t species l
   | Leaving { species; overworld_seen } -> leaving t species ~overworld_seen l
 

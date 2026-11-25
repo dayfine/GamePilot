@@ -43,8 +43,11 @@ let label (v : Pc_screen.view) =
   match (v.screen, v.cursor) with
   | (Pc_list | Storage_menu), Some row ->
       text (Text.Text_lines.pc_menu_row row) menu_rows
-  | Mon_menu, Some row ->
-      text (Text.Text_lines.pc_mon_menu_row row) mon_menu_rows
+  | Mon_menu, Some row -> (
+      (* STORE's menu, else WITHDRAW's, 8 pixels left. *)
+      match text (Text.Text_lines.pc_mon_menu_row row) mon_menu_rows with
+      | Some l -> Some l
+      | None -> text (Text.Text_lines.pc_withdraw_menu_row row) mon_menu_rows)
   | _ -> None
 
 let wait ms =

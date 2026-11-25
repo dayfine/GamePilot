@@ -4,11 +4,16 @@
 open Frlg_actions
 module P = Pc_withdraw_steps
 
-let look ?cursor ?label ?species ?panel_empty screen : P.look =
-  { view = { screen; cursor }; label; species; panel_empty }
+let look ?cursor ?label ?species ?panel_empty ?holds_item screen : P.look =
+  { view = { screen; cursor }; label; species; panel_empty; holds_item }
 
 let empty_slot = look Box_grid ~panel_empty:true
-let occupied species = look Overworld ~species ~panel_empty:false
+
+let occupied species =
+  look Overworld ~species ~panel_empty:false ~holds_item:false
+
+let holding species =
+  look Overworld ~species ~panel_empty:false ~holds_item:true
 
 (* Feeds the looks in order; the presses, one per look, and the species
    withdrawn. *)
@@ -84,7 +89,7 @@ let cases =
                   List.init 5 (fun _ ->
                       if row mod 2 = 0 then "RIGHT" else "LEFT")
                   @ if row < 4 then [ "DOWN" ] else [])))
-      ^ " fail: no Pokemon in the box the PC opened on");
+      ^ " fail: no Pokemon holding nothing in the box the PC opened on");
     case "the party is full: the message fails it"
       (presses
          (to_box
@@ -100,6 +105,39 @@ let cases =
          (to_box
          @ [ occupied "magikarp"; look Mon_menu ~cursor:3 ~label:"RELEASE" ]))
       "A B A B A wait wait A fail: the Pokemon's menu is not on WITHDRAW";
+    case "mGBA mk-seen (2026-11-25): the menu's first frame unread, waited for"
+      (presses
+         (to_box
+         @ [
+             occupied "magikarp";
+             look Mon_menu;
+             look Mon_menu ~cursor:0 ~label:"WITHDRAW";
+             occupied "magikarp";
+             empty_slot;
+           ]
+         @ out))
+      "A B A B A wait wait A wait A wait B B wait B B wait done | magikarp";
+    case "a menu that never reads: fail after three looks"
+      (presses
+         (to_box
+         @ [ occupied "magikarp"; look Mon_menu; look Mon_menu; look Mon_menu ]
+         ))
+      "A B A B A wait wait A wait wait fail: the Pokemon's menu is not on \
+       WITHDRAW";
+    case "MIMIEN holding an Antidote first: passed, the next one taken"
+      (presses (to_box @ [ holding "mr-mime" ] @ take "magikarp" @ out))
+      "A B A B A wait wait RIGHT A A wait wait B B wait B B wait done | \
+       magikarp";
+    case "the item line unread: looked at twice, then passed"
+      (presses
+         (to_box
+         @ [
+             look Overworld ~species:"magikarp" ~panel_empty:false;
+             look Overworld ~species:"magikarp" ~panel_empty:false;
+           ]
+         @ take "pidgey" @ out))
+      "A B A B A wait wait wait RIGHT A A wait wait B B wait B B wait done | \
+       pidgey";
     case "the storage menu's row 1 not read as WITHDRAW: no A"
       (presses [ look Overworld; look Storage_menu ~cursor:0 ~label:"SEE YA!" ])
       "A fail: the storage menu's row 1 did not read as WITHDRAW";

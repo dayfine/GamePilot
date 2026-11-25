@@ -10,28 +10,37 @@ let nothing : Steps.look =
     label = None;
     species = None;
     panel_empty = None;
+    holds_item = None;
   }
 
-(* PKMN DATA's species and whether it is blank, on a box screen only. *)
-let panel m (view : Pc_screen.view) =
-  if box_screen view then
-    ( Pc_deposit.species_shown (),
-      Option.map not (Pc_box_screen.panel_occupied m) )
-  else (None, None)
+(* PKMN DATA's species, whether it is blank and whether it names an item, on
+   a box screen only. *)
+let panel m : Steps.look -> Steps.look =
+ fun l ->
+  {
+    l with
+    species = Pc_deposit.species_shown ();
+    panel_empty = Option.map not (Pc_box_screen.panel_occupied m);
+    holds_item = Pc_box_screen.holds_item m;
+  }
 
 let look_at m : Steps.look =
   let view = Pc_screen.read m in
-  let species, panel_empty = panel m view in
-  { view; label = Pc_deposit.label view; species; panel_empty }
+  let l = { nothing with view; label = Pc_deposit.label view } in
+  if box_screen view then panel m l else l
 
 let look () = Option.fold ~none:nothing ~some:look_at (Effects.read ())
 
 let describe (l : Steps.look) =
-  Printf.sprintf "%s (cursor %s%s%s)"
+  Printf.sprintf "%s (cursor %s%s%s%s)"
     (Pc_screen.screen_name l.view.screen)
     (Option.fold ~none:"-" ~some:string_of_int l.view.cursor)
     (Option.fold ~none:"" ~some:(fun s -> ", " ^ s) l.label)
     (Option.fold ~none:"" ~some:(fun s -> ", " ^ s) l.species)
+    (match l.holds_item with
+    | Some true -> ", holds an item"
+    | Some false -> ", holds nothing"
+    | None -> "")
 
 let rec run ~log steps left =
   if left = 0 then

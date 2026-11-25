@@ -21,7 +21,10 @@
     most 110 (the wire's color ranges are per channel; the fork sums the three
     under 330), and a party slot's hand white with every channel 235 and over
     (the fork also bounds the spread to 20). The box grid (WITHDRAW) is not
-    read: a deposit never shows it. *)
+    read: a deposit never shows it. GamePilot's own: under WITHDRAW, a box
+    Pokémon's menu (WITHDRAW, SUMMARY, ...) is wider and its arrow 8 pixels
+    left, at x 153 (mGBA, 2026-11-25); its cursor is read there when STORE's
+    column shows none. *)
 
 type screen =
   | Overworld
