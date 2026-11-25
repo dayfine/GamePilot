@@ -168,8 +168,9 @@ let read_live setup world decide say log port =
 
 let party setup world record decide say log =
   match
-    Daemon_process.start ?watch:setup.Pf.watch ~daemon:setup.daemon
-      ~backend:setup.backend ~port:0
+    Daemon_process.start ?watch:setup.Pf.watch
+      ~flags:(Daemon_process.viewport_args setup.backend setup.viewport)
+      ~daemon:setup.daemon ~backend:setup.backend ~port:0
       ~wire_log:(Run_record.path record "wire.jsonl")
       ~out_file:(Run_record.path record "daemon.out")
       ~checkpoint:M.id ()

@@ -25,12 +25,7 @@ let encounter m =
   facts.battle || facts.fade <> No_fade
 
 let turn d =
-  Wire.Press
-    {
-      buttons = [ M.dpad d ];
-      hold_ms = turn_hold_ms;
-      cooldown_ms = turn_release_ms;
-    }
+  Wire.press ~hold_ms:turn_hold_ms ~cooldown_ms:turn_release_ms [ M.dpad d ]
 
 let seen_now () =
   match Effects.read () with Some m -> encounter m | None -> false

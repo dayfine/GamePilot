@@ -26,7 +26,7 @@ let look_every_ms = 250
 let moves_page = 3
 
 let tap_all ?(hold_ms = tap_hold_ms) ?(cooldown_ms = tap_gap_ms) buttons =
-  let tap b = Wire.Press { buttons = [ b ]; hold_ms; cooldown_ms } in
+  let tap b = Wire.press ~hold_ms ~cooldown_ms [ b ] in
   ignore (Effects.submit (List.map tap buttons) : Wire.batch_done)
 
 let wait ms =

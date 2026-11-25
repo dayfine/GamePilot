@@ -11,7 +11,14 @@ A descriptor (`Program_registry.t`) gives:
   one-line description;
 - `doc`: its page, from the repo root (a page in this folder, or an existing one);
 - `checkpoints`: its plans folder, or none for a one-shot program (`gamepilot run`);
-- the backends it runs on.
+- the backends it runs on;
+- `viewport`: where its game picture sits in a Switch capture, `Nso_gba` (a GBA game in the
+  Switch's GBA app: every FRLG program) or `Native` (a full-screen Switch game, the whole frame).
+  Every daemon of its Switch runs takes it as `--viewport nso-gba|native` (`daemon/src/viewport.h`):
+  the checkpoints' daemons, the pre-flight's, 00-make-room's and the bring-up's frame check
+  (`gamepilot bring-up --program ID`), so no run needs the flag and a native game never runs with
+  the GBA picture. An explicit `--viewport` that differs from the program's is refused; it is
+  only for a plan folder no program registers.
 
 To add a program, add its descriptor to the list in `program_registry.ml` (registration is that
 list; nothing registers itself at start-up) and write its page, and its player's guide in

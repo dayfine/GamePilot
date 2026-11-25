@@ -1,6 +1,6 @@
 // Submitted command batches in wall time, for a live backend: each press and
-// wait becomes a timed key segment that the server hands to the controller
-// when its start time comes. Batches run one after another, as in
+// wait becomes a timed key and stick segment that the server hands to the
+// controller when its start time comes. Batches run one after another, as in
 // InputSchedule (schedule.h), but nothing is rounded to frames: the device
 // times each segment itself.
 
@@ -18,8 +18,9 @@ namespace gamepilot {
 
 struct KeySegment {
   double start_ms = 0;  // daemon clock
-  double ms = 0;        // how long `keys` are held
+  double ms = 0;        // how long `keys` and `sticks` are held
   KeyMask keys = 0;
+  Sticks sticks;
 };
 
 struct EndedBatch {

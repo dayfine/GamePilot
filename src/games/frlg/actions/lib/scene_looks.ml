@@ -56,8 +56,7 @@ let look ~menu_open ~arrived ~fade_in last () : Screen_state.Settle.look =
       last := middle m;
       { facts; at_ms = m.t_ms; since_ms = None }
 
-let press_b () =
-  Wire.Press { buttons = [ Wire.B ]; hold_ms = press_hold_ms; cooldown_ms = 0 }
+let press_b () = Wire.press ~hold_ms:press_hold_ms ~cooldown_ms:0 [ Wire.B ]
 
 let warp_look ~arrived m : Screen_state.Settle.look option =
   let seen = Screen_facts.of_measurements m in

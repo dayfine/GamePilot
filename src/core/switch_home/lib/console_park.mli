@@ -6,8 +6,11 @@
     HOME's A resumes the suspended game when it still runs (the leftmost tile,
     the one played last) and launches it otherwise, through the user select (A
     on the highlighted user) and the game's boot. The cursor is moved to the
-    game's tile first. A launch ends at the first picture that is not black; the
-    runner's soft reset takes the game to its last save from there. *)
+    game's tile first: within the tiles in view, or, when none shows the game
+    (the row scrolled, or the game further along), Left a tile at a time (up to
+    12, the games HOME holds) and then Right (up to 12), reading HOME after each
+    press, until one does. A launch ends at the first picture that is not black;
+    the runner's soft reset takes the game to its last save from there. *)
 
 type resumed =
   | Already_in_game  (** HOME was not on screen: nothing pressed *)

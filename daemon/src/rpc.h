@@ -151,6 +151,12 @@ KeyMask button_mask(const std::string& name);
 // (kInvalidParams, data {backend, button}).
 RpcError switch_button_refusal(const std::string& backend, KeyMask mask);
 
+// The refusal of a press that tilts a stick (`stick`: "left_stick" or
+// "right_stick") by a backend that is not the Switch (kInvalidParams, data
+// {backend, stick}).
+RpcError switch_stick_refusal(const std::string& backend,
+                              const std::string& stick);
+
 pa::JsonValue result_message(const pa::JsonValue& id, pa::JsonObject result);
 pa::JsonValue error_message(const pa::JsonValue& id, const RpcError& error);
 

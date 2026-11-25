@@ -14,7 +14,7 @@ Department Store).
 (`frlg.team_training`) run the same loop many times to duplicate Rare Candies.
 
 <!-- generated:backends -->
-Runs on: mGBA, the Switch.
+Runs on: mGBA, the Switch (in its GBA app).
 <!-- /generated -->
 
 ## How it works, in short

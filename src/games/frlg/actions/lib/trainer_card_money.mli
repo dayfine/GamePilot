@@ -11,8 +11,12 @@ val max_digits : int
 (** 6: money stops at 999,999. *)
 
 val close : log:(string -> unit) -> unit
-(** From the open card back to the overworld: B back to the Start menu, the menu
-    closed, the talk settle. Fails as [not_closed]. *)
+(** From the open card back to the overworld: B, which fades the card out and
+    the overworld in with the Start menu open; once that fade-in is over
+    ({!Menu_input.await_fade_in}), the menu closed and the talk settle. On mGBA
+    (2026-11-24, 04-grind-farfetchd testing run 2) the Start menu read 45 frames
+    after the black, in the fade-in's steps, and the B that closes it came then
+    and was lost. Fails as [not_closed]. *)
 
 val read : log:(string -> unit) -> int option
 (** From the overworld: the card opened, its money read until it shows (the card

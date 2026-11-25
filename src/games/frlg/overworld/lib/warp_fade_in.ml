@@ -38,10 +38,10 @@ let see t ~at_ms ~now =
 let seen t (m : Effects.measurements) =
   match brightness m with None -> false | Some now -> see t ~at_ms:m.t_ms ~now
 
-type phase = Up | Down | Coming_up of t
+type phase = No_fade_yet | Down | Coming_up of t | Up
 type watch = { mutable phase : phase }
 
-let watch () = { phase = Up }
+let watch () = { phase = No_fade_yet }
 
 let faded m =
   (Frlg_readers.Screen_facts.of_measurements m).fade
@@ -52,6 +52,10 @@ let watch_frame w (m : Effects.measurements) =
   | _ when faded m -> w.phase <- Down
   | Down -> w.phase <- Coming_up (create m)
   | Coming_up t -> if seen t m then w.phase <- Up
-  | Up -> ()
+  | No_fade_yet | Up -> ()
 
-let fading w = w.phase <> Up
+let fading w =
+  match w.phase with Down | Coming_up _ -> true | No_fade_yet | Up -> false
+
+let came_up w =
+  match w.phase with Up -> true | No_fade_yet | Down | Coming_up _ -> false
