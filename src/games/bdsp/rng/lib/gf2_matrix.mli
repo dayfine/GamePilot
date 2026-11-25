@@ -13,9 +13,16 @@ type vec = { high : int64; low : int64 }
     the least significant bit of [low] ([Gf2Vec128]). *)
 
 val zero : vec
+(** The vector with every bit clear. *)
+
 val get : vec -> int -> bool
+(** [get v i] is bit [i] (0 to 127, see {!vec}). *)
+
 val set : vec -> int -> bool -> vec
+(** [set v i b] is [v] with bit [i] set to [b]. *)
+
 val xor : vec -> vec -> vec
+(** Bitwise exclusive or: vector addition over GF(2). *)
 
 val dot : vec -> vec -> bool
 (** Parity of the bitwise AND: the GF(2) dot product. *)
@@ -33,8 +40,13 @@ val init : (int -> vec) -> t
     always has {!dimension} rows, as the C++ [std::array] does. *)
 
 val row : t -> int -> vec
+(** [row m r] is row [r] of [m] (0 to 127). *)
+
 val identity : t
+(** The identity matrix: bit [r] set in row [r]. *)
+
 val equal : t -> t -> bool
+(** Whether every row is the same. *)
 
 val mul : t -> t -> t
 (** The matrix product: row [i] is the XOR of the rows [k] of the right operand

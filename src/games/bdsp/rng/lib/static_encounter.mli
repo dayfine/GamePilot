@@ -12,14 +12,20 @@
     32-bit values ([ec], [pid], rolls) are OCaml [int]s in [0, 2^32), as in
     {!Xorshift128}. *)
 
-type shiny = Not_shiny | Star | Square
+type shiny =
+  | Not_shiny
+  | Star
+  | Square
+      (** How a PID is shiny against a trainer: not at all, star or square
+          ([BdspShinyType]). *)
 
 val shiny_name : shiny -> string
 (** ["Not Shiny"], ["Star Shiny"], ["Square Shiny"]. *)
 
-type gender = Male | Female | Genderless
+type gender = Male | Female | Genderless  (** A generated Pokemon's gender. *)
 
 val gender_name : gender -> string
+(** ["Male"], ["Female"] or ["Genderless"]. *)
 
 type ivs = {
   hp : int;
@@ -29,6 +35,7 @@ type ivs = {
   spdef : int;
   speed : int;
 }
+(** The six individual values, each 0-31, in the game's stat order. *)
 
 val ivs_to_string : ivs -> string
 (** ["hp/atk/def/spa/spd/spe"]. *)
@@ -55,6 +62,7 @@ val shiny_of_pid : pid:int -> tsv:int -> shiny
 *)
 
 val is_shiny : pid:int -> tsv:int -> bool
+(** Whether {!shiny_of_pid} is a star or a square. *)
 
 type template = {
   species : string;
@@ -87,6 +95,10 @@ val searcher :
   tsv:int ->
   synchronize_nature:int option ->
   searcher
+(** [searcher base template ~tsv ~synchronize_nature] searches from the state
+    [base] for [template] against trainer shiny value [tsv];
+    [synchronize_nature] is the lead's nature index when it has Synchronize, or
+    [None]. *)
 
 val generate_at : searcher -> int -> pokemon
 (** The Pokemon after jumping the base state this many advances. *)
