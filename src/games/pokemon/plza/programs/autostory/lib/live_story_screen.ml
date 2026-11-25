@@ -62,6 +62,7 @@ let look_of ~still (m : Effects.measurements) : L.t =
         s.map_pin;
     minimap_arrow = s.minimap_arrow;
     run_prompt = s.run_prompt;
+    main_menu = s.main_menu;
     alert_eye = s.alert_eye;
     battle = s.battle;
     story_dialog = s.story_dialog;

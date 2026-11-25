@@ -31,7 +31,8 @@
   test_minimap_arrow
   test_map_pin
   test_party_slots
-  test_lock_plate)
+  test_lock_plate
+  test_main_menu)
  (modules
   test_dialog_readers
   test_story_readers
@@ -46,6 +47,7 @@
   test_map_pin
   test_party_slots
   test_lock_plate
+  test_main_menu
   fixture_frames)
  (deps
   switch.probes.jsonl

@@ -47,6 +47,14 @@ MATCHERS = {
     "button_minus": (
         "PokemonLZA/Buttons/ButtonMinus.png",
         0xFF808008, 0xFFFFFFFF, 100),
+    # ButtonMatcher::B and ButtonMatcher::Right, for
+    # PokemonLZA_MainMenuDetector.cpp's main menu.
+    "button_b": (
+        "PokemonLZA/Buttons/ButtonB.png",
+        0xFF808008, 0xFFFFFFFF, 100),
+    "button_right": (
+        "PokemonLZA/Buttons/ButtonRight.png",
+        0xFF808008, 0xFFFFFFFF, 100),
     # PokemonLZA_AlertEyeDetector.cpp's AlertEyeMatcher.
     "alert_eye": (
         "PokemonLZA/AlertEye-Template.png",

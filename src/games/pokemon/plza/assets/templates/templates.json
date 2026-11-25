@@ -9,6 +9,11 @@
     "height": 33,
     "width": 34
   },
+  "button_b": {
+    "fill": 0.605556,
+    "height": 30,
+    "width": 30
+  },
   "button_dpad_down": {
     "fill": 0.633333,
     "height": 30,
@@ -31,6 +36,11 @@
   },
   "button_minus": {
     "fill": 0.742222,
+    "height": 30,
+    "width": 30
+  },
+  "button_right": {
+    "fill": 0.69,
     "height": 30,
     "width": 30
   },

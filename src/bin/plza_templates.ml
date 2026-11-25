@@ -23,6 +23,8 @@ let upload_from dir =
   let* advance_chevron_shape = up f.advance_chevron_shape in
   let* button_a = up f.button_a in
   let* button_minus = up f.button_minus in
+  let* button_b = up f.button_b in
+  let* button_right = up f.button_right in
   let* alert_eye = up f.alert_eye in
   let* button_dpad_up = up f.button_dpad_up in
   let* button_dpad_down = up f.button_dpad_down in
@@ -41,6 +43,8 @@ let upload_from dir =
       advance_chevron_shape;
       button_a;
       button_minus;
+      button_b;
+      button_right;
       alert_eye;
       button_dpad_up;
       button_dpad_down;

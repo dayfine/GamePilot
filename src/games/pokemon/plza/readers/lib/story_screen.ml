@@ -15,6 +15,7 @@ type t = {
   map_pin : Map_pin.point option;
   minimap_arrow : float option;
   run_prompt : bool;
+  main_menu : bool;
   alert_eye : bool;
   minimap : string option;
 }
@@ -41,6 +42,7 @@ let probes ~picture ~assets =
       Party_bar.probes ~picture ~assets;
       Minimap.probes ~picture;
       Run_prompt.probes ~picture ~assets;
+      Main_menu.probes ~picture ~assets;
       Minimap_arrow.probes ~picture;
       Map_pin.probes ~picture;
       Party_slots.card_probes ~picture;
@@ -79,36 +81,48 @@ let read m =
     map_pin = Map_pin.read m;
     minimap_arrow = Minimap_arrow.read m;
     run_prompt = Run_prompt.shown m;
+    main_menu = Main_menu.shown m;
     alert_eye = Alert_eye.shown m;
     minimap = (if boxes && not box then Minimap.read m else None);
   }
 
+let fade_names = function
+  | Screen_state.Fade.No_fade -> []
+  | f -> [ Screen_state.Fade.name f ]
+
+let flag name on = if on then [ name ] else []
+
+let row_names = function
+  | Some (r : Choice_rows.t) ->
+      [ Printf.sprintf "row %d of %d" r.selected r.count ]
+  | None -> []
+
+let text_names t =
+  [
+    fade_names t.fade;
+    flag "dialog box" t.dialog_box;
+    flag "choice box" t.choice_box;
+    row_names t.choice_rows;
+    flag "advance arrow" t.advance_arrow;
+    flag "controls hint" t.controls_hint;
+    flag "autosave" t.autosave;
+    flag "tutorial card" t.tutorial_card;
+    flag "A prompt" t.interact_prompt;
+  ]
+
+let world_names t =
+  [
+    flag "battle" t.battle;
+    flag "story dialog" t.story_dialog;
+    flag "move symbols" (List.exists Option.is_some t.moves);
+    flag "party bar" t.party_bar;
+    Option.fold ~none:[] ~some:(fun n -> [ "minimap " ^ n ]) t.minimap;
+    flag "Run prompt" t.run_prompt;
+    flag "alert eye" t.alert_eye;
+    flag "main menu" t.main_menu;
+  ]
+
 let to_string t =
-  let flag name on = if on then [ name ] else [] in
-  let rows =
-    match t.choice_rows with
-    | Some r -> [ Printf.sprintf "row %d of %d" r.selected r.count ]
-    | None -> []
-  in
-  let shown =
-    List.concat
-      [
-        (match t.fade with No_fade -> [] | f -> [ Screen_state.Fade.name f ]);
-        flag "dialog box" t.dialog_box;
-        flag "choice box" t.choice_box;
-        rows;
-        flag "advance arrow" t.advance_arrow;
-        flag "controls hint" t.controls_hint;
-        flag "autosave" t.autosave;
-        flag "tutorial card" t.tutorial_card;
-        flag "A prompt" t.interact_prompt;
-        flag "battle" t.battle;
-        flag "story dialog" t.story_dialog;
-        (if List.exists Option.is_some t.moves then [ "move symbols" ] else []);
-        flag "party bar" t.party_bar;
-        (match t.minimap with Some n -> [ "minimap " ^ n ] | None -> []);
-        flag "Run prompt" t.run_prompt;
-        flag "alert eye" t.alert_eye;
-      ]
-  in
-  if shown = [] then "nothing" else String.concat ", " shown
+  match List.concat (text_names t @ world_names t) with
+  | [] -> "nothing"
+  | shown -> String.concat ", " shown

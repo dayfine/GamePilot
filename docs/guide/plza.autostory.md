@@ -84,9 +84,11 @@ and passes. Each run keeps its log, wire log and a `failure.png` in its run fold
 
 ## Known limits
 
-03.07 to 03.11 have their plans; all but 03.11 are ported. 03.11 stops loudly before it presses
-anything (`no handler`): Mable's research reward (`claim_mable_research_reward`, which opens the main
-menu) is not ported yet. 03.08 and 03.08a catch the fourth and fifth species: the party bar's count
+03.07 to 03.11 have their plans and are ported. 03.11's reward opens the main menu (X, until the
+menu's right arrow and B show; `main_menu_not_reached`), goes three rows down to Mable's Research,
+passes her lines (`no_reward_lines` when there are none: not in her office) and presses B until the
+party bar or a text box shows (`menu_not_closed`). The menu's reader has read only one full-size
+frame so far. 03.08 and 03.08a catch the fourth and fifth species: the party bar's count
 picks the spot (from Taunie's rocks to the 100 spot by the map for the fourth, `rocks_not_left` when
 the run does not start on the rocks; the 80 spot for the fifth), the camera sweeps until ZL locks on,
 up to 4 plates are read by flicking right and the nearest not marked caught is chosen and stepped

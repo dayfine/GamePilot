@@ -46,6 +46,8 @@ type t = {
   run_prompt : bool;
       (** A wild battle's Run prompt (its minus button), the fork's
           [RunFromBattleDetector]. *)
+  main_menu : bool;
+      (** The game's main menu (X), the fork's [MainMenuDetector]. *)
   alert_eye : bool;
       (** The eye on a wild Pokemon's alert bar, the fork's [AlertEyeDetector].
       *)

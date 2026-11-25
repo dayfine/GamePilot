@@ -6,6 +6,8 @@ type t = {
   advance_chevron_shape : string;
   button_a : string;
   button_minus : string;
+  button_b : string;
+  button_right : string;
   alert_eye : string;
   button_dpad_up : string;
   button_dpad_down : string;
@@ -28,6 +30,8 @@ let file_names =
     advance_chevron_shape = "advance_chevron_shape.png";
     button_a = "button_a.png";
     button_minus = "button_minus.png";
+    button_b = "button_b.png";
+    button_right = "button_right.png";
     alert_eye = "alert_eye.png";
     button_dpad_up = "button_dpad_up.png";
     button_dpad_down = "button_dpad_down.png";

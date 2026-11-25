@@ -141,6 +141,7 @@ let zone_actions =
           Zone_catch.run steps ~max_throws:Zone_catch.max_throws) );
     ("run_out_of_zone_1", timed run_out_of_zone_1 ~default:run_out_of_zone_1_ms);
     ("check_out_of_zone_1", no_args check_out_of_zone_1);
+    ("claim_mable_research_reward", no_args Mable_reward.run);
   ]
 
 (* The story's own actions, up to 03.06. *)

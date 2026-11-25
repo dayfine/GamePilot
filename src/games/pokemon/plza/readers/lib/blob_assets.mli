@@ -12,6 +12,8 @@ type t = {
   advance_chevron_shape : string;  (** the chevron's V *)
   button_a : string;  (** the A button of a prompt ("A Talk") *)
   button_minus : string;  (** the Run prompt's minus button in a wild battle *)
+  button_b : string;  (** the main menu's B (Close) *)
+  button_right : string;  (** the main menu's right arrow *)
   alert_eye : string;  (** the eye on the alert bar of a wild Pokemon *)
   button_dpad_up : string;
       (** the party bar's D-pad markers: up, down, and their black insides *)

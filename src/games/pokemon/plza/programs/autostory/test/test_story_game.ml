@@ -673,6 +673,34 @@ let leave_zone c =
   | None when held_b >= 1000 && not (map_open c) -> prompt c
   | None -> in_zone ~facing:264. ~pin:(379., 250.) c
 
+(* 03.11's reward: the party bar until X; the main menu until A; with
+   [lines], Mable's text until two more A, then the Rewards page (nothing
+   read) until B, then the party bar. [menu]: X opens it. *)
+let mable ?(menu = true) ?(lines = true) c =
+  match C.nth_after c Wire.X ~after:0. 0 with
+  | None -> party c
+  | Some _ when not menu -> party c
+  | Some x -> (
+      match C.nth_after c Wire.A ~after:x 0 with
+      | None -> { (look c) with main_menu = true }
+      | Some _ when not lines -> look c
+      | Some a -> (
+          match
+            (C.nth_after c Wire.A ~after:a 1, C.nth_after c Wire.B ~after:a 0)
+          with
+          | None, _ -> text c
+          | Some _, None -> look c
+          | Some _, Some _ -> party c))
+
+let mable_reward screen () =
+  let c = C.create () in
+  let r = Plza_story.Mable_reward.run (C.steps c screen) in
+  String.concat "\n"
+    ((match r with
+     | Ok () -> Printf.sprintf "ok, %d inputs" (List.length c.C.inputs)
+     | Error e -> Engine_run.Failure.cause_to_string e)
+    :: C.lines c)
+
 (* 03.07's run to the gate on [screen]: its result and log. *)
 let gate_run ?(timeout_ms = 8000) screen () =
   let c = C.create () in
@@ -1516,10 +1544,26 @@ let cases =
       (result "03.10" (lab_elevator ~lost:true))
       "03.10 event 1 (to_lab_elevator): walk_no_end: to_lab_elevator: no end \
        event within 1538 ms of the last leg";
-    case "03.11 is refused before it presses: Mable's reward is not ported"
-      (refused "03.11")
-      "03.11 event 3 (rock_smash_tm): no handler for game action \
-       \"claim_mable_research_reward\"; 0 inputs";
+    case "03.11's reward: X, the menu, three down, A, her lines, B out"
+      (mable_reward mable)
+      "ok, 8 inputs\n\
+       [PLZA] claim_mable_research_reward: overworld: X\n\
+       [PLZA] claim_mable_research_reward: main menu";
+    case "03.11's reward, not in her office: no_reward_lines"
+      (mable_reward (mable ~lines:false))
+      "no_reward_lines: no dialog after opening Mable's Research: no reward \
+       was claimed\n\
+       [PLZA] claim_mable_research_reward: overworld: X\n\
+       [PLZA] claim_mable_research_reward: main menu";
+    case "03.11's reward, the menu never shows: main_menu_not_reached"
+      (fun () ->
+        match
+          String.split_on_char '\n' (mable_reward (mable ~menu:false) ())
+        with
+        | result :: lines ->
+            Printf.sprintf "%s; %d X pressed" result (List.length lines)
+        | [] -> "no result")
+      "main_menu_not_reached: no main menu after 120 s; 139 X pressed";
     case "the walk is walked before 03.03, run after"
       (fun () ->
         Printf.sprintf "%b %b"

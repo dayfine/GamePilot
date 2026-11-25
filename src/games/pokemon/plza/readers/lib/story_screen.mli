@@ -38,6 +38,7 @@ type t = {
   minimap_arrow : float option;
       (** the bearing of the minimap's arrow ({!Minimap_arrow}), degrees *)
   run_prompt : bool;  (** a wild battle's Run prompt ({!Run_prompt}) *)
+  main_menu : bool;  (** the game's main menu ({!Main_menu}) *)
   alert_eye : bool;  (** a wild Pokemon's alert eye ({!Alert_eye}) *)
   minimap : string option;
       (** the recorded minimap the top-left one matches ({!Minimap}), with no

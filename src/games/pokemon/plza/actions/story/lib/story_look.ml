@@ -24,6 +24,7 @@ type t = {
   map_pin : map_point option;
   minimap_arrow : float option;
   run_prompt : bool;
+  main_menu : bool;
   alert_eye : bool;
   minimap : string option;
   battle : bool;
@@ -52,6 +53,7 @@ let empty ~at_ms =
     map_pin = None;
     minimap_arrow = None;
     run_prompt = false;
+    main_menu = false;
     alert_eye = false;
     battle = false;
     story_dialog = false;
