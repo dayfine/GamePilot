@@ -164,6 +164,7 @@
  (modules test_make_room)
  (libraries
   yojson
+  gamepilot.grid_maps
   gamepilot.table_test
   gamepilot.checkpoints_plan
   gamepilot.checkpoints_run
