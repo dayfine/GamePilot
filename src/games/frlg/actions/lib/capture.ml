@@ -1,5 +1,12 @@
 type destination = Party | Pc
-type throw_end = Caught | Broke_free | No_balls | Throw_failed
+
+type throw_end =
+  | Caught
+  | Broke_free
+  | No_balls
+  | Player_fainted
+  | Throw_failed
+
 type encounter = { species : string option; caught : bool }
 
 type game_steps = {
@@ -16,6 +23,7 @@ type end_ =
   | Out_of_encounters
   | Out_of_balls of string option
   | No_encounter
+  | Player_fainted
   | Failed of string
 
 type catch = { species : string option; destination : destination }
@@ -84,6 +92,7 @@ let rec target_battle r species turn =
         target_battle r species (turn + 1)
     | No_balls ->
         run_and_stop r (Out_of_balls (Some ("the bag has no " ^ r.plan.ball)))
+    | Player_fainted -> stop Player_fainted
     | Throw_failed ->
         stop (Failed "the throw didn't end in a catch or at the battle menu")
 
@@ -133,6 +142,7 @@ let end_name = function
   | Out_of_encounters -> "out_of_encounters"
   | Out_of_balls _ -> "out_of_balls"
   | No_encounter -> "no_encounter"
+  | Player_fainted -> "player_fainted"
   | Failed _ -> "failed"
 
 let catch_text (plan : Capture_plan.t) c =
@@ -164,6 +174,8 @@ let message (plan : Capture_plan.t) (result : result) =
         tally
   | No_encounter ->
       Printf.sprintf "Capture of %s: no wild battle started: %s." s tally
+  | Player_fainted ->
+      Printf.sprintf "Capture of %s: the player's Pokemon fainted: %s." s tally
   | Failed detail -> Printf.sprintf "Capture of %s: %s: %s." s detail tally
 
 let party_after party (result : result) =

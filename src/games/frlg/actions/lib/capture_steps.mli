@@ -29,6 +29,17 @@ val finish_quiet_ms : int
 val finish_timeout_ms : int
 (** 30 s for them, as mash_until_overworld(). *)
 
+val player_down : Effects.measurements -> bool
+(** The player's Pokemon fainted: the battle's text box over the foe's HP box,
+    the player's HP box gone ("... fainted!", "Use next POKéMON?"). After a
+    catch the foe's box is gone too; after a break-free the player's is back. A
+    throw that shows it for {!player_down_ms} ends [Player_fainted], before a B
+    can answer "Use next POKéMON?" NO and run (mGBA, 2026-11-25, Victory Road:
+    the run away read as a catch, the Yes/No box unread). *)
+
+val player_down_ms : int
+(** 1 s. *)
+
 val opening_line : string -> string
 (** ["Wild SPEAROW appeared!"] for ["spearow"]. *)
 

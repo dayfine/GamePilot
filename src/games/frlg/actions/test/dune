@@ -66,7 +66,8 @@
   mgba.probes.jsonl
   menus.mgba.probes.jsonl
   switch.probes.jsonl
-  menus.switch.probes.jsonl)
+  menus.switch.probes.jsonl
+  fixtures/capture_throw.looks.jsonl)
  (libraries
   yojson
   gamepilot.table_test
