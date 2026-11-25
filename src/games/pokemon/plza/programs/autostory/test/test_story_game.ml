@@ -277,6 +277,29 @@ let elevator ?(lost = false) c =
       | Some _, Some _, Some _ -> room_202 c)
   | _ -> party c
 
+(* 02.06: the room's party bar; a passing prompt over it from 300 ms of stick
+   to 600 ms, the bed's A prompt from 1 s, until A; "Rest until tomorrow
+   morning?" until A, the choice until A, the night's black fade 2 s, text
+   until one A, then the party bar. [lost]: the passing prompt only. *)
+let bed ?(lost = false) c =
+  let prompt = { (party c) with interact_prompt = true } in
+  match
+    (C.stick_reached c 300, C.stick_reached c 600, C.stick_reached c 1000)
+  with
+  | None, _, _ -> party c
+  | Some _, None, _ -> prompt
+  | Some _, Some _, None -> party c
+  | Some _, Some _, Some _ when lost -> party c
+  | Some _, Some _, Some b -> (
+      let a n = C.nth_after c Wire.A ~after:b n in
+      match (a 0, a 1, a 2, a 3) with
+      | None, _, _, _ -> prompt
+      | Some _, None, _, _ -> text c
+      | Some _, Some a1, None, _ -> choice c ~after:a1
+      | Some _, Some _, Some r, _ when since c r < 2000.0 -> black c
+      | Some _, Some _, Some _, None -> text c
+      | Some _, Some _, Some _, Some _ -> party c)
+
 let outcome checkpoint screen =
   let c = C.create () in
   reloaded := false;
@@ -631,6 +654,29 @@ let cases =
       (result "02.05" (elevator ~lost:true))
       "02.05 event 1 (to_lobby_elevator): walk_no_end: to_lobby_elevator: no \
        end event within 3363 ms of the last leg";
+    case "02.06: a prompt passed, the bed, rest until morning"
+      (fun () ->
+        let r, c = outcome "02.06" bed in
+        String.concat "\n"
+          (r
+          :: List.filter
+               (fun line ->
+                 List.exists
+                   (fun prefix -> String.starts_with ~prefix line)
+                   [ "[PLZA] to_"; "[PLZA] choose"; "[PLZA scene] done" ])
+               (C.lines c)))
+      "passed\n\
+       [PLZA] to_bed: the end event after 500 ms of the last leg, before its \
+       750 ms: passed on the way, on.\n\
+       [PLZA] to_bed: the end event after 1000 ms of the last leg.\n\
+       [PLZA] to_bed: ended on: player_can_move, interact_prompt\n\
+       [PLZA scene] done on choice.\n\
+       [PLZA] choose_0: row 0 of 2 highlighted\n\
+       [PLZA scene] done on control.";
+    case "02.06 lost: no bed prompt"
+      (result "02.06" (bed ~lost:true))
+      "02.06 event 1 (to_bed): walk_no_end: to_bed: no end event within 1665 \
+       ms of the last leg";
     case "the walk is walked before 03.03, run after"
       (fun () ->
         Printf.sprintf "%b %b"
