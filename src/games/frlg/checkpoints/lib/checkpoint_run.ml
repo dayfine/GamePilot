@@ -28,7 +28,9 @@ let load_all dir =
   in
   let world rock_stairs maps =
     Frlg_overworld.Frlg_steps.world ~edge_stalls:false ~rock_stairs
-      ~hidden:Frlg_overworld.Scene_only_people.hidden
+      ~hidden:(fun o ->
+        Frlg_overworld.Scene_only_people.hidden o
+        || Frlg_overworld.Scene_removed_people.hidden o)
       (Grid_maps.Connected_maps.create
          (Frlg_overworld.Standard_center.with_rooms maps))
   in

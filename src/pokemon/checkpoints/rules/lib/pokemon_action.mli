@@ -9,9 +9,11 @@ type leg = { direction : Grid_geometry.Direction.t; tiles : int }
 type item = { item : string; quantity : int }
 (** [quantity] of the bag item [item] (a slug), to buy. *)
 
-type route = { target : Pose.grid; fight_wild : bool }
+type route = { target : Pose.grid; fight_wild : bool; fight_trainers : bool }
 (** A planned walk to [target]; [fight_wild] fights wild encounters on the way
-    instead of running. *)
+    instead of running; [fight_trainers] watches each tile a trainer of the maps
+    may see the player from, and fights a trainer who does, where without it a
+    trainer's battle stops the walk (a save past them has beaten them). *)
 
 (** A Pokémon action, with its args. *)
 type t =
