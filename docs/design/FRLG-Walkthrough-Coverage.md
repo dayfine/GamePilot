@@ -87,13 +87,16 @@ Exists today in FireRed and used across the drafts: route walks planned on Pokem
 `save`, `ready`, `fly` (13 Kanto towns), `lift_floor` (Celadon), `mart` (11 Kanto marts),
 `cut_tree`, `pick_up_item`, `use_item`, `give_bag_item`, `party_swap`, `capture` (wild grass),
 `grind`, `pc_deposit`, `ingame_trade`, `candy_level`, fleeing wild battles on a walk, scripted
-battles (`Scripted_battle`), soft reset, make room in the party.
+battles (`Scripted_battle`), soft reset, make room in the party, `step` (one tile onto a scene's
+trigger, nothing watched) and `train` (trainer battles in a row, `Trainer_battles`: the lead attacks
+in slot order, a fainted lead loses; Sevii 04's Bikers).
 
 ## Parts 1 to 8: the authored chain
 
 The fork's AutoStory plans, in PokemonSimulation. GamePilot decodes their format (its old name is
-an alias) but FireRed's builtin events run only `route`, `ready`, `talk`, `scene`, `heal` and `save`:
-every other kind returns `not_implemented`. What each needs:
+an alias) but FireRed's builtin events run only `route`, `ready`, `step`, `train`, `talk`, `answer`,
+`scene`, `heal` and `save`: every other kind returns `not_implemented`. The table predates `step`
+and `train`; a `battle` event with an `opponent` and a `policy` is still missing. What each needs:
 
 | Plan | Title | Missing in GamePilot |
 |---|---|---|
