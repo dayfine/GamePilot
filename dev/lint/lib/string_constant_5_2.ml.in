@@ -1,0 +1,3 @@
+(* OCaml 5.2: the constant is the variant itself (see string_constant.mli). *)
+let text (c : Parsetree.constant) =
+  match c with Pconst_string (s, _, _) -> Some s | _ -> None
