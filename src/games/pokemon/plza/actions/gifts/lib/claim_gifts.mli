@@ -13,11 +13,11 @@
     A run first wakes the screen ({!Switch_home.Stick_wake}): a console left on
     a stop dims, and a dimmed screen reads as none of them. Then the start and
     the stop are read where a reader knows the screen (gift-list, card,
-    keyboard, code-card: held 1 s, a card within 30 s), with no press; the run
-    is an error when one does not show, and logs a point no reader knows as not
-    read (console B, 2026-11-25: a stop on card was logged while the screen was
-    still the white fade before it). Each step's screens are read; the first one
-    not seen ends the run with an error naming it. *)
+    keyboard, code-card, boxes, save: held 1 s, a card within 30 s), with no
+    press; the run is an error when one does not show, and logs a point no
+    reader knows as not read (console B, 2026-11-25: a stop on card was logged
+    while the screen was still the white fade before it). Each step's screens
+    are read; the first one not seen ends the run with an error naming it. *)
 
 type span = {
   from : string;  (** the point the console is on: "overworld" from the start *)

@@ -8,6 +8,8 @@ let probes ~picture ~assets ~gift_name =
   Plza_readers.Main_menu_row.probes ~picture ~assets
   @ S.probes ~picture ~gift_name
   @ K.probes
+  @ Plza_readers.Boxes_screen.probes ~picture
+  @ Plza_readers.Save_dialog.probes ~picture
 
 let a ms : T.t = { button = A; hold_ms = 100; cooldown_ms = ms }
 let dpad button : T.t = { button; hold_ms = 80; cooldown_ms = 300 }

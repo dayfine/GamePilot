@@ -107,6 +107,8 @@ let read_at = function
   | "gift-list" -> Some G.await_list
   | "card" | "code-card" -> Some G.await_card
   | "keyboard" -> Some G.await_keyboard
+  | "boxes" -> Some B.await_boxes
+  | "save" -> Some B.await_dialog
   | _ -> None
 
 let confirm ~log ~verb at =
