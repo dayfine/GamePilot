@@ -24,5 +24,8 @@
   gamepilot.ctl_script
   gamepilot.switch_home
   gamepilot.frlg_checkpoints
+  gamepilot.plza_readers
+  gamepilot.plza_checkpoints
+  gamepilot.plza_autostory
   unix
   yojson))

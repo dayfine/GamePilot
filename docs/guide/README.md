@@ -12,6 +12,7 @@ Developer pages are in `docs/programs/`.
 | [Supplies](frlg.supplies.md) | `frlg.supplies` | mGBA, the Switch | Stocks what the duplication programs use: Retro Mail and Super Repels. |
 | [Team Training](frlg.team_training.md) | `frlg.team_training` | mGBA, the Switch | Farms Rare Candies with the Mail Glitch's item duplication and levels the team with them. |
 | [Sevii Story](frlg.sevii_story.md) | `frlg.sevii_story` | mGBA | Plays the Sevii Islands story after the Hall of Fame, starting with Bill's trip to One Island. |
+| [AutoStory](plza.autostory.md) | `plza.autostory` | the Switch | Plays the story from a new game's Confirm Choices: the opening to the station platform, then the platform to Main Mission 01. |
 <!-- /generated -->
 
 The Mail Glitch has a second page for its last checkpoint:

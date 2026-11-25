@@ -9,10 +9,9 @@
     stddevs summing to 30 at most) and the others slate (red 20-55, green 40-80,
     blue 65-115, blue over red by 25, stddevs summing to 30 at most).
 
-    Where it differs: a plain row's slate is wider (red 10-65, green 30-90,
-    blue 50-125, blue over red by 15): the fork's bounds miss rows of these
-    frames a tenth dimmer or with blue 12 down (row 0 of English_1 is green 43,
-    blue 68).
+    Where it differs: a plain row's slate is wider (red 10-65, green 30-90, blue
+    50-125, blue over red by 15): the fork's bounds miss rows of these frames a
+    tenth dimmer or with blue 12 down (row 0 of English_1 is green 43, blue 68).
 
     Not ported: the name and language OCR of the screen ([check_profile]); the
     fork checks both before it confirms. *)

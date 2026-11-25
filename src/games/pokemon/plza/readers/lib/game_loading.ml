@@ -1,13 +1,17 @@
-let box left top width height =
-  Native_box.of_fractions { left; top; width; height }
-
 let loading_boxes =
   [
-    ("game_loading.top", box 0.2 0.2 0.6 0.1);
-    ("game_loading.bottom", box 0.2 0.7 0.6 0.1);
+    ( "game_loading.top",
+      Native_box.of_fractions
+        { left = 0.2; top = 0.2; width = 0.6; height = 0.1 } );
+    ( "game_loading.bottom",
+      Native_box.of_fractions
+        { left = 0.2; top = 0.7; width = 0.6; height = 0.1 } );
   ]
 
-let entering_box = ("game_loading.entering", box 0.1 0.04 0.8 0.3)
+let entering_box =
+  ( "game_loading.entering",
+    Native_box.of_fractions
+      { left = 0.1; top = 0.04; width = 0.8; height = 0.3 } )
 
 let probes ~picture =
   List.concat_map

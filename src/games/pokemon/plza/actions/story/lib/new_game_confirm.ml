@@ -4,6 +4,10 @@ module Failure = Engine_run.Failure
 let poll_ms = 100
 let presses_max = 6
 let ready_row = 2
+let ready_release_ms = 2000
+let down_release_ms = 500
+let down_read_ms = 1000
+let first_read_ms = 2000
 
 (* The highlighted row, read within [window_ms]. *)
 let read_row steps window_ms =
@@ -20,22 +24,22 @@ let not_on_screen =
      language, look and name (made by hand). It is not on screen; nothing was \
      pressed."
 
+let log_row steps r =
+  S.(steps.log)
+    (Printf.sprintf "[PLZA] Confirm Choices: the highlight is on row %d." r)
+
 let rec to_ready steps row press =
   match row with
   | Some r when r = ready_row ->
       S.(steps.log) "[PLZA] Confirm Choices: A on \"Ready!\".";
-      S.press steps Wire.A ~hold_ms:160 ~release_ms:2000;
+      S.press steps Wire.A ~hold_ms:S.press_hold_ms ~release_ms:ready_release_ms;
       Ok ()
   | Some _ when press < presses_max ->
       S.(steps.log) "[PLZA] Confirm Choices: DOWN.";
-      S.press steps Wire.Down ~hold_ms:160 ~release_ms:500;
-      let row = read_row steps 1000 in
-      Option.iter
-        (fun r ->
-          S.(steps.log)
-            (Printf.sprintf
-               "[PLZA] Confirm Choices: the highlight is on row %d." r))
-        row;
+      S.press steps Wire.Down ~hold_ms:S.press_hold_ms
+        ~release_ms:down_release_ms;
+      let row = read_row steps down_read_ms in
+      Option.iter (log_row steps) row;
       to_ready steps row (press + 1)
   | _ ->
       Error
@@ -43,7 +47,7 @@ let rec to_ready steps row press =
            "the Confirm Choices highlight was not read on \"Ready!\".")
 
 let run steps =
-  match read_row steps 2000 with
+  match read_row steps first_read_ms with
   | None -> Error not_on_screen
   | Some r ->
       S.(steps.log)

@@ -193,6 +193,22 @@ let preflight plan_dir f =
   Preflight_command.run ~plan_dir ~from_id
     (preflight_setup plan_dir f backend ~viewport ~from_id)
 
+(* A PLZA program's checkpoints (Plza_series): the Switch only, testing. *)
+let plza_series plan_dir f =
+  let* backend = daemon_backend f Checkpoint_trials.Testing in
+  let* viewport = viewport plan_dir f in
+  match backend with
+  | Daemon_process.Switch _ ->
+      Plza_series.run_series ~plan_dir f ~backend ~viewport
+  | Mgba _ -> Error "PLZA runs on the Switch only: --backend switch"
+
+let is_plza plan_dir =
+  match R.of_plan_dir plan_dir with
+  | Some p -> p.game.game_id = "plza"
+  | None -> false
+
 let main plan_dir args =
   let* f = parse defaults args in
-  if f.preflight then preflight plan_dir f else run_series plan_dir f
+  if is_plza plan_dir then plza_series plan_dir f
+  else if f.preflight then preflight plan_dir f
+  else run_series plan_dir f

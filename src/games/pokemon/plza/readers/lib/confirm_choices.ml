@@ -29,9 +29,10 @@ let dark_max_brightness = 90.0
 let dark_max_spread = 80.0
 let dark_max_red = 30.0
 let dark_blue_over_red = 40.0
+let channels = 3.0
 
 let dark (s : Box_color.stats) =
-  sum s.mean /. 3.0 < dark_max_brightness
+  sum s.mean /. channels < dark_max_brightness
   && sum s.stddev <= dark_max_spread
   && s.mean.r <= dark_max_red
   && s.mean.b >= s.mean.r +. dark_blue_over_red
@@ -42,7 +43,13 @@ type row = Highlighted | Plain | Other
    .mli). *)
 let highlight_min = 200.0
 let max_spread = 30.0
-let between lo hi v = v >= lo && v <= hi
+
+type range = { lo : float; hi : float }
+
+let between r v = v >= r.lo && v <= r.hi
+let slate_red = { lo = 10.0; hi = 65.0 }
+let slate_green = { lo = 30.0; hi = 90.0 }
+let slate_blue = { lo = 50.0; hi = 125.0 }
 let slate_blue_over_red = 15.0
 
 let classify (s : Box_color.stats) =
@@ -52,7 +59,7 @@ let classify (s : Box_color.stats) =
     && spread <= max_spread
   then Highlighted
   else if
-    between 10.0 65.0 m.r && between 30.0 90.0 m.g && between 50.0 125.0 m.b
+    between slate_red m.r && between slate_green m.g && between slate_blue m.b
     && m.b >= m.r +. slate_blue_over_red
     && spread <= max_spread
   then Plain

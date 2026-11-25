@@ -88,14 +88,28 @@ let checkpoint_row (plan : Pokemon_checkpoints.Plan.t) =
     (cell plan.checkpoint.title)
     repeats
 
+(* PLZA's plans are over its own rules (Plza_checkpoints). *)
+let is_plza (p : R.t) = p.game.game_id = "plza"
+
+let plza_row plans id =
+  Result.map
+    (fun (plan : Plza_checkpoints.Plan.t) ->
+      Printf.sprintf "| %s | %s |" plan.checkpoint.checkpoint_id
+        (cell plan.checkpoint.title))
+    (Plza_series.load_plan ~plan_dir:plans.dir id)
+
+let checkpoint_rows p plans ids =
+  if is_plza p then collect (plza_row plans) ids
+  else Result.map (List.map checkpoint_row) (load plans ids)
+
 let checkpoints p arg =
   let* plans = plans_of p in
   let* ids = range plans arg in
-  let* loaded = load plans ids in
+  let* rows = checkpoint_rows p plans ids in
   Ok
     (String.concat "\n"
        ([ "| Checkpoint | What its plan does |"; "|---|---|" ]
-       @ List.map checkpoint_row loaded
+       @ rows
        @ [ ""; Printf.sprintf "<!-- plans: %s -->" (digest plans ids) ]))
 
 let plural n one many = if n = 1 then one else many
@@ -208,14 +222,26 @@ let backend_commands args = function
         script "switch" args;
       ]
 
+(* PLZA runs through gamepilot checkpoints itself (Plza_series). *)
+let plza_commands args =
+  String.concat "\n"
+    [
+      "# the Switch: each checkpoint once, from where the console is";
+      "cd src && opam exec -- dune exec -- gamepilot checkpoints " ^ args
+      ^ " --mode testing --backend switch --serial PORT --capture DEVICE \\";
+      "    --watch";
+    ]
+
 let checkpoint_commands (p : R.t) ~from_id ~to_id =
   let args =
     Printf.sprintf "--program %s --from %s --to %s" p.id from_id to_id
   in
-  String.concat "\n\n"
-    (List.map
-       (fun b -> String.concat "\n" (backend_commands args b))
-       p.backends)
+  if is_plza p then plza_commands args
+  else
+    String.concat "\n\n"
+      (List.map
+         (fun b -> String.concat "\n" (backend_commands args b))
+         p.backends)
 
 let commands (p : R.t) arg =
   let body =

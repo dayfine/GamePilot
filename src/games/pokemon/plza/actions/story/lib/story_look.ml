@@ -44,21 +44,22 @@ let overworld_free l =
 let platform_hint l = l.controls_hint && (not l.dialog_box) && not l.autosave
 let card_shows l = l.tutorial_card
 
+let flags l =
+  [
+    (l.fade_black, "black fade");
+    (l.fade_white, "white fade");
+    (l.dialog_box, "text box");
+    (l.choice_box, "choice box");
+    (l.screen_still, "still");
+    (l.controls_hint, "controls hint");
+    (l.advance_arrow, "advance arrow");
+    (l.tutorial_card, "tutorial card");
+    (l.autosave, "autosave");
+  ]
+
 let describe l =
   let shown =
-    List.filter_map
-      (fun (on, name) -> if on then Some name else None)
-      [
-        (l.fade_black, "black fade");
-        (l.fade_white, "white fade");
-        (l.dialog_box, "text box");
-        (l.choice_box, "choice box");
-        (l.screen_still, "still");
-        (l.controls_hint, "controls hint");
-        (l.advance_arrow, "advance arrow");
-        (l.tutorial_card, "tutorial card");
-        (l.autosave, "autosave");
-      ]
+    List.filter_map (fun (on, name) -> if on then Some name else None) (flags l)
   in
   if shown = [] then "nothing" else String.concat ", " shown
 

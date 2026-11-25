@@ -9,6 +9,11 @@ type game_steps = {
 
 type outcome = (unit, Failure.cause) result
 
+let press_hold_ms = 160
+let press_release_ms = 240
+let ms_per_second = 1000.0
+let seconds ms = ms /. ms_per_second
+
 let press steps button ~hold_ms ~release_ms =
   steps.submit (Wire.press ~hold_ms ~cooldown_ms:release_ms [ button ])
 

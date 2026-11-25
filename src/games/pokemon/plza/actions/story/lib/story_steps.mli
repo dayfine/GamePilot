@@ -16,6 +16,15 @@ type game_steps = {
 type outcome = (unit, Engine_run.Failure.cause) result
 (** [Ok], or the action's failure. *)
 
+val press_hold_ms : int
+(** 160: how long the story actions hold a button. *)
+
+val press_release_ms : int
+(** 240: the release after most presses. *)
+
+val seconds : float -> float
+(** Milliseconds as seconds, for a log line. *)
+
 val press : game_steps -> Wire.button -> hold_ms:int -> release_ms:int -> unit
 (** The button held [hold_ms], then [release_ms] with nothing held. *)
 

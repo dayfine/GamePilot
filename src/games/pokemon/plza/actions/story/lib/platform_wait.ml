@@ -6,6 +6,7 @@ let poll_ms = 300
 let platform_looks = 2
 let opening_skip_after_fade_in_ms = 750.0
 let cutscene_skip_hold_ms = 2000
+let opening_release_ms = 400
 
 let waited_to_outcome steps ~what ~missing (w : S.waited) =
   match w with
@@ -16,14 +17,14 @@ let waited_to_outcome steps ~what ~missing (w : S.waited) =
   | Home_menu -> Error S.game_not_running
   | Timed_out -> Error (Failure.cause "platform_not_seen" missing)
 
+let no_hint timeout_ms =
+  Printf.sprintf "No controls hint on %d looks in a row within %d ms."
+    platform_looks timeout_ms
+
 let wait_for_platform steps ~timeout_ms =
-  S.wait_for steps
-    (S.rule ~confirm_looks:platform_looks ~poll_ms ~timeout_ms ())
-    L.platform_hint
-  |> waited_to_outcome steps ~what:"on the platform"
-       ~missing:
-         (Printf.sprintf "No controls hint on %d looks in a row within %d ms."
-            platform_looks timeout_ms)
+  let rule = S.rule ~confirm_looks:platform_looks ~poll_ms ~timeout_ms () in
+  waited_to_outcome steps ~what:"on the platform" ~missing:(no_hint timeout_ms)
+    (S.wait_for steps rule L.platform_hint)
 
 (* The opening's edges: text waiting for A, and the end of a fade. *)
 type opening = {
@@ -44,7 +45,7 @@ let on_opening_look steps o (look : L.t) =
   let waiting = L.text_waiting_for_a look in
   if waiting && not o.text_waiting then (
     S.(steps.log) "[PLZA] platform wait: text waiting for A; A";
-    S.press steps Wire.A ~hold_ms:160 ~release_ms:400);
+    S.press steps Wire.A ~hold_ms:S.press_hold_ms ~release_ms:opening_release_ms);
   o.text_waiting <- waiting;
   let fade = L.fade_shows look in
   if fade then o.faded_in <- None;
@@ -53,7 +54,8 @@ let on_opening_look steps o (look : L.t) =
   if skip_due o look then (
     S.(steps.log)
       "[PLZA] platform wait: the opening plays; Plus held to skip it";
-    S.press steps Wire.Start ~hold_ms:cutscene_skip_hold_ms ~release_ms:400;
+    S.press steps Wire.Start ~hold_ms:cutscene_skip_hold_ms
+      ~release_ms:opening_release_ms;
     o.faded_in <- None);
   S.wait steps poll_ms
 

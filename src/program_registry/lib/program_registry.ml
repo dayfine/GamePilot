@@ -89,7 +89,27 @@ let sevii_story =
     viewport = Nso_gba;
   }
 
-let all = [ start_menu_poc; mail_glitch; supplies; team_training; sevii_story ]
+let plza = { game_id = "plza"; game_name = "Pokémon Legends: Z-A" }
+
+let autostory =
+  {
+    id = "plza.autostory";
+    game = plza;
+    name = "AutoStory";
+    group = [ "PLZA"; "Story" ];
+    description =
+      "Plays the story from a new game's Confirm Choices: the opening to the \
+       station platform, then the platform to Main Mission 01.";
+    doc = "docs/guide/plza.autostory.md";
+    checkpoints = Some "src/games/pokemon/plza/programs/autostory/plans";
+    backends = [ Switch ];
+    viewport = Native;
+  }
+
+let all =
+  [
+    start_menu_poc; mail_glitch; supplies; team_training; sevii_story; autostory;
+  ]
 
 let short_id p =
   let prefix = p.game.game_id ^ "." in

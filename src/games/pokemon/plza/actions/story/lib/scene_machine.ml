@@ -6,8 +6,8 @@ type config = { end_on_black_fade : bool }
 
 let control_hold_ms = 1000.0
 let poll_ms = 250
-let press_hold_ms = 160
-let press_release_ms = 240
+let press_hold_ms = S.press_hold_ms
+let press_release_ms = S.press_release_ms
 let timeout_ms = 360_000
 
 type screen =
@@ -105,7 +105,7 @@ let log_look steps label ~start last screen tl (l : L.t) =
     last := key;
     S.(steps.log_detail)
       (Printf.sprintf "[PLZA %s] %s at %.1fs: %s" label (name screen)
-         ((l.at_ms -. start) /. 1000.0)
+         (S.seconds (l.at_ms -. start))
          readings))
 
 let timed_out label =
@@ -113,7 +113,8 @@ let timed_out label =
     (Printf.sprintf
        "%s: Did not finish within %d s (expecting the controls hint, the party \
         bar or the A prompt)."
-       label (timeout_ms / 1000))
+       label
+       (int_of_float (S.seconds (float_of_int timeout_ms))))
 
 let run steps label config =
   S.(steps.log)
