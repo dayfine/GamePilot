@@ -127,3 +127,6 @@ card_numbers mgba shift=gminus12 src/games/frlg/readers/test/images/mgba/trainer
 card_numbers mgba shift=bplus12 src/games/frlg/readers/test/images/mgba/trainer-card-dex/caught-10.png|mgba/trainer-card-dex/bplus12/caught-10.png
 card_numbers mgba shift=bminus12 src/games/frlg/readers/test/images/mgba/trainer-card-dex/caught-10.png|mgba/trainer-card-dex/bminus12/caught-10.png
 card_numbers mgba shift=grey10 src/games/frlg/readers/test/images/mgba/trainer-card-dex/caught-10.png|mgba/trainer-card-dex/grey10/caught-10.png
+pc_message mgba repo src/games/frlg/readers/test/images/mgba/pc-deposit-lavender/08-panel.png|mgba/pc-deposit-lavender/08-panel.png
+pc_message mgba repo src/games/frlg/readers/test/images/mgba/pc-deposit-lavender/12-chooser.png|mgba/pc-deposit-lavender/12-chooser.png
+pc_message mgba repo src/games/frlg/readers/test/images/mgba/pc-deposit-mail/remove-mail.png|mgba/pc-deposit-mail/remove-mail.png
