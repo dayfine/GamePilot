@@ -19,6 +19,7 @@ let party_promised : Pokemon_checkpoints.Postconditions.t =
     party = Some (Party_includes { members = [ "abra" ]; slots = [] });
     items = [];
     coins = None;
+    caught = None;
     money = None;
     flags = [];
     knows = [];

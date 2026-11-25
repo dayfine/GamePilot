@@ -19,6 +19,7 @@ type need =
   | Badges_at_least of int
   | Badges of string list
   | Hall_of_fame
+  | Caught_at_least of int
 
 (* The args naming a member the action uses, and those naming one it brings. *)
 let brings action =

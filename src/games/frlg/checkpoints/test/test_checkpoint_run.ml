@@ -144,6 +144,7 @@ let from_last_event ~kept_ropes () =
         {
           start_money = Some 29202;
           start_coins = None;
+          start_caught = None;
           start_items = [ ("revive", 0); ("escape-rope", kept_ropes) ];
         };
       at = None;

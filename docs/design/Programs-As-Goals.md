@@ -253,5 +253,7 @@ Exceptions in library code become `Result`, one per PR, in between.
 
 The Fly badge is settled: a plan declares it in `metadata.preconditions` (`"badges": 8` or by
 name, with `"hall_of_fame": true`), and the pre-flight reads it off the Trainer Card's front
-(`Plan_preconditions`). Still open: mart choice (a fixed preference list, Celadon first, unless the
+(`Plan_preconditions`). So is the caught count Oak's National Dex asks for: `"caught": 60` in
+`metadata.preconditions`, and `"caught": {"at_least": 60}` (or `{"gained": 2}`) in
+`metadata.postconditions` or a repeat's `until`, both read off the Trainer Card. Still open: mart choice (a fixed preference list, Celadon first, unless the
 goal names a mart).

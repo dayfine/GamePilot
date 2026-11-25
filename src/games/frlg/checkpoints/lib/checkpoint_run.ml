@@ -139,6 +139,7 @@ let kept_start_line (start : Pokemon_checkpoints.Postcondition_check.start) =
    re-read:"
   ^ count "money $" start.start_money
   ^ count "coins" start.start_coins
+  ^ count "caught" start.start_caught
   ^ String.concat "" items
 
 (* What a promise of a change is checked against: read now, at the
