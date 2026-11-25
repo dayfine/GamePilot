@@ -2,3 +2,4 @@ ocaml
 dune
 odoc
 yojson
+ppx_deriving_yojson

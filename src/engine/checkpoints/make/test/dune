@@ -14,7 +14,9 @@
   gamepilot.engine_text
   gamepilot.engine_saved
   gamepilot.engine_checkpoints
-  toy_terms))
+  toy_terms)
+ (preprocess
+  (pps ppx_deriving_yojson)))
 
 (test
  (name test_toy_game)

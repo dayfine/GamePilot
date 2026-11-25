@@ -1,4 +1,5 @@
-(** What a toy run keeps beside an event's state, and its JSON. *)
+(** What a toy run keeps beside an event's state, and its JSON, derived
+    ([[@@deriving yojson]]). *)
 
 type t = { start : int option; at : Toy_terms.Pose.t option }
 (** The gold at the checkpoint's start, and where the player was reckoned to
