@@ -3,7 +3,7 @@
   "game": "frlg",
   "checkpoint": {
     "id": "01-ultra-balls",
-    "title": "From anywhere outdoors: Ultra Balls at Indigo Plateau, then to Route 10's Pokemon Center",
+    "title": "From anywhere outdoors: Ultra Balls at Indigo Plateau, then out of Route 10's Pokemon Center",
     "start": {"anywhere": "outdoors"},
     "events": [
       {
@@ -29,7 +29,7 @@
           "map": "IndigoPlateau_PokemonCenter_1F",
           "items": [{"item": "ultra-ball", "quantity": 10}]
         },
-        "why": "10 Ultra Balls ($12,000): at full HP one catches an Ekans about two times in three, a Voltorb one in two."
+        "why": "10 Ultra Balls ($12,000): at full HP one catches an Ekans about two times in three, a Voltorb or a Drowzee one in two."
       },
       {
         "id": "out_of_indigo",
@@ -49,14 +49,21 @@
         "fragment": "heal_at",
         "args": {"town": "route10"},
         "id": "heal_route10",
-        "why": "Back at the nurse, where 02-route10-new-species starts."
+        "why": "Healed at Route 10's nurse, the catches' home Center."
+      },
+      {
+        "id": "out_of_center",
+        "kind": "route",
+        "action": "run",
+        "args": {"target": {"place": "route10_center_outside"}},
+        "why": "Outdoors, where each catch starts."
       }
     ]
   },
   "execution": {"menu": "full"},
   "metadata": {
     "phase": "testing",
-    "notes": "Starts anywhere outdoors in Kanto and ends at Route 10's Pokemon Center nurse: the dex collection's home Center (Route 10 is a fly point; its grass is 15 tiles north). The bag's Poke Balls (8 on the Mail Glitch save) catch Voltorb about one time in four.",
+    "notes": "Starts anywhere outdoors in Kanto and ends outside Route 10's Pokemon Center, healed: the dex collection's home Center (Route 10 is a fly point; its grass is 15 tiles north). The bag's Poke Balls (8 on the Sevii save) catch Voltorb about one time in four.",
     "postconditions": {
       "items": [{"item": "ultra-ball", "gained": 10}],
       "money": {"spent": 12000}
