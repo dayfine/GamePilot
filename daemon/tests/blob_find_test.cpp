@@ -380,8 +380,8 @@ void check_masked_score() {
   FindSpec spec;
   spec.filters.push_back(ColorRange{{200, 0, 0}, {255, 50, 50}});
   spec.min_area = 2;
-  const FindResult plain = find_blobs(frame, cv::Rect(0, 0, 6, 6),
-                                      map_find(spec, 1, 1, ring_bgra, cv::Mat()));
+  const FindResult plain = find_blobs(
+      frame, cv::Rect(0, 0, 6, 6), map_find(spec, 1, 1, ring_bgra, cv::Mat()));
   spec.masked = true;
   const FindResult masked = find_blobs(
       frame, cv::Rect(0, 0, 6, 6), map_find(spec, 1, 1, ring_bgra, cv::Mat()));

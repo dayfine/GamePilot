@@ -577,17 +577,18 @@ void check_one_clock_and_cancel() {
 
   // A cancel with `then` (v1.15): ZL held, then ZL with X in its place, with
   // no release between (the board's replace-on-next).
-  call(client,
-       R"({"jsonrpc":"2.0","id":7,"method":"submit","params":{"batch_id":"b4","commands":[{"press":["ZL"],"hold_ms":2000,"cooldown_ms":0}]}})");
+  call(
+      client,
+      R"({"jsonrpc":"2.0","id":7,"method":"submit","params":{"batch_id":"b4","commands":[{"press":["ZL"],"hold_ms":2000,"cooldown_ms":0}]}})");
   sleep_ms(200);
-  call(client,
-       R"({"jsonrpc":"2.0","id":8,"method":"cancel","params":{"then":{"batch_id":"b5","commands":[{"press":["ZL","X"],"hold_ms":160,"cooldown_ms":0}]}}})");
-  const std::vector<std::string> replaced =
-      read_until(client, "\"b5\"", 2000);
+  call(
+      client,
+      R"({"jsonrpc":"2.0","id":8,"method":"cancel","params":{"then":{"batch_id":"b5","commands":[{"press":["ZL","X"],"hold_ms":160,"cooldown_ms":0}]}}})");
+  const std::vector<std::string> replaced = read_until(client, "\"b5\"", 2000);
   CHECK(!replaced.empty());
   const std::vector<BoardCommand> held = console.board.commands();
-  const auto x = std::find_if(
-      held.begin(), held.end(), [](const BoardCommand& c) {
+  const auto x =
+      std::find_if(held.begin(), held.end(), [](const BoardCommand& c) {
         return (c.message.buttons.button3 & 0x02) != 0;
       });
   CHECK(x != held.end() && x != held.begin());
@@ -604,6 +605,35 @@ void check_one_clock_and_cancel() {
   serving.join();
 }
 
+// The server takes the keep-awake keys the --keepawake-key flag does: a
+// button, or RStick (keep_awake.h); anything else stops it at the start.
+// bdd5a03's server checked buttons only and refused RStick on console B.
+void check_keep_awake_keys() {
+  const Clock clock;
+  test::FakeConsole console(clock);
+  SwitchBackend backend(console.board.screen(60, 0, cv::Size(64, 36)),
+                        console.session, clock, SwitchOptions{});
+  bool started = true;
+  ServerOptions options;
+  options.port = 47979;
+  options.keepawake = KeepAwakeOptions{180000, "RStick"};
+  try {
+    const Server server(backend, options, clock);
+  } catch (const std::exception&) {
+    started = false;
+  }
+  CHECK(started);
+  bool refused = false;
+  options.port = 47980;
+  options.keepawake = KeepAwakeOptions{180000, "Q"};
+  try {
+    const Server server(backend, options, clock);
+  } catch (const std::exception&) {
+    refused = true;
+  }
+  CHECK(refused);
+}
+
 }  // namespace
 
 int main() {
@@ -618,5 +648,6 @@ int main() {
   check_home_press();
   check_stick_run();
   check_one_clock_and_cancel();
+  check_keep_awake_keys();
   return TEST_RESULT();
 }

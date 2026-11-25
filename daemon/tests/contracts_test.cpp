@@ -177,8 +177,7 @@ void check_requests(const std::map<std::string, pa::JsonValue>& files) {
   const Request cancel = decode_request(files.at("12-cancel.request.json"));
   CHECK(cancel.method == "cancel");
   CHECK(!decode_cancel(cancel.params).then);
-  const Request then =
-      decode_request(files.at("48-cancel.then.request.json"));
+  const Request then = decode_request(files.at("48-cancel.then.request.json"));
   const CancelParams replaced = decode_cancel(then.params);
   CHECK(replaced.then && replaced.then->batch_id == "move" &&
         replaced.then->commands.size() == 2 &&

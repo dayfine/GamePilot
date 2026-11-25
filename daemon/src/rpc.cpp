@@ -539,7 +539,8 @@ SubmitParams decode_submit(const pa::JsonObject& params) {
 CancelParams decode_cancel(const pa::JsonObject& params) {
   CancelParams cancel;
   if (params.get_value("then") != nullptr) {
-    cancel.then = decode_submit(require_object(*params.get_value("then"), "then"));
+    cancel.then =
+        decode_submit(require_object(*params.get_value("then"), "then"));
   }
   return cancel;
 }

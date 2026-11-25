@@ -383,8 +383,7 @@ void Server::replace_input() {
   schedule_.clear();
   live_schedule_.clear();
   batch_owners_.clear();
-  if (backend_.info().takes_input &&
-      backend_.info().timing == Timing::kLive) {
+  if (backend_.info().takes_input && backend_.info().timing == Timing::kLive) {
     backend_.replace_queued_keys();
   }
 }
