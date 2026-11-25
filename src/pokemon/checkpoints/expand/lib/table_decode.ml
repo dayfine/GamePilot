@@ -27,7 +27,7 @@ let as_string where key = function
 let string where key fields =
   Result.bind (field where key fields) (as_string where key)
 
-let only where allowed fields =
+let known_fields_only where allowed fields =
   match List.find_opt (fun (k, _) -> not (List.mem k allowed)) fields with
   | Some (k, _) -> error where "%s is not a known field." k
   | None -> Ok ()
