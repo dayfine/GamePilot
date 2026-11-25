@@ -30,3 +30,16 @@ let pick_up ~log () =
 
 let scene ~log () =
   Scene_looks.settle Talk ~label:"scene" ~battle_ends:true ~log
+
+(* No screen ends the question but the question itself: the YES box's default
+   is taken only by our deliberate A. *)
+let never_past_question (_ : Effects.measurements) = false
+
+let answer_yes ~log () =
+  ignore (Effects.submit [ press_a () ]);
+  Menu_input.answer_yes ~code:"no_question" ~taken:never_past_question
+    "the Yes/No question";
+  Menu_input.settle_back ~label:"answer" ~log
+
+let answer ~log ~yes () =
+  if yes then Menu_input.run (answer_yes ~log) else talk ~log ()

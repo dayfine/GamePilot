@@ -31,8 +31,14 @@ val maps_dir : string
 (** PokemonSimulation's FireRed maps, from the repo root. *)
 
 val load_world : unit -> (Frlg_overworld.Frlg_steps.world, string) result
-(** Every runtime map of {!maps_dir}, found from the working directory, as mGBA
-    walks them: map edges do not stall ({!Frlg_overworld.Frlg_steps.world}). *)
+(** Every runtime map of {!maps_dir}, found from the working directory, and the
+    coded room of each Pokemon Center in the shared layout that has none
+    ({!Frlg_overworld.Standard_center.with_rooms}), as mGBA walks them: map
+    edges do not stall ({!Frlg_overworld.Frlg_steps.world}). *)
+
+val load_map : string -> (Grid_maps.Map_data.t, string) result
+(** The map of that name as {!load_world} has it: its runtime file, or a
+    standard Center's coded room. *)
 
 val check_plan : Pokemon_checkpoints.Plan.t -> (unit, string) result
 (** A FireRed plan whose [execution.menu], when given, is ["full"]: the Start

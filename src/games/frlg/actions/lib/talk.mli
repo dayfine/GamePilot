@@ -24,3 +24,17 @@ val scene :
   log:(string -> unit) ->
   unit ->
   (unit, Pokemon_checkpoints.Failure.cause) result
+
+val answer :
+  log:(string -> unit) ->
+  yes:bool ->
+  unit ->
+  (unit, Pokemon_checkpoints.Failure.cause) result
+(** The plan's [answer] event: A to the person the player faces, and the Yes/No
+    question their text comes to answered. YES as {!Menu_input.answer_yes}
+    answers it, then the talk settle through whatever the answer starts (Bill's
+    YES in the Cinnabar Center runs on to One Island); fails as [no_question]
+    when no question shows. NO is the talk itself: its settle presses B, and B
+    answers NO. The fork's [answer] follows a [talk] that stops at the first
+    message (talk_until_message); here a [talk] settles through the question, so
+    an [answer] starts the talk itself and the plan has no [talk] before it. *)

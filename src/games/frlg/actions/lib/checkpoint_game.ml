@@ -84,6 +84,7 @@ let builtin t (event : Pokemon_checkpoints.Plan.event) =
   match event.kind with
   | Own (Ready pose) -> walk_to t pose
   | Talk -> Talk.talk ~log ()
+  | Answer yes -> Talk.answer ~log ~yes ()
   | Scene -> Talk.scene ~log ()
   | Own Heal -> Menu_input.run (Heal_and_save.heal_at_nurse ~log)
   | Save -> Menu_input.run (Heal_and_save.save ~log)
@@ -151,10 +152,8 @@ let battle_on t wrap script =
 let battle t script = battle_on t Fun.id script
 
 let grind_game_steps t (plan : Grind_plan.t) =
-  let patch =
-    List.hd plan.strategy.spot.tiles
-    (* Grind_plan reads one *)
-  in
+  (* Grind_plan reads one *)
+  let patch = List.hd plan.strategy.spot.tiles in
   let find_battle = find_battle t ~pace:plan.strategy.pace ~patch in
   Grind_steps.make ~log:t.config.log ~party:t.party ~walk_to:(walk_to t)
     ~find_battle ~battle:(battle t)
