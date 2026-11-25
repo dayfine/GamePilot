@@ -64,13 +64,17 @@ let run start react body =
 
 let park start react () =
   run start react (fun () ->
-      match Console_park.park ~log Fire_red.tile with
+      match
+        Console_park.park ~log ~picture:Fire_red.nso_gba_picture Fire_red.tile
+      with
       | Ok () -> "ok"
       | Error e -> "error: " ^ e)
 
 let resume start react () =
   run start react (fun () ->
-      match Console_park.resume ~log Fire_red.tile with
+      match
+        Console_park.resume ~log ~picture:Fire_red.nso_gba_picture Fire_red.tile
+      with
       | Ok r -> "ok, " ^ Console_park.resumed_to_string r
       | Error e -> "error: " ^ e)
 

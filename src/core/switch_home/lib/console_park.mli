@@ -18,13 +18,20 @@ type resumed =
   | Launched  (** A on HOME showed the user select: the game started anew *)
 
 val park :
-  log:(string -> unit) -> Home_screen.tile_color -> (unit, string) result
-(** HOME, then waits for the HOME menu. Already on HOME: nothing (a HOME press
-    there would resume the game), dimmed or not. On the user select: B back to
-    HOME. *)
+  log:(string -> unit) ->
+  picture:Wire.box ->
+  Home_screen.tile_color ->
+  (unit, string) result
+(** HOME, then waits for the HOME menu. [picture] is where the game picture sits
+    in the frame (the daemon's [hello] viewport). Already on HOME: nothing (a
+    HOME press there would resume the game), dimmed or not. On the user select:
+    B back to HOME. *)
 
 val resume :
-  log:(string -> unit) -> Home_screen.tile_color -> (resumed, string) result
+  log:(string -> unit) ->
+  picture:Wire.box ->
+  Home_screen.tile_color ->
+  (resumed, string) result
 (** From HOME (or the user select) back to the game, as above. A dimmed HOME
     gets B first (nothing on HOME) to bring the light back. *)
 

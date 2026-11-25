@@ -44,8 +44,8 @@ let park_from ~log = function
           press ~hold_ms:home_hold_ms ~cooldown_ms:home_settle_ms Wire.Home;
           await_home ())
 
-let park ~log color =
-  Effects.with_probes (H.probes color) (fun () ->
+let park ~log ~picture color =
+  Effects.with_probes (H.probes ~picture color) (fun () ->
       let result = park_from ~log (screen ()) in
       (match result with
       | Ok () -> log ("[Park] " ^ H.to_string (screen ()))
@@ -162,8 +162,8 @@ let rec resume_from ~log = function
       until_game ~log ~launched:true
   | Home _ -> from_home ~log
 
-let resume ~log color =
-  Effects.with_probes (H.probes color) (fun () ->
+let resume ~log ~picture color =
+  Effects.with_probes (H.probes ~picture color) (fun () ->
       let screen = screen () in
       log ("[Resume] " ^ H.to_string screen);
       resume_from ~log screen)

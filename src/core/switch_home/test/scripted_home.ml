@@ -20,6 +20,7 @@ type screen =
       (** HOME scrolled, a part tile at the left, the cursor on FireRed (tile 0)
       *)
   | Home_on_buttons  (** HOME, the cursor on the eShop button below the row *)
+  | Close_popup  (** X on FireRed's tile: "Close the software...?" *)
   | User_select
   | Black  (** a launch's loading screen: every probe black *)
   | Intro  (** the Game Freak logo *)
@@ -34,6 +35,7 @@ let screen_name = function
   | Home_row_start -> "HOME (row start, FireRed out of view)"
   | Home_scrolled_on_fire_red -> "HOME (scrolled, cursor on FireRed)"
   | Home_on_buttons -> "HOME (cursor on the buttons)"
+  | Close_popup -> "the close popup"
   | User_select -> "user select"
   | Black -> "black"
   | Intro -> "intro"
@@ -77,6 +79,7 @@ let probes = function
   | Home_scrolled_on_fire_red ->
       capture "home-scrolled-part-tile-left-cursor-on-firered"
   | Home_on_buttons -> capture "home-cursor-on-eshop-button"
+  | Close_popup -> capture "home-close-software-popup"
   | User_select -> capture "user-select"
   | Black -> black_probes
   | Intro -> capture "launch-game-freak-intro"
@@ -111,20 +114,37 @@ let rec run_frames t ms stop =
     let f = frame t in
     if stop f then Some f else run_frames t (ms - 1) stop)
 
-let submit t commands : Wire.batch_done =
-  List.iter
-    (fun (c : Wire.command) ->
-      match c with
-      | Press { buttons; hold_ms; cooldown_ms; _ } ->
-          List.iter
-            (fun b ->
-              t.presses <- Wire.string_of_button b :: t.presses;
-              t.react t b (screen_at t t.clock_ms))
-            buttons;
-          ignore (run_frames t (hold_ms + cooldown_ms) (fun _ -> false))
-      | Wait { wait_ms } -> ignore (run_frames t wait_ms (fun _ -> false)))
-    commands;
+(* Runs the commands in turn; the first frame on which [stop] holds ends
+   them (a race's cancel). *)
+let rec run_commands t stop = function
+  | [] -> None
+  | (c : Wire.command) :: rest -> (
+      let ms =
+        match c with
+        | Press { buttons; hold_ms; cooldown_ms; _ } ->
+            List.iter
+              (fun b ->
+                t.presses <- Wire.string_of_button b :: t.presses;
+                t.react t b (screen_at t t.clock_ms))
+              buttons;
+            hold_ms + cooldown_ms
+        | Wait { wait_ms } -> wait_ms
+      in
+      match run_frames t ms stop with
+      | Some f -> Some f
+      | None -> run_commands t stop rest)
+
+let batch_done t : Wire.batch_done =
   { batch_id = "scripted"; seq = t.clock_ms; t_ms = float_of_int t.clock_ms }
+
+let submit t commands =
+  ignore (run_commands t (fun _ -> false) commands);
+  batch_done t
+
+let race t commands stop : Effects.raced =
+  match run_commands t stop commands with
+  | Some f -> Stopped f
+  | None -> Finished (batch_done t)
 
 let await t pred timeout_ms : Effects.awaited =
   let now = frame t in
@@ -145,6 +165,8 @@ let run t f =
           in
           match eff with
           | Effects.Submit commands -> answer (fun () -> submit t commands)
+          | Effects.Race (commands, stop) ->
+              answer (fun () -> race t commands stop)
           | Effects.Await (pred, timeout_ms) ->
               answer (fun () -> await t pred timeout_ms)
           | Effects.Now -> answer (fun () -> float_of_int t.clock_ms)

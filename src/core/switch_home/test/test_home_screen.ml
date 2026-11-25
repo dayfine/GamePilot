@@ -11,8 +11,13 @@ let shifted = Wire.read_image_probes "switch.shifted.probes.jsonl"
 
 let text probes =
   let m : Wire.frame = { seq = 1; t_ms = 0.; probes } in
-  Home_screen.to_string (Home_screen.read m)
-  ^ if Home_screen.black m then ", black" else ""
+  String.concat ""
+    [
+      Home_screen.to_string (Home_screen.read m);
+      (if Home_screen.black m then ", black" else "");
+      (if Close_game_popup.shown m then ", the close-game popup" else "");
+      (if Black_screen.shown m then ", the launch's black" else "");
+    ]
 
 let read name () = text (List.assoc ("./" ^ name ^ ".png") fixtures)
 
@@ -34,6 +39,42 @@ let shifted_cases =
 
 let case name input expectation : Table_test.case =
   { name; input = read input; expectation }
+
+(* A probe's box on a viewport, or "none" when it is not probed. *)
+let box_on picture id () =
+  match
+    List.find_opt
+      (fun (p : Wire.probe_spec) -> p.id = id)
+      (Home_screen.probes ~picture Fire_red.tile)
+  with
+  | None -> "none"
+  | Some p -> Printf.sprintf "%g %g %g %g" p.box.x p.box.y p.box.w p.box.h
+
+let native : Wire.box = { x = 0.; y = 0.; w = 1.; h = 1. }
+
+let viewport_cases : Table_test.case list =
+  [
+    {
+      name = "native viewport: the fork's box, unchanged";
+      input = box_on native "home.top";
+      expectation = "0.510223 0.019835 0.44145 0.034711";
+    };
+    {
+      name = "native viewport: the user icons read";
+      input = box_on native "home.user_icons";
+      expectation = "0.05 0.05 0.2 0.08";
+    };
+    {
+      name = "GBA viewport: a box partly outside the picture, clipped";
+      input = box_on Fire_red.nso_gba_picture "home.game_slot";
+      expectation = "0 0.254808 0.106154 0.394615";
+    };
+    {
+      name = "GBA viewport: the user icons, cut by the picture, left out";
+      input = box_on Fire_red.nso_gba_picture "home.user_icons";
+      expectation = "none";
+    };
+  ]
 
 let () =
   Table_test.run "home_screen"
@@ -64,5 +105,7 @@ let () =
        case "the Game Freak intro after a launch" "launch-game-freak-intro"
          "not HOME";
        case "FireRed's load menu" "firered-load-menu" "not HOME";
+       case "X on FireRed's tile: the close-software popup"
+         "home-close-software-popup" "not HOME, the close-game popup";
      ]
-    @ shifted_cases)
+    @ shifted_cases @ viewport_cases)
