@@ -21,7 +21,7 @@ Choices" screen. Nothing else is read from the save. The Switch's capture must b
 <!-- generated:commands -->
 ```sh
 # the Switch: each checkpoint once, from where the console is
-cd src && opam exec -- dune exec -- gamepilot checkpoints --program plza.autostory --from 01.00b --to 03.08b --mode testing --backend switch --serial PORT --capture DEVICE \
+cd src && opam exec -- dune exec -- gamepilot checkpoints --program plza.autostory --from 01.00b --to 03.09 --mode testing --backend switch --serial PORT --capture DEVICE \
     --watch
 ```
 <!-- /generated -->
@@ -54,8 +54,9 @@ cd src && opam exec -- dune exec -- gamepilot checkpoints --program plza.autosto
 | 03.08 | Wild Zone 1: fourth species |
 | 03.08a | Wild Zone 1: fifth species |
 | 03.08b | Out of Wild Zone 1's far gate |
+| 03.09 | From Wild Zone 1's gate into the Research Lab |
 
-<!-- plans: c9f4100873fe -->
+<!-- plans: 11cb86675144 -->
 <!-- /generated -->
 
 ## When it stops
@@ -77,11 +78,13 @@ always reloads its autosave when it follows 03.03c, since its timed legs assume 
 
 ## Known limits
 
-03.07 to 03.08b have their plans but are refused before they press anything (`no handler`): their
+03.07 to 03.09 have their plans but are refused before they press anything (`no handler`): their
 catches (`catch_tutorial`, `battle_then_catch`, `catch_in_zone`) and 03.08b's way out of the
 zone by its map (`run_out_of_zone_1`, `check_out_of_zone_1`) are not ported yet. 03.07's run
 to the gate is. The start checks of 03.08 to 03.08b name the wild zone, the party count or the A
-prompt, which nothing reads yet (`start_signature_unread`).
+prompt, which nothing reads yet (`start_signature_unread`), and so do 03.09's. 03.09's first walk
+faces a heading by the minimap's arrow, which nothing reads yet either (`heading_unread`, before any
+leg).
 
 Only 01.00b to 03.06 so far. 01.02's chase, 01.03's walk to Chikorita and the walks of 02.01 to
 03.06 are timed stick legs with no map, so they can miss; the chase then stops on Ryon's

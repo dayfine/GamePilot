@@ -51,7 +51,7 @@ let style ~where args =
 
 let walk ~where args =
   known_fields_only ~where
-    [ "legs"; "end"; "style"; "wait_before_ms"; "earliest_end_ms" ]
+    [ "legs"; "end"; "style"; "wait_before_ms"; "earliest_end_ms"; "heading" ]
     args;
   let move =
     {
@@ -62,4 +62,9 @@ let walk ~where args =
     }
   in
   let until = until ~where args in
-  { move; until; earliest_end_ms = earliest_end_ms ~where args until }
+  {
+    move;
+    until;
+    earliest_end_ms = earliest_end_ms ~where args until;
+    heading_deg = Option.map float_of_int (optional ~where "heading" args F.int);
+  }

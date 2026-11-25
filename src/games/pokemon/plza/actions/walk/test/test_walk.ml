@@ -278,7 +278,12 @@ let reads_every_poll n make =
 
 let step ?(until = None) ?(wait_before_ms = 0) legs steps =
   Walk.run_event steps ~walk_only:true "walk"
-    { move = { (move legs) with wait_before_ms }; until; earliest_end_ms = 0 }
+    {
+      move = { (move legs) with wait_before_ms };
+      until;
+      earliest_end_ms = 0;
+      heading_deg = None;
+    }
 
 let free_cases =
   [

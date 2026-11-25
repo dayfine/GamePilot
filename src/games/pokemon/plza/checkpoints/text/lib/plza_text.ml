@@ -15,13 +15,16 @@ let until = function
   | Some (Talk { after_legs }) ->
       [ (if after_legs then "into a talk after the legs" else "into a talk") ]
 
-let walk { move; until = u; earliest_end_ms } =
+let walk { move; until = u; earliest_end_ms; heading_deg } =
   String.concat " "
     (("walk" :: List.map leg move.legs)
     @ (if move.style = Steer then [ "steer" ] else [])
     @ (if move.wait_before_ms > 0 then
          [ Printf.sprintf "after %d ms" move.wait_before_ms ]
        else [])
+    @ (match heading_deg with
+      | Some h -> [ Printf.sprintf "facing %.0f" h ]
+      | None -> [])
     @ until u
     @
     if earliest_end_ms > 0 then

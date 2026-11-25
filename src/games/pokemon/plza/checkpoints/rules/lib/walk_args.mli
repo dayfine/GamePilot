@@ -53,6 +53,9 @@ type t = {
   earliest_end_ms : int;
       (** An end event seen before the last leg has been held this long was
           passed on the way, and the walk goes on; 0 for none. *)
+  heading_deg : float option;
+      (** The fork's [heading]: a minimap bearing (0 north, 90 east) to face
+          before the legs, read from the minimap's arrow. *)
 }
 (** A walk event's args. *)
 

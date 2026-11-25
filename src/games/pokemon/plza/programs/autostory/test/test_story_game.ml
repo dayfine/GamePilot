@@ -1217,6 +1217,15 @@ let cases =
       (refused "03.08b")
       "03.08b event 1 (zone_1_to_far_gate): no handler for game action \
        \"run_out_of_zone_1\"; 0 inputs";
+    case "03.09: the walk's heading fails before any leg (no arrow reader)"
+      (refused "03.09")
+      "03.09 event 1 (to_research_lab): heading_unread: to_research_lab: its \
+       heading (257 deg) needs the minimap arrow, which no reader here reads; \
+       0 inputs";
+    case "03.09's start signature (a party of 5, out of the zone): not read"
+      (start_check "03.09" party)
+      "start_signature_unread: 03.09: its start signature is not one minimap \
+       ({\"minimap\": \"<name>\"}): only the minimap is read here";
     case "the walk is walked before 03.03, run after"
       (fun () ->
         Printf.sprintf "%b %b"

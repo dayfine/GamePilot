@@ -3,7 +3,13 @@ type style = Face_then_walk | Steer
 type move = { legs : leg list; style : style; wait_before_ms : int }
 type end_event = Fade_white | Fade_black | Dialog | Prompt
 type until = Scene | Event of end_event | Talk of { after_legs : bool }
-type t = { move : move; until : until option; earliest_end_ms : int }
+
+type t = {
+  move : move;
+  until : until option;
+  earliest_end_ms : int;
+  heading_deg : float option;
+}
 
 (* In the order the C++ lists them. *)
 let end_events =
