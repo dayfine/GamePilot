@@ -40,7 +40,7 @@
           "seeds": "rng_seeds_mgba_sevii_save.json",
           "seed_offset": 4,
           "frame_model": "mgba",
-          "advances": [900, 4000],
+          "advances": [1000, 4000],
           "ball": "ultra-ball",
           "balls": 5,
           "attempts": 1
