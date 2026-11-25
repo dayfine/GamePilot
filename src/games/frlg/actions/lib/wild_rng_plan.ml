@@ -7,6 +7,7 @@ type t = {
   tid : int;
   sid : int;
   seeds : string;
+  seed_offset : int;
   frame_model : string;
   min_advance : int;
   max_advance : int;
@@ -14,6 +15,7 @@ type t = {
 }
 
 let max_id = 0xffff
+let seed_mask = 0xffff
 let default_min_advance = 900
 let default_max_advance = 4000
 let default_advances = (default_min_advance, default_max_advance)
@@ -30,6 +32,11 @@ let id ~where name args =
   let n = J.int ~where name args in
   if n < 0 || n > max_id then J.fail "%s%s is %d, not 0..65535" where name n
   else n
+
+let seed_offset ~where args =
+  match J.find "seed_offset" args with
+  | None -> 0
+  | Some _ -> id ~where "seed_offset" args
 
 let advances ~where args =
   match J.list_opt ~where "advances" args with
@@ -64,6 +71,7 @@ let read ~where args =
     tid = id ~where "tid" args;
     sid = id ~where "sid" args;
     seeds = J.string ~where "seeds" args;
+    seed_offset = seed_offset ~where args;
     frame_model = frame_model ~where args;
     min_advance;
     max_advance;
@@ -86,7 +94,10 @@ let seed_column t =
       (fun (c : R.Seeds_database.column) -> c.name = column)
       db.columns
   with
-  | Some c -> Ok (db.delays, c.seeds)
+  | Some c ->
+      Ok
+        ( db.delays,
+          Array.map (fun s -> (s + t.seed_offset) land seed_mask) c.seeds )
   | None -> Error (t.seeds ^ " has no column " ^ column)
 
 let slots t =

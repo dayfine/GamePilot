@@ -9,23 +9,35 @@ let obj json = Json_field.as_object "" (Yojson.Safe.from_string json)
 
 let plan_args =
   {|{"species": "ekans", "location": "route_10", "tid": 33002, "sid": 9011,
-     "seeds": "rng_seeds_mgba_route10_save.json", "frame_model": "mgba",
+     "seeds": "rng_seeds_mgba_sevii_save.json", "seed_offset": 8,
+     "frame_model": "mgba",
      "advances": [900, 4000], "ball": "poke-ball", "balls": 8}|}
 
 let decode json () =
   match Wild_rng_plan.decode (obj json) with
   | Ok t ->
-      Printf.sprintf "%s at %s, ids %d/%d, %s (%s), advances %d..%d: %s"
-        t.species t.location t.tid t.sid t.seeds t.frame_model t.min_advance
-        t.max_advance
+      Printf.sprintf "%s at %s, ids %d/%d, %s + %d (%s), advances %d..%d: %s"
+        t.species t.location t.tid t.sid t.seeds t.seed_offset t.frame_model
+        t.min_advance t.max_advance
         (Capture_plan.describe t.capture)
   | Error c -> Pokemon_engine.Failure.cause_to_string c
 
 let decoding =
   [
     case "02-shiny-ekans's args" (decode plan_args)
-      "ekans at route_10, ids 33002/9011, rng_seeds_mgba_route10_save.json \
+      "ekans at route_10, ids 33002/9011, rng_seeds_mgba_sevii_save.json + 8 \
        (mgba), advances 900..4000: 1 ekans, 1 encounters, 8 poke-ball";
+    case "no seed_offset: 0"
+      (decode
+         {|{"species": "ekans", "location": "route_10", "tid": 1, "sid": 2,
+            "seeds": "x.json", "frame_model": "mgba"}|})
+      "ekans at route_10, ids 1/2, x.json + 0 (mgba), advances 900..4000: 1 \
+       ekans, 1 encounters, 5 poke-ball";
+    case "a seed_offset out of range"
+      (decode
+         {|{"species": "ekans", "location": "route_10", "tid": 1, "sid": 2,
+            "seeds": "x.json", "seed_offset": -4, "frame_model": "mgba"}|})
+      "bad_args: wild_rng: seed_offset is -4, not 0..65535";
     case "a SID out of range"
       (decode
          {|{"species": "ekans", "location": "route_10", "tid": 1, "sid": 70000,

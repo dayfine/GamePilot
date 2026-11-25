@@ -326,7 +326,7 @@ none
 no repeat
 == wild_rng/plans/02-shiny-ekans.plan.json
 frlg 02-shiny-ekans from Route10 (12, 8) east: 2 game_action
-shiny_ekans: [wild_rng] game_action {"species":"ekans","location":"route_10","tid":33002,"sid":9011,"seeds":"rng_seeds_mgba_route10_save.json","frame_model":"mgba","advances":[900,4000],"ball":"poke-ball","balls":8,"attempts":1}
+shiny_ekans: [wild_rng] game_action {"species":"ekans","location":"route_10","tid":33002,"sid":9011,"seeds":"rng_seeds_mgba_sevii_save.json","seed_offset":8,"frame_model":"mgba","advances":[900,4000],"ball":"poke-ball","balls":8,"attempts":1}
 save_catch: [save_game] game_action {}
 retries 0
 postconditions:

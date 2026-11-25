@@ -15,14 +15,15 @@
           "location": "route_10",
           "tid": 33002,
           "sid": 9011,
-          "seeds": "rng_seeds_mgba_route10_save.json",
+          "seeds": "rng_seeds_mgba_sevii_save.json",
+          "seed_offset": 8,
           "frame_model": "mgba",
           "advances": [900, 4000],
           "ball": "poke-ball",
           "balls": 8,
           "attempts": 1
         },
-        "why": "The soonest shiny Ekans of the table: seed 08F5 (press 33050 ms after the reset), advance 988, Lv 11. SID 9011 was read once from this save's memory. Oddish, last in the party, knows Sweet Scent."
+        "why": "The soonest shiny Ekans of the table: seed 08F5 (press 33050 ms after the reset), advance 988, Lv 11. SID 9011 was read once from this save's memory. seed_offset 8: what 01's end save adds to the Sevii table's seeds on mGBA, measured. Oddish, last in the party, knows Sweet Scent."
       },
       {
         "id": "save_catch",
@@ -36,7 +37,7 @@
   "execution": {"menu": "full"},
   "metadata": {
     "phase": "testing",
-    "notes": "mGBA only: the seed table holds the seeds of 01-route10-grass's end save after backend.reset; another save shifts them. A miss fails the checkpoint (wild_rng_not_shiny), the catch unsaved.",
+    "notes": "mGBA only: the Sevii table plus 8 holds the seeds of 01-route10-grass's end save after backend.reset; a save made another number of saves later can shift them. A miss fails the checkpoint (wild_rng_not_shiny), the catch unsaved.",
     "postconditions": {"party_includes": ["ekans"]}
   }
 }

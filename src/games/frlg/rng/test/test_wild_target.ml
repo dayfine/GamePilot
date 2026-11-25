@@ -1,8 +1,9 @@
 (* Wild_target, Seeds_database.of_json and Encounters_database on the mGBA
    run that caught a shiny Ekans on Route 10 (TID 33002, SID 9011): seed BEF4,
    pressed 1837 frames (30756 ms) after the reset (the lab's 1836, counted
-   from a frame after it), advance 1555. The seed table
-   is the program's asset, measured on mGBA from the Route 10 save. *)
+   from a frame after it), advance 1555. The seed table is the asset measured
+   on mGBA from the Sevii save; the Route 10 save that run booted from adds 8
+   to each of its seeds (the plan's seed_offset). *)
 
 open Frlg_rng
 
@@ -42,11 +43,11 @@ let one_row () =
     (slots ()) ~species:"ekans" ~tid_xor_sid ~min_advance:1300 ~max_advance:1600
   |> found
 
+let sevii_table = "../../assets/rng_seeds_mgba_sevii_save.json"
+let route10_save_offset = 8
+
 let table () =
-  match
-    Seeds_database.of_json
-      (Yojson.Safe.from_file "../../assets/rng_seeds_mgba_route10_save.json")
-  with
+  match Seeds_database.of_json (Yojson.Safe.from_file sevii_table) with
   | Error e -> "error: " ^ e
   | Ok db ->
       let c = List.hd db.columns in
@@ -55,16 +56,15 @@ let table () =
         c.seeds.(0)
 
 let soonest () =
-  match
-    Seeds_database.of_json
-      (Yojson.Safe.from_file "../../assets/rng_seeds_mgba_route10_save.json")
-  with
+  match Seeds_database.of_json (Yojson.Safe.from_file sevii_table) with
   | Error e -> "error: " ^ e
   | Ok db ->
       let c = List.hd db.columns in
-      Wild_target.find Rng_timings.mgba ~delays:db.delays ~seeds:c.seeds
-        (slots ()) ~species:"ekans" ~tid_xor_sid ~min_advance:900
-        ~max_advance:4000
+      let seeds =
+        Array.map (fun s -> (s + route10_save_offset) land 0xffff) c.seeds
+      in
+      Wild_target.find Rng_timings.mgba ~delays:db.delays ~seeds (slots ())
+        ~species:"ekans" ~tid_xor_sid ~min_advance:900 ~max_advance:4000
       |> found
 
 let parse_error text () =
@@ -83,10 +83,10 @@ let () =
            26D0850C; csf 3348 ingame 19622";
       };
       {
-        name = "the mGBA table: press 1837 is row 103, seed BEF4";
+        name = "the Sevii table: press 1837 is row 103, seed BEEC (BEF4 less 8)";
         input = table;
         expectation =
-          "Mono / Help / A, 567 rows, 30756 ms: BEF4, 29032 ms: 1189";
+          "Mono / Help / A, 567 rows, 30756 ms: BEEC, 29032 ms: 1181";
       };
       {
         name = "the soonest shiny Ekans of the mGBA table";

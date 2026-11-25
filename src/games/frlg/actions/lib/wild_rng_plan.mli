@@ -18,7 +18,13 @@ type t = {
           [tid] it decides which PIDs are shiny. *)
   seeds : string;
       (** the seed table, a file under [src/games/frlg/assets/] in FR_Eng.json's
-          shape, measured from the checkpoint's start save *)
+          shape, measured on one save *)
+  seed_offset : int;
+      (** What the save the reset boots from adds to every seed of [seeds]
+          (16-bit, wrapping), measured: on mGBA a FireRed save boots a few timer
+          counts later or sooner by where its last save left the flash sectors
+          (0, 4, 8 or 12 on the Sevii saves), so one table serves every save
+          with its offset. 0 when not given. *)
   frame_model : string;  (** ["mgba"] or ["switch"] (Frlg_rng.Rng_timings) *)
   min_advance : int;
       (** The first RNG advance the search tries: fewer cannot be reached in
@@ -30,9 +36,9 @@ type t = {
 
 val decode : Json_field.obj -> (t, Pokemon_engine.Failure.cause) result
 (** ["species"], ["location"] (["route_10"]), ["tid"], ["sid"] (0..65535),
-    ["seeds"], ["frame_model"] (["mgba"]), ["advances"] ([[min, max]], default
-    [[900, 4000]]), ["ball"] (["poke-ball"]), ["balls"] (5), ["attempts"] (1).
-*)
+    ["seeds"], ["seed_offset"] (0..65535, default 0), ["frame_model"]
+    (["mgba"]), ["advances"] ([[min, max]], default [[900, 4000]]), ["ball"]
+    (["poke-ball"]), ["balls"] (5), ["attempts"] (1). *)
 
 val encounter_slots : string
 (** The file the grass slots are read from, FireRed's:
