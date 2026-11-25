@@ -14,8 +14,11 @@ val time : unit -> string
 val make_dirs : string -> unit
 (** The folder and its parents. *)
 
-val create : runs_dir:string -> checkpoint:string -> mode:string -> t
-(** The first free [<date>-<checkpoint>-<mode>-<n>] folder, made. *)
+val create :
+  runs_dir:string -> checkpoint:string -> mode:string -> (t, string) result
+(** The first free [<date>-<checkpoint>-<mode>-<n>] folder, made (the runs
+    folder too). A name is free when making it succeeds, so runs started at once
+    each get a folder of their own. [Error] when a folder cannot be made. *)
 
 val path : t -> string -> string
 (** A file in the folder. *)
@@ -88,7 +91,7 @@ val start :
   info ->
   checkpoint:string ->
   mode:string ->
-  run
+  (run, string) result
 (** The run's folder ({!create}) and its run.json. *)
 
 val finish : runs_dir:string -> run -> summary:string -> ending -> unit

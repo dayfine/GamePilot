@@ -57,9 +57,14 @@ val verdict : policy -> run list -> verdict
     every run ran, else run again. *)
 
 val until_decided :
-  policy -> trial:('r -> run) -> (int -> 'r) -> verdict * 'r list
+  policy ->
+  trial:('r -> run) ->
+  (int -> ('r, string) result) ->
+  verdict * 'r list
 (** Runs [n] = 1, 2, ... until the {!verdict} is no longer [Run_again]: the
-    verdict and the runs, oldest first. [trial] reads a run's outcome. *)
+    verdict and the runs, oldest first. [trial] reads a run's outcome. A run
+    that could not happen ([Error], e.g. no folder for its record) stops the
+    checkpoint with that error, the runs before it kept. *)
 
 (** {1 Attempts within a run}
 

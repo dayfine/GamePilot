@@ -81,14 +81,11 @@ let run_program p handle state =
   print_endline line;
   code
 
-(* Live, in a run folder of its own (Attached_run). *)
-let run_live (p : Program_registry.t) one_shot ~runs_dir ~port state =
-  let run =
-    Attached_run.start ~runs_dir ~kind:Program
-      ~program:(Program_registry.run_fields p)
-      ~label:p.id ~mode:"run"
+(* Live, in its run folder. *)
+let run_live_in one_shot run ~runs_dir ~port state =
+  let after passed =
+    if not passed then Attached_run.save_failure run.Run_record.record
   in
-  let after passed = if not passed then Attached_run.save_failure run.record in
   let line, code =
     Effects.with_run_folder run.record.dir (fun () ->
         program_outcome ~after one_shot (Live.run ~port) state)
@@ -96,6 +93,18 @@ let run_live (p : Program_registry.t) one_shot ~runs_dir ~port state =
   print_endline line;
   Attached_run.finish ~runs_dir run ~line ~code;
   code
+
+(* Live, in a run folder of its own (Attached_run). *)
+let run_live (p : Program_registry.t) one_shot ~runs_dir ~port state =
+  match
+    Attached_run.start ~runs_dir ~kind:Program
+      ~program:(Program_registry.run_fields p)
+      ~label:p.id ~mode:"run"
+  with
+  | Error e ->
+      print_endline (p.id ^ ": " ^ e);
+      1
+  | Ok run -> run_live_in one_shot run ~runs_dir ~port state
 
 let exit_with = function
   | Ok code -> exit code

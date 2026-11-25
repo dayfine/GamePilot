@@ -138,7 +138,11 @@ let finished ending () =
   let info =
     info Preflight ~program:[] ~from_id:"mg-01" ~to_id:"mg-01" ~backend:"mgba"
   in
-  let run = R.start ~runs_dir info ~checkpoint:"mg-01" ~mode:"preflight" in
+  let run =
+    match R.start ~runs_dir info ~checkpoint:"mg-01" ~mode:"preflight" with
+    | Ok run -> run
+    | Error e -> failwith e
+  in
   let started = read (R.path run.record "run.json") in
   R.finish ~runs_dir run ~summary:"table\nPREFLIGHT verdict" ending;
   let ended = Yojson.Safe.from_string (read (R.path run.record "run.json")) in
@@ -165,6 +169,66 @@ let files =
       (finished { result = "fail"; at = "preflight"; reason = "mismatch" })
       "started; preflight preflight fail; table\n\
        PREFLIGHT verdict; KEEP; 2 rows";
+  ]
+
+(* The folder names [create] gives, from a scratch runs folder holding
+   [taken]: the number after the mode, or the error. *)
+let created ?(taken = []) () () =
+  let runs_dir = temp_dir () in
+  Sys.mkdir runs_dir 0o755;
+  List.iter
+    (fun n ->
+      Sys.mkdir
+        (Filename.concat runs_dir
+           (Printf.sprintf "%s-cp-testing-%d" (R.date ()) n))
+        0o755)
+    taken;
+  match R.create ~runs_dir ~checkpoint:"cp" ~mode:"testing" with
+  | Ok t -> List.nth (List.rev (String.split_on_char '-' t.name)) 0
+  | Error _ -> "error"
+
+(* [domains] runs at once, each starting [each] runs in one runs folder (two
+   checkpoint runs started together, 2026-11-25, crashed with "File exists"):
+   the folders made, the distinct names and the errors. *)
+let raced ~domains ~each () =
+  let runs_dir = Filename.concat (temp_dir ()) "runs" in
+  let starts () =
+    List.init each (fun _ ->
+        R.create ~runs_dir ~checkpoint:"cp" ~mode:"verification")
+  in
+  let results =
+    List.concat_map Domain.join
+      (List.init domains (fun _ -> Domain.spawn starts))
+  in
+  let names = List.filter_map Result.to_option results in
+  let errors = List.length results - List.length names in
+  let distinct =
+    List.length
+      (List.sort_uniq compare (List.map (fun (t : R.t) -> t.name) names))
+  in
+  let made =
+    List.length (List.filter (fun (t : R.t) -> Sys.is_directory t.dir) names)
+  in
+  Printf.sprintf "%d made, %d distinct, %d errors" made distinct errors
+
+let runs_dir_a_file () =
+  let file = temp_dir () in
+  Out_channel.with_open_bin file (fun out -> Out_channel.output_string out "");
+  match R.create ~runs_dir:file ~checkpoint:"cp" ~mode:"testing" with
+  | Ok _ -> "made"
+  | Error e -> if String.ends_with ~suffix:"not a folder" e then "error" else e
+
+let folders =
+  [
+    case "an empty runs folder: -1" (created ()) "1";
+    case "-1 and -2 taken: -3" (created ~taken:[ 1; 2 ] ()) "3";
+    case "-1 taken, -2 free: -2, not past a gap"
+      (created ~taken:[ 1; 3 ] ())
+      "2";
+    case "runs started at once (4 x 25): each its own folder, no error"
+      (raced ~domains:4 ~each:25)
+      "100 made, 100 distinct, 0 errors";
+    case "the runs folder is a file: an error value" runs_dir_a_file "error";
   ]
 
 (* An old folder's times: daemon.json's zero and the wire log's last line;
@@ -237,4 +301,4 @@ let failure_saves =
 
 let () =
   Table_test.run "run_record"
-    (paths @ names @ files @ facts @ verdicts @ failure_saves)
+    (paths @ names @ files @ folders @ facts @ verdicts @ failure_saves)

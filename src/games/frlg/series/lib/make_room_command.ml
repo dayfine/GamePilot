@@ -194,7 +194,7 @@ let prepare ~plan_dir ~from_id ~at (setup : Pf.setup) =
   let need = Pr.chain_need plans in
   let* () = ensure_start setup from_id in
   let* world = Frlg_checkpoints.Checkpoint_run.load_world () in
-  let run =
+  let* run =
     Run_record.start ~runs_dir:setup.runs_dir setup.info ~checkpoint:M.id
       ~mode:"preflight"
   in
