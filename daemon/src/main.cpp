@@ -9,9 +9,15 @@
 // of frames and batch_done stay in game time (protocol/v1/README.md, Clock
 // and frames), so a program runs the same at any speed.
 //   gamepilot_daemon --backend switch (--replay VIDEO | --capture DEVICE)
-//   [--serial PORT] [--viewport x,y,w,h] [--port 47900] [--log f]
+//   [--serial PORT] [--viewport nso-gba|native|x,y,w,h] [--port 47900]
+//   [--log f]
 //   gamepilot_daemon --backend switch --serial PORT --board-check
 //   gamepilot_daemon --backend switch --capture DEVICE --capture-check PNG
+//
+// --viewport says where the game picture sits in the frame (viewport.h):
+// nso-gba, the default, is the GBA picture in the Switch's GBA app (FRLG);
+// native is a full-screen Switch game, the whole frame in 1920x1080 game
+// pixels; x,y,w,h moves the picture box and keeps the game size.
 //
 // Either takes [--watch-port 47901] [--listen ADDR] [--watch-token T] for the
 // watch page (watch_server.h): on 127.0.0.1 unless --listen opens it to the
@@ -52,8 +58,8 @@
 // Controller: the board must already run NS1 Wired Pro Controller, a mode the
 // daemon never changes), else to FakeSwitch's board. --board-check only starts
 // the session (checking the mode), prints what the board said and exits;
-// --capture-check saves one captured frame and checks the GBA picture sits
-// where nso_gba_viewport() says (switch_geometry.h). Without --serial, and
+// --capture-check saves one captured frame and checks the game picture sits
+// where the viewport says (switch_geometry.h). Without --serial, and
 // with --replay in place of --capture, both check the fakes: a dry run
 // (run/run_checkpoints_on_switch.sh --dry-run). Bring-up:
 // docs/switch-bring-up.md.
@@ -97,7 +103,8 @@ int usage() {
       "usage: gamepilot_daemon --backend mgba --mgba-port N [--port 47900] "
       "[--log FILE] [--fast | --speed S]\n"
       "       gamepilot_daemon --backend switch (--replay VIDEO | --capture "
-      "DEVICE) [--serial PORT] [--viewport x,y,w,h] [--port 47900] "
+      "DEVICE) [--serial PORT]\n"
+      "         [--viewport nso-gba|native|x,y,w,h] [--port 47900] "
       "[--log FILE]\n"
       "       gamepilot_daemon --backend switch [--serial PORT] --board-check\n"
       "       gamepilot_daemon --backend switch (--capture DEVICE | --replay "
@@ -199,6 +206,20 @@ bool valid_view_flags(Flags& flags) {
          flags.server.keepawake.idle_ms == 0;
 }
 
+// A viewport name sets the whole viewport; x,y,w,h only its picture box.
+bool parse_viewport(const char* text, gamepilot::Viewport& viewport) {
+  if (const auto named = gamepilot::named_viewport(text)) {
+    viewport = *named;
+    return true;
+  }
+  const auto box = gamepilot::parse_box(text);
+  if (!box) {
+    return false;
+  }
+  viewport.picture = *box;
+  return true;
+}
+
 bool parse_flags(int argc, char** argv, Flags& flags) {
   for (int i = 1; i < argc; i++) {
     const std::string_view arg = argv[i];
@@ -220,11 +241,9 @@ bool parse_flags(int argc, char** argv, Flags& flags) {
     } else if (arg == "--capture-check" && has_value) {
       flags.capture_check = argv[++i];
     } else if (arg == "--viewport" && has_value) {
-      const auto box = gamepilot::parse_box(argv[++i]);
-      if (!box) {
+      if (!parse_viewport(argv[++i], flags.switch_options.viewport)) {
         return false;
       }
-      flags.switch_options.viewport.picture = *box;
     } else if (arg == "--port" && has_value) {
       if (!parse_port(argv[++i], flags.server.port)) {
         return false;
