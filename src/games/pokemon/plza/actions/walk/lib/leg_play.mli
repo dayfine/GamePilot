@@ -5,7 +5,7 @@
 type game_steps = {
   submit : Wire.command -> unit;
       (** Send one input and return once it is done. *)
-  read_screen : unit -> Screen.t;  (** Read the screen. *)
+  read_screen : unit -> Walk_screen.t;  (** Read the screen. *)
   log : string -> unit;  (** A line for the log and the watch page. *)
   log_detail : string -> unit;  (** A line for the log alone. *)
 }
@@ -33,6 +33,3 @@ val hold_last_leg :
   (unit, Engine_run.Failure.cause) result
 (** One slice of that many ms of the last leg, run at its angle when steered,
     else straight on. *)
-
-val last : 'a list -> 'a
-(** The last of a non-empty list. *)

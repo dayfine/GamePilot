@@ -12,20 +12,19 @@
     at its own angle instead, with an L press before an angled leg after the
     first. A facing or walk after which the screen stayed still was dropped (or
     walked into a wall) and is played once more. Every walk and held slice asks
-    to run ({!Inputs.Run}); [walk_only] walks it, as before dash is unlocked
-    (01.01).
+    to run ({!Walk_inputs.Run}); [walk_only] walks it, as before dash is
+    unlocked (01.01).
 
     With a story battle ahead in the checkpoint ([battle_ahead]), as the fork's
     walk action (PokemonLZA_AutoStoryActionTable.cpp, fork PR 725 on its
     plza/lean branch): the battle HUD before the walk, on two reads in a row of
     its last leg, or after a failed walk is [battle_on_screen] ({!Battle_stop}),
-    and the caller goes on at the battle. The map walks ({!Map_walk}) do not
-    stop on a battle, as the fork's do not. *)
+    and the caller goes on at the battle. *)
 
 type game_steps = Leg_play.game_steps = {
   submit : Wire.command -> unit;
       (** Send one input and return once it is done. *)
-  read_screen : unit -> Screen.t;  (** Read the screen. *)
+  read_screen : unit -> Walk_screen.t;  (** Read the screen. *)
   log : string -> unit;  (** A line for the log and the watch page. *)
   log_detail : string -> unit;  (** A line for the log alone. *)
 }

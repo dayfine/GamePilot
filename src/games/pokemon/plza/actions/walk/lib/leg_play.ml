@@ -3,7 +3,7 @@ module Failure = Engine_run.Failure
 
 type game_steps = {
   submit : Wire.command -> unit;
-  read_screen : unit -> Screen.t;
+  read_screen : unit -> Walk_screen.t;
   log : string -> unit;
   log_detail : string -> unit;
 }
@@ -19,24 +19,24 @@ let face_release_ms = 100
 
 let recenter steps =
   steps.submit
-    (Inputs.button Wire.L ~hold_ms:recenter_hold_ms
+    (Walk_inputs.button Wire.L ~hold_ms:recenter_hold_ms
        ~release_ms:recenter_release_ms)
 
 let tilt steps ~walk_only pace ~degrees ~duration_ms ~release_ms =
-  match Inputs.tilt ~walk_only pace ~degrees ~duration_ms ~release_ms with
+  match Walk_inputs.tilt ~walk_only pace ~degrees ~duration_ms ~release_ms with
   | Ok input -> Ok (steps.submit input)
   | Error e -> Error (Failure.cause ~repeats:true "walk_stick" e)
 
 (* Runs straight on, or at the leg's angle when steered. *)
 let run steps ~walk_only ~degrees duration_ms =
-  tilt steps ~walk_only Inputs.Run ~degrees ~duration_ms ~release_ms:0
+  tilt steps ~walk_only Walk_inputs.Run ~degrees ~duration_ms ~release_ms:0
 
 (* L, a tilt toward the angle, then L again: the walk goes where the camera
    looks. *)
 let face steps ~walk_only degrees =
   recenter steps;
   let* () =
-    tilt steps ~walk_only Inputs.Walk ~degrees ~duration_ms:face_tilt_ms
+    tilt steps ~walk_only Walk_inputs.Walk ~degrees ~duration_ms:face_tilt_ms
       ~release_ms:face_release_ms
   in
   Ok (recenter steps)

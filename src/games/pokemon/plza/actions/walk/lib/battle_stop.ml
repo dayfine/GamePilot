@@ -3,7 +3,7 @@ module Failure = Engine_run.Failure
 let battle_on_screen = Failure.cause "battle_on_screen" "battle on screen"
 let reads_in_a_row = 2
 
-let streak ~stop_on_battle streak (screen : Screen.t) =
+let streak ~stop_on_battle streak (screen : Walk_screen.t) =
   if stop_on_battle && screen.battle then streak + 1 else 0
 
 let holds streak = streak >= reads_in_a_row
@@ -16,7 +16,7 @@ let stopped log walk ~held_ms =
        walk held_ms);
   Error battle_on_screen
 
-type game_steps = { read_screen : unit -> Screen.t; wait : int -> unit }
+type game_steps = { read_screen : unit -> Walk_screen.t; wait : int -> unit }
 
 let looks = 8
 let look_ms = 250

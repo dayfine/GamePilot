@@ -28,7 +28,7 @@ type game_steps = {
 
 val screen_game_steps :
   submit:(Wire.command -> unit) ->
-  read_screen:(unit -> Screen.t) ->
+  read_screen:(unit -> Walk_screen.t) ->
   log_detail:(string -> unit) ->
   game_steps
 (** The steps, with the arrow read off a walk's screen read. *)

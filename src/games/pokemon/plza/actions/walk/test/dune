@@ -1,5 +1,5 @@
 (tests
- (names test_walk test_map_leg test_face_heading)
+ (names test_walk test_face_heading)
  (libraries
   gamepilot.table_test
   gamepilot.wire

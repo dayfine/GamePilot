@@ -10,7 +10,7 @@
 
 type game_steps = {
   submit : Wire.command -> unit;
-  read_screen : unit -> Screen.t;
+  read_screen : unit -> Walk_screen.t;
   log : string -> unit;
   log_detail : string -> unit;
 }

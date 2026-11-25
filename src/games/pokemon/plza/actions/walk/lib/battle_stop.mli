@@ -7,7 +7,7 @@
 val battle_on_screen : Engine_run.Failure.cause
 (** [battle_on_screen]: the run goes on at the story battle. *)
 
-val streak : stop_on_battle:bool -> int -> Screen.t -> int
+val streak : stop_on_battle:bool -> int -> Walk_screen.t -> int
 (** The battle HUD's reads in a row, this one counted; 0 without
     [stop_on_battle]. *)
 
@@ -23,7 +23,7 @@ val stopped :
     ["[PLZA] <walk>: battle HUD showed after <held_ms> ms of the last leg:
      stopping walk."], then {!battle_on_screen}. *)
 
-type game_steps = { read_screen : unit -> Screen.t; wait : int -> unit }
+type game_steps = { read_screen : unit -> Walk_screen.t; wait : int -> unit }
 (** What the check reads and does in the game. *)
 
 val showing : game_steps -> bool
