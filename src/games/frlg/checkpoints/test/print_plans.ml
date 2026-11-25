@@ -9,17 +9,20 @@ let plan_files dir =
   |> List.filter (fun name -> Filename.check_suffix name ".plan.json")
   |> List.sort compare
 
-(* src/games/frlg/programs/<program>/plans/*.plan.json, as
-   "<program>/plans/<file>". *)
+(* src/games/frlg/programs/<program>/plans/*.plan.json, named
+   "<program>/plans/<file>" with "/" on every OS, so the golden file is the
+   same on Windows. *)
 let program_plans programs =
   Sys.readdir programs |> Array.to_list |> List.sort compare
   |> List.concat_map (fun program ->
-         let plans = Filename.concat program "plans" in
-         if Sys.file_exists (Filename.concat programs plans) then
-           List.map (Filename.concat plans)
-             (plan_files (Filename.concat programs plans))
+         let dir = Filename.concat (Filename.concat programs program) "plans" in
+         if Sys.file_exists dir then
+           List.map
+             (fun file ->
+               ( String.concat "/" [ program; "plans"; file ],
+                 Filename.concat dir file ))
+             (plan_files dir)
          else [])
-  |> List.map (fun name -> (name, Filename.concat programs name))
 
 let authored_plans () =
   let relative = "third_party/PokemonSimulation/data/story/frlg-authored" in
