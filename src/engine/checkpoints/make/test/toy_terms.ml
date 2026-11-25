@@ -1,57 +1,22 @@
-(* A toy game's terms, to prove the engine needs no tile grid and no Pokémon:
+(* A toy game's rules, to prove the engine needs no tile grid and no Pokémon:
    the player stands in a zone (a place, and maybe a spot in it), its own
    kinds are a walk that holds a direction until a landmark shows and a rest
    at an inn, and a checkpoint promises gold and flags. *)
 
 open Engine_postcondition
-module F = Json_field
-
-let known ~where allowed obj =
-  Engine_plan.Plan_fields.known_fields_only ~where allowed obj
 
 module Pose = struct
-  type t = { place : string; spot : string option } [@@deriving yojson]
+  type t = { place : string; spot : string option }
   type observed = t
-
-  let decode ~where obj =
-    F.catch (fun () ->
-        known ~where [ "place"; "spot" ] obj;
-        {
-          place = F.string ~where "place" obj;
-          spot = F.string_opt ~where "spot" obj;
-        })
 
   (* A pose without a spot holds anywhere in its place. *)
   let matches pose observed =
     pose.place = observed.place
     && (pose.spot = None || pose.spot = observed.spot)
-
-  let text p = match p.spot with Some s -> p.place ^ "/" ^ s | None -> p.place
-  let observed_text = text
 end
 
 module Kind = struct
   type t = Walk of { toward : string; until : string } | Rest
-
-  let walk ~where args =
-    F.catch (fun () ->
-        known ~where [ "toward"; "until" ] args;
-        Walk
-          {
-            toward = F.string ~where "toward" args;
-            until = F.string ~where "until" args;
-          })
-
-  let rest ~where args =
-    F.catch (fun () ->
-        known ~where [] args;
-        Rest)
-
-  let decode = function "walk" -> Some walk | "rest" -> Some rest | _ -> None
-
-  let text = function
-    | Walk { toward; until } -> Printf.sprintf "walk %s until %s" toward until
-    | Rest -> "rest"
 end
 
 module Postconditions = struct
@@ -59,22 +24,6 @@ module Postconditions = struct
 
   (* What the game read: the gold now and at the start, and each flag read. *)
   type reads = { gold_now : int option; start : int option; set : string list }
-
-  let gold ~where obj =
-    match F.find "gold" obj with
-    | None -> None
-    | Some _ -> Some (Count.Gained (F.int ~where "gold" obj))
-
-  let decode ~where obj =
-    F.catch (fun () ->
-        known ~where [ "gold"; "flags" ] obj;
-        {
-          gold = gold ~where obj;
-          flags =
-            Option.fold ~none:[]
-              ~some:(F.strings (where ^ "flags"))
-              (F.find "flags" obj);
-        })
 
   let check_gold (p : t) reads =
     match (p.gold, reads.gold_now) with
@@ -90,13 +39,4 @@ module Postconditions = struct
       set
 
   let check p reads = check_gold p reads @ List.map (check_flag reads) p.flags
-
-  let text p =
-    Option.fold ~none:[] ~some:(fun c -> [ "gold " ^ Count.text c ]) p.gold
-    @ if p.flags = [] then [] else [ "flags " ^ String.concat ", " p.flags ]
-end
-
-module Saved = struct
-  type t = { start : int option; [@key "start_gold"] at : Pose.t option }
-  [@@deriving yojson]
 end

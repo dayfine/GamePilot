@@ -332,7 +332,7 @@ let kept_cases =
         match Saved.of_yojson (`Assoc [ ("at", `Assoc pose) ]) with
         | Ok _ -> "read"
         | Error e -> e)
-      "Pose.observed.at_map";
+      "Pokemon_saved.observed.at_map";
     case "spent, checked from the event against the checkpoint's start"
       (fun () -> spent_from ~start:(Some 29202))
       "money: passed: spent $4100 ($29202 to $25102)";

@@ -29,8 +29,7 @@ let summary file () =
     match Checkpoint_run.check_plan p with Ok () -> "frlg" | Error e -> e
   in
   let start =
-    Option.fold ~none:"no start"
-      ~some:Pokemon_checkpoints.Pose.observed_to_string
+    Option.fold ~none:"no start" ~some:Pokemon_checkpoints.Pose_text.observed
       (Checkpoint_run.start_of p.checkpoint)
   in
   let missing =
@@ -106,7 +105,7 @@ let capped cap file () =
 let grind_save_point () =
   let start id =
     match (plan (id ^ ".plan.json")).checkpoint.start with
-    | Some (Grid g) -> Pokemon_checkpoints.Pose.grid_to_string g
+    | Some (Grid g) -> Pokemon_checkpoints.Pose_text.grid g
     | Some (Zone _) | None -> "not a tile"
   in
   let a = plan "04-grind-farfetchd.plan.json"
@@ -119,7 +118,7 @@ let grind_save_point () =
   in
   String.concat "; "
     (List.map
-       (Option.fold ~none:"none" ~some:Pokemon_checkpoints.Pose.grid_to_string)
+       (Option.fold ~none:"none" ~some:Pokemon_checkpoints.Pose_text.grid)
        ends
     @ [ start "05-grind-mr-mime"; start "06-grind-return" ])
 

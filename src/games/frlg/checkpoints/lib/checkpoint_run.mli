@@ -78,7 +78,7 @@ type keep_event_state =
 
 val run :
   ?end_at:Pokemon_checkpoints.Pose.grid ->
-  ?on_event:(int -> Engine_run.Event_progress.t -> unit) ->
+  ?on_event:(int -> string Engine_run.Event_progress.t -> unit) ->
   ?actions:(string * Pokemon_checkpoints.Game.game_action) list ->
   ?from_event:from_event ->
   ?keep_event_state:keep_event_state ->

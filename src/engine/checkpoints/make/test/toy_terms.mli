@@ -1,4 +1,6 @@
-(** A toy game's terms for the engine's tests: zones and no grid. *)
+(** A toy game's rules for the engine's tests: zones and no grid. Pure: its plan
+    codec ({!Toy_codec}), text ({!Toy_text}) and kept reads ({!Toy_saved}) are
+    their own modules. *)
 
 (** Where the player stands: a zone. *)
 module Pose : sig
@@ -27,13 +29,4 @@ module Postconditions : sig
   (** The gold now and at the start, and the flags set. *)
 
   include Engine_terms.POSTCONDITIONS with type t := t and type reads := reads
-end
-
-(** What a toy run keeps beside an event's state. *)
-module Saved : sig
-  type t = { start : int option; at : Pose.t option }
-  (** The gold at the checkpoint's start, and where the player was reckoned to
-      stand. *)
-
-  include Engine_terms.SAVED with type t := t
 end

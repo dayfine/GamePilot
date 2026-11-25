@@ -32,7 +32,10 @@ let cases =
       (after true C.Stopped) "nothing";
     case "unmet postconditions are an end check"
       (fun () ->
-        C.outcome_name (C.outcome_of_failure (Unmet_postconditions [ "money" ])))
+        C.outcome_name
+          (C.outcome_of_failure
+             (Unmet_postconditions
+                [ Engine_postcondition.Postcondition.not_read "money" ])))
       (C.outcome_name C.Failed_end_check);
     case "no handler is an event failure"
       (fun () -> C.outcome_name (C.outcome_of_failure (No_handler "walk")))

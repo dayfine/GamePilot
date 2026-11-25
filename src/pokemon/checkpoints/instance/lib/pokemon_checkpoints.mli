@@ -1,10 +1,14 @@
-(** The checkpoint engine over Pokémon's terms ({!Pokemon_terms}): the plans,
-    handlers, runner, failures, event states and repeats every Pokémon game
-    uses, with grid poses, Pokémon kinds and Pokémon promises in their types,
-    and those terms' own modules beside them. *)
+(** The checkpoint engine over Pokémon: its rules ({!Pokemon_terms}), read from
+    plans by {!Pokemon_plan_codec}, printed by {!Pokemon_text} and kept beside
+    an event's state by {!Pokemon_saved}. The plans, handlers, runner, failures,
+    event states and repeats every Pokémon game uses, with grid poses, Pokémon
+    kinds and Pokémon promises in their types, and those rules' own modules
+    beside them. *)
 
 include module type of struct
-  include Engine_checkpoints.Make (Pokemon_terms)
+  include
+    Engine_checkpoints.Make (Pokemon_terms) (Pokemon_plan_codec) (Pokemon_text)
+      (Pokemon_saved)
 end
 
 module Pose = Pokemon_terms.Pose
@@ -21,5 +25,11 @@ module Postcondition_check = Pokemon_terms.Postcondition_check
 (** {!Pokemon_terms.Postcondition_check}: those promises checked against what
     the game read. *)
 
-module Saved = Pokemon_terms.Saved
-(** {!Pokemon_terms.Saved}: what a run keeps beside an event's save state. *)
+module Pose_text = Pokemon_text.Pose_text
+(** {!Pokemon_text.Pose_text}: poses as text. *)
+
+module Postconditions_text = Pokemon_text.Postconditions_text
+(** {!Pokemon_text.Postconditions_text}: the promises as text. *)
+
+module Saved = Pokemon_saved
+(** {!Pokemon_saved}: what a run keeps beside an event's save state. *)

@@ -1,0 +1,11 @@
+(library
+ (name engine_text)
+ (public_name gamepilot.engine_text)
+ (modules_without_implementation terms_text)
+ (libraries
+  yojson
+  gamepilot.engine_postcondition
+  gamepilot.engine_terms
+  gamepilot.engine_plan
+  gamepilot.engine_plan_codec
+  gamepilot.engine_run))

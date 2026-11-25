@@ -1,0 +1,4 @@
+(library
+ (name engine_saved)
+ (public_name gamepilot.engine_saved)
+ (libraries yojson gamepilot.repo_io gamepilot.engine_run))

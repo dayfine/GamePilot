@@ -1,6 +1,7 @@
+open Pokemon_terms
 module F = Json_field
 open Engine_postcondition
-open Engine_plan.Plan_fields
+open Engine_plan_codec.Plan_fields
 
 let money_range ~where obj : Money.t =
   let min = F.int ~where "min" obj and max = F.int ~where "max" obj in

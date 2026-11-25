@@ -68,8 +68,7 @@ let run ?(world = Frlg_world.pallet) ?(react = react) ?(checkpoint = checkpoint)
     | Error f -> Pokemon_checkpoints.Failure.to_string f
   in
   let at =
-    Option.fold ~none:"unknown"
-      ~some:Pokemon_checkpoints.Pose.observed_to_string
+    Option.fold ~none:"unknown" ~some:Pokemon_checkpoints.Pose_text.observed
       ((Checkpoint_game.game t).position ())
   in
   Printf.sprintf "%s; at %s; %s" outcome at (S.presses_text screen)
