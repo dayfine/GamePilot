@@ -14,6 +14,9 @@
   fixtures/switch.shifted.rg.probes.jsonl
   switch.shifted.rg.probes.jsonl))
 
+(rule
+ (copy fixtures/switch.second.probes.jsonl switch.second.probes.jsonl))
+
 (tests
  (names
   test_dialog_readers
@@ -26,7 +29,9 @@
   test_minimap
   test_wild_battle_readers
   test_minimap_arrow
-  test_map_pin)
+  test_map_pin
+  test_party_slots
+  test_lock_plate)
  (modules
   test_dialog_readers
   test_story_readers
@@ -39,9 +44,12 @@
   test_wild_battle_readers
   test_minimap_arrow
   test_map_pin
+  test_party_slots
+  test_lock_plate
   fixture_frames)
  (deps
   switch.probes.jsonl
   switch.shifted.probes.jsonl
-  switch.shifted.rg.probes.jsonl)
+  switch.shifted.rg.probes.jsonl
+  switch.second.probes.jsonl)
  (libraries gamepilot.wire gamepilot.table_test gamepilot.plza_readers))

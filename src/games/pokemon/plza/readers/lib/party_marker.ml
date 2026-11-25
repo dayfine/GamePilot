@@ -122,3 +122,11 @@ let in_slot m marker i =
 
 let slot_shows m i = List.exists (fun marker -> in_slot m marker i) markers
 let shown m = List.exists (slot_shows m) (List.init slots Fun.id)
+
+let down_markers =
+  List.filter (fun m -> m.name = "down" || m.name = "down_interior") markers
+
+let down_slot m =
+  List.find_opt
+    (fun i -> List.exists (fun marker -> in_slot m marker i) down_markers)
+    (List.init slots Fun.id)

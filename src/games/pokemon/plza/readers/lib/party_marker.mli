@@ -15,8 +15,9 @@
     are the fork's at 4K scaled to 1080p; aspect and fill within 0.8 to 1.25 of
     the template's.
 
-    Where it differs: the fork keeps which slot shows each marker; this says
-    only whether any does. *)
+    Where it differs: the fork keeps which slot shows each marker, up and down;
+    this says whether any does ({!shown}) and which slot shows the down one
+    ({!down_slot}), the one the party count needs. *)
 
 val probes : picture:Wire.box -> assets:Blob_assets.t -> Wire.probe_spec list
 (** The probes, for a game picture at [picture] in the frame: 24, four templates
@@ -24,3 +25,7 @@ val probes : picture:Wire.box -> assets:Blob_assets.t -> Wire.probe_spec list
 
 val shown : Effects.measurements -> bool
 (** A marker shows under some slot; [false] when the probes are missing. *)
+
+val down_slot : Effects.measurements -> int option
+(** The first slot showing the D-pad down marker (its button or its inside): the
+    Pokémon sent out (the fork's [dpad_down_idx]). *)

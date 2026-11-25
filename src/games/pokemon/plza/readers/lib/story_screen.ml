@@ -43,6 +43,8 @@ let probes ~picture ~assets =
       Run_prompt.probes ~picture ~assets;
       Minimap_arrow.probes ~picture;
       Map_pin.probes ~picture;
+      Party_slots.card_probes ~picture;
+      Lock_plate.probes ~picture;
       Alert_eye.probes ~picture ~assets;
     ]
 
