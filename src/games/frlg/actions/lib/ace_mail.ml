@@ -187,8 +187,7 @@ let run_with ~action read perform args =
   Result.bind (Action_args.decode ~action read args) (fun v ->
       M.run (fun () -> perform v))
 
-let on_member party ~action read perform (_ : Pokemon_checkpoints.Plan.event)
-    args =
+let on_member party ~action read perform (_ : Pokemon_engine.Plan.event) args =
   run_with ~action
     (fun ~where args -> (Action_args.member ~where args, read ~where args))
     (fun (member, v) ->
@@ -203,7 +202,7 @@ let handlers ~log ~party =
       on_member party ~action:"write_glitched_mail" words (fun slot ws ->
           write_glitched_mail ~log ~slot ws) );
     ( "check_box_slot",
-      fun (_ : Pokemon_checkpoints.Plan.event) args ->
+      fun (_ : Pokemon_engine.Plan.event) args ->
         run_with ~action:"check_box_slot" slot_check (check_box_slot ~log) args
     );
   ]

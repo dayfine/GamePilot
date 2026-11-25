@@ -11,7 +11,7 @@ val decode :
   action:string ->
   (where:string -> Json_field.obj -> 'a) ->
   Json_field.obj ->
-  ('a, Pokemon_checkpoints.Failure.cause) result
+  ('a, Pokemon_engine.Failure.cause) result
 (** Runs the reader on the args with ["<action>: "] as [where]. *)
 
 val party_slots : int

@@ -54,9 +54,23 @@
   gamepilot.grid_geometry
   gamepilot.grid_maps
   gamepilot.grid_planning
-  gamepilot.pokemon_checkpoints
+  gamepilot.pokemon_engine
   gamepilot.frlg_overworld
   frlg_overworld_fixtures))
+
+(test
+ (name test_battle_flash)
+ (modules test_battle_flash)
+ (deps
+  fixtures/viridian_forest_walk_flash.fade.jsonl
+  fixtures/viridian_forest_quiet_steps.fade.jsonl
+  fixtures/route3_walk_flash.fade.jsonl
+  fixtures/route3_turn_flash.fade.jsonl)
+ (libraries
+  gamepilot.table_test
+  gamepilot.wire
+  gamepilot.effects
+  gamepilot.frlg_overworld))
 
 (test
  (name test_warp_fade_in)

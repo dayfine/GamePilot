@@ -11,7 +11,7 @@ let names = [ "TwoIsland"; "TwoIsland_JoyfulGameCorner"; "TwoIsland_Harbor" ]
 
 let walk ~from:(map, x, y, facing) (goal_map, tx, ty, goal_facing) () =
   let w = mgba_world names in
-  let goal : Pokemon_checkpoints.Pose.grid =
+  let goal : Pokemon_engine.Pose.grid =
     {
       map = goal_map;
       tiles = [ { x = tx; y = ty } ];

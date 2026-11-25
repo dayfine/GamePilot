@@ -115,6 +115,7 @@ class FakeSwitch : public BoardPort {
   void on_message(const std::uint8_t* message, std::size_t bytes);
   void finish_due_commands(double now);
   void cancel_queued(double now);
+  bool replace_on_next_ = false;  // the next state replaces the running one
   double next_finish_ms() const;
 
   const Clock& clock_;

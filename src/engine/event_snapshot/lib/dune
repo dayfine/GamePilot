@@ -1,0 +1,10 @@
+(library
+ (name engine_event_snapshot)
+ (public_name gamepilot.engine_event_snapshot)
+ (libraries
+  yojson
+  gamepilot.repo_io
+  gamepilot.engine_rules
+  gamepilot.engine_run)
+ (preprocess
+  (pps ppx_deriving_yojson)))

@@ -58,7 +58,7 @@ val slot_verdict : slot_check -> box_view -> verdict
 val handlers :
   log:(string -> unit) ->
   party:Party_roster.t ref ->
-  (string * Pokemon_checkpoints.Game.game_action) list
+  (string * Pokemon_engine.Game.game_action) list
 (** ["write_glitched_mail"] and ["check_box_slot"], their args decoded first (a
     wrong arg fails as [bad_args] before anything is pressed); [party] finds the
     member a ["species"] names, [log] gets each step's line. *)

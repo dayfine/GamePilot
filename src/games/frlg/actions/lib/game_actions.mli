@@ -11,12 +11,10 @@ type context = {
 }
 
 val perform :
-  context ->
-  Action_requests.t ->
-  (unit, Pokemon_checkpoints.Failure.cause) result
+  context -> Action_requests.t -> (unit, Pokemon_engine.Failure.cause) result
 (** Runs the action. An in-game trade whose offer is gone and whose [receive] is
     in the party already passes without a press (it ran before this save). *)
 
-val handlers : context -> (string * Pokemon_checkpoints.Game.game_action) list
+val handlers : context -> (string * Pokemon_engine.Game.game_action) list
 (** Every FRLG game action a plan can name, by name: each decodes its args, then
     does the action. *)

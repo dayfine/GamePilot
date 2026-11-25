@@ -65,7 +65,7 @@ let scan ?stuck ?(rows = 130) target () =
         (Option.value ~default:"-" (word_at g ~row:g.row ~col:g.col))
         (String.concat " " (List.rev g.presses))
   | exception Menu_input.Action_failed c ->
-      Pokemon_checkpoints.Failure.cause_to_string c
+      Pokemon_engine.Failure.cause_to_string c
 
 let scan_cases =
   [
@@ -78,13 +78,12 @@ let scan_cases =
       "on KARATE CHOP after [Down Down Down Down Down]";
     case "scan: a word the list lacks: not found once the rows run out"
       (scan ~rows:8 "THRASH")
-      (Pokemon_checkpoints.Failure.cause_to_string
-         (Pokemon_checkpoints.Failure.cause "easy_chat_not_found"
-            "no word THRASH"));
+      (Pokemon_engine.Failure.cause_to_string
+         (Pokemon_engine.Failure.cause "easy_chat_not_found" "no word THRASH"));
     case "scan: the cursor does not move across: no cursor on it"
       (scan ~stuck:true "DIG")
-      (Pokemon_checkpoints.Failure.cause_to_string
-         (Pokemon_checkpoints.Failure.cause "easy_chat_no_cursor"
+      (Pokemon_engine.Failure.cause_to_string
+         (Pokemon_engine.Failure.cause "easy_chat_no_cursor"
             "the cursor did not reach word DIG"));
   ]
 

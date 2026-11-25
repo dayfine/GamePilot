@@ -49,5 +49,5 @@ val marks_mismatch :
 val handlers :
   log:(string -> unit) ->
   party:Party_roster.t ref ->
-  (string * Pokemon_checkpoints.Game.game_action) list
+  (string * Pokemon_engine.Game.game_action) list
 (** The four actions above, by name. *)

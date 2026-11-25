@@ -65,10 +65,9 @@ let walk f g () =
       Printf.sprintf "%s after [%s]" (S.screen_name g.screen)
         (String.concat " " (List.rev g.presses))
   | exception Menu_input.Action_failed c ->
-      Pokemon_checkpoints.Failure.cause_to_string c
+      Pokemon_engine.Failure.cause_to_string c
 
-let failure why =
-  Pokemon_checkpoints.Failure.(cause_to_string (cause "pc_box" why))
+let failure why = Pokemon_engine.Failure.(cause_to_string (cause "pc_box" why))
 
 let walk_cases =
   [

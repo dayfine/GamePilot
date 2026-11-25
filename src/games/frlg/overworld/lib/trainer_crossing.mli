@@ -30,7 +30,7 @@ type game_steps = {
       (** Watches for [watch_ms] for what a trainer's sight sets off. *)
   flee : unit -> unit;
       (** Runs from a wild battle a step set off, back to the overworld. *)
-  fight_trainer : unit -> (unit, Pokemon_checkpoints.Failure.cause) result;
+  fight_trainer : unit -> (unit, Pokemon_engine.Failure.cause) result;
       (** Plays the battle of a trainer who spoke, from their text to the
           overworld after it. *)
   log : string -> unit;  (** Where the crossing says what it saw. *)
@@ -63,7 +63,7 @@ val walk :
   Frlg_steps.world ->
   beaten:Trainer_sight.trainer list ->
   Connected_maps.place Grid_planning.Leg.t ->
-  (outcome, Pokemon_checkpoints.Failure.cause) result
+  (outcome, Pokemon_engine.Failure.cause) result
 (** Walks the leg in pieces, watching for the trainers not in [beaten]. Fails as
     [fight_trainer] does. *)
 
