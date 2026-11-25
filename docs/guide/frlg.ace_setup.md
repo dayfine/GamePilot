@@ -34,6 +34,7 @@ The plan names the Fly user and the member to deposit by species, as the Mail Gl
 - the Hall of Fame entered
 - pidgey in the party (fly)
 - mr-mime in the party (pc_deposit)
+- mr-mime holds no Mail (pc_deposit)
 - at the start, CeladonCity_DepartmentStore_1F
 <!-- /generated -->
 
@@ -83,7 +84,7 @@ the Magikarp) is the backup from before the ? Mail.
 <!-- generated:preflight ace-01 -->
 | Resume from | The pre-flight checks |
 |---|---|
-| ace-01 | the Hall of Fame entered; pidgey in the party (fly); mr-mime in the party (pc_deposit); at the start, CeladonCity_DepartmentStore_1F |
+| ace-01 | the Hall of Fame entered; pidgey in the party (fly); mr-mime in the party (pc_deposit); mr-mime holds no Mail (pc_deposit); at the start, CeladonCity_DepartmentStore_1F |
 <!-- /generated -->
 
 ## Known limits

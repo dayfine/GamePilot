@@ -36,6 +36,7 @@ let look g () : P.look =
     label = label g;
     species = None;
     box_full = false;
+    remove_mail = false;
   }
 
 let go g screen cursor =
@@ -92,7 +93,13 @@ let walk_cases =
   ]
 
 let look_at ?cursor ?label screen : P.look =
-  { view = { screen; cursor }; label; species = None; box_full = false }
+  {
+    view = { screen; cursor };
+    label;
+    species = None;
+    box_full = false;
+    remove_mail = false;
+  }
 
 let next o l () =
   match Pc_box.open_next o l with

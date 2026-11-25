@@ -180,8 +180,8 @@ let ace_setup =
     name = "ACE Setup";
     group = [ "FRLG"; "Glitches" ];
     description =
-      "Sets up arbitrary code execution from the Mail Glitch: Magikarp seen, \
-       then the ? Mail's words put species 0x0351 in Box 3 slot 1.";
+      "Sets up arbitrary code execution: the ? Mail puts species 0x0351 in Box \
+       3 slot 1.";
     doc = "docs/guide/frlg.ace_setup.md";
     checkpoints = Some "src/games/frlg/programs/ace_setup/plans";
     backends = [ Mgba ];
