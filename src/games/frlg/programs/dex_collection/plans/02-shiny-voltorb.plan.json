@@ -25,8 +25,8 @@
         "id": "make_room",
         "kind": "game_action",
         "action": "pc_deposit",
-        "args": {"species": ["rattata"]},
-        "why": "The catch's summary needs a party slot. This stores Rattata, the Sevii save's weakest member, which no catch needs: the first member holding no Mail (the other role the PC knows) would be Blastoise, the party's Surf and Strength."
+        "args": {"member": "holding_no_mail"},
+        "why": "The catch's summary needs a party slot. The PC refuses a member holding Mail, so this stores the one that holds none (on the Sevii save the other five hold the mail glitch's Mail)."
       },
       {
         "id": "to_grass",
@@ -102,6 +102,6 @@
   },
   "metadata": {
     "phase": "testing",
-    "notes": "mGBA only. The seed offset holds for this checkpoint's start save as the program's chain leaves it (from sevii_story's end, two saves a catch): a start save with another number of saves before it boots a few timer counts off and misses, failing the checkpoint (wild_rng_not_shiny) with the catch unsaved. Starts with the Sevii story's full party; make_room leaves five, with Oddish (Sweet Scent) last."
+    "notes": "mGBA only. The seed offset holds for this checkpoint's start save as the program's chain leaves it (from sevii_story's end, two saves a catch): a start save with another number of saves before it boots a few timer counts off and misses, failing the checkpoint (wild_rng_not_shiny) with the catch unsaved. Starts with the Sevii story's full party; make_room leaves five, with the Sweet Scent member last."
   }
 }

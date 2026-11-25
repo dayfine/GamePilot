@@ -25,8 +25,7 @@ Runs on: mGBA.
 
 <!-- generated:needs -->
 - 3 free party slots (joining: voltorb in 02-shiny-voltorb, drowzee in 03-shiny-drowzee, ekans in 04-shiny-ekans)
-- rattata in the party (pc_deposit)
-- rattata holds no Mail (pc_deposit)
+- a member holds no Mail (pc_deposit)
 - a member knows fly (fly)
 - the thunder badge (fly)
 - money at least ¥12000 (all the purchases)
@@ -52,7 +51,7 @@ sh run/run_checkpoints_on_mgba.sh frlg.dex_collection --from 01-ultra-balls --to
 | 03-shiny-drowzee | From anywhere outdoors: a shiny Drowzee in Route 11's grass by the wild RNG, stored in the PC, back to the nurse |
 | 04-shiny-ekans | From anywhere outdoors: a shiny Ekans in Route 10's grass by the wild RNG, stored in the PC, back to the nurse |
 
-<!-- plans: 78f6260344ac -->
+<!-- plans: eef1f19f7838 -->
 <!-- /generated -->
 
 
@@ -62,7 +61,7 @@ sh run/run_checkpoints_on_mgba.sh frlg.dex_collection --from 01-ultra-balls --to
 | Resume from | The pre-flight checks |
 |---|---|
 | 01-ultra-balls | a member knows fly (fly); the thunder badge (fly); money at least ¥12000 (mart); at the start, anywhere outdoors where Fly works |
-| 02-shiny-voltorb | rattata in the party (pc_deposit); rattata holds no Mail (pc_deposit); a member knows fly (fly); the thunder badge (fly); ultra-ball at least x1 (wild_rng); at the start, anywhere outdoors where Fly works |
+| 02-shiny-voltorb | a member holds no Mail (pc_deposit); a member knows fly (fly); the thunder badge (fly); ultra-ball at least x1 (wild_rng); at the start, anywhere outdoors where Fly works |
 | 03-shiny-drowzee | a member knows fly (fly); the thunder badge (fly); ultra-ball at least x1 (wild_rng); at the start, anywhere outdoors where Fly works |
 | 04-shiny-ekans | a member knows fly (fly); the thunder badge (fly); ultra-ball at least x1 (wild_rng); at the start, anywhere outdoors where Fly works |
 <!-- /generated -->

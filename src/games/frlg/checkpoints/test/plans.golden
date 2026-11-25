@@ -15,7 +15,7 @@ no repeat
 frlg 02-shiny-voltorb from anywhere outdoors: 6 game_action, 5 route, 1 heal
 fly_route10: [fly] game_action {"town":"Route10"} => Route10 (13, 21) south
 to_pc: [run] route to Route10_PokemonCenter_1F (11, 2) north
-make_room: [pc_deposit] game_action {"species":["rattata"]}
+make_room: [pc_deposit] game_action {"member":"holding_no_mail"}
 to_grass: [run] route to Route10 (12, 8) east
 save_in_grass: [save_game] game_action {}
 shiny_voltorb: [wild_rng] game_action {"species":"voltorb","location":"route_10","tid":33002,"sid":9011,"seeds":"rng_seeds_mgba_sevii_save.json","seed_offset":8,"frame_model":"mgba","advances":[900,4000],"ball":"ultra-ball","balls":5,"attempts":1}
