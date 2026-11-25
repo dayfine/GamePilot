@@ -32,6 +32,13 @@ let submit t commands =
       check_stop t;
       take t.dones batch_id ())
 
+(* Returns once the daemon accepted the batch; its end is not waited for. *)
+let queue t commands =
+  let batch_id = next_batch_id t in
+  check_stop t;
+  Hashtbl.replace t.queued batch_id ();
+  check_submitted batch_id (call t (Wire.Submit { batch_id; commands }))
+
 (* Cancels the batch [race] stopped. Its [batch_done] can still arrive before
    the cancel's reply (it was on its way); after the reply none can, so the one
    that came is dropped there. *)
@@ -40,8 +47,9 @@ let cancel_batch t batch_id =
   Hashtbl.remove t.dones batch_id
 
 (* Every frame pumped after the submit was sent is checked against [stop],
-   also while its reply is still on the way. *)
-let race t commands stop =
+   also while its reply is still on the way. On a stop, [after] ends the
+   batch: a cancel, or a cancel into the next batch. *)
+let race_ending t commands stop after =
   check_stop t;
   let batch_id = next_batch_id t in
   let id = send_request t (Wire.Submit { batch_id; commands }) in
@@ -63,12 +71,34 @@ let race t commands stop =
   let raced = watch () in
   match raced with
   | Effects.Finished _ -> raced
-  | Effects.Stopped _ ->
-      cancel_batch t batch_id;
+  | Effects.Stopped f ->
+      after batch_id f;
       (* The submit's reply, if it was still on the way, came before the
          cancel's. *)
       check_reply ();
       raced
+
+let race t commands stop =
+  race_ending t commands stop (fun batch_id _ -> cancel_batch t batch_id)
+
+(* Cancels the held batch into [commands]; that batch's [batch_done] ends the
+   op. With none held, the commands are a plain submit. *)
+let replace t commands =
+  match t.held with
+  | None -> submit t commands
+  | Some held ->
+      t.held <- None;
+      let next = next_batch_id t in
+      let cancel = Wire.Cancel_then { batch_id = next; commands } in
+      ignore (Wire.cancel_result_of_json (call t cancel) : int);
+      Hashtbl.remove t.dones held;
+      pump_until t (fun () ->
+          check_stop t;
+          take t.dones next ())
+
+(* The stopped batch runs on until [replace]. *)
+let race_held t commands stop =
+  race_ending t commands stop (fun batch_id _ -> t.held <- Some batch_id)
 
 (* The daemon keeps uploads until the connection closes, so each PNG goes up
    once. *)
@@ -180,6 +210,10 @@ let answer : type a. t -> a Effect.t -> (unit -> a) option =
   match eff with
   | Effects.Submit commands -> Some (fun () -> submit t commands)
   | Effects.Race (commands, stop) -> Some (fun () -> race t commands stop)
+  | Effects.Race_held (commands, stop) ->
+      Some (fun () -> race_held t commands stop)
+  | Effects.Replace commands -> Some (fun () -> replace t commands)
+  | Effects.Queue commands -> Some (fun () -> queue t commands)
   | Effects.Await (pred, timeout_ms) -> Some (fun () -> await t pred timeout_ms)
   | Effects.Now -> Some (fun () -> Option.value t.now ~default:0.)
   | Effects.Read -> Some (fun () -> t.latest)

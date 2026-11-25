@@ -43,6 +43,9 @@ type _ Effect.t +=
   | Submit : Wire.command list -> Wire.batch_done Effect.t
   | Await : (measurements -> bool) * int -> awaited Effect.t
   | Race : Wire.command list * (measurements -> bool) -> raced Effect.t
+  | Race_held : Wire.command list * (measurements -> bool) -> raced Effect.t
+  | Replace : Wire.command list -> Wire.batch_done Effect.t
+  | Queue : Wire.command list -> unit Effect.t
   | Now : float Effect.t
   | Read : measurements option Effect.t
   | Load_state : string -> int Effect.t
@@ -74,6 +77,30 @@ val race : Wire.command list -> stop:(measurements -> bool) -> raced
     command and releases all buttons) and returns once the daemon answered it,
     so the next op starts from released buttons. Frames received before the
     submit, the latest included, are not checked. *)
+
+val race_then :
+  Wire.command list ->
+  stop:(measurements -> bool) ->
+  then_:(measurements -> Wire.command list) ->
+  raced
+(** As {!race}, but on a stop the batch is replaced, not cancelled: the daemon
+    drops the queued commands with no release and runs [then_ m] in their place
+    (protocol v1.15, [cancel] with [then]), so a button both hold stays held, as
+    the fork's command dispatched over a running one. Returns [Stopped m] once
+    that batch is done. Two effects, [Race_held] (stop and leave the batch
+    running) then [Replace], so [then_] runs in the program's own context and
+    may perform effects (a log line), which a handler's own code could not. *)
+
+val queue : Wire.command list -> unit
+(** Queues one batch after the running and queued ones, as {!submit} does, but
+    returns once the daemon accepted it, not at its end; its [batch_done] is
+    dropped. The program reads and decides while it runs and queues the next
+    before it ends: a button held at one batch's end and the next one's start
+    stays held, as the fork's commands queued on the controller while the
+    program reads (a controller state press,
+    NintendoSwitch_Commands_PushButtons.h, then a snapshot; ZL held through the
+    PLZA catches, PokemonLZA_AutoStoryCatches.cpp). A later {!submit} or {!race}
+    queues after it too; a stop's cancel drops it. *)
 
 val now : unit -> float
 (** Daemon clock in ms: the [t_ms] of the newest frame or [batch_done] seen. *)

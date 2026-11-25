@@ -19,6 +19,8 @@ type t = {
   responses : (int, (Wire.json, Wire.error) result) Hashtbl.t;
   dones : (string, Wire.batch_done) Hashtbl.t;
   templates : (Digest.t, Effects.template_hash) Hashtbl.t;
+  mutable held : string option;
+  queued : (string, unit) Hashtbl.t;
 }
 
 let create transport =
@@ -33,6 +35,8 @@ let create transport =
     responses = Hashtbl.create 8;
     dones = Hashtbl.create 8;
     templates = Hashtbl.create 8;
+    held = None;
+    queued = Hashtbl.create 8;
   }
 
 let protocol_error fmt = Printf.ksprintf (fun s -> raise (Protocol_error s)) fmt
@@ -63,7 +67,8 @@ let take_notification t = function
   | Wire.Frame { load; _ } when load < t.load -> None
   | Wire.Frame { frame; _ } -> take_frame t frame
   | Wire.Batch_done d ->
-      Hashtbl.replace t.dones d.batch_id d;
+      if Hashtbl.mem t.queued d.batch_id then Hashtbl.remove t.queued d.batch_id
+      else Hashtbl.replace t.dones d.batch_id d;
       t.now <- Some d.t_ms;
       None
   | Wire.Stop reason ->
