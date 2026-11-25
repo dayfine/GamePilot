@@ -21,6 +21,7 @@
   gamepilot.switch_home
   gamepilot.repo_io
   gamepilot.frlg_series
+  gamepilot.plza_series
   gamepilot.checkpoints_flags
   gamepilot.run_args
   gamepilot.one_shot_flags

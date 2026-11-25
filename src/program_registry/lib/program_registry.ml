@@ -1,6 +1,6 @@
 type backend = Mgba | Switch
 type viewport = Nso_gba | Native
-type rules = Pokemon_grid
+type rules = Pokemon_grid | Plza_story
 
 type switch_home = {
   title : string;
@@ -203,6 +203,22 @@ let wild_rng =
     rules = Pokemon_grid;
   }
 
+let autostory =
+  {
+    id = "plza.autostory";
+    game = plza;
+    name = "AutoStory";
+    group = [ "PLZA"; "Story" ];
+    description =
+      "Plays the story; for now its first walk, from the platform to the plaza \
+       (checkpoint 01.01).";
+    doc = "docs/guide/plza.autostory.md";
+    checkpoints = Some "src/games/pokemon/plza/programs/autostory/plans";
+    backends = [ Switch ];
+    viewport = Native;
+    rules = Plza_story;
+  }
+
 let all =
   [
     start_menu_poc;
@@ -212,6 +228,7 @@ let all =
     sevii_story;
     dex_collection;
     wild_rng;
+    autostory;
   ]
 
 let short_id p =

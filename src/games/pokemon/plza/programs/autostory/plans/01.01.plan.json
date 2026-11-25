@@ -1,0 +1,28 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "plza",
+  "execution": {},
+  "metadata": {
+    "phase": "testing",
+    "source": "played from a new game; the fork's plza-01.01.plan.json (plza/lean, #754 plza/mvp-0101)",
+    "postconditions": {}
+  },
+  "checkpoint": {
+    "id": "01.01",
+    "title": "The platform to the plaza",
+    "start": {
+      "place": "LumioseCity"
+    },
+    "events": [
+      {
+        "id": "platform_to_plaza",
+        "kind": "walk",
+        "why": "down the platform, then right until the white fade into the arrival scenes. not planned: the platform has no map",
+        "args": {
+          "legs": [[0, 4500], [90, 10000]],
+          "end": "fade_white"
+        }
+      }
+    ]
+  }
+}

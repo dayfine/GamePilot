@@ -1,0 +1,14 @@
+(tests
+ (names test_story_game)
+ (modules test_story_game)
+ (deps
+  (glob_files ../plans/*.plan.json))
+ (libraries
+  yojson
+  gamepilot.wire
+  gamepilot.effects
+  gamepilot.table_test
+  gamepilot.plza_walk
+  gamepilot.engine_run
+  gamepilot.plza_engine
+  gamepilot.plza_autostory))

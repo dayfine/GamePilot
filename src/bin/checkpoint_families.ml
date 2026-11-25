@@ -9,6 +9,7 @@
 
 module R = Program_registry
 module Grid = Frlg_series
+module Plza = Plza_series.Runs
 
 let ( let* ) = Result.bind
 
@@ -83,8 +84,37 @@ let grid =
     one_shots = [ ("frlg.start_menu_poc", start_menu_poc) ];
   }
 
-let all = [ grid ]
-let of_rules = function R.Pokemon_grid -> grid
+let plza_series plan_dir args =
+  let* f = Plza_series.Flags.parse args in
+  Plza.run_series ~program:(program_fields plan_dir)
+    ~viewport:(viewport plan_dir f) plan_dir args
+
+let no_stated what ~plan_dir:_ _ = Error ("PLZA's plans state no " ^ what)
+
+let plza_guide : Guide_blocks.rules_guide =
+  {
+    rows = Plza_series.Guide_tables.rows;
+    needs = no_stated "needs";
+    preflight = no_stated "pre-flight";
+    commands = (fun _ ~args -> Plza_series.Guide_tables.commands ~args);
+  }
+
+(* PLZA's story rules' entry points: a series of whole checkpoints on the
+   Switch; no plan runs alone, and the plans state no chain needs. *)
+let plza =
+  {
+    run_series = plza_series;
+    run_checkpoint =
+      (fun _ _ -> Error "PLZA runs whole series only: gamepilot run");
+    replay_checkpoint = (fun _ _ _ -> Error "PLZA has no checkpoint replay yet");
+    guide = plza_guide;
+    chain_needs = (fun _ -> Error "PLZA's plans state no chain needs");
+    ctl_readers = [];
+    one_shots = [];
+  }
+
+let all = [ grid; plza ]
+let of_rules = function R.Pokemon_grid -> grid | R.Plza_story -> plza
 
 let of_program (p : R.t option) =
   of_rules (match p with Some p -> p.rules | None -> R.Pokemon_grid)
