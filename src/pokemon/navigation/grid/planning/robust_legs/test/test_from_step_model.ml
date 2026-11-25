@@ -4,7 +4,7 @@
    them. Ported from the C++ fork's Pokemon_RobustLegPlanner_Tests.cpp
    (RobustModelFromLegModel). *)
 
-open Grid_maps
+open Grid_geometry
 open Grid_planning
 open Grid_robust_legs
 open Robust_toy

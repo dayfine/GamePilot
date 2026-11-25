@@ -3,7 +3,7 @@
    Pokemon_LegWalker_Tests.cpp, case by case, with the walker's log lines and
    leg record added. *)
 
-open Grid_maps
+open Grid_geometry
 open Grid_walker
 
 let tile_ms = 267

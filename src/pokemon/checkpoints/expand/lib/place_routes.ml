@@ -1,5 +1,5 @@
 open Engine_expand
-open Grid_maps
+open Grid_geometry
 module J = Plan_json
 
 type spot = { map : string; tile : Tile_pos.t; facing : Direction.t option }

@@ -1,5 +1,5 @@
 type t = {
-  direction : Grid_maps.Direction.t;
+  direction : Grid_geometry.Direction.t;
   tiles : int;
   to_wall : bool;
   tile_ms : int;
@@ -25,7 +25,7 @@ let make ?(to_wall = false) ~tile_ms direction tiles =
 
 let to_string leg =
   Printf.sprintf "%s %d%s"
-    (Grid_maps.Direction.name leg.direction)
+    (Grid_geometry.Direction.name leg.direction)
     leg.tiles
     (if leg.to_wall then " (to wall)" else "")
 

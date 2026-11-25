@@ -2,7 +2,7 @@
     ({!result}). Ported from the fork's [Pokemon_LegTypes.h]. *)
 
 type t = {
-  direction : Grid_maps.Direction.t;
+  direction : Grid_geometry.Direction.t;
   tiles : int;
   to_wall : bool;  (** A wall stops the player after the last tile. *)
   tile_ms : int;
@@ -26,7 +26,7 @@ type t = {
 }
 (** A straight leg, for a player standing still and facing its way. *)
 
-val make : ?to_wall:bool -> tile_ms:int -> Grid_maps.Direction.t -> int -> t
+val make : ?to_wall:bool -> tile_ms:int -> Grid_geometry.Direction.t -> int -> t
 (** A leg of [tiles] tiles toward the direction (open unless [to_wall]), that
     walks on after interrupts and has no stalled steps. *)
 

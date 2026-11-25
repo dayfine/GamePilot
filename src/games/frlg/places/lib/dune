@@ -3,7 +3,7 @@
  (public_name gamepilot.frlg_places)
  (libraries
   yojson
-  gamepilot.grid_maps
+  gamepilot.grid_geometry
   gamepilot.name_suggestion
   gamepilot.pokemon_checkpoints
   gamepilot.engine_expand

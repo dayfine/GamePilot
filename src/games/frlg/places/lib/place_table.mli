@@ -17,14 +17,15 @@ type map_object =
   | Warp of { warp : string; to_map : string }
       (** A door: the map's warp ["warp_<n>"] (the [n]th of its [warps], as pret
           numbers them), leading to [to_map]. *)
-  | Not_in_maps of { what : string; tile : Grid_maps.Tile_pos.t option }
+  | Not_in_maps of { what : string; tile : Grid_geometry.Tile_pos.t option }
       (** Not in the maps: what it is, and the object's tile if it has one. *)
 
 type place = {
   name : string;
   map : string;
-  stand : Grid_maps.Tile_pos.t;  (** The tile to stand on to use the object. *)
-  facing : Grid_maps.Direction.t;  (** The way to face there. *)
+  stand : Grid_geometry.Tile_pos.t;
+      (** The tile to stand on to use the object. *)
+  facing : Grid_geometry.Direction.t;  (** The way to face there. *)
   map_object : map_object;
 }
 (** One named spot of the table. *)

@@ -3,6 +3,7 @@
    from Cinnabar's Fly landing to Bill. *)
 
 open Grid_maps
+open Grid_geometry
 open Frlg_overworld_fixtures
 open Frlg_world
 module Center = Frlg_overworld.Standard_center

@@ -6,7 +6,7 @@ type plan = {
   species : string;
   move : string;
   backup_move : string;
-  pace : Grid_maps.Direction.t;
+  pace : Grid_geometry.Direction.t;
 }
 
 let decode =

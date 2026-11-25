@@ -1,4 +1,5 @@
 open Grid_maps
+open Grid_geometry
 
 type gait = Walking | Running
 

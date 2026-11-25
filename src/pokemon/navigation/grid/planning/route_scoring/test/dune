@@ -3,5 +3,5 @@
  (modules toy_score_map test_route_scorer)
  (libraries
   gamepilot.table_test
-  gamepilot.grid_maps
+  gamepilot.grid_geometry
   gamepilot.grid_route_scoring))

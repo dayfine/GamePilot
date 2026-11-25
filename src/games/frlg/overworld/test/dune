@@ -4,6 +4,7 @@
  (libraries
   gamepilot.wire
   gamepilot.effects
+  gamepilot.grid_geometry
   gamepilot.grid_maps
   gamepilot.grid_planning
   gamepilot.frlg_overworld))
@@ -44,6 +45,7 @@
   gamepilot.table_test
   gamepilot.wire
   gamepilot.effects
+  gamepilot.grid_geometry
   gamepilot.grid_maps
   gamepilot.grid_planning
   gamepilot.pokemon_checkpoints

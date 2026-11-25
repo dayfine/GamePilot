@@ -88,7 +88,7 @@ let find name () =
   match Place_table.find table name with
   | Ok p ->
       let s = Place_table.spot p in
-      Printf.sprintf "%s %s" s.map (Grid_maps.Tile_pos.to_string s.tile)
+      Printf.sprintf "%s %s" s.map (Grid_geometry.Tile_pos.to_string s.tile)
   | Error e -> e
 
 let parse text () =

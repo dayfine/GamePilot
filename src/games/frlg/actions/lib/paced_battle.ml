@@ -5,8 +5,8 @@ let reckoned = function
 let off_patch ~patch (at : Pokemon_checkpoints.Pose.observed) =
   Menu_input.fail "off_patch"
     (Printf.sprintf "%s is not the patch %s or next to it"
-       (Grid_maps.Tile_pos.to_string at.at_tile)
-       (Grid_maps.Tile_pos.to_string patch))
+       (Grid_geometry.Tile_pos.to_string at.at_tile)
+       (Grid_geometry.Tile_pos.to_string patch))
 
 let no_encounter () =
   Menu_input.fail "no_encounter"

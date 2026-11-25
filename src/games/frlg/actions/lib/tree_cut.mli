@@ -6,7 +6,7 @@
 val cut :
   Frlg_overworld.Frlg_steps.world ->
   Pokemon_checkpoints.Pose.observed ->
-  Grid_maps.Direction.t ->
+  Grid_geometry.Direction.t ->
   Frlg_overworld.Frlg_steps.world * Pokemon_checkpoints.Pose.observed
 (** From where the player stood facing the tree that way: the world with the
     tree's gate open ({!Frlg_overworld.Frlg_steps.with_tree_cut}; unchanged when

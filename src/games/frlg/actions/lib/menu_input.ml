@@ -137,7 +137,7 @@ let press_until ?(max_presses = default_max_presses) ~code what button
     | Stopped _ -> ()
     | Finished _ -> fail code (what ^ " did not show")
 
-let dpad : Grid_maps.Direction.t -> Wire.button = function
+let dpad : Grid_geometry.Direction.t -> Wire.button = function
   | North -> Up
   | South -> Down
   | East -> Right

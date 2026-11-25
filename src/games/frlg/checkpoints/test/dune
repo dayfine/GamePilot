@@ -151,7 +151,6 @@
   08-activate-and-verify.plan.json)
  (libraries
   gamepilot.table_test
-  gamepilot.grid_maps
   gamepilot.json_field
   gamepilot.pokemon_checkpoints
   gamepilot.frlg_actions
@@ -175,6 +174,7 @@
  (deps 02-trade-farfetchd.plan.json 07-glitch-prep.plan.json)
  (libraries
   gamepilot.table_test
+  gamepilot.grid_geometry
   gamepilot.grid_maps
   gamepilot.json_field
   gamepilot.pokemon_checkpoints

@@ -12,7 +12,7 @@ let decode json () =
   match Capture_plan.decode (obj json) with
   | Ok t ->
       Printf.sprintf "%s, pace %s" (Capture_plan.describe t)
-        (Grid_maps.Direction.name t.pace)
+        (Grid_geometry.Direction.name t.pace)
   | Error c -> Pokemon_checkpoints.Failure.cause_to_string c
 
 let mg02_args =

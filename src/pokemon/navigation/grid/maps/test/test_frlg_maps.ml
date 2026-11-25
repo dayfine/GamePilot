@@ -4,6 +4,7 @@
    button). *)
 
 open Grid_maps
+open Grid_geometry
 open Map_gates
 
 (* third_party/ sits outside the dune project, so find it from the build

@@ -5,7 +5,7 @@
 type context = {
   log : string -> unit;
   party : Party_roster.t ref;
-  facing : unit -> Grid_maps.Direction.t option;
+  facing : unit -> Grid_geometry.Direction.t option;
       (** Where the player faces, when known (the spin starts from it). *)
   stocks : unit -> (Mart_plan.stocks, string) result;
 }

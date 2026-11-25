@@ -1,4 +1,4 @@
-open Grid_maps
+open Grid_geometry
 module Tiles = Set.Make (Tile_pos)
 module Maps = Map.Make (String)
 

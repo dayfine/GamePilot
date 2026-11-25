@@ -10,14 +10,16 @@
 
 (** How a person in a Center moves, as pret's object events give it. *)
 type motion =
-  | Faces of Grid_maps.Direction.t  (** Stands still, facing that way. *)
+  | Faces of Grid_geometry.Direction.t  (** Stands still, facing that way. *)
   | Turns  (** Stands still, looking about. *)
-  | Wanders of { min : Grid_maps.Tile_pos.t; max : Grid_maps.Tile_pos.t }
-      (** May stand anywhere in the box. *)
+  | Wanders of {
+      min : Grid_geometry.Tile_pos.t;
+      max : Grid_geometry.Tile_pos.t;
+    }  (** May stand anywhere in the box. *)
 
 type person = {
   name : string;  (** Its graphics, as PokemonSimulation's maps name it. *)
-  at : Grid_maps.Tile_pos.t;  (** Where it stands in the Center's room. *)
+  at : Grid_geometry.Tile_pos.t;  (** Where it stands in the Center's room. *)
   motion : motion;
   script : string option;  (** Its pret script; none for Six Island's rival. *)
   hide_flag : string option;  (** The game hides it while this is set. *)

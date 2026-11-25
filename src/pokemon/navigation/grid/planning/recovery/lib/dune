@@ -2,5 +2,5 @@
  (name grid_recovery)
  (public_name gamepilot.grid_recovery)
  (flags
-  (:standard -open Grid_maps))
- (libraries gamepilot.grid_maps))
+  (:standard -open Grid_maps -open Grid_geometry))
+ (libraries gamepilot.grid_geometry gamepilot.grid_maps))

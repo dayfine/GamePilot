@@ -3,7 +3,7 @@
    the errors for an unknown kind and a missing field. The C++ reader
    (Pokemon_LegReplay.cpp) has no tests of its own; these pin its rules. *)
 
-open Grid_maps
+open Grid_geometry
 open Grid_trace
 
 let fade_name = function

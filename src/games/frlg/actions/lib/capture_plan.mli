@@ -13,7 +13,7 @@ type t = {
   catches : int;  (** how many to catch *)
   max_encounters : int;  (** wild battles, of any species, before giving up *)
   max_balls : int;  (** Poké Balls thrown before giving up *)
-  pace : Grid_maps.Direction.t;
+  pace : Grid_geometry.Direction.t;
       (** the way to step for a battle, and back ({!Pacing}) *)
 }
 
