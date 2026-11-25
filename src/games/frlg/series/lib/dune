@@ -19,6 +19,7 @@
   gamepilot.room_policy
   gamepilot.checkpoints_series
   gamepilot.checkpoints_flags
+  gamepilot.pokemon_flags
   gamepilot.frlg_overworld
   gamepilot.frlg_actions
   gamepilot.frlg_readers

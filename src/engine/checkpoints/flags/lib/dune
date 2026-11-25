@@ -3,4 +3,4 @@
  (public_name gamepilot.checkpoints_flags)
  (flags
   (:standard -open Live_run))
- (libraries gamepilot.live gamepilot.live_run gamepilot.engine_run))
+ (libraries gamepilot.live_run gamepilot.engine_run))
