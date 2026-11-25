@@ -107,9 +107,10 @@ for the user to spot check.
   Its FLAGs are questions for the user and do not block.
 - A verdict holds for the SHA it names. A rework commit invalidates it: review the new tip.
 - Docs-only PRs (every file `.md` or under `docs/`) skip qc-structural. CI is still required, but
-  a PR of prose only (every file a `.md` outside `docs/guide/`) needs only the `review-tools` check:
-  the builds read no such file (user, 2026-11-25). A guide page waits for the builds, which run
-  `gamepilot guide --check`.
+  a PR of prose only (every file a `.md` added or changed in place, outside `docs/guide/` and
+  `.agents/`) needs only the `review-tools` check: no build reads such a file's text (user,
+  2026-11-25). A guide page waits for the builds (`gamepilot guide --check`), an agent's rules for
+  Harness Check, and a deleted or renamed page for the builds (the registry's docs must exist).
 - `sh dev/review/pr_gate_status.sh [PR...]` prints each open PR's CI, verdict (ok / rework /
   stale(<sha>) / none / skip) and next step (`merge`, `merge (structural: <reason>)`, or `user review (<reason>)`).
   `sh dev/review/format_only_changes.sh` lists files changed only in formatting; CI prints the same list as warnings.
