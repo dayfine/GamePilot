@@ -6,7 +6,7 @@ let decode ~action read args =
   match read ~where:(action ^ ": ") args with
   | value -> Ok value
   | exception J.Invalid e ->
-      Error (Pokemon_checkpoints.Failure.cause ~repeats:true "bad_args" e)
+      Error (Pokemon_engine.Failure.cause ~repeats:true "bad_args" e)
 
 let party_slots = 6
 

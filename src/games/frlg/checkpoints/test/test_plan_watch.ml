@@ -84,7 +84,7 @@ let party =
 (* The pre-flight's steps, scripted: [back] the return to the save,
    [verdict] the table's. *)
 let actions ~back ~verdict log =
-  let step f : Pokemon_checkpoints.Game.game_action = fun _ _ -> f () in
+  let step f : Pokemon_engine.Game.game_action = fun _ _ -> f () in
   let ok () = Ok () in
   [
     ("soft_reset", step back);
@@ -101,7 +101,7 @@ let preflight ~back ~verdict () =
   ignore
     (Plan_watch.run_shadow ~mode:"preflight" ~log:ignore (Lazy.force world) plan
        (actions ~back ~verdict)
-      : (unit, Pokemon_checkpoints.Failure.t) result)
+      : (unit, Pokemon_engine.Failure.t) result)
 
 let plan_line states =
   "plan mg-01: "
@@ -142,8 +142,7 @@ let full_party_pass =
       ])
 
 let not_back =
-  Error
-    (Pokemon_checkpoints.Failure.cause ~repeats:true "not_back" "no start state")
+  Error (Pokemon_engine.Failure.cause ~repeats:true "not_back" "no start state")
 
 let last n text =
   let lines = String.split_on_char '\n' text in
@@ -182,7 +181,7 @@ let () =
               (shown
                  (preflight ~back:Result.ok ~verdict:(fun () ->
                       Error
-                        (Pokemon_checkpoints.Failure.cause "mismatch"
+                        (Pokemon_engine.Failure.cause "mismatch"
                            "the save does not hold what it needs")))));
         expectation =
           plan_line

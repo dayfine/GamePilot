@@ -1,4 +1,4 @@
-module Failure = Pokemon_checkpoints.Failure
+module Failure = Pokemon_engine.Failure
 
 (* Menu_input.run takes a step that returns nothing: the value comes back
    through [value], set once the step has returned. *)

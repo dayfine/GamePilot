@@ -5,3 +5,4 @@
     {!Minimap}. *)
 
 val all : (string * string list) list
+(** Each reference's name and its 16 rows of cells. *)

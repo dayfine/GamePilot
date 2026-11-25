@@ -2,7 +2,7 @@
     run or round it was, its attempt, a repeating checkpoint's goal and a grind
     cap, each a note added to ["PASS 05-grind-mr-mime round 3"]. *)
 
-open Pokemon_checkpoints
+open Pokemon_engine
 
 val run_name : string -> Plan.t -> int -> string
 (** ["05-grind-mr-mime round 3"] for a repeating checkpoint, else

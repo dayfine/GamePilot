@@ -2,7 +2,7 @@
    saving after each round and reloading the last save to retry a failed one.
    The world is a level grind: target level 10, 3 levels a batch from 1. *)
 
-open Pokemon_checkpoints
+open Pokemon_engine
 
 let limits = { Repeat_until.max_rounds = 5; attempts_per_round = 2 }
 

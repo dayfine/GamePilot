@@ -1,4 +1,4 @@
 (library
  (name checkpoints_series)
  (public_name gamepilot.checkpoints_series)
- (libraries gamepilot.wire gamepilot.pokemon_checkpoints))
+ (libraries gamepilot.wire gamepilot.pokemon_engine))

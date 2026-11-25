@@ -12,7 +12,7 @@
     the caller picks it. The rest of the postconditions are
     {!Pokemon_rules.Postcondition_check}'s. *)
 
-open Pokemon_checkpoints
+open Pokemon_engine
 
 val declared :
   next:Plan.checkpoint option ->

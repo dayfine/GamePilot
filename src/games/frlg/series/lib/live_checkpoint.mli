@@ -2,7 +2,7 @@
     series' setup, the checkpoint, and how the run ended. *)
 
 open Engine_run
-open Pokemon_checkpoints
+open Pokemon_engine
 
 type setup = {
   states : string;

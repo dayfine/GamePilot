@@ -6,8 +6,9 @@ open Frlg_actions
 module S = Frlg_readers.Pc_screen
 module P = Pc_deposit_steps
 
-let look ?cursor ?label ?species ?(box_full = false) screen : P.look =
-  { view = { screen; cursor }; label; species; box_full }
+let look ?cursor ?label ?species ?(box_full = false) ?(remove_mail = false)
+    screen : P.look =
+  { view = { screen; cursor }; label; species; box_full; remove_mail }
 
 (* Feeds the looks in order; the presses, one per look. *)
 let presses targets looks () =
@@ -76,6 +77,18 @@ let cases =
            look Party_panel ~cursor:1;
          ])
       "A A A A B RIGHT A B";
+    case
+      "viridian-forest run 1 (2026-11-25): Farfetch'd holds Retro Mail, the \
+       game refuses: fail, not STORE again"
+      (presses [ "farfetchd" ]
+         (to_panel
+         @ [
+             look Party_panel ~cursor:2 ~species:"farfetchd";
+             look Mon_menu ~cursor:0 ~label:"STORE";
+             look Party_panel ~cursor:6 ~species:"farfetchd" ~remove_mail:true;
+           ]))
+      "A B A B DOWN A wait A A fail: farfetchd holds Mail: the game will not \
+       store it (\"Please remove the MAIL.\")";
     case "the member is not in the party: fail at the last slot"
       (presses [ "eevee" ]
          [

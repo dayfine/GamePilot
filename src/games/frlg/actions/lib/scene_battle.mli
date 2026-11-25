@@ -12,7 +12,7 @@
 val run :
   Trainer_battles.game_steps ->
   may_lose:bool ->
-  (unit, Pokemon_checkpoints.Failure.cause) result
+  (unit, Pokemon_engine.Failure.cause) result
 (** The battle waited for (at once if it is on the screen), then fought. A
     battle lost fails as [battle_lost] unless [may_lose]. The steps' [settle] is
     not run. *)
@@ -21,5 +21,5 @@ val play :
   log:(string -> unit) ->
   fight:(Frlg_battle.Battle_script.t -> Frlg_battle.Scripted_battle.outcome) ->
   may_lose:bool ->
-  (unit, Pokemon_checkpoints.Failure.cause) result
+  (unit, Pokemon_engine.Failure.cause) result
 (** {!run} on {!Trainer_battles.live_game_steps}. *)

@@ -3,7 +3,7 @@
    goes back to the saved one. Batches and saves fail where the script says.
    Logs the world's lines and the loop's, not the runner's per-event ones. *)
 
-open Pokemon_checkpoints
+open Pokemon_engine
 
 type script = {
   start_level : int;

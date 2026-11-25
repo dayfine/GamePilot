@@ -9,7 +9,7 @@
    series stops too. *)
 
 open Engine_run
-open Pokemon_checkpoints
+open Pokemon_engine
 open Checkpoints_series
 include Live_checkpoint
 

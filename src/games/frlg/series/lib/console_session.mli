@@ -5,7 +5,7 @@
     start's frame for a pass (Frlg_actions.Game_save), back to the last save for
     a failure. In the effect context. *)
 
-open Pokemon_checkpoints
+open Pokemon_engine
 
 val start_party :
   roster:string list -> Postconditions.t option -> Postconditions.party option

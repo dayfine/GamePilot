@@ -32,8 +32,8 @@ let all_decode () =
   | [] -> "all decode"
   | first :: _ -> first
 
-let outline name = Pokemon_checkpoints.Plan_text.outline (plan name)
-let event name id = Pokemon_checkpoints.Plan_text.event_named (plan name) id
+let outline name = Pokemon_engine.Plan_text.outline (plan name)
+let event name id = Pokemon_engine.Plan_text.event_named (plan name) id
 
 let records : Table_test.case list =
   [
@@ -122,7 +122,7 @@ let records : Table_test.case list =
          them), 20 coins gained and $4,100 spent";
       input =
         (fun () ->
-          Pokemon_checkpoints.Plan_text.postconditions
+          Pokemon_engine.Plan_text.postconditions
             (plan "01-celadon-setup.plan.json"));
       expectation =
         "party includes blastoise, pidgey, abra\n\
@@ -135,7 +135,7 @@ let records : Table_test.case list =
          Rope";
       input =
         (fun () ->
-          Pokemon_checkpoints.Plan_text.postconditions
+          Pokemon_engine.Plan_text.postconditions
             (plan "03-trade-mr-mime.plan.json"));
       expectation =
         "party includes blastoise, pidgey, mr-mime, farfetchd\n\
@@ -147,7 +147,7 @@ let records : Table_test.case list =
       name = "04-grind-farfetchd promises Knock Off and one rope used";
       input =
         (fun () ->
-          Pokemon_checkpoints.Plan_text.postconditions
+          Pokemon_engine.Plan_text.postconditions
             (plan "04-grind-farfetchd.plan.json"));
       expectation =
         "party includes blastoise, pidgey, mr-mime, farfetchd\n\
@@ -160,7 +160,7 @@ let records : Table_test.case list =
       name = "a grind round (05-grind-mr-mime) promises what holds on any save";
       input =
         (fun () ->
-          Pokemon_checkpoints.Plan_text.postconditions
+          Pokemon_engine.Plan_text.postconditions
             (plan "05-grind-mr-mime.plan.json"));
       expectation =
         "position IndigoPlateau_PokemonCenter_1F (13, 12) north\n\
@@ -171,7 +171,7 @@ let records : Table_test.case list =
       name = "06-grind-return promises the grind's moves";
       input =
         (fun () ->
-          Pokemon_checkpoints.Plan_text.postconditions
+          Pokemon_engine.Plan_text.postconditions
             (plan "06-grind-return.plan.json"));
       expectation =
         "party includes blastoise, pidgey, mr-mime, farfetchd\n\
@@ -186,7 +186,7 @@ let records : Table_test.case list =
          duplication gives, and Lea & Jed's prize less the mail";
       input =
         (fun () ->
-          Pokemon_checkpoints.Plan_text.postconditions
+          Pokemon_engine.Plan_text.postconditions
             (plan "08-activate-and-verify.plan.json"));
       expectation =
         "party includes mr-mime, pidgey\n\
@@ -199,7 +199,7 @@ let records : Table_test.case list =
       name = "07-glitch-prep promises Blastoise's Leppa Berry and MIMIEN's mail";
       input =
         (fun () ->
-          Pokemon_checkpoints.Plan_text.postconditions
+          Pokemon_engine.Plan_text.postconditions
             (plan "07-glitch-prep.plan.json"));
       expectation =
         "party includes pidgey\n\
@@ -225,7 +225,7 @@ let cases : Table_test.case list =
       "3";
     case "05-grind-mr-mime repeats until MIMIEN is Lv 33 and knows Recycle"
       (fun () ->
-        Pokemon_checkpoints.Plan_text.repeat (plan "05-grind-mr-mime.plan.json"))
+        Pokemon_engine.Plan_text.repeat (plan "05-grind-mr-mime.plan.json"))
       "at most 20 rounds, until:\nmr-mime knows recycle\nmr-mime at least Lv 33";
     case "05-grind-mr-mime retries each round twice"
       (fun () -> string_of_int (plan "05-grind-mr-mime.plan.json").retries)

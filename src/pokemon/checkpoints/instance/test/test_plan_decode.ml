@@ -2,7 +2,7 @@
    kind's args, and rejects a broken plan naming the field. The Mail Glitch
    plans are read through FireRed's loader, in its test_mail_glitch_plans. *)
 
-open Pokemon_checkpoints
+open Pokemon_engine
 
 let load_all paths =
   let errors =

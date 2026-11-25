@@ -40,3 +40,6 @@ val mover : running:bool -> Direction.t -> int -> Wire.command list
 
 val turn_tap : Direction.t -> Wire.command list
 (** A tap that turns the player without a step, and the wait for the turn. *)
+
+val turn_ms : int
+(** How long {!turn_tap} takes: the tap and the wait. *)

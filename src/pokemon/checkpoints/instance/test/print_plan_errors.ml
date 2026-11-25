@@ -5,7 +5,7 @@
    with several bad fields (which one is named first). A change that keeps
    plan_errors.golden as it is reports every broken plan the same way. *)
 
-open Pokemon_checkpoints
+open Pokemon_engine
 
 let start = {|{"map": "Town", "tiles": [[1, 2]], "facing": "south"}|}
 

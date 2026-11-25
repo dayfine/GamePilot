@@ -1,7 +1,7 @@
 (* Postcondition_check: each postcondition the plan states against what the
    game read, passed, failed or not checked, and the log lines. *)
 
-open Pokemon_checkpoints
+open Pokemon_engine
 open Engine_postcondition
 module C = Postcondition_check
 
