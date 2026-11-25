@@ -21,12 +21,15 @@ struct FrameProbe {
   // core.template_match@1 only: the template scaled to frame pixels, BGR, or
   // with ink its mask.
   cv::Mat template_image;
+  // core.find@1 only: its params in frame pixels, with its template and shape.
+  FrameFind find;
 };
 
 // Maps the probe's picture-relative box (and template, given in game pixels)
 // onto a width x height frame. Throws RpcError kUnknownProbeKind for an
 // unknown kind, and kInvalidParams for a template_match probe whose template
-// is not in `templates` or, scaled, does not fit its box.
+// is not in `templates` or, scaled, does not fit its box, and for a find probe
+// whose template or shape is not in `templates`.
 FrameProbe map_probe(const ProbeSpec& probe, const TemplateStore& templates,
                      const Viewport& viewport, int width, int height);
 

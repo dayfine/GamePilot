@@ -102,6 +102,33 @@ void check_requests(const std::map<std::string, pa::JsonValue>& files) {
   CHECK(arrow.probes[1].color_range.max ==
         (std::array<std::uint8_t, 3>{255, 120, 120}));
 
+  const SubscribeParams shares_and_blobs = decode_subscribe(
+      decode_request(files.at("44-subscribe.line_shares_find.request.json"))
+          .params);
+  CHECK(shares_and_blobs.probes.size() == 3);
+  const ProbeSpec& glyph = shares_and_blobs.probes[0];
+  CHECK(glyph.kind == kLineSharesKind && glyph.pixel_test.size() == 3);
+  CHECK(glyph.pixel_test[2].weights == (std::array<int, 3>{-1, 0, 1}) &&
+        glyph.pixel_test[2].op == ChannelComparison::Op::kGreater &&
+        glyph.pixel_test[2].value == 60);
+  const ProbeSpec& chevron = shares_and_blobs.probes[1];
+  CHECK(chevron.kind == kFindKind && chevron.find);
+  if (chevron.find) {
+    CHECK(chevron.find->filters.size() == 2);
+    CHECK(chevron.find->filters[0].min ==
+          (std::array<std::uint8_t, 3>{235, 235, 220}));
+    CHECK(chevron.find->min_area == 1 && !chevron.find->max_area);
+    CHECK(chevron.find->min_size == (std::array<double, 2>{26, 15}));
+    CHECK(chevron.find->max_size == (std::array<double, 2>{40, 24}));
+    CHECK(chevron.find->margin == 4.0);
+    CHECK(chevron.find->template_hash.empty() &&
+          chevron.find->shape_hash.size() == 64);
+  }
+  const ProbeSpec& choice = shares_and_blobs.probes[2];
+  CHECK(choice.find && choice.find->max_area == 5000.0 &&
+        choice.find->template_hash.size() == 64 &&
+        choice.find->shape_hash.empty() && !choice.find->margin);
+
   const Request submit = decode_request(files.at("08-submit.request.json"));
   const SubmitParams batch = decode_submit(submit.params);
   CHECK(batch.batch_id == "b1");
@@ -274,6 +301,24 @@ void check_encoders(const std::map<std::string, pa::JsonValue>& files) {
                            probe_results_json({{"arrow_line1", no_arrow},
                                                {"arrow_line2", arrow}})) ==
         files.at("20-frame.color_count.notification.json"));
+  FindResult chevron;
+  Blob blob;
+  blob.filter = 1;
+  blob.box = cv::Rect(1418, 982, 32, 20);
+  blob.area = 230;  // 0.359375 of 32 x 20
+  blob.stray = 0.0;
+  blob.overlap = 0.585443;
+  chevron.blobs.push_back(blob);
+  const ProbeResult glyph = LineShares{
+      {3.0 / 8, 4.0 / 8, 2.0 / 8, 2.0 / 8, 4.0 / 8, 3.0 / 8, 2.0 / 8},
+      {1.0 / 7, 3.0 / 7, 4.0 / 7, 3.0 / 7, 2.0 / 7, 3.0 / 7, 3.0 / 7,
+       1.0 / 7}};
+  CHECK(frame_notification(
+            5120, 0, 85337.2,
+            probe_results_json({{"controls_hint.glyph", glyph},
+                                {"advance_arrow", chevron},
+                                {"choice_arrow", FindResult{}}})) ==
+        files.at("45-frame.line_shares_find.notification.json"));
   CHECK(batch_done_notification("b1", 1230, 20599.0) ==
         files.at("10-batch_done.notification.json"));
 
@@ -394,6 +439,39 @@ void check_errors() {
       (std::string(R"({"id":"p","kind":"core.color_stats@1",)") + kBox +
        R"(,"min":[0,0,0],"max":[1,1,1]})")
           .c_str()));  // a range only for color counts
+  const std::string shares =
+      std::string(R"({"id":"p","kind":"core.line_shares@1",)") + kBox;
+  CHECK(subscribe_error((shares + "}").c_str()));  // a test is required
+  CHECK(subscribe_error((shares + R"(,"test":[]})").c_str()));  // not empty
+  CHECK(subscribe_error(
+      (shares + R"(,"test":[{"weights":[1,0],"op":">","value":1}]})")
+          .c_str()));  // three weights
+  CHECK(subscribe_error(
+      (shares + R"(,"test":[{"weights":[1,0,0],"op":"=","value":1}]})")
+          .c_str()));  // > >= < <= only
+  CHECK(subscribe_error(
+      (shares + R"(,"test":[{"weights":[1,0,0],"op":">","value":1.5}]})")
+          .c_str()));  // integers
+  CHECK(subscribe_error(
+      (std::string(R"({"id":"p","kind":"core.color_stats@1",)") + kBox +
+       R"(,"test":[{"weights":[1,0,0],"op":">","value":1}]})")
+          .c_str()));  // a test only for line shares
+  const std::string find =
+      std::string(R"({"id":"p","kind":"core.find@1",)") + kBox;
+  const std::string filter = R"(,"filters":[{"min":[0,0,0],"max":[9,9,9]}])";
+  CHECK(subscribe_error((find + filter + "}").c_str()));  // min_area needed
+  CHECK(subscribe_error(
+      (find + R"(,"filters":[],"min_area":1})").c_str()));  // a filter
+  CHECK(subscribe_error((find + filter + R"(,"min_area":0})").c_str()));
+  CHECK(subscribe_error(
+      (find + filter + R"(,"min_area":5,"max_area":4})").c_str()));
+  CHECK(subscribe_error(
+      (find + filter + R"(,"min_area":1,"min_size":[1]})").c_str()));
+  CHECK(subscribe_error(
+      (find + filter + R"(,"min_area":1,"margin":-1})").c_str()));
+  CHECK(subscribe_error(
+      (find + filter + R"(,"min_area":1,"ink":{"min":[0,0,0],"max":[1,1,1]}})")
+          .c_str()));  // ink only for template_match
   CHECK(subscribe_error(
       (std::string(R"({"id":"p","kind":"core.template_match@1",)") + kBox +
        R"(,"template":"t","ink":{"min":[9,0,0],"max":[8,0,0]}})")
@@ -425,8 +503,10 @@ void check_errors() {
 
 int main() {
   const auto files = load_contracts();
-  CHECK(files.size() == 43);
-  if (files.size() == 41) {
+  // Every golden file: a new one is checked here, then counted.
+  constexpr std::size_t kGoldenFiles = 45;
+  CHECK(files.size() == kGoldenFiles);
+  if (files.size() == kGoldenFiles) {
     check_requests(files);
     check_lease(files);
     check_upload(files);

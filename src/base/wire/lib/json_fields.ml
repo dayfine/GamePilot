@@ -46,3 +46,21 @@ let json_of_strings l = `List (List.map (fun s -> `String s) l)
 let parse_json s =
   try Yojson.Safe.from_string s
   with Yojson.Json_error e -> fail "bad JSON: %s" e
+
+let member_opt name = function
+  | `Assoc fields -> List.assoc_opt name fields
+  | _ -> None
+
+let number_opt = function
+  | `Int i -> Some (float_of_int i)
+  | `Float f -> Some f
+  | _ -> None
+
+let rec all_opt f = function
+  | [] -> Some []
+  | x :: rest -> (
+      match f x with
+      | None -> None
+      | Some y -> Option.map (List.cons y) (all_opt f rest))
+
+let numbers_opt = function `List items -> all_opt number_opt items | _ -> None

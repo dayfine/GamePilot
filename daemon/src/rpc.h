@@ -14,6 +14,7 @@
 #include "Common/Cpp/Json/JsonObject.h"
 #include "Common/Cpp/Json/JsonValue.h"
 #include "backend.h"
+#include "blob_find.h"
 #include "input_lease.h"
 #include "probes.h"
 #include "schedule.h"
@@ -90,6 +91,10 @@ struct ProbeSpec {
   std::optional<ColorRange> ink;
   // core.color_count@1 only.
   ColorRange color_range;
+  // core.line_shares@1 only: what a counted pixel passes.
+  PixelTest pixel_test;
+  // core.find@1 only.
+  std::optional<FindSpec> find;
 };
 
 struct SubscribeParams {
@@ -115,14 +120,14 @@ struct LeaseAcquireParams {
 // The daemon's health, for `status`.
 struct DaemonStatus {
   double t_ms = 0;
-  std::string backend;                // BackendInfo::kind
+  std::string backend;  // BackendInfo::kind
   // The lease holder's hello name, else the oldest connection's that said
   // hello.
   std::optional<std::string> client;
   std::int64_t clients = 0;  // connections now
   std::optional<LeaseHolder> lease;
-  std::string fidelity;               // "full" while an `every` probe is
-                                      // subscribed, else "latest"
+  std::string fidelity;  // "full" while an `every` probe is
+                         // subscribed, else "latest"
   BackendHealth health;  // threads: the backend's, then the server's
 };
 
@@ -173,7 +178,8 @@ pa::JsonObject lease_release_result(bool released);
 RpcError lease_refusal(const LeaseHolder& holder, double now_ms);
 // The refusal of `method` (input or lease.acquire) by a view-only backend
 // (kBackendError, data {backend, method}).
-RpcError view_only_refusal(const std::string& backend, const std::string& method);
+RpcError view_only_refusal(const std::string& backend,
+                           const std::string& method);
 
 // One probe result as sent: its `kind` and fields, rounded.
 pa::JsonObject probe_result_json(const ProbeResult& result);

@@ -18,6 +18,8 @@ type probe_spec = {
   template : string option;
   ink : color_range option;
   color_range : color_range option;
+  test : Line_shares.test;
+  find : Blob_find.params option;
 }
 
 val color_stats_probe : id:string -> box:box -> delivery:delivery -> probe_spec
@@ -39,6 +41,22 @@ val color_count_probe :
   max:int * int * int ->
   probe_spec
 
+val line_shares_probe :
+  id:string ->
+  box:box ->
+  delivery:delivery ->
+  test:Line_shares.test ->
+  (probe_spec, string) result
+(** [Error] for an empty test, which the daemon refuses. *)
+
+val find_probe :
+  ?template:string ->
+  id:string ->
+  box:box ->
+  delivery:delivery ->
+  Blob_find.params ->
+  probe_spec
+
 val probe_spec_of_json : json -> probe_spec
 val json_of_probe_spec : probe_spec -> json
 
@@ -49,6 +67,16 @@ type probe_result =
   | Template_match of { score : float; x : float; y : float }
   | Color_count of { fraction : float; mean : rgb option }
   | Other of json
+
+val line_shares : probe_result -> Line_shares.t option
+(** A [core.line_shares@1] result, which decodes as [Other]; [None] for any
+    other result. *)
+
+val blobs : probe_result -> Blob_find.blob list option
+(** A [core.find@1] result's blobs, likewise. *)
+
+val line_shares_result : Line_shares.t -> probe_result
+val find_result : Blob_find.blob list -> probe_result
 
 val probes_of_json : string -> json -> (string * probe_result) list
 (** A [probes] object [{id: result}], in its order; [what] names it in errors.

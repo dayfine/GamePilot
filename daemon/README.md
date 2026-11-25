@@ -125,7 +125,8 @@ picture whole and at 2x inside side bars give the same results.
 |---|---|
 | `src/backend.h` | the I/O boundary |
 | `src/mgba_backend.*` | mGBA through the bridge's line protocol |
-| `src/probes.*` | probe kinds (`core.color_stats@1`, `core.template_match@1` with its optional ink masks, `core.color_count@1`) on frame pixels |
+| `src/probes.*` | probe kinds (`core.color_stats@1`, `core.template_match@1` with its optional ink masks, `core.color_count@1`, `core.line_shares@1`) on frame pixels |
+| `src/blob_find.*` | `core.find@1`: colour filter, 4-connected blobs, size filter, stray share, template score, shape overlap |
 | `src/viewport.*` | where the game picture sits in the frame: picture boxes to frame pixels, template scale |
 | `src/probe_evaluation.*` | maps a subscribed probe onto the frame and runs it (daemon and `probe_images`) |
 | `src/probe_images.cpp` | the offline `probe_images` tool |
