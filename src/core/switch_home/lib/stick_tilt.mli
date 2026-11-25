@@ -1,9 +1,9 @@
 (** The left stick tilted toward an angle, as the daemon presses it: the fork's
-    [pbf_move_left_joystick] with its position from an angle, and a run as a
-    button held with the stick. Moved out of PLZA's
-    [PokemonLZA_AutoStoryConsoleBackend.cpp] port, since any game that moves on
-    the stick turns angles into tilts the same way; how much faster a game runs
-    is the game's to say. *)
+    left-stick press ([NintendoSwitch_Commands_PushButtons.h]) with its position
+    from an angle, and a run as a button held with the stick. Moved out of
+    PLZA's [PokemonLZA_AutoStoryConsoleBackend.cpp] port, since any game that
+    moves on the stick turns angles into tilts the same way; how much faster a
+    game runs is the game's to say. *)
 
 val toward : degrees:float -> (Wire.stick, string) result
 (** The stick toward [degrees] clockwise from straight on (up): [(sin, cos)], +x
