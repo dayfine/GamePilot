@@ -16,7 +16,8 @@
   gamepilot.engine_run
   gamepilot.engine_series
   gamepilot.pokemon_checkpoints
-  gamepilot.checkpoints_run
+  gamepilot.checkpoint_end
+  gamepilot.room_policy
   gamepilot.checkpoints_series
   gamepilot.frlg_actions
   gamepilot.frlg_readers

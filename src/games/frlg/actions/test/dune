@@ -68,7 +68,7 @@
   gamepilot.grid_maps
   gamepilot.json_field
   gamepilot.pokemon_checkpoints
-  gamepilot.checkpoints_run
+  gamepilot.room_policy
   gamepilot.frlg_overworld
   gamepilot.frlg_actions
   gamepilot.frlg_battle

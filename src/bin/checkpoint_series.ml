@@ -11,7 +11,6 @@
 open Engine_run
 open Engine_series
 open Pokemon_checkpoints
-open Checkpoints_run
 module Run = Checkpoint_live_run
 
 let ( let* ) = Result.bind

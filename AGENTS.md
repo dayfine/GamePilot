@@ -17,7 +17,8 @@ GamePilot automates games through three layers (design: `docs/design/Layered-Aut
     names no game, grid or Pokémon type.
   - `pokemon/`: code shared by Pokemon games: the navigation grid, and in `checkpoints/` the
     Pokémon terms (`terms`: grid poses, own kinds, postconditions), the engine applied to them
-    (`plan`: `Pokemon_checkpoints`), the end-state check and room policy (`run`), console runs
+    (`instance`: `Pokemon_checkpoints`), the declared end of a checkpoint (`checkpoint_end`), who
+    goes to the PC when a chain needs party room (`room_policy`), console runs
     (`series`) and place-route rewrites (`expand`).
   - `games/<game>/`: `readers/`, `actions/`, `maps/`, `checkpoints/`, and `programs/<program>/`.
   - `program_registry/`: every program's descriptor (game, group, name, doc, checkpoints folder,

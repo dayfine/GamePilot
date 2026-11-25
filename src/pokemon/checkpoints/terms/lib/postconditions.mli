@@ -29,7 +29,7 @@ type level = { species : string; min : int }
 type t = {
   position : Pose.grid option;
       (** Where the checkpoint ends; unset, the end is the next checkpoint's
-          start ([Checkpoints_run.Checkpoint_end]). *)
+          start ([Checkpoint_end]). *)
   party : party option;
   items : bag_count list;  (** Each item's count in the bag. *)
   coins : Engine_promise.Count.t option;  (** Game Corner coins. *)
