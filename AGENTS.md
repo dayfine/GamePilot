@@ -64,6 +64,21 @@ GamePilot automates games through three layers (design: `docs/design/Layered-Aut
 - Machine-specific paths come from environment variables (`GAMEPILOT_*`, see `README.md`),
   never from a home path in code, docs or tests.
 
+## PR gate loop
+
+Each PR goes through, in order: **CI green → qc-structural at the tip → the user's structure
+review → squash merge** (the user merges).
+
+- qc-structural (`.agents/agents/qc-structural.md`, rows in
+  `.agents/rules/qc-structural-authority.md`) runs only on green CI. It posts its verdict as a
+  COMMENT review: `Reviewed SHA: <sha>` on line 1, `## Verdict` then `APPROVED` or `NEEDS_REWORK`.
+  Its FLAGs are questions for the user and do not block.
+- A verdict holds for the SHA it names. A rework commit invalidates it: review the new tip.
+- Docs-only PRs (every file `.md` or under `docs/`) skip qc-structural; CI is still required.
+- `sh dev/review/pr_gate_status.sh [PR...]` prints each open PR's CI, verdict (ok / rework /
+  stale(<sha>) / none / skip) and next step. `sh dev/review/format_only_changes.sh` lists files
+  changed only in formatting; CI prints the same list as warnings.
+
 ## Agents
 
-Harness from `dayfine/agent-harness` (`.agents/rules/`, `dev/lib/`, `.agents/checks/`).
+Harness from `dayfine/agent-harness` (`.agents/agents/`, `.agents/rules/`, `dev/lib/`, `.agents/checks/`).
