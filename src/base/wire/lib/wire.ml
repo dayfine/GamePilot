@@ -23,6 +23,7 @@ type button = Command.button =
   | ZR
   | Plus
   | Minus
+  | LStick
 
 let all_buttons = Command.all_buttons
 let string_of_button = Command.string_of_button

@@ -2,9 +2,9 @@
     command line, in the lab's labB.sh format: [press A 100 800] (button, hold
     ms, wait ms after the release), [dpad DOWN 160 800], [shot NAME], [wait MS];
     [#] starts a comment. Buttons are the daemon's (protocol/v1), any case: the
-    GBA buttons, and the Switch's own HOME, X, Y, ZL, ZR, PLUS and MINUS, which
-    only the Switch backend takes (on the Switch, START and SELECT press Plus
-    and Minus too, as the Switch's GBA app maps them). *)
+    GBA buttons, and the Switch's own HOME, X, Y, ZL, ZR, PLUS, MINUS and
+    LSTICK, which only the Switch backend takes (on the Switch, START and SELECT
+    press Plus and Minus too, as the Switch's GBA app maps them). *)
 
 type step =
   | Press of { button : Wire.button; hold_ms : int; wait_ms : int; times : int }

@@ -29,7 +29,10 @@
       other game. Placements that do not bind [VAR] are not restricted.
     - [never_links PATTERN LIB...] (repeatable): a dune directory matching
       [PATTERN] (as for [layer]) links none of the [LIB]s, directly or through a
-      library of the scanned tree it links (see {!Never_links}). *)
+      library of the scanned tree it links (see {!Never_links}).
+    - [doc_listing VALUE...] (repeatable): registration values (such as
+      [handlers]) that an [.mli] doc comment may not list from several modules
+      (see {!Doc_listing}). *)
 
 type layer = { name : string; pattern : string list }
 
@@ -55,6 +58,8 @@ type t = {
   families : family list;
   never_links : (string list * string list) list;
       (** Each rule's directory pattern and the libraries it never links. *)
+  doc_listing : string list;
+      (** Registration values a doc comment may not list ({!Doc_listing}). *)
 }
 
 val default : t

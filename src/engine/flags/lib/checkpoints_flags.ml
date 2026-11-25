@@ -1,4 +1,4 @@
-(* gamepilot checkpoints' flags, whatever the game: their record, defaults and
+(* gamepilot run's flags, whatever the game: their record, defaults and
    parsing, with a game's own flags ('game) parsed by the game's hooks. *)
 
 open Engine_run

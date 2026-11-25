@@ -3,7 +3,7 @@
    fled two wild battles and cleared the PurifiedZone message on the way.
 
    Re-record: daemon/build/gamepilot_daemon --backend mgba --mgba-port 47810
-   --log run.wire.jsonl, then gamepilot checkpoint on 04-grind-farfetchd (mg-04 then) cut to its first
+   --log run.wire.jsonl, then gamepilot run --plan on 04-grind-farfetchd (mg-04 then) cut to its first
    event, its postconditions emptied, with --state 04-grind-farfetchd.start.ss
    (formerly mg04_start.ss; a save state, not committed); rewrite the
    load_state path in the log to "mg04_start.ss" (replay does not compare it)
