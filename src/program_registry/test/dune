@@ -3,4 +3,5 @@
  (libraries
   gamepilot.table_test
   gamepilot.frlg_checkpoints
+  gamepilot.plza_engine
   gamepilot.program_registry))

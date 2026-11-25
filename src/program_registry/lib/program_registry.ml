@@ -1,6 +1,6 @@
 type backend = Mgba | Switch
 type viewport = Nso_gba | Native
-type rules = Pokemon_grid
+type rules = Pokemon_grid | Plza_story
 
 type switch_home = {
   title : string;
@@ -99,7 +99,7 @@ let lab_game_of_env () =
     | Some "" | None -> None
     | id -> id)
 
-let mail_glitch =
+let frlg_mail_glitch =
   {
     id = "frlg.mail_glitch";
     game = frlg;
@@ -115,7 +115,7 @@ let mail_glitch =
     rules = Pokemon_grid;
   }
 
-let start_menu_poc =
+let frlg_start_menu_poc =
   {
     id = "frlg.start_menu_poc";
     game = frlg;
@@ -130,7 +130,7 @@ let start_menu_poc =
     rules = Pokemon_grid;
   }
 
-let team_training =
+let frlg_team_training =
   {
     id = "frlg.team_training";
     game = frlg;
@@ -144,7 +144,7 @@ let team_training =
     rules = Pokemon_grid;
   }
 
-let supplies =
+let frlg_supplies =
   {
     id = "frlg.supplies";
     game = frlg;
@@ -159,7 +159,7 @@ let supplies =
     rules = Pokemon_grid;
   }
 
-let sevii_story =
+let frlg_sevii_story =
   {
     id = "frlg.sevii_story";
     game = frlg;
@@ -173,7 +173,7 @@ let sevii_story =
     rules = Pokemon_grid;
   }
 
-let dex_collection =
+let frlg_dex_collection =
   {
     id = "frlg.dex_collection";
     game = frlg;
@@ -188,7 +188,7 @@ let dex_collection =
     rules = Pokemon_grid;
   }
 
-let wild_rng =
+let frlg_wild_rng =
   {
     id = "frlg.wild_rng";
     game = frlg;
@@ -203,15 +203,32 @@ let wild_rng =
     rules = Pokemon_grid;
   }
 
+let plza_autostory =
+  {
+    id = "plza.autostory";
+    game = plza;
+    name = "AutoStory";
+    group = [ "PLZA"; "Story" ];
+    description =
+      "Plays the story; for now its first walk, from the platform to the plaza \
+       (checkpoint 01.01).";
+    doc = "docs/guide/plza.autostory.md";
+    checkpoints = Some "src/games/pokemon/plza/programs/autostory/plans";
+    backends = [ Switch ];
+    viewport = Native;
+    rules = Plza_story;
+  }
+
 let all =
   [
-    start_menu_poc;
-    mail_glitch;
-    supplies;
-    team_training;
-    sevii_story;
-    dex_collection;
-    wild_rng;
+    frlg_start_menu_poc;
+    frlg_mail_glitch;
+    frlg_supplies;
+    frlg_team_training;
+    frlg_sevii_story;
+    frlg_dex_collection;
+    frlg_wild_rng;
+    plza_autostory;
   ]
 
 let short_id p =

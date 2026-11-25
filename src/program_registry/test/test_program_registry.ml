@@ -30,7 +30,13 @@ let plans_in dir =
   |> List.filter (fun n -> Filename.check_suffix n ".plan.json")
   |> List.map (Filename.concat dir)
 
-let plan_error file =
+(* PLZA's plans are over its own rules: they decode with Plza_engine. *)
+let plza_plan_error file =
+  match Plza_engine.Plan_decode.load file with
+  | Ok _ -> None
+  | Error e -> Some (file ^ ": " ^ e)
+
+let frlg_plan_error file =
   match Frlg_checkpoints.Plan_file.load file with
   | Error e -> Some (file ^ ": " ^ e)
   | Ok plan -> (
@@ -44,7 +50,13 @@ let bad_plans () =
     (fun (p : R.t) ->
       match Option.bind p.checkpoints R.locate with
       | None -> []
-      | Some dir -> List.filter_map plan_error (plans_in dir))
+      | Some dir ->
+          let plan_error =
+            match p.rules with
+            | Plza_story -> plza_plan_error
+            | Pokemon_grid -> frlg_plan_error
+          in
+          List.filter_map plan_error (plans_in dir))
     R.all
   |> String.concat "\n"
 
