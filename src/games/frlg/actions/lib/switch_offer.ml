@@ -15,8 +15,12 @@ let probes () =
 (* A fresh subscription is read on the next frame: well within this. *)
 let look_timeout_ms = 1000
 
+(* The latest frame may predate the subscription and carry no result for the
+   line: wait for one that does, as [Line_reading.read] waits for its probes. *)
+let has_line m = Effects.probe m (Text.Line_reading.probe_id line text) <> None
+
 let read () =
   Effects.with_probes (probes ()) (fun () ->
-      match Effects.await ~timeout_ms:look_timeout_ms (fun _ -> true) with
+      match Effects.await ~timeout_ms:look_timeout_ms has_line with
       | Holds m -> shows m
       | Timeout -> false)

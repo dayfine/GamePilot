@@ -35,6 +35,10 @@ val field_move_users : (string * string) list
     know: [cut_tree] (Cut). Their ["species"] names that member for the
     pre-flight only. *)
 
+val deposited_species : where:string -> Json_field.obj -> string list
+(** [pc_deposit]'s ["species"]: a list, every member it stores, in order; [[]]
+    when the args leave it out. *)
+
 val picks_member : action:string -> Json_field.obj -> bool
 (** The action finds a member by its species in the party: its args name one
     ({!member_keys}) and the game does not pick it ({!field_move_users}); or it
