@@ -19,14 +19,25 @@ Delete PLZA's save (`gamepilot ctl delete-save plza`, look at the screen, then
 game, finds PLZA's tile among HOME's first 8 by its title and starts the new game there. The Switch's capture must be the whole
 1920x1080 picture (the daemon's `--viewport native`).
 
-The new game's choices are the args of 01.00a's `new_game` event, in its plan
-(`src/games/pokemon/plza/programs/autostory/plans/01.00a.plan.json`):
+The new game's choices are options of the run, `--language`, `--look` and `--name`; each one not
+given keeps the default in 01.00a's plan (the args of its `new_game` event,
+`src/games/pokemon/plza/programs/autostory/plans/01.00a.plan.json`). Pass them on the command
+line rather than editing the plan:
 
-- `language`: `en` (the default), `es-ES`, `es-419`, `fr`, `de`, `it`, `ja` or `zh-Hant`.
+- `--language`: `en` (the default), `es-ES`, `es-419`, `fr`, `de`, `it`, `ja` or `zh-Hant`.
   Korean (`ko`) and Simplified Chinese (`zh-Hans`) are refused: their keyboards are not typed on.
-- `look`: 1 (the default) to 8, left to right along the top row, then the bottom one.
-- `name`: `Kosmos` (the default); at most 12 characters (6 in Japanese and Chinese), only letters,
-  digits and `- / : ' , . ? !`.
+- `--look`: 1 (the default) to 8, left to right along the top row, then the bottom one.
+- `--name`: `Kosmos` (the default); at most 12 characters (6 in Japanese and Chinese), only
+  letters, digits and `- / : ' , . ? !`.
+
+A choice 01.00a cannot play is refused before the console moves, and so are these options on a
+series that does not start at 01.00a: they would do nothing there. The run prints the choices it
+plays. In French with look 5, for example:
+
+```sh
+cd src && opam exec -- dune exec -- gamepilot checkpoints --program plza.autostory --from 01.00a --to 03.11 --mode testing --backend switch --serial PORT --capture DEVICE \
+    --watch --language fr --look 5
+```
 
 To make the choices by hand instead, stop on the "Confirm Choices" screen and start at 01.00b
 (`--from 01.00b`).

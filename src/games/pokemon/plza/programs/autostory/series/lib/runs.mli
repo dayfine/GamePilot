@@ -36,6 +36,9 @@ val run_series :
 (** [run_series ~program ~viewport plan_dir args]: the checkpoints --from to
     --to of the plan folder, in order, each run until the policy decides; every
     plan loaded and checked ({!Plza_autostory.Plan_check}) before the console
-    moves. [program] is run.json's program fields, [viewport] the Switch
-    daemons' (the registry's check of --viewport). [Ok 0] when every one passed,
-    [Ok 1] when one stopped; the Switch only, testing. *)
+    moves, and 01.00a's new-game choices with them: the program's options
+    ([--language], [--look], [--name]) over its plan's args, refused when the
+    series has no 01.00a ({!Plza_autostory.New_game_event.series_choices}).
+    [program] is run.json's program fields, [viewport] the Switch daemons' (the
+    registry's check of --viewport). [Ok 0] when every one passed, [Ok 1] when
+    one stopped; the Switch only, testing. *)

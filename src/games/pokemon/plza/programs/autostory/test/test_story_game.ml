@@ -599,8 +599,9 @@ let battle_lines c =
 let result checkpoint screen () = fst (outcome checkpoint screen)
 
 (* 01.00a's plan with a new game that only says what it was given, or the
-   default new game ([given] false). *)
-let new_game_given ?(given = true) () =
+   default new game ([given] false); [options]: the program's options over the
+   plan's choices. *)
+let new_game_given ?(given = true) ?options () =
   let choices = ref "not played" in
   let new_game (c : Plza_story.New_game_choices.t) =
     choices :=
@@ -611,7 +612,7 @@ let new_game_given ?(given = true) () =
   let steps = C.steps (C.create ()) look in
   let game =
     if given then
-      Plza_autostory.Story_game.make ~new_game steps
+      Plza_autostory.Story_game.make ?options ~new_game steps
         ~checkpoint:(plan "01.00a").checkpoint ~reload:(fun () -> Ok ())
     else
       Plza_autostory.Story_game.make steps
@@ -620,6 +621,26 @@ let new_game_given ?(given = true) () =
   match Runner.run game (plan "01.00a").checkpoint with
   | Ok () -> "passed: " ^ !choices
   | Error f -> Failure.to_string f
+
+(* The new games [ids]' plans play with [options] over their args, before
+   the console moves (New_game_event.series_choices). *)
+let choices_of ?(options = Plza_autostory.New_game_options.none) ids () =
+  match
+    Plza_autostory.New_game_event.series_choices ~options
+      (List.map (fun id -> (plan id).checkpoint) ids)
+  with
+  | Ok cs ->
+      "ok: "
+      ^ String.concat "; "
+          (List.map Plza_autostory.New_game_options.describe cs)
+  | Error e -> "error: " ^ e
+
+let french_5 =
+  {
+    Plza_autostory.New_game_options.none with
+    language = Some Plza_story.New_game_choices.French;
+    look = Some 5;
+  }
 
 (* Whether [part] is in [line]. *)
 let contains part line =
@@ -904,6 +925,44 @@ let cases =
   [
     case "01.00a: the plan's choices reach the new game" new_game_given
       "passed: en, look 1, \"Kosmos\"";
+    case "01.00a: the program's options replace the plan's choices they give"
+      (new_game_given
+         ~options:
+           {
+             Plza_autostory.New_game_options.none with
+             language = Some Plza_story.New_game_choices.French;
+             look = Some 5;
+           })
+      "passed: fr, look 5, \"Kosmos\"";
+    case "01.00a: a name option alone keeps the plan's language and look"
+      (new_game_given
+         ~options:
+           { Plza_autostory.New_game_options.none with name = Some "Ana" })
+      "passed: en, look 1, \"Ana\"";
+    case "01.00a to 01.00b with options: the choices it will play"
+      (choices_of ~options:french_5 [ "01.00a"; "01.00b" ])
+      "ok: fr, look 5, \"Kosmos\"";
+    case "01.00a, no options: the plan's choices" (choices_of [ "01.00a" ])
+      "ok: en, look 1, \"Kosmos\"";
+    case "01.01 to 01.02, no options: no new game"
+      (choices_of [ "01.01"; "01.02" ])
+      "ok: ";
+    case "01.01 to 01.02 with options: refused, no new game to take them"
+      (choices_of ~options:french_5 [ "01.01"; "01.02" ])
+      "error: --language, --look and --name are 01.00a's new-game choices, and \
+       this series has no new game: start it at 01.00a, or drop them";
+    case
+      "01.00a with a name its language cannot take: refused before the console"
+      (choices_of
+         ~options:
+           {
+             Plza_autostory.New_game_options.none with
+             language = Some Plza_story.New_game_choices.Japanese;
+             name = Some "Kosmoss";
+           }
+         [ "01.00a" ])
+      "error: 01.00a: AutoStory: the player name \"Kosmoss\" has 7 characters; \
+       the game takes at most 6 in this language (ja).";
     case "01.00a with no console new game: no handler, repeats"
       (new_game_given ~given:false)
       "01.00a event 1 (new_game): no_handler: new_game runs on the console only";

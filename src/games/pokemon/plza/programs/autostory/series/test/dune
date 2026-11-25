@@ -1,0 +1,7 @@
+(test
+ (name test_flags)
+ (libraries
+  gamepilot.table_test
+  gamepilot.plza_story
+  gamepilot.plza_autostory
+  gamepilot.plza_series))

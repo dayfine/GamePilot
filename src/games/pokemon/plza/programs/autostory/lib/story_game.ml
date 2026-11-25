@@ -119,33 +119,8 @@ let scene_through_prompt ~jump steps (event : Plan.event)
         { Scene_machine.default with stop_at_choice = true }
   | _ -> bad_args event "the only arg is stop_at_choice, true"
 
-(* 01.00a's choices: "language" (a tag), "look" (1 to 8) and "name", each
-   optional, the fork's default when absent. *)
-let language_choice (c : New_game_choices.t) event tag =
-  match New_game_choices.of_tag tag with
-  | Some language -> Ok { c with language }
-  | None ->
-      bad_args event
-        ("language is one of "
-        ^ String.concat ", " New_game_choices.tags
-        ^ ", not " ^ tag)
-
-let choice (c : New_game_choices.t) (event : Plan.event) = function
-  | "language", `String tag -> language_choice c event tag
-  | "look", `Int look -> Ok { c with look }
-  | "name", `String name -> Ok { c with name }
-  | key, _ ->
-      bad_args event
-        (key
-       ^ ": the args are language (a tag), look (a whole number) and name (a \
-          string)")
-
-let new_game run _steps (event : Plan.event) (args : Json_field.obj) =
-  Result.bind
-    (List.fold_left
-       (fun acc arg -> Result.bind acc (fun c -> choice c event arg))
-       (Ok New_game_choices.default) args)
-    run
+let new_game ~options run _steps event args =
+  Result.bind (New_game_event.choices ~options event args) run
 
 let no_new_game _ =
   Error
@@ -190,9 +165,9 @@ let zone_actions =
   ]
 
 (* The story's own actions, up to 03.06. *)
-let story_actions ~new_game:run ~reload ~jump =
+let story_actions ~options ~new_game:run ~reload ~jump =
   [
-    ("new_game", new_game run);
+    ("new_game", new_game ~options run);
     ("confirm_new_game", no_args New_game_confirm.run);
     ( "opening_to_platform",
       timed Platform_wait.opening_to_platform ~default:opening_to_platform_ms );
@@ -212,10 +187,10 @@ let story_actions ~new_game:run ~reload ~jump =
       no_args (fun steps -> Plza_walk.Ladder_climb.run (talk_steps steps)) );
   ]
 
-let game_actions ~new_game ~reload ~jump steps =
+let game_actions ~options ~new_game ~reload ~jump steps =
   List.map
     (fun (name, action) -> (name, action steps))
-    (story_actions ~new_game ~reload ~jump @ zone_actions)
+    (story_actions ~options ~new_game ~reload ~jump @ zone_actions)
 
 let scene ~jump steps (event : Plan.event) =
   let run = run_scene ~jump steps event in
@@ -264,15 +239,16 @@ let builtin_through jump steps event =
 let no_save () =
   Error (Failure.cause ~repeats:true "no_save" "PLZA saves by autosave only")
 
-let make ?(new_game = no_new_game) steps ~(checkpoint : Plan.checkpoint) ~reload
-    : Game.t =
+let make ?(options = New_game_options.none) ?(new_game = no_new_game) steps
+    ~(checkpoint : Plan.checkpoint) ~reload : Game.t =
   let checkpoint_id = checkpoint.checkpoint_id in
   let jump = Battle_jump.make checkpoint ~log:steps.Steps.log in
   {
     run_own = own_through jump steps ~checkpoint_id;
     run_builtin = builtin_through jump steps;
     game_actions =
-      List.map (jumping jump) (game_actions ~new_game ~reload ~jump steps);
+      List.map (jumping jump)
+        (game_actions ~options ~new_game ~reload ~jump steps);
     flag_holds = Resume_flags.holds steps;
     position = (fun () -> None);
     between_rounds = (fun () -> Ok ());
