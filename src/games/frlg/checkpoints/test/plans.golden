@@ -242,6 +242,25 @@ postconditions:
 position ThreeIsland (8, 26) north
 money spent -3196
 no repeat
+== sevii_story/plans/05-berry-forest.plan.json
+frlg 05-berry-forest from ThreeIsland (8, 26) north: 7 route, 1 heal, 2 game_action, 1 talk, 1 battle, 1 scene
+to_nurse: [run] route to ThreeIsland_PokemonCenter_1F (7, 4) north
+heal: heal
+repel_bond_bridge: [use_item] game_action {"item":"super-repel"}
+over_bond_bridge: [run] route to ThreeIsland_BerryForest (43, 41) fighting trainers
+pace_west: [run] route to ThreeIsland_BerryForest (30, 39)
+pace_east: [run] route to ThreeIsland_BerryForest (44, 39)
+pace_west_again: [run] route to ThreeIsland_BerryForest (30, 39)
+pace_east_again: [run] route to ThreeIsland_BerryForest (44, 39)
+repel_berry_forest: [use_item] game_action {"item":"super-repel"}
+to_lostelle: [run] route to ThreeIsland_BerryForest (4, 9) north
+talk_to_lostelle: talk
+hypno: battle
+lostelle_home: scene => TwoIsland_JoyfulGameCorner (6, 6) north
+retries 0
+postconditions:
+position TwoIsland_JoyfulGameCorner (6, 6) north
+no repeat
 == supplies/plans/su-01.plan.json
 frlg su-01 from CeladonCity_DepartmentStore_1F (6, 2) south: 7 route, 6 game_action
 to_4f_clerk: [run] route to CeladonCity_DepartmentStore_1F (6, 2) north

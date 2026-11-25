@@ -89,14 +89,18 @@ Exists today in FireRed and used across the drafts: route walks planned on Pokem
 `grind`, `pc_deposit`, `ingame_trade`, `candy_level`, fleeing wild battles on a walk, scripted
 battles (`Scripted_battle`), soft reset, make room in the party, `step` (one tile onto a scene's
 trigger, nothing watched) and `train` (trainer battles in a row, `Trainer_battles`: the lead attacks
-in slot order, a fainted lead loses; Sevii 04's Bikers).
+in slot order, a fainted lead loses; Sevii 04's Bikers), a `battle` a talk or scene started
+(`Scene_battle`; Sevii 05's Hypno) and trainers who see the player on a walk
+(`Trainer_crossing`, on a route with `fight_trainers`: fought, then the walk planned on round
+them; Sevii 05's Bond Bridge).
 
 ## Parts 1 to 8: the authored chain
 
 The fork's AutoStory plans, in PokemonSimulation. GamePilot decodes their format (its old name is
-an alias) but FireRed's builtin events run only `route`, `ready`, `step`, `train`, `talk`, `answer`,
-`scene`, `heal` and `save`: every other kind returns `not_implemented`. The table predates `step`
-and `train`; a `battle` event with an `opponent` and a `policy` is still missing. What each needs:
+an alias) but FireRed's builtin events run only `route`, `ready`, `step`, `train`, `battle`, `talk`,
+`answer`, `scene`, `heal` and `save`: every other kind returns `not_implemented`. The table predates
+`step`, `train` and `battle`; a `battle` event with an `opponent` and a `policy` is still missing.
+What each needs:
 
 | Plan | Title | Missing in GamePilot |
 |---|---|---|
