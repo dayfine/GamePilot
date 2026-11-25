@@ -1,10 +1,15 @@
 (* The recorded probe results of the PLZA frames (regen_fixture.sh), as the
    measurements a reader takes: fixtures/switch.probes.jsonl by frame
    ("<folder>/<frame>", no extension), and every shifted frame of
-   fixtures/switch.shifted.probes.jsonl with the frame it shifts. *)
+   fixtures/switch.shifted.probes.jsonl and switch.shifted.rg.probes.jsonl with
+   the frame it shifts. *)
 
 let frames = Wire.read_image_probes "switch.probes.jsonl"
-let shifted = Wire.read_image_probes "switch.shifted.probes.jsonl"
+
+let shifted =
+  Wire.read_image_probes "switch.shifted.probes.jsonl"
+  @ Wire.read_image_probes "switch.shifted.rg.probes.jsonl"
+
 let measurements probes : Wire.frame = { seq = 1; t_ms = 0.; probes }
 
 (* "./<folder>/<frame>.<ext>" to "<folder>/<frame>". *)
@@ -28,11 +33,18 @@ let shift_and_frame path =
    it: the wild battle at the zone's pillar shows no trainer's balls, and at
    brightness 0.9 its stat markers' triangle falls under the fork's blue 225
    (Battle_hud); at brightness 1.1 the first ZL frame of Andi's battle loses
-   Tackle's ring to the pavement around it (Move_symbols). *)
+   Tackle's ring to the pavement around it (Move_symbols); the fork's alert eye
+   frames: at brightness 0.9 Zone 20's bar loses its last empty slot to the
+   dark ground (Party_bar), and the translucent eye of Zone 6, the bar's first
+   frame (51 under the bound 60 unshifted), scores over 60 with blue up or
+   green down 12 (Alert_eye). *)
 let known_misses =
   [
     ("battle-hud/it-0308b-zone-pillar-wild-battle", "bright90");
     ("move-symbols/0303-andi-zl-held-1", "bright110");
+    ("alert-eye/zone-20-dedenne-alakazam-alert-true", "bright90");
+    ("alert-eye/zone-6-translucent-1-true", "bplus12");
+    ("alert-eye/zone-6-translucent-1-true", "gminus12");
   ]
 
 (* One case per shifted frame: [read] on it gives what [read] gives on the

@@ -5,6 +5,8 @@ type t = {
   choice_arrow : string;
   advance_chevron_shape : string;
   button_a : string;
+  button_minus : string;
+  alert_eye : string;
   button_dpad_up : string;
   button_dpad_down : string;
   button_dpad_up_interior : string;
@@ -25,6 +27,8 @@ let file_names =
     choice_arrow = "choice_arrow.png";
     advance_chevron_shape = "advance_chevron_shape.png";
     button_a = "button_a.png";
+    button_minus = "button_minus.png";
+    alert_eye = "alert_eye.png";
     button_dpad_up = "button_dpad_up.png";
     button_dpad_down = "button_dpad_down.png";
     button_dpad_up_interior = "button_dpad_up_interior.png";

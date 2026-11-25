@@ -4,12 +4,15 @@
 # frames (draw_synthetic_frames.py), probed by the daemon's probe_images on the
 # native viewport with every PLZA reader's probes (write_probe_spec.exe, its
 # find templates copied from assets/templates beside the spec). Also
-# fixtures/switch.shifted.probes.jsonl: every frame again with its colors
+# fixtures/switch.shifted.probes.jsonl and switch.shifted.rg.probes.jsonl:
+# every frame again with its colors
 # shifted as another capture card might show them, by
 # dev/reader_fixtures/shift_frame.py (brightness times 0.9 and 1.1, one channel
 # plus or minus 12, 10% toward mid-grey), named <shift>/<folder>/<frame>.png:
 # the jpg frames are decoded to png first, so a shift adds no JPEG loss. The
 # shifted frames are probed without the minimap's cells (write_probe_spec.ml).
+# The brightness and blue shifts go to the first file, the red, green and grey
+# ones to the second: one file of all nine is over GitHub's 50 MB warning.
 # The Python steps need Pillow ($SHIFT_PYTHON, default python3; e.g.
 # "uv run --with pillow python3").
 #
@@ -45,4 +48,7 @@ for path in sys.argv[2:]:
 ' "$work/lossless" ./*/*)
 (cd "$work/lossless" && $SHIFT_PYTHON "$SHIFT_FRAME" "$work/shifted" ./*/*.png)
 (cd "$work/shifted" && "$PROBE_IMAGES" --spec "$work/spec/shifted.probes.json" \
-    --viewport native ./*/*/*.png) >"$HERE/fixtures/switch.shifted.probes.jsonl"
+    --viewport native ./b*/*/*.png) >"$HERE/fixtures/switch.shifted.probes.jsonl"
+(cd "$work/shifted" && "$PROBE_IMAGES" --spec "$work/spec/shifted.probes.json" \
+    --viewport native ./[gr]*/*/*.png) \
+    >"$HERE/fixtures/switch.shifted.rg.probes.jsonl"

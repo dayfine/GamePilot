@@ -12,6 +12,8 @@ type t = {
   story_dialog : bool;
   moves : Move_symbols.symbol option list;
   party_bar : bool;
+  run_prompt : bool;
+  alert_eye : bool;
   minimap : string option;
 }
 
@@ -36,6 +38,8 @@ let probes ~picture ~assets =
       Move_symbols.probes ~picture ~assets;
       Party_bar.probes ~picture ~assets;
       Minimap.probes ~picture;
+      Run_prompt.probes ~picture ~assets;
+      Alert_eye.probes ~picture ~assets;
     ]
 
 let fade m =
@@ -66,6 +70,8 @@ let read m =
     story_dialog = Dialog_box.shown ~white:Box_and_arrow m;
     moves = Move_symbols.read m;
     party_bar = boxes && (not box) && Party_bar.shown m;
+    run_prompt = Run_prompt.shown m;
+    alert_eye = Alert_eye.shown m;
     minimap = (if boxes && not box then Minimap.read m else None);
   }
 
@@ -93,6 +99,8 @@ let to_string t =
         (if List.exists Option.is_some t.moves then [ "move symbols" ] else []);
         flag "party bar" t.party_bar;
         (match t.minimap with Some n -> [ "minimap " ^ n ] | None -> []);
+        flag "Run prompt" t.run_prompt;
+        flag "alert eye" t.alert_eye;
       ]
   in
   if shown = [] then "nothing" else String.concat ", " shown

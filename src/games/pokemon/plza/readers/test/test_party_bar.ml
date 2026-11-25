@@ -112,4 +112,6 @@ let cases =
     story_screen "battle-hud/it-0309-lab-gate-ryon-dialog" "no";
   ]
 
-let () = Table_test.run "party_bar" (cases @ Fixture_frames.shifted_cases read)
+let () =
+  Table_test.run "party_bar"
+    (cases @ Fixture_frames.shifted_cases ~misses:true read)

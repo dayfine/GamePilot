@@ -56,6 +56,8 @@ let look_of ~still (m : Effects.measurements) : L.t =
     interact_prompt = s.interact_prompt;
     party_bar = s.party_bar;
     minimap = s.minimap;
+    run_prompt = s.run_prompt;
+    alert_eye = s.alert_eye;
     battle = s.battle;
     story_dialog = s.story_dialog;
     moves = List.map (Option.map effectiveness) s.moves;
@@ -84,6 +86,9 @@ let raced = function
 let race c check =
   raced (Effects.race [ c ] ~stop:(fun m -> check (look_of_frame m)))
 
+let race_batch cs check =
+  raced (Effects.race cs ~stop:(fun m -> check (look_of_frame m)))
+
 let race_then c check next =
   raced
     (Effects.race_then [ c ]
@@ -97,6 +102,7 @@ let game_steps ~picture:_ ~log ~log_detail : Plza_story.Story_steps.game_steps =
     submit_batch = (fun cs -> ignore (Effects.submit cs : Wire.batch_done));
     read_screen = read_screen last;
     race;
+    race_batch;
     race_then;
     log;
     log_detail;

@@ -33,6 +33,8 @@ type t = {
   party_bar : bool;
       (** the overworld party bar ({!Party_bar}), with no fade and no text box:
           the fork's [PLAYER_CAN_MOVE] *)
+  run_prompt : bool;  (** a wild battle's Run prompt ({!Run_prompt}) *)
+  alert_eye : bool;  (** a wild Pokemon's alert eye ({!Alert_eye}) *)
   minimap : string option;
       (** the recorded minimap the top-left one matches ({!Minimap}), with no
           fade and no text box, as the fork reads a start signature *)

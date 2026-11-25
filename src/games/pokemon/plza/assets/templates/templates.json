@@ -1,4 +1,9 @@
 {
+  "alert_eye": {
+    "fill": 0.504808,
+    "height": 26,
+    "width": 40
+  },
   "button_a": {
     "fill": 0.650624,
     "height": 33,
@@ -23,6 +28,11 @@
     "fill": 0.583333,
     "height": 10,
     "width": 12
+  },
+  "button_minus": {
+    "fill": 0.742222,
+    "height": 30,
+    "width": 30
   },
   "choice_arrow": {
     "fill": 0.384681,

@@ -19,6 +19,8 @@ type t = {
   tutorial_card : bool;
   interact_prompt : bool;
   party_bar : bool;
+  run_prompt : bool;
+  alert_eye : bool;
   minimap : string option;
   battle : bool;
   story_dialog : bool;
@@ -43,6 +45,8 @@ let empty ~at_ms =
     interact_prompt = false;
     party_bar = false;
     minimap = None;
+    run_prompt = false;
+    alert_eye = false;
     battle = false;
     story_dialog = false;
     moves = [];
@@ -110,3 +114,5 @@ let to_walk_screen l : Plza_walk.Walk_screen.t =
     interact_prompt = l.interact_prompt;
     scene_under_way = scene_under_way l;
   }
+
+let wild_battle_on t = t.run_prompt || t.alert_eye

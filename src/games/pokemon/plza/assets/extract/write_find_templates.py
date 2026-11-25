@@ -42,6 +42,15 @@ MATCHERS = {
     "button_a": (
         "PokemonLZA/Buttons/ButtonA.png",
         0xFF808008, 0xFFFFFFFF, 100),
+    # ButtonMatcher::Minus, for PokemonLZA_RunFromBattleDetector.cpp's Run
+    # prompt.
+    "button_minus": (
+        "PokemonLZA/Buttons/ButtonMinus.png",
+        0xFF808008, 0xFFFFFFFF, 100),
+    # PokemonLZA_AlertEyeDetector.cpp's AlertEyeMatcher.
+    "alert_eye": (
+        "PokemonLZA/AlertEye-Template.png",
+        0xFFC86464, 0xFFFFFFFF, 100),
     # ButtonMatcher::DpadUp and DpadDown, and their black interiors (the
     # Interior matchers: the dark range, least area 50), for
     # PokemonLZA_OverworldPartySelectionDetector.cpp's party bar marker.

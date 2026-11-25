@@ -33,6 +33,12 @@ type t = {
       (** An A prompt (["(A) Talk"]) with no text box: [INTERACT_PROMPT]. *)
   party_bar : bool;
       (** The overworld party bar with no text box: [PLAYER_CAN_MOVE]. *)
+  run_prompt : bool;
+      (** A wild battle's Run prompt (its minus button), the fork's
+          [RunFromBattleDetector]. *)
+  alert_eye : bool;
+      (** The eye on a wild Pokemon's alert bar, the fork's [AlertEyeDetector].
+      *)
   minimap : string option;
       (** The recorded minimap the top-left one matches
           ({!Plza_readers.Minimap}), as the fork's start signature reads it. *)
@@ -93,3 +99,7 @@ val describe : t -> string
 
 val to_walk_screen : t -> Plza_walk.Walk_screen.t
 (** The read as the walk takes it. *)
+
+val wild_battle_on : t -> bool
+(** The catches' [wild_battle_on]: the Run prompt, or the alert eye while a wild
+    Pokemon attacks before the partner is out. *)
