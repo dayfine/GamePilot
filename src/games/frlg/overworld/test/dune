@@ -50,3 +50,17 @@
   gamepilot.checkpoints_run
   gamepilot.frlg_overworld
   frlg_overworld_fixtures))
+
+(test
+ (name test_warp_fade_in)
+ (modules test_warp_fade_in)
+ (deps
+  fixtures/cinnabar_center.fade.jsonl
+  fixtures/indigo_center.fade.jsonl
+  fixtures/celadon_dept_store_exit.fade.jsonl)
+ (libraries
+  gamepilot.table_test
+  gamepilot.wire
+  gamepilot.effects
+  gamepilot.frlg_readers
+  gamepilot.frlg_overworld))
