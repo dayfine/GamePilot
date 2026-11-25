@@ -9,7 +9,7 @@ open Grid_planning
 open Grid_robust_legs
 open Robust_toy
 
-type Leg.action += Toy_action
+type Leg.special_step += Toy_action
 
 let press rows p direction =
   let next = Tile_pos.next p direction in
@@ -17,7 +17,7 @@ let press rows p direction =
   match at rows next with
   | '#' -> None
   | 'W' -> Some { step with warped = true; ends_leg = true }
-  | 'A' -> Some { step with action = Some Toy_action }
+  | 'A' -> Some { step with special_step = Some Toy_action }
   | '"' -> Some { step with wild = true }
   | _ -> Some step
 

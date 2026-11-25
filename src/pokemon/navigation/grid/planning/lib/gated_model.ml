@@ -1,5 +1,5 @@
 type 'inner state = { inner : 'inner; gates : Gate_state.t }
-type Leg.action += Open_gate | Press_switch
+type Leg.special_step += Open_gate | Press_switch
 
 type rules = {
   card_key_held : bool;
@@ -46,7 +46,7 @@ let carry (walked : _ Leg.step) gates =
 let action_step state action direction gates extra_cost =
   {
     (Leg.plain_step { state with gates } direction) with
-    action = Some action;
+    special_step = Some action;
     ends_leg = true;
     extra_cost;
   }

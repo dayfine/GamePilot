@@ -49,7 +49,7 @@ struct
     let name = F.string ~where "kind" obj in
     let args = Option.value ~default:[] (F.object_opt ~where "args" obj) in
     let args_where = where ^ "args." in
-    match (name, engine_kind name, C.kind_of_plan name) with
+    match (name, engine_kind name, C.action_of_plan name) with
     | "game_action", _, _ when way = None ->
         F.fail "%saction is missing: a game_action names its action." where
     | "game_action", _, _ -> Plan.Named_action args
