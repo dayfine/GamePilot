@@ -1,8 +1,9 @@
 (** Reader: the screens of System Settings > Data Management > Delete Save Data
     that the delete-save route stops on, read on the whole 1920x1080 frame (the
-    daemon's [native] viewport). The lab's delete-save route (2026-11-15/25)
-    read the game's title with OCR; there is no OCR probe here, so the game is
-    told by its icon instead, a [core.template_match@1] probe per game.
+    daemon's [native] viewport). The lab's delete-save route, [delete_save.sh]
+    from the BDSPLab lab tools (2026-11-15/25), read the game's title with OCR;
+    there is no OCR probe here, so the game is told by its icon instead, a
+    [core.template_match@1] probe per game.
 
     - The game's page: "<game title>" over "Delete Save Data for <user>", that
       row selected (its blue frame's top edge). Manage Software's page for the
@@ -29,7 +30,7 @@ val colour_probes : Wire.probe_spec list
 (** The colour probes the other readers need, on the [native] viewport. *)
 
 val icon_id : string -> string
-(** The icon probe's id for a game's key. *)
+(** The icon probe's id for a game's key: [delete_save.icon.<key>]. *)
 
 val max_icon_score : float
 (** 0.02: the most a game's icon match scores on its own page. *)
@@ -40,13 +41,18 @@ val game_page : Effects.measurements -> bool
 val is_game : string -> Effects.measurements -> bool
 (** The page's icon is the game's with this key ({!max_icon_score}). *)
 
+(** What the Caution screen's red Delete Save Data button shows. *)
 type caution =
   | Red_selected  (** the red button, selected: A deletes *)
   | Red_not_selected  (** the red button, Cancel selected *)
   | No_red_button  (** not the Caution screen, or its button still greyed *)
 
 val caution : Effects.measurements -> caution
+(** The red button as the frame shows it: red inside, and whether the blue
+    selection frame is round it. *)
+
 val caution_to_string : caution -> string
+(** A reading in words, for logs and tests ("the red button, selected"). *)
 
 val deleted : Effects.measurements -> bool
 (** "Successfully deleted save data." with its OK button selected. *)

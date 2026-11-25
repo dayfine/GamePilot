@@ -1,8 +1,9 @@
 (** Deleting one game's save data from System Settings: the lab's delete-save
-    route (2026-11-15/25, console B, on a firmware whose Data Management lists
-    Delete Save Data last), its presses, holds and waits, in two steps so that a
-    person looks before anything is deleted. The screens are read by
-    {!Delete_save_screen}, on the whole frame (the daemon's [native] viewport).
+    route, [delete_save.sh] from the BDSPLab lab tools (2026-11-15/25, console
+    B, on a firmware whose Data Management lists Delete Save Data last), its
+    presses, holds and waits, in two steps so that a person looks before
+    anything is deleted. The screens are read by {!Delete_save_screen}, on the
+    whole frame (the daemon's [native] viewport).
 
     Where it differs from the route, deliberately: the game is told by its icon,
     not by OCR of its title; each game page, the Caution screen and the success

@@ -1,7 +1,8 @@
 (* gamepilot ctl [--port N] [--owner LABEL] delete-save GAME | delete-save --confirm
 
    Deletes one game's save data on the Switch from System Settings, in two
-   steps (Switch_home.Delete_save, the lab's delete-save route): [delete-save
+   steps (Switch_home.Delete_save, the lab's delete-save route, delete_save.sh
+   from the BDSPLab lab tools): [delete-save
    GAME] closes the running game and stops on the Caution screen with the red
    Delete Save Data button selected, deleting nothing; after a look at the
    screen, [delete-save --confirm] presses it, OK on the success popup, and
