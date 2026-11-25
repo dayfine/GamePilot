@@ -25,6 +25,14 @@
   Through the hub this page comes from the hub's own build, whatever the run
   daemon's age: the run supplies only data (events, stream, frame, summary,
   stop).
+  A checkpoint series' page (/series/ID/, Watch-Page.md, One page per series)
+  is this page for the whole series: the Run card is the series' record
+  (series.json, polled), every checkpoint with its state, runs and times;
+  its data (events, stream, frame, stop) comes from the run going, which the
+  hub passes it to, so the page stays while the daemons change underneath:
+  it opens the event stream again when the run going changes or the stream
+  closes. Each new daemon's `info` clears the probes and the plan, so no
+  checkpoint shows the last one's.
 -->
 <html lang="en">
 <head>

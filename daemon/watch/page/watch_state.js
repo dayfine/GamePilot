@@ -17,6 +17,9 @@ const $ = (id) => document.getElementById(id);
 // Stop's token: from the URL, else the one the daemon put in for this machine.
 const TOKEN = new URLSearchParams(location.search).get("token") ||
   document.querySelector('meta[name="gamepilot-token"]').content;
+// A series' page: /series/ID/ through the hub.
+const viaSeries = location.pathname.match(/^(.*)\/series\/([^/]+)\/$/);
+const SERIES_ID = viaSeries ? decodeURIComponent(viaSeries[2]) : null;
 const screen = $("screen");
 let info = null;          // the backend, as `hello` describes it
 let probes = [];          // [{id, kind, box, result}]

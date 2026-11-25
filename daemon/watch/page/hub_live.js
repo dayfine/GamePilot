@@ -24,6 +24,7 @@ function duration(ms) {
 
 // A run's page, through this hub.
 const runUrl = (name) => "runs/" + encodeURIComponent(name) + "/";
+const seriesUrl = (id) => "series/" + encodeURIComponent(id) + "/";
 
 async function fetchSummary(name) {
   try {
@@ -74,12 +75,33 @@ function renderWatching(sources) {
   }));
 }
 
-function render(all) {
+// A running series: one row for all its runs.
+function seriesRow(s) {
+  const cps = s.checkpoints;
+  const cur = cps.findIndex((c) => c.state === "current");
+  const current = cur >= 0 ? cps[cur] : null;
+  const last = current && current.runs.length ? current.runs[current.runs.length - 1] : null;
+  const tr = el("tr");
+  const name = el("td");
+  const link = el("a", "", (s.program_name || s.program || "series") + " " + s.from + " → " + s.to);
+  link.href = seriesUrl(s.series);
+  name.append(link, el("div", "muted", s.backend + " · series · " + cps.filter((c) => c.state === "passed").length +
+                       " of " + cps.length + " passed"));
+  const [state, cls] = s.run ? stateOf(summaries.get(s.run)) : ["between runs", ""];
+  tr.append(name, el("td", "", current ? current.id + " (" + (cur + 1) + " of " + cps.length + ")" : "–"),
+            el("td", "", s.mode),
+            el("td", "num", last ? "run " + last.n + (last.attempt > 1 ? " attempt " + last.attempt : "") : "–"),
+            el("td", "num", duration(Date.now() - s.started_ms)),
+            el("td", "state " + cls, state));
+  return tr;
+}
+
+function render(all, series) {
   renderWatching(all.filter((r) => r.source));
-  const entries = all.filter((r) => !r.source);
+  const entries = all.filter((r) => !r.source && !r.series);
   const body = $("runs");
-  body.replaceChildren();
-  if (!entries.length) {
+  body.replaceChildren(...[...series].reverse().map(seriesRow));
+  if (!entries.length && !series.length) {
     const td = el("td", "empty", "no live runs: gamepilot run --watch starts one");
     td.colSpan = 6;
     const tr = el("tr");

@@ -8,7 +8,10 @@
   state (live, stale, covered) from their /summary.json; the live runs table
   and `live` are our own runs only.
   GET runs.json lists the registry's live entries; each run's mode, trial and
-  state come from that run's /summary.json, through the hub too. recent.json
+  state come from that run's /summary.json, through the hub too. A running
+  checkpoint series (series.json) is one row, linking to its page
+  (series/ID/), with its current checkpoint, how far it is and what its run
+  going does; its runs are not listed again. recent.json
   lists the latest finished runs (RESULTS.tsv). Links are relative, so a LAN
   viewer's links stay on the LAN address.
 

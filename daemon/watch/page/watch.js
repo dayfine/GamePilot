@@ -6,3 +6,4 @@ initialSide();
 layoutFrame();
 connect();  // its `info` starts the stream
 pollSide();
+if (SERIES_ID) pollSeries();

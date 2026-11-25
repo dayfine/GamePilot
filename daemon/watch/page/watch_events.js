@@ -2,22 +2,47 @@
 
 // --- Events ------------------------------------------------------------------
 
+// The event stream. On a series' page it follows the run going: opened again
+// when that run changes, and when the hub closed it (between runs, 503).
+let events = null;
+let eventsRun = null;      // the series' run going when it was opened
+const RECONNECT_MS = 2000;
+
 function connect() {
-  const events = new EventSource("events");
-  const on = (name, f) => events.addEventListener(name, (m) => f(JSON.parse(m.data)));
-  events.onopen = () => { $("conn").textContent = "live"; $("conn").className = ""; };
-  events.onerror = () => { $("conn").textContent = "disconnected, retrying…"; $("conn").className = "down"; };
+  if (events) events.close();
+  const source = new EventSource("events");
+  events = source;
+  eventsRun = lastSeries ? lastSeries.run : null;
+  const on = (name, f) => source.addEventListener(name, (m) => f(JSON.parse(m.data)));
+  source.onopen = () => { $("conn").textContent = "live"; $("conn").className = ""; };
+  source.onerror = () => {
+    if (source !== events || endedShown) return;
+    $("conn").textContent = SERIES_ID ? "between runs, waiting for the next…" : "disconnected, retrying…";
+    $("conn").className = "down";
+    if (SERIES_ID && source.readyState === EventSource.CLOSED) {
+      setTimeout(() => { if (source === events && !endedShown) connect(); }, RECONNECT_MS);
+    }
+  };
   // A new daemon (each checkpoint has its own): its frame size, and the
-  // stream again, since the last one ended with the old daemon.
+  // stream again, since the last one ended with the old daemon. Its probes
+  // and plan come after it: the last daemon's are gone.
   on("info", (d) => {
     info = d;
+    lastLabel.clear();
+    changedAt.clear();
+    takeProbes([]);
+    lastPlan = null;
+    currentKey = null;
+    $("plan-title").textContent = "Plan";
+    $("plan").replaceChildren(el("li", "empty", "no plan yet: the program sends it when a checkpoint starts"));
     if (d.backend.kind === "view") showViewOnly();
     frameW = d.backend.width || frameW;
     frameH = d.backend.height || frameH;
     layoutFrame();
     if (!document.hidden) setSource("stream");
   });
-  on("run", (d) => { lastRun = d; runAt = Date.now(); renderRun(); });
+  // A series' page shows the series' record instead of one run's chain.
+  on("run", (d) => { lastRun = d; runAt = Date.now(); if (!SERIES_ID) renderRun(); });
   on("plan", (d) => {
     lastPlan = d;
     plans.set(d.checkpoint, d);
