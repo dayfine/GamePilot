@@ -9,6 +9,7 @@ type t = {
   choice_rows : Choice_rows.t option;
   interact_prompt : bool;
   battle : bool;
+  lead_hp : float option;
   story_dialog : bool;
   moves : Move_symbols.symbol option list;
   party_bar : bool;
@@ -75,6 +76,7 @@ let read m =
     choice_rows = (if choice then rows else None);
     interact_prompt = boxes && (not box) && Interact_prompt.shown m;
     battle;
+    lead_hp = (if boxes then Battle_hud.lead_hp m else None);
     story_dialog = Dialog_box.shown ~white:Box_and_arrow m;
     moves = Move_symbols.read m;
     party_bar = boxes && (not box) && Party_bar.shown m;

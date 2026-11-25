@@ -1,7 +1,7 @@
 (** A plan's run on the watch page ({!Watch_report}), for any game family: its
     checkpoint's events as the steps, moved by the runner's progress
     ({!Engine_run.Event_progress}), and the run itself ([watch.run]). What
-    FireRed's [Frlg_checkpoints.Plan_watch] and PLZA's series show. *)
+    FireRed's [Frlg_checkpoints.Plan_watch] shows. *)
 
 (** Over the plan's types of one family. *)
 module Make (T : Engine_rules.GAME_RULES) (Raw : Engine_plan.Plan.RAW) : sig

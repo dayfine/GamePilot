@@ -25,6 +25,9 @@ type t = {
   interact_prompt : bool;
       (** an A prompt ({!Interact_prompt}), with no fade and no text box *)
   battle : bool;  (** the battle HUD ({!Battle_hud}), with no fade *)
+  lead_hp : float option;
+      (** the lead's HP bar fill under its level badge ({!Battle_hud.lead_hp}),
+          with no fade *)
   story_dialog : bool;
       (** a dialogue box as the fork's default story dialogue detector
           (PokemonLZA_StoryDialogDetector.cpp) reads it: the white box with its
