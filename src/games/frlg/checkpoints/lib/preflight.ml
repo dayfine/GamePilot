@@ -16,6 +16,7 @@ type need = Plan_needs.need =
   | Item_at_least of { item : string; count : int; for_ : string }
   | Item_exactly of { item : string; count : int }
   | Place of string
+  | Anywhere_start of Pokemon_engine.Pose.place_class
   | Badges_at_least of int
   | Badges of string list
   | Hall_of_fame
@@ -192,6 +193,10 @@ let row read need =
   | Knows_move { move; _ } -> knows_row read ~need:text move
   | Badge { badge; _ } -> badges_row read ~need:text [ badge ]
   | Place _ -> place_row read ~need:text
+  | Anywhere_start _ ->
+      (* The run's first event, a Fly, checks it at no cost: the game refuses
+         to fly indoors before anything changes. *)
+      { need = text; read = "not read: the first Fly checks it"; verdict = Ok }
   | Badges_at_least n -> badge_count_row read ~need:text n
   | Badges names -> badges_row read ~need:text names
   | Hall_of_fame -> hall_of_fame_row read ~need:text

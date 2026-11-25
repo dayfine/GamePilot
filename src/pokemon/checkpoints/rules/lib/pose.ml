@@ -7,7 +7,8 @@ type grid = {
 }
 
 type zone = { place : string; spot : string option; heading : int option }
-type declared = Grid of grid | Zone of zone
+type place_class = Outdoors
+type declared = Grid of grid | Zone of zone | Anywhere of place_class
 
 type observed = {
   at_map : string;
@@ -40,6 +41,13 @@ let observed_to_string observed =
     (observed.at_map ^ " " ^ Tile_pos.to_string observed.at_tile)
     observed.faces
 
+let place_class_name = function Outdoors -> "outdoors"
+let place_class_of_name = function "outdoors" -> Some Outdoors | _ -> None
+
+let place_class_text = function
+  | Outdoors -> "anywhere outdoors where Fly works"
+
 let to_string = function
   | Grid g -> grid_to_string g
   | Zone { place; _ } -> "zone " ^ place
+  | Anywhere c -> "anywhere " ^ place_class_name c

@@ -3,21 +3,15 @@
   "game": "frlg",
   "checkpoint": {
     "id": "01-ultra-balls",
-    "title": "From Route 10's Pokemon Center: Ultra Balls at Indigo Plateau, then back",
-    "start": {"map": "Route10_PokemonCenter_1F", "tiles": [[7, 4]], "facing": "north"},
+    "title": "From anywhere outdoors: Ultra Balls at Indigo Plateau, then to Route 10's Pokemon Center",
+    "start": {"anywhere": "outdoors"},
     "events": [
-      {
-        "id": "out_of_center",
-        "kind": "route",
-        "action": "run",
-        "args": {"target": {"place": "route10_center_outside"}},
-        "why": "Out of the Center to fly."
-      },
       {
         "id": "fly_indigo",
         "kind": "game_action",
         "action": "fly",
         "args": {"town": "IndigoPlateau", "species": "pidgey"},
+        "declared_after": {"map": "IndigoPlateau_Exterior", "tiles": [[11, 7]], "facing": "south"},
         "why": "Indigo Plateau's Center has the only Mart counter near a fly point that sells Ultra Balls."
       },
       {
@@ -55,14 +49,14 @@
         "fragment": "heal_at",
         "args": {"town": "route10"},
         "id": "heal_route10",
-        "why": "Back at the nurse, where the checkpoint started."
+        "why": "Back at the nurse, where 02-route10-new-species starts."
       }
     ]
   },
   "execution": {"menu": "full"},
   "metadata": {
     "phase": "testing",
-    "notes": "Starts and ends at Route 10's Pokemon Center nurse: the dex collection's home Center (Route 10 is a fly point; its grass is 15 tiles north). The bag's Poke Balls (8 on the Mail Glitch save) catch Voltorb about one time in four.",
+    "notes": "Starts anywhere outdoors in Kanto and ends at Route 10's Pokemon Center nurse: the dex collection's home Center (Route 10 is a fly point; its grass is 15 tiles north). The bag's Poke Balls (8 on the Mail Glitch save) catch Voltorb about one time in four.",
     "postconditions": {
       "items": [{"item": "ultra-ball", "gained": 10}],
       "money": {"spent": 12000}

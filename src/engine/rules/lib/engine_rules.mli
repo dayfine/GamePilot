@@ -11,14 +11,16 @@
 module type POSE = sig
   type t
   (** Where a plan says the player stands: a checkpoint's [start], an event's
-      [declared_after] (a grid pose, a zone). *)
+      [declared_after] (a grid pose, a zone). A start may be a class of places
+      the game recognises (anywhere outdoors) rather than one place. *)
 
   type observed
   (** Where the game reads the player to be. *)
 
   val matches : t -> observed -> bool
-  (** Whether the player read stands where the pose says. A pose the game does
-      not check holds wherever the player is. *)
+  (** Whether the player read stands where the pose says, or in the class of
+      places it names. A pose the game does not check holds wherever the player
+      is. *)
 
   val to_string : t -> string
   (** A plan's pose: ["CeladonCity (48, 12) south"]. *)

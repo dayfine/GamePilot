@@ -70,6 +70,7 @@ let parts =
     ]
 
 let pose_of_plan = Zone_pose_decode.pose_of_plan
+let start_of_plan = Zone_pose_decode.pose_of_plan
 let action_of_plan = Action_parts.action_of_plan parts
 
 include With_position_decode.Make (Zone_pose_decode) (Promises_decode)

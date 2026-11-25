@@ -75,6 +75,13 @@ let checkpoint_outcome setup cp log =
 let frame_path setup id =
   Frlg_checkpoints.Start_check.frame_file ~states:setup.states id
 
+(* The start frame kept under the checkpoint's id: none for a start anywhere
+   outdoors, which looks different from each save. *)
+let start_frame_path setup cp =
+  match cp.plan.checkpoint.start with
+  | Some (Anywhere _) -> None
+  | Some (Grid _ | Zone _) | None -> Some (frame_path setup cp.id)
+
 (* On the Switch: back to the last save and the start check, then the run. *)
 let console_run setup cp log =
   let roster =
@@ -82,7 +89,8 @@ let console_run setup cp log =
   in
   let party = Console_session.start_party ~roster cp.before in
   match
-    Console_session.before ~log ~frame_path:(frame_path setup cp.id)
+    Console_session.before ~log
+      ~frame_path:(start_frame_path setup cp)
       ~start_path:
         (Frlg_checkpoints.Start_check.start_file ~states:setup.states
            cp.plan.checkpoint.start)
