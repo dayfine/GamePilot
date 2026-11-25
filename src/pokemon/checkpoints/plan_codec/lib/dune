@@ -8,4 +8,4 @@
   gamepilot.json_field
   gamepilot.engine_postcondition
   gamepilot.engine_plan_codec
-  gamepilot.pokemon_terms))
+  gamepilot.pokemon_rules))

@@ -5,7 +5,7 @@ let cause ?(repeats = false) code detail = { code; detail; repeats }
 let cause_to_string { code; detail; _ } =
   if detail = "" then code else code ^ ": " ^ detail
 
-module Make (T : Engine_terms.TERMS) = struct
+module Make (T : Engine_rules.GAME_RULES) = struct
   type nonrec cause = cause = { code : string; detail : string; repeats : bool }
 
   let cause = cause

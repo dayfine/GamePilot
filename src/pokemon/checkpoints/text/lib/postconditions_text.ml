@@ -1,4 +1,4 @@
-open Pokemon_terms
+open Pokemon_rules
 open Postconditions
 
 let list = String.concat ", "

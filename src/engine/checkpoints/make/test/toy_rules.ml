@@ -15,7 +15,7 @@ module Pose = struct
     && (pose.spot = None || pose.spot = observed.spot)
 end
 
-module Kind = struct
+module Action = struct
   type t = Walk of { toward : string; until : string } | Rest
 end
 

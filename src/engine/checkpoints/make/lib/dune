@@ -2,7 +2,7 @@
  (name engine_checkpoints)
  (public_name gamepilot.engine_checkpoints)
  (libraries
-  gamepilot.engine_terms
+  gamepilot.engine_rules
   gamepilot.engine_plan
   gamepilot.engine_plan_codec
   gamepilot.engine_text

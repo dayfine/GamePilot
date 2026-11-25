@@ -35,7 +35,7 @@ let busy_with l =
   else if fade_shows l then Some "a fade"
   else None
 
-let shows (event : Plza_terms.Walk_args.end_event) l =
+let shows (event : Plza_rules.Walk_args.end_event) l =
   match event with
   | Fade_white -> l.fade_white
   | Fade_black -> l.fade_black

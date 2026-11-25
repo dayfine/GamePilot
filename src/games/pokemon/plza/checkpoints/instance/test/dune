@@ -3,6 +3,6 @@
  (libraries
   yojson
   gamepilot.table_test
-  gamepilot.plza_terms
+  gamepilot.plza_rules
   gamepilot.plza_text
   gamepilot.plza_checkpoints))

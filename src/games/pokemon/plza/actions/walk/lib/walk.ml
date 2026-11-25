@@ -1,4 +1,4 @@
-open Plza_terms.Walk_args
+open Plza_rules.Walk_args
 module Failure = Engine_run.Failure
 
 type game_steps = {
@@ -186,7 +186,7 @@ let free_control_game_steps steps =
     log = steps.log;
   }
 
-let run_event steps ~walk_only walk (args : Plza_terms.Walk_args.t) =
+let run_event steps ~walk_only walk (args : Plza_rules.Walk_args.t) =
   if args.move.wait_before_ms > 0 then
     steps.submit (Walk_inputs.wait args.move.wait_before_ms);
   let* () = Free_control_wait.wait (free_control_game_steps steps) walk in

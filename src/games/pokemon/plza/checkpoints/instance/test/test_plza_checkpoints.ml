@@ -1,5 +1,5 @@
 (* PLZA's rules through the engine (Plza_checkpoints = Engine_checkpoints.Make
-   over Plza_terms): 01.01's plan decodes with zones and walks, a walk's args
+   over Plza_rules): 01.01's plan decodes with zones and walks, a walk's args
    are checked as PokemonLZA_AutoStoryActionTable.cpp checks them (under our
    names), the runner sends a walk to
    the game's own handler and checks zones, and what a run keeps reads back. *)

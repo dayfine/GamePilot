@@ -1,5 +1,5 @@
-open Pokemon_terms
-open Own_kind
+open Pokemon_rules
+open Pokemon_action
 
 let list = String.concat ", "
 

@@ -63,7 +63,7 @@ let no_scene walk elapsed_ms =
 let no_end_event walk elapsed_ms =
   Printf.sprintf "%s: no end event within %d ms of the last leg" walk elapsed_ms
 
-let timed_out walk (until : Plza_terms.Walk_args.until) ~elapsed_ms =
+let timed_out walk (until : Plza_rules.Walk_args.until) ~elapsed_ms =
   match until with
   | Scene -> Failure.cause "walk_no_scene" (no_scene walk elapsed_ms)
   | Event _ -> Failure.cause "walk_no_end" (no_end_event walk elapsed_ms)

@@ -1,0 +1,5 @@
+(library
+ (name engine_rules)
+ (public_name gamepilot.engine_rules)
+ (modules_without_implementation engine_rules)
+ (libraries gamepilot.engine_postcondition))
