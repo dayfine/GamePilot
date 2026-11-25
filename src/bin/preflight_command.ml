@@ -1,6 +1,6 @@
 (* gamepilot checkpoints PLAN_DIR --preflight --from ID [--backend ...]
 
-   The pre-flight of a save (Frlg_story.Preflight): back to the last save (on
+   The pre-flight of a save (Frlg_checkpoints.Preflight): back to the last save (on
    the Switch the soft reset; on mGBA the checkpoint's start state), then the
    party, money and bag items the first checkpoint's plan needs and the place
    (against the start frame kept there), read with the existing readers and
@@ -8,14 +8,14 @@
    wire log and the story log go to a run folder ("<ID>-preflight"), with
    run.json (mode preflight), the table and the verdict in summary.txt, the
    RESULTS.tsv row and, on a mismatch or a failed reload, failure.png
-   (Run_record). It runs as a shadow plan (Frlg_story.Shadow_plan: soft_reset,
+   (Run_record). It runs as a shadow plan (Frlg_checkpoints.Shadow_plan: soft_reset,
    check_start, read_party, read_trainer_card, verdict) through the checkpoint
    runner, so with --watch its daemon's page shows its steps, story lines and
-   run as a checkpoint run's (Frlg_story.Plan_watch). *)
+   run as a checkpoint run's (Frlg_checkpoints.Plan_watch). *)
 
-open Story
-module Pf = Frlg_story.Preflight
-module C = Frlg_story.Start_check
+open Checkpoints
+module Pf = Frlg_checkpoints.Preflight
+module C = Frlg_checkpoints.Start_check
 
 type setup = {
   states : string;
@@ -43,7 +43,7 @@ let needs ~plan_dir from_id =
       (Ok []) chain
   in
   match
-    (Pf.needs stocks ~before plan, Frlg_story.Party_room.chain_need plans)
+    (Pf.needs stocks ~before plan, Frlg_checkpoints.Party_room.chain_need plans)
   with
   | needs, room -> Ok (needs, room)
   | exception Grid_maps.Json_field.Invalid e -> Error e
@@ -86,11 +86,12 @@ let place setup id start log =
 
 (* The party is read on its summaries (species, level, moves): the room and
    the field moves are judged on them. *)
-let without_party (p : Story.Plan.postconditions) = { p with party = None }
+let without_party (p : Checkpoints.Plan.postconditions) =
+  { p with party = None }
 
-let party_of (members : Story.Room_policy.member list) =
+let party_of (members : Checkpoints.Room_policy.member list) =
   List.map
-    (fun (m : Story.Room_policy.member) ->
+    (fun (m : Checkpoints.Room_policy.member) ->
       if m.species = "?" then None else Some m.species)
     members
 
@@ -105,12 +106,12 @@ type verdict = Rows of Pf.row list | Stopped of string
 
 type reads = {
   mutable place : Frlg_readers.Start_frame.difference option;
-  mutable members : Story.Room_policy.member list option;
-  mutable observed : Story.Postcondition_check.observed option;
+  mutable members : Checkpoints.Room_policy.member list option;
+  mutable observed : Checkpoints.Postcondition_check.observed option;
   mutable verdict : verdict;
 }
 
-let action f : Story.Game.game_action = fun _ _ -> f ()
+let action f : Checkpoints.Game.game_action = fun _ _ -> f ()
 
 (* Back to the save: on a failure, its frame and the verdict. *)
 let soft_reset setup record id reads log () =
@@ -145,17 +146,17 @@ let check_start setup id start reads log () =
   Ok ()
 
 let read_party reads log () =
-  reads.members <- Frlg_story.Postcondition_reads.party_summary ~log;
+  reads.members <- Frlg_checkpoints.Postcondition_reads.party_summary ~log;
   Ok ()
 
 let read_trainer_card needs reads log () =
   reads.observed <-
     Some
-      (Frlg_story.Postcondition_reads.observe ~log
+      (Frlg_checkpoints.Postcondition_reads.observe ~log
          (without_party (Pf.to_read needs)));
   Ok ()
 
-(* The shadow plan's steps (Frlg_story.Shadow_plan.preflight_steps). The
+(* The shadow plan's steps (Frlg_checkpoints.Shadow_plan.preflight_steps). The
    party is read on its summaries (species, level, moves): the room and the
    field moves are judged on them. *)
 let actions setup record id start ((needs, _) as all) reads log =
@@ -168,8 +169,8 @@ let actions setup record id start ((needs, _) as all) reads log =
   ]
 
 let shadow_plan id =
-  Frlg_story.Shadow_plan.plan ~id ~title:("pre-flight of " ^ id)
-    Frlg_story.Shadow_plan.preflight_steps
+  Frlg_checkpoints.Shadow_plan.plan ~id ~title:("pre-flight of " ^ id)
+    Frlg_checkpoints.Shadow_plan.preflight_steps
 
 (* The pre-flight as a plan through the checkpoint runner, on the page. *)
 let session setup record id start needs world log () =
@@ -177,7 +178,7 @@ let session setup record id start needs world log () =
     { place = None; members = None; observed = None; verdict = Stopped "" }
   in
   match
-    Frlg_story.Plan_watch.run_shadow ~mode:"preflight" ~log world
+    Frlg_checkpoints.Plan_watch.run_shadow ~mode:"preflight" ~log world
       (shadow_plan id)
       (actions setup record id start needs reads)
   with
@@ -227,7 +228,7 @@ let run ~plan_dir ~from_id setup =
   let* needs = needs ~plan_dir from_id in
   let* plan = Plan_dir.load_plan ~plan_dir from_id in
   let start = plan.checkpoint.start in
-  let* world = Frlg_story.Checkpoint_run.load_world () in
+  let* world = Frlg_checkpoints.Checkpoint_run.load_world () in
   let run =
     Run_record.start ~runs_dir:setup.runs_dir setup.info ~checkpoint:from_id
       ~mode:"preflight"

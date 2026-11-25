@@ -5,9 +5,9 @@
 
 val cut :
   Frlg_overworld.Frlg_steps.world ->
-  Story.Pose.observed ->
+  Checkpoints.Pose.observed ->
   Grid_maps.Direction.t ->
-  Frlg_overworld.Frlg_steps.world * Story.Pose.observed
+  Frlg_overworld.Frlg_steps.world * Checkpoints.Pose.observed
 (** From where the player stood facing the tree that way: the world with the
     tree's gate open ({!Frlg_overworld.Frlg_steps.with_tree_cut}; unchanged when
     no cut tree is there) and the player on the tree's tile, facing it. *)

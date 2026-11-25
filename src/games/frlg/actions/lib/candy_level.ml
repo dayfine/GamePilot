@@ -1,8 +1,9 @@
 type game_steps = {
-  level : slot:int -> (int option, Story.Failure.cause) result;
+  level : slot:int -> (int option, Checkpoints.Failure.cause) result;
   candy : slot:int -> Level_up_policy.policy -> Rare_candy.result;
   member :
-    slot:int -> (Story.Room_policy.member option, Story.Failure.cause) result;
+    slot:int ->
+    (Checkpoints.Room_policy.member option, Checkpoints.Failure.cause) result;
   log : string -> unit;
 }
 
@@ -18,7 +19,7 @@ type report = {
 let ( let* ) = Result.bind
 
 let fail code fmt =
-  Printf.ksprintf (fun d -> Error (Story.Failure.cause code d)) fmt
+  Printf.ksprintf (fun d -> Error (Checkpoints.Failure.cause code d)) fmt
 
 (* The candies so far and what they did. *)
 type fed = {
@@ -78,15 +79,15 @@ let rec feed game_steps goal ~slot ~before fed =
 let missing_moves (goal : Candy_plan.goal) known =
   List.filter (fun m -> not (List.mem m known)) goal.moves
 
-let check_level (goal : Candy_plan.goal) (m : Story.Room_policy.member) =
+let check_level (goal : Candy_plan.goal) (m : Checkpoints.Room_policy.member) =
   match m.level with
   | Some l when l >= goal.target_level -> Ok ()
   | Some l ->
       fail "level_short" "the summary reads Lv %d, not %d" l goal.target_level
   | None -> fail "level_unread" "the summary's level did not read"
 
-let check_species (goal : Candy_plan.goal) ~slot (m : Story.Room_policy.member)
-    =
+let check_species (goal : Candy_plan.goal) ~slot
+    (m : Checkpoints.Room_policy.member) =
   match goal.species with
   | Some s when s <> m.species ->
       fail "species_wrong" "slot %d is a %s, not a %s" slot m.species s
@@ -100,7 +101,8 @@ let check_moves (goal : Candy_plan.goal) ~slot known =
         (String.concat ", " known)
         (String.concat ", " missing)
 
-let checked (goal : Candy_plan.goal) ~slot (m : Story.Room_policy.member) =
+let checked (goal : Candy_plan.goal) ~slot (m : Checkpoints.Room_policy.member)
+    =
   let* () = check_level goal m in
   let* () = check_species goal ~slot m in
   match (goal.moves, m.moves) with
@@ -108,7 +110,7 @@ let checked (goal : Candy_plan.goal) ~slot (m : Story.Room_policy.member) =
   | _, None -> fail "moves_unread" "slot %d's moves did not read" slot
   | _, Some known -> check_moves goal ~slot known
 
-let report (m : Story.Room_policy.member) level fed =
+let report (m : Checkpoints.Room_policy.member) level fed =
   {
     candies = fed.count;
     level;
@@ -137,5 +139,5 @@ let run game_steps (goal : Candy_plan.goal) ~slot =
       Ok r
   | Error cause ->
       game_steps.log
-        ("Candy level: " ^ Story.Failure.cause_to_string cause ^ ".");
+        ("Candy level: " ^ Checkpoints.Failure.cause_to_string cause ^ ".");
       Error cause

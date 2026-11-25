@@ -19,7 +19,7 @@
   test_pc_deposit_steps
   test_fly_towns
   test_actions
-  test_story_game
+  test_checkpoint_game
   test_action_requests
   test_menu_actions
   test_grind
@@ -38,7 +38,7 @@
   test_pc_deposit_steps
   test_fly_towns
   test_actions
-  test_story_game
+  test_checkpoint_game
   test_action_requests
   test_menu_actions
   test_grind
@@ -64,7 +64,7 @@
   gamepilot.table_test
   gamepilot.wire
   gamepilot.grid_maps
-  gamepilot.story
+  gamepilot.checkpoints
   gamepilot.frlg_overworld
   gamepilot.frlg_actions
   gamepilot.frlg_battle

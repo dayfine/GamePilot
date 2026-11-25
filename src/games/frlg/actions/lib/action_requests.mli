@@ -31,7 +31,7 @@ val decode :
   Mart_plan.stocks ->
   string ->
   Grid_maps.Json_field.obj ->
-  (t, Story.Failure.cause) result
+  (t, Checkpoints.Failure.cause) result
 (** The action of that name with its args; [bad_args] naming the field, or
     [unknown_action]. The args:
     - [mart]: see {!Mart_plan.t}.
@@ -49,7 +49,7 @@ val decode :
       Pokémon Center's PC ({!Pc_deposit}).
     - [pick_up_item]: ["item"], the item the player faces (a hidden item, an
       item ball): a talk, as the plan's [talk] event, that names what it gains
-      so a pre-flight counts it ({!Frlg_story.Plan_needs}). *)
+      so a pre-flight counts it ({!Frlg_checkpoints.Plan_needs}). *)
 
 val to_string : t -> string
 (** One line, for logs and tests. *)

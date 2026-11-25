@@ -1,7 +1,7 @@
 (* gamepilot checkpoints' flags: their record, defaults and parsing
    (Checkpoints_command). *)
 
-open Story
+open Checkpoints
 
 type flags = {
   from_id : string option;
@@ -21,8 +21,8 @@ type flags = {
   make_room : string option;  (** The save's map: room first (mg-00). *)
   max_rounds : int option;  (** A repeating checkpoint's rounds, at most. *)
   from_event : string option;
-      (** mGBA, testing: run from this event's kept state (Story.Event_range).
-      *)
+      (** mGBA, testing: run from this event's kept state
+          (Checkpoints.Event_range). *)
   to_event : string option;  (** ... to this event (else the last). *)
   common : Checkpoint_command.flags;
   watch : Daemon_process.watch option;

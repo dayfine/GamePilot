@@ -8,7 +8,7 @@
   gamepilot.screen_state
   gamepilot.grid_maps
   gamepilot.grid_planning
-  gamepilot.story
+  gamepilot.checkpoints
   gamepilot.frlg_readers
   gamepilot.frlg_menu_cursor
   gamepilot.frlg_text

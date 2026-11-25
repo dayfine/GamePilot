@@ -4,6 +4,6 @@
     Main's [Action_failed] is to be converted to Result in its own PR, and this
     module then goes. *)
 
-val result : (unit -> 'a) -> ('a, Story.Failure.cause) result
+val result : (unit -> 'a) -> ('a, Checkpoints.Failure.cause) result
 (** The step run through {!Menu_input.run} (its probes subscribed, only those
     not held already); [Error] with the cause it failed with. *)

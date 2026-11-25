@@ -1,12 +1,12 @@
 (* The checkpoint runner's steps on a console without save states (the
-   Switch), around each run, as Story.Console_runs decides them: back to the
+   Switch), around each run, as Checkpoints.Console_runs decides them: back to the
    last save (Frlg_actions.Soft_reset) and the start check
-   (Frlg_story.Start_check) before; after, the in-game save and the next
+   (Frlg_checkpoints.Start_check) before; after, the in-game save and the next
    start's frame for a pass (Frlg_actions.Game_save), back to the last save for
    a failure. In the effect context. *)
 
-open Story
-module C = Frlg_story.Start_check
+open Checkpoints
+module C = Frlg_checkpoints.Start_check
 
 let log_results log results =
   List.iter

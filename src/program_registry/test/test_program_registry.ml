@@ -31,10 +31,10 @@ let plans_in dir =
   |> List.map (Filename.concat dir)
 
 let plan_error file =
-  match Story.Plan_decode.load file with
+  match Checkpoints.Plan_decode.load file with
   | Error e -> Some (file ^ ": " ^ e)
   | Ok plan -> (
-      match Frlg_story.Checkpoint_run.check_plan plan with
+      match Frlg_checkpoints.Checkpoint_run.check_plan plan with
       | Ok () -> None
       | Error e -> Some (file ^ ": " ^ e))
 

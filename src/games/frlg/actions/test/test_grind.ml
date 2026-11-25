@@ -24,11 +24,11 @@ let plan json = Result.get_ok (Grind_plan.decode strategies (obj json))
 let decode json () =
   match Grind_plan.decode strategies (obj json) with
   | Ok t -> Grind_plan.describe t
-  | Error c -> Story.Failure.cause_to_string c
+  | Error c -> Checkpoints.Failure.cause_to_string c
 
 let heal_name : Grind_plan.heal -> string = function
-  | Nurse g -> "nurse at " ^ Story.Pose.grid_to_string g
-  | Pad g -> "pad at " ^ Story.Pose.grid_to_string g
+  | Nurse g -> "nurse at " ^ Checkpoints.Pose.grid_to_string g
+  | Pad g -> "pad at " ^ Checkpoints.Pose.grid_to_string g
 
 let strategy name () =
   match
@@ -37,7 +37,7 @@ let strategy name () =
   | None -> "none"
   | Some s ->
       Printf.sprintf "spot %s; heal every %d, %s"
-        (Story.Pose.grid_to_string s.spot)
+        (Checkpoints.Pose.grid_to_string s.spot)
         s.heal_every (heal_name s.heal)
 
 let decoding =
@@ -196,7 +196,7 @@ let flow ?cap ?(battle_lines = false) ?(levels = [ Some 9 ]) ~party ~known
         (fun a b ->
           call (Printf.sprintf "swap %d %d" a b);
           party := Party_roster.swap !party a b);
-      go_to = (fun g -> call ("go " ^ Story.Pose.grid_to_string g));
+      go_to = (fun g -> call ("go " ^ Checkpoints.Pose.grid_to_string g));
       heal = (fun h -> call ("heal " ^ heal_name h));
       find_battle = (fun () -> call "spin");
       battle =
@@ -225,7 +225,7 @@ let flow ?cap ?(battle_lines = false) ?(levels = [ Some 9 ]) ~party ~known
     match Grind.run ?cap rig plan with
     | () -> "ok"
     | exception Menu_input.Action_failed c ->
-        "failed " ^ Story.Failure.cause_to_string c
+        "failed " ^ Checkpoints.Failure.cause_to_string c
   in
   String.concat "; " (List.rev !calls) ^ " => " ^ result
 
@@ -508,10 +508,10 @@ let victory_road =
 let nurse_of (s : Grind_plan.strategy) =
   match s.heal with Nurse g | Pad g -> g
 
-let pose_of (g : Story.Pose.grid) : Story.Pose.observed =
+let pose_of (g : Checkpoints.Pose.grid) : Checkpoints.Pose.observed =
   { at_map = g.map; at_tile = List.hd g.tiles; faces = g.facing }
 
-let legs_from (from : Story.Pose.observed) target =
+let legs_from (from : Checkpoints.Pose.observed) target =
   let w = Lazy.force kanto in
   Result.bind (Route_target.place_of w from) (fun place ->
       Route_target.plan w ~from:place ~facing:from.faces target)

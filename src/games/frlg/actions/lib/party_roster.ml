@@ -26,7 +26,7 @@ let resolve t (member : Action_args.member) =
   | Species s ->
       let missing = s ^ " is not in the party (" ^ String.concat ", " t ^ ")" in
       Option.to_result
-        ~none:(Story.Failure.cause ~repeats:true "not_in_party" missing)
+        ~none:(Checkpoints.Failure.cause ~repeats:true "not_in_party" missing)
         (slot_of t s)
 
 let swap t a b =

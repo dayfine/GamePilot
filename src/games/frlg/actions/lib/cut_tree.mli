@@ -3,8 +3,8 @@
     (the fork's [step_once], a walking tap). The fork's [cut_tree] event
     (AutoStory/PokemonFRLG_AutoStoryEvents); the plan's route has already
     brought the player next to the tree. The player ends on the tree's tile,
-    whose gate {!Story_game} opens for the planner until the next map change, as
-    the fork's [tree_cut] and [regrow_on_warp]. *)
+    whose gate {!Checkpoint_game} opens for the planner until the next map
+    change, as the fork's [tree_cut] and [regrow_on_warp]. *)
 
 val turn_hold_ms : int
 (** A D-pad press this short only turns the player: 40 ms. *)

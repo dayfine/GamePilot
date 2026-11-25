@@ -12,15 +12,15 @@
     12), then no battle in 25 batches); pacing keeps the player on two known
     grass tiles. *)
 
-val reckoned : Story.Pose.observed option -> Story.Pose.observed
+val reckoned : Checkpoints.Pose.observed option -> Checkpoints.Pose.observed
 (** The player's reckoned pose; fails as [position_unknown] without one. *)
 
 val find :
   log:(string -> unit) ->
   pace:Grid_maps.Direction.t ->
   patch:Grid_maps.Tile_pos.t ->
-  stands:(Story.Pose.observed -> unit) ->
-  Story.Pose.observed ->
+  stands:(Checkpoints.Pose.observed -> unit) ->
+  Checkpoints.Pose.observed ->
   unit
 (** From where the player is reckoned to stand, which must be the patch or one
     tile [pace] from it (as the last search left them; else it fails as
@@ -29,6 +29,8 @@ val find :
 *)
 
 val back_on_patch :
-  pace:Grid_maps.Direction.t -> Story.Pose.observed -> Story.Pose.grid
+  pace:Grid_maps.Direction.t ->
+  Checkpoints.Pose.observed ->
+  Checkpoints.Pose.grid
 (** The patch the player started on, facing [pace]: where an action that paced
     from it ends. *)

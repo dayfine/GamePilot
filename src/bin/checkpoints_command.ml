@@ -7,10 +7,10 @@
    The checkpoint dev loop. A program's checkpoints are its plan files
    (<ID>.plan.json in PLAN_DIR, in name order; --program ID in its place:
    Programs_command); each runs from its start state (<states>/<ID>.start.ss),
-   as many times as the mode's policy says (Story.Checkpoint_trials), each run with its own daemon and run folder
+   as many times as the mode's policy says (Checkpoints.Checkpoint_trials), each run with its own daemon and run folder
    (Run_record). A run passes when every event passed and the player ends at
-   the checkpoint's declared end (Story.Checkpoint_end) and the plan's
-   postconditions hold (Story.Postcondition_check). With --end-check-only each
+   the checkpoint's declared end (Checkpoints.Checkpoint_end) and the plan's
+   postconditions hold (Checkpoints.Postcondition_check). With --end-check-only each
    run checks its start state against the postconditions and runs no event. The loop goes to the
    next checkpoint only after this one passed; in verification mode the last
    passing run's end becomes the next checkpoint's start state.
@@ -46,7 +46,7 @@
    testing runs: before each run the runner soft-resets to the last save and
    checks the start; a run that passes is saved in the game
    (--save-after-pass, the default; --no-save-after-pass), a failed one
-   soft-resets back to the last save (Story.Console_runs, Console_session).
+   soft-resets back to the last save (Checkpoints.Console_runs, Console_session).
 
    Each run reads the party from the members' summaries before its first
    action that finds a member by its species, so a save whose other members
@@ -59,7 +59,7 @@
 
    --from-event ID|N [--to-event ID|N] (mGBA, testing, one checkpoint: --to
    is --from unless given) runs that checkpoint from the save state kept at
-   the event's start (Story.Event_states: every mGBA run keeps one at each
+   the event's start (Checkpoints.Event_states: every mGBA run keeps one at each
    event it reaches cleanly) to the given event or the last, the end checks
    only when it runs the last. Its mode is "from-event" (run.json's
    from_event and to_event): it never verifies the checkpoint nor saves its
@@ -81,7 +81,7 @@
    with reload), the reproduction phase, the overlay log. mGBA itself is
    started and closed around the command by run/run_checkpoints_on_mgba.sh. *)
 
-open Story
+open Checkpoints
 module R = Program_registry
 include Checkpoints_flags
 
@@ -135,7 +135,7 @@ let mode_and_to f ~from_id =
         ( Option.value f.mode ~default:Checkpoint_trials.Testing,
           Option.value f.to_id ~default:from_id )
 
-(* A partial run's own rules (Story.Event_range.check). *)
+(* A partial run's own rules (Checkpoints.Event_range.check). *)
 let check_from_event f mode ~checkpoints =
   match f.from_event with
   | None -> Ok ()
@@ -157,7 +157,7 @@ let run_series plan_dir f =
   let* ids = Plan_dir.checkpoint_ids plan_dir in
   let* selected, after = Plan_dir.select ids ~from_id ~to_id in
   let* () = check_from_event f mode ~checkpoints:(List.length selected) in
-  let* world = Frlg_story.Checkpoint_run.load_world () in
+  let* world = Frlg_checkpoints.Checkpoint_run.load_world () in
   Ok
     (Checkpoint_series.run ~plan_dir
        {

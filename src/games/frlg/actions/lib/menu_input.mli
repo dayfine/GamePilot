@@ -4,19 +4,19 @@
     {!Action_failed} through these and {!run} turns it into the story's outcome,
     so a flow reads as the list of its steps. *)
 
-exception Action_failed of Story.Failure.cause
+exception Action_failed of Checkpoints.Failure.cause
 
 val fail : ?repeats:bool -> string -> string -> 'a
-(** Raises {!Action_failed} with [Story.Failure.cause code detail]. *)
+(** Raises {!Action_failed} with [Checkpoints.Failure.cause code detail]. *)
 
-val raise_error : (unit, Story.Failure.cause) result -> unit
+val raise_error : (unit, Checkpoints.Failure.cause) result -> unit
 (** Raises {!Action_failed} with an [Error]'s cause; [Ok] does nothing. *)
 
 val probes : Wire.probe_spec list
 (** What the menu actions read: {!Scene_looks.probes}, the party and a member's
     menu, the bag and the money box. *)
 
-val run : (unit -> unit) -> (unit, Story.Failure.cause) result
+val run : (unit -> unit) -> (unit, Checkpoints.Failure.cause) result
 (** Runs the body with {!probes} subscribed; [Error] with the cause it failed
     with. *)
 

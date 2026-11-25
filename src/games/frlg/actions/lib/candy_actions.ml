@@ -23,7 +23,7 @@ let level ~log ~slot = Menu_step.result (fun () -> Member_level.read ~log ~slot)
 
 let member ~log ~slot =
   Result.map
-    (List.find_opt (fun (m : Story.Room_policy.member) -> m.slot = slot))
+    (List.find_opt (fun (m : Checkpoints.Room_policy.member) -> m.slot = slot))
     (Menu_step.result (Party_summary.read_all ~log))
 
 let candy_level_game_steps ~log ~party : Candy_level.game_steps =
@@ -58,15 +58,16 @@ let use_candy ~log ~party ~slot (use : Candy_plan.use) =
       if o.evolution = Level_up.Evolved then after_evolution ~log ~party ~slot
       else Ok ()
   | Out_of_candies ->
-      Error (Story.Failure.cause "out_of_candies" "no Rare Candy in the bag")
-  | Failed why -> Error (Story.Failure.cause "rare_candy_failed" why)
+      Error
+        (Checkpoints.Failure.cause "out_of_candies" "no Rare Candy in the bag")
+  | Failed why -> Error (Checkpoints.Failure.cause "rare_candy_failed" why)
   | Stopped cause -> Error cause
 
 let candy_level ~log ~party ~slot goal =
   let* r = Candy_level.run (candy_level_game_steps ~log ~party) goal ~slot in
   Ok (renamed ~party ~slot r.species)
 
-let on_member ~party decode run (_ : Story.Plan.event) args =
+let on_member ~party decode run (_ : Checkpoints.Plan.event) args =
   let* v, member = decode args in
   let* slot = Party_roster.resolve !party member in
   Effects.with_probes M.probes (fun () -> run ~slot v)

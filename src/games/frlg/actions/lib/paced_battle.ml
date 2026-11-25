@@ -2,7 +2,7 @@ let reckoned = function
   | Some at -> at
   | None -> Menu_input.fail "position_unknown" "no position to pace from"
 
-let off_patch ~patch (at : Story.Pose.observed) =
+let off_patch ~patch (at : Checkpoints.Pose.observed) =
   Menu_input.fail "off_patch"
     (Printf.sprintf "%s is not the patch %s or next to it"
        (Grid_maps.Tile_pos.to_string at.at_tile)
@@ -12,7 +12,8 @@ let no_encounter () =
   Menu_input.fail "no_encounter"
     (Printf.sprintf "no wild battle in %d steps" Pacing.max_steps)
 
-let standing ~pace ~patch (at : Story.Pose.observed) (spot : Pacing.spot) =
+let standing ~pace ~patch (at : Checkpoints.Pose.observed) (spot : Pacing.spot)
+    =
   { at with at_tile = Pacing.stands_on ~pace spot patch; faces = spot.facing }
 
 let pace_from ~log ~pace ~patch ~stands at spot =
@@ -21,10 +22,11 @@ let pace_from ~log ~pace ~patch ~stands at spot =
   stands (standing ~pace ~patch at !spot);
   if not found then no_encounter ()
 
-let find ~log ~pace ~patch ~stands (at : Story.Pose.observed) =
+let find ~log ~pace ~patch ~stands (at : Checkpoints.Pose.observed) =
   match Pacing.spot_at ~pace ~patch at.at_tile at.faces with
   | None -> off_patch ~patch at
   | Some spot -> pace_from ~log ~pace ~patch ~stands at spot
 
-let back_on_patch ~pace (start : Story.Pose.observed) : Story.Pose.grid =
+let back_on_patch ~pace (start : Checkpoints.Pose.observed) :
+    Checkpoints.Pose.grid =
   { map = start.at_map; tiles = [ start.at_tile ]; facing = Some pace }
