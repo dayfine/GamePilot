@@ -40,6 +40,7 @@ type stick = Command.stick
 (** A stick's tilt (x, y) in -1..1: +x right, +y up (v1.12). *)
 
 val stick : float -> float -> (stick, string) result
+(** [stick x y]; an error when [x] or [y] is outside -1..1 or not a number. *)
 
 type command = Command.command =
   | Press of { buttons : button list; hold_ms : int; cooldown_ms : int }
