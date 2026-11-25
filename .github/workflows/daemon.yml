@@ -93,19 +93,3 @@ jobs:
           if [ "$RUNNER_OS" = "Windows" ]; then sccache --show-stats; else ccache --show-stats; fi
       - name: Test
         run: ctest --test-dir daemon/build -C Release --output-on-failure
-      - name: Diagnose probe_images (temporary)
-        if: always() && runner.os == 'Windows'
-        shell: bash
-        working-directory: daemon/tests/probe_images
-        run: |
-          cmake --version
-          tool=$(cygpath -m "$GITHUB_WORKSPACE/daemon/build/probe_images.exe")
-          bad=0
-          for i in $(seq 300); do
-            "$tool" --spec probes.json --game-size 24x16 frame.png > out.txt 2> err.txt; s=$?
-            n=$(wc -c < out.txt)
-            if [ $s -ne 0 ] || [ "$n" -lt 100 ]; then bad=$((bad+1)); echo "run $i: status=$s out_len=$n err=$(cat err.txt)"; fi
-          done
-          echo "bash redirect: $bad/300 bad"
-          cmake -DTOOL="$tool" -P ../probe_images_diag.cmake
-          ctest --test-dir "$GITHUB_WORKSPACE/daemon/build" -C Release -R probe_images_test --repeat until-fail:100 --output-on-failure | tail -30
