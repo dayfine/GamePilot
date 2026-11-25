@@ -93,12 +93,12 @@ library only because the map decoders came first.
 
 In short: the skeleton (run order, skips, trials, rounds, chains, fragments, the watch page, the
 records) is agnostic already. The grid and Pokémon parts are three types (where the player is, the
-game's own event kinds, what a checkpoint promises) and the code that reads, prints and checks them.
+game's actions, what a checkpoint promises) and the code that reads, prints and checks them.
 
 ## 2. Layout: a game's rules apart from its formats
 
 A game's rules and its formats are separate libraries. The rules (where the player stands, the
-game's own event kinds, what a checkpoint promises and its check) are plain values, with no JSON
+game's actions, what a checkpoint promises and its check) are plain values, with no JSON
 and no text. Each format turns them into bytes or words at one edge only, so the plan types, the
 runner, its failures and the checks never see JSON or build a string. A lint rule enforces it.
 
@@ -106,7 +106,10 @@ The rules were first called terms (`Engine_terms.TERMS`, `Pokemon_terms`, `Terms
 renamed `Engine_rules.GAME_RULES`, `Pokemon_rules` and `Rules_text` on 2026-11-25, unchanged. The
 game's own kinds were renamed its actions the same day, also unchanged: `KIND` and `Kind` became
 `ACTION` and `Action`, `Own_kind` `Pokemon_action`, the plan's `Own` and `Game_action` `Game` and
-`Named_action`, and the event's `action` field `way` (its JSON key stays `"action"`).
+`Named_action`, and the event's `action` field `way` (its JSON key stays `"action"`). Later
+the same day `kind_of_plan` became `action_of_plan`, `TEXT.kind` `action`, `Kind_decode` and
+`Kind_text` `Pokemon_action_decode` and `Pokemon_action_text`, and the planner's `Leg.action`
+`Leg.special_step`.
 
 | Part | Engine signature | Pokémon | Toy game | Used by | Holds |
 |---|---|---|---|---|---|
@@ -126,7 +129,7 @@ module type POSE = sig
   val matches : t -> observed -> bool
 end
 module type ACTION = sig
-  type t                    (* the game's actions, its own kinds, with their args: route, battle; walk, rest *)
+  type t                    (* the game's actions, with their args: route, battle; walk, rest *)
 end
 module type POSTCONDITIONS = sig
   type t                    (* metadata.postconditions, a repeat's until *)
@@ -166,7 +169,7 @@ library, so `plan/` itself links no JSON.
 module type PLAN_CODEC = sig
   module T : Engine_rules.GAME_RULES
   val pose_of_plan : where:string -> Json_field.obj -> (T.Pose.t, string) result
-  val kind_of_plan :
+  val action_of_plan :
     string -> (where:string -> Json_field.obj -> (T.Action.t, string) result) option
       (* [None]: the kind name is not this game's *)
   val postconditions_of_plan :
@@ -178,7 +181,7 @@ module type TEXT = sig
   module T : Engine_rules.GAME_RULES
   val pose : T.Pose.t -> string
   val observed : T.Pose.observed -> string
-  val kind : T.Action.t -> string
+  val action : T.Action.t -> string
   val postconditions : T.Postconditions.t -> string list
 end
 
@@ -193,7 +196,7 @@ end
 - **Plan codec, hand-written.** A plan is written by hand, so a bad one must say where:
   `01-celadon-setup.plan.json: checkpoint.events[1].args.target.map is missing.` Every reader takes
   `where`, the field prefix, and the engine's `Plan_decode` passes any kind name it does not know to
-  `kind_of_plan`. The plan format did not change.
+  `action_of_plan`. The plan format did not change.
 - **Text, at the edges.** Plain nouns returning strings. `Plan_text` prints a decoded plan (the
   golden plan test compares it), and `Failure_text` and `Run_text` print what the runner kept.
 - **Saved, derived.** A machine writes and reads `<n>-<event>.json` beside each event state, so its
@@ -203,8 +206,8 @@ end
   (`Pokemon_saved.observed.at_map`); older files with fewer fields still load.
 
 **Naming.** The hand-written plan side is `*_of_plan` (`pose_of_plan`, the Pokémon decoders in
-`Pose_decode`, `Kind_decode`, `Postcondition_decode`, `Party_decode`); the derived saved side keeps
-the ppx's `to_yojson` / `of_yojson`; text is the noun it prints (`pose`, `kind`).
+`Pose_decode`, `Pokemon_action_decode`, `Postcondition_decode`, `Party_decode`); the derived saved
+side keeps the ppx's `to_yojson` / `of_yojson`; text is the noun it prints (`pose`, `action`).
 
 ### The functor
 
@@ -290,9 +293,10 @@ src/engine/checkpoints/
 src/pokemon/navigation/grid/geometry/   Grid_geometry: Tile_pos, Direction (pure; the rules use it)
 src/pokemon/checkpoints/
   rules/                        Pokemon_rules: Pose, Pokemon_action, Postconditions, Postcondition_check
-  plan_codec/                   Pokemon_plan_codec: Pose_decode, Kind_decode, Postcondition_decode,
-                                Party_decode
-  text/                         Pokemon_text: Pose_text, Kind_text, Postconditions_text
+  plan_codec/                   Pokemon_plan_codec: Pose_decode, Pokemon_action_decode,
+                                Postcondition_decode, Party_decode
+  text/                         Pokemon_text: Pose_text, Pokemon_action_text,
+                                Postconditions_text
   saved/                        Pokemon_saved
   instance/                     Pokemon_checkpoints = Engine_checkpoints.Make (...)
   checkpoint_end/               Checkpoint_end: the declared end as a grid pose

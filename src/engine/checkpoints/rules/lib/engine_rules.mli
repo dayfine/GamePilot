@@ -1,5 +1,5 @@
 (** A game's rules, as the checkpoint engine's plans, runner and checks carry
-    them: where the player stands, the game's actions (its own event kinds), and
+    them: where the player stands, the game's actions (its event kinds), and
     what a checkpoint promises ([docs/design/Engine-Boundary.md], section 2).
     Pure: no JSON and no text. How a plan writes them is the game's
     {!Engine_plan_codec.Plan_codec.PLAN_CODEC}, how a log prints them its
@@ -21,12 +21,12 @@ module type POSE = sig
       not check holds wherever the player is. *)
 end
 
-(** The game's actions: its own event kinds. *)
+(** The game's actions: its event kinds. *)
 module type ACTION = sig
   type t
-  (** The game's actions, its own event kinds, with their args (route, battle,
-      heal; walk, rest), beside the engine's [talk], [answer], [scene], [save]
-      and [game_action]. *)
+  (** The game's actions, its event kinds, with their args (route, battle, heal;
+      walk, rest), beside the engine's [talk], [answer], [scene], [save] and
+      [game_action]. *)
 end
 
 (** What a checkpoint promises, and its check. *)

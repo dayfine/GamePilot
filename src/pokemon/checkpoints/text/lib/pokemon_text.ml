@@ -1,9 +1,9 @@
 module T = Pokemon_rules
 module Pose_text = Pose_text
-module Kind_text = Kind_text
+module Pokemon_action_text = Pokemon_action_text
 module Postconditions_text = Postconditions_text
 
 let pose = Pose_text.declared
 let observed = Pose_text.observed
-let kind = Kind_text.text
+let action = Pokemon_action_text.text
 let postconditions = Postconditions_text.text

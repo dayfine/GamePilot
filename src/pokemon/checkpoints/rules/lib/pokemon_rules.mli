@@ -19,7 +19,7 @@ module Pose : sig
 end
 
 module Pokemon_action = Pokemon_action
-(** {!Pokemon_action}: the Pokémon actions, the game's own event kinds. *)
+(** {!Pokemon_action}: the Pokémon actions, the game's event kinds. *)
 
 module Postcondition_check = Postcondition_check
 (** {!Postcondition_check}: those promises checked against what the game read.

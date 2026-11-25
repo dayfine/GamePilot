@@ -41,7 +41,7 @@ let walk ?(gates = none) ?(card_key_held = false) from goal =
   { from; goal; gates; card_key_held }
 
 let actions action (legs : legs) =
-  List.filter (fun (leg : _ Leg.t) -> leg.kind = Action action) legs
+  List.filter (fun (leg : _ Leg.t) -> leg.kind = Special_step action) legs
 
 let route holds = function Some legs -> holds legs | None -> false
 let no_route = Option.is_none
@@ -141,9 +141,9 @@ let describe_leg (leg : Connected_maps.place Gated_model.state Leg.t) =
   let kind =
     match leg.kind with
     | Walk { tiles; _ } -> Printf.sprintf "walk %d" tiles
-    | Action Gated_model.Open_gate -> "open gate"
-    | Action Gated_model.Press_switch -> "press switch"
-    | Action _ | Face -> "other"
+    | Special_step Gated_model.Open_gate -> "open gate"
+    | Special_step Gated_model.Press_switch -> "press switch"
+    | Special_step _ | Face -> "other"
   in
   Printf.sprintf "%s %s -> %d %s" kind
     (Direction.name leg.direction)

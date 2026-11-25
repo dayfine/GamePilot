@@ -5,6 +5,9 @@
 # every capture again with its colors shifted as another capture card might
 # show them, by dev/reader_fixtures/shift_frame.py (brightness times 0.9 and 1.1,
 # one channel plus or minus 12, 10% toward mid-grey), named <shift>/<image>.
+# Likewise fixtures/delete_save.probes.jsonl and delete_save.shifted.probes.jsonl
+# from images/delete-save/ with the native viewport (System Settings, the whole
+# frame) and the games' delete-save icons (the delete-save-icon*.png under src/games).
 # shift_frame.py needs Pillow ($SHIFT_PYTHON, default python3; e.g.
 # "uv run --with pillow python3").
 #
@@ -18,12 +21,22 @@ SRC=$(cd "$HERE/../../.." && pwd)
 PROBE_IMAGES=${PROBE_IMAGES:-$SRC/../daemon/build/probe_images}
 SHIFT_PYTHON=${SHIFT_PYTHON:-python3}
 SHIFT_FRAME=$SRC/../dev/reader_fixtures/shift_frame.py
-spec=$(mktemp)
-shifted=$(mktemp -d)
-trap 'rm -rf "$spec" "$shifted"' EXIT
+work=$(mktemp -d)
+trap 'rm -rf "$work"' EXIT
+mkdir "$work/home" "$work/delete_save" "$work/shifted" "$work/shifted_delete_save"
+spec=$work/home/spec.json
+ds_spec=$work/delete_save/spec.json
 (cd "$SRC" && dune exec core/switch_home/test/write_probe_spec.exe) >"$spec"
+(cd "$SRC" && dune exec core/switch_home/test/write_probe_spec.exe delete-save) >"$ds_spec"
+cp "$SRC/games/pokemon/plza/assets/delete-save-icon.png" "$work/delete_save/plza-icon.png"
+cp "$SRC/games/frlg/assets/delete-save-icon-firered.png" "$work/delete_save/firered-icon.png"
 (cd "$HERE/images" && "$PROBE_IMAGES" --spec "$spec" --viewport nso-gba ./*.png) \
     >"$HERE/fixtures/switch.probes.jsonl"
-(cd "$HERE/images" && $SHIFT_PYTHON "$SHIFT_FRAME" "$shifted" ./*.png)
-(cd "$shifted" && "$PROBE_IMAGES" --spec "$spec" --viewport nso-gba ./*/*.png) \
+(cd "$HERE/images" && $SHIFT_PYTHON "$SHIFT_FRAME" "$work/shifted" ./*.png)
+(cd "$work/shifted" && "$PROBE_IMAGES" --spec "$spec" --viewport nso-gba ./*/*.png) \
     >"$HERE/fixtures/switch.shifted.probes.jsonl"
+(cd "$HERE/images/delete-save" && "$PROBE_IMAGES" --spec "$ds_spec" --viewport native ./*.png) \
+    >"$HERE/fixtures/delete_save.probes.jsonl"
+(cd "$HERE/images/delete-save" && $SHIFT_PYTHON "$SHIFT_FRAME" "$work/shifted_delete_save" ./*.png)
+(cd "$work/shifted_delete_save" && "$PROBE_IMAGES" --spec "$ds_spec" --viewport native ./*/*.png) \
+    >"$HERE/fixtures/delete_save.shifted.probes.jsonl"

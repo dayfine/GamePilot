@@ -12,7 +12,7 @@ struct
     | Scene -> "scene"
     | Save -> "save"
     | Named_action args -> "game_action " ^ Yojson.Safe.to_string (`Assoc args)
-    | Game action -> X.kind action
+    | Game action -> X.action action
 
   let event (e : Plan.event) =
     let way = Option.fold ~none:"" ~some:(fun a -> "[" ^ a ^ "] ") e.way in

@@ -8,8 +8,9 @@ Island's Game Corner. The program then sails from One Island's harbor to Two Isl
 the Game Corner, where the owner asks you to find his daughter Lostelle and a Biker barges in. It
 sails on to Three Island, walks through its port, where PC storage comes back on, and beats the
 Bikers who hold the town: three goons and their boss, Cue Ball Paxton, in four trainer battles in a
-row. It moves BLASTOISE to the front of the party first, since it leads every one of those battles. Your save must have turned Bill down when he asked
-after the Cinnabar Gym, so that he still waits in the Center. It starts at the Celadon Dept. Store
+row. It moves BLASTOISE to the front of the party first, since it leads every one of those
+battles. Your save must have turned Bill down when he asked after the Cinnabar Gym, so that he
+still waits in the Center. It starts at the Celadon Dept. Store
 1F save spot, where Supplies and Team Training end.
 
 <!-- generated:backends -->
