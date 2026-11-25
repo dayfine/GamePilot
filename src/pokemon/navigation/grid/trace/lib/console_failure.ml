@@ -55,14 +55,14 @@ let overrun ~where obj =
   in
   {
     step = Json_field.string ~where "step" obj;
-    direction = Json_field.direction ~where "direction" obj;
+    direction = Grid_field.direction ~where "direction" obj;
     tiles = int_or ~where ~default:1 "tiles" obj;
     fade = fade_of where fade;
     far_pose_of = Json_field.string_opt ~where "far_pose_of" obj;
   }
 
 let tile_of ~where obj =
-  Json_field.pair (where ^ "tile") (Json_field.field ~where "tile" obj)
+  Grid_field.pair (where ^ "tile") (Json_field.field ~where "tile" obj)
 
 let fault ~where obj =
   let int key = Json_field.int ~where key obj in
@@ -84,7 +84,7 @@ let start_of ~where start =
   let where = where ^ "start." in
   let tile = tile_of ~where start in
   ( { Route_tile.map = Json_field.string ~where "map" start; pos = tile },
-    Json_field.direction ~where "facing" start )
+    Grid_field.direction ~where "facing" start )
 
 let start ~where obj =
   Option.map (start_of ~where) (Json_field.object_opt ~where "start" obj)

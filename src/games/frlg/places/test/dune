@@ -6,7 +6,7 @@
   gamepilot.table_test
   gamepilot.grid_maps
   gamepilot.checkpoints_expand
-  gamepilot.frlg_repo_files
+  gamepilot.repo_io
   gamepilot.frlg_overworld
   gamepilot.frlg_actions
   gamepilot.frlg_places

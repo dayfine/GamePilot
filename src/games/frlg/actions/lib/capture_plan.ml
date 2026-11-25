@@ -1,4 +1,4 @@
-module J = Grid_maps.Json_field
+module J = Json_field
 
 type t = {
   species : string;
@@ -44,7 +44,8 @@ let read ~where args =
     max_balls =
       bounded ~where "balls" ~default:default_balls ~max:max_ball_bound args;
     pace =
-      (if J.has "pace" args then J.direction ~where "pace" args
+      (if J.has "pace" args then
+         Grid_maps.Grid_field.direction ~where "pace" args
        else Grid_maps.Direction.East);
   }
 

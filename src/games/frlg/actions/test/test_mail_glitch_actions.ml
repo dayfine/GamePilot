@@ -8,7 +8,7 @@ module B = Frlg_battle
 module Battle = B.Battle
 
 let case name input expectation = { Table_test.name; input; expectation }
-let obj json = Grid_maps.Json_field.as_object "" (Yojson.Safe.from_string json)
+let obj json = Json_field.as_object "" (Yojson.Safe.from_string json)
 
 (* A battle as the list's fake game steps play it: the events it reports, and the result
    of each move chosen (default [Chosen]). *)

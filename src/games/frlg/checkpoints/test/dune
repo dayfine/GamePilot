@@ -153,6 +153,7 @@
  (libraries
   gamepilot.table_test
   gamepilot.grid_maps
+  gamepilot.json_field
   gamepilot.checkpoints_plan
   gamepilot.checkpoints_run
   gamepilot.frlg_actions
@@ -176,6 +177,7 @@
  (libraries
   gamepilot.table_test
   gamepilot.grid_maps
+  gamepilot.json_field
   gamepilot.checkpoints_plan
   gamepilot.frlg_overworld
   gamepilot.frlg_actions

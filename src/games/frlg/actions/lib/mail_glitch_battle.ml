@@ -1,4 +1,4 @@
-module J = Grid_maps.Json_field
+module J = Json_field
 module M = Menu_input
 module B = Frlg_battle
 
@@ -17,7 +17,8 @@ let decode =
         recycle_species = J.string ~where "recycle_species" args;
         sweeper = J.string ~where "sweeper" args;
         depleted_move = J.string ~where "depleted_move" args;
-        step_direction = J.direction ~where "step_direction" args;
+        step_direction =
+          Grid_maps.Grid_field.direction ~where "step_direction" args;
       })
 
 type slots = {

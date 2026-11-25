@@ -7,7 +7,7 @@ open Checkpoints_plan
 
 type outcome = (unit, Failure.cause) result
 
-type game_action = Plan.event -> Grid_maps.Json_field.obj -> outcome
+type game_action = Plan.event -> Json_field.obj -> outcome
 (** Runs one game action with the event's args, which the handler reads (and
     rejects with a {!Failure.cause} when they are wrong). *)
 

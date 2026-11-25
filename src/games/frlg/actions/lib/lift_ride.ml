@@ -50,10 +50,9 @@ let ride_of_args args =
     Error (Checkpoints_run.Failure.cause ~repeats:true "bad_args" e)
   in
   match
-    ( Grid_maps.Json_field.string ~where "from" args,
-      Grid_maps.Json_field.string ~where "to" args )
+    (Json_field.string ~where "from" args, Json_field.string ~where "to" args)
   with
-  | exception Grid_maps.Json_field.Invalid e -> bad e
+  | exception Json_field.Invalid e -> bad e
   | from, to_ -> (
       match ride_of_floors ~from ~to_ with
       | Some ride -> Ok ride

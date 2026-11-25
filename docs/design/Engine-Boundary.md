@@ -97,8 +97,8 @@ game's own event kinds, what a checkpoint promises) and the code that reads, pri
 ## 2. Layout
 
 ```
-src/base/json_field/         Json_field, moved unchanged from Grid_maps
-src/base/repo_files/         Repo_files, Json_file, moved from games/frlg
+src/base/json_field/         Json_field, moved from Grid_maps; its grid readers stay as Grid_maps.Grid_field
+src/base/repo_files/         library repo_io: Repo_files, Json_file, moved from games/frlg
 src/engine/checkpoints/
   terms/                     GAME_TERMS: the signature a game fills (below)
   plan/                      Make: event, checkpoint, plan skeleton, decode skeleton, Count, Money

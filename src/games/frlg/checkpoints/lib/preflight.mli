@@ -46,8 +46,8 @@ val needs :
 (** What the save must hold for the plan's first event, in the table's order:
     the plan's declared preconditions ({!Plan_preconditions.needs}), then the
     party, the money, the items, the place. [Error] for declared preconditions
-    that do not decode. Raises {!Grid_maps.Json_field.Invalid} for a plan arg
-    that does not read. *)
+    that do not decode. Raises {!Json_field.Invalid} for a plan arg that does
+    not read. *)
 
 type read = {
   observed : Checkpoints_run.Postcondition_check.observed;

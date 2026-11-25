@@ -108,12 +108,10 @@ let parse ~source json =
   Ok { places; towns }
 
 let read () =
-  match Frlg_repo_files.Repo_files.locate asset with
+  match Repo_io.Repo_files.locate asset with
   | None -> Error (asset ^ " not found from the working directory")
   | Some path ->
-      Result.bind
-        (Frlg_repo_files.Json_file.read path)
-        (parse ~source:"places.json")
+      Result.bind (Repo_io.Json_file.read path) (parse ~source:"places.json")
 
 let loaded = lazy (read ())
 let load () = Lazy.force loaded

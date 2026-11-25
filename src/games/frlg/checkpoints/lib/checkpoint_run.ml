@@ -16,7 +16,7 @@ let maps_dir = "third_party/PokemonSimulation/data/games/frlg/maps"
 
 let load_rock_stairs () =
   let asset = Frlg_overworld.Rock_stairs.asset in
-  match Frlg_repo_files.Repo_files.locate asset with
+  match Repo_io.Repo_files.locate asset with
   | Some file -> Frlg_overworld.Rock_stairs.load file
   | None -> Error (asset ^ " not found from the working directory")
 
@@ -35,12 +35,12 @@ let load_all dir =
       Result.map (world rock_stairs) (all [] names))
 
 let load_world () =
-  match Frlg_repo_files.Repo_files.locate maps_dir with
+  match Repo_io.Repo_files.locate maps_dir with
   | None -> Error (maps_dir ^ " not found from the working directory")
   | Some dir -> load_all dir
 
 let check_plan (plan : Checkpoints_plan.Plan.t) =
-  match (plan.game, Grid_maps.Json_field.find "menu" plan.execution) with
+  match (plan.game, Json_field.find "menu" plan.execution) with
   | "frlg", (None | Some (`String "full")) -> Ok ()
   | "frlg", Some menu ->
       Error ("execution.menu " ^ Yojson.Safe.to_string menu ^ " is not \"full\"")

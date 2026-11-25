@@ -61,9 +61,7 @@ val load_strategies : unit -> (strategy list, string) result
 (** The asset, found from the working directory and read once. *)
 
 val decode :
-  strategy list ->
-  Grid_maps.Json_field.obj ->
-  (t, Checkpoints_run.Failure.cause) result
+  strategy list -> Json_field.obj -> (t, Checkpoints_run.Failure.cause) result
 (** The action's args: ["species"], ["target_level"], ["learn_move"],
     ["learn_slot"] (from 1), ["sweeper"], ["sweeper_moves"] (from 1),
     ["max_battles"], ["strategy"] (default {!default_strategy}) and ["round"]

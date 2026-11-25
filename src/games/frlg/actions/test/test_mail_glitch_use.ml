@@ -7,7 +7,7 @@ module P = Frlg_readers.Party_menu
 module L = Frlg_text.Line_reading
 
 let case name input expectation = { Table_test.name; input; expectation }
-let obj json = Grid_maps.Json_field.as_object "" (Yojson.Safe.from_string json)
+let obj json = Json_field.as_object "" (Yojson.Safe.from_string json)
 let read text : L.reading = Read { text; score = 0.1 }
 
 let verdict r () =

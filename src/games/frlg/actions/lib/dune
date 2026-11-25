@@ -7,12 +7,13 @@
   gamepilot.effects
   gamepilot.screen_state
   gamepilot.grid_maps
+  gamepilot.json_field
   gamepilot.grid_planning
   gamepilot.checkpoints_plan
   gamepilot.checkpoints_run
   gamepilot.frlg_readers
   gamepilot.frlg_menu_cursor
   gamepilot.frlg_text
-  gamepilot.frlg_repo_files
+  gamepilot.repo_io
   gamepilot.frlg_overworld
   gamepilot.frlg_battle))

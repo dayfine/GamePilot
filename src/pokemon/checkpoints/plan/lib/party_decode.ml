@@ -1,4 +1,4 @@
-module F = Grid_maps.Json_field
+module F = Json_field
 
 let slot_fields = [ "slot"; "species" ]
 

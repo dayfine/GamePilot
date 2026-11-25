@@ -1,6 +1,6 @@
 open Frlg_readers
 module M = Menu_input
-module J = Grid_maps.Json_field
+module J = Json_field
 
 let mark_of_name : string -> Party_menu.mark option = function
   | "held_item" -> Some Held_item

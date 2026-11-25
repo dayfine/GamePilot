@@ -85,7 +85,7 @@ let strategies = Result.get_ok (Grind_plan.load_strategies ())
 let mimien =
   Result.get_ok
     (Grind_plan.decode strategies
-       (Grid_maps.Json_field.as_object ""
+       (Json_field.as_object ""
           (Yojson.Safe.from_string
              {|{"species": "mr-mime", "target_level": 33, "learn_move": "recycle",
                 "learn_slot": 1, "sweeper": "blastoise", "sweeper_moves": [1, 2],

@@ -65,7 +65,7 @@ let members save id event_id () =
         (fun s ->
           s ^ " "
           ^ slot_text (Party_roster.resolve (read (save id)) (Species s)))
-        (Grid_maps.Json_field.string_opt ~where:"" key a))
+        (Json_field.string_opt ~where:"" key a))
     Action_args.member_keys
   |> String.concat ", "
 

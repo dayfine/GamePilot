@@ -1,4 +1,4 @@
-module J = Grid_maps.Json_field
+module J = Json_field
 module M = Menu_input
 module S = Frlg_battle.Scripted_battle
 
@@ -15,7 +15,7 @@ let decode =
         species = J.string ~where "species" args;
         move = J.string ~where "move" args;
         backup_move = J.string ~where "backup_move" args;
-        pace = J.direction ~where "pace" args;
+        pace = Grid_maps.Grid_field.direction ~where "pace" args;
       })
 
 let script ~move_slot ~backup_slot =

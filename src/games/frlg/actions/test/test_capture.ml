@@ -6,7 +6,7 @@
 open Frlg_actions
 
 let case name input expectation = { Table_test.name; input; expectation }
-let obj json = Grid_maps.Json_field.as_object "" (Yojson.Safe.from_string json)
+let obj json = Json_field.as_object "" (Yojson.Safe.from_string json)
 
 let decode json () =
   match Capture_plan.decode (obj json) with

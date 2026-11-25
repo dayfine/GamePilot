@@ -52,18 +52,5 @@ val records :
 (** Each object of the array field [key] read by the function, which gets the
     item's prefix; [[]] when the field is left out. *)
 
-val pos : where:string -> obj -> Tile_pos.t
-(** The fields ["x"] and ["y"]. *)
-
-val pair : string -> Yojson.Safe.t -> Tile_pos.t
-(** A value [[x, y]]; [where] names the value itself. *)
-
-val direction_named : string -> string -> Direction.t
-(** [direction_named where name]: the direction [name] names; raises naming
-    [where] (the value itself) otherwise. *)
-
-val direction : where:string -> string -> obj -> Direction.t
-(** The string field [key], read as a direction. *)
-
 val strings : string -> Yojson.Safe.t -> string list
 (** An array of strings; [where] names the array itself. *)

@@ -33,5 +33,5 @@ val needs :
   Checkpoints_plan.Plan.t ->
   need list
 (** What the save must hold for the plan's first event, in the table's order:
-    the party, the money, the items, the place. Raises
-    {!Grid_maps.Json_field.Invalid} for a plan arg that does not read. *)
+    the party, the money, the items, the place. Raises {!Json_field.Invalid} for
+    a plan arg that does not read. *)

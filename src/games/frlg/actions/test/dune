@@ -66,6 +66,7 @@
   gamepilot.table_test
   gamepilot.wire
   gamepilot.grid_maps
+  gamepilot.json_field
   gamepilot.checkpoints_plan
   gamepilot.checkpoints_run
   gamepilot.frlg_overworld

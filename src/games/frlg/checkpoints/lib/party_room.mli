@@ -22,8 +22,8 @@ val field_moves : string list
 (** cut, fly, surf, strength: a member knowing one stays. *)
 
 val chain_need : Checkpoints_plan.Plan.t list -> need
-(** Over the plans in run order. Raises {!Grid_maps.Json_field.Invalid} for an
-    arg that does not read. *)
+(** Over the plans in run order. Raises {!Json_field.Invalid} for an arg that
+    does not read. *)
 
 val free_needed : need -> int
 (** The members that join: each must reach the party (a trade or a battle uses

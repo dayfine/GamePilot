@@ -51,8 +51,7 @@ let knows_fly (m : R.member) =
 let room ~at need members =
   let* towns = Frlg_actions.Fly_towns.load () in
   let* dir =
-    Option.to_result ~none:"no maps"
-      (Frlg_repo_files.Repo_files.locate Cr.maps_dir)
+    Option.to_result ~none:"no maps" (Repo_io.Repo_files.locate Cr.maps_dir)
   in
   let maps = Grid_maps.Map_file.runtime_names ~maps_dir:dir in
   let* center = M.nearest_center towns ~maps at in

@@ -2,11 +2,11 @@ let ( let* ) = Result.bind
 let fragments_asset = "src/games/frlg/fragments/fragments.json"
 
 let read_fragments () =
-  match Frlg_repo_files.Repo_files.locate fragments_asset with
+  match Repo_io.Repo_files.locate fragments_asset with
   | None -> Error (fragments_asset ^ " not found from the working directory")
   | Some path ->
       Result.bind
-        (Frlg_repo_files.Json_file.read path)
+        (Repo_io.Json_file.read path)
         (Checkpoints_expand.Fragment_table.parse ~source:"fragments.json")
 
 let fragments = lazy (read_fragments ())
@@ -28,5 +28,5 @@ let decode ~source json =
 
 let load path =
   Result.bind
-    (Frlg_repo_files.Json_file.read path)
+    (Repo_io.Json_file.read path)
     (decode ~source:(Filename.basename path))
