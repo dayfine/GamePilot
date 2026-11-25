@@ -1,4 +1,4 @@
-# Composable rules: a game's rules from shared pieces (draft, 2026-11-25)
+# Composable rules: a game's rules from shared pieces (2026-11-25)
 
 `Engine-Boundary.md` section 2 gives the engine one `GAME_RULES` per game family: a pose, actions
 and postconditions, with three formats (plan codec, text, saved). The names below are the ones this
@@ -399,7 +399,7 @@ Every PR keeps every plan, test and run as it is; **S** marks a structural one.
 0, 1 and 2 can start at once; 0b follows 0. FRLG's line (3 to 10) runs first; 11 waits for it only where it needs
 4, and Octopath 0 needs only the engine pieces.
 
-## Decisions for the user
+## Decisions (user approved all as recommended, 2026-11-25)
 
 1. **The action sum is a variant each game writes** (`Story | Grid | Pokemon | Frlg`, matched as
    `Grid (Route r)`), decoded through a list of parts, not `Sum2`/`Sum3` functors or polymorphic
