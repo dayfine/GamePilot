@@ -59,11 +59,11 @@
             "map": "Route21_North",
             "tiles": [
               [
-                12,
+                16,
                 6
               ]
             ],
-            "facing": "east"
+            "facing": "west"
           }
         },
         "why": "Surf south from Pallet's pond to Route 21's island and into its grass; the Fishermen stand far south."
@@ -80,9 +80,27 @@
           "encounters": 30,
           "balls": 15,
           "ball": "ultra-ball",
-          "pace": "east"
+          "pace": "west"
         },
         "why": "Route 21 North's grass (FireRed, pret src/data/wild_encounters.json): Tangela only, Lv 17 to 28."
+      },
+      {
+        "id": "back_on_patch",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "Route21_North",
+            "tiles": [
+              [
+                16,
+                6
+              ]
+            ],
+            "facing": "east"
+          }
+        },
+        "why": "Back onto the patch's tile against the wall behind it: a pacing step that did not move the player leaves the reckoned tile one off, and a step into the wall puts the two together again before the walk out."
       },
       {
         "id": "fly_route10",

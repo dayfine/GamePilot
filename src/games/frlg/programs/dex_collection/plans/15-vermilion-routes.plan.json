@@ -86,7 +86,7 @@
             "map": "Route6",
             "tiles": [
               [
-                5,
+                2,
                 24
               ]
             ],
@@ -110,6 +110,24 @@
           "pace": "east"
         },
         "why": "Route 6's water (FireRed): Psyduck, every encounter."
+      },
+      {
+        "id": "back_on_patch_2",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "Route6",
+            "tiles": [
+              [
+                2,
+                24
+              ]
+            ],
+            "facing": "west"
+          }
+        },
+        "why": "Back onto the patch's tile against the wall behind it: a pacing step that did not move the player leaves the reckoned tile one off, and a step into the wall puts the two together again before the walk out."
       },
       {
         "fragment": "heal_at",

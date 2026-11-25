@@ -112,10 +112,11 @@ item rare-candy gained 40
 item ultra-ball gained 90
 no repeat
 == dex_collection/plans/08-victory-road-rest.plan.json
-frlg 08-victory-road-rest from IndigoPlateau_PokemonCenter_1F (13, 12) north: 3 game_action, 2 route, 1 heal
+frlg 08-victory-road-rest from IndigoPlateau_PokemonCenter_1F (13, 12) north: 3 game_action, 3 route, 1 heal
 caught_before: [read_caught] game_action {}
-to_victory_road_1: [run] route to VictoryRoad_2F (44, 11) east
-catch_1: [capture] game_action {"uncaught":["machop","geodude","onix","primeape","zubat","arbok","golbat","marowak","machoke"],"catches":2,"encounters":120,"balls":40,"ball":"ultra-ball","pace":"east"}
+to_victory_road_1: [run] route to VictoryRoad_2F (44, 11) north
+catch_1: [capture] game_action {"uncaught":["machop","geodude","onix","primeape","zubat","arbok","golbat","marowak","machoke"],"catches":2,"encounters":120,"balls":40,"ball":"ultra-ball","pace":"north"}
+back_on_patch: [run] route to VictoryRoad_2F (44, 11) south
 heal_indigo_1.walk: [run] route to IndigoPlateau_PokemonCenter_1F (13, 12) north
 heal_indigo_1: heal
 caught_after: [read_caught] game_action {}
@@ -125,12 +126,13 @@ caught gained 2
 at most 4 rounds, until:
 caught at least 25
 == dex_collection/plans/09-viridian-forest.plan.json
-frlg 09-viridian-forest from IndigoPlateau_PokemonCenter_1F (13, 12) north: 4 game_action, 3 route, 1 heal
+frlg 09-viridian-forest from IndigoPlateau_PokemonCenter_1F (13, 12) north: 4 game_action, 4 route, 1 heal
 caught_before: [read_caught] game_action {}
 out_of_indigo: [run] route to IndigoPlateau_Exterior (11, 7) south
 fly_pewter: [fly] game_action {"town":"PewterCity","species":"pidgeot"}
-to_forest: [run] route to ViridianForest (5, 13) east
+to_forest: [run] route to ViridianForest (3, 13) east
 catch_forest: [capture] game_action {"uncaught":["caterpie","weedle","kakuna","metapod","pikachu"],"catches":5,"encounters":150,"balls":20,"ball":"ultra-ball","pace":"east"}
+back_on_patch: [run] route to ViridianForest (3, 13) west
 heal_pewter.walk: [run] route to PewterCity_PokemonCenter_1F (7, 4) north
 heal_pewter: heal
 caught_after: [read_caught] game_action {}
@@ -139,12 +141,13 @@ postconditions:
 caught gained 5
 no repeat
 == dex_collection/plans/10-route3-east-grass.plan.json
-frlg 10-route3-east-grass from PewterCity_PokemonCenter_1F (7, 4) north: 4 game_action, 3 route, 1 heal
+frlg 10-route3-east-grass from PewterCity_PokemonCenter_1F (7, 4) north: 4 game_action, 4 route, 1 heal
 caught_before: [read_caught] game_action {}
 out_of_center: [run] route to PewterCity (17, 26) south
 fly_route4: [fly] game_action {"town":"Route4","species":"pidgeot"}
-to_grass: [run] route to Route3 (74, 13) east
-catch_route3: [capture] game_action {"uncaught":["nidoran-m","mankey","jigglypuff","nidoran-f"],"catches":3,"encounters":150,"balls":20,"ball":"ultra-ball","pace":"east"}
+to_grass: [run] route to Route3 (74, 10) south
+catch_route3: [capture] game_action {"uncaught":["nidoran-m","mankey","jigglypuff","nidoran-f"],"catches":3,"encounters":150,"balls":20,"ball":"ultra-ball","pace":"south"}
+back_on_patch: [run] route to Route3 (74, 10) north
 heal_route4.walk: [run] route to Route4_PokemonCenter_1F (7, 4) north
 heal_route4: heal
 caught_after: [read_caught] game_action {}
@@ -153,14 +156,15 @@ postconditions:
 caught gained 3
 no repeat
 == dex_collection/plans/11-route8-grass.plan.json
-frlg 11-route8-grass from Route4_PokemonCenter_1F (7, 4) north: 5 game_action, 4 route, 1 heal
+frlg 11-route8-grass from Route4_PokemonCenter_1F (7, 4) north: 5 game_action, 5 route, 1 heal
 caught_before: [read_caught] game_action {}
 out_of_center: [run] route to Route4 (12, 6) south
 fly_lavender: [fly] game_action {"town":"LavenderTown","species":"pidgeot"}
 to_cut_tree: [run] route to Route8 (48, 12) west
 cut_tree: [cut_tree] game_action {"direction":"west"} => Route8 (47, 12) west
-to_grass: [run] route to Route8 (40, 14) east
-catch_route8: [capture] game_action {"uncaught":["meowth","growlithe"],"catches":2,"encounters":120,"balls":20,"ball":"ultra-ball","pace":"east"}
+to_grass: [run] route to Route8 (39, 9) south
+catch_route8: [capture] game_action {"uncaught":["meowth","growlithe"],"catches":2,"encounters":120,"balls":20,"ball":"ultra-ball","pace":"south"}
+back_on_patch: [run] route to Route8 (39, 9) north
 heal_lavender.walk: [run] route to LavenderTown_PokemonCenter_1F (7, 4) north
 heal_lavender: heal
 caught_after: [read_caught] game_action {}
@@ -169,12 +173,13 @@ postconditions:
 caught gained 2
 no repeat
 == dex_collection/plans/12-power-plant.plan.json
-frlg 12-power-plant from LavenderTown_PokemonCenter_1F (7, 4) north: 4 game_action, 3 route, 1 heal
+frlg 12-power-plant from LavenderTown_PokemonCenter_1F (7, 4) north: 4 game_action, 4 route, 1 heal
 caught_before: [read_caught] game_action {}
 out_of_center: [run] route to LavenderTown (6, 6) south
 fly_route10: [fly] game_action {"town":"Route10","species":"pidgeot"}
-to_power_plant: [run] route to PowerPlant (5, 36) east
+to_power_plant: [run] route to PowerPlant (2, 36) east
 catch_power_plant: [capture] game_action {"uncaught":["magnemite","pikachu","magneton","electabuzz"],"catches":3,"encounters":150,"balls":40,"ball":"ultra-ball","pace":"east"}
+back_on_patch: [run] route to PowerPlant (2, 36) west
 heal_route10.walk: [run] route to Route10_PokemonCenter_1F (7, 4) north
 heal_route10: heal
 caught_after: [read_caught] game_action {}
@@ -183,12 +188,13 @@ postconditions:
 caught gained 3
 no repeat
 == dex_collection/plans/13-mansion.plan.json
-frlg 13-mansion from Route10_PokemonCenter_1F (7, 4) north: 5 game_action, 4 route, 1 heal
+frlg 13-mansion from Route10_PokemonCenter_1F (7, 4) north: 5 game_action, 5 route, 1 heal
 caught_before: [read_caught] game_action {}
 out_of_center: [run] route to Route10 (13, 21) south
 fly_cinnabar: [fly] game_action {"town":"CinnabarIsland","species":"pidgeot"}
-to_mansion: [run] route to PokemonMansion_1F (8, 31) east
+to_mansion: [run] route to PokemonMansion_1F (6, 31) east
 catch_mansion: [capture] game_action {"uncaught":["koffing","grimer","weezing","growlithe"],"catches":3,"encounters":150,"balls":40,"ball":"ultra-ball","pace":"east"}
+back_on_patch: [run] route to PokemonMansion_1F (6, 31) west
 out_of_mansion: [run] route to CinnabarIsland (8, 4) south
 fly_route10: [fly] game_action {"town":"Route10","species":"pidgeot"}
 heal_route10.walk: [run] route to Route10_PokemonCenter_1F (7, 4) north
@@ -199,10 +205,11 @@ postconditions:
 caught gained 3
 no repeat
 == dex_collection/plans/14-route10-river.plan.json
-frlg 14-route10-river from Route10_PokemonCenter_1F (7, 4) north: 3 game_action, 2 route, 1 heal
+frlg 14-route10-river from Route10_PokemonCenter_1F (7, 4) north: 3 game_action, 3 route, 1 heal
 caught_before: [read_caught] game_action {}
-to_river: [run] route to Route10 (20, 24) south
-catch_tentacool: [capture] game_action {"uncaught":["tentacool"],"catches":1,"encounters":40,"balls":20,"ball":"ultra-ball","pace":"south"}
+to_river: [run] route to Route10 (19, 24) east
+catch_tentacool: [capture] game_action {"uncaught":["tentacool"],"catches":1,"encounters":40,"balls":20,"ball":"ultra-ball","pace":"east"}
+back_on_patch: [run] route to Route10 (19, 24) west
 heal_route10.walk: [run] route to Route10_PokemonCenter_1F (7, 4) north
 heal_route10: heal
 caught_after: [read_caught] game_action {}
@@ -211,14 +218,15 @@ postconditions:
 caught gained 1
 no repeat
 == dex_collection/plans/15-vermilion-routes.plan.json
-frlg 15-vermilion-routes from Route10_PokemonCenter_1F (7, 4) north: 5 game_action, 4 route, 1 heal
+frlg 15-vermilion-routes from Route10_PokemonCenter_1F (7, 4) north: 5 game_action, 5 route, 1 heal
 caught_before: [read_caught] game_action {}
 out_of_center: [run] route to Route10 (13, 21) south
 fly_vermilion: [fly] game_action {"town":"VermilionCity","species":"pidgeot"}
 to_route11_grass: [run] route to Route11 (20, 15) east
 catch_drowzee: [capture] game_action {"uncaught":["drowzee"],"catches":1,"encounters":60,"balls":20,"ball":"ultra-ball","pace":"east"}
-to_route6_pond: [run] route to Route6 (5, 24) east
+to_route6_pond: [run] route to Route6 (2, 24) east
 catch_psyduck: [capture] game_action {"uncaught":["psyduck"],"catches":1,"encounters":40,"balls":20,"ball":"ultra-ball","pace":"east"}
+back_on_patch_2: [run] route to Route6 (2, 24) west
 heal_vermilion.walk: [run] route to VermilionCity_PokemonCenter_1F (7, 4) north
 heal_vermilion: heal
 caught_after: [read_caught] game_action {}
@@ -279,12 +287,13 @@ postconditions:
 caught gained 4
 no repeat
 == dex_collection/plans/19-pokemon-tower.plan.json
-frlg 19-pokemon-tower from Route10_PokemonCenter_1F (7, 4) north: 4 game_action, 3 route, 1 heal
+frlg 19-pokemon-tower from Route10_PokemonCenter_1F (7, 4) north: 4 game_action, 4 route, 1 heal
 caught_before: [read_caught] game_action {}
 out_of_center: [run] route to Route10 (13, 21) south
 fly_lavender: [fly] game_action {"town":"LavenderTown","species":"pidgeot"}
-to_tower_3f: [run] route to PokemonTower_3F (4, 11) south
-catch_tower: [capture] game_action {"uncaught":["gastly","cubone","haunter"],"catches":2,"encounters":100,"balls":30,"ball":"ultra-ball","pace":"south"}
+to_tower_3f: [run] route to PokemonTower_3F (5, 12) west
+catch_tower: [capture] game_action {"uncaught":["gastly","cubone","haunter"],"catches":2,"encounters":100,"balls":30,"ball":"ultra-ball","pace":"west"}
+back_on_patch: [run] route to PokemonTower_3F (5, 12) east
 heal_lavender.walk: [run] route to LavenderTown_PokemonCenter_1F (7, 4) north
 heal_lavender: heal
 caught_after: [read_caught] game_action {}
@@ -293,12 +302,13 @@ postconditions:
 caught gained 2
 no repeat
 == dex_collection/plans/20-route21-tangela.plan.json
-frlg 20-route21-tangela from LavenderTown_PokemonCenter_1F (7, 4) north: 5 game_action, 3 route, 1 heal
+frlg 20-route21-tangela from LavenderTown_PokemonCenter_1F (7, 4) north: 5 game_action, 4 route, 1 heal
 caught_before: [read_caught] game_action {}
 out_of_center: [run] route to LavenderTown (6, 6) south
 fly_pallet: [fly] game_action {"town":"PalletTown","species":"pidgeot"}
-to_route21_grass: [run] route to Route21_North (12, 6) east
-catch_tangela: [capture] game_action {"uncaught":["tangela"],"catches":1,"encounters":30,"balls":15,"ball":"ultra-ball","pace":"east"}
+to_route21_grass: [run] route to Route21_North (16, 6) west
+catch_tangela: [capture] game_action {"uncaught":["tangela"],"catches":1,"encounters":30,"balls":15,"ball":"ultra-ball","pace":"west"}
+back_on_patch: [run] route to Route21_North (16, 6) east
 fly_route10: [fly] game_action {"town":"Route10","species":"pidgeot"}
 heal_route10.walk: [run] route to Route10_PokemonCenter_1F (7, 4) north
 heal_route10: heal
@@ -308,12 +318,13 @@ postconditions:
 caught gained 1
 no repeat
 == dex_collection/plans/21-seafoam.plan.json
-frlg 21-seafoam from Route10_PokemonCenter_1F (7, 4) north: 5 game_action, 4 route, 1 heal
+frlg 21-seafoam from Route10_PokemonCenter_1F (7, 4) north: 5 game_action, 5 route, 1 heal
 caught_before: [read_caught] game_action {}
 out_of_center: [run] route to Route10 (13, 21) south
 fly_cinnabar: [fly] game_action {"town":"CinnabarIsland","species":"pidgeot"}
-to_seafoam_b1f: [run] route to SeafoamIslands_B1F (8, 8) south
-catch_seafoam: [capture] game_action {"uncaught":["seel","golduck","golbat"],"catches":2,"encounters":150,"balls":30,"ball":"ultra-ball","pace":"south"}
+to_seafoam_b1f: [run] route to SeafoamIslands_B1F (9, 8) west
+catch_seafoam: [capture] game_action {"uncaught":["seel","golduck","golbat"],"catches":2,"encounters":150,"balls":30,"ball":"ultra-ball","pace":"west"}
+back_on_patch: [run] route to SeafoamIslands_B1F (9, 8) east
 out_of_seafoam: [run] route to Route20 (60, 9) south
 fly_route10: [fly] game_action {"town":"Route10","species":"pidgeot"}
 heal_route10.walk: [run] route to Route10_PokemonCenter_1F (7, 4) north
@@ -324,12 +335,13 @@ postconditions:
 caught gained 2
 no repeat
 == dex_collection/plans/22-mt-moon.plan.json
-frlg 22-mt-moon from Route10_PokemonCenter_1F (7, 4) north: 4 game_action, 3 route, 1 heal
+frlg 22-mt-moon from Route10_PokemonCenter_1F (7, 4) north: 4 game_action, 4 route, 1 heal
 caught_before: [read_caught] game_action {}
 out_of_center: [run] route to Route10 (13, 21) south
 fly_route4: [fly] game_action {"town":"Route4","species":"pidgeot"}
-to_mt_moon_b2f: [run] route to MtMoon_B2F (24, 16) south
-catch_mt_moon: [capture] game_action {"uncaught":["paras","clefairy"],"catches":2,"encounters":200,"balls":20,"ball":"ultra-ball","pace":"south"}
+to_mt_moon_b2f: [run] route to MtMoon_B2F (23, 16) east
+catch_mt_moon: [capture] game_action {"uncaught":["paras","clefairy"],"catches":2,"encounters":200,"balls":20,"ball":"ultra-ball","pace":"east"}
+back_on_patch: [run] route to MtMoon_B2F (23, 16) west
 heal_route4.walk: [run] route to Route4_PokemonCenter_1F (7, 4) north
 heal_route4: heal
 caught_after: [read_caught] game_action {}

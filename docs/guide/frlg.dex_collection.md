@@ -67,7 +67,7 @@ sh run/run_checkpoints_on_mgba.sh --program frlg.dex_collection --from 01-ultra-
 | 21-seafoam | From Route 10's nurse: fly to Cinnabar, surf to the Seafoam Islands, Seel and Golduck on B1F, fly to Route 10's nurse |
 | 22-mt-moon | From Route 10's nurse: fly to Route 4, Paras and Clefairy on Mt. Moon B2F, Route 4's nurse |
 
-<!-- plans: e68bface67b7 -->
+<!-- plans: 8ec0f9cb4a30 -->
 <!-- /generated -->
 
 ## When it stops

@@ -52,11 +52,11 @@
             "map": "MtMoon_B2F",
             "tiles": [
               [
-                24,
+                23,
                 16
               ]
             ],
-            "facing": "south"
+            "facing": "east"
           }
         },
         "why": "Through 1F, down its north-west ladder to B1F's west strip and its ladder (22, 18) to B2F's middle corridor."
@@ -74,9 +74,27 @@
           "encounters": 200,
           "balls": 20,
           "ball": "ultra-ball",
-          "pace": "south"
+          "pace": "east"
         },
         "why": "Mt. Moon B2F (FireRed, pret src/data/wild_encounters.json): Zubat 49%, Geodude 30%, Paras 15%, Clefairy 6%, Lv 9 to 13."
+      },
+      {
+        "id": "back_on_patch",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "MtMoon_B2F",
+            "tiles": [
+              [
+                23,
+                16
+              ]
+            ],
+            "facing": "west"
+          }
+        },
+        "why": "Back onto the patch's tile against the wall behind it: a pacing step that did not move the player leaves the reckoned tile one off, and a step into the wall puts the two together again before the walk out."
       },
       {
         "fragment": "heal_at",

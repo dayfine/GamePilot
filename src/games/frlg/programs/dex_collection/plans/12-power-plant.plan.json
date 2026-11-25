@@ -59,7 +59,7 @@
             "map": "PowerPlant",
             "tiles": [
               [
-                5,
+                2,
                 36
               ]
             ],
@@ -86,6 +86,24 @@
           "pace": "east"
         },
         "why": "Power Plant (FireRed, pret src/data/wild_encounters.json): Voltorb and Magnemite 30% each, Pikachu 25%, Magneton 10%, Electabuzz 5%, Lv 22 to 35. Pikachu is caught by then (Viridian Forest), so the three are Magnemite, Magneton and Electabuzz."
+      },
+      {
+        "id": "back_on_patch",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "PowerPlant",
+            "tiles": [
+              [
+                2,
+                36
+              ]
+            ],
+            "facing": "west"
+          }
+        },
+        "why": "Back onto the patch's tile against the wall behind it: a pacing step that did not move the player leaves the reckoned tile one off, and a step into the wall puts the two together again before the walk out."
       },
       {
         "fragment": "heal_at",

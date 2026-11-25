@@ -52,7 +52,7 @@
             "map": "PokemonMansion_1F",
             "tiles": [
               [
-                8,
+                6,
                 31
               ]
             ],
@@ -79,6 +79,24 @@
           "pace": "east"
         },
         "why": "Pokemon Mansion 1F (FireRed, pret src/data/wild_encounters.json): Koffing and Raticate 30% each, Growlithe and Rattata 15%, Grimer and Weezing 5%, Lv 26 to 36. Growlithe is caught by then (Route 8), so the three are Koffing, Grimer and Weezing."
+      },
+      {
+        "id": "back_on_patch",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "PokemonMansion_1F",
+            "tiles": [
+              [
+                6,
+                31
+              ]
+            ],
+            "facing": "west"
+          }
+        },
+        "why": "Back onto the patch's tile against the wall behind it: a pacing step that did not move the player leaves the reckoned tile one off, and a step into the wall puts the two together again before the walk out."
       },
       {
         "id": "out_of_mansion",

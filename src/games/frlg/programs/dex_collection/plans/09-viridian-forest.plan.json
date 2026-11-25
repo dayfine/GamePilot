@@ -59,7 +59,7 @@
             "map": "ViridianForest",
             "tiles": [
               [
-                5,
+                3,
                 13
               ]
             ],
@@ -87,6 +87,24 @@
           "pace": "east"
         },
         "why": "Viridian Forest (FireRed, pret src/data/wild_encounters.json): Caterpie and Weedle 40% each, Kakuna 10%, Metapod and Pikachu 5%, Lv 3 to 6. Each catches at full HP almost every throw."
+      },
+      {
+        "id": "back_on_patch",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "ViridianForest",
+            "tiles": [
+              [
+                3,
+                13
+              ]
+            ],
+            "facing": "west"
+          }
+        },
+        "why": "Back onto the patch's tile against the wall behind it: a pacing step that did not move the player leaves the reckoned tile one off, and a step into the wall puts the two together again before the walk out."
       },
       {
         "fragment": "heal_at",

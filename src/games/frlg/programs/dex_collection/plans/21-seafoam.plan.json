@@ -52,11 +52,11 @@
             "map": "SeafoamIslands_B1F",
             "tiles": [
               [
-                8,
+                9,
                 8
               ]
             ],
-            "facing": "south"
+            "facing": "west"
           }
         },
         "why": "Surf east on Route 20 into the west cave, down its ladder (10, 6) to B1F's west chamber."
@@ -75,9 +75,27 @@
           "encounters": 150,
           "balls": 30,
           "ball": "ultra-ball",
-          "pace": "south"
+          "pace": "west"
         },
         "why": "Seafoam Islands B1F (FireRed, pret src/data/wild_encounters.json): Psyduck 40%, Zubat 34%, Golbat 11%, Seel 10%, Golduck 5%, Lv 22 to 32."
+      },
+      {
+        "id": "back_on_patch",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "SeafoamIslands_B1F",
+            "tiles": [
+              [
+                9,
+                8
+              ]
+            ],
+            "facing": "east"
+          }
+        },
+        "why": "Back onto the patch's tile against the wall behind it: a pacing step that did not move the player leaves the reckoned tile one off, and a step into the wall puts the two together again before the walk out."
       },
       {
         "id": "out_of_seafoam",

@@ -52,11 +52,11 @@
             "map": "PokemonTower_3F",
             "tiles": [
               [
-                4,
-                11
+                5,
+                12
               ]
             ],
-            "facing": "south"
+            "facing": "west"
           }
         },
         "why": "Up two floors to 3F's west strip by its stairs, out of the Channelers' sight behind the wall."
@@ -75,9 +75,27 @@
           "encounters": 100,
           "balls": 30,
           "ball": "ultra-ball",
-          "pace": "south"
+          "pace": "west"
         },
         "why": "Pokemon Tower 3F (FireRed, pret src/data/wild_encounters.json): Gastly 90%, Cubone 9%, Haunter 1%, Lv 13 to 20."
+      },
+      {
+        "id": "back_on_patch",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "PokemonTower_3F",
+            "tiles": [
+              [
+                5,
+                12
+              ]
+            ],
+            "facing": "east"
+          }
+        },
+        "why": "Back onto the patch's tile against the wall behind it: a pacing step that did not move the player leaves the reckoned tile one off, and a step into the wall puts the two together again before the walk out."
       },
       {
         "fragment": "heal_at",

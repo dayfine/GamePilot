@@ -35,7 +35,7 @@
                 11
               ]
             ],
-            "facing": "east"
+            "facing": "north"
           }
         },
         "why": "South down Route 23 into Victory Road 2F by its north door; the cave floor east of the move tutor is all encounter tiles and no trainer sees it."
@@ -60,9 +60,27 @@
           "encounters": 120,
           "balls": 40,
           "ball": "ultra-ball",
-          "pace": "east"
+          "pace": "north"
         },
         "why": "Victory Road 2F (FireRed, pret src/data/wild_encounters.json): Machop, Geodude and Onix 20% each, Primeape and Zubat 10%, Arbok, Golbat, Marowak and Machoke 5%, Lv 34 to 48. A foe without the caught mark is caught with Ultra Balls; the rest are run from."
+      },
+      {
+        "id": "back_on_patch",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "VictoryRoad_2F",
+            "tiles": [
+              [
+                44,
+                11
+              ]
+            ],
+            "facing": "south"
+          }
+        },
+        "why": "Back onto the patch's tile against the wall behind it: a pacing step that did not move the player leaves the reckoned tile one off, and a step into the wall puts the two together again before the walk out."
       },
       {
         "fragment": "heal_at",

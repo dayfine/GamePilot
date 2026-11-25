@@ -96,11 +96,11 @@
             "map": "Route8",
             "tiles": [
               [
-                40,
-                14
+                39,
+                9
               ]
             ],
-            "facing": "east"
+            "facing": "south"
           }
         },
         "why": "Into the grass, out of every trainer's sight."
@@ -118,9 +118,27 @@
           "encounters": 120,
           "balls": 20,
           "ball": "ultra-ball",
-          "pace": "east"
+          "pace": "south"
         },
         "why": "Route 8 (FireRed, pret src/data/wild_encounters.json): Meowth 30%, Growlithe 20%, Pidgey 30% and Ekans 20%, Lv 15 to 20."
+      },
+      {
+        "id": "back_on_patch",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "Route8",
+            "tiles": [
+              [
+                39,
+                9
+              ]
+            ],
+            "facing": "north"
+          }
+        },
+        "why": "Back onto the patch's tile against the wall behind it: a pacing step that did not move the player leaves the reckoned tile one off, and a step into the wall puts the two together again before the walk out."
       },
       {
         "fragment": "heal_at",

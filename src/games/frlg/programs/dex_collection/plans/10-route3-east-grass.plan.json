@@ -60,10 +60,10 @@
             "tiles": [
               [
                 74,
-                13
+                10
               ]
             ],
-            "facing": "east"
+            "facing": "south"
           }
         },
         "why": "South into Route 3's east grass, by the youngster who does not battle."
@@ -83,9 +83,27 @@
           "encounters": 150,
           "balls": 20,
           "ball": "ultra-ball",
-          "pace": "east"
+          "pace": "south"
         },
         "why": "Route 3 (FireRed, pret src/data/wild_encounters.json): Nidoran (male) 14%, Mankey and Jigglypuff 10% each, Nidoran (female) 1%, the rest Spearow and Pidgey, Lv 6 to 8."
+      },
+      {
+        "id": "back_on_patch",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "Route3",
+            "tiles": [
+              [
+                74,
+                10
+              ]
+            ],
+            "facing": "north"
+          }
+        },
+        "why": "Back onto the patch's tile against the wall behind it: a pacing step that did not move the player leaves the reckoned tile one off, and a step into the wall puts the two together again before the walk out."
       },
       {
         "fragment": "heal_at",
