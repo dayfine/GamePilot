@@ -15,6 +15,7 @@
      slotN         slot N (1-6) selected        membersN  N slots filled
      heldN, mailN  slot N's sprite carries the held-item or the mail icon
      summaryN      the summary screen on page N
+     shiny         the summary (page 1 or 2) shows the shiny star
      money         the money box
      moverowN      a move being picked on the summary's move list, row N
      memberN       a member's menu over the party, its cursor on row N (0 is
@@ -32,11 +33,12 @@
    images whose tags give its answer.
 
    menus.mgba.shifted.probes.jsonl holds the Seagallop list's frames
-   (seagallop-one-island/) again with their colors shifted
-   (dev/reader_fixtures/shift_frame.py: brightness times 0.9 and 1.1, one
-   channel plus or minus 12, 10% toward mid-grey), named <shift>/<image>: on
-   each, seagallop_row must read as on the frame itself. Its arrow is counted
-   in a color range, so the images are shifted, not the probes' numbers. *)
+   (seagallop-one-island/) and the summaries of rng-route10/ again with their
+   colors shifted (dev/reader_fixtures/shift_frame.py: brightness times 0.9
+   and 1.1, one channel plus or minus 12, 10% toward mid-grey), named
+   <shift>/<image>: on each, seagallop_row and shiny_star must read as on the
+   frame itself. The arrow and the star are counted in color ranges, so the
+   images are shifted, not the probes' numbers. *)
 
 open Frlg_readers
 
@@ -176,6 +178,12 @@ let screen_readers =
 
 let inner_readers =
   [
+    {
+      reader = "shiny_star";
+      applies = (fun tags -> has "summary1" tags || has "summary2" tags);
+      verdict = flag Shiny_star.shiny;
+      expected = tagged "shiny";
+    };
     {
       reader = "mail_editor_yes_no";
       applies =
@@ -359,7 +367,7 @@ let unshifted image =
   | None -> failwith ("no shift in " ^ image)
 
 (* The readers checked on shifted frames. *)
-let shift_tested = [ "seagallop_row" ]
+let shift_tested = [ "seagallop_row"; "shiny_star" ]
 
 let shifted_frame_cases backend images shifted =
   List.concat_map
