@@ -39,7 +39,7 @@ let faded m =
   (Frlg_readers.Screen_facts.of_measurements m).fade
   <> Screen_state.Fade.No_fade
 
-let fail code detail = Error (Checkpoints.Failure.cause code detail)
+let fail code detail = Error (Checkpoints_run.Failure.cause code detail)
 
 (* A on the town, the fade watched from the press on: the fly map's fade is
    over in half a second, so a look that starts after it misses it (mg-01

@@ -13,7 +13,7 @@ let decode json () =
   | Ok t ->
       Printf.sprintf "%s, pace %s" (Capture_plan.describe t)
         (Grid_maps.Direction.name t.pace)
-  | Error c -> Checkpoints.Failure.cause_to_string c
+  | Error c -> Checkpoints_run.Failure.cause_to_string c
 
 let mg02_args =
   {|{"species": "spearow", "catches": 1, "encounters": 50, "balls": 10,

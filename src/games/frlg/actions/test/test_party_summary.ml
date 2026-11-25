@@ -26,7 +26,7 @@ let ends_on screen = S.screen_name (S.screen_at screen screen.S.clock_ms)
 
 let outcome = function
   | Ok () -> "ok"
-  | Error cause -> "failed " ^ Checkpoints.Failure.cause_to_string cause
+  | Error cause -> "failed " ^ Checkpoints_run.Failure.cause_to_string cause
 
 (* What was read, how many times the menu opened, where it ended. *)
 let summary_of ?latencies members () =
@@ -38,7 +38,7 @@ let summary_of ?latencies members () =
   in
   Printf.sprintf "%s: %s; START x%d; ends on %s" (outcome result)
     (String.concat "; "
-       (List.map Checkpoints.Room_policy.member_to_string !read))
+       (List.map Checkpoints_run.Room_policy.member_to_string !read))
     (Party.count screen Wire.Start)
     (ends_on screen)
 

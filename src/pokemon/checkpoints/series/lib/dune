@@ -1,0 +1,4 @@
+(library
+ (name checkpoints_series)
+ (public_name gamepilot.checkpoints_series)
+ (libraries gamepilot.wire gamepilot.checkpoints_run))

@@ -1,7 +1,7 @@
 (* Make_room: the Center nearest the save, and the generated checkpoint. *)
 
 open Frlg_checkpoints
-module R = Checkpoints.Room_policy
+module R = Checkpoints_run.Room_policy
 
 let table = Result.get_ok (Frlg_actions.Fly_towns.load ())
 
@@ -51,18 +51,19 @@ let plan () =
     }
   in
   match
-    Checkpoints.Plan_decode.decode ~source:"mg-00" (Make_room.plan_json room)
+    Checkpoints_plan.Plan_decode.decode ~source:"mg-00"
+      (Make_room.plan_json room)
   with
   | Error e -> "error: " ^ e
   | Ok p ->
       String.concat "; "
         (List.map
-           (fun (e : Checkpoints.Plan.event) ->
+           (fun (e : Checkpoints_plan.Plan.event) ->
              e.id ^ " " ^ Option.value e.action ~default:"")
            p.checkpoint.events)
       ^ " | ends "
       ^ Option.fold ~none:"?"
-          ~some:(fun (g : Checkpoints.Pose.grid) -> g.map)
+          ~some:(fun (g : Checkpoints_plan.Pose.grid) -> g.map)
           p.postconditions.position
       ^ " | party "
       ^ (match p.postconditions.party with
@@ -71,7 +72,7 @@ let plan () =
       ^ " | knows "
       ^ String.concat ", "
           (List.map
-             (fun (k : Checkpoints.Plan.knows) ->
+             (fun (k : Checkpoints_plan.Plan.knows) ->
                k.species ^ " " ^ String.concat "+" k.moves)
              p.postconditions.knows)
 

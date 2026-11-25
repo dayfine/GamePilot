@@ -11,7 +11,7 @@ val decode :
   action:string ->
   (where:string -> Grid_maps.Json_field.obj -> 'a) ->
   Grid_maps.Json_field.obj ->
-  ('a, Checkpoints.Failure.cause) result
+  ('a, Checkpoints_run.Failure.cause) result
 (** Runs the reader on the args with ["<action>: "] as [where]. *)
 
 val party_slots : int

@@ -12,7 +12,9 @@
   gamepilot.program_registry
   gamepilot.guide_page
   gamepilot.run_record
-  gamepilot.checkpoints
+  gamepilot.checkpoints_plan
+  gamepilot.checkpoints_run
+  gamepilot.checkpoints_series
   gamepilot.frlg_actions
   gamepilot.frlg_readers
   gamepilot.ctl_script

@@ -13,7 +13,7 @@ let levels = [ 52; 20; 18; 21; 33; 12 ]
 let party_screen ?lost_b () =
   Party.react ?lost_b (List.map2 (fun n l -> Party.member n l) names levels)
 
-let party_promised : Checkpoints.Plan.postconditions =
+let party_promised : Checkpoints_plan.Plan.postconditions =
   {
     position = None;
     party = Some (Party_includes { members = [ "abra" ]; slots = [] });
@@ -26,7 +26,7 @@ let party_promised : Checkpoints.Plan.postconditions =
     marks = None;
   }
 
-let observed_text (o : Checkpoints.Postcondition_check.observed) =
+let observed_text (o : Checkpoints_run.Postcondition_check.observed) =
   match o.party with
   | None -> "party not read"
   | Some members ->
@@ -63,7 +63,7 @@ let bag_screen items screen (p : S.press) =
   | [ Wire.B ], S.Start_menu _ -> show S.Overworld
   | _ -> ()
 
-let items_promised : Checkpoints.Plan.postconditions =
+let items_promised : Checkpoints_plan.Plan.postconditions =
   {
     party_promised with
     party = None;
@@ -119,8 +119,8 @@ let read_level min () =
   in
   Printf.sprintf "%s; ends on %s"
     (String.concat "; "
-       (List.map Checkpoints.Postcondition_check.result_to_string
-          (Checkpoints.Postcondition_check.check promised observed)))
+       (List.map Checkpoints_run.Postcondition_check.result_to_string
+          (Checkpoints_run.Postcondition_check.check promised observed)))
     (S.screen_name (S.screen_at screen screen.S.clock_ms))
 
 let cases : Table_test.case list =

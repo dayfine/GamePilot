@@ -1,4 +1,4 @@
-open Checkpoints
+open Checkpoints_plan
 
 let pose = Pose.grid_to_string
 let list = String.concat ", "

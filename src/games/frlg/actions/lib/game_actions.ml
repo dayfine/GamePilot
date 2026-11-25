@@ -75,10 +75,10 @@ let body ctx (request : R.t) () =
 
 let perform ctx request = Menu_input.run (body ctx request)
 
-let handler ctx name (_ : Checkpoints.Plan.event) args =
+let handler ctx name (_ : Checkpoints_plan.Plan.event) args =
   match (ctx.stocks (), name) with
   | Error e, "mart" ->
-      Error (Checkpoints.Failure.cause ~repeats:true "no_mart_stock" e)
+      Error (Checkpoints_run.Failure.cause ~repeats:true "no_mart_stock" e)
   | stocks, _ ->
       let stocks = Result.value stocks ~default:Mart_plan.empty in
       Result.bind (R.decode stocks name args) (perform ctx)

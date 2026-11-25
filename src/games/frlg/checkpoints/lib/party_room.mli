@@ -1,9 +1,10 @@
 (** Room in the party for a chain of FireRed checkpoints: how many members the
     chain's plans bring into the party (a Game Corner prize, a capture) and
     which members they use (a species an action names or a promised party
-    lists), as the shared {!Checkpoints.Room_policy}'s precondition and rules:
-    FireRed's field moves, and the lead stays. GamePilot's own (the fork's
-    AutoStory deposits by its PC plan, PokemonFRLG_AutoStoryPcStorage). *)
+    lists), as the shared {!Checkpoints_run.Room_policy}'s precondition and
+    rules: FireRed's field moves, and the lead stays. GamePilot's own (the
+    fork's AutoStory deposits by its PC plan, PokemonFRLG_AutoStoryPcStorage).
+*)
 
 type need = {
   joins : (string * string) list;
@@ -20,7 +21,7 @@ val party_size : int
 val field_moves : string list
 (** cut, fly, surf, strength: a member knowing one stays. *)
 
-val chain_need : Checkpoints.Plan.t list -> need
+val chain_need : Checkpoints_plan.Plan.t list -> need
 (** Over the plans in run order. Raises {!Grid_maps.Json_field.Invalid} for an
     arg that does not read. *)
 
@@ -28,16 +29,16 @@ val free_needed : need -> int
 (** The members that join: each must reach the party (a trade or a battle uses
     it), and none leaves. *)
 
-type member = Checkpoints.Room_policy.member
+type member = Checkpoints_run.Room_policy.member
 
 val lead_stays : bool
 (** true: the chain's battles are planned with the lead the save has. *)
 
-val rules : need -> Checkpoints.Room_policy.rules
-val precondition : need -> Checkpoints.Room_policy.precondition
+val rules : need -> Checkpoints_run.Room_policy.rules
+val precondition : need -> Checkpoints_run.Room_policy.precondition
 
 val deposits : need -> member list -> (string list, string) result
-(** The species {!Checkpoints.Room_policy.choose} deposits so {!free_needed}
+(** The species {!Checkpoints_run.Room_policy.choose} deposits so {!free_needed}
     slots are free: [Ok []] when they are; [Error] naming the members kept and
     why when too few may go. *)
 

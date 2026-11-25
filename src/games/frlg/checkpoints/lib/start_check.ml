@@ -1,14 +1,17 @@
 module F = Frlg_readers.Start_frame
-module P = Checkpoints.Postcondition_check
+module P = Checkpoints_run.Postcondition_check
 
-type expected = { party : Checkpoints.Plan.party option; frame : F.t option }
+type expected = {
+  party : Checkpoints_plan.Plan.party option;
+  frame : F.t option;
+}
 
 type observed = {
   party_read : string option list option;
   frame_read : F.t option;
 }
 
-let party_only party : Checkpoints.Plan.postconditions =
+let party_only party : Checkpoints_plan.Plan.postconditions =
   {
     position = None;
     party;
@@ -58,7 +61,7 @@ let observe ~log expected =
 let frame_file ~states id = Filename.concat states (id ^ ".start.frame.json")
 
 let start_file ~states = function
-  | Some (Checkpoints.Pose.Grid { map; tiles = { x; y } :: _; _ }) ->
+  | Some (Checkpoints_plan.Pose.Grid { map; tiles = { x; y } :: _; _ }) ->
       Some
         (Filename.concat states
            (Printf.sprintf "%s.%d_%d.start.frame.json" map x y))
