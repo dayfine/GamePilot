@@ -60,7 +60,7 @@
           "balls": 5,
           "attempts": 1
         },
-        "why": "A shiny Voltorb, the soonest of the table for TID 33002 and SID 9011 (read once from the save's memory). seed_shift 8: what this checkpoint's grass save (the save file's save number 139) adds to the table's seeds on mGBA, measured from it. The party's last member knows Sweet Scent. ingame_offset -1: the presses land one advance late on this target, measured by replaying them on the grass save with an RNG trace."
+        "why": "A shiny Voltorb, the soonest of the table for TID 33002 and SID 9011 (read once from the save's memory). seed_shift 8: what this checkpoint's grass save (the save file's save number 139) adds to the table's seeds on mGBA, measured from it. The party's last member knows Sweet Scent. ingame_offset -1: the target's waits otherwise land on another advance, measured by replaying the presses on the grass save with an RNG trace."
       },
       {
         "id": "save_catch",

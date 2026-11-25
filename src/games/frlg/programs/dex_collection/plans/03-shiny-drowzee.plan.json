@@ -39,13 +39,14 @@
           "sid": 9011,
           "seeds": "rng_seeds_mgba_sevii_save.json",
           "seed_shift": 4,
+          "ingame_offset": -3,
           "frame_model": "mgba",
           "advances": [1000, 4000],
           "ball": "ultra-ball",
           "balls": 5,
           "attempts": 1
         },
-        "why": "A shiny Drowzee, the soonest of the table for TID 33002 and SID 9011 (read once from the save's memory). seed_shift 4: what this checkpoint's grass save (the save file's save number 141) adds to the table's seeds on mGBA, measured from it. The party's last member knows Sweet Scent."
+        "why": "A shiny Drowzee, the soonest of the table for TID 33002 and SID 9011 (read once from the save's memory). seed_shift 4: what this checkpoint's grass save (the save file's save number 141) adds to the table's seeds on mGBA, measured from it. The party's last member knows Sweet Scent. ingame_offset -3: the target's waits otherwise land on another advance, measured by replaying the presses on the grass save with an RNG trace."
       },
       {
         "id": "save_catch",
