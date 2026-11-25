@@ -6,10 +6,11 @@
 
 type t =
   | Party_in_order of string list
+      (** The party's members, these species in this order. *)
   | Party_includes of {
       members : string list;
       slots : Pokemon_engine.Postconditions.slot list;
-    }
+    }  (** These species somewhere in the party, and these slots as given. *)
   | Member of { species : string; for_ : string }
       (** A member an event uses ([for_]: ["party_swap"]). *)
   | No_mail of { species : string; for_ : string }
@@ -31,9 +32,13 @@ type t =
           Cut Cascade, Fly Thunder, Strength Rainbow, Surf Soul, Rock Smash
           Marsh, Waterfall Volcano). *)
   | Money_at_least of { amount : int; for_ : string }
+      (** At least this much money, for the event [for_] (a purchase). *)
   | Money_between of { min : int; max : int }
+      (** Money in this range, both ends included. *)
   | Item_at_least of { item : string; count : int; for_ : string }
+      (** At least [count] of the bag item, for the event [for_]. *)
   | Item_exactly of { item : string; count : int }
+      (** Exactly [count] of the bag item. *)
   | Place of string  (** The checkpoint's start map. *)
   | Anywhere_start of Pokemon_engine.Pose.place_class
       (** The checkpoint starts anywhere in the class (outdoors). FireRed does

@@ -1,27 +1,7 @@
 module P = Pokemon_engine.Plan
 module Postconditions = Pokemon_engine.Postconditions
 
-type need = Need.t =
-  | Party_in_order of string list
-  | Party_includes of {
-      members : string list;
-      slots : Postconditions.slot list;
-    }
-  | Member of { species : string; for_ : string }
-  | No_mail of { species : string; for_ : string }
-  | Holding_no_mail of { for_ : string }
-  | Knows_move of { move : string; for_ : string }
-  | Badge of { badge : string; for_ : string }
-  | Money_at_least of { amount : int; for_ : string }
-  | Money_between of { min : int; max : int }
-  | Item_at_least of { item : string; count : int; for_ : string }
-  | Item_exactly of { item : string; count : int }
-  | Place of string
-  | Anywhere_start of Pokemon_engine.Pose.place_class
-  | Badges_at_least of int
-  | Badges of string list
-  | Hall_of_fame
-  | Caught_at_least of int
+type need = Need.t
 
 (* The declared preconditions first: the save's state the plan's goal implies,
    before what its events' args need. *)

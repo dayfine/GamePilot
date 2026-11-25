@@ -126,7 +126,7 @@ let decode_cases =
       "error: metadata.preconditions.caught: a count of species caught";
     case "the caught count is read for its need"
       (fun () ->
-        match (Preflight.to_read [ Preflight.Caught_at_least 60 ]).caught with
+        match (Preflight.to_read [ Need.Caught_at_least 60 ]).caught with
         | Some _ -> "read"
         | None -> "not read")
       "read";
@@ -136,8 +136,8 @@ let decode_cases =
     case "reads the card only for these needs"
       (fun () ->
         Printf.sprintf "%b %b"
-          (Preflight.reads_card [ Preflight.Hall_of_fame ])
-          (Preflight.reads_card [ Preflight.Place "CeladonCity" ]))
+          (Preflight.reads_card [ Need.Hall_of_fame ])
+          (Preflight.reads_card [ Need.Place "CeladonCity" ]))
       "true false";
   ]
 

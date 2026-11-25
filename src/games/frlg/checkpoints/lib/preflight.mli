@@ -21,45 +21,8 @@
     GamePilot's own: the fork checks the save's place on the save card and its
     StoryPreflight only the program's settings. *)
 
-type need = Need.t =
-  | Party_in_order of string list
-  | Party_includes of {
-      members : string list;
-      slots : Pokemon_engine.Postconditions.slot list;
-    }
-  | Member of { species : string; for_ : string }
-      (** A member an event uses ([for_]: ["party_swap"]). *)
-  | No_mail of { species : string; for_ : string }
-      (** The first member of this species holds no Mail: a [pc_deposit] stores
-          it, and the game will not store a Mail holder ("Please remove the
-          MAIL."). *)
-  | Holding_no_mail of { for_ : string }
-      (** Some member holds no Mail: a [pc_deposit] stores the first such member
-          (["member"]: ["holding_no_mail"]). *)
-  | Knows_move of { move : string; for_ : string }
-      (** Some member knows this field move: a [cut_tree] event's Cut, which the
-          game lets any member that knows it use, or a [fly] event's Fly, which
-          the first member that knows it uses. *)
-  | Badge of { badge : string; for_ : string }
-      (** The badge a field move needs outside battle ([for_]: the action),
-          judged on the Trainer Card. *)
-  | Money_at_least of { amount : int; for_ : string }
-  | Money_between of { min : int; max : int }
-  | Item_at_least of { item : string; count : int; for_ : string }
-  | Item_exactly of { item : string; count : int }
-  | Place of string  (** The checkpoint's start map. *)
-  | Anywhere_start of Pokemon_engine.Pose.place_class
-      (** The checkpoint starts anywhere in the class (outdoors). FireRed does
-          not read the map: the pre-flight lets it pass, and the first Fly
-          checks it (the game will not fly indoors). *)
-  | Badges_at_least of int
-      (** At least this many badges ({!Plan_preconditions}: [badges] a count).
-      *)
-  | Badges of string list  (** Each of these badges, by name. *)
-  | Hall_of_fame  (** The Hall of Fame entered: a star on the card. *)
-  | Caught_at_least of int
-      (** At least this many species caught, the Trainer Card's Pokédex count
-          ({!Plan_preconditions}: [caught]). *)
+type need = Need.t
+(** {!Need.t}: one thing the save must hold. *)
 
 val needs :
   Frlg_actions.Mart_plan.stocks ->
@@ -86,10 +49,8 @@ type read = Need_check.read = {
           ({!Frlg_actions.Trainer_card_badges}); [None] when not read. *)
 }
 
-type verdict = Need_check.verdict =
-  | Ok
-  | Mismatch
-  | Not_read  (** {!Need_check.verdict}. *)
+(** {!Need_check.verdict}. *)
+type verdict = Need_check.verdict = Ok | Mismatch | Not_read
 
 type row = Need_check.row = { need : string; read : string; verdict : verdict }
 (** {!Need_check.row}. *)
