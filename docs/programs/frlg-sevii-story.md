@@ -22,10 +22,12 @@ presses B, and B answers NO.
 
 The Cinnabar Pokemon Center has no map in PokemonSimulation, and needs none: 17 of FireRed's 19
 Centers share one layout, and `Frlg_overworld.Standard_center` codes that room as the fork's story
-does (`PokemonFRLG_CodedRooms`), with each Center's people as obstacles. The world loader adds it for
-every standard Center without a map file, so the `cinnabar_center_bill` place and the route reach it.
-The Centers that already have maps (Viridian's, Lavender's and the others `heal_at` and `make_room`
-use) keep them for now; they could move to the coded room later, and their map files with them.
+does (`PokemonFRLG_CodedRooms`), with each Center's people (`Frlg_overworld.Center_people`, from
+pret) as obstacles. The world loader uses it for every standard Center, so the `cinnabar_center_bill`
+place and the route reach it. Where PokemonSimulation also has a map of a standard Center, the
+coded room wins and the map file is not read: `heal_at` and `make_room` walk the same room in every
+standard Center. Only the Indigo Plateau's and One Island's Centers, with layouts of their own, come
+from their map files.
 
 The walk in goes up to the counter before it turns to Bill. A room entered by its door comes up dim
 and holds still for about 600ms before it fades in. The walk reads the dim room as no fade, and the
