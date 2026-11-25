@@ -27,6 +27,8 @@ It runs on mGBA.
 | 17-eevee | Fly to Celadon: the Eevee on the Condominiums' roof (once per save); fly to Route 10's nurse |
 | 18-fuchsia-routes | Fly to Fuchsia: Venonat and Ditto on Route 15, Doduo and Fearow on Route 18; fly to Route 10's nurse |
 | 19-pokemon-tower | Fly to Lavender: Gastly and Cubone on Pokemon Tower 3F; Lavender's nurse |
+| 20-route21-tangela | Fly to Pallet Town, surf to Route 21's grass: Tangela; fly to Route 10's nurse |
+| 21-seafoam | Fly to Cinnabar, surf to the Seafoam Islands: Seel and Golduck on B1F; fly to Route 10's nurse |
 
 Each starts and ends at a Pokemon Center's nurse, the next one's start, so a save anywhere in Kanto
 flies to Route 10's first. A catch

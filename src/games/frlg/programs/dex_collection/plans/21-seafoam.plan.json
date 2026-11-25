@@ -1,0 +1,139 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "frlg",
+  "checkpoint": {
+    "id": "21-seafoam",
+    "title": "From Route 10's nurse: fly to Cinnabar, surf to the Seafoam Islands, Seel and Golduck on B1F, fly to Route 10's nurse",
+    "start": {
+      "map": "Route10_PokemonCenter_1F",
+      "tiles": [
+        [
+          7,
+          4
+        ]
+      ],
+      "facing": "north"
+    },
+    "events": [
+      {
+        "id": "caught_before",
+        "kind": "game_action",
+        "action": "read_caught",
+        "args": {},
+        "why": "The Pokedex count before the catches."
+      },
+      {
+        "id": "out_of_center",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "place": "route10_center_outside"
+          }
+        },
+        "why": "Out of the Center to fly."
+      },
+      {
+        "id": "fly_cinnabar",
+        "kind": "game_action",
+        "action": "fly",
+        "args": {
+          "town": "CinnabarIsland",
+          "species": "pidgeot"
+        },
+        "why": "Cinnabar Island: Route 20 runs east of it to the Seafoam Islands."
+      },
+      {
+        "id": "to_seafoam_b1f",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "SeafoamIslands_B1F",
+            "tiles": [
+              [
+                8,
+                8
+              ]
+            ],
+            "facing": "south"
+          }
+        },
+        "why": "Surf east on Route 20 into the west cave, down its ladder (10, 6) to B1F's west chamber."
+      },
+      {
+        "id": "catch_seafoam",
+        "kind": "game_action",
+        "action": "capture",
+        "args": {
+          "uncaught": [
+            "seel",
+            "golduck",
+            "golbat"
+          ],
+          "catches": 2,
+          "encounters": 150,
+          "balls": 30,
+          "ball": "ultra-ball",
+          "pace": "south"
+        },
+        "why": "Seafoam Islands B1F (FireRed, pret src/data/wild_encounters.json): Psyduck 40%, Zubat 34%, Golbat 11%, Seel 10%, Golduck 5%, Lv 22 to 32."
+      },
+      {
+        "id": "out_of_seafoam",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "Route20",
+            "tiles": [
+              [
+                60,
+                9
+              ]
+            ],
+            "facing": "south"
+          }
+        },
+        "why": "Back up and out the west cave's door to Route 20's shore, to fly."
+      },
+      {
+        "id": "fly_route10",
+        "kind": "game_action",
+        "action": "fly",
+        "args": {
+          "town": "Route10",
+          "species": "pidgeot"
+        },
+        "why": "Back to Route 10's Center."
+      },
+      {
+        "fragment": "heal_at",
+        "args": {
+          "town": "route10"
+        },
+        "id": "heal_route10",
+        "why": "At the nurse, where the next checkpoint starts."
+      },
+      {
+        "id": "caught_after",
+        "kind": "game_action",
+        "action": "read_caught",
+        "args": {},
+        "why": "The Pokedex count after the catches."
+      }
+    ]
+  },
+  "execution": {
+    "menu": "full"
+  },
+  "metadata": {
+    "phase": "testing",
+    "notes": "The party is full, so the catches go to Bill's PC. Golbat is Victory Road's too (08).",
+    "postconditions": {
+      "caught": {
+        "gained": 2
+      }
+    }
+  }
+}

@@ -1,0 +1,126 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "frlg",
+  "checkpoint": {
+    "id": "20-route21-tangela",
+    "title": "From Lavender's nurse: fly to Pallet Town, surf to Route 21's grass for Tangela, fly to Route 10's nurse",
+    "start": {
+      "map": "LavenderTown_PokemonCenter_1F",
+      "tiles": [
+        [
+          7,
+          4
+        ]
+      ],
+      "facing": "north"
+    },
+    "events": [
+      {
+        "id": "caught_before",
+        "kind": "game_action",
+        "action": "read_caught",
+        "args": {},
+        "why": "The Pokedex count before the catch."
+      },
+      {
+        "id": "out_of_center",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "LavenderTown",
+            "tiles": [
+              [
+                6,
+                6
+              ]
+            ],
+            "facing": "south"
+          }
+        },
+        "why": "Out of the Center to fly."
+      },
+      {
+        "id": "fly_pallet",
+        "kind": "game_action",
+        "action": "fly",
+        "args": {
+          "town": "PalletTown",
+          "species": "pidgeot"
+        },
+        "why": "Pallet Town: Route 21 runs south of it over the sea."
+      },
+      {
+        "id": "to_route21_grass",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "Route21_North",
+            "tiles": [
+              [
+                12,
+                6
+              ]
+            ],
+            "facing": "east"
+          }
+        },
+        "why": "Surf south from Pallet's pond to Route 21's island and into its grass; the Fishermen stand far south."
+      },
+      {
+        "id": "catch_tangela",
+        "kind": "game_action",
+        "action": "capture",
+        "args": {
+          "uncaught": [
+            "tangela"
+          ],
+          "catches": 1,
+          "encounters": 30,
+          "balls": 15,
+          "ball": "ultra-ball",
+          "pace": "east"
+        },
+        "why": "Route 21 North's grass (FireRed, pret src/data/wild_encounters.json): Tangela only, Lv 17 to 28."
+      },
+      {
+        "id": "fly_route10",
+        "kind": "game_action",
+        "action": "fly",
+        "args": {
+          "town": "Route10",
+          "species": "pidgeot"
+        },
+        "why": "Back to Route 10's Center."
+      },
+      {
+        "fragment": "heal_at",
+        "args": {
+          "town": "route10"
+        },
+        "id": "heal_route10",
+        "why": "At the nurse, where the next checkpoint starts."
+      },
+      {
+        "id": "caught_after",
+        "kind": "game_action",
+        "action": "read_caught",
+        "args": {},
+        "why": "The Pokedex count after the catch."
+      }
+    ]
+  },
+  "execution": {
+    "menu": "full"
+  },
+  "metadata": {
+    "phase": "testing",
+    "notes": "The party is full, so the catch goes to Bill's PC.",
+    "postconditions": {
+      "caught": {
+        "gained": 1
+      }
+    }
+  }
+}

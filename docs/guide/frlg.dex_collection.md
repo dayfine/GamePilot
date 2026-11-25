@@ -28,7 +28,7 @@ Runs on: mGBA.
 - money at least ¥17500 (all the purchases)
 - retro-mail at least x104 (duplicate_item)
 - rare-candy at least x8 (give_bag_item)
-- ultra-ball at least x6 (capture)
+- ultra-ball at least x8 (capture)
 - at the start, Route10_PokemonCenter_1F
 <!-- /generated -->
 
@@ -37,7 +37,7 @@ Runs on: mGBA.
 <!-- generated:commands -->
 ```sh
 # mGBA: each checkpoint three times from its start state, two must pass
-sh run/run_checkpoints_on_mgba.sh --program frlg.dex_collection --from 01-ultra-balls --to 19-pokemon-tower --mode verification
+sh run/run_checkpoints_on_mgba.sh --program frlg.dex_collection --from 01-ultra-balls --to 21-seafoam --mode verification
 ```
 <!-- /generated -->
 
@@ -65,8 +65,10 @@ sh run/run_checkpoints_on_mgba.sh --program frlg.dex_collection --from 01-ultra-
 | 17-eevee | From Route 4's nurse: fly to Celadon, take the Eevee on the Condominiums' roof, fly to Route 10's nurse |
 | 18-fuchsia-routes | From Route 10's nurse: fly to Fuchsia, Venonat and Ditto in Route 15's grass, Doduo and Fearow in Route 18's, fly to Route 10's nurse |
 | 19-pokemon-tower | From Route 10's nurse: fly to Lavender, Gastly and Cubone on Pokemon Tower 3F, Lavender's nurse |
+| 20-route21-tangela | From Lavender's nurse: fly to Pallet Town, surf to Route 21's grass for Tangela, fly to Route 10's nurse |
+| 21-seafoam | From Route 10's nurse: fly to Cinnabar, surf to the Seafoam Islands, Seel and Golduck on B1F, fly to Route 10's nurse |
 
-<!-- plans: 4fe1b85fb6a7 -->
+<!-- plans: cd20bad0999f -->
 <!-- /generated -->
 
 ## When it stops
@@ -93,6 +95,8 @@ sh run/run_checkpoints_on_mgba.sh --program frlg.dex_collection --from 01-ultra-
 | 17-eevee | pidgeot in the party (fly); at the start, Route4_PokemonCenter_1F |
 | 18-fuchsia-routes | pidgeot in the party (fly); ultra-ball at least x2 (capture); at the start, Route10_PokemonCenter_1F |
 | 19-pokemon-tower | pidgeot in the party (fly); ultra-ball at least x1 (capture); at the start, Route10_PokemonCenter_1F |
+| 20-route21-tangela | pidgeot in the party (fly); ultra-ball at least x1 (capture); at the start, LavenderTown_PokemonCenter_1F |
+| 21-seafoam | pidgeot in the party (fly); ultra-ball at least x1 (capture); at the start, Route10_PokemonCenter_1F |
 <!-- /generated -->
 
 ## Known limits

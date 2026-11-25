@@ -296,6 +296,37 @@ retries 0
 postconditions:
 caught gained 2
 no repeat
+== dex_collection/plans/20-route21-tangela.plan.json
+frlg 20-route21-tangela from LavenderTown_PokemonCenter_1F (7, 4) north: 5 game_action, 3 route, 1 heal
+caught_before: [read_caught] game_action {}
+out_of_center: [run] route to LavenderTown (6, 6) south
+fly_pallet: [fly] game_action {"town":"PalletTown","species":"pidgeot"}
+to_route21_grass: [run] route to Route21_North (12, 6) east
+catch_tangela: [capture] game_action {"uncaught":["tangela"],"catches":1,"encounters":30,"balls":15,"ball":"ultra-ball","pace":"east"}
+fly_route10: [fly] game_action {"town":"Route10","species":"pidgeot"}
+heal_route10.walk: [run] route to Route10_PokemonCenter_1F (7, 4) north
+heal_route10: heal
+caught_after: [read_caught] game_action {}
+retries 0
+postconditions:
+caught gained 1
+no repeat
+== dex_collection/plans/21-seafoam.plan.json
+frlg 21-seafoam from Route10_PokemonCenter_1F (7, 4) north: 5 game_action, 4 route, 1 heal
+caught_before: [read_caught] game_action {}
+out_of_center: [run] route to Route10 (13, 21) south
+fly_cinnabar: [fly] game_action {"town":"CinnabarIsland","species":"pidgeot"}
+to_seafoam_b1f: [run] route to SeafoamIslands_B1F (8, 8) south
+catch_seafoam: [capture] game_action {"uncaught":["seel","golduck","golbat"],"catches":2,"encounters":150,"balls":30,"ball":"ultra-ball","pace":"south"}
+out_of_seafoam: [run] route to Route20 (60, 9) south
+fly_route10: [fly] game_action {"town":"Route10","species":"pidgeot"}
+heal_route10.walk: [run] route to Route10_PokemonCenter_1F (7, 4) north
+heal_route10: heal
+caught_after: [read_caught] game_action {}
+retries 0
+postconditions:
+caught gained 2
+no repeat
 == mail_glitch/plans/01-celadon-setup.plan.json
 frlg 01-celadon-setup from CeladonCity (48, 12) south: 6 game_action, 7 route, 1 talk, 1 scene
 fly_celadon: [fly] game_action {"town":"CeladonCity","species":"pidgey"} => CeladonCity (48, 12) south
