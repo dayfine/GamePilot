@@ -7,7 +7,7 @@ let read_fragments () =
   | Some path ->
       Result.bind
         (Repo_io.Json_file.read path)
-        (Checkpoints_expand.Fragment_table.parse ~source:"fragments.json")
+        (Engine_expand.Fragment_table.parse ~source:"fragments.json")
 
 let fragments = lazy (read_fragments ())
 
@@ -15,7 +15,7 @@ let decode ~source json =
   let* fragments = Lazy.force fragments in
   let* places = Frlg_places.Place_table.load () in
   let* json =
-    Checkpoints_expand.Fragment_calls.expand fragments
+    Engine_expand.Fragment_calls.expand fragments
       (Frlg_places.Place_table.resolve places)
       ~source json
   in

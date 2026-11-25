@@ -1,7 +1,7 @@
 (* Round_trials decides, after each round of a repeating checkpoint (05-grind-mr-mime's
    grind round), whether to run another, go on (the goal holds) or stop. *)
 
-open Checkpoints_series
+open Engine_series
 open Round_trials
 
 let decide_text ?(capped = false) ?(max_rounds = 20) rounds =

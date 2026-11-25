@@ -165,12 +165,15 @@ let layered =
       "root .\n\
        layer base src/base/**\n\
        layer core src/core/**\n\
+       layer pokemon src/pokemon/**\n\
        layer program src/games/{game}/programs/{program}/**\n\
        layer game src/games/{game}/**\n\
        allow base base\n\
        allow core core base\n\
-       allow game game core base\n\
-       allow program program game core base\n"
+       allow pokemon pokemon core base\n\
+       allow game game pokemon core base\n\
+       allow program program game pokemon core base\n\
+       family pokemon game frlg\n"
   with
   | Ok c -> c
   | Error e -> failwith e
@@ -183,6 +186,7 @@ let tree extra =
   [
     ("src/base/wire/lib/dune", library "wire" [ "yojson" ]);
     ("src/core/effects/lib/dune", library "effects" [ "p.wire" ]);
+    ("src/pokemon/party/lib/dune", library "party" [ "p.effects" ]);
     ("src/games/frlg/readers/lib/dune", library "frlg_readers" [ "p.effects" ]);
     ( "src/games/emerald/readers/lib/dune",
       library "emerald_readers" [ "p.effects" ] );
@@ -210,7 +214,28 @@ let () =
        ]);
   case "layers: base linking core is caught" ~expect:[ "layers" ]
     (layer_findings
-       [ ("src/base/codec/lib/dune", library "codec" [ "effects" ]) ])
+       [ ("src/base/codec/lib/dune", library "codec" [ "effects" ]) ]);
+  case "layers: a game and its program in the family may link it" ~expect:[]
+    (layer_findings
+       [
+         ("src/games/frlg/maps/lib/dune", library "frlg_maps" [ "p.party" ]);
+         ( "src/games/frlg/programs/poc/test/dune",
+           "(test (name t) (libraries p.party))" );
+       ]);
+  case "layers: a game outside the family linking it is caught"
+    ~expect:[ "layers" ]
+    (layer_findings
+       [
+         ( "src/games/emerald/maps/lib/dune",
+           library "emerald_maps" [ "p.party" ] );
+       ]);
+  case "layers: a program of a game outside the family is caught"
+    ~expect:[ "layers" ]
+    (layer_findings
+       [
+         ( "src/games/emerald/programs/poc/test/dune",
+           "(test (name t) (libraries p.party))" );
+       ])
 
 (* --- exceptions file, parse failures, config --- *)
 
@@ -249,6 +274,13 @@ let () =
   case "config: allow naming an undeclared layer is rejected"
     ~expect:[ "error" ]
     (match Config.parse "root .\nlayer base src/base/**\nallow base bsae\n" with
+    | Ok _ -> [ "ok" ]
+    | Error _ -> [ "error" ]);
+  case "config: family naming an undeclared layer is rejected"
+    ~expect:[ "error" ]
+    (match
+       Config.parse "root .\nlayer base src/base/**\nfamily bsae game a\n"
+     with
     | Ok _ -> [ "ok" ]
     | Error _ -> [ "error" ])
 

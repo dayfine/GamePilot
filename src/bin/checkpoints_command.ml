@@ -7,7 +7,7 @@
    The checkpoint dev loop. A program's checkpoints are its plan files
    (<ID>.plan.json in PLAN_DIR, in name order; --program ID in its place:
    Programs_command); each runs from its start state (<states>/<ID>.start.ss),
-   as many times as the mode's policy says (Checkpoints_run.Checkpoint_trials), each run with its own daemon and run folder
+   as many times as the mode's policy says (Engine_run.Checkpoint_trials), each run with its own daemon and run folder
    (Run_record). A run passes when every event passed and the player ends at
    the checkpoint's declared end (Checkpoints_run.Checkpoint_end) and the plan's
    postconditions hold (Checkpoints_run.Postcondition_check). With --end-check-only each
@@ -81,6 +81,7 @@
    with reload), the reproduction phase, the overlay log. mGBA itself is
    started and closed around the command by run/run_checkpoints_on_mgba.sh. *)
 
+open Engine_run
 open Checkpoints_run
 module R = Program_registry
 include Checkpoints_flags

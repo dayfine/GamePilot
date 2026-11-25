@@ -29,7 +29,7 @@ failed, skipped), the story log, the daemon's health, and a Stop button. It is s
   keeps the latest plan and the last 1000 lines for a page that connects later.
 - **The chain is the runner's** (`watch.run`, contract v1.7): `gamepilot checkpoints --from --to`
   sends every checkpoint's state and time, the mode and the current checkpoint's trial (2 of 3, 1
-  pass) at the start and the end of each run (`Checkpoints_series.Chain_progress`). Each run has its own daemon,
+  pass) at the start and the end of each run (`Engine_series.Chain_progress`). Each run has its own daemon,
   so the page's stream reconnects between runs and gets the chain again. The page shows it as a Run
   strip of chips above the plan and keeps each checkpoint's last plan in its own memory, so clicking
   a finished checkpoint shows its events at its end, with their times; the daemon keeps only the

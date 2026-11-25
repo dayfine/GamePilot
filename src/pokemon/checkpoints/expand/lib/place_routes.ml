@@ -1,3 +1,4 @@
+open Engine_expand
 open Grid_maps
 module J = Plan_json
 

@@ -14,6 +14,8 @@
     [start], then each route's one-tile target, or else each event's one-tile
     [declared_after]. A place route needs it known. *)
 
+open Engine_expand
+
 type spot = {
   map : string;
   tile : Grid_maps.Tile_pos.t;

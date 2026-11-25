@@ -1,8 +1,8 @@
 (* A program's plan folder: its checkpoints (<ID>.plan.json, in run order),
    a range of them, and the plan before one. *)
 
+open Engine_series
 open Checkpoints_plan
-open Checkpoints_series
 
 let plan_suffix = ".plan.json"
 

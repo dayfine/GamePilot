@@ -8,6 +8,7 @@
   gamepilot.watch_report
   gamepilot.grid_maps
   gamepilot.json_field
+  gamepilot.engine_run
   gamepilot.checkpoints_plan
   gamepilot.checkpoints_run
   gamepilot.frlg_readers
@@ -15,5 +16,6 @@
   gamepilot.repo_io
   gamepilot.frlg_overworld
   gamepilot.frlg_actions
+  gamepilot.engine_expand
   gamepilot.checkpoints_expand
   gamepilot.frlg_places))

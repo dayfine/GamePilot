@@ -1,5 +1,5 @@
 (** Reads a FireRed checkpoint plan file: the JSON, its fragment calls expanded
-    ({!Checkpoints_expand.Fragment_calls}, with the fragments of
+    ({!Engine_expand.Fragment_calls}, with the fragments of
     src/games/frlg/fragments/fragments.json and the places table's towns:
     {!Frlg_places.Place_table.resolve}), then its place routes expanded
     ({!Checkpoints_expand.Place_routes}, with FireRed's places and lifts:

@@ -1,6 +1,7 @@
 (* What one live run of a checkpoint is given (Checkpoint_live_run): the
    series' setup, the checkpoint, and how the run ended. *)
 
+open Engine_run
 open Checkpoints_plan
 open Checkpoints_run
 
