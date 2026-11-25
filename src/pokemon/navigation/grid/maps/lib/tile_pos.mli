@@ -1,14 +1,6 @@
-(** A tile of a map, in that map's own coordinates. *)
+(** {!Grid_geometry.Tile_pos}, here for the map code that names it
+    [Grid_maps.Tile_pos]. *)
 
-type t = { x : int; y : int }
-
-val next : t -> Direction.t -> t
-(** The tile one step away in that direction (it may lie off the map). *)
-
-val to_string : t -> string
-(** ["(x, y)"]. *)
-
-val compare : t -> t -> int
-(** x, then y: an order for sets and maps of tiles, not a walking order. *)
-
-val equal : t -> t -> bool
+include module type of struct
+  include Grid_geometry.Tile_pos
+end
