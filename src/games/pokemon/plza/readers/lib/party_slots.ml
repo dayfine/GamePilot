@@ -135,6 +135,8 @@ let bars m = all_some (List.init slots (bar m))
 let hp_share_min = 0.05
 let bar_share_min = 0.5
 
+(* Half or more HP colours or trough, at 0.72 when 5% are HP colours, else at
+    0.65. *)
 let has_hp_bar b =
   (if b.hp >= hp_share_min then b.relaxed else b.strict) >= bar_share_min
 

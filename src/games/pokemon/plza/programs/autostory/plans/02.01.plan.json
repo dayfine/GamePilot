@@ -1,9 +1,7 @@
 {
   "format": "gamepilot-checkpoint/1",
   "game": "plza",
-  "execution": {
-    "save": "unverified"
-  },
+  "execution": {},
   "metadata": {
     "phase": "testing",
     "source": "played from a new game; starts in free control in the night alley, where 01.03 ends; ends at the autosave after Brigitte; the fork's plza-02.01.plan.json (plza/lean)",

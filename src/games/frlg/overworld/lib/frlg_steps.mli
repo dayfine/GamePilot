@@ -54,6 +54,10 @@ type world = {
       (** The cut trees cut since the last map change ({!with_tree_cut}): their
           gates open and their trees gone, as the fork's [tree_cut] opens them
           in its run state. *)
+  walked_up : Connected_maps.place list;
+      (** Tiles a trainer who saw the player may have walked up to
+          ({!with_walked_up}): nobody steps onto them, and they hold no one,
+          since the trainer may stand elsewhere. *)
 }
 
 val world :
@@ -63,7 +67,12 @@ val world :
   Connected_maps.t ->
   world
 (** Every object shown, {!default_costs}, edges that stall (the console), no
-    rock stairs unless given, no tree cut. *)
+    rock stairs unless given, no tree cut, no trainer walked up. *)
+
+val with_walked_up : world -> Connected_maps.place list -> world
+(** The world with a trainer who walked up to the player on one of the places:
+    they stay there after the battle, as the fork's
+    Overworld/PokemonFRLG_OverworldReanchor walls their tile in. *)
 
 val with_tree_cut : world -> Connected_maps.place -> world option
 (** The world with the cut tree on that tile cut: the fork's [tree_cut]

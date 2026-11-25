@@ -15,8 +15,9 @@ val shown : Effects.measurements -> bool
 val backup_save_probes :
   picture:Wire.box -> assets:Blob_assets.t -> Wire.probe_spec list
 (** The same arrow in the box (0.2, 0.5, 0.6, 0.3): the backup save's arrow
-    PLZA's title shows, as [gamemenu_to_ingame] (PokemonLZA_GameEntry.cpp)
-    watches for it. No frame of that screen yet: untested on one. *)
+    PLZA's title shows, as the fork's entry from the title into the game
+    (PokemonLZA_GameEntry.cpp) watches for it. No frame of that screen yet:
+    untested on one. *)
 
 val backup_save_shown : Effects.measurements -> bool
 (** The backup save's arrow shows. [false] when the probe is missing. *)

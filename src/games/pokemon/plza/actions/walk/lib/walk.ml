@@ -3,7 +3,7 @@ module Failure = Engine_run.Failure
 
 type game_steps = {
   submit : Wire.command -> unit;
-  read_screen : unit -> Walk_screen.t;
+  read_screen : unit -> Screen.t;
   log : string -> unit;
   log_detail : string -> unit;
 }
@@ -25,24 +25,24 @@ let hold_slice_ms = 250
 
 let recenter steps =
   steps.submit
-    (Walk_inputs.button Wire.L ~hold_ms:recenter_hold_ms
+    (Inputs.button Wire.L ~hold_ms:recenter_hold_ms
        ~release_ms:recenter_release_ms)
 
 let tilt steps ~walk_only pace ~degrees ~duration_ms ~release_ms =
-  match Walk_inputs.tilt ~walk_only pace ~degrees ~duration_ms ~release_ms with
+  match Inputs.tilt ~walk_only pace ~degrees ~duration_ms ~release_ms with
   | Ok input -> Ok (steps.submit input)
   | Error e -> Error (Failure.cause ~repeats:true "walk_stick" e)
 
 (* Runs straight on, or at the leg's angle when steered. *)
 let run steps ~walk_only ~degrees duration_ms =
-  tilt steps ~walk_only Walk_inputs.Run ~degrees ~duration_ms ~release_ms:0
+  tilt steps ~walk_only Inputs.Run ~degrees ~duration_ms ~release_ms:0
 
 (* L, a tilt toward the angle, then L again: the walk goes where the camera
    looks. *)
 let face steps ~walk_only degrees =
   recenter steps;
   let* () =
-    tilt steps ~walk_only Walk_inputs.Walk ~degrees ~duration_ms:face_tilt_ms
+    tilt steps ~walk_only Inputs.Walk ~degrees ~duration_ms:face_tilt_ms
       ~release_ms:face_release_ms
   in
   Ok (recenter steps)
@@ -104,11 +104,13 @@ let play_legs steps ~walk_only move =
       ignore (steps.read_screen ());
       face_then_walk_each steps ~walk_only (List.length move.legs) 0 move.legs
 
+(* Reads the screen once the legs are done, so queued inputs have finished
+    before the event ends, and logs what it shows. *)
 let log_final_screen steps walk =
   let screen = steps.read_screen () in
   steps.log
     (Printf.sprintf "[PLZA] %s: legs done, screen now: %s" walk
-       (Walk_screen.describe screen))
+       (Screen.describe screen))
 
 let all_but_last legs = List.filteri (fun i _ -> i < List.length legs - 1) legs
 let last legs = List.nth legs (List.length legs - 1)
@@ -205,14 +207,14 @@ let no_talk walk =
 let rec talk_tail steps walk ~held_ms tail =
   if tail >= talk_tail_ms then Error (no_talk walk)
   else if not (steps.read_screen ()).interact_prompt then (
-    steps.submit (Walk_inputs.wait talk_poll_ms);
+    steps.submit (Inputs.wait talk_poll_ms);
     talk_tail steps walk ~held_ms (tail + talk_poll_ms))
   else
     match talk_at_prompt steps walk ~held_ms with
     | Some ended -> ended
     | None -> talk_tail steps walk ~held_ms (tail + talk_retry_gap_ms)
 
-let talk_check steps walk ~after_legs (screen : Walk_screen.t) ~held_ms :
+let talk_check steps walk ~after_legs (screen : Screen.t) ~held_ms :
     Last_leg_end.verdict =
   if after_legs || not screen.interact_prompt then Walk_on
   else
@@ -221,7 +223,7 @@ let talk_check steps walk ~after_legs (screen : Walk_screen.t) ~held_ms :
     | Some (Error cause) -> Failed cause
     | None -> Walk_on
 
-(* The fork's walk_into_talk. *)
+(* A walk into a talk, as PokemonLZA_AutoStoryWalks.cpp walks it. *)
 let walk_into_talk steps ~walk_only walk move ~after_legs =
   let early =
     if prompt_before_walking steps walk move then
@@ -248,7 +250,8 @@ let end_check steps walk ~earliest_end_ms = function
         walk event ~earliest_end_ms
   | Talk _ -> fun _ ~held_ms:_ -> Last_leg_end.Walk_on
 
-(* The fork's ends_before_walking: a walk of one straight leg to the first A
+(* As PokemonLZA_AutoStoryWalks.cpp ends a walk before it walks: a walk of
+   one straight leg to the first A
    prompt ahead, with no earliest end, does not walk when it already shows. *)
 let ends_before_walking steps walk move ~until ~earliest_end_ms =
   match until with
@@ -280,7 +283,7 @@ let walk_to_end steps ~walk_only walk move ~until ~earliest_end_ms =
 
 let run_event steps ~walk_only walk (args : Plza_rules.Walk_args.t) =
   if args.move.wait_before_ms > 0 then
-    steps.submit (Walk_inputs.wait args.move.wait_before_ms);
+    steps.submit (Inputs.wait args.move.wait_before_ms);
   let { submit; read_screen; log; log_detail } = steps in
   let free = Free_control_wait.screen_game_steps ~submit ~read_screen ~log in
   let* () = Free_control_wait.wait free walk in

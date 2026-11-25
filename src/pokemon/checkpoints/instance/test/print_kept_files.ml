@@ -15,7 +15,12 @@ let house2 : Pose.observed =
   }
 
 let start ?money ?coins ?(items = []) () : Postcondition_check.start =
-  { start_money = money; start_coins = coins; start_items = items }
+  {
+    start_money = money;
+    start_coins = coins;
+    start_caught = None;
+    start_items = items;
+  }
 
 let written =
   [

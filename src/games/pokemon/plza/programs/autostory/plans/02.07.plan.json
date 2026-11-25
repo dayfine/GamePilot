@@ -1,9 +1,7 @@
 {
   "format": "gamepilot-checkpoint/1",
   "game": "plza",
-  "execution": {
-    "save": "unverified"
-  },
+  "execution": {},
   "metadata": {
     "phase": "testing",
     "source": "played from a new game; starts at the autosave after waking up, where 02.06 ends, facing the door; the fork's plza-02.07.plan.json (plza/lean)",

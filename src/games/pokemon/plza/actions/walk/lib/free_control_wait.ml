@@ -1,13 +1,13 @@
 open Engine_run
 
 type game_steps = {
-  read_screen : unit -> Walk_screen.t;
+  read_screen : unit -> Screen.t;
   wait : int -> unit;
   log : string -> unit;
 }
 
 let screen_game_steps ~submit ~read_screen ~log =
-  { read_screen; wait = (fun ms -> submit (Walk_inputs.wait ms)); log }
+  { read_screen; wait = (fun ms -> submit (Inputs.wait ms)); log }
 
 (* The timeout: only a stuck game gets this far; free control confirms in
    about 0.5 s (two reads). *)
@@ -65,10 +65,10 @@ let streak watch matched =
 let free_control_shows steps walk watch screen =
   let poll_time = watch.poll_reads * free_control_read_ms in
   watch.poll_reads <- watch.poll_reads + 1;
-  let busy = Walk_screen.busy_with screen in
+  let busy = Screen.busy_with screen in
   Option.iter (fun b -> watch.last_busy <- b) busy;
   let quiet = quiet_ready watch ~quiet:(busy = None) poll_time in
-  if streak watch (Walk_screen.player_free screen) then true
+  if streak watch (Screen.player_free screen) then true
   else if
     prompt_ready watch ~prompt:(busy = None && screen.interact_prompt) poll_time
   then (
@@ -105,8 +105,8 @@ let wait steps walk =
   match
     Switch_home.Screen_poll.until
       { read_screen = steps.read_screen; wait = steps.wait }
-      ~at_ms:(fun (s : Walk_screen.t) -> s.at_ms)
-      ~home_menu:(fun (s : Walk_screen.t) -> s.home_menu)
+      ~at_ms:(fun (s : Screen.t) -> s.at_ms)
+      ~home_menu:(fun (s : Screen.t) -> s.home_menu)
       ~poll_ms:free_control_read_ms ~timeout_ms:free_control_wait_ms
       (free_control_shows steps walk watch)
   with

@@ -1,4 +1,4 @@
-module S = Story_steps
+module S = Steps
 module Failure = Engine_run.Failure
 
 let poll_ms = 100
@@ -28,9 +28,11 @@ let log_row steps r =
   S.(steps.log)
     (Printf.sprintf "[PLZA] Confirm Choices: the highlight is on row %d." r)
 
+(* As the C++ loop: at most [presses_max] reads, the last DOWN's read
+   included, so "Ready!" read only after the sixth DOWN fails too. *)
 let rec to_ready steps row press =
   match row with
-  | Some r when r = ready_row ->
+  | Some r when press < presses_max && r = ready_row ->
       S.(steps.log) "[PLZA] Confirm Choices: A on \"Ready!\".";
       S.press steps Wire.A ~hold_ms:S.press_hold_ms ~release_ms:ready_release_ms;
       Ok ()

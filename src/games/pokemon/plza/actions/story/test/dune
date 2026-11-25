@@ -1,0 +1,20 @@
+(library
+ (name plza_fake_console)
+ (modules fake_console)
+ (libraries
+  gamepilot.wire
+  gamepilot.effects
+  gamepilot.plza_story
+  gamepilot.plza_walk))
+
+(tests
+ (names test_catch_plan test_zone_catch)
+ (modules test_catch_plan test_zone_catch)
+ (libraries
+  gamepilot.wire
+  gamepilot.effects
+  gamepilot.table_test
+  gamepilot.engine_run
+  gamepilot.plza_story
+  gamepilot.plza_walk
+  plza_fake_console))

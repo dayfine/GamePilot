@@ -25,7 +25,7 @@ let min_side = 15.
 let max_score = 80.
 
 (* The crop's size and fill as templates.json gives them, with the
-   WaterfillTemplateMatcher's default bounds. *)
+   default bounds of CommonTools/ImageMatch/WaterfillTemplateMatcher.cpp. *)
 let button_minus : Blob_template.t =
   {
     width = 30;

@@ -1,13 +1,13 @@
 (** A walk to a point on the full map, planned from one pin read at a time.
-    Ported from PokemonLZA_AutoStoryMapLegs.cpp ([plza/lean]): its [bearing] and
-    [MapLeg]. *)
+    Ported from PokemonLZA_AutoStoryMapLegs.cpp/.h: its bearing between two map
+    points and its leg. *)
 
 type point = { x : float; y : float }
-(** A point on the full map: the frame scaled to 800 x 450 (the fork's
-    MapPoint). *)
+(** A point on the full map: the frame scaled to 800 x 450 (a map point of the
+    fork's PokemonLZA_MapPoint.h). *)
 
 type waypoint = { name : string; pin : point; stop_radius : float }
-(** A walk's target (the fork's MapWaypoint, PokemonLZA_AutoStoryZone1.h). *)
+(** A walk's target (the fork's waypoints, PokemonLZA_AutoStoryZone1.h). *)
 
 val bearing : point -> point -> float
 (** [bearing from to]: the minimap bearing, degrees clockwise from north (0 up,

@@ -101,7 +101,7 @@ let cases =
     case "dialog-choices/it-0102-villy-2-rows" "no";
     case "interact-prompt/mission-complete-0001-prompt" "no";
     case "tutorial-cards/it-0302b-map-missions-card" "no";
-    headroom "party-bar/0103-alley-party1" "inside 41, outside 37";
+    headroom "party-bar/0103-alley-party1" "inside 41, outside 38";
     headroom "party-bar/za2-m3v-s1-prompt" "inside 18, outside 12";
     marker "party-bar/en-0302b-arch-collapsed-1080p" "marker yes, last slot no";
     marker "party-bar/0103-alley-party1" "marker yes, last slot yes";

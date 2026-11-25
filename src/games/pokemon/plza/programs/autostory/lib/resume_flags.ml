@@ -1,5 +1,5 @@
-module S = Plza_story.Story_steps
-module L = Plza_story.Story_look
+module S = Plza_story.Steps
+module L = Plza_story.Look
 
 let reads = 5
 let poll_ms = 250
@@ -61,6 +61,17 @@ let find flag =
   match List.assoc_opt flag flags with
   | Some f -> Some f
   | None -> minimap_flag flag
+
+let known flag =
+  match find flag with
+  | None -> Error (Printf.sprintf "unknown skip_if flag %S" flag)
+  | Some _ when String.starts_with ~prefix:minimap_prefix flag ->
+      let n = String.length minimap_prefix in
+      let name = String.sub flag n (String.length flag - n) in
+      if List.mem name Plza_readers.Minimap.reference_names then Ok ()
+      else
+        Error (Printf.sprintf "skip_if %S: no minimap %S is recorded" flag name)
+  | Some _ -> Ok ()
 
 let holds steps flag =
   match find flag with

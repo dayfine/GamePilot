@@ -27,7 +27,7 @@ let min_side = 1.
 let max_score = 60.
 
 (* The crop's size and fill as templates.json gives them, with the
-   AlertEyeMatcher's bounds. *)
+   bounds of the eye's matcher in PokemonLZA_AlertEyeDetector.cpp. *)
 let eye : Blob_template.t =
   {
     width = 40;

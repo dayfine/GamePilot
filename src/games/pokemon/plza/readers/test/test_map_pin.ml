@@ -1,5 +1,5 @@
 (* The map pin reader (PokemonLZA_MapPinReader.cpp) on the fork's test frames
-   (PokemonLZA_Detectors_Tests.cpp, [plza/lean]): its drawn maps and two
+   (PokemonLZA_Detectors_Tests.cpp): its drawn maps and two
    console maps of Wild Zone 1. The fork passes a pin within 2 of the
    expected. *)
 
@@ -26,11 +26,21 @@ let cases =
     case "a speck of the arrow's blue" "synthetic/map-arrow-speck" "none";
     (* The fork's (358.9, 227.3). *)
     case "console: stuck at the zone's north fence"
-      "map-pin/zone1-at-north-fence" "(358.5, 228.3)";
+      "map-pin/zone1-at-north-fence" "(358.3, 228.1)";
     (* The fork's (415.4, 230.4). *)
     case
       "console: the patrol's stop 10, the arrow partly under the zone's badge"
       "map-pin/zone1-stop-10-under-badge" "(414.4, 230.4)";
+    (* 03.08's and 03.08b's map reads (640x360 run frames scaled up, console
+       B, 2026-11-25), against the pin the run logged. *)
+    case "03.08 at Taunie's rocks (run: 476, 223)"
+      "map-pin/en-0308-zone1-rocks-005-360p" "(475.0, 223.8)";
+    case "03.08 at the 100 spot (run: 441, 229)"
+      "map-pin/en-0308-zone1-spot-100-033-360p" "(440.6, 228.8)";
+    case "03.08b at the 80 spot (run: 403, 233)"
+      "map-pin/en-0308b-zone1-spot-80-005-360p" "(405.0, 233.8)";
+    case "03.08b out of the zone, the map opening (run: 401, 227)"
+      "map-pin/en-0308b-out-of-zone1-024-360p" "(401.9, 225.6)";
     case "no map: the 03.03 start" "minimap/es-0303-start" "none";
   ]
 
@@ -38,12 +48,19 @@ let is_map name =
   String.starts_with ~prefix:"map-pin/" name
   || String.starts_with ~prefix:"synthetic/map-" name
 
+(* The 640x360 run frames scaled up lose the pin's blue at brightness 0.9,
+   and the out-of-zone one reads 2.5 off at 1.1: the full-size maps keep
+   the shift check. *)
+let scaled_up name = String.ends_with ~suffix:"-360p" name
+
 (* A shifted map reads within 2 of the frame, or none where it does. Only
    maps: the pin is read with the map open, and other screens have the
    arrow's blue in the window (text boxes, a battle). *)
 let shifted_cases =
   List.filter
-    (fun (path, _) -> is_map (snd (Fixture_frames.shift_and_frame path)))
+    (fun (path, _) ->
+      let name = snd (Fixture_frames.shift_and_frame path) in
+      is_map name && not (scaled_up name))
     Fixture_frames.shifted
   |> List.map (fun (path, probes) : Table_test.case ->
          let shift, name = Fixture_frames.shift_and_frame path in

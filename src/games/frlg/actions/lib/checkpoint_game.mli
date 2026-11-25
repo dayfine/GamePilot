@@ -1,13 +1,17 @@
 (** FireRed's story {!Pokemon_checkpoints.Game.t}: [route] and [ready] events
-    planned and walked ({!Frlg_overworld}), [talk], [answer] and [scene] settled
-    ({!Talk}), [heal] and [save] events ({!Heal_and_save}), the ["fly"] game
-    action ({!Fly}), ["lift_floor"] ({!Lift_ride}), ["ferry"] ({!Seagallop}),
-    the ["grind"] one ({!Grind}, its walks and heals this game's), ["capture"]
-    ({!Capture} on {!Capture_steps}; its catches join the reckoned party),
-    mg-05's ["prepare_berry_pp"] ({!Berry_pp}) and ["mail_glitch_double_battle"]
-    ({!Mail_glitch_battle}) and the shared ones ({!Game_actions}). Battles and
-    the other built-in kinds fail as [not_implemented] (repeats): they come from
-    their own libraries.
+    planned and walked ({!Frlg_overworld}), a [step] onto a scene's tile
+    ({!Frlg_overworld.Route_walk.step}), [talk], [answer] and [scene] settled
+    ({!Talk}), [train]'s trainer battles in a row ({!Trainer_battles}), a
+    [battle] a talk or scene started ({!Scene_battle}), [heal] and [save] events
+    ({!Heal_and_save}), the ["fly"] game action ({!Fly}), ["lift_floor"]
+    ({!Lift_ride}), ["ferry"] ({!Seagallop}), the ["grind"] one ({!Grind}, its
+    walks and heals this game's), ["capture"] ({!Capture} on {!Capture_steps};
+    its catches join the reckoned party), mg-05's ["prepare_berry_pp"]
+    ({!Berry_pp}) and ["mail_glitch_double_battle"] ({!Mail_glitch_battle}) and
+    the shared ones ({!Game_actions}). The other built-in kinds fail as
+    [not_implemented] (repeats): they come from their own libraries. A trainer
+    who sees the player on a walk is fought with {!Trainer_battles} too
+    ({!Frlg_overworld.Route_walk}).
 
     Between loop rounds, heal walks to the configured Center's nurse and talks
     to her, save saves from the Start menu, and reload is the program's (an
@@ -16,12 +20,12 @@
     FireRed can't show where the player stands, so the position is reckoned: a
     walk ends on its plan's tile, a Fly on the town's landing tile, a lift ride
     below the floor's lift door, the Seagallop above the island harbor's sailor,
-    and after any other event that passes, game actions included, the player is
-    taken to be where its [declared_after] says when that names one tile (the
-    fork's StoryStepRunner). The party is reckoned too ({!Party_roster}), from
-    the config's or, when the config states none, from the members' summaries
-    read before the first action that finds a member by its species
-    ({!Party_reading}). *)
+    a step on the tile it presses onto, and after any other event that passes,
+    game actions included, the player is taken to be where its [declared_after]
+    says when that names one tile (the fork's StoryStepRunner). The party is
+    reckoned too ({!Party_roster}), from the config's or, when the config states
+    none, from the members' summaries read before the first action that finds a
+    member by its species ({!Party_reading}). *)
 
 type config = {
   world : Frlg_overworld.Frlg_steps.world;

@@ -1,4 +1,4 @@
-module S = Story_steps
+module S = Steps
 module P = Catch_plan
 
 let lock_on_wait_ms = 3000
@@ -51,6 +51,8 @@ let chosen steps held cycle best =
   | Some _ | None -> ());
   Some (Option.value now ~default:best)
 
+(* Up to 4 plates read by flicking right (0.8), then flicks back to the nearest
+    one not marked caught: the closer one is much more likely to be caught. *)
 let choose_target steps held =
   let view = Held_zl.wait_for_plate held ~limit_ms:lock_on_wait_ms in
   if Option.is_none view then

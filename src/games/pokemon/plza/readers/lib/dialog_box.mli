@@ -27,6 +27,6 @@ val shown : white:white_part -> Effects.measurements -> bool
     probe. *)
 
 val blue_shown : Effects.measurements -> bool
-(** The blue box alone (its corner and white arrow): the fork's
-    [BlueDialogDetector], which PLZA's title watches for ([gamemenu_to_ingame]
-    in PokemonLZA_GameEntry.cpp). *)
+(** The blue box alone (its corner and white arrow): the fork's blue dialogue
+    detector (PokemonLZA_DialogDetector.cpp), which PLZA's title watches for as
+    it enters the game (PokemonLZA_GameEntry.cpp). *)

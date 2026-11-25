@@ -2,7 +2,11 @@
  (name gamepilot)
  (public_name gamepilot)
  (package gamepilot)
+ (flags
+  (:standard -open Live_run))
  (libraries
+  gamepilot.live_run
+  gamepilot.plza_series
   gamepilot.wire
   gamepilot.json_field
   gamepilot.effects
@@ -25,7 +29,6 @@
   gamepilot.switch_home
   gamepilot.repo_io
   gamepilot.frlg_checkpoints
-  gamepilot.plza_readers
   gamepilot.plza_checkpoints
   gamepilot.plza_autostory
   gamepilot.plza_gifts

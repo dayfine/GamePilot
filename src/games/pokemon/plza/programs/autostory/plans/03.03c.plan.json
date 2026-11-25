@@ -1,10 +1,7 @@
 {
   "format": "gamepilot-checkpoint/1",
   "game": "plza",
-  "execution": {
-    "save": "autosave",
-    "autosave_step": "south_boulevard"
-  },
+  "execution": {},
   "metadata": {
     "phase": "testing",
     "source": "starts at the rooftop autosave, where a reload lands; starts where 03.03b ends; the fork's plza-03.03c.plan.json (plza/lean)",

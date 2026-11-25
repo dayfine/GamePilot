@@ -2,8 +2,6 @@
   "format": "gamepilot-checkpoint/1",
   "game": "plza",
   "execution": {
-    "save": "autosave",
-    "autosave_step": "after_catches",
     "start_signature": {
       "minimap": "03.07-start"
     }

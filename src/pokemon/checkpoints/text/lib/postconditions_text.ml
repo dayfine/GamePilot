@@ -9,6 +9,7 @@ let slot_text ({ slot; species } : slot) =
 
 let party_text : party option -> string list = function
   | Some (Party_in_order l) -> [ "party in order " ^ list l ]
+  | Some (Party_includes { members = []; slots }) -> List.map slot_text slots
   | Some (Party_includes { members; slots }) ->
       ("party includes " ^ list members) :: List.map slot_text slots
   | None -> []
@@ -31,6 +32,7 @@ let text p =
       party_text p.party;
       List.map bag_count_text p.items;
       some (fun c -> "coins " ^ count_text c) p.coins;
+      some (fun c -> "caught " ^ count_text c) p.caught;
       some Engine_postcondition.Money.text p.money;
       (if p.flags = [] then [] else [ "flags " ^ list p.flags ]);
       List.map knows_text p.knows;

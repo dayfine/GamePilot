@@ -1,11 +1,11 @@
 (** A PLZA walk as a plan writes it: timed legs of the left stick, each an angle
     and a time, and what ends the last one. Ported from the walk's args in
-    [PokemonLZA_AutoStoryActionTable.cpp] and [PokemonLZA_AutoStoryWalks.h]
-    (fork #754, [plza/mvp-0101]). Positions in PLZA are 3D and camera-relative,
-    so a walk is durations and angles, never tiles. The names are ours, not the
-    fork's: its [held] is [Steer], its wait is [wait_before_ms] and its
-    [end_after_ms] is [earliest_end_ms] (a fork plan file needs those keys
-    renamed, [Walk_decode]). Pure: [Walk_decode] reads it from a plan. *)
+    [PokemonLZA_AutoStoryActionTable.cpp] and [PokemonLZA_AutoStoryWalks.h].
+    Positions in PLZA are 3D and camera-relative, so a walk is durations and
+    angles, never tiles. The names are ours, not the fork's: its [held] is
+    [Steer], its wait is [wait_before_ms] and its [end_after_ms] is
+    [earliest_end_ms] (a fork plan file needs those keys renamed,
+    [Walk_decode]). Pure: [Walk_decode] reads it from a plan. *)
 
 type leg = {
   angle_deg : float;
@@ -41,9 +41,10 @@ type until =
   | Scene  (** A scene takes control (text, a box or a fade). *)
   | Event of end_event
   | Talk of { after_legs : bool }
-      (** The fork's ["talk"]: A on the A prompt the walk reaches starts a talk.
-          [after_legs] (a plan's ["talk_after_legs"], the fork's [to_starter]):
-          prompts are passed until every leg is walked. *)
+      (** A walk ending in a talk, as the fork's: A on the A prompt the walk
+          reaches starts a talk. [after_legs] (a plan's ["talk_after_legs"], the
+          fork's walk to the starter): prompts are passed until every leg is
+          walked. *)
 
 type t = {
   move : move;
@@ -54,8 +55,8 @@ type t = {
       (** An end event seen before the last leg has been held this long was
           passed on the way, and the walk goes on; 0 for none. *)
   heading_deg : float option;
-      (** The fork's [heading]: a minimap bearing (0 north, 90 east) to face
-          before the legs, read from the minimap's arrow. *)
+      (** A minimap bearing (0 north, 90 east), as the fork's plans give it, to
+          face before the legs, read from the minimap's arrow. *)
 }
 (** A walk event's args. *)
 
@@ -66,8 +67,5 @@ val end_event_name : end_event -> string
 val end_event_of_name : string -> end_event option
 (** {!end_event_name} read back. *)
 
-val style_name : style -> string
-(** ["face_then_walk"], ["steer"]: as a plan writes it. *)
-
 val style_of_name : string -> style option
-(** {!style_name} read back. *)
+(** ["face_then_walk"] or ["steer"], as a plan writes it. *)

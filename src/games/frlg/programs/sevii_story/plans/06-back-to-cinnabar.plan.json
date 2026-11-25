@@ -1,0 +1,111 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "frlg",
+  "execution": {
+    "menu": "full"
+  },
+  "metadata": {
+    "phase": "testing",
+    "notes": "From the Joyful Game Corner (6, 6) after Lostelle's homecoming, facing her at (6, 5). Her father stands at (5, 5) (pret TwoIsland_JoyfulGameCorner_EventScript_LostellesDaddy): with the room's scene var at 3 he takes the Meteorite, sets VAR_MAP_SCENE_ONE_ISLAND_POKEMON_CENTER_1F to 2 and gives a Moon Stone if the bag has room (checkitemspace; with no room he says so, keeps the stone and gives it on the next talk). Then out to Two Island's harbor and the Seagallop to One Island: until Bill's trip back the sailor offers ONE ISLAND, THREE ISLAND and EXIT (pret EventScript_ChooseDestFromTwoIsland, MULTICHOICE_ISLAND_13). In One Island's Center four coord events stand in column 12, rows 6 to 9, while Celio's VAR is 2 (OneIsland_PokemonCenter_1F_EventScript_LeaveOneIslandScene): stepped onto from (11, 7) (MidTop), Bill sees the player, who walks a tile east; Bill and Celio say goodbye, the player and Bill walk out, and the script sets Celio's VAR to 3 and VAR_MAP_SCENE_CINNABAR_ISLAND to 3 and sails to Cinnabar. The Seagallop lands at Cinnabar (21, 7) (pret src/seagallop.c), with Bill placed below at (21, 8); Cinnabar's frame script (CinnabarIsland_EventScript_ReturnFromSeviiIslands) runs at once: Bill's line about the Tri-Pass, he walks six tiles south and is gone, and Cinnabar's VAR goes to 4, which adds VERMILION to the Sevii harbors' lists.",
+    "postconditions": {
+      "items": [
+        {
+          "item": "meteorite",
+          "quantity": 0
+        },
+        {
+          "item": "moon-stone",
+          "gained": 1
+        }
+      ],
+      "position": {
+        "map": "CinnabarIsland",
+        "tiles": [
+          [21, 7]
+        ],
+        "facing": "south"
+      }
+    }
+  },
+  "checkpoint": {
+    "id": "06-back-to-cinnabar",
+    "title": "The Meteorite for a Moon Stone; Bill's goodbye on One Island and the Seagallop to Cinnabar",
+    "start": {
+      "map": "TwoIsland_JoyfulGameCorner",
+      "tiles": [
+        [6, 6]
+      ],
+      "facing": "north"
+    },
+    "events": [
+      {
+        "id": "to_lostelles_father",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {"map": "TwoIsland_JoyfulGameCorner", "tiles": [[5, 6]], "facing": "north"}
+        },
+        "why": "A tile west, below Lostelle's father (5, 5)."
+      },
+      {
+        "id": "give_meteorite",
+        "kind": "talk",
+        "why": "He takes Bill's Meteorite and gives a Moon Stone."
+      },
+      {
+        "id": "to_harbor_sailor",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {"place": "two_island_harbor_sailor"}
+        },
+        "why": "Out over the door tile, west through town and down to the harbor, above the sailor (8, 6)."
+      },
+      {
+        "id": "sail_one_island",
+        "kind": "game_action",
+        "action": "ferry",
+        "args": {
+          "to": "OneIsland"
+        },
+        "why": "The sailor's list: ONE ISLAND, then the crossing to One Island's harbor."
+      },
+      {
+        "id": "to_center_west_of_trigger",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {"map": "OneIsland_PokemonCenter_1F", "tiles": [[11, 7]], "facing": "east"}
+        },
+        "why": "Up into town and into the Pokemon Center, a tile west of the goodbye's coord events in column 12."
+      },
+      {
+        "id": "onto_goodbye",
+        "kind": "step",
+        "args": {
+          "direction": "east"
+        },
+        "why": "Onto (12, 7): Bill's \"!\" and his first line show at once.",
+        "declared_after": {
+          "map": "OneIsland_PokemonCenter_1F",
+          "tiles": [
+            [12, 7]
+          ],
+          "facing": "east"
+        }
+      },
+      {
+        "id": "bills_goodbye",
+        "kind": "scene",
+        "why": "Bill and Celio's goodbye, out of the Center with Bill, the Seagallop to Cinnabar; there Bill's last words, and he walks away south.",
+        "declared_after": {
+          "map": "CinnabarIsland",
+          "tiles": [
+            [21, 7]
+          ],
+          "facing": "south"
+        }
+      }
+    ]
+  }
+}

@@ -1,7 +1,7 @@
-(** Wild Zone 1's catches for the fourth and fifth species (03.08, 03.08a): the
-    fork's [catch_in_zone] (PokemonLZA_AutoStoryCatches.cpp, with
-    [read_party_slots] and [go_to_zone_spot]; [plza/lean]), 12 throws as the
-    fork's (PokemonLZA_AutoStoryConsoleActions.cpp).
+(** Wild Zone 1's catches for the fourth and fifth species (03.08, 03.08a), the
+    plan's [catch_in_zone]: ported from PokemonLZA_AutoStoryCatches.cpp (with
+    its party slot count and its way to a zone spot), 12 throws as the fork's
+    (PokemonLZA_AutoStoryConsoleActions.cpp).
 
     The party bar's count (settled, {!Catch_plan.settled_party_slots}, looks 250
     ms apart) decides the catch: 5 or more, nothing to catch; 4, the fifth at
@@ -16,4 +16,4 @@
 val max_throws : int
 (** 12. *)
 
-val run : Story_steps.game_steps -> max_throws:int -> Story_steps.outcome
+val run : Steps.game_steps -> max_throws:int -> Steps.outcome

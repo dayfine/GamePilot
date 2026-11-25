@@ -556,4 +556,10 @@ let () =
         "ok; 12 turns";
       case "spin: no battle in two batches" (spin ~after_ms:100000)
         "failed no_encounter: no wild battle in 2 batches; 48 turns";
+      case "GIVE is the second row on the Items pocket"
+        (fun () -> string_of_int (Party_actions.give_row "rare-candy"))
+        "1";
+      case "GIVE is the first row on the Poke Balls pocket, which has no USE"
+        (fun () -> string_of_int (Party_actions.give_row "ultra-ball"))
+        "0";
     ]

@@ -52,7 +52,7 @@ let gift_name () =
 let ( let* ) = Result.bind
 
 let claim f ~log ~picture =
-  let* assets = Plza_templates.upload () in
+  let* assets = Plza_series.Templates.upload () in
   let* gift_name = gift_name () in
   C.run ~log ~picture ~assets ~gift_name
     ~tile:Plza_autostory.Game_reload.tile_color ~span:f.span ~code:f.code

@@ -4,8 +4,8 @@ let slice_ms = 250
 let gone_ms = 400
 let runs = 2
 
-(* B held with the stick for the whole slice, as run_towards_gate_with_A_button
-   holds it. *)
+(* B held with the stick for the whole slice, as PokemonLZA_BasicNavigation.cpp's
+   run to a gate holds it. *)
 let run_whole = { Switch_home.Stick_tilt.button = Wire.B; speedup = 1.0 }
 let ( let* ) = Result.bind
 
@@ -26,7 +26,7 @@ let rec run_slices steps ~timeout_ms ~ran ~gone_since =
   if ran >= timeout_ms then Ok Out_of_time
   else
     let* () = slice steps in
-    let (look : Walk_screen.t) = steps.read_screen () in
+    let (look : Screen.t) = steps.read_screen () in
     let gone_since =
       if look.player_can_move then None
       else Some (Option.value gone_since ~default:look.at_ms)

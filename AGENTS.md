@@ -8,7 +8,9 @@ GamePilot automates games through three layers (design: `docs/design/Layered-Aut
 - `src/` (OCaml 5.2+, dune): one dune project. Every library is `<name>/lib` with its tests in
   `<name>/test`.
   - `base/`: pure, game-agnostic code with no effects (`wire`: the protocol codec).
-  - `core/`: the effects programs use (`effects`) and their handlers (`session`, `live`, `replay`).
+  - `core/`: the effects programs use (`effects`) and their handlers (`session`, `live`, `replay`);
+    `live_run`: a run's daemon, its watch page and hub, and one checkpoint run in its own daemon,
+    shared by every game's series runner.
   - `engine/`: the game-agnostic checkpoint engine (`docs/design/Engine-Boundary.md`). Its
     `checkpoints/` libraries: `rules` (`GAME_RULES`, what a game family gives the engine),
     `promise` (promises, counts, money), `plan` (types, decoding, text), `run` (one checkpoint:

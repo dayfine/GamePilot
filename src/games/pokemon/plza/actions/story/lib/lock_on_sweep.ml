@@ -1,4 +1,4 @@
-module S = Story_steps
+module S = Steps
 
 let stick_ms = 1000
 let dpad_ms = 160
@@ -16,6 +16,7 @@ let tap right_stick i =
   in
   Wire.press ?right_stick ~hold_ms:mash_ms ~cooldown_ms:0 buttons
 
+(* One round's inputs. *)
 let round_inputs ~camera_x =
   let right_stick = Result.to_option (Wire.stick camera_x 0.) in
   List.init (stick_ms / mash_ms) (tap right_stick)
@@ -24,7 +25,7 @@ let round_inputs ~camera_x =
 let rec sweep steps ~camera_x ~rounds =
   rounds > 0
   && (Option.is_some
-        (S.(steps.race_batch) (round_inputs ~camera_x) Story_look.moves_shown)
+        (S.(steps.race_batch) (round_inputs ~camera_x) Look.moves_shown)
      || sweep steps ~camera_x ~rounds:(rounds - 1))
 
 let run steps ~camera_x ~rounds =

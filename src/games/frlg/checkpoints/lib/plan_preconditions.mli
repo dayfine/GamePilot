@@ -6,11 +6,14 @@
     {v
 "preconditions": {"badges": 8, "hall_of_fame": true}
 "preconditions": {"badges": ["boulder", "cascade", "thunder"]}
+"preconditions": {"caught": 60}
     v}
 
     [badges] is a count (at least that many, 0 to 8) or the badges by name
     ({!Frlg_readers.Trainer_card_front.badge_names}); [hall_of_fame] takes
-    [true] (the Hall of Fame entered). Both are read off the Trainer Card. *)
+    [true] (the Hall of Fame entered); [caught] a count, at least that many
+    species caught (0 to 386: Oak's National Dex asks for 60). All are read off
+    the Trainer Card (pokefirered src/trainer_card.c). *)
 
 val needs : Pokemon_checkpoints.Plan.t -> (Plan_needs.need list, string) result
 (** The plan's declared preconditions as needs: [[]] when it declares none.

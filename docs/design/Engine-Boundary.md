@@ -41,7 +41,7 @@ which part is which. `Grid_maps` is `src/pokemon/navigation/grid/maps`.
 | `pose.ml` | mixed | G: `grid` (map, tiles, facing), `observed` (map, tile), `matches`. A: `zone` (place, spot, heading), already decoded and never used |
 | `plan_decode.ml` | mixed | A: format names, strictness, unique ids, the event loop. G and P: the kind table and its args, grid poses |
 | `plan_fields.ml` | mixed | A: field readers. G: `grid_pose`; P: `item` |
-| `postcondition_decode.ml` | mixed | A: `items`, `money`, `flags`. P: `party`, `coins`, `knows`, `levels`, `marks`. G: `position` |
+| `postcondition_decode.ml` | mixed | A: `items`, `money`, `flags`. P: `party`, `coins`, `caught`, `knows`, `levels`, `marks`. G: `position` |
 | `party_decode.ml` | P | the party a checkpoint promises |
 
 Every file reads JSON through `Grid_maps.Json_field`, a game-agnostic reader that sits in the grid
@@ -63,7 +63,7 @@ library only because the map decoders came first.
 | `runner.ml` | mixed | A: order, skips, logging, handler check, end state. G: `declared_after` and `end_at` checked only as grid poses (a zone is silently not checked) |
 | `checkpoint_end.ml` | G | the end is a grid pose from the next start or the last route |
 | `failure.ml` | mixed | A: `cause`, `Handler`, `No_handler`, `Unmet_postconditions`. G: `Not_at_declared`, `Not_at_end` carry grid poses |
-| `postcondition_check.ml` | mixed | A: `verdict`, `result`, `unmet`, `log_lines`, the count and money comparisons against the start. P: `observed` and `start` fields (party, coins, knows, levels, marks) |
+| `postcondition_check.ml` | mixed | A: `verdict`, `result`, `unmet`, `log_lines`, the count and money comparisons against the start. P: `observed` and `start` fields (party, coins, caught, knows, levels, marks) |
 | `checkpoint_trials.ml` | A | runs, passes, the hard stop, attempts. But an attempt lost to luck and one lost to a fault are the same `Attempt_failed` |
 | `event_range.ml`, `event_progress.ml` | A | partial runs need a backend that keeps states (mGBA) |
 | `event_states.ml` | mixed | A: tracker. Emulator-bound: `.ss` files. P and G: `kept` holds Pokémon start reads and a grid position |
@@ -145,7 +145,7 @@ end
 
 | Game | `Pose.t` / `observed` | `Action.t` | `Postconditions.t` / `reads` |
 |---|---|---|---|
-| Pokémon | `Grid of grid \| Zone of zone` (a zone holds anywhere) / map and tile (`Grid_geometry`) | `Pokemon_action.t`: new game, options, route, ready, legs, step, battle, train, heal, shop | party, items, coins, money, flags, moves, levels, marks / `Postcondition_check.observed` (with `start`) |
+| Pokémon | `Grid of grid \| Zone of zone` (a zone holds anywhere) / map and tile (`Grid_geometry`) | `Pokemon_action.t`: new game, options, route, ready, legs, step, battle, train, heal, shop | party, items, coins, caught, money, flags, moves, levels, marks / `Postcondition_check.observed` (with `start`) |
 | Toy | `{ place; spot }` / the same | `Walk`, `Rest` | gold (`Count.t`), flags / gold now and at the start, flags set |
 
 `check` takes the reads alone: what the game read at the checkpoint's start is part of `reads`. The

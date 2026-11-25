@@ -1,4 +1,4 @@
-module S = Story_steps
+module S = Steps
 module Failure = Engine_run.Failure
 
 let poll_ms = 250

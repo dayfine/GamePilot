@@ -1,4 +1,4 @@
-(** Reader: what 01.01's story screen shows, every PLZA reading of one frame, as
+(** Reader: what a story screen shows, every PLZA reading of one frame, as
     PokemonLZA_AutoStoryScreenEvents.cpp and
     PokemonLZA_AutoStoryConsoleBackend.cpp combine them. A black or white fade
     (the middle 80% of the frame, {!Screen_state.Fade}) hides the dialogue and
@@ -8,8 +8,8 @@
     controls hint, advance chevron and tutorial card read through a fade.
 
     Not read here: the Switch HOME menu ({!Switch_home.Home_screen}); whether
-    the screen is still (the fork compares the frame with the one before, which
-    no probe does yet). *)
+    the screen is still ({!Frame_cells}, which the live screen compares between
+    reads). *)
 
 type t = {
   fade : Screen_state.Fade.t;
@@ -26,13 +26,14 @@ type t = {
       (** an A prompt ({!Interact_prompt}), with no fade and no text box *)
   battle : bool;  (** the battle HUD ({!Battle_hud}), with no fade *)
   story_dialog : bool;
-      (** a dialogue box as the fork's default [StoryDialogDetector] reads it:
-          the white box with its arrow, or the blue or teal box *)
+      (** a dialogue box as the fork's default story dialogue detector
+          (PokemonLZA_StoryDialogDetector.cpp) reads it: the white box with its
+          arrow, or the blue or teal box *)
   moves : Move_symbols.symbol option list;
       (** the four moves' effectiveness symbols ({!Move_symbols}) *)
   party_bar : bool;
       (** the overworld party bar ({!Party_bar}), with no fade and no text box:
-          the fork's [PLAYER_CAN_MOVE] *)
+          the fork's can-move event *)
   map_pin : Map_pin.point option;
       (** the player's pin on the full map ({!Map_pin}) *)
   minimap_arrow : float option;

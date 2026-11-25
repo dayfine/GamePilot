@@ -1,5 +1,6 @@
 type t = Wire.rgb list
 
+(* 2.0: a channel mean moving this much in any cell is a change. *)
 let max_change = 2.0
 let side = 4
 

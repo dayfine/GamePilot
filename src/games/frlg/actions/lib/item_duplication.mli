@@ -29,7 +29,9 @@
       ({!Party_actions.party_input_ms}) comes first.
     - The item's count is read before and after the rounds (after them once the
       pocket's arrows show again: the list redraws after the editor), and must
-      have gone up by one per round (the C++ only counts its rounds). *)
+      have gone up by one per round (the C++ only counts its rounds); an item of
+      another pocket (an Ultra Ball) is counted on its own pocket, then the
+      Items pocket is back at its top. *)
 
 val wait_ms : int
 (** Every wait of the C++'s loop: 4000. *)

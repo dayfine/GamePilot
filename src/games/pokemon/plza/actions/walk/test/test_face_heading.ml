@@ -1,6 +1,5 @@
 (* Facing a bearing by the minimap's arrow, as the C++'s tests check it
-   ([face_heading] cases of PokemonLZA_AutoStoryActions_Tests.cpp,
-   [plza/lean]): a game whose arrow follows the stick's turns, or does not,
+   (the heading cases of PokemonLZA_AutoStoryActions_Tests.cpp): a game whose arrow follows the stick's turns, or does not,
    lags, or overshoots small turns. *)
 
 open Plza_walk

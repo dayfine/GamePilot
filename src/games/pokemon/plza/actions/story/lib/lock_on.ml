@@ -1,5 +1,5 @@
-module S = Story_steps
-module L = Story_look
+module S = Steps
+module L = Look
 
 let hold_ms = 2000
 let turn_degrees = 90.0
@@ -12,31 +12,40 @@ let zl_until_symbols (steps : S.game_steps) ~hold_ms =
   Option.is_some
     (steps.race
        (Wire.press ~hold_ms ~cooldown_ms:0 [ Wire.ZL ])
-       Story_look.moves_shown)
+       Look.moves_shown)
 
+(* What the turn did, for the log: the tilt can be refused. *)
 let turn steps =
   match
-    Plza_walk.Walk_inputs.tilt ~walk_only:true Walk ~degrees:turn_degrees
+    Plza_walk.Inputs.tilt ~walk_only:true Walk ~degrees:turn_degrees
       ~duration_ms:turn_ms ~release_ms:turn_release_ms
   with
-  | Ok input -> S.(steps.submit) input
-  | Error _ -> ()
+  | Ok input ->
+      S.(steps.submit) input;
+      "turned 90 degrees right"
+  | Error e -> "no turn (" ^ e ^ ")"
 
 let result_text symbols =
   if symbols then "the move symbols showed"
   else Printf.sprintf "no move symbols in %d ms" hold_ms
 
+(* The scene machine's lock-on try [attempt] (from 1) of [of_]: from the
+    second, a quarter turn right (150 ms, released 100) and L (100 ms, released
+    150) put the camera behind the player; then ZL for {!hold_ms}. Whether the
+    symbols showed; logged under [label]. *)
 let attempt steps label ~attempt ~of_ =
-  let later = attempt > 1 in
-  if later then (
-    turn steps;
-    S.press steps Wire.L ~hold_ms:recenter_hold_ms
-      ~release_ms:recenter_release_ms);
+  let before =
+    if attempt > 1 then (
+      let turned = turn steps in
+      S.press steps Wire.L ~hold_ms:recenter_hold_ms
+        ~release_ms:recenter_release_ms;
+      turned ^ ", L, ")
+    else ""
+  in
   let symbols = zl_until_symbols steps ~hold_ms in
   S.(steps.log)
     (Printf.sprintf "[PLZA %s] lock-on %d/%d: %sZL held: %s." label attempt of_
-       (if later then "turned 90 degrees right, L, " else "")
-       (result_text symbols));
+       before (result_text symbols));
   symbols
 
 type state = {

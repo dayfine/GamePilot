@@ -1,6 +1,6 @@
 (** Reader: the name plate over a locked-on wild Pokémon, and whether it shows
-    the caught mark. Ported from PokemonLZA_CaughtMarkReader.cpp ([plza/lean]):
-    [lock_target_plate_bar] and [lock_target_caught].
+    the caught mark. Ported from PokemonLZA_CaughtMarkReader.cpp: its plate bar
+    and caught mark reads.
 
     The plate's bar: in the upper 68% of the frame, the pixels of its green (red
     up to 90, green 175 and up, blue 90 to 145: the bar is about 45, 198, 115,

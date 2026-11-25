@@ -25,12 +25,10 @@ let input_text : Wire.command -> string = function
       in
       Printf.sprintf "%s %d/%d" (String.concat "+" parts) hold_ms cooldown_ms
 
-(* --- Walk_inputs --- *)
+(* --- Inputs --- *)
 
 let stick ?(walk_only = false) pace duration_ms () =
-  match
-    Walk_inputs.tilt ~walk_only pace ~degrees:0.0 ~duration_ms ~release_ms:0
-  with
+  match Inputs.tilt ~walk_only pace ~degrees:0.0 ~duration_ms ~release_ms:0 with
   | Ok c -> input_text c
   | Error e -> e
 
@@ -49,7 +47,7 @@ let stick_cases =
 
 let screen ?(still = false) ?(fade_black = false) ?(fade_white = false)
     ?(dialog = false) ?(arrow = false) ?(party = false) ?(hint = false)
-    ?(home = false) at_ms : Walk_screen.t =
+    ?(home = false) at_ms : Screen.t =
   {
     at_ms;
     home_menu = home;
@@ -79,7 +77,7 @@ let scripted screens run =
     | l :: rest ->
         screens := rest;
         l
-    | [] -> Walk_screen.empty ~at_ms:0.0
+    | [] -> Screen.empty ~at_ms:0.0
   in
   let steps : Walk.game_steps =
     {
@@ -310,7 +308,7 @@ let free_cases =
         let lines =
           String.split_on_char '\n'
             (scripted
-               (reads_every_poll 50 (fun at_ms -> Walk_screen.empty ~at_ms))
+               (reads_every_poll 50 (fun at_ms -> Screen.empty ~at_ms))
                can_walk)
         in
         String.concat "\n" (List.filteri (fun i _ -> i >= 40) lines))

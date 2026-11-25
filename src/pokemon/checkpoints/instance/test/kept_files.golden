@@ -1,25 +1,25 @@
 == written by a run
 the start money, coins and items, and the reckoned pose
-  {"start_money":29202,"start_coins":50,"start_items":{"revive":0,"escape-rope":4},"at":{"map":"VermilionCity_House2","tile":[4,4],"facing":"north"}}
+  {"start_money":29202,"start_coins":50,"start_caught":null,"start_items":{"revive":0,"escape-rope":4},"at":{"map":"VermilionCity_House2","tile":[4,4],"facing":"north"}}
 nothing read at the start, the pose unknown
-  {"start_money":null,"start_coins":null,"start_items":{},"at":null}
+  {"start_money":null,"start_coins":null,"start_caught":null,"start_items":{},"at":null}
 the start money only, a facing the game could not tell
-  {"start_money":29202,"start_coins":null,"start_items":{},"at":{"map":"VermilionCity_House2","tile":[4,4],"facing":null}}
+  {"start_money":29202,"start_coins":null,"start_caught":null,"start_items":{},"at":{"map":"VermilionCity_House2","tile":[4,4],"facing":null}}
 an item name that needs escaping
-  {"start_money":null,"start_coins":null,"start_items":{"poké-ball \"x\"":2},"at":null}
+  {"start_money":null,"start_coins":null,"start_caught":null,"start_items":{"poké-ball \"x\"":2},"at":null}
 == kept by older runs, read back
 kept before coins and items were
-  written again: {"start_money":29202,"start_coins":null,"start_items":{},"at":null}
+  written again: {"start_money":29202,"start_coins":null,"start_caught":null,"start_items":{},"at":null}
 kept before coins and items were, with a pose
-  written again: {"start_money":100,"start_coins":null,"start_items":{},"at":{"map":"Town","tile":[1,2],"facing":"west"}}
+  written again: {"start_money":100,"start_coins":null,"start_caught":null,"start_items":{},"at":{"map":"Town","tile":[1,2],"facing":"west"}}
 an empty object
-  written again: {"start_money":null,"start_coins":null,"start_items":{},"at":null}
+  written again: {"start_money":null,"start_coins":null,"start_caught":null,"start_items":{},"at":null}
 fields in another order, spaced
-  written again: {"start_money":null,"start_coins":7,"start_items":{"potion":3},"at":null}
+  written again: {"start_money":null,"start_coins":7,"start_caught":null,"start_items":{"potion":3},"at":null}
 a facing no run writes
-  written again: {"start_money":null,"start_coins":null,"start_items":{},"at":{"map":"Town","tile":[1,2],"facing":null}}
+  written again: {"start_money":null,"start_coins":null,"start_caught":null,"start_items":{},"at":{"map":"Town","tile":[1,2],"facing":null}}
 a field no run writes
-  written again: {"start_money":1,"start_coins":null,"start_items":{},"at":null}
+  written again: {"start_money":1,"start_coins":null,"start_caught":null,"start_items":{},"at":null}
 not an object
   error: what is kept is not an object
 an item count that is not a number

@@ -96,9 +96,10 @@ val queue : Wire.command list -> unit
     dropped. The program reads and decides while it runs and queues the next
     before it ends: a button held at one batch's end and the next one's start
     stays held, as the fork's commands queued on the controller while the
-    program reads ([pbf_controller_state] then a snapshot; the PLZA catches'
-    [HeldZl], PokemonLZA_AutoStoryCatches.cpp, [plza/lean]). A later {!submit}
-    or {!race} queues after it too; a stop's cancel drops it. *)
+    program reads (a controller state press,
+    NintendoSwitch_Commands_PushButtons.h, then a snapshot; ZL held through the
+    PLZA catches, PokemonLZA_AutoStoryCatches.cpp). A later {!submit} or {!race}
+    queues after it too; a stop's cancel drops it. *)
 
 val now : unit -> float
 (** Daemon clock in ms: the [t_ms] of the newest frame or [batch_done] seen. *)

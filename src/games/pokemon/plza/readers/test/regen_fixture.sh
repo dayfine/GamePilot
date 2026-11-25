@@ -4,15 +4,19 @@
 # frames (draw_synthetic_frames.py), probed by the daemon's probe_images on the
 # native viewport with every PLZA reader's probes (write_probe_spec.exe, its
 # find templates copied from assets/templates beside the spec). Also
-# fixtures/switch.shifted.probes.jsonl and switch.shifted.rg.probes.jsonl:
-# every frame again with its colors
+# fixtures/switch.shifted.probes.jsonl: every frame again with its colors
 # shifted as another capture card might show them, by
-# dev/reader_fixtures/shift_frame.py (brightness times 0.9 and 1.1, one channel
-# plus or minus 12, 10% toward mid-grey), named <shift>/<folder>/<frame>.png:
-# the jpg frames are decoded to png first, so a shift adds no JPEG loss. The
-# shifted frames are probed without the minimap's cells (write_probe_spec.ml).
-# The brightness and blue shifts go to the first file, the red, green and grey
-# ones to the second: one file of all nine is over GitHub's 50 MB warning.
+# dev/reader_fixtures/shift_frame.py --one (one shift per frame, picked from
+# its name: brightness times 0.9 or 1.1, one channel plus or minus 12, or 10%
+# toward mid-grey), named <shift>/<folder>/<frame>.png: the jpg frames are
+# decoded to png first, so a shift adds no JPEG loss. The shifted frames are
+# probed without the minimap's cells (write_probe_spec.ml). All nine shifts of
+# every frame would be about 85 MB.
+# The fork's 1080p captures are kept at 640x360 where every reader test still
+# passes on them, at 1280x720 where one does not, and at 1080p (JPEG quality
+# 80) where 720p fails too, and as captured where the daemon's blob_find_test
+# reads them at 1080p (arrival-to-ad's 0001, 0033 and 0040); the scaled frames' arrow bearings moved by up to 6
+# degrees (the fork's tolerance is 10), their expectations with them.
 # Also fixtures/switch.second.probes.jsonl: every frame again, probed by what
 # a two-frame read subscribes from what the frame shows (write_probe_spec.exe
 # --second): the party bars' tests made from its cards, the caught mark's box
@@ -21,7 +25,7 @@
 # (console B's own, png), probed by the Mystery Gift steps' readers alone
 # (write_probe_spec.exe --gifts, the gift name's template from
 # assets/gift-name-vivillon.png), and fixtures/gifts.shifted.probes.jsonl: the
-# main menu's frame and images/mystery-gift's shifted.
+# main menu's frame and images/mystery-gift's, all nine shifts each.
 # The Python steps need Pillow ($SHIFT_PYTHON, default python3; e.g.
 # "uv run --with pillow python3").
 #
@@ -65,23 +69,23 @@ for path in sys.argv[2:]:
     os.makedirs(os.path.dirname(out), exist_ok=True)
     Image.open(path).convert("RGB").save(out)
 ' "$work/lossless" ./*/*)
-(cd "$work/lossless" && $SHIFT_PYTHON "$SHIFT_FRAME" "$work/shifted" ./*/*.png)
+(cd "$work/lossless" && $SHIFT_PYTHON "$SHIFT_FRAME" --one "$work/shifted" \
+    ./*/*.png)
 (cd "$work/shifted" && "$PROBE_IMAGES" --spec "$work/spec/shifted.probes.json" \
-    --viewport native ./b*/*/*.png) >"$HERE/fixtures/switch.shifted.probes.jsonl"
-(cd "$work/shifted" && "$PROBE_IMAGES" --spec "$work/spec/shifted.probes.json" \
-    --viewport native ./[gr]*/*/*.png) \
-    >"$HERE/fixtures/switch.shifted.rg.probes.jsonl"
+    --viewport native ./*/*/*.png) >"$HERE/fixtures/switch.shifted.probes.jsonl"
 cp "$SRC/games/pokemon/plza/assets/gift-name-vivillon.png" "$work/spec/"
 (cd "$SRC" && dune exec games/pokemon/plza/readers/test/write_probe_spec.exe \
     -- --gifts) >"$work/spec/gifts.probes.json"
-mkdir "$work/frames/mystery-gift" "$work/lossless/mystery-gift"
+mkdir "$work/frames/mystery-gift" "$work/gifts" "$work/gifts/tutorial-cards" \
+    "$work/gifts/mystery-gift" "$work/gifts_shifted"
 cp "$HERE/images/mystery-gift/"*.png "$work/frames/mystery-gift/"
-cp "$HERE/images/mystery-gift/"*.png "$work/lossless/mystery-gift/"
-(cd "$work/lossless" && $SHIFT_PYTHON "$SHIFT_FRAME" "$work/shifted" \
-    ./mystery-gift/*.png)
+cp "$HERE/images/mystery-gift/"*.png "$work/gifts/mystery-gift/"
+cp "$work/lossless/tutorial-cards/it-menu-no-card.png" "$work/gifts/tutorial-cards/"
+(cd "$work/gifts" && $SHIFT_PYTHON "$SHIFT_FRAME" "$work/gifts_shifted" \
+    ./*/*.png)
 (cd "$work/frames" && "$PROBE_IMAGES" --spec "$work/spec/gifts.probes.json" \
     --viewport native ./*/*.jpg ./mystery-gift/*.png) \
     >"$HERE/fixtures/gifts.probes.jsonl"
-(cd "$work/shifted" && "$PROBE_IMAGES" --spec "$work/spec/gifts.probes.json" \
-    --viewport native ./*/tutorial-cards/it-menu-no-card.png \
-    ./*/mystery-gift/*.png) >"$HERE/fixtures/gifts.shifted.probes.jsonl"
+(cd "$work/gifts_shifted" && "$PROBE_IMAGES" \
+    --spec "$work/spec/gifts.probes.json" --viewport native ./*/*/*.png) \
+    >"$HERE/fixtures/gifts.shifted.probes.jsonl"

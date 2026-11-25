@@ -1,7 +1,7 @@
 (** How a story scene ({!Scene_machine}) fails, worded as
-    PokemonLZA_AutoStorySceneMachine.cpp's [scene_outcome] and its timeout
-    ([plza/lean]). [label] names the scene ("scene"); [expected] is what would
-    have ended it ("the controls hint, the party bar or the A prompt"). *)
+    PokemonLZA_AutoStorySceneMachine.cpp words a scene's outcome and its
+    timeout. [label] names the scene ("scene"); [expected] is what would have
+    ended it ("the controls hint, the party bar or the A prompt"). *)
 
 val timed_out :
   label:string -> seconds:int -> expected:string -> Engine_run.Failure.cause

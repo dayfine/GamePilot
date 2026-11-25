@@ -13,4 +13,4 @@
     looks, keep their aim (02.01's run 1: a sideways nudge turned the camera
     right, and the first leg ran into the alley's crates). *)
 
-val run : Story_steps.game_steps -> unit
+val run : Steps.game_steps -> unit

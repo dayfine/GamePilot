@@ -1,7 +1,8 @@
 (** Walks by the full map's pin, and Wild Zone 1's way out. Ported from
-    PokemonLZA_AutoStoryWorldWalks.cpp ([read_pin_on_map], [walk_map_legs]) and
-    PokemonLZA_AutoStoryConsoleActions.cpp ([run_out_of_zone_1], with
-    [check_out_of_zone_1] of PokemonLZA_AutoStoryZone1.cpp), [plza/lean].
+    PokemonLZA_AutoStoryWorldWalks.cpp (the pin read on the map and the walk
+    along map legs) and PokemonLZA_AutoStoryConsoleActions.cpp (the plan's
+    [run_out_of_zone_1], with its [check_out_of_zone_1] from
+    PokemonLZA_AutoStoryZone1.cpp).
 
     Where it differs: the fork keeps the pin its start check read and hands it
     to the checkpoint's first map read, which skips opening the map; here every
@@ -9,8 +10,8 @@
 
 val read_pin : Walk.game_steps -> Map_leg.point option
 (** + ([Start] on the wire; 100 ms, then 1.5 s for the map to open), up to 8
-      looks 250 ms apart for the pin ({!Walk_screen.t.map_pin}), then B (100 ms,
-      then 1 s for it to close). *)
+      looks 250 ms apart for the pin ({!Screen.t.map_pin}), then B (100 ms, then
+      1 s for it to close). *)
 
 val walk_legs :
   Walk.game_steps ->

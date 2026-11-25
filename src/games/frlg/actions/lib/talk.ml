@@ -38,7 +38,8 @@ let answer_yes ~log () =
   ignore (Effects.submit [ press_a () ]);
   Menu_input.answer_yes ~code:"no_question" ~taken:never_past_question
     "the Yes/No question";
-  Menu_input.settle_back ~label:"answer" ~log
+  Menu_input.raise_error
+    (Scene_looks.settle Talk ~label:"answer" ~battle_ends:true ~log)
 
 let answer ~log ~yes () =
   if yes then Menu_input.run (answer_yes ~log) else talk ~log ()

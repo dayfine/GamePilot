@@ -1,4 +1,4 @@
-module S = Story_steps
+module S = Steps
 module P = Catch_plan
 
 type result = { throws : int; caught : bool; party_reached : bool }
@@ -26,6 +26,9 @@ let right_stick steps x y ~hold_ms ~release_ms =
        ?right_stick:(Result.to_option (Wire.stick x y))
        ~hold_ms ~cooldown_ms:release_ms [])
 
+(* After a lock-on the camera looks steeply down: the right stick down 1.5 s
+    (released 100 ms) pins the pitch at its lowest, then up 600 ms (released
+    300) gives the walking pitch. *)
 let level_camera steps =
   right_stick steps 0. (-1.) ~hold_ms:pitch_down_ms
     ~release_ms:pitch_down_release_ms;

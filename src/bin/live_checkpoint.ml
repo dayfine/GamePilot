@@ -54,6 +54,10 @@ type outcome =
           [None] for a checkpoint that does not repeat. *)
   | Failed of { at : string; reason : string; repeats : bool }
 
+(* A failure the shared runner reports (Live_run.Daemon_run). *)
+let failed ({ at; reason; repeats } : Daemon_run.failed) =
+  Failed { at; reason; repeats }
+
 let trial = function
   | Passed _ -> Checkpoint_trials.Passed
   | Failed { at; repeats; _ } -> Checkpoint_trials.Failed { at; repeats }

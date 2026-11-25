@@ -45,6 +45,7 @@ let outline =
 let map_centre = { x = 401.; y = 224. }
 let map_centre_radius = 3.
 
+(* Within 3 of (401, 224). *)
 let at_map_centre p =
   Float.hypot (p.x -. map_centre.x) (p.y -. map_centre.y) <= map_centre_radius
 
@@ -84,6 +85,7 @@ let exit_legs start =
   then [ far_gate ]
   else [ gate_run_up; far_gate ]
 
+(* 2: the pin reads {!check_out} takes at most. *)
 let out_of_zone_reads = 2
 let point_text p = Printf.sprintf "(%.0f, %.0f)" p.x p.y
 

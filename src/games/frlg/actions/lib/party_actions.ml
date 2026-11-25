@@ -85,7 +85,14 @@ let answer_switch () =
 
 (* After a berry is given the pouch shows again, over the bag. *)
 let bag_pouch_or_party m = bag_or_party m || Berry_pouch.shows_pouch m
-let give_row = 1
+
+(* GIVE's row in the item's menu: USE, GIVE, TOSS on the Items pocket, but
+   GIVE, TOSS on the Poke Balls pocket, which has no USE (pokefirered
+   src/item_menu.c). *)
+let give_row item =
+  match Bag_items.pocket_of_item item with
+  | Frlg_readers.Bag_screen.Poke_balls -> 0
+  | Items | Key_items -> 1
 
 (* The fork's wait after the party shows, before its presses: an A that comes
    sooner is dropped (mGBA, mg-06 testing run 2: slot 1, already selected,
@@ -102,7 +109,7 @@ let give_to slot =
 let give ~log ~item ~slot =
   log (Printf.sprintf "Bag: give %s to slot %d." item slot);
   if Berry_pouch.is_berry item then Berry_pouch.choose_give item
-  else Bag_items.item_action item give_row;
+  else Bag_items.item_action item (give_row item);
   give_to slot;
   if answer_switch () then log "Bag: the member held an item; switched it.";
   if is_mail item then write_one_word ();

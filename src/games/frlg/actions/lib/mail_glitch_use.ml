@@ -56,7 +56,7 @@ let editor_opening m = not (Dialog.dialog_up m)
 
 let read_glitched_mail ~log ~slot ~word =
   log (Printf.sprintf "Mail: give Retro Mail to slot %d, read the mail." slot);
-  Bag_items.item_action mail Party_actions.give_row;
+  Bag_items.item_action mail (Party_actions.give_row mail);
   Party_actions.give_to slot;
   M.answer_yes ~code:"no_switch_question" ~taken:editor_opening
     "the switch question";

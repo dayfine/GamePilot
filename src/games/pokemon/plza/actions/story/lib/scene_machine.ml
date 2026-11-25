@@ -1,5 +1,5 @@
-module S = Story_steps
-module L = Story_look
+module S = Steps
+module L = Look
 
 type config = {
   end_on_black_fade : bool;

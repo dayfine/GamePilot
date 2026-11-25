@@ -1,0 +1,17 @@
+(library
+ (name plza_series)
+ (public_name gamepilot.plza_series)
+ (libraries
+  yojson
+  gamepilot.wire
+  gamepilot.effects
+  gamepilot.live
+  gamepilot.live_run
+  gamepilot.run_record
+  gamepilot.watch_report
+  gamepilot.repo_io
+  gamepilot.engine_run
+  gamepilot.plza_readers
+  gamepilot.plza_story
+  gamepilot.plza_checkpoints
+  gamepilot.plza_autostory))

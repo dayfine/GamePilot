@@ -1,10 +1,10 @@
 (** Reading a Switch game's screen until a check holds, giving up after a
     timeout, and stopping at once on the HOME menu: the game is not running
     there, and no wait in it can pass. Ported from the fork's
-    [Pokemon/AutoStory/Engine/Pokemon_ScreenWait.h] ([plza/mvp-0101]) as its
-    callers use it: one read that holds is enough, and the HOME menu fails the
-    wait. Any game's screen read works: the caller says when it was read and
-    whether it is the HOME menu. *)
+    [Pokemon/AutoStory/Engine/Pokemon_ScreenWait.h] as its callers use it: one
+    read that holds is enough, and the HOME menu fails the wait. Any game's
+    screen read works: the caller says when it was read and whether it is the
+    HOME menu. *)
 
 type 'screen game_steps = {
   read_screen : unit -> 'screen;

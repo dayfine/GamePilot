@@ -21,9 +21,16 @@ type viewport = Nso_gba | Native
     split in two runs its lettered part first, [cp-05a] then [cp-05], as the
     FRLG fork splits them (Engine_series.Checkpoint_order). [Name_order]: plain
     name order, where a lettered id continues the bare one: PLZA's 01.00b,
-    03.02b and 03.03b, 03.03c follow 01.00a, 03.02 and 03.03 (the PLZA fork's
-    StoryData rows, its plan sources saying where each starts). *)
+    03.02b and 03.03b, 03.03c follow 01.00a, 03.02 and 03.03 (the checkpoint
+    rows of the PLZA fork's PokemonLZA_AutoStoryPlan.h, its plan sources saying
+    where each starts). *)
 type checkpoint_order = Parts_first | Name_order
+
+(** The rules a program's checkpoint plans are written over, which pick the
+    library that loads and runs them. [Pokemon_grid]: the Pokémon grid rules
+    (Pokemon_checkpoints, the FRLG runner); [Plza_story]: PLZA's story rules
+    (Plza_checkpoints, Plza_series). *)
+type rules = Pokemon_grid | Plza_story
 
 type game = {
   game_id : string;  (** ["frlg"], as plans and the games/ folder name it. *)
@@ -44,6 +51,7 @@ type t = {
   viewport : viewport;
       (** The Switch's game picture, which every daemon of its runs takes. *)
   checkpoint_order : checkpoint_order;
+  rules : rules;  (** What its plans are written over. *)
 }
 
 val all : t list

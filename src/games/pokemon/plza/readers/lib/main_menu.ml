@@ -31,7 +31,7 @@ let right_max_score = 70.
 let b_max_score = 80.
 
 (* The crops' sizes and fills as templates.json gives them, with the
-   WaterfillTemplateMatcher's default bounds. *)
+   default bounds of CommonTools/ImageMatch/WaterfillTemplateMatcher.cpp. *)
 let template ~fill : Blob_template.t =
   {
     width = 30;

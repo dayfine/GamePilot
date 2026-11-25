@@ -10,20 +10,20 @@ let release_ms = 300
 let gate_runs = 3
 
 let press (steps : Walk.game_steps) b ~release_ms =
-  steps.submit (Walk_inputs.button b ~hold_ms:button_hold_ms ~release_ms)
+  steps.submit (Inputs.button b ~hold_ms:button_hold_ms ~release_ms)
 
-let wait (steps : Walk.game_steps) ms = steps.submit (Walk_inputs.wait ms)
+let wait (steps : Walk.game_steps) ms = steps.submit (Inputs.wait ms)
 let pin_text = function Some p -> Wild_zone_one.point_text p | None -> "none"
 
 let read_pin (steps : Walk.game_steps) =
   press steps Start ~release_ms:map_open_ms;
+  (* As the C++ loop: 250 ms after every miss, the last one too. *)
   let rec look n =
     match (steps.read_screen ()).map_pin with
     | Some p -> Some p
-    | None when n + 1 >= pin_looks -> None
     | None ->
         wait steps pin_look_gap_ms;
-        look (n + 1)
+        if n + 1 >= pin_looks then None else look (n + 1)
   in
   let pin = look 0 in
   press steps B ~release_ms:map_close_ms;
@@ -38,7 +38,7 @@ let face (steps : Walk.game_steps) heading =
 
 let stick (steps : Walk.game_steps) pace ~hold_ms =
   match
-    Walk_inputs.tilt ~walk_only:false pace ~degrees:0. ~duration_ms:hold_ms
+    Inputs.tilt ~walk_only:false pace ~degrees:0. ~duration_ms:hold_ms
       ~release_ms
   with
   | Ok c -> Ok (steps.submit c)
@@ -74,13 +74,13 @@ let walk_move (steps : Walk.game_steps) w pin ~heading ~hold_ms ~correction =
         else Printf.sprintf "correction %d" correction)
        (pin_text pin) heading hold_ms);
   let* () = face steps heading in
-  stick steps Walk_inputs.Walk ~hold_ms
+  stick steps Inputs.Walk ~hold_ms
 
 (* The map's cursor can snap onto a badge next to the player, its ring over
    the player's arrow (the zone's "1" at the 60 spot). *)
 let short_step (steps : Walk.game_steps) =
   steps.log "[PLZA] map pin not read: a short step, then the map again";
-  stick steps Walk_inputs.Walk ~hold_ms:release_ms
+  stick steps Inputs.Walk ~hold_ms:release_ms
 
 let rec walk_leg steps w leg pin =
   match Map_leg.next leg pin with
@@ -112,7 +112,7 @@ let run_exit_leg (steps : Walk.game_steps) from to_ =
          (Wild_zone_one.point_text to_)
          heading hold_ms);
     let* () = face steps heading in
-    stick steps Walk_inputs.Run ~hold_ms
+    stick steps Inputs.Run ~hold_ms
   in
   match Map_leg.next (Map_leg.start to_ ~stop_radius:0.) (Some from) with
   | _, Walk { heading; hold_ms; _ } -> run heading hold_ms

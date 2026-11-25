@@ -1,5 +1,5 @@
 open Plza_readers
-module L = Plza_story.Story_look
+module L = Plza_story.Look
 
 let probes ~picture ~assets =
   List.concat
@@ -39,6 +39,7 @@ let look_of ~still (m : Effects.measurements) : L.t =
   let s = Story_screen.read m in
   {
     at_ms = m.t_ms;
+    frame_read = true;
     home_menu = home m;
     screen_still = still;
     fade_black = s.fade = Black;
@@ -72,7 +73,7 @@ let look_of ~still (m : Effects.measurements) : L.t =
 
 let read_screen last () =
   match fresh () with
-  | None -> L.empty ~at_ms:(Effects.now ())
+  | None -> L.no_frame ~at_ms:(Effects.now ())
   | Some m ->
       let cells = Frame_cells.read m in
       let still =
@@ -141,7 +142,7 @@ let read_party_slots ~picture () =
   | Some n when n > 0 -> Some n
   | Some _ | None -> None
 
-let game_steps ~picture ~log ~log_detail : Plza_story.Story_steps.game_steps =
+let game_steps ~picture ~log ~log_detail : Plza_story.Steps.game_steps =
   let last = ref None in
   {
     submit = (fun c -> ignore (Effects.submit [ c ] : Wire.batch_done));

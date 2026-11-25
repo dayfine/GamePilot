@@ -34,4 +34,4 @@ let inputs o =
        else []);
     ]
 
-let throw (steps : Story_steps.game_steps) o = steps.submit_batch (inputs o)
+let throw (steps : Steps.game_steps) o = steps.submit_batch (inputs o)

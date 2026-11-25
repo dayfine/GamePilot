@@ -88,24 +88,17 @@ let checkpoint_row (plan : Pokemon_checkpoints.Plan.t) =
     (cell plan.checkpoint.title)
     repeats
 
-(* PLZA's plans are over its own rules (Plza_checkpoints). *)
-let is_plza (p : R.t) = p.game.game_id = "plza"
+(* What a program's rules give its guide (Checkpoint_families): its
+   checkpoints' rows and how to run them ([args]: --program, --from, --to). *)
+type rules_guide = {
+  rows : plan_dir:string -> string list -> (string list, string) result;
+  commands : R.t -> args:string -> string;
+}
 
-let plza_row plans id =
-  Result.map
-    (fun (plan : Plza_checkpoints.Plan.t) ->
-      Printf.sprintf "| %s | %s |" plan.checkpoint.checkpoint_id
-        (cell plan.checkpoint.title))
-    (Plza_series.load_plan ~plan_dir:plans.dir id)
-
-let checkpoint_rows p plans ids =
-  if is_plza p then collect (plza_row plans) ids
-  else Result.map (List.map checkpoint_row) (load plans ids)
-
-let checkpoints p arg =
+let checkpoints ~guide p arg =
   let* plans = plans_of p in
   let* ids = range plans arg in
-  let* rows = checkpoint_rows p plans ids in
+  let* rows = (guide p).rows ~plan_dir:plans.dir ids in
   Ok
     (String.concat "\n"
        ([ "| Checkpoint | What its plan does |"; "|---|---|" ]
@@ -222,35 +215,34 @@ let backend_commands args = function
         script "switch" args;
       ]
 
-(* PLZA runs through gamepilot checkpoints itself (Plza_series). *)
-let plza_commands args =
-  String.concat "\n"
-    [
-      "# the Switch: each checkpoint once, from where the console is";
-      "cd src && opam exec -- dune exec -- gamepilot checkpoints " ^ args
-      ^ " --mode testing --backend switch --serial PORT --capture DEVICE \\";
-      "    --watch";
-    ]
+let grid_commands (p : R.t) ~args =
+  String.concat "\n\n"
+    (List.map
+       (fun b -> String.concat "\n" (backend_commands args b))
+       p.backends)
 
-let checkpoint_commands (p : R.t) ~from_id ~to_id =
-  let args =
-    Printf.sprintf "--program %s --from %s --to %s" p.id from_id to_id
-  in
-  if is_plza p then plza_commands args
-  else
-    String.concat "\n\n"
-      (List.map
-         (fun b -> String.concat "\n" (backend_commands args b))
-         p.backends)
+(* The Pokémon grid rules' guide. *)
+let grid =
+  {
+    rows =
+      (fun ~plan_dir ids ->
+        Result.map (List.map checkpoint_row)
+          (collect (Plan_dir.load_plan ~plan_dir) ids));
+    commands = grid_commands;
+  }
 
-let commands (p : R.t) arg =
+(* gamepilot checkpoints' --program, --from and --to for [ids]. *)
+let program_args (p : R.t) ids =
+  Printf.sprintf "--program %s --from %s --to %s" p.id (List.hd ids) (last ids)
+
+let commands ~guide (p : R.t) arg =
   let body =
     match p.checkpoints with
     | None -> Ok ("cd src && opam exec -- dune exec -- gamepilot run " ^ p.id)
     | Some _ ->
         let* plans = plans_of p in
         let* ids = range plans arg in
-        Ok (checkpoint_commands p ~from_id:(List.hd ids) ~to_id:(last ids))
+        Ok ((guide p).commands p ~args:(program_args p ids))
   in
   Result.map (fun b -> "```sh\n" ^ b ^ "\n```") body
 
@@ -265,14 +257,14 @@ let programs () =
        ([ "| Program | Id | Runs on | What it does |"; "|---|---|---|---|" ]
        @ List.map program_row R.all))
 
-let generate (p : R.t option) (b : Guide_page.block) =
+let generate ~guide (p : R.t option) (b : Guide_page.block) =
   match (b.name, p) with
   | "programs", _ -> programs ()
   | "backends", Some p -> backends p
-  | "checkpoints", Some p -> checkpoints p b.arg
+  | "checkpoints", Some p -> checkpoints ~guide p b.arg
   | "needs", Some p -> needs p b.arg
   | "preflight", Some p -> preflight p b.arg
-  | "commands", Some p -> commands p b.arg
+  | "commands", Some p -> commands ~guide p b.arg
   | ("backends" | "checkpoints" | "needs" | "preflight" | "commands"), None ->
       Error (b.name ^ ": this page is not a program's")
   | name, _ -> Error ("no generated block " ^ name)

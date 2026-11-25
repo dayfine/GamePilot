@@ -1,5 +1,4 @@
-(* Copied verbatim from the fork's ReferenceData/plza-minimap-<name>.json
-   ([plza/lean]): each grid's 16 rows of 16 cells, "rrggbb" each. *)
+(* Copied verbatim from the fork's ReferenceData/plza-minimap-<name>.json: each grid's 16 rows of 16 cells, "rrggbb" each. *)
 
 let grid_03_03_start =
   [

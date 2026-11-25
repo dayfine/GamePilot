@@ -1,5 +1,5 @@
 (* The lock-on name plate and its caught mark (PokemonLZA_CaughtMarkReader.cpp)
-   on the fork's drawn plates (PokemonLZA_Detectors_Tests.cpp, [plza/lean]):
+   on the fork's drawn plates (PokemonLZA_Detectors_Tests.cpp):
    the bar from the frame, the mark from the second read made from it. *)
 
 open Plza_readers
@@ -31,6 +31,9 @@ let cases =
       "synthetic/plate-gender-and-ball-marks" "a plate with the caught mark";
     case "the player's HP bar alone" "synthetic/player-bar-alone" "no plate";
     case "bright grass alone" "synthetic/bright-grass-alone" "no plate";
+    case "03.08's Scatterbug under ZL (not caught)"
+      "lock-plate/en-0308-scatterbug-not-caught-038-360p"
+      "a plate with no caught mark";
     case "03.07's Bunnelby battle: no lock on"
       "alert-eye/en-0307-bunnelby-battle-113-360p" "no plate";
   ]
@@ -52,6 +55,8 @@ let plates =
     ("move-symbols/0303-andi-zl-held-target-5", "a plate at (0.53, 0.49)");
     ("party-bar/party5-slot0-selected", "a plate at (0.54, 0.40)");
     ("tutorial-cards/it-menu-no-card", "a plate at (0.49, 0.37)");
+    ( "lock-plate/en-0308-scatterbug-not-caught-038-360p",
+      "a plate at (0.53, 0.44)" );
     ("synthetic/plate-and-player-bar-on-grass", "a plate at (0.52, 0.49)");
     ("synthetic/plate-gender-and-ball-marks", "a plate at (0.52, 0.49)");
     ("synthetic/plate-gender-mark-only", "a plate at (0.52, 0.49)");
