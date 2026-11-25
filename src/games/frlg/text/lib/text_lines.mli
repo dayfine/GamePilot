@@ -175,7 +175,8 @@ val box : t -> Wire.box
 val pc_menu_row : int -> t
 (** Row [i] of the PC list ("BILL'S PC" on top) and of the storage menu
     (WITHDRAW POKéMON, DEPOSIT POKéMON, ...): pokefirered's menus, measured on
-    console B's captures (CommandLineTests PcScreenReader) and mGBA frames. *)
+    console B's captures (the CommandLineTests of the fork's
+    Inference/Box/PokemonFRLG_PcScreenReader.cpp) and mGBA frames. *)
 
 val pc_mon_menu_row : int -> t
 (** Row [i] (0-4) of a Pokémon's menu on the box screen: STORE, SUMMARY, MARK,

@@ -2,9 +2,8 @@
     (["Your COINS:\n<coins>"], pokefirered item_use.c [FieldUseFunc_CoinCase]),
     digit by digit ({!Frlg_text.Number_reading},
     {!Frlg_text.Text_lines.bag_message_digit}). New for the end checks: the fork
-    buys coins ([run_buy_coins()] in
-    Programs/MailGlitch/PokemonFRLG_MailGlitchActions.cpp) without reading them.
-*)
+    buys coins (Programs/MailGlitch/PokemonFRLG_MailGlitchActions.cpp) without
+    reading them. *)
 
 val max_digits : int
 (** 4: coins stop at 9,999. *)
