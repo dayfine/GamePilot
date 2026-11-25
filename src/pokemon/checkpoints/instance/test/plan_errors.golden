@@ -136,7 +136,7 @@ an item with two counts
 an item with an unknown field
   p.plan.json: checkpoint.metadata.postconditions.items[0].x is not a known field.
 coins not a number or an object
-  p.plan.json: checkpoint.metadata.postconditions.coins. is not a JSON object.
+  p.plan.json: checkpoint.metadata.postconditions.coins is not a number or a JSON object.
 coins with no count
   p.plan.json: checkpoint.metadata.postconditions.coins: give one of exactly, gained, used, at_least.
 coins with an unknown field
