@@ -52,10 +52,12 @@ val walk_only : string -> bool
 
 val make :
   Plza_story.Steps.game_steps ->
-  checkpoint_id:string ->
+  checkpoint:Plza_checkpoints.Plan.checkpoint ->
   reload:(unit -> (unit, Engine_run.Failure.cause) result) ->
   Plza_checkpoints.Game.t
-(** The handlers for one checkpoint's run. *)
+(** The handlers for one checkpoint's run. With a [story_battle] later in the
+    checkpoint, a walk stops on the battle HUD and the run goes on at the battle
+    ({!Battle_jump}). *)
 
 val run_watched :
   ?end_check:(unit -> (unit, Engine_run.Failure.cause) result) ->

@@ -397,28 +397,36 @@ let map_talk c ~y =
           | Some _, None -> text c
           | Some _, Some _ -> party c))
 
-(* 03.02b's battles after Taunie's prompt [t]: her text until two A, the
-   battle HUD until a move; "We're not done" until two A, the card until A,
-   the HUD until a second move; then the map talk. *)
-let taunie_battles c ~t =
-  let y n = C.nth_after c Wire.Y ~after:t n in
-  match (C.nth_after c Wire.A ~after:t 2, y 0, y 1) with
-  | None, _, _ -> text c
-  | Some _, None, _ -> battle c
-  | Some _, Some y0, None -> (
+(* 03.02b's battles from the battle HUD after [after]: the HUD until a move;
+   "We're not done" until two A, the card until A, the HUD until a second
+   move; then the map talk. *)
+let taunie_from_battle c ~after =
+  let y n = C.nth_after c Wire.Y ~after n in
+  match (y 0, y 1) with
+  | None, _ -> battle c
+  | Some y0, None -> (
       match
         (C.nth_after c Wire.A ~after:y0 1, C.nth_after c Wire.A ~after:y0 2)
       with
       | None, _ -> { (text c) with story_dialog = true }
       | Some _, None -> { (look c) with tutorial_card = true }
       | Some _, Some _ -> battle c)
-  | Some _, Some _, Some y1 -> map_talk c ~y:y1
+  | Some _, Some y1 -> map_talk c ~y:y1
+
+(* 03.02b's battles after Taunie's prompt [t]: her text until two A, then
+   the battles. *)
+let taunie_battles c ~t =
+  match C.nth_after c Wire.A ~after:t 2 with
+  | None -> text c
+  | Some _ -> taunie_from_battle c ~after:t
 
 (* 03.02b: the plaza's party bar, the scene's A prompt once the stick was held
    4 s, until A; a black fade 1.5 s, the Smart Rotom card until A, the party
    bar at the arch; Taunie's A prompt once the stick was held 7 s, until A;
-   then her battles. [lost]: no scene prompt. *)
-let quartiere_verde ?(lost = false) c =
+   then her battles. [lost]: no scene prompt. [battle_mid_walk]: her battle
+   starts 2 s into the walk to her (the HUD, no talk), as 03.02b's did on
+   console B (2026-11-19). *)
+let quartiere_verde ?(lost = false) ?(battle_mid_walk = false) c =
   match C.stick_reached c 4000 with
   | Some p when not lost -> (
       match C.nth_after c Wire.A ~after:p 0 with
@@ -426,6 +434,10 @@ let quartiere_verde ?(lost = false) c =
       | Some a when since c a < 1500.0 -> black c
       | Some a when C.nth_after c Wire.A ~after:a 0 = None ->
           { (look c) with tutorial_card = true }
+      | Some _ when battle_mid_walk -> (
+          match C.stick_reached c 6000 with
+          | None -> party c
+          | Some w -> taunie_from_battle c ~after:w)
       | Some _ -> (
           match C.stick_reached c 7000 with
           | None -> party c
@@ -539,7 +551,8 @@ let run checkpoint screen =
     Ok ()
   in
   let game =
-    Plza_autostory.Story_game.make steps ~checkpoint_id:checkpoint ~reload
+    Plza_autostory.Story_game.make steps
+      ~checkpoint:(plan checkpoint).checkpoint ~reload
   in
   (Runner.run game (plan checkpoint).checkpoint, c)
 
@@ -838,7 +851,7 @@ let watched checkpoint screen () =
       reloaded := false;
       let game =
         Plza_autostory.Story_game.make (C.steps c screen)
-          ~checkpoint_id:checkpoint ~reload:(fun () -> Ok ())
+          ~checkpoint:(plan checkpoint).checkpoint ~reload:(fun () -> Ok ())
       in
       let report = Plan_watch.create (plan checkpoint).checkpoint in
       ignore
@@ -1247,6 +1260,71 @@ let cases =
        [PLZA] story_battle: Picking Move: Left\n\
        [PLZA] talk_through_map_screen: the party bar held: back in the \
        overworld";
+    case
+      "03.02b, Taunie's battle mid-walk: the walk stops on the HUD, the run \
+       goes on at the battle (fork PR 725)"
+      (fun () ->
+        let r, c = outcome "03.02b" (quartiere_verde ~battle_mid_walk:true) in
+        String.concat "\n"
+          (r
+          :: List.filter
+               (fun line ->
+                 List.exists
+                   (fun prefix -> String.starts_with ~prefix line)
+                   [
+                     "[PLZA] to_taunie";
+                     "[Event]";
+                     "[Story] 03.02b #3";
+                     "[Story] 03.02b #4";
+                     "[Story] 03.02b #5";
+                     "[PLZA] story_battle: Picking";
+                   ])
+               (C.lines c)))
+      "passed\n\
+       [Story] 03.02b #3 to_taunie: start (on through the arch to Taunie's \"A \
+       Talk\", A on it. not planned: no tile grid in Lumiose)\n\
+       [PLZA] to_taunie: battle HUD showed after 2250 ms of the last leg: \
+       stopping walk.\n\
+       [Event] 03.02b: battle on screen during to_taunie: jumping to \
+       battle_totodile, skipping taunie_battle_start\n\
+       [Story] 03.02b #3 to_taunie: done\n\
+       [Story] 03.02b #4 taunie_battle_start: start (A through her talk and \
+       challenge (no A hint, subtitles without a box) to the battle HUD)\n\
+       [Story] 03.02b #4 taunie_battle_start: done\n\
+       [Story] 03.02b #5 battle_totodile: start (beat Totodile, until \"We're \
+       not done just yet!\")\n\
+       [PLZA] story_battle: Picking Move: Left\n\
+       [Story] 03.02b #5 battle_totodile: done\n\
+       [PLZA] story_battle: Picking Move: Left";
+    case
+      "03.02b's jump, its battles skipped by their skip_if: the next event \
+       runs again"
+      (fun () ->
+        let cp = (plan "03.02b").checkpoint in
+        let ev id = List.find (fun (e : Plan.event) -> e.id = id) cp.events in
+        let lines = ref [] in
+        let jump =
+          Plza_autostory.Battle_jump.make cp ~log:(fun l ->
+              lines := l :: !lines)
+        in
+        let ran id =
+          match
+            Plza_autostory.Battle_jump.run jump (ev id) (fun () ->
+                lines := ("ran " ^ id) :: !lines;
+                Ok ())
+          with
+          | Ok () -> ()
+          | Error _ -> lines := "failed" :: !lines
+        in
+        ignore
+          (Plza_autostory.Battle_jump.after jump (ev "to_taunie")
+             (Error Plza_walk.Battle_stop.battle_on_screen));
+        ran "taunie_battle_start";
+        ran "after_taunie_battle";
+        String.concat "\n" (List.rev !lines))
+      "[Event] 03.02b: battle on screen during to_taunie: jumping to \
+       battle_totodile, skipping taunie_battle_start\n\
+       ran after_taunie_battle";
     case "03.02b lost: no plaza scene prompt"
       (result "03.02b" (quartiere_verde ~lost:true))
       "03.02b event 1 (to_plaza_scene_prompt): walk_no_end: \

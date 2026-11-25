@@ -10,6 +10,7 @@ type t = {
   controls_hint : bool;
   interact_prompt : bool;
   scene_under_way : bool;
+  battle : bool;
   minimap_arrow : float option;
   map_pin : Map_leg.point option;
 }
@@ -27,6 +28,7 @@ let empty ~at_ms =
     controls_hint = false;
     interact_prompt = false;
     scene_under_way = false;
+    battle = false;
     minimap_arrow = None;
     map_pin = None;
   }
@@ -61,6 +63,7 @@ let fields l =
     ("player_can_move", l.player_can_move);
     ("controls_hint", l.controls_hint);
     ("interact_prompt", l.interact_prompt);
+    ("battle", l.battle);
   ]
 
 let set_name (name, on) = if on then Some name else None

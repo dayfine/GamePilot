@@ -18,6 +18,7 @@ type t = {
   scene_under_way : bool;
       (** The scene machine's [scene_under_way]: text, a box, a battle or a
           card, or (with no sign of control) a fade or a moving screen. *)
+  battle : bool;  (** The battle HUD. *)
   minimap_arrow : float option;
       (** The bearing of the minimap's arrow, degrees clockwise from up. *)
   map_pin : Map_leg.point option;  (** The player's pin, with the map open. *)
