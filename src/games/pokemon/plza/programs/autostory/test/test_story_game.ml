@@ -456,6 +456,16 @@ let ladder ?(lost = false) c =
               | Some _ -> party c)))
   | _ -> party c
 
+(* 03.03c: the roof's party bar until the stick was held 3 s; then the south
+   boulevard's text until two A, then the party bar. [lost]: no scene. *)
+let off_the_roof ?(lost = false) c =
+  match C.stick_reached c 3000 with
+  | Some w when not lost -> (
+      match C.nth_after c Wire.A ~after:w 1 with
+      | None -> text c
+      | Some _ -> party c)
+  | _ -> party c
+
 let outcome checkpoint screen =
   let c = C.create () in
   reloaded := false;
@@ -974,6 +984,25 @@ let cases =
       (result "03.03b" (ladder ~lost:true))
       "03.03b event 2 (climb_ladder): ladder_not_found: no Climb Up prompt \
        stepping along the wall";
+    case "03.03c: off the roof into the south boulevard scene"
+      (fun () ->
+        let r, c = outcome "03.03c" off_the_roof in
+        String.concat "\n"
+          (r
+          :: List.filter
+               (fun line ->
+                 List.exists
+                   (fun prefix -> String.starts_with ~prefix line)
+                   [ "[PLZA] off"; "[PLZA scene] done" ])
+               (C.lines c)))
+      "passed\n\
+       [PLZA] off_the_roof: a scene (text waiting for A) took control after \
+       5250 ms of the last leg: the walk stops.\n\
+       [PLZA scene] done on control.";
+    case "03.03c lost: no scene takes the walk"
+      (result "03.03c" (off_the_roof ~lost:true))
+      "03.03c event 1 (off_the_roof): walk_no_scene: off_the_roof: control \
+       still free after 8162 ms of the last leg: no scene took it";
     case "the walk is walked before 03.03, run after"
       (fun () ->
         Printf.sprintf "%b %b"

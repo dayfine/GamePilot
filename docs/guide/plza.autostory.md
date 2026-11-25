@@ -46,9 +46,10 @@ cd src && opam exec -- dune exec -- gamepilot checkpoints --program plza.autosto
 | 03.02b | Battle Taunie |
 | 03.02 | Out of Hotel Z |
 | 03.03b | Up the ladder to the rooftop scene |
+| 03.03c | Off the roof to Station Front |
 | 03.03 | To the rock pile scene |
 
-<!-- plans: 8484067770d7 -->
+<!-- plans: 2dae21486538 -->
 <!-- /generated -->
 
 ## When it stops
@@ -66,8 +67,8 @@ battle is already up. Started in the night alley after Andi (the party bar up, n
 
 ## Known limits
 
-Only 01.00b to 03.03b so far. 01.02's chase, 01.03's walk to Chikorita and the walks of 02.01 to
-03.03b are timed stick legs with no map, so they can miss; the chase then stops on Ryon's
+Only 01.00b to 03.03c so far. 01.02's chase, 01.03's walk to Chikorita and the walks of 02.01 to
+03.03c are timed stick legs with no map, so they can miss; the chase then stops on Ryon's
 A prompt (`scene_ended_in_control`), the walk to Chikorita with `walk_no_end`, and the Battle Zone
 walk with `scene_ended_in_control` when Brigitte's talk never starts. In 02.02, a walk to the
 blocked street that misses fails with `walk_no_end` (no black fade), one to the gate that misses
