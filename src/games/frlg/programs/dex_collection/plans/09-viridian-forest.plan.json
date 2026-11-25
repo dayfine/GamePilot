@@ -2,14 +2,14 @@
   "format": "gamepilot-checkpoint/1",
   "game": "frlg",
   "checkpoint": {
-    "id": "08-route3-east-grass",
-    "title": "From Pewter's nurse: fly to Route 4, catch Route 3's new species in its east grass, back to Route 4's nurse",
+    "id": "09-viridian-forest",
+    "title": "From Indigo Plateau's nurse: fly to Pewter, catch Viridian Forest's five new species, back to Pewter's nurse",
     "start": {
-      "map": "PewterCity_PokemonCenter_1F",
+      "map": "IndigoPlateau_PokemonCenter_1F",
       "tiles": [
         [
-          7,
-          4
+          13,
+          12
         ]
       ],
       "facing": "north"
@@ -23,16 +23,16 @@
         "why": "The Pokedex count before the catches."
       },
       {
-        "id": "out_of_center",
+        "id": "out_of_indigo",
         "kind": "route",
         "action": "run",
         "args": {
           "target": {
-            "map": "PewterCity",
+            "map": "IndigoPlateau_Exterior",
             "tiles": [
               [
-                17,
-                26
+                11,
+                7
               ]
             ],
             "facing": "south"
@@ -41,59 +41,60 @@
         "why": "Out of the Center to fly."
       },
       {
-        "id": "fly_route4",
+        "id": "fly_pewter",
         "kind": "game_action",
         "action": "fly",
         "args": {
-          "town": "Route4",
+          "town": "PewterCity",
           "species": "pidgeot"
         },
-        "why": "Route 4's Center, by Mt. Moon: Route 3's east grass is just south of it, down the ledges."
+        "why": "Pewter City: Route 2 runs south from it to Viridian Forest's north gate."
       },
       {
-        "id": "to_grass",
+        "id": "to_forest",
         "kind": "route",
         "action": "run",
         "args": {
           "target": {
-            "map": "Route3",
+            "map": "ViridianForest",
             "tiles": [
               [
-                74,
+                5,
                 13
               ]
             ],
             "facing": "east"
           }
         },
-        "why": "South into Route 3's east grass, by the youngster who does not battle."
+        "why": "Down Route 2, through the north gate, into the forest's first grass: no trainer sees it."
       },
       {
-        "id": "catch_route3",
+        "id": "catch_forest",
         "kind": "game_action",
         "action": "capture",
         "args": {
           "uncaught": [
-            "nidoran-m",
-            "mankey",
-            "jigglypuff",
-            "nidoran-f"
+            "caterpie",
+            "weedle",
+            "kakuna",
+            "metapod",
+            "pikachu"
           ],
-          "catches": 3,
+          "catches": 5,
           "encounters": 150,
           "balls": 20,
           "ball": "ultra-ball",
           "pace": "east"
         },
-        "why": "Route 3 (FireRed, pret src/data/wild_encounters.json): Nidoran (male) 14%, Mankey and Jigglypuff 10% each, Nidoran (female) 1%, the rest Spearow and Pidgey, Lv 6 to 8."
+        "why": "Viridian Forest (FireRed, pret src/data/wild_encounters.json): Caterpie and Weedle 40% each, Kakuna 10%, Metapod and Pikachu 5%, Lv 3 to 6. Each catches at full HP almost every throw."
       },
       {
         "fragment": "heal_at",
         "args": {
-          "town": "route4"
+          "town": "pewter"
         },
-        "id": "heal_route4",
-        "why": "Back up to Route 4's nurse, where the next checkpoint starts."
+        "id": "heal_pewter",
+        "why": "Back up Route 2 to Pewter's nurse, where the next checkpoint starts."
       },
       {
         "id": "caught_after",
@@ -109,10 +110,10 @@
   },
   "metadata": {
     "phase": "testing",
-    "notes": "Three of the four: Nidoran (female) at 1% is left to chance. The party is full, so the catches go to Bill's PC.",
+    "notes": "The party is full, so the catches go to Bill's PC.",
     "postconditions": {
       "caught": {
-        "gained": 3
+        "gained": 5
       }
     }
   }

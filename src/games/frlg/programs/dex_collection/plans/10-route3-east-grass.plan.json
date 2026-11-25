@@ -2,10 +2,10 @@
   "format": "gamepilot-checkpoint/1",
   "game": "frlg",
   "checkpoint": {
-    "id": "10-power-plant",
-    "title": "From Lavender's nurse: fly to Route 10, surf down to the Power Plant, catch its new species, back to Route 10's nurse",
+    "id": "10-route3-east-grass",
+    "title": "From Pewter's nurse: fly to Route 4, catch Route 3's new species in its east grass, back to Route 4's nurse",
     "start": {
-      "map": "LavenderTown_PokemonCenter_1F",
+      "map": "PewterCity_PokemonCenter_1F",
       "tiles": [
         [
           7,
@@ -28,11 +28,11 @@
         "action": "run",
         "args": {
           "target": {
-            "map": "LavenderTown",
+            "map": "PewterCity",
             "tiles": [
               [
-                6,
-                6
+                17,
+                26
               ]
             ],
             "facing": "south"
@@ -41,59 +41,59 @@
         "why": "Out of the Center to fly."
       },
       {
-        "id": "fly_route10",
+        "id": "fly_route4",
         "kind": "game_action",
         "action": "fly",
         "args": {
-          "town": "Route10",
+          "town": "Route4",
           "species": "pidgeot"
         },
-        "why": "Route 10's Center: the Power Plant's door is down the river east of it."
+        "why": "Route 4's Center, by Mt. Moon: Route 3's east grass is just south of it, down the ledges."
       },
       {
-        "id": "to_power_plant",
+        "id": "to_grass",
         "kind": "route",
         "action": "run",
         "args": {
           "target": {
-            "map": "PowerPlant",
+            "map": "Route3",
             "tiles": [
               [
-                5,
-                36
+                74,
+                13
               ]
             ],
             "facing": "east"
           }
         },
-        "why": "North to the river, Blastoise surfs south down it, and west on foot to the Power Plant's door; two tiles in, the floor is all encounter tiles."
+        "why": "South into Route 3's east grass, by the youngster who does not battle."
       },
       {
-        "id": "catch_power_plant",
+        "id": "catch_route3",
         "kind": "game_action",
         "action": "capture",
         "args": {
           "uncaught": [
-            "magnemite",
-            "pikachu",
-            "magneton",
-            "electabuzz"
+            "nidoran-m",
+            "mankey",
+            "jigglypuff",
+            "nidoran-f"
           ],
           "catches": 3,
           "encounters": 150,
-          "balls": 40,
+          "balls": 20,
           "ball": "ultra-ball",
           "pace": "east"
         },
-        "why": "Power Plant (FireRed, pret src/data/wild_encounters.json): Voltorb and Magnemite 30% each, Pikachu 25%, Magneton 10%, Electabuzz 5%, Lv 22 to 35. Pikachu is caught by then (Viridian Forest), so the three are Magnemite, Magneton and Electabuzz."
+        "why": "Route 3 (FireRed, pret src/data/wild_encounters.json): Nidoran (male) 14%, Mankey and Jigglypuff 10% each, Nidoran (female) 1%, the rest Spearow and Pidgey, Lv 6 to 8."
       },
       {
         "fragment": "heal_at",
         "args": {
-          "town": "route10"
+          "town": "route4"
         },
-        "id": "heal_route10",
-        "why": "Back up the river to Route 10's nurse, where the next checkpoint starts."
+        "id": "heal_route4",
+        "why": "Back up to Route 4's nurse, where the next checkpoint starts."
       },
       {
         "id": "caught_after",
@@ -109,7 +109,7 @@
   },
   "metadata": {
     "phase": "testing",
-    "notes": "Needs Surf (Blastoise). The party is full, so the catches go to Bill's PC.",
+    "notes": "Three of the four: Nidoran (female) at 1% is left to chance. The party is full, so the catches go to Bill's PC.",
     "postconditions": {
       "caught": {
         "gained": 3

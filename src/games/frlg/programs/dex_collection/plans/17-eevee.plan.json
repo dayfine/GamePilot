@@ -2,7 +2,7 @@
   "format": "gamepilot-checkpoint/1",
   "game": "frlg",
   "checkpoint": {
-    "id": "15-eevee",
+    "id": "17-eevee",
     "title": "From Route 4's nurse: fly to Celadon, take the Eevee on the Condominiums' roof, fly to Route 10's nurse",
     "start": {
       "map": "Route4_PokemonCenter_1F",

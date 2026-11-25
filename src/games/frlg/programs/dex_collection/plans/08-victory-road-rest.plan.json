@@ -2,7 +2,7 @@
   "format": "gamepilot-checkpoint/1",
   "game": "frlg",
   "checkpoint": {
-    "id": "06-victory-road-rest",
+    "id": "08-victory-road-rest",
     "title": "Indigo Plateau's nurse: Victory Road 2F until its nine species are caught",
     "start": {
       "map": "IndigoPlateau_PokemonCenter_1F",
@@ -86,7 +86,7 @@
   },
   "metadata": {
     "phase": "testing",
-    "notes": "A round from Indigo Plateau's nurse back to her, two new species a round, until the count holds the Sevii save's nine Victory Road species (16 caught after 03, 19 after 04, 25 with all nine).",
+    "notes": "A round from Indigo Plateau's nurse back to her, two new species a round, until the count holds the Sevii save's nine Victory Road species (16 caught after 04, 19 after 05, 25 with all nine).",
     "postconditions": {
       "caught": {
         "gained": 2

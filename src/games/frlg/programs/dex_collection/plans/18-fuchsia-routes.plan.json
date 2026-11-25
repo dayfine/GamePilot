@@ -2,8 +2,8 @@
   "format": "gamepilot-checkpoint/1",
   "game": "frlg",
   "checkpoint": {
-    "id": "13-vermilion-routes",
-    "title": "From Route 10's nurse: fly to Vermilion, Drowzee in Route 11's grass, Psyduck on Route 6's pond, back to Vermilion's nurse",
+    "id": "18-fuchsia-routes",
+    "title": "From Route 10's nurse: fly to Fuchsia, Venonat and Ditto in Route 15's grass, Doduo and Fearow in Route 18's, fly to Route 10's nurse",
     "start": {
       "map": "Route10_PokemonCenter_1F",
       "tiles": [
@@ -34,90 +34,120 @@
         "why": "Out of the Center to fly."
       },
       {
-        "id": "fly_vermilion",
+        "id": "fly_fuchsia",
         "kind": "game_action",
         "action": "fly",
         "args": {
-          "town": "VermilionCity",
+          "town": "FuchsiaCity",
           "species": "pidgeot"
         },
-        "why": "Vermilion City: Route 11 runs east of it, Route 6 north."
+        "why": "Fuchsia City: Route 15 runs east of it, Route 18 west."
       },
       {
-        "id": "to_route11_grass",
+        "id": "to_route15_grass",
         "kind": "route",
         "action": "run",
         "args": {
           "target": {
-            "map": "Route11",
+            "map": "Route15",
             "tiles": [
               [
                 20,
-                15
+                10
               ]
             ],
             "facing": "east"
           }
         },
-        "why": "East into Route 11's big south grass."
+        "why": "East through Route 15's gate to the first grass past it."
       },
       {
-        "id": "catch_drowzee",
+        "id": "catch_route15",
         "kind": "game_action",
         "action": "capture",
         "args": {
           "uncaught": [
-            "drowzee"
+            "venonat",
+            "ditto"
           ],
-          "catches": 1,
-          "encounters": 60,
-          "balls": 20,
+          "catches": 2,
+          "encounters": 120,
+          "balls": 30,
           "ball": "ultra-ball",
           "pace": "east"
         },
-        "why": "Route 11 (FireRed, pret src/data/wild_encounters.json): Ekans 40%, Spearow 35%, Drowzee 25%, Lv 11 to 17."
+        "why": "Route 15 (FireRed, pret src/data/wild_encounters.json): Oddish 35%, Venonat 30%, Pidgey 20%, Ditto, Pidgeotto and Gloom 5% each, Lv 22 to 30."
       },
       {
-        "id": "to_route6_pond",
+        "id": "to_route18_grass",
         "kind": "route",
         "action": "run",
         "args": {
           "target": {
-            "map": "Route6",
+            "map": "Route18",
             "tiles": [
               [
-                5,
-                24
+                41,
+                14
               ]
             ],
             "facing": "east"
           }
         },
-        "why": "Back west, north into Route 6, and Blastoise surfs onto its pond."
+        "why": "Back west across Fuchsia and through Route 18's gate to its grass."
       },
       {
-        "id": "catch_psyduck",
+        "id": "catch_route18",
         "kind": "game_action",
         "action": "capture",
         "args": {
           "uncaught": [
-            "psyduck"
+            "doduo",
+            "fearow"
           ],
-          "catches": 1,
-          "encounters": 40,
-          "balls": 20,
+          "catches": 2,
+          "encounters": 80,
+          "balls": 30,
           "ball": "ultra-ball",
           "pace": "east"
         },
-        "why": "Route 6's water (FireRed): Psyduck, every encounter."
+        "why": "Route 18 (FireRed): Doduo 35%, Spearow 30%, Raticate and Fearow 15% each, Rattata 5%, Lv 20 to 29."
+      },
+      {
+        "id": "out_to_fly",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "FuchsiaCity",
+            "tiles": [
+              [
+                25,
+                32
+              ]
+            ],
+            "facing": "south"
+          }
+        },
+        "why": "Back to Fuchsia to fly: its Center has no map yet."
+      },
+      {
+        "id": "fly_route10",
+        "kind": "game_action",
+        "action": "fly",
+        "args": {
+          "town": "Route10",
+          "species": "pidgeot"
+        },
+        "why": "Back to Route 10's Center."
       },
       {
         "fragment": "heal_at",
         "args": {
-          "town": "vermilion"
+          "town": "route10"
         },
-        "id": "heal_vermilion",
-        "why": "South to Vermilion's nurse, where the next checkpoint starts."
+        "id": "heal_route10",
+        "why": "At the nurse, where the next checkpoint starts."
       },
       {
         "id": "caught_after",
@@ -133,10 +163,10 @@
   },
   "metadata": {
     "phase": "testing",
-    "notes": "Needs Surf (Blastoise). The party is full, so the catches go to Bill's PC.",
+    "notes": "The party is full, so the catches go to Bill's PC.",
     "postconditions": {
       "caught": {
-        "gained": 2
+        "gained": 4
       }
     }
   }

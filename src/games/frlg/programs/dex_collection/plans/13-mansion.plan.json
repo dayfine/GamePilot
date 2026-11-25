@@ -2,7 +2,7 @@
   "format": "gamepilot-checkpoint/1",
   "game": "frlg",
   "checkpoint": {
-    "id": "11-mansion",
+    "id": "13-mansion",
     "title": "From Route 10's nurse: fly to Cinnabar, catch the Pokemon Mansion's new species on 1F, fly back to Route 10's nurse",
     "start": {
       "map": "Route10_PokemonCenter_1F",

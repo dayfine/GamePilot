@@ -1,0 +1,125 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "frlg",
+  "checkpoint": {
+    "id": "06-retro-mail",
+    "title": "From Indigo Plateau's nurse: fly to Celadon, 80 Retro Mail at the Dept. Store's 4F, fly back to Indigo's nurse",
+    "start": {
+      "map": "IndigoPlateau_PokemonCenter_1F",
+      "tiles": [
+        [
+          13,
+          12
+        ]
+      ],
+      "facing": "north"
+    },
+    "events": [
+      {
+        "id": "out_of_indigo",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "IndigoPlateau_Exterior",
+            "tiles": [
+              [
+                11,
+                7
+              ]
+            ],
+            "facing": "south"
+          }
+        },
+        "why": "Out of the Center to fly."
+      },
+      {
+        "id": "fly_celadon",
+        "kind": "game_action",
+        "action": "fly",
+        "args": {
+          "town": "CeladonCity",
+          "species": "pidgeot"
+        },
+        "why": "Celadon's Dept. Store sells Retro Mail on 4F."
+      },
+      {
+        "id": "to_4f_clerk",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "place": "celadon_dept_store_4f_clerk"
+          }
+        },
+        "why": "Up the lift to face the 4F clerk across the counter."
+      },
+      {
+        "id": "buy_retro_mail",
+        "kind": "game_action",
+        "action": "mart",
+        "args": {
+          "map": "CeladonCity_DepartmentStore_4F",
+          "items": [
+            {
+              "item": "retro-mail",
+              "quantity": 50
+            },
+            {
+              "item": "retro-mail",
+              "quantity": 30
+            }
+          ]
+        },
+        "why": "80 Retro Mail ($4,000), one per Ultra Ball the next checkpoint copies; the quantity box stops at 99."
+      },
+      {
+        "id": "out_of_dept_store",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "place": "celadon_dept_store_west_door_outside"
+          }
+        },
+        "why": "Down the lift and out by the west door, to fly."
+      },
+      {
+        "id": "fly_indigo",
+        "kind": "game_action",
+        "action": "fly",
+        "args": {
+          "town": "IndigoPlateau",
+          "species": "pidgeot"
+        },
+        "why": "Back to Indigo Plateau, the Victory Road round's Center."
+      },
+      {
+        "fragment": "heal_at",
+        "args": {
+          "town": "indigo_plateau"
+        },
+        "id": "heal_indigo",
+        "why": "At the nurse, where the next checkpoint starts."
+      }
+    ]
+  },
+  "execution": {
+    "menu": "full"
+  },
+  "metadata": {
+    "phase": "testing",
+    "notes": "Victory Road's species take about 7 Ultra Balls each at full HP (Onix about 9): 03's 40 run short.",
+    "postconditions": {
+      "items": [
+        {
+          "item": "retro-mail",
+          "gained": 80
+        }
+      ],
+      "money": {
+        "spent": 4000
+      }
+    }
+  }
+}

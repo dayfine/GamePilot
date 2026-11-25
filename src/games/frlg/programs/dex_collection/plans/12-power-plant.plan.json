@@ -2,14 +2,14 @@
   "format": "gamepilot-checkpoint/1",
   "game": "frlg",
   "checkpoint": {
-    "id": "07-viridian-forest",
-    "title": "From Indigo Plateau's nurse: fly to Pewter, catch Viridian Forest's five new species, back to Pewter's nurse",
+    "id": "12-power-plant",
+    "title": "From Lavender's nurse: fly to Route 10, surf down to the Power Plant, catch its new species, back to Route 10's nurse",
     "start": {
-      "map": "IndigoPlateau_PokemonCenter_1F",
+      "map": "LavenderTown_PokemonCenter_1F",
       "tiles": [
         [
-          13,
-          12
+          7,
+          4
         ]
       ],
       "facing": "north"
@@ -23,16 +23,16 @@
         "why": "The Pokedex count before the catches."
       },
       {
-        "id": "out_of_indigo",
+        "id": "out_of_center",
         "kind": "route",
         "action": "run",
         "args": {
           "target": {
-            "map": "IndigoPlateau_Exterior",
+            "map": "LavenderTown",
             "tiles": [
               [
-                11,
-                7
+                6,
+                6
               ]
             ],
             "facing": "south"
@@ -41,60 +41,59 @@
         "why": "Out of the Center to fly."
       },
       {
-        "id": "fly_pewter",
+        "id": "fly_route10",
         "kind": "game_action",
         "action": "fly",
         "args": {
-          "town": "PewterCity",
+          "town": "Route10",
           "species": "pidgeot"
         },
-        "why": "Pewter City: Route 2 runs south from it to Viridian Forest's north gate."
+        "why": "Route 10's Center: the Power Plant's door is down the river east of it."
       },
       {
-        "id": "to_forest",
+        "id": "to_power_plant",
         "kind": "route",
         "action": "run",
         "args": {
           "target": {
-            "map": "ViridianForest",
+            "map": "PowerPlant",
             "tiles": [
               [
                 5,
-                13
+                36
               ]
             ],
             "facing": "east"
           }
         },
-        "why": "Down Route 2, through the north gate, into the forest's first grass: no trainer sees it."
+        "why": "North to the river, Blastoise surfs south down it, and west on foot to the Power Plant's door; two tiles in, the floor is all encounter tiles."
       },
       {
-        "id": "catch_forest",
+        "id": "catch_power_plant",
         "kind": "game_action",
         "action": "capture",
         "args": {
           "uncaught": [
-            "caterpie",
-            "weedle",
-            "kakuna",
-            "metapod",
-            "pikachu"
+            "magnemite",
+            "pikachu",
+            "magneton",
+            "electabuzz"
           ],
-          "catches": 5,
+          "catches": 3,
           "encounters": 150,
-          "balls": 20,
+          "balls": 40,
           "ball": "ultra-ball",
           "pace": "east"
         },
-        "why": "Viridian Forest (FireRed, pret src/data/wild_encounters.json): Caterpie and Weedle 40% each, Kakuna 10%, Metapod and Pikachu 5%, Lv 3 to 6. Each catches at full HP almost every throw."
+        "why": "Power Plant (FireRed, pret src/data/wild_encounters.json): Voltorb and Magnemite 30% each, Pikachu 25%, Magneton 10%, Electabuzz 5%, Lv 22 to 35. Pikachu is caught by then (Viridian Forest), so the three are Magnemite, Magneton and Electabuzz."
       },
       {
         "fragment": "heal_at",
         "args": {
-          "town": "pewter"
+          "town": "route10"
         },
-        "id": "heal_pewter",
-        "why": "Back up Route 2 to Pewter's nurse, where the next checkpoint starts."
+        "id": "heal_route10",
+        "why": "Back up the river to Route 10's nurse, where the next checkpoint starts."
       },
       {
         "id": "caught_after",
@@ -110,10 +109,10 @@
   },
   "metadata": {
     "phase": "testing",
-    "notes": "The party is full, so the catches go to Bill's PC.",
+    "notes": "Needs Surf (Blastoise). The party is full, so the catches go to Bill's PC.",
     "postconditions": {
       "caught": {
-        "gained": 5
+        "gained": 3
       }
     }
   }

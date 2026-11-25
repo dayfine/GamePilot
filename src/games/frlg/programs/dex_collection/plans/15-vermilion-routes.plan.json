@@ -2,10 +2,10 @@
   "format": "gamepilot-checkpoint/1",
   "game": "frlg",
   "checkpoint": {
-    "id": "09-route8-grass",
-    "title": "From Route 4's nurse: fly to Lavender, cut into Route 8's grass, catch Meowth and Growlithe, back to Lavender's nurse",
+    "id": "15-vermilion-routes",
+    "title": "From Route 10's nurse: fly to Vermilion, Drowzee in Route 11's grass, Psyduck on Route 6's pond, back to Vermilion's nurse",
     "start": {
-      "map": "Route4_PokemonCenter_1F",
+      "map": "Route10_PokemonCenter_1F",
       "tiles": [
         [
           7,
@@ -28,107 +28,96 @@
         "action": "run",
         "args": {
           "target": {
-            "map": "Route4",
-            "tiles": [
-              [
-                12,
-                6
-              ]
-            ],
-            "facing": "south"
+            "place": "route10_center_outside"
           }
         },
         "why": "Out of the Center to fly."
       },
       {
-        "id": "fly_lavender",
+        "id": "fly_vermilion",
         "kind": "game_action",
         "action": "fly",
         "args": {
-          "town": "LavenderTown",
+          "town": "VermilionCity",
           "species": "pidgeot"
         },
-        "why": "Lavender Town: Route 8 runs west from it."
+        "why": "Vermilion City: Route 11 runs east of it, Route 6 north."
       },
       {
-        "id": "to_cut_tree",
+        "id": "to_route11_grass",
         "kind": "route",
         "action": "run",
         "args": {
           "target": {
-            "map": "Route8",
+            "map": "Route11",
             "tiles": [
               [
-                48,
-                12
-              ]
-            ],
-            "facing": "west"
-          }
-        },
-        "why": "West along Route 8 to the tree that closes its grass on the east."
-      },
-      {
-        "id": "cut_tree",
-        "kind": "game_action",
-        "action": "cut_tree",
-        "args": {
-          "direction": "west"
-        },
-        "declared_after": {
-          "map": "Route8",
-          "tiles": [
-            [
-              47,
-              12
-            ]
-          ],
-          "facing": "west"
-        },
-        "why": "Gloom cuts the tree at (47, 12)."
-      },
-      {
-        "id": "to_grass",
-        "kind": "route",
-        "action": "run",
-        "args": {
-          "target": {
-            "map": "Route8",
-            "tiles": [
-              [
-                40,
-                14
+                20,
+                15
               ]
             ],
             "facing": "east"
           }
         },
-        "why": "Into the grass, out of every trainer's sight."
+        "why": "East into Route 11's big south grass."
       },
       {
-        "id": "catch_route8",
+        "id": "catch_drowzee",
         "kind": "game_action",
         "action": "capture",
         "args": {
           "uncaught": [
-            "meowth",
-            "growlithe"
+            "drowzee"
           ],
-          "catches": 2,
-          "encounters": 120,
+          "catches": 1,
+          "encounters": 60,
           "balls": 20,
           "ball": "ultra-ball",
           "pace": "east"
         },
-        "why": "Route 8 (FireRed, pret src/data/wild_encounters.json): Meowth 30%, Growlithe 20%, Pidgey 30% and Ekans 20%, Lv 15 to 20."
+        "why": "Route 11 (FireRed, pret src/data/wild_encounters.json): Ekans 40%, Spearow 35%, Drowzee 25%, Lv 11 to 17."
+      },
+      {
+        "id": "to_route6_pond",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "Route6",
+            "tiles": [
+              [
+                5,
+                24
+              ]
+            ],
+            "facing": "east"
+          }
+        },
+        "why": "Back west, north into Route 6, and Blastoise surfs onto its pond."
+      },
+      {
+        "id": "catch_psyduck",
+        "kind": "game_action",
+        "action": "capture",
+        "args": {
+          "uncaught": [
+            "psyduck"
+          ],
+          "catches": 1,
+          "encounters": 40,
+          "balls": 20,
+          "ball": "ultra-ball",
+          "pace": "east"
+        },
+        "why": "Route 6's water (FireRed): Psyduck, every encounter."
       },
       {
         "fragment": "heal_at",
         "args": {
-          "town": "lavender"
+          "town": "vermilion"
         },
-        "id": "heal_lavender",
-        "why": "Back east to Lavender's nurse, where the next checkpoint starts."
+        "id": "heal_vermilion",
+        "why": "South to Vermilion's nurse, where the next checkpoint starts."
       },
       {
         "id": "caught_after",
@@ -144,7 +133,7 @@
   },
   "metadata": {
     "phase": "testing",
-    "notes": "The tree grows back once the player leaves Route 8. The party is full, so the catches go to Bill's PC.",
+    "notes": "Needs Surf (Blastoise). The party is full, so the catches go to Bill's PC.",
     "postconditions": {
       "caught": {
         "gained": 2

@@ -2,7 +2,7 @@
   "format": "gamepilot-checkpoint/1",
   "game": "frlg",
   "checkpoint": {
-    "id": "12-route10-river",
+    "id": "14-route10-river",
     "title": "Route 10's nurse: surf on the river east of the Center, catch a Tentacool, back to the nurse",
     "start": {
       "map": "Route10_PokemonCenter_1F",

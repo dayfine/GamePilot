@@ -2,7 +2,7 @@
   "format": "gamepilot-checkpoint/1",
   "game": "frlg",
   "checkpoint": {
-    "id": "14-magikarp-salesman",
+    "id": "16-magikarp-salesman",
     "title": "From Vermilion's nurse: fly to Route 4, buy the salesman's Magikarp, Route 4's nurse",
     "start": {
       "map": "VermilionCity_PokemonCenter_1F",

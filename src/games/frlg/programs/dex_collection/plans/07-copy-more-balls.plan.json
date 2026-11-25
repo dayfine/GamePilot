@@ -1,0 +1,118 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "frlg",
+  "checkpoint": {
+    "id": "07-copy-more-balls",
+    "title": "Indigo Plateau's nurse: the Mail Glitch copies 80 more Ultra Balls",
+    "start": {
+      "map": "IndigoPlateau_PokemonCenter_1F",
+      "tiles": [
+        [
+          13,
+          12
+        ]
+      ],
+      "facing": "north"
+    },
+    "events": [
+      {
+        "id": "mimien_to_slot1",
+        "kind": "game_action",
+        "action": "party_swap",
+        "args": {
+          "species": "mr-mime",
+          "target_slot": 1
+        },
+        "why": "The duplication copies what party slot 1 holds: MIMIEN, still holding 03's Ultra Ball."
+      },
+      {
+        "id": "check_marks_before",
+        "kind": "game_action",
+        "action": "check_party_marks",
+        "args": {
+          "marks": [
+            "held_item",
+            "mail",
+            "mail",
+            "mail",
+            "mail",
+            "mail"
+          ]
+        },
+        "why": "The glitch's mail records are intact."
+      },
+      {
+        "id": "retro_mail_to_top",
+        "kind": "game_action",
+        "action": "move_item_to_top",
+        "args": {
+          "item": "retro-mail"
+        },
+        "why": "duplicate_item gives the top row's Retro Mail."
+      },
+      {
+        "id": "duplicate_ultra_ball",
+        "kind": "game_action",
+        "action": "duplicate_item",
+        "args": {
+          "species": "mr-mime",
+          "item": "ultra-ball",
+          "count": 80,
+          "word": "ABRA"
+        },
+        "why": "80 Ultra Balls, one Retro Mail each, for the catches to come."
+      },
+      {
+        "id": "check_marks_after",
+        "kind": "game_action",
+        "action": "check_party_marks",
+        "args": {
+          "marks": [
+            "held_item",
+            "mail",
+            "mail",
+            "mail",
+            "mail",
+            "mail"
+          ]
+        },
+        "why": "The glitch's mail records are intact after the rounds."
+      },
+      {
+        "id": "blastoise_to_slot1",
+        "kind": "game_action",
+        "action": "party_swap",
+        "args": {
+          "species": "blastoise",
+          "target_slot": 1
+        },
+        "why": "Blastoise leads again for the catches."
+      }
+    ]
+  },
+  "execution": {
+    "menu": "full"
+  },
+  "metadata": {
+    "phase": "testing",
+    "notes": "Needs at least 82 Retro Mail (06's 80 and what 03 left) and MIMIEN holding an Ultra Ball.",
+    "postconditions": {
+      "items": [
+        {
+          "item": "ultra-ball",
+          "gained": 80
+        }
+      ],
+      "party_slots": [
+        {
+          "slot": 1,
+          "species": "blastoise"
+        },
+        {
+          "slot": 2,
+          "species": "mr-mime"
+        }
+      ]
+    }
+  }
+}
