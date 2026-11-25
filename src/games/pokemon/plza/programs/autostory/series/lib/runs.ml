@@ -276,8 +276,8 @@ let switch_only : Live_run.Daemon_process.backend -> _ = function
 
 (* The checkpoints from --from to --to, in run order. *)
 let selected ~plan_dir (f : Flags.t) =
-  let* from_id = Checkpoints_flags.required "--from" f.from_id in
-  let* to_id = Checkpoints_flags.required "--to" f.to_id in
+  let* from_id = Run_flags.required "--from" f.from_id in
+  let* to_id = Run_flags.required "--to" f.to_id in
   let* ids =
     Engine_series.Plan_folder.checkpoint_ids ~compare:checkpoint_order plan_dir
   in
@@ -288,7 +288,7 @@ let run_series ~program ~viewport plan_dir args =
   let* f = Flags.parse args in
   let* () = Flags.takes f in
   let* from_id, to_id, ids = selected ~plan_dir f in
-  let* backend = Checkpoints_flags.daemon_backend f Checkpoint_trials.Testing in
+  let* backend = Run_flags.daemon_backend f Checkpoint_trials.Testing in
   let* () = switch_only backend in
   let* viewport = viewport in
   let* policy =

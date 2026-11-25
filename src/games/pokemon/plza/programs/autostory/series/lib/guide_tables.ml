@@ -19,7 +19,7 @@ let commands ~args =
   String.concat "\n"
     [
       "# the Switch: each checkpoint once, from where the console is";
-      "cd src && opam exec -- dune exec -- gamepilot checkpoints " ^ args
+      "cd src && opam exec -- dune exec -- gamepilot run " ^ args
       ^ " --mode testing --backend switch --serial PORT --capture DEVICE \\";
       "    --watch";
     ]

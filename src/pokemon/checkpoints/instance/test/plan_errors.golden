@@ -56,7 +56,7 @@ answer not true or false
 == the Pokémon actions
 new_game with an arg
   p.plan.json: checkpoint.events[0].args.name is not a known field.
-options with an arg
+game_settings with an arg
   p.plan.json: checkpoint.events[0].args.fast is not a known field.
 heal with an arg
   p.plan.json: checkpoint.events[0].args.where is not a known field.

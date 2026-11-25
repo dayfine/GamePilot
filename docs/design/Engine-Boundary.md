@@ -37,7 +37,7 @@ which part is which. `Grid_maps` is `src/pokemon/navigation/grid/maps`.
 
 | File | | What ties it |
 |---|---|---|
-| `plan.mli` | mixed | A: `event` (id, way, why, `skip_if`, `once_per_save`), `checkpoint`, `t` (game, execution, metadata, retries, repeat), `count`, `money`, `Talk`, `Answer`, `Scene`, `Save`, `Named_action`. G: `leg`, `route`, `Route`, `Ready`, `Legs`, `Step` (`Grid_maps.Direction`). P: `party`, `slot`, `knows`, `level`, `marks`, `coins`, and the built-ins `Battle`, `Train`, `Heal`, `Shop`, `New_game`, `Options` as FireRed runs them |
+| `plan.mli` | mixed | A: `event` (id, way, why, `skip_if`, `once_per_save`), `checkpoint`, `t` (game, execution, metadata, retries, repeat), `count`, `money`, `Talk`, `Answer`, `Scene`, `Save`, `Named_action`. G: `leg`, `route`, `Route`, `Ready`, `Legs`, `Step` (`Grid_maps.Direction`). P: `party`, `slot`, `knows`, `level`, `marks`, `coins`, and the built-ins `Battle`, `Train`, `Heal`, `Shop`, `New_game`, `Game_settings` as FireRed runs them |
 | `pose.ml` | mixed | G: `grid` (map, tiles, facing), `observed` (map, tile), `matches`. A: `zone` (place, spot, heading), already decoded and never used |
 | `plan_decode.ml` | mixed | A: format names, strictness, unique ids, the event loop. G and P: the kind table and its args, grid poses |
 | `plan_fields.ml` | mixed | A: field readers. G: `grid_pose`; P: `item` |

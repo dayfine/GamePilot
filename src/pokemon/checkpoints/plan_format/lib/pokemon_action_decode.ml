@@ -55,7 +55,7 @@ let no_args kind ~where:_ _ = kind
 let kinds =
   [
     ("new_game", [], no_args New_game);
-    ("options", [], no_args Options);
+    ("game_settings", [], no_args Game_settings);
     ("heal", [], no_args Heal);
     ("route", [ "target"; "fight_wild"; "fight_trainers" ], route);
     ("ready", [ "target" ], ready);

@@ -16,9 +16,10 @@ let wanted ~species ~tid_xor_sid (e : Wild_encounter.result) =
   Wild_encounter.species_matches ~observed:species ~candidate:e.species
   && Pokemon_generation.shiny_type_of_pid e.pokemon.pid ~tid_xor_sid <> Normal
 
-let timed model ~table_delay_ms ~seed (state : Rng_state.t) encounter =
+let timed model calibrations ~table_delay_ms ~seed (state : Rng_state.t)
+    encounter =
   Rng_timings.sweet_scent model ~seed_delay_ms:table_delay_ms
-    ~advances:state.advance ~use_teachy_tv:false Rng_timings.no_calibrations
+    ~advances:state.advance ~use_teachy_tv:false calibrations
   |> Result.to_option
   |> Option.map (fun timings ->
          { seed; table_delay_ms; advance = state.advance; encounter; timings })
@@ -29,25 +30,25 @@ let sooner a b =
   | Some x, Some y -> if total_ms y < total_ms x then b else a
 
 (* The soonest hit of one seed: the first wanted advance whose timings pass. *)
-let first_hit model slots ~species ~tid_xor_sid ~max_advance ~table_delay_ms
-    ~seed ~min_advance =
+let first_hit model calibrations slots ~species ~tid_xor_sid ~max_advance
+    ~table_delay_ms ~seed ~min_advance =
   let rec walk (state : Rng_state.t) =
     if state.advance > max_advance then None
     else
       let e = Wild_encounter.pokemon_of_state state slots ~super_rod:false in
       let hit =
         if wanted ~species ~tid_xor_sid e then
-          timed model ~table_delay_ms ~seed state e
+          timed model calibrations ~table_delay_ms ~seed state e
         else None
       in
       if Option.is_some hit then hit else walk (Rng_state.next state)
   in
   walk (Rng_state.of_seed ~seed ~advance:min_advance Method1)
 
-let find model ~delays ~seeds slots ~species ~tid_xor_sid ~min_advance
-    ~max_advance =
+let find ?(calibrations = Rng_timings.no_calibrations) model ~delays ~seeds
+    slots ~species ~tid_xor_sid ~min_advance ~max_advance =
   let row i =
-    first_hit model slots ~species ~tid_xor_sid ~max_advance
+    first_hit model calibrations slots ~species ~tid_xor_sid ~max_advance
       ~table_delay_ms:delays.(i) ~seed:seeds.(i) ~min_advance
   in
   let rows = min (Array.length delays) (Array.length seeds) in

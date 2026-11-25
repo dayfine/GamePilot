@@ -1,6 +1,6 @@
-type t = unit Checkpoints_flags.flags
+type t = unit Run_flags.flags
 
-let no_game_flags : unit Checkpoints_flags.game_flags =
+let no_game_flags : unit Run_flags.game_flags =
   {
     game_defaults = ();
     game_switch = (fun () _ -> None);
@@ -8,9 +8,7 @@ let no_game_flags : unit Checkpoints_flags.game_flags =
   }
 
 let parse args =
-  Checkpoints_flags.parse no_game_flags
-    (Checkpoints_flags.defaults no_game_flags)
-    args
+  Run_flags.parse no_game_flags (Run_flags.defaults no_game_flags) args
 
 let takes (f : t) =
   let refused =
