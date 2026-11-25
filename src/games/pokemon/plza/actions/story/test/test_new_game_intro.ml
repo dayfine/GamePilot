@@ -2,7 +2,7 @@
    the language list (the D-pad moves its highlight), the look picker (no
    highlight until the first tilt, which lands on a look of the console's
    choosing; each tilt moves it after), the name keyboard (the D-pad moves its
-   cursor round twelve columns, A types, LClick shifts the next key), and +
+   cursor round twelve columns, A types, LStick shifts the next key), and +
    to Confirm Choices (a Chinese keyboard takes one + to accept the text
    first). Each case prints how the run ended and what the game was given.
    Also the choices refused before any press (New_game_choices.problem, the
@@ -70,7 +70,7 @@ let on_language k entry b =
 
 let on_keyboard k b =
   match b with
-  | Wire.LClick -> k.shift <- true
+  | Wire.LStick -> k.shift <- true
   | Wire.A when k.col < ring - 1 ->
       let ch = layout.(k.row).[k.col] in
       k.text <-

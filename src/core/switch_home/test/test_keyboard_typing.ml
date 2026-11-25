@@ -1,7 +1,7 @@
 (* The name typer (Keyboard_typing): the moves from key to key as the fork's
    keyboard_get_path makes them (rows first, then the short way round the
    twelve columns, wrapping at the sides), and names typed on a scripted
-   keyboard: upper case with Shift (LClick) first, the cursor read before each
+   keyboard: upper case with Shift (LStick) first, the cursor read before each
    key, a dropped move corrected on the next read, a cursor left on the right
    column (which does not read) failing after ten tries, a press the field
    does not take failing, and a character with no key refused before any
@@ -51,7 +51,7 @@ let move k = function
   | _ -> ()
 
 let key_press k = function
-  | Wire.LClick -> k.shift <- true
+  | Wire.LStick -> k.shift <- true
   | Wire.A when k.col < ring - 1 && not k.dead ->
       let ch = layout.(k.row).[k.col] in
       k.text <-
@@ -105,13 +105,13 @@ let () =
       case "the same key: no move" (path 'k' 'K') "";
       case "Kosmos from 1: Shift for K only" (typed "Kosmos")
         "ok; field \"Kosmos\"; pressed Down Down Left Left Left Left Left \
-         LClick A Up Right A Down Right Right Right Right Right A Down Right \
+         LStick A Up Right A Down Right Right Right Right Right A Down Right \
          Right Right Right Right A Up Up Right Right A Down Right Right Right \
          Right Right A";
       case "Kosmos with two moves dropped: read and moved again"
         (typed ~drop:2 "Kosmos")
         "ok; field \"Kosmos\"; pressed Down Down Left Left Left Left Left Down \
-         Down LClick A Up Right A Down Right Right Right Right Right A Down \
+         Down LStick A Up Right A Down Right Right Right Right Right A Down \
          Right Right Right Right Right A Up Up Right Right A Down Right Right \
          Right Right Right A";
       case "a1-/:',.?! from 1" (typed "a1-/:',.?!")

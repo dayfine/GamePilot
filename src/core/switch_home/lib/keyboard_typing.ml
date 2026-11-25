@@ -132,7 +132,7 @@ let is_upper ch = ch >= 'A' && ch <= 'Z'
 let press_key steps ch =
   let before = steps.read_text_pixels () in
   let shift =
-    if is_upper ch then [ press Wire.LClick shift_release_ms ] else []
+    if is_upper ch then [ press Wire.LStick shift_release_ms ] else []
   in
   steps.submit (shift @ [ press Wire.A key_release_ms ]);
   Result.map_error
