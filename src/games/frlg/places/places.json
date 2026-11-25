@@ -74,11 +74,23 @@
       "stand": [7, 4],
       "facing": "north"
     },
+    "one_island_harbor_sailor": {
+      "map": "OneIsland_Harbor",
+      "object": {"npc": "OneIsland_Harbor_EventScript_Sailor"},
+      "stand": [8, 5],
+      "facing": "south"
+    },
     "route6_hidden_rare_candy": {
       "map": "Route6",
       "object": {"hidden_item": "FLAG_HIDDEN_ITEM_ROUTE6_RARE_CANDY"},
       "stand": [19, 6],
       "facing": "north"
+    },
+    "two_island_game_corner_outside": {
+      "map": "TwoIsland",
+      "object": {"warp": "warp_0", "to_map": "TwoIsland_JoyfulGameCorner"},
+      "stand": [39, 10],
+      "facing": "east"
     }
   },
   "towns": {

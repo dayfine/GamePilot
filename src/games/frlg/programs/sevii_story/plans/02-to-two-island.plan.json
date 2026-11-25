@@ -1,0 +1,66 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "frlg",
+  "execution": {
+    "menu": "full"
+  },
+  "metadata": {
+    "phase": "testing",
+    "notes": "Celio's scene ends with Bill's favor: take the Meteorite to the man who runs Two Island's Game Corner (pret OneIsland_PokemonCenter_1F_Text_CanYouDeliverThisMeteoritePlayer). Out of One Island's Center, south to the harbor, and the Seagallop with the Tri-Pass: before the trip back to Cinnabar with Bill the sailor offers TWO ISLAND, THREE ISLAND and EXIT (pret EventScript_ChooseDestFromOneIsland, MULTICHOICE_ISLAND_23). The ship lands the player at Two Island's harbor (8, 5) (pret sSeagallopSpawnLocations); then north into town, to the Joyful Game Corner's door. Its map is not in PokemonSimulation, so this checkpoint ends outside it; entering starts the Game Corner owner's scene (pret TwoIsland_JoyfulGameCorner_EventScript_HelpFindLostelleScene).",
+    "postconditions": {
+      "items": [
+        {
+          "item": "meteorite",
+          "at_least": 1
+        }
+      ],
+      "position": {
+        "map": "TwoIsland",
+        "tiles": [
+          [39, 10]
+        ],
+        "facing": "east"
+      }
+    }
+  },
+  "checkpoint": {
+    "id": "02-to-two-island",
+    "title": "One Island's harbor: the Seagallop to Two Island, to the Joyful Game Corner's door",
+    "start": {
+      "map": "OneIsland_PokemonCenter_1F",
+      "tiles": [
+        [14, 7]
+      ],
+      "facing": "north"
+    },
+    "events": [
+      {
+        "id": "to_harbor_sailor",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {"place": "one_island_harbor_sailor"}
+        },
+        "why": "Out of the Center and south through town to the harbor, above the sailor (8, 6)."
+      },
+      {
+        "id": "sail_two_island",
+        "kind": "game_action",
+        "action": "ferry",
+        "args": {
+          "to": "TwoIsland"
+        },
+        "why": "The sailor's list: TWO ISLAND, then the Seagallop's crossing to Two Island's harbor."
+      },
+      {
+        "id": "to_game_corner",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {"place": "two_island_game_corner_outside"}
+        },
+        "why": "Up the harbor's stairs into Two Island, east below the Joyful Game Corner's door (39, 9), facing the sign east of it: a press north there walks in (pret TryDoorWarp takes the pressed direction, not the faced one)."
+      }
+    ]
+  }
+}
