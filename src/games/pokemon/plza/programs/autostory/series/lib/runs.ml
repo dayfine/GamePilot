@@ -70,6 +70,13 @@ let start ~log ~picture ~reload (plan : P.Plan.t) =
   | true, None -> Error (unreachable plan)
   | true, Some _ -> back_to_autosave ~log ~picture
 
+(* 01.00a's new game, with PLZA's HOME title uploaded for its launch. *)
+let new_game ~log ~picture choices =
+  match Templates.upload_home_title () with
+  | Error e -> Error (Failure.cause ~repeats:true "assets" e)
+  | Ok home_title ->
+      Story.Live_intro_screen.run ~picture ~log ~home_title choices
+
 let run_checkpoint ~log ~picture ~reload report (plan : P.Plan.t) =
   let* () = start ~log ~picture ~reload plan in
   let steps =
@@ -86,7 +93,7 @@ let run_checkpoint ~log ~picture ~reload report (plan : P.Plan.t) =
   in
   let game =
     Story.Story_game.make steps ~checkpoint:plan.checkpoint
-      ~new_game:(Story.Live_intro_screen.run ~picture ~log)
+      ~new_game:(new_game ~log ~picture)
       ~reload:(reload_cause ~log ~picture)
   in
   let end_check () =

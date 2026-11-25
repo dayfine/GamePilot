@@ -6,6 +6,7 @@ type switch_home = {
   title : string;
   home_tile : Switch_home.Home_screen.tile_color;
   lab_panel : string;
+  title_template : string option;
 }
 
 type game = {
@@ -53,18 +54,27 @@ let frlg =
           title = "FireRed";
           home_tile = fire_red_tile;
           lab_panel = "PokemonFRLG:AutoStory";
+          title_template = None;
         };
   }
 
 (* plza's icon is cut from console B's capture of that page
-   (core/switch_home/test/images/delete-save/za-page-delete-save-data-for-user.png). *)
+   (core/switch_home/test/images/delete-save/za-page-delete-save-data-for-user.png);
+   its HOME tile, as 01.00a's launch finds it (Plza_readers.Switch_home_tile). *)
 let plza =
   {
     game_id = "plza";
     game_name = "Pokémon Legends: Z-A";
     delete_save_icons =
       [ ("plza", "src/games/pokemon/plza/assets/delete-save-icon.png") ];
-    switch_home = None;
+    switch_home =
+      Some
+        {
+          title = "Pokémon Legends: Z-A";
+          home_tile = Plza_readers.Switch_home_tile.tile_color;
+          lab_panel = "PokemonLZA:AutoStory";
+          title_template = Some Plza_readers.Switch_home_tile.title_template;
+        };
   }
 
 let games = [ plza; frlg ]

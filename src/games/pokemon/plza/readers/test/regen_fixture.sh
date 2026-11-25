@@ -27,9 +27,11 @@
 # assets/gift-name-vivillon.png), and fixtures/gifts.shifted.probes.jsonl: the
 # main menu's frame and images/mystery-gift's, all nine shifts each.
 # Also fixtures/intro.probes.jsonl: images/new-game's frames (the fork's
-# AutoStoryNewGame/2026-11-15 captures, JPEG quality 80 at 1080p: at 640x360
-# the look picker's corners and the keyboard's cursor no longer read) probed
-# by the new game's readers alone (write_probe_spec.exe --intro), and
+# AutoStoryNewGame/2026-11-15 captures, and home-*: console B's Switch HOME of
+# 2026-11-24 and -25, JPEG quality 80 at 1080p: at 640x360 the look picker's
+# corners and the keyboard's cursor no longer read) probed by the new game's
+# readers alone (write_probe_spec.exe --intro, PLZA's HOME title template
+# from assets/), and
 # fixtures/intro.shifted.probes.jsonl: each of them once shifted (--one).
 # The Python steps need Pillow ($SHIFT_PYTHON, default python3; e.g.
 # "uv run --with pillow python3").
@@ -97,6 +99,7 @@ cp "$work/lossless/tutorial-cards/it-menu-no-card.png" "$work/gifts/tutorial-car
 mkdir "$work/intro" "$work/intro_lossless" "$work/intro_shifted"
 (cd "$SRC" && dune exec games/pokemon/plza/readers/test/write_probe_spec.exe \
     -- --intro) >"$work/spec/intro.probes.json"
+cp "$SRC/games/pokemon/plza/assets/switch-home-title-legends-za.png" "$work/spec/"
 cp -R "$HERE/images/new-game" "$work/intro/"
 (cd "$work/intro" && "$PROBE_IMAGES" --spec "$work/spec/intro.probes.json" \
     --viewport native ./new-game/*.jpg) >"$HERE/fixtures/intro.probes.jsonl"

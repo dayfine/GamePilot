@@ -27,12 +27,16 @@ type switch_home = {
   title : string;  (** As the ctl usage names it: ["FireRed"]. *)
   home_tile : Switch_home.Home_screen.tile_color;
   lab_panel : string;  (** ["PokemonFRLG:AutoStory"]. *)
+  title_template : string option;
+      (** Part of the title HOME writes over the tile row with the cursor on its
+          tile, a repo path ({!Switch_home.Home_title}, the template a launch
+          walks the row to); [None] while none was cut. *)
 }
 (** A game on the lab's Switch: the title the HOME steps (park, resume,
     close-game, start-game, delete-save) go back to and look for by its tile's
-    colour, and the lab app's program panel whose console setup has the
-    controller board and capture card it runs with ([gamepilot switch-devices]).
-*)
+    colour or its title, and the lab app's program panel whose console setup has
+    the controller board and capture card it runs with
+    ([gamepilot switch-devices]). *)
 
 type game = {
   game_id : string;  (** ["frlg"], as plans and the games/ folder name it. *)
@@ -62,8 +66,8 @@ type t = {
 }
 
 val games : game list
-(** Every game with a program or a Switch title GamePilot knows, PLZA (no
-    program yet) first, as [gamepilot ctl delete-save] lists their keys. *)
+(** Every game with a program or a Switch title GamePilot knows, PLZA first, as
+    [gamepilot ctl delete-save] lists their keys. *)
 
 val lab_game : string option -> (game * switch_home, string) result
 (** The game the lab's console runs, by its id; with none, the one game that has

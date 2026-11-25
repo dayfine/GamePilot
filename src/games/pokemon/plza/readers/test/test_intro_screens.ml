@@ -1,11 +1,14 @@
-(* The new game's readers (Intro_screens, the keyboard's cursor and text
+(* The new game's readers (Switch_home_tile, Intro_screens, the keyboard's cursor and text
    field as Switch_home.Keyboard_typing reads them, Confirm_choices) on the
    fork's frames of 2026-11-15 (PokemonLZA_AutoStoryIntroScreens_Tests.cpp,
    AutoStoryNewGame/2026-11-15, images/new-game): the language list on each
    of its ten entries, the look picker before the stick moves and after the
    first tilt, the name keyboard in nine languages with the cursor on "1",
    Simplified Chinese's keyboard keeping "1" after the first +, and Confirm
-   Choices after the name "1" (none of the others). A frame reads as
+   Choices after the name "1" (none of the others); and console B's Switch
+   HOME (the home- frames): the cursor on PLZA's tile, first or scrolled to, reads as
+   PLZA's tile, and on another tile with PLZA's in view (Pokémon HOME first
+   and PLZA fourth, as the first 01.00a run found it on 2026-11-25) does not. A frame reads as
    everything it shows, in one line. Every frame also reads the same with
    its colours shifted as another capture card might show them
    (fixtures/intro.shifted.probes.jsonl, one shift per frame). *)
@@ -32,6 +35,7 @@ let keyboard_parts m =
 
 let parts (m : Effects.measurements) =
   [
+    (if Switch_home_tile.on_plza_tile m then Some "PLZA's tile" else None);
     Option.map (Printf.sprintf "language %d") (Intro_screens.language_entry m);
     (if Intro_screens.look_picker_shown m then Some "look picker" else None);
     Option.map (Printf.sprintf "look %d") (Intro_screens.highlighted_look m);
@@ -74,6 +78,15 @@ let shifted_cases =
 let case name expectation : Table_test.case =
   { name; input = read name; expectation }
 
+let home =
+  [
+    case "home-cursor-on-za-first-tile" "PLZA's tile";
+    case "home-scrolled-cursor-on-za" "PLZA's tile";
+    case "home-cursor-on-pokemon-home-za-fourth" "nothing";
+    case "home-cursor-on-brilliant-diamond-za-fourth" "nothing";
+    case "home-scrolled-cursor-on-lets-go-pikachu" "nothing";
+  ]
+
 let languages =
   [
     case "language-list-en-opens-on-english" "language 0";
@@ -114,4 +127,4 @@ let confirms =
 
 let () =
   Table_test.run "intro_screens"
-    (languages @ looks @ keyboards @ confirms @ shifted_cases)
+    (home @ languages @ looks @ keyboards @ confirms @ shifted_cases)

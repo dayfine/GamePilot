@@ -28,8 +28,10 @@
     Where it differs: the keyboard's "0/N" counter is not read (OCR); the
     language's limit holds, as the fork's does when its counter does not read.
     Simplified Chinese is refused ({!New_game_choices}). The fork's debug
-    captures of each screen are not taken. The launch is the caller's: the fork
-    finds PLZA's tile among HOME's first 8 by its title (OCR). *)
+    captures of each screen are not taken. The launch is the caller's ([launch]);
+    on the console it walks HOME's row to PLZA's tile by its title, as the fork
+    does, matching a template instead of OCR
+    (the autostory program's Live_intro_screen). *)
 
 type game_steps = {
   read_screen : unit -> New_game_screen.t;

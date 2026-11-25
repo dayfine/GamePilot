@@ -10,9 +10,9 @@ A descriptor (`Program_registry.t`) gives:
 - the game (`Program_registry.game`): its id and display name, its Switch titles' icons on their
   Delete Save Data page by the key `gamepilot ctl delete-save` takes (`delete_save_icons`), and its
   Switch HOME data when measured (`switch_home`: the title park and resume go back to, its HOME
-  tile's colour, and the lab app panel whose console setup `gamepilot switch-devices` reads). The
-  lab console's game is `$GAMEPILOT_LAB_GAME`, else the one game with Switch HOME data. A game may
-  have no program yet (PLZA, for delete-save). Then the display name, the group path
+  tile's colour, the lab app panel whose console setup `gamepilot switch-devices` reads, and the
+  template of its title on HOME a launch walks the tile row to, if cut). The lab console's game is
+  `$GAMEPILOT_LAB_GAME`, else the one game with Switch HOME data. A game may have no program yet. Then the display name, the group path
   (`["FRLG"; "Glitches"]`) and a one-line description;
 - `doc`: its page, from the repo root (a page in this folder, or an existing one);
 - `checkpoints`: its plans folder, or none for a one-shot program (`gamepilot run`);

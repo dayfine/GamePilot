@@ -6,30 +6,26 @@ let ( let* ) = Result.bind
 let probes ~game_icon = M.probes ~game_icon
 let read_ms = 3000
 
-(* The script's scan: HOME to the first tile, then Right along the row,
-   reading each tile's title; up to [max_tiles] tiles. *)
-let max_tiles = 8
+(* The script's scan (Switch_home.Home_title.find_tile): HOME to the first
+   tile, then Right along the row, reading each tile's title, up to 8 tiles. *)
 let title_read_ms = 1500
-let first_tile : T.t = { button = Home; hold_ms = 100; cooldown_ms = 1000 }
-let next_tile : T.t = { button = Right; hold_ms = 80; cooldown_ms = 600 }
 
-let not_found =
-  Printf.sprintf "Pokémon HOME's tile is not among the first %d on HOME"
-    max_tiles
+let walk : Switch_home.Home_title.walk =
+  {
+    first = { button = Home; hold_ms = 100; cooldown_ms = 1000 };
+    next = { button = Right; hold_ms = 80; cooldown_ms = 600 };
+    tiles = 8;
+  }
 
-let rec scan_from k =
+let title_shows () =
   match Effects.await ~timeout_ms:title_read_ms Home_tile.on_home_tile with
-  | Holds _ -> Ok k
-  | Timeout when k + 1 >= max_tiles -> Error not_found
-  | Timeout ->
-      T.press next_tile;
-      scan_from (k + 1)
+  | Holds _ -> true
+  | Timeout -> false
 
 let scan ~log =
-  T.press first_tile;
-  let* k = scan_from 0 in
-  log (Printf.sprintf "Pokémon HOME is tile %d." (k + 1));
-  Ok k
+  Switch_home.Home_title.find_tile
+    { title_shows; press = T.press; log }
+    walk ~name:"Pokémon HOME"
 
 let find_tile ~log ~picture ~home_art ~home_title =
   let art = Effects.upload_template home_art in

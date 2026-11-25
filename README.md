@@ -43,7 +43,7 @@ again. It takes its paths from the environment, or from `~/.config/gamepilot/env
 | `GAMEPILOT_RUNS` | run records, one folder per run | `~/.local/share/gamepilot/runs` |
 | `GAMEPILOT_BIN` | the `gamepilot` binary | `src/_build/default/bin/gamepilot.exe` |
 | `GAMEPILOT_WATCH_LISTEN` | the watch pages' address; `0.0.0.0` opens them to the LAN | `127.0.0.1` |
-| `GAMEPILOT_LAB_GAME` | the lab console's game id (its HOME tile, its lab panel) for `ctl park`/`resume`, `console`, `switch-devices` | the one game with Switch HOME data (`frlg`) |
+| `GAMEPILOT_LAB_GAME` | the lab console's game id (its HOME tile, its lab panel) for `ctl park`/`resume`, `console`, `switch-devices` | none: required, as `frlg` and `plza` both have Switch HOME data |
 
 `gamepilot checkpoints` reads `GAMEPILOT_STATES` and `GAMEPILOT_RUNS` too (`--states` and
 `--runs-dir` override them). No ROM is included in or needed by this repository; bring your own.
