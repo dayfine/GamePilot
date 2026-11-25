@@ -201,6 +201,20 @@ postconditions:
 position ThreeIsland_Harbor (8, 5) south
 item meteorite at least 1
 no repeat
+== sevii_story/plans/04-three-island-bikers.plan.json
+frlg 04-three-island-bikers from ThreeIsland_Harbor (8, 5) south: 1 game_action, 1 route, 2 step, 1 scene, 1 answer, 1 train
+lead_blastoise: [party_swap] game_action {"species":"blastoise","target_slot":1}
+below_bikers: [run] route to ThreeIsland (8, 28) north
+onto_boss_intro: step north => ThreeIsland (8, 27) north
+boss_intro_scene: scene
+onto_bikers: step north => ThreeIsland (8, 26) north
+take_on_bikers: answer yes
+bikers_battles: train 4 => ThreeIsland (8, 26) north
+retries 0
+postconditions:
+position ThreeIsland (8, 26) north
+money spent -3196
+no repeat
 == supplies/plans/su-01.plan.json
 frlg su-01 from CeladonCity_DepartmentStore_1F (6, 2) south: 7 route, 6 game_action
 to_4f_clerk: [run] route to CeladonCity_DepartmentStore_1F (6, 2) north
