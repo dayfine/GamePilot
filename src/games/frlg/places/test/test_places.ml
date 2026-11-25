@@ -6,8 +6,7 @@ open Frlg_places
 module Run = Frlg_checkpoints.Checkpoint_run
 
 let table = Result.get_ok (Place_table.load ())
-let maps_dir = Option.get (Repo_io.Repo_files.locate Run.maps_dir)
-let map name = Grid_maps.Map_file.load_runtime ~maps_dir name
+let map = Run.load_map
 let world = lazy (Result.get_ok (Run.load_world ()))
 let places = Place_table.places table
 
