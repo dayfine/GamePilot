@@ -3,9 +3,9 @@
     at each change (written aside, then renamed, so the hub never reads half of
     it). With it the hub lists the series as one entry, serves its page at
     [/series/ID/] and passes that page through to the daemon of the run going
-    (docs/design/Watch-Page.md, One page per series). A game's series runner
-    starts it once and tells it of each run; without a watch page every call is
-    a no-op. *)
+    (docs/design/Watch-Page.md, One page per series). The series' daemons
+    (Series_daemons) start it once and tell it of each run; without a watch page
+    every call is a no-op. *)
 
 type t
 (** A series' record and where it is written; nothing without a watch page. *)

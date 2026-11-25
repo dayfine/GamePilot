@@ -7,24 +7,21 @@ open Pokemon_engine
 type setup = {
   states : string;
   runs_dir : string;
-  daemon : string;
   backend : Daemon_process.backend;
   common : Plan_command.flags;
   mode : Checkpoint_trials.mode;
   policy : Checkpoint_trials.policy;
   world : Frlg_overworld.Frlg_steps.world;
-  watch : Daemon_process.watch option;  (** the daemon's watch page, if any *)
-  series : Series_watch.t;
   save_after_pass : bool;
       (** On the Switch: save in the game after a pass
           (Checkpoints_series.Console_runs). *)
   info : Run_record.info;  (** For each run's run.json. *)
-  daemon_flags : string list;
-      (** The daemon's recording and keep-awake flags, as the user gave them
-          (the daemon's defaults otherwise: on for the Switch, off for mGBA). *)
-  bound : (int * int option) option ref;
-      (** The ports the series' last daemon bound (program, page): the next one
-          asks for them again, so the page keeps its URL across runs. *)
+  daemons : Series_daemons.t;
+      (** Each run's daemon: the daemon, its recording and keep-awake flags as
+          the user gave them (the daemon's defaults otherwise: on for the
+          Switch, off for mGBA), the program's port and the watch page; the next
+          run's daemon asks for the ports the last one bound, so the page keeps
+          its URL across runs. *)
   from_event : (string * string option) option;
       (** --from-event and --to-event: a partial run (Engine_run.Event_range).
       *)

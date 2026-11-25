@@ -203,8 +203,8 @@ The series is now one entry with one page:
   program fields, range, mode, backend, start and end, `result` (`running`, `pass`, `fail`), `run`
   (the run going, absent between runs) and every checkpoint in run order with its state (pending,
   current, passed, failed, skipped), its times and its runs (run folder, run `n`, attempt,
-  result, where and why it failed). A game's series runner starts it and tells it of each run's
-  start and end and of the series' end; nothing is written without `--watch`. The series goes on
+  result, where and why it failed). The series' daemons (`Live_run.Series_daemons`) start it and
+  tell it of each run's start and end and of the series' end, as a game's series runner gives them; nothing is written without `--watch`. The series goes on
   only after a pass, so a run of the next checkpoint marks the one before passed.
 - **The hub routes by it** (`daemon/src/watch_series.*`): `/series.json` lists the running series
   (runner alive, not ended); `/runs.json` gives each run its `series`; `/series/ID/` is the live

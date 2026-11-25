@@ -258,5 +258,5 @@ let run ~plan_dir (setup : Run.setup) ids ~after =
          ~started_ms:(now_ms ()) ids)
   in
   let code = chain_from ~plan_dir setup ids chain ~after in
-  Series_watch.finished setup.series ~passed:(code = 0);
+  Series_daemons.finished setup.daemons ~passed:(code = 0);
   code
