@@ -5,6 +5,7 @@
   yojson
   gamepilot.wire
   gamepilot.effects
+  gamepilot.watch_report
   gamepilot.json_field
   gamepilot.switch_home
   gamepilot.screen_state

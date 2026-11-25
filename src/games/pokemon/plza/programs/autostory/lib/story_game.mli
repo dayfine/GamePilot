@@ -30,3 +30,13 @@ val make :
   reload:(unit -> (unit, Engine_run.Failure.cause) result) ->
   Plza_checkpoints.Game.t
 (** The handlers for one checkpoint's run. *)
+
+val run_watched :
+  mode:string ->
+  Watch_report.t ->
+  Plza_checkpoints.Game.t ->
+  Plza_checkpoints.Plan.checkpoint ->
+  (unit, Plza_checkpoints.Failure.t) result
+(** The checkpoint through the runner, shown on the watch page
+    ({!Plza_checkpoints.Plan_watch}): the report's steps move with its events
+    and its run in [mode] ends passed or failed. *)

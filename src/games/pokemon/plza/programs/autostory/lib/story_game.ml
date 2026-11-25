@@ -88,3 +88,7 @@ let make steps ~checkpoint_id ~reload : Game.t =
     reload;
     log = steps.log;
   }
+
+let run_watched ~mode report game checkpoint =
+  Plza_checkpoints.Plan_watch.run ~mode report (fun ~on_event ->
+      Plza_checkpoints.Runner.run ~on_event game checkpoint)

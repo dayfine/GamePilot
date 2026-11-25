@@ -13,7 +13,7 @@ GamePilot automates games through three layers (design: `docs/design/Layered-Aut
     `checkpoints/` libraries: `rules` (`GAME_RULES`, what a game family gives the engine),
     `promise` (promises, counts, money), `plan` (types, decoding, text), `run` (one checkpoint:
     handlers, trials, event progress), `series` (chains, order, rounds), `expand` (plan JSON
-    rewrites) and `make` (`Engine_checkpoints.Make`, the engine applied to a family's rules). It
+    rewrites), `watch` (a plan's run on the watch page) and `make` (`Engine_checkpoints.Make`, the engine applied to a family's rules). It
     names no game, grid or Pokémon type.
   - `pokemon/`: code shared by Pokemon games: the navigation grid, and in `checkpoints/` the
     Pokémon rules (`rules`: grid poses, Pokémon actions, postconditions), the engine applied to them

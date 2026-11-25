@@ -5,6 +5,7 @@
  (libraries
   yojson
   gamepilot.wire
+  gamepilot.effects
   gamepilot.table_test
   gamepilot.plza_story
   gamepilot.plza_checkpoints

@@ -3,7 +3,8 @@
    decode, every event reaches its handler, and each handler's presses move a
    game that answers them as the console did. Also the failures: a walk whose
    white fade never shows (lost), a start that is not Confirm Choices, a
-   platform never seen. *)
+   platform never seen. And what the watch page is sent (Story_game.run_watched):
+   the plan at each event's change and the run. *)
 
 open Plza_checkpoints
 module L = Plza_story.Story_look
@@ -100,6 +101,65 @@ let outcome checkpoint screen =
 
 let result checkpoint screen () = fst (outcome checkpoint screen)
 
+module W = Wire.Watch
+
+let state_name = function
+  | W.Pending -> "pending"
+  | Current -> "current"
+  | Done -> "done"
+  | Failed -> "failed"
+  | Skipped -> "skipped"
+
+let shown_event (e : W.plan_event) =
+  e.id ^ "=" ^ state_name e.state
+  ^ if e.detail = "" then "" else "(" ^ e.detail ^ ")"
+
+let shown_run (r : Wire.Watch_run.t) =
+  String.concat " "
+    (("run " ^ r.mode)
+    :: List.map
+         (fun (c : Wire.Watch_run.checkpoint) ->
+           c.id ^ "=" ^ Wire.Watch_run.string_of_state c.state)
+         r.checkpoints)
+
+(* What the watch page is sent while [f] runs: each plan and run, in order. *)
+let page f =
+  let sent = ref [] in
+  let add line = sent := line :: !sent in
+  let effc : type a.
+      a Effect.t -> ((a, unit) Effect.Deep.continuation -> unit) option =
+    function
+    | Effects.Show_plan p ->
+        Some
+          (fun k ->
+            add
+              ("plan " ^ p.checkpoint ^ ": "
+              ^ String.concat " " (List.map shown_event p.events));
+            Effect.Deep.continue k ())
+    | Effects.Show_run r ->
+        Some
+          (fun k ->
+            add (shown_run r);
+            Effect.Deep.continue k ())
+    | _ -> None
+  in
+  Effect.Deep.try_with f () { effc };
+  String.concat "\n" (List.rev !sent)
+
+(* [checkpoint] run with Story_game.run_watched: what the page showed. *)
+let watched checkpoint screen () =
+  page (fun () ->
+      let c = C.create () in
+      reloaded := false;
+      let game =
+        Plza_autostory.Story_game.make (C.steps c screen)
+          ~checkpoint_id:checkpoint ~reload:(fun () -> Ok ())
+      in
+      let report = Plan_watch.create (plan checkpoint).checkpoint in
+      ignore
+        (Plza_autostory.Story_game.run_watched ~mode:"testing" report game
+           (plan checkpoint).checkpoint))
+
 let cases =
   [
     case "01.00b: Confirm Choices, Ready!, the opening skipped, the platform"
@@ -124,6 +184,29 @@ let cases =
       (result "01.01" look)
       "01.01 event 1 (on_platform): platform_not_seen: No controls hint on 2 \
        looks in a row within 10000 ms.";
+    case "01.00b on the watch page: its events move, its run passes"
+      (watched "01.00b" new_game)
+      "plan 01.00b: confirm=pending opening=pending\n\
+       run testing 01.00b=current\n\
+       plan 01.00b: confirm=current opening=pending\n\
+       plan 01.00b: confirm=done opening=pending\n\
+       plan 01.00b: confirm=done opening=current\n\
+       plan 01.00b: confirm=done opening=done\n\
+       run testing 01.00b=passed";
+    case "01.01 lost on the watch page: the walk fails with its reason"
+      (fun () ->
+        let shown =
+          String.split_on_char '\n' (watched "01.01" (platform ~lost:true) ())
+        in
+        String.concat "\n" (List.filteri (fun i _ -> i >= 6) shown))
+      "plan 01.01: on_platform=done text_speed_fast=done \
+       platform_to_plaza=current arrival_to_ad=pending skip_ad=pending \
+       arrival_scenes=pending\n\
+       plan 01.01: on_platform=done text_speed_fast=done \
+       platform_to_plaza=failed(walk_no_end: platform_to_plaza: no end event \
+       within 11287 ms of the last leg) arrival_to_ad=pending skip_ad=pending \
+       arrival_scenes=pending\n\
+       run testing 01.01=failed";
     case "the walk is walked before 03.03, run after"
       (fun () ->
         Printf.sprintf "%b %b"

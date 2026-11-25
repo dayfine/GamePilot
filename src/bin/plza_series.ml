@@ -107,7 +107,7 @@ let start ~log ~picture ~reload (plan : P.Plan.t) =
   | true, None -> Error (unreachable plan)
   | true, Some _ -> back_to_autosave ~log ~picture
 
-let run_checkpoint ~log ~picture ~reload (plan : P.Plan.t) =
+let run_checkpoint ~log ~picture ~reload report (plan : P.Plan.t) =
   let* () = start ~log ~picture ~reload plan in
   let steps =
     Story.Live_story_screen.game_steps ~picture ~log ~log_detail:log
@@ -116,16 +116,20 @@ let run_checkpoint ~log ~picture ~reload (plan : P.Plan.t) =
     Story.Story_game.make steps ~checkpoint_id:plan.checkpoint.checkpoint_id
       ~reload:(reload_cause ~log ~picture)
   in
-  Result.map_error of_failure (P.Runner.run game plan.checkpoint)
+  Result.map_error of_failure
+    (Story.Story_game.run_watched ~mode:"testing" report game plan.checkpoint)
 
-let with_assets ~log ~picture ~reload plan assets =
+(* The run fails on the page when it stops before its runner ended it. *)
+let with_assets ~log ~picture ~reload report plan assets =
   match
     Effects.with_probes (Story.Live_story_screen.probes ~picture ~assets)
-      (fun () -> run_checkpoint ~log ~picture ~reload plan)
+      (fun () -> run_checkpoint ~log ~picture ~reload report plan)
   with
   | Ok () -> Passed
   | Error f -> f
-  | exception Effects.Stop_requested why -> failed ~repeats:true "stopped" why
+  | exception Effects.Stop_requested why ->
+      Watch_report.end_run report ~passed:false;
+      failed ~repeats:true "stopped" why
 
 (* The frame a failed run ended on; a refusal is skipped. *)
 let save_failure record =
@@ -136,10 +140,11 @@ let save_failure record =
 let in_session ~log ~reload record plan (backend : Wire.backend) =
   let picture = backend.viewport in
   let log = Watch_report.log log in
+  let report = P.Plan_watch.create plan.P.Plan.checkpoint in
   let outcome =
     match upload_assets () with
     | Error e -> failed ~repeats:true "assets" e
-    | Ok assets -> with_assets ~log ~picture ~reload plan assets
+    | Ok assets -> with_assets ~log ~picture ~reload report plan assets
   in
   (match outcome with Failed _ -> save_failure record | Passed -> ());
   outcome
