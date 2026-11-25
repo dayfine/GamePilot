@@ -8,7 +8,7 @@
     its people stand in the way, so routes and places reach into it as into any
     mapped room.
 
-    Ported from the fork's Overworld/PokemonFRLG_CodedRooms.{h,cpp}
+    Ported from the fork's [Overworld/PokemonFRLG_CodedRooms.{h,cpp}]
     ([CENTER_ROOM_JSON], [pokemon_center_room()],
     [add_pokemon_center_room()]), Overworld/PokemonFRLG_PokemonCenterRoom.h
     ([CENTER_MAT], [CENTER_NURSE_FRONT]) and
