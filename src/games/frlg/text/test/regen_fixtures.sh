@@ -82,7 +82,7 @@ probe() {
   (cd "$WORK/images" && "$PROBE_IMAGES" --spec "$WORK/$screen.json" "$@" $images) | keep_best
 }
 
-for screen in bag_items bag_key_items tm_case summary_moves battle_opening battle_prompt bag_counts berry_pouch_numbers summary_level mail_editor start_menu; do
+for screen in bag_items bag_key_items tm_case summary_moves battle_opening battle_prompt bag_counts berry_pouch_numbers summary_level mail_editor start_menu card_numbers; do
   {
     probe "$screen" switch
     probe "$screen" mgba

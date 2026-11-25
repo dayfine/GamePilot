@@ -21,6 +21,7 @@ let screens =
     "summary_level";
     "mail_editor";
     "start_menu";
+    "card_numbers";
   ]
 
 let glyphs =
@@ -50,6 +51,10 @@ let line_of_id id =
       small
         (Text_lines.berry_pouch_number_digit (int_of_string row)
            (int_of_string k))
+  | [ "card_money"; k ] ->
+      normal (Text_lines.trainer_card_money_digit (int_of_string k))
+  | [ "card_dex"; k ] ->
+      normal (Text_lines.trainer_card_dex_digit (int_of_string k))
   | [ "summary_level"; k ] ->
       (Text_lines.summary_level_digit (int_of_string k), Summary_level.max_score)
   | _ -> failwith ("line id " ^ id)
