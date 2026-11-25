@@ -7,7 +7,7 @@ type t = {
   default : policy;
 }
 
-let only policy = { by_slot = []; by_species = []; default = policy }
+let for_everyone policy = { by_slot = []; by_species = []; default = policy }
 let decline_all = { rules = []; evolve = false }
 
 let for_member t ~slot ~species =

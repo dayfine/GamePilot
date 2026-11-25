@@ -180,13 +180,13 @@ let close_bag ~log () =
   M.close "the bag" Bag_screen.bag_open;
   M.settle_back ~label:"rare candy" ~log
 
-let level_up_rig ~log : Level_up.rig =
+let level_up_driver ~log : Level_up.driver =
   { next; open_list; read_list; forget; leave_list; decline; evolution; log }
 
-let make ~log : Rare_candy.rig =
+let make ~log : Rare_candy.driver =
   {
     open_candy = open_candy ~log;
-    level_up = level_up_rig ~log;
+    level_up = level_up_driver ~log;
     close_bag = close_bag ~log;
     log;
   }

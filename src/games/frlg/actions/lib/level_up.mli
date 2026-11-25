@@ -2,11 +2,21 @@
     each level's stats window, the moves each level offers answered by the
     member's {!Level_up_policy.policy}, each evolution let run or cancelled, and
     the evolved species' own moves; until the screen is back where the context
-    ends. The context comes as a {!rig}: its screens
+    ends. The context comes as a {!driver}: its screens
     ({!Level_up_screens.context}), how its text is pressed through, and what
     "back" means (the bag after a Rare Candy, the overworld after a battle).
-    Only the party menu's rig is built ({!Rare_candy_steps}); a battle's is the
-    follow-up. A Rare Candy is the one-member case.
+    Only the party menu's driver is built ({!Rare_candy_steps}); a battle's is
+    the follow-up. A Rare Candy is the one-member case.
+
+    Text and language: [Level_up] never matches text. The quoted strings below
+    are the English messages, there so a reader can find each step in the game;
+    other languages word them differently and at other lengths. A driver tells
+    the screens apart by their layout (the text box and its arrow, the YES/NO
+    box, the stats window, the list to forget from), which is the same in every
+    language. The one text a driver may read is the member's name in "<MON>
+    gained <N> EXP. Points!" and "<MON> is evolving!", and that read is
+    language-dependent. The name shown there is the member's nickname, not its
+    species (seen on mGBA 2026-11-24: CH'DING, MIMIEN), hence {!Nickname}.
 
     The order the game shows them in (pokefirered):
     + In a battle, at each foe's faint, the EXP step (battle_script_commands.c,
@@ -29,18 +39,22 @@
     + A Rare Candy (party_menu.c): one level, its stats window and moves, then
       at once its evolution, back to the bag ({!Rare_candy}).
 
-    Who a screen is about: the rig names the member where it reads the text
+    Who a screen is about: the driver names the member where it reads the text
     ({!who}); else the order tells. A stats window belongs to the member of the
     last {!Exp} message (the first member before any), the next {!Exp} to the
     next member in slot order (wrapping round at the next foe's faint). A scene
     belongs to the next member, in slot order after the last scene's, that
     levelled; with names unread, a levelled member whose species does not evolve
-    would shift the scenes after it onto the wrong member, so the battle rig
+    would shift the scenes after it onto the wrong member, so the battle driver
     must read them. Move prompts belong to the member of the stats window or
     scene they follow. *)
 
-(** A member as the rig read it off the text. *)
-type who = Slot of int | Species of string
+(** A member as the driver knows it: its party slot (from 1) where the context
+    knows it (the party menu's highlight), or the nickname read off the text. A
+    nickname is found among the [members] given to {!run}; when two of them
+    share it, it does not tell them apart, so the order decides (as with no
+    name) and the log says so. *)
+type who = Slot of int | Nickname of string
 
 (** What the screen asks for next. *)
 type look =
@@ -53,7 +67,7 @@ type look =
           text before took it) *)
   | Evolving of who option  (** an evolution scene, no question on it *)
   | Back  (** where the context ends: the bag, the overworld *)
-  | Timed_out  (** none of these within the rig's bound *)
+  | Timed_out  (** none of these within the driver's bound *)
 
 type forget_list = {
   offered : string option;  (** the fifth row: the move offered *)
@@ -63,7 +77,7 @@ type forget_list = {
 (** How an evolution scene left off. *)
 type scene = Continues  (** a question or a page of it shows *) | Ended
 
-type rig = {
+type driver = {
   next : unit -> look;
       (** Presses through text and stats windows (never B) until a {!look}. *)
   open_list : unit -> bool;
@@ -80,11 +94,20 @@ type rig = {
   evolution : cancel:bool -> scene;
       (** On {!Evolving}: B held if [cancel], else nothing pressed, until the
           scene shows something else. *)
-  log : string -> unit;
+  log : string -> unit;  (** Where {!run} logs each answer. *)
 }
+(** The callbacks a context supplies so {!run} can answer its screens: how to
+    press through its text to the next {!look}, read its screens, and answer its
+    YES/NO boxes. {!run} decides; the driver only presses and reads. The Rare
+    Candy action builds one for the party menu; a battle will build its own. *)
 
-type member = { slot : int; species : string }
-(** A member that may level: its party slot (from 1) and species. *)
+type member = {
+  slot : int;  (** party slot, from 1 *)
+  species : string;  (** a slug; picks the member's policy *)
+  nickname : string option;
+      (** the name the game's text shows, when the context knows it *)
+}
+(** A member that may level. *)
 
 type evolution = No_evolution | Evolved | Cancelled
 
@@ -100,7 +123,7 @@ val max_looks : int
 (** {!look}s before it fails: 200 per run (six members, several levels each). *)
 
 val run :
-  rig ->
+  driver ->
   Level_up_policy.t ->
   members:member list ->
   (outcome list, string) result

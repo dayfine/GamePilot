@@ -1,5 +1,5 @@
-(** The game's {!Rare_candy.rig}, and the party menu's {!Level_up.rig} in it:
-    the bag's Rare Candy used on a member ({!Bag_items.item_action}, USE,
+(** The game's {!Rare_candy.driver}, and the party menu's {!Level_up.driver} in
+    it: the bag's Rare Candy used on a member ({!Bag_items.item_action}, USE,
     {!Party_actions.choose_slot}), then what follows read and answered as
     upstream's [use_rare_candy()]
     (Programs/RngManipulation/PokemonFRLG_RngNavigation.cpp) watches for it: the
@@ -42,8 +42,8 @@ val evolution_hold_ms : int
 (** 12 s: the scene's start (its message, the cry, the intro sound, the
     sparkles) lasts some seconds before the sprites cycle. Unmeasured. *)
 
-val level_up_rig : log:(string -> unit) -> Level_up.rig
-(** The party menu's {!Level_up.rig}: a stats window pressed through (both
+val level_up_driver : log:(string -> unit) -> Level_up.driver
+(** The party menu's {!Level_up.driver}: a stats window pressed through (both
     pages) is one {!Level_up.Stats}; {!Level_up.Back} is the bag. *)
 
-val make : log:(string -> unit) -> Rare_candy.rig
+val make : log:(string -> unit) -> Rare_candy.driver

@@ -6,7 +6,7 @@ let member_at ~party ~slot : Level_up.member =
     Option.value ~default:"?"
       (List.nth_opt (Party_roster.to_list !party) (slot - 1))
   in
-  { slot; species }
+  { slot; species; nickname = None }
 
 let one_candy ~log ~party ~slot policy =
   Effects.with_probes Rare_candy_steps.probes (fun () ->
@@ -19,7 +19,7 @@ let member ~log ~slot =
     (fun (m : Story.Room_policy.member) -> m.slot = slot)
     (Party_summary.read_all ~log ())
 
-let rig ~log ~party : Candy_level.rig =
+let driver ~log ~party : Candy_level.driver =
   {
     level = (fun ~slot -> Member_level.read ~log ~slot);
     candy = (fun ~slot policy -> one_candy ~log ~party ~slot policy);
@@ -48,7 +48,7 @@ let use_candy ~log ~party ~slot (use : Candy_plan.use) =
   | Failed why -> M.fail "rare_candy_failed" why
 
 let level ~log ~party ~slot goal =
-  match Candy_level.run (rig ~log ~party) goal ~slot with
+  match Candy_level.run (driver ~log ~party) goal ~slot with
   | Ok r -> renamed ~party ~slot r.species
   | Error cause -> raise (M.Action_failed cause)
 

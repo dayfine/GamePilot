@@ -1,20 +1,22 @@
-(* A fake Level_up rig for the tests of Level_up and of what drives it (a Rare
-   Candy): it answers each step from a script and records the steps. *)
+(* A fake Level_up driver for the tests of Level_up and of what drives it (a
+   Rare Candy): it answers each step from a script and records the steps. *)
 
 open Frlg_actions
 
 (* The fake game: the looks [next] answers in order, the list each opened
-   list shows in order. Its rig serves any context; [Back] is wherever the
-   context ends. *)
+   list shows in order, how each evolution scene leaves off; [trace] is every
+   driver call it saw (newest first), [logs] every line logged. Its driver
+   serves any context; [Back] is wherever the context ends. *)
 type game = {
   mutable looks : Level_up.look list;
   mutable lists : Level_up.forget_list list;
   mutable scenes : Level_up.scene list;
   mutable trace : string list;
+  mutable logs : string list;
 }
 
 let game ?(lists = []) ?(scenes = []) looks =
-  { looks; lists; scenes; trace = [] }
+  { looks; lists; scenes; trace = []; logs = [] }
 
 let note g s = g.trace <- s :: g.trace
 
@@ -46,7 +48,7 @@ let noted g step result () =
   note g step;
   result
 
-let rig g : Level_up.rig =
+let driver g : Level_up.driver =
   {
     next = pop_look g;
     open_list = noted g "yes" true;
@@ -58,7 +60,7 @@ let rig g : Level_up.rig =
       (fun ~cancel ->
         note g (if cancel then "hold B" else "wait");
         scene_after g);
-    log = ignore;
+    log = (fun line -> g.logs <- line :: g.logs);
   }
 
 let known = [ Some "lick"; Some "hypnosis"; Some "spite"; Some "curse" ]
@@ -71,4 +73,4 @@ let policy ?(rules = []) ?(evolve = false) () : Level_up_policy.policy =
 let traced g text = text ^ " [" ^ String.concat ", " (List.rev g.trace) ^ "]"
 let stats = Level_up.Stats None
 let evolving = Level_up.Evolving None
-let gastly : Level_up.member = { slot = 1; species = "gastly" }
+let gastly : Level_up.member = { slot = 1; species = "gastly"; nickname = None }

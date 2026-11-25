@@ -1,6 +1,13 @@
-(* Level_up's decisions on a fake rig that answers each step from a script
-   and records the steps: one member's level-ups, and six members levelled by
-   one battle. *)
+(* Level_up's decisions on a fake driver that answers each step from a script
+   and records the steps: one member's level-ups, who a screen is about, and
+   six members levelled by one battle.
+
+   [game] (Level_up_fake) is the fake console: given the scripted screens
+   (looks), the lists to forget from and how each evolution scene leaves off,
+   its [driver] answers each call from that script and records the call
+   ("yes", "no", "forget 1", "leave", "wait", "hold B"). [traced g text]
+   appends the calls [g] saw, in order, in [...] after [text], so one string
+   checks both the outcome and the exact presses. *)
 
 open Frlg_actions
 open Level_up_fake
@@ -11,7 +18,9 @@ let settle ?(lists = []) looks policy () =
   let g = game ~lists looks in
   traced g
     (match
-       Level_up.run (rig g) (Level_up_policy.only policy) ~members:[ gastly ]
+       Level_up.run (driver g)
+         (Level_up_policy.for_everyone policy)
+         ~members:[ gastly ]
      with
     | Ok outcomes -> String.concat "; " (List.map Level_up.describe outcomes)
     | Error why -> "failed: " ^ why)
@@ -87,6 +96,62 @@ let level_ups =
       "failed: nothing to answer showed []";
   ]
 
+(* Who a screen is about, when the driver names the member: two members,
+   the second's screens named out of slot order. *)
+let pair ?(nicknames = (Some "CH'DING", Some "MIMIEN")) () :
+    Level_up.member list =
+  [
+    { slot = 1; species = "gastly"; nickname = fst nicknames };
+    { slot = 2; species = "mankey"; nickname = snd nicknames };
+  ]
+
+let named_run ?nicknames looks () =
+  let g = game looks in
+  let result =
+    match
+      Level_up.run (driver g)
+        (Level_up_policy.for_everyone (policy ()))
+        ~members:(pair ?nicknames ())
+    with
+    | Ok outcomes ->
+        String.concat "; "
+          (List.map
+             (fun (o : Level_up.outcome) ->
+               Printf.sprintf "%d: %d" o.member.slot o.levels)
+             outcomes)
+    | Error why -> "failed: " ^ why
+  in
+  let by_order =
+    List.filter
+      (String.ends_with ~suffix:"going by the order.")
+      (List.rev g.logs)
+  in
+  String.concat " " (result :: by_order)
+
+let mimien = Some (Level_up.Nickname "MIMIEN")
+
+let named =
+  [
+    case "a slot names the member"
+      (named_run [ Exp (Some (Slot 2)); stats; Back ])
+      "1: 0; 2: 1";
+    case "a nickname names the member"
+      (named_run [ Exp mimien; stats; Back ])
+      "1: 0; 2: 1";
+    case "a nickname not in the run fails"
+      (named_run [ Exp (Some (Nickname "GASTLY")); stats; Back ])
+      "failed: a screen names GASTLY, not in the run";
+    case "a slot not in the run fails"
+      (named_run [ Exp (Some (Slot 3)); stats; Back ])
+      "failed: a screen names slot 3, not in the run";
+    case "a nickname two members share: the order decides, and it is logged"
+      (named_run
+         ~nicknames:(Some "MIMIEN", Some "MIMIEN")
+         [ Exp mimien; stats; Back ])
+      "1: 1; 2: 0 Level up: MIMIEN names more than one member; going by the \
+       order.";
+  ]
+
 (* A battle's shape: six members, each switched in once, so all gain EXP,
    all level (several levels each) and all evolve; names unread, so the run
    tracks them by order. Slot 2 cancels its evolution, the Squirtle learns
@@ -94,7 +159,8 @@ let level_ups =
    declines it; the rest decline at the prompt. *)
 let party =
   List.mapi
-    (fun i species : Level_up.member -> { slot = i + 1; species })
+    (fun i species : Level_up.member ->
+      { slot = i + 1; species; nickname = None })
     [ "bulbasaur"; "charmander"; "squirtle"; "caterpie"; "weedle"; "pidgey" ]
 
 let six_policies : Level_up_policy.t =
@@ -128,32 +194,48 @@ let six_lists : Level_up.forget_list list =
     { offered = Some "skull-bash"; known = turtle_moves };
   ]
 
-let battle () =
-  let g =
-    game ~lists:six_lists
-      ~scenes:[ Ended; Continues; Ended; Continues; Ended; Ended; Ended; Ended ]
-      six_looks
-  in
-  traced g
-    (match Level_up.run (rig g) six_policies ~members:party with
-    | Ok outcomes ->
-        String.concat "; "
-          (List.map
-             (fun (o : Level_up.outcome) ->
-               Printf.sprintf "%d: %s" o.member.slot (Level_up.describe o))
-             outcomes)
-    | Error why -> "failed: " ^ why)
+(* The battle, run once; each case below checks one part of it. *)
+let battle =
+  lazy
+    (let g =
+       game ~lists:six_lists
+         ~scenes:
+           [ Ended; Continues; Ended; Continues; Ended; Ended; Ended; Ended ]
+         six_looks
+     in
+     let result = Level_up.run (driver g) six_policies ~members:party in
+     (result, traced g ""))
+
+let member_outcome slot () =
+  match fst (Lazy.force battle) with
+  | Ok outcomes -> (
+      match
+        List.find_opt
+          (fun (o : Level_up.outcome) -> o.member.slot = slot)
+          outcomes
+      with
+      | Some o -> Level_up.describe o
+      | None -> "no outcome")
+  | Error why -> "failed: " ^ why
+
+let member slot expectation =
+  case
+    (Printf.sprintf "the battle: slot %d" slot)
+    (member_outcome slot) expectation
 
 let battles =
   [
-    case "six members levelled by one battle, then their evolutions" battle
-      "1: 2 levels; learned none; declined none; evolution evolved; 2: 2 \
-       levels; learned none; declined an unread move; evolution cancelled; 3: \
-       2 levels; learned bite; declined skull-bash; evolution evolved; 4: 1 \
-       level; learned none; declined harden; evolution evolved; 5: 2 levels; \
-       learned none; declined none; evolution evolved; 6: 2 levels; learned \
-       none; declined none; evolution evolved [no, yes, forget 1, yes, leave, \
-       wait, hold B, wait, wait, yes, leave, wait, wait, wait, wait]";
+    member 1 "2 levels; learned none; declined none; evolution evolved";
+    member 2
+      "2 levels; learned none; declined an unread move; evolution cancelled";
+    member 3 "2 levels; learned bite; declined skull-bash; evolution evolved";
+    member 4 "1 level; learned none; declined harden; evolution evolved";
+    member 5 "2 levels; learned none; declined none; evolution evolved";
+    member 6 "2 levels; learned none; declined none; evolution evolved";
+    case "the battle: the driver calls, in order"
+      (fun () -> String.trim (snd (Lazy.force battle)))
+      "[no, yes, forget 1, yes, leave, wait, hold B, wait, wait, yes, leave, \
+       wait, wait, wait, wait]";
   ]
 
-let () = Table_test.run "level up" (level_ups @ battles)
+let () = Table_test.run "level up" (level_ups @ named @ battles)

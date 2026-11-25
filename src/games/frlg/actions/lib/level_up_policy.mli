@@ -21,8 +21,9 @@ type t = {
   default : policy;
 }
 
-val only : policy -> t
-(** The same policy for every member: one member's level-ups (a Rare Candy). *)
+val for_everyone : policy -> t
+(** One policy for every member: no per-slot or per-species entries, only the
+    default. What a Rare Candy uses, since it levels one member. *)
 
 val decline_all : policy
 (** No rules, no evolution. *)

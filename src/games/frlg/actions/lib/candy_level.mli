@@ -9,10 +9,10 @@
 
     The level is read on the member's summary ({!Member_level}) before the first
     candy and after each: each candy must raise it, and the feeding stops as
-    soon as it reads the target. The game steps come as a {!rig}, so the loop
+    soon as it reads the target. The game steps come as a {!driver}, so the loop
     runs on a fake in tests. *)
 
-type rig = {
+type driver = {
   level : slot:int -> int option;
       (** From the overworld: the member's level on its summary; [None] when it
           did not read. *)
@@ -34,7 +34,7 @@ type report = {
 }
 
 val run :
-  rig -> Candy_plan.goal -> slot:int -> (report, Story.Failure.cause) result
+  driver -> Candy_plan.goal -> slot:int -> (report, Story.Failure.cause) result
 (** Fails as [level_unread], [level_stuck] (a candy that did not raise the level
     read), [no_effect] (the candy did nothing: a Lv 100 member),
     [rare_candy_failed] (with the candy's reason), [out_of_candies],

@@ -1,4 +1,4 @@
-(* The Rare Candy actions: their args (pure), one candy on Level_up's fake rig
+(* The Rare Candy actions: their args (pure), one candy on Level_up's fake driver
    (test_level_up has the level-up decisions), and the leveling loop on a fake
    that counts candies. *)
 
@@ -50,14 +50,14 @@ let decoding =
       "bad_args: candy_level: target_level is 101, not 2..100";
   ]
 
-(* The candy on Level_up's fake rig, with or without a candy in the bag. *)
-let candy_rig ~has_candy g : Rare_candy.rig =
+(* The candy on Level_up's fake driver, with or without a candy in the bag. *)
+let candy_driver ~has_candy g : Rare_candy.driver =
   {
     open_candy =
       (fun ~slot ->
         note g (Printf.sprintf "open %d" slot);
         if has_candy then Opened else No_candy);
-    level_up = rig g;
+    level_up = driver g;
     close_bag = (fun () -> note g "close");
     log = ignore;
   }
@@ -66,7 +66,7 @@ let candy ?(has_candy = true) looks () =
   let g = game looks in
   traced g
     (Rare_candy.describe
-       (Rare_candy.run (candy_rig ~has_candy g) (policy ()) ~member:gastly))
+       (Rare_candy.run (candy_driver ~has_candy g) (policy ()) ~member:gastly))
 
 let candies =
   [
@@ -94,7 +94,7 @@ type trainer = {
   moves : string list;
 }
 
-let level_rig t : Candy_level.rig =
+let level_driver t : Candy_level.driver =
   {
     level =
       (fun ~slot:_ ->
@@ -136,7 +136,7 @@ let goal ?(species = None) ?(moves = []) target : Candy_plan.goal =
 let train ?(candies = 10) ?(species = "haunter") ?(moves = [ "hypnosis" ])
     levels goal () =
   let t = { levels; candies; used = 0; species; moves } in
-  match Candy_level.run (level_rig t) goal ~slot:1 with
+  match Candy_level.run (level_driver t) goal ~slot:1 with
   | Ok r ->
       Printf.sprintf "Lv %d %s after %d candies" r.level r.species r.candies
   | Error c -> cause c ^ Printf.sprintf " (%d used)" t.used

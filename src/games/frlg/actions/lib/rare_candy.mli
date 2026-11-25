@@ -1,12 +1,12 @@
 (** The ["use_rare_candy"] game action: one Rare Candy from the bag on a party
     member, then whatever its level brings ({!Level_up}, on the party menu's
-    rig), back to the overworld. Ported from upstream's [use_rare_candy()]
+    driver), back to the overworld. Ported from upstream's [use_rare_candy()]
     (Programs/RngManipulation/PokemonFRLG_RngNavigation.cpp): the bag, A on the
     candy until the party shows, the slot, A until the level-up stats show, then
     until the bag is back, answering each move-learn prompt (B, A: NO, then YES
     to stop) and each evolution (B) on the way. The game's steps come as a
-    {!rig}, so the decisions run on a fake in tests; {!Rare_candy_steps} is the
-    game's.
+    {!driver}, so the decisions run on a fake in tests; {!Rare_candy_steps} is
+    the game's.
 
     What one candy shows, in order (pokefirered party_menu.c,
     [ItemUseCB_RareCandy] on; evolution_scene.c; item_use.c
@@ -57,11 +57,11 @@ type opened =
   | No_candy  (** no Rare Candy in the bag: the bag is closed again *)
   | Not_opened of string  (** why *)
 
-type rig = {
+type driver = {
   open_candy : slot:int -> opened;
       (** From the overworld: the bag, the Rare Candy, USE, the slot (from 1).
       *)
-  level_up : Level_up.rig;
+  level_up : Level_up.driver;
       (** The party menu's: {!Level_up.Back} is the bag. *)
   close_bag : unit -> unit;  (** From the bag, back to the overworld. *)
   log : string -> unit;
@@ -73,7 +73,7 @@ type result =
   | Out_of_candies
   | Failed of string
 
-val run : rig -> Level_up_policy.policy -> member:Level_up.member -> result
+val run : driver -> Level_up_policy.policy -> member:Level_up.member -> result
 (** One candy on the member: {!Level_up.run} with it alone. *)
 
 val describe : result -> string
