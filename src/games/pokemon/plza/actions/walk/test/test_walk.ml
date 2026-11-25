@@ -25,12 +25,10 @@ let input_text : Wire.command -> string = function
       in
       Printf.sprintf "%s %d/%d" (String.concat "+" parts) hold_ms cooldown_ms
 
-(* --- Walk_inputs --- *)
+(* --- Inputs --- *)
 
 let stick ?(walk_only = false) pace duration_ms () =
-  match
-    Walk_inputs.tilt ~walk_only pace ~degrees:0.0 ~duration_ms ~release_ms:0
-  with
+  match Inputs.tilt ~walk_only pace ~degrees:0.0 ~duration_ms ~release_ms:0 with
   | Ok c -> input_text c
   | Error e -> e
 
@@ -49,7 +47,7 @@ let stick_cases =
 
 let screen ?(still = false) ?(fade_black = false) ?(fade_white = false)
     ?(dialog = false) ?(arrow = false) ?(party = false) ?(hint = false)
-    ?(home = false) at_ms : Walk_screen.t =
+    ?(home = false) ?(battle = false) at_ms : Screen.t =
   {
     at_ms;
     home_menu = home;
@@ -60,6 +58,11 @@ let screen ?(still = false) ?(fade_black = false) ?(fade_white = false)
     advance_arrow = arrow;
     player_can_move = party;
     controls_hint = hint;
+    interact_prompt = false;
+    scene_under_way = false;
+    battle;
+    minimap_arrow = None;
+    map_pin = None;
   }
 
 let platform at = screen ~hint:true at
@@ -75,7 +78,7 @@ let scripted screens run =
     | l :: rest ->
         screens := rest;
         l
-    | [] -> Walk_screen.empty ~at_ms:0.0
+    | [] -> Screen.empty ~at_ms:0.0
   in
   let steps : Walk.game_steps =
     {
@@ -159,9 +162,12 @@ let move_cases =
 
 (* --- walk_to_end --- *)
 
-let until ?(earliest_end_ms = 0) ?(walk_only = true) until legs steps =
-  Walk.walk_to_end steps ~walk_only "walk" (move legs) ~until ~earliest_end_ms
+let until ?(earliest_end_ms = 0) ?(walk_only = true) ?(stop_on_battle = false)
+    until legs steps =
+  Walk.walk_to_end steps ~walk_only ~stop_on_battle "walk" (move legs) ~until
+    ~earliest_end_ms
 
+let hud at = screen ~battle:true ~party:true at
 let white = Event Fade_white
 
 let until_cases =
@@ -255,12 +261,55 @@ let until_cases =
        stick (0.00, 1.00) 250/0\n\
        walk_no_scene: walk: control still free after 500 ms of the last leg: \
        no scene took it";
+    case
+      "a story battle ahead: the battle HUD on two reads in a row stops the \
+       last leg (fork PR 725)"
+      (fun () ->
+        scripted
+          [
+            platform 0.0;
+            platform 250.0;
+            hud 500.0;
+            platform 750.0;
+            hud 1000.0;
+            hud 1250.0;
+          ]
+          (until ~stop_on_battle:true white [ leg 0.0 3000 ]))
+      "stick (0.00, 1.00) 250/0\n\
+       stick (0.00, 1.00) 250/0\n\
+       stick (0.00, 1.00) 250/0\n\
+       stick (0.00, 1.00) 250/0\n\
+       stick (0.00, 1.00) 250/0\n\
+       log [PLZA] walk: battle HUD showed after 1250 ms of the last leg: \
+       stopping walk.\n\
+       battle_on_screen: battle on screen";
+    case
+      "a walk into a talk, a story battle ahead: the HUD on the last slice and \
+       the read after the legs stops it"
+      (fun () ->
+        scripted
+          [ platform 0.0; platform 250.0; hud 500.0; hud 750.0 ]
+          (until ~stop_on_battle:true
+             (Talk { after_legs = false })
+             [ leg 0.0 250 ]))
+      "stick (0.00, 1.00) 250/0\n\
+       log [PLZA] walk: battle HUD showed after 250 ms of the last leg: \
+       stopping walk.\n\
+       battle_on_screen: battle on screen";
+    case "no story battle ahead: the battle HUD does not stop the walk"
+      (fun () ->
+        inputs
+          [ platform 0.0; hud 250.0; hud 500.0 ]
+          (until white [ leg 0.0 500 ]))
+      "stick (0.00, 1.00) 250/0\n\
+       stick (0.00, 1.00) 250/0\n\
+       walk_no_end: walk: no end event within 500 ms of the last leg";
     case "steered: the last leg sliced at its own angle, after its L"
       (fun () ->
         inputs
           [ screen ~fade_white:true 0.0 ]
           (fun steps ->
-            Walk.walk_to_end steps ~walk_only:true "walk"
+            Walk.walk_to_end steps ~walk_only:true ~stop_on_battle:false "walk"
               (move ~style:Steer [ leg 0.0 300; leg 90.0 500 ])
               ~until:white ~earliest_end_ms:0))
       "stick (0.00, 1.00) 300/0\nL 100/150\nstick (1.00, 0.00) 250/0\nok";
@@ -268,15 +317,23 @@ let until_cases =
 
 (* --- free control, and the walk event --- *)
 
-let can_walk steps =
-  Free_control_wait.wait (Walk.free_control_game_steps steps) "walk"
+let can_walk { Walk.submit; read_screen; log; _ } =
+  Free_control_wait.wait
+    (Free_control_wait.screen_game_steps ~submit ~read_screen ~log)
+    "walk"
 
 let reads_every_poll n make =
   List.init n (fun i -> make (float_of_int (i * 250)))
 
-let step ?(until = None) ?(wait_before_ms = 0) legs steps =
-  Walk.run_event steps ~walk_only:true "walk"
-    { move = { (move legs) with wait_before_ms }; until; earliest_end_ms = 0 }
+let step ?(until = None) ?(wait_before_ms = 0) ?(battle_ahead = false) legs
+    steps =
+  Walk.run_event steps ~walk_only:true ~battle_ahead "walk"
+    {
+      move = { (move legs) with wait_before_ms };
+      until;
+      earliest_end_ms = 0;
+      heading_deg = None;
+    }
 
 let free_cases =
   [
@@ -299,7 +356,7 @@ let free_cases =
         let lines =
           String.split_on_char '\n'
             (scripted
-               (reads_every_poll 50 (fun at_ms -> Walk_screen.empty ~at_ms))
+               (reads_every_poll 50 (fun at_ms -> Screen.empty ~at_ms))
                can_walk)
         in
         String.concat "\n" (List.filteri (fun i _ -> i >= 40) lines))
@@ -322,6 +379,47 @@ let free_cases =
           [ overworld 0.0; overworld 250.0; screen ~fade_white:true 500.0 ]
           (step ~until:(Some white) [ leg 0.0 400 ]))
       "wait 250\nstick (0.00, 1.00) 250/0\nok";
+    case
+      "a story battle ahead, the battle HUD before the walk (two reads 250 ms \
+       apart): no walk, battle_on_screen"
+      (fun () ->
+        inputs [ hud 0.0; hud 250.0 ] (step ~battle_ahead:true [ leg 0.0 400 ]))
+      "wait 250\nbattle_on_screen: battle on screen";
+    case
+      "a story battle ahead, a walk that failed with the HUD flickering (never \
+       two reads in a row): the HUD after it, battle_on_screen"
+      (fun () ->
+        inputs
+          [
+            overworld 0.0;
+            overworld 250.0;
+            hud 500.0;
+            overworld 750.0;
+            hud 1000.0;
+            hud 1250.0;
+          ]
+          (step ~battle_ahead:true ~until:(Some white) [ leg 0.0 500 ]))
+      "wait 250\n\
+       stick (0.00, 1.00) 250/0\n\
+       stick (0.00, 1.00) 250/0\n\
+       wait 250\n\
+       battle_on_screen: battle on screen";
+    case "no story battle ahead, the same walk: walk_no_end"
+      (fun () ->
+        inputs
+          [
+            overworld 0.0;
+            overworld 250.0;
+            hud 500.0;
+            overworld 750.0;
+            hud 1000.0;
+            hud 1250.0;
+          ]
+          (step ~until:(Some white) [ leg 0.0 500 ]))
+      "wait 250\n\
+       stick (0.00, 1.00) 250/0\n\
+       stick (0.00, 1.00) 250/0\n\
+       walk_no_end: walk: no end event within 500 ms of the last leg";
     case "a walk event without free control sends no stick"
       (fun () -> inputs [ screen ~home:true 0.0 ] (step [ leg 0.0 400 ]))
       "game_not_running: the game is not running: the Switch HOME menu is \

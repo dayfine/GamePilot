@@ -1,6 +1,6 @@
 (** The story screen read live, in the effect context: the PLZA readers' probes
     over the game picture, and each read turned into what a walk reads
-    ({!Plza_walk.Walk_screen.t}), as the screen read of
+    ({!Plza_walk.Screen.t}), as the screen read of
     PokemonLZA_AutoStoryConsoleBackend.cpp fills its look: the HOME menu first
     ({!Switch_home.Home_screen}), else {!Plza_readers.Story_screen}, and whether
     the frame is the last read's ({!Plza_readers.Frame_cells}). A read waits for

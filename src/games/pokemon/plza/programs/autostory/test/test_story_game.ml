@@ -6,7 +6,7 @@
    event's change and the run. *)
 
 open Plza_engine
-module S = Plza_walk.Walk_screen
+module S = Plza_walk.Screen
 
 let case name input expectation = { Table_test.name; input; expectation }
 

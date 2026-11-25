@@ -70,6 +70,11 @@ let decode_cases =
       (fun () -> walk_args {|{"legs": [[0, 1]], "style": "held"}|})
       "plza-01.01.plan.json: checkpoint.events[0].args.style must be \
        \"face_then_walk\" or \"steer\".";
+    case "a heading to face first (the fork's, a minimap bearing)"
+      (fun () ->
+        walk_args
+          {|{"legs": [[0, 6500], [-90, 13000]], "end": "dialog", "heading": 257}|})
+      "w: walk [0, 6500] [-90, 13000] facing 257 until dialog";
     case "until a scene"
       (fun () -> walk_args {|{"legs": [[0, 1000]], "end": "scene"}|})
       "w: walk [0, 1000] until scene";
@@ -83,14 +88,20 @@ let decode_cases =
     case "legs are required"
       (fun () -> walk_args {|{"end": "scene"}|})
       "plza-01.01.plan.json: checkpoint.events[0].args.legs is missing.";
-    case "an end that is not one of the four"
+    case "an end that is not one of the seven"
       (fun () -> walk_args {|{"legs": [[0, 1]], "end": "banner"}|})
       "plza-01.01.plan.json: checkpoint.events[0].args.end must be \
-       \"fade_white\", \"fade_black\", \"dialog\", or \"scene\".";
+       \"fade_white\", \"fade_black\", \"dialog\", \"prompt\", \"talk\", \
+       \"talk_after_legs\" or \"scene\".";
     case "earliest_end_ms needs an end"
       (fun () -> walk_args {|{"legs": [[0, 1]], "earliest_end_ms": 100}|})
       "plza-01.01.plan.json: checkpoint.events[0].args.earliest_end_ms needs \
-       an \"end\".";
+       an \"end\" other than a talk.";
+    case "a walk into a talk after its legs"
+      (fun () ->
+        walk_args
+          {|{"legs": [[-66, 600]], "style": "steer", "end": "talk_after_legs"}|})
+      "w: walk [-66, 600] steer into a talk after the legs";
     case "an unknown walk arg"
       (fun () -> walk_args {|{"legs": [[0, 1]], "tiles": 3}|})
       "plza-01.01.plan.json: checkpoint.events[0].args.tiles is not a known \

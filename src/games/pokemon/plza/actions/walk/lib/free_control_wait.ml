@@ -1,10 +1,13 @@
 open Engine_run
 
 type game_steps = {
-  read_screen : unit -> Walk_screen.t;
+  read_screen : unit -> Screen.t;
   wait : int -> unit;
   log : string -> unit;
 }
+
+let screen_game_steps ~submit ~read_screen ~log =
+  { read_screen; wait = (fun ms -> submit (Inputs.wait ms)); log }
 
 (* The timeout: only a stuck game gets this far; free control confirms in
    about 0.5 s (two reads). *)
@@ -18,11 +21,17 @@ let quiet_is_control_ms = 10000
 (* Reads of free control in a row that confirm it. *)
 let control_reads = 2
 
+(* An A prompt shows only in the overworld, so it is control where no party
+   bar shows (01.03). Held a second, so a prompt left up under a late fade
+   after A at a door is not taken. *)
+let prompt_is_control_ms = 1000
+
 (* What the wait has seen so far. *)
 type watch = {
   mutable last_busy : string;
   mutable control_streak : int;
   mutable quiet_since : int option;
+  mutable prompt_since : int option;
   mutable poll_reads : int;
 }
 
@@ -37,6 +46,16 @@ let quiet_ready watch ~quiet poll_time =
     watch.quiet_since <- Some since;
     poll_time - since >= quiet_is_control_ms
 
+(* Whether an A prompt with nothing busy has held a second. *)
+let prompt_ready watch ~prompt poll_time =
+  if not prompt then (
+    watch.prompt_since <- None;
+    false)
+  else
+    let since = Option.value ~default:poll_time watch.prompt_since in
+    watch.prompt_since <- Some since;
+    poll_time - since >= prompt_is_control_ms
+
 (* Whether free control has held on [control_reads] reads in a row. *)
 let streak watch matched =
   watch.control_streak <- (if matched then watch.control_streak + 1 else 0);
@@ -46,10 +65,18 @@ let streak watch matched =
 let free_control_shows steps walk watch screen =
   let poll_time = watch.poll_reads * free_control_read_ms in
   watch.poll_reads <- watch.poll_reads + 1;
-  let busy = Walk_screen.busy_with screen in
+  let busy = Screen.busy_with screen in
   Option.iter (fun b -> watch.last_busy <- b) busy;
   let quiet = quiet_ready watch ~quiet:(busy = None) poll_time in
-  if streak watch (Walk_screen.player_free screen) then true
+  if streak watch (Screen.player_free screen) then true
+  else if
+    prompt_ready watch ~prompt:(busy = None && screen.interact_prompt) poll_time
+  then (
+    steps.log
+      (Printf.sprintf
+         "[PLZA] %s: the A prompt held %d ms with nothing busy: control." walk
+         prompt_is_control_ms);
+    true)
   else if quiet then (
     steps.log
       (Printf.sprintf
@@ -69,6 +96,7 @@ let new_watch () =
     last_busy = "nothing";
     control_streak = 0;
     quiet_since = None;
+    prompt_since = None;
     poll_reads = 0;
   }
 
@@ -77,8 +105,8 @@ let wait steps walk =
   match
     Switch_home.Screen_poll.until
       { read_screen = steps.read_screen; wait = steps.wait }
-      ~at_ms:(fun (s : Walk_screen.t) -> s.at_ms)
-      ~home_menu:(fun (s : Walk_screen.t) -> s.home_menu)
+      ~at_ms:(fun (s : Screen.t) -> s.at_ms)
+      ~home_menu:(fun (s : Screen.t) -> s.home_menu)
       ~poll_ms:free_control_read_ms ~timeout_ms:free_control_wait_ms
       (free_control_shows steps walk watch)
   with

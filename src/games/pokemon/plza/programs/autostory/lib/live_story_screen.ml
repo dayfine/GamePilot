@@ -36,7 +36,18 @@ let home m =
   | Home _ | Home_dimmed | User_select -> true
   | Elsewhere -> false
 
-let look_of ~still (m : Effects.measurements) : Plza_walk.Walk_screen.t =
+(* The scene machine's [scene_under_way] (PokemonLZA_AutoStoryScreenPredicates.h):
+   text, a box, a battle or a card; else, with no sign of control, a fade or a
+   moving screen. *)
+let scene_under_way ~still (s : Story_screen.t) =
+  if
+    s.dialog_box || s.advance_arrow || s.choice_box || s.battle
+    || s.tutorial_card
+  then true
+  else if s.party_bar || s.controls_hint || s.interact_prompt then false
+  else s.fade <> No_fade || not still
+
+let look_of ~still (m : Effects.measurements) : Plza_walk.Screen.t =
   let s = Story_screen.read m in
   {
     at_ms = m.t_ms;
@@ -48,11 +59,19 @@ let look_of ~still (m : Effects.measurements) : Plza_walk.Walk_screen.t =
     advance_arrow = s.advance_arrow;
     player_can_move = s.party_bar;
     controls_hint = s.controls_hint;
+    interact_prompt = s.interact_prompt;
+    scene_under_way = scene_under_way ~still s;
+    battle = s.battle;
+    minimap_arrow = s.minimap_arrow;
+    map_pin =
+      Option.map
+        (fun ({ x; y } : Map_pin.point) : Plza_walk.Map_leg.point -> { x; y })
+        s.map_pin;
   }
 
 let read_screen last () =
   match fresh () with
-  | None -> Plza_walk.Walk_screen.empty ~at_ms:(Effects.now ())
+  | None -> Plza_walk.Screen.empty ~at_ms:(Effects.now ())
   | Some m ->
       let cells = Frame_cells.read m in
       let still =
