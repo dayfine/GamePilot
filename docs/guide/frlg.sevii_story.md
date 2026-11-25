@@ -159,9 +159,10 @@ settled to a quiet overworld. A fainted lead fails the event as `battle_lost`.
 **04, the lead.** A `party_swap` puts BLASTOISE (Lv 60, Surf) first. On mGBA, with MIMIEN (Lv 33)
 in slot 1, every battle opened on it, since Gen 3 puts the party back in order after a battle, and
 it fainted in the second. Surf takes most of the Lv 37 to 39 Pokemon in one hit, so there is no
-heal first (no free control between the battles anyway). The save plays with the Set battle
-style; under Shift, "Will ... change POKéMON?"
-is read (`Switch_offer`) and answered NO.
+heal first (no free control between the battles anyway).
+
+**04, the battle style.** The save plays with the Set battle style; under Shift, "Will ... change
+POKéMON?" is read (`Switch_offer`) and answered NO.
 
 **04's money.** It ends on (8, 26) facing north with $3,196 more: 740, 760, 760 and 936 (4 x the
 last Pokemon's level x the class's base, Biker 5, Cue Ball 6).
