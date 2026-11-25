@@ -70,7 +70,7 @@ let leg_text w (leg : Connected_maps.place Leg.t) =
           tiles
           (if to_wall then " (to wall)" else "")
     | Face -> "face " ^ Direction.name leg.direction
-    | Action _ -> "action " ^ Direction.name leg.direction
+    | Special_step _ -> "action " ^ Direction.name leg.direction
   in
   Printf.sprintf "%s%s -> %s %s" kind
     (if leg.warps then " (warp)" else "")

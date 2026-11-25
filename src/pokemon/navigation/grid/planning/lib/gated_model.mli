@@ -17,7 +17,7 @@
 type 'inner state = { inner : 'inner; gates : Gate_state.t }
 (** The game's state and the gate state. *)
 
-type Leg.action +=
+type Leg.special_step +=
   | Open_gate  (** Face a closed Card Key gate and press A. *)
   | Press_switch  (** Face a statue and press A. *)
 

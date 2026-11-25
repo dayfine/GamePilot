@@ -41,16 +41,18 @@ let case name input expectation = { Table_test.name; input; expectation }
 
 let decode_cases =
   [
-    case "a toy plan's outline: a zone start, own and engine kinds"
+    case
+      "a toy plan's outline: a zone start, the toy's actions and the engine's \
+       kinds"
       (fun () -> Plan_text.outline (plan ()))
       "toy cf from Village/inn: 1 walk, 1 talk, 1 answer, 1 game_action, 1 rest";
-    case "a walk: the toy's own kind, with a zone declared after"
+    case "a walk: the toy's walk action, with a zone declared after"
       (event "into_forest")
       "into_forest: walk north until forest_sign => Forest";
     case "an answer: the engine's kind" (event "agree") "agree: answer no";
     case "a game action: its args as written" (event "beg")
       {|beg: [beg] game_action {"item":"bell"}|};
-    case "a rest: the toy's kind without args" (event "sleep")
+    case "a rest: the toy's rest action, without args" (event "sleep")
       "sleep: rest skip_if rested";
     case "the toy's promises"
       (fun () -> Plan_text.postconditions (plan ()))
@@ -65,7 +67,7 @@ let decode_cases =
         decoded Plan_text.outline
           (toy_plan [ {|{"id": "x", "kind": "route"}|} ]))
       {|toy.plan.json: checkpoint.events[0].kind "route" is not a story event kind.|};
-    case "an own kind's unknown arg, named by the toy's decoder"
+    case "an unknown arg of the toy's walk action, named by the toy's decoder"
       (fun () ->
         decoded Plan_text.outline
           (toy_plan
@@ -99,7 +101,7 @@ let toy_game ?(after = []) ?(flags = []) () =
   in
   let game : Game.t =
     {
-      run_own = (fun event own -> handled ("own " ^ Toy_text.kind own) event);
+      run_own = (fun event own -> handled ("own " ^ Toy_text.action own) event);
       run_builtin = (fun event -> handled ("builtin " ^ event.id) event);
       game_actions = [ ("beg", fun event _ -> handled "action beg" event) ];
       flag_holds = (fun flag -> List.mem flag flags);

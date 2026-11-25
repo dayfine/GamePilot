@@ -27,7 +27,7 @@ let rest ~where args =
       known ~where [] args;
       Action.Rest)
 
-let kind_of_plan = function
+let action_of_plan = function
   | "walk" -> Some walk
   | "rest" -> Some rest
   | _ -> None

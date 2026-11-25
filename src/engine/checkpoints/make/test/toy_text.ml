@@ -6,7 +6,7 @@ let pose (p : Pose.t) =
 
 let observed = pose
 
-let kind : Action.t -> string = function
+let action : Action.t -> string = function
   | Walk { toward; until } -> Printf.sprintf "walk %s until %s" toward until
   | Rest -> "rest"
 
