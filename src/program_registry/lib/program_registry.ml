@@ -108,7 +108,7 @@ let mail_glitch =
     description =
       "Turns on the Mail Glitch against Lea & Jed on Route 16 and copies one \
        item with it.";
-    doc = "docs/programs/frlg-mail-glitch.md";
+    doc = "docs/guide/frlg.mail_glitch.md";
     checkpoints = Some "src/games/frlg/programs/mail_glitch/plans";
     backends = [ Mgba; Switch ];
     viewport = Nso_gba;
@@ -137,7 +137,7 @@ let team_training =
     name = "Team Training";
     group = [ "FRLG"; "Training" ];
     description = "Copies Rare Candies with the Mail Glitch to level the team.";
-    doc = "docs/programs/frlg-team-training.md";
+    doc = "docs/guide/frlg.team_training.md";
     checkpoints = Some "src/games/frlg/programs/team_training/plans";
     backends = [ Mgba; Switch ];
     viewport = Nso_gba;
@@ -152,7 +152,7 @@ let supplies =
     group = [ "FRLG"; "Training" ];
     description =
       "Stocks what the duplication programs use: Retro Mail and Super Repels.";
-    doc = "docs/programs/frlg-supplies.md";
+    doc = "docs/guide/frlg.supplies.md";
     checkpoints = Some "src/games/frlg/programs/supplies/plans";
     backends = [ Mgba; Switch ];
     viewport = Nso_gba;
@@ -166,7 +166,7 @@ let sevii_story =
     name = "Sevii Story";
     group = [ "FRLG"; "Story" ];
     description = "Plays the Sevii Islands story after the Cinnabar Gym.";
-    doc = "docs/programs/frlg-sevii-story.md";
+    doc = "docs/guide/frlg.sevii_story.md";
     checkpoints = Some "src/games/frlg/programs/sevii_story/plans";
     backends = [ Mgba ];
     viewport = Nso_gba;
@@ -181,7 +181,7 @@ let dex_collection =
     group = [ "FRLG"; "Pokedex" ];
     description =
       "Catches Pokemon the Pokedex lacks, toward the National Pokedex.";
-    doc = "docs/programs/frlg-dex-collection.md";
+    doc = "docs/guide/frlg.dex_collection.md";
     checkpoints = Some "src/games/frlg/programs/dex_collection/plans";
     backends = [ Mgba ];
     viewport = Nso_gba;

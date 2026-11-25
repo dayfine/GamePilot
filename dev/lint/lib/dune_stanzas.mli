@@ -8,6 +8,7 @@ type stanza = {
       (** The [libraries] field; [re_export] forms are unwrapped, [select] forms
           are skipped. *)
 }
+(** One stanza of a dune file, by the line it starts on. *)
 
 val parse : string -> (stanza list, string) result
 (** Stanzas with a [libraries] field or that define a library. *)
