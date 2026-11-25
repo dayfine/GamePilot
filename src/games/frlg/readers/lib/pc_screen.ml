@@ -66,9 +66,15 @@ let column name (c : column) rows =
 
 let pc_column = { left = 9.; top = 12.; step = 16. }
 let mon_column = { left = 159.; top = 44.; step = 16. }
+let withdraw_shift = 8
+
+let withdraw_column =
+  { mon_column with left = mon_column.left -. float_of_int withdraw_shift }
+
 let yes_no_column = { left = 191.; top = 91.; step = 14. }
 let pc_rows = column "menu" pc_column storage_menu_rows
 let mon_rows = column "mon" mon_column mon_menu_rows
+let withdraw_rows = column "withdraw" withdraw_column mon_menu_rows
 let yes_no_rows_boxes = column "yes_no" yes_no_column yes_no_rows
 
 (* The party panel's slot under the hand: the lead's hand area above its box;
@@ -112,7 +118,7 @@ let probes =
   List.map (fun (id, b) -> Solid_color.probe ~id b) patches
   @ List.map
       (fun (id, b) -> Color_count.probe ~id b dark)
-      (pc_rows @ mon_rows @ yes_no_rows_boxes)
+      (pc_rows @ mon_rows @ withdraw_rows @ yes_no_rows_boxes)
   @ List.map (fun (id, b) -> Color_count.probe ~id b white) hand_areas
   @ Start_menu.probes
 
@@ -177,7 +183,13 @@ let message : white_box = { min_sum = 500.; max_stddev_sum = 40. }
 
 let box_screen m =
   if is_white m "pc.mon_menu" then
-    { screen = Mon_menu; cursor = arrow_row m mon_rows }
+    {
+      screen = Mon_menu;
+      cursor =
+        (match arrow_row m mon_rows with
+        | Some row -> Some row
+        | None -> arrow_row m withdraw_rows);
+    }
   else if is_white m "pc.yes_no" then
     { screen = Yes_no; cursor = arrow_row m yes_no_rows_boxes }
   else if holds m "pc.chooser" (solid chooser_yellow) then

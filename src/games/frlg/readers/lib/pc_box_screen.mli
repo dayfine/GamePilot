@@ -14,11 +14,14 @@
       (x 100-219, y 140-151): Box 3's default Desert is tan (208, 167, 117 on
       mGBA), Box 1's Forest green (156, 204, 101). The title's name is drawn
       white with a dark outline, which the text templates do not read;
-    - the panel's gender mark: the male symbol's blue at x 10-16, y 117-127. *)
+    - the panel's gender mark: the male symbol's blue at x 10-16, y 117-127;
+    - the panel's held-item line ({!holds_item}), flat when the Pokémon holds
+      nothing. *)
 
 val probes : Wire.probe_spec list
-(** The panel's lower part, the first slot's shadow box, the wallpaper strip and
-    the gender mark's box: every probe the functions below read. *)
+(** The panel's lower part, the held-item line, the first slot's shadow box, the
+    wallpaper strip and the gender mark's box: every probe the functions below
+    read. *)
 
 val panel_occupied : Effects.measurements -> bool option
 (** The fork's test: the panel's stddev sum over {!min_panel_stddev}. *)
@@ -26,6 +29,12 @@ val panel_occupied : Effects.measurements -> bool option
 val min_panel_stddev : float
 (** 10, the fork's. Measured on mGBA: an empty slot's panel 0, the ACE Pokémon's
     200 and more. *)
+
+val holds_item : Effects.measurements -> bool option
+(** PKMN DATA's held-item line has text: the channel stddevs' sum over
+    {!min_panel_stddev} in x 2-69, y 134-143, where pokefirered
+    [PrintDisplayMonInfo] prints the item's name in the small font (window 0 at
+    (0, 88), the text at (6, 44)); flat with no item or an empty slot. *)
 
 val hand_on_first_slot : Effects.measurements -> bool option
 (** The hand's shadow fills at least {!min_shadow_share} of the first slot's
