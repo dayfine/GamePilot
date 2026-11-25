@@ -1,8 +1,8 @@
 (** What flags PLZA's series runner ({!Runs}) takes: [gamepilot run]'s flags
-    (Checkpoints_flags) with no game flags of its own, and the ones it refuses
-    rather than ignores. *)
+    (Run_flags) with no game flags of its own, and the ones it refuses rather
+    than ignores. *)
 
-type t = unit Checkpoints_flags.flags
+type t = unit Run_flags.flags
 (** The command's flags, with no game flags. *)
 
 val parse : string list -> (t, string) result

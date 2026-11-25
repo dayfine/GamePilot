@@ -29,7 +29,7 @@ let usage =
    N] [--mgba-port N | --backend switch ...] [--daemon PATH] [--state PATH | \
    --console] [--runs-dir DIR]\n\
   \  gamepilot replay frlg.start_menu_poc WIRELOG\n"
-  ^ Checkpoint_families.checkpoints_usage ^ Checkpoint_families.usage
+  ^ Checkpoint_families.run_usage ^ Checkpoint_families.usage
   ^ "  (gamepilot checkpoints and gamepilot checkpoint: old forms of gamepilot \
      run)\n" ^ Programs_command.usage ^ Guide_command.usage
   ^ Status_command.usage ^ Ctl_command.usage ^ Runs_command.usage

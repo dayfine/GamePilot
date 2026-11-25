@@ -7,6 +7,6 @@
   gamepilot.live_run
   gamepilot.live
   gamepilot.run_record
-  gamepilot.checkpoints_flags
+  gamepilot.run_flags
   gamepilot.engine_run
   gamepilot.program_registry))
