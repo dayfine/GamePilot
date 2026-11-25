@@ -3,13 +3,29 @@ name: OCaml
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - "daemon/**"
+      - ".github/workflows/daemon.yml"
   pull_request:
+    # The daemon's C++ has its own workflow; the OCaml build reads none of it.
+    # protocol/ is not ignored: the OCaml tests parse its golden files.
+    paths-ignore:
+      - "daemon/**"
+      - ".github/workflows/daemon.yml"
+# A newer push to a PR replaces its queued or running run, as daemon.yml does;
+# main's runs all finish.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 jobs:
   build:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        # macOS runners are the slow queue: a PR stacked on another branch
+        # runs Ubuntu and Windows only, since it is pushed again (and runs on
+        # all three) once its base merges and it is based on main.
+        os: ${{ fromJSON((github.event_name != 'pull_request' || github.base_ref == 'main') && '["ubuntu-latest", "macos-latest", "windows-latest"]' || '["ubuntu-latest", "windows-latest"]') }}
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4

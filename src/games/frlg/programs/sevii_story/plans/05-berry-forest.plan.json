@@ -1,0 +1,142 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "frlg",
+  "execution": {
+    "menu": "full"
+  },
+  "metadata": {
+    "phase": "testing",
+    "notes": "From below the Bikers' rows, healed first at Three Island's Pokemon Center (04 did not heal), then west out of town onto Bond Bridge (ThreeIsland_BondBridge), whose two Aroma Ladies cannot both be walked around: Nikki wanders (27, 10) in a 3 x 3 box looking every way with sight 5 (Bellsprout and Weepinbell Lv 37) and Violet stands at (68, 10) looking west with sight 2 (Bulbasaur and Ivysaur Lv 36); Tuber Alexis walks row 11 below the bridge's way (sight 1). The walk fights whoever sees it (Frlg_overworld.Route_walk). The bridge's warp (12, 6) north leads to the Berry Forest's south mat (43, 41). Lostelle stands at (4, 8) (pret ThreeIsland_BerryForest_EventScript_Lostelle): she asks for help, looks round, and a Hypno Lv 30 attacks, a wild battle (setwildbattle, dowildbattle) whose outcome the script does not check. Once it is over she gives an Iapapa Berry, sets FLAG_RESCUED_LOSTELLE and VAR_MAP_SCENE_TWO_ISLAND_JOYFUL_GAME_CORNER 2, and the game warps the player to the Joyful Game Corner (6, 6), turned north (TwoIsland_JoyfulGameCorner_OnWarp); there her father's thanks run at once (TwoIsland_JoyfulGameCorner_EventScript_FoundLostelleScene), which set the room's scene var to 3. The Bikers are gone since 04's scene removed them (Frlg_overworld.Scene_removed_people).",
+    "postconditions": {
+      "position": {
+        "map": "TwoIsland_JoyfulGameCorner",
+        "tiles": [
+          [6, 6]
+        ],
+        "facing": "north"
+      }
+    }
+  },
+  "checkpoint": {
+    "id": "05-berry-forest",
+    "title": "Bond Bridge's trainers, the Berry Forest and Lostelle's Hypno; home to the Game Corner",
+    "start": {
+      "map": "ThreeIsland",
+      "tiles": [
+        [8, 26]
+      ],
+      "facing": "north"
+    },
+    "events": [
+      {
+        "id": "to_nurse",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {"place": "three_island_nurse"}
+        },
+        "why": "Into Three Island's Pokemon Center (14, 27), to its nurse."
+      },
+      {
+        "id": "heal",
+        "kind": "heal",
+        "why": "Full HP and PP after the Bikers, before Bond Bridge's grass-type trainers."
+      },
+      {
+        "id": "repel_bond_bridge",
+        "kind": "game_action",
+        "action": "use_item",
+        "args": {
+          "item": "super-repel"
+        },
+        "why": "No wild battles on Bond Bridge: BLASTOISE (Lv 60) leads, above every wild Pokemon here, and a battle on an open leg in the grass left the walk reckoned a tile ahead of the player (testing-1, stuck at (61, 8) off the bridge's way). Its 200 steps cover the Center, the town, the bridge and the forest's first 20 or so."
+      },
+      {
+        "id": "over_bond_bridge",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {"map": "ThreeIsland_BerryForest", "tiles": [[43, 41]]},
+          "fight_trainers": true
+        },
+        "why": "West over Bond Bridge, fighting the Aroma Ladies Nikki and Violet (and Tuber Alexis, if she sees the player), north through the warp (12, 6) into the Berry Forest's south mat."
+      },
+      {
+        "id": "pace_west",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {"map": "ThreeIsland_BerryForest", "tiles": [[30, 39]]}
+        },
+        "why": "North 2 and west along row 39 to its wall (30, 39), clear of the grass: the first Super Repel, used about 170 steps before at the Center, has some 30 left at the mat (testing-3: it wore off 29 steps in), and the game refuses another while one works."
+      },
+      {
+        "id": "pace_east",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {"map": "ThreeIsland_BerryForest", "tiles": [[44, 39]]}
+        },
+        "why": "East along row 39 to its wall (44, 39), still clear of the grass."
+      },
+      {
+        "id": "pace_west_again",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {"map": "ThreeIsland_BerryForest", "tiles": [[30, 39]]}
+        },
+        "why": "West to (30, 39) again."
+      },
+      {
+        "id": "pace_east_again",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {"map": "ThreeIsland_BerryForest", "tiles": [[44, 39]]}
+        },
+        "why": "East to (44, 39) again: 57 steps in the forest, past the first Super Repel's end; its message shows on a leg held to a wall, which walks on after it."
+      },
+      {
+        "id": "repel_berry_forest",
+        "kind": "game_action",
+        "action": "use_item",
+        "args": {
+          "item": "super-repel"
+        },
+        "why": "The second Super Repel, now that the first has worn off, for the forest's grass on the way to Lostelle (about 190 steps)."
+      },
+      {
+        "id": "to_lostelle",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {"map": "ThreeIsland_BerryForest", "tiles": [[4, 9]], "facing": "north"}
+        },
+        "why": "Round the forest to the tile below Lostelle (4, 8)."
+      },
+      {
+        "id": "talk_to_lostelle",
+        "kind": "talk",
+        "why": "Lostelle asks for help and looks round; the Hypno's cry, and its wild battle starts."
+      },
+      {
+        "id": "hypno",
+        "kind": "battle",
+        "why": "Hypno Lv 30, a wild battle: BLASTOISE (Lv 60) leads and attacks; the script goes on however it ends."
+      },
+      {
+        "id": "lostelle_home",
+        "kind": "scene",
+        "why": "Lostelle's thanks and the Iapapa Berry, the warp to the Joyful Game Corner (6, 6), and her father's thanks there.",
+        "declared_after": {
+          "map": "TwoIsland_JoyfulGameCorner",
+          "tiles": [
+            [6, 6]
+          ],
+          "facing": "north"
+        }
+      }
+    ]
+  }
+}

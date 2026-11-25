@@ -11,6 +11,7 @@ let nothing : Postconditions.t =
     party = None;
     items = [];
     coins = None;
+    caught = None;
     money = None;
     flags = [];
     knows = [];
@@ -57,6 +58,7 @@ let ropes ?start now =
   }
 
 let coins count = { nothing with coins = Some count }
+let caught count = { nothing with caught = Some count }
 
 let money_from start now =
   {
@@ -161,11 +163,31 @@ let count_cases =
         read with
         start = { C.nothing_at_start with start_coins = Some 50 };
         coins = Some 70;
+        caught = None;
       }
       "coins: passed: gained 20 (50 to 70)";
     case "coins gained, the start not read" (coins (Count.Gained 20))
       { read with coins = Some 20 }
       "coins: not checked: the count at the start was not read";
+    case "the National Dex's 60 caught"
+      (caught (Count.At_least 60))
+      { read with caught = Some 61 }
+      "caught: passed: 61";
+    case "short of 60 caught"
+      (caught (Count.At_least 60))
+      { read with caught = Some 12 }
+      "caught: failed: expected at least 60, read 12";
+    case "caught not read off the card"
+      (caught (Count.At_least 60))
+      read "caught: not checked: the game can't read it";
+    case "two species caught on the route: gained 2 (10 to 12)"
+      (caught (Count.Gained 2))
+      {
+        read with
+        start = { C.nothing_at_start with start_caught = Some 10 };
+        caught = Some 12;
+      }
+      "caught: passed: gained 2 (10 to 12)";
     case "money exactly" (money 25014 25014)
       { read with money = Some 25014 }
       "money: passed: $25014";
@@ -269,6 +291,7 @@ let log_cases : Table_test.case list =
          {
            in_order with
            coins = Some (Count.Exactly 20);
+           caught = None;
            money = Some (Money.Range { min = 1; max = 1 });
          }
          { (party (some mg01_party)) with coins = Some 200 })
@@ -285,6 +308,7 @@ let log_cases : Table_test.case list =
          {
            nothing with
            coins = Some (Count.Exactly 20);
+           caught = None;
            money = Some (Money.Range { min = 1; max = 1 });
          }
          { read with coins = Some 20 })

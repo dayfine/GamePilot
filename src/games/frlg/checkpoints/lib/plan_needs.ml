@@ -19,6 +19,7 @@ type need =
   | Badges_at_least of int
   | Badges of string list
   | Hall_of_fame
+  | Caught_at_least of int
 
 (* The args naming a member the action uses, and those naming one it brings. *)
 let brings action =
@@ -105,6 +106,9 @@ let game_action stocks ~where action args acc =
   let named key = J.string_opt ~where key args in
   let acc =
     if List.mem_assoc action field_move_users then field_move action acc
+    else if action = "pc_deposit" then
+      List.fold_left (use_member action) acc
+        (A.Action_args.deposited_species ~where args)
     else use_members ~named action acc
   in
   let acc =
@@ -119,6 +123,10 @@ let game_action stocks ~where action args acc =
         (List.init
            (rounds + A.Item_duplication.min_mail - 1)
            (fun _ -> "retro-mail"))
+    else if action = "capture" then
+      (* One ball at least: the plan's, a Poke Ball when it names none. *)
+      use_item action acc
+        (Option.value (named "ball") ~default:A.Capture_plan.default_ball)
     else if action = "pick_up_item" then
       Option.fold ~none:acc
         ~some:(fun item -> gain acc (item, 1))

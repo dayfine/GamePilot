@@ -32,10 +32,20 @@ let hall_of_fame : Yojson.Safe.t -> (Plan_needs.need, string) result = function
   | `Bool true -> Ok Plan_needs.Hall_of_fame
   | _ -> Error (where ^ ".hall_of_fame: only true")
 
+(* At most the National Pokédex's 386 (pokefirered include/constants/species.h). *)
+let max_caught = 386
+
+let caught : Yojson.Safe.t -> (Plan_needs.need, string) result = function
+  | `Int n when n >= 0 && n <= max_caught -> Ok (Plan_needs.Caught_at_least n)
+  | `Int n ->
+      Error (Printf.sprintf "%s.caught: %d is not 0 to %d" where n max_caught)
+  | _ -> Error (where ^ ".caught: a count of species caught")
+
 let field (key, value) =
   match key with
   | "badges" -> badges value
   | "hall_of_fame" -> hall_of_fame value
+  | "caught" -> caught value
   | _ -> Error (Printf.sprintf "%s.%s is not a known field." where key)
 
 let needs (plan : Pokemon_checkpoints.Plan.t) =

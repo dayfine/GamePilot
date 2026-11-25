@@ -20,3 +20,7 @@ module Postconditions = struct
 
   let check () () = []
 end
+
+(* PLZA reads no position: a walk names no end, and nothing is promised. *)
+let ends_at (Action.Walk _) = None
+let position () = None

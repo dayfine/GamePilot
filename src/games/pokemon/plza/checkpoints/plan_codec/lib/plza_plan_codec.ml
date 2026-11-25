@@ -13,7 +13,7 @@ let pose_of_plan ~where obj =
 let walk ~where args =
   F.catch (fun () -> T.Action.Walk (Walk_decode.walk ~where args))
 
-let kind_of_plan = function "walk" -> Some walk | _ -> None
+let action_of_plan = function "walk" -> Some walk | _ -> None
 
 let postconditions_of_plan ~where obj =
   F.catch (fun () -> known_fields_only ~where [] obj)

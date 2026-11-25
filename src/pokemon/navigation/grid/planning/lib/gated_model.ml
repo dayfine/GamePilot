@@ -1,5 +1,5 @@
 type 'inner state = { inner : 'inner; gates : Gate_state.t }
-type Leg.action += Open_gate | Press_switch
+type Leg.special_step += Open_gate | Press_switch
 
 type rules = {
   card_key_held : bool;
@@ -43,10 +43,10 @@ let carry (walked : _ Leg.step) gates =
 
 (* A step that leaves the player where they are, facing [direction], with
    the gates changed. *)
-let action_step state action direction gates extra_cost =
+let special_step state special direction gates extra_cost =
   {
     (Leg.plain_step { state with gates } direction) with
-    action = Some action;
+    special_step = Some special;
     ends_leg = true;
     extra_cost;
   }
@@ -56,7 +56,7 @@ let open_gate rules state (map : Map_data.t) (gate : Map_gates.gate) direction =
   let gates =
     { state.gates with opened = Gate_state.Names.add key state.gates.opened }
   in
-  action_step state Open_gate direction gates rules.open_gate_cost
+  special_step state Open_gate direction gates rules.open_gate_cost
 
 let press_switch rules state (pressed : Map_gates.switch) direction =
   let key = Gate_tiles.switch_key pressed in
@@ -70,7 +70,7 @@ let press_switch rules state (pressed : Map_gates.switch) direction =
     else Gate_state.Names.remove key state.gates.switches_on
   in
   let gates = { state.gates with switches_on } in
-  action_step state Press_switch direction gates rules.press_switch_cost
+  special_step state Press_switch direction gates rules.press_switch_cost
 
 (* What a press the game refuses may still do: open a gate or press a
    statue. *)

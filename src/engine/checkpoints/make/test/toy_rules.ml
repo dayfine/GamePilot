@@ -1,42 +1,24 @@
-(* A toy game's rules, to prove the engine needs no tile grid and no Pokémon:
-   the player stands in a zone (a place, and maybe a spot in it), its own
-   kinds are a walk that holds a direction until a landmark shows and a rest
-   at an inn, and a checkpoint promises gold and flags. *)
+(* A toy game's rules, to prove the engine needs no tile grid and no Pokémon,
+   and that a game's rules come from pieces: the engine's zone pose and story
+   actions, two toy action sets, and the engine's position beside the toy's
+   promises. *)
 
-open Engine_postcondition
-
-module Pose = struct
-  type t = { place : string; spot : string option }
-  type observed = t
-
-  (* A pose without a spot holds anywhere in its place. *)
-  let matches pose observed =
-    pose.place = observed.place
-    && (pose.spot = None || pose.spot = observed.spot)
-end
+module Toy_walk = Toy_walk
+module Toy_inn = Toy_inn
+module Toy_promises = Toy_promises
+module Pose = Engine_rules.Zone_pose
 
 module Action = struct
-  type t = Walk of { toward : string; until : string } | Rest
+  type t =
+    | Story of Engine_rules.Story_action.t
+    | Walk of Toy_walk.t
+    | Inn of Toy_inn.t
 end
 
-module Postconditions = struct
-  type t = { gold : Count.t option; flags : string list }
+module Promised = Engine_rules.Promises.With_position (Pose) (Toy_promises)
+module Postconditions = Promised
 
-  (* What the game read: the gold now and at the start, and each flag read. *)
-  type reads = { gold_now : int option; start : int option; set : string list }
+let ends_at : Action.t -> Pose.t option = function
+  | Story _ | Walk _ | Inn _ -> None
 
-  let check_gold (p : t) reads =
-    match (p.gold, reads.gold_now) with
-    | None, _ -> []
-    | Some _, None -> [ Postcondition.not_read "gold" ]
-    | Some count, Some read ->
-        [ Postcondition.count "gold" count ~start:reads.start ~read ]
-
-  let check_flag reads flag =
-    let set = List.mem flag reads.set in
-    Postcondition.judge ("flag " ^ flag) ~expected:"set"
-      ~read:(if set then "set" else "clear")
-      set
-
-  let check p reads = check_gold p reads @ List.map (check_flag reads) p.flags
-end
+let position = Promised.position

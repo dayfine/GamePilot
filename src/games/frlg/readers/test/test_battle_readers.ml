@@ -9,9 +9,19 @@
      nopp    the move menu, its PP red   nohp    the battle text box with no
              HP box, arrow or YES/NO: what an evolution shows
      ally    a double battle's HP boxes on the player's side
+     caught  the Poké Ball mark on a wild foe's HP box: its species caught
      none    none of these
 
-   Switch names keep their CommandLineTests folder and file name. *)
+   Switch names keep their CommandLineTests folder and file name. A trainer's
+   "Will ... change POKéMON?" (three-island-bikers/switch-offer, the Shift
+   battle style) is tagged learn: its YES/NO stands where a move learn's does,
+   beside the player's HP box, and only its text tells the two apart
+   (Frlg_actions.Switch_offer).
+
+   battle.<backend>.shifted.probes.jsonl holds the frames of dex-route10/
+   again with their colors shifted (dev/reader_fixtures/shift_frame.py:
+   brightness times 0.9 and 1.1, each channel 12 up and down, 10% toward
+   mid-grey): the caught mark must read on each as on its frame. *)
 
 open Frlg_readers
 
@@ -40,6 +50,7 @@ let readers =
     };
     { reader = "no_pp_left"; verdict = Move_pp.no_pp_left; tag = "nopp" };
     { reader = "ally_boxes"; verdict = Battle_screen.ally_boxes; tag = "ally" };
+    { reader = "caught_mark"; verdict = Caught_mark.caught; tag = "caught" };
     {
       reader = "evolution_shows";
       verdict = Evolution_screen.evolution_shows;
@@ -76,6 +87,29 @@ let print_tally backend images =
         (List.length right) (List.length images) (List.length shown))
     readers
 
+(* The frame a shifted one comes from: its name less the "<shift>/". *)
+let unshifted image =
+  match String.index_opt image '/' with
+  | Some i -> String.sub image (i + 1) (String.length image - i - 1)
+  | None -> failwith ("no shift in " ^ image)
+
+let shifted_cases backend shifted =
+  List.map
+    (fun (image, probes) ->
+      {
+        Table_test.name =
+          Printf.sprintf "%s shifted caught_mark: %s" backend image;
+        input =
+          (fun () -> string_of_bool (Caught_mark.caught (measurements probes)));
+        expectation =
+          string_of_bool (List.mem "caught" (tags (unshifted image)));
+      })
+    shifted
+
+let shifted backend =
+  let file = "fixtures/battle." ^ backend ^ ".shifted.probes.jsonl" in
+  if Sys.file_exists file then Wire.read_image_probes file else []
+
 let () =
   let backends =
     List.map
@@ -87,4 +121,7 @@ let () =
   in
   List.iter (fun (backend, images) -> print_tally backend images) backends;
   Table_test.run "battle readers"
-    (List.concat_map (fun (backend, images) -> cases backend images) backends)
+    (List.concat_map
+       (fun (backend, images) ->
+         cases backend images @ shifted_cases backend (shifted backend))
+       backends)

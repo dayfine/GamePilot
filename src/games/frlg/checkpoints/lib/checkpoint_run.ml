@@ -28,6 +28,9 @@ let load_all dir =
   in
   let world rock_stairs maps =
     Frlg_overworld.Frlg_steps.world ~edge_stalls:false ~rock_stairs
+      ~hidden:(fun o ->
+        Frlg_overworld.Scene_only_people.hidden o
+        || Frlg_overworld.Scene_removed_people.hidden o)
       (Grid_maps.Connected_maps.create
          (Frlg_overworld.Standard_center.with_rooms maps))
   in
@@ -138,6 +141,7 @@ let kept_start_line (start : Pokemon_checkpoints.Postcondition_check.start) =
    re-read:"
   ^ count "money $" start.start_money
   ^ count "coins" start.start_coins
+  ^ count "caught" start.start_caught
   ^ String.concat "" items
 
 (* What a promise of a change is checked against: read now, at the
