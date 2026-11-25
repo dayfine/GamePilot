@@ -1,4 +1,4 @@
-(* The Mail Glitch plans mg-01..mg-06 against FireRed's story game: each is a
+(* The Mail Glitch plans 01-celadon-setup..08-activate-and-verify against FireRed's story game: each is a
    FireRed plan it runs, from its start tile, and the game actions it names
    that FireRed has no handler for yet (the runner refuses such a plan before
    its first event). *)
@@ -95,15 +95,16 @@ let capped cap file () =
     (List.length kept.knows) (List.length kept.levels)
     (match skipped with [] -> "none" | l -> String.concat "; " l)
 
-(* The grind's save point: mg-04a ends at mg-04b's start, and every round
-   (mg-04b) ends there too, where mg-04c starts. *)
+(* The grind's save point: 04-grind-farfetchd ends at 05-grind-mr-mime's start, and every round
+   (05-grind-mr-mime) ends there too, where 06-grind-return starts. *)
 let grind_save_point () =
   let start id =
     match (plan (id ^ ".plan.json")).checkpoint.start with
     | Some (Grid g) -> Checkpoints.Pose.grid_to_string g
     | Some (Zone _) | None -> "not a tile"
   in
-  let a = plan "mg-04a.plan.json" and b = plan "mg-04b.plan.json" in
+  let a = plan "04-grind-farfetchd.plan.json"
+  and b = plan "05-grind-mr-mime.plan.json" in
   let ends =
     [
       Checkpoints.Checkpoint_end.declared ~next:(Some b.checkpoint) a.checkpoint;
@@ -114,14 +115,14 @@ let grind_save_point () =
     (List.map
        (Option.fold ~none:"none" ~some:Checkpoints.Pose.grid_to_string)
        ends
-    @ [ start "mg-04b"; start "mg-04c" ])
+    @ [ start "05-grind-mr-mime"; start "06-grind-return" ])
 
-(* mg-03 run from its last event (heal_lavender, after buy_revives): the
+(* 03-trade-mr-mime run from its last event (heal_lavender, after buy_revives): the
    checkpoint's start reads as a whole run kept them beside the event's state
    (no Escape Rope at the start), read back from that file, and the end's read
    after the purchase (one rope). [kept_ropes] is the start count kept. *)
 let from_last_event ~kept_ropes () =
-  let p = plan "mg-03.plan.json" in
+  let p = plan "03-trade-mr-mime.plan.json" in
   let events = p.checkpoint.events in
   let range =
     Result.get_ok
@@ -164,78 +165,84 @@ let from_last_event ~kept_ropes () =
 let () =
   Table_test.run "checkpoint_run"
     [
-      case "mg-01"
-        (summary "mg-01.plan.json")
+      case "01-celadon-setup"
+        (summary "01-celadon-setup.plan.json")
         "frlg; from CeladonCity (48, 12) south; missing: none";
-      case "mg-01's walks plan on the maps" (walks "mg-01.plan.json")
+      case "01-celadon-setup's walks plan on the maps"
+        (walks "01-celadon-setup.plan.json")
         "to_coin_case_man 8; to_4f_clerk 11; to_4f_clerk.walk 3; \
          to_coins_clerk 3; to_coins_clerk.walk 10; to_prize_clerk 5; \
          exit_prize_room 1";
-      case "mg-02"
-        (summary "mg-02.plan.json")
+      case "02-trade-farfetchd"
+        (summary "02-trade-farfetchd.plan.json")
         "frlg; from CeladonCity (39, 21) south; missing: none";
-      case "mg-02's walks plan on the maps" (walks "mg-02.plan.json")
+      case "02-trade-farfetchd's walks plan on the maps"
+        (walks "02-trade-farfetchd.plan.json")
         "to_route16_cut_tree 7; to_route16_grass 4; to_route6_pond_wall 2; \
          to_route6_sitrus_berry 9; to_vermilion_mart_wall 3; \
          to_vermilion_elyssa 5; exit_vermilion_house2 1";
-      case "mg-03"
-        (summary "mg-03.plan.json")
+      case "03-trade-mr-mime"
+        (summary "03-trade-mr-mime.plan.json")
         "frlg; from VermilionCity (19, 18) south; missing: none";
-      case "mg-03's walks plan on the maps" (walks "mg-03.plan.json")
+      case "03-trade-mr-mime's walks plan on the maps"
+        (walks "03-trade-mr-mime.plan.json")
         "to_route2_cut_tree 3; to_route2_reyley 8; exit_route2_house 3; \
          to_lavender_mart 7; heal_lavender.walk 8";
-      case "mg-03 from its last event: the rope gained from the kept start"
+      case
+        "03-trade-mr-mime from its last event: the rope gained from the kept \
+         start"
         (from_last_event ~kept_ropes:0)
         "#11 heal_lavender: item escape-rope: passed: gained 1 (0 to 1)";
       case "re-read at that event (after the purchase), it would read gained 0"
         (from_last_event ~kept_ropes:1)
         "#11 heal_lavender: item escape-rope: failed: expected gained 1, read \
          gained 0 (1 to 1)";
-      case "mg-05a"
-        (summary "mg-05a.plan.json")
+      case "07-glitch-prep"
+        (summary "07-glitch-prep.plan.json")
         "frlg; from LavenderTown (18, 7) south; missing: none";
-      case "mg-05a's walks plan on the maps" (walks "mg-05a.plan.json")
+      case "07-glitch-prep's walks plan on the maps"
+        (walks "07-glitch-prep.plan.json")
         "lavender_mart_clerk 6; out_of_lavender_mart 1; return_to_tower_door \
          4; to_route8_cut_tree 9; to_route8_grass 1; face_route8_leppa_berry \
          2; return_to_route8_grass 3; to_route16_cut_tree 6; to_lea_and_jed 3";
-      case "mg-04a"
-        (summary "mg-04a.plan.json")
+      case "04-grind-farfetchd"
+        (summary "04-grind-farfetchd.plan.json")
         "frlg; from LavenderTown_PokemonCenter_1F (7, 4) north; missing: none";
-      case "mg-04a's walks plan on the maps" (walks "mg-04a.plan.json")
+      case "04-grind-farfetchd's walks plan on the maps"
+        (walks "04-grind-farfetchd.plan.json")
         "to_tower_5f_patch 34; heal_indigo.walk 4";
-      case "mg-04b (the grind round)"
-        (summary "mg-04b.plan.json")
+      case "05-grind-mr-mime (the grind round)"
+        (summary "05-grind-mr-mime.plan.json")
         "frlg; from IndigoPlateau_PokemonCenter_1F (13, 12) north; missing: \
          none";
       case
-        "mg-04a's end, a round's end, the round's and mg-04c's start: the \
-         Indigo nurse"
+        "04-grind-farfetchd's end, a round's end, the round's and \
+         06-grind-return's start: the Indigo nurse"
         grind_save_point
         "IndigoPlateau_PokemonCenter_1F (13, 12) north; \
          IndigoPlateau_PokemonCenter_1F (13, 12) north; \
          IndigoPlateau_PokemonCenter_1F (13, 12) north; \
          IndigoPlateau_PokemonCenter_1F (13, 12) north";
-      case "mg-04c"
-        (summary "mg-04c.plan.json")
+      case "06-grind-return"
+        (summary "06-grind-return.plan.json")
         "frlg; from IndigoPlateau_PokemonCenter_1F (13, 12) north; missing: \
          none";
-      case "mg-04c's walks plan on the maps" (walks "mg-04c.plan.json")
+      case "06-grind-return's walks plan on the maps"
+        (walks "06-grind-return.plan.json")
         "out_to_indigo_plateau 2; to_mg05_start 4";
-      case "mg-04c uncapped: every postcondition checked"
-        (capped None "mg-04c.plan.json")
+      case "06-grind-return uncapped: every postcondition checked"
+        (capped None "06-grind-return.plan.json")
         "knows checked: 2, levels checked: 1; skipped: none";
-      case "mg-04c capped at 8: the grind's moves skipped, saying so"
-        (capped (Some 8) "mg-04c.plan.json")
+      case "06-grind-return capped at 8: the grind's moves skipped, saying so"
+        (capped (Some 8) "06-grind-return.plan.json")
         "knows checked: 0, levels checked: 0; skipped: knows farfetchd \
          knock-off (grind capped at 8); knows mr-mime recycle (grind capped at \
          8); level mr-mime at least 33 (grind capped at 8)";
-      case "mg-05"
-        (summary "mg-05.plan.json")
+      case "08-activate-and-verify"
+        (summary "08-activate-and-verify.plan.json")
         "frlg; from Route16 (30, 7) north; missing: none";
-      case "mg-06"
-        (summary "mg-06.plan.json")
-        "frlg; from Route16 (30, 6) north; missing: none";
-      case "mg-06's walks plan on the maps" (walks "mg-06.plan.json")
+      case "08-activate-and-verify's walks plan on the maps"
+        (walks "08-activate-and-verify.plan.json")
         "to_4f_clerk 7; to_4f_clerk.walk 3; to_1f_save_spot 3";
       case "su-01"
         (summary "su-01.plan.json")

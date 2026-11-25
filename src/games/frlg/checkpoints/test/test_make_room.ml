@@ -51,7 +51,8 @@ let plan () =
     }
   in
   match
-    Checkpoints.Plan_decode.decode ~source:"mg-00" (Make_room.plan_json room)
+    Checkpoints.Plan_decode.decode ~source:"00-make-room"
+      (Make_room.plan_json room)
   with
   | Error e -> "error: " ^ e
   | Ok p ->

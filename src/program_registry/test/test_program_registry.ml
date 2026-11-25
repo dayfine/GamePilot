@@ -85,8 +85,8 @@ let () =
       case "plan dir: a scratch copy is no program"
         (fun () -> id_of (R.of_plan_dir "/tmp/mail_glitch/plans"))
         "none";
-      case "checkpoint: mg-05a is the mail glitch's"
-        (fun () -> id_of (R.of_checkpoint "mg-05a"))
+      case "checkpoint: 07-glitch-prep is the mail glitch's"
+        (fun () -> id_of (R.of_checkpoint "07-glitch-prep"))
         "frlg.mail_glitch";
       case "checkpoint: a scratch plan's id is no program's"
         (fun () -> id_of (R.of_checkpoint "pc-01"))

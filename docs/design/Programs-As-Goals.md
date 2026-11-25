@@ -25,7 +25,7 @@ for these things.
 
 A checkpoint repeats in two ways, neither of them a level: **runs** are retries of the same
 checkpoint from its start ("2 of 3 runs must pass"), and **rounds** repeat a checkpoint until a
-condition holds (mg-04b's grind rounds). The whole chain is "the program's checkpoints"; "plan"
+condition holds (05-grind-mr-mime's grind rounds). The whole chain is "the program's checkpoints"; "plan"
 always means one checkpoint's plan. The library that runs them is renamed from `story` to
 `checkpoints` in its own PR before any of this is built.
 
@@ -40,7 +40,7 @@ always means one checkpoint's plan. The library that runs them is renamed from `
   the save (Trainer Card money, bag, party summary) and refuses when one does not hold.
 - **Walks** are planned from PokemonSimulation's maps, so no path is copied. But the sequence of
   targets is: "stand below the 1F lift door, `lift_floor` 1F to 4F, walk to the clerk, back to the
-  lift, ride down" appears in mg-01, mg-06 and su-01, each with its own tiles.
+  lift, ride down" appears in 01-celadon-setup, 08-activate-and-verify and su-01, each with its own tiles.
 - **Skipping** exists per event only (`skip_if`, flags fixed by the run's configuration), not per
   checkpoint, and nothing tries an alternative when an event cannot succeed.
 - **Configuration** does not exist: the registry (`src/program_registry`) gives each program a name,
@@ -56,7 +56,7 @@ A program has:
   runs;
 - **plans**: hand-written where the story is fixed, generated where the configuration decides them.
 
-What stays hand-written: the Mail Glitch (mg-01 to mg-06 is a fixed story; its order, tiles and
+What stays hand-written: the Mail Glitch (01-celadon-setup to 08-activate-and-verify is a fixed story; its order, tiles and
 battles are the point), every action's code (`mart`, `lift_floor`, `fly`, `duplicate_item`,
 `candy_level`), and one-off routes that need a person's judgement (where to use a Super Repel). What
 is generated: plans whose content is a function of the configuration, today only Supplies (which
@@ -222,7 +222,7 @@ plan working. The structure comes first, so that other programs can be written i
    with the naming rule in `AGENTS.md`. Renames only.
 3. **Learnsets, evolutions and HMs** extracted in PokemonSimulation.
 4. **Places and fragments.** The table, route targets that name a place, the expansion with the
-   lift case. mg-01, mg-06, su-01 and tt-01 use them; a test checks that each expands to the same
+   lift case. 01-celadon-setup, 08-activate-and-verify, su-01 and tt-01 use them; a test checks that each expands to the same
    walks, rides and end poses as today's hand-written plan.
 5. **Goals.** The typed decoder, `goal describe` and `goal check`, the goal in `run.json`. Then
    configurable Supplies (the checked item list, mart choice and generator, the Dept. Store 2F in the

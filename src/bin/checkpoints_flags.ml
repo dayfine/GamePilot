@@ -18,7 +18,7 @@ type flags = {
   replay : string option;  (** A recorded video for a dry run (fake board). *)
   save_after_pass : bool;  (** Switch: save in the game after a pass. *)
   preflight : bool;
-  make_room : string option;  (** The save's map: room first (mg-00). *)
+  make_room : string option;  (** The save's map: room first (00-make-room). *)
   max_rounds : int option;  (** A repeating checkpoint's rounds, at most. *)
   from_event : string option;
       (** mGBA, testing: run from this event's kept state

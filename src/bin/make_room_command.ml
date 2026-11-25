@@ -1,13 +1,13 @@
 (* gamepilot checkpoints PLAN_DIR --from ID --to ID ... --make-room MAP
 
    Room in the party before the chain (Frlg_checkpoints.Make_room): back to the save
-   (mGBA: mg-00's start state, else the first checkpoint's, kept as mg-00's;
+   (mGBA: 00-make-room's start state, else the first checkpoint's, kept as 00-make-room's;
    Switch: the soft reset), each member's summary read (species, level,
    moves), and the room policy's deposits for the chain from ID on
    (Frlg_checkpoints.Party_room). None needed: the chain runs as it is. Else the
-   generated checkpoint mg-00 (Fly to the Center nearest MAP, the save's map,
+   generated checkpoint 00-make-room (Fly to the Center nearest MAP, the save's map,
    the deposit, out to the Fly landing) is written with the chain's plans
-   (linked) into "<runs>/<ID>-make-room/plans", and the series runs from mg-00
+   (linked) into "<runs>/<ID>-make-room/plans", and the series runs from 00-make-room
    there: it is judged, retried and saved like any checkpoint. The party read
    runs as a shadow plan (Frlg_checkpoints.Shadow_plan: soft_reset, read_party,
    plan_deposit), so the watch page shows it as a checkpoint run. *)
@@ -36,7 +36,7 @@ let copy_file from to_ =
   let bytes = In_channel.with_open_bin from In_channel.input_all in
   Out_channel.with_open_bin to_ (fun oc -> Out_channel.output_string oc bytes)
 
-(* mGBA: mg-00 starts from its own state, else from the chain's first. *)
+(* mGBA: 00-make-room starts from its own state, else from the chain's first. *)
 let ensure_start (setup : Pf.setup) from_id =
   let own = state setup M.id and first = state setup from_id in
   match setup.backend with
@@ -71,7 +71,7 @@ let room ~at need members =
         needed_moves = List.sort_uniq compare ("fly" :: need.Pr.moves);
       } )
 
-(* The chain's plans linked beside mg-00's. *)
+(* The chain's plans linked beside 00-make-room's. *)
 let write_plans ~plan_dir dir room =
   Sys.mkdir dir 0o755;
   let* ids = Plan_dir.checkpoint_ids plan_dir in
@@ -91,7 +91,7 @@ let say lines line =
   print_endline ("[Make room] " ^ line);
   lines := line :: !lines
 
-(* The party read, the policy's pick and mg-00's plans in [record]. *)
+(* The party read, the policy's pick and 00-make-room's plans in [record]. *)
 let decide ~plan_dir ~at need (record : Run_record.t) say members =
   List.iter (fun m -> say (R.member_to_string m)) members;
   let* deposits, room = room ~at need members in
@@ -182,7 +182,7 @@ let ending = function
   | Ok _ -> Run_record.{ result = "pass"; at = ""; reason = "" }
   | Error why -> { result = "fail"; at = "make-room"; reason = why }
 
-(* A pre-flight run of mg-00's own ("<date>-mg-00-preflight-<n>"). *)
+(* A pre-flight run of 00-make-room's own ("<date>-00-make-room-preflight-<n>"). *)
 let prepare ~plan_dir ~from_id ~at (setup : Pf.setup) =
   let* plans = chain_plans ~plan_dir from_id in
   let need = Pr.chain_need plans in
@@ -205,7 +205,7 @@ let prepare ~plan_dir ~from_id ~at (setup : Pf.setup) =
   Run_record.finish ~runs_dir:setup.runs_dir run ~summary (ending result);
   result
 
-(* --make-room: mg-00 first when the party needs room, from its plan dir. *)
+(* --make-room: 00-make-room first when the party needs room, from its plan dir. *)
 let with_room ~plan_dir ~from_id make_room setup =
   match make_room with
   | None -> Ok (plan_dir, from_id)

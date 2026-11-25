@@ -1,7 +1,7 @@
 (* What the runner decides on a console without save states, from what it
    read: the start check after a reload (Start_check), the pre-flight of a save
    against the first checkpoint's plan (Preflight), and the room the Mail
-   Glitch chain needs in the party (Party_room). Plans are mg-01..06's. *)
+   Glitch chain needs in the party (Party_room). Plans are 01-celadon-setup..08-activate-and-verify. *)
 
 open Frlg_checkpoints
 module P = Checkpoints.Postcondition_check
@@ -15,15 +15,14 @@ let plan id =
 let chain =
   List.map plan
     [
-      "mg-01";
-      "mg-02";
-      "mg-03";
-      "mg-04a";
-      "mg-04b";
-      "mg-04c";
-      "mg-05a";
-      "mg-05";
-      "mg-06";
+      "01-celadon-setup";
+      "02-trade-farfetchd";
+      "03-trade-mr-mime";
+      "04-grind-farfetchd";
+      "05-grind-mr-mime";
+      "06-grind-return";
+      "07-glitch-prep";
+      "08-activate-and-verify";
     ]
 
 let case name input expectation = { Table_test.name; input; expectation }
@@ -122,13 +121,13 @@ let preflight id before read =
 
 let same = Some { F.tiles = 150; changed = 3 }
 
-(* The pre-flight's row for mg-02's Cut user. *)
+(* The pre-flight's row for 02-trade-farfetchd's Cut user. *)
 let summary slot species moves : Checkpoints.Room_policy.member =
   { slot; species; level = Some 30; moves = Some moves }
 
 let cut_row read =
-  let before = Some (plan "mg-01").postconditions in
-  Preflight.compare (needs "mg-02" before) read
+  let before = Some (plan "01-celadon-setup").postconditions in
+  Preflight.compare (needs "02-trade-farfetchd" before) read
   |> List.filter_map (fun (r : Preflight.row) ->
          if String.ends_with ~suffix:"(cut_tree)" r.need then
            Some
@@ -142,9 +141,11 @@ let cut_row read =
 
 let preflight_cases =
   [
-    case "preflight mg-01: Fly's user, the purchases' money and the place"
+    case
+      "preflight 01-celadon-setup: Fly's user, the purchases' money and the \
+       place"
       (fun () ->
-        preflight "mg-01" None
+        preflight "01-celadon-setup" None
           {
             observed = observed ~party:[ "blastoise"; "pidgey" ] ~money:25014 ();
             place = same;
@@ -153,9 +154,9 @@ let preflight_cases =
       "pidgey in the party (fly): blastoise, pidgey: ok | money at least ¥4100 \
        (mart, buy_coins): ¥25014: ok | at the start, CeladonCity: 3 of 150 \
        tiles changed: ok => go";
-    case "preflight mg-01: no Fly user and too little money stop"
+    case "preflight 01-celadon-setup: no Fly user and too little money stop"
       (fun () ->
-        preflight "mg-01" None
+        preflight "01-celadon-setup" None
           {
             observed = observed ~party:[ "blastoise" ] ~money:4000 ();
             place = same;
@@ -164,9 +165,11 @@ let preflight_cases =
       "pidgey in the party (fly): blastoise: MISMATCH | money at least ¥4100 \
        (mart, buy_coins): ¥4000: MISMATCH | at the start, CeladonCity: 3 of \
        150 tiles changed: ok => stop";
-    case "preflight mg-01: no kept frame: the place is not read, which stops"
+    case
+      "preflight 01-celadon-setup: no kept frame: the place is not read, which \
+       stops"
       (fun () ->
-        preflight "mg-01" None
+        preflight "01-celadon-setup" None
           {
             observed = observed ~party:[ "pidgey" ] ~money:25014 ();
             place = None;
@@ -195,7 +198,7 @@ let preflight_cases =
        at least x1 (use_item): super-repel x2: ok | retro-mail at least x99 \
        (duplicate_item): retro-mail x100: ok | at the start, \
        CeladonCity_DepartmentStore_1F: 3 of 150 tiles changed: ok => go";
-    case "preflight mg-02, mGBA: some member knows Cut (Rattata)"
+    case "preflight 02-trade-farfetchd, mGBA: some member knows Cut (Rattata)"
       (fun () ->
         cut_row
           {
@@ -209,7 +212,7 @@ let preflight_cases =
                 ];
           })
       "a member knows cut (cut_tree): rattata knows cut: ok";
-    case "preflight mg-02, console B: no Rattata, Oddish knows Cut"
+    case "preflight 02-trade-farfetchd, console B: no Rattata, Oddish knows Cut"
       (fun () ->
         cut_row
           {
@@ -223,7 +226,7 @@ let preflight_cases =
                 ];
           })
       "a member knows cut (cut_tree): oddish knows cut: ok";
-    case "preflight mg-02: nobody knows Cut"
+    case "preflight 02-trade-farfetchd: nobody knows Cut"
       (fun () ->
         cut_row
           {
@@ -233,54 +236,60 @@ let preflight_cases =
           })
       "a member knows cut (cut_tree): no member knows cut: MISMATCH";
     case
-      "preflight mg-03: what mg-02 promised, exactly (its money spent is no \
-       start need)"
+      "preflight 03-trade-mr-mime: what 02-trade-farfetchd promised, exactly \
+       (its money spent is no start need)"
       (fun () ->
-        let before = Some (plan "mg-02").postconditions in
+        let before = Some (plan "02-trade-farfetchd").postconditions in
         String.concat "; "
           (List.map
              (fun (r : Preflight.row) -> r.need)
-             (Preflight.compare (needs "mg-03" before)
+             (Preflight.compare
+                (needs "03-trade-mr-mime" before)
                 { observed = P.nothing_read; place = None; members = None })))
       "party includes blastoise, pidgey, abra, farfetchd; pidgey in the party \
        (fly); abra in the party (ingame_trade); a member knows cut (cut_tree); \
        money at least ¥3550 (mart); at the start, VermilionCity";
     case
-      "preflight mg-04a: mg-03's Revives and Escape Rope gained are no start \
-       need (console B held 5 ropes, not mGBA's 3); its own rope is"
+      "preflight 04-grind-farfetchd: 03-trade-mr-mime's Revives and Escape \
+       Rope gained are no start need (console B held 5 ropes, not mGBA's 3); \
+       its own rope is"
       (fun () ->
-        let before = Some (plan "mg-03").postconditions in
+        let before = Some (plan "03-trade-mr-mime").postconditions in
         String.concat "; "
           (List.map
              (fun (r : Preflight.row) -> r.need)
-             (Preflight.compare (needs "mg-04a" before)
+             (Preflight.compare
+                (needs "04-grind-farfetchd" before)
                 { observed = P.nothing_read; place = None; members = None })))
       "party includes blastoise, pidgey, mr-mime, farfetchd; farfetchd in the \
        party (grind); blastoise in the party (grind); pidgey in the party \
        (fly); escape-rope at least x1 (use_item); at the start, \
        LavenderTown_PokemonCenter_1F";
     case
-      "preflight mg-04b (a grind round, resumed from any round's save): what \
-       mg-04a promised, MIMIEN and Blastoise, at the Indigo nurse"
+      "preflight 05-grind-mr-mime (a grind round, resumed from any round's \
+       save): what 04-grind-farfetchd promised, MIMIEN and Blastoise, at the \
+       Indigo nurse"
       (fun () ->
-        let before = Some (plan "mg-04a").postconditions in
+        let before = Some (plan "04-grind-farfetchd").postconditions in
         String.concat "; "
           (List.map
              (fun (r : Preflight.row) -> r.need)
-             (Preflight.compare (needs "mg-04b" before)
+             (Preflight.compare
+                (needs "05-grind-mr-mime" before)
                 { observed = P.nothing_read; place = None; members = None })))
       "party includes blastoise, pidgey, mr-mime, farfetchd; mr-mime in the \
        party (grind); blastoise in the party (grind); at the start, \
        IndigoPlateau_PokemonCenter_1F";
     case
-      "preflight mg-05a: the Leppa Berry it picks up on Route 8 is no start \
-       need for its give_bag_item (console B, 2026-11-24)"
+      "preflight 07-glitch-prep: the Leppa Berry it picks up on Route 8 is no \
+       start need for its give_bag_item (console B, 2026-11-24)"
       (fun () ->
-        let before = Some (plan "mg-04c").postconditions in
+        let before = Some (plan "06-grind-return").postconditions in
         String.concat "; "
           (List.map
              (fun (r : Preflight.row) -> r.need)
-             (Preflight.compare (needs "mg-05a" before)
+             (Preflight.compare
+                (needs "07-glitch-prep" before)
                 { observed = P.nothing_read; place = None; members = None })))
       "party includes blastoise, pidgey, mr-mime, farfetchd; blastoise in the \
        party (party_swap); pidgey in the party (fly); farfetchd in the party \
@@ -317,11 +326,13 @@ let deposits party =
 
 let room_cases =
   [
-    case "room: the chain brings Abra (mg-01) and Spearow (mg-02)"
+    case
+      "room: the chain brings Abra (01-celadon-setup) and Spearow \
+       (02-trade-farfetchd)"
       (fun () ->
         String.concat ", " (List.map (fun (s, id) -> s ^ " " ^ id) need.joins)
         ^ Printf.sprintf "; %d free" (Party_room.free_needed need))
-      "abra mg-01, spearow mg-02; 2 free";
+      "abra 01-celadon-setup, spearow 02-trade-farfetchd; 2 free";
     case "room: the members the plans use or promise"
       (fun () -> String.concat ", " need.used)
       "blastoise, pidgey";
@@ -361,13 +372,15 @@ let room_row_cases =
   [
     case "preflight room: console B's full party: stop, moves not read here"
       (fun () -> room_row names)
-      "2 free party slots (abra mg-01, spearow mg-02): 0 free; 2 to deposit, 0 \
-       may go; kept: blastoise: the plans use it; eevee: its moves did not \
-       read; pidgey: the plans use it; oddish: its moves did not read; lapras: \
-       its moves did not read; magikarp: its moves did not read: MISMATCH";
+      "2 free party slots (abra 01-celadon-setup, spearow 02-trade-farfetchd): \
+       0 free; 2 to deposit, 0 may go; kept: blastoise: the plans use it; \
+       eevee: its moves did not read; pidgey: the plans use it; oddish: its \
+       moves did not read; lapras: its moves did not read; magikarp: its moves \
+       did not read: MISMATCH";
     case "preflight room: four members: ok"
       (fun () -> room_row (List.filteri (fun i _ -> i < 4) names))
-      "2 free party slots (abra mg-01, spearow mg-02): 2 free: ok";
+      "2 free party slots (abra 01-celadon-setup, spearow 02-trade-farfetchd): \
+       2 free: ok";
   ]
 
 let () =

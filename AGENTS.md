@@ -48,7 +48,7 @@ GamePilot automates games through three layers (design: `docs/design/Layered-Aut
   differ (a missing reader, a new strategy), say so in the doc comment.
 - **Every checkpoint goes through the checkpoint runner** (`pokemon/checkpoints`) and its dev loop: run
   from the checkpoint's start state, verify its end state, retry, record. Programs run in order
-  (mg-01 → mg-05), each tested on mGBA before it runs on the Switch.
+  (01-celadon-setup → 08-activate-and-verify), each tested on mGBA before it runs on the Switch.
 - **Submodules are read-only.** `third_party/Arduino-Source` tracks the fork branch
   `gamepilot/base`, `third_party/Packages` tracks upstream, and `third_party/PokemonSimulation`
   tracks its `main`: never edit them here. Maps are read from PokemonSimulation

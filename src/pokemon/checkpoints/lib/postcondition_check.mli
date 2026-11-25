@@ -82,9 +82,9 @@ val result_to_string : result -> string
 val log_lines : string -> result list -> string list
 (** One line per result and a summary, the checkpoint first:
     {v
-    [Postcondition] mg-01 party: passed: pidgey, abra
-    [Postcondition] mg-01 coins: failed: expected 20, read 200
-    [Postcondition] mg-01: 1 passed, 1 failed, 0 not checked: failed
+    [Postcondition] 01-celadon-setup party: passed: pidgey, abra
+    [Postcondition] 01-celadon-setup coins: failed: expected 20, read 200
+    [Postcondition] 01-celadon-setup: 1 passed, 1 failed, 0 not checked: failed
     v}
     The summary is ["passed"] only when every one passed, ["incomplete"] when
     none failed and some were not checked, ["nothing to check"] for none. *)

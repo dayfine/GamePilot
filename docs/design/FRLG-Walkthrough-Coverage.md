@@ -51,17 +51,17 @@ for deciding what to build next; nothing here runs.
 | 3 | Viridian Forest, Pewter City, Brock | authored 00.08-00.10 | 3 authored |
 | 4 | Route 3, Mt. Moon, Route 4 | authored 00.11-00.14 | 6 authored |
 | 5 | Cerulean, Misty, Nugget Bridge, Bill, Route 5 | authored 00.14b-00.21 | 10 authored |
-| 6 | Route 6, Vermilion, S.S. Anne, Lt. Surge | authored 00.22-00.26; tt-01, mg-02 touch Route 6 and Vermilion | 5 authored |
-| 7 | Route 11, Diglett's Cave, Flash, Route 9, Route 10 | authored 00.27; mg-03 touches Route 2 east | 1 authored, 2 drafts (opt.) |
+| 6 | Route 6, Vermilion, S.S. Anne, Lt. Surge | authored 00.22-00.26; tt-01, 02-trade-farfetchd touch Route 6 and Vermilion | 5 authored |
+| 7 | Route 11, Diglett's Cave, Flash, Route 9, Route 10 | authored 00.27; 03-trade-mr-mime touches Route 2 east | 1 authored, 2 drafts (opt.) |
 | 8 | Rock Tunnel, Lavender, Route 8, Route 7 | authored 00.28-00.29; drafted Route 8 to Celadon | 2 authored, 1 draft |
-| 9 | Celadon, Erika, Rocket Hideout, Pokémon Tower | mg-01, mg-06, su-01, tt-01 run in Celadon; story drafted | 8 drafts |
-| 10 | Routes 12-18, Fuchsia, Koga, Safari Zone, Fly | mg-02, mg-05 run on Route 16; story drafted | 6 drafts |
+| 9 | Celadon, Erika, Rocket Hideout, Pokémon Tower | 01-celadon-setup, 08-activate-and-verify, su-01, tt-01 run in Celadon; story drafted | 8 drafts |
+| 10 | Routes 12-18, Fuchsia, Koga, Safari Zone, Fly | 02-trade-farfetchd, 08-activate-and-verify run on Route 16; story drafted | 6 drafts |
 | 11 | Saffron, Silph Co., Sabrina | drafted | 5 drafts (1 opt.) |
 | 12 | Routes 19-20, Seafoam Islands | drafted | 3 drafts |
 | 13 | Cinnabar, Mansion, Blaine, to the Sevii Islands | drafted | 4 drafts (1 opt.) |
 | 14 | One to Three Island | drafted | 6 drafts (1 opt.) |
 | 15 | Route 21, Power Plant, Giovanni | drafted | 3 drafts (2 opt.) |
-| 16 | Route 22-23, Victory Road | mg-04a-c run at Indigo Plateau and Victory Road 2F; drafted | 3 drafts |
+| 16 | Route 22-23, Victory Road | 04-grind-farfetchd to 06-grind-return run at Indigo Plateau and Victory Road 2F; drafted | 3 drafts |
 | 17 | Elite Four, Champion | drafted | 5 drafts |
 | 18 | Post-game: One, Four, Six Island | drafted | 6 drafts (1 opt.) |
 | 19 | Five and Seven Island | drafted | 4 drafts (2 opt.) |
@@ -73,12 +73,12 @@ events carry over to the drafts where they meet.
 
 | Program | Places and actions | Walkthrough part |
 |---|---|---|
-| mg-01 | Fly to Celadon; Coin Case (restaurant); Dept. Store lift and 4F mart; Game Corner coins; prize Abra | 9 (side content; wt-09a's Coin Case) |
-| mg-02 | Route 16 capture; Route 6 hidden Sitrus Berry; Vermilion trade (Ch'Ding) | 6, 10 |
-| mg-03 | Route 2 east (Cut), the Mr. Mime trade; Lavender Mart; Lavender Center | 7, 8 |
-| mg-04a-c | Escape Rope; Fly to Indigo Plateau; its nurse; Victory Road 2F grind | 16 |
-| mg-05, mg-05a | Route 16: Lea & Jed's double battle, its cut tree (41, 11), a hidden Leppa Berry | 10 |
-| mg-06 | Route 16 to Celadon Dept. Store | 9 |
+| 01-celadon-setup | Fly to Celadon; Coin Case (restaurant); Dept. Store lift and 4F mart; Game Corner coins; prize Abra | 9 (side content; wt-09a's Coin Case) |
+| 02-trade-farfetchd | Route 16 capture; Route 6 hidden Sitrus Berry; Vermilion trade (Ch'Ding) | 6, 10 |
+| 03-trade-mr-mime | Route 2 east (Cut), the Mr. Mime trade; Lavender Mart; Lavender Center | 7, 8 |
+| 04-grind-farfetchd to 06-grind-return | Escape Rope; Fly to Indigo Plateau; its nurse; Victory Road 2F grind | 16 |
+| 07-glitch-prep | Route 16's cut tree (41, 11), Route 8's hidden Leppa Berry | 10 |
+| 08-activate-and-verify | Route 16: Lea & Jed's double battle; Route 16 to Celadon Dept. Store | 9, 10 |
 | su-01 | Celadon 4F, Lavender Mart | 8, 9 |
 | tt-01 | Route 6's hidden Rare Candy | 6 |
 

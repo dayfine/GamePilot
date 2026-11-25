@@ -2,7 +2,7 @@
   "format": "gamepilot-checkpoint/1",
   "game": "frlg",
   "checkpoint": {
-    "id": "mg-03",
+    "id": "03-trade-mr-mime",
     "title": "Trade Abra for MIMIEN on Route 2, buy Revives in Lavender Mart, heal at Lavender Center",
     "start": {"map": "VermilionCity", "tiles": [[19, 18]], "facing": "south"},
     "events": [

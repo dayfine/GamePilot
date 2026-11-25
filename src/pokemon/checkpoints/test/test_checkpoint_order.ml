@@ -17,14 +17,14 @@ let () =
   Table_test.run "checkpoint_order"
     [
       case
-        "mail glitch: mg-05a before mg-05 (mg-04 testing 15 ended at mg-05's \
-         start)"
+        "the fork's split: mg-05a before mg-05 (mg-04 testing 15 ended at \
+         mg-05's start)"
         (sorted [ "mg-06"; "mg-05"; "mg-05a"; "mg-04"; "mg-01" ])
         "mg-01, mg-04, mg-05a, mg-05, mg-06";
-      case
-        "the Mail Glitch chain: mg-04 split in three, its grind round between"
-        mail_glitch_chain
-        "mg-01, mg-02, mg-03, mg-04a, mg-04b, mg-04c, mg-05a, mg-05, mg-06";
+      case "the Mail Glitch chain, in its ids' number order" mail_glitch_chain
+        "01-celadon-setup, 02-trade-farfetchd, 03-trade-mr-mime, \
+         04-grind-farfetchd, 05-grind-mr-mime, 06-grind-return, \
+         07-glitch-prep, 08-activate-and-verify";
       case "parts in letter order, before the bare id"
         (sorted [ "cp-2"; "cp-2b"; "cp-2a"; "cp-10" ])
         "cp-10, cp-2a, cp-2b, cp-2";

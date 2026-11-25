@@ -1,4 +1,4 @@
-(* Round_trials decides, after each round of a repeating checkpoint (mg-04b's
+(* Round_trials decides, after each round of a repeating checkpoint (05-grind-mr-mime's
    grind round), whether to run another, go on (the goal holds) or stop. *)
 
 open Checkpoints

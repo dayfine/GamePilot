@@ -30,5 +30,5 @@ val rewrite_events :
 (** The plan with each of [checkpoint.events] replaced, in order, by the events
     [step] gives for it, threading a state that [start] makes from the
     [checkpoint] object. An error is prefixed with [source] and the event
-    (["mg-01.plan.json: checkpoint.events[4]: ..."]). A plan with no event list
-    comes back unchanged, for the decoder to report. *)
+    (["01-celadon-setup.plan.json: checkpoint.events[4]: ..."]). A plan with no
+    event list comes back unchanged, for the decoder to report. *)

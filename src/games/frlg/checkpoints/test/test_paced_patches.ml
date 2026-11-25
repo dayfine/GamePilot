@@ -1,6 +1,6 @@
 (* Every spot a wild battle is paced for on (Frlg_actions.Paced_battle and the
    capture): the patch's tile and the one a step [pace] from it are both grass
-   on PokemonSimulation's map, so pacing never leaves the grass (mg-05a testing
+   on PokemonSimulation's map, so pacing never leaves the grass (07-glitch-prep testing
    1 turned off it). The grind's spots come from its strategies; a plan's patch
    is where the event before a capture or PP drain leaves the player. *)
 
@@ -65,11 +65,11 @@ let cases =
     case "the Pokemon Tower 5F grind"
       (strategy "pokemon_tower_5f")
       "PokemonTower_5F (8, 9) grass, (9, 9) grass";
-    case "mg-02's Spearow capture"
-      (plan_patches "mg-02.plan.json")
+    case "02-trade-farfetchd's Spearow capture"
+      (plan_patches "02-trade-farfetchd.plan.json")
       "Route16 (35, 6) grass, (36, 6) grass";
-    case "mg-05a's Blizzard PP drain"
-      (plan_patches "mg-05a.plan.json")
+    case "07-glitch-prep's Blizzard PP drain"
+      (plan_patches "07-glitch-prep.plan.json")
       "Route8 (45, 12) grass, (44, 12) grass";
   ]
 

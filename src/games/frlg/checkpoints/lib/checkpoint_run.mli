@@ -98,5 +98,5 @@ val goal_holds :
 (** In the effect context, from the overworld and back to it: whether a
     repeating checkpoint's goal ({!Checkpoints.Plan.repeat}'s [until]) holds
     now, read as postconditions are ({!Postcondition_reads}) and logged
-    (["[Goal] [Postcondition] mg-04b ..."]). A goal with nothing in it, or one
-    not read, does not hold. *)
+    (["[Goal] [Postcondition] 05-grind-mr-mime ..."]). A goal with nothing in
+    it, or one not read, does not hold. *)

@@ -2,7 +2,7 @@
   "format": "gamepilot-checkpoint/1",
   "game": "frlg",
   "checkpoint": {
-    "id": "mg-04a",
+    "id": "04-grind-farfetchd",
     "title": "Grinding, part 1: CH'DING Knock Off (skips when known), Escape Rope, Fly to Indigo Plateau and heal at its nurse",
     "start": {"map": "LavenderTown_PokemonCenter_1F", "tiles": [[7, 4]], "facing": "north"},
     "events": [
@@ -30,7 +30,7 @@
           "max_battles": 60
         },
         "declared_after": {"map": "PokemonTower_5F", "tiles": [[8, 9]]},
-        "why": "CH'DING must know Knock Off; the mg-03 save has it at Lv 22, so this reads the summary and skips. If not, it switch-grinds on the Tower 5F spot it stands on"
+        "why": "CH'DING must know Knock Off; the 03-trade-mr-mime save has it at Lv 22, so this reads the summary and skips. If not, it switch-grinds on the Tower 5F spot it stands on"
       },
       {
         "id": "escape_rope_tower",
@@ -57,14 +57,14 @@
         "id": "heal_indigo",
         "fragment": "heal_at",
         "args": {"town": "indigo_plateau"},
-        "why": "full HP/PP before the first grind round, at the Indigo nurse: mg-04b's start and the grind rounds' save point"
+        "why": "full HP/PP before the first grind round, at the Indigo nurse: 05-grind-mr-mime's start and the grind rounds' save point"
       }
     ]
   },
   "execution": {"menu": "full"},
   "metadata": {
     "phase": "testing",
-    "notes": "Ends at the Indigo Plateau nurse, healed: mg-04b's start, where every grind round is saved. CH'DING knows Knock Off; one Escape Rope used; the nurse heals for free.",
+    "notes": "Ends at the Indigo Plateau nurse, healed: 05-grind-mr-mime's start, where every grind round is saved. CH'DING knows Knock Off; one Escape Rope used; the nurse heals for free.",
     "postconditions": {
       "party_includes": ["blastoise", "pidgey", "mr-mime", "farfetchd"],
       "money": {"spent": 0},
