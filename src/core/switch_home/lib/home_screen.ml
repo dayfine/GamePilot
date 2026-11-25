@@ -183,10 +183,16 @@ let is_home g =
 
 (* Dimmed, the dark theme's grey (51 a channel lit) reads 8 on console B: a
    flat band between black and the lit grey, the detail limits scaled by it.
-   A black picture (a launch) is below the band. Shifted, the dimmed capture
-   reads 16 to 60: one channel 12 down leaves it 1 above the band's floor. *)
+   The band's floor does not tell black from dimmed: console B's black (the
+   capture card's, a launch or a fade) reads 21 (14 to 57 shifted, the FRLG
+   readers' trainer-card captures), inside the band with the dimmed HOME's 24
+   (16 to 60 shifted). The detail tells them apart: black's boxes are flat
+   (stddev 0), the dimmed HOME's 31 at least against scaled limits of 20 at
+   most. The floor only keeps those limits above 0, which an all-black picture
+   would otherwise meet; 8, half the dimmed HOME's lowest, leaves it clear of
+   both. *)
 let dark_lit_sum = 153.
-let dimmed_min_sum = 15.
+let dimmed_min_sum = 8.
 let dimmed_max_sum = 100.
 
 let is_home_dimmed g =
