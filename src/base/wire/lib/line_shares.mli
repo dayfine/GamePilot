@@ -10,14 +10,15 @@
     share from one probe. *)
 
 type json = Yojson.Safe.t
+(** A decoded JSON value: a probe's [test] or a result object. *)
 
+(** A comparison's operator: how its weighted sum stands to its value, [>],
+    [>=], [<] or [<=] on the wire. *)
 type op =
-  | Greater
-  | Greater_equal
-  | Less
-  | Less_equal
-      (** How a comparison's weighted sum stands to its value: [>], [>=], [<],
-          [<=] on the wire. *)
+  | Greater  (** [>]: the sum is above the value. *)
+  | Greater_equal  (** [>=]: the sum is the value or above. *)
+  | Less  (** [<]: the sum is below the value. *)
+  | Less_equal  (** [<=]: the sum is the value or below. *)
 
 type comparison = { weights : int * int * int; op : op; value : int }
 (** [r * wr + g * wg + b * wb op value], channels 0..255. *)
