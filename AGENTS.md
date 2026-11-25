@@ -9,16 +9,16 @@ GamePilot automates games through three layers (design: `docs/design/Layered-Aut
   `<name>/test`.
   - `base/`: pure, game-agnostic code with no effects (`wire`: the protocol codec).
   - `core/`: the effects programs use (`effects`) and their handlers (`session`, `live`, `replay`).
-  - `engine/`: the game-agnostic checkpoint engine (`docs/design/Engine-Boundary.md`): `checkpoints/`
-    `expand` (plan JSON rewrites), `run` (trials, event progress) and `series` (chains, order,
-    rounds). It names no game, grid or Pokémon type; a game family plugs its own in.
-  - `engine/`: the game-agnostic checkpoint engine (plans, runner, series), applied to a game
-    family's terms (`Engine_checkpoints.Make`, `docs/design/Engine-Boundary.md`).
-  - `pokemon/`: code shared by Pokemon games (navigation grid, the Pokemon terms and the engine
-    applied to them).
-    `checkpoints/` holds four libraries. A plan file passes through `expand` (rewrites raw plan
-    JSON; the game calls it at load) and then `plan` (types, decoding). The libraries depend one
-    way, `plan` -> `run` (one checkpoint) -> `series` (a chain of checkpoints); `expand` stands alone.
+  - `engine/`: the game-agnostic checkpoint engine (`docs/design/Engine-Boundary.md`). Its
+    `checkpoints/` libraries: `terms` (`GAME_TERMS`, what a game family gives the engine),
+    `promise` (promises, counts, money), `plan` (types, decoding, text), `run` (one checkpoint:
+    handlers, trials, event progress), `series` (chains, order, rounds), `expand` (plan JSON
+    rewrites) and `make` (`Engine_checkpoints.Make`, the engine applied to a family's terms). It
+    names no game, grid or Pokémon type.
+  - `pokemon/`: code shared by Pokemon games: the navigation grid, and in `checkpoints/` the
+    Pokémon terms (`terms`: grid poses, own kinds, postconditions), the engine applied to them
+    (`plan`: `Pokemon_checkpoints`), the end-state check and room policy (`run`), console runs
+    (`series`) and place-route rewrites (`expand`).
   - `games/<game>/`: `readers/`, `actions/`, `maps/`, `checkpoints/`, and `programs/<program>/`.
   - `program_registry/`: every program's descriptor (game, group, name, doc, checkpoints folder,
     backends), as PA/CC's program list. A new program registers there (`docs/programs/README.md`).
