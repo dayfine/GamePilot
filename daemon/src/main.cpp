@@ -26,7 +26,8 @@
 // is listed in the watch registry (watch_registry.h) while it is up.
 // [--record | --no-record] records the run's frames into DIR/frames (on by
 // default for the switch backend with a run folder, off for mgba);
-// [--keepawake SECONDS] [--keepawake-key B] presses that key after SECONDS
+// [--keepawake SECONDS] [--keepawake-key B] presses that key (or RStick, a
+// right-stick nudge: keep_awake.h) after SECONDS
 // with no input, never during a client's batch (keep_awake.h; default 180 on
 // the switch backend, 0 = off, off for mgba).
 // [--stream-fps 30] [--stream-width 1280] set the page's live frame
@@ -282,7 +283,7 @@ bool parse_flags(int argc, char** argv, Flags& flags) {
       flags.keepawake_s = static_cast<double>(seconds);
     } else if (arg == "--keepawake-key" && has_value) {
       flags.server.keepawake.key = argv[++i];
-      if (gamepilot::button_mask(flags.server.keepawake.key) == 0) {
+      if (!gamepilot::keep_awake_key(flags.server.keepawake.key)) {
         return false;
       }
     } else if (arg == "--window-pid" && has_value) {
