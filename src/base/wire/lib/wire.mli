@@ -1,4 +1,4 @@
-(** Wire protocol v1.13 (protocol/v1): message types and their JSON codec.
+(** Wire protocol v1.14 (protocol/v1): message types and their JSON codec.
 
     The codec lives in one module per message family ([Command], [Probe],
     [Backend], [Jsonrpc], [Wire_log], [Probe_images]); this module re-exports
@@ -225,6 +225,9 @@ type error = Jsonrpc.error = {
 type call = Jsonrpc.call =
   | Hello of { protocol : int; client : string }
   | Load_state of { path : string }
+  | Reset
+      (** Resets the machine as its power switch would ([backend.reset], mGBA
+          only); answered like [Load_state]. *)
   | Save_state of { path : string }
       (** Saves the emulator's state to [path] (a dev-loop op: a checkpoint's
           end saved as the next one's start). *)

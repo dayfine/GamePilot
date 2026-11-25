@@ -98,6 +98,13 @@ class Backend {
   // BackendError on failure.
   virtual std::int64_t save_state(const std::string& path) = 0;
 
+  // Lockstep backends with a power switch only (mGBA). Resets the machine as
+  // its power switch would, holds at the first frame after the reset and
+  // returns the new seq(). The game boots from its cartridge save, so the RNG
+  // programs' hard reset (close and relaunch the game on the Switch) is the
+  // same on every start state. Throws BackendError elsewhere.
+  virtual std::int64_t reset();
+
   // Releases keys and lets the backend run on its own.
   virtual void release() = 0;
 
@@ -132,6 +139,10 @@ inline std::optional<FrameStamp> Backend::next_frame(double) {
 
 inline void Backend::queue_keys(KeyMask, const Sticks&, double) {
   throw BackendError(info().kind + " is not a live backend");
+}
+
+inline std::int64_t Backend::reset() {
+  throw BackendError(info().kind + " has no reset");
 }
 
 inline void Backend::drop_queued_keys() {

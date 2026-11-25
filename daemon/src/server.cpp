@@ -454,7 +454,8 @@ void Server::refuse_switch_input(const SubmitParams& submit) const {
 std::optional<std::string> Server::take_lease(ClientConnection& client,
                                               const std::string& method) {
   const bool input = method == "submit" || method == "cancel" ||
-                     method == "backend.load_state";
+                     method == "backend.load_state" ||
+                     method == "backend.reset";
   if (!backend_.info().takes_input && (input || method == "lease.acquire")) {
     throw view_only_refusal(backend_.info().kind, method);
   }
@@ -559,7 +560,7 @@ pa::JsonObject Server::dispatch(ClientConnection& client,
     return dispatch_probes(client, request);
   }
   if (method == "submit" || method == "cancel" ||
-      method == "backend.load_state") {
+      method == "backend.load_state" || method == "backend.reset") {
     return dispatch_input(client, request);
   }
   throw RpcError(kMethodNotFound, "unknown method: " + method);
@@ -608,14 +609,21 @@ pa::JsonObject Server::dispatch_probes(ClientConnection& client,
   return unsubscribe_result(removed);
 }
 
-// Submit, cancel and load_state: take_lease already let the client in.
+// Submit, cancel, load_state and reset: take_lease already let the client in.
 pa::JsonObject Server::dispatch_input(ClientConnection& client,
                                       const Request& request) {
   const std::string& method = request.method;
-  if (method == "backend.load_state") {
-    const LoadStateParams load = decode_load_state(request.params);
+  if (method == "backend.load_state" || method == "backend.reset") {
+    // A reset starts the frames again like a load: the same reply, and the
+    // frames before it carry the old load.
     try {
-      const std::int64_t seq = backend_.load_state(load.path);
+      std::int64_t seq = 0;
+      if (method == "backend.reset") {
+        decode_reset(request.params);
+        seq = backend_.reset();
+      } else {
+        seq = backend_.load_state(decode_load_state(request.params).path);
+      }
       schedule_.clear();
       batch_owners_.clear();
       sent_mask_.reset();

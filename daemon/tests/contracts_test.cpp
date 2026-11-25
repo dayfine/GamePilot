@@ -53,6 +53,10 @@ void check_requests(const std::map<std::string, pa::JsonValue>& files) {
   CHECK(load.method == "backend.load_state");
   CHECK(decode_load_state(load.params).path.ends_with("overworld.ss"));
 
+  const Request reset = decode_request(files.at("48-reset.request.json"));
+  CHECK(reset.method == "backend.reset" && reset.has_id);
+  decode_reset(reset.params);
+
   const Request save_state =
       decode_request(files.at("24-save_state.request.json"));
   CHECK(save_state.method == "backend.save_state");
@@ -259,6 +263,8 @@ void check_encoders(const std::map<std::string, pa::JsonValue>& files) {
   CHECK(hello_result(mgba) == result_of(files.at("02-hello.response.json")));
   CHECK(load_state_result(1200, 1) ==
         result_of(files.at("04-load_state.response.json")));
+  CHECK(load_state_result(0, 2) ==
+        result_of(files.at("49-reset.response.json")));
   CHECK(save_result(5400) ==
         result_of(files.at("25-save_state.response.json")));
   CHECK(save_result(5460) ==
@@ -549,7 +555,7 @@ int main() {
   const auto files = load_contracts();
   // One per protocol/v1 golden file. The checks below index files by name,
   // so they run only when every one is there.
-  constexpr std::size_t kGoldenFiles = 47;
+  constexpr std::size_t kGoldenFiles = 49;
   CHECK(files.size() == kGoldenFiles);
   if (files.size() == kGoldenFiles) {
     check_requests(files);

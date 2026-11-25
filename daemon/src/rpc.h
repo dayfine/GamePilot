@@ -146,6 +146,8 @@ SubscribeParams decode_subscribe(const pa::JsonObject& params);
 UnsubscribeParams decode_unsubscribe(const pa::JsonObject& params);
 SubmitParams decode_submit(const pa::JsonObject& params);
 CancelParams decode_cancel(const pa::JsonObject& params);
+// backend.reset takes no params.
+void decode_reset(const pa::JsonObject& params);
 LeaseAcquireParams decode_lease_acquire(const pa::JsonObject& params);
 
 // Button name ("A", "Start", ..., "Home") to its KeyMask bit; 0 if unknown.

@@ -20,6 +20,7 @@ let json_of_error { code; message; data } =
 type call =
   | Hello of { protocol : int; client : string }
   | Load_state of { path : string }
+  | Reset
   | Save_state of { path : string }
   | Save_frame of { path : string }
   | Upload_template of { png : string }
@@ -51,6 +52,7 @@ type message =
 let method_name = function
   | Hello _ -> "hello"
   | Load_state _ -> "backend.load_state"
+  | Reset -> "backend.reset"
   | Save_state _ -> "backend.save_state"
   | Save_frame _ -> "backend.save_frame"
   | Upload_template _ -> "probe.upload_template"
@@ -96,6 +98,7 @@ let call_of_json name params =
   | "hello" -> hello_of_params what params
   | "backend.load_state" ->
       Load_state { path = string_field what "path" params }
+  | "backend.reset" -> Reset
   | "backend.save_state" ->
       Save_state { path = string_field what "path" params }
   | "backend.save_frame" ->
@@ -132,7 +135,7 @@ let params_of_call = function
         (("owner", `String owner)
         :: Option.fold ~none:[] ~some:(fun ms -> [ ("ttl_ms", `Int ms) ]) ttl_ms
         )
-  | Cancel | Status | Lease_release -> `Assoc []
+  | Reset | Cancel | Status | Lease_release -> `Assoc []
 
 let check_version j =
   match field_opt "message" "jsonrpc" j with

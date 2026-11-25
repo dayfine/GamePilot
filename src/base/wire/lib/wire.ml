@@ -123,6 +123,7 @@ type error = Jsonrpc.error = {
 type call = Jsonrpc.call =
   | Hello of { protocol : int; client : string }
   | Load_state of { path : string }
+  | Reset
   | Save_state of { path : string }
   | Save_frame of { path : string }
   | Upload_template of { png : string }
