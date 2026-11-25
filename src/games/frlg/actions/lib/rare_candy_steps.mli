@@ -7,7 +7,7 @@
     PartyLevelUpWatcher and PartyMoveLearnWatcher), the evolution scene
     ({!Level_up_screens}, its BattleDialogWatcher) and the bag
     ({!Frlg_readers.Bag_screen}, its BagWatcher). The list to forget from is
-    worked as the battle's ({!Frlg_battle.Screen_driver}): read by
+    worked as the battle's ({!Frlg_battle.Battle_steps}): read by
     {!Summary_moves}, its cursor by {!Frlg_readers.Move_list_cursor}.
 
     Where it differs:

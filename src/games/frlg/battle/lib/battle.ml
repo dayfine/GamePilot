@@ -30,7 +30,7 @@ type learned =
   | Not_learned of { offered : string option }
   | Unread of string
 
-type t = {
+type game_steps = {
   next_event : timeout_ms:int -> event;
   use_move : slot:int -> target:target -> expect:string option -> move_result;
   switch_to : slot:int -> bool;

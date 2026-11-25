@@ -141,26 +141,27 @@ let find_battle t ~pace ~patch () =
     ~stands:(fun at -> t.at <- Some at)
     (Paced_battle.reckoned t.at)
 
-let screen_driver () =
-  Frlg_battle.Screen_driver.make ~read_offered_move:Summary_moves.read_offered
-    ()
+let battle_game_steps () =
+  Frlg_battle.Battle_steps.make ~read_offered_move:Summary_moves.read_offered ()
 
 let battle_on t wrap script =
   Effects.with_probes Frlg_battle.Battle_look.probes (fun () ->
       Frlg_battle.Scripted_battle.run ~log:t.config.log
-        (wrap (screen_driver ()))
+        (wrap (battle_game_steps ()))
         script)
 
 let battle t script = battle_on t Fun.id script
 
-let grind_rig t (plan : Grind_plan.t) =
+let grind_game_steps t (plan : Grind_plan.t) =
   let patch =
     List.hd plan.strategy.spot.tiles
     (* Grind_plan reads one *)
   in
   let find_battle = find_battle t ~pace:plan.strategy.pace ~patch in
-  Grind_rig.make ~log:t.config.log ~party:t.party ~walk_to:(walk_to t)
+  Grind_steps.make ~log:t.config.log ~party:t.party ~walk_to:(walk_to t)
     ~find_battle ~battle:(battle t)
+
+let run_grind t ?cap plan () = Grind.run ?cap (grind_game_steps t plan) plan
 
 let grind t (_ : Checkpoints.Plan.event) args =
   let cap = t.config.grind_cap in
@@ -169,7 +170,7 @@ let grind t (_ : Checkpoints.Plan.event) args =
       Error (Checkpoints.Failure.cause ~repeats:true "no_grind_strategies" e)
   | Ok strategies ->
       Result.bind (Grind_plan.decode strategies args) (fun plan ->
-          Menu_input.run (fun () -> Grind.run ?cap (grind_rig t plan) plan))
+          Menu_input.run (run_grind t ?cap plan))
 
 (* The catches that went to the party join it; the player stands where the
    pacing left them: the patch's tile, or one tile [pace] from it. *)
@@ -185,12 +186,12 @@ let run_capture t (plan : Capture_plan.t) () =
   let log = t.config.log in
   log ("Capture: " ^ Capture_plan.describe plan ^ ".");
   let spot = ref (Pacing.on_patch (Option.bind t.at (fun at -> at.faces))) in
-  let rig =
+  let game_steps =
     Capture_steps.make ~log ~pace:plan.pace ~spot ~target:plan.species
   in
   let result =
     Effects.with_probes Frlg_battle.Battle_look.probes (fun () ->
-        Capture.run rig plan ~party:(Party_roster.size !(t.party)))
+        Capture.run game_steps plan ~party:(Party_roster.size !(t.party)))
   in
   after_capture t plan !spot result;
   let message = Capture.message plan result in
@@ -210,7 +211,7 @@ let species_at t slot = List.nth_opt (Party_roster.to_list !(t.party)) (slot - 1
    back on it afterwards, facing [pace] (mg-05a declares it so). *)
 let run_berry_pp t (plan : Berry_pp.plan) () =
   let start = Paced_battle.reckoned t.at in
-  let rig : Berry_pp.rig =
+  let game_steps : Berry_pp.game_steps =
     {
       lead = (fun () -> species_at t 1);
       known_moves = known_moves t;
@@ -219,7 +220,7 @@ let run_berry_pp t (plan : Berry_pp.plan) () =
       log = t.config.log;
     }
   in
-  Berry_pp.run rig plan;
+  Berry_pp.run game_steps plan;
   Menu_input.raise_error
     (walk_to t (Paced_battle.back_on_patch ~pace:plan.pace start))
 
@@ -228,12 +229,13 @@ let prepare_berry_pp t (_ : Checkpoints.Plan.event) args =
       Menu_input.run (run_berry_pp t plan))
 
 let double_battle t (_ : Checkpoints.Plan.event) args =
-  let rig =
-    Mail_glitch_battle.live_rig ~log:t.config.log ~species_at:(species_at t)
-      ~known_moves:(known_moves t) ~battle:(battle_on t)
+  let game_steps =
+    Mail_glitch_battle.live_game_steps ~log:t.config.log
+      ~species_at:(species_at t) ~known_moves:(known_moves t)
+      ~battle:(battle_on t)
   in
   Result.bind (Mail_glitch_battle.decode args) (fun plan ->
-      Menu_input.run (fun () -> Mail_glitch_battle.run rig plan))
+      Menu_input.run (fun () -> Mail_glitch_battle.run game_steps plan))
 
 let action_context t : Game_actions.context =
   {

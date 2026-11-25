@@ -156,7 +156,7 @@ let stop_teaching () =
     gone ~timeout_ms:M.screen_timeout_ms question)
   else false
 
-(* B on the list only leaves it; a B it does not take (Screen_driver's
+(* B on the list only leaves it; a B it does not take (Battle_steps'
    leave_list, mGBA, mg-04 testing 14) is tapped again. *)
 let leave_taps = 3
 let list_left_ms = 1500

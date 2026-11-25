@@ -3,7 +3,7 @@ module M = Frlg_actions.Menu_input
 (* The battle is over once no battle screen shows; the flee is done once the
    overworld is quiet and takes input again, read by the talk settle. *)
 let flee_body ~log () =
-  match Frlg_battle.Wild_flee.run (Frlg_battle.Screen_driver.make ()) ~log with
+  match Frlg_battle.Wild_flee.run (Frlg_battle.Battle_steps.make ()) ~log with
   | Fled _ as fled ->
       log ("Wild battle: " ^ Frlg_battle.Wild_flee.describe fled ^ ".");
       M.settle_back ~label:"flee" ~log

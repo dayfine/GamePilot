@@ -1,4 +1,4 @@
-(** What {!Screen_driver}'s [next_event] does at each look: the one table from
+(** What {!Battle_steps}'s [next_event] does at each look: the one table from
     the screen to an answer. Pure: a state is a value, and each look returns the
     next one.
 
@@ -24,7 +24,7 @@ val start : at_ms:float -> state
 
 (** The answer to a look. *)
 type step =
-  | Report of Battle_driver.event  (** [next_event] returns this *)
+  | Report of Battle.event  (** [next_event] returns this *)
   | Press of Wire.button  (** then look again *)
   | Look  (** nothing to do yet: look again *)
 

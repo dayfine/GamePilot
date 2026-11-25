@@ -1,7 +1,7 @@
 type destination = Party | Pc
 type throw_end = Caught | Broke_free | No_balls | Throw_failed
 
-type rig = {
+type game_steps = {
   find_encounter : unit -> bool;
   read_encounter : unit -> string option;
   flee : unit -> bool;
@@ -29,7 +29,7 @@ let party_size = 6
 
 (* One capture under way: what it has counted, and its party. *)
 type under_way = {
-  rig : rig;
+  game_steps : game_steps;
   plan : Capture_plan.t;
   mutable party : int;
   mutable encounters : int;
@@ -42,7 +42,7 @@ exception Ended of end_
 let stop end_ = raise (Ended end_)
 
 let run_and_stop r end_ =
-  if r.rig.flee () then stop end_
+  if r.game_steps.flee () then stop end_
   else stop (Failed ("couldn't run from " ^ r.plan.species))
 
 let destination_name = function Party -> "party" | Pc -> "PC"
@@ -50,17 +50,17 @@ let destination_name = function Party -> "party" | Pc -> "PC"
 let next_encounter r =
   if r.encounters >= r.plan.max_encounters then stop Out_of_encounters;
   if r.balls >= r.plan.max_balls then stop (Out_of_balls None);
-  if not (r.rig.find_encounter ()) then stop No_encounter;
+  if not (r.game_steps.find_encounter ()) then stop No_encounter;
   r.encounters <- r.encounters + 1
 
 (* To the party, or to the PC when the party is full. *)
 let caught r =
   let destination = if r.party < party_size then Party else Pc in
-  if not (r.rig.finish_catch destination) then
+  if not (r.game_steps.finish_catch destination) then
     stop (Failed "the overworld didn't come back after the catch");
   if destination = Party then r.party <- r.party + 1;
   r.caught <- r.caught @ [ destination ];
-  r.rig.log
+  r.game_steps.log
     (Printf.sprintf "Capture: caught %s, to the %s." r.plan.species
        (destination_name destination))
 
@@ -70,7 +70,7 @@ let rec target_battle r turn =
     run_and_stop r (Failed (Printf.sprintf "not caught in %d turns" max_turns))
   else if r.balls >= r.plan.max_balls then run_and_stop r (Out_of_balls None)
   else
-    match r.rig.throw_ball () with
+    match r.game_steps.throw_ball () with
     | Caught ->
         r.balls <- r.balls + 1;
         caught r
@@ -83,17 +83,18 @@ let rec target_battle r turn =
         stop (Failed "the throw didn't end in a catch or at the battle menu")
 
 let battle r =
-  match r.rig.read_encounter () with
+  match r.game_steps.read_encounter () with
   | Some species when species = r.plan.species ->
-      r.rig.log
+      r.game_steps.log
         (Printf.sprintf "Capture: encounter %d: %s." r.encounters species);
       target_battle r 0
   | seen ->
       let species = Option.value seen ~default:"an unread species" in
-      r.rig.log
+      r.game_steps.log
         (Printf.sprintf "Capture: encounter %d: %s, running." r.encounters
            species);
-      if not (r.rig.flee ()) then stop (Failed ("couldn't run from " ^ species))
+      if not (r.game_steps.flee ()) then
+        stop (Failed ("couldn't run from " ^ species))
 
 let rec catches r =
   if List.length r.caught < r.plan.catches then (
@@ -101,11 +102,11 @@ let rec catches r =
     battle r;
     catches r)
 
-let run rig (plan : Capture_plan.t) ~party =
-  rig.log
+let run game_steps (plan : Capture_plan.t) ~party =
+  game_steps.log
     (Printf.sprintf "Capture: %d %s, party of %d." plan.catches plan.species
        party);
-  let r = { rig; plan; party; encounters = 0; balls = 0; caught = [] } in
+  let r = { game_steps; plan; party; encounters = 0; balls = 0; caught = [] } in
   let end_ =
     match catches r with () -> All_caught | exception Ended end_ -> end_
   in

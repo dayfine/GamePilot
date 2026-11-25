@@ -22,7 +22,7 @@ val move : slot:int -> Wire.button list
 (** On the open move menu: to the top-left move, then to [slot] (0-3), without
     the A. *)
 
-val target : Battle_driver.target -> Wire.button list
+val target : Battle.target -> Wire.button list
 (** On a double battle's target cursor, without the A. The cursor starts on the
     foe on the left; RIGHT steps past the user to the partner, LEFT to the foe
     on the right (pokefirered battle_controller_player.c,

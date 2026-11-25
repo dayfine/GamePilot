@@ -1,5 +1,5 @@
 (** Running from a wild battle that interrupts a walk: {!Frlg_battle.Wild_flee}
-    on the screen ({!Frlg_battle.Screen_driver}), then the talk settle until the
+    on the screen ({!Frlg_battle.Battle_steps}), then the talk settle until the
     overworld is quiet and in control. The battle's probes
     ({!Frlg_battle.Battle_look.probes}) are subscribed for the flee only. *)
 

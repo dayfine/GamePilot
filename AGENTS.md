@@ -22,6 +22,10 @@ GamePilot automates games through three layers (design: `docs/design/Layered-Aut
 - **Names say what a thing is or does.** No catch-all modules or folders (`helpers`, `utils`, `common`, `misc`):
   a function with no obvious home gets a module named for its job. The C++ folder names on the
   fork are a guide where they are informative.
+- **What a deciding module reads and does in the game is its `game_steps`.** One record,
+  `<Module>.game_steps`, verb-phrase fields; builders `<context>_game_steps` (or `<Module>_steps.make`),
+  test fakes `fake_game_steps`. Never `rig`, `driver`, `handlers`, `ops` or `callbacks`; `deps` only
+  for a struct that holds external resources or connections.
 - **OCaml passes `sh dev/lint/lint_ocaml.sh`** (`dev/lint/`, configured by `dev/lint/ocaml_lint.conf`): function
   length, nesting, magic numbers, file length, `.mli` for every `lib/` module, layer boundaries,
   no exceptions; complexity is advisory. Waive only in `dev/lint/ocaml_lint_exceptions.conf`,

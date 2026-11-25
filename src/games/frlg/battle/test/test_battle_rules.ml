@@ -1,4 +1,4 @@
-(* The screen driver's decisions on reader facts, with no screen: which screen
+(* The battle steps' decisions on reader facts, with no screen: which screen
    a look's facts make, what next_event does at each look (Event_rule), and
    where the cursors go (Battle_cursor). *)
 
@@ -46,7 +46,7 @@ let classify_cases : Table_test.case list =
   ]
 
 let step_name : Event_rule.step -> string = function
-  | Report e -> Battle_driver.event_name e
+  | Report e -> Battle.event_name e
   | Press b -> "press " ^ Wire.string_of_button b
   | Look -> "look"
 

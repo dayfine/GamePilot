@@ -62,19 +62,19 @@ let read_opening ~target =
   then Some target
   else None
 
-let read_encounter ~target (driver : B.Battle_driver.t) () =
+let read_encounter ~target (game_steps : B.Battle.game_steps) () =
   let seen = read_opening ~target in
-  match driver.next_event ~timeout_ms:B.Wild_flee.event_timeout_ms with
+  match game_steps.next_event ~timeout_ms:B.Wild_flee.event_timeout_ms with
   | Action_menu -> seen
   | event ->
       M.fail "capture_no_menu"
         ("the wild battle's action menu did not show: "
-        ^ B.Battle_driver.event_name event)
+       ^ B.Battle.event_name event)
 
 (* The pacing counts its taps: one lost to the battle's exit would put it a
    tile off, so the overworld settles first (wait_out_battle_exit()). *)
-let flee ~log driver () =
-  match B.Wild_flee.run driver ~log with
+let flee ~log game_steps () =
+  match B.Wild_flee.run game_steps ~log with
   | Fled _ ->
       M.settle_back ~label:"after the flee" ~log;
       true
@@ -155,12 +155,12 @@ let finish_catch ~log (destination : Capture.destination) =
 let find_encounter ~log ~pace spot () =
   Pacing_steps.find_encounter ~log ~pace spot
 
-let make ~log ~pace ~spot ~target : Capture.rig =
-  let driver = B.Screen_driver.make () in
+let make ~log ~pace ~spot ~target : Capture.game_steps =
+  let game_steps = B.Battle_steps.make () in
   {
     find_encounter = find_encounter ~log ~pace spot;
-    read_encounter = read_encounter ~target driver;
-    flee = flee ~log driver;
+    read_encounter = read_encounter ~target game_steps;
+    flee = flee ~log game_steps;
     throw_ball = throw_ball ~log;
     finish_catch = finish_catch ~log;
     log;

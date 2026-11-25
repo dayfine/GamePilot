@@ -74,9 +74,11 @@ val script : slots -> Frlg_battle.Battle_script.t
     fails the battle, and so does a member fainting. *)
 
 val check_before_first_switch :
-  (unit -> bool) -> Frlg_battle.Battle_driver.t -> Frlg_battle.Battle_driver.t
-(** The driver, with the check run before its first switch (the sweeper's, turn
-    1); a check that fails stops the action as
+  (unit -> bool) ->
+  Frlg_battle.Battle.game_steps ->
+  Frlg_battle.Battle.game_steps
+(** The battle's game steps, with the check run before its first switch (the
+    sweeper's, turn 1); a check that fails stops the action as
     [double_battle_berry_not_consumed]. *)
 
 val pp_restored : slot:int -> unit -> bool
@@ -88,33 +90,34 @@ val step_into_sight : log:(string -> unit) -> Grid_maps.Direction.t -> unit
     Overworld/PokemonFRLG_MovementStepPresses.h), the trainers' text pressed
     through until their battle shows. Fails as [double_battle_not_started]. *)
 
-type rig = {
+type game_steps = {
   species_at : int -> string option;  (** the reckoned party, slots from 1 *)
   known_moves : slot:int -> string list;  (** read on the summary *)
   start_battle : Grid_maps.Direction.t -> unit;
   restored : slot:int -> unit -> bool;  (** {!pp_restored} live *)
   battle :
-    (Frlg_battle.Battle_driver.t -> Frlg_battle.Battle_driver.t) ->
+    (Frlg_battle.Battle.game_steps -> Frlg_battle.Battle.game_steps) ->
     Frlg_battle.Battle_script.t ->
     Frlg_battle.Scripted_battle.outcome;
-      (** the battle played on the driver as the function changes it *)
+      (** the battle played on the battle's game steps as the function changes
+          it *)
   after_battle : unit -> unit;  (** back to a quiet overworld *)
   log : string -> unit;
 }
 
-val live_rig :
+val live_game_steps :
   log:(string -> unit) ->
   species_at:(int -> string option) ->
   known_moves:(slot:int -> string list) ->
   battle:
-    ((Frlg_battle.Battle_driver.t -> Frlg_battle.Battle_driver.t) ->
+    ((Frlg_battle.Battle.game_steps -> Frlg_battle.Battle.game_steps) ->
     Frlg_battle.Battle_script.t ->
     Frlg_battle.Scripted_battle.outcome) ->
-  rig
-(** The game's rig: {!step_into_sight}, {!pp_restored}, and the talk settle
-    after the battle. *)
+  game_steps
+(** The game's game steps: {!step_into_sight}, {!pp_restored}, and the talk
+    settle after the battle. *)
 
-val run : rig -> plan -> unit
+val run : game_steps -> plan -> unit
 (** Fails as [double_battle_wrong_party], [double_battle_missing_move],
     [double_battle_not_started], [double_battle_berry_not_consumed] or
     [double_battle_failed] (with the battle's reason). *)
