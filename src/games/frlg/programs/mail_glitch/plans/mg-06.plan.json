@@ -15,26 +15,11 @@
         "why": "Fly from Route 16 to Celadon City's Pokemon Center landing tile (48, 12)"
       },
       {
-        "id": "to_dept_store_lift",
-        "kind": "route",
-        "action": "run",
-        "args": {"target": {"map": "CeladonCity_DepartmentStore_1F", "tiles": [[6, 2]], "facing": "north"}},
-        "why": "enter Celadon Dept Store 1F and stand below the elevator door (6, 1)"
-      },
-      {
-        "id": "lift_1f_to_4f",
-        "kind": "game_action",
-        "action": "lift_floor",
-        "args": {"from": "1F", "to": "4F"},
-        "declared_after": {"map": "CeladonCity_DepartmentStore_4F", "tiles": [[6, 2]], "facing": "south"},
-        "why": "ride the elevator to 4F (Wise Man Gifts)"
-      },
-      {
         "id": "to_4f_clerk",
         "kind": "route",
         "action": "run",
-        "args": {"target": {"map": "CeladonCity_DepartmentStore_4F", "tiles": [[3, 11]], "facing": "south"}},
-        "why": "walk to face the 4F clerk (3, 13) across counter row 12"
+        "args": {"target": {"place": "celadon_dept_store_4f_clerk"}},
+        "why": "into Celadon Dept Store and up the lift to face the 4F clerk across the counter"
       },
       {
         "id": "buy_retro_mail",
@@ -44,19 +29,11 @@
         "why": "buy 8 Retro Mail ($50 each): 5 to fill the party's mail records, 1 for proof A, 1 per duplication round, 1 spare (spec section 6)"
       },
       {
-        "id": "back_to_4f_lift",
+        "id": "to_1f_save_spot",
         "kind": "route",
         "action": "run",
-        "args": {"target": {"map": "CeladonCity_DepartmentStore_4F", "tiles": [[6, 2]], "facing": "north"}},
-        "why": "return below the 4F elevator door (6, 1)"
-      },
-      {
-        "id": "lift_4f_to_1f",
-        "kind": "game_action",
-        "action": "lift_floor",
-        "args": {"from": "4F", "to": "1F"},
-        "declared_after": {"map": "CeladonCity_DepartmentStore_1F", "tiles": [[6, 2]], "facing": "south"},
-        "why": "ride the elevator back down to 1F"
+        "args": {"target": {"place": "celadon_dept_store_1f_save"}},
+        "why": "down the lift to the 1F save spot, where the party is set up"
       },
       {
         "id": "arrange_slot1_mimien",

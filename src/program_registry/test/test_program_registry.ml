@@ -31,7 +31,7 @@ let plans_in dir =
   |> List.map (Filename.concat dir)
 
 let plan_error file =
-  match Checkpoints.Plan_decode.load file with
+  match Frlg_checkpoints.Plan_file.load file with
   | Error e -> Some (file ^ ": " ^ e)
   | Ok plan -> (
       match Frlg_checkpoints.Checkpoint_run.check_plan plan with

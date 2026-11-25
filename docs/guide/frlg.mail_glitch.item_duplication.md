@@ -67,7 +67,7 @@ writes. To run activation and duplication in one go, use `--from mg-01 --to mg-0
 |---|---|
 | mg-06 | Use the Mail Glitch: read the glitched mail, duplicate one Antidote |
 
-<!-- plans: a4b9833a20d0 -->
+<!-- plans: 21bdc978bc08 -->
 <!-- /generated -->
 
 In plain words:

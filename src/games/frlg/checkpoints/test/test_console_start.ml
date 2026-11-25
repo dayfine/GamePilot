@@ -8,7 +8,7 @@ module P = Checkpoints.Postcondition_check
 module F = Frlg_readers.Start_frame
 
 let plan id =
-  match Checkpoints.Plan_decode.load (id ^ ".plan.json") with
+  match Frlg_checkpoints.Plan_file.load (id ^ ".plan.json") with
   | Ok p -> p
   | Error e -> failwith e
 

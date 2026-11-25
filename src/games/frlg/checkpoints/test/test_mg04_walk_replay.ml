@@ -17,7 +17,7 @@ let start_state = "mg04_start.ss"
 
 (* mg-04 with only its first event, the walk the log recorded. *)
 let walk_plan () =
-  let p = Result.get_ok (Checkpoints.Plan_decode.load "mg-04a.plan.json") in
+  let p = Result.get_ok (Frlg_checkpoints.Plan_file.load "mg-04a.plan.json") in
   let first = List.hd p.checkpoint.events in
   {
     p with

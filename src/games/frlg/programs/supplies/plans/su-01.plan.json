@@ -35,51 +35,13 @@
     },
     "events": [
       {
-        "id": "to_dept_store_lift",
-        "kind": "route",
-        "action": "run",
-        "args": {
-          "target": {
-            "map": "CeladonCity_DepartmentStore_1F",
-            "tiles": [
-              [6, 2]
-            ],
-            "facing": "north"
-          }
-        },
-        "why": "Turn to the elevator door (6, 1)."
-      },
-      {
-        "id": "lift_1f_to_4f",
-        "kind": "game_action",
-        "action": "lift_floor",
-        "args": {
-          "from": "1F",
-          "to": "4F"
-        },
-        "declared_after": {
-          "map": "CeladonCity_DepartmentStore_4F",
-          "tiles": [
-            [6, 2]
-          ],
-          "facing": "south"
-        },
-        "why": "Ride the elevator 1F to 4F."
-      },
-      {
         "id": "to_4f_clerk",
         "kind": "route",
         "action": "run",
         "args": {
-          "target": {
-            "map": "CeladonCity_DepartmentStore_4F",
-            "tiles": [
-              [3, 11]
-            ],
-            "facing": "south"
-          }
+          "target": {"place": "celadon_dept_store_4f_clerk"}
         },
-        "why": "Face the 4F clerk across the counter."
+        "why": "Up the lift to face the 4F clerk across the counter."
       },
       {
         "id": "buy_retro_mail",
@@ -101,51 +63,13 @@
         "why": "One Retro Mail per duplication round: 100, as 50 + 50 (the quantity box stops at 99; a second line of 1 left the box on x01 with its A dropped, mGBA su-01 verification)."
       },
       {
-        "id": "back_to_4f_lift",
-        "kind": "route",
-        "action": "run",
-        "args": {
-          "target": {
-            "map": "CeladonCity_DepartmentStore_4F",
-            "tiles": [
-              [6, 2]
-            ],
-            "facing": "north"
-          }
-        },
-        "why": "Back below the 4F elevator door."
-      },
-      {
-        "id": "lift_4f_to_1f",
-        "kind": "game_action",
-        "action": "lift_floor",
-        "args": {
-          "from": "4F",
-          "to": "1F"
-        },
-        "declared_after": {
-          "map": "CeladonCity_DepartmentStore_1F",
-          "tiles": [
-            [6, 2]
-          ],
-          "facing": "south"
-        },
-        "why": "Ride the elevator 4F to 1F."
-      },
-      {
         "id": "out_of_dept_store",
         "kind": "route",
         "action": "run",
         "args": {
-          "target": {
-            "map": "CeladonCity",
-            "tiles": [
-              [11, 15]
-            ],
-            "facing": "south"
-          }
+          "target": {"place": "celadon_dept_store_west_door_outside"}
         },
-        "why": "Leave by the west door (11, 14) to fly."
+        "why": "Down the lift and out by the west door, to fly."
       },
       {
         "id": "fly_lavender",
@@ -169,13 +93,7 @@
         "kind": "route",
         "action": "run",
         "args": {
-          "target": {
-            "map": "LavenderTown_Mart",
-            "tiles": [
-              [4, 3]
-            ],
-            "facing": "west"
-          }
+          "target": {"place": "lavender_mart_clerk"}
         },
         "why": "Face the Lavender Town Mart clerk."
       },
@@ -199,13 +117,7 @@
         "kind": "route",
         "action": "run",
         "args": {
-          "target": {
-            "map": "LavenderTown",
-            "tiles": [
-              [20, 16]
-            ],
-            "facing": "south"
-          }
+          "target": {"place": "lavender_mart_outside"}
         },
         "why": "Back on the street to fly."
       },
@@ -231,13 +143,7 @@
         "kind": "route",
         "action": "run",
         "args": {
-          "target": {
-            "map": "CeladonCity_DepartmentStore_1F",
-            "tiles": [
-              [6, 2]
-            ],
-            "facing": "south"
-          }
+          "target": {"place": "celadon_dept_store_1f_save"}
         },
         "why": "End at the Dept. Store 1F save spot, team training's start."
       }

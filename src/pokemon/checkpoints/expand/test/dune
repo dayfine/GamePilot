@@ -1,0 +1,8 @@
+(tests
+ (names test_place_routes)
+ (modules expand_cases test_place_routes)
+ (libraries
+  yojson
+  gamepilot.table_test
+  gamepilot.grid_maps
+  gamepilot.checkpoints_expand))

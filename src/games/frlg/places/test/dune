@@ -1,0 +1,23 @@
+(test
+ (name test_places)
+ (modules place_objects test_places)
+ (libraries
+  yojson
+  gamepilot.table_test
+  gamepilot.grid_maps
+  gamepilot.checkpoints
+  gamepilot.checkpoints_expand
+  gamepilot.frlg_repo_files
+  gamepilot.frlg_overworld
+  gamepilot.frlg_places
+  gamepilot.frlg_checkpoints))
+
+(test
+ (name test_lift_routes)
+ (modules test_lift_routes)
+ (libraries
+  yojson
+  gamepilot.table_test
+  gamepilot.checkpoints
+  gamepilot.plan_text
+  gamepilot.frlg_checkpoints))

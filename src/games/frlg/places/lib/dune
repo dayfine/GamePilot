@@ -1,0 +1,11 @@
+(library
+ (name frlg_places)
+ (public_name gamepilot.frlg_places)
+ (libraries
+  yojson
+  gamepilot.grid_maps
+  gamepilot.name_suggestion
+  gamepilot.checkpoints
+  gamepilot.checkpoints_expand
+  gamepilot.frlg_repo_files
+  gamepilot.frlg_actions))

@@ -34,7 +34,7 @@ let ( let* ) = Result.bind
 let plan_file ~plan_dir id = Filename.concat plan_dir (id ^ plan_suffix)
 
 let load_plan ~plan_dir id =
-  let* plan = Plan_decode.load (plan_file ~plan_dir id) in
+  let* plan = Frlg_checkpoints.Plan_file.load (plan_file ~plan_dir id) in
   let* () = Frlg_checkpoints.Checkpoint_run.check_plan plan in
   Ok plan
 

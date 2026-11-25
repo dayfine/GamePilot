@@ -140,7 +140,8 @@
   gamepilot.table_test
   gamepilot.grid_maps
   gamepilot.checkpoints
-  gamepilot.frlg_actions))
+  gamepilot.frlg_actions
+  gamepilot.frlg_checkpoints))
 
 (test
  (name test_make_room)
@@ -172,4 +173,23 @@
   gamepilot.wire
   gamepilot.effects
   gamepilot.checkpoints
+  gamepilot.frlg_checkpoints))
+
+(test
+ (name test_mail_glitch_plans)
+ (modules test_mail_glitch_plans)
+ (deps
+  mg-01.plan.json
+  mg-02.plan.json
+  mg-03.plan.json
+  mg-04a.plan.json
+  mg-04b.plan.json
+  mg-04c.plan.json
+  mg-05a.plan.json
+  mg-05.plan.json
+  mg-06.plan.json)
+ (libraries
+  gamepilot.table_test
+  gamepilot.checkpoints
+  gamepilot.plan_text
   gamepilot.frlg_checkpoints))

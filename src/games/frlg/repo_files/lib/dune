@@ -1,3 +1,4 @@
 (library
  (name frlg_repo_files)
- (public_name gamepilot.frlg_repo_files))
+ (public_name gamepilot.frlg_repo_files)
+ (libraries yojson))
