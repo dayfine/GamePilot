@@ -48,13 +48,13 @@ let waiting_text : Blink_recovery.waiting -> string = function
   | Unsolved -> "unsolved"
 
 let confirmed_text ~start (r : Blink_recovery.recovery) =
-  Printf.sprintf
-    "confirmed %s %d slots %s anchor %d %d %s %.17g %d thresholds %s"
+  Printf.sprintf "confirmed %s %d slots %s anchor %d %d %s %s %d thresholds %s"
     (state_text r.state) r.events
     (String.concat " " (List.map string_of_int r.slots))
     r.anchor_stream r.clock.anchor_advance
     (Fixture_lines.micros_since ~from:start r.clock.anchor_time)
-    r.clock.tick_seconds r.clock.npcs
+    (Fixture_lines.float17 r.clock.tick_seconds)
+    r.clock.npcs
     (String.concat " " (List.map Fixture_lines.float17 r.thresholds))
 
 let decision_text ~start : Blink_recovery.decision -> string = function

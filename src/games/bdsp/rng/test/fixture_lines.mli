@@ -5,7 +5,9 @@ type record = { op : string; inputs : string list; expected : string }
 val read : string -> record list
 val hex : string -> int
 val hex32 : int -> string
+
 val float17 : float -> string
+(** C's ["%.17g"] text, with a two-digit exponent on every platform. *)
 
 val micros_since : from:float -> float -> string
 (** Whole microseconds from [from] to a time on the microsecond grid, as the C++
