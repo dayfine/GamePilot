@@ -32,7 +32,7 @@ let tile where key = function
   | `List [ `Int x; `Int y ] -> Ok { Tile_pos.x; y }
   | _ -> error where "%s is not [x, y]." key
 
-let only = D.only
+let known_fields_only = D.known_fields_only
 
 let not_in_maps where obj what =
   let* tile =
@@ -40,11 +40,11 @@ let not_in_maps where obj what =
     | None -> Ok None
     | Some v -> Result.map Option.some (tile where "tile" v)
   in
-  let* () = only where [ "not_in_maps"; "tile" ] obj in
+  let* () = known_fields_only where [ "not_in_maps"; "tile" ] obj in
   Ok (Not_in_maps { what; tile })
 
 let one_key where obj make =
-  let* () = only where [ fst (List.hd obj) ] obj in
+  let* () = known_fields_only where [ fst (List.hd obj) ] obj in
   Result.map make (string where (fst (List.hd obj)) obj)
 
 let map_object where obj =
@@ -54,7 +54,7 @@ let map_object where obj =
   | ("item", _) :: _ -> one_key where obj (fun s -> Item s)
   | ("hidden_item", _) :: _ -> one_key where obj (fun s -> Hidden_item s)
   | ("warp", _) :: _ ->
-      let* () = only where [ "warp"; "to_map" ] obj in
+      let* () = known_fields_only where [ "warp"; "to_map" ] obj in
       let* warp = string where "warp" obj in
       let* to_map = string where "to_map" obj in
       Ok (Warp { warp; to_map })
@@ -74,7 +74,9 @@ let facing where obj =
 let place where (name, value) =
   let* obj = fields (where ^ "places.") name value in
   let where = Printf.sprintf "%splaces.%s." where name in
-  let* () = only where [ "map"; "object"; "stand"; "facing" ] obj in
+  let* () =
+    known_fields_only where [ "map"; "object"; "stand"; "facing" ] obj
+  in
   let* map = string where "map" obj in
   let* stand = Result.bind (field where "stand" obj) (tile where "stand") in
   let* facing = facing where obj in
@@ -85,7 +87,9 @@ let place where (name, value) =
 let parse ~source json =
   let where = source ^ ": " in
   let* top = fields where "the table" json in
-  let* () = only where [ "format"; "game"; "places"; "towns" ] top in
+  let* () =
+    known_fields_only where [ "format"; "game"; "places"; "towns" ] top
+  in
   let* named = string where "format" top in
   let* () =
     if named = format then Ok ()

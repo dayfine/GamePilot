@@ -27,6 +27,8 @@ val as_list :
 val as_string : string -> string -> Yojson.Safe.t -> (string, string) result
 (** The value's string, or ["<key> is not a string."]. *)
 
-val only : string -> string list -> Plan_json.fields -> (unit, string) result
-(** [only where allowed fields]: [Ok] when every field is one of [allowed];
-    otherwise ["<key> is not a known field."] for the first that is not. *)
+val known_fields_only :
+  string -> string list -> Plan_json.fields -> (unit, string) result
+(** [known_fields_only where allowed fields]: [Ok] when every field is one of
+    [allowed]; otherwise ["<key> is not a known field."] for the first that is
+    not. *)
