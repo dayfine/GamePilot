@@ -146,6 +146,46 @@ let mail_field_one ~width =
     width;
   }
 
+let mail_row_pitch = 16
+
+let mail_field ~row ~left ~width =
+  {
+    id = Printf.sprintf "mail_field.r%d.x%d" row left;
+    left;
+    indent = 0;
+    glyph_top = mail_first_row_top + (mail_row_pitch * row);
+    width;
+  }
+
+(* The lower panel's list window: window 2 at tile (1, 0), its rows 16 apart
+   from y 96 scrolled so the top shown row is at 92. *)
+let easy_chat_list_top = 92
+let easy_chat_list_pitch = 16
+let easy_chat_word_left_first = 32
+let easy_chat_word_left_second = 136
+let easy_chat_group_left_first = 18
+let easy_chat_group_left_second = 102
+
+let easy_chat_word_lefts =
+  [| easy_chat_word_left_first; easy_chat_word_left_second |]
+
+let easy_chat_group_lefts =
+  [| easy_chat_group_left_first; easy_chat_group_left_second |]
+
+let easy_chat_rows = 4
+
+let easy_chat_cell kind lefts ~row ~col ~width =
+  {
+    id = Printf.sprintf "easy_chat_%s.r%dc%d" kind row col;
+    left = lefts.(col);
+    indent = 0;
+    glyph_top = easy_chat_list_top + (easy_chat_list_pitch * row);
+    width;
+  }
+
+let easy_chat_word_cell = easy_chat_cell "word" easy_chat_word_lefts
+let easy_chat_group_cell = easy_chat_cell "group" easy_chat_group_lefts
+
 let box t : Wire.box =
   let x = float (t.left - t.indent - slack)
   and y = float (t.glyph_top + template_top - slack) in
@@ -186,6 +226,9 @@ let pc_mon_menu_row i =
 
 let pc_data_species =
   { id = "pc_data_species"; left = 6; indent = 2; glyph_top = 102; width = 72 }
+
+let pc_data_level =
+  { id = "pc_data_level"; left = 34; indent = 0; glyph_top = 117; width = 24 }
 
 let pc_message =
   { id = "pc_message"; left = 88; indent = 0; glyph_top = 138; width = 140 }

@@ -20,3 +20,8 @@
  (deps
   (glob_files fixtures/*))
  (libraries gamepilot.table_test gamepilot.frlg_text))
+
+(test
+ (name test_easy_chat_words)
+ (modules test_easy_chat_words)
+ (libraries gamepilot.table_test gamepilot.frlg_text))
