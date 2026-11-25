@@ -56,7 +56,9 @@
  (deps
   fixtures/cinnabar_center.fade.jsonl
   fixtures/indigo_center.fade.jsonl
-  fixtures/celadon_dept_store_exit.fade.jsonl)
+  fixtures/celadon_dept_store_exit.fade.jsonl
+  fixtures/party_close.fade.jsonl
+  fixtures/summary_close.fade.jsonl)
  (libraries
   gamepilot.table_test
   gamepilot.wire

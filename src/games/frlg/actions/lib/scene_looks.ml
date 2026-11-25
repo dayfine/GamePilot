@@ -18,12 +18,19 @@ let moved (a : Wire.rgb) (b : Wire.rgb) =
 let arrived_at ~arrived (seen : Screen_state.Facts.t) m =
   seen.fade = No_fade && (not seen.dialog) && (not seen.battle) && arrived m
 
-let facts ~menu_open ~arrived ~last m : Screen_state.Facts.t =
+module Fade_in = Frlg_overworld.Warp_fade_in
+
+(* A fade still coming up, when the settle waits fade-ins out: the game takes
+   no input yet, so it is no free control. *)
+let fading_in = function Some w -> Fade_in.fading w | None -> false
+
+let facts ~menu_open ~arrived ~fade_in ~last m : Screen_state.Facts.t =
   let seen = Screen_facts.of_measurements m in
   let free_control =
     seen.fade = No_fade && (not seen.dialog) && (not seen.battle)
     && (not (Start_menu.start_menu_open m))
-    && not (menu_open m)
+    && (not (menu_open m))
+    && not (fading_in fade_in)
   in
   let screen_still =
     match (last, middle m) with
@@ -32,7 +39,10 @@ let facts ~menu_open ~arrived ~last m : Screen_state.Facts.t =
   in
   { seen with free_control; screen_still; arrived = arrived_at ~arrived seen m }
 
-let look ~menu_open ~arrived last () : Screen_state.Settle.look =
+let see_fade_in fade_in m =
+  Option.iter (fun w -> Fade_in.watch_frame w m) fade_in
+
+let look ~menu_open ~arrived ~fade_in last () : Screen_state.Settle.look =
   match Effects.read () with
   | None ->
       {
@@ -41,7 +51,8 @@ let look ~menu_open ~arrived last () : Screen_state.Settle.look =
         since_ms = None;
       }
   | Some m ->
-      let facts = facts ~menu_open ~arrived ~last:!last m in
+      see_fade_in fade_in m;
+      let facts = facts ~menu_open ~arrived ~fade_in ~last:!last m in
       last := middle m;
       { facts; at_ms = m.t_ms; since_ms = None }
 
@@ -55,34 +66,42 @@ let warp_look ~arrived m : Screen_state.Settle.look option =
     Some { facts; at_ms = m.t_ms; since_ms = None }
   else None
 
-(* Runs [commands] watching every frame; the first that showed a warp. The
-   stop never holds: the batch runs to its end. *)
-let watch ~arrived commands =
+(* Runs [commands] watching every frame, each fed to [fade_in]; the first that
+   showed a warp. The stop never holds: the batch runs to its end. *)
+let watch ?fade_in ~arrived commands =
   let seen = ref None in
   let note m =
+    see_fade_in fade_in m;
     if Option.is_none !seen then seen := warp_look ~arrived m;
     false
   in
   ignore (Effects.race commands ~stop:note : Effects.raced);
   !seen
 
-let press ~arrived (_ : Screen_state.Talk_over.press) ~wait_ms =
-  watch ~arrived [ press_b (); Wire.Wait { wait_ms } ]
+(* B, then the wait; only the wait while a fade-in is still coming up. *)
+let press ~arrived ~fade_in (_ : Screen_state.Talk_over.press) ~wait_ms =
+  let wait = Wire.Wait { wait_ms } in
+  let commands = if fading_in fade_in then [ wait ] else [ press_b (); wait ] in
+  watch ?fade_in ~arrived commands
 
 let never _ = false
 
-let io ?(menu_open = never) ?(arrived = never) ~flee_battle ~log () :
-    Screen_state.Settle.io =
+let io ?(menu_open = never) ?(arrived = never) ?(await_fade_in = false)
+    ~flee_battle ~log () : Screen_state.Settle.io =
   let last = ref None in
+  let fade_in = if await_fade_in then Some (Fade_in.watch ()) else None in
   {
-    look = look ~menu_open ~arrived last;
-    press = press ~arrived;
+    look = look ~menu_open ~arrived ~fade_in last;
+    press = press ~arrived ~fade_in;
     flee_battle;
     log;
   }
 
-let settle ?menu_open ?arrived ?(start = []) kind ~label ~battle_ends ~log =
-  let io = io ?menu_open ?arrived ~flee_battle:(fun () -> false) ~log () in
+let settle ?menu_open ?arrived ?await_fade_in ?(start = []) kind ~label
+    ~battle_ends ~log =
+  let io =
+    io ?menu_open ?arrived ?await_fade_in ~flee_battle:(fun () -> false) ~log ()
+  in
   let arrived = Option.value arrived ~default:never in
   match
     Effects.with_probes probes (fun () ->
