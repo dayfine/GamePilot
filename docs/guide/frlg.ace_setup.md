@@ -130,12 +130,13 @@ for sale a withdrawn one serves.
 
 **The pieces.** `Easy_chat_entry` writes words into the mail editor: the cursor goes down a row
 at a time until its row shows the word, and each field is read back. The word lists are
-`Frlg_text.Easy_chat_words`, extracted from pret. `Pc_withdraw` walks the box's slots until PKMN
-DATA names a species and no item, and withdraws it. `Pc_box` walks from the PC to the MOVE POKéMON
+`Frlg_text.Easy_chat_words`, extracted from pret. `Pc_box` walks from the PC to the MOVE POKéMON
 box screen and back, one look at a time. `Ace_mail`'s `check_box_slot` moves the hand to the slot
 and reads the box: its wallpaper, the PKMN DATA panel, the level and the male mark.
 
-**Reader headroom.** The colour readers' thresholds and their headroom on 14 mGBA frames, each
+`Pc_withdraw` walks the box's slots until PKMN DATA names a species and no item, and withdraws it.
+
+**Reader headroom.** The colour readers' thresholds and their headroom on 16 mGBA frames, each
 under nine colour shifts, are in `src/games/frlg/readers/test/test_ace_readers.ml`. The word
 arrow and the hand shadow are the thin ones; both are confirmed by a second read.
 
