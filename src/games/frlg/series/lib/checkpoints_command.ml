@@ -72,13 +72,13 @@
    else to $HOME/.local/share/gamepilot/{states,runs}.
 
    Mirrors, on the fork's frlg/lean (SerialPrograms/Source/Pokemon/AutoStory/):
-   the START/END_CHECKPOINT range (Options/Pokemon_StoryRangeOptions.h) and
-   StoryEngine::run_checkpoints() (Engine/Pokemon_StoryEngine.cpp) over it;
-   verify_checkpoint() (Engine/Pokemon_StoryVerifyRuns.cpp) for the runs of
-   one checkpoint; the program leaving the game where it failed
-   (STORY_LEFT_WHERE_FAILED in PokemonFRLG_AutoStory.cpp), here as failure.ss.
-   Not ported yet: retries inside a run (StoryGame::attempts_per_checkpoint
-   with reload), the reproduction phase, the overlay log. mGBA itself is
+   the start and end checkpoint range (Options/Pokemon_StoryRangeOptions.h)
+   and the engine's run over it (Engine/Pokemon_StoryEngine.cpp); the
+   verification loop (Engine/Pokemon_StoryVerifyRuns.cpp) for the runs of one
+   checkpoint; the program leaving the game where it failed
+   (PokemonFRLG_AutoStory.cpp), here as failure.ss. Not ported yet: retries
+   inside a run (a checkpoint's attempts with a reload between,
+   Engine/Pokemon_StoryEngine.cpp), the reproduction phase, the overlay log. mGBA itself is
    started and closed around the command by run/run_checkpoints_on_mgba.sh. *)
 
 open Engine_run

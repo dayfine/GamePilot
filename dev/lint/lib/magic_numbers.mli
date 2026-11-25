@@ -5,3 +5,4 @@
     exempt. *)
 
 val check : Parsed_source.t -> Finding.t list
+(** One finding per bare literal, at its line. *)

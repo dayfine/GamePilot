@@ -14,4 +14,8 @@ val in_library_dir : Config.t -> string -> bool
 val under_no_exceptions_root : Config.t -> string -> bool
 (** The path is inside a [no_exceptions] tree. *)
 
+val under_interface_docs_root : Config.t -> string -> bool
+(** The path is inside an [interface_docs] tree. *)
+
 val read : string -> string
+(** The whole contents of a file. *)

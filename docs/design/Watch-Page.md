@@ -22,7 +22,10 @@ failed, skipped), the story log, the daemon's health, and a Stop button. It is s
 - **The daemon serves the page** (`daemon/src/watch_server.*`, `server_watch.cpp`): a small HTTP
   server on its own port (`--watch-port`; the runner asks for a free one), polled by the same loop as
   the program's socket, no thread of its own. It already holds the frame, the probes and the health; the page is
-  one HTML/JS file (`daemon/watch/watch.html`) compiled in and served as is. No new dependency.
+  one HTML file (`daemon/watch/watch.html`) with its scripts (`watch_*.js`, by job) and style
+  (`watch.css`) beside it, plain files with no build step, compiled in and served as they are. They are classic scripts
+  loaded in order into one global scope, so a file uses at load time only what the files before it
+  define. No new dependency.
 - **The program publishes what only it knows**: the plan's states and its story lines, as two
   notifications (`watch.plan`, `watch.log`, contract v1.6) sent through the `show_plan`/`show_log`
   effects. Notifications need no answer, so they cost the program nothing but a write. The daemon
@@ -247,7 +250,7 @@ duration; a "frames" tag on a recorded run.
   game, `game_name`, program, `program_name`, group, from, to, checkpoint, backend, mode,
   `started_ms`) and again at the end with `ended_ms`, result, at and reason
   (`src/bin/run_record.ml`). The program is the registry's whose checkpoints folder the plan
-  folder is (`src/program_registry`, `docs/programs/README.md`): `game` and `program` are its ids
+  folder is (`src/program_registry`, `docs/guide/README.md`): `game` and `program` are its ids
   (`frlg`, `frlg.mail_glitch`), the others its names and group path (`FRLG / Glitches`). A folder
   from before `run.json` falls back to its name (`<date>-<checkpoint>-<mode>-<n>`), its
   `RESULTS.tsv` row (result, reason, end time), its daemon's first output line (backend) and its

@@ -74,10 +74,32 @@ embed_page(watch.html watch_page watch_server.h)
 embed_page(hub.html hub_page watch_hub.h)
 embed_page(run.html run_page watch_hub.h)
 
+# The pages' scripts and styles, compiled in the same way into one lookup
+# (watch_assets.h), each served beside the page that loads it.
+set(WATCH_ASSETS
+  hub.css hub_live.js hub_history.js hub.js
+  run.css run_record.js run_plan.js run_log.js run_frames.js run_probes.js
+  run.js
+  watch.css watch_state.js watch_frame.js watch_plan.js watch_run.js
+  watch_log.js watch_health.js watch_events.js watch_sidebar.js watch.js)
+list(TRANSFORM WATCH_ASSETS PREPEND "${CMAKE_CURRENT_SOURCE_DIR}/watch/"
+     OUTPUT_VARIABLE WATCH_ASSET_FILES)
+string(REPLACE ";" "," WATCH_ASSET_NAMES "${WATCH_ASSETS}")
+add_custom_command(
+  OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/watch_assets.cpp"
+  COMMAND ${CMAKE_COMMAND} -DDIR=${CMAKE_CURRENT_SOURCE_DIR}/watch
+          -DNAMES=${WATCH_ASSET_NAMES}
+          -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/watch_assets.cpp
+          -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/embed_watch_assets.cmake"
+  DEPENDS ${WATCH_ASSET_FILES}
+          "${CMAKE_CURRENT_SOURCE_DIR}/cmake/embed_watch_assets.cmake"
+  VERBATIM)
+
 add_library(gamepilot_core STATIC
   "${CMAKE_CURRENT_BINARY_DIR}/watch_page.cpp"
   "${CMAKE_CURRENT_BINARY_DIR}/hub_page.cpp"
   "${CMAKE_CURRENT_BINARY_DIR}/run_page.cpp"
+  "${CMAKE_CURRENT_BINARY_DIR}/watch_assets.cpp"
   src/base64.cpp
   src/blob_find.cpp
   src/board_session.cpp

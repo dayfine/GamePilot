@@ -7,12 +7,17 @@
 
 #include "watch_registry.h"
 
+#include <functional>
 #include <string>
+#include <string_view>
+#include <vector>
 
 #include "Common/Cpp/Filesystem/FileIO.h"
 #include "Common/Cpp/Filesystem/Filesystem.h"
 #include "check.h"
 #include "net.h"
+#include "page_assets.h"
+#include "watch_assets.h"
 #include "watch_hub.h"
 #include "watch_series.h"
 #include "watch_server.h"
@@ -166,8 +171,32 @@ std::string hub_request(WatchHub& hub, WatchServer& run,
   return through_hub(hub, run, client, want);
 }
 
+// Each script and style `page` loads, served under `base` with its type
+// (`get` asks the hub for a path, until the text it is given).
+void check_assets(const std::function<std::string(const std::string&,
+                                                  const std::string&)>& get,
+                  const std::string& base, std::string_view page) {
+  const std::vector<std::string> assets = test::page_assets(page);
+  CHECK(assets.size() > 2);
+  for (const std::string& name : assets) {
+    const auto asset = watch_asset(name);
+    CHECK(asset && asset->type == test::asset_type(name));
+    if (!asset) {
+      continue;
+    }
+    const std::string reply =
+        get(base + name,
+            std::string(asset->bytes.substr(asset->bytes.size() - 32)));
+    CHECK(reply.starts_with("HTTP/1.1 200 OK"));
+    CHECK(reply.find("Content-Type: " + std::string(asset->type) + "\r\n") !=
+          std::string::npos);
+    CHECK(reply.ends_with(asset->bytes));
+  }
+}
+
 // A run's page under /runs/NAME/: the page with its token for this machine,
-// Stop, the event stream as it comes, and /live's redirects.
+// its scripts and styles (and the hub's at /), Stop, the event stream as it
+// comes, and /live's redirects.
 void check_hub_pass_through() {
   fs::remove_all(kDir);
   int stops = 0;
@@ -187,6 +216,11 @@ void check_hub_pass_through() {
       hub_request(hub, run, "GET " + base + " HTTP/1.1\r\n\r\n", "</html>");
   CHECK(page.starts_with("HTTP/1.1 200 OK"));
   CHECK(page.find("content=\"t0\"") != std::string::npos);
+  const auto get = [&](const std::string& path, const std::string& want) {
+    return hub_request(hub, run, "GET " + path + " HTTP/1.1\r\n\r\n", want);
+  };
+  check_assets(get, base, watch_page());
+  check_assets(get, "/", hub_page());
   CHECK(hub_request(hub, run,
                     "POST " + base + "stop?token=t0 HTTP/1.1\r\n\r\n", "}")
             .ends_with("{\"stopped\":true}"));
@@ -215,9 +249,9 @@ void check_hub_pass_through() {
             .find("is not live") != std::string::npos);
 }
 
-// A finished run's folder under /runs/NAME/: its page from the hub's build,
-// its row, its files (never the wire log, never outside the folder), and the
-// runs list.
+// A finished run's folder under /runs/NAME/: its page from the hub's build
+// with its scripts and styles, its row, its files (never the wire log, never
+// outside the folder), and the runs list.
 void check_hub_past_run() {
   const std::string runs = kDir + "-runs";
   fs::remove_all(runs);
@@ -239,6 +273,7 @@ void check_hub_past_run() {
     return hub_request(hub, idle, "GET " + path + " HTTP/1.1\r\n\r\n", want);
   };
   CHECK(get(base, "</html>").find("GamePilot Run") != std::string::npos);
+  check_assets(get, base, run_page());
   CHECK(get(base + "record.json", "}").find("\"checkpoint\":\"mg-06\"") !=
         std::string::npos);
   CHECK(get(base + "files/story.log", "events\n").ends_with("1 events\n"));
@@ -377,8 +412,9 @@ void check_hub_series_lists() {
 }
 
 // A series' page under /series/ID/: the page with the token of the run
-// going, its record, its data and Stop passed on to that run's daemon, and
-// an answer that says "between runs" while none goes.
+// going and its scripts and styles (between runs too), its record, its data
+// and Stop passed on to that run's daemon, and an answer that says "between
+// runs" while none goes.
 void check_hub_series_page() {
   fs::remove_all(kDir);
   int stops = 0;
@@ -402,6 +438,7 @@ void check_hub_series_page() {
   const std::string page = get("/series/s1/", "</html>");
   CHECK(page.starts_with("HTTP/1.1 200 OK"));
   CHECK(page.find("content=\"t0\"") != std::string::npos);
+  check_assets(get, "/series/s1/", watch_page());
   CHECK(get("/series/s1", "\r\n\r\n").find("Location: /series/s1/\r\n") !=
         std::string::npos);
   CHECK(get("/series/s1/series.json", "]}").find("\"checkpoints\":[") !=
@@ -424,6 +461,7 @@ void check_hub_series_page() {
   // does not.
   write_series(kDir, "s1", series_json("s1", own_pid(), "running", ""));
   CHECK(get("/series/s1/", "</html>").starts_with("HTTP/1.1 200 OK"));
+  check_assets(get, "/series/s1/", watch_page());
   CHECK(get("/series/s1/events", "\n\n").starts_with("HTTP/1.1 503"));
   CHECK(get("/series/s9/", "</html>").starts_with("HTTP/1.1 404"));
   CHECK(get("/series/../x/", "\n\n").starts_with("HTTP/1.1 404"));

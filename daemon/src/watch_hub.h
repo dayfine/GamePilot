@@ -9,6 +9,9 @@
 //                      run's /summary.json), elapsed time and state; then
 //                      every run in the runs folder, with filters kept in the
 //                      URL's query (Watch-Page.md, Runs list)
+//   GET /NAME, /runs/RUN/NAME, /series/ID/NAME
+//                      the pages' scripts and styles (watch_assets.h), from
+//                      the hub's build like the pages
 //   GET /runs.json     the live registry entries
 //   GET /recent.json   the latest finished runs (RESULTS.tsv), newest first
 //   GET /history.json  every run folder (run_history.h), newest first

@@ -10,6 +10,7 @@
 #include "Common/Cpp/Filesystem/Filesystem.h"
 #include "rpc.h"
 #include "run_history.h"
+#include "watch_assets.h"
 #include "watch_server.h"
 
 namespace gamepilot {
@@ -39,6 +40,8 @@ constexpr std::size_t kTimelinesKept = 8;
 constexpr std::string_view kRunsPrefix = "/runs/";
 constexpr std::string_view kSeriesPrefix = "/series/";
 constexpr std::string_view kLive = "/live";
+// The pages' scripts and styles change with the build: never kept stale.
+constexpr std::string_view kNoCache = "Cache-Control: no-cache\r\n";
 constexpr std::string_view kAnyOrigin = "Access-Control-Allow-Origin: *\r\n";
 
 std::string folder_name(const std::string& path) {
@@ -319,6 +322,8 @@ void WatchHub::respond(Connection& connection, const HttpRequest& request) {
     response = http_response(405, "text/plain", "method not allowed\n");
   } else if (path == "/") {
     response = http_response(200, "text/html; charset=utf-8", hub_page());
+  } else if (const auto asset = watch_asset(path.substr(1))) {
+    response = http_response(200, asset->type, asset->bytes, kNoCache);
   } else if (path == "/runs.json") {
     response = http_response(200, "application/json",
                              hub_runs_json(live_entries(options_.registry),
@@ -368,7 +373,8 @@ void WatchHub::respond(Connection& connection, const HttpRequest& request) {
   connection.client.close();
 }
 
-// The series' page, its record, and the rest passed on to its run going.
+// The series' page with its scripts and styles, its record, and the rest
+// passed on to its run going.
 void WatchHub::respond_series(Connection& connection,
                               const HttpRequest& request,
                               std::string_view rest) {
@@ -392,9 +398,13 @@ void WatchHub::respond_series(Connection& connection,
           return !record->run.empty() && hub_run_name(e) == record->run;
         });
     const RegistryEntry* live = entry != entries.end() ? &*entry : nullptr;
+    const auto asset = watch_asset(sub.substr(1));
     if (get && sub == "/series.json") {
       response =
           http_response(200, "application/json", record->json, kAnyOrigin);
+    } else if (get && asset) {
+      // The page's scripts and styles, from the hub's build like the page.
+      response = http_response(200, asset->type, asset->bytes, kNoCache);
     } else if (live != nullptr &&
                (sub == "/" || sub == "/summary.json" || sub == "/events" ||
                 sub == "/stream" || sub == "/frame" || sub == "/stop")) {
@@ -423,9 +433,9 @@ std::string WatchHub::results_text() const {
 }
 
 // What the hub answers itself under /runs/NAME/: the page (the live one from
-// its own build while the run is live, else the finished run's), the run's
-// row, its probe timeline and its folder's files. Anything else goes on to a
-// live run.
+// its own build while the run is live, else the finished run's) and its
+// scripts and styles, the run's row, its probe timeline and its folder's
+// files. Anything else goes on to a live run.
 bool WatchHub::respond_run(Connection& connection, const HttpRequest& request,
                            const std::string& name, std::string_view rest,
                            const RegistryEntry* live) {
@@ -438,7 +448,11 @@ bool WatchHub::respond_run(Connection& connection, const HttpRequest& request,
                               : options_.runs + "/" + name;
   const bool exists = !folder.empty() && pa::Filesystem::is_directory(folder);
   std::string response;
-  if (get && rest == "/" && live != nullptr && connection.local) {
+  const auto asset = watch_asset(rest.substr(1));
+  if (get && asset) {
+    // The page's scripts and styles, from the hub's build like the page.
+    response = http_response(200, asset->type, asset->bytes, kNoCache);
+  } else if (get && rest == "/" && live != nullptr && connection.local) {
     // The run's own page is fetched for its token only: what is sent is this
     // build's page (pump).
     connection.page = true;

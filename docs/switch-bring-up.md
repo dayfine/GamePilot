@@ -38,7 +38,7 @@ reader fixtures under `src/games/frlg/readers/test/images/switch/console-b-20261
 picture fills that box exactly, black bars left and right.
 
 A full-screen Switch game (Legends Z-A) has no bars: its program's registry descriptor says
-`viewport = Native` (`docs/programs/README.md`), which `run/run_checkpoints_on_switch.sh PROGRAM`
+`viewport = Native` (`docs/guide/README.md`, "Adding a program"), which `run/run_checkpoints_on_switch.sh PROGRAM`
 passes to every daemon as `--viewport native` (by hand: `gamepilot bring-up --program ID`, or the
 daemon's own `--viewport native`), and the check then only asks that the frame is not mostly dark.
 

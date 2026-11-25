@@ -8,6 +8,7 @@
     a no-op. *)
 
 type t
+(** A series' record and where it is written; nothing without a watch page. *)
 
 val start :
   Daemon_process.watch option ->
@@ -29,4 +30,7 @@ val run_started : t -> Run_record.run -> n:int -> unit
 *)
 
 val run_ended : t -> Run_record.run -> Run_record.ending -> unit
+(** That run ended: {!Series_record.end_run}. *)
+
 val finished : t -> passed:bool -> unit
+(** The series ended: {!Series_record.finish}. *)

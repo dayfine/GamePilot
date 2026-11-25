@@ -1,10 +1,10 @@
 (** Readers: the windows the party menu opens over itself while an item is used
     on a member: a Rare Candy's level-up stats window, and the YES/NO box of
     "Should a move be deleted and replaced with ...?" and "Stop trying to teach
-    ...?". Ported from the fork's Dialogs/PokemonFRLG_PartyDialogs
-    (PartyLevelUpDetector, PartyMoveLearnDetector; English only, as GamePilot
-    reads English games); the boxes are theirs, relative to the game picture.
-    Each window is a grey border ((120, 115, 140)) around a white inside, tested
+    ...?". Ported from the fork's Inference/Dialogs/PokemonFRLG_PartyDialogs.cpp
+    (its level-up and move-learn detectors; English only, as GamePilot reads
+    English games); the boxes are theirs, relative to the game picture. Each
+    window is a grey border ((120, 115, 140)) around a white inside, tested
     along its top and right edges.
 
     The stats window is pokefirered's [sLevelUpStatsWindowTemplate]
@@ -42,5 +42,6 @@ val move_learn_box : Effects.measurements -> bool
 (** The party menu's YES/NO box: a move to learn, or to stop teaching. Where it
     differs: the overworld's YES/NO (the save question) is the same window in
     the same place and passes the fork's test, so the party's teal page
-    background must show left of the boxes too (the fork's
-    PartySelectionDetector's color, its box raised above the message box). *)
+    background must show left of the boxes too (the colour of the fork's party
+    selection detector, in the same PokemonFRLG_PartyDialogs.cpp, its box raised
+    above the message box). *)

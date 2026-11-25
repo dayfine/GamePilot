@@ -12,6 +12,7 @@
     series ended ({!finish}). *)
 
 type t
+(** One series' record. *)
 
 val create :
   id:string ->
@@ -38,6 +39,7 @@ val finish : t -> passed:bool -> now_ms:int -> t
     failure the checkpoints to come are skipped. *)
 
 val id : t -> string
+(** The id {!create} was given. *)
 
 val to_json : t -> Yojson.Safe.t
 (** The record the hub serves ([/series/ID/series.json]): the series' fields

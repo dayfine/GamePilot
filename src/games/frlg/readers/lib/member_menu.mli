@@ -1,10 +1,13 @@
 (** Reader: the menu a party member opens over the party (SUMMARY, its field
-    moves, SWITCH, ITEM or MAIL, CANCEL) and its selection arrow. Not in the
-    fork. The window's bottom stays put and it grows upward with each field move
-    the member knows, so the probes find its rows from the bottom. Measured on
-    mGBA frames; the boxes are game pixels, so a Switch capture's picture reads
-    the same if its scale holds. The arrow is found as in {!Cursor_column},
-    among the rows the window's white inside reaches. *)
+    moves, SWITCH, ITEM or MAIL, CANCEL) and its selection arrow. Not a port:
+    written here, beside the fork's
+    Inference/Menus/PokemonFRLG_PartyMemberMenuReader.cpp, which reads the same
+    window from its bottom row up. The window's bottom stays put and it grows
+    upward with each field move the member knows, so the probes find its rows
+    from the bottom. Measured on mGBA frames; the boxes are game pixels, so a
+    Switch capture's picture reads the same if its scale holds. The arrow is
+    found as in {!Cursor_column}, among the rows the window's white inside
+    reaches. *)
 
 val probes : Wire.probe_spec list
 

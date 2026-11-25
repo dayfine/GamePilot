@@ -137,8 +137,8 @@ works" section. There is no separate `docs/programs/<program>.md` page.
 - Bad: `docs/programs/frlg-supplies.md` beside `docs/guide/frlg.supplies.md`.
 - Good: `docs/guide/frlg.supplies.md` with a "How it works" section; the descriptor's `doc` points
   at it.
-- Find: recipe (every hit is a finding; `docs/programs/README.md`, the registry's page, stays):
-  `ls docs/programs/*.md | grep -v README.md` and
+- Find: recipe (every hit is a finding; the folder is gone, and adding a program is in
+  `docs/guide/README.md`): `ls docs/programs/` and
   `grep -rn 'doc = "docs/programs/' src/program_registry/lib`.
 
 ## From the user's earlier structural calls
@@ -228,19 +228,19 @@ and text read from the game screen names its language risk. (qc-structural row S
   is a standing goal.
 - Bad: `type verdict = As_asked | Wrong of string | Unread of string` with no doc line.
 - Good: `(** What the box screen says about the checked slot. *)` above it.
-- Find: recipe (a candidate lint: qc-structural marked it LINTER_CANDIDATE on #109):
+- Find: lint `interface_docs` (`dev/lint/ocaml_lint.conf`, `interface_docs src`): every `type`,
+  `val`, variant constructor and `exception` in a `lib/` `.mli` needs a doc comment the compiler
+  attaches to it (right before or after, no blank line between); a constructor may instead be
+  named in its type's doc (a re-exported variant's are documented where defined), and a record documented only through its fields is a finding. Files
+  with gaps on the day it landed are waived file by file in `dev/lint/ocaml_lint_exceptions.conf`
+  (a list that only shrinks), so in a waived file, new items are judgment: run the check with the
+  file's line removed. Whether a doc says what a thing means, and the language risk of screen
+  text, are judgment:
 
   ```sh
-  python3 -c 'import glob,re
-  for f in glob.glob("src/**/lib/*.mli", recursive=True):
-      if "_build" in f: continue
-      ls = open(f, errors="replace").read().split("\n")
-      for i, l in enumerate(ls):
-          if re.match(r"(type|val) ", l):
-              near = "\n".join(ls[max(0, i - 1):i + 6])
-              if "(**" not in near: print(f"{f}:{i + 1}: {l}")'
-  grep -rlE --include='*.ml' '"[A-Z][a-z]+ [a-z]+.*[?!.]"' src/games/*/readers src/games/*/text | \
-    xargs grep -L -iE 'language|english'
+  find src/games -path '*/lib/*.ml' \( -path '*/readers/*' -o -path '*/text/*' \
+    -o -path '*/actions/*' -o -path '*/battle/*' \) | \
+    xargs grep -lE '"[A-Z][a-z]+ [a-z]+.*[?!.]"' | xargs grep -L -iE 'language|english'
   ```
 
 ### R12 Tests check one fact per expectation and say what their fakes are
