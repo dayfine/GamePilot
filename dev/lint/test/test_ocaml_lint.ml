@@ -78,6 +78,34 @@ let () =
               let f ?(retries = 10) x =\n\
              \  match x with 42 -> retries | _ -> seconds_per_day\n")))
 
+(* --- no exceptions --- *)
+
+let () =
+  case "no_exceptions: declaring, raising and catching are caught"
+    ~expect:(List.init 7 (fun _ -> "no_exceptions"))
+    (checks
+       (No_exceptions.check
+          (parse
+             "exception Stop\n\
+              let a () = raise Stop\n\
+              let b () = failwith \"no\"\n\
+              let c f = try f () with Stop -> 0\n\
+              let d f = match f () with x -> x | exception Stop -> 0\n\
+              let e () = Stdlib.invalid_arg \"x\"\n\
+              let g = List.map raise_notrace\n")));
+  case "no_exceptions: a local exception is caught" ~expect:[ "no_exceptions" ]
+    (checks (No_exceptions.check (parse "let f () = let exception E in ()\n")));
+  case
+    "no_exceptions: comments, strings, Result and names containing raise pass"
+    ~expect:[]
+    (checks
+       (No_exceptions.check
+          (parse
+             "(* raise Stop; try ... with; failwith *)\n\
+              let raise_volume v = v + 1\n\
+              let msg = \"failwith: exception, try with\"\n\
+              let f x = match x with Ok v -> v | Error _ -> 0\n")))
+
 (* --- complexity --- *)
 
 let branches =
@@ -223,5 +251,11 @@ let () =
     (match Config.parse "root .\nlayer base src/base/**\nallow base bsae\n" with
     | Ok _ -> [ "ok" ]
     | Error _ -> [ "error" ])
+
+let () =
+  case "config: no_exceptions roots are read" ~expect:[ "src"; "tools" ]
+    (match Config.parse "root .\nno_exceptions src\nno_exceptions tools\n" with
+    | Ok c -> c.no_exceptions_roots
+    | Error e -> [ e ])
 
 let () = if !failures > 0 then exit 1
