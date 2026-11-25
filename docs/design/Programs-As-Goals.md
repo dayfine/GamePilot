@@ -155,7 +155,7 @@ are never copied from the maps.
 
 **Fragments and checkpoint templates.** Two units of reuse, nested:
 
-- A **fragment** is a named run of events with parameters (`go_to(place)`, `heal_at(town)`,
+- A **fragment** is a named run of events with parameters (`heal_at(town)`,
   `fly_and_walk(town, place)`, `buy(items, mart)`), expanded at load time like the place expansion
   above. It has no save of its own: if it fails halfway, the checkpoint around it runs again.
 - A **checkpoint template** is a checkpoint with parameters (`stock(items)`, `get_one(item, spots)`,
