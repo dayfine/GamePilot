@@ -6,6 +6,7 @@
 
 #include <cmath>
 #include <opencv2/imgcodecs.hpp>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -167,6 +168,23 @@ void check_viewport() {
   CHECK(!parse_box("0,0,1,1,"));
 }
 
+// A --viewport value, as the daemon and probe_images take it: a name is the
+// whole viewport, x,y,w,h moves the base's picture and keeps its game size.
+void check_parse_viewport() {
+  const Viewport base{Box{0, 0, 1, 1}, 240, 160};
+  const std::optional<Viewport> native = parse_viewport("native", base);
+  CHECK(native && native->game_width == 1920 && native->game_height == 1080 &&
+        native->picture.w == 1);
+  const std::optional<Viewport> gba = parse_viewport("nso-gba", base);
+  CHECK(gba && gba->picture.x == nso_gba_viewport().picture.x);
+  const std::optional<Viewport> moved = parse_viewport("0.125,0,0.75,1", base);
+  CHECK(moved && moved->picture.x == 0.125 && moved->picture.w == 0.75 &&
+        moved->game_width == 240 && moved->game_height == 160);
+  CHECK(!parse_viewport("gba", base));
+  CHECK(!parse_viewport("0.5,0,0.6,1", base));
+  CHECK(!parse_viewport("", base));
+}
+
 // A full-screen Switch game: boxes are fractions of the whole 1920x1080
 // frame (the fork's ImageFloatBox) and templates are 1080p crops, matched at
 // their own size.
@@ -247,15 +265,22 @@ void check_base64() {
 void check_schedule() {
   InputSchedule schedule(59.7275);
   // The golden batch: Start 100 ms + 100 ms cooldown, then wait 250 ms.
-  InputCommand start{8, 100, 100, 0, false};
-  InputCommand wait{0, 0, 0, 250, true};
+  InputCommand start;
+  start.buttons = 8;
+  start.hold_ms = 100;
+  start.cooldown_ms = 100;
+  InputCommand wait;
+  wait.wait_ms = 250;
+  wait.is_wait = true;
   CHECK(schedule.submit("b1", {start, wait}, 1203) == 1203);
   CHECK(schedule.mask_at(1202) == 0);
   CHECK(schedule.mask_at(1203) == 8);
   CHECK(schedule.mask_at(1208) == 8);
   CHECK(schedule.mask_at(1209) == 0);
   // A second batch queues after the first one ends (frame 1230).
-  CHECK(schedule.submit("b2", {InputCommand{2, 0, 0, 0, false}}, 1205) == 1230);
+  InputCommand b;
+  b.buttons = 2;  // GBA B, 0 ms
+  CHECK(schedule.submit("b2", {b}, 1205) == 1230);
   CHECK(schedule.mask_at(1230) == 2);  // a 0 ms press still lasts one frame
   CHECK(schedule.mask_at(1231) == 0);
   CHECK(schedule.take_finished(1229).empty());
@@ -274,6 +299,7 @@ int main() {
   check_color_count();
   check_viewport();
   check_native_viewport();
+  check_parse_viewport();
   check_base64();
   check_schedule();
   return TEST_RESULT();

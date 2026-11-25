@@ -54,7 +54,7 @@ class ViewBackend : public Backend {
   std::int64_t step() override;
   std::int64_t load_state(const std::string& path) override;
   std::int64_t save_state(const std::string& path) override;
-  void queue_keys(KeyMask mask, double ms) override;
+  void queue_keys(KeyMask mask, const Sticks& sticks, double ms) override;
   void drop_queued_keys() override;
   // Nothing to release.
   void release() override {}
