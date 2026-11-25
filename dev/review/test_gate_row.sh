@@ -64,6 +64,19 @@ check "a docs-only PR skips" skip "$(pr "$doc" "$green" "" | column 3)"
 check "red CI comes first" "fix CI" "$(pr "$code" "$red" "$(review "$tip" APPROVED)" | column 4)"
 check "green CI and no verdict asks for one" "run qc-structural" \
     "$(pr "$code" "$green" "$(review "$old" APPROVED)" | column 4)"
-check "ok goes to the user" "user review" \
+check "ok on a plain change merges" merge \
     "$(pr "$code" "$green" "$(review "$tip" APPROVED)" | column 4)"
+check "docs-only goes to the user" "user review (docs)" "$(pr "$doc" "$green" "" | column 4)"
+check "a new lib module goes to the user" "user review (module added: src/x/lib/a.ml)" \
+    "$(pr '{"path": "src/x/lib/a.ml", "changeType": "ADDED"}' "$green" "$(review "$tip" APPROVED)" | column 4)"
+check "a renamed dune file goes to the user" "user review (module renamed: src/x/lib/dune)" \
+    "$(pr '{"path": "src/x/lib/dune", "changeType": "RENAMED"}' "$green" "$(review "$tip" APPROVED)" | column 4)"
+check "a shared .mli change goes to the user" "user review (shared interface: src/pokemon/a/lib/b.mli)" \
+    "$(pr '{"path": "src/pokemon/a/lib/b.mli", "changeType": "MODIFIED"}' "$green" "$(review "$tip" APPROVED)" | column 4)"
+check "a game's own .mli change merges" merge \
+    "$(pr '{"path": "src/games/frlg/a/lib/b.mli", "changeType": "MODIFIED"}' "$green" "$(review "$tip" APPROVED)" | column 4)"
+check "a decoder change goes to the user" "user review (format: src/x/lib/plan_decode.ml)" \
+    "$(pr '{"path": "src/x/lib/plan_decode.ml", "changeType": "MODIFIED"}' "$green" "$(review "$tip" APPROVED)" | column 4)"
+check "two reworks go to the user" "user review (reworked twice)" \
+    "$(pr "$code" "$green" "$(review "$old" NEEDS_REWORK), $(review "$old" NEEDS_REWORK), $(review "$tip" APPROVED)" | column 4)"
 exit $failures

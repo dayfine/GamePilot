@@ -5,6 +5,11 @@ prints on stdin and prints its gate row: NUMBER CI STRUCT NEXT, tab-separated, t
 CI is pass / fail / pending / none, over the checks at the PR's tip. STRUCT is the qc-structural
 verdict at the tip: ok (APPROVED), rework (NEEDS_REWORK), stale(<sha>) when the latest verdict was
 given at an older commit, none, or skip for a docs-only PR (every file is a .md or under docs/).
+NEXT is the one next step; once CI is green and the verdict is ok, it is "merge" unless the PR
+changes structure, then "user review (<reason>)" (AGENTS.md, "PR gate loop"). Structure, read off
+the file list: a library module or dune file added, deleted or renamed under src/; a changed .mli
+of a library shared across games (src/base, src/core, src/pokemon); a changed format (protocol/,
+a *_decode.ml); or two NEEDS_REWORK verdicts. Docs-only PRs always go to the user.
 
 A qc-structural verdict is a COMMENT review (GitHub refuses self-approval, so the review state
 says nothing) whose body has a "## Structural QC" heading, a "Reviewed SHA: <sha>" line and a
@@ -43,6 +48,36 @@ def verdict(review):
     return sha, found[-1].upper()
 
 
+SHARED = ("src/base/", "src/core/", "src/pokemon/")
+MOVED = {"ADDED", "DELETED", "RENAMED"}
+
+
+def structural_reason(files):
+    """Why the file list changes structure, or None."""
+    for f in files:
+        path, change = f["path"], f.get("changeType", "MODIFIED")
+        name = path.rsplit("/", 1)[-1]
+        in_lib = path.startswith("src/") and "/lib/" in path
+        if change in MOVED and (name == "dune" and path.startswith("src/")
+                                or in_lib and name.endswith((".ml", ".mli"))):
+            return "module " + change.lower() + ": " + path
+        if path.startswith(SHARED) and in_lib and name.endswith(".mli"):
+            return "shared interface: " + path
+        if path.startswith("protocol/") or name.endswith("_decode.ml"):
+            return "format: " + path
+    return None
+
+
+def owner_reason(pr):
+    """Why the PR needs the user's review, or None."""
+    if docs_only(pr.get("files") or []):
+        return "docs"
+    reworks = [v for v in map(verdict, pr.get("reviews") or []) if v and v[1] == "NEEDS_REWORK"]
+    if len(reworks) >= 2:
+        return "reworked twice"
+    return structural_reason(pr.get("files") or [])
+
+
 def docs_only(files):
     paths = [f["path"] for f in files]
     return bool(paths) and all(p.endswith(".md") or p.startswith("docs/") for p in paths)
@@ -79,7 +114,7 @@ def ci_state(pr):
     return "none"
 
 
-def next_action(ci, struct):
+def next_action(ci, struct, owner=None):
     if ci == "fail":
         return "fix CI"
     if ci in ("pending", "none"):
@@ -87,14 +122,14 @@ def next_action(ci, struct):
     if struct == "rework":
         return "rework"
     if struct in ("ok", "skip"):
-        return "user review"
+        return "user review (" + owner + ")" if owner else "merge"
     return "run qc-structural"
 
 
 def main():
     pr = json.load(sys.stdin)
     ci, struct = ci_state(pr), struct_state(pr)
-    print("\t".join([str(pr["number"]), ci, struct, next_action(ci, struct), pr.get("title", "")]))
+    print("\t".join([str(pr["number"]), ci, struct, next_action(ci, struct, owner_reason(pr)), pr.get("title", "")]))
 
 
 if __name__ == "__main__":

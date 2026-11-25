@@ -127,6 +127,13 @@ Every row is one of `PASS`, `FLAG`, `FAIL`, `NA`. `NA` only when the row genuine
 
 APPROVED | NEEDS_REWORK
 
+Structural change: yes (<reason>) | no
+
+(Yes when the PR adds, deletes or renames a library module or dune file under src/, changes the
+.mli of a library in src/base, src/core or src/pokemon, or changes a format: the plan, goal or
+places format, protocol/, a *_decode.ml. `dev/review/pr_gate_status.sh` decides the same from the
+file list; say so in a FLAG when you disagree with it.)
+
 (APPROVED only when every applicable row is PASS or FLAG. Any FAIL → NEEDS_REWORK.)
 
 ## FLAGs for the user
