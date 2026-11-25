@@ -45,6 +45,7 @@
     hold. *)
 
 val run : Steps.game_steps -> Steps.outcome
+(** The story battle, fought to its end as above. *)
 
 val attempt_one_attack : Steps.game_steps -> int ref -> bool
 (** One attack of the fight (PokemonLZA_TrainerBattle.cpp): ZL held up to 1 s

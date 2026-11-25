@@ -13,8 +13,9 @@ val bearing : point -> point -> float
 (** [bearing from to]: the minimap bearing, degrees clockwise from north (0 up,
     90 right), 0 to under 360. *)
 
+(** The leg's next move after a pin read. *)
 type move =
-  | Arrived
+  | Arrived  (** within the stop radius of the target *)
   | Walk of { heading : float; hold_ms : int; correction : int }
       (** face [heading] and walk [hold_ms]; [correction] 0 for the first walk
       *)

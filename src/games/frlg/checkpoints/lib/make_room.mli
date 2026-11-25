@@ -35,7 +35,6 @@ val nearest_center :
 
 type room = {
   center : Frlg_actions.Fly_towns.town;
-  fly_user : string;  (** A member that knows Fly. *)
   deposits : Room_policy.plan;
   party : Room_policy.member list;  (** As read, slot 1 first. *)
   needed_moves : string list;  (** Field moves the chain needs. *)

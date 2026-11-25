@@ -8,7 +8,7 @@ val all_ok : ('a, string) result list -> ('a list, string) result
 
 val check :
   options:Plza_autostory.New_game_options.t ->
-  Plza_checkpoints.Plan.t list ->
+  Plza_engine.Plan.t list ->
   (unit, string) result
 (** [Error] on the first plan whose keys are bad, on new-game choices 01.00a
     would refuse, or on [options] given to a series with no 01.00a; the choices

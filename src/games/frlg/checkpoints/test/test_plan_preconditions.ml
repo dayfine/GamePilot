@@ -1,7 +1,8 @@
 (* A plan's declared preconditions (Plan_preconditions) and how the pre-flight
-   judges them on the Trainer Card as read (Preflight.compare): the badges and
-   the Hall of Fame a post-Elite Four program (the Sevii Islands chain, sb-01)
-   needs. The plan is tt-01's with its metadata replaced; the card is a
+   judges them on the Trainer Card as read (Preflight.compare): badges by count
+   or by name, the Hall of Fame and the caught count. (The Sevii Islands chain
+   once declared 8 badges and the Hall of Fame; it now names the Volcano Badge,
+   R24.) The plan is tt-01's with its metadata replaced; the card is a
    Trainer_card_front.t as the reader would give it, with no frame behind it. *)
 
 open Frlg_checkpoints
@@ -37,7 +38,7 @@ let judge ?caught json card =
       let read : Preflight.read =
         {
           observed =
-            { Pokemon_checkpoints.Postcondition_check.nothing_read with caught };
+            { Pokemon_engine.Postcondition_check.nothing_read with caught };
           place = None;
           members = None;
           card;
@@ -125,7 +126,7 @@ let decode_cases =
       "error: metadata.preconditions.caught: a count of species caught";
     case "the caught count is read for its need"
       (fun () ->
-        match (Preflight.to_read [ Preflight.Caught_at_least 60 ]).caught with
+        match (Preflight.to_read [ Need.Caught_at_least 60 ]).caught with
         | Some _ -> "read"
         | None -> "not read")
       "read";
@@ -135,10 +136,39 @@ let decode_cases =
     case "reads the card only for these needs"
       (fun () ->
         Printf.sprintf "%b %b"
-          (Preflight.reads_card [ Preflight.Hall_of_fame ])
-          (Preflight.reads_card [ Preflight.Place "CeladonCity" ]))
+          (Preflight.reads_card [ Need.Hall_of_fame ])
+          (Preflight.reads_card [ Need.Place "CeladonCity" ]))
       "true false";
   ]
+
+(* Whether each need asks anything of the save: one case per need, named by its
+   text, so a regression names the need that changed (review rule R2). *)
+let asks_cases =
+  let asks expected need =
+    case
+      ("asks: " ^ Need.describe need)
+      (fun () -> if Need.asks_something need then "something" else "nothing")
+      expected
+  in
+  List.map (asks "nothing")
+    [
+      Need.Money_at_least { amount = 0; for_ = "buy" };
+      Item_at_least { item = "retro-mail"; count = 0; for_ = "give" };
+      Badges_at_least 0;
+      Caught_at_least 0;
+      Badges [];
+      Party_in_order [];
+      Party_includes { members = []; slots = [] };
+    ]
+  @ List.map (asks "something")
+      [
+        Need.Money_at_least { amount = 1; for_ = "buy" };
+        Item_at_least { item = "retro-mail"; count = 99; for_ = "give" };
+        Item_exactly { item = "retro-mail"; count = 0 };
+        Badges_at_least 8;
+        Member { species = "pidgey"; for_ = "fly" };
+        No_mail { species = "mr-mime"; for_ = "trade" };
+      ]
 
 let eight =
   "8 badges (boulder, cascade, thunder, rainbow, soul, marsh, volcano, earth), \
@@ -193,4 +223,5 @@ let judge_cases =
         ~go:"stop";
     ]
 
-let () = Table_test.run "plan preconditions" (decode_cases @ judge_cases)
+let () =
+  Table_test.run "plan preconditions" (decode_cases @ asks_cases @ judge_cases)

@@ -5,7 +5,7 @@
     start's frame for a pass (Frlg_actions.Game_save), back to the last save for
     a failure. In the effect context. *)
 
-open Pokemon_checkpoints
+open Pokemon_engine
 
 val start_party :
   roster:string list -> Postconditions.t option -> Postconditions.party option
@@ -14,13 +14,15 @@ val start_party :
 
 val before :
   log:(string -> unit) ->
-  frame_path:string ->
+  frame_path:string option ->
   start_path:string option ->
   Postconditions.party option ->
   (unit, string) result
 (** Back to the last save, then the start check against the party and the frame
-    kept under the checkpoint's id (or at its start), keeping the frame read
-    where none was kept. *)
+    kept under the checkpoint's id ([frame_path]) or at its start
+    ([start_path]), keeping the frame read where none was kept. With neither (a
+    checkpoint that starts anywhere outdoors has no one frame), the party only.
+*)
 
 val after :
   log:(string -> unit) ->

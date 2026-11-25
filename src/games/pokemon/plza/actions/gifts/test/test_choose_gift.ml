@@ -1,10 +1,10 @@
 (* Mystery_gift.choose_gift on console B's Internet gift list
-   (readers/test/fixtures/gifts.probes.jsonl: four gifts, the cursor on the
+   (readers/test/fixtures/gifts/gifts.probes.jsonl: four gifts, the cursor on the
    first, Vivillon the 4th), played by a scripted console: each Down moves the
    white item one down (its probes' results swapped), A is counted. The gift
    is found by its name, the cursor read on it, then A; a cursor that does not
    move ends it with no A. One frame per ms. On the French list
-   (readers/test/fixtures/gifts.fr.probes.jsonl) the French name finds the
+   (readers/test/fixtures/gifts/gifts.fr.probes.jsonl) the French name finds the
    same item 4; the English name finds none and nothing is pressed, as console
    B's French run ended (2026-11-25). *)
 

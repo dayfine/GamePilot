@@ -3,7 +3,7 @@
 
 open Frlg_actions
 module B = Frlg_battle
-module Failure = Pokemon_checkpoints.Failure
+module Failure = Pokemon_engine.Failure
 
 let case name input expectation = { Table_test.name; input; expectation }
 let over = B.Scripted_battle.Over B.Scripted_battle.empty_summary

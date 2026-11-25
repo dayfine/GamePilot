@@ -1,0 +1,108 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "frlg",
+  "checkpoint": {
+    "id": "02-shiny-voltorb",
+    "title": "From anywhere outdoors: a shiny Voltorb in Route 10's grass by the wild RNG, stored in the PC, back to the nurse",
+    "start": {"anywhere": "outdoors"},
+    "events": [
+      {
+        "id": "fly_route10",
+        "kind": "game_action",
+        "action": "fly",
+        "args": {"town": "Route10"},
+        "declared_after": {"map": "Route10", "tiles": [[13, 21]], "facing": "south"},
+        "why": "Fly to Route 10's Pokemon Center."
+      },
+      {
+        "id": "to_pc",
+        "kind": "route",
+        "action": "run",
+        "args": {"target": {"place": "route10_center_pc"}},
+        "why": "Below the Center's PC."
+      },
+      {
+        "id": "make_room",
+        "kind": "game_action",
+        "action": "pc_deposit",
+        "args": {"member": "holding_no_mail"},
+        "why": "The catch's summary needs a party slot. The PC refuses a member holding Mail, so this stores the one that holds none (on the Sevii save the other five hold the mail glitch's Mail)."
+      },
+      {
+        "id": "to_grass",
+        "kind": "route",
+        "action": "run",
+        "args": {"target": {"place": "route10_north_grass"}},
+        "why": "Into the north grass, where Sweet Scent finds Voltorb, Spearow and Ekans."
+      },
+      {
+        "id": "save_in_grass",
+        "kind": "game_action",
+        "action": "save_game",
+        "args": {},
+        "why": "The wild RNG's hard reset boots from this save, in the grass."
+      },
+      {
+        "id": "shiny_voltorb",
+        "kind": "game_action",
+        "action": "wild_rng",
+        "args": {
+          "species": "voltorb",
+          "location": "route_10",
+          "tid": 33002,
+          "sid": 9011,
+          "seeds": "rng_seeds_mgba_sevii_save.json",
+          "seed_shift": 8,
+          "ingame_offset": -1,
+          "frame_model": "mgba",
+          "advances": [1000, 4000],
+          "ball": "ultra-ball",
+          "balls": 5,
+          "attempts": 1
+        },
+        "why": "A shiny Voltorb, the soonest of the table for TID 33002 and SID 9011 (read once from the save's memory). seed_shift 8: what this checkpoint's grass save (the save file's save number 139) adds to the table's seeds on mGBA, measured from it. The party's last member knows Sweet Scent. ingame_offset -1: the target's waits otherwise land on another advance, measured by replaying the presses on the grass save with an RNG trace."
+      },
+      {
+        "id": "save_catch",
+        "kind": "game_action",
+        "action": "save_game",
+        "args": {},
+        "why": "Keeps the shiny."
+      },
+      {
+        "id": "back_to_pc",
+        "kind": "route",
+        "action": "run",
+        "args": {"target": {"place": "route10_center_pc"}},
+        "why": "Below the Center's PC."
+      },
+      {
+        "id": "deposit_catch",
+        "kind": "game_action",
+        "action": "pc_deposit",
+        "args": {"species": ["voltorb"]},
+        "why": "Stores the catch, so the party is five again with the Sweet Scent member last, as the next catch needs."
+      },
+      {
+        "fragment": "heal_at",
+        "args": {"town": "route10"},
+        "id": "heal_route10",
+        "why": "Sweet Scent's PP back at the nurse."
+      },
+      {
+        "id": "out_of_center",
+        "kind": "route",
+        "action": "run",
+        "args": {"target": {"place": "route10_center_outside"}},
+        "why": "Outdoors, where the next catch starts."
+      }
+    ]
+  },
+  "execution": {
+    "menu": "full"
+  },
+  "metadata": {
+    "phase": "testing",
+    "notes": "mGBA only. The seed shift holds for this checkpoint's start save as the program's chain leaves it (from sevii_story's end, two saves a catch): a start save with another number of saves before it boots a few timer counts off and misses, failing the checkpoint (wild_rng_not_shiny) with the catch unsaved. Starts with the Sevii story's full party; make_room leaves five, with the Sweet Scent member last."
+  }
+}

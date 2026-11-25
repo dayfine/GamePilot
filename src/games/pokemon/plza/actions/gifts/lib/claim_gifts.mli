@@ -26,6 +26,7 @@ type span = {
       (** the script's [--code-only]: from the overworld, Mystery Gift, then
           straight to the code *)
 }
+(** The part of the run to play: where it starts and where it stops. *)
 
 val points : string list
 (** The screens between the steps, in order: overworld (the start), mystery-gift
@@ -56,7 +57,7 @@ val run :
 val gift_name_template :
   language:string -> span -> (string option, string) result
 (** The repo path of the Internet gift's name template for the game's language
-    (a tag of [gamepilot checkpoints --options language=]): en and fr, each
+    (a tag of [gamepilot run --options language=]): en and fr, each
     cropped from its gift list (400 x 38 from (592, 566) of the 1080p frame,
     Vivillon's name at item 4: readers/test/images/mystery-gift's
     gift-list-cursor-on-1 and gift-list-fr-cursor-on-1). [None] when the span

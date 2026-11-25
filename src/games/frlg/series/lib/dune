@@ -14,11 +14,11 @@
   gamepilot.run_record
   gamepilot.engine_run
   gamepilot.engine_series
-  gamepilot.pokemon_checkpoints
+  gamepilot.pokemon_engine
   gamepilot.checkpoint_end
   gamepilot.room_policy
   gamepilot.checkpoints_series
-  gamepilot.checkpoints_flags
+  gamepilot.run_flags
   gamepilot.pokemon_flags
   gamepilot.frlg_overworld
   gamepilot.frlg_actions

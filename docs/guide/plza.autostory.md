@@ -2,11 +2,13 @@
 
 Plays Pokémon Legends: Z-A's story on the Switch from a new game: it launches the game from the
 Switch HOME, picks the language, the look and the name, confirms them, skips the opening to the
-station platform, then walks off the platform and presses through
-the arrival scenes to Main Mission 01, where you have free control in Lumiose City. From there it
-chases Pancham, takes Chikorita and beats Andi (Main Mission 01), then follows Main Missions 02 and
-03: Hotel Z, Taunie's battle, the Pokémon Center, Wild Zone 1's catches (five species in the
-party), the research lab and Mable's first research reward, the Rock Smash TM (checkpoint 03.11).
+station platform, then walks off the platform and presses through the arrival scenes to Main
+Mission 01, where you have free control in Lumiose City.
+
+From there it chases Pancham, takes Chikorita and beats Andi (Main Mission 01), then follows Main
+Missions 02 and 03: Hotel Z, Taunie's battle, the Pokémon Center, Wild Zone 1's catches (five
+species in the party), the research lab and Mable's first research reward, the Rock Smash TM
+(checkpoint 03.11).
 
 <!-- generated:backends -->
 Runs on: the Switch.
@@ -36,7 +38,7 @@ options on a series that does not start at 01.00a: they would do nothing there. 
 the choices it plays. In French with look 5, for example:
 
 ```sh
-cd src && opam exec -- dune exec -- gamepilot checkpoints --program plza.autostory --from 01.00a --to 03.11 --mode testing --backend switch --serial PORT --capture DEVICE \
+cd src && opam exec -- dune exec -- gamepilot run plza.autostory --from 01.00a --to 03.11 --mode testing --backend switch --serial PORT --capture DEVICE \
     --watch --options language=fr,look=5
 ```
 
@@ -48,7 +50,7 @@ To make the choices by hand instead, stop on the "Confirm Choices" screen and st
 <!-- generated:commands -->
 ```sh
 # the Switch: each checkpoint once, from where the console is
-cd src && opam exec -- dune exec -- gamepilot checkpoints --program plza.autostory --from 01.00a --to 03.11 --mode testing --backend switch --serial PORT --capture DEVICE \
+cd src && opam exec -- dune exec -- gamepilot run plza.autostory --from 01.00a --to 03.11 --mode testing --backend switch --serial PORT --capture DEVICE \
     --watch
 ```
 <!-- /generated -->

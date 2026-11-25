@@ -1,0 +1,288 @@
+(* gamepilot run's flags, whatever the game: their record, defaults and
+   parsing, with a game's own flags ('game) parsed by the game's hooks. *)
+
+open Engine_run
+
+type 'game flags = {
+  from_id : string option;
+  to_id : string option;
+  mode : Checkpoint_trials.mode option;
+  runs : int option;
+  states : string;
+  runs_dir : string;
+  daemon : string;
+  mgba_port : int;
+  backend : string;  (** mgba or switch *)
+  serial : string option;
+  capture : string option;
+  replay : string option;  (** A recorded video for a dry run (fake board). *)
+  save_after_pass : bool;  (** Switch: save in the game after a pass. *)
+  preflight : bool;
+  max_rounds : int option;  (** A repeating checkpoint's rounds, at most. *)
+  from_event : string option;
+      (** mGBA, testing: run from this event's kept state
+          (Engine_run.Event_range). *)
+  to_event : string option;  (** ... to this event (else the last). *)
+  port : int;  (** The program's port; 0: any free one. *)
+  watch : Daemon_process.watch option;
+  viewport : string option;
+      (** --viewport V: the Switch daemons' game picture; only for a plan folder
+          no program registers, else it must match the program's
+          (Program_registry.check_viewport). *)
+  daemon_flags : string list;
+      (** --record, --no-record, --keepawake N, --speed S: passed to each run's
+          daemon. *)
+  options : (string * string) list;
+      (** --options KEY=VALUE[,KEY=VALUE...]: the program's own options, in the
+          order given; [[]] when not given. Their keys and values are the
+          program's to check ({!read_options}). *)
+  game : 'game;  (** The game's own flags. *)
+}
+
+type 'game game_flags = {
+  game_defaults : 'game;
+  game_switch : 'game -> string -> 'game option;
+  game_valued : 'game -> string -> string -> ('game, string) result option;
+}
+
+type 'options option_keys = {
+  unset : 'options;
+  keys : (string * ('options -> string -> ('options, string) result)) list;
+}
+
+let no_option_keys = { unset = (); keys = [] }
+
+(* "a", "a and b", "a, b and c". *)
+let and_list = function
+  | [] -> ""
+  | [ one ] -> one
+  | items ->
+      let rev = List.rev items in
+      String.concat ", " (List.rev (List.tl rev)) ^ " and " ^ List.hd rev
+
+let not_taken keys key =
+  match List.map fst keys.keys with
+  | [] -> Error "--options: this program takes no options"
+  | names ->
+      Error ("--options: this program takes " ^ and_list names ^ ", not " ^ key)
+
+let read_option keys acc (key, value) =
+  Result.bind acc (fun options ->
+      match List.assoc_opt key keys.keys with
+      | None -> not_taken keys key
+      | Some read ->
+          Result.map_error (fun e -> "--options " ^ e) (read options value))
+
+let read_options keys pairs =
+  List.fold_left (read_option keys) (Ok keys.unset) pairs
+
+let ( let* ) = Result.bind
+
+let options_usage =
+  "      [--options KEY=VALUE[,KEY=VALUE...]]   (once: the program's own \
+   options; its keys in docs/guide/<program id>.md)\n"
+
+let home = Option.value (Sys.getenv_opt "HOME") ~default:"."
+
+(* [var] from the environment, else [$HOME/.local/share/gamepilot/<name>]. *)
+let data_dir var name =
+  match Sys.getenv_opt var with
+  | Some dir when dir <> "" -> dir
+  | _ ->
+      List.fold_left Filename.concat home
+        [ ".local"; "share"; "gamepilot"; name ]
+
+let mgba_bridge_port = 47810
+
+let defaults game =
+  {
+    from_id = None;
+    to_id = None;
+    mode = None;
+    runs = None;
+    states = data_dir "GAMEPILOT_STATES" "states";
+    runs_dir = data_dir "GAMEPILOT_RUNS" "runs";
+    daemon = "daemon/build/gamepilot_daemon";
+    mgba_port = mgba_bridge_port;
+    backend = "mgba";
+    serial = None;
+    capture = None;
+    replay = None;
+    save_after_pass = true;
+    preflight = false;
+    max_rounds = None;
+    from_event = None;
+    to_event = None;
+    port = 0;
+    watch = None;
+    viewport = None;
+    daemon_flags = [];
+    options = [];
+    game = game.game_defaults;
+  }
+
+(* A flag with an int value: [set] applies it. *)
+let int_flag name text set =
+  match int_of_string_opt text with
+  | Some n -> Ok (set n)
+  | None -> Error ("bad " ^ name ^ " " ^ text)
+
+let mode_flag f m =
+  match Checkpoint_trials.mode_of_string m with
+  | Some mode -> Ok { f with mode = Some mode }
+  | None -> Error ("bad --mode " ^ m)
+
+(* mGBA only (the daemon refuses it on a live backend): the daemon steps the
+   emulator S times its frame rate; the program's times stay game time
+   (protocol/v1/README.md). *)
+let speed_flag f text =
+  match float_of_string_opt text with
+  | Some s when s > 0. ->
+      Ok { f with daemon_flags = f.daemon_flags @ [ "--speed"; text ] }
+  | _ -> Error ("bad --speed " ^ text)
+
+let keepawake_flag f seconds =
+  {
+    f with
+    daemon_flags = f.daemon_flags @ [ "--keepawake"; string_of_int seconds ];
+  }
+
+(* One KEY=VALUE of --options [text]: the value keeps any later [=]. *)
+let option_pair text pair =
+  match String.index_opt pair '=' with
+  | None when pair = "" -> Error ("--options: an empty key in " ^ text)
+  | None -> Error ("--options: " ^ pair ^ " has no =VALUE")
+  | Some 0 -> Error ("--options: an empty key in " ^ text)
+  | Some i ->
+      Ok
+        ( String.sub pair 0 i,
+          String.sub pair (i + 1) (String.length pair - i - 1) )
+
+let add_pair text acc pair =
+  let* pairs = acc in
+  let* key, value = option_pair text pair in
+  if List.mem_assoc key pairs then
+    Error ("--options: " ^ key ^ " is given twice")
+  else Ok ((key, value) :: pairs)
+
+(* --options KEY=VALUE[,KEY=VALUE...], once: its pairs in order, syntax
+   errors only. *)
+let options_flag f text =
+  if f.options <> [] then
+    Error "--options is given twice; give its pairs once, joined by commas"
+  else
+    Result.map
+      (fun pairs -> { f with options = List.rev pairs })
+      (List.fold_left (add_pair text) (Ok []) (String.split_on_char ',' text))
+
+(* One flag with its value, or [None] for a flag that takes none or an
+   unknown one. *)
+let valued f name v =
+  match name with
+  | "--from" -> Some (Ok { f with from_id = Some v })
+  | "--to" -> Some (Ok { f with to_id = Some v })
+  | "--mode" -> Some (mode_flag f v)
+  | "--runs" -> Some (int_flag name v (fun n -> { f with runs = Some n }))
+  | "--states" -> Some (Ok { f with states = v })
+  | "--runs-dir" -> Some (Ok { f with runs_dir = v })
+  | "--daemon" -> Some (Ok { f with daemon = v })
+  | "--mgba-port" ->
+      Some (int_flag name v (fun mgba_port -> { f with mgba_port }))
+  | "--port" -> Some (int_flag name v (fun port -> { f with port }))
+  | "--backend" -> Some (Ok { f with backend = v })
+  | "--serial" -> Some (Ok { f with serial = Some v })
+  | "--capture" -> Some (Ok { f with capture = Some v })
+  | "--replay" -> Some (Ok { f with replay = Some v })
+  | "--max-rounds" -> (
+      match int_of_string_opt v with
+      | Some n when n > 0 -> Some (Ok { f with max_rounds = Some n })
+      | _ -> Some (Error ("bad --max-rounds " ^ v)))
+  | "--from-event" -> Some (Ok { f with from_event = Some v })
+  | "--to-event" -> Some (Ok { f with to_event = Some v })
+  | "--keepawake" -> Some (int_flag name v (keepawake_flag f))
+  | "--speed" -> Some (speed_flag f v)
+  | "--viewport" -> Some (Ok { f with viewport = Some v })
+  | "--options" -> Some (options_flag f v)
+  | _ -> None
+
+(* The page by default: on a free port, $GAMEPILOT_WATCH_LISTEN or this machine
+   only, a new token, the registry beside the runs. *)
+let default_watch runs_dir =
+  {
+    Daemon_process.listen = Watch_urls.default_listen ();
+    port = 0;
+    token = Watch_urls.new_token ();
+    registry = Filename.concat runs_dir ".watch";
+  }
+
+(* --watch-port and --listen imply --watch. *)
+let watch_flag f set =
+  let w = Option.value f.watch ~default:(default_watch f.runs_dir) in
+  { f with watch = Some (set w) }
+
+let watch_port f port = watch_flag f (fun w -> { w with Daemon_process.port })
+
+let watch_valued f name v =
+  match name with
+  | "--watch-port" -> Some (int_flag name v (watch_port f))
+  | "--listen" -> Some (Ok (watch_flag f (fun w -> { w with listen = v })))
+  | _ -> None
+
+(* The game's flag with its value. *)
+let game_valued game f name v =
+  Option.map
+    (Result.map (fun g -> { f with game = g }))
+    (game.game_valued f.game name v)
+
+let valued game f name v =
+  match watch_valued f name v with
+  | Some r -> Some r
+  | None -> (
+      match valued f name v with
+      | Some r -> Some r
+      | None -> game_valued game f name v)
+
+let rec parse game f = function
+  | [] -> Ok f
+  | "--watch" :: rest -> parse game (watch_flag f Fun.id) rest
+  | "--save-after-pass" :: rest ->
+      parse game { f with save_after_pass = true } rest
+  | "--no-save-after-pass" :: rest ->
+      parse game { f with save_after_pass = false } rest
+  | "--preflight" :: rest -> parse game { f with preflight = true } rest
+  | (("--record" | "--no-record") as flag) :: rest ->
+      parse game { f with daemon_flags = f.daemon_flags @ [ flag ] } rest
+  | name :: rest when Option.is_some (game.game_switch f.game name) ->
+      parse game
+        { f with game = Option.get (game.game_switch f.game name) }
+        rest
+  | name :: v :: rest when Option.is_some (valued game f name v) ->
+      Result.bind
+        (Option.get (valued game f name v))
+        (fun f -> parse game f rest)
+  | a :: _ -> Error ("unknown argument " ^ a)
+
+let required name = function
+  | Some v -> Ok v
+  | None -> Error (name ^ " is required")
+
+(* The daemon's backend from the flags; the Switch only in testing mode. *)
+let daemon_backend f mode =
+  match (f.backend, f.serial, f.capture, f.replay, mode) with
+  | "mgba", None, None, None, _ ->
+      Ok (Daemon_process.Mgba { port = f.mgba_port })
+  | "mgba", _, _, _, _ ->
+      Error "--serial, --capture and --replay need --backend switch"
+  | "switch", _, _, _, Checkpoint_trials.Verification ->
+      Error "--backend switch runs only --mode testing"
+  | "switch", Some serial, Some capture, None, Testing ->
+      Ok
+        (Daemon_process.Switch
+           { serial = Some serial; frames = Capture capture })
+  | "switch", None, None, Some video, Testing ->
+      Ok (Daemon_process.Switch { serial = None; frames = Replay video })
+  | "switch", _, _, _, _ ->
+      Error
+        "--backend switch needs --serial and --capture, or --replay alone (a \
+         dry run on the fake board)"
+  | b, _, _, _, _ -> Error ("bad --backend " ^ b)

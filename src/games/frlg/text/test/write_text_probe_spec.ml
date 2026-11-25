@@ -36,6 +36,9 @@ let species =
 
 let dark = Line_reading.ink
 
+(* The Kanto Pokédex's species: the first 151 in the game's order. *)
+let kanto_species = 151
+
 (* Each screen: its font, its lines, their candidates and the ink they are read
    in. *)
 let screens =
@@ -80,6 +83,22 @@ let screens =
     ( "berry_pouch_numbers",
       small_glyphs,
       cells ~rows:7 ~cells:2 Text_lines.berry_pouch_number_digit,
+      Number_reading.digits,
+      dark );
+    ( "pc_message",
+      glyphs,
+      [ Text_lines.pc_message ],
+      [ "Deposit in which BOX?"; "The BOX is full."; "Please remove the MAIL." ],
+      dark );
+    ( "pokedex_list",
+      glyphs,
+      rows Text_lines.pokedex_list_rows Text_lines.pokedex_list_name,
+      List.filteri (fun i _ -> i < kanto_species) species @ [ "-----" ],
+      dark );
+    ( "pokedex_numbers",
+      small_glyphs,
+      cells ~rows:Text_lines.pokedex_list_rows ~cells:3
+        Text_lines.pokedex_list_number_digit,
       Number_reading.digits,
       dark );
     ( "card_numbers",

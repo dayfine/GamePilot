@@ -1,14 +1,16 @@
 (** The game's {!Rare_candy.game_steps}, and the party menu's
     {!Level_up.game_steps} in them: the bag's Rare Candy used on a member
     ({!Bag_items.item_action}, USE, {!Party_actions.choose_slot}), then what
-    follows read and answered as upstream's [use_rare_candy()]
-    (Programs/RngManipulation/PokemonFRLG_RngNavigation.cpp) watches for it: the
-    stats window and the party's YES/NO box ({!Frlg_readers.Party_dialogs}, its
-    PartyLevelUpWatcher and PartyMoveLearnWatcher), the evolution scene
-    ({!Level_up_screens}, its BattleDialogWatcher) and the bag
-    ({!Frlg_readers.Bag_screen}, its BagWatcher). The list to forget from is
-    worked as the battle's ({!Frlg_battle.Battle_steps}): read by
-    {!Summary_moves}, its cursor by {!Frlg_readers.Move_list_cursor}.
+    follows read and answered as upstream's
+    Programs/RngManipulation/PokemonFRLG_RngNavigation.cpp does after a Rare
+    Candy: the stats window and the party's YES/NO box
+    ({!Frlg_readers.Party_dialogs}; its Inference/Dialogs/
+    PokemonFRLG_PartyDialogs.cpp), the evolution scene ({!Level_up_screens}; a
+    battle dialog to it, Inference/Dialogs/PokemonFRLG_BattleDialogs.cpp) and
+    the bag ({!Frlg_readers.Bag_screen}; Inference/Menus/
+    PokemonFRLG_BagDetector.cpp). The list to forget from is worked as the
+    battle's ({!Frlg_battle.Battle_steps}): read by {!Summary_moves}, its cursor
+    by {!Frlg_readers.Move_list_cursor}.
 
     Where it differs:
     - Text is pressed with A, never B (the C++ mashes B, which would cancel an

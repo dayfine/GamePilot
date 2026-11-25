@@ -4,5 +4,5 @@
   gamepilot.table_test
   yojson
   gamepilot.frlg_checkpoints
-  gamepilot.plza_checkpoints
+  gamepilot.plza_engine
   gamepilot.program_registry))

@@ -1,6 +1,6 @@
 open Plza_story
 module Failure = Engine_run.Failure
-module Plan = Plza_checkpoints.Plan
+module Plan = Plza_engine.Plan
 
 let bad_args (event : Plan.event) detail =
   Error (Failure.cause ~repeats:true "bad_args" (event.id ^ ": " ^ detail))

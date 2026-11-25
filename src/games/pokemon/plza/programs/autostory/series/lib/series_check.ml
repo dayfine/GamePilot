@@ -1,4 +1,4 @@
-module P = Plza_checkpoints
+module P = Plza_engine
 module Story = Plza_autostory
 
 let ( let* ) = Result.bind

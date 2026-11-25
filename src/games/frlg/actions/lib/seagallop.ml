@@ -12,7 +12,7 @@ let islands =
 
 let island_list = Script_menu.seagallop_islands
 let where = "ferry: "
-let bad e = Error (Pokemon_checkpoints.Failure.cause ~repeats:true "bad_args" e)
+let bad e = Error (Pokemon_engine.Failure.cause ~repeats:true "bad_args" e)
 
 let trip_on from to_ =
   match List.assoc_opt from islands with
@@ -33,7 +33,7 @@ let trip_of_args ~from args =
 (* sSeagallopSpawnLocations: (8, 5) of every Sevii harbor. *)
 let landing : Grid_geometry.Tile_pos.t = { x = 8; y = 5 }
 
-let arrival trip : Pokemon_checkpoints.Pose.observed =
+let arrival trip : Pokemon_engine.Pose.observed =
   { at_map = trip.to_ ^ "_Harbor"; at_tile = landing; faces = Some South }
 
 (* The text box opening after the A, as a talk's. *)

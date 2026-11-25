@@ -24,16 +24,20 @@ val probes : game_icon:Effects.template_hash -> Wire.probe_spec list
 (** Every probe, with the game's icon template for the game list. *)
 
 val main_menu : Effects.measurements -> bool
+(** The main menu shows: its orange button fills over 0.45 of its box. *)
 
 (** The bottom banner. *)
 type banner =
-  | No_banner
+  | No_banner  (** no white bar along the bottom *)
   | Blank  (** the white bar, no text (between login lines) *)
   | One_line  (** text on the first line only: taken to be "saved" *)
   | Two_lines  (** "logging in" or "saving" *)
 
 val banner : Effects.measurements -> banner
+(** The banner the frame shows. *)
+
 val banner_to_string : banner -> string
+(** "no banner", "a one-line banner", ...: for a log line. *)
 
 type tile = { row : int; col : int }
 (** A tile of the game list, 0-based from the top left. *)

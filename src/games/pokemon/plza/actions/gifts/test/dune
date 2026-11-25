@@ -1,9 +1,11 @@
 (rule
- (copy ../../../readers/test/fixtures/gifts.probes.jsonl gifts.probes.jsonl))
+ (copy
+  ../../../readers/test/fixtures/gifts/gifts.probes.jsonl
+  gifts.probes.jsonl))
 
 (rule
  (copy
-  ../../../readers/test/fixtures/gifts.fr.probes.jsonl
+  ../../../readers/test/fixtures/gifts/gifts.fr.probes.jsonl
   gifts.fr.probes.jsonl))
 
 (tests

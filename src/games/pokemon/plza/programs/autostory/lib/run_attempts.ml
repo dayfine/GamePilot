@@ -21,12 +21,12 @@ let of_cause ~at (c : Engine_run.Failure.cause) =
       off_start = off_start c;
     }
 
-let of_failure (f : Plza_checkpoints.Failure.t) =
+let of_failure (f : Plza_engine.Failure.t) =
   Failed
     {
       at = Printf.sprintf "#%d %s" (f.event_index + 1) f.event_id;
-      reason = Plza_checkpoints.Failure.reason_to_string f.reason;
-      repeats = Plza_checkpoints.Failure.repeats f;
+      reason = Plza_engine.Failure.reason_to_string f.reason;
+      repeats = Plza_engine.Failure.repeats f;
       off_start = (match f.reason with Handler c -> off_start c | _ -> false);
     }
 

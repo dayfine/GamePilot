@@ -18,15 +18,15 @@
 type t
 (** One checkpoint run's jump: none yet, or to the battle's event. *)
 
-val make : Plza_checkpoints.Plan.checkpoint -> log:(string -> unit) -> t
+val make : Plza_engine.Plan.checkpoint -> log:(string -> unit) -> t
 (** No jump yet, over the checkpoint's events. *)
 
-val battle_ahead : t -> Plza_checkpoints.Plan.event -> bool
+val battle_ahead : t -> Plza_engine.Plan.event -> bool
 (** A [story_battle] event comes after this one. *)
 
 val after :
   t ->
-  Plza_checkpoints.Plan.event ->
+  Plza_engine.Plan.event ->
   (unit, Engine_run.Failure.cause) result ->
   (unit, Engine_run.Failure.cause) result
 (** An event's outcome, as the run takes it: [battle_on_screen] with a battle
@@ -34,7 +34,7 @@ val after :
 
 val run :
   t ->
-  Plza_checkpoints.Plan.event ->
+  Plza_engine.Plan.event ->
   (unit -> (unit, Engine_run.Failure.cause) result) ->
   (unit, Engine_run.Failure.cause) result
 (** Runs the event, or, during a jump, passes it at once until the battle's

@@ -11,7 +11,7 @@
     its batch is done, so each run here ends before the next screen read. *)
 
 (** How fast a held direction moves the player. *)
-type pace = Walk | Run
+type pace = Walk  (** The stick alone. *) | Run  (** The stick with B held. *)
 
 val tilt :
   walk_only:bool ->

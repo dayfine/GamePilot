@@ -8,12 +8,12 @@
     people stand in the way, so routes and places reach into it as into any
     mapped room.
 
-    Ported from the fork's [Overworld/PokemonFRLG_CodedRooms.{h,cpp}]
-    ([CENTER_ROOM_JSON], [pokemon_center_room()], [add_pokemon_center_room()]),
-    Overworld/PokemonFRLG_PokemonCenterRoom.h ([CENTER_MAT],
-    [CENTER_NURSE_FRONT]) and Overworld/PokemonFRLG_OverworldMaps.cpp
-    ([add_unmapped_centers()]): the same tiles, elevation, mat warps, door point
-    and people.
+    Ported from the fork's [Overworld/PokemonFRLG_CodedRooms.{h,cpp}] (the
+    room's map and how it is added to its town),
+    Overworld/PokemonFRLG_PokemonCenterRoom.h (the mat and the tile before the
+    nurse) and Overworld/PokemonFRLG_OverworldMaps.cpp (the room added for each
+    Center with no map): the same tiles, elevation, mat warps, door point and
+    people.
 
     Where we differ:
     - The mat's warps follow each Center's own map.json order, so ["warp_<n>"]
@@ -26,11 +26,11 @@
     - Each Center has all its pret people ({!Center_people}), not the nurse
       alone. Each person has a pret script, for places to name, and the stairs
       lead to the town's 2F (not loaded).
-    - The room is added only for the 17 standard Centers, where the fork's
-      [is_pokemon_center()] takes any [_PokemonCenter_1F]. It replaces
-      PokemonSimulation's map of a standard Center, where the fork adds it only
-      for a Center with no map: {!Frlg_checkpoints.Checkpoint_run.load_world}
-      does not read those map files.
+    - The room is added only for the 17 standard Centers, where the fork takes
+      any map named [_PokemonCenter_1F]. It replaces PokemonSimulation's map of
+      a standard Center, where the fork adds it only for a Center with no map:
+      {!Frlg_checkpoints.Checkpoint_run.load_world} does not read those map
+      files.
     - There is a ["pc_front"] point, the PC's stand as
       [Frlg_checkpoints.Make_room] uses it. *)
 

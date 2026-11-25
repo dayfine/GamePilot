@@ -1,4 +1,4 @@
-(* gamepilot checkpoints' flags over the Pokémon grid rules
+(* gamepilot run's flags over the Pokémon grid rules
    (Pokemon_flags.parse): no grid program takes --options, so any is
    refused, not ignored. *)
 

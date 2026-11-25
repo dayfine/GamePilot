@@ -7,6 +7,7 @@ type t
 (** The reads that saw it, and whether it is on. *)
 
 val make : hits:int -> window_ms:float -> off_after_ms:float -> t
+(** A filter, off, with no reads yet. *)
 
 val battle_hud : unit -> t
 (** The battle HUD's, as PokemonLZA_AutoStorySceneMachine.cpp filters it: on

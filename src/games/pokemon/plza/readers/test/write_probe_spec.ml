@@ -17,13 +17,13 @@
    ({!Plza_readers.Switch_home_tile}, its title template named by the file
    beside the spec, {!Plza_readers.Intro_screens},
    {!Switch_home.Keyboard_typing} and {!Plza_readers.Confirm_choices}), for
-   fixtures/intro.probes.jsonl.
+   fixtures/intro/intro.probes.jsonl.
 
    With [--gifts LANGUAGE], only the Mystery Gift steps' readers' probes
    ({!Plza_readers.Main_menu_row}, {!Plza_readers.Mystery_gift_screen}), the
    gift's name matched by its template in that language
    (gift-name-vivillon-<language>.png, copied beside the spec): en for
-   fixtures/gifts.probes.jsonl, fr for fixtures/gifts.fr.probes.jsonl. *)
+   fixtures/gifts/gifts.probes.jsonl, fr for fixtures/gifts/gifts.fr.probes.jsonl. *)
 
 let native : Wire.box = { x = 0.; y = 0.; w = 1.; h = 1. }
 let no_minimap = Array.mem "--no-minimap" Sys.argv

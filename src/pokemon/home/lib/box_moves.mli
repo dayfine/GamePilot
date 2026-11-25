@@ -22,8 +22,9 @@ type t = {
   game_col : int;
       (** its slot in the game's box: row 1, this column (0-based) *)
   boxes : int list;  (** HOME's boxes to try in order, e.g. [166; 167] *)
-  order : Box_view.order;
+  order : Box_view.order;  (** the order the HOME box's slots are tried in *)
 }
+(** One move: a Pokémon in the game's box and where in HOME it goes. *)
 
 val cursor_probes : t list -> Wire.probe_spec list
 (** The cursor's probes over HOME's first slot and each move's game slot. *)

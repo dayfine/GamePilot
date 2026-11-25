@@ -39,15 +39,17 @@ val shows : Effects.measurements -> string -> bool
 type game_steps = {
   title_shows : unit -> bool;
       (** The game's title shows over the row now (after the last press). *)
-  press : Timed_press.t -> unit;
-  log : string -> unit;
+  press : Timed_press.t -> unit;  (** Presses one button and waits it out. *)
+  log : string -> unit;  (** Writes a line to the run's log. *)
 }
+(** What {!find_tile} reads and does on the console. *)
 
 type walk = {
   first : Timed_press.t;  (** HOME: from anywhere to HOME's first tile. *)
   next : Timed_press.t;  (** Right: to the next tile. *)
   tiles : int;  (** Tiles read before giving up. *)
 }
+(** How {!find_tile} walks HOME's tile row. *)
 
 val find_tile : game_steps -> walk -> name:string -> (int, string) result
 (** [first], then the title read on each tile, [next] between two, up to [tiles]

@@ -1,4 +1,4 @@
-module Plan = Plza_checkpoints.Plan
+module Plan = Plza_engine.Plan
 
 type t = {
   checkpoint : Plan.checkpoint;

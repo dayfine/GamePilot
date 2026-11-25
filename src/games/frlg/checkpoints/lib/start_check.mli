@@ -10,7 +10,7 @@
     not stop the run, as in the fork; a mismatch stops it. *)
 
 type expected = {
-  party : Pokemon_checkpoints.Postconditions.party option;
+  party : Pokemon_engine.Postconditions.party option;
   frame : Frlg_readers.Start_frame.t option;
       (** The frame kept when the runner last saved at this start. *)
 }
@@ -21,11 +21,10 @@ type observed = {
 }
 
 val check :
-  expected -> observed -> Pokemon_checkpoints.Postcondition_check.result list
+  expected -> observed -> Pokemon_engine.Postcondition_check.result list
 (** The party, then the place; nothing for what [expected] leaves out. *)
 
-val mismatches :
-  Pokemon_checkpoints.Postcondition_check.result list -> string list
+val mismatches : Pokemon_engine.Postcondition_check.result list -> string list
 (** The failed results, one line each; empty: the run may start. *)
 
 val observe : log:(string -> unit) -> expected -> observed
@@ -37,7 +36,7 @@ val frame_file : states:string -> string -> string
     start frame. *)
 
 val start_file :
-  states:string -> Pokemon_checkpoints.Pose.declared option -> string option
+  states:string -> Pokemon_engine.Pose.declared option -> string option
 (** [<states>/<map>.<x>_<y>.start.frame.json] for a start on tiles (its first):
     the frame kept at that start under any checkpoint's id, so a checkpoint
     renamed or split off (mg-04 to mg-04a) finds the frame kept where it starts.

@@ -17,6 +17,7 @@ type options = {
   scroll_release_ms : int;
   after_throw_ms : int;
 }
+(** A throw's timings. *)
 
 val default : options
 (** The fork's defaults: no lock-on, a 500 ms aim, no scrolls (120 ms held, 80

@@ -40,11 +40,28 @@ val probes :
     ({!Claim_gifts.gift_name_template}). *)
 
 val open_gifts : log:(string -> unit) -> (unit, string) result
+(** From the overworld: the main menu's Link Play row, then Mystery Gift; no
+    read after. *)
+
 val open_internet_list : log:(string -> unit) -> (unit, string) result
+(** "Get with Internet" and connect, then A until the gift list is active (up to
+    25 presses). *)
+
 val choose_gift : log:(string -> unit) -> (unit, string) result
+(** Down from the cursor to the list's gift and A to claim it; an error, nothing
+    claimed, when the list shows no gift below the cursor or the cursor does not
+    reach it. *)
+
 val leave_card : log:(string -> unit) -> (unit, string) result
+(** {!dismiss_card}, then B and yes to "stop for now?": back on the Mystery Gift
+    menu. *)
+
 val open_keyboard : log:(string -> unit) -> (unit, string) result
+(** Down and A on the Mystery Gift menu, to its code entry, then A until the
+    code keyboard shows (up to 25 presses). *)
+
 val dismiss_card : log:(string -> unit) -> (unit, string) result
+(** {!await_card}, then A on the card. *)
 
 val await_list : unit -> (unit, string) result
 (** The gift list read for 1 s within 3 s, no press. *)
@@ -58,5 +75,9 @@ val await_keyboard : unit -> (unit, string) result
 
 val claim_code :
   log:(string -> unit) -> picture:Wire.box -> string -> (unit, string) result
+(** Types the code on the open keyboard, Plus to send it, then A on its gift
+    once the list is active. *)
 
 val disconnect : unit -> unit
+(** B, yes to "you will be disconnected", A, B: from the code gift's list back
+    to the overworld. No read. *)

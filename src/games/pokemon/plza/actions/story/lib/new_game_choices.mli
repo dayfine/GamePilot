@@ -11,16 +11,16 @@
 
 (** In the language list's order: down the left column, then the right one. *)
 type language =
-  | English
-  | Spanish_spain
-  | Spanish_latin_america
-  | French
-  | German
-  | Italian
-  | Japanese
-  | Korean
-  | Chinese_simplified
-  | Chinese_traditional
+  | English  (** en, English *)
+  | Spanish_spain  (** es-ES, Español (España) *)
+  | Spanish_latin_america  (** es-419, Español (Latinoamérica) *)
+  | French  (** fr, Français *)
+  | German  (** de, Deutsch *)
+  | Italian  (** it, Italiano *)
+  | Japanese  (** ja, 日本語 *)
+  | Korean  (** ko, 한국어 *)
+  | Chinese_simplified  (** zh-Hans, 简体中文 *)
+  | Chinese_traditional  (** zh-Hant, 繁體中文 *)
 
 type language_info = {
   tag : string;  (** For logs and plans: ["en"], ["es-ES"], ... *)
@@ -30,8 +30,11 @@ type language_info = {
       (** Whether 01.00a types a name on its keyboard: not Korean's (Hangul) nor
           Simplified Chinese's (Pinyin). *)
 }
+(** What 01.00a needs to know of a language. *)
 
 val info : language -> language_info
+(** The language's tag, list entry, name limit and whether 01.00a types in it.
+*)
 
 val of_tag : string -> language option
 (** The language with this tag. *)
@@ -42,8 +45,9 @@ val tags : string list
 type t = {
   language : language;
   look : int;  (** 1 to 8: left to right along the top row, then the bottom. *)
-  name : string;
+  name : string;  (** The player's name, typed on the keyboard. *)
 }
+(** The new game's three choices. *)
 
 val default : t
 (** English, look 1, "Kosmos". *)

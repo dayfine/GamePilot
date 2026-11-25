@@ -8,7 +8,9 @@
 type passed = {
   text : bool;  (** text showed *)
   card : bool;  (** a tutorial card showed *)
-  timed_out : bool;
+  timed_out : bool;  (** the limit or the HOME menu came first *)
 }
+(** What the lines passed showed, and how they ended. *)
 
 val run : Steps.game_steps -> quiet_ms:int -> limit_ms:int -> passed
+(** A through the lines until quiet, as above. *)

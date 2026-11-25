@@ -1,14 +1,15 @@
 (** 01.00a's choices given as the program's options (the keys [language], [look]
-    and [name] of [gamepilot checkpoints --options]), each replacing the
-    matching arg of 01.00a's [new_game] event; the plan's args stay the
-    defaults. The fork too reads the new game's choices from the program's
-    options (PokemonLZA_AutoStoryNewGame.h). *)
+    and [name] of [gamepilot run --options]), each replacing the matching arg of
+    01.00a's [new_game] event; the plan's args stay the defaults. The fork too
+    reads the new game's choices from the program's options
+    (PokemonLZA_AutoStoryNewGame.h). *)
 
 type t = {
   language : Plza_story.New_game_choices.language option;
   look : int option;
   name : string option;
 }
+(** The options given, each [None] when not given. *)
 
 val none : t
 (** No option given: the plan's choices. *)

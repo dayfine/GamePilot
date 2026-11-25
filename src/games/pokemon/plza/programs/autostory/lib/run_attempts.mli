@@ -29,8 +29,12 @@ type failure = {
       (** Another attempt from the same screen fails the same way. *)
   off_start : bool;  (** The console was not at the checkpoint's start. *)
 }
+(** A failed attempt. *)
 
-type outcome = Passed | Failed of failure
+(** How a run, or one attempt, ended. *)
+type outcome =
+  | Passed  (** The checkpoint's events all passed. *)
+  | Failed of failure  (** Where and why it failed. *)
 
 val off_start : Engine_run.Failure.cause -> bool
 (** A start check's [chain_off_start], or 03.08's [rocks_not_left] (the catch
@@ -40,7 +44,7 @@ val of_cause : at:string -> Engine_run.Failure.cause -> outcome
 (** A failure at [at] for this cause (["code: detail"]), off its start by
     {!off_start}. *)
 
-val of_failure : Plza_checkpoints.Failure.t -> outcome
+val of_failure : Plza_engine.Failure.t -> outcome
 (** The runner's failure at ["#<n> <event>"], off its start when its handler's
     cause is (an action's own start check, such as 03.08's rocks). *)
 

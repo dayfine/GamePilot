@@ -9,5 +9,7 @@
     s up the ladder. [ladder_not_found] when no step showed the prompt. *)
 
 type game_steps = Talk_prompt.game_steps
+(** What the climb reads and does: a prompt's. *)
 
 val run : game_steps -> (unit, Engine_run.Failure.cause) result
+(** Up the ladder, as above. *)

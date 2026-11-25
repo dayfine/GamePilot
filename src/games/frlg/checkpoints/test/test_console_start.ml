@@ -4,7 +4,7 @@
    Glitch chain needs in the party (Party_room). Plans are 01-celadon-setup..08-activate-and-verify. *)
 
 open Frlg_checkpoints
-module P = Pokemon_checkpoints.Postcondition_check
+module P = Pokemon_engine.Postcondition_check
 module F = Frlg_readers.Start_frame
 
 let plan id =
@@ -44,7 +44,7 @@ let frame ?(changed = 0) () =
   | Ok f -> f
   | Error e -> failwith e
 
-let party l = Some (Pokemon_checkpoints.Postconditions.Party_in_order l)
+let party l = Some (Pokemon_engine.Postconditions.Party_in_order l)
 let read l = Some (List.map Option.some l)
 
 let start_check expected observed =
@@ -109,8 +109,8 @@ let observed ?party ?money ?(items = []) () =
     items;
   }
 
-let preflight id before read =
-  let rows = Preflight.compare (needs id before) read in
+let rows_text needs read =
+  let rows = Preflight.compare needs read in
   String.concat " | "
     (List.map
        (fun (r : Preflight.row) ->
@@ -122,21 +122,26 @@ let preflight id before read =
        rows)
   ^ if Preflight.passed rows then " => go" else " => stop"
 
+let preflight id before read = rows_text (needs id before) read
 let same = Some { F.tiles = 150; changed = 3 }
 
-(* The pre-flight's row for 02-trade-farfetchd's Cut user. *)
+(* The Trainer Card's front with the first [n] badges and no star. *)
+let badges n : Frlg_readers.Trainer_card_front.t option =
+  Some { badges = List.init 8 (fun i -> i < n); stars = 0 }
+
 let summary slot species moves : Room_policy.member =
   { slot; species; level = Some 30; moves = Some moves }
 
+(* The pre-flight's row for 02-trade-farfetchd's Cut user. *)
 let cut_row read =
   let before =
     Some
-      (Pokemon_checkpoints.Postconditions.stated
+      (Pokemon_engine.Postconditions.stated
          (plan "01-celadon-setup").postconditions)
   in
   Preflight.compare (needs "02-trade-farfetchd" before) read
   |> List.filter_map (fun (r : Preflight.row) ->
-         if String.ends_with ~suffix:"(cut_tree)" r.need then
+         if String.starts_with ~prefix:"a member knows cut" r.need then
            Some
              (Printf.sprintf "%s: %s: %s" r.need r.read
                 (match r.verdict with
@@ -145,6 +150,15 @@ let cut_row read =
                 | Not_read -> "NOT READ"))
          else None)
   |> String.concat " | "
+
+(* Each species' moves, for the Fly row: Pidgey knows Fly. *)
+let members species =
+  Some
+    (List.mapi
+       (fun i s ->
+         summary (i + 1) s
+           (if s = "pidgey" then [ "fly"; "gust" ] else [ "surf" ]))
+       species)
 
 let preflight_cases =
   [
@@ -156,38 +170,48 @@ let preflight_cases =
           {
             observed = observed ~party:[ "blastoise"; "pidgey" ] ~money:25014 ();
             place = same;
-            card = None;
-            members = None;
+            card = badges 8;
+            members = members [ "blastoise"; "pidgey" ];
           })
-      "pidgey in the party (fly): blastoise, pidgey: ok | money at least ¥4100 \
-       (mart, buy_coins): ¥25014: ok | at the start, CeladonCity: 3 of 150 \
-       tiles changed: ok => go";
-    case "preflight 01-celadon-setup: no Fly user and too little money stop"
+      "a member knows fly (fly): pidgey knows fly: ok | the thunder badge \
+       (fly): 8 badges (boulder, cascade, thunder, rainbow, soul, marsh, \
+       volcano, earth), no star: ok | money at least ¥4100 (mart, buy_coins): \
+       ¥25014: ok | at the start, anywhere outdoors where Fly works: not read: \
+       the first Fly checks it: ok => go";
+    case
+      "preflight 01-celadon-setup: no Fly user, no Thunder Badge and too \
+       little money stop"
       (fun () ->
         preflight "01-celadon-setup" None
           {
             observed = observed ~party:[ "blastoise" ] ~money:4000 ();
             place = same;
-            card = None;
-            members = None;
+            card = badges 2;
+            members = members [ "blastoise" ];
           })
-      "pidgey in the party (fly): blastoise: MISMATCH | money at least ¥4100 \
-       (mart, buy_coins): ¥4000: MISMATCH | at the start, CeladonCity: 3 of \
-       150 tiles changed: ok => stop";
+      "a member knows fly (fly): no member knows fly: MISMATCH | the thunder \
+       badge (fly): 2 badges (boulder, cascade), no star; missing thunder: \
+       MISMATCH | money at least ¥4100 (mart, buy_coins): ¥4000: MISMATCH | at \
+       the start, anywhere outdoors where Fly works: not read: the first Fly \
+       checks it: ok => stop";
     case
-      "preflight 01-celadon-setup: no kept frame: the place is not read, which \
-       stops"
+      "preflight 02-trade-farfetchd: no kept frame: the place is not read, \
+       which stops"
       (fun () ->
-        preflight "01-celadon-setup" None
+        Preflight.compare
+          (needs "02-trade-farfetchd" None)
           {
-            observed = observed ~party:[ "pidgey" ] ~money:25014 ();
+            observed = observed ~party:[ "rattata" ] ();
             place = None;
             card = None;
             members = None;
-          })
-      "pidgey in the party (fly): pidgey: ok | money at least ¥4100 (mart, \
-       buy_coins): ¥25014: ok | at the start, CeladonCity: no kept start frame \
-       to compare: NOT READ => stop";
+          }
+        |> List.filter_map (fun (r : Preflight.row) ->
+               if String.starts_with ~prefix:"at the start" r.need then
+                 Some (r.need ^ ": " ^ r.read)
+               else None)
+        |> String.concat " | ")
+      "at the start, CeladonCity: no kept start frame to compare";
     case
       "preflight tt-01, console B: the picked-up Rare Candy is duplicated; its \
        Retro Mail and Super Repel come from su-01"
@@ -201,14 +225,16 @@ let preflight_cases =
                 ~items:[ ("super-repel", 2); ("retro-mail", 100) ]
                 ();
             place = same;
-            card = None;
-            members = None;
+            card = badges 8;
+            members = members [ "mr-mime"; "blastoise"; "pidgey" ];
           })
-      "pidgey in the party (fly): mr-mime, blastoise, pidgey: ok | mr-mime in \
-       the party (give_bag_item): mr-mime, blastoise, pidgey: ok | super-repel \
-       at least x1 (use_item): super-repel x2: ok | retro-mail at least x99 \
-       (duplicate_item): retro-mail x100: ok | at the start, \
-       CeladonCity_DepartmentStore_1F: 3 of 150 tiles changed: ok => go";
+      "mr-mime in the party (give_bag_item): mr-mime, blastoise, pidgey: ok | \
+       a member knows fly (fly): pidgey knows fly: ok | the thunder badge \
+       (fly): 8 badges (boulder, cascade, thunder, rainbow, soul, marsh, \
+       volcano, earth), no star: ok | super-repel at least x1 (use_item): \
+       super-repel x2: ok | retro-mail at least x99 (duplicate_item): \
+       retro-mail x100: ok | at the start, anywhere outdoors where Fly works: \
+       not read: the first Fly checks it: ok => go";
     case "preflight 02-trade-farfetchd, mGBA: some member knows Cut (Rattata)"
       (fun () ->
         cut_row
@@ -250,12 +276,30 @@ let preflight_cases =
           })
       "a member knows cut (cut_tree): no member knows cut: MISMATCH";
     case
+      "preflight 02-trade-farfetchd: Cut outside battle needs the Cascade Badge"
+      (fun () ->
+        Preflight.compare
+          (needs "02-trade-farfetchd" None)
+          {
+            observed = observed ~party:[ "rattata" ] ();
+            place = same;
+            card = badges 1;
+            members = None;
+          }
+        |> List.filter_map (fun (r : Preflight.row) ->
+               if String.ends_with ~suffix:"badge (cut_tree)" r.need then
+                 Some (r.need ^ ": " ^ r.read)
+               else None)
+        |> String.concat " | ")
+      "the cascade badge (cut_tree): 1 badge (boulder), no star; missing \
+       cascade";
+    case
       "preflight 03-trade-mr-mime: what 02-trade-farfetchd promised, exactly \
        (its money spent is no start need)"
       (fun () ->
         let before =
           Some
-            (Pokemon_checkpoints.Postconditions.stated
+            (Pokemon_engine.Postconditions.stated
                (plan "02-trade-farfetchd").postconditions)
         in
         String.concat "; "
@@ -269,8 +313,9 @@ let preflight_cases =
                   members = None;
                   card = None;
                 })))
-      "party includes blastoise, pidgey, abra, farfetchd; pidgey in the party \
-       (fly); abra in the party (ingame_trade); a member knows cut (cut_tree); \
+      "party includes blastoise, abra, farfetchd; abra in the party \
+       (ingame_trade); a member knows fly (fly); a member knows cut \
+       (cut_tree); the thunder badge (fly); the cascade badge (cut_tree); \
        money at least ¥3550 (mart); at the start, VermilionCity";
     case
       "preflight 04-grind-farfetchd: 03-trade-mr-mime's Revives and Escape \
@@ -279,7 +324,7 @@ let preflight_cases =
       (fun () ->
         let before =
           Some
-            (Pokemon_checkpoints.Postconditions.stated
+            (Pokemon_engine.Postconditions.stated
                (plan "03-trade-mr-mime").postconditions)
         in
         String.concat "; "
@@ -293,9 +338,9 @@ let preflight_cases =
                   members = None;
                   card = None;
                 })))
-      "party includes blastoise, pidgey, mr-mime, farfetchd; farfetchd in the \
-       party (grind); blastoise in the party (grind); pidgey in the party \
-       (fly); escape-rope at least x1 (use_item); at the start, \
+      "party includes blastoise, mr-mime, farfetchd; farfetchd in the party \
+       (grind); blastoise in the party (grind); a member knows fly (fly); the \
+       thunder badge (fly); escape-rope at least x1 (use_item); at the start, \
        LavenderTown_PokemonCenter_1F";
     case
       "preflight 05-grind-mr-mime (a grind round, resumed from any round's \
@@ -304,7 +349,7 @@ let preflight_cases =
       (fun () ->
         let before =
           Some
-            (Pokemon_checkpoints.Postconditions.stated
+            (Pokemon_engine.Postconditions.stated
                (plan "04-grind-farfetchd").postconditions)
         in
         String.concat "; "
@@ -318,8 +363,8 @@ let preflight_cases =
                   members = None;
                   card = None;
                 })))
-      "party includes blastoise, pidgey, mr-mime, farfetchd; mr-mime in the \
-       party (grind); blastoise in the party (grind); at the start, \
+      "party includes blastoise, mr-mime, farfetchd; mr-mime in the party \
+       (grind); blastoise in the party (grind); at the start, \
        IndigoPlateau_PokemonCenter_1F";
     case
       "preflight 07-glitch-prep: the Leppa Berry it picks up on Route 8 is no \
@@ -327,7 +372,7 @@ let preflight_cases =
       (fun () ->
         let before =
           Some
-            (Pokemon_checkpoints.Postconditions.stated
+            (Pokemon_engine.Postconditions.stated
                (plan "06-grind-return").postconditions)
         in
         String.concat "; "
@@ -341,11 +386,12 @@ let preflight_cases =
                   members = None;
                   card = None;
                 })))
-      "party includes blastoise, pidgey, mr-mime, farfetchd; blastoise in the \
-       party (party_swap); pidgey in the party (fly); farfetchd in the party \
-       (party_swap); mr-mime in the party (party_swap); a member knows cut \
-       (cut_tree); money at least ¥2300 (mart); retro-mail at least x1 \
-       (give_bag_item); at the start, LavenderTown";
+      "party includes blastoise, mr-mime, farfetchd; blastoise in the party \
+       (party_swap); farfetchd in the party (party_swap); mr-mime in the party \
+       (party_swap); a member knows cut (cut_tree); a member knows fly (fly); \
+       the cascade badge (cut_tree); the thunder badge (fly); money at least \
+       ¥2300 (mart); retro-mail at least x1 (give_bag_item); at the start, \
+       LavenderTown";
   ]
 
 (* {1 Room in the party} *)
@@ -407,7 +453,7 @@ let room_cases =
       "abra 01-celadon-setup, spearow 02-trade-farfetchd; 2 free";
     case "room: the members the plans use or promise"
       (fun () -> String.concat ", " need.used)
-      "blastoise, pidgey";
+      "blastoise";
     case
       "room: console B's full party: the lowest level that knows no field move \
        and is not used, twice"
@@ -423,9 +469,9 @@ let room_cases =
              (fun (m : Party_room.member) -> { m with moves = None })
              console_b))
       "stop: 2 to deposit, 0 may go; kept: blastoise: the plans use it; eevee: \
-       its moves did not read; pidgey: the plans use it; oddish: its moves did \
-       not read; lapras: its moves did not read; magikarp: its moves did not \
-       read";
+       its moves did not read; pidgey: its moves did not read; oddish: its \
+       moves did not read; lapras: its moves did not read; magikarp: its moves \
+       did not read";
   ]
 
 let room_row party =
@@ -451,15 +497,97 @@ let room_row_cases =
       (fun () -> room_row names)
       "2 free party slots (abra 01-celadon-setup, spearow 02-trade-farfetchd): \
        0 free; 2 to deposit, 0 may go; kept: blastoise: the plans use it; \
-       eevee: its moves did not read; pidgey: the plans use it; oddish: its \
-       moves did not read; lapras: its moves did not read; magikarp: its moves \
-       did not read: MISMATCH";
+       eevee: its moves did not read; pidgey: its moves did not read; oddish: \
+       its moves did not read; lapras: its moves did not read; magikarp: its \
+       moves did not read: MISMATCH";
     case "preflight room: four members: ok"
       (fun () -> room_row (List.filteri (fun i _ -> i < 4) names))
       "2 free party slots (abra 01-celadon-setup, spearow 02-trade-farfetchd): \
        2 free: ok";
   ]
 
+(* A plan that stores a member at a PC, by these args. *)
+let deposit_plan_of args =
+  let json =
+    Printf.sprintf
+      {|{"format": "gamepilot-checkpoint/1", "game": "frlg",
+       "execution": {"menu": "full"},
+       "checkpoint": {"id": "deposit", "title": "Store a member",
+         "events": [{"id": "deposit", "kind": "game_action",
+           "action": "pc_deposit", "args": %s,
+           "why": "Room for the forest's catches."}]}}|}
+      args
+  in
+  match Plan_file.decode ~source:"deposit" (Yojson.Safe.from_string json) with
+  | Ok p -> p
+  | Error e -> failwith e
+
+(* Farfetch'd stored at Pewter's PC, as 09-viridian-forest's deposit did (mGBA,
+   2026-11-25), with Farfetch'd holding Retro Mail. *)
+let farfetchd_deposit_plan = deposit_plan_of {|{"species": ["farfetchd"]}|}
+
+(* The member holding no Mail stored, as wild_rng's 01-route10-grass does. *)
+let no_mail_deposit_plan = deposit_plan_of {|{"member": "holding_no_mail"}|}
+
+let deposit_preflight ?(plan = farfetchd_deposit_plan) marks =
+  let read : Preflight.read =
+    {
+      observed =
+        {
+          (observed ~party:[ "blastoise"; "mr-mime"; "farfetchd" ] ()) with
+          marks;
+        };
+      place = None;
+      members = None;
+      card = None;
+    }
+  in
+  match Preflight.needs stocks ~before:None plan with
+  | Error e -> "error: " ^ e
+  | Ok needs -> rows_text needs read
+
+let deposit_cases =
+  [
+    case "preflight pc_deposit: the member stored holds Retro Mail: stop"
+      (fun () -> deposit_preflight (Some [ "held_item"; "none"; "mail" ]))
+      "farfetchd in the party (pc_deposit): blastoise, mr-mime, farfetchd: ok \
+       | farfetchd holds no Mail (pc_deposit): farfetchd in slot 3: mail: \
+       MISMATCH => stop";
+    case "preflight pc_deposit: it holds an item, not Mail: go"
+      (fun () -> deposit_preflight (Some [ "mail"; "none"; "held_item" ]))
+      "farfetchd in the party (pc_deposit): blastoise, mr-mime, farfetchd: ok \
+       | farfetchd holds no Mail (pc_deposit): farfetchd in slot 3: held_item: \
+       ok => go";
+    case "preflight pc_deposit: the marks not read: stop"
+      (fun () -> deposit_preflight None)
+      "farfetchd in the party (pc_deposit): blastoise, mr-mime, farfetchd: ok \
+       | farfetchd holds no Mail (pc_deposit): not read: NOT READ => stop";
+    case "preflight pc_deposit: the marks are read for it"
+      (fun () ->
+        match Preflight.needs stocks ~before:None farfetchd_deposit_plan with
+        | Error e -> "error: " ^ e
+        | Ok needs ->
+            Option.fold ~none:"none"
+              ~some:(fun _ -> "read")
+              (Preflight.to_read needs).marks)
+      "read";
+    case "preflight pc_deposit by role: a member holds no Mail: go"
+      (fun () ->
+        deposit_preflight ~plan:no_mail_deposit_plan
+          (Some [ "held_item"; "mail"; "mail" ]))
+      "a member holds no Mail (pc_deposit): slot 1 holds no Mail: ok => go";
+    case "preflight pc_deposit by role: every member holds Mail: stop"
+      (fun () ->
+        deposit_preflight ~plan:no_mail_deposit_plan
+          (Some [ "mail"; "mail"; "mail" ]))
+      "a member holds no Mail (pc_deposit): every member holds Mail: MISMATCH \
+       => stop";
+    case "preflight pc_deposit by role: no species is used"
+      (fun () ->
+        String.concat ", " (Party_room.chain_need [ no_mail_deposit_plan ]).used)
+      "";
+  ]
+
 let () =
   Table_test.run "console start"
-    (start_cases @ preflight_cases @ room_cases @ room_row_cases)
+    (start_cases @ preflight_cases @ deposit_cases @ room_cases @ room_row_cases)

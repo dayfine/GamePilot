@@ -1,3 +1,0 @@
-(test
- (name test_checkpoints_flags)
- (libraries gamepilot.table_test gamepilot.checkpoints_flags))

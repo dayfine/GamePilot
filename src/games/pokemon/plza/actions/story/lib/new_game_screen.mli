@@ -17,6 +17,7 @@ type t = {
   confirm_choices : bool;
       (** Confirm Choices' highlight reads ({!Plza_readers.Confirm_choices}). *)
 }
+(** What one frame shows, each reader's answer. *)
 
 val nothing : t
 (** A screen on which nothing reads. *)

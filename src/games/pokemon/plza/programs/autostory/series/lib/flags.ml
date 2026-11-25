@@ -1,10 +1,10 @@
 module Options = Plza_autostory.New_game_options
 
-type t = Options.t Checkpoints_flags.flags
+type t = Options.t Run_flags.flags
 
 let ( let* ) = Result.bind
 
-let option_keys : Options.t Checkpoints_flags.option_keys =
+let option_keys : Options.t Run_flags.option_keys =
   {
     unset = Options.none;
     keys =
@@ -16,7 +16,7 @@ let option_keys : Options.t Checkpoints_flags.option_keys =
   }
 
 (* No flag of PLZA's own: its options ride in --options. *)
-let no_game_flags : unit Checkpoints_flags.game_flags =
+let no_game_flags : unit Run_flags.game_flags =
   {
     game_defaults = ();
     game_switch = (fun () _ -> None);
@@ -25,17 +25,14 @@ let no_game_flags : unit Checkpoints_flags.game_flags =
 
 let parse args =
   let* f =
-    Checkpoints_flags.parse no_game_flags
-      (Checkpoints_flags.defaults no_game_flags)
-      args
+    Run_flags.parse no_game_flags (Run_flags.defaults no_game_flags) args
   in
-  let* options = Checkpoints_flags.read_options option_keys f.options in
+  let* options = Run_flags.read_options option_keys f.options in
   let* () = Options.check options in
   Ok { f with game = options }
 
 let usage =
-  "  gamepilot checkpoints --program plza.autostory --from ID --to ID --mode \
-   testing\n\
+  "  gamepilot run plza.autostory --from ID --to ID --mode testing\n\
   \      --backend switch --serial PORT --capture DEVICE [--runs N] [--watch]\n"
 
 let takes (f : t) =

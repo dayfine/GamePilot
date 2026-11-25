@@ -4,7 +4,7 @@
     SerialPrograms/Source/CommonFramework/Panels/PanelDescriptor.h: category,
     display name, description, doc link). Unlike the fork, nothing registers
     itself at start-up: {!all} is a plain list, and a new program is one more
-    entry in it (docs/programs/README.md).
+    entry in it (docs/guide/README.md, "Adding a program").
 
     What a program needs of the save (free party slots, field moves) is not
     declared here: it is derived from its checkpoint plans, as the pre-flight
@@ -19,8 +19,8 @@ type viewport = Nso_gba | Native
 
 (** The rules a program's checkpoint plans are written over, which pick the
     library that loads and runs them. [Pokemon_grid]: the Pokémon grid rules
-    (Pokemon_checkpoints, the FRLG runner); [Plza_story]: PLZA's story rules
-    (Plza_checkpoints, Plza_series). *)
+    (Pokemon_engine, the FRLG runner); [Plza_story]: PLZA's story rules
+    (Plza_engine, Plza_series). *)
 type rules = Pokemon_grid | Plza_story
 
 type switch_home = {

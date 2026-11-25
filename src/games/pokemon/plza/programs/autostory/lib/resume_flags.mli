@@ -28,3 +28,4 @@ val known : string -> (unit, string) result
     Checked when the plan loads. *)
 
 val holds : Plza_story.Steps.game_steps -> string -> bool
+(** The flag holds on the screen now, read as above. *)

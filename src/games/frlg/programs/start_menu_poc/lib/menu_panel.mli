@@ -1,6 +1,7 @@
 (** Reader: is FireRed's Start menu open? The start menu PoC's own reader, kept
     as it was recorded: its wire logs subscribe this probe, so a replay needs it
-    unchanged ([Frlg_readers.Start_menu] is the fork's detector).
+    unchanged ([Frlg_readers.Start_menu] is the fork's detector,
+    Inference/Menus/PokemonFRLG_StartMenuDetector.cpp).
 
     The menu is a white panel on the right of the 240x160 screen (about x
     0.70-0.99, y 0.02-0.62) with black text. {!probe} watches the blank strip

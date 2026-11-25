@@ -23,6 +23,7 @@ type templates = {
   slash : string;  (** the counter's "/300", PNG *)
   digits : (int * string) list;  (** the counter's digits that have one, PNG *)
 }
+(** The PNG templates a run uploads to find its way. *)
 
 (** What to do on the boxes. *)
 type mode =
@@ -30,6 +31,7 @@ type mode =
       (** read the box number and HOME's box, log them, and stop there: nothing
           moved, HOME left open on the boxes *)
   | Bank of Box_moves.t list
+      (** make each move in order, then save and close HOME *)
 
 val run :
   log:(string -> unit) ->
@@ -37,3 +39,6 @@ val run :
   templates ->
   mode ->
   (unit, string) result
+(** From the Switch's HOME menu: opens Pokémon HOME on the game, then the
+    [mode]'s work on the boxes; an error on the first check that fails, or when
+    [picture] is not the native frame. *)

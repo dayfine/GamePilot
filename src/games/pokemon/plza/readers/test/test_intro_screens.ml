@@ -11,13 +11,13 @@
    and PLZA fourth, as the first 01.00a run found it on 2026-11-25) does not. A frame reads as
    everything it shows, in one line. Every frame also reads the same with
    its colours shifted as another capture card might show them
-   (fixtures/intro.shifted.probes.jsonl, one shift per frame). *)
+   (fixtures/intro/intro.shifted.probes.jsonl, one shift per frame). *)
 
 open Plza_readers
 module T = Switch_home.Keyboard_typing
 
-let frames = Wire.read_image_probes "intro.probes.jsonl"
-let shifted = Wire.read_image_probes "intro.shifted.probes.jsonl"
+let frames = Wire.read_image_probes "fixtures/intro/intro.probes.jsonl"
+let shifted = Wire.read_image_probes "fixtures/intro/intro.shifted.probes.jsonl"
 
 (* A typed "1" adds about 110 white pixels; an empty field has none. *)
 let has_text = 20

@@ -53,15 +53,43 @@ jobs:
           echo "OpenCV_DIR=C:/tools/opencv/build" >> "$GITHUB_ENV"
           echo "C:\\tools\\opencv\\build\\x64\\vc16\\bin" >> "$GITHUB_PATH"
 
+      # Compiler cache: ccache on Linux/macOS, sccache with MSVC on Windows. The key
+      # holds the Arduino-Source pin, so an unchanged pin restores a warm cache.
+      - name: Cache key
+        id: cache-key
+        shell: bash
+        run: |
+          case "$RUNNER_OS" in
+            Linux) compiler=gcc ;;
+            macOS) compiler=appleclang ;;
+            Windows) compiler=msvc ;;
+          esac
+          sha=$(git rev-parse HEAD:third_party/Arduino-Source)
+          echo "key=daemon-${RUNNER_OS}-${RUNNER_ARCH}-${compiler}-${sha}" >> "$GITHUB_OUTPUT"
+      - uses: hendrikmuhs/ccache-action@v1.2.26
+        with:
+          key: ${{ steps.cache-key.outputs.key }}
+          variant: ${{ runner.os == 'Windows' && 'sccache' || 'ccache' }}
+          max-size: 1G
+      # MSVC through Ninja: the Visual Studio generator ignores compiler launchers.
+      - uses: ilammy/msvc-dev-cmd@v1.13.0
+        if: runner.os == 'Windows'
+
       - name: Configure
         shell: bash
         run: |
           if [ "$RUNNER_OS" = "Windows" ]; then
-            cmake -S daemon -B daemon/build
+            cmake -S daemon -B daemon/build -G Ninja -DCMAKE_BUILD_TYPE=Release \
+              -DCMAKE_C_COMPILER=cl -DCMAKE_CXX_COMPILER=cl \
+              -DCMAKE_C_COMPILER_LAUNCHER=sccache -DCMAKE_CXX_COMPILER_LAUNCHER=sccache
           else
             cmake -S daemon -B daemon/build -G Ninja -DCMAKE_BUILD_TYPE=Release
           fi
       - name: Build
         run: cmake --build daemon/build --config Release --parallel 4
+      - name: Compiler cache stats
+        shell: bash
+        run: |
+          if [ "$RUNNER_OS" = "Windows" ]; then sccache --show-stats; else ccache --show-stats; fi
       - name: Test
         run: ctest --test-dir daemon/build -C Release --output-on-failure

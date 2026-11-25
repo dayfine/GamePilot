@@ -8,10 +8,10 @@
 
 (** A move's effectiveness symbol under ZL, weakest first. *)
 type effectiveness =
-  | No_effect
-  | Not_very_effective
-  | Effective
-  | Super_effective
+  | No_effect  (** The crossed-out symbol. *)
+  | Not_very_effective  (** One down arrow. *)
+  | Effective  (** One up arrow. *)
+  | Super_effective  (** Two up arrows. *)
 
 type map_point = { x : float; y : float }
 (** A point on the full map, which is the frame scaled to 800 x 450, as the
@@ -68,6 +68,7 @@ type t = {
   confirm_row : int option;
       (** On the new game's Confirm Choices: the highlighted row. *)
 }
+(** What one read of the screen shows. *)
 
 val empty : at_ms:float -> t
 (** A read with nothing on it. *)

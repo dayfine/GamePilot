@@ -13,15 +13,15 @@
     grass tiles. *)
 
 val reckoned :
-  Pokemon_checkpoints.Pose.observed option -> Pokemon_checkpoints.Pose.observed
+  Pokemon_engine.Pose.observed option -> Pokemon_engine.Pose.observed
 (** The player's reckoned pose; fails as [position_unknown] without one. *)
 
 val find :
   log:(string -> unit) ->
   pace:Grid_geometry.Direction.t ->
   patch:Grid_geometry.Tile_pos.t ->
-  stands:(Pokemon_checkpoints.Pose.observed -> unit) ->
-  Pokemon_checkpoints.Pose.observed ->
+  stands:(Pokemon_engine.Pose.observed -> unit) ->
+  Pokemon_engine.Pose.observed ->
   unit
 (** From where the player is reckoned to stand, which must be the patch or one
     tile [pace] from it (as the last search left them; else it fails as
@@ -31,7 +31,7 @@ val find :
 
 val back_on_patch :
   pace:Grid_geometry.Direction.t ->
-  Pokemon_checkpoints.Pose.observed ->
-  Pokemon_checkpoints.Pose.grid
+  Pokemon_engine.Pose.observed ->
+  Pokemon_engine.Pose.grid
 (** The patch the player started on, facing [pace]: where an action that paced
     from it ends. *)

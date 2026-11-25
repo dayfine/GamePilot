@@ -1,7 +1,6 @@
 (** The Pokémon grid rules' own flags, which the generic series flags carry
-    (Checkpoints_flags: [series Checkpoints_flags.flags]):
-    [gamepilot checkpoint]'s, which a series' runs share, and the series'
-    --make-room. *)
+    (Run_flags: [series Run_flags.flags]): [gamepilot run --plan]'s, which a
+    series' runs share, and the series' --make-room. *)
 
 type checkpoint_flags = {
   state : string option;
@@ -13,7 +12,7 @@ type checkpoint_flags = {
   end_check_only : bool;
   grind_cap : int option;
 }
-(** [gamepilot checkpoint PLAN.json]'s flags. *)
+(** [gamepilot run --plan PLAN.json]'s flags. *)
 
 val checkpoint_defaults : checkpoint_flags
 (** No state, log or party; the program's default port; running. *)
@@ -23,18 +22,18 @@ type series = { common : checkpoint_flags; make_room : string option }
     --grind-battles for its runs ([common]; their port is the series' --port),
     and --make-room MAP. *)
 
-type flags = series Checkpoints_flags.flags
-(** [gamepilot checkpoints]' flags over the Pokémon grid rules. *)
+type flags = series Run_flags.flags
+(** [gamepilot run]'s flags over the Pokémon grid rules. *)
 
-val series : series Checkpoints_flags.game_flags
+val series : series Run_flags.game_flags
 (** The hooks that parse a series' Pokémon flags. *)
 
 val defaults : flags
-(** {!Checkpoints_flags.defaults} with no Pokémon flag given. *)
+(** {!Run_flags.defaults} with no Pokémon flag given. *)
 
 val parse : flags -> string list -> (flags, string) result
-(** {!Checkpoints_flags.parse} with the Pokémon flags; [Error] on any
-    [--options]: no grid program takes one. *)
+(** {!Run_flags.parse} with the Pokémon flags; [Error] on any [--options]: no
+    grid program takes one. *)
 
 val usage : string
-(** [gamepilot checkpoints]' usage lines. *)
+(** [gamepilot run]'s usage lines. *)

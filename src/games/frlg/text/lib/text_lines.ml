@@ -240,3 +240,29 @@ let pc_data_level =
 
 let pc_message =
   { id = "pc_message"; left = 88; indent = 0; glyph_top = 138; width = 140 }
+
+(* The Pokédex's numerical list: window at tile (2, 2), rows 14 apart from
+   y 2, the names at x 56 and the No symbol at x 12, its digits 9 right. *)
+let pokedex_list_rows = 9
+let pokedex_list_first_top = 18
+let pokedex_list_pitch = 14
+
+let pokedex_list_row_top row =
+  pokedex_list_first_top + (pokedex_list_pitch * row)
+
+let pokedex_list_name row =
+  {
+    id = Printf.sprintf "pokedex_name.%d" row;
+    left = 72;
+    indent = 2;
+    glyph_top = pokedex_list_row_top row;
+    width = 62;
+  }
+
+let pokedex_number_left = 37
+
+let pokedex_list_number_digit row k =
+  small_digit_cell
+    (Printf.sprintf "pokedex_number.%d.%d" row k)
+    ~left:(pokedex_number_left + (small_digit_width * k))
+    ~glyph_top:(pokedex_list_row_top row)

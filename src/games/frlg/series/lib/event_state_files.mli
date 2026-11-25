@@ -1,5 +1,5 @@
 (** The save states an mGBA run keeps at each event's start, on disk
-    (Pokemon_checkpoints.Event_states): saved through the daemon, one per event
+    (Pokemon_engine.Event_snapshot): saved through the daemon, one per event
     (the newest run's), and found again for a partial run (--from-event). *)
 
 val keep :
@@ -14,7 +14,7 @@ val keep :
 val partial :
   states:string ->
   checkpoint:string ->
-  Pokemon_checkpoints.Plan.checkpoint ->
+  Pokemon_engine.Plan.checkpoint ->
   string * string option ->
   (string * Frlg_checkpoints.Checkpoint_run.from_event, string) result
 (** [(from_event, to_event)]'s first event's kept state and the partial run from

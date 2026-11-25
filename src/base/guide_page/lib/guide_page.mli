@@ -33,5 +33,11 @@ val start_marker : string -> string option -> string
 
 val end_marker : string
 
+val long_paragraphs : max_lines:int -> string -> (int * int) list
+(** The hand-written paragraphs longer than [max_lines] lines, as each one's
+    first line number and length. A list item counts as a paragraph of its own;
+    blocks, code (fenced or indented), headings, tables and comments are not
+    paragraphs. *)
+
 val cell : string -> string
 (** Text as a Markdown table cell: every pipe escaped, so none ends the cell. *)

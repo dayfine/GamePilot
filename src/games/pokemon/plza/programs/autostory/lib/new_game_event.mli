@@ -6,7 +6,7 @@
 
 val choices :
   options:New_game_options.t ->
-  Plza_checkpoints.Plan.event ->
+  Plza_engine.Plan.event ->
   Json_field.obj ->
   (Plza_story.New_game_choices.t, Engine_run.Failure.cause) result
 (** The event's args, then the options over them; [Error] [bad_args] (repeats)
@@ -14,7 +14,7 @@ val choices :
 
 val series_choices :
   options:New_game_options.t ->
-  Plza_checkpoints.Plan.checkpoint list ->
+  Plza_engine.Plan.checkpoint list ->
   (Plza_story.New_game_choices.t list, string) result
 (** The choices each [new_game] event of the checkpoints plays, in order;
     [Error] on a bad arg, on choices 01.00a refuses

@@ -1,10 +1,11 @@
 #!/bin/sh
-# Remakes fixtures/switch.probes.jsonl: every frame in images/switch (console
-# captures from the fork's CommandLineTests, jpg) and the fork's synthetic test
-# frames (draw_synthetic_frames.py), probed by the daemon's probe_images on the
-# native viewport with every PLZA reader's probes (write_probe_spec.exe, its
+# Remakes fixtures/<folder>.probes.jsonl for each image folder: every frame
+# in images/switch/<folder> (console captures from the fork's
+# CommandLineTests, jpg) or, for the folder synthetic, the fork's synthetic
+# test frames (draw_synthetic_frames.py), probed by the daemon's probe_images
+# on the native viewport with every PLZA reader's probes (write_probe_spec.exe, its
 # find templates copied from assets/templates beside the spec). Also
-# fixtures/switch.shifted.probes.jsonl: every frame again with its colors
+# fixtures/<folder>.shifted.probes.jsonl: every frame again with its colors
 # shifted as another capture card might show them, by
 # dev/reader_fixtures/shift_frame.py --one (one shift per frame, picked from
 # its name: brightness times 0.9 or 1.1, one channel plus or minus 12, or 10%
@@ -17,53 +18,77 @@
 # 80) where 720p fails too, and as captured where the daemon's blob_find_test
 # reads them at 1080p (arrival-to-ad's 0001, 0033 and 0040); the scaled frames' arrow bearings moved by up to 6
 # degrees (the fork's tolerance is 10), their expectations with them.
-# Also fixtures/switch.second.probes.jsonl: every frame again, probed by what
+# Also fixtures/<folder>.second.probes.jsonl: every frame again, probed by what
 # a two-frame read subscribes from what the frame shows (write_probe_spec.exe
 # --second): the party bars' tests made from its cards, the caught mark's box
-# above its plate. And fixtures/switch.shifted.second.probes.jsonl likewise
+# above its plate. And fixtures/<folder>.shifted.second.probes.jsonl likewise
 # for every shifted frame, from its own first read.
-# Also fixtures/gifts.probes.jsonl: every capture, and images/mystery-gift's
-# (console B's own, png), probed by the Mystery Gift steps' readers alone
-# (write_probe_spec.exe --gifts en, the gift name's template from
-# assets/gift-name-vivillon-en.png), and fixtures/gifts.shifted.probes.jsonl: the
-# main menu's frame and images/mystery-gift's, all nine shifts each. And
-# fixtures/gifts.fr.probes.jsonl: images/mystery-gift's frames and their nine
-# shifts each, the gift's name matched by its French template
+# Also, for the name gifts, fixtures/gifts/gifts.probes.jsonl: every capture in
+# images/switch, and images/mystery-gift's (console B's own, png), probed by the
+# Mystery Gift steps' readers alone (write_probe_spec.exe --gifts en, the gift
+# name's template from assets/gift-name-vivillon-en.png), and
+# fixtures/gifts/gifts.shifted.probes.jsonl: the main menu's frame and
+# images/mystery-gift's, all nine shifts each. And
+# fixtures/gifts/gifts.fr.probes.jsonl: images/mystery-gift's frames and their
+# nine shifts each, the gift's name matched by its French template
 # (assets/gift-name-vivillon-fr.png, --gifts fr).
-# Also fixtures/intro.probes.jsonl: images/new-game's frames (the fork's
-# AutoStoryNewGame/2026-11-15 captures, and home-*: console B's Switch HOME of
-# 2026-11-24 and -25, JPEG quality 80 at 1080p: at 640x360 the look picker's
-# corners and the keyboard's cursor no longer read) probed by the new game's
-# readers alone (write_probe_spec.exe --intro, PLZA's HOME title template
-# from assets/), and
-# fixtures/intro.shifted.probes.jsonl: each of them once shifted (--one).
+# Also, for the name intro, fixtures/intro/intro.probes.jsonl:
+# images/new-game's frames (the fork's AutoStoryNewGame/2026-11-15 captures,
+# and home-*: console B's Switch HOME of 2026-11-24 and -25, JPEG quality 80 at
+# 1080p: at 640x360 the look picker's corners and the keyboard's cursor no
+# longer read) probed by the new game's readers alone (write_probe_spec.exe
+# --intro, PLZA's HOME title template from assets/), and
+# fixtures/intro/intro.shifted.probes.jsonl: each of them once shifted (--one).
+# Both keep their own folder under fixtures/, as their frames are probed by
+# their own readers, not every reader's.
 # The Python steps need Pillow ($SHIFT_PYTHON, default python3; e.g.
 # "uv run --with pillow python3").
 #
-#   sh games/pokemon/plza/readers/test/regen_fixture.sh
+#   sh games/pokemon/plza/readers/test/regen_fixture.sh [FOLDER...]
 #
-# run from src/, with probe_images at $PROBE_IMAGES (default the repo's
+# remakes the named folders' four files (e.g. party-bar, synthetic; gifts and
+# intro their own), or with no FOLDER every folder's (dropping the files of
+# folders no longer there).
+# Run from src/, with probe_images at $PROBE_IMAGES (default the repo's
 # daemon/build/probe_images).
+
 set -eu
 HERE=$(cd "$(dirname "$0")" && pwd)
 SRC=$(cd "$HERE/../../../../.." && pwd)
 PROBE_IMAGES=${PROBE_IMAGES:-$SRC/../daemon/build/probe_images}
 SHIFT_PYTHON=${SHIFT_PYTHON:-python3}
 SHIFT_FRAME=$SRC/../dev/reader_fixtures/shift_frame.py
+FIXTURES=$HERE/fixtures
+if [ $# -eq 0 ]; then
+    set -- $(ls "$HERE/images/switch") synthetic gifts intro
+    rm -f "$FIXTURES"/*.probes.jsonl
+fi
+for folder in "$@"; do
+    case $folder in synthetic | gifts | intro) continue ;; esac
+    if [ ! -d "$HERE/images/switch/$folder" ]; then
+        echo "no image folder images/switch/$folder" >&2
+        exit 1
+    fi
+done
 work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT
-mkdir "$work/spec" "$work/frames" "$work/lossless" "$work/shifted"
+mkdir "$work/spec" "$work/frames" "$work/lossless" "$work/shifted" \
+    "$work/second"
 cp "$SRC/games/pokemon/plza/assets/templates/"*.png "$work/spec/"
 (cd "$SRC" && dune exec games/pokemon/plza/readers/test/write_probe_spec.exe) \
     >"$work/spec/probes.json"
 (cd "$SRC" && dune exec games/pokemon/plza/readers/test/write_probe_spec.exe \
     -- --no-minimap) >"$work/spec/shifted.probes.json"
-cp -R "$HERE/images/switch/." "$work/frames/"
-$SHIFT_PYTHON "$HERE/draw_synthetic_frames.py" "$work/frames"
-(cd "$work/frames" && "$PROBE_IMAGES" --spec "$work/spec/probes.json" \
-    --viewport native ./*/*.jpg ./*/*.png) >"$HERE/fixtures/switch.probes.jsonl"
+
+# Prints the folder's frames, ./<folder>/<frame>.<ext>, run in $work/frames.
+folder_frames() {
+    for f in "./$1"/*.jpg "./$1"/*.png; do
+        if [ -e "$f" ]; then echo "$f"; fi
+    done
+}
+
 # second_reads FIXTURE FRAMES OUT: each frame's second read, as FIXTURE's
-# first reads ask for it.
+# first reads ask for it, its frames under FRAMES.
 second_reads() {
     rm -rf "$work/second"
     mkdir "$work/second"
@@ -77,62 +102,102 @@ second_reads() {
             "$frame") >>"$3"
     done
 }
-second_reads "$HERE/fixtures/switch.probes.jsonl" "$work/frames" \
-    "$HERE/fixtures/switch.second.probes.jsonl"
-(cd "$work/frames" && $SHIFT_PYTHON -c '
+
+regen_folder() {
+    folder=$1
+    if [ "$folder" = synthetic ]; then
+        $SHIFT_PYTHON "$HERE/draw_synthetic_frames.py" "$work/frames"
+    else
+        cp -R "$HERE/images/switch/$folder" "$work/frames/$folder"
+    fi
+    frames=$(cd "$work/frames" && folder_frames "$folder")
+    (cd "$work/frames" && "$PROBE_IMAGES" --spec "$work/spec/probes.json" \
+        --viewport native $frames) >"$FIXTURES/$folder.probes.jsonl"
+    second_reads "$FIXTURES/$folder.probes.jsonl" "$work/frames" \
+        "$FIXTURES/$folder.second.probes.jsonl"
+    (cd "$work/frames" && $SHIFT_PYTHON -c '
 import os, sys
 from PIL import Image
 for path in sys.argv[2:]:
     out = os.path.join(sys.argv[1], os.path.splitext(path)[0] + ".png")
     os.makedirs(os.path.dirname(out), exist_ok=True)
     Image.open(path).convert("RGB").save(out)
-' "$work/lossless" ./*/*)
-(cd "$work/lossless" && $SHIFT_PYTHON "$SHIFT_FRAME" --one "$work/shifted" \
-    ./*/*.png)
-(cd "$work/shifted" && "$PROBE_IMAGES" --spec "$work/spec/shifted.probes.json" \
-    --viewport native ./*/*/*.png) >"$HERE/fixtures/switch.shifted.probes.jsonl"
-second_reads "$HERE/fixtures/switch.shifted.probes.jsonl" "$work/shifted" \
-    "$HERE/fixtures/switch.shifted.second.probes.jsonl"
-cp "$SRC/games/pokemon/plza/assets/"gift-name-vivillon-*.png "$work/spec/"
-(cd "$SRC" && dune exec games/pokemon/plza/readers/test/write_probe_spec.exe \
-    -- --gifts en) >"$work/spec/gifts.probes.json"
-(cd "$SRC" && dune exec games/pokemon/plza/readers/test/write_probe_spec.exe \
-    -- --gifts fr) >"$work/spec/gifts.fr.probes.json"
-mkdir "$work/frames/mystery-gift" "$work/gifts" "$work/gifts/tutorial-cards" \
-    "$work/gifts/mystery-gift" "$work/gifts_shifted"
-cp "$HERE/images/mystery-gift/"*.png "$work/frames/mystery-gift/"
-cp "$HERE/images/mystery-gift/"*.png "$work/gifts/mystery-gift/"
-cp "$work/lossless/tutorial-cards/it-menu-no-card.png" "$work/gifts/tutorial-cards/"
-(cd "$work/gifts" && $SHIFT_PYTHON "$SHIFT_FRAME" "$work/gifts_shifted" \
-    ./*/*.png)
-(cd "$work/frames" && "$PROBE_IMAGES" --spec "$work/spec/gifts.probes.json" \
-    --viewport native ./*/*.jpg ./mystery-gift/*.png) \
-    >"$HERE/fixtures/gifts.probes.jsonl"
-(cd "$work/gifts_shifted" && "$PROBE_IMAGES" \
-    --spec "$work/spec/gifts.probes.json" --viewport native ./*/*/*.png) \
-    >"$HERE/fixtures/gifts.shifted.probes.jsonl"
-(cd "$work/frames" && "$PROBE_IMAGES" --spec "$work/spec/gifts.fr.probes.json" \
-    --viewport native ./mystery-gift/*.png) >"$HERE/fixtures/gifts.fr.probes.jsonl"
-(cd "$work/gifts_shifted" && "$PROBE_IMAGES" \
-    --spec "$work/spec/gifts.fr.probes.json" --viewport native \
-    ./*/mystery-gift/*.png) >>"$HERE/fixtures/gifts.fr.probes.jsonl"
-mkdir "$work/intro" "$work/intro_lossless" "$work/intro_shifted"
-(cd "$SRC" && dune exec games/pokemon/plza/readers/test/write_probe_spec.exe \
-    -- --intro) >"$work/spec/intro.probes.json"
-cp "$SRC/games/pokemon/plza/assets/switch-home-title-legends-za.png" "$work/spec/"
-cp -R "$HERE/images/new-game" "$work/intro/"
-(cd "$work/intro" && "$PROBE_IMAGES" --spec "$work/spec/intro.probes.json" \
-    --viewport native ./new-game/*.jpg) >"$HERE/fixtures/intro.probes.jsonl"
-(cd "$work/intro" && $SHIFT_PYTHON -c '
+' "$work/lossless" $frames)
+    (cd "$work/lossless" && $SHIFT_PYTHON "$SHIFT_FRAME" --one "$work/shifted" \
+        "./$folder"/*.png)
+    (cd "$work/shifted" && "$PROBE_IMAGES" \
+        --spec "$work/spec/shifted.probes.json" --viewport native \
+        ./*/"$folder"/*.png) >"$FIXTURES/$folder.shifted.probes.jsonl"
+    second_reads "$FIXTURES/$folder.shifted.probes.jsonl" "$work/shifted" \
+        "$FIXTURES/$folder.shifted.second.probes.jsonl"
+}
+
+# Writes each of its frames, ./<folder>/<frame>.<ext> under the current
+# folder, as a png under OUT: a shift then adds no JPEG loss.
+to_png() {
+    out=$1
+    shift
+    $SHIFT_PYTHON -c '
 import os, sys
 from PIL import Image
 for path in sys.argv[2:]:
     out = os.path.join(sys.argv[1], os.path.splitext(path)[0] + ".png")
     os.makedirs(os.path.dirname(out), exist_ok=True)
     Image.open(path).convert("RGB").save(out)
-' "$work/intro_lossless" ./new-game/*.jpg)
-(cd "$work/intro_lossless" && $SHIFT_PYTHON "$SHIFT_FRAME" --one \
-    "$work/intro_shifted" ./new-game/*.png)
-(cd "$work/intro_shifted" && "$PROBE_IMAGES" \
-    --spec "$work/spec/intro.probes.json" --viewport native ./*/*/*.png) \
-    >"$HERE/fixtures/intro.shifted.probes.jsonl"
+' "$out" "$@"
+}
+
+regen_gifts() {
+    g=$work/gifts
+    mkdir -p "$g/frames" "$g/menu" "$g/lossless/mystery-gift" "$g/shifted" \
+        "$FIXTURES/gifts"
+    cp "$SRC/games/pokemon/plza/assets/"gift-name-vivillon-*.png "$work/spec/"
+    (cd "$SRC" && dune exec games/pokemon/plza/readers/test/write_probe_spec.exe \
+        -- --gifts en) >"$work/spec/gifts.probes.json"
+    (cd "$SRC" && dune exec games/pokemon/plza/readers/test/write_probe_spec.exe \
+        -- --gifts fr) >"$work/spec/gifts.fr.probes.json"
+    cp -R "$HERE/images/switch/." "$g/frames/"
+    cp -R "$HERE/images/mystery-gift" "$g/frames/"
+    cp "$HERE/images/mystery-gift/"*.png "$g/lossless/mystery-gift/"
+    cp -R "$HERE/images/switch/tutorial-cards" "$g/menu/"
+    (cd "$g/menu" && to_png "$g/lossless" ./tutorial-cards/it-menu-no-card.jpg)
+    (cd "$g/lossless" && $SHIFT_PYTHON "$SHIFT_FRAME" "$g/shifted" ./*/*.png)
+    (cd "$g/frames" && "$PROBE_IMAGES" --spec "$work/spec/gifts.probes.json" \
+        --viewport native ./*/*.jpg ./mystery-gift/*.png) \
+        >"$FIXTURES/gifts/gifts.probes.jsonl"
+    (cd "$g/shifted" && "$PROBE_IMAGES" \
+        --spec "$work/spec/gifts.probes.json" --viewport native ./*/*/*.png) \
+        >"$FIXTURES/gifts/gifts.shifted.probes.jsonl"
+    (cd "$g/frames" && "$PROBE_IMAGES" \
+        --spec "$work/spec/gifts.fr.probes.json" --viewport native \
+        ./mystery-gift/*.png) >"$FIXTURES/gifts/gifts.fr.probes.jsonl"
+    (cd "$g/shifted" && "$PROBE_IMAGES" \
+        --spec "$work/spec/gifts.fr.probes.json" --viewport native \
+        ./*/mystery-gift/*.png) >>"$FIXTURES/gifts/gifts.fr.probes.jsonl"
+}
+
+regen_intro() {
+    i=$work/intro
+    mkdir -p "$i/frames" "$i/lossless" "$i/shifted" "$FIXTURES/intro"
+    (cd "$SRC" && dune exec games/pokemon/plza/readers/test/write_probe_spec.exe \
+        -- --intro) >"$work/spec/intro.probes.json"
+    cp "$SRC/games/pokemon/plza/assets/switch-home-title-legends-za.png" \
+        "$work/spec/"
+    cp -R "$HERE/images/new-game" "$i/frames/"
+    (cd "$i/frames" && "$PROBE_IMAGES" --spec "$work/spec/intro.probes.json" \
+        --viewport native ./new-game/*.jpg) >"$FIXTURES/intro/intro.probes.jsonl"
+    (cd "$i/frames" && to_png "$i/lossless" ./new-game/*.jpg)
+    (cd "$i/lossless" && $SHIFT_PYTHON "$SHIFT_FRAME" --one "$i/shifted" \
+        ./new-game/*.png)
+    (cd "$i/shifted" && "$PROBE_IMAGES" \
+        --spec "$work/spec/intro.probes.json" --viewport native ./*/*/*.png) \
+        >"$FIXTURES/intro/intro.shifted.probes.jsonl"
+}
+
+for folder in "$@"; do
+    case $folder in
+    gifts) regen_gifts ;;
+    intro) regen_intro ;;
+    *) regen_folder "$folder" ;;
+    esac
+done

@@ -44,7 +44,7 @@
     },
     "postconditions": {
       "position": {"map": "IndigoPlateau_PokemonCenter_1F", "tiles": [[13, 12]], "facing": "north"},
-      "party_includes": ["blastoise", "pidgey", "mr-mime", "farfetchd"],
+      "party_includes": ["blastoise", "mr-mime", "farfetchd"],
       "money": {"spent": 0}
     }
   }

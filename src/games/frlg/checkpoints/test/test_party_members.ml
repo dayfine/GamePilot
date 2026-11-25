@@ -17,7 +17,7 @@ let args id event_id =
   let p = plan id in
   match
     List.find_opt
-      (fun (e : Pokemon_checkpoints.Plan.event) -> e.id = event_id)
+      (fun (e : Pokemon_engine.Plan.event) -> e.id = event_id)
       p.checkpoint.events
   with
   | Some { kind = Named_action args; _ } -> args
@@ -48,13 +48,7 @@ let read party = Party_roster.of_read (List.map Option.some party)
 
 let slot_text = function
   | Ok n -> "slot " ^ string_of_int n
-  | Error c -> Pokemon_checkpoints.Failure.cause_to_string c
-
-(* Fly's user through Fly's own decoding. *)
-let flyer save id event_id () =
-  match Fly_args.decode (read (save id)) (args id event_id) with
-  | Ok plan -> Printf.sprintf "slot %d" plan.slot
-  | Error e -> e
+  | Error c -> Pokemon_engine.Failure.cause_to_string c
 
 (* Each member the event's args name, found in the party. *)
 let members save id event_id () =
@@ -78,9 +72,6 @@ let both name run ~mgba:m ~console_b:b =
 let slots =
   List.concat
     [
-      both "01-celadon-setup Fly's Pidgey"
-        (fun s -> flyer s "01-celadon-setup" "fly_celadon")
-        ~mgba:"slot 4" ~console_b:"slot 2";
       both "03-trade-mr-mime the trade's Abra"
         (fun s -> members s "03-trade-mr-mime" "trade_mimien")
         ~mgba:"abra slot 5" ~console_b:"abra slot 5";
@@ -91,9 +82,6 @@ let slots =
       both "08-activate-and-verify MIMIEN to slot 1"
         (fun s -> members s "08-activate-and-verify" "arrange_slot1_mimien")
         ~mgba:"mr-mime slot 3" ~console_b:"mr-mime slot 3";
-      both "08-activate-and-verify Fly's Pidgey"
-        (fun s -> flyer s "08-activate-and-verify" "fly_celadon")
-        ~mgba:"slot 4" ~console_b:"slot 4";
       [
         case "a member whose species did not read is found by none"
           (fun () ->
@@ -105,11 +93,11 @@ let slots =
       ];
     ]
 
-(* The events that read the party first: those naming a member the game does
-   not pick itself (Cut's user is the game's). *)
+(* The events that read the party first: those naming a member, not a field
+   move's user (Cut's and Fly's are any member that knows the move). *)
 let pickers id =
   List.filter_map
-    (fun (e : Pokemon_checkpoints.Plan.event) ->
+    (fun (e : Pokemon_engine.Plan.event) ->
       match (e.kind, e.way) with
       | Named_action a, Some action when Action_args.picks_member ~action a ->
           Some e.id
@@ -119,20 +107,18 @@ let pickers id =
 
 let picking =
   [
-    case "01-celadon-setup: Fly"
+    case "01-celadon-setup: none, its Fly's user knows Fly"
       (fun () -> pickers "01-celadon-setup")
-      "fly_celadon";
-    case
-      "02-trade-farfetchd: not the Cut, which names its user for the \
-       pre-flight only"
+      "";
+    case "02-trade-farfetchd: not the Cut or the Flies"
       (fun () -> pickers "02-trade-farfetchd")
-      "catch_spearow, fly_vermilion, fly_vermilion_house2, trade_chding";
+      "catch_spearow, trade_chding";
     case
       "08-activate-and-verify: the battle's members by species; the mail to \
        slots 2-6 picks by slot, read by none"
       (fun () -> pickers "08-activate-and-verify")
-      "activate_mail_glitch_battle, verify_mail_glitch, fly_celadon, \
-       arrange_slot1_mimien, read_glitched_mail, give_dup_item, duplicate_item";
+      "activate_mail_glitch_battle, verify_mail_glitch, arrange_slot1_mimien, \
+       read_glitched_mail, give_dup_item, duplicate_item";
   ]
 
 let () = Table_test.run "party members" (slots @ picking)

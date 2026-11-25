@@ -1,9 +1,9 @@
 (** A party member's level read on its summary ({!Frlg_text.Summary_level}), as
-    the fork's story reads it: [console_member_reader()]
-    (Programs/AutoStory/PokemonFRLG_AutoStoryMember.cpp, [frlg/lean]) opens the
-    member's summary and takes the level from page 1 ([read_party_summary()],
-    [StatsReader::read_level()]). Opened the way {!Summary_moves} opens it; only
-    the level is read. *)
+    the fork's story reads it:
+    Programs/AutoStory/PokemonFRLG_AutoStoryMember.cpp ([frlg/lean]) opens the
+    member's summary and takes the level from page 1
+    (PokemonFRLG_AutoStorySummary.cpp, Inference/PokemonFRLG_StatsReader.cpp).
+    Opened the way {!Summary_moves} opens it; only the level is read. *)
 
 val read_shown : unit -> int option
 (** The level on the open summary page; [None] when it does not read. *)

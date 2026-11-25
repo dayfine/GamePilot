@@ -22,3 +22,4 @@
     also presses B out of the box system, which nothing reads here. *)
 
 val run : Steps.game_steps -> Steps.outcome
+(** The reward claimed as above, back on the overworld. *)

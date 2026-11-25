@@ -22,11 +22,13 @@
   gamepilot.repo_io
   gamepilot.frlg_series
   gamepilot.plza_series
-  gamepilot.plza_checkpoints
+  gamepilot.plza_engine
   gamepilot.plza_autostory
   gamepilot.plza_gifts
   gamepilot.pokemon_home
-  gamepilot.checkpoints_flags
+  gamepilot.run_flags
+  gamepilot.run_args
+  gamepilot.one_shot_flags
   gamepilot.pokemon_flags
   unix
   yojson))

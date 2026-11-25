@@ -10,13 +10,14 @@
   gamepilot.grid_maps
   gamepilot.json_field
   gamepilot.engine_run
-  gamepilot.pokemon_checkpoints
+  gamepilot.pokemon_engine
   gamepilot.room_policy
   gamepilot.frlg_readers
   gamepilot.frlg_battle
   gamepilot.repo_io
   gamepilot.frlg_overworld
   gamepilot.frlg_actions
+  gamepilot.frlg_text
   gamepilot.engine_expand
   gamepilot.checkpoints_expand
   gamepilot.frlg_places))

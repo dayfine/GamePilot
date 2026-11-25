@@ -18,7 +18,9 @@ type route = { target : Pose.grid; fight_wild : bool; fight_trainers : bool }
 (** A Pokémon action, with its args. *)
 type t =
   | New_game
-  | Options
+  | Game_settings
+      (** Set the game's own settings (its Options menu: text speed and the
+          like). Declared for plans; no game runs it yet. *)
   | Route of route
   | Ready of Pose.grid  (** Walk to the pose and stand ready there. *)
   | Legs of { legs : leg list; fight_wild : bool }
@@ -29,3 +31,8 @@ type t =
   | Train of int  (** Fight this many trainer battles. *)
   | Heal
   | Shop of item list
+
+val to_string : t -> string
+(** The action with its typed args, its name first:
+    ["route to Town (4, 0) north"], ["battle (may lose)"],
+    ["shop 2 retro-mail"]. *)

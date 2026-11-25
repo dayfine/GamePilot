@@ -1,6 +1,6 @@
-(** PLZA's AutoStory as a game of the checkpoint engine ({!Plza_checkpoints}):
-    the handlers 01.00a's to 03.11's plans use, over {!Plza_story.Steps}. The
-    fork's action table (PokemonLZA_AutoStoryActionTable.cpp) for these actions:
+(** PLZA's AutoStory as a game of the checkpoint engine ({!Plza_engine}): the
+    handlers 01.00a's to 03.11's plans use, over {!Plza_story.Steps}. The fork's
+    action table (PokemonLZA_AutoStoryActionTable.cpp) for these actions:
 
     - [new_game], 01.00a's ({!Plza_story.New_game_intro}), with the fork's
       choices as optional args: [language] (a tag of
@@ -58,9 +58,9 @@ val make :
   ?options:New_game_options.t ->
   ?new_game:(Plza_story.New_game_choices.t -> Plza_story.Steps.outcome) ->
   Plza_story.Steps.game_steps ->
-  checkpoint:Plza_checkpoints.Plan.checkpoint ->
+  checkpoint:Plza_engine.Plan.checkpoint ->
   reload:(unit -> (unit, Engine_run.Failure.cause) result) ->
-  Plza_checkpoints.Game.t
+  Plza_engine.Game.t
 (** The handlers for one checkpoint's run; [new_game] plays 01.00a's choices,
     the program's [options] (none by default) over the plan's (by default it
     fails [no_handler]: the live runner passes {!Live_intro_screen.run}). With a
@@ -72,11 +72,11 @@ val run_watched :
   ?end_check:(unit -> (unit, Engine_run.Failure.cause) result) ->
   mode:string ->
   Watch_report.t ->
-  Plza_checkpoints.Game.t ->
-  Plza_checkpoints.Plan.checkpoint ->
-  (unit, Plza_checkpoints.Failure.t) result
+  Plza_engine.Game.t ->
+  Plza_engine.Plan.checkpoint ->
+  (unit, Plza_engine.Failure.t) result
 (** The checkpoint through the runner, shown on the watch page
-    ({!Plza_checkpoints.Plan_watch}): the report's steps move with its events
-    and its run in [mode] ends passed or failed. [end_check] (none by default)
-    runs after the last event passed: its failure is the run's, at "end"
+    ({!Plza_engine.Plan_watch}): the report's steps move with its events and its
+    run in [mode] ends passed or failed. [end_check] (none by default) runs
+    after the last event passed: its failure is the run's, at "end"
     ({!Start_signature.check_end}). *)

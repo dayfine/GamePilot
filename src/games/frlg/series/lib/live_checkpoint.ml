@@ -2,14 +2,14 @@
    series' setup, the checkpoint, and how the run ended. *)
 
 open Engine_run
-open Pokemon_checkpoints
+open Pokemon_engine
 
 type setup = {
   states : string;
   runs_dir : string;
   daemon : string;
   backend : Daemon_process.backend;
-  common : Checkpoint_command.flags;
+  common : Plan_command.flags;
   mode : Checkpoint_trials.mode;
   policy : Checkpoint_trials.policy;
   world : Frlg_overworld.Frlg_steps.world;

@@ -1,4 +1,4 @@
-(* 01.00a's choices reaching its new game, and 01.00b to 02.07 run through the engine (Plza_checkpoints.Runner) with
+(* 01.00a's choices reaching its new game, and 01.00b to 02.07 run through the engine (Plza_engine.Runner) with
    Story_game's handlers on a scripted console (Fake_console): the plans
    decode, every event reaches its handler, and each handler's presses move a
    game that answers them as the console did. Also the failures: a walk whose
@@ -8,7 +8,7 @@
    a cutscene. And what the watch page is sent (Story_game.run_watched):
    the plan at each event's change and the run. *)
 
-open Plza_checkpoints
+open Plza_engine
 module L = Plza_story.Look
 module C = Plza_fake_console.Fake_console
 

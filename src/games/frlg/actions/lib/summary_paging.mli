@@ -5,8 +5,8 @@
     last member (pokefirered pokemon_summary_screen.c,
     SeekToNextMonInSingleParty: only the other pages skip eggs), so the member
     shown is always the next slot. GamePilot's own: the fork reads each member
-    from the overworld ([read_party_summary()],
-    Programs/AutoStory/PokemonFRLG_AutoStorySummary, [frlg/lean]). *)
+    from the overworld (Programs/AutoStory/PokemonFRLG_AutoStorySummary.cpp,
+    [frlg/lean]). *)
 
 val member_switch_ms : int
 (** After a DOWN, before the next member's page is read: 500 ms, so a frame from
@@ -18,6 +18,18 @@ val each_member : label:string -> log:(string -> unit) -> (int -> 'a) -> 'a list
     each run on that member's info page and back on it when it returns, then out
     to the overworld. In {!Frlg_readers.Summary_screen}'s probes. Fails as
     [no_party], [no_member_menu], [no_summary] or the close's cause. *)
+
+val until_member :
+  label:string ->
+  log:(string -> unit) ->
+  stop:('a -> bool) ->
+  (int -> 'a) ->
+  'a list
+(** As {!each_member}, but the pass ends at the first member whose read [stop]
+    holds for: the reads so far, slot 1 first, that one last. *)
+
+val info_page : int
+(** 1: the POKéMON INFO page, where {!each_member} leaves each member. *)
 
 val settled : (unit -> 'a option) -> 'a option
 (** A read of the page once two reads {!Summary_moves.reread_ms} apart agree

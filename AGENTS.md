@@ -11,23 +11,26 @@ GamePilot automates games through three layers (design: `docs/design/Layered-Aut
   - `core/`: the effects programs use (`effects`) and their handlers (`session`, `live`, `replay`);
     `live_run`: a run's daemon, its watch page and hub, and one checkpoint run in its own daemon,
     shared by every game's series runner.
-  - `engine/`: the game-agnostic checkpoint engine (`docs/design/Engine-Boundary.md`). Its
-    `checkpoints/` libraries: `rules` (`GAME_RULES`, what a game family gives the engine),
-    `promise` (promises, counts, money), `plan` (types, decoding, text), `run` (one checkpoint:
-    handlers, trials, event progress), `series` (chains, order, rounds), `expand` (plan JSON
-    rewrites), `watch` (a plan's run on the watch page), `flags` (`gamepilot checkpoints`' flags, a game's own carried along) and `make`
-    (`Engine_checkpoints.Make`, the engine applied to a family's rules). It
-    names no game, grid or Pokémon type.
+  - `engine/`: the game-agnostic program engine (`docs/design/Engine-Boundary.md`), one library
+    per folder: `rules` (`GAME_RULES`, what a game family gives the engine), `postcondition`
+    (promises, counts, money), `plan` (types), `plan_format` (how a plan file is read), `text`
+    (plans, failures and log lines printed), `event_snapshot` (what a run keeps beside each
+    event's save state), `run` (one checkpoint: handlers, trials, event progress), `series`
+    (chains, order, rounds), `expand` (plan JSON rewrites), `watch` (a plan's run on the watch
+    page), `flags` (`gamepilot run`'s flags, a game's own carried along) and `program_engine`
+    (`Program_engine.Make`, the engine applied to a family's rules). It names no game, grid or
+    Pokémon type.
   - `pokemon/`: code shared by Pokemon games: the navigation grid, and in `checkpoints/` the
-    Pokémon rules (`rules`: grid poses, Pokémon actions, postconditions), the engine applied to them
-    (`instance`: `Pokemon_checkpoints`), the declared end of a checkpoint (`checkpoint_end`), who
+    Pokémon rules (`rules`: grid poses, Pokémon actions, postconditions), their plan format
+    (`plan_format`) and event snapshot (`event_snapshot`), the engine applied to them
+    (`instance`: `Pokemon_engine`), the declared end of a checkpoint (`checkpoint_end`), who
     goes to the PC when a chain needs party room (`room_policy`), console runs
-    (`series`), place-route rewrites (`expand`) and the Pokémon flags of `gamepilot checkpoints` (`flags`).
+    (`series`), place-route rewrites (`expand`) and the Pokémon flags of `gamepilot run` (`flags`).
   - `games/<game>/` (or `games/pokemon/<game>/`, as PLZA): `readers/`, `actions/`, `maps/`,
     `checkpoints/`, `series/` (the game's checkpoint series runner, which
     `bin/checkpoint_families.ml` picks by the registry's `rules`), and `programs/<program>/`.
   - `program_registry/`: every program's descriptor (game, group, name, doc, checkpoints folder,
-    backends), as PA/CC's program list. A new program registers there (`docs/programs/README.md`).
+    backends), as PA/CC's program list. A new program registers there (`docs/guide/README.md`, "Adding a program").
   - `bin/`: the `gamepilot` command.
 - `protocol/`: golden JSON-RPC messages both sides must parse. The only thing they share.
   Formatted by `dev/lint/fmt_json.py` (one key per line, lists of scalars inline).
@@ -61,7 +64,7 @@ GamePilot automates games through three layers (design: `docs/design/Layered-Aut
   timings, and each module's doc comment names the C++ file(s) it comes from, so a reader can lay the
   two side by side. Improvements and reshaping come later, in their own PRs. Where we deliberately
   differ (a missing reader, a new strategy), say so in the doc comment.
-- **Every checkpoint goes through the checkpoint runner** (`engine/checkpoints/run`) and its dev loop: run
+- **Every checkpoint goes through the checkpoint runner** (`engine/run`) and its dev loop: run
   from the checkpoint's start state, verify its end state, retry, record. Programs run in order
   (01-celadon-setup → 08-activate-and-verify), each tested on mGBA before it runs on the Switch.
   A game with no emulator (PLZA, Sword/Shield, Octopath 0) is tested instead by its reader and
@@ -83,7 +86,7 @@ GamePilot automates games through three layers (design: `docs/design/Layered-Aut
 - The FireRed ROM, its path and its hash never enter this repo or any log.
 - The Switch (a Switch with a capture card and a controller board) is shared with other
   automation: only one program may drive the console at a time.
-- Machine-specific paths come from environment variables (`GAMEPILOT_*`, see `README.md`),
+- Machine-specific paths come from environment variables (`GAMEPILOT_*`, see `docs/mgba.md`),
   never from a home path in code, docs or tests.
 
 ## PR gate loop
@@ -104,10 +107,21 @@ for the user to spot check.
   COMMENT review: `Reviewed SHA: <sha>` on line 1, `## Verdict` then `APPROVED` or `NEEDS_REWORK`.
   Its FLAGs are questions for the user and do not block.
 - A verdict holds for the SHA it names. A rework commit invalidates it: review the new tip.
-- Docs-only PRs (every file `.md` or under `docs/`) skip qc-structural; CI is still required.
+- Docs-only PRs (every file `.md` or under `docs/`) skip qc-structural. CI is still required, but
+  a PR of prose only (every file a `.md` added or changed in place, outside `docs/guide/` and
+  `.agents/`) needs only the `review-tools` check: no build reads such a file's text (user,
+  2026-11-25). A guide page waits for the builds (`gamepilot guide --check`), an agent's rules for
+  Harness Check, and a deleted or renamed page for the builds (the registry's docs must exist).
 - `sh dev/review/pr_gate_status.sh [PR...]` prints each open PR's CI, verdict (ok / rework /
   stale(<sha>) / none / skip) and next step (`merge`, `merge (structural: <reason>)`, or `user review (<reason>)`).
   `sh dev/review/format_only_changes.sh` lists files changed only in formatting; CI prints the same list as warnings.
+
+When the user's review comment states a general rule (not only a fix for that PR), add it to
+`.agents/rules/review-rules.md` in the same PR or in a follow-up right after, with the user's words
+(in quotation marks only when verbatim, linked where they were written) and how to find it.
+qc-structural checks new PRs against the catalog; the next rule audit
+(`.agents/agents/rule-audit.md`, run as in `dev/review/rule_audit.md`) finds the older instances,
+and periodic maintenance turns them into fix PRs.
 
 ## User guides
 
