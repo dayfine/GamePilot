@@ -114,10 +114,11 @@ presses B, and B answers NO.
 **Standard Centers.** 17 of FireRed's 19 Centers share one layout: `Frlg_overworld.Standard_center`
 codes that room as the fork's story does (`PokemonFRLG_CodedRooms`), with each Center's people
 (`Frlg_overworld.Center_people`, from pret) as obstacles. The world loader uses it for every
-standard Center, even where PokemonSimulation has a map, so Cinnabar's needs none: the
-`cinnabar_center_bill` place and the route reach it, and `heal_at` and `make_room` walk the same room
-in every standard Center. Only the Indigo Plateau's and One Island's Centers, with layouts of their
-own, come from their map files.
+standard Center, even where PokemonSimulation has a map, so Cinnabar's needs none. Only the Indigo
+Plateau's and One Island's Centers, with layouts of their own, come from their map files.
+
+**Bill's Center.** The `cinnabar_center_bill` place and the route reach Cinnabar's coded room, and
+`heal_at` and `make_room` walk the same room in every standard Center.
 
 **The fade-in.** A room entered by its door comes up dim and holds still for about 600ms before it
 fades in; the walk waits for that (`Warp_fade_in`) before its first step, so no step is lost.
