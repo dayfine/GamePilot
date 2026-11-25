@@ -234,6 +234,21 @@ retries 0
 postconditions:
 position TwoIsland_JoyfulGameCorner (6, 6) north
 no repeat
+== sevii_story/plans/06-back-to-cinnabar.plan.json
+frlg 06-back-to-cinnabar from TwoIsland_JoyfulGameCorner (6, 6) north: 3 route, 1 talk, 1 game_action, 1 step, 1 scene
+to_lostelles_father: [run] route to TwoIsland_JoyfulGameCorner (5, 6) north
+give_meteorite: talk
+to_harbor_sailor: [run] route to TwoIsland_Harbor (8, 5) south
+sail_one_island: [ferry] game_action {"to":"OneIsland"}
+to_center_west_of_trigger: [run] route to OneIsland_PokemonCenter_1F (11, 7) east
+onto_goodbye: step east => OneIsland_PokemonCenter_1F (12, 7) east
+bills_goodbye: scene => CinnabarIsland (21, 7) south
+retries 0
+postconditions:
+position CinnabarIsland (21, 7) south
+item meteorite x0
+item moon-stone gained 1
+no repeat
 == supplies/plans/su-01.plan.json
 frlg su-01 from CeladonCity_DepartmentStore_1F (6, 2) south: 7 route, 6 game_action
 to_4f_clerk: [run] route to CeladonCity_DepartmentStore_1F (6, 2) north
