@@ -153,8 +153,8 @@ void check_requests(const std::map<std::string, pa::JsonValue>& files) {
         home.commands[0].buttons == button_mask("Home") &&
         (home.commands[0].buttons & kSwitchOnlyKeys) != 0);
   CHECK((button_mask("X") | button_mask("Y") | button_mask("ZL") |
-         button_mask("ZR") | button_mask("Plus") | button_mask("Minus")) ==
-        (kSwitchOnlyKeys & ~button_mask("Home")));
+         button_mask("ZR") | button_mask("Plus") | button_mask("Minus") |
+         button_mask("LStick")) == (kSwitchOnlyKeys & ~button_mask("Home")));
   CHECK((button_mask("L") & kSwitchOnlyKeys) == 0);
   // v1.17: the Switch's own Plus and Minus, Switch-only like Home.
   const SubmitParams skip = decode_submit(
@@ -162,6 +162,13 @@ void check_requests(const std::map<std::string, pa::JsonValue>& files) {
   CHECK(skip.commands.size() == 2 &&
         skip.commands[0].buttons == button_mask("Plus") &&
         skip.commands[1].buttons == button_mask("Minus"));
+  // v1.18: the left stick's click, the Switch keyboard's Shift.
+  const SubmitParams shift = decode_submit(
+      decode_request(files.at("52-submit.lstick.request.json")).params);
+  CHECK(shift.commands.size() == 2 &&
+        shift.commands[0].buttons == button_mask("LStick") &&
+        (shift.commands[0].buttons & kSwitchOnlyKeys) != 0 &&
+        shift.commands[1].buttons == button_mask("A"));
   // v1.16: ZL then ZL with ZR, PLZA's ball throw.
   const SubmitParams aim = decode_submit(
       decode_request(files.at("50-submit.zl_zr.request.json")).params);
@@ -577,7 +584,7 @@ int main() {
   const auto files = load_contracts();
   // One per protocol/v1 golden file. The checks below index files by name,
   // so they run only when every one is there.
-  constexpr std::size_t kGoldenFiles = 51;
+  constexpr std::size_t kGoldenFiles = 52;
   CHECK(files.size() == kGoldenFiles);
   if (files.size() == kGoldenFiles) {
     check_requests(files);

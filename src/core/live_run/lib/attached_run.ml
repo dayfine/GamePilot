@@ -1,4 +1,4 @@
-(* A run on a daemon that is already up (gamepilot checkpoint, gamepilot run
+(* A run on a daemon that is already up (gamepilot run --plan, gamepilot run
    <program>): a run folder of its own in --runs-dir ($GAMEPILOT_RUNS) through
    Run_record, so the hub lists it like a series' run. The wire log stays
    with the daemon. *)

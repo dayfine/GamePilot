@@ -1,4 +1,4 @@
-(* gamepilot checkpoints PLAN_DIR --preflight --from ID [--backend ...]
+(* gamepilot run PLAN_DIR --preflight --from ID [--backend ...]
 
    The pre-flight of a save (Frlg_checkpoints.Preflight): back to the last save (on
    the Switch the soft reset; on mGBA the checkpoint's start state), then the

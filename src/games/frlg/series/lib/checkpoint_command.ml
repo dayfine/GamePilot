@@ -1,4 +1,4 @@
-(* gamepilot checkpoint PLAN.json [--state FILE] [--port N] [--log FILE]
+(* gamepilot run --plan PLAN.json [--state FILE] [--port N] [--log FILE]
      [--party SPECIES,...] [--center TOWN] [--walk] [--end-check-only]
      [--grind-battles N]
    gamepilot replay checkpoint WIRELOG PLAN.json [the same flags]
@@ -30,7 +30,7 @@ type flags = Pokemon_flags.checkpoint_flags = {
 }
 
 let usage =
-  "  gamepilot checkpoint PLAN.json [--state FILE] [--port N] [--log FILE] \
+  "  gamepilot run --plan PLAN.json [--state FILE] [--port N] [--log FILE] \
    [--runs-dir DIR]\n\
   \      [--party SPECIES,...] [--center TOWN] [--walk] [--end-check-only]\n\
   \      [--grind-battles N]\n\

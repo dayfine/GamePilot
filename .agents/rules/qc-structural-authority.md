@@ -12,6 +12,8 @@ on a real PR; the PR is named so the reviewer can read the case.
 ## Project context
 
 - Hard rules: `AGENTS.md`. Layers and boundaries: `docs/design/Layered-Automation-Stack.md`.
+- The user's review rules, each with examples and how to find it: `.agents/rules/review-rules.md`.
+  The rows below cite them by id.
 - Lints: `dev/lint/lint_ocaml.sh` (function length, nesting, magic numbers, file length, `.mli`
   for every `lib/` module, layer boundaries, no exceptions) with waivers in
   `dev/lint/ocaml_lint_exceptions.conf`; `dev/lint/lint_dune.sh` (no C, opam allowlist).
