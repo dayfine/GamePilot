@@ -78,7 +78,7 @@ frlg.start_menu_poc` does the same and starts and closes mGBA too.
 
 ## What you see
 
-Open `http://127.0.0.1:47902/` while the daemon runs. The watch page shows the live frame, the
+Open the page URL the run printed, or find it on the hub. The watch page shows the live frame, the
 probe boxes a program reads, its plan and log, the daemon's health, and a Stop button:
 
 ![The watch page after Start Menu PoC passed on mGBA](images/watch-page-start-menu-poc.png)
