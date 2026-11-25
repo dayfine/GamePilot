@@ -1,29 +1,30 @@
 module F = Json_field
+open Engine_promise
 open Plan_fields
 
-let money_range ~where obj : Plan.money =
+let money_range ~where obj : Money.t =
   let min = F.int ~where "min" obj and max = F.int ~where "max" obj in
   if min > max then F.fail "%smin %d is above max %d." where min max;
-  Money_range { min; max }
+  Range { min; max }
 
 (* [where] ends in "money.": the error names the object. *)
-let money ~where obj : Plan.money =
+let money ~where obj : Money.t =
   known_fields_only ~where [ "min"; "max"; "spent" ] obj;
   let money = String.sub where 0 (String.length where - 1) in
   let range = F.has "min" obj || F.has "max" obj in
   match (F.has "spent" obj, range) with
   | true, true -> F.fail "%s: give min and max, or spent, not both." money
-  | true, false -> Money_spent (F.int ~where "spent" obj)
+  | true, false -> Spent (F.int ~where "spent" obj)
   | false, true -> money_range ~where obj
   | false, false -> F.fail "%s: give min and max, or spent." money
 
 (* The keys naming a count: one of them, with how each reads. *)
 let count_keys exact =
   [
-    (exact, fun n -> Plan.Count_exactly n);
-    ("gained", fun n -> Plan.Count_gained n);
-    ("used", fun n -> Plan.Count_gained (-n));
-    ("at_least", fun n -> Plan.Count_at_least n);
+    (exact, fun n -> Count.Exactly n);
+    ("gained", fun n -> Count.Gained n);
+    ("used", fun n -> Count.Gained (-n));
+    ("at_least", fun n -> Count.At_least n);
   ]
 
 (* [where] ends in a dot: the error names the object. *)
@@ -49,7 +50,7 @@ let bag_count ~where obj : Plan.bag_count =
 let coins ~where obj =
   match F.find "coins" obj with
   | None -> None
-  | Some (`Int n) -> Some (Plan.Count_exactly n)
+  | Some (`Int n) -> Some (Count.Exactly n)
   | Some value ->
       let where = where ^ "coins." in
       let obj = F.as_object where value in

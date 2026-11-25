@@ -2,4 +2,8 @@
  (name checkpoints_plan)
  (public_name gamepilot.checkpoints_plan)
  (modules_without_implementation plan)
- (libraries yojson gamepilot.grid_maps gamepilot.json_field))
+ (libraries
+  gamepilot.engine_promise
+  yojson
+  gamepilot.grid_maps
+  gamepilot.json_field))

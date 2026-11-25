@@ -1,4 +1,5 @@
 open Checkpoints_plan
+open Engine_promise
 
 type start = {
   start_money : int option;
@@ -99,11 +100,7 @@ let check_party (expected : Plan.party option) observed =
   | Some (Party_includes { members = list; slots }), Some members ->
       [ includes list slots members ]
 
-let check_count what (count : Plan.count) ~start read =
-  match count with
-  | Count_exactly n -> Promise.count_exactly what n ~read
-  | Count_at_least n -> Promise.count_at_least what n ~read
-  | Count_gained n -> Promise.count_gained what n ~start ~read
+let check_count what count ~start read = Promise.count what count ~start ~read
 
 let check_item observed ({ bag_item; count } : Plan.bag_count) =
   let what = "item " ^ bag_item in
@@ -121,14 +118,12 @@ let check_coins expected observed =
   | Some count, Some read ->
       [ check_count "coins" count ~start:observed.start.start_coins read ]
 
-let check_money (expected : Plan.money option) observed =
+let check_money expected observed =
   match (expected, observed.money) with
   | None, _ -> []
   | Some _, None -> [ not_read "money" ]
-  | Some (Money_range { min; max }), Some read ->
-      [ Promise.money_range ~min ~max ~read ]
-  | Some (Money_spent amount), Some read ->
-      [ Promise.money_spent amount ~start:observed.start.start_money ~read ]
+  | Some money, Some read ->
+      [ Promise.money money ~start:observed.start.start_money ~read ]
 
 let check_flag observed flag =
   let what = "flag " ^ flag in

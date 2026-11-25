@@ -84,3 +84,14 @@ let log_lines ~tag checkpoint results =
         (count Not_checked results)
         (summary results);
     ]
+
+let count what (promised : Count.t) ~start ~read =
+  match promised with
+  | Exactly n -> count_exactly what n ~read
+  | At_least n -> count_at_least what n ~read
+  | Gained n -> count_gained what n ~start ~read
+
+let money (promised : Money.t) ~start ~read =
+  match promised with
+  | Range { min; max } -> money_range ~min ~max ~read
+  | Spent amount -> money_spent amount ~start ~read
