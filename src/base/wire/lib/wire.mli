@@ -33,6 +33,7 @@ type button = Command.button =
   | ZR
   | Plus
   | Minus
+  | LStick
 
 val all_buttons : button list
 (** Every button, in the daemon's bit order (protocol/v1). *)
@@ -44,7 +45,8 @@ val switch_only : button -> bool
 (** [Home], [X], [Y] (v1.11), [ZL] (v1.14), [ZR] (v1.16), [Plus] and [Minus]
     (v1.17): buttons only the Switch backend takes. [Plus] and [Minus] are the
     Switch's names; [Start] and [Select] are the GBA's, which the Switch backend
-    presses as Plus and Minus (the Switch's GBA app maps them so). *)
+    presses as Plus and Minus (the Switch's GBA app maps them so). [LStick]
+    (v1.18) is the left stick's click: the Switch keyboard's Shift. *)
 
 type stick = Command.stick
 (** A stick's tilt (x, y) in -1..1: +x right, +y up (v1.12). *)
