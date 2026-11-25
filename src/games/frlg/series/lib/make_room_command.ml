@@ -1,4 +1,4 @@
-(* gamepilot checkpoints PLAN_DIR --from ID --to ID ... --make-room MAP
+(* gamepilot run PLAN_DIR --from ID --to ID ... --make-room MAP
 
    Room in the party before the chain (Frlg_checkpoints.Make_room): back to the save
    (mGBA: 00-make-room's start state, else the first checkpoint's, kept as 00-make-room's;

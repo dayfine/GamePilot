@@ -30,7 +30,7 @@ GamePilot stands on these projects, used as read-only submodules under `third_pa
 
 ## Running on mGBA
 
-`run/run_checkpoints_on_mgba.sh` starts mGBA, runs `gamepilot checkpoints` against it and closes it
+`run/run_checkpoints_on_mgba.sh` starts mGBA, runs `gamepilot run` against it and closes it
 again. It takes its paths from the environment, or from `~/.config/gamepilot/env` (one
 `export NAME=value` per line; `GAMEPILOT_ENV_FILE` names another file), and prints the ones in use:
 
@@ -45,12 +45,12 @@ again. It takes its paths from the environment, or from `~/.config/gamepilot/env
 | `GAMEPILOT_WATCH_LISTEN` | the watch pages' address; `0.0.0.0` opens them to the LAN | `127.0.0.1` |
 | `GAMEPILOT_LAB_GAME` | the lab console's game id (its HOME tile, its lab panel) for `ctl park`/`resume`, `console`, `switch-devices` | the one game with Switch HOME data (`frlg`) |
 
-`gamepilot checkpoints` reads `GAMEPILOT_STATES` and `GAMEPILOT_RUNS` too (`--states` and
+`gamepilot run` reads `GAMEPILOT_STATES` and `GAMEPILOT_RUNS` too (`--states` and
 `--runs-dir` override them). No ROM is included in or needed by this repository; bring your own.
 
 ## Watching runs
 
-`gamepilot checkpoints ... --watch` gives each run its own page (`docs/design/Watch-Page.md`) on a
+`gamepilot run ... --watch` gives each run its own page (`docs/design/Watch-Page.md`) on a
 free port and prints its URL, with the hub's: `http://127.0.0.1:47901/` lists every live run on
 this machine and links to each page. `gamepilot runs` lists the same in the terminal.
 

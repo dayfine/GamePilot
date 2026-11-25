@@ -16,7 +16,7 @@ GamePilot automates games through three layers (design: `docs/design/Layered-Aut
     (promises, counts, money), `plan` (types), `plan_format` (how a plan file is read), `text`
     (printing), `event_snapshot` (what a run keeps beside each event's save state), `run` (one
     checkpoint: handlers, trials, event progress), `series` (chains, order, rounds), `expand` (plan
-    JSON rewrites), `flags` (`gamepilot checkpoints`' flags, a game's own carried along) and
+    JSON rewrites), `flags` (`gamepilot run`' flags, a game's own carried along) and
     `program_engine` (`Program_engine.Make`, the engine applied to a family's rules). It names no
     game, grid or Pokémon type.
   - `pokemon/`: code shared by Pokemon games: the navigation grid, and in `checkpoints/` the
@@ -24,7 +24,7 @@ GamePilot automates games through three layers (design: `docs/design/Layered-Aut
     (`plan_format`), printing (`text`) and event snapshot (`event_snapshot`), the engine applied to them
     (`instance`: `Pokemon_engine`), the declared end of a checkpoint (`checkpoint_end`), who
     goes to the PC when a chain needs party room (`room_policy`), console runs
-    (`series`), place-route rewrites (`expand`) and the Pokémon flags of `gamepilot checkpoints` (`flags`).
+    (`series`), place-route rewrites (`expand`) and the Pokémon flags of `gamepilot run` (`flags`).
   - `games/<game>/` (or `games/pokemon/<game>/`, as PLZA): `readers/`, `actions/`, `maps/`,
     `checkpoints/`, `series/` (the game's checkpoint series runner, which
     `bin/checkpoint_families.ml` picks by the registry's `rules`), and `programs/<program>/`.

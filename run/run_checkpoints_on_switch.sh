@@ -1,5 +1,5 @@
 #!/bin/sh
-# Runs `gamepilot checkpoints` on the Switch (console B): takes the console's lab lock, refuses
+# Runs `gamepilot run` on the Switch (console B): takes the console's lab lock, refuses
 # while the lab app holds the controller board's serial port or the capture card, runs the
 # bring-up checks (the board's mode, one frame and its geometry), the pre-flight of the loaded
 # save, then the checkpoints with --backend switch, and always hands the console back: the
@@ -7,13 +7,13 @@
 # released, also on a failure or Ctrl-C. The console is parked on the HOME menu at the release
 # (gamepilot console park) and the bring-up resumes the game from it before its frame check.
 #
-#   sh run/run_checkpoints_on_switch.sh --program frlg.mail_glitch | PLAN_DIR \
+#   sh run/run_checkpoints_on_switch.sh PROGRAM | --program PROGRAM | PLAN_DIR \
 #       --from 01-celadon-setup --to 03-trade-mr-mime [--runs N] [--no-save-after-pass] [--no-preflight | --preflight-only] \
-#       [--no-watch] [--dry-run] [--viewport nso-gba|native] [other `gamepilot checkpoints` flags,
+#       [--no-watch] [--dry-run] [--viewport nso-gba|native] [other `gamepilot run` flags,
 #       e.g. --party ..., --make-room PalletTown]
 #
-# --program takes a program registry id (`gamepilot programs` lists them); a plan folder in its
-# place still works.
+# PROGRAM is a program registry id (`gamepilot programs` lists them), e.g. frlg.mail_glitch; a
+# plan folder in its place still works.
 #
 # Where the game picture sits in the capture, for the bring-up's frame check and every run's
 # daemon (daemon/src/viewport.h), comes from the program's registry descriptor (nso-gba: FRLG in
@@ -63,14 +63,16 @@ usage() {
     exit 2
 }
 
-# Our flags out; the rest go to `gamepilot checkpoints`.
+# Our flags out; the rest go to `gamepilot run`.
 [ $# -gt 0 ] || usage
-# The program: --program ID, else the plan folder.
+# The program: --program ID or an id, else the plan folder.
 program_flag=""
 if [ "$1" = --program ]; then
     [ $# -gt 1 ] || usage
     program_flag=--program
     shift
+elif [ ! -d "$1" ]; then
+    program_flag=--program
 fi
 plan_dir=$1
 shift
@@ -245,9 +247,9 @@ if [ -n "$make_room" ] && [ "$preflight" = --preflight ]; then
 elif [ -n "$preflight" ]; then
     echo "[Preflight] $from"
     # shellcheck disable=SC2086
-    step "$bin" checkpoints "$@" --preflight $watch
+    step "$bin" run "$@" --preflight $watch
     [ "$preflight" != --preflight-only ] || exit 0
 fi
 echo "[Checkpoints] --runs $runs $save"
 # shellcheck disable=SC2086
-step "$bin" checkpoints "$@" --mode testing --runs "$runs" "$save" $watch
+step "$bin" run "$@" --mode testing --runs "$runs" "$save" $watch

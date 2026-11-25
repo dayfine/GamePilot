@@ -29,11 +29,11 @@ Runs on: mGBA, the Switch (in its GBA app).
 <!-- generated:commands -->
 ```sh
 # mGBA: each checkpoint three times from its start state, two must pass
-sh run/run_checkpoints_on_mgba.sh --program frlg.team_training --from tt-01 --to tt-01 --mode verification
+sh run/run_checkpoints_on_mgba.sh frlg.team_training --from tt-01 --to tt-01 --mode verification
 
 # the Switch: check the save first, then run (each checkpoint once, saved when it passes)
-sh run/run_checkpoints_on_switch.sh --program frlg.team_training --from tt-01 --to tt-01 --preflight-only
-sh run/run_checkpoints_on_switch.sh --program frlg.team_training --from tt-01 --to tt-01
+sh run/run_checkpoints_on_switch.sh frlg.team_training --from tt-01 --to tt-01 --preflight-only
+sh run/run_checkpoints_on_switch.sh frlg.team_training --from tt-01 --to tt-01
 ```
 <!-- /generated -->
 

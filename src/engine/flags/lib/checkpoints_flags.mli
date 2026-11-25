@@ -1,6 +1,6 @@
-(** [gamepilot checkpoints]' flags, whatever the game: their record, defaults
-    and parsing. Each game's series runner reads them; a game's own flags
-    (['game], e.g. Pokemon_flags.series) ride along, parsed by the game's hooks
+(** [gamepilot run]'s flags, whatever the game: their record, defaults and
+    parsing. Each game's series runner reads them; a game's own flags (['game],
+    e.g. Pokemon_flags.series) ride along, parsed by the game's hooks
     ({!game_flags}). *)
 
 open Engine_run
