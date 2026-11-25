@@ -60,7 +60,9 @@ let probes ~picture ~gift_name =
        count ~picture text_box_id (Native_box.of_fractions text_box) blue;
      ]
     @ List.map (fun k -> count ~picture (item_id k) (item_strip k) white) all
-    @ List.map (name_probe ~picture ~gift_name) all)
+    @ Option.fold ~none:[]
+        ~some:(fun gift_name -> List.map (name_probe ~picture ~gift_name) all)
+        gift_name)
 
 let fraction m id =
   match Effects.probe m id with

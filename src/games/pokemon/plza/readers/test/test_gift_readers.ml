@@ -5,7 +5,12 @@
    Internet gift list (images/mystery-gift, 2026-11-25: four gifts, the cursor
    on the first, Vivillon the 4th) reads as the active list with its gift on
    item 4; its two cards (Vivillon's, the shiny Xerneas's) read as a card;
-   all also shifted (fixtures/gifts.shifted.probes.jsonl). The white fade
+   all also shifted (fixtures/gifts.shifted.probes.jsonl). The French list
+   (console B, 2026-11-25: the same four gifts, Vivillon the 4th as
+   "Prismillon (Motif Poké Ball)") reads as the list with no gift under the
+   English name, as the console's run failed; under the French name
+   (fixtures/gifts.fr.probes.jsonl, every Mystery Gift frame and its nine
+   shifts) its gift is item 4 and the English list has none. The white fade
    before a card, the receive animation and the code keyboard read as
    nothing. The same
    list dimmed by the Switch after an idle (gift-list-dimmed, about 30%
@@ -14,7 +19,10 @@
    the SAVE dialog (console B, 2026-11-25) read as themselves and nothing else
    does; the dialog's "Last Saved" reads the same as itself and not as a copy
    with its 18:16 made 18:18 (synthetic-..., no second save captured), in
-   every shift. *)
+   every shift. So does a copy with its date and time where the French game
+   shows them (synthetic-save-dialog-fr-layout-..., console B, 2026-11-25:
+   no French frame was captured; placed where that run's reading of the old
+   time box shows them), whose old box read only the date. *)
 
 open Plza_readers
 module R = Main_menu_row
@@ -22,9 +30,11 @@ module G = Mystery_gift_screen
 
 let frames = Wire.read_image_probes "gifts.probes.jsonl"
 let shifted = Wire.read_image_probes "gifts.shifted.probes.jsonl"
+let french = Wire.read_image_probes "gifts.fr.probes.jsonl"
 let measurements probes : Wire.frame = { seq = 1; t_ms = 0.; probes }
 let menu = "./tutorial-cards/it-menu-no-card.jpg"
 let gift_list = "./mystery-gift/gift-list-cursor-on-1.png"
+let french_list = "./mystery-gift/gift-list-fr-cursor-on-1.png"
 
 let cards m =
   String.init 6 (fun k ->
@@ -64,9 +74,11 @@ let nothing probes =
 let case name input expectation : Table_test.case = { name; input; expectation }
 let menu_text = "menu row 0; cards xxxxx.; no gift list; no gift card"
 
-let list_read =
-  "no menu; cards ......; gift list, item 1 selected, the gift item 4; no gift \
-   card"
+let list_read gift =
+  Printf.sprintf
+    "no menu; cards ......; gift list, item 1 selected, the gift item %s; no \
+     gift card"
+    gift
 
 let same a b = Filename.remove_extension a = Filename.remove_extension b
 let card_read = "no menu; cards ......; no gift list; gift card"
@@ -80,56 +92,70 @@ let boxes = "./mystery-gift/boxes-xerneas-in-box-1.png"
 let boxes_read = "no menu; cards ......; no gift list; no gift card; boxes"
 let save_read = "no menu; cards ......; no gift list; no gift card; save dialog"
 
-let saves =
+(* Each "Last Saved" layout's 18:16 and 18:18. *)
+let save_pairs =
   [
-    "./mystery-gift/save-dialog-last-saved-1816.png";
-    "./mystery-gift/synthetic-save-dialog-last-saved-1818.png";
+    ( "English",
+      "./mystery-gift/save-dialog-last-saved-1816.png",
+      "./mystery-gift/synthetic-save-dialog-last-saved-1818.png" );
+    ( "French layout",
+      "./mystery-gift/synthetic-save-dialog-fr-layout-1816.png",
+      "./mystery-gift/synthetic-save-dialog-fr-layout-1818.png" );
   ]
 
-let expected path =
+let saves = List.concat_map (fun (_, a, b) -> [ a; b ]) save_pairs
+
+(* [name] is the language of the gift name's template. *)
+let expected ?(name = "en") path =
   if same path menu then menu_text
   else if same path boxes then boxes_read
   else if List.exists (same path) saves then save_read
-  else if same path gift_list then list_read
+  else if same path gift_list then
+    list_read (if name = "en" then "4" else "none")
+  else if same path french_list then
+    list_read (if name = "fr" then "4" else "none")
   else if List.exists (same path) cards_shown then card_read
   else "nothing"
 
 let read probes = if nothing probes then "nothing" else text probes
 
 (* "./bright90/mystery-gift/x.png" -> "./mystery-gift/x.png"; the shifted
-   frames are png. *)
+   frames are png. An unshifted path stays. *)
 let unshifted path =
   match String.split_on_char '/' path with
-  | dot :: _shift :: rest -> String.concat "/" (dot :: rest)
+  | [ dot; _shift; folder; frame ] -> String.concat "/" [ dot; folder; frame ]
   | _ -> path
 
-(* "Last Saved" 18:16 against itself and against 18:18, in one shift. *)
+(* A layout's "Last Saved" 18:16 against itself and against 18:18, in one
+   shift. *)
 let shift_of path = List.nth (String.split_on_char '/' path) 1
 
 let last_saved_cases all =
-  let in_shift k =
-    List.filter
-      (fun (path, _) ->
-        List.exists (same (unshifted path)) saves
-        || List.exists (same path) saves)
+  let reading k frame =
+    List.find_map
+      (fun (path, probes) ->
+        if shift_of path = k && same (unshifted path) frame then
+          Save_dialog.last_saved (measurements probes)
+        else None)
       all
-    |> List.filter (fun (path, _) -> shift_of path = k)
   in
-  let read probes = Save_dialog.last_saved (measurements probes) in
-  let compare k =
-    match List.map (fun (_, p) -> read p) (in_shift k) with
-    | [ Some a; Some b ] ->
+  let compare k (_, before, after) () =
+    match (reading k before, reading k after) with
+    | Some a, Some b ->
         Printf.sprintf "itself %b, 18:16 and 18:18 %b"
           (Save_dialog.same_time a a)
           (Save_dialog.same_time a b)
     | _ -> "no reading"
   in
-  List.map
+  List.concat_map
     (fun k ->
-      case
-        ("Last Saved, " ^ if k = "mystery-gift" then "as captured" else k)
-        (fun () -> compare k)
-        "itself true, 18:16 and 18:18 false")
+      List.map
+        (fun ((layout, _, _) as pair) ->
+          case
+            (Printf.sprintf "Last Saved, %s, %s" layout
+               (if k = "mystery-gift" then "as captured" else k))
+            (compare k pair) "itself true, 18:16 and 18:18 false")
+        save_pairs)
     (List.sort_uniq String.compare (List.map (fun (p, _) -> shift_of p) all))
 
 let () =
@@ -143,6 +169,12 @@ let () =
             (fun () -> read probes)
             (expected (unshifted path)))
         shifted
+    @ List.map
+        (fun (path, probes) ->
+          case ("French name: " ^ path)
+            (fun () -> read probes)
+            (expected ~name:"fr" (unshifted path)))
+        french
     @ last_saved_cases
         (List.filter
            (fun (p, _) -> List.exists (same (unshifted p)) saves)

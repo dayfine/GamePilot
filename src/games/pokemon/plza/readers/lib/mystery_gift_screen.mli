@@ -28,14 +28,21 @@
     shows it (white on grey), matched in each item's name window (576, 554 + 84
     (k - 3), 436, 62); the script took the 4th item by its place. The name
     scores 0.000 on its own item and 0.088 at least on the other three and the
-    empty rows, also shifted (0.003 at most on its own). *)
+    empty rows, also shifted (0.003 at most on its own). The name is the game
+    language's: on the French list (console B, 2026-11-25, the same four gifts,
+    "Prismillon (Motif Poké Ball)" at item 4) the French template scores 0.000
+    on its item and 0.070 at least elsewhere, shifted too (0.003 at most on its
+    own), and the English one 0.092 at least everywhere. The French list's third
+    name is long enough to reach that item's strip: 0.14 white. *)
 
 val items : int
 (** 6: the rows the list shows. *)
 
-val probes : picture:Wire.box -> gift_name:string -> Wire.probe_spec list
+val probes : picture:Wire.box -> gift_name:string option -> Wire.probe_spec list
 (** The card's, the items' and the gift name's probes, for a game picture at
-    [picture] in the frame; [gift_name] the name template's reference. *)
+    [picture] in the frame; [gift_name] the name template's reference, in the
+    game's language. Without one the name is not matched ({!gift_item} is
+    [None]). *)
 
 val selected_item : Effects.measurements -> int option
 (** The one white item, 0 the top; [None] when none or several are. *)

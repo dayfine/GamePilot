@@ -23,9 +23,12 @@
 # above its plate.
 # Also fixtures/gifts.probes.jsonl: every capture, and images/mystery-gift's
 # (console B's own, png), probed by the Mystery Gift steps' readers alone
-# (write_probe_spec.exe --gifts, the gift name's template from
-# assets/gift-name-vivillon.png), and fixtures/gifts.shifted.probes.jsonl: the
-# main menu's frame and images/mystery-gift's, all nine shifts each.
+# (write_probe_spec.exe --gifts en, the gift name's template from
+# assets/gift-name-vivillon-en.png), and fixtures/gifts.shifted.probes.jsonl: the
+# main menu's frame and images/mystery-gift's, all nine shifts each. And
+# fixtures/gifts.fr.probes.jsonl: images/mystery-gift's frames and their nine
+# shifts each, the gift's name matched by its French template
+# (assets/gift-name-vivillon-fr.png, --gifts fr).
 # The Python steps need Pillow ($SHIFT_PYTHON, default python3; e.g.
 # "uv run --with pillow python3").
 #
@@ -73,9 +76,11 @@ for path in sys.argv[2:]:
     ./*/*.png)
 (cd "$work/shifted" && "$PROBE_IMAGES" --spec "$work/spec/shifted.probes.json" \
     --viewport native ./*/*/*.png) >"$HERE/fixtures/switch.shifted.probes.jsonl"
-cp "$SRC/games/pokemon/plza/assets/gift-name-vivillon.png" "$work/spec/"
+cp "$SRC/games/pokemon/plza/assets/"gift-name-vivillon-*.png "$work/spec/"
 (cd "$SRC" && dune exec games/pokemon/plza/readers/test/write_probe_spec.exe \
-    -- --gifts) >"$work/spec/gifts.probes.json"
+    -- --gifts en) >"$work/spec/gifts.probes.json"
+(cd "$SRC" && dune exec games/pokemon/plza/readers/test/write_probe_spec.exe \
+    -- --gifts fr) >"$work/spec/gifts.fr.probes.json"
 mkdir "$work/frames/mystery-gift" "$work/gifts" "$work/gifts/tutorial-cards" \
     "$work/gifts/mystery-gift" "$work/gifts_shifted"
 cp "$HERE/images/mystery-gift/"*.png "$work/frames/mystery-gift/"
@@ -89,3 +94,8 @@ cp "$work/lossless/tutorial-cards/it-menu-no-card.png" "$work/gifts/tutorial-car
 (cd "$work/gifts_shifted" && "$PROBE_IMAGES" \
     --spec "$work/spec/gifts.probes.json" --viewport native ./*/*/*.png) \
     >"$HERE/fixtures/gifts.shifted.probes.jsonl"
+(cd "$work/frames" && "$PROBE_IMAGES" --spec "$work/spec/gifts.fr.probes.json" \
+    --viewport native ./mystery-gift/*.png) >"$HERE/fixtures/gifts.fr.probes.jsonl"
+(cd "$work/gifts_shifted" && "$PROBE_IMAGES" \
+    --spec "$work/spec/gifts.fr.probes.json" --viewport native \
+    ./*/mystery-gift/*.png) >>"$HERE/fixtures/gifts.fr.probes.jsonl"

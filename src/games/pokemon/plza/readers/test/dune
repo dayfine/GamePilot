@@ -18,6 +18,9 @@
 (rule
  (copy fixtures/gifts.shifted.probes.jsonl gifts.shifted.probes.jsonl))
 
+(rule
+ (copy fixtures/gifts.fr.probes.jsonl gifts.fr.probes.jsonl))
+
 (tests
  (names
   test_dialog_readers
@@ -57,5 +60,6 @@
   switch.shifted.probes.jsonl
   switch.second.probes.jsonl
   gifts.probes.jsonl
-  gifts.shifted.probes.jsonl)
+  gifts.shifted.probes.jsonl
+  gifts.fr.probes.jsonl)
  (libraries gamepilot.wire gamepilot.table_test gamepilot.plza_readers))

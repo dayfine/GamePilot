@@ -5,15 +5,27 @@
       200 or over, 1.00 there and 0.67 at most elsewhere (a gift's card), with
       its dark "Save Progress" button (640, 722, 640, 56), every channel 90 or
       under, 0.93 there and 0.35 at most elsewhere (the Boxes);
-    - "Last Saved": its date and time (405, 856, 220, 32), dark text on white,
-      as the share of each column's pixels with every channel under 120. Two
-      readings are the same time when no column differs by more than 0.2.
+    - "Last Saved": its line (258, 856, 1000, 32), the label, the date and the
+      time, short of the Cancel button (1545), dark text on white, as the share
+      of each column's (and row's) pixels with every channel under 120. Two
+      readings are the same time when their shares differ by 0.3 at most in all.
+      The line is read whole, as each language lays it out its own way: the box
+      over English's minutes, (552, 856, 70, 32), held French's date (console B,
+      2026-11-25: "6/01/2" of 26/01/2026), so a French save never changed it.
 
     The script did not read the save. The steps read the dialog before saving
     and again after, and count the save done when "Last Saved" changed
     ({!Plza_gifts.Gift_to_box}). Measured against a copy of the capture with its
     last digit replaced by the 8 before it (18:18,
-    images/mystery-gift/synthetic-...), as no second save was captured. *)
+    images/mystery-gift/synthetic-...), as no second save was captured: 0.53 to
+    0.72 apart in every colour shift (18:16 and 18:18 differ least of the
+    digits; a static dialog read twice on console B is 0.00 apart). Also on a
+    copy with the date and time moved where French shows them, the date as
+    26/01/2026 (synthetic-save-dialog-fr-layout-1816 and -1818), placed so the
+    old minutes box reads it as console B's French run did, but for the day's
+    second digit; no French frame of the dialog was captured. Any language whose
+    line fits the box reads the same way; one whose date or time sits past x
+    1258, or on another row, does not. *)
 
 val probes : picture:Wire.box -> Wire.probe_spec list
 (** The panel's, the button's and the time's probes. *)
