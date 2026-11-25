@@ -4,10 +4,13 @@
     the evolved species' own moves; until the screen is back where the context
     ends. The context comes as {!game_steps}: its screens
     ({!Level_up_screens.context}), how its text is pressed through, and what
-    "back" means (the bag after a Rare Candy, the overworld after a battle).
-    Only the party menu's game steps are built
+    <<<<<<< HEAD "back" means (the bag after a Rare Candy, the overworld after a
+    battle). Only the party menu's game steps are built
     ({!Rare_candy_steps.party_menu_game_steps}); a battle's are the follow-up. A
-    Rare Candy is the one-member case.
+    Rare Candy is the one-member case. ======= "back" means (the bag after a
+    Rare Candy, the overworld after a battle). No game steps are built here: the
+    party menu's come with the Rare Candy action, a battle's are the follow-up.
+    A Rare Candy is the one-member case. >>>>>>> origin/main
 
     Text and language: [Level_up] never matches text. The quoted strings below
     are the English messages, there so a reader can find each step in the game;
@@ -38,7 +41,8 @@
       (evolution_scene.c, [EVOSTATE_TRY_LEARN_MOVE]); a stopped one asks
       nothing. Then the next member's scene, then the overworld.
     + A Rare Candy (party_menu.c): one level, its stats window and moves, then
-      at once its evolution, back to the bag ({!Rare_candy}).
+      <<<<<<< HEAD at once its evolution, back to the bag ({!Rare_candy}).
+      ======= at once its evolution, back to the bag. >>>>>>> origin/main
 
     Who a screen is about: the game steps name the member where it reads the
     text ({!who}); else the order tells. A stats window belongs to the member of

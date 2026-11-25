@@ -23,8 +23,15 @@ GamePilot automates games through three layers (design: `docs/design/Layered-Aut
   a function with no obvious home gets a module named for its job. The C++ folder names on the
   fork are a guide where they are informative.
 - **OCaml passes `sh dev/lint/lint_ocaml.sh`** (`dev/lint/`, configured by `dev/lint/ocaml_lint.conf`): function
-  length, nesting, magic numbers, file length, `.mli` for every `lib/` module, layer boundaries;
-  complexity is advisory. Waive only in `dev/lint/ocaml_lint_exceptions.conf`, with a reason.
+  length, nesting, magic numbers, file length, `.mli` for every `lib/` module, layer boundaries,
+  no exceptions; complexity is advisory. Waive only in `dev/lint/ocaml_lint_exceptions.conf`,
+  with a reason.
+- **Errors are values.** Code under `src/` (tests aside) returns a `Result`: no `exception`,
+  `raise`, `failwith`, `invalid_arg` or `try`/`match ... with exception` (`no_exceptions` in
+  `dev/lint/`). The one kept exception is the effects boundary (`Effects.Rpc_error`,
+  `Disconnected`, `Stop_requested`, `Replay.Divergence`), confined to `core/effects`, `session`,
+  `live`, `replay` and the runner that catches them. Today's other uses are waived file by file in
+  `dev/lint/ocaml_lint_exceptions.conf`; that list only shrinks.
 - **No C in OCaml.** No `foreign_stubs`, `foreign_archives`, `extra_objects` or `ctypes` in any
   `dune` file (`dev/lint/lint_dune.sh`). Every opam dependency is listed in
   `dev/lint/opam-allowlist.txt`. The Windows CI build is the real gate.

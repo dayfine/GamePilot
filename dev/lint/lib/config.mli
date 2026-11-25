@@ -11,6 +11,8 @@
     - [library_dir NAME]: directory name that holds library modules (default
       [lib]); [.mli] coverage and magic numbers apply there.
     - [exceptions FILE]: the exceptions file (see {!Lint_exceptions}).
+    - [no_exceptions DIR] (repeatable): a tree whose non-test [.ml] files may
+      not raise or catch exceptions (see {!No_exceptions}).
     - [max_function_lines N], [max_function_avg_depth F],
       [max_function_depth N], [max_file_avg_depth F], [max_file_lines N],
       [max_interface_lines N], [complexity_advisory N]: thresholds.
@@ -30,6 +32,7 @@ type t = {
   test_dirs : string list;
   library_dir : string;
   exceptions_file : string option;
+  no_exceptions_roots : string list;
   max_function_lines : int;
   max_function_avg_depth : float;
   max_function_depth : int;
