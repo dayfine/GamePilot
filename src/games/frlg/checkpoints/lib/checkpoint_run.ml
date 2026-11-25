@@ -77,7 +77,8 @@ let check_menu (plan : Pokemon_engine.Plan.t) =
   | game, _ -> Error ("the plan is for " ^ game ^ ", not frlg")
 
 (* Each skip_if condition FireRed reads names what it reads: the species
-   names are loaded only for a plan with a pokedex_seen condition. *)
+   names (English, as the Pokédex reader matches them) are loaded only for a
+   plan with a pokedex_seen condition. *)
 let read_species () =
   let file = Frlg_text.Data_files.species_names_eng in
   match Frlg_text.Data_files.locate file with

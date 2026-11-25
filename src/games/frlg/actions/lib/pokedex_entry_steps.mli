@@ -4,7 +4,12 @@
     with the game's font ({!Frlg_text.Text_lines.pokedex_list_number_digit},
     {!Frlg_text.Text_lines.pokedex_list_name}), and the way out as the Trainer
     Card's: B to the contents, B through the fade to the Start menu, the menu
-    closed and the talk settled. *)
+    closed and the talk settled.
+
+    English only: the Start menu's POKéDEX row, the species' names
+    (species_names_eng) and the dashes of a species not seen are matched as the
+    English game prints them, at positions measured on the English game. Another
+    language needs its own names and a check of the positions. *)
 
 val open_timeout_ms : int
 (** How long the contents may take to fade in after POKéDEX's A: 5 s. *)
@@ -23,10 +28,10 @@ val reread_ms : int
 (** Between those two reads: 100 ms. *)
 
 val make : log:(string -> unit) -> Pokedex_entry.game_steps
-(** In the effect context, with {!Frlg_readers.Pokedex_list.probes} and the menu
-    actions' probes subscribed. Fails ({!Menu_input.fail}) as [no_start_menu],
-    [no_pokedex] (no POKéDEX row, or the Pokédex does not show) or [not_closed].
-*)
+(** English screens only (see above). In the effect context, with
+    {!Frlg_readers.Pokedex_list.probes} and the menu actions' probes subscribed.
+    Fails ({!Menu_input.fail}) as [no_start_menu], [no_pokedex] (no POKéDEX row,
+    or the Pokédex does not show) or [not_closed]. *)
 
 val read :
   log:(string -> unit) ->

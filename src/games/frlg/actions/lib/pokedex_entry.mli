@@ -12,9 +12,17 @@
     arrow's row on screen depends on how it got there, so each look reads the
     arrow's row and the number on it, and each tap moves toward the target from
     what was read. Kanto numbers only (1 to 151): NUMERICAL MODE is the Kanto
-    list's on a save with the National Pokédex too. *)
+    list's on a save with the National Pokédex too.
 
-type entry = Not_seen | Seen  (** seen, not caught *) | Caught
+    English only: the species' name a row is matched against is the English
+    game's ({!Frlg_text.Species_names}, from species_names_eng); another
+    language needs its own names. *)
+
+(** What the Pokédex list shows for a species. *)
+type entry =
+  | Not_seen  (** dashes on its row, or its number past the list's end *)
+  | Seen  (** seen, not caught *)
+  | Caught  (** seen and caught: the Poké Ball on its row *)
 
 val entry_name : entry -> string
 (** ["not seen"], ["seen"], ["caught"]. *)
@@ -33,8 +41,9 @@ type game_steps = {
       (** The shown row's entry for the species of this name: its name or the
           dashes, and the caught mark; [None] when the row shows neither. *)
   close_list : unit -> unit;  (** Back to the overworld. *)
-  log : string -> unit;
+  log : string -> unit;  (** Where {!read_with} logs the read. *)
 }
+(** What {!read_with} reads and does in the game. *)
 
 val kanto_count : int
 (** 151. *)
