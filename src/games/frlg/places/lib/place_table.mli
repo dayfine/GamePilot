@@ -3,7 +3,8 @@
 
     A place is a map, the tile to stand on and the way to face there, and the
     object it is for, named by its id in PokemonSimulation's runtime map
-    (third_party/PokemonSimulation/data/games/frlg/maps/runtime): its
+    (third_party/PokemonSimulation/data/games/frlg/maps/runtime), or in a
+    standard Pokemon Center's coded room ([Frlg_overworld.Standard_center]): its
     coordinates stay there and are never copied here. A spot with no object in
     those maps (a save spot, or an object the maps lack) says so with
     [not_in_maps], and gives the object's tile when it has one. *)

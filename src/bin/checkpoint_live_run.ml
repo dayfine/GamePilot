@@ -9,8 +9,7 @@
    series stops too. *)
 
 open Engine_run
-open Checkpoints_plan
-open Checkpoints_run
+open Pokemon_checkpoints
 open Checkpoints_series
 include Live_checkpoint
 

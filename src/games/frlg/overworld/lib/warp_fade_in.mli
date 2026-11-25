@@ -18,9 +18,10 @@
     screen that never changes is taken as up after {!unchanged_ms}.
 
     This is FireRed's one rule for when a warp's or a door's fade-in is over:
-    the walker ({!Route_walk}) waits on it after every warp, and a closed menu's
-    settle (the actions' [Scene_looks]) on every fade it sees. The core settle
-    ({!Screen_state.Settle}) has no door rule of its own. *)
+    the walker ({!Route_walk}) waits on it after every warp, a closed menu's
+    settle (the actions' [Scene_looks]) on every fade it sees, and the actions'
+    [Menu_input.await_fade_in] (#73) after the bag or the Trainer Card closes.
+    The core settle ({!Screen_state.Settle}) has no door rule of its own. *)
 
 type t
 (** A watcher, from the first lit frame on. *)

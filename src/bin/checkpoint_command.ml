@@ -101,7 +101,7 @@ let prepare plan_file flags =
 let report = function
   | Ok () -> ("checkpoint: PASSED", 0)
   | Error failure ->
-      ("checkpoint: FAILED " ^ Checkpoints_run.Failure.to_string failure, 1)
+      ("checkpoint: FAILED " ^ Pokemon_checkpoints.Failure.to_string failure, 1)
 
 (* The checkpoint under [handle], its failures from the handler reported. *)
 let outcome handle run =

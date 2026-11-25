@@ -27,7 +27,11 @@ let ride ~(at : R.spot) (target : R.spot) =
          })
   else Ok None
 
-let expanded = Expand_cases.expanded (R.expand { place; ride })
+(* Plans start on Town's (1, 1): the expansion reckons from the start. *)
+let town = {|{"map": "Town", "tiles": [[1, 1]], "facing": "south"}|}
+
+let expanded ?(start = town) =
+  Expand_cases.expanded (R.expand { place; ride }) ~start
 
 let route ?(extra = "") id name =
   Printf.sprintf

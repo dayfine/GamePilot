@@ -11,4 +11,4 @@
 val handlers :
   log:(string -> unit) ->
   party:Party_roster.t ref ->
-  (string * Checkpoints_run.Game.game_action) list
+  (string * Pokemon_checkpoints.Game.game_action) list

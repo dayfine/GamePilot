@@ -1,8 +1,8 @@
 (* Runner.run takes a checkpoint's events in order through the game's handlers
    and stops at the first failure, naming the event. *)
 
-open Checkpoints_plan
-open Checkpoints_run
+open Pokemon_checkpoints
+open Engine_promise
 
 let tile x y : Grid_maps.Tile_pos.t = { x; y }
 
@@ -31,8 +31,8 @@ let last_line text = text |> String.split_on_char '\n' |> List.rev |> List.hd
 (* A run with a declared end; the log's last three lines. *)
 let run_to_end script =
   let game, log = Scripted_game.make script in
-  let end_at : Pose.grid =
-    { map = "Town"; tiles = [ tile 4 2 ]; facing = None }
+  let end_at : Pose.declared =
+    Grid { map = "Town"; tiles = [ tile 4 2 ]; facing = None }
   in
   let result =
     match Runner.run ~end_at game checkpoint with
@@ -186,12 +186,12 @@ passed|};
 
 (* A run whose plan promises Abra in the party and 20 coins, the game reading
    [observed] (and logging that it read); the log after the last event. *)
-let promised : Plan.postconditions =
+let promised : Postconditions.t =
   {
     position = None;
     party = Some (Party_includes { members = [ "abra" ]; slots = [] });
     items = [];
-    coins = Some (Count_exactly 20);
+    coins = Some (Count.Exactly 20);
     money = None;
     flags = [];
     knows = [];
@@ -272,7 +272,7 @@ let end_state_cases : Table_test.case list =
       input =
         (fun () ->
           run_with_end_state
-            ~end_at:{ map = "Town"; tiles = [ tile 4 2 ]; facing = None }
+            ~end_at:(Grid { map = "Town"; tiles = [ tile 4 2 ]; facing = None })
             (with_abra (Some 20)));
       expectation =
         "[Story] cp end Town (4, 2): failed: declared end at Town (4, 2), but \

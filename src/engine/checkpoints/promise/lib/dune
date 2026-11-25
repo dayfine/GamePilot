@@ -1,0 +1,3 @@
+(library
+ (name engine_promise)
+ (public_name gamepilot.engine_promise))

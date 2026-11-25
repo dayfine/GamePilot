@@ -17,7 +17,7 @@ val roster : t -> Party_roster.t ref
 
 val guard :
   t ->
-  string * Checkpoints_run.Game.game_action ->
-  string * Checkpoints_run.Game.game_action
+  string * Pokemon_checkpoints.Game.game_action ->
+  string * Pokemon_checkpoints.Game.game_action
 (** The named action, with the party read first when it picks a member and the
     party is not known yet; a read that fails fails the action. *)

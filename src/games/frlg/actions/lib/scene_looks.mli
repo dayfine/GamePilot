@@ -55,7 +55,7 @@ val settle :
   label:string ->
   battle_ends:bool ->
   log:(string -> unit) ->
-  (unit, Checkpoints_run.Failure.cause) result
+  (unit, Pokemon_checkpoints.Failure.cause) result
 (** Runs the settle of that kind with {!probes} subscribed, fleeing no battle.
     [start] (default none): the presses that start the step (the item's USE),
     run once the probes are subscribed with every frame watched, so a warp that

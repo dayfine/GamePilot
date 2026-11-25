@@ -6,8 +6,7 @@ open Frlg_places
 module Run = Frlg_checkpoints.Checkpoint_run
 
 let table = Result.get_ok (Place_table.load ())
-let maps_dir = Option.get (Repo_io.Repo_files.locate Run.maps_dir)
-let map name = Grid_maps.Map_file.load_runtime ~maps_dir name
+let map = Run.load_map
 let world = lazy (Result.get_ok (Run.load_world ()))
 let places = Place_table.places table
 
@@ -109,10 +108,10 @@ let () =
     [
       case "every place's object is in the maps, usable from its stand tile"
         (fun () -> failures resolves)
-        "12 places, all pass";
+        "13 places, all pass";
       case "every place's stand tile is walked to from a warp"
         (fun () -> failures reachable)
-        "12 places, all pass";
+        "13 places, all pass";
       case "every town's Fly name is one Fly knows" towns_fly
         "2 towns, all pass";
       case "every town's nurse and mart start with the town's key" towns_prefix
