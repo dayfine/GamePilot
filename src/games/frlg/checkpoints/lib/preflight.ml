@@ -203,8 +203,8 @@ let asks_something = function
   | Badges_at_least n
   | Caught_at_least n ->
       n > 0
-  | Member _ | Knows_move _ | Money_between _ | Item_exactly _ | Place _
-  | Hall_of_fame ->
+  | Member _ | No_mail _ | Knows_move _ | Money_between _ | Item_exactly _
+  | Place _ | Hall_of_fame ->
       true
 
 let row read need =

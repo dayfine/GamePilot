@@ -110,8 +110,9 @@ for the user to spot check.
   `sh dev/review/format_only_changes.sh` lists files changed only in formatting; CI prints the same list as warnings.
 
 When the user's review comment states a general rule (not only a fix for that PR), add it to
-`.agents/rules/review-rules.md` in the same PR or in a follow-up right after, with the quote, the
-link and how to find it. qc-structural checks new PRs against the catalog; the next rule audit
+`.agents/rules/review-rules.md` in the same PR or in a follow-up right after, with the user's words
+(in quotation marks only when verbatim, linked where they were written) and how to find it.
+qc-structural checks new PRs against the catalog; the next rule audit
 (`.agents/agents/rule-audit.md`, run as in `dev/review/rule_audit.md`) finds the older instances,
 and periodic maintenance turns them into fix PRs.
 

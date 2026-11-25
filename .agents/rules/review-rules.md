@@ -8,8 +8,11 @@ The general rules the user has stated in reviews, one entry each, so they can be
 PRs (qc-structural reads this file) and audited across the tree now and then (the `rule-audit`
 agent, `.agents/agents/rule-audit.md`; how to run it: `dev/review/rule_audit.md`).
 
-Each entry: the rule in one sentence; why, in the user's words, with the date and where it was
-said; a bad and a good example; and how to find it. "How to find it" is a lint or check name when
+Each entry: the rule in one sentence; why, with the date and where it was said; a bad and a good
+example; and how to find it. Text in quotation marks is the user's own words, linked where they
+were written; words said in a working session, with no page to link, say so instead of a link. A
+call the user made without words worth quoting is paraphrased, without quotation marks, and links
+a PR only where it was applied. "How to find it" is a lint or check name when
 one exists; else a recipe an auditor runs from the repo root (its hits are candidates, to be
 confirmed by reading); else "judgment" with what to read.
 
@@ -47,7 +50,8 @@ and the generated guide blocks do not print it.
   https://github.com/dayfine/GamePilot/pull/109#discussion_r4697777309).
 - Bad: `- 0 free party slots` in a guide's `needs` block.
 - Good: the line left out; `- 2 free party slots (joining: ...)` when slots are needed.
-- Find: the generator (`src/bin/guide_blocks.ml`, `Frlg_checkpoints.Preflight.asks_something`)
+- Find: the generator (`src/games/frlg/series/lib/guide_tables.ml`,
+  `Frlg_checkpoints.Preflight.asks_something`)
   leaves them out and CI's `gamepilot guide --check` fails on a stale block. A new kind of need
   must say in `asks_something` when it asks nothing. Recipe for leftovers:
   `grep -rnE '^- 0 |x0\b|¥0\b|at least 0' docs/guide`.
@@ -102,11 +106,12 @@ picked up, a mail written) carries a `skip_if` on that game state, so a rerun or
 does not do it twice. No plan assumes its save came from one particular earlier run, unless it says
 so as a checked precondition.
 
-- Why: "what if we already have Magikarp?" and "huge assumption which might be wrong — this
-  assumes it's chained from the particular mail glitch setup we used?" (user, 2026-11-25:
-  https://github.com/dayfine/GamePilot/pull/109#discussion_r4697876656,
-  https://github.com/dayfine/GamePilot/pull/109#discussion_r4697884303). Earlier: "preconditions,
-  not special saves" (user, 2026-11-24, Sevii start).
+- Why: "what if we already have Magikarp?" and "huge assumptoin [sic] which might be wrong",
+  "this assumes it's' [sic] chained from the particular mail glitch setup we used?" (user,
+  2026-11-25: https://github.com/dayfine/GamePilot/pull/109#discussion_r4697876656,
+  https://github.com/dayfine/GamePilot/pull/109#discussion_r4697884303). Earlier, the user's call
+  on the Sevii start (2026-11-24, in a working session), paraphrased: a program checks its
+  preconditions instead of needing a special save.
 - Bad: a `catch` event for Magikarp with no `skip_if`; a plan's notes saying "the party from mg-08"
   with no precondition checking it.
 - Good: `"skip_if": ["magikarp_in_party"]` on the catch; `metadata.preconditions` (or a
@@ -145,13 +150,18 @@ belongs, no "story" on what is not story-specific, and a conversion's name says 
 (`AGENTS.md`, hard rule "Names say what a thing is or does", is the base rule; this adds the
 cases the user called out.)
 
-- Why: `rig` and `only` questioned, renamed to plain names (user, 2026-11-24,
-  https://github.com/dayfine/GamePilot/pull/30); "Drop 'story' from GamePilot names: goal programs
-  like mail-glitch are generic" (user, 2026-11-24); "let's really take a moment and scrutinize the
-  names", `_look` and `no_end` unclear (user, 2026-11-25, https://github.com/dayfine/GamePilot/pull/89);
-  `*_json` "too vague, says format not job", "_text really stands out as not obvious" (user,
-  2026-11-25, https://github.com/dayfine/GamePilot/pull/97); names "that say the direction of a
-  conversion" (user, 2026-11-25, https://github.com/dayfine/GamePilot/pull/77).
+- Why: "what is a `rig`? can it be an easier-to-understand naming?" and "what's only does here?"
+  (user, 2026-11-24: https://github.com/dayfine/GamePilot/pull/30#discussion_r4688349381,
+  https://github.com/dayfine/GamePilot/pull/30#discussion_r4688361342); "what does _look really
+  mean?" and "what does no_end really mean?" (user, 2026-11-25:
+  https://github.com/dayfine/GamePilot/pull/89#discussion_r4693210307,
+  https://github.com/dayfine/GamePilot/pull/89#discussion_r4693212720); "let's really take a moment
+  and scrutinize the names" (user, 2026-11-25, in a working session; the renames applied in #89);
+  "_text really stands out as not obvious" (user, 2026-11-25, in a working session; applied in
+  #97). The user's calls in working sessions, paraphrased: drop `story` from GamePilot names, since
+  goal programs like the Mail Glitch are generic (2026-11-24); a `*_json` name is too vague, it says
+  the format, not the job (2026-11-25, applied in #97); a conversion's name says its direction
+  (2026-11-25, applied in #77).
 - Bad: `Walk_look`, `no_end`, `story_runner` for a goal program's runner, `plan_json`, `convert`.
 - Good: `Walk_screen`, `Last_leg_end`, `checkpoint_runner`, `plan_format`, `of_plan`/`to_text`.
 - Find: judgment on new and renamed modules; recipe for the known offenders:
@@ -162,8 +172,10 @@ cases the user called out.)
 
 `AGENTS.md`, hard rule "What a deciding module reads and does in the game is its `game_steps`".
 
-- Why: "one grep-able name; 'handler' clashes with effect handlers" (user, 2026-11-24, naming
-  convention).
+- Why: "what is a `rig`? can it be an easier-to-understand naming?" (user, 2026-11-24:
+  https://github.com/dayfine/GamePilot/pull/30#discussion_r4688349381). The user's call on the
+  naming convention (2026-11-24, in a working session), paraphrased: one name anyone can grep for,
+  and not `handler`, which clashes with effect handlers.
 - Bad: `type candy_rig = { read_party : ...; press : ... }`.
 - Good: `type game_steps = { read_party : ...; press : ... }`, built by `candy_game_steps`, faked
   by `fake_game_steps`.
@@ -176,8 +188,8 @@ A ported module's doc comment names the C++ (or pret) file(s) it comes from, so 
 side by side, and says where it differs; it does not name the source's functions, classes or
 constants.
 
-- Why: "let's not refer to the old C++ symbols" (user, 2026-11-25,
-  https://github.com/dayfine/GamePilot/pull/89). The base rule is `AGENTS.md`, "Port the C++
+- Why: "let's not refer to the old C++ symbols" (user, 2026-11-25:
+  https://github.com/dayfine/GamePilot/pull/89#discussion_r4693220866). The base rule is `AGENTS.md`, "Port the C++
   transparently".
 - Bad: `as upstream's [use_rare_candy()] watches for it: ... its PartyLevelUpWatcher`.
 - Good: `as upstream's PokemonFRLG_RngNavigation.cpp does after a Rare Candy: the stats window ...`.
@@ -194,9 +206,10 @@ A decision taken in several contexts (level-up: learn, forget, evolve) lives in 
 with its checks; each context supplies only its readers and inputs, never its own copy of the
 decision.
 
-- Why: "Level-up handling is shared: candy and post-battle level-ups use one module" and "Shared
-  checks (evolution YES/NO) live in the shared module by default; rigs only supply readers" (user,
-  2026-11-24, https://github.com/dayfine/GamePilot/pull/26).
+- Why: the user's calls while reviewing the Rare Candy work (2026-11-24, in a working session),
+  paraphrased: the Rare Candy and post-battle level-ups share one level-up module, and its shared
+  checks (the evolution YES/NO) live there by default, each context supplying only its readers.
+  Applied in #30 (`Level_up`).
 - Bad: the battle and the Rare Candy actions each answering the evolution YES/NO box.
 - Good: `Level_up` decides; `candy_game_steps` and the battle's steps supply the screens.
 - Find: judgment. Read modules that answer the same prompt or screen
@@ -208,9 +221,11 @@ decision.
 Every `type`, constructor and `val` in a `lib/` `.mli` has a doc comment a newcomer understands,
 and text read from the game screen names its language risk. (qc-structural row S5.)
 
-- Why: "every type documented" and "Language risk of dialogue text must be documented" (user,
-  2026-11-24, https://github.com/dayfine/GamePilot/pull/30); "multi-language support is a standing
-  goal".
+- Why: "again, what's right and why doesn't have a comment for itself?" and "risk of the dialogue
+  is of various length in different languages? let's document clearly" (user, 2026-11-24:
+  https://github.com/dayfine/GamePilot/pull/30#discussion_r4688400289,
+  https://github.com/dayfine/GamePilot/pull/30#discussion_r4688370726). Supporting every language
+  is a standing goal.
 - Bad: `type verdict = As_asked | Wrong of string | Unread of string` with no doc line.
 - Good: `(** What the box screen says about the checked slot. *)` above it.
 - Find: recipe (a candidate lint: qc-structural marked it LINTER_CANDIDATE on #109):
@@ -233,8 +248,9 @@ and text read from the game screen names its language risk. (qc-structural row S
 A test's expectation is one fact; a long expected string that packs several (a whole trace, a
 multi-line log) is split. Each test file says what its fakes stand in for. (qc-structural row S6.)
 
-- Why: "Long expected strings in tests are unreadable -> one expectation per thing" (user,
-  2026-11-24, https://github.com/dayfine/GamePilot/pull/30).
+- Why: "what is this? it's a really long string" (user, 2026-11-24:
+  https://github.com/dayfine/GamePilot/pull/30#discussion_r4688422803), answered by splitting the
+  case into one expectation per member.
 - Bad: `check "trace" (String.concat "\n" trace) "press A\nread menu\npress down\n..."`.
 - Good: one case per press and per reading.
 - Find: recipe, then judgment:
@@ -247,9 +263,10 @@ Steps repeated across plans ("walk to the lift, ride to 4F, walk to the clerk") 
 and a `go_to`, not copies; places and towns are typed keys in the places table, never names built
 from strings.
 
-- Why: the repeated "go to Dept Store 4F" across plans (user, 2026-11-24,
-  https://github.com/dayfine/GamePilot/pull/25); "one spelling per town, no string-built place
-  names" — "typed keys over naming conventions" (user, 2026-11-24, town key).
+- Why: "how do we dedup'd the go-to-XF of department store?" and "code abstraction? data
+  composition?" (user, 2026-11-24: https://github.com/dayfine/GamePilot/pull/25#discussion_r4688693488).
+  The user's call on the town key (2026-11-24, in a working session), paraphrased: one spelling per
+  town and no place names built from strings, typed keys over naming conventions; applied in #40.
 - Bad: the same three events in `su-01` and `tt-01`; `town ^ "_nurse"`.
 - Good: `{"kind": "route", "args": {"place": "celadon_dept_4f_clerk"}}`; `towns.celadon.nurse`.
 - Find: recipe for runs of three identical events in two plans, and string-built place names:
@@ -272,11 +289,12 @@ What a player would choose (a shopping list, a count, a target level) is a progr
 literal; the input is validated (no Master Ball on a shopping list); and the pre-flight refuses
 before the first event, naming the missing fact and the checkpoint that provides it.
 
-- Why: "Programs should be configurable (e.g. shopping list), validated (no Master Ball), with
-  checked preconditions (money, Fly)" (user, 2026-11-24, https://github.com/dayfine/GamePilot/pull/25);
-  unmet needs: "refuse before first event, naming the missing fact and the providing checkpoint"
-  (user, 2026-11-24, design session); "decisions must be predefined" (user, 2026-11-24, level-up
-  design).
+- Why: "should it be configurable?", "prerequisite is flying and money (do we check from trainer
+  card)?" and "it should now [sic] how to go to different locations or reject invalid items (e.g.
+  master balls)?" (user, 2026-11-24: https://github.com/dayfine/GamePilot/pull/25#discussion_r4688670416);
+  "decisions must be predefined" (user, 2026-11-24, in a working session on level-ups). The user's
+  call on unmet needs (2026-11-24, in a working session), paraphrased: refuse before the first
+  event, naming the missing fact and the checkpoint that provides it.
 - Bad: a plan buying a hard-coded 30 Ultra Balls; a run that fails at event 12 because money ran
   out.
 - Good: `--count 30` with a default, validated; the pre-flight's `money at least ¥36000` row.
@@ -289,8 +307,8 @@ before the first event, naming the missing fact and the checkpoint that provides
 A program that stocks or duplicates an item makes more than the next step uses, so later steps
 never run short.
 
-- Why: "Duplicate more than the immediate need" — "later steps never run short" (user,
-  2026-11-24, team training tt-01).
+- Why: the user's call on team training's tt-01 (2026-11-24, in a working session), paraphrased:
+  duplicate more than the immediate need, so later steps never run short.
 - Bad: duplicating exactly the 8 Retro Mail the next checkpoint gives away.
 - Good: duplicating to 99 and leaving the rest in the bag.
 - Find: judgment. Compare each stocking checkpoint's `gained` postcondition with what later
@@ -302,8 +320,8 @@ Code moves to a shared layer (`src/pokemon`, `src/engine`, a cross-game folder) 
 or program uses it, not before; until then it lives with its one user.
 
 - Why: on where the RNG goes: "each game's mechanism is different ... then we need to invent some
-  gen directory" — keep it in `games/frlg/rng`, "don't share before a second user exists" (user,
-  2026-11-24, https://github.com/dayfine/GamePilot/pull/24).
+  gen directory" (user, 2026-11-24, in a working session; applied in #24). The call, paraphrased:
+  keep it in `games/frlg/rng`, and share nothing before a second user exists.
 - Bad: `src/pokemon/rng/` holding FireRed's seeding with FireRed its only caller.
 - Good: `src/games/frlg/rng/`, moved when a second Gen 3 game needs it.
 - Find: recipe, then judgment: for each library under `src/pokemon` and `src/engine`, the
@@ -323,8 +341,8 @@ or program uses it, not before; until then it lives with its one user.
 When a command or case needs an extra, optional part, the existing case gets an optional field;
 no parallel `X_with_y` case.
 
-- Why: "we don't need a second kind of press" — one wire command, one OCaml case (user,
-  2026-11-25, https://github.com/dayfine/GamePilot/pull/59).
+- Why: "we don't need a second kind of press" (user, 2026-11-25, in a working session; applied in
+  #59): one wire command, one OCaml case.
 - Bad: `Press of press | Press_with_sticks of press * sticks`.
 - Good: `Press of { ...; left_stick : stick option; right_stick : stick option }`, built by
   `Wire.press ?left_stick`.
@@ -335,8 +353,8 @@ no parallel `X_with_y` case.
 What does not change during a run (the backend's picture, the game size) is passed to the program
 once, as an argument, not read through an effect or a new query.
 
-- Why: "value fixed for a run = input, not a query" (user, 2026-11-25,
-  https://github.com/dayfine/GamePilot/pull/86).
+- Why: the user's call (2026-11-25, in a working session), paraphrased: a value fixed for a run is
+  an input, not a query. Applied in #86 (`run_with_backend ~picture`).
 - Bad: a `read Picture` effect the program calls before each walk.
 - Good: `run_with_backend ~picture` handing it to the program at start.
 - Find: judgment. Read new effects and probe kinds, and readers called with the same arguments on
@@ -347,8 +365,8 @@ once, as an argument, not read through an effect or a new query.
 A function whose answer has more than two meanings returns a variant naming each (`verdict`),
 not `result option` or a pair of bools.
 
-- Why: rename list approved for #89: "`Last_leg_end` with verdict type instead of result option"
-  (user, 2026-11-25, https://github.com/dayfine/GamePilot/pull/89).
+- Why: the rename list the user approved (2026-11-25, in a working session) gave `Last_leg_end` a
+  verdict type instead of a result option; applied in #89.
 - Bad: `val last_leg_end : ... -> (pose, string) result option`.
 - Good: `type verdict = Arrived of pose | Off_route of string | Not_yet`.
 - Find: recipe, then judgment: `grep -rnE --include='*.mli' 'result option|bool \* bool|option option' src`.
@@ -359,7 +377,7 @@ A game's rules, plan types, runner and checks link no JSON or text library; form
 own codec, text and saved-state modules, converted at the edge.
 
 - Why: "my main concern is layering -- there is lots of I/O conversions here which I'd prefer to
-  isolate" (user, 2026-11-25, https://github.com/dayfine/GamePilot/pull/77).
+  isolate" (user, 2026-11-25, in a working session; applied in #77).
 - Bad: `Pokemon_rules` calling `Yojson.Safe.to_string` in a failure message.
 - Good: failures carry values, rendered to text by the text module.
 - Find: lint `never_links` covers the libraries listed in `dev/lint/ocaml_lint.conf`. For new
@@ -371,8 +389,9 @@ own codec, text and saved-state modules, converted at the edge.
 Fixtures kept only to prove a change on mGBA or the console (before/after captures, one-off logs)
 are deleted once that run passed; the unit tests that pin the behaviour stay.
 
-- Why: "delete now mGBA passed; keep expansion unit tests" — "proof fixtures go stale" (user,
-  2026-11-24, https://github.com/dayfine/GamePilot/pull/39).
+- Why: the user's call on the `before/` fixtures (2026-11-24, in a working session), paraphrased:
+  delete them now that mGBA passed and keep the expansion unit tests, since proof fixtures go stale.
+  Applied in #39 and #40.
 - Bad: a `before/` folder of expanded plans beside the expansion tests.
 - Good: the expansion tests alone.
 - Find: recipe, then judgment (is any test or doc reading it?):
@@ -385,9 +404,9 @@ are deleted once that run passed; the unit tests that pin the behaviour stay.
 A plan file is its order number and one to five words saying what it does, with species names,
 not nicknames: `03-trade-mr-mime.plan.json`, not `mg-03.plan.json`.
 
-- Why: "Plan files get short descriptive names: 1-2 words ideally, at most 5" and "Names use
-  species, not nicknames" (user, 2026-11-24). `su-01` and `tt-01` keep their ids until their
-  programs are split by goal (user, 2026-11-24).
+- Why: the user's calls on plan file names (2026-11-24, in a working session), paraphrased: short
+  descriptive names, one or two words ideally and at most five, using species, not nicknames;
+  applied in #43. `su-01` and `tt-01` keep their ids until their programs are split by goal.
 - Bad: `mg-03.plan.json`, `03-trade-mimien.plan.json`.
 - Good: `03-trade-mr-mime.plan.json`.
 - Find: recipe (`su-01`, `tt-01` are known):
@@ -398,8 +417,9 @@ not nicknames: `03-trade-mr-mime.plan.json`, not `mg-03.plan.json`.
 Code reads game text and assets from files committed in this repo, one per language, never from
 `third_party/Packages` at run time; every language is kept even when only English is tested.
 
-- Why: "No runtime dependency on Packages; committed per-language assets, multi-language kept"
-  — CI and portability; "languages matter even if untested" (user, 2026-11-24, move names).
+- Why: the user's call on move names (2026-11-24, in a working session), paraphrased: no runtime
+  dependency on Packages, per-language assets committed and every language kept, for CI and
+  portability; languages matter even when untested.
 - Bad: a reader opening `third_party/Packages/.../MoveNames.json` at start.
 - Good: `src/games/frlg/text/assets/move_names.<lang>.json` committed, loaded per language.
 - Find: recipe: `grep -rn 'Packages' --include='*.ml' --include=dune src | grep -v '/test/'`.
