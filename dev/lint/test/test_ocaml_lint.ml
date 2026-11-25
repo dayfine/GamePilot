@@ -53,6 +53,38 @@ let () =
              \  else\n\
              \    let c = b + 1 in\n\
              \    if c > b then 1 else 2\n")));
+  case "nesting: a function in a functor is measured from its let" ~expect:[]
+    (checks
+       (Nesting.check config
+          (parse
+             "module Make (T : sig end) = struct\n\
+             \  let f a =\n\
+             \    match a with\n\
+             \    | Some b ->\n\
+             \        if b then\n\
+             \          1\n\
+             \        else 2\n\
+             \    | None -> 0\n\
+              end\n")));
+  case "nesting: a functor's body counts from the functor, file-wide" ~expect:[]
+    (checks
+       (Nesting.check config
+          (parse
+             "module Make (T : sig end) = struct\n\
+             \  let f a =\n\
+             \    match a with\n\
+             \    | Some b -> b\n\
+             \    | None -> 0\n\
+              end\n")));
+  case "nesting: the same lines at the top level are too deep"
+    ~expect:[ "nesting"; "nesting" ]
+    (checks
+       (Nesting.check config
+          (parse
+             "let f a =\n\
+             \        match a with\n\
+             \        | Some b -> b\n\
+             \        | None -> 0\n")));
   case "nesting: an else-if chain is flat" ~expect:[]
     (checks
        (Nesting.check config
