@@ -19,6 +19,7 @@ type _ Effect.t +=
   | Now : float Effect.t
   | Read : measurements option Effect.t
   | Load_state : string -> int Effect.t
+  | Reset : int Effect.t
   | Save_state : string -> int Effect.t
   | Save_frame : string -> int Effect.t
   | Upload_template : string -> template_hash Effect.t
@@ -34,6 +35,7 @@ let race commands ~stop = Effect.perform (Race (commands, stop))
 let now () = Effect.perform Now
 let read () = Effect.perform Read
 let load_state path = Effect.perform (Load_state path)
+let reset () = Effect.perform Reset
 let save_state path = Effect.perform (Save_state path)
 let save_frame path = Effect.perform (Save_frame path)
 let upload_template png = Effect.perform (Upload_template png)
