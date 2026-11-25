@@ -44,6 +44,12 @@
       "stand": [2, 2],
       "facing": "west"
     },
+    "cinnabar_center_bill": {
+      "map": "CinnabarIsland_PokemonCenter_1F",
+      "object": {"npc": "CinnabarIsland_PokemonCenter_1F_EventScript_Bill"},
+      "stand": [10, 5],
+      "facing": "east"
+    },
     "indigo_plateau_nurse": {
       "map": "IndigoPlateau_PokemonCenter_1F",
       "object": {"npc": "IndigoPlateau_PokemonCenter_1F_EventScript_Nurse"},
