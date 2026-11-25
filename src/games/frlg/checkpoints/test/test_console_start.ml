@@ -381,6 +381,7 @@ let deposit_plan =
     Plan_file.decode ~source:"deposit"
       (Yojson.Safe.from_string
          {|{"format": "gamepilot-checkpoint/1", "game": "frlg",
+       "execution": {"menu": "full"},
             "checkpoint": {"id": "deposit", "title": "Two members to the PC",
               "start": {"map": "Route4_PokemonCenter_1F", "tiles": [[11, 2]],
                         "facing": "north"},
@@ -460,6 +461,76 @@ let room_row_cases =
        2 free: ok";
   ]
 
+(* A plan that stores Farfetch'd at Pewter's PC, as 09-viridian-forest's
+   deposit did (mGBA, 2026-11-25), with Farfetch'd holding Retro Mail. *)
+let deposit_plan =
+  let json =
+    {|{"format": "gamepilot-checkpoint/1", "game": "frlg",
+       "execution": {"menu": "full"},
+       "checkpoint": {"id": "deposit", "title": "Store Farfetch'd",
+         "events": [{"id": "deposit", "kind": "game_action",
+           "action": "pc_deposit", "args": {"species": ["farfetchd"]},
+           "why": "Room for the forest's catches."}]}}|}
+  in
+  match Plan_file.decode ~source:"deposit" (Yojson.Safe.from_string json) with
+  | Ok p -> p
+  | Error e -> failwith e
+
+let deposit_preflight marks =
+  let read : Preflight.read =
+    {
+      observed =
+        {
+          (observed ~party:[ "blastoise"; "mr-mime"; "farfetchd" ] ()) with
+          marks;
+        };
+      place = None;
+      members = None;
+      card = None;
+    }
+  in
+  match Preflight.needs stocks ~before:None deposit_plan with
+  | Error e -> "error: " ^ e
+  | Ok needs ->
+      let rows = Preflight.compare needs read in
+      String.concat " | "
+        (List.map
+           (fun (r : Preflight.row) ->
+             Printf.sprintf "%s: %s: %s" r.need r.read
+               (match r.verdict with
+               | Ok -> "ok"
+               | Mismatch -> "MISMATCH"
+               | Not_read -> "NOT READ"))
+           rows)
+      ^ if Preflight.passed rows then " => go" else " => stop"
+
+let deposit_cases =
+  [
+    case "preflight pc_deposit: the member stored holds Retro Mail: stop"
+      (fun () -> deposit_preflight (Some [ "held_item"; "none"; "mail" ]))
+      "farfetchd in the party (pc_deposit): blastoise, mr-mime, farfetchd: ok \
+       | farfetchd holds no Mail (pc_deposit): farfetchd in slot 3: mail: \
+       MISMATCH => stop";
+    case "preflight pc_deposit: it holds an item, not Mail: go"
+      (fun () -> deposit_preflight (Some [ "mail"; "none"; "held_item" ]))
+      "farfetchd in the party (pc_deposit): blastoise, mr-mime, farfetchd: ok \
+       | farfetchd holds no Mail (pc_deposit): farfetchd in slot 3: held_item: \
+       ok => go";
+    case "preflight pc_deposit: the marks not read: stop"
+      (fun () -> deposit_preflight None)
+      "farfetchd in the party (pc_deposit): blastoise, mr-mime, farfetchd: ok \
+       | farfetchd holds no Mail (pc_deposit): not read: NOT READ => stop";
+    case "preflight pc_deposit: the marks are read for it"
+      (fun () ->
+        match Preflight.needs stocks ~before:None deposit_plan with
+        | Error e -> "error: " ^ e
+        | Ok needs ->
+            Option.fold ~none:"none"
+              ~some:(fun _ -> "read")
+              (Preflight.to_read needs).marks)
+      "read";
+  ]
+
 let () =
   Table_test.run "console start"
-    (start_cases @ preflight_cases @ room_cases @ room_row_cases)
+    (start_cases @ preflight_cases @ deposit_cases @ room_cases @ room_row_cases)
