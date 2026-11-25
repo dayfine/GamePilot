@@ -14,7 +14,7 @@
 # the write_probe_spec default), menus (test_menu_readers.ml) and battle
 # (test_battle_readers.ml); pc (test_pc_readers.ml) and card
 # (test_card_readers.ml) are made only when named. A set with no map for a
-# backend (card has no Switch capture yet) skips that backend.
+# backend skips that backend.
 #
 #   sh games/frlg/readers/test/regen_fixtures.sh [screen|menus|battle ...]
 #

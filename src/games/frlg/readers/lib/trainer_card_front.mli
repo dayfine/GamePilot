@@ -16,7 +16,8 @@
     Thresholds come from renders of pret's graphics (palettes as mGBA shows
     them), which match the lab's mGBA frame of the card with no badge and no
     star to the pixel; real mGBA frames of a post-League save (8 badges, 1 star)
-    read as such. The Switch's colors are not measured yet. *)
+    read as such, and so do real Switch frames of the same save (console B's
+    capture card). *)
 
 val probes : Wire.probe_spec list
 (** Every probe {!front_shown} and {!read} need. *)

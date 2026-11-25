@@ -5,8 +5,10 @@
    patterns, and two fading in. images/mgba/trainer-card-2026-11-24/ holds real
    mGBA frames of a post-League save (8 badges, 1 star), named for the time
    after the A that opened the card: the menu fading out, black, the card
-   fading in and the card settled. The fixtures are the daemon's
-   [probe_images] output: run [regen_fixtures.sh card], which reads
+   fading in and the card settled; images/switch/trainer-card-2026-11-24/
+   holds the same on console B's Switch (the start menu, black, fading in,
+   settled) and the overworld. The fixtures are the daemon's [probe_images]
+   output: run [regen_fixtures.sh card], which reads card.switch.map and
    card.mgba.map. Each image's name carries what it shows after "__",
    dash-separated:
 
@@ -42,11 +44,11 @@ let verdict = function
 let expected tags =
   match tags with "card" :: _ -> String.concat "-" tags | _ -> "none"
 
-let cases images =
+let cases backend images =
   List.map
     (fun (image, probes) ->
       {
-        Table_test.name = "mgba trainer card: " ^ image;
+        Table_test.name = Printf.sprintf "%s trainer card: %s" backend image;
         input =
           (fun () -> verdict (Trainer_card_front.read (measurements probes)));
         expectation = expected (tags image);
@@ -87,4 +89,10 @@ let derived =
 
 let () =
   Table_test.run "trainer card reader"
-    (derived @ cases (Wire.read_image_probes "fixtures/card.mgba.probes.jsonl"))
+    (derived
+    @ List.concat_map
+        (fun backend ->
+          cases backend
+            (Wire.read_image_probes
+               ("fixtures/card." ^ backend ^ ".probes.jsonl")))
+        [ "switch"; "mgba" ])
