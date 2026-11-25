@@ -181,6 +181,17 @@ let make steps ~checkpoint_id ~reload : Game.t =
     log = steps.log;
   }
 
-let run_watched ~mode report game checkpoint =
+(* The end check's failure, after the last event, as the engine's own end
+   check names one. *)
+let at_end (checkpoint : Plza_checkpoints.Plan.checkpoint) cause =
+  {
+    Plza_checkpoints.Failure.checkpoint_id = checkpoint.checkpoint_id;
+    event_index = List.length checkpoint.events;
+    event_id = "end";
+    reason = Handler cause;
+  }
+
+let run_watched ?(end_check = fun () -> Ok ()) ~mode report game checkpoint =
   Plza_checkpoints.Plan_watch.run ~mode report (fun ~on_event ->
-      Plza_checkpoints.Runner.run ~on_event game checkpoint)
+      Result.bind (Plza_checkpoints.Runner.run ~on_event game checkpoint)
+        (fun () -> Result.map_error (at_end checkpoint) (end_check ())))

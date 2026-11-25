@@ -58,7 +58,7 @@ cd src && opam exec -- dune exec -- gamepilot checkpoints --program plza.autosto
 | 03.10 | Up the Research Lab's elevator to the Director's Office |
 | 03.11 | Mable's research, the Rock Smash TM |
 
-<!-- plans: e9d5fde9ca72 -->
+<!-- plans: 38fd4322cf23 -->
 <!-- /generated -->
 
 ## When it stops
@@ -76,7 +76,11 @@ battle is already up. Started in the night alley after Andi (the party bar up, n
 plaza arch after its map talk (the minimap up and reading 03.03's start), skips every step and
 passes. 03.03 and 03.04 check their start first, as the fork does: the minimap must read the one
 the fork recorded there, or the run stops with `chain_off_start` before it presses anything. 03.04
-always reloads its autosave when it follows 03.03c, since its timed legs assume the reload's facing. Each run keeps its log, wire log and a `failure.png` in its run folder.
+always reloads its autosave when it follows 03.03c, since its timed legs assume the reload's facing.
+03.04 also checks its end: after the Pokédex and Taunie's scene the minimap must read 03.06's start,
+outside the Center, or the run fails with `end_off_signature` (a talk with Urbain inside the
+Center once passed for the nurse's). Started outside the Center already, 03.04 skips both steps
+and passes. Each run keeps its log, wire log and a `failure.png` in its run folder.
 
 ## Known limits
 

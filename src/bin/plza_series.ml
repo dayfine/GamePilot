@@ -102,8 +102,12 @@ let run_checkpoint ~log ~picture ~reload report (plan : P.Plan.t) =
     Story.Story_game.make steps ~checkpoint_id:id
       ~reload:(reload_cause ~log ~picture)
   in
+  let end_check () =
+    Story.Start_signature.check_end steps ~checkpoint_id:id plan.execution
+  in
   Result.map_error of_failure
-    (Story.Story_game.run_watched ~mode:"testing" report game plan.checkpoint)
+    (Story.Story_game.run_watched ~end_check ~mode:"testing" report game
+       plan.checkpoint)
 
 (* The run fails on the page when it stops before its runner ended it. *)
 let with_assets ~log ~picture ~reload report plan assets =

@@ -57,6 +57,7 @@ val make :
 (** The handlers for one checkpoint's run. *)
 
 val run_watched :
+  ?end_check:(unit -> (unit, Engine_run.Failure.cause) result) ->
   mode:string ->
   Watch_report.t ->
   Plza_checkpoints.Game.t ->
@@ -64,4 +65,6 @@ val run_watched :
   (unit, Plza_checkpoints.Failure.t) result
 (** The checkpoint through the runner, shown on the watch page
     ({!Plza_checkpoints.Plan_watch}): the report's steps move with its events
-    and its run in [mode] ends passed or failed. *)
+    and its run in [mode] ends passed or failed. [end_check] (none by default)
+    runs after the last event passed: its failure is the run's, at "end"
+    ({!Start_signature.check_end}). *)

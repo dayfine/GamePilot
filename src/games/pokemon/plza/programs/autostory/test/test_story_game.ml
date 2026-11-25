@@ -466,8 +466,8 @@ let off_the_roof ?(lost = false) c =
       | Some _ -> party c)
   | _ -> party c
 
-(* 03.04: the party bar; the nurse's A prompt once the stick was held 3.9 s
-   (the legs run), until A; the Pokedex app and the talks until three B, then
+(* 03.04: the party bar; an A prompt once the stick was held 3.9 s (Urbain's
+   on the way in the -90 run, then the nurse's once the legs end), until A; the Pokedex app and the talks until three B, then
    the party bar. [lost]: no nurse's prompt. *)
 let nurse ?(lost = false) c =
   match C.stick_reached c 3900 with
@@ -553,6 +553,22 @@ let start_check ?execution checkpoint screen () =
      | Ok () -> "ok"
      | Error e -> Engine_run.Failure.cause_to_string e)
     :: C.lines c)
+
+(* The end check of [checkpoint]'s plan on [screen], with its log lines. *)
+let end_check checkpoint screen () =
+  let c = C.create () in
+  let r =
+    Plza_autostory.Start_signature.check_end (C.steps c screen)
+      ~checkpoint_id:checkpoint (plan checkpoint).execution
+  in
+  String.concat "\n"
+    ((match r with
+     | Ok () -> "ok"
+     | Error e -> Engine_run.Failure.cause_to_string e)
+    :: C.lines c)
+
+(* Outside the Center, where 03.04 ends and 03.06 starts. *)
+let outside_center c = { (party c) with minimap = Some "03.06-start" }
 
 (* 03.07's run to the gate on [screen]: its result and log. *)
 let gate_run ?(timeout_ms = 8000) screen () =
@@ -1103,7 +1119,9 @@ let cases =
       (result "03.03c" (off_the_roof ~lost:true))
       "03.03c event 1 (off_the_roof): walk_no_scene: off_the_roof: control \
        still free after 8162 ms of the last leg: no scene took it";
-    case "03.04: into the Pokemon Center, the nurse, the Pokedex with B"
+    case
+      "03.04: into the Pokemon Center past Urbain's prompt, the nurse after \
+       the legs, the Pokedex with B"
       (fun () ->
         let r, c = outcome "03.04" nurse in
         String.concat "\n"
@@ -1115,7 +1133,7 @@ let cases =
                    [ "[PLZA] into"; "[PLZA scene] done" ])
                (C.lines c)))
       "passed\n\
-       [PLZA] into_pokemon_center: A on the A prompt after 750 ms of the last \
+       [PLZA] into_pokemon_center: A on the A prompt after 0 ms of the last \
        leg started a talk.\n\
        [PLZA] into_pokemon_center: started on: dialog_box, advance_arrow\n\
        [PLZA scene] done on control.";
@@ -1153,12 +1171,40 @@ let cases =
        minimap), its start is (minimap 03.03-start)\n\
        [Checkpoint] 03.03: START CHECK FAILED: the screen reads (no minimap), \
        its start is (minimap 03.03-start)";
+    case "03.04's start check at its end, outside the Center: passed"
+      (start_check "03.04" outside_center)
+      "ok\n\
+       [Checkpoint] 03.04: START CHECKED (at its end): the screen reads \
+       (minimap 03.06-start), its start is (minimap 03.04-start) or its end \
+       (minimap 03.06-start)";
+    case "03.04 resumed outside the Center: every event skipped"
+      (fun () -> skips "03.04" outside_center)
+      "passed\n\
+       [Story] 03.04 #1 into_pokemon_center: skipped (minimap:03.06-start)\n\
+       [Story] 03.04 #2 pokedex_app: skipped (minimap:03.06-start)\n\
+       [Story] 03.04: done";
+    case "03.04's end check outside the Center: passed"
+      (end_check "03.04" outside_center)
+      "ok\n\
+       [Checkpoint] 03.04: END CHECKED: the screen reads (minimap \
+       03.06-start), its end is (minimap 03.06-start)";
+    case
+      "03.04's end check inside the Center (Urbain's line): end_off_signature"
+      (end_check "03.04" party)
+      "end_off_signature: 03.04 passed its events but did not end at its end: \
+       the screen reads (no minimap), its end is (minimap 03.06-start)\n\
+       [Checkpoint] 03.04: END CHECK FAILED: the screen reads (no minimap), \
+       its end is (minimap 03.06-start)";
+    case "03.03's end check: none named, nothing read" (end_check "03.03" party)
+      "ok";
     case "03.04's start check at the arch: chain_off_start, the wrong minimap"
       (start_check "03.04" at_arch)
       "chain_off_start: the run is not at 03.04's start: the screen reads \
-       (minimap 03.03-start), its start is (minimap 03.04-start)\n\
+       (minimap 03.03-start), its start is (minimap 03.04-start) or its end \
+       (minimap 03.06-start)\n\
        [Checkpoint] 03.04: START CHECK FAILED: the screen reads (minimap \
-       03.03-start), its start is (minimap 03.04-start)";
+       03.03-start), its start is (minimap 03.04-start) or its end (minimap \
+       03.06-start)";
     case "03.02's start: no signature, unchecked"
       (start_check "03.02" party)
       "ok\n\
