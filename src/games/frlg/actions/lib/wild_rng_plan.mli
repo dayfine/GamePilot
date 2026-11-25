@@ -19,12 +19,16 @@ type t = {
   seeds : string;
       (** the seed table, a file under [src/games/frlg/assets/] in FR_Eng.json's
           shape, measured on one save *)
-  seed_offset : int;
+  seed_shift : int;
       (** What the save the reset boots from adds to every seed of [seeds]
           (16-bit, wrapping), measured: on mGBA a FireRed save boots a few timer
           counts later or sooner by where its last save left the flash sectors
           (0, 4, 8 or 12 on the Sevii saves), so one table serves every save
           with its offset. 0 when not given. *)
+  ingame_offset : int;
+      (** Advances added to the in-game wait (the fork's in-game calibration),
+          measured: on mGBA a target can land one advance late, by how its waits
+          round to frames. 0 when not given. *)
   frame_model : string;  (** ["mgba"] or ["switch"] (Frlg_rng.Rng_timings) *)
   min_advance : int;
       (** The first RNG advance the search tries: fewer cannot be reached in
@@ -36,9 +40,10 @@ type t = {
 
 val decode : Json_field.obj -> (t, Pokemon_engine.Failure.cause) result
 (** ["species"], ["location"] (["route_10"]), ["tid"], ["sid"] (0..65535),
-    ["seeds"], ["seed_offset"] (0..65535, default 0), ["frame_model"]
-    (["mgba"]), ["advances"] ([[min, max]], default [[900, 4000]]), ["ball"]
-    (["poke-ball"]), ["balls"] (5), ["attempts"] (1). *)
+    ["seeds"], ["seed_shift"] (0..65535, default 0), ["ingame_offset"] (-99..99,
+    default 0), ["frame_model"] (["mgba"]), ["advances"] ([[min, max]], default
+    [[900, 4000]]), ["ball"] (["poke-ball"]), ["balls"] (5), ["attempts"] (1).
+*)
 
 val encounter_slots : string
 (** The file the grass slots are read from, FireRed's:

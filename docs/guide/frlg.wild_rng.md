@@ -26,7 +26,7 @@ in `SerialPrograms-Settings.json`, so copy the SID from the box or the log.
 A Switch FireRed save takes its SID the same way, once, into the plan. The mGBA save these plans
 were made on has SID 9011, read from the game's memory.
 
-Each save also needs its seed offset measured (below).
+Each save also needs its seed shift measured (below).
 
 <!-- generated:needs -->
 - 1 free party slot (joining: ekans in 02-shiny-ekans)
@@ -54,7 +54,7 @@ sh run/run_checkpoints_on_mgba.sh frlg.wild_rng --from 01-route10-grass --to 02-
 | 01-route10-grass | From anywhere outdoors: fly to Route 10, a party slot free in the Center's PC, into the north grass, saved |
 | 02-shiny-ekans | Route 10's north grass: a hard reset timed for a shiny Ekans, Sweet Scent, the catch, its summary's star, saved |
 
-<!-- plans: f8c3802476c8 -->
+<!-- plans: 55dbaca1a59d -->
 <!-- /generated -->
 
 ## When it stops
@@ -69,7 +69,7 @@ sh run/run_checkpoints_on_mgba.sh frlg.wild_rng --from 01-route10-grass --to 02-
 ## Known limits
 
 - mGBA only. The seed table was measured on mGBA from the Sevii story's end save, and 02's
-  `seed_offset` from the save 01 makes; a save made another number of saves later can need
+  `seed_shift` from the save 01 makes; a save made another number of saves later can need
   another offset, and misses the target until it is measured.
 - If the catch is not shiny, the checkpoint fails before saving and the run tries again from its
   start.
@@ -88,7 +88,7 @@ the game from its save, and the press N frames later gives the same seed every t
 delays in ms that round to the press frame) was measured on mGBA from the Sevii story's end save,
 the save 01 starts from. The plan names its table (`seeds`).
 
-**The seed offset.** The plan's `seed_offset` is added to every seed. A save's boot ends a few
+**The seed shift.** The plan's `seed_shift` is added to every seed. A save's boot ends a few
 timer counts later or sooner by where its last save left the flash sectors (the save count modulo
 14: 0, 4, 8 or 12 on these saves), which moves every seed by that much. 01's end save adds 8,
 measured: the table it gives is the Sevii table plus 8, row for row.

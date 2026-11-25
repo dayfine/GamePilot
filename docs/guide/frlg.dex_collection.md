@@ -51,7 +51,7 @@ sh run/run_checkpoints_on_mgba.sh frlg.dex_collection --from 01-ultra-balls --to
 | 03-shiny-drowzee | From anywhere outdoors: a shiny Drowzee in Route 11's grass by the wild RNG, stored in the PC, back to the nurse |
 | 04-shiny-ekans | From anywhere outdoors: a shiny Ekans in Route 10's grass by the wild RNG, stored in the PC, back to the nurse |
 
-<!-- plans: 719b77eb6d4d -->
+<!-- plans: 07356fbf73b6 -->
 <!-- /generated -->
 
 
@@ -70,7 +70,7 @@ sh run/run_checkpoints_on_mgba.sh frlg.dex_collection --from 01-ultra-balls --to
 
 - mGBA only, and only from the save this program was measured on (the end of the Sevii story).
   On mGBA a save boots a few timer counts sooner or later depending on how many times the game
-  has been saved, so each catch's plan holds a `seed_offset` measured for its own grass save in
+  has been saved, so each catch's plan holds a `seed_shift` measured for its own grass save in
   this chain. Started from another save, a catch misses: the checkpoint fails before saving
   (`wild_rng_not_shiny`).
 - Three species so far, in grass only. Fishing, surfing, static encounters and gifts come later.
@@ -84,7 +84,7 @@ sh run/run_checkpoints_on_mgba.sh frlg.dex_collection --from 01-ultra-balls --to
 
 Each catch is the `wild_rng` action ([Wild RNG](frlg.wild_rng.md)) on the seed table
 `src/games/frlg/assets/rng_seeds_mgba_sevii_save.json`, measured on mGBA from the Sevii story's
-end save, plus the plan's `seed_offset`. On mGBA the seed a title-screen press gives depends a
+end save, plus the plan's `seed_shift`. On mGBA the seed a title-screen press gives depends a
 little on the save the game boots from: by where the last save left the flash sectors (the save
 count modulo 14), the boot ends 0, 4, 8 or 12 timer counts later, and every seed moves with it.
 

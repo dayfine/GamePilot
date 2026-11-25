@@ -3,7 +3,7 @@
    pressed 1837 frames (30756 ms) after the reset (the lab's 1836, counted
    from a frame after it), advance 1555. The seed table is the asset measured
    on mGBA from the Sevii save; the Route 10 save that run booted from adds 8
-   to each of its seeds (the plan's seed_offset). *)
+   to each of its seeds (the plan's seed_shift). *)
 
 open Frlg_rng
 

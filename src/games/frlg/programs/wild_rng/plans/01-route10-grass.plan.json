@@ -46,6 +46,6 @@
   "execution": {"menu": "full"},
   "metadata": {
     "phase": "testing",
-    "notes": "Starts anywhere outdoors in Kanto, where Fly reaches Route 10 (sevii_story's 06-back-to-cinnabar ends on Cinnabar). 02's seed offset (8 on the Sevii table, rng_seeds_mgba_sevii_save.json) was measured from this checkpoint's end save."
+    "notes": "Starts anywhere outdoors in Kanto, where Fly reaches Route 10 (sevii_story's 06-back-to-cinnabar ends on Cinnabar). 02's seed shift (8 on the Sevii table, rng_seeds_mgba_sevii_save.json) was measured from this checkpoint's end save."
   }
 }

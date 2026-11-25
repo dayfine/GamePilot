@@ -38,14 +38,14 @@
           "tid": 33002,
           "sid": 9011,
           "seeds": "rng_seeds_mgba_sevii_save.json",
-          "seed_offset": 4,
+          "seed_shift": 4,
           "frame_model": "mgba",
           "advances": [1000, 4000],
           "ball": "ultra-ball",
           "balls": 5,
           "attempts": 1
         },
-        "why": "A shiny Ekans, the soonest of the table for TID 33002 and SID 9011 (read once from the save's memory). seed_offset 4: what this checkpoint's grass save (the save file's save number 143) adds to the table's seeds on mGBA, measured from it. The party's last member knows Sweet Scent."
+        "why": "A shiny Ekans, the soonest of the table for TID 33002 and SID 9011 (read once from the save's memory). seed_shift 4: what this checkpoint's grass save (the save file's save number 143) adds to the table's seeds on mGBA, measured from it. The party's last member knows Sweet Scent."
       },
       {
         "id": "save_catch",
@@ -88,6 +88,6 @@
   },
   "metadata": {
     "phase": "testing",
-    "notes": "mGBA only. The seed offset holds for this checkpoint's start save as the program's chain leaves it (from sevii_story's end, two saves a catch): a start save with another number of saves before it boots a few timer counts off and misses, failing the checkpoint (wild_rng_not_shiny) with the catch unsaved."
+    "notes": "mGBA only. The seed shift holds for this checkpoint's start save as the program's chain leaves it (from sevii_story's end, two saves a catch): a start save with another number of saves before it boots a few timer counts off and misses, failing the checkpoint (wild_rng_not_shiny) with the catch unsaved."
   }
 }
