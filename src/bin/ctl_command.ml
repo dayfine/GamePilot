@@ -7,12 +7,20 @@
    someone else holds it; reads (shot, read, status) need no lease. COMMAND and
    FILE's lines are Ctl_script's (labB.sh's format). [run] prints [ok N LINE]
    per line and stops at the first error. [park] and [resume] park the Switch
-   on its HOME menu and resume FireRed from it, [close-game] and [start-game]
+   on its HOME menu and resume the lab console's game from it, [close-game] and [start-game]
    close the running game and start one from a HOME tile (the fork's
    NintendoSwitch_GameEntry steps) (Console_park_command), [delete-save] goes
    to a game's red Delete Save Data button and [delete-save --confirm] presses
    it (Delete_save_command). Every press is in the daemon's wire log with its
    owner. *)
+
+(* The readers [read NAME] runs, one line each (Checkpoint_families). *)
+let readers_usage () =
+  String.concat ""
+    (List.map
+       (fun (r : Ctl_script.reader) ->
+         Printf.sprintf "    %-11s %s\n" r.name r.doc)
+       Checkpoint_families.ctl_readers)
 
 let default_owner = "ctl"
 let client = "gamepilot-ctl/0.1"
@@ -21,12 +29,14 @@ let usage =
   "  gamepilot ctl [--port N] [--owner LABEL] press A [--hold 100] [--wait \
    500] | dpad UP [N]\n\
   \      | wait MS | shot FILE.png | read READER | status\n\
-  \      | park | resume  (the Switch: HOME menu and back to FireRed)\n\
-  \      | close-game | start-game TILE  (the Switch, from HOME: close the\n\
-  \        running game; start the game on TILE, 1 the first, 0 the cursor's)\n"
+  \      | park | resume  (the Switch: HOME menu and back to "
+  ^ Program_registry.lab_console.title
+  ^ ")\n\
+    \      | close-game | start-game TILE  (the Switch, from HOME: close the\n\
+    \        running game; start the game on TILE, 1 the first, 0 the cursor's)\n"
   ^ Delete_save_command.usage_line
   ^ "  gamepilot ctl [--port N] [--owner LABEL] run FILE\n    readers:\n"
-  ^ Ctl_readers.usage ()
+  ^ readers_usage ()
 
 type flags = { port : int; owner : string }
 
@@ -68,7 +78,7 @@ let exec port (step : Ctl_script.step) =
       ignore (Effects.save_frame (absolute file) : int);
       Ok ()
   | Read name -> (
-      match Ctl_readers.find name with
+      match Checkpoint_families.ctl_reader name with
       | None -> Error ("unknown reader " ^ name)
       | Some reader ->
           print_fields (reader.read ());

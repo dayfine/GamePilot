@@ -106,3 +106,9 @@ let commands = function
           Wire.press ~hold_ms ~cooldown_ms:wait_ms [ button ])
   | Wait wait_ms -> [ Wire.Wait { wait_ms } ]
   | Shot _ | Read _ | Status -> []
+
+type reader = {
+  name : string;
+  doc : string;
+  read : unit -> (string * string) list;
+}

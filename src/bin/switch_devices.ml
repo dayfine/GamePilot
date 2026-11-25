@@ -16,8 +16,8 @@
 let usage = "  gamepilot switch-devices [--profile DIR]\n"
 let settings_file = [ "UserSettings"; "SerialPrograms-Settings.json" ]
 
-(* The panel whose console setup the lab runs FRLG with. *)
-let panel = "PokemonFRLG:AutoStory"
+(* The panel whose console setup the lab runs its console with. *)
+let panel = Program_registry.lab_console.panel
 let utf8_bom = "\xef\xbb\xbf"
 
 let read_settings dir =

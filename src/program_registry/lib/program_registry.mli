@@ -25,7 +25,21 @@ type rules = Pokemon_grid
 type game = {
   game_id : string;  (** ["frlg"], as plans and the games/ folder name it. *)
   game_name : string;
+  delete_save_icons : (string * string) list;
+      (** Its Switch titles' icons on their "Delete Save Data for <user>" page
+          (Switch_home.Delete_save), each a repo path, by the key
+          [gamepilot ctl delete-save] takes: [firered] for FRLG. *)
 }
+
+type lab_console = {
+  title : string;  (** The game it is parked from and resumes: ["FireRed"]. *)
+  panel : string;
+  home_tile : Switch_home.Home_screen.tile_color;
+}
+(** The lab's console as GamePilot drives it: the lab app's program panel whose
+    console setup has its controller board and capture card
+    ([gamepilot switch-devices]), and the colour of the game tile its HOME steps
+    look for (park, resume, close-game, start-game and delete-save). *)
 
 type t = {
   id : string;  (** [<game>.<program>]: ["frlg.mail_glitch"]. *)
@@ -42,6 +56,13 @@ type t = {
       (** The Switch's game picture, which every daemon of its runs takes. *)
   rules : rules;  (** What its plans are written over. *)
 }
+
+val games : game list
+(** Every game with a program or a Switch title GamePilot knows, PLZA (no
+    program yet) first, as [gamepilot ctl delete-save] lists their keys. *)
+
+val lab_console : lab_console
+(** FRLG's: the FRLG AutoStory panel and FireRed's tile. *)
 
 val all : t list
 (** By game, then group, then name. *)

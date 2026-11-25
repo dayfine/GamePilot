@@ -60,6 +60,13 @@ let viewport_for program flag =
   | Ok None -> "default"
   | Error e -> "error: " ^ e
 
+(* Every game's delete-save icons that are not found from here. *)
+let missing_icons () =
+  List.concat_map (fun (g : R.game) -> g.delete_save_icons) R.games
+  |> List.filter_map (fun (key, path) ->
+         if R.locate path = None then Some (key ^ ": " ^ path) else None)
+  |> String.concat ", "
+
 let id_of = function Some (p : R.t) -> p.id | None -> "none"
 
 let () =
@@ -70,6 +77,7 @@ let () =
       case "every checkpoints folder exists"
         (missing (fun p -> p.checkpoints))
         "";
+      case "every delete-save icon exists" missing_icons "";
       case "the mail glitch folder has plans" plan_count "true";
       case "every plan decodes and checks" bad_plans "";
       case "find by id"

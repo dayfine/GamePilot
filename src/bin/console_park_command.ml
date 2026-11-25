@@ -2,8 +2,8 @@
      (--capture DEVICE | --replay VIDEO) [--log-dir DIR]
    gamepilot ctl [--port N] [--owner LABEL] park|resume
 
-   Parks the Switch on its HOME menu, or resumes FireRed from there
-   (Switch_home.Console_park). [console] starts a daemon of its own on the
+   Parks the Switch on its HOME menu, or resumes the lab console's game from
+   there (Switch_home.Console_park; its tile: Program_registry.lab_console). [console] starts a daemon of its own on the
    board and the card, as run/run_checkpoints_on_switch.sh does at its start
    and its release, with its wire log and output in --log-dir (the temp
    folder); [ctl park] and [ctl resume] use a running daemon (the idle one)
@@ -11,11 +11,8 @@
 
 module P = Switch_home.Console_park
 
-(* FireRed's tile on HOME: its orange background and Charizard, 0.41 of the
-   art; the other tiles on console B 0.05 at most (2026-11-24). *)
-let fire_red_tile : Switch_home.Home_screen.tile_color =
-  { min = (200, 40, 0); max = (255, 170, 100) }
-
+(* The lab console's game's tile on HOME. *)
+let game_tile = Program_registry.lab_console.home_tile
 let client = "gamepilot-console/0.1"
 
 let usage =
@@ -25,14 +22,14 @@ let usage =
 let log line = print_endline line
 
 let park ~picture =
-  match P.park ~log ~picture fire_red_tile with
+  match P.park ~log ~picture game_tile with
   | Ok () -> true
   | Error e ->
       log ("[Park] failed: " ^ e);
       false
 
 let resume ~picture =
-  match P.resume ~log ~picture fire_red_tile with
+  match P.resume ~log ~picture game_tile with
   | Ok r ->
       log ("[Resume] " ^ P.resumed_to_string r);
       true
@@ -40,7 +37,7 @@ let resume ~picture =
       log ("[Resume] failed: " ^ e);
       false
 
-(* Switch_home.Game_entry's steps, FireRed's tile colour for the HOME
+(* Switch_home.Game_entry's steps, the game's tile colour for the HOME
    reader. *)
 let entry_step name result =
   match result with
@@ -53,17 +50,17 @@ let entry_step name result =
 
 let close_game ~picture =
   entry_step "Close game"
-    (Switch_home.Game_entry.close_game ~log ~picture fire_red_tile)
+    (Switch_home.Game_entry.close_game ~log ~picture game_tile)
 
 let start_game ~picture slot =
   entry_step "Start game"
     (Switch_home.Game_entry.start_game ~log ~picture ~game_slot:slot
-       ~user_slot:0 fire_red_tile)
+       ~user_slot:0 game_tile)
 
 (* Switch_home.Delete_save's two steps (Delete_save_command). *)
 let delete_save ~picture game =
   entry_step "Delete save"
-    (Switch_home.Delete_save.to_caution ~log ~picture fire_red_tile game)
+    (Switch_home.Delete_save.to_caution ~log ~picture game_tile game)
 
 let delete_save_confirm ~picture =
   entry_step "Delete save, confirm"

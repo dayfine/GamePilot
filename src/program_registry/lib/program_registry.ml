@@ -1,7 +1,18 @@
 type backend = Mgba | Switch
 type viewport = Nso_gba | Native
 type rules = Pokemon_grid
-type game = { game_id : string; game_name : string }
+
+type game = {
+  game_id : string;
+  game_name : string;
+  delete_save_icons : (string * string) list;
+}
+
+type lab_console = {
+  title : string;
+  panel : string;
+  home_tile : Switch_home.Home_screen.tile_color;
+}
 
 type t = {
   id : string;
@@ -16,7 +27,45 @@ type t = {
   rules : rules;
 }
 
-let frlg = { game_id = "frlg"; game_name = "Pokémon FireRed/LeafGreen" }
+(* Each icon is 82x82 frame pixels of the 90 px icon at (90, 30) on its
+   "Delete Save Data for <user>" page, 4 px in. No FireRed page was captured:
+   firered's is the game list's 135 px icon (game-list-za-first.png, at (157,
+   397)) scaled to 90 px (Lanczos), then cut the same way; Z-A's made so
+   scores 0.0054 on its page against the reader's 0.02. *)
+let frlg =
+  {
+    game_id = "frlg";
+    game_name = "Pokémon FireRed/LeafGreen";
+    delete_save_icons =
+      [ ("firered", "src/games/frlg/assets/delete-save-icon-firered.png") ];
+  }
+
+(* plza's icon is cut from console B's capture of that page
+   (core/switch_home/test/images/delete-save/za-page-delete-save-data-for-user.png). *)
+let plza =
+  {
+    game_id = "plza";
+    game_name = "Pokémon Legends: Z-A";
+    delete_save_icons =
+      [ ("plza", "src/games/pokemon/plza/assets/delete-save-icon.png") ];
+  }
+
+let games = [ plza; frlg ]
+
+(* FireRed's tile on HOME: its orange background and Charizard, 0.41 of the
+   art; the other tiles on console B 0.05 at most (2026-11-24). RGB, each
+   bound 0 to 255. *)
+let fire_red_tile : Switch_home.Home_screen.tile_color =
+  let red_from = 200 and green_from = 40 in
+  let full = 255 and green_to = 170 and blue_to = 100 in
+  { min = (red_from, green_from, 0); max = (full, green_to, blue_to) }
+
+let lab_console =
+  {
+    title = "FireRed";
+    panel = "PokemonFRLG:AutoStory";
+    home_tile = fire_red_tile;
+  }
 
 let mail_glitch =
   {

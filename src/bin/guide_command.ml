@@ -2,7 +2,7 @@
 
    The user guides (docs/guide/, docs/guide/README.md): one page per
    registered program, <id>.md, and any number of extra pages for a part of
-   one, <id>.<part>.md (frlg.mail_glitch.item_duplication.md). Hand-written
+   one, <id>.<part>.md (the item duplication part of the Mail Glitch's). Hand-written
    prose around generated blocks (Guide_page, Guide_blocks).
 
    - PROGRAM prints each block the program's pages can hold, for a first draft;

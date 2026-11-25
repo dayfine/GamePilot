@@ -1,0 +1,14 @@
+(** The FRLG readers [gamepilot ctl read NAME] runs once on the current frame:
+    the screen readers (games/frlg/readers) and the text readers the actions use
+    (Start_menu_names, Party_species, Summary_moves), each subscribed for one
+    frame and printed as [field: value] lines. Nothing here presses a button. *)
+
+type reader = Ctl_script.reader = {
+  name : string;
+  doc : string;
+  read : unit -> (string * string) list;
+}
+
+val all : reader list
+(** start_menu, dialog, party_menu, summary, battle, yes_no, load_menu, bag,
+    trainer_card. *)
