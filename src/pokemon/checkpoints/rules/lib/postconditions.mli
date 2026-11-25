@@ -63,8 +63,8 @@ val stated : t option -> t
 val at_end : t -> t option
 (** What the runner reads and checks after the end position: [None] unless a
     party, items, coins, a caught count, money, flags or marks are promised
-    (moves and levels alone are not read at the end). Marks alone: what a member
-    holds, whichever species it is (ACE setup 01's slot 6). *)
+    (moves and levels alone are not read at the end). Marks alone check what the
+    members hold, whichever species they are. *)
 
 val to_lines : t -> string list
 (** One line per promise: ["position CeladonCity (39, 21) south"],
