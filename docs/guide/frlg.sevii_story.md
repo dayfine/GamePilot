@@ -1,6 +1,6 @@
 # Sevii Story
 
-Plays the Sevii Islands story on a save that has beaten the Elite Four. So far it does the first
+Plays the Sevii Islands story on a save that has beaten Blaine at the Cinnabar Gym. So far it does the first
 trip and Bill's errand after it, up to Bill's return to Cinnabar. It flies to Cinnabar Island and answers YES to
 Bill in the Pokemon Center, who takes you to One Island on the Seagallop. There Celio gives you the
 Tri-Pass, which the Vermilion ferry needs, and Bill gives you a Meteorite for the man who runs Two
@@ -25,10 +25,10 @@ Runs on: mGBA.
 ## Before you start
 
 <!-- generated:needs -->
-- at least 8 badges
-- the Hall of Fame entered
+- the volcano badge
 - pidgey in the party (fly)
 - blastoise in the party (party_swap)
+- the thunder badge (fly)
 - super-repel at least x2 (use_item)
 - at the start, CeladonCity_DepartmentStore_1F
 <!-- /generated -->
@@ -54,7 +54,7 @@ sh run/run_checkpoints_on_mgba.sh --program frlg.sevii_story --from 01-to-one-is
 | 05-berry-forest | Bond Bridge's trainers, the Berry Forest and Lostelle's Hypno; home to the Game Corner |
 | 06-back-to-cinnabar | The Meteorite for a Moon Stone; Bill's goodbye on One Island and the Seagallop to Cinnabar |
 
-<!-- plans: e316e535ccf5 -->
+<!-- plans: 20cd4230b56e -->
 <!-- /generated -->
 
 ## When it stops
@@ -62,7 +62,7 @@ sh run/run_checkpoints_on_mgba.sh --program frlg.sevii_story --from 01-to-one-is
 <!-- generated:preflight -->
 | Resume from | The pre-flight checks |
 |---|---|
-| 01-to-one-island | at least 8 badges; the Hall of Fame entered; pidgey in the party (fly); at the start, CeladonCity_DepartmentStore_1F |
+| 01-to-one-island | the volcano badge; pidgey in the party (fly); the thunder badge (fly); at the start, CeladonCity_DepartmentStore_1F |
 | 02-to-two-island | tri-pass at least x1 (promised before); at the start, OneIsland_PokemonCenter_1F |
 | 03-to-three-island | meteorite at least x1 (promised before); at the start, TwoIsland |
 | 04-three-island-bikers | blastoise in the party (party_swap); meteorite at least x1 (promised before); at the start, ThreeIsland_Harbor |

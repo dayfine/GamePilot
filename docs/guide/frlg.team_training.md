@@ -15,6 +15,7 @@ Runs on: mGBA, the Switch (in its GBA app).
 <!-- generated:needs -->
 - pidgey in the party (fly)
 - mr-mime in the party (give_bag_item)
+- the thunder badge (fly)
 - super-repel at least x1 (use_item)
 - retro-mail at least x99 (duplicate_item)
 - at the start, CeladonCity_DepartmentStore_1F
@@ -48,7 +49,7 @@ sh run/run_checkpoints_on_switch.sh --program frlg.team_training --from tt-01 --
 <!-- generated:preflight -->
 | Resume from | The pre-flight checks |
 |---|---|
-| tt-01 | pidgey in the party (fly); mr-mime in the party (give_bag_item); super-repel at least x1 (use_item); retro-mail at least x99 (duplicate_item); at the start, CeladonCity_DepartmentStore_1F |
+| tt-01 | pidgey in the party (fly); mr-mime in the party (give_bag_item); the thunder badge (fly); super-repel at least x1 (use_item); retro-mail at least x99 (duplicate_item); at the start, CeladonCity_DepartmentStore_1F |
 <!-- /generated -->
 
 ## Known limits

@@ -17,6 +17,7 @@ Runs on: mGBA.
 
 <!-- generated:needs -->
 - pidgey in the party (fly)
+- the thunder badge (fly)
 - money at least ¥12000 (all the purchases)
 - at the start, Route10_PokemonCenter_1F
 <!-- /generated -->
@@ -46,7 +47,7 @@ sh run/run_checkpoints_on_mgba.sh --program frlg.dex_collection --from 01-ultra-
 <!-- generated:preflight -->
 | Resume from | The pre-flight checks |
 |---|---|
-| 01-ultra-balls | pidgey in the party (fly); money at least ¥12000 (mart); at the start, Route10_PokemonCenter_1F |
+| 01-ultra-balls | pidgey in the party (fly); the thunder badge (fly); money at least ¥12000 (mart); at the start, Route10_PokemonCenter_1F |
 | 02-route10-new-species | ultra-ball at least x1 (capture); at the start, Route10_PokemonCenter_1F |
 <!-- /generated -->
 

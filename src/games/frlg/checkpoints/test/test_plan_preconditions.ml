@@ -1,7 +1,8 @@
 (* A plan's declared preconditions (Plan_preconditions) and how the pre-flight
-   judges them on the Trainer Card as read (Preflight.compare): the badges and
-   the Hall of Fame a post-Elite Four program (the Sevii Islands chain, sb-01)
-   needs. The plan is tt-01's with its metadata replaced; the card is a
+   judges them on the Trainer Card as read (Preflight.compare): badges by count
+   or by name, the Hall of Fame and the caught count. (The Sevii Islands chain
+   once declared 8 badges and the Hall of Fame; it now names the Volcano Badge,
+   R24.) The plan is tt-01's with its metadata replaced; the card is a
    Trainer_card_front.t as the reader would give it, with no frame behind it. *)
 
 open Frlg_checkpoints

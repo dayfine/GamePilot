@@ -11,6 +11,7 @@ type need =
     }
   | Member of { species : string; for_ : string }
   | Knows_move of { move : string; for_ : string }
+  | Badge of { badge : string; for_ : string }
   | Money_at_least of { amount : int; for_ : string }
   | Money_between of { min : int; max : int }
   | Item_at_least of { item : string; count : int; for_ : string }
@@ -38,6 +39,29 @@ let item_users = [ "give_bag_item"; "use_item" ]
 let candy_users = [ "use_rare_candy"; "candy_level" ]
 let yen_per_coin = 20
 
+(* The badge each HM needs outside battle, by field move: pret pokefirered
+   src/party_menu.c (FLAG_BADGE01_GET + the field move, from
+   include/constants/party_menu.h: Flash 0 to Waterfall 6), the overworld
+   prompts in data/scripts/field_moves.inc (Cut, Rock Smash, Strength) and
+   src/field_control_avatar.c (Surf, Waterfall). *)
+let field_move_badges =
+  [
+    ("flash", "boulder");
+    ("cut", "cascade");
+    ("fly", "thunder");
+    ("strength", "rainbow");
+    ("surf", "soul");
+    ("rock_smash", "marsh");
+    ("waterfall", "volcano");
+  ]
+
+(* The field move an action uses outside battle: Cut's users, and Fly, whose
+   member the plan still names by species. *)
+let field_move_of action =
+  match List.assoc_opt action A.Action_args.field_move_users with
+  | Some move -> Some move
+  | None -> if action = "fly" then Some "fly" else None
+
 type acc = {
   members : (string * string) list;
       (** needed, with the action; newest first *)
@@ -46,6 +70,7 @@ type acc = {
   items : (string * string) list;  (** needed, one per use *)
   bought : (string * int) list;  (** bought or picked up, not yet used *)
   knows : (string * string) list;  (** field move, action; newest first *)
+  badges : (string * string) list;  (** badge, action; newest first *)
 }
 
 let empty =
@@ -56,6 +81,7 @@ let empty =
     items = [];
     bought = [];
     knows = [];
+    badges = [];
   }
 
 (* The game lets any member that knows Cut cut: some member must know it. *)
@@ -65,6 +91,15 @@ let field_move action acc =
   let move = List.assoc action field_move_users in
   if List.mem_assoc move acc.knows then acc
   else { acc with knows = (move, action) :: acc.knows }
+
+let use_badge action acc =
+  match
+    Option.bind (field_move_of action) (fun m ->
+        List.assoc_opt m field_move_badges)
+  with
+  | Some badge when not (List.mem_assoc badge acc.badges) ->
+      { acc with badges = (badge, action) :: acc.badges }
+  | _ -> acc
 
 let use_member action acc species =
   if List.mem species acc.brought || List.mem_assoc species acc.members then acc
@@ -104,6 +139,7 @@ let use_members ~named action acc =
 
 let game_action stocks ~where action args acc =
   let named key = J.string_opt ~where key args in
+  let acc = use_badge action acc in
   let acc =
     if List.mem_assoc action field_move_users then field_move action acc
     else if action = "pc_deposit" then
@@ -161,6 +197,7 @@ let party_needs before acc =
   promised
   @ List.rev_map (fun (species, for_) -> Member { species; for_ }) acc.members
   @ List.rev_map (fun (move, for_) -> Knows_move { move; for_ }) acc.knows
+  @ List.rev_map (fun (badge, for_) -> Badge { badge; for_ }) acc.badges
 
 let money_needs before acc =
   let promised =

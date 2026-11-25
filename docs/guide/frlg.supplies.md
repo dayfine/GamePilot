@@ -13,6 +13,7 @@ Runs on: mGBA, the Switch (in its GBA app).
 
 <!-- generated:needs -->
 - pidgey in the party (fly)
+- the thunder badge (fly)
 - money at least ¥7500 (all the purchases)
 - at the start, CeladonCity_DepartmentStore_1F
 <!-- /generated -->
@@ -45,7 +46,7 @@ sh run/run_checkpoints_on_switch.sh --program frlg.supplies --from su-01 --to su
 <!-- generated:preflight -->
 | Resume from | The pre-flight checks |
 |---|---|
-| su-01 | pidgey in the party (fly); money at least ¥7500 (mart, mart); at the start, CeladonCity_DepartmentStore_1F |
+| su-01 | pidgey in the party (fly); the thunder badge (fly); money at least ¥7500 (mart, mart); at the start, CeladonCity_DepartmentStore_1F |
 <!-- /generated -->
 
 ## Known limits

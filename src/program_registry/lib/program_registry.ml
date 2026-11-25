@@ -81,7 +81,7 @@ let sevii_story =
     name = "Sevii Story";
     group = [ "FRLG"; "Story" ];
     description =
-      "Plays the Sevii Islands story after the Hall of Fame, starting with \
+      "Plays the Sevii Islands story after the Cinnabar Gym, starting with \
        Bill's trip to One Island.";
     doc = "docs/programs/frlg-sevii-story.md";
     checkpoints = Some "src/games/frlg/programs/sevii_story/plans";
