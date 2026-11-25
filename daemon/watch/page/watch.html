@@ -1,0 +1,128 @@
+<!doctype html>
+<!--
+  gamepilot watch: the daemon's live page for one run (served as is by
+  daemon/watch/server/watch_server.cpp; design in docs/design/Watch-Page.md).
+  Frame: an <img> on GET /stream (MJPEG, up to 30 frames a second, 1280 px
+  wide or 960 on a phone) while the tab is visible; when the stream fails it
+  polls GET /frame (PNG or JPEG) 5 times a second and tries the stream again
+  later. Probe boxes are drawn on a canvas over it at display resolution, not
+  into the frame. Everything else: the event stream GET /events (info, run, plan,
+  log, probes, status). Stop: POST /stop?token=T, with the run's token: the
+  daemon puts it in the gamepilot-token meta tag for a viewer on its own
+  machine; elsewhere it comes from this page's ?token=, and without one the
+  page is read-only. The Run strip keeps each checkpoint's last plan in
+  memory, so a finished one's events (and their times) can be looked at again.
+  A view-only daemon (backend `view`: another program's window) has no Stop
+  and no run or plan; its `source` event says whether the picture is live,
+  stale or covered, shown beside the connection state, and its log is that
+  program's log.
+  Runs sidebar: the hub's runs.json and recent.json (watch_hub.h), polled
+  every few seconds; opened through the hub (/runs/NAME/) it is the same
+  origin, opened on the run's own port it asks the hub on port 47901. When
+  this run leaves the registry the page says so and links to its record and
+  the newest live run; the next checkpoint of the same series (same port) is
+  followed. Finished runs in the sidebar link to their record (run.html).
+  Through the hub this page comes from the hub's own build, whatever the run
+  daemon's age: the run supplies only data (events, stream, frame, summary,
+  stop).
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="gamepilot-token" content="">
+<title>GamePilot Watch</title>
+<link rel="stylesheet" href="watch.css">
+</head>
+<body>
+<header>
+  <button id="side-toggle" type="button" aria-controls="side" aria-expanded="false"
+          title="Runs">☰</button>
+  <h1>GamePilot watch</h1>
+  <span id="conn">connecting…</span>
+  <span id="source-state" hidden></span>
+  <button id="stop" type="button" title="Release all buttons and end the program">Stop</button>
+  <span id="readonly" hidden title="Open the URL with ?token=… (the runner prints it) to get Stop">read-only</span>
+</header>
+<div id="shell">
+<nav id="side" aria-label="Runs">
+  <div id="side-watching-group" hidden>
+    <h2>Watching</h2>
+    <ul id="side-watching"></ul>
+  </div>
+  <h2>Live runs <a id="side-hub" href="/">all runs</a></h2>
+  <ul id="side-live"><li><span class="row note">loading…</span></li></ul>
+  <h2>Recent</h2>
+  <ul id="side-recent"></ul>
+</nav>
+<main>
+  <section id="frame-panel">
+    <h2>Live frame</h2>
+    <div class="toolbar">
+      <span>Boxes</span>
+      <span class="modes" role="group" aria-label="Probe boxes">
+        <button type="button" data-mode="off">Off</button>
+        <button type="button" data-mode="changed" title="Only probes whose value changed in the last second">Changed</button>
+        <button type="button" data-mode="all">All</button>
+      </span>
+    </div>
+    <div id="frame-body">
+      <div id="stage-wrap">
+        <div id="stage">
+          <img id="screen" alt="" width="240" height="160">
+          <canvas id="overlay"></canvas>
+        </div>
+        <div id="frame-meta">waiting for a frame</div>
+      </div>
+      <div id="probe-side">
+        <input id="probe-filter" type="search" list="probe-prefixes"
+               placeholder="filter probes by prefix (party., bag., …)">
+        <datalist id="probe-prefixes"></datalist>
+        <div id="probe-scroll">
+          <table id="probe-table"><tbody><tr><td class="empty">no probes subscribed</td></tr></tbody></table>
+        </div>
+      </div>
+    </div>
+  </section>
+  <section id="run-panel">
+    <h2>Run</h2>
+    <div id="run-meta">no chain yet: <code>gamepilot run</code> sends it when a run starts</div>
+    <ol id="chain"></ol>
+    <div id="past" hidden>
+      <div id="past-head"><span id="past-title"></span>
+        <button id="past-close" type="button">Close</button></div>
+      <ol id="past-plan" class="plan"></ol>
+    </div>
+  </section>
+  <section id="plan-panel">
+    <h2 id="plan-title">Plan</h2>
+    <ol id="plan" class="plan"><li class="empty">no plan yet: the program sends it when a checkpoint starts</li></ol>
+  </section>
+  <section id="log-panel">
+    <h2>Log</h2>
+    <pre id="log"></pre>
+  </section>
+  <section id="health-panel">
+    <h2>Health</h2>
+    <table id="health"><tbody><tr><td class="empty">waiting for the daemon's status</td></tr></tbody></table>
+  </section>
+</main>
+</div>
+<div id="side-backdrop" hidden></div>
+<div id="ended" role="status" hidden>
+  <span id="ended-text">This run has ended.</span>
+  <a id="ended-record" href="./">Open its record</a>
+  <a id="ended-newest" href="/live">Go to the newest live run</a>
+  <button id="ended-close" type="button">Close</button>
+</div>
+<script src="watch_state.js"></script>
+<script src="watch_frame.js"></script>
+<script src="watch_plan.js"></script>
+<script src="watch_run.js"></script>
+<script src="watch_log.js"></script>
+<script src="watch_health.js"></script>
+<script src="watch_events.js"></script>
+<script src="watch_sidebar.js"></script>
+<script src="watch.js"></script>
+</body>
+</html>

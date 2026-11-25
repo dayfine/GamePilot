@@ -19,10 +19,13 @@ failed, skipped), the story log, the daemon's health, and a Stop button. It is s
                                                          OCaml program (Live session)
 ```
 
-- **The daemon serves the page** (`daemon/src/watch_server.*`, `server_watch.cpp`): a small HTTP
+- **The daemon serves the page** (`daemon/watch/server/watch_server.*`, `daemon/watch/server/server_watch.cpp`): a small HTTP
   server on its own port (`--watch-port`; the runner asks for a free one), polled by the same loop as
   the program's socket, no thread of its own. It already holds the frame, the probes and the health; the page is
-  one HTML/JS file (`daemon/watch/watch.html`) compiled in and served as is. No new dependency.
+  one HTML file (`daemon/watch/page/watch.html`) with its scripts (`watch_*.js`, by job) and style
+  (`watch.css`) beside it, plain files with no build step, compiled in and served as they are. They are classic scripts
+  loaded in order into one global scope, so a file uses at load time only what the files before it
+  define. No new dependency.
 - **The program publishes what only it knows**: the plan's states and its story lines, as two
   notifications (`watch.plan`, `watch.log`, contract v1.6) sent through the `show_plan`/`show_log`
   effects. Notifications need no answer, so they cost the program nothing but a write. The daemon
@@ -124,10 +127,10 @@ wants one place to find them.
   (one mGBA today).
 - **The registry.** While its page is up, each daemon keeps one file in `$GAMEPILOT_RUNS/.watch/`,
   `<pid>.json`: pid, the page's port and address, backend, run folder, checkpoint, start time
-  (`daemon/src/watch_registry.*`). It removes it on exit; a daemon that died leaves a stale file,
+  (`daemon/watch/server/watch_registry.*`). It removes it on exit; a daemon that died leaves a stale file,
   which every reader skips because its pid is gone.
 - **The hub.** `gamepilot_daemon --hub` serves one page on the fixed port 47901
-  (`daemon/src/watch_hub.*`, `watch/hub.html`, the same HTTP pieces, no new dependency): the live
+  (`daemon/watch/server/watch_hub.*`, `daemon/watch/page/hub.html`, the same HTTP pieces, no new dependency): the live
   runs from the registry (`/runs.json`), each with its checkpoint, mode and trial from that run's
   `/summary.json` (its latest `watch.run` and `watch.plan`), elapsed time and what it is doing,
   and the latest finished runs from `RESULTS.tsv` beside the registry (`/recent.json`). The runner
@@ -245,7 +248,7 @@ duration; a "frames" tag on a recorded run.
 
 ## Past runs
 
-`/runs/NAME/` for a run that is not live is its record (`watch/run.html`, from the hub's build):
+`/runs/NAME/` for a run that is not live is its record (`daemon/watch/page/run.html`, from the hub's build):
 the result, where and why it failed, game, program, range, backend, mode, start and duration;
 `failure.png`; the plan with each event's time; the full story log; the recorded frames with a
 scrubber; and the probe values over the run. Everything is read from the run folder through the

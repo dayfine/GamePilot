@@ -135,6 +135,12 @@ let check_from_event f mode ~checkpoints =
   | Some _ ->
       Event_range.check ~mode ~keeps_states:(f.backend = "mgba") ~checkpoints
 
+(* Each run's daemon: the program's --viewport, then the user's flags. *)
+let daemons f backend ~viewport series =
+  Series_daemons.create ~daemon:f.daemon ~backend ~port:f.port
+    ~flags:(Daemon_process.viewport_args backend viewport @ f.daemon_flags)
+    ~watch:(watch_of f) series
+
 let from_event f = Option.map (fun first -> (first, f.to_event)) f.from_event
 
 let run_series program plan_dir (f : Pokemon_flags.flags) =
@@ -152,22 +158,23 @@ let run_series program plan_dir (f : Pokemon_flags.flags) =
   let* selected, after = Plan_dir.select ids ~from_id ~to_id in
   let* () = check_from_event f mode ~checkpoints:(List.length selected) in
   let* world = Frlg_checkpoints.Checkpoint_run.load_world () in
+  let info = run_info program plan_dir f Checkpoints ~from_id ~to_id in
+  let mode_name = Checkpoint_trials.mode_to_string mode in
+  let series : Series_daemons.series =
+    { info; mode = mode_name; checkpoints = selected }
+  in
   Ok
     (Checkpoint_series.run ~plan_dir
        {
          states = f.states;
          runs_dir = f.runs_dir;
-         daemon = f.daemon;
          backend;
          common = { f.game.common with port = f.port };
          mode;
          policy;
          world;
-         watch = watch_of f;
-         info = run_info program plan_dir f Checkpoints ~from_id ~to_id;
-         daemon_flags =
-           Daemon_process.viewport_args backend viewport @ f.daemon_flags;
-         bound = ref None;
+         info;
+         daemons = daemons f backend ~viewport series;
          save_after_pass = f.save_after_pass;
          max_rounds = f.max_rounds;
          from_event = from_event f;

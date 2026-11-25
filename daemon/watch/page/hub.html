@@ -1,0 +1,84 @@
+<!doctype html>
+<!--
+  gamepilot hub: the live runs on this machine, each linking to its own watch
+  page, which the hub serves under runs/NAME/ (served by `gamepilot_daemon
+  --hub`, daemon/watch/server/watch_hub.cpp; design in docs/design/Watch-Page.md).
+  External sources (entries with a `source`: a view-only daemon showing
+  another program's window) are listed under Watching, with their picture's
+  state (live, stale, covered) from their /summary.json; the live runs table
+  and `live` are our own runs only.
+  GET runs.json lists the registry's live entries; each run's mode, trial and
+  state come from that run's /summary.json, through the hub too. recent.json
+  lists the latest finished runs (RESULTS.tsv). Links are relative, so a LAN
+  viewer's links stay on the LAN address.
+
+  All runs: history.json lists every run folder (run.json, else the folder's
+  name and its RESULTS.tsv row), newest first, each linking to its page
+  (runs/NAME/: the live page while it runs, its record after). The filters
+  live in the URL's query (game, program, backend, mode, result, since,
+  until, q), so a filtered list can be bookmarked: ?backend=switch&result=fail.
+  A click on a column's header sorts by it, a second click reverses; the sort
+  is in the query too (sort=start&dir=desc, the default: newest first), and
+  group=program puts each program's runs under its own heading. The game and
+  program filters offer the values the runs' run.json carry (the program
+  registry's ids, shown by their names): the daemon knows no game, and a
+  program with no run has nothing to filter.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GamePilot Runs</title>
+<link rel="stylesheet" href="hub.css">
+</head>
+<body>
+<header>
+  <h1>GamePilot runs</h1>
+  <span id="conn">loading…</span>
+  <a id="live" href="live" title="Bookmark this: it always opens the newest live run">newest live run</a>
+</header>
+<main>
+  <section id="watching-panel" hidden>
+    <h2>Watching</h2>
+    <table>
+      <thead><tr><th>Name</th><th>Source</th><th>Elapsed</th><th>Picture</th></tr></thead>
+      <tbody id="watching"></tbody>
+    </table>
+  </section>
+  <section>
+    <table>
+      <thead><tr><th>Run</th><th>Checkpoint</th><th>Mode</th><th>Trial</th>
+        <th>Elapsed</th><th>State</th></tr></thead>
+      <tbody id="runs"><tr><td class="empty" colspan="6">loading the live runs</td></tr></tbody>
+    </table>
+  </section>
+  <h2>All runs</h2>
+  <form class="filters" id="filters" onsubmit="return false">
+    <label>Game<select name="game"></select></label>
+    <label>Program<select name="program"></select></label>
+    <label>Backend<select name="backend"></select></label>
+    <label>Mode<select name="mode"></select></label>
+    <label>Result<select name="result"></select></label>
+    <label>Since<input type="date" name="since"></label>
+    <label>Until<input type="date" name="until"></label>
+    <label>Search<input type="search" name="q" placeholder="run name or failure reason"></label>
+    <label class="toggle"><input type="checkbox" name="group" value="program">Group by program</label>
+    <button type="button" id="clear">Clear</button>
+    <span id="count"></span>
+  </form>
+  <section>
+    <table>
+      <thead><tr id="columns"><th data-sort="run">Run</th><th data-sort="game">Game</th>
+        <th data-sort="program">Program</th><th data-sort="checkpoint">Checkpoints</th>
+        <th data-sort="backend">Backend</th><th data-sort="mode">Mode</th>
+        <th data-sort="result">Result</th><th data-sort="start">Started</th>
+        <th data-sort="duration">Duration</th></tr></thead>
+      <tbody id="history"><tr><td class="empty" colspan="9">loading</td></tr></tbody>
+    </table>
+  </section>
+</main>
+<script src="hub_live.js"></script>
+<script src="hub_history.js"></script>
+<script src="hub.js"></script>
+</body>
+</html>

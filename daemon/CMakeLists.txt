@@ -62,11 +62,11 @@ endfunction()
 function(embed_page page function header)
   add_custom_command(
     OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/${function}.cpp"
-    COMMAND ${CMAKE_COMMAND} -DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/watch/${page}
+    COMMAND ${CMAKE_COMMAND} -DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/watch/page/${page}
             -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/${function}.cpp
             -DFUNCTION=${function} -DHEADER=${header}
             -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/embed_watch_page.cmake"
-    DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/watch/${page}"
+    DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/watch/page/${page}"
             "${CMAKE_CURRENT_SOURCE_DIR}/cmake/embed_watch_page.cmake"
     VERBATIM)
 endfunction()
@@ -74,10 +74,32 @@ embed_page(watch.html watch_page watch_server.h)
 embed_page(hub.html hub_page watch_hub.h)
 embed_page(run.html run_page watch_hub.h)
 
+# The pages' scripts and styles, compiled in the same way into one lookup
+# (watch_assets.h), each served beside the page that loads it.
+set(WATCH_ASSETS
+  hub.css hub_live.js hub_history.js hub.js
+  run.css run_record.js run_plan.js run_log.js run_frames.js run_probes.js
+  run.js
+  watch.css watch_state.js watch_frame.js watch_plan.js watch_run.js
+  watch_log.js watch_health.js watch_events.js watch_sidebar.js watch.js)
+list(TRANSFORM WATCH_ASSETS PREPEND "${CMAKE_CURRENT_SOURCE_DIR}/watch/page/"
+     OUTPUT_VARIABLE WATCH_ASSET_FILES)
+string(REPLACE ";" "," WATCH_ASSET_NAMES "${WATCH_ASSETS}")
+add_custom_command(
+  OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/watch_assets.cpp"
+  COMMAND ${CMAKE_COMMAND} -DDIR=${CMAKE_CURRENT_SOURCE_DIR}/watch/page
+          -DNAMES=${WATCH_ASSET_NAMES}
+          -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/watch_assets.cpp
+          -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/embed_watch_assets.cmake"
+  DEPENDS ${WATCH_ASSET_FILES}
+          "${CMAKE_CURRENT_SOURCE_DIR}/cmake/embed_watch_assets.cmake"
+  VERBATIM)
+
 add_library(gamepilot_core STATIC
   "${CMAKE_CURRENT_BINARY_DIR}/watch_page.cpp"
   "${CMAKE_CURRENT_BINARY_DIR}/hub_page.cpp"
   "${CMAKE_CURRENT_BINARY_DIR}/run_page.cpp"
+  "${CMAKE_CURRENT_BINARY_DIR}/watch_assets.cpp"
   src/base64.cpp
   src/blob_find.cpp
   src/board_session.cpp
@@ -101,7 +123,6 @@ add_library(gamepilot_core STATIC
   src/schedule.cpp
   src/sent_results.cpp
   src/server.cpp
-  src/server_watch.cpp
   src/switch_backend.cpp
   src/switch_controller.cpp
   src/switch_geometry.cpp
@@ -110,9 +131,10 @@ add_library(gamepilot_core STATIC
   src/view_backend.cpp
   src/view_source.cpp
   src/viewport.cpp
-  src/watch_hub.cpp
-  src/watch_registry.cpp
-  src/watch_server.cpp
+  watch/server/server_watch.cpp
+  watch/server/watch_hub.cpp
+  watch/server/watch_registry.cpp
+  watch/server/watch_server.cpp
 )
 # The window frame source: ScreenCaptureKit on macOS (Objective-C++), none
 # elsewhere (window_capture.h).
@@ -128,7 +150,7 @@ if(APPLE)
 else()
   target_sources(gamepilot_core PRIVATE src/window_capture_none.cpp)
 endif()
-target_include_directories(gamepilot_core PUBLIC src)
+target_include_directories(gamepilot_core PUBLIC src watch/server)
 target_include_directories(gamepilot_core SYSTEM PUBLIC ${OpenCV_INCLUDE_DIRS})
 target_link_libraries(gamepilot_core PUBLIC CoreLib ${OpenCV_LIBS})
 if(WIN32)
