@@ -1,5 +1,6 @@
-(** Reading and writing a JSON file as a [Result], catching the [Sys_error] and
-    [Yojson.Json_error] that the Yojson file functions raise. *)
+(** Reading and writing a JSON file as a [Result]: the one place data readers
+    and writers catch [Sys_error] and [Yojson.Json_error], which the Yojson file
+    functions raise. *)
 
 val read : string -> (Yojson.Safe.t, string) result
 (** The JSON in the file at the path; an error names the file by its base name.
