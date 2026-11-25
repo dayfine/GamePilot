@@ -60,7 +60,8 @@
   fixtures/party_close.fade.jsonl
   fixtures/summary_close.fade.jsonl
   fixtures/trainer_card_close.fade.jsonl
-  fixtures/bag_close.fade.jsonl)
+  fixtures/bag_close.fade.jsonl
+  fixtures/mail_give_close.fade.jsonl)
  (libraries
   gamepilot.table_test
   gamepilot.wire
