@@ -5,8 +5,8 @@
 
 module C = Plza_gifts.Claim_gifts
 
-let span ?(from = "overworld") ?stop_at ?(code_only = false) () : C.span =
-  { from; stop_at; code_only }
+let span ?(from = "overworld") ?stop_at ?(mode = C.Both_gifts) () : C.span =
+  { from; stop_at; mode }
 
 let template language span () =
   match C.gift_name_template ~language span with
@@ -36,7 +36,7 @@ let () =
         (template "de" (span ~from:"gift-list" ()))
         refusal;
       case "German, the code alone"
-        (template "de" (span ~code_only:true ()))
+        (template "de" (span ~mode:Code_gift_only ()))
         "none needed";
       case "German, from the card"
         (template "de" (span ~from:"card" ()))

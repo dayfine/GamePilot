@@ -7,10 +7,16 @@
   gifts.fr.probes.jsonl))
 
 (tests
- (names test_choose_gift test_gift_name_template)
+ (names
+  test_choose_gift
+  test_gift_name_template
+  test_box_gifts
+  test_check_span)
  (deps gifts.probes.jsonl gifts.fr.probes.jsonl)
  (libraries
   gamepilot.wire
   gamepilot.effects
   gamepilot.table_test
+  gamepilot.switch_home
+  gamepilot.plza_readers
   gamepilot.plza_gifts))

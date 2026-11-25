@@ -17,7 +17,9 @@
    brightness) must read as nothing: a dim screen is no screen we know. No
    other capture reads as the menu, the list or a gift's card. The Boxes and
    the SAVE dialog (console B, 2026-11-25) read as themselves and nothing else
-   does; the dialog's "Last Saved" reads the same as itself and not as a copy
+   does; on the Boxes (console B's, Xerneas under the cursor, and the fork's
+   box-cells captures) the cursor's cell reads as holding a Pokémon or empty,
+   a Pokémon held over an empty cell empty; the dialog's "Last Saved" reads the same as itself and not as a copy
    with its 18:16 made 18:18 (synthetic-..., no second save captured), in
    every shift. So does a copy with its date and time where the French game
    shows them (synthetic-save-dialog-fr-layout-..., console B, 2026-11-25:
@@ -49,6 +51,9 @@ let list_text m =
       (item (G.gift_item m))
   else "no gift list"
 
+let cell m =
+  if Box_cell.holds_pokemon m then "a Pokémon in the cell" else "an empty cell"
+
 let text probes =
   let m = measurements probes in
   String.concat "; "
@@ -60,7 +65,7 @@ let text probes =
        list_text m;
        (if G.card m then "gift card" else "no gift card");
      ]
-    @ (if Boxes_screen.shown m then [ "boxes" ] else [])
+    @ (if Boxes_screen.shown m then [ "boxes"; cell m ] else [])
     @ if Save_dialog.shown m then [ "save dialog" ] else [])
 
 let nothing probes =
@@ -89,7 +94,18 @@ let cards_shown =
   ]
 
 let boxes = "./mystery-gift/boxes-xerneas-in-box-1.png"
-let boxes_read = "no menu; cards ......; no gift list; no gift card; boxes"
+
+let boxes_read cell =
+  "no menu; cards ......; no gift list; no gift card; boxes; " ^ cell
+
+(* The fork's captures of the Boxes (box-cells/: CommandLineTests'
+   BoxCellInfoDetector frames at 360p), named by what the cursor is on. *)
+let box_cell path =
+  match String.split_on_char '/' path with
+  | [ _; "box-cells"; frame ] ->
+      Some (String.starts_with ~prefix:"pokemon" frame)
+  | _ -> None
+
 let save_read = "no menu; cards ......; no gift list; no gift card; save dialog"
 
 (* Each "Last Saved" layout's 18:16 and 18:18. *)
@@ -108,7 +124,9 @@ let saves = List.concat_map (fun (_, a, b) -> [ a; b ]) save_pairs
 (* [name] is the language of the gift name's template. *)
 let expected ?(name = "en") path =
   if same path menu then menu_text
-  else if same path boxes then boxes_read
+  else if same path boxes then boxes_read "a Pokémon in the cell"
+  else if box_cell path = Some true then boxes_read "a Pokémon in the cell"
+  else if box_cell path = Some false then boxes_read "an empty cell"
   else if List.exists (same path) saves then save_read
   else if same path gift_list then
     list_read (if name = "en" then "4" else "none")
