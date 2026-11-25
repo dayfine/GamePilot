@@ -5,8 +5,13 @@
     (_AutoStoryPacing). The game steps come as {!steps}, so the search runs on a
     fake in tests; {!Pacing_steps} is the game's.
 
-    Where it differs: no select_off_bike(): GamePilot has no reader for the
-    Bicycle's sprite, and the walks to a patch are on foot. *)
+    Where it differs:
+    - No select_off_bike(): GamePilot has no reader for the Bicycle's sprite,
+      and the walks to a patch are on foot.
+    - The fork counts every step that a flash or a battle's screen followed as
+      walked. Here a battle the step's turn started (its flash sooner than the
+      walk could end), or one whose flash was missed (its wipe, or its screen
+      after the step), leaves the player on the tile. *)
 
 type spot = {
   displaced : bool;
@@ -41,9 +46,31 @@ val spot_at :
     one tile [pace] from it, or [None] (somewhere else: pacing would walk off).
     The inverse of {!stands_on}. *)
 
+(** What a step's watch saw of a battle's start. *)
+type sign =
+  | Flash_after of float
+      (** the battle's flash, this many ms after the step's first press *)
+  | Going_black  (** the screen going black: the battle's wipe *)
+
+(** What a step did. The game looks for a wild battle at the end of a walk and
+    at the end of a turn on the spot. *)
+type stepped =
+  | Walked  (** no battle showed: the step walked *)
+  | Battle_on_walk  (** the step walked, and its flash showed after the walk *)
+  | Battle_on_turn
+      (** the flash showed before the walk could end: the step's turn started
+          the battle, and the player faces the step's way on the same tile *)
+  | Battle_unflashed
+      (** the battle's wipe, its flash missed: a battle started before the step,
+          which did not move the player *)
+
+val stepped : walk_ms:float -> sign option -> stepped
+(** A step's end from what its watch saw: [walk_ms] is how long after the step's
+    first press its own walk ends (a turn tap, then the tile). *)
+
 type steps = {
-  step : unit -> bool;
-      (** One step, {!way}: whether a battle's flash showed. *)
+  step : spot -> stepped;
+      (** One step from the spot, {!way}, watched for a battle's start. *)
   battle_shows : unit -> bool;
   overworld_shows : unit -> bool;  (** No text or menu open. *)
   message_shows : unit -> bool;
@@ -57,7 +84,10 @@ type steps = {
 val max_steps : int
 (** 200 (PACE_MAX_STEPS): about 10 % of steps in grass start a battle. *)
 
-val pace_until_battle : steps -> max_steps:int -> bool
-(** From the overworld, in the patch: steps until a wild battle starts. A battle
-    whose flash was missed is found by its screen after the step; a trainer who
+val pace_until_battle :
+  steps -> pace:Grid_geometry.Direction.t -> spot ref -> max_steps:int -> bool
+(** From the overworld, in the patch, from [spot]: steps until a wild battle
+    starts, moving [spot] with each step that walked or turned, so the next
+    search starts where this one left the player. A battle whose flash was
+    missed is found by its wipe or its screen after the step. A trainer who
     speaks is fought and pacing goes on. False if no battle came. *)

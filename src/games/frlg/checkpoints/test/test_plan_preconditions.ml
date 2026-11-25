@@ -145,9 +145,10 @@ let decode_cases =
           Party_includes { members = []; slots = [] };
         ]
         |> List.filter Preflight.asks_something
-        |> List.length |> string_of_int)
-      "0";
-    case "a need with a count asks something"
+        |> List.map Preflight.describe
+        |> String.concat "; ")
+      "";
+    case "every need that asks something stays"
       (fun () ->
         [
           Preflight.Money_at_least { amount = 1; for_ = "buy" };
@@ -155,10 +156,14 @@ let decode_cases =
           Item_exactly { item = "retro-mail"; count = 0 };
           Badges_at_least 8;
           Member { species = "pidgey"; for_ = "fly" };
+          No_mail { species = "mr-mime"; for_ = "trade" };
         ]
         |> List.filter Preflight.asks_something
-        |> List.length |> string_of_int)
-      "5";
+        |> List.map Preflight.describe
+        |> String.concat "; ")
+      "money at least ¥1 (buy); retro-mail at least x99 (give); retro-mail x0; \
+       at least 8 badges; pidgey in the party (fly); mr-mime holds no Mail \
+       (trade)";
     case "reads the card only for these needs"
       (fun () ->
         Printf.sprintf "%b %b"

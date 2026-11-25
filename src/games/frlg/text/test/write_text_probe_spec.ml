@@ -82,6 +82,11 @@ let screens =
       cells ~rows:7 ~cells:2 Text_lines.berry_pouch_number_digit,
       Number_reading.digits,
       dark );
+    ( "pc_message",
+      glyphs,
+      [ Text_lines.pc_message ],
+      [ "Deposit in which BOX?"; "The BOX is full."; "Please remove the MAIL." ],
+      dark );
     ( "card_numbers",
       glyphs,
       List.init 6 Text_lines.trainer_card_money_digit

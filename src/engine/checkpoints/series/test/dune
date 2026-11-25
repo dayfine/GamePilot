@@ -1,6 +1,14 @@
 (tests
- (names test_round_trials test_chain_progress test_checkpoint_order)
- (modules test_round_trials test_chain_progress test_checkpoint_order)
+ (names
+  test_round_trials
+  test_chain_progress
+  test_checkpoint_order
+  test_plan_folder)
+ (modules
+  test_round_trials
+  test_chain_progress
+  test_checkpoint_order
+  test_plan_folder)
  (libraries
   gamepilot.table_test
   gamepilot.wire

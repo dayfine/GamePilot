@@ -20,7 +20,7 @@
 # with their colors shifted by dev/reader_fixtures/shift_frame.py, which needs Pillow
 # ($SHIFT_PYTHON, default python3; e.g. "uv run --with pillow python3"). The
 # menus set writes menus.<backend>.shifted likewise, from the Seagallop list's
-# frames (seagallop-one-island/), and the battle set battle.<backend>.shifted
+# frames (seagallop-one-island/) and the summaries of rng-route10-*/, and the battle set battle.<backend>.shifted
 # from Route 10's wild battles (dex-route10/).
 #
 #   sh games/frlg/readers/test/regen_fixtures.sh [screen|menus|battle ...]
@@ -77,7 +77,7 @@ probe() {
 shifted_frames() {
   case $1 in
   card) grep -v '/pret-trainer-card/' "$2" | cut -d'|' -f2 ;;
-  menus) grep '/seagallop-one-island/' "$2" | cut -d'|' -f2 ;;
+  menus) grep '/seagallop-one-island/\|/rng-route10-' "$2" | cut -d'|' -f2 ;;
   battle) grep '/dex-route10/' "$2" | cut -d'|' -f2 ;;
   ace) cut -d'|' -f2 "$2" ;;
   esac
