@@ -38,6 +38,10 @@ MATCHERS = {
     "choice_arrow": (
         "PokemonLZA/SelectionArrowRight.png",
         0xFF80C000, 0xFFFFFF7F, 100),
+    # PokemonLZA_ButtonDetector.cpp's ButtonMatcher::A.
+    "button_a": (
+        "PokemonLZA/Buttons/ButtonA.png",
+        0xFF808008, 0xFFFFFFFF, 100),
 }
 
 SHAPE_WIDTH = 2560

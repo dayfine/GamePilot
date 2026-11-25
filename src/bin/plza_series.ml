@@ -12,7 +12,8 @@
    autosave (Plza_autostory.Game_reload), which 01.00b cannot (its start is
    no save): its second run is refused. A passing checkpoint hands the
    console to the next one as it ends. Its daemons run with keep-awake off
-   (keepawake_off). *)
+   (keepawake_off). The watch page shows each run's plan, its events moving
+   with the runner (Story_game.run_watched), and the run. *)
 
 open Engine_run
 module P = Plza_checkpoints
@@ -61,6 +62,7 @@ let upload_from dir =
   let* dialog_teal_arrow = up f.dialog_teal_arrow in
   let* choice_arrow = up f.choice_arrow in
   let* advance_chevron_shape = up f.advance_chevron_shape in
+  let* button_a = up f.button_a in
   Ok
     {
       Assets.dialog_white_arrow;
@@ -68,6 +70,7 @@ let upload_from dir =
       dialog_teal_arrow;
       choice_arrow;
       advance_chevron_shape;
+      button_a;
     }
 
 (* Each template, uploaded to the daemon: its hash. *)

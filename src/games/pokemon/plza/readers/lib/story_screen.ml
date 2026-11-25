@@ -7,6 +7,7 @@ type t = {
   autosave : bool;
   tutorial_card : bool;
   choice_rows : Choice_rows.t option;
+  interact_prompt : bool;
 }
 
 let fade_id = "story_screen.fade"
@@ -25,6 +26,7 @@ let probes ~picture ~assets =
       Controls_hint.probes ~picture;
       Autosave_badge.probes ~picture;
       Tutorial_card.probes ~picture;
+      Interact_prompt.probes ~picture ~assets;
     ]
 
 let fade m =
@@ -49,6 +51,7 @@ let read m =
     autosave = Autosave_badge.shown m;
     tutorial_card = Tutorial_card.shown m;
     choice_rows = (if choice then rows else None);
+    interact_prompt = boxes && (not box) && Interact_prompt.shown m;
   }
 
 let to_string t =
@@ -69,6 +72,7 @@ let to_string t =
         flag "controls hint" t.controls_hint;
         flag "autosave" t.autosave;
         flag "tutorial card" t.tutorial_card;
+        flag "A prompt" t.interact_prompt;
       ]
   in
   if shown = [] then "nothing" else String.concat ", " shown

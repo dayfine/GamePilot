@@ -1,5 +1,5 @@
 (** PLZA's AutoStory as a game of the checkpoint engine ({!Plza_checkpoints}):
-    the handlers 01.00b's and 01.01's plans use, over {!Plza_story.Story_steps}.
+    the handlers 01.00b's to 01.02's plans use, over {!Plza_story.Story_steps}.
     The fork's action table (PokemonLZA_AutoStoryActionTable.cpp, [plza/lean])
     for these actions:
 
@@ -15,6 +15,10 @@
       ({!Plza_story.Plus_skip}), no args;
     - the engine's [scene] ({!Plza_story.Scene_machine}): its [action]
       ["end_on_black_fade"] for the fork's [end_on_black_fade: true];
+    - [scene_to_choice], the fork's [scene] with [stop_at_choice: true] (a game
+      action here, as the engine's scene takes no args), with an optional
+      [button], ["A"] (when absent) or ["B"];
+    - [choose_0] and [choose_1] ({!Plza_story.Choose_row}), no args;
     - the game's [walk] ({!Plza_walk.Walk}), walked rather than run before 03.03
       (the fork's [RUN_FROM], before dash is unlocked).
 

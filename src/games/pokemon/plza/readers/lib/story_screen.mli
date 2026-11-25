@@ -21,6 +21,8 @@ type t = {
   autosave : bool;
   tutorial_card : bool;
   choice_rows : Choice_rows.t option;  (** only with a choice box *)
+  interact_prompt : bool;
+      (** an A prompt ({!Interact_prompt}), with no fade and no text box *)
 }
 (** What one frame shows. *)
 

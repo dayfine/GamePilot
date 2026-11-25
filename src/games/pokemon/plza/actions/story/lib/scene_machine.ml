@@ -2,20 +2,30 @@ module S = Story_steps
 module L = Story_look
 module Failure = Engine_run.Failure
 
-type config = { end_on_black_fade : bool }
+type config = {
+  end_on_black_fade : bool;
+  stop_at_choice : bool;
+  button : Wire.button;
+}
 
+let default = { end_on_black_fade = false; stop_at_choice = false; button = A }
 let control_hold_ms = 1000.0
+let control_instead_hold_ms = 5000.0
+let text_a_again_ms = 2000.0
 let poll_ms = 250
 let press_hold_ms = S.press_hold_ms
 let press_release_ms = S.press_release_ms
 let timeout_ms = 360_000
+let short_timeout_ms = 120_000
 
 type screen =
   | Fade
   | Black_fade_end
+  | Choice_end
   | Choice
   | Text
   | Card
+  | Ended_in_control
   | Control
   | Control_showing
   | Other
@@ -23,40 +33,68 @@ type screen =
 let name = function
   | Fade -> "fade"
   | Black_fade_end -> "black_fade"
+  | Choice_end -> "choice"
   | Choice -> "choice_top_row"
   | Text -> "text"
   | Card -> "card"
+  | Ended_in_control -> "ended_in_control"
   | Control -> "control"
   | Control_showing -> "control_showing"
   | Other -> "other"
 
-let terminal = function Black_fade_end | Control -> true | _ -> false
+let terminal = function
+  | Black_fade_end | Choice_end | Ended_in_control | Control -> true
+  | _ -> false
 
-(* What earlier reads showed. *)
+(* The last A on text with stop_at_choice and the button A: when, and whether
+   its page showed the advance arrow. *)
+type text_a = { at : float; arrow : bool }
+
+(* What earlier reads showed; each hold is when its sign started. *)
 type timeline = {
   mutable scene_seen : bool;
   mutable overworld_seen : bool;
   mutable control_since : float option;
+  mutable control_instead_since : float option;
   mutable black_fades : int;
+  mutable text_a : text_a option;
 }
 
-let hud_shows (l : L.t) = l.controls_hint
+let held since ~hold_ms (l : L.t) =
+  match since with Some t -> l.at_ms -. t >= hold_ms | None -> false
 
 let scene_under_way (l : L.t) =
   if L.text_shows l || l.choice_box || l.tutorial_card then true
-  else if hud_shows l then false
+  else if L.hud_shows l then false
   else L.fade_shows l || not l.screen_still
+
+(* Not when stopping at a choice: the talk shows control between lines. *)
+let party_bar_is_control config = not config.stop_at_choice
+
+let ends_machine config (l : L.t) =
+  if party_bar_is_control config then L.control_shows l
+  else l.controls_hint && not l.dialog_box
+
+let expected_end config =
+  (if config.stop_at_choice then "the choice box, " else "")
+  ^
+  if party_bar_is_control config then
+    "the controls hint, the party bar or the A prompt"
+  else "the controls hint"
+
+let classify_control tl (l : L.t) =
+  if held tl.control_since ~hold_ms:control_hold_ms l then Control
+  else if held tl.control_instead_since ~hold_ms:control_instead_hold_ms l then
+    Ended_in_control
+  else Control_showing
 
 let classify config tl (l : L.t) =
   if L.fade_shows l then
     if config.end_on_black_fade && l.fade_black then Black_fade_end else Fade
-  else if l.choice_box then Choice
+  else if l.choice_box then if config.stop_at_choice then Choice_end else Choice
   else if L.text_shows l then Text
   else if L.card_shows l then Card
-  else if L.control_shows l then
-    match tl.control_since with
-    | Some since when l.at_ms -. since >= control_hold_ms -> Control
-    | _ -> Control_showing
+  else if L.control_shows l then classify_control tl l
   else Other
 
 let choice_button steps (l : L.t) =
@@ -76,22 +114,54 @@ let choice_button steps (l : L.t) =
            rows);
       Wire.A
 
-let button steps tl screen (l : L.t) =
+(* stop_at_choice with A: a new page (its arrow came or went), or the last
+   A's page 2 s on. *)
+let text_a_due tl (l : L.t) =
+  match tl.text_a with
+  | None -> true
+  | Some a -> a.arrow <> l.advance_arrow || l.at_ms -. a.at >= text_a_again_ms
+
+let text_button config tl (l : L.t) =
+  if config.stop_at_choice then
+    if config.button <> Wire.A then Some config.button
+    else if text_a_due tl l then Some Wire.A
+    else None
+  else if L.hud_shows l || tl.overworld_seen then Some Wire.B
+  else Some config.button
+
+let other_button config tl =
+  if config.stop_at_choice then None
+  else if tl.overworld_seen then Some Wire.B
+  else Some config.button
+
+let button steps config tl screen (l : L.t) =
   match screen with
   | Choice -> Some (choice_button steps l)
-  | Text -> Some (if hud_shows l || tl.overworld_seen then Wire.B else Wire.A)
+  | Text -> text_button config tl l
   | Card -> Some Wire.A
-  | Other -> Some (if tl.overworld_seen then Wire.B else Wire.A)
+  | Other -> other_button config tl
   | _ -> None
 
-let record tl (l : L.t) =
+let since_while on since (l : L.t) =
+  if on then Some (Option.value since ~default:l.at_ms) else None
+
+let record config tl screen (l : L.t) =
+  (match screen with
+  | Text when config.stop_at_choice && config.button = Wire.A ->
+      if text_a_due tl l then
+        tl.text_a <- Some { at = l.at_ms; arrow = l.advance_arrow }
+  | Text -> ()
+  | _ -> tl.text_a <- None);
   if l.fade_black then tl.black_fades <- tl.black_fades + 1;
   tl.overworld_seen <- tl.overworld_seen || (tl.scene_seen && L.control_shows l);
   tl.scene_seen <- tl.scene_seen || scene_under_way l;
-  tl.control_since <-
-    (if L.control_shows l then
-       Some (Option.value tl.control_since ~default:l.at_ms)
-     else None)
+  tl.control_since <- since_while (ends_machine config l) tl.control_since l;
+  tl.control_instead_since <-
+    since_while
+      ((not (party_bar_is_control config))
+      && L.control_shows l
+      && not (L.scene_busy l))
+      tl.control_instead_since l
 
 (* A line per change of class or readings. *)
 let log_look steps label ~start last screen tl (l : L.t) =
@@ -108,49 +178,65 @@ let log_look steps label ~start last screen tl (l : L.t) =
          (S.seconds (l.at_ms -. start))
          readings))
 
-let timed_out label =
+let timeout_of config =
+  if config.stop_at_choice || config.button = Wire.B then short_timeout_ms
+  else timeout_ms
+
+let timed_out config label =
   Failure.cause "scene_timeout"
+    (Printf.sprintf "%s: Did not finish within %d s (expecting %s)." label
+       (int_of_float (S.seconds (float_of_int (timeout_of config))))
+       (expected_end config))
+
+let ended_in_control config label =
+  Failure.cause "scene_ended_in_control"
     (Printf.sprintf
-       "%s: Did not finish within %d s (expecting the controls hint, the party \
-        bar or the A prompt)."
+       "%s: the scene ended in control, the party bar up %d ms with nothing \
+        busy (expecting %s)."
        label
-       (int_of_float (S.seconds (float_of_int timeout_ms))))
+       (int_of_float control_instead_hold_ms)
+       (expected_end config))
+
+let outcome steps config label screen =
+  if screen = Ended_in_control then Error (ended_in_control config label)
+  else (
+    S.(steps.log) (Printf.sprintf "[PLZA %s] done on %s." label (name screen));
+    Ok ())
+
+let new_timeline () =
+  {
+    scene_seen = false;
+    overworld_seen = false;
+    control_since = None;
+    control_instead_since = None;
+    black_fades = 0;
+    text_a = None;
+  }
+
+let act steps screen = function
+  | Some b ->
+      S.press steps b ~hold_ms:press_hold_ms ~release_ms:press_release_ms
+  | None -> if not (terminal screen) then S.wait steps poll_ms
 
 let run steps label config =
   S.(steps.log)
-    (Printf.sprintf
-       "[PLZA %s] start, expecting the controls hint, the party bar or the A \
-        prompt."
-       label);
-  let tl =
-    {
-      scene_seen = false;
-      overworld_seen = false;
-      control_since = None;
-      black_fades = 0;
-    }
-  in
-  let last = ref "" and max_looks = (timeout_ms / poll_ms) + 1 in
+    (Printf.sprintf "[PLZA %s] start, expecting %s." label (expected_end config));
+  let tl = new_timeline () and last = ref "" in
+  let limit = timeout_of config in
+  let max_looks = (limit / poll_ms) + 1 in
   let rec go ~start looks =
     let look = S.(steps.read_screen) () in
     let start = Option.value start ~default:look.at_ms in
     if look.home_menu then Error S.game_not_running
     else
       let screen = classify config tl look in
-      let b = button steps tl screen look in
-      record tl look;
+      let b = button steps config tl screen look in
+      record config tl screen look;
       log_look steps label ~start last screen tl look;
-      (match b with
-      | Some b ->
-          S.press steps b ~hold_ms:press_hold_ms ~release_ms:press_release_ms
-      | None -> if not (terminal screen) then S.wait steps poll_ms);
-      if terminal screen then (
-        S.(steps.log)
-          (Printf.sprintf "[PLZA %s] done on %s." label (name screen));
-        Ok ())
-      else if
-        look.at_ms -. start >= float_of_int timeout_ms || looks >= max_looks
-      then Error (timed_out label)
+      act steps screen b;
+      if terminal screen then outcome steps config label screen
+      else if look.at_ms -. start >= float_of_int limit || looks >= max_looks
+      then Error (timed_out config label)
       else go ~start:(Some start) (looks + 1)
   in
   go ~start:None 1

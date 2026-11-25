@@ -1,4 +1,9 @@
 {
+  "button_a": {
+    "fill": 0.650624,
+    "height": 33,
+    "width": 34
+  },
   "choice_arrow": {
     "fill": 0.384681,
     "height": 57,

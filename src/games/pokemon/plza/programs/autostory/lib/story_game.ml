@@ -36,6 +36,18 @@ let platform_or_reload ~reload steps ~timeout_ms =
           Platform_wait.wait_for_platform steps ~timeout_ms)
   | outcome -> outcome
 
+(* The fork's scene with "stop_at_choice": its "button" A or B (A when
+   absent). *)
+let scene_to_choice steps (event : Plan.event) (args : Json_field.obj) =
+  let to_choice button =
+    Scene_machine.run steps "scene"
+      { Scene_machine.default with stop_at_choice = true; button }
+  in
+  match args with
+  | [] | [ ("button", `String "A") ] -> to_choice Wire.A
+  | [ ("button", `String "B") ] -> to_choice Wire.B
+  | _ -> bad_args event "the only arg is button, \"A\" or \"B\""
+
 let game_actions ~reload steps =
   List.map
     (fun (name, action) -> (name, action steps))
@@ -48,13 +60,17 @@ let game_actions ~reload steps =
         timed (platform_or_reload ~reload) ~default:wait_for_platform_ms );
       ("set_text_speed_fast", no_args Text_speed.run);
       ("plus_skip", no_args Plus_skip.run);
+      ("scene_to_choice", scene_to_choice);
+      ("choose_0", no_args (fun steps -> Choose_row.run steps 0));
+      ("choose_1", no_args (fun steps -> Choose_row.run steps 1));
     ]
 
 let scene steps (event : Plan.event) =
   match event.way with
-  | None -> Scene_machine.run steps "scene" { end_on_black_fade = false }
+  | None -> Scene_machine.run steps "scene" Scene_machine.default
   | Some "end_on_black_fade" ->
-      Scene_machine.run steps "scene" { end_on_black_fade = true }
+      Scene_machine.run steps "scene"
+        { Scene_machine.default with end_on_black_fade = true }
   | Some way ->
       bad_args event ("a scene's action is end_on_black_fade, not " ^ way)
 

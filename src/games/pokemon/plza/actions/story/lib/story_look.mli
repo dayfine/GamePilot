@@ -4,9 +4,8 @@
     ([plza/lean]). Plain values: the live screen fills it from the readers,
     tests by hand.
 
-    Not read: the party bar ([PLAYER_CAN_MOVE]), the A prompt, the battle HUD
-    and the "mission complete" card, which have no reader yet; each reads as not
-    shown. *)
+    Not read: the party bar ([PLAYER_CAN_MOVE]), the battle HUD and the "mission
+    complete" card, which have no reader yet; each reads as not shown. *)
 
 type t = {
   at_ms : float;  (** When the frame was read, on the daemon's clock. *)
@@ -22,6 +21,8 @@ type t = {
   controls_hint : bool;
   autosave : bool;
   tutorial_card : bool;
+  interact_prompt : bool;
+      (** An A prompt (["(A) Talk"]) with no text box: [INTERACT_PROMPT]. *)
   confirm_row : int option;
       (** On the new game's Confirm Choices: the highlighted row. *)
 }
@@ -39,8 +40,14 @@ val text_waiting_for_a : t -> bool
 (** TEXT_WAITING_FOR_A: a text box with the advance chevron. *)
 
 val control_shows : t -> bool
-(** CONTROL_SHOWS: the controls hint with no text box (the party bar and the A
-    prompt are not read). *)
+(** CONTROL_SHOWS: the controls hint or an A prompt with no text box (the party
+    bar is not read). *)
+
+val hud_shows : t -> bool
+(** The scene machine's [hud_shows]: the controls hint or an A prompt. *)
+
+val scene_busy : t -> bool
+(** SCENE_BUSY: text, a fade or a card (no "mission complete" reader). *)
 
 val overworld_free : t -> bool
 (** OVERWORLD_FREE: the controls hint, with no text box, fade or chevron. *)

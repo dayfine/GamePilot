@@ -47,6 +47,7 @@ let look_of ~still (m : Effects.measurements) : L.t =
     controls_hint = s.controls_hint;
     autosave = s.autosave;
     tutorial_card = s.tutorial_card;
+    interact_prompt = s.interact_prompt;
     confirm_row = Confirm_choices.read m;
   }
 

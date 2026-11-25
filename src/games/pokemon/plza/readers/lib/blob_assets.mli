@@ -10,6 +10,7 @@ type t = {
   dialog_teal_arrow : string;  (** the teal box's arrow *)
   choice_arrow : string;  (** the arrow at a choice box's row *)
   advance_chevron_shape : string;  (** the chevron's V *)
+  button_a : string;  (** the A button of a prompt ("A Talk") *)
 }
 (** One path or file name for each template and shape the readers match. *)
 

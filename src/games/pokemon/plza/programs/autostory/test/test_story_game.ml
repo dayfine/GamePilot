@@ -1,4 +1,4 @@
-(* 01.00b and 01.01 run through the engine (Plza_checkpoints.Runner) with
+(* 01.00b, 01.01 and 01.02 run through the engine (Plza_checkpoints.Runner) with
    Story_game's handlers on a scripted console (Fake_console): the plans
    decode, every event reaches its handler, and each handler's presses move a
    game that answers them as the console did. Also the failures: a walk whose
@@ -83,6 +83,34 @@ let platform ?(lost = false) ?(faded = false) c =
       match (lost, C.stick_reached c 8000) with
       | false, Some w -> arrival c w
       | _ -> hint c)
+
+(* 01.02: free control (the hint) until the stick was held 20 s; then
+   Pancham's scene, text until three B, the choice (row 1 once Down was
+   pressed) until A, text until two more A, then Ryon's A prompt. [lost]: the
+   walk ends by Ryon with no scene, his A prompt alone. *)
+let choice c ~after =
+  let down = C.nth_after c Wire.Down ~after 0 <> None in
+  {
+    (look c) with
+    dialog_box = true;
+    choice_box = true;
+    choice_rows = Some ((if down then 1 else 0), 2);
+  }
+
+let prompt c = { (look c) with interact_prompt = true }
+
+let pancham ?(lost = false) c =
+  match C.stick_reached c 20_000 with
+  | None -> hint c
+  | Some _ when lost -> prompt c
+  | Some w -> (
+      match C.nth_after c Wire.B ~after:w 2 with
+      | None -> text c
+      | Some b3 -> (
+          match C.nth_after c Wire.A ~after:b3 0 with
+          | None -> choice c ~after:b3
+          | Some a when C.nth_after c Wire.A ~after:a 1 = None -> text c
+          | Some _ -> prompt c))
 
 let outcome checkpoint screen =
   let c = C.create () in
@@ -207,6 +235,25 @@ let cases =
        within 11287 ms of the last leg) arrival_to_ad=pending skip_ad=pending \
        arrival_scenes=pending\n\
        run testing 01.01=failed";
+    case "01.02: the chase, Pancham's scene to its choice, row 1, Ryon's prompt"
+      (fun () ->
+        let r, c = outcome "01.02" pancham in
+        String.concat "\n"
+          (r
+          :: List.filter
+               (fun line ->
+                 String.starts_with ~prefix:"[PLZA] choose" line
+                 || String.starts_with ~prefix:"[PLZA scene] done" line)
+               (C.lines c)))
+      "passed\n\
+       [PLZA scene] done on choice.\n\
+       [PLZA] choose_1: row 0 of 2 highlighted\n\
+       [PLZA scene] done on control.";
+    case "01.02 lost: no scene after the chase, Ryon's prompt alone"
+      (result "01.02" (pancham ~lost:true))
+      "01.02 event 2 (pancham_cornered): scene_ended_in_control: scene: the \
+       scene ended in control, the party bar up 5000 ms with nothing busy \
+       (expecting the choice box, the controls hint).";
     case "the walk is walked before 03.03, run after"
       (fun () ->
         Printf.sprintf "%b %b"
