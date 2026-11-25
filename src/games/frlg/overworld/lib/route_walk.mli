@@ -16,8 +16,10 @@
     trainer may see, with a watch for the trainer after each. A trainer who
     speaks is fought with [fight_trainer], and the rest of the walk is planned
     again from that tile, round where the trainer may stand, with the trainer
-    beaten for the rest of the walk. A battle after a message elsewhere on a leg
-    (a trainer the maps do not put there) still fails the walk. *)
+    beaten for the rest of the walk. Their tiles stay walled for this walk only:
+    the next walk plans from [world] again, where they are free. A battle after
+    a message elsewhere on a leg (a trainer the maps do not put there) still
+    fails the walk. *)
 
 open Grid_maps
 open Grid_geometry

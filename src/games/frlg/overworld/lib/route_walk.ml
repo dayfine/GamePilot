@@ -125,7 +125,7 @@ let hold t (leg : Connected_maps.place Grid_planning.Leg.t)
            ~to_map:(map_name t leg.finish))
       ~steps_out:(Frlg_steps.walked_out_onto t.world leg.finish);
   (* A trainer's text after a leg that ends in their sight is theirs to
-     speak: {!watch_for_trainer} waits for it, where the message interrupt
+     speak: Trainer_crossing's watch waits for it, where the message interrupt
      would press B through it. *)
   if not seen then
     let watch_ms =
@@ -145,10 +145,11 @@ let walk_plain t ?(seen = false) at
       hold t leg spec ~running ~wild ~turn_first ~seen);
   { place = leg.finish; facing = Some leg.facing_after }
 
-(* What a walk leg ended with: the player on its end, or stopped by a
-   trainer, beaten, who now stands beside them on [world]'s walked-up tiles,
-   from where the rest of the walk is planned again. *)
-type walked = Walked of at | Stopped_by_trainer of Frlg_steps.world * at
+(* A walk leg's end, or where trainers, now beaten with those before, stopped
+   the player and stand beside them on [world]'s walked-up tiles. *)
+type walked =
+  | Walked of at
+  | Stopped_by_trainer of Frlg_steps.world * at * Trainer_sight.trainer list
 
 let crossing_steps t now : Trainer_crossing.game_steps =
   {
@@ -160,14 +161,14 @@ let crossing_steps t now : Trainer_crossing.game_steps =
   }
 
 let walk_one t ~beaten at (leg : Connected_maps.place Grid_planning.Leg.t) =
-  if t.watch_trainers && Trainer_crossing.crosses t.world ~beaten:!beaten leg
-  then
+  if t.watch_trainers && Trainer_crossing.crosses t.world ~beaten leg then
     let now = ref at in
     match Trainer_crossing.walk (crossing_steps t now) t.world ~beaten leg with
     | Error cause -> raise (Walk_failed cause)
     | Ok Walked -> Walked !now
-    | Ok (Stopped_by_trainer { world; at }) ->
-        Stopped_by_trainer (world, { place = at; facing = Some leg.direction })
+    | Ok (Stopped_by_trainer { world; at; fought }) ->
+        let at = { place = at; facing = Some leg.direction } in
+        Stopped_by_trainer (world, at, fought @ beaten)
   else Walked (walk_plain t at leg)
 
 let last_leg legs = List.nth legs (List.length legs - 1)
@@ -201,8 +202,7 @@ let rejoin t ~before (leg : Connected_maps.place Grid_planning.Leg.t) legs =
   | [] -> blocked_failure leg "no sign on the maps is ahead: off the route"
   | _ -> blocked_failure leg "more than one sign could be ahead"
 
-(* The legs on from where a trainer stopped the player, round where they may
-   stand, to where [legs] end. *)
+(* The legs on from a trainer's stop, round where they may stand. *)
 let past_trainer t (at : at) facing legs =
   match replan t at.place facing legs with
   | Some legs -> legs
@@ -211,9 +211,8 @@ let past_trainer t (at : at) facing legs =
         "no walk on from %s past where the trainer may stand"
         (Tile_pos.to_string at.place.tile)
 
-(* The legs [legs] walked from [at]: [Ok] where they end, or [Error] where a
-   sign leaves the player and the legs on from there. [t]'s world gains the
-   trainers who walked up on the way. *)
+(* [legs] walked from [at], past [beaten]: [Ok] where they end, or [Error]
+   where a sign leaves the player, the walker, [beaten] and the legs on. *)
 let rec walk_past_trainer t ~beaten world at facing legs =
   let t = { t with world } in
   walk_on t ~beaten ~before:None at (past_trainer t at facing legs)
@@ -224,9 +223,9 @@ and walk_on t ~beaten ~before at legs =
   | leg :: rest -> (
       match walk_one t ~beaten at leg with
       | Walked next -> walk_on t ~beaten ~before:(Some leg) next rest
-      | Stopped_by_trainer (world, at) ->
+      | Stopped_by_trainer (world, at, beaten) ->
           walk_past_trainer t ~beaten world at leg.direction legs
-      | exception Leg_blocked -> Error (t, rejoin t ~before leg legs))
+      | exception Leg_blocked -> Error (t, beaten, rejoin t ~before leg legs))
 
 let rec walk_legs t ~beaten ~rejoins at legs =
   match walk_on t ~beaten ~before:None at legs with
@@ -234,12 +233,13 @@ let rec walk_legs t ~beaten ~rejoins at legs =
   | Error _ when rejoins >= max_sign_rejoins ->
       fail "leg_blocked"
         "a message at every hold, after walking on before %d signs" rejoins
-  | Error (t, (at, legs)) -> walk_legs t ~beaten ~rejoins:(rejoins + 1) at legs
+  | Error (t, beaten, (at, legs)) ->
+      walk_legs t ~beaten ~rejoins:(rejoins + 1) at legs
 
 let walk t at legs =
   match
     Effects.with_probes Walk_interrupts.probes (fun () ->
-        walk_legs t ~beaten:(ref []) ~rejoins:0 at legs)
+        walk_legs t ~beaten:[] ~rejoins:0 at legs)
   with
   | at -> Ok at
   | exception Walk_failed cause -> Error cause

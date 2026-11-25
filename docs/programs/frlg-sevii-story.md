@@ -23,7 +23,6 @@ The program ends when Cerulean Cave opens: Celio takes the Sapphire and the guar
 | 03-to-three-island | The Joyful Game Corner's owner asks the player to find Lostelle; the Seagallop to Three Island's harbor |
 | 04-three-island-bikers | North through Three Island's port (storage back on); the Bikers' scene and its four trainer battles |
 | 05-berry-forest | Healed at Three Island's Center; west over Bond Bridge past its trainers, the Berry Forest to Lostelle, her Hypno, and home to the Joyful Game Corner |
-| 06-back-to-cinnabar | Lostelle's father takes the Meteorite for a Moon Stone; the Seagallop to One Island, Bill's goodbye in the Center, and the Seagallop home to Cinnabar |
 
 The game decides the first trip. Bill offers it when you leave Cinnabar Gym with the seventh badge;
 a player who said no finds him waiting in the Cinnabar Pokemon Center, even after the Hall of Fame
@@ -138,20 +137,8 @@ moves in slot order. Then a `scene`: Lostelle gives an Iapapa Berry, sets `FLAG_
 and the game warps the player to the Joyful Game Corner (6, 6), turned north, where her father's
 thanks run at once (`TwoIsland_JoyfulGameCorner_EventScript_FoundLostelleScene`). 05 ends there.
 
-06 walks a tile west, below Lostelle's father (5, 5), and talks to him (pokefirered
-`TwoIsland_JoyfulGameCorner_EventScript_LostellesDaddy`): with the room's scene var at 3 he takes
-the Meteorite, sets Celio's VAR to 2 and gives a Moon Stone, if the bag has room for it. Then it
-sails from Two Island's harbor to One Island (ONE ISLAND, the first row of the same two-island list
-as before) and walks into One Island's Center. Column 12 of that room, rows 6 to 9, holds four
-coord events while Celio's VAR is 2 (`OneIsland_PokemonCenter_1F_EventScript_LeaveOneIslandScene`):
-like 04's rows, the walk stops a tile west of them, at (11, 7), and a `step` goes on. Bill and
-Celio say goodbye and the script itself walks the player out with Bill and sails to Cinnabar,
-which lands at (21, 7) (pokefirered `src/seagallop.c`). Cinnabar's frame script
-(`CinnabarIsland_EventScript_ReturnFromSeviiIslands`) runs at once: Bill's last line, and he walks
-off south. One `scene` event settles it all. 06 ends there, at (21, 7) facing south. Cinnabar's VAR
-is now 4, so from here on every Sevii harbor's list starts with VERMILION
-(`EventScript_ChooseDestFromOneIslandVermilionAllowed`, MULTICHOICE_SEAGALLOP_V23 and V13), a
-window of four rows that `Seagallop` does not read yet. The two islanders by Three Island's street
-hide once Lostelle is home (`ThreeIsland_EventScript_HideAntiBikers`).
+06 talks to the owner, who takes the Meteorite (Celio's VAR 2) and gives a Moon Stone, then sails
+back to One Island for Bill's goodbye. The two islanders by Three Island's street hide once
+Lostelle is home (`ThreeIsland_EventScript_HideAntiBikers`).
 
 After that come Celio's Ruby and Sapphire errands, from the roadmap.

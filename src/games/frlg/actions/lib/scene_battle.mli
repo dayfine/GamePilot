@@ -2,10 +2,9 @@
     started, fought to its end with {!Trainer_battles.script} (the lead's moves
     in slot order). The lines after it are left to the plan's next event, a
     [scene], since a story battle's script goes on: Three Island's Lostelle asks
-    for help, her Hypno attacks (a wild battle, pokefirered
-    ThreeIsland_BerryForest_EventScript_Lostelle:
-    [setwildbattle SPECIES_HYPNO, 30] and [dowildbattle]), and once it is over
-    she thanks the player, gives a berry and is warped home with them.
+    for help, her Hypno attacks (a wild battle, a level 30 Hypno, in pokefirered
+    data/maps/ThreeIsland_BerryForest/scripts.inc), and once it is over she
+    thanks the player, gives a berry and is warped home with them.
 
     Not in the fork, whose [battle] events carry an opponent and a policy; this
     one reads no args but [may_lose]. *)

@@ -12,8 +12,9 @@
 # map that names them). The tagged name is what the test reads its
 # expectations from. Sets: screen (test_screen_readers.ml,
 # the write_probe_spec default), menus (test_menu_readers.ml) and battle
-# (test_battle_readers.ml); pc (test_pc_readers.ml) and card
-# (test_card_readers.ml) are made only when named. A set with no map for a
+# (test_battle_readers.ml); pc (test_pc_readers.ml), card
+# (test_card_readers.ml) and ace (test_ace_readers.ml, shifted too) are made
+# only when named. A set with no map for a
 # backend skips that backend. The card set also writes card.<backend>.shifted:
 # its real frames (every image but the renders under pret-trainer-card/)
 # with their colors shifted by dev/reader_fixtures/shift_frame.py, which needs Pillow
@@ -76,6 +77,7 @@ shifted_frames() {
   case $1 in
   card) grep -v '/pret-trainer-card/' "$2" | cut -d'|' -f2 ;;
   menus) grep '/seagallop-one-island/' "$2" | cut -d'|' -f2 ;;
+  ace) cut -d'|' -f2 "$2" ;;
   esac
 }
 
@@ -109,7 +111,7 @@ regen() {
   probe "$set_name" switch "$spec" "${prefix}switch.probes.jsonl" --viewport "$SWITCH_VIEWPORT"
   probe "$set_name" mgba "$spec" "${prefix}mgba.probes.jsonl"
   case $set_name in
-  card | menus)
+  card | menus | ace)
     probe_shifted "$set_name" switch "$spec" "${prefix}switch.shifted.probes.jsonl" --viewport "$SWITCH_VIEWPORT"
     probe_shifted "$set_name" mgba "$spec" "${prefix}mgba.shifted.probes.jsonl"
     ;;

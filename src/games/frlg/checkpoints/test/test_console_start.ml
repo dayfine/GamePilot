@@ -374,8 +374,30 @@ let deposits party =
   | Ok l -> "deposit " ^ String.concat ", " l
   | Error e -> "stop: " ^ e
 
+(* A plan that stores two members at a PC: [pc_deposit]'s ["species"] is a
+   list, and both members are used. *)
+let deposit_plan =
+  match
+    Plan_file.decode ~source:"deposit"
+      (Yojson.Safe.from_string
+         {|{"format": "gamepilot-checkpoint/1", "game": "frlg",
+            "checkpoint": {"id": "deposit", "title": "Two members to the PC",
+              "start": {"map": "Route4_PokemonCenter_1F", "tiles": [[11, 2]],
+                        "facing": "north"},
+              "events": [{"id": "deposit", "kind": "game_action",
+                          "action": "pc_deposit",
+                          "args": {"species": ["mr-mime", "abra"]}}]},
+            "execution": {"menu": "full"}}|})
+  with
+  | Ok p -> p
+  | Error e -> failwith e
+
 let room_cases =
   [
+    case "room: pc_deposit's species list: each member is used"
+      (fun () ->
+        String.concat ", " (Party_room.chain_need [ deposit_plan ]).used)
+      "abra, mr-mime";
     case
       "room: the chain brings Abra (01-celadon-setup) and Spearow \
        (02-trade-farfetchd)"
