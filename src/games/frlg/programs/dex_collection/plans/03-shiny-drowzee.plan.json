@@ -56,6 +56,14 @@
         "why": "Keeps the shiny."
       },
       {
+        "id": "fly_vermilion_back",
+        "kind": "game_action",
+        "action": "fly",
+        "args": {"town": "VermilionCity"},
+        "declared_after": {"map": "VermilionCity", "tiles": [[15, 7]], "facing": "south"},
+        "why": "Back to Vermilion by Fly, outside its Center: the long walk back after the battle drifted twice and missed the Center's door."
+      },
+      {
         "id": "back_to_pc",
         "kind": "route",
         "action": "run",
