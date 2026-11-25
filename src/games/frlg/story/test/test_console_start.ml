@@ -175,6 +175,26 @@ let preflight_cases =
       "pidgey in the party (fly): pidgey: ok | money at least ¥4100 (mart, \
        buy_coins): ¥25014: ok | at the start, CeladonCity: no kept start frame \
        to compare: NOT READ => stop";
+    case
+      "preflight tt-01, console B: the picked-up Rare Candy is duplicated; its \
+       Retro Mail and Super Repel come from su-01"
+      (fun () ->
+        preflight "tt-01" None
+          {
+            observed =
+              observed
+                ~party:[ "mr-mime"; "blastoise"; "pidgey" ]
+                ~money:20476
+                ~items:[ ("super-repel", 2); ("retro-mail", 100) ]
+                ();
+            place = same;
+            members = None;
+          })
+      "pidgey in the party (fly): mr-mime, blastoise, pidgey: ok | mr-mime in \
+       the party (give_bag_item): mr-mime, blastoise, pidgey: ok | super-repel \
+       at least x1 (use_item): super-repel x2: ok | retro-mail at least x99 \
+       (duplicate_item): retro-mail x100: ok | at the start, \
+       CeladonCity_DepartmentStore_1F: 3 of 150 tiles changed: ok => go";
     case "preflight mg-02, mGBA: some member knows Cut (Rattata)"
       (fun () ->
         cut_row

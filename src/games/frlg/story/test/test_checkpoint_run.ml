@@ -233,4 +233,16 @@ let () =
         "frlg; from Route16 (30, 6) north; missing: none";
       case "mg-06's walks plan on the maps" (walks "mg-06.plan.json")
         "to_dept_store_lift 7; to_4f_clerk 3; back_to_4f_lift 3";
+      case "su-01"
+        (summary "su-01.plan.json")
+        "frlg; from CeladonCity_DepartmentStore_1F (6, 2) south; missing: none";
+      case "su-01's walks plan on the maps" (walks "su-01.plan.json")
+        "to_dept_store_lift 1; to_4f_clerk 3; back_to_4f_lift 3; \
+         out_of_dept_store 3; lavender_mart_clerk 7; out_of_lavender_mart 1; \
+         to_save_spot 8";
+      case "tt-01"
+        (summary "tt-01.plan.json")
+        "frlg; from CeladonCity_DepartmentStore_1F (6, 2) south; missing: none";
+      case "tt-01's walks plan on the maps" (walks "tt-01.plan.json")
+        "out_of_dept_store 3; face_route6_rare_candy 10; to_save_spot 8";
     ]

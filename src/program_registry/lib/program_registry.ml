@@ -41,7 +41,34 @@ let start_menu_poc =
     backends = [ Mgba ];
   }
 
-let all = [ start_menu_poc; mail_glitch ]
+let team_training =
+  {
+    id = "frlg.team_training";
+    game = frlg;
+    name = "Team Training";
+    group = [ "FRLG"; "Training" ];
+    description =
+      "Farms Rare Candies with the Mail Glitch's item duplication and levels \
+       the team with them.";
+    doc = "docs/programs/frlg-team-training.md";
+    checkpoints = Some "src/games/frlg/programs/team_training/plans";
+    backends = [ Mgba; Switch ];
+  }
+
+let supplies =
+  {
+    id = "frlg.supplies";
+    game = frlg;
+    name = "Supplies";
+    group = [ "FRLG"; "Training" ];
+    description =
+      "Stocks what the duplication programs use: Retro Mail and Super Repels.";
+    doc = "docs/programs/frlg-supplies.md";
+    checkpoints = Some "src/games/frlg/programs/supplies/plans";
+    backends = [ Mgba; Switch ];
+  }
+
+let all = [ start_menu_poc; mail_glitch; supplies; team_training ]
 
 let short_id p =
   let prefix = p.game.game_id ^ "." in
