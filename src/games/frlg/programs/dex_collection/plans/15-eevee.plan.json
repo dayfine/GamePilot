@@ -1,0 +1,133 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "frlg",
+  "checkpoint": {
+    "id": "15-eevee",
+    "title": "From Route 4's nurse: fly to Celadon, take the Eevee on the Condominiums' roof, fly to Route 10's nurse",
+    "start": {
+      "map": "Route4_PokemonCenter_1F",
+      "tiles": [
+        [
+          7,
+          4
+        ]
+      ],
+      "facing": "north"
+    },
+    "events": [
+      {
+        "id": "caught_before",
+        "kind": "game_action",
+        "action": "read_caught",
+        "args": {},
+        "why": "The Pokedex count before the gift."
+      },
+      {
+        "id": "out_of_center",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "Route4",
+            "tiles": [
+              [
+                12,
+                6
+              ]
+            ],
+            "facing": "south"
+          }
+        },
+        "why": "Out of the Center to fly."
+      },
+      {
+        "id": "fly_celadon",
+        "kind": "game_action",
+        "action": "fly",
+        "args": {
+          "town": "CeladonCity",
+          "species": "pidgeot"
+        },
+        "why": "Celadon City: the Condominiums are north of the Center."
+      },
+      {
+        "id": "to_eevee_ball",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "CeladonCity_Condominiums_RoofRoom",
+            "tiles": [
+              [
+                7,
+                4
+              ]
+            ],
+            "facing": "north"
+          }
+        },
+        "why": "Up the Condominiums to the roof and into its room, facing the Poke Ball at (7, 3)."
+      },
+      {
+        "id": "take_eevee",
+        "kind": "talk",
+        "why": "\"Obtained an EEVEE!\" (Lv 25) goes to Bill's PC; the settle's B answers NO to the nickname (pokefirered data/maps/CeladonCity_Condominiums_RoofRoom/scripts.inc)."
+      },
+      {
+        "id": "out_of_condominiums",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "CeladonCity",
+            "tiles": [
+              [
+                30,
+                12
+              ]
+            ],
+            "facing": "south"
+          }
+        },
+        "why": "Back down and out the front door to fly: Celadon's Center has no map yet."
+      },
+      {
+        "id": "fly_route10",
+        "kind": "game_action",
+        "action": "fly",
+        "args": {
+          "town": "Route10",
+          "species": "pidgeot"
+        },
+        "why": "Back to Route 10's Center."
+      },
+      {
+        "fragment": "heal_at",
+        "args": {
+          "town": "route10"
+        },
+        "id": "heal_route10",
+        "why": "At the nurse, where the next checkpoint starts."
+      },
+      {
+        "id": "caught_after",
+        "kind": "game_action",
+        "action": "read_caught",
+        "args": {},
+        "why": "The Pokedex count after the gift."
+      }
+    ]
+  },
+  "execution": {
+    "menu": "full"
+  },
+  "metadata": {
+    "phase": "testing",
+    "notes": "Once per save: the ball is gone once taken (FLAG_HIDE_EEVEE_BALL).",
+    "postconditions": {
+      "caught": {
+        "gained": 1
+      }
+    }
+  }
+}

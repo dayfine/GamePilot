@@ -1,0 +1,111 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "frlg",
+  "checkpoint": {
+    "id": "14-magikarp-salesman",
+    "title": "From Vermilion's nurse: fly to Route 4, buy the salesman's Magikarp, Route 4's nurse",
+    "start": {
+      "map": "VermilionCity_PokemonCenter_1F",
+      "tiles": [
+        [
+          7,
+          4
+        ]
+      ],
+      "facing": "north"
+    },
+    "events": [
+      {
+        "id": "caught_before",
+        "kind": "game_action",
+        "action": "read_caught",
+        "args": {},
+        "why": "The Pokedex count before the purchase."
+      },
+      {
+        "id": "out_of_center",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "VermilionCity",
+            "tiles": [
+              [
+                15,
+                7
+              ]
+            ],
+            "facing": "south"
+          }
+        },
+        "why": "Out of the Center to fly."
+      },
+      {
+        "id": "fly_route4",
+        "kind": "game_action",
+        "action": "fly",
+        "args": {
+          "town": "Route4",
+          "species": "pidgeot"
+        },
+        "why": "Route 4's Center, where the Magikarp salesman sits."
+      },
+      {
+        "id": "to_salesman",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "Route4_PokemonCenter_1F",
+            "tiles": [
+              [
+                2,
+                3
+              ]
+            ],
+            "facing": "west"
+          }
+        },
+        "why": "Face the salesman at (1, 3), in the Center's north-west corner."
+      },
+      {
+        "id": "buy_magikarp",
+        "kind": "answer",
+        "args": {
+          "yes": true
+        },
+        "why": "\"MAGIKARP for just $500! So, will you buy it?\" YES: Magikarp (Lv 5) goes to Bill's PC, and the settle's B answers NO to the nickname (pokefirered data/maps/Route4_PokemonCenter_1F/scripts.inc)."
+      },
+      {
+        "fragment": "heal_at",
+        "args": {
+          "town": "route4"
+        },
+        "id": "heal_route4",
+        "why": "To the nurse, where the next checkpoint starts."
+      },
+      {
+        "id": "caught_after",
+        "kind": "game_action",
+        "action": "read_caught",
+        "args": {},
+        "why": "The Pokedex count after the purchase."
+      }
+    ]
+  },
+  "execution": {
+    "menu": "full"
+  },
+  "metadata": {
+    "phase": "testing",
+    "notes": "Once per save: the salesman sells one Magikarp (FLAG_BOUGHT_MAGIKARP).",
+    "postconditions": {
+      "caught": {
+        "gained": 1
+      },
+      "money": {
+        "spent": 500
+      }
+    }
+  }
+}
