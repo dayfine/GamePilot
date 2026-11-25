@@ -29,6 +29,7 @@ type t = {
   alert_eye : bool;
   minimap : string option;
   battle : bool;
+  lead_hp : float option;
   story_dialog : bool;
   moves : effectiveness option list;
   confirm_row : int option;
@@ -58,6 +59,7 @@ let empty ~at_ms =
     main_menu = false;
     alert_eye = false;
     battle = false;
+    lead_hp = None;
     story_dialog = false;
     moves = [];
     confirm_row = None;
