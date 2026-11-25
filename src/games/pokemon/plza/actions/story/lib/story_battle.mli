@@ -17,6 +17,12 @@
     released, and from the third miss in a row the camera turns left (right
     stick) while ZL is mashed, 1 s.
 
+    A black fade read after the attacks is a lost battle: [battle_lost]. The
+    fork reads no loss: its fight ran on through the black fade, Urbain's heal
+    ("It's OK! I healed up Chikorita!") and Andi's rematch until its 120 s ran
+    out (01.03, console B, 2026-11-25). A won battle ends on the trainer's line
+    with no fade before it.
+
     The move replaces the watch's ZL hold with no release between (protocol
     v1.15, [cancel] with [then]), as the fork dispatches it over the running
     hold. *)

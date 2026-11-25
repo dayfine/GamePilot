@@ -134,6 +134,16 @@ let no_dialogue =
   Failure.cause "battle_failed"
     "fight_story_battle(): no dialogue after the battle within the timeout."
 
+let lost =
+  Failure.cause "battle_lost"
+    "a black fade after the attacks: the lead fainted (the heal and the \
+     rematch follow)"
+
+let log_lost steps =
+  S.(steps.log)
+    "[PLZA] story_battle: a black fade after the attacks: the battle is lost.";
+  Error lost
+
 let fight steps =
   let misses = ref 0 in
   let rec go ~deadline ~attacked =
@@ -142,6 +152,7 @@ let fight steps =
       Option.value deadline ~default:(look.at_ms +. fight_timeout_ms)
     in
     if look.home_menu then Error S.game_not_running
+    else if look.fade_black && attacked then log_lost steps
     else if look.story_dialog && attacked then (
       S.(steps.log)
         "[PLZA] story_battle: a dialogue box after the attacks: the battle is \

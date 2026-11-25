@@ -913,6 +913,31 @@ let cases =
        [PLZA] story_battle: Picking Move: Left\n\
        [Story] 01.03: done";
     case
+      "01.03 lost: a black fade after the move (the lead fainted): battle_lost"
+      (fun () ->
+        let lost c =
+          match C.nth_after c Wire.Y ~after:0.0 0 with
+          | None ->
+              {
+                (look c) with
+                battle = true;
+                moves = [ Some L.Effective; Some L.Super_effective; None; None ];
+              }
+          | Some _ -> black c
+        in
+        let r, c = outcome "01.03" lost in
+        String.concat "\n"
+          (r
+          :: List.filter
+               (fun l -> String.starts_with ~prefix:"[PLZA] story_battle" l)
+               (C.lines c)))
+      "01.03 event 3 (andi_battle): battle_lost: a black fade after the \
+       attacks: the lead fainted (the heal and the rematch follow)\n\
+       [PLZA] story_battle: Move Effectiveness: Top: Effective; Left: Super \
+       Effective; Right: (Unable to Detect); Bottom: (Unable to Detect);\n\
+       [PLZA] story_battle: Picking Move: Left\n\
+       [PLZA] story_battle: a black fade after the attacks: the battle is lost.";
+    case
       "01.03 resumed at Urbain's heal: the walk skipped, the scene to the HUD"
       (fun () -> skips "01.03" rematch)
       "passed\n\
