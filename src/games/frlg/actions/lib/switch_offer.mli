@@ -24,4 +24,5 @@ val probes : unit -> Wire.probe_spec list
 (** The line's template for {!text}. *)
 
 val read : unit -> bool
-(** {!shows} on the latest frame, {!probes} subscribed for the look. *)
+(** {!shows} on the first frame within a second that carries the line's probe,
+    {!probes} subscribed for the look; [false] if none comes. *)
