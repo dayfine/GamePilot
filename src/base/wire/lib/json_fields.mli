@@ -15,6 +15,7 @@ val field : string -> string -> json -> json
 val field_opt : string -> string -> json -> json option
 val to_int : string -> json -> int
 val to_float : string -> json -> float
+val to_bool : string -> json -> bool
 val to_string : string -> json -> string
 val to_list : string -> json -> json list
 val int_field : string -> string -> json -> int

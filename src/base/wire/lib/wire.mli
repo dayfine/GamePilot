@@ -1,4 +1,4 @@
-(** Wire protocol v1.13 (protocol/v1): message types and their JSON codec.
+(** Wire protocol v1.17 (protocol/v1): message types and their JSON codec.
 
     The codec lives in one module per message family ([Command], [Probe],
     [Backend], [Jsonrpc], [Wire_log], [Probe_images]); this module re-exports
@@ -29,12 +29,22 @@ type button = Command.button =
   | Home
   | X
   | Y
+  | ZL
+  | ZR
+  | Plus
+  | Minus
+
+val all_buttons : button list
+(** Every button, in the daemon's bit order (protocol/v1). *)
 
 val string_of_button : button -> string
 val button_of_string : string -> button option
 
 val switch_only : button -> bool
-(** [Home], [X] and [Y]: buttons only the Switch backend takes (v1.11). *)
+(** [Home], [X], [Y] (v1.11), [ZL] (v1.14), [ZR] (v1.16), [Plus] and [Minus]
+    (v1.17): buttons only the Switch backend takes. [Plus] and [Minus] are the
+    Switch's names; [Start] and [Select] are the GBA's, which the Switch backend
+    presses as Plus and Minus (the Switch's GBA app maps them so). *)
 
 type stick = Command.stick
 (** A stick's tilt (x, y) in -1..1: +x right, +y up (v1.12). *)
@@ -237,6 +247,10 @@ type call = Jsonrpc.call =
       (** probe ids; the daemon stops measuring them *)
   | Submit of { batch_id : string; commands : command list }
   | Cancel
+  | Cancel_then of { batch_id : string; commands : command list }
+      (** (v1.15) [cancel] with [then]: drops the queued commands with no
+          release and starts this batch in their place, the buttons both hold
+          staying held (the fork's command dispatched over a running one) *)
   | Status  (** the daemon's health; served to every client *)
   | Lease_acquire of { owner : string; ttl_ms : int option }
       (** takes the input lease for this connection, or renews it; [ttl_ms]
