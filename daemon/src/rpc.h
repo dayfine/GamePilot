@@ -110,7 +110,10 @@ struct SubmitParams {
   std::vector<InputCommand> commands;
 };
 
-struct CancelParams {};
+// `then` (v1.15): a batch that replaces the queued commands with no release.
+struct CancelParams {
+  std::optional<SubmitParams> then;
+};
 
 struct LeaseAcquireParams {
   std::string owner;

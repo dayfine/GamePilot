@@ -1,0 +1,20 @@
+{
+  "jsonrpc": "2.0",
+  "id": 51,
+  "method": "submit",
+  "params": {
+    "batch_id": "skip",
+    "commands": [
+      {
+        "press": ["Plus"],
+        "hold_ms": 2000,
+        "cooldown_ms": 0
+      },
+      {
+        "press": ["Minus"],
+        "hold_ms": 100,
+        "cooldown_ms": 500
+      }
+    ]
+  }
+}

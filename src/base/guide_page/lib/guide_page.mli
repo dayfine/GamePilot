@@ -38,3 +38,6 @@ val long_paragraphs : max_lines:int -> string -> (int * int) list
     first line number and length. A list item counts as a paragraph of its own;
     blocks, code (fenced or indented), headings, tables and comments are not
     paragraphs. *)
+
+val cell : string -> string
+(** Text as a Markdown table cell: every pipe escaped, so none ends the cell. *)

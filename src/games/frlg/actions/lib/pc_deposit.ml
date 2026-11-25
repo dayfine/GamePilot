@@ -6,7 +6,9 @@ let first_presses = 80
 let more_presses = 40
 let max_presses n = first_presses + (more_presses * max 0 (n - 1))
 let overworld_confirm_ms = 800
-let messages = [ "Deposit in which BOX?"; "The BOX is full." ]
+let box_full = "The BOX is full."
+let remove_mail = "Please remove the MAIL."
+let messages = [ "Deposit in which BOX?"; box_full; remove_mail ]
 let mon_menu_rows = [ "STORE"; "SUMMARY"; "MARK"; "RELEASE"; "CANCEL" ]
 
 let menu_rows =
@@ -58,15 +60,16 @@ let view () =
     frame ())
   else v
 
+let message () = text Text.Text_lines.pc_message messages
+
 let look () : Steps.look =
   let view = view () in
   {
     view;
     label = label view;
     species = (if view.screen = Party_panel then species_shown () else None);
-    box_full =
-      view.screen = Box_chooser
-      && text Text.Text_lines.pc_message messages = Some "The BOX is full.";
+    box_full = view.screen = Box_chooser && message () = Some box_full;
+    remove_mail = view.screen = Party_panel && message () = Some remove_mail;
   }
 
 (* The fork's ConsolePcStorageActions::press(). *)

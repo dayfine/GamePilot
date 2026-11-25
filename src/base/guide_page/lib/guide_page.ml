@@ -196,3 +196,5 @@ let long_paragraphs ~max_lines text =
     List.fold_left (para_step max_lines) (1, start) (fst (lines text))
   in
   List.rev (close max_lines st).long
+
+let cell s = String.concat "\\|" (String.split_on_char '|' s)
