@@ -1,0 +1,8 @@
+(library
+ (name plza_plan_codec)
+ (public_name gamepilot.plza_plan_codec)
+ (libraries
+  yojson
+  gamepilot.json_field
+  gamepilot.engine_plan_codec
+  gamepilot.plza_terms))
