@@ -1,19 +1,29 @@
 (** Trainer battles in a row on FireRed: the plan's [train] event. Each battle
     is waited for through the lines before it, fought with {!script} to its end,
     and the lines after the last one are pressed through to a quiet overworld. A
-    scene that chains battles (pokefirered
-    ThreeIsland_EventScript_BattleBikersScene: three Biker goons, then Cue Ball
-    Paxton, each with their lines before and after) is one [train] event.
+    scene that chains battles (pokefirered data/maps/ThreeIsland/scripts.inc:
+    three Biker goons, then Cue Ball Paxton, each with their lines before and
+    after) is one [train] event.
 
     Ported from the fork's Elite Four farmer
-    (Programs/Farming/PokemonFRLG_EliteFourFarmer.cpp): [run_battle()] attacks
-    at each battle menu and presses through the text until the menu comes back
-    or the battle ends, and a fainted attacker is a lost run;
-    [clear_post_battle_dialog()] presses B until the trainer's last lines close.
-    Where we differ: the move is the first of the lead's slots not out of PP,
-    where the farmer picks one per opposing species from its plan; the prompts
-    are read and answered ({!Frlg_battle.Event_rule}) where the farmer mashes B;
-    and the battles are not walked to, a scene brings each one. *)
+    (Programs/Farming/PokemonFRLG_EliteFourFarmer.cpp): the attacker attacks at
+    each battle menu and the text is pressed through until the menu comes back
+    or the battle ends, a fainted attacker is a lost run, and B is pressed until
+    the trainer's last lines close. Where we differ:
+    - the move is the first of the lead's slots not out of PP, where the farmer
+      picks one per opposing species from its plan;
+    - the prompts are read and answered ({!Frlg_battle.Event_rule}) where the
+      farmer mashes B;
+    - the battles are not walked to, a scene brings each one, and the lines
+      before each are pressed through until the battle shows
+      ({!Scene_looks.until_battle}), where the farmer mashes B until the battle
+      menu;
+    - there is no turn cap: the farmer fails a battle that runs past three turns
+      per Pokémon the trainer has, while the plan here does not know the
+      trainers' teams, so a battle ends only by its end or a battle step's
+      timeout;
+    - the settle after the last battle passes on a quiet overworld, where the
+      farmer fails when no dialogue shows within 20 s. *)
 
 type outcome =
   | Won of int  (** this many battles, each to its end *)
@@ -36,8 +46,8 @@ type game_steps = {
 val script : Frlg_battle.Battle_script.t
 (** Every action menu: the lead's moves in slot order, each until the game
     refuses it for want of PP. No member is sent in, so a fainted lead fails the
-    battle (the farmer's [ATTACKER_FAINTED]). Moves to learn are not learned,
-    and a trainer's "Will ... change POKéMON?" (the Shift battle style, read by
+    battle, as it ends the farmer's run. Moves to learn are not learned, and a
+    trainer's "Will ... change POKéMON?" (the Shift battle style, read by
     {!Switch_offer}) gets NO, as {!Frlg_battle.Scripted_battle} answers every
     {!Frlg_battle.Battle.Switch_offer}. *)
 
