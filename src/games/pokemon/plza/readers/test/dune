@@ -12,6 +12,11 @@
 (rule
  (copy fixtures/switch.second.probes.jsonl switch.second.probes.jsonl))
 
+(rule
+ (copy
+  fixtures/switch.shifted.second.probes.jsonl
+  switch.shifted.second.probes.jsonl))
+
 (tests
  (names
   test_dialog_readers
@@ -47,5 +52,6 @@
  (deps
   switch.probes.jsonl
   switch.shifted.probes.jsonl
-  switch.second.probes.jsonl)
+  switch.second.probes.jsonl
+  switch.shifted.second.probes.jsonl)
  (libraries gamepilot.wire gamepilot.table_test gamepilot.plza_readers))

@@ -3,7 +3,8 @@
    ("<folder>/<frame>", no extension), every shifted frame of
    fixtures/switch.shifted.probes.jsonl (one shift per frame) with the frame
    it shifts, and each frame's second read
-   (fixtures/switch.second.probes.jsonl). *)
+   (fixtures/switch.second.probes.jsonl, and for the shifted frames
+   fixtures/switch.shifted.second.probes.jsonl). *)
 
 let frames = Wire.read_image_probes "switch.probes.jsonl"
 let shifted = Wire.read_image_probes "switch.shifted.probes.jsonl"
@@ -73,6 +74,18 @@ let shifted_cases ?(misses = false) read =
             expectation = read (frame name);
           })
     shifted
+
+(* fixtures/switch.shifted.second.probes.jsonl: a shifted frame's second
+   read, by its shift and frame name. *)
+let shifted_seconds =
+  Wire.read_image_probes "switch.shifted.second.probes.jsonl"
+
+let shifted_second shift name =
+  Option.map
+    (fun (_, probes) -> measurements probes)
+    (List.find_opt
+       (fun (path, _) -> shift_and_frame path = (shift, name))
+       shifted_seconds)
 
 (* A shifted frame by its shift and frame name. *)
 let shifted_frame shift name =

@@ -20,7 +20,8 @@
 # Also fixtures/switch.second.probes.jsonl: every frame again, probed by what
 # a two-frame read subscribes from what the frame shows (write_probe_spec.exe
 # --second): the party bars' tests made from its cards, the caught mark's box
-# above its plate.
+# above its plate. And fixtures/switch.shifted.second.probes.jsonl likewise
+# for every shifted frame, from its own first read.
 # The Python steps need Pillow ($SHIFT_PYTHON, default python3; e.g.
 # "uv run --with pillow python3").
 #
@@ -46,16 +47,23 @@ cp -R "$HERE/images/switch/." "$work/frames/"
 $SHIFT_PYTHON "$HERE/draw_synthetic_frames.py" "$work/frames"
 (cd "$work/frames" && "$PROBE_IMAGES" --spec "$work/spec/probes.json" \
     --viewport native ./*/*.jpg ./*/*.png) >"$HERE/fixtures/switch.probes.jsonl"
-mkdir "$work/second"
-(cd "$SRC" && dune exec games/pokemon/plza/readers/test/write_probe_spec.exe \
-    -- --second "$HERE/fixtures/switch.probes.jsonl" "$work/second")
-: >"$HERE/fixtures/switch.second.probes.jsonl"
-for spec in "$work"/second/*/*.json; do
-    rel=${spec#"$work/second/"}
-    frame=$(cd "$work/frames" && ls "./${rel%.json}".* | head -n 1)
-    (cd "$work/frames" && "$PROBE_IMAGES" --spec "$spec" --viewport native \
-        "$frame") >>"$HERE/fixtures/switch.second.probes.jsonl"
-done
+# second_reads FIXTURE FRAMES OUT: each frame's second read, as FIXTURE's
+# first reads ask for it.
+second_reads() {
+    rm -rf "$work/second"
+    mkdir "$work/second"
+    (cd "$SRC" && dune exec games/pokemon/plza/readers/test/write_probe_spec.exe \
+        -- --second "$1" "$work/second")
+    : >"$3"
+    find "$work/second" -name '*.json' | sort | while read -r spec; do
+        rel=${spec#"$work/second/"}
+        frame=$(cd "$2" && ls "./${rel%.json}".* | head -n 1)
+        (cd "$2" && "$PROBE_IMAGES" --spec "$spec" --viewport native \
+            "$frame") >>"$3"
+    done
+}
+second_reads "$HERE/fixtures/switch.probes.jsonl" "$work/frames" \
+    "$HERE/fixtures/switch.second.probes.jsonl"
 (cd "$work/frames" && $SHIFT_PYTHON -c '
 import os, sys
 from PIL import Image
@@ -68,3 +76,5 @@ for path in sys.argv[2:]:
     ./*/*.png)
 (cd "$work/shifted" && "$PROBE_IMAGES" --spec "$work/spec/shifted.probes.json" \
     --viewport native ./*/*/*.png) >"$HERE/fixtures/switch.shifted.probes.jsonl"
+second_reads "$HERE/fixtures/switch.shifted.probes.jsonl" "$work/shifted" \
+    "$HERE/fixtures/switch.shifted.second.probes.jsonl"
