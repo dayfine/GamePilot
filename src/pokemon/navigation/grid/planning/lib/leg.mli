@@ -54,7 +54,7 @@ type 'state t = {
   start : 'state;
   finish : 'state;
 }
-(** one straight run, one special step, or a turn on the spot. *)
+(** One straight run, one special step, or a turn on the spot. *)
 
 val join :
   held_at:('state -> Direction.t -> bool) ->

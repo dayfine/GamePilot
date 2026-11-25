@@ -40,15 +40,15 @@ let plan { from; goal; gates; card_key_held } =
 let walk ?(gates = none) ?(card_key_held = false) from goal =
   { from; goal; gates; card_key_held }
 
-let actions action (legs : legs) =
-  List.filter (fun (leg : _ Leg.t) -> leg.kind = Special_step action) legs
+let special_steps special (legs : legs) =
+  List.filter (fun (leg : _ Leg.t) -> leg.kind = Special_step special) legs
 
 let route holds = function Some legs -> holds legs | None -> false
 let no_route = Option.is_none
 
-(* Exactly one [action] leg, which [holds]. *)
-let one action holds legs =
-  match actions action legs with [ leg ] -> holds leg | _ -> false
+(* Exactly one [special] leg, which [holds]. *)
+let one special holds legs =
+  match special_steps special legs with [ leg ] -> holds leg | _ -> false
 
 let from_facing tile direction (leg : _ Gated_model.state Leg.t) =
   Connected_maps.compare_place leg.start.inner tile = 0
@@ -88,7 +88,7 @@ let silph_cases =
       input = walk ~gates:{ none with opened = Names.singleton door } from goal;
       expectation =
         ( "a route with no open-gate leg",
-          route (fun legs -> actions Gated_model.Open_gate legs = []) );
+          route (fun legs -> special_steps Gated_model.Open_gate legs = []) );
     };
   ]
 
@@ -120,7 +120,8 @@ let mansion_cases =
       input = walk (place mansion_1f 5 6) (place mansion_1f 5 8);
       expectation =
         ( "a route with no press",
-          route (fun legs -> actions Gated_model.Press_switch legs = []) );
+          route (fun legs -> special_steps Gated_model.Press_switch legs = [])
+        );
     };
     {
       name = "down a hole";
