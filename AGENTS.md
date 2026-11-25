@@ -104,6 +104,12 @@ for the user to spot check.
   stale(<sha>) / none / skip) and next step (`merge`, `merge (structural: <reason>)`, or `user review (<reason>)`).
   `sh dev/review/format_only_changes.sh` lists files changed only in formatting; CI prints the same list as warnings.
 
+When the user's review comment states a general rule (not only a fix for that PR), add it to
+`.agents/rules/review-rules.md` in the same PR or in a follow-up right after, with the quote, the
+link and how to find it. qc-structural checks new PRs against the catalog; the next rule audit
+(`.agents/agents/rule-audit.md`, run as in `dev/review/rule_audit.md`) finds the older instances,
+and periodic maintenance turns them into fix PRs.
+
 ## User guides
 
 A new or changed program updates its guide. Every registered program has a player's page in

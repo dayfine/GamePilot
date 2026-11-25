@@ -132,6 +132,32 @@ let decode_cases =
     case "a list, as the drafts write them"
       (declared {|[{"fact": "badges: 8"}]|})
       "error: metadata.preconditions is not an object.";
+    case "a need any save meets asks nothing"
+      (fun () ->
+        [
+          Preflight.Money_at_least { amount = 0; for_ = "buy" };
+          Item_at_least { item = "retro-mail"; count = 0; for_ = "give" };
+          Badges_at_least 0;
+          Caught_at_least 0;
+          Badges [];
+          Party_in_order [];
+          Party_includes { members = []; slots = [] };
+        ]
+        |> List.filter Preflight.asks_something
+        |> List.length |> string_of_int)
+      "0";
+    case "a need with a count asks something"
+      (fun () ->
+        [
+          Preflight.Money_at_least { amount = 1; for_ = "buy" };
+          Item_at_least { item = "retro-mail"; count = 99; for_ = "give" };
+          Item_exactly { item = "retro-mail"; count = 0 };
+          Badges_at_least 8;
+          Member { species = "pidgey"; for_ = "fly" };
+        ]
+        |> List.filter Preflight.asks_something
+        |> List.length |> string_of_int)
+      "5";
     case "reads the card only for these needs"
       (fun () ->
         Printf.sprintf "%b %b"

@@ -13,7 +13,6 @@ Runs on: mGBA, the Switch (in its GBA app).
 ## Before you start
 
 <!-- generated:needs -->
-- 0 free party slots
 - pidgey in the party (fly)
 - mr-mime in the party (give_bag_item)
 - super-repel at least x1 (use_item)

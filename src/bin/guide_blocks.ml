@@ -7,10 +7,11 @@
    - checkpoints [RANGE]: each checkpoint's id and its plan's title, a
      repeating one marked, and a digest of those plans' files, so a plan change
      makes the page stale until it is regenerated;
-   - needs [RANGE]: what the save must hold for the whole chain: its free
-     party slots (Frlg_checkpoints.Party_room) and the pre-flight's needs
-     (Frlg_checkpoints.Preflight.needs, the checkpoint before's promises included)
-     of the chain's events taken as one plan: the members and field moves no
+   - needs [RANGE]: what the save must hold for the whole chain, needs any
+     save meets (no free slot, at least x0) left out: its free party slots
+     (Frlg_checkpoints.Party_room) and the pre-flight's needs
+     (Frlg_checkpoints.Preflight.needs, the checkpoint before's promises
+     included) of the chain's events taken as one plan: the members and field moves no
      earlier event brings, the money all its purchases cost, the items no
      earlier purchase or pickup brings, and the start;
    - preflight [RANGE]: per checkpoint, what the pre-flight checks before a
@@ -100,6 +101,8 @@ let checkpoints p arg =
 
 let plural n one many = if n = 1 then one else many
 
+(* No line when the chain needs no free slot and no member joins: a need of
+   zero is no need (review rule R2). *)
 let room_line (room : Frlg_checkpoints.Party_room.need) =
   let free = Frlg_checkpoints.Party_room.free_needed room in
   let joins =
@@ -107,9 +110,14 @@ let room_line (room : Frlg_checkpoints.Party_room.need) =
       (fun (species, cp) -> Printf.sprintf "%s in %s" species cp)
       room.joins
   in
-  Printf.sprintf "- %d free party %s%s" free
-    (plural free "slot" "slots")
-    (if joins = [] then "" else " (joining: " ^ String.concat ", " joins ^ ")")
+  if free = 0 && joins = [] then []
+  else
+    [
+      Printf.sprintf "- %d free party %s%s" free
+        (plural free "slot" "slots")
+        (if joins = [] then ""
+         else " (joining: " ^ String.concat ", " joins ^ ")");
+    ]
 
 (* The chain as one plan: its events in order from the first checkpoint's
    start, so an item or member one checkpoint brings counts for the later
@@ -141,7 +149,11 @@ let chain_lines stocks ~before (loaded : Pokemon_checkpoints.Plan.t list) =
     Frlg_checkpoints.Preflight.needs stocks ~before (as_one_plan loaded)
   in
   let line n = "- " ^ Frlg_checkpoints.Preflight.describe n in
-  Ok (room_line room :: List.map line (List.filter_map (chain_need room) needs))
+  let needs =
+    List.filter_map (chain_need room) needs
+    |> List.filter Frlg_checkpoints.Preflight.asks_something
+  in
+  Ok (room_line room @ List.map line needs)
 
 let needs p arg =
   let* plans = plans_of p in
@@ -153,8 +165,11 @@ let needs p arg =
   | lines -> Result.map (String.concat "\n") lines
   | exception Json_field.Invalid e -> Error e
 
+(* The needs any save meets left out (review rule R2). *)
 let needs_text needs =
-  cell (String.concat "; " (List.map Frlg_checkpoints.Preflight.describe needs))
+  List.filter Frlg_checkpoints.Preflight.asks_something needs
+  |> List.map Frlg_checkpoints.Preflight.describe
+  |> String.concat "; " |> cell
 
 (* One row per checkpoint: what the pre-flight checks before resuming there. *)
 let preflight_row stocks plans id =

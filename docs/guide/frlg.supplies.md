@@ -12,7 +12,6 @@ Runs on: mGBA, the Switch (in its GBA app).
 ## Before you start
 
 <!-- generated:needs -->
-- 0 free party slots
 - pidgey in the party (fly)
 - money at least ¥7500 (all the purchases)
 - at the start, CeladonCity_DepartmentStore_1F

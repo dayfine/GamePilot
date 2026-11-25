@@ -73,6 +73,12 @@ val describe : need -> string
 (** The need as the table's NEED column and the user guides (docs/guide/) say
     it: ["money at least ¥4100 (buy_coins)"]. *)
 
+val asks_something : need -> bool
+(** False for a need any save meets: money or an item at least 0, at least 0
+    badges or species caught, an empty party order, badge list or [includes].
+    The user guides leave these out (review rule R2,
+    [.agents/rules/review-rules.md]). *)
+
 val compare : need list -> read -> row list
 
 val room : Party_room.need -> read -> row

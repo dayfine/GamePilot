@@ -25,7 +25,6 @@ Runs on: mGBA.
 ## Before you start
 
 <!-- generated:needs -->
-- 0 free party slots
 - at least 8 badges
 - the Hall of Fame entered
 - pidgey in the party (fly)

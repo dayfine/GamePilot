@@ -16,7 +16,6 @@ Runs on: mGBA.
 ## Before you start
 
 <!-- generated:needs -->
-- 0 free party slots
 - pidgey in the party (fly)
 - money at least ¥12000 (all the purchases)
 - at the start, Route10_PokemonCenter_1F

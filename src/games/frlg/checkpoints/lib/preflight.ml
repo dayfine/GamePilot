@@ -172,6 +172,18 @@ let describe = function
   | Hall_of_fame -> "the Hall of Fame entered"
   | Caught_at_least n -> Printf.sprintf "at least %d species caught" n
 
+let asks_something = function
+  | Party_in_order l | Badges l -> l <> []
+  | Party_includes { members; slots } -> members <> [] || slots <> []
+  | Money_at_least { amount = n; _ }
+  | Item_at_least { count = n; _ }
+  | Badges_at_least n
+  | Caught_at_least n ->
+      n > 0
+  | Member _ | Knows_move _ | Money_between _ | Item_exactly _ | Place _
+  | Hall_of_fame ->
+      true
+
 let row read need =
   let text = describe need in
   match need with
