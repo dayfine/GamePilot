@@ -11,8 +11,9 @@ val log_target : Steps.game_steps -> string -> Catch_plan.target -> unit
 
 type choice = {
   target : Catch_plan.target option;  (** none when none was chosen *)
-  saw_plates : bool;
+  saw_plates : bool;  (** any plate was read on the flicks *)
 }
+(** The target chosen from the plates read. *)
 
 val approach :
   Steps.game_steps ->

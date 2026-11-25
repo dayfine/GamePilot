@@ -1,0 +1,32 @@
+(library
+ (name toy_rules)
+ (modules toy_walk toy_inn toy_promises toy_rules)
+ (libraries gamepilot.engine_postcondition gamepilot.engine_rules))
+
+(library
+ (name toy_game)
+ (modules toy_plan_format toy_event_snapshot toy_engine)
+ (libraries
+  yojson
+  gamepilot.json_field
+  gamepilot.engine_postcondition
+  gamepilot.engine_rules
+  gamepilot.engine_plan_format
+  gamepilot.engine_event_snapshot
+  gamepilot.program_engine
+  toy_rules))
+
+(tests
+ (names test_toy_game test_toy_pieces)
+ (modules test_toy_game test_toy_pieces)
+ (libraries
+  yojson
+  gamepilot.table_test
+  gamepilot.engine_postcondition
+  gamepilot.engine_rules
+  gamepilot.engine_plan_format
+  gamepilot.engine_text
+  gamepilot.engine_event_snapshot
+  gamepilot.engine_run
+  toy_rules
+  toy_game))

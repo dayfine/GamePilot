@@ -1,4 +1,4 @@
-module Failure = Pokemon_checkpoints.Failure
+module Failure = Pokemon_engine.Failure
 
 type t = string list
 

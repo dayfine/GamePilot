@@ -9,7 +9,7 @@
    series stops too. *)
 
 open Engine_run
-open Pokemon_checkpoints
+open Pokemon_engine
 open Checkpoints_series
 include Live_checkpoint
 
@@ -75,6 +75,13 @@ let checkpoint_outcome setup cp log =
 let frame_path setup id =
   Frlg_checkpoints.Start_check.frame_file ~states:setup.states id
 
+(* The start frame kept under the checkpoint's id: none for a start anywhere
+   outdoors, which looks different from each save. *)
+let start_frame_path setup cp =
+  match cp.plan.checkpoint.start with
+  | Some (Anywhere _) -> None
+  | Some (Grid _ | Zone _) | None -> Some (frame_path setup cp.id)
+
 (* On the Switch: back to the last save and the start check, then the run. *)
 let console_run setup cp log =
   let roster =
@@ -82,7 +89,8 @@ let console_run setup cp log =
   in
   let party = Console_session.start_party ~roster cp.before in
   match
-    Console_session.before ~log ~frame_path:(frame_path setup cp.id)
+    Console_session.before ~log
+      ~frame_path:(start_frame_path setup cp)
       ~start_path:
         (Frlg_checkpoints.Start_check.start_file ~states:setup.states
            cp.plan.checkpoint.start)
@@ -228,17 +236,8 @@ let record_outcome setup cp (run : Run_record.run) n ~attempt outcome =
   in
   Daemon_run.finish ~runs_dir:setup.runs_dir run ~summary:line ending
 
-(* Attempt [attempt] of run [n] of [cp]: its folder and how it ended.
-   [progress] is the chain for the watch page before the attempt ([None]) and
-   after it. *)
-let run setup cp n ~attempt ~progress =
-  let attempts = cp.plan.retries + 1 in
-  let run =
-    Run_record.start
-      ?attempt:(if attempts > 1 then Some (attempt, attempts) else None)
-      ?events:(events cp) ~runs_dir:setup.runs_dir setup.info ~checkpoint:cp.id
-      ~mode:(mode_name setup cp)
-  in
+(* The attempt in its folder: the folder and how it ended. *)
+let run_in setup cp n ~attempt ~progress (run : Run_record.run) =
   let record = run.record in
   let log, close = Run_record.story_log record in
   log
@@ -252,3 +251,15 @@ let run setup cp n ~attempt ~progress =
   close ();
   record_outcome setup cp run n ~attempt outcome;
   (record, outcome)
+
+(* Attempt [attempt] of run [n] of [cp]: its folder and how it ended; [Error]
+   when its folder could not be made. [progress] is the chain for the watch
+   page before the attempt ([None]) and after it. *)
+let run setup cp n ~attempt ~progress =
+  let attempts = cp.plan.retries + 1 in
+  Result.map
+    (run_in setup cp n ~attempt ~progress)
+    (Run_record.start
+       ?attempt:(if attempts > 1 then Some (attempt, attempts) else None)
+       ?events:(events cp) ~runs_dir:setup.runs_dir setup.info ~checkpoint:cp.id
+       ~mode:(mode_name setup cp))

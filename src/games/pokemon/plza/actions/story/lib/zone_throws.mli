@@ -9,10 +9,11 @@
     the throw's 8 s: reaching the target on reads 250 ms apart ends it there. *)
 
 type result = {
-  throws : int;
-  caught : bool;
+  throws : int;  (** throws made at the stop *)
+  caught : bool;  (** a throw caught the target *)
   party_reached : bool;  (** the party bar showed the target count *)
 }
+(** How the stop ended. *)
 
 val catch_at_stop :
   Steps.game_steps -> spot:string -> max_throws:int -> party:int -> result

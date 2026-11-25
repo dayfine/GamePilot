@@ -1,7 +1,7 @@
 open Plza_story
 module Failure = Engine_run.Failure
-module Game = Plza_checkpoints.Game
-module Plan = Plza_checkpoints.Plan
+module Game = Plza_engine.Game
+module Plan = Plza_engine.Plan
 
 let run_from = "03.03"
 let walk_only id = String.compare id run_from < 0
@@ -247,15 +247,15 @@ let make steps ~(checkpoint : Plan.checkpoint) ~reload : Game.t =
 
 (* The end check's failure, after the last event, as the engine's own end
    check names one. *)
-let at_end (checkpoint : Plza_checkpoints.Plan.checkpoint) cause =
+let at_end (checkpoint : Plza_engine.Plan.checkpoint) cause =
   {
-    Plza_checkpoints.Failure.checkpoint_id = checkpoint.checkpoint_id;
+    Plza_engine.Failure.checkpoint_id = checkpoint.checkpoint_id;
     event_index = List.length checkpoint.events;
     event_id = "end";
     reason = Handler cause;
   }
 
 let run_watched ?(end_check = fun () -> Ok ()) ~mode report game checkpoint =
-  Plza_checkpoints.Plan_watch.run ~mode report (fun ~on_event ->
-      Result.bind (Plza_checkpoints.Runner.run ~on_event game checkpoint)
-        (fun () -> Result.map_error (at_end checkpoint) (end_check ())))
+  Plza_engine.Plan_watch.run ~mode report (fun ~on_event ->
+      Result.bind (Plza_engine.Runner.run ~on_event game checkpoint) (fun () ->
+          Result.map_error (at_end checkpoint) (end_check ())))

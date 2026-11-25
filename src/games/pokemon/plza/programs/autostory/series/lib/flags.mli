@@ -3,6 +3,7 @@
     refuses rather than ignores. *)
 
 type t = unit Checkpoints_flags.flags
+(** The command's flags, with no game flags. *)
 
 val parse : string list -> (t, string) result
 (** The command's flags over the defaults; [Error] on an unknown flag or a bad

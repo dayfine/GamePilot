@@ -17,3 +17,4 @@ val max_throws : int
 (** 12. *)
 
 val run : Steps.game_steps -> max_throws:int -> Steps.outcome
+(** The catch, up to [max_throws] throws, as above. *)

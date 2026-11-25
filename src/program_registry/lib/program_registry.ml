@@ -106,9 +106,9 @@ let mail_glitch =
     name = "Mail Glitch";
     group = [ "FRLG"; "Glitches" ];
     description =
-      "Sets up the Mail Glitch, performs it against Lea & Jed on Route 16 and \
-       uses it to duplicate an item.";
-    doc = "docs/programs/frlg-mail-glitch.md";
+      "Turns on the Mail Glitch against Lea & Jed on Route 16 and copies one \
+       item with it.";
+    doc = "docs/guide/frlg.mail_glitch.md";
     checkpoints = Some "src/games/frlg/programs/mail_glitch/plans";
     backends = [ Mgba; Switch ];
     viewport = Nso_gba;
@@ -136,10 +136,8 @@ let team_training =
     game = frlg;
     name = "Team Training";
     group = [ "FRLG"; "Training" ];
-    description =
-      "Farms Rare Candies with the Mail Glitch's item duplication and levels \
-       the team with them.";
-    doc = "docs/programs/frlg-team-training.md";
+    description = "Copies Rare Candies with the Mail Glitch to level the team.";
+    doc = "docs/guide/frlg.team_training.md";
     checkpoints = Some "src/games/frlg/programs/team_training/plans";
     backends = [ Mgba; Switch ];
     viewport = Nso_gba;
@@ -154,7 +152,7 @@ let supplies =
     group = [ "FRLG"; "Training" ];
     description =
       "Stocks what the duplication programs use: Retro Mail and Super Repels.";
-    doc = "docs/programs/frlg-supplies.md";
+    doc = "docs/guide/frlg.supplies.md";
     checkpoints = Some "src/games/frlg/programs/supplies/plans";
     backends = [ Mgba; Switch ];
     viewport = Nso_gba;
@@ -167,10 +165,8 @@ let sevii_story =
     game = frlg;
     name = "Sevii Story";
     group = [ "FRLG"; "Story" ];
-    description =
-      "Plays the Sevii Islands story after the Hall of Fame, starting with \
-       Bill's trip to One Island.";
-    doc = "docs/programs/frlg-sevii-story.md";
+    description = "Plays the Sevii Islands story after the Cinnabar Gym.";
+    doc = "docs/guide/frlg.sevii_story.md";
     checkpoints = Some "src/games/frlg/programs/sevii_story/plans";
     backends = [ Mgba ];
     viewport = Nso_gba;
@@ -184,10 +180,24 @@ let dex_collection =
     name = "Dex Collection";
     group = [ "FRLG"; "Pokedex" ];
     description =
-      "Catches wild Pokemon the Pokedex has not caught yet, toward the 60 the \
-       National Pokedex needs.";
-    doc = "docs/programs/frlg-dex-collection.md";
+      "Catches Pokemon the Pokedex lacks, toward the National Pokedex.";
+    doc = "docs/guide/frlg.dex_collection.md";
     checkpoints = Some "src/games/frlg/programs/dex_collection/plans";
+    backends = [ Mgba ];
+    viewport = Nso_gba;
+    rules = Pokemon_grid;
+  }
+
+let wild_rng =
+  {
+    id = "frlg.wild_rng";
+    game = frlg;
+    name = "Wild RNG";
+    group = [ "FRLG"; "RNG" ];
+    description =
+      "Catches a chosen shiny wild Pokemon by timing the game's random numbers.";
+    doc = "docs/guide/frlg.wild_rng.md";
+    checkpoints = Some "src/games/frlg/programs/wild_rng/plans";
     backends = [ Mgba ];
     viewport = Nso_gba;
     rules = Pokemon_grid;
@@ -217,6 +227,7 @@ let all =
     team_training;
     sevii_story;
     dex_collection;
+    wild_rng;
     autostory;
   ]
 

@@ -23,7 +23,7 @@ let checkpoint ~id ~title steps =
 let json ~id ~title steps =
   `Assoc
     [
-      ("format", `String Pokemon_checkpoints.Plan_decode.format);
+      ("format", `String Pokemon_engine.Plan_decode.format);
       ("game", `String "frlg");
       ("checkpoint", checkpoint ~id ~title steps);
       ("execution", `Assoc [ ("menu", `String "full") ]);
@@ -32,7 +32,7 @@ let json ~id ~title steps =
 
 let plan ~id ~title steps =
   match
-    Pokemon_checkpoints.Plan_decode.decode ~source:id (json ~id ~title steps)
+    Pokemon_engine.Plan_decode.decode ~source:id (json ~id ~title steps)
   with
   | Ok plan -> plan
   | Error e -> invalid_arg ("Shadow_plan.plan: " ^ e)

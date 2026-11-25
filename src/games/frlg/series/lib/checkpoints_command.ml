@@ -1,16 +1,16 @@
-(* gamepilot checkpoints PLAN_DIR --from ID --to ID --mode testing|verification
+(* gamepilot run PROGRAM|DIR/PLANS --from ID --to ID --mode testing|verification
      [--runs N] [--states DIR] [--runs-dir DIR] [--daemon PATH]
      [--mgba-port N] [--port N] [--party SPECIES,...] [--center TOWN] [--walk]
      [--end-check-only] [--grind-battles N] [--watch] [--watch-port N]
      [--listen ADDR] [--backend mgba|switch --serial PORT --capture DEVICE]
 
    The checkpoint dev loop. A program's checkpoints are its plan files
-   (<ID>.plan.json in PLAN_DIR, in name order; --program ID in its place:
+   (<ID>.plan.json in the plan folder, in name order; --program ID in its place:
    Programs_command); each runs from its start state (<states>/<ID>.start.ss),
    as many times as the mode's policy says (Engine_run.Checkpoint_trials), each run with its own daemon and run folder
    (Run_record). A run passes when every event passed and the player ends at
    the checkpoint's declared end (Checkpoint_end) and the plan's
-   postconditions hold (Pokemon_checkpoints.Postcondition_check). With --end-check-only each
+   postconditions hold (Pokemon_engine.Postcondition_check). With --end-check-only each
    run checks its start state against the postconditions and runs no event. The loop goes to the
    next checkpoint only after this one passed; in verification mode the last
    passing run's end becomes the next checkpoint's start state.
@@ -59,7 +59,7 @@
 
    --from-event ID|N [--to-event ID|N] (mGBA, testing, one checkpoint: --to
    is --from unless given) runs that checkpoint from the save state kept at
-   the event's start (Pokemon_checkpoints.Event_states: every mGBA run keeps one at each
+   the event's start (Pokemon_engine.Event_snapshot: every mGBA run keeps one at each
    event it reaches cleanly) to the given event or the last, the end checks
    only when it runs the last. Its mode is "from-event" (run.json's
    from_event and to_event): it never verifies the checkpoint nor saves its
@@ -72,13 +72,13 @@
    else to $HOME/.local/share/gamepilot/{states,runs}.
 
    Mirrors, on the fork's frlg/lean (SerialPrograms/Source/Pokemon/AutoStory/):
-   the START/END_CHECKPOINT range (Options/Pokemon_StoryRangeOptions.h) and
-   StoryEngine::run_checkpoints() (Engine/Pokemon_StoryEngine.cpp) over it;
-   verify_checkpoint() (Engine/Pokemon_StoryVerifyRuns.cpp) for the runs of
-   one checkpoint; the program leaving the game where it failed
-   (STORY_LEFT_WHERE_FAILED in PokemonFRLG_AutoStory.cpp), here as failure.ss.
-   Not ported yet: retries inside a run (StoryGame::attempts_per_checkpoint
-   with reload), the reproduction phase, the overlay log. mGBA itself is
+   the start and end checkpoint range (Options/Pokemon_StoryRangeOptions.h)
+   and the engine's run over it (Engine/Pokemon_StoryEngine.cpp); the
+   verification loop (Engine/Pokemon_StoryVerifyRuns.cpp) for the runs of one
+   checkpoint; the program leaving the game where it failed
+   (PokemonFRLG_AutoStory.cpp), here as failure.ss. Not ported yet: retries
+   inside a run (a checkpoint's attempts with a reload between,
+   Engine/Pokemon_StoryEngine.cpp), the reproduction phase, the overlay log. mGBA itself is
    started and closed around the command by run/run_checkpoints_on_mgba.sh. *)
 
 open Engine_run

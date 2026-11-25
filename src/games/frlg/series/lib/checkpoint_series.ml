@@ -5,12 +5,12 @@
    StoryEngine::run_checkpoints() and verify_checkpoint() on the fork's
    frlg/lean; see Checkpoints_command. The chain's progress (Chain_progress)
    goes to the watch page from each run. A repeating checkpoint (05-grind-mr-mime's grind
-   round, Pokemon_checkpoints.Plan.repeat) runs round by round instead, each round one run
+   round, Pokemon_engine.Plan.repeat) runs round by round instead, each round one run
    whatever the mode's policy. *)
 
 open Engine_run
 open Engine_series
-open Pokemon_checkpoints
+open Pokemon_engine
 module Run = Checkpoint_live_run
 
 let ( let* ) = Result.bind
@@ -70,10 +70,13 @@ let attempt_of : Run.outcome -> Checkpoint_trials.attempt = function
 
 (* Run [n] of [cp]: attempts from its start until Checkpoint_trials.attempts
    decides; the last attempt's folder and the run's outcome, noted in that
-   folder's summary.txt. *)
+   folder's summary.txt. [Error] when an attempt's folder could not be made. *)
 let rec attempts setup cp n ~progress tried =
   let attempt = List.length tried + 1 in
-  let record, outcome = Run.run setup cp n ~attempt ~progress in
+  Result.bind (Run.run setup cp n ~attempt ~progress) (fun (record, outcome) ->
+      attempted setup cp n ~progress tried ~attempt record outcome)
+
+and attempted setup cp n ~progress tried ~attempt record outcome =
   let tried = tried @ [ attempt_of outcome ] in
   let decided why outcome =
     if cp.Run.plan.retries > 0 then (
@@ -83,18 +86,19 @@ let rec attempts setup cp n ~progress tried =
       in
       print_endline ("[Checkpoints] " ^ line);
       Run_record.append record "summary.txt" (line ^ "\n"));
-    (record, outcome)
+    Ok (record, outcome)
   in
   match Checkpoint_trials.attempts ~retries:cp.plan.retries tried with
   | Attempt_again -> attempts setup cp n ~progress tried
   | Run_passed -> decided "passed" outcome
-  | Run_failed _ when cp.plan.retries = 0 -> (record, outcome)
+  | Run_failed _ when cp.plan.retries = 0 -> Ok (record, outcome)
   | Run_failed { at; repeats; why } ->
       let reason = match outcome with Failed f -> f.reason | Passed _ -> "" in
       decided ("failed: " ^ why)
         (Run.Failed { at; reason = why ^ ": " ^ reason; repeats })
 
-(* One run of [cp], [chain] updated around it. *)
+(* One run of [cp], [chain] updated around it; [Error] (the checkpoint failed
+   on the chain) when a folder could not be made. *)
 let trial setup cp n chain =
   chain := Chain_progress.begin_trial !chain;
   let started = !chain in
@@ -106,13 +110,17 @@ let trial setup cp n chain =
           (Chain_progress.end_trial started r ~now_ms)
           ~now_ms
   in
-  let ((_, outcome) as run) = attempts setup cp n ~progress [] in
-  chain :=
-    Chain_progress.end_trial started (Run.trial outcome) ~now_ms:(now_ms ());
-  run
+  match attempts setup cp n ~progress [] with
+  | Ok (_, outcome) as run ->
+      chain :=
+        Chain_progress.end_trial started (Run.trial outcome) ~now_ms:(now_ms ());
+      run
+  | Error e ->
+      chain := Chain_progress.fail_checkpoint !chain ~now_ms:(now_ms ());
+      Error e
 
 (* Runs [cp] until the policy decides; the verdict and the runs, oldest
-   first. *)
+   first. A run whose folder cannot be made stops the checkpoint. *)
 let runs_of setup cp chain =
   Checkpoint_trials.until_decided setup.Run.policy
     ~trial:(fun (_, o) -> Run.trial o)
@@ -207,10 +215,15 @@ let rec rounds (setup : Run.setup) cp chain ~next ~max_rounds runs =
   | Next_round n ->
       Printf.printf "[Checkpoints] %s round %d of at most %d\n%!" cp.Run.id n
         max_rounds;
-      let run = trial setup cp n chain in
+      next_round setup cp chain ~next ~max_rounds runs n
+  | decision -> rounds_ended setup cp chain ~next runs decision
+
+and next_round setup cp chain ~next ~max_rounds runs n =
+  match trial setup cp n chain with
+  | Ok run ->
       rounds setup (after_round setup cp run) chain ~next ~max_rounds
         (runs @ [ run ])
-  | decision -> rounds_ended setup cp chain ~next runs decision
+  | Error e -> rounds_ended setup cp chain ~next runs (Stopped e)
 
 let repeat (setup : Run.setup) (cp : Run.checkpoint) chain ~next
     (r : Plan.repeat) =

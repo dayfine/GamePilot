@@ -30,10 +30,10 @@ let plans_in dir =
   |> List.filter (fun n -> Filename.check_suffix n ".plan.json")
   |> List.map (Filename.concat dir)
 
-(* PLZA's plans are over its own rules: they decode with Plza_checkpoints. *)
+(* PLZA's plans are over its own rules: they decode with Plza_engine. *)
 let plza_plan_error file =
   match
-    Plza_checkpoints.Plan_decode.decode ~source:(Filename.basename file)
+    Plza_engine.Plan_decode.decode ~source:(Filename.basename file)
       (Yojson.Safe.from_file file)
   with
   | Ok _ -> None

@@ -212,6 +212,11 @@ same end tile).
 
 ## 8. Agents and MCP
 
+**Superseded (user, 2026-11-25):** the lab app and pa-lab retired; there is no MCP front for now.
+Agents use `gamepilot` from a shell, and a thin `gamepilot mcp` over the daemon's protocol comes
+when a client without a shell needs one (`Console-Roadmap.md`, decision 4). The rest of this
+section is kept as history.
+
 pa-lab (`lab/server` on the `agents` branch; design in `docs/design/Agent-Integration.md`
 on `lab/tooling`) stays the MCP front and control plane: leases, idempotent requests,
 event cursor, audit, refusals. The app is already behind one channel adapter (fork #611);

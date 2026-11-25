@@ -18,6 +18,7 @@
  (names
   test_pc_deposit_steps
   test_fly_towns
+  test_fly_user
   test_actions
   test_checkpoint_game
   test_action_requests
@@ -37,10 +38,13 @@
   test_warp_settle
   test_trainer_card_read
   test_trainer_battles
-  test_scene_battle)
+  test_scene_battle
+  test_wild_rng
+  test_pokedex_entry)
  (modules
   test_pc_deposit_steps
   test_fly_towns
+  test_fly_user
   test_actions
   test_checkpoint_game
   test_action_requests
@@ -61,7 +65,9 @@
   test_warp_settle
   test_trainer_card_read
   test_trainer_battles
-  test_scene_battle)
+  test_scene_battle
+  test_wild_rng
+  test_pokedex_entry)
  (deps
   mgba.probes.jsonl
   menus.mgba.probes.jsonl
@@ -75,7 +81,7 @@
   gamepilot.grid_geometry
   gamepilot.grid_maps
   gamepilot.json_field
-  gamepilot.pokemon_checkpoints
+  gamepilot.pokemon_engine
   gamepilot.room_policy
   gamepilot.frlg_overworld
   gamepilot.frlg_actions

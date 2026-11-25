@@ -1,4 +1,4 @@
-(* gamepilot checkpoint PLAN.json [--state FILE] [--port N] [--log FILE]
+(* gamepilot run --plan PLAN.json [--state FILE] [--port N] [--log FILE]
      [--party SPECIES,...] [--center TOWN] [--walk] [--end-check-only]
      [--grind-battles N]
    gamepilot replay checkpoint WIRELOG PLAN.json [the same flags]
@@ -30,7 +30,7 @@ type flags = Pokemon_flags.checkpoint_flags = {
 }
 
 let usage =
-  "  gamepilot checkpoint PLAN.json [--state FILE] [--port N] [--log FILE] \
+  "  gamepilot run --plan PLAN.json [--state FILE] [--port N] [--log FILE] \
    [--runs-dir DIR]\n\
   \      [--party SPECIES,...] [--center TOWN] [--walk] [--end-check-only]\n\
   \      [--grind-battles N]\n\
@@ -91,7 +91,7 @@ let prepare plan_file flags =
 let report = function
   | Ok () -> ("checkpoint: PASSED", 0)
   | Error failure ->
-      ("checkpoint: FAILED " ^ Pokemon_checkpoints.Failure.to_string failure, 1)
+      ("checkpoint: FAILED " ^ Pokemon_engine.Failure.to_string failure, 1)
 
 (* The checkpoint under [handle], its failures from the handler reported. *)
 let outcome handle run =
@@ -136,10 +136,10 @@ let live ~program_fields plan_file args =
   let* runs_dir, args = Attached_run.runs_dir_flag args in
   let* flags = parse defaults args in
   let id = label plan_file in
-  let run =
+  let* run =
     Attached_run.start ~runs_dir ~kind:Checkpoint
       ~program:(program_fields (Filename.dirname plan_file))
-      ~label:id ~mode:"single"
+      ~label:id ~mode:"single" ()
   in
   let log_file =
     Some

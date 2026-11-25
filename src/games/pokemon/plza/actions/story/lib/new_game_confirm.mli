@@ -10,3 +10,4 @@
     by hand. *)
 
 val run : Steps.game_steps -> Steps.outcome
+(** "Ready!" confirmed, as above. *)

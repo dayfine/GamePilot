@@ -38,7 +38,7 @@ reader fixtures under `src/games/frlg/readers/test/images/switch/console-b-20261
 picture fills that box exactly, black bars left and right.
 
 A full-screen Switch game (Legends Z-A) has no bars: its program's registry descriptor says
-`viewport = Native` (`docs/programs/README.md`), which `run/run_checkpoints_on_switch.sh --program ID`
+`viewport = Native` (`docs/guide/README.md`, "Adding a program"), which `run/run_checkpoints_on_switch.sh PROGRAM`
 passes to every daemon as `--viewport native` (by hand: `gamepilot bring-up --program ID`, or the
 daemon's own `--viewport native`), and the check then only asks that the frame is not mostly dark.
 
@@ -59,10 +59,10 @@ Expect `start_menu_poc: PASS`. Stop the daemon with Ctrl-C.
 **6. Pre-flight.** The save loaded, the player in the overworld. Set `GAMEPILOT_SWITCH_SERIAL`,
 `GAMEPILOT_SWITCH_CAPTURE` and `GAMEPILOT_LABLOCK` (the env file, `~/.config/gamepilot/env`), then:
 
-    sh run/run_checkpoints_on_switch.sh --program frlg.mail_glitch \
+    sh run/run_checkpoints_on_switch.sh frlg.mail_glitch \
         --from 01-celadon-setup --to 01-celadon-setup --preflight-only
 
-(or `gamepilot checkpoints ... --preflight --backend switch --serial PORT --capture INDEX`). It
+(or `gamepilot run ... --preflight --backend switch --serial PORT --capture INDEX`). It
 soft-resets to the save, reads the party, money and items, compares the place with the frame
 kept at 01-celadon-setup's start, and prints a NEED / READ / VERDICT table: Fly's user, the money the
 purchases cost, what the checkpoint before promised, and the free party slots the whole chain
@@ -93,7 +93,7 @@ the game's last save. A run that passes, its end checks included, is saved in th
 the next checkpoint starts from that save. A run that fails soft-resets to the last save and the
 series stops. A failed or stopped run never saves.
 
-    sh run/run_checkpoints_on_switch.sh --program frlg.mail_glitch \
+    sh run/run_checkpoints_on_switch.sh frlg.mail_glitch \
         --from 01-celadon-setup --to 01-celadon-setup
 
 The script takes console B's lab lock, refuses while anything holds the serial port or the lab
@@ -106,7 +106,7 @@ it presses B, only while no client batch is queued or running and no client subm
 window, so never inside a program's batch (`daemon/src/keep_awake.h`). Each press is a `daemon`
 line in the run's `wire.jsonl` (`"method":"keepawake"`, the key and the idle time) and a line in
 `daemon.out`. `--keepawake SECONDS` changes the wait (0 turns it off; `--keepawake-key KEY` the
-key, a GBA button name); `gamepilot checkpoints ... --keepawake N` passes it on. mGBA daemons
+key, a GBA button name); `gamepilot run ... --keepawake N` passes it on. mGBA daemons
 have it off, and it never presses while a client holds the input lease. It replaces
 `~/BDSPLab/gp_keepawake.py`: an idle daemon holding console B keeps it awake.
 

@@ -4,7 +4,9 @@ prints on stdin and prints its gate row: NUMBER CI STRUCT NEXT, tab-separated, t
 optional argument names a file of the PR's changed files, one REST `{path, status}` object per line
 (pr_gate_status.sh pages them, since `--json files` stops at 100); it replaces any `files` on stdin.
 
-CI is pass / fail / pending / none, over the checks at the PR's tip. STRUCT is the qc-structural
+CI is pass / fail / pending / none, over the checks at the PR's tip; for a PR of prose only (every
+file a .md added or modified outside docs/guide/ and .agents/), over the review-tools check alone
+when it ran. STRUCT is the qc-structural
 verdict at the tip: ok (APPROVED), rework (NEEDS_REWORK), stale(<sha>) when the latest verdict was
 given at an older commit, none, or skip for a docs-only PR (every file is a .md or under docs/).
 NEXT is the one next step: "merge main" first when the PR conflicts with main; once CI is green and
@@ -118,8 +120,41 @@ def check_state(check):
     return "pass" if check.get("conclusion") in PASSING else "fail"
 
 
+# The one check a PR of prose needs: the PR text and the review tools. The builds read the
+# text of no .md outside docs/guide/ (user, 2026-11-25).
+PROSE_CHECK = "review-tools"
+
+# Prose that other checks read: `gamepilot guide --check` reads docs/guide/, and Harness Check
+# reads .agents/ (an agent's standing-rules block).
+READ_BY_CHECKS = ("docs/guide/", ".agents/")
+
+# The OCaml tests check that every registered program's doc page exists, so a .md the PR deletes
+# or renames waits for the builds.
+MOVED_PROSE = {"DELETED", "RENAMED"}
+
+
+def prose(f):
+    """A .md added or changed in place, whose text no build or harness check reads."""
+    path = f["path"]
+    return (path.endswith(".md") and not path.startswith(READ_BY_CHECKS)
+            and f.get("changeType", "MODIFIED") not in MOVED_PROSE)
+
+
+def prose_only(files):
+    """Every file prose ({!prose}): the PR needs only the review-tools check."""
+    return bool(files) and all(prose(f) for f in files)
+
+
+def check_name(check):
+    return check.get("name") or check.get("context") or ""
+
+
 def ci_state(pr):
-    states = {check_state(c) for c in pr.get("statusCheckRollup") or []}
+    checks = pr.get("statusCheckRollup") or []
+    prose = [c for c in checks if check_name(c) == PROSE_CHECK]
+    if prose and prose_only(pr.get("files") or []):
+        checks = prose
+    states = {check_state(c) for c in checks}
     for state in ("fail", "pending", "pass"):
         if state in states:
             return state

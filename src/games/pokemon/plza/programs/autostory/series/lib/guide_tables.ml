@@ -2,7 +2,7 @@ let ( let* ) = Result.bind
 
 let row ~plan_dir id =
   Result.map
-    (fun (plan : Plza_checkpoints.Plan.t) ->
+    (fun (plan : Plza_engine.Plan.t) ->
       Printf.sprintf "| %s | %s |" plan.checkpoint.checkpoint_id
         (Guide_page.cell plan.checkpoint.title))
     (Runs.load_plan ~plan_dir id)

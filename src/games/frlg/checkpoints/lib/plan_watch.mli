@@ -3,14 +3,14 @@
     that runs a plan shows: a checkpoint, and the shadow plans ({!Shadow_plan})
     of the pre-flight and the make-room party read. *)
 
-val create : Pokemon_checkpoints.Plan.checkpoint -> Watch_report.t
-(** {!Pokemon_checkpoints.Plan_watch.create}: the checkpoint's events, all
-    pending; shows the plan. *)
+val create : Pokemon_engine.Plan.checkpoint -> Watch_report.t
+(** {!Pokemon_engine.Plan_watch.create}: the checkpoint's events, all pending;
+    shows the plan. *)
 
 val on_event :
   Watch_report.t -> int -> string Engine_run.Event_progress.t -> unit
-(** {!Pokemon_checkpoints.Plan_watch.on_event}: the runner's progress of event
-    [i], shown. *)
+(** {!Pokemon_engine.Plan_watch.on_event}: the runner's progress of event [i],
+    shown. *)
 
 val options : (string -> unit) -> Checkpoint_run.options
 (** A run that loads no state (its own events go back to the save), reads the
@@ -18,12 +18,11 @@ val options : (string -> unit) -> Checkpoint_run.options
 
 val run :
   mode:string ->
-  ?actions:
-    ((string -> unit) -> (string * Pokemon_checkpoints.Game.game_action) list) ->
+  ?actions:((string -> unit) -> (string * Pokemon_engine.Game.game_action) list) ->
   Checkpoint_run.options ->
   Frlg_overworld.Frlg_steps.world ->
-  Pokemon_checkpoints.Plan.t ->
-  (unit, Pokemon_checkpoints.Failure.t) result
+  Pokemon_engine.Plan.t ->
+  (unit, Pokemon_engine.Failure.t) result
 (** In the effect context: the plan through {!Checkpoint_run.run}, shown with
     its run in [mode] (["single"], ["preflight"]) from start to end, failed when
     the run raises (re-raised). Every story line goes to the options' log and to
@@ -34,7 +33,7 @@ val run_shadow :
   mode:string ->
   log:(string -> unit) ->
   Frlg_overworld.Frlg_steps.world ->
-  Pokemon_checkpoints.Plan.t ->
-  ((string -> unit) -> (string * Pokemon_checkpoints.Game.game_action) list) ->
-  (unit, Pokemon_checkpoints.Failure.t) result
+  Pokemon_engine.Plan.t ->
+  ((string -> unit) -> (string * Pokemon_engine.Game.game_action) list) ->
+  (unit, Pokemon_engine.Failure.t) result
 (** {!run} with {!options}. *)

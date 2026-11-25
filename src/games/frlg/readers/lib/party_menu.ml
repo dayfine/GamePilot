@@ -24,8 +24,8 @@ let max_distance = 0.25
 let max_teal_stddev_sum = 20.
 let max_border_stddev_sum = 30.
 
-(* PartySlotDetector::party_slot_boxes: the border's left edge for slot 1,
-   the right edge for the others. *)
+(* The fork's party slot boxes (Inference/Menus/PokemonFRLG_PartyMenuDetector.cpp):
+   the border's left edge for slot 1, the right edge for the others. *)
 let selected_boxes : Wire.box list =
   [
     { x = 0.035000; y = 0.376617; w = 0.003280; h = 0.070000 };
@@ -55,7 +55,8 @@ let double_selected_boxes : Wire.box list =
    box of the single layout and slot 2's of the double one. *)
 let edge_box = Game_pixels.box { x = 2.; y = 80.; w = 4.; h = 40. }
 
-(* PartyEmptySlotDetector::box_for_slot, slots 2 to 6. *)
+(* The fork's empty slot boxes
+   (Inference/Menus/PokemonFRLG_PartyEmptySlotDetector.cpp), slots 2 to 6. *)
 let empty_boxes : Wire.box list =
   [
     { x = 0.709; y = 0.078; w = 0.01; h = 0.018 };

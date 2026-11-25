@@ -40,6 +40,8 @@ val check :
   checkpoint_id:string ->
   Json_field.obj ->
   (unit, Engine_run.Failure.cause) result
+(** [check steps ~checkpoint_id execution]: the start signature read on the
+    screen, as above. *)
 
 val decode :
   checkpoint_id:string ->

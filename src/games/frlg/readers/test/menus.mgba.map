@@ -62,3 +62,6 @@ repo src/games/frlg/readers/test/images/mgba/seagallop-one-island/list-row0.png|
 repo src/games/frlg/readers/test/images/mgba/seagallop-one-island/list-row1.png|seagallop-one-island/list-row1__seagallop1.png
 repo src/games/frlg/readers/test/images/mgba/seagallop-one-island/list-row2.png|seagallop-one-island/list-row2__seagallop2.png
 repo src/games/frlg/readers/test/images/mgba/seagallop-one-island/after-b.png|seagallop-one-island/after-b__none.png
+repo src/games/frlg/readers/test/images/mgba/rng-route10-2026-11-25/ekans-shiny-summary.png|rng-route10/ekans-shiny-summary__summary1-shiny.png
+repo src/games/frlg/readers/test/images/mgba/rng-route10-2026-11-25/oddish-summary.png|rng-route10/oddish-summary__summary1.png
+repo src/games/frlg/readers/test/images/mgba/rng-route10-2026-11-25/rattata-summary.png|rng-route10/rattata-summary__summary1.png

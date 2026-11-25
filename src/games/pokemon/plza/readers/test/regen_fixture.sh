@@ -1,10 +1,11 @@
 #!/bin/sh
-# Remakes fixtures/switch.probes.jsonl: every frame in images/switch (console
-# captures from the fork's CommandLineTests, jpg) and the fork's synthetic test
-# frames (draw_synthetic_frames.py), probed by the daemon's probe_images on the
-# native viewport with every PLZA reader's probes (write_probe_spec.exe, its
+# Remakes fixtures/<folder>.probes.jsonl for each image folder: every frame
+# in images/switch/<folder> (console captures from the fork's
+# CommandLineTests, jpg) or, for the folder synthetic, the fork's synthetic
+# test frames (draw_synthetic_frames.py), probed by the daemon's probe_images
+# on the native viewport with every PLZA reader's probes (write_probe_spec.exe, its
 # find templates copied from assets/templates beside the spec). Also
-# fixtures/switch.shifted.probes.jsonl: every frame again with its colors
+# fixtures/<folder>.shifted.probes.jsonl: every frame again with its colors
 # shifted as another capture card might show them, by
 # dev/reader_fixtures/shift_frame.py --one (one shift per frame, picked from
 # its name: brightness times 0.9 or 1.1, one channel plus or minus 12, or 10%
@@ -17,38 +18,57 @@
 # 80) where 720p fails too, and as captured where the daemon's blob_find_test
 # reads them at 1080p (arrival-to-ad's 0001, 0033 and 0040); the scaled frames' arrow bearings moved by up to 6
 # degrees (the fork's tolerance is 10), their expectations with them.
-# Also fixtures/switch.second.probes.jsonl: every frame again, probed by what
+# Also fixtures/<folder>.second.probes.jsonl: every frame again, probed by what
 # a two-frame read subscribes from what the frame shows (write_probe_spec.exe
 # --second): the party bars' tests made from its cards, the caught mark's box
-# above its plate. And fixtures/switch.shifted.second.probes.jsonl likewise
+# above its plate. And fixtures/<folder>.shifted.second.probes.jsonl likewise
 # for every shifted frame, from its own first read.
 # The Python steps need Pillow ($SHIFT_PYTHON, default python3; e.g.
 # "uv run --with pillow python3").
 #
-#   sh games/pokemon/plza/readers/test/regen_fixture.sh
+#   sh games/pokemon/plza/readers/test/regen_fixture.sh [FOLDER...]
 #
-# run from src/, with probe_images at $PROBE_IMAGES (default the repo's
+# remakes the named folders' four files (e.g. party-bar, synthetic), or with
+# no FOLDER every folder's (dropping the files of folders no longer there).
+# Run from src/, with probe_images at $PROBE_IMAGES (default the repo's
 # daemon/build/probe_images).
+
 set -eu
 HERE=$(cd "$(dirname "$0")" && pwd)
 SRC=$(cd "$HERE/../../../../.." && pwd)
 PROBE_IMAGES=${PROBE_IMAGES:-$SRC/../daemon/build/probe_images}
 SHIFT_PYTHON=${SHIFT_PYTHON:-python3}
 SHIFT_FRAME=$SRC/../dev/reader_fixtures/shift_frame.py
+FIXTURES=$HERE/fixtures
+if [ $# -eq 0 ]; then
+    set -- $(ls "$HERE/images/switch") synthetic
+    rm -f "$FIXTURES"/*.probes.jsonl
+fi
+for folder in "$@"; do
+    if [ "$folder" != synthetic ] && [ ! -d "$HERE/images/switch/$folder" ]; then
+        echo "no image folder images/switch/$folder" >&2
+        exit 1
+    fi
+done
 work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT
-mkdir "$work/spec" "$work/frames" "$work/lossless" "$work/shifted"
+mkdir "$work/spec" "$work/frames" "$work/lossless" "$work/shifted" \
+    "$work/second"
 cp "$SRC/games/pokemon/plza/assets/templates/"*.png "$work/spec/"
 (cd "$SRC" && dune exec games/pokemon/plza/readers/test/write_probe_spec.exe) \
     >"$work/spec/probes.json"
 (cd "$SRC" && dune exec games/pokemon/plza/readers/test/write_probe_spec.exe \
     -- --no-minimap) >"$work/spec/shifted.probes.json"
-cp -R "$HERE/images/switch/." "$work/frames/"
-$SHIFT_PYTHON "$HERE/draw_synthetic_frames.py" "$work/frames"
-(cd "$work/frames" && "$PROBE_IMAGES" --spec "$work/spec/probes.json" \
-    --viewport native ./*/*.jpg ./*/*.png) >"$HERE/fixtures/switch.probes.jsonl"
+
+# Prints the folder's frames, ./<folder>/<frame>.<ext>, run in $work/frames.
+folder_frames() {
+    for f in "./$1"/*.jpg "./$1"/*.png; do
+        if [ -e "$f" ]; then echo "$f"; fi
+    done
+}
+
 # second_reads FIXTURE FRAMES OUT: each frame's second read, as FIXTURE's
-# first reads ask for it.
+# first reads ask for it, its frames under FRAMES.
 second_reads() {
     rm -rf "$work/second"
     mkdir "$work/second"
@@ -62,19 +82,36 @@ second_reads() {
             "$frame") >>"$3"
     done
 }
-second_reads "$HERE/fixtures/switch.probes.jsonl" "$work/frames" \
-    "$HERE/fixtures/switch.second.probes.jsonl"
-(cd "$work/frames" && $SHIFT_PYTHON -c '
+
+regen_folder() {
+    folder=$1
+    if [ "$folder" = synthetic ]; then
+        $SHIFT_PYTHON "$HERE/draw_synthetic_frames.py" "$work/frames"
+    else
+        cp -R "$HERE/images/switch/$folder" "$work/frames/$folder"
+    fi
+    frames=$(cd "$work/frames" && folder_frames "$folder")
+    (cd "$work/frames" && "$PROBE_IMAGES" --spec "$work/spec/probes.json" \
+        --viewport native $frames) >"$FIXTURES/$folder.probes.jsonl"
+    second_reads "$FIXTURES/$folder.probes.jsonl" "$work/frames" \
+        "$FIXTURES/$folder.second.probes.jsonl"
+    (cd "$work/frames" && $SHIFT_PYTHON -c '
 import os, sys
 from PIL import Image
 for path in sys.argv[2:]:
     out = os.path.join(sys.argv[1], os.path.splitext(path)[0] + ".png")
     os.makedirs(os.path.dirname(out), exist_ok=True)
     Image.open(path).convert("RGB").save(out)
-' "$work/lossless" ./*/*)
-(cd "$work/lossless" && $SHIFT_PYTHON "$SHIFT_FRAME" --one "$work/shifted" \
-    ./*/*.png)
-(cd "$work/shifted" && "$PROBE_IMAGES" --spec "$work/spec/shifted.probes.json" \
-    --viewport native ./*/*/*.png) >"$HERE/fixtures/switch.shifted.probes.jsonl"
-second_reads "$HERE/fixtures/switch.shifted.probes.jsonl" "$work/shifted" \
-    "$HERE/fixtures/switch.shifted.second.probes.jsonl"
+' "$work/lossless" $frames)
+    (cd "$work/lossless" && $SHIFT_PYTHON "$SHIFT_FRAME" --one "$work/shifted" \
+        "./$folder"/*.png)
+    (cd "$work/shifted" && "$PROBE_IMAGES" \
+        --spec "$work/spec/shifted.probes.json" --viewport native \
+        ./*/"$folder"/*.png) >"$FIXTURES/$folder.shifted.probes.jsonl"
+    second_reads "$FIXTURES/$folder.shifted.probes.jsonl" "$work/shifted" \
+        "$FIXTURES/$folder.shifted.second.probes.jsonl"
+}
+
+for folder in "$@"; do
+    regen_folder "$folder"
+done

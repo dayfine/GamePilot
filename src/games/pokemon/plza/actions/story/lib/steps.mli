@@ -74,12 +74,12 @@ val game_not_running : Engine_run.Failure.cause
 type waited =
   | Matched of { look : Look.t; looks : int; elapsed_ms : float }
       (** The check held on [looks] reads in a row (and for the hold asked). *)
-  | Timed_out
-  | Home_menu
+  | Timed_out  (** The check did not hold before the timeout. *)
+  | Home_menu  (** The Switch HOME menu showed: the game is not running. *)
 
 type rule = {
-  poll_ms : int;
-  timeout_ms : int;
+  poll_ms : int;  (** Time between reads. *)
+  timeout_ms : int;  (** How long the wait may take. *)
   confirm_looks : int;  (** Reads in a row the check must hold on; 1 for one. *)
   confirm_hold_ms : int;  (** How long it must hold; 0 for none. *)
 }
@@ -92,6 +92,8 @@ val rule :
   timeout_ms:int ->
   unit ->
   rule
+(** A rule read every [poll_ms] up to [timeout_ms]; one read and no hold by
+    default. *)
 
 val poll_until :
   game_steps -> rule -> (Look.t -> bool) -> (Look.t -> unit) -> waited

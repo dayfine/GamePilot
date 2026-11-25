@@ -117,8 +117,8 @@ let settle ?menu_open ?arrived ?await_fade_in ?start kind ~label ~battle_ends
       log (label ^ ": a battle starts, " ^ what);
       Ok ()
   | Battle what ->
-      Error (Pokemon_checkpoints.Failure.cause "battle" (label ^ ": " ^ what))
-  | Timed_out why -> Error (Pokemon_checkpoints.Failure.cause "not_settled" why)
+      Error (Pokemon_engine.Failure.cause "battle" (label ^ ": " ^ what))
+  | Timed_out why -> Error (Pokemon_engine.Failure.cause "not_settled" why)
 
 let until_battle ~label ~log =
   match run_settle Talk ~label ~log with
@@ -127,6 +127,6 @@ let until_battle ~label ~log =
       Ok ()
   | Quiet why ->
       Error
-        (Pokemon_checkpoints.Failure.cause "no_battle"
+        (Pokemon_engine.Failure.cause "no_battle"
            (label ^ ": the overworld went quiet with no battle (" ^ why ^ ")"))
-  | Timed_out why -> Error (Pokemon_checkpoints.Failure.cause "not_settled" why)
+  | Timed_out why -> Error (Pokemon_engine.Failure.cause "not_settled" why)

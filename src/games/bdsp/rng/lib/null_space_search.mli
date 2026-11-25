@@ -1,9 +1,9 @@
 (** Checks the states a GF(2) solution leaves open: the particular solution plus
     every XOR-combination of its null space basis.
 
-    Port of [count_verified_candidates] and [MAX_ENUMERATED_BITS] from the
-    fork's [PokemonBDSP/Programs/RngManipulation/PokemonBDSP_StateSolver.cpp]
-    (R21: same candidate order, same early stop), shared by {!State_solver} and
+    Port of the candidate check and its limit on unknown bits in the fork's
+    [PokemonBDSP/Programs/RngManipulation/PokemonBDSP_StateSolver.cpp] (R21:
+    same candidate order, same early stop), shared by {!State_solver} and
     {!Pokemon_blink_solver}. *)
 
 val max_enumerated_bits : int

@@ -13,3 +13,4 @@
     first leg ran into the alley's crates). *)
 
 val run : Steps.game_steps -> unit
+(** The stick up, down and the wait, as above. *)

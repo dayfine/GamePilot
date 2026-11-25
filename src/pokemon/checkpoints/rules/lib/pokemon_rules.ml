@@ -6,13 +6,19 @@ module Pose = struct
 
   type t = declared
 
-  (* A zone is never checked: it holds wherever the player is. *)
+  (* A zone is never checked: it holds wherever the player is. Nor is a class
+     of places: the game knows the map by name only, not its kind; FireRed's
+     first Fly from it is the check (the game refuses to fly indoors). *)
   let matches (pose : t) observed =
-    match pose with Grid grid -> grid_matches grid observed | Zone _ -> true
+    match pose with
+    | Grid grid -> grid_matches grid observed
+    | Zone _ | Anywhere _ -> true
 end
 
 module Action = struct
   type t = Pokemon_action.t
+
+  let to_string = Pokemon_action.to_string
 end
 
 module Postconditions = struct

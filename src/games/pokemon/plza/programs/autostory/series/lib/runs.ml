@@ -1,5 +1,5 @@
 open Engine_run
-module P = Plza_checkpoints
+module P = Plza_engine
 module Story = Plza_autostory
 
 let ( let* ) = Result.bind
@@ -165,14 +165,10 @@ let summary name = function
   | Failed { at; reason; _ } ->
       Printf.sprintf "FAIL %s at %s: %s" name at reason
 
-(* Attempt [attempt] of run [n] of [plan]; [reload]: back to the latest
-   autosave first. *)
-let run_attempt setup plan n ~attempt ~reload =
+(* Attempt [attempt] of run [n] of [plan] in its folder [run]; [reload]: back
+   to the latest autosave first. *)
+let run_in setup plan n ~attempt ~reload (run : Run_record.run) =
   let id = plan.P.Plan.checkpoint.checkpoint_id in
-  let run =
-    Run_record.start ~runs_dir:setup.flags.runs_dir setup.info ~checkpoint:id
-      ~mode:"testing"
-  in
   let name = run_name id n attempt in
   let log, close = Run_record.story_log run.record in
   log ("[Run] " ^ name ^ if reload then " (after a reload)" else "");
@@ -188,6 +184,18 @@ let run_attempt setup plan n ~attempt ~reload =
   Live_run.Daemon_run.finish ~runs_dir:setup.flags.runs_dir run
     ~summary:(summary name outcome) ending;
   outcome
+
+(* {!run_in} in a new run folder; a folder that cannot be made fails the
+   attempt, as a failure that repeats. *)
+let run_attempt setup plan n ~attempt ~reload =
+  let id = plan.P.Plan.checkpoint.checkpoint_id in
+  match
+    Run_record.start ~runs_dir:setup.flags.runs_dir setup.info ~checkpoint:id
+      ~mode:"testing"
+  with
+  | Ok run -> run_in setup plan n ~attempt ~reload run
+  | Error reason ->
+      Failed { at = "run folder"; reason; repeats = true; off_start = false }
 
 (* Run [n] of [plan]: attempts until one passes or the run fails
    (Run_attempts: a reload when off its start, and the plan's retries).
@@ -217,7 +225,7 @@ let runs_of setup plan ~chained =
   match
     fst
       (Checkpoint_trials.until_decided setup.policy ~trial:Attempts.trial
-         (fun n -> run setup plan n ~reload:(reload n)))
+         (fun n -> Ok (run setup plan n ~reload:(reload n))))
   with
   | Checkpoint_trials.Run_again -> false
   | Checkpoint_passed { passes; runs } ->

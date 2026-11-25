@@ -1,6 +1,6 @@
-(** PLZA's AutoStory as a game of the checkpoint engine ({!Plza_checkpoints}):
-    the handlers 01.00b's to 03.11's plans use, over {!Plza_story.Steps}. The
-    fork's action table (PokemonLZA_AutoStoryActionTable.cpp) for these actions:
+(** PLZA's AutoStory as a game of the checkpoint engine ({!Plza_engine}): the
+    handlers 01.00b's to 03.11's plans use, over {!Plza_story.Steps}. The fork's
+    action table (PokemonLZA_AutoStoryActionTable.cpp) for these actions:
 
     - [confirm_new_game] ({!Plza_story.New_game_confirm}), no args;
     - [opening_to_platform] and [wait_for_platform]
@@ -52,9 +52,9 @@ val walk_only : string -> bool
 
 val make :
   Plza_story.Steps.game_steps ->
-  checkpoint:Plza_checkpoints.Plan.checkpoint ->
+  checkpoint:Plza_engine.Plan.checkpoint ->
   reload:(unit -> (unit, Engine_run.Failure.cause) result) ->
-  Plza_checkpoints.Game.t
+  Plza_engine.Game.t
 (** The handlers for one checkpoint's run. With a [story_battle] later in the
     checkpoint, a walk or a scene (but [scene_to_battle]) stops on the battle
     HUD and the run goes on at the battle ({!Battle_jump}). *)
@@ -63,11 +63,11 @@ val run_watched :
   ?end_check:(unit -> (unit, Engine_run.Failure.cause) result) ->
   mode:string ->
   Watch_report.t ->
-  Plza_checkpoints.Game.t ->
-  Plza_checkpoints.Plan.checkpoint ->
-  (unit, Plza_checkpoints.Failure.t) result
+  Plza_engine.Game.t ->
+  Plza_engine.Plan.checkpoint ->
+  (unit, Plza_engine.Failure.t) result
 (** The checkpoint through the runner, shown on the watch page
-    ({!Plza_checkpoints.Plan_watch}): the report's steps move with its events
-    and its run in [mode] ends passed or failed. [end_check] (none by default)
-    runs after the last event passed: its failure is the run's, at "end"
+    ({!Plza_engine.Plan_watch}): the report's steps move with its events and its
+    run in [mode] ends passed or failed. [end_check] (none by default) runs
+    after the last event passed: its failure is the run's, at "end"
     ({!Start_signature.check_end}). *)

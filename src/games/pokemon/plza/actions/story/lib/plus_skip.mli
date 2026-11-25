@@ -5,3 +5,4 @@
     [cutscene_not_skipped]. *)
 
 val run : Steps.game_steps -> Steps.outcome
+(** The cutscene skipped, as above. *)

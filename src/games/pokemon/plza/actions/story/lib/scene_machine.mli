@@ -36,8 +36,8 @@
     screen no detector reads (A, as for the card). *)
 
 type config = {
-  end_on_black_fade : bool;
-  stop_at_choice : bool;
+  end_on_black_fade : bool;  (** a black fade ends the scene *)
+  stop_at_choice : bool;  (** a choice box ends the scene, unanswered *)
   stop_at_battle : bool;
       (** the fork's battle start: ends on the battle HUD, with the lock-on *)
   end_at_battle : bool;
@@ -49,6 +49,7 @@ type config = {
       (** the fork's start window: control before any scene waits for one this
           long, then fails [scene_never_started] *)
 }
+(** How a scene ends and which button it takes. *)
 
 val default : config
 (** A, no stop at a choice or a battle, no end at a battle or on a black fade:

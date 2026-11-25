@@ -3,7 +3,7 @@ module J = Json_field
 type town = {
   name : string;
   cell : Grid_geometry.Tile_pos.t;
-  landing : Pokemon_checkpoints.Pose.observed;
+  landing : Pokemon_engine.Pose.observed;
 }
 
 type t = { columns : int; rows : int; towns : town list }

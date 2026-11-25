@@ -6,16 +6,17 @@
 
     The fork's boxes are in the whole frame; the daemon's probe boxes are
     relative to the game picture its [hello] reports ({!Picture_box}). On the
-    native viewport they are the fork's; on the GBA app's ([nso-gba], the fork's
-    FRLG GAME_BOX) each is clipped to the picture, and the HOME detector's user
-    icon box, whose avatar lies outside it, is left out. New here: which tile
-    the cursor is on (its cyan frame, above the tile, read through its pulse)
-    and which tile shows a game's colour, among the four whole tiles in view,
-    and the dark theme's HOME dimmed (its grey at about a sixth). The row
-    scrolls a whole tile at a time, so the four tiles sit at the same places
-    scrolled or not; a part tile at either edge of a scrolled row is outside the
-    picture and not read. Unscrolled, the leftmost tile is the game played last.
-    Measured on console B's captures in [test/images] (2026-11-24 and 25).
+    native viewport they are the fork's; on the GBA app's ([nso-gba], the FRLG
+    game picture's box in the fork's PokemonFRLG_Settings.cpp) each is clipped
+    to the picture, and the HOME detector's user icon box, whose avatar lies
+    outside it, is left out. New here: which tile the cursor is on (its cyan
+    frame, above the tile, read through its pulse) and which tile shows a game's
+    colour, among the four whole tiles in view, and the dark theme's HOME dimmed
+    (its grey at about a sixth). The row scrolls a whole tile at a time, so the
+    four tiles sit at the same places scrolled or not; a part tile at either
+    edge of a scrolled row is outside the picture and not read. Unscrolled, the
+    leftmost tile is the game played last. Measured on console B's captures in
+    [test/images] (2026-11-24 and 25).
 
     Another capture card may show the colors a little off. Every capture reads
     the same with its brightness times 0.9 or 1.1, any one channel 12 up or

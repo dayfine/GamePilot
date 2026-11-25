@@ -2,10 +2,12 @@
 
 Plays Pokémon Legends: Z-A's story on the Switch from a new game: it confirms the new game's
 choices, skips the opening to the station platform, then walks off the platform and presses through
-the arrival scenes to Main Mission 01, where you have free control in Lumiose City. From there it
-chases Pancham, takes Chikorita and beats Andi (Main Mission 01), then follows Main Missions 02 and
-03: Hotel Z, Taunie's battle, the Pokémon Center, Wild Zone 1's catches (five species in the
-party), the research lab and Mable's first research reward, the Rock Smash TM (checkpoint 03.11).
+the arrival scenes to Main Mission 01, where you have free control in Lumiose City.
+
+From there it chases Pancham, takes Chikorita and beats Andi (Main Mission 01), then follows Main
+Missions 02 and 03: Hotel Z, Taunie's battle, the Pokémon Center, Wild Zone 1's catches (five
+species in the party), the research lab and Mable's first research reward, the Rock Smash TM
+(checkpoint 03.11).
 
 <!-- generated:backends -->
 Runs on: the Switch.
@@ -22,7 +24,7 @@ Choices" screen. Nothing else is read from the save. The Switch's capture must b
 <!-- generated:commands -->
 ```sh
 # the Switch: each checkpoint once, from where the console is
-cd src && opam exec -- dune exec -- gamepilot checkpoints --program plza.autostory --from 01.00b --to 03.11 --mode testing --backend switch --serial PORT --capture DEVICE \
+cd src && opam exec -- dune exec -- gamepilot checkpoints plza.autostory --from 01.00b --to 03.11 --mode testing --backend switch --serial PORT --capture DEVICE \
     --watch
 ```
 <!-- /generated -->

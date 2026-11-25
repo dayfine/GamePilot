@@ -24,6 +24,7 @@ type state = {
     instead of the battle held 1 s; five at most. *)
 
 val new_state : unit -> state
+(** No fade, no quiet or control yet, no try. *)
 
 val due : state -> Look.t -> bool
 (** A try is due on this read. *)

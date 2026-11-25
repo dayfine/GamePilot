@@ -13,7 +13,7 @@ let names =
 
 let w = mgba_world names
 
-let goal map (x, y) facing : Pokemon_checkpoints.Pose.grid =
+let goal map (x, y) facing : Pokemon_engine.Pose.grid =
   { map; tiles = [ { x; y } ]; facing }
 
 let plan ~from:(map, x, y, facing) goal =

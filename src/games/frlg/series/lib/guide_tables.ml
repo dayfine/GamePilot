@@ -23,7 +23,7 @@ let collect f ids =
 
 let load ~plan_dir ids = collect (Plan_dir.load_plan ~plan_dir) ids
 
-let checkpoint_row (plan : Pokemon_checkpoints.Plan.t) =
+let checkpoint_row (plan : Pokemon_engine.Plan.t) =
   let repeats =
     match plan.repeat with
     | Some { max_rounds; _ } ->
@@ -39,6 +39,8 @@ let rows ~plan_dir ids =
 
 let plural n one many = if n = 1 then one else many
 
+(* No line when the chain needs no free slot and no member joins: a need of
+   zero is no need (review rule R2). *)
 let room_line (room : Frlg_checkpoints.Party_room.need) =
   let free = Frlg_checkpoints.Party_room.free_needed room in
   let joins =
@@ -46,18 +48,23 @@ let room_line (room : Frlg_checkpoints.Party_room.need) =
       (fun (species, cp) -> Printf.sprintf "%s in %s" species cp)
       room.joins
   in
-  Printf.sprintf "- %d free party %s%s" free
-    (plural free "slot" "slots")
-    (if joins = [] then "" else " (joining: " ^ String.concat ", " joins ^ ")")
+  if free = 0 && joins = [] then []
+  else
+    [
+      Printf.sprintf "- %d free party %s%s" free
+        (plural free "slot" "slots")
+        (if joins = [] then ""
+         else " (joining: " ^ String.concat ", " joins ^ ")");
+    ]
 
 (* The chain as one plan: its events in order from the first checkpoint's
    start, so an item or member one checkpoint brings counts for the later
    ones, and the money is all its purchases'. *)
-let as_one_plan (loaded : Pokemon_checkpoints.Plan.t list) =
+let as_one_plan (loaded : Pokemon_engine.Plan.t list) =
   let first = List.hd loaded in
   let events =
     List.concat_map
-      (fun (p : Pokemon_checkpoints.Plan.t) -> p.checkpoint.events)
+      (fun (p : Pokemon_engine.Plan.t) -> p.checkpoint.events)
       loaded
   in
   { first with checkpoint = { first.checkpoint with events } }
@@ -65,22 +72,26 @@ let as_one_plan (loaded : Pokemon_checkpoints.Plan.t list) =
 (* A member that joins on the way (a Game Corner prize, a capture) is not the
    save's; the money is said once for all the purchases. *)
 let chain_need (room : Frlg_checkpoints.Party_room.need) =
-  let module Pf = Frlg_checkpoints.Preflight in
+  let module Need = Frlg_checkpoints.Need in
   function
-  | Pf.Member { species; _ } when List.mem_assoc species room.joins -> None
-  | Pf.Money_at_least { amount; _ } ->
-      Some (Pf.Money_at_least { amount; for_ = "all the purchases" })
+  | Need.Member { species; _ } when List.mem_assoc species room.joins -> None
+  | Need.Money_at_least { amount; _ } ->
+      Some (Need.Money_at_least { amount; for_ = "all the purchases" })
   | n -> Some n
 
 (* The chain's declared preconditions are its first checkpoint's: the save's
    state where it starts. *)
-let chain_lines stocks ~before (loaded : Pokemon_checkpoints.Plan.t list) =
+let chain_lines stocks ~before (loaded : Pokemon_engine.Plan.t list) =
   let room = Frlg_checkpoints.Party_room.chain_need loaded in
   let* needs =
     Frlg_checkpoints.Preflight.needs stocks ~before (as_one_plan loaded)
   in
   let line n = "- " ^ Frlg_checkpoints.Preflight.describe n in
-  Ok (room_line room :: List.map line (List.filter_map (chain_need room) needs))
+  let needs =
+    List.filter_map (chain_need room) needs
+    |> List.filter Frlg_checkpoints.Preflight.asks_something
+  in
+  Ok (room_line room @ List.map line needs)
 
 let needs ~plan_dir chain =
   let* loaded = load ~plan_dir chain in
@@ -90,7 +101,9 @@ let needs ~plan_dir chain =
   | lines -> Result.map (String.concat "\n") lines
   | exception Json_field.Invalid e -> Error e
 
+(* The needs any save meets left out (review rule R2). *)
 let needs_text needs =
+  let needs = List.filter Frlg_checkpoints.Preflight.asks_something needs in
   cell (String.concat "; " (List.map Frlg_checkpoints.Preflight.describe needs))
 
 (* One row per checkpoint: what the pre-flight checks before resuming there. *)

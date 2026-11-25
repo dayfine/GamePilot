@@ -42,8 +42,11 @@ val to_top : unit -> unit
 
 val open_pocket_top : Frlg_readers.Bag_screen.pocket -> unit
 (** From the overworld: the bag open on the pocket (turned to by LEFT or RIGHT
-    as its arrows read) with the cursor on the list's top row. Fails as [no_bag]
-    or [no_pocket]. *)
+    as its arrows read) with the cursor on the list's top row. The bag is looked
+    at only 1300 ms after the Start menu takes A on BAG, as the fork's
+    PokemonFRLG_Navigation.cpp waits when it opens the bag from the overworld:
+    the pocket reads while the bag still fades in, and the bag drops input until
+    the fade is over. Fails as [no_bag] or [no_pocket]. *)
 
 val choose_in_item_menu : string -> int -> unit
 (** Once the item's menu shows ({!Frlg_readers.Bag_screen.item_menu}) and 500 ms
@@ -88,9 +91,10 @@ val count : log:(string -> unit) -> string -> int option
     ({!count_on_row}; 1 for a key item, {!found_count}), then the bag closed,
     its fade-in over ({!Menu_input.await_fade_in}) and the talk settle. [Some 0]
     when the list reaches CANCEL first; [None] when a row or the count did not
-    read. New for the end checks: the fork's [check_postconditions()] reads
-    counts with its own bag reader (Menus/PokemonFRLG_ItemListReader). Fails as
-    {!open_pocket_top}, or as [unknown_item] for a slug no item is named. *)
+    read. New for the end checks: the fork's end check
+    (Pokemon_StoryPostconditionCheck.cpp) reads counts with its own bag reader
+    (Menus/PokemonFRLG_ItemListReader). Fails as {!open_pocket_top}, or as
+    [unknown_item] for a slug no item is named. *)
 
 val list_row : string -> int option
 (** In the item's open pocket, from the list's top: its row in the list (from

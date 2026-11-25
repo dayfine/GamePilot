@@ -1,8 +1,8 @@
-(** [gamepilot checkpoints PLAN_DIR|--program ID]: the checkpoint dev loop over
-    FRLG's plans (the Pokémon grid rules), or its pre-flight. Each checkpoint
-    runs from its start state as many times as the mode's policy says, each run
-    with its own daemon and run folder (Checkpoint_series), going on only after
-    it passed. See the implementation's header for the flags. *)
+(** [gamepilot run PROGRAM|DIR/PLANS]: the checkpoint dev loop over FRLG's plans
+    (the Pokémon grid rules), or its pre-flight. Each checkpoint runs from its
+    start state as many times as the mode's policy says, each run with its own
+    daemon and run folder (Checkpoint_series), going on only after it passed.
+    See the implementation's header for the flags. *)
 
 type program = {
   fields : string -> (string * string) list;

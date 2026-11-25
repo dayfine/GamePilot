@@ -7,3 +7,4 @@
     [map_talk_timeout] after 120 s. *)
 
 val run : Steps.game_steps -> Steps.outcome
+(** Through the talk and its map, as above. *)

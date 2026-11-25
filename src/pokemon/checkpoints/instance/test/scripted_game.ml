@@ -2,7 +2,7 @@
    and runner line goes to one log, handlers fail where the script says, and
    the player is read where the script puts them after each event. *)
 
-open Pokemon_checkpoints
+open Pokemon_engine
 
 type script = {
   fails : (string * Failure.cause) list;

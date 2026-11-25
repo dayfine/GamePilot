@@ -17,3 +17,4 @@
 
 val run :
   Walk.game_steps -> timeout_ms:int -> (unit, Engine_run.Failure.cause) result
+(** The run to the gate's prompt, as above. *)

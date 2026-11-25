@@ -11,6 +11,6 @@
   gamepilot.plza_story
   gamepilot.plza_walk
   gamepilot.engine_run
-  gamepilot.plza_checkpoints
+  gamepilot.plza_engine
   gamepilot.plza_autostory
   plza_fake_console))

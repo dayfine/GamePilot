@@ -1,5 +1,5 @@
 (** PLZA's checkpoints on the Switch (Plza_autostory.Story_game through the
-    engine, Plza_checkpoints.Runner): each run its own daemon (the program's
+    engine, Plza_engine.Runner): each run its own daemon (the program's
     viewport, native) and run folder (Live_run.Daemon_run), as FireRed's, but
     without save states or an in-game save: PLZA saves by autosave. A plan's
     start signature (minimap, party count, A prompt, wild zone) is checked
@@ -18,8 +18,7 @@
     (Plza_story.Screen_wake). The watch page shows each run's plan, its events
     moving with the runner (Story_game.run_watched), and the run. *)
 
-val load_plan :
-  plan_dir:string -> string -> (Plza_checkpoints.Plan.t, string) result
+val load_plan : plan_dir:string -> string -> (Plza_engine.Plan.t, string) result
 (** The plan [<plan_dir>/<id>.plan.json], decoded. *)
 
 val checkpoint_order : string -> string -> int
