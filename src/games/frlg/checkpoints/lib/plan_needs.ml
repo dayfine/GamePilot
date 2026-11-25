@@ -26,7 +26,7 @@ type need =
 (* The args naming a member the action uses, and those naming one it brings. *)
 let brings action =
   match action with
-  | "capture" -> [ "species" ]
+  | "capture" | "wild_rng" -> [ "species" ]
   | "ingame_trade" -> [ "receive" ]
   | _ -> []
 
@@ -145,7 +145,7 @@ let game_action stocks ~where action args acc =
         (List.init
            (rounds + A.Item_duplication.min_mail - 1)
            (fun _ -> "retro-mail"))
-    else if action = "capture" then
+    else if action = "capture" || action = "wild_rng" then
       (* One ball at least: the plan's, a Poke Ball when it names none. *)
       use_item action acc
         (Option.value (named "ball") ~default:A.Capture_plan.default_ball)

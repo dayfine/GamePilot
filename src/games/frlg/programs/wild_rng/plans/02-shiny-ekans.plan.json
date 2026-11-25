@@ -1,0 +1,42 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "frlg",
+  "checkpoint": {
+    "id": "02-shiny-ekans",
+    "title": "Route 10's north grass: a hard reset timed for a shiny Ekans, Sweet Scent, the catch, its summary's star, saved",
+    "start": {"map": "Route10", "tiles": [[12, 8]], "facing": "east"},
+    "events": [
+      {
+        "id": "shiny_ekans",
+        "kind": "game_action",
+        "action": "wild_rng",
+        "args": {
+          "species": "ekans",
+          "location": "route_10",
+          "tid": 33002,
+          "sid": 9011,
+          "seeds": "rng_seeds_mgba_route10_save.json",
+          "frame_model": "mgba",
+          "advances": [900, 4000],
+          "ball": "poke-ball",
+          "balls": 8,
+          "attempts": 1
+        },
+        "why": "The soonest shiny Ekans of the table: seed 08F5 (press 33050 ms after the reset), advance 988, Lv 11. SID 9011 was read once from this save's memory. Oddish, last in the party, knows Sweet Scent."
+      },
+      {
+        "id": "save_catch",
+        "kind": "game_action",
+        "action": "save_game",
+        "args": {},
+        "why": "Keeps the shiny."
+      }
+    ]
+  },
+  "execution": {"menu": "full"},
+  "metadata": {
+    "phase": "testing",
+    "notes": "mGBA only: the seed table holds the seeds of 01-route10-grass's end save after backend.reset; another save shifts them. A miss fails the checkpoint (wild_rng_not_shiny), the catch unsaved.",
+    "postconditions": {"party_includes": ["ekans"]}
+  }
+}

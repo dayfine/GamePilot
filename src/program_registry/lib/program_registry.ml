@@ -188,6 +188,21 @@ let dex_collection =
     rules = Pokemon_grid;
   }
 
+let wild_rng =
+  {
+    id = "frlg.wild_rng";
+    game = frlg;
+    name = "Wild RNG";
+    group = [ "FRLG"; "RNG" ];
+    description =
+      "Catches a chosen shiny wild Pokemon by timing the game's random numbers.";
+    doc = "docs/guide/frlg.wild_rng.md";
+    checkpoints = Some "src/games/frlg/programs/wild_rng/plans";
+    backends = [ Mgba ];
+    viewport = Nso_gba;
+    rules = Pokemon_grid;
+  }
+
 let all =
   [
     start_menu_poc;
@@ -196,6 +211,7 @@ let all =
     team_training;
     sevii_story;
     dex_collection;
+    wild_rng;
   ]
 
 let short_id p =
