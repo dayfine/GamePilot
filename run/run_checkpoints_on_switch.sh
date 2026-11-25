@@ -9,11 +9,15 @@
 #
 #   sh run/run_checkpoints_on_switch.sh --program frlg.mail_glitch | PLAN_DIR \
 #       --from 01-celadon-setup --to 03-trade-mr-mime [--runs N] [--no-save-after-pass] [--no-preflight | --preflight-only] \
-#       [--no-watch] [--dry-run] [other `gamepilot checkpoints` flags, e.g. --party ...,
-#       --make-room PalletTown]
+#       [--no-watch] [--dry-run] [--viewport nso-gba|native] [other `gamepilot checkpoints` flags,
+#       e.g. --party ..., --make-room PalletTown]
 #
 # --program takes a program registry id (`gamepilot programs` lists them); a plan folder in its
 # place still works.
+#
+# --viewport is where the game picture sits in the capture, for the bring-up's frame check and
+# every run's daemon (daemon/src/viewport.h): nso-gba, the default, is FRLG in the GBA app;
+# native is a full-screen Switch game (Legends Z-A).
 #
 # Policy (docs/switch-bring-up.md): each checkpoint runs once (--runs 1) from the game's last
 # save, which a soft reset returns to; a run that passes, its end checks included, is saved in
@@ -69,7 +73,7 @@ if [ "$1" = --program ]; then
 fi
 plan_dir=$1
 shift
-make_room="" dry_run="" watch=--watch preflight=--preflight save=--save-after-pass runs=1 from="" locked=""
+make_room="" dry_run="" viewport="" watch=--watch preflight=--preflight save=--save-after-pass runs=1 from="" locked=""
 n=$#
 while [ $n -gt 0 ]; do
     a=$1
@@ -88,6 +92,7 @@ while [ $n -gt 0 ]; do
     --preflight | --preflight-only) preflight=$a; continue ;;
     --save-after-pass | --no-save-after-pass) save=$a; continue ;;
     --runs) runs=$1; shift; n=$((n - 1)); continue ;;
+    --viewport) viewport=$1; shift; n=$((n - 1)); continue ;;
     --from) from=$1 ;;
     --make-room) make_room=$1 ;;
     --watch | --watch-port | --listen) watch="" ;;
@@ -134,7 +139,7 @@ if [ -z "$locked" ]; then
         # shellcheck disable=SC2086
         exec $lock_cmd -c "$console" run gamepilot-switch -- \
             sh "$0" ${program_flag:+"$program_flag"} "$plan_dir" --locked ${dry_run:+--dry-run} --runs "$runs" "$save" \
-            ${preflight:---no-preflight} ${watch:---no-watch} "$@"
+            ${viewport:+--viewport "$viewport"} ${preflight:---no-preflight} ${watch:---no-watch} "$@"
     fi
     echo "[Dry run] no GAMEPILOT_LABLOCK: running without a lab lock"
 fi
@@ -227,10 +232,11 @@ cd "$root"
 # the hub like the others.
 mkdir -p "$GAMEPILOT_RUNS"
 # shellcheck disable=SC2086
-step "$bin" bring-up --daemon "$daemon" $board_args $frames_args
+step "$bin" bring-up --daemon "$daemon" $board_args $frames_args ${viewport:+--viewport "$viewport"}
 
 # shellcheck disable=SC2086
-set -- ${program_flag:+"$program_flag"} "$plan_dir" "$@" --backend switch $board_args $frames_args
+set -- ${program_flag:+"$program_flag"} "$plan_dir" "$@" --backend switch $board_args $frames_args \
+    ${viewport:+--viewport "$viewport"}
 if [ -n "$make_room" ] && [ "$preflight" = --preflight ]; then
     # The pre-flight would stop on the room 00-make-room is there to make; 00-make-room's end check reads it.
     echo "[Preflight] skipped: --make-room $make_room runs 00-make-room first when the party needs room"
