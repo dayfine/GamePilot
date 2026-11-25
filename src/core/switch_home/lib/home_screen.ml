@@ -46,7 +46,11 @@ let picture_id = "home.picture"
 let tiles = 4
 
 (* Tile k's left edge and the tiles' pitch, in the frame; the cursor's frame
-   runs along the tile's top, its art fills the middle. *)
+   runs along the tile's top, its art fills the middle. The row scrolls a whole
+   tile at a time, so these four slots stay put whatever the scroll (console B,
+   2026-11-25: the same edges unscrolled and scrolled). A part tile at either
+   edge of a scrolled row lies outside the picture and is not read; the cursor
+   never rests on one (the row scrolls to keep its tile whole). *)
 let tile_left = 0.098
 let tile_pitch = 0.2125
 let tile_inner_w = 0.17
@@ -57,10 +61,15 @@ let art_h = 0.30
 let cursor_id k = Printf.sprintf "home.cursor%d" k
 let art_id k = Printf.sprintf "home.tile%d" k
 
-(* The cursor frame's cyan. *)
-let cursor_min_green = 150
-let cursor_min_blue = 200
-let cursor_max_red = 120
+(* The cursor frame's cyan. It pulses: dim, its pixels read about
+   (20, 165, 220); at its brightest about (120 to 130, 255, 255), so a red
+   limit of 120 lost it (console B, 2026-11-25: [cursor on tile none] on
+   HOME). The limits sit clear of both ends of the pulse: with every limit
+   12 tighter or looser, console B's captures read the same
+   (0.34 at least above the cursor's tile, 0.00 above the others). *)
+let cursor_min_green = 130
+let cursor_min_blue = 180
+let cursor_max_red = 160
 let channel_max = 255
 let cursor_min = (0, cursor_min_green, cursor_min_blue)
 let cursor_max = (cursor_max_red, channel_max, channel_max)
@@ -203,8 +212,8 @@ let is_user_select g =
   && distance bottom.mean row.mean <= max_same_color
   && sum (g "user.user_slot").stddev >= min_detail_stddev
 
-(* The cursor's cyan covers 0.36 to 0.40 of the strip above its tile, none
-   above the others; the FireRed tile's orange 0.41, the others' 0.05 at
+(* The cursor's cyan covers 0.40 to 0.47 of the strip above its tile, none
+   above the others; the FireRed tile's orange 0.41, the others' 0.09 at
    most. *)
 let min_cursor_fraction = 0.15
 let min_art_fraction = 0.2

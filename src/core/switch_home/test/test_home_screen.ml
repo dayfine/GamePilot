@@ -1,4 +1,4 @@
-(* The HOME reader on console B's captures (images/, 2026-11-24). *)
+(* The HOME reader on console B's captures (images/, 2026-11-24 and 25). *)
 
 open Switch_home
 
@@ -21,6 +21,21 @@ let () =
         "HOME (cursor on tile 0, the game's tile 1)";
       case "HOME, the cursor moved onto FireRed" "home-cursor-on-firered"
         "HOME (cursor on tile 1, the game's tile 1)";
+      case "HOME scrolled, a part tile at the left, the cursor on FireRed"
+        "home-scrolled-part-tile-left-cursor-on-firered"
+        "HOME (cursor on tile 0, the game's tile 0)";
+      case "HOME scrolled, the cursor on Legends Z-A, FireRed out of view"
+        "home-scrolled-cursor-on-legends-za-firered-out-of-view"
+        "HOME (cursor on tile 1, the game's tile none)";
+      case "the cursor at its pulse's brightest (red lost it before)"
+        "home-scrolled-cursor-pulse-brightest"
+        "HOME (cursor on tile 1, the game's tile none)";
+      case "the cursor on the fourth tile in view"
+        "home-scrolled-cursor-on-fourth-tile"
+        "HOME (cursor on tile 3, the game's tile none)";
+      case "the cursor on the eShop button, off the row"
+        "home-cursor-on-eshop-button"
+        "HOME (cursor on tile none, the game's tile none)";
       case "HOME dimmed after a while untouched" "home-dimmed"
         "HOME, dimmed (tiles not read)";
       case "the user select over a dimmed HOME" "user-select" "the user select";

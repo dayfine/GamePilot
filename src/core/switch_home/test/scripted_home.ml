@@ -10,6 +10,16 @@ type screen =
   | Home_bdsp_last  (** HOME, BDSP played last, the cursor on it *)
   | Home_on_fire_red  (** HOME, BDSP played last, the cursor on FireRed *)
   | Home_dimmed  (** HOME, dimmed after a while untouched *)
+  | Home_scrolled_fire_red_out
+      (** HOME scrolled, the cursor on Legends Z-A (tile 1), FireRed out of view
+      *)
+  | Home_row_start
+      (** HOME, the cursor on tile 0, FireRed out of view: synthesized from the
+          scrolled capture by swapping cursors 0 and 1 *)
+  | Home_scrolled_on_fire_red
+      (** HOME scrolled, a part tile at the left, the cursor on FireRed (tile 0)
+      *)
+  | Home_on_buttons  (** HOME, the cursor on the eShop button below the row *)
   | User_select
   | Black  (** a launch's loading screen: every probe black *)
   | Intro  (** the Game Freak logo *)
@@ -20,6 +30,10 @@ let screen_name = function
   | Home_bdsp_last -> "HOME (BDSP last)"
   | Home_on_fire_red -> "HOME (cursor on FireRed)"
   | Home_dimmed -> "HOME (dimmed)"
+  | Home_scrolled_fire_red_out -> "HOME (scrolled, FireRed out of view)"
+  | Home_row_start -> "HOME (row start, FireRed out of view)"
+  | Home_scrolled_on_fire_red -> "HOME (scrolled, cursor on FireRed)"
+  | Home_on_buttons -> "HOME (cursor on the buttons)"
   | User_select -> "user select"
   | Black -> "black"
   | Intro -> "intro"
@@ -49,6 +63,8 @@ let black_probes =
       | other -> (id, other))
     (capture "firered-load-menu")
 
+let scrolled_za = "home-scrolled-cursor-on-legends-za-firered-out-of-view"
+
 let probes = function
   | Game -> capture "firered-load-menu"
   | Home_fire_red_last ->
@@ -56,6 +72,11 @@ let probes = function
   | Home_bdsp_last -> capture "home-cursor-on-last-played"
   | Home_on_fire_red -> capture "home-cursor-on-firered"
   | Home_dimmed -> capture "home-dimmed"
+  | Home_scrolled_fire_red_out -> capture scrolled_za
+  | Home_row_start -> swap "home.cursor0" "home.cursor1" (capture scrolled_za)
+  | Home_scrolled_on_fire_red ->
+      capture "home-scrolled-part-tile-left-cursor-on-firered"
+  | Home_on_buttons -> capture "home-cursor-on-eshop-button"
   | User_select -> capture "user-select"
   | Black -> black_probes
   | Intro -> capture "launch-game-freak-intro"
