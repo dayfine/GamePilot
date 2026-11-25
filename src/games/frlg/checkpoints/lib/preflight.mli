@@ -3,14 +3,15 @@
     needs come from the plan's args: each party member an action names (Fly's
     user, a grind's member and sweeper, a swap's member, ...) unless an earlier
     event of the plan brings it (a capture, a trade), and Cut's user knowing
-    Cut; the money its purchases cost (a Mart's prices from the stock table,
-    ¥1000 for each 50 Game Corner coins); each bag item an action gives or uses
-    that no earlier purchase or pickup ([pick_up_item]) brought. When the
-    checkpoint before it promises a state (its postconditions: the members it
-    names and the slots it pins, the money as a range (not what it spent), item
-    counts and floors (not what it gained or used)), that is needed too, as
-    promised. The plan's declared preconditions ({!Plan_preconditions}: the
-    badges, the Hall of Fame), read off the Trainer Card. And the place: the
+    Cut; no Mail on a member a [pc_deposit] stores (each member's held-item mark
+    on the party menu); the money its purchases cost (a Mart's prices from the
+    stock table, ¥1000 for each 50 Game Corner coins); each bag item an action
+    gives or uses that no earlier purchase or pickup ([pick_up_item]) brought.
+    When the checkpoint before it promises a state (its postconditions: the
+    members it names and the slots it pins, the money as a range (not what it
+    spent), item counts and floors (not what it gained or used)), that is needed
+    too, as promised. The plan's declared preconditions ({!Plan_preconditions}:
+    the badges, the Hall of Fame), read off the Trainer Card. And the place: the
     frame kept at the checkpoint's start ({!Start_check}).
 
     GamePilot's own: the fork checks the save's place on the save card and its
@@ -24,6 +25,10 @@ type need = Plan_needs.need =
     }
   | Member of { species : string; for_ : string }
       (** A member an event uses ([for_]: ["fly"]). *)
+  | No_mail of { species : string; for_ : string }
+      (** The first member of this species holds no Mail: a [pc_deposit] stores
+          it, and the game will not store a Mail holder ("Please remove the
+          MAIL."). *)
   | Knows_move of { move : string; for_ : string }
       (** Some member knows this field move: a [cut_tree] event's Cut, which the
           game lets any member that knows it use. *)
