@@ -10,7 +10,11 @@
     {!Frlg_text.Easy_chat_words}), then to its column, and A only once the
     cursor ({!Frlg_readers.Easy_chat_screen}) is on it. Each field is read back
     after its word ({!Frlg_text.Mail_fields.read_field}), and the whole message
-    again before START. *)
+    again before START.
+
+    English only: the group names and words are read against the English game's
+    ({!Frlg_text.Easy_chat_words}), in its font; another language's editor does
+    not read. *)
 
 type word = { group : string; word : string }
 (** A word and the group it is taken from, as the grid names it (["MOVE 2"],
@@ -28,7 +32,23 @@ val field_col : int -> int
 
 val moves_to_next_field : int -> Wire.button list
 (** From field [i] to field [i + 1]: RIGHT from a row's first field, DOWN and
-    LEFT from its second (pokefirered [HandleJoypad_SelectField]). *)
+    LEFT from its second (pokefirered easy_chat_2.c). *)
+
+type game_steps = {
+  read_cursor : unit -> Frlg_readers.Easy_chat_screen.cell;
+  read_cell : row:int -> col:int -> string option;
+  press : Wire.button -> unit;
+}
+(** What the scan reads and presses: the cursor's cell (failing as
+    [easy_chat_no_cursor] when none reads), what a shown cell reads (one of the
+    candidates, or [None]), a press and its wait. *)
+
+val scan : game_steps -> what:string -> target:string -> int -> unit
+(** In the group grid or a word list: DOWN a row at a time, at most this many
+    rows, until a cell of the cursor's row reads [target], then LEFT or RIGHT
+    onto it, where the cursor must read. Fails as [easy_chat_not_found] (no row
+    showed it) or [easy_chat_no_cursor]. [what] (["group"], ["word"]) names it
+    in the failure. *)
 
 val check_unchanged : count:int -> unit
 (** The first [count] fields read ["???"]: the ? Mail on an empty Box 3 slot 1

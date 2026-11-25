@@ -20,7 +20,7 @@ species 0x0351 in Box 3 slot 1. It runs on mGBA; the Switch comes after the exec
   0xFF while all six party mail records are taken. After 08 the records are the leaked record 0
   and the five filler mails, and MIMIEN's index is still 0 (that is how 08's duplication reads
   ABRA). With MIMIEN in the PC, the bought Magikarp (index 0xFF) takes slot 6. The ? Mail is
-  `gSaveBlock1`'s `mail[0xFF]`, which lies on Box 3 slot 1, so its first four words become that
+  the save's mail record 0xFF, which lies on Box 3 slot 1, so its first four words become that
   slot's personality (0x162E2753) and OT ID (0x2A812402), and the slot decrypts as species 0x0351.
 - **Consequence for the duplication programs:** MIMIEN's stale index is gone once it is deposited.
   Item duplication still works through the ? Mail (pomeg's Mail Glitch notes: give mail to a
@@ -47,22 +47,11 @@ species 0x0351 in Box 3 slot 1. It runs on mGBA; the Switch comes after the exec
 
 ## Reader headroom
 
-From `test_ace_readers` (14 mGBA frames, and each at brightness x0.9/x1.1, a channel +-12 and
-grey 10 levels: every one reads the same):
-
-| Reader | Threshold | Worst on | Worst off |
-|---|---|---|---|
-| Group rectangle, red share of the edge box | 0.15 | 0.25 | 0 |
-| Word arrow, dark share (`Cursor_column`) | 0.10 | 0.136 | 0 |
-| PKMN DATA, sum of channel stddevs | 10 | 157 | 0 |
-| Hand shadow on slot 1, share | 0.25 | 0.31 (grey) | 0 |
-| Desert wallpaper, r-g / g-b | 15 / 20 | 29 / 38 | -60 / - |
-| Forest wallpaper, g-r / g-b | 20 / 20 | 36 / 92 | -53 / - |
-| Male mark, blue share | 0.15 | 0.41 | - |
-
-The word arrow and the hand shadow are the thin ones; both are confirmed by a second read (the
-row's words, the panel). Words and fields are read with the text templates, every word read back
-on mGBA in each run; text reads have no frame test here yet.
+The colour readers' thresholds and their headroom on 14 mGBA frames, each under nine colour shifts,
+are in `src/games/frlg/readers/test/test_ace_readers.ml`. The word arrow and the hand shadow are
+the thin ones; both are confirmed by a second read (the row's words, the panel). Words and fields
+are read with the text templates, every word read back on mGBA in each run. The Easy Chat scan
+and the box slot's verdict are tested on fakes in `src/games/frlg/actions/test/test_ace_actions.ml`.
 
 ## Running
 

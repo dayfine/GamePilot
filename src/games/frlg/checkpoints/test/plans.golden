@@ -1,3 +1,31 @@
+== ace_setup/plans/ace-01.plan.json
+frlg ace-01 from CeladonCity_DepartmentStore_1F (6, 2) south: 3 route, 2 game_action, 1 talk, 2 answer, 1 scene
+out_of_dept_store: [run] route to CeladonCity (11, 15) south
+fly_route4: [fly] game_action {"town":"Route4","species":"pidgey"} => Route4 (12, 6) south
+to_pc: [run] route to Route4_PokemonCenter_1F (11, 2) north
+deposit_mimien: [pc_deposit] game_action {"species":["mr-mime"]}
+to_salesman: [run] route to Route4_PokemonCenter_1F (2, 3) west
+talk_salesman: talk
+buy_magikarp: answer yes once_per_save
+no_nickname: answer no
+clear_salesman_text: scene => Route4_PokemonCenter_1F (2, 3) west
+retries 3
+postconditions:
+party includes magikarp, pidgey
+magikarp in slot 6
+money spent 500
+no repeat
+== ace_setup/plans/ace-02.plan.json
+frlg ace-02 from Route4_PokemonCenter_1F (2, 3) west: 1 route, 3 game_action
+to_pc: [run] route to Route4_PokemonCenter_1F (11, 2) north
+box3_slot1_empty: [check_box_slot] game_action {"box":3,"slot":1,"occupied":false}
+write_ace_mail: [write_glitched_mail] game_action {"target_slot":6,"words":[{"group":"MOVE 2","word":"BULK UP"},{"group":"ACTIONS","word":"CAPABLE"},{"group":"MOVE 1","word":"KARATE CHOP"},{"group":"POKéMON","word":"MAGIKARP"}]}
+box3_slot1_ace: [check_box_slot] game_action {"box":3,"slot":1,"occupied":true,"level":100,"male":true}
+retries 3
+postconditions:
+magikarp in slot 6
+item retro-mail used 1
+no repeat
 == mail_glitch/plans/01-celadon-setup.plan.json
 frlg 01-celadon-setup from CeladonCity (48, 12) south: 6 game_action, 7 route, 1 talk, 1 scene
 fly_celadon: [fly] game_action {"town":"CeladonCity","species":"pidgey"} => CeladonCity (48, 12) south

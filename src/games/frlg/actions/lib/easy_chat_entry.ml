@@ -49,32 +49,43 @@ let cursor what reader =
       | Holds m -> ( match reader m with Some c -> c | None -> no_cursor what)
       | Timeout -> no_cursor what)
 
-let column_of ~line ~width ~row ~candidates target =
-  List.find_opt
-    (fun col -> read_cell (line ~row ~col ~width) candidates = Some target)
-    [ 0; 1 ]
+type game_steps = {
+  read_cursor : unit -> Easy_chat_screen.cell;
+  read_cell : row:int -> col:int -> string option;
+  press : Wire.button -> unit;
+}
+
+let column_of steps ~row target =
+  List.find_opt (fun col -> steps.read_cell ~row ~col = Some target) [ 0; 1 ]
 
 (* Over to [col] on the cursor's row: the cursor must read on it. *)
-let across ~what ~reader ~target (c : Easy_chat_screen.cell) col =
+let across steps ~what ~target (c : Easy_chat_screen.cell) col =
   if col <> c.col then (
-    press move_ms (if col > c.col then Wire.Right else Wire.Left);
-    let (on : Easy_chat_screen.cell) = cursor what reader in
+    steps.press (if col > c.col then Wire.Right else Wire.Left);
+    let (on : Easy_chat_screen.cell) = steps.read_cursor () in
     if on.col <> col then
       M.fail "easy_chat_no_cursor"
         (Printf.sprintf "the cursor did not reach %s %s" what target))
 
 (* DOWN a row at a time until the cursor's row shows the target, then over to
    its column. *)
-let rec scan ~what ~reader ~line ~width ~candidates ~target rows =
+let rec scan steps ~what ~target rows =
   if rows = 0 then
     M.fail "easy_chat_not_found" (Printf.sprintf "no %s %s" what target)
   else
-    let (c : Easy_chat_screen.cell) = cursor what reader in
-    match column_of ~line ~width ~row:c.row ~candidates target with
-    | Some col -> across ~what ~reader ~target c col
+    let (c : Easy_chat_screen.cell) = steps.read_cursor () in
+    match column_of steps ~row:c.row target with
+    | Some col -> across steps ~what ~target c col
     | None ->
-        press move_ms Wire.Down;
-        scan ~what ~reader ~line ~width ~candidates ~target (rows - 1)
+        steps.press Wire.Down;
+        scan steps ~what ~target (rows - 1)
+
+let screen_game_steps ~what ~reader ~line ~width ~candidates =
+  {
+    read_cursor = (fun () -> cursor what reader);
+    read_cell = (fun ~row ~col -> read_cell (line ~row ~col ~width) candidates);
+    press = press move_ms;
+  }
 
 let group_of words (w : word) =
   match Words.group words w.group with
@@ -87,15 +98,18 @@ let group_of words (w : word) =
 let choose ~log words (w : word) =
   let g = group_of words w in
   press open_ms Wire.A;
-  scan ~what:"group" ~reader:Easy_chat_screen.group_cell
-    ~line:Text.Text_lines.easy_chat_group_cell ~width:group_width
-    ~candidates:(Words.names words) ~target:w.group max_rows;
+  scan
+    (screen_game_steps ~what:"group" ~reader:Easy_chat_screen.group_cell
+       ~line:Text.Text_lines.easy_chat_group_cell ~width:group_width
+       ~candidates:(Words.names words))
+    ~what:"group" ~target:w.group max_rows;
   log ("Easy Chat: group " ^ w.group ^ ".");
   press open_ms Wire.A;
-  scan ~what:"word" ~reader:Easy_chat_screen.word_cell
-    ~line:Text.Text_lines.easy_chat_word_cell ~width:word_width
-    ~candidates:(Words.look_alikes g w.word)
-    ~target:w.word max_rows;
+  scan
+    (screen_game_steps ~what:"word" ~reader:Easy_chat_screen.word_cell
+       ~line:Text.Text_lines.easy_chat_word_cell ~width:word_width
+       ~candidates:(Words.look_alikes g w.word))
+    ~what:"word" ~target:w.word max_rows;
   press open_ms Wire.A;
   log ("Easy Chat: " ^ w.word ^ ".")
 

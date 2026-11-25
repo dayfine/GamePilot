@@ -133,35 +133,49 @@ let level_reads level =
   | Read _ -> true
   | No_match _ -> false
 
-let read_or name = function
-  | Some v -> v
-  | None -> pc_fail (name ^ " did not read")
+type box_view = {
+  panel_occupied : bool option;
+  desert : bool option;
+  hand_on_first_slot : bool option;
+  male : bool option;
+  level_shown : int -> bool;
+}
 
-let verdict c m =
-  let occupied = read_or "PKMN DATA" (Pc_box_screen.panel_occupied m) in
-  let desert = read_or "the wallpaper" (Pc_box_screen.desert_wallpaper m) in
-  if not desert then
-    Some (Printf.sprintf "BOX %d's Desert wallpaper is not shown" c.box)
-  else if occupied <> c.occupied then
-    Some
+type verdict = As_asked | Wrong of string | Unread of string
+
+let box_view m =
+  {
+    panel_occupied = Pc_box_screen.panel_occupied m;
+    desert = Pc_box_screen.desert_wallpaper m;
+    hand_on_first_slot = Pc_box_screen.hand_on_first_slot m;
+    male = Pc_box_screen.male m;
+    level_shown = level_reads;
+  }
+
+let asked (c : slot_check) ~occupied (v : box_view) =
+  if occupied <> c.occupied then
+    Wrong
       (Printf.sprintf "slot %d is %s" c.slot
          (if occupied then "occupied" else "empty"))
-  else if
-    (not occupied)
-    && Pc_box_screen.hand_on_first_slot m <> Some true
-    && c.slot = 1
-  then Some "the hand is not on the first slot"
+  else if (not occupied) && v.hand_on_first_slot <> Some true && c.slot = 1 then
+    Wrong "the hand is not on the first slot"
   else if
     occupied
-    && Option.fold ~none:false
-         ~some:(fun male -> Pc_box_screen.male m <> Some male)
-         c.male
-  then Some "the gender mark is not as asked"
+    && Option.fold ~none:false ~some:(fun male -> v.male <> Some male) c.male
+  then Wrong "the gender mark is not as asked"
   else if
     occupied
-    && Option.fold ~none:false ~some:(fun l -> not (level_reads l)) c.level
-  then Some "the level is not as asked"
-  else None
+    && Option.fold ~none:false ~some:(fun l -> not (v.level_shown l)) c.level
+  then Wrong "the level is not as asked"
+  else As_asked
+
+let slot_verdict (c : slot_check) (v : box_view) =
+  match (v.panel_occupied, v.desert) with
+  | None, _ -> Unread "PKMN DATA did not read"
+  | _, None -> Unread "the wallpaper did not read"
+  | _, Some false ->
+      Wrong (Printf.sprintf "BOX %d's Desert wallpaper is not shown" c.box)
+  | Some occupied, Some true -> asked c ~occupied v
 
 let rec leave ~log looks =
   if looks = 0 then pc_fail "the overworld did not come back"
@@ -182,11 +196,11 @@ let back_out ~log looks =
   leave ~log looks
 
 let report ~log c = function
-  | None ->
+  | As_asked ->
       log
         (Printf.sprintf "PC: BOX %d slot %d is %s, as expected." c.box c.slot
            (if c.occupied then "occupied" else "empty"))
-  | Some why -> M.fail "box_slot_wrong" why
+  | Wrong why | Unread why -> M.fail "box_slot_wrong" why
 
 let look_at_slot ~log c =
   to_box_screen ~log ~booted:false max_looks;
@@ -194,8 +208,11 @@ let look_at_slot ~log c =
   ignore (Effects.submit [ Wire.Wait { wait_ms = hand_ms } ]);
   Effects.save_run_frame (Printf.sprintf "box%d-slot%d.png" c.box c.slot);
   let v =
-    match Effects.read () with Some m -> verdict c m | None -> Some "no frame"
+    match Effects.read () with
+    | Some m -> slot_verdict c (box_view m)
+    | None -> Wrong "no frame"
   in
+  (match v with Unread why -> pc_fail why | As_asked | Wrong _ -> ());
   back_out ~log max_looks;
   v
 
