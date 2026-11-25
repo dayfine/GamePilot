@@ -3,7 +3,7 @@
     repeating checkpoint round by round. Ported from the fork's run over a
     checkpoint range and its verification loop
     (Pokemon/AutoStory/Engine/Pokemon_StoryEngine.cpp and
-    Pokemon_StoryVerifyRuns.cpp, frlg/lean; see Checkpoints_command). *)
+    Pokemon_StoryVerifyRuns.cpp, frlg/lean; see Run_command). *)
 
 val run :
   plan_dir:string ->
