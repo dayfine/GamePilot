@@ -29,7 +29,11 @@ type result = {
 }
 (** [AdvPokemonResult]. *)
 
+(** A generated Pokémon's gender. A species with a gender ratio is Female when
+    the PID's low byte is at most its threshold, else Male; a genderless species
+    has none ([None] from {!gender_of_value}). *)
 type gender = Male | Female
+
 type shiny_type = Normal | Star | Square  (** [AdvShinyType] without [Any]. *)
 
 val pid_of_states : low:int -> high:int -> int
