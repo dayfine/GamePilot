@@ -5,12 +5,12 @@ a chosen Pokemon until a target level, learns the moves the plan names and handl
 
 ## What exists
 
-- **Duplication.** mg-06's `duplicate_item` (`src/games/frlg/programs/mail_glitch/plans/mg-06.plan.json`)
+- **Duplication.** 08-activate-and-verify's `duplicate_item` (`src/games/frlg/programs/mail_glitch/plans/08-activate-and-verify.plan.json`)
   runs one round of the C++ `ItemDuplication` loop: the held item +1 in the bag, one Retro Mail used.
   The fork's FRLG story design (`docs/design/AutoStory-FRLG-FutureEvents.md`, fork PR #130, section
   "Item duplication") already names Rare Candies and Nuggets as the reason to have it. Retro Mail is
-  sold at the Celadon Dept. Store 4F; mg-06 buys it there.
-- **Move learning.** mg-04's `grind` action reads the grinder's moves on the summary, learns one named
+  sold at the Celadon Dept. Store 4F; 08-activate-and-verify buys it there.
+- **Move learning.** The grind checkpoints' `grind` action reads the grinder's moves on the summary, learns one named
   move into a named slot and declines every other move offered.
 - **No prior plan** for the leveling program itself.
 
@@ -28,8 +28,8 @@ a chosen Pokemon until a target level, learns the moves the plan names and handl
 
 ## Prerequisites
 
-- The Mail Glitch active on the save (mg-05 done).
-- A level reader (missing; see `docs/roadmap.md` mg-04) and a species reader after evolution.
+- The Mail Glitch active on the save (08-activate-and-verify done).
+- A level reader (missing; see `docs/roadmap.md`, Grinding options) and a species reader after evolution.
 - Replay frames of the level-up box, move-learn prompt and evolution scene, recorded on mGBA.
 
 ## Open questions

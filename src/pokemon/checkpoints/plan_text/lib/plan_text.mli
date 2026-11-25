@@ -21,9 +21,9 @@ val kind_name : Checkpoints_plan.Plan.kind -> string
 (** The kind's name in the plan format: ["route"], ["game_action"], ... *)
 
 val outline : Checkpoints_plan.Plan.t -> string
-(** ["frlg mg-01 from CeladonCity (48, 12) south: 6 game_action, 7 route"]: the
-    plan's game, id, start, and how many events of each kind, in first-seen
-    order. *)
+(** ["frlg 01-celadon-setup from CeladonCity (48, 12) south: 6 game_action, 7
+     route"]: the plan's game, id, start, and how many events of each kind, in
+    first-seen order. *)
 
 val count_text : Checkpoints_plan.Plan.count -> string
 (** ["x2"], ["gained 2"], ["used 1"], ["at least 100"]. *)

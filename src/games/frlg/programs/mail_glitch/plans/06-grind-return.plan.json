@@ -2,8 +2,8 @@
   "format": "gamepilot-checkpoint/1",
   "game": "frlg",
   "checkpoint": {
-    "id": "mg-04c",
-    "title": "Grinding, part 3: from the Indigo Plateau nurse, Fly back to Lavender Town for mg-05",
+    "id": "06-grind-return",
+    "title": "Grinding, part 3: from the Indigo Plateau nurse, Fly back to Lavender Town for 07-glitch-prep",
     "start": {"map": "IndigoPlateau_PokemonCenter_1F", "tiles": [[13, 12]], "facing": "north"},
     "events": [
       {
@@ -24,23 +24,23 @@
           "species": "pidgey"
         },
         "declared_after": {"map": "LavenderTown", "tiles": [[6, 6]]},
-        "why": "back to Lavender Town for mg-05"
+        "why": "back to Lavender Town for 07-glitch-prep"
       },
       {
-        "id": "to_mg05_start",
+        "id": "to_glitch_prep_start",
         "kind": "route",
         "action": "run",
         "args": {
           "target": {"map": "LavenderTown", "tiles": [[18, 7]], "facing": "south"}
         },
-        "why": "mg-05 starts at Lavender Town (18, 7) facing south"
+        "why": "07-glitch-prep starts at Lavender Town (18, 7) facing south"
       }
     ]
   },
   "execution": {"menu": "full"},
   "metadata": {
     "phase": "testing",
-    "notes": "The grind's real end: CH'DING knows Knock Off, MIMIEN at least Lv 33 (read on its summary) knows Recycle, nothing spent since mg-03.",
+    "notes": "The grind's real end: CH'DING knows Knock Off, MIMIEN at least Lv 33 (read on its summary) knows Recycle, nothing spent since 03-trade-mr-mime.",
     "postconditions": {
       "party_includes": ["blastoise", "pidgey", "mr-mime", "farfetchd"],
       "money": {"spent": 0},

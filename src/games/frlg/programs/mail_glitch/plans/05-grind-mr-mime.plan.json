@@ -2,7 +2,7 @@
   "format": "gamepilot-checkpoint/1",
   "game": "frlg",
   "checkpoint": {
-    "id": "mg-04b",
+    "id": "05-grind-mr-mime",
     "title": "Grinding, part 2 (repeats): one round of MIMIEN's grind at Victory Road 2F, from the Indigo Plateau nurse and back to heal",
     "start": {"map": "IndigoPlateau_PokemonCenter_1F", "tiles": [[13, 12]], "facing": "north"},
     "events": [

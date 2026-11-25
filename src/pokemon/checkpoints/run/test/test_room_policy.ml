@@ -5,7 +5,7 @@ module R = Room_policy
 
 let frlg_field_moves = [ "cut"; "fly"; "surf"; "strength" ]
 
-(* The Mail Glitch chain's members (mg-01..mg-06). *)
+(* The Mail Glitch chain's members (01-celadon-setup..08-activate-and-verify). *)
 let rules : R.rules =
   {
     party_size = 6;
@@ -36,7 +36,7 @@ let console_b =
       ("magikarp", Some 5, Some [ "splash" ]);
     ]
 
-(* The mGBA save at mg-04's start (Lavender Center, after mg-03's trade). *)
+(* The mGBA save at 04-grind-farfetchd's start (Lavender Center, after 03-trade-mr-mime's trade). *)
 let mgba_mg04 =
   party
     [
@@ -68,8 +68,8 @@ let cases =
     case "console B, four members: room enough"
       (choose (first 4 console_b))
       "nothing to deposit";
-    case "mGBA mg-04 start: the two lowest that nobody uses" (choose mgba_mg04)
-      "deposit mr-mime (slot 5), farfetchd (slot 6)";
+    case "mGBA 04-grind-farfetchd start: the two lowest that nobody uses"
+      (choose mgba_mg04) "deposit mr-mime (slot 5), farfetchd (slot 6)";
     case "the lead stays though no plan names it"
       (choose ~rules:{ rules with used = [] } ~need:{ free_slots = 6 } console_b)
       "stop: 6 to deposit, 2 may go; kept: blastoise: it leads; pidgey: it \

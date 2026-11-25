@@ -2,7 +2,7 @@
   "format": "gamepilot-checkpoint/1",
   "game": "frlg",
   "checkpoint": {
-    "id": "mg-01",
+    "id": "01-celadon-setup",
     "title": "Celadon setup: Fly to Celadon, Coin Case, Retro Mail on Dept Store 4F, buy 200 coins, redeem Abra",
     "start": {"map": "CeladonCity", "tiles": [[48, 12]], "facing": "south"},
     "events": [

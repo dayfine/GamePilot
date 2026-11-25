@@ -10,8 +10,8 @@
     v}
 
     NAME says what the block shows ([checkpoints], [needs], ...) and ARG, when
-    given, which part ([mg-01..mg-05]). Text outside the blocks is never
-    touched. *)
+    given, which part ([01-celadon-setup..08-activate-and-verify]). Text outside
+    the blocks is never touched. *)
 
 type block = {
   name : string;

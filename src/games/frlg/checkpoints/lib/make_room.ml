@@ -1,7 +1,7 @@
 module Towns = Frlg_actions.Fly_towns
 module R = Checkpoints_run.Room_policy
 
-let id = "mg-00"
+let id = "00-make-room"
 let center_map town = town ^ "_PokemonCenter_1F"
 let pc_front : Grid_maps.Tile_pos.t = { x = 11; y = 2 }
 

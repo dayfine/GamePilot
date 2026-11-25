@@ -42,8 +42,8 @@ val of_plan_dir : string -> t option
     relative, with or without a trailing [/]) ends with the program's. *)
 
 val of_checkpoint : string -> t option
-(** The program with a plan for this checkpoint id ([mg-04] is the Mail
-    Glitch's), its folder found from the working directory up. *)
+(** The program with a plan for this checkpoint id ([04-grind-farfetchd] is the
+    Mail Glitch's), its folder found from the working directory up. *)
 
 val locate : string -> string option
 (** A repo path ({!t.doc}, {!t.checkpoints}) on this machine, found from the

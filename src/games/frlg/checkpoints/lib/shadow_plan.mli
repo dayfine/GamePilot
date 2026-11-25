@@ -3,7 +3,7 @@
     and story lines on the watch page: the pre-flight of a save and the
     make-room party read. Each event is a game action the caller supplies
     ([Checkpoint_run.run ~actions]), named by the event's id. Generated, never
-    written to a plan folder, as {!Make_room}'s mg-00. *)
+    written to a plan folder, as {!Make_room}'s 00-make-room. *)
 
 val preflight_steps : string list
 (** ["soft_reset"] (back to the save: the soft reset, on mGBA the start state),
@@ -14,7 +14,7 @@ val preflight_steps : string list
 
 val make_room_steps : string list
 (** ["soft_reset"], ["read_party"], ["plan_deposit"] (the room policy's pick and
-    mg-00's plans). *)
+    00-make-room's plans). *)
 
 val plan : id:string -> title:string -> string list -> Checkpoints_plan.Plan.t
 (** A checkpoint [id] whose events are game actions named by these ids. *)

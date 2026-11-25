@@ -1,5 +1,5 @@
-(** The make-room checkpoint ("mg-00 make room"), generated before a chain's
-    first checkpoint when the party has too few free slots ({!Party_room},
+(** The make-room checkpoint ("00-make-room"), generated before a chain's first
+    checkpoint when the party has too few free slots ({!Party_room},
     {!Checkpoints_run.Room_policy}): Fly to the Pokémon Center nearest the save,
     walk to its PC, deposit the policy's members ({!Frlg_actions.Pc_deposit}),
     walk out to the town's Fly landing. Its postconditions are its end check:
@@ -8,7 +8,7 @@
     fork's AutoStory deposits at the PC steps its plans name. *)
 
 val id : string
-(** ["mg-00"]: sorts before the chain's first checkpoint. *)
+(** ["00-make-room"]: sorts before the chain's first checkpoint. *)
 
 val center_map : string -> string
 (** ["ViridianCity"] -> ["ViridianCity_PokemonCenter_1F"]. *)
