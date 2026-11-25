@@ -19,7 +19,7 @@
   test_pc_deposit_steps
   test_fly_towns
   test_actions
-  test_story_game
+  test_checkpoint_game
   test_action_requests
   test_menu_actions
   test_grind
@@ -28,15 +28,21 @@
   test_mail_glitch_actions
   test_mail_glitch_use
   test_lift_ride
+  test_seagallop
   test_capture
+  test_level_up
+  test_rare_candy
   test_pacing
   test_console_actions
-  test_warp_settle)
+  test_warp_settle
+  test_trainer_card_read
+  test_trainer_battles
+  test_scene_battle)
  (modules
   test_pc_deposit_steps
   test_fly_towns
   test_actions
-  test_story_game
+  test_checkpoint_game
   test_action_requests
   test_menu_actions
   test_grind
@@ -45,21 +51,32 @@
   test_mail_glitch_actions
   test_mail_glitch_use
   test_lift_ride
+  test_seagallop
   test_capture
+  test_level_up
+  level_up_fake
+  test_rare_candy
   test_pacing
   test_console_actions
-  test_warp_settle)
+  test_warp_settle
+  test_trainer_card_read
+  test_trainer_battles
+  test_scene_battle)
  (deps
   mgba.probes.jsonl
   menus.mgba.probes.jsonl
   switch.probes.jsonl
-  menus.switch.probes.jsonl)
+  menus.switch.probes.jsonl
+  fixtures/capture_throw.looks.jsonl)
  (libraries
   yojson
   gamepilot.table_test
   gamepilot.wire
+  gamepilot.grid_geometry
   gamepilot.grid_maps
-  gamepilot.story
+  gamepilot.json_field
+  gamepilot.pokemon_engine
+  gamepilot.room_policy
   gamepilot.frlg_overworld
   gamepilot.frlg_actions
   gamepilot.frlg_battle

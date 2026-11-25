@@ -74,7 +74,7 @@ let stop_cost (model : _ Step_model.t) costs node next =
 
 (* Where pressing [direction] from [current] leads. *)
 let next_node (model : _ Step_model.t) current direction (step : _ Leg.step) =
-  let plain = Option.is_none step.action in
+  let plain = Option.is_none step.special_step in
   let extends =
     current.moving
     && current.facing = Some direction

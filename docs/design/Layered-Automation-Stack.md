@@ -88,7 +88,8 @@ on frames and returns raw results with no judgment.
 | `color_stats` | mean RGB, stddev over a box | microseconds |
 | `rmsd_prev` | difference against the previous frame | about a millisecond |
 | `template` | match score against a template at a box | milliseconds |
-| `find` | fixed pipeline: colour filter -> waterfill -> size filter -> template; list of boxes with scores | milliseconds |
+| `line_shares` | share of a box's pixels passing linear channel comparisons, per row and per column (`core.line_shares@1`) | microseconds |
+| `find` | fixed pipeline: colour filter -> waterfill -> size filter -> template; list of boxes with scores (`core.find@1`: also a blob's stray share and its overlap with a shape) | milliseconds |
 | `ocr` (on request) | text | tens to hundreds of milliseconds |
 | `model` (on request) | boxes, labels, scores | tens of milliseconds |
 
@@ -211,6 +212,11 @@ same end tile).
 
 ## 8. Agents and MCP
 
+**Superseded (user, 2026-11-25):** the lab app and pa-lab retired; there is no MCP front for now.
+Agents use `gamepilot` from a shell, and a thin `gamepilot mcp` over the daemon's protocol comes
+when a client without a shell needs one (`Console-Roadmap.md`, decision 4). The rest of this
+section is kept as history.
+
 pa-lab (`lab/server` on the `agents` branch; design in `docs/design/Agent-Integration.md`
 on `lab/tooling`) stays the MCP front and control plane: leases, idempotent requests,
 event cursor, audit, refusals. The app is already behind one channel adapter (fork #611);
@@ -320,7 +326,7 @@ Estimates here are rough judgments, not measurements.
 | R16 | OCaml layout | `src/` in `base/` (pure), `core/` (effects + handlers), `pokemon/` (navigation grid, story plans + engine), `games/<game>/{readers,actions,maps,story,programs/<program>}`; each library `lib/` + `test/`; the first real program is `games/frlg/programs/mail_glitch/` |
 | R17 | Naming | Names say what a thing does; no `helpers`, `utils`, `common`, `misc` |
 | R18 | Maps and plans | PokemonSimulation as a read-only submodule: maps are read from it, never copied. Program plans live with the program and are refined there: `mg-01..05` copied from fork #781 (`31dce02b8`) into `src/games/frlg/programs/mail_glitch/plans/` |
-| R20 | Mail Glitch shape | Follow fork #804's split instead of #781's monolith: `pokemon/story` gets `repeat_until` (idempotent looped checkpoints); `games/frlg/actions` gets the shared actions (`party_swap`, `give_bag_item`, `buy_coins`, `redeem_prize_mon`, `ingame_trade`, `spin_for_encounter`); `games/frlg/battle` gets a driver (single + double, ally targeting) under a scripted battle runner; `programs/mail_glitch` keeps only its table and sequence |
+| R20 | Mail Glitch shape | Follow fork #804's split instead of #781's monolith: `pokemon/checkpoints` gets `repeat_until` (idempotent looped checkpoints); `games/frlg/actions` gets the shared actions (`party_swap`, `give_bag_item`, `buy_coins`, `redeem_prize_mon`, `ingame_trade`, `spin_for_encounter`); `games/frlg/battle` gets a driver (single + double, ally targeting) under a scripted battle runner; `programs/mail_glitch` keeps only its table and sequence |
 | R21 | Porting and order | User 2026-11-23: everything runs on the Switch in the end, after mGBA testing. Ports from the fork are transparent (same behaviour, steps and timings; each module names its C++ source); refactors come later. Programs go in order (mg-01 → mg-05) through the checkpoint runner, with the C++ AutoStory dev loop (start states per checkpoint, end-state verification, retries, failure records) carried over. |
 | R22 | Watching a run | User 2026-11-23, option A: the daemon serves one HTML/JS page (frame with probe boxes, plan, log, health, Stop) on its own port, localhost unless `--listen`; the program publishes plan and log as notifications and honours `stop` at its next wait (`Watch-Page.md`) |
 | R19 | Text reading | FRLG: font templates, no OCR. Glyphs and widths come from pokefirered's font graphics; a reader draws each dictionary candidate (item, move names; per-language dictionaries as in Arduino-Source) and scores it with `core.template_match@1`, which the daemon scales from game pixels (v1.2). Two glyph sets cover all six FRLG languages (Western, Japanese); English data first. OCR only for a future game with a large character set |

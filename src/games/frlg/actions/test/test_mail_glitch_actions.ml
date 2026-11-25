@@ -1,32 +1,36 @@
-(* mg-05's two battle actions on fake rigs whose battles answer from a list
-   driver, so the real Scripted_battle plays each action's script: the Blizzard
+(* mg-05's two battle actions on fake game steps whose battles answer from a
+   list, so the real Scripted_battle plays each action's script: the Blizzard
    PP drain (prepare_berry_pp) and Lea & Jed's double battle
    (mail_glitch_double_battle), as the fork's Route 16 run played them. *)
 
 open Frlg_actions
 module B = Frlg_battle
-module D = B.Battle_driver
+module Battle = B.Battle
 
 let case name input expectation = { Table_test.name; input; expectation }
-let obj json = Grid_maps.Json_field.as_object "" (Yojson.Safe.from_string json)
+let obj json = Json_field.as_object "" (Yojson.Safe.from_string json)
 
-(* A battle as the list driver plays it: the events it reports, and the result
+(* A battle as the list's fake game steps play it: the events it reports, and the result
    of each move chosen (default [Chosen]). *)
-type fake_battle = { events : D.event list; moves : D.move_result list }
+type fake_battle = {
+  events : Battle.event list;
+  moves : Battle.move_result list;
+}
 
 let take q d = Option.value (Queue.take_opt q) ~default:d
 
-let list_driver (b : fake_battle) call : D.t =
+let fake_battle_game_steps (b : fake_battle) call : Battle.game_steps =
   let events = Queue.of_seq (List.to_seq b.events) in
   let moves = Queue.of_seq (List.to_seq b.moves) in
   {
-    next_event = (fun ~timeout_ms:_ -> take events D.Timed_out);
+    next_event = (fun ~timeout_ms:_ -> take events Battle.Timed_out);
     use_move =
       (fun ~slot ~target ~expect:_ ->
-        let result = take moves D.Chosen in
+        let result = take moves Battle.Chosen in
         call
-          (Printf.sprintf "move %d %s%s" slot (D.target_name target)
-             (if result = D.Refused then " refused" else ""));
+          (Printf.sprintf "move %d %s%s" slot
+             (Battle.target_name target)
+             (if result = Battle.Refused then " refused" else ""));
         result);
     switch_to =
       (fun ~slot ->
@@ -38,7 +42,7 @@ let list_driver (b : fake_battle) call : D.t =
         true);
     run = (fun () -> call "run");
     use_item = (fun _ -> true);
-    answer_move_learn = (fun _ -> D.Not_learned { offered = None });
+    answer_move_learn = (fun _ -> Battle.Not_learned { offered = None });
     answer_use_next = (fun _ -> ());
   }
 
@@ -49,7 +53,7 @@ let outcome f =
   match f () with
   | () -> "ok"
   | exception Menu_input.Action_failed c ->
-      "failed " ^ Story.Failure.cause_to_string c
+      "failed " ^ Pokemon_engine.Failure.cause_to_string c
 
 let recorded f =
   let calls = ref [] in
@@ -59,7 +63,7 @@ let recorded f =
 
 let cause_or_ok = function
   | Ok _ -> "ok"
-  | Error c -> Story.Failure.cause_to_string c
+  | Error c -> Pokemon_engine.Failure.cause_to_string c
 
 (* prepare_berry_pp *)
 
@@ -73,7 +77,7 @@ let berry_plan = Result.get_ok (Berry_pp.decode (obj berry_args))
 let drain ?(lead = "blastoise") ?(known = blastoise_moves) battles () =
   recorded (fun call ->
       let battles = Queue.of_seq (List.to_seq battles) in
-      let rig : Berry_pp.rig =
+      let fake_game_steps : Berry_pp.game_steps =
         {
           lead = (fun () -> Some lead);
           known_moves =
@@ -85,19 +89,20 @@ let drain ?(lead = "blastoise") ?(known = blastoise_moves) battles () =
             (fun script ->
               match Queue.take_opt battles with
               | None -> no_battle
-              | Some b -> B.Scripted_battle.run (list_driver b call) script);
+              | Some b ->
+                  B.Scripted_battle.run (fake_battle_game_steps b call) script);
           log = ignore;
         }
       in
-      Berry_pp.run rig berry_plan)
+      Berry_pp.run fake_game_steps berry_plan)
 
-let won = { events = D.[ Action_menu; Battle_over ]; moves = [] }
+let won = { events = Battle.[ Action_menu; Battle_over ]; moves = [] }
 
 (* Blizzard refused on the first menu: Surf instead, and the drain is done. *)
 let ran_dry =
   {
-    events = D.[ Action_menu; Action_menu; Battle_over ];
-    moves = [ D.Refused ];
+    events = Battle.[ Action_menu; Action_menu; Battle_over ];
+    moves = [ Battle.Refused ];
   }
 
 let berry_pp_cases =
@@ -130,7 +135,7 @@ let berry_pp_cases =
       (drain ~known:[ "surf"; "bite" ] [])
       "summary 1 => failed berry_pp_missing_move: blastoise knows no blizzard";
     case "a failed battle fails the action"
-      (drain [ { events = [ D.Action_menu ]; moves = [] } ])
+      (drain [ { events = [ Battle.Action_menu ]; moves = [] } ])
       "summary 1; spin; move 1 default => failed berry_pp_battle_failed: \
        battle 1: no battle event within 60000 ms";
   ]
@@ -153,28 +158,31 @@ let moves_of slot =
    until it is over. *)
 let double ?(restored = true) ?(party = party) battle () =
   recorded (fun call ->
-      let rig : Mail_glitch_battle.rig =
+      let fake_game_steps : Mail_glitch_battle.game_steps =
         {
           species_at = (fun slot -> Array.get party (slot - 1) |> Option.some);
           known_moves =
             (fun ~slot ->
               call (Printf.sprintf "summary %d" slot);
               moves_of slot);
-          start_battle = (fun d -> call ("step " ^ Grid_maps.Direction.name d));
+          start_battle =
+            (fun d -> call ("step " ^ Grid_geometry.Direction.name d));
           restored =
             (fun ~slot () ->
               call (Printf.sprintf "pp %d" slot);
               restored);
           battle =
             (fun wrap script ->
-              B.Scripted_battle.run (wrap (list_driver battle call)) script);
+              B.Scripted_battle.run
+                (wrap (fake_battle_game_steps battle call))
+                script);
           after_battle = (fun () -> call "after");
           log = ignore;
         }
       in
-      Mail_glitch_battle.run rig battle_plan)
+      Mail_glitch_battle.run fake_game_steps battle_plan)
 
-let menus n = List.init n (fun _ -> D.Action_menu)
+let menus n = List.init n (fun _ -> Battle.Action_menu)
 
 let double_battle_cases =
   [
@@ -193,7 +201,7 @@ let double_battle_cases =
         | Error e -> e)
       "knock off 0, sand attack 1, surf 0, bite 2, blizzard 1, recycle 1";
     case "the fork's run: Berry turn, Knock Off, two switches, Recycle, sweep"
-      (double { events = menus 9 @ [ D.Battle_over ]; moves = [] })
+      (double { events = menus 9 @ [ Battle.Battle_over ]; moves = [] })
       "summary 1; summary 2; summary 3; step north; move 1 foe left; move 2 \
        foe left; move 0 ally; pp 1; switch 2; switch 2; move 1 default; move 0 \
        default; move 1 default; move 0 default; after => ok";

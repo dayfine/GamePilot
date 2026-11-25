@@ -1,4 +1,5 @@
 open Grid_maps
+open Grid_geometry
 open Grid_planning
 
 type costs = { grass : int; warp : int; wander : int; trainer_line : int }
@@ -12,6 +13,7 @@ type world = {
   edge_stalls : bool;
   rock_stairs : Rock_stairs.t;
   cut : Gate_state.t;
+  walked_up : Connected_maps.place list;
 }
 
 let world ?(hidden = fun _ -> false) ?(edge_stalls = true)
@@ -23,7 +25,13 @@ let world ?(hidden = fun _ -> false) ?(edge_stalls = true)
     edge_stalls;
     rock_stairs;
     cut = Gate_state.new_game;
+    walked_up = [];
   }
+
+let with_walked_up w places = { w with walked_up = places @ w.walked_up }
+
+let walked_up_to w (place : Connected_maps.place) =
+  List.exists (fun p -> Connected_maps.compare_place p place = 0) w.walked_up
 
 let map_of w (place : Connected_maps.place) =
   Connected_maps.map w.maps place.map
@@ -180,7 +188,10 @@ let landing w d (target : Connected_maps.place) =
   let map = map_of w target in
   let free (p : Connected_maps.place) =
     match walk_tile w map p.tile with
-    | Some kind -> enterable kind d && Option.is_none (object_at w map p.tile)
+    | Some kind ->
+        enterable kind d
+        && Option.is_none (object_at w map p.tile)
+        && not (walked_up_to w p)
     | None -> false
   in
   match tile_at map target.tile with
@@ -239,10 +250,12 @@ let edge_leads_on (map : Map_data.t) d =
   List.exists (fun (c : Map_features.connection) -> c.side = d) map.connections
 
 (* Whether what stands ahead keeps a held player where they are. *)
-let holds_ahead w (map : Map_data.t) ahead d =
+let holds_ahead w (place : Connected_maps.place) (map : Map_data.t) ahead d =
   match tile_at map ahead with
   | Some (Ledge _) -> false
-  | Some _ -> Option.fold ~none:true ~some:stands_still (object_at w map ahead)
+  | Some _ ->
+      (not (walked_up_to w { place with tile = ahead }))
+      && Option.fold ~none:true ~some:stands_still (object_at w map ahead)
   | None -> not (edge_leads_on map d)
 
 let held_at w (place : Connected_maps.place) d =
@@ -251,7 +264,7 @@ let held_at w (place : Connected_maps.place) d =
   Option.is_none (press w place d)
   && (not (warp_off_maps w place d))
   && (not (sign_read map ahead d))
-  && holds_ahead w map ahead d
+  && holds_ahead w place map ahead d
 
 let sign_ahead w (place : Connected_maps.place) d =
   sign_read (map_of w place) (Tile_pos.next place.tile d) d

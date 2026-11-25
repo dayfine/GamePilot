@@ -15,11 +15,14 @@ let screens =
     "tm_case";
     "summary_moves";
     "battle_opening";
+    "battle_prompt";
     "bag_counts";
     "berry_pouch_numbers";
     "summary_level";
     "mail_editor";
     "start_menu";
+    "card_numbers";
+    "pc_message";
   ]
 
 let glyphs =
@@ -49,6 +52,11 @@ let line_of_id id =
       small
         (Text_lines.berry_pouch_number_digit (int_of_string row)
            (int_of_string k))
+  | [ "card_money"; k ] ->
+      normal (Text_lines.trainer_card_money_digit (int_of_string k))
+  | [ "card_dex"; k ] ->
+      normal (Text_lines.trainer_card_dex_digit (int_of_string k))
+  | [ "pc_message" ] -> normal Text_lines.pc_message
   | [ "summary_level"; k ] ->
       (Text_lines.summary_level_digit (int_of_string k), Summary_level.max_score)
   | _ -> failwith ("line id " ^ id)

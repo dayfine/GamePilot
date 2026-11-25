@@ -42,7 +42,7 @@ Server::Server(Backend& backend, ServerOptions options, const Clock& clock)
     throw std::runtime_error("speed must be above 0");
   }
   game_zero_ms_ = clock_.now_ms();
-  if (keep_awake_.on() && button_mask(keep_awake_.key()) == 0) {
+  if (keep_awake_.on() && !keep_awake_key(keep_awake_.key())) {
     throw std::runtime_error("bad keep-awake key " + keep_awake_.key());
   }
   if (!options_.log_path.empty()) {
@@ -161,7 +161,7 @@ void Server::run_live(const std::atomic<bool>& stop) {
     serve_network(0);
     double now = clock_.now_ms();
     for (const KeySegment& segment : live_schedule_.take_due(now)) {
-      backend_.queue_keys(segment.keys, segment.ms);
+      backend_.queue_keys(segment.keys, segment.sticks, segment.ms);
     }
     const double next =
         live_schedule_.next_event_ms().value_or(now + kMaxPollMs);
@@ -376,6 +376,18 @@ void Server::clear_input() {
   sent_mask_ = KeyMask{0};
 }
 
+// Drops queued commands with no release: a live device's running input goes
+// on until the next one replaces it; a stepped backend's keys stay as they
+// are until the next batch sets them.
+void Server::replace_input() {
+  schedule_.clear();
+  live_schedule_.clear();
+  batch_owners_.clear();
+  if (backend_.info().takes_input && backend_.info().timing == Timing::kLive) {
+    backend_.replace_queued_keys();
+  }
+}
+
 // The connection's probes and templates go with it; its queued batches too
 // when it held the lease (only the holder submits).
 void Server::drop_client(ClientConnection& client, const char* reason) {
@@ -431,13 +443,19 @@ DaemonStatus Server::status() const {
   return status;
 }
 
-void Server::refuse_switch_buttons(const SubmitParams& submit) const {
+void Server::refuse_switch_input(const SubmitParams& submit) const {
   if (backend_.info().kind == "switch") {
     return;
   }
   for (const InputCommand& command : submit.commands) {
     if ((command.buttons & kSwitchOnlyKeys) != 0) {
       throw switch_button_refusal(backend_.info().kind, command.buttons);
+    }
+    if (command.left_stick.has_value()) {
+      throw switch_stick_refusal(backend_.info().kind, "left_stick");
+    }
+    if (command.right_stick.has_value()) {
+      throw switch_stick_refusal(backend_.info().kind, "right_stick");
     }
   }
 }
@@ -625,7 +643,7 @@ pa::JsonObject Server::dispatch_input(ClientConnection& client,
   }
   if (method == "submit") {
     const SubmitParams submit = decode_submit(request.params);
-    refuse_switch_buttons(submit);
+    refuse_switch_input(submit);
     keep_awake_.input(clock_.now_ms());
     batch_owners_.emplace_back(submit.batch_id, client.number);
     if (backend_.info().timing == Timing::kLive) {
@@ -636,9 +654,22 @@ pa::JsonObject Server::dispatch_input(ClientConnection& client,
         schedule_.submit(submit.batch_id, submit.commands, backend_.seq());
     return submit_result(submit.batch_id, start);
   }
-  decode_cancel(request.params);
+  const CancelParams cancel = decode_cancel(request.params);
   keep_awake_.input(clock_.now_ms());
-  clear_input();
+  if (!cancel.then) {
+    clear_input();
+    return cancel_result(backend_.seq());
+  }
+  refuse_switch_input(*cancel.then);
+  replace_input();
+  batch_owners_.emplace_back(cancel.then->batch_id, client.number);
+  if (backend_.info().timing == Timing::kLive) {
+    live_schedule_.submit(cancel.then->batch_id, cancel.then->commands,
+                          clock_.now_ms());
+  } else {
+    schedule_.submit(cancel.then->batch_id, cancel.then->commands,
+                     backend_.seq());
+  }
   return cancel_result(backend_.seq());
 }
 

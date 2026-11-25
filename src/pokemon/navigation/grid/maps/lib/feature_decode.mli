@@ -27,6 +27,9 @@ val objects : where:string -> Json_field.obj -> map_object list
 (** A trainer's ["looks"] defaults to the object's facing; one without either is
     an error. *)
 
+val hidden_items : where:string -> Json_field.obj -> hidden_item list
+(** Each item's ["flag"] and tile; [[]] when the map has none. *)
+
 val triggers : where:string -> Json_field.obj -> trigger list
 val connections : where:string -> Json_field.obj -> connection list
 val patches : where:string -> Json_field.obj -> patch list

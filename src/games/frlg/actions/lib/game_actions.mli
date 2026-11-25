@@ -5,15 +5,17 @@
 type context = {
   log : string -> unit;
   party : Party_roster.t ref;
-  facing : unit -> Grid_maps.Direction.t option;
+  facing : unit -> Grid_geometry.Direction.t option;
       (** Where the player faces, when known (the spin starts from it). *)
   stocks : unit -> (Mart_plan.stocks, string) result;
 }
 
-val perform : context -> Action_requests.t -> (unit, Story.Failure.cause) result
+val perform :
+  context -> Action_requests.t -> (unit, Pokemon_engine.Failure.cause) result
 (** Runs the action. An in-game trade whose offer is gone and whose [receive] is
     in the party already passes without a press (it ran before this save). *)
 
-val handlers : context -> (string * Story.Game.game_action) list
+val handlers : context -> (string * Pokemon_engine.Game.game_action) list
 (** One handler per {!Action_requests.names}: decode, then {!perform}; then
-    mg-06's ({!Mail_glitch_use.handlers}). *)
+    mg-06's ({!Mail_glitch_use.handlers}) and the Rare Candy ones
+    ({!Candy_actions.handlers}). *)

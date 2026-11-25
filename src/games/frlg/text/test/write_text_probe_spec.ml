@@ -62,6 +62,11 @@ let screens =
       [ Text_lines.battle_message 0 ],
       List.map (fun name -> "Wild " ^ name ^ " appeared!") species,
       Line_reading.light_ink );
+    ( "battle_prompt",
+      glyphs,
+      [ Text_lines.battle_message 1 ],
+      [ "POKéMON?" ],
+      Line_reading.light_ink );
     ( "bag_counts",
       small_glyphs,
       cells ~rows:7 ~cells:3 Text_lines.bag_count_digit,
@@ -75,6 +80,17 @@ let screens =
     ( "berry_pouch_numbers",
       small_glyphs,
       cells ~rows:7 ~cells:2 Text_lines.berry_pouch_number_digit,
+      Number_reading.digits,
+      dark );
+    ( "pc_message",
+      glyphs,
+      [ Text_lines.pc_message ],
+      [ "Deposit in which BOX?"; "The BOX is full."; "Please remove the MAIL." ],
+      dark );
+    ( "card_numbers",
+      glyphs,
+      List.init 6 Text_lines.trainer_card_money_digit
+      @ List.init 3 Text_lines.trainer_card_dex_digit,
       Number_reading.digits,
       dark );
   ]

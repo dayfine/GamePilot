@@ -26,7 +26,7 @@ type next = Continue of progress | Stop of outcome
 let fail p fmt =
   Printf.ksprintf (fun why -> Stop (Failed { why; summary = p.summary })) fmt
 
-let move_failed p ~slot : Battle_driver.move_result -> next = function
+let move_failed p ~slot : Battle.move_result -> next = function
   | Chosen -> Continue p
   | Refused -> fail p "move %d was refused" slot
   | Other_move name -> fail p "move slot %d holds %s" slot name
@@ -42,56 +42,56 @@ let switch_refused p ~slot =
       let summary = { s with switches_refused = s.switches_refused + 1 } in
       Continue { p with opening = []; fallback; summary }
 
-let command (driver : Battle_driver.t) p : Battle_script.command -> next =
+let command (game_steps : Battle.game_steps) p : Battle_script.command -> next =
   function
   | Move { slot; target; name } ->
-      move_failed p ~slot (driver.use_move ~slot ~target ~expect:name)
+      move_failed p ~slot (game_steps.use_move ~slot ~target ~expect:name)
   | Switch slot ->
-      if driver.switch_to ~slot then Continue p else switch_refused p ~slot
+      if game_steps.switch_to ~slot then Continue p else switch_refused p ~slot
   | Item item ->
-      if driver.use_item item then Continue p
+      if game_steps.use_item item then Continue p
       else fail p "the item in row %d was not used" item.row
   | Run ->
-      driver.run ();
+      game_steps.run ();
       Continue p
 
-let attack (driver : Battle_driver.t) p ~slots ~target =
+let attack (game_steps : Battle.game_steps) p ~slots ~target =
   match List.find_opt (fun s -> not (List.mem s p.refused)) slots with
   | None -> fail p "every attack slot was refused"
   | Some slot -> (
-      match driver.use_move ~slot ~target ~expect:None with
+      match game_steps.use_move ~slot ~target ~expect:None with
       | Refused ->
           let summary = { p.summary with refusals = p.summary.refusals + 1 } in
           Continue { p with refused = slot :: p.refused; summary }
       | result -> move_failed p ~slot result)
 
-let fallback (driver : Battle_driver.t) p : Battle_script.fallback -> next =
-  function
+let fallback (game_steps : Battle.game_steps) p : Battle_script.fallback -> next
+    = function
   | Stop -> fail p "an action menu after the script's last command"
   | Flee ->
-      driver.run ();
+      game_steps.run ();
       Continue p
-  | Attack { slots; target } -> attack driver p ~slots ~target
+  | Attack { slots; target } -> attack game_steps p ~slots ~target
 
 let count_menu p =
   { p with summary = { p.summary with menus = p.summary.menus + 1 } }
 
-let next_command ~log driver p =
+let next_command ~log game_steps p =
   match p.opening with
   | c :: rest ->
       log
         (Printf.sprintf "menu %d: %s" p.summary.menus
            (Battle_script.describe_command c));
-      command driver { p with opening = rest } c
+      command game_steps { p with opening = rest } c
   | [] ->
       log (Printf.sprintf "menu %d: fallback" p.summary.menus);
-      fallback driver p p.fallback
+      fallback game_steps p p.fallback
 
-let action_menu ~log driver (script : Battle_script.t) p =
+let action_menu ~log game_steps (script : Battle_script.t) p =
   let p = count_menu p in
   if p.summary.menus > script.max_menus then
     fail p "more than %d action menus" script.max_menus
-  else next_command ~log driver p
+  else next_command ~log game_steps p
 
 (* The member sent in: the opening is over, the fallback may change. *)
 let sent_in p (s : Battle_script.send_in) rest =
@@ -99,11 +99,11 @@ let sent_in p (s : Battle_script.send_in) rest =
   let fallback = Option.value s.then_ ~default:p.fallback in
   Continue { p with opening = []; send_ins = rest; fallback; summary }
 
-let switch_in (driver : Battle_driver.t) p =
+let switch_in (game_steps : Battle.game_steps) p =
   match p.send_ins with
   | [] -> fail p "a member fainted and the script sends in no more"
   | s :: rest ->
-      if driver.send_in ~slot:s.slot then sent_in p s rest
+      if game_steps.send_in ~slot:s.slot then sent_in p s rest
       else fail p "slot %d could not be sent in" s.slot
 
 let prompted p =
@@ -111,9 +111,10 @@ let prompted p =
 
 let max_unread = 3
 
-let move_learn ~log (driver : Battle_driver.t) (script : Battle_script.t) p =
-  let result = driver.answer_move_learn script.learn in
-  log ("move learn: " ^ Battle_driver.describe_learned result);
+let move_learn ~log (game_steps : Battle.game_steps) (script : Battle_script.t)
+    p =
+  let result = game_steps.answer_move_learn script.learn in
+  log ("move learn: " ^ Battle.describe_learned result);
   let s = p.summary in
   match result with
   | Learned { move = Some m; _ } ->
@@ -125,16 +126,20 @@ let move_learn ~log (driver : Battle_driver.t) (script : Battle_script.t) p =
         fail p "the move learn did not read %d times: %s" max_unread why
       else Continue p
 
-let answer ~log (driver : Battle_driver.t) (script : Battle_script.t) p event =
-  log ("event: " ^ Battle_driver.event_name event);
-  match (event : Battle_driver.event) with
+let answer ~log (game_steps : Battle.game_steps) (script : Battle_script.t) p
+    event =
+  log ("event: " ^ Battle.event_name event);
+  match (event : Battle.event) with
   | Battle_over -> Stop (Over p.summary)
   | Timed_out -> fail p "no battle event within %d ms" script.event_timeout_ms
-  | Action_menu -> action_menu ~log driver script p
-  | Switch_in -> switch_in driver p
-  | Move_learn -> move_learn ~log driver script (prompted p)
+  | Action_menu -> action_menu ~log game_steps script p
+  | Switch_in -> switch_in game_steps p
+  | Move_learn -> move_learn ~log game_steps script (prompted p)
+  | Switch_offer ->
+      game_steps.answer_use_next false;
+      Continue (prompted p)
   | Use_next ->
-      driver.answer_use_next script.use_next;
+      game_steps.answer_use_next script.use_next;
       Continue (prompted p)
 
 let empty_summary =
@@ -148,11 +153,12 @@ let empty_summary =
     unread = 0;
   }
 
-let run ?(log = ignore) (driver : Battle_driver.t) (script : Battle_script.t) =
+let run ?(log = ignore) (game_steps : Battle.game_steps)
+    (script : Battle_script.t) =
   let rec loop p =
     match
-      answer ~log driver script p
-        (driver.next_event ~timeout_ms:script.event_timeout_ms)
+      answer ~log game_steps script p
+        (game_steps.next_event ~timeout_ms:script.event_timeout_ms)
     with
     | Continue p -> loop p
     | Stop outcome -> outcome

@@ -1,4 +1,5 @@
 open Grid_maps
+open Grid_geometry
 
 type gait = Walking | Running
 
@@ -30,16 +31,14 @@ let mover ~running direction hold_ms =
   let buttons =
     if running then [ dpad direction; Wire.B ] else [ dpad direction ]
   in
-  [ Wire.Press { buttons; hold_ms; cooldown_ms = step_release_ms } ]
+  [ Wire.press ~hold_ms ~cooldown_ms:step_release_ms buttons ]
+
+let turn_ms = mechanics.turn_tap_ms + turn_settle_ms
 
 let turn_tap direction =
   [
-    Wire.Press
-      {
-        buttons = [ dpad direction ];
-        hold_ms = mechanics.turn_tap_ms;
-        cooldown_ms = turn_settle_ms;
-      };
+    Wire.press ~hold_ms:mechanics.turn_tap_ms ~cooldown_ms:turn_settle_ms
+      [ dpad direction ];
   ]
 
 (* A step onto another map stalls, where the world's edges stall. *)
@@ -105,7 +104,7 @@ let move_of w gait ~facing (leg : Connected_maps.place Grid_planning.Leg.t) =
   match leg.kind with
   | Walk { tiles; to_wall } -> Ok (hold w gait ~facing leg tiles to_wall)
   | Face -> Ok (Turn leg.direction)
-  | Action _ ->
+  | Special_step _ ->
       Error
         (Printf.sprintf "an action leg %s is not walked yet"
            (Direction.name leg.direction))

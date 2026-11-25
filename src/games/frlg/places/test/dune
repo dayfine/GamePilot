@@ -1,0 +1,23 @@
+(test
+ (name test_places)
+ (modules place_objects test_places)
+ (libraries
+  yojson
+  gamepilot.table_test
+  gamepilot.grid_geometry
+  gamepilot.grid_maps
+  gamepilot.checkpoints_expand
+  gamepilot.repo_io
+  gamepilot.frlg_overworld
+  gamepilot.frlg_actions
+  gamepilot.frlg_places
+  gamepilot.frlg_checkpoints))
+
+(test
+ (name test_plan_expansion)
+ (modules test_plan_expansion)
+ (libraries
+  yojson
+  gamepilot.table_test
+  gamepilot.pokemon_engine
+  gamepilot.frlg_checkpoints))

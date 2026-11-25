@@ -36,15 +36,23 @@ let log_of_file path =
 
 let diverge fmt = Printf.ksprintf (fun s -> raise (Divergence s)) fmt
 
+let describe_stick name = function
+  | None -> ""
+  | Some (stick : Wire.stick) ->
+      let x, y = (stick :> float * float) in
+      Printf.sprintf " %s %g,%g" name x y
+
+let describe_command = function
+  | Wire.Press { buttons; left_stick; right_stick; hold_ms; cooldown_ms } ->
+      Printf.sprintf "press %s%s%s hold %d cooldown %d"
+        (String.concat "+" (List.map Wire.string_of_button buttons))
+        (describe_stick "left" left_stick)
+        (describe_stick "right" right_stick)
+        hold_ms cooldown_ms
+  | Wire.Wait { wait_ms } -> Printf.sprintf "wait %d" wait_ms
+
 let describe_commands commands =
-  let one = function
-    | Wire.Press { buttons; hold_ms; cooldown_ms } ->
-        Printf.sprintf "press %s hold %d cooldown %d"
-          (String.concat "+" (List.map Wire.string_of_button buttons))
-          hold_ms cooldown_ms
-    | Wire.Wait { wait_ms } -> Printf.sprintf "wait %d" wait_ms
-  in
-  "[" ^ String.concat "; " (List.map one commands) ^ "]"
+  "[" ^ String.concat "; " (List.map describe_command commands) ^ "]"
 
 let describe = function
   | Wire.Request { id; call } ->
@@ -164,11 +172,11 @@ let transport r : Session.transport =
     wall_ms = (fun () -> if r.ran_out then infinity else 0.);
   }
 
-let run log f =
+let run_with_backend log f =
   let r =
     { log; next_in = 0; next_out = 0; ran_out = false; timed_out = false }
   in
-  let result = Session.run (transport r) f in
+  let result = Session.run_with_backend (transport r) f in
   (match next_client_message r with
   | Some i when not r.timed_out ->
       let n, l = log.(i) in
@@ -176,3 +184,5 @@ let run log f =
         (describe l.msg)
   | Some _ | None -> ());
   result
+
+let run log f = run_with_backend log (fun (_ : Wire.backend) -> f ())

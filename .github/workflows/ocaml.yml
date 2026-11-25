@@ -3,13 +3,29 @@ name: OCaml
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - "daemon/**"
+      - ".github/workflows/daemon.yml"
   pull_request:
+    # The daemon's C++ has its own workflow; the OCaml build reads none of it.
+    # protocol/ is not ignored: the OCaml tests parse its golden files.
+    paths-ignore:
+      - "daemon/**"
+      - ".github/workflows/daemon.yml"
+# A newer push to a PR replaces its queued or running run, as daemon.yml does;
+# main's runs all finish.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 jobs:
   build:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        # macOS runners are the slow queue: a PR stacked on another branch
+        # runs Ubuntu and Windows only, since it is pushed again (and runs on
+        # all three) once its base merges and it is based on main.
+        os: ${{ fromJSON((github.event_name != 'pull_request' || github.base_ref == 'main') && '["ubuntu-latest", "macos-latest", "windows-latest"]' || '["ubuntu-latest", "windows-latest"]') }}
     runs-on: ${{ matrix.os }}
     # setup-ocaml saves and restores dune's cache folder, but dune 3.25 wrote
     # nothing to it without this.
@@ -50,6 +66,10 @@ jobs:
           status=${PIPESTATUS[0]}
           if [ "$status" -ne 0 ]; then sh ../dev/ci/report_test_failures.sh dune-test.log; fi
           exit "$status"
+      - name: Check the user guides (docs/guide/) against the registry and the plans
+        if: runner.os == 'Linux'
+        working-directory: src
+        run: opam exec -- dune exec -- gamepilot guide --check
       - name: Build and test the OCaml linters (dev/lint/)
         if: runner.os == 'Linux'
         working-directory: dev/lint

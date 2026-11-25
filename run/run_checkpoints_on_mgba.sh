@@ -4,15 +4,15 @@
 # `gamepilot checkpoints` as they are, e.g.:
 #
 #   sh run/run_checkpoints_on_mgba.sh --program frlg.mail_glitch \
-#       --from mg-01 --to mg-03 --mode verification
+#       --from 01-celadon-setup --to 03-trade-mr-mime --mode verification
 #
 # To test a fix from just before the changed event, not from the checkpoint's start: every run
 # keeps a save state at each event it reaches cleanly ($GAMEPILOT_STATES/<ID>.events/), and
 #
-#   sh run/run_checkpoints_on_mgba.sh --program frlg.mail_glitch --from mg-02 \
+#   sh run/run_checkpoints_on_mgba.sh --program frlg.mail_glitch --from 02-trade-farfetchd \
 #       --from-event trade_chding [--to-event N]
 #
-# runs mg-02 from that state (testing, a partial run: never a verification, never a next start).
+# runs 02-trade-farfetchd from that state (testing, a partial run: never a verification, never a next start).
 #
 # A plan folder in place of --program ID still works (`gamepilot checkpoints PLAN_DIR ...`).
 #

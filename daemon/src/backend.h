@@ -33,9 +33,24 @@ struct BackendInfo {
 };
 
 // GBA KEYINPUT bit order (A, B, Select, Start, Right, Left, Up, Down, R, L in
-// bits 0-9), then the buttons only the Switch has: Home, X, Y in bits 10-12.
-using KeyMask = std::uint16_t;
-constexpr KeyMask kSwitchOnlyKeys = 0x7u << 10;
+// bits 0-9), then the buttons only the Switch has: Home, X, Y, ZL, ZR, Plus,
+// Minus in bits 10-16. On the Switch, Start and Select are the GBA app's names
+// for Plus and Minus and press the same buttons.
+using KeyMask = std::uint32_t;
+constexpr KeyMask kSwitchOnlyKeys = 0x7Fu << 10;
+
+// A stick's tilt as CoreLib's JoystickPosition (SerialPrograms/Source/
+// Controllers/Joystick.h): x and y in -1..1, +x right, +y up; 0, 0 is centred.
+struct StickPosition {
+  double x = 0;
+  double y = 0;
+};
+
+// The Switch controller's two sticks, centred unless a press tilts them.
+struct Sticks {
+  StickPosition left;
+  StickPosition right;
+};
 
 // A thread's last sign of life: the last frame it handled and when.
 struct ThreadBeat {
@@ -92,14 +107,20 @@ class Backend {
   // seq()), waiting up to `timeout_ms` for one; nullopt if none came.
   virtual std::optional<FrameStamp> next_frame(double timeout_ms);
 
-  // Live backends only. Holds `mask` for `ms` from now, after inputs already
-  // queued.
-  virtual void queue_keys(KeyMask mask, double ms);
+  // Live backends only. Holds `mask` and `sticks` for `ms` from now, after
+  // inputs already queued.
+  virtual void queue_keys(KeyMask mask, const Sticks& sticks, double ms);
 
   // Live backends only. Drops the inputs queued with queue_keys() that have
   // not run yet and cuts short the one running, so a cancel takes effect now
   // rather than after the device has played out the queue.
   virtual void drop_queued_keys();
+
+  // Live backends only. As drop_queued_keys(), but the input running keeps
+  // running until the next queue_keys() replaces it, with no release between
+  // (the board's CQ_REPLACE_ON_NEXT, as the C++ controller's
+  // replace_on_next_command()). Defaults to drop_queued_keys().
+  virtual void replace_queued_keys() { drop_queued_keys(); }
 
   virtual BackendHealth health() const { return {}; }
 
@@ -117,7 +138,7 @@ inline std::optional<FrameStamp> Backend::next_frame(double) {
   throw BackendError(info().kind + " is not a live backend");
 }
 
-inline void Backend::queue_keys(KeyMask, double) {
+inline void Backend::queue_keys(KeyMask, const Sticks&, double) {
   throw BackendError(info().kind + " is not a live backend");
 }
 

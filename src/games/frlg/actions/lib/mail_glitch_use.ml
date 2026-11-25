@@ -1,6 +1,6 @@
 open Frlg_readers
 module M = Menu_input
-module J = Grid_maps.Json_field
+module J = Json_field
 
 let mark_of_name : string -> Party_menu.mark option = function
   | "held_item" -> Some Held_item
@@ -34,7 +34,7 @@ let read_marks ~log =
   let marks =
     List.init (Party_menu.members m) (fun i -> Party_menu.mark m (i + 1))
   in
-  M.close "the party" Party_menu.party_menu;
+  M.close_through_fades "the party" Party_menu.party_menu;
   M.settle_back ~label:"party marks" ~log;
   marks
 
@@ -56,7 +56,7 @@ let editor_opening m = not (Dialog.dialog_up m)
 
 let read_glitched_mail ~log ~slot ~word =
   log (Printf.sprintf "Mail: give Retro Mail to slot %d, read the mail." slot);
-  Bag_items.item_action mail Party_actions.give_row;
+  Bag_items.item_action mail (Party_actions.give_row mail);
   Party_actions.give_to slot;
   M.answer_yes ~code:"no_switch_question" ~taken:editor_opening
     "the switch question";
@@ -64,7 +64,7 @@ let read_glitched_mail ~log ~slot ~word =
   log ("Mail: the editor reads " ^ word ^ " in field 1 (proof A).");
   M.press Wire.Start;
   Party_actions.confirm_mail ();
-  M.close "the bag" bag_or_party;
+  M.close_through_fades "the bag" bag_or_party;
   M.settle_back ~label:"read glitched mail" ~log
 
 (* While an item moves, the list's cursor is hidden (pokefirered
@@ -88,7 +88,7 @@ let move_to_top ~log item =
       Bag_items.to_top ();
       if Bag_items.list_row item <> Some 0 then
         M.fail "item_not_on_top" (item ^ " did not move to the top"));
-  M.close "the bag" Bag_screen.bag_open;
+  M.close_through_fades "the bag" Bag_screen.bag_open;
   M.settle_back ~label:"move item" ~log
 
 let marks ~where args =
@@ -112,7 +112,7 @@ let run_with ~action read perform args =
 
 let on_slot party ~action read perform =
   let decode ~where args = (Action_args.member ~where args, read ~where args) in
-  fun (_ : Story.Plan.event) args ->
+  fun (_ : Pokemon_engine.Plan.event) args ->
     run_with ~action decode
       (fun (member, v) ->
         match Party_roster.resolve !party member with
@@ -127,7 +127,7 @@ let duplicate ~log slot plan =
   Item_duplication.run ~log plan
 
 let handlers ~log ~party =
-  let simple action read perform (_ : Story.Plan.event) args =
+  let simple action read perform (_ : Pokemon_engine.Plan.event) args =
     run_with ~action read perform args
   in
   [

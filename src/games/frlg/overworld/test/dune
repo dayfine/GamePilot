@@ -4,6 +4,7 @@
  (libraries
   gamepilot.wire
   gamepilot.effects
+  gamepilot.grid_geometry
   gamepilot.grid_maps
   gamepilot.grid_planning
   gamepilot.frlg_overworld))
@@ -25,8 +26,22 @@
   menus.switch.probes.jsonl))
 
 (tests
- (names test_route_target test_route_walk test_edge_steps)
- (modules test_route_target test_route_walk test_edge_steps)
+ (names
+  test_route_target
+  test_route_walk
+  test_edge_steps
+  test_standard_center
+  test_joyful_game_corner
+  test_trainer_crossing
+  test_berry_forest)
+ (modules
+  test_route_target
+  test_route_walk
+  test_edge_steps
+  test_standard_center
+  test_joyful_game_corner
+  test_trainer_crossing
+  test_berry_forest)
  (deps
   mgba.probes.jsonl
   menus.mgba.probes.jsonl
@@ -36,8 +51,42 @@
   gamepilot.table_test
   gamepilot.wire
   gamepilot.effects
+  gamepilot.grid_geometry
   gamepilot.grid_maps
   gamepilot.grid_planning
-  gamepilot.story
+  gamepilot.pokemon_engine
   gamepilot.frlg_overworld
   frlg_overworld_fixtures))
+
+(test
+ (name test_battle_flash)
+ (modules test_battle_flash)
+ (deps
+  fixtures/viridian_forest_walk_flash.fade.jsonl
+  fixtures/viridian_forest_quiet_steps.fade.jsonl
+  fixtures/route3_walk_flash.fade.jsonl
+  fixtures/route3_turn_flash.fade.jsonl)
+ (libraries
+  gamepilot.table_test
+  gamepilot.wire
+  gamepilot.effects
+  gamepilot.frlg_overworld))
+
+(test
+ (name test_warp_fade_in)
+ (modules test_warp_fade_in)
+ (deps
+  fixtures/cinnabar_center.fade.jsonl
+  fixtures/indigo_center.fade.jsonl
+  fixtures/celadon_dept_store_exit.fade.jsonl
+  fixtures/party_close.fade.jsonl
+  fixtures/summary_close.fade.jsonl
+  fixtures/trainer_card_close.fade.jsonl
+  fixtures/bag_close.fade.jsonl
+  fixtures/mail_give_close.fade.jsonl)
+ (libraries
+  gamepilot.table_test
+  gamepilot.wire
+  gamepilot.effects
+  gamepilot.frlg_readers
+  gamepilot.frlg_overworld))

@@ -1,0 +1,22 @@
+{
+  "choice_arrow": {
+    "fill": 0.384681,
+    "height": 57,
+    "width": 41
+  },
+  "dialog_black_arrow": {
+    "fill": 0.358553,
+    "height": 19,
+    "width": 32
+  },
+  "dialog_teal_arrow": {
+    "fill": 0.365025,
+    "height": 19,
+    "width": 31
+  },
+  "dialog_white_arrow": {
+    "fill": 0.373355,
+    "height": 19,
+    "width": 32
+  }
+}

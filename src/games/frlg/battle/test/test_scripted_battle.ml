@@ -1,14 +1,14 @@
-(* The scripted battle runner against a driver that answers from lists: the
+(* The scripted battle runner against fake game steps that answer from lists: the
    events the battle reports in order, and the results of the moves chosen.
-   Each case gives the driver's calls and the outcome. The battles are the
+   Each case gives the game steps' calls and the outcome. The battles are the
    fork's Mail Glitch ones (MailGlitchBattle.cpp, and #804's PR C acceptance
    list). *)
 
 open Frlg_battle
 
 type fake = {
-  events : Battle_driver.event list;
-  moves : Battle_driver.move_result list;  (** default [Chosen] *)
+  events : Battle.event list;
+  moves : Battle.move_result list;  (** default [Chosen] *)
   switch_ok : bool;
   send_in_ok : bool;
   offered : string option list;
@@ -19,8 +19,8 @@ let fake ?(moves = []) ?(switch_ok = true) ?(send_in_ok = true) ?(offered = [])
     events =
   { events; moves; switch_ok; send_in_ok; offered }
 
-(* The driver's answer from what the list shows. *)
-let learned offered : Battle_driver.learn -> Battle_driver.learned = function
+(* The fake game steps' answer from what the list shows. *)
+let learned offered : Battle.learn -> Battle.learned = function
   | Keep_moves -> Not_learned { offered = None }
   | Forget slot -> Learned { slot; move = offered }
   | Forget_for { move; slot } -> (
@@ -29,14 +29,14 @@ let learned offered : Battle_driver.learn -> Battle_driver.learned = function
       | Some _ -> Not_learned { offered }
       | None -> Unread "the move offered did not read")
 
-let learn_name : Battle_driver.learn -> string = function
+let learn_name : Battle.learn -> string = function
   | Keep_moves -> "keep moves"
   | Forget s -> Printf.sprintf "forget %d" s
   | Forget_for { move; slot } -> Printf.sprintf "forget %d for %s" slot move
 
 let take q ~default = Option.value (Queue.take_opt q) ~default
 
-let driver f calls : Battle_driver.t =
+let fake_game_steps f calls : Battle.game_steps =
   let events = Queue.of_seq (List.to_seq f.events) in
   let moves = Queue.of_seq (List.to_seq f.moves) in
   let offered = Queue.of_seq (List.to_seq f.offered) in
@@ -47,9 +47,9 @@ let driver f calls : Battle_driver.t =
       (fun ~slot ~target ~expect ->
         call
           (Printf.sprintf "move %d %s%s" slot
-             (Battle_driver.target_name target)
+             (Battle.target_name target)
              (match expect with Some n -> " " ^ n | None -> ""));
-        take moves ~default:Battle_driver.Chosen);
+        take moves ~default:Battle.Chosen);
     switch_to =
       (fun ~slot ->
         call (Printf.sprintf "switch %d" slot);
@@ -66,15 +66,14 @@ let driver f calls : Battle_driver.t =
     answer_move_learn =
       (fun learn ->
         let result = learned (take offered ~default:None) learn in
-        call
-          (learn_name learn ^ " (" ^ Battle_driver.describe_learned result ^ ")");
+        call (learn_name learn ^ " (" ^ Battle.describe_learned result ^ ")");
         result);
     answer_use_next = (fun yes -> call (if yes then "next yes" else "next no"));
   }
 
 let played f script () =
   let calls = ref [] in
-  let outcome = Scripted_battle.run (driver f calls) script in
+  let outcome = Scripted_battle.run (fake_game_steps f calls) script in
   let calls =
     if !calls = [] then "no calls" else String.concat "; " (List.rev !calls)
   in
@@ -83,7 +82,7 @@ let played f script () =
 let case name f script expectation : Table_test.case =
   { name; input = played f script; expectation }
 
-let menus n = List.init n (fun _ -> Battle_driver.Action_menu)
+let menus n = List.init n (fun _ -> Battle.Action_menu)
 let move ?name slot target = Battle_script.Move { slot; target; name }
 
 (* The old Route 8 mg-05: Knock Off on the ally, MIMIEN in, the sweeper in,
@@ -213,6 +212,12 @@ let other_cases =
       (fake [ Use_next; Battle_over ])
       (Battle_script.make Flee)
       "next no => over (0 menus, 0 send-ins, 0 refused, 1 prompts)";
+    case "a trainer's switch offer: NO, whatever the script's use next"
+      (fake [ Action_menu; Switch_offer; Action_menu; Battle_over ])
+      (Battle_script.make ~use_next:true
+         (Attack { slots = [ 0 ]; target = Default }))
+      "move 0 default; next no; move 0 default => over (2 menus, 0 send-ins, 0 \
+       refused, 1 prompts)";
     case "move learn: the moves kept when the script forgets none"
       (fake [ Move_learn; Move_learn; Battle_over ])
       (Battle_script.make Flee)

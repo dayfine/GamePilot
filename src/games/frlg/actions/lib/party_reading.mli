@@ -16,6 +16,8 @@ val roster : t -> Party_roster.t ref
     update it. Empty until read when none was stated. *)
 
 val guard :
-  t -> string * Story.Game.game_action -> string * Story.Game.game_action
+  t ->
+  string * Pokemon_engine.Game.game_action ->
+  string * Pokemon_engine.Game.game_action
 (** The named action, with the party read first when it picks a member and the
     party is not known yet; a read that fails fails the action. *)

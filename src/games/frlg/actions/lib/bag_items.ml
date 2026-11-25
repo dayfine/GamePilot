@@ -165,12 +165,17 @@ let select slug =
   | Absent | Unread ->
       M.fail "not_in_bag" (slug ^ " is not in " ^ Bag_screen.pocket_name pocket)
 
+(* pokefirered src/item_menu.c (the list's row print) draws no count in the
+   Key Items pocket: a key item is one or none. *)
+let found_count (pocket : Bag_screen.pocket) read_count =
+  match pocket with Key_items -> Some 1 | Items | Poke_balls -> read_count ()
+
 let count ~log slug =
   let pocket, candidates, name = pocket_names slug in
   open_pocket_top pocket;
   let counted =
     match find_from candidates name 0 with
-    | Found { row; _ } -> count_on_row row
+    | Found { row; _ } -> found_count pocket (fun () -> count_on_row row)
     | Absent -> Some 0
     | Unread -> None
   in
@@ -179,6 +184,7 @@ let count ~log slug =
     | Some n -> Printf.sprintf "Bag: %d %s." n slug
     | None -> Printf.sprintf "Bag: the count of %s did not read." slug);
   M.close "the bag" Bag_screen.bag_open;
+  M.await_fade_in ~code:"not_closed" "the overworld after the bag";
   M.settle_back ~label:"bag count" ~log;
   counted
 
@@ -215,9 +221,7 @@ let choose_in_item_menu item row =
   to_item_menu_row item row;
   M.press Wire.A
 
-let action_a =
-  Wire.Press
-    { buttons = [ Wire.A ]; hold_ms = M.button_hold_ms; cooldown_ms = 0 }
+let action_a = Wire.press ~hold_ms:M.button_hold_ms ~cooldown_ms:0 [ Wire.A ]
 
 let item_action_press item row =
   open_pocket_top (pocket_of_item item);

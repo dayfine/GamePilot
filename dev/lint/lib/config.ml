@@ -1,4 +1,5 @@
 type layer = { name : string; pattern : string list }
+type family = { layer : string; var : string; members : string list }
 
 type t = {
   roots : string list;
@@ -6,6 +7,7 @@ type t = {
   test_dirs : string list;
   library_dir : string;
   exceptions_file : string option;
+  no_exceptions_roots : string list;
   max_function_lines : int;
   max_function_avg_depth : float;
   max_function_depth : int;
@@ -15,6 +17,8 @@ type t = {
   complexity_advisory : int;
   layers : layer list;
   allowed : (string * string list) list;
+  families : family list;
+  never_links : (string list * string list) list;
 }
 
 let default =
@@ -24,6 +28,7 @@ let default =
     test_dirs = [];
     library_dir = "lib";
     exceptions_file = None;
+    no_exceptions_roots = [];
     max_function_lines = 50;
     max_function_avg_depth = 3.0;
     max_function_depth = 5;
@@ -33,6 +38,8 @@ let default =
     complexity_advisory = 10;
     layers = [];
     allowed = [];
+    families = [];
+    never_links = [];
   }
 
 let words line =
@@ -82,11 +89,18 @@ let apply_line c = function
   | [ "test_dir"; name ] -> Ok { c with test_dirs = c.test_dirs @ [ name ] }
   | [ "library_dir"; name ] -> Ok { c with library_dir = name }
   | [ "exceptions"; file ] -> Ok { c with exceptions_file = Some file }
+  | [ "no_exceptions"; dir ] ->
+      Ok { c with no_exceptions_roots = c.no_exceptions_roots @ [ dir ] }
   | [ "layer"; name; pattern ] ->
       let layer = { name; pattern = String.split_on_char '/' pattern } in
       Ok { c with layers = c.layers @ [ layer ] }
   | "allow" :: name :: deps ->
       Ok { c with allowed = c.allowed @ [ (name, deps) ] }
+  | "family" :: layer :: var :: members ->
+      Ok { c with families = c.families @ [ { layer; var; members } ] }
+  | "never_links" :: pattern :: (_ :: _ as libs) ->
+      let rule = (String.split_on_char '/' pattern, libs) in
+      Ok { c with never_links = c.never_links @ [ rule ] }
   | [ key; v ] -> set_threshold c key v
   | key :: _ -> Error (Printf.sprintf "malformed '%s' line" key)
   | [] -> Ok c
@@ -95,11 +109,13 @@ let check_layer_names c =
   let declared name = List.exists (fun l -> l.name = name) c.layers in
   let undeclared =
     List.concat_map (fun (name, deps) -> name :: deps) c.allowed
+    @ List.map (fun (f : family) -> f.layer) c.families
     |> List.filter (fun n -> n <> "*" && not (declared n))
   in
   match (c.roots, undeclared) with
   | [], _ -> Error "no 'root' line"
-  | _, n :: _ -> Error (Printf.sprintf "allow names undeclared layer '%s'" n)
+  | _, n :: _ ->
+      Error (Printf.sprintf "allow or family names undeclared layer '%s'" n)
   | _, [] -> Ok c
 
 let apply_text_line c line =

@@ -5,6 +5,7 @@ PABotBase2, mGBA, or recorded frames) and serves probe measurements over JSON-RP
 are written in OCaml and run unchanged against the console, a replay, or a simulation.
 
 - Design: `docs/design/Layered-Automation-Stack.md`
+- Engine boundary (what is game-agnostic, how a second game plugs in): `docs/design/Engine-Boundary.md`
 - Roadmap: `docs/roadmap.md`
 - Rules for contributors and agents: `AGENTS.md`
 
@@ -42,6 +43,7 @@ again. It takes its paths from the environment, or from `~/.config/gamepilot/env
 | `GAMEPILOT_RUNS` | run records, one folder per run | `~/.local/share/gamepilot/runs` |
 | `GAMEPILOT_BIN` | the `gamepilot` binary | `src/_build/default/bin/gamepilot.exe` |
 | `GAMEPILOT_WATCH_LISTEN` | the watch pages' address; `0.0.0.0` opens them to the LAN | `127.0.0.1` |
+| `GAMEPILOT_LAB_GAME` | the lab console's game id (its HOME tile, its lab panel) for `ctl park`/`resume`, `console`, `switch-devices` | the one game with Switch HOME data (`frlg`) |
 
 `gamepilot checkpoints` reads `GAMEPILOT_STATES` and `GAMEPILOT_RUNS` too (`--states` and
 `--runs-dir` override them). No ROM is included in or needed by this repository; bring your own.

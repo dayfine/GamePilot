@@ -4,9 +4,9 @@
 
 type town = {
   name : string;  (** The map's name, as a plan names it (["CeladonCity"]). *)
-  cell : Grid_maps.Tile_pos.t;
+  cell : Grid_geometry.Tile_pos.t;
       (** Presses right and down from the map's top-left corner. *)
-  landing : Story.Pose.observed;
+  landing : Pokemon_engine.Pose.observed;
       (** Facing south, as every Fly lands the player; a walk from it needs no
           turn tap first, which would be a step when the player already faces
           the leg's way. *)
@@ -24,8 +24,8 @@ val asset : string
 val parse : Yojson.Safe.t -> (t, string) result
 
 val load : unit -> (t, string) result
-(** The table, found from the working directory
-    ({!Frlg_repo_files.Repo_files.locate}) and read once. *)
+(** The table, found from the working directory ({!Repo_io.Repo_files.locate})
+    and read once. *)
 
 val find : t -> string -> town option
 

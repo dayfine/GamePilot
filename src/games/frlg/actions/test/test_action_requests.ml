@@ -11,10 +11,10 @@ let stocks = Result.get_ok (Mart_plan.load ())
 let decode name json () =
   match
     Action_requests.decode stocks name
-      (Grid_maps.Json_field.as_object "" (Yojson.Safe.from_string json))
+      (Json_field.as_object "" (Yojson.Safe.from_string json))
   with
   | Ok r -> Action_requests.to_string r
-  | Error c -> Story.Failure.cause_to_string c
+  | Error c -> Pokemon_engine.Failure.cause_to_string c
 
 let decoding =
   [
@@ -76,6 +76,15 @@ let decoding =
     case "verify_mail_glitch"
       (decode "verify_mail_glitch" {|{"species": "mr-mime"}|})
       "verify the mail glitch on mr-mime";
+    case "read_caught, logged only"
+      (decode "read_caught" "{}")
+      "read the species caught";
+    case "read_caught with a floor"
+      (decode "read_caught" {|{"at_least": 60}|})
+      "read the species caught, at least 60";
+    case "read_caught past the National Pokedex"
+      (decode "read_caught" {|{"at_least": 400}|})
+      "bad_args: read_caught: at_least is 400, not 0..386";
     case "an action FireRed does not have"
       (decode "switch_grind" "{}")
       "unknown_action: switch_grind";
@@ -122,7 +131,7 @@ let roster =
       (fun () ->
         match Party_roster.resolve mg (Species "mr-mime") with
         | Ok n -> string_of_int n
-        | Error c -> Story.Failure.cause_to_string c)
+        | Error c -> Pokemon_engine.Failure.cause_to_string c)
       "not_in_party: mr-mime is not in the party (blastoise, pidgey, abra, \
        spearow)";
     case "a full party sends a prize to the PC"
@@ -159,7 +168,8 @@ let others =
     case "spin: five turns clockwise from west"
       (fun () ->
         String.concat " "
-          (List.map Grid_maps.Direction.name (Spin_for_encounter.turns West 5)))
+          (List.map Grid_geometry.Direction.name
+             (Spin_for_encounter.turns West 5)))
       "north east south west north";
   ]
 

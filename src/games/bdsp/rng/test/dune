@@ -1,0 +1,29 @@
+(tests
+ (names
+  test_xorshift128
+  test_static_encounter
+  test_blink_model
+  test_state_solver
+  test_blink_extraction
+  test_state_reidentifier
+  test_advance_clock
+  test_rng_calibration
+  test_provisional_state
+  test_blink_recovery
+  test_blink_reanchor)
+ (modules
+  fixture_lines
+  test_xorshift128
+  test_static_encounter
+  test_blink_model
+  test_state_solver
+  test_blink_extraction
+  test_state_reidentifier
+  test_advance_clock
+  test_rng_calibration
+  test_provisional_state
+  test_blink_recovery
+  test_blink_reanchor)
+ (deps
+  (glob_files fixtures/*.txt))
+ (libraries gamepilot.table_test gamepilot.bdsp_rng))

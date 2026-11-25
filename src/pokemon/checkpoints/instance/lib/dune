@@ -1,0 +1,9 @@
+(library
+ (name pokemon_engine)
+ (public_name gamepilot.pokemon_engine)
+ (libraries
+  gamepilot.program_engine
+  gamepilot.pokemon_rules
+  gamepilot.pokemon_plan_format
+  gamepilot.pokemon_text
+  gamepilot.pokemon_event_snapshot))

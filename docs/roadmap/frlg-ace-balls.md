@@ -19,7 +19,7 @@ Runner") is the plan to carry over:
 - The exact payloads for the Switch release must be verified against its memory layout before any
   preset ships (the plan says so; none is verified yet).
 
-Track 1A of the same plan (Mail Glitch Activation) is what GamePilot already ported as mg-01..mg-06.
+Track 1A of the same plan (Mail Glitch Activation) is what GamePilot already ported as 01-celadon-setup..08-activate-and-verify.
 How the Mail Glitch leads to ACE is in the
 [pomeg-letterbombers ACE notes](https://pomeg-letterbombers.github.io/pokemon-ace-notes/mail-glitch).
 
@@ -35,7 +35,7 @@ How the Mail Glitch leads to ACE is in the
 
 ## Prerequisites
 
-- mg-05 done on the save (the glitch is active), and whatever bootstrap state the chosen ACE route
+- 08-activate-and-verify done on the save (the glitch is active), and whatever bootstrap state the chosen ACE route
   needs, which the fork plan calls the "bootstrap species".
 - A bag reader that reads counts in the Balls and Items pockets.
 

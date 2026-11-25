@@ -12,6 +12,9 @@ let rec match_segments pattern segments bindings =
       else None
   | _ -> None
 
+let dir_matches pattern dir =
+  match_segments pattern (String.split_on_char '/' dir) [] <> None
+
 let place (c : Config.t) dir =
   let segments = String.split_on_char '/' dir in
   List.find_map
@@ -26,6 +29,16 @@ let describe p =
   | bs ->
       Printf.sprintf "%s (%s)" p.layer
         (String.concat ", " (List.rev_map (fun (k, v) -> k ^ "=" ^ v) bs))
+
+let in_family from (f : Config.family) =
+  match List.assoc_opt f.var from.bindings with
+  | None -> true
+  | Some v -> List.mem v f.members
+
+let family_allows (c : Config.t) from target =
+  List.for_all
+    (fun (f : Config.family) -> f.layer <> target.layer || in_family from f)
+    c.families
 
 let allows (c : Config.t) from target =
   let permitted =
@@ -42,7 +55,7 @@ let allows (c : Config.t) from target =
         | Some w -> v = w)
       from.bindings
   in
-  layer_ok && bindings_agree
+  layer_ok && bindings_agree && family_allows c from target
 
 let dep_message c ~from lib target =
   let outside = "which is outside every layer" in

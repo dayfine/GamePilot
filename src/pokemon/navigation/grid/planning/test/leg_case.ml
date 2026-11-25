@@ -1,7 +1,7 @@
 (* A leg planner case on the toy game: a map, a walk, and what the plan must
    be. Each case of the C++ tests that planned twice is two cases here. *)
 
-open Grid_maps
+open Grid_geometry
 open Grid_planning
 
 type input = {
@@ -51,12 +51,12 @@ let last holds legs = leg (List.length legs - 1) holds legs
 let to_wall (leg : _ Leg.t) =
   match leg.kind with
   | Walk { to_wall; _ } -> to_wall
-  | Action _ | Face -> false
+  | Special_step _ | Face -> false
 
 let tiles n (leg : _ Leg.t) =
   match leg.kind with
   | Walk { tiles; _ } -> tiles = n
-  | Action _ | Face -> false
+  | Special_step _ | Face -> false
 
 let going direction (leg : _ Leg.t) = leg.direction = direction
 let wild (leg : _ Leg.t) = leg.wild

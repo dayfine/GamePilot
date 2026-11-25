@@ -77,12 +77,30 @@ let round ~frame ~word =
   press Wire.A;
   pause after_confirm_ms
 
+(* The item's count in its own pocket, from the Items pocket and back to it:
+   an Ultra Ball is counted on the Poke Balls pocket. *)
 let count_of item =
-  match Bag_items.count_in_pocket item with
+  let pocket = Bag_items.pocket_of_item item in
+  let away = pocket <> Frlg_readers.Bag_screen.Items in
+  if away then Bag_items.pocket_top pocket;
+  let n = Bag_items.count_in_pocket item in
+  if away then Bag_items.pocket_top Items;
+  match n with
   | Some n -> n
   | None -> M.fail "count_not_read" (item ^ "'s count did not read")
 
+(* The bag back after the editor: a fade passes first, black on the frame
+   (round 2 read black there), and the list takes no A for a moment after it
+   shows (round 2's A was dropped, so DOWN, A chose the next row; mGBA, tt-01
+   testing runs 2 and 3), so the party's input wait comes after it. *)
+let await_bag () =
+  ignore
+    (M.await_screen ~timeout_ms:wait_ms ~code:"no_bag" "the bag" (fun m ->
+         Bag_screen.pocket m = Some Items));
+  pause Party_actions.party_input_ms
+
 let mail_left () =
+  await_bag ();
   match Bag_items.count_on_row 0 with
   | Some n when n >= min_mail -> ()
   | n ->
@@ -106,13 +124,11 @@ let run ~log plan =
   let before = count_of plan.item in
   Bag_items.to_top ();
   rounds ~log plan;
-  ignore
-    (M.await_screen ~timeout_ms:wait_ms ~code:"no_bag"
-       "the bag after the rounds" (fun m -> Bag_screen.pocket m = Some Items));
+  await_bag ();
   Bag_items.to_top ();
   let after = count_of plan.item in
   Effects.save_run_frame "proof-b.png";
-  M.close "the bag" Bag_screen.bag_open;
+  M.close_through_fades "the bag" Bag_screen.bag_open;
   M.settle_back ~label:"duplication" ~log;
   log (Printf.sprintf "Duplication: %s %d -> %d." plan.item before after);
   Option.iter (M.fail "duplication_failed") (counted plan ~before ~after)

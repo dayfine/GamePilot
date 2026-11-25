@@ -2,7 +2,7 @@
    map connection, and by the model's own risks. Ported from the C++ fork's
    Pokemon_LegPlanner_Tests.cpp. *)
 
-open Grid_maps
+open Grid_geometry
 open Grid_planning
 open Leg_case
 

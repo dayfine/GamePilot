@@ -3,6 +3,6 @@
  (modules robust_toy test_robust_plan test_robust_cost test_from_step_model)
  (libraries
   gamepilot.table_test
-  gamepilot.grid_maps
+  gamepilot.grid_geometry
   gamepilot.grid_planning
   gamepilot.grid_robust_legs))

@@ -3,7 +3,7 @@
    Pokemon_LegWalker_Tests.cpp, case by case, with the walker's log lines and
    leg record added. *)
 
-open Grid_maps
+open Grid_geometry
 open Grid_walker
 
 let tile_ms = 267
@@ -19,7 +19,7 @@ let button_of : Direction.t -> Wire.button = function
   | West -> Left
 
 let mover direction hold_ms =
-  [ Wire.Press { buttons = [ button_of direction ]; hold_ms; cooldown_ms = 0 } ]
+  [ Wire.press ~hold_ms ~cooldown_ms:0 [ button_of direction ] ]
 
 (* The scripted interrupt: a wild battle unless [kind] says otherwise (a sign's
    message is a [Dialogue]). *)

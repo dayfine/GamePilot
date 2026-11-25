@@ -52,7 +52,7 @@ let () =
       case "Indigo Plateau lands outside"
         (fun () ->
           match Fly_towns.find table "IndigoPlateau" with
-          | Some t -> Story.Pose.observed_to_string t.landing
+          | Some t -> Pokemon_engine.Pose_text.observed t.landing
           | None -> "none")
         "IndigoPlateau_Exterior (11, 7) south";
       case "a cell that is not [x, y]"

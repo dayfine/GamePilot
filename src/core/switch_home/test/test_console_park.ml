@@ -25,29 +25,51 @@ let console ?(home_ignored = 0) ?(a_ignored = false) ?(closed = false) () =
         show 300 S.Game;
         show 1200 S.User_select
     | Wire.A, S.Home_fire_red_last when not a_ignored -> show 800 S.Game
-    | Wire.A, S.Home_on_fire_red -> show 800 S.User_select
+    | Wire.A, (S.Home_on_fire_red | S.Home_scrolled_on_fire_red) ->
+        show 800 S.User_select
     | Wire.A, S.User_select ->
         show 300 S.Black;
         show 4000 S.Intro
     | _ -> ()
 
-let log = ignore
+(* A scrolled row: the [n]th Left (or Right) brings FireRed into view with the
+   cursor on it, the ones before show other tiles; with [None], that way is
+   the row's end and the press does nothing. Other presses as [console]. *)
+let scrolled ?left_to_fire_red ?right_to_fire_red () =
+  let base = console () and lefts = ref 0 and rights = ref 0 in
+  fun t b screen ->
+    let step count far on n =
+      incr count;
+      S.show t ~after:200 (if !count >= n then on else far)
+    in
+    match b with
+    | Wire.Left ->
+        Option.iter
+          (step lefts S.Home_row_start S.Home_scrolled_on_fire_red)
+          left_to_fire_red
+    | Wire.Right ->
+        Option.iter
+          (step rights S.Home_scrolled_fire_red_out S.Home_on_fire_red)
+          right_to_fire_red
+    | _ -> base t b screen
 
-let run start react body =
-  let t = S.create ~start react in
-  let outcome = S.run t body in
-  Printf.sprintf "%s; %s; ends on %s" outcome (S.presses_text t)
-    (S.screen_name (S.screen_at t t.S.clock_ms))
+let times n b = List.init n (fun _ -> b)
+let log = ignore
+let run start react body = S.play ~start react body
 
 let park start react () =
   run start react (fun () ->
-      match Console_park.park ~log Fire_red.tile with
+      match
+        Console_park.park ~log ~picture:Fire_red.nso_gba_picture Fire_red.tile
+      with
       | Ok () -> "ok"
       | Error e -> "error: " ^ e)
 
 let resume start react () =
   run start react (fun () ->
-      match Console_park.resume ~log Fire_red.tile with
+      match
+        Console_park.resume ~log ~picture:Fire_red.nso_gba_picture Fire_red.tile
+      with
       | Ok r -> "ok, " ^ Console_park.resumed_to_string r
       | Error e -> "error: " ^ e)
 
@@ -90,6 +112,32 @@ let () =
       case "resume: HOME dimmed, B wakes it, A resumes FireRed"
         (resume S.Home_dimmed (console ()))
         "ok, resumed the suspended game; B, A; ends on game";
+      case "resume: HOME scrolled, the cursor on FireRed, A at once"
+        (resume S.Home_scrolled_on_fire_red (scrolled ()))
+        "ok, launched the game; A, A; ends on intro";
+      case
+        "resume: FireRed out of view to the left, Left until it shows with the \
+         cursor on it (console B, 2026-11-25)"
+        (resume S.Home_scrolled_fire_red_out (scrolled ~left_to_fire_red:3 ()))
+        "ok, launched the game; Left, Left, Left, A, A; ends on intro";
+      case
+        "resume: FireRed out of view to the right, 12 Left at the row's start, \
+         then Right until it shows"
+        (resume S.Home_row_start (scrolled ~right_to_fire_red:2 ()))
+        (Printf.sprintf
+           "ok, launched the game; %s, Right, Right, A, A; ends on intro"
+           (String.concat ", " (times 12 "Left")));
+      case "resume: no tile shows FireRed, 12 Left and 12 Right, then an error"
+        (resume S.Home_scrolled_fire_red_out (scrolled ()))
+        (Printf.sprintf
+           "error: no tile on HOME shows the game, after 12 Left and 12 Right; \
+            %s, %s; ends on HOME (scrolled, FireRed out of view)"
+           (String.concat ", " (times 12 "Left"))
+           (String.concat ", " (times 12 "Right")));
+      case "resume: the cursor on the buttons below the row, nothing pressed"
+        (resume S.Home_on_buttons (scrolled ()))
+        "error: the cursor is on no tile of HOME's row (on the buttons \
+         below?); no press; ends on HOME (cursor on the buttons)";
       case "resume: already in the game, nothing"
         (resume S.Game (console ()))
         "ok, already in the game; no press; ends on game";

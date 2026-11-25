@@ -13,14 +13,14 @@ type lead =
       (** the grinder leads and switches to the sweeper on turn 1 *)
 
 type heal =
-  | Nurse of Story.Pose.grid
+  | Nurse of Pokemon_engine.Pose.grid
       (** talk to the nurse from this tile (walked to and back) *)
-  | Pad of Story.Pose.grid  (** step on this healing tile and back *)
+  | Pad of Pokemon_engine.Pose.grid  (** step on this healing tile and back *)
 
 type strategy = {
   name : string;
-  spot : Story.Pose.grid;  (** the grass tile battles are paced from *)
-  pace : Grid_maps.Direction.t;
+  spot : Pokemon_engine.Pose.grid;  (** the grass tile battles are paced from *)
+  pace : Grid_geometry.Direction.t;
       (** the way paced, one step and back: the tile that way is grass too
           ({!Pacing}) *)
   lead : lead;
@@ -60,7 +60,7 @@ val load_strategies : unit -> (strategy list, string) result
 (** The asset, found from the working directory and read once. *)
 
 val decode :
-  strategy list -> Grid_maps.Json_field.obj -> (t, Story.Failure.cause) result
+  strategy list -> Json_field.obj -> (t, Pokemon_engine.Failure.cause) result
 (** The action's args: ["species"], ["target_level"], ["learn_move"],
     ["learn_slot"] (from 1), ["sweeper"], ["sweeper_moves"] (from 1),
     ["max_battles"], ["strategy"] (default {!default_strategy}) and ["round"]

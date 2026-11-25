@@ -19,14 +19,31 @@ type button = Command.button =
   | Home
   | X
   | Y
+  | ZL
+  | ZR
+  | Plus
+  | Minus
 
+let all_buttons = Command.all_buttons
 let string_of_button = Command.string_of_button
 let button_of_string = Command.button_of_string
 let switch_only = Command.switch_only
 
+type stick = Command.stick
+
+let stick = Command.stick
+
 type command = Command.command =
-  | Press of { buttons : button list; hold_ms : int; cooldown_ms : int }
+  | Press of {
+      buttons : button list;
+      left_stick : stick option;
+      right_stick : stick option;
+      hold_ms : int;
+      cooldown_ms : int;
+    }
   | Wait of { wait_ms : int }
+
+let press = Command.press
 
 type box = Probe.box = { x : float; y : float; w : float; h : float }
 type delivery = Probe.delivery = Every | Latest
@@ -44,11 +61,18 @@ type probe_spec = Probe.probe_spec = {
   template : string option;
   ink : color_range option;
   color_range : color_range option;
+  test : Line_shares.test;
+  find : Blob_find.params option;
 }
+
+module Line_shares = Line_shares
+module Blob_find = Blob_find
 
 let color_stats_probe = Probe.color_stats_probe
 let template_match_probe = Probe.template_match_probe
 let color_count_probe = Probe.color_count_probe
+let line_shares_probe = Probe.line_shares_probe
+let find_probe = Probe.find_probe
 
 type rgb = Probe.rgb = { r : float; g : float; b : float }
 
@@ -56,6 +80,8 @@ type probe_result = Probe.probe_result =
   | Color_stats of { mean : rgb; stddev : rgb }
   | Template_match of { score : float; x : float; y : float }
   | Color_count of { fraction : float; mean : rgb option }
+  | Line_shares of Line_shares.t
+  | Find of { blobs : Blob_find.blob list }
   | Other of json
 
 type frame = Probe.frame = {
@@ -109,6 +135,7 @@ type call = Jsonrpc.call =
   | Unsubscribe of string list
   | Submit of { batch_id : string; commands : command list }
   | Cancel
+  | Cancel_then of { batch_id : string; commands : command list }
   | Status
   | Lease_acquire of { owner : string; ttl_ms : int option }
   | Lease_release

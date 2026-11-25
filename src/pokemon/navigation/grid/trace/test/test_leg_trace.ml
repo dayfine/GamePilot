@@ -2,7 +2,7 @@
    and the tracer's records for a leg that ends, one cut off by the next, and
    one with a wild battle on the way. Ported from Pokemon_LegTrace_Tests.cpp. *)
 
-open Grid_maps
+open Grid_geometry
 open Grid_trace
 
 let tile map x y = { Route_tile.map; pos = { Tile_pos.x; y } }

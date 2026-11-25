@@ -7,6 +7,7 @@
        y 3..5:      [ Town (4) ][Lake]                                    *)
 
 open Grid_maps
+open Grid_geometry
 
 let open_map ?world ?(points = "{}") name ~width ~height =
   let row = Printf.sprintf "%S" (String.make width '.') in

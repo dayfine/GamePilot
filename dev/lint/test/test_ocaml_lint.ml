@@ -53,6 +53,38 @@ let () =
              \  else\n\
              \    let c = b + 1 in\n\
              \    if c > b then 1 else 2\n")));
+  case "nesting: a function in a functor is measured from its let" ~expect:[]
+    (checks
+       (Nesting.check config
+          (parse
+             "module Make (T : sig end) = struct\n\
+             \  let f a =\n\
+             \    match a with\n\
+             \    | Some b ->\n\
+             \        if b then\n\
+             \          1\n\
+             \        else 2\n\
+             \    | None -> 0\n\
+              end\n")));
+  case "nesting: a functor's body counts from the functor, file-wide" ~expect:[]
+    (checks
+       (Nesting.check config
+          (parse
+             "module Make (T : sig end) = struct\n\
+             \  let f a =\n\
+             \    match a with\n\
+             \    | Some b -> b\n\
+             \    | None -> 0\n\
+              end\n")));
+  case "nesting: the same lines at the top level are too deep"
+    ~expect:[ "nesting"; "nesting" ]
+    (checks
+       (Nesting.check config
+          (parse
+             "let f a =\n\
+             \        match a with\n\
+             \        | Some b -> b\n\
+             \        | None -> 0\n")));
   case "nesting: an else-if chain is flat" ~expect:[]
     (checks
        (Nesting.check config
@@ -77,6 +109,34 @@ let () =
               let default = { timeout_ms = 3000; ratio = 0.75 }\n\
               let f ?(retries = 10) x =\n\
              \  match x with 42 -> retries | _ -> seconds_per_day\n")))
+
+(* --- no exceptions --- *)
+
+let () =
+  case "no_exceptions: declaring, raising and catching are caught"
+    ~expect:(List.init 7 (fun _ -> "no_exceptions"))
+    (checks
+       (No_exceptions.check
+          (parse
+             "exception Stop\n\
+              let a () = raise Stop\n\
+              let b () = failwith \"no\"\n\
+              let c f = try f () with Stop -> 0\n\
+              let d f = match f () with x -> x | exception Stop -> 0\n\
+              let e () = Stdlib.invalid_arg \"x\"\n\
+              let g = List.map raise_notrace\n")));
+  case "no_exceptions: a local exception is caught" ~expect:[ "no_exceptions" ]
+    (checks (No_exceptions.check (parse "let f () = let exception E in ()\n")));
+  case
+    "no_exceptions: comments, strings, Result and names containing raise pass"
+    ~expect:[]
+    (checks
+       (No_exceptions.check
+          (parse
+             "(* raise Stop; try ... with; failwith *)\n\
+              let raise_volume v = v + 1\n\
+              let msg = \"failwith: exception, try with\"\n\
+              let f x = match x with Ok v -> v | Error _ -> 0\n")))
 
 (* --- complexity --- *)
 
@@ -137,12 +197,15 @@ let layered =
       "root .\n\
        layer base src/base/**\n\
        layer core src/core/**\n\
+       layer pokemon src/pokemon/**\n\
        layer program src/games/{game}/programs/{program}/**\n\
        layer game src/games/{game}/**\n\
        allow base base\n\
        allow core core base\n\
-       allow game game core base\n\
-       allow program program game core base\n"
+       allow pokemon pokemon core base\n\
+       allow game game pokemon core base\n\
+       allow program program game pokemon core base\n\
+       family pokemon game frlg\n"
   with
   | Ok c -> c
   | Error e -> failwith e
@@ -155,6 +218,7 @@ let tree extra =
   [
     ("src/base/wire/lib/dune", library "wire" [ "yojson" ]);
     ("src/core/effects/lib/dune", library "effects" [ "p.wire" ]);
+    ("src/pokemon/party/lib/dune", library "party" [ "p.effects" ]);
     ("src/games/frlg/readers/lib/dune", library "frlg_readers" [ "p.effects" ]);
     ( "src/games/emerald/readers/lib/dune",
       library "emerald_readers" [ "p.effects" ] );
@@ -182,7 +246,62 @@ let () =
        ]);
   case "layers: base linking core is caught" ~expect:[ "layers" ]
     (layer_findings
-       [ ("src/base/codec/lib/dune", library "codec" [ "effects" ]) ])
+       [ ("src/base/codec/lib/dune", library "codec" [ "effects" ]) ]);
+  case "layers: a game and its program in the family may link it" ~expect:[]
+    (layer_findings
+       [
+         ("src/games/frlg/maps/lib/dune", library "frlg_maps" [ "p.party" ]);
+         ( "src/games/frlg/programs/poc/test/dune",
+           "(test (name t) (libraries p.party))" );
+       ]);
+  case "layers: a game outside the family linking it is caught"
+    ~expect:[ "layers" ]
+    (layer_findings
+       [
+         ( "src/games/emerald/maps/lib/dune",
+           library "emerald_maps" [ "p.party" ] );
+       ]);
+  case "layers: a program of a game outside the family is caught"
+    ~expect:[ "layers" ]
+    (layer_findings
+       [
+         ( "src/games/emerald/programs/poc/test/dune",
+           "(test (name t) (libraries p.party))" );
+       ])
+
+(* --- never_links --- *)
+
+let pure =
+  match Config.parse "root .\nnever_links src/engine/rules/lib yojson\n" with
+  | Ok c -> c
+  | Error e -> failwith e
+
+let never_links_findings extra =
+  checks
+    (Never_links.check pure
+       ([
+          ("src/base/wire/lib/dune", library "wire" [ "yojson" ]);
+          ("src/base/text/lib/dune", library "text" []);
+          ("src/engine/codec/lib/dune", library "codec" [ "p.wire" ]);
+        ]
+       @ extra))
+
+let () =
+  case "never_links: a rules library linking only pure libraries passes"
+    ~expect:[]
+    (never_links_findings
+       [ ("src/engine/rules/lib/dune", library "rules" [ "p.text" ]) ]);
+  case "never_links: linking the library directly is caught"
+    ~expect:[ "never_links" ]
+    (never_links_findings
+       [ ("src/engine/rules/lib/dune", library "rules" [ "yojson" ]) ]);
+  case "never_links: linking it through two libraries is caught"
+    ~expect:[ "never_links" ]
+    (never_links_findings
+       [ ("src/engine/rules/lib/dune", library "rules" [ "codec" ]) ]);
+  case "never_links: another directory may link it" ~expect:[]
+    (never_links_findings
+       [ ("src/engine/other/lib/dune", library "other" [ "p.codec" ]) ])
 
 (* --- exceptions file, parse failures, config --- *)
 
@@ -222,6 +341,19 @@ let () =
     ~expect:[ "error" ]
     (match Config.parse "root .\nlayer base src/base/**\nallow base bsae\n" with
     | Ok _ -> [ "ok" ]
+    | Error _ -> [ "error" ]);
+  case "config: family naming an undeclared layer is rejected"
+    ~expect:[ "error" ]
+    (match
+       Config.parse "root .\nlayer base src/base/**\nfamily bsae game a\n"
+     with
+    | Ok _ -> [ "ok" ]
     | Error _ -> [ "error" ])
+
+let () =
+  case "config: no_exceptions roots are read" ~expect:[ "src"; "tools" ]
+    (match Config.parse "root .\nno_exceptions src\nno_exceptions tools\n" with
+    | Ok c -> c.no_exceptions_roots
+    | Error e -> [ e ])
 
 let () = if !failures > 0 then exit 1

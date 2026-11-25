@@ -57,3 +57,11 @@ repo src/games/frlg/readers/test/images/mgba/mail-glitch-use/item-menu-mail.png|
 repo src/games/frlg/readers/test/images/mgba/mail-editor/editor-abra.png|mail-editor/editor-abra__maileditor.png
 repo src/games/frlg/readers/test/images/mgba/mail-editor/editor-blank.png|mail-editor/editor-blank__maileditor.png
 repo src/games/frlg/readers/test/images/mgba/mg04-escape-rope/item-menu-escape-rope.png|mg04-escape-rope/item-menu-escape-rope__itemmenu.png
+repo src/games/frlg/readers/test/images/mgba/seagallop-one-island/sailor-text.png|seagallop-one-island/sailor-text__none.png
+repo src/games/frlg/readers/test/images/mgba/seagallop-one-island/list-row0.png|seagallop-one-island/list-row0__seagallop0.png
+repo src/games/frlg/readers/test/images/mgba/seagallop-one-island/list-row1.png|seagallop-one-island/list-row1__seagallop1.png
+repo src/games/frlg/readers/test/images/mgba/seagallop-one-island/list-row2.png|seagallop-one-island/list-row2__seagallop2.png
+repo src/games/frlg/readers/test/images/mgba/seagallop-one-island/after-b.png|seagallop-one-island/after-b__none.png
+repo src/games/frlg/readers/test/images/mgba/rng-route10-2026-11-25/ekans-shiny-summary.png|rng-route10/ekans-shiny-summary__summary1-shiny.png
+repo src/games/frlg/readers/test/images/mgba/rng-route10-2026-11-25/oddish-summary.png|rng-route10/oddish-summary__summary1.png
+repo src/games/frlg/readers/test/images/mgba/rng-route10-2026-11-25/rattata-summary.png|rng-route10/rattata-summary__summary1.png

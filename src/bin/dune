@@ -2,7 +2,10 @@
  (name gamepilot)
  (public_name gamepilot)
  (package gamepilot)
+ (flags
+  (:standard -open Live_run))
  (libraries
+  gamepilot.live_run
   gamepilot.wire
   gamepilot.effects
   gamepilot.watch_report
@@ -10,12 +13,15 @@
   gamepilot.live
   gamepilot.start_menu_poc
   gamepilot.program_registry
+  gamepilot.guide_page
   gamepilot.run_record
-  gamepilot.story
-  gamepilot.frlg_actions
-  gamepilot.frlg_readers
+  gamepilot.engine_series
+  gamepilot.frlg_ctl_readers
   gamepilot.ctl_script
   gamepilot.switch_home
-  gamepilot.frlg_story
+  gamepilot.repo_io
+  gamepilot.frlg_series
+  gamepilot.checkpoints_flags
+  gamepilot.pokemon_flags
   unix
   yojson))

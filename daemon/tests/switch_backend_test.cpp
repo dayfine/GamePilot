@@ -1,11 +1,12 @@
 // The Switch backend without a console: the key mapping, the wall-time input
-// schedule, the capture ring's gaps and heartbeat, a
-// recorded clip played at its own rate, the latency harness on FakeSwitch, and
-// `status` from a second connection while a client is served.
+// schedule, the capture ring's gaps and heartbeat, a recorded clip played at
+// its own rate, the latency harness (on time the test sets, and on
+// FakeSwitch), and `status` from a second connection while a client is served.
 
 #include "switch_backend.h"
 
 #include <algorithm>
+#include <array>
 #include <atomic>
 #include <chrono>
 #include <cmath>
@@ -51,6 +52,53 @@ void check_key_mapping() {
   CHECK(pro_buttons_for_keys(button_mask("Home")).button4 == 0x10);
   CHECK(pro_buttons_for_keys(button_mask("X") | kA).button3 == 0x0a);
   CHECK(pro_buttons_for_keys(button_mask("Y")).button3 == 0x01);
+  // ZL in byte 5 bit 7, beside L.
+  CHECK(pro_buttons_for_keys(button_mask("ZL")).button5 == 0x80);
+  // Plus and Minus (v1.17) are the GBA app's Start and Select: byte 4 bits 1
+  // and 0.
+  CHECK(pro_buttons_for_keys(button_mask("Plus")).button4 == 0x02);
+  CHECK(pro_buttons_for_keys(button_mask("Minus")).button4 == 0x01);
+  CHECK(pro_buttons_for_keys(button_mask("Start")).button4 == 0x02);
+  // ZR in byte 3 bit 7, beside R.
+  CHECK(pro_buttons_for_keys(button_mask("ZR")).button3 == 0x80);
+}
+
+bool axes_are(const std::uint8_t (&bytes)[3], std::uint16_t x,
+              std::uint16_t y) {
+  const StickAxes axes = pro_stick_axes(bytes);
+  return axes.x == x && axes.y == y;
+}
+
+// encode_joystick<1874, 320>()'s 12-bit axes: 2048 centred, +y up; a tilt
+// inside the unit circle scaled onto the registering range, one on or past
+// it pushed out to the square's edge.
+void check_stick_encoding() {
+  const ProButtons centred = neutral_pro_buttons();
+  CHECK(pro_stick_bytes({}) ==
+        (std::array<std::uint8_t, 3>{centred.left_joystick[0],
+                                     centred.left_joystick[1],
+                                     centred.left_joystick[2]}));
+  const struct {
+    StickPosition position;
+    std::uint16_t x;
+    std::uint16_t y;
+  } kCases[] = {
+      {{0, 0}, 2048, 2048},       {{0, 1}, 2048, 4095},
+      {{1, 0}, 4095, 2048},       {{-1, 0}, 0, 2048},
+      {{0, -1}, 2048, 0},         {{0.5, 0}, 2999, 2048},
+      {{0.5, 0.866}, 2912, 3544}, {{0, -0.25}, 2048, 1486},
+      {{0.8, 0.8}, 4095, 4095},
+  };
+  for (const auto& c : kCases) {
+    const ProButtons buttons =
+        pro_buttons_for_state(kA, Sticks{c.position, {}});
+    CHECK(axes_are(buttons.left_joystick, c.x, c.y));
+    CHECK(axes_are(buttons.right_joystick, 2048, 2048));
+    CHECK(buttons.button3 == 0x08);
+  }
+  const ProButtons look = pro_buttons_for_state(0, Sticks{{}, {-1, 0}});
+  CHECK(axes_are(look.right_joystick, 0, 2048));
+  CHECK(axes_are(look.left_joystick, 2048, 2048));
 }
 
 void check_live_schedule() {
@@ -78,6 +126,24 @@ void check_live_schedule() {
   CHECK(ended.size() == 1 && ended[0].batch_id == "b1");
   schedule.clear();
   CHECK(!schedule.next_event_ms());
+
+  // A tilt holds with its press and is centred in the cooldown; a stick not
+  // given stays centred.
+  InputCommand tilt;
+  tilt.buttons = kA;
+  tilt.left_stick = StickPosition{0, 1};
+  tilt.hold_ms = 100;
+  const auto segments = [&] {
+    schedule.submit("b3", {tilt}, 2000);
+    return schedule.take_due(2100);
+  }();
+  CHECK(segments.size() == 2);
+  if (segments.size() == 2) {
+    CHECK(segments[0].keys == kA && segments[0].sticks.left.y == 1 &&
+          segments[0].sticks.right.x == 0 && segments[0].sticks.right.y == 0);
+    CHECK(segments[1].keys == 0 && segments[1].ms == 0 &&
+          segments[1].sticks.left.y == 0);
+  }
 }
 
 // Frame 1 at once, then frames 2..`total` as fast as they go once `open()` is
@@ -214,22 +280,174 @@ void check_video_replay() {
   CHECK(means.front() != means.back());
 }
 
+// Time the test sets: the latency harness's clock, moved only by
+// ScriptedScreen as the harness waits for frames.
+class ManualClock : public Clock {
+ public:
+  double now_ms() const override { return now_ms_; }
+  void set_ms(double t_ms) { now_ms_ = t_ms; }
+
+ private:
+  double now_ms_ = 0;
+};
+
+// A live backend on a ManualClock, for the latency harness: frame k shows the
+// screen at k frame periods and is stamped then, or at `stall_end_ms` when it
+// falls in [stall_start_ms, stall_end_ms) (the daemon stamps a frame when it
+// takes it, and a host stall holds that up); a press shows from `response_ms`
+// after it is queued, for as long as it holds. Waiting for a frame moves the
+// clock to its stamp, or by the whole timeout when none comes by then.
+class ScriptedScreen : public Backend {
+ public:
+  ScriptedScreen(ManualClock& clock, double frame_rate, double response_ms)
+      : clock_(clock), response_ms_(response_ms) {
+    info_.kind = "scripted";
+    info_.frame_rate = frame_rate;
+    info_.width = 4;
+    info_.height = 4;
+    info_.timing = Timing::kLive;
+  }
+
+  void stall(double start_ms, double end_ms) {
+    stall_start_ms_ = start_ms;
+    stall_end_ms_ = end_ms;
+  }
+
+  const BackendInfo& info() const override { return info_; }
+  std::int64_t seq() const override { return seq_; }
+  void set_keys(KeyMask) override {}
+  std::int64_t step() override { return seq_; }
+  cv::Mat frame() override {
+    return cv::Mat(info_.height, info_.width, CV_8UC3,
+                   cv::Scalar::all(bright(screen_ms(seq_)) ? 240 : 16));
+  }
+  std::int64_t load_state(const std::string&) override { return seq_; }
+  std::int64_t save_state(const std::string&) override { return seq_; }
+  void release() override {}
+
+  std::optional<FrameStamp> next_frame(double timeout_ms) override {
+    const double deadline_ms = clock_.now_ms() + timeout_ms;
+    const double stamp_ms = stamp(seq_ + 1);
+    if (stamp_ms > deadline_ms) {
+      clock_.set_ms(deadline_ms);
+      return std::nullopt;
+    }
+    seq_++;
+    clock_.set_ms(std::max(clock_.now_ms(), stamp_ms));
+    return FrameStamp{seq_, stamp_ms};
+  }
+
+  void queue_keys(KeyMask mask, const Sticks&, double ms) override {
+    if (mask != 0) {
+      presses_.push_back({clock_.now_ms() + response_ms_, ms});
+    }
+  }
+
+ private:
+  struct Shown {
+    double from_ms;
+    double hold_ms;
+  };
+
+  double screen_ms(std::int64_t k) const {
+    return static_cast<double>(k) * 1000.0 / info_.frame_rate;
+  }
+  double stamp(std::int64_t k) const {
+    const double t_ms = screen_ms(k);
+    return t_ms >= stall_start_ms_ && t_ms < stall_end_ms_ ? stall_end_ms_
+                                                           : t_ms;
+  }
+  bool bright(double t_ms) const {
+    return std::any_of(presses_.begin(), presses_.end(), [&](const Shown& p) {
+      return t_ms >= p.from_ms && t_ms < p.from_ms + p.hold_ms;
+    });
+  }
+
+  ManualClock& clock_;
+  double response_ms_;
+  BackendInfo info_;
+  std::int64_t seq_ = 0;
+  std::vector<Shown> presses_;
+  double stall_start_ms_ = 0;
+  double stall_end_ms_ = 0;
+};
+
+// The latency harness on time the test sets: each press is measured at the
+// first frame that shows it, the response time plus less than a frame. A
+// frame the host took late is measured late: on a loaded CI runner a thread
+// stalled over 100 ms, which is why this is not checked on wall time
+// (check_latency_harness_on_fake_switch).
 void check_latency_harness() {
+  // 50 frames a second: every time here is a whole number of ms.
+  constexpr double kFrameRate = 50;
+  constexpr double kResponseMs = 50;
+  PressLatencyPlan plan;
+  plan.presses = 5;
+  plan.settle_ms = 200;
+  {
+    ManualClock clock;
+    ScriptedScreen screen(clock, kFrameRate, kResponseMs);
+    const PressLatencyReport report =
+        measure_press_latency(screen, clock, plan);
+    CHECK(report.misses == 0);
+    CHECK(report.latencies_ms.size() == 5);
+    CHECK(report.frame_ms == 20);
+    for (const double latency : report.latencies_ms) {
+      CHECK(latency >= kResponseMs && latency < kResponseMs + report.frame_ms);
+    }
+  }
+  {
+    // The first press is sent at 200 ms and shows from 250 ms (the frame at
+    // 260 ms), but the frames from 240 ms on are taken only at 400 ms.
+    ManualClock clock;
+    ScriptedScreen screen(clock, kFrameRate, kResponseMs);
+    screen.stall(240, 400);
+    const PressLatencyReport report =
+        measure_press_latency(screen, clock, plan);
+    CHECK(report.misses == 0);
+    CHECK(report.latencies_ms.size() == 5);
+    if (!report.latencies_ms.empty()) {
+      CHECK(report.latencies_ms.front() == 200);
+    }
+    CHECK(percentile(report.latencies_ms, 0.8) < kResponseMs + report.frame_ms);
+  }
+  {
+    // A response slower than the timeout: every press a miss.
+    ManualClock clock;
+    ScriptedScreen screen(clock, kFrameRate, plan.timeout_ms + 100);
+    const PressLatencyReport report =
+        measure_press_latency(screen, clock, plan);
+    CHECK(report.misses == 5);
+    CHECK(report.latencies_ms.empty());
+  }
+}
+
+// The harness on FakeSwitch through the Switch backend, on wall time: each
+// press reaches the board and is counted, measured or missed. How late a press
+// shows is checked above: here every thread runs on the host's time, and a
+// stall of a loaded runner (over 100 ms on macOS CI) puts a frame's stamp
+// late, or lets the capture ring drop the frames that showed the press before
+// the harness read them, or leaves the previous press on the frame it compares
+// against.
+void check_latency_harness_on_fake_switch() {
   const Clock clock;
   test::FakeConsole console(clock);
-  constexpr double kResponseMs = 50;
-  SwitchBackend backend(console.board.screen(60, kResponseMs, cv::Size(64, 36)),
+  SwitchBackend backend(console.board.screen(60, 50, cv::Size(64, 36)),
                         console.session, clock, SwitchOptions{});
   PressLatencyPlan plan;
   plan.presses = 5;
   plan.settle_ms = 200;
   const PressLatencyReport report = measure_press_latency(backend, clock, plan);
-  CHECK(report.misses == 0);
-  CHECK(report.latencies_ms.size() == 5);
-  // The response time plus up to a frame, with room for a loaded machine.
-  CHECK(percentile(report.latencies_ms, 0) >= kResponseMs);
-  CHECK(percentile(report.latencies_ms, 1) <=
-        kResponseMs + report.frame_ms + 50);
+  CHECK(report.latencies_ms.size() + static_cast<std::size_t>(report.misses) ==
+        5);
+  const std::vector<BoardCommand> commands = console.board.commands();
+  const auto held = std::count_if(
+      commands.begin(), commands.end(), [&](const BoardCommand& c) {
+        return c.message.milliseconds ==
+                   static_cast<std::uint16_t>(plan.hold_ms) &&
+               c.message.buttons.button3 != 0;
+      });
+  CHECK(held == 5);
 }
 
 // One connection to the server and the lines it received but not yet read.
@@ -321,8 +539,9 @@ void check_two_clients_and_the_lease() {
       R"({"jsonrpc":"2.0","id":9,"method":"lease.acquire","params":{"owner":"pad"}})");
   CHECK(acquire_refused.find("-32004") != std::string::npos);
 
-  const std::string released = call(
-      client, R"({"jsonrpc":"2.0","id":3,"method":"lease.release","params":{}})");
+  const std::string released =
+      call(client,
+           R"({"jsonrpc":"2.0","id":3,"method":"lease.release","params":{}})");
   CHECK(released.find("\"released\":true") != std::string::npos);
   const std::string acquired = call(
       other,
@@ -330,9 +549,9 @@ void check_two_clients_and_the_lease() {
   CHECK(acquired.find("\"owner\":\"pad\"") != std::string::npos);
   CHECK(call(other, submit_line).find("\"batch_id\":\"x\"") !=
         std::string::npos);
-  CHECK(call(client,
-             R"({"jsonrpc":"2.0","id":4,"method":"cancel","params":{}})")
-            .find("held by pad") != std::string::npos);
+  CHECK(
+      call(client, R"({"jsonrpc":"2.0","id":4,"method":"cancel","params":{}})")
+          .find("held by pad") != std::string::npos);
 
   // Reads need no lease.
   const std::string subscribed = call(
@@ -344,7 +563,8 @@ void check_two_clients_and_the_lease() {
   other.socket.close();
   sleep_ms(50);
   TestClient third = connect_client(options.port);
-  const std::string after = call(third, R"({"jsonrpc":"2.0","id":1,"method":"status"})");
+  const std::string after =
+      call(third, R"({"jsonrpc":"2.0","id":1,"method":"status"})");
   CHECK(after.find("\"lease\":null") != std::string::npos);
 
   stop.store(true);
@@ -377,6 +597,49 @@ void check_home_press() {
     home = home || command.message.buttons.button4 == 0x10;
   }
   CHECK(home);
+  stop = true;
+  serving.join();
+}
+
+// A run and a look, chained by cooldown 0, reach the fake board as the Pro
+// Controller's sticks: B with the left stick up, then the right stick alone,
+// then everything centred.
+void check_stick_run() {
+  const Clock clock;
+  test::FakeConsole console(clock);
+  SwitchBackend backend(console.board.screen(60, 0, cv::Size(64, 36)),
+                        console.session, clock, SwitchOptions{});
+  ServerOptions options;
+  options.port = 47979;
+  Server server(backend, options, clock);
+  std::atomic<bool> stop{false};
+  std::thread serving([&] { server.run(stop); });
+
+  TestClient client = connect_client(options.port);
+  call(
+      client,
+      R"({"jsonrpc":"2.0","id":1,"method":"hello","params":{"protocol":1,"client":"stick-test"}})");
+  const std::string submitted = call(
+      client,
+      R"({"jsonrpc":"2.0","id":2,"method":"submit","params":{"batch_id":"run","commands":[{"press":["B"],"left_stick":[0,1],"hold_ms":60,"cooldown_ms":0},{"press":[],"right_stick":[-1,0],"hold_ms":40,"cooldown_ms":10}]}})");
+  CHECK(submitted.find(R"("batch_id":"run")") != std::string::npos);
+  sleep_ms(300);
+  std::vector<ProButtons> held;
+  for (const BoardCommand& command : console.board.commands()) {
+    if (command.message.milliseconds > 0) {
+      held.push_back(command.message.buttons);
+    }
+  }
+  CHECK(held.size() == 3);
+  if (held.size() == 3) {
+    CHECK(held[0].button3 == 0x04 &&
+          axes_are(held[0].left_joystick, 2048, 4095) &&
+          axes_are(held[0].right_joystick, 2048, 2048));
+    CHECK(held[1].button3 == 0 && axes_are(held[1].left_joystick, 2048, 2048) &&
+          axes_are(held[1].right_joystick, 0, 2048));
+    CHECK(axes_are(held[2].left_joystick, 2048, 2048) &&
+          axes_are(held[2].right_joystick, 2048, 2048));
+  }
   stop = true;
   serving.join();
 }
@@ -451,27 +714,83 @@ void check_one_clock_and_cancel() {
     CHECK(done_ms >= frame_ms - 1 && done_ms - frame_ms < 100);
   }
 
-  call(client,
-       R"({"jsonrpc":"2.0","id":4,"method":"submit","params":{"batch_id":"b2","commands":[{"press":["A"],"hold_ms":50,"cooldown_ms":1000}]}})");
+  call(
+      client,
+      R"({"jsonrpc":"2.0","id":4,"method":"submit","params":{"batch_id":"b2","commands":[{"press":["A"],"hold_ms":50,"cooldown_ms":1000}]}})");
   sleep_ms(150);
   call(client, R"({"jsonrpc":"2.0","id":5,"method":"cancel","params":{}})");
   const double cancelled_ms = clock.now_ms();
-  call(client,
-       R"({"jsonrpc":"2.0","id":6,"method":"submit","params":{"batch_id":"b3","commands":[{"press":["Down"],"hold_ms":50,"cooldown_ms":0}]}})");
+  call(
+      client,
+      R"({"jsonrpc":"2.0","id":6,"method":"submit","params":{"batch_id":"b3","commands":[{"press":["Down"],"hold_ms":50,"cooldown_ms":0}]}})");
   sleep_ms(100);
   const std::vector<BoardCommand> commands = console.board.commands();
   // The only D-pad press of the test.
   const auto down = std::find_if(
-      commands.rbegin(), commands.rend(), [](const BoardCommand& c) {
-        return c.message.buttons.button5 != 0;
-      });
+      commands.rbegin(), commands.rend(),
+      [](const BoardCommand& c) { return c.message.buttons.button5 != 0; });
   CHECK(down != commands.rend());
   if (down != commands.rend()) {
     CHECK(down->start_ms - cancelled_ms < 100);
   }
 
+  // A cancel with `then` (v1.15): ZL held, then ZL with X in its place, with
+  // no release between (the board's replace-on-next).
+  call(
+      client,
+      R"({"jsonrpc":"2.0","id":7,"method":"submit","params":{"batch_id":"b4","commands":[{"press":["ZL"],"hold_ms":2000,"cooldown_ms":0}]}})");
+  sleep_ms(200);
+  call(
+      client,
+      R"({"jsonrpc":"2.0","id":8,"method":"cancel","params":{"then":{"batch_id":"b5","commands":[{"press":["ZL","X"],"hold_ms":160,"cooldown_ms":0}]}}})");
+  const std::vector<std::string> replaced = read_until(client, "\"b5\"", 2000);
+  CHECK(!replaced.empty());
+  const std::vector<BoardCommand> held = console.board.commands();
+  const auto x =
+      std::find_if(held.begin(), held.end(), [](const BoardCommand& c) {
+        return (c.message.buttons.button3 & 0x02) != 0;
+      });
+  CHECK(x != held.end() && x != held.begin());
+  if (x != held.end() && x != held.begin()) {
+    const BoardCommand& zl = *(x - 1);
+    CHECK((zl.message.buttons.button5 & 0x80) != 0);
+    CHECK((x->message.buttons.button5 & 0x80) != 0);
+    // The ZL hold ended where ZL with X started: no state between.
+    CHECK(std::abs(zl.end_ms - x->start_ms) < 1);
+    CHECK(x->start_ms - zl.start_ms < 1000);
+  }
+
   stop.store(true);
   serving.join();
+}
+
+// The server takes the keep-awake keys the --keepawake-key flag does: a
+// button, or RStick (keep_awake.h); anything else stops it at the start.
+// bdd5a03's server checked buttons only and refused RStick on console B.
+void check_keep_awake_keys() {
+  const Clock clock;
+  test::FakeConsole console(clock);
+  SwitchBackend backend(console.board.screen(60, 0, cv::Size(64, 36)),
+                        console.session, clock, SwitchOptions{});
+  bool started = true;
+  ServerOptions options;
+  options.port = 47979;
+  options.keepawake = KeepAwakeOptions{180000, "RStick"};
+  try {
+    const Server server(backend, options, clock);
+  } catch (const std::exception&) {
+    started = false;
+  }
+  CHECK(started);
+  bool refused = false;
+  options.port = 47980;
+  options.keepawake = KeepAwakeOptions{180000, "Q"};
+  try {
+    const Server server(backend, options, clock);
+  } catch (const std::exception&) {
+    refused = true;
+  }
+  CHECK(refused);
 }
 
 }  // namespace
@@ -479,12 +798,16 @@ void check_one_clock_and_cancel() {
 int main() {
   init_sockets();
   check_key_mapping();
+  check_stick_encoding();
   check_live_schedule();
   check_gaps_and_stalled_capture();
   check_video_replay();
   check_latency_harness();
+  check_latency_harness_on_fake_switch();
   check_two_clients_and_the_lease();
   check_home_press();
+  check_stick_run();
   check_one_clock_and_cancel();
+  check_keep_awake_keys();
   return TEST_RESULT();
 }

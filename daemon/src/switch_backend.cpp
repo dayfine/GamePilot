@@ -61,16 +61,18 @@ std::optional<FrameStamp> SwitchBackend::next_frame(double timeout_ms) {
   return FrameStamp{current_.seq, current_.t_ms};
 }
 
-void SwitchBackend::queue_keys(KeyMask mask, double ms) {
+void SwitchBackend::queue_keys(KeyMask mask, const Sticks& sticks, double ms) {
   const auto rounded = static_cast<std::uint32_t>(std::llround(ms));
   // Blocks while the board's command queue is full, as the C++ does.
-  controller_.send_state(pro_buttons_for_keys(mask), rounded);
+  controller_.send_state(pro_buttons_for_state(mask, sticks), rounded);
 }
 
 void SwitchBackend::drop_queued_keys() { controller_.cancel_queued(); }
 
+void SwitchBackend::replace_queued_keys() { controller_.replace_on_next(); }
+
 void SwitchBackend::set_keys(KeyMask mask) {
-  queue_keys(mask, 1000.0 / info_.frame_rate);
+  queue_keys(mask, Sticks{}, 1000.0 / info_.frame_rate);
 }
 
 std::int64_t SwitchBackend::step() {
@@ -85,7 +87,7 @@ std::int64_t SwitchBackend::save_state(const std::string&) {
   throw BackendError("the switch has no save states");
 }
 
-void SwitchBackend::release() { queue_keys(0, 0); }
+void SwitchBackend::release() { queue_keys(0, Sticks{}, 0); }
 
 BackendHealth SwitchBackend::health() const {
   BackendHealth health;

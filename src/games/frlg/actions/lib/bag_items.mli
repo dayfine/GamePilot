@@ -76,13 +76,20 @@ val select : string -> unit
     lost tap is tapped again). Fails as [not_in_bag] when the item is not in the
     pocket. *)
 
+val found_count :
+  Frlg_readers.Bag_screen.pocket -> (unit -> int option) -> int option
+(** The count of an item found on a row of the pocket: 1 in Key Items, which
+    pokefirered draws with no count (src/item_menu.c), else what the row's count
+    reads. *)
+
 val count : log:(string -> unit) -> string -> int option
 (** From the overworld: the item's pocket opened ({!open_pocket_top}), its rows
     read down to the item as {!select} reads them, the count on its row
-    ({!count_on_row}), then the bag closed and the talk settle. [Some 0] when
-    the list reaches CANCEL first; [None] when a row or the count did not read.
-    New for the end checks: the fork's [check_postconditions()] reads counts
-    with its own bag reader (Menus/PokemonFRLG_ItemListReader). Fails as
+    ({!count_on_row}; 1 for a key item, {!found_count}), then the bag closed,
+    its fade-in over ({!Menu_input.await_fade_in}) and the talk settle. [Some 0]
+    when the list reaches CANCEL first; [None] when a row or the count did not
+    read. New for the end checks: the fork's [check_postconditions()] reads
+    counts with its own bag reader (Menus/PokemonFRLG_ItemListReader). Fails as
     {!open_pocket_top}, or as [unknown_item] for a slug no item is named. *)
 
 val list_row : string -> int option

@@ -9,18 +9,18 @@ type member =
 
 val decode :
   action:string ->
-  (where:string -> Grid_maps.Json_field.obj -> 'a) ->
-  Grid_maps.Json_field.obj ->
-  ('a, Story.Failure.cause) result
+  (where:string -> Json_field.obj -> 'a) ->
+  Json_field.obj ->
+  ('a, Pokemon_engine.Failure.cause) result
 (** Runs the reader on the args with ["<action>: "] as [where]. *)
 
 val party_slots : int
 (** 6. *)
 
-val slot : where:string -> string -> Grid_maps.Json_field.obj -> int
+val slot : where:string -> string -> Json_field.obj -> int
 (** The int field, which must be a party slot (1 to {!party_slots}). *)
 
-val member : where:string -> Grid_maps.Json_field.obj -> member
+val member : where:string -> Json_field.obj -> member
 (** ["species"] if given, else ["target_slot"]; one of them is required. *)
 
 val member_to_string : member -> string
@@ -35,6 +35,12 @@ val field_move_users : (string * string) list
     know: [cut_tree] (Cut). Their ["species"] names that member for the
     pre-flight only. *)
 
-val picks_member : action:string -> Grid_maps.Json_field.obj -> bool
+val deposited_species : where:string -> Json_field.obj -> string list
+(** [pc_deposit]'s ["species"]: a list, every member it stores, in order; [[]]
+    when the args leave it out. *)
+
+val picks_member : action:string -> Json_field.obj -> bool
 (** The action finds a member by its species in the party: its args name one
-    ({!member_keys}) and the game does not pick it ({!field_move_users}). *)
+    ({!member_keys}) and the game does not pick it ({!field_move_users}); or it
+    is a capture, which counts the party to know whether a catch joins it or
+    goes to the PC. *)

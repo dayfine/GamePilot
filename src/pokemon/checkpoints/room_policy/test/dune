@@ -1,0 +1,4 @@
+(tests
+ (names test_room_policy)
+ (modules test_room_policy)
+ (libraries gamepilot.table_test gamepilot.room_policy))

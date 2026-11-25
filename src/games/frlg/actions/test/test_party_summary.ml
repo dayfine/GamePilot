@@ -26,7 +26,7 @@ let ends_on screen = S.screen_name (S.screen_at screen screen.S.clock_ms)
 
 let outcome = function
   | Ok () -> "ok"
-  | Error cause -> "failed " ^ Story.Failure.cause_to_string cause
+  | Error cause -> "failed " ^ Pokemon_engine.Failure.cause_to_string cause
 
 (* What was read, how many times the menu opened, where it ended. *)
 let summary_of ?latencies members () =
@@ -37,7 +37,7 @@ let summary_of ?latencies members () =
         Menu_input.run (fun () -> read := Party_summary.read_all ~log:ignore ()))
   in
   Printf.sprintf "%s: %s; START x%d; ends on %s" (outcome result)
-    (String.concat "; " (List.map Story.Room_policy.member_to_string !read))
+    (String.concat "; " (List.map Room_policy.member_to_string !read))
     (Party.count screen Wire.Start)
     (ends_on screen)
 

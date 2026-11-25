@@ -13,7 +13,7 @@
     walker's. *)
 
 type t = {
-  mover : Grid_maps.Direction.t -> int -> Wire.command list;
+  mover : Grid_geometry.Direction.t -> int -> Wire.command list;
       (** The commands that hold the direction for the time in ms, then let go:
           the D-pad or the stick, as the game moves. *)
   interrupts : Leg_interrupt.t list;

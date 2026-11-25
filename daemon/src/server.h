@@ -139,9 +139,11 @@ class Server {
   std::optional<std::string> take_lease(ClientConnection& client,
                                         const std::string& method);
   void clear_input();
-  // Throws switch_button_refusal() when a press names a Switch-only button
-  // and the backend is not the Switch.
-  void refuse_switch_buttons(const SubmitParams& submit) const;
+  void replace_input();
+  // Throws switch_button_refusal() when a press names a Switch-only button,
+  // or switch_stick_refusal() when it tilts a stick, and the backend is not
+  // the Switch.
+  void refuse_switch_input(const SubmitParams& submit) const;
   // The connection whose probes the watch page shows: the oldest with any.
   const ClientConnection* watched_client() const;
   DaemonStatus status() const;

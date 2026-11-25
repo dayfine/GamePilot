@@ -1,0 +1,8 @@
+(library
+ (name plza_walk)
+ (public_name gamepilot.plza_walk)
+ (libraries
+  gamepilot.wire
+  gamepilot.switch_home
+  gamepilot.engine_run
+  gamepilot.plza_rules))

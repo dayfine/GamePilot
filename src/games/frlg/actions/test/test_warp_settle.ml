@@ -30,11 +30,11 @@ let escape_rope ~fades screen (p : S.press) =
       show 900 S.Town
   | _ -> ()
 
-let use_a = Wire.Press { buttons = [ Wire.A ]; hold_ms = 160; cooldown_ms = 0 }
+let use_a = Wire.press ~hold_ms:160 ~cooldown_ms:0 [ Wire.A ]
 
 let outcome = function
   | Ok () -> "ok"
-  | Error cause -> "failed " ^ Story.Failure.cause_to_string cause
+  | Error cause -> "failed " ^ Pokemon_engine.Failure.cause_to_string cause
 
 (* The settle from the USE on, with the departure read on the overworld
    before the bag when [arrival]. The text is the outcome, what proved the

@@ -1,4 +1,5 @@
 open Grid_maps
+open Grid_geometry
 
 let open_leg_shortfall = 2
 
@@ -49,7 +50,7 @@ let standable w (place : Connected_maps.place) =
   | _ -> false
 
 let leg_tiles (leg : Connected_maps.place Grid_planning.Leg.t) =
-  match leg.kind with Walk { tiles; _ } -> tiles | Action _ | Face -> 0
+  match leg.kind with Walk { tiles; _ } -> tiles | Special_step _ | Face -> 0
 
 (* Where a hold of [leg] from [start] stops before a sign, if it does. *)
 let stop_before_sign w (leg : Connected_maps.place Grid_planning.Leg.t) start =

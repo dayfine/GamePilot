@@ -15,17 +15,30 @@
      slotN         slot N (1-6) selected        membersN  N slots filled
      heldN, mailN  slot N's sprite carries the held-item or the mail icon
      summaryN      the summary screen on page N
+     shiny         the summary (page 1 or 2) shows the shiny star
      money         the money box
      moverowN      a move being picked on the summary's move list, row N
      memberN       a member's menu over the party, its cursor on row N (0 is
                    SUMMARY at the top)
+     levelupN      a Rare Candy's level-up stats window on page N
+     seagallopN    the Seagallop sailor's list of islands, its arrow on row N
+     partyyesno    the party menu's YES/NO box (a move to delete, or to stop
+                   teaching)
      jpn           a Japanese game (the icons sit elsewhere: marks not read)
      none          none of these
 
    Switch names keep their CommandLineTests folder and file name, whose
    True/False the fork's tests read for that folder's detector. A reader is
    checked on every image unless it reads inside a screen: then only on the
-   images whose tags give its answer. *)
+   images whose tags give its answer.
+
+   menus.mgba.shifted.probes.jsonl holds the Seagallop list's frames
+   (seagallop-one-island/) and the summaries of rng-route10/ again with their
+   colors shifted (dev/reader_fixtures/shift_frame.py: brightness times 0.9
+   and 1.1, one channel plus or minus 12, 10% toward mid-grey), named
+   <shift>/<image>: on each, seagallop_row and shiny_star must read as on the
+   frame itself. The arrow and the star are counted in color ranges, so the
+   images are shifted, not the probes' numbers. *)
 
 open Frlg_readers
 
@@ -136,6 +149,26 @@ let screen_readers =
       expected = (fun tags -> optional (numbered "moverow" tags));
     };
     {
+      reader = "party_level_up_page";
+      applies = everywhere;
+      verdict = (fun m -> optional (Party_dialogs.level_up_page m));
+      expected = (fun tags -> optional (numbered "levelup" tags));
+    };
+    {
+      reader = "party_yes_no";
+      applies = everywhere;
+      verdict = flag Party_dialogs.move_learn_box;
+      expected = tagged "partyyesno";
+    };
+    {
+      reader = "seagallop_row";
+      applies = everywhere;
+      verdict =
+        (fun m ->
+          optional (Script_menu.cursor_row Script_menu.seagallop_islands m));
+      expected = (fun tags -> optional (numbered "seagallop" tags));
+    };
+    {
       reader = "member_menu_row";
       applies = everywhere;
       verdict = (fun m -> optional (Member_menu.cursor_row m));
@@ -145,6 +178,12 @@ let screen_readers =
 
 let inner_readers =
   [
+    {
+      reader = "shiny_star";
+      applies = (fun tags -> has "summary1" tags || has "summary2" tags);
+      verdict = flag Shiny_star.shiny;
+      expected = tagged "shiny";
+    };
     {
       reader = "mail_editor_yes_no";
       applies =
@@ -272,6 +311,79 @@ let floors =
     };
   ]
 
+(* The capture-card shifts of dev/reader_fixtures/shift_frame.py, applied to
+   each color_stats probe's mean (and its stddev, for a scale): what they do to
+   a flat box. Color counts stay as read. *)
+let clamp v = Float.min 255. (Float.max 0. v)
+let each f (c : Wire.rgb) : Wire.rgb = { r = f c.r; g = f c.g; b = f c.b }
+
+let shifts : (string * (Wire.rgb -> Wire.rgb) * float) list =
+  let scale k = each (fun v -> clamp (v *. k)) in
+  [
+    ("bright90", scale 0.9, 0.9);
+    ("bright110", scale 1.1, 1.1);
+    ("grey10", each (fun v -> v +. (0.1 *. (128. -. v))), 0.9);
+    ("rplus12", (fun c -> { c with r = clamp (c.r +. 12.) }), 1.);
+    ("rminus12", (fun c -> { c with r = clamp (c.r -. 12.) }), 1.);
+    ("gplus12", (fun c -> { c with g = clamp (c.g +. 12.) }), 1.);
+    ("gminus12", (fun c -> { c with g = clamp (c.g -. 12.) }), 1.);
+    ("bplus12", (fun c -> { c with b = clamp (c.b +. 12.) }), 1.);
+    ("bminus12", (fun c -> { c with b = clamp (c.b -. 12.) }), 1.);
+  ]
+
+let shifted (shift, k) probes =
+  List.map
+    (fun (id, result) ->
+      match result with
+      | Wire.Color_stats { mean; stddev } ->
+          ( id,
+            Wire.Color_stats
+              { mean = shift mean; stddev = each (fun v -> v *. k) stddev } )
+      | other -> (id, other))
+    probes
+
+(* bag_item_menu reads every image right with its colours shifted. *)
+let shifted_cases backend images =
+  List.concat_map
+    (fun (name, shift, k) ->
+      List.map
+        (fun (image, probes) ->
+          {
+            Table_test.name =
+              Printf.sprintf "%s bag_item_menu %s: %s" backend name image;
+            input =
+              (fun () ->
+                flag Bag_screen.item_menu
+                  (measurements (shifted (shift, k) probes)));
+            expectation = tagged "itemmenu" (tags image);
+          })
+        images)
+    shifts
+
+(* The frame a shifted one comes from: its name less the "<shift>/". *)
+let unshifted image =
+  match String.index_opt image '/' with
+  | Some i -> String.sub image (i + 1) (String.length image - i - 1)
+  | None -> failwith ("no shift in " ^ image)
+
+(* The readers checked on shifted frames. *)
+let shift_tested = [ "seagallop_row"; "shiny_star" ]
+
+let shifted_frame_cases backend images shifted =
+  List.concat_map
+    (fun r ->
+      List.map
+        (fun (image, probes) ->
+          let original = List.assoc (unshifted image) images in
+          {
+            Table_test.name =
+              Printf.sprintf "%s shifted %s: %s" backend r.reader image;
+            input = (fun () -> r.verdict (measurements probes));
+            expectation = r.verdict (measurements original);
+          })
+        shifted)
+    (List.filter (fun r -> List.mem r.reader shift_tested) readers)
+
 let () =
   let backends =
     List.map
@@ -282,6 +394,13 @@ let () =
       [ "switch"; "mgba" ]
   in
   List.iter (fun (backend, images) -> print_tally backend images) backends;
+  let shifted_frames =
+    Wire.read_image_probes "fixtures/menus.mgba.shifted.probes.jsonl"
+  in
   Table_test.run "menu readers"
     (floors
-    @ List.concat_map (fun (backend, images) -> cases backend images) backends)
+    @ List.concat_map (fun (backend, images) -> cases backend images) backends
+    @ List.concat_map
+        (fun (backend, images) -> shifted_cases backend images)
+        backends
+    @ shifted_frame_cases "mgba" (List.assoc "mgba" backends) shifted_frames)

@@ -12,9 +12,7 @@ let home_wait_ms = 5000
 let launch_wait_ms = 60_000
 
 let press ?(hold_ms = tap_hold_ms) ?(cooldown_ms = tap_release_ms) b =
-  ignore
-    (Effects.submit [ Wire.Press { buttons = [ b ]; hold_ms; cooldown_ms } ]
-      : Wire.batch_done)
+  Switch_presses.press ~hold_ms ~cooldown_ms b
 
 let screen () =
   match Effects.read () with Some m -> H.read m | None -> H.Elsewhere
@@ -44,8 +42,8 @@ let park_from ~log = function
           press ~hold_ms:home_hold_ms ~cooldown_ms:home_settle_ms Wire.Home;
           await_home ())
 
-let park ~log color =
-  Effects.with_probes (H.probes color) (fun () ->
+let park ~log ~picture color =
+  Effects.with_probes (H.probes ~picture color) (fun () ->
       let result = park_from ~log (screen ()) in
       (match result with
       | Ok () -> log ("[Park] " ^ H.to_string (screen ()))
@@ -102,15 +100,51 @@ let rec until_game ~log ~launched =
 
 let ( let* ) = Result.bind
 
-let from_home ~log ~cursor ~game_tile =
-  match (cursor, game_tile) with
-  | _, None -> Error "no tile on HOME shows the game"
-  | None, Some _ -> Error "the cursor is on no tile"
-  | Some cursor, Some k ->
-      let* () = move_cursor ~log ~cursor k in
-      log "[Resume] A on the game's tile";
-      press Wire.A;
-      until_game ~log ~launched:false
+(* HOME's row holds up to 12 games, then All Software: 12 presses one way
+   pass every tile. *)
+let row_tiles = 12
+let no_cursor = "the cursor is on no tile of HOME's row (on the buttons below?)"
+
+let row m =
+  match H.read m with
+  | H.Home { cursor = Some cursor; game_tile } -> Some (cursor, game_tile)
+  | Home _ | Home_dimmed | User_select | Elsewhere -> None
+
+(* The tile the cursor is on and the game's, once the row has settled. *)
+let read_row () =
+  match
+    Effects.await ~timeout_ms:home_wait_ms (fun m -> Option.is_some (row m))
+  with
+  | Holds m -> Option.to_result ~none:no_cursor (row m)
+  | Timeout -> Error no_cursor
+
+(* The cursor onto the game's tile: within the tiles in view, or, when none
+   shows the game, [sweeps] in turn (Left, then Right) a tile at a time,
+   reading the row after each press. *)
+let rec find_game ~log ~sweeps ~presses =
+  let* cursor, game_tile = read_row () in
+  match (game_tile, sweeps) with
+  | Some k, _ -> move_cursor ~log ~cursor k
+  | None, [] ->
+      Error
+        (Printf.sprintf
+           "no tile on HOME shows the game, after %d Left and %d Right"
+           row_tiles row_tiles)
+  | None, _ :: rest when presses >= row_tiles ->
+      find_game ~log ~sweeps:rest ~presses:0
+  | None, button :: _ ->
+      log
+        (Printf.sprintf
+           "[Resume] the game's tile not in view (cursor on %d): %s" cursor
+           (Wire.string_of_button button));
+      press button;
+      find_game ~log ~sweeps ~presses:(presses + 1)
+
+let from_home ~log =
+  let* () = find_game ~log ~sweeps:[ Wire.Left; Wire.Right ] ~presses:0 in
+  log "[Resume] A on the game's tile";
+  press Wire.A;
+  until_game ~log ~launched:false
 
 let rec resume_from ~log = function
   | H.Elsewhere -> Ok Already_in_game
@@ -124,10 +158,10 @@ let rec resume_from ~log = function
   | User_select ->
       press Wire.A;
       until_game ~log ~launched:true
-  | Home { cursor; game_tile } -> from_home ~log ~cursor ~game_tile
+  | Home _ -> from_home ~log
 
-let resume ~log color =
-  Effects.with_probes (H.probes color) (fun () ->
+let resume ~log ~picture color =
+  Effects.with_probes (H.probes ~picture color) (fun () ->
       let screen = screen () in
       log ("[Resume] " ^ H.to_string screen);
       resume_from ~log screen)

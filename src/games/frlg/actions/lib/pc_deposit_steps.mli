@@ -12,13 +12,19 @@
     menu, whose RELEASE is three rows below and never reached (the cursor is
     never moved there); the box is the first with room from the one the chooser
     opens on, RIGHT after "The BOX is full." (pokefirered's [Task_DepositMenu]
-    prints it and waits for a key), where the fork names a box. *)
+    prints it and waits for a key), where the fork names a box; a member holding
+    Mail fails the deposit when the game says "Please remove the MAIL." over the
+    party panel (pokefirered's [Task_DepositMenu] refuses it there) instead of
+    choosing STORE again until the press bound runs out. *)
 
 type look = {
   view : Frlg_readers.Pc_screen.view;
   label : string option;  (** The text of the cursor's row, when read. *)
   species : string option;  (** PKMN DATA's species slug, on the party panel. *)
   box_full : bool;  (** "The BOX is full." over the box chooser. *)
+  remove_mail : bool;
+      (** "Please remove the MAIL." over the party panel: the member holds Mail.
+      *)
 }
 
 type press = A | B | Up | Down | Right | Wait | Done | Fail of string

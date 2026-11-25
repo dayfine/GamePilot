@@ -62,7 +62,10 @@ class FakeScreen : public FrameSource {
       std::this_thread::sleep_for(
           std::chrono::duration<double, std::milli>(due - now));
     }
-    const bool bright = board_.pressed_at(clock_.now_ms() - response_ms_);
+    // The frame shows the screen at its own time, not when this thread woke:
+    // a capture card keeps capturing while the host is stalled, so a late
+    // read still gets the frames the console showed meanwhile.
+    const bool bright = board_.pressed_at(due - response_ms_);
     frame = cv::Mat(size_, CV_8UC3, cv::Scalar::all(bright ? kBright : kDark));
     return true;
   }
@@ -364,12 +367,21 @@ void FakeSwitch::on_message(const std::uint8_t* message, std::size_t bytes) {
     case PABB2_MESSAGE_OPCODE_CQ_CANCEL:
       cancel_queued(clock_.now_ms());
       return;
+    case PABB2_MESSAGE_OPCODE_CQ_REPLACE_ON_NEXT:
+      replace_on_next_ = true;
+      return;
     case PABB2_MESSAGE_CMD_NS1_OEM_CONTROLLER_BUTTONS:
       if (bytes == sizeof(ProButtonsMessage) &&
           mode_ == kWiredProControllerMode) {
         ProButtonsMessage command;
         std::memcpy(&command, message, sizeof(command));
         const double now = clock_.now_ms();
+        if (replace_on_next_) {
+          // The firmware's replace: the running state ends as this one
+          // starts, the queued ones never run.
+          cancel_queued(now);
+          replace_on_next_ = false;
+        }
         const double start =
             commands_.empty() ? now : std::max(now, commands_.back().end_ms);
         commands_.push_back(BoardCommand{

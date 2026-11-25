@@ -4,7 +4,7 @@
    wall to stop against), 'v' entered only going south, 'W' a warp to the
    tile marked 'X'. Off the rows is wall. *)
 
-open Grid_maps
+open Grid_geometry
 open Grid_planning
 
 let grass_cost = 5
@@ -61,7 +61,7 @@ let describe_leg (leg : Tile_pos.t Leg.t) =
           tiles
           (if to_wall then " (to wall)" else "")
     | Face -> "face " ^ Direction.name leg.direction
-    | Action _ -> "action " ^ Direction.name leg.direction
+    | Special_step _ -> "action " ^ Direction.name leg.direction
   in
   Printf.sprintf "%s%s%s -> %s" kind
     (if leg.wild then " (wild)" else "")

@@ -1,0 +1,9 @@
+(tests
+ (names test_checkpoint_end)
+ (modules test_checkpoint_end)
+ (libraries
+  gamepilot.table_test
+  yojson
+  gamepilot.pokemon_engine
+  gamepilot.checkpoint_end
+  plan_files))

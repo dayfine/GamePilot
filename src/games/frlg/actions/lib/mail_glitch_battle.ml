@@ -1,4 +1,4 @@
-module J = Grid_maps.Json_field
+module J = Json_field
 module M = Menu_input
 module B = Frlg_battle
 
@@ -7,7 +7,7 @@ type plan = {
   recycle_species : string;
   sweeper : string;
   depleted_move : string;
-  step_direction : Grid_maps.Direction.t;
+  step_direction : Grid_geometry.Direction.t;
 }
 
 let decode =
@@ -17,7 +17,8 @@ let decode =
         recycle_species = J.string ~where "recycle_species" args;
         sweeper = J.string ~where "sweeper" args;
         depleted_move = J.string ~where "depleted_move" args;
-        step_direction = J.direction ~where "step_direction" args;
+        step_direction =
+          Grid_maps.Grid_field.direction ~where "step_direction" args;
       })
 
 type slots = {
@@ -74,7 +75,7 @@ let script s =
   in
   B.Battle_script.make ~opening:(berry_turn @ setup @ sweep s) Stop
 
-let check_before_first_switch check (driver : B.Battle_driver.t) =
+let check_before_first_switch check (game_steps : B.Battle.game_steps) =
   let checked = ref false in
   let switch_to ~slot =
     if not !checked then (
@@ -82,13 +83,13 @@ let check_before_first_switch check (driver : B.Battle_driver.t) =
       if not (check ()) then
         M.fail "double_battle_berry_not_consumed"
           "the depleted move shows no PP after the Berry turn");
-    driver.switch_to ~slot
+    game_steps.switch_to ~slot
   in
-  { driver with switch_to }
+  { game_steps with switch_to }
 
 (* The fork's battle taps: D-pad 140 ms held, 260 ms after; A 160 ms. *)
 let tap ?(hold_ms = 140) ?(cooldown_ms = 260) buttons =
-  let press b = Wire.Press { buttons = [ b ]; hold_ms; cooldown_ms } in
+  let press b = Wire.press ~hold_ms ~cooldown_ms [ b ] in
   ignore (Effects.submit (List.map press buttons) : Wire.batch_done)
 
 let move_menu_timeout_ms = 4000
@@ -130,49 +131,50 @@ let step_into_sight ~log direction =
            Frlg_readers.Battle_screen.battle_shows)
       : Effects.measurements)
 
-type rig = {
+type game_steps = {
   species_at : int -> string option;
   known_moves : slot:int -> string list;
-  start_battle : Grid_maps.Direction.t -> unit;
+  start_battle : Grid_geometry.Direction.t -> unit;
   restored : slot:int -> unit -> bool;
   battle :
-    (B.Battle_driver.t -> B.Battle_driver.t) ->
+    (B.Battle.game_steps -> B.Battle.game_steps) ->
     B.Battle_script.t ->
     B.Scripted_battle.outcome;
   after_battle : unit -> unit;
   log : string -> unit;
 }
 
-let check_party rig plan =
+let check_party game_steps plan =
   let want = [ plan.knock_off_species; plan.sweeper; plan.recycle_species ] in
-  let ok = List.for_all2 (fun slot s -> rig.species_at slot = Some s) in
+  let ok = List.for_all2 (fun slot s -> game_steps.species_at slot = Some s) in
   if not (ok [ 1; 2; 3 ] want) then
     M.fail "double_battle_wrong_party"
       ("expected " ^ String.concat ", " want ^ " in slots 1-3")
 
-let read_slots rig plan =
-  let lead = rig.known_moves ~slot:1 in
-  let holder = rig.known_moves ~slot:2 in
-  let recycler = rig.known_moves ~slot:3 in
+let read_slots game_steps plan =
+  let lead = game_steps.known_moves ~slot:1 in
+  let holder = game_steps.known_moves ~slot:2 in
+  let recycler = game_steps.known_moves ~slot:3 in
   match
     find_slots ~lead ~holder ~recycler ~depleted_move:plan.depleted_move
   with
   | Ok s -> s
   | Error e -> M.fail "double_battle_missing_move" e
 
-let run rig plan =
-  check_party rig plan;
-  let s = read_slots rig plan in
-  rig.log "Mail Glitch: starting Lea & Jed's double battle.";
-  rig.start_battle plan.step_direction;
-  let wrap = check_before_first_switch (rig.restored ~slot:s.depleted) in
-  match rig.battle wrap (script s) with
+let run game_steps plan =
+  check_party game_steps plan;
+  let s = read_slots game_steps plan in
+  game_steps.log "Mail Glitch: starting Lea & Jed's double battle.";
+  game_steps.start_battle plan.step_direction;
+  let wrap = check_before_first_switch (game_steps.restored ~slot:s.depleted) in
+  match game_steps.battle wrap (script s) with
   | B.Scripted_battle.Failed { why; _ } -> M.fail "double_battle_failed" why
   | B.Scripted_battle.Over _ as over ->
-      rig.log ("Mail Glitch: Lea & Jed " ^ B.Scripted_battle.describe over);
-      rig.after_battle ()
+      game_steps.log
+        ("Mail Glitch: Lea & Jed " ^ B.Scripted_battle.describe over);
+      game_steps.after_battle ()
 
-let live_rig ~log ~species_at ~known_moves ~battle =
+let live_game_steps ~log ~species_at ~known_moves ~battle =
   {
     species_at;
     known_moves;

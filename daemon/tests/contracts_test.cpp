@@ -102,6 +102,41 @@ void check_requests(const std::map<std::string, pa::JsonValue>& files) {
   CHECK(arrow.probes[1].color_range.max ==
         (std::array<std::uint8_t, 3>{255, 120, 120}));
 
+  const SubscribeParams shares_and_blobs = decode_subscribe(
+      decode_request(files.at("46-subscribe.line_shares_find.request.json"))
+          .params);
+  CHECK(shares_and_blobs.probes.size() == 3);
+  const ProbeSpec& glyph = shares_and_blobs.probes[0];
+  CHECK(glyph.kind == kLineSharesKind && glyph.pixel_test.size() == 3);
+  CHECK(glyph.pixel_test[2].weights == (std::array<int, 3>{-1, 0, 1}) &&
+        glyph.pixel_test[2].op == ChannelComparison::Op::kGreater &&
+        glyph.pixel_test[2].value == 60);
+  const ProbeSpec& chevron = shares_and_blobs.probes[1];
+  CHECK(chevron.kind == kFindKind && chevron.find);
+  if (chevron.find) {
+    CHECK(chevron.find->filters.size() == 2);
+    CHECK(chevron.find->filters[0].min ==
+          (std::array<std::uint8_t, 3>{235, 235, 220}));
+    CHECK(chevron.find->min_area == 1 && !chevron.find->max_area);
+    CHECK(chevron.find->min_size == (std::array<double, 2>{26, 15}));
+    CHECK(chevron.find->max_size == (std::array<double, 2>{40, 24}));
+    CHECK(chevron.find->margin == 4.0);
+    CHECK(chevron.find->template_hash.empty() &&
+          chevron.find->shape_hash.size() == 64);
+  }
+  const ProbeSpec& choice = shares_and_blobs.probes[2];
+  CHECK(choice.find && choice.find->max_area == 5000.0 &&
+        choice.find->template_hash.size() == 64 &&
+        choice.find->shape_hash.empty() && !choice.find->margin);
+  CHECK(!chevron.find || !chevron.find->masked);
+
+  // v1.15: a find scored with the pixels outside its filter black.
+  const SubscribeParams masked = decode_subscribe(
+      decode_request(files.at("49-subscribe.find_masked.request.json")).params);
+  CHECK(masked.probes.size() == 1 && masked.probes[0].find &&
+        masked.probes[0].find->masked &&
+        masked.probes[0].find->template_hash.size() == 64);
+
   const Request submit = decode_request(files.at("08-submit.request.json"));
   const SubmitParams batch = decode_submit(submit.params);
   CHECK(batch.batch_id == "b1");
@@ -117,16 +152,59 @@ void check_requests(const std::map<std::string, pa::JsonValue>& files) {
   CHECK(home.commands.size() == 1 &&
         home.commands[0].buttons == button_mask("Home") &&
         (home.commands[0].buttons & kSwitchOnlyKeys) != 0);
-  CHECK((button_mask("X") | button_mask("Y")) ==
+  CHECK((button_mask("X") | button_mask("Y") | button_mask("ZL") |
+         button_mask("ZR") | button_mask("Plus") | button_mask("Minus")) ==
         (kSwitchOnlyKeys & ~button_mask("Home")));
   CHECK((button_mask("L") & kSwitchOnlyKeys) == 0);
+  // v1.17: the Switch's own Plus and Minus, Switch-only like Home.
+  const SubmitParams skip = decode_submit(
+      decode_request(files.at("51-submit.plus.request.json")).params);
+  CHECK(skip.commands.size() == 2 &&
+        skip.commands[0].buttons == button_mask("Plus") &&
+        skip.commands[1].buttons == button_mask("Minus"));
+  // v1.16: ZL then ZL with ZR, PLZA's ball throw.
+  const SubmitParams aim = decode_submit(
+      decode_request(files.at("50-submit.zl_zr.request.json")).params);
+  CHECK(aim.commands.size() == 2 &&
+        aim.commands[0].buttons == button_mask("ZL") &&
+        aim.commands[1].buttons == (button_mask("ZL") | button_mask("ZR")) &&
+        aim.commands[1].cooldown_ms == 8000);
   CHECK(error_message(pa::JsonValue(std::int64_t{42}),
                       switch_button_refusal("mgba", button_mask("Home"))) ==
         files.at("43-error.switch_button.response.json"));
 
+  // A run: B with the left stick, chained by cooldown 0; then the right stick
+  // alone. A stick left out is not set; its refusal by mGBA names it.
+  const SubmitParams run = decode_submit(
+      decode_request(files.at("44-submit.sticks.request.json")).params);
+  CHECK(run.commands.size() == 3);
+  if (run.commands.size() == 3) {
+    const InputCommand& ahead = run.commands[0];
+    CHECK(ahead.buttons == button_mask("B") && ahead.hold_ms == 1200 &&
+          ahead.cooldown_ms == 0);
+    CHECK(ahead.left_stick.has_value() && ahead.left_stick->x == 0 &&
+          ahead.left_stick->y == 1 && !ahead.right_stick.has_value());
+    CHECK(run.commands[1].left_stick.has_value() &&
+          run.commands[1].left_stick->x == 0.5 &&
+          run.commands[1].left_stick->y == 0.866);
+    const InputCommand& look = run.commands[2];
+    CHECK(look.buttons == 0 && !look.left_stick.has_value() &&
+          look.right_stick.has_value() && look.right_stick->x == -1 &&
+          look.right_stick->y == 0 && look.cooldown_ms == 100);
+  }
+  CHECK(error_message(pa::JsonValue(std::int64_t{44}),
+                      switch_stick_refusal("mgba", "left_stick")) ==
+        files.at("45-error.switch_stick.response.json"));
+
   const Request cancel = decode_request(files.at("12-cancel.request.json"));
   CHECK(cancel.method == "cancel");
-  decode_cancel(cancel.params);
+  CHECK(!decode_cancel(cancel.params).then);
+  const Request then = decode_request(files.at("48-cancel.then.request.json"));
+  const CancelParams replaced = decode_cancel(then.params);
+  CHECK(replaced.then && replaced.then->batch_id == "move" &&
+        replaced.then->commands.size() == 2 &&
+        replaced.then->commands[0].buttons ==
+            (button_mask("ZL") | button_mask("X")));
 
   const Request status = decode_request(files.at("28-status.request.json"));
   CHECK(status.method == "status" && status.has_id);
@@ -274,6 +352,24 @@ void check_encoders(const std::map<std::string, pa::JsonValue>& files) {
                            probe_results_json({{"arrow_line1", no_arrow},
                                                {"arrow_line2", arrow}})) ==
         files.at("20-frame.color_count.notification.json"));
+  FindResult chevron;
+  Blob blob;
+  blob.filter = 1;
+  blob.box = cv::Rect(1418, 982, 32, 20);
+  blob.area = 230;  // 0.359375 of 32 x 20
+  blob.stray = 0.0;
+  blob.overlap = 0.585443;
+  chevron.blobs.push_back(blob);
+  const ProbeResult glyph = LineShares{
+      {3.0 / 8, 4.0 / 8, 2.0 / 8, 2.0 / 8, 4.0 / 8, 3.0 / 8, 2.0 / 8},
+      {1.0 / 7, 3.0 / 7, 4.0 / 7, 3.0 / 7, 2.0 / 7, 3.0 / 7, 3.0 / 7,
+       1.0 / 7}};
+  CHECK(frame_notification(
+            5120, 0, 85337.2,
+            probe_results_json({{"controls_hint.glyph", glyph},
+                                {"advance_arrow", chevron},
+                                {"choice_arrow", FindResult{}}})) ==
+        files.at("47-frame.line_shares_find.notification.json"));
   CHECK(batch_done_notification("b1", 1230, 20599.0) ==
         files.at("10-batch_done.notification.json"));
 
@@ -394,6 +490,39 @@ void check_errors() {
       (std::string(R"({"id":"p","kind":"core.color_stats@1",)") + kBox +
        R"(,"min":[0,0,0],"max":[1,1,1]})")
           .c_str()));  // a range only for color counts
+  const std::string shares =
+      std::string(R"({"id":"p","kind":"core.line_shares@1",)") + kBox;
+  CHECK(subscribe_error((shares + "}").c_str()));  // a test is required
+  CHECK(subscribe_error((shares + R"(,"test":[]})").c_str()));  // not empty
+  CHECK(subscribe_error(
+      (shares + R"(,"test":[{"weights":[1,0],"op":">","value":1}]})")
+          .c_str()));  // three weights
+  CHECK(subscribe_error(
+      (shares + R"(,"test":[{"weights":[1,0,0],"op":"=","value":1}]})")
+          .c_str()));  // > >= < <= only
+  CHECK(subscribe_error(
+      (shares + R"(,"test":[{"weights":[1,0,0],"op":">","value":1.5}]})")
+          .c_str()));  // integers
+  CHECK(subscribe_error(
+      (std::string(R"({"id":"p","kind":"core.color_stats@1",)") + kBox +
+       R"(,"test":[{"weights":[1,0,0],"op":">","value":1}]})")
+          .c_str()));  // a test only for line shares
+  const std::string find =
+      std::string(R"({"id":"p","kind":"core.find@1",)") + kBox;
+  const std::string filter = R"(,"filters":[{"min":[0,0,0],"max":[9,9,9]}])";
+  CHECK(subscribe_error((find + filter + "}").c_str()));  // min_area needed
+  CHECK(subscribe_error(
+      (find + R"(,"filters":[],"min_area":1})").c_str()));  // a filter
+  CHECK(subscribe_error((find + filter + R"(,"min_area":0})").c_str()));
+  CHECK(subscribe_error(
+      (find + filter + R"(,"min_area":5,"max_area":4})").c_str()));
+  CHECK(subscribe_error(
+      (find + filter + R"(,"min_area":1,"min_size":[1]})").c_str()));
+  CHECK(subscribe_error(
+      (find + filter + R"(,"min_area":1,"margin":-1})").c_str()));
+  CHECK(subscribe_error(
+      (find + filter + R"(,"min_area":1,"ink":{"min":[0,0,0],"max":[1,1,1]}})")
+          .c_str()));  // ink only for template_match
   CHECK(subscribe_error(
       (std::string(R"({"id":"p","kind":"core.template_match@1",)") + kBox +
        R"(,"template":"t","ink":{"min":[9,0,0],"max":[8,0,0]}})")
@@ -402,6 +531,27 @@ void check_errors() {
       (std::string(R"({"id":"p","kind":"core.color_stats@1",)") + kBox +
        R"(,"ink":{"min":[0,0,0],"max":[1,1,1]}})")
           .c_str()));  // ink only for template matches
+
+  // A stick is [x, y], each a number in -1..1.
+  const auto stick_error = [](const char* stick) {
+    try {
+      decode_submit(
+          parse_message(
+              std::string(
+                  R"({"batch_id":"b","commands":[{"press":[],"left_stick":)") +
+              stick + R"(,"hold_ms":1}]})")
+              .to_object_throw());
+    } catch (const RpcError& error) {
+      return error.code() == kInvalidParams;
+    }
+    return false;
+  };
+  CHECK(stick_error("[1.5,0]"));
+  CHECK(stick_error("[0,-1.01]"));
+  CHECK(stick_error("[0]"));
+  CHECK(stick_error("[0,0,0]"));
+  CHECK(stick_error(R"(["up",0])"));
+  CHECK(!stick_error("[-1,1]"));
 
   threw = false;
   try {
@@ -425,8 +575,11 @@ void check_errors() {
 
 int main() {
   const auto files = load_contracts();
-  CHECK(files.size() == 43);
-  if (files.size() == 41) {
+  // One per protocol/v1 golden file. The checks below index files by name,
+  // so they run only when every one is there.
+  constexpr std::size_t kGoldenFiles = 51;
+  CHECK(files.size() == kGoldenFiles);
+  if (files.size() == kGoldenFiles) {
     check_requests(files);
     check_lease(files);
     check_upload(files);

@@ -1,0 +1,4 @@
+(library
+ (name engine_plan)
+ (public_name gamepilot.engine_plan)
+ (libraries gamepilot.engine_rules))

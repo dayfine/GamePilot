@@ -8,7 +8,7 @@ module S = Scripted_screen
 
 let outcome = function
   | Ok () -> "ok"
-  | Error cause -> "failed " ^ Story.Failure.cause_to_string cause
+  | Error cause -> "failed " ^ Pokemon_engine.Failure.cause_to_string cause
 
 let run ?react f =
   let screen = S.create ?react () in

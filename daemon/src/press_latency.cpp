@@ -64,8 +64,8 @@ PressLatencyReport measure_press_latency(Backend& backend, const Clock& clock,
       throw BackendError("no frames while settling");
     }
     const double pressed_ms = clock.now_ms();
-    backend.queue_keys(plan.keys, plan.hold_ms);
-    backend.queue_keys(0, 0);
+    backend.queue_keys(plan.keys, Sticks{}, plan.hold_ms);
+    backend.queue_keys(0, Sticks{}, 0);
     const std::optional<double> changed =
         first_change(backend, clock, *before, rect, plan.threshold, pressed_ms,
                      pressed_ms + plan.timeout_ms);

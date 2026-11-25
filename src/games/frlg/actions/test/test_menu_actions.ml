@@ -8,7 +8,7 @@ module S = Scripted_screen
 
 let outcome = function
   | Ok () -> "ok"
-  | Error cause -> "failed " ^ Story.Failure.cause_to_string cause
+  | Error cause -> "failed " ^ Pokemon_engine.Failure.cause_to_string cause
 
 let a p = p.S.buttons = [ Wire.A ]
 
@@ -84,7 +84,7 @@ let save () = run ~react:save_screen (Heal_and_save.save ~log)
 
 let cut () =
   run ~react:(talk ~page:true ~after_ms:1500) (fun () ->
-      Cut_tree.cut ~log Grid_maps.Direction.North)
+      Cut_tree.cut ~log Grid_geometry.Direction.North)
 
 (* The Cut talk, its question dropping presses for its first
    [question_input_ms]: A then answers YES, B answers NO, each ending the talk.
@@ -119,7 +119,7 @@ let cut_slow_question () =
         | None -> presses
       in
       Printf.sprintf "%s; answered %s" before_b !answer)
-    (fun () -> Cut_tree.cut ~log Grid_maps.Direction.North)
+    (fun () -> Cut_tree.cut ~log Grid_geometry.Direction.North)
 
 (* A talk whose page drops an A for its first [page_input_ms] (the A only
    hurries the text): a later A shows the question, YES ends it. *)
@@ -173,7 +173,7 @@ let redeem ?(page = S.Dialog_arrow) () =
 
 (* START opens the menu on [start_row]; A on POKéMON the party, its cursor on
    [slot]; A on a slot opens its menu; A on SWITCH and on the second slot
-   keep the party. The cursors move as the presses move them, once a menu has
+   keep the party; B on it the overworld, through a black fade. The cursors move as the presses move them, once a menu has
    shown [input_delay_ms]. *)
 let swap_screen ~start_row ~slot () =
   let switching = ref false and chosen = ref slot in
@@ -189,16 +189,20 @@ let swap_screen ~start_row ~slot () =
     | [ Wire.A ], S.Member_menu 1 ->
         switching := true;
         show (S.Party !chosen)
-    | [ Wire.B ], S.Party _ -> show S.Overworld
+    | [ Wire.B ], S.Party _ ->
+        show S.Black;
+        S.show screen ~at_ms:(p.at_ms + 800) S.Overworld
     | _ -> ()
 
-(* START, POKéMON shows [party]; B on it the overworld. *)
+(* START, POKéMON shows [party]; B on it the overworld, through a black fade. *)
 let verify_screen party screen (p : S.press) =
   let show s = S.show screen ~at_ms:(p.at_ms + 100) s in
   match (p.buttons, S.screen_at screen p.at_ms) with
   | [ Wire.Start ], _ -> show (S.Start_menu 1)
   | [ Wire.A ], S.Start_menu 1 -> show party
-  | [ Wire.B ], (S.Party _ | S.Party_after_recycle) -> show S.Overworld
+  | [ Wire.B ], (S.Party _ | S.Party_after_recycle) ->
+      show S.Black;
+      S.show screen ~at_ms:(p.at_ms + 800) S.Overworld
   | _ -> ()
 
 let verify party () =
@@ -341,7 +345,7 @@ let trade_yes_taken () =
 let cut_yes_taken () =
   run_latent
     (latent_talk ~after_yes:[ (100, S.Dialog); (1600, S.Overworld) ] ())
-    (fun () -> Cut_tree.cut ~log Grid_maps.Direction.North)
+    (fun () -> Cut_tree.cut ~log Grid_geometry.Direction.North)
 
 (* A wild battle starts [after_ms] into the spin. *)
 let spin ~after_ms () =
@@ -424,6 +428,35 @@ let redeem_list_lingers () =
   Printf.sprintf "%s; %s" (outcome result)
     (if !taken then "the prize taken" else "the prize declined")
 
+(* The plan's answer event: its own A starts the talk (Bill's "Ready to set
+   sail?" in the Cinnabar Center), YES or NO, then the settle. B turns a page
+   as A does. *)
+let answer ~yes () =
+  let answered = ref "none" in
+  let react screen (p : S.press) =
+    let on_question = S.screen_at screen p.at_ms = S.Question in
+    match p.buttons with
+    | [ Wire.B ] when S.screen_at screen p.at_ms = S.Dialog_arrow ->
+        talk ~page:true ~after_ms:1500 screen { p with buttons = [ Wire.A ] }
+    | [ Wire.B ] when on_question && !answered = "none" ->
+        answered := "NO";
+        S.show screen ~at_ms:(p.at_ms + 100) S.Dialog;
+        S.show screen ~at_ms:(p.at_ms + 1600) S.Overworld
+    | [ Wire.A ] when on_question && !answered = "none" ->
+        answered := "YES";
+        talk ~page:true ~after_ms:1500 screen p
+    | _ -> talk ~page:true ~after_ms:1500 screen p
+  in
+  let screen = S.create ~react () in
+  let result = S.run screen (Talk.answer ~log ~yes) in
+  Printf.sprintf "%s; %s; answered %s" (outcome result) (S.presses_text screen)
+    !answered
+
+(* A key item's row shows no count; any other's is read. *)
+let found_count pocket read =
+  Option.fold ~none:"none" ~some:string_of_int
+    (Bag_items.found_count pocket (fun () -> read))
+
 let case name input expectation = { Table_test.name; input; expectation }
 
 let () =
@@ -462,6 +495,14 @@ let () =
             [ "leppa-berry"; "oran-berry"; "sitrus-berry"; "retro-mail" ]
           |> String.concat " ")
         "6 7 10 none";
+      (* As after a held item is switched: no reader reads the party behind
+         its message, and no fade comes until a press. *)
+      case "a close with nothing open and no fade: no B, nothing waited for"
+        (fun () ->
+          run (fun () ->
+              Menu_input.close_through_fades "the bag"
+                Frlg_readers.Bag_screen.bag_open))
+        "ok; ";
       case "verify_mail_glitch: MIMIEN shows the held-item mark after Recycle"
         (verify S.Party_after_recycle)
         "ok; Start, A, B x6";
@@ -501,8 +542,24 @@ let () =
         "cut on console B: the last page's A takes YES as the box draws, the \
          Cut runs"
         cut_yes_taken "ok; up, A x3, B x5, up";
+      case "answer YES: A to the person, the page, YES, the settle"
+        (answer ~yes:true) "ok; A x3, B x6; answered YES";
+      case "answer NO: the talk, whose B answers NO" (answer ~yes:false)
+        "ok; A, B x8; answered NO";
+      case "a key item found counts one, whatever its row reads"
+        (fun () -> found_count Frlg_readers.Bag_screen.Key_items None)
+        "1";
+      case "an item found counts what its row reads"
+        (fun () -> found_count Frlg_readers.Bag_screen.Items (Some 7))
+        "7";
       case "spin: a battle in the first batch" (spin ~after_ms:1500)
         "ok; 12 turns";
       case "spin: no battle in two batches" (spin ~after_ms:100000)
         "failed no_encounter: no wild battle in 2 batches; 48 turns";
+      case "GIVE is the second row on the Items pocket"
+        (fun () -> string_of_int (Party_actions.give_row "rare-candy"))
+        "1";
+      case "GIVE is the first row on the Poke Balls pocket, which has no USE"
+        (fun () -> string_of_int (Party_actions.give_row "ultra-ball"))
+        "0";
     ]

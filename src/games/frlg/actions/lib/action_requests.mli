@@ -13,16 +13,17 @@ type t =
   | Redeem_prize_mon of int
   | Ingame_trade of { offer : string; receive : string option }
   | Spin_for_encounter of { max_batches : int }
-  | Cut_tree of Grid_maps.Direction.t
+  | Cut_tree of Grid_geometry.Direction.t
   | Verify_mail_glitch of Action_args.member
   | Pc_deposit of string list
   | Pick_up_item of string
+  | Read_caught of { at_least : int option }
 
 val names : string list
 (** The action names {!decode} reads: ["mart"], ["use_item"], ["give_bag_item"],
     ["party_swap"], ["buy_coins"], ["redeem_prize_mon"], ["ingame_trade"],
     ["spin_for_encounter"], ["cut_tree"], ["verify_mail_glitch"],
-    ["pc_deposit"], ["pick_up_item"]. *)
+    ["pc_deposit"], ["pick_up_item"], ["read_caught"]. *)
 
 val default_spin_batches : int
 (** ["spin_for_encounter"]'s ["max_batches"] when left out: 25. *)
@@ -30,8 +31,8 @@ val default_spin_batches : int
 val decode :
   Mart_plan.stocks ->
   string ->
-  Grid_maps.Json_field.obj ->
-  (t, Story.Failure.cause) result
+  Json_field.obj ->
+  (t, Pokemon_engine.Failure.cause) result
 (** The action of that name with its args; [bad_args] naming the field, or
     [unknown_action]. The args:
     - [mart]: see {!Mart_plan.t}.
@@ -49,7 +50,10 @@ val decode :
       Pokémon Center's PC ({!Pc_deposit}).
     - [pick_up_item]: ["item"], the item the player faces (a hidden item, an
       item ball): a talk, as the plan's [talk] event, that names what it gains
-      so a pre-flight counts it ({!Frlg_story.Plan_needs}). *)
+      so a pre-flight counts it ({!Frlg_checkpoints.Plan_needs}).
+    - [read_caught]: optional ["at_least"]: the count of species caught, read
+      off the Trainer Card ({!Trainer_card_caught}) and logged; below [at_least]
+      it fails. *)
 
 val to_string : t -> string
 (** One line, for logs and tests. *)

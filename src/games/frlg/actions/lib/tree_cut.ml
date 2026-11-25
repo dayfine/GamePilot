@@ -1,8 +1,8 @@
-let cut world (at : Story.Pose.observed) direction =
+let cut world (at : Pokemon_engine.Pose.observed) direction =
   let on_tree =
     {
-      Story.Pose.at_map = at.at_map;
-      at_tile = Grid_maps.Tile_pos.next at.at_tile direction;
+      Pokemon_engine.Pose.at_map = at.at_map;
+      at_tile = Grid_geometry.Tile_pos.next at.at_tile direction;
       faces = Some direction;
     }
   in

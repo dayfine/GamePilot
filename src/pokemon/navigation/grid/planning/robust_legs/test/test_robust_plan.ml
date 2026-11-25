@@ -2,7 +2,7 @@
    fork's Pokemon_RobustLegPlanner_Tests.cpp (PLAN_CASES). Open legs on
    default costs may end a tile either way (two from 5 tiles up). *)
 
-open Grid_maps
+open Grid_geometry
 open Grid_robust_legs
 open Robust_toy
 

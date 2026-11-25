@@ -61,7 +61,8 @@ struct FakeBoardProfile {
   bool console_sees_controller = true;  // the status' ready bit
 };
 
-// One state command as the fake board ran it.
+// One state command as the fake board ran it: its buttons and both sticks
+// as the report carries them (pro_stick_axes() reads a stick back).
 struct BoardCommand {
   double start_ms = 0;  // daemon clock
   double end_ms = 0;
@@ -114,6 +115,7 @@ class FakeSwitch : public BoardPort {
   void on_message(const std::uint8_t* message, std::size_t bytes);
   void finish_due_commands(double now);
   void cancel_queued(double now);
+  bool replace_on_next_ = false;  // the next state replaces the running one
   double next_finish_ms() const;
 
   const Clock& clock_;

@@ -79,6 +79,7 @@ add_library(gamepilot_core STATIC
   "${CMAKE_CURRENT_BINARY_DIR}/hub_page.cpp"
   "${CMAKE_CURRENT_BINARY_DIR}/run_page.cpp"
   src/base64.cpp
+  src/blob_find.cpp
   src/board_session.cpp
   src/fake_switch.cpp
   src/frame_stream.cpp
@@ -148,7 +149,7 @@ target_link_libraries(press_latency PRIVATE gamepilot_core)
 gamepilot_warnings(press_latency)
 
 enable_testing()
-foreach(test board_session_test contracts_test input_lease_test keep_awake_test
+foreach(test blob_find_test board_session_test contracts_test input_lease_test keep_awake_test
              lockstep_speed_test probes_test
              run_history_test
              switch_backend_test
@@ -159,6 +160,7 @@ foreach(test board_session_test contracts_test input_lease_test keep_awake_test
   target_compile_definitions(${test} PRIVATE
     GAMEPILOT_CONTRACTS_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../protocol/v1"
     GAMEPILOT_SWITCH_IMAGES_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../src/games/frlg/readers/test/images/switch/tmcase"
+    GAMEPILOT_PLZA_IMAGES_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../src/games/pokemon/plza/readers/test/images/switch"
     GAMEPILOT_SWITCH_CAPTURES_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../src/games/frlg/readers/test/images/switch"
     GAMEPILOT_TEST_OUTPUT_DIR="${CMAKE_CURRENT_BINARY_DIR}")
   gamepilot_warnings(${test})

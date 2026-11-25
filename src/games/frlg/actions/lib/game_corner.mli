@@ -9,7 +9,7 @@ val coin_batches : int -> int list
     the batches that make up a total, 500s first. The total is a multiple of 50;
     see {!coins_of_args}. *)
 
-val coins_of_args : where:string -> Grid_maps.Json_field.obj -> int
+val coins_of_args : where:string -> Json_field.obj -> int
 (** ["coins"]: a positive multiple of 50. *)
 
 val prize_slots : int
@@ -19,7 +19,7 @@ val fire_red_prizes : string list
 (** The prizes by row on FireRed: Abra, Clefairy, Dratini, Scyther, Porygon
     (LeafGreen's differ). *)
 
-val prize_slot_of_args : where:string -> Grid_maps.Json_field.obj -> int
+val prize_slot_of_args : where:string -> Json_field.obj -> int
 (** ["slot"]: the prize's row from 0. *)
 
 val choice_wait_ms : int

@@ -4,8 +4,12 @@ let code_checks c path text =
   | Ok src ->
       Function_length.check c src
       @ Nesting.check c src @ Complexity.check c src
+      @ (if Source_tree.in_library_dir c path then Magic_numbers.check src
+         else [])
       @
-      if Source_tree.in_library_dir c path then Magic_numbers.check src else []
+      if Source_tree.under_no_exceptions_root c path then
+        No_exceptions.check src
+      else []
 
 let file_findings (c : Config.t) path =
   if Source_tree.in_test_dir c path then []
@@ -40,6 +44,7 @@ let run (c : Config.t) =
     List.concat_map (file_findings c) files
     @ Mli_coverage.check c code_files
     @ Layers.check c dune_files
+    @ Never_links.check c dune_files
   in
   Ok
     (Lint_exceptions.apply ~file entries findings

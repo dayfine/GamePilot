@@ -2,12 +2,12 @@
    PokemonFRLG_OverworldRoute_Tests (doors, exit mats, ledges, map edges)
    on Pallet Town, the player's house and Route 1. *)
 
-open Grid_maps
+open Grid_geometry
 open Frlg_overworld_fixtures
 open Frlg_world
 module Route_target = Frlg_overworld.Route_target
 
-let target ?facing map tiles : Story.Pose.grid =
+let target ?facing map tiles : Pokemon_engine.Pose.grid =
   { map; tiles = List.map (fun (x, y) -> { Tile_pos.x; y }) tiles; facing }
 
 let plan ~from goal () =

@@ -13,5 +13,6 @@ val read : log:(string -> unit) -> int option
 (** From the overworld: the Key Items pocket ({!Bag_items.open_pocket_top}),
     COIN CASE selected by its name, A, USE (row 0 of its menu), the count read
     until it shows ({!Trainer_card_money.read_timeout_ms}), B to the bag, the
-    bag closed, the talk settle. [None] when no count read in time. Fails as
-    [no_bag], [no_pocket], [not_in_bag], [no_item_menu] or [not_closed]. *)
+    bag closed, its fade-in over ({!Menu_input.await_fade_in}), the talk settle.
+    [None] when no count read in time. Fails as [no_bag], [no_pocket],
+    [not_in_bag], [no_item_menu] or [not_closed]. *)

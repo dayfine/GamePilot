@@ -1,0 +1,22 @@
+{
+  "jsonrpc": "2.0",
+  "id": 48,
+  "method": "cancel",
+  "params": {
+    "then": {
+      "batch_id": "move",
+      "commands": [
+        {
+          "press": ["ZL", "X"],
+          "hold_ms": 160,
+          "cooldown_ms": 0
+        },
+        {
+          "press": ["ZL"],
+          "hold_ms": 640,
+          "cooldown_ms": 200
+        }
+      ]
+    }
+  }
+}

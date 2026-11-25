@@ -5,6 +5,7 @@
    these, except that 3F's holes are tall grass there). *)
 
 open Grid_maps
+open Grid_geometry
 open Grid_planning
 
 (* third_party/ sits outside the dune project, so find it from the build

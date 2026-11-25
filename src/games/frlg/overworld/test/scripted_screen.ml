@@ -51,6 +51,9 @@ type screen =
   | Title  (** The title screen, "PRESS START" (mGBA). *)
   | Load_menu  (** CONTINUE over NEW GAME after the title (mGBA). *)
   | Recap  (** "Previously on your quest" after CONTINUE (mGBA). *)
+  | Seagallop_list of int
+      (** The Seagallop sailor's list at One Island's harbor (mGBA), its arrow
+          on this row from 0: TWO ISLAND, THREE ISLAND, EXIT. *)
 
 let screen_name = function
   | Overworld -> "overworld"
@@ -75,6 +78,7 @@ let screen_name = function
   | Title -> "title"
   | Load_menu -> "load menu"
   | Recap -> "recap"
+  | Seagallop_list row -> Printf.sprintf "seagallop list row %d" row
 
 (* The fixture images each screen is read from; a screen merges the probes of
    every fixture file that has its image. *)
@@ -97,12 +101,16 @@ let image = function
   | Bag_items _ -> "emu-1/20261122-024507-05.04__bag-items-row0.png"
   | Item_menu -> "mg04-escape-rope/item-menu-escape-rope__itemmenu.png"
   | Mart_list -> "ItemListReader/MartBuyList_eng__money.png"
-  | Summary _ | Summary_at _ -> "captures/sm3_s1__summary1.png"
+  | Summary _ | Summary_at _ -> "captures/sm3_s1__summary1-shiny.png"
   | Summary_page { page; _ } ->
-      Printf.sprintf "captures/sm3_s%d__summary%d.png" page page
+      (* The Squirtle of these captures is shiny: pages 1 and 2 show the star. *)
+      Printf.sprintf "captures/sm3_s%d__summary%d%s.png" page page
+        (if page <= 2 then "-shiny" else "")
   | Title -> "mail-glitch-04/continue__none.png"
   | Load_menu -> "mail-glitch-04/save-select__loadmenu.png"
   | Recap -> "mail-glitch-04/location__none.png"
+  | Seagallop_list row ->
+      Printf.sprintf "seagallop-one-island/list-row%d__seagallop%d.png" row row
 
 (* Copied next to the test by its dune rules. *)
 let fixtures =
@@ -403,7 +411,7 @@ let rec run_frames t ms stop =
 
 let start_command t (command : Wire.command) =
   match command with
-  | Press { buttons; hold_ms; cooldown_ms } ->
+  | Press { buttons; hold_ms; cooldown_ms; _ } ->
       let press =
         { buttons; at_ms = t.clock_ms; hold_ms; index = List.length t.presses }
       in
