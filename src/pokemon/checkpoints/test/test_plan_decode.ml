@@ -26,6 +26,31 @@ let load name dir =
   | Ok plan -> plan
   | Error message -> failwith message
 
+(* The plan's metadata (postconditions, retries, repeat), decoded with its
+   events left out: some Mail Glitch plans' events name places or fragments,
+   which only FireRed's loader expands (Frlg_checkpoints.Plan_file). *)
+let metadata_of name dir =
+  let without_events = function
+    | `Assoc plan ->
+        `Assoc
+          (List.map
+             (function
+               | "checkpoint", `Assoc c ->
+                   ( "checkpoint",
+                     `Assoc
+                       (List.map
+                          (function
+                            | "events", _ -> ("events", `List []) | f -> f)
+                          c) )
+               | f -> f)
+             plan)
+    | json -> json
+  in
+  let json = Yojson.Safe.from_file (Filename.concat dir name) in
+  match Plan_decode.decode ~source:name (without_events json) with
+  | Ok plan -> plan
+  | Error message -> failwith message
+
 (* A plan's id, start, and how many events of each kind, in first-seen order. *)
 let outline name dir =
   let plan = load name dir in
@@ -335,7 +360,7 @@ let postcondition_cases : Table_test.case list =
       name =
         "mg-01 promises the members the plans use (Abra among them), 20 coins \
          gained and $4,100 spent";
-      input = (fun () -> postconditions_text (load "mg-01.plan.json" mg));
+      input = (fun () -> postconditions_text (metadata_of "mg-01.plan.json" mg));
       expectation =
         "party includes blastoise, pidgey, abra\n\
          coins gained 20\n\
@@ -343,13 +368,13 @@ let postcondition_cases : Table_test.case list =
     };
     {
       name = "mg-05 promises MIMIEN, Pidgey and slots 1-3's marks";
-      input = (fun () -> postconditions_text (load "mg-05.plan.json" mg));
+      input = (fun () -> postconditions_text (metadata_of "mg-05.plan.json" mg));
       expectation =
         "party includes mr-mime, pidgey\nmarks held_item, none, held_item";
     };
     {
       name = "mg-03 promises MIMIEN for Abra, 2 Revives and an Escape Rope";
-      input = (fun () -> postconditions_text (load "mg-03.plan.json" mg));
+      input = (fun () -> postconditions_text (metadata_of "mg-03.plan.json" mg));
       expectation =
         "party includes blastoise, pidgey, mr-mime, farfetchd\n\
          item revive gained 2\n\
@@ -358,7 +383,8 @@ let postcondition_cases : Table_test.case list =
     };
     {
       name = "mg-04a promises Knock Off and one rope used";
-      input = (fun () -> postconditions_text (load "mg-04a.plan.json" mg));
+      input =
+        (fun () -> postconditions_text (metadata_of "mg-04a.plan.json" mg));
       expectation =
         "party includes blastoise, pidgey, mr-mime, farfetchd\n\
          item revive gained 0\n\
@@ -368,7 +394,8 @@ let postcondition_cases : Table_test.case list =
     };
     {
       name = "a grind round (mg-04b) promises what holds on any save";
-      input = (fun () -> postconditions_text (load "mg-04b.plan.json" mg));
+      input =
+        (fun () -> postconditions_text (metadata_of "mg-04b.plan.json" mg));
       expectation =
         "position IndigoPlateau_PokemonCenter_1F (13, 12) north\n\
          party includes blastoise, pidgey, mr-mime, farfetchd\n\
@@ -376,7 +403,8 @@ let postcondition_cases : Table_test.case list =
     };
     {
       name = "mg-04c promises the grind's moves";
-      input = (fun () -> postconditions_text (load "mg-04c.plan.json" mg));
+      input =
+        (fun () -> postconditions_text (metadata_of "mg-04c.plan.json" mg));
       expectation =
         "party includes blastoise, pidgey, mr-mime, farfetchd\n\
          money spent 0\n\
@@ -386,7 +414,7 @@ let postcondition_cases : Table_test.case list =
     };
     {
       name = "mg-06 promises MIMIEN in slot 1, where the duplication gives";
-      input = (fun () -> postconditions_text (load "mg-06.plan.json" mg));
+      input = (fun () -> postconditions_text (metadata_of "mg-06.plan.json" mg));
       expectation =
         "party includes pidgey\n\
          mr-mime in slot 1\n\
@@ -478,7 +506,8 @@ let postcondition_cases : Table_test.case list =
     };
     {
       name = "mg-05a promises Blastoise's Leppa Berry and MIMIEN's mail";
-      input = (fun () -> postconditions_text (load "mg-05a.plan.json" mg));
+      input =
+        (fun () -> postconditions_text (metadata_of "mg-05a.plan.json" mg));
       expectation =
         "party includes pidgey\n\
          farfetchd in slot 1\n\
@@ -553,7 +582,7 @@ let retries_cases : Table_test.case list =
   in
   [
     case "mg-05 retries the battle's luck 3 times"
-      (fun () -> string_of_int (load "mg-05.plan.json" mg).retries)
+      (fun () -> string_of_int (metadata_of "mg-05.plan.json" mg).retries)
       "3";
     case "no retries field: none"
       (fun () -> retries_of {|{"phase": "testing"}|})
@@ -587,10 +616,10 @@ let repeat_cases : Table_test.case list =
   in
   [
     case "mg-04b repeats until MIMIEN is Lv 33 and knows Recycle"
-      (fun () -> repeat_text (load "mg-04b.plan.json" mg))
+      (fun () -> repeat_text (metadata_of "mg-04b.plan.json" mg))
       "at most 20 rounds, until:\nmr-mime knows recycle\nmr-mime at least Lv 33";
     case "mg-04b retries each round twice"
-      (fun () -> string_of_int (load "mg-04b.plan.json" mg).retries)
+      (fun () -> string_of_int (metadata_of "mg-04b.plan.json" mg).retries)
       "2";
     case "no repeat field: none"
       (fun () -> repeat_of {|{"phase": "testing"}|})
