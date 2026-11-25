@@ -21,6 +21,7 @@ type button = Command.button =
   | Y
   | ZL
   | ZR
+  | LClick
 
 let string_of_button = Command.string_of_button
 let button_of_string = Command.button_of_string

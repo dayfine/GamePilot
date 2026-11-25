@@ -463,9 +463,9 @@ UnsubscribeParams decode_unsubscribe(const pa::JsonObject& params) {
 namespace {
 
 // The buttons by KeyMask bit (backend.h).
-constexpr std::array<const char*, 15> kButtons = {
+constexpr std::array<const char*, 16> kButtons = {
     "A", "B", "Select", "Start", "Right", "Left", "Up", "Down",
-    "R", "L", "Home",   "X",     "Y",     "ZL",   "ZR"};
+    "R", "L", "Home",   "X",     "Y",     "ZL",   "ZR", "LClick"};
 
 }  // namespace
 

@@ -145,7 +145,8 @@ void check_requests(const std::map<std::string, pa::JsonValue>& files) {
         home.commands[0].buttons == button_mask("Home") &&
         (home.commands[0].buttons & kSwitchOnlyKeys) != 0);
   CHECK((button_mask("X") | button_mask("Y") | button_mask("ZL") |
-         button_mask("ZR")) == (kSwitchOnlyKeys & ~button_mask("Home")));
+         button_mask("ZR") | button_mask("LClick")) ==
+        (kSwitchOnlyKeys & ~button_mask("Home")));
   CHECK((button_mask("L") & kSwitchOnlyKeys) == 0);
   CHECK(error_message(pa::JsonValue(std::int64_t{42}),
                       switch_button_refusal("mgba", button_mask("Home"))) ==

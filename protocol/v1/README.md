@@ -1,4 +1,4 @@
-# Wire protocol v1.16
+# Wire protocol v1.17
 
 JSON-RPC 2.0 between the OCaml programs (client) and the daemon (server). The golden files in this
 folder are the spec: the daemon's tests parse every file and the OCaml tests decode and re-encode
@@ -39,6 +39,9 @@ the share of a box's pixels passing a test of linear channel comparisons per row
 and `core.find@1`, blobs found by the fork's fixed pipeline (colour filter, waterfill, size filter,
 scores) (`46-subscribe.line_shares_find.request.json`, `47-frame.line_shares_find.notification.json`).
 `hello` lists both. A v1.12 program never subscribes them.
+v1.17 adds the Switch's `LClick` (the left stick pressed in) to `submit`, for the Switch keyboard's
+Shift (PLZA's new-game name); a backend that is not the Switch refuses it as it does `ZL`. A v1.16
+program never names it.
 v1.16 adds the Switch's `ZR` to `submit`, for PLZA's ball throw (ZL and ZR held to aim); a backend
 that is not the Switch refuses it as it does `ZL`. A v1.15 program never names it.
 v1.15 adds `masked` to `core.find@1` (optional, default `false`): `true` scores each blob's box
@@ -121,7 +124,7 @@ size) every v1.1 message means the same in v1.2.
   again replaces it. Each probe costs time on every frame, so a reader unsubscribes the probes it no
   longer reads.
 - Buttons (GBA): `A`, `B`, `Select`, `Start`, `Right`, `Left`, `Up`, `Down`, `R`, `L`.
-  The Switch only: `Home`, `X`, `Y`, `ZL`, `ZR` (`42-submit.home.request.json`). A press of one on another
+  The Switch only: `Home`, `X`, `Y`, `ZL`, `ZR`, `LClick` (`42-submit.home.request.json`). A press of one on another
   backend is refused, as a whole batch, with -32602 and `data` {`backend`, `button`}: mGBA and the
   view backend have no such button (the view backend refuses every input anyway, -32002).
 - Sticks (the Switch only, `44-submit.sticks.request.json`): `left_stick` and `right_stick` are each
