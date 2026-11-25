@@ -3,7 +3,7 @@
   "game": "frlg",
   "checkpoint": {
     "id": "01-buy-magikarp",
-    "title": "Magikarp in the party: from anywhere outdoors, fly to the Route 4 Pokemon Center; unless Magikarp is already seen, a free slot made at its PC and a Magikarp bought there",
+    "title": "Magikarp in the party, below the Route 4 Pokemon Center's PC: from anywhere outdoors, fly there; unless Magikarp is already seen, a free slot made at the PC and a Magikarp bought from the salesman",
     "start": {
       "anywhere": "outdoors"
     },
@@ -54,7 +54,8 @@
             "place": "route4_magikarp_salesman"
           }
         },
-        "why": "Facing the Magikarp salesman: where 02 starts, bought or not."
+        "why": "Facing the Magikarp salesman.",
+        "skip_if": ["pokedex_seen:magikarp"]
       },
       {
         "id": "talk_salesman",
@@ -93,6 +94,17 @@
         },
         "why": "The salesman's last line, back to free control.",
         "skip_if": ["pokedex_seen:magikarp"]
+      },
+      {
+        "id": "back_to_pc",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "place": "route4_center_pc"
+          }
+        },
+        "why": "Back below the Center's PC, facing it: where 02 starts, bought or not (with the purchase skipped the player is already there)."
       }
     ]
   },

@@ -7,22 +7,11 @@
     "start": {
       "map": "Route4_PokemonCenter_1F",
       "tiles": [
-        [2, 3]
+        [11, 2]
       ],
-      "facing": "west"
+      "facing": "north"
     },
     "events": [
-      {
-        "id": "to_pc",
-        "kind": "route",
-        "action": "run",
-        "args": {
-          "target": {
-            "place": "route4_center_pc"
-          }
-        },
-        "why": "Below the Center's PC, facing it."
-      },
       {
         "id": "box3_slot1_empty",
         "kind": "game_action",
@@ -82,7 +71,7 @@
   "metadata": {
     "phase": "testing",
     "retries": 3,
-    "notes": "The irreversible step: confirming the ? Mail writes Box 3 slot 1. Its start state (01-buy-magikarp's end, at the salesman) is the backup: on mGBA the run starts from it every time, and on the Switch nothing is saved until every check passed. Words from pomeg-letterbombers' FRLG non-JPN Post-E4 route (English). The Retro Mail is spent and the Magikarp ends holding nothing (the give fails half way, as in the duplication). Checked on mGBA from RAM (not by the program): Box 3 slot 1 personality 0x162E2753, OT ID 0x2A812402, species 0x0351.",
+    "notes": "The irreversible step: confirming the ? Mail writes Box 3 slot 1. Its start state (01-buy-magikarp's end, below the Route 4 Center's PC) is the backup: on mGBA the run starts from it every time, and on the Switch nothing is saved until every check passed. Words from pomeg-letterbombers' FRLG non-JPN Post-E4 route (English). The Retro Mail is spent and the Magikarp ends holding nothing (the give fails half way, as in the duplication). Checked on mGBA from RAM (not by the program): Box 3 slot 1 personality 0x162E2753, OT ID 0x2A812402, species 0x0351.",
     "postconditions": {
       "party_slots": [
         {

@@ -56,17 +56,18 @@ Glitch 08-activate-and-verify ends in.
 <!-- generated:checkpoints -->
 | Checkpoint | What its plan does |
 |---|---|
-| 01-buy-magikarp | Magikarp in the party: from anywhere outdoors, fly to the Route 4 Pokemon Center; unless Magikarp is already seen, a free slot made at its PC and a Magikarp bought there |
+| 01-buy-magikarp | Magikarp in the party, below the Route 4 Pokemon Center's PC: from anywhere outdoors, fly there; unless Magikarp is already seen, a free slot made at the PC and a Magikarp bought from the salesman |
 | 02-write-ace-mail | The ? Mail written BULK UP / CAPABLE / KARATE CHOP / MAGIKARP: species 0x0351 in Box 3 slot 1 |
 
-<!-- plans: eceb73478350 -->
+<!-- plans: afc804990159 -->
 <!-- /generated -->
 
 In plain words:
 
 1. Flies to the Route 4 Pokémon Center, puts MIMIEN in the PC and buys a Magikarp from the man
-   by the door ($500). The Magikarp joins the party, and with it Magikarp counts as seen. When
-   the Pokédex already has Magikarp seen, it only walks to the man: no deposit, no purchase.
+   by the door ($500), then walks back to the PC. The Magikarp joins the party, and with it
+   Magikarp counts as seen. When the Pokédex already has Magikarp seen, it stops at the PC: no
+   deposit, no purchase.
 2. Opens the PC and checks that Box 3 slot 1 is empty.
 3. Gives the Magikarp a Retro Mail. Every party mail record is in use, so the game opens the
    "? Mail", nine fields of `???`. It writes `BULK UP / CAPABLE / KARATE CHOP / MAGIKARP`, reads
