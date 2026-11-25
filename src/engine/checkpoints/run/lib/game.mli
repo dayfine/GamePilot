@@ -15,7 +15,7 @@ module Make (T : Engine_terms.GAME_TERMS) : sig
       rejects with a {!Failure.cause} when they are wrong). *)
 
   type t = {
-    run_own : Plan.Make(T).event -> T.own_kind -> outcome;
+    run_own : Plan.Make(T).event -> T.Kind.t -> outcome;
         (** An event of one of the game's own kinds, with its args. *)
     run_builtin : Plan.Make(T).event -> outcome;
         (** An event of the engine's other kinds ([talk], [answer], [scene],
@@ -24,7 +24,7 @@ module Make (T : Engine_terms.GAME_TERMS) : sig
         (** The game actions it implements, by name. *)
     flag_holds : string -> bool;
         (** Whether a flag an event's [skip_if] names holds now. *)
-    position : unit -> T.observed option;
+    position : unit -> T.Pose.observed option;
         (** Where the player is, or [None] when the game cannot tell; checked
             against an event's [declared_after]. *)
     between_rounds : unit -> outcome;

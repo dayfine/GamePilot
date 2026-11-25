@@ -4,7 +4,7 @@
  (libraries
   yojson
   gamepilot.json_field
-  gamepilot.engine_promise
+  gamepilot.engine_postcondition
   gamepilot.engine_terms
   gamepilot.engine_plan
   gamepilot.engine_checkpoints))
@@ -15,6 +15,6 @@
  (libraries
   yojson
   gamepilot.table_test
-  gamepilot.engine_promise
+  gamepilot.engine_postcondition
   gamepilot.engine_run
   toy_game))

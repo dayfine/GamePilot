@@ -6,7 +6,7 @@
 
 open Engine_run
 open Pokemon_checkpoints
-open Engine_promise
+open Engine_postcondition
 
 let case name input expectation = { Table_test.name; input; expectation }
 
@@ -250,7 +250,7 @@ let spent_from ~start =
 
 (* What is kept, written and read back. *)
 let round_trip kept =
-  match Event_states.kept_of_json (Event_states.kept_to_json kept) with
+  match Saved.of_json (Saved.to_json kept) with
   | Error e -> e
   | Ok { start = { start_money; start_coins; start_items }; at } ->
       let money =
@@ -307,8 +307,7 @@ let kept_cases =
     case "kept before items were: no coins or items read at the start"
       (fun () ->
         match
-          Event_states.kept_of_json
-            (`Assoc [ ("start_money", `Int 29202); ("at", `Null) ])
+          Saved.of_json (`Assoc [ ("start_money", `Int 29202); ("at", `Null) ])
         with
         | Ok { start; _ } -> string_of_bool (start = money (Some 29202))
         | Error e -> e)
@@ -316,7 +315,7 @@ let kept_cases =
     case "an item count that is not a number"
       (fun () ->
         match
-          Event_states.kept_of_json
+          Saved.of_json
             (`Assoc [ ("start_items", `Assoc [ ("revive", `String "2") ]) ])
         with
         | Ok _ -> "read"
@@ -324,9 +323,7 @@ let kept_cases =
       "start_items: revive is not a number";
     case "not an object"
       (fun () ->
-        match Event_states.kept_of_json (`Int 1) with
-        | Ok _ -> "read"
-        | Error e -> e)
+        match Saved.of_json (`Int 1) with Ok _ -> "read" | Error e -> e)
       "what is kept is not an object";
     case "spent, checked from the event against the checkpoint's start"
       (fun () -> spent_from ~start:(Some 29202))

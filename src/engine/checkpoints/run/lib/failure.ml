@@ -14,8 +14,8 @@ module Make (T : Engine_terms.GAME_TERMS) = struct
   type reason =
     | Handler of cause
     | No_handler of string
-    | Not_at_declared of { declared : T.pose; observed : T.observed }
-    | Not_at_end of { declared : T.pose; observed : T.observed option }
+    | Not_at_declared of { declared : T.Pose.t; observed : T.Pose.observed }
+    | Not_at_end of { declared : T.Pose.t; observed : T.Pose.observed option }
     | Unmet_postconditions of string list
 
   type t = {
@@ -36,12 +36,13 @@ module Make (T : Engine_terms.GAME_TERMS) = struct
     | No_handler action -> "no handler for game action \"" ^ action ^ "\""
     | Not_at_declared { declared; observed } ->
         Printf.sprintf "declared after at %s, but the game reads %s"
-          (T.pose_text declared) (T.observed_text observed)
+          (T.Pose.text declared)
+          (T.Pose.observed_text observed)
     | Not_at_end { declared; observed } ->
         Printf.sprintf "declared end at %s, but the game reads %s"
-          (T.pose_text declared)
+          (T.Pose.text declared)
           (match observed with
-          | Some o -> T.observed_text o
+          | Some o -> T.Pose.observed_text o
           | None -> "no position")
     | Unmet_postconditions unmet ->
         "postconditions unmet: " ^ String.concat "; " unmet

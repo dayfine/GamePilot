@@ -15,7 +15,7 @@ type observed = {
   faces : Direction.t option;
 }
 
-let matches pose observed =
+let grid_matches pose observed =
   let tile_ok =
     pose.tiles = [] || List.exists (Tile_pos.equal observed.at_tile) pose.tiles
   in

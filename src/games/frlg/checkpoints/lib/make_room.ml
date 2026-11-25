@@ -1,9 +1,9 @@
 module Towns = Frlg_actions.Fly_towns
-module R = Checkpoints_run.Room_policy
+module R = Room_policy
 
 let id = "00-make-room"
 let center_map town = town ^ "_PokemonCenter_1F"
-let pc_front : Grid_maps.Tile_pos.t = { x = 11; y = 2 }
+let pc_front = Frlg_overworld.Standard_center.pc_front
 
 let town_of_map (t : Towns.t) map =
   List.find_opt
@@ -14,20 +14,21 @@ let town_of_map (t : Towns.t) map =
 let distance (a : Grid_maps.Tile_pos.t) (b : Grid_maps.Tile_pos.t) =
   ((a.x - b.x) * (a.x - b.x)) + ((a.y - b.y) * (a.y - b.y))
 
+(* A Center Make_room can walk: its coded room, with the PC at pc_front. *)
+let has_standard_center maps (town : Towns.town) =
+  let center = center_map town.name in
+  Frlg_overworld.Standard_center.is_standard center && List.mem center maps
+
 let nearest_center (t : Towns.t) ~maps map =
   match town_of_map t map with
   | None -> Error (map ^ " is in no Fly town: give a town's map")
   | Some here -> (
-      let with_center =
-        List.filter
-          (fun (town : Towns.town) -> List.mem (center_map town.name) maps)
-          t.towns
-      in
+      let with_center = List.filter (has_standard_center maps) t.towns in
       let nearer (a : Towns.town) (b : Towns.town) =
         if distance b.cell here.cell < distance a.cell here.cell then b else a
       in
       match with_center with
-      | [] -> Error "no Fly town has a Center in the maps"
+      | [] -> Error "no Fly town has a standard Center in the maps"
       | first :: rest -> Ok (List.fold_left nearer first rest))
 
 type room = {

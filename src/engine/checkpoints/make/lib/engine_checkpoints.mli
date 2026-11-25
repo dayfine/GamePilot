@@ -36,10 +36,8 @@ module Make (T : Engine_terms.GAME_TERMS) : sig
     include Engine_run.Runner.Make (T)
   end
 
-  (** {!Engine_run.Event_states.Make}: the states a run keeps. *)
-  module Event_states : module type of struct
-    include Engine_run.Event_states.Make (T)
-  end
+  module Event_states = Engine_run.Event_states
+  (** {!Engine_run.Event_states}: where a run keeps its states. *)
 
   (** {!Engine_run.Repeat_until.Make}: a looped checkpoint. *)
   module Repeat_until : module type of struct

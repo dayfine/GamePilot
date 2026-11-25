@@ -23,14 +23,14 @@ val at_start :
   Pokemon_checkpoints.Postconditions.t ->
   Pokemon_checkpoints.Postcondition_check.start
 (** Reads now, at the checkpoint's start, what a promise of a change needs: the
-    money for a promise of the money spent ({!Engine_promise.Money.Spent}), the
-    coins and each item promised as gained ({!Engine_promise.Count.Gained}),
-    each as at the end, from the overworld and back to it; nothing for a plan
-    with no such promise. With no Coin Case in the bag the coins at the start
-    are 0. A read that failed stays unread, so its promise is not checked. *)
+    money for a promise of the money spent
+    ({!Engine_postcondition.Money.Spent}), the coins and each item promised as
+    gained ({!Engine_postcondition.Count.Gained}), each as at the end, from the
+    overworld and back to it; nothing for a plan with no such promise. With no
+    Coin Case in the bag the coins at the start are 0. A read that failed stays
+    unread, so its promise is not checked. *)
 
-val party_summary :
-  log:(string -> unit) -> Checkpoints_run.Room_policy.member list option
+val party_summary : log:(string -> unit) -> Room_policy.member list option
 (** Every member's species, level and moves ({!Frlg_actions.Party_summary}),
     from the overworld and back to it; [None] when the read failed. *)
 

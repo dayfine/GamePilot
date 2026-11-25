@@ -14,7 +14,7 @@
 
 module Pf = Preflight_command
 module M = Frlg_checkpoints.Make_room
-module R = Checkpoints_run.Room_policy
+module R = Room_policy
 module Pr = Frlg_checkpoints.Party_room
 module Cr = Frlg_checkpoints.Checkpoint_run
 
@@ -50,10 +50,11 @@ let knows_fly (m : R.member) =
 
 let room ~at need members =
   let* towns = Frlg_actions.Fly_towns.load () in
-  let* dir =
-    Option.to_result ~none:"no maps" (Repo_io.Repo_files.locate Cr.maps_dir)
+  let* world = Cr.load_world () in
+  let maps =
+    List.init (Grid_maps.Connected_maps.size world.maps) (fun i ->
+        (Grid_maps.Connected_maps.map world.maps i).name)
   in
-  let maps = Grid_maps.Map_file.runtime_names ~maps_dir:dir in
   let* center = M.nearest_center towns ~maps at in
   let* deposits = R.choose (Pr.rules need) (Pr.precondition need) members in
   let* fly_user =

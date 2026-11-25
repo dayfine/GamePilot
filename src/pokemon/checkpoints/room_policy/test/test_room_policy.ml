@@ -1,6 +1,6 @@
 (* Room_policy: who goes to the PC when a chain needs free party slots. *)
 
-module R = Checkpoints_run.Room_policy
+module R = Room_policy
 
 let frlg_field_moves = [ "cut"; "fly"; "surf"; "strength" ]
 

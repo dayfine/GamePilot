@@ -15,7 +15,7 @@ type party =
 and slot = { slot : int; species : string }
 (** The member in party slot [slot] (from 1) is of [species] (a slug). *)
 
-type bag_count = { bag_item : string; count : Engine_promise.Count.t }
+type bag_count = { bag_item : string; count : Engine_postcondition.Count.t }
 (** A count of the bag item [bag_item] (a slug). *)
 
 type knows = { species : string; moves : string list }
@@ -29,11 +29,11 @@ type level = { species : string; min : int }
 type t = {
   position : Pose.grid option;
       (** Where the checkpoint ends; unset, the end is the next checkpoint's
-          start ([Checkpoints_run.Checkpoint_end]). *)
+          start ([Checkpoint_end]). *)
   party : party option;
   items : bag_count list;  (** Each item's count in the bag. *)
-  coins : Engine_promise.Count.t option;  (** Game Corner coins. *)
-  money : Engine_promise.Money.t option;
+  coins : Engine_postcondition.Count.t option;  (** Game Corner coins. *)
+  money : Engine_postcondition.Money.t option;
   flags : string list;  (** Story flags (named by the game) that must be set. *)
   knows : knows list;  (** Moves members must know. *)
   levels : level list;
@@ -54,10 +54,13 @@ type t = {
 val none : t
 (** Nothing promised: what a plan that states no postconditions promises. *)
 
-val checked_at_end : t -> bool
-(** Whether the runner reads and checks them after the end position: a party,
-    items, coins, money or flags promised (moves, levels and marks alone are not
-    read at the end). *)
+val stated : t option -> t
+(** A plan's postconditions: {!none} when it states none. *)
+
+val at_end : t -> t option
+(** What the runner reads and checks after the end position: [None] unless a
+    party, items, coins, money or flags are promised (moves, levels and marks
+    alone are not read at the end). *)
 
 val text : t -> string list
 (** One line per promise: ["position CeladonCity (39, 21) south"],

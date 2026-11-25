@@ -4,9 +4,12 @@
 
    Re-record: daemon/build/gamepilot_daemon --backend mgba --mgba-port 47810
    --log run.wire.jsonl, then gamepilot checkpoint on 04-grind-farfetchd (mg-04 then) cut to its first
-   event with --state mg04_start.ss (a save state, not committed); rewrite the
+   event, its postconditions emptied, with --state 04-grind-farfetchd.start.ss
+   (formerly mg04_start.ss; a save state, not committed); rewrite the
    load_state path in the log to "mg04_start.ss" (replay does not compare it)
-   and gzip -9n it to mg04_walk_two_fled_battles.wire.jsonl.gz. *)
+   and gzip -9n it to mg04_walk_two_fled_battles.wire.jsonl.gz. Last
+   re-recorded at 4x for the walker's wait for a warp's fade-in
+   (Warp_fade_in), again two wild battles fled. *)
 
 open Frlg_checkpoints
 
@@ -26,14 +29,17 @@ let walk_plan () =
     p with
     checkpoint = { p.checkpoint with events = [ first ] };
     postconditions =
-      {
-        p.postconditions with
-        party = None;
-        money = None;
-        items = [];
-        knows = [];
-        levels = [];
-      };
+      Option.map
+        (fun (promised : Pokemon_checkpoints.Postconditions.t) ->
+          {
+            promised with
+            party = None;
+            money = None;
+            items = [];
+            knows = [];
+            levels = [];
+          })
+        p.postconditions;
   }
 
 let fled line = String.starts_with ~prefix:"Wild battle: fled" line

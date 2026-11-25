@@ -1,0 +1,45 @@
+(** When a warp's fade-in is over: the room has come up from the fade and stands
+    still in full light, so the player takes input. The fade probe
+    ({!Frlg_readers.Screen_facts.fade_id}) reads "no fade" from the first lit
+    frame of the fade-in, before the game gives the player control back.
+
+    After some warps the room first shows dim and still for about 35 frames,
+    then fades in. On mGBA (2026-11-24, 01-to-one-island testing run 2, into
+    Cinnabar Island's Pokemon Center) the screen came up from black at a channel
+    sum of 35 (stddev sum 34, so no fade), held there for 33 frames, then rose
+    in steps over 14 frames to 351; a hold sent during the dim spell lost its
+    first tile.
+
+    The fork's walker waits a fixed 300 ms after the black ends ([WARP_FADE_IN]
+    in Overworld/PokemonFRLG_OverworldWalk.cpp), which the dim spell outlasts.
+    We deliberately differ: the fade-in is over once the screen's brightness has
+    changed from its first lit frame and then stood still for {!still_ms}; a
+    screen that never changes is taken as up after {!unchanged_ms}. *)
+
+type t
+(** A watcher, from the first lit frame on. *)
+
+val step_min : float
+(** 10: a change in the fade probe's channel sum at least this large is a step
+    of the fade-in. *)
+
+val still_tolerance : float
+(** 4: the screen stands still while its channel sum stays within this of where
+    the still spell began (an NPC walking, water shimmering). *)
+
+val still_ms : float
+(** 200 ms: still this long after a change ends the fade-in. The game steps a
+    warp's fade-in every 2 frames, or every 4 with the door's delayed fade
+    (pret's [WarpFadeInScreenWithDelay]): a still spell between steps is
+    shorter. *)
+
+val unchanged_ms : float
+(** 1000 ms: a screen that never changed from the first lit frame is up after
+    this, longer than the dim spell (35 frames, 586 ms). *)
+
+val create : Effects.measurements -> t
+(** A watcher whose first lit frame is this one. *)
+
+val seen : t -> Effects.measurements -> bool
+(** Feeds the watcher one later frame: whether the fade-in is over by it. Frames
+    go in order; one without the fade probe is skipped. *)

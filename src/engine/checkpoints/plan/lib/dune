@@ -4,5 +4,5 @@
  (libraries
   yojson
   gamepilot.json_field
-  gamepilot.engine_promise
+  gamepilot.engine_postcondition
   gamepilot.engine_terms))

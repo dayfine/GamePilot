@@ -125,11 +125,15 @@ let preflight id before read =
 let same = Some { F.tiles = 150; changed = 3 }
 
 (* The pre-flight's row for 02-trade-farfetchd's Cut user. *)
-let summary slot species moves : Checkpoints_run.Room_policy.member =
+let summary slot species moves : Room_policy.member =
   { slot; species; level = Some 30; moves = Some moves }
 
 let cut_row read =
-  let before = Some (plan "01-celadon-setup").postconditions in
+  let before =
+    Some
+      (Pokemon_checkpoints.Postconditions.stated
+         (plan "01-celadon-setup").postconditions)
+  in
   Preflight.compare (needs "02-trade-farfetchd" before) read
   |> List.filter_map (fun (r : Preflight.row) ->
          if String.ends_with ~suffix:"(cut_tree)" r.need then
@@ -249,7 +253,11 @@ let preflight_cases =
       "preflight 03-trade-mr-mime: what 02-trade-farfetchd promised, exactly \
        (its money spent is no start need)"
       (fun () ->
-        let before = Some (plan "02-trade-farfetchd").postconditions in
+        let before =
+          Some
+            (Pokemon_checkpoints.Postconditions.stated
+               (plan "02-trade-farfetchd").postconditions)
+        in
         String.concat "; "
           (List.map
              (fun (r : Preflight.row) -> r.need)
@@ -269,7 +277,11 @@ let preflight_cases =
        Rope gained are no start need (console B held 5 ropes, not mGBA's 3); \
        its own rope is"
       (fun () ->
-        let before = Some (plan "03-trade-mr-mime").postconditions in
+        let before =
+          Some
+            (Pokemon_checkpoints.Postconditions.stated
+               (plan "03-trade-mr-mime").postconditions)
+        in
         String.concat "; "
           (List.map
              (fun (r : Preflight.row) -> r.need)
@@ -290,7 +302,11 @@ let preflight_cases =
        save): what 04-grind-farfetchd promised, MIMIEN and Blastoise, at the \
        Indigo nurse"
       (fun () ->
-        let before = Some (plan "04-grind-farfetchd").postconditions in
+        let before =
+          Some
+            (Pokemon_checkpoints.Postconditions.stated
+               (plan "04-grind-farfetchd").postconditions)
+        in
         String.concat "; "
           (List.map
              (fun (r : Preflight.row) -> r.need)
@@ -309,7 +325,11 @@ let preflight_cases =
       "preflight 07-glitch-prep: the Leppa Berry it picks up on Route 8 is no \
        start need for its give_bag_item (console B, 2026-11-24)"
       (fun () ->
-        let before = Some (plan "06-grind-return").postconditions in
+        let before =
+          Some
+            (Pokemon_checkpoints.Postconditions.stated
+               (plan "06-grind-return").postconditions)
+        in
         String.concat "; "
           (List.map
              (fun (r : Preflight.row) -> r.need)
@@ -331,7 +351,7 @@ let preflight_cases =
 (* {1 Room in the party} *)
 
 let member ?moves slot species level =
-  { Checkpoints_run.Room_policy.slot; species; level = Some level; moves }
+  { Room_policy.slot; species; level = Some level; moves }
 
 (* Console B's save on 2026-11-23: Pallet Town, after the Hall of Fame. The
    moves are what a plain run of FireRed would have them know; a real run

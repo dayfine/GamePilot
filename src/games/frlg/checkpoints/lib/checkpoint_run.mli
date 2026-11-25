@@ -31,14 +31,16 @@ val maps_dir : string
 (** PokemonSimulation's FireRed maps, from the repo root. *)
 
 val load_world : unit -> (Frlg_overworld.Frlg_steps.world, string) result
-(** Every runtime map of {!maps_dir}, found from the working directory, and the
-    coded room of each Pokemon Center in the shared layout that has none
-    ({!Frlg_overworld.Standard_center.with_rooms}), as mGBA walks them: map
-    edges do not stall ({!Frlg_overworld.Frlg_steps.world}). *)
+(** Every runtime map of {!maps_dir}, found from the working directory, but the
+    standard Pokemon Centers' (the shared layout's), and the coded room of each
+    of those Centers in their place
+    ({!Frlg_overworld.Standard_center.with_rooms}): the coded room wins, and a
+    standard Center's map file is not read. As mGBA walks them: map edges do not
+    stall ({!Frlg_overworld.Frlg_steps.world}). *)
 
 val load_map : string -> (Grid_maps.Map_data.t, string) result
-(** The map of that name as {!load_world} has it: its runtime file, or a
-    standard Center's coded room. *)
+(** The map of that name as {!load_world} has it: a standard Center's coded
+    room, or else its runtime file. *)
 
 val check_plan : Pokemon_checkpoints.Plan.t -> (unit, string) result
 (** A FireRed plan whose [execution.menu], when given, is ["full"]: the Start
@@ -61,7 +63,7 @@ val capped_postconditions :
 
 type from_event = {
   range : Engine_run.Event_range.t;
-  kept : Pokemon_checkpoints.Event_states.kept;
+  kept : Pokemon_checkpoints.Saved.t;
       (** What the run that kept the first event's state read at the
           checkpoint's start ({!Pokemon_checkpoints.Event_states}). *)
 }
@@ -70,7 +72,7 @@ type from_event = {
 type keep_event_state =
   index:int ->
   Pokemon_checkpoints.Plan.event ->
-  Pokemon_checkpoints.Event_states.kept ->
+  Pokemon_checkpoints.Saved.t ->
   unit
 (** Keeps the state at an event's start, with the checkpoint's start reads. *)
 

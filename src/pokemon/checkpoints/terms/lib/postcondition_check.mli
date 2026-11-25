@@ -5,30 +5,30 @@
     one result per postcondition, passed, failed or not checked, with what was
     expected and read; a postcondition the game cannot read is not checked,
     never passed. The game-agnostic half (verdicts, counts, money, the log) is
-    {!Engine_promise.Promise}; this module keeps the Pokémon promises and the
-    plan's types.
+    {!Engine_postcondition.Postcondition}; this module keeps the Pokémon
+    promises and the plan's types.
 
     Where it differs: money is promised as a range or as what the checkpoint
-    spent from the money read at its start ({!Engine_promise.Money}), and coins
-    and items as a count, a floor or what the checkpoint gained from the count
-    read at its start ({!Engine_promise.Count}), so the promise holds on any
-    save, not only on the one the plan was made on; and the position stays the
-    runner's end check (the runner's [end_at]), as before; party, coins and
-    money are checked too ({!Postconditions.t} says why); and the runner fails a
-    run on a postcondition not checked as well as a failed one (the C++'s
-    [all_passed()]), so a promise nobody read never passes. *)
+    spent from the money read at its start ({!Engine_postcondition.Money}), and
+    coins and items as a count, a floor or what the checkpoint gained from the
+    count read at its start ({!Engine_postcondition.Count}), so the promise
+    holds on any save, not only on the one the plan was made on; and the
+    position stays the runner's end check (the runner's [end_at]), as before;
+    party, coins and money are checked too ({!Postconditions.t} says why); and
+    the runner fails a run on a postcondition not checked as well as a failed
+    one (the C++'s [all_passed()]), so a promise nobody read never passes. *)
 
 type start = {
   start_money : int option;
       (** The money read at the checkpoint's start, for a
-          {!Engine_promise.Money.Spent} promise; [None] when not read. *)
+          {!Engine_postcondition.Money.Spent} promise; [None] when not read. *)
   start_coins : int option;
       (** The coins read at the checkpoint's start, for a
-          {!Engine_promise.Count.Gained} promise; [None] when not read. *)
+          {!Engine_postcondition.Count.Gained} promise; [None] when not read. *)
   start_items : (string * int) list;
       (** Each item read at the checkpoint's start, for a
-          {!Engine_promise.Count.Gained} promise, and its count; one left out
-          was not read. *)
+          {!Engine_postcondition.Count.Gained} promise, and its count; one left
+          out was not read. *)
 }
 (** What a promise of a change is checked against: the counts read before the
     checkpoint's first event. *)
@@ -72,15 +72,19 @@ type observed = {
 val nothing_read : observed
 (** Nothing read. *)
 
-(** {!Engine_promise.Promise.verdict}. *)
-type verdict = Engine_promise.Promise.verdict = Passed | Failed | Not_checked
+(** {!Engine_postcondition.Postcondition.verdict}. *)
+type verdict = Engine_postcondition.Postcondition.verdict =
+  | Passed
+  | Failed
+  | Not_checked
 
-type result = Engine_promise.Promise.result = {
+type result = Engine_postcondition.Postcondition.result = {
   what : string;
   verdict : verdict;
   detail : string;
 }
-(** One result per postcondition ({!Engine_promise.Promise.result}). *)
+(** One result per postcondition ({!Engine_postcondition.Postcondition.result}).
+*)
 
 val check : Postconditions.t -> observed -> result list
 (** The party, then each item, the coins, the money, each flag, each member's
@@ -88,13 +92,13 @@ val check : Postconditions.t -> observed -> result list
     postcondition the plan leaves out gives no result. *)
 
 val unmet : result list -> result list
-(** {!Engine_promise.Promise.unmet}. *)
+(** {!Engine_postcondition.Postcondition.unmet}. *)
 
 val result_to_string : result -> string
-(** {!Engine_promise.Promise.result_to_string}. *)
+(** {!Engine_postcondition.Postcondition.result_to_string}. *)
 
 val log_lines : string -> result list -> string list
-(** {!Engine_promise.Promise.log_lines} tagged ["Postcondition"]:
+(** {!Engine_postcondition.Postcondition.log_lines} tagged ["Postcondition"]:
     {v
     [Postcondition] 01-celadon-setup coins: failed: expected 20, read 200
     v} *)

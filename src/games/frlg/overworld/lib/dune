@@ -10,5 +10,4 @@
   gamepilot.grid_trace
   gamepilot.grid_walker
   gamepilot.pokemon_checkpoints
-  gamepilot.checkpoints_run
   gamepilot.frlg_readers))

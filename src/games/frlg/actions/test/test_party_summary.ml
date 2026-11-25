@@ -37,8 +37,7 @@ let summary_of ?latencies members () =
         Menu_input.run (fun () -> read := Party_summary.read_all ~log:ignore ()))
   in
   Printf.sprintf "%s: %s; START x%d; ends on %s" (outcome result)
-    (String.concat "; "
-       (List.map Checkpoints_run.Room_policy.member_to_string !read))
+    (String.concat "; " (List.map Room_policy.member_to_string !read))
     (Party.count screen Wire.Start)
     (ends_on screen)
 

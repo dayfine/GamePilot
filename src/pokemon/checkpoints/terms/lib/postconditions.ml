@@ -4,7 +4,7 @@ type party =
 
 and slot = { slot : int; species : string }
 
-type bag_count = { bag_item : string; count : Engine_promise.Count.t }
+type bag_count = { bag_item : string; count : Engine_postcondition.Count.t }
 type knows = { species : string; moves : string list }
 type level = { species : string; min : int }
 
@@ -12,8 +12,8 @@ type t = {
   position : Pose.grid option;
   party : party option;
   items : bag_count list;
-  coins : Engine_promise.Count.t option;
-  money : Engine_promise.Money.t option;
+  coins : Engine_postcondition.Count.t option;
+  money : Engine_postcondition.Money.t option;
   flags : string list;
   knows : knows list;
   levels : level list;
@@ -33,12 +33,17 @@ let none =
     marks = None;
   }
 
-let checked_at_end p =
-  p.party <> None || p.items <> [] || p.coins <> None || p.money <> None
-  || p.flags <> []
+let stated = Option.value ~default:none
+
+let at_end p =
+  if
+    p.party <> None || p.items <> [] || p.coins <> None || p.money <> None
+    || p.flags <> []
+  then Some p
+  else None
 
 let list = String.concat ", "
-let count_text = Engine_promise.Count.text
+let count_text = Engine_postcondition.Count.text
 
 let slot_text ({ slot; species } : slot) =
   Printf.sprintf "%s in slot %d" species slot
@@ -67,7 +72,7 @@ let text p =
       party_text p.party;
       List.map bag_count_text p.items;
       some (fun c -> "coins " ^ count_text c) p.coins;
-      some Engine_promise.Money.text p.money;
+      some Engine_postcondition.Money.text p.money;
       (if p.flags = [] then [] else [ "flags " ^ list p.flags ]);
       List.map knows_text p.knows;
       List.map level_text p.levels;

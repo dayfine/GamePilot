@@ -113,9 +113,8 @@ let grind_save_point () =
   and b = plan "05-grind-mr-mime.plan.json" in
   let ends =
     [
-      Checkpoints_run.Checkpoint_end.declared ~next:(Some b.checkpoint)
-        a.checkpoint;
-      b.postconditions.position;
+      Checkpoint_end.declared ~next:(Some b.checkpoint) a.checkpoint;
+      Option.bind b.postconditions (fun p -> p.position);
     ]
   in
   String.concat "; "
@@ -140,7 +139,7 @@ let from_last_event ~kept_ropes () =
       (Engine_run.Event_range.resolve events ~from_event:"heal_lavender"
          ~to_event:None)
   in
-  let kept : Pokemon_checkpoints.Event_states.kept =
+  let kept : Pokemon_checkpoints.Saved.t =
     {
       start =
         {
@@ -153,8 +152,8 @@ let from_last_event ~kept_ropes () =
   in
   let kept =
     Result.get_ok
-      (Pokemon_checkpoints.Event_states.kept_of_json
-         (Pokemon_checkpoints.Event_states.kept_to_json kept))
+      (Pokemon_checkpoints.Saved.of_json
+         (Pokemon_checkpoints.Saved.to_json kept))
   in
   let observed =
     {
@@ -167,7 +166,9 @@ let from_last_event ~kept_ropes () =
     List.find
       (fun (r : Pokemon_checkpoints.Postcondition_check.result) ->
         r.what = "item escape-rope")
-      (Pokemon_checkpoints.Postcondition_check.check p.postconditions observed)
+      (Pokemon_checkpoints.Postcondition_check.check
+         (Option.get p.postconditions)
+         observed)
   in
   Printf.sprintf "%s: %s"
     (Engine_run.Event_range.label events range.first)

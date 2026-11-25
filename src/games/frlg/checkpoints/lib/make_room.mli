@@ -1,11 +1,11 @@
 (** The make-room checkpoint ("00-make-room"), generated before a chain's first
     checkpoint when the party has too few free slots ({!Party_room},
-    {!Checkpoints_run.Room_policy}): Fly to the Pokémon Center nearest the save,
-    walk to its PC, deposit the policy's members ({!Frlg_actions.Pc_deposit}),
-    walk out to the town's Fly landing. Its postconditions are its end check:
-    the end there, the party left in order (so the free slots), and each needed
-    field move still known by a member that knows it. GamePilot's own: the
-    fork's AutoStory deposits at the PC steps its plans name. *)
+    {!Room_policy}): Fly to the Pokémon Center nearest the save, walk to its PC,
+    deposit the policy's members ({!Frlg_actions.Pc_deposit}), walk out to the
+    town's Fly landing. Its postconditions are its end check: the end there, the
+    party left in order (so the free slots), and each needed field move still
+    known by a member that knows it. GamePilot's own: the fork's AutoStory
+    deposits at the PC steps its plans name. *)
 
 val id : string
 (** ["00-make-room"]: sorts before the chain's first checkpoint. *)
@@ -14,9 +14,8 @@ val center_map : string -> string
 (** ["ViridianCity"] -> ["ViridianCity_PokemonCenter_1F"]. *)
 
 val pc_front : Grid_maps.Tile_pos.t
-(** (11, 2), facing north: below the PC (11, 1) on every Center's ground floor
-    of the maps (PokemonSimulation's [CeruleanCity_PokemonCenter_1F] names it
-    [pc]). *)
+(** (11, 2), facing north: below the PC (11, 1) on a standard Center's ground
+    floor ({!Frlg_overworld.Standard_center.pc_front}). *)
 
 val town_of_map :
   Frlg_actions.Fly_towns.t -> string -> Frlg_actions.Fly_towns.town option
@@ -28,16 +27,17 @@ val nearest_center :
   maps:string list ->
   string ->
   (Frlg_actions.Fly_towns.town, string) result
-(** The Fly town with a Center in [maps] whose fly-map cell is nearest (by
-    squared distance; the table's order breaks ties) to the town of the save's
-    map: Viridian City from Pallet Town, which has no Center. *)
+(** The Fly town with a standard Center ({!Frlg_overworld.Standard_center}) in
+    [maps] whose fly-map cell is nearest (by squared distance; the table's order
+    breaks ties) to the town of the save's map: Viridian City from Pallet Town,
+    which has no Center. The Indigo Plateau's Center has its own layout, with no
+    PC at {!pc_front}, so it is never chosen. *)
 
 type room = {
   center : Frlg_actions.Fly_towns.town;
   fly_user : string;  (** A member that knows Fly. *)
-  deposits : Checkpoints_run.Room_policy.plan;
-  party : Checkpoints_run.Room_policy.member list;
-      (** As read, slot 1 first. *)
+  deposits : Room_policy.plan;
+  party : Room_policy.member list;  (** As read, slot 1 first. *)
   needed_moves : string list;  (** Field moves the chain needs. *)
 }
 

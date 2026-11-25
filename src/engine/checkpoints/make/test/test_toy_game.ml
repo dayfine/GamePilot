@@ -85,7 +85,7 @@ let decode_cases =
        field.";
   ]
 
-let at place spot : Toy_terms.pose = { place; spot }
+let at place spot : Toy_terms.Pose.t = { place; spot }
 
 (* A toy game that logs each handler and stands where the script says after
    each event. *)
@@ -100,7 +100,7 @@ let toy_game ?(after = []) ?(flags = []) () =
   let game : Game.t =
     {
       run_own =
-        (fun event own -> handled ("own " ^ Toy_terms.own_kind_text own) event);
+        (fun event own -> handled ("own " ^ Toy_terms.Kind.text own) event);
       run_builtin = (fun event -> handled ("builtin " ^ event.id) event);
       game_actions = [ ("beg", fun event _ -> handled "action beg" event) ];
       flag_holds = (fun flag -> List.mem flag flags);
@@ -128,10 +128,10 @@ let run_result ?end_at ?end_state ?after ?flags () =
 let outcome ?end_at ?end_state ?after ?flags () =
   fst (run_result ?end_at ?end_state ?after ?flags ())
 
-let reads gold_now : Toy_terms.reads =
+let reads gold_now : Toy_terms.Postconditions.reads =
   { gold_now = Some gold_now; start = Some 50; set = [ "met_cat" ] }
 
-let promised () = (plan ()).postconditions
+let promised () = Option.get (plan ()).postconditions
 
 let run_cases =
   [
@@ -177,22 +177,22 @@ let run_cases =
       "[Postcondition] cf gold: passed: gained 30 (50 to 80)";
   ]
 
-let kept : Event_states.kept = { start = Some 50; at = Some (at "Forest" None) }
+let kept : Toy_terms.Saved.t = { start = Some 50; at = Some (at "Forest" None) }
 
 let kept_cases =
   [
     case "what is kept beside a state: the toy's start reads and zone"
-      (fun () -> Yojson.Safe.to_string (Event_states.kept_to_json kept))
+      (fun () -> Yojson.Safe.to_string (Toy_terms.Saved.to_json kept))
       {|{"start_gold":50,"at":{"place":"Forest","spot":null}}|};
     case "what is kept reads back as written"
       (fun () ->
-        match Event_states.kept_of_json (Event_states.kept_to_json kept) with
+        match Toy_terms.Saved.of_json (Toy_terms.Saved.to_json kept) with
         | Ok back -> string_of_bool (back = kept)
         | Error e -> e)
       "true";
     case "a kept zone the toy cannot read: named under at"
       (fun () ->
-        match Event_states.kept_of_json (`Assoc [ ("at", `Int 1) ]) with
+        match Toy_terms.Saved.of_json (`Assoc [ ("at", `Int 1) ]) with
         | Ok _ -> "read"
         | Error e -> e)
       "at: not a place";

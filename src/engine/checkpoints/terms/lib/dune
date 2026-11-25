@@ -2,4 +2,4 @@
  (name engine_terms)
  (public_name gamepilot.engine_terms)
  (modules_without_implementation engine_terms)
- (libraries yojson gamepilot.json_field gamepilot.engine_promise))
+ (libraries yojson gamepilot.json_field gamepilot.engine_postcondition))

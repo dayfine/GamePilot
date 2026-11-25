@@ -2,7 +2,7 @@
    and stops at the first failure, naming the event. *)
 
 open Pokemon_checkpoints
-open Engine_promise
+open Engine_postcondition
 
 let tile x y : Grid_maps.Tile_pos.t = { x; y }
 
@@ -205,8 +205,12 @@ let run_with_end_state ?end_at ?(promised = promised) observed =
     game.log "read the end state";
     observed
   in
+  (* As FireRed's run: only promises read at the end are checked there. *)
+  let end_state =
+    Option.map (fun p -> (p, observe)) (Postconditions.at_end promised)
+  in
   let result =
-    match Runner.run ?end_at ~end_state:(promised, observe) game checkpoint with
+    match Runner.run ?end_at ?end_state game checkpoint with
     | Ok () -> "passed"
     | Error failure -> "stopped: " ^ Failure.to_string failure
   in

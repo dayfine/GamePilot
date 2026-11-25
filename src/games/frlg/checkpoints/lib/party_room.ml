@@ -58,7 +58,7 @@ let promised (p : Postconditions.t) =
 let plan acc (p : P.t) =
   let id = p.checkpoint.checkpoint_id in
   let joins, used = List.fold_left (event id) acc p.checkpoint.events in
-  (joins, used @ promised p.postconditions)
+  (joins, used @ promised (Postconditions.stated p.postconditions))
 
 (* The species a trade brings ("receive"). *)
 let traded (p : P.t) =
@@ -91,11 +91,11 @@ let chain_need plans =
 
 let free_needed need = List.length need.joins
 
-type member = Checkpoints_run.Room_policy.member
+type member = Room_policy.member
 
 let lead_stays = true
 
-let rules need : Checkpoints_run.Room_policy.rules =
+let rules need : Room_policy.rules =
   {
     party_size;
     used = need.used;
@@ -104,13 +104,13 @@ let rules need : Checkpoints_run.Room_policy.rules =
     lead_stays;
   }
 
-let precondition need : Checkpoints_run.Room_policy.precondition =
+let precondition need : Room_policy.precondition =
   { free_slots = free_needed need }
 
 let deposits need party =
   Result.map
-    (List.map (fun (d : Checkpoints_run.Room_policy.deposit) -> d.species))
-    (Checkpoints_run.Room_policy.choose (rules need) (precondition need) party)
+    (List.map (fun (d : Room_policy.deposit) -> d.species))
+    (Room_policy.choose (rules need) (precondition need) party)
 
 let unread slot species : member =
   {
