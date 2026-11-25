@@ -1,0 +1,95 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "frlg",
+  "execution": {
+    "menu": "full"
+  },
+  "metadata": {
+    "phase": "draft",
+    "walkthrough_part": 18,
+    "optional": false,
+    "notes": "Celio's Rainbow Pass; the ferry to Four Island",
+    "goal_facts": ["key: rainbow-pass", "flag: FLAG_SYS_SEVII_MAP_4567"],
+    "needs": [
+      {
+        "capability": "fly_sevii",
+        "status": "missing"
+      },
+      {
+        "capability": "ferry",
+        "status": "missing"
+      }
+    ]
+  },
+  "checkpoint": {
+    "id": "wt-18d",
+    "title": "Celio's Rainbow Pass; the ferry to Four Island",
+    "start": {
+      "map": "MtEmber_Exterior",
+      "todo": "TODO: after the Escape Rope"
+    },
+    "events": [
+      {
+        "id": "fly_one_island",
+        "kind": "game_action",
+        "action": "fly",
+        "args": {
+          "town": "OneIsland",
+          "species": "TODO: a member that knows Fly"
+        },
+        "why": ""
+      },
+      {
+        "id": "before_celio",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "OneIsland_PokemonCenter_1F",
+            "tiles": [
+              [15, 7]
+            ],
+            "facing": "north"
+          }
+        },
+        "why": "Celio"
+      },
+      {
+        "id": "give_ruby",
+        "kind": "talk",
+        "why": "he installs the Ruby, gives the Rainbow Pass, asks for the Sapphire"
+      },
+      {
+        "id": "to_harbor",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "OneIsland_Harbor",
+            "todo": "TODO: the sailor"
+          }
+        },
+        "why": "the harbor"
+      },
+      {
+        "id": "ferry_four",
+        "kind": "game_action",
+        "action": "ferry",
+        "args": {
+          "to": "FourIsland"
+        },
+        "why": "the Rainbow Pass reaches Four to Seven"
+      },
+      {
+        "id": "blue_on_beach",
+        "kind": "scene",
+        "why": "Blue's scene by the port"
+      },
+      {
+        "id": "save",
+        "kind": "save",
+        "why": "save: the checkpoint's end"
+      }
+    ]
+  }
+}

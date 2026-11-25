@@ -1,0 +1,134 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "frlg",
+  "execution": {
+    "menu": "full"
+  },
+  "metadata": {
+    "phase": "draft",
+    "walkthrough_part": 11,
+    "optional": false,
+    "notes": "Silph Co.: Card Key doors to 7F: rival 6 and the Lapras",
+    "goal_facts": ["party: lapras (FLAG_GOT_LAPRAS_FROM_SILPH)", "flag: rival 6 beaten"],
+    "needs": [
+      {
+        "capability": "card_key_door",
+        "status": "missing"
+      },
+      {
+        "capability": "battle",
+        "status": "missing"
+      },
+      {
+        "capability": "battle_policy",
+        "status": "missing"
+      },
+      {
+        "capability": "gift_pokemon",
+        "status": "missing"
+      },
+      {
+        "capability": "story_gates",
+        "status": "partial"
+      },
+      {
+        "capability": "warp_pads",
+        "status": "partial"
+      }
+    ]
+  },
+  "checkpoint": {
+    "id": "wt-11b",
+    "title": "Silph Co.: Card Key doors to 7F: rival 6 and the Lapras",
+    "start": {
+      "map": "SilphCo_5F",
+      "todo": "TODO: wt-11a's end"
+    },
+    "events": [
+      {
+        "id": "to_3f_center_door",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "SilphCo_3F",
+            "todo": "TODO: below the central room's door (a gate in PokemonSimulation: FLAG_SILPH_3F_DOOR_*)"
+          }
+        },
+        "why": "back to 3F"
+      },
+      {
+        "id": "open_3f_door",
+        "kind": "game_action",
+        "action": "card_key_door",
+        "args": {
+          "map": "SilphCo_3F",
+          "door": "TODO: gate id"
+        },
+        "why": "the Card Key opens it"
+      },
+      {
+        "id": "to_7f_pad",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "SilphCo_7F",
+            "todo": "TODO: the pad from 3F's central room to 7F's northwest room"
+          }
+        },
+        "why": "the central room's pad to 7F"
+      },
+      {
+        "id": "blue_7f",
+        "kind": "scene",
+        "why": "Blue is waiting"
+      },
+      {
+        "id": "rival_6",
+        "kind": "battle",
+        "args": {
+          "opponent": "rival-6",
+          "policy": "type_matchup"
+        },
+        "why": "Pidgeot, Gyarados/Growlithe/Exeggcute, Alakazam, his starter"
+      },
+      {
+        "id": "before_lapras_guy",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "SilphCo_7F",
+            "tiles": [
+              [1, 7]
+            ],
+            "facing": "west",
+            "place": "silph_lapras_guy"
+          }
+        },
+        "why": "the office worker (0, 7)"
+      },
+      {
+        "id": "talk_lapras_guy",
+        "kind": "talk",
+        "why": "a Lapras for the party"
+      },
+      {
+        "id": "receive_lapras",
+        "kind": "game_action",
+        "action": "gift_pokemon",
+        "args": {
+          "species": "lapras",
+          "nickname": false
+        },
+        "why": "needs a free party slot (make_room)"
+      },
+      {
+        "id": "save",
+        "kind": "save",
+        "why": "save: the checkpoint's end"
+      }
+    ]
+  }
+}

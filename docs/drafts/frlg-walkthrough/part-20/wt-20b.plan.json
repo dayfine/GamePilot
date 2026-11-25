@@ -1,0 +1,44 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "frlg",
+  "execution": {
+    "menu": "full"
+  },
+  "metadata": {
+    "phase": "draft",
+    "walkthrough_part": 20,
+    "optional": true,
+    "notes": "Needs a reader for where the roamer is, or many route changes; low value.",
+    "goal_facts": ["party or box: the beast"],
+    "needs": [
+      {
+        "capability": "roamer",
+        "status": "missing"
+      }
+    ]
+  },
+  "checkpoint": {
+    "id": "wt-20b",
+    "title": "The roaming beast (optional)",
+    "start": {
+      "map": "anywhere",
+      "todo": "TODO: after the National Pokedex"
+    },
+    "events": [
+      {
+        "id": "find_roamer",
+        "kind": "game_action",
+        "action": "roamer_hunt",
+        "args": {
+          "species": "TODO: Entei/Raikou/Suicune by starter"
+        },
+        "why": "walk between routes until it appears; it flees every turn: Mean Look or a fast sleep"
+      },
+      {
+        "id": "save",
+        "kind": "save",
+        "why": "save: the checkpoint's end"
+      }
+    ]
+  }
+}

@@ -1,0 +1,156 @@
+{
+  "format": "gamepilot-places/1",
+  "game": "frlg",
+  "notes": "Places sb-01..sb-10 name, in #39's table format, to merge into src/games/frlg/places/places.json when the program is built. Stand tiles: the open tile beside the object on PokemonSimulation's runtime grid; Seagallop arrivals from pret src/seagallop.c.",
+  "places": {
+    "articuno_front": {
+      "map": "SeafoamIslands_B4F",
+      "object": {
+        "npc": "SeafoamIslands_B4F_EventScript_Articuno"
+      },
+      "stand": [9, 3],
+      "facing": "north"
+    },
+    "celio": {
+      "map": "OneIsland_PokemonCenter_1F",
+      "object": {
+        "npc": "OneIsland_PokemonCenter_1F_EventScript_Celio"
+      },
+      "stand": [15, 7],
+      "facing": "north"
+    },
+    "dotted_hole_door_outside": {
+      "map": "SixIsland_RuinValley",
+      "object": {
+        "warp": "warp_0",
+        "to_map": "SixIsland_DottedHole_1F"
+      },
+      "stand": [24, 25],
+      "facing": "north"
+    },
+    "fiveisland_harbor_sailor": {
+      "map": "FiveIsland_Harbor",
+      "object": {
+        "npc": "FiveIsland_Harbor_EventScript_Sailor"
+      },
+      "stand": [8, 5],
+      "facing": "south"
+    },
+    "gideon_front": {
+      "map": "FiveIsland_RocketWarehouse",
+      "object": {
+        "npc": "FiveIsland_RocketWarehouse_EventScript_Gideon"
+      },
+      "stand": [27, 5],
+      "facing": "north"
+    },
+    "moltres_front": {
+      "map": "MtEmber_Summit",
+      "object": {
+        "npc": "MtEmber_Summit_EventScript_Moltres"
+      },
+      "stand": [9, 7],
+      "facing": "north"
+    },
+    "mt_ember_grunt_1": {
+      "map": "MtEmber_Exterior",
+      "object": {
+        "npc": "MtEmber_Exterior_EventScript_Grunt1"
+      },
+      "stand": [41, 41],
+      "facing": "north"
+    },
+    "mt_ember_grunt_2": {
+      "map": "MtEmber_Exterior",
+      "object": {
+        "npc": "MtEmber_Exterior_EventScript_Grunt2"
+      },
+      "stand": [42, 41],
+      "facing": "north"
+    },
+    "oneisland_harbor_sailor": {
+      "map": "OneIsland_Harbor",
+      "object": {
+        "npc": "OneIsland_Harbor_EventScript_Sailor"
+      },
+      "stand": [8, 5],
+      "facing": "south"
+    },
+    "oneisland_nurse": {
+      "map": "OneIsland_PokemonCenter_1F",
+      "object": {
+        "npc": "OneIsland_PokemonCenter_1F_EventScript_Nurse"
+      },
+      "stand": [5, 4],
+      "facing": "north"
+    },
+    "power_plant_door_outside": {
+      "map": "Route10",
+      "object": {
+        "warp": "warp_2",
+        "to_map": "PowerPlant"
+      },
+      "stand": [7, 41],
+      "facing": "north"
+    },
+    "rocket_warehouse_door_outside": {
+      "map": "FiveIsland_Meadow",
+      "object": {
+        "warp": "warp_0",
+        "to_map": "FiveIsland_RocketWarehouse"
+      },
+      "stand": [12, 22],
+      "facing": "north"
+    },
+    "ruby_path_door_outside": {
+      "map": "MtEmber_Exterior",
+      "object": {
+        "warp": "warp_5",
+        "to_map": "MtEmber_RubyPath_1F"
+      },
+      "stand": [42, 40],
+      "facing": "north"
+    },
+    "ruby_pedestal": {
+      "map": "MtEmber_RubyPath_B5F",
+      "object": {
+        "npc": "MtEmber_RubyPath_B5F_EventScript_Ruby"
+      },
+      "stand": [7, 8],
+      "facing": "north"
+    },
+    "seafoam_west_mouth_outside": {
+      "map": "Route20",
+      "object": {
+        "warp": "warp_0",
+        "to_map": "SeafoamIslands_1F"
+      },
+      "stand": [60, 9],
+      "facing": "north"
+    },
+    "sixisland_harbor_sailor": {
+      "map": "SixIsland_Harbor",
+      "object": {
+        "npc": "SixIsland_Harbor_EventScript_Sailor"
+      },
+      "stand": [8, 5],
+      "facing": "south"
+    },
+    "vermilion_ferry_sailor": {
+      "map": "VermilionCity",
+      "object": {
+        "npc": "VermilionCity_EventScript_FerrySailor"
+      },
+      "stand": [24, 32],
+      "facing": "south"
+    },
+    "zapdos_front": {
+      "map": "PowerPlant",
+      "object": {
+        "npc": "PowerPlant_EventScript_Zapdos"
+      },
+      "stand": [5, 12],
+      "facing": "north"
+    }
+  }
+}

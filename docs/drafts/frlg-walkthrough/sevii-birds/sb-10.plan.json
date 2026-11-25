@@ -1,0 +1,124 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "frlg",
+  "execution": {
+    "menu": "full"
+  },
+  "metadata": {
+    "phase": "draft",
+    "program": "frlg.sevii_and_birds (proposed)",
+    "notes": "The goal's last checkpoint: three birds and the Sevii story done.",
+    "goal_facts": ["party or box: zapdos (FLAG_HIDE_ZAPDOS)"],
+    "needs": ["surf", "static_encounter", "soft_reset_retry"],
+    "skip_when": ["flag: FLAG_HIDE_ZAPDOS"]
+  },
+  "checkpoint": {
+    "id": "sb-10",
+    "title": "Power Plant: Zapdos",
+    "start": {
+      "map": "SeafoamIslands_1F",
+      "todo": "TODO: where sb-09's Escape Rope lands"
+    },
+    "events": [
+      {
+        "id": "fly_route10",
+        "kind": "game_action",
+        "action": "fly",
+        "args": {
+          "town": "Route10",
+          "species": "TODO: the Fly member's species"
+        },
+        "declared_after": {
+          "map": "Route10",
+          "tiles": [
+            [13, 21]
+          ],
+          "facing": "south"
+        },
+        "why": "Route 10's Center"
+      },
+      {
+        "id": "surf_river",
+        "kind": "game_action",
+        "action": "surf",
+        "args": {
+          "species": "TODO: the Surf member's species"
+        },
+        "why": "the river south of Rock Tunnel's north mouth"
+      },
+      {
+        "id": "to_power_plant",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "place": "power_plant_door_outside"
+          }
+        },
+        "why": "down the river to the Plant's door (7, 40) (PokeManiac Mark (13, 44) nearby)"
+      },
+      {
+        "id": "into_plant",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "PowerPlant",
+            "todo": "TODO: arrival (5, 38), facing north"
+          }
+        },
+        "why": "in"
+      },
+      {
+        "id": "to_zapdos",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "place": "zapdos_front"
+          }
+        },
+        "why": "clockwise through the rooms to Zapdos (5, 11); item-shaped Voltorb and Electrode are battles if checked: the walk does not check items"
+      },
+      {
+        "id": "save_before",
+        "kind": "save",
+        "why": "one chance"
+      },
+      {
+        "id": "talk_zapdos",
+        "kind": "talk",
+        "why": "the cry"
+      },
+      {
+        "id": "zapdos",
+        "kind": "game_action",
+        "action": "static_encounter",
+        "args": {
+          "species": "zapdos",
+          "outcome": "catch",
+          "balls": ["ultra-ball"],
+          "retry": "soft_reset"
+        },
+        "why": "Lv 50"
+      },
+      {
+        "id": "out_side_door",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "Route10",
+            "todo": "TODO: the west side exit (1, 11) leads to Route 10 (2, 37)"
+          }
+        },
+        "why": "out by the side exit"
+      },
+      {
+        "id": "save",
+        "kind": "save",
+        "why": "save"
+      }
+    ]
+  }
+}

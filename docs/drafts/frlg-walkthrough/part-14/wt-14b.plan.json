@@ -1,0 +1,88 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "frlg",
+  "execution": {
+    "menu": "full"
+  },
+  "metadata": {
+    "phase": "draft",
+    "walkthrough_part": 14,
+    "optional": false,
+    "notes": "Kindle Road to the Ember Spa: HM06 Rock Smash",
+    "goal_facts": ["bag: hm06 (FLAG_GOT_HM06)"],
+    "needs": [
+      {
+        "capability": "teach",
+        "status": "missing"
+      },
+      {
+        "capability": "trainer_interrupt",
+        "status": "missing"
+      }
+    ]
+  },
+  "checkpoint": {
+    "id": "wt-14b",
+    "title": "Kindle Road to the Ember Spa: HM06 Rock Smash",
+    "start": {
+      "map": "OneIsland_PokemonCenter_1F",
+      "todo": "TODO: One Island's nurse"
+    },
+    "events": [
+      {
+        "id": "to_ember_spa",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "OneIsland_KindleRoad_EmberSpa",
+            "tiles": [
+              [13, 36]
+            ],
+            "facing": "north",
+            "place": "ember_spa_door"
+          }
+        },
+        "why": "north on Kindle Road's west path (trainers: Maria, Abigail, Finn, Garrett, Sharon, Tanya, Shea, Hugh, Bryce, Claire, Mik, Kia)"
+      },
+      {
+        "id": "before_rock_smash_man",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "OneIsland_KindleRoad_EmberSpa",
+            "tiles": [
+              [10, 6]
+            ],
+            "facing": "north",
+            "place": "rock_smash_man"
+          }
+        },
+        "why": "the old man between the waterfalls (10, 5)"
+      },
+      {
+        "id": "talk_rock_smash_man",
+        "kind": "talk",
+        "why": "HM06"
+      },
+      {
+        "id": "teach_rock_smash",
+        "kind": "game_action",
+        "action": "teach",
+        "args": {
+          "item": "hm06",
+          "move": "rock-smash",
+          "species": "TODO"
+        },
+        "why": "a member learns Rock Smash",
+        "once_per_save": true
+      },
+      {
+        "id": "save",
+        "kind": "save",
+        "why": "save: the checkpoint's end"
+      }
+    ]
+  }
+}

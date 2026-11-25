@@ -1,0 +1,160 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "frlg",
+  "execution": {
+    "menu": "full"
+  },
+  "metadata": {
+    "phase": "draft",
+    "program": "frlg.sevii_and_birds (proposed)",
+    "notes": "PokemonSimulation has the warehouse's spinners (u d l r o); FireRed's planner does not walk them yet.",
+    "goal_facts": ["flag: FLAG_DEFEATED_ROCKETS_IN_WAREHOUSE", "flag: FLAG_RECOVERED_SAPPHIRE"],
+    "needs": ["ferry", "spin_tiles", "fight_trainer", "battle", "battle_policy"]
+  },
+  "checkpoint": {
+    "id": "sb-07",
+    "title": "Five Island: the Rocket Warehouse; Gideon gives back the Sapphire",
+    "start": {
+      "map": "SixIsland_RuinValley",
+      "todo": "TODO: where sb-06's Escape Rope lands"
+    },
+    "events": [
+      {
+        "id": "to_six_harbor",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "SixIsland_Harbor",
+            "todo": "TODO: back north by Water Path, Six Island town, the harbor"
+          }
+        },
+        "why": "back to the harbor"
+      },
+      {
+        "id": "to_six_sailor",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "place": "sixisland_harbor_sailor"
+          }
+        },
+        "why": "the sailor"
+      },
+      {
+        "id": "talk_sailor",
+        "kind": "talk",
+        "why": "\"Where to?\""
+      },
+      {
+        "id": "seagallop_five",
+        "kind": "game_action",
+        "action": "ferry",
+        "args": {
+          "to": "FiveIsland"
+        },
+        "declared_after": {
+          "map": "FiveIsland_Harbor",
+          "tiles": [
+            [8, 5]
+          ]
+        },
+        "why": "Five Island"
+      },
+      {
+        "id": "to_meadow",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "FiveIsland_Meadow",
+            "todo": "TODO: Five Island's east edge"
+          }
+        },
+        "why": "east into Five Isle Meadow (Grunts Rocket1-3 on the way; cut trees (8, 9), (19, 12) off the path)"
+      },
+      {
+        "id": "to_warehouse_door",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "place": "rocket_warehouse_door_outside"
+          }
+        },
+        "why": "below the warehouse door (12, 21)"
+      },
+      {
+        "id": "open_door",
+        "kind": "talk",
+        "why": "the door takes both passwords (FLAG_UNLOCKED_ROCKET_WAREHOUSE)"
+      },
+      {
+        "id": "through_spinners",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "FiveIsland_RocketWarehouse",
+            "todo": "TODO: the stopper tiles the walkthrough names: southwest corner, north-central, then the south row"
+          }
+        },
+        "why": "the spinner maze (trainers: Grunt1-3, Admin1, Admin2)"
+      },
+      {
+        "id": "admin_1",
+        "fragment": "fight_trainer",
+        "args": {
+          "map": "FiveIsland_RocketWarehouse",
+          "trainer": "FiveIsland_RocketWarehouse_EventScript_Admin1"
+        },
+        "why": "she reverses the two east spinners: a shortcut (fight_trainer does not exist yet)"
+      },
+      {
+        "id": "admin_2",
+        "fragment": "fight_trainer",
+        "args": {
+          "map": "FiveIsland_RocketWarehouse",
+          "trainer": "FiveIsland_RocketWarehouse_EventScript_Admin2"
+        },
+        "why": "the last Admin: the Sevii Rockets give up"
+      },
+      {
+        "id": "to_gideon",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "place": "gideon_front"
+          }
+        },
+        "why": "Gideon (27, 4) in the northeast room"
+      },
+      {
+        "id": "talk_gideon",
+        "kind": "talk",
+        "why": "he wants revenge"
+      },
+      {
+        "id": "gideon",
+        "kind": "battle",
+        "args": {
+          "opponent": "gideon",
+          "policy": "type_matchup"
+        },
+        "why": "Voltorb, Electrode, Magneton"
+      },
+      {
+        "id": "sapphire_back",
+        "kind": "scene",
+        "why": "the Sapphire (FLAG_RECOVERED_SAPPHIRE)"
+      },
+      {
+        "id": "save",
+        "kind": "save",
+        "why": "save"
+      }
+    ]
+  }
+}

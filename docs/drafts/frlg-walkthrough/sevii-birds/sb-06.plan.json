@@ -1,0 +1,149 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "frlg",
+  "execution": {
+    "menu": "full"
+  },
+  "metadata": {
+    "phase": "draft",
+    "program": "frlg.sevii_and_birds (proposed)",
+    "notes": "Icefall Cave (Four Island, HM07, Lorelei) is not needed for the Sapphire: pret sets the second password here, in SixIsland_DottedHole_SapphireRoom.",
+    "goal_facts": ["flag: FLAG_LEARNED_YES_NAH_CHANSEY (the warehouse password)", "story: the Sapphire stolen"],
+    "needs": ["ferry", "surf", "field_move_menu", "fall_holes", "trainer_interrupt", "maps: SixIsland_DottedHole_* (6) missing"]
+  },
+  "checkpoint": {
+    "id": "sb-06",
+    "title": "Six Island: Water Path, Ruin Valley, the Dotted Hole; the Sapphire is stolen",
+    "start": {
+      "place": "oneisland_nurse"
+    },
+    "events": [
+      {
+        "id": "to_harbor_sailor",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "place": "oneisland_harbor_sailor"
+          }
+        },
+        "why": "the One Island harbor's sailor (8, 6)"
+      },
+      {
+        "id": "talk_sailor",
+        "kind": "talk",
+        "why": "\"Where to?\""
+      },
+      {
+        "id": "seagallop_six",
+        "kind": "game_action",
+        "action": "ferry",
+        "args": {
+          "to": "SixIsland"
+        },
+        "declared_after": {
+          "map": "SixIsland_Harbor",
+          "tiles": [
+            [8, 5]
+          ]
+        },
+        "why": "Six Island from the Rainbow Pass list"
+      },
+      {
+        "id": "to_water_path",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "SixIsland_WaterPath",
+            "todo": "TODO: Six Island's east edge"
+          }
+        },
+        "why": "east out of town"
+      },
+      {
+        "id": "surf_water_path",
+        "kind": "game_action",
+        "action": "surf",
+        "args": {
+          "species": "TODO: the Surf member's species"
+        },
+        "why": "Water Path is part water (trainers: Rose, Edward, Samir, Denise, Miu & Mia, Earl)"
+      },
+      {
+        "id": "to_ruin_valley",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "SixIsland_RuinValley",
+            "todo": "TODO: Water Path's south end"
+          }
+        },
+        "why": "south to Ruin Valley"
+      },
+      {
+        "id": "to_dotted_door",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "place": "dotted_hole_door_outside"
+          }
+        },
+        "why": "below the sealed door (24, 24)"
+      },
+      {
+        "id": "read_braille",
+        "kind": "talk",
+        "why": "the Braille reads CUT"
+      },
+      {
+        "id": "cut_door",
+        "kind": "game_action",
+        "action": "field_move",
+        "args": {
+          "move": "cut",
+          "species": "TODO: the Cut member"
+        },
+        "why": "Cut from the party menu opens the door"
+      },
+      {
+        "id": "drop_to_sapphire",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "SixIsland_DottedHole_SapphireRoom",
+            "todo": "TODO: maps not in PokemonSimulation: 1F's hole, then on B1F to B4F the holes in the Braille's order (up, left, right, down per the walkthrough)"
+          }
+        },
+        "why": "down through the holes"
+      },
+      {
+        "id": "take_sapphire",
+        "kind": "talk",
+        "why": "the Sapphire on the pedestal"
+      },
+      {
+        "id": "gideon_steals",
+        "kind": "scene",
+        "why": "Gideon snatches it, says the password (FLAG_LEARNED_YES_NAH_CHANSEY) and runs"
+      },
+      {
+        "id": "escape_rope",
+        "kind": "game_action",
+        "action": "use_item",
+        "args": {
+          "item": "escape-rope"
+        },
+        "why": "out to Ruin Valley"
+      },
+      {
+        "id": "save",
+        "kind": "save",
+        "why": "save"
+      }
+    ]
+  }
+}

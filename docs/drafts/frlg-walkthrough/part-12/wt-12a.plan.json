@@ -1,0 +1,89 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "frlg",
+  "execution": {
+    "menu": "full"
+  },
+  "metadata": {
+    "phase": "draft",
+    "walkthrough_part": 12,
+    "optional": false,
+    "notes": "Route 21 from Pallet (wt-15a, reversed) reaches Cinnabar without Seafoam; the walkthrough's order is kept.",
+    "goal_facts": ["map: SeafoamIslands_1F"],
+    "needs": [
+      {
+        "capability": "surf",
+        "status": "missing"
+      },
+      {
+        "capability": "trainer_interrupt",
+        "status": "missing"
+      }
+    ],
+    "maps_missing_in_pokesim": ["FuchsiaCity_PokemonCenter_1F"]
+  },
+  "checkpoint": {
+    "id": "wt-12a",
+    "title": "Fuchsia south by Surf: Routes 19 and 20 to the Seafoam Islands",
+    "start": {
+      "map": "FuchsiaCity_PokemonCenter_1F",
+      "todo": "TODO: map not in PokemonSimulation; the nurse's stand tile differs per Center (Lavender (7, 4), Indigo Plateau (13, 12)): read it off the map once it is added"
+    },
+    "events": [
+      {
+        "id": "to_fuchsia_beach",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "FuchsiaCity",
+            "todo": "TODO: a shore tile facing the water south of the city"
+          }
+        },
+        "why": "to the beach"
+      },
+      {
+        "id": "start_surf",
+        "kind": "game_action",
+        "action": "surf",
+        "args": {
+          "species": "TODO: the Surf member"
+        },
+        "why": "\"Want to Surf?\" yes"
+      },
+      {
+        "id": "down_route19",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "Route19",
+            "todo": "TODO: the water south"
+          }
+        },
+        "why": "Route 19's water (trainers on the water: Reece, Richard, Tony, Matthew, Douglas, David, Axle, Alice, Connie, Anya, Lia, Luc)"
+      },
+      {
+        "id": "to_seafoam",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "SeafoamIslands_1F",
+            "tiles": [
+              [6, 21]
+            ],
+            "facing": "north",
+            "place": "seafoam_east_mouth"
+          }
+        },
+        "why": "east part of Route 20 to the Seafoam Islands' east mouth (trainers: Melissa, Missy, Nora, Roger, Dean, Irene, Barry, Darrin, Shirley, Tiffany)"
+      },
+      {
+        "id": "save",
+        "kind": "save",
+        "why": "save: the checkpoint's end"
+      }
+    ]
+  }
+}

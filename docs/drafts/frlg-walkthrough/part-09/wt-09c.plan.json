@@ -1,0 +1,103 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "frlg",
+  "execution": {
+    "menu": "full"
+  },
+  "metadata": {
+    "phase": "draft",
+    "walkthrough_part": 9,
+    "optional": false,
+    "notes": "The opened stairs are a metatile change: PokemonSimulation's GameCorner map needs the stairs as a gate (FLAG? VAR? check pret's script) before the walk can plan through them.",
+    "goal_facts": ["map: RocketHideout_B1F"],
+    "needs": [
+      {
+        "capability": "battle",
+        "status": "missing"
+      },
+      {
+        "capability": "check_object",
+        "status": "missing"
+      },
+      {
+        "capability": "story_gates",
+        "status": "partial"
+      }
+    ],
+    "maps_missing_in_pokesim": ["CeladonCity_PokemonCenter_1F"]
+  },
+  "checkpoint": {
+    "id": "wt-09c",
+    "title": "Game Corner: the Rocket at the poster, the switch, into the Hideout",
+    "start": {
+      "map": "CeladonCity_PokemonCenter_1F",
+      "todo": "TODO: map not in PokemonSimulation; the nurse's stand tile differs per Center (Lavender (7, 4), Indigo Plateau (13, 12)): read it off the map once it is added"
+    },
+    "events": [
+      {
+        "id": "below_poster_grunt",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "CeladonCity_GameCorner",
+            "tiles": [
+              [11, 3]
+            ],
+            "facing": "north",
+            "place": "game_corner_poster_grunt"
+          }
+        },
+        "why": "below the Rocket Grunt (11, 2) at the back wall's poster"
+      },
+      {
+        "id": "talk_grunt",
+        "kind": "talk",
+        "why": "he picks a fight"
+      },
+      {
+        "id": "poster_grunt",
+        "kind": "battle",
+        "args": {
+          "opponent": "rocket-grunt"
+        },
+        "why": "Raticate and Ekans"
+      },
+      {
+        "id": "grunt_leaves",
+        "kind": "scene",
+        "why": "the Grunt runs off, the poster is free"
+      },
+      {
+        "id": "press_poster_switch",
+        "kind": "game_action",
+        "action": "check_object",
+        "args": {
+          "what": "poster"
+        },
+        "why": "TODO: face the poster (11, 1)? and press A: the hidden stairs open (the switch's metatile change)"
+      },
+      {
+        "id": "into_hideout",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "RocketHideout_B1F",
+            "tiles": [
+              [12, 2]
+            ],
+            "facing": "north",
+            "place": "hideout_b1f_stairs"
+          }
+        },
+        "why": "down the new stairs"
+      },
+      {
+        "id": "save",
+        "kind": "save",
+        "why": "save: the checkpoint's end"
+      }
+    ]
+  }
+}

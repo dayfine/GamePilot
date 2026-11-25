@@ -1,0 +1,161 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "frlg",
+  "execution": {
+    "menu": "full"
+  },
+  "metadata": {
+    "phase": "draft",
+    "walkthrough_part": 11,
+    "optional": false,
+    "notes": "Silph Co. 11F: Giovanni, the Master Ball",
+    "goal_facts": ["bag: master-ball (FLAG_GOT_MASTER_BALL_FROM_SILPH)"],
+    "needs": [
+      {
+        "capability": "fight_trainer",
+        "status": "missing"
+      },
+      {
+        "capability": "battle",
+        "status": "missing"
+      },
+      {
+        "capability": "card_key_door",
+        "status": "missing"
+      },
+      {
+        "capability": "battle_policy",
+        "status": "missing"
+      },
+      {
+        "capability": "heal_at",
+        "status": "missing"
+      },
+      {
+        "capability": "story_gates",
+        "status": "partial"
+      },
+      {
+        "capability": "warp_pads",
+        "status": "partial"
+      }
+    ]
+  },
+  "checkpoint": {
+    "id": "wt-11c",
+    "title": "Silph Co. 11F: Giovanni, the Master Ball",
+    "start": {
+      "map": "SilphCo_7F",
+      "todo": "TODO: wt-11b's end"
+    },
+    "events": [
+      {
+        "id": "to_11f_pad",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "SilphCo_11F",
+            "todo": "TODO: the pad from 7F to 11F's west side"
+          }
+        },
+        "why": "7F's pad to 11F"
+      },
+      {
+        "id": "grunt_11f",
+        "kind": "fragment",
+        "action": "fight_trainer",
+        "args": {
+          "map": "SilphCo_11F",
+          "trainer": "Grunt2"
+        },
+        "why": "the Grunt before the boardroom"
+      },
+      {
+        "id": "open_boardroom",
+        "kind": "game_action",
+        "action": "card_key_door",
+        "args": {
+          "map": "SilphCo_11F",
+          "door": "TODO: gate id"
+        },
+        "why": "the boardroom door"
+      },
+      {
+        "id": "giovanni_trigger",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "SilphCo_11F",
+            "todo": "TODO: the tile where Giovanni (6, 11) starts his battle"
+          }
+        },
+        "why": "into the boardroom"
+      },
+      {
+        "id": "giovanni_speech",
+        "kind": "scene",
+        "why": "Giovanni's speech"
+      },
+      {
+        "id": "giovanni_2",
+        "kind": "battle",
+        "args": {
+          "opponent": "giovanni-2",
+          "policy": "type_matchup"
+        },
+        "why": "Nidorino, Kangaskhan, Rhyhorn, Nidoqueen"
+      },
+      {
+        "id": "rockets_flee",
+        "kind": "scene",
+        "why": "Team Rocket leaves Silph"
+      },
+      {
+        "id": "before_president",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "SilphCo_11F",
+            "tiles": [
+              [9, 10]
+            ],
+            "facing": "north",
+            "place": "silph_president"
+          }
+        },
+        "why": "the president (9, 9)"
+      },
+      {
+        "id": "talk_president",
+        "kind": "talk",
+        "why": "the Master Ball"
+      },
+      {
+        "id": "escape_rope",
+        "kind": "game_action",
+        "action": "use_item",
+        "args": {
+          "item": "escape-rope"
+        },
+        "why": "out of the building"
+      },
+      {
+        "id": "heal",
+        "kind": "fragment",
+        "action": "heal_at",
+        "args": {
+          "town": "SaffronCity"
+        },
+        "why": "heal at the town's Pokemon Center nurse"
+      },
+      {
+        "id": "save",
+        "kind": "save",
+        "why": "save: the checkpoint's end"
+      }
+    ]
+  }
+}

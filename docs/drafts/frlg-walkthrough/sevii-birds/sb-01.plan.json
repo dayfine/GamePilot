@@ -1,0 +1,117 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "frlg",
+  "execution": {
+    "menu": "full"
+  },
+  "metadata": {
+    "phase": "draft",
+    "program": "frlg.sevii_and_birds (proposed)",
+    "notes": "First checkpoint of the proposed Sevii + birds program. The preconditions are checked before the Fly; Fly's Sevii page is not used (One Island may not be on it yet).",
+    "goal_facts": ["map: OneIsland_PokemonCenter_1F, at the nurse"],
+    "needs": ["ferry", "trainer_card_reader (preconditions)"],
+    "preconditions": [
+      {
+        "fact": "badges: 8",
+        "read_by": "Trainer Card back (a new reader)",
+        "why": "a post-Elite Four save; the island guards and HMs assume it"
+      },
+      {
+        "fact": "hall of fame entered (FLAG_SYS_GAME_CLEAR)",
+        "read_by": "Trainer Card front (its star; a new reader)",
+        "why": "Celio's Ruby request and the Rainbow Pass come after the Hall of Fame"
+      },
+      {
+        "fact": "key item: tri-pass",
+        "read_by": "bag, Key Items pocket",
+        "why": "the first Sevii trip (Part 14) is done: the Vermilion sailor sails only then (pret VermilionCity_EventScript_FerrySailor: VAR_MAP_SCENE_ONE_ISLAND_POKEMON_CENTER_1F >= 1). Without it the program refuses and names the Part 14 drafts"
+      },
+      {
+        "fact": "national pokedex",
+        "read_by": "Pokedex menu or Trainer Card (a new reader)",
+        "why": "Celio asks for the Ruby only with it (IsNationalPokedexEnabled); Oak gives it in Pallet Town after One Island with 60 caught"
+      },
+      {
+        "fact": "party knows: fly, surf, strength, rock-smash, cut",
+        "read_by": "party summary moves (exists)",
+        "why": "Fly to Vermilion, Cinnabar and Route 10; Surf for Water Path, Route 20 and the Power Plant; Strength and Rock Smash for Ruby Path and the birds' caves; Cut for the Dotted Hole's door"
+      },
+      {
+        "fact": "bag: escape-rope >= 5, ultra-ball >= 30, super-repel >= 10, full-restore >= 5, revive >= 5",
+        "read_by": "bag (exists)",
+        "why": "five caves, three birds; Supplies can provide all but the Full Restores' mart choice"
+      }
+    ]
+  },
+  "checkpoint": {
+    "id": "sb-01",
+    "title": "Fly to Vermilion; the Seagallop to One Island",
+    "start": {
+      "map": "TODO",
+      "todo": "TODO: the save's spot: anywhere outdoors in Kanto where Fly works (a post-Elite Four save)"
+    },
+    "events": [
+      {
+        "id": "fly_vermilion",
+        "kind": "game_action",
+        "action": "fly",
+        "args": {
+          "town": "VermilionCity",
+          "species": "TODO: the Fly member's species"
+        },
+        "declared_after": {
+          "map": "VermilionCity",
+          "tiles": [
+            [15, 7]
+          ],
+          "facing": "south"
+        },
+        "why": "Vermilion's harbor sails to the Sevii Islands"
+      },
+      {
+        "id": "to_ferry_sailor",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "place": "vermilion_ferry_sailor"
+          }
+        },
+        "why": "the sailor (24, 33) at the harbor's gangway, south of the city"
+      },
+      {
+        "id": "talk_sailor",
+        "kind": "talk",
+        "why": "\"Board the Seagallop?\""
+      },
+      {
+        "id": "seagallop_one",
+        "kind": "game_action",
+        "action": "ferry",
+        "args": {
+          "to": "OneIsland"
+        },
+        "declared_after": {
+          "map": "OneIsland_Harbor",
+          "tiles": [
+            [8, 5]
+          ]
+        },
+        "why": "pick One Island from the Tri-Pass list; the ship scene"
+      },
+      {
+        "id": "heal_one_island",
+        "fragment": "heal_at",
+        "args": {
+          "town": "oneisland"
+        },
+        "why": "One Island's Network Center; its nurse (5, 2) is served from (5, 4)"
+      },
+      {
+        "id": "save",
+        "kind": "save",
+        "why": "save: sb-02's start"
+      }
+    ]
+  }
+}

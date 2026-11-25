@@ -1,0 +1,193 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "frlg",
+  "execution": {
+    "menu": "full"
+  },
+  "metadata": {
+    "phase": "draft",
+    "walkthrough_part": 9,
+    "optional": false,
+    "notes": "Pokemon Tower 6F and 7F: Marowak, the Rockets, Mr. Fuji, the Poke Flute",
+    "goal_facts": ["key: poke-flute (FLAG_GOT_POKE_FLUTE)", "flag: FLAG_RESCUED_MR_FUJI"],
+    "needs": [
+      {
+        "capability": "static_encounter",
+        "status": "missing"
+      },
+      {
+        "capability": "battle",
+        "status": "missing"
+      },
+      {
+        "capability": "fight_trainer",
+        "status": "missing"
+      },
+      {
+        "capability": "heal_at",
+        "status": "missing"
+      },
+      {
+        "capability": "trainer_interrupt",
+        "status": "missing"
+      },
+      {
+        "capability": "battle_policy",
+        "status": "missing"
+      }
+    ]
+  },
+  "checkpoint": {
+    "id": "wt-09h",
+    "title": "Pokemon Tower 6F and 7F: Marowak, the Rockets, Mr. Fuji, the Poke Flute",
+    "start": {
+      "map": "PokemonTower_5F",
+      "todo": "TODO: wt-09g's end in the healing zone"
+    },
+    "events": [
+      {
+        "id": "to_6f",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "PokemonTower_6F",
+            "tiles": [
+              [18, 10]
+            ],
+            "facing": "north"
+          }
+        },
+        "why": "5F's east stairs (trainers: Ruth, Tammy, Karina, Janae)"
+      },
+      {
+        "id": "marowak_trigger",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "PokemonTower_6F",
+            "todo": "TODO: the trigger tile before the south stairs (pret coord event)"
+          }
+        },
+        "why": "toward the stairs up; 6F trainers: Angelica, Jennifer, Emilia"
+      },
+      {
+        "id": "marowak_ghost",
+        "kind": "game_action",
+        "action": "static_encounter",
+        "args": {
+          "species": "marowak",
+          "outcome": "defeat"
+        },
+        "why": "the Scope reveals Marowak Lv 30; it can't be caught or fled"
+      },
+      {
+        "id": "to_7f",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "PokemonTower_7F",
+            "tiles": [
+              [11, 16]
+            ],
+            "facing": "north"
+          }
+        },
+        "why": "stairs up"
+      },
+      {
+        "id": "grunt_7f_1",
+        "kind": "fragment",
+        "action": "fight_trainer",
+        "args": {
+          "map": "PokemonTower_7F",
+          "trainer": "Grunt1"
+        },
+        "why": "the three Grunts guard Mr. Fuji"
+      },
+      {
+        "id": "grunt_7f_2",
+        "kind": "fragment",
+        "action": "fight_trainer",
+        "args": {
+          "map": "PokemonTower_7F",
+          "trainer": "Grunt2"
+        },
+        "why": ""
+      },
+      {
+        "id": "grunt_7f_3",
+        "kind": "fragment",
+        "action": "fight_trainer",
+        "args": {
+          "map": "PokemonTower_7F",
+          "trainer": "Grunt3"
+        },
+        "why": ""
+      },
+      {
+        "id": "before_fuji",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "PokemonTower_7F",
+            "tiles": [
+              [11, 5]
+            ],
+            "facing": "north",
+            "place": "fuji_tower"
+          }
+        },
+        "why": "Mr. Fuji (11, 4)"
+      },
+      {
+        "id": "talk_fuji",
+        "kind": "talk",
+        "why": "he asks to go home"
+      },
+      {
+        "id": "to_fuji_house",
+        "kind": "scene",
+        "why": "fade to the Volunteer Pokemon House"
+      },
+      {
+        "id": "before_fuji_home",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "LavenderTown_VolunteerPokemonHouse",
+            "tiles": [
+              [3, 4]
+            ],
+            "facing": "north",
+            "place": "fuji_home"
+          }
+        },
+        "why": "Mr. Fuji at his table"
+      },
+      {
+        "id": "talk_fuji_home",
+        "kind": "talk",
+        "why": "the Poke Flute"
+      },
+      {
+        "id": "heal",
+        "kind": "fragment",
+        "action": "heal_at",
+        "args": {
+          "town": "LavenderTown"
+        },
+        "why": "heal at the town's Pokemon Center nurse"
+      },
+      {
+        "id": "save",
+        "kind": "save",
+        "why": "save: the checkpoint's end"
+      }
+    ]
+  }
+}

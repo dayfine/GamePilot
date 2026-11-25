@@ -1,0 +1,70 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "frlg",
+  "execution": {
+    "menu": "full"
+  },
+  "metadata": {
+    "phase": "draft",
+    "program": "frlg.sevii_and_birds (proposed)",
+    "notes": "",
+    "goal_facts": ["key item: rainbow-pass", "flag: FLAG_SYS_SEVII_MAP_4567", "VAR_MAP_SCENE_ONE_ISLAND_POKEMON_CENTER_1F = 5"],
+    "needs": ["fly_sevii (optional shortcut)", "trainer_interrupt"]
+  },
+  "checkpoint": {
+    "id": "sb-05",
+    "title": "Celio takes the Ruby: the Rainbow Pass",
+    "start": {
+      "map": "MtEmber_Exterior",
+      "todo": "TODO: where sb-04's Escape Rope lands"
+    },
+    "events": [
+      {
+        "id": "back_to_one_island",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "OneIsland",
+            "todo": "TODO: Kindle Road south (Fly's Sevii page would skip it)"
+          }
+        },
+        "why": "back down Kindle Road"
+      },
+      {
+        "id": "to_celio",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "place": "celio"
+          }
+        },
+        "why": "Celio"
+      },
+      {
+        "id": "give_ruby",
+        "kind": "talk",
+        "why": "he installs the Ruby"
+      },
+      {
+        "id": "rainbow_pass",
+        "kind": "scene",
+        "why": "the Rainbow Pass; he asks for the Sapphire too; the Sevii map's second page"
+      },
+      {
+        "id": "heal",
+        "fragment": "heal_at",
+        "args": {
+          "town": "oneisland"
+        },
+        "why": "heal"
+      },
+      {
+        "id": "save",
+        "kind": "save",
+        "why": "save"
+      }
+    ]
+  }
+}

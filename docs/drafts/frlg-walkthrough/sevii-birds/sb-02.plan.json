@@ -1,0 +1,110 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "frlg",
+  "execution": {
+    "menu": "full"
+  },
+  "metadata": {
+    "phase": "draft",
+    "program": "frlg.sevii_and_birds (proposed)",
+    "notes": "Check on Kindle Road's grid whether the walk to Mt. Ember stays on land or needs Surf. The Grunts are talk-started, not trainer-line battles.",
+    "goal_facts": ["story: Ruby Path open (VAR_MAP_SCENE_MT_EMBER_EXTERIOR advanced)", "story: first Rocket Warehouse password heard"],
+    "needs": ["answer", "battle", "trainer_interrupt"]
+  },
+  "checkpoint": {
+    "id": "sb-02",
+    "title": "One Island: Celio asks for the Ruby; Kindle Road to Mt. Ember's two Rockets",
+    "start": {
+      "place": "oneisland_nurse"
+    },
+    "events": [
+      {
+        "id": "to_celio",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "place": "celio"
+          }
+        },
+        "why": "Celio (15, 6) by the Network Machine"
+      },
+      {
+        "id": "talk_celio",
+        "kind": "talk",
+        "why": "he needs a gem for the long-distance link"
+      },
+      {
+        "id": "agree",
+        "kind": "answer",
+        "args": {
+          "yes": true
+        },
+        "why": "\"Will you help?\" yes (no loops back: pret DeclineHelpCelio)"
+      },
+      {
+        "id": "celio_scene",
+        "kind": "scene",
+        "why": "the Ruby is said to be on One Island; Mt. Ember's scene var is set"
+      },
+      {
+        "id": "to_grunt_1",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "place": "mt_ember_grunt_1"
+          }
+        },
+        "why": "out of town, north up Kindle Road's west path (trainers: Maria, Abigail, Finn, Garrett, Tommy, Sharon, Tanya, Shea, Hugh, Bryce), Mt. Ember's foot, east to the Grunts (41, 40), (42, 40)"
+      },
+      {
+        "id": "talk_grunt_1",
+        "kind": "talk",
+        "why": "the first Grunt"
+      },
+      {
+        "id": "grunt_1",
+        "kind": "battle",
+        "args": {
+          "opponent": "rocket-grunt"
+        },
+        "why": "Team Rocket Grunt"
+      },
+      {
+        "id": "to_grunt_2",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "place": "mt_ember_grunt_2"
+          }
+        },
+        "why": "beside him"
+      },
+      {
+        "id": "talk_grunt_2",
+        "kind": "talk",
+        "why": "the second Grunt"
+      },
+      {
+        "id": "grunt_2",
+        "kind": "battle",
+        "args": {
+          "opponent": "rocket-grunt"
+        },
+        "why": "Team Rocket Grunt; he lets slip the first password and the Ruby Path opens"
+      },
+      {
+        "id": "grunts_leave",
+        "kind": "scene",
+        "why": "they run off"
+      },
+      {
+        "id": "save",
+        "kind": "save",
+        "why": "save"
+      }
+    ]
+  }
+}

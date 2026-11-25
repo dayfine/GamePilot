@@ -1,0 +1,65 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "frlg",
+  "execution": {
+    "menu": "full"
+  },
+  "metadata": {
+    "phase": "draft",
+    "walkthrough_part": 19,
+    "optional": false,
+    "notes": "One Island: the Sapphire to Celio",
+    "goal_facts": ["flag: FLAG_SYS_CAN_LINK_WITH_RS"],
+    "needs": [
+      {
+        "capability": "fly_sevii",
+        "status": "missing"
+      }
+    ]
+  },
+  "checkpoint": {
+    "id": "wt-19b",
+    "title": "One Island: the Sapphire to Celio",
+    "start": {
+      "map": "FiveIsland_RocketWarehouse",
+      "todo": "TODO: wt-19a's end"
+    },
+    "events": [
+      {
+        "id": "fly_one_island",
+        "kind": "game_action",
+        "action": "fly",
+        "args": {
+          "town": "OneIsland",
+          "species": "TODO: a member that knows Fly"
+        },
+        "why": ""
+      },
+      {
+        "id": "before_celio",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "OneIsland_PokemonCenter_1F",
+            "tiles": [
+              [15, 7]
+            ],
+            "facing": "north"
+          }
+        },
+        "why": "Celio"
+      },
+      {
+        "id": "give_sapphire",
+        "kind": "talk",
+        "why": "the Network Machine is complete"
+      },
+      {
+        "id": "save",
+        "kind": "save",
+        "why": "save: the checkpoint's end"
+      }
+    ]
+  }
+}

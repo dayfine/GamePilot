@@ -1,0 +1,59 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "frlg",
+  "execution": {
+    "menu": "full"
+  },
+  "metadata": {
+    "phase": "draft",
+    "walkthrough_part": 7,
+    "optional": true,
+    "notes": "Pewter Museum: the Old Amber (optional)",
+    "goal_facts": ["key: old-amber (FLAG_GOT_OLD_AMBER)"],
+    "needs": []
+  },
+  "checkpoint": {
+    "id": "wt-07b",
+    "title": "Pewter Museum: the Old Amber (optional)",
+    "start": {
+      "map": "PewterCity_PokemonCenter_1F",
+      "tiles": [
+        [7, 4]
+      ],
+      "facing": "north"
+    },
+    "events": [
+      {
+        "id": "cut_museum_tree",
+        "kind": "game_action",
+        "action": "cut_tree",
+        "args": {
+          "direction": "TODO"
+        },
+        "why": "the small tree on Pewter's northeast hill"
+      },
+      {
+        "id": "to_amber_scientist",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "PewterCity_Museum_1F",
+            "todo": "TODO: the employee-only building is a separate pret map (PewterCity_Museum_2F? check); the Scientist by the table"
+          }
+        },
+        "why": "the Scientist next to the table"
+      },
+      {
+        "id": "talk_scientist",
+        "kind": "talk",
+        "why": "the Old Amber"
+      },
+      {
+        "id": "save",
+        "kind": "save",
+        "why": "save: the checkpoint's end"
+      }
+    ]
+  }
+}

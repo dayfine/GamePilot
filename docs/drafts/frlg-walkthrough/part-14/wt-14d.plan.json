@@ -1,0 +1,120 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "frlg",
+  "execution": {
+    "menu": "full"
+  },
+  "metadata": {
+    "phase": "draft",
+    "walkthrough_part": 14,
+    "optional": false,
+    "notes": "The ferry to Three Island: four Bikers in a row",
+    "goal_facts": ["flag: FLAG_HIDE_THREE_ISLAND_BIKERS"],
+    "needs": [
+      {
+        "capability": "ferry",
+        "status": "missing"
+      },
+      {
+        "capability": "answer",
+        "status": "missing"
+      },
+      {
+        "capability": "consecutive_battles",
+        "status": "missing"
+      },
+      {
+        "capability": "battle",
+        "status": "missing"
+      },
+      {
+        "capability": "heal_at",
+        "status": "missing"
+      }
+    ],
+    "maps_missing_in_pokesim": ["ThreeIsland_PokemonCenter_1F"]
+  },
+  "checkpoint": {
+    "id": "wt-14d",
+    "title": "The ferry to Three Island: four Bikers in a row",
+    "start": {
+      "map": "OneIsland_PokemonCenter_1F",
+      "todo": "TODO: One Island's nurse"
+    },
+    "events": [
+      {
+        "id": "to_one_harbor",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "OneIsland_Harbor",
+            "todo": "TODO: the sailor's front"
+          }
+        },
+        "why": "the harbor"
+      },
+      {
+        "id": "ferry_three",
+        "kind": "game_action",
+        "action": "ferry",
+        "args": {
+          "to": "ThreeIsland"
+        },
+        "why": "the Tri-Pass: pick Three Island from the list"
+      },
+      {
+        "id": "to_bikers",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "ThreeIsland",
+            "todo": "TODO: beside the Biker gang (8..11, 22..24)"
+          }
+        },
+        "why": "out of the port to the Bikers by the Center"
+      },
+      {
+        "id": "talk_biker",
+        "kind": "talk",
+        "why": "\"You really want to take us on?\""
+      },
+      {
+        "id": "take_them_on",
+        "kind": "answer",
+        "args": {
+          "yes": true
+        },
+        "why": "yes"
+      },
+      {
+        "id": "four_bikers",
+        "kind": "train",
+        "args": {
+          "battles": 4
+        },
+        "why": "the Kanto Rider Federation: four battles back to back"
+      },
+      {
+        "id": "bikers_leave",
+        "kind": "scene",
+        "why": "they leave the island"
+      },
+      {
+        "id": "heal",
+        "kind": "fragment",
+        "action": "heal_at",
+        "args": {
+          "town": "ThreeIsland"
+        },
+        "why": "heal at the town's Pokemon Center nurse"
+      },
+      {
+        "id": "save",
+        "kind": "save",
+        "why": "save: the checkpoint's end"
+      }
+    ]
+  }
+}

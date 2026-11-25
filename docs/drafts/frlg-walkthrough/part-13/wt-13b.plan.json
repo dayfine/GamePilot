@@ -1,0 +1,123 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "frlg",
+  "execution": {
+    "menu": "full"
+  },
+  "metadata": {
+    "phase": "draft",
+    "walkthrough_part": 13,
+    "optional": false,
+    "notes": "Cinnabar Gym: the quiz doors, Blaine, the Volcano Badge",
+    "goal_facts": ["badge: volcano (FLAG_BADGE07_GET)", "flag: FLAG_DEFEATED_BLAINE"],
+    "needs": [
+      {
+        "capability": "gym_quiz",
+        "status": "missing"
+      },
+      {
+        "capability": "battle",
+        "status": "missing"
+      },
+      {
+        "capability": "battle_policy",
+        "status": "missing"
+      },
+      {
+        "capability": "answer",
+        "status": "missing"
+      },
+      {
+        "capability": "story_gates",
+        "status": "partial"
+      }
+    ],
+    "maps_missing_in_pokesim": ["CinnabarIsland_PokemonCenter_1F"]
+  },
+  "checkpoint": {
+    "id": "wt-13b",
+    "title": "Cinnabar Gym: the quiz doors, Blaine, the Volcano Badge",
+    "start": {
+      "map": "CinnabarIsland_PokemonCenter_1F",
+      "todo": "TODO: map not in PokemonSimulation; the nurse's stand tile differs per Center (Lavender (7, 4), Indigo Plateau (13, 12)): read it off the map once it is added"
+    },
+    "events": [
+      {
+        "id": "into_gym",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "CinnabarIsland_Gym",
+            "tiles": [
+              [24, 23]
+            ],
+            "facing": "north",
+            "place": "cinnabar_gym_door"
+          }
+        },
+        "why": "the Secret Key opens the door"
+      },
+      {
+        "id": "quiz_1",
+        "kind": "game_action",
+        "action": "gym_quiz",
+        "args": {
+          "machine": 1,
+          "answer": "TODO: from pret's CinnabarIsland_Gym scripts"
+        },
+        "why": "each right answer opens the next door; a wrong one starts a trainer battle"
+      },
+      {
+        "id": "quiz_2_to_6",
+        "kind": "game_action",
+        "action": "gym_quiz",
+        "args": {
+          "machine": "2..6",
+          "answer": "TODO"
+        },
+        "why": "the other five machines"
+      },
+      {
+        "id": "before_blaine",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "CinnabarIsland_Gym",
+            "tiles": [
+              [5, 5]
+            ],
+            "facing": "north",
+            "place": "blaine_front"
+          }
+        },
+        "why": "Blaine (5, 4)"
+      },
+      {
+        "id": "challenge_blaine",
+        "kind": "talk",
+        "why": "Blaine's speech"
+      },
+      {
+        "id": "blaine",
+        "kind": "battle",
+        "args": {
+          "opponent": "blaine",
+          "policy": "type_matchup"
+        },
+        "why": "Growlithe, Ponyta, Rapidash, Arcanine: Water, Ground, Rock"
+      },
+      {
+        "id": "volcano_badge",
+        "kind": "scene",
+        "why": "the badge and TM38"
+      },
+      {
+        "id": "save",
+        "kind": "save",
+        "why": "save: the checkpoint's end"
+      }
+    ]
+  }
+}

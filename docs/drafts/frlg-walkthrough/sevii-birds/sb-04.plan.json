@@ -1,0 +1,138 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "frlg",
+  "execution": {
+    "menu": "full"
+  },
+  "metadata": {
+    "phase": "draft",
+    "program": "frlg.sevii_and_birds (proposed)",
+    "notes": "Can run before or after sb-05..sb-08; it is here because Mt. Ember is already reached.",
+    "goal_facts": ["party or box: moltres (FLAG_HIDE_MOLTRES)"],
+    "needs": ["strength", "static_encounter", "soft_reset_retry", "battle_policy (catching: lower HP, status)"],
+    "skip_when": ["flag: FLAG_HIDE_MOLTRES (the summit has no Moltres: a reader of the summit's npc, or the run's configuration)"]
+  },
+  "checkpoint": {
+    "id": "sb-04",
+    "title": "Mt. Ember's summit: Moltres",
+    "start": {
+      "map": "MtEmber_Exterior",
+      "todo": "TODO: where sb-03's Escape Rope lands"
+    },
+    "events": [
+      {
+        "id": "to_summit_path",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "MtEmber_SummitPath_1F",
+            "todo": "TODO: Mt. Ember Exterior's west cave mouth (14, 24), via Ranger Logan's ledge (trainers: Jocelyn, Logan, Beth)"
+          }
+        },
+        "why": "the summit path; the exterior's west boulder pair first"
+      },
+      {
+        "id": "push_exterior",
+        "kind": "game_action",
+        "action": "push_boulder",
+        "args": {
+          "map": "MtEmber_Exterior",
+          "boulder": [
+            [22, 45],
+            [17, 46]
+          ],
+          "pushes": "TODO: the walkthrough's pair west of the entrance"
+        },
+        "why": "the pair of boulders west"
+      },
+      {
+        "id": "through_summit_path",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "MtEmber_Exterior",
+            "todo": "TODO: out of SummitPath_3F onto the upper east side (39, 19)"
+          }
+        },
+        "why": "SummitPath 1F, 2F, 3F"
+      },
+      {
+        "id": "to_summit",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "MtEmber_Summit",
+            "todo": "TODO: via the exterior's north warp (29, 7); arrival (9, 15)"
+          }
+        },
+        "why": "up to the summit"
+      },
+      {
+        "id": "push_summit",
+        "kind": "game_action",
+        "action": "push_boulder",
+        "args": {
+          "map": "MtEmber_Summit",
+          "boulder": [
+            [10, 12],
+            [9, 12],
+            [8, 11],
+            [8, 10]
+          ],
+          "pushes": "TODO: clear a column north to Moltres"
+        },
+        "why": "the four boulders below Moltres"
+      },
+      {
+        "id": "to_moltres",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "place": "moltres_front"
+          }
+        },
+        "why": "below Moltres (9, 6)"
+      },
+      {
+        "id": "save_before",
+        "kind": "save",
+        "why": "one chance: the checkpoint's runs retry from here by soft reset"
+      },
+      {
+        "id": "talk_moltres",
+        "kind": "talk",
+        "why": "the cry"
+      },
+      {
+        "id": "moltres",
+        "kind": "game_action",
+        "action": "static_encounter",
+        "args": {
+          "species": "moltres",
+          "outcome": "catch",
+          "balls": ["ultra-ball"],
+          "retry": "soft_reset"
+        },
+        "why": "Lv 50; sleep or paralysis, then Ultra Balls; a faint or a flee resets"
+      },
+      {
+        "id": "escape_rope",
+        "kind": "game_action",
+        "action": "use_item",
+        "args": {
+          "item": "escape-rope"
+        },
+        "why": "down"
+      },
+      {
+        "id": "save",
+        "kind": "save",
+        "why": "save"
+      }
+    ]
+  }
+}

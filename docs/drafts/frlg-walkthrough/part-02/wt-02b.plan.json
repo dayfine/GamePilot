@@ -1,0 +1,86 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "frlg",
+  "execution": {
+    "menu": "full"
+  },
+  "metadata": {
+    "phase": "draft",
+    "walkthrough_part": 2,
+    "optional": true,
+    "notes": "Optional in the walkthrough; nothing later depends on it.",
+    "goal_facts": ["rival 2 beaten (VAR_MAP_SCENE_ROUTE22)", "money +$144"],
+    "needs": [
+      {
+        "capability": "battle",
+        "status": "missing"
+      },
+      {
+        "capability": "battle_policy",
+        "status": "missing"
+      },
+      {
+        "capability": "heal_at",
+        "status": "missing"
+      }
+    ]
+  },
+  "checkpoint": {
+    "id": "wt-02b",
+    "title": "Route 22: rival battle 2 (optional detour)",
+    "start": {
+      "map": "ViridianCity_PokemonCenter_1F",
+      "tiles": [
+        [7, 4]
+      ],
+      "facing": "north"
+    },
+    "events": [
+      {
+        "id": "route22_trigger",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "Route22",
+            "todo": "TODO: the tile east of Blue (25, 4) where his trigger runs; read the trigger from pret's Route22 coord events"
+          }
+        },
+        "why": "West onto Route 22 until Blue walks up."
+      },
+      {
+        "id": "blue_walks_up",
+        "kind": "scene",
+        "why": "Blue's speech"
+      },
+      {
+        "id": "rival_2",
+        "kind": "battle",
+        "args": {
+          "opponent": "rival-2",
+          "policy": "type_matchup"
+        },
+        "why": "Pidgey and his starter, Lv 9"
+      },
+      {
+        "id": "blue_leaves",
+        "kind": "scene",
+        "why": "Blue's parting words"
+      },
+      {
+        "id": "heal_viridian",
+        "kind": "fragment",
+        "action": "heal_at",
+        "args": {
+          "town": "ViridianCity"
+        },
+        "why": "heal at the town's Pokemon Center nurse"
+      },
+      {
+        "id": "save",
+        "kind": "save",
+        "why": "save: the checkpoint's end"
+      }
+    ]
+  }
+}

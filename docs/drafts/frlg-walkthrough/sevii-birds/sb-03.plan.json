@@ -1,0 +1,162 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "frlg",
+  "execution": {
+    "menu": "full"
+  },
+  "metadata": {
+    "phase": "draft",
+    "program": "frlg.sevii_and_birds (proposed)",
+    "notes": "Escape Rope's landing is Mt. Ember's entrance warp: read it from pret (the last cave entrance) and declare it.",
+    "goal_facts": ["key item: ruby (FLAG_GOT_RUBY)"],
+    "needs": ["rock_smash", "strength", "fall_holes? (no)", "wild battles in caves: flee (exists)"]
+  },
+  "checkpoint": {
+    "id": "sb-03",
+    "title": "Ruby Path: Rock Smash and boulders down to the Ruby",
+    "start": {
+      "place": "mt_ember_grunt_2"
+    },
+    "events": [
+      {
+        "id": "to_ruby_path",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "place": "ruby_path_door_outside"
+          }
+        },
+        "why": "the hole the Grunts dug (42, 39)"
+      },
+      {
+        "id": "into_ruby_path",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "MtEmber_RubyPath_1F",
+            "todo": "TODO: arrival (22, 17), facing north"
+          }
+        },
+        "why": "in"
+      },
+      {
+        "id": "smash_1f",
+        "kind": "game_action",
+        "action": "rock_smash",
+        "args": {
+          "map": "MtEmber_RubyPath_1F",
+          "rocks": [
+            [18, 11],
+            [20, 12],
+            [19, 7],
+            [21, 15],
+            [23, 16]
+          ]
+        },
+        "why": "1F's five rocks (PokemonSimulation's rock_smash_rock npcs); smash only those on the way northwest; a wild battle may start"
+      },
+      {
+        "id": "to_b1f",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "MtEmber_RubyPath_B1F",
+            "todo": "TODO: 1F's ladder (1, 1)"
+          }
+        },
+        "why": "down; B1F's rocks the same way"
+      },
+      {
+        "id": "to_b2f",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "MtEmber_RubyPath_B2F",
+            "todo": "TODO: B1F's ladder"
+          }
+        },
+        "why": "down"
+      },
+      {
+        "id": "push_b2f",
+        "kind": "game_action",
+        "action": "push_boulder",
+        "args": {
+          "map": "MtEmber_RubyPath_B2F",
+          "boulder": "TODO: from the map's pushable_boulder npcs",
+          "pushes": "E2; then E1; then N1 (walkthrough)"
+        },
+        "why": "clear the way to the ladder"
+      },
+      {
+        "id": "to_b3f",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "MtEmber_RubyPath_B3F",
+            "todo": "TODO: B2F's ladder"
+          }
+        },
+        "why": "down"
+      },
+      {
+        "id": "push_b3f",
+        "kind": "game_action",
+        "action": "push_boulder",
+        "args": {
+          "map": "MtEmber_RubyPath_B3F",
+          "boulder": "TODO",
+          "pushes": "E1 S1 (walkthrough); take the southwest branch"
+        },
+        "why": ""
+      },
+      {
+        "id": "to_b5f",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "MtEmber_RubyPath_B5F",
+            "todo": "TODO: via B4F's Braille room, its southeast ladder"
+          }
+        },
+        "why": "down"
+      },
+      {
+        "id": "to_ruby",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "place": "ruby_pedestal"
+          }
+        },
+        "why": "below the pedestal (7, 7)"
+      },
+      {
+        "id": "take_ruby",
+        "kind": "talk",
+        "why": "the Ruby"
+      },
+      {
+        "id": "escape_rope",
+        "kind": "game_action",
+        "action": "use_item",
+        "args": {
+          "item": "escape-rope"
+        },
+        "why": "out to Mt. Ember's foot"
+      },
+      {
+        "id": "save",
+        "kind": "save",
+        "why": "save"
+      }
+    ]
+  }
+}

@@ -1,0 +1,99 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "frlg",
+  "execution": {
+    "menu": "full"
+  },
+  "metadata": {
+    "phase": "draft",
+    "walkthrough_part": 19,
+    "optional": true,
+    "notes": "Five Island's side quests: Lemonade at Memorial Pillar, Lost Cave's Selphy, the Togepi Egg (optional)",
+    "goal_facts": ["bag: tm42 (FLAG_GOT_TM42_AT_MEMORIAL_PILLAR)", "party: togepi egg (FLAG_GOT_TOGEPI_EGG)"],
+    "needs": [
+      {
+        "capability": "battle",
+        "status": "missing"
+      },
+      {
+        "capability": "surf",
+        "status": "missing"
+      }
+    ],
+    "maps_missing_in_pokesim": ["FiveIsland_MemorialPillar", "FiveIsland_LostCave_Entrance"]
+  },
+  "checkpoint": {
+    "id": "wt-19c",
+    "title": "Five Island's side quests: Lemonade at Memorial Pillar, Lost Cave's Selphy, the Togepi Egg (optional)",
+    "start": {
+      "map": "FiveIsland",
+      "todo": "TODO: Fly to Five Island"
+    },
+    "events": [
+      {
+        "id": "to_memorial_pillar",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "FiveIsland_MemorialPillar",
+            "todo": "TODO: map not in PokemonSimulation"
+          }
+        },
+        "why": "by Surf"
+      },
+      {
+        "id": "leave_lemonade",
+        "kind": "talk",
+        "why": "TM42 Facade for a Lemonade"
+      },
+      {
+        "id": "into_lost_cave",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "FiveIsland_LostCave_Entrance",
+            "todo": "TODO: maps not in PokemonSimulation; rooms 1-14 by rock count"
+          }
+        },
+        "why": "Resort Gorgeous, Lost Cave"
+      },
+      {
+        "id": "talk_selphy",
+        "kind": "talk",
+        "why": "Lady Selphy"
+      },
+      {
+        "id": "selphy",
+        "kind": "battle",
+        "args": {
+          "opponent": "selphy"
+        },
+        "why": "Persian, Persian"
+      },
+      {
+        "id": "selphy_home",
+        "kind": "scene",
+        "why": "the walk to her resort"
+      },
+      {
+        "id": "to_egg_man",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "FiveIsland_WaterLabyrinth",
+            "todo": "TODO: the islet's old man"
+          }
+        },
+        "why": "Water Labyrinth: the Egg if the lead's friendship is max"
+      },
+      {
+        "id": "save",
+        "kind": "save",
+        "why": "save: the checkpoint's end"
+      }
+    ]
+  }
+}

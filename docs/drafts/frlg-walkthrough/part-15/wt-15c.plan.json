@@ -1,0 +1,144 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "frlg",
+  "execution": {
+    "menu": "full"
+  },
+  "metadata": {
+    "phase": "draft",
+    "walkthrough_part": 15,
+    "optional": false,
+    "notes": "Viridian Gym: Giovanni, the Earth Badge",
+    "goal_facts": ["badge: earth (FLAG_BADGE08_GET)", "flag: FLAG_DEFEATED_LEADER_GIOVANNI"],
+    "needs": [
+      {
+        "capability": "fight_trainer",
+        "status": "missing"
+      },
+      {
+        "capability": "battle",
+        "status": "missing"
+      },
+      {
+        "capability": "battle_policy",
+        "status": "missing"
+      },
+      {
+        "capability": "heal_at",
+        "status": "missing"
+      },
+      {
+        "capability": "spin_tiles",
+        "status": "missing"
+      }
+    ]
+  },
+  "checkpoint": {
+    "id": "wt-15c",
+    "title": "Viridian Gym: Giovanni, the Earth Badge",
+    "start": {
+      "map": "ViridianCity_PokemonCenter_1F",
+      "tiles": [
+        [7, 4]
+      ],
+      "facing": "north"
+    },
+    "events": [
+      {
+        "id": "fly_viridian",
+        "kind": "game_action",
+        "action": "fly",
+        "args": {
+          "town": "ViridianCity",
+          "species": "TODO: a member that knows Fly"
+        },
+        "why": "Viridian"
+      },
+      {
+        "id": "into_gym",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "ViridianCity_Gym",
+            "tiles": [
+              [16, 22]
+            ],
+            "facing": "north",
+            "place": "viridian_gym_door"
+          }
+        },
+        "why": "the Gym is open now"
+      },
+      {
+        "id": "warren",
+        "kind": "fragment",
+        "action": "fight_trainer",
+        "args": {
+          "map": "ViridianCity_Gym",
+          "trainer": "Warren"
+        },
+        "why": "so Takashi walks off the north wall (walkthrough)"
+      },
+      {
+        "id": "takashi",
+        "kind": "fragment",
+        "action": "fight_trainer",
+        "args": {
+          "map": "ViridianCity_Gym",
+          "trainer": "Takashi"
+        },
+        "why": ""
+      },
+      {
+        "id": "before_giovanni",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "ViridianCity_Gym",
+            "tiles": [
+              [2, 3]
+            ],
+            "facing": "north",
+            "place": "giovanni_gym_front"
+          }
+        },
+        "why": "back to the entrance, the spinners north and west to Giovanni (2, 2) (trainers: Takashi, Yuji, Atsushi, Jason, Cole, Kiyo, Samuel, Warren)"
+      },
+      {
+        "id": "challenge_giovanni",
+        "kind": "talk",
+        "why": "Giovanni's speech"
+      },
+      {
+        "id": "giovanni_3",
+        "kind": "battle",
+        "args": {
+          "opponent": "giovanni-3",
+          "policy": "type_matchup"
+        },
+        "why": "Rhyhorn, Dugtrio, Nidoqueen, Nidoking, Rhydon"
+      },
+      {
+        "id": "earth_badge",
+        "kind": "scene",
+        "why": "the badge and TM26; he disbands Team Rocket"
+      },
+      {
+        "id": "heal",
+        "kind": "fragment",
+        "action": "heal_at",
+        "args": {
+          "town": "ViridianCity"
+        },
+        "why": "heal at the town's Pokemon Center nurse"
+      },
+      {
+        "id": "save",
+        "kind": "save",
+        "why": "save: the checkpoint's end"
+      }
+    ]
+  }
+}

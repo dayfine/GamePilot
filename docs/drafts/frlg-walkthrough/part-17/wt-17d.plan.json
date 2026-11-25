@@ -1,0 +1,83 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "frlg",
+  "execution": {
+    "menu": "full"
+  },
+  "metadata": {
+    "phase": "draft",
+    "walkthrough_part": 17,
+    "optional": false,
+    "notes": "Elite Four 4: Lance",
+    "goal_facts": ["flag: FLAG_DEFEATED_LANCE"],
+    "needs": [
+      {
+        "capability": "battle",
+        "status": "missing"
+      },
+      {
+        "capability": "battle_policy",
+        "status": "missing"
+      },
+      {
+        "capability": "item_heal",
+        "status": "missing"
+      }
+    ]
+  },
+  "checkpoint": {
+    "id": "wt-17d",
+    "title": "Elite Four 4: Lance",
+    "start": {
+      "map": "PokemonLeague_LancesRoom",
+      "todo": "TODO: the room's entrance"
+    },
+    "events": [
+      {
+        "id": "before_lance",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "PokemonLeague_LancesRoom",
+            "tiles": [
+              [6, 9]
+            ],
+            "facing": "north",
+            "place": "lance_front"
+          }
+        },
+        "why": "into Lance's room, below Lance"
+      },
+      {
+        "id": "challenge_lance",
+        "kind": "talk",
+        "why": "Lance's speech"
+      },
+      {
+        "id": "lance",
+        "kind": "battle",
+        "args": {
+          "opponent": "lance",
+          "policy": "type_matchup"
+        },
+        "why": "Gyarados, Dragonair, Dragonair, Aerodactyl, Dragonite: Ice, Electric"
+      },
+      {
+        "id": "heal_with_items",
+        "kind": "game_action",
+        "action": "heal_party_items",
+        "args": {
+          "hp_below": "TODO",
+          "revive": true
+        },
+        "why": "no nurse: Full Restores and Revives from the bag"
+      },
+      {
+        "id": "save",
+        "kind": "save",
+        "why": "save: the checkpoint's end"
+      }
+    ]
+  }
+}

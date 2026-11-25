@@ -1,0 +1,61 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "frlg",
+  "execution": {
+    "menu": "full"
+  },
+  "metadata": {
+    "phase": "draft",
+    "walkthrough_part": 15,
+    "optional": true,
+    "notes": "Route 21 by Surf: Cinnabar to Pallet Town (optional)",
+    "goal_facts": ["map: PalletTown"],
+    "needs": [
+      {
+        "capability": "surf",
+        "status": "missing"
+      },
+      {
+        "capability": "trainer_interrupt",
+        "status": "missing"
+      }
+    ],
+    "maps_missing_in_pokesim": ["CinnabarIsland_PokemonCenter_1F"]
+  },
+  "checkpoint": {
+    "id": "wt-15a",
+    "title": "Route 21 by Surf: Cinnabar to Pallet Town (optional)",
+    "start": {
+      "map": "CinnabarIsland_PokemonCenter_1F",
+      "todo": "TODO: map not in PokemonSimulation; the nurse's stand tile differs per Center (Lavender (7, 4), Indigo Plateau (13, 12)): read it off the map once it is added"
+    },
+    "events": [
+      {
+        "id": "start_surf",
+        "kind": "game_action",
+        "action": "surf",
+        "args": {
+          "species": "TODO"
+        },
+        "why": "north shore"
+      },
+      {
+        "id": "up_route21",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "PalletTown",
+            "todo": "TODO: Route 21's north end"
+          }
+        },
+        "why": "Route21_South, Route21_North (trainers: Spencer, Lil, Ian)"
+      },
+      {
+        "id": "save",
+        "kind": "save",
+        "why": "save: the checkpoint's end"
+      }
+    ]
+  }
+}

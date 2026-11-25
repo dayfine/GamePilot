@@ -1,0 +1,109 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "frlg",
+  "execution": {
+    "menu": "full"
+  },
+  "metadata": {
+    "phase": "draft",
+    "program": "frlg.sevii_and_birds (proposed)",
+    "notes": "The Sevii story's end. sb-09 and sb-10 are the two Kanto birds.",
+    "goal_facts": ["flag: FLAG_SYS_CAN_LINK_WITH_RS", "flag: FLAG_HIDE_CERULEAN_CAVE_GUARD"],
+    "needs": ["ferry"]
+  },
+  "checkpoint": {
+    "id": "sb-08",
+    "title": "One Island: the Sapphire to Celio; the network is complete",
+    "start": {
+      "place": "gideon_front"
+    },
+    "events": [
+      {
+        "id": "escape_rope",
+        "kind": "game_action",
+        "action": "use_item",
+        "args": {
+          "item": "escape-rope"
+        },
+        "why": "out to Five Isle Meadow"
+      },
+      {
+        "id": "to_five_harbor",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "FiveIsland_Harbor",
+            "todo": "TODO: west to Five Island town, its harbor"
+          }
+        },
+        "why": "the harbor"
+      },
+      {
+        "id": "to_five_sailor",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "place": "fiveisland_harbor_sailor"
+          }
+        },
+        "why": "the sailor"
+      },
+      {
+        "id": "talk_sailor",
+        "kind": "talk",
+        "why": "\"Where to?\""
+      },
+      {
+        "id": "seagallop_one",
+        "kind": "game_action",
+        "action": "ferry",
+        "args": {
+          "to": "OneIsland"
+        },
+        "declared_after": {
+          "map": "OneIsland_Harbor",
+          "tiles": [
+            [8, 5]
+          ]
+        },
+        "why": "One Island"
+      },
+      {
+        "id": "to_celio",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "place": "celio"
+          }
+        },
+        "why": "Celio"
+      },
+      {
+        "id": "give_sapphire",
+        "kind": "talk",
+        "why": "the Sapphire"
+      },
+      {
+        "id": "network_done",
+        "kind": "scene",
+        "why": "Hoenn trades open (FLAG_SYS_CAN_LINK_WITH_RS); Cerulean Cave's guard leaves (FLAG_HIDE_CERULEAN_CAVE_GUARD)"
+      },
+      {
+        "id": "heal",
+        "fragment": "heal_at",
+        "args": {
+          "town": "oneisland"
+        },
+        "why": "heal"
+      },
+      {
+        "id": "save",
+        "kind": "save",
+        "why": "save"
+      }
+    ]
+  }
+}
