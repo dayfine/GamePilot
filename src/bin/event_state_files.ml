@@ -1,33 +1,35 @@
 (* The save states an mGBA run keeps at each event's start, on disk
-   (Pokemon_checkpoints.Event_states): saved through the daemon beside what the run read at
+   (Pokemon_engine.Event_snapshot): saved through the daemon beside what the run read at
    the checkpoint's start, one per event (the newest run's), and found again
    for a partial run (--from-event). *)
 
-open Pokemon_checkpoints
+open Pokemon_engine
 module Run = Frlg_checkpoints.Checkpoint_run
 
 (* The older states of event [index] under another id. *)
 let prune dir ~index ~keep =
   Sys.readdir dir |> Array.to_list
-  |> List.filter (Event_states.is_other_state ~index ~keep)
+  |> List.filter (Event_snapshot.is_other_state ~index ~keep)
   |> List.iter (fun name -> Sys.remove (Filename.concat dir name))
 
 (* Saved to a temporary file, then moved: a state cut short never replaces a
    good one. A save the daemon refuses is logged, not fatal. *)
 let keep ~states ~checkpoint ~log : Run.keep_event_state =
  fun ~index event reads ->
-  let dir = Event_states.dir ~states ~checkpoint in
-  let path = Event_states.path ~states ~checkpoint ~index ~event_id:event.id in
+  let dir = Event_snapshot.dir ~states ~checkpoint in
+  let path =
+    Event_snapshot.path ~states ~checkpoint ~index ~event_id:event.id
+  in
   let tmp = path ^ ".tmp" in
   Run_record.make_dirs dir;
   match Effects.save_state tmp with
   | (_ : int) ->
       Sys.rename tmp path;
-      Event_states.write_kept path reads;
+      Event_snapshot.write_kept path reads;
       prune dir ~index ~keep:(Filename.basename path);
       log
         ("[Run] kept the state at "
-        ^ Event_states.file ~index ~event_id:event.id)
+        ^ Event_snapshot.file ~index ~event_id:event.id)
   | exception Effects.Rpc_error e ->
       log
         (Printf.sprintf "[Run] could not keep the state at %s: %s" event.id
@@ -42,11 +44,11 @@ let partial ~states ~checkpoint (plan : Plan.checkpoint) (from_event, to_event)
   let first = range.first in
   let event : Plan.event = List.nth plan.events first in
   let path =
-    Event_states.path ~states ~checkpoint ~index:first ~event_id:event.id
+    Event_snapshot.path ~states ~checkpoint ~index:first ~event_id:event.id
   in
   let label = Engine_run.Event_range.label ids first in
-  let missing = Event_states.missing ~checkpoint ~label ~path in
+  let missing = Event_snapshot.missing ~checkpoint ~label ~path in
   if not (Sys.file_exists path) then Error missing
   else
-    let* kept = Event_states.read_kept ~missing path in
+    let* kept = Event_snapshot.read_kept ~missing path in
     Ok (path, { Run.range; kept })

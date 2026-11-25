@@ -1,5 +1,5 @@
-module P = Pokemon_checkpoints.Plan
-module Postconditions = Pokemon_checkpoints.Postconditions
+module P = Pokemon_engine.Plan
+module Postconditions = Pokemon_engine.Postconditions
 
 type need = Plan_needs.need =
   | Party_in_order of string list
@@ -27,7 +27,7 @@ let needs stocks ~before plan =
     (Plan_preconditions.needs plan)
 
 type read = {
-  observed : Pokemon_checkpoints.Postcondition_check.observed;
+  observed : Pokemon_engine.Postcondition_check.observed;
   place : Frlg_readers.Start_frame.difference option;
   members : Room_policy.member list option;
   card : Frlg_readers.Trainer_card_front.t option;
