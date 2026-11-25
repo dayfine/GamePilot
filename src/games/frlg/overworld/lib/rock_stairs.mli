@@ -25,5 +25,5 @@ val parse : string -> (t, string) result
 val load : string -> (t, string) result
 (** {!parse} of a file. *)
 
-val on : t -> map:string -> Grid_maps.Tile_pos.t -> bool
+val on : t -> map:string -> Grid_geometry.Tile_pos.t -> bool
 (** Whether the map has a rock stair on the tile. *)

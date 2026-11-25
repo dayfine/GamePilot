@@ -22,9 +22,19 @@
       (any rest).
     - [allow NAME DEP...] (repeatable): layers [NAME] may depend on ([*] = any).
       A dependency is allowed only when every variable both sides bind has the
-      same value, so [games/{game}/**] can use its own game only. *)
+      same value, so [games/{game}/**] can use its own game only.
+    - [family LAYER VAR VALUE...] (repeatable): a placement that binds [VAR] may
+      link layer [LAYER] only when its value is one of the [VALUE]s, so
+      [family shared game a b] lets games [a] and [b] use layer [shared], and no
+      other game. Placements that do not bind [VAR] are not restricted.
+    - [never_links PATTERN LIB...] (repeatable): a dune directory matching
+      [PATTERN] (as for [layer]) links none of the [LIB]s, directly or through a
+      library of the scanned tree it links (see {!Never_links}). *)
 
 type layer = { name : string; pattern : string list }
+
+type family = { layer : string; var : string; members : string list }
+(** The values of [var] whose placements may link [layer]. *)
 
 type t = {
   roots : string list;
@@ -42,6 +52,9 @@ type t = {
   complexity_advisory : int;
   layers : layer list;
   allowed : (string * string list) list;
+  families : family list;
+  never_links : (string list * string list) list;
+      (** Each rule's directory pattern and the libraries it never links. *)
 }
 
 val default : t
@@ -49,5 +62,5 @@ val default : t
 
 val parse : string -> (t, string) result
 (** [parse text] reads a config file's contents. Unknown keys, malformed
-    numbers, [allow] lines naming an undeclared layer and an empty root list are
-    errors. *)
+    numbers, [allow] and [family] lines naming an undeclared layer and an empty
+    root list are errors. *)

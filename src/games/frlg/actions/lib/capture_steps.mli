@@ -31,7 +31,7 @@ val opening_line : string -> string
 
 val make :
   log:(string -> unit) ->
-  pace:Grid_maps.Direction.t ->
+  pace:Grid_geometry.Direction.t ->
   spot:Pacing.spot ref ->
   target:string ->
   Capture.game_steps

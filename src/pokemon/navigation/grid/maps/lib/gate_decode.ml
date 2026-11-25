@@ -1,4 +1,5 @@
 open Json_field
+open Grid_field
 open Map_gates
 
 let open_glyphs = ".~2468"

@@ -92,7 +92,7 @@ let options flags : Frlg_checkpoints.Checkpoint_run.options =
   }
 
 let prepare plan_file flags =
-  let* plan = Checkpoints.Plan_decode.load plan_file in
+  let* plan = Frlg_checkpoints.Plan_file.load plan_file in
   let* () = Frlg_checkpoints.Checkpoint_run.check_plan plan in
   let* world = Frlg_checkpoints.Checkpoint_run.load_world () in
   Ok (plan, world, options flags)
@@ -101,7 +101,7 @@ let prepare plan_file flags =
 let report = function
   | Ok () -> ("checkpoint: PASSED", 0)
   | Error failure ->
-      ("checkpoint: FAILED " ^ Checkpoints.Failure.to_string failure, 1)
+      ("checkpoint: FAILED " ^ Pokemon_checkpoints.Failure.to_string failure, 1)
 
 (* The checkpoint under [handle], its failures from the handler reported. *)
 let outcome handle run =

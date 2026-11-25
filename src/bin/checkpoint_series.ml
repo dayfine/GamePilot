@@ -1,14 +1,16 @@
 (* The selected checkpoints in order, each run until its policy decides
-   (Checkpoints.Checkpoint_trials), stopping at the first that does not pass; the
+   (Engine_run.Checkpoint_trials), stopping at the first that does not pass; the
    exit code. In verification mode a passing checkpoint's last passing end
    becomes the next checkpoint's start state, the one before kept beside it.
    StoryEngine::run_checkpoints() and verify_checkpoint() on the fork's
    frlg/lean; see Checkpoints_command. The chain's progress (Chain_progress)
-   goes to the watch page from each run. A repeating checkpoint (mg-04b's grind
-   round, Checkpoints.Plan.repeat) runs round by round instead, each round one run
+   goes to the watch page from each run. A repeating checkpoint (05-grind-mr-mime's grind
+   round, Pokemon_checkpoints.Plan.repeat) runs round by round instead, each round one run
    whatever the mode's policy. *)
 
-open Checkpoints
+open Engine_run
+open Engine_series
+open Pokemon_checkpoints
 module Run = Checkpoint_live_run
 
 let ( let* ) = Result.bind
@@ -54,7 +56,7 @@ let checkpoint ~plan_dir (setup : Run.setup) id ~next =
       next_id;
       partial;
       end_at =
-        (match plan.postconditions.position with
+        (match Option.bind plan.postconditions (fun p -> p.position) with
         | Some position -> Some position
         | None -> Checkpoint_end.declared ~next plan.checkpoint);
     }
@@ -171,7 +173,7 @@ let decide (setup : Run.setup) (cp : Run.checkpoint) chain ~next =
    saved like any checkpoint's pass: on the Switch in the game
    (--save-after-pass), on mGBA as the run's end.ss, the next round's start.
    The rounds go on until the goal, read after each passing round, holds
-   (Checkpoints.Round_trials). *)
+   (Engine_series.Round_trials). *)
 
 let round_of : Run.outcome -> Round_trials.round = function
   | Passed { goal } -> Round_passed { goal_met = goal = Some true }

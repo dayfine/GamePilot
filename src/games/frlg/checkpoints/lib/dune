@@ -6,10 +6,17 @@
   gamepilot.wire
   gamepilot.effects
   gamepilot.watch_report
+  gamepilot.grid_geometry
   gamepilot.grid_maps
-  gamepilot.checkpoints
+  gamepilot.json_field
+  gamepilot.engine_run
+  gamepilot.pokemon_checkpoints
+  gamepilot.room_policy
   gamepilot.frlg_readers
   gamepilot.frlg_battle
-  gamepilot.frlg_repo_files
+  gamepilot.repo_io
   gamepilot.frlg_overworld
-  gamepilot.frlg_actions))
+  gamepilot.frlg_actions
+  gamepilot.engine_expand
+  gamepilot.checkpoints_expand
+  gamepilot.frlg_places))

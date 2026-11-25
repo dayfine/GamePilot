@@ -26,6 +26,32 @@ Related fork PRs: #590 (the shared ball throw helper), #755 and #754 (minimal sl
 - Dialog choices take the top option unless it has a lasting effect; the rival battle at 03.02b may
   be lost and the story goes on.
 
+## First stage: 01.01 only (decided 2026-11-25)
+
+PLZA is the first native Switch game on GamePilot, ahead of Octopath 0 and Sword/Shield (#17): its C++
+passed on the console in all ten languages, so a failure points at GamePilot, not at the game. It
+shapes the pieces both later games use.
+
+- **Scope.** Checkpoint 01.01 (the platform to MAIN MISSION 01), the cut of fork #754: `wait_for_platform`,
+  `set_text_speed_fast`, `walk`, `scene`, `plus_skip`. 01.00 (new game) and 01.02 are later decisions.
+- **Engine.** `games/plza` links `src/engine` only, through its own `Plza_terms` (zone poses, its own
+  kinds), after Engine-Boundary PR 4. Readers, actions and the plan file can come before it; nothing
+  touches `src/engine` or `src/pokemon/checkpoints` meanwhile. `walk`'s timed legs stay PLZA's own JSON
+  until a second game needs the same shape. `plza` joins `family pokemon` in its own PR when battles
+  and catches are ported (moves, types, party).
+- **Daemon (Engine-Boundary PR 8, claimed by this port).** 8a: `--viewport native`, the whole frame at
+  1920x1080 game pixels, so the C++ boxes and 1080p templates carry over. 8b: optional `left_stick` and
+  `right_stick` on `press`, [x, y] in -1..1; running is B with the stick, as `PlzaConsoleBackend::stick`.
+  Angles and the run speed-up stay in `games/plza`.
+- **Reload.** As `reload_latest_save` in the C++: close the game and launch PLZA's tile from HOME
+  (`switch_home` learns it from `NintendoSwitch_GameEntry`), then game menu to in game. `Home_screen`
+  keeps the fork's whole-frame boxes and converts them by the daemon's viewport. The game autosaves on
+  the platform, so every attempt reloads to it.
+- **Tests.** The detector and game tests of fork #644 ported with their modules, a scripted run with a
+  walk that never sees its fade (`lost`, no input after it), a wire-log replay of the first passing
+  console run. On console B: three passes in a row, each leaving the platform and reaching free control
+  in the city after the MAIN MISSION 01 banner. Any language: a faithful port keeps the C++'s handling.
+
 ## Steps
 
 1. Readers with their frames (the fork's CommandLineTests frames): dialog, platform, minimap arrow,
@@ -36,5 +62,5 @@ Related fork PRs: #590 (the shared ball throw helper), #755 and #754 (minimal sl
 
 ## Open questions
 
-- Which language for the first run (the fork's final check was Spanish)?
+- After 01.01: 01.02 next, or 01.00 (new game)?
 - Port the whole 01.00-03.11 or stop at the first catch as the exercise?

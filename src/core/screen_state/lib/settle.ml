@@ -1,4 +1,4 @@
-type kind = Talk | After_warp | Door | Menu_closed
+type kind = Talk | After_warp | Menu_closed
 
 type rule = {
   judge : Talk_over.rule;
@@ -11,18 +11,6 @@ type rule = {
 let talk_look_every_ms = 1200
 let cap_ms = 120_000
 
-(* A door's settle: the player still this long after the fade is back up ends
-   it; a walk any earlier could still go nowhere in the fade-in (BDSP lab-B
-   2026-11-10, 00.04b's nurse). *)
-let door_quiet_ms = 1000
-
-(* A door's settle: the overworld back up this long ends it, still or not
-   (someone walking past the player the whole time). *)
-let door_calm_ms = 2500
-
-(* A door has no text: look often to catch its short still spell. *)
-let door_look_every_ms = 200
-
 let talk_rule =
   {
     judge = Talk_over.default_rule;
@@ -31,16 +19,9 @@ let talk_rule =
     watch_battles = false;
   }
 
-let door_judge =
-  {
-    Talk_over.default_rule with
-    calm_ms = door_calm_ms;
-    quiet_ms = door_quiet_ms;
-    still = Player;
-  }
-
 (* A menu closed to the overworld: no text or scene comes after it, so a short
-   quiet ends it (a fade-in is never still), looking often. *)
+   quiet ends it, looking often. A game whose fade-in can hold still (FireRed's
+   dim spell) reports no free control until it is over. *)
 let menu_quiet_ms = 500
 let menu_calm_ms = 2500
 let menu_look_every_ms = 300
@@ -59,8 +40,6 @@ let rule = function
   | Talk -> talk_rule
   | After_warp ->
       { talk_rule with judge = { talk_rule.judge with warp = true } }
-  | Door ->
-      { talk_rule with judge = door_judge; look_every_ms = door_look_every_ms }
   | Menu_closed ->
       {
         talk_rule with

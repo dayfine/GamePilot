@@ -12,6 +12,11 @@
 
 type backend = Mgba | Switch
 
+(** Where the game picture sits in a Switch capture: the daemon's [--viewport]
+    (daemon/src/viewport.h). [Nso_gba]: a GBA game in the Switch's GBA app
+    (FRLG); [Native]: a full-screen Switch game, the whole frame. *)
+type viewport = Nso_gba | Native
+
 type game = {
   game_id : string;  (** ["frlg"], as plans and the games/ folder name it. *)
   game_name : string;
@@ -28,6 +33,8 @@ type t = {
       (** Its checkpoint plans' folder from the repo root; [None] for a one-shot
           program ([gamepilot run]). *)
   backends : backend list;
+  viewport : viewport;
+      (** The Switch's game picture, which every daemon of its runs takes. *)
 }
 
 val all : t list
@@ -42,8 +49,8 @@ val of_plan_dir : string -> t option
     relative, with or without a trailing [/]) ends with the program's. *)
 
 val of_checkpoint : string -> t option
-(** The program with a plan for this checkpoint id ([mg-04] is the Mail
-    Glitch's), its folder found from the working directory up. *)
+(** The program with a plan for this checkpoint id ([04-grind-farfetchd] is the
+    Mail Glitch's), its folder found from the working directory up. *)
 
 val locate : string -> string option
 (** A repo path ({!t.doc}, {!t.checkpoints}) on this machine, found from the
@@ -51,6 +58,14 @@ val locate : string -> string option
 
 val backend_name : backend -> string
 (** [mgba], [switch]: as [--backend] takes it. *)
+
+val viewport_name : viewport -> string
+(** [nso-gba], [native]: as the daemon's [--viewport] takes it. *)
+
+val check_viewport : t option -> string option -> (string option, string) result
+(** The daemon's [--viewport] for a run: the program's ({!viewport_name}), or
+    the [--viewport] given when no program is known. A given one that differs
+    from the program's is an error. [None]: neither, the daemon's default. *)
 
 val run_fields : t -> (string * string) list
 (** What a run's run.json says of its program: [game], [game_name], [program]

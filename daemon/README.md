@@ -24,7 +24,7 @@ runs on one thread (the client is served between frames) except the watch page's
 ## The Switch backend
 
     daemon/build/gamepilot_daemon --backend switch (--replay clip.avi | --capture INDEX) \
-        [--serial PORT] [--viewport x,y,w,h] [--port 47900] [--log wire.jsonl]
+        [--serial PORT] [--viewport nso-gba|native|x,y,w,h] [--port 47900] [--log wire.jsonl]
     daemon/build/gamepilot_daemon --backend switch --serial PORT --board-check
     daemon/build/gamepilot_daemon --backend switch --capture INDEX --capture-check frame.png
 
@@ -33,8 +33,12 @@ rate, stamps each with a `seq` and the daemon clock, and pushes it into a bounde
 thread probes each frame from the ring and hands timed key segments to the controller when they are
 due. A full ring drops its oldest frame, which the server counts as a gap. `--replay` plays a recorded
 video at its own frame rate; `--capture` opens a capture card through OpenCV (by index; 1920x1080 at
-60 fps requested). The GBA picture sits where `nso_gba_viewport()` (`src/viewport.h`) says: the one
-table from game pixels to the Switch frame, checked on the lab's captures.
+60 fps requested). `--viewport` says where the game picture sits (`src/viewport.h`). `nso-gba`, the
+default, is the GBA picture in the Switch's GBA app (`nso_gba_viewport()`, FRLG), checked on the
+lab's captures. `native` is a full-screen Switch game (`native_switch_viewport()`): the whole frame,
+in 1920x1080 game pixels, so a probe box is a fraction of the frame as the fork's `ImageFloatBox` is
+and a 1080p template is matched at its own size. `x,y,w,h` moves the picture box and keeps the
+default's game size. `hello` reports both the picture box (`viewport`) and the game size.
 
 Inputs go to the PABotBase2 board on `--serial` (`src/board_session.h`): the session starts as the C++
 app starts it (DTR/RTS, the baud scan with resets, the link's version, packet size and buffer slots,
@@ -103,7 +107,7 @@ other program's log, read only, into the page's log.
 `probe_images` runs the same probes on PNG files, with no backend and no socket, so readers can be
 built and tested from saved screenshots (mGBA shots, CommandLineTests images):
 
-    daemon/build/probe_images --spec probes.json [--viewport x,y,w,h] [--game-size WxH] \
+    daemon/build/probe_images --spec probes.json [--viewport x,y,w,h|nso-gba|native] [--game-size WxH] \
         shot1.png [shot2.png ...] > results.jsonl
 
 The spec file is the `subscribe` params (`{"probes": [...]}`, `protocol/v1`); a
@@ -111,8 +115,9 @@ The spec file is the `subscribe` params (`{"probes": [...]}`, `protocol/v1`); a
 uploaded hash. Each image gives one line `{"image": path, "probes": {id: result}}`, the `probes` of a
 `frame` notification. Boxes are relative to the game picture and templates are in game pixels, as on
 the wire; `--viewport` says where the picture sits in every image (default the whole image, as on
-mGBA; for a Switch capture of FRLG, the fork's `GAME_BOX`: `0.09375,0.00462963,0.8125,0.962963`) and
-`--game-size` its native size (default `240x160`, the GBA). A scaled template must fit its box at each
+mGBA; for a Switch capture of FRLG, `nso-gba`, the fork's `GAME_BOX`; for a full-screen Switch game,
+`native`, the whole image in 1920x1080 game pixels) and `--game-size` its native size (default
+`240x160`, the GBA; a viewport name sets it too, so a `--game-size` goes after the name). A scaled template must fit its box at each
 image's size, or the tool stops with an error. `tests/probe_images/` is a worked example: the same
 picture whole and at 2x inside side bars give the same results.
 
@@ -120,7 +125,8 @@ picture whole and at 2x inside side bars give the same results.
 |---|---|
 | `src/backend.h` | the I/O boundary |
 | `src/mgba_backend.*` | mGBA through the bridge's line protocol |
-| `src/probes.*` | probe kinds (`core.color_stats@1`, `core.template_match@1` with its optional ink masks, `core.color_count@1`) on frame pixels |
+| `src/probes.*` | probe kinds (`core.color_stats@1`, `core.template_match@1` with its optional ink masks, `core.color_count@1`, `core.line_shares@1`) on frame pixels |
+| `src/blob_find.*` | `core.find@1`: colour filter, 4-connected blobs, size filter, stray share, template score, shape overlap |
 | `src/viewport.*` | where the game picture sits in the frame: picture boxes to frame pixels, template scale |
 | `src/probe_evaluation.*` | maps a subscribed probe onto the frame and runs it (daemon and `probe_images`) |
 | `src/probe_images.cpp` | the offline `probe_images` tool |
@@ -141,7 +147,7 @@ picture whole and at 2x inside side bars give the same results.
 | `src/window_capture*` | one app window as a frame source (ScreenCaptureKit on macOS) |
 | `src/log_tail.*` | another program's log, followed for the page |
 | `src/frame_ring.*` | the bounded ring between the capture and server threads |
-| `src/switch_controller.*` | GBA keys to Pro Controller button reports (CoreLib's PABotBase2 message) |
+| `src/switch_controller.*` | keys and stick tilts to Pro Controller reports (CoreLib's PABotBase2 message) |
 | `src/board_session.*` | the board's session as the C++ app starts it, on CoreLib's link and device handle |
 | `src/switch_geometry.*` | whether a capture shows the GBA picture where the viewport says |
 | `src/live_schedule.*` | command batches to key segments in wall time (live backends) |

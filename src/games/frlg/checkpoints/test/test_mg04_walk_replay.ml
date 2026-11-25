@@ -3,10 +3,13 @@
    fled two wild battles and cleared the PurifiedZone message on the way.
 
    Re-record: daemon/build/gamepilot_daemon --backend mgba --mgba-port 47810
-   --log run.wire.jsonl, then gamepilot checkpoint on mg-04 cut to its first
-   event with --state mg04_start.ss (a save state, not committed); rewrite the
+   --log run.wire.jsonl, then gamepilot checkpoint on 04-grind-farfetchd (mg-04 then) cut to its first
+   event, its postconditions emptied, with --state 04-grind-farfetchd.start.ss
+   (formerly mg04_start.ss; a save state, not committed); rewrite the
    load_state path in the log to "mg04_start.ss" (replay does not compare it)
-   and gzip -9n it to mg04_walk_two_fled_battles.wire.jsonl.gz. *)
+   and gzip -9n it to mg04_walk_two_fled_battles.wire.jsonl.gz. Last
+   re-recorded at 4x for the walker's wait for a warp's fade-in
+   (Warp_fade_in), again two wild battles fled. *)
 
 open Frlg_checkpoints
 
@@ -15,22 +18,28 @@ let wire_log = "mg04_walk_two_fled_battles.wire.jsonl"
 (* The state path as the committed log names it. *)
 let start_state = "mg04_start.ss"
 
-(* mg-04 with only its first event, the walk the log recorded. *)
+(* 04-grind-farfetchd with only its first event, the walk the log recorded. *)
 let walk_plan () =
-  let p = Result.get_ok (Checkpoints.Plan_decode.load "mg-04a.plan.json") in
+  let p =
+    Result.get_ok
+      (Frlg_checkpoints.Plan_file.load "04-grind-farfetchd.plan.json")
+  in
   let first = List.hd p.checkpoint.events in
   {
     p with
     checkpoint = { p.checkpoint with events = [ first ] };
     postconditions =
-      {
-        p.postconditions with
-        party = None;
-        money = None;
-        items = [];
-        knows = [];
-        levels = [];
-      };
+      Option.map
+        (fun (promised : Pokemon_checkpoints.Postconditions.t) ->
+          {
+            promised with
+            party = None;
+            money = None;
+            items = [];
+            knows = [];
+            levels = [];
+          })
+        p.postconditions;
   }
 
 let fled line = String.starts_with ~prefix:"Wild battle: fled" line
@@ -56,7 +65,7 @@ let replayed_walk () =
           Checkpoint_run.run options world (walk_plan ()))
     with
     | Ok () -> "PASSED"
-    | Error failure -> "FAILED " ^ Checkpoints.Failure.to_string failure
+    | Error failure -> "FAILED " ^ Pokemon_checkpoints.Failure.to_string failure
     | exception Replay.Divergence e -> "DIVERGED " ^ e
   in
   Printf.sprintf "%s; fled %d wild battles" outcome

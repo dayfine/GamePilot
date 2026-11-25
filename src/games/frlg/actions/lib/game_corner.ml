@@ -1,5 +1,5 @@
 open Frlg_readers
-module J = Grid_maps.Json_field
+module J = Json_field
 module M = Menu_input
 
 let small = 50

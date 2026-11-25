@@ -1,14 +1,17 @@
 module F = Frlg_readers.Start_frame
-module P = Checkpoints.Postcondition_check
+module P = Pokemon_checkpoints.Postcondition_check
 
-type expected = { party : Checkpoints.Plan.party option; frame : F.t option }
+type expected = {
+  party : Pokemon_checkpoints.Postconditions.party option;
+  frame : F.t option;
+}
 
 type observed = {
   party_read : string option list option;
   frame_read : F.t option;
 }
 
-let party_only party : Checkpoints.Plan.postconditions =
+let party_only party : Pokemon_checkpoints.Postconditions.t =
   {
     position = None;
     party;
@@ -58,7 +61,7 @@ let observe ~log expected =
 let frame_file ~states id = Filename.concat states (id ^ ".start.frame.json")
 
 let start_file ~states = function
-  | Some (Checkpoints.Pose.Grid { map; tiles = { x; y } :: _; _ }) ->
+  | Some (Pokemon_checkpoints.Pose.Grid { map; tiles = { x; y } :: _; _ }) ->
       Some
         (Filename.concat states
            (Printf.sprintf "%s.%d_%d.start.frame.json" map x y))
@@ -67,15 +70,13 @@ let start_file ~states = function
 let load_frame path =
   if not (Sys.file_exists path) then Ok None
   else
-    match Yojson.Safe.from_file path with
-    | json -> Result.map Option.some (F.of_json json)
-    | exception Yojson.Json_error e -> Error (path ^ ": " ^ e)
-    | exception Sys_error e -> Error e
+    Result.bind (Repo_io.Json_file.read path) (fun json ->
+        Result.map Option.some (F.of_json json))
 
 let write_frame ~log path frame =
-  match Yojson.Safe.to_file path (F.to_json frame) with
-  | () -> log ("[Start] kept the start frame as " ^ path)
-  | exception Sys_error e -> log ("[Start] could not keep the frame: " ^ e)
+  match Repo_io.Json_file.write path (F.to_json frame) with
+  | Ok () -> log ("[Start] kept the start frame as " ^ path)
+  | Error e -> log ("[Start] could not keep the frame: " ^ e)
 
 let keep_frame ~log path =
   match read_frame () with

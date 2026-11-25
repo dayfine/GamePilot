@@ -7,10 +7,10 @@
    The checkpoint dev loop. A program's checkpoints are its plan files
    (<ID>.plan.json in PLAN_DIR, in name order; --program ID in its place:
    Programs_command); each runs from its start state (<states>/<ID>.start.ss),
-   as many times as the mode's policy says (Checkpoints.Checkpoint_trials), each run with its own daemon and run folder
+   as many times as the mode's policy says (Engine_run.Checkpoint_trials), each run with its own daemon and run folder
    (Run_record). A run passes when every event passed and the player ends at
-   the checkpoint's declared end (Checkpoints.Checkpoint_end) and the plan's
-   postconditions hold (Checkpoints.Postcondition_check). With --end-check-only each
+   the checkpoint's declared end (Checkpoint_end) and the plan's
+   postconditions hold (Pokemon_checkpoints.Postcondition_check). With --end-check-only each
    run checks its start state against the postconditions and runs no event. The loop goes to the
    next checkpoint only after this one passed; in verification mode the last
    passing run's end becomes the next checkpoint's start state.
@@ -27,7 +27,7 @@
    token, which the URL printed for other devices carries. The program's port
    (--port) is a free one too unless given, so runs do not collide.
 
-   A repeating checkpoint (its plan's metadata.repeat: mg-04b, the grind
+   A repeating checkpoint (its plan's metadata.repeat: 05-grind-mr-mime, the grind
    round) runs round after round, each one run with its attempts, each passing
    round saved (on the Switch in the game, on mGBA as the next round's start
    state), until its goal (repeat.until), read after each passing round,
@@ -46,7 +46,7 @@
    testing runs: before each run the runner soft-resets to the last save and
    checks the start; a run that passes is saved in the game
    (--save-after-pass, the default; --no-save-after-pass), a failed one
-   soft-resets back to the last save (Checkpoints.Console_runs, Console_session).
+   soft-resets back to the last save (Checkpoints_series.Console_runs, Console_session).
 
    Each run reads the party from the members' summaries before its first
    action that finds a member by its species, so a save whose other members
@@ -54,12 +54,12 @@
    party for the Switch's start check when no checkpoint before it promises
    one.
 
-   --make-room MAP (the save's map) runs the generated checkpoint mg-00 first
+   --make-room MAP (the save's map) runs the generated checkpoint 00-make-room first
    when the chain needs party room (Make_room_command).
 
    --from-event ID|N [--to-event ID|N] (mGBA, testing, one checkpoint: --to
    is --from unless given) runs that checkpoint from the save state kept at
-   the event's start (Checkpoints.Event_states: every mGBA run keeps one at each
+   the event's start (Pokemon_checkpoints.Event_states: every mGBA run keeps one at each
    event it reaches cleanly) to the given event or the last, the end checks
    only when it runs the last. Its mode is "from-event" (run.json's
    from_event and to_event): it never verifies the checkpoint nor saves its
@@ -81,7 +81,7 @@
    with reload), the reproduction phase, the overlay log. mGBA itself is
    started and closed around the command by run/run_checkpoints_on_mgba.sh. *)
 
-open Checkpoints
+open Engine_run
 module R = Program_registry
 include Checkpoints_flags
 
@@ -116,11 +116,16 @@ let run_info plan_dir f kind ~from_id ~to_id : Run_record.info =
 let watch_of f =
   Watch_hub.for_runs_dir ~daemon:f.daemon ~runs_dir:f.runs_dir f.watch
 
+(* The Switch daemons' --viewport: the program's, which a --viewport given
+   must match. *)
+let viewport plan_dir f = R.check_viewport (R.of_plan_dir plan_dir) f.viewport
+
 (* The pre-flight's (and --make-room's party read's) setup. *)
-let preflight_setup plan_dir f backend ~from_id : Preflight_command.setup =
+let preflight_setup plan_dir f backend ~viewport ~from_id :
+    Preflight_command.setup =
   let info = run_info plan_dir f Preflight ~from_id ~to_id:from_id in
   let { states; runs_dir; daemon; _ } = f in
-  { states; runs_dir; daemon; backend; info; watch = watch_of f }
+  { states; runs_dir; daemon; backend; viewport; info; watch = watch_of f }
 
 (* --from-event: testing by default, one checkpoint (--to is --from unless
    given). *)
@@ -135,7 +140,7 @@ let mode_and_to f ~from_id =
         ( Option.value f.mode ~default:Checkpoint_trials.Testing,
           Option.value f.to_id ~default:from_id )
 
-(* A partial run's own rules (Checkpoints.Event_range.check). *)
+(* A partial run's own rules (Engine_run.Event_range.check). *)
 let check_from_event f mode ~checkpoints =
   match f.from_event with
   | None -> Ok ()
@@ -149,9 +154,10 @@ let run_series plan_dir f =
   let* mode, to_id = mode_and_to f ~from_id in
   let* () = check_from_event f mode ~checkpoints:1 in
   let* backend = daemon_backend f mode in
+  let* viewport = viewport plan_dir f in
   let* plan_dir, from_id =
     Make_room_command.with_room ~plan_dir ~from_id f.make_room
-      (preflight_setup plan_dir f backend ~from_id)
+      (preflight_setup plan_dir f backend ~viewport ~from_id)
   in
   let* policy = Checkpoint_trials.policy ?runs:f.runs mode in
   let* ids = Plan_dir.checkpoint_ids plan_dir in
@@ -171,7 +177,8 @@ let run_series plan_dir f =
          world;
          watch = watch_of f;
          info = run_info plan_dir f Checkpoints ~from_id ~to_id;
-         daemon_flags = f.daemon_flags;
+         daemon_flags =
+           Daemon_process.viewport_args backend viewport @ f.daemon_flags;
          bound = ref None;
          save_after_pass = f.save_after_pass;
          max_rounds = f.max_rounds;
@@ -182,8 +189,9 @@ let run_series plan_dir f =
 let preflight plan_dir f =
   let* from_id = required "--from" f.from_id in
   let* backend = daemon_backend f Checkpoint_trials.Testing in
+  let* viewport = viewport plan_dir f in
   Preflight_command.run ~plan_dir ~from_id
-    (preflight_setup plan_dir f backend ~from_id)
+    (preflight_setup plan_dir f backend ~viewport ~from_id)
 
 let main plan_dir args =
   let* f = parse defaults args in

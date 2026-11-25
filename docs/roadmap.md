@@ -61,7 +61,7 @@ Follow fork #804's split (R20), not #781's monolith.
 |---|---|
 | Overworld and menu actions: talk, Fly, mart, `use_item`, `give_bag_item`, `party_swap`, `buy_coins`, `redeem_prize_mon`, `ingame_trade`, `spin_for_encounter`, `cut_tree`; heal and save; `gamepilot checkpoint` (`frlg/shared-actions`; still to come: `lift_floor`, `capture`, berries from the Berry Pouch, a party species reader in place of the reckoned party, live recordings of each flow) | `src/games/frlg/actions`, `src/games/frlg/checkpoints` |
 | Battle driver (single and double, ally targeting, switch, move-learn prompt) and scripted battle runner (#28; YES/NO and out-of-PP readers, double party list and replay tests still to come) | `src/games/frlg/battle` |
-| Story engine: plan decoder (`gamepilot-checkpoint/1`), event runner, `repeat_until` (looped checkpoints that heal and save each round) | `src/pokemon/checkpoints` |
+| Story engine: plan decoder (`gamepilot-checkpoint/1`), event runner, `repeat_until` (looped checkpoints that heal and save each round) | `src/engine/checkpoints/plan`, `src/engine/checkpoints/run`, over `src/pokemon/checkpoints/terms` |
 
 ## Phase 4: the Mail Glitch on mGBA (S0)
 
@@ -70,13 +70,13 @@ its start (under `GAMEPILOT_STATES`; the source saves are in `mail-glitch-test/`
 
 | Checkpoint | Content |
 |---|---|
-| mg-01 | Celadon: Coin Case, Retro Mail, 200 coins, Abra |
-| mg-02 | Spearow on Route 16, Sitrus Berry on Route 6, trade for CH'DING |
-| mg-03 | Abra for MIMIEN on Route 2, Revives at Lavender |
-| mg-04 | Level CH'DING to 21 (Knock Off) and MIMIEN to 33 (Recycle): see below |
-| mg-05 | Ported from the fork's tested Route 16 version, in two checkpoints like the fork's: `mg-05a` (Leppa Berry from Route 8, Blastoise's Blizzard PP used up, Fly to Celadon, Route 16's tree, party and held items arranged at (30, 7)) and `mg-05` (Lea & Jed's double battle: Knock Off, Recycle; MIMIEN Lv 33 ends holding the recycled Leppa Berry). Runs on mGBA, then on the Switch (user, 2026-11-23). Still missing: giving a Berry (the Berry Pouch) and `verify_mail_glitch` (a held-item reader) |
+| 01-celadon-setup | Celadon: Coin Case, Retro Mail, 200 coins, Abra |
+| 02-trade-farfetchd | Spearow on Route 16, Sitrus Berry on Route 6, trade for CH'DING |
+| 03-trade-mr-mime | Abra for MIMIEN on Route 2, Revives at Lavender |
+| 04-grind-farfetchd .. 06-grind-return | Level CH'DING to 21 (Knock Off) and MIMIEN to 33 (Recycle), the fork's mg-04: see below |
+| 07-glitch-prep, 08-activate-and-verify | Ported from the fork's tested Route 16 version (its `mg-05a` and `mg-05`): 07-glitch-prep (Leppa Berry from Route 8, Blastoise's Blizzard PP used up, Fly to Celadon, Route 16's tree, party and held items arranged at (30, 7)), then 08-activate-and-verify (Lea & Jed's double battle: Knock Off, Recycle; MIMIEN Lv 33 holding the recycled Leppa Berry; then the duplication, with no save in between, user 2026-11-24). Runs on mGBA, then on the Switch (user, 2026-11-23) |
 
-### mg-04: grinding options
+### Grinding options (04-grind-farfetchd to 06-grind-return, the fork's mg-04)
 
 EVs do not matter (user, 2026-11-23), and the save is post-game with the Sevii Islands not done
 (Cerulean Cave and Sevault Canyon closed) and no Exp. Share. PokemonSimulation PR #119
@@ -103,9 +103,9 @@ by battle count, the sim's rate), and the foe's species.
 | Item | Gate |
 |---|---|
 | Daemon Switch backend: capture card frames and serial controller (one boundary each, R11) | latency spike: frame to command p99 under one frame (stop rule) |
-| mg-01..mg-05 on the post-game save, in Switch windows (only one program drives the console at a time) | 10 runs per checkpoint, pass rate at least the C++ twin's (R9) |
+| 01-celadon-setup..08-activate-and-verify on the post-game save, in Switch windows (only one program drives the console at a time) | 10 runs per checkpoint, pass rate at least the C++ twin's (R9) |
 
-mg-05 runs on the Switch too, after mGBA (user, 2026-11-23; it was mGBA only before).
+08-activate-and-verify (was mg-05) runs on the Switch too, after mGBA (user, 2026-11-23; it was mGBA only before).
 
 ## Standing gates
 

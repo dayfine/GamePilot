@@ -1,8 +1,12 @@
-module P = Checkpoints.Plan
+module P = Pokemon_checkpoints.Plan
+module Postconditions = Pokemon_checkpoints.Postconditions
 
 type need = Plan_needs.need =
   | Party_in_order of string list
-  | Party_includes of { members : string list; slots : P.slot list }
+  | Party_includes of {
+      members : string list;
+      slots : Postconditions.slot list;
+    }
   | Member of { species : string; for_ : string }
   | Knows_move of { move : string; for_ : string }
   | Money_at_least of { amount : int; for_ : string }
@@ -10,14 +14,22 @@ type need = Plan_needs.need =
   | Item_at_least of { item : string; count : int; for_ : string }
   | Item_exactly of { item : string; count : int }
   | Place of string
+  | Badges_at_least of int
+  | Badges of string list
+  | Hall_of_fame
 
-(* The args naming a member the action uses, and those naming one it brings. *)
-let needs = Plan_needs.needs
+(* The declared preconditions first: the save's state the plan's goal implies,
+   before what its events' args need. *)
+let needs stocks ~before plan =
+  Result.map
+    (fun declared -> declared @ Plan_needs.needs stocks ~before plan)
+    (Plan_preconditions.needs plan)
 
 type read = {
-  observed : Checkpoints.Postcondition_check.observed;
+  observed : Pokemon_checkpoints.Postcondition_check.observed;
   place : Frlg_readers.Start_frame.difference option;
-  members : Checkpoints.Room_policy.member list option;
+  members : Room_policy.member list option;
+  card : Frlg_readers.Trainer_card_front.t option;
 }
 
 type verdict = Ok | Mismatch | Not_read
@@ -42,20 +54,20 @@ let with_party (read : read) need test =
 
 let has members species = List.mem (Some species) members
 
-let in_slot members ({ slot; species } : P.slot) =
+let in_slot members ({ slot; species } : Postconditions.slot) =
   List.nth_opt members (slot - 1) = Some (Some species)
 
-let slot_text ({ slot; species } : P.slot) =
+let slot_text ({ slot; species } : Postconditions.slot) =
   Printf.sprintf "%s in slot %d" species slot
 
 let includes_text members slots =
   "party includes " ^ species_list (members @ List.map slot_text slots)
 
 (* Its moves as read; a member not in the party read is a mismatch. *)
-let knows (move : string) (m : Checkpoints.Room_policy.member) =
+let knows (move : string) (m : Room_policy.member) =
   Option.fold ~none:false ~some:(List.mem move) m.moves
 
-let unread_moves (m : Checkpoints.Room_policy.member) = m.moves = None
+let unread_moves (m : Room_policy.member) = m.moves = None
 
 let knows_row (read : read) ~need move =
   match read.members with
@@ -95,6 +107,41 @@ let place_row read ~need =
         verdict = of_bool (F.same_place d);
       }
 
+module Card = Frlg_readers.Trainer_card_front
+
+let with_card (read : read) need judge =
+  match read.card with
+  | None -> { need; read = "not read"; verdict = Not_read }
+  | Some card ->
+      let ok, text = judge card in
+      { need; read = text; verdict = of_bool ok }
+
+let badge_count_row read ~need n =
+  with_card read need (fun card ->
+      let have = List.length (Card.earned card) in
+      ( have >= n,
+        if have >= n then Card.to_string card
+        else Printf.sprintf "%s; %d short" (Card.to_string card) (n - have) ))
+
+let missing_badges names card =
+  let earned = Card.earned card in
+  List.filter (fun b -> not (List.mem b earned)) names
+
+let badges_text card = function
+  | [] -> Card.to_string card
+  | missing -> Card.to_string card ^ "; missing " ^ String.concat ", " missing
+
+let badges_row read ~need names =
+  with_card read need (fun card ->
+      let missing = missing_badges names card in
+      (missing = [], badges_text card missing))
+
+let hall_of_fame_row read ~need =
+  with_card read need (fun card ->
+      ( Card.hall_of_fame card,
+        if Card.hall_of_fame card then Card.to_string card ^ ": entered"
+        else "no star: the Hall of Fame not entered" ))
+
 let describe = function
   | Party_in_order l -> "party " ^ species_list l
   | Party_includes { members; slots } -> includes_text members slots
@@ -109,6 +156,9 @@ let describe = function
   | Knows_move { move; for_ } ->
       Printf.sprintf "a member knows %s (%s)" move for_
   | Place map -> "at the start, " ^ map
+  | Badges_at_least n -> Printf.sprintf "at least %d badges" n
+  | Badges names -> "badges " ^ String.concat ", " names
+  | Hall_of_fame -> "the Hall of Fame entered"
 
 let row read need =
   let text = describe need in
@@ -128,6 +178,9 @@ let row read need =
       with_item read item text (fun n -> n = count)
   | Knows_move { move; _ } -> knows_row read ~need:text move
   | Place _ -> place_row read ~need:text
+  | Badges_at_least n -> badge_count_row read ~need:text n
+  | Badges names -> badges_row read ~need:text names
+  | Hall_of_fame -> hall_of_fame_row read ~need:text
 
 let compare needs read = List.map (row read) needs
 
@@ -157,7 +210,18 @@ let table rows =
     (line "NEED" "READ" "VERDICT"
     :: List.map (fun r -> line r.need r.read (verdict_text r.verdict)) rows)
 
-let to_read needs : P.postconditions =
+let reads_card =
+  List.exists (function
+    | Badges_at_least _ | Badges _ | Hall_of_fame -> true
+    | _ -> false)
+
+(* An item or the money named only so that it is read (to_read). *)
+let any_count bag_item =
+  { Postconditions.bag_item; count = Engine_postcondition.Count.Exactly 0 }
+
+let any_money = Engine_postcondition.Money.Range { min = 0; max = 0 }
+
+let to_read needs : Postconditions.t =
   let party =
     List.exists
       (function
@@ -180,12 +244,12 @@ let to_read needs : P.postconditions =
   {
     position = None;
     party =
-      (if party then Some (P.Party_includes { members = []; slots = [] })
+      (if party then
+         Some (Postconditions.Party_includes { members = []; slots = [] })
        else None);
-    items =
-      List.map (fun bag_item -> { P.bag_item; count = P.Count_exactly 0 }) items;
+    items = List.map any_count items;
     coins = None;
-    money = (if money then Some (P.Money_range { min = 0; max = 0 }) else None);
+    money = (if money then Some any_money else None);
     flags = [];
     knows = [];
     levels = [];

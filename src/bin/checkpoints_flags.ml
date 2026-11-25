@@ -1,7 +1,7 @@
 (* gamepilot checkpoints' flags: their record, defaults and parsing
    (Checkpoints_command). *)
 
-open Checkpoints
+open Engine_run
 
 type flags = {
   from_id : string option;
@@ -18,14 +18,18 @@ type flags = {
   replay : string option;  (** A recorded video for a dry run (fake board). *)
   save_after_pass : bool;  (** Switch: save in the game after a pass. *)
   preflight : bool;
-  make_room : string option;  (** The save's map: room first (mg-00). *)
+  make_room : string option;  (** The save's map: room first (00-make-room). *)
   max_rounds : int option;  (** A repeating checkpoint's rounds, at most. *)
   from_event : string option;
       (** mGBA, testing: run from this event's kept state
-          (Checkpoints.Event_range). *)
+          (Engine_run.Event_range). *)
   to_event : string option;  (** ... to this event (else the last). *)
   common : Checkpoint_command.flags;
   watch : Daemon_process.watch option;
+  viewport : string option;
+      (** --viewport V: the Switch daemons' game picture; only for a plan folder
+          no program registers, else it must match the program's
+          (Program_registry.check_viewport). *)
   daemon_flags : string list;
       (** --record, --no-record, --keepawake N, --speed S: passed to each run's
           daemon. *)
@@ -43,6 +47,8 @@ let usage =
   \      [--replay VIDEO] [--save-after-pass|--no-save-after-pass]\n\
   \      [--record|--no-record] [--keepawake SECONDS] [--speed S] [--make-room \
    MAP]\n\
+  \      [--viewport nso-gba|native|x,y,w,h]   (Switch: where the game picture \
+   sits; the program's by default)\n\
   \      [--from-event ID|N [--to-event ID|N]]   (mGBA, testing, one checkpoint)\n\
   \  gamepilot checkpoints PLAN_DIR|--program ID --preflight --from ID \
    [--backend ...]\n"
@@ -81,6 +87,7 @@ let defaults =
     to_event = None;
     common = { Checkpoint_command.defaults with port = 0 };
     watch = None;
+    viewport = None;
     daemon_flags = [];
   }
 
@@ -149,6 +156,7 @@ let valued f name v =
       Some (Ok (common_flag f (fun c -> { c with center = Some v })))
   | "--keepawake" -> Some (int_flag name v (keepawake_flag f))
   | "--speed" -> Some (speed_flag f v)
+  | "--viewport" -> Some (Ok { f with viewport = Some v })
   | _ -> None
 
 (* The page by default: on a free port, $GAMEPILOT_WATCH_LISTEN or this machine

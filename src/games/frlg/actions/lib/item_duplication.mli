@@ -66,6 +66,7 @@ val run : log:(string -> unit) -> plan -> unit
 (** From the overworld: the Items pocket at its top, Retro Mail checked on its
     top row, the item's count read, the rounds (each after the Retro Mail guard;
     round [i]'s editor kept as [proof-a-round<i>.png]), the count read again
-    (that frame kept as [proof-b.png]), the bag closed. Fails as {!round} does,
-    or as [retro_mail_not_on_top], [retro_mail_low], [count_not_read] or
+    (that frame kept as [proof-b.png]), the bag closed through its fade
+    ({!Menu_input.close_through_fades}). Fails as {!round} does, or as
+    [retro_mail_not_on_top], [retro_mail_low], [count_not_read] or
     [duplication_failed]. *)

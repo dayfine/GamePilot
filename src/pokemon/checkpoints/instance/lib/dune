@@ -1,0 +1,9 @@
+(library
+ (name pokemon_checkpoints)
+ (public_name gamepilot.pokemon_checkpoints)
+ (libraries
+  gamepilot.engine_checkpoints
+  gamepilot.pokemon_terms
+  gamepilot.pokemon_plan_codec
+  gamepilot.pokemon_text
+  gamepilot.pokemon_saved))

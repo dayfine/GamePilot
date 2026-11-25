@@ -3,7 +3,7 @@
    rows), '.' floor, '"' tall grass, 'D' a warp, 'T' a scene's trigger, 'w'
    a wanderer's tile, 's' a trainer's sight, 'v' a ledge hopped south. *)
 
-open Grid_maps
+open Grid_geometry
 open Grid_route_scoring
 
 let pos x y = { Tile_pos.x; y }

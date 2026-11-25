@@ -1,4 +1,4 @@
-module J = Grid_maps.Json_field
+module J = Json_field
 module M = Menu_input
 module B = Frlg_battle
 
@@ -7,7 +7,7 @@ type plan = {
   recycle_species : string;
   sweeper : string;
   depleted_move : string;
-  step_direction : Grid_maps.Direction.t;
+  step_direction : Grid_geometry.Direction.t;
 }
 
 let decode =
@@ -17,7 +17,8 @@ let decode =
         recycle_species = J.string ~where "recycle_species" args;
         sweeper = J.string ~where "sweeper" args;
         depleted_move = J.string ~where "depleted_move" args;
-        step_direction = J.direction ~where "step_direction" args;
+        step_direction =
+          Grid_maps.Grid_field.direction ~where "step_direction" args;
       })
 
 type slots = {
@@ -88,7 +89,7 @@ let check_before_first_switch check (game_steps : B.Battle.game_steps) =
 
 (* The fork's battle taps: D-pad 140 ms held, 260 ms after; A 160 ms. *)
 let tap ?(hold_ms = 140) ?(cooldown_ms = 260) buttons =
-  let press b = Wire.Press { buttons = [ b ]; hold_ms; cooldown_ms } in
+  let press b = Wire.press ~hold_ms ~cooldown_ms [ b ] in
   ignore (Effects.submit (List.map press buttons) : Wire.batch_done)
 
 let move_menu_timeout_ms = 4000
@@ -133,7 +134,7 @@ let step_into_sight ~log direction =
 type game_steps = {
   species_at : int -> string option;
   known_moves : slot:int -> string list;
-  start_battle : Grid_maps.Direction.t -> unit;
+  start_battle : Grid_geometry.Direction.t -> unit;
   restored : slot:int -> unit -> bool;
   battle :
     (B.Battle.game_steps -> B.Battle.game_steps) ->

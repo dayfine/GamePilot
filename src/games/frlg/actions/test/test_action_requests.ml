@@ -11,10 +11,10 @@ let stocks = Result.get_ok (Mart_plan.load ())
 let decode name json () =
   match
     Action_requests.decode stocks name
-      (Grid_maps.Json_field.as_object "" (Yojson.Safe.from_string json))
+      (Json_field.as_object "" (Yojson.Safe.from_string json))
   with
   | Ok r -> Action_requests.to_string r
-  | Error c -> Checkpoints.Failure.cause_to_string c
+  | Error c -> Pokemon_checkpoints.Failure.cause_to_string c
 
 let decoding =
   [
@@ -122,7 +122,7 @@ let roster =
       (fun () ->
         match Party_roster.resolve mg (Species "mr-mime") with
         | Ok n -> string_of_int n
-        | Error c -> Checkpoints.Failure.cause_to_string c)
+        | Error c -> Pokemon_checkpoints.Failure.cause_to_string c)
       "not_in_party: mr-mime is not in the party (blastoise, pidgey, abra, \
        spearow)";
     case "a full party sends a prize to the PC"
@@ -159,7 +159,8 @@ let others =
     case "spin: five turns clockwise from west"
       (fun () ->
         String.concat " "
-          (List.map Grid_maps.Direction.name (Spin_for_encounter.turns West 5)))
+          (List.map Grid_geometry.Direction.name
+             (Spin_for_encounter.turns West 5)))
       "north east south west north";
   ]
 

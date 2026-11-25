@@ -11,7 +11,7 @@ let read_pages ~log slot =
   let moves = Summary_moves.settled_rows () in
   P.to_page 1;
   ignore (Effects.submit [ Wire.Wait { wait_ms = flip_ms } ] : Wire.batch_done);
-  let member : Checkpoints.Room_policy.member =
+  let member : Room_policy.member =
     {
       slot;
       species = Option.value species ~default:"?";
@@ -21,7 +21,7 @@ let read_pages ~log slot =
   in
   log
     (Printf.sprintf "Party: slot %d is %s." slot
-       (Checkpoints.Room_policy.member_to_string member));
+       (Room_policy.member_to_string member));
   member
 
 let read_all ~log () =

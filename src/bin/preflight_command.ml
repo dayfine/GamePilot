@@ -2,8 +2,8 @@
 
    The pre-flight of a save (Frlg_checkpoints.Preflight): back to the last save (on
    the Switch the soft reset; on mGBA the checkpoint's start state), then the
-   party, money and bag items the first checkpoint's plan needs and the place
-   (against the start frame kept there), read with the existing readers and
+   party, money, bag items and badges the first checkpoint's plan needs and the
+   place (against the start frame kept there), read with the existing readers and
    printed as a table. Exit 1 on a mismatch or a need not read. Its daemon's
    wire log and the story log go to a run folder ("<ID>-preflight"), with
    run.json (mode preflight), the table and the verdict in summary.txt, the
@@ -13,7 +13,7 @@
    runner, so with --watch its daemon's page shows its steps, story lines and
    run as a checkpoint run's (Frlg_checkpoints.Plan_watch). *)
 
-open Checkpoints
+open Pokemon_checkpoints
 module Pf = Frlg_checkpoints.Preflight
 module C = Frlg_checkpoints.Start_check
 
@@ -22,6 +22,9 @@ type setup = {
   runs_dir : string;
   daemon : string;
   backend : Daemon_process.backend;
+  viewport : string option;
+      (** The Switch daemon's --viewport: the program's
+          (Program_registry.check_viewport). *)
   info : Run_record.info;
   watch : Daemon_process.watch option;
 }
@@ -45,8 +48,8 @@ let needs ~plan_dir from_id =
   match
     (Pf.needs stocks ~before plan, Frlg_checkpoints.Party_room.chain_need plans)
   with
-  | needs, room -> Ok (needs, room)
-  | exception Grid_maps.Json_field.Invalid e -> Error e
+  | needs, room -> Result.map (fun needs -> (needs, room)) needs
+  | exception Json_field.Invalid e -> Error e
 
 exception Not_back of string
 
@@ -86,12 +89,12 @@ let place setup id start log =
 
 (* The party is read on its summaries (species, level, moves): the room and
    the field moves are judged on them. *)
-let without_party (p : Checkpoints.Plan.postconditions) =
+let without_party (p : Pokemon_checkpoints.Postconditions.t) =
   { p with party = None }
 
-let party_of (members : Checkpoints.Room_policy.member list) =
+let party_of (members : Room_policy.member list) =
   List.map
-    (fun (m : Checkpoints.Room_policy.member) ->
+    (fun (m : Room_policy.member) ->
       if m.species = "?" then None else Some m.species)
     members
 
@@ -106,12 +109,13 @@ type verdict = Rows of Pf.row list | Stopped of string
 
 type reads = {
   mutable place : Frlg_readers.Start_frame.difference option;
-  mutable members : Checkpoints.Room_policy.member list option;
-  mutable observed : Checkpoints.Postcondition_check.observed option;
+  mutable members : Room_policy.member list option;
+  mutable observed : Pokemon_checkpoints.Postcondition_check.observed option;
+  mutable card : Frlg_readers.Trainer_card_front.t option;
   mutable verdict : verdict;
 }
 
-let action f : Checkpoints.Game.game_action = fun _ _ -> f ()
+let action f : Pokemon_checkpoints.Game.game_action = fun _ _ -> f ()
 
 (* Back to the save: on a failure, its frame and the verdict. *)
 let soft_reset setup record id reads log () =
@@ -132,6 +136,7 @@ let judge record (needs, room) reads log () =
         | None -> invalid_arg "verdict before read_trainer_card");
       place = reads.place;
       members = reads.members;
+      card = reads.card;
     }
   in
   let rows = Pf.compare needs read @ [ Pf.room room read ] in
@@ -154,6 +159,8 @@ let read_trainer_card needs reads log () =
     Some
       (Frlg_checkpoints.Postcondition_reads.observe ~log
          (without_party (Pf.to_read needs)));
+  if Pf.reads_card needs then
+    reads.card <- Frlg_checkpoints.Postcondition_reads.trainer_card ~log;
   Ok ()
 
 (* The shadow plan's steps (Frlg_checkpoints.Shadow_plan.preflight_steps). The
@@ -175,7 +182,13 @@ let shadow_plan id =
 (* The pre-flight as a plan through the checkpoint runner, on the page. *)
 let session setup record id start needs world log () =
   let reads =
-    { place = None; members = None; observed = None; verdict = Stopped "" }
+    {
+      place = None;
+      members = None;
+      observed = None;
+      card = None;
+      verdict = Stopped "";
+    }
   in
   match
     Frlg_checkpoints.Plan_watch.run_shadow ~mode:"preflight" ~log world
@@ -205,8 +218,9 @@ let ending_of id = function
 
 let with_daemon setup record id body =
   match
-    Daemon_process.start ?watch:setup.watch ~daemon:setup.daemon
-      ~backend:setup.backend ~port:0
+    Daemon_process.start ?watch:setup.watch
+      ~flags:(Daemon_process.viewport_args setup.backend setup.viewport)
+      ~daemon:setup.daemon ~backend:setup.backend ~port:0
       ~wire_log:(Run_record.path record "wire.jsonl")
       ~out_file:(Run_record.path record "daemon.out")
       ~checkpoint:id ()

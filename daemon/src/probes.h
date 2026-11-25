@@ -46,11 +46,62 @@ struct ColorCount {
   std::optional<std::array<double, 3>> mean;
 };
 
-using ProbeResult = std::variant<ColorStats, TemplateMatch, ColorCount>;
+// One linear comparison on a pixel's channels:
+// weights[0] * r + weights[1] * g + weights[2] * b <op> value, in integers.
+// The fork's PixelShares tests (PokemonLZA_PixelShares.cpp,
+// PokemonLZA_ControlsHintDetector.cpp) are conjunctions of these, e.g.
+// b > r + 60 is {-1, 0, 1} > 60.
+struct ChannelComparison {
+  enum class Op { kGreater, kGreaterEqual, kLess, kLessEqual };
+  std::array<int, 3> weights{};  // r, g, b
+  Op op = Op::kGreater;
+  int value = 0;
+};
+
+// A pixel passes when every comparison holds (none: every pixel passes).
+using PixelTest = std::vector<ChannelComparison>;
+
+// The share of a box's pixels that pass a PixelTest, per row (top to bottom)
+// and per column (left to right) of the box's frame pixels.
+struct LineShares {
+  std::vector<double> rows;
+  std::vector<double> columns;
+};
+
+// One blob of core.find@1: a 4-connected region of pixels in one filter's
+// range, as the fork's waterfill finds them. Geometry is in frame pixels here;
+// the probe result converts it to game pixels.
+struct Blob {
+  int filter = 0;  // the index of the filter whose range made it
+  cv::Rect box;    // its bounding box, frame pixels
+  int area = 0;    // its pixels
+  // With a margin: the filter's pixels within the margin around the box
+  // (clipped to the probe's box) and not in the blob, over area.
+  std::optional<double> stray;
+  // With a template: the fork's ExactImageMatcher::rmsd of the box's pixels.
+  std::optional<double> score;
+  // With a shape: the blob's overlap with the shape over their union.
+  std::optional<double> overlap;
+};
+
+struct FindResult {
+  std::vector<Blob> blobs;
+  // Frame pixels per game pixel, to report blobs in game pixels.
+  double x_scale = 1;
+  double y_scale = 1;
+  // The picture's top-left corner in frame pixels.
+  double picture_x = 0;
+  double picture_y = 0;
+};
+
+using ProbeResult =
+    std::variant<ColorStats, TemplateMatch, ColorCount, LineShares, FindResult>;
 
 inline constexpr std::string_view kColorStatsKind = "core.color_stats@1";
 inline constexpr std::string_view kTemplateMatchKind = "core.template_match@1";
 inline constexpr std::string_view kColorCountKind = "core.color_count@1";
+inline constexpr std::string_view kLineSharesKind = "core.line_shares@1";
+inline constexpr std::string_view kFindKind = "core.find@1";
 
 // The probe kinds this daemon evaluates, for hello and subscribe.
 const std::vector<std::string>& probe_kinds();
@@ -84,6 +135,14 @@ TemplateMatch mask_match(const cv::Mat& bgr, const cv::Mat& template_mask,
 // mean color.
 ColorCount color_count(const cv::Mat& bgr, const cv::Rect& pixels,
                        const ColorRange& range);
+
+// Whether a pixel's channels (r, g, b) pass every comparison.
+bool passes(const PixelTest& test, int r, int g, int b);
+
+// core.line_shares@1: the share of the pixels passing `test`, per row and per
+// column of the box.
+LineShares line_shares(const cv::Mat& bgr, const cv::Rect& pixels,
+                       const PixelTest& test);
 
 // A template (BGR or a mask) given in game pixels, resized to `size` frame
 // pixels with INTER_AREA (unchanged when it already has that size).

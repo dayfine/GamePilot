@@ -1,7 +1,7 @@
 (* A leg planner case on the toy game: a map, a walk, and what the plan must
    be. Each case of the C++ tests that planned twice is two cases here. *)
 
-open Grid_maps
+open Grid_geometry
 open Grid_planning
 
 type input = {

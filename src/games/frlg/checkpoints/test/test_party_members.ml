@@ -9,7 +9,7 @@ open Frlg_actions
 let case name input expectation = { Table_test.name; input; expectation }
 
 let plan id =
-  match Checkpoints.Plan_decode.load (id ^ ".plan.json") with
+  match Frlg_checkpoints.Plan_file.load (id ^ ".plan.json") with
   | Ok p -> p
   | Error e -> failwith e
 
@@ -17,7 +17,7 @@ let args id event_id =
   let p = plan id in
   match
     List.find_opt
-      (fun (e : Checkpoints.Plan.event) -> e.id = event_id)
+      (fun (e : Pokemon_checkpoints.Plan.event) -> e.id = event_id)
       p.checkpoint.events
   with
   | Some { kind = Game_action args; _ } -> args
@@ -25,22 +25,22 @@ let args id event_id =
 
 (* Each save's party at a checkpoint's start, slot 1 first. *)
 let mgba = function
-  | "mg-01" -> [ "blastoise"; "rattata"; "oddish"; "pidgey" ]
-  | "mg-03" ->
+  | "01-celadon-setup" -> [ "blastoise"; "rattata"; "oddish"; "pidgey" ]
+  | "03-trade-mr-mime" ->
       [ "blastoise"; "rattata"; "oddish"; "pidgey"; "abra"; "farfetchd" ]
-  | "mg-04a" ->
+  | "04-grind-farfetchd" ->
       [ "blastoise"; "rattata"; "oddish"; "pidgey"; "mr-mime"; "farfetchd" ]
-  | "mg-06" ->
+  | "08-activate-and-verify" ->
       [ "farfetchd"; "blastoise"; "mr-mime"; "pidgey"; "rattata"; "oddish" ]
   | id -> failwith id
 
 let console_b = function
-  | "mg-01" -> [ "blastoise"; "pidgey"; "oddish"; "lapras" ]
-  | "mg-03" ->
+  | "01-celadon-setup" -> [ "blastoise"; "pidgey"; "oddish"; "lapras" ]
+  | "03-trade-mr-mime" ->
       [ "blastoise"; "pidgey"; "oddish"; "lapras"; "abra"; "farfetchd" ]
-  | "mg-04a" ->
+  | "04-grind-farfetchd" ->
       [ "blastoise"; "pidgey"; "oddish"; "lapras"; "mr-mime"; "farfetchd" ]
-  | "mg-06" ->
+  | "08-activate-and-verify" ->
       [ "farfetchd"; "blastoise"; "mr-mime"; "pidgey"; "oddish"; "lapras" ]
   | id -> failwith id
 
@@ -48,7 +48,7 @@ let read party = Party_roster.of_read (List.map Option.some party)
 
 let slot_text = function
   | Ok n -> "slot " ^ string_of_int n
-  | Error c -> Checkpoints.Failure.cause_to_string c
+  | Error c -> Pokemon_checkpoints.Failure.cause_to_string c
 
 (* Fly's user through Fly's own decoding. *)
 let flyer save id event_id () =
@@ -65,7 +65,7 @@ let members save id event_id () =
         (fun s ->
           s ^ " "
           ^ slot_text (Party_roster.resolve (read (save id)) (Species s)))
-        (Grid_maps.Json_field.string_opt ~where:"" key a))
+        (Json_field.string_opt ~where:"" key a))
     Action_args.member_keys
   |> String.concat ", "
 
@@ -78,21 +78,21 @@ let both name run ~mgba:m ~console_b:b =
 let slots =
   List.concat
     [
-      both "mg-01 Fly's Pidgey"
-        (fun s -> flyer s "mg-01" "fly_celadon")
+      both "01-celadon-setup Fly's Pidgey"
+        (fun s -> flyer s "01-celadon-setup" "fly_celadon")
         ~mgba:"slot 4" ~console_b:"slot 2";
-      both "mg-03 the trade's Abra"
-        (fun s -> members s "mg-03" "trade_mimien")
+      both "03-trade-mr-mime the trade's Abra"
+        (fun s -> members s "03-trade-mr-mime" "trade_mimien")
         ~mgba:"abra slot 5" ~console_b:"abra slot 5";
-      both "mg-04a the grind's member and sweeper"
-        (fun s -> members s "mg-04a" "grind_chding_knock_off")
+      both "04-grind-farfetchd the grind's member and sweeper"
+        (fun s -> members s "04-grind-farfetchd" "grind_chding_knock_off")
         ~mgba:"farfetchd slot 6, blastoise slot 1"
         ~console_b:"farfetchd slot 6, blastoise slot 1";
-      both "mg-06 MIMIEN to slot 1"
-        (fun s -> members s "mg-06" "arrange_slot1_mimien")
+      both "08-activate-and-verify MIMIEN to slot 1"
+        (fun s -> members s "08-activate-and-verify" "arrange_slot1_mimien")
         ~mgba:"mr-mime slot 3" ~console_b:"mr-mime slot 3";
-      both "mg-06 Fly's Pidgey"
-        (fun s -> flyer s "mg-06" "fly_celadon")
+      both "08-activate-and-verify Fly's Pidgey"
+        (fun s -> flyer s "08-activate-and-verify" "fly_celadon")
         ~mgba:"slot 4" ~console_b:"slot 4";
       [
         case "a member whose species did not read is found by none"
@@ -109,7 +109,7 @@ let slots =
    not pick itself (Cut's user is the game's). *)
 let pickers id =
   List.filter_map
-    (fun (e : Checkpoints.Plan.event) ->
+    (fun (e : Pokemon_checkpoints.Plan.event) ->
       match (e.kind, e.action) with
       | Game_action a, Some action when Action_args.picks_member ~action a ->
           Some e.id
@@ -119,14 +119,20 @@ let pickers id =
 
 let picking =
   [
-    case "mg-01: Fly" (fun () -> pickers "mg-01") "fly_celadon";
-    case "mg-02: not the Cut, which names its user for the pre-flight only"
-      (fun () -> pickers "mg-02")
+    case "01-celadon-setup: Fly"
+      (fun () -> pickers "01-celadon-setup")
+      "fly_celadon";
+    case
+      "02-trade-farfetchd: not the Cut, which names its user for the \
+       pre-flight only"
+      (fun () -> pickers "02-trade-farfetchd")
       "catch_spearow, fly_vermilion, fly_vermilion_house2, trade_chding";
-    case "mg-06: the mail to slots 2-6 picks by slot, read by none"
-      (fun () -> pickers "mg-06")
-      "fly_celadon, arrange_slot1_mimien, read_glitched_mail, give_dup_item, \
-       duplicate_item";
+    case
+      "08-activate-and-verify: the battle's members by species; the mail to \
+       slots 2-6 picks by slot, read by none"
+      (fun () -> pickers "08-activate-and-verify")
+      "activate_mail_glitch_battle, verify_mail_glitch, fly_celadon, \
+       arrange_slot1_mimien, read_glitched_mail, give_dup_item, duplicate_item";
   ]
 
 let () = Table_test.run "party members" (slots @ picking)

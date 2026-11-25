@@ -14,6 +14,7 @@
 #include "Common/Cpp/Json/JsonObject.h"
 #include "Common/Cpp/Json/JsonValue.h"
 #include "backend.h"
+#include "blob_find.h"
 #include "input_lease.h"
 #include "probes.h"
 #include "schedule.h"
@@ -90,6 +91,10 @@ struct ProbeSpec {
   std::optional<ColorRange> ink;
   // core.color_count@1 only.
   ColorRange color_range;
+  // core.line_shares@1 only: what a counted pixel passes.
+  PixelTest pixel_test;
+  // core.find@1 only.
+  std::optional<FindSpec> find;
 };
 
 struct SubscribeParams {
@@ -150,6 +155,12 @@ KeyMask button_mask(const std::string& name);
 // the first one in `mask`) by a backend that is not the Switch
 // (kInvalidParams, data {backend, button}).
 RpcError switch_button_refusal(const std::string& backend, KeyMask mask);
+
+// The refusal of a press that tilts a stick (`stick`: "left_stick" or
+// "right_stick") by a backend that is not the Switch (kInvalidParams, data
+// {backend, stick}).
+RpcError switch_stick_refusal(const std::string& backend,
+                              const std::string& stick);
 
 pa::JsonValue result_message(const pa::JsonValue& id, pa::JsonObject result);
 pa::JsonValue error_message(const pa::JsonValue& id, const RpcError& error);

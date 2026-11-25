@@ -1,29 +1,42 @@
 (rule
- (copy ../../programs/mail_glitch/plans/mg-01.plan.json mg-01.plan.json))
+ (copy
+  ../../programs/mail_glitch/plans/01-celadon-setup.plan.json
+  01-celadon-setup.plan.json))
 
 (rule
- (copy ../../programs/mail_glitch/plans/mg-02.plan.json mg-02.plan.json))
+ (copy
+  ../../programs/mail_glitch/plans/02-trade-farfetchd.plan.json
+  02-trade-farfetchd.plan.json))
 
 (rule
- (copy ../../programs/mail_glitch/plans/mg-03.plan.json mg-03.plan.json))
+ (copy
+  ../../programs/mail_glitch/plans/03-trade-mr-mime.plan.json
+  03-trade-mr-mime.plan.json))
 
 (rule
- (copy ../../programs/mail_glitch/plans/mg-04a.plan.json mg-04a.plan.json))
+ (copy
+  ../../programs/mail_glitch/plans/04-grind-farfetchd.plan.json
+  04-grind-farfetchd.plan.json))
 
 (rule
- (copy ../../programs/mail_glitch/plans/mg-04b.plan.json mg-04b.plan.json))
+ (copy
+  ../../programs/mail_glitch/plans/05-grind-mr-mime.plan.json
+  05-grind-mr-mime.plan.json))
 
 (rule
- (copy ../../programs/mail_glitch/plans/mg-04c.plan.json mg-04c.plan.json))
+ (copy
+  ../../programs/mail_glitch/plans/06-grind-return.plan.json
+  06-grind-return.plan.json))
 
 (rule
- (copy ../../programs/mail_glitch/plans/mg-05a.plan.json mg-05a.plan.json))
+ (copy
+  ../../programs/mail_glitch/plans/07-glitch-prep.plan.json
+  07-glitch-prep.plan.json))
 
 (rule
- (copy ../../programs/mail_glitch/plans/mg-05.plan.json mg-05.plan.json))
-
-(rule
- (copy ../../programs/mail_glitch/plans/mg-06.plan.json mg-06.plan.json))
+ (copy
+  ../../programs/mail_glitch/plans/08-activate-and-verify.plan.json
+  08-activate-and-verify.plan.json))
 
 (rule
  (copy ../../programs/team_training/plans/tt-01.plan.json tt-01.plan.json))
@@ -43,31 +56,31 @@
  (name test_checkpoint_run)
  (modules test_checkpoint_run)
  (deps
-  mg-01.plan.json
-  mg-02.plan.json
-  mg-03.plan.json
-  mg-04a.plan.json
-  mg-04b.plan.json
-  mg-04c.plan.json
-  mg-05a.plan.json
-  mg-05.plan.json
-  mg-06.plan.json
+  01-celadon-setup.plan.json
+  02-trade-farfetchd.plan.json
+  03-trade-mr-mime.plan.json
+  04-grind-farfetchd.plan.json
+  05-grind-mr-mime.plan.json
+  06-grind-return.plan.json
+  07-glitch-prep.plan.json
+  08-activate-and-verify.plan.json
   tt-01.plan.json
   su-01.plan.json)
  (libraries
   gamepilot.table_test
-  gamepilot.checkpoints
+  gamepilot.pokemon_checkpoints
+  gamepilot.checkpoint_end
   gamepilot.frlg_actions
   gamepilot.frlg_checkpoints))
 
 (test
  (name test_mg04_walk_replay)
  (modules test_mg04_walk_replay)
- (deps mg-04a.plan.json mg04_walk_two_fled_battles.wire.jsonl)
+ (deps 04-grind-farfetchd.plan.json mg04_walk_two_fled_battles.wire.jsonl)
  (libraries
   gamepilot.table_test
   gamepilot.replay
-  gamepilot.checkpoints
+  gamepilot.pokemon_checkpoints
   gamepilot.frlg_actions
   gamepilot.frlg_checkpoints))
 
@@ -98,7 +111,7 @@
  (libraries
   gamepilot.wire
   gamepilot.table_test
-  gamepilot.checkpoints
+  gamepilot.pokemon_checkpoints
   gamepilot.frlg_checkpoints
   frlg_overworld_fixtures))
 
@@ -107,20 +120,20 @@
  (modules test_console_start)
  (deps
   tt-01.plan.json
-  mg-01.plan.json
-  mg-02.plan.json
-  mg-03.plan.json
-  mg-04a.plan.json
-  mg-04b.plan.json
-  mg-04c.plan.json
-  mg-05a.plan.json
-  mg-05.plan.json
-  mg-06.plan.json)
+  01-celadon-setup.plan.json
+  02-trade-farfetchd.plan.json
+  03-trade-mr-mime.plan.json
+  04-grind-farfetchd.plan.json
+  05-grind-mr-mime.plan.json
+  06-grind-return.plan.json
+  07-glitch-prep.plan.json
+  08-activate-and-verify.plan.json)
  (libraries
   yojson
   gamepilot.wire
   gamepilot.table_test
-  gamepilot.checkpoints
+  gamepilot.pokemon_checkpoints
+  gamepilot.room_policy
   gamepilot.frlg_readers
   gamepilot.frlg_actions
   gamepilot.frlg_checkpoints))
@@ -129,37 +142,42 @@
  (name test_party_members)
  (modules test_party_members)
  (deps
-  mg-01.plan.json
-  mg-02.plan.json
-  mg-03.plan.json
-  mg-04a.plan.json
-  mg-04b.plan.json
-  mg-04c.plan.json
-  mg-06.plan.json)
+  01-celadon-setup.plan.json
+  02-trade-farfetchd.plan.json
+  03-trade-mr-mime.plan.json
+  04-grind-farfetchd.plan.json
+  05-grind-mr-mime.plan.json
+  06-grind-return.plan.json
+  08-activate-and-verify.plan.json)
  (libraries
   gamepilot.table_test
-  gamepilot.grid_maps
-  gamepilot.checkpoints
-  gamepilot.frlg_actions))
+  gamepilot.json_field
+  gamepilot.pokemon_checkpoints
+  gamepilot.frlg_actions
+  gamepilot.frlg_checkpoints))
 
 (test
  (name test_make_room)
  (modules test_make_room)
  (libraries
   yojson
+  gamepilot.grid_maps
   gamepilot.table_test
-  gamepilot.checkpoints
+  gamepilot.pokemon_checkpoints
+  gamepilot.room_policy
   gamepilot.frlg_actions
   gamepilot.frlg_checkpoints))
 
 (test
  (name test_paced_patches)
  (modules test_paced_patches)
- (deps mg-02.plan.json mg-05a.plan.json)
+ (deps 02-trade-farfetchd.plan.json 07-glitch-prep.plan.json)
  (libraries
   gamepilot.table_test
+  gamepilot.grid_geometry
   gamepilot.grid_maps
-  gamepilot.checkpoints
+  gamepilot.json_field
+  gamepilot.pokemon_checkpoints
   gamepilot.frlg_overworld
   gamepilot.frlg_actions
   gamepilot.frlg_checkpoints))
@@ -171,5 +189,54 @@
   gamepilot.table_test
   gamepilot.wire
   gamepilot.effects
-  gamepilot.checkpoints
+  gamepilot.pokemon_checkpoints
   gamepilot.frlg_checkpoints))
+
+(test
+ (name test_mail_glitch_plans)
+ (modules test_mail_glitch_plans)
+ (deps
+  01-celadon-setup.plan.json
+  02-trade-farfetchd.plan.json
+  03-trade-mr-mime.plan.json
+  04-grind-farfetchd.plan.json
+  05-grind-mr-mime.plan.json
+  06-grind-return.plan.json
+  07-glitch-prep.plan.json
+  08-activate-and-verify.plan.json)
+ (libraries
+  gamepilot.table_test
+  gamepilot.pokemon_checkpoints
+  gamepilot.frlg_checkpoints))
+
+(test
+ (name test_plan_preconditions)
+ (modules test_plan_preconditions)
+ (deps tt-01.plan.json)
+ (libraries
+  yojson
+  gamepilot.table_test
+  gamepilot.pokemon_checkpoints
+  gamepilot.frlg_readers
+  gamepilot.frlg_checkpoints))
+
+(executable
+ (name print_plans)
+ (modules print_plans)
+ (libraries
+  gamepilot.repo_io
+  gamepilot.pokemon_checkpoints
+  gamepilot.frlg_checkpoints))
+
+(rule
+ (deps
+  (glob_files_rec ../../programs/*.plan.json))
+ (action
+  (with-stdout-to
+   plans.txt
+   (run ./print_plans.exe ../../programs))))
+
+(rule
+ (alias runtest)
+ (action
+  (diff plans.golden plans.txt)))

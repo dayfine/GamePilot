@@ -39,11 +39,10 @@ type plan = {
   recycle_species : string;
   sweeper : string;
   depleted_move : string;
-  step_direction : Grid_maps.Direction.t;
+  step_direction : Grid_geometry.Direction.t;
 }
 
-val decode :
-  Grid_maps.Json_field.obj -> (plan, Checkpoints.Failure.cause) result
+val decode : Json_field.obj -> (plan, Pokemon_checkpoints.Failure.cause) result
 (** Args ["knock_off_species"], ["recycle_species"], ["sweeper"],
     ["depleted_move"] (slugs) and ["step_direction"]. *)
 
@@ -85,7 +84,7 @@ val pp_restored : slot:int -> unit -> bool
 (** From the action menu: FIGHT, the cursor to [slot], the move menu's PP read
     not red, then B back to the action menu. *)
 
-val step_into_sight : log:(string -> unit) -> Grid_maps.Direction.t -> unit
+val step_into_sight : log:(string -> unit) -> Grid_geometry.Direction.t -> unit
 (** One step tap ([STEP_TAP], 66 ms, then 700 ms; the fork's
     Overworld/PokemonFRLG_MovementStepPresses.h), the trainers' text pressed
     through until their battle shows. Fails as [double_battle_not_started]. *)
@@ -93,7 +92,7 @@ val step_into_sight : log:(string -> unit) -> Grid_maps.Direction.t -> unit
 type game_steps = {
   species_at : int -> string option;  (** the reckoned party, slots from 1 *)
   known_moves : slot:int -> string list;  (** read on the summary *)
-  start_battle : Grid_maps.Direction.t -> unit;
+  start_battle : Grid_geometry.Direction.t -> unit;
   restored : slot:int -> unit -> bool;  (** {!pp_restored} live *)
   battle :
     (Frlg_battle.Battle.game_steps -> Frlg_battle.Battle.game_steps) ->

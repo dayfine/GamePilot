@@ -1,7 +1,8 @@
 (* gamepilot programs
 
    The program registry (Program_registry) by game and group, as PA/CC's
-   program list shows it: each program's id, name, backends, description and
+   program list shows it: each program's id, name, backends, its Switch game
+   picture (the daemon's --viewport), description and
    page, and for a program with checkpoints its checkpoint ids and what its
    chain needs of the save: the free party slots (Frlg_checkpoints.Party_room, as
    the pre-flight's room row) and the field moves its plans use
@@ -50,7 +51,7 @@ let needs dir =
   | free, moves ->
       let moves = if moves = [] then "none" else String.concat ", " moves in
       Ok (Printf.sprintf "%d free party slot(s); field moves: %s" free moves)
-  | exception Grid_maps.Json_field.Invalid e -> Error e
+  | exception Json_field.Invalid e -> Error e
 
 let plan_lines path dir =
   let ids = Result.value (Plan_dir.checkpoint_ids dir) ~default:[] in
@@ -69,8 +70,9 @@ let checkpoint_lines (p : R.t) =
   | Some (path, Some dir) -> plan_lines path dir
 
 let show (p : R.t) =
-  Printf.printf "    %s  %s  [%s]\n" p.id p.name
-    (String.concat ", " (List.map R.backend_name p.backends));
+  Printf.printf "    %s  %s  [%s]  viewport %s\n" p.id p.name
+    (String.concat ", " (List.map R.backend_name p.backends))
+    (R.viewport_name p.viewport);
   List.iter
     (fun line -> print_endline ("      " ^ line))
     (p.description :: ("doc: " ^ p.doc) :: checkpoint_lines p)

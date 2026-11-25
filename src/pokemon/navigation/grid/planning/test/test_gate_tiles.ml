@@ -4,6 +4,7 @@
    case are the map model's tests (grid/maps/test). *)
 
 open Grid_maps
+open Grid_geometry
 open Grid_planning
 module Names = Gate_state.Names
 

@@ -103,6 +103,6 @@ let sends_input = function
 let commands = function
   | Press { button; hold_ms; wait_ms; times } ->
       List.init times (fun _ ->
-          Wire.Press { buttons = [ button ]; hold_ms; cooldown_ms = wait_ms })
+          Wire.press ~hold_ms ~cooldown_ms:wait_ms [ button ])
   | Wait wait_ms -> [ Wire.Wait { wait_ms } ]
   | Shot _ | Read _ | Status -> []

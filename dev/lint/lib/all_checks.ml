@@ -44,6 +44,7 @@ let run (c : Config.t) =
     List.concat_map (file_findings c) files
     @ Mli_coverage.check c code_files
     @ Layers.check c dune_files
+    @ Never_links.check c dune_files
   in
   Ok
     (Lint_exceptions.apply ~file entries findings

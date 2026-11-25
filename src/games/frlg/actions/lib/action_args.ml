@@ -1,4 +1,4 @@
-module J = Grid_maps.Json_field
+module J = Json_field
 
 type member = Species of string | Slot of int
 
@@ -6,7 +6,7 @@ let decode ~action read args =
   match read ~where:(action ^ ": ") args with
   | value -> Ok value
   | exception J.Invalid e ->
-      Error (Checkpoints.Failure.cause ~repeats:true "bad_args" e)
+      Error (Pokemon_checkpoints.Failure.cause ~repeats:true "bad_args" e)
 
 let party_slots = 6
 

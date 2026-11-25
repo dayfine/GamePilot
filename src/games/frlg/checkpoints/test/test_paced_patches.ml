@@ -1,6 +1,6 @@
 (* Every spot a wild battle is paced for on (Frlg_actions.Paced_battle and the
    capture): the patch's tile and the one a step [pace] from it are both grass
-   on PokemonSimulation's map, so pacing never leaves the grass (mg-05a testing
+   on PokemonSimulation's map, so pacing never leaves the grass (07-glitch-prep testing
    1 turned off it). The grind's spots come from its strategies; a plan's patch
    is where the event before a capture or PP drain leaves the player. *)
 
@@ -22,10 +22,10 @@ let kind map tile =
 
 let patch map tile pace =
   Printf.sprintf "%s %s %s, %s %s" map
-    (Grid_maps.Tile_pos.to_string tile)
+    (Grid_geometry.Tile_pos.to_string tile)
     (kind map tile)
-    (Grid_maps.Tile_pos.to_string (Grid_maps.Tile_pos.next tile pace))
-    (kind map (Grid_maps.Tile_pos.next tile pace))
+    (Grid_geometry.Tile_pos.to_string (Grid_geometry.Tile_pos.next tile pace))
+    (kind map (Grid_geometry.Tile_pos.next tile pace))
 
 let strategy name () =
   let s =
@@ -37,19 +37,19 @@ let strategy name () =
 
 (* The plan's paced events, each from the tile the event before it names. *)
 let plan_patches file () =
-  let p = Result.get_ok (Checkpoints.Plan_decode.load file) in
-  let named (e : Checkpoints.Plan.event) =
+  let p = Result.get_ok (Frlg_checkpoints.Plan_file.load file) in
+  let named (e : Pokemon_checkpoints.Plan.event) =
     match (e.kind, e.declared_after) with
-    | Route r, _ -> Some r.target
+    | Own (Route r), _ -> Some r.target
     | _, Some (Grid g) -> Some g
     | _ -> None
   in
-  let paced (before, out) (e : Checkpoints.Plan.event) =
+  let paced (before, out) (e : Pokemon_checkpoints.Plan.event) =
     let out =
       match (e.kind, e.action, before) with
       | Game_action args, Some ("capture" | "prepare_berry_pp"), Some g ->
-          let pace = Grid_maps.Json_field.direction ~where:"" "pace" args in
-          patch g.Checkpoints.Pose.map (List.hd g.tiles) pace :: out
+          let pace = Grid_maps.Grid_field.direction ~where:"" "pace" args in
+          patch g.Pokemon_checkpoints.Pose.map (List.hd g.tiles) pace :: out
       | _ -> out
     in
     (Option.fold ~none:before ~some:Option.some (named e), out)
@@ -65,11 +65,11 @@ let cases =
     case "the Pokemon Tower 5F grind"
       (strategy "pokemon_tower_5f")
       "PokemonTower_5F (8, 9) grass, (9, 9) grass";
-    case "mg-02's Spearow capture"
-      (plan_patches "mg-02.plan.json")
+    case "02-trade-farfetchd's Spearow capture"
+      (plan_patches "02-trade-farfetchd.plan.json")
       "Route16 (35, 6) grass, (36, 6) grass";
-    case "mg-05a's Blizzard PP drain"
-      (plan_patches "mg-05a.plan.json")
+    case "07-glitch-prep's Blizzard PP drain"
+      (plan_patches "07-glitch-prep.plan.json")
       "Route8 (45, 12) grass, (44, 12) grass";
   ]
 

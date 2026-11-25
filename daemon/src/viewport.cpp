@@ -17,6 +17,22 @@ Viewport nso_gba_viewport() {
   return Viewport{kGameBox, kGbaWidth, kGbaHeight};
 }
 
+Viewport native_switch_viewport() {
+  constexpr int kWidth = 1920;
+  constexpr int kHeight = 1080;
+  return Viewport{Box{0, 0, 1, 1}, kWidth, kHeight};
+}
+
+std::optional<Viewport> named_viewport(std::string_view name) {
+  if (name == "nso-gba") {
+    return nso_gba_viewport();
+  }
+  if (name == "native") {
+    return native_switch_viewport();
+  }
+  return std::nullopt;
+}
+
 bool is_unit_box(const Box& box) {
   constexpr double kSlack = 1e-9;  // x + w of a box ending at 1, in floats
   return box.x >= 0 && box.y >= 0 && box.w > 0 && box.h > 0 &&
@@ -81,6 +97,20 @@ std::optional<Box> parse_box(std::string_view text) {
     return std::nullopt;
   }
   return box;
+}
+
+std::optional<Viewport> parse_viewport(std::string_view text,
+                                       const Viewport& base) {
+  if (const std::optional<Viewport> named = named_viewport(text)) {
+    return named;
+  }
+  const std::optional<Box> picture = parse_box(text);
+  if (!picture) {
+    return std::nullopt;
+  }
+  Viewport viewport = base;
+  viewport.picture = *picture;
+  return viewport;
 }
 
 }  // namespace gamepilot

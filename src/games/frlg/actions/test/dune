@@ -33,7 +33,8 @@
   test_rare_candy
   test_pacing
   test_console_actions
-  test_warp_settle)
+  test_warp_settle
+  test_trainer_card_badges)
  (modules
   test_pc_deposit_steps
   test_fly_towns
@@ -53,7 +54,8 @@
   test_rare_candy
   test_pacing
   test_console_actions
-  test_warp_settle)
+  test_warp_settle
+  test_trainer_card_badges)
  (deps
   mgba.probes.jsonl
   menus.mgba.probes.jsonl
@@ -63,8 +65,11 @@
   yojson
   gamepilot.table_test
   gamepilot.wire
+  gamepilot.grid_geometry
   gamepilot.grid_maps
-  gamepilot.checkpoints
+  gamepilot.json_field
+  gamepilot.pokemon_checkpoints
+  gamepilot.room_policy
   gamepilot.frlg_overworld
   gamepilot.frlg_actions
   gamepilot.frlg_battle

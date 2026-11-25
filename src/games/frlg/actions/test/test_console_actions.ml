@@ -14,7 +14,7 @@ let log = ignore
 
 let outcome = function
   | Ok () -> "ok"
-  | Error cause -> "failed " ^ Checkpoints.Failure.cause_to_string cause
+  | Error cause -> "failed " ^ Pokemon_checkpoints.Failure.cause_to_string cause
 
 let run_on ~react body =
   let screen = S.create ~react () in

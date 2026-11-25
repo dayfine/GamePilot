@@ -27,7 +27,7 @@ val menu : lift -> string list
     sMultichoiceList_RocketHideoutElevator); 5F, 4F, 3F, 2F, 1F, EXIT
     (sMultichoiceList_DeptStoreElevator). *)
 
-val exits : lift -> Checkpoints.Pose.grid list
+val exits : lift -> Pokemon_checkpoints.Pose.grid list
 (** Where the lift lets the player out for each floor of its menu, top first: a
     tile south of the floor's lift door, facing south (the game walks the player
     off it). *)
@@ -38,17 +38,17 @@ val ride_of_floors : from:string -> to_:string -> ride option
     hideout's, 1F..5F the store's. *)
 
 val ride_of_args :
-  Grid_maps.Json_field.obj -> (ride, Checkpoints.Failure.cause) result
+  Json_field.obj -> (ride, Pokemon_checkpoints.Failure.cause) result
 (** A ["lift_floor"] action's ["from"] and ["to"]; [bad_args] otherwise. *)
 
-type presses = { direction : Grid_maps.Direction.t; count : int }
+type presses = { direction : Grid_geometry.Direction.t; count : int }
 
 val menu_presses : ride -> presses
 (** The fewest D-pad presses that move the cursor from [from] to [to_]. A
     multichoice of more than three rows wraps round (pokefirered
     DrawVerticalMultichoiceMenu()); on a tie the cursor goes down. *)
 
-val arrival : ride -> Checkpoints.Pose.observed
+val arrival : ride -> Pokemon_checkpoints.Pose.observed
 (** Where the ride leaves the player: [to_]'s exit. *)
 
 val dim_warp_change : float

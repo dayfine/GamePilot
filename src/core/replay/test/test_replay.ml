@@ -101,8 +101,7 @@ let cancel_reply ~id ~seq =
     {|{"dir":"out","t_ms":%d,"msg":{"jsonrpc":"2.0","id":%d,"result":{"released_seq":%d}}}|}
     seq id seq
 
-let hold_up =
-  [ Wire.Press { buttons = [ Up ]; hold_ms = 500; cooldown_ms = 0 } ]
+let hold_up = [ Wire.press ~hold_ms:500 ~cooldown_ms:0 [ Up ] ]
 
 (* Stops on the frame numbered [seq]. *)
 let race_until_seq seq () =
@@ -373,3 +372,38 @@ let () =
     (match Replay.run log first_frame with
     | Effects.Holds m -> m.seq = 502
     | Effects.Timeout -> false)
+
+(* v1.12: a press with sticks shows them when it diverges from the log. *)
+let () =
+  let log = Replay.log_of_lines (hello @ submit_b1) in
+  let up = Result.get_ok (Wire.stick 0. 1.) in
+  let run () =
+    ignore (Effects.load_state "state.ss" : int);
+    Effects.submit
+      [ Wire.press ~left_stick:up ~hold_ms:500 ~cooldown_ms:0 [ B ] ]
+  in
+  match Replay.run log run with
+  | _ -> failwith "FAILED a stick press replayed as the recorded Up press"
+  | exception Replay.Divergence e ->
+      print_endline e;
+      expect "stick press -> divergence naming the stick"
+        (contains e "press B left 0,1 hold 500")
+
+(* run_with_backend hands the program the recorded hello's backend: where the
+   game picture sat in the frame. *)
+let () =
+  let log =
+    Replay.log_of_lines
+      (hello
+      @ [
+          {|{"dir":"out","t_ms":2,"msg":{"jsonrpc":"2.0","method":"frame","params":{"seq":501,"load":2,"t_ms":2,"probes":{}}}}|};
+        ])
+  in
+  let backend =
+    Replay.run_with_backend log (fun (b : Wire.backend) ->
+        ignore (Effects.load_state "state.ss" : int);
+        b)
+  in
+  expect "run_with_backend: the recorded hello's viewport"
+    (backend.kind = "mgba" && backend.viewport.w = 1.
+   && backend.game_width = 240)

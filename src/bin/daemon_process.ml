@@ -27,6 +27,13 @@ let frames_args = function
   | Capture device -> [ "--capture"; device ]
   | Replay video -> [ "--replay"; video ]
 
+(* The Switch daemon's --viewport, when there is one; mGBA's frame is the
+   picture. *)
+let viewport_args backend viewport =
+  match (backend, viewport) with
+  | Switch _, Some v -> [ "--viewport"; v ]
+  | Switch _, None | Mgba _, _ -> []
+
 let backend_args = function
   | Mgba { port } -> [ "--backend"; "mgba"; "--mgba-port"; string_of_int port ]
   | Switch { serial; frames } ->

@@ -6,8 +6,8 @@ open Frlg_actions
 open Level_up_fake
 
 let case name input expectation = { Table_test.name; input; expectation }
-let obj json = Grid_maps.Json_field.as_object "" (Yojson.Safe.from_string json)
-let cause = Checkpoints.Failure.cause_to_string
+let obj json = Json_field.as_object "" (Yojson.Safe.from_string json)
+let cause = Pokemon_checkpoints.Failure.cause_to_string
 
 let decode_use json () =
   match Candy_plan.decode_use (obj json) with

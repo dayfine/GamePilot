@@ -31,7 +31,7 @@ let plans_in dir =
   |> List.map (Filename.concat dir)
 
 let plan_error file =
-  match Checkpoints.Plan_decode.load file with
+  match Frlg_checkpoints.Plan_file.load file with
   | Error e -> Some (file ^ ": " ^ e)
   | Ok plan -> (
       match Frlg_checkpoints.Checkpoint_run.check_plan plan with
@@ -52,6 +52,13 @@ let plan_count () =
   match R.locate "src/games/frlg/programs/mail_glitch/plans" with
   | Some dir -> string_of_bool (plans_in dir <> [])
   | None -> "no folder"
+
+(* A run's --viewport for [program] given [flag], as the CLI prints it. *)
+let viewport_for program flag =
+  match R.check_viewport (Option.bind program R.find) flag with
+  | Ok (Some v) -> v
+  | Ok None -> "default"
+  | Error e -> "error: " ^ e
 
 let id_of = function Some (p : R.t) -> p.id | None -> "none"
 
@@ -85,12 +92,37 @@ let () =
       case "plan dir: a scratch copy is no program"
         (fun () -> id_of (R.of_plan_dir "/tmp/mail_glitch/plans"))
         "none";
-      case "checkpoint: mg-05a is the mail glitch's"
-        (fun () -> id_of (R.of_checkpoint "mg-05a"))
+      case "checkpoint: 07-glitch-prep is the mail glitch's"
+        (fun () -> id_of (R.of_checkpoint "07-glitch-prep"))
         "frlg.mail_glitch";
       case "checkpoint: a scratch plan's id is no program's"
         (fun () -> id_of (R.of_checkpoint "pc-01"))
         "none";
+      case "every FRLG program shows the GBA app's picture"
+        (fun () ->
+          List.filter
+            (fun (p : R.t) ->
+              p.game.game_id = "frlg" && p.viewport <> R.Nso_gba)
+            R.all
+          |> List.map (fun (p : R.t) -> p.id)
+          |> String.concat ", ")
+        "";
+      case "viewport: the program's, no flag"
+        (fun () -> viewport_for (Some "frlg.mail_glitch") None)
+        "nso-gba";
+      case "viewport: a flag that agrees"
+        (fun () -> viewport_for (Some "frlg.mail_glitch") (Some "nso-gba"))
+        "nso-gba";
+      case "viewport: a flag that disagrees is an error"
+        (fun () -> viewport_for (Some "frlg.mail_glitch") (Some "native"))
+        "error: --viewport native: frlg.mail_glitch's game picture is nso-gba \
+         (program_registry); drop --viewport, or fix the program's descriptor";
+      case "viewport: no program, the flag as given"
+        (fun () -> viewport_for None (Some "0.1,0,0.8,1"))
+        "0.1,0,0.8,1";
+      case "viewport: no program, no flag"
+        (fun () -> viewport_for None None)
+        "default";
       case "run.json fields"
         (fun () ->
           Option.get (R.find "frlg.mail_glitch")

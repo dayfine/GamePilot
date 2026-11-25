@@ -1,13 +1,16 @@
-module J = Grid_maps.Json_field
+module J = Json_field
 module B = Frlg_battle
 
 type lead = Switch_to_sweeper
-type heal = Nurse of Checkpoints.Pose.grid | Pad of Checkpoints.Pose.grid
+
+type heal =
+  | Nurse of Pokemon_checkpoints.Pose.grid
+  | Pad of Pokemon_checkpoints.Pose.grid
 
 type strategy = {
   name : string;
-  spot : Checkpoints.Pose.grid;
-  pace : Grid_maps.Direction.t;
+  spot : Pokemon_checkpoints.Pose.grid;
+  pace : Grid_geometry.Direction.t;
   lead : lead;
   heal : heal;
   heal_every : int;
@@ -32,18 +35,18 @@ type t = {
 let default_strategy = "victory_road_2f"
 let asset = "src/games/frlg/assets/grind_strategies.json"
 
-let tile ~where obj : Grid_maps.Tile_pos.t =
+let tile ~where obj : Grid_geometry.Tile_pos.t =
   match J.field ~where "tile" obj with
   | `List [ `Int x; `Int y ] -> { x; y }
   | _ -> J.fail "%stile is not [x, y]." where
 
-let pose ~where key obj : Checkpoints.Pose.grid =
+let pose ~where key obj : Pokemon_checkpoints.Pose.grid =
   let p = J.as_object (where ^ key ^ ": ") (J.field ~where key obj) in
   let where = where ^ key ^ "." in
   {
     map = J.string ~where "map" p;
     tiles = [ tile ~where p ];
-    facing = Some (J.direction ~where "facing" p);
+    facing = Some (Grid_maps.Grid_field.direction ~where "facing" p);
   }
 
 let lead ~where obj =
@@ -69,7 +72,7 @@ let strategy i json =
   {
     name = J.string ~where "name" obj;
     spot = pose ~where "spot" obj;
-    pace = J.direction ~where "pace" obj;
+    pace = Grid_maps.Grid_field.direction ~where "pace" obj;
     lead = lead ~where obj;
     heal = heal ~where obj;
     heal_every = J.int ~where "heal_every" obj;
@@ -86,7 +89,7 @@ let strategies_of_json json =
   | exception J.Invalid e -> Error e
 
 let read () =
-  match Frlg_repo_files.Repo_files.locate asset with
+  match Repo_io.Repo_files.locate asset with
   | None -> Error (asset ^ " not found from the working directory")
   | Some path -> (
       match Yojson.Safe.from_file path with
@@ -143,7 +146,7 @@ let decode strategies obj =
   with
   | t -> Ok t
   | exception J.Invalid e ->
-      Error (Checkpoints.Failure.cause ~repeats:true "bad_args" e)
+      Error (Pokemon_checkpoints.Failure.cause ~repeats:true "bad_args" e)
 
 let met goal ~known = List.mem goal.learn_move known
 let heal_due s ~since_heal = since_heal >= s.heal_every

@@ -12,6 +12,7 @@ type t = {
   regions : Tile_pos.t list String_map.t;
   warps : Map_features.warp list;
   objects : Map_features.map_object list;
+  hidden_items : Map_features.hidden_item list;
   triggers : Map_features.trigger list;
   flag_sets : String_set.t String_map.t;
   connections : Map_features.connection list;

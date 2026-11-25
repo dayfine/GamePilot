@@ -33,6 +33,10 @@ git diff --name-status -M "$from" "$head" | while IFS="$(printf '\t')" read -r s
     case "$status" in
         R100) echo "moved $path -> $new" ;;
         M*)
+            # A binary file (a .gz replay, a .png) has no text to compare: its bytes changed.
+            if [ "$(git diff --numstat "$from" "$head" -- "$path" | cut -f1)" = "-" ]; then
+                continue
+            fi
             case "$path" in
                 *.json) if same_json "$from:$path" "$head:$path"; then echo "format-only $path"; fi ;;
                 *) if same_text_but_whitespace "$from:$path" "$head:$path"; then

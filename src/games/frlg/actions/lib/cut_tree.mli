@@ -9,5 +9,5 @@
 val turn_hold_ms : int
 (** A D-pad press this short only turns the player: 40 ms. *)
 
-val cut : log:(string -> unit) -> Grid_maps.Direction.t -> unit
+val cut : log:(string -> unit) -> Grid_geometry.Direction.t -> unit
 (** Fails as [cut_no_prompt] (no Cut user, or no tree there). *)

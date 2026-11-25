@@ -159,6 +159,12 @@ mgba/route16-key-items.png|bag.2|CARD KEY
 mgba/route16-key-items.png|bag.3|COIN CASE
 mgba/route16-key-items.png|bag.4|BERRY POUCH
 mgba/route16-key-items.png|bag.5|CANCEL
+mgba/sevii-key-items.png|bag.0|COIN CASE
+mgba/sevii-key-items.png|bag.1|BERRY POUCH
+mgba/sevii-key-items.png|bag.2|METEORITE
+mgba/sevii-key-items.png|bag.3|TRI-PASS
+mgba/sevii-key-items.png|bag.4|TOWN MAP
+mgba/sevii-key-items.png|bag.5|CANCEL
 switch_lab/tmcase-16-summary-moves-after-teach.png|summary_move.0|BITE
 switch_lab/tmcase-16-summary-moves-after-teach.png|summary_move.1|WATER PULSE
 switch_lab/tmcase-16-summary-moves-after-teach.png|summary_move.2|BUBBLE
@@ -327,6 +333,9 @@ mgba/route16-pouch.png|bag_count.5.2|-
 mgba/route16-pouch.png|bag_count.6.0|-
 mgba/route16-pouch.png|bag_count.6.1|-
 mgba/route16-pouch.png|bag_count.6.2|-
+mgba/sevii-key-items.png|bag_count.3.0|-
+mgba/sevii-key-items.png|bag_count.3.1|-
+mgba/sevii-key-items.png|bag_count.3.2|-
 # The Berry Pouch's berry numbers (small font): <image>|pouch_number.<row>.<cell from the left>|<digit>.
 mgba/route16-pouch.png|pouch_number.0.0|0
 mgba/route16-pouch.png|pouch_number.0.1|6

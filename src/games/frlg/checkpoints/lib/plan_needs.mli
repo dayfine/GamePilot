@@ -9,7 +9,7 @@ type need =
   | Party_in_order of string list
   | Party_includes of {
       members : string list;
-      slots : Checkpoints.Plan.slot list;
+      slots : Pokemon_checkpoints.Postconditions.slot list;
     }
   | Member of { species : string; for_ : string }
       (** A member an event uses ([for_]: ["fly"]). *)
@@ -21,12 +21,17 @@ type need =
   | Item_at_least of { item : string; count : int; for_ : string }
   | Item_exactly of { item : string; count : int }
   | Place of string  (** The checkpoint's start map. *)
+  | Badges_at_least of int
+      (** At least this many badges ({!Plan_preconditions}: [badges] a count).
+      *)
+  | Badges of string list  (** Each of these badges, by name. *)
+  | Hall_of_fame  (** The Hall of Fame entered: a star on the card. *)
 
 val needs :
   Frlg_actions.Mart_plan.stocks ->
-  before:Checkpoints.Plan.postconditions option ->
-  Checkpoints.Plan.t ->
+  before:Pokemon_checkpoints.Postconditions.t option ->
+  Pokemon_checkpoints.Plan.t ->
   need list
 (** What the save must hold for the plan's first event, in the table's order:
-    the party, the money, the items, the place. Raises
-    {!Grid_maps.Json_field.Invalid} for a plan arg that does not read. *)
+    the party, the money, the items, the place. Raises {!Json_field.Invalid} for
+    a plan arg that does not read. *)

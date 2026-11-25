@@ -6,7 +6,7 @@ copy) and 5 Super Repels from the Lavender Mart. It starts and ends at the Dept.
 and costs ¥7,500. The list is fixed for now; a configurable shopping list is planned.
 
 <!-- generated:backends -->
-Runs on: mGBA, the Switch.
+Runs on: mGBA, the Switch (in its GBA app).
 <!-- /generated -->
 
 ## Before you start
@@ -38,7 +38,7 @@ sh run/run_checkpoints_on_switch.sh --program frlg.supplies --from su-01 --to su
 |---|---|
 | su-01 | Stock 100 Retro Mail (Celadon 4F) and 5 Super Repels (Lavender) |
 
-<!-- plans: 92b35a7b5fc5 -->
+<!-- plans: 741bdeff32cd -->
 <!-- /generated -->
 
 ## When it stops

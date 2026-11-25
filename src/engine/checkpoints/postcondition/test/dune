@@ -1,0 +1,4 @@
+(test
+ (name test_postcondition)
+ (modules test_postcondition)
+ (libraries gamepilot.table_test gamepilot.engine_postcondition))

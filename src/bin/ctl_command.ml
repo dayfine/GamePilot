@@ -7,7 +7,9 @@
    someone else holds it; reads (shot, read, status) need no lease. COMMAND and
    FILE's lines are Ctl_script's (labB.sh's format). [run] prints [ok N LINE]
    per line and stops at the first error. [park] and [resume] park the Switch
-   on its HOME menu and resume FireRed from it (Console_park_command). Every press is in the daemon's wire
+   on its HOME menu and resume FireRed from it, [close-game] and [start-game]
+   close the running game and start one from a HOME tile (the fork's
+   NintendoSwitch_GameEntry steps) (Console_park_command). Every press is in the daemon's wire
    log with its owner. *)
 
 let default_owner = "ctl"
@@ -18,6 +20,8 @@ let usage =
    500] | dpad UP [N]\n\
   \      | wait MS | shot FILE.png | read READER | status\n\
   \      | park | resume  (the Switch: HOME menu and back to FireRed)\n\
+  \      | close-game | start-game TILE  (the Switch, from HOME: close the\n\
+  \        running game; start the game on TILE, 1 the first, 0 the cursor's)\n\
   \  gamepilot ctl [--port N] [--owner LABEL] run FILE\n\
   \    readers:\n" ^ Ctl_readers.usage ()
 
@@ -109,6 +113,16 @@ let run_steps f steps =
 
 let read_lines file = In_channel.with_open_text file In_channel.input_lines
 
+let start_game f tile =
+  match int_of_string_opt tile with
+  | Some n when n >= 0 ->
+      Ok
+        (Console_park_command.on_port ~port:f.port ~owner:f.owner
+           (`Start_game n))
+  | _ ->
+      Error
+        ("ctl: start-game takes a tile, 1 the first (0 the cursor's): " ^ tile)
+
 let main args =
   match
     parse_flags { port = Live.default_port; owner = default_owner } args
@@ -120,6 +134,9 @@ let main args =
       Ok (Console_park_command.on_port ~port:f.port ~owner:f.owner `Park)
   | Ok (f, [ "resume" ]) ->
       Ok (Console_park_command.on_port ~port:f.port ~owner:f.owner `Resume)
+  | Ok (f, [ "close-game" ]) ->
+      Ok (Console_park_command.on_port ~port:f.port ~owner:f.owner `Close_game)
+  | Ok (f, [ "start-game"; tile ]) -> start_game f tile
   | Ok (f, [ "run"; file ]) -> (
       match parse_script (read_lines file) with
       | Ok steps -> Ok (run_steps f steps)

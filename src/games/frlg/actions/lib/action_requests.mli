@@ -13,7 +13,7 @@ type t =
   | Redeem_prize_mon of int
   | Ingame_trade of { offer : string; receive : string option }
   | Spin_for_encounter of { max_batches : int }
-  | Cut_tree of Grid_maps.Direction.t
+  | Cut_tree of Grid_geometry.Direction.t
   | Verify_mail_glitch of Action_args.member
   | Pc_deposit of string list
   | Pick_up_item of string
@@ -30,8 +30,8 @@ val default_spin_batches : int
 val decode :
   Mart_plan.stocks ->
   string ->
-  Grid_maps.Json_field.obj ->
-  (t, Checkpoints.Failure.cause) result
+  Json_field.obj ->
+  (t, Pokemon_checkpoints.Failure.cause) result
 (** The action of that name with its args; [bad_args] naming the field, or
     [unknown_action]. The args:
     - [mart]: see {!Mart_plan.t}.

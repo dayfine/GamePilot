@@ -7,4 +7,4 @@ let tm_hm_moves_eng = "src/games/frlg/assets/tm_hm_moves_eng.txt"
 let move_names ~language =
   Printf.sprintf "src/games/frlg/assets/move_names_%s.txt" language
 
-let locate = Frlg_repo_files.Repo_files.locate
+let locate = Repo_io.Repo_files.locate

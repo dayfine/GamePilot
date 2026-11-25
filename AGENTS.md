@@ -9,7 +9,17 @@ GamePilot automates games through three layers (design: `docs/design/Layered-Aut
   `<name>/test`.
   - `base/`: pure, game-agnostic code with no effects (`wire`: the protocol codec).
   - `core/`: the effects programs use (`effects`) and their handlers (`session`, `live`, `replay`).
-  - `pokemon/`: code shared by Pokemon games (navigation grid, checkpoint plans and their runner).
+  - `engine/`: the game-agnostic checkpoint engine (`docs/design/Engine-Boundary.md`). Its
+    `checkpoints/` libraries: `terms` (`GAME_TERMS`, what a game family gives the engine),
+    `promise` (promises, counts, money), `plan` (types, decoding, text), `run` (one checkpoint:
+    handlers, trials, event progress), `series` (chains, order, rounds), `expand` (plan JSON
+    rewrites) and `make` (`Engine_checkpoints.Make`, the engine applied to a family's terms). It
+    names no game, grid or Pokémon type.
+  - `pokemon/`: code shared by Pokemon games: the navigation grid, and in `checkpoints/` the
+    Pokémon terms (`terms`: grid poses, own kinds, postconditions), the engine applied to them
+    (`instance`: `Pokemon_checkpoints`), the declared end of a checkpoint (`checkpoint_end`), who
+    goes to the PC when a chain needs party room (`room_policy`), console runs
+    (`series`) and place-route rewrites (`expand`).
   - `games/<game>/`: `readers/`, `actions/`, `maps/`, `checkpoints/`, and `programs/<program>/`.
   - `program_registry/`: every program's descriptor (game, group, name, doc, checkpoints folder,
     backends), as PA/CC's program list. A new program registers there (`docs/programs/README.md`).
@@ -46,9 +56,12 @@ GamePilot automates games through three layers (design: `docs/design/Layered-Aut
   timings, and each module's doc comment names the C++ file(s) it comes from, so a reader can lay the
   two side by side. Improvements and reshaping come later, in their own PRs. Where we deliberately
   differ (a missing reader, a new strategy), say so in the doc comment.
-- **Every checkpoint goes through the checkpoint runner** (`pokemon/checkpoints`) and its dev loop: run
+- **Every checkpoint goes through the checkpoint runner** (`engine/checkpoints/run`) and its dev loop: run
   from the checkpoint's start state, verify its end state, retry, record. Programs run in order
-  (mg-01 → mg-05), each tested on mGBA before it runs on the Switch.
+  (01-celadon-setup → 08-activate-and-verify), each tested on mGBA before it runs on the Switch.
+  A game with no emulator (PLZA, Sword/Shield, Octopath 0) is tested instead by its reader and
+  game tests, a scripted run (including a lost walk) and a wire-log replay of a console run in CI,
+  then three console passes in a row.
 - **Submodules are read-only.** `third_party/Arduino-Source` tracks the fork branch
   `gamepilot/base`, `third_party/Packages` tracks upstream, and `third_party/PokemonSimulation`
   tracks its `main`: never edit them here. Maps are read from PokemonSimulation
@@ -70,14 +83,16 @@ GamePilot automates games through three layers (design: `docs/design/Layered-Aut
 
 ## PR gate loop
 
-Each PR goes through, in order: **CI green → qc-structural at the tip → the user's structure
-review when the PR changes structure → squash merge**.
+Each PR goes through, in order: **CI green → qc-structural at the tip → squash merge**. A design
+doc, or a PR reworked twice, waits for the user's review instead. A PR that changes structure merges
+on its APPROVED verdict like any other (user, 2026-11-24); the main session holds one now and then
+for the user to spot check.
 
 - A PR changes structure when it adds, deletes or renames a library module or a `dune` file under
   `src/`; changes the `.mli` of a library shared across games (`src/base`, `src/core`,
   `src/pokemon`); changes a format (the plan, goal or places format, `protocol/`, a `*_decode.ml`);
   or has had two NEEDS_REWORK verdicts. Rename-only PRs count, and so do design docs (`docs/design/`).
-  Any other PR merges on green CI and an APPROVED verdict at its tip.
+  The gate marks these `merge (structural: <reason>)`, so they are easy to pick for a spot check.
 
 - qc-structural (`.agents/agents/qc-structural.md`, rows in
   `.agents/rules/qc-structural-authority.md`) runs only on green CI. It posts its verdict as a
@@ -86,7 +101,7 @@ review when the PR changes structure → squash merge**.
 - A verdict holds for the SHA it names. A rework commit invalidates it: review the new tip.
 - Docs-only PRs (every file `.md` or under `docs/`) skip qc-structural; CI is still required.
 - `sh dev/review/pr_gate_status.sh [PR...]` prints each open PR's CI, verdict (ok / rework /
-  stale(<sha>) / none / skip) and next step (`merge`, or `user review (<reason>)`).
+  stale(<sha>) / none / skip) and next step (`merge`, `merge (structural: <reason>)`, or `user review (<reason>)`).
   `sh dev/review/format_only_changes.sh` lists files changed only in formatting; CI prints the same list as warnings.
 
 ## User guides

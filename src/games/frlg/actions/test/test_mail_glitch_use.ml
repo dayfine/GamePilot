@@ -7,7 +7,7 @@ module P = Frlg_readers.Party_menu
 module L = Frlg_text.Line_reading
 
 let case name input expectation = { Table_test.name; input; expectation }
-let obj json = Grid_maps.Json_field.as_object "" (Yojson.Safe.from_string json)
+let obj json = Json_field.as_object "" (Yojson.Safe.from_string json)
 let read text : L.reading = Read { text; score = 0.1 }
 
 let verdict r () =
@@ -29,7 +29,7 @@ let marks shown () =
 let party = ref (Party_roster.of_list [ "mr-mime"; "blastoise" ])
 let handlers = Mail_glitch_use.handlers ~log:ignore ~party
 
-let event : Checkpoints.Plan.event =
+let event : Pokemon_checkpoints.Plan.event =
   {
     id = "e";
     kind = Game_action [];
@@ -44,7 +44,7 @@ let event : Checkpoints.Plan.event =
 let args name json () =
   match (List.assoc name handlers) event (obj json) with
   | Ok () -> "ok"
-  | Error c -> Checkpoints.Failure.cause_to_string c
+  | Error c -> Pokemon_checkpoints.Failure.cause_to_string c
 
 (* Proof A keeps the frame it judged: here the editor never reads (every wait
    times out), and its frame is saved in the run folder before the step
@@ -85,7 +85,7 @@ let editor_frames () =
   let ended =
     match result with
     | Ok () -> "ok"
-    | Error c -> Checkpoints.Failure.cause_to_string c
+    | Error c -> Pokemon_checkpoints.Failure.cause_to_string c
   in
   Printf.sprintf "%s; saved %s" ended (String.concat ", " (List.rev !saved))
 

@@ -7,7 +7,7 @@ let turn_hold_ms = 40
 let cut_started m = not (Frlg_readers.Dialog.dialog_up m)
 
 let cut ~log direction =
-  log ("Cut the tree to the " ^ Grid_maps.Direction.name direction ^ ".");
+  log ("Cut the tree to the " ^ Grid_geometry.Direction.name direction ^ ".");
   let turn =
     M.hold ~hold_ms:turn_hold_ms ~cooldown_ms:M.tap_release_ms
       (M.dpad direction)

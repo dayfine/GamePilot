@@ -1,0 +1,10 @@
+(library
+ (name pokemon_saved)
+ (public_name gamepilot.pokemon_saved)
+ (libraries
+  yojson
+  gamepilot.grid_geometry
+  gamepilot.engine_saved
+  gamepilot.pokemon_terms)
+ (preprocess
+  (pps ppx_deriving_yojson)))

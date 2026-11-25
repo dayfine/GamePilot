@@ -1,5 +1,7 @@
 (library
  (name grid_maps)
  (public_name gamepilot.grid_maps)
+ (flags
+  (:standard -open Grid_geometry))
  (modules_without_implementation map_features map_gates)
- (libraries yojson))
+ (libraries yojson gamepilot.json_field gamepilot.grid_geometry))

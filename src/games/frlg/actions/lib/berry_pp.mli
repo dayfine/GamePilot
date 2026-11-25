@@ -30,13 +30,12 @@ type plan = {
   species : string;
   move : string;
   backup_move : string;
-  pace : Grid_maps.Direction.t;
+  pace : Grid_geometry.Direction.t;
       (** The way the battles are paced for: one step from the start tile and
           back ({!Pacing}). *)
 }
 
-val decode :
-  Grid_maps.Json_field.obj -> (plan, Checkpoints.Failure.cause) result
+val decode : Json_field.obj -> (plan, Pokemon_checkpoints.Failure.cause) result
 (** Args ["species"], ["move"] and ["backup_move"] (slugs), and ["pace"] (a
     direction). *)
 

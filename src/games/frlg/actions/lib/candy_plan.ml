@@ -1,4 +1,4 @@
-module J = Grid_maps.Json_field
+module J = Json_field
 
 type use = { member : Action_args.member; policy : Level_up_policy.policy }
 
@@ -21,7 +21,8 @@ let ( let* ) = Result.bind
    cannot check is checked after, here, as a Result. *)
 let bad_args fmt =
   Printf.ksprintf
-    (fun e -> Error (Checkpoints.Failure.cause ~repeats:true "bad_args" e))
+    (fun e ->
+      Error (Pokemon_checkpoints.Failure.cause ~repeats:true "bad_args" e))
     fmt
 
 (* The fields as read, before the checks; [where] names each in a message. *)

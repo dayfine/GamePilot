@@ -1,0 +1,12 @@
+(library
+ (name frlg_places)
+ (public_name gamepilot.frlg_places)
+ (libraries
+  yojson
+  gamepilot.grid_geometry
+  gamepilot.name_suggestion
+  gamepilot.pokemon_checkpoints
+  gamepilot.engine_expand
+  gamepilot.checkpoints_expand
+  gamepilot.repo_io
+  gamepilot.frlg_actions))

@@ -1,4 +1,5 @@
 open Grid_maps
+open Grid_geometry
 open Grid_planning
 
 type costs = { grass : int; warp : int; wander : int; trainer_line : int }

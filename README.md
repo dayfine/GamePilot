@@ -5,6 +5,7 @@ PABotBase2, mGBA, or recorded frames) and serves probe measurements over JSON-RP
 are written in OCaml and run unchanged against the console, a replay, or a simulation.
 
 - Design: `docs/design/Layered-Automation-Stack.md`
+- Engine boundary (what is game-agnostic, how a second game plugs in): `docs/design/Engine-Boundary.md`
 - Roadmap: `docs/roadmap.md`
 - Rules for contributors and agents: `AGENTS.md`
 

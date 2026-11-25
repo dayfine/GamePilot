@@ -6,7 +6,8 @@
     - ["check_party_marks"], args ["marks"]: one per slot from 1, ["held_item"],
       ["mail"] or ["none"]. The party opened, read after the fork's 800 ms
       ({!Party_actions.party_settle_ms}), each slot's mark compared, the party
-      closed. As the fork's [run_verify_mail_glitch()]
+      closed through its fade ({!Menu_input.close_through_fades}). As the fork's
+      [run_verify_mail_glitch()]
       (Programs/MailGlitch/PokemonFRLG_MailGlitchActions.cpp), for every slot.
       Fails as [party_marks_wrong].
     - ["read_glitched_mail"], args ["species"] or ["target_slot"], ["word"]:
@@ -14,8 +15,9 @@
       question, answered YES), the editor's field 1 read
       ({!Frlg_text.Mail_fields}, that frame kept in the run folder as
       [proof-a.png]), and only if it reads ["word"], PLUS and YES (the C++
-      ItemDuplication's exit) back to the bag, closed. Fails as
-      [mail_glitch_not_active] without confirming anything. Not in the fork.
+      ItemDuplication's exit) back to the bag, closed through the fades
+      ({!Menu_input.close_through_fades}). Fails as [mail_glitch_not_active]
+      without confirming anything. Not in the fork.
     - ["move_item_to_top"], args ["item"]: in the item's pocket, SELECT on it,
       UP to the list's top (counted: the cursor hides while the item moves),
       SELECT (pokefirered item_menu.c, [BeginMovingItemInPocket] and
@@ -34,7 +36,8 @@ val name_of_mark : Frlg_readers.Party_menu.mark -> string
 val read_marks : log:(string -> unit) -> Frlg_readers.Party_menu.mark list
 (** The party opened, read after {!Party_actions.party_settle_ms}, each member's
     mark from slot 1 ({!Frlg_readers.Party_menu.members} of them), the party
-    closed: [check_party_marks]'s read, also the [marks] postcondition's. *)
+    closed through its fade ({!Menu_input.close_through_fades}):
+    [check_party_marks]'s read, also the [marks] postcondition's. *)
 
 val marks_mismatch :
   Frlg_readers.Party_menu.mark list ->
@@ -46,5 +49,5 @@ val marks_mismatch :
 val handlers :
   log:(string -> unit) ->
   party:Party_roster.t ref ->
-  (string * Checkpoints.Game.game_action) list
+  (string * Pokemon_checkpoints.Game.game_action) list
 (** The four actions above, by name. *)

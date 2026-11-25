@@ -1,11 +1,12 @@
 (* The checkpoint runner's steps on a console without save states (the
-   Switch), around each run, as Checkpoints.Console_runs decides them: back to the
+   Switch), around each run, as Checkpoints_series.Console_runs decides them: back to the
    last save (Frlg_actions.Soft_reset) and the start check
    (Frlg_checkpoints.Start_check) before; after, the in-game save and the next
    start's frame for a pass (Frlg_actions.Game_save), back to the last save for
    a failure. In the effect context. *)
 
-open Checkpoints
+open Pokemon_checkpoints
+open Checkpoints_series
 module C = Frlg_checkpoints.Start_check
 
 let log_results log results =
@@ -15,11 +16,11 @@ let log_results log results =
 
 (* The party a checkpoint starts with: the one the checkpoint before it
    promised, else the roster given with --party. *)
-let start_party ~roster (before : Plan.postconditions option) =
+let start_party ~roster (before : Postconditions.t option) =
   match (before, roster) with
   | Some { party = Some p; _ }, _ -> Some p
   | _, [] -> None
-  | _, roster -> Some (Plan.Party_in_order roster)
+  | _, roster -> Some (Postconditions.Party_in_order roster)
 
 let cause = Failure.cause_to_string
 

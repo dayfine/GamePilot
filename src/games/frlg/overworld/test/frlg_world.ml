@@ -2,6 +2,7 @@
    and a one-line text of planned legs. *)
 
 open Grid_maps
+open Grid_geometry
 open Grid_planning
 
 (* third_party/ and src/games/frlg/assets sit outside the test's build dir,

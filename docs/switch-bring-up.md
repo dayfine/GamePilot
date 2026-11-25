@@ -37,6 +37,11 @@ Expect `1920x1080 at 60.00 fps` and `geometry ok: picture 1560x1040 at (180, 5)`
 reader fixtures under `src/games/frlg/readers/test/images/switch/console-b-20261123/`): the
 picture fills that box exactly, black bars left and right.
 
+A full-screen Switch game (Legends Z-A) has no bars: its program's registry descriptor says
+`viewport = Native` (`docs/programs/README.md`), which `run/run_checkpoints_on_switch.sh --program ID`
+passes to every daemon as `--viewport native` (by hand: `gamepilot bring-up --program ID`, or the
+daemon's own `--viewport native`), and the check then only asks that the frame is not mostly dark.
+
 **4. Press and see it.** Player in the overworld, start menu closed. If the board line says the
 console does not see the controller, press A on the Switch's controller screen and rerun.
 
@@ -55,29 +60,29 @@ Expect `start_menu_poc: PASS`. Stop the daemon with Ctrl-C.
 `GAMEPILOT_SWITCH_CAPTURE` and `GAMEPILOT_LABLOCK` (the env file, `~/.config/gamepilot/env`), then:
 
     sh run/run_checkpoints_on_switch.sh --program frlg.mail_glitch \
-        --from mg-01 --to mg-01 --preflight-only
+        --from 01-celadon-setup --to 01-celadon-setup --preflight-only
 
 (or `gamepilot checkpoints ... --preflight --backend switch --serial PORT --capture INDEX`). It
 soft-resets to the save, reads the party, money and items, compares the place with the frame
-kept at mg-01's start, and prints a NEED / READ / VERDICT table: Fly's user, the money the
+kept at 01-celadon-setup's start, and prints a NEED / READ / VERDICT table: Fly's user, the money the
 purchases cost, what the checkpoint before promised, and the free party slots the whole chain
-needs (Abra in mg-01, Spearow in mg-02: two). The party is read on each member's summary
+needs (Abra in 01-celadon-setup, Spearow in 02-trade-farfetchd: two). The party is read on each member's summary
 (species, level, moves), so a Cut the plans need passes when any member knows it. Any MISMATCH
 or NOT READ stops it. A full party names the members to deposit (Room_policy: never one the plans
 use, the lead, one that knows Cut, Fly, Surf or Strength, or the only one knowing a move the plans
 need; the lowest level first; never a release). For console B's save (Blastoise 59, Eevee 25,
 Pidgey 24, Oddish 12, Lapras 25, Magikarp 5) that is Eevee and Magikarp. With `--make-room MAP` (MAP: the
 save's map, `PalletTown` for console B) the runner deposits them itself, as the generated
-checkpoint mg-00 before the chain: it reads the summaries, Flies to the Center nearest MAP on the
+checkpoint 00-make-room before the chain: it reads the summaries, Flies to the Center nearest MAP on the
 fly map (Viridian from Pallet, which has none), walks to the PC, deposits with `pc_deposit`
 (members found by species; A only on BILL'S PC, DEPOSIT POKéMON and STORE, read first), and walks
 out to the Fly landing. Its end check re-reads the party (the members left, in order, so the free
 slots) and that a member still knows each needed field move; a pass is saved like any checkpoint.
-The script skips the pre-flight with `--make-room` (its room row would stop the run mg-00 is
+The script skips the pre-flight with `--make-room` (its room row would stop the run 00-make-room is
 there for):
 
     sh run/run_checkpoints_on_switch.sh src/games/frlg/programs/mail_glitch/plans \
-        --from mg-01 --to mg-01 --make-room PalletTown
+        --from 01-celadon-setup --to 01-celadon-setup --make-room PalletTown
 
 The first run has no kept frame, so the place reads NOT
 READ until a pass keeps one.
@@ -89,7 +94,7 @@ the next checkpoint starts from that save. A run that fails soft-resets to the l
 series stops. A failed or stopped run never saves.
 
     sh run/run_checkpoints_on_switch.sh --program frlg.mail_glitch \
-        --from mg-01 --to mg-01
+        --from 01-celadon-setup --to 01-celadon-setup
 
 The script takes console B's lab lock, refuses while anything holds the serial port or the lab
 app runs, runs steps 2, 3 and 6, then the checkpoint with the watch page, and stops the daemons

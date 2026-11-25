@@ -18,7 +18,10 @@ val overworld_shows : unit -> bool
     overworld, and B closes it again. *)
 
 val find_encounter :
-  log:(string -> unit) -> pace:Grid_maps.Direction.t -> Pacing.spot ref -> bool
+  log:(string -> unit) ->
+  pace:Grid_geometry.Direction.t ->
+  Pacing.spot ref ->
+  bool
 (** From the overworld, in the patch, from [spot] (which each step updates, so
     the next search starts where this one left the player): steps until a wild
     battle starts, {!Pacing.max_steps} at most; {!overworld_shows} tells a

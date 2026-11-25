@@ -1,17 +1,20 @@
 #!/usr/bin/env python3
-"""Reads one PR as `gh pr view N --json number,title,headRefOid,files,reviews,statusCheckRollup`
-prints on stdin and prints its gate row: NUMBER CI STRUCT NEXT, tab-separated, then the title.
+"""Reads one PR as `gh pr view N --json number,title,headRefOid,reviews,statusCheckRollup,mergeable`
+prints on stdin and prints its gate row: NUMBER CI STRUCT NEXT, tab-separated, then the title. An
+optional argument names a file of the PR's changed files, one REST `{path, status}` object per line
+(pr_gate_status.sh pages them, since `--json files` stops at 100); it replaces any `files` on stdin.
 
 CI is pass / fail / pending / none, over the checks at the PR's tip. STRUCT is the qc-structural
 verdict at the tip: ok (APPROVED), rework (NEEDS_REWORK), stale(<sha>) when the latest verdict was
 given at an older commit, none, or skip for a docs-only PR (every file is a .md or under docs/).
 NEXT is the one next step: "merge main" first when the PR conflicts with main; once CI is green and
-the verdict is ok, "merge" unless the PR changes structure, then "user review (<reason>)"
+the verdict is ok, "merge", or "merge (structural: <reason>)" when the PR changes structure, or
+"user review (<reason>)" for a design doc or a PR reworked twice
 (AGENTS.md, "PR gate loop"). Structure, read off the file list: a library module or dune file added,
 deleted or renamed under src/; a changed .mli of a library shared across games (src/base, src/core,
 src/pokemon); a changed format (protocol/, a *_decode.ml); a design doc (docs/design/); or two
 NEEDS_REWORK verdicts. The reason printed is the first that holds, in the order: reworked twice,
-structure, design doc.
+design doc, structure.
 
 A qc-structural verdict is a COMMENT review (GitHub refuses self-approval, so the review state
 says nothing) whose body has a "## Structural QC" heading, a "Reviewed SHA: <sha>" line and a
@@ -70,6 +73,11 @@ def structural_reason(files):
     return None
 
 
+# What still goes to the user; other structural changes merge on an APPROVED verdict (user,
+# 2026-11-24), the main session holding one now and then for the user's spot check.
+USER_REASONS = ("design doc", "reworked twice")
+
+
 def owner_reason(pr):
     """Why the PR needs the user's review, or None."""
     files = pr.get("files") or []
@@ -77,7 +85,9 @@ def owner_reason(pr):
     if len(reworks) >= 2:
         return "reworked twice"
     design = [f["path"] for f in files if f["path"].startswith("docs/design/")]
-    return structural_reason(files) or ("design doc: " + design[0] if design else None)
+    if design:
+        return "design doc: " + design[0]
+    return structural_reason(files)
 
 
 def docs_only(files):
@@ -126,12 +136,30 @@ def next_action(ci, struct, owner=None, conflicting=False):
     if struct == "rework":
         return "rework"
     if struct in ("ok", "skip"):
-        return "user review (" + owner + ")" if owner else "merge"
+        if not owner:
+            return "merge"
+        if owner.startswith(USER_REASONS):
+            return "user review (" + owner + ")"
+        return "merge (structural: " + owner + ")"
     return "run qc-structural"
+
+
+# REST file statuses, as the changeType names `gh pr view --json files` uses.
+REST_CHANGE = {"added": "ADDED", "removed": "DELETED", "renamed": "RENAMED"}
+
+
+def rest_files(lines):
+    """The PR's files from REST lines ({path, status} per line), in the `gh pr view` shape."""
+    rows = [json.loads(line) for line in lines if line.strip()]
+    return [{"path": r["path"], "changeType": REST_CHANGE.get(r["status"], "MODIFIED")}
+            for r in rows]
 
 
 def main():
     pr = json.load(sys.stdin)
+    if len(sys.argv) > 1:
+        with open(sys.argv[1]) as f:
+            pr["files"] = rest_files(f)
     ci, struct = ci_state(pr), struct_state(pr)
     conflicting = pr.get("mergeable") == "CONFLICTING"
     step = next_action(ci, struct, owner_reason(pr), conflicting)

@@ -6,14 +6,14 @@
 open Frlg_actions
 
 let case name input expectation = { Table_test.name; input; expectation }
-let obj json = Grid_maps.Json_field.as_object "" (Yojson.Safe.from_string json)
+let obj json = Json_field.as_object "" (Yojson.Safe.from_string json)
 
 let decode json () =
   match Capture_plan.decode (obj json) with
   | Ok t ->
       Printf.sprintf "%s, pace %s" (Capture_plan.describe t)
-        (Grid_maps.Direction.name t.pace)
-  | Error c -> Checkpoints.Failure.cause_to_string c
+        (Grid_geometry.Direction.name t.pace)
+  | Error c -> Pokemon_checkpoints.Failure.cause_to_string c
 
 let mg02_args =
   {|{"species": "spearow", "catches": 1, "encounters": 50, "balls": 10,

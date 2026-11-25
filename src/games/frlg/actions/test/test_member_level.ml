@@ -39,7 +39,7 @@ let ends_on screen = S.screen_name (S.screen_at screen screen.S.clock_ms)
 
 let outcome = function
   | Ok () -> "ok"
-  | Error cause -> "failed " ^ Checkpoints.Failure.cause_to_string cause
+  | Error cause -> "failed " ^ Pokemon_checkpoints.Failure.cause_to_string cause
 
 let level_text = Option.fold ~none:"unread" ~some:(Printf.sprintf "Lv %d")
 
@@ -85,7 +85,7 @@ let strategies = Result.get_ok (Grind_plan.load_strategies ())
 let mimien =
   Result.get_ok
     (Grind_plan.decode strategies
-       (Grid_maps.Json_field.as_object ""
+       (Json_field.as_object ""
           (Yojson.Safe.from_string
              {|{"species": "mr-mime", "target_level": 33, "learn_move": "recycle",
                 "learn_slot": 1, "sweeper": "blastoise", "sweeper_moves": [1, 2],
@@ -105,7 +105,7 @@ let grind levels () =
       known_moves = (fun ~slot:_ -> [ "barrier" ]);
       level = (fun ~slot -> Member_level.read ~log:ignore ~slot);
       swap = (fun a b -> call (Printf.sprintf "swap %d %d" a b));
-      go_to = (fun g -> call ("go " ^ g.Checkpoints.Pose.map));
+      go_to = (fun g -> call ("go " ^ g.Pokemon_checkpoints.Pose.map));
       heal = (fun _ -> call "heal");
       find_battle = (fun () -> call "spin");
       battle =

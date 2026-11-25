@@ -11,6 +11,7 @@ Developer pages are in `docs/programs/`.
 | [Mail Glitch](frlg.mail_glitch.md) | `frlg.mail_glitch` | mGBA, the Switch | Sets up the Mail Glitch, performs it against Lea & Jed on Route 16 and uses it to duplicate an item. |
 | [Supplies](frlg.supplies.md) | `frlg.supplies` | mGBA, the Switch | Stocks what the duplication programs use: Retro Mail and Super Repels. |
 | [Team Training](frlg.team_training.md) | `frlg.team_training` | mGBA, the Switch | Farms Rare Candies with the Mail Glitch's item duplication and levels the team with them. |
+| [Sevii Story](frlg.sevii_story.md) | `frlg.sevii_story` | mGBA | Plays the Sevii Islands story after the Hall of Fame, starting with Bill's trip to One Island. |
 <!-- /generated -->
 
 The Mail Glitch has a second page for its last checkpoint:
@@ -26,7 +27,7 @@ come from the registry and the plans; everything else is hand-written and kept a
     cd src && opam exec -- dune exec -- gamepilot guide --check    # what CI runs
     cd src && opam exec -- dune exec -- gamepilot guide frlg.mail_glitch    # print a program's blocks
 
-The blocks: `programs` (this table), `backends`, `checkpoints [RANGE]` (each checkpoint's title, and
+The blocks: `programs` (this table), `backends` (on the Switch, with its game picture), `checkpoints [RANGE]` (each checkpoint's title, and
 a digest of its plans, so any plan change needs a regenerated page), `needs [RANGE]` (what the save
 needs for the chain, from the pre-flight), `preflight [RANGE]` (what the pre-flight checks before
 each checkpoint) and `commands [RANGE]`. RANGE is `FROM..TO` or one checkpoint id; without it, every

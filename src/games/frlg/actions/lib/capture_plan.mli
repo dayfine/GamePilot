@@ -13,11 +13,11 @@ type t = {
   catches : int;  (** how many to catch *)
   max_encounters : int;  (** wild battles, of any species, before giving up *)
   max_balls : int;  (** Poké Balls thrown before giving up *)
-  pace : Grid_maps.Direction.t;
+  pace : Grid_geometry.Direction.t;
       (** the way to step for a battle, and back ({!Pacing}) *)
 }
 
-val decode : Grid_maps.Json_field.obj -> (t, Checkpoints.Failure.cause) result
+val decode : Json_field.obj -> (t, Pokemon_checkpoints.Failure.cause) result
 (** ["species"] (required), ["catches"] (1, 1..999), ["encounters"] (20,
     1..9999), ["balls"] (5, 1..999), ["pace"] (east), as the fork reads them. *)
 

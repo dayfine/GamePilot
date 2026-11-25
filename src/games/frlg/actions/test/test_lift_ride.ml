@@ -11,18 +11,19 @@ let presses ~from ~to_ =
   | None -> "no ride"
   | Some ride ->
       let { Lift_ride.direction; count } = Lift_ride.menu_presses ride in
-      Printf.sprintf "%d %s" count (Grid_maps.Direction.name direction)
+      Printf.sprintf "%d %s" count (Grid_geometry.Direction.name direction)
 
 let arrival ~from ~to_ () =
   match Lift_ride.ride_of_floors ~from ~to_ with
   | None -> "no ride"
   | Some ride ->
       let at = Lift_ride.arrival ride in
-      Printf.sprintf "%s %s" at.at_map (Grid_maps.Tile_pos.to_string at.at_tile)
+      Printf.sprintf "%s %s" at.at_map
+        (Grid_geometry.Tile_pos.to_string at.at_tile)
 
 let outcome = function
   | Ok () -> "ok"
-  | Error cause -> "failed " ^ Checkpoints.Failure.cause_to_string cause
+  | Error cause -> "failed " ^ Pokemon_checkpoints.Failure.cause_to_string cause
 
 (* Store 1F to 4F. The step through the lift door fades to black and back; the
    last step south, off the lift's arrival tile, dims into the floor picked,

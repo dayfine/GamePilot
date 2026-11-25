@@ -1,3 +1,5 @@
+module Failure = Pokemon_checkpoints.Failure
+
 type t = string list
 
 let of_list species =
@@ -26,7 +28,7 @@ let resolve t (member : Action_args.member) =
   | Species s ->
       let missing = s ^ " is not in the party (" ^ String.concat ", " t ^ ")" in
       Option.to_result
-        ~none:(Checkpoints.Failure.cause ~repeats:true "not_in_party" missing)
+        ~none:(Failure.cause ~repeats:true "not_in_party" missing)
         (slot_of t s)
 
 let swap t a b =

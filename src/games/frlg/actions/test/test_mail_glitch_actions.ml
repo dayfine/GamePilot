@@ -8,7 +8,7 @@ module B = Frlg_battle
 module Battle = B.Battle
 
 let case name input expectation = { Table_test.name; input; expectation }
-let obj json = Grid_maps.Json_field.as_object "" (Yojson.Safe.from_string json)
+let obj json = Json_field.as_object "" (Yojson.Safe.from_string json)
 
 (* A battle as the list's fake game steps play it: the events it reports, and the result
    of each move chosen (default [Chosen]). *)
@@ -53,7 +53,7 @@ let outcome f =
   match f () with
   | () -> "ok"
   | exception Menu_input.Action_failed c ->
-      "failed " ^ Checkpoints.Failure.cause_to_string c
+      "failed " ^ Pokemon_checkpoints.Failure.cause_to_string c
 
 let recorded f =
   let calls = ref [] in
@@ -63,7 +63,7 @@ let recorded f =
 
 let cause_or_ok = function
   | Ok _ -> "ok"
-  | Error c -> Checkpoints.Failure.cause_to_string c
+  | Error c -> Pokemon_checkpoints.Failure.cause_to_string c
 
 (* prepare_berry_pp *)
 
@@ -165,7 +165,8 @@ let double ?(restored = true) ?(party = party) battle () =
             (fun ~slot ->
               call (Printf.sprintf "summary %d" slot);
               moves_of slot);
-          start_battle = (fun d -> call ("step " ^ Grid_maps.Direction.name d));
+          start_battle =
+            (fun d -> call ("step " ^ Grid_geometry.Direction.name d));
           restored =
             (fun ~slot () ->
               call (Printf.sprintf "pp %d" slot);

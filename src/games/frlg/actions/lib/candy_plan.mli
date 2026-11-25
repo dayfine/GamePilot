@@ -27,13 +27,13 @@ val default_max_candies : int
 (** 99, from Lv 1 to 100. *)
 
 val decode_use :
-  Grid_maps.Json_field.obj -> (use, Checkpoints.Failure.cause) result
+  Json_field.obj -> (use, Pokemon_checkpoints.Failure.cause) result
 (** ["use_rare_candy"]'s args: ["species"] or ["target_slot"], ["evolve"] (true
     or false, required: an evolution is not undone), and an optional ["learn"],
     a list of [{"move": ..., "replacing": ...}]. [bad_args] naming the field. *)
 
 val decode_goal :
-  Grid_maps.Json_field.obj -> (goal, Checkpoints.Failure.cause) result
+  Json_field.obj -> (goal, Pokemon_checkpoints.Failure.cause) result
 (** ["candy_level"]'s args: {!decode_use}'s, ["target_level"] (2-100), and the
     optional ["expect_species"], ["expect_moves"] (a list of slugs) and
     ["max_candies"] (1-99, default {!default_max_candies}). *)
