@@ -5,4 +5,4 @@
   yojson
   gamepilot.json_field
   gamepilot.engine_plan_codec
-  gamepilot.plza_terms))
+  gamepilot.plza_rules))

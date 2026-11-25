@@ -1,4 +1,4 @@
 (library
- (name plza_terms)
- (public_name gamepilot.plza_terms)
+ (name plza_rules)
+ (public_name gamepilot.plza_rules)
  (libraries gamepilot.engine_postcondition gamepilot.engine_rules))

@@ -1,6 +1,6 @@
-open Plza_terms
+open Plza_rules
 open Walk_args
-module T = Plza_terms
+module T = Plza_rules
 
 let pose ({ place; spot } : Pose.t) =
   match spot with Some s -> place ^ "/" ^ s | None -> place

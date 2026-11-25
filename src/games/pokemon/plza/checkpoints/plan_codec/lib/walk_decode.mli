@@ -10,6 +10,6 @@
     [end]). PLZA's own JSON shape: no other game walks this way yet. Raises
     [Json_field.Invalid] as its readers do; the codec catches it. *)
 
-val walk : where:string -> Json_field.obj -> Plza_terms.Walk_args.t
+val walk : where:string -> Json_field.obj -> Plza_rules.Walk_args.t
 (** [where] is the prefix of the args' fields
     (["f: checkpoint.events[2].args."]). *)

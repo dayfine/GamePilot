@@ -2,7 +2,7 @@
     ([[@@deriving yojson]]). PLZA has no emulator, so no event states are
     written yet; the engine still needs the format. *)
 
-type t = { at : Plza_terms.Pose.zone option }
+type t = { at : Plza_rules.Pose.zone option }
 (** Where the player was reckoned to stand. PLZA's promises read nothing at a
     checkpoint's start. *)
 
