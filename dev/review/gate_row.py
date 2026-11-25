@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
-"""Reads one PR as `gh pr view N --json number,title,headRefOid,files,reviews,statusCheckRollup`
-prints on stdin and prints its gate row: NUMBER CI STRUCT NEXT, tab-separated, then the title.
+"""Reads one PR as `gh pr view N --json number,title,headRefOid,reviews,statusCheckRollup,mergeable`
+prints on stdin and prints its gate row: NUMBER CI STRUCT NEXT, tab-separated, then the title. An
+optional argument names a file of the PR's changed files, one REST `{path, status}` object per line
+(pr_gate_status.sh pages them, since `--json files` stops at 100); it replaces any `files` on stdin.
 
 CI is pass / fail / pending / none, over the checks at the PR's tip. STRUCT is the qc-structural
 verdict at the tip: ok (APPROVED), rework (NEEDS_REWORK), stale(<sha>) when the latest verdict was
