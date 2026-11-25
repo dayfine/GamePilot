@@ -9,7 +9,7 @@ type need =
   | Party_in_order of string list
   | Party_includes of {
       members : string list;
-      slots : Checkpoints_plan.Plan.slot list;
+      slots : Pokemon_checkpoints.Postconditions.slot list;
     }
   | Member of { species : string; for_ : string }
       (** A member an event uses ([for_]: ["fly"]). *)
@@ -29,8 +29,8 @@ type need =
 
 val needs :
   Frlg_actions.Mart_plan.stocks ->
-  before:Checkpoints_plan.Plan.postconditions option ->
-  Checkpoints_plan.Plan.t ->
+  before:Pokemon_checkpoints.Postconditions.t option ->
+  Pokemon_checkpoints.Plan.t ->
   need list
 (** What the save must hold for the plan's first event, in the table's order:
     the party, the money, the items, the place. Raises {!Json_field.Invalid} for

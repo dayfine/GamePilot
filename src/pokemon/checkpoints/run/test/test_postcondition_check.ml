@@ -1,12 +1,11 @@
 (* Postcondition_check: each postcondition the plan states against what the
    game read, passed, failed or not checked, and the log lines. *)
 
-open Checkpoints_plan
+open Pokemon_checkpoints
 open Engine_promise
-open Checkpoints_run
 module C = Postcondition_check
 
-let nothing : Plan.postconditions =
+let nothing : Postconditions.t =
   {
     position = None;
     party = None;
@@ -34,7 +33,7 @@ let in_order = { nothing with party = Some (Party_in_order mg01_party) }
 let includes ?(slots = []) l =
   { nothing with party = Some (Party_includes { members = l; slots }) }
 
-let slot slot species = { Plan.slot; species }
+let slot slot species = { Postconditions.slot; species }
 let party members = { read with party = Some members }
 let money min max = { nothing with money = Some (Money.Range { min; max }) }
 let spent n = { nothing with money = Some (Money.Spent n) }

@@ -21,7 +21,7 @@ val party_size : int
 val field_moves : string list
 (** cut, fly, surf, strength: a member knowing one stays. *)
 
-val chain_need : Checkpoints_plan.Plan.t list -> need
+val chain_need : Pokemon_checkpoints.Plan.t list -> need
 (** Over the plans in run order. Raises {!Json_field.Invalid} for an arg that
     does not read. *)
 
