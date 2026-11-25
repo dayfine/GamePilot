@@ -11,7 +11,9 @@
    close the running game and start one from a HOME tile (the fork's
    NintendoSwitch_GameEntry steps) (Console_park_command), [delete-save] goes
    to a game's red Delete Save Data button and [delete-save --confirm] presses
-   it (Delete_save_command). Every press is in the daemon's wire log with its
+   it (Delete_save_command), [claim-gifts] claims PLZA's Mystery Gifts and
+   boxes them (Claim_gifts_command) and [bank-home] moves them into Pokémon
+   HOME (Bank_home_command). Every press is in the daemon's wire log with its
    owner. *)
 
 let default_owner = "ctl"
@@ -24,7 +26,8 @@ let usage =
   \      | park | resume  (the Switch: HOME menu and back to FireRed)\n\
   \      | close-game | start-game TILE  (the Switch, from HOME: close the\n\
   \        running game; start the game on TILE, 1 the first, 0 the cursor's)\n"
-  ^ Delete_save_command.usage_line
+  ^ Delete_save_command.usage_line ^ Claim_gifts_command.usage_line
+  ^ Bank_home_command.usage_line
   ^ "  gamepilot ctl [--port N] [--owner LABEL] run FILE\n    readers:\n"
   ^ Ctl_readers.usage ()
 
@@ -142,6 +145,10 @@ let main args =
   | Ok (f, [ "start-game"; tile ]) -> start_game f tile
   | Ok (f, "delete-save" :: args) ->
       Delete_save_command.main ~port:f.port ~owner:f.owner args
+  | Ok (f, "claim-gifts" :: args) ->
+      Claim_gifts_command.main ~port:f.port ~owner:f.owner args
+  | Ok (f, "bank-home" :: args) ->
+      Bank_home_command.main ~port:f.port ~owner:f.owner args
   | Ok (f, [ "run"; file ]) -> (
       match parse_script (read_lines file) with
       | Ok steps -> Ok (run_steps f steps)

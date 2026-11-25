@@ -28,5 +28,7 @@
   gamepilot.plza_readers
   gamepilot.plza_checkpoints
   gamepilot.plza_autostory
+  gamepilot.plza_gifts
+  gamepilot.pokemon_home
   unix
   yojson))
