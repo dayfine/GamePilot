@@ -10,10 +10,13 @@
       shifted too; 0.273 at least elsewhere). The digits before it (as many as
       fit from x 153 to the slash, 17 px each) are each read by one probe per
       digit template in a 26 px window, the lowest score, 0.08 or less (the
-      right digit 0.038 at most, the next best 0.149 at least). The lab script
-      ([plza_claim_and_bank.sh] in the BDSPLab lab tools) read the counter with
-      tesseract; there is no OCR here, so every digit needs a template, and the
-      steps refuse to move anything until all ten are there ({!complete}).
+      right digit 0.038 at most, the next best 0.102 at least, an 8 against a 3;
+      boxes 152, 158, 159, 164 and 167, shifted too). The digits are cut from
+      those captures: the ink's columns (170 or under) and 2 px each side, y 783
+      to 810. The lab script ([plza_claim_and_bank.sh] in the BDSPLab lab tools)
+      read the counter with tesseract; there is no OCR here, so every digit
+      needs a template, and the steps refuse to move anything until all ten are
+      there ({!complete}).
     - A slot (the script's [empty_rtl] / [empty_ltr] boxes): 56 px round (1920 ×
       (0.073 + 0.0725 col), 1080 × (0.228 + 0.112 row)) on the left, from 1920 ×
       0.5635 on the right. Empty is flat and light: its stddevs summing to 25 or

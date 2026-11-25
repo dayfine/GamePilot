@@ -5,7 +5,7 @@
 
 open Pokemon_home
 
-let digits = [ 0; 1; 2; 3; 5 ]
+let digits = List.init 10 Fun.id
 
 let templates : Box_view.templates =
   {

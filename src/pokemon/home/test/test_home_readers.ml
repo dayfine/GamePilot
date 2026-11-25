@@ -1,6 +1,7 @@
 (* Pokémon HOME's readers (Home_menus, Home_tile, Box_view) on console B's
-   captures (images/, 2026-11-24 and the Switch's HOME after PLZA's gifts of
-   2026-11-25, the whole frame), and on each capture with
+   captures (images/, 2026-11-24; and of 2026-11-25: the Switch's HOME after
+   PLZA's gifts, HOME's boxes with PLZA's Box 1 holding them, boxes 158, 159,
+   164 and 167 for the digits; the whole frame), and on each capture with
    its colors shifted as another capture card might show them
    (fixtures/home.shifted.probes.jsonl, regen_fixture.sh), named
    <shift>/<image>: each must read as the capture itself does. *)
@@ -94,6 +95,21 @@ let () =
        case "box 152 before banking, cursor on HOME's first slot"
          "boxes-152-before-bank-cursor-0-0"
          "box 152; home xxxx../xxxxxx/xxxxxx/xxx.../xxx...; game row 1 xxx...; \
+          cursor HOME's box row 1 column 1";
+       case "PLZA's gifts in its Box 1, box 152" "boxes-152-plza-gifts-look"
+         "box 152; home xxxx../xxxxxx/xxxxxx/xxxxxx/xxx...; game row 1 xx....; \
+          cursor HOME's box row 1 column 1";
+       case "box 158, paged with R" "boxes-158-left-paged"
+         "box 158; home ....../....../....../....../......; game row 1 xx....; \
+          cursor HOME's box row 1 column 1";
+       case "box 159" "boxes-159-left-paged"
+         "box 159; home ....../....../....../....../......; game row 1 xx....; \
+          cursor HOME's box row 1 column 1";
+       case "box 164" "boxes-164-left-paged"
+         "box 164; home xx..../xx..../xx..../xx..../x.....; game row 1 xx....; \
+          cursor HOME's box row 1 column 1";
+       case "box 167" "boxes-167-left-paged"
+         "box 167; home xx.xxx/xx.xxx/xx..xx/xx..xx/xx..xx; game row 1 xx....; \
           cursor HOME's box row 1 column 1";
        case "box 152 after banking: three more in HOME's, the game's emptied"
          "boxes-152-after-bank"
