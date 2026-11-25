@@ -26,6 +26,7 @@
   test_console_park
   test_game_entry
   test_screen_poll
+  test_stick_tilt
   test_delete_save_screen
   test_delete_save)
  (modules
@@ -33,6 +34,7 @@
   test_console_park
   test_game_entry
   test_screen_poll
+  test_stick_tilt
   test_delete_save_screen
   test_delete_save
   fire_red

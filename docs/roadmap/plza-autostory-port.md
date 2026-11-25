@@ -11,7 +11,7 @@ The C++ is the plan: branch `plza/lean` (fork PR #644), story rows 01.00 to 03.1
 | C++ (under `PokemonLZA/Programs/AutoStory/`) | What it does | GamePilot home |
 |---|---|---|
 | `StoryData/plza-*.plan.json` (31 plans) | checkpoints as data | `src/games/pokemon/plza/programs/story/plans/` |
-| `ScreenEvents`, `SceneMachine`, `ConsoleBackend`, `Game` | screen events and scenes, the story backend | `src/games/pokemon/plza/checkpoints`, `src/pokemon/checkpoints` |
+| `PokemonLZA_AutoStoryScreenEvents.cpp`, `PokemonLZA_AutoStorySceneMachine.cpp`, `PokemonLZA_AutoStoryConsoleBackend.cpp`, `PokemonLZA_AutoStoryGame.cpp` | screen events and scenes, the story backend | `src/games/pokemon/plza/checkpoints`, `src/pokemon/checkpoints` |
 | `Actions/Walks`, `WorldWalks`, `MapLegs` | timed legs, turns after a camera recenter, minimap heading, platform arrival | `src/games/pokemon/plza/actions` |
 | `Actions/Catches`, `CatchPlan`, `Zone1` | wild-zone catches, battle then catch | `src/games/pokemon/plza/battle` |
 | `Actions/NewGame`, `Starts`, `Autosaves` | new game, start checks from recorded minimaps, autosave points | `src/games/pokemon/plza/actions` |
@@ -41,12 +41,13 @@ shapes the pieces both later games use.
   and catches are ported (moves, types, party).
 - **Daemon (Engine-Boundary PR 8, claimed by this port).** 8a: `--viewport native`, the whole frame at
   1920x1080 game pixels, so the C++ boxes and 1080p templates carry over. 8b: optional `left_stick` and
-  `right_stick` on `press`, [x, y] in -1..1; running is B with the stick, as `PlzaConsoleBackend::stick`.
-  Angles and the run speed-up stay in `games/pokemon/plza`.
-- **Reload.** As `reload_latest_save` in the C++: close the game and launch PLZA's tile from HOME
-  (`switch_home` learns it from `NintendoSwitch_GameEntry`), then game menu to in game. `Home_screen`
-  keeps the fork's whole-frame boxes and converts them by the daemon's viewport. The game autosaves on
-  the platform, so every attempt reloads to it.
+  `right_stick` on `press`, [x, y] in -1..1; running is B with the stick, as in
+  `PokemonLZA_AutoStoryConsoleBackend.cpp`. Angles become tilts in `Switch_home.Stick_tilt`; the run
+  speed-up stays in `games/pokemon/plza`.
+- **Reload.** As the reload in `PokemonLZA_AutoStoryConsoleBackend.cpp`: close the game and launch PLZA's
+  tile from HOME (`switch_home` learns it from `NintendoSwitch_GameEntry.cpp`), then game menu to in
+  game. `Home_screen` keeps the fork's whole-frame boxes and converts them by the daemon's viewport. The
+  game autosaves on the platform, so every attempt reloads to it.
 - **Tests.** The detector and game tests of fork #644 ported with their modules, a scripted run with a
   walk that never sees its fade (`lost`, no input after it), a wire-log replay of the first passing
   console run. On console B: three passes in a row, each leaving the platform and reaching free control
