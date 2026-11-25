@@ -56,6 +56,12 @@ let float17 x =
       String.sub text 0 (at + 2) ^ String.sub text (at + 3) 2
   | _ -> text
 
+let micro = 1e6
+
+let micros_since ~from time =
+  Printf.sprintf "%.0f"
+    (Float.round (time *. micro) -. Float.round (from *. micro))
+
 (* Checks every record of [op] with [compute], reporting the count and the first
    mismatch as one case. *)
 let check_op records op compute =
