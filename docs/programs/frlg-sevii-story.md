@@ -9,6 +9,7 @@ Trainer Card. It runs on mGBA.
 |---|---|
 | 01-to-one-island | Fly to Cinnabar, YES to Bill in the Pokemon Center: out with him, the Seagallop, One Island, Celio's Tri-Pass |
 | 02-to-two-island | Bill's Meteorite errand: One Island's harbor, the Seagallop to Two Island, outside the Joyful Game Corner |
+| 03-to-three-island | The Joyful Game Corner's owner asks the player to find Lostelle; the Seagallop to Three Island's harbor |
 
 The game decides the first trip. Bill offers it when you leave Cinnabar Gym with the seventh badge;
 a player who said no finds him waiting in the Cinnabar Pokemon Center, even after the Hall of Fame
@@ -46,8 +47,22 @@ the list is the two other islands of One, Two and Three, then EXIT (pokefirered
 other windows, not read yet. 02 ends below the Game Corner's door facing east, not north: a press
 toward a door walks in whichever way the player faces (pokefirered `TryDoorWarp`).
 
-The Joyful Game Corner (`TwoIsland_JoyfulGameCorner`) has no map in PokemonSimulation, so the story
-stops at its door. Entering starts the owner's scene (Lostelle is missing; a Biker barges in), which
-sends the player to Three Island, whose port turns PC storage back on and whose Bikers are four
-trainer battles in a row (pokefirered `ThreeIsland_EventScript_BattleBikersScene`). After that come
-Celio's Ruby and Sapphire errands and the legendary birds, from the walkthrough drafts.
+On the Joyful Game Corner's mat (`TwoIsland_JoyfulGameCorner`) the owner's scene runs at once
+(pokefirered `TwoIsland_JoyfulGameCorner_EventScript_HelpFindLostelleScene`): Lostelle's father
+comes down to the player, who steps a tile west, and a Biker comes in on the door tile asking for
+Three Island. 03 settles it as a `scene` event and declares where it leaves the player, (4, 8)
+facing east. The scene sets `VAR_MAP_SCENE_THREE_ISLAND` to 2, which no screen we read shows; the
+Meteorite stays in the bag until Lostelle is home.
+
+The room's map has the Biker standing on the door tile (5, 8), with his hide flag. The game sets
+that flag at the new game and no script clears it: the scene shows him with `addobject` and takes
+him away again. `Frlg_overworld.Scene_only_people` lists such people, and the checkpoint runner's
+world treats them as not there, so the walk out goes over the door tile. The other hidden people in
+the maps still count as standing where the map puts them.
+
+03 sails from Two Island's harbor to Three Island (the second row of the sailor's list, below ONE
+ISLAND) and ends at Three Island's harbor (8, 5), facing south. North of the harbor is Three
+Island's port, which turns PC storage back on, and the Bikers: four trainer battles in a row
+(pokefirered `ThreeIsland_EventScript_BattleBikersScene`), the next checkpoint, which needs trainer
+battles. After that come Celio's Ruby and Sapphire errands and the legendary birds, from the
+walkthrough drafts.
