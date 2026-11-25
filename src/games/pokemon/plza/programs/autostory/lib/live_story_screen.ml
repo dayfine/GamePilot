@@ -1,4 +1,5 @@
 open Plza_readers
+module L = Plza_story.Look
 
 type rgb = { r : int; g : int; b : int }
 
@@ -16,6 +17,7 @@ let probes ~picture ~assets =
     [
       Switch_home.Home_screen.probes ~picture tile_color;
       Story_screen.probes ~picture ~assets;
+      Confirm_choices.probes ~picture;
       Frame_cells.probes ~picture;
     ]
 
@@ -36,38 +38,48 @@ let home m =
   | Home _ | Home_dimmed | User_select -> true
   | Elsewhere -> false
 
-(* The scene machine's [scene_under_way] (PokemonLZA_AutoStoryScreenPredicates.h):
-   text, a box, a battle or a card; else, with no sign of control, a fade or a
-   moving screen. *)
-let scene_under_way ~still (s : Story_screen.t) =
-  if
-    s.dialog_box || s.advance_arrow || s.choice_box || s.battle
-    || s.tutorial_card
-  then true
-  else if s.party_bar || s.controls_hint || s.interact_prompt then false
-  else s.fade <> No_fade || not still
+let effectiveness : Move_symbols.symbol -> L.effectiveness = function
+  | No_effect -> No_effect
+  | Not_very_effective -> Not_very_effective
+  | Effective -> Effective
+  | Super_effective -> Super_effective
 
-let look_of ~still (m : Effects.measurements) : Plza_walk.Walk_screen.t =
+let look_of ~still (m : Effects.measurements) : L.t =
   let s = Story_screen.read m in
   {
     at_ms = m.t_ms;
+    frame_read = true;
     home_menu = home m;
     screen_still = still;
     fade_black = s.fade = Black;
     fade_white = s.fade = White;
     dialog_box = s.dialog_box;
+    choice_box = s.choice_box;
+    choice_rows =
+      Option.map
+        (fun (r : Choice_rows.t) -> (r.selected, r.count))
+        s.choice_rows;
     advance_arrow = s.advance_arrow;
-    player_can_move = s.party_bar;
     controls_hint = s.controls_hint;
+    autosave = s.autosave;
+    tutorial_card = s.tutorial_card;
     interact_prompt = s.interact_prompt;
-    scene_under_way = scene_under_way ~still s;
-    battle = s.battle;
+    party_bar = s.party_bar;
+    minimap = s.minimap;
     minimap_arrow = s.minimap_arrow;
+    run_prompt = s.run_prompt;
+    main_menu = s.main_menu;
+    alert_eye = s.alert_eye;
+    battle = s.battle;
+    lead_hp = s.lead_hp;
+    story_dialog = s.story_dialog;
+    moves = List.map (Option.map effectiveness) s.moves;
+    confirm_row = Confirm_choices.read m;
   }
 
 let read_screen last () =
   match fresh () with
-  | None -> Plza_walk.Walk_screen.empty ~at_ms:(Effects.now ())
+  | None -> L.no_frame ~at_ms:(Effects.now ())
   | Some m ->
       let cells = Frame_cells.read m in
       let still =
@@ -78,11 +90,19 @@ let read_screen last () =
       last := cells;
       look_of ~still m
 
-let game_steps ~log ~log_detail : Plza_walk.Walk.game_steps =
+let raced = function
+  | Effects.Stopped m -> Some (look_of ~still:false m)
+  | Finished _ -> None
+
+let race c check =
+  raced (Effects.race [ c ] ~stop:(fun m -> check (look_of ~still:false m)))
+
+let game_steps ~log ~log_detail : Plza_story.Steps.game_steps =
   let last = ref None in
   {
     submit = (fun c -> ignore (Effects.submit [ c ] : Wire.batch_done));
     read_screen = read_screen last;
+    race;
     log;
     log_detail;
   }

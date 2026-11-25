@@ -1,0 +1,4 @@
+(library
+ (name plza_fake_console)
+ (modules fake_console)
+ (libraries gamepilot.wire gamepilot.plza_story))

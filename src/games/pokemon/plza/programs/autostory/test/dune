@@ -9,6 +9,8 @@
   gamepilot.effects
   gamepilot.table_test
   gamepilot.plza_walk
+  gamepilot.plza_story
+  plza_fake_console
   gamepilot.engine_run
   gamepilot.plza_engine
   gamepilot.plza_autostory))
