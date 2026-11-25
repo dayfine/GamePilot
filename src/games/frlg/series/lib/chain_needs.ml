@@ -1,9 +1,16 @@
+(* What a program's chain needs of the save, as gamepilot programs prints it:
+   the free party slots (Frlg_checkpoints.Party_room, as the pre-flight's room
+   row) and the field moves its plans use (Frlg_checkpoints.Plan_needs: Fly's
+   user, Cut's user). *)
+
+let ( let* ) = Result.bind
+
 let load_plans dir =
-  let* ids = Engine_series.Plan_folder.checkpoint_ids dir in
+  let* ids = Plan_dir.checkpoint_ids dir in
   List.fold_left
     (fun acc id ->
       let* acc = acc in
-      let* plan = Frlg_series.Plan_dir.load_plan ~plan_dir:dir id in
+      let* plan = Plan_dir.load_plan ~plan_dir:dir id in
       Ok (plan :: acc))
     (Ok []) ids
   |> Result.map List.rev

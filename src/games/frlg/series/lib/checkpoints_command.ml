@@ -97,7 +97,13 @@ let ( let* ) = Result.bind
 
 (* What each run's run.json says of the series (or the pre-flight). *)
 let run_info program plan_dir f kind ~from_id ~to_id : Run_record.info =
-  { kind; program = program.fields plan_dir; from_id; to_id; backend = f.backend }
+  {
+    kind;
+    program = program.fields plan_dir;
+    from_id;
+    to_id;
+    backend = f.backend;
+  }
 
 let watch_of f =
   Watch_hub.for_runs_dir ~daemon:f.daemon ~runs_dir:f.runs_dir f.watch

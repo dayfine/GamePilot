@@ -1,3 +1,28 @@
+(* FRLG's blocks of a program's user guide page (bin/guide_blocks.ml): each
+   checkpoint's row, what the save must hold for a chain, and what the
+   pre-flight checks before each checkpoint.
+
+   The needs of a chain are its free party slots (Frlg_checkpoints.Party_room)
+   and the pre-flight's needs (Frlg_checkpoints.Preflight.needs, the
+   checkpoint before's promises included) of the chain's events taken as one
+   plan: the members and field moves no earlier event brings, the money all
+   its purchases cost, the items no earlier purchase or pickup brings, and the
+   start. *)
+
+let ( let* ) = Result.bind
+let cell = Guide_page.cell
+
+(* [f] of each id, in order; the first error otherwise. *)
+let collect f ids =
+  List.fold_left
+    (fun acc id ->
+      let* acc = acc in
+      let* x = f id in
+      Ok (acc @ [ x ]))
+    (Ok []) ids
+
+let load ~plan_dir ids = collect (Plan_dir.load_plan ~plan_dir) ids
+
 let checkpoint_row (plan : Pokemon_checkpoints.Plan.t) =
   let repeats =
     match plan.repeat with
@@ -8,6 +33,9 @@ let checkpoint_row (plan : Pokemon_checkpoints.Plan.t) =
   Printf.sprintf "| %s | %s%s |" plan.checkpoint.checkpoint_id
     (cell plan.checkpoint.title)
     repeats
+
+let rows ~plan_dir ids =
+  Result.map (List.map checkpoint_row) (load ~plan_dir ids)
 
 let plural n one many = if n = 1 then one else many
 
@@ -54,11 +82,9 @@ let chain_lines stocks ~before (loaded : Pokemon_checkpoints.Plan.t list) =
   let line n = "- " ^ Frlg_checkpoints.Preflight.describe n in
   Ok (room_line room :: List.map line (List.filter_map (chain_need room) needs))
 
-let needs p arg =
-  let* plans = plans_of p in
-  let* chain = range plans arg in
-  let* loaded = load plans chain in
-  let* before = Frlg_series.Plan_dir.promised_before ~plan_dir:plans.dir (List.hd chain) in
+let needs ~plan_dir chain =
+  let* loaded = load ~plan_dir chain in
+  let* before = Plan_dir.promised_before ~plan_dir (List.hd chain) in
   let* stocks = Frlg_actions.Mart_plan.load () in
   match chain_lines stocks ~before loaded with
   | lines -> Result.map (String.concat "\n") lines
@@ -68,9 +94,9 @@ let needs_text needs =
   cell (String.concat "; " (List.map Frlg_checkpoints.Preflight.describe needs))
 
 (* One row per checkpoint: what the pre-flight checks before resuming there. *)
-let preflight_row stocks plans id =
-  let* plan = Frlg_series.Plan_dir.load_plan ~plan_dir:plans.dir id in
-  let* before = Frlg_series.Plan_dir.promised_before ~plan_dir:plans.dir id in
+let preflight_row stocks ~plan_dir id =
+  let* plan = Plan_dir.load_plan ~plan_dir id in
+  let* before = Plan_dir.promised_before ~plan_dir id in
   match Frlg_checkpoints.Preflight.needs stocks ~before plan with
   | needs ->
       Result.map
@@ -78,11 +104,9 @@ let preflight_row stocks plans id =
         needs
   | exception Json_field.Invalid e -> Error e
 
-let preflight p arg =
-  let* plans = plans_of p in
-  let* ids = range plans arg in
+let preflight ~plan_dir ids =
   let* stocks = Frlg_actions.Mart_plan.load () in
-  let* rows = collect (preflight_row stocks plans) ids in
+  let* rows = collect (preflight_row stocks ~plan_dir) ids in
   Ok
     (String.concat "\n"
        ([ "| Resume from | The pre-flight checks |"; "|---|---|" ] @ rows))

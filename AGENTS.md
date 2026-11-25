@@ -21,8 +21,10 @@ GamePilot automates games through three layers (design: `docs/design/Layered-Aut
     Pokémon rules (`rules`: grid poses, Pokémon actions, postconditions), the engine applied to them
     (`instance`: `Pokemon_checkpoints`), the declared end of a checkpoint (`checkpoint_end`), who
     goes to the PC when a chain needs party room (`room_policy`), console runs
-    (`series`) and place-route rewrites (`expand`).
-  - `games/<game>/`: `readers/`, `actions/`, `maps/`, `checkpoints/`, and `programs/<program>/`.
+    (`series`), place-route rewrites (`expand`) and `gamepilot checkpoints`' flags (`flags`).
+  - `games/<game>/`: `readers/`, `actions/`, `maps/`, `checkpoints/`, `series/` (the game's
+    checkpoint series runner, which `bin/checkpoint_families.ml` picks by the registry's `rules`),
+    and `programs/<program>/`.
   - `program_registry/`: every program's descriptor (game, group, name, doc, checkpoints folder,
     backends), as PA/CC's program list. A new program registers there (`docs/programs/README.md`).
   - `bin/`: the `gamepilot` command.

@@ -7,7 +7,6 @@
  (libraries
   gamepilot.live_run
   gamepilot.wire
-  gamepilot.json_field
   gamepilot.effects
   gamepilot.watch_report
   gamepilot.replay
@@ -16,18 +15,12 @@
   gamepilot.program_registry
   gamepilot.guide_page
   gamepilot.run_record
-  gamepilot.engine_run
   gamepilot.engine_series
-  gamepilot.pokemon_checkpoints
-  gamepilot.checkpoint_end
-  gamepilot.room_policy
-  gamepilot.checkpoints_series
   gamepilot.frlg_actions
   gamepilot.frlg_readers
   gamepilot.ctl_script
   gamepilot.switch_home
   gamepilot.repo_io
-  gamepilot.frlg_checkpoints
   gamepilot.frlg_series
   gamepilot.checkpoints_flags
   unix

@@ -4,9 +4,8 @@
    program list shows it: each program's id, name, backends, its Switch game
    picture (the daemon's --viewport), description and
    page, and for a program with checkpoints its checkpoint ids and what its
-   chain needs of the save: the free party slots (Frlg_checkpoints.Party_room, as
-   the pre-flight's room row) and the field moves its plans use
-   (Frlg_checkpoints.Plan_needs: Fly's user, Cut's user).
+   chain needs of the save, as its rules say it (Checkpoint_families: free
+   party slots, field moves).
 
    Also the program a command names: --program ID in place of a plan folder
    (gamepilot checkpoints), or a one-shot program's id (gamepilot run). *)
@@ -16,8 +15,10 @@ module R = Program_registry
 let usage = "  gamepilot programs\n"
 let ( let* ) = Result.bind
 
-let plan_lines path dir =
-  let ids = Result.value (Engine_series.Plan_folder.checkpoint_ids dir) ~default:[] in
+let plan_lines ~needs path dir =
+  let ids =
+    Result.value (Engine_series.Plan_folder.checkpoint_ids dir) ~default:[]
+  in
   let needs =
     match needs dir with Ok n -> n | Error e -> "not derived: " ^ e
   in
@@ -30,7 +31,9 @@ let checkpoint_lines (p : R.t) =
   match Option.map (fun path -> (path, R.locate path)) p.checkpoints with
   | None -> [ "one-shot: gamepilot run " ^ p.id ]
   | Some (path, None) -> [ "checkpoints: " ^ path ^ " (not found from here)" ]
-  | Some (path, Some dir) -> plan_lines path dir
+  | Some (path, Some dir) ->
+      plan_lines ~needs:(Checkpoint_families.of_program (Some p)).chain_needs
+        path dir
 
 let show (p : R.t) =
   Printf.printf "    %s  %s  [%s]  viewport %s\n" p.id p.name

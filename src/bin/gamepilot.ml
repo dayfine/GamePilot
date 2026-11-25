@@ -83,8 +83,8 @@ let run_program handle state =
 let run_live (p : Program_registry.t) ~runs_dir ~port state =
   let run =
     Attached_run.start ~runs_dir ~kind:Program
-      ~program:(Program_registry.run_fields p) ~label:p.id
-      ~mode:"run"
+      ~program:(Program_registry.run_fields p)
+      ~label:p.id ~mode:"run"
   in
   let after = function
     | Start_menu_poc.Passed _ -> ()

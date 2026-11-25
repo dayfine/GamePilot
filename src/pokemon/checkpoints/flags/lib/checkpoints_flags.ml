@@ -1,5 +1,5 @@
-(* gamepilot checkpoints' flags: their record, defaults and parsing
-   (Checkpoints_command). *)
+(* gamepilot checkpoints' flags: their record, defaults and parsing, and
+   gamepilot checkpoint's. *)
 
 open Engine_run
 

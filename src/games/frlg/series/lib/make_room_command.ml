@@ -20,6 +20,9 @@ module Cr = Frlg_checkpoints.Checkpoint_run
 
 let ( let* ) = Result.bind
 
+(* rwxr-xr-x: 00-make-room's plan folder. *)
+let dir_perm = 0o755
+
 let chain_plans ~plan_dir from_id =
   let* ids = Plan_dir.checkpoint_ids plan_dir in
   List.fold_left
@@ -73,7 +76,7 @@ let room ~at need members =
 
 (* The chain's plans linked beside 00-make-room's. *)
 let write_plans ~plan_dir dir room =
-  Sys.mkdir dir 0o755;
+  Sys.mkdir dir dir_perm;
   let* ids = Plan_dir.checkpoint_ids plan_dir in
   List.iter
     (fun id ->

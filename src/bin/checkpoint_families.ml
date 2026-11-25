@@ -1,9 +1,9 @@
 (* Each family of checkpoint rules (Program_registry.rules) and its library's
    entry points: how gamepilot checkpoints runs its series, how gamepilot
-   checkpoint runs or replays one plan, and how its guide lists its
-   checkpoints and the commands that run them. The one place under bin/ that
-   picks a family; a program no registry entry names is over the Pokémon grid
-   rules. *)
+   checkpoint runs or replays one plan, how its guide lists its checkpoints,
+   their needs and the commands that run them, and what gamepilot programs
+   says a chain needs. The one place under bin/ that picks a family; a program
+   no registry entry names is over the Pokémon grid rules. *)
 
 module R = Program_registry
 module Grid = Frlg_series
@@ -18,6 +18,9 @@ type t = {
   replay_checkpoint : string -> string -> string list -> (int, string) result;
       (** One plan file replayed from a wire log. *)
   guide : Guide_blocks.rules_guide;
+  chain_needs : string -> (string, string) result;
+      (** What a plan folder's chain needs of the save, in one line (gamepilot
+          programs). *)
 }
 
 (* run.json's program fields for a plan folder; none for no program. *)
@@ -34,14 +37,26 @@ let grid_series plan_dir f =
     ~program:{ fields = program_fields; viewport = viewport plan_dir f }
     plan_dir f
 
-let of_rules = function
-  | R.Pokemon_grid ->
-      {
-        run_series = grid_series;
-        run_checkpoint = Grid.Checkpoint_command.live ~program_fields;
-        replay_checkpoint = Grid.Checkpoint_command.replay;
-        guide = Guide_blocks.grid;
-      }
+(* The Pokémon grid rules' guide. *)
+let grid_guide : Guide_blocks.rules_guide =
+  {
+    rows = Grid.Guide_tables.rows;
+    needs = Grid.Guide_tables.needs;
+    preflight = Grid.Guide_tables.preflight;
+    commands = Guide_blocks.grid_commands;
+  }
+
+(* The Pokémon grid rules' entry points. *)
+let grid =
+  {
+    run_series = grid_series;
+    run_checkpoint = Grid.Checkpoint_command.live ~program_fields;
+    replay_checkpoint = Grid.Checkpoint_command.replay;
+    guide = grid_guide;
+    chain_needs = Grid.Chain_needs.needs;
+  }
+
+let of_rules = function R.Pokemon_grid -> grid
 
 let of_program (p : R.t option) =
   of_rules (match p with Some p -> p.rules | None -> R.Pokemon_grid)
@@ -55,7 +70,6 @@ let main plan_dir args =
 (* gamepilot checkpoint's usage: the grid rules', the only family that runs a
    plan file alone. *)
 let usage = Grid.Checkpoint_command.usage
-
 let of_plan_file plan = of_program (R.of_plan_dir (Filename.dirname plan))
 let checkpoint plan args = (of_plan_file plan).run_checkpoint plan args
 

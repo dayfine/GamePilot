@@ -5,6 +5,8 @@
   (:standard -open Live_run))
  (libraries
   gamepilot.effects
+  gamepilot.json_field
+  gamepilot.guide_page
   gamepilot.watch_report
   gamepilot.replay
   gamepilot.live

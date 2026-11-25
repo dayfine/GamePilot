@@ -21,8 +21,9 @@ val start :
     (Program_registry.run_fields), [] for no program. *)
 
 val save_failure : Run_record.t -> unit
-(** The frame now, in the session, as the run's failure.png; a refusal (an
-    older daemon) is skipped. *)
+(** The frame now, in the session, as the run's failure.png; a refusal (an older
+    daemon) is skipped. *)
 
-val finish : runs_dir:string -> Run_record.run -> line:string -> code:int -> unit
+val finish :
+  runs_dir:string -> Run_record.run -> line:string -> code:int -> unit
 (** The run's ending: a pass for exit code 0, else a failure with [line]. *)

@@ -23,13 +23,7 @@ let runs_dir_flag args =
 
 let start ~runs_dir ~kind ~program ~label ~mode =
   let info : Run_record.info =
-    {
-      kind;
-      program;
-      from_id = label;
-      to_id = label;
-      backend = "";
-    }
+    { kind; program; from_id = label; to_id = label; backend = "" }
   in
   let run = Run_record.start ~runs_dir info ~checkpoint:label ~mode in
   print_endline ("[Run] " ^ run.record.dir);
