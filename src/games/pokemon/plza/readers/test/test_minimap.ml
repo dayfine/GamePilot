@@ -4,9 +4,12 @@
    03.03 starts, and frames with no minimap.
 
    Headroom (bound 30): 03.03's start reads 1 from its own reference, the arch
-   3 (6 on frame 210 scaled up from 640x360), 03.07's start 3; the fork's
-   03.06 reference matches the frame it names 03.05's start at 2, and the one
-   it names 03.06's start matches nothing (49 at the nearest). The shifted
+   3 (6 on frame 210 scaled up from 640x360), 03.06's 1, 03.07's 3; the
+   Pokémon Center's counter, a spot no start names, matches nothing (49 at the
+   nearest). The fork's frames are named one off: its Spanish_0305_start.png
+   is 03.06's start (outside the Center, where 03.04 ends; there is no 03.05),
+   as its 03.06 reference says it was recorded on, and Spanish_0306_start.png
+   is the counter inside; here they are es-0306-start and es-center-counter. The shifted
    fixture leaves the minimap out (write_probe_spec.ml): each channel is
    scaled to the reference before comparing; the fork measured 03.04's start
    20% darker at 2.2 and 20% brighter at 21.9. *)
@@ -58,8 +61,8 @@ let cases =
       expectation = "03.03-start, 03.04-start, 03.06-start, 03.07-start";
     };
     case "minimap/es-0303-start" "03.03-start";
-    case "minimap/es-0305-start" "03.06-start";
-    case "minimap/es-0306-start" "none";
+    case "minimap/es-0306-start" "03.06-start";
+    case "minimap/es-center-counter" "none";
     case "minimap/es-0307-start" "03.07-start";
     case "party-bar/en-0302b-arch-collapsed-1080p" "03.03-start";
     case "party-bar/en-0302b-arch-collapsed-210" "03.03-start";
@@ -68,7 +71,8 @@ let cases =
     case "arrival-to-ad/0007-plaza" "none";
     case "battle-hud/it-0308-zone1-road-no-battle" "none";
     headroom "minimap/es-0303-start" "03.03-start at 1";
-    headroom "minimap/es-0306-start" "03.03-start at 49";
+    headroom "minimap/es-0306-start" "03.06-start at 1";
+    headroom "minimap/es-center-counter" "03.03-start at 49";
     headroom "party-bar/en-0302b-arch-collapsed-1080p" "03.03-start at 3";
     story_screen "party-bar/en-0302b-arch-collapsed-1080p" "03.03-start";
     story_screen "party-bar/en-0302b-arch-urbain-text-144" "none";

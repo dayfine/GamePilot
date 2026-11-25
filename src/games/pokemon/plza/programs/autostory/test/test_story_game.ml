@@ -480,6 +480,19 @@ let nurse ?(lost = false) c =
           | Some _ -> party c))
   | _ -> party c
 
+(* 03.06: the party bar while the run is held (15 s of walk is 9.1 s with
+   B); then Taunie's text until two A, the Wild Zones card until A, then the
+   party bar. [lost]: no scene ever starts. *)
+let wild_zones_card ?(lost = false) c =
+  match C.stick_reached c 9000 with
+  | Some w when not lost -> (
+      let a n = C.nth_after c Wire.A ~after:w n in
+      match (a 1, a 2) with
+      | None, _ -> text c
+      | Some _, None -> { (look c) with tutorial_card = true }
+      | Some _, Some _ -> party c)
+  | _ -> party c
+
 let outcome checkpoint screen =
   let c = C.create () in
   reloaded := false;
@@ -1110,6 +1123,32 @@ let cases =
          "03.03" at_arch)
       "start_signature_unread: 03.03: its start signature names minimap \
        03.05-start, which is not recorded";
+    case "03.06: on to Wild Zone 1's gate, Taunie, the Wild Zones card"
+      (fun () ->
+        let r, c = outcome "03.06" wild_zones_card in
+        String.concat "\n"
+          ((r ^ Printf.sprintf ", %d run" (runs c))
+          :: List.filter
+               (fun line ->
+                 List.exists
+                   (fun prefix -> String.starts_with ~prefix line)
+                   [ "[PLZA] center"; "[PLZA scene] done" ])
+               (C.lines c)))
+      "passed, 1 run\n\
+       [PLZA] center_to_zone_1: legs done, screen now: dialog_box, advance_arrow\n\
+       [PLZA scene] done on control.";
+    case "03.06 lost: no scene within the start window"
+      (result "03.06" (wild_zones_card ~lost:true))
+      "03.06 event 2 (wild_zones_tutorial): scene_never_started: scene: the \
+       scene never started (player not at its trigger?): the HUD up and no \
+       text, choice, battle or cutscene for 45000 ms (expecting the controls \
+       hint, the party bar or the A prompt).";
+    case "03.06's start check outside the Center"
+      (start_check "03.06" (fun c ->
+           { (party c) with minimap = Some "03.06-start" }))
+      "ok\n\
+       [Checkpoint] 03.06: START CHECKED: the screen reads (minimap \
+       03.06-start), its start is (minimap 03.06-start)";
     case "the walk is walked before 03.03, run after"
       (fun () ->
         Printf.sprintf "%b %b"
