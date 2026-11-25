@@ -387,4 +387,58 @@ let () =
     | Ok c -> c.doc_listing
     | Error e -> [ e ])
 
+(* --- interface_docs --- *)
+
+let docs text = Interface_docs.check ~path:"lib/m.mli" text
+let messages findings = List.map (fun (f : Finding.t) -> f.message) findings
+
+let () =
+  case "interface_docs: a val with no doc is caught"
+    ~expect:[ "interface_docs" ]
+    (checks (docs "(** The module. *)\n\nval f : int -> int\n"));
+  case "interface_docs: a doc right after or right before counts" ~expect:[]
+    (checks
+       (docs "val f : int\n(** After. *)\n\n(** Before. *)\nval g : int\n"));
+  case "interface_docs: the first val of a group has no doc" ~expect:[ "1" ]
+    (List.map
+       (fun (f : Finding.t) -> string_of_int f.line)
+       (docs "val f : int\nval g : int\n(** g only. *)\n"));
+  case "interface_docs: a record documented only by its fields is caught"
+    ~expect:[ "type t documents only its fields: say what the whole is (R11)" ]
+    (messages (docs "type t = {\n  a : int;  (** The a. *)\n}\n"));
+  case
+    "interface_docs: a constructor needs its own doc or its name in the type's"
+    ~expect:[ "constructor B has no doc comment (R11)" ]
+    (messages
+       (docs
+          "(** [A] or the other. *)\n\
+           type t =\n\
+          \  | A\n\
+          \  | B\n\
+          \  | C  (** Its own. *)\n"));
+  case "interface_docs: a longer word does not name a constructor"
+    ~expect:[ "constructor Time has no doc comment (R11)" ]
+    (messages (docs "(** Timeouts. *)\ntype t = Time\n"));
+  case "interface_docs: items inside a module signature are checked"
+    ~expect:[ "val g has no doc comment (R11)" ]
+    (messages (docs "module M : sig\n  val g : int\nend\n"));
+  case "interface_docs: exceptions and added constructors are checked"
+    ~expect:
+      [
+        "exception E has no doc comment (R11)";
+        "constructor X has no doc comment (R11)";
+      ]
+    (messages (docs "exception E\n\ntype t += X\n"));
+  case "interface_docs: a blank doc does not count" ~expect:[ "interface_docs" ]
+    (checks (docs "val f : int\n(** *)\n"));
+  case "interface_docs: a file that does not parse is a finding"
+    ~expect:[ "parse" ]
+    (checks (docs "val f :\n"));
+  case "config: interface_docs roots are read" ~expect:[ "src"; "tools" ]
+    (match
+       Config.parse "root .\ninterface_docs src\ninterface_docs tools\n"
+     with
+    | Ok c -> c.interface_docs_roots
+    | Error e -> [ e ])
+
 let () = if !failures > 0 then exit 1
