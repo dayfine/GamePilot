@@ -60,6 +60,17 @@ check "the latest verdict at the tip wins" ok \
 check "a verdict at an older commit is stale" "stale(bbbbbbbb)" \
     "$(pr "$code" "$green" "$(review "$old" APPROVED)" | column 3)"
 check "a fenced quote is not a verdict" none "$(pr "$code" "$green" "$(quoting)" | column 3)"
+named() { # name, check JSON: the check with a name
+    printf '%s' "$2" | sed "s/^{/{\"name\": \"$1\", /"
+}
+check "a prose PR needs only review-tools" pass \
+    "$(pr "$doc" "$(named review-tools "$green"), $(named "build (macos-latest)" "$running")" "" | column 2)"
+check "a prose PR with review-tools red fails" fail \
+    "$(pr "$doc" "$(named review-tools "$red"), $(named build "$green")" "" | column 2)"
+check "a guide page still waits for the builds" pending \
+    "$(pr '{"path": "docs/guide/a.md"}' "$(named review-tools "$green"), $(named build "$running")" "" | column 2)"
+check "code with prose waits for the builds" pending \
+    "$(pr "$doc, $code" "$(named review-tools "$green"), $(named build "$running")" "" | column 2)"
 check "a docs-only PR skips" skip "$(pr "$doc" "$green" "" | column 3)"
 check "red CI comes first" "fix CI" "$(pr "$code" "$red" "$(review "$tip" APPROVED)" | column 4)"
 check "green CI and no verdict asks for one" "run qc-structural" \
