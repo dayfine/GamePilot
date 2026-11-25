@@ -4,7 +4,7 @@
     SerialPrograms/Source/CommonFramework/Panels/PanelDescriptor.h: category,
     display name, description, doc link). Unlike the fork, nothing registers
     itself at start-up: {!all} is a plain list, and a new program is one more
-    entry in it (docs/programs/README.md).
+    entry in it (docs/guide/README.md, "Adding a program").
 
     What a program needs of the save (free party slots, field moves) is not
     declared here: it is derived from its checkpoint plans, as the pre-flight
