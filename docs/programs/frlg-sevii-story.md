@@ -29,10 +29,9 @@ coded room wins and the map file is not read: `heal_at` and `make_room` walk the
 standard Center. Only the Indigo Plateau's and One Island's Centers, with layouts of their own, come
 from their map files.
 
-The walk in goes up to the counter before it turns to Bill. A room entered by its door comes up dim
-and holds still for about 600ms before it fades in. The walk reads the dim room as no fade, and the
-player's first steps are lost; a walk held to the counter's wall makes up for them. Fixing the
-walker's wait is its own change, since it changes the recorded mg-04 walk.
+The walk goes from the Center's door mat straight to Bill. A room entered by its door comes up dim
+and holds still for about 600ms before it fades in; the walk waits for that fade-in to finish
+(`Warp_fade_in`) before its first step, so no step is lost.
 
 Celio's scene also turns off Bill's PC storage (`FLAG_SYS_PC_STORAGE_DISABLED`) until the player
 reaches Three Island's port, which is the next checkpoint's way. After that come Celio's Ruby and

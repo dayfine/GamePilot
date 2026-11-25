@@ -37,7 +37,7 @@ sh run/run_checkpoints_on_mgba.sh --program frlg.sevii_story --from 01-to-one-is
 |---|---|
 | 01-to-one-island | Fly to Cinnabar; Bill takes the Seagallop to One Island, Celio gives the Tri-Pass |
 
-<!-- plans: 87160197a247 -->
+<!-- plans: 11d20789c82a -->
 <!-- /generated -->
 
 ## When it stops
