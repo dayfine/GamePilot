@@ -1,8 +1,8 @@
 (** What a walk reads on the screen, and what it judges from it: a fade, free
     control, what keeps the player busy, a walk's end event. Ported from
     [PokemonLZA_AutoStoryScreenPredicates.h], [PokemonLZA_AutoStoryWalks.cpp]
-    and the screen reads of [PokemonLZA_AutoStoryConsoleBackend.cpp] (fork
-    #754). PLZA's readers fill it; until they come, tests do. *)
+    and the screen reads of [PokemonLZA_AutoStoryConsoleBackend.cpp]. PLZA's
+    readers fill it, or tests do. *)
 
 type t = {
   at_ms : float;  (** When the frame was read, on the daemon's clock. *)
@@ -14,6 +14,13 @@ type t = {
   advance_arrow : bool;  (** The advance chevron, with a box or without. *)
   player_can_move : bool;  (** The party bar. *)
   controls_hint : bool;  (** The tutorial's controls hint, ["(L) Move"]. *)
+  interact_prompt : bool;  (** An A prompt (["(A) Talk"]), no text box. *)
+  scene_under_way : bool;
+      (** The scene machine's [scene_under_way]: text, a box, a battle or a
+          card, or (with no sign of control) a fade or a moving screen. *)
+  battle : bool;  (** The battle HUD. *)
+  minimap_arrow : float option;
+      (** The bearing of the minimap's arrow, degrees clockwise from up. *)
 }
 (** One screen read. *)
 

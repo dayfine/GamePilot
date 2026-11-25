@@ -1,5 +1,8 @@
 type pace = Walk | Run
 
+(* 1.65: running covers this many times walking's distance in the same time
+    (console B, 2026-11-19: 16.6 px/s walking, 27.0 px/s running on the full
+    map), so a run is held for its walk time over this. *)
 let run_speedup = 1.65
 let run = { Switch_home.Stick_tilt.button = Wire.B; speedup = run_speedup }
 
