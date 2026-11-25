@@ -1,7 +1,7 @@
 <!doctype html>
 <!--
   gamepilot watch: the daemon's live page for one run (served as is by
-  daemon/src/watch_server.cpp; design in docs/design/Watch-Page.md).
+  daemon/watch/server/watch_server.cpp; design in docs/design/Watch-Page.md).
   Frame: an <img> on GET /stream (MJPEG, up to 30 frames a second, 1280 px
   wide or 960 on a phone) while the tab is visible; when the stream fails it
   polls GET /frame (PNG or JPEG) 5 times a second and tries the stream again
