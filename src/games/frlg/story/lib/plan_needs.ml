@@ -24,6 +24,10 @@ let brings action =
    given before it (tt-01's picked-up Rare Candy was counted twice, console B
    2026-11-24). *)
 let item_users = [ "give_bag_item"; "use_item" ]
+
+(* The Rare Candy actions need one candy at least; how many more a
+   [candy_level] eats depends on the member's level. *)
+let candy_users = [ "use_rare_candy"; "candy_level" ]
 let yen_per_coin = 20
 
 type acc = {
@@ -99,6 +103,7 @@ let game_action stocks ~where action args acc =
   let acc =
     if List.mem action item_users then
       Option.fold ~none:acc ~some:(use_item action acc) (named "item")
+    else if List.mem action candy_users then use_item action acc "rare-candy"
     else if action = "duplicate_item" then
       (* A round gives one Retro Mail and starts only with two on the row
          (Item_duplication.min_mail): count + 1 in the bag at the start. *)
