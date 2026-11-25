@@ -4,19 +4,20 @@
     {!Action_failed} through these and {!run} turns it into the story's outcome,
     so a flow reads as the list of its steps. *)
 
-exception Action_failed of Checkpoints_run.Failure.cause
+exception Action_failed of Pokemon_checkpoints.Failure.cause
 
 val fail : ?repeats:bool -> string -> string -> 'a
-(** Raises {!Action_failed} with [Checkpoints_run.Failure.cause code detail]. *)
+(** Raises {!Action_failed} with
+    [Pokemon_checkpoints.Failure.cause code detail]. *)
 
-val raise_error : (unit, Checkpoints_run.Failure.cause) result -> unit
+val raise_error : (unit, Pokemon_checkpoints.Failure.cause) result -> unit
 (** Raises {!Action_failed} with an [Error]'s cause; [Ok] does nothing. *)
 
 val probes : Wire.probe_spec list
 (** What the menu actions read: {!Scene_looks.probes}, the party and a member's
     menu, the bag and the money box. *)
 
-val run : (unit -> unit) -> (unit, Checkpoints_run.Failure.cause) result
+val run : (unit -> unit) -> (unit, Pokemon_checkpoints.Failure.cause) result
 (** Runs the body with {!probes} subscribed; [Error] with the cause it failed
     with. *)
 
@@ -66,7 +67,8 @@ val close_to_overworld : label:string -> log:(string -> unit) -> unit
 (** From the party, a member's menu or a summary, as the settle's [Menu_closed]
     rule closes it ({!Screen_state.Settle.rule}): B until the overworld shows
     with none of these menus, still for 0.5 s; not the talk's 5 s quiet, as no
-    text comes after a menu. Fails as its cause. *)
+    text comes after a menu. No B and no quiet while a menu's fade-in is still
+    coming up ([await_fade_in] of {!Scene_looks.settle}). Fails as its cause. *)
 
 val max_pages : int
 (** A presses {!answer_yes} gives the pages before the question must show: 8. *)

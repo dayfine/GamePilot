@@ -1,9 +1,9 @@
 open Frlg_readers
 
-exception Action_failed of Checkpoints_run.Failure.cause
+exception Action_failed of Pokemon_checkpoints.Failure.cause
 
 let fail ?repeats code detail =
-  raise (Action_failed (Checkpoints_run.Failure.cause ?repeats code detail))
+  raise (Action_failed (Pokemon_checkpoints.Failure.cause ?repeats code detail))
 
 let raise_error = function
   | Ok () -> ()
@@ -55,8 +55,8 @@ let party_menus m =
   || Option.is_some (Summary_screen.page m)
 
 let settle_menu_closed ~label ~log () =
-  Scene_looks.settle ~menu_open:party_menus Menu_closed ~label
-    ~battle_ends:false ~log
+  Scene_looks.settle ~menu_open:party_menus ~await_fade_in:true Menu_closed
+    ~label ~battle_ends:false ~log
 
 let close_to_overworld ~label ~log =
   raise_error

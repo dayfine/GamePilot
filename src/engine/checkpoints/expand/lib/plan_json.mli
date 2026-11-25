@@ -1,7 +1,7 @@
-(** A checkpoint plan's raw JSON, as the load-time rewriters ({!Place_routes},
-    and a game's own) read and rebuild it before the plan is decoded: field
-    access that never raises, and each event rewritten into the events it stands
-    for. *)
+(** A checkpoint plan's raw JSON, as the load-time rewriters (a game's, such as
+    Pokémon's place routes) read and rebuild it before the plan is decoded:
+    field access that never raises, and each event rewritten into the events it
+    stands for. *)
 
 type fields = (string * Yojson.Safe.t) list
 (** A JSON object's fields, in file order. *)

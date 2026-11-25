@@ -1,8 +1,12 @@
-module P = Checkpoints_plan.Plan
+module P = Pokemon_checkpoints.Plan
+module Postconditions = Pokemon_checkpoints.Postconditions
 
 type need = Plan_needs.need =
   | Party_in_order of string list
-  | Party_includes of { members : string list; slots : P.slot list }
+  | Party_includes of {
+      members : string list;
+      slots : Postconditions.slot list;
+    }
   | Member of { species : string; for_ : string }
   | Knows_move of { move : string; for_ : string }
   | Money_at_least of { amount : int; for_ : string }
@@ -22,7 +26,7 @@ let needs stocks ~before plan =
     (Plan_preconditions.needs plan)
 
 type read = {
-  observed : Checkpoints_run.Postcondition_check.observed;
+  observed : Pokemon_checkpoints.Postcondition_check.observed;
   place : Frlg_readers.Start_frame.difference option;
   members : Checkpoints_run.Room_policy.member list option;
   card : Frlg_readers.Trainer_card_front.t option;
@@ -50,10 +54,10 @@ let with_party (read : read) need test =
 
 let has members species = List.mem (Some species) members
 
-let in_slot members ({ slot; species } : P.slot) =
+let in_slot members ({ slot; species } : Postconditions.slot) =
   List.nth_opt members (slot - 1) = Some (Some species)
 
-let slot_text ({ slot; species } : P.slot) =
+let slot_text ({ slot; species } : Postconditions.slot) =
   Printf.sprintf "%s in slot %d" species slot
 
 let includes_text members slots =
@@ -211,7 +215,7 @@ let reads_card =
     | Badges_at_least _ | Badges _ | Hall_of_fame -> true
     | _ -> false)
 
-let to_read needs : P.postconditions =
+let to_read needs : Postconditions.t =
   let party =
     List.exists
       (function
@@ -234,11 +238,13 @@ let to_read needs : P.postconditions =
   {
     position = None;
     party =
-      (if party then Some (P.Party_includes { members = []; slots = [] })
+      (if party then
+         Some (Postconditions.Party_includes { members = []; slots = [] })
        else None);
     items =
       List.map
-        (fun bag_item -> { P.bag_item; count = Engine_promise.Count.Exactly 0 })
+        (fun bag_item ->
+          { Postconditions.bag_item; count = Engine_promise.Count.Exactly 0 })
         items;
     coins = None;
     money =

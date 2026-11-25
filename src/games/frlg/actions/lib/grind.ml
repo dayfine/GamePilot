@@ -7,7 +7,7 @@ type game_steps = {
   known_moves : slot:int -> string list;
   level : slot:int -> int option;
   swap : int -> int -> unit;
-  go_to : Checkpoints_plan.Pose.grid -> unit;
+  go_to : Pokemon_checkpoints.Pose.grid -> unit;
   heal : Grind_plan.heal -> unit;
   find_battle : unit -> unit;
   battle : Frlg_battle.Battle_script.t -> Frlg_battle.Scripted_battle.outcome;

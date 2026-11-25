@@ -1,8 +1,9 @@
 (** What a checkpoint promises, checked: one result per promise, passed, failed
     or not checked, with what was expected and read, and the log lines over
-    them. The game-agnostic half of {!Postcondition_check}, which keeps the
-    Pokémon half (party, moves, levels, marks) and the plan's types. Ported with
-    it from the fork's [check_postconditions()] and [postcondition_log_lines()]
+    them. The game-agnostic half, which a game's own checks build on (Pokémon's
+    party, moves, levels and marks, in its [Postcondition_check]). Ported with
+    those from the fork's [check_postconditions()] and
+    [postcondition_log_lines()]
     ([Pokemon/AutoStory/Pokemon_StoryPostconditionCheck.{h,cpp}], [frlg/lean]).
 
     A promise the game cannot read is not checked, never passed. Counts (items,

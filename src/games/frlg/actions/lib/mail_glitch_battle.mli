@@ -42,7 +42,7 @@ type plan = {
   step_direction : Grid_maps.Direction.t;
 }
 
-val decode : Json_field.obj -> (plan, Checkpoints_run.Failure.cause) result
+val decode : Json_field.obj -> (plan, Pokemon_checkpoints.Failure.cause) result
 (** Args ["knock_off_species"], ["recycle_species"], ["sweeper"],
     ["depleted_move"] (slugs) and ["step_direction"]. *)
 

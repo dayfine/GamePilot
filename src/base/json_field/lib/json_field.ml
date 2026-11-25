@@ -5,6 +5,7 @@ type obj = (string * Yojson.Safe.t) list
 let fail format =
   Printf.ksprintf (fun message -> raise (Invalid message)) format
 
+let catch read = try Ok (read ()) with Invalid message -> Error message
 let item_where where key i = Printf.sprintf "%s%s[%d]." where key i
 
 let as_object where : Yojson.Safe.t -> obj = function

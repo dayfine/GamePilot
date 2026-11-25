@@ -17,7 +17,7 @@ let args id event_id =
   let p = plan id in
   match
     List.find_opt
-      (fun (e : Checkpoints_plan.Plan.event) -> e.id = event_id)
+      (fun (e : Pokemon_checkpoints.Plan.event) -> e.id = event_id)
       p.checkpoint.events
   with
   | Some { kind = Game_action args; _ } -> args
@@ -48,7 +48,7 @@ let read party = Party_roster.of_read (List.map Option.some party)
 
 let slot_text = function
   | Ok n -> "slot " ^ string_of_int n
-  | Error c -> Checkpoints_run.Failure.cause_to_string c
+  | Error c -> Pokemon_checkpoints.Failure.cause_to_string c
 
 (* Fly's user through Fly's own decoding. *)
 let flyer save id event_id () =
@@ -109,7 +109,7 @@ let slots =
    not pick itself (Cut's user is the game's). *)
 let pickers id =
   List.filter_map
-    (fun (e : Checkpoints_plan.Plan.event) ->
+    (fun (e : Pokemon_checkpoints.Plan.event) ->
       match (e.kind, e.action) with
       | Game_action a, Some action when Action_args.picks_member ~action a ->
           Some e.id

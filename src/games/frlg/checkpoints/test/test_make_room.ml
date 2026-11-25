@@ -58,19 +58,19 @@ let plan () =
     }
   in
   match
-    Checkpoints_plan.Plan_decode.decode ~source:"00-make-room"
+    Pokemon_checkpoints.Plan_decode.decode ~source:"00-make-room"
       (Make_room.plan_json room)
   with
   | Error e -> "error: " ^ e
   | Ok p ->
       String.concat "; "
         (List.map
-           (fun (e : Checkpoints_plan.Plan.event) ->
+           (fun (e : Pokemon_checkpoints.Plan.event) ->
              e.id ^ " " ^ Option.value e.action ~default:"")
            p.checkpoint.events)
       ^ " | ends "
       ^ Option.fold ~none:"?"
-          ~some:(fun (g : Checkpoints_plan.Pose.grid) -> g.map)
+          ~some:(fun (g : Pokemon_checkpoints.Pose.grid) -> g.map)
           p.postconditions.position
       ^ " | party "
       ^ (match p.postconditions.party with
@@ -79,7 +79,7 @@ let plan () =
       ^ " | knows "
       ^ String.concat ", "
           (List.map
-             (fun (k : Checkpoints_plan.Plan.knows) ->
+             (fun (k : Pokemon_checkpoints.Postconditions.knows) ->
                k.species ^ " " ^ String.concat "+" k.moves)
              p.postconditions.knows)
 
