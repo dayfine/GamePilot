@@ -38,3 +38,5 @@ let yes_no_box m =
   && Battle_screen.teal_box m box_top_id
   && Battle_screen.teal_box m box_right_id
   && framed m
+
+let move_learn m = yes_no_box m && Battle_screen.player_box_left m

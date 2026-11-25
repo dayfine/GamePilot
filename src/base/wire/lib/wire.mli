@@ -1,10 +1,10 @@
-(** Wire protocol v1.4 (contracts/v1): message types and their JSON codec.
+(** Wire protocol v1.13 (protocol/v1): message types and their JSON codec.
 
     The codec lives in one module per message family ([Command], [Probe],
     [Backend], [Jsonrpc], [Wire_log], [Probe_images]); this module re-exports
     it.
 
-    One JSON object per line. The golden files in [contracts/v1] are the spec;
+    One JSON object per line. The golden files in [protocol/v1] are the spec;
     [test/test_wire.ml] decodes and re-encodes every one of them. *)
 
 type json = Yojson.Safe.t
@@ -26,13 +26,44 @@ type button = Command.button =
   | Down
   | R
   | L
+  | Home
+  | X
+  | Y
 
 val string_of_button : button -> string
 val button_of_string : string -> button option
 
+val switch_only : button -> bool
+(** [Home], [X] and [Y]: buttons only the Switch backend takes (v1.11). *)
+
+type stick = Command.stick
+(** A stick's tilt (x, y) in -1..1: +x right, +y up (v1.12). *)
+
+val stick : float -> float -> (stick, string) result
+(** [stick x y]; an error when [x] or [y] is outside -1..1 or not a number. *)
+
 type command = Command.command =
-  | Press of { buttons : button list; hold_ms : int; cooldown_ms : int }
+  | Press of {
+      buttons : button list;
+      left_stick : stick option;
+      right_stick : stick option;
+      hold_ms : int;
+      cooldown_ms : int;
+    }
+      (** [buttons] held and the sticks tilted for [hold_ms], then all released
+          and centred for [cooldown_ms]; a stick left out ([None]) is centred
+          (sticks: v1.12, the Switch only). *)
   | Wait of { wait_ms : int }
+
+val press :
+  ?left_stick:stick ->
+  ?right_stick:stick ->
+  hold_ms:int ->
+  cooldown_ms:int ->
+  button list ->
+  command
+(** [press ~hold_ms ~cooldown_ms buttons] is a {!Press}; each stick is centred
+    ([None]) unless given. Build presses with this rather than the record. *)
 
 type box = Probe.box = { x : float; y : float; w : float; h : float }
 (** Normalized, 0..1. A probe's box is relative to the game picture (the [hello]
@@ -52,12 +83,14 @@ type probe_spec = Probe.probe_spec = {
   box : box;
   delivery : delivery;
   template : string option;
-      (** [core.template_match@1] only: the hash [probe.upload_template]
-          returned on this connection. *)
+      (** [core.template_match@1] and [core.find@1] only: the hash
+          [probe.upload_template] returned on this connection. *)
   ink : color_range option;
       (** [core.template_match@1] only: compare the masks of the pixels in this
           range instead of the colors. *)
   color_range : color_range option;  (** [core.color_count@1] only *)
+  test : Line_shares.test;  (** [core.line_shares@1] only; else [[]] *)
+  find : Blob_find.params option;  (** [core.find@1] only *)
 }
 (** [kind] is an open set, e.g. ["core.color_stats@1"]. Programs build specs
     with the constructors below. *)
@@ -91,6 +124,33 @@ val color_count_probe :
 (** [core.color_count@1]: the share of [box]'s pixels whose every channel lies
     in [min..max] (inclusive), and their mean color. *)
 
+module Line_shares = Line_shares
+(** [core.line_shares@1]'s pixel test and result. *)
+
+module Blob_find = Blob_find
+(** [core.find@1]'s params and blobs. *)
+
+val line_shares_probe :
+  id:string ->
+  box:box ->
+  delivery:delivery ->
+  test:Line_shares.test ->
+  (probe_spec, string) result
+(** [core.line_shares@1]: the share of [box]'s pixels passing every comparison
+    of [test], per row and per column of the box's frame pixels; [Error] for an
+    empty test. *)
+
+val find_probe :
+  ?template:string ->
+  id:string ->
+  box:box ->
+  delivery:delivery ->
+  Blob_find.params ->
+  probe_spec
+(** [core.find@1]: the blobs in [box] that pass the params' filters, with the
+    scores they ask for; [template] (an uploaded hash, used at its own size with
+    its alpha) asks for each blob's [score]. *)
+
 type rgb = Probe.rgb = { r : float; g : float; b : float }
 
 (** Decoded by the result's [kind] field, not by its shape. *)
@@ -104,6 +164,12 @@ type probe_result = Probe.probe_result =
   | Color_count of { fraction : float; mean : rgb option }
       (** [core.color_count@1]: pixels in range over pixels in the box, and the
           mean of those in range ([None] when there are none). *)
+  | Line_shares of Line_shares.t
+      (** [core.line_shares@1]: each row's and each column's share of the box's
+          pixels passing the probe's test. *)
+  | Find of { blobs : Blob_find.blob list }
+      (** [core.find@1]: the blobs that passed the probe's filters, with the
+          scores its params asked for; [[]] when none did. *)
   | Other of json  (** a kind this side does not know yet, kept verbatim *)
 
 type frame = Probe.frame = {
@@ -171,6 +237,11 @@ type call = Jsonrpc.call =
       (** probe ids; the daemon stops measuring them *)
   | Submit of { batch_id : string; commands : command list }
   | Cancel
+  | Status  (** the daemon's health; served to every client *)
+  | Lease_acquire of { owner : string; ttl_ms : int option }
+      (** takes the input lease for this connection, or renews it; [ttl_ms]
+          defaults to the daemon's (60 s) *)
+  | Lease_release
 
 type request = Jsonrpc.request = { id : int; call : call }
 
@@ -184,6 +255,23 @@ type notification = Jsonrpc.notification =
           daemon took the frame. Session bookkeeping, not a measurement, so it
           stays out of {!frame}. *)
   | Batch_done of batch_done
+  | Watch_plan of Watch.plan
+      (** From the program: its checkpoint's events and their states, for the
+          watch page. The daemon keeps it off the wire log. *)
+  | Watch_log of string
+      (** From the program: one story log line, for the watch page; off the wire
+          log too. *)
+  | Watch_run of Watch_run.t
+      (** From the program: the chain of checkpoints it runs and the current
+          one's trials, for the watch page; off the wire log too. *)
+  | Stop of string
+      (** From the daemon: someone pressed Stop on the watch page (the reason).
+          The daemon has already cancelled the queued commands and released
+          every button; the program ends at its next wait. *)
+  | Keepawake of { key : string; idle_ms : int }
+      (** In the wire log only (a [Daemon] line), never sent: the daemon pressed
+          [key] to keep the console awake after [idle_ms] with no input
+          (daemon/src/keep_awake.h). *)
 
 type message = Jsonrpc.message =
   | Request of request
@@ -236,15 +324,34 @@ val cancel_result_of_json : json -> int
 
 val json_of_cancel_result : int -> json
 
+module Watch = Watch
+
+module Watch_run = Watch_run
+(** The watch page's plan and log notifications. *)
+
+module Watch_registry = Watch_registry
+(** The registry of live watch pages ([gamepilot runs]). *)
+
+module Daemon_status = Daemon_status
+(** The [status] result: decode it with [Daemon_status.of_json]. *)
+
+module Lease = Lease
+(** The input lease: [lease.acquire] and [lease.release] results, refusals. *)
+
 (** {1 Wire log} *)
 
 type direction = Wire_log.direction =
   | In  (** from the client *)
   | Out  (** to the client *)
+  | Daemon
+      (** the daemon's own act, sent to no one: its keep-awake press. Replay
+          skips it. *)
 
 type log_line = Wire_log.log_line = {
   dir : direction;
   t_ms : float;
+  conn : int option;
+  owner : string option;
   msg : message;
 }
 

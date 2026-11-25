@@ -78,6 +78,15 @@ let boxes : (string * Wire.box) list =
       { x = 0.626282; y = 0.393492; w = 0.341026; h = 0.006175 } );
     ( "battle.level_up.right",
       { x = 0.967949; y = 0.401923; w = 0.003846; h = 0.550962 } );
+    (* A double battle's two HP boxes on the player's side, measured on an
+       mGBA frame of Lea & Jed's defeat text (mg-05 testing 1), in 240x160
+       pixels: the upper box's dark top edge (y 62) and a blank row of its
+       body (y 74), x 144-216; the lower box's dark bottom edge (y 110) and a
+       blank body row (y 100), x 160-226. *)
+    ("battle.ally1.top", { x = 0.6; y = 0.3875; w = 0.3; h = 0.00625 });
+    ("battle.ally1.body", { x = 0.6; y = 0.4625; w = 0.3; h = 0.00625 });
+    ("battle.ally2.bottom", { x = 0.666667; y = 0.6875; w = 0.275; h = 0.00625 });
+    ("battle.ally2.body", { x = 0.666667; y = 0.625; w = 0.275; h = 0.00625 });
     (* Measured on an mGBA double battle's move menu, in 240x160 pixels: the
        moves box's top rows (x 10-150, y 118-121), the PP box's (x 168-228),
        and the dark frame between them (x 158-161, y 112-157). *)
@@ -145,12 +154,15 @@ let sand_or_white ~sand s =
 let plain_background m id ~sand =
   holds m id (fun s -> not (sand_or_white ~sand s))
 
-let player_box m =
+let player_box_left m =
   edge m "battle.player.left" ~light:true
-  && edge m "battle.player.right" ~light:false
-  && edge m "battle.player.top" ~light:true
   && edge m "battle.player.bottom" ~light:false
   && plain_background m "battle.player.background" ~sand:player_sand
+
+let player_box m =
+  player_box_left m
+  && edge m "battle.player.right" ~light:false
+  && edge m "battle.player.top" ~light:true
 
 let foe_box m =
   edge m "battle.foe.left" ~light:true
@@ -159,7 +171,22 @@ let foe_box m =
   && edge m "battle.foe.bottom" ~light:false
   && plain_background m "battle.foe.background" ~sand:foe_sand
 
-let hp_box m = player_box m || foe_box m
+(* The boxes' edge is a dark olive ((33, 57, 0) on mGBA), a channel sum near
+   90; their body a pale cream ((255, 255, 222)). *)
+let ally_edge_max_sum = 150.
+
+let ally_edge m id =
+  holds m id (fun s ->
+      Solid_color.sum s.mean <= ally_edge_max_sum
+      && Solid_color.sum s.stddev <= edge_stddev)
+
+let ally_box m ~edge ~body = ally_edge m edge && white m body
+
+let ally_boxes m =
+  ally_box m ~edge:"battle.ally1.top" ~body:"battle.ally1.body"
+  || ally_box m ~edge:"battle.ally2.bottom" ~body:"battle.ally2.body"
+
+let hp_box m = player_box m || foe_box m || ally_boxes m
 
 (* The slate is a mid grey, a channel sum near 375; like the teal, its hue
    test alone takes near white (the purified zone's fade read as a level-up

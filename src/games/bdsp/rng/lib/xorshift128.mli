@@ -62,9 +62,10 @@ val bdsp_gen_transform : int -> int
 module Window : sig
   type window
 
-  val create : size:int -> t -> window
-  (** Fills [size] outputs (a power of two) from a copy of the generator. Raises
-      [Invalid_argument] for any other size. *)
+  val create : size_bits:int -> t -> window
+  (** Fills [2^size_bits] outputs from a copy of the generator. The C++ takes
+      the size as a template argument and rejects one that is not a power of two
+      at compile time; taking its exponent keeps every size a power of two. *)
 
   val next_raw : window -> int
   val next_gen : window -> int

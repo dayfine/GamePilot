@@ -26,8 +26,10 @@ type t
 val dimension : int
 (** 128. *)
 
-val of_rows : vec array -> t
-(** Raises [Invalid_argument] unless there are {!dimension} rows. *)
+val init : (int -> vec) -> t
+(** [init row] is the matrix whose row [r] is [row r], for [r] from 0 to
+    {!dimension} - 1. Taking a function instead of an array means a matrix
+    always has {!dimension} rows, as the C++ [std::array] does. *)
 
 val row : t -> int -> vec
 val identity : t
@@ -59,8 +61,10 @@ type solution = {
 }
 (** [Gf2SolveResult]; its [null_space_dimension] is the basis's length. *)
 
-val solve : vec array -> bool array -> solution
-(** [solve equations constants] solves [equations * x = constants] over GF(2) by
-    Gauss-Jordan elimination, pivoting on the first row with the column set
-    ([gf2_solve_128]). Any number of rows; more than 128 is normal. Raises
-    [Invalid_argument] when the two arrays differ in length. *)
+val solve : (vec * bool) array -> solution
+(** [solve equations] solves the system whose equations are each a coefficient
+    row and its constant ([row . x = constant]) over GF(2) by Gauss-Jordan
+    elimination, pivoting on the first row with the column set
+    ([gf2_solve_128]). Any number of rows; more than 128 is normal. The C++
+    takes the rows and constants as two vectors and throws when their lengths
+    differ; pairing them makes that impossible. *)

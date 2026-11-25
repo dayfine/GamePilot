@@ -1,0 +1,7 @@
+(test
+ (name test_watch_report)
+ (libraries
+  gamepilot.table_test
+  gamepilot.wire
+  gamepilot.effects
+  gamepilot.watch_report))

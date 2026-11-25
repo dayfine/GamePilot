@@ -152,7 +152,8 @@ let build inputs =
       Printf.sprintf "ok %d%s\n  solve %s" (List.length samples)
         (List.filter (fun (s : State_solver.blink_sample) -> s.blinked) samples
         |> List.map sample_text |> String.concat "")
-        (npc_result_text (State_solver.solve_state_from_samples samples))
+        (npc_result_text
+           (Result.get_ok (State_solver.solve_state_from_samples samples)))
 
 let anchor inputs =
   let period_seconds, slots, streams = placement inputs in
@@ -182,4 +183,4 @@ let () =
   check "build_samples" build;
   check "anchor" anchor;
   check "step_anchor" step_anchor;
-  Case_table.finish ()
+  Table_test.finish ()

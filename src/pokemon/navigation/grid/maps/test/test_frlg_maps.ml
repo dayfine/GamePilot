@@ -4,6 +4,7 @@
    button). *)
 
 open Grid_maps
+open Grid_geometry
 open Map_gates
 
 (* third_party/ sits outside the dune project, so find it from the build
@@ -146,13 +147,40 @@ let walk_north_onto_route_1 () =
         ((Connected_maps.map world map).name ^ " " ^ Tile_pos.to_string tile)
   | None -> Error "nowhere"
 
+(* Route 6's hidden items by flag and tile, and the Game Corner's clerk by the
+   decompilation's script name. *)
+let hidden_items_and_scripts () =
+  let route6 = load "Route6" and corner = load "CeladonCity_GameCorner" in
+  let hidden =
+    List.map
+      (fun (h : Map_features.hidden_item) ->
+        h.hidden_flag ^ " " ^ Tile_pos.to_string h.hidden_pos)
+      route6.hidden_items
+  in
+  let clerk =
+    List.find_map
+      (fun (o : Map_features.map_object) ->
+        if o.script = Some "CeladonCity_GameCorner_EventScript_CoinsClerk" then
+          Some (Tile_pos.to_string o.object_pos)
+        else None)
+      corner.objects
+  in
+  Check.equal "hidden items and the coins clerk"
+    ~expected:
+      "FLAG_HIDDEN_ITEM_ROUTE6_SITRUS_BERRY (5, 5), \
+       FLAG_HIDDEN_ITEM_ROUTE6_RARE_CANDY (19, 5); clerk (6, 2)"
+    (String.concat ", " hidden ^ "; clerk "
+    ^ Option.value ~default:"missing" clerk)
+
 let () =
-  Case_table.report "every FRLG runtime map parses" (all_parse maps_dir);
-  Case_table.report "every BDSP runtime map parses"
+  Table_test.report "every FRLG runtime map parses" (all_parse maps_dir);
+  Table_test.report "every BDSP runtime map parses"
     (all_parse (maps_dir_of "bdsp"));
   List.iter
     (Map_text.run_case ~read_map:(Map_file.load_runtime ~maps_dir))
     cases;
-  Case_table.report "north out of Pallet Town onto Route 1"
+  Table_test.report "north out of Pallet Town onto Route 1"
     (walk_north_onto_route_1 ());
-  Case_table.finish ()
+  Table_test.report "hidden items by flag, objects by script"
+    (hidden_items_and_scripts ());
+  Table_test.finish ()

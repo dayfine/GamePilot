@@ -1,0 +1,4 @@
+(library
+ (name engine_series)
+ (public_name gamepilot.engine_series)
+ (libraries gamepilot.wire gamepilot.engine_run))

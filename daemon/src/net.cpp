@@ -1,5 +1,6 @@
 #include "net.h"
 
+#include <cerrno>
 #include <stdexcept>
 
 #ifdef _WIN32
@@ -7,6 +8,7 @@
 #include <ws2tcpip.h>
 #else
 #include <arpa/inet.h>
+#include <fcntl.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <poll.h>
@@ -102,6 +104,28 @@ bool Socket::send_all(const std::string& data) {
   return true;
 }
 
+std::optional<std::size_t> Socket::send_some(const char* data,
+                                             std::size_t size) {
+#ifdef _WIN32
+  const int n = ::send(native(handle_), data,
+                       static_cast<int>(size > 1u << 30 ? 1u << 30 : size), 0);
+  const bool would_block = n < 0 && WSAGetLastError() == WSAEWOULDBLOCK;
+#elif defined(MSG_NOSIGNAL)
+  const auto n = ::send(native(handle_), data, size, MSG_NOSIGNAL);
+  const bool would_block = n < 0 && (errno == EAGAIN || errno == EWOULDBLOCK);
+#else
+  const auto n = ::send(native(handle_), data, size, 0);
+  const bool would_block = n < 0 && (errno == EAGAIN || errno == EWOULDBLOCK);
+#endif
+  if (would_block) {
+    return 0;
+  }
+  if (n <= 0) {
+    return std::nullopt;
+  }
+  return static_cast<std::size_t>(n);
+}
+
 std::optional<std::string> Socket::receive_some() {
   char buffer[4096];
 #ifdef _WIN32
@@ -116,6 +140,25 @@ std::optional<std::string> Socket::receive_some() {
   return std::string(buffer, static_cast<std::size_t>(n));
 }
 
+std::optional<std::size_t> Socket::receive_some(char* data,
+                                                std::size_t size) {
+#ifdef _WIN32
+  const int n = ::recv(native(handle_), data,
+                       static_cast<int>(size > 1u << 30 ? 1u << 30 : size), 0);
+  const bool would_block = n < 0 && WSAGetLastError() == WSAEWOULDBLOCK;
+#else
+  const auto n = ::recv(native(handle_), data, size, 0);
+  const bool would_block = n < 0 && (errno == EAGAIN || errno == EWOULDBLOCK);
+#endif
+  if (would_block) {
+    return 0;
+  }
+  if (n <= 0) {
+    return std::nullopt;
+  }
+  return static_cast<std::size_t>(n);
+}
+
 void init_sockets() {
 #ifdef _WIN32
   static const bool started = [] {
@@ -128,25 +171,95 @@ void init_sockets() {
 #endif
 }
 
-Socket listen_local(std::uint16_t port) {
+Socket listen_tcp(const std::string& address, std::uint16_t port) {
+  sockaddr_in bound{};
+  bound.sin_family = AF_INET;
+  bound.sin_port = htons(port);
+  if (inet_pton(AF_INET, address.c_str(), &bound.sin_addr) != 1) {
+    throw std::runtime_error("not an IPv4 address: " + address);
+  }
   const NativeSocket socket = ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
   if (socket == kNativeInvalid) {
     throw std::runtime_error("socket() failed");
   }
   Socket result(wrap(socket));
   int one = 1;
+#ifdef _WIN32
+  // Windows' SO_REUSEADDR lets a second socket bind a port in use; this
+  // option refuses that, as bind does elsewhere.
+  setsockopt(socket, SOL_SOCKET, SO_EXCLUSIVEADDRUSE,
+             reinterpret_cast<const char*>(&one), sizeof(one));
+#else
+  // Rebind at once after a restart, past the old socket's TIME_WAIT.
   setsockopt(socket, SOL_SOCKET, SO_REUSEADDR,
              reinterpret_cast<const char*>(&one), sizeof(one));
-  const sockaddr_in address = loopback(port);
-  if (::bind(socket, reinterpret_cast<const sockaddr*>(&address),
-             sizeof(address)) != 0) {
-    throw std::runtime_error("cannot bind 127.0.0.1:" + std::to_string(port));
+#endif
+  const std::string where = address + ":" + std::to_string(port);
+  if (::bind(socket, reinterpret_cast<const sockaddr*>(&bound),
+             sizeof(bound)) != 0) {
+    throw std::runtime_error("cannot bind " + where);
   }
-  if (::listen(socket, 4) != 0) {
-    throw std::runtime_error("cannot listen on 127.0.0.1:" +
-                             std::to_string(port));
+  if (::listen(socket, 8) != 0) {
+    throw std::runtime_error("cannot listen on " + where);
   }
   return result;
+}
+
+Socket listen_local(std::uint16_t port) {
+  return listen_tcp("127.0.0.1", port);
+}
+
+std::uint16_t local_port(const Socket& socket) {
+  sockaddr_in address{};
+#ifdef _WIN32
+  int size = sizeof(address);
+#else
+  socklen_t size = sizeof(address);
+#endif
+  if (getsockname(native(socket.handle()),
+                  reinterpret_cast<sockaddr*>(&address), &size) != 0) {
+    return 0;
+  }
+  return ntohs(address.sin_port);
+}
+
+bool peer_is_loopback(const Socket& socket) {
+  sockaddr_in address{};
+#ifdef _WIN32
+  int size = sizeof(address);
+#else
+  socklen_t size = sizeof(address);
+#endif
+  if (getpeername(native(socket.handle()),
+                  reinterpret_cast<sockaddr*>(&address), &size) != 0 ||
+      address.sin_family != AF_INET) {
+    return false;
+  }
+  constexpr std::uint32_t kLoopbackNet = 0x7f000000;  // 127.0.0.0/8
+  constexpr std::uint32_t kNetMask = 0xff000000;
+  return (ntohl(address.sin_addr.s_addr) & kNetMask) == kLoopbackNet;
+}
+
+void set_send_timeout(const Socket& socket, int ms) {
+#ifdef _WIN32
+  const DWORD timeout = static_cast<DWORD>(ms);
+#else
+  timeval timeout{};
+  timeout.tv_sec = ms / 1000;
+  timeout.tv_usec = (ms % 1000) * 1000;
+#endif
+  setsockopt(native(socket.handle()), SOL_SOCKET, SO_SNDTIMEO,
+             reinterpret_cast<const char*>(&timeout), sizeof(timeout));
+}
+
+void set_nonblocking(const Socket& socket) {
+#ifdef _WIN32
+  u_long on = 1;
+  ioctlsocket(native(socket.handle()), FIONBIO, &on);
+#else
+  const int flags = fcntl(native(socket.handle()), F_GETFL, 0);
+  fcntl(native(socket.handle()), F_SETFL, flags | O_NONBLOCK);
+#endif
 }
 
 Socket accept_client(const Socket& listener) {
@@ -183,25 +296,28 @@ Socket connect_local(std::uint16_t port) {
   return result;
 }
 
-std::vector<bool> poll_readable(const std::vector<const Socket*>& sockets,
-                                int timeout_ms) {
+std::vector<PollReady> poll_sockets(const std::vector<PollWant>& wants,
+                                    int timeout_ms) {
 #ifdef _WIN32
   std::vector<WSAPOLLFD> fds;
 #else
   std::vector<pollfd> fds;
 #endif
   std::vector<std::size_t> index;
-  for (std::size_t i = 0; i < sockets.size(); i++) {
-    if (sockets[i] != nullptr && sockets[i]->valid()) {
+  for (std::size_t i = 0; i < wants.size(); i++) {
+    const PollWant& want = wants[i];
+    if (want.socket != nullptr && want.socket->valid() &&
+        (want.read || want.write)) {
       fds.push_back({});
-      fds.back().fd = native(sockets[i]->handle());
-      fds.back().events = POLLIN;
+      fds.back().fd = native(want.socket->handle());
+      fds.back().events = static_cast<short>((want.read ? POLLIN : 0) |
+                                             (want.write ? POLLOUT : 0));
       index.push_back(i);
     }
   }
-  std::vector<bool> readable(sockets.size(), false);
+  std::vector<PollReady> ready(wants.size());
   if (fds.empty()) {
-    return readable;
+    return ready;
   }
 #ifdef _WIN32
   const int n = WSAPoll(fds.data(), static_cast<ULONG>(fds.size()), timeout_ms);
@@ -209,12 +325,26 @@ std::vector<bool> poll_readable(const std::vector<const Socket*>& sockets,
   const int n = ::poll(fds.data(), static_cast<nfds_t>(fds.size()), timeout_ms);
 #endif
   if (n <= 0) {
-    return readable;
+    return ready;
   }
   for (std::size_t k = 0; k < fds.size(); k++) {
-    if ((fds[k].revents & (POLLIN | POLLHUP | POLLERR)) != 0) {
-      readable[index[k]] = true;
-    }
+    const auto events = fds[k].revents;
+    ready[index[k]].readable = (events & (POLLIN | POLLHUP | POLLERR)) != 0;
+    ready[index[k]].writable = (events & (POLLOUT | POLLERR)) != 0;
+  }
+  return ready;
+}
+
+std::vector<bool> poll_readable(const std::vector<const Socket*>& sockets,
+                                int timeout_ms) {
+  std::vector<PollWant> wants;
+  for (const Socket* socket : sockets) {
+    wants.push_back(PollWant{socket, true, false});
+  }
+  const std::vector<PollReady> ready = poll_sockets(wants, timeout_ms);
+  std::vector<bool> readable(sockets.size(), false);
+  for (std::size_t i = 0; i < ready.size(); i++) {
+    readable[i] = ready[i].readable;
   }
   return readable;
 }

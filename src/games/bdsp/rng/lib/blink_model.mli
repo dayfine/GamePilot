@@ -10,7 +10,7 @@
     clang build does, and so would ocamlopt), which can move the result by one
     ulp; this port keeps the products separate. Rolls are 32-bit values held in
     an OCaml [int]; floats are IEEE doubles as in the C++. Precondition failures
-    raise [Invalid_argument] where the C++ throws [InternalProgramError]. *)
+    return [Error] where the C++ throws [InternalProgramError]. *)
 
 val npc_tick_seconds : float
 (** 1.017: seconds per NPC tick, one advance per NPC. *)
@@ -53,7 +53,11 @@ type blink_tick = { blinked : bool; blink_type : blink_type }
 (** [blink_type] means something only when [blinked]. *)
 
 val generate_blink_ticks :
-  Xorshift128.state -> ticks:int -> npcs:int -> slot:int -> blink_tick list
+  Xorshift128.state ->
+  ticks:int ->
+  npcs:int ->
+  slot:int ->
+  (blink_tick list, string) result
 (** One NPC's blinks over [ticks] ticks, when [npcs] NPCs each take one advance
-    per tick and the watched one is at [slot] in that order. Raises
-    [Invalid_argument] when [npcs = 0] or [slot >= npcs]. *)
+    per tick and the watched one is at [slot] in that order. [Error] when
+    [npcs = 0] or [slot >= npcs]. *)

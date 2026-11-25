@@ -13,10 +13,21 @@ let parse_line (n, s) =
   | exception Wire.Decode_error e ->
       raise (Wire.Decode_error (Printf.sprintf "wire log line %d: %s" n e))
 
+(* The program's connection: the one of the log's first client line. Other
+   clients' lines (a [gamepilot ctl] reading the screen) are not the
+   program's. *)
+let program_lines (lines : (int * Wire.log_line) list) =
+  match List.find_opt (fun (_, (l : Wire.log_line)) -> l.dir = In) lines with
+  | None -> lines
+  | Some (_, first) ->
+      List.filter
+        (fun (_, (l : Wire.log_line)) -> l.dir = Daemon || l.conn = first.conn)
+        lines
+
 let log_of_lines lines =
   List.mapi (fun i s -> (i + 1, String.trim s)) lines
   |> List.filter (fun (_, s) -> s <> "")
-  |> List.map parse_line |> Array.of_list
+  |> List.map parse_line |> program_lines |> Array.of_list
 
 let log_of_file path =
   log_of_lines
@@ -25,15 +36,23 @@ let log_of_file path =
 
 let diverge fmt = Printf.ksprintf (fun s -> raise (Divergence s)) fmt
 
+let describe_stick name = function
+  | None -> ""
+  | Some (stick : Wire.stick) ->
+      let x, y = (stick :> float * float) in
+      Printf.sprintf " %s %g,%g" name x y
+
+let describe_command = function
+  | Wire.Press { buttons; left_stick; right_stick; hold_ms; cooldown_ms } ->
+      Printf.sprintf "press %s%s%s hold %d cooldown %d"
+        (String.concat "+" (List.map Wire.string_of_button buttons))
+        (describe_stick "left" left_stick)
+        (describe_stick "right" right_stick)
+        hold_ms cooldown_ms
+  | Wire.Wait { wait_ms } -> Printf.sprintf "wait %d" wait_ms
+
 let describe_commands commands =
-  let one = function
-    | Wire.Press { buttons; hold_ms; cooldown_ms } ->
-        Printf.sprintf "press %s hold %d cooldown %d"
-          (String.concat "+" (List.map Wire.string_of_button buttons))
-          hold_ms cooldown_ms
-    | Wire.Wait { wait_ms } -> Printf.sprintf "wait %d" wait_ms
-  in
-  "[" ^ String.concat "; " (List.map one commands) ^ "]"
+  "[" ^ String.concat "; " (List.map describe_command commands) ^ "]"
 
 let describe = function
   | Wire.Request { id; call } ->
@@ -99,7 +118,16 @@ type cursor = {
 
 let next_client_message r = find_from r.log r.next_in (is_dir Wire.In)
 
-let send r actual =
+(* The program's watch notifications are not in the wire log (the daemon keeps
+   them out), so the replay drops them too. *)
+let rec send r actual =
+  match actual with
+  | Wire.Notification (Wire.Watch_plan _ | Wire.Watch_log _ | Wire.Watch_run _)
+    ->
+      ()
+  | _ -> send_logged r actual
+
+and send_logged r actual =
   r.ran_out <- false;
   match next_client_message r with
   | None ->
@@ -144,11 +172,11 @@ let transport r : Session.transport =
     wall_ms = (fun () -> if r.ran_out then infinity else 0.);
   }
 
-let run log f =
+let run_with_backend log f =
   let r =
     { log; next_in = 0; next_out = 0; ran_out = false; timed_out = false }
   in
-  let result = Session.run (transport r) f in
+  let result = Session.run_with_backend (transport r) f in
   (match next_client_message r with
   | Some i when not r.timed_out ->
       let n, l = log.(i) in
@@ -156,3 +184,5 @@ let run log f =
         (describe l.msg)
   | Some _ | None -> ());
   result
+
+let run log f = run_with_backend log (fun (_ : Wire.backend) -> f ())

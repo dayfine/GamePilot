@@ -95,5 +95,5 @@ let bdsp =
   }
 
 let () =
-  List.iter (fun case -> Case_table.report case.name (run case)) [ frlg; bdsp ];
-  Case_table.finish ()
+  List.iter (fun case -> Table_test.report case.name (run case)) [ frlg; bdsp ];
+  Table_test.finish ()

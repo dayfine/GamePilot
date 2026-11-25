@@ -13,12 +13,20 @@ let outcome = function
 
 let tap b =
   ignore
-    (Effects.submit
-       [ Wire.Press { buttons = [ b ]; hold_ms = 80; cooldown_ms = 240 } ]
+    (Effects.submit [ Wire.press ~hold_ms:80 ~cooldown_ms:240 [ b ] ]
       : Wire.batch_done)
 
-let party_to ?(input_delay_ms = 0) ~from slot () =
-  let screen = S.create ~input_delay_ms () in
+let unread_at_ms = 330
+
+(* After each tap, a frame the reader cannot read (a capture glitch, a fade)
+   and then the screen as it was, before the tap's move shows. *)
+let unread_frame_after_tap screen (p : S.press) =
+  let before = S.screen_at screen p.at_ms in
+  S.show screen ~at_ms:(p.at_ms + unread_at_ms) S.Black;
+  S.show screen ~at_ms:(p.at_ms + unread_at_ms + 2) before
+
+let party_to ?(input_delay_ms = 0) ?capture_latencies_ms ?react ~from slot () =
+  let screen = S.create ~input_delay_ms ?capture_latencies_ms ?react () in
   S.show screen ~at_ms:0 (S.Party from);
   let result =
     S.run screen (fun () ->
@@ -26,10 +34,10 @@ let party_to ?(input_delay_ms = 0) ~from slot () =
   in
   Printf.sprintf "%s; %s" (outcome result) (S.presses_text screen)
 
-let case name input expectation = { Case_table.name; input; expectation }
+let case name input expectation = { Table_test.name; input; expectation }
 
 let () =
-  Case_table.run "cursor_steps"
+  Table_test.run "cursor_steps"
     [
       case "already there: nothing pressed" (party_to ~from:2 2) "reached; ";
       case "down from the remembered slot" (party_to ~from:2 5)
@@ -38,6 +46,17 @@ let () =
       case "a tap the list drops while it slides in is tapped again"
         (party_to ~input_delay_ms:300 ~from:5 6)
         "reached; down x2";
+      case
+        "console B's capture shows a move 160 or 335 ms after its tap: one tap \
+         per row (2026-11-23)"
+        (party_to ~capture_latencies_ms:[ 160; 335 ] ~from:2 5)
+        "reached; down x3";
+      case
+        "an unread frame between a tap and its move is not a move: one tap per \
+         row"
+        (party_to ~capture_latencies_ms:[ 400 ] ~react:unread_frame_after_tap
+           ~from:2 5)
+        "reached; down x3";
       case "no party: unread, nothing pressed"
         (fun () ->
           let screen = S.create () in

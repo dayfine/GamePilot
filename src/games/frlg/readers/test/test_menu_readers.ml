@@ -1,11 +1,16 @@
 (* The FRLG menu readers on real screenshots: Switch captures (CommandLineTests
-   and console B) and native mGBA frames from the lab. The fixtures are the
+   and our own) and native mGBA frames. The fixtures are the
    daemon's [probe_images] output, as for test_screen_readers.ml: run
    [regen_fixtures.sh menus], which reads menus.switch.map and menus.mgba.map.
    Each image's name carries what it shows after "__", dash-separated:
 
      startN        the Start menu, its cursor on row N (0 at the top)
      bag           the bag; items, keyitems, balls its pocket; rowN its cursor
+     maileditor    the Easy Chat mail editor
+     mailyes, mailno  its Yes/No, the arrow on YES or NO
+     itemmenu      an item's own menu (USE or CHECK, GIVE, TOSS, CANCEL) over
+                   the bag
+     pouch         the Berry Pouch
      party         the party menu (its message box not covered)
      slotN         slot N (1-6) selected        membersN  N slots filled
      heldN, mailN  slot N's sprite carries the held-item or the mail icon
@@ -14,6 +19,9 @@
      moverowN      a move being picked on the summary's move list, row N
      memberN       a member's menu over the party, its cursor on row N (0 is
                    SUMMARY at the top)
+     levelupN      a Rare Candy's level-up stats window on page N
+     partyyesno    the party menu's YES/NO box (a move to delete, or to stop
+                   teaching)
      jpn           a Japanese game (the icons sit elsewhere: marks not read)
      none          none of these
 
@@ -95,6 +103,12 @@ let screen_readers =
       expected = tagged "bag";
     };
     {
+      reader = "bag_item_menu";
+      applies = everywhere;
+      verdict = flag Bag_screen.item_menu;
+      expected = tagged "itemmenu";
+    };
+    {
       reader = "party_menu";
       applies = everywhere;
       verdict = flag Party_menu.party_menu;
@@ -105,6 +119,12 @@ let screen_readers =
       applies = everywhere;
       verdict = (fun m -> optional (Summary_screen.page m));
       expected = (fun tags -> optional (numbered "summary" tags));
+    };
+    {
+      reader = "berry_pouch";
+      applies = everywhere;
+      verdict = flag Berry_pouch_screen.berry_pouch;
+      expected = tagged "pouch";
     };
     {
       reader = "money_box";
@@ -119,6 +139,18 @@ let screen_readers =
       expected = (fun tags -> optional (numbered "moverow" tags));
     };
     {
+      reader = "party_level_up_page";
+      applies = everywhere;
+      verdict = (fun m -> optional (Party_dialogs.level_up_page m));
+      expected = (fun tags -> optional (numbered "levelup" tags));
+    };
+    {
+      reader = "party_yes_no";
+      applies = everywhere;
+      verdict = flag Party_dialogs.move_learn_box;
+      expected = tagged "partyyesno";
+    };
+    {
       reader = "member_menu_row";
       applies = everywhere;
       verdict = (fun m -> optional (Member_menu.cursor_row m));
@@ -128,6 +160,23 @@ let screen_readers =
 
 let inner_readers =
   [
+    {
+      reader = "mail_editor_yes_no";
+      applies =
+        (fun tags ->
+          has "maileditor" tags || has "mailyes" tags || has "mailno" tags);
+      verdict =
+        (fun m ->
+          match Mail_editor.confirm_arrow m with
+          | Some true -> "yes"
+          | Some false -> "no"
+          | None -> "none");
+      expected =
+        (fun tags ->
+          if has "mailyes" tags then "yes"
+          else if has "mailno" tags then "no"
+          else "none");
+    };
     {
       reader = "bag_pocket";
       applies = (fun tags -> expected_pocket tags <> "none");
@@ -172,7 +221,7 @@ let readers = screen_readers @ inner_readers
 let known_misreads =
   [
     (* A Key Items action menu covers the bag's grey shadow, as in the fork. *)
-    ("bag_open", "captures/tmcase-04-tmcase-after-A__bag.png", "false");
+    ("bag_open", "captures/tmcase-04-tmcase-after-A__bag-itemmenu.png", "false");
   ]
 
 let expectation r image =
@@ -192,7 +241,7 @@ let cases backend images =
       List.map
         (fun (image, probes) ->
           {
-            Case_table.name = Printf.sprintf "%s %s: %s" backend r.reader image;
+            Table_test.name = Printf.sprintf "%s %s: %s" backend r.reader image;
             input = (fun () -> r.verdict (measurements probes));
             expectation = expectation r image;
           })
@@ -214,6 +263,30 @@ let print_tally backend images =
         (List.length images))
     readers
 
+(* Victory Road 2F's cave floor under all three summary marks, as mGBA read it
+   after the grind's level read (mg-04b, 2026-11-24): one flat pale colour that
+   passes for tan and for white at once. *)
+let cave_floor =
+  let floor : Wire.rgb = { r = 206.; g = 181.; b = 156. } in
+  let flat : Wire.rgb = { r = 0.; g = 0.; b = 0. } in
+  measurements
+    (List.map
+       (fun id -> (id, Wire.Color_stats { mean = floor; stddev = flat }))
+       [ "summary.page1"; "summary.page2"; "summary.page3" ])
+
+let floors =
+  [
+    {
+      Table_test.name =
+        "summary_page: Victory Road's cave floor is no summary page";
+      input =
+        (fun () ->
+          Option.fold ~none:"none" ~some:string_of_int
+            (Summary_screen.page cave_floor));
+      expectation = "none";
+    };
+  ]
+
 let () =
   let backends =
     List.map
@@ -224,5 +297,6 @@ let () =
       [ "switch"; "mgba" ]
   in
   List.iter (fun (backend, images) -> print_tally backend images) backends;
-  Case_table.run "menu readers"
-    (List.concat_map (fun (backend, images) -> cases backend images) backends)
+  Table_test.run "menu readers"
+    (floors
+    @ List.concat_map (fun (backend, images) -> cases backend images) backends)

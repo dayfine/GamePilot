@@ -1,0 +1,50 @@
+# FRLG rock stairs, made by src/games/frlg/assets/extract/extract_frlg_rock_stairs.py from pret/pokefirered
+# (MB_ROCK_STAIRS metatiles of each map's layout): <map> <x>,<y> ...
+BirthIsland_Exterior 15,17 15,18 15,19
+CeruleanCave_1F 33,4 10,9 19,11 24,13 5,18 14,18
+CeruleanCave_B1F 13,4 18,11 7,15 17,19 20,19 29,19
+CeruleanCity 22,4 23,4 24,4
+FiveIsland 11,9 12,9 13,9
+FiveIsland_Meadow 2,10 3,10 18,20 19,20 4,24 12,30 13,30
+FiveIsland_MemorialPillar 9,7 10,7 17,29 18,29 5,46 6,46 12,46 13,46 5,48 6,48 15,49 16,49
+FourIsland 9,23 10,23 11,23 33,27 34,27
+IndigoPlateau_Exterior 10,14 11,14 12,14 10,16 11,16 12,16 10,18 11,18 12,18
+MtEmber_Exterior 29,2 29,3 29,4 29,5 29,6 17,12 18,12 29,12 17,13 18,13 29,13 17,14 18,14 29,18 30,18 29,19 30,19 29,22 30,22 29,23 30,23 29,30 30,30 29,31 30,31 8,34 9,34 19,34 20,34 25,34 26,34 19,35 20,35 18,38 19,38 25,39 26,39 32,39 33,39 25,40 26,40 32,40 33,40 32,45 33,45 28,49 29,49
+MtEmber_RubyPath_B3F 5,15 5,16
+MtEmber_Summit 8,16 9,16 10,16 8,17 9,17 10,17 8,18 9,18 10,18 8,19 9,19 10,19 8,20 9,20 10,20 8,21 9,21 10,21
+MtEmber_SummitPath_2F 29,7 29,8 23,12 23,13 16,17 16,18 14,24 14,25
+MtMoon_B2F 3,7 4,7 34,7 35,7 13,12 14,12 31,18 32,18 38,18 39,18 29,28 30,28
+NavelRock_Base 10,17
+NavelRock_Exterior 8,11 9,11 10,11
+NavelRock_Fork 14,5
+NavelRock_Summit 9,14 9,15
+OneIsland 13,7 14,7 15,7 18,11 19,11 20,11 11,15 12,15 13,15
+OneIsland_KindleRoad 11,5 12,5 11,12 12,12 11,13 12,13 11,14 12,14 12,85 13,85 14,107 15,107
+OneIsland_KindleRoad_EmberSpa 13,10 21,10 21,11
+Route23 10,0 11,0 12,0
+Route24 10,17 11,17 12,17
+SafariZone_East 24,12 25,12 31,12 32,12 40,19 41,19 29,25 30,25 36,25 37,25
+SafariZone_North 41,18 42,18 30,24 31,24 24,27 25,27 37,27 38,27
+SafariZone_West 29,23 30,23 14,26 15,26
+SeafoamIslands_1F 25,7 26,7 8,14 9,14
+SeafoamIslands_B1F 22,5 23,5 7,11 8,11 13,16 14,16
+SeafoamIslands_B2F 31,7 32,7 8,14 9,14 22,16 23,16
+SeafoamIslands_B3F 10,8 11,8 20,10 21,10 27,11 28,11 20,17 21,17
+SeafoamIslands_B4F 10,4 11,4 29,6 30,6 12,12 13,12
+SevenIsland 15,12 16,12 17,12 7,14 8,14 9,14
+SevenIsland_SevaultCanyon 9,6 10,6 13,8 14,8 4,10 5,10 15,15 16,15 15,16 16,16 15,17 16,17 13,20 7,29 8,29 7,30 8,30 10,48 11,48 10,49 11,49 13,68 14,68 15,74 16,74
+SevenIsland_SevaultCanyon_Entrance 11,13 12,13 15,19 16,19 8,23 9,23 14,29 15,29 21,30 22,30 6,32 7,32
+SevenIsland_TanobyRuins 119,12 120,12 121,12 119,13 120,13 121,13
+SevenIsland_TrainerTower 57,11 58,11 59,11 57,14 58,14 59,14 57,15 58,15 59,15 52,31 53,31
+SixIsland 10,20 11,20 12,20
+SixIsland_AlteringCave 26,14 27,14
+SixIsland_GreenPath 38,13 39,13
+SixIsland_RuinValley 28,13 29,13 10,14 11,14 9,19 10,19 33,26 34,26 27,30 28,30 16,31 17,31
+SixIsland_WaterPath 12,6 13,6 8,24 9,24 8,54 9,54 13,73 14,73 7,85 8,85
+ThreeIsland_BondBridge 63,6 64,6 49,8 50,8 77,8 78,8 66,9 67,9 88,9 89,9 16,11 17,11 18,11 74,12 75,12
+ThreeIsland_Port 10,1 11,1 12,1
+TwoIsland 36,1 37,1 36,2 37,2 20,10 21,10 22,10
+TwoIsland_CapeBrink 6,19 7,19 6,24 7,24 7,32 8,32
+VictoryRoad_1F 10,9 18,9 7,16
+VictoryRoad_2F 9,12 23,18 31,18
+VictoryRoad_3F 25,7 4,12

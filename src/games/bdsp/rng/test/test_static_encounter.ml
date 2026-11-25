@@ -106,4 +106,4 @@ let () =
     (scan_line (fun p -> is_shiny ~pid:(p.pid lxor unshiny_bit) ~tsv:0));
   check "scan_adamant_31atk"
     (scan_line (fun p -> p.nature = adamant && p.ivs.attack = max_iv));
-  Case_table.finish ()
+  Table_test.finish ()

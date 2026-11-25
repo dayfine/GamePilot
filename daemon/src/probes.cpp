@@ -22,7 +22,8 @@ cv::Scalar bgr_of(const std::array<std::uint8_t, 3>& rgb) {
 const std::vector<std::string>& probe_kinds() {
   static const std::vector<std::string> kinds = {
       std::string(kColorStatsKind), std::string(kTemplateMatchKind),
-      std::string(kColorCountKind)};
+      std::string(kColorCountKind), std::string(kLineSharesKind),
+      std::string(kFindKind)};
   return kinds;
 }
 
@@ -86,6 +87,57 @@ ColorCount color_count(const cv::Mat& bgr, const cv::Rect& pixels,
     result.mean = rgb_of(cv::mean(region, in_range));
   }
   return result;
+}
+
+bool passes(const PixelTest& test, int r, int g, int b) {
+  for (const ChannelComparison& comparison : test) {
+    const int sum = comparison.weights[0] * r + comparison.weights[1] * g +
+                    comparison.weights[2] * b;
+    bool holds = false;
+    switch (comparison.op) {
+      case ChannelComparison::Op::kGreater:
+        holds = sum > comparison.value;
+        break;
+      case ChannelComparison::Op::kGreaterEqual:
+        holds = sum >= comparison.value;
+        break;
+      case ChannelComparison::Op::kLess:
+        holds = sum < comparison.value;
+        break;
+      case ChannelComparison::Op::kLessEqual:
+        holds = sum <= comparison.value;
+        break;
+    }
+    if (!holds) {
+      return false;
+    }
+  }
+  return true;
+}
+
+LineShares line_shares(const cv::Mat& bgr, const cv::Rect& pixels,
+                       const PixelTest& test) {
+  const cv::Mat region = bgr(pixels);
+  std::vector<int> per_row(static_cast<std::size_t>(region.rows), 0);
+  std::vector<int> per_column(static_cast<std::size_t>(region.cols), 0);
+  for (int y = 0; y < region.rows; y++) {
+    const auto* row = region.ptr<cv::Vec3b>(y);
+    for (int x = 0; x < region.cols; x++) {
+      const cv::Vec3b& pixel = row[x];
+      if (passes(test, pixel[2], pixel[1], pixel[0])) {
+        per_row[static_cast<std::size_t>(y)]++;
+        per_column[static_cast<std::size_t>(x)]++;
+      }
+    }
+  }
+  LineShares shares;
+  for (const int count : per_row) {
+    shares.rows.push_back(static_cast<double>(count) / region.cols);
+  }
+  for (const int count : per_column) {
+    shares.columns.push_back(static_cast<double>(count) / region.rows);
+  }
+  return shares;
 }
 
 cv::Mat scale_template(const cv::Mat& template_image, cv::Size size) {

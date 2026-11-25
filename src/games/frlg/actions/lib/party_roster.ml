@@ -1,9 +1,13 @@
+module Failure = Pokemon_checkpoints.Failure
+
 type t = string list
 
 let of_list species =
   if List.length species > Action_args.party_slots then
     invalid_arg "Party_roster.of_list: more than six members"
   else species
+
+let of_read species = of_list (List.map (Option.value ~default:"?") species)
 
 let of_string text =
   String.split_on_char ',' text
@@ -24,7 +28,7 @@ let resolve t (member : Action_args.member) =
   | Species s ->
       let missing = s ^ " is not in the party (" ^ String.concat ", " t ^ ")" in
       Option.to_result
-        ~none:(Story.Failure.cause ~repeats:true "not_in_party" missing)
+        ~none:(Failure.cause ~repeats:true "not_in_party" missing)
         (slot_of t s)
 
 let swap t a b =
@@ -41,3 +45,8 @@ let replace t ~slot species =
 
 let add t species =
   if size t >= Action_args.party_slots then t else t @ [ species ]
+
+let remove t species =
+  match slot_of t species with
+  | None -> t
+  | Some slot -> of_list (List.filteri (fun i _ -> i + 1 <> slot) (to_list t))

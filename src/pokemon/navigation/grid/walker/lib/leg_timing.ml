@@ -4,11 +4,13 @@ let wall_extra_tiles = 2
 
 let hold_ms (leg : Leg_spec.t) tiles =
   let first = leg.tiles - tiles + 1 in
-  let stalls =
-    List.length
-      (List.filter (fun s -> s >= first && s <= leg.tiles) leg.stalled_steps)
+  let count steps =
+    List.length (List.filter (fun s -> s >= first && s <= leg.tiles) steps)
   in
-  let stalled = leg.tile_ms * stalls in
+  let stalled =
+    (leg.tile_ms * count leg.stalled_steps)
+    + ((leg.slow_step_ms - leg.tile_ms) * count leg.slow_steps)
+  in
   let half_tile = leg.tile_ms / 2 in
   if leg.to_wall then (leg.tile_ms * (tiles + wall_extra_tiles)) + stalled
   else (leg.tile_ms * (tiles - 1)) + half_tile + stalled

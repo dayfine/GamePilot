@@ -82,14 +82,15 @@ let pokemon_blink_bucket_with_margin interval_seconds =
 type blink_tick = { blinked : bool; blink_type : blink_type }
 
 let generate_blink_ticks state ~ticks ~npcs ~slot =
-  if npcs = 0 then
-    invalid_arg "generate_blink_ticks: there must be at least one NPC";
-  if slot >= npcs then
-    invalid_arg "generate_blink_ticks: slot is outside the per-tick order";
-  let rng = Xorshift128.create state in
-  (* Skip forward to the observed NPC's place. *)
-  Xorshift128.advance rng slot;
-  List.init ticks (fun _ ->
-      let roll = Xorshift128.next rng in
-      Xorshift128.advance rng (npcs - 1);
-      { blinked = npc_blinks roll; blink_type = npc_blink_type roll })
+  if npcs = 0 then Error "generate_blink_ticks: there must be at least one NPC"
+  else if slot >= npcs then
+    Error "generate_blink_ticks: slot is outside the per-tick order"
+  else
+    let rng = Xorshift128.create state in
+    (* Skip forward to the observed NPC's place. *)
+    Xorshift128.advance rng slot;
+    Ok
+      (List.init ticks (fun _ ->
+           let roll = Xorshift128.next rng in
+           Xorshift128.advance rng (npcs - 1);
+           { blinked = npc_blinks roll; blink_type = npc_blink_type roll }))

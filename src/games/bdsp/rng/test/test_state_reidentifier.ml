@@ -38,4 +38,4 @@ let reidentify = function
 
 let () =
   Fixture_lines.check_op records "reidentify" reidentify;
-  Case_table.finish ()
+  Table_test.finish ()

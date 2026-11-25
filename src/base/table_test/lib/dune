@@ -1,0 +1,3 @@
+(library
+ (name table_test)
+ (public_name gamepilot.table_test))

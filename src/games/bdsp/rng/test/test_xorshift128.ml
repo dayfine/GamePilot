@@ -56,4 +56,4 @@ let () =
   check "rewind" (after Xorshift128.rewind);
   check "seed_pair" seed_pair;
   check "gen" gen;
-  Case_table.finish ()
+  Table_test.finish ()

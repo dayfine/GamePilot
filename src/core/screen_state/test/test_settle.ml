@@ -14,13 +14,13 @@ let describe_rule (r : Settle.rule) =
 
 let rule_case name kind expectation =
   {
-    Case_table.name;
+    Table_test.name;
     input = (fun () -> describe_rule (Settle.rule kind));
     expectation;
   }
 
 let () =
-  Case_table.run "Settle.rule"
+  Table_test.run "Settle.rule"
     [
       rule_case "a talk waits out 5 s of quiet" Talk
         "warp=false quiet=5000ms calm=15000ms still=screen still look=1200ms \
@@ -28,11 +28,9 @@ let () =
       rule_case "after a warp, the fade or banner comes first" After_warp
         "warp=true quiet=5000ms calm=15000ms still=screen still look=1200ms \
          cap=120000ms";
-      (* Wait 1 s of the player still after a door fade-in (lab-B
-         2026-11-10). *)
-      rule_case "a door waits 1 s of the player still, looking often" Door
-        "warp=false quiet=1000ms calm=2500ms still=player still look=200ms \
-         cap=120000ms";
+      rule_case "a closed menu waits 0.5 s of quiet, looking often" Menu_closed
+        "warp=false quiet=500ms calm=2500ms still=screen still look=300ms \
+         cap=15000ms";
     ]
 
 let quiet =
@@ -86,7 +84,8 @@ let run_pressing rule ?(flee = true) script =
       press =
         (fun p ~wait_ms ->
           Buffer.add_char presses (match p with Next -> 'N' | B -> 'B');
-          now := !now +. float_of_int wait_ms);
+          now := !now +. float_of_int wait_ms;
+          None);
       flee_battle =
         (fun () ->
           Buffer.add_char presses 'F';
@@ -100,13 +99,16 @@ let run_pressing rule ?(flee = true) script =
 
 let run_case name ?flee rule script expectation =
   {
-    Case_table.name;
+    Table_test.name;
     input = (fun () -> run_pressing rule ?flee script);
     expectation;
   }
 
 let talk = Settle.rule Talk
-let door = Settle.rule Door
+
+(* A short settle: 1 s of quiet ends it, looking often. *)
+let short_quiet =
+  { talk with judge = { talk.judge with quiet_ms = 1000 }; look_every_ms = 200 }
 
 let before_battle =
   { talk with judge = { talk.judge with end_on_quiet = false } }
@@ -114,19 +116,21 @@ let before_battle =
 let short = { talk with look_every_ms = 1000; cap_ms = 3000 }
 
 let () =
-  Case_table.run "Settle.run"
+  Table_test.run "Settle.run"
     [
       run_case "a talk presses B while quiet, until 5 s of it" talk [ quiet ]
         "quiet; presses BBBBB";
       run_case "a box is answered with the talk's button" talk
         (repeat box 2 @ [ quiet ])
         "quiet; presses NNBBBBB";
-      run_case "a door's settle ends 1 s after the fade is back up" door
+      run_case "the quiet counts from the fade back up" short_quiet
         (repeat faded 3 @ [ quiet ])
         "quiet; presses BBBBBBBB";
-      run_case "people walking about do not hold a door's settle up" door
-        [ people_walking ] "quiet; presses BBBBB";
-      run_case "a wild battle is fled and the settle goes on" door
+      run_case
+        "someone walking about the whole time does not hold a closed menu's \
+         settle up (calm)"
+        (Settle.rule Menu_closed) [ people_walking ] "quiet; presses BBBBBBBBB";
+      run_case "a wild battle is fled and the settle goes on" short_quiet
         [ quiet; battle; quiet ] "quiet; presses BFBBBBB";
       run_case "a battle not fled ends it" ~flee:false before_battle
         (repeat box 2 @ [ battle ])
@@ -166,27 +170,27 @@ let run_watching (rule : Settle.rule) script =
     true
   in
   let io : Settle.io =
-    { look; press = (fun _ ~wait_ms:_ -> ()); flee_battle; log = ignore }
+    { look; press = (fun _ ~wait_ms:_ -> None); flee_battle; log = ignore }
   in
   let ending = Settle.run rule ~label:"Step" io in
   Printf.sprintf "%s after %d looks, %d flees" (ending_text ending) !looks
     !flees
 
-(* A door's settle looked at every 400 ms, as FRLG watches. *)
-let watched_door ~watch_battles =
-  { door with look_every_ms = 400; watch_battles }
+(* A short settle looked at every 400 ms, by a game that only watches. *)
+let watched ~watch_battles =
+  { short_quiet with look_every_ms = 400; watch_battles }
 
 let watch_case name rule script expectation =
-  { Case_table.name; input = (fun () -> run_watching rule script); expectation }
+  { Table_test.name; input = (fun () -> run_watching rule script); expectation }
 
 let () =
-  Case_table.run "Settle.run, watching"
+  Table_test.run "Settle.run, watching"
     [
       (* Quiet from 50 ms into the first look: 1 s of it by the third look's
          end (1200 ms), not the fourth (1600 ms, 1 s from the first look's
          end). *)
       watch_case "a quiet that began early in a look counts from then"
-        (watched_door ~watch_battles:false)
+        (watched ~watch_battles:false)
         [
           (quiet, Some 350.);
           (quiet, Some 750.);
@@ -195,13 +199,13 @@ let () =
         ]
         "quiet after 3 looks, 0 flees";
       watch_case "with no since, the quiet counts from the look"
-        (watched_door ~watch_battles:false)
+        (watched ~watch_battles:false)
         [ (quiet, None) ]
         "quiet after 4 looks, 0 flees";
       (* 1 s of quiet after the battle: from the third look (1200 ms) to the
          sixth (2400 ms). *)
       watch_case "a battle on screen is watched, not fled"
-        (watched_door ~watch_battles:true)
+        (watched ~watch_battles:true)
         [ (quiet, None); (battle, None); (quiet, None) ]
         "quiet after 6 looks, 0 flees";
     ]

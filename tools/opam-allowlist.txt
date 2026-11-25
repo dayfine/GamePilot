@@ -1,4 +1,0 @@
-ocaml
-dune
-odoc
-yojson

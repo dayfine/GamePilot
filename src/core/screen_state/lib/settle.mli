@@ -1,25 +1,28 @@
 (** How a step waits for the game to settle after a talk, a scene, a warp or a
-    door: one loop over {!Talk_over} for every game. A game gives it its looks
-    (facts from its readers) and its presses through {!io}; the rule for each
-    kind of settle is one table here. *)
+    closed menu: one loop over {!Talk_over} for every game. A game gives it its
+    looks (facts from its readers) and its presses through {!io}; the rule for
+    each kind of settle is one table here. A walk through a door is not settled
+    here: the game's walker waits out its own warp (FireRed's
+    [Frlg_overworld.Warp_fade_in]). *)
 
 (** What ends a settle. *)
 type kind =
   | Talk  (** text and scenes pressed through, then the overworld quiet *)
   | After_warp
-      (** as [Talk], but a warp (a map change) must come first: a fade, or the
-          far map's banner *)
-  | Door
-      (** after a door or a way through with no text to come: the fade back up
-          and a short still spell around the player, people walking about
-          ignored *)
+      (** as [Talk], but a warp (a map change) must come first: a fade, the far
+          map's banner, or a read that the player arrived *)
+  | Menu_closed
+      (** after a menu (the party, a summary) is backed out of, with no text to
+          come: B until the overworld shows still and with no box for 0.5 s,
+          looking every 0.3 s, at most 15 s; the talk's 5 s quiet is for a scene
+          that may go on *)
 
 type rule = {
   judge : Talk_over.rule;  (** what ends it *)
   look_every_ms : int;
       (** The wait after a press before the next look: a line's text takes about
-          a second to run out; a door has no text and looks often to catch its
-          short still spell. *)
+          a second to run out; a closed menu has no text and looks often to
+          catch its short quiet. *)
   cap_ms : int;  (** how long it may take before it fails *)
   watch_battles : bool;
       (** For a game that only watches: a battle on screen is watched like any
@@ -41,9 +44,12 @@ type look = {
 
 type io = {
   look : unit -> look;  (** the screen now *)
-  press : Talk_over.press -> wait_ms:int -> unit;
+  press : Talk_over.press -> wait_ms:int -> look option;
       (** answers a look, then waits [wait_ms]; a game that only watches just
-          waits *)
+          waits. Returns the first frame of the wait that showed a warp
+          ({!Facts.shows_warp}), if one did: a whole warp (fade out, black, fade
+          in) is over in under a second, so the next look alone can miss it
+          (mg-04a testing run 1 on console B, 2026-11-24: the Escape Rope's). *)
   flee_battle : unit -> bool;
       (** a battle started: flees a wild one and returns true, or returns false
           for one that ends the settle (a trainer's after their talk) *)
@@ -57,6 +63,8 @@ type ending =
   | Battle of string  (** a battle [flee_battle] did not flee *)
   | Timed_out of string  (** the cap: the step fails; the string says why *)
 
-val run : rule -> label:string -> io -> ending
+val run : ?seen:look -> rule -> label:string -> io -> ending
 (** Looks and presses until [rule] says the game has settled, a battle ends it,
-    or the cap. [label] names the step in the log and the failure. *)
+    or the cap. [label] names the step in the log and the failure. [seen]: a
+    frame before the first look that showed a warp, watched while the press that
+    starts the step ran. *)

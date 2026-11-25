@@ -1,4 +1,4 @@
-module J = Grid_maps.Json_field
+module J = Json_field
 
 type stock_item = { item : string; price : int }
 type stocks = (string * stock_item list) list
@@ -19,7 +19,7 @@ let parse json =
   | exception J.Invalid e -> Error e
 
 let read () =
-  match Frlg_repo_files.Repo_files.locate asset with
+  match Repo_io.Repo_files.locate asset with
   | None -> Error (asset ^ " not found from the working directory")
   | Some path -> (
       match Yojson.Safe.from_file path with

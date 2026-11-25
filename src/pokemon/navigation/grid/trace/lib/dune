@@ -1,4 +1,8 @@
 (library
  (name grid_trace)
  (public_name gamepilot.grid_trace)
- (libraries yojson gamepilot.grid_maps))
+ (libraries
+  yojson
+  gamepilot.grid_geometry
+  gamepilot.grid_maps
+  gamepilot.json_field))

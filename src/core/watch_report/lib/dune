@@ -1,0 +1,4 @@
+(library
+ (name watch_report)
+ (public_name gamepilot.watch_report)
+ (libraries gamepilot.wire gamepilot.effects unix))

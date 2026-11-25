@@ -50,3 +50,10 @@ repo src/games/frlg/readers/test/images/mgba/grind-2026-11-23/member-menu-switch
 repo src/games/frlg/readers/test/images/mgba/grind-2026-11-23/member-menu-6rows-surf.png|grind-2026-11-23/member-menu-6rows-surf__member2.png
 repo src/games/frlg/readers/test/images/mgba/grind-2026-11-23/member-menu-6rows-switch.png|grind-2026-11-23/member-menu-6rows-switch__member3.png
 repo src/games/frlg/readers/test/images/mgba/grind-2026-11-23/party-move-to-where.png|grind-2026-11-23/party-move-to-where__party-held6.png
+repo src/games/frlg/readers/test/images/mgba/mail-glitch-route16/pouch.png|mail-glitch-route16/pouch__pouch.png
+repo src/games/frlg/readers/test/images/mgba/mail-glitch-route16/final-party.png|mail-glitch-route16/final-party__party-slot1-members6-held1-held3.png
+repo src/games/frlg/readers/test/images/mgba/mail-glitch-route16/bag.png|mail-glitch-route16/bag__bag-keyitems-row4.png
+repo src/games/frlg/readers/test/images/mgba/mail-glitch-use/item-menu-mail.png|mail-glitch-use/item-menu-mail__itemmenu.png
+repo src/games/frlg/readers/test/images/mgba/mail-editor/editor-abra.png|mail-editor/editor-abra__maileditor.png
+repo src/games/frlg/readers/test/images/mgba/mail-editor/editor-blank.png|mail-editor/editor-blank__maileditor.png
+repo src/games/frlg/readers/test/images/mgba/mg04-escape-rope/item-menu-escape-rope.png|mg04-escape-rope/item-menu-escape-rope__itemmenu.png

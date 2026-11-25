@@ -1,4 +1,5 @@
 open Grid_maps
+open Grid_geometry
 
 let open_leg_shortfall = 2
 

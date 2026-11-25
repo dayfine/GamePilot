@@ -1,7 +1,7 @@
-# Roadmap: Start menu PoC to the Mail Glitch on console B (2026-11-23)
+# Roadmap: Start menu PoC to the Mail Glitch on the Switch (2026-11-23)
 
 The goal is the Mail Glitch (`mg-01`..`mg-05`, fork #781) written as an OCaml program: first on mGBA
-(S0), then on console B's post-game save (S1). Decisions live in `docs/design/Layered-Automation-Stack.md`
+(S0), then on a Switch's post-game save (S1). Decisions live in `docs/design/Layered-Automation-Stack.md`
 section 13 (R1-R20). This file says what is built in what order. Mark each item done with its PR.
 
 ## Phase 0: foundation (now)
@@ -10,8 +10,8 @@ section 13 (R1-R20). This file says what is built in what order. Mark each item 
 |---|---|---|
 | Layout and naming (R16, R17) | `src/` | #5 merged |
 | PokemonSimulation submodule, `mg-*` plans copied (R18) | `third_party/`, `games/frlg/programs/mail_glitch/plans/` | #6 merged |
-| **OCaml linters** (see below) | `lint/` | run in `dune test` and CI before any large port lands |
-| Contract v1.1: load counter in `frame`, method in responses, probe kind in results; replay checks every recorded request was sent | `contracts/`, `daemon/`, `src/base/wire`, `src/core/replay` | both sides pass the golden files; PoC passes live again |
+| **OCaml linters** (see below) | `dev/lint/` | run in `dune test` and CI before any large port lands |
+| Contract v1.1: load counter in `frame`, method in responses, probe kind in results; replay checks every recorded request was sent | `protocol/`, `daemon/`, `src/base/wire`, `src/core/replay` | both sides pass the golden files; PoC passes live again |
 
 ### Linters
 
@@ -24,7 +24,7 @@ ported code is written to them instead of fixed afterwards:
   `core` and `base`, a game on `pokemon`, `core` and `base`, a program on its own game; `bin` on anything;
 - one exceptions file with a reason per entry.
 
-They go in `lint/` as their own dune project, driven by a config file (roots, thresholds, layer
+They go in `dev/lint/` as their own dune project, driven by a config file (roots, thresholds, layer
 table), with nothing GamePilot-specific in the code. Moving them to a shared repo (for example
 `dayfine/ocaml-lint`, used by trading too) is then a `git subtree split` with no code change; that
 happens when trading agrees to consume it.
@@ -59,24 +59,24 @@ Follow fork #804's split (R20), not #781's monolith.
 
 | Item | Where |
 |---|---|
-| Overworld and menu actions: talk, Fly, mart, `use_item`, `give_bag_item`, `party_swap`, `buy_coins`, `redeem_prize_mon`, `ingame_trade`, `spin_for_encounter`, `cut_tree`; heal and save; `gamepilot checkpoint` (`frlg/shared-actions`; still to come: `lift_floor`, `capture`, berries from the Berry Pouch, a party species reader in place of the reckoned party, live recordings of each flow) | `src/games/frlg/actions`, `src/games/frlg/story` |
+| Overworld and menu actions: talk, Fly, mart, `use_item`, `give_bag_item`, `party_swap`, `buy_coins`, `redeem_prize_mon`, `ingame_trade`, `spin_for_encounter`, `cut_tree`; heal and save; `gamepilot checkpoint` (`frlg/shared-actions`; still to come: `lift_floor`, `capture`, berries from the Berry Pouch, a party species reader in place of the reckoned party, live recordings of each flow) | `src/games/frlg/actions`, `src/games/frlg/checkpoints` |
 | Battle driver (single and double, ally targeting, switch, move-learn prompt) and scripted battle runner (#28; YES/NO and out-of-PP readers, double party list and replay tests still to come) | `src/games/frlg/battle` |
-| Story engine: plan decoder (`pokesim-authored-checkpoint/1`), event runner, `repeat_until` (looped checkpoints that heal and save each round) | `src/pokemon/story` |
+| Story engine: plan decoder (`gamepilot-checkpoint/1`), event runner, `repeat_until` (looped checkpoints that heal and save each round) | `src/engine/checkpoints/plan`, `src/engine/checkpoints/run`, over `src/pokemon/checkpoints/terms` |
 
 ## Phase 4: the Mail Glitch on mGBA (S0)
 
 One PR per checkpoint, each with its recorded wire log as a replay test and an mGBA save state at
-its start (`~/FRLGLab/mgba/emu-1/saves`, `mail-glitch-test/`).
+its start (under `GAMEPILOT_STATES`; the source saves are in `mail-glitch-test/`).
 
 | Checkpoint | Content |
 |---|---|
-| mg-01 | Celadon: Coin Case, Retro Mail, 200 coins, Abra |
-| mg-02 | Spearow on Route 16, Sitrus Berry on Route 6, trade for CH'DING |
-| mg-03 | Abra for MIMIEN on Route 2, Revives at Lavender |
-| mg-04 | Level CH'DING to 21 (Knock Off) and MIMIEN to 33 (Recycle): see below |
-| mg-05 | Route 8 setup and the double battle (mGBA only, R9) |
+| 01-celadon-setup | Celadon: Coin Case, Retro Mail, 200 coins, Abra |
+| 02-trade-farfetchd | Spearow on Route 16, Sitrus Berry on Route 6, trade for CH'DING |
+| 03-trade-mr-mime | Abra for MIMIEN on Route 2, Revives at Lavender |
+| 04-grind-farfetchd .. 06-grind-return | Level CH'DING to 21 (Knock Off) and MIMIEN to 33 (Recycle), the fork's mg-04: see below |
+| 07-glitch-prep, 08-activate-and-verify | Ported from the fork's tested Route 16 version (its `mg-05a` and `mg-05`): 07-glitch-prep (Leppa Berry from Route 8, Blastoise's Blizzard PP used up, Fly to Celadon, Route 16's tree, party and held items arranged at (30, 7)), then 08-activate-and-verify (Lea & Jed's double battle: Knock Off, Recycle; MIMIEN Lv 33 holding the recycled Leppa Berry; then the duplication, with no save in between, user 2026-11-24). Runs on mGBA, then on the Switch (user, 2026-11-23) |
 
-### mg-04: grinding options
+### Grinding options (04-grind-farfetchd to 06-grind-return, the fork's mg-04)
 
 EVs do not matter (user, 2026-11-23), and the save is post-game with the Sevii Islands not done
 (Cerulean Cave and Sevault Canyon closed) and no Exp. Share. PokemonSimulation PR #119
@@ -98,14 +98,14 @@ learned in; every other move offered is declined.
 Missing readers: the grinder's level (the summary draws it in the small font), HP and PP (heals go
 by battle count, the sim's rate), and the foe's species.
 
-## Phase 5: console B (S1)
+## Phase 5: the Switch (S1)
 
 | Item | Gate |
 |---|---|
 | Daemon Switch backend: capture card frames and serial controller (one boundary each, R11) | latency spike: frame to command p99 under one frame (stop rule) |
-| mg-01..mg-04 on the post-game save, in console B windows under the one-train rule | 10 runs per checkpoint, pass rate at least the C++ twin's (R9) |
+| 01-celadon-setup..08-activate-and-verify on the post-game save, in Switch windows (only one program drives the console at a time) | 10 runs per checkpoint, pass rate at least the C++ twin's (R9) |
 
-mg-05 stays on mGBA only.
+08-activate-and-verify (was mg-05) runs on the Switch too, after mGBA (user, 2026-11-23; it was mGBA only before).
 
 ## Standing gates
 
@@ -113,3 +113,17 @@ mg-05 stays on mGBA only.
   emulator and no C++ rebuild. If that stops being true, fix that first.
 - Every live failure becomes a replay test before the fix.
 - No patch on `gamepilot/base` and no new opam dependency without the user.
+
+## After the Mail Glitch
+
+The plans that follow S0/S1 have one page each under [`docs/roadmap/`](roadmap/README.md) and one
+GitHub issue each:
+
+- FRLG after the Elite Four ([parent page](roadmap/frlg-post-e4.md)): [Rare Candies and leveling](roadmap/frlg-rare-candy-leveling.md),
+  [Sevii Islands](roadmap/frlg-sevii-islands.md), [ACE balls](roadmap/frlg-ace-balls.md),
+  [legendaries](roadmap/frlg-legendaries.md), [Wild and Static RNG port](roadmap/frlg-rng-port.md),
+  [dex collection, FireRed exclusives first](roadmap/frlg-dex-exclusives.md).
+- [SwSh: story to the DLC](roadmap/swsh-dlc-access.md).
+- [BDSP legendary RNG](roadmap/bdsp-legendary-rng.md) and [BDSP Underground mining](roadmap/bdsp-underground-mining.md).
+- [SV isolated shiny hunts](roadmap/sv-isolated-shiny.md) and [SV Snacksworth legendaries](roadmap/sv-snacksworth-legendaries.md).
+- [PLZA story port](roadmap/plza-autostory-port.md).

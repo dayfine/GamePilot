@@ -1,0 +1,15 @@
+{
+  "jsonrpc": "2.0",
+  "id": 42,
+  "method": "submit",
+  "params": {
+    "batch_id": "park",
+    "commands": [
+      {
+        "press": ["Home"],
+        "hold_ms": 100,
+        "cooldown_ms": 1000
+      }
+    ]
+  }
+}

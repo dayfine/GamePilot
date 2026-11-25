@@ -30,6 +30,13 @@ exception Rpc_error of Wire.error
 exception Disconnected of string
 (** The handler lost its source of frames (socket closed, end of log). *)
 
+exception Stop_requested of string
+(** Someone pressed Stop on the watch page (the reason): raised by the program's
+    next wait on the game ({!submit}, {!race}, {!await}). The daemon already
+    released every button. The program ends through its failure path, which may
+    still save (saves are not waits). [Printexc.to_string] gives the reason
+    alone. *)
+
 (** {1 Effects} *)
 
 type _ Effect.t +=
@@ -44,6 +51,9 @@ type _ Effect.t +=
   | Upload_template : string -> template_hash Effect.t
   | Subscribe : Wire.probe_spec list -> string list Effect.t
   | Unsubscribe : string list -> string list Effect.t
+  | Show_plan : Wire.Watch.plan -> unit Effect.t
+  | Show_log : string -> unit Effect.t
+  | Show_run : Wire.Watch_run.t -> unit Effect.t
 
 (** {1 Ops} *)
 
@@ -84,6 +94,17 @@ val save_frame : string -> int
 (** Writes the current frame to the path as a PNG; returns its [seq]. The
     checkpoint runner's failure frame. *)
 
+val with_run_folder : string -> (unit -> 'a) -> 'a
+(** [with_run_folder dir f] runs [f] with [dir] as the run folder that
+    {!save_run_frame} writes to, also when [f] raises. The runner calls it
+    around a run that keeps a folder (Run_record). *)
+
+val save_run_frame : string -> unit
+(** [save_run_frame name] writes the current frame into the run folder as
+    [name]: a step keeps the frame it judged (the Mail Glitch's proofs). Outside
+    {!with_run_folder} (tests, ctl) it does nothing; a refusal (an older daemon)
+    is skipped. *)
+
 val upload_template : string -> template_hash
 (** [upload_template png] registers a template from a PNG file's bytes and
     returns its hash. The handler sends each distinct PNG once per connection:
@@ -104,6 +125,20 @@ val with_probes : Wire.probe_spec list -> (unit -> 'a) -> 'a
     call subscribes only the probes no outer call holds and unsubscribes only
     those, so each phase of a program names every probe its readers need and
     pays for them only while it runs. *)
+
+(** {1 Watch page}
+
+    What the program shows on the watch page beside the video. Neither waits for
+    an answer nor goes into the wire log. *)
+
+val show_plan : Wire.Watch.plan -> unit
+(** The checkpoint's events and their states, all of them each time. *)
+
+val show_log : string -> unit
+(** One story log line. *)
+
+val show_run : Wire.Watch_run.t -> unit
+(** The chain of checkpoints and the current one's trials. *)
 
 (** {1 Helpers for readers} *)
 

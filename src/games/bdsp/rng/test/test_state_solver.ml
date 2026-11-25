@@ -47,21 +47,19 @@ let gf2_system state height mask flip_last =
           low = Int64.logand row.low mask.low;
         })
   in
-  let constants =
-    Array.mapi
-      (fun c row -> Gf2_matrix.dot row secret <> (flip_last && c + 1 = height))
-      rows
-  in
-  (rows, constants)
+  Array.mapi
+    (fun c row ->
+      (row, Gf2_matrix.dot row secret <> (flip_last && c + 1 = height)))
+    rows
 
 let gf2_solve inputs =
   match state_and_rest inputs with
   | state, [ height; mask; flip ] ->
-      let rows, constants =
-        gf2_system state (int_of_string height) (vector_of_text mask)
-          (flip = "1")
+      let solved =
+        Gf2_matrix.solve
+          (gf2_system state (int_of_string height) (vector_of_text mask)
+             (flip = "1"))
       in
-      let solved = Gf2_matrix.solve rows constants in
       String.concat " "
         ((if solved.consistent then "1" else "0")
         :: vector_text solved.particular
@@ -98,6 +96,7 @@ let solve_npc inputs =
           (npc_samples state ~count:(int_of_string count)
              ~stride:(int_of_string stride) ~types ~flip:(int_of_string flip)
              ~repeat:(int_of_string repeat))
+        |> Result.get_ok
       in
       Printf.sprintf "%d %s %d %d %d %s" (Bool.to_int r.success)
         (state_text r.state) r.advances_to_last_blink r.equations_used
@@ -129,11 +128,7 @@ let solve_pokemon = function
         (reason r.failure_reason)
   | _ -> failwith "solve_pokemon: tolerance attempts count intervals"
 
-let raises_invalid_argument f =
-  match f () with
-  | _ -> Error "no Invalid_argument"
-  | exception Invalid_argument _ -> Ok ()
-
+let rejected = function Ok _ -> Error "accepted" | Error _ -> Ok ()
 let sample advance = { State_solver.advance; blinked = true; blink_type = None }
 
 let () =
@@ -142,13 +137,9 @@ let () =
   check "solve_npc" solve_npc;
   check "recommended" recommended;
   check "solve_pokemon" solve_pokemon;
-  Case_table.report "gf2_solve: rows and constants must pair up"
-    (raises_invalid_argument (fun () ->
-         Gf2_matrix.solve [| Gf2_matrix.zero |] [||]));
-  Case_table.report "solve_npc: samples must start at advance zero"
-    (raises_invalid_argument (fun () ->
-         State_solver.solve_state_from_samples [ sample 1 ]));
-  Case_table.report "solve_npc: samples must be sorted"
-    (raises_invalid_argument (fun () ->
-         State_solver.solve_state_from_samples [ sample 0; sample 5; sample 3 ]));
-  Case_table.finish ()
+  Table_test.report "solve_npc: samples must start at advance zero"
+    (rejected (State_solver.solve_state_from_samples [ sample 1 ]));
+  Table_test.report "solve_npc: samples must be sorted"
+    (rejected
+       (State_solver.solve_state_from_samples [ sample 0; sample 5; sample 3 ]));
+  Table_test.finish ()

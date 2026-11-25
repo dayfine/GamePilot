@@ -1,0 +1,8 @@
+{
+  "jsonrpc": "2.0",
+  "id": 12,
+  "method": "backend.save_frame",
+  "params": {
+    "path": "/home/example/.local/share/gamepilot/runs/2026-11-23-mg-04/run-1/failure.png"
+  }
+}

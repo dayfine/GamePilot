@@ -3,6 +3,7 @@
    Pokemon_Gates_Tests.cpp (its planner cases). *)
 
 open Grid_maps
+open Grid_geometry
 open Grid_planning
 module Names = Gate_state.Names
 
@@ -157,7 +158,7 @@ let () =
   List.iter
     (fun { name; input; expectation = expected, holds } ->
       let legs = plan input in
-      Case_table.report name
+      Table_test.report name
         (Check.expect ~expected ~plan:(describe legs) (holds legs)))
     (silph_cases @ mansion_cases);
-  Case_table.finish ()
+  Table_test.finish ()

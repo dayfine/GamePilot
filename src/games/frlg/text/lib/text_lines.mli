@@ -27,6 +27,78 @@ val summary_move : int -> t
     on the list a battle opens to forget a move from (the same 28-pixel pitch,
     pokefirered pokemon_summary_screen.c). *)
 
+val battle_message : int -> t
+(** Line [i] (0..1) of a battle's message box, white on teal ("Wild SPEAROW
+    appeared!"; read with {!Line_reading.light_ink}), as wide as the box.
+    Measured on mGBA frames of the opening message (Route 16, mg-02 testing run
+    7): its capitals from x 10, rows from 125, three below the cell's top as on
+    the bag's list. *)
+
+val start_menu_row : int -> t
+(** Row [i] (0..6) of the Start menu's names (POKéDEX, POKéMON, BAG, the
+    player's, SAVE, OPTION, EXIT on the full menu). Measured on mGBA
+    (mail-glitch-04 pause-menu.png, 2026-11-23): the capitals' top at y 11 + 15
+    i (glyph cell top 3 above), the names from x 184, the window's right edge at
+    x 234. *)
+
+val summary_species : t
+(** The species on the summary's POKéMON INFO page (page 1), right of NAME:
+    pokefirered pokemon_summary_screen.c, [PrintInfoPage], at (47, 19) in the
+    right pane's window (15 tiles from the left, 2 from the top). Placed from
+    the source and read right on mGBA (each member of mg-02's start,
+    2026-11-23). *)
+
+val digit_width : int
+(** Every digit of the normal font is 6 pixels wide. *)
+
+val trainer_card_money_digit : int -> t
+(** Digit [k] of the money on the Trainer Card's front, counted from the right
+    (0: ones): pokefirered trainer_card.c, [PrintMoneyOnCard], right-aligns
+    ["¥<money>"] to end at x 136 of window 1 (at (8, 8)), at y 56. Read right on
+    mGBA ($25,014 and $29,114, 2026-11-23). *)
+
+val bag_message_digit : int -> t
+(** Digit [k] (from the left) of the bag message's second line, where the Coin
+    Case's ["Your COINS:\n<coins>"] (pokefirered strings.c [gText_CoinCase],
+    item_use.c [FieldUseFunc_CoinCase], left-aligned) prints its count: the
+    message window 5 of bag.c at (16, 120), the second line's glyphs at y 137.
+    Read right on mGBA (20 coins, 2026-11-23). *)
+
+val summary_level_digit : int -> t
+(** Digit [k] (from the left) of the level in the summary's top left, shown on
+    every page: white with a dark shadow on the header's lilac (teal on the info
+    page), after the 10-pixel "Lv" glyph at x 4, so the first digit starts at x
+    14 with its cell's top at y 18. The box of the fork's
+    PokemonFRLG_StatsReader ([m_box_level], English and the other Latin
+    languages but Spanish) holds it. Measured on mGBA (MIMIEN Lv 9, Lv 50,
+    2026-11-23); read with {!Summary_level.ink}. *)
+
+val small_digit_width : int
+(** Every digit (and the space) of the small font is 5 pixels wide. *)
+
+val bag_count_digit : int -> int -> t
+(** [bag_count_digit row k]: digit [k], counted from the right (0: ones), of the
+    count on list row [row] of a bag pocket (0..5) or the Berry Pouch (0..6).
+    Small font: pokefirered item_menu.c [BagListMenuItemPrintFunc] and
+    berry_pouch.c [BerryPouchItemPrintFunc] print ["×<count>"] (the count right
+    aligned in 3 cells, spaces before it) at x 110 of the list window (left 88),
+    on the row's line; the × is 8 wide, so the ones digit starts at x 216. *)
+
+val berry_pouch_number_digit : int -> int -> t
+(** [berry_pouch_number_digit row k]: digit [k] (0: tens) of the berry's number
+    on Berry Pouch row [row] (0..6), the ["06"] of ["No06 LEPPA BERRY"]. Small
+    font: pokefirered berry_pouch.c [GetBerryNameAndIndexForMenu] prints the No
+    symbol (8 wide), a 1-pixel gap and the two digits (leading zero) from the
+    label's x 97, so the digits start at x 106. *)
+
+val mail_field_one : width:int -> t
+(** The first word field of the Easy Chat mail editor, [width] pixels from its
+    left: pokefirered easy_chat_3.c prints each row of the phrase window as
+    [CLEAR 17], the word (or seven underscores for an empty field), [CLEAR 17],
+    the next word, so field 1 starts 17 pixels into the window and the next
+    field after the word and a 17-pixel gap. The window's left (x 24) and top
+    measured on mGBA, where ABRA reads at x 41, glyphs from y 2 (2026-11-23). *)
+
 (** {1 Template rows and the probe box} *)
 
 val template_top : int
@@ -42,3 +114,21 @@ val slack : int
 
 val box : t -> Wire.box
 (** The probe box, normalized to the game picture. *)
+
+val pc_menu_row : int -> t
+(** Row [i] of the PC list ("BILL'S PC" on top) and of the storage menu
+    (WITHDRAW POKéMON, DEPOSIT POKéMON, ...): pokefirered's menus, measured on
+    console B's captures (CommandLineTests PcScreenReader) and mGBA frames. *)
+
+val pc_mon_menu_row : int -> t
+(** Row [i] (0-4) of a Pokémon's menu on the box screen: STORE, SUMMARY, MARK,
+    RELEASE, CANCEL. *)
+
+val pc_data_species : t
+(** The box screen's PKMN DATA species line, ["/ODDISH"]: window 0 at (0, 88)
+    prints it at (6, 14) (pokefirered [PrintDisplayMonInfo]), white with a dark
+    shadow: read with {!Line_reading.light_ink}. *)
+
+val pc_message : t
+(** The box screen's message ("Deposit in which BOX?", "The BOX is full."):
+    window 1 at (88, 136) prints at (0, 2) ([PrintStorageMessage]). *)

@@ -1,12 +1,16 @@
-module J = Grid_maps.Json_field
+module J = Json_field
 module B = Frlg_battle
 
 type lead = Switch_to_sweeper
-type heal = Nurse of Story.Pose.grid | Pad of Story.Pose.grid
+
+type heal =
+  | Nurse of Pokemon_checkpoints.Pose.grid
+  | Pad of Pokemon_checkpoints.Pose.grid
 
 type strategy = {
   name : string;
-  spot : Story.Pose.grid;
+  spot : Pokemon_checkpoints.Pose.grid;
+  pace : Grid_geometry.Direction.t;
   lead : lead;
   heal : heal;
   heal_every : int;
@@ -25,23 +29,24 @@ type t = {
   sweeper : string;
   sweeper_moves : int list;
   max_battles : int;
+  round : bool;
 }
 
 let default_strategy = "victory_road_2f"
 let asset = "src/games/frlg/assets/grind_strategies.json"
 
-let tile ~where obj : Grid_maps.Tile_pos.t =
+let tile ~where obj : Grid_geometry.Tile_pos.t =
   match J.field ~where "tile" obj with
   | `List [ `Int x; `Int y ] -> { x; y }
   | _ -> J.fail "%stile is not [x, y]." where
 
-let pose ~where key obj : Story.Pose.grid =
+let pose ~where key obj : Pokemon_checkpoints.Pose.grid =
   let p = J.as_object (where ^ key ^ ": ") (J.field ~where key obj) in
   let where = where ^ key ^ "." in
   {
     map = J.string ~where "map" p;
     tiles = [ tile ~where p ];
-    facing = Some (J.direction ~where "facing" p);
+    facing = Some (Grid_maps.Grid_field.direction ~where "facing" p);
   }
 
 let lead ~where obj =
@@ -67,6 +72,7 @@ let strategy i json =
   {
     name = J.string ~where "name" obj;
     spot = pose ~where "spot" obj;
+    pace = Grid_maps.Grid_field.direction ~where "pace" obj;
     lead = lead ~where obj;
     heal = heal ~where obj;
     heal_every = J.int ~where "heal_every" obj;
@@ -83,7 +89,7 @@ let strategies_of_json json =
   | exception J.Invalid e -> Error e
 
 let read () =
-  match Frlg_repo_files.Repo_files.locate asset with
+  match Repo_io.Repo_files.locate asset with
   | None -> Error (asset ^ " not found from the working directory")
   | Some path -> (
       match Yojson.Safe.from_file path with
@@ -135,11 +141,12 @@ let decode strategies obj =
       sweeper = J.string ~where "sweeper" obj;
       sweeper_moves = move_slot_list obj;
       max_battles = J.int ~where "max_battles" obj;
+      round = J.bool_or ~where ~default:false "round" obj;
     }
   with
   | t -> Ok t
   | exception J.Invalid e ->
-      Error (Story.Failure.cause ~repeats:true "bad_args" e)
+      Error (Pokemon_checkpoints.Failure.cause ~repeats:true "bad_args" e)
 
 let met goal ~known = List.mem goal.learn_move known
 let heal_due s ~since_heal = since_heal >= s.heal_every
@@ -154,6 +161,7 @@ let battle_script t =
   in
   B.Battle_script.make ~opening
     ~send_ins:[ { slot = sweeper_slot; then_ = None } ]
+    ~switch_refused:Flee
     ~learn:(Forget_for { move = t.goal.learn_move; slot = t.goal.learn_slot })
     (Attack { slots = t.sweeper_moves; target = Default })
 
@@ -161,3 +169,4 @@ let describe t =
   Printf.sprintf "%s to Lv %d for %s (into move %d) at %s, %s fighting"
     t.goal.species t.goal.target_level t.goal.learn_move (t.goal.learn_slot + 1)
     t.strategy.name t.sweeper
+  ^ if t.round then ", one round" else ""

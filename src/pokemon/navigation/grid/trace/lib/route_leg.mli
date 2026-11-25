@@ -14,7 +14,7 @@ type leg_end = Open | Wall | Warp
 
 type t = {
   action : action;
-  direction : Grid_maps.Direction.t;
+  direction : Grid_geometry.Direction.t;
   tiles : int;
   leg_end : leg_end;
 }

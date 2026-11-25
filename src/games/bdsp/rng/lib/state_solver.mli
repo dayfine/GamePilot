@@ -8,8 +8,8 @@
     same equations, same order, same messages); the Pokemon half is
     {!Pokemon_blink_solver}. Where the C++ takes an optional [Logger] and logs a
     success, this port logs nothing: the caller has the whole result. Advances
-    are OCaml [int]s (the C++ [uint64_t]). Precondition failures raise
-    [Invalid_argument] where the C++ throws [InternalProgramError]. *)
+    are OCaml [int]s (the C++ [uint64_t]). Precondition failures return [Error]
+    where the C++ throws [InternalProgramError]. *)
 
 type blink_sample = {
   advance : int;  (** Rolls since the first watched one. *)
@@ -30,9 +30,11 @@ type blink_solve_result = {
 }
 (** [BlinkSolveResult]. *)
 
-val solve_state_from_samples : blink_sample list -> blink_solve_result
+val solve_state_from_samples :
+  blink_sample list -> (blink_solve_result, string) result
 (** Solves from watched NPC rolls, sorted by advance and starting at advance 0
-    (else [Invalid_argument]). Each blink gives three equations (bits 3-1 are
-    zero) and a fourth when its type is known. Fails (with a reason) below 128
-    equations, on contradictions, with more than 12 unknown bits left, or when
-    not exactly one candidate reproduces every sample. *)
+    (else [Error]: a bug in the caller, not a failed solve). Each blink gives
+    three equations (bits 3-1 are zero) and a fourth when its type is known.
+    Fails (with a reason) below 128 equations, on contradictions, with more than
+    12 unknown bits left, or when not exactly one candidate reproduces every
+    sample. *)

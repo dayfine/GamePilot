@@ -34,7 +34,10 @@ let choose ~code column row ~taken =
 let start_menu_taken m =
   (not (Start_menu.start_menu_open m)) || Dialog.dialog_up m
 
-let open_start_menu_row row =
+let open_start_menu () =
   M.press_until ~max_presses:max_confirms ~code:"no_start_menu" "the Start menu"
-    Wire.Start ~cooldown_ms:confirm_ms Start_menu.start_menu_open;
+    Wire.Start ~cooldown_ms:confirm_ms Start_menu.start_menu_open
+
+let open_start_menu_row row =
+  open_start_menu ();
   choose ~code:"no_start_menu" start_menu row ~taken:start_menu_taken

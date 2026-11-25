@@ -1,0 +1,4 @@
+(library
+ (name json_field)
+ (public_name gamepilot.json_field)
+ (libraries yojson))

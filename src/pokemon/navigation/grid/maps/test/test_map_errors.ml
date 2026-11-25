@@ -196,11 +196,11 @@ let gate_rows =
   ]
 
 let run_case { name; input; expectation } =
-  Case_table.report name
+  Table_test.report name
     (match Map_file.of_string ~source_name:"Test.json" input with
     | Ok _ -> Error "parsed"
     | Error message -> Check.mentions message expectation)
 
 let () =
   List.iter run_case (valid_map_rows @ game_field_rows @ gate_rows);
-  Case_table.finish ()
+  Table_test.finish ()

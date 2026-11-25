@@ -4,6 +4,7 @@
    case are the map model's tests (grid/maps/test). *)
 
 open Grid_maps
+open Grid_geometry
 open Grid_planning
 module Names = Gate_state.Names
 
@@ -169,6 +170,6 @@ let cases =
 let () =
   List.iter
     (fun { name; input; expectation } ->
-      Case_table.report name (Check.equal ~expected:expectation (input ())))
+      Table_test.report name (Check.equal ~expected:expectation (input ())))
     cases;
-  Case_table.finish ()
+  Table_test.finish ()

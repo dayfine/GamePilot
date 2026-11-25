@@ -71,18 +71,14 @@ let blink_equations transition sample =
   List.init blink_zero_bits zero_bit
   @ Option.to_list (Option.map type_bit sample.blink_type)
 
-(* Each blink constrains the four low bits of one roll. Returns the equations,
-   their constants and the number of blinks. *)
+(* Each blink constrains the four low bits of one roll. Returns the equations
+   and the number of blinks. The samples are sorted by advance. *)
 let npc_equations samples =
   let equations = ref [] in
   let transition = ref Xorshift128.transition_matrix in
   let at = ref 0 in
   let blinks = ref 0 in
   let take sample =
-    if sample.advance < !at then
-      invalid_arg
-        "State_solver.solve_state_from_samples: samples are not sorted by \
-         advance";
     if sample.blinked && sample.advance > !at then (
       transition :=
         Gf2_matrix.mul
@@ -95,8 +91,7 @@ let npc_equations samples =
         List.rev_append (blink_equations !transition sample) !equations)
   in
   List.iter take samples;
-  let rows, constants = List.split (List.rev !equations) in
-  (Array.of_list rows, Array.of_list constants, !blinks)
+  (Array.of_list (List.rev !equations), !blinks)
 
 let npc_failure ?(equations_used = 0) ?(null_space_dimension = 0) reason =
   {
@@ -145,9 +140,9 @@ let pick_npc_state samples (solved : Gf2_matrix.solution) equations_used =
         "More than one state reproduces the observed blinks. Collect more \
          blinks."
 
-let solve_equations samples rows constants =
-  let equations_used = Array.length rows in
-  let solved = Gf2_matrix.solve rows constants in
+let solve_equations samples equations =
+  let equations_used = Array.length equations in
+  let solved = Gf2_matrix.solve equations in
   let null_space_dimension = Array.length solved.null_space_basis in
   let failure = npc_failure ~equations_used ~null_space_dimension in
   if not solved.consistent then
@@ -163,20 +158,28 @@ let solve_equations samples rows constants =
   else pick_npc_state samples solved equations_used
 
 let solve_watched samples =
-  let rows, constants, blinks = npc_equations samples in
-  let equations_used = Array.length rows in
+  let equations, blinks = npc_equations samples in
+  let equations_used = Array.length equations in
   if equations_used < unknowns then
     npc_failure ~equations_used
       (Printf.sprintf
          "Only %d equations from %d blinks. At least 128 are needed."
          equations_used blinks)
-  else solve_equations samples rows constants
+  else solve_equations samples equations
+
+let rec sorted_by_advance = function
+  | a :: (b :: _ as rest) -> a.advance <= b.advance && sorted_by_advance rest
+  | [ _ ] | [] -> true
 
 let solve_state_from_samples samples =
   match samples with
-  | [] -> npc_failure "No rolls were watched."
+  | [] -> Ok (npc_failure "No rolls were watched.")
   | first :: _ when first.advance <> 0 ->
-      invalid_arg
+      Error
         "State_solver.solve_state_from_samples: samples must start at advance \
          zero"
-  | _ -> solve_watched samples
+  | _ when not (sorted_by_advance samples) ->
+      Error
+        "State_solver.solve_state_from_samples: samples are not sorted by \
+         advance"
+  | _ -> Ok (solve_watched samples)

@@ -28,6 +28,16 @@ let arrow_min = (arrow_min_red, 0, 0)
 let arrow_max = (channel_max, arrow_max_green, arrow_max_blue)
 let min_red_excess = 160.
 
+(* SelectionArrowDetector::arrow_box_for_position, YES and NO. *)
+let yes_no_rows : Wire.box list =
+  [
+    { x = 0.69692; y = 0.4625; w = 0.037; h = 0.07788 };
+    { x = 0.69692; y = 0.55; w = 0.037; h = 0.07788 };
+  ]
+
+let yes_no_arrow = Cursor_column.make ~prefix:"dialog.yes_no" yes_no_rows
+let yes_no_probes = Cursor_column.probes yes_no_arrow
+
 let probes =
   Wire.color_count_probe ~id:arrow_id ~box:text_area ~delivery:Every
     ~min:arrow_min ~max:arrow_max
@@ -56,3 +66,10 @@ let arrow_red m =
 
 let advance_arrow m = dialog_up m && arrow_red m
 let selection_dialog m = dialog_up m && white m selection_id
+
+let yes_no_arrow m =
+  if white m selection_id then
+    Option.map (fun row -> row = 0) (Cursor_column.row yes_no_arrow m)
+  else None
+
+let yes_no_cursor m = if dialog_up m then yes_no_arrow m else None

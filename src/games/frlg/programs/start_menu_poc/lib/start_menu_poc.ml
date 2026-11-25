@@ -10,14 +10,20 @@ let home () =
   | Some h -> h
   | None -> Option.value (Sys.getenv_opt "USERPROFILE") ~default:"."
 
-let default_state =
-  List.fold_left Filename.concat (home ())
-    [ "FRLGLab"; "mgba"; "gamepilot"; "states"; "overworld.ss" ]
+let states_dir () =
+  match Sys.getenv_opt "GAMEPILOT_STATES" with
+  | Some dir when dir <> "" -> dir
+  | _ ->
+      List.fold_left Filename.concat (home ())
+        [ ".local"; "share"; "gamepilot"; "states" ]
 
+let default_state = Filename.concat (states_dir ()) "overworld.ss"
 let timeout_ms = 3000
+let press_hold_ms = 100
+let press_cooldown_ms = 100
 
 let press button =
-  Wire.Press { buttons = [ button ]; hold_ms = 100; cooldown_ms = 100 }
+  Wire.press ~hold_ms:press_hold_ms ~cooldown_ms:press_cooldown_ms [ button ]
 
 (* Presses [button], then waits for [pred]; returns ms from batch_done to the
    frame where it held. *)
@@ -30,8 +36,8 @@ let press_until button pred =
 let menu_open = Menu_panel.start_menu_open
 let menu_closed m = not (menu_open m)
 
-let run ~state () =
-  ignore (Effects.load_state state : int);
+let run ?state () =
+  Option.iter (fun s -> ignore (Effects.load_state s : int)) state;
   ignore (Effects.subscribe [ Menu_panel.probe ] : string list);
   match press_until Wire.Start menu_open with
   | None -> Did_not_open

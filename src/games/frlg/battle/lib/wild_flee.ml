@@ -15,17 +15,16 @@ let refused runs =
        runs)
 
 let unanswered event runs =
-  Not_fled
-    (Printf.sprintf "%s after %d RUNs" (Battle_driver.event_name event) runs)
+  Not_fled (Printf.sprintf "%s after %d RUNs" (Battle.event_name event) runs)
 
-let run (driver : Battle_driver.t) ~log =
+let run (game_steps : Battle.game_steps) ~log =
   let rec from runs =
-    match driver.next_event ~timeout_ms:event_timeout_ms with
+    match game_steps.next_event ~timeout_ms:event_timeout_ms with
     | Battle_over -> Fled runs
     | Action_menu when runs >= max_runs -> refused runs
     | Action_menu ->
         log (run_line runs);
-        driver.run ();
+        game_steps.run ();
         from (runs + 1)
     | (Switch_in | Move_learn | Use_next | Timed_out) as event ->
         unanswered event runs
