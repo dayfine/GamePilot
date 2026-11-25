@@ -1,0 +1,11 @@
+(test
+ (name test_story_game)
+ (deps
+  (glob_files ../plans/*.plan.json))
+ (libraries
+  yojson
+  gamepilot.wire
+  gamepilot.table_test
+  gamepilot.plza_story
+  gamepilot.plza_checkpoints
+  gamepilot.plza_autostory))

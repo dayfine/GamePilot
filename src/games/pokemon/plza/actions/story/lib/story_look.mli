@@ -1,0 +1,59 @@
+(** One read of a PLZA story screen, and what the story actions judge from it:
+    the fork's [ScreenObservation] as PokemonLZA_AutoStoryConsoleBackend.cpp
+    fills it, and the matches of PokemonLZA_AutoStoryScreenPredicates.h
+    ([plza/lean]). Plain values: the live screen fills it from the readers,
+    tests by hand.
+
+    Not read: the party bar ([PLAYER_CAN_MOVE]), the A prompt, the battle HUD
+    and the "mission complete" card, which have no reader yet; each reads as not
+    shown. *)
+
+type t = {
+  at_ms : float;  (** When the frame was read, on the daemon's clock. *)
+  home_menu : bool;  (** The Switch HOME menu, not the game. *)
+  screen_still : bool;  (** The frame is the same as the last read's. *)
+  fade_black : bool;
+  fade_white : bool;
+  dialog_box : bool;  (** A text box, or a choice box. *)
+  choice_box : bool;
+  choice_rows : (int * int) option;
+      (** With a choice box: the highlighted row (0 the top) and the rows. *)
+  advance_arrow : bool;
+  controls_hint : bool;
+  autosave : bool;
+  tutorial_card : bool;
+  confirm_row : int option;
+      (** On the new game's Confirm Choices: the highlighted row. *)
+}
+
+val empty : at_ms:float -> t
+(** A read with nothing on it. *)
+
+val fade_shows : t -> bool
+(** FADE_SHOWS: a black or white fade. *)
+
+val text_shows : t -> bool
+(** TEXT_SHOWS: a text box, or the advance chevron without one. *)
+
+val text_waiting_for_a : t -> bool
+(** TEXT_WAITING_FOR_A: a text box with the advance chevron. *)
+
+val control_shows : t -> bool
+(** CONTROL_SHOWS: the controls hint with no text box (the party bar and the A
+    prompt are not read). *)
+
+val overworld_free : t -> bool
+(** OVERWORLD_FREE: the controls hint, with no text box, fade or chevron. *)
+
+val platform_hint : t -> bool
+(** PLATFORM_HINT: the controls hint, no text box and no autosave badge. *)
+
+val card_shows : t -> bool
+(** CARD_SHOWS: a tutorial card. *)
+
+val describe : t -> string
+(** What shows, as the fork's [describe_look] lists it ("black fade, text box,
+    still, controls hint"), or ["nothing"]. *)
+
+val to_walk_screen : t -> Plza_walk.Walk_screen.t
+(** The read as the walk takes it; the party bar never shows. *)

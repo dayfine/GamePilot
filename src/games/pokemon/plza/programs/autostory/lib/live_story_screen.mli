@@ -1,0 +1,21 @@
+(** The story screen read live, in the effect context: every PLZA reader's
+    probes over the game picture, and each read turned into a
+    {!Plza_story.Story_look.t}, as [PlzaConsoleBackend::observe]
+    (PokemonLZA_AutoStoryConsoleBackend.cpp, [plza/lean]) fills its look: the
+    HOME menu first ({!Switch_home.Home_screen}), else
+    {!Plza_readers.Story_screen}, the Confirm Choices row
+    ({!Plza_readers.Confirm_choices}), and whether the frame is the last read's
+    ({!Plza_readers.Frame_cells}). A read waits for a frame newer than the
+    inputs sent before it (500 ms at most). *)
+
+val probes :
+  picture:Wire.box -> assets:Plza_readers.Blob_assets.t -> Wire.probe_spec list
+(** Every probe a read needs; subscribe them around the run. *)
+
+val game_steps :
+  picture:Wire.box ->
+  log:(string -> unit) ->
+  log_detail:(string -> unit) ->
+  Plza_story.Story_steps.game_steps
+(** The story actions' steps on the live game: inputs through {!Effects.submit},
+    reads as above. *)

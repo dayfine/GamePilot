@@ -1,6 +1,6 @@
-(** PLZA's rules for the checkpoint engine ({!Engine_rules.GAME_RULES}). PLZA moves
-    in 3D with a camera that follows the player, so there is no tile grid: a
-    plan's pose is a zone (a place, and maybe a spot in it), the own kinds are
+(** PLZA's rules for the checkpoint engine ({!Engine_rules.GAME_RULES}). PLZA
+    moves in 3D with a camera that follows the player, so there is no tile grid:
+    a plan's pose is a zone (a place, and maybe a spot in it), the own kinds are
     timed walks ({!Walk_args}), and a checkpoint promises nothing the game reads
     yet. PLZA links the engine only, not [src/pokemon]
     ([docs/roadmap/plza-autostory-port.md]). Pure: how a plan writes them is
