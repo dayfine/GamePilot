@@ -114,8 +114,10 @@ presses B, and B answers NO.
 **Standard Centers.** 17 of FireRed's 19 Centers share one layout: `Frlg_overworld.Standard_center`
 codes that room as the fork's story does (`PokemonFRLG_CodedRooms`), with each Center's people
 (`Frlg_overworld.Center_people`, from pret) as obstacles. The world loader uses it for every
-standard Center, even where PokemonSimulation has a map, so Cinnabar's needs none. Only the Indigo
-Plateau's and One Island's Centers, with layouts of their own, come from their map files.
+standard Center, even where PokemonSimulation has a map, so Cinnabar's needs none: the
+`cinnabar_center_bill` place and the route reach it, and `heal_at` and `make_room` walk the same room
+in every standard Center. Only the Indigo Plateau's and One Island's Centers, with layouts of their
+own, come from their map files.
 
 **The fade-in.** A room entered by its door comes up dim and holds still for about 600ms before it
 fades in; the walk waits for that (`Warp_fade_in`) before its first step, so no step is lost.
@@ -142,7 +144,8 @@ which the game sets at the new game and no script clears: the scene shows him wi
 takes him away. `Frlg_overworld.Scene_only_people` lists such people, and the runner's world treats
 them as not there, so the walk out goes over the door. Other hidden people still count.
 
-**04, the Bikers' rows.** Two rows of coord events cross the street: row 27 runs the boss's intro
+**04, the Bikers' rows.** 04 walks through the port into town and stops below the Bikers at
+(8, 28). Two rows of coord events cross the street: row 27 runs the boss's intro
 once the scene var is 2, row 26 the battles once the intro has set it to 3. Their text shows the
 moment the player lands, so each row is reached with a `step` event, which holds one tile and
 watches nothing; a walk would take the text for a message on its way, press B and answer NO.
@@ -156,7 +159,8 @@ settled to a quiet overworld. A fainted lead fails the event as `battle_lost`.
 **04, the lead.** A `party_swap` puts BLASTOISE (Lv 60, Surf) first. On mGBA, with MIMIEN (Lv 33)
 in slot 1, every battle opened on it, since Gen 3 puts the party back in order after a battle, and
 it fainted in the second. Surf takes most of the Lv 37 to 39 Pokemon in one hit, so there is no
-heal first (no free control between the battles anyway). Under Shift, "Will ... change POKéMON?"
+heal first (no free control between the battles anyway). The save plays with the Set battle
+style; under Shift, "Will ... change POKéMON?"
 is read (`Switch_offer`) and answered NO.
 
 **04's money.** It ends on (8, 26) facing north with $3,196 more: 740, 760, 760 and 936 (4 x the
@@ -173,9 +177,10 @@ row 39 by the mat wall to wall four times (57 steps) and uses the second there, 
 steps to Lostelle. Each wears off on a leg held to a wall, which walks on after the message.
 
 **Bond Bridge's trainers.** `ThreeIsland_BondBridge` has seven, and two cannot both be walked
-around: Aroma Lady Violet at (68, 10) looks west two tiles over the only way from the east half,
+around (a reachability pass over the map and their sight): Aroma Lady Violet at (68, 10) looks west two tiles over the only way from the east half,
 and Aroma Lady Nikki wanders a 3 by 3 box round (27, 10) looking five tiles every way. The planner
-keeps off a standing trainer's line where it can (the twins' double battle is walked around).
+keeps off a standing trainer's line where it can (the twins' double battle is walked around) and
+treats the rest as open.
 
 **Fighting them.** On a route event with `"fight_trainers": true` (05's `over_bond_bridge`; off by
 default), a leg onto a tile an unbeaten trainer may see is walked in pieces
@@ -183,8 +188,8 @@ default), a leg onto a tile an unbeaten trainer may see is walked in pieces
 the fork's `trainer_full_watch()`: 1.5 s, a walking tile for each tile of sight, then 1 s.
 
 **After a sighting.** A text is the trainer's: the battle is a `train` battle, the trainer is
-beaten for the rest of the walk, and the walk is planned again round where the trainer may now
-stand. The fork instead holds the whole leg and finds the player from the stop's timing; a
+beaten for the rest of the walk, and the walk is planned again from that tile round where the
+trainer may now stand (the tile beside the player toward each tile they may have looked from). The fork instead holds the whole leg and finds the player from the stop's timing; a
 wanderer may see the player from more than one tile, so here the tile is fixed first.
 
 **05, Lostelle.** The walk goes from the Berry Forest's south mat to (4, 9), below her. Her script
