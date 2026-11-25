@@ -35,7 +35,7 @@
   test_pacing
   test_console_actions
   test_warp_settle
-  test_trainer_card_badges
+  test_trainer_card_read
   test_trainer_battles)
  (modules
   test_pc_deposit_steps
@@ -58,7 +58,7 @@
   test_pacing
   test_console_actions
   test_warp_settle
-  test_trainer_card_badges
+  test_trainer_card_read
   test_trainer_battles)
  (deps
   mgba.probes.jsonl
