@@ -4,8 +4,12 @@ let code_checks c path text =
   | Ok src ->
       Function_length.check c src
       @ Nesting.check c src @ Complexity.check c src
+      @ (if Source_tree.in_library_dir c path then Magic_numbers.check src
+         else [])
       @
-      if Source_tree.in_library_dir c path then Magic_numbers.check src else []
+      if Source_tree.under_no_exceptions_root c path then
+        No_exceptions.check src
+      else []
 
 let file_findings (c : Config.t) path =
   if Source_tree.in_test_dir c path then []
