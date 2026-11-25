@@ -39,7 +39,10 @@ let world ?edge_stalls ?rock_stairs ?hidden names =
 (* mGBA's world, as the checkpoint runner loads it. *)
 let mgba_world names =
   world ~edge_stalls:false ~rock_stairs
-    ~hidden:Frlg_overworld.Scene_only_people.hidden names
+    ~hidden:(fun o ->
+      Frlg_overworld.Scene_only_people.hidden o
+      || Frlg_overworld.Scene_removed_people.hidden o)
+    names
 
 let pallet =
   world

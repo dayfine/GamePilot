@@ -31,13 +31,15 @@
   test_route_walk
   test_edge_steps
   test_standard_center
-  test_joyful_game_corner)
+  test_joyful_game_corner
+  test_berry_forest)
  (modules
   test_route_target
   test_route_walk
   test_edge_steps
   test_standard_center
-  test_joyful_game_corner)
+  test_joyful_game_corner
+  test_berry_forest)
  (deps
   mgba.probes.jsonl
   menus.mgba.probes.jsonl

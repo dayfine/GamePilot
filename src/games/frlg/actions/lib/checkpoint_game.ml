@@ -41,11 +41,26 @@ let route_from w (at : Pokemon_checkpoints.Pose.observed) target =
       Route_target.plan w ~from ~facing:at.faces target
       |> Result.map (fun legs -> (from, legs)))
 
+let battle_game_steps () =
+  Frlg_battle.Battle_steps.make ~read_offered_move:Summary_moves.read_offered
+    ~is_switch_offer:Switch_offer.read ()
+
+let battle_on t wrap script =
+  Effects.with_probes Frlg_battle.Battle_look.probes (fun () ->
+      Frlg_battle.Scripted_battle.run ~log:t.config.log
+        (wrap (battle_game_steps ()))
+        script)
+
+let battle t script = battle_on t Fun.id script
+
 let walker t : Route_walk.t =
   {
     world = t.world;
     gait = t.config.gait;
     flee = t.config.flee;
+    fight_trainer =
+      (fun () ->
+        Trainer_battles.play ~log:t.config.log ~fight:(battle t) ~battles:1);
     log = t.config.log;
   }
 
@@ -135,18 +150,6 @@ let find_battle t ~pace ~patch () =
   Paced_battle.find ~log:t.config.log ~pace ~patch
     ~stands:(fun at -> t.at <- Some at)
     (Paced_battle.reckoned t.at)
-
-let battle_game_steps () =
-  Frlg_battle.Battle_steps.make ~read_offered_move:Summary_moves.read_offered
-    ~is_switch_offer:Switch_offer.read ()
-
-let battle_on t wrap script =
-  Effects.with_probes Frlg_battle.Battle_look.probes (fun () ->
-      Frlg_battle.Scripted_battle.run ~log:t.config.log
-        (wrap (battle_game_steps ()))
-        script)
-
-let battle t script = battle_on t Fun.id script
 
 let grind_game_steps t (plan : Grind_plan.t) =
   (* Grind_plan reads one *)
@@ -276,7 +279,8 @@ let ferry t (_ : Pokemon_checkpoints.Plan.event) args =
 
 let declared t event = Result.map (fun () -> adopt_declared t event)
 
-(* The plan's [step] (Route_walk.step) and [train] (Trainer_battles). *)
+(* The plan's [step] (Route_walk.step), [train] (Trainer_battles) and
+   [battle] (Scene_battle). *)
 let step_from t (at : Pokemon_checkpoints.Pose.observed) direction =
   match Route_target.place_of t.world at with
   | Error e -> Error (Failure.cause ~repeats:true "no_route" e)
@@ -293,14 +297,20 @@ let train t event battles =
   declared t event
     (Trainer_battles.play ~log:t.config.log ~fight:(battle t) ~battles)
 
+let story_battle t event may_lose =
+  declared t event
+    (Scene_battle.play ~log:t.config.log ~fight:(battle t) ~may_lose)
+
+let run_own t event : Pokemon_checkpoints.Pokemon_action.t -> _ = function
+  | Route route -> regrowing t (fun () -> walk_to t route.target)
+  | Step direction -> step t event direction
+  | Train battles -> train t event battles
+  | Battle { may_lose } -> story_battle t event may_lose
+  | _ -> run_builtin t event
+
 let game t : Pokemon_checkpoints.Game.t =
   {
-    run_own =
-      (fun event -> function
-        | Route route -> regrowing t (fun () -> walk_to t route.target)
-        | Step direction -> step t event direction
-        | Train battles -> train t event battles
-        | _ -> run_builtin t event);
+    run_own = run_own t;
     run_builtin = run_builtin t;
     game_actions =
       List.map
