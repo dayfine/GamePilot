@@ -1,6 +1,7 @@
-(* Plan_decode reads every real plan (PokemonSimulation's FireRed plans and the
-   Mail Glitch program's), types each built-in kind's args, and rejects a broken
-   plan naming the field. *)
+(* Plan_decode reads every PokemonSimulation FireRed plan and the Mail Glitch
+   plans that need no FireRed expansion (places, fragments: the program
+   registry's test loads every program plan through FireRed's Plan_file), types
+   each built-in kind's args, and rejects a broken plan naming the field. *)
 
 open Checkpoints
 
@@ -116,18 +117,6 @@ let real_plans : Table_test.case list =
       expectation = "all decode";
     };
     {
-      name = "every Mail Glitch plan";
-      input = (fun () -> load_all (Plan_files.plans_in mg));
-      expectation = "all decode";
-    };
-    {
-      name = "mg-01 outline";
-      input = (fun () -> outline "mg-01.plan.json" mg);
-      expectation =
-        "frlg mg-01 from CeladonCity (48, 12) south: 6 game_action, 7 route, 1 \
-         talk, 1 scene";
-    };
-    {
       name = "mg-02 outline";
       input = (fun () -> outline "mg-02.plan.json" mg);
       expectation =
@@ -181,15 +170,14 @@ let real_plans : Table_test.case list =
     };
     {
       name = "a route's typed target";
-      input = (fun () -> event "mg-01.plan.json" mg "to_coin_case_man");
-      expectation =
-        "to_coin_case_man: [run] route to CeladonCity_Restaurant (2, 2) west";
+      input = (fun () -> event "mg-02.plan.json" mg "to_route16_cut_tree");
+      expectation = "to_route16_cut_tree: [run] route to Route16 (41, 12) north";
     };
     {
       name = "a game action keeps its args as JSON, and its declared_after";
-      input = (fun () -> event "mg-01.plan.json" mg "lift_1f_to_4f");
+      input = (fun () -> event "mg-02.plan.json" mg "fly_vermilion");
       expectation =
-        {|lift_1f_to_4f: [lift_floor] game_action {"from":"1F","to":"4F"} => CeladonCity_DepartmentStore_4F (6, 2) south|};
+        {|fly_vermilion: [fly] game_action {"town":"VermilionCity","species":"pidgey"} => VermilionCity (15, 7) south|};
     };
     {
       name = "legs that fight wild Pokemon";
