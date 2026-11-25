@@ -19,7 +19,7 @@ val old_format : string
 
 (** The decoder of the game's plans. *)
 module Make
-    (T : Engine_terms.TERMS)
+    (T : Engine_rules.GAME_RULES)
     (_ : Plan_codec.PLAN_CODEC with module T = T) : sig
   val format : string
   (** {!Plan_decode.format}. *)

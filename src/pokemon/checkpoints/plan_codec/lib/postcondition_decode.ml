@@ -1,4 +1,4 @@
-open Pokemon_terms
+open Pokemon_rules
 module F = Json_field
 open Engine_postcondition
 open Engine_plan_codec.Plan_fields

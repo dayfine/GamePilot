@@ -14,9 +14,9 @@
 
 (** The engine's modules over [T]. *)
 module Make
-    (T : Engine_terms.TERMS)
+    (T : Engine_rules.GAME_RULES)
     (C : Engine_plan_codec.Plan_codec.PLAN_CODEC with module T = T)
-    (X : Engine_text.Terms_text.TEXT with module T = T)
+    (X : Engine_text.Rules_text.TEXT with module T = T)
     (S : Engine_saved.Event_states.SAVED) : sig
   (** {!Engine_plan.Plan.Make}: the plan's types, a game action's args the
       plan's JSON ({!Engine_plan_codec.Raw_json}). *)

@@ -1,4 +1,4 @@
-module Make (T : Engine_terms.TERMS) = struct
+module Make (T : Engine_rules.GAME_RULES) = struct
   type part =
     | Text of string
     | Pose of T.Pose.t

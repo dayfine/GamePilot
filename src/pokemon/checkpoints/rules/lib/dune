@@ -1,0 +1,7 @@
+(library
+ (name pokemon_rules)
+ (public_name gamepilot.pokemon_rules)
+ (libraries
+  gamepilot.grid_geometry
+  gamepilot.engine_postcondition
+  gamepilot.engine_rules))

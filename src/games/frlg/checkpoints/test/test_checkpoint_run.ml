@@ -17,8 +17,8 @@ let handled =
 let missing (p : Pokemon_checkpoints.Plan.t) =
   List.filter_map
     (fun (e : Pokemon_checkpoints.Plan.event) ->
-      match (e.kind, e.action) with
-      | Game_action _, Some name when not (List.mem name handled) -> Some name
+      match (e.kind, e.way) with
+      | Named_action _, Some name when not (List.mem name handled) -> Some name
       | _ -> None)
     p.checkpoint.events
   |> List.sort_uniq compare
@@ -52,9 +52,9 @@ let reckoned (e : Pokemon_checkpoints.Plan.event) :
           }
     | _ -> None
   in
-  match (e.kind, e.action) with
-  | Own (Route r), _ -> of_grid r.target
-  | Game_action args, Some "lift_floor" ->
+  match (e.kind, e.way) with
+  | Game (Route r), _ -> of_grid r.target
+  | Named_action args, Some "lift_floor" ->
       Result.to_option (Frlg_actions.Lift_ride.ride_of_args args)
       |> Option.map Frlg_actions.Lift_ride.arrival
   | _ ->
@@ -68,7 +68,7 @@ let walks file () =
   let step (at, out) (e : Pokemon_checkpoints.Plan.event) =
     let out =
       match (e.kind, at) with
-      | Own (Route r), Some (at : Pokemon_checkpoints.Pose.observed) ->
+      | Game (Route r), Some (at : Pokemon_checkpoints.Pose.observed) ->
           let legs =
             Result.bind (Frlg_overworld.Route_target.place_of world at)
               (fun from ->
