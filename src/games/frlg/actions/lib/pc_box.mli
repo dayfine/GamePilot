@@ -12,6 +12,8 @@ type game_steps = {
   look : unit -> Pc_deposit_steps.look;
       (** The screen, the cursor's row and its label. *)
   press : Pc_deposit_steps.press -> unit;
+      (** One press (or a wait) in the game, as {!open_next} or {!leave_next}
+          chose it. *)
 }
 (** What the walk reads and presses in the game. *)
 
@@ -28,8 +30,10 @@ type opening = {
 val opening : opening
 (** At the PC, nothing pressed. *)
 
+(** What {!open_next} answers for one look: the walk is done, or the next press
+    and where the walk will be once it went in. *)
 type next =
-  | At_box_screen
+  | At_box_screen  (** The MOVE POKéMON box screen shows: the walk is done. *)
   | Press of Pc_deposit_steps.press * opening
       (** The press, and where the walk is once it went in. *)
 
@@ -44,7 +48,7 @@ val leave_next : Pc_deposit_steps.look -> Pc_deposit_steps.press option
 (** [None] on the overworld; a wait on a fade; B on any other screen. *)
 
 val max_looks : int
-(** 40. *)
+(** The most looks {!to_box_screen} or {!leave} takes before it fails: 40. *)
 
 val to_box_screen : log:(string -> unit) -> game_steps -> unit
 (** Walks {!open_next} from {!opening}. Fails as [pc_box] when the box screen

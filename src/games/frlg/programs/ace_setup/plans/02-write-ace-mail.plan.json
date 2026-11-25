@@ -2,7 +2,7 @@
   "format": "gamepilot-checkpoint/1",
   "game": "frlg",
   "checkpoint": {
-    "id": "ace-02",
+    "id": "02-write-ace-mail",
     "title": "The ? Mail written BULK UP / CAPABLE / KARATE CHOP / MAGIKARP: species 0x0351 in Box 3 slot 1",
     "start": {
       "map": "Route4_PokemonCenter_1F",
@@ -82,7 +82,7 @@
   "metadata": {
     "phase": "testing",
     "retries": 3,
-    "notes": "The irreversible step: confirming the ? Mail writes Box 3 slot 1. Its start state (ace-01's end, at the salesman) is the backup: on mGBA the run starts from it every time, and on the Switch nothing is saved until every check passed. Words from pomeg-letterbombers' FRLG non-JPN Post-E4 route (English). The Retro Mail is spent and the Magikarp ends holding nothing (the give fails half way, as in the duplication). Checked on mGBA from RAM (not by the program): Box 3 slot 1 personality 0x162E2753, OT ID 0x2A812402, species 0x0351.",
+    "notes": "The irreversible step: confirming the ? Mail writes Box 3 slot 1. Its start state (01-buy-magikarp's end, at the salesman) is the backup: on mGBA the run starts from it every time, and on the Switch nothing is saved until every check passed. Words from pomeg-letterbombers' FRLG non-JPN Post-E4 route (English). The Retro Mail is spent and the Magikarp ends holding nothing (the give fails half way, as in the duplication). Checked on mGBA from RAM (not by the program): Box 3 slot 1 personality 0x162E2753, OT ID 0x2A812402, species 0x0351.",
     "postconditions": {
       "party_slots": [
         {

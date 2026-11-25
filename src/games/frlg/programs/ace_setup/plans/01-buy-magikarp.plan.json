@@ -2,7 +2,7 @@
   "format": "gamepilot-checkpoint/1",
   "game": "frlg",
   "checkpoint": {
-    "id": "ace-01",
+    "id": "01-buy-magikarp",
     "title": "Magikarp seen and in the party: a free slot made at the Route 4 Pokemon Center's PC, a Magikarp bought there",
     "start": {
       "map": "CeladonCity_DepartmentStore_1F",

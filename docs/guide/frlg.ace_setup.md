@@ -29,12 +29,12 @@ What the save needs:
 The plan names the Fly user and the member to deposit by species, as the Mail Glitch save has them
 (Pidgey and MIMIEN). What the pre-flight checks (generated from the plan):
 
-<!-- generated:needs ace-01 -->
-- 0 free party slots
+<!-- generated:needs 01-buy-magikarp -->
 - the Hall of Fame entered
 - pidgey in the party (fly)
 - mr-mime in the party (pc_deposit)
 - mr-mime holds no Mail (pc_deposit)
+- the thunder badge (fly)
 - at the start, CeladonCity_DepartmentStore_1F
 <!-- /generated -->
 
@@ -43,11 +43,11 @@ The plan names the Fly user and the member to deposit by species, as the Mail Gl
 <!-- generated:commands -->
 ```sh
 # mGBA: each checkpoint three times from its start state, two must pass
-sh run/run_checkpoints_on_mgba.sh --program frlg.ace_setup --from ace-01 --to ace-02 --mode verification
+sh run/run_checkpoints_on_mgba.sh frlg.ace_setup --from 01-buy-magikarp --to 02-write-ace-mail --mode verification
 ```
 <!-- /generated -->
 
-On mGBA the start state is `ace-01.start.ss` in `GAMEPILOT_STATES`: a copy of the state Mail
+On mGBA the start state is `01-buy-magikarp.start.ss` in `GAMEPILOT_STATES`: a copy of the state Mail
 Glitch 08-activate-and-verify ends in.
 
 ## What happens
@@ -55,10 +55,10 @@ Glitch 08-activate-and-verify ends in.
 <!-- generated:checkpoints -->
 | Checkpoint | What its plan does |
 |---|---|
-| ace-01 | Magikarp seen and in the party: a free slot made at the Route 4 Pokemon Center's PC, a Magikarp bought there |
-| ace-02 | The ? Mail written BULK UP / CAPABLE / KARATE CHOP / MAGIKARP: species 0x0351 in Box 3 slot 1 |
+| 01-buy-magikarp | Magikarp seen and in the party: a free slot made at the Route 4 Pokemon Center's PC, a Magikarp bought there |
+| 02-write-ace-mail | The ? Mail written BULK UP / CAPABLE / KARATE CHOP / MAGIKARP: species 0x0351 in Box 3 slot 1 |
 
-<!-- plans: 452c1c79ff39 -->
+<!-- plans: b3353105c0c5 -->
 <!-- /generated -->
 
 In plain words:
@@ -81,10 +81,10 @@ Nothing is confirmed until every word reads right, and on mGBA every run starts 
 saved start state, so a stopped run changes nothing. The second checkpoint's start state (after
 the Magikarp) is the backup from before the ? Mail.
 
-<!-- generated:preflight ace-01 -->
+<!-- generated:preflight 01-buy-magikarp -->
 | Resume from | The pre-flight checks |
 |---|---|
-| ace-01 | the Hall of Fame entered; pidgey in the party (fly); mr-mime in the party (pc_deposit); mr-mime holds no Mail (pc_deposit); at the start, CeladonCity_DepartmentStore_1F |
+| 01-buy-magikarp | the Hall of Fame entered; pidgey in the party (fly); mr-mime in the party (pc_deposit); mr-mime holds no Mail (pc_deposit); the thunder badge (fly); at the start, CeladonCity_DepartmentStore_1F |
 <!-- /generated -->
 
 ## Known limits
