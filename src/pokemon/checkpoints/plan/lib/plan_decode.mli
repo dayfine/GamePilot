@@ -4,9 +4,9 @@
     It is as strict as PokemonSimulation's reader on the record: unknown fields,
     kinds and built-in args, missing required fields, malformed poses and
     repeated event ids are errors, each naming the file and the field, as in
-    ["mg-01.plan.json: checkpoint.events[1].args.target.map is missing."]. It
-    does not check a game action's args (the game does, when it binds the
-    action) nor the game's [execution] settings. *)
+    ["01-celadon-setup.plan.json: checkpoint.events[1].args.target.map is
+     missing."]. It does not check a game action's args (the game does, when it
+    binds the action) nor the game's [execution] settings. *)
 
 val format : string
 (** ["gamepilot-checkpoint/1"], what a plan file names and what is written. *)

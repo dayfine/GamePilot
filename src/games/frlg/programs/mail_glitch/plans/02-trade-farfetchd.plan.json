@@ -2,7 +2,7 @@
   "format": "gamepilot-checkpoint/1",
   "game": "frlg",
   "checkpoint": {
-    "id": "mg-02",
+    "id": "02-trade-farfetchd",
     "title": "Catch Spearow on Route 16, collect Sitrus Berry on Route 6, trade for CH'DING in Vermilion",
     "start": {"map": "CeladonCity", "tiles": [[39, 21]], "facing": "south"},
     "events": [

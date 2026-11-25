@@ -9,15 +9,14 @@ let plan name =
 
 let plan_names =
   [
-    "mg-01";
-    "mg-02";
-    "mg-03";
-    "mg-04a";
-    "mg-04b";
-    "mg-04c";
-    "mg-05a";
-    "mg-05";
-    "mg-06";
+    "01-celadon-setup";
+    "02-trade-farfetchd";
+    "03-trade-mr-mime";
+    "04-grind-farfetchd";
+    "05-grind-mr-mime";
+    "06-grind-return";
+    "07-glitch-prep";
+    "08-activate-and-verify";
   ]
 
 let all_decode () =
@@ -44,95 +43,96 @@ let records : Table_test.case list =
       expectation = "all decode";
     };
     {
-      name = "mg-01 outline";
-      input = (fun () -> outline "mg-01.plan.json");
+      name = "01-celadon-setup outline";
+      input = (fun () -> outline "01-celadon-setup.plan.json");
       expectation =
-        "frlg mg-01 from CeladonCity (48, 12) south: 6 game_action, 7 route, 1 \
-         talk, 1 scene";
+        "frlg 01-celadon-setup from CeladonCity (48, 12) south: 6 game_action, \
+         7 route, 1 talk, 1 scene";
     };
     {
       name = "a place route, expanded: the lift ride FireRed adds";
-      input = (fun () -> event "mg-01.plan.json" "to_4f_clerk.lift");
+      input = (fun () -> event "01-celadon-setup.plan.json" "to_4f_clerk.lift");
       expectation =
         {|to_4f_clerk.lift: [lift_floor] game_action {"from":"1F","to":"4F"} => CeladonCity_DepartmentStore_4F (6, 2) south|};
     };
     {
-      name = "mg-02 outline";
-      input = (fun () -> outline "mg-02.plan.json");
+      name = "02-trade-farfetchd outline";
+      input = (fun () -> outline "02-trade-farfetchd.plan.json");
       expectation =
-        "frlg mg-02 from CeladonCity (39, 21) south: 7 route, 6 game_action, 1 \
-         scene";
+        "frlg 02-trade-farfetchd from CeladonCity (39, 21) south: 7 route, 6 \
+         game_action, 1 scene";
     };
     {
-      name = "mg-03 outline";
-      input = (fun () -> outline "mg-03.plan.json");
+      name = "03-trade-mr-mime outline";
+      input = (fun () -> outline "03-trade-mr-mime.plan.json");
       expectation =
-        "frlg mg-03 from VermilionCity (19, 18) south: 5 game_action, 5 route, \
-         1 heal";
+        "frlg 03-trade-mr-mime from VermilionCity (19, 18) south: 5 \
+         game_action, 5 route, 1 heal";
     };
     {
-      name = "mg-04a outline";
-      input = (fun () -> outline "mg-04a.plan.json");
+      name = "04-grind-farfetchd outline";
+      input = (fun () -> outline "04-grind-farfetchd.plan.json");
       expectation =
-        "frlg mg-04a from LavenderTown_PokemonCenter_1F (7, 4) north: 2 route, \
-         3 game_action, 1 heal";
+        "frlg 04-grind-farfetchd from LavenderTown_PokemonCenter_1F (7, 4) \
+         north: 2 route, 3 game_action, 1 heal";
     };
     {
-      name = "mg-04b outline: one grind round";
-      input = (fun () -> outline "mg-04b.plan.json");
+      name = "05-grind-mr-mime outline: one grind round";
+      input = (fun () -> outline "05-grind-mr-mime.plan.json");
       expectation =
-        "frlg mg-04b from IndigoPlateau_PokemonCenter_1F (13, 12) north: 1 \
-         game_action";
+        "frlg 05-grind-mr-mime from IndigoPlateau_PokemonCenter_1F (13, 12) \
+         north: 1 game_action";
     };
     {
-      name = "mg-04c outline";
-      input = (fun () -> outline "mg-04c.plan.json");
+      name = "06-grind-return outline";
+      input = (fun () -> outline "06-grind-return.plan.json");
       expectation =
-        "frlg mg-04c from IndigoPlateau_PokemonCenter_1F (13, 12) north: 2 \
-         route, 1 game_action";
+        "frlg 06-grind-return from IndigoPlateau_PokemonCenter_1F (13, 12) \
+         north: 2 route, 1 game_action";
     };
     {
-      name = "mg-05a outline";
-      input = (fun () -> outline "mg-05a.plan.json");
+      name = "07-glitch-prep outline";
+      input = (fun () -> outline "07-glitch-prep.plan.json");
       expectation =
-        "frlg mg-05a from LavenderTown (18, 7) south: 9 route, 12 game_action, \
-         1 scene";
+        "frlg 07-glitch-prep from LavenderTown (18, 7) south: 9 route, 12 \
+         game_action, 1 scene";
     };
     {
-      name = "mg-05 outline";
-      input = (fun () -> outline "mg-05.plan.json");
-      expectation = "frlg mg-05 from Route16 (30, 7) north: 2 game_action";
+      name = "08-activate-and-verify outline";
+      input = (fun () -> outline "08-activate-and-verify.plan.json");
+      expectation =
+        "frlg 08-activate-and-verify from Route16 (30, 7) north: 18 \
+         game_action, 3 route";
     };
     {
       name = "a route's typed target";
-      input = (fun () -> event "mg-02.plan.json" "to_route16_cut_tree");
+      input =
+        (fun () -> event "02-trade-farfetchd.plan.json" "to_route16_cut_tree");
       expectation = "to_route16_cut_tree: [run] route to Route16 (41, 12) north";
     };
     {
       name = "a game action keeps its args as JSON, and its declared_after";
-      input = (fun () -> event "mg-02.plan.json" "fly_vermilion");
+      input = (fun () -> event "02-trade-farfetchd.plan.json" "fly_vermilion");
       expectation =
         {|fly_vermilion: [fly] game_action {"town":"VermilionCity","species":"pidgey"} => VermilionCity (15, 7) south|};
     };
     {
       name =
-        "mg-01 promises the members the plans use (Abra among them), 20 coins \
-         gained and $4,100 spent";
-      input = (fun () -> Plan_text.postconditions (plan "mg-01.plan.json"));
+        "01-celadon-setup promises the members the plans use (Abra among \
+         them), 20 coins gained and $4,100 spent";
+      input =
+        (fun () -> Plan_text.postconditions (plan "01-celadon-setup.plan.json"));
       expectation =
         "party includes blastoise, pidgey, abra\n\
          coins gained 20\n\
          money spent 4100";
     };
     {
-      name = "mg-05 promises MIMIEN, Pidgey and slots 1-3's marks";
-      input = (fun () -> Plan_text.postconditions (plan "mg-05.plan.json"));
-      expectation =
-        "party includes mr-mime, pidgey\nmarks held_item, none, held_item";
-    };
-    {
-      name = "mg-03 promises MIMIEN for Abra, 2 Revives and an Escape Rope";
-      input = (fun () -> Plan_text.postconditions (plan "mg-03.plan.json"));
+      name =
+        "03-trade-mr-mime promises MIMIEN for Abra, 2 Revives and an Escape \
+         Rope";
+      input =
+        (fun () -> Plan_text.postconditions (plan "03-trade-mr-mime.plan.json"));
       expectation =
         "party includes blastoise, pidgey, mr-mime, farfetchd\n\
          item revive gained 2\n\
@@ -140,8 +140,10 @@ let records : Table_test.case list =
          money spent 3550";
     };
     {
-      name = "mg-04a promises Knock Off and one rope used";
-      input = (fun () -> Plan_text.postconditions (plan "mg-04a.plan.json"));
+      name = "04-grind-farfetchd promises Knock Off and one rope used";
+      input =
+        (fun () ->
+          Plan_text.postconditions (plan "04-grind-farfetchd.plan.json"));
       expectation =
         "party includes blastoise, pidgey, mr-mime, farfetchd\n\
          item revive gained 0\n\
@@ -150,16 +152,18 @@ let records : Table_test.case list =
          farfetchd knows knock-off";
     };
     {
-      name = "a grind round (mg-04b) promises what holds on any save";
-      input = (fun () -> Plan_text.postconditions (plan "mg-04b.plan.json"));
+      name = "a grind round (05-grind-mr-mime) promises what holds on any save";
+      input =
+        (fun () -> Plan_text.postconditions (plan "05-grind-mr-mime.plan.json"));
       expectation =
         "position IndigoPlateau_PokemonCenter_1F (13, 12) north\n\
          party includes blastoise, pidgey, mr-mime, farfetchd\n\
          money spent 0";
     };
     {
-      name = "mg-04c promises the grind's moves";
-      input = (fun () -> Plan_text.postconditions (plan "mg-04c.plan.json"));
+      name = "06-grind-return promises the grind's moves";
+      input =
+        (fun () -> Plan_text.postconditions (plan "06-grind-return.plan.json"));
       expectation =
         "party includes blastoise, pidgey, mr-mime, farfetchd\n\
          money spent 0\n\
@@ -168,18 +172,23 @@ let records : Table_test.case list =
          mr-mime at least Lv 33";
     };
     {
-      name = "mg-06 promises MIMIEN in slot 1, where the duplication gives";
-      input = (fun () -> Plan_text.postconditions (plan "mg-06.plan.json"));
+      name =
+        "08-activate-and-verify promises MIMIEN in slot 1, where the \
+         duplication gives, and Lea & Jed's prize less the mail";
+      input =
+        (fun () ->
+          Plan_text.postconditions (plan "08-activate-and-verify.plan.json"));
       expectation =
-        "party includes pidgey\n\
+        "party includes mr-mime, pidgey\n\
          mr-mime in slot 1\n\
          item antidote gained 0\n\
          item retro-mail gained 1\n\
-         money spent 400";
+         money spent -1224";
     };
     {
-      name = "mg-05a promises Blastoise's Leppa Berry and MIMIEN's mail";
-      input = (fun () -> Plan_text.postconditions (plan "mg-05a.plan.json"));
+      name = "07-glitch-prep promises Blastoise's Leppa Berry and MIMIEN's mail";
+      input =
+        (fun () -> Plan_text.postconditions (plan "07-glitch-prep.plan.json"));
       expectation =
         "party includes pidgey\n\
          farfetchd in slot 1\n\
@@ -198,14 +207,15 @@ let cases : Table_test.case list =
     { name; input; expectation }
   in
   [
-    case "mg-05 retries the battle's luck 3 times"
-      (fun () -> string_of_int (plan "mg-05.plan.json").retries)
+    case "08-activate-and-verify retries the battle's luck 3 times"
+      (fun () ->
+        string_of_int (plan "08-activate-and-verify.plan.json").retries)
       "3";
-    case "mg-04b repeats until MIMIEN is Lv 33 and knows Recycle"
-      (fun () -> Plan_text.repeat (plan "mg-04b.plan.json"))
+    case "05-grind-mr-mime repeats until MIMIEN is Lv 33 and knows Recycle"
+      (fun () -> Plan_text.repeat (plan "05-grind-mr-mime.plan.json"))
       "at most 20 rounds, until:\nmr-mime knows recycle\nmr-mime at least Lv 33";
-    case "mg-04b retries each round twice"
-      (fun () -> string_of_int (plan "mg-04b.plan.json").retries)
+    case "05-grind-mr-mime retries each round twice"
+      (fun () -> string_of_int (plan "05-grind-mr-mime.plan.json").retries)
       "2";
   ]
 

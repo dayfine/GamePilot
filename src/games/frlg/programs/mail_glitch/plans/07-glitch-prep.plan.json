@@ -2,7 +2,7 @@
   "format": "gamepilot-checkpoint/1",
   "game": "frlg",
   "checkpoint": {
-    "id": "mg-05a",
+    "id": "07-glitch-prep",
     "title": "Prepare Leppa and Retro Mail for Lea & Jed on Route 16",
     "start": {"map": "LavenderTown", "tiles": [[18, 7]], "facing": "south"},
     "events": [
@@ -170,7 +170,7 @@
   },
   "metadata": {
     "phase": "testing",
-    "notes": "Ported unchanged from the fork's tested PlanData/mg-05a.plan.json (Route 16 run on mGBA, 2026-11-23). The fork splits mg-05 in two so the double battle retries from a save one tile outside Lea's sightline: mg-05a buys medicine, picks up Route 8's hidden Leppa Berry, uses up Blastoise's Blizzard PP in wild battles, flies to Celadon, cuts Route 16's tree, walks to (30, 7) and arranges the party and its held items. The postconditions check the battle's three members in slots 1-3 and Pidgey (Fly), slots 1-3's held-item marks on the party menu (CH'DING's own item, as the C++ run's party shows, Blastoise the Leppa Berry, MIMIEN the Retro Mail), the bag's new medicine and one Retro Mail left of two, and the money after the Mart ($21,464 - $2,300); not that Blizzard is at 0 PP (no PP digit reader). The fork turns in place for the wild battles; GamePilot paces west and back from (45, 12), see Paced_battle.",
+    "notes": "Ported unchanged from the fork's tested PlanData/mg-05a.plan.json (Route 16 run on mGBA, 2026-11-23). The fork splits its mg-05 in two so the double battle retries from a save one tile outside Lea's sightline: this part (the fork's mg-05a) buys medicine, picks up Route 8's hidden Leppa Berry, uses up Blastoise's Blizzard PP in wild battles, flies to Celadon, cuts Route 16's tree, walks to (30, 7) and arranges the party and its held items. The postconditions check the battle's three members in slots 1-3 and Pidgey (Fly), slots 1-3's held-item marks on the party menu (CH'DING's own item, as the C++ run's party shows, Blastoise the Leppa Berry, MIMIEN the Retro Mail), the bag's new medicine and one Retro Mail left of two, and the money after the Mart ($21,464 - $2,300); not that Blizzard is at 0 PP (no PP digit reader). The fork turns in place for the wild battles; GamePilot paces west and back from (45, 12), see Paced_battle.",
     "postconditions": {
       "party_includes": ["pidgey"],
       "party_slots": [{"slot": 1, "species": "farfetchd"}, {"slot": 2, "species": "blastoise"}, {"slot": 3, "species": "mr-mime"}],

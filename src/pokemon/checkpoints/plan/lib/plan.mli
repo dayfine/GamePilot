@@ -137,8 +137,8 @@ type repeat = {
 }
 (** The metadata's [repeat]: the checkpoint is a round that runs again (each
     pass saved like any checkpoint's) until [until] holds. It starts and ends at
-    the same place, its save point: mg-04b's grind round, from the Indigo
-    Plateau nurse back to her. *)
+    the same place, its save point: 05-grind-mr-mime's grind round, from the
+    Indigo Plateau nurse back to her. *)
 
 type t = {
   game : string;  (** The plan's [game], e.g. ["frlg"]. *)

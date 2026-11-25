@@ -27,7 +27,7 @@
    token, which the URL printed for other devices carries. The program's port
    (--port) is a free one too unless given, so runs do not collide.
 
-   A repeating checkpoint (its plan's metadata.repeat: mg-04b, the grind
+   A repeating checkpoint (its plan's metadata.repeat: 05-grind-mr-mime, the grind
    round) runs round after round, each one run with its attempts, each passing
    round saved (on the Switch in the game, on mGBA as the next round's start
    state), until its goal (repeat.until), read after each passing round,
@@ -54,7 +54,7 @@
    party for the Switch's start check when no checkpoint before it promises
    one.
 
-   --make-room MAP (the save's map) runs the generated checkpoint mg-00 first
+   --make-room MAP (the save's map) runs the generated checkpoint 00-make-room first
    when the chain needs party room (Make_room_command).
 
    --from-event ID|N [--to-event ID|N] (mGBA, testing, one checkpoint: --to

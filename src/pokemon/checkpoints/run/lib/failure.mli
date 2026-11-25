@@ -52,5 +52,5 @@ val repeats : t -> bool
 val reason_to_string : reason -> string
 
 val to_string : t -> string
-(** ["mg-01 event 3 (talk_coin_case_man): no_text: ..."], the event counted from
-    1. *)
+(** ["01-celadon-setup event 3 (talk_coin_case_man): no_text: ..."], the event
+    counted from 1. *)

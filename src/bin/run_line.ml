@@ -1,10 +1,10 @@
 (* The words of a checkpoint run's summary line (Checkpoint_live_run): which
    run or round it was, its attempt, a repeating checkpoint's goal and a grind
-   cap, each a note added to "PASS mg-04b round 3". *)
+   cap, each a note added to "PASS 05-grind-mr-mime round 3". *)
 
 open Checkpoints_plan
 
-(* "mg-04b round 3" for a repeating checkpoint, else "mg-04a run 1". *)
+(* "05-grind-mr-mime round 3" for a repeating checkpoint, else "04-grind-farfetchd run 1". *)
 let run_name id (plan : Plan.t) n =
   Printf.sprintf "%s %s %d" id (if plan.repeat = None then "run" else "round") n
 

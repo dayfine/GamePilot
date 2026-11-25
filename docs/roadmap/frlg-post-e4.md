@@ -6,7 +6,7 @@ the checkpoint runner and story engine the Mail Glitch built. Together they are 
 
 | # | Milestone | Needs first | Page |
 |---|---|---|---|
-| A1 | Duplicate Rare Candies and a leveling program (candies, target moves, evolution) | Mail Glitch (mg-06 `duplicate_item`) | [frlg-rare-candy-leveling.md](frlg-rare-candy-leveling.md) |
+| A1 | Duplicate Rare Candies and a leveling program (candies, target moves, evolution) | Mail Glitch (08-activate-and-verify's `duplicate_item`) | [frlg-rare-candy-leveling.md](frlg-rare-candy-leveling.md) |
 | A2 | Sevii Islands story: One to Seven Island, Ruby and Sapphire, National Dex | post-game save; Cut and Surf users (Waterfall is taught on the way) | [frlg-sevii-islands.md](frlg-sevii-islands.md) |
 | A3 | ACE: stock Master Balls and Luxury Balls | Mail Glitch; FRLG naming-screen typer | [frlg-ace-balls.md](frlg-ace-balls.md) |
 | A4 | Collect the legendaries | A2 for Moltres, Mewtwo and the beast; balls from A3 | [frlg-legendaries.md](frlg-legendaries.md) |
@@ -15,7 +15,7 @@ the checkpoint runner and story engine the Mail Glitch built. Together they are 
 
 ## Suggested order
 
-1. **A1** first: it reuses mg-06's action with a different item and count, and its leveling program
+1. **A1** first: it reuses 08-activate-and-verify's action with a different item and count, and its leveling program
    is what A3/A6's catcher and A4's trapper need if ACE is not used.
 2. **A5** next, in parallel with A1: the RNG math is pure and has the C++ as oracle; it gates the
    shiny parts of A4 and A6.

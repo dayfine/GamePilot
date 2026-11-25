@@ -93,10 +93,12 @@ the verdict NEEDS_REWORK; still fill in what static reading can decide.
 
 ### Step 3: Read the PR
 
-The PR's file list is GitHub's, not a git ancestry walk:
+The PR's file list is GitHub's, not a git ancestry walk. Page it from the REST endpoint:
+`gh pr view --json files` stops at 100 files.
 
 ```bash
-gh pr view <N> --repo dayfine/GamePilot --json title,body,files --jq '.title, .body, (.files[].path)'
+gh pr view <N> --repo dayfine/GamePilot --json title,body --jq '.title, .body'
+gh api --paginate "repos/dayfine/GamePilot/pulls/<N>/files?per_page=100" --jq '.[] | .status + " " + .filename'
 git diff origin/main...FETCH_HEAD
 sh dev/review/format_only_changes.sh origin/main FETCH_HEAD   # for row S2
 ```

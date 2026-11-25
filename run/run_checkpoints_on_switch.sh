@@ -8,7 +8,7 @@
 # (gamepilot console park) and the bring-up resumes the game from it before its frame check.
 #
 #   sh run/run_checkpoints_on_switch.sh --program frlg.mail_glitch | PLAN_DIR \
-#       --from mg-01 --to mg-03 [--runs N] [--no-save-after-pass] [--no-preflight | --preflight-only] \
+#       --from 01-celadon-setup --to 03-trade-mr-mime [--runs N] [--no-save-after-pass] [--no-preflight | --preflight-only] \
 #       [--no-watch] [--dry-run] [other `gamepilot checkpoints` flags, e.g. --party ...,
 #       --make-room PalletTown]
 #
@@ -232,8 +232,8 @@ step "$bin" bring-up --daemon "$daemon" $board_args $frames_args
 # shellcheck disable=SC2086
 set -- ${program_flag:+"$program_flag"} "$plan_dir" "$@" --backend switch $board_args $frames_args
 if [ -n "$make_room" ] && [ "$preflight" = --preflight ]; then
-    # The pre-flight would stop on the room mg-00 is there to make; mg-00's end check reads it.
-    echo "[Preflight] skipped: --make-room $make_room runs mg-00 first when the party needs room"
+    # The pre-flight would stop on the room 00-make-room is there to make; 00-make-room's end check reads it.
+    echo "[Preflight] skipped: --make-room $make_room runs 00-make-room first when the party needs room"
 elif [ -n "$preflight" ]; then
     echo "[Preflight] $from"
     # shellcheck disable=SC2086
