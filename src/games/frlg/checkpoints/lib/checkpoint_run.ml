@@ -31,7 +31,12 @@ let load_all dir =
       (Grid_maps.Connected_maps.create
          (Frlg_overworld.Standard_center.with_rooms maps))
   in
-  let names = Grid_maps.Map_file.runtime_names ~maps_dir:dir in
+  (* A standard Center's coded room wins over its map file, which is not read. *)
+  let names =
+    List.filter
+      (fun name -> not (Frlg_overworld.Standard_center.is_standard name))
+      (Grid_maps.Map_file.runtime_names ~maps_dir:dir)
+  in
   Result.bind (load_rock_stairs ()) (fun rock_stairs ->
       Result.map (world rock_stairs) (all [] names))
 
