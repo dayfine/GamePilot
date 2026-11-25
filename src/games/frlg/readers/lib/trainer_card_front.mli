@@ -37,6 +37,7 @@ type t = {
   badges : bool list;  (** Each slot earned, in {!badge_names}' order. *)
   stars : int;  (** 0 to 4. *)
 }
+(** What the card's front shows: the badges earned and the stars. *)
 
 val earned : t -> string list
 (** The earned badges' names. *)
