@@ -183,7 +183,8 @@ let is_home g =
 
 (* Dimmed, the dark theme's grey (51 a channel lit) reads 8 on console B: a
    flat band between black and the lit grey, the detail limits scaled by it.
-   A black picture (a launch) is below the band. *)
+   A black picture (a launch) is below the band. Shifted, the dimmed capture
+   reads 16 to 60: one channel 12 down leaves it 1 above the band's floor. *)
 let dark_lit_sum = 153.
 let dimmed_min_sum = 15.
 let dimmed_max_sum = 100.
@@ -214,7 +215,8 @@ let is_user_select g =
 
 (* The cursor's cyan covers 0.40 to 0.47 of the strip above its tile, none
    above the others; the FireRed tile's orange 0.41, the others' 0.09 at
-   most. *)
+   most. On the shifted captures (test_home_screen): the cursor 0.33 at least,
+   0.00 elsewhere; FireRed's tile 0.36 at least, the others 0.13 at most. *)
 let min_cursor_fraction = 0.15
 let min_art_fraction = 0.2
 let first_tile pred = List.find_opt pred (List.init tiles Fun.id)

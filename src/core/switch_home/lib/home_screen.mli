@@ -14,7 +14,12 @@
     so the four tiles sit at the same places scrolled or not; a part tile at
     either edge of a scrolled row is outside the picture and not read.
     Unscrolled, the leftmost tile is the game played last. Measured on console
-    B's captures in [test/images] (2026-11-24 and 25). *)
+    B's captures in [test/images] (2026-11-24 and 25).
+
+    Another capture card may show the colors a little off. Every capture reads
+    the same with its brightness times 0.9 or 1.1, any one channel 12 up or
+    down, or every channel pulled 10% toward mid-grey (the shifted fixture in
+    [test_home_screen]). *)
 
 type tile_color = { min : int * int * int; max : int * int * int }
 (** The colour range most of a game's tile art is in. *)
