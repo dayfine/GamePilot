@@ -9,6 +9,7 @@
   },
   "metadata": {
     "phase": "testing",
+    "retries": 2,
     "source": "played from a new game; starts at 03.08's fourth-species autosave in Wild Zone 1 (party 4), ends on the fifth species's autosave (party 5); starts where 03.08 ends; the fork's plza-03.08a.plan.json (plza/lean)",
     "postconditions": {}
   },

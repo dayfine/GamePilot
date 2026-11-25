@@ -7,30 +7,33 @@
     PokemonLZA_AutoStoryStarts.cpp).
 
     A signature names any of [talk_prompt] (an A prompt shows), [wild_zone] (the
-    map's pin is in Wild Zone 1), [party] (the party bar's filled slots) and
-    [minimap] (a recorded minimap). The screen is read up to 20 times, 500 ms
-    apart, until the same read (the A prompt, the party count and the minimap;
-    nothing during a fade or a text box) has come 3 times in a row. With
-    [wild_zone] named, the map is then opened for the pin
-    ({!Plza_walk.Map_walk.read_pin}). Every field the signature names must read
-    the same. Nothing is pressed but the map's buttons.
+    map's pin is in Wild Zone 1), [near_rocks] (the map's pin is on Taunie's
+    rocks, {!Plza_walk.Wild_zone_one.near_rocks}), [party] (the party bar's
+    filled slots) and [minimap] (a recorded minimap). The screen is read up to
+    20 times, 500 ms apart, until the same read (the A prompt, the party count
+    and the minimap; nothing during a fade or a text box) has come 3 times in a
+    row. With [wild_zone] or [near_rocks] named, the map is then opened for the
+    pin ({!Plza_walk.Map_walk.read_pin}). Every field the signature names must
+    read the same. Nothing is pressed but the map's buttons.
 
     - no signature: logged as START UNCHECKED, and the run goes on, as the
       fork's;
     - the plan's [execution.end_signature] read instead: passed, as at its end
       (a reload past the checkpoint's own autosave lands there, and its events
       skip there by [skip_if]);
-    - anything else, or no read agreed on: [chain_off_start], which repeats, so
-      the series stops with no reload, as the fork's chain stops its run
-      (PokemonLZA_AutoStoryGame.cpp): a run off its start was put there by the
-      checkpoint before it, which a reload would hide;
+    - anything else, or no read agreed on: [chain_off_start], which repeats from
+      the same screen; the series reloads once on it ({!Run_attempts}), where
+      the fork's chain stops its run (PokemonLZA_AutoStoryGame.cpp);
     - a signature with another field, an unrecorded minimap, or nothing:
       [start_signature_unread], which repeats.
 
-    Where it differs: the end signature is ours: the fork checks no end (it only
-    notes whether its autosave showed), and 03.04 passed on Urbain's one line
-    inside the Center (console B, 2026-11-25). The party count takes two frames
-    here ({!Plza_readers.Party_slots}). *)
+    Where it differs: [near_rocks] is ours: the fork's 03.08 checks only the
+    zone and the party, and a run left at the 100 spot passed it (console B,
+    2026-11-25), to fail in the catch's own rocks check. The end signature is
+    ours too: the fork checks no end (it only notes whether its autosave
+    showed), and 03.04 passed on Urbain's one line inside the Center (console B,
+    2026-11-25). The party count takes two frames here
+    ({!Plza_readers.Party_slots}). *)
 
 val check :
   Plza_story.Steps.game_steps ->

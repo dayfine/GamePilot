@@ -9,12 +9,19 @@ let ( let* ) = Result.bind
 type t = {
   talk_prompt : bool option;
   wild_zone : bool option;
+  near_rocks : bool option;
   party : int option;
   minimap : string option;
 }
 
 let nothing =
-  { talk_prompt = None; wild_zone = None; party = None; minimap = None }
+  {
+    talk_prompt = None;
+    wild_zone = None;
+    near_rocks = None;
+    party = None;
+    minimap = None;
+  }
 
 let flag ~yes ~no = Option.map (fun b -> if b then yes else no)
 
@@ -24,6 +31,8 @@ let to_string s =
       [
         flag ~yes:"talk prompt" ~no:"no talk prompt" s.talk_prompt;
         flag ~yes:"in a wild zone" ~no:"not in a wild zone" s.wild_zone;
+        flag ~yes:"near Taunie's rocks" ~no:"not near Taunie's rocks"
+          s.near_rocks;
         Option.map (Printf.sprintf "party %d") s.party;
         Option.map (( ^ ) "minimap ") s.minimap;
       ]
@@ -38,8 +47,8 @@ let unread ~checkpoint_id ~which detail =
 let other_field ~checkpoint_id ~which key =
   unread ~checkpoint_id ~which
     (Printf.sprintf
-       "has \"%s\": its fields are talk_prompt and wild_zone (true or false), \
-        party (a count) and minimap (a recorded name)"
+       "has \"%s\": its fields are talk_prompt, wild_zone and near_rocks (true \
+        or false), party (a count) and minimap (a recorded name)"
        key)
 
 let unrecorded ~checkpoint_id ~which name =
@@ -52,6 +61,7 @@ let recorded name = List.mem name Plza_readers.Minimap.reference_names
 let field ~checkpoint_id ~which s = function
   | "talk_prompt", `Bool b -> Ok { s with talk_prompt = Some b }
   | "wild_zone", `Bool b -> Ok { s with wild_zone = Some b }
+  | "near_rocks", `Bool b -> Ok { s with near_rocks = Some b }
   | "party", `Int n -> Ok { s with party = Some n }
   | "minimap", `String name when recorded name ->
       Ok { s with minimap = Some name }
@@ -88,6 +98,7 @@ let read_frame steps =
     {
       talk_prompt = Some look.interact_prompt;
       wild_zone = None;
+      near_rocks = None;
       party = steps.S.read_party_slots ();
       minimap = look.minimap;
     }
@@ -105,13 +116,31 @@ and read_next steps ~frame ~last ~agreeing =
   if agreeing >= agreeing_frames && read <> nothing then read
   else read_agreed steps ~frame:(frame + 1) ~last:(Some read) ~agreeing
 
-(* With a signature naming the wild zone, also the map's pin (as
-   PokemonLZA_AutoStory.cpp reads the start position): in Wild Zone 1 or not. *)
-let read steps ~wild_zone =
+type pin_fields = { in_zone : bool; at_rocks : bool }
+(** The fields the map's pin answers that a signature names. *)
+
+let names_pin s =
+  {
+    in_zone = Option.is_some s.wild_zone;
+    at_rocks = Option.is_some s.near_rocks;
+  }
+
+let either a b =
+  { in_zone = a.in_zone || b.in_zone; at_rocks = a.at_rocks || b.at_rocks }
+
+(* With a signature naming the wild zone or the rocks, also the map's pin (as
+   PokemonLZA_AutoStory.cpp reads the start position): in Wild Zone 1 or not,
+   near Taunie's rocks or not. *)
+let read steps (asked : pin_fields) =
   let r = read_agreed steps ~frame:0 ~last:None ~agreeing:0 in
-  if wild_zone && r <> nothing then
+  if (asked.in_zone || asked.at_rocks) && r <> nothing then
     let pin = Plza_walk.Map_walk.read_pin (S.walk_game_steps steps) in
-    { r with wild_zone = Option.map Plza_walk.Wild_zone_one.pin_in_zone pin }
+    let answer yes f = if yes then Option.map f pin else None in
+    {
+      r with
+      wild_zone = answer asked.in_zone Plza_walk.Wild_zone_one.pin_in_zone;
+      near_rocks = answer asked.at_rocks Plza_walk.Wild_zone_one.near_rocks;
+    }
   else r
 
 (* Every field the signature names reads the same. *)
@@ -119,6 +148,7 @@ let confirmed known r =
   let agrees k v = Option.is_none k || k = v in
   agrees known.talk_prompt r.talk_prompt
   && agrees known.wild_zone r.wild_zone
+  && agrees known.near_rocks r.near_rocks
   && agrees known.party r.party
   && agrees known.minimap r.minimap
 
@@ -137,16 +167,15 @@ let start_screen r known ~at_end =
     | Some e -> Printf.sprintf " or its end (%s)" (to_string e)
     | None -> "")
 
-let names_wild_zone s = Option.is_some s.wild_zone
-
 (* The start, or the end: a reload past the checkpoint's own autosave lands
    at its end, and its events skip there (skip_if). *)
 let confirm steps ~checkpoint_id known ~at_end =
-  let wild_zone =
-    names_wild_zone known
-    || Option.fold ~none:false ~some:names_wild_zone at_end
+  let asked =
+    Option.fold ~none:(names_pin known)
+      ~some:(fun e -> either (names_pin known) (names_pin e))
+      at_end
   in
-  let r = read steps ~wild_zone in
+  let r = read steps asked in
   let screen = start_screen r known ~at_end in
   if r <> nothing && confirmed known r then
     Ok (log_check steps ~checkpoint_id "START CHECKED" screen)
@@ -196,7 +225,7 @@ let check_end steps ~checkpoint_id (execution : Json_field.obj) =
   match at_end with
   | None -> Ok ()
   | Some known ->
-      let r = read steps ~wild_zone:(names_wild_zone known) in
+      let r = read steps (names_pin known) in
       let screen =
         Printf.sprintf "the screen reads (%s), its end is (%s)" (to_string r)
           (to_string known)

@@ -74,7 +74,7 @@ cd src && opam exec -- dune exec -- gamepilot checkpoints --program plza.autosto
 | 03.10 | Up the Research Lab's elevator to the Director's Office |
 | 03.11 | Mable's research, the Rock Smash TM |
 
-<!-- plans: 3b541ab595d2 -->
+<!-- plans: ca7a7f4bb447 -->
 <!-- /generated -->
 
 From Wild Zone 1 on:
@@ -101,6 +101,11 @@ Reloads and retries:
 - 01.01 reloads once more if the platform's controls hint has already faded.
 - A checkpoint that follows a passing one starts where it ended, with no reload.
 - 03.04 always reloads when it follows 03.03c: its legs need the reload's facing.
+- A checkpoint found off its start reloads once and checks its start again, then stops if it is
+  still off (`chain_off_start`, or `rocks_not_left` in 03.08). A start left there by a stopped run
+  or by the checkpoint before it is put right this way; the log says it reloaded.
+- 03.08 and 03.08a reload and try again up to twice when they come up short (`short_of_species`):
+  the reload respawns the zone, so a run of bad spawns is luck, not a bug.
 
 Resuming mid-checkpoint (the screen is read first, and steps already done are skipped):
 
@@ -112,8 +117,9 @@ Resuming mid-checkpoint (the screen is read first, and steps already done are sk
 Start and end checks:
 
 - From 03.03 on, a checkpoint checks its start before it presses anything: the minimap, the party
-  count, the A prompt or whether the player is in Wild Zone 1.
-- A start that does not match stops the series: `chain_off_start`.
+  count, the A prompt, whether the player is in Wild Zone 1, or (03.08) on Taunie's rocks.
+- A start that does not match reloads once (above); still off, it stops the series:
+  `chain_off_start`.
 - 03.04 also checks its end (outside the Center): `end_off_signature`.
 
 The run folder keeps:
@@ -144,8 +150,10 @@ Catching:
 
 - The Run prompt's reader has not seen a console frame yet.
 - 03.07: `no_catch` after 6 throws at Fletchling, `still_a_target` after 6 rounds at Bunnelby.
-- 03.08 must start on Taunie's rocks: `rocks_not_left`.
-- 03.08 and 03.08a: `short_of_species` when the party does not grow after 12 throws.
+- 03.08 must start on Taunie's rocks: its start check reloads once when it is not, and
+  `rocks_not_left` is the catch's own check of the same.
+- 03.08 and 03.08a: `short_of_species` when the party does not grow after 12 throws, on each of
+  their three attempts.
 
 Readers:
 

@@ -8,7 +8,11 @@
     Confirm Choices, 01.01 on the platform); every later run of the same
     checkpoint first goes back to the latest autosave
     (Plza_autostory.Game_reload), which 01.00b cannot (its start is no save):
-    its second run is refused. A passing checkpoint hands the console to the
+    its second run is refused. Within a run (Plza_autostory.Run_attempts), a
+    checkpoint found off its start (its start signature, or an action's own
+    start check such as 03.08's rocks) reloads once and checks again, and a
+    plan's [retries] (03.08 and 03.08a: spawn luck) reload and try again; each
+    attempt is its own run folder. A passing checkpoint hands the console to the
     next one as it ends. Its daemons keep the console awake with the right stick
     (keepawake_stick), and each checkpoint wakes the screen before it reads it
     (Plza_story.Screen_wake). The watch page shows each run's plan, its events

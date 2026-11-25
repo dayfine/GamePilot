@@ -9,14 +9,14 @@ let ( let* ) = Result.bind
    nudge the right stick instead, which only turns the camera in the field and
    does nothing in a dialogue, a menu or a battle (up then down, so the
    camera's heading never moves: walk legs are aimed from it). Off, an idle
-   console dimmed
-   its screen, which reads as nothing (01.03's run 2). A --keepawake-key given
-   on the command line comes after, and the daemon takes the last. *)
+   console dimmed its screen, which reads as nothing (01.03's run 2). A
+   --keepawake-key given on the command line comes after, and the daemon takes
+   the last. *)
 let keepawake_stick = [ "--keepawake-key"; "RStick" ]
 
-type outcome =
-  | Passed
-  | Failed of { at : string; reason : string; repeats : bool }
+module Attempts = Story.Run_attempts
+
+type outcome = Attempts.outcome = Passed | Failed of Attempts.failure
 
 type setup = {
   flags : Flags.t;
@@ -36,15 +36,11 @@ let load_plan ~plan_dir id =
   | exception Sys_error e -> Error e
   | exception Yojson.Json_error e -> Error (id ^ ": " ^ e)
 
-let failed ?(repeats = false) at reason = Failed { at; reason; repeats }
+let failed ?(repeats = false) ?(off_start = false) at reason =
+  Failed { at; reason; repeats; off_start }
 
 let of_runner ({ at; reason; repeats } : Live_run.Daemon_run.failed) =
-  Failed { at; reason; repeats }
-
-let of_failure (f : P.Failure.t) =
-  failed ~repeats:(P.Failure.repeats f)
-    (Printf.sprintf "#%d %s" (f.event_index + 1) f.event_id)
-    (P.Failure.reason_to_string f.reason)
+  failed ~repeats at reason
 
 let reload_cause ~log ~picture () =
   Result.map_error
@@ -87,8 +83,7 @@ let run_checkpoint ~log ~picture ~reload report (plan : P.Plan.t) =
   let id = plan.checkpoint.checkpoint_id in
   let* () =
     Result.map_error
-      (fun (c : Failure.cause) ->
-        failed ~repeats:c.repeats "start" (Failure.cause_to_string c))
+      (Attempts.of_cause ~at:"start")
       (Story.Start_signature.check steps ~checkpoint_id:id plan.execution)
   in
   let game =
@@ -99,7 +94,7 @@ let run_checkpoint ~log ~picture ~reload report (plan : P.Plan.t) =
   let end_check () =
     Story.Start_signature.check_end steps ~checkpoint_id:id plan.execution
   in
-  Result.map_error of_failure
+  Result.map_error Attempts.of_failure
     (Story.Story_game.run_watched ~end_check ~mode:"testing" report game
        plan.checkpoint)
 
@@ -168,22 +163,27 @@ let with_daemon setup record id body =
       print_page setup daemon;
       body daemon)
 
-let summary id n = function
-  | Passed -> Printf.sprintf "PASS %s run %d" id n
-  | Failed { at; reason; _ } ->
-      Printf.sprintf "FAIL %s run %d at %s: %s" id n at reason
+(* "03.08 run 1", with " attempt 2" after the first. *)
+let run_name id n = function
+  | 1 -> Printf.sprintf "%s run %d" id n
+  | a -> Printf.sprintf "%s run %d attempt %d" id n a
 
-(* Run [n] of [plan]; [reload] for any run but the series' first. *)
-let run setup plan n ~reload =
+let summary name = function
+  | Passed -> "PASS " ^ name
+  | Failed { at; reason; _ } ->
+      Printf.sprintf "FAIL %s at %s: %s" name at reason
+
+(* Attempt [attempt] of run [n] of [plan]; [reload]: back to the latest
+   autosave first. *)
+let run_attempt setup plan n ~attempt ~reload =
   let id = plan.P.Plan.checkpoint.checkpoint_id in
   let run =
     Run_record.start ~runs_dir:setup.flags.runs_dir setup.info ~checkpoint:id
       ~mode:"testing"
   in
+  let name = run_name id n attempt in
   let log, close = Run_record.story_log run.record in
-  log
-    (Printf.sprintf "[Run] %s run %d%s" id n
-       (if reload then " (after a reload)" else ""));
+  log ("[Run] " ^ name ^ if reload then " (after a reload)" else "");
   let outcome =
     with_daemon setup run.record id (live ~log ~reload run.record plan)
   in
@@ -194,12 +194,19 @@ let run setup plan n ~reload =
     | Failed { at; reason; _ } -> { result = "fail"; at; reason }
   in
   Live_run.Daemon_run.finish ~runs_dir:setup.flags.runs_dir run
-    ~summary:(summary id n outcome) ending;
+    ~summary:(summary name outcome) ending;
   outcome
 
-let trial = function
-  | Passed -> Checkpoint_trials.Passed
-  | Failed { at; repeats; _ } -> Checkpoint_trials.Failed { at; repeats }
+(* Run [n] of [plan]: attempts until one passes or the run fails
+   (Run_attempts: a reload when off its start, and the plan's retries).
+   [reload]: its first attempt goes back to the latest autosave. *)
+let run setup (plan : P.Plan.t) n ~reload =
+  let id = plan.checkpoint.checkpoint_id in
+  Attempts.run
+    ~has_start:(Option.is_some plan.checkpoint.start)
+    ~retries:plan.retries ~reload_first:reload
+    ~log:(fun line -> Printf.printf "[Checkpoints] %s run %d: %s\n%!" id n line)
+    (run_attempt setup plan n)
 
 (* The plan's execution asks for a reload when it follows another checkpoint
    in the series (the fork's "reload_when_chained", 03.04's: its walk starts
@@ -217,8 +224,8 @@ let runs_of setup plan ~chained =
   let reload n = n > 1 || (chained && reload_when_chained plan) in
   match
     fst
-      (Checkpoint_trials.until_decided setup.policy ~trial (fun n ->
-           run setup plan n ~reload:(reload n)))
+      (Checkpoint_trials.until_decided setup.policy ~trial:Attempts.trial
+         (fun n -> run setup plan n ~reload:(reload n)))
   with
   | Checkpoint_trials.Run_again -> false
   | Checkpoint_passed { passes; runs } ->

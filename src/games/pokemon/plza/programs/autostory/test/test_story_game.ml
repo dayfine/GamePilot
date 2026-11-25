@@ -1634,8 +1634,8 @@ let cases =
            [ ("start_signature", `Assoc [ ("weather", `String "sun") ]) ]
          "03.03" at_arch)
       "start_signature_unread: 03.03: its start signature has \"weather\": its \
-       fields are talk_prompt and wild_zone (true or false), party (a count) \
-       and minimap (a recorded name)";
+       fields are talk_prompt, wild_zone and near_rocks (true or false), party \
+       (a count) and minimap (a recorded name)";
     case "a start signature naming an unrecorded minimap: refused"
       (start_check
          ~execution:
@@ -1731,16 +1731,42 @@ let cases =
       "ok\n\
        [PLZA] map pin: (476, 224)\n\
        [Checkpoint] 03.08: START CHECKED: the screen reads (no talk prompt, in \
-       a wild zone, party 3), its start is (in a wild zone, party 3)";
+       a wild zone, near Taunie's rocks, party 3), its start is (in a wild \
+       zone, near Taunie's rocks, party 3)";
     case "03.08's start out of the zone: chain_off_start"
       (start_check ~party:3 "03.08" (in_zone ~pin:(401., 224.)))
       "chain_off_start: the run is not at 03.08's start: the screen reads (no \
-       talk prompt, not in a wild zone, party 3), its start is (in a wild \
-       zone, party 3)\n\
+       talk prompt, not in a wild zone, not near Taunie's rocks, party 3), its \
+       start is (in a wild zone, near Taunie's rocks, party 3)\n\
        [PLZA] map pin: (401, 224)\n\
        [Checkpoint] 03.08: START CHECK FAILED: the screen reads (no talk \
-       prompt, not in a wild zone, party 3), its start is (in a wild zone, \
-       party 3)";
+       prompt, not in a wild zone, not near Taunie's rocks, party 3), its \
+       start is (in a wild zone, near Taunie's rocks, party 3)";
+    case "03.08's start at the 100 spot, where a run stopped: chain_off_start"
+      (start_check ~party:3 "03.08" (in_zone ~pin:(440., 229.)))
+      "chain_off_start: the run is not at 03.08's start: the screen reads (no \
+       talk prompt, in a wild zone, not near Taunie's rocks, party 3), its \
+       start is (in a wild zone, near Taunie's rocks, party 3)\n\
+       [PLZA] map pin: (440, 229)\n\
+       [Checkpoint] 03.08: START CHECK FAILED: the screen reads (no talk \
+       prompt, in a wild zone, not near Taunie's rocks, party 3), its start is \
+       (in a wild zone, near Taunie's rocks, party 3)";
+    case "03.08 off Taunie's rocks: the run is off its start, a reload's to fix"
+      (fun () ->
+        match run "03.08" (in_zone ~pin:(440., 229.)) with
+        | Ok (), _ -> "passed"
+        | Error f, _ -> (
+            match Plza_autostory.Run_attempts.of_failure f with
+            | Passed -> "passed"
+            | Failed f ->
+                Printf.sprintf "%s %s: off its start %b, repeats %b" f.at
+                  (List.hd (String.split_on_char ':' f.reason))
+                  f.off_start f.repeats))
+      "#1 catch_more_species rocks_not_left: off its start true, repeats false";
+    case "03.08 and 03.08a retry spawn luck: 2 retries each, from a reload"
+      (fun () ->
+        Printf.sprintf "%d %d" (plan "03.08").retries (plan "03.08a").retries)
+      "2 2";
     case "03.08a with no party bar read: the fourth's way, rocks_not_left"
       (refused "03.08a")
       "03.08a event 1 (catch_fifth_species): rocks_not_left: the pin at the \
