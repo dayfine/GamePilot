@@ -5,16 +5,18 @@
    PLZA's checkpoints on the Switch (Plza_autostory.Story_game through the
    engine, Plza_checkpoints.Runner): each run its own daemon (the program's
    viewport, native) and run folder, as Checkpoint_live_run for FireRed, but
-   without save states, a start check or an in-game save: PLZA saves by
-   autosave. The series' first run starts where the console is, put there by
-   hand (01.00b on the new game's Confirm Choices, 01.01 on the platform);
-   every later run of the same checkpoint first goes back to the latest
-   autosave (Plza_autostory.Game_reload), which 01.00b cannot (its start is
-   no save): its second run is refused. A passing checkpoint hands the
-   console to the next one as it ends. Its daemons keep the console awake with
-   the right stick (keepawake_stick), and each checkpoint wakes the screen
-   before it reads it (Plza_story.Screen_wake). The watch page shows each run's plan, its events moving
-   with the runner (Story_game.run_watched), and the run. *)
+   without save states or an in-game save: PLZA saves by autosave. A plan's
+   start signature (its minimap) is checked before each run
+   (Plza_autostory.Start_signature). The series' first run starts where the
+   console is, put there by hand (01.00b on the new game's Confirm Choices,
+   01.01 on the platform); every later run of the same checkpoint first goes
+   back to the latest autosave (Plza_autostory.Game_reload), which 01.00b
+   cannot (its start is no save): its second run is refused. A passing
+   checkpoint hands the console to the next one as it ends. Its daemons keep
+   the console awake with the right stick (keepawake_stick), and each
+   checkpoint wakes the screen before it reads it (Plza_story.Screen_wake).
+   The watch page shows each run's plan, its events moving with the runner
+   (Story_game.run_watched), and the run. *)
 
 open Engine_run
 module P = Plza_checkpoints
@@ -89,8 +91,15 @@ let run_checkpoint ~log ~picture ~reload report (plan : P.Plan.t) =
   in
   (* A console idle between runs dims its screen; nothing reads on it. *)
   Plza_story.Screen_wake.run steps;
+  let id = plan.checkpoint.checkpoint_id in
+  let* () =
+    Result.map_error
+      (fun (c : Failure.cause) ->
+        failed ~repeats:c.repeats "start" (Failure.cause_to_string c))
+      (Story.Start_signature.check steps ~checkpoint_id:id plan.execution)
+  in
   let game =
-    Story.Story_game.make steps ~checkpoint_id:plan.checkpoint.checkpoint_id
+    Story.Story_game.make steps ~checkpoint_id:id
       ~reload:(reload_cause ~log ~picture)
   in
   Result.map_error of_failure

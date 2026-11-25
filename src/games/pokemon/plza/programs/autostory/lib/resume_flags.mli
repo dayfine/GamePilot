@@ -9,12 +9,17 @@
     - ["battle_shows"]: the battle HUD shows;
     - ["party_bar_free"]: the party bar with no text box, fade, chevron or
       battle HUD (the fork's PARTY_BAR_FREE, less the battle): free control with
-      a Pokémon in the party, so after 01.03's starter.
+      a Pokémon in the party, so after 01.03's starter;
+    - ["minimap:<name>"]: the minimap reads as the recorded one
+      ({!Plza_readers.Minimap}, ["minimap:03.03-start"]): where a checkpoint
+      ends when the next one's start signature names it. 03.02b's end, the plaza
+      arch, shows the party bar as its start does, but its minimap only after
+      the map talk.
 
     The screen is woken first ({!Plza_story.Screen_wake}): a dimmed one reads as
     nothing. Each is read over 1 s (five reads 250 ms apart): the first two hold
-    when any read shows them, ["party_bar_free"] only when every read does (a
-    battle HUD missed once must not skip the battle). An unknown flag is logged
-    and does not hold. *)
+    when any read shows them, ["party_bar_free"] and the minimap only when every
+    read does (a battle HUD missed once must not skip the battle). An unknown
+    flag is logged and does not hold. *)
 
 val holds : Plza_story.Story_steps.game_steps -> string -> bool

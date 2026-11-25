@@ -50,7 +50,7 @@ cd src && opam exec -- dune exec -- gamepilot checkpoints --program plza.autosto
 | 03.03c | Off the roof to Station Front |
 | 03.04 | Pokemon Center, the Pokedex |
 
-<!-- plans: 32bda021430c -->
+<!-- plans: 7dca6bfba4e0 -->
 <!-- /generated -->
 
 ## When it stops
@@ -64,12 +64,16 @@ so after it fails, put the console back on Confirm Choices by hand and run it ag
 also start inside Andi's battle, or at Urbain's heal and Andi's challenge after a lost one: it
 looks at the screen first and skips the walk to Chikorita, and the scene to the battle when the
 battle is already up. Started in the night alley after Andi (the party bar up, nothing over it),
-01.03 skips every step and passes; 02.01 starts there. Each run keeps its log, wire log and a `failure.png` in its run folder.
+01.03 skips every step and passes; 02.01 starts there. In the same way 03.02b, started at the
+plaza arch after its map talk (the minimap up and reading 03.03's start), skips every step and
+passes. 03.03 and 03.04 check their start first, as the fork does: the minimap must read the one
+the fork recorded there, or the run stops with `chain_off_start` before it presses anything. 03.04
+always reloads its autosave when it follows 03.03c, since its timed legs assume the reload's facing. Each run keeps its log, wire log and a `failure.png` in its run folder.
 
 ## Known limits
 
-Only 01.00b to 03.03c so far. 01.02's chase, 01.03's walk to Chikorita and the walks of 02.01 to
-03.03c are timed stick legs with no map, so they can miss; the chase then stops on Ryon's
+Only 01.00b to 03.04 so far. 01.02's chase, 01.03's walk to Chikorita and the walks of 02.01 to
+03.04 are timed stick legs with no map, so they can miss; the chase then stops on Ryon's
 A prompt (`scene_ended_in_control`), the walk to Chikorita with `walk_no_end`, and the Battle Zone
 walk with `scene_ended_in_control` when Brigitte's talk never starts. In 02.02, a walk to the
 blocked street that misses fails with `walk_no_end` (no black fade), one to the gate that misses
@@ -83,7 +87,7 @@ that never reaches its A prompt
 battle holds ZL and picks the most effective move from the symbols it shows; the move is pressed
 with ZL still held. A battle that never sees them fails with `battle_failed` after 2 minutes, and
 a lost battle reads as won (the talk after it looks the same), so the scene after it then fails. The
-party bar is read from its empty last slot, so a full party of six would not show it; "mission
+party bar is read from its D-pad marker or its empty last slot; "mission
 complete" is not read. After Brigitte, a scene that never starts within 45 s fails with
 `scene_never_started`. The name and language on Confirm Choices are not checked. The
 daemon's keep-awake nudges the right stick up and down for this program, not B, which would back out

@@ -47,8 +47,23 @@ let rec every steps shows n =
     S.wait steps poll_ms;
     every steps shows (n - 1))
 
-let holds steps flag =
+(* "minimap:<name>": the minimap reads as that recorded one. *)
+let minimap_prefix = "minimap:"
+
+let minimap_flag flag =
+  if String.starts_with ~prefix:minimap_prefix flag then
+    let n = String.length minimap_prefix in
+    let name = String.sub flag n (String.length flag - n) in
+    Some (Every, fun (l : L.t) -> l.minimap = Some name)
+  else None
+
+let find flag =
   match List.assoc_opt flag flags with
+  | Some f -> Some f
+  | None -> minimap_flag flag
+
+let holds steps flag =
+  match find flag with
   | Some (reading, shows) -> (
       Plza_story.Screen_wake.run steps;
       match reading with

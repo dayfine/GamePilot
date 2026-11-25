@@ -505,6 +505,24 @@ let contains part line =
   in
   at 0
 
+(* The arch where 03.02b ends: free control with the minimap 03.03 starts
+   on. *)
+let at_arch c = { (party c) with minimap = Some "03.03-start" }
+
+(* The start check of [checkpoint]'s plan on [screen], with its log lines. *)
+let start_check ?execution checkpoint screen () =
+  let c = C.create () in
+  let execution = Option.value execution ~default:(plan checkpoint).execution in
+  let r =
+    Plza_autostory.Start_signature.check (C.steps c screen)
+      ~checkpoint_id:checkpoint execution
+  in
+  String.concat "\n"
+    ((match r with
+     | Ok () -> "ok"
+     | Error e -> Engine_run.Failure.cause_to_string e)
+    :: C.lines c)
+
 (* The run's skips, its moves and its end. *)
 let skips checkpoint screen =
   let r, c = outcome checkpoint screen in
@@ -1037,6 +1055,61 @@ let cases =
       (result "03.04" (nurse ~lost:true))
       "03.04 event 1 (into_pokemon_center): walk_no_end: into_pokemon_center: \
        no talk started within 1000 ms after the last leg";
+    case "03.02b resumed at the arch after it: every event skipped"
+      (fun () -> skips "03.02b" at_arch)
+      "passed\n\
+       [Story] 03.02b #1 to_plaza_scene_prompt: skipped (minimap:03.03-start)\n\
+       [Story] 03.02b #2 plaza_scene: skipped (minimap:03.03-start)\n\
+       [Story] 03.02b #3 to_taunie: skipped (minimap:03.03-start)\n\
+       [Story] 03.02b #4 taunie_battle_start: skipped (minimap:03.03-start)\n\
+       [Story] 03.02b #5 battle_totodile: skipped (minimap:03.03-start)\n\
+       [Story] 03.02b #6 tepig_battle_start: skipped (minimap:03.03-start)\n\
+       [Story] 03.02b #7 battle_tepig: skipped (minimap:03.03-start)\n\
+       [Story] 03.02b #8 after_taunie_battle: skipped (minimap:03.03-start)\n\
+       [Story] 03.02b: done";
+    case "03.02b's start: the plaza, no minimap, nothing skipped"
+      (fun () ->
+        String.concat "\n"
+          (List.filter
+             (fun line -> contains "skipped" line)
+             (C.lines (snd (outcome "03.02b" quartiere_verde)))))
+      "";
+    case "03.03's start check at the arch: the minimap reads 03.03-start"
+      (start_check "03.03" at_arch)
+      "ok\n\
+       [Checkpoint] 03.03: START CHECKED: the screen reads (minimap \
+       03.03-start), its start is (minimap 03.03-start)";
+    case "03.03's start check elsewhere: chain_off_start"
+      (start_check "03.03" party)
+      "chain_off_start: the run is not at 03.03's start: the screen reads (no \
+       minimap), its start is (minimap 03.03-start)\n\
+       [Checkpoint] 03.03: START CHECK FAILED: the screen reads (no minimap), \
+       its start is (minimap 03.03-start)";
+    case "03.04's start check at the arch: chain_off_start, the wrong minimap"
+      (start_check "03.04" at_arch)
+      "chain_off_start: the run is not at 03.04's start: the screen reads \
+       (minimap 03.03-start), its start is (minimap 03.04-start)\n\
+       [Checkpoint] 03.04: START CHECK FAILED: the screen reads (minimap \
+       03.03-start), its start is (minimap 03.04-start)";
+    case "03.02's start: no signature, unchecked"
+      (start_check "03.02" party)
+      "ok\n\
+       [Checkpoint] 03.02: START UNCHECKED: its plan names no start signature";
+    case "a start signature naming the party: refused, nothing reads it"
+      (start_check
+         ~execution:[ ("start_signature", `Assoc [ ("party", `Int 1) ]) ]
+         "03.03" at_arch)
+      "start_signature_unread: 03.03: its start signature is not one minimap \
+       ({\"minimap\": \"<name>\"}): only the minimap is read here";
+    case "a start signature naming an unrecorded minimap: refused"
+      (start_check
+         ~execution:
+           [
+             ("start_signature", `Assoc [ ("minimap", `String "03.05-start") ]);
+           ]
+         "03.03" at_arch)
+      "start_signature_unread: 03.03: its start signature names minimap \
+       03.05-start, which is not recorded";
     case "the walk is walked before 03.03, run after"
       (fun () ->
         Printf.sprintf "%b %b"
