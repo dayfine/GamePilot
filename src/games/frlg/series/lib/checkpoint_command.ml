@@ -18,7 +18,7 @@
 
 let ( let* ) = Result.bind
 
-type flags = Checkpoints_flags.checkpoint_flags = {
+type flags = Pokemon_flags.checkpoint_flags = {
   state : string option;
   port : int;
   log_file : string option;
@@ -36,7 +36,7 @@ let usage =
   \      [--grind-battles N]\n\
   \  gamepilot replay checkpoint WIRELOG PLAN.json [same flags]\n"
 
-let defaults = Checkpoints_flags.checkpoint_defaults
+let defaults = Pokemon_flags.checkpoint_defaults
 
 let rec parse flags = function
   | [] -> Ok flags

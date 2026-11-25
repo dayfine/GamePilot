@@ -19,6 +19,9 @@ A descriptor (`Program_registry.t`) gives:
   (`gamepilot bring-up --program ID`), so no run needs the flag and a native game never runs with
   the GBA picture. An explicit `--viewport` that differs from the program's is refused; it is
   only for a plan folder no program registers.
+- `rules`: the rules its checkpoint plans are written over, which pick the library that loads and
+  runs them (`Pokemon_grid`: the Pokémon grid rules, FRLG's runner). `src/bin/checkpoint_families.ml`
+  is the one place in `src/bin` that picks a family's code from it.
 
 To add a program, add its descriptor to the list in `program_registry.ml` (registration is that
 list; nothing registers itself at start-up) and write its page, and its player's guide in

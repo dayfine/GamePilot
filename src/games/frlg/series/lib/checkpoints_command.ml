@@ -137,14 +137,14 @@ let check_from_event f mode ~checkpoints =
 
 let from_event f = Option.map (fun first -> (first, f.to_event)) f.from_event
 
-let run_series program plan_dir f =
+let run_series program plan_dir (f : Pokemon_flags.flags) =
   let* from_id = required "--from" f.from_id in
   let* mode, to_id = mode_and_to f ~from_id in
   let* () = check_from_event f mode ~checkpoints:1 in
   let* backend = daemon_backend f mode in
   let* viewport = program.viewport in
   let* plan_dir, from_id =
-    Make_room_command.with_room ~plan_dir ~from_id f.make_room
+    Make_room_command.with_room ~plan_dir ~from_id f.game.make_room
       (preflight_setup program plan_dir f backend ~viewport ~from_id)
   in
   let* policy = Checkpoint_trials.policy ?runs:f.runs mode in
@@ -159,7 +159,7 @@ let run_series program plan_dir f =
          runs_dir = f.runs_dir;
          daemon = f.daemon;
          backend;
-         common = f.common;
+         common = { f.game.common with port = f.port };
          mode;
          policy;
          world;

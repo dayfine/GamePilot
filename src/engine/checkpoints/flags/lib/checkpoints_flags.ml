@@ -1,32 +1,9 @@
-(* gamepilot checkpoints' flags: their record, defaults and parsing, and
-   gamepilot checkpoint's. *)
+(* gamepilot checkpoints' flags, whatever the game: their record, defaults and
+   parsing, with a game's own flags ('game) parsed by the game's hooks. *)
 
 open Engine_run
 
-type checkpoint_flags = {
-  state : string option;
-  port : int;
-  log_file : string option;
-  party : string;
-  center : string option;
-  walk : bool;
-  end_check_only : bool;
-  grind_cap : int option;
-}
-
-let checkpoint_defaults =
-  {
-    state = None;
-    port = Live.default_port;
-    log_file = None;
-    party = "";
-    center = None;
-    walk = false;
-    end_check_only = false;
-    grind_cap = None;
-  }
-
-type flags = {
+type 'game flags = {
   from_id : string option;
   to_id : string option;
   mode : Checkpoint_trials.mode option;
@@ -41,13 +18,12 @@ type flags = {
   replay : string option;  (** A recorded video for a dry run (fake board). *)
   save_after_pass : bool;  (** Switch: save in the game after a pass. *)
   preflight : bool;
-  make_room : string option;  (** The save's map: room first (00-make-room). *)
   max_rounds : int option;  (** A repeating checkpoint's rounds, at most. *)
   from_event : string option;
       (** mGBA, testing: run from this event's kept state
           (Engine_run.Event_range). *)
   to_event : string option;  (** ... to this event (else the last). *)
-  common : checkpoint_flags;
+  port : int;  (** The program's port; 0: any free one. *)
   watch : Daemon_process.watch option;
   viewport : string option;
       (** --viewport V: the Switch daemons' game picture; only for a plan folder
@@ -56,25 +32,14 @@ type flags = {
   daemon_flags : string list;
       (** --record, --no-record, --keepawake N, --speed S: passed to each run's
           daemon. *)
+  game : 'game;  (** The game's own flags. *)
 }
 
-let usage =
-  "  gamepilot checkpoints PLAN_DIR|--program ID --from ID --to ID --mode \
-   testing|verification\n\
-  \      [--runs N] [--states DIR] [--runs-dir DIR] [--daemon PATH]\n\
-  \      [--mgba-port N] [--port N] [--party SPECIES,...] [--center TOWN] \
-   [--walk]\n\
-  \      [--end-check-only] [--grind-battles N] [--max-rounds N] [--watch]\n\
-  \      [--watch-port N] [--listen ADDR]\n\
-  \      [--backend mgba|switch --serial PORT --capture DEVICE]\n\
-  \      [--replay VIDEO] [--save-after-pass|--no-save-after-pass]\n\
-  \      [--record|--no-record] [--keepawake SECONDS] [--speed S] [--make-room \
-   MAP]\n\
-  \      [--viewport nso-gba|native|x,y,w,h]   (Switch: where the game picture \
-   sits; the program's by default)\n\
-  \      [--from-event ID|N [--to-event ID|N]]   (mGBA, testing, one checkpoint)\n\
-  \  gamepilot checkpoints PLAN_DIR|--program ID --preflight --from ID \
-   [--backend ...]\n"
+type 'game game_flags = {
+  game_defaults : 'game;
+  game_switch : 'game -> string -> 'game option;
+  game_valued : 'game -> string -> string -> ('game, string) result option;
+}
 
 let home = Option.value (Sys.getenv_opt "HOME") ~default:"."
 
@@ -88,7 +53,7 @@ let data_dir var name =
 
 let mgba_bridge_port = 47810
 
-let defaults =
+let defaults game =
   {
     from_id = None;
     to_id = None;
@@ -104,17 +69,15 @@ let defaults =
     replay = None;
     save_after_pass = true;
     preflight = false;
-    make_room = None;
     max_rounds = None;
     from_event = None;
     to_event = None;
-    common = { checkpoint_defaults with port = 0 };
+    port = 0;
     watch = None;
     viewport = None;
     daemon_flags = [];
+    game = game.game_defaults;
   }
-
-let common_flag f c = { f with common = c f.common }
 
 (* A flag with an int value: [set] applies it. *)
 let int_flag name text set =
@@ -155,28 +118,17 @@ let valued f name v =
   | "--daemon" -> Some (Ok { f with daemon = v })
   | "--mgba-port" ->
       Some (int_flag name v (fun mgba_port -> { f with mgba_port }))
-  | "--port" ->
-      Some
-        (int_flag name v (fun port -> common_flag f (fun c -> { c with port })))
+  | "--port" -> Some (int_flag name v (fun port -> { f with port }))
   | "--backend" -> Some (Ok { f with backend = v })
   | "--serial" -> Some (Ok { f with serial = Some v })
   | "--capture" -> Some (Ok { f with capture = Some v })
   | "--replay" -> Some (Ok { f with replay = Some v })
-  | "--party" -> Some (Ok (common_flag f (fun c -> { c with party = v })))
-  | "--grind-battles" -> (
-      match int_of_string_opt v with
-      | Some n when n > 0 ->
-          Some (Ok (common_flag f (fun c -> { c with grind_cap = Some n })))
-      | _ -> Some (Error ("bad --grind-battles " ^ v)))
-  | "--make-room" -> Some (Ok { f with make_room = Some v })
   | "--max-rounds" -> (
       match int_of_string_opt v with
       | Some n when n > 0 -> Some (Ok { f with max_rounds = Some n })
       | _ -> Some (Error ("bad --max-rounds " ^ v)))
   | "--from-event" -> Some (Ok { f with from_event = Some v })
   | "--to-event" -> Some (Ok { f with to_event = Some v })
-  | "--center" ->
-      Some (Ok (common_flag f (fun c -> { c with center = Some v })))
   | "--keepawake" -> Some (int_flag name v (keepawake_flag f))
   | "--speed" -> Some (speed_flag f v)
   | "--viewport" -> Some (Ok { f with viewport = Some v })
@@ -205,24 +157,38 @@ let watch_valued f name v =
   | "--listen" -> Some (Ok (watch_flag f (fun w -> { w with listen = v })))
   | _ -> None
 
-let valued f name v =
-  match watch_valued f name v with Some r -> Some r | None -> valued f name v
+(* The game's flag with its value. *)
+let game_valued game f name v =
+  Option.map
+    (Result.map (fun g -> { f with game = g }))
+    (game.game_valued f.game name v)
 
-let rec parse f = function
+let valued game f name v =
+  match watch_valued f name v with
+  | Some r -> Some r
+  | None -> (
+      match valued f name v with
+      | Some r -> Some r
+      | None -> game_valued game f name v)
+
+let rec parse game f = function
   | [] -> Ok f
-  | "--watch" :: rest -> parse (watch_flag f Fun.id) rest
-  | "--save-after-pass" :: rest -> parse { f with save_after_pass = true } rest
+  | "--watch" :: rest -> parse game (watch_flag f Fun.id) rest
+  | "--save-after-pass" :: rest ->
+      parse game { f with save_after_pass = true } rest
   | "--no-save-after-pass" :: rest ->
-      parse { f with save_after_pass = false } rest
-  | "--preflight" :: rest -> parse { f with preflight = true } rest
+      parse game { f with save_after_pass = false } rest
+  | "--preflight" :: rest -> parse game { f with preflight = true } rest
   | (("--record" | "--no-record") as flag) :: rest ->
-      parse { f with daemon_flags = f.daemon_flags @ [ flag ] } rest
-  | "--walk" :: rest ->
-      parse (common_flag f (fun c -> { c with walk = true })) rest
-  | "--end-check-only" :: rest ->
-      parse (common_flag f (fun c -> { c with end_check_only = true })) rest
-  | name :: v :: rest when Option.is_some (valued f name v) ->
-      Result.bind (Option.get (valued f name v)) (fun f -> parse f rest)
+      parse game { f with daemon_flags = f.daemon_flags @ [ flag ] } rest
+  | name :: rest when Option.is_some (game.game_switch f.game name) ->
+      parse game
+        { f with game = Option.get (game.game_switch f.game name) }
+        rest
+  | name :: v :: rest when Option.is_some (valued game f name v) ->
+      Result.bind
+        (Option.get (valued game f name v))
+        (fun f -> parse game f rest)
   | a :: _ -> Error ("unknown argument " ^ a)
 
 let required name = function

@@ -3,7 +3,7 @@
     through the story runner, live in a run folder of its own (Attached_run) or
     replayed from a wire log. *)
 
-type flags = Checkpoints_flags.checkpoint_flags = {
+type flags = Pokemon_flags.checkpoint_flags = {
   state : string option;
   port : int;
   log_file : string option;
@@ -13,9 +13,10 @@ type flags = Checkpoints_flags.checkpoint_flags = {
   end_check_only : bool;
   grind_cap : int option;
 }
-(** The command's flags; a series' runs share them (Checkpoints_flags). *)
+(** The command's flags; a series' runs share them (Pokemon_flags). *)
 
 val usage : string
+(** [gamepilot checkpoint]'s and [gamepilot replay checkpoint]'s usage lines. *)
 
 val options : flags -> Frlg_checkpoints.Checkpoint_run.options
 (** The story runner's options from the flags, logging to stdout and, with

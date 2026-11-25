@@ -13,5 +13,5 @@ type program = {
     which a --viewport given must match (Program_registry.check_viewport). *)
 
 val run_grid :
-  program:program -> string -> Checkpoints_flags.flags -> (int, string) result
+  program:program -> string -> Pokemon_flags.flags -> (int, string) result
 (** The plan folder's pre-flight (--preflight) or its series; the exit code. *)

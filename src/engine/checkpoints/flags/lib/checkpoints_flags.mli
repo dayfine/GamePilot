@@ -1,26 +1,11 @@
-(** [gamepilot checkpoints]' flags (each game's series runner reads them), their
-    defaults and parsing, and [gamepilot checkpoint]'s, which a series' runs
-    share. *)
+(** [gamepilot checkpoints]' flags, whatever the game: their record, defaults
+    and parsing. Each game's series runner reads them; a game's own flags
+    (['game], e.g. Pokemon_flags.series) ride along, parsed by the game's hooks
+    ({!game_flags}). *)
 
 open Engine_run
 
-type checkpoint_flags = {
-  state : string option;
-  port : int;
-  log_file : string option;
-  party : string;
-  center : string option;
-  walk : bool;
-  end_check_only : bool;
-  grind_cap : int option;
-}
-(** [gamepilot checkpoint PLAN.json]'s flags; a series' runs take theirs from
-    the series' (port 0 there: any free one). *)
-
-val checkpoint_defaults : checkpoint_flags
-(** No state, log or party; the program's default port; running. *)
-
-type flags = {
+type 'game flags = {
   from_id : string option;
   to_id : string option;
   mode : Checkpoint_trials.mode option;
@@ -35,13 +20,12 @@ type flags = {
   replay : string option;  (** A recorded video for a dry run (fake board). *)
   save_after_pass : bool;  (** Switch: save in the game after a pass. *)
   preflight : bool;
-  make_room : string option;  (** The save's map: room first (00-make-room). *)
   max_rounds : int option;  (** A repeating checkpoint's rounds, at most. *)
   from_event : string option;
       (** mGBA, testing: run from this event's kept state
           (Engine_run.Event_range). *)
   to_event : string option;  (** ... to this event (else the last). *)
-  common : checkpoint_flags;
+  port : int;  (** The program's port; 0: any free one. *)
   watch : Daemon_process.watch option;
   viewport : string option;
       (** --viewport V: the Switch daemons' game picture; only for a plan folder
@@ -50,26 +34,38 @@ type flags = {
   daemon_flags : string list;
       (** --record, --no-record, --keepawake N, --speed S: passed to each run's
           daemon. *)
+  game : 'game;  (** The game's own flags. *)
 }
 
-val usage : string
+type 'game game_flags = {
+  game_defaults : 'game;
+  game_switch : 'game -> string -> 'game option;
+  game_valued : 'game -> string -> string -> ('game, string) result option;
+}
+(** How a game's own flags parse: their defaults, a flag without a value
+    ([None]: not the game's), and a flag with its value ([None]: not the game's;
+    [Some (Error _)]: a bad value). *)
 
 val data_dir : string -> string -> string
 (** [data_dir var name]: [$var], else [$HOME/.local/share/gamepilot/<name>]. *)
 
-val defaults : flags
+val defaults : 'game game_flags -> 'game flags
 (** $GAMEPILOT_STATES and $GAMEPILOT_RUNS (else under
     [$HOME/.local/share/gamepilot]), the daemon's build, mGBA's bridge port, no
-    watch page, saving after a pass on the Switch. *)
+    watch page, any free program port, saving after a pass on the Switch; the
+    game's defaults. *)
 
-val parse : flags -> string list -> (flags, string) result
-(** The flags given over [flags]; [Error] on an unknown flag or a bad value.
-    --watch-port and --listen imply --watch. *)
+val parse :
+  'game game_flags -> 'game flags -> string list -> ('game flags, string) result
+(** The flags given over [flags], the game's through its hooks; [Error] on an
+    unknown flag or a bad value. --watch-port and --listen imply --watch. *)
 
 val required : string -> 'a option -> ('a, string) result
 (** The flag's value; ["NAME is required"] without it. *)
 
 val daemon_backend :
-  flags -> Checkpoint_trials.mode -> (Daemon_process.backend, string) result
+  'game flags ->
+  Checkpoint_trials.mode ->
+  (Daemon_process.backend, string) result
 (** The daemon's backend from the flags: mGBA, or the Switch (testing mode only)
     on --serial and --capture, or a dry run on --replay alone. *)

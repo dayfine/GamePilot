@@ -22,8 +22,8 @@ type one_shot = {
 }
 
 type t = {
-  run_series : string -> Checkpoints_flags.flags -> (int, string) result;
-      (** The series from a plan folder, with the command's flags. *)
+  run_series : string -> string list -> (int, string) result;
+      (** The series from a plan folder, with the command's args. *)
   run_checkpoint : string -> string list -> (int, string) result;
       (** One plan file on a running daemon, with the command's flags. *)
   replay_checkpoint : string -> string -> string list -> (int, string) result;
@@ -42,10 +42,11 @@ let program_fields plan_dir =
 
 (* The Switch daemons' --viewport: the program's, which a --viewport given
    must match. *)
-let viewport plan_dir (f : Checkpoints_flags.flags) =
+let viewport plan_dir (f : _ Checkpoints_flags.flags) =
   R.check_viewport (R.of_plan_dir plan_dir) f.viewport
 
-let grid_series plan_dir f =
+let grid_series plan_dir args =
+  let* f = Pokemon_flags.parse Pokemon_flags.defaults args in
   Grid.Checkpoints_command.run_grid
     ~program:{ fields = program_fields; viewport = viewport plan_dir f }
     plan_dir f
@@ -91,12 +92,14 @@ let of_program (p : R.t option) =
 let guide (p : R.t) = (of_program (Some p)).guide
 
 let main plan_dir args =
-  let* f = Checkpoints_flags.parse Checkpoints_flags.defaults args in
-  (of_program (R.of_plan_dir plan_dir)).run_series plan_dir f
+  (of_program (R.of_plan_dir plan_dir)).run_series plan_dir args
 
 (* gamepilot checkpoint's usage: the grid rules', the only family that runs a
    plan file alone. *)
 let usage = Grid.Checkpoint_command.usage
+
+(* gamepilot checkpoints' usage: the grid rules' flags. *)
+let checkpoints_usage = Pokemon_flags.usage
 let of_plan_file plan = of_program (R.of_plan_dir (Filename.dirname plan))
 let checkpoint plan args = (of_plan_file plan).run_checkpoint plan args
 

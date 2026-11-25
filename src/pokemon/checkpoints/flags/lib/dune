@@ -1,6 +1,4 @@
 (library
- (name checkpoints_flags)
- (public_name gamepilot.checkpoints_flags)
- (flags
-  (:standard -open Live_run))
- (libraries gamepilot.live gamepilot.live_run gamepilot.engine_run))
+ (name pokemon_flags)
+ (public_name gamepilot.pokemon_flags)
+ (libraries gamepilot.live gamepilot.checkpoints_flags))
