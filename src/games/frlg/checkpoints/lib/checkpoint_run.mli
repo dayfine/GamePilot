@@ -1,7 +1,8 @@
 (** Runs one checkpoint of a FireRed plan live: the start state loaded (when
     given), the overworld's probes subscribed, then the plan's events through
-    {!Checkpoints_run.Runner} with FireRed's {!Frlg_actions.Checkpoint_game}.
-    What [gamepilot checkpoint] runs, and replays from its wire log. *)
+    {!Pokemon_checkpoints.Runner} with FireRed's
+    {!Frlg_actions.Checkpoint_game}. What [gamepilot checkpoint] runs, and
+    replays from its wire log. *)
 
 type options = {
   state : string option;
@@ -30,21 +31,30 @@ val maps_dir : string
 (** PokemonSimulation's FireRed maps, from the repo root. *)
 
 val load_world : unit -> (Frlg_overworld.Frlg_steps.world, string) result
-(** Every runtime map of {!maps_dir}, found from the working directory, as mGBA
-    walks them: map edges do not stall ({!Frlg_overworld.Frlg_steps.world}). *)
+(** Every runtime map of {!maps_dir}, found from the working directory, but the
+    standard Pokemon Centers' (the shared layout's), and the coded room of each
+    of those Centers in their place
+    ({!Frlg_overworld.Standard_center.with_rooms}): the coded room wins, and a
+    standard Center's map file is not read. As mGBA walks them: map edges do not
+    stall ({!Frlg_overworld.Frlg_steps.world}). *)
 
-val check_plan : Checkpoints_plan.Plan.t -> (unit, string) result
+val load_map : string -> (Grid_maps.Map_data.t, string) result
+(** The map of that name as {!load_world} has it: a standard Center's coded
+    room, or else its runtime file. *)
+
+val check_plan : Pokemon_checkpoints.Plan.t -> (unit, string) result
 (** A FireRed plan whose [execution.menu], when given, is ["full"]: the Start
     menu rows the actions press to (POKéMON 1, BAG 2, SAVE 4). *)
 
 val start_of :
-  Checkpoints_plan.Plan.checkpoint -> Checkpoints_plan.Pose.observed option
+  Pokemon_checkpoints.Plan.checkpoint ->
+  Pokemon_checkpoints.Pose.observed option
 (** The checkpoint's [start] when it names one tile. *)
 
 val capped_postconditions :
   grind_cap:int option ->
-  Checkpoints_plan.Plan.t ->
-  Checkpoints_plan.Plan.postconditions * string list
+  Pokemon_checkpoints.Plan.t ->
+  Pokemon_checkpoints.Postconditions.t * string list
 (** The postconditions a run checks, and the ones it skips, one line each
     (["knows mr-mime recycle (grind capped at 8)"],
     ["level mr-mime at least 33 (grind capped at 8)"]): with a grind cap, the
@@ -52,58 +62,59 @@ val capped_postconditions :
     none without. *)
 
 type from_event = {
-  range : Checkpoints_run.Event_range.t;
-  kept : Checkpoints_run.Event_states.kept;
+  range : Engine_run.Event_range.t;
+  kept : Pokemon_checkpoints.Event_states.kept;
       (** What the run that kept the first event's state read at the
-          checkpoint's start ({!Checkpoints_run.Event_states}). *)
+          checkpoint's start ({!Pokemon_checkpoints.Event_states}). *)
 }
 (** A partial run: its events, from a state kept at the first one's start. *)
 
 type keep_event_state =
   index:int ->
-  Checkpoints_plan.Plan.event ->
-  Checkpoints_run.Event_states.kept ->
+  Pokemon_checkpoints.Plan.event ->
+  Pokemon_checkpoints.Event_states.kept ->
   unit
 (** Keeps the state at an event's start, with the checkpoint's start reads. *)
 
 val run :
-  ?end_at:Checkpoints_plan.Pose.grid ->
+  ?end_at:Pokemon_checkpoints.Pose.grid ->
   ?on_event:(int -> Engine_run.Event_progress.t -> unit) ->
-  ?actions:(string * Checkpoints_run.Game.game_action) list ->
+  ?actions:(string * Pokemon_checkpoints.Game.game_action) list ->
   ?from_event:from_event ->
   ?keep_event_state:keep_event_state ->
   options ->
   Frlg_overworld.Frlg_steps.world ->
-  Checkpoints_plan.Plan.t ->
-  (unit, Checkpoints_run.Failure.t) result
+  Pokemon_checkpoints.Plan.t ->
+  (unit, Pokemon_checkpoints.Failure.t) result
 (** In the effect context: loads the state and runs the checkpoint with the
     overworld's probes ({!Frlg_readers.Screen_facts.probes}) subscribed; a walk,
     a settle, a menu action and a battle add their own while they run. With
-    [end_at], the player must end there ({!Checkpoints_run.Runner.run}); FireRed
-    reads no position yet, so it is where the walks tracked the player. Then the
-    plan's postconditions ({!Checkpoints_plan.Plan.postconditions}), read by
-    {!Postcondition_reads}, must all pass (a promise of a change against the
-    count read before the first event, {!Postcondition_reads.at_start}), but for
-    those {!capped_postconditions} skips (logged). [on_event] hears each event's
-    progress ({!Checkpoints_run.Runner.run}). [actions] are game actions of the
-    caller's own, ahead of FireRed's: a shadow plan's ({!Shadow_plan}).
+    [end_at], the player must end there ({!Pokemon_checkpoints.Runner.run});
+    FireRed reads no position yet, so it is where the walks tracked the player.
+    Then the plan's postconditions ({!Pokemon_checkpoints.Postconditions.t}),
+    read by {!Postcondition_reads}, must all pass (a promise of a change against
+    the count read before the first event, {!Postcondition_reads.at_start}), but
+    for those {!capped_postconditions} skips (logged). [on_event] hears each
+    event's progress ({!Pokemon_checkpoints.Runner.run}). [actions] are game
+    actions of the caller's own, ahead of FireRed's: a shadow plan's
+    ({!Shadow_plan}).
 
-    With [from_event], only its events run ({!Checkpoints_run.Runner.run}), from
-    [options.state], the state kept at the first one's start; a promise of a
-    change is checked against the start reads kept with that state, never
+    With [from_event], only its events run ({!Pokemon_checkpoints.Runner.run}),
+    from [options.state], the state kept at the first one's start; a promise of
+    a change is checked against the start reads kept with that state, never
     re-read at the event (logged), and the walks start where the run that kept
     it reckoned the player to stand. [keep_event_state] is called at the start
     of each event the run reached cleanly
-    ({!Checkpoints_run.Event_states.hear}), with what the run read at the
+    ({!Pokemon_checkpoints.Event_states.hear}), with what the run read at the
     checkpoint's start (or, on a partial run, what was kept). *)
 
 val goal_holds :
   log:(string -> unit) ->
   id:string ->
-  Checkpoints_plan.Plan.postconditions ->
+  Pokemon_checkpoints.Postconditions.t ->
   bool
 (** In the effect context, from the overworld and back to it: whether a
-    repeating checkpoint's goal ({!Checkpoints_plan.Plan.repeat}'s [until])
+    repeating checkpoint's goal ({!Pokemon_checkpoints.Plan.repeat}'s [until])
     holds now, read as postconditions are ({!Postcondition_reads}) and logged
     (["[Goal] [Postcondition] 05-grind-mr-mime ..."]). A goal with nothing in
     it, or one not read, does not hold. *)

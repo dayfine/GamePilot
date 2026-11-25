@@ -13,7 +13,7 @@ let levels = [ 52; 20; 18; 21; 33; 12 ]
 let party_screen ?lost_b () =
   Party.react ?lost_b (List.map2 (fun n l -> Party.member n l) names levels)
 
-let party_promised : Checkpoints_plan.Plan.postconditions =
+let party_promised : Pokemon_checkpoints.Postconditions.t =
   {
     position = None;
     party = Some (Party_includes { members = [ "abra" ]; slots = [] });
@@ -26,7 +26,7 @@ let party_promised : Checkpoints_plan.Plan.postconditions =
     marks = None;
   }
 
-let observed_text (o : Checkpoints_run.Postcondition_check.observed) =
+let observed_text (o : Pokemon_checkpoints.Postcondition_check.observed) =
   match o.party with
   | None -> "party not read"
   | Some members ->
@@ -65,14 +65,14 @@ let bag_screen items screen (p : S.press) =
   | [ Wire.B ], S.Start_menu _ -> show S.Overworld
   | _ -> ()
 
-let items_promised : Checkpoints_plan.Plan.postconditions =
+let items_promised : Pokemon_checkpoints.Postconditions.t =
   {
     party_promised with
     party = None;
     items =
       [
-        { bag_item = "revive"; count = Count_exactly 2 };
-        { bag_item = "escape-rope"; count = Count_exactly 3 };
+        { bag_item = "revive"; count = Engine_promise.Count.Exactly 2 };
+        { bag_item = "escape-rope"; count = Engine_promise.Count.Exactly 3 };
       ];
   }
 
@@ -96,8 +96,8 @@ let read_at_start items () =
       items_promised with
       items =
         [
-          { bag_item = "revive"; count = Count_exactly 2 };
-          { bag_item = "escape-rope"; count = Count_gained 1 };
+          { bag_item = "revive"; count = Engine_promise.Count.Exactly 2 };
+          { bag_item = "escape-rope"; count = Engine_promise.Count.Gained 1 };
         ];
     }
   in
@@ -121,8 +121,8 @@ let read_level min () =
   in
   Printf.sprintf "%s; ends on %s"
     (String.concat "; "
-       (List.map Checkpoints_run.Postcondition_check.result_to_string
-          (Checkpoints_run.Postcondition_check.check promised observed)))
+       (List.map Pokemon_checkpoints.Postcondition_check.result_to_string
+          (Pokemon_checkpoints.Postcondition_check.check promised observed)))
     (S.screen_name (S.screen_at screen screen.S.clock_ms))
 
 let cases : Table_test.case list =

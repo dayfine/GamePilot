@@ -1,0 +1,10 @@
+(library
+ (name pokemon_terms)
+ (public_name gamepilot.pokemon_terms)
+ (libraries
+  yojson
+  gamepilot.grid_maps
+  gamepilot.json_field
+  gamepilot.engine_promise
+  gamepilot.engine_terms
+  gamepilot.engine_plan))

@@ -8,7 +8,7 @@ module S = Scripted_screen
 
 let outcome = function
   | Ok () -> "ok"
-  | Error cause -> "failed " ^ Checkpoints_run.Failure.cause_to_string cause
+  | Error cause -> "failed " ^ Pokemon_checkpoints.Failure.cause_to_string cause
 
 let a p = p.S.buttons = [ Wire.A ]
 
@@ -428,6 +428,35 @@ let redeem_list_lingers () =
   Printf.sprintf "%s; %s" (outcome result)
     (if !taken then "the prize taken" else "the prize declined")
 
+(* The plan's answer event: its own A starts the talk (Bill's "Ready to set
+   sail?" in the Cinnabar Center), YES or NO, then the settle. B turns a page
+   as A does. *)
+let answer ~yes () =
+  let answered = ref "none" in
+  let react screen (p : S.press) =
+    let on_question = S.screen_at screen p.at_ms = S.Question in
+    match p.buttons with
+    | [ Wire.B ] when S.screen_at screen p.at_ms = S.Dialog_arrow ->
+        talk ~page:true ~after_ms:1500 screen { p with buttons = [ Wire.A ] }
+    | [ Wire.B ] when on_question && !answered = "none" ->
+        answered := "NO";
+        S.show screen ~at_ms:(p.at_ms + 100) S.Dialog;
+        S.show screen ~at_ms:(p.at_ms + 1600) S.Overworld
+    | [ Wire.A ] when on_question && !answered = "none" ->
+        answered := "YES";
+        talk ~page:true ~after_ms:1500 screen p
+    | _ -> talk ~page:true ~after_ms:1500 screen p
+  in
+  let screen = S.create ~react () in
+  let result = S.run screen (Talk.answer ~log ~yes) in
+  Printf.sprintf "%s; %s; answered %s" (outcome result) (S.presses_text screen)
+    !answered
+
+(* A key item's row shows no count; any other's is read. *)
+let found_count pocket read =
+  Option.fold ~none:"none" ~some:string_of_int
+    (Bag_items.found_count pocket (fun () -> read))
+
 let case name input expectation = { Table_test.name; input; expectation }
 
 let () =
@@ -513,6 +542,16 @@ let () =
         "cut on console B: the last page's A takes YES as the box draws, the \
          Cut runs"
         cut_yes_taken "ok; up, A x3, B x5, up";
+      case "answer YES: A to the person, the page, YES, the settle"
+        (answer ~yes:true) "ok; A x3, B x6; answered YES";
+      case "answer NO: the talk, whose B answers NO" (answer ~yes:false)
+        "ok; A, B x8; answered NO";
+      case "a key item found counts one, whatever its row reads"
+        (fun () -> found_count Frlg_readers.Bag_screen.Key_items None)
+        "1";
+      case "an item found counts what its row reads"
+        (fun () -> found_count Frlg_readers.Bag_screen.Items (Some 7))
+        "7";
       case "spin: a battle in the first batch" (spin ~after_ms:1500)
         "ok; 12 turns";
       case "spin: no battle in two batches" (spin ~after_ms:100000)

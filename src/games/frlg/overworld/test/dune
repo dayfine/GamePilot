@@ -25,8 +25,16 @@
   menus.switch.probes.jsonl))
 
 (tests
- (names test_route_target test_route_walk test_edge_steps)
- (modules test_route_target test_route_walk test_edge_steps)
+ (names
+  test_route_target
+  test_route_walk
+  test_edge_steps
+  test_standard_center)
+ (modules
+  test_route_target
+  test_route_walk
+  test_edge_steps
+  test_standard_center)
  (deps
   mgba.probes.jsonl
   menus.mgba.probes.jsonl
@@ -38,7 +46,7 @@
   gamepilot.effects
   gamepilot.grid_maps
   gamepilot.grid_planning
-  gamepilot.checkpoints_plan
+  gamepilot.pokemon_checkpoints
   gamepilot.checkpoints_run
   gamepilot.frlg_overworld
   frlg_overworld_fixtures))

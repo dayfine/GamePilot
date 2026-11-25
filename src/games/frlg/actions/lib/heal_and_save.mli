@@ -2,7 +2,7 @@
     [save] (the fork's heal_at_pokecenter in PokemonFRLG_Navigation, and
     {!Game_save}). The heal mashes as the fork's does. *)
 
-val nurse_front : Checkpoints_plan.Pose.grid
+val nurse_front : Pokemon_checkpoints.Pose.grid
 (** Where the player talks to the nurse on any Center's ground floor (the map is
     left blank: a caller names the Center): tile (7, 4) facing north. *)
 

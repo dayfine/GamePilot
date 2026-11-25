@@ -14,7 +14,7 @@ the verdict is ok, "merge", or "merge (structural: <reason>)" when the PR change
 deleted or renamed under src/; a changed .mli of a library shared across games (src/base, src/core,
 src/pokemon); a changed format (protocol/, a *_decode.ml); a design doc (docs/design/); or two
 NEEDS_REWORK verdicts. The reason printed is the first that holds, in the order: reworked twice,
-structure, design doc.
+design doc, structure.
 
 A qc-structural verdict is a COMMENT review (GitHub refuses self-approval, so the review state
 says nothing) whose body has a "## Structural QC" heading, a "Reviewed SHA: <sha>" line and a
@@ -85,7 +85,9 @@ def owner_reason(pr):
     if len(reworks) >= 2:
         return "reworked twice"
     design = [f["path"] for f in files if f["path"].startswith("docs/design/")]
-    return structural_reason(files) or ("design doc: " + design[0] if design else None)
+    if design:
+        return "design doc: " + design[0]
+    return structural_reason(files)
 
 
 def docs_only(files):

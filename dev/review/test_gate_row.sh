@@ -79,8 +79,8 @@ check "a game's own .mli change merges" merge \
     "$(pr '{"path": "src/games/frlg/a/lib/b.mli", "changeType": "MODIFIED"}' "$green" "$(review "$tip" APPROVED)" | column 4)"
 check "a decoder change merges, marked structural" "merge (structural: format: src/x/lib/plan_decode.ml)" \
     "$(pr '{"path": "src/x/lib/plan_decode.ml", "changeType": "MODIFIED"}' "$green" "$(review "$tip" APPROVED)" | column 4)"
-check "a rename that also edits a design doc names the rename" \
-    "merge (structural: module renamed: src/x/lib/a.ml)" \
+check "a rename that also edits a design doc goes to the user for the doc" \
+    "user review (design doc: docs/design/a.md)" \
     "$(pr '{"path": "docs/design/a.md"}, {"path": "src/x/lib/a.ml", "changeType": "RENAMED"}' "$green" "$(review "$tip" APPROVED)" | column 4)"
 check "a conflict with main comes first" "merge main" \
     "$(pr "$code" "$red" "" | sed 's/^{/{"mergeable": "CONFLICTING", /' | column 4)"

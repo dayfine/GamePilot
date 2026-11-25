@@ -1,5 +1,5 @@
-(** FireRed's story {!Checkpoints_run.Game.t}: [route] and [ready] events
-    planned and walked ({!Frlg_overworld}), [talk] and [scene] settled
+(** FireRed's story {!Pokemon_checkpoints.Game.t}: [route] and [ready] events
+    planned and walked ({!Frlg_overworld}), [talk], [answer] and [scene] settled
     ({!Talk}), [heal] and [save] events ({!Heal_and_save}), the ["fly"] game
     action ({!Fly}), ["lift_floor"] ({!Lift_ride}), the ["grind"] one ({!Grind},
     its walks and heals this game's), ["capture"] ({!Capture} on
@@ -37,17 +37,17 @@ type config = {
   center : string option;
       (** The town whose Pokémon Center heals between loop rounds
           (["LavenderTown"]); [None]: heal fails as [not_implemented]. *)
-  reload : unit -> (unit, Checkpoints_run.Failure.cause) result;
+  reload : unit -> (unit, Pokemon_checkpoints.Failure.cause) result;
       (** Back to the checkpoint's start state. *)
   log : string -> unit;
 }
 
 type t
 
-val create : config -> start:Checkpoints_plan.Pose.observed option -> t
+val create : config -> start:Pokemon_checkpoints.Pose.observed option -> t
 (** [start]: where the player stands at the checkpoint's start, if known. *)
 
-val game : t -> Checkpoints_run.Game.t
+val game : t -> Pokemon_checkpoints.Game.t
 
 val party : t -> Party_roster.t
 (** The party as reckoned now. *)

@@ -1,7 +1,7 @@
 open Frlg_readers
 module M = Menu_input
 
-let nurse_front : Checkpoints_plan.Pose.grid =
+let nurse_front : Pokemon_checkpoints.Pose.grid =
   { map = ""; tiles = [ { x = 7; y = 4 } ]; facing = Some North }
 
 let center_map town = town ^ "_PokemonCenter_1F"

@@ -20,7 +20,7 @@ type need = Plan_needs.need =
   | Party_in_order of string list
   | Party_includes of {
       members : string list;
-      slots : Checkpoints_plan.Plan.slot list;
+      slots : Pokemon_checkpoints.Postconditions.slot list;
     }
   | Member of { species : string; for_ : string }
       (** A member an event uses ([for_]: ["fly"]). *)
@@ -40,8 +40,8 @@ type need = Plan_needs.need =
 
 val needs :
   Frlg_actions.Mart_plan.stocks ->
-  before:Checkpoints_plan.Plan.postconditions option ->
-  Checkpoints_plan.Plan.t ->
+  before:Pokemon_checkpoints.Postconditions.t option ->
+  Pokemon_checkpoints.Plan.t ->
   (need list, string) result
 (** What the save must hold for the plan's first event, in the table's order:
     the plan's declared preconditions ({!Plan_preconditions.needs}), then the
@@ -50,7 +50,7 @@ val needs :
     not read. *)
 
 type read = {
-  observed : Checkpoints_run.Postcondition_check.observed;
+  observed : Pokemon_checkpoints.Postcondition_check.observed;
   place : Frlg_readers.Start_frame.difference option;
       (** The frame after the load against the one kept at the start; [None]
           when none was kept or the frame did not read. *)
@@ -88,5 +88,5 @@ val reads_card : need list -> bool
 (** A need is judged on the Trainer Card's badges or stars: the pre-flight reads
     them. *)
 
-val to_read : need list -> Checkpoints_plan.Plan.postconditions
+val to_read : need list -> Pokemon_checkpoints.Postconditions.t
 (** What {!Postcondition_reads.observe} must read for these needs. *)

@@ -32,7 +32,7 @@ let checkpoint_of_events events =
       (String.concat ", " events)
   in
   match
-    Checkpoints_plan.Plan_decode.decode ~source:"inline"
+    Pokemon_checkpoints.Plan_decode.decode ~source:"inline"
       (Yojson.Safe.from_string text)
   with
   | Ok plan -> plan.checkpoint

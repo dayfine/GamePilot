@@ -58,12 +58,12 @@ type opened =
   | Not_opened of string  (** why *)
 
 type game_steps = {
-  open_candy : slot:int -> (opened, Checkpoints_run.Failure.cause) result;
+  open_candy : slot:int -> (opened, Pokemon_checkpoints.Failure.cause) result;
       (** From the overworld: the bag, the Rare Candy, USE, the slot (from 1).
           [Error] when a menu step after the candy's USE fails, as its cause. *)
   level_up : Level_up.game_steps;
       (** The party menu's: {!Level_up.Back} is the bag. *)
-  close_bag : unit -> (unit, Checkpoints_run.Failure.cause) result;
+  close_bag : unit -> (unit, Pokemon_checkpoints.Failure.cause) result;
       (** From the bag, back to the overworld; [Error] as {!open_candy}. *)
   log : string -> unit;
 }
@@ -75,7 +75,7 @@ type result =
       (** [levels] is 0 when the candy had no effect (a Lv 100 member) *)
   | Out_of_candies
   | Failed of string
-  | Stopped of Checkpoints_run.Failure.cause
+  | Stopped of Pokemon_checkpoints.Failure.cause
       (** a menu step of the game steps failed, as this cause *)
 
 val run :

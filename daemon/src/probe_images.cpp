@@ -3,7 +3,7 @@
 // {"image": path, "probes": {id: result}}, the `probes` object of a `frame`
 // notification.
 //
-//   probe_images --spec probes.json [--viewport x,y,w,h|nso-gba]
+//   probe_images --spec probes.json [--viewport x,y,w,h|nso-gba|native]
 //                [--game-size WxH] image.png [image.png ...]
 //
 // The spec file holds the `subscribe` params ({"probes": [...]}); a
@@ -11,9 +11,11 @@
 // file's folder, that the tool uploads to its own template store.
 // --viewport is where the game picture sits in every image, normalized
 // (default the whole image, as on mGBA; a Switch capture has side bars, and
-// nso-gba is the Switch's GBA app as the daemon's switch backend sees it), and
-// --game-size the picture's native size in game pixels (default 240x160, the
-// GBA), which templates are given in.
+// nso-gba is the Switch's GBA app as the daemon's switch backend sees it;
+// native is a full-screen Switch game, the whole image in 1920x1080 game
+// pixels), and --game-size the picture's native size in game pixels (default
+// 240x160, the GBA), which templates are given in. A viewport name sets the
+// game size too, so a --game-size goes after it.
 
 #include <cstdio>
 #include <cstdlib>
@@ -39,7 +41,7 @@ namespace pa = PokemonAutomation;
 
 int usage() {
   std::fputs(
-      "usage: probe_images --spec FILE [--viewport x,y,w,h|nso-gba] "
+      "usage: probe_images --spec FILE [--viewport x,y,w,h|nso-gba|native] "
       "[--game-size WxH] IMAGE.png [IMAGE.png ...]\n",
       stderr);
   return 2;
@@ -141,9 +143,8 @@ int main(int argc, char** argv) {
     if (arg == "--spec" && has_value) {
       spec_path = argv[++i];
     } else if (arg == "--viewport" && has_value &&
-               std::string_view(argv[i + 1]) == "nso-gba") {
-      i++;
-      viewport = gp::nso_gba_viewport();
+               gp::named_viewport(argv[i + 1])) {
+      viewport = *gp::named_viewport(argv[++i]);
     } else if (arg == "--viewport" && has_value) {
       const std::optional<gp::Box> picture = gp::parse_box(argv[++i]);
       if (!picture) {
