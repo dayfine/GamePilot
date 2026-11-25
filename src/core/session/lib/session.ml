@@ -39,11 +39,18 @@ let queue t commands =
   Hashtbl.replace t.queued batch_id ();
   check_submitted batch_id (call t (Wire.Submit { batch_id; commands }))
 
+(* A cancel drops every batch still queued, and the daemon sends no
+   [batch_done] for a dropped one (server.cpp, clear_input and replace_input);
+   any sent before the cancel's reply came before it. So once the reply is in,
+   no [queue]d batch will end: forget them. *)
+let forget_queued t = Hashtbl.reset t.queued
+
 (* Cancels the batch [race] stopped. Its [batch_done] can still arrive before
    the cancel's reply (it was on its way); after the reply none can, so the one
    that came is dropped there. *)
 let cancel_batch t batch_id =
   ignore (Wire.cancel_result_of_json (call t Wire.Cancel) : int);
+  forget_queued t;
   Hashtbl.remove t.dones batch_id
 
 (* Every frame pumped after the submit was sent is checked against [stop],
@@ -91,6 +98,7 @@ let replace t commands =
       let next = next_batch_id t in
       let cancel = Wire.Cancel_then { batch_id = next; commands } in
       ignore (Wire.cancel_result_of_json (call t cancel) : int);
+      forget_queued t;
       Hashtbl.remove t.dones held;
       pump_until t (fun () ->
           check_stop t;
