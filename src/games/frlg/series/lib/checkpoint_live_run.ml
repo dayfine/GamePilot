@@ -13,14 +13,6 @@ open Pokemon_engine
 open Checkpoints_series
 include Live_checkpoint
 
-(* A save the daemon may refuse (an older daemon, a bad path): logged, not
-   fatal. *)
-let save log what op =
-  match op () with
-  | (_ : int) -> log ("[Run] saved " ^ what)
-  | exception Effects.Rpc_error e ->
-      log (Printf.sprintf "[Run] could not save %s: %s" what e.message)
-
 let options setup cp log : Frlg_checkpoints.Checkpoint_run.options =
   {
     (Plan_command.options { setup.common with log_file = None }) with
@@ -111,46 +103,37 @@ let console_after setup cp log (outcome, kind) =
   | Ok () -> outcome
   | Error reason -> Failed { at = "save"; reason; repeats = true }
 
-let save_op path file : Run_record.save -> unit -> int = function
-  | Frame -> fun () -> Effects.save_frame (path file)
-  | State -> fun () -> Effects.save_state (path file)
-
-(* The frame, and the state where the backend keeps states (not the Switch). *)
-let save_failure log path ~save_states =
-  List.iter
-    (fun (file, kind) -> save log file (save_op path file kind))
-    (Run_record.failure_saves ~save_states)
-
 (* In the session: the chain before and after this run, the checkpoint, then
    the outcome's saves. Each run has its own daemon, so each sends the chain
    for a page that is watching it. *)
-let emulator_run setup cp log path =
+let emulator_run setup cp log record =
+  let path = Run_record.path record in
   let outcome, _ = checkpoint_outcome setup cp log in
   (match outcome with
-  | Failed _ -> save_failure log path ~save_states:true
+  | Failed _ -> Daemon_run.save_failure ~log record ~save_states:true
   | Passed _
     when Event_range.keeps_end (partial_range cp) setup.policy
          || cp.plan.repeat <> None ->
       (* A round's end is the next round's start. *)
-      save log "end.ss" (fun () -> Effects.save_state (path "end.ss"))
+      Daemon_run.save ~log "end.ss" (fun () ->
+          Effects.save_state (path "end.ss"))
   | Passed _ -> ());
   outcome
 
-let switch_run setup cp log path =
+let switch_run setup cp log record =
   let ((outcome, _) as ended) = console_run setup cp log in
   (match outcome with
-  | Failed _ -> save_failure log path ~save_states:false
+  | Failed _ -> Daemon_run.save_failure ~log record ~save_states:false
   | Passed _ -> ());
   console_after setup cp log ended
 
 let in_session setup cp ~progress record log () =
   let log = Watch_report.log log in
   Effects.show_run (progress None);
-  let path = Run_record.path record in
   let outcome =
     match setup.backend with
-    | Mgba _ -> emulator_run setup cp log path
-    | Switch _ -> switch_run setup cp log path
+    | Mgba _ -> emulator_run setup cp log record
+    | Switch _ -> switch_run setup cp log record
   in
   Effects.show_run (progress (Some (trial outcome)));
   outcome
@@ -159,44 +142,8 @@ let live setup cp ~progress record log (daemon : Daemon_process.t) =
   Daemon_run.in_session ~failed ~dir:record.Run_record.dir (fun () ->
       Live.run ~port:daemon.port (in_session setup cp ~progress record log))
 
-let start_daemon setup record cp (port, watch) =
-  Daemon_process.start ?watch ~flags:setup.daemon_flags ~daemon:setup.daemon
-    ~backend:setup.backend ~port
-    ~wire_log:(Run_record.path record "wire.jsonl")
-    ~out_file:(Run_record.path record "daemon.out")
-    ~checkpoint:cp.id ()
-
-(* The ports the last daemon bound, else the flags' (0: any); the flags' when
-   those are taken now. *)
-let start_sticky setup record cp =
-  let asked = (setup.common.port, setup.watch) in
-  let again =
-    match !(setup.bound) with
-    | None -> asked
-    | Some (port, page) ->
-        let keep (w : Daemon_process.watch) =
-          { w with port = Option.value page ~default:w.port }
-        in
-        (port, Option.map keep setup.watch)
-  in
-  match start_daemon setup record cp again with
-  | Error _ when again <> asked -> start_daemon setup record cp asked
-  | started -> started
-
-(* Prints the page's URLs when they are new: at the first run, or when the
-   last run's ports were taken. *)
-let announce setup (daemon : Daemon_process.t) =
-  let bound = Some (daemon.port, daemon.watch_port) in
-  (match (setup.watch, daemon.watch_port) with
-  | Some w, Some port when !(setup.bound) <> bound ->
-      Watch_urls.print ~listen:w.listen ~token:w.token ~port
-  | _ -> ());
-  setup.bound := bound
-
-let with_daemon setup record cp body =
-  Daemon_run.with_daemon ~failed (start_sticky setup record cp) (fun daemon ->
-      announce setup daemon;
-      body daemon)
+let with_daemon setup run n body =
+  Series_daemons.with_daemon setup.daemons ~failed run ~n body
 
 let capped_note setup cp =
   Run_line.capped_note ~grind_cap:setup.common.grind_cap cp.plan
@@ -234,7 +181,8 @@ let record_outcome setup cp (run : Run_record.run) n ~attempt outcome =
     | Passed _ -> { result = "pass"; at = ""; reason = "" }
     | Failed { at; reason; _ } -> { result = "fail"; at; reason }
   in
-  Daemon_run.finish ~runs_dir:setup.runs_dir run ~summary:line ending
+  Series_daemons.finish setup.daemons ~runs_dir:setup.runs_dir run ~summary:line
+    ending
 
 (* The attempt in its folder: the folder and how it ended. *)
 let run_in setup cp n ~attempt ~progress (run : Run_record.run) =
@@ -245,9 +193,7 @@ let run_in setup cp n ~attempt ~progress (run : Run_record.run) =
        (Run_line.run_name cp.id cp.plan n)
        (Run_line.attempt_note cp.plan attempt)
        cp.start_state);
-  let outcome =
-    with_daemon setup record cp (live setup cp ~progress record log)
-  in
+  let outcome = with_daemon setup run n (live setup cp ~progress record log) in
   close ();
   record_outcome setup cp run n ~attempt outcome;
   (record, outcome)
