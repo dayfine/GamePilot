@@ -135,5 +135,6 @@ on `GAMEPILOT_*` variables and the ROM). → **FAIL** naming the text.
 - GamePilot's lints and their waiver file (above).
 - That docs-only PRs (every file `.md` or under `docs/`) skip this gate; CI is still required.
   A PR that changes dev tools (`dev/`, `.agents/`, workflows) is not docs-only and gets every row.
-- That the user reviews structure after this gate and makes the merge call; this gate's FLAGs go
-  to them.
+- That the user reviews each structural change: an APPROVED structural PR merges, the user spot
+  checks one now and then, and reviews design docs. This gate's FLAGs go to the main session,
+  which answers them or brings them to the user.
