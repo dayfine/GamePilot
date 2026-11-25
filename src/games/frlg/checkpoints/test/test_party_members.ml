@@ -20,7 +20,7 @@ let args id event_id =
       (fun (e : Pokemon_checkpoints.Plan.event) -> e.id = event_id)
       p.checkpoint.events
   with
-  | Some { kind = Game_action args; _ } -> args
+  | Some { kind = Named_action args; _ } -> args
   | _ -> failwith (id ^ " has no game action " ^ event_id)
 
 (* Each save's party at a checkpoint's start, slot 1 first. *)
@@ -110,8 +110,8 @@ let slots =
 let pickers id =
   List.filter_map
     (fun (e : Pokemon_checkpoints.Plan.event) ->
-      match (e.kind, e.action) with
-      | Game_action a, Some action when Action_args.picks_member ~action a ->
+      match (e.kind, e.way) with
+      | Named_action a, Some action when Action_args.picks_member ~action a ->
           Some e.id
       | _ -> None)
     (plan id).checkpoint.events

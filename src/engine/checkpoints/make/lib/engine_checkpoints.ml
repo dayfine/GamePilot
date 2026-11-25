@@ -1,7 +1,7 @@
 module Make
-    (T : Engine_terms.TERMS)
+    (T : Engine_rules.GAME_RULES)
     (C : Engine_plan_codec.Plan_codec.PLAN_CODEC with module T = T)
-    (X : Engine_text.Terms_text.TEXT with module T = T)
+    (X : Engine_text.Rules_text.TEXT with module T = T)
     (S : Engine_saved.Event_states.SAVED) =
 struct
   module Raw = Engine_plan_codec.Raw_json

@@ -69,7 +69,7 @@ let plan () =
       String.concat "; "
         (List.map
            (fun (e : Pokemon_checkpoints.Plan.event) ->
-             e.id ^ " " ^ Option.value e.action ~default:"")
+             e.id ^ " " ^ Option.value e.way ~default:"")
            p.checkpoint.events)
       ^ " | ends "
       ^ Option.fold ~none:"?"

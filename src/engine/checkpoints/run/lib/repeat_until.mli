@@ -12,7 +12,7 @@
 open Engine_plan
 
 (** The loop over the game's rules. *)
-module Make (T : Engine_terms.TERMS) (Raw : Plan.RAW) : sig
+module Make (T : Engine_rules.GAME_RULES) (Raw : Plan.RAW) : sig
   type limits = {
     max_rounds : int;  (** Rounds to run before giving up; at least 1. *)
     attempts_per_round : int;

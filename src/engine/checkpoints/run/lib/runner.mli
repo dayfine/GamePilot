@@ -5,12 +5,12 @@
     handler. Then, per event: it is skipped when a flag its [skip_if] names
     holds; otherwise its handler runs, and once it passes, the game's position
     (when it can tell) must match its [declared_after]
-    ({!Engine_terms.POSE.matches}). The first event that fails stops the run.
+    ({!Engine_rules.POSE.matches}). The first event that fails stops the run.
     Each event's start (with its [why]), skip, end and failure is logged as
     ["[Story] <checkpoint> #<n> <event>: ..."]. A handler that raises is logged
     as failed and the exception passes through.
 
-    The runner prints none of the game's terms: it says each line as a
+    The runner prints none of the game's rules: it says each line as a
     {!Log_line.Make.t}, poses and failures kept as values, and the engine prints
     it through the game's text ([Engine_checkpoints.Make]'s [Runner], which
     keeps this module's lines as they read).
@@ -22,7 +22,7 @@
 open Engine_plan
 
 (** The runner over the game's rules. *)
-module Make (T : Engine_terms.TERMS) (Raw : Plan.RAW) : sig
+module Make (T : Engine_rules.GAME_RULES) (Raw : Plan.RAW) : sig
   val run :
     ?end_at:T.Pose.t ->
     ?end_state:
@@ -43,7 +43,7 @@ module Make (T : Engine_terms.TERMS) (Raw : Plan.RAW) : sig
 
       With [end_state] (the plan's promises and the game's reader of them), once
       the end position holds the game reads what the plan promises and every one
-      must pass ({!Engine_terms.POSTCONDITIONS.check}); one failed or not read
+      must pass ({!Engine_rules.POSTCONDITIONS.check}); one failed or not read
       fails the run with {!Failure.Make.Unmet_postconditions}. Each is logged as
       ["[Postcondition] <checkpoint> <what>: <verdict>: <detail>"] with a
       summary line. Without [end_state] (a plan that states no postconditions,

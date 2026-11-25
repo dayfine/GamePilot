@@ -1,5 +1,5 @@
-open Toy_terms
-module T = Toy_terms
+open Toy_rules
+module T = Toy_rules
 module F = Json_field
 
 let known ~where allowed obj =
@@ -16,7 +16,7 @@ let pose_of_plan ~where obj =
 let walk ~where args =
   F.catch (fun () ->
       known ~where [ "toward"; "until" ] args;
-      Kind.Walk
+      Action.Walk
         {
           toward = F.string ~where "toward" args;
           until = F.string ~where "until" args;
@@ -25,7 +25,7 @@ let walk ~where args =
 let rest ~where args =
   F.catch (fun () ->
       known ~where [] args;
-      Kind.Rest)
+      Action.Rest)
 
 let kind_of_plan = function
   | "walk" -> Some walk
