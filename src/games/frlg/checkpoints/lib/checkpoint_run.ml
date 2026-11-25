@@ -55,12 +55,29 @@ let map_in (w : Frlg_overworld.Frlg_steps.world) name =
 
 let load_map name = Result.bind (load_world ()) (fun w -> map_in w name)
 
-let check_plan (plan : Pokemon_engine.Plan.t) =
+(* FireRed reckons where the player stands from the start; from anywhere
+   outdoors it knows nothing until a Fly lands, and that Fly is the check that
+   the save is outdoors (the game will not fly from indoors). *)
+let check_start (checkpoint : Pokemon_engine.Plan.checkpoint) =
+  match (checkpoint.start, checkpoint.events) with
+  | Some (Anywhere _), { kind = Named_action _; way = Some "fly"; _ } :: _ ->
+      Ok ()
+  | Some (Anywhere _ as start), _ ->
+      Error
+        ("a checkpoint that starts "
+        ^ Pokemon_engine.Pose.to_string start
+        ^ " begins with a fly event")
+  | _ -> Ok ()
+
+let check_menu (plan : Pokemon_engine.Plan.t) =
   match (plan.game, Json_field.find "menu" plan.execution) with
   | "frlg", (None | Some (`String "full")) -> Ok ()
   | "frlg", Some menu ->
       Error ("execution.menu " ^ Yojson.Safe.to_string menu ^ " is not \"full\"")
   | game, _ -> Error ("the plan is for " ^ game ^ ", not frlg")
+
+let check_plan (plan : Pokemon_engine.Plan.t) =
+  Result.bind (check_menu plan) (fun () -> check_start plan.checkpoint)
 
 let start_of (checkpoint : Pokemon_engine.Plan.checkpoint) =
   match checkpoint.start with

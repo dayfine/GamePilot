@@ -4,6 +4,8 @@ module F = Json_field
 let pose_of_plan ~where obj =
   F.catch (fun () -> Pose_decode.declared ~where obj)
 
+let start_of_plan ~where obj = F.catch (fun () -> Pose_decode.start ~where obj)
+
 let action_of_plan name =
   Option.map
     (fun read ~where args -> F.catch (fun () -> read ~where args))

@@ -43,7 +43,9 @@ val load_map : string -> (Grid_maps.Map_data.t, string) result
 
 val check_plan : Pokemon_engine.Plan.t -> (unit, string) result
 (** A FireRed plan whose [execution.menu], when given, is ["full"]: the Start
-    menu rows the actions press to (POKéMON 1, BAG 2, SAVE 4). *)
+    menu rows the actions press to (POKéMON 1, BAG 2, SAVE 4); and whose first
+    event, when it starts anywhere outdoors, is a [fly]: FireRed does not read
+    the map, so only a Fly's landing tells it where the player is. *)
 
 val start_of :
   Pokemon_engine.Plan.checkpoint -> Pokemon_engine.Pose.observed option

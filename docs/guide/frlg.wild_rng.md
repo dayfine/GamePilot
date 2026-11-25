@@ -35,7 +35,7 @@ Each save also needs its own seed table (below).
 - mr-mime holds no Mail (pc_deposit)
 - the thunder badge (fly)
 - poke-ball at least x1 (wild_rng)
-- at the start, CinnabarIsland
+- at the start, anywhere outdoors where Fly works
 <!-- /generated -->
 
 ## Running it
@@ -52,10 +52,10 @@ sh run/run_checkpoints_on_mgba.sh frlg.wild_rng --from 01-route10-grass --to 02-
 <!-- generated:checkpoints -->
 | Checkpoint | What its plan does |
 |---|---|
-| 01-route10-grass | From Cinnabar: fly to Route 10, a party slot free in the Center's PC, into the north grass, saved |
+| 01-route10-grass | From anywhere outdoors: fly to Route 10, a party slot free in the Center's PC, into the north grass, saved |
 | 02-shiny-ekans | Route 10's north grass: a hard reset timed for a shiny Ekans, Sweet Scent, the catch, its summary's star, saved |
 
-<!-- plans: 413778a9820e -->
+<!-- plans: 333382e6951b -->
 <!-- /generated -->
 
 ## When it stops
@@ -63,7 +63,7 @@ sh run/run_checkpoints_on_mgba.sh frlg.wild_rng --from 01-route10-grass --to 02-
 <!-- generated:preflight -->
 | Resume from | The pre-flight checks |
 |---|---|
-| 01-route10-grass | pidgey in the party (fly); mr-mime in the party (pc_deposit); mr-mime holds no Mail (pc_deposit); the thunder badge (fly); at the start, CinnabarIsland |
+| 01-route10-grass | pidgey in the party (fly); mr-mime in the party (pc_deposit); mr-mime holds no Mail (pc_deposit); the thunder badge (fly); at the start, anywhere outdoors where Fly works |
 | 02-shiny-ekans | poke-ball at least x1 (wild_rng); at the start, Route10 |
 <!-- /generated -->
 

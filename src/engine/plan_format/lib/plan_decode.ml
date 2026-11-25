@@ -20,6 +20,9 @@ struct
   let pose path value =
     ok_or_fail (C.pose_of_plan ~where:(path ^ ".") (F.as_object path value))
 
+  let start path value =
+    ok_or_fail (C.start_of_plan ~where:(path ^ ".") (F.as_object path value))
+
   let list_of ~where key args read =
     required ~where key args;
     F.records ~where key args read
@@ -108,7 +111,7 @@ struct
     {
       checkpoint_id;
       title = F.string ~where "title" obj;
-      start = Option.map (pose (where ^ "start")) (F.find "start" obj);
+      start = Option.map (start (where ^ "start")) (F.find "start" obj);
       events;
     }
 

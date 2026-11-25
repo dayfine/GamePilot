@@ -18,6 +18,7 @@ type need =
   | Item_at_least of { item : string; count : int; for_ : string }
   | Item_exactly of { item : string; count : int }
   | Place of string
+  | Anywhere_start of Pokemon_engine.Pose.place_class
   | Badges_at_least of int
   | Badges of string list
   | Hall_of_fame
@@ -232,6 +233,7 @@ let needs stocks ~before (plan : P.t) =
   let place =
     match plan.checkpoint.start with
     | Some (Grid { map; _ }) -> [ Place map ]
+    | Some (Anywhere place_class) -> [ Anywhere_start place_class ]
     | _ -> []
   in
   party_needs before acc @ money_needs before acc @ item_needs before acc
@@ -262,6 +264,8 @@ let describe = function
       Printf.sprintf "a member knows %s (%s)" move for_
   | Badge { badge; for_ } -> Printf.sprintf "the %s badge (%s)" badge for_
   | Place map -> "at the start, " ^ map
+  | Anywhere_start place_class ->
+      "at the start, " ^ Pokemon_engine.Pose.place_class_text place_class
   | Badges_at_least n -> Printf.sprintf "at least %d badges" n
   | Badges [ badge ] -> Printf.sprintf "the %s badge" badge
   | Badges names -> "badges " ^ String.concat ", " names
@@ -277,5 +281,5 @@ let asks_something = function
   | Caught_at_least n ->
       n > 0
   | Member _ | No_mail _ | Knows_move _ | Badge _ | Money_between _
-  | Item_exactly _ | Place _ | Hall_of_fame ->
+  | Item_exactly _ | Place _ | Anywhere_start _ | Hall_of_fame ->
       true

@@ -66,7 +66,7 @@ let start_file ~states = function
       Some
         (Filename.concat states
            (Printf.sprintf "%s.%d_%d.start.frame.json" map x y))
-  | Some (Grid { tiles = []; _ } | Zone _) | None -> None
+  | Some (Grid { tiles = []; _ } | Zone _ | Anywhere _) | None -> None
 
 let load_frame path =
   if not (Sys.file_exists path) then Ok None

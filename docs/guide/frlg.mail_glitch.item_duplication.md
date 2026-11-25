@@ -81,7 +81,7 @@ which a passing 07-glitch-prep run writes. To run the whole program in one go, u
 |---|---|
 | 08-activate-and-verify | Turn the Mail Glitch on against Lea & Jed on Route 16, read the glitched mail, duplicate one Antidote |
 
-<!-- plans: 096c63877d33 -->
+<!-- plans: 6d5e7db4fdac -->
 <!-- /generated -->
 
 In plain words, after the battle and the check that MIMIEN shows a held item:
