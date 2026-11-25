@@ -362,6 +362,14 @@ void BoardSession::send_state(const ProButtons& buttons,
   }
 }
 
+void BoardSession::replace_on_next() {
+  if (device_ == nullptr) {
+    throw BackendError("board: not connected");
+  }
+  // Queued as the next command's special: its result says nothing more.
+  static_cast<void>(device_->command_queue().send_replace_on_next());
+}
+
 void BoardSession::cancel_queued() {
   if (device_ == nullptr) {
     throw BackendError("board: not connected");

@@ -37,6 +37,9 @@ type need = Plan_needs.need =
       *)
   | Badges of string list  (** Each of these badges, by name. *)
   | Hall_of_fame  (** The Hall of Fame entered: a star on the card. *)
+  | Caught_at_least of int
+      (** At least this many species caught, the Trainer Card's Pokédex count
+          ({!Plan_preconditions}: [caught]). *)
 
 val needs :
   Frlg_actions.Mart_plan.stocks ->

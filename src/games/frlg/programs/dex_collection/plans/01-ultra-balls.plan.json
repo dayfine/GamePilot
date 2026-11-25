@@ -1,0 +1,71 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "frlg",
+  "checkpoint": {
+    "id": "01-ultra-balls",
+    "title": "From Route 10's Pokemon Center: Ultra Balls at Indigo Plateau, then back",
+    "start": {"map": "Route10_PokemonCenter_1F", "tiles": [[7, 4]], "facing": "north"},
+    "events": [
+      {
+        "id": "out_of_center",
+        "kind": "route",
+        "action": "run",
+        "args": {"target": {"place": "route10_center_outside"}},
+        "why": "Out of the Center to fly."
+      },
+      {
+        "id": "fly_indigo",
+        "kind": "game_action",
+        "action": "fly",
+        "args": {"town": "IndigoPlateau", "species": "pidgey"},
+        "why": "Indigo Plateau's Center has the only Mart counter near a fly point that sells Ultra Balls."
+      },
+      {
+        "id": "to_clerk",
+        "kind": "route",
+        "action": "run",
+        "args": {"target": {"place": "indigo_plateau_mart_clerk"}},
+        "why": "Into the Center, facing the clerk across the counter."
+      },
+      {
+        "id": "buy_ultra_balls",
+        "kind": "game_action",
+        "action": "mart",
+        "args": {
+          "map": "IndigoPlateau_PokemonCenter_1F",
+          "items": [{"item": "ultra-ball", "quantity": 10}]
+        },
+        "why": "10 Ultra Balls ($12,000): at full HP one catches an Ekans about two times in three, a Voltorb one in two."
+      },
+      {
+        "id": "out_of_indigo",
+        "kind": "route",
+        "action": "run",
+        "args": {"target": {"map": "IndigoPlateau_Exterior", "tiles": [[11, 7]], "facing": "south"}},
+        "why": "Out of the Center to fly."
+      },
+      {
+        "id": "fly_route10",
+        "kind": "game_action",
+        "action": "fly",
+        "args": {"town": "Route10", "species": "pidgey"},
+        "why": "Back to Route 10's Center, where the catches start."
+      },
+      {
+        "fragment": "heal_at",
+        "args": {"town": "route10"},
+        "id": "heal_route10",
+        "why": "Back at the nurse, where the checkpoint started."
+      }
+    ]
+  },
+  "execution": {"menu": "full"},
+  "metadata": {
+    "phase": "testing",
+    "notes": "Starts and ends at Route 10's Pokemon Center nurse: the dex collection's home Center (Route 10 is a fly point; its grass is 15 tiles north). The bag's Poke Balls (8 on the Mail Glitch save) catch Voltorb about one time in four.",
+    "postconditions": {
+      "items": [{"item": "ultra-ball", "gained": 10}],
+      "money": {"spent": 12000}
+    }
+  }
+}

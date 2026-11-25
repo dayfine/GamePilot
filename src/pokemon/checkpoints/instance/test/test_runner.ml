@@ -192,6 +192,7 @@ let promised : Postconditions.t =
     party = Some (Party_includes { members = [ "abra" ]; slots = [] });
     items = [];
     coins = Some (Count.Exactly 20);
+    caught = None;
     money = None;
     flags = [];
     knows = [];

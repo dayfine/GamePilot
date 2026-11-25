@@ -11,6 +11,7 @@ type params = {
   max_size : (float * float) option;
   margin : float option;
   shape : string option;
+  masked : bool;
 }
 
 type blob = {
@@ -50,8 +51,10 @@ let check p =
     Error "core.find@1: margin must be >= 0"
   else Ok p
 
-let params ?max_area ?min_size ?max_size ?margin ?shape ~filters ~min_area () =
-  check { filters; min_area; max_area; min_size; max_size; margin; shape }
+let params ?max_area ?min_size ?max_size ?margin ?shape ?(masked = false)
+    ~filters ~min_area () =
+  check
+    { filters; min_area; max_area; min_size; max_size; margin; shape; masked }
 
 let channels_of_json what j =
   match List.map (to_int what) (to_list what j) with
@@ -86,6 +89,7 @@ let params_of_json what j =
     max_size = opt what "max_size" pair_of_json j;
     margin = opt what "margin" to_float j;
     shape = opt what "shape" to_string j;
+    masked = Option.value ~default:false (opt what "masked" to_bool j);
   }
 
 let json_of_filter { low; high } =
@@ -105,6 +109,7 @@ let params_fields p =
   @ some "max_size" json_of_pair p.max_size
   @ some "margin" float_json p.margin
   @ some "shape" (fun s -> `String s) p.shape
+  @ if p.masked then [ ("masked", `Bool true) ] else []
 
 let blob_of_json what j =
   let num name = float_field what name j in

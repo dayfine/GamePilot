@@ -1,17 +1,23 @@
-open Toy_rules
+open Engine_text
 module T = Toy_rules
 
-let pose (p : Pose.t) =
-  match p.spot with Some s -> p.place ^ "/" ^ s | None -> p.place
+let pose = Zone_pose_text.pose
+let observed = Zone_pose_text.observed
 
-let observed = pose
-
-let kind : Action.t -> string = function
+let action : Toy_rules.Action.t -> string = function
+  | Story a -> Story_action_text.action a
   | Walk { toward; until } -> Printf.sprintf "walk %s until %s" toward until
-  | Rest -> "rest"
+  | Inn Rest -> "rest"
+  | Inn (Buy item) -> "buy " ^ item
 
-let postconditions (p : Postconditions.t) =
-  Option.fold ~none:[]
-    ~some:(fun c -> [ "gold " ^ Engine_postcondition.Count.text c ])
-    p.gold
-  @ if p.flags = [] then [] else [ "flags " ^ String.concat ", " p.flags ]
+module Promises_text = struct
+  type t = Toy_rules.Toy_promises.t
+
+  let postconditions (p : t) =
+    Option.fold ~none:[]
+      ~some:(fun c -> [ "gold " ^ Engine_postcondition.Count.text c ])
+      p.gold
+    @ if p.flags = [] then [] else [ "flags " ^ String.concat ", " p.flags ]
+end
+
+include With_position_text.Make (Zone_pose_text) (Promises_text)

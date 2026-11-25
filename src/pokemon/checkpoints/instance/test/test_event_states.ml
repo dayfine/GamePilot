@@ -230,6 +230,7 @@ let spent_from ~start =
       party = None;
       items = [];
       coins = None;
+      caught = None;
       money = Some (Money.Spent 4100);
       flags = [];
       knows = [];
@@ -252,11 +253,14 @@ let spent_from ~start =
 let round_trip kept =
   match Saved.of_yojson (Saved.to_yojson kept) with
   | Error e -> e
-  | Ok { start = { start_money; start_coins; start_items }; at } ->
+  | Ok { start = { start_money; start_coins; start_caught; start_items }; at }
+    ->
       let money =
         Option.fold ~none:"no money" ~some:(Printf.sprintf "$%d") start_money
       and coins =
         Option.fold ~none:"" ~some:(Printf.sprintf ", %d coins") start_coins
+      and caught =
+        Option.fold ~none:"" ~some:(Printf.sprintf ", %d caught") start_caught
       and items =
         String.concat ""
           (List.map (fun (i, n) -> Printf.sprintf ", %s x%d" i n) start_items)
@@ -265,7 +269,8 @@ let round_trip kept =
         Printf.sprintf "%s (%d, %d) %s" p.at_map p.at_tile.x p.at_tile.y
           (Option.fold ~none:"?" ~some:Grid_geometry.Direction.name p.faces)
       in
-      money ^ coins ^ items ^ ", " ^ Option.fold ~none:"nowhere" ~some:pose at
+      money ^ coins ^ caught ^ items ^ ", "
+      ^ Option.fold ~none:"nowhere" ~some:pose at
 
 let money start_money =
   { Postcondition_check.nothing_at_start with start_money }
@@ -292,7 +297,7 @@ let kept_cases =
         round_trip
           { start = money None; at = Some { house2 with faces = None } })
       "no money, VermilionCity_House2 (4, 4) ?";
-    case "the coins and each item counted at the start, read back"
+    case "the coins, the caught count and each item at the start, read back"
       (fun () ->
         round_trip
           {
@@ -300,11 +305,12 @@ let kept_cases =
               {
                 start_money = Some 29202;
                 start_coins = Some 50;
+                start_caught = Some 12;
                 start_items = [ ("revive", 0); ("escape-rope", 4) ];
               };
             at = None;
           })
-      "$29202, 50 coins, revive x0, escape-rope x4, nowhere";
+      "$29202, 50 coins, 12 caught, revive x0, escape-rope x4, nowhere";
     case "kept before items were: no coins or items read at the start"
       (fun () ->
         match

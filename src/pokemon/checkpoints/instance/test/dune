@@ -32,3 +32,30 @@
   gamepilot.pokemon_checkpoints
   gamepilot.engine_run
   plan_files))
+
+(executables
+ (names print_plan_errors print_kept_files)
+ (modules print_plan_errors print_kept_files)
+ (libraries yojson gamepilot.pokemon_checkpoints))
+
+(rule
+ (action
+  (with-stdout-to
+   plan_errors.txt
+   (run ./print_plan_errors.exe))))
+
+(rule
+ (alias runtest)
+ (action
+  (diff plan_errors.golden plan_errors.txt)))
+
+(rule
+ (action
+  (with-stdout-to
+   kept_files.txt
+   (run ./print_kept_files.exe))))
+
+(rule
+ (alias runtest)
+ (action
+  (diff kept_files.golden kept_files.txt)))

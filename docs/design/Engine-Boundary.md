@@ -41,7 +41,7 @@ which part is which. `Grid_maps` is `src/pokemon/navigation/grid/maps`.
 | `pose.ml` | mixed | G: `grid` (map, tiles, facing), `observed` (map, tile), `matches`. A: `zone` (place, spot, heading), already decoded and never used |
 | `plan_decode.ml` | mixed | A: format names, strictness, unique ids, the event loop. G and P: the kind table and its args, grid poses |
 | `plan_fields.ml` | mixed | A: field readers. G: `grid_pose`; P: `item` |
-| `postcondition_decode.ml` | mixed | A: `items`, `money`, `flags`. P: `party`, `coins`, `knows`, `levels`, `marks`. G: `position` |
+| `postcondition_decode.ml` | mixed | A: `items`, `money`, `flags`. P: `party`, `coins`, `caught`, `knows`, `levels`, `marks`. G: `position` |
 | `party_decode.ml` | P | the party a checkpoint promises |
 
 Every file reads JSON through `Grid_maps.Json_field`, a game-agnostic reader that sits in the grid
@@ -63,7 +63,7 @@ library only because the map decoders came first.
 | `runner.ml` | mixed | A: order, skips, logging, handler check, end state. G: `declared_after` and `end_at` checked only as grid poses (a zone is silently not checked) |
 | `checkpoint_end.ml` | G | the end is a grid pose from the next start or the last route |
 | `failure.ml` | mixed | A: `cause`, `Handler`, `No_handler`, `Unmet_postconditions`. G: `Not_at_declared`, `Not_at_end` carry grid poses |
-| `postcondition_check.ml` | mixed | A: `verdict`, `result`, `unmet`, `log_lines`, the count and money comparisons against the start. P: `observed` and `start` fields (party, coins, knows, levels, marks) |
+| `postcondition_check.ml` | mixed | A: `verdict`, `result`, `unmet`, `log_lines`, the count and money comparisons against the start. P: `observed` and `start` fields (party, coins, caught, knows, levels, marks) |
 | `checkpoint_trials.ml` | A | runs, passes, the hard stop, attempts. But an attempt lost to luck and one lost to a fault are the same `Attempt_failed` |
 | `event_range.ml`, `event_progress.ml` | A | partial runs need a backend that keeps states (mGBA) |
 | `event_states.ml` | mixed | A: tracker. Emulator-bound: `.ss` files. P and G: `kept` holds Pokémon start reads and a grid position |
@@ -75,7 +75,7 @@ library only because the map decoders came first.
 | File | | What ties it |
 |---|---|---|
 | `chain_progress.ml`, `checkpoint_order.ml`, `round_trials.ml` | A | |
-| `console_runs.ml` | A | the decision is agnostic (its doc says "soft reset"); the steps are bound to FireRed in `bin/console_session.ml` |
+| `console_runs.ml` | A | the decision is agnostic (its doc says "soft reset"); the steps are bound to FireRed in `games/frlg/series/lib/console_session.ml` |
 | `plan_text.ml` | mixed | A: `event`, `outline`, `count_text`. G and P: kinds, poses, postconditions as text |
 
 ### `core` and around it
@@ -86,27 +86,40 @@ library only because the map decoders came first.
 | `screen_state` | A | facts (fade, banner, dialog, battle, free control, stillness) and the settle rules are shared by every game; the timings were measured on FireRed and a game may give its own `rule` |
 | `switch_home` | mixed | A: parking and resuming on HOME. Tied to the GBA picture: boxes clipped to FireRed's `GAME_BOX` viewport, tests on FireRed's tile |
 | `games/frlg/repo_files` | A | `Repo_files.locate`, `Json_file`: agnostic, but under FireRed, and `program_registry` depends on it |
-| `bin/` | mixed | 13 files name `Frlg_*`: plan loading, the live checkpoint, console save steps, pre-flight, make-room, guides |
+| `bin/` | A | names no game module but in `bin/checkpoint_families.ml`, which picks a family's libraries by the registry's `rules` (FRLG's `games/frlg/series`, its ctl readers, `start_menu_poc`); per-game data (delete-save icons, the lab console's panel and HOME tile) is the registry's |
 | `dev/lint/ocaml_lint.conf` | mixed | layer `game` may use `pokemon`: nothing stops a non-Pokémon game from using Pokémon code |
 | `daemon/src/viewport.h` | G | only `nso_gba_viewport` (240 x 160 inside the Switch frame); a native Switch game is the whole 1920 x 1080 frame |
 | `Wire.command` | A | buttons, waits and both analog sticks (protocol v1.12); no ZL/ZR |
 
 In short: the skeleton (run order, skips, trials, rounds, chains, fragments, the watch page, the
 records) is agnostic already. The grid and Pokémon parts are three types (where the player is, the
-game's own event kinds, what a checkpoint promises) and the code that reads, prints and checks them.
+game's actions, what a checkpoint promises) and the code that reads, prints and checks them.
 
 ## 2. Layout: a game's rules apart from its formats
 
 A game's rules and its formats are separate libraries. The rules (where the player stands, the
-game's own event kinds, what a checkpoint promises and its check) are plain values, with no JSON
+game's actions, what a checkpoint promises and its check) are plain values, with no JSON
 and no text. Each format turns them into bytes or words at one edge only, so the plan types, the
 runner, its failures and the checks never see JSON or build a string. A lint rule enforces it.
+
+**Names to come** (user, 2026-11-25; `Composable-Rules.md`, "Names"): `Engine_checkpoints.Make`
+becomes `Program_engine.Make (Rules) (Plan_format) (Event_snapshot)`; `*_plan_codec` becomes
+`*_plan_format`, `*_saved` `*_event_snapshot`, the instances `*_engine`; `Rules_text` goes, each
+rules part printing itself; `src/engine/checkpoints/` loses its `checkpoints` level. This section
+describes the code as it is until those PRs land.
 
 The rules were first called terms (`Engine_terms.TERMS`, `Pokemon_terms`, `Terms_text`); they were
 renamed `Engine_rules.GAME_RULES`, `Pokemon_rules` and `Rules_text` on 2026-11-25, unchanged. The
 game's own kinds were renamed its actions the same day, also unchanged: `KIND` and `Kind` became
 `ACTION` and `Action`, `Own_kind` `Pokemon_action`, the plan's `Own` and `Game_action` `Game` and
-`Named_action`, and the event's `action` field `way` (its JSON key stays `"action"`).
+`Named_action`, and the event's `action` field `way` (its JSON key stays `"action"`). Later
+the same day `kind_of_plan` became `action_of_plan`, `TEXT.kind` `action`, `Kind_decode` and
+`Kind_text` `Pokemon_action_decode` and `Pokemon_action_text`, and the planner's `Leg.action`
+`Leg.special_step`.
+
+What follows is one `GAME_RULES` per family, as built. How a game builds its rules from shared
+pieces (a pose, action sets, promises), so that FRLG, PLZA and Octopath 0 each take only the parts
+they use and FRLG's own actions stop being raw JSON, is `Composable-Rules.md`.
 
 | Part | Engine signature | Pokémon | Toy game | Used by | Holds |
 |---|---|---|---|---|---|
@@ -126,7 +139,7 @@ module type POSE = sig
   val matches : t -> observed -> bool
 end
 module type ACTION = sig
-  type t                    (* the game's actions, its own kinds, with their args: route, battle; walk, rest *)
+  type t                    (* the game's actions, with their args: route, battle; walk, rest *)
 end
 module type POSTCONDITIONS = sig
   type t                    (* metadata.postconditions, a repeat's until *)
@@ -142,7 +155,7 @@ end
 
 | Game | `Pose.t` / `observed` | `Action.t` | `Postconditions.t` / `reads` |
 |---|---|---|---|
-| Pokémon | `Grid of grid \| Zone of zone` (a zone holds anywhere) / map and tile (`Grid_geometry`) | `Pokemon_action.t`: new game, options, route, ready, legs, step, battle, train, heal, shop | party, items, coins, money, flags, moves, levels, marks / `Postcondition_check.observed` (with `start`) |
+| Pokémon | `Grid of grid \| Zone of zone` (a zone holds anywhere) / map and tile (`Grid_geometry`) | `Pokemon_action.t`: new game, options, route, ready, legs, step, battle, train, heal, shop | party, items, coins, caught, money, flags, moves, levels, marks / `Postcondition_check.observed` (with `start`) |
 | Toy | `{ place; spot }` / the same | `Walk`, `Rest` | gold (`Count.t`), flags / gold now and at the start, flags set |
 
 `check` takes the reads alone: what the game read at the checkpoint's start is part of `reads`. The
@@ -166,7 +179,7 @@ library, so `plan/` itself links no JSON.
 module type PLAN_CODEC = sig
   module T : Engine_rules.GAME_RULES
   val pose_of_plan : where:string -> Json_field.obj -> (T.Pose.t, string) result
-  val kind_of_plan :
+  val action_of_plan :
     string -> (where:string -> Json_field.obj -> (T.Action.t, string) result) option
       (* [None]: the kind name is not this game's *)
   val postconditions_of_plan :
@@ -178,7 +191,7 @@ module type TEXT = sig
   module T : Engine_rules.GAME_RULES
   val pose : T.Pose.t -> string
   val observed : T.Pose.observed -> string
-  val kind : T.Action.t -> string
+  val action : T.Action.t -> string
   val postconditions : T.Postconditions.t -> string list
 end
 
@@ -193,7 +206,7 @@ end
 - **Plan codec, hand-written.** A plan is written by hand, so a bad one must say where:
   `01-celadon-setup.plan.json: checkpoint.events[1].args.target.map is missing.` Every reader takes
   `where`, the field prefix, and the engine's `Plan_decode` passes any kind name it does not know to
-  `kind_of_plan`. The plan format did not change.
+  `action_of_plan`. The plan format did not change.
 - **Text, at the edges.** Plain nouns returning strings. `Plan_text` prints a decoded plan (the
   golden plan test compares it), and `Failure_text` and `Run_text` print what the runner kept.
 - **Saved, derived.** A machine writes and reads `<n>-<event>.json` beside each event state, so its
@@ -203,8 +216,8 @@ end
   (`Pokemon_saved.observed.at_map`); older files with fewer fields still load.
 
 **Naming.** The hand-written plan side is `*_of_plan` (`pose_of_plan`, the Pokémon decoders in
-`Pose_decode`, `Kind_decode`, `Postcondition_decode`, `Party_decode`); the derived saved side keeps
-the ppx's `to_yojson` / `of_yojson`; text is the noun it prints (`pose`, `kind`).
+`Pose_decode`, `Pokemon_action_decode`, `Postcondition_decode`, `Party_decode`); the derived saved
+side keeps the ppx's `to_yojson` / `of_yojson`; text is the noun it prints (`pose`, `action`).
 
 ### The functor
 
@@ -290,9 +303,10 @@ src/engine/checkpoints/
 src/pokemon/navigation/grid/geometry/   Grid_geometry: Tile_pos, Direction (pure; the rules use it)
 src/pokemon/checkpoints/
   rules/                        Pokemon_rules: Pose, Pokemon_action, Postconditions, Postcondition_check
-  plan_codec/                   Pokemon_plan_codec: Pose_decode, Kind_decode, Postcondition_decode,
-                                Party_decode
-  text/                         Pokemon_text: Pose_text, Kind_text, Postconditions_text
+  plan_codec/                   Pokemon_plan_codec: Pose_decode, Pokemon_action_decode,
+                                Postcondition_decode, Party_decode
+  text/                         Pokemon_text: Pose_text, Pokemon_action_text,
+                                Postconditions_text
   saved/                        Pokemon_saved
   instance/                     Pokemon_checkpoints = Engine_checkpoints.Make (...)
   checkpoint_end/               Checkpoint_end: the declared end as a grid pose
@@ -365,7 +379,7 @@ three verifying runs do not need three wins.
 
 Today mGBA loads a `.ss` state (`Checkpoint_run.options.state`, `Event_states`), and on the Switch
 `Console_runs` decides "return to the last save, check the start; after a pass save in game", which
-`bin/console_session.ml` binds to FireRed's `Soft_reset.return_to_save`, `Start_check` (kept frame,
+`games/frlg/series/lib/console_session.ml` binds to FireRed's `Soft_reset.return_to_save`, `Start_check` (kept frame,
 party) and `Game_save.save_game`. The decision is agnostic; the binding is the part to lift:
 
 ```ocaml
@@ -384,7 +398,7 @@ type game_steps = {
 }
 ```
 
-`Console_runs.step` runs over this record instead of FireRed's modules, and `bin/console_session.ml`
+`Console_runs.step` runs over this record instead of FireRed's modules, and `games/frlg/series/lib/console_session.ml`
 becomes generic. A game with no emulator has no event states, so `--from-event` refuses as it does on
 the Switch today (`Event_range.check`).
 

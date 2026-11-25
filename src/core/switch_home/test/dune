@@ -12,22 +12,38 @@
 (rule
  (copy fixtures/switch.shifted.probes.jsonl switch.shifted.probes.jsonl))
 
+(rule
+ (copy fixtures/delete_save.probes.jsonl delete_save.probes.jsonl))
+
+(rule
+ (copy
+  fixtures/delete_save.shifted.probes.jsonl
+  delete_save.shifted.probes.jsonl))
+
 (tests
  (names
   test_home_screen
   test_console_park
   test_game_entry
   test_screen_poll
-  test_stick_tilt)
+  test_stick_tilt
+  test_delete_save_screen
+  test_delete_save)
  (modules
   test_home_screen
   test_console_park
   test_game_entry
   test_screen_poll
   test_stick_tilt
+  test_delete_save_screen
+  test_delete_save
   fire_red
   scripted_home)
- (deps switch.probes.jsonl switch.shifted.probes.jsonl)
+ (deps
+  switch.probes.jsonl
+  switch.shifted.probes.jsonl
+  delete_save.probes.jsonl
+  delete_save.shifted.probes.jsonl)
  (libraries
   gamepilot.wire
   gamepilot.effects

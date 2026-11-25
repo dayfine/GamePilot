@@ -119,3 +119,5 @@ let fill generate text =
   let page = String.concat "" (List.rev parts) in
   if snd (lines text) then Ok page
   else Ok (String.sub page 0 (max 0 (String.length page - 1)))
+
+let cell s = String.concat "\\|" (String.split_on_char '|' s)

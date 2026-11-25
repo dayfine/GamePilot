@@ -102,7 +102,7 @@ let move_of w gait ~facing (leg : Connected_maps.place Grid_planning.Leg.t) =
   match leg.kind with
   | Walk { tiles; to_wall } -> Ok (hold w gait ~facing leg tiles to_wall)
   | Face -> Ok (Turn leg.direction)
-  | Action _ ->
+  | Special_step _ ->
       Error
         (Printf.sprintf "an action leg %s is not walked yet"
            (Direction.name leg.direction))

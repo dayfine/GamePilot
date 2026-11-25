@@ -51,8 +51,9 @@ val give_to : int -> unit
 (** After GIVE: the party read, the fork's 400 ms (an earlier A is dropped),
     then the slot chosen ({!choose_slot}). Fails as [no_party]. *)
 
-val give_row : int
-(** GIVE on an item's menu: row 1. *)
+val give_row : string -> int
+(** GIVE's row on the item's menu: 1 on the Items pocket (under USE), 0 on the
+    Poke Balls pocket, which has no USE (pokefirered src/item_menu.c). *)
 
 val confirm_mail : unit -> unit
 (** After PLUS in the mail editor: its Yes/No arrow on YES

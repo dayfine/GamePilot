@@ -39,3 +39,16 @@ repo src/games/frlg/readers/test/images/mgba/mail-glitch-route16/refill-pp.png|m
 repo src/games/frlg/readers/test/images/mgba/victory-road-move-learn/delete-a-move.png|victory-road-move-learn/delete-a-move__yesno-learn.png
 repo src/games/frlg/readers/test/images/mgba/victory-road-move-learn/stop-learning.png|victory-road-move-learn/stop-learning__yesno-learn.png
 repo src/games/frlg/readers/test/images/mgba/mail-glitch-route16/lea-jed-defeat-text.png|mail-glitch-route16/lea-jed-defeat-text__ally.png
+repo src/games/frlg/readers/test/images/mgba/three-island-bikers/action-menu.png|three-island-bikers/action-menu__none.png
+repo src/games/frlg/readers/test/images/mgba/three-island-bikers/defeat-text.png|three-island-bikers/defeat-text__none.png
+repo src/games/frlg/readers/test/images/mgba/three-island-bikers/foe-fainted.png|three-island-bikers/foe-fainted__arrow.png
+repo src/games/frlg/readers/test/images/mgba/three-island-bikers/player-defeated.png|three-island-bikers/player-defeated__arrow.png
+repo src/games/frlg/readers/test/images/mgba/three-island-bikers/prize-money.png|three-island-bikers/prize-money__arrow.png
+repo src/games/frlg/readers/test/images/mgba/three-island-bikers/sent-out.png|three-island-bikers/sent-out__nohp.png
+repo src/games/frlg/readers/test/images/mgba/three-island-bikers/switch-offer.png|three-island-bikers/switch-offer__yesno-learn.png
+repo src/games/frlg/readers/test/images/mgba/dex-route10/spearow-opening.png|dex-route10/spearow-opening__arrow-caught.png
+repo src/games/frlg/readers/test/images/mgba/dex-route10/spearow-menu.png|dex-route10/spearow-menu__caught.png
+repo src/games/frlg/readers/test/images/mgba/dex-route10/ekans-opening.png|dex-route10/ekans-opening__arrow.png
+repo src/games/frlg/readers/test/images/mgba/dex-route10/ekans-menu.png|dex-route10/ekans-menu__none.png
+repo src/games/frlg/readers/test/images/mgba/dex-route10/voltorb-opening.png|dex-route10/voltorb-opening__arrow.png
+repo src/games/frlg/readers/test/images/mgba/dex-route10/voltorb-menu.png|dex-route10/voltorb-menu__none.png

@@ -4,10 +4,10 @@
     ({!Engine_rules.GAME_RULES}). Types only, and pure: [Engine_plan_codec]
     reads them from a plan file.
 
-    The engine's own kinds ([talk], [answer], [scene], [save], [game_action])
-    are typed here; every other kind is one of the game's actions ([Game]). A
-    [game_action]'s args stay as written ({!RAW}): the game that names the
-    action reads them. *)
+    The engine's story actions ([talk], [answer], [scene], [save]) and
+    [game_action] are typed here; every other kind is one of the game's actions
+    ([Game]). A [game_action]'s args stay as written ({!RAW}): the game that
+    names the action reads them. *)
 
 (** What the plan keeps unread: a game action's args, the [execution] and the
     [metadata]. The engine applies the plan to [Engine_plan_codec.Raw_json], the

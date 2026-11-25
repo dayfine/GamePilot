@@ -1,0 +1,78 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "frlg",
+  "execution": {
+    "menu": "full"
+  },
+  "metadata": {
+    "phase": "testing",
+    "notes": "Into Two Island's Joyful Game Corner: on its mat the owner's scene runs at once (pret TwoIsland_JoyfulGameCorner_EventScript_HelpFindLostelleScene, VAR_MAP_SCENE_TWO_ISLAND_JOYFUL_GAME_CORNER 0). Lostelle's father paces, comes down three tiles to (6, 8) and asks the player to find her; the player steps west to (4, 8); a Biker comes in on the door tile (5, 8), asks for Three Island and leaves. The scene sets VAR_MAP_SCENE_THREE_ISLAND 2, clears FLAG_HIDE_THREE_ISLAND_LONE_BIKER and sets the room's scene var to 1; none of them shows on a screen we read, and the Meteorite stays in the bag until Lostelle is home. The Biker is hidden from the new game (EventScript_ResetAllMapFlags) and shown only by the scene, so the walk out goes over the door tile (Frlg_overworld.Scene_only_people). Then back to the harbor and the Seagallop to Three Island, which lands at Three Island's harbor (8, 5); its port, north of the harbor, turns PC storage back on and holds the Bikers.",
+    "postconditions": {
+      "items": [
+        {
+          "item": "meteorite",
+          "at_least": 1
+        }
+      ],
+      "position": {
+        "map": "ThreeIsland_Harbor",
+        "tiles": [
+          [8, 5]
+        ],
+        "facing": "south"
+      }
+    }
+  },
+  "checkpoint": {
+    "id": "03-to-three-island",
+    "title": "The Joyful Game Corner's owner asks for Lostelle; the Seagallop to Three Island",
+    "start": {
+      "map": "TwoIsland",
+      "tiles": [
+        [39, 10]
+      ],
+      "facing": "east"
+    },
+    "events": [
+      {
+        "id": "into_game_corner",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {"map": "TwoIsland_JoyfulGameCorner", "tiles": [[5, 8]], "facing": "north"}
+        },
+        "why": "North through the door onto the Game Corner's mat (5, 8); the owner's scene starts there."
+      },
+      {
+        "id": "find_lostelle_scene",
+        "kind": "scene",
+        "why": "The owner's plea and the Biker's visit; the player ends a tile west of the mat, facing the owner.",
+        "declared_after": {
+          "map": "TwoIsland_JoyfulGameCorner",
+          "tiles": [
+            [4, 8]
+          ],
+          "facing": "east"
+        }
+      },
+      {
+        "id": "to_harbor_sailor",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {"place": "two_island_harbor_sailor"}
+        },
+        "why": "Out over the door tile, west through town and down to the harbor, above the sailor (8, 6)."
+      },
+      {
+        "id": "sail_three_island",
+        "kind": "game_action",
+        "action": "ferry",
+        "args": {
+          "to": "ThreeIsland"
+        },
+        "why": "The sailor's list: THREE ISLAND (below ONE ISLAND), then the crossing to Three Island's harbor."
+      }
+    ]
+  }
+}
