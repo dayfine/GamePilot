@@ -9,13 +9,16 @@ let ok_or_fail = function
   | Ok value -> value
   | Error message -> F.fail "%s" message
 
-module Make (T : Engine_terms.GAME_TERMS) = struct
-  module Plan = Plan.Make (T)
+module Make
+    (T : Engine_terms.TERMS)
+    (C : Plan_codec.PLAN_CODEC with module T = T) =
+struct
+  module Plan = Engine_plan.Plan.Make (T) (Raw_json)
 
   let format = format
 
   let pose path value =
-    ok_or_fail (T.pose ~where:(path ^ ".") (F.as_object path value))
+    ok_or_fail (C.pose_of_plan ~where:(path ^ ".") (F.as_object path value))
 
   let list_of ~where key args read =
     required ~where key args;
@@ -46,7 +49,7 @@ module Make (T : Engine_terms.GAME_TERMS) = struct
     let name = F.string ~where "kind" obj in
     let args = Option.value ~default:[] (F.object_opt ~where "args" obj) in
     let args_where = where ^ "args." in
-    match (name, engine_kind name, T.own_kind name) with
+    match (name, engine_kind name, C.kind_of_plan name) with
     | "game_action", _, _ when action = None ->
         F.fail "%saction is missing: a game_action names its action." where
     | "game_action", _, _ -> Plan.Game_action args
@@ -130,7 +133,7 @@ module Make (T : Engine_terms.GAME_TERMS) = struct
         | Some n when n >= 0 -> n
         | Some n -> F.fail "%sretries is %d, not 0 or more." where n)
 
-  let promises ~where obj = ok_or_fail (T.promises ~where obj)
+  let promises ~where obj = ok_or_fail (C.postconditions_of_plan ~where obj)
 
   let repeat_of ~where obj : Plan.repeat =
     known_fields_only ~where [ "until"; "max_rounds" ] obj;
@@ -147,13 +150,12 @@ module Make (T : Engine_terms.GAME_TERMS) = struct
           (repeat_of ~where:(where ^ "repeat."))
           (F.object_opt ~where "repeat" m))
 
-  (* The metadata's "postconditions"; none promised when it states none. *)
-  let postconditions ~where = function
-    | None -> T.no_promises
-    | Some metadata ->
-        Option.fold ~none:T.no_promises
-          ~some:(promises ~where:(where ^ "metadata.postconditions."))
-          (F.object_opt ~where:(where ^ "metadata.") "postconditions" metadata)
+  (* The metadata's "postconditions"; [None] when it states none. *)
+  let postconditions ~where metadata =
+    Option.bind metadata (fun m ->
+        Option.map
+          (promises ~where:(where ^ "metadata.postconditions."))
+          (F.object_opt ~where:(where ^ "metadata.") "postconditions" m))
 
   let plan ~where obj : Plan.t =
     known_fields_only ~where

@@ -29,14 +29,17 @@ let walk_plan () =
     p with
     checkpoint = { p.checkpoint with events = [ first ] };
     postconditions =
-      {
-        p.postconditions with
-        party = None;
-        money = None;
-        items = [];
-        knows = [];
-        levels = [];
-      };
+      Option.map
+        (fun (promised : Pokemon_checkpoints.Postconditions.t) ->
+          {
+            promised with
+            party = None;
+            money = None;
+            items = [];
+            knows = [];
+            levels = [];
+          })
+        p.postconditions;
   }
 
 let fled line = String.starts_with ~prefix:"Wild battle: fled" line

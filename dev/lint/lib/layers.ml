@@ -12,6 +12,9 @@ let rec match_segments pattern segments bindings =
       else None
   | _ -> None
 
+let dir_matches pattern dir =
+  match_segments pattern (String.split_on_char '/' dir) [] <> None
+
 let place (c : Config.t) dir =
   let segments = String.split_on_char '/' dir in
   List.find_map

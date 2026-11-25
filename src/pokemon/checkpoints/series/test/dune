@@ -4,6 +4,7 @@
  (libraries
   gamepilot.table_test
   gamepilot.wire
+  gamepilot.engine_promise
   gamepilot.engine_series
   gamepilot.pokemon_checkpoints
   gamepilot.checkpoints_series

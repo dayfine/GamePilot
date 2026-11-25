@@ -2,9 +2,6 @@
  (name engine_run)
  (public_name gamepilot.engine_run)
  (libraries
-  yojson
-  gamepilot.wire
-  gamepilot.json_field
   gamepilot.engine_promise
   gamepilot.engine_terms
   gamepilot.engine_plan))
