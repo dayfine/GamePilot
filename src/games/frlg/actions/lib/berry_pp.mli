@@ -35,7 +35,8 @@ type plan = {
           back ({!Pacing}). *)
 }
 
-val decode : Grid_maps.Json_field.obj -> (plan, Story.Failure.cause) result
+val decode :
+  Grid_maps.Json_field.obj -> (plan, Checkpoints.Failure.cause) result
 (** Args ["species"], ["move"] and ["backup_move"] (slugs), and ["pace"] (a
     direction). *)
 

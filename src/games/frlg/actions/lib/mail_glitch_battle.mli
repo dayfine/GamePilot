@@ -42,7 +42,8 @@ type plan = {
   step_direction : Grid_maps.Direction.t;
 }
 
-val decode : Grid_maps.Json_field.obj -> (plan, Story.Failure.cause) result
+val decode :
+  Grid_maps.Json_field.obj -> (plan, Checkpoints.Failure.cause) result
 (** Args ["knock_off_species"], ["recycle_species"], ["sweeper"],
     ["depleted_move"] (slugs) and ["step_direction"]. *)
 

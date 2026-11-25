@@ -11,7 +11,7 @@ The C++ is the plan: branch `plza/lean` (fork PR #644), story rows 01.00 to 03.1
 | C++ (under `PokemonLZA/Programs/AutoStory/`) | What it does | GamePilot home |
 |---|---|---|
 | `StoryData/plza-*.plan.json` (31 plans) | checkpoints as data | `src/games/plza/programs/story/plans/` |
-| `ScreenEvents`, `SceneMachine`, `ConsoleBackend`, `Game` | screen events and scenes, the story backend | `src/games/plza/story`, `src/pokemon/story` |
+| `ScreenEvents`, `SceneMachine`, `ConsoleBackend`, `Game` | screen events and scenes, the story backend | `src/games/plza/checkpoints`, `src/pokemon/checkpoints` |
 | `Actions/Walks`, `WorldWalks`, `MapLegs` | timed legs, turns after a camera recenter, minimap heading, platform arrival | `src/games/plza/actions` |
 | `Actions/Catches`, `CatchPlan`, `Zone1` | wild-zone catches, battle then catch | `src/games/plza/battle` |
 | `Actions/NewGame`, `Starts`, `Autosaves` | new game, start checks from recorded minimaps, autosave points | `src/games/plza/actions` |
@@ -30,7 +30,7 @@ Related fork PRs: #590 (the shared ball throw helper), #755 and #754 (minimal sl
 
 1. Readers with their frames (the fork's CommandLineTests frames): dialog, platform, minimap arrow,
    badges, battle and catch screens.
-2. Engine fit: PLZA plans decode on `src/pokemon/story` (the fork's C1-C9 core is PLZA's engine).
+2. Engine fit: PLZA plans decode on `src/pokemon/checkpoints` (the fork's C1-C9 core is PLZA's engine).
 3. 01.00-01.01 (new game to the first free control), replayed, then on console B.
 4. Battle and catch actions, then rows to 03.11 in order, each with a replay test.
 

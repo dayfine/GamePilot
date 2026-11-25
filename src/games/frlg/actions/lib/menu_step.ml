@@ -6,4 +6,5 @@ let result step =
     (Menu_input.run (fun () -> value := Some (step ())))
     (fun () ->
       Option.to_result !value
-        ~none:(Story.Failure.cause "no_value" "the step returned no value"))
+        ~none:
+          (Checkpoints.Failure.cause "no_value" "the step returned no value"))

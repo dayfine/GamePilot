@@ -1,9 +1,9 @@
 type opened = Opened | No_candy | Not_opened of string
 
 type game_steps = {
-  open_candy : slot:int -> (opened, Story.Failure.cause) result;
+  open_candy : slot:int -> (opened, Checkpoints.Failure.cause) result;
   level_up : Level_up.game_steps;
-  close_bag : unit -> (unit, Story.Failure.cause) result;
+  close_bag : unit -> (unit, Checkpoints.Failure.cause) result;
   log : string -> unit;
 }
 
@@ -11,7 +11,7 @@ type result =
   | Used of Level_up.outcome
   | Out_of_candies
   | Failed of string
-  | Stopped of Story.Failure.cause
+  | Stopped of Checkpoints.Failure.cause
 
 let closed game_steps o =
   match game_steps.close_bag () with Ok () -> Used o | Error c -> Stopped c
@@ -40,4 +40,4 @@ let describe = function
   | Used o -> "Rare Candy: " ^ Level_up.describe o ^ "."
   | Out_of_candies -> "Rare Candy: none left in the bag."
   | Failed why -> "Rare Candy: failed: " ^ why ^ "."
-  | Stopped c -> "Rare Candy: " ^ Story.Failure.cause_to_string c ^ "."
+  | Stopped c -> "Rare Candy: " ^ Checkpoints.Failure.cause_to_string c ^ "."

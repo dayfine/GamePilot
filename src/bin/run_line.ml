@@ -2,7 +2,7 @@
    run or round it was, its attempt, a repeating checkpoint's goal and a grind
    cap, each a note added to "PASS mg-04b round 3". *)
 
-open Story
+open Checkpoints
 
 (* "mg-04b round 3" for a repeating checkpoint, else "mg-04a run 1". *)
 let run_name id (plan : Plan.t) n =
@@ -24,8 +24,8 @@ let goal_note = function
 let capped_note ~grind_cap plan =
   let skipped cap =
     snd
-      (Frlg_story.Checkpoint_run.capped_postconditions ~grind_cap:(Some cap)
-         plan)
+      (Frlg_checkpoints.Checkpoint_run.capped_postconditions
+         ~grind_cap:(Some cap) plan)
   in
   match grind_cap with
   | None -> ""

@@ -42,17 +42,18 @@ let closed_without_candy ~log () =
   M.close "the bag" Bag_screen.bag_open;
   M.settle_back ~label:"no rare candy" ~log
 
-let open_candy ~log ~slot : (Rare_candy.opened, Story.Failure.cause) result =
+let open_candy ~log ~slot :
+    (Rare_candy.opened, Checkpoints.Failure.cause) result =
   match Menu_step.result (fun () -> Bag_items.item_action candy use_row) with
   | Ok () ->
       Result.map
         (fun () -> Rare_candy.Opened)
         (Menu_step.result (to_party ~slot))
-  | Error { Story.Failure.code = "not_in_bag"; _ } ->
+  | Error { Checkpoints.Failure.code = "not_in_bag"; _ } ->
       Result.map
         (fun () -> Rare_candy.No_candy)
         (Menu_step.result (closed_without_candy ~log))
-  | Error c -> Ok (Not_opened (Story.Failure.cause_to_string c))
+  | Error c -> Ok (Not_opened (Checkpoints.Failure.cause_to_string c))
 
 (* A message with no arrow ("... was elevated to Lv. 51.", "... learned
    ...!") waits for A once printed. A is pressed only after it has shown

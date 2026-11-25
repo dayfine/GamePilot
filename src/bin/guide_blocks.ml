@@ -7,8 +7,8 @@
      repeating one marked, and a digest of those plans' files, so a plan change
      makes the page stale until it is regenerated;
    - needs [RANGE]: what the save must hold for the whole chain: its free
-     party slots (Frlg_story.Party_room) and the pre-flight's needs
-     (Frlg_story.Preflight.needs, the checkpoint before's promises included)
+     party slots (Frlg_checkpoints.Party_room) and the pre-flight's needs
+     (Frlg_checkpoints.Preflight.needs, the checkpoint before's promises included)
      of the chain's events taken as one plan: the members and field moves no
      earlier event brings, the money all its purchases cost, the items no
      earlier purchase or pickup brings, and the start;
@@ -76,7 +76,7 @@ let digest plans ids =
 (* A table cell: no pipe ends it. *)
 let cell s = String.concat "\\|" (String.split_on_char '|' s)
 
-let checkpoint_row (plan : Story.Plan.t) =
+let checkpoint_row (plan : Checkpoints.Plan.t) =
   let repeats =
     match plan.repeat with
     | Some { max_rounds; _ } ->
@@ -99,8 +99,8 @@ let checkpoints p arg =
 
 let plural n one many = if n = 1 then one else many
 
-let room_line (room : Frlg_story.Party_room.need) =
-  let free = Frlg_story.Party_room.free_needed room in
+let room_line (room : Frlg_checkpoints.Party_room.need) =
+  let free = Frlg_checkpoints.Party_room.free_needed room in
   let joins =
     List.map
       (fun (species, cp) -> Printf.sprintf "%s in %s" species cp)
@@ -113,30 +113,30 @@ let room_line (room : Frlg_story.Party_room.need) =
 (* The chain as one plan: its events in order from the first checkpoint's
    start, so an item or member one checkpoint brings counts for the later
    ones, and the money is all its purchases'. *)
-let as_one_plan (loaded : Story.Plan.t list) =
+let as_one_plan (loaded : Checkpoints.Plan.t list) =
   let first = List.hd loaded in
   let events =
-    List.concat_map (fun (p : Story.Plan.t) -> p.checkpoint.events) loaded
+    List.concat_map (fun (p : Checkpoints.Plan.t) -> p.checkpoint.events) loaded
   in
   { first with checkpoint = { first.checkpoint with events } }
 
 (* A member that joins on the way (a Game Corner prize, a capture) is not the
    save's; the money is said once for all the purchases. *)
-let chain_need (room : Frlg_story.Party_room.need) =
-  let module Pf = Frlg_story.Preflight in
+let chain_need (room : Frlg_checkpoints.Party_room.need) =
+  let module Pf = Frlg_checkpoints.Preflight in
   function
   | Pf.Member { species; _ } when List.mem_assoc species room.joins -> None
   | Pf.Money_at_least { amount; _ } ->
       Some (Pf.Money_at_least { amount; for_ = "all the purchases" })
   | n -> Some n
 
-let chain_lines stocks ~before (loaded : Story.Plan.t list) =
-  let room = Frlg_story.Party_room.chain_need loaded in
+let chain_lines stocks ~before (loaded : Checkpoints.Plan.t list) =
+  let room = Frlg_checkpoints.Party_room.chain_need loaded in
   room_line room
   :: List.map
-       (fun n -> "- " ^ Frlg_story.Preflight.describe n)
+       (fun n -> "- " ^ Frlg_checkpoints.Preflight.describe n)
        (List.filter_map (chain_need room)
-          (Frlg_story.Preflight.needs stocks ~before (as_one_plan loaded)))
+          (Frlg_checkpoints.Preflight.needs stocks ~before (as_one_plan loaded)))
 
 let needs p arg =
   let* plans = plans_of p in
@@ -149,13 +149,13 @@ let needs p arg =
   | exception Grid_maps.Json_field.Invalid e -> Error e
 
 let needs_text needs =
-  cell (String.concat "; " (List.map Frlg_story.Preflight.describe needs))
+  cell (String.concat "; " (List.map Frlg_checkpoints.Preflight.describe needs))
 
 (* One row per checkpoint: what the pre-flight checks before resuming there. *)
 let preflight_row stocks plans id =
   let* plan = Plan_dir.load_plan ~plan_dir:plans.dir id in
   let* before = Plan_dir.promised_before ~plan_dir:plans.dir id in
-  match Frlg_story.Preflight.needs stocks ~before plan with
+  match Frlg_checkpoints.Preflight.needs stocks ~before plan with
   | needs -> Ok (Printf.sprintf "| %s | %s |" id (needs_text needs))
   | exception Grid_maps.Json_field.Invalid e -> Error e
 

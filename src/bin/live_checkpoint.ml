@@ -1,7 +1,7 @@
 (* What one live run of a checkpoint is given (Checkpoint_live_run): the
    series' setup, the checkpoint, and how the run ended. *)
 
-open Story
+open Checkpoints
 
 type setup = {
   states : string;
@@ -14,7 +14,8 @@ type setup = {
   world : Frlg_overworld.Frlg_steps.world;
   watch : Daemon_process.watch option;  (** the daemon's watch page, if any *)
   save_after_pass : bool;
-      (** On the Switch: save in the game after a pass (Story.Console_runs). *)
+      (** On the Switch: save in the game after a pass
+          (Checkpoints.Console_runs). *)
   info : Run_record.info;  (** For each run's run.json. *)
   daemon_flags : string list;
       (** The daemon's recording and keep-awake flags, as the user gave them
@@ -23,7 +24,8 @@ type setup = {
       (** The ports the series' last daemon bound (program, page): the next one
           asks for them again, so the page keeps its URL across runs. *)
   from_event : (string * string option) option;
-      (** --from-event and --to-event: a partial run (Story.Event_range). *)
+      (** --from-event and --to-event: a partial run (Checkpoints.Event_range).
+      *)
   max_rounds : int option;
       (** --max-rounds: a repeating checkpoint's rounds, in place of its plan's
           (testing a few rounds). *)
@@ -40,7 +42,7 @@ type checkpoint = {
       (** What the checkpoint before it promised, if any: the start check's
           party. *)
   next_id : string option;  (** The checkpoint after it, if any. *)
-  partial : Frlg_story.Checkpoint_run.from_event option;
+  partial : Frlg_checkpoints.Checkpoint_run.from_event option;
       (** A partial run's events; [start_state] is then its first event's kept
           state. *)
 }
@@ -66,7 +68,7 @@ let of_failure (f : Failure.t) =
 (* A partial run's events, [None] for a whole run. *)
 let partial_range cp =
   Option.map
-    (fun (p : Frlg_story.Checkpoint_run.from_event) -> p.range)
+    (fun (p : Frlg_checkpoints.Checkpoint_run.from_event) -> p.range)
     cp.partial
 
 (* A partial run's first and last event, as run.json gives them. *)

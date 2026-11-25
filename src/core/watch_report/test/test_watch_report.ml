@@ -1,7 +1,7 @@
 (* What a run sends the watch page through Watch_report, on a scripted
    session that records the page's notifications: the plan at each step's
    change, the story lines and the run, in order. (A plan's run, the
-   pre-flight's among them: Frlg_story's test_plan_watch.) *)
+   pre-flight's among them: Frlg_checkpoints's test_plan_watch.) *)
 
 module R = Watch_report
 module W = Wire.Watch

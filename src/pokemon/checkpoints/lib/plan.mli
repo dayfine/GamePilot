@@ -1,0 +1,158 @@
+(** A checkpoint plan ([gamepilot-checkpoint/1], owned by GamePilot; once
+    PokemonSimulation's [pokesim-authored-checkpoint/1]): the stretch of story
+    between two saves, as a list of events. Types only; {!Plan_decode} reads
+    them from a plan file.
+
+    Each built-in kind's args are typed here, with the format's fallbacks filled
+    in. A [game_action]'s args stay JSON: the game that names the action reads
+    them. *)
+
+type leg = { direction : Grid_maps.Direction.t; tiles : int }
+(** A straight walk of [tiles] tiles. *)
+
+type item = { item : string; quantity : int }
+
+type route = { target : Pose.grid; fight_wild : bool }
+(** A planned walk to [target]; [fight_wild] fights wild encounters on the way
+    instead of running. *)
+
+(** What an event does, with its args. *)
+type kind =
+  | New_game
+  | Options
+  | Route of route
+  | Ready of Pose.grid  (** Walk to the pose and stand ready there. *)
+  | Legs of { legs : leg list; fight_wild : bool }
+      (** Walk these legs as written, without planning. *)
+  | Step of Grid_maps.Direction.t  (** One step or turn toward the direction. *)
+  | Talk
+  | Answer of bool  (** Answer a yes/no prompt: [true] for yes. *)
+  | Scene  (** Clear dialog and cutscenes back to free control. *)
+  | Battle of { may_lose : bool }
+  | Train of int  (** Fight this many trainer battles. *)
+  | Heal
+  | Shop of item list
+  | Save
+  | Game_action of Grid_maps.Json_field.obj
+      (** The game's own action, named by the event's [action], with its args.
+      *)
+
+type event = {
+  id : string;  (** Unique within the checkpoint. *)
+  kind : kind;
+  action : string option;
+      (** The plan's [action]: which of its kind's ways the event takes (["run"]
+          for a route), or the game action's name; [None] for the kind's
+          default. Always set for a {!Game_action}. *)
+  why : string;  (** What the event is for, in the plan author's words. *)
+  skip_if : string list;
+      (** Flags (named by the game) under which the event is skipped. *)
+  declared_after : Pose.declared option;
+      (** Where the event leaves the player, as the plan declares it. *)
+  once_per_save : bool;
+      (** The event spends something the save keeps (money, a TM): the game runs
+          it once per save. *)
+}
+
+type checkpoint = {
+  checkpoint_id : string;
+  title : string;
+  start : Pose.declared option;
+  events : event list;
+}
+
+(** Which party a checkpoint promises. *)
+type party =
+  | Party_in_order of string list
+      (** Exactly these species (slugs, ["abra"]), slot 1 first. *)
+  | Party_includes of { members : string list; slots : slot list }
+      (** Each of [members] somewhere in the party (a species named twice needs
+          two members), and each of [slots] in its slot: only the members the
+          plans use and only the positions they depend on, so a save whose other
+          members differ keeps the promise. *)
+
+and slot = { slot : int; species : string }
+(** The member in party slot [slot] (from 1) is of [species] (a slug). *)
+
+type money =
+  | Money_range of { min : int; max : int }
+      (** Money from [min] to [max], both included. *)
+  | Money_spent of int
+      (** Exactly this much less than at the checkpoint's start (negative: more
+          than at the start): what the checkpoint's purchases cost, whatever
+          money the save started with. *)
+
+(** How many of a thing (a bag item, Game Corner coins) a checkpoint promises. A
+    count copied from one save holds on that save only: a checkpoint that buys
+    or uses something promises what it changed ({!Count_gained}), and one whose
+    later checkpoints need a stock promises a floor ({!Count_at_least}). *)
+type count =
+  | Count_exactly of int  (** Exactly this many. *)
+  | Count_gained of int
+      (** Exactly this many more than at the checkpoint's start (negative: this
+          many used), whatever the save started with. *)
+  | Count_at_least of int  (** At least this many. *)
+
+type bag_count = { bag_item : string; count : count }
+(** A count of the bag item [bag_item] (a slug). *)
+
+type knows = { species : string; moves : string list }
+(** The party member of this species (a slug; the first such member) knows each
+    of these moves (slugs). *)
+
+type level = { species : string; min : int }
+(** The party member of this species (a slug; the first such member) is at least
+    at this level. *)
+
+type postconditions = {
+  position : Pose.grid option;
+      (** Where the checkpoint ends; unset, the end is the next checkpoint's
+          start ({!Checkpoint_end}). *)
+  party : party option;
+  items : bag_count list;  (** Each item's count in the bag. *)
+  coins : count option;  (** Game Corner coins. *)
+  money : money option;
+  flags : string list;  (** Story flags (named by the game) that must be set. *)
+  knows : knows list;  (** Moves members must know. *)
+  levels : level list;
+      (** Levels members must have reached, e.g. MIMIEN at least Lv 33. *)
+  marks : string list option;
+      (** Each party slot's held-item mark, slot 1 first: ["held_item"],
+          ["mail"] or ["none"] (a slot left out is not checked). *)
+}
+(** What must hold once the checkpoint is done, from the plan's
+    [metadata.postconditions]. [position], [items] and [flags] are
+    PokemonSimulation's ([read_metadata] in
+    [src/pokesim/story/checkpoint_wire.py]) and the C++'s ([StoryPostconditions]
+    in [Pokemon/AutoStory/Types/Pokemon_StoryPostconditions.h], fork
+    [frlg/lean]); [party], [coins], [money], [knows], [levels] and [marks] are
+    GamePilot's additions: the state a Mail Glitch checkpoint exists to change.
+*)
+
+type repeat = {
+  until : postconditions;
+      (** The goal, read after each passing round: the rounds end once it holds.
+      *)
+  max_rounds : int;  (** Rounds to run before giving up; at least 1. *)
+}
+(** The metadata's [repeat]: the checkpoint is a round that runs again (each
+    pass saved like any checkpoint's) until [until] holds. It starts and ends at
+    the same place, its save point: mg-04b's grind round, from the Indigo
+    Plateau nurse back to her. *)
+
+type t = {
+  game : string;  (** The plan's [game], e.g. ["frlg"]. *)
+  checkpoint : checkpoint;
+  execution : Grid_maps.Json_field.obj;
+      (** How the game runs the checkpoint (save menu, supplies, ...): its
+          fields are each game's own. *)
+  metadata : Grid_maps.Json_field.obj option;
+      (** The plan's phase, verification and postconditions, kept as written. *)
+  postconditions : postconditions;
+      (** The metadata's postconditions, read; all empty when it states none. *)
+  retries : int;
+      (** The metadata's ["retries"] (default 0): how many more attempts a run
+          of the checkpoint makes from its start after a failed one
+          ({!Checkpoint_trials.attempts}). *)
+  repeat : repeat option;  (** The metadata's [repeat], if any. *)
+}

@@ -46,5 +46,5 @@ val marks_mismatch :
 val handlers :
   log:(string -> unit) ->
   party:Party_roster.t ref ->
-  (string * Story.Game.game_action) list
+  (string * Checkpoints.Game.game_action) list
 (** The four actions above, by name. *)

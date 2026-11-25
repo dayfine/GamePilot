@@ -112,7 +112,7 @@ let run_with ~action read perform args =
 
 let on_slot party ~action read perform =
   let decode ~where args = (Action_args.member ~where args, read ~where args) in
-  fun (_ : Story.Plan.event) args ->
+  fun (_ : Checkpoints.Plan.event) args ->
     run_with ~action decode
       (fun (member, v) ->
         match Party_roster.resolve !party member with
@@ -127,7 +127,7 @@ let duplicate ~log slot plan =
   Item_duplication.run ~log plan
 
 let handlers ~log ~party =
-  let simple action read perform (_ : Story.Plan.event) args =
+  let simple action read perform (_ : Checkpoints.Plan.event) args =
     run_with ~action read perform args
   in
   [

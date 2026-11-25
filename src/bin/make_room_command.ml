@@ -1,20 +1,22 @@
 (* gamepilot checkpoints PLAN_DIR --from ID --to ID ... --make-room MAP
 
-   Room in the party before the chain (Frlg_story.Make_room): back to the save
+   Room in the party before the chain (Frlg_checkpoints.Make_room): back to the save
    (mGBA: mg-00's start state, else the first checkpoint's, kept as mg-00's;
    Switch: the soft reset), each member's summary read (species, level,
    moves), and the room policy's deposits for the chain from ID on
-   (Frlg_story.Party_room). None needed: the chain runs as it is. Else the
+   (Frlg_checkpoints.Party_room). None needed: the chain runs as it is. Else the
    generated checkpoint mg-00 (Fly to the Center nearest MAP, the save's map,
    the deposit, out to the Fly landing) is written with the chain's plans
    (linked) into "<runs>/<ID>-make-room/plans", and the series runs from mg-00
    there: it is judged, retried and saved like any checkpoint. The party read
-   runs as a shadow plan (Frlg_story.Shadow_plan: soft_reset, read_party,
+   runs as a shadow plan (Frlg_checkpoints.Shadow_plan: soft_reset, read_party,
    plan_deposit), so the watch page shows it as a checkpoint run. *)
 
 module Pf = Preflight_command
-module M = Frlg_story.Make_room
-module R = Story.Room_policy
+module M = Frlg_checkpoints.Make_room
+module R = Checkpoints.Room_policy
+module Pr = Frlg_checkpoints.Party_room
+module Cr = Frlg_checkpoints.Checkpoint_run
 
 let ( let* ) = Result.bind
 
@@ -50,16 +52,11 @@ let room ~at need members =
   let* towns = Frlg_actions.Fly_towns.load () in
   let* dir =
     Option.to_result ~none:"no maps"
-      (Frlg_repo_files.Repo_files.locate Frlg_story.Checkpoint_run.maps_dir)
+      (Frlg_repo_files.Repo_files.locate Cr.maps_dir)
   in
   let maps = Grid_maps.Map_file.runtime_names ~maps_dir:dir in
   let* center = M.nearest_center towns ~maps at in
-  let* deposits =
-    R.choose
-      (Frlg_story.Party_room.rules need)
-      (Frlg_story.Party_room.precondition need)
-      members
-  in
+  let* deposits = R.choose (Pr.rules need) (Pr.precondition need) members in
   let* fly_user =
     Option.to_result ~none:"no member knows Fly"
       (List.find_opt knows_fly members)
@@ -71,8 +68,7 @@ let room ~at need members =
         fly_user = fly_user.species;
         deposits;
         party = members;
-        needed_moves =
-          List.sort_uniq compare ("fly" :: need.Frlg_story.Party_room.moves);
+        needed_moves = List.sort_uniq compare ("fly" :: need.Pr.moves);
       } )
 
 (* The chain's plans linked beside mg-00's. *)
@@ -107,8 +103,8 @@ let decide ~plan_dir ~at need (record : Run_record.t) say members =
     say (M.id ^ ": Fly to " ^ room.center.name ^ ", in " ^ dir);
     Ok (Some dir)
 
-let action f : Story.Game.game_action = fun _ _ -> f ()
-let failed code why = Error (Story.Failure.cause ~repeats:true code why)
+let action f : Checkpoints.Game.game_action = fun _ _ -> f ()
+let failed code why = Error (Checkpoints.Failure.cause ~repeats:true code why)
 
 let soft_reset setup result log () =
   match Pf.reload setup M.id log with
@@ -118,7 +114,7 @@ let soft_reset setup result log () =
       failed "not_back" e
 
 let read_members members result log () =
-  match Frlg_story.Postcondition_reads.party_summary ~log with
+  match Frlg_checkpoints.Postcondition_reads.party_summary ~log with
   | Some read ->
       members := read;
       Ok ()
@@ -134,7 +130,7 @@ let plan_deposit decide members result say log () =
   result := decide both !members;
   Result.fold ~ok:(fun _ -> Ok ()) ~error:(failed "no_room") !result
 
-(* The shadow plan's steps (Frlg_story.Shadow_plan.make_room_steps); the
+(* The shadow plan's steps (Frlg_checkpoints.Shadow_plan.make_room_steps); the
    party read and the decision in [result]. *)
 let actions (setup : Pf.setup) decide result say log =
   let members = ref [] in
@@ -145,20 +141,21 @@ let actions (setup : Pf.setup) decide result say log =
   ]
 
 let shadow_plan =
-  Frlg_story.Shadow_plan.plan ~id:M.id ~title:"make room: the party read"
-    Frlg_story.Shadow_plan.make_room_steps
+  Frlg_checkpoints.Shadow_plan.plan ~id:M.id ~title:"make room: the party read"
+    Frlg_checkpoints.Shadow_plan.make_room_steps
 
 (* In the session: the shadow plan through the checkpoint runner, on the
    page. *)
 let session setup world decide say log () =
   let result = ref (Error "the party read did not finish") in
   (match
-     Frlg_story.Plan_watch.run_shadow ~mode:"preflight" ~log world shadow_plan
+     Frlg_checkpoints.Plan_watch.run_shadow ~mode:"preflight" ~log world
+       shadow_plan
        (actions setup decide result say)
    with
   | Ok () -> ()
   | Error f when Result.is_ok !result ->
-      result := Error (Story.Failure.to_string f)
+      result := Error (Checkpoints.Failure.to_string f)
   | Error _ -> ());
   !result
 
@@ -188,9 +185,9 @@ let ending = function
 (* A pre-flight run of mg-00's own ("<date>-mg-00-preflight-<n>"). *)
 let prepare ~plan_dir ~from_id ~at (setup : Pf.setup) =
   let* plans = chain_plans ~plan_dir from_id in
-  let need = Frlg_story.Party_room.chain_need plans in
+  let need = Pr.chain_need plans in
   let* () = ensure_start setup from_id in
-  let* world = Frlg_story.Checkpoint_run.load_world () in
+  let* world = Frlg_checkpoints.Checkpoint_run.load_world () in
   let run =
     Run_record.start ~runs_dir:setup.runs_dir setup.info ~checkpoint:M.id
       ~mode:"preflight"
