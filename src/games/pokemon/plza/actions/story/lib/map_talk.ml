@@ -18,11 +18,12 @@ let button (l : L.t) part =
   else if L.text_shows l && part = Before_card then Wire.A
   else Wire.B
 
+let press steps part (l : L.t) =
+  S.press steps (button l !part) ~hold_ms ~release_ms;
+  if l.tutorial_card then part := After_card
+
 let act steps part (l : L.t) =
-  if party_bar_free l then S.wait steps poll_ms
-  else (
-    S.press steps (button l !part) ~hold_ms ~release_ms;
-    if l.tutorial_card then part := After_card)
+  if party_bar_free l then S.wait steps poll_ms else press steps part l
 
 let timed_out =
   Failure.cause "map_talk_timeout"
