@@ -106,15 +106,19 @@ maps, as `Scene_only_people` does the Game Corner's Biker. Two Super Repels from
 wild Pokemon away: BLASTOISE (Lv 60) leads, above them all. Without them a wild battle on an open
 leg in the bridge's grass left the walk reckoned a tile ahead of the player, who went on into a
 pocket of grass off the way. A Super Repel lasts 200 steps and the game refuses another while one
-works, so the first, used at the Center, carries the walk over the bridge and about 20 steps into
-the forest, and the second is used at (30, 25), 29 steps in, once the first has worn off.
+works. The first, used at the Center, carries the walk over the bridge and has some 30 steps
+left at the forest's mat; the walk paces row 39 by the mat, clear of the grass, wall to wall four
+times (57 steps), and uses the second there, for the 190 or so steps to Lostelle. Each wears off
+on a leg held to a wall, which walks on after the message.
 
 Bond Bridge (`ThreeIsland_BondBridge`) has seven trainers, and two cannot both be walked around
 (a reachability pass over the map and their sight): Aroma Lady Violet at (68, 10) looks west two
 tiles over the only way from the east half, and Aroma Lady Nikki wanders a 3 by 3 box round
 (27, 10) looking every way five tiles. The planner keeps off a standing trainer's line where it
-can (the twins Joy and Meg's double battle is walked around) and treats the rest as open. A leg
-that steps onto a tile a trainer not beaten may see is walked a piece at a time
+can (the twins Joy and Meg's double battle is walked around) and treats the rest as open. On a
+route event with `"fight_trainers": true` (05's `over_bond_bridge`; off by default, for saves that
+have beaten the maps' trainers), a leg that steps onto a tile a trainer not beaten may see is
+walked a piece at a time
 (`Frlg_overworld.Trainer_crossing`): each piece ends on such a tile, then the walk waits for the
 trainer's "!", walk up and text, as long as the fork's `trainer_full_watch()` (1.5 s, a walking tile
 for each tile of sight, 1 s). A text is the trainer's: its battle is fought as a `train` battle

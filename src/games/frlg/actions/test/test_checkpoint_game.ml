@@ -27,7 +27,14 @@ let checkpoint : Pokemon_checkpoints.Plan.checkpoint =
     start = None;
     events =
       [
-        event "out" (Game (Route { target = pallet_door; fight_wild = false }));
+        event "out"
+          (Game
+             (Route
+                {
+                  target = pallet_door;
+                  fight_wild = false;
+                  fight_trainers = false;
+                }));
         event "talk" Talk;
       ];
   }
@@ -150,6 +157,7 @@ let cut_then_grass : Pokemon_checkpoints.Plan.checkpoint =
                       facing = Some East;
                     };
                   fight_wild = false;
+                  fight_trainers = false;
                 }));
       ];
   }

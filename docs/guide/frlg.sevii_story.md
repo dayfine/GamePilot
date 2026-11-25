@@ -52,7 +52,7 @@ sh run/run_checkpoints_on_mgba.sh --program frlg.sevii_story --from 01-to-one-is
 | 04-three-island-bikers | Three Island's port turns storage back on; the Bikers and Cue Ball Paxton |
 | 05-berry-forest | Bond Bridge's trainers, the Berry Forest and Lostelle's Hypno; home to the Game Corner |
 
-<!-- plans: f8f7d3f646eb -->
+<!-- plans: e017af48b8b0 -->
 <!-- /generated -->
 
 ## When it stops

@@ -76,6 +76,7 @@ let walk_with ?react ~from:(map, x, y, facing) goal () =
           incr fought;
           S.show screen ~at_ms:screen.S.clock_ms S.Overworld;
           Ok ());
+      watch_trainers = true;
       log = (fun line -> log := line :: !log);
     }
   in

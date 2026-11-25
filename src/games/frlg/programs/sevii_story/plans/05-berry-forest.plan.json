@@ -56,7 +56,8 @@
         "kind": "route",
         "action": "run",
         "args": {
-          "target": {"map": "ThreeIsland_BerryForest", "tiles": [[43, 41]]}
+          "target": {"map": "ThreeIsland_BerryForest", "tiles": [[43, 41]]},
+          "fight_trainers": true
         },
         "why": "West over Bond Bridge, fighting the Aroma Ladies Nikki and Violet (and Tuber Alexis, if she sees the player), north through the warp (12, 6) into the Berry Forest's south mat."
       },

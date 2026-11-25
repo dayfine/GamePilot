@@ -91,7 +91,8 @@ battles (`Scripted_battle`), soft reset, make room in the party, `step` (one til
 trigger, nothing watched) and `train` (trainer battles in a row, `Trainer_battles`: the lead attacks
 in slot order, a fainted lead loses; Sevii 04's Bikers), a `battle` a talk or scene started
 (`Scene_battle`; Sevii 05's Hypno) and trainers who see the player on a walk
-(`Trainer_crossing`: fought, then the walk planned on round them; Sevii 05's Bond Bridge).
+(`Trainer_crossing`, on a route with `fight_trainers`: fought, then the walk planned on round
+them; Sevii 05's Bond Bridge).
 
 ## Parts 1 to 8: the authored chain
 

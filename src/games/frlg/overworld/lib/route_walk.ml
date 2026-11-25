@@ -6,6 +6,7 @@ type t = {
   gait : Route_legs.gait;
   flee : unit -> unit;
   fight_trainer : unit -> (unit, Pokemon_checkpoints.Failure.cause) result;
+  watch_trainers : bool;
   log : string -> unit;
 }
 
@@ -159,7 +160,8 @@ let crossing_steps t now : Trainer_crossing.game_steps =
   }
 
 let walk_one t ~beaten at (leg : Connected_maps.place Grid_planning.Leg.t) =
-  if Trainer_crossing.crosses t.world ~beaten:!beaten leg then
+  if t.watch_trainers && Trainer_crossing.crosses t.world ~beaten:!beaten leg
+  then
     let now = ref at in
     match Trainer_crossing.walk (crossing_steps t now) t.world ~beaten leg with
     | Error cause -> raise (Walk_failed cause)
