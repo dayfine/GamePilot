@@ -1,7 +1,8 @@
 # Composable rules: a game's rules from shared pieces (draft, 2026-11-25)
 
 `Engine-Boundary.md` section 2 gives the engine one `GAME_RULES` per game family: a pose, actions
-and postconditions, with three formats (plan codec, text, saved). Today `Pokemon_rules` hard-wires
+and postconditions, with three formats (plan codec, text, saved). The names below are the ones this
+note settles (see "Names"): `Program_engine.Make (Rules) (Plan_format) (Event_snapshot)`. Today `Pokemon_rules` hard-wires
 "grid + Pokémon" for every Pokémon game, and each game's own actions are raw JSON
 (`Named_action of Raw.t`), read by the handler at run time. But a game's rules are three
 independent choices:
@@ -15,13 +16,50 @@ independent choices:
 | Octopath 0 | zone | its own | story + its own walk + its own |
 
 This note says how a game builds its rules from pieces, how each format composes the same way, and
-the PRs that get there. Settled and not reopened: the rules are pure and each format is its own
-library used at one edge (#71, #81); the engine is `Engine_checkpoints.Make (T) (C) (X) (S)`.
+the PRs that get there. Settled and not reopened: the rules are pure, and the plan format and the
+event snapshot are each their own library used at one edge (#71, #81). Printing is no longer a
+format: it moves into the rules (user, 2026-11-25).
+
+## Names (user, 2026-11-25)
+
+A game reads, at its one application of the engine:
+
+```ocaml
+(* today *)
+include Engine_checkpoints.Make (Plza_rules) (Plza_plan_codec) (Plza_text) (Plza_saved)
+(* after *)
+include Program_engine.Make (Plza_rules) (Plza_plan_format) (Plza_event_snapshot)
+```
+
+| Today | After | What it is |
+|---|---|---|
+| `Engine_checkpoints.Make` | `Program_engine.Make` | the engine that runs a program's plans; a checkpoint is one unit of a plan, not the engine's name |
+| `Pokemon_checkpoints`, `Plza_checkpoints` | `Frlg_engine`, `Plza_engine` | the engine applied to one game's rules |
+| `*_rules` | `*_rules` | `GAME_RULES`: the pose, actions and promises, their checks, and now their printing |
+| `*_text`, `Rules_text.TEXT` | gone | each part prints itself beside its type: `Pose.to_string`, `Pose.observed_to_string`, `Action.to_string`, `Postconditions.to_lines` |
+| `*_plan_codec`, `PLAN_CODEC` | `*_plan_format`, `PLAN_FORMAT` | how a plan file writes the rules' poses, actions and promises |
+| `*_saved`, `Event_states.SAVED` | `*_event_snapshot`, `Event_snapshot.SNAPSHOT` | what a run snapshots at the checkpoint's start (money, coins, items) and at each event's start (where the player was reckoned to stand), kept as `<n>-<event>.json` beside the event's save state so a run started from that state checks the same promises |
+| `src/engine/checkpoints/{rules,plan,run,...,make}` | `src/engine/{rules,plan,run,...}`, `src/engine/program_engine` | one folder level less |
+
+Inside the engine, `Plan`, `Runner`, `Failure`, `Game` and `Series` keep their names, and so do
+`Plan.checkpoint` and the checkpoint runner: a checkpoint is still the stretch between two saves.
+
+**Printing in the rules.** It is pure, so the rules stay free of JSON and I/O; a lint
+`never_links` line per rules library still keeps out `yojson`. A piece is then three parts, not
+four: its rules (with its printing), its plan format and its event snapshot. The `*_text` modules
+of the pieces below fold into their rules modules, `Plan_text`, `Failure_text` and `Run_text` stay
+in the engine and call `T.Pose.to_string` and the rest.
+
+**A position read in the game is the pose's job.** `Pose.observed` is what the game reads and
+`Pose.matches` compares it with the plan: map and tile in FRLG; in PLZA, after the tutorial, the
+minimap's recorded name (`Plza_readers.Minimap`), so the engine checks PLZA's start and end the way
+it checks FRLG's. PLZA's `Start_signature` (#100) keeps the rest of its checks (talk prompt, wild
+zone, party count) until they become preconditions.
 
 ## The shape
 
-A piece is a pose, an action set or a set of promises, and brings up to four parts: its rules
-type, its plan decoder, its text and its saved JSON. A game's rules are written by hand from
+A piece is a pose, an action set or a set of promises, and brings up to three parts: its rules
+type with its printing, its plan format and its event snapshot. A game's rules are written by hand from
 pieces, in a dozen lines:
 
 ```ocaml
@@ -157,25 +195,30 @@ claimed, unknown fields checked once, parts in order).
 
 ## The formats
 
-| Piece | Lives in | Rules | Plan codec | Text | Saved |
-|---|---|---|---|---|---|
-| `Story_action` | engine | talk, answer, scene, save | `Story_action_decode` | `Story_action_text` | |
-| `Command_step` | engine | a command's step, by name | yes | yes | |
-| `Zone_pose` | engine | place, spot | `Zone_pose_decode` | `Zone_pose_text` | `Zone_saved` |
-| `With_position` | engine | position + promises | `With_position_decode` | `With_position_text` | |
-| `Grid_pose` | `src/pokemon/navigation/grid/checkpoints` | map, tiles, facing; observed | `Grid_pose_decode` | `Grid_pose_text` | `Grid_saved` |
-| `Grid_action` | same | route, ready, legs, step | `Grid_action_decode` | `Grid_action_text` | |
-| `Pokemon_action` | `src/pokemon/checkpoints` | new_game, options, battle, train, heal, shop | `Pokemon_action_decode` | `Pokemon_action_text` | |
-| `Pokemon_promises` | same | party ... marks, `Postcondition_check` | `Postcondition_decode`, `Party_decode` | `Postconditions_text` | `Pokemon_start_saved` |
-| `Frlg_action` | `src/games/frlg/checkpoints` | today's `Action_requests` and the rest | `Frlg_action_decode` | `Frlg_action_text` | |
+| Piece | Lives in | Rules, with its printing | Plan format | Event snapshot |
+|---|---|---|---|---|
+| `Story_action` | engine | talk, answer, scene, save | `Story_action_decode` | |
+| `Command_step` | engine | a command's step, by name | yes | |
+| `Zone_pose` | engine | place, spot | `Zone_pose_decode` | `Zone_snapshot` |
+| `With_position` | engine | position + promises | `With_position_decode` | |
+| `Grid_pose` | `src/pokemon/navigation/grid/checkpoints` | map, tiles, facing; observed | `Grid_pose_decode` | `Grid_snapshot` |
+| `Grid_action` | same | route, ready, legs, step | `Grid_action_decode` | |
+| `Pokemon_action` | `src/pokemon/checkpoints` | new_game, options, battle, train, heal, shop | `Pokemon_action_decode` | |
+| `Pokemon_promises` | same | party ... marks, `Postcondition_check` | `Postcondition_decode`, `Party_decode` | `Pokemon_start_snapshot` |
+| `Frlg_action` | `src/games/frlg/checkpoints` | today's `Action_requests` and the rest | `Frlg_action_decode` | |
+
+Today's `*_text` modules (`Story_action_text`, `Zone_pose_text`, `With_position_text`,
+`Grid_pose_text`, `Pokemon_action_text`, `Postconditions_text`, `Frlg_action_text`) fold into the
+piece's rules module as its `to_string`.
 
 Each column is its own library, as today, so a lint `never_links` line per rules library keeps it
 free of JSON and text. How each format composes:
 
-- **Plan codec.** `pose_of_plan` is the pose piece's; `action_of_plan` is `Action_parts` over the
+- **Plan format.** `pose_of_plan` is the pose piece's; `action_of_plan` is `Action_parts` over the
   game's list; `postconditions_of_plan` is `With_position_decode (Pose_decode) (Promises_decode)`.
-- **Text.** The pose piece's `pose` and `observed`; the game's `action` match; `With_position_text`.
-- **Saved.** What a run keeps is the promises' start reads and the pose's observed position. The
+- **Printing.** The pose piece's `to_string` and `observed_to_string`; the game's `Action.to_string`
+  matches its sum and calls each set's; `With_position.to_lines`.
+- **Event snapshot.** What a run keeps is the promises' start reads and the pose's observed position. The
   engine gives `Kept.Make (Start) (At)`, where `Start` writes its fields in order and `At` is the
   observed pose's derived JSON:
 
@@ -192,9 +235,9 @@ module Make (Start : FIELDS) (At : sig type t [@@deriving yojson] end) :
   (* the file is Start's fields, then "at" *)
 ```
 
-**Byte-identical.** `Pokemon_start_saved` keeps today's derived record, so FRLG's file stays
+**Byte-identical.** `Pokemon_start_snapshot` keeps today's derived record, so FRLG's file stays
 `start_money`, `start_coins`, `start_items`, `at`, nulls included, and older files with fewer
-fields still load. PLZA's (#89) is `Make (No_start) (Zone_saved)`: `{"at": ...}`, as now. A golden
+fields still load. PLZA's (#89) is `Make (No_start) (Zone_snapshot)`: `{"at": ...}`, as now. A golden
 of a kept file's bytes goes in before anything moves. `plans.golden` stays byte-identical through
 every PR, with one exception: the PR that types FRLG's actions changes their 96 event lines and
 the 28 outline lines that count them, because the typed value prints its own text (`mart
@@ -240,13 +283,12 @@ let run t event = function
 ## Per-game instances and shared code
 
 `Pokemon_checkpoints` cannot stay family-wide: its plan type carries the action sum, which is now
-per game. FRLG gets `Frlg_checkpoints = Engine_checkpoints.Make (Frlg_rules) (Frlg_plan_codec)
-(Frlg_text) (Frlg_saved)`, as PLZA gets `Plza_checkpoints` in #89. The 140 files that name
-`Pokemon_checkpoints` (113 under `games/`) are renamed in one sed PR; those that use only
-`Failure.cause`, which does not depend on the rules, point at `Engine_run.Failure` instead, so
-fewer files carry a game's instance. The name `Frlg_checkpoints` is taken today by the library of
-FireRed's checkpoint runs (`Checkpoint_run`, `Plan_file`, `Plan_needs`, `Preflight`); it moves to
-`games/frlg/checkpoints/run` as `Frlg_checkpoint_run` first.
+per game. FRLG gets `Frlg_engine = Program_engine.Make (Frlg_rules) (Frlg_plan_format)
+(Frlg_event_snapshot)`, as PLZA gets `Plza_engine`. The 140 files that name `Pokemon_checkpoints`
+(113 under `games/`) are renamed in one sed PR; those that use only `Failure.cause`, which does not
+depend on the rules, point at `Engine_run.Failure` instead, so fewer files carry a game's instance.
+`Frlg_engine` is a free name, so today's `frlg_checkpoints` library (FireRed's checkpoint runs:
+`Checkpoint_run`, `Plan_file`, `Plan_needs`, `Preflight`) keeps its name.
 
 Shared code goes one of two ways:
 
@@ -264,19 +306,21 @@ FRLG's `Plan_needs` and `Party_room` change for the better: they match `Frlg (Ma
 ## Where the pieces live
 
 ```
-src/engine/checkpoints/
-  rules/        + Story_action, Command_step, Zone_pose, Promises (With_position)
-  plan_codec/   + Action_parts, Story_action_decode, Zone_pose_decode, With_position_decode
-  text/         + Story_action_text, Zone_pose_text, With_position_text
-  saved/        + Kept, Zone_saved
-  run/          + Checkpoint_end;  series/ + Console_runs
-src/pokemon/navigation/grid/checkpoints/{rules,plan_codec,text,saved}/
-                Grid_pose, Grid_action and their formats, beside the grid they walk
-src/pokemon/checkpoints/{rules,plan_codec,text,saved}/
-                Pokemon_action, Pokemon_promises and their formats; no instance
-src/games/frlg/checkpoints/{rules,plan_codec,text,saved,instance,run}/
-                Frlg_action, Frlg_rules and formats, Frlg_checkpoints, Frlg_checkpoint_run
-src/games/pokemon/plza/checkpoints/...   as #89, built from pieces
+src/engine/
+  rules/          + Story_action, Command_step, Zone_pose, Promises (With_position), each printing itself
+  plan_format/    + Action_parts, Story_action_decode, Zone_pose_decode, With_position_decode
+  text/           Plan_text, Failure_text, Run_text only
+  event_snapshot/ + Kept, Zone_snapshot
+  run/            + Checkpoint_end;  series/ + Console_runs
+  program_engine/ Program_engine.Make
+src/pokemon/navigation/grid/checkpoints/{rules,plan_format,event_snapshot}/
+                  Grid_pose, Grid_action and their formats, beside the grid they walk
+src/pokemon/checkpoints/{rules,plan_format,event_snapshot}/
+                  Pokemon_action, Pokemon_promises and their formats; no instance
+src/games/frlg/checkpoints/{rules,plan_format,event_snapshot,engine}/
+                  Frlg_action, Frlg_rules and formats, Frlg_engine; frlg_checkpoints as today
+src/games/pokemon/plza/checkpoints/{rules,plan_format,event_snapshot,engine}/
+                  as #89, built from pieces, Plza_engine
 ```
 
 The stick walk stays PLZA's own action until SwSh needs it, then moves to
@@ -319,21 +363,23 @@ Every PR keeps every plan, test and run as it is; **S** marks a structural one.
 
 | # | PR | S | After |
 |---|---|---|---|
+| 0 | Names (above): `Program_engine`, `*_plan_format`, `*_event_snapshot`, the folder level, `Pokemon_checkpoints` to `Pokemon_engine` until step 8 splits it. Renames only | S | |
+| 0b | Printing into the rules: each `*_text` piece folds into its rules module, `TEXT` deleted, `Program_engine.Make` takes three arguments. `plans.golden` byte-identical | S | 0 |
 | 1 | Leftover names (above). Renames only | S | |
 | 2 | Goldens for what must not move: a kept file's bytes, the plan decode errors. Tests only | | |
 | 3 | Engine pieces: `Action_parts`, `Story_action`, `Command_step`, `Zone_pose`, `With_position`, `Kept`; `ends_at` and `position` in `GAME_RULES` (Pokémon gives today's); the toy game rebuilt from pieces | S | 1 |
 | 4 | Built-ins out of the plan: Talk..Save become `Story` in Pokémon's sum, `Game.t` loses `run_builtin`; `Named_action` stays | S | 3 |
 | 5 | Grid pieces under `navigation/grid/checkpoints`; `Pokemon_action` keeps the rest; zones leave Pokémon's pose; Pokémon's promises become `With_position (Grid_pose) (Pokemon_promises)`, its saved `Kept.Make` | S | 2, 4 |
 | 6 | `Checkpoint_end` and `Console_runs` to the engine as functors over `GAME_RULES` | S | 5 |
-| 7 | `frlg_checkpoints` library to `games/frlg/checkpoints/run` as `frlg_checkpoint_run`. Rename only | S | |
-| 8 | `Frlg_rules` (Story, Grid, Pokemon), its formats and `Frlg_checkpoints`; `Pokemon_checkpoints` deleted; the 140 files renamed | S | 6, 7 |
+| 7 | (dropped: `Frlg_engine` needs no library moved) | | |
+| 8 | `Frlg_rules` (Story, Grid, Pokemon), its formats and `Frlg_engine`; `Pokemon_engine` deleted; the 140 files renamed | S | 6 |
 | 9 | FRLG's actions typed, in three PRs: the shared ones (`Action_requests`); travel (fly, lift_floor, ferry); battles and the Mail Glitch (grind, capture, berry PP, double battle, mail, candy). Load check of marts, towns, strategies; `Plan_needs` and `Party_room` on typed actions. `game_action` with `"action": "mart"` is read as kind `mart`; unclaimed names stay `Named_action` until the last | S (format) | 8 |
 | 10 | Plans rewritten by script to `"kind": "mart"`; shadow plans to `Command_step`; `Named_action`, the alias and `game_actions` deleted. Golden identical | S (format) | 9 |
 | 11 | PLZA from pieces, after #89 merges | S | 4 |
 | 12 | PLZA in `family pokemon` with its first battle | S | 5, 11 |
 | 13 | Octopath 0's rules from pieces (Engine-Boundary PR 9) | S | 3 |
 
-1, 2 and 7 can start at once. FRLG's line (3 to 10) runs first; 11 waits for it only where it needs
+0, 1 and 2 can start at once; 0b follows 0. FRLG's line (3 to 10) runs first; 11 waits for it only where it needs
 4, and Octopath 0 needs only the engine pieces.
 
 ## Decisions for the user
@@ -351,9 +397,9 @@ Every PR keeps every plan, test and run as it is; **S** marks a structural one.
 4. **Plan format.** Rewrite `{"kind": "game_action", "action": "mart"}` to `{"kind": "mart"}` in
    every plan and drop `game_action`. Recommended: yes, as its own PR after the typing, its
    golden byte-identical.
-5. **FRLG's instance is `Frlg_checkpoints`,** and today's `frlg_checkpoints` library becomes
-   `Frlg_checkpoint_run` under `games/frlg/checkpoints/run`. Recommended: yes, to match
-   `Plza_checkpoints`. The alternative keeps that library and names the instance `Frlg_engine`.
+5. **Names: decided** (user, 2026-11-25; see "Names"). `Program_engine.Make (Rules) (Plan_format)
+   (Event_snapshot)`, instances `*_engine`, printing in the rules, PLZA's minimap as its observed
+   pose.
 6. **Table references are names checked at plan load** (marts, Fly towns, grind strategies), and
    looked up again at run time. Recommended: yes, over a codec context or tables generated at build
    time.
