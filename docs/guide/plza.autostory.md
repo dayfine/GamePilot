@@ -21,7 +21,7 @@ Choices" screen. Nothing else is read from the save. The Switch's capture must b
 <!-- generated:commands -->
 ```sh
 # the Switch: each checkpoint once, from where the console is
-cd src && opam exec -- dune exec -- gamepilot checkpoints --program plza.autostory --from 01.00b --to 03.08a --mode testing --backend switch --serial PORT --capture DEVICE \
+cd src && opam exec -- dune exec -- gamepilot checkpoints --program plza.autostory --from 01.00b --to 03.08b --mode testing --backend switch --serial PORT --capture DEVICE \
     --watch
 ```
 <!-- /generated -->
@@ -53,8 +53,9 @@ cd src && opam exec -- dune exec -- gamepilot checkpoints --program plza.autosto
 | 03.07 | Into Wild Zone 1: first catches |
 | 03.08 | Wild Zone 1: fourth species |
 | 03.08a | Wild Zone 1: fifth species |
+| 03.08b | Out of Wild Zone 1's far gate |
 
-<!-- plans: 4a376bc67701 -->
+<!-- plans: c9f4100873fe -->
 <!-- /generated -->
 
 ## When it stops
@@ -76,10 +77,12 @@ always reloads its autosave when it follows 03.03c, since its timed legs assume 
 
 ## Known limits
 
-03.07, 03.08 and 03.08a have their plans but are refused before they press anything (`no handler`): their
-catches (`catch_tutorial`, `battle_then_catch`, `catch_in_zone`) are not ported yet. 03.07's run
-to the gate is. 03.08's start check names the wild zone and the party count, which nothing reads
-yet (`start_signature_unread`).
+03.07 to 03.08b have their plans but are refused before they press anything (`no handler`): their
+catches (`catch_tutorial`, `battle_then_catch`, `catch_in_zone`) and 03.08b's way out of the
+zone by its map (`run_out_of_zone_1`, `check_out_of_zone_1`) are not ported yet. 03.07's run
+to the gate is. The start checks of 03.08 to 03.08b name the wild zone, the party count or the A
+prompt, which nothing reads yet (`start_signature_unread`).
+
 Only 01.00b to 03.06 so far. 01.02's chase, 01.03's walk to Chikorita and the walks of 02.01 to
 03.06 are timed stick legs with no map, so they can miss; the chase then stops on Ryon's
 A prompt (`scene_ended_in_control`), the walk to Chikorita with `walk_no_end`, and the Battle Zone

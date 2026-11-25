@@ -1213,6 +1213,10 @@ let cases =
       (refused "03.08a")
       "03.08a event 1 (catch_fifth_species): no handler for game action \
        \"catch_in_zone\"; 0 inputs";
+    case "03.08b is refused before it presses: its way out is not ported"
+      (refused "03.08b")
+      "03.08b event 1 (zone_1_to_far_gate): no handler for game action \
+       \"run_out_of_zone_1\"; 0 inputs";
     case "the walk is walked before 03.03, run after"
       (fun () ->
         Printf.sprintf "%b %b"
