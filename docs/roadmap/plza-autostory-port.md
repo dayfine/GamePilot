@@ -34,15 +34,15 @@ shapes the pieces both later games use.
 
 - **Scope.** Checkpoint 01.01 (the platform to MAIN MISSION 01), the cut of fork #754: `wait_for_platform`,
   `set_text_speed_fast`, `walk`, `scene`, `plus_skip`. 01.00 (new game) and 01.02 are later decisions.
-- **Engine.** `games/pokemon/plza` links `src/engine` only, through its own `Plza_terms` (zone poses, its own
-  kinds), after Engine-Boundary PR 4. Readers, actions and the plan file can come before it; nothing
+- **Engine.** `games/pokemon/plza` links `src/engine` only, through its own `Plza_rules` (zone poses, its own
+  actions), after Engine-Boundary PR 4. Readers, actions and the plan file can come before it; nothing
   touches `src/engine` or `src/pokemon/checkpoints` meanwhile. `walk`'s timed legs stay PLZA's own JSON
   until a second game needs the same shape. `plza` joins `family pokemon` in its own PR when battles
   and catches are ported (moves, types, party).
 - **Daemon (Engine-Boundary PR 8, claimed by this port).** 8a: `--viewport native`, the whole frame at
   1920x1080 game pixels, so the C++ boxes and 1080p templates carry over. 8b: optional `left_stick` and
   `right_stick` on `press`, [x, y] in -1..1; running is B with the stick, as `PlzaConsoleBackend::stick`.
-  Angles become tilts in `Switch_home.Stick_tilt`; the run speed-up stays in `games/pokemon/plza`.
+  Angles and the run speed-up stay in `games/pokemon/plza`.
 - **Reload.** As `reload_latest_save` in the C++: close the game and launch PLZA's tile from HOME
   (`switch_home` learns it from `NintendoSwitch_GameEntry`), then game menu to in game. `Home_screen`
   keeps the fork's whole-frame boxes and converts them by the daemon's viewport. The game autosaves on
