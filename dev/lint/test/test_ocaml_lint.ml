@@ -356,4 +356,35 @@ let () =
     | Ok c -> c.no_exceptions_roots
     | Error e -> [ e ])
 
+(* --- doc_listing --- *)
+
+let listing_config = { config with doc_listing = [ "handlers" ] }
+let listing text = Doc_listing.check listing_config ~path:"lib/m.mli" text
+
+let () =
+  case "doc_listing: a doc naming two modules' handlers is caught"
+    ~expect:[ "doc_listing" ]
+    (checks
+       (listing
+          "val handlers : t\n\
+           (** Ours, then {!A.handlers} and\n\
+          \    {!B.C.handlers}. *)\n"));
+  case "doc_listing: one other module's handlers is a pointer, not a list"
+    ~expect:[]
+    (checks (listing "(** Built like {!A.handlers}. *)\nval handlers : t\n"));
+  case "doc_listing: other values of several modules pass" ~expect:[]
+    (checks (listing "(** The {!A.game_steps} and {!B.game_steps} in it. *)\n"));
+  case "doc_listing: the finding is at the comment's first line" ~expect:[ "2" ]
+    (List.map
+       (fun (f : Finding.t) -> string_of_int f.line)
+       (listing "type t\n(** {!A.handlers},\n {!B.handlers} *)\n"));
+  case "doc_listing: an .ml file is not checked" ~expect:[]
+    (checks
+       (Doc_listing.check listing_config ~path:"lib/m.ml"
+          "(** {!A.handlers} {!B.handlers} *)\n"));
+  case "config: doc_listing values are read" ~expect:[ "handlers"; "checks" ]
+    (match Config.parse "root .\ndoc_listing handlers checks\n" with
+    | Ok c -> c.doc_listing
+    | Error e -> [ e ])
+
 let () = if !failures > 0 then exit 1

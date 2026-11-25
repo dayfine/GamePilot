@@ -5,7 +5,7 @@ Glitch from a post-game FireRed save, performs it in Lea & Jed's double battle o
 the glitched mail to duplicate an item. It runs on mGBA and on the Switch.
 
 Its checkpoints are the plans in `src/games/frlg/programs/mail_glitch/plans/`, run in order by the
-checkpoint runner (`gamepilot checkpoints --program frlg.mail_glitch --from 01-celadon-setup --to 08-activate-and-verify`):
+checkpoint runner (`gamepilot run frlg.mail_glitch --from 01-celadon-setup --to 08-activate-and-verify`):
 
 | Checkpoint | Content |
 |---|---|
@@ -26,7 +26,7 @@ the rounds for a test, with `--grind-battles N` capping each round's battles.
 
 What the save needs before a checkpoint (free party slots, field moves, money, items) comes from
 the plans: `gamepilot programs` prints the program's needs, and
-`gamepilot checkpoints --program frlg.mail_glitch --preflight --from ID` checks a save against them.
+`gamepilot run frlg.mail_glitch --preflight --from ID` checks a save against them.
 The port's history and the grinding options are in `docs/roadmap.md` (Phase 4).
 
 The player's guides: `docs/guide/frlg.mail_glitch.md` (activation) and

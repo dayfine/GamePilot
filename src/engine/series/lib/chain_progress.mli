@@ -1,9 +1,8 @@
 (** What the watch page shows of a checkpoint chain
-    ([gamepilot checkpoints --from --to]): each checkpoint's state and time, and
-    the current one's trials, as the [watch.run] notification
-    ({!Wire.Watch_run}). Pure: the caller gives the clock (Unix time in ms) and
-    sends the result. The fork's AutoStory shows none of this; it is the watch
-    page's own. *)
+    ([gamepilot run --from --to]): each checkpoint's state and time, and the
+    current one's trials, as the [watch.run] notification ({!Wire.Watch_run}).
+    Pure: the caller gives the clock (Unix time in ms) and sends the result. The
+    fork's AutoStory shows none of this; it is the watch page's own. *)
 
 open Engine_run
 

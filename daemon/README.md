@@ -81,7 +81,7 @@ daemon lists its page there (`<pid>.json`, removed on exit) for the hub: `--hub`
 live runs (`watch/hub.html`) in a session of its own, and exits at once when its port is taken.
 The page is `watch/watch.html`, compiled in. The 10 s rate line on mGBA adds what the page costs
 the frame loop (stream viewers, frames polled, ms spent); the stream prints its own 10 s line
-(encodes/s, ms and bytes a frame, the slowest viewer's frames/s). `gamepilot checkpoints --watch` starts the runner's daemons with it.
+(encodes/s, ms and bytes a frame, the slowest viewer's frames/s). `gamepilot run --watch` starts the runner's daemons with it.
 
 ## View-only sources
 

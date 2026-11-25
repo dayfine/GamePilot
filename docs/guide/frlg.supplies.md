@@ -17,8 +17,8 @@ Runs on: mGBA, the Switch (in its GBA app).
 Save at the Celadon Dept. Store 1F save spot: the run starts and ends there.
 
 <!-- generated:needs -->
-- 0 free party slots
 - pidgey in the party (fly)
+- the thunder badge (fly)
 - money at least ¥7500 (all the purchases)
 - at the start, CeladonCity_DepartmentStore_1F
 <!-- /generated -->
@@ -28,11 +28,11 @@ Save at the Celadon Dept. Store 1F save spot: the run starts and ends there.
 <!-- generated:commands -->
 ```sh
 # mGBA: each checkpoint three times from its start state, two must pass
-sh run/run_checkpoints_on_mgba.sh --program frlg.supplies --from su-01 --to su-01 --mode verification
+sh run/run_checkpoints_on_mgba.sh frlg.supplies --from su-01 --to su-01 --mode verification
 
 # the Switch: check the save first, then run (each checkpoint once, saved when it passes)
-sh run/run_checkpoints_on_switch.sh --program frlg.supplies --from su-01 --to su-01 --preflight-only
-sh run/run_checkpoints_on_switch.sh --program frlg.supplies --from su-01 --to su-01
+sh run/run_checkpoints_on_switch.sh frlg.supplies --from su-01 --to su-01 --preflight-only
+sh run/run_checkpoints_on_switch.sh frlg.supplies --from su-01 --to su-01
 ```
 <!-- /generated -->
 
@@ -51,7 +51,7 @@ sh run/run_checkpoints_on_switch.sh --program frlg.supplies --from su-01 --to su
 <!-- generated:preflight -->
 | Resume from | The pre-flight checks |
 |---|---|
-| su-01 | pidgey in the party (fly); money at least ¥7500 (mart, mart); at the start, CeladonCity_DepartmentStore_1F |
+| su-01 | pidgey in the party (fly); the thunder badge (fly); money at least ¥7500 (mart, mart); at the start, CeladonCity_DepartmentStore_1F |
 <!-- /generated -->
 
 ## Known limits
