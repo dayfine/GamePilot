@@ -4,7 +4,8 @@
     ([Pokemon/AutoStory/Pokemon_StoryPostconditionCheck.{h,cpp}], [frlg/lean]):
     one result per postcondition, passed, failed or not checked, with what was
     expected and read; a postcondition the game cannot read is not checked,
-    never passed.
+    never passed. The game-agnostic half (verdicts, counts, money, the log) is
+    {!Promise}; this module keeps the Pokémon promises and the plan's types.
 
     Where it differs: money is promised as a range or as what the checkpoint
     spent from the money read at its start ({!Plan.money}), and coins and items
@@ -60,15 +61,15 @@ type observed = {
 
 val nothing_read : observed
 
-type verdict = Passed | Failed | Not_checked
+(** {!Promise.verdict}. *)
+type verdict = Promise.verdict = Passed | Failed | Not_checked
 
-type result = {
-  what : string;  (** ["party"], ["item retro-mail"], ["coins"], ["flag x"]. *)
+type result = Promise.result = {
+  what : string;
   verdict : verdict;
   detail : string;
-      (** What was read when it passed; ["expected X, read Y"] when it failed;
-          why it was not checked. *)
 }
+(** One result per postcondition ({!Promise.result}). *)
 
 val check : Plan.postconditions -> observed -> result list
 (** The party, then each item, the coins, the money, each flag, each member's
@@ -76,17 +77,13 @@ val check : Plan.postconditions -> observed -> result list
     postcondition the plan leaves out gives no result. *)
 
 val unmet : result list -> result list
-(** The results that failed or were not checked. *)
+(** {!Promise.unmet}. *)
 
 val result_to_string : result -> string
-(** ["coins: failed: expected 20, read 0"]. *)
+(** {!Promise.result_to_string}. *)
 
 val log_lines : string -> result list -> string list
-(** One line per result and a summary, the checkpoint first:
+(** {!Promise.log_lines} tagged ["Postcondition"]:
     {v
-    [Postcondition] 01-celadon-setup party: passed: pidgey, abra
     [Postcondition] 01-celadon-setup coins: failed: expected 20, read 200
-    [Postcondition] 01-celadon-setup: 1 passed, 1 failed, 0 not checked: failed
-    v}
-    The summary is ["passed"] only when every one passed, ["incomplete"] when
-    none failed and some were not checked, ["nothing to check"] for none. *)
+    v} *)
