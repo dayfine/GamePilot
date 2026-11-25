@@ -101,8 +101,7 @@ let cancel_reply ~id ~seq =
     {|{"dir":"out","t_ms":%d,"msg":{"jsonrpc":"2.0","id":%d,"result":{"released_seq":%d}}}|}
     seq id seq
 
-let hold_up =
-  [ Wire.Press { buttons = [ Up ]; hold_ms = 500; cooldown_ms = 0 } ]
+let hold_up = [ Wire.press ~hold_ms:500 ~cooldown_ms:0 [ Up ] ]
 
 (* Stops on the frame numbered [seq]. *)
 let race_until_seq seq () =
@@ -321,3 +320,90 @@ let () =
         && red m "q" = Some 3.
         && List.map fst m.probes = [ "p"; "q" ]
     | Effects.Timeout -> false)
+
+(* A stopped run replays as it ran: the logged stop ends the program's wait
+   at the same point, and its watch notifications, which the daemon keeps off
+   the wire log, are not expected there. *)
+let () =
+  let log =
+    Replay.log_of_lines
+      (hello
+      @ [
+          frame ~seq:501 ~load:2;
+          {|{"dir":"out","t_ms":502,"msg":{"jsonrpc":"2.0","method":"stop","params":{"reason":"stopped by user"}}}|};
+          frame ~seq:503 ~load:2;
+        ])
+  in
+  let program () =
+    ignore (Effects.load_state "state.ss" : int);
+    Effects.show_log "[Story] waiting";
+    Effects.await ~timeout_ms:100_000 (fun _ -> false)
+  in
+  expect "a logged stop replays as Stop_requested"
+    (match Replay.run log program with
+    | _ -> false
+    | exception Effects.Stop_requested r -> r = "stopped by user")
+
+(* A daemon that served two clients logs both; the replay follows the program
+   (the connection that spoke first) and skips the other's lines, frames
+   included. *)
+let () =
+  let on conn line =
+    "{\"conn\":" ^ string_of_int conn ^ ","
+    ^ String.sub line 1 (String.length line - 1)
+  in
+  let ctl_status =
+    {|{"dir":"in","t_ms":1,"msg":{"jsonrpc":"2.0","id":1,"method":"status","params":{}}}|}
+  in
+  let log =
+    Replay.log_of_lines
+      (List.map (on 1) hello
+      @ [
+          on 2 ctl_status;
+          on 2 (frame ~seq:7777 ~load:2);
+          on 1 (frame ~seq:502 ~load:2);
+        ])
+  in
+  let first_frame () =
+    ignore (Effects.load_state "state.ss" : int);
+    Effects.await ~timeout_ms:1000 (fun _ -> true)
+  in
+  expect "replay follows the program's connection"
+    (match Replay.run log first_frame with
+    | Effects.Holds m -> m.seq = 502
+    | Effects.Timeout -> false)
+
+(* v1.12: a press with sticks shows them when it diverges from the log. *)
+let () =
+  let log = Replay.log_of_lines (hello @ submit_b1) in
+  let up = Result.get_ok (Wire.stick 0. 1.) in
+  let run () =
+    ignore (Effects.load_state "state.ss" : int);
+    Effects.submit
+      [ Wire.press ~left_stick:up ~hold_ms:500 ~cooldown_ms:0 [ B ] ]
+  in
+  match Replay.run log run with
+  | _ -> failwith "FAILED a stick press replayed as the recorded Up press"
+  | exception Replay.Divergence e ->
+      print_endline e;
+      expect "stick press -> divergence naming the stick"
+        (contains e "press B left 0,1 hold 500")
+
+(* run_with_backend hands the program the recorded hello's backend: where the
+   game picture sat in the frame. *)
+let () =
+  let log =
+    Replay.log_of_lines
+      (hello
+      @ [
+          {|{"dir":"out","t_ms":2,"msg":{"jsonrpc":"2.0","method":"frame","params":{"seq":501,"load":2,"t_ms":2,"probes":{}}}}|};
+        ])
+  in
+  let backend =
+    Replay.run_with_backend log (fun (b : Wire.backend) ->
+        ignore (Effects.load_state "state.ss" : int);
+        b)
+  in
+  expect "run_with_backend: the recorded hello's viewport"
+    (backend.kind = "mgba" && backend.viewport.w = 1.
+   && backend.game_width = 240)

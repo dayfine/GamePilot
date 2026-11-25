@@ -1,3 +1,6 @@
 (tests
  (names test_wall_recovery test_wander_recovery)
- (libraries gamepilot.grid_maps gamepilot.grid_recovery gamepilot.case_table))
+ (libraries
+  gamepilot.grid_geometry
+  gamepilot.grid_recovery
+  gamepilot.table_test))

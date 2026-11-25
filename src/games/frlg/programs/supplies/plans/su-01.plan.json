@@ -1,0 +1,152 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "frlg",
+  "execution": {
+    "menu": "full"
+  },
+  "metadata": {
+    "phase": "testing",
+    "notes": "Stocks what the duplication programs use: Retro Mail (one per round, Celadon 4F, $50) and Super Repels (Lavender, $500) for walks that must not be cut by wild battles. Starts and ends at Celadon Dept. Store 1F (6, 2), the save spot frlg.team_training starts from.",
+    "postconditions": {
+      "items": [
+        {
+          "item": "retro-mail",
+          "gained": 100
+        },
+        {
+          "item": "super-repel",
+          "gained": 5
+        }
+      ],
+      "money": {
+        "spent": 7500
+      }
+    }
+  },
+  "checkpoint": {
+    "id": "su-01",
+    "title": "Stock 100 Retro Mail (Celadon 4F) and 5 Super Repels (Lavender)",
+    "start": {
+      "map": "CeladonCity_DepartmentStore_1F",
+      "tiles": [
+        [6, 2]
+      ],
+      "facing": "south"
+    },
+    "events": [
+      {
+        "id": "to_4f_clerk",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {"place": "celadon_dept_store_4f_clerk"}
+        },
+        "why": "Up the lift to face the 4F clerk across the counter."
+      },
+      {
+        "id": "buy_retro_mail",
+        "kind": "game_action",
+        "action": "mart",
+        "args": {
+          "map": "CeladonCity_DepartmentStore_4F",
+          "items": [
+            {
+              "item": "retro-mail",
+              "quantity": 50
+            },
+            {
+              "item": "retro-mail",
+              "quantity": 50
+            }
+          ]
+        },
+        "why": "One Retro Mail per duplication round: 100, as 50 + 50 (the quantity box stops at 99; a second line of 1 left the box on x01 with its A dropped, mGBA su-01 verification)."
+      },
+      {
+        "id": "out_of_dept_store",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {"place": "celadon_dept_store_west_door_outside"}
+        },
+        "why": "Down the lift and out by the west door, to fly."
+      },
+      {
+        "id": "fly_lavender",
+        "kind": "game_action",
+        "action": "fly",
+        "args": {
+          "town": "LavenderTown",
+          "species": "pidgey"
+        },
+        "why": "Lavender's Mart sells Super Repels.",
+        "declared_after": {
+          "map": "LavenderTown",
+          "tiles": [
+            [6, 6]
+          ],
+          "facing": "south"
+        }
+      },
+      {
+        "id": "lavender_mart_clerk",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {"place": "lavender_mart_clerk"}
+        },
+        "why": "Face the Lavender Town Mart clerk."
+      },
+      {
+        "id": "buy_super_repels",
+        "kind": "game_action",
+        "action": "mart",
+        "args": {
+          "map": "LavenderTown_Mart",
+          "items": [
+            {
+              "item": "super-repel",
+              "quantity": 5
+            }
+          ]
+        },
+        "why": "Super Repels for walks to items and spots."
+      },
+      {
+        "id": "out_of_lavender_mart",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {"place": "lavender_mart_outside"}
+        },
+        "why": "Back on the street to fly."
+      },
+      {
+        "id": "fly_celadon",
+        "kind": "game_action",
+        "action": "fly",
+        "args": {
+          "town": "CeladonCity",
+          "species": "pidgey"
+        },
+        "declared_after": {
+          "map": "CeladonCity",
+          "tiles": [
+            [48, 12]
+          ],
+          "facing": "south"
+        },
+        "why": "Back to Celadon."
+      },
+      {
+        "id": "to_save_spot",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {"place": "celadon_dept_store_1f_save"}
+        },
+        "why": "End at the Dept. Store 1F save spot, team training's start."
+      }
+    ]
+  }
+}

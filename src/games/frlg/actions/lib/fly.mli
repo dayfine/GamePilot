@@ -3,10 +3,15 @@
     stands in the town. Ported from the fork's AutoStory fly step
     (PokemonFRLG_AutoStoryFieldMoves: [open_fly_map()], [fly_to_town()]).
 
-    The Start menu and the party are read. The member's menu and the fly map
-    have no reader here yet, so those two are waited out by time
-    ({!member_menu_wait_ms}, {!fly_map_wait_ms}); the landing is the settle
-    after a warp (a fade first, then a quiet overworld). *)
+    The Start menu, the party and the member's menu are read ({!Menu_cursor}).
+    The fly map has no reader here yet, so it is waited out by time
+    ({!fly_map_wait_ms}) and its cursor moved by counted presses. The landing is
+    the fork's judge (PokemonFRLG_AutoStoryFlyLanding: [judge_fly_landing()]): a
+    fade watched from the town's A on, then, until the landing's time is up, a
+    quiet overworld (the talk settle) showing another scene than the overworld
+    before the Fly ({!Frlg_readers.Scene_signature}, for the fork's
+    [left_departure()]). The fork also reads the player's facing; no reader for
+    it here. *)
 
 type plan = {
   town : Fly_towns.town;
@@ -16,15 +21,19 @@ type plan = {
           order, so 2 when Fly is the only one. *)
 }
 
-val member_menu_wait_ms : int
 val fly_map_wait_ms : int
 
-val pokemon_row : int
-(** The Start menu's POKéMON row once the player has the Pokédex: 1. *)
+val fly :
+  log:(string -> unit) ->
+  plan ->
+  (unit, Pokemon_checkpoints.Failure.cause) result
+(** Fails as [no_start_menu], [no_party], [no_member_menu] or, from the settle,
+    [battle] or [not_settled]; [fly_no_takeoff] when no fade follows the town's
+    A, [fly_no_landing] when the screen still shows the departure town (the fly
+    map closed and nothing happened). *)
 
-val menu_moves : from:int -> to_:int -> Wire.command list
-(** Taps down (or up) that move a menu's cursor from row [from] to [to_]. *)
+val takeoff_timeout_ms : int
+(** 10000: the fade after the town's A, watched from the press on. *)
 
-val fly : log:(string -> unit) -> plan -> (unit, Story.Failure.cause) result
-(** Fails as [fly_no_start_menu], [fly_no_party] or, from the settle, [battle]
-    or [not_settled]. *)
+val landing_timeout_ms : int
+(** 30000: the flight and the landing. *)

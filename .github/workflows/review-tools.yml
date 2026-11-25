@@ -1,0 +1,33 @@
+# harness: project
+# The PR review tools (dev/review/): their tests, and a report of the files this PR changes only
+# in formatting. The report is a warning for the reviewer (qc-structural row S2), never a failure.
+name: Review tools
+on:
+  pull_request:
+  push:
+    branches: [main]
+    paths:
+      - "dev/review/**"
+      - ".github/workflows/review-tools.yml"
+jobs:
+  review-tools:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Test the review tools
+        run: |
+          sh dev/review/test_format_only_changes.sh
+          sh dev/review/test_gate_row.sh
+      - name: Report formatting-only changes
+        if: github.event_name == 'pull_request'
+        run: |
+          found=$(sh dev/review/format_only_changes.sh "origin/$GITHUB_BASE_REF" HEAD)
+          if [ -n "$found" ]; then
+            echo "$found" | sed 's/^/::warning::unrelated to this PR? /'
+            { echo "### Files changed only in formatting or moved unchanged"; echo
+              echo "$found" | sed 's/^/- /'; } >>"$GITHUB_STEP_SUMMARY"
+          else
+            echo "no formatting-only changes"
+          fi

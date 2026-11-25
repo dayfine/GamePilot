@@ -1,0 +1,30 @@
+(rule
+ (copy ../../readers/test/fixtures/mgba.probes.jsonl mgba.probes.jsonl))
+
+(rule
+ (copy
+  ../../readers/test/fixtures/menus.mgba.probes.jsonl
+  menus.mgba.probes.jsonl))
+
+(rule
+ (copy ../../readers/test/fixtures/switch.probes.jsonl switch.probes.jsonl))
+
+(rule
+ (copy
+  ../../readers/test/fixtures/menus.switch.probes.jsonl
+  menus.switch.probes.jsonl))
+
+(test
+ (name test_cursor_steps)
+ (deps
+  mgba.probes.jsonl
+  menus.mgba.probes.jsonl
+  switch.probes.jsonl
+  menus.switch.probes.jsonl)
+ (libraries
+  gamepilot.wire
+  gamepilot.effects
+  gamepilot.table_test
+  gamepilot.frlg_readers
+  gamepilot.frlg_menu_cursor
+  frlg_overworld_fixtures))

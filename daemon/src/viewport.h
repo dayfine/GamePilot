@@ -29,6 +29,24 @@ struct Viewport {
   int game_height = 0;
 };
 
+// The GBA picture in the Switch's GBA app (Nintendo Switch Online) on a
+// 1920x1080 capture: 1560 x 1040 frame pixels at (180, 5), 6.5 per game pixel,
+// black outside. The fork's FRLG GAME_BOX (PokemonFRLG_Settings.cpp), checked
+// on the lab's Switch captures by switch_geometry_test.
+// Every FRLG reader's box is in game pixels (readers' Game_pixels), so this is
+// the one table from GBA coordinates to the Switch frame.
+Viewport nso_gba_viewport();
+
+// A full-screen Switch game (Legends Z-A, BDSP): the picture is the whole
+// 1920x1080 capture, one game pixel per frame pixel. A probe box is then a
+// fraction of the frame, as the fork's ImageFloatBox is, and its templates
+// are 1080p crops, so both carry over from the C++ unchanged.
+Viewport native_switch_viewport();
+
+// The viewport a name stands for: "nso-gba" (nso_gba_viewport) or "native"
+// (native_switch_viewport); nullopt for any other name.
+std::optional<Viewport> named_viewport(std::string_view name);
+
 // Whether the box lies in 0..1 with w, h > 0.
 bool is_unit_box(const Box& box);
 
@@ -51,5 +69,11 @@ cv::Size template_size_in_frame(const Viewport& viewport, cv::Size game_size,
 
 // "x,y,w,h" as a box when it is_unit_box, else nullopt.
 std::optional<Box> parse_box(std::string_view text);
+
+// A --viewport value: a name (named_viewport) is that whole viewport; x,y,w,h
+// is `base` with its picture box moved, its game size kept; nullopt for
+// anything else. The daemon and probe_images both parse theirs here.
+std::optional<Viewport> parse_viewport(std::string_view text,
+                                       const Viewport& base);
 
 }  // namespace gamepilot

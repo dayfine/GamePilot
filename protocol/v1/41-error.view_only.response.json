@@ -1,0 +1,12 @@
+{
+  "jsonrpc": "2.0",
+  "id": 3,
+  "error": {
+    "code": -32002,
+    "message": "the view backend is view-only: it takes no input",
+    "data": {
+      "backend": "view",
+      "method": "submit"
+    }
+  }
+}

@@ -19,7 +19,8 @@ val display_name : string list -> string -> string option
 
 val pocket_of_item : string -> Frlg_readers.Bag_screen.pocket
 (** The pocket a slug's item sits in: Poké Balls for a name ending in ["-ball"],
-    else Items. (Key items and berries are not looked up yet.) *)
+    Key Items for a key item's name (["coin-case"]), else Items. (Berries are
+    not looked up yet.) *)
 
 val shown_rows : int
 (** Rows the list shows: 6. *)
@@ -31,12 +32,72 @@ val taps_to_reveal : int -> int
 (** Taps from the list's top before list row [k] (from 0) shows on the screen's
     bottom row: 0 while [k] is one of the first six, else [k - 2]. *)
 
+val pocket_top : Frlg_readers.Bag_screen.pocket -> unit
+(** In the open bag (the Start menu's or a battle's BAG): to the pocket and its
+    list's top row. Fails as [no_bag] or [no_pocket]. *)
+
+val to_top : unit -> unit
+(** In the open pocket: UP until the cursor reads on the list's top row (none
+    when it is there). Fails as [no_pocket]. *)
+
 val open_pocket_top : Frlg_readers.Bag_screen.pocket -> unit
 (** From the overworld: the bag open on the pocket (turned to by LEFT or RIGHT
     as its arrows read) with the cursor on the list's top row. Fails as [no_bag]
     or [no_pocket]. *)
 
+val choose_in_item_menu : string -> int -> unit
+(** Once the item's menu shows ({!Frlg_readers.Bag_screen.item_menu}) and 500 ms
+    later (it drops an A sooner), the action on this row (from 0) chosen with A.
+    Fails as [no_item_menu]. *)
+
+val item_action : string -> int -> unit
+(** From the overworld: the item's pocket opened ({!open_pocket_top}), the item
+    selected ({!select}), A, and once its menu shows (USE or CHECK or OPEN,
+    GIVE, TOSS, CANCEL: the pocket arrows hide), the action on this row (from 0)
+    chosen with A. Fails as {!open_pocket_top} and {!select} do, or as
+    [no_item_menu]. *)
+
+val item_action_press : string -> int -> Wire.command
+(** As {!item_action} up to the action's A, which it returns unpressed: for a
+    step whose settle watches the frames from that press on (the Escape Rope's
+    USE starts its warp). *)
+
+val count_on_row : int -> int option
+(** The count on shown list row [row] (0..5; the Berry Pouch's 0..6, the same
+    column), read digit by digit in the small font
+    ({!Frlg_text.Text_lines.bag_count_digit}); [None] where no count shows (a
+    key item, CANCEL, an empty row). Not in the fork, whose bag reader
+    (Menus/PokemonFRLG_ItemListReader) reads counts with its own digit
+    templates. Read right on mGBA (1 to 9) and on Switch captures (up to 21). *)
+
 val select : string -> unit
-(** In the open pocket, the cursor from the list's top to the item the slug
-    names, read by name. Fails as [not_in_bag] when the item is not in the
+(** In the open pocket, from the list's top: the item the slug names found by
+    reading the rows, then DOWN until the cursor's own row reads its name (a
+    lost tap is tapped again). Fails as [not_in_bag] when the item is not in the
     pocket. *)
+
+val found_count :
+  Frlg_readers.Bag_screen.pocket -> (unit -> int option) -> int option
+(** The count of an item found on a row of the pocket: 1 in Key Items, which
+    pokefirered draws with no count (src/item_menu.c), else what the row's count
+    reads. *)
+
+val count : log:(string -> unit) -> string -> int option
+(** From the overworld: the item's pocket opened ({!open_pocket_top}), its rows
+    read down to the item as {!select} reads them, the count on its row
+    ({!count_on_row}; 1 for a key item, {!found_count}), then the bag closed,
+    its fade-in over ({!Menu_input.await_fade_in}) and the talk settle. [Some 0]
+    when the list reaches CANCEL first; [None] when a row or the count did not
+    read. New for the end checks: the fork's [check_postconditions()] reads
+    counts with its own bag reader (Menus/PokemonFRLG_ItemListReader). Fails as
+    {!open_pocket_top}, or as [unknown_item] for a slug no item is named. *)
+
+val list_row : string -> int option
+(** In the item's open pocket, from the list's top: its row in the list (from
+    0), the rows read down to it as {!select} reads them; [None] when the pocket
+    does not hold it or a row does not read. The list may be left scrolled. *)
+
+val count_in_pocket : string -> int option
+(** {!count} in the open pocket, from the list's top: [Some 0] when the list
+    reaches CANCEL first, [None] when a row or the count does not read. The
+    cursor stays where the reading left it. *)

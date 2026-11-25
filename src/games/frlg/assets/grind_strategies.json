@@ -4,6 +4,7 @@
     {
       "name": "victory_road_2f",
       "spot": {"map": "VictoryRoad_2F", "tile": [45, 10], "facing": "west"},
+      "pace": "west",
       "lead": "switch",
       "heal": {"nurse": {"map": "IndigoPlateau_PokemonCenter_1F", "tile": [13, 12], "facing": "north"}},
       "heal_every": 7,
@@ -12,6 +13,7 @@
     {
       "name": "pokemon_tower_5f",
       "spot": {"map": "PokemonTower_5F", "tile": [8, 9], "facing": "east"},
+      "pace": "east",
       "lead": "switch",
       "heal": {"pad": {"map": "PokemonTower_5F", "tile": [10, 9], "facing": "east"}},
       "heal_every": 1,

@@ -2,6 +2,7 @@
    file says, and the case shape the map tests share. *)
 
 open Grid_maps
+open Grid_geometry
 open Map_features
 open Map_gates
 
@@ -101,7 +102,7 @@ let of_json input = Map_file.of_string ~source_name:"Test.json" input
 
 (* Reads the case's map with [read_map] and checks each expectation. *)
 let run_case ~read_map { name; input; expectation } =
-  Case_table.report name
+  Table_test.report name
     (Result.bind (read_map input) (fun map ->
          Check.all
            (List.map

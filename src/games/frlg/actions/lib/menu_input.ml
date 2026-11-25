@@ -1,9 +1,13 @@
 open Frlg_readers
 
-exception Action_failed of Story.Failure.cause
+exception Action_failed of Pokemon_checkpoints.Failure.cause
 
 let fail ?repeats code detail =
-  raise (Action_failed (Story.Failure.cause ?repeats code detail))
+  raise (Action_failed (Pokemon_checkpoints.Failure.cause ?repeats code detail))
+
+let raise_error = function
+  | Ok () -> ()
+  | Error cause -> raise (Action_failed cause)
 
 let probes =
   Scene_looks.probes @ Party_menu.probes @ Bag_screen.probes @ Money_box.probes
@@ -21,17 +25,16 @@ let screen_timeout_ms = 3000
 let press ?(cooldown_ms = 0) button =
   ignore
     (Effects.submit
-       [
-         Wire.Press
-           { buttons = [ button ]; hold_ms = button_hold_ms; cooldown_ms };
-       ])
+       [ Wire.press ~hold_ms:button_hold_ms ~cooldown_ms [ button ] ])
 
 let hold ~hold_ms ~cooldown_ms button =
-  Wire.Press { buttons = [ button ]; hold_ms; cooldown_ms }
+  Wire.press ~hold_ms ~cooldown_ms [ button ]
 
 let taps button n =
   let tap = hold ~hold_ms:tap_hold_ms ~cooldown_ms:tap_release_ms button in
   if n > 0 then ignore (Effects.submit (List.init n (fun _ -> tap)))
+
+let mash button ms = taps button (ms / (tap_hold_ms + tap_release_ms))
 
 let moves ~from ~to_ =
   if to_ >= from then taps Wire.Down (to_ - from) else taps Wire.Up (from - to_)
@@ -41,42 +44,92 @@ let await_screen ?(timeout_ms = screen_timeout_ms) ~code what reader =
   | Holds m -> m
   | Timeout -> fail code (what ^ " did not show")
 
-let open_start_menu_row row =
-  press Wire.Start;
-  let m =
-    await_screen ~code:"no_start_menu" "the Start menu"
-      Start_menu.start_menu_open
-  in
-  moves ~from:(Option.value (Start_menu.cursor_row m) ~default:0) ~to_:row;
-  press Wire.A
-
 let settle_back ~label ~log =
-  match Scene_looks.settle Talk ~label ~battle_ends:false ~log with
-  | Ok () -> ()
-  | Error cause -> raise (Action_failed cause)
+  raise_error (Scene_looks.settle Talk ~label ~battle_ends:false ~log)
+
+module Fade_in = Frlg_overworld.Warp_fade_in
+
+(* A menu's close: its fade out, the black, the dim spell, the steps up and
+   the still spell after them take about 2 s (110 frames). *)
+let fade_in_timeout_ms = 5000
+
+let fade_in_over watch ~code what =
+  let came_up m =
+    Fade_in.watch_frame watch m;
+    Fade_in.came_up watch
+  in
+  await_screen ~timeout_ms:fade_in_timeout_ms ~code what came_up
+
+let await_fade_in ~code what =
+  ignore (fade_in_over (Fade_in.watch ()) ~code what)
+
+(* The menus a party read goes through: none has a box or a fade the settle's
+   look tells from the overworld. *)
+let party_menus m =
+  Party_menu.party_menu m
+  || Option.is_some (Member_menu.cursor_row m)
+  || Option.is_some (Summary_screen.page m)
+
+let settle_menu_closed ~label ~log () =
+  Scene_looks.settle ~menu_open:party_menus ~await_fade_in:true Menu_closed
+    ~label ~battle_ends:false ~log
+
+let close_to_overworld ~label ~log =
+  raise_error
+    (Effects.with_probes
+       (Member_menu.probes @ Summary_screen.probes)
+       (settle_menu_closed ~label ~log))
 
 let max_pages = 8
-let page_or_question m = Dialog.selection_dialog m || Dialog.advance_arrow m
+let question m = Option.is_some (Dialog.yes_no_cursor m)
+let question_input_ms = 300
+let answer_cooldown_ms = 800
 
-let rec answer_yes_from page ~code what =
-  let m = await_screen ~code what page_or_question in
-  press Wire.A;
-  if not (Dialog.selection_dialog m) then (
-    ignore
-      (await_screen ~code (what ^ "'s next page") (fun m ->
-           not (Dialog.advance_arrow m)));
-    if page >= max_pages then fail code (what ^ " did not show")
-    else answer_yes_from (page + 1) ~code what)
+let answer_yes_to m =
+  if Dialog.yes_no_cursor m = Some false then taps Wire.Up 1;
+  ignore (Effects.submit [ Wire.Wait { wait_ms = question_input_ms } ]);
+  press ~cooldown_ms:answer_cooldown_ms Wire.A
 
-let answer_yes ~code what = answer_yes_from 1 ~code what
+let page_press_ms = 600
+
+(* One look, one move: Screen_state.Choice_talk on the FRLG readers. *)
+let choice_look ~taken m : Screen_state.Choice_talk.look =
+  { choice = question m; page = Dialog.advance_arrow m; past_choice = taken m }
+
+let rec answer_yes_from page ~code ~taken what =
+  let move m =
+    Screen_state.Choice_talk.move ~pressed:(page > 1) (choice_look ~taken m)
+  in
+  let m = await_screen ~code what (fun m -> move m <> Wait) in
+  match move m with
+  | Pick -> answer_yes_to m
+  | Answered | Wait -> ()
+  | Next_page when page > max_pages -> fail code (what ^ " did not show")
+  | Next_page ->
+      press ~cooldown_ms:page_press_ms Wire.A;
+      answer_yes_from (page + 1) ~code ~taken what
+
+let answer_yes ~code ~taken what =
+  Effects.with_probes Dialog.yes_no_probes (fun () ->
+      answer_yes_from 1 ~code ~taken what)
+
+let answer_if_asked ~timeout_ms () =
+  match Effects.await ~timeout_ms question with
+  | Holds m ->
+      answer_yes_to m;
+      true
+  | Timeout -> false
+
+let answer_yes_if_asked ~timeout_ms =
+  Effects.with_probes Dialog.yes_no_probes (answer_if_asked ~timeout_ms)
+
 let default_max_presses = 45
 
 let press_until ?(max_presses = default_max_presses) ~code what button
     ~cooldown_ms reader =
   let presses =
     List.init max_presses (fun _ ->
-        Wire.Press
-          { buttons = [ button ]; hold_ms = button_hold_ms; cooldown_ms })
+        Wire.press ~hold_ms:button_hold_ms ~cooldown_ms [ button ])
   in
   let holds = match Effects.read () with Some m -> reader m | None -> false in
   if not holds then
@@ -84,7 +137,7 @@ let press_until ?(max_presses = default_max_presses) ~code what button
     | Stopped _ -> ()
     | Finished _ -> fail code (what ^ " did not show")
 
-let dpad : Grid_maps.Direction.t -> Wire.button = function
+let dpad : Grid_geometry.Direction.t -> Wire.button = function
   | North -> Up
   | South -> Down
   | East -> Right
@@ -95,3 +148,35 @@ let close_press_ms = 500
 let close what reader =
   press_until ~code:"not_closed" (what ^ " closed") Wire.B
     ~cooldown_ms:close_press_ms (fun m -> not (reader m))
+
+(* The editor, the party and the bag: each closes through a fade of its own. *)
+let max_faded_closes = 3
+let fade_start_ms = 1000
+
+let open_now reader =
+  match Effects.read () with Some m -> reader m | None -> false
+
+(* Whether a fade shows within fade_start_ms, [watch] fed every frame. *)
+let fade_starts watch =
+  let started m =
+    Fade_in.watch_frame watch m;
+    Fade_in.fading watch || Fade_in.came_up watch
+  in
+  match Effects.await ~timeout_ms:fade_start_ms started with
+  | Holds _ -> true
+  | Timeout -> false
+
+let rec close_faded_from closes what reader =
+  let opened = open_now reader in
+  close what reader;
+  let watch = Fade_in.watch () in
+  if opened || fade_starts watch then
+    let m =
+      fade_in_over watch ~code:"not_closed" ("the screen after " ^ what)
+    in
+    if reader m then
+      if closes >= max_faded_closes then
+        fail "not_closed" (what ^ " did not close")
+      else close_faded_from (closes + 1) what reader
+
+let close_through_fades what reader = close_faded_from 1 what reader

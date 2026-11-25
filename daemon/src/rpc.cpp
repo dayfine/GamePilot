@@ -93,6 +93,26 @@ std::array<std::uint8_t, 3> require_rgb(const pa::JsonObject& params,
   return rgb;
 }
 
+// An optional [x, y] stick param, each a number in -1..1.
+std::optional<StickPosition> optional_stick(const pa::JsonObject& params,
+                                            const char* key) {
+  if (params.get_value(key) == nullptr) {
+    return std::nullopt;
+  }
+  const pa::JsonArray& values = require_array(params, key);
+  bool ok = values.size() == 2;
+  for (std::size_t i = 0; ok && i < values.size(); i++) {
+    const double v = values[i].to_double_default(2);
+    ok = values[i].is_float() && v >= -1 && v <= 1;
+  }
+  if (!ok) {
+    throw RpcError(kInvalidParams,
+                   std::string("param must be [x, y] in -1..1: ") + key);
+  }
+  return StickPosition{values[0].to_double_default(),
+                       values[1].to_double_default()};
+}
+
 // `min` and `max`, [r, g, b] each, with min <= max per channel.
 ColorRange require_color_range(const pa::JsonObject& params,
                                const std::string& probe_id) {
@@ -104,6 +124,156 @@ ColorRange require_color_range(const pa::JsonObject& params,
     }
   }
   return range;
+}
+
+// An integer param, required.
+int require_int(const pa::JsonObject& params, const char* key) {
+  const pa::JsonValue& value = require(params, key);
+  if (!value.is_integer()) {
+    throw RpcError(kInvalidParams,
+                   std::string("param must be an integer: ") + key);
+  }
+  return static_cast<int>(value.to_integer_default(0));
+}
+
+// A number param >= 0 when present.
+std::optional<double> optional_size(const pa::JsonObject& params,
+                                    const char* key) {
+  if (params.get_value(key) == nullptr) {
+    return std::nullopt;
+  }
+  const double value = require_number(params, key);
+  if (!(value >= 0)) {
+    throw RpcError(kInvalidParams, std::string("param must be >= 0: ") + key);
+  }
+  return value;
+}
+
+// A [w, h] param of numbers >= 0 when present.
+std::optional<std::array<double, 2>> optional_pair(const pa::JsonObject& params,
+                                                   const char* key) {
+  if (params.get_value(key) == nullptr) {
+    return std::nullopt;
+  }
+  const pa::JsonArray& values = require_array(params, key);
+  std::array<double, 2> pair{};
+  bool ok = values.size() == pair.size();
+  for (std::size_t i = 0; ok && i < pair.size(); i++) {
+    ok = values[i].is_float() && values[i].to_double_default(-1) >= 0;
+    pair[i] = values[i].to_double_default(0);
+  }
+  if (!ok) {
+    throw RpcError(kInvalidParams,
+                   std::string("param must be [w, h], each >= 0: ") + key);
+  }
+  return pair;
+}
+
+ChannelComparison::Op require_op(const pa::JsonObject& params) {
+  const std::string op = require_string(params, "op");
+  if (op == ">") {
+    return ChannelComparison::Op::kGreater;
+  }
+  if (op == ">=") {
+    return ChannelComparison::Op::kGreaterEqual;
+  }
+  if (op == "<") {
+    return ChannelComparison::Op::kLess;
+  }
+  if (op == "<=") {
+    return ChannelComparison::Op::kLessEqual;
+  }
+  throw RpcError(kInvalidParams, "op must be >, >=, < or <=: " + op);
+}
+
+// core.line_shares@1's `test`: one or more {weights: [r, g, b], op, value}.
+PixelTest require_pixel_test(const pa::JsonObject& probe,
+                             const std::string& probe_id) {
+  PixelTest test;
+  for (const pa::JsonValue& item : require_array(probe, "test")) {
+    const pa::JsonObject& entry = require_object(item, "test");
+    const pa::JsonArray& weights = require_array(entry, "weights");
+    ChannelComparison comparison;
+    bool ok = weights.size() == comparison.weights.size();
+    for (std::size_t c = 0; ok && c < comparison.weights.size(); c++) {
+      ok = weights[c].is_integer();
+      comparison.weights[c] =
+          static_cast<int>(weights[c].to_integer_default(0));
+    }
+    if (!ok) {
+      throw RpcError(kInvalidParams,
+                     "weights must be [r, g, b] integers: " + probe_id);
+    }
+    comparison.op = require_op(entry);
+    comparison.value = require_int(entry, "value");
+    test.push_back(comparison);
+  }
+  if (test.empty()) {
+    throw RpcError(kInvalidParams, "test needs a comparison: " + probe_id);
+  }
+  return test;
+}
+
+// core.find@1's params.
+FindSpec require_find(const pa::JsonObject& probe,
+                      const std::string& probe_id) {
+  FindSpec find;
+  for (const pa::JsonValue& item : require_array(probe, "filters")) {
+    find.filters.push_back(
+        require_color_range(require_object(item, "filter"), probe_id));
+  }
+  if (find.filters.empty()) {
+    throw RpcError(kInvalidParams, "filters needs a range: " + probe_id);
+  }
+  find.min_area = require_number(probe, "min_area");
+  find.max_area = optional_size(probe, "max_area");
+  if (!(find.min_area >= 1) ||
+      (find.max_area && *find.max_area < find.min_area)) {
+    throw RpcError(kInvalidParams,
+                   "min_area must be >= 1 and <= max_area: " + probe_id);
+  }
+  find.min_size = optional_pair(probe, "min_size");
+  find.max_size = optional_pair(probe, "max_size");
+  find.margin = optional_size(probe, "margin");
+  if (probe.get_value("template") != nullptr) {
+    find.template_hash = require_string(probe, "template");
+  }
+  if (probe.get_value("shape") != nullptr) {
+    find.shape_hash = require_string(probe, "shape");
+  }
+  return find;
+}
+
+pa::JsonArray rounded_list(const std::vector<double>& values, double scale) {
+  pa::JsonArray array;
+  for (const double value : values) {
+    array.push_back(round_to(value, scale));
+  }
+  return array;
+}
+
+// A blob in game pixels of the picture.
+pa::JsonObject blob_json(const FindResult& found, const Blob& blob) {
+  constexpr double kPixels = 1e3;
+  constexpr double kShares = 1e6;
+  pa::JsonObject json;
+  json["filter"] = static_cast<std::int64_t>(blob.filter);
+  json["x"] = round_to((blob.box.x - found.picture_x) / found.x_scale, kPixels);
+  json["y"] = round_to((blob.box.y - found.picture_y) / found.y_scale, kPixels);
+  json["w"] = round_to(blob.box.width / found.x_scale, kPixels);
+  json["h"] = round_to(blob.box.height / found.y_scale, kPixels);
+  json["fill"] =
+      round_to(static_cast<double>(blob.area) / blob.box.area(), kShares);
+  if (blob.stray) {
+    json["stray"] = round_to(*blob.stray, kShares);
+  }
+  if (blob.score) {
+    json["score"] = round_to(*blob.score, kPixels);
+  }
+  if (blob.overlap) {
+    json["overlap"] = round_to(*blob.overlap, kShares);
+  }
+  return json;
 }
 
 pa::JsonArray triple(const std::array<double, 3>& values) {
@@ -130,6 +300,18 @@ pa::JsonObject probe_result_json(const ProbeResult& result) {
           json["fraction"] = round_to(value.fraction, 1e6);
           json["mean"] =
               value.mean ? pa::JsonValue(triple(*value.mean)) : pa::JsonValue();
+        } else if constexpr (std::is_same_v<T, LineShares>) {
+          constexpr double kShares = 1e6;
+          json["kind"] = std::string(kLineSharesKind);
+          json["rows"] = rounded_list(value.rows, kShares);
+          json["columns"] = rounded_list(value.columns, kShares);
+        } else if constexpr (std::is_same_v<T, FindResult>) {
+          json["kind"] = std::string(kFindKind);
+          pa::JsonArray blobs;
+          for (const Blob& blob : value.blobs) {
+            blobs.push_back(blob_json(value, blob));
+          }
+          json["blobs"] = std::move(blobs);
         } else {
           json["kind"] = std::string(kTemplateMatchKind);
           json["score"] = round_to(value.score, 1e6);
@@ -229,10 +411,23 @@ SubscribeParams decode_subscribe(const pa::JsonObject& params) {
       if (const pa::JsonValue* ink = probe.get_value("ink")) {
         spec.ink = require_color_range(require_object(*ink, "ink"), spec.id);
       }
+    } else if (spec.kind == kFindKind) {
+      if (probe.get_value("ink") != nullptr) {
+        throw RpcError(kInvalidParams,
+                       "ink is only for core.template_match@1: " + spec.id);
+      }
+      spec.find = require_find(probe, spec.id);
     } else if (has_template) {
-      throw RpcError(
-          kInvalidParams,
-          "template and ink are only for core.template_match@1: " + spec.id);
+      throw RpcError(kInvalidParams,
+                     "template and ink are only for core.template_match@1 "
+                     "(template also for core.find@1): " +
+                         spec.id);
+    }
+    if (spec.kind == kLineSharesKind) {
+      spec.pixel_test = require_pixel_test(probe, spec.id);
+    } else if (probe.get_value("test") != nullptr) {
+      throw RpcError(kInvalidParams,
+                     "test is only for core.line_shares@1: " + spec.id);
     }
     const bool has_range =
         probe.get_value("min") != nullptr || probe.get_value("max") != nullptr;
@@ -259,15 +454,50 @@ UnsubscribeParams decode_unsubscribe(const pa::JsonObject& params) {
   return unsubscribe;
 }
 
+namespace {
+
+// The buttons by KeyMask bit (backend.h).
+constexpr std::array<const char*, 13> kButtons = {
+    "A",    "B", "Select", "Start", "Right", "Left", "Up",
+    "Down", "R", "L",      "Home",  "X",     "Y"};
+
+}  // namespace
+
 KeyMask button_mask(const std::string& name) {
-  static constexpr std::array<const char*, 10> kButtons = {
-      "A", "B", "Select", "Start", "Right", "Left", "Up", "Down", "R", "L"};
   for (std::size_t bit = 0; bit < kButtons.size(); bit++) {
     if (name == kButtons[bit]) {
       return static_cast<KeyMask>(1u << bit);
     }
   }
   return 0;
+}
+
+RpcError switch_button_refusal(const std::string& backend, KeyMask mask) {
+  std::string button;
+  for (std::size_t bit = 0; bit < kButtons.size(); bit++) {
+    if ((mask & kSwitchOnlyKeys & (1u << bit)) != 0) {
+      button = kButtons[bit];
+      break;
+    }
+  }
+  pa::JsonObject data;
+  data["backend"] = backend;
+  data["button"] = button;
+  return RpcError(kInvalidParams,
+                  button + " is a Switch button: the " + backend +
+                      " backend has no " + button,
+                  std::move(data));
+}
+
+RpcError switch_stick_refusal(const std::string& backend,
+                              const std::string& stick) {
+  pa::JsonObject data;
+  data["backend"] = backend;
+  data["stick"] = stick;
+  return RpcError(
+      kInvalidParams,
+      stick + " is a Switch stick: the " + backend + " backend has no sticks",
+      std::move(data));
 }
 
 SubmitParams decode_submit(const pa::JsonObject& params) {
@@ -285,6 +515,8 @@ SubmitParams decode_submit(const pa::JsonObject& params) {
         }
         input.buttons = static_cast<KeyMask>(input.buttons | bit);
       }
+      input.left_stick = optional_stick(command, "left_stick");
+      input.right_stick = optional_stick(command, "right_stick");
       input.hold_ms = optional_ms(command, "hold_ms");
       input.cooldown_ms = optional_ms(command, "cooldown_ms");
     } else if (command.get_value("wait_ms") != nullptr) {
@@ -299,6 +531,21 @@ SubmitParams decode_submit(const pa::JsonObject& params) {
 }
 
 CancelParams decode_cancel(const pa::JsonObject&) { return CancelParams{}; }
+
+LeaseAcquireParams decode_lease_acquire(const pa::JsonObject& params) {
+  LeaseAcquireParams lease;
+  lease.owner = require_string(params, "owner");
+  if (lease.owner.empty()) {
+    throw RpcError(kInvalidParams, "owner must not be empty");
+  }
+  if (params.get_value("ttl_ms") != nullptr) {
+    lease.ttl_ms = require_number(params, "ttl_ms");
+    if (!(lease.ttl_ms > 0)) {
+      throw RpcError(kInvalidParams, "ttl_ms must be positive");
+    }
+  }
+  return lease;
+}
 
 pa::JsonValue result_message(const pa::JsonValue& id, pa::JsonObject result) {
   pa::JsonObject message;
@@ -428,6 +675,78 @@ pa::JsonValue frame_notification(std::int64_t seq, std::int64_t load,
   return message;
 }
 
+pa::JsonObject status_result(const DaemonStatus& status) {
+  pa::JsonObject result;
+  result["t_ms"] = round_to(status.t_ms, 10);
+  result["backend"] = status.backend;
+  if (status.client) {
+    result["client"] = *status.client;
+  } else {
+    result["client"] = pa::JsonValue();
+  }
+  result["clients"] = status.clients;
+  if (status.lease) {
+    result["lease"] = lease_json(*status.lease, status.t_ms);
+  } else {
+    result["lease"] = pa::JsonValue();
+  }
+  result["fidelity"] = status.fidelity;
+  pa::JsonArray threads;
+  for (const ThreadBeat& beat : status.health.threads) {
+    pa::JsonObject thread;
+    thread["name"] = beat.name;
+    thread["seq"] = beat.seq;
+    thread["t_ms"] = round_to(beat.t_ms, 10);
+    threads.push_back(std::move(thread));
+  }
+  result["threads"] = std::move(threads);
+  pa::JsonObject ring;
+  ring["depth"] = static_cast<std::int64_t>(status.health.ring_depth);
+  ring["capacity"] = static_cast<std::int64_t>(status.health.ring_capacity);
+  result["ring"] = std::move(ring);
+  pa::JsonObject gaps;
+  gaps["count"] = status.health.gaps;
+  gaps["frames"] = status.health.gap_frames;
+  result["gaps"] = std::move(gaps);
+  return result;
+}
+
+pa::JsonObject lease_json(const LeaseHolder& holder, double now_ms) {
+  pa::JsonObject lease;
+  lease["owner"] = holder.owner;
+  lease["client"] = holder.client;
+  lease["held_ms"] = static_cast<std::int64_t>(now_ms - holder.since_ms);
+  lease["ttl_ms"] = static_cast<std::int64_t>(holder.ttl_ms);
+  return lease;
+}
+
+pa::JsonObject lease_acquire_result(const LeaseHolder& holder, double now_ms) {
+  pa::JsonObject result;
+  result["lease"] = lease_json(holder, now_ms);
+  return result;
+}
+
+pa::JsonObject lease_release_result(bool released) {
+  pa::JsonObject result;
+  result["released"] = released;
+  return result;
+}
+
+RpcError lease_refusal(const LeaseHolder& holder, double now_ms) {
+  return RpcError(kLeaseHeld, "input lease held by " + holder.owner,
+                  lease_json(holder, now_ms));
+}
+
+RpcError view_only_refusal(const std::string& backend,
+                           const std::string& method) {
+  pa::JsonObject data;
+  data["backend"] = backend;
+  data["method"] = method;
+  return RpcError(kBackendError,
+                  "the " + backend + " backend is view-only: it takes no input",
+                  std::move(data));
+}
+
 pa::JsonValue batch_done_notification(const std::string& batch_id,
                                       std::int64_t seq, double t_ms) {
   pa::JsonObject params;
@@ -441,10 +760,39 @@ pa::JsonValue batch_done_notification(const std::string& batch_id,
   return message;
 }
 
-pa::JsonValue wire_log_line(const char* dir, double t_ms, pa::JsonValue msg) {
+pa::JsonValue stop_notification(const std::string& reason) {
+  pa::JsonObject params;
+  params["reason"] = reason;
+  pa::JsonObject message;
+  message["jsonrpc"] = "2.0";
+  message["method"] = "stop";
+  message["params"] = std::move(params);
+  return message;
+}
+
+pa::JsonValue keepawake_notification(const std::string& key, double idle_ms) {
+  pa::JsonObject params;
+  params["key"] = key;
+  params["idle_ms"] = static_cast<std::int64_t>(idle_ms);
+  pa::JsonObject message;
+  message["jsonrpc"] = "2.0";
+  message["method"] = "keepawake";
+  message["params"] = std::move(params);
+  return message;
+}
+
+pa::JsonValue wire_log_line(const char* dir, double t_ms, pa::JsonValue msg,
+                            std::optional<int> conn,
+                            const std::optional<std::string>& owner) {
   pa::JsonObject line;
   line["dir"] = dir;
   line["t_ms"] = round_to(t_ms, 10);
+  if (conn) {
+    line["conn"] = static_cast<std::int64_t>(*conn);
+  }
+  if (owner) {
+    line["owner"] = *owner;
+  }
   line["msg"] = std::move(msg);
   return line;
 }

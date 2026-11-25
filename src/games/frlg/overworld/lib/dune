@@ -5,9 +5,10 @@
   gamepilot.wire
   gamepilot.effects
   gamepilot.screen_state
+  gamepilot.grid_geometry
   gamepilot.grid_maps
   gamepilot.grid_planning
   gamepilot.grid_trace
   gamepilot.grid_walker
-  gamepilot.story
+  gamepilot.pokemon_checkpoints
   gamepilot.frlg_readers))

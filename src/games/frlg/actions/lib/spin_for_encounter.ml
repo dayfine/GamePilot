@@ -5,7 +5,8 @@ let batch_turns = 24
 let turn_hold_ms = 30
 let turn_release_ms = 100
 
-let clockwise : Grid_maps.Direction.t -> Grid_maps.Direction.t = function
+let clockwise : Grid_geometry.Direction.t -> Grid_geometry.Direction.t =
+  function
   | North -> East
   | East -> South
   | South -> West
@@ -25,12 +26,7 @@ let encounter m =
   facts.battle || facts.fade <> No_fade
 
 let turn d =
-  Wire.Press
-    {
-      buttons = [ M.dpad d ];
-      hold_ms = turn_hold_ms;
-      cooldown_ms = turn_release_ms;
-    }
+  Wire.press ~hold_ms:turn_hold_ms ~cooldown_ms:turn_release_ms [ M.dpad d ]
 
 let seen_now () =
   match Effects.read () with Some m -> encounter m | None -> false

@@ -1,6 +1,7 @@
 (** FRLG item names by bag pocket, as the bag shows them, from the file
-    [tools/extract_frlg_item_names.py] writes. A bag reader draws only the open
-    pocket's names: that pocket's list is all a row can show. *)
+    [src/games/frlg/assets/extract/extract_frlg_item_names.py] writes. A bag
+    reader draws only the open pocket's names: that pocket's list is all a row
+    can show. *)
 
 type pocket = Items | Key_items | Poke_balls | Tm_case | Berry_pouch
 type t

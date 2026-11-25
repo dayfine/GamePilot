@@ -1,0 +1,49 @@
+# A3. ACE: Master Balls and Luxury Balls
+
+Goal: use arbitrary code execution, bootstrapped from the Mail Glitch, to put large stacks of Master
+Balls and Luxury Balls (and other prep items) in the bag, so A4 and A6 never run short of balls.
+
+## Source plan
+
+The fork's `docs/design/FRLG-DexCollection-Plan.md` (fork PR #776, Track 1B "Generic Box-Name ACE
+Runner") is the plan to carry over:
+
+- A runner with **named presets** and **custom Box 1-14 names**: the payload is typed as PC box names
+  with the naming-screen keyboard, then triggered.
+- First preset, "bag prep": Master Balls in Balls slot 1, Luxury Balls in slot 2, Rare Candies, Max
+  Repels, Escape Ropes, coins and money.
+- **Guardrails:** save in the overworld before the PC; check every character and the length of each
+  box name before any press; type and confirm each name with the cursor and screen checked; trigger;
+  check the game still answers and the expected change happened before saving again; on a mismatch,
+  stop without saving.
+- The exact payloads for the Switch release must be verified against its memory layout before any
+  preset ships (the plan says so; none is verified yet).
+
+Track 1A of the same plan (Mail Glitch Activation) is what GamePilot already ported as 01-celadon-setup..08-activate-and-verify.
+How the Mail Glitch leads to ACE is in the
+[pomeg-letterbombers ACE notes](https://pomeg-letterbombers.github.io/pokemon-ace-notes/mail-glitch).
+
+## Steps
+
+1. **Naming-screen typer** (`src/games/frlg/actions`): all three pages (upper, lower, symbols), the
+   key grids taken from `naming_screen.c` in the pret decomp, cursor and page reader to check each
+   move. Needed for the full ACE character set; it also covers player and nickname typing.
+2. **Box rename action**: PC, Box options, rename, type, confirm, read the new name back.
+3. **ACE runner** (`frlg.ace`): presets as data (`src/games/frlg/assets/ace_presets.json`), the
+   guardrails above as checks in the plan, one checkpoint per preset.
+4. **Proof on mGBA**: one preset end to end, with a bag reader check of each item count.
+
+## Prerequisites
+
+- 08-activate-and-verify done on the save (the glitch is active), and whatever bootstrap state the chosen ACE route
+  needs, which the fork plan calls the "bootstrap species".
+- A bag reader that reads counts in the Balls and Items pockets.
+
+## Open questions
+
+- Which ACE route and payloads? Nothing is verified for the Switch release yet; mGBA can verify a
+  payload's memory effect directly before the Switch is tried.
+- Why ACE rather than more `duplicate_item` rounds (one item per round and one Retro Mail)? ACE gives
+  a full stack at once and can make items that cannot be bought; duplication needs one held item to
+  start from.
+- How many Luxury Balls: A4's legendary plan asks for 50 per legendary by default.

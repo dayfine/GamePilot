@@ -1,4 +1,4 @@
-module J = Grid_maps.Json_field
+module J = Json_field
 
 type member = Species of string | Slot of int
 
@@ -6,7 +6,7 @@ let decode ~action read args =
   match read ~where:(action ^ ": ") args with
   | value -> Ok value
   | exception J.Invalid e ->
-      Error (Story.Failure.cause ~repeats:true "bad_args" e)
+      Error (Pokemon_checkpoints.Failure.cause ~repeats:true "bad_args" e)
 
 let party_slots = 6
 
@@ -25,3 +25,12 @@ let member ~where args =
 let member_to_string = function
   | Species s -> s
   | Slot n -> Printf.sprintf "slot %d" n
+
+let member_keys =
+  [ "species"; "sweeper"; "knock_off_species"; "recycle_species" ]
+
+let field_move_users = [ ("cut_tree", "cut") ]
+
+let picks_member ~action args =
+  (not (List.mem_assoc action field_move_users))
+  && List.exists (fun key -> J.has key args) member_keys

@@ -1,0 +1,3 @@
+(library
+ (name room_policy)
+ (public_name gamepilot.room_policy))

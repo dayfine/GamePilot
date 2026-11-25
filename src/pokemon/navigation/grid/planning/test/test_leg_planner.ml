@@ -2,7 +2,7 @@
    and a warp. Ported from the C++ fork's Pokemon_LegPlanner_Tests.cpp; the
    cases that weigh open stops are in test_open_stops.ml. *)
 
-open Grid_maps
+open Grid_geometry
 open Grid_planning
 open Leg_case
 
@@ -104,4 +104,4 @@ let cases =
 
 let () =
   List.iter run cases;
-  Case_table.finish ()
+  Table_test.finish ()

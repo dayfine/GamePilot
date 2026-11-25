@@ -1,8 +1,0 @@
-{
-  "jsonrpc": "2.0",
-  "id": 11,
-  "method": "backend.save_state",
-  "params": {
-    "path": "/Users/example/FRLGLab/mgba/gamepilot/states/mg-02.start.ss"
-  }
-}

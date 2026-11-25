@@ -1,0 +1,12 @@
+{
+  "jsonrpc": "2.0",
+  "id": 44,
+  "error": {
+    "code": -32602,
+    "message": "left_stick is a Switch stick: the mgba backend has no sticks",
+    "data": {
+      "backend": "mgba",
+      "stick": "left_stick"
+    }
+  }
+}

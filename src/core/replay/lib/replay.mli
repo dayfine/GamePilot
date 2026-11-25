@@ -1,5 +1,5 @@
 (** Replay handler: runs a program against a recorded wire log
-    ([contracts/v1/14-wire_log.line.json] format) instead of the daemon.
+    ([protocol/v1/14-wire_log.line.json] format) instead of the daemon.
 
     Daemon output ([dir = out]) is fed to the program in log order: frames,
     [batch_done] notifications and responses. Each message the program sends
@@ -12,6 +12,9 @@
     the PNG bytes (the base64 payload) for [probe.upload_template]; commands,
     then batch id, for [submit]. [hello] and [backend.load_state] params are not
     compared (client names and state paths vary by machine).
+
+    A log of a daemon that served several clients replays the program's
+    connection only: the one that sent the log's first client message.
 
     Pure: no sockets, no clock, nothing written. *)
 
@@ -32,3 +35,8 @@ val run : log -> (unit -> 'a) -> 'a
     first one it did not send, unless one of its waits timed out at a recorded
     point: then it is on its own failure path), or [Effects.Disconnected] when
     the program waits past the end of the log. *)
+
+val run_with_backend : log -> (Wire.backend -> 'a) -> 'a
+(** {!run}, the program given the [backend] of the log's recorded [hello] reply
+    (where the game picture sat in the frame), as [Session.run_with_backend]
+    gives it live. *)

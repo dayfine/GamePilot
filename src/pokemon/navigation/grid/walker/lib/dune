@@ -5,5 +5,5 @@
  (libraries
   gamepilot.wire
   gamepilot.effects
-  gamepilot.grid_maps
+  gamepilot.grid_geometry
   gamepilot.grid_trace))

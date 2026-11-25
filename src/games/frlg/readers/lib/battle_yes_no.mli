@@ -26,3 +26,11 @@ val min_frame_share : float
 
 val yes_no_box : Effects.measurements -> bool
 (** The white YES/NO box with its slate frame beside the teal text box. *)
+
+val move_learn : Effects.measurements -> bool
+(** The YES/NO box with the player's HP box beside it
+    ({!Battle_screen.player_box_left}): a move to learn ("Delete a move ...?",
+    "Stop learning ...?"), where "Use next POKéMON?" has the fainted battler's
+    box gone. The box covers the HP box's right end, so the whole HP box never
+    reads with it (Victory Road, mGBA, 2026-11-23: a move learn taken for "Use
+    next" was answered NO and asked again for ever). *)

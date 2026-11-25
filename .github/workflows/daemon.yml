@@ -5,13 +5,13 @@ on:
     branches: [main]
     paths:
       - "daemon/**"
-      - "contracts/**"
+      - "protocol/**"
       - "third_party/Arduino-Source"
       - ".github/workflows/daemon.yml"
   pull_request:
     paths:
       - "daemon/**"
-      - "contracts/**"
+      - "protocol/**"
       - "third_party/Arduino-Source"
       - ".github/workflows/daemon.yml"
   workflow_dispatch:

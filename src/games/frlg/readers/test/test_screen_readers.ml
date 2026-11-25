@@ -7,6 +7,7 @@
      choice  a Yes/No box above it     textbox a battle's teal text box
      menu    the battle action menu    battle  any battle screen
      black, white  a fade              dark    black corners, lit middle
+     loadmenu  the load menu (CONTINUE)
      none    none of these
 
    Switch names keep their CommandLineTests folder and file name, whose
@@ -76,6 +77,26 @@ let readers =
       expected = tagged "choice";
     };
     {
+      reader = "yes_no_cursor";
+      verdict =
+        (fun m ->
+          match Dialog.yes_no_cursor m with
+          | Some true -> "yes"
+          | Some false -> "no"
+          | None -> "none");
+      expected = (fun tags -> if List.mem "choice" tags then "yes" else "none");
+    };
+    {
+      reader = "yes_no_arrow";
+      verdict =
+        (fun m ->
+          match Dialog.yes_no_arrow m with
+          | Some true -> "yes"
+          | Some false -> "no"
+          | None -> "none");
+      expected = (fun tags -> if List.mem "choice" tags then "yes" else "none");
+    };
+    {
       reader = "battle_text_box";
       verdict = flag Battle_screen.battle_text_box;
       expected = tagged "textbox";
@@ -89,6 +110,11 @@ let readers =
       reader = "dark_corners";
       verdict = flag Dark_corners.dark_corners;
       expected = tagged "dark";
+    };
+    {
+      reader = "load_menu";
+      verdict = flag Load_menu.load_menu_open;
+      expected = tagged "loadmenu";
     };
     {
       reader = "facts";
@@ -120,7 +146,7 @@ let cases backend images =
       List.map
         (fun r ->
           {
-            Case_table.name = Printf.sprintf "%s %s: %s" backend r.reader image;
+            Table_test.name = Printf.sprintf "%s %s: %s" backend r.reader image;
             input = (fun () -> r.verdict m);
             expectation = expectation r image;
           })
@@ -150,5 +176,5 @@ let () =
       [ "switch"; "mgba" ]
   in
   List.iter (fun (backend, images) -> print_tally backend images) backends;
-  Case_table.run "screen readers"
+  Table_test.run "screen readers"
     (List.concat_map (fun (backend, images) -> cases backend images) backends)

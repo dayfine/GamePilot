@@ -1,0 +1,17 @@
+repo src/games/frlg/readers/test/images/mgba/pc-deposit-lavender/01-front.png|pc/01-front__overworld.png
+repo src/games/frlg/readers/test/images/mgba/pc-deposit-lavender/02-boot.png|pc/02-boot__text.png
+repo src/games/frlg/readers/test/images/mgba/pc-deposit-lavender/03-list.png|pc/03-list__pclist-cursor0.png
+repo src/games/frlg/readers/test/images/mgba/pc-deposit-lavender/04-accessed.png|pc/04-accessed__text.png
+repo src/games/frlg/readers/test/images/mgba/pc-deposit-lavender/05-opened.png|pc/05-opened__text.png
+repo src/games/frlg/readers/test/images/mgba/pc-deposit-lavender/06-menu.png|pc/06-menu__storagemenu-cursor0.png
+repo src/games/frlg/readers/test/images/mgba/pc-deposit-lavender/07-menu-deposit.png|pc/07-menu-deposit__storagemenu-cursor1.png
+repo src/games/frlg/readers/test/images/mgba/pc-deposit-lavender/08-panel.png|pc/08-panel__partypanel-cursor0.png
+repo src/games/frlg/readers/test/images/mgba/pc-deposit-lavender/09-panel-1.png|pc/09-panel-1__partypanel-cursor1.png
+repo src/games/frlg/readers/test/images/mgba/pc-deposit-lavender/10-panel-2.png|pc/10-panel-2__partypanel-cursor2.png
+repo src/games/frlg/readers/test/images/mgba/pc-deposit-lavender/11-monmenu.png|pc/11-monmenu__monmenu-cursor0.png
+repo src/games/frlg/readers/test/images/mgba/pc-deposit-lavender/12-chooser.png|pc/12-chooser__boxchooser.png
+repo src/games/frlg/readers/test/images/mgba/pc-deposit-lavender/13a-storing.png|pc/13a-storing__partypanel-cursor2.png
+repo src/games/frlg/readers/test/images/mgba/pc-deposit-lavender/14-continue.png|pc/14-continue__yesno-cursor1.png
+repo src/games/frlg/readers/test/images/mgba/pc-deposit-lavender/15-back-menu.png|pc/15-back-menu__storagemenu-cursor1.png
+repo src/games/frlg/readers/test/images/mgba/pc-deposit-lavender/16-back-list.png|pc/16-back-list__pclist-cursor0.png
+repo src/games/frlg/readers/test/images/mgba/pc-deposit-lavender/18-out2.png|pc/18-out2__overworld.png

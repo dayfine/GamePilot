@@ -1,7 +1,7 @@
 open Grid_trace
 
 type t = {
-  mover : Grid_maps.Direction.t -> int -> Wire.command list;
+  mover : Grid_geometry.Direction.t -> int -> Wire.command list;
   interrupts : Leg_interrupt.t list;
   log : string -> unit;
   tracer : Leg_tracer.t option;
@@ -14,7 +14,7 @@ let default_max_interruptions = 5
 (* How soon after a hold starts a sign's message shows, at the latest, when the
    hold bumps into it: about two walking tiles, however fast the player moves.
    Running, 3 tiles were 399ms, and the Pallet Town sign spoke 353 to 726ms
-   into each hold south, which was held into it 6 times (console B,
+   into each hold south, which was held into it 6 times (Switch,
    2026-11-13 18:29, 12.03 pallet_shore). *)
 let blocked_message_window_ms = 800
 
@@ -57,12 +57,16 @@ let hold walker ~hold_watchers (leg : Leg_spec.t) hold_ms =
       None
 
 (* Whether [leg], held again after an interrupt, was interrupted again soon:
-   something on the way that speaks, like a sign, stops every hold. *)
+   something on the way that speaks, like a sign, stops every hold. A wild
+   battle is luck, however soon it comes (two in a row on Route 8's grass,
+   Switch, 2026-11-24): it never says the way is blocked. *)
 let blocked (leg : Leg_spec.t) ~interruptions held =
   let window =
     max (leg.tile_ms * blocked_window_tiles) blocked_message_window_ms
   in
-  leg.stop_if_blocked && interruptions > 1 && held.elapsed_ms < window
+  leg.stop_if_blocked && interruptions > 1
+  && held.interrupt.kind <> Wild_battle
+  && held.elapsed_ms < window
 
 (* Whether [leg] stops at the interrupt just cleared: a blocked leg, or an
    open leg asked to stop at any. *)

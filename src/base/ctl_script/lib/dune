@@ -1,0 +1,4 @@
+(library
+ (name ctl_script)
+ (public_name gamepilot.ctl_script)
+ (libraries gamepilot.wire))

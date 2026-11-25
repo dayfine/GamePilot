@@ -34,8 +34,8 @@ type t = { map : string; lines : line list; budget : int option }
 val max_quantity : int
 (** 99. *)
 
-val of_args : stocks -> where:string -> Grid_maps.Json_field.obj -> t
-(** Raises {!Grid_maps.Json_field.Invalid} naming the field. *)
+val of_args : stocks -> where:string -> Json_field.obj -> t
+(** Raises {!Json_field.Invalid} naming the field. *)
 
 type buy = { row : int; buy_item : string; buy_quantity : int; cost : int }
 (** [row]: the item's row on the BUY list, from 0. *)

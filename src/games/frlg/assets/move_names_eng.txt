@@ -1,0 +1,356 @@
+# FRLG move names (eng), made by src/games/frlg/assets/extract/extract_frlg_move_names.py
+# from Packages Resources/PokemonFRLG/BattleMovesOCR.json: <slug> <name>
+pound POUND
+karate-chop KARATE CHOP
+double-slap DOUBLESLAP
+comet-punch COMET PUNCH
+mega-punch MEGA PUNCH
+pay-day PAY DAY
+fire-punch FIRE PUNCH
+ice-punch ICE PUNCH
+thunder-punch THUNDERPUNCH
+scratch SCRATCH
+vise-grip VICEGRIP
+guillotine GUILLOTINE
+razor-wind RAZOR WIND
+swords-dance SWORDS DANCE
+cut CUT
+gust GUST
+wing-attack WING ATTACK
+whirlwind WHIRLWIND
+fly FLY
+bind BIND
+slam SLAM
+vine-whip VINE WHIP
+stomp STOMP
+double-kick DOUBLE KICK
+mega-kick MEGA KICK
+jump-kick JUMP KICK
+rolling-kick ROLLING KICK
+sand-attack SAND-ATTACK
+headbutt HEADBUTT
+horn-attack HORN ATTACK
+fury-attack FURY ATTACK
+horn-drill HORN DRILL
+tackle TACKLE
+body-slam BODY SLAM
+wrap WRAP
+take-down TAKE DOWN
+thrash THRASH
+double-edge DOUBLE-EDGE
+tail-whip TAIL WHIP
+poison-sting POISON STING
+twineedle TWINEEDLE
+pin-missile PIN MISSILE
+leer LEER
+bite BITE
+growl GROWL
+roar ROAR
+sing SING
+supersonic SUPERSONIC
+sonic-boom SONICBOOM
+disable DISABLE
+acid ACID
+ember EMBER
+flamethrower FLAMETHROWER
+mist MIST
+water-gun WATER GUN
+hydro-pump HYDRO PUMP
+surf SURF
+ice-beam ICE BEAM
+blizzard BLIZZARD
+psybeam PSYBEAM
+bubble-beam BUBBLEBEAM
+aurora-beam AURORA BEAM
+hyper-beam HYPER BEAM
+peck PECK
+drill-peck DRILL PECK
+submission SUBMISSION
+low-kick LOW KICK
+counter COUNTER
+seismic-toss SEISMIC TOSS
+strength STRENGTH
+absorb ABSORB
+mega-drain MEGA DRAIN
+leech-seed LEECH SEED
+growth GROWTH
+razor-leaf RAZOR LEAF
+solar-beam SOLARBEAM
+poison-powder POISONPOWDER
+stun-spore STUN SPORE
+sleep-powder SLEEP POWDER
+petal-dance PETAL DANCE
+string-shot STRING SHOT
+dragon-rage DRAGON RAGE
+fire-spin FIRE SPIN
+thunder-shock THUNDERSHOCK
+thunderbolt THUNDERBOLT
+thunder-wave THUNDER WAVE
+thunder THUNDER
+rock-throw ROCK THROW
+earthquake EARTHQUAKE
+fissure FISSURE
+dig DIG
+toxic TOXIC
+confusion CONFUSION
+psychic PSYCHIC
+hypnosis HYPNOSIS
+meditate MEDITATE
+agility AGILITY
+quick-attack QUICK ATTACK
+rage RAGE
+teleport TELEPORT
+night-shade NIGHT SHADE
+mimic MIMIC
+screech SCREECH
+double-team DOUBLE TEAM
+recover RECOVER
+harden HARDEN
+minimize MINIMIZE
+smokescreen SMOKESCREEN
+confuse-ray CONFUSE RAY
+withdraw WITHDRAW
+defense-curl DEFENSE CURL
+barrier BARRIER
+light-screen LIGHT SCREEN
+haze HAZE
+reflect REFLECT
+focus-energy FOCUS ENERGY
+bide BIDE
+metronome METRONOME
+mirror-move MIRROR MOVE
+self-destruct SELFDESTRUCT
+egg-bomb EGG BOMB
+lick LICK
+smog SMOG
+sludge SLUDGE
+bone-club BONE CLUB
+fire-blast FIRE BLAST
+waterfall WATERFALL
+clamp CLAMP
+swift SWIFT
+skull-bash SKULL BASH
+spike-cannon SPIKE CANNON
+constrict CONSTRICT
+amnesia AMNESIA
+kinesis KINESIS
+soft-boiled SOFTBOILED
+high-jump-kick HI JUMP KICK
+glare GLARE
+dream-eater DREAM EATER
+poison-gas POISON GAS
+barrage BARRAGE
+leech-life LEECH LIFE
+lovely-kiss LOVELY KISS
+sky-attack SKY ATTACK
+transform TRANSFORM
+bubble BUBBLE
+dizzy-punch DIZZY PUNCH
+spore SPORE
+flash FLASH
+psywave PSYWAVE
+splash SPLASH
+acid-armor ACID ARMOR
+crabhammer CRABHAMMER
+explosion EXPLOSION
+fury-swipes FURY SWIPES
+bonemerang BONEMERANG
+rest REST
+rock-slide ROCK SLIDE
+hyper-fang HYPER FANG
+sharpen SHARPEN
+conversion CONVERSION
+tri-attack TRI ATTACK
+super-fang SUPER FANG
+slash SLASH
+substitute SUBSTITUTE
+struggle STRUGGLE
+sketch SKETCH
+triple-kick TRIPLE KICK
+thief THIEF
+spider-web SPIDER WEB
+mind-reader MIND READER
+nightmare NIGHTMARE
+flame-wheel FLAME WHEEL
+snore SNORE
+curse CURSE
+flail FLAIL
+conversion-2 CONVERSION 2
+aeroblast AEROBLAST
+cotton-spore COTTON SPORE
+reversal REVERSAL
+spite SPITE
+powder-snow POWDER SNOW
+protect PROTECT
+mach-punch MACH PUNCH
+scary-face SCARY FACE
+feint-attack FAINT ATTACK
+sweet-kiss SWEET KISS
+belly-drum BELLY DRUM
+sludge-bomb SLUDGE BOMB
+mud-slap MUD-SLAP
+octazooka OCTAZOOKA
+spikes SPIKES
+zap-cannon ZAP CANNON
+foresight FORESIGHT
+destiny-bond DESTINY BOND
+perish-song PERISH SONG
+icy-wind ICY WIND
+detect DETECT
+bone-rush BONE RUSH
+lock-on LOCK-ON
+outrage OUTRAGE
+sandstorm SANDSTORM
+giga-drain GIGA DRAIN
+endure ENDURE
+charm CHARM
+rollout ROLLOUT
+false-swipe FALSE SWIPE
+swagger SWAGGER
+milk-drink MILK DRINK
+spark SPARK
+fury-cutter FURY CUTTER
+steel-wing STEEL WING
+mean-look MEAN LOOK
+attract ATTRACT
+sleep-talk SLEEP TALK
+heal-bell HEAL BELL
+return RETURN
+present PRESENT
+frustration FRUSTRATION
+safeguard SAFEGUARD
+pain-split PAIN SPLIT
+sacred-fire SACRED FIRE
+magnitude MAGNITUDE
+dynamic-punch DYNAMICPUNCH
+megahorn MEGAHORN
+dragon-breath DRAGONBREATH
+baton-pass BATON PASS
+encore ENCORE
+pursuit PURSUIT
+rapid-spin RAPID SPIN
+sweet-scent SWEET SCENT
+iron-tail IRON TAIL
+metal-claw METAL CLAW
+vital-throw VITAL THROW
+morning-sun MORNING SUN
+synthesis SYNTHESIS
+moonlight MOONLIGHT
+hidden-power HIDDEN POWER
+cross-chop CROSS CHOP
+twister TWISTER
+rain-dance RAIN DANCE
+sunny-day SUNNY DAY
+crunch CRUNCH
+mirror-coat MIRROR COAT
+psych-up PSYCH UP
+extreme-speed EXTREMESPEED
+ancient-power ANCIENTPOWER
+shadow-ball SHADOW BALL
+future-sight FUTURE SIGHT
+rock-smash ROCK SMASH
+whirlpool WHIRLPOOL
+beat-up BEAT UP
+fake-out FAKE OUT
+uproar UPROAR
+stockpile STOCKPILE
+spit-up SPIT UP
+swallow SWALLOW
+heat-wave HEAT WAVE
+hail HAIL
+torment TORMENT
+flatter FLATTER
+will-o-wisp WILL-O-WISP
+memento MEMENTO
+facade FACADE
+focus-punch FOCUS PUNCH
+smelling-salts SMELLINGSALT
+follow-me FOLLOW ME
+nature-power NATURE POWER
+charge CHARGE
+taunt TAUNT
+helping-hand HELPING HAND
+trick TRICK
+role-play ROLE PLAY
+wish WISH
+assist ASSIST
+ingrain INGRAIN
+superpower SUPERPOWER
+magic-coat MAGIC COAT
+recycle RECYCLE
+revenge REVENGE
+brick-break BRICK BREAK
+yawn YAWN
+knock-off KNOCK OFF
+endeavor ENDEAVOR
+eruption ERUPTION
+skill-swap SKILL SWAP
+imprison IMPRISON
+refresh REFRESH
+grudge GRUDGE
+snatch SNATCH
+secret-power SECRET POWER
+dive DIVE
+arm-thrust ARM THRUST
+camouflage CAMOUFLAGE
+tail-glow TAIL GLOW
+luster-purge LUSTER PURGE
+mist-ball MIST BALL
+feather-dance FEATHERDANCE
+teeter-dance TEETER DANCE
+blaze-kick BLAZE KICK
+mud-sport MUD SPORT
+ice-ball ICE BALL
+needle-arm NEEDLE ARM
+slack-off SLACK OFF
+hyper-voice HYPER VOICE
+poison-fang POISON FANG
+crush-claw CRUSH CLAW
+blast-burn BLAST BURN
+hydro-cannon HYDRO CANNON
+meteor-mash METEOR MASH
+astonish ASTONISH
+weather-ball WEATHER BALL
+aromatherapy AROMATHERAPY
+fake-tears FAKE TEARS
+air-cutter AIR CUTTER
+overheat OVERHEAT
+odor-sleuth ODOR SLEUTH
+rock-tomb ROCK TOMB
+silver-wind SILVER WIND
+metal-sound METAL SOUND
+grass-whistle GRASSWHISTLE
+tickle TICKLE
+cosmic-power COSMIC POWER
+water-spout WATER SPOUT
+signal-beam SIGNAL BEAM
+shadow-punch SHADOW PUNCH
+extrasensory EXTRASENSORY
+sky-uppercut SKY UPPERCUT
+sand-tomb SAND TOMB
+sheer-cold SHEER COLD
+muddy-water MUDDY WATER
+bullet-seed BULLET SEED
+aerial-ace AERIAL ACE
+icicle-spear ICICLE SPEAR
+iron-defense IRON DEFENSE
+block BLOCK
+howl HOWL
+dragon-claw DRAGON CLAW
+frenzy-plant FRENZY PLANT
+bulk-up BULK UP
+bounce BOUNCE
+mud-shot MUD SHOT
+poison-tail POISON TAIL
+covet COVET
+volt-tackle VOLT TACKLE
+magical-leaf MAGICAL LEAF
+water-sport WATER SPORT
+calm-mind CALM MIND
+leaf-blade LEAF BLADE
+dragon-dance DRAGON DANCE
+rock-blast ROCK BLAST
+shock-wave SHOCK WAVE
+water-pulse WATER PULSE
+doom-desire DOOM DESIRE
+psycho-boost PSYCHO BOOST

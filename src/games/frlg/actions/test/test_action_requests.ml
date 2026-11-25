@@ -5,16 +5,16 @@
 
 open Frlg_actions
 
-let case name input expectation = { Case_table.name; input; expectation }
+let case name input expectation = { Table_test.name; input; expectation }
 let stocks = Result.get_ok (Mart_plan.load ())
 
 let decode name json () =
   match
     Action_requests.decode stocks name
-      (Grid_maps.Json_field.as_object "" (Yojson.Safe.from_string json))
+      (Json_field.as_object "" (Yojson.Safe.from_string json))
   with
   | Ok r -> Action_requests.to_string r
-  | Error c -> Story.Failure.cause_to_string c
+  | Error c -> Pokemon_checkpoints.Failure.cause_to_string c
 
 let decoding =
   [
@@ -73,6 +73,9 @@ let decoding =
     case "cut_tree"
       (decode "cut_tree" {|{"direction": "north"}|})
       "cut the tree to the north";
+    case "verify_mail_glitch"
+      (decode "verify_mail_glitch" {|{"species": "mr-mime"}|})
+      "verify the mail glitch on mr-mime";
     case "an action FireRed does not have"
       (decode "switch_grind" "{}")
       "unknown_action: switch_grind";
@@ -119,7 +122,7 @@ let roster =
       (fun () ->
         match Party_roster.resolve mg (Species "mr-mime") with
         | Ok n -> string_of_int n
-        | Error c -> Story.Failure.cause_to_string c)
+        | Error c -> Pokemon_checkpoints.Failure.cause_to_string c)
       "not_in_party: mr-mime is not in the party (blastoise, pidgey, abra, \
        spearow)";
     case "a full party sends a prize to the PC"
@@ -156,8 +159,9 @@ let others =
     case "spin: five turns clockwise from west"
       (fun () ->
         String.concat " "
-          (List.map Grid_maps.Direction.name (Spin_for_encounter.turns West 5)))
+          (List.map Grid_geometry.Direction.name
+             (Spin_for_encounter.turns West 5)))
       "north east south west north";
   ]
 
-let () = Case_table.run "action_requests" (decoding @ mart @ roster @ others)
+let () = Table_test.run "action_requests" (decoding @ mart @ roster @ others)
