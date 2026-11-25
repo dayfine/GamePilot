@@ -23,6 +23,7 @@ type button = Command.button =
   | ZR
   | Plus
   | Minus
+  | LStick
 
 let all_buttons = Command.all_buttons
 let string_of_button = Command.string_of_button
@@ -128,6 +129,7 @@ type error = Jsonrpc.error = {
 type call = Jsonrpc.call =
   | Hello of { protocol : int; client : string }
   | Load_state of { path : string }
+  | Reset
   | Save_state of { path : string }
   | Save_frame of { path : string }
   | Upload_template of { png : string }

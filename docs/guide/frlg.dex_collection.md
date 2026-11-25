@@ -16,8 +16,8 @@ Runs on: mGBA.
 - Bring ¥12,000 for 10 Ultra Balls at the Indigo Plateau's Pokemon Center.
 
 <!-- generated:needs -->
-- 0 free party slots
 - pidgey in the party (fly)
+- the thunder badge (fly)
 - money at least ¥12000 (all the purchases)
 - at the start, Route10_PokemonCenter_1F
 <!-- /generated -->
@@ -27,7 +27,7 @@ Runs on: mGBA.
 <!-- generated:commands -->
 ```sh
 # mGBA: each checkpoint three times from its start state, two must pass
-sh run/run_checkpoints_on_mgba.sh --program frlg.dex_collection --from 01-ultra-balls --to 02-route10-new-species --mode verification
+sh run/run_checkpoints_on_mgba.sh frlg.dex_collection --from 01-ultra-balls --to 02-route10-new-species --mode verification
 ```
 <!-- /generated -->
 
@@ -51,7 +51,7 @@ kind is already caught.
 <!-- generated:preflight -->
 | Resume from | The pre-flight checks |
 |---|---|
-| 01-ultra-balls | pidgey in the party (fly); money at least ¥12000 (mart); at the start, Route10_PokemonCenter_1F |
+| 01-ultra-balls | pidgey in the party (fly); the thunder badge (fly); money at least ¥12000 (mart); at the start, Route10_PokemonCenter_1F |
 | 02-route10-new-species | ultra-ball at least x1 (capture); at the start, Route10_PokemonCenter_1F |
 <!-- /generated -->
 

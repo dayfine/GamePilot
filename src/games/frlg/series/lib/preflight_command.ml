@@ -1,4 +1,4 @@
-(* gamepilot checkpoints PLAN_DIR --preflight --from ID [--backend ...]
+(* gamepilot run PROGRAM|DIR/PLANS --preflight --from ID [--backend ...]
 
    The pre-flight of a save (Frlg_checkpoints.Preflight): back to the last save (on
    the Switch the soft reset; on mGBA the checkpoint's start state), then the
@@ -243,7 +243,7 @@ let run ~plan_dir ~from_id setup =
   let* plan = Plan_dir.load_plan ~plan_dir from_id in
   let start = plan.checkpoint.start in
   let* world = Frlg_checkpoints.Checkpoint_run.load_world () in
-  let run =
+  let* run =
     Run_record.start ~runs_dir:setup.runs_dir setup.info ~checkpoint:from_id
       ~mode:"preflight"
   in

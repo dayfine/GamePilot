@@ -1,8 +1,6 @@
-(** The engine over the toy game ({!Toy_rules}, read by {!Toy_plan_format},
-    printed by {!Toy_text}, kept by {!Toy_event_snapshot}). *)
+(** The engine over the toy game ({!Toy_rules}, read by {!Toy_plan_format}, kept
+    by {!Toy_event_snapshot}). *)
 
 include module type of struct
-  include
-    Program_engine.Make (Toy_rules) (Toy_plan_format) (Toy_text)
-      (Toy_event_snapshot)
+  include Program_engine.Make (Toy_rules) (Toy_plan_format) (Toy_event_snapshot)
 end

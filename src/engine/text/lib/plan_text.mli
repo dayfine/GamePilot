@@ -1,13 +1,11 @@
 (** A decoded plan as text, one line per thing, so a test can compare it with
     what the plan file says. The game's poses, kinds and promises are printed by
-    its text ({!Rules_text.TEXT}). *)
+    the rules themselves ([to_string], [to_lines]). *)
 
 (** The game's plans as text. *)
-module Make
-    (T : Engine_rules.GAME_RULES)
-    (_ : Rules_text.TEXT with module T = T) : sig
+module Make (T : Engine_rules.GAME_RULES) : sig
   val pose : T.Pose.t -> string
-  (** {!Rules_text.TEXT.pose}: ["CeladonCity (48, 12) south"]. *)
+  (** [T.Pose.to_string]: ["CeladonCity (48, 12) south"]. *)
 
   val kind :
     Engine_plan.Plan.Make(T)(Engine_plan_format.Raw_json).kind -> string

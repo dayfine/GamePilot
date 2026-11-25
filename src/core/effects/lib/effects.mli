@@ -46,6 +46,7 @@ type _ Effect.t +=
   | Now : float Effect.t
   | Read : measurements option Effect.t
   | Load_state : string -> int Effect.t
+  | Reset : int Effect.t
   | Save_state : string -> int Effect.t
   | Save_frame : string -> int Effect.t
   | Upload_template : string -> template_hash Effect.t
@@ -84,6 +85,13 @@ val read : unit -> measurements option
 
 val load_state : string -> int
 (** Loads a save state; returns the frame [seq] after loading. *)
+
+val reset : unit -> int
+(** Resets the machine as its power switch would and returns the frame [seq]
+    after it, from which the frames count again (mGBA only: the Switch's hard
+    reset is closing and starting the game from HOME). The game boots from its
+    save, so presses timed from here land on the same frames on every start
+    state: the RNG programs' hard reset. *)
 
 val save_state : string -> int
 (** Saves the emulator's state to the path; returns the frame [seq] saved. A

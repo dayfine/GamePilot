@@ -39,6 +39,8 @@ let rows ~plan_dir ids =
 
 let plural n one many = if n = 1 then one else many
 
+(* No line when the chain needs no free slot and no member joins: a need of
+   zero is no need (review rule R2). *)
 let room_line (room : Frlg_checkpoints.Party_room.need) =
   let free = Frlg_checkpoints.Party_room.free_needed room in
   let joins =
@@ -46,9 +48,14 @@ let room_line (room : Frlg_checkpoints.Party_room.need) =
       (fun (species, cp) -> Printf.sprintf "%s in %s" species cp)
       room.joins
   in
-  Printf.sprintf "- %d free party %s%s" free
-    (plural free "slot" "slots")
-    (if joins = [] then "" else " (joining: " ^ String.concat ", " joins ^ ")")
+  if free = 0 && joins = [] then []
+  else
+    [
+      Printf.sprintf "- %d free party %s%s" free
+        (plural free "slot" "slots")
+        (if joins = [] then ""
+         else " (joining: " ^ String.concat ", " joins ^ ")");
+    ]
 
 (* The chain as one plan: its events in order from the first checkpoint's
    start, so an item or member one checkpoint brings counts for the later
@@ -80,7 +87,11 @@ let chain_lines stocks ~before (loaded : Pokemon_engine.Plan.t list) =
     Frlg_checkpoints.Preflight.needs stocks ~before (as_one_plan loaded)
   in
   let line n = "- " ^ Frlg_checkpoints.Preflight.describe n in
-  Ok (room_line room :: List.map line (List.filter_map (chain_need room) needs))
+  let needs =
+    List.filter_map (chain_need room) needs
+    |> List.filter Frlg_checkpoints.Preflight.asks_something
+  in
+  Ok (room_line room @ List.map line needs)
 
 let needs ~plan_dir chain =
   let* loaded = load ~plan_dir chain in
@@ -90,7 +101,9 @@ let needs ~plan_dir chain =
   | lines -> Result.map (String.concat "\n") lines
   | exception Json_field.Invalid e -> Error e
 
+(* The needs any save meets left out (review rule R2). *)
 let needs_text needs =
+  let needs = List.filter Frlg_checkpoints.Preflight.asks_something needs in
   cell (String.concat "; " (List.map Frlg_checkpoints.Preflight.describe needs))
 
 (* One row per checkpoint: what the pre-flight checks before resuming there. *)

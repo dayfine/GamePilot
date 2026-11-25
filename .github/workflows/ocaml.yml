@@ -27,6 +27,10 @@ jobs:
         # all three) once its base merges and it is based on main.
         os: ${{ fromJSON((github.event_name != 'pull_request' || github.base_ref == 'main') && '["ubuntu-latest", "macos-latest", "windows-latest"]' || '["ubuntu-latest", "windows-latest"]') }}
     runs-on: ${{ matrix.os }}
+    # setup-ocaml saves and restores dune's cache folder, but dune 3.25 wrote
+    # nothing to it without this.
+    env:
+      DUNE_CACHE: enabled
     steps:
       - uses: actions/checkout@v4
       - name: Fetch the PokemonSimulation submodule (maps read by tests)
@@ -47,6 +51,9 @@ jobs:
       - uses: ocaml/setup-ocaml@v3
         with:
           ocaml-compiler: "5.2"
+          # opam root/switch cache (on by default in v3) and dune's build cache.
+          cache: true
+          dune-cache: true
       - working-directory: src
         run: opam install . --deps-only --yes
       - working-directory: src

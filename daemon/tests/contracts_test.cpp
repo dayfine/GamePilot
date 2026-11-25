@@ -53,6 +53,10 @@ void check_requests(const std::map<std::string, pa::JsonValue>& files) {
   CHECK(load.method == "backend.load_state");
   CHECK(decode_load_state(load.params).path.ends_with("overworld.ss"));
 
+  const Request reset = decode_request(files.at("53-reset.request.json"));
+  CHECK(reset.method == "backend.reset" && reset.has_id);
+  decode_reset(reset.params);
+
   const Request save_state =
       decode_request(files.at("24-save_state.request.json"));
   CHECK(save_state.method == "backend.save_state");
@@ -153,8 +157,8 @@ void check_requests(const std::map<std::string, pa::JsonValue>& files) {
         home.commands[0].buttons == button_mask("Home") &&
         (home.commands[0].buttons & kSwitchOnlyKeys) != 0);
   CHECK((button_mask("X") | button_mask("Y") | button_mask("ZL") |
-         button_mask("ZR") | button_mask("Plus") | button_mask("Minus")) ==
-        (kSwitchOnlyKeys & ~button_mask("Home")));
+         button_mask("ZR") | button_mask("Plus") | button_mask("Minus") |
+         button_mask("LStick")) == (kSwitchOnlyKeys & ~button_mask("Home")));
   CHECK((button_mask("L") & kSwitchOnlyKeys) == 0);
   // v1.17: the Switch's own Plus and Minus, Switch-only like Home.
   const SubmitParams skip = decode_submit(
@@ -162,6 +166,13 @@ void check_requests(const std::map<std::string, pa::JsonValue>& files) {
   CHECK(skip.commands.size() == 2 &&
         skip.commands[0].buttons == button_mask("Plus") &&
         skip.commands[1].buttons == button_mask("Minus"));
+  // v1.18: the left stick's click, the Switch keyboard's Shift.
+  const SubmitParams shift = decode_submit(
+      decode_request(files.at("52-submit.lstick.request.json")).params);
+  CHECK(shift.commands.size() == 2 &&
+        shift.commands[0].buttons == button_mask("LStick") &&
+        (shift.commands[0].buttons & kSwitchOnlyKeys) != 0 &&
+        shift.commands[1].buttons == button_mask("A"));
   // v1.16: ZL then ZL with ZR, PLZA's ball throw.
   const SubmitParams aim = decode_submit(
       decode_request(files.at("50-submit.zl_zr.request.json")).params);
@@ -287,6 +298,8 @@ void check_encoders(const std::map<std::string, pa::JsonValue>& files) {
   CHECK(hello_result(mgba) == result_of(files.at("02-hello.response.json")));
   CHECK(load_state_result(1200, 1) ==
         result_of(files.at("04-load_state.response.json")));
+  CHECK(load_state_result(0, 2) ==
+        result_of(files.at("54-reset.response.json")));
   CHECK(save_result(5400) ==
         result_of(files.at("25-save_state.response.json")));
   CHECK(save_result(5460) ==
@@ -577,7 +590,7 @@ int main() {
   const auto files = load_contracts();
   // One per protocol/v1 golden file. The checks below index files by name,
   // so they run only when every one is there.
-  constexpr std::size_t kGoldenFiles = 51;
+  constexpr std::size_t kGoldenFiles = 54;
   CHECK(files.size() == kGoldenFiles);
   if (files.size() == kGoldenFiles) {
     check_requests(files);

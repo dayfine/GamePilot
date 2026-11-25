@@ -1,6 +1,6 @@
 (* Each family of checkpoint rules (Program_registry.rules) and its library's
-   entry points: how gamepilot checkpoints runs its series, how gamepilot
-   checkpoint runs or replays one plan, how its guide lists its checkpoints,
+   entry points: how gamepilot run runs its series and one plan (--plan),
+   how gamepilot replay checkpoint replays one plan, how its guide lists its checkpoints,
    their needs and the commands that run them, and what gamepilot programs
    says a chain needs; the readers gamepilot ctl read runs; and the one-shot
    programs gamepilot run and replay run. The one place under bin/ that picks
@@ -94,11 +94,11 @@ let guide (p : R.t) = (of_program (Some p)).guide
 let main plan_dir args =
   (of_program (R.of_plan_dir plan_dir)).run_series plan_dir args
 
-(* gamepilot checkpoint's usage: the grid rules', the only family that runs a
+(* gamepilot run --plan's usage: the grid rules', the only family that runs a
    plan file alone. *)
 let usage = Grid.Checkpoint_command.usage
 
-(* gamepilot checkpoints' usage: the grid rules' flags. *)
+(* gamepilot run's usage: the grid rules' flags. *)
 let checkpoints_usage = Pokemon_flags.usage
 let of_plan_file plan = of_program (R.of_plan_dir (Filename.dirname plan))
 let checkpoint plan args = (of_plan_file plan).run_checkpoint plan args

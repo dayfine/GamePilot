@@ -1,7 +1,7 @@
 (* What a run leaves on disk, under the runs folder ($GAMEPILOT_RUNS, else
    ~/.local/share/gamepilot/runs). Every run path writes its folder through
-   [start] and [finish]: a checkpoint series' runs (gamepilot checkpoints), the
-   pre-flight, one checkpoint (gamepilot checkpoint), a one-shot program
+   [start] and [finish]: a checkpoint series' runs (gamepilot run), the
+   pre-flight, one checkpoint (gamepilot run --plan), a one-shot program
    (gamepilot run) and the Switch's bring-up checks (gamepilot bring-up). A
    daemon started by hand with --run-folder writes a run.json of its own
    (daemon/src/run_journal.h, kind "daemon").
@@ -48,18 +48,21 @@ let rec make_dirs dir =
     make_dirs (Filename.dirname dir);
     Sys.mkdir dir dir_perm)
 
-(* The first free <date>-<label>-<mode>-<n>. *)
+(* The first free <date>-<label>-<mode>-<n>, taken by making it: two runs
+   started at once that pick one name both try, and the one that loses goes on
+   to the next. *)
 let create ~runs_dir ~checkpoint ~mode =
-  make_dirs runs_dir;
   let rec free n =
     let name = Printf.sprintf "%s-%s-%s-%d" (date ()) checkpoint mode n in
     let dir = Filename.concat runs_dir name in
-    if Sys.file_exists dir then free (n + 1)
-    else (
-      Sys.mkdir dir dir_perm;
-      { dir; name })
+    match Fresh_folder.make dir with
+    | Ok Made -> Ok { dir; name }
+    | Ok Taken -> free (n + 1)
+    | Error e -> Error ("run folder " ^ e)
   in
-  free 1
+  Result.bind
+    (Result.map_error (( ^ ) "runs folder ") (Fresh_folder.make_all runs_dir))
+    (fun () -> free 1)
 
 let path t file = Filename.concat t.dir file
 
@@ -220,13 +223,17 @@ let write_run_json run ending =
   write run.record "run.json"
     (Yojson.Safe.to_string (run_json run ~ended_ms:(now_ms ()) ending) ^ "\n")
 
-let start ?attempt ?events ~runs_dir info ~checkpoint ~mode =
-  let record = create ~runs_dir ~checkpoint ~mode in
+let started ?attempt ?events info ~checkpoint ~mode record =
   let run =
     { record; info; checkpoint; mode; started_ms = now_ms (); attempt; events }
   in
   write_run_json run None;
   run
+
+let start ?attempt ?events ~runs_dir info ~checkpoint ~mode =
+  Result.map
+    (started ?attempt ?events info ~checkpoint ~mode)
+    (create ~runs_dir ~checkpoint ~mode)
 
 let finish ~runs_dir run ~summary ending =
   write run.record "summary.txt" (summary ^ "\n");

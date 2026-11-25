@@ -127,7 +127,9 @@ let plza_game ?(after = []) ?(reads_zone = true) () =
   let action name = (name, fun event _ -> handled ("action " ^ name) event) in
   let game : Game.t =
     {
-      run_own = (fun event own -> handled ("own " ^ Plza_text.action own) event);
+      run_own =
+        (fun event own ->
+          handled ("own " ^ Plza_rules.Action.to_string own) event);
       run_builtin = (fun event -> handled ("builtin " ^ event.id) event);
       game_actions =
         List.map action

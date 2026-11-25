@@ -1,4 +1,4 @@
-(* gamepilot checkpoints PLAN_DIR --from ID --to ID ... --make-room MAP
+(* gamepilot run PROGRAM|DIR/PLANS --from ID --to ID ... --make-room MAP
 
    Room in the party before the chain (Frlg_checkpoints.Make_room): back to the save
    (mGBA: 00-make-room's start state, else the first checkpoint's, kept as 00-make-room's;
@@ -194,7 +194,7 @@ let prepare ~plan_dir ~from_id ~at (setup : Pf.setup) =
   let need = Pr.chain_need plans in
   let* () = ensure_start setup from_id in
   let* world = Frlg_checkpoints.Checkpoint_run.load_world () in
-  let run =
+  let* run =
     Run_record.start ~runs_dir:setup.runs_dir setup.info ~checkpoint:M.id
       ~mode:"preflight"
   in

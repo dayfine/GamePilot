@@ -1,11 +1,11 @@
 (** A game's rules, as the checkpoint engine's plans, runner and checks carry
     them: where the player stands, the game's actions (its event kinds), and
     what a checkpoint promises ([docs/design/Engine-Boundary.md], section 2).
-    Pure: no JSON and no text. How a plan writes them is the game's
-    {!Engine_plan_format.Plan_format.PLAN_FORMAT}, how a log prints them its
-    {!Engine_text.Rules_text.TEXT}, and what a run keeps on disk its
-    {!Engine_event_snapshot.Event_snapshot.SNAPSHOT}; the engine is applied to
-    all four once per game family ([Program_engine.Make]). *)
+    Pure: no JSON, and each part prints itself ([to_string], [to_lines]) for log
+    lines, failures and a plan's text. How a plan writes them is the game's
+    {!Engine_plan_format.Plan_format.PLAN_FORMAT}, and what a run keeps on disk
+    its {!Engine_event_snapshot.Event_snapshot.SNAPSHOT}; the engine is applied
+    to all three once per game family ([Program_engine.Make]). *)
 
 (** Where a plan says the player stands, and where the game reads them. *)
 module type POSE = sig
@@ -19,6 +19,12 @@ module type POSE = sig
   val matches : t -> observed -> bool
   (** Whether the player read stands where the pose says. A pose the game does
       not check holds wherever the player is. *)
+
+  val to_string : t -> string
+  (** A plan's pose: ["CeladonCity (48, 12) south"]. *)
+
+  val observed_to_string : observed -> string
+  (** Where the player was read. *)
 end
 
 (** The game's actions: its event kinds. *)
@@ -27,6 +33,10 @@ module type ACTION = sig
   (** The game's actions, its event kinds, with their args (route, battle, heal;
       walk, rest), beside the engine's [talk], [answer], [scene], [save] and
       [game_action]. *)
+
+  val to_string : t -> string
+  (** One of the game's actions with its args, its name first:
+      ["route to Town (4, 0) north"]. *)
 end
 
 (** What a checkpoint promises, and its check. *)
@@ -41,6 +51,9 @@ module type POSTCONDITIONS = sig
 
   val check : t -> reads -> Engine_postcondition.Postcondition.result list
   (** One result per promise, in the order they are logged. *)
+
+  val to_lines : t -> string list
+  (** The promises, one per line, in the order the plan's text gives them. *)
 end
 
 (** The rules a game family gives the engine. *)
@@ -63,7 +76,8 @@ end
 
     A game's rules are written by hand from pieces: a pose, action sets and a
     set of promises ([docs/design/Composable-Rules.md]). These are the engine's;
-    each brings its plan format, text and event snapshot in those libraries. *)
+    each prints itself, and brings its plan format and event snapshot in those
+    libraries. *)
 
 module Story_action = Story_action
 (** {!Story_action}: talk, answer, scene and save. *)

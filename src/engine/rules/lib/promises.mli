@@ -1,9 +1,8 @@
 (** A checkpoint's promises as a product: an end position in the game's pose,
     plus one set of the family's promises ([docs/design/Composable-Rules.md],
     "Postconditions"). The record is the engine's, so the plan format
-    ([Engine_plan_format.With_position_decode]) and the text
-    ([Engine_text.With_position_text]) build the same type without a functor
-    path between them. *)
+    ([Engine_plan_format.With_position_decode]) builds the same type without a
+    functor path to it. *)
 
 type ('pose, 'promises) with_position = {
   position : 'pose option;
@@ -18,11 +17,14 @@ type ('pose, 'promises) with_position = {
     [Engine_rules.POSTCONDITIONS]. *)
 module With_position (P : sig
   type t
+
+  val to_string : t -> string
 end) (R : sig
   type t
   type reads
 
   val check : t -> reads -> Engine_postcondition.Postcondition.result list
+  val to_lines : t -> string list
 end) : sig
   type t = (P.t, R.t) with_position
   type reads = R.reads
@@ -32,4 +34,8 @@ end) : sig
 
   val position : t -> P.t option
   (** The promised end position. *)
+
+  val to_lines : t -> string list
+  (** [position <pose>] first, if promised, then [R]'s lines in their own order.
+  *)
 end

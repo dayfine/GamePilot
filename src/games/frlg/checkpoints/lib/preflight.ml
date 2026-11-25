@@ -10,6 +10,7 @@ type need = Plan_needs.need =
   | Member of { species : string; for_ : string }
   | No_mail of { species : string; for_ : string }
   | Knows_move of { move : string; for_ : string }
+  | Badge of { badge : string; for_ : string }
   | Money_at_least of { amount : int; for_ : string }
   | Money_between of { min : int; max : int }
   | Item_at_least of { item : string; count : int; for_ : string }
@@ -58,12 +59,6 @@ let has members species = List.mem (Some species) members
 
 let in_slot members ({ slot; species } : Postconditions.slot) =
   List.nth_opt members (slot - 1) = Some (Some species)
-
-let slot_text ({ slot; species } : Postconditions.slot) =
-  Printf.sprintf "%s in slot %d" species slot
-
-let includes_text members slots =
-  "party includes " ^ species_list (members @ List.map slot_text slots)
 
 (* Its moves as read; a member not in the party read is a mismatch. *)
 let knows (move : string) (m : Room_policy.member) =
@@ -174,26 +169,8 @@ let caught_row (read : read) ~need n =
   | Some have ->
       { need; read = caught_text ~need:n have; verdict = of_bool (have >= n) }
 
-let describe = function
-  | Party_in_order l -> "party " ^ species_list l
-  | Party_includes { members; slots } -> includes_text members slots
-  | Member { species; for_ } ->
-      Printf.sprintf "%s in the party (%s)" species for_
-  | No_mail { species; for_ } ->
-      Printf.sprintf "%s holds no Mail (%s)" species for_
-  | Money_at_least { amount; for_ } ->
-      Printf.sprintf "money at least ¥%d (%s)" amount for_
-  | Money_between { min; max } -> Printf.sprintf "money ¥%d..¥%d" min max
-  | Item_at_least { item; count; for_ } ->
-      Printf.sprintf "%s at least x%d (%s)" item count for_
-  | Item_exactly { item; count } -> Printf.sprintf "%s x%d" item count
-  | Knows_move { move; for_ } ->
-      Printf.sprintf "a member knows %s (%s)" move for_
-  | Place map -> "at the start, " ^ map
-  | Badges_at_least n -> Printf.sprintf "at least %d badges" n
-  | Badges names -> "badges " ^ String.concat ", " names
-  | Hall_of_fame -> "the Hall of Fame entered"
-  | Caught_at_least n -> Printf.sprintf "at least %d species caught" n
+let describe = Plan_needs.describe
+let asks_something = Plan_needs.asks_something
 
 let row read need =
   let text = describe need in
@@ -213,6 +190,7 @@ let row read need =
   | Item_exactly { item; count } ->
       with_item read item text (fun n -> n = count)
   | Knows_move { move; _ } -> knows_row read ~need:text move
+  | Badge { badge; _ } -> badges_row read ~need:text [ badge ]
   | Place _ -> place_row read ~need:text
   | Badges_at_least n -> badge_count_row read ~need:text n
   | Badges names -> badges_row read ~need:text names
@@ -249,7 +227,7 @@ let table rows =
 
 let reads_card =
   List.exists (function
-    | Badges_at_least _ | Badges _ | Hall_of_fame -> true
+    | Badges_at_least _ | Badges _ | Badge _ | Hall_of_fame -> true
     | _ -> false)
 
 (* An item or the money named only so that it is read (to_read). *)

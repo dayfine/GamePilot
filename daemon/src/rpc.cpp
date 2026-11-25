@@ -463,9 +463,9 @@ UnsubscribeParams decode_unsubscribe(const pa::JsonObject& params) {
 namespace {
 
 // The buttons by KeyMask bit (backend.h).
-constexpr std::array<const char*, 17> kButtons = {
-    "A", "B",    "Select", "Start", "Right", "Left", "Up",   "Down", "R",
-    "L", "Home", "X",      "Y",     "ZL",    "ZR",   "Plus", "Minus"};
+constexpr std::array<const char*, 18> kButtons = {
+    "A", "B",    "Select", "Start", "Right", "Left", "Up",   "Down",  "R",
+    "L", "Home", "X",      "Y",     "ZL",    "ZR",   "Plus", "Minus", "LStick"};
 
 }  // namespace
 
@@ -544,6 +544,8 @@ CancelParams decode_cancel(const pa::JsonObject& params) {
   }
   return cancel;
 }
+
+void decode_reset(const pa::JsonObject&) {}
 
 LeaseAcquireParams decode_lease_acquire(const pa::JsonObject& params) {
   LeaseAcquireParams lease;

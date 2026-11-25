@@ -17,6 +17,8 @@
     Where it differs: the fork's detector also keeps where the button was; this
     says only whether it shows. Only the buttons the readers use are here. *)
 
+(** The buttons the PLZA readers look for, each with its own template and size
+    limits. *)
 type button =
   | A  (** a prompt's A ("A Talk") *)
   | B  (** the main menu's B (Close) *)

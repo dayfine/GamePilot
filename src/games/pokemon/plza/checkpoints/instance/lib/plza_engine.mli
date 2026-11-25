@@ -1,13 +1,11 @@
 (** The checkpoint engine over PLZA: its rules ({!Plza_rules}), read from plans
-    by {!Plza_plan_format}, printed by {!Plza_text} and kept beside an event's
-    state by {!Plza_event_snapshot}. The plans, handlers, runner, failures,
-    event states and repeats PLZA's programs use, with zones and walks in their
-    types. *)
+    by {!Plza_plan_format} and kept beside an event's state by
+    {!Plza_event_snapshot}. The plans, handlers, runner, failures, event states
+    and repeats PLZA's programs use, with zones and walks in their types. *)
 
 include module type of struct
   include
-    Program_engine.Make (Plza_rules) (Plza_plan_format) (Plza_text)
-      (Plza_event_snapshot)
+    Program_engine.Make (Plza_rules) (Plza_plan_format) (Plza_event_snapshot)
 end
 
 module Pose = Plza_rules.Pose

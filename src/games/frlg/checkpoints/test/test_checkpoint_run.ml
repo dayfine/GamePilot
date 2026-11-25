@@ -8,8 +8,9 @@ open Frlg_checkpoints
 let plan file = Result.get_ok (Frlg_checkpoints.Plan_file.load file)
 
 let handled =
-  "fly" :: "lift_floor" :: "capture" :: "grind" :: "prepare_berry_pp"
-  :: "mail_glitch_double_battle" :: Frlg_actions.Action_requests.names
+  "fly" :: "lift_floor" :: "capture" :: "wild_rng" :: "save_game" :: "grind"
+  :: "prepare_berry_pp" :: "mail_glitch_double_battle"
+  :: Frlg_actions.Action_requests.names
   @ List.map fst
       (Frlg_actions.Mail_glitch_use.handlers ~log:ignore
          ~party:(ref (Frlg_actions.Party_roster.of_list [])))
@@ -29,7 +30,7 @@ let summary file () =
     match Checkpoint_run.check_plan p with Ok () -> "frlg" | Error e -> e
   in
   let start =
-    Option.fold ~none:"no start" ~some:Pokemon_engine.Pose_text.observed
+    Option.fold ~none:"no start" ~some:Pokemon_engine.Pose.observed_to_string
       (Checkpoint_run.start_of p.checkpoint)
   in
   let missing =
@@ -105,7 +106,7 @@ let capped cap file () =
 let grind_save_point () =
   let start id =
     match (plan (id ^ ".plan.json")).checkpoint.start with
-    | Some (Grid g) -> Pokemon_engine.Pose_text.grid g
+    | Some (Grid g) -> Pokemon_engine.Pose.grid_to_string g
     | Some (Zone _) | None -> "not a tile"
   in
   let a = plan "04-grind-farfetchd.plan.json"
@@ -118,7 +119,7 @@ let grind_save_point () =
   in
   String.concat "; "
     (List.map
-       (Option.fold ~none:"none" ~some:Pokemon_engine.Pose_text.grid)
+       (Option.fold ~none:"none" ~some:Pokemon_engine.Pose.grid_to_string)
        ends
     @ [ start "05-grind-mr-mime"; start "06-grind-return" ])
 

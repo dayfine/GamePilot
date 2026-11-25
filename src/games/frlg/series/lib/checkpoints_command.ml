@@ -1,11 +1,11 @@
-(* gamepilot checkpoints PLAN_DIR --from ID --to ID --mode testing|verification
+(* gamepilot run PROGRAM|DIR/PLANS --from ID --to ID --mode testing|verification
      [--runs N] [--states DIR] [--runs-dir DIR] [--daemon PATH]
      [--mgba-port N] [--port N] [--party SPECIES,...] [--center TOWN] [--walk]
      [--end-check-only] [--grind-battles N] [--watch] [--watch-port N]
      [--listen ADDR] [--backend mgba|switch --serial PORT --capture DEVICE]
 
    The checkpoint dev loop. A program's checkpoints are its plan files
-   (<ID>.plan.json in PLAN_DIR, in name order; --program ID in its place:
+   (<ID>.plan.json in the plan folder, in name order; --program ID in its place:
    Programs_command); each runs from its start state (<states>/<ID>.start.ss),
    as many times as the mode's policy says (Engine_run.Checkpoint_trials), each run with its own daemon and run folder
    (Run_record). A run passes when every event passed and the player ends at

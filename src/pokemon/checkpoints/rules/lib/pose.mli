@@ -28,3 +28,12 @@ type observed = {
 val grid_matches : grid -> observed -> bool
 (** The map is the pose's, the tile one of its tiles (any, when it lists none),
     and the facing its facing when both the pose and the reading know it. *)
+
+val grid_to_string : grid -> string
+(** ["CeladonCity (48, 12) south"]; alternatives joined by ["|"]. *)
+
+val observed_to_string : observed -> string
+(** ["CeladonCity (48, 12) south"], or without the facing when unknown. *)
+
+val to_string : declared -> string
+(** A grid pose as {!grid_to_string}, a zone as ["zone <place>"]. *)
