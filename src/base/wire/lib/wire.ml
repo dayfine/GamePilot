@@ -19,6 +19,8 @@ type button = Command.button =
   | Home
   | X
   | Y
+  | ZL
+  | ZR
 
 let string_of_button = Command.string_of_button
 let button_of_string = Command.button_of_string
@@ -130,6 +132,7 @@ type call = Jsonrpc.call =
   | Unsubscribe of string list
   | Submit of { batch_id : string; commands : command list }
   | Cancel
+  | Cancel_then of { batch_id : string; commands : command list }
   | Status
   | Lease_acquire of { owner : string; ttl_ms : int option }
   | Lease_release

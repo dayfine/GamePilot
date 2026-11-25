@@ -69,6 +69,8 @@ void SwitchBackend::queue_keys(KeyMask mask, const Sticks& sticks, double ms) {
 
 void SwitchBackend::drop_queued_keys() { controller_.cancel_queued(); }
 
+void SwitchBackend::replace_queued_keys() { controller_.replace_on_next(); }
+
 void SwitchBackend::set_keys(KeyMask mask) {
   queue_keys(mask, Sticks{}, 1000.0 / info_.frame_rate);
 }
