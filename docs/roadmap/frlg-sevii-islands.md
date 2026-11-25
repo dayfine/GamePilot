@@ -2,8 +2,8 @@
 
 Goal: from a post-game save, play the Sevii Islands story on mGBA until Cerulean Cave is open, and
 prove it by walking into `CeruleanCave_1F` (a screenshot at its mat). The program is
-`frlg.sevii_story` (`docs/programs/frlg-sevii-story.md`); 01 to 03 exist, 03 ending on Three
-Island's harbor after the Joyful Game Corner's scene.
+`frlg.sevii_story` (`docs/programs/frlg-sevii-story.md`); 01 to 06 exist, 06 ending on
+Cinnabar Island's shore (21, 7) after Bill's goodbye.
 
 Everything below is read from pret/pokefirered at the pinned commit `ce6406d8`
 (`data/maps/<Map>/scripts.inc`, `map.json`, `src/field_specials.c`) and checked against the
@@ -66,7 +66,7 @@ dayfine/PokemonSimulation#125.
 | 03 | `03-to-three-island` | (in #99) Game Corner scene, the Seagallop to Three Island's harbor |
 | 04 | `04-three-island-bikers` | Harbor, port (PC storage back on), north into town: the boss's scene, YES, four trainer battles (Bikers Lv 37-38, Paxton's Weezing and Muk Lv 39); heal at Three Island's Center (14, 27). Needs **trainer battles** |
 | 05 | `05-berry-forest` | West over Bond Bridge (at least one trainer cannot be walked around), Berry Forest to Lostelle (4, 8), talk, Hypno Lv 30 (beat or run), warp to the Game Corner, Lostelle's scene. Needs trainer battles, a **wild battle after a talk** |
-| 06 | `06-back-to-cinnabar` | Talk to the owner (Meteorite for a Moon Stone; bag room), Two Island's harbor, ferry to One Island, into the Center: Bill's goodbye scene, the Seagallop to Cinnabar, Bill leaves. Needs nothing new |
+| 06 | `06-back-to-cinnabar` | Talk to the owner (Meteorite for a Moon Stone; bag room), Two Island's harbor, ferry to One Island, into the Center: Bill's goodbye scene, the Seagallop to Cinnabar, Bill leaves. Needs nothing new (done: a `step` onto the coord events at (12, 7), then one `scene` to Cinnabar) |
 | 07 | `07-national-dex` | Precondition 60 species caught. Fly to Pallet, Oak in his lab: rating, then the National Dex scene. Needs a **caught-count reader**, and, if the save is short, a catching program first |
 | 08 | `08-celio-ruby-request` | Fly to Vermilion, the Seagallop to One Island (Vermilion's sailor's Tri-Pass list), Celio's request. Needs the **Vermilion ferry list** |
 | 09 | `09-kindle-road` | One Island east to Kindle Road, Surf north to Mt. Ember, the password scene, both Grunts (Lv 35-37), into Ruby Path 1F. Needs **Surf**, trainer battles |
