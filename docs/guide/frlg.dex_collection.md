@@ -84,11 +84,12 @@ Each catch is the `wild_rng` action ([Wild RNG](frlg.wild_rng.md)) on the seed t
 `src/games/frlg/assets/rng_seeds_mgba_sevii_save.json`, measured on mGBA from the Sevii story's
 end save, plus the plan's `seed_offset`. On mGBA the seed a title-screen press gives depends a
 little on the save the game boots from: by where the last save left the flash sectors (the save
-count modulo 14), the boot ends 0, 4, 8 or 12 timer counts later, and every seed of the table
-moves by that much. Each catch saves twice (in the grass, then the catch), so in this chain the
-grass saves are the save file's 139th, 141st and 143rd, which add 8, 4 and 4. Each offset was
-measured from the checkpoint's own state before the reset (the seed a press 1801 frames after the
-reset gives, against the table's).
+count modulo 14), the boot ends 0, 4, 8 or 12 timer counts later, and every seed moves with it.
+
+Each catch saves twice (in the grass, then the catch), so in this chain the grass saves are the
+save file's 139th, 141st and 143rd, which add 8, 4 and 4. Each offset was measured from the
+checkpoint's own state before the reset: the seed a press 1801 frames after the reset gives,
+against the table's.
 
 The plain catches of the first version of this program (catch whatever the Pokedex lacks, run
 from the rest) are gone: every catch toward the 60 is to be shiny (issue #14).

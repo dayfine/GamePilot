@@ -86,11 +86,12 @@ the game from its save, and the press N frames later gives the same seed every t
 
 **The seed table.** `src/games/frlg/assets/rng_seeds_mgba_sevii_save.json` (FR_Eng.json's shape,
 delays in ms that round to the press frame) was measured on mGBA from the Sevii story's end save,
-the save 01 starts from. The plan names its table (`seeds`) and adds its `seed_offset` to every
-seed: the save the reset boots from ends its boot a few timer counts later or sooner by where its
-last save left the flash sectors (the save count modulo 14: 0, 4, 8 or 12 on these saves), which
-moves every seed by that much. 01's end save adds 8, measured: the table 01's end save gives is
-the Sevii table plus 8, row for row.
+the save 01 starts from. The plan names its table (`seeds`).
+
+**The seed offset.** The plan's `seed_offset` is added to every seed. A save's boot ends a few
+timer counts later or sooner by where its last save left the flash sectors (the save count modulo
+14: 0, 4, 8 or 12 on these saves), which moves every seed by that much. 01's end save adds 8,
+measured: the table it gives is the Sevii table plus 8, row for row.
 
 **The target.** It is searched, not given: of the table's seeds and advances 900 to 4000, the
 shiny Ekans for the plan's TID and SID whose waits add up least (`Frlg_rng.Wild_target`).
