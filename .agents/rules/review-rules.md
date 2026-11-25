@@ -137,8 +137,8 @@ works" section. There is no separate `docs/programs/<program>.md` page.
 - Bad: `docs/programs/frlg-supplies.md` beside `docs/guide/frlg.supplies.md`.
 - Good: `docs/guide/frlg.supplies.md` with a "How it works" section; the descriptor's `doc` points
   at it.
-- Find: recipe (every hit is a finding; `docs/programs/README.md`, the registry's page, stays):
-  `ls docs/programs/*.md | grep -v README.md` and
+- Find: recipe (every hit is a finding; the folder is gone, and adding a program is in
+  `docs/guide/README.md`): `ls docs/programs/` and
   `grep -rn 'doc = "docs/programs/' src/program_registry/lib`.
 
 ## From the user's earlier structural calls
