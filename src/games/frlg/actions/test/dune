@@ -37,7 +37,8 @@
   test_warp_settle
   test_trainer_card_read
   test_trainer_battles
-  test_scene_battle)
+  test_scene_battle
+  test_wild_rng)
  (modules
   test_pc_deposit_steps
   test_fly_towns
@@ -61,7 +62,8 @@
   test_warp_settle
   test_trainer_card_read
   test_trainer_battles
-  test_scene_battle)
+  test_scene_battle
+  test_wild_rng)
  (deps
   mgba.probes.jsonl
   menus.mgba.probes.jsonl

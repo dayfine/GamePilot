@@ -204,6 +204,43 @@ let capture t (_ : Pokemon_checkpoints.Plan.event) args =
   Result.bind (Capture_plan.decode args) (fun plan ->
       Menu_input.run (run_capture t plan))
 
+(* The wild RNG catch ({!Wild_rng}): the target searched for, then the capture
+   on the blind steps and the summary's star. *)
+let run_wild_rng t (plan : Wild_rng_plan.t) () =
+  let log = t.config.log in
+  let target =
+    match Wild_rng_plan.target plan with
+    | Ok target -> target
+    | Error e -> Menu_input.fail "wild_rng_no_target" e
+  in
+  log ("Wild RNG: " ^ Frlg_rng.Wild_target.describe target ^ ".");
+  let catch capture ~party =
+    Effects.with_probes Frlg_battle.Battle_look.probes (fun () ->
+        Capture.run
+          (Wild_rng_steps.game_steps ~log target.timings capture)
+          capture ~party)
+  in
+  let game_steps : Wild_rng.game_steps =
+    { catch; shiny_at = (fun slot -> Wild_rng_steps.shiny_at ~log ~slot); log }
+  in
+  let r =
+    Wild_rng.run game_steps plan.capture ~party:(Party_roster.size !(t.party))
+  in
+  Option.iter (fun c -> t.party := Capture.party_after !(t.party) c) r.capture;
+  log (Wild_rng.message r);
+  Option.iter
+    (fun code -> Menu_input.fail code (Wild_rng.message r))
+    (Wild_rng.failure_code r.end_)
+
+let wild_rng t (_ : Pokemon_checkpoints.Plan.event) args =
+  Result.bind (Wild_rng_plan.decode args) (fun plan ->
+      Menu_input.run (run_wild_rng t plan))
+
+(* The game saved from the Start menu, as between loop rounds: what a hard
+   reset ({!Effects.reset}) boots from. *)
+let save_game t (_ : Pokemon_checkpoints.Plan.event) (_ : Json_field.obj) =
+  Game_save.save_game ~log:t.config.log ()
+
 let known_moves t ~slot = Summary_moves.read_known ~log:t.config.log ~slot
 let species_at t slot = List.nth_opt (Party_roster.to_list !(t.party)) (slot - 1)
 
@@ -325,6 +362,8 @@ let game t : Pokemon_checkpoints.Game.t =
         :: ("ferry", ferry t)
         :: ("grind", grind t)
         :: ("capture", capture t)
+        :: ("wild_rng", wild_rng t)
+        :: ("save_game", save_game t)
         :: ("lift_floor", lift t)
         :: ("prepare_berry_pp", prepare_berry_pp t)
         :: ("mail_glitch_double_battle", double_battle t)

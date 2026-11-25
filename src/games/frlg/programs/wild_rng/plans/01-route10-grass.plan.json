@@ -1,0 +1,51 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "frlg",
+  "checkpoint": {
+    "id": "01-route10-grass",
+    "title": "From Cinnabar: fly to Route 10, a party slot free in the Center's PC, into the north grass, saved",
+    "start": {"map": "CinnabarIsland", "tiles": [[21, 7]], "facing": "south"},
+    "events": [
+      {
+        "id": "fly_route10",
+        "kind": "game_action",
+        "action": "fly",
+        "args": {"town": "Route10", "species": "pidgey"},
+        "why": "Route 10's Center is a fly point south of the grass."
+      },
+      {
+        "id": "to_pc",
+        "kind": "route",
+        "action": "run",
+        "args": {"target": {"map": "Route10_PokemonCenter_1F", "tiles": [[11, 2]], "facing": "north"}},
+        "why": "Below the Center's PC."
+      },
+      {
+        "id": "deposit_member",
+        "kind": "game_action",
+        "action": "pc_deposit",
+        "args": {"species": ["mr-mime"]},
+        "why": "The catch's summary needs a party slot; every other member holds Mail, which the PC refuses."
+      },
+      {
+        "id": "to_grass",
+        "kind": "route",
+        "action": "run",
+        "args": {"target": {"place": "route10_north_grass"}},
+        "why": "Into the north grass, where Sweet Scent finds Ekans, Spearow and Voltorb."
+      },
+      {
+        "id": "save_in_grass",
+        "kind": "game_action",
+        "action": "save_game",
+        "args": {},
+        "why": "The RNG checkpoint's hard reset boots from this save, in the grass."
+      }
+    ]
+  },
+  "execution": {"menu": "full"},
+  "metadata": {
+    "phase": "testing",
+    "notes": "Starts from sevii_story's 06-back-to-cinnabar end. The mGBA seed table (rng_seeds_mgba_route10_save.json) was measured from this checkpoint's end save."
+  }
+}

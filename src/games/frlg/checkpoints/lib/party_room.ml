@@ -25,10 +25,11 @@ let joining ~where action args =
       | Some species ->
           List.init (J.int ~where "catches" args) (fun _ -> species)
       | None -> [])
+  | "wild_rng" -> [ J.string ~where "species" args ]
   | _ -> []
 
 let brought_keys = function
-  | "capture" -> [ "species" ]
+  | "capture" | "wild_rng" -> [ "species" ]
   | "ingame_trade" -> [ "receive" ]
   | _ -> []
 

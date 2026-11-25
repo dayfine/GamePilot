@@ -316,6 +316,25 @@ postconditions:
 mr-mime in slot 1
 item rare-candy gained 98
 no repeat
+== wild_rng/plans/01-route10-grass.plan.json
+frlg 01-route10-grass from CinnabarIsland (21, 7) south: 3 game_action, 2 route
+fly_route10: [fly] game_action {"town":"Route10","species":"pidgey"}
+to_pc: [run] route to Route10_PokemonCenter_1F (11, 2) north
+deposit_member: [pc_deposit] game_action {"species":["mr-mime"]}
+to_grass: [run] route to Route10 (12, 8) east
+save_in_grass: [save_game] game_action {}
+retries 0
+postconditions:
+none
+no repeat
+== wild_rng/plans/02-shiny-ekans.plan.json
+frlg 02-shiny-ekans from Route10 (12, 8) east: 2 game_action
+shiny_ekans: [wild_rng] game_action {"species":"ekans","location":"route_10","tid":33002,"sid":9011,"seeds":"rng_seeds_mgba_route10_save.json","frame_model":"mgba","advances":[900,4000],"ball":"poke-ball","balls":8,"attempts":1}
+save_catch: [save_game] game_action {}
+retries 0
+postconditions:
+party includes ekans
+no repeat
 == frlg-authored/frlg-00.01.plan.json
 frlg 00.01 from (no start): 1 new_game, 1 options
 intro: new_game => PalletTown_PlayersHouse_2F (6, 6) north

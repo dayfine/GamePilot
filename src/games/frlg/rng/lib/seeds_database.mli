@@ -65,3 +65,8 @@ val find_seed : t -> target:int -> sound -> radius:int -> seed_match option
     directly or with L held, with the seeds up to [radius >= 0] rows either side
     (L-held seeds given without the offset). On equal delays the earlier column
     wins, and within a column the seed without L. *)
+
+val of_json : Yojson.Safe.t -> (t, string) result
+(** The constructor's reading of the seed file (FR_Eng.json's shape): the
+    [Delay] array of integers, every other key a column of hex seed strings,
+    taken in byte order of their names as the C++'s [std::map] holds them. *)

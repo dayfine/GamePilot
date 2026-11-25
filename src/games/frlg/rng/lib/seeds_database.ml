@@ -145,3 +145,46 @@ let find_seed t ~target sound ~radius =
       if column.sound <> sound || column.button_mode <> "Help" then best
       else List.fold_left (try_variant t ~radius column) best variants)
     None t.columns
+
+let rec collect f = function
+  | [] -> Ok []
+  | x :: rest ->
+      let* v = f x in
+      let* vs = collect f rest in
+      Ok (v :: vs)
+
+let json_string key = function
+  | `String s -> Ok s
+  | _ -> Error ("Seed column " ^ key ^ " holds a non-string")
+
+let json_int = function
+  | `Int d -> Ok d
+  | _ -> Error "Delay holds a non-integer"
+
+let json_strings key = function
+  | `List items -> collect (json_string key) items
+  | _ -> Error ("Seed column " ^ key ^ " is not an array")
+
+let json_delays = function
+  | `List items -> Result.map Array.of_list (collect json_int items)
+  | _ -> Error "Delay is not an array"
+
+let json_column (key, v) =
+  let* seeds = json_strings key v in
+  Ok (key, seeds)
+
+let by_name (a, _) (b, _) = String.compare a b
+
+let of_fields fields =
+  let* delays =
+    Option.fold ~none:(Error "No Delay array in the seed file")
+      ~some:json_delays
+      (List.assoc_opt "Delay" fields)
+  in
+  let named = List.filter (fun (k, _) -> k <> "Delay") fields in
+  let* columns = collect json_column (List.sort by_name named) in
+  of_columns ~delays columns
+
+let of_json = function
+  | `Assoc fields -> of_fields fields
+  | _ -> Error "The seed file is not an object"

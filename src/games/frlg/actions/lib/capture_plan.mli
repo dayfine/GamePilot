@@ -35,6 +35,10 @@ val default_ball : string
 val balls : string list
 (** The balls a Mart sells: ["poke-ball"], ["great-ball"], ["ultra-ball"]. *)
 
+val read : where:string -> Json_field.obj -> t
+(** {!decode}'s reader, for an action whose args hold a capture's
+    (["wild_rng"]). It fails with [Json_field.Invalid]. *)
+
 val decode : Json_field.obj -> (t, Pokemon_checkpoints.Failure.cause) result
 (** ["species"] or ["uncaught"] (a list of slugs, maybe empty), not both;
     ["catches"] (1, 1..999), ["encounters"] (20, 1..9999), ["balls"] (5,

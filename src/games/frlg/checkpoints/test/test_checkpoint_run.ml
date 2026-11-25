@@ -8,8 +8,9 @@ open Frlg_checkpoints
 let plan file = Result.get_ok (Frlg_checkpoints.Plan_file.load file)
 
 let handled =
-  "fly" :: "lift_floor" :: "capture" :: "grind" :: "prepare_berry_pp"
-  :: "mail_glitch_double_battle" :: Frlg_actions.Action_requests.names
+  "fly" :: "lift_floor" :: "capture" :: "wild_rng" :: "save_game" :: "grind"
+  :: "prepare_berry_pp" :: "mail_glitch_double_battle"
+  :: Frlg_actions.Action_requests.names
   @ List.map fst
       (Frlg_actions.Mail_glitch_use.handlers ~log:ignore
          ~party:(ref (Frlg_actions.Party_roster.of_list [])))

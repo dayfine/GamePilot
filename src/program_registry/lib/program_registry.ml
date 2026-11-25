@@ -104,6 +104,21 @@ let dex_collection =
     viewport = Nso_gba;
   }
 
+let wild_rng =
+  {
+    id = "frlg.wild_rng";
+    game = frlg;
+    name = "Wild RNG";
+    group = [ "FRLG"; "RNG" ];
+    description =
+      "Catches a chosen shiny wild Pokemon: a hard reset timed to its seed, \
+       Sweet Scent timed to its advance, the catch, and its summary's star.";
+    doc = "docs/programs/frlg-wild-rng.md";
+    checkpoints = Some "src/games/frlg/programs/wild_rng/plans";
+    backends = [ Mgba ];
+    viewport = Nso_gba;
+  }
+
 let all =
   [
     start_menu_poc;
@@ -112,6 +127,7 @@ let all =
     team_training;
     sevii_story;
     dex_collection;
+    wild_rng;
   ]
 
 let short_id p =
