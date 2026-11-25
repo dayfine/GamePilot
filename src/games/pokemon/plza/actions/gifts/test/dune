@@ -1,0 +1,11 @@
+(rule
+ (copy ../../../readers/test/fixtures/gifts.probes.jsonl gifts.probes.jsonl))
+
+(test
+ (name test_choose_gift)
+ (deps gifts.probes.jsonl)
+ (libraries
+  gamepilot.wire
+  gamepilot.effects
+  gamepilot.table_test
+  gamepilot.plza_gifts))

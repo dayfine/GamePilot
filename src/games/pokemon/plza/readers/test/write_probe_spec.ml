@@ -58,7 +58,8 @@ let () =
         (params
            (Plza_readers.Main_menu_row.probes ~picture:native
               ~assets:Plza_readers.Blob_assets.file_names
-           @ Plza_readers.Mystery_gift_screen.probes ~picture:native))
+           @ Plza_readers.Mystery_gift_screen.probes ~picture:native
+               ~gift_name:"gift-name-vivillon.png"))
   | _ ->
       let assets = Plza_readers.Blob_assets.file_names in
       print_endline

@@ -23,10 +23,10 @@ let move =
   @ [ T.{ button = Y; hold_ms = 100; cooldown_ms = 600 } ]
 
 let leave_boxes : T.t = { button = B; hold_ms = 100; cooldown_ms = 1500 }
+let open_save : T.t = { button = R; hold_ms = 100; cooldown_ms = 1500 }
 
-let save : T.t list =
+let confirm_save : T.t list =
   [
-    { button = R; hold_ms = 100; cooldown_ms = 1500 };
     { button = A; hold_ms = 100; cooldown_ms = 3500 };
     { button = A; hold_ms = 100; cooldown_ms = 1500 };
     { button = B; hold_ms = 100; cooldown_ms = 1500 };
@@ -49,16 +49,30 @@ let gift_in_party m = R.highlighted m <> None && R.card_green m sixth
 let gift_moved m =
   R.highlighted m <> None && R.card_empty m sixth && R.card_green m fifth
 
-let move_and_save ~log =
+let to_boxes ~log =
   let* () = Menu_rows.goto ~log boxes_row in
   let* () =
     cards_hold ~what:"no Pokémon in party slot 6; nothing moved" gift_in_party
   in
-  T.press_all (open_boxes @ move);
+  T.press_all open_boxes;
+  log "Boxes.";
+  Ok ()
+
+let move_gift ~log =
+  T.press_all move;
   T.press leave_boxes;
   let* () =
     cards_hold ~what:"party slot 6 not emptied; nothing saved" gift_moved
   in
-  log "Party slot 6 moved to Box 1 slot 2. Saving.";
-  T.press_all save;
+  log "Party slot 6 moved to Box 1 slot 2.";
+  Ok ()
+
+let open_save_prompt ~log =
+  T.press open_save;
+  log "Save Progress.";
+  Ok ()
+
+let save ~log =
+  T.press_all confirm_save;
+  log "Saved.";
   Ok ()

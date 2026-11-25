@@ -12,6 +12,17 @@
     ({!Plza_readers.Main_menu_row.card_green}): the sixth must hold a Pokémon
     before the move and none after it, the fifth one still, or the move is an
     error and nothing is saved. The save itself is not read (no capture of it
-    yet). *)
+    yet). The stage is four calls, so a run can start or stop between them
+    ({!Claim_gifts}). *)
 
-val move_and_save : log:(string -> unit) -> (unit, string) result
+val to_boxes : log:(string -> unit) -> (unit, string) result
+(** Row 0, the sixth card read, and into the Boxes. *)
+
+val move_gift : log:(string -> unit) -> (unit, string) result
+(** From the Boxes: the move, B, the cards read. *)
+
+val open_save_prompt : log:(string -> unit) -> (unit, string) result
+(** From the main menu: R, Save Progress's prompt. *)
+
+val save : log:(string -> unit) -> (unit, string) result
+(** On the prompt: A, A, B. Not read. *)

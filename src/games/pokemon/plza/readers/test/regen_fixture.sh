@@ -17,9 +17,11 @@
 # a two-frame read subscribes from what the frame shows (write_probe_spec.exe
 # --second): the party bars' tests made from its cards, the caught mark's box
 # above its plate.
-# Also fixtures/gifts.probes.jsonl: every frame probed by the Mystery Gift
-# steps' readers alone (write_probe_spec.exe --gifts), the captures only, and
-# fixtures/gifts.shifted.probes.jsonl: the main menu's frame shifted.
+# Also fixtures/gifts.probes.jsonl: every capture, and images/mystery-gift's
+# (console B's own, png), probed by the Mystery Gift steps' readers alone
+# (write_probe_spec.exe --gifts, the gift name's template from
+# assets/gift-name-vivillon.png), and fixtures/gifts.shifted.probes.jsonl: the
+# main menu's frame and images/mystery-gift's shifted.
 # The Python steps need Pillow ($SHIFT_PYTHON, default python3; e.g.
 # "uv run --with pillow python3").
 #
@@ -69,10 +71,17 @@ for path in sys.argv[2:]:
 (cd "$work/shifted" && "$PROBE_IMAGES" --spec "$work/spec/shifted.probes.json" \
     --viewport native ./[gr]*/*/*.png) \
     >"$HERE/fixtures/switch.shifted.rg.probes.jsonl"
+cp "$SRC/games/pokemon/plza/assets/gift-name-vivillon.png" "$work/spec/"
 (cd "$SRC" && dune exec games/pokemon/plza/readers/test/write_probe_spec.exe \
     -- --gifts) >"$work/spec/gifts.probes.json"
+mkdir "$work/frames/mystery-gift" "$work/lossless/mystery-gift"
+cp "$HERE/images/mystery-gift/"*.png "$work/frames/mystery-gift/"
+cp "$HERE/images/mystery-gift/"*.png "$work/lossless/mystery-gift/"
+(cd "$work/lossless" && $SHIFT_PYTHON "$SHIFT_FRAME" "$work/shifted" \
+    ./mystery-gift/*.png)
 (cd "$work/frames" && "$PROBE_IMAGES" --spec "$work/spec/gifts.probes.json" \
-    --viewport native ./*/*.jpg) >"$HERE/fixtures/gifts.probes.jsonl"
+    --viewport native ./*/*.jpg ./mystery-gift/*.png) \
+    >"$HERE/fixtures/gifts.probes.jsonl"
 (cd "$work/shifted" && "$PROBE_IMAGES" --spec "$work/spec/gifts.probes.json" \
-    --viewport native ./*/tutorial-cards/it-menu-no-card.png) \
-    >"$HERE/fixtures/gifts.shifted.probes.jsonl"
+    --viewport native ./*/tutorial-cards/it-menu-no-card.png \
+    ./*/mystery-gift/*.png) >"$HERE/fixtures/gifts.shifted.probes.jsonl"

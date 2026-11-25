@@ -1,18 +1,31 @@
 (** Claiming PLZA's Mystery Gifts and putting them in Box 1, saved:
     [plza_claim_and_bank.sh] from the BDSPLab lab tools (console B, 2026-11-20),
-    its stages 1 to 3, as one call. From the overworld, with five Pokémon in the
-    party and Box 1 empty: the Internet gift (the 4th, Vivillon) lands in party
+    its stages 1 to 3. From the overworld, with five Pokémon in the party and
+    Box 1 empty: the Internet gift (Vivillon, Poké Ball Pattern) lands in party
     slot 6, the code's gift (Xerneas for CELEBRATE30TH) in Box 1 slot 1; the
     Vivillon goes to Box 1 slot 2; PLZA is saved and closed
     ({!Switch_home.Game_entry.close_game}).
 
-    Each step's screens are read ({!Mystery_gift}, {!Gift_to_box}); the first
-    one not seen ends the call with an error naming it. *)
+    The run is a chain of steps ({!Mystery_gift}, {!Gift_to_box}), each named by
+    the screen it starts on ({!points}); a run can start on any of them and stop
+    before any later one, the console left on that screen. Each step's screens
+    are read; the first one not seen ends the run with an error naming it. *)
 
-(** Where to start, as the script's flags: [From_internet] (none), [From_code]
-    ([--code-only]: the menu and Mystery Gift again, then the code),
-    [From_boxes] ([--from-boxes]: the menu, then the move and the save). *)
-type start = From_internet | From_code | From_boxes
+type span = {
+  from : string;  (** the point the console is on: "overworld" from the start *)
+  stop_at : string option;  (** the point to stop on, before its step *)
+  code_only : bool;
+      (** the script's [--code-only]: from the overworld, Mystery Gift, then
+          straight to the code *)
+}
+
+val points : string list
+(** The screens between the steps, in order: overworld (the start), mystery-gift
+    (its menu), gift-list (the Internet list), card (the Internet gift's card),
+    code (the Mystery Gift menu again), keyboard (the code keyboard), code-card
+    (the code gift's card), disconnect (its list), after-gifts (the overworld,
+    the gifts claimed), boxes (the Boxes), moved (the main menu, the gift
+    moved), save (Save Progress's prompt), saved (the overworld, saved). *)
 
 val default_code : string
 (** CELEBRATE30TH, the script's default. *)
@@ -21,13 +34,17 @@ val run :
   log:(string -> unit) ->
   picture:Wire.box ->
   assets:Plza_readers.Blob_assets.t ->
+  gift_name:string ->
   tile:Switch_home.Home_screen.tile_color ->
-  start:start ->
-  stop_at_list:bool ->
+  span:span ->
   code:string ->
   (unit, string) result
-(** With [stop_at_list] (and [From_internet]): stops once the Internet gift list
-    is active, having claimed nothing, the console left on the list (the first
-    console run's safe point). [assets] are the PLZA readers' uploaded templates
-    (the main menu's buttons); [tile] is PLZA's colour for the HOME reader that
-    closes the game. *)
+(** The steps from [span.from] to [span.stop_at] (or the end). [assets] are the
+    PLZA readers' uploaded templates (the main menu's buttons), [gift_name] the
+    Internet gift's name template's; [tile] is PLZA's colour for the HOME reader
+    that closes the game. [Error] before any press for an unknown point or a
+    stop not after the start ({!check}). *)
+
+val check : span -> (unit, string) result
+(** The points are known, the stop after the start, the code alone from the
+    overworld. *)

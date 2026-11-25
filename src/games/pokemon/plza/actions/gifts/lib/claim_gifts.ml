@@ -1,42 +1,116 @@
-type start = From_internet | From_code | From_boxes
+module G = Mystery_gift
+module B = Gift_to_box
+
+type span = { from : string; stop_at : string option; code_only : bool }
+type step = { at : string; go : unit -> (unit, string) result }
 
 let default_code = "CELEBRATE30TH"
 let ( let* ) = Result.bind
 
-let gifts ~log ~picture ~start ~code =
-  let* () = Mystery_gift.open_gifts ~log in
-  let* () =
-    if start = From_internet then
-      let* () = Mystery_gift.open_internet_list ~log in
-      Mystery_gift.claim_internet ~log
-    else Ok ()
-  in
-  let* () = Mystery_gift.claim_code ~log ~picture code in
-  Mystery_gift.disconnect ();
-  Ok ()
+let from_overworld ~log next () =
+  let* _row = Menu_rows.open_menu ~log in
+  next ~log
 
-let to_box_and_close ~log ~picture ~tile =
-  let* () = Gift_to_box.move_and_save ~log in
-  log "Saved. Closing the game.";
+let close ~log ~picture ~tile () =
+  log "Closing the game.";
   Switch_home.Game_entry.close_game ~log ~picture tile
 
-let stop_on_list ~log =
-  let* _row = Menu_rows.open_menu ~log in
-  let* () = Mystery_gift.open_gifts ~log in
-  let* () = Mystery_gift.open_internet_list ~log in
-  log "Stopped on the Internet gift list; nothing claimed.";
-  Ok ()
+let internet_steps ~log =
+  [
+    { at = "mystery-gift"; go = (fun () -> G.open_internet_list ~log) };
+    { at = "gift-list"; go = (fun () -> G.choose_gift ~log) };
+    { at = "card"; go = (fun () -> G.leave_card ~log) };
+  ]
 
-let steps ~log ~picture ~tile ~start ~stop_at_list ~code =
-  if stop_at_list && start = From_internet then stop_on_list ~log
-  else if stop_at_list then Error "the stop on the gift list needs the start"
+let code_steps ~log ~picture ~code =
+  [
+    { at = "code"; go = (fun () -> G.open_keyboard ~log) };
+    { at = "keyboard"; go = (fun () -> G.claim_code ~log ~picture code) };
+    { at = "code-card"; go = (fun () -> G.dismiss_card ~log) };
+    { at = "disconnect"; go = (fun () -> Ok (G.disconnect ())) };
+  ]
+
+let box_steps ~log ~picture ~tile =
+  [
+    { at = "after-gifts"; go = from_overworld ~log B.to_boxes };
+    { at = "boxes"; go = (fun () -> B.move_gift ~log) };
+    { at = "moved"; go = (fun () -> B.open_save_prompt ~log) };
+    { at = "save"; go = (fun () -> B.save ~log) };
+    { at = "saved"; go = close ~log ~picture ~tile };
+  ]
+
+let steps ~log ~picture ~tile ~code ~code_only =
+  { at = "overworld"; go = from_overworld ~log G.open_gifts }
+  :: (if code_only then [] else internet_steps ~log)
+  @ code_steps ~log ~picture ~code
+  @ box_steps ~log ~picture ~tile
+
+let points =
+  [
+    "overworld";
+    "mystery-gift";
+    "gift-list";
+    "card";
+    "code";
+    "keyboard";
+    "code-card";
+    "disconnect";
+    "after-gifts";
+    "boxes";
+    "moved";
+    "save";
+    "saved";
+  ]
+
+let rec drop_to at = function
+  | [] -> []
+  | s :: rest as all -> if s.at = at then all else drop_to at rest
+
+let rec take_to stop = function
+  | [] -> []
+  | s :: rest -> if Some s.at = stop then [] else s :: take_to stop rest
+
+let index name = List.find_index (String.equal name) points
+
+let known name =
+  if index name <> None then Ok ()
   else
-    let* _row = Menu_rows.open_menu ~log in
-    let* () =
-      if start = From_boxes then Ok () else gifts ~log ~picture ~start ~code
-    in
-    to_box_and_close ~log ~picture ~tile
+    Error (Printf.sprintf "no point %s (%s)" name (String.concat ", " points))
 
-let run ~log ~picture ~assets ~tile ~start ~stop_at_list ~code =
-  Effects.with_probes (Mystery_gift.probes ~picture ~assets) (fun () ->
-      steps ~log ~picture ~tile ~start ~stop_at_list ~code)
+let after_start span stop =
+  if index stop > index span.from then Ok ()
+  else
+    Error
+      (Printf.sprintf "the stop %s is not after the start %s" stop span.from)
+
+let check span =
+  let* () = known span.from in
+  let* () = Option.fold ~none:(Ok ()) ~some:known span.stop_at in
+  let* () = Option.fold ~none:(Ok ()) ~some:(after_start span) span.stop_at in
+  if span.code_only && span.from <> "overworld" then
+    Error "the code alone starts from the overworld"
+  else Ok ()
+
+let rec run_all = function
+  | [] -> Ok ()
+  | s :: rest ->
+      let* () = s.go () in
+      run_all rest
+
+let chosen ~log ~picture ~tile ~code span =
+  take_to span.stop_at
+    (drop_to span.from
+       (steps ~log ~picture ~tile ~code ~code_only:span.code_only))
+
+let stopped ~log span =
+  Option.iter
+    (fun at -> log (Printf.sprintf "Stopped on %s, as asked." at))
+    span.stop_at
+
+let run ~log ~picture ~assets ~gift_name ~tile ~span ~code =
+  let* () = check span in
+  let* () =
+    Effects.with_probes (G.probes ~picture ~assets ~gift_name) (fun () ->
+        run_all (chosen ~log ~picture ~tile ~code span))
+  in
+  Ok (stopped ~log span)
