@@ -59,10 +59,10 @@ let walk_from t (at : Pokemon_checkpoints.Pose.observed) target =
       Result.map (arrived t)
         (Route_walk.walk (walker t) { place; facing = at.faces } legs)
 
+let no_position = Failure.cause "position_unknown" "no position to walk from"
+
 let walk_to t (target : Pokemon_checkpoints.Pose.grid) =
-  match t.at with
-  | None -> Error (Failure.cause "position_unknown" "no position to walk from")
-  | Some at -> walk_from t at target
+  match t.at with None -> Error no_position | Some at -> walk_from t at target
 
 (* After an event that passed: its declared pose, when it names one tile. A
    pose with no facing on the tile already reckoned keeps the facing reckoned
@@ -137,7 +137,8 @@ let find_battle t ~pace ~patch () =
     (Paced_battle.reckoned t.at)
 
 let battle_game_steps () =
-  Frlg_battle.Battle_steps.make ~read_offered_move:Summary_moves.read_offered ()
+  Frlg_battle.Battle_steps.make ~read_offered_move:Summary_moves.read_offered
+    ~is_switch_offer:Switch_offer.read ()
 
 let battle_on t wrap script =
   Effects.with_probes Frlg_battle.Battle_look.probes (fun () ->
@@ -273,28 +274,24 @@ let ferry t (_ : Pokemon_checkpoints.Plan.event) args =
   Seagallop.run ~log:t.config.log ~from:(map_now t) args
   |> Result.map (fun at -> t.at <- Some at)
 
-(* The plan's [step]: one tile, nothing watched (Route_walk.step). *)
-let step t (event : Pokemon_checkpoints.Plan.event) direction =
-  match t.at with
-  | None -> Error (Failure.cause "position_unknown" "no position to step from")
-  | Some at -> (
-      match Route_target.place_of t.world at with
-      | Error e -> Error (Failure.cause ~repeats:true "no_route" e)
-      | Ok place ->
-          Route_walk.step (walker t) { place; facing = at.faces } direction
-          |> Result.map (fun ended ->
-                 arrived t ended;
-                 adopt_declared t event))
+let declared t event = Result.map (fun () -> adopt_declared t event)
 
-(* The plan's [train]: [battles] trainer battles in a row (Trainer_battles). *)
-let train t (event : Pokemon_checkpoints.Plan.event) battles =
-  let game_steps =
-    Trainer_battles.live_game_steps ~log:t.config.log ~fight:(battle t)
-  in
-  Result.bind (Trainer_battles.run game_steps ~battles) (fun outcome ->
-      Result.map
-        (fun () -> adopt_declared t event)
-        (Trainer_battles.failure outcome))
+(* The plan's [step] (Route_walk.step) and [train] (Trainer_battles). *)
+let step_from t (at : Pokemon_checkpoints.Pose.observed) direction =
+  match Route_target.place_of t.world at with
+  | Error e -> Error (Failure.cause ~repeats:true "no_route" e)
+  | Ok place ->
+      Route_walk.step (walker t) { place; facing = at.faces } direction
+
+let step t event direction =
+  Result.bind (Option.to_result ~none:no_position t.at) (fun at ->
+      step_from t at direction)
+  |> Result.map (arrived t)
+  |> declared t event
+
+let train t event battles =
+  declared t event
+    (Trainer_battles.play ~log:t.config.log ~fight:(battle t) ~battles)
 
 let game t : Pokemon_checkpoints.Game.t =
   {
