@@ -42,7 +42,7 @@ Server::Server(Backend& backend, ServerOptions options, const Clock& clock)
     throw std::runtime_error("speed must be above 0");
   }
   game_zero_ms_ = clock_.now_ms();
-  if (keep_awake_.on() && button_mask(keep_awake_.key()) == 0) {
+  if (keep_awake_.on() && !keep_awake_key(keep_awake_.key())) {
     throw std::runtime_error("bad keep-awake key " + keep_awake_.key());
   }
   if (!options_.log_path.empty()) {
