@@ -130,14 +130,13 @@ let subset_equations readings transitions ~use ~omitted =
     Array.to_list (Array.sub readings 0 use)
     |> List.filteri (fun c _ -> c <> omitted)
   in
-  let rows, constants =
+  let equations =
     List.concat_map
       (fun reading -> reading_equations transitions.(reading.index) reading)
       chosen
-    |> List.split
   in
   let weakest = List.fold_left (fun _ reading -> reading.margin) 0.0 chosen in
-  (Array.of_list rows, Array.of_list constants, weakest, List.length chosen)
+  (Array.of_list equations, weakest, List.length chosen)
 
 let minimum_readings = Gf2_matrix.dimension / pokemon_blink_known_bits
 
@@ -190,10 +189,10 @@ let check_candidates request solved search =
       None
 
 let try_subset request readings transitions search ~use ~omitted =
-  let rows, constants, weakest, count =
+  let equations, weakest, count =
     subset_equations readings transitions ~use ~omitted
   in
-  let solved = Gf2_matrix.solve rows constants in
+  let solved = Gf2_matrix.solve equations in
   let dimension = Array.length solved.null_space_basis in
   if not solved.consistent then (
     search.last_failure <- "The intervals contradict each other.";
@@ -209,7 +208,7 @@ let try_subset request readings transitions search ~use ~omitted =
   else
     let found (state, fit) =
       Found
-        (found request ~state ~fit ~equations:(Array.length rows) ~weakest
+        (found request ~state ~fit ~equations:(Array.length equations) ~weakest
            ~count search)
     in
     Option.fold ~none:Next ~some:found (check_candidates request solved search)

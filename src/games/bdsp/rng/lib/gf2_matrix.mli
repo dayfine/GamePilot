@@ -61,8 +61,10 @@ type solution = {
 }
 (** [Gf2SolveResult]; its [null_space_dimension] is the basis's length. *)
 
-val solve : vec array -> bool array -> solution
-(** [solve equations constants] solves [equations * x = constants] over GF(2) by
-    Gauss-Jordan elimination, pivoting on the first row with the column set
-    ([gf2_solve_128]). Any number of rows; more than 128 is normal. Raises
-    [Invalid_argument] when the two arrays differ in length. *)
+val solve : (vec * bool) array -> solution
+(** [solve equations] solves the system whose equations are each a coefficient
+    row and its constant ([row . x = constant]) over GF(2) by Gauss-Jordan
+    elimination, pivoting on the first row with the column set
+    ([gf2_solve_128]). Any number of rows; more than 128 is normal. The C++
+    takes the rows and constants as two vectors and throws when their lengths
+    differ; pairing them makes that impossible. *)

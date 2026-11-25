@@ -144,11 +144,9 @@ let basis_vector rows pivot_row column =
     pivot_row;
   !basis
 
-let solve equations rhs =
-  if Array.length equations <> Array.length rhs then
-    invalid_arg "Gf2_matrix.solve: coefficient and constant counts differ";
-  let rows = Array.copy equations in
-  let constants = Array.copy rhs in
+let solve equations =
+  let rows = Array.map fst equations in
+  let constants = Array.map snd equations in
   let pivot_row = eliminate rows constants in
   (* An all-zero row with a nonzero constant makes the system unsolvable. *)
   if Array.exists2 (fun row constant -> is_zero row && constant) rows constants
