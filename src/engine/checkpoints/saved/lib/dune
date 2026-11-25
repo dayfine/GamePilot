@@ -1,4 +1,10 @@
 (library
  (name engine_saved)
  (public_name gamepilot.engine_saved)
- (libraries yojson gamepilot.repo_io gamepilot.engine_run))
+ (libraries
+  yojson
+  gamepilot.repo_io
+  gamepilot.engine_rules
+  gamepilot.engine_run)
+ (preprocess
+  (pps ppx_deriving_yojson)))

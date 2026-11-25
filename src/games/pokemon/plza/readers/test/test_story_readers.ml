@@ -44,7 +44,11 @@ let arrival = "arrival-to-ad/"
 let past = "arrival-past-mission-banner/"
 
 (* The arrival to the ad: the hint up to frame 6, no autosave badge; the
-   subtitles likewise; the other folders as their names say. *)
+   subtitles likewise; the other folders as their names say. 0033 and 0038
+   show no badge although CommandLineTests names them "+autosave" (here
+   0033-autosave-badge, 0038-light-pavement): the fork's
+   PokemonLZA_AutoStoryDetectors_Tests.cpp (branch lab/dev-plza) expects no
+   badge on any ArrivalToAd frame, and neither frame draws one. *)
 let story_cases =
   List.concat_map
     (fun (frame, has_hint, has_badge) ->

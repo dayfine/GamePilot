@@ -24,38 +24,26 @@ struct
     required ~where key args;
     F.records ~where key args read
 
-  let flag ~default key ~where args = F.bool_or ~where ~default key args
-  let answer ~where args = Plan.Answer (flag ~default:true "yes" ~where args)
-  let no_args kind ~where:_ _ = kind
+  (* The engine's story actions are still the plan's own kinds, read by their
+     piece's decoder. *)
+  let story : Engine_rules.Story_action.t -> Plan.kind = function
+    | Talk -> Talk
+    | Answer yes -> Answer yes
+    | Scene -> Scene
+    | Save -> Save
 
-  (* Each engine kind: its name, the args it takes, and how to read them. *)
-  let engine_kinds =
-    [
-      ("talk", [], no_args Plan.Talk);
-      ("scene", [], no_args Plan.Scene);
-      ("save", [], no_args Plan.Save);
-      ("answer", [ "yes" ], answer);
-    ]
-
-  let engine_kind name =
-    List.find_map
-      (fun (named, allowed, read) ->
-        if named = name then Some (allowed, read) else None)
-      engine_kinds
-
+  let story_kind read ~where args = story (ok_or_fail (read ~where args))
   let game_kind read ~where args = Plan.Game (ok_or_fail (read ~where args))
 
   let kind ~where obj way : Plan.kind =
     let name = F.string ~where "kind" obj in
     let args = Option.value ~default:[] (F.object_opt ~where "args" obj) in
     let args_where = where ^ "args." in
-    match (name, engine_kind name, C.kind_of_plan name) with
+    match (name, Story_action_decode.of_plan name, C.action_of_plan name) with
     | "game_action", _, _ when way = None ->
         F.fail "%saction is missing: a game_action names its action." where
     | "game_action", _, _ -> Plan.Named_action args
-    | _, Some (allowed, read), _ ->
-        known_fields_only ~where:args_where allowed args;
-        read ~where:args_where args
+    | _, Some read, _ -> story_kind read ~where:args_where args
     | _, None, Some read -> game_kind read ~where:args_where args
     | _, None, None ->
         F.fail "%skind \"%s\" is not a story event kind." where name

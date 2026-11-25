@@ -527,7 +527,7 @@ let maps_crossed from target () =
   let leg_maps acc (leg : _ Grid_planning.Leg.t) =
     match leg.kind with
     | Walk { tiles; _ } -> pressed leg.start leg.direction tiles acc
-    | Face | Action _ -> name leg.finish :: acc
+    | Face | Special_step _ -> name leg.finish :: acc
   in
   let rec dedupe = function
     | a :: (b :: _ as rest) when a = b -> dedupe rest
