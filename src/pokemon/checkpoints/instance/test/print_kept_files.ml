@@ -1,11 +1,11 @@
 (* What a run keeps beside an event's state, byte for byte, for the golden test
-   (kept_files.golden): each kept value as Event_states.write_kept writes it
+   (kept_files.golden): each kept value as Event_snapshot.write_kept writes it
    (one line of JSON and its newline, printed as is),
    and files kept by older runs (fewer fields, nulls) as they read back and are
    written again. A change that keeps kept_files.golden as it is writes and
    reads every kept file the same way. *)
 
-open Pokemon_checkpoints
+open Pokemon_engine
 
 let house2 : Pose.observed =
   {
@@ -60,20 +60,20 @@ let older =
   ]
 
 let state = Filename.temp_file "kept" ".ss"
-let kept_file = Event_states.kept_path state
+let kept_file = Event_snapshot.kept_path state
 let file_bytes () = In_channel.with_open_bin kept_file In_channel.input_all
 
 let print_written (name, kept) =
-  Event_states.write_kept state kept;
+  Event_snapshot.write_kept state kept;
   Printf.printf "%s\n  %s" name (file_bytes ())
 
 let print_older (name, bytes) =
   Out_channel.with_open_bin kept_file (fun out ->
       Out_channel.output_string out bytes);
-  match Event_states.read_kept ~missing:"missing" state with
+  match Event_snapshot.read_kept ~missing:"missing" state with
   | Error e -> Printf.printf "%s\n  error: %s\n" name e
   | Ok kept ->
-      Event_states.write_kept state kept;
+      Event_snapshot.write_kept state kept;
       Printf.printf "%s\n  written again: %s" name (file_bytes ())
 
 let () =

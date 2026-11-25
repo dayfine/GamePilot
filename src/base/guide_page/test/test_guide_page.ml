@@ -23,6 +23,11 @@ let show_fill text =
   | Ok page -> String.escaped page
   | Error e -> "error: " ^ e
 
+let show_long text =
+  Guide_page.long_paragraphs ~max_lines:2 text
+  |> List.map (fun (line, n) -> Printf.sprintf "%d:%d" line n)
+  |> String.concat " "
+
 let page =
   "# Title\n\
    prose\n\
@@ -80,6 +85,38 @@ let () =
           show_blocks
             "<!-- generated:a -->\n<!-- generated:b -->\n<!-- /generated -->\n")
         "error: line 2: a block starts inside the block of line 1";
+      case "a long paragraph, by its first line and length"
+        (fun () -> show_long "# T\n\na\nb\nc\n\nd\n")
+        "3:3";
+      case "a list item is a paragraph of its own"
+        (fun () -> show_long "- a\n  b\n- c\n- d\n  e\n  f\n")
+        "4:3";
+      case "blocks, fences, indented code and tables are not paragraphs"
+        (fun () ->
+          show_long
+            "<!-- generated:x -->\n\
+             a\n\
+             b\n\
+             c\n\
+             <!-- /generated -->\n\
+             ```\n\
+             a\n\
+             b\n\
+             c\n\
+             ```\n\n\
+            \    a\n\
+            \    b\n\
+            \    c\n\n\
+             |a|\n\
+             |b|\n\
+             |c|\n")
+        "";
+      case "a heading ends a paragraph"
+        (fun () -> show_long "a\nb\n## H\nc\n")
+        "";
+      case "a paragraph at the end of the page"
+        (fun () -> show_long "x\n\na\nb\nc")
+        "3:3";
       case "the start marker"
         (fun () -> Guide_page.start_marker "checkpoints" (Some "mg-06"))
         "<!-- generated:checkpoints mg-06 -->";

@@ -66,7 +66,8 @@
   mgba.probes.jsonl
   menus.mgba.probes.jsonl
   switch.probes.jsonl
-  menus.switch.probes.jsonl)
+  menus.switch.probes.jsonl
+  fixtures/capture_throw.looks.jsonl)
  (libraries
   yojson
   gamepilot.table_test
@@ -74,7 +75,7 @@
   gamepilot.grid_geometry
   gamepilot.grid_maps
   gamepilot.json_field
-  gamepilot.pokemon_checkpoints
+  gamepilot.pokemon_engine
   gamepilot.room_policy
   gamepilot.frlg_overworld
   gamepilot.frlg_actions

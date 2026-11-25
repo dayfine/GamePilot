@@ -1,0 +1,8 @@
+(test
+ (name test_walk)
+ (libraries
+  gamepilot.table_test
+  gamepilot.wire
+  gamepilot.engine_run
+  gamepilot.plza_rules
+  gamepilot.plza_walk))

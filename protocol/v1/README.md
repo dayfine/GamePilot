@@ -1,4 +1,4 @@
-# Wire protocol v1.14
+# Wire protocol v1.18
 
 JSON-RPC 2.0 between the OCaml programs (client) and the daemon (server). The golden files in this
 folder are the spec: the daemon's tests parse every file and the OCaml tests decode and re-encode
@@ -39,9 +39,25 @@ the share of a box's pixels passing a test of linear channel comparisons per row
 and `core.find@1`, blobs found by the fork's fixed pipeline (colour filter, waterfill, size filter,
 scores) (`46-subscribe.line_shares_find.request.json`, `47-frame.line_shares_find.notification.json`).
 `hello` lists both. A v1.12 program never subscribes them.
-v1.14 adds `backend.reset` (see Methods): mGBA's power switch, answered like `backend.load_state`
-(`48-reset.request.json`, `49-reset.response.json`), for the FRLG RNG programs' hard reset. A
-v1.13 program never sends it.
+v1.18 adds `backend.reset` (see Methods): mGBA's power switch, answered like `backend.load_state`
+(`52-reset.request.json`, `53-reset.response.json`), for the FRLG RNG programs' hard reset. A
+v1.17 program never sends it.
+v1.17 adds the Switch's `Plus` and `Minus` to `submit` (`51-submit.plus.request.json`), the
+Switch's own names for those buttons, which a Switch-native game's program uses (PLZA's cutscene
+skip holds Plus); a backend that is not the Switch refuses them as it does `Home`. `Start` and
+`Select` stay the GBA's names: the Switch backend still presses them as Plus and Minus, as the
+Switch's GBA app maps them. A v1.16 program never names `Plus` or `Minus`.
+v1.16 adds the Switch's `ZR` to `submit`, for PLZA's ball throw (ZL and ZR held to aim); a backend
+that is not the Switch refuses it as it does `ZL`. A v1.15 program never names it.
+v1.15 adds `masked` to `core.find@1` (optional, default `false`): `true` scores each blob's box
+with the pixels outside its filter's range black, as the fork's `filter_by_mask` before
+MoveEffectivenessSymbol's match. v1.15 also adds `then` to `cancel`: the queued commands are dropped
+with no release and the batch given runs in their place (on the Switch, the board's replace-on-next:
+the running input lasts until the new one starts), as the fork's command dispatched over a running
+one, so ZL held to read the move symbols stays held through the move
+(`48-cancel.then.request.json`). A v1.14 program never sends either.
+v1.14 adds the Switch's `ZL` to `submit` (see Methods), for PLZA's lock-on in battle; a backend that
+is not the Switch refuses it as it does `Home`. A v1.13 program never names it.
 v1.2 makes the daemon own where the game picture sits in the frame: `hello` gives the `viewport` and
 the `game_size`, probe boxes and template placements are relative to the picture, templates are in game
 pixels, and `core.color_count@1` is new.
@@ -90,10 +106,10 @@ size) every v1.1 message means the same in v1.2.
 | `backend.load_state` | `path` (a save state file; the daemon passes it to the backend unread) | `seq` after loading, the new `load` |
 | `backend.reset` | {} | `seq` after the reset, the new `load`: the machine restarts as from its power switch and boots from its cartridge save, held at its first frame until the next `submit` (or `cancel`), so that batch starts on the reset's frame (mGBA: the core's reset) |
 | `probe.upload_template` | `png`: a PNG file, base64 | `template`: the lowercase hex SHA-256 of the PNG bytes |
-| `subscribe` | `probes`: list of {`id`, `kind`, `box`, `delivery`, and `template` (and optionally `ink`) for `core.template_match@1`, `min` and `max` for `core.color_count@1`, `test` for `core.line_shares@1`, `filters`, `min_area` and the optional `max_area`, `min_size`, `max_size`, `margin`, `template`, `shape` for `core.find@1`} | `subscribed`: ids |
+| `subscribe` | `probes`: list of {`id`, `kind`, `box`, `delivery`, and `template` (and optionally `ink`) for `core.template_match@1`, `min` and `max` for `core.color_count@1`, `test` for `core.line_shares@1`, `filters`, `min_area` and the optional `max_area`, `min_size`, `max_size`, `margin`, `template`, `shape`, `masked` for `core.find@1`} | `subscribed`: ids |
 | `unsubscribe` | `ids`: probe ids | `unsubscribed`: the ids that were subscribed, now removed (others are ignored) |
 | `submit` | `batch_id`, `commands`: list of {`press`: buttons, optional `left_stick` and `right_stick`, `hold_ms`, `cooldown_ms`} or {`wait_ms`} | `batch_id`, `start_seq` |
-| `cancel` | {} | `released_seq`: drops queued commands and releases all buttons |
+| `cancel` | {} or {`then`: {`batch_id`, `commands`}} | `released_seq`: drops queued commands and releases all buttons; with `then` (v1.15), releases none and runs that batch in their place, its `batch_done` as a submit's |
 | `status` | {} | `t_ms`, `backend` (its `kind`), `client` (the lease holder's `hello` name, else the oldest connection's, or `null`), `clients` (connections now), `lease` (below, or `null`), `fidelity`, `threads`, `ring`, `gaps` (below) |
 | `lease.acquire` | `owner` (a label for people), optional `ttl_ms` (default 60000) | `lease` {`owner`, `client`, `held_ms`, `ttl_ms`} |
 | `lease.release` | {} | `released`: whether this connection held it |
@@ -115,7 +131,8 @@ size) every v1.1 message means the same in v1.2.
   again replaces it. Each probe costs time on every frame, so a reader unsubscribes the probes it no
   longer reads.
 - Buttons (GBA): `A`, `B`, `Select`, `Start`, `Right`, `Left`, `Up`, `Down`, `R`, `L`.
-  The Switch only: `Home`, `X`, `Y` (`42-submit.home.request.json`). A press of one on another
+  The Switch only: `Home`, `X`, `Y`, `ZL`, `ZR`, `Plus`, `Minus` (`42-submit.home.request.json`,
+  `51-submit.plus.request.json`); on the Switch, `Start` and `Select` press Plus and Minus. A press of one on another
   backend is refused, as a whole batch, with -32602 and `data` {`backend`, `button`}: mGBA and the
   view backend have no such button (the view backend refuses every input anyway, -32002).
 - Sticks (the Switch only, `44-submit.sticks.request.json`): `left_stick` and `right_stick` are each
@@ -319,6 +336,9 @@ filter order, so a reader filters by size to keep the list short.
   included, at its own size: upload the fork's template already cut to its largest blob, as
   `WaterfillTemplateMatcher` cuts it. The fork's aspect and area-ratio gates are the reader's, from
   `w`, `h` and `fill`.
+- `masked` (v1.15, a boolean, default `false`): with `true`, the `score` is of the blob's box with
+  every pixel outside the filter's range black, as the fork's `filter_by_mask` before
+  MoveEffectivenessSymbol's match.
 - `shape` (a hash): `overlap`, the blob's pixels against the shape's opaque pixels (alpha 128 or
   more) sampled at the centres of the blob's box's pixels: pixels in both over pixels in either.
   AdvanceArrowDetector tests the chevron by this overlap with a V (`v_match`), a test of the blob's

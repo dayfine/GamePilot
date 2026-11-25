@@ -32,12 +32,12 @@ type outcome =
           no answer; the game is left in that battle *)
 
 type game_steps = {
-  await_battle : unit -> (unit, Pokemon_checkpoints.Failure.cause) result;
+  await_battle : unit -> (unit, Pokemon_engine.Failure.cause) result;
       (** The lines before a battle pressed through until it starts; [Ok] at
           once if one is on the screen. *)
   fight : Frlg_battle.Battle_script.t -> Frlg_battle.Scripted_battle.outcome;
       (** The battle played to its end. *)
-  settle : unit -> (unit, Pokemon_checkpoints.Failure.cause) result;
+  settle : unit -> (unit, Pokemon_engine.Failure.cause) result;
       (** The lines after the last battle pressed through to a quiet overworld.
       *)
   log : string -> unit;
@@ -52,9 +52,7 @@ val script : Frlg_battle.Battle_script.t
     {!Frlg_battle.Battle.Switch_offer}. *)
 
 val run :
-  game_steps ->
-  battles:int ->
-  (outcome, Pokemon_checkpoints.Failure.cause) result
+  game_steps -> battles:int -> (outcome, Pokemon_engine.Failure.cause) result
 (** [battles] battles, then the settle. [Error] when a battle never came (the
     overworld went quiet first) or the settle failed; a battle fought and not
     won is [Ok (Lost _)], for the caller to judge. A battle that leaves the
@@ -62,7 +60,7 @@ val run :
     fainted, members left), which fails the script. A whiteout with no member
     left would count as won; the checkpoint's money and position catch it. *)
 
-val failure : outcome -> (unit, Pokemon_checkpoints.Failure.cause) result
+val failure : outcome -> (unit, Pokemon_engine.Failure.cause) result
 (** [Won] passes; [Lost] fails as [battle_lost], naming the battle and why. *)
 
 val live_game_steps :
@@ -75,5 +73,5 @@ val play :
   log:(string -> unit) ->
   fight:(Frlg_battle.Battle_script.t -> Frlg_battle.Scripted_battle.outcome) ->
   battles:int ->
-  (unit, Pokemon_checkpoints.Failure.cause) result
+  (unit, Pokemon_engine.Failure.cause) result
 (** {!run} on {!live_game_steps}, judged by {!failure}. *)

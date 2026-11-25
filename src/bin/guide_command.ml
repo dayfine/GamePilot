@@ -1,17 +1,19 @@
 (* gamepilot guide PROGRAM | --write | --check
 
    The user guides (docs/guide/, docs/guide/README.md): one page per
-   registered program, <id>.md, and any number of extra pages for a part of
-   one, <id>.<part>.md (frlg.mail_glitch.item_duplication.md). Hand-written
-   prose around generated blocks (Guide_page, Guide_blocks).
+   registered program, <program id>.md, and any number of extra pages for a
+   part of one, <program id>.<part>.md (<program id>.item_duplication.md for
+   a part named item_duplication). Hand-written prose around generated blocks
+   (Guide_page, Guide_blocks).
 
    - PROGRAM prints each block the program's pages can hold, for a first draft;
    - --write refills every page's blocks in place and starts a page, from a
      skeleton, for a program that has none;
    - --check fails, naming each page and the command that fixes it, when a
      program has no page, a page names no program, a page still holds the
-     skeleton's TODO, or a block is not what --write would write (CI runs it:
-     a plan change makes its program's checkpoints block stale). *)
+     skeleton's TODO, a block is not what --write would write (CI runs it:
+     a plan change makes its program's checkpoints block stale), or a
+     hand-written paragraph runs over five lines. *)
 
 module R = Program_registry
 
@@ -19,6 +21,10 @@ let usage = "  gamepilot guide PROGRAM | --write | --check\n"
 let ( let* ) = Result.bind
 let regenerate = "cd src && opam exec -- dune exec -- gamepilot guide --write"
 let todo = "<!-- TODO(guide)"
+
+(* The longest hand-written paragraph or list item a page may hold
+   (docs/guide/README.md: written for a player who reads in passing). *)
+let max_paragraph_lines = 5
 
 (* The program a page is for, by its file name; None for the index. *)
 let program_of_page name =
@@ -59,7 +65,10 @@ let write path text =
 
 let block p name arg =
   let marker = Guide_page.start_marker name arg in
-  match Guide_blocks.generate p { name; arg; body = "" } with
+  match
+    Guide_blocks.generate ~guide:Checkpoint_families.guide p
+      { name; arg; body = "" }
+  with
   | Ok body -> marker ^ "\n" ^ body ^ "\n" ^ Guide_page.end_marker ^ "\n"
   | Error e -> "<!-- " ^ name ^ ": " ^ e ^ " -->\n"
 
@@ -98,7 +107,9 @@ let refill dir name =
   let* filled =
     Result.map_error
       (fun e -> name ^ ": " ^ e)
-      (Guide_page.fill (Guide_blocks.generate p) text)
+      (Guide_page.fill
+         (Guide_blocks.generate ~guide:Checkpoint_families.guide p)
+         text)
   in
   Ok (text, filled)
 
@@ -125,15 +136,22 @@ let write_all () =
       Ok code)
     (Ok 0) (pages dir)
 
+let long_paragraphs name text =
+  List.map
+    (fun (line, n) ->
+      Printf.sprintf "%s:%d: a paragraph of %d lines (at most %d): break it up"
+        name line n max_paragraph_lines)
+    (Guide_page.long_paragraphs ~max_lines:max_paragraph_lines text)
+
 let page_problems dir name =
   match refill dir name with
   | Error e -> [ e ]
   | Ok (text, filled) ->
       (if filled <> text then [ name ^ ": generated blocks are stale" ] else [])
-      @
-      if contains text todo then
-        [ name ^ ": still has the skeleton's TODO(guide)" ]
-      else []
+      @ (if contains text todo then
+           [ name ^ ": still has the skeleton's TODO(guide)" ]
+         else [])
+      @ long_paragraphs name text
 
 let check () =
   let* dir = guide_dir () in

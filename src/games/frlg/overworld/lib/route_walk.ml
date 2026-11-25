@@ -5,7 +5,7 @@ type t = {
   world : Frlg_steps.world;
   gait : Route_legs.gait;
   flee : unit -> unit;
-  fight_trainer : unit -> (unit, Pokemon_checkpoints.Failure.cause) result;
+  fight_trainer : unit -> (unit, Pokemon_engine.Failure.cause) result;
   watch_trainers : bool;
   log : string -> unit;
 }
@@ -27,12 +27,12 @@ let door_step_out_ms = 1000
 (* Times a walk goes on before a sign the plan did not walk into. *)
 let max_sign_rejoins = 2
 
-exception Walk_failed of Pokemon_checkpoints.Failure.cause
+exception Walk_failed of Pokemon_engine.Failure.cause
 exception Leg_blocked
 
 let fail code fmt =
   Printf.ksprintf
-    (fun s -> raise (Walk_failed (Pokemon_checkpoints.Failure.cause code s)))
+    (fun s -> raise (Walk_failed (Pokemon_engine.Failure.cause code s)))
     fmt
 
 let faded m =
@@ -244,14 +244,14 @@ let walk t at legs =
   | at -> Ok at
   | exception Walk_failed cause -> Error cause
   | exception Grid_walker.Leg_walker.Interrupted_too_often s ->
-      Error (Pokemon_checkpoints.Failure.cause "interrupted" s)
+      Error (Pokemon_engine.Failure.cause "interrupted" s)
   | exception Walk_interrupts.Trainer_battle ->
       Error
-        (Pokemon_checkpoints.Failure.cause "trainer_battle"
+        (Pokemon_engine.Failure.cause "trainer_battle"
            "a battle started after a message on the overworld")
   | exception Walk_interrupts.Message_stuck ->
       Error
-        (Pokemon_checkpoints.Failure.cause "message_stuck"
+        (Pokemon_engine.Failure.cause "message_stuck"
            "a message on the overworld did not close")
 
 let step_leg (at : at) direction
@@ -269,7 +269,7 @@ let step_leg (at : at) direction
 
 let step_failed fmt =
   Printf.ksprintf
-    (fun s -> Error (Pokemon_checkpoints.Failure.cause "step_unsupported" s))
+    (fun s -> Error (Pokemon_engine.Failure.cause "step_unsupported" s))
     fmt
 
 (* The hold for one tile at a walk, a turn tap first if the player faces

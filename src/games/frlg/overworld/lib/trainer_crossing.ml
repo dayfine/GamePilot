@@ -7,7 +7,7 @@ type game_steps = {
   walk_piece : seen:bool -> Connected_maps.place Grid_planning.Leg.t -> unit;
   await_trainer : watch_ms:int -> sighting;
   flee : unit -> unit;
-  fight_trainer : unit -> (unit, Pokemon_checkpoints.Failure.cause) result;
+  fight_trainer : unit -> (unit, Pokemon_engine.Failure.cause) result;
   log : string -> unit;
 }
 

@@ -8,10 +8,10 @@
     decisions run on a fake in tests; {!Capture_steps} is the game's.
 
     Where it differs: no shiny check (the fork hears the shiny sound; GamePilot
-    has no audio), no weakening move ({!Capture_plan}), and no fainted player
-    (the fork's PLAYER_FAINTED ends): a throw that ends anywhere but a catch or
-    the action menu is [Failed]. The uncaught target and the ball are new
-    ({!Capture_plan}). *)
+    has no audio) and no weakening move ({!Capture_plan}), so the only fainted
+    player is one the foe beat after a throw (the fork's ThrowEnd::
+    PLAYER_FAINTED, which its console steps never report; {!Capture_steps}
+    does). The uncaught target and the ball are new ({!Capture_plan}). *)
 
 (** Where a catch went. *)
 type destination = Party | Pc
@@ -21,6 +21,9 @@ type throw_end =
   | Caught  (** the catch's first message *)
   | Broke_free  (** the action menu is back *)
   | No_balls  (** the bag has none of the ball; the action menu is back *)
+  | Player_fainted
+      (** the foe beat the player's Pokemon after the throw: "Use next
+          POKéMON?", the battle still on *)
   | Throw_failed  (** neither in time *)
 
 type encounter = {
@@ -52,6 +55,7 @@ type end_ =
   | Out_of_encounters
   | Out_of_balls of string option  (** why, when the bag ran out *)
   | No_encounter
+  | Player_fainted  (** the battle is still on, at "Use next POKéMON?" *)
   | Failed of string
 
 type catch = { species : string option; destination : destination }

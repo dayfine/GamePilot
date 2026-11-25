@@ -4,6 +4,6 @@
  (libraries
   gamepilot.table_test
   yojson
-  gamepilot.pokemon_checkpoints
+  gamepilot.pokemon_engine
   gamepilot.checkpoint_end
   plan_files))

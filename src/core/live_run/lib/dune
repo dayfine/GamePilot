@@ -1,0 +1,4 @@
+(library
+ (name live_run)
+ (public_name gamepilot.live_run)
+ (libraries gamepilot.effects gamepilot.live gamepilot.run_record unix))

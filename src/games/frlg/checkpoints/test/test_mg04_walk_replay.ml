@@ -30,7 +30,7 @@ let walk_plan () =
     checkpoint = { p.checkpoint with events = [ first ] };
     postconditions =
       Option.map
-        (fun (promised : Pokemon_checkpoints.Postconditions.t) ->
+        (fun (promised : Pokemon_engine.Postconditions.t) ->
           {
             promised with
             party = None;
@@ -65,7 +65,7 @@ let replayed_walk () =
           Checkpoint_run.run options world (walk_plan ()))
     with
     | Ok () -> "PASSED"
-    | Error failure -> "FAILED " ^ Pokemon_checkpoints.Failure.to_string failure
+    | Error failure -> "FAILED " ^ Pokemon_engine.Failure.to_string failure
     | exception Replay.Divergence e -> "DIVERGED " ^ e
   in
   Printf.sprintf "%s; fled %d wild battles" outcome

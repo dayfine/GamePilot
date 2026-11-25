@@ -100,6 +100,19 @@ void check_press() {
   CHECK(press.size() == 1 && press[0].buttons == button_mask("B") &&
         press[0].hold_ms == kKeepAwakeHoldMs &&
         press[0].cooldown_ms == kKeepAwakeCooldownMs && !press[0].is_wait);
+  // RStick: the right stick up, then down as long, no button: the camera's
+  // heading never moves.
+  const KeepAwake nudge(KeepAwakeOptions{kIdleMs, "RStick"}, 0);
+  const std::vector<InputCommand> tilt = nudge.press();
+  CHECK(tilt.size() == 2);
+  for (const InputCommand& c : tilt) {
+    CHECK(c.buttons == 0 && c.right_stick && c.right_stick->x == 0 &&
+          !c.left_stick && c.hold_ms == kKeepAwakeHoldMs);
+  }
+  CHECK(tilt[0].right_stick->y == 1 && tilt[1].right_stick->y == -1 &&
+        tilt[1].cooldown_ms == kKeepAwakeCooldownMs);
+  CHECK(keep_awake_key("RStick") && keep_awake_key("B") &&
+        !keep_awake_key("Q"));
 }
 
 }  // namespace

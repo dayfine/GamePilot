@@ -55,7 +55,7 @@ val settle :
   label:string ->
   battle_ends:bool ->
   log:(string -> unit) ->
-  (unit, Pokemon_checkpoints.Failure.cause) result
+  (unit, Pokemon_engine.Failure.cause) result
 (** Runs the settle of that kind with {!probes} subscribed, fleeing no battle.
     [start] (default none): the presses that start the step (the item's USE),
     run once the probes are subscribed with every frame watched, so a warp that
@@ -68,7 +68,7 @@ val settle :
 val until_battle :
   label:string ->
   log:(string -> unit) ->
-  (unit, Pokemon_checkpoints.Failure.cause) result
+  (unit, Pokemon_engine.Failure.cause) result
 (** The talk settle through a scene's text until a battle starts: a trainer's
     next battle, after the lines between two of them. Fails as [no_battle] when
     the overworld goes quiet first, and as [not_settled] at the cap. *)
