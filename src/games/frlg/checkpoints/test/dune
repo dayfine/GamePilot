@@ -193,3 +193,14 @@
   gamepilot.checkpoints
   gamepilot.plan_text
   gamepilot.frlg_checkpoints))
+
+(test
+ (name test_plan_preconditions)
+ (modules test_plan_preconditions)
+ (deps tt-01.plan.json)
+ (libraries
+  yojson
+  gamepilot.table_test
+  gamepilot.checkpoints
+  gamepilot.frlg_readers
+  gamepilot.frlg_checkpoints))

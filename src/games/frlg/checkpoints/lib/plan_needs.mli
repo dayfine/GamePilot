@@ -21,6 +21,11 @@ type need =
   | Item_at_least of { item : string; count : int; for_ : string }
   | Item_exactly of { item : string; count : int }
   | Place of string  (** The checkpoint's start map. *)
+  | Badges_at_least of int
+      (** At least this many badges ({!Plan_preconditions}: [badges] a count).
+      *)
+  | Badges of string list  (** Each of these badges, by name. *)
+  | Hall_of_fame  (** The Hall of Fame entered: a star on the card. *)
 
 val needs :
   Frlg_actions.Mart_plan.stocks ->

@@ -162,3 +162,6 @@ let at_start ~log (promised : Checkpoints.Plan.postconditions) =
 
 let party_summary ~log =
   read ~log "party summary" (fun () -> Some (A.Party_summary.read_all ~log ()))
+
+let trainer_card ~log =
+  read ~log "Trainer Card badges" (fun () -> A.Trainer_card_badges.read ~log)
