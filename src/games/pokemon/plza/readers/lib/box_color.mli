@@ -4,6 +4,7 @@
     fork's defaults only). *)
 
 type stats = Switch_home.Solid_color.stats
+(** A box's mean and stddev per channel. *)
 
 val probe :
   picture:Wire.box -> id:string -> Native_box.t -> Wire.probe_spec list

@@ -11,6 +11,7 @@ type t = {
   choice_arrow : string;  (** the arrow at a choice box's row *)
   advance_chevron_shape : string;  (** the chevron's V *)
 }
+(** One path or file name for each template and shape the readers match. *)
 
 val folder : string
 (** ["src/games/pokemon/plza/assets/templates"], from the repo root. *)

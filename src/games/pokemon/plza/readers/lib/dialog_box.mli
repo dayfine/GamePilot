@@ -14,6 +14,7 @@
     {!Box_only} (PokemonLZA_AutoStoryScreenEvents.cpp): the box shows while its
     text is still typed. *)
 
+(** What counts as a white dialogue box. *)
 type white_part =
   | Box_and_arrow  (** the white box's edge and its black arrow *)
   | Box_only  (** the white box's edge alone *)
