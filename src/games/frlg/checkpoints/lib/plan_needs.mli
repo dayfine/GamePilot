@@ -1,7 +1,8 @@
 (** What a checkpoint's plan needs of the save before its first event, for the
     pre-flight ({!Preflight}): each party member an action names unless an
-    earlier event brings it, some member knowing Cut, the money its purchases
-    cost, the bag items it gives or uses that no earlier purchase or pickup
+    earlier event brings it, no Mail on a member of the save it deposits
+    ([pc_deposit]), some member knowing Cut, the money its purchases cost, the
+    bag items it gives or uses that no earlier purchase or pickup
     ([pick_up_item]) of its own brought (a Rare Candy for [use_rare_candy] and
     [candy_level], one of its ball for [capture]), what the checkpoint before it
     promised, and the place. *)
@@ -14,6 +15,10 @@ type need =
     }
   | Member of { species : string; for_ : string }
       (** A member an event uses ([for_]: ["fly"]). *)
+  | No_mail of { species : string; for_ : string }
+      (** The first member of this species holds no Mail: a [pc_deposit] stores
+          it, and the game will not store a Mail holder ("Please remove the
+          MAIL."). *)
   | Knows_move of { move : string; for_ : string }
       (** Some member knows this field move: a [cut_tree] event's Cut, which the
           game lets any member that knows it use. *)

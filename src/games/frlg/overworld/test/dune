@@ -59,6 +59,20 @@
   frlg_overworld_fixtures))
 
 (test
+ (name test_battle_flash)
+ (modules test_battle_flash)
+ (deps
+  fixtures/viridian_forest_walk_flash.fade.jsonl
+  fixtures/viridian_forest_quiet_steps.fade.jsonl
+  fixtures/route3_walk_flash.fade.jsonl
+  fixtures/route3_turn_flash.fade.jsonl)
+ (libraries
+  gamepilot.table_test
+  gamepilot.wire
+  gamepilot.effects
+  gamepilot.frlg_overworld))
+
+(test
  (name test_warp_fade_in)
  (modules test_warp_fade_in)
  (deps
