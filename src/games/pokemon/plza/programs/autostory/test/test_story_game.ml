@@ -1723,6 +1723,22 @@ let cases =
        [Checkpoint] 03.08: START CHECK FAILED: the screen reads (no talk \
        prompt, in a wild zone, not near Taunie's rocks, party 3), its start is \
        (in a wild zone, near Taunie's rocks, party 3)";
+    case "03.08 off Taunie's rocks: the run is off its start, a reload's to fix"
+      (fun () ->
+        match run "03.08" (in_zone ~pin:(440., 229.)) with
+        | Ok (), _ -> "passed"
+        | Error f, _ -> (
+            match Plza_autostory.Run_attempts.of_failure f with
+            | Passed -> "passed"
+            | Failed f ->
+                Printf.sprintf "%s %s: off its start %b, repeats %b" f.at
+                  (List.hd (String.split_on_char ':' f.reason))
+                  f.off_start f.repeats))
+      "#1 catch_more_species rocks_not_left: off its start true, repeats false";
+    case "03.08 and 03.08a retry spawn luck: 2 retries each, from a reload"
+      (fun () ->
+        Printf.sprintf "%d %d" (plan "03.08").retries (plan "03.08a").retries)
+      "2 2";
     case "03.08a with no party bar read: the fourth's way, rocks_not_left"
       (refused "03.08a")
       "03.08a event 1 (catch_fifth_species): rocks_not_left: the pin at the \
