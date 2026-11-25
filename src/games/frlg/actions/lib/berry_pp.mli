@@ -17,9 +17,9 @@
     - The fork reads the move's PP off the summary and counts it down, stopping
       after the battle its last PP goes in. With no PP digit reader here the
       move is used until the game refuses it ("There's no PP left for this
-      move!", {!Frlg_battle.Battle_driver.Refused}) and the loop stops after
-      that battle: one battle more than the fork when the last PP went on a
-      battle's last turn.
+      move!", {!Frlg_battle.Battle.Refused}) and the loop stops after that
+      battle: one battle more than the fork when the last PP went on a battle's
+      last turn.
     - The fork checks each foe for a shiny, uses a Super Potion when the lead's
       HP bar is under 80% and stops when the lead is poisoned. There is no
       shiny, HP or status reader here, so none of the three is done.
@@ -47,7 +47,7 @@ val max_battles : int
 (** 64: a move's PP is at most 64 (PP Max on a 40 PP move) and every battle uses
     at least one. *)
 
-type rig = {
+type game_steps = {
   lead : unit -> string option;  (** the species in party slot 1 *)
   known_moves : slot:int -> string list;  (** read on the summary *)
   find_battle : unit -> unit;  (** paced until a wild battle *)
@@ -57,6 +57,6 @@ type rig = {
 (** The steps that press, so the loop runs on a fake in tests. Each raises
     {!Menu_input.Action_failed} when it fails. *)
 
-val run : rig -> plan -> unit
+val run : game_steps -> plan -> unit
 (** Fails as [berry_pp_wrong_lead], [berry_pp_missing_move],
     [berry_pp_battle_failed] or [berry_pp_out_of_battles]. *)

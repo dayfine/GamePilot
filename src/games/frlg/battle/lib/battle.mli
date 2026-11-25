@@ -1,6 +1,7 @@
-(** The verbs a battle is played with, as a record of functions, so the
-    {!Scripted_battle} runner runs on any driver: {!Screen_driver} presses
-    FireRed's buttons and reads its screen, a test answers from a list.
+(** A battle's game steps: the verbs it is played with, as a record of functions
+    ({!game_steps}), so the {!Scripted_battle} runner runs on any:
+    {!Battle_steps} presses FireRed's buttons and reads its screen, a test
+    answers from a list.
 
     Slots count from 0. Move slots as the move menu shows them: 0 top left, 1
     top right, 2 bottom left, 3 bottom right. Party slots as the party list
@@ -42,9 +43,9 @@ type move_result =
       (** The game turned it down (no PP left, Disable) and the action menu is
           back. *)
   | Other_move of string
-      (** The slot holds this move, not the one the script names; the driver
-          went back to the action menu without choosing. *)
-  | Not_done of string  (** the driver could not make the choice: why *)
+      (** The slot holds this move, not the one the script names; the steps went
+          back to the action menu without choosing. *)
+  | Not_done of string  (** the steps could not make the choice: why *)
 
 type item = {
   pocket : Frlg_readers.Bag_screen.pocket;
@@ -72,13 +73,13 @@ type learned =
       (** the move offered did not read, or the list's cursor did not: backed
           out with NO to "Stop learning ...?", so the game asks again *)
 
-type t = {
+type game_steps = {
   next_event : timeout_ms:int -> event;
       (** Plays the battle on (text, level-up boxes) until it asks for
           something, ends, or [timeout_ms] passes. *)
   use_move : slot:int -> target:target -> expect:string option -> move_result;
       (** From the action menu: FIGHT, the move in [slot], its target. With
-          [expect], the move's name is checked first where the driver can read
+          [expect], the move's name is checked first where the steps can read
           it. *)
   switch_to : slot:int -> bool;
       (** From the action menu: POKEMON and SHIFT to [slot]. False, back at the

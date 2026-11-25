@@ -6,7 +6,7 @@ let heal_at ~log ~walk_to : Grind_plan.heal -> unit = function
       Menu_input.raise_error (walk_to pad);
       Menu_input.settle_back ~label:"heal pad" ~log
 
-let make ~log ~party ~walk_to ~find_battle ~battle : Grind.rig =
+let make ~log ~party ~walk_to ~find_battle ~battle : Grind.game_steps =
   {
     slot_of = (fun species -> Party_roster.slot_of !party species);
     known_moves = (fun ~slot -> Summary_moves.read_known ~log ~slot);

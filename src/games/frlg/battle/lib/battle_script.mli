@@ -1,7 +1,7 @@
 (** A battle written down as data: the commands for the first action menus in
     order, what to do at the action menus after them, whom to send in when a
     member faints, and the answers to the prompts. {!Scripted_battle} plays it
-    on a {!Battle_driver}.
+    on a {!Battle.game_steps}.
 
     One command per action menu: a single battle asks once a turn, a double
     battle twice (its left battler first). The Mail Glitch's three battles:
@@ -24,18 +24,18 @@
 type command =
   | Move of {
       slot : int;
-      target : Battle_driver.target;
+      target : Battle.target;
       name : string option;
-          (** the move the slot must hold, checked where the driver can read it
-          *)
+          (** the move the slot must hold, checked where the game steps can read
+              it *)
     }
   | Switch of int  (** party slot *)
-  | Item of Battle_driver.item
+  | Item of Battle.item
   | Run
 
 (** What each action menu after the opening gets. *)
 type fallback =
-  | Attack of { slots : int list; target : Battle_driver.target }
+  | Attack of { slots : int list; target : Battle.target }
       (** the first of [slots] the game has not refused in this battle (no PP
           left), so a list rotates as each runs dry *)
   | Flee  (** RUN, again after a failed escape *)
@@ -59,7 +59,7 @@ type t = {
       (** The fallback from a refused [Switch] on ("... has no energy left to
           battle!": the member fainted in an earlier battle), the rest of the
           opening dropped; [None] fails the battle. *)
-  learn : Battle_driver.learn;  (** "Delete a move to make room for ...?" *)
+  learn : Battle.learn;  (** "Delete a move to make room for ...?" *)
   use_next : bool;  (** "Use next POKéMON?" *)
   max_menus : int;  (** more action menus than this fail the battle *)
   event_timeout_ms : int;  (** the longest wait for the battle's next event *)
@@ -77,7 +77,7 @@ val make :
   ?opening:command list ->
   ?send_ins:send_in list ->
   ?switch_refused:fallback ->
-  ?learn:Battle_driver.learn ->
+  ?learn:Battle.learn ->
   ?use_next:bool ->
   ?max_menus:int ->
   ?event_timeout_ms:int ->

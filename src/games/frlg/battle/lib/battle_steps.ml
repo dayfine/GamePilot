@@ -39,12 +39,12 @@ let shows ?(timeout_ms = menu_timeout_ms) pred =
 
 let move_menu_gone m = not (Battle_screen.move_menu m)
 
-let target_chosen target : Battle_driver.move_result =
+let target_chosen target : Battle.move_result =
   tap_all (Battle_cursor.target target @ [ Wire.A ]);
   if shows move_menu_gone then Chosen
   else Not_done "the move menu stayed up after the target"
 
-let choose_target target : Battle_driver.move_result =
+let choose_target target : Battle.move_result =
   if shows ~timeout_ms:target_cursor_ms move_menu_gone then Chosen
   else target_chosen target
 
@@ -59,7 +59,7 @@ let other_name read_move_name ~slot ~expect =
 (* On the move menu: to [slot], then A unless its PP shows none left; then B
    goes back to the action menu, as the game would after "There's no PP left
    for this move!". *)
-let choose_move ~slot ~target : Battle_driver.move_result =
+let choose_move ~slot ~target : Battle.move_result =
   tap_all (Battle_cursor.move ~slot);
   match Effects.read () with
   | Some m when Move_pp.no_pp_left m ->
@@ -69,7 +69,7 @@ let choose_move ~slot ~target : Battle_driver.move_result =
       tap_all [ Wire.A ];
       choose_target target
 
-let use_move read_move_name ~slot ~target ~expect : Battle_driver.move_result =
+let use_move read_move_name ~slot ~target ~expect : Battle.move_result =
   tap_all Battle_cursor.fight;
   if not (shows Battle_screen.move_menu) then
     Not_done "FIGHT did not open the move menu"
@@ -136,7 +136,7 @@ let pick_slot = function
       (tap_all (Battle_cursor.down slot @ [ Wire.A ]);
        true)
 
-let use_item (item : Battle_driver.item) =
+let use_item (item : Battle.item) =
   tap_all Battle_cursor.bag;
   shows ~timeout_ms:list_timeout_ms Bag_screen.bag_open
   && turn_to item.pocket
@@ -155,7 +155,7 @@ let cursor_read m = Move_list_cursor.row m <> None
    [Unread] when it never shows. *)
 let stop_prompt_ms = 8000
 
-let answer_stop_learning button ~then_ : Battle_driver.learned =
+let answer_stop_learning button ~then_ : Battle.learned =
   ignore (shows (fun m -> not (Battle_yes_no.yes_no_box m)) : bool);
   if shows ~timeout_ms:stop_prompt_ms Battle_yes_no.yes_no_box then (
     tap_all [ button ];
@@ -183,7 +183,7 @@ let leave_list button ~then_ =
 
 (* On the list, on its top row: down to [slot], A only with the cursor read
    there. *)
-let pick slot ~move : Battle_driver.learned =
+let pick slot ~move : Battle.learned =
   tap_all (Battle_cursor.down slot);
   if shows (fun m -> Move_list_cursor.row m = Some slot) then (
     tap_all [ Wire.A ];
@@ -196,17 +196,16 @@ let open_list () =
   tap_all [ Wire.A ];
   shows ~timeout_ms:list_timeout_ms (fun m -> move_list m && cursor_read m)
 
-let forget_for read_offered ~move ~slot : Battle_driver.learned =
+let forget_for read_offered ~move ~slot : Battle.learned =
   match read_offered () with
   | Some offered when offered = move -> pick slot ~move:(Some offered)
   | Some offered ->
       leave_list Wire.A ~then_:(Not_learned { offered = Some offered })
   | None -> leave_list Wire.B ~then_:(Unread "the move offered did not read")
 
-let no_list = Battle_driver.Unread "the list to forget from did not show"
+let no_list = Battle.Unread "the list to forget from did not show"
 
-let answer_move_learn read_offered (learn : Battle_driver.learn) :
-    Battle_driver.learned =
+let answer_move_learn read_offered (learn : Battle.learn) : Battle.learned =
   match learn with
   | Keep_moves ->
       tap_all [ Wire.B ];
@@ -218,7 +217,7 @@ let answer_move_learn read_offered (learn : Battle_driver.learn) :
 let answer_use_next yes = tap_all [ (if yes then Wire.A else Wire.B) ]
 
 (* Carries out a look's answer: [Some event] ends [next_event]. *)
-let carry_out : Event_rule.step -> Battle_driver.event option = function
+let carry_out : Event_rule.step -> Battle.event option = function
   | Report event -> Some event
   | Press button ->
       tap_all [ button ];
@@ -240,7 +239,7 @@ let look_once state =
 let next_event ~timeout_ms =
   let deadline = Effects.now () +. float_of_int timeout_ms in
   let rec loop state =
-    if Effects.now () > deadline then Battle_driver.Timed_out
+    if Effects.now () > deadline then Battle.Timed_out
     else
       match look_once state with
       | _, Some event -> event
@@ -257,7 +256,8 @@ let run () =
 
 let no_reader () = None
 
-let make ?read_move_name ?(read_offered_move = no_reader) () : Battle_driver.t =
+let make ?read_move_name ?(read_offered_move = no_reader) () : Battle.game_steps
+    =
   {
     next_event;
     use_move = use_move read_move_name;

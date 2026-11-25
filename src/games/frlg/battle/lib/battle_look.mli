@@ -40,9 +40,9 @@ val classify : facts -> screen
 val screen_name : screen -> string
 
 val probes : Wire.probe_spec list
-(** The probes {!of_measurements} and {!Screen_driver} read: the battle
-    screen's, its YES/NO box's, arrow's and PP's, the dark corners', the party
-    menu's, the bag's, the summary screen's and its move list cursor's. *)
+(** The probes {!of_measurements} and {!Battle_steps} read: the battle screen's,
+    its YES/NO box's, arrow's and PP's, the dark corners', the party menu's, the
+    bag's, the summary screen's and its move list cursor's. *)
 
 val of_measurements : Effects.measurements -> facts
 (** The facts from {!Frlg_readers}. *)

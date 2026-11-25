@@ -1,5 +1,5 @@
-(* After a won battle, the text before the overworld comes back: the screen
-   driver's rule (Event_rule) on a real frame of it and on a scripted flow.
+(* After a won battle, the text before the overworld comes back: the battle
+   steps' rule (Event_rule) on a real frame of it and on a scripted flow.
    mg-05 testing 1 (mGBA): Lea & Jed's defeat line ("LEA: Ohh! But JED looks
    cool even in a loss!") showed with no arrow and with the HP boxes where a
    single battle's are not; it read as an evolution, which never gets a press,
@@ -21,7 +21,7 @@ let defeat_line =
 let screen facts = Battle_look.(screen_name (classify facts))
 
 let step_name : Event_rule.step -> string = function
-  | Report e -> Battle_driver.event_name e
+  | Report e -> Battle.event_name e
   | Press b -> "press " ^ Wire.string_of_button b
   | Look -> "look"
 

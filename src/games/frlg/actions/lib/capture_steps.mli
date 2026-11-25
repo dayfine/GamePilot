@@ -1,6 +1,6 @@
-(** The game's {!Capture.rig}, as the fork's ConsoleCaptureActions
+(** The game's {!Capture.game_steps}, as the fork's ConsoleCaptureActions
     (Programs/AutoStory/PokemonFRLG_AutoStoryCaptureConsole) presses and reads,
-    on the battle's {!Frlg_battle.Screen_driver}. The caller subscribes
+    on the battle's {!Frlg_battle.Battle_steps}. The caller subscribes
     {!Frlg_battle.Battle_look.probes} and {!Menu_input.probes}.
 
     Where it differs:
@@ -34,7 +34,7 @@ val make :
   pace:Grid_maps.Direction.t ->
   spot:Pacing.spot ref ->
   target:string ->
-  Capture.rig
+  Capture.game_steps
 (** A wild battle is found by pacing [pace] and back from [spot], which the
     steps keep from one search to the next ({!Pacing_steps}). [target]: the
     plan's species. *)
