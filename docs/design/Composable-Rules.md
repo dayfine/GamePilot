@@ -248,20 +248,34 @@ kind name, as `Plan_text`'s counts need, and promises keep position first, then 
 
 ## Arguments that need a table: mart, fly, grind
 
-Three FRLG decoders read a file or the party: `mart` checks items against the stock table
-(`kanto_mart_stocks.json`), `fly` reads `Fly_towns` and turns a species into a slot from the
-reckoned party, and `grind` reads its strategies. Typed decoding must stay pure. The plan holds
-names, as data: `Mart { map; lines; budget }` (`Mart_plan.t` already is that), `Fly { town; flyer
-: Action_args.member; menu_row }`, `Grind { strategy : string; ... }`. FRLG's plan loader
-(`Plan_file.load`, which reads files already) then checks every name against its tables and names
-the event (`01-celadon-setup.plan.json: checkpoint.events[8]: no Mart on CeladonCity_4F`), and the
-run looks the stock, town or strategy up again. The party is run-time state, so the flyer stays a
-member until the run, as `use_item`'s does.
+**Recommendation.** A typed action keeps the names the plan writes (a mart's map, a Fly town, a
+grind strategy) and does not look them up while decoding. FRLG's plan loader checks every name
+against its table once, when it loads the plan, and fails naming the event; the run looks the name
+up again when it gets there.
 
-Rejected: a codec closed over loaded tables (the instance would be built at run time, not applied
-once); a `context` argument on `PLAN_CODEC` (every game pays for FRLG's tables); generating OCaml
-from the JSON tables at build time (a generator per table, and assets stop being data read through
-`Repo_files`).
+**Why it comes up.** Typing FRLG's actions moves the reading of their args from run time to plan
+decoding, and decoding is pure: it cannot read a file. Today three of these args are checked by
+reading something:
+
+| Action | Its args name | Checked today against |
+|---|---|---|
+| `mart` | a mart map and items | the stock table, `kanto_mart_stocks.json` |
+| `fly` | a town, and the flyer by species | `Fly_towns`; the species becomes a slot from the reckoned party |
+| `grind` | a strategy | the grind strategies file |
+
+**What it looks like.** The typed values hold names: `Mart { map; lines; budget }` (`Mart_plan.t`
+already is that), `Fly { town; flyer : Action_args.member; menu_row }`, `Grind { strategy :
+string; ... }`. `Plan_file.load`, which reads files already, checks them and fails as
+`01-celadon-setup.plan.json: checkpoint.events[8]: no Mart on CeladonCity_4F`. The flyer stays a
+party member, not a slot, until the run, because the party is only known then; `use_item`'s member
+works the same way.
+
+**Rejected.**
+
+- A plan format built over the loaded tables: the engine would be applied per run, not once.
+- A `context` argument on `PLAN_FORMAT`: every game would carry FRLG's tables.
+- OCaml generated from the tables at build time: a generator per table, and the tables would stop
+  being data read through `Repo_files`.
 
 ## Running stays per game
 
