@@ -19,11 +19,9 @@ type outcome = Passed | Failed of failure
 
 type setup = {
   flags : Flags.t;
-  backend : Live_run.Daemon_process.backend;
   policy : Checkpoint_trials.policy;
   info : Run_record.info;
-  daemon_flags : string list;
-  watch : Live_run.Daemon_process.watch option;
+  daemons : Live_run.Series_daemons.t;
 }
 
 let load_plan ~plan_dir id =
@@ -75,12 +73,6 @@ let with_assets ~log ~picture report plan assets =
       Watch_report.end_run report ~passed:false;
       failed "raised" (Printexc.to_string e)
 
-(* The frame a failed run ended on; a refusal is skipped. *)
-let save_failure record =
-  match Effects.save_frame (Run_record.path record "failure.png") with
-  | (_ : int) -> ()
-  | exception Effects.Rpc_error _ -> ()
-
 let in_session ~log record plan (backend : Wire.backend) =
   let picture = backend.viewport in
   let log = Watch_report.log log in
@@ -90,7 +82,9 @@ let in_session ~log record plan (backend : Wire.backend) =
     | Error e -> failed ~repeats:true "assets" e
     | Ok assets -> with_assets ~log ~picture report plan assets
   in
-  (match outcome with Failed _ -> save_failure record | Passed -> ());
+  (match outcome with
+  | Failed _ -> Live_run.Daemon_run.save_failure ~log record ~save_states:false
+  | Passed -> ());
   outcome
 
 (* Any exception Daemon_run.in_session passes on fails the run here, so the
@@ -103,23 +97,6 @@ let live ~log record plan (daemon : Live_run.Daemon_process.t) =
   with
   | outcome -> outcome
   | exception e -> failed "raised" (Printexc.to_string e)
-
-let print_page setup (daemon : Live_run.Daemon_process.t) =
-  match (setup.watch, daemon.watch_port) with
-  | Some w, Some port ->
-      Live_run.Watch_urls.print ~listen:w.listen ~token:w.token ~port
-  | _ -> ()
-
-let with_daemon setup record id body =
-  Live_run.Daemon_run.with_daemon ~failed:of_runner
-    (Live_run.Daemon_process.start ?watch:setup.watch ~flags:setup.daemon_flags
-       ~daemon:setup.flags.daemon ~backend:setup.backend ~port:0
-       ~wire_log:(Run_record.path record "wire.jsonl")
-       ~out_file:(Run_record.path record "daemon.out")
-       ~checkpoint:id ())
-    (fun daemon ->
-      print_page setup daemon;
-      body daemon)
 
 let run_name id n = Printf.sprintf "%s run %d" id n
 
@@ -134,7 +111,11 @@ let run_in setup plan n (run : Run_record.run) =
   let name = run_name id n in
   let log, close = Run_record.story_log run.record in
   log ("[Run] " ^ name);
-  let outcome = with_daemon setup run.record id (live ~log run.record plan) in
+  let outcome =
+    Live_run.Series_daemons.with_daemon setup.daemons ~failed:of_runner
+      run.record ~checkpoint:id
+      (live ~log run.record plan)
+  in
   close ();
   let ending : Run_record.ending =
     match outcome with
@@ -188,18 +169,23 @@ let load_all ~plan_dir ids =
       Ok (plans @ [ plan ]))
     (Ok []) ids
 
+(* Each run's daemon: the program's viewport, the right stick's keep-awake,
+   then the user's flags. *)
+let daemons (f : Flags.t) backend ~viewport =
+  Live_run.Series_daemons.create ~daemon:f.daemon ~backend ~port:f.port
+    ~flags:
+      (Live_run.Daemon_process.viewport_args backend viewport
+      @ keepawake_stick @ f.daemon_flags)
+    ~watch:
+      (Live_run.Watch_hub.for_runs_dir ~daemon:f.daemon ~runs_dir:f.runs_dir
+         f.watch)
+
 let setup_of (f : Flags.t) ~program ~from_id ~to_id ~backend ~viewport policy =
   {
     flags = f;
-    backend;
     policy;
     info = { kind = Checkpoints; program; from_id; to_id; backend = f.backend };
-    daemon_flags =
-      Live_run.Daemon_process.viewport_args backend viewport
-      @ keepawake_stick @ f.daemon_flags;
-    watch =
-      Live_run.Watch_hub.for_runs_dir ~daemon:f.daemon ~runs_dir:f.runs_dir
-        f.watch;
+    daemons = daemons f backend ~viewport;
   }
 
 let switch_only : Live_run.Daemon_process.backend -> _ = function

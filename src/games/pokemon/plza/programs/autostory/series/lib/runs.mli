@@ -1,12 +1,13 @@
 (** PLZA's checkpoints on the Switch (Plza_autostory.Story_game through the
     engine, Plza_engine.Runner): each run its own daemon (the program's
-    viewport, native) and run folder (Live_run.Daemon_run), as FireRed's, but
-    without save states or an in-game save: PLZA saves by autosave. The series'
-    first run starts where the console is, put there by hand; a passing
-    checkpoint hands the console to the next one as it ends. Its daemons keep
-    the console awake with the right stick (keepawake_stick). The watch page
-    shows each run's plan, its events moving with the runner
-    (Story_game.run_watched), and the run.
+    viewport, native; Live_run.Series_daemons, so the watch page keeps its URL
+    across runs) and run folder (Live_run.Daemon_run), as FireRed's, but without
+    save states or an in-game save: PLZA saves by autosave. The series' first
+    run starts where the console is, put there by hand; a passing checkpoint
+    hands the console to the next one as it ends. Its daemons keep the console
+    awake with the right stick (keepawake_stick). The watch page shows each
+    run's plan, its events moving with the runner (Story_game.run_watched), and
+    the run.
 
     Where it differs: the skeleton. No run goes back to the latest autosave yet,
     so a checkpoint's second run (--runs 2) is refused before it starts; no
