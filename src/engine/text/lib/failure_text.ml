@@ -1,9 +1,6 @@
 open Engine_run
 
-module Make
-    (T : Engine_rules.GAME_RULES)
-    (X : Rules_text.TEXT with module T = T) =
-struct
+module Make (T : Engine_rules.GAME_RULES) = struct
   module Failure = Failure.Make (T)
 
   let reason_to_string : Failure.reason -> string = function
@@ -11,11 +8,14 @@ struct
     | No_handler action -> "no handler for game action \"" ^ action ^ "\""
     | Not_at_declared { declared; observed } ->
         Printf.sprintf "declared after at %s, but the game reads %s"
-          (X.pose declared) (X.observed observed)
+          (T.Pose.to_string declared)
+          (T.Pose.observed_to_string observed)
     | Not_at_end { declared; observed } ->
         Printf.sprintf "declared end at %s, but the game reads %s"
-          (X.pose declared)
-          (match observed with Some o -> X.observed o | None -> "no position")
+          (T.Pose.to_string declared)
+          (match observed with
+          | Some o -> T.Pose.observed_to_string o
+          | None -> "no position")
     | Unmet_postconditions unmet ->
         "postconditions unmet: "
         ^ String.concat "; "

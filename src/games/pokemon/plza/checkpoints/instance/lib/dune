@@ -5,5 +5,4 @@
   gamepilot.program_engine
   gamepilot.plza_rules
   gamepilot.plza_plan_format
-  gamepilot.plza_text
   gamepilot.plza_event_snapshot))

@@ -1,7 +1,7 @@
 (** A toy game's rules for the engine's tests, built from the engine's pieces: a
     zone pose, the engine's story actions beside two toy sets (a walk; an inn's
-    rest and buy), and a position with the toy's promises. Pure: its plan format
-    ({!Toy_plan_format}), text ({!Toy_text}) and kept reads
+    rest and buy), and a position with the toy's promises. Pure, and each part
+    prints itself; its plan format ({!Toy_plan_format}) and kept reads
     ({!Toy_event_snapshot}) are their own modules. *)
 
 module Toy_walk = Toy_walk

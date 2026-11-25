@@ -3,10 +3,8 @@
     ({!Engine_run.Repeat_until.Make.stop}), the game's rules in them printed by
     the game's text. *)
 
-(** A run's text over the game's rules, printed by [X]. *)
-module Make
-    (T : Engine_rules.GAME_RULES)
-    (_ : Rules_text.TEXT with module T = T) : sig
+(** A run's text over the game's rules, printed by the rules ([T]). *)
+module Make (T : Engine_rules.GAME_RULES) : sig
   val line : Engine_run.Log_line.Make(T).t -> string
   (** The line as logged: ["[Story] 01-celadon-setup end <pose>: holds"]. *)
 

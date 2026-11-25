@@ -19,7 +19,7 @@ let end_of ?next events =
   match
     Checkpoint_end.declared ~next (Plan_files.checkpoint_of_events events)
   with
-  | Some pose -> Pose_text.grid pose
+  | Some pose -> Pose.grid_to_string pose
   | None -> "none"
 
 let route_to_door =

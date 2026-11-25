@@ -1,5 +1,5 @@
 (* The engine over a toy game built from the engine's pieces, with zones and
-   no grid (Toy_rules, Toy_plan_format, Toy_text, Toy_event_snapshot): its plans decode with
+   no grid (Toy_rules, Toy_plan_format, Toy_event_snapshot): its plans decode with
    the toy's zones, action sets and promises, the runner sends each action to
    its handler and checks zones and promises, and what a run keeps and loops
    works on the toy's types. Test_toy_pieces tests the pieces' own parts. *)
@@ -114,7 +114,9 @@ let toy_game ?(after = []) ?(flags = []) () =
   in
   let game : Game.t =
     {
-      run_own = (fun event own -> handled ("own " ^ Toy_text.action own) event);
+      run_own =
+        (fun event own ->
+          handled ("own " ^ Toy_rules.Action.to_string own) event);
       run_builtin = (fun event -> handled ("builtin " ^ event.id) event);
       game_actions = [ ("beg", fun event _ -> handled "action beg" event) ];
       flag_holds = (fun flag -> List.mem flag flags);
