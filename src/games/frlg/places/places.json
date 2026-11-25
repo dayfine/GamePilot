@@ -92,6 +92,12 @@
       "stand": [39, 10],
       "facing": "east"
     },
+    "three_island_nurse": {
+      "map": "ThreeIsland_PokemonCenter_1F",
+      "object": {"npc": "ThreeIsland_PokemonCenter_1F_EventScript_Nurse"},
+      "stand": [7, 4],
+      "facing": "north"
+    },
     "two_island_harbor_sailor": {
       "map": "TwoIsland_Harbor",
       "object": {"npc": "TwoIsland_Harbor_EventScript_Sailor"},
