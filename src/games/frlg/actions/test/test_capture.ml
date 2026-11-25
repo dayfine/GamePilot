@@ -22,10 +22,22 @@ let mg02_args =
 let decoding =
   [
     case "mg-02's catch_spearow" (decode mg02_args)
-      "1 spearow, 50 encounters, 10 balls, pace east";
+      "1 spearow, 50 encounters, 10 poke-ball, pace east";
     case "the fork's defaults"
       (decode {|{"species": "rattata"}|})
-      "1 rattata, 20 encounters, 5 balls, pace east";
+      "1 rattata, 20 encounters, 5 poke-ball, pace east";
+    case "uncaught species with Ultra Balls"
+      (decode
+         {|{"uncaught": ["voltorb", "spearow", "ekans"], "catches": 2,
+            "ball": "ultra-ball", "balls": 20, "pace": "west"}|})
+      "2 uncaught species, 20 encounters, 20 ultra-ball, pace west";
+    case "a species and uncaught"
+      (decode {|{"species": "ekans", "uncaught": []}|})
+      "bad_args: capture: species and uncaught: name one";
+    case "a ball no Mart sells"
+      (decode {|{"species": "ekans", "ball": "master-ball"}|})
+      "bad_args: capture: ball is master-ball, not poke-ball, great-ball, \
+       ultra-ball";
     case "no species"
       (decode {|{"catches": 2}|})
       "bad_args: capture: species is missing.";
@@ -37,10 +49,11 @@ let decoding =
       "bad_args: capture: move: the weakening move is not ported";
   ]
 
-(* What the fake game answers: one species (or none read) per encounter, one
-   end per throw; finding an encounter fails once they run out. *)
+(* What the fake game answers: one encounter per battle (a species or none
+   read, a "*" after it for the caught mark), one end per throw; finding an
+   encounter fails once they run out. *)
 type game = {
-  mutable seen : string option list;
+  mutable seen : Capture.encounter list;
   mutable throws : Capture.throw_end list;
   mutable trace : string list;
   flees : bool;
@@ -48,12 +61,15 @@ type game = {
 
 let note g s = g.trace <- s :: g.trace
 
-let pop_seen g () =
+let pop_seen g () : Capture.encounter =
   match g.seen with
-  | [] -> None
+  | [] -> { species = None; caught = false }
   | s :: rest ->
       g.seen <- rest;
       s
+
+let seen_text (e : Capture.encounter) =
+  Option.value e.species ~default:"?" ^ if e.caught then "*" else ""
 
 let pop_throw g () : Capture.throw_end =
   match g.throws with
@@ -72,7 +88,7 @@ let fake_game_steps g : Capture.game_steps =
     read_encounter =
       (fun () ->
         let s = pop_seen g () in
-        note g ("see " ^ Option.value s ~default:"?");
+        note g ("see " ^ seen_text s);
         s);
     flee =
       (fun () ->
@@ -97,15 +113,31 @@ let fake_game_steps g : Capture.game_steps =
 
 let rattata =
   {
-    Capture_plan.species = "rattata";
+    Capture_plan.target = Species "rattata";
     catches = 1;
     max_encounters = 20;
     max_balls = 5;
+    ball = "poke-ball";
     pace = East;
   }
 
+let new_species =
+  {
+    rattata with
+    target = Uncaught [ "voltorb"; "spearow"; "ekans" ];
+    catches = 2;
+    ball = "ultra-ball";
+  }
+
+(* "rattata", None for unread; a trailing "*" for the caught mark. *)
+let encounter = function
+  | None -> { Capture.species = None; caught = false }
+  | Some s when String.ends_with ~suffix:"*" s ->
+      { species = Some (String.sub s 0 (String.length s - 1)); caught = true }
+  | Some s -> { species = Some s; caught = false }
+
 let decide ?(plan = rattata) ?(party = 2) ?(flees = true) seen throws () =
-  let g = { seen; throws; trace = []; flees } in
+  let g = { seen = List.map encounter seen; throws; trace = []; flees } in
   let result = Capture.run (fake_game_steps g) plan ~party in
   Printf.sprintf "%s: %s"
     (Capture.message plan result)
@@ -138,7 +170,7 @@ let decisions =
        caught.: find, see rattata, ball: free, ball: free, run";
     case "the bag has no Poke Ball: run"
       (decide [ Some "rattata" ] [ No_balls ])
-      "Capture of rattata: out of balls (the bag has no Poke Ball): 1 \
+      "Capture of rattata: out of balls (the bag has no poke-ball): 1 \
        encounters, 0 balls thrown, 0 of 1 caught.: find, see rattata, ball: \
        none, run";
     case "the encounter cap"
@@ -160,6 +192,23 @@ let decisions =
       "Capture of rattata: the throw didn't end in a catch or at the battle \
        menu: 1 encounters, 0 balls thrown, 0 of 1 caught.: find, see rattata, \
        ball: ?";
+    case "new species: a caught one is run from, an unread new one caught"
+      (decide ~plan:new_species ~party:6
+         [ Some "spearow*"; Some "voltorb"; Some "voltorb*"; None ]
+         [ Broke_free; Caught; Caught ])
+      "Capture: caught 2 uncaught species (voltorb to the PC, ? to the PC): 4 \
+       encounters, 3 balls thrown, 2 of 2 caught.: find, see spearow*, run, \
+       find, see voltorb, ball: free, ball: caught, to PC, find, see voltorb*, \
+       run, find, see ?, ball: caught, to PC";
+    case "new species: no Ultra Ball left"
+      (decide ~plan:new_species [ Some "ekans" ] [ No_balls ])
+      "Capture of uncaught species: out of balls (the bag has no ultra-ball): \
+       1 encounters, 0 balls thrown, 0 of 2 caught.: find, see ekans, ball: \
+       none, run";
+    case "a caught mark on the named species does not stop its catch"
+      (decide [ Some "rattata*" ] [ Caught ])
+      "Capture: caught 1 rattata (party): 1 encounters, 1 balls thrown, 1 of 1 \
+       caught.: find, see rattata*, ball: caught, to party";
   ]
 
 let reading =

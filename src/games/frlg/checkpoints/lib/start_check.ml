@@ -17,6 +17,7 @@ let party_only party : Pokemon_checkpoints.Postconditions.t =
     party;
     items = [];
     coins = None;
+    caught = None;
     money = None;
     flags = [];
     knows = [];

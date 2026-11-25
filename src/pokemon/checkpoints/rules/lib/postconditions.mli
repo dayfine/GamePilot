@@ -33,6 +33,9 @@ type t = {
   party : party option;
   items : bag_count list;  (** Each item's count in the bag. *)
   coins : Engine_postcondition.Count.t option;  (** Game Corner coins. *)
+  caught : Engine_postcondition.Count.t option;
+      (** Species the Pokédex has caught (owned), the count FireRed shows on the
+          Trainer Card (pokefirered src/trainer_card.c). *)
   money : Engine_postcondition.Money.t option;
   flags : string list;  (** Story flags (named by the game) that must be set. *)
   knows : knows list;  (** Moves members must know. *)
@@ -47,9 +50,9 @@ type t = {
     PokemonSimulation's ([read_metadata] in
     [src/pokesim/story/checkpoint_wire.py]) and the C++'s ([StoryPostconditions]
     in [Pokemon/AutoStory/Types/Pokemon_StoryPostconditions.h], fork
-    [frlg/lean]); [party], [coins], [money], [knows], [levels] and [marks] are
-    GamePilot's additions: the state a Mail Glitch checkpoint exists to change.
-*)
+    [frlg/lean]); [party], [coins], [caught], [money], [knows], [levels] and
+    [marks] are GamePilot's additions: the state a Mail Glitch checkpoint exists
+    to change. *)
 
 val none : t
 (** Nothing promised: what a plan that states no postconditions promises. *)
@@ -59,5 +62,5 @@ val stated : t option -> t
 
 val at_end : t -> t option
 (** What the runner reads and checks after the end position: [None] unless a
-    party, items, coins, money or flags are promised (moves, levels and marks
-    alone are not read at the end). *)
+    party, items, coins, a caught count, money or flags are promised (moves,
+    levels and marks alone are not read at the end). *)

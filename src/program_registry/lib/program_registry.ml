@@ -96,6 +96,22 @@ let sevii_story =
     checkpoint_order = Parts_first;
   }
 
+let dex_collection =
+  {
+    id = "frlg.dex_collection";
+    game = frlg;
+    name = "Dex Collection";
+    group = [ "FRLG"; "Pokedex" ];
+    description =
+      "Catches wild Pokemon the Pokedex has not caught yet, toward the 60 the \
+       National Pokedex needs.";
+    doc = "docs/programs/frlg-dex-collection.md";
+    checkpoints = Some "src/games/frlg/programs/dex_collection/plans";
+    backends = [ Mgba ];
+    viewport = Nso_gba;
+    checkpoint_order = Parts_first;
+  }
+
 let plza = { game_id = "plza"; game_name = "Pokémon Legends: Z-A" }
 
 let autostory =
@@ -105,8 +121,8 @@ let autostory =
     name = "AutoStory";
     group = [ "PLZA"; "Story" ];
     description =
-      "Plays the story from a new game's Confirm Choices: the opening to the \
-       station platform, then the platform to Main Mission 01.";
+      "Plays the story from a new game's Confirm Choices to Mable's first \
+       research reward (checkpoints 01.00b to 03.11).";
     doc = "docs/guide/plza.autostory.md";
     checkpoints = Some "src/games/pokemon/plza/programs/autostory/plans";
     backends = [ Switch ];
@@ -116,7 +132,13 @@ let autostory =
 
 let all =
   [
-    start_menu_poc; mail_glitch; supplies; team_training; sevii_story; autostory;
+    start_menu_poc;
+    mail_glitch;
+    supplies;
+    team_training;
+    sevii_story;
+    dex_collection;
+    autostory;
   ]
 
 let short_id p =

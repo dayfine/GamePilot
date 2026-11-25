@@ -9,7 +9,10 @@
 # ~/Projects/CommandLineTests) or repo (a file in this repository, given from
 # its root: lab captures live under games/frlg/readers/test/images/, shared
 # with the screen reader tests; that folder's regen_fixtures.sh says how to add
-# one). The tagged name is what fixtures/expected.txt names.
+# one), or shift=<shift> (that repo file with its colors shifted by
+# dev/reader_fixtures/shift_frame.py, which needs Pillow: $SHIFT_PYTHON, default
+# python3, e.g. "uv run --with pillow python3"). The tagged name is what
+# fixtures/expected.txt names.
 #
 #   sh games/frlg/text/test/regen_fixtures.sh
 #
@@ -26,6 +29,7 @@ HERE=$(cd "$(dirname "$0")" && pwd)
 SRC=$(cd "$HERE/../../../.." && pwd)
 REPO=$(cd "$SRC/.." && pwd)
 PROBE_IMAGES=${PROBE_IMAGES:-$SRC/../daemon/build/probe_images}
+SHIFT_PYTHON=${SHIFT_PYTHON:-python3}
 SWITCH_VIEWPORT=0.09375,0.00462963,0.8125,0.962963
 WORK=$(mktemp -d)
 trap 'rm -rf "$WORK"' EXIT
@@ -60,6 +64,10 @@ probe() {
     case $3 in
     clt) cp "$CLT/$4" "$WORK/images/$tagged" ;;
     repo) cp "$REPO/$4" "$WORK/images/$tagged" ;;
+    shift=*)
+      (cd "$REPO" && $SHIFT_PYTHON dev/reader_fixtures/shift_frame.py "$WORK/shifted" "$4")
+      cp "$WORK/shifted/${3#shift=}/$4" "$WORK/images/$tagged"
+      ;;
     *) echo "unknown root $3" >&2 && exit 1 ;;
     esac
     images="$images $tagged"
@@ -74,7 +82,7 @@ probe() {
   (cd "$WORK/images" && "$PROBE_IMAGES" --spec "$WORK/$screen.json" "$@" $images) | keep_best
 }
 
-for screen in bag_items bag_key_items tm_case summary_moves battle_opening bag_counts berry_pouch_numbers summary_level mail_editor start_menu; do
+for screen in bag_items bag_key_items tm_case summary_moves battle_opening battle_prompt bag_counts berry_pouch_numbers summary_level mail_editor start_menu card_numbers; do
   {
     probe "$screen" switch
     probe "$screen" mgba

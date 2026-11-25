@@ -212,6 +212,12 @@ let other_cases =
       (fake [ Use_next; Battle_over ])
       (Battle_script.make Flee)
       "next no => over (0 menus, 0 send-ins, 0 refused, 1 prompts)";
+    case "a trainer's switch offer: NO, whatever the script's use next"
+      (fake [ Action_menu; Switch_offer; Action_menu; Battle_over ])
+      (Battle_script.make ~use_next:true
+         (Attack { slots = [ 0 ]; target = Default }))
+      "move 0 default; next no; move 0 default => over (2 menus, 0 send-ins, 0 \
+       refused, 1 prompts)";
     case "move learn: the moves kept when the script forgets none"
       (fake [ Move_learn; Move_learn; Battle_over ])
       (Battle_script.make Flee)

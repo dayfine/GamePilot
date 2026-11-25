@@ -32,10 +32,11 @@ let opening_line species =
 
 let line = Text.Text_lines.battle_message 0
 
-let reads_opening candidate m =
-  match Text.Line_reading.pick line [ candidate ] m with
-  | Read _ -> true
-  | No_match _ -> false
+(* The candidate the line shows, if any. *)
+let reads_opening candidates m =
+  match Text.Line_reading.pick line candidates m with
+  | Read { text; _ } -> Some text
+  | No_match _ -> None
 
 (* The opening message's line has been printed, or passed. *)
 let opening_over m =
@@ -44,28 +45,45 @@ let opening_over m =
 let await_opening reads =
   let awaited =
     Effects.await ~timeout_ms:opening_timeout_ms (fun m ->
-        reads m || opening_over m)
+        Option.is_some (reads m) || opening_over m)
   in
-  match awaited with Holds m -> reads m | Timeout -> false
+  match awaited with Holds m -> reads m | Timeout -> None
 
 (* The opening message's line once it reads, its page waits (the arrow) or the
    action menu shows: whichever comes first. *)
-let read_opening ~target =
-  let candidate = opening_line target in
+let read_opening species =
+  let lines = List.map (fun s -> (opening_line s, s)) species in
+  let candidates = List.map fst lines in
   let probes =
     Text.Line_reading.probes ~ink:Text.Line_reading.light_ink
-      (Text_data.glyphs ()) line [ candidate ]
+      (Text_data.glyphs ()) line candidates
   in
-  if
-    Effects.with_probes probes (fun () ->
-        await_opening (reads_opening candidate))
-  then Some target
-  else None
+  Effects.with_probes probes (fun () ->
+      await_opening (reads_opening candidates))
+  |> Option.map (fun text -> List.assoc text lines)
 
-let read_encounter ~target (game_steps : B.Battle.game_steps) () =
-  let seen = read_opening ~target in
+let mark_timeout_ms = 2000
+let mark_measured m = Option.is_some (Caught_mark.read m)
+
+let await_mark () =
+  match Effects.await ~timeout_ms:mark_timeout_ms mark_measured with
+  | Holds m -> Caught_mark.caught m
+  | Timeout -> false
+
+(* The caught mark on the action menu's frame, once its probes measure. *)
+let read_mark () = Effects.with_probes Caught_mark.probes await_mark
+
+let candidates : Capture_plan.target -> string list = function
+  | Species s -> [ s ]
+  | Uncaught l -> l
+
+let read_encounter ~target (game_steps : B.Battle.game_steps) () :
+    Capture.encounter =
+  let species =
+    match candidates target with [] -> None | l -> read_opening l
+  in
   match game_steps.next_event ~timeout_ms:B.Wild_flee.event_timeout_ms with
-  | Action_menu -> seen
+  | Action_menu -> { species; caught = read_mark () }
   | event ->
       M.fail "capture_no_menu"
         ("the wild battle's action menu did not show: "
@@ -84,16 +102,16 @@ let flee ~log game_steps () =
 
 let press_b () = M.press ~cooldown_ms:mash_release_ms Wire.B
 
-(* BAG, the Poke Balls pocket's top, the Poke Ball's row: false if the bag has
-   none, after B back to the action menu (the fork mashes B 2 s). *)
-let ball_chosen ~log () =
+(* BAG, the Poke Balls pocket's top, the ball's row: false if the bag has none,
+   after B back to the action menu (the fork mashes B 2 s). *)
+let ball_chosen ~log ball () =
   tap B.Battle_cursor.bag;
   ignore (M.await_screen ~code:"no_bag" "the bag" Bag_screen.bag_open);
   Bag_items.pocket_top Poke_balls;
-  match Bag_items.select "poke-ball" with
+  match Bag_items.select ball with
   | () -> true
   | exception M.Action_failed cause ->
-      log ("Capture: no Poke Ball found in the bag: " ^ cause.detail);
+      log ("Capture: no " ^ ball ^ " found in the bag: " ^ cause.detail);
       M.close "the bag" Bag_screen.bag_open;
       false
 
@@ -115,8 +133,8 @@ let rec wait_for_throw ~deadline polls : Capture.throw_end =
         press_b ();
         wait_for_throw ~deadline (polls + 1)
 
-let throw_ball ~log () : Capture.throw_end =
-  if not (ball_chosen ~log ()) then No_balls
+let throw_ball ~log ball () : Capture.throw_end =
+  if not (ball_chosen ~log ball ()) then No_balls
   else (
     (* A on the ball, then USE at the top of its menu: the throw. *)
     M.press ~cooldown_ms:throw_press_ms Wire.A;
@@ -155,13 +173,13 @@ let finish_catch ~log (destination : Capture.destination) =
 let find_encounter ~log ~pace spot () =
   Pacing_steps.find_encounter ~log ~pace spot
 
-let make ~log ~pace ~spot ~target : Capture.game_steps =
+let make ~log ~spot (plan : Capture_plan.t) : Capture.game_steps =
   let game_steps = B.Battle_steps.make () in
   {
-    find_encounter = find_encounter ~log ~pace spot;
-    read_encounter = read_encounter ~target game_steps;
+    find_encounter = find_encounter ~log ~pace:plan.pace spot;
+    read_encounter = read_encounter ~target:plan.target game_steps;
     flee = flee ~log game_steps;
-    throw_ball = throw_ball ~log;
+    throw_ball = throw_ball ~log plan.ball;
     finish_catch = finish_catch ~log;
     log;
   }

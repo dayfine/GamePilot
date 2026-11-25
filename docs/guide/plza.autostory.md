@@ -3,8 +3,9 @@
 Plays Pokémon Legends: Z-A's story on the Switch from a new game: it confirms the new game's
 choices, skips the opening to the station platform, then walks off the platform and presses through
 the arrival scenes to Main Mission 01, where you have free control in Lumiose City. From there it
-chases Pancham, answers "Battle with Pokémon!", walks to Chikorita, takes it, and beats Andi's
-Pancham, through MAIN MISSION 01 COMPLETE to the Main Mission 02 banner.
+chases Pancham, takes Chikorita and beats Andi (Main Mission 01), then follows Main Missions 02 and
+03: Hotel Z, Taunie's battle, the Pokémon Center, Wild Zone 1's catches (five species in the
+party), the research lab and Mable's first research reward, the Rock Smash TM (checkpoint 03.11).
 
 <!-- generated:backends -->
 Runs on: the Switch.

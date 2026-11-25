@@ -17,8 +17,9 @@ let legs_text legs fight_wild =
 let text = function
   | New_game -> "new_game"
   | Options -> "options"
-  | Route { target; fight_wild } ->
+  | Route { target; fight_wild; fight_trainers } ->
       "route to " ^ pose target ^ fighting fight_wild
+      ^ if fight_trainers then " fighting trainers" else ""
   | Ready target -> "ready at " ^ pose target
   | Legs { legs = l; fight_wild } -> legs_text l fight_wild
   | Step direction -> "step " ^ Grid_geometry.Direction.name direction

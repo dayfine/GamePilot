@@ -33,8 +33,12 @@ val answer :
 (** The plan's [answer] event: A to the person the player faces, and the Yes/No
     question their text comes to answered. YES as {!Menu_input.answer_yes}
     answers it, then the talk settle through whatever the answer starts (Bill's
-    YES in the Cinnabar Center runs on to One Island); fails as [no_question]
-    when no question shows. NO is the talk itself: its settle presses B, and B
-    answers NO. The fork's [answer] follows a [talk] that stops at the first
-    message (talk_until_message); here a [talk] settles through the question, so
-    an [answer] starts the talk itself and the plan has no [talk] before it. *)
+    YES in the Cinnabar Center runs on to One Island), ending at a quiet
+    overworld or at a battle the answer starts, as {!talk} does (the Three
+    Island Biker's "You wanna make something of it or what?": YES, and the
+    Bikers' battles, which the plan's next event fights); fails as [no_question]
+    when no question shows. In a scene the speaker's text is up already, and the
+    A turns its page. NO is the talk itself: its settle presses B, and B answers
+    NO. The fork's [answer] follows a [talk] that stops at the first message
+    (talk_until_message); here a [talk] settles through the question, so an
+    [answer] starts the talk itself and the plan has no [talk] before it. *)

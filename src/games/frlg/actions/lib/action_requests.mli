@@ -17,12 +17,13 @@ type t =
   | Verify_mail_glitch of Action_args.member
   | Pc_deposit of string list
   | Pick_up_item of string
+  | Read_caught of { at_least : int option }
 
 val names : string list
 (** The action names {!decode} reads: ["mart"], ["use_item"], ["give_bag_item"],
     ["party_swap"], ["buy_coins"], ["redeem_prize_mon"], ["ingame_trade"],
     ["spin_for_encounter"], ["cut_tree"], ["verify_mail_glitch"],
-    ["pc_deposit"], ["pick_up_item"]. *)
+    ["pc_deposit"], ["pick_up_item"], ["read_caught"]. *)
 
 val default_spin_batches : int
 (** ["spin_for_encounter"]'s ["max_batches"] when left out: 25. *)
@@ -49,7 +50,10 @@ val decode :
       Pokémon Center's PC ({!Pc_deposit}).
     - [pick_up_item]: ["item"], the item the player faces (a hidden item, an
       item ball): a talk, as the plan's [talk] event, that names what it gains
-      so a pre-flight counts it ({!Frlg_checkpoints.Plan_needs}). *)
+      so a pre-flight counts it ({!Frlg_checkpoints.Plan_needs}).
+    - [read_caught]: optional ["at_least"]: the count of species caught, read
+      off the Trainer Card ({!Trainer_card_caught}) and logged; below [at_least]
+      it fails. *)
 
 val to_string : t -> string
 (** One line, for logs and tests. *)

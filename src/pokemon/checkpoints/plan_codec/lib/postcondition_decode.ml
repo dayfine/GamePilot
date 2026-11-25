@@ -47,16 +47,17 @@ let bag_count ~where obj : Postconditions.bag_count =
     count = count ~where ~exact:"quantity" obj;
   }
 
-(* A number, exactly that many; or an object with a count. *)
-let coins ~where obj =
-  match F.find "coins" obj with
+(* A number, exactly that many; or an object with a count: [key]'s (coins,
+   caught). *)
+let total key ~where obj =
+  match F.find key obj with
   | None -> None
   | Some (`Int n) -> Some (Count.Exactly n)
   | Some (`Assoc obj) ->
-      let where = where ^ "coins." in
+      let where = where ^ key ^ "." in
       known_fields_only ~where [ "exactly"; "gained"; "used"; "at_least" ] obj;
       Some (count ~where ~exact:"exactly" obj)
-  | Some _ -> F.fail "%scoins is not a number or a JSON object." where
+  | Some _ -> F.fail "%s%s is not a number or a JSON object." where key
 
 let knows ~where obj : Postconditions.knows =
   known_fields_only ~where [ "species"; "moves" ] obj;
@@ -90,6 +91,7 @@ let postconditions ~where obj : Postconditions.t =
       "party_slots";
       "items";
       "coins";
+      "caught";
       "money";
       "flags";
       "knows";
@@ -106,7 +108,8 @@ let postconditions ~where obj : Postconditions.t =
     position = nested "position" Pose_decode.grid_pose;
     party = Party_decode.party ~where obj;
     items = F.records ~where "items" obj bag_count;
-    coins = coins ~where obj;
+    coins = total "coins" ~where obj;
+    caught = total "caught" ~where obj;
     money = nested "money" money;
     flags =
       Option.fold ~none:[]

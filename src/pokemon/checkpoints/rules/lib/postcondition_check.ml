@@ -3,16 +3,23 @@ open Engine_postcondition
 type start = {
   start_money : int option;
   start_coins : int option;
+  start_caught : int option;
   start_items : (string * int) list;
 }
 
 let nothing_at_start =
-  { start_money = None; start_coins = None; start_items = [] }
+  {
+    start_money = None;
+    start_coins = None;
+    start_caught = None;
+    start_items = [];
+  }
 
 type observed = {
   party : string option list option;
   items : (string * int) list;
   coins : int option;
+  caught : int option;
   money : int option;
   start : start;
   flags : (string * bool) list;
@@ -26,6 +33,7 @@ let nothing_read =
     party = None;
     items = [];
     coins = None;
+    caught = None;
     money = None;
     start = nothing_at_start;
     flags = [];
@@ -121,6 +129,13 @@ let check_coins expected observed =
   | Some count, Some read ->
       [ check_count "coins" count ~start:observed.start.start_coins read ]
 
+let check_caught expected observed =
+  match (expected, observed.caught) with
+  | None, _ -> []
+  | Some _, None -> [ not_read "caught" ]
+  | Some count, Some read ->
+      [ check_count "caught" count ~start:observed.start.start_caught read ]
+
 let check_money expected observed =
   match (expected, observed.money) with
   | None, _ -> []
@@ -175,6 +190,7 @@ let check (expected : Postconditions.t) observed =
       check_party expected.party observed;
       List.map (check_item observed) expected.items;
       check_coins expected.coins observed;
+      check_caught expected.caught observed;
       check_money expected.money observed;
       List.map (check_flag observed) expected.flags;
       List.map (check_knows observed) expected.knows;

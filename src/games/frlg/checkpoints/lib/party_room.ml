@@ -18,9 +18,13 @@ let joining ~where action args =
       let slot = Frlg_actions.Game_corner.prize_slot_of_args ~where args in
       Option.to_list
         (List.nth_opt Frlg_actions.Game_corner.fire_red_prizes slot)
-  | "capture" ->
-      let species = J.string ~where "species" args in
-      List.init (J.int ~where "catches" args) (fun _ -> species)
+  | "capture" -> (
+      (* Collecting uncaught species needs no room: a full party sends them to
+         the PC. *)
+      match J.string_opt ~where "species" args with
+      | Some species ->
+          List.init (J.int ~where "catches" args) (fun _ -> species)
+      | None -> [])
   | _ -> []
 
 let brought_keys = function
@@ -35,6 +39,8 @@ let field_move_users = Frlg_actions.Action_args.field_move_users
 let named ~where action args =
   let brought = brought_keys action in
   if List.mem_assoc action field_move_users then []
+  else if action = "pc_deposit" then
+    Frlg_actions.Action_args.deposited_species ~where args
   else
     List.filter_map
       (fun k -> if List.mem k brought then None else J.string_opt ~where k args)
