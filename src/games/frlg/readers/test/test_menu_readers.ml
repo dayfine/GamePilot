@@ -19,6 +19,9 @@
      moverowN      a move being picked on the summary's move list, row N
      memberN       a member's menu over the party, its cursor on row N (0 is
                    SUMMARY at the top)
+     levelupN      a Rare Candy's level-up stats window on page N
+     partyyesno    the party menu's YES/NO box (a move to delete, or to stop
+                   teaching)
      jpn           a Japanese game (the icons sit elsewhere: marks not read)
      none          none of these
 
@@ -134,6 +137,18 @@ let screen_readers =
       applies = everywhere;
       verdict = (fun m -> optional (Move_list_cursor.row m));
       expected = (fun tags -> optional (numbered "moverow" tags));
+    };
+    {
+      reader = "party_level_up_page";
+      applies = everywhere;
+      verdict = (fun m -> optional (Party_dialogs.level_up_page m));
+      expected = (fun tags -> optional (numbered "levelup" tags));
+    };
+    {
+      reader = "party_yes_no";
+      applies = everywhere;
+      verdict = flag Party_dialogs.move_learn_box;
+      expected = tagged "partyyesno";
     };
     {
       reader = "member_menu_row";

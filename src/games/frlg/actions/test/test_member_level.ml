@@ -1,6 +1,6 @@
 (* Member_level on a scripted screen (Scripted_screen): the member's level
    read off its summary, from the overworld and back to it; and one grind
-   battle on a fake rig whose level reads go through that screen. *)
+   battle on fake game steps whose level reads go through that screen. *)
 
 open Frlg_actions
 module S = Frlg_overworld_fixtures.Scripted_screen
@@ -39,7 +39,7 @@ let ends_on screen = S.screen_name (S.screen_at screen screen.S.clock_ms)
 
 let outcome = function
   | Ok () -> "ok"
-  | Error cause -> "failed " ^ Story.Failure.cause_to_string cause
+  | Error cause -> "failed " ^ Checkpoints.Failure.cause_to_string cause
 
 let level_text = Option.fold ~none:"unread" ~some:(Printf.sprintf "Lv %d")
 
@@ -55,16 +55,16 @@ let read_level levels () =
     (ends_on screen)
 
 (* Switch on turn 1, the sweeper's KO: the battle is over. *)
-let won_driver calls : B.Battle_driver.t =
+let fake_won_battle_game_steps calls : B.Battle.game_steps =
   let events =
     Queue.of_seq
-      (List.to_seq B.Battle_driver.[ Action_menu; Action_menu; Battle_over ])
+      (List.to_seq B.Battle.[ Action_menu; Action_menu; Battle_over ])
   in
   let call s = calls := s :: !calls in
   {
     next_event =
       (fun ~timeout_ms:_ ->
-        Option.value (Queue.take_opt events) ~default:B.Battle_driver.Timed_out);
+        Option.value (Queue.take_opt events) ~default:B.Battle.Timed_out);
     use_move =
       (fun ~slot ~target:_ ~expect:_ ->
         call (Printf.sprintf "move %d" slot);
@@ -99,16 +99,18 @@ let grind levels () =
   let calls = ref [] in
   let call s = calls := s :: !calls in
   let party = Party_roster.of_list [ "mr-mime"; "blastoise" ] in
-  let rig : Grind.rig =
+  let fake_game_steps : Grind.game_steps =
     {
       slot_of = Party_roster.slot_of party;
       known_moves = (fun ~slot:_ -> [ "barrier" ]);
       level = (fun ~slot -> Member_level.read ~log:ignore ~slot);
       swap = (fun a b -> call (Printf.sprintf "swap %d %d" a b));
-      go_to = (fun g -> call ("go " ^ g.Story.Pose.map));
+      go_to = (fun g -> call ("go " ^ g.Checkpoints.Pose.map));
       heal = (fun _ -> call "heal");
       find_battle = (fun () -> call "spin");
-      battle = (fun script -> B.Scripted_battle.run (won_driver calls) script);
+      battle =
+        (fun script ->
+          B.Scripted_battle.run (fake_won_battle_game_steps calls) script);
       log =
         (fun line ->
           if
@@ -118,7 +120,8 @@ let grind levels () =
     }
   in
   let result =
-    S.run screen (fun () -> Menu_input.run (fun () -> Grind.run rig mimien))
+    S.run screen (fun () ->
+        Menu_input.run (fun () -> Grind.run fake_game_steps mimien))
   in
   Printf.sprintf "%s => %s; ends on %s"
     (String.concat "; " (List.rev !calls))

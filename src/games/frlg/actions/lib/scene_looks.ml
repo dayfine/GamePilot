@@ -93,5 +93,6 @@ let settle ?menu_open ?arrived ?(start = []) kind ~label ~battle_ends ~log =
   | Battle what when battle_ends ->
       log (label ^ ": a battle starts, " ^ what);
       Ok ()
-  | Battle what -> Error (Story.Failure.cause "battle" (label ^ ": " ^ what))
-  | Timed_out why -> Error (Story.Failure.cause "not_settled" why)
+  | Battle what ->
+      Error (Checkpoints.Failure.cause "battle" (label ^ ": " ^ what))
+  | Timed_out why -> Error (Checkpoints.Failure.cause "not_settled" why)

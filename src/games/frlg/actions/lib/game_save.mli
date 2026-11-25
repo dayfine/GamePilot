@@ -30,5 +30,5 @@ val save : log:(string -> unit) -> unit -> unit
     [save_no_question], [save_cancelled], [save_error] or [save_timeout]. *)
 
 val save_game :
-  log:(string -> unit) -> unit -> (unit, Story.Failure.cause) result
+  log:(string -> unit) -> unit -> (unit, Checkpoints.Failure.cause) result
 (** {!save} under {!Menu_input.run} with the YES/NO probes subscribed. *)

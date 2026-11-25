@@ -1,7 +1,7 @@
 (* A program's plan folder: its checkpoints (<ID>.plan.json, in run order),
    a range of them, and the plan before one. *)
 
-open Story
+open Checkpoints
 
 let plan_suffix = ".plan.json"
 
@@ -35,7 +35,7 @@ let plan_file ~plan_dir id = Filename.concat plan_dir (id ^ plan_suffix)
 
 let load_plan ~plan_dir id =
   let* plan = Plan_decode.load (plan_file ~plan_dir id) in
-  let* () = Frlg_story.Checkpoint_run.check_plan plan in
+  let* () = Frlg_checkpoints.Checkpoint_run.check_plan plan in
   Ok plan
 
 (* The id before [id] in the folder's order, if any. *)

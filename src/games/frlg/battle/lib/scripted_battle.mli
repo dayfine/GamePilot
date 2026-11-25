@@ -1,5 +1,5 @@
-(** Plays a {!Battle_script} on a {!Battle_driver} from anywhere in a battle
-    (its opening included) to its end: each event the driver reports gets the
+(** Plays a {!Battle_script} on a {!Battle.game_steps} from anywhere in a battle
+    (its opening included) to its end: each event the game steps report gets the
     script's answer, until the battle is over or the script has none. *)
 
 type summary = {
@@ -19,7 +19,7 @@ type outcome =
       (** The battle left the screen: won, run from, or lost; the caller reads
           which from the screen after it. *)
   | Failed of { why : string; summary : summary }
-      (** The script had no answer or the driver could not carry it out. The
+      (** The script had no answer or the game steps could not carry it out. The
           game is left as it was, in the battle. *)
 
 val empty_summary : summary
@@ -28,7 +28,8 @@ val empty_summary : summary
 val max_unread : int
 (** 3: a move learn that does not read this many times fails the battle. *)
 
-val run : ?log:(string -> unit) -> Battle_driver.t -> Battle_script.t -> outcome
+val run :
+  ?log:(string -> unit) -> Battle.game_steps -> Battle_script.t -> outcome
 (** [log] gets a line per event and per command. *)
 
 val describe : outcome -> string

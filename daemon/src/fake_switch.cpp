@@ -62,7 +62,10 @@ class FakeScreen : public FrameSource {
       std::this_thread::sleep_for(
           std::chrono::duration<double, std::milli>(due - now));
     }
-    const bool bright = board_.pressed_at(clock_.now_ms() - response_ms_);
+    // The frame shows the screen at its own time, not when this thread woke:
+    // a capture card keeps capturing while the host is stalled, so a late
+    // read still gets the frames the console showed meanwhile.
+    const bool bright = board_.pressed_at(due - response_ms_);
     frame = cv::Mat(size_, CV_8UC3, cv::Scalar::all(bright ? kBright : kDark));
     return true;
   }

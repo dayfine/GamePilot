@@ -43,6 +43,10 @@ jobs:
           status=${PIPESTATUS[0]}
           if [ "$status" -ne 0 ]; then sh ../dev/ci/report_test_failures.sh dune-test.log; fi
           exit "$status"
+      - name: Check the user guides (docs/guide/) against the registry and the plans
+        if: runner.os == 'Linux'
+        working-directory: src
+        run: opam exec -- dune exec -- gamepilot guide --check
       - name: Build and test the OCaml linters (dev/lint/)
         if: runner.os == 'Linux'
         working-directory: dev/lint

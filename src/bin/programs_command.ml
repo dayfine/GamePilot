@@ -3,9 +3,9 @@
    The program registry (Program_registry) by game and group, as PA/CC's
    program list shows it: each program's id, name, backends, description and
    page, and for a program with checkpoints its checkpoint ids and what its
-   chain needs of the save: the free party slots (Frlg_story.Party_room, as
+   chain needs of the save: the free party slots (Frlg_checkpoints.Party_room, as
    the pre-flight's room row) and the field moves its plans use
-   (Frlg_story.Plan_needs: Fly's user, Cut's user).
+   (Frlg_checkpoints.Plan_needs: Fly's user, Cut's user).
 
    Also the program a command names: --program ID in place of a plan folder
    (gamepilot checkpoints), or a one-shot program's id (gamepilot run). *)
@@ -27,10 +27,10 @@ let load_plans dir =
 
 (* "fly (pidgey)" for each field move a plan uses, without repeats. *)
 let field_moves stocks plans =
-  let module N = Frlg_story.Plan_needs in
+  let module N = Frlg_checkpoints.Plan_needs in
   let field_move = function
     | N.Member { species; for_ }
-      when List.mem for_ Frlg_story.Party_room.field_moves ->
+      when List.mem for_ Frlg_checkpoints.Party_room.field_moves ->
         Some (Printf.sprintf "%s (%s)" for_ species)
     | N.Knows_move { move; _ } -> Some (move ^ " (a member that knows it)")
     | _ -> None
@@ -44,7 +44,7 @@ let needs dir =
   let* plans = load_plans dir in
   let* stocks = Frlg_actions.Mart_plan.load () in
   match
-    ( Frlg_story.Party_room.(free_needed (chain_need plans)),
+    ( Frlg_checkpoints.Party_room.(free_needed (chain_need plans)),
       field_moves stocks plans )
   with
   | free, moves ->

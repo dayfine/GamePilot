@@ -1,14 +1,14 @@
 (* One run of one checkpoint on the live emulator: a run folder, a daemon
    logging to it, the checkpoint from its start state through
-   Frlg_story.Checkpoint_run with its declared end, then the saves the outcome
+   Frlg_checkpoints.Checkpoint_run with its declared end, then the saves the outcome
    asks for (the failure frame and state, or a passing end) while the session
    is still open, and the run's summary, KEEP and RESULTS.tsv row. The run
-   shows the chain it is part of (Story.Chain_progress, through [progress]),
+   shows the chain it is part of (Checkpoints.Chain_progress, through [progress]),
    its plan and story lines on the daemon's watch page (Plan_watch);
    a Stop pressed there is a failure ("stopped by user") that repeats, so the
    series stops too. *)
 
-open Story
+open Checkpoints
 include Live_checkpoint
 
 (* A save the daemon may refuse (an older daemon, a bad path): logged, not
@@ -19,7 +19,7 @@ let save log what op =
   | exception Effects.Rpc_error e ->
       log (Printf.sprintf "[Run] could not save %s: %s" what e.message)
 
-let options setup cp log : Frlg_story.Checkpoint_run.options =
+let options setup cp log : Frlg_checkpoints.Checkpoint_run.options =
   {
     (Checkpoint_command.options { setup.common with log_file = None }) with
     (* Each checkpoint of the series reads its party: --party is only the
@@ -36,7 +36,7 @@ let options setup cp log : Frlg_story.Checkpoint_run.options =
 let goal_after cp log =
   Option.map
     (fun (r : Plan.repeat) ->
-      Frlg_story.Checkpoint_run.goal_holds ~log ~id:cp.id r.until)
+      Frlg_checkpoints.Checkpoint_run.goal_holds ~log ~id:cp.id r.until)
     cp.plan.repeat
 
 (* On mGBA, the state at each event's start (Event_state_files). *)
@@ -49,10 +49,10 @@ let keep_event_state setup cp log =
 (* The checkpoint, shown on the watch page as it runs; a Stop there ends it
    at the event it was in. With how it ended, for the console's steps. *)
 let checkpoint_outcome setup cp log =
-  let watch = Frlg_story.Plan_watch.create cp.plan.checkpoint in
+  let watch = Frlg_checkpoints.Plan_watch.create cp.plan.checkpoint in
   match
-    Frlg_story.Checkpoint_run.run ?end_at:cp.end_at
-      ~on_event:(Frlg_story.Plan_watch.on_event watch)
+    Frlg_checkpoints.Checkpoint_run.run ?end_at:cp.end_at
+      ~on_event:(Frlg_checkpoints.Plan_watch.on_event watch)
       ?from_event:cp.partial
       ?keep_event_state:(keep_event_state setup cp log)
       (options setup cp log) setup.world cp.plan
@@ -71,7 +71,7 @@ let checkpoint_outcome setup cp log =
         Failed_event )
 
 let frame_path setup id =
-  Frlg_story.Start_check.frame_file ~states:setup.states id
+  Frlg_checkpoints.Start_check.frame_file ~states:setup.states id
 
 (* On the Switch: back to the last save and the start check, then the run. *)
 let console_run setup cp log =
@@ -82,7 +82,7 @@ let console_run setup cp log =
   match
     Console_session.before ~log ~frame_path:(frame_path setup cp.id)
       ~start_path:
-        (Frlg_story.Start_check.start_file ~states:setup.states
+        (Frlg_checkpoints.Start_check.start_file ~states:setup.states
            cp.plan.checkpoint.start)
       party
   with

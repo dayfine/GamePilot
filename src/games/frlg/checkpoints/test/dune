@@ -1,0 +1,175 @@
+(rule
+ (copy ../../programs/mail_glitch/plans/mg-01.plan.json mg-01.plan.json))
+
+(rule
+ (copy ../../programs/mail_glitch/plans/mg-02.plan.json mg-02.plan.json))
+
+(rule
+ (copy ../../programs/mail_glitch/plans/mg-03.plan.json mg-03.plan.json))
+
+(rule
+ (copy ../../programs/mail_glitch/plans/mg-04a.plan.json mg-04a.plan.json))
+
+(rule
+ (copy ../../programs/mail_glitch/plans/mg-04b.plan.json mg-04b.plan.json))
+
+(rule
+ (copy ../../programs/mail_glitch/plans/mg-04c.plan.json mg-04c.plan.json))
+
+(rule
+ (copy ../../programs/mail_glitch/plans/mg-05a.plan.json mg-05a.plan.json))
+
+(rule
+ (copy ../../programs/mail_glitch/plans/mg-05.plan.json mg-05.plan.json))
+
+(rule
+ (copy ../../programs/mail_glitch/plans/mg-06.plan.json mg-06.plan.json))
+
+(rule
+ (copy ../../programs/team_training/plans/tt-01.plan.json tt-01.plan.json))
+
+(rule
+ (copy ../../programs/supplies/plans/su-01.plan.json su-01.plan.json))
+
+(rule
+ (target mg04_walk_two_fled_battles.wire.jsonl)
+ (deps mg04_walk_two_fled_battles.wire.jsonl.gz)
+ (action
+  (with-stdout-to
+   %{target}
+   (run gzip -dc %{deps}))))
+
+(test
+ (name test_checkpoint_run)
+ (modules test_checkpoint_run)
+ (deps
+  mg-01.plan.json
+  mg-02.plan.json
+  mg-03.plan.json
+  mg-04a.plan.json
+  mg-04b.plan.json
+  mg-04c.plan.json
+  mg-05a.plan.json
+  mg-05.plan.json
+  mg-06.plan.json
+  tt-01.plan.json
+  su-01.plan.json)
+ (libraries
+  gamepilot.table_test
+  gamepilot.checkpoints
+  gamepilot.frlg_actions
+  gamepilot.frlg_checkpoints))
+
+(test
+ (name test_mg04_walk_replay)
+ (modules test_mg04_walk_replay)
+ (deps mg-04a.plan.json mg04_walk_two_fled_battles.wire.jsonl)
+ (libraries
+  gamepilot.table_test
+  gamepilot.replay
+  gamepilot.checkpoints
+  gamepilot.frlg_actions
+  gamepilot.frlg_checkpoints))
+
+(rule
+ (copy ../../readers/test/fixtures/mgba.probes.jsonl mgba.probes.jsonl))
+
+(rule
+ (copy
+  ../../readers/test/fixtures/menus.mgba.probes.jsonl
+  menus.mgba.probes.jsonl))
+
+(rule
+ (copy ../../readers/test/fixtures/switch.probes.jsonl switch.probes.jsonl))
+
+(rule
+ (copy
+  ../../readers/test/fixtures/menus.switch.probes.jsonl
+  menus.switch.probes.jsonl))
+
+(test
+ (name test_postcondition_reads)
+ (modules test_postcondition_reads)
+ (deps
+  mgba.probes.jsonl
+  menus.mgba.probes.jsonl
+  switch.probes.jsonl
+  menus.switch.probes.jsonl)
+ (libraries
+  gamepilot.wire
+  gamepilot.table_test
+  gamepilot.checkpoints
+  gamepilot.frlg_checkpoints
+  frlg_overworld_fixtures))
+
+(test
+ (name test_console_start)
+ (modules test_console_start)
+ (deps
+  tt-01.plan.json
+  mg-01.plan.json
+  mg-02.plan.json
+  mg-03.plan.json
+  mg-04a.plan.json
+  mg-04b.plan.json
+  mg-04c.plan.json
+  mg-05a.plan.json
+  mg-05.plan.json
+  mg-06.plan.json)
+ (libraries
+  yojson
+  gamepilot.wire
+  gamepilot.table_test
+  gamepilot.checkpoints
+  gamepilot.frlg_readers
+  gamepilot.frlg_actions
+  gamepilot.frlg_checkpoints))
+
+(test
+ (name test_party_members)
+ (modules test_party_members)
+ (deps
+  mg-01.plan.json
+  mg-02.plan.json
+  mg-03.plan.json
+  mg-04a.plan.json
+  mg-04b.plan.json
+  mg-04c.plan.json
+  mg-06.plan.json)
+ (libraries
+  gamepilot.table_test
+  gamepilot.grid_maps
+  gamepilot.checkpoints
+  gamepilot.frlg_actions))
+
+(test
+ (name test_make_room)
+ (modules test_make_room)
+ (libraries
+  yojson
+  gamepilot.table_test
+  gamepilot.checkpoints
+  gamepilot.frlg_actions
+  gamepilot.frlg_checkpoints))
+
+(test
+ (name test_paced_patches)
+ (modules test_paced_patches)
+ (deps mg-02.plan.json mg-05a.plan.json)
+ (libraries
+  gamepilot.table_test
+  gamepilot.grid_maps
+  gamepilot.checkpoints
+  gamepilot.frlg_overworld
+  gamepilot.frlg_actions
+  gamepilot.frlg_checkpoints))
+
+(test
+ (name test_plan_watch)
+ (modules test_plan_watch)
+ (libraries
+  gamepilot.table_test
+  gamepilot.wire
+  gamepilot.effects
+  gamepilot.checkpoints
+  gamepilot.frlg_checkpoints))

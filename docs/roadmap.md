@@ -59,9 +59,9 @@ Follow fork #804's split (R20), not #781's monolith.
 
 | Item | Where |
 |---|---|
-| Overworld and menu actions: talk, Fly, mart, `use_item`, `give_bag_item`, `party_swap`, `buy_coins`, `redeem_prize_mon`, `ingame_trade`, `spin_for_encounter`, `cut_tree`; heal and save; `gamepilot checkpoint` (`frlg/shared-actions`; still to come: `lift_floor`, `capture`, berries from the Berry Pouch, a party species reader in place of the reckoned party, live recordings of each flow) | `src/games/frlg/actions`, `src/games/frlg/story` |
+| Overworld and menu actions: talk, Fly, mart, `use_item`, `give_bag_item`, `party_swap`, `buy_coins`, `redeem_prize_mon`, `ingame_trade`, `spin_for_encounter`, `cut_tree`; heal and save; `gamepilot checkpoint` (`frlg/shared-actions`; still to come: `lift_floor`, `capture`, berries from the Berry Pouch, a party species reader in place of the reckoned party, live recordings of each flow) | `src/games/frlg/actions`, `src/games/frlg/checkpoints` |
 | Battle driver (single and double, ally targeting, switch, move-learn prompt) and scripted battle runner (#28; YES/NO and out-of-PP readers, double party list and replay tests still to come) | `src/games/frlg/battle` |
-| Story engine: plan decoder (`pokesim-authored-checkpoint/1`), event runner, `repeat_until` (looped checkpoints that heal and save each round) | `src/pokemon/story` |
+| Story engine: plan decoder (`gamepilot-checkpoint/1`), event runner, `repeat_until` (looped checkpoints that heal and save each round) | `src/pokemon/checkpoints` |
 
 ## Phase 4: the Mail Glitch on mGBA (S0)
 

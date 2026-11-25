@@ -1,5 +1,5 @@
-(* The grind action: its args and strategies (pure), and its loop on a fake rig
-   whose battles answer from a list driver, so a switch-trick battle with a
+(* The grind action: its args and strategies (pure), and its loop on fake game
+   steps whose battles answer from a list, so a switch-trick battle with a
    level-up's move learn runs through the real Scripted_battle and the
    strategy's script. *)
 
@@ -24,11 +24,11 @@ let plan json = Result.get_ok (Grind_plan.decode strategies (obj json))
 let decode json () =
   match Grind_plan.decode strategies (obj json) with
   | Ok t -> Grind_plan.describe t
-  | Error c -> Story.Failure.cause_to_string c
+  | Error c -> Checkpoints.Failure.cause_to_string c
 
 let heal_name : Grind_plan.heal -> string = function
-  | Nurse g -> "nurse at " ^ Story.Pose.grid_to_string g
-  | Pad g -> "pad at " ^ Story.Pose.grid_to_string g
+  | Nurse g -> "nurse at " ^ Checkpoints.Pose.grid_to_string g
+  | Pad g -> "pad at " ^ Checkpoints.Pose.grid_to_string g
 
 let strategy name () =
   match
@@ -37,7 +37,7 @@ let strategy name () =
   | None -> "none"
   | Some s ->
       Printf.sprintf "spot %s; heal every %d, %s"
-        (Story.Pose.grid_to_string s.spot)
+        (Checkpoints.Pose.grid_to_string s.spot)
         s.heal_every (heal_name s.heal)
 
 let decoding =
@@ -106,21 +106,21 @@ let decisions =
       "forget 0 for recycle";
   ]
 
-(* The fake rig: a party, the moves the summary reads, and a list of battles,
-   each the events a list driver reports and the moves it is offered. *)
+(* The fake game steps: a party, the moves the summary reads, and a list of battles,
+   each the events the list's battle steps report and the moves it is offered. *)
 type fake_battle = {
-  events : B.Battle_driver.event list;
+  events : B.Battle.event list;
   offered : string option list;
   switch_ok : bool;  (** false: the sweeper fainted, the game refuses it *)
 }
 
-let list_driver (b : fake_battle) calls : B.Battle_driver.t =
+let fake_battle_game_steps (b : fake_battle) calls : B.Battle.game_steps =
   let events = Queue.of_seq (List.to_seq b.events) in
   let offered = Queue.of_seq (List.to_seq b.offered) in
   let call s = calls := s :: !calls in
   let take q d = Option.value (Queue.take_opt q) ~default:d in
   {
-    next_event = (fun ~timeout_ms:_ -> take events B.Battle_driver.Timed_out);
+    next_event = (fun ~timeout_ms:_ -> take events B.Battle.Timed_out);
     use_move =
       (fun ~slot ~target:_ ~expect:_ ->
         call (Printf.sprintf "move %d" slot);
@@ -138,13 +138,13 @@ let list_driver (b : fake_battle) calls : B.Battle_driver.t =
     answer_move_learn =
       (fun learn ->
         let move = take offered None in
-        let result : B.Battle_driver.learned =
+        let result : B.Battle.learned =
           match learn with
           | Forget_for { move = want; slot } when move = Some want ->
               Learned { slot; move }
           | _ -> Not_learned { offered = move }
         in
-        call ("learn: " ^ B.Battle_driver.describe_learned result);
+        call ("learn: " ^ B.Battle.describe_learned result);
         result);
     answer_use_next = (fun _ -> ());
   }
@@ -184,7 +184,7 @@ let flow ?cap ?(battle_lines = false) ?(levels = [ Some 9 ]) ~party ~known
          slot);
     level
   in
-  let rig : Grind.rig =
+  let fake_game_steps : Grind.game_steps =
     {
       slot_of = (fun s -> Party_roster.slot_of !party s);
       known_moves =
@@ -196,7 +196,7 @@ let flow ?cap ?(battle_lines = false) ?(levels = [ Some 9 ]) ~party ~known
         (fun a b ->
           call (Printf.sprintf "swap %d %d" a b);
           party := Party_roster.swap !party a b);
-      go_to = (fun g -> call ("go " ^ Story.Pose.grid_to_string g));
+      go_to = (fun g -> call ("go " ^ Checkpoints.Pose.grid_to_string g));
       heal = (fun h -> call ("heal " ^ heal_name h));
       find_battle = (fun () -> call "spin");
       battle =
@@ -217,15 +217,16 @@ let flow ?cap ?(battle_lines = false) ?(levels = [ Some 9 ]) ~party ~known
                       unread = 0;
                     };
                 }
-          | Some b -> B.Scripted_battle.run (list_driver b calls) script);
+          | Some b ->
+              B.Scripted_battle.run (fake_battle_game_steps b calls) script);
       log = (fun line -> if shown ~battle_lines line then call line);
     }
   in
   let result =
-    match Grind.run ?cap rig plan with
+    match Grind.run ?cap fake_game_steps plan with
     | () -> "ok"
     | exception Menu_input.Action_failed c ->
-        "failed " ^ Story.Failure.cause_to_string c
+        "failed " ^ Checkpoints.Failure.cause_to_string c
   in
   String.concat "; " (List.rev !calls) ^ " => " ^ result
 
@@ -234,12 +235,10 @@ let lv n = Some n
 
 (* Switch on turn 1, the sweeper's KO, a level up that offers a move. *)
 let won ?(offered = []) () =
-  let learns = List.map (fun _ -> B.Battle_driver.Move_learn) offered in
+  let learns = List.map (fun _ -> B.Battle.Move_learn) offered in
   {
     events =
-      B.Battle_driver.[ Action_menu; Action_menu ]
-      @ learns
-      @ [ B.Battle_driver.Battle_over ];
+      B.Battle.[ Action_menu; Action_menu ] @ learns @ [ B.Battle.Battle_over ];
     offered;
     switch_ok = true;
   }
@@ -248,7 +247,7 @@ let won ?(offered = []) () =
    game refuses the switch, the lead runs. *)
 let sweeper_down =
   {
-    events = B.Battle_driver.[ Action_menu; Action_menu; Battle_over ];
+    events = B.Battle.[ Action_menu; Action_menu; Battle_over ];
     offered = [];
     switch_ok = false;
   }
@@ -334,11 +333,7 @@ let flows =
     case "a failed battle fails the action"
       (flow ~party ~known:[]
          [
-           {
-             events = [ B.Battle_driver.Action_menu ];
-             offered = [];
-             switch_ok = true;
-           };
+           { events = [ B.Battle.Action_menu ]; offered = []; switch_ok = true };
          ]
          (plan mimien_args))
       "summary 2; Lv 9 in 2; swap 2 1; go VictoryRoad_2F (45, 10) west; spin; \
@@ -508,10 +503,10 @@ let victory_road =
 let nurse_of (s : Grind_plan.strategy) =
   match s.heal with Nurse g | Pad g -> g
 
-let pose_of (g : Story.Pose.grid) : Story.Pose.observed =
+let pose_of (g : Checkpoints.Pose.grid) : Checkpoints.Pose.observed =
   { at_map = g.map; at_tile = List.hd g.tiles; faces = g.facing }
 
-let legs_from (from : Story.Pose.observed) target =
+let legs_from (from : Checkpoints.Pose.observed) target =
   let w = Lazy.force kanto in
   Result.bind (Route_target.place_of w from) (fun place ->
       Route_target.plan w ~from:place ~facing:from.faces target)

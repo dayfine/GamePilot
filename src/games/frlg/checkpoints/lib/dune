@@ -1,0 +1,15 @@
+(library
+ (name frlg_checkpoints)
+ (public_name gamepilot.frlg_checkpoints)
+ (libraries
+  yojson
+  gamepilot.wire
+  gamepilot.effects
+  gamepilot.watch_report
+  gamepilot.grid_maps
+  gamepilot.checkpoints
+  gamepilot.frlg_readers
+  gamepilot.frlg_battle
+  gamepilot.frlg_repo_files
+  gamepilot.frlg_overworld
+  gamepilot.frlg_actions))

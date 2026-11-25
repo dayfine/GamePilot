@@ -9,8 +9,8 @@ GamePilot automates games through three layers (design: `docs/design/Layered-Aut
   `<name>/test`.
   - `base/`: pure, game-agnostic code with no effects (`wire`: the protocol codec).
   - `core/`: the effects programs use (`effects`) and their handlers (`session`, `live`, `replay`).
-  - `pokemon/`: code shared by Pokemon games (navigation grid, story plans and their engine).
-  - `games/<game>/`: `readers/`, `actions/`, `maps/`, `story/`, and `programs/<program>/`.
+  - `pokemon/`: code shared by Pokemon games (navigation grid, checkpoint plans and their runner).
+  - `games/<game>/`: `readers/`, `actions/`, `maps/`, `checkpoints/`, and `programs/<program>/`.
   - `program_registry/`: every program's descriptor (game, group, name, doc, checkpoints folder,
     backends), as PA/CC's program list. A new program registers there (`docs/programs/README.md`).
   - `bin/`: the `gamepilot` command.
@@ -22,9 +22,20 @@ GamePilot automates games through three layers (design: `docs/design/Layered-Aut
 - **Names say what a thing is or does.** No catch-all modules or folders (`helpers`, `utils`, `common`, `misc`):
   a function with no obvious home gets a module named for its job. The C++ folder names on the
   fork are a guide where they are informative.
+- **What a deciding module reads and does in the game is its `game_steps`.** One record,
+  `<Module>.game_steps`, verb-phrase fields; builders `<context>_game_steps` (or `<Module>_steps.make`),
+  test fakes `fake_game_steps`. Never `rig`, `driver`, `handlers`, `ops` or `callbacks`; `deps` only
+  for a struct that holds external resources or connections.
 - **OCaml passes `sh dev/lint/lint_ocaml.sh`** (`dev/lint/`, configured by `dev/lint/ocaml_lint.conf`): function
-  length, nesting, magic numbers, file length, `.mli` for every `lib/` module, layer boundaries;
-  complexity is advisory. Waive only in `dev/lint/ocaml_lint_exceptions.conf`, with a reason.
+  length, nesting, magic numbers, file length, `.mli` for every `lib/` module, layer boundaries,
+  no exceptions; complexity is advisory. Waive only in `dev/lint/ocaml_lint_exceptions.conf`,
+  with a reason.
+- **Errors are values.** Code under `src/` (tests aside) returns a `Result`: no `exception`,
+  `raise`, `failwith`, `invalid_arg` or `try`/`match ... with exception` (`no_exceptions` in
+  `dev/lint/`). The one kept exception is the effects boundary (`Effects.Rpc_error`,
+  `Disconnected`, `Stop_requested`, `Replay.Divergence`), confined to `core/effects`, `session`,
+  `live`, `replay` and the runner that catches them. Today's other uses are waived file by file in
+  `dev/lint/ocaml_lint_exceptions.conf`; that list only shrinks.
 - **No C in OCaml.** No `foreign_stubs`, `foreign_archives`, `extra_objects` or `ctypes` in any
   `dune` file (`dev/lint/lint_dune.sh`). Every opam dependency is listed in
   `dev/lint/opam-allowlist.txt`. The Windows CI build is the real gate.
@@ -35,7 +46,7 @@ GamePilot automates games through three layers (design: `docs/design/Layered-Aut
   timings, and each module's doc comment names the C++ file(s) it comes from, so a reader can lay the
   two side by side. Improvements and reshaping come later, in their own PRs. Where we deliberately
   differ (a missing reader, a new strategy), say so in the doc comment.
-- **Every checkpoint goes through the checkpoint runner** (`pokemon/story`) and its dev loop: run
+- **Every checkpoint goes through the checkpoint runner** (`pokemon/checkpoints`) and its dev loop: run
   from the checkpoint's start state, verify its end state, retry, record. Programs run in order
   (mg-01 → mg-05), each tested on mGBA before it runs on the Switch.
 - **Submodules are read-only.** `third_party/Arduino-Source` tracks the fork branch
@@ -57,6 +68,36 @@ GamePilot automates games through three layers (design: `docs/design/Layered-Aut
 - Machine-specific paths come from environment variables (`GAMEPILOT_*`, see `README.md`),
   never from a home path in code, docs or tests.
 
+## PR gate loop
+
+Each PR goes through, in order: **CI green → qc-structural at the tip → the user's structure
+review when the PR changes structure → squash merge**.
+
+- A PR changes structure when it adds, deletes or renames a library module or a `dune` file under
+  `src/`; changes the `.mli` of a library shared across games (`src/base`, `src/core`,
+  `src/pokemon`); changes a format (the plan, goal or places format, `protocol/`, a `*_decode.ml`);
+  or has had two NEEDS_REWORK verdicts. Rename-only PRs count, and so do design docs (`docs/design/`).
+  Any other PR merges on green CI and an APPROVED verdict at its tip.
+
+- qc-structural (`.agents/agents/qc-structural.md`, rows in
+  `.agents/rules/qc-structural-authority.md`) runs only on green CI. It posts its verdict as a
+  COMMENT review: `Reviewed SHA: <sha>` on line 1, `## Verdict` then `APPROVED` or `NEEDS_REWORK`.
+  Its FLAGs are questions for the user and do not block.
+- A verdict holds for the SHA it names. A rework commit invalidates it: review the new tip.
+- Docs-only PRs (every file `.md` or under `docs/`) skip qc-structural; CI is still required.
+- `sh dev/review/pr_gate_status.sh [PR...]` prints each open PR's CI, verdict (ok / rework /
+  stale(<sha>) / none / skip) and next step (`merge`, or `user review (<reason>)`).
+  `sh dev/review/format_only_changes.sh` lists files changed only in formatting; CI prints the same list as warnings.
+
+## User guides
+
+A new or changed program updates its guide. Every registered program has a player's page in
+`docs/guide/<program id>.md` (`docs/guide/README.md`): hand-written prose around blocks generated
+from the registry and the plans. After changing a program's plans, its descriptor or its commands,
+run `cd src && opam exec -- dune exec -- gamepilot guide --write` and reread the prose around the
+blocks. CI runs `gamepilot guide --check`, which fails on a missing page, a stale block (any plan
+change makes its checkpoints block stale) or a skeleton's unfinished `TODO(guide)`.
+
 ## Agents
 
-Harness from `dayfine/agent-harness` (`.agents/rules/`, `dev/lib/`, `.agents/checks/`).
+Harness from `dayfine/agent-harness` (`.agents/agents/`, `.agents/rules/`, `dev/lib/`, `.agents/checks/`).

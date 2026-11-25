@@ -1,5 +1,5 @@
-(* The capture action: its args (pure), its decisions on a fake rig that
-   answers each step from a list and records the steps, as the fork's
+(* The capture action: its args (pure), its decisions on fake game steps that
+   answer each step from a list and records the steps, as the fork's
    test_capture_decisions (PokemonFRLG_AutoStoryCapture_Tests), and the line
    its encounters are read by. *)
 
@@ -13,7 +13,7 @@ let decode json () =
   | Ok t ->
       Printf.sprintf "%s, pace %s" (Capture_plan.describe t)
         (Grid_maps.Direction.name t.pace)
-  | Error c -> Story.Failure.cause_to_string c
+  | Error c -> Checkpoints.Failure.cause_to_string c
 
 let mg02_args =
   {|{"species": "spearow", "catches": 1, "encounters": 50, "balls": 10,
@@ -62,7 +62,7 @@ let pop_throw g () : Capture.throw_end =
       g.throws <- rest;
       t
 
-let rig g : Capture.rig =
+let fake_game_steps g : Capture.game_steps =
   {
     find_encounter =
       (fun () ->
@@ -106,7 +106,7 @@ let rattata =
 
 let decide ?(plan = rattata) ?(party = 2) ?(flees = true) seen throws () =
   let g = { seen; throws; trace = []; flees } in
-  let result = Capture.run (rig g) plan ~party in
+  let result = Capture.run (fake_game_steps g) plan ~party in
   Printf.sprintf "%s: %s"
     (Capture.message plan result)
     (String.concat ", " (List.rev g.trace))

@@ -9,5 +9,5 @@
   gamepilot.grid_planning
   gamepilot.grid_trace
   gamepilot.grid_walker
-  gamepilot.story
+  gamepilot.checkpoints
   gamepilot.frlg_readers))

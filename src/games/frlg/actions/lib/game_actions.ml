@@ -71,14 +71,14 @@ let body ctx (request : R.t) () =
       Party_actions.verify_mail_glitch ~log
         ~who:(Action_args.member_to_string member)
         ~slot:(resolve ctx member)
-  | Pick_up_item _ -> Menu_input.raise_error (Talk.talk ~log ())
+  | Pick_up_item _ -> Menu_input.raise_error (Talk.pick_up ~log ())
 
 let perform ctx request = Menu_input.run (body ctx request)
 
-let handler ctx name (_ : Story.Plan.event) args =
+let handler ctx name (_ : Checkpoints.Plan.event) args =
   match (ctx.stocks (), name) with
   | Error e, "mart" ->
-      Error (Story.Failure.cause ~repeats:true "no_mart_stock" e)
+      Error (Checkpoints.Failure.cause ~repeats:true "no_mart_stock" e)
   | stocks, _ ->
       let stocks = Result.value stocks ~default:Mart_plan.empty in
       Result.bind (R.decode stocks name args) (perform ctx)
@@ -86,3 +86,4 @@ let handler ctx name (_ : Story.Plan.event) args =
 let handlers ctx =
   List.map (fun name -> (name, handler ctx name)) R.names
   @ Mail_glitch_use.handlers ~log:ctx.log ~party:ctx.party
+  @ Candy_actions.handlers ~log:ctx.log ~party:ctx.party

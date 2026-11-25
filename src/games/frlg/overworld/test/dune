@@ -38,6 +38,6 @@
   gamepilot.effects
   gamepilot.grid_maps
   gamepilot.grid_planning
-  gamepilot.story
+  gamepilot.checkpoints
   gamepilot.frlg_overworld
   frlg_overworld_fixtures))

@@ -11,4 +11,7 @@ val in_test_dir : Config.t -> string -> bool
 val in_library_dir : Config.t -> string -> bool
 (** The file's own directory is named [library_dir]. *)
 
+val under_no_exceptions_root : Config.t -> string -> bool
+(** The path is inside a [no_exceptions] tree. *)
+
 val read : string -> string

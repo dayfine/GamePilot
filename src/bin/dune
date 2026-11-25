@@ -10,12 +10,13 @@
   gamepilot.live
   gamepilot.start_menu_poc
   gamepilot.program_registry
+  gamepilot.guide_page
   gamepilot.run_record
-  gamepilot.story
+  gamepilot.checkpoints
   gamepilot.frlg_actions
   gamepilot.frlg_readers
   gamepilot.ctl_script
   gamepilot.switch_home
-  gamepilot.frlg_story
+  gamepilot.frlg_checkpoints
   unix
   yojson))

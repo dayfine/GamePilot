@@ -9,7 +9,7 @@
    summaries before the first action that finds a member by its species. With --end-check-only
    no event runs: the state is checked against the plan's postconditions.
    --grind-battles N (testing) ends each grind, passing, after N battles and
-   skips the plan's moves postconditions (Frlg_story.Checkpoint_run).
+   skips the plan's moves postconditions (Frlg_checkpoints.Checkpoint_run).
 
    A live run gets a run folder in --runs-dir ($GAMEPILOT_RUNS) with
    run.json (kind checkpoint, mode single), story.log, summary.txt, the
@@ -78,7 +78,7 @@ let logger = function
         output_string out (line ^ "\n");
         flush out
 
-let options flags : Frlg_story.Checkpoint_run.options =
+let options flags : Frlg_checkpoints.Checkpoint_run.options =
   {
     state = flags.state;
     party =
@@ -92,15 +92,16 @@ let options flags : Frlg_story.Checkpoint_run.options =
   }
 
 let prepare plan_file flags =
-  let* plan = Story.Plan_decode.load plan_file in
-  let* () = Frlg_story.Checkpoint_run.check_plan plan in
-  let* world = Frlg_story.Checkpoint_run.load_world () in
+  let* plan = Checkpoints.Plan_decode.load plan_file in
+  let* () = Frlg_checkpoints.Checkpoint_run.check_plan plan in
+  let* world = Frlg_checkpoints.Checkpoint_run.load_world () in
   Ok (plan, world, options flags)
 
 (* The outcome's line and exit code. *)
 let report = function
   | Ok () -> ("checkpoint: PASSED", 0)
-  | Error failure -> ("checkpoint: FAILED " ^ Story.Failure.to_string failure, 1)
+  | Error failure ->
+      ("checkpoint: FAILED " ^ Checkpoints.Failure.to_string failure, 1)
 
 (* The checkpoint under [handle], its failures from the handler reported. *)
 let outcome handle run =
@@ -123,7 +124,7 @@ let run_with ?(after = ignore) handle plan_file flags =
   | Ok (plan, world, options) ->
       let body () =
         let result =
-          Frlg_story.Plan_watch.run ~mode:"single" options world plan
+          Frlg_checkpoints.Plan_watch.run ~mode:"single" options world plan
         in
         after result;
         result

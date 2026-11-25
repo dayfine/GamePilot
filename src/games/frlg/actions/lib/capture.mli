@@ -3,8 +3,8 @@
     catch to the party, or to the PC once the party is full. Ported from the
     fork's run_capture() and capture_message()
     (Programs/AutoStory/PokemonFRLG_AutoStoryCapture, _AutoStoryCaptureRun,
-    _AutoStoryCaptureTurns). The game steps come as a {!rig}, so the decisions
-    run on a fake in tests; {!Capture_steps} is the game's.
+    _AutoStoryCaptureTurns). The game steps come as {!game_steps}, so the
+    decisions run on a fake in tests; {!Capture_steps} is the game's.
 
     Where it differs: no shiny check (the fork hears the shiny sound; GamePilot
     has no audio), no weakening move ({!Capture_plan}), and no fainted player
@@ -21,7 +21,7 @@ type throw_end =
   | No_balls  (** the bag has no Poké Ball; the action menu is back *)
   | Throw_failed  (** neither in time *)
 
-type rig = {
+type game_steps = {
   find_encounter : unit -> bool;
       (** From the overworld in the patch: until a wild battle starts. False if
           none did within its bound. *)
@@ -60,7 +60,7 @@ val max_turns : int
 val party_size : int
 (** 6: a full party sends catches to the PC. *)
 
-val run : rig -> Capture_plan.t -> party:int -> result
+val run : game_steps -> Capture_plan.t -> party:int -> result
 (** From the overworld in the patch, with [party] members. *)
 
 val end_name : end_ -> string
