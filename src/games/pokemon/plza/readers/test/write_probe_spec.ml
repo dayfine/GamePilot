@@ -19,9 +19,11 @@
    {!Switch_home.Keyboard_typing} and {!Plza_readers.Confirm_choices}), for
    fixtures/intro.probes.jsonl.
 
-   With [--gifts], only the Mystery Gift steps' readers' probes
-   ({!Plza_readers.Main_menu_row}, {!Plza_readers.Mystery_gift_screen}), for
-   fixtures/gifts.probes.jsonl. *)
+   With [--gifts LANGUAGE], only the Mystery Gift steps' readers' probes
+   ({!Plza_readers.Main_menu_row}, {!Plza_readers.Mystery_gift_screen}), the
+   gift's name matched by its template in that language
+   (gift-name-vivillon-<language>.png, copied beside the spec): en for
+   fixtures/gifts.probes.jsonl, fr for fixtures/gifts.fr.probes.jsonl. *)
 
 let native : Wire.box = { x = 0.; y = 0.; w = 1.; h = 1. }
 let no_minimap = Array.mem "--no-minimap" Sys.argv
@@ -74,7 +76,7 @@ let () =
            @ Plza_readers.Intro_screens.probes ~picture:native
            @ Switch_home.Keyboard_typing.probes
            @ Plza_readers.Confirm_choices.probes ~picture:native))
-  | [ _; "--gifts" ] ->
+  | [ _; "--gifts"; language ] ->
       print_endline
         (params
            (Plza_readers.Main_menu_row.probes ~picture:native
@@ -82,7 +84,8 @@ let () =
            @ Plza_readers.Boxes_screen.probes ~picture:native
            @ Plza_readers.Save_dialog.probes ~picture:native
            @ Plza_readers.Mystery_gift_screen.probes ~picture:native
-               ~gift_name:"gift-name-vivillon.png"))
+               ~gift_name:
+                 (Some (Printf.sprintf "gift-name-vivillon-%s.png" language))))
   | _ ->
       let assets = Plza_readers.Blob_assets.file_names in
       print_endline

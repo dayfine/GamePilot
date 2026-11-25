@@ -42,16 +42,26 @@ val run :
   log:(string -> unit) ->
   picture:Wire.box ->
   assets:Plza_readers.Blob_assets.t ->
-  gift_name:string ->
+  gift_name:string option ->
   tile:Switch_home.Home_screen.tile_color ->
   span:span ->
   code:string ->
   (unit, string) result
 (** The steps from [span.from] to [span.stop_at] (or the end). [assets] are the
     PLZA readers' uploaded templates (the main menu's buttons), [gift_name] the
-    Internet gift's name template's; [tile] is PLZA's colour for the HOME reader
-    that closes the game. [Error] before any press for an unknown point or a
-    stop not after the start ({!check}). *)
+    Internet gift's name template's, uploaded from {!gift_name_template}; [tile]
+    is PLZA's colour for the HOME reader that closes the game. [Error] before
+    any press for an unknown point or a stop not after the start ({!check}). *)
+
+val gift_name_template :
+  language:string -> span -> (string option, string) result
+(** The repo path of the Internet gift's name template for the game's language
+    (a tag of [gamepilot checkpoints --options language=]): en and fr, each
+    cropped from its gift list (400 x 38 from (592, 566) of the 1080p frame,
+    Vivillon's name at item 4: readers/test/images/mystery-gift's
+    gift-list-cursor-on-1 and gift-list-fr-cursor-on-1). [None] when the span
+    does not claim the Internet gift (the code alone, a start past the list, a
+    stop on it); [Error] for another language, before any press. *)
 
 val check : span -> (unit, string) result
 (** The points are known, the stop after the start, the code alone from the

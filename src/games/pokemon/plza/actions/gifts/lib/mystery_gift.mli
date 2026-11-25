@@ -32,11 +32,12 @@
 val probes :
   picture:Wire.box ->
   assets:Plza_readers.Blob_assets.t ->
-  gift_name:string ->
+  gift_name:string option ->
   Wire.probe_spec list
 (** The menu's, the gift screens', the keyboard's, the Boxes' and the SAVE
     dialog's probes; [gift_name] the reference of the Internet gift's name
-    template. *)
+    template in the game's language, [None] when the run does not claim it
+    ({!Claim_gifts.gift_name_template}). *)
 
 val open_gifts : log:(string -> unit) -> (unit, string) result
 val open_internet_list : log:(string -> unit) -> (unit, string) result

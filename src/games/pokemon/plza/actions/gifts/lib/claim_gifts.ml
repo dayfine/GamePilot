@@ -91,6 +91,35 @@ let check span =
     Error "the code alone starts from the overworld"
   else Ok ()
 
+(* Whether a run claims the Internet gift: its list's step, from at or
+   before the list to a stop after it. *)
+let reads_gift_name span =
+  (not span.code_only)
+  && index span.from <= index "gift-list"
+  && Option.fold ~none:true
+       ~some:(fun stop -> index stop > index "gift-list")
+       span.stop_at
+
+let name_languages = [ "en"; "fr" ]
+
+let name_template language =
+  Printf.sprintf "src/games/pokemon/plza/assets/gift-name-vivillon-%s.png"
+    language
+
+let gift_name_template ~language span =
+  if not (reads_gift_name span) then Ok None
+  else if List.mem language name_languages then
+    Ok (Some (name_template language))
+  else
+    Error
+      (Printf.sprintf
+         "no template of the Internet gift's name in language %s (there is one \
+          in %s); crop one from its gift list as %s was, or claim the code \
+          alone (--code-only)"
+         language
+         (String.concat ", " name_languages)
+         (name_template "en"))
+
 let rec run_all = function
   | [] -> Ok ()
   | s :: rest ->

@@ -3,21 +3,28 @@
    first, Vivillon the 4th), played by a scripted console: each Down moves the
    white item one down (its probes' results swapped), A is counted. The gift
    is found by its name, the cursor read on it, then A; a cursor that does not
-   move ends it with no A. One frame per ms. *)
+   move ends it with no A. One frame per ms. On the French list
+   (readers/test/fixtures/gifts.fr.probes.jsonl) the French name finds the
+   same item 4; the English name finds none and nothing is pressed, as console
+   B's French run ended (2026-11-25). *)
 
 let frames = Wire.read_image_probes "gifts.probes.jsonl"
 let list = List.assoc "./mystery-gift/gift-list-cursor-on-1.png" frames
+let french_list_path = "./mystery-gift/gift-list-fr-cursor-on-1.png"
+let french_names = Wire.read_image_probes "gifts.fr.probes.jsonl"
+let french_list = List.assoc french_list_path french_names
+let french_list_english_names = List.assoc french_list_path frames
 let menu = List.assoc "./tutorial-cards/it-menu-no-card.jpg" frames
 let item k = Printf.sprintf "mystery_gift.item%d" k
 
-(* The list with the white item [k]: item 0's result and item k's swapped. *)
-let cursor_on k probes =
+(* [shown] with the white item [k]: item 0's result and item k's swapped. *)
+let cursor_on shown k =
   List.map
     (fun (id, r) ->
-      if id = item 0 then (id, List.assoc (item k) list)
-      else if id = item k then (id, List.assoc (item 0) list)
+      if id = item 0 then (id, List.assoc (item k) shown)
+      else if id = item k then (id, List.assoc (item 0) shown)
       else (id, r))
-    probes
+    shown
 
 type t = {
   mutable ms : int;
@@ -25,6 +32,7 @@ type t = {
   mutable presses : string list;
   mutable cursor : int;
   moves : bool;
+  shown : (string * Wire.probe_result) list;
 }
 
 let frame t : Wire.frame =
@@ -34,7 +42,7 @@ let press t b =
   t.presses <- Wire.string_of_button b :: t.presses;
   if b = Wire.Down && t.moves then (
     t.cursor <- t.cursor + 1;
-    t.probes <- cursor_on t.cursor list)
+    t.probes <- cursor_on t.shown t.cursor)
 
 let rec tick t n pred =
   if n <= 0 then None
@@ -77,7 +85,7 @@ let handle t f =
     }
 
 let run ?(moves = true) probes () =
-  let t = { ms = 0; probes; presses = []; cursor = 0; moves } in
+  let t = { ms = 0; probes; presses = []; cursor = 0; moves; shown = probes } in
   let outcome =
     handle t (fun () ->
         match Plza_gifts.Mystery_gift.choose_gift ~log:ignore with
@@ -99,8 +107,15 @@ let () =
       case "the cursor does not move: no A" (run ~moves:false list)
         "error: the cursor did not reach item 4; nothing claimed; Down Down \
          Down";
+      case "the French list, the French name: three Downs, then A"
+        (run french_list) "ok; Down Down Down A";
+      case "the French list, the English name: no press"
+        (run french_list_english_names)
+        "error: the gift is not listed below the cursor: items white 1.00 0.00 \
+         0.14 0.00 0.00 0.00; names 0.261 0.092 0.110 0.100 0.139 0.123; card \
+         header 0.71, text box 0.18; nothing claimed; no press";
       case "not the list (the main menu): no press" (run menu)
-        "error: no active gift list: items white 0.14 0.00 0.00 0.18 0.13 \
-         0.00; names 0.126 0.103 0.099 0.112 0.122 0.107; card header 0.22, \
-         text box 0.01; no press";
+        "error: no active gift list: items white 0.13 0.00 0.00 0.14 0.10 \
+         0.00; names 0.111 0.088 0.084 0.097 0.105 0.091; card header 0.21, \
+         text box 0.00; no press";
     ]

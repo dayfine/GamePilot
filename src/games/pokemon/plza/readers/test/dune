@@ -33,6 +33,9 @@
   fixtures/switch.shifted.second.probes.jsonl
   switch.shifted.second.probes.jsonl))
 
+(rule
+ (copy fixtures/gifts.fr.probes.jsonl gifts.fr.probes.jsonl))
+
 (tests
  (names
   test_dialog_readers
@@ -76,6 +79,7 @@
   switch.shifted.second.probes.jsonl
   gifts.probes.jsonl
   gifts.shifted.probes.jsonl
+  gifts.fr.probes.jsonl
   intro.probes.jsonl
   intro.shifted.probes.jsonl)
  (libraries
