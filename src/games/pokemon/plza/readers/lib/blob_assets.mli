@@ -11,6 +11,11 @@ type t = {
   choice_arrow : string;  (** the arrow at a choice box's row *)
   advance_chevron_shape : string;  (** the chevron's V *)
   button_a : string;  (** the A button of a prompt ("A Talk") *)
+  button_dpad_up : string;
+      (** the party bar's D-pad markers: up, down, and their black insides *)
+  button_dpad_down : string;
+  button_dpad_up_interior : string;
+  button_dpad_down_interior : string;
   move_no_effect : string;  (** a move's effectiveness symbols under ZL *)
   move_not_very_effective : string;
   move_effective : string;

@@ -5,6 +5,10 @@ type t = {
   choice_arrow : string;
   advance_chevron_shape : string;
   button_a : string;
+  button_dpad_up : string;
+  button_dpad_down : string;
+  button_dpad_up_interior : string;
+  button_dpad_down_interior : string;
   move_no_effect : string;
   move_not_very_effective : string;
   move_effective : string;
@@ -21,6 +25,10 @@ let file_names =
     choice_arrow = "choice_arrow.png";
     advance_chevron_shape = "advance_chevron_shape.png";
     button_a = "button_a.png";
+    button_dpad_up = "button_dpad_up.png";
+    button_dpad_down = "button_dpad_down.png";
+    button_dpad_up_interior = "button_dpad_up_interior.png";
+    button_dpad_down_interior = "button_dpad_down_interior.png";
     move_no_effect = "move_no_effect.png";
     move_not_very_effective = "move_not_very_effective.png";
     move_effective = "move_effective.png";

@@ -19,7 +19,6 @@
 open Engine_run
 module P = Plza_checkpoints
 module Story = Plza_autostory
-module Assets = Plza_readers.Blob_assets
 
 let ( let* ) = Result.bind
 
@@ -51,46 +50,6 @@ let load_plan ~plan_dir id =
   | json -> P.Plan_decode.decode ~source:(id ^ Plan_dir.plan_suffix) json
   | exception Sys_error e -> Error e
   | exception Yojson.Json_error e -> Error (id ^ ": " ^ e)
-
-let read_file path =
-  match In_channel.with_open_bin path In_channel.input_all with
-  | text -> Ok text
-  | exception Sys_error e -> Error e
-
-let upload dir name =
-  Result.map Effects.upload_template (read_file (Filename.concat dir name))
-
-let upload_from dir =
-  let up = upload dir and f = Assets.file_names in
-  let* dialog_white_arrow = up f.dialog_white_arrow in
-  let* dialog_black_arrow = up f.dialog_black_arrow in
-  let* dialog_teal_arrow = up f.dialog_teal_arrow in
-  let* choice_arrow = up f.choice_arrow in
-  let* advance_chevron_shape = up f.advance_chevron_shape in
-  let* button_a = up f.button_a in
-  let* move_no_effect = up f.move_no_effect in
-  let* move_not_very_effective = up f.move_not_very_effective in
-  let* move_effective = up f.move_effective in
-  let* move_super_effective = up f.move_super_effective in
-  Ok
-    {
-      Assets.dialog_white_arrow;
-      dialog_black_arrow;
-      dialog_teal_arrow;
-      choice_arrow;
-      advance_chevron_shape;
-      button_a;
-      move_no_effect;
-      move_not_very_effective;
-      move_effective;
-      move_super_effective;
-    }
-
-(* Each template, uploaded to the daemon: its hash. *)
-let upload_assets () =
-  match Program_registry.locate Assets.folder with
-  | None -> Error (Assets.folder ^ " not found from here: run in the repo")
-  | Some dir -> upload_from dir
 
 let failed ?(repeats = false) at reason = Failed { at; reason; repeats }
 
@@ -160,7 +119,7 @@ let in_session ~log ~reload record plan (backend : Wire.backend) =
   let log = Watch_report.log log in
   let report = P.Plan_watch.create plan.P.Plan.checkpoint in
   let outcome =
-    match upload_assets () with
+    match Plza_templates.upload () with
     | Error e -> failed ~repeats:true "assets" e
     | Ok assets -> with_assets ~log ~picture ~reload report plan assets
   in

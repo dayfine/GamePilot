@@ -42,6 +42,21 @@ MATCHERS = {
     "button_a": (
         "PokemonLZA/Buttons/ButtonA.png",
         0xFF808008, 0xFFFFFFFF, 100),
+    # ButtonMatcher::DpadUp and DpadDown, and their black interiors (the
+    # Interior matchers: the dark range, least area 50), for
+    # PokemonLZA_OverworldPartySelectionDetector.cpp's party bar marker.
+    "button_dpad_up": (
+        "PokemonLZA/Buttons/ButtonDpadUp.png",
+        0xFF808008, 0xFFFFFFFF, 100),
+    "button_dpad_down": (
+        "PokemonLZA/Buttons/ButtonDpadDown.png",
+        0xFF808008, 0xFFFFFFFF, 100),
+    "button_dpad_up_interior": (
+        "PokemonLZA/Buttons/ButtonDpadUp.png",
+        0xFF000000, 0xFF404040, 50),
+    "button_dpad_down_interior": (
+        "PokemonLZA/Buttons/ButtonDpadDown.png",
+        0xFF000000, 0xFF404040, 50),
     # PokemonLZA_MoveEffectivenessSymbol.cpp's MoveEffectivenessSymbolMatcher.
     "move_no_effect": (
         "PokemonLZA/MoveEffectiveness/MoveEffectiveness-NoEffect.png",

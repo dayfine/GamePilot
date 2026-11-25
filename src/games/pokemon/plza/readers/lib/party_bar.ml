@@ -64,7 +64,7 @@ let edges =
 let id edge part = Printf.sprintf "party_bar.%s.%s" edge part
 let parts e = [ ("line", e.line); ("inside", e.inside); ("outside", e.outside) ]
 
-let probes ~picture =
+let empty_slot_probes ~picture =
   List.concat_map
     (fun (name, e) ->
       List.concat_map
@@ -98,5 +98,10 @@ let margins m =
 let clears (g : margin) =
   g.inside >= inside_margin && g.outside >= outside_margin
 
-let shown m =
+let last_slot_empty m =
   match margins m with Some gs -> List.for_all clears gs | None -> false
+
+let probes ~picture ~assets =
+  empty_slot_probes ~picture @ Party_marker.probes ~picture ~assets
+
+let shown m = Party_marker.shown m || last_slot_empty m

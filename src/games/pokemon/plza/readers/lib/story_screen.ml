@@ -33,7 +33,7 @@ let probes ~picture ~assets =
       Interact_prompt.probes ~picture ~assets;
       Battle_hud.probes ~picture ~assets;
       Move_symbols.probes ~picture ~assets;
-      Party_bar.probes ~picture;
+      Party_bar.probes ~picture ~assets;
     ]
 
 let fade m =

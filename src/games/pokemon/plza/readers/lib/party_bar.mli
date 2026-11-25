@@ -9,12 +9,13 @@
     lighter than inside with the last slot empty, and at most 2 on 686 cutscene
     frames.
 
-    Where it differs: the fork also takes the bar when its D-pad marker shows
-    (OverworldPartySelectionDetector, a party of two or more), and counts the
-    filled slots; neither is ported, so a full party of six (no empty slot)
-    reads as no bar. *)
+    The bar also shows when its D-pad marker does ({!Party_marker}), as the
+    fork's [detect] takes either.
 
-val probes : picture:Wire.box -> Wire.probe_spec list
+    Where it differs: the fork also counts the filled slots; that is not ported.
+*)
+
+val probes : picture:Wire.box -> assets:Blob_assets.t -> Wire.probe_spec list
 (** The probes {!shown} needs, for a game picture at [picture] in the frame. *)
 
 type margin = { inside : float; outside : float }
@@ -25,6 +26,9 @@ val margins : Effects.measurements -> margin list option
 (** The four edges' margins (top, bottom, left, right); [None] when a probe is
     missing. *)
 
-val shown : Effects.measurements -> bool
+val last_slot_empty : Effects.measurements -> bool
 (** Every edge clears its margins: the last slot's empty frame shows. [false]
     when a probe is missing. *)
+
+val shown : Effects.measurements -> bool
+(** The bar shows: its D-pad marker, or its last slot empty. *)

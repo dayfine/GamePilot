@@ -4,6 +4,26 @@
     "height": 33,
     "width": 34
   },
+  "button_dpad_down": {
+    "fill": 0.633333,
+    "height": 30,
+    "width": 30
+  },
+  "button_dpad_down_interior": {
+    "fill": 0.583333,
+    "height": 10,
+    "width": 12
+  },
+  "button_dpad_up": {
+    "fill": 0.631111,
+    "height": 30,
+    "width": 30
+  },
+  "button_dpad_up_interior": {
+    "fill": 0.583333,
+    "height": 10,
+    "width": 12
+  },
   "choice_arrow": {
     "fill": 0.384681,
     "height": 57,
