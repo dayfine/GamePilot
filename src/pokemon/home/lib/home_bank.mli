@@ -18,6 +18,7 @@
 
 type templates = {
   home_art : string;  (** Pokémon HOME's tile art, PNG ({!Home_tile}) *)
+  home_title : string;  (** its title over the row, PNG ({!Home_tile}) *)
   game_icon : string;  (** the game's icon on HOME's game list, PNG *)
   slash : string;  (** the counter's "/300", PNG *)
   digits : (int * string) list;  (** the counter's digits that have one, PNG *)

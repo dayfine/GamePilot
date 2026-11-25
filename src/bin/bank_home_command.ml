@@ -56,9 +56,10 @@ let digits () =
 
 let templates () =
   let* home_art = read (assets ^ "switch-home-tile.png") in
+  let* home_title = read (assets ^ "switch-home-title-pokemon-home.png") in
   let* slash = read (assets ^ "box-counter-slash-300.png") in
   let* game_icon = read "src/games/pokemon/plza/assets/home-game-icon.png" in
-  Ok { H.home_art; game_icon; slash; digits = digits () }
+  Ok { H.home_art; home_title; game_icon; slash; digits = digits () }
 
 let run ~port ~owner mode =
   Result.map

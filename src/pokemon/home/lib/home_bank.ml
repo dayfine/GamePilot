@@ -6,6 +6,7 @@ let ( let* ) = Result.bind
 
 type templates = {
   home_art : string;
+  home_title : string;
   game_icon : string;
   slash : string;
   digits : (int * string) list;
@@ -114,7 +115,8 @@ let launch_and_act ~log ~picture (t : templates) mode =
   let on_menus () = on_boxes ~log box_templates mode in
   Effects.with_probes (B.probes box_templates) (fun () ->
       let* () =
-        Home_launch.to_boxes ~log ~picture ~home_art:t.home_art ~game_icon
+        Home_launch.to_boxes ~log ~picture ~home_art:t.home_art
+          ~home_title:t.home_title ~game_icon
       in
       Effects.with_probes (M.probes ~game_icon) on_menus)
 

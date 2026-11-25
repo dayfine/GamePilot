@@ -26,7 +26,8 @@ let cursor_slots : Box_view.slot list =
 let () =
   let probes =
     Home_menus.probes ~game_icon:"home-game-icon.png"
-    @ Home_tile.probes "switch-home-tile.png"
+    @ Home_tile.probes ~art:"switch-home-tile.png"
+        ~title:"switch-home-title-pokemon-home.png"
     @ Box_view.probes templates
     @ List.concat_map Box_view.cursor_probes cursor_slots
   in

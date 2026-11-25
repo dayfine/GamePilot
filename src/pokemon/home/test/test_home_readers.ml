@@ -1,5 +1,6 @@
 (* Pokémon HOME's readers (Home_menus, Home_tile, Box_view) on console B's
-   captures (images/, 2026-11-24, the whole frame), and on each capture with
+   captures (images/, 2026-11-24 and the Switch's HOME after PLZA's gifts of
+   2026-11-25, the whole frame), and on each capture with
    its colors shifted as another capture card might show them
    (fixtures/home.shifted.probes.jsonl, regen_fixture.sh), named
    <shift>/<image>: each must read as the capture itself does. *)
@@ -28,6 +29,7 @@ let menus m =
       Option.fold ~none:[]
         ~some:(fun k -> [ Printf.sprintf "HOME's tile %d" k ])
         (Home_tile.tile m);
+      (if Home_tile.on_home_tile m then [ "the cursor on HOME's tile" ] else []);
     ]
 
 let slot pane row col : B.slot = { pane; row; col }
@@ -101,8 +103,11 @@ let () =
          "a two-line banner; box 152; home xxxx../xxxxxx/xxxxxx/xxxxxx/xxx...; \
           game row 1 ......; cursor HOME's box row 4 column 6";
        case "the Switch's HOME, cursor on Pokémon HOME"
-         "switch-home-cursor-on-pokemon-home" "HOME's tile 0";
+         "switch-home-cursor-on-pokemon-home"
+         "HOME's tile 0; the cursor on HOME's tile";
        case "the Switch's HOME, Pokémon HOME third"
          "switch-home-pokemon-home-third" "HOME's tile 2";
+       case "the Switch's HOME after PLZA closed: HOME the fifth, cut off"
+         "switch-home-cursor-on-za-home-fifth-cut" "nothing";
      ]
     @ shifted_cases)

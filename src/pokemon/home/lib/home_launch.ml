@@ -6,19 +6,39 @@ let ( let* ) = Result.bind
 let probes ~game_icon = M.probes ~game_icon
 let read_ms = 3000
 
-let find_tile ~picture art_png =
-  let art = Effects.upload_template art_png in
+(* The script's scan: HOME to the first tile, then Right along the row,
+   reading each tile's title; up to [max_tiles] tiles. *)
+let max_tiles = 8
+let title_read_ms = 1500
+let first_tile : T.t = { button = Home; hold_ms = 100; cooldown_ms = 1000 }
+let next_tile : T.t = { button = Right; hold_ms = 80; cooldown_ms = 600 }
+
+let not_found =
+  Printf.sprintf "Pokémon HOME's tile is not among the first %d on HOME"
+    max_tiles
+
+let rec scan_from k =
+  match Effects.await ~timeout_ms:title_read_ms Home_tile.on_home_tile with
+  | Holds _ -> Ok k
+  | Timeout when k + 1 >= max_tiles -> Error not_found
+  | Timeout ->
+      T.press next_tile;
+      scan_from (k + 1)
+
+let scan ~log =
+  T.press first_tile;
+  let* k = scan_from 0 in
+  log (Printf.sprintf "Pokémon HOME is tile %d." (k + 1));
+  Ok k
+
+let find_tile ~log ~picture ~home_art ~home_title =
+  let art = Effects.upload_template home_art in
+  let title = Effects.upload_template home_title in
   let probes =
     Switch_home.Home_screen.probes ~picture Home_tile.tile_color
-    @ Home_tile.probes art
+    @ Home_tile.probes ~art ~title
   in
-  Effects.with_probes probes (fun () ->
-      match
-        Effects.await ~timeout_ms:read_ms (fun m -> Home_tile.tile m <> None)
-      with
-      | Holds m -> Option.to_result ~none:"" (Home_tile.tile m)
-      | Timeout ->
-          Error "Pokémon HOME's tile is not among the first four on HOME")
+  Effects.with_probes probes (fun () -> scan ~log)
 
 let title_a : T.t = { button = A; hold_ms = 100; cooldown_ms = 3000 }
 let menu_rounds = 30
@@ -89,13 +109,12 @@ let connect : T.t list =
 
 let boxes_ms = 30_000
 
-let to_boxes ~log ~picture ~home_art ~game_icon =
+let to_boxes ~log ~picture ~home_art ~home_title ~game_icon =
   let* () = G.close_game ~log ~picture Home_tile.tile_color in
-  let* tile = find_tile ~picture home_art in
-  log (Printf.sprintf "Pokémon HOME is tile %d." (tile + 1));
+  let* (_ : int) = find_tile ~log ~picture ~home_art ~home_title in
+  (* The cursor is on HOME's tile: start the cursor's tile. *)
   let* () =
-    G.start_game ~log ~picture ~game_slot:(tile + 1) ~user_slot:0
-      Home_tile.tile_color
+    G.start_game ~log ~picture ~game_slot:0 ~user_slot:0 Home_tile.tile_color
   in
   Effects.with_probes (probes ~game_icon) (fun () ->
       let* () = to_main_menu ~log in
