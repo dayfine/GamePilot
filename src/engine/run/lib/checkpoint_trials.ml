@@ -101,7 +101,10 @@ let attempts ~retries attempts =
 let until_decided policy ~trial run =
   let rec go runs =
     match verdict policy (List.map trial runs) with
-    | Run_again -> go (runs @ [ run (List.length runs + 1) ])
+    | Run_again -> (
+        match run (List.length runs + 1) with
+        | Ok r -> go (runs @ [ r ])
+        | Error why -> (Stopped why, runs))
     | decided -> (decided, runs)
   in
   go []

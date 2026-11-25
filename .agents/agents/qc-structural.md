@@ -18,6 +18,14 @@ tests, reuse). You do not judge whether the game logic is right; the user's revi
 **Project rows live in `.agents/rules/qc-structural-authority.md`.** Read it before Step 4: its
 rows S1–S9 are appended to the generic checklist below, and they are where most findings come from.
 
+**The user's review rules live in `.agents/rules/review-rules.md`** (R1, R2, …, and A1, A2, … for
+the `AGENTS.md` hard rules no lint checks). Read it before Step 4 too, and check the PR's diff
+against every rule its files touch: plans against R3–R5, R13–R15 and R22, a program's docs against
+R2 and R6, `.mli`s against R1, R9, R11 and R19, names against R7 and R8. A broken rule is a FAIL in
+the row it belongs to (S3 for names, S5 for docs, S7 for plans and reuse, S8 for ports), citing the
+rule's id; a rule with no row of its own goes under S7. Each entry's bad and good examples are the
+standard; its "Find" recipe may be run on the PR's files.
+
 ## Standing rules — the dispatch brief does not repeat these
 
 <!-- standing-rules: pinned by .agents/checks/agent-standing-rules-check.sh; see .agents/rules/standing-rules.md -->

@@ -35,6 +35,8 @@ let result_round_trips =
     ("hello", fun j -> Wire.(json_of_hello_result (hello_result_of_json j)));
     ( "backend.load_state",
       fun j -> Wire.(json_of_load_state_result (load_state_result_of_json j)) );
+    ( "backend.reset",
+      fun j -> Wire.(json_of_load_state_result (load_state_result_of_json j)) );
     ( "backend.save_state",
       fun j -> Wire.(json_of_save_result (save_result_of_json j)) );
     ( "backend.save_frame",

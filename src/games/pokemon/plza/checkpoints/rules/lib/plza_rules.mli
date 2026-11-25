@@ -3,9 +3,9 @@
     a plan's pose is a zone (a place, and maybe a spot in it), its actions are
     timed walks ({!Walk_args}), and a checkpoint promises nothing the game reads
     yet. PLZA links the engine only, not [src/pokemon]
-    ([docs/roadmap/plza-autostory-port.md]). Pure: how a plan writes them is
-    [Plza_plan_format], how a log prints them [Plza_text], and what a run keeps
-    [Plza_event_snapshot]; [Plza_engine] applies the engine to the four. *)
+    ([docs/roadmap/plza-autostory-port.md]). Pure, and each part prints itself:
+    how a plan writes them is [Plza_plan_format], and what a run keeps
+    [Plza_event_snapshot]; [Plza_engine] applies the engine to the three. *)
 
 module Walk_args = Walk_args
 (** {!Walk_args}: a walk's legs and end. *)

@@ -1,4 +1,4 @@
-(* A run on a daemon that is already up (gamepilot checkpoint, gamepilot run
+(* A run on a daemon that is already up (gamepilot run --plan, gamepilot run
    <program>): a run folder of its own in --runs-dir ($GAMEPILOT_RUNS) through
    Run_record, so the hub lists it like a series' run. The wire log stays
    with the daemon. *)
@@ -25,9 +25,11 @@ let start ~runs_dir ~kind ~program ~label ~mode =
   let info : Run_record.info =
     { kind; program; from_id = label; to_id = label; backend = "" }
   in
-  let run = Run_record.start ~runs_dir info ~checkpoint:label ~mode in
-  print_endline ("[Run] " ^ run.record.dir);
-  run
+  Result.map
+    (fun (run : Run_record.run) ->
+      print_endline ("[Run] " ^ run.record.dir);
+      run)
+    (Run_record.start ~runs_dir info ~checkpoint:label ~mode)
 
 (* The frame now, in the session; a refusal (an older daemon) is skipped. *)
 let save_failure (record : Run_record.t) =

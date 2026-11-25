@@ -58,6 +58,9 @@ void check_key_mapping() {
   // and 0.
   CHECK(pro_buttons_for_keys(button_mask("Plus")).button4 == 0x02);
   CHECK(pro_buttons_for_keys(button_mask("Minus")).button4 == 0x01);
+  // The left stick's click (v1.18) in byte 4 bit 3
+  // (PABotBase2_OemController's).
+  CHECK(pro_buttons_for_keys(button_mask("LStick")).button4 == 0x08);
   CHECK(pro_buttons_for_keys(button_mask("Start")).button4 == 0x02);
   // ZR in byte 3 bit 7, beside R.
   CHECK(pro_buttons_for_keys(button_mask("ZR")).button3 == 0x80);

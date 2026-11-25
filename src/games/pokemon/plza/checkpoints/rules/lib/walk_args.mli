@@ -62,3 +62,8 @@ val style_name : style -> string
 
 val style_of_name : string -> style option
 (** {!style_name} read back. *)
+
+val to_string : t -> string
+(** ["walk [0, 4500] [90, 10000] until fade_white"]: the legs as the plan writes
+    them, then [steer], the wait before, the end and its [earliest_end_ms] when
+    set. *)

@@ -43,12 +43,12 @@ need:
 What the plan needs, as the pre-flight checks it (generated from the plan):
 
 <!-- generated:needs 08-activate-and-verify -->
-- 0 free party slots
 - party includes pidgey, farfetchd in slot 1, blastoise in slot 2, mr-mime in slot 3
 - blastoise in the party (mail_glitch_double_battle)
 - farfetchd in the party (mail_glitch_double_battle)
 - mr-mime in the party (mail_glitch_double_battle)
 - pidgey in the party (fly)
+- the thunder badge (fly)
 - money at least ¥400 (all the purchases)
 - antidote at least x1 (give_bag_item)
 - at the start, Route16
@@ -61,11 +61,11 @@ Straight after 07-glitch-prep, or on its own from the 07-glitch-prep save:
 <!-- generated:commands 08-activate-and-verify -->
 ```sh
 # mGBA: each checkpoint three times from its start state, two must pass
-sh run/run_checkpoints_on_mgba.sh --program frlg.mail_glitch --from 08-activate-and-verify --to 08-activate-and-verify --mode verification
+sh run/run_checkpoints_on_mgba.sh frlg.mail_glitch --from 08-activate-and-verify --to 08-activate-and-verify --mode verification
 
 # the Switch: check the save first, then run (each checkpoint once, saved when it passes)
-sh run/run_checkpoints_on_switch.sh --program frlg.mail_glitch --from 08-activate-and-verify --to 08-activate-and-verify --preflight-only
-sh run/run_checkpoints_on_switch.sh --program frlg.mail_glitch --from 08-activate-and-verify --to 08-activate-and-verify
+sh run/run_checkpoints_on_switch.sh frlg.mail_glitch --from 08-activate-and-verify --to 08-activate-and-verify --preflight-only
+sh run/run_checkpoints_on_switch.sh frlg.mail_glitch --from 08-activate-and-verify --to 08-activate-and-verify
 ```
 <!-- /generated -->
 
@@ -114,7 +114,7 @@ the same command, which fights the battle again. On mGBA the start state is unto
 <!-- generated:preflight 08-activate-and-verify -->
 | Resume from | The pre-flight checks |
 |---|---|
-| 08-activate-and-verify | party includes pidgey, farfetchd in slot 1, blastoise in slot 2, mr-mime in slot 3; blastoise in the party (mail_glitch_double_battle); farfetchd in the party (mail_glitch_double_battle); mr-mime in the party (mail_glitch_double_battle); pidgey in the party (fly); money at least ¥400 (mart); antidote at least x1 (give_bag_item); at the start, Route16 |
+| 08-activate-and-verify | party includes pidgey, farfetchd in slot 1, blastoise in slot 2, mr-mime in slot 3; blastoise in the party (mail_glitch_double_battle); farfetchd in the party (mail_glitch_double_battle); mr-mime in the party (mail_glitch_double_battle); pidgey in the party (fly); the thunder badge (fly); money at least ¥400 (mart); antidote at least x1 (give_bag_item); at the start, Route16 |
 <!-- /generated -->
 
 If the proof step stopped the run (a blank editor or `???`), the battle did not turn the glitch on:

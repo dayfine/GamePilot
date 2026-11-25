@@ -228,17 +228,8 @@ let record_outcome setup cp (run : Run_record.run) n ~attempt outcome =
   in
   Daemon_run.finish ~runs_dir:setup.runs_dir run ~summary:line ending
 
-(* Attempt [attempt] of run [n] of [cp]: its folder and how it ended.
-   [progress] is the chain for the watch page before the attempt ([None]) and
-   after it. *)
-let run setup cp n ~attempt ~progress =
-  let attempts = cp.plan.retries + 1 in
-  let run =
-    Run_record.start
-      ?attempt:(if attempts > 1 then Some (attempt, attempts) else None)
-      ?events:(events cp) ~runs_dir:setup.runs_dir setup.info ~checkpoint:cp.id
-      ~mode:(mode_name setup cp)
-  in
+(* The attempt in its folder: the folder and how it ended. *)
+let run_in setup cp n ~attempt ~progress (run : Run_record.run) =
   let record = run.record in
   let log, close = Run_record.story_log record in
   log
@@ -252,3 +243,15 @@ let run setup cp n ~attempt ~progress =
   close ();
   record_outcome setup cp run n ~attempt outcome;
   (record, outcome)
+
+(* Attempt [attempt] of run [n] of [cp]: its folder and how it ended; [Error]
+   when its folder could not be made. [progress] is the chain for the watch
+   page before the attempt ([None]) and after it. *)
+let run setup cp n ~attempt ~progress =
+  let attempts = cp.plan.retries + 1 in
+  Result.map
+    (run_in setup cp n ~attempt ~progress)
+    (Run_record.start
+       ?attempt:(if attempts > 1 then Some (attempt, attempts) else None)
+       ?events:(events cp) ~runs_dir:setup.runs_dir setup.info ~checkpoint:cp.id
+       ~mode:(mode_name setup cp))

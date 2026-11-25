@@ -6,10 +6,9 @@
   },
   "metadata": {
     "phase": "testing",
-    "notes": "From a save past the Hall of Fame that turned Bill down after Blaine: he waits in the Cinnabar Pokemon Center (pret CinnabarIsland_EventScript_DeclineSailToOneIsland clears FLAG_HIDE_CINNABAR_POKECENTER_BILL). The Vermilion ferry needs the Tri-Pass first (pret VermilionCity_EventScript_FerrySailor), so the first trip is Bill's. YES runs one script to the end: out of the Center with him, the Seagallop from Cinnabar's shore, the walk from One Island's harbor into its Center, and Celio's scene, which gives the Meteorite, the Tri-Pass and the Town Map's Sevii page (pret OneIsland_PokemonCenter_1F_EventScript_MeetCelioScene). It also sets FLAG_SYS_PC_STORAGE_DISABLED until Three Island's port. The Cinnabar Center has no map file: the walk goes through its coded room (Frlg_overworld.Standard_center), as the fork's story walks every Center in the shared layout.",
+    "notes": "From a save that beat Blaine and turned Bill down: he waits in the Cinnabar Pokemon Center (pret CinnabarIsland_EventScript_DeclineSailToOneIsland clears FLAG_HIDE_CINNABAR_POKECENTER_BILL). The gate is the Volcano Badge, not a badge count or the Hall of Fame: Blaine's win (pret data/maps/CinnabarIsland_Gym/scripts.inc, CinnabarIsland_Gym_EventScript_DefeatedBlaine) sets FLAG_BADGE07_GET and starts Bill's scene outside (VAR_MAP_SCENE_CINNABAR_ISLAND 1, data/maps/CinnabarIsland/scripts.inc), and on the way to One Island the Hall of Fame (FLAG_SYS_GAME_CLEAR) changes only which line Bill introduces the player with (data/maps/OneIsland_PokemonCenter_1F/scripts.inc). The Vermilion ferry needs the Tri-Pass first (pret VermilionCity_EventScript_FerrySailor), so the first trip is Bill's. YES runs one script to the end: out of the Center with him, the Seagallop from Cinnabar's shore, the walk from One Island's harbor into its Center, and Celio's scene, which gives the Meteorite, the Tri-Pass and the Town Map's Sevii page (pret OneIsland_PokemonCenter_1F_EventScript_MeetCelioScene). It also sets FLAG_SYS_PC_STORAGE_DISABLED until Three Island's port. The Cinnabar Center has no map file: the walk goes through its coded room (Frlg_overworld.Standard_center), as the fork's story walks every Center in the shared layout.",
     "preconditions": {
-      "badges": 8,
-      "hall_of_fame": true
+      "badges": ["volcano"]
     },
     "postconditions": {
       "items": [

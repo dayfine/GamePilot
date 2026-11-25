@@ -1,18 +1,15 @@
-module Make
-    (T : Engine_rules.GAME_RULES)
-    (X : Rules_text.TEXT with module T = T) =
-struct
+module Make (T : Engine_rules.GAME_RULES) = struct
   module Plan = Engine_plan.Plan.Make (T) (Engine_plan_format.Raw_json)
 
-  let pose = X.pose
+  let pose = T.Pose.to_string
 
   let kind : Plan.kind -> string = function
-    | Talk -> Story_action_text.action Talk
-    | Answer yes -> Story_action_text.action (Answer yes)
-    | Scene -> Story_action_text.action Scene
-    | Save -> Story_action_text.action Save
+    | Talk -> Engine_rules.Story_action.to_string Talk
+    | Answer yes -> Engine_rules.Story_action.to_string (Answer yes)
+    | Scene -> Engine_rules.Story_action.to_string Scene
+    | Save -> Engine_rules.Story_action.to_string Save
     | Named_action args -> "game_action " ^ Yojson.Safe.to_string (`Assoc args)
-    | Game action -> X.action action
+    | Game action -> T.Action.to_string action
 
   let event (e : Plan.event) =
     let way = Option.fold ~none:"" ~some:(fun a -> "[" ^ a ^ "] ") e.way in
@@ -56,10 +53,11 @@ struct
             (kind_counts plan.checkpoint.events)))
 
   let lines_text = function [] -> "none" | lines -> String.concat "\n" lines
-  let promises_text promises = lines_text (X.postconditions promises)
+  let promises_text promises = lines_text (T.Postconditions.to_lines promises)
 
   let postconditions (plan : Plan.t) =
-    lines_text (Option.fold ~none:[] ~some:X.postconditions plan.postconditions)
+    lines_text
+      (Option.fold ~none:[] ~some:T.Postconditions.to_lines plan.postconditions)
 
   let repeat (plan : Plan.t) =
     match plan.repeat with

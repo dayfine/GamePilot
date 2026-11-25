@@ -196,6 +196,17 @@ std::int64_t MgbaBackend::save_state(const std::string& path) {
   return seq_;
 }
 
+std::int64_t MgbaBackend::reset() {
+  // RESET clears queued KEYS, resets the core (its frame count starts again at
+  // 0) and, with a grant active, holds at the first frame. GRANT 0 reads it.
+  const std::string reply = command("RESET");
+  if (reply != "OK") {
+    throw BackendError("bridge RESET: " + reply);
+  }
+  seq_ = grant(0);
+  return seq_;
+}
+
 void MgbaBackend::release() {
   if (!socket_.valid()) {
     return;

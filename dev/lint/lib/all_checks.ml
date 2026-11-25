@@ -17,7 +17,8 @@ let file_findings (c : Config.t) path =
     let text = Source_tree.read path in
     File_length.check c ~path text @ code_checks c path text
   else if Filename.check_suffix path ".mli" then
-    File_length.check c ~path (Source_tree.read path)
+    let text = Source_tree.read path in
+    File_length.check c ~path text @ Doc_listing.check c ~path text
   else []
 
 let exceptions (c : Config.t) =
