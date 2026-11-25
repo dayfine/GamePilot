@@ -145,7 +145,7 @@ let live plan_file args =
   let* runs_dir, args = Attached_run.runs_dir_flag args in
   let* flags = parse defaults args in
   let id = label plan_file in
-  let run =
+  let* run =
     Attached_run.start ~runs_dir ~kind:Checkpoint
       ~program:(Program_registry.of_plan_dir (Filename.dirname plan_file))
       ~label:id ~mode:"single"

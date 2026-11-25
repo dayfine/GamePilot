@@ -34,9 +34,11 @@ let start ~runs_dir ~kind ~program ~label ~mode =
       backend = "";
     }
   in
-  let run = Run_record.start ~runs_dir info ~checkpoint:label ~mode in
-  print_endline ("[Run] " ^ run.record.dir);
-  run
+  Result.map
+    (fun (run : Run_record.run) ->
+      print_endline ("[Run] " ^ run.record.dir);
+      run)
+    (Run_record.start ~runs_dir info ~checkpoint:label ~mode)
 
 (* The frame now, in the session; a refusal (an older daemon) is skipped. *)
 let save_failure (record : Run_record.t) =
