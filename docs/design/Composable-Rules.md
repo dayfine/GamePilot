@@ -279,19 +279,22 @@ works the same way.
 
 ## Running stays per game
 
-Action types are data and shared; running them is the game's, through `game_steps`:
+The action types are shared data: FRLG and PLZA both have `Pokemon (Battle b)`. How an action runs
+is each game's own, through its `game_steps`: FRLG fights a battle through turn-based menus, PLZA
+in real time. So each game writes one function that takes an event's action and runs it, a match
+over its sum that hands each case to the game's code for it:
 
 ```ocaml
-(* FRLG's Game.t.run *)
-let run t event = function
-  | Story a -> Frlg_story.run t a                           (* Talk.talk, Heal_and_save.save *)
-  | Grid a -> walk t a                                      (* planned on the grid, walked *)
-  | Pokemon (Battle b) -> Frlg_battle.Scripted_battle.run (battle_game_steps t) b   (* turn-based *)
-  | Pokemon a -> pokemon t a
-  | Frlg a -> Frlg_game_actions.perform (action_context t) event a
+(* FRLG: the engine calls this for each event; [game] is the running game (session, readers, log) *)
+let run_action game event = function
+  | Story a -> Frlg_story.run game a                     (* talk, answer, scene, save *)
+  | Grid a -> Frlg_walk.run game a                      (* planned on the grid, walked *)
+  | Pokemon (Battle b) -> Frlg_battle.run game b        (* turn-based menus *)
+  | Pokemon a -> Frlg_pokemon_actions.run game a        (* the other Pokémon actions: heal, shop, train, new_game *)
+  | Frlg a -> Frlg_game_actions.perform game event a    (* FRLG's own: fly, mart, grind, the Mail Glitch steps *)
 
-(* PLZA's, later *)
-  | Pokemon (Battle b) -> Plza_battle.run (plza_battle_game_steps t) b              (* real time *)
+(* PLZA, once it battles: the same action type, its own way to run it *)
+  | Pokemon (Battle b) -> Plza_battle.run game b        (* real time *)
 ```
 
 ## Per-game instances and shared code
