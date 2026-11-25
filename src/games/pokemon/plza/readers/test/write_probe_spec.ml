@@ -10,7 +10,11 @@
    fixture, DIR/<folder>/<frame>.json: the probes a two-frame read subscribes
    from what that frame shows, the party bars' made from its cards
    ({!Plza_readers.Party_slots.bar_probes}) and the caught mark's from its
-   plate's bar ({!Plza_readers.Lock_plate.mark_probes}). *)
+   plate's bar ({!Plza_readers.Lock_plate.mark_probes}).
+
+   With [--gifts], only the Mystery Gift steps' readers' probes
+   ({!Plza_readers.Main_menu_row}, {!Plza_readers.Mystery_gift_screen}), for
+   fixtures/gifts.probes.jsonl. *)
 
 let native : Wire.box = { x = 0.; y = 0.; w = 1.; h = 1. }
 let no_minimap = Array.mem "--no-minimap" Sys.argv
@@ -49,6 +53,12 @@ let () =
   match Array.to_list Sys.argv with
   | [ _; "--second"; fixture; dir ] ->
       List.iter (write_second_spec dir) (Wire.read_image_probes fixture)
+  | [ _; "--gifts" ] ->
+      print_endline
+        (params
+           (Plza_readers.Main_menu_row.probes ~picture:native
+              ~assets:Plza_readers.Blob_assets.file_names
+           @ Plza_readers.Mystery_gift_screen.probes ~picture:native))
   | _ ->
       let assets = Plza_readers.Blob_assets.file_names in
       print_endline

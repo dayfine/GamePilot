@@ -17,6 +17,9 @@
 # a two-frame read subscribes from what the frame shows (write_probe_spec.exe
 # --second): the party bars' tests made from its cards, the caught mark's box
 # above its plate.
+# Also fixtures/gifts.probes.jsonl: every frame probed by the Mystery Gift
+# steps' readers alone (write_probe_spec.exe --gifts), the captures only, and
+# fixtures/gifts.shifted.probes.jsonl: the main menu's frame shifted.
 # The Python steps need Pillow ($SHIFT_PYTHON, default python3; e.g.
 # "uv run --with pillow python3").
 #
@@ -66,3 +69,10 @@ for path in sys.argv[2:]:
 (cd "$work/shifted" && "$PROBE_IMAGES" --spec "$work/spec/shifted.probes.json" \
     --viewport native ./[gr]*/*/*.png) \
     >"$HERE/fixtures/switch.shifted.rg.probes.jsonl"
+(cd "$SRC" && dune exec games/pokemon/plza/readers/test/write_probe_spec.exe \
+    -- --gifts) >"$work/spec/gifts.probes.json"
+(cd "$work/frames" && "$PROBE_IMAGES" --spec "$work/spec/gifts.probes.json" \
+    --viewport native ./*/*.jpg) >"$HERE/fixtures/gifts.probes.jsonl"
+(cd "$work/shifted" && "$PROBE_IMAGES" --spec "$work/spec/gifts.probes.json" \
+    --viewport native ./*/tutorial-cards/it-menu-no-card.png) \
+    >"$HERE/fixtures/gifts.shifted.probes.jsonl"

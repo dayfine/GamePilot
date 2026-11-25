@@ -1,0 +1,8 @@
+(library
+ (name plza_gifts)
+ (public_name gamepilot.plza_gifts)
+ (libraries
+  gamepilot.wire
+  gamepilot.effects
+  gamepilot.switch_home
+  gamepilot.plza_readers))
