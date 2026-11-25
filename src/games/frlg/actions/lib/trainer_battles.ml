@@ -54,3 +54,6 @@ let live_game_steps ~log ~fight =
           ~log);
     log;
   }
+
+let play ~log ~fight ~battles =
+  Result.bind (run (live_game_steps ~log ~fight) ~battles) failure

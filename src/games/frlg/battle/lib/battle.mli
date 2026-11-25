@@ -33,6 +33,10 @@ type event =
   | Use_next
       (** A YES/NO with the player's battler gone: "Use next POKéMON?" in a wild
           battle. *)
+  | Switch_offer
+      (** A trainer's "Will ... change POKéMON?" before their next Pokémon (the
+          Shift battle style): a YES/NO that reads as {!Move_learn} until its
+          text is read. *)
   | Battle_over  (** no battle on screen for a while after one showed *)
   | Timed_out  (** none of these within the time given *)
 
@@ -98,7 +102,8 @@ type game_steps = {
           to forget from, and "Stop learning ...?" when the move is not taken
           (pokefirered battle_script_commands.c: YES there stops, NO or B asks
           again). *)
-  answer_use_next : bool -> unit;  (** On {!Use_next}: YES or NO. *)
+  answer_use_next : bool -> unit;
+      (** On {!Use_next}: YES or NO; on {!Switch_offer}, NO (B). *)
 }
 
 val target_name : target -> string

@@ -37,9 +37,9 @@ val script : Frlg_battle.Battle_script.t
 (** Every action menu: the lead's moves in slot order, each until the game
     refuses it for want of PP. No member is sent in, so a fainted lead fails the
     battle (the farmer's [ATTACKER_FAINTED]). Moves to learn are not learned,
-    and a YES/NO with the player's HP box hidden gets NO: "Will ... change
-    POKéMON?" under the Shift battle style, where the box covers the HP box
-    (mGBA, Three Island, 2026-11-25), as wild battles' "Use next POKéMON?". *)
+    and a trainer's "Will ... change POKéMON?" (the Shift battle style, read by
+    {!Switch_offer}) gets NO, as {!Frlg_battle.Scripted_battle} answers every
+    {!Frlg_battle.Battle.Switch_offer}. *)
 
 val run :
   game_steps ->
@@ -60,3 +60,10 @@ val live_game_steps :
   fight:(Frlg_battle.Battle_script.t -> Frlg_battle.Scripted_battle.outcome) ->
   game_steps
 (** The settles on the screen ({!Scene_looks}), and [fight] for the battle. *)
+
+val play :
+  log:(string -> unit) ->
+  fight:(Frlg_battle.Battle_script.t -> Frlg_battle.Scripted_battle.outcome) ->
+  battles:int ->
+  (unit, Pokemon_checkpoints.Failure.cause) result
+(** {!run} on {!live_game_steps}, judged by {!failure}. *)
