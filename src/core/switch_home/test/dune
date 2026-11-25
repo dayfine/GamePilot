@@ -13,11 +13,12 @@
  (copy fixtures/switch.shifted.probes.jsonl switch.shifted.probes.jsonl))
 
 (tests
- (names test_home_screen test_console_park test_game_entry)
+ (names test_home_screen test_console_park test_game_entry test_screen_poll)
  (modules
   test_home_screen
   test_console_park
   test_game_entry
+  test_screen_poll
   fire_red
   scripted_home)
  (deps switch.probes.jsonl switch.shifted.probes.jsonl)
