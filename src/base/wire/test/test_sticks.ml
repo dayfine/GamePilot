@@ -18,44 +18,49 @@ let golden_call name =
   | Wire.Request { call; _ } -> call
   | _ -> failwith (name ^ ": expected a request")
 
+let contains s sub =
+  let n = String.length sub in
+  let rec go i =
+    i + n <= String.length s && (String.sub s i n = sub || go (i + 1))
+  in
+  go 0
+
 let stick x y = match Wire.stick x y with Ok s -> s | Error e -> failwith e
 
 let check_golden_run () =
   let expected =
     [
-      Wire.Press_with_sticks
-        {
-          buttons = [ B ];
-          left_stick = Some (stick 0. 1.);
-          right_stick = None;
-          hold_ms = 1200;
-          cooldown_ms = 0;
-        };
-      Wire.Press_with_sticks
-        {
-          buttons = [ B ];
-          left_stick = Some (stick 0.5 0.866);
-          right_stick = None;
-          hold_ms = 400;
-          cooldown_ms = 0;
-        };
-      Wire.Press_with_sticks
-        {
-          buttons = [];
-          left_stick = None;
-          right_stick = Some (stick (-1.) 0.);
-          hold_ms = 300;
-          cooldown_ms = 100;
-        };
+      Wire.press ~left_stick:(stick 0. 1.) ~hold_ms:1200 ~cooldown_ms:0 [ B ];
+      Wire.press ~left_stick:(stick 0.5 0.866) ~hold_ms:400 ~cooldown_ms:0 [ B ];
+      Wire.press ~right_stick:(stick (-1.) 0.) ~hold_ms:300 ~cooldown_ms:100 [];
     ]
   in
   (match golden_call "44-submit.sticks.request.json" with
   | Wire.Submit { batch_id = "run"; commands } when commands = expected -> ()
   | _ -> failwith "FAILED the golden run decodes to other commands");
-  (match golden_call "08-submit.request.json" with
-  | Wire.Submit { commands = Wire.Press _ :: _; _ } -> ()
-  | _ -> failwith "FAILED a press without sticks is not a plain press");
   print_endline "ok golden run"
+
+(* A press without sticks is a v1.11 press: no stick fields on the wire, and
+   it decodes back equal (the golden Start press is one). *)
+let check_press_without_sticks () =
+  let start = Wire.press ~hold_ms:100 ~cooldown_ms:100 [ Start ] in
+  (match golden_call "08-submit.request.json" with
+  | Wire.Submit { commands = first :: _; _ } when first = start -> ()
+  | _ -> failwith "FAILED the golden Start press is not Wire.press [Start]");
+  let json =
+    Wire.json_of_message
+      (Wire.Request
+         { id = 1; call = Wire.Submit { batch_id = "b"; commands = [ start ] } })
+  in
+  let text = Yojson.Safe.to_string json in
+  if List.exists (fun f -> contains text f) [ "left_stick"; "right_stick" ] then
+    failwith ("FAILED a press without sticks encodes a stick: " ^ text);
+  (match Wire.message_of_json json with
+  | Wire.Request { call = Wire.Submit { commands = [ c ]; _ }; _ }
+    when c = start ->
+      ()
+  | _ -> failwith "FAILED a press without sticks does not decode back equal");
+  print_endline "ok a press without sticks round-trips without stick fields"
 
 let submit_with command =
   Printf.sprintf
@@ -85,4 +90,5 @@ let check_rejected () =
 
 let () =
   check_golden_run ();
+  check_press_without_sticks ();
   check_rejected ()

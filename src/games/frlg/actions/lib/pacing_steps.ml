@@ -4,12 +4,8 @@ module Ow = Frlg_overworld
 let walk_tap = Grid_maps.Move_mechanics.frlg.walk.tap
 
 let step_tap d =
-  Wire.Press
-    {
-      buttons = [ Menu_input.dpad d ];
-      hold_ms = walk_tap.hold_ms;
-      cooldown_ms = walk_tap.release_ms;
-    }
+  Wire.press ~hold_ms:walk_tap.hold_ms ~cooldown_ms:walk_tap.release_ms
+    [ Menu_input.dpad d ]
 
 (* step_once(): a turn first when the player faces another way; the release
    waits out the lockout before the next step tap. *)

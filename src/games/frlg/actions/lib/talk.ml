@@ -4,8 +4,7 @@ let a_hold_ms = 160
 let a_cooldown_ms = 500
 
 let press_a () =
-  Wire.Press
-    { buttons = [ Wire.A ]; hold_ms = a_hold_ms; cooldown_ms = a_cooldown_ms }
+  Wire.press ~hold_ms:a_hold_ms ~cooldown_ms:a_cooldown_ms [ Wire.A ]
 
 let talk ~log () =
   ignore (Effects.submit [ press_a () ]);

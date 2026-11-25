@@ -51,8 +51,7 @@ let stick x y =
   else Error (Printf.sprintf "stick (%g, %g): x and y must be in -1..1" x y)
 
 type command =
-  | Press of { buttons : button list; hold_ms : int; cooldown_ms : int }
-  | Press_with_sticks of {
+  | Press of {
       buttons : button list;
       left_stick : stick option;
       right_stick : stick option;
@@ -60,6 +59,9 @@ type command =
       cooldown_ms : int;
     }
   | Wait of { wait_ms : int }
+
+let press ?left_stick ?right_stick ~hold_ms ~cooldown_ms buttons =
+  Press { buttons; left_stick; right_stick; hold_ms; cooldown_ms }
 
 let pressed_button v =
   let s = to_string "command.press" v in
@@ -80,14 +82,14 @@ let stick_field name j =
   Option.map (stick_of_json name) (field_opt "command" name j)
 
 let press_of_json press j =
-  let buttons = List.map pressed_button (to_list "command.press" press) in
-  let hold_ms = int_field "command" "hold_ms" j in
-  let cooldown_ms = int_field "command" "cooldown_ms" j in
-  match (stick_field "left_stick" j, stick_field "right_stick" j) with
-  | None, None -> Press { buttons; hold_ms; cooldown_ms }
-  | left_stick, right_stick ->
-      Press_with_sticks
-        { buttons; left_stick; right_stick; hold_ms; cooldown_ms }
+  Press
+    {
+      buttons = List.map pressed_button (to_list "command.press" press);
+      left_stick = stick_field "left_stick" j;
+      right_stick = stick_field "right_stick" j;
+      hold_ms = int_field "command" "hold_ms" j;
+      cooldown_ms = int_field "command" "cooldown_ms" j;
+    }
 
 let command_of_json j =
   match field_opt "command" "press" j with
@@ -97,18 +99,11 @@ let command_of_json j =
 let json_of_buttons buttons =
   json_of_strings (List.map string_of_button buttons)
 
-let json_of_press buttons ~hold_ms ~cooldown_ms =
-  `Assoc
-    [
-      ("press", json_of_buttons buttons);
-      ("hold_ms", `Int hold_ms);
-      ("cooldown_ms", `Int cooldown_ms);
-    ]
-
 let json_of_stick (x, y) = `List [ `Float x; `Float y ]
 
-let json_of_press_with_sticks buttons ~left_stick ~right_stick ~hold_ms
-    ~cooldown_ms =
+(* A centred stick ([None]) is left out, so a press without sticks is a v1.11
+   press. *)
+let json_of_press buttons ~left_stick ~right_stick ~hold_ms ~cooldown_ms =
   let stick name = Option.map (fun s -> (name, json_of_stick s)) in
   `Assoc
     (List.concat
@@ -120,12 +115,8 @@ let json_of_press_with_sticks buttons ~left_stick ~right_stick ~hold_ms
        ])
 
 let json_of_command = function
-  | Press { buttons; hold_ms; cooldown_ms } ->
-      json_of_press buttons ~hold_ms ~cooldown_ms
-  | Press_with_sticks { buttons; left_stick; right_stick; hold_ms; cooldown_ms }
-    ->
-      json_of_press_with_sticks buttons ~left_stick ~right_stick ~hold_ms
-        ~cooldown_ms
+  | Press { buttons; left_stick; right_stick; hold_ms; cooldown_ms } ->
+      json_of_press buttons ~left_stick ~right_stick ~hold_ms ~cooldown_ms
   | Wait { wait_ms } -> `Assoc [ ("wait_ms", `Int wait_ms) ]
 
 type batch_done = { batch_id : string; seq : int; t_ms : float }

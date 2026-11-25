@@ -30,7 +30,7 @@ let escape_rope ~fades screen (p : S.press) =
       show 900 S.Town
   | _ -> ()
 
-let use_a = Wire.Press { buttons = [ Wire.A ]; hold_ms = 160; cooldown_ms = 0 }
+let use_a = Wire.press ~hold_ms:160 ~cooldown_ms:0 [ Wire.A ]
 
 let outcome = function
   | Ok () -> "ok"

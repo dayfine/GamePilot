@@ -101,8 +101,7 @@ let cancel_reply ~id ~seq =
     {|{"dir":"out","t_ms":%d,"msg":{"jsonrpc":"2.0","id":%d,"result":{"released_seq":%d}}}|}
     seq id seq
 
-let hold_up =
-  [ Wire.Press { buttons = [ Up ]; hold_ms = 500; cooldown_ms = 0 } ]
+let hold_up = [ Wire.press ~hold_ms:500 ~cooldown_ms:0 [ Up ] ]
 
 (* Stops on the frame numbered [seq]. *)
 let race_until_seq seq () =
@@ -381,16 +380,7 @@ let () =
   let run () =
     ignore (Effects.load_state "state.ss" : int);
     Effects.submit
-      [
-        Wire.Press_with_sticks
-          {
-            buttons = [ B ];
-            left_stick = Some up;
-            right_stick = None;
-            hold_ms = 500;
-            cooldown_ms = 0;
-          };
-      ]
+      [ Wire.press ~left_stick:up ~hold_ms:500 ~cooldown_ms:0 [ B ] ]
   in
   match Replay.run log run with
   | _ -> failwith "FAILED a stick press replayed as the recorded Up press"

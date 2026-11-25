@@ -29,8 +29,7 @@ type stick = Command.stick
 let stick = Command.stick
 
 type command = Command.command =
-  | Press of { buttons : button list; hold_ms : int; cooldown_ms : int }
-  | Press_with_sticks of {
+  | Press of {
       buttons : button list;
       left_stick : stick option;
       right_stick : stick option;
@@ -38,6 +37,8 @@ type command = Command.command =
       cooldown_ms : int;
     }
   | Wait of { wait_ms : int }
+
+let press = Command.press
 
 type box = Probe.box = { x : float; y : float; w : float; h : float }
 type delivery = Probe.delivery = Every | Latest

@@ -45,8 +45,7 @@ let wild_battle ~flee : Grid_walker.Leg_interrupt.t =
 let closed m = not (Dialog.dialog_up m)
 
 let press_b () =
-  Wire.Press
-    { buttons = [ Wire.B ]; hold_ms = b_hold_ms; cooldown_ms = b_cooldown_ms }
+  Wire.press ~hold_ms:b_hold_ms ~cooldown_ms:b_cooldown_ms [ Wire.B ]
 
 let rec close_message presses =
   if presses >= max_b_presses then raise Message_stuck

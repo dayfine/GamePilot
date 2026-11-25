@@ -23,12 +23,8 @@ let probes =
 let wait ms = Wire.Wait { wait_ms = ms }
 
 let combo =
-  Wire.Press
-    {
-      buttons = [ Wire.A; B; Select; Start ];
-      hold_ms = combo_hold_ms;
-      cooldown_ms = combo_release_ms;
-    }
+  Wire.press ~hold_ms:combo_hold_ms ~cooldown_ms:combo_release_ms
+    [ Wire.A; B; Select; Start ]
 
 let title_mash =
   let tap =

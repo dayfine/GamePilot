@@ -32,18 +32,28 @@ val stick : float -> float -> (stick, string) result
 (** [stick x y]; an error when [x] or [y] is outside -1..1 or not a number. *)
 
 type command =
-  | Press of { buttons : button list; hold_ms : int; cooldown_ms : int }
-  | Press_with_sticks of {
-      buttons : button list;  (** may be empty *)
+  | Press of {
+      buttons : button list;  (** may be empty when a stick is tilted *)
       left_stick : stick option;
       right_stick : stick option;
       hold_ms : int;
       cooldown_ms : int;
     }
-      (** A [press] that also tilts the Switch's sticks for [hold_ms]: a stick
-          left out ([None]) is centred, both are centred in the cooldown. The
-          daemon refuses it on any backend but the Switch. *)
+      (** Holds [buttons] and tilts the sticks for [hold_ms], then releases and
+          centres everything for [cooldown_ms]. A stick left out ([None]) is
+          centred and is not on the wire; the daemon refuses a tilted stick on
+          any backend but the Switch (v1.12). *)
   | Wait of { wait_ms : int }
+
+val press :
+  ?left_stick:stick ->
+  ?right_stick:stick ->
+  hold_ms:int ->
+  cooldown_ms:int ->
+  button list ->
+  command
+(** [press ~hold_ms ~cooldown_ms buttons] is a {!Press}; each stick is centred
+    ([None]) unless given. *)
 
 val command_of_json : json -> command
 val json_of_command : command -> json
