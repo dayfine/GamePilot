@@ -1,6 +1,6 @@
-open Plza_terms
+open Plza_rules
 open Walk_args
-module T = Plza_terms
+module T = Plza_rules
 
 let pose ({ place; spot } : Pose.t) =
   match spot with Some s -> place ^ "/" ^ s | None -> place
@@ -26,5 +26,5 @@ let walk { move; until = u; earliest_end_ms } =
       [ Printf.sprintf "not before %d ms" earliest_end_ms ]
     else [])
 
-let kind : Kind.t -> string = function Walk w -> walk w
+let kind : Action.t -> string = function Walk w -> walk w
 let postconditions () = []

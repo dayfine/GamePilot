@@ -12,7 +12,7 @@ val check_end_event :
   log:(string -> unit) ->
   log_detail:(string -> unit) ->
   string ->
-  Plza_terms.Walk_args.end_event ->
+  Plza_rules.Walk_args.end_event ->
   earliest_end_ms:int ->
   Walk_screen.t ->
   held_ms:int ->
@@ -30,9 +30,9 @@ val check_scene :
 
 val timed_out :
   string ->
-  Plza_terms.Walk_args.until ->
+  Plza_rules.Walk_args.until ->
   elapsed_ms:int ->
   Engine_run.Failure.cause
 (** [timed_out walk until ~elapsed_ms]: the failure once the last leg's budget
     is spent with nothing ending it: [walk_no_scene] for
-    {!Plza_terms.Walk_args.Scene}, [walk_no_end] for an event. *)
+    {!Plza_rules.Walk_args.Scene}, [walk_no_end] for an event. *)

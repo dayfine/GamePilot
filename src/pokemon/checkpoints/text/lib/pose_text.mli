@@ -1,7 +1,7 @@
-(** Poses ({!Pokemon_terms.Pose}) as text, in log lines, failures and a plan's
+(** Poses ({!Pokemon_rules.Pose}) as text, in log lines, failures and a plan's
     text. *)
 
-open Pokemon_terms
+open Pokemon_rules
 
 val grid : Pose.grid -> string
 (** ["CeladonCity (48, 12) south"]; alternatives joined by ["|"]. *)

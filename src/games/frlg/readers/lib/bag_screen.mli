@@ -24,6 +24,19 @@ val min_arrow_share : float
     Measured: 0.16-0.24 with the arrow on Switch and mGBA, 0 without (also while
     a message or an item's action menu shows: the arrows hide). *)
 
+val max_shadow_distance : float
+(** {!item_menu} holds the bag's grey shadow within this distance of an even
+    grey in channel shares (the fork's is_grey bound), tighter than the bag's
+    0.25. Measured: 0 on the bag's mGBA and Switch frames, 0.023 at most with
+    their colours shifted; One Island's harbor, whose sea passes 0.25, reads
+    0.243-0.251, 0.219 at least shifted. *)
+
+val min_box_sum : float
+(** {!item_menu} holds the bag's shadow, underline and top frame each to at
+    least this channel sum: a near-black box has no hue to read. Measured: 436
+    at least on the bag's mGBA and Switch frames, 392 shifted; two Switch Start
+    menu captures' near-black boxes 21, 33 at most shifted. *)
+
 (** {1 Readers} *)
 
 val bag_open : Effects.measurements -> bool
@@ -31,7 +44,8 @@ val bag_open : Effects.measurements -> bool
 val item_menu : Effects.measurements -> bool
 (** An item's own menu shows over the bag: the bag's shadow, underline and top
     frame show, but not the list's right frame, which the menu covers, nor
-    either pocket arrow (they hide). *)
+    either pocket arrow (they hide). The shadow must be grey within
+    {!max_shadow_distance}, and each box at least {!min_box_sum} bright. *)
 
 val pocket : Effects.measurements -> pocket option
 (** While the bag shows; [None] for no arrow either side. *)

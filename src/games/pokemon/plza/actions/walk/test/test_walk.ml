@@ -3,7 +3,7 @@
    tests (PokemonLZA_AutoStoryActions_Tests.cpp) check them. *)
 
 open Plza_walk
-open Plza_terms.Walk_args
+open Plza_rules.Walk_args
 
 let case name input expectation = { Table_test.name; input; expectation }
 

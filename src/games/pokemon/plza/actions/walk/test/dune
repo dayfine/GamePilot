@@ -4,5 +4,5 @@
   gamepilot.table_test
   gamepilot.wire
   gamepilot.engine_run
-  gamepilot.plza_terms
+  gamepilot.plza_rules
   gamepilot.plza_walk))
