@@ -56,6 +56,7 @@ let look_of ~still (m : Effects.measurements) : L.t =
     interact_prompt = s.interact_prompt;
     party_bar = s.party_bar;
     minimap = s.minimap;
+    minimap_arrow = s.minimap_arrow;
     run_prompt = s.run_prompt;
     alert_eye = s.alert_eye;
     battle = s.battle;

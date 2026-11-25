@@ -24,7 +24,8 @@
   test_move_symbols
   test_party_bar
   test_minimap
-  test_wild_battle_readers)
+  test_wild_battle_readers
+  test_minimap_arrow)
  (modules
   test_dialog_readers
   test_story_readers
@@ -35,6 +36,7 @@
   test_party_bar
   test_minimap
   test_wild_battle_readers
+  test_minimap_arrow
   fixture_frames)
  (deps
   switch.probes.jsonl

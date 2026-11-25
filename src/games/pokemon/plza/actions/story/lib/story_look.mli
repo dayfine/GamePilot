@@ -33,6 +33,9 @@ type t = {
       (** An A prompt (["(A) Talk"]) with no text box: [INTERACT_PROMPT]. *)
   party_bar : bool;
       (** The overworld party bar with no text box: [PLAYER_CAN_MOVE]. *)
+  minimap_arrow : float option;
+      (** The bearing the minimap's arrow points, degrees clockwise from up
+          ({!Plza_readers.Minimap_arrow}), the fork's [get_facing_direction]. *)
   run_prompt : bool;
       (** A wild battle's Run prompt (its minus button), the fork's
           [RunFromBattleDetector]. *)

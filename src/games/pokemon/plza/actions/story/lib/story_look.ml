@@ -19,6 +19,7 @@ type t = {
   tutorial_card : bool;
   interact_prompt : bool;
   party_bar : bool;
+  minimap_arrow : float option;
   run_prompt : bool;
   alert_eye : bool;
   minimap : string option;
@@ -45,6 +46,7 @@ let empty ~at_ms =
     interact_prompt = false;
     party_bar = false;
     minimap = None;
+    minimap_arrow = None;
     run_prompt = false;
     alert_eye = false;
     battle = false;
