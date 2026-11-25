@@ -76,9 +76,11 @@ New names leave out "story" for goal programs and engine parts that are not stor
 
 Game code returns `result`; exceptions stay at the effects/I/O boundary (`core/effects`,
 `session`, `live`, `replay` and the runners). `lint_ocaml.sh`'s `no_exceptions` check enforces it
-through `dev/lint/ocaml_lint_exceptions.conf`, which only shrinks. A PR that **adds** a line to
-that file → **FAIL** unless the PR body says why the exception cannot be a value. NA when the file
-is untouched; a PR that removes lines passes.
+through `dev/lint/ocaml_lint_exceptions.conf`, whose `no_exceptions` lines only shrink. A PR that
+**adds** a `no_exceptions` line → **FAIL** unless the PR body says why the exception cannot be a
+value. Other waivers (`magic_numbers`, `function_length`, ...) are allowed with a reason on the
+line (AGENTS.md) and are not this row. NA when no `no_exceptions` line is added; removing them
+passes.
 
 ### S5 Documented interfaces
 
@@ -87,12 +89,15 @@ is for, in words a newcomer to the codebase understands: no unexplained abbrevia
 other private ideas without a pointer to them. Module doc comments say what the module does and,
 for a port, where it comes from (S8). Text read from the game screen (dialogue, menu labels)
 names its language risk: GamePilot keeps multi-language support as a goal. An undocumented type
-or val → **FAIL** naming it.
+or val → **FAIL** naming it. Applies to `lib/` interfaces; a variant whose constructors say it
+all (`Mono | Stereo`) still needs one line on what the type is for.
 
 ### S6 Readable tests
 
 - One expectation per fact: a long expected string that packs several facts (a whole trace, a
-  multi-line log) → **FAIL**; check each fact on its own (#30 review).
+  multi-line log) → **FAIL**; check each fact on its own (#30 review). A golden-vector record
+  (one input and its outputs from the C++, printed as one line) is one fact: it passes when a
+  mismatch prints that record.
 - The test file says what its fakes are and what each one stands in for (a comment at the top or
   at the fake).
 
@@ -129,5 +134,6 @@ on `GAMEPILOT_*` variables and the ROM). → **FAIL** naming the text.
 
 - GamePilot's lints and their waiver file (above).
 - That docs-only PRs (every file `.md` or under `docs/`) skip this gate; CI is still required.
+  A PR that changes dev tools (`dev/`, `.agents/`, workflows) is not docs-only and gets every row.
 - That the user reviews structure after this gate and makes the merge call; this gate's FLAGs go
   to them.

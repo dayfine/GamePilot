@@ -39,13 +39,17 @@ without being restated (`.agents/rules/agent-liveness.md`).
 - **CI is the build of record.** Read the checks at the tip first: `gh pr checks <N> --repo
   dayfine/GamePilot`. When the OCaml workflow passed on all three systems, H1–H3 and the lint rows
   are PASS with the run URL; do not rebuild. Build locally only scoped to a claim you need to test.
-  While CI is pending, post nothing and report "CI pending at <sha>".
+  While CI is pending, post nothing. To wait, poll with a bound rather than `--watch` (which the
+  harness backgrounds after a few minutes): `for i in $(seq 20); do gh pr checks <N> --repo
+  dayfine/GamePilot | grep -q pending || break; sleep 30; done`. Still pending after that: report
+  "CI pending at <sha>" and stop.
 - **Review delivery.** Line 1 is `Reviewed SHA: <full sha>`; the first heading is
   `## Structural QC — <PR title>`; `## Verdict` sits on its own line, followed by `APPROVED` or
   `NEEDS_REWORK`. Post it as a COMMENT review pinned to the SHA (GitHub refuses self-approval):
   `gh api -X POST repos/dayfine/GamePilot/pulls/<N>/reviews -f event=COMMENT -f commit_id=<sha>
   -F body=@<file>`. **Post first, then verify:** re-read the PR's reviews and confirm yours is
-  there, and that `sh dev/review/pr_gate_status.sh <N>` reads it. A verdict that exists only in
+  there, and that `sh dev/review/pr_gate_status.sh <N>` reads it (main's copy, in the primary
+  checkout, not the PR's). A verdict that exists only in
   your return text did not happen.
 - **No bare @mentions** in anything you post: a dune alias like `@fmt` or `@runtest` goes in
   backticks, or GitHub notifies a real user of that name.
@@ -58,7 +62,8 @@ to the PR's branch: a review only reports.
 ## When the gate is skipped
 
 A **docs-only** PR (every file is a `.md` or under `docs/`) skips this review; CI is still
-required. `dev/review/pr_gate_status.sh` shows it as `skip`.
+required. `dev/review/pr_gate_status.sh` shows it as `skip`. A PR to dev tools (`dev/`,
+`.agents/`, workflows) is not docs-only: review every row.
 
 ---
 
@@ -67,8 +72,11 @@ required. `dev/review/pr_gate_status.sh` shows it as `skip`.
 ### Step 1: Check out the PR (read-only)
 
 Per the standing rules. Then count how far `main` moved since the branch point:
-`git rev-list --count FETCH_HEAD..origin/main`. Over 10 is a **FLAG** ("N commits behind main;
-merge main before merging"), not a FAIL.
+`git rev-list --count FETCH_HEAD..origin/main`. A **FLAG** ("merge main before merging"), not a
+FAIL, when the PR conflicts with main (`pr_gate_status.sh` shows NEXT `merge main`), or when main
+changed `dev/lint/`, `.github/workflows/` or a file the PR touches since the branch point (`git diff
+--name-only FETCH_HEAD...origin/main`): the tip's CI did not run what main now runs. Being behind
+alone is not a FLAG.
 
 ### Step 2: Hard gates
 
@@ -137,6 +145,8 @@ file list; say so in a FLAG when you disagree with it.)
 (APPROVED only when every applicable row is PASS or FLAG. Any FAIL → NEEDS_REWORK.)
 
 ## FLAGs for the user
+
+(FLAGs from the rows, and from the process steps such as the main check in Step 1, all go here.)
 
 (One line per FLAG: the row, the question, the files. Omit when there are none.)
 

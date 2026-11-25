@@ -82,6 +82,8 @@ check "a decoder change goes to the user" "user review (format: src/x/lib/plan_d
 check "a rename that also edits a design doc names the rename" \
     "user review (module renamed: src/x/lib/a.ml)" \
     "$(pr '{"path": "docs/design/a.md"}, {"path": "src/x/lib/a.ml", "changeType": "RENAMED"}' "$green" "$(review "$tip" APPROVED)" | column 4)"
+check "a conflict with main comes first" "merge main" \
+    "$(pr "$code" "$red" "" | sed 's/^{/{"mergeable": "CONFLICTING", /' | column 4)"
 check "two reworks go to the user" "user review (reworked twice)" \
     "$(pr "$code" "$green" "$(review "$old" NEEDS_REWORK), $(review "$old" NEEDS_REWORK), $(review "$tip" APPROVED)" | column 4)"
 exit $failures
