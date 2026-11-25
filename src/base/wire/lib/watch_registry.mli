@@ -1,8 +1,8 @@
 (** An entry of the watch registry: one JSON file per daemon serving a watch
     page, [$GAMEPILOT_RUNS/.watch/<pid>.json], written by the daemon while it
-    lives (daemon/src/watch_registry.h) and read by [gamepilot runs]. A reader
-    skips an entry whose pid is gone (a daemon that died without removing it).
-*)
+    lives (daemon/watch/server/watch_registry.h) and read by [gamepilot runs]. A
+    reader skips an entry whose pid is gone (a daemon that died without removing
+    it). *)
 
 type json = Yojson.Safe.t
 (** A decoded JSON value: one registry file, or a page's [/summary.json]. *)
