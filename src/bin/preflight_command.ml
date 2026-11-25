@@ -89,9 +89,9 @@ let place setup id start log =
 let without_party (p : Pokemon_checkpoints.Postconditions.t) =
   { p with party = None }
 
-let party_of (members : Checkpoints_run.Room_policy.member list) =
+let party_of (members : Room_policy.member list) =
   List.map
-    (fun (m : Checkpoints_run.Room_policy.member) ->
+    (fun (m : Room_policy.member) ->
       if m.species = "?" then None else Some m.species)
     members
 
@@ -106,7 +106,7 @@ type verdict = Rows of Pf.row list | Stopped of string
 
 type reads = {
   mutable place : Frlg_readers.Start_frame.difference option;
-  mutable members : Checkpoints_run.Room_policy.member list option;
+  mutable members : Room_policy.member list option;
   mutable observed : Pokemon_checkpoints.Postcondition_check.observed option;
   mutable card : Frlg_readers.Trainer_card_front.t option;
   mutable verdict : verdict;

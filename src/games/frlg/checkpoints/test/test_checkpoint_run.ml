@@ -113,8 +113,7 @@ let grind_save_point () =
   and b = plan "05-grind-mr-mime.plan.json" in
   let ends =
     [
-      Checkpoints_run.Checkpoint_end.declared ~next:(Some b.checkpoint)
-        a.checkpoint;
+      Checkpoint_end.declared ~next:(Some b.checkpoint) a.checkpoint;
       b.postconditions.position;
     ]
   in

@@ -69,7 +69,7 @@
  (libraries
   gamepilot.table_test
   gamepilot.pokemon_checkpoints
-  gamepilot.checkpoints_run
+  gamepilot.checkpoint_end
   gamepilot.frlg_actions
   gamepilot.frlg_checkpoints))
 
@@ -81,7 +81,6 @@
   gamepilot.table_test
   gamepilot.replay
   gamepilot.pokemon_checkpoints
-  gamepilot.checkpoints_run
   gamepilot.frlg_actions
   gamepilot.frlg_checkpoints))
 
@@ -113,7 +112,6 @@
   gamepilot.wire
   gamepilot.table_test
   gamepilot.pokemon_checkpoints
-  gamepilot.checkpoints_run
   gamepilot.frlg_checkpoints
   frlg_overworld_fixtures))
 
@@ -135,7 +133,7 @@
   gamepilot.wire
   gamepilot.table_test
   gamepilot.pokemon_checkpoints
-  gamepilot.checkpoints_run
+  gamepilot.room_policy
   gamepilot.frlg_readers
   gamepilot.frlg_actions
   gamepilot.frlg_checkpoints))
@@ -156,7 +154,6 @@
   gamepilot.grid_maps
   gamepilot.json_field
   gamepilot.pokemon_checkpoints
-  gamepilot.checkpoints_run
   gamepilot.frlg_actions
   gamepilot.frlg_checkpoints))
 
@@ -167,7 +164,7 @@
   yojson
   gamepilot.table_test
   gamepilot.pokemon_checkpoints
-  gamepilot.checkpoints_run
+  gamepilot.room_policy
   gamepilot.frlg_actions
   gamepilot.frlg_checkpoints))
 
@@ -192,7 +189,6 @@
   gamepilot.wire
   gamepilot.effects
   gamepilot.pokemon_checkpoints
-  gamepilot.checkpoints_run
   gamepilot.frlg_checkpoints))
 
 (test
@@ -220,7 +216,6 @@
   yojson
   gamepilot.table_test
   gamepilot.pokemon_checkpoints
-  gamepilot.checkpoints_run
   gamepilot.frlg_readers
   gamepilot.frlg_checkpoints))
 

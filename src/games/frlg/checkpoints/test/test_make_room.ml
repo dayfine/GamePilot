@@ -1,7 +1,7 @@
 (* Make_room: the Center nearest the save, and the generated checkpoint. *)
 
 open Frlg_checkpoints
-module R = Checkpoints_run.Room_policy
+module R = Room_policy
 
 let table = Result.get_ok (Frlg_actions.Fly_towns.load ())
 

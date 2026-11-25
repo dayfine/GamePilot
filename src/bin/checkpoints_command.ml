@@ -9,7 +9,7 @@
    Programs_command); each runs from its start state (<states>/<ID>.start.ss),
    as many times as the mode's policy says (Engine_run.Checkpoint_trials), each run with its own daemon and run folder
    (Run_record). A run passes when every event passed and the player ends at
-   the checkpoint's declared end (Checkpoints_run.Checkpoint_end) and the plan's
+   the checkpoint's declared end (Checkpoint_end) and the plan's
    postconditions hold (Pokemon_checkpoints.Postcondition_check). With --end-check-only each
    run checks its start state against the postconditions and runs no event. The loop goes to the
    next checkpoint only after this one passed; in verification mode the last
