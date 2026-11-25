@@ -29,7 +29,14 @@
    Switch names keep their CommandLineTests folder and file name, whose
    True/False the fork's tests read for that folder's detector. A reader is
    checked on every image unless it reads inside a screen: then only on the
-   images whose tags give its answer. *)
+   images whose tags give its answer.
+
+   menus.mgba.shifted.probes.jsonl holds the Seagallop list's frames
+   (seagallop-one-island/) again with their colors shifted
+   (dev/reader_fixtures/shift_frame.py: brightness times 0.9 and 1.1, one
+   channel plus or minus 12, 10% toward mid-grey), named <shift>/<image>: on
+   each, seagallop_row must read as on the frame itself. Its arrow is counted
+   in a color range, so the images are shifted, not the probes' numbers. *)
 
 open Frlg_readers
 
@@ -302,6 +309,30 @@ let floors =
     };
   ]
 
+(* The frame a shifted one comes from: its name less the "<shift>/". *)
+let unshifted image =
+  match String.index_opt image '/' with
+  | Some i -> String.sub image (i + 1) (String.length image - i - 1)
+  | None -> failwith ("no shift in " ^ image)
+
+(* The readers checked on shifted frames. *)
+let shift_tested = [ "seagallop_row" ]
+
+let shifted_frame_cases backend images shifted =
+  List.concat_map
+    (fun r ->
+      List.map
+        (fun (image, probes) ->
+          let original = List.assoc (unshifted image) images in
+          {
+            Table_test.name =
+              Printf.sprintf "%s shifted %s: %s" backend r.reader image;
+            input = (fun () -> r.verdict (measurements probes));
+            expectation = r.verdict (measurements original);
+          })
+        shifted)
+    (List.filter (fun r -> List.mem r.reader shift_tested) readers)
+
 let () =
   let backends =
     List.map
@@ -312,6 +343,10 @@ let () =
       [ "switch"; "mgba" ]
   in
   List.iter (fun (backend, images) -> print_tally backend images) backends;
+  let shifted =
+    Wire.read_image_probes "fixtures/menus.mgba.shifted.probes.jsonl"
+  in
   Table_test.run "menu readers"
     (floors
-    @ List.concat_map (fun (backend, images) -> cases backend images) backends)
+    @ List.concat_map (fun (backend, images) -> cases backend images) backends
+    @ shifted_frame_cases "mgba" (List.assoc "mgba" backends) shifted)

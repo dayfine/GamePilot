@@ -46,6 +46,14 @@ let probes t =
   (Solid_color.probe ~id:t.margin_id t.margin :: Cursor_column.probes t.cursor)
   @ Dialog.probes
 
+(* Headroom on the Seagallop list's mGBA frames, each also shifted by
+   dev/reader_fixtures/shift_frame.py (test_menu_readers.ml): the margin's
+   channel sum is 690 at the least (is_white needs 500), its stddev 0 (at most
+   10) and its distance from grey 0.013 at the most (0.08); the arrow's
+   pixels reach 111 at the most (dark is up to 150) and the lightest pixel
+   beside it 193 at the least, so its row's share stays 0.26 (0.10 needed)
+   and every other row's 0. Dialog's edges sum 690 at the least (500) and its
+   frame line 671 at the most (below 720). *)
 let shows t m =
   Dialog.dialog_up m
   && Solid_color.holds m t.margin_id (fun s -> Solid_color.is_white s)
