@@ -2,18 +2,18 @@
     mapped. 17 of FireRed's 19 [*_PokemonCenter_1F] maps use
     LAYOUT_POKEMON_CENTER_1F (pokefirered data/maps/*/map.json); the Indigo
     Plateau's and One Island's have their own layouts and are in
-    PokemonSimulation's maps. Every standard Center gets this room, as the
-    user decided ("regular pokemon center which we should script, like in
-    C++"), so all 17 walk the same way. Its mat lets out on its town's door, and
-    its people stand in the way, so routes and places reach into it as into any
+    PokemonSimulation's maps. Every standard Center gets this room, as the user
+    decided ("regular pokemon center which we should script, like in C++"), so
+    all 17 walk the same way. Its mat lets out on its town's door, and its
+    people stand in the way, so routes and places reach into it as into any
     mapped room.
 
     Ported from the fork's [Overworld/PokemonFRLG_CodedRooms.{h,cpp}]
-    ([CENTER_ROOM_JSON], [pokemon_center_room()],
-    [add_pokemon_center_room()]), Overworld/PokemonFRLG_PokemonCenterRoom.h
-    ([CENTER_MAT], [CENTER_NURSE_FRONT]) and
-    Overworld/PokemonFRLG_OverworldMaps.cpp ([add_unmapped_centers()]): the
-    same tiles, elevation, mat warps, door point and people.
+    ([CENTER_ROOM_JSON], [pokemon_center_room()], [add_pokemon_center_room()]),
+    Overworld/PokemonFRLG_PokemonCenterRoom.h ([CENTER_MAT],
+    [CENTER_NURSE_FRONT]) and Overworld/PokemonFRLG_OverworldMaps.cpp
+    ([add_unmapped_centers()]): the same tiles, elevation, mat warps, door point
+    and people.
 
     Where we differ:
     - The mat's warps follow each Center's own map.json order, so ["warp_<n>"]
