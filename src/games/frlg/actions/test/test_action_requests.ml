@@ -14,7 +14,7 @@ let decode name json () =
       (Json_field.as_object "" (Yojson.Safe.from_string json))
   with
   | Ok r -> Action_requests.to_string r
-  | Error c -> Pokemon_checkpoints.Failure.cause_to_string c
+  | Error c -> Pokemon_engine.Failure.cause_to_string c
 
 let decoding =
   [
@@ -131,7 +131,7 @@ let roster =
       (fun () ->
         match Party_roster.resolve mg (Species "mr-mime") with
         | Ok n -> string_of_int n
-        | Error c -> Pokemon_checkpoints.Failure.cause_to_string c)
+        | Error c -> Pokemon_engine.Failure.cause_to_string c)
       "not_in_party: mr-mime is not in the party (blastoise, pidgey, abra, \
        spearow)";
     case "a full party sends a prize to the PC"

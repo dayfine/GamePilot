@@ -3,14 +3,15 @@
     needs come from the plan's args: each party member an action names (Fly's
     user, a grind's member and sweeper, a swap's member, ...) unless an earlier
     event of the plan brings it (a capture, a trade), and Cut's user knowing
-    Cut; the money its purchases cost (a Mart's prices from the stock table,
-    ¥1000 for each 50 Game Corner coins); each bag item an action gives or uses
-    that no earlier purchase or pickup ([pick_up_item]) brought. When the
-    checkpoint before it promises a state (its postconditions: the members it
-    names and the slots it pins, the money as a range (not what it spent), item
-    counts and floors (not what it gained or used)), that is needed too, as
-    promised. The plan's declared preconditions ({!Plan_preconditions}: the
-    badges, the Hall of Fame), read off the Trainer Card. And the place: the
+    Cut; no Mail on a member a [pc_deposit] stores (each member's held-item mark
+    on the party menu); the money its purchases cost (a Mart's prices from the
+    stock table, ¥1000 for each 50 Game Corner coins); each bag item an action
+    gives or uses that no earlier purchase or pickup ([pick_up_item]) brought.
+    When the checkpoint before it promises a state (its postconditions: the
+    members it names and the slots it pins, the money as a range (not what it
+    spent), item counts and floors (not what it gained or used)), that is needed
+    too, as promised. The plan's declared preconditions ({!Plan_preconditions}:
+    the badges, the Hall of Fame), read off the Trainer Card. And the place: the
     frame kept at the checkpoint's start ({!Start_check}).
 
     GamePilot's own: the fork checks the save's place on the save card and its
@@ -20,10 +21,14 @@ type need = Plan_needs.need =
   | Party_in_order of string list
   | Party_includes of {
       members : string list;
-      slots : Pokemon_checkpoints.Postconditions.slot list;
+      slots : Pokemon_engine.Postconditions.slot list;
     }
   | Member of { species : string; for_ : string }
       (** A member an event uses ([for_]: ["fly"]). *)
+  | No_mail of { species : string; for_ : string }
+      (** The first member of this species holds no Mail: a [pc_deposit] stores
+          it, and the game will not store a Mail holder ("Please remove the
+          MAIL."). *)
   | Knows_move of { move : string; for_ : string }
       (** Some member knows this field move: a [cut_tree] event's Cut, which the
           game lets any member that knows it use. *)
@@ -43,8 +48,8 @@ type need = Plan_needs.need =
 
 val needs :
   Frlg_actions.Mart_plan.stocks ->
-  before:Pokemon_checkpoints.Postconditions.t option ->
-  Pokemon_checkpoints.Plan.t ->
+  before:Pokemon_engine.Postconditions.t option ->
+  Pokemon_engine.Plan.t ->
   (need list, string) result
 (** What the save must hold for the plan's first event, in the table's order:
     the plan's declared preconditions ({!Plan_preconditions.needs}), then the
@@ -53,7 +58,7 @@ val needs :
     not read. *)
 
 type read = {
-  observed : Pokemon_checkpoints.Postcondition_check.observed;
+  observed : Pokemon_engine.Postcondition_check.observed;
   place : Frlg_readers.Start_frame.difference option;
       (** The frame after the load against the one kept at the start; [None]
           when none was kept or the frame did not read. *)
@@ -91,5 +96,5 @@ val reads_card : need list -> bool
 (** A need is judged on the Trainer Card's badges or stars: the pre-flight reads
     them. *)
 
-val to_read : need list -> Pokemon_checkpoints.Postconditions.t
+val to_read : need list -> Pokemon_engine.Postconditions.t
 (** What {!Postcondition_reads.observe} must read for these needs. *)

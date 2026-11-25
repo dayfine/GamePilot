@@ -21,6 +21,10 @@ type params = {
   shape : string option;
       (** an uploaded PNG's hash; asks for each blob's [overlap]. A template
           asking for [score] is the probe's own [template]. *)
+  masked : bool;
+      (** (v1.15) score each blob's box with the pixels outside the filter's
+          range black, as the fork's [filter_by_mask] before
+          MoveEffectivenessSymbol's match; [false] scores the box as it is *)
 }
 (** What a [core.find@1] probe asks the daemon for: the filters, the size
     bounds, and which scores to give each blob. *)
@@ -49,6 +53,7 @@ val params :
   ?max_size:float * float ->
   ?margin:float ->
   ?shape:string ->
+  ?masked:bool ->
   filters:filter list ->
   min_area:float ->
   unit ->

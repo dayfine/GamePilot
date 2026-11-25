@@ -27,7 +27,7 @@ let expanded ~start events () =
   with
   | Ok p ->
       String.concat "\n"
-        (List.map Pokemon_checkpoints.Plan_text.event p.checkpoint.events)
+        (List.map Pokemon_engine.Plan_text.event p.checkpoint.events)
   | Error e -> e
 
 let up_to_4f =

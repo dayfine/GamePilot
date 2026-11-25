@@ -1,9 +1,10 @@
 (* gamepilot guide PROGRAM | --write | --check
 
    The user guides (docs/guide/, docs/guide/README.md): one page per
-   registered program, <id>.md, and any number of extra pages for a part of
-   one, <id>.<part>.md (frlg.mail_glitch.item_duplication.md). Hand-written
-   prose around generated blocks (Guide_page, Guide_blocks).
+   registered program, <program id>.md, and any number of extra pages for a
+   part of one, <program id>.<part>.md (<program id>.item_duplication.md for
+   a part named item_duplication). Hand-written prose around generated blocks
+   (Guide_page, Guide_blocks).
 
    - PROGRAM prints each block the program's pages can hold, for a first draft;
    - --write refills every page's blocks in place and starts a page, from a
@@ -59,7 +60,10 @@ let write path text =
 
 let block p name arg =
   let marker = Guide_page.start_marker name arg in
-  match Guide_blocks.generate p { name; arg; body = "" } with
+  match
+    Guide_blocks.generate ~guide:Checkpoint_families.guide p
+      { name; arg; body = "" }
+  with
   | Ok body -> marker ^ "\n" ^ body ^ "\n" ^ Guide_page.end_marker ^ "\n"
   | Error e -> "<!-- " ^ name ^ ": " ^ e ^ " -->\n"
 
@@ -98,7 +102,9 @@ let refill dir name =
   let* filled =
     Result.map_error
       (fun e -> name ^ ": " ^ e)
-      (Guide_page.fill (Guide_blocks.generate p) text)
+      (Guide_page.fill
+         (Guide_blocks.generate ~guide:Checkpoint_families.guide p)
+         text)
   in
   Ok (text, filled)
 
