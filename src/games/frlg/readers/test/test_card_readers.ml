@@ -1,8 +1,11 @@
 (* The Trainer Card reader (Trainer_card_front) on frames of its front and on
-   every other mGBA frame the menu and screen tests read. No capture of the
-   card is in the lab yet: its frames are renders of pret's graphics
-   (render_trainer_card.py, images/mgba/pret-trainer-card/), five card colors,
-   badges in several patterns, and two fading in. The fixtures are the daemon's
+   every other mGBA frame the menu and screen tests read. Most card frames are
+   renders of pret's graphics (render_trainer_card.py,
+   images/mgba/pret-trainer-card/): five card colors, badges in several
+   patterns, and two fading in. images/mgba/trainer-card-2026-11-24/ holds real
+   mGBA frames of a post-League save (8 badges, 1 star), named for the time
+   after the A that opened the card: the menu fading out, black, the card
+   fading in and the card settled. The fixtures are the daemon's
    [probe_images] output: run [regen_fixtures.sh card], which reads
    card.mgba.map. Each image's name carries what it shows after "__",
    dash-separated:
