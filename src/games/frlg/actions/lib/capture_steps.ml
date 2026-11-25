@@ -115,16 +115,35 @@ let ball_chosen ~log ball () =
       M.close "the bag" Bag_screen.bag_open;
       false
 
+(* The player's HP box by its left end: the whole box bobs in and out of its
+   probes with the battler, its left end does not. *)
+let player_down m =
+  Battle_screen.battle_text_box m
+  && Battle_screen.foe_box m
+  && not (Battle_screen.player_box_left m)
+
+let player_down_ms = 1000
+
+(* The look holds [player_down_ms]: not a frame between two screens. *)
+let player_fainted () =
+  match
+    Effects.await ~timeout_ms:player_down_ms (fun m -> not (player_down m))
+  with
+  | Holds _ -> false
+  | Timeout -> true
+
 (* After the throw: the nickname question ("Give a nickname ...?", its Yes/No
-   arrow) or the overworld is a catch, the action menu is a break-free; every
-   fourth look with neither checks the overworld, then presses B through the
-   messages (wait_for_throw()). *)
+   arrow) or the overworld is a catch, the action menu is a break-free, and the
+   foe's HP box over the battle's text without the player's is the player's
+   Pokemon fainted; every fourth look with none of them checks the overworld,
+   then presses B through the messages (wait_for_throw()). *)
 let rec wait_for_throw ~deadline polls : Capture.throw_end =
   if Effects.now () >= deadline then Throw_failed
   else
     match Effects.read () with
     | Some m when Option.is_some (Dialog.yes_no_arrow m) -> Caught
     | Some m when Battle_screen.battle_menu m -> Broke_free
+    | Some m when player_down m && player_fainted () -> Player_fainted
     | _ when polls mod presses_per_check <> 0 ->
         wait throw_poll_ms;
         wait_for_throw ~deadline (polls + 1)
