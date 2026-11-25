@@ -1,10 +1,10 @@
 (** Reader: the box screen of MOVE POKéMON, for the one slot a check looks at.
     Made from mGBA frames of the Route 4 Pokémon Center's PC (2026-11-25), in
     GBA pixels. Parts ported from the fork's
-    Inference/Box/PokemonFRLG_BoxCellOccupiedDetector: the PKMN DATA panel's
-    lower part (the fork's box (0.007, 0.556, 0.296, 0.253) of the game) is flat
-    grey with the hand on an empty slot and has text (name, gender, level,
-    species) on an occupied one; the fork's test is a stddev sum over 10.
+    Inference/Box/PokemonFRLG_BoxCellOccupiedDetector.cpp/.h: the PKMN DATA
+    panel's lower part (the fork's box (0.007, 0.556, 0.296, 0.253) of the game)
+    is flat grey with the hand on an empty slot and has text (name, gender,
+    level, species) on an occupied one; the fork's test is a stddev sum over 10.
 
     GamePilot's own:
     - the hand over the box's first slot: its shadow, a blue-grey ellipse (82,
@@ -17,6 +17,8 @@
     - the panel's gender mark: the male symbol's blue at x 10-16, y 117-127. *)
 
 val probes : Wire.probe_spec list
+(** The panel's lower part, the first slot's shadow box, the wallpaper strip and
+    the gender mark's box: every probe the functions below read. *)
 
 val panel_occupied : Effects.measurements -> bool option
 (** The fork's test: the panel's stddev sum over {!min_panel_stddev}. *)

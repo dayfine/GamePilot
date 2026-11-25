@@ -1,23 +1,30 @@
 (** FRLG's Easy Chat groups and their words, in the order the editor lists them,
     from the file
     [src/games/frlg/assets/extract/extract_frlg_easy_chat_words.py] writes
-    (pret/pokefirered's [src/data/easy_chat/] and [PopulateECGroups]). The grid
+    (pret/pokefirered's [src/data/easy_chat/] and [src/easy_chat.c]). The grid
     lists only the groups the save has unlocked and the POKéMON group only the
     species seen, so a group's position and a word's are found on screen; these
-    lists give the names to read there. *)
+    lists give the names to read there.
 
+    English only: the file holds the English game's group names and words, so
+    another language's editor does not read against them. *)
+
+(** When the grid lists a group. *)
 type shown =
   | Seen  (** Any Pokémon seen; its words only the species seen. *)
-  | Always
-  | Game_clear  (** FLAG_SYS_GAME_CLEAR: EVENTS, MOVE 1, MOVE 2. *)
+  | Always  (** From the start of the game. *)
+  | Game_clear
+      (** Once the game is clear (the Hall of Fame entered): EVENTS, MOVE 1,
+          MOVE 2. *)
   | National  (** The National Pokédex: POKéMON2. *)
 
 type group = {
-  id : int;  (** The EC_GROUP_ value (POKéMON is 0x15, POKéMON2 0). *)
+  id : int;  (** The game's group number (POKéMON is 0x15, POKéMON2 0). *)
   shown : shown;
   name : string;  (** As the grid shows it: ["MOVE 1"]. *)
   words : string list;  (** As the word list shows them, top left first. *)
 }
+(** One group of the grid and its word list. *)
 
 type t = group list
 (** In the grid's order. *)
@@ -27,6 +34,8 @@ val of_string : string -> (t, string) result
     left out. *)
 
 val load : string -> (t, string) result
+(** The file at this path (found with {!Data_files.locate}), read whole and
+    parsed ({!of_string}). *)
 
 val group : t -> string -> group option
 (** The group of this name. *)

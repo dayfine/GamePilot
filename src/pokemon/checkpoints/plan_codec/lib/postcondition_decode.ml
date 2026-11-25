@@ -52,11 +52,11 @@ let coins ~where obj =
   match F.find "coins" obj with
   | None -> None
   | Some (`Int n) -> Some (Count.Exactly n)
-  | Some value ->
+  | Some (`Assoc obj) ->
       let where = where ^ "coins." in
-      let obj = F.as_object where value in
       known_fields_only ~where [ "exactly"; "gained"; "used"; "at_least" ] obj;
       Some (count ~where ~exact:"exactly" obj)
+  | Some _ -> F.fail "%scoins is not a number or a JSON object." where
 
 let knows ~where obj : Postconditions.knows =
   known_fields_only ~where [ "species"; "moves" ] obj;

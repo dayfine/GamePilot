@@ -62,6 +62,11 @@ let screens =
       [ Text_lines.battle_message 0 ],
       List.map (fun name -> "Wild " ^ name ^ " appeared!") species,
       Line_reading.light_ink );
+    ( "battle_prompt",
+      glyphs,
+      [ Text_lines.battle_message 1 ],
+      [ "POKéMON?" ],
+      Line_reading.light_ink );
     ( "bag_counts",
       small_glyphs,
       cells ~rows:7 ~cells:3 Text_lines.bag_count_digit,

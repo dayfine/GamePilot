@@ -101,18 +101,13 @@ let use_members ~named action acc =
       else Option.fold ~none:acc ~some:(use_member action acc) (named key))
     acc A.Action_args.member_keys
 
-(* pc_deposit's ["species"] is a list: every member it stores is needed. *)
-let deposited ~where args =
-  Option.fold ~none:[]
-    ~some:(J.strings (where ^ "species"))
-    (J.find "species" args)
-
 let game_action stocks ~where action args acc =
   let named key = J.string_opt ~where key args in
   let acc =
     if List.mem_assoc action field_move_users then field_move action acc
     else if action = "pc_deposit" then
-      List.fold_left (use_member action) acc (deposited ~where args)
+      List.fold_left (use_member action) acc
+        (A.Action_args.deposited_species ~where args)
     else use_members ~named action acc
   in
   let acc =

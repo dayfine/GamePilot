@@ -250,6 +250,14 @@ let postcondition_cases : Table_test.case list =
       expectation = "party includes pidgey\nmr-mime in slot 1";
     };
     {
+      name = "party_slots alone: only the slots";
+      input =
+        (fun () ->
+          with_postconditions
+            {|{"party_slots": [{"slot": 1, "species": "mr-mime"}]}|});
+      expectation = "mr-mime in slot 1";
+    };
+    {
       name = "party_slots with party, which names every slot";
       input =
         (fun () ->

@@ -3,13 +3,13 @@
     press does; {!Leg_planner} searches over presses and joins them into legs
     with {!join}. *)
 
-type action = ..
-(** A step of a game's own kind (starting to Surf, opening a gate), planned as a
-    leg on its own. Games and planner wrappers add their constructors. *)
+type special_step = ..
+(** A step that is more than a press (starting to Surf, opening a gate), planned
+    as a leg on its own. Games and planner wrappers add their constructors. *)
 
 type 'state step = {
   next : 'state;
-  action : action option;  (** [None] for a plain step. *)
+  special_step : special_step option;  (** [None] for a plain step. *)
   starts_leg : bool;
       (** The step can't continue the leg before it, e.g. leaving the water,
           after which the player walks at another speed. *)
@@ -42,7 +42,7 @@ type kind =
       (** Hold the direction for [tiles] steps. [to_wall]: holding on keeps the
           player on the last tile, so the leg can be held for longer than it
           takes and walked again after an interruption. *)
-  | Action of action  (** One step of the game's own kind. *)
+  | Special_step of special_step  (** One step that is more than a press. *)
   | Face  (** Turn to the direction without moving. *)
 
 type 'state t = {
@@ -54,7 +54,7 @@ type 'state t = {
   start : 'state;
   finish : 'state;
 }
-(** One straight run, one action, or a turn on the spot. *)
+(** One straight run, one special step, or a turn on the spot. *)
 
 val join :
   held_at:('state -> Direction.t -> bool) ->

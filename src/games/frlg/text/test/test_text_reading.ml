@@ -15,6 +15,7 @@ let screens =
     "tm_case";
     "summary_moves";
     "battle_opening";
+    "battle_prompt";
     "bag_counts";
     "berry_pouch_numbers";
     "summary_level";

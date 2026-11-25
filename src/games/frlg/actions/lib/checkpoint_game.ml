@@ -59,10 +59,10 @@ let walk_from t (at : Pokemon_checkpoints.Pose.observed) target =
       Result.map (arrived t)
         (Route_walk.walk (walker t) { place; facing = at.faces } legs)
 
+let no_position = Failure.cause "position_unknown" "no position to walk from"
+
 let walk_to t (target : Pokemon_checkpoints.Pose.grid) =
-  match t.at with
-  | None -> Error (Failure.cause "position_unknown" "no position to walk from")
-  | Some at -> walk_from t at target
+  match t.at with None -> Error no_position | Some at -> walk_from t at target
 
 (* After an event that passed: its declared pose, when it names one tile. A
    pose with no facing on the tile already reckoned keeps the facing reckoned
@@ -137,7 +137,8 @@ let find_battle t ~pace ~patch () =
     (Paced_battle.reckoned t.at)
 
 let battle_game_steps () =
-  Frlg_battle.Battle_steps.make ~read_offered_move:Summary_moves.read_offered ()
+  Frlg_battle.Battle_steps.make ~read_offered_move:Summary_moves.read_offered
+    ~is_switch_offer:Switch_offer.read ()
 
 let battle_on t wrap script =
   Effects.with_probes Frlg_battle.Battle_look.probes (fun () ->
@@ -273,11 +274,32 @@ let ferry t (_ : Pokemon_checkpoints.Plan.event) args =
   Seagallop.run ~log:t.config.log ~from:(map_now t) args
   |> Result.map (fun at -> t.at <- Some at)
 
+let declared t event = Result.map (fun () -> adopt_declared t event)
+
+(* The plan's [step] (Route_walk.step) and [train] (Trainer_battles). *)
+let step_from t (at : Pokemon_checkpoints.Pose.observed) direction =
+  match Route_target.place_of t.world at with
+  | Error e -> Error (Failure.cause ~repeats:true "no_route" e)
+  | Ok place ->
+      Route_walk.step (walker t) { place; facing = at.faces } direction
+
+let step t event direction =
+  Result.bind (Option.to_result ~none:no_position t.at) (fun at ->
+      step_from t at direction)
+  |> Result.map (arrived t)
+  |> declared t event
+
+let train t event battles =
+  declared t event
+    (Trainer_battles.play ~log:t.config.log ~fight:(battle t) ~battles)
+
 let game t : Pokemon_checkpoints.Game.t =
   {
     run_own =
       (fun event -> function
         | Route route -> regrowing t (fun () -> walk_to t route.target)
+        | Step direction -> step t event direction
+        | Train battles -> train t event battles
         | _ -> run_builtin t event);
     run_builtin = run_builtin t;
     game_actions =
