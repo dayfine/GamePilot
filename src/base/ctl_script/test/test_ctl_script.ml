@@ -51,8 +51,7 @@ let () =
         "press Home hold 100 wait 1500 x1";
       line "the Switch's X" "press x" "press X hold 100 wait 500 x1";
       line "the Switch's ZL" "press zl 2000 0" "press ZL hold 2000 wait 0 x1";
-      line "the Switch's ZR" "press zr 500 0" "press ZR hold 500 wait 0 x1";
-      line "unknown button" "press ZX" "error: unknown button \"ZX\"";
+      line "unknown button" "press ZR" "error: unknown button \"ZR\"";
       line "dpad needs a direction" "dpad A" "error: \"A\" is not a direction";
       line "dpad count of 0" "dpad UP 0" "error: dpad: N must be at least 1";
       line "not a number" "press A soon"

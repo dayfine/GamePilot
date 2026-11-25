@@ -8,9 +8,6 @@ type step =
 let default_hold_ms = 100
 let default_wait_ms = 500
 
-let buttons =
-  Wire.[ A; B; Select; Start; Right; Left; Up; Down; R; L; Home; X; Y; ZL; ZR ]
-
 let button_of_name name =
   match String.uppercase_ascii name with
   | "PLUS" -> Some Wire.Start
@@ -18,7 +15,8 @@ let button_of_name name =
   | upper ->
       List.find_opt
         (fun b -> String.uppercase_ascii (Wire.string_of_button b) = upper)
-        buttons
+        Wire.
+          [ A; B; Select; Start; Right; Left; Up; Down; R; L; Home; X; Y; ZL ]
 
 let ms what word =
   match int_of_string_opt word with

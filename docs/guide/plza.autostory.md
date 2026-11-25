@@ -62,76 +62,82 @@ cd src && opam exec -- dune exec -- gamepilot checkpoints --program plza.autosto
 <!-- plans: 8bccc5f7e39a -->
 <!-- /generated -->
 
+From Wild Zone 1 on:
+
+- 03.07 catches Fletchling and Bunnelby, weakening them with three attacks when a throw breaks out.
+- 03.08 and 03.08a catch a fourth and a fifth species: the camera sweeps until ZL locks on, and
+  the nearest Pokémon not marked caught gets the throws.
+- 03.08b leaves the zone by its far gate, steering by the map's pin and the minimap's arrow.
+- 03.09 and 03.10 walk to the Research Lab and up to the Director's Office.
+- 03.11 opens the main menu, goes to Mable's Research and takes the Rock Smash TM.
+
 ## When it stops
 
-The first run starts wherever the console is. If 01.01 does not see the platform's controls hint,
-which fades after a few seconds idle, it reloads the platform's autosave and looks again. A later run of 01.01 first closes the game and
-starts it again from HOME's first tile to load the latest autosave (the platform's for 01.01,
-Main Mission 01's in Vert District for 01.02, the battle area's for 01.03); 01.00b cannot be
-reloaded,
-so after it fails, put the console back on Confirm Choices by hand and run it again. 01.03 can
-also start inside Andi's battle, or at Urbain's heal and Andi's challenge after a lost one: it
-looks at the screen first and skips the walk to Chikorita, and the scene to the battle when the
-battle is already up. Started in the night alley after Andi (the party bar up, nothing over it),
-01.03 skips every step and passes; 02.01 starts there. In the same way 03.02b, started at the
-plaza arch after its map talk (the minimap up and reading 03.03's start), skips every step and
-passes. 03.03 and 03.04 check their start first, as the fork does: the minimap must read the one
-the fork recorded there, or the run stops with `chain_off_start` before it presses anything. 03.04
-always reloads its autosave when it follows 03.03c, since its timed legs assume the reload's facing.
-03.04 also checks its end: after the Pokédex and Taunie's scene the minimap must read 03.06's start,
-outside the Center, or the run fails with `end_off_signature` (a talk with Urbain inside the
-Center once passed for the nurse's). Started outside the Center already, 03.04 skips both steps
-and passes. Each run keeps its log, wire log and a `failure.png` in its run folder.
+Reloads and retries:
+
+- The first run starts wherever the console is.
+- A retry closes the game and reloads the latest autosave first.
+- 01.00b has no autosave to go back to: after it fails, put the console back on Confirm Choices by
+  hand.
+- 01.01 reloads once more if the platform's controls hint has already faded.
+- A checkpoint that follows a passing one starts where it ended, with no reload.
+- 03.04 always reloads when it follows 03.03c: its legs need the reload's facing.
+
+Resuming mid-checkpoint (the screen is read first, and steps already done are skipped):
+
+- 01.03 can start inside Andi's battle, or at Urbain's heal after a lost one.
+- 01.03 started in the night alley after Andi skips everything and passes.
+- 03.02b started at the plaza arch after its map talk skips everything and passes.
+- 03.04 started outside the Pokémon Center skips everything and passes.
+
+Start and end checks:
+
+- From 03.03 on, a checkpoint checks its start before it presses anything: the minimap, the party
+  count, the A prompt or whether the player is in Wild Zone 1.
+- A start that does not match stops the series: `chain_off_start`.
+- 03.04 also checks its end (outside the Center): `end_off_signature`.
+
+The run folder keeps:
+
+- the story log and the wire log;
+- `failure.png`, the last frame of a failed run.
 
 ## Known limits
 
-03.07 to 03.11 have their plans and are ported. 03.11's reward opens the main menu (X, until the
-menu's right arrow and B show; `main_menu_not_reached`), goes three rows down to Mable's Research,
-passes her lines (`no_reward_lines` when there are none: not in her office) and presses B until the
-party bar or a text box shows (`menu_not_closed`). 03.08 and 03.08a catch the fourth and fifth species: the party bar's count
-picks the spot (from Taunie's rocks to the 100 spot by the map for the fourth, `rocks_not_left` when
-the run does not start on the rocks; the 80 spot for the fifth), the camera sweeps until ZL locks on,
-up to 4 plates are read by flicking right and the nearest not marked caught is chosen and stepped
-toward, ZL held from the lock-on through the throw. 12 throws at most; a throw that breaks out is
-fought (three attacks) before the next, and a species already caught that attacks is fought off.
-They fail with `short_of_species` when the party bar does not reach the count. 03.07's
-catches throw a ball (ZL to lock on, ZL and ZR to aim) and pass the lines after it with A: Fletchling
-is caught when its tutorial card shows (`no_catch` after 6 throws), and when a throw breaks out into a
-battle (the Run prompt, or the alert eye over a wild Pokémon) it is weakened with three attacks
-first. Bunnelby is weakened, then caught, up to 6 rounds (`still_a_target`); when nothing locks on
-and the battle is still up, the camera sweeps right to find it. The Run prompt's reader has not seen
-a console frame yet. 03.08b leaves Wild Zone 1 by its map: it opens the map (+) for the pin, turns by
-the minimap's arrow and runs (B held) onto the far gate's line and down it to the gate's A prompt, up
-to 3 runs (`gate_not_reached`, or `map_pin_not_read`); after A Leave it opens the map again and fails
-with `in_wild_zone` if the pin is still in the zone. The start checks from 03.08 on name the wild zone
-(the map is opened for the pin), the party count (the party bar's filled slots) or the A prompt, and
-every field named must read the same (`chain_off_start`). A walk with a heading (03.09's first)
-turns to it by the minimap's arrow first, up to 4 turns (`heading_missed`), and stops with
-`arrow_unread` when no arrow shows for 40 s. 03.10 starts in the lab's lobby, where 03.09 ends.
+Walks:
 
-01.02's chase, 01.03's walk to Chikorita and the walks of 02.01 to
-03.06 are timed stick legs with no map, so they can miss; the chase then stops on Ryon's
-A prompt (`scene_ended_in_control`), the walk to Chikorita with `walk_no_end`, and the Battle Zone
-walk with `scene_ended_in_control` when Brigitte's talk never starts. In 02.02, a walk to the
-blocked street that misses fails with `walk_no_end` (no black fade), one to the gate that misses
-its A prompt with `walk_no_end`, and the passage walk that misses Hotel Z leaves its scene to fail
-with `scene_never_started` after 45 s. A walk with no end followed by a plain scene (03.03's gate walk before the rock
-pile) passes even when it misses, since the scene ends on control; the next checkpoint then fails.
-From 03.03 on, walks run (B held, each leg for its walk time over 1.65), as the fork does; the
-earlier ones walk, since running was checked on the console only from there. From 02.03 on, a walk
-that never reaches its A prompt
-(a door, the clerk, the elevator, the bed) fails with `walk_no_end`. The starter is always Chikorita. The
-battle holds ZL and picks the most effective move from the symbols it shows; the move is pressed
-with ZL still held. A battle that never sees them fails with `battle_failed` after 2 minutes, and
-a lost battle reads as won (the talk after it looks the same), so the scene after it then fails.
-A battle that comes up during a walk or a scene (not one the plan names) is not handled: the walk or
-the scene then fails or times out. The
-party bar is read from its D-pad marker or its empty last slot; "mission
-complete" is not read. After Brigitte, a scene that never starts within 45 s fails with
-`scene_never_started`. The name and language on Confirm Choices are not checked. The
-daemon's keep-awake nudges the right stick up and down for this program, not B, which would back out
-of the new game's menus; and each checkpoint wakes the screen the same way before it reads it, since a
-dimmed screen reads as nothing. Up and down, never sideways: the walks' legs are aimed from where the
-camera looks, so they need it behind the player as the checkpoint starts (after 01.03's scenes, or
-after a reload). A checkpoint that follows a passing one starts where it ended, with no reload; only
-a retry reloads.
+- Walks are timed stick legs with no map, so they can miss.
+- A missed walk to an A prompt (a door, the clerk, the elevator, the bed): `walk_no_end`.
+- A missed walk whose scene never comes: `scene_ended_in_control` or `scene_never_started`.
+- A missed walk before a plain scene still passes; the next checkpoint then fails.
+- A walk that turns by the minimap's arrow: `heading_missed` after 4 turns, `arrow_unread` when no
+  arrow shows for 40 s.
+- 03.08b's gate: `gate_not_reached` after 3 runs, `map_pin_not_read`, `in_wild_zone`.
+
+Battles:
+
+- The starter is always Chikorita.
+- A lost battle reads as won, so the scene after it fails.
+- A battle with no move symbols for 2 minutes: `battle_failed`.
+- A battle that comes up during a walk or a scene is not handled: that step fails or times out.
+
+Catching:
+
+- The Run prompt's reader has not seen a console frame yet.
+- 03.07: `no_catch` after 6 throws at Fletchling, `still_a_target` after 6 rounds at Bunnelby.
+- 03.08 must start on Taunie's rocks: `rocks_not_left`.
+- 03.08 and 03.08a: `short_of_species` when the party does not grow after 12 throws.
+
+Readers:
+
+- "Mission complete" is not read.
+- The name and language on Confirm Choices are not checked.
+- 03.11: `main_menu_not_reached`, `no_reward_lines` (not in Mable's office), `menu_not_closed`.
+
+Keep-awake and camera:
+
+- The daemon keeps the console awake with the right stick (up, then down), not B, which would back
+  out of the new game's menus.
+- Each checkpoint wakes a dimmed screen the same way before it reads it.
+- The walks aim from where the camera looks, so it must be behind the player when a checkpoint
+  starts, as after 01.03's scenes or a reload.

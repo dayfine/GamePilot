@@ -339,9 +339,7 @@ bool parse_flags(int argc, char** argv, Flags& flags) {
   }
   backend_defaults(flags);
   if (flags.backend == "mgba") {
-    // The right stick is a Switch input: mGBA has none to nudge.
-    return flags.mgba_port != 0 &&
-           flags.server.keepawake.key != gamepilot::kRightStickKey;
+    return flags.mgba_port != 0;
   }
   // A live backend runs at its own rate.
   if (flags.server.speed != 1) {
