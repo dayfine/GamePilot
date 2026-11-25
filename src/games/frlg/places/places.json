@@ -4,103 +4,162 @@
   "places": {
     "celadon_dept_store_1f_save": {
       "map": "CeladonCity_DepartmentStore_1F",
-      "object": {"not_in_maps": "a save spot below the lift door, where su-01 ends and tt-01 starts"},
+      "object": {
+        "not_in_maps": "a save spot below the lift door, where su-01 ends and tt-01 starts"
+      },
       "stand": [6, 2],
       "facing": "south"
     },
     "celadon_dept_store_4f_clerk": {
       "map": "CeladonCity_DepartmentStore_4F",
-      "object": {"npc": "CeladonCity_DepartmentStore_4F_EventScript_Clerk"},
+      "object": {
+        "npc": "CeladonCity_DepartmentStore_4F_EventScript_Clerk"
+      },
       "stand": [3, 11],
       "facing": "south"
     },
     "celadon_dept_store_west_door_outside": {
       "map": "CeladonCity",
-      "object": {"warp": "warp_1", "to_map": "CeladonCity_DepartmentStore_1F"},
+      "object": {
+        "warp": "warp_1",
+        "to_map": "CeladonCity_DepartmentStore_1F"
+      },
       "stand": [11, 15],
       "facing": "south"
     },
     "celadon_game_corner_coins_clerk": {
       "map": "CeladonCity_GameCorner",
-      "object": {"npc": "CeladonCity_GameCorner_EventScript_CoinsClerk"},
+      "object": {
+        "npc": "CeladonCity_GameCorner_EventScript_CoinsClerk"
+      },
       "stand": [6, 4],
       "facing": "north"
     },
     "celadon_prize_room_mon_clerk": {
       "map": "CeladonCity_GameCorner_PrizeRoom",
-      "object": {"npc": "CeladonCity_GameCorner_PrizeRoom_EventScript_PrizeClerkMons"},
+      "object": {
+        "npc": "CeladonCity_GameCorner_PrizeRoom_EventScript_PrizeClerkMons"
+      },
       "stand": [4, 4],
       "facing": "north"
     },
     "celadon_prize_room_outside": {
       "map": "CeladonCity",
-      "object": {"warp": "warp_5", "to_map": "CeladonCity_GameCorner_PrizeRoom"},
+      "object": {
+        "warp": "warp_5",
+        "to_map": "CeladonCity_GameCorner_PrizeRoom"
+      },
       "stand": [39, 21],
       "facing": "south"
     },
     "celadon_restaurant_coin_case_man": {
       "map": "CeladonCity_Restaurant",
-      "object": {"npc": "CeladonCity_Restaurant_EventScript_CoinCaseMan"},
+      "object": {
+        "npc": "CeladonCity_Restaurant_EventScript_CoinCaseMan"
+      },
       "stand": [2, 2],
       "facing": "west"
     },
     "cinnabar_center_bill": {
       "map": "CinnabarIsland_PokemonCenter_1F",
-      "object": {"npc": "CinnabarIsland_PokemonCenter_1F_EventScript_Bill"},
+      "object": {
+        "npc": "CinnabarIsland_PokemonCenter_1F_EventScript_Bill"
+      },
       "stand": [10, 5],
       "facing": "east"
     },
     "indigo_plateau_nurse": {
       "map": "IndigoPlateau_PokemonCenter_1F",
-      "object": {"npc": "IndigoPlateau_PokemonCenter_1F_EventScript_Nurse"},
+      "object": {
+        "npc": "IndigoPlateau_PokemonCenter_1F_EventScript_Nurse"
+      },
       "stand": [13, 12],
       "facing": "north"
     },
     "lavender_mart_clerk": {
       "map": "LavenderTown_Mart",
-      "object": {"npc": "LavenderTown_Mart_EventScript_Clerk"},
+      "object": {
+        "npc": "LavenderTown_Mart_EventScript_Clerk"
+      },
       "stand": [4, 3],
       "facing": "west"
     },
     "lavender_mart_outside": {
       "map": "LavenderTown",
-      "object": {"warp": "warp_5", "to_map": "LavenderTown_Mart"},
+      "object": {
+        "warp": "warp_5",
+        "to_map": "LavenderTown_Mart"
+      },
       "stand": [20, 16],
       "facing": "south"
     },
     "lavender_nurse": {
       "map": "LavenderTown_PokemonCenter_1F",
-      "object": {"npc": "LavenderTown_PokemonCenter_1F_EventScript_Nurse"},
+      "object": {
+        "npc": "LavenderTown_PokemonCenter_1F_EventScript_Nurse"
+      },
       "stand": [7, 4],
       "facing": "north"
     },
     "one_island_harbor_sailor": {
       "map": "OneIsland_Harbor",
-      "object": {"npc": "OneIsland_Harbor_EventScript_Sailor"},
+      "object": {
+        "npc": "OneIsland_Harbor_EventScript_Sailor"
+      },
       "stand": [8, 5],
       "facing": "south"
     },
+    "route4_center_pc": {
+      "map": "Route4_PokemonCenter_1F",
+      "object": {
+        "not_in_maps": "the Center's PC (11, 1), a standard Center's (Standard_center.pc_front), where frlg.ace_setup deposits and checks Box 3"
+      },
+      "stand": [11, 2],
+      "facing": "north"
+    },
+    "route4_magikarp_salesman": {
+      "map": "Route4_PokemonCenter_1F",
+      "object": {
+        "npc": "Route4_PokemonCenter_1F_EventScript_MagikarpSalesman"
+      },
+      "stand": [2, 3],
+      "facing": "west"
+    },
     "route6_hidden_rare_candy": {
       "map": "Route6",
-      "object": {"hidden_item": "FLAG_HIDDEN_ITEM_ROUTE6_RARE_CANDY"},
+      "object": {
+        "hidden_item": "FLAG_HIDDEN_ITEM_ROUTE6_RARE_CANDY"
+      },
       "stand": [19, 6],
       "facing": "north"
     },
     "two_island_game_corner_outside": {
       "map": "TwoIsland",
-      "object": {"warp": "warp_0", "to_map": "TwoIsland_JoyfulGameCorner"},
+      "object": {
+        "warp": "warp_0",
+        "to_map": "TwoIsland_JoyfulGameCorner"
+      },
       "stand": [39, 10],
       "facing": "east"
     },
     "two_island_harbor_sailor": {
       "map": "TwoIsland_Harbor",
-      "object": {"npc": "TwoIsland_Harbor_EventScript_Sailor"},
+      "object": {
+        "npc": "TwoIsland_Harbor_EventScript_Sailor"
+      },
       "stand": [8, 5],
       "facing": "south"
     }
   },
   "towns": {
-    "indigo_plateau": {"nurse": "indigo_plateau_nurse", "fly": "IndigoPlateau"},
-    "lavender": {"nurse": "lavender_nurse", "fly": "LavenderTown", "mart": "lavender_mart_clerk"}
+    "indigo_plateau": {
+      "nurse": "indigo_plateau_nurse",
+      "fly": "IndigoPlateau"
+    },
+    "lavender": {
+      "nurse": "lavender_nurse",
+      "fly": "LavenderTown",
+      "mart": "lavender_mart_clerk"
+    }
   }
 }

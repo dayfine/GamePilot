@@ -89,7 +89,25 @@ let sevii_story =
     viewport = Nso_gba;
   }
 
-let all = [ start_menu_poc; mail_glitch; supplies; team_training; sevii_story ]
+let ace_setup =
+  {
+    id = "frlg.ace_setup";
+    game = frlg;
+    name = "ACE Setup";
+    group = [ "FRLG"; "Glitches" ];
+    description =
+      "Sets up arbitrary code execution from the Mail Glitch: Magikarp seen, \
+       then the ? Mail's words put species 0x0351 in Box 3 slot 1.";
+    doc = "docs/programs/frlg-ace-setup.md";
+    checkpoints = Some "src/games/frlg/programs/ace_setup/plans";
+    backends = [ Mgba ];
+    viewport = Nso_gba;
+  }
+
+let all =
+  [
+    start_menu_poc; mail_glitch; supplies; team_training; sevii_story; ace_setup;
+  ]
 
 let short_id p =
   let prefix = p.game.game_id ^ "." in

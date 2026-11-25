@@ -99,6 +99,35 @@ val mail_field_one : width:int -> t
     field after the word and a 17-pixel gap. The window's left (x 24) and top
     measured on mGBA, where ABRA reads at x 41, glyphs from y 2 (2026-11-23). *)
 
+val mail_field : row:int -> left:int -> width:int -> t
+(** A word field on row [row] (0..4) of the mail editor, starting [left] pixels
+    into the picture: each row's first field at {!mail_field_one}'s x 41, the
+    second after the first's word and a 17-pixel gap; rows 16 apart (pokefirered
+    easy_chat_3.c [PrintECFields] prints row [i] at y [16 i]). Measured on mGBA
+    (the ? Mail's ??? fields and BULK UP, CAPABLE, KARATE CHOP, MAGIKARP,
+    2026-11-25). *)
+
+val easy_chat_rows : int
+(** Rows the Easy Chat lower panel shows at once: 4. *)
+
+val easy_chat_word_cell : row:int -> col:int -> width:int -> t
+(** A word on shown row [row] (0..3) and column [col] (0..1) of the Easy Chat
+    word list: pokefirered easy_chat_3.c [PrintECRowsWin2] prints column [j] at
+    x [(13 j + 3) 8] of window 2 (at x 8), rows 16 apart; the shown rows' glyph
+    tops at y 92, 108, 124, 140. Measured on mGBA (MOVE 1, ACTIONS, MOVE 2 and
+    POKéMON lists, 2026-11-25). *)
+
+val easy_chat_group_cell : row:int -> col:int -> width:int -> t
+(** A group's name on shown row [row] (0..3) and column [col] (0..1) of the Easy
+    Chat group grid: [PrintECGroupsMenu] prints column [x] at x [84 x + 10] of
+    window 2, so x 18 and 102, on the word list's rows. Measured on mGBA. *)
+
+val pc_data_level : t
+(** The level's digits in the box screen's PKMN DATA panel, after the "Lv"
+    glyph: white with a dark shadow (read with {!Line_reading.light_ink}), the
+    digits' cell top at y 117 from x 34. Measured on mGBA (the ACE Pokémon in
+    Box 3, Lv 100, 2026-11-25). *)
+
 (** {1 Template rows and the probe box} *)
 
 val template_top : int

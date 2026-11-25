@@ -35,6 +35,11 @@ let field_move_users = Frlg_actions.Action_args.field_move_users
 let named ~where action args =
   let brought = brought_keys action in
   if List.mem_assoc action field_move_users then []
+  else if action = "pc_deposit" then
+    (* Its ["species"] is the list of members it stores. *)
+    Option.fold ~none:[]
+      ~some:(J.strings (where ^ "species"))
+      (J.find "species" args)
   else
     List.filter_map
       (fun k -> if List.mem k brought then None else J.string_opt ~where k args)

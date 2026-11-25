@@ -20,4 +20,4 @@ val perform :
 val handlers : context -> (string * Pokemon_checkpoints.Game.game_action) list
 (** One handler per {!Action_requests.names}: decode, then {!perform}; then
     mg-06's ({!Mail_glitch_use.handlers}) and the Rare Candy ones
-    ({!Candy_actions.handlers}). *)
+    ({!Candy_actions.handlers}), and the ACE setup's ({!Ace_mail.handlers}). *)

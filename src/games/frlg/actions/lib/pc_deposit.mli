@@ -15,3 +15,13 @@ val max_presses : int -> int
 val deposit : log:(string -> unit) -> string list -> unit
 (** Stores these species (slugs) in the first boxes with room, and is back on
     the overworld. Fails as [pc_deposit] naming the screen and why. *)
+
+val look : unit -> Pc_deposit_steps.look
+(** One look at the PC's screen: the view, the cursor row's label, PKMN DATA's
+    species on the party panel, "The BOX is full.". A frame that reads as the
+    overworld is looked at again 800 ms later. With {!Frlg_readers.Pc_screen}'s
+    probes subscribed. *)
+
+val press : Pc_deposit_steps.press -> unit
+(** The fork's press: A and B held 160 ms then 640 ms, the D-pad 160 then 320, a
+    wait 500. *)

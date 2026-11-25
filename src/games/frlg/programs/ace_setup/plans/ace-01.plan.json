@@ -1,0 +1,130 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "frlg",
+  "checkpoint": {
+    "id": "ace-01",
+    "title": "Magikarp seen: MIMIEN to the PC, a Magikarp bought at the Route 4 Pokemon Center",
+    "start": {
+      "map": "CeladonCity_DepartmentStore_1F",
+      "tiles": [
+        [6, 2]
+      ],
+      "facing": "south"
+    },
+    "events": [
+      {
+        "id": "out_of_dept_store",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "place": "celadon_dept_store_west_door_outside"
+          }
+        },
+        "why": "Out of the Dept. Store by the west door, to fly."
+      },
+      {
+        "id": "fly_route4",
+        "kind": "game_action",
+        "action": "fly",
+        "args": {
+          "town": "Route4",
+          "species": "pidgey"
+        },
+        "declared_after": {
+          "map": "Route4",
+          "tiles": [
+            [12, 6]
+          ],
+          "facing": "south"
+        },
+        "why": "The Route 4 Pokemon Center: its PC and the Magikarp salesman."
+      },
+      {
+        "id": "to_pc",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "place": "route4_center_pc"
+          }
+        },
+        "why": "Below the Center's PC, facing it."
+      },
+      {
+        "id": "deposit_mimien",
+        "kind": "game_action",
+        "action": "pc_deposit",
+        "args": {
+          "species": ["mr-mime"]
+        },
+        "why": "MIMIEN still points at the leaked mail record 0, so Retro Mail given to it opens that record, not the ? Mail. Out of the party, it leaves a slot for a member whose mail index is 0xFF (the Magikarp)."
+      },
+      {
+        "id": "to_salesman",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "place": "route4_magikarp_salesman"
+          }
+        },
+        "why": "Facing the Magikarp salesman."
+      },
+      {
+        "id": "talk_salesman",
+        "kind": "talk",
+        "why": "\"Would you like to buy a MAGIKARP for just $500?\" (pret Route4_PokemonCenter_1F_EventScript_MagikarpSalesman)."
+      },
+      {
+        "id": "buy_magikarp",
+        "kind": "answer",
+        "args": {
+          "yes": true
+        },
+        "once_per_save": true,
+        "why": "YES: $500, Magikarp Lv 5 joins the party in slot 6, seen and caught in the Pokedex."
+      },
+      {
+        "id": "no_nickname",
+        "kind": "answer",
+        "args": {
+          "yes": false
+        },
+        "why": "No nickname."
+      },
+      {
+        "id": "clear_salesman_text",
+        "kind": "scene",
+        "declared_after": {
+          "map": "Route4_PokemonCenter_1F",
+          "tiles": [
+            [2, 3]
+          ],
+          "facing": "west"
+        },
+        "why": "The salesman's last line, back to free control."
+      }
+    ]
+  },
+  "execution": {
+    "menu": "full"
+  },
+  "metadata": {
+    "phase": "testing",
+    "retries": 3,
+    "notes": "Starts where frlg.mail_glitch's 08-activate-and-verify ends (Celadon Dept. Store 1F (6, 2), the save spot frlg.supplies and frlg.team_training start from). The Post-E4 ACE route (pomeg-letterbombers' FRLG non-JPN Post-E4 route) needs Magikarp seen for its fourth word, and on the save 08 leaves it is not (Gyarados is). The salesman is the cheapest way: $500, one talk, no rod and no battle. The ? Mail opens on mail[0xFF] only for a member whose mail index is 0xFF while all six party mail records are taken (the leaked record 0 and the five filler mails): MIMIEN's index is 0, so MIMIEN goes to the PC and the Magikarp, with no mail, takes slot 6. Depositing MIMIEN also ends its stale index 0: later item duplication gives mail to a 0xFF member and reads the ? Mail's words, not ABRA.",
+    "postconditions": {
+      "party_includes": ["magikarp", "pidgey"],
+      "party_slots": [
+        {
+          "slot": 6,
+          "species": "magikarp"
+        }
+      ],
+      "money": {
+        "spent": 500
+      }
+    }
+  }
+}

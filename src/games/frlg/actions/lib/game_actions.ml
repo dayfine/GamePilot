@@ -88,3 +88,4 @@ let handlers ctx =
   List.map (fun name -> (name, handler ctx name)) R.names
   @ Mail_glitch_use.handlers ~log:ctx.log ~party:ctx.party
   @ Candy_actions.handlers ~log:ctx.log ~party:ctx.party
+  @ Ace_mail.handlers ~log:ctx.log ~party:ctx.party
