@@ -39,7 +39,7 @@ let to_party ~slot () =
   Party_actions.choose_slot slot
 
 let closed_without_candy ~log () =
-  M.close "the bag" Bag_screen.bag_open;
+  M.close_through_fades "the bag" Bag_screen.bag_open;
   M.settle_back ~label:"no rare candy" ~log
 
 let open_candy ~log ~slot :
@@ -190,7 +190,7 @@ let evolution ~cancel : Level_up.scene =
 
 let close_bag ~log () =
   Menu_step.result (fun () ->
-      M.close "the bag" Bag_screen.bag_open;
+      M.close_through_fades "the bag" Bag_screen.bag_open;
       M.settle_back ~label:"rare candy" ~log)
 
 let party_menu_game_steps ~log : Level_up.game_steps =

@@ -34,7 +34,7 @@ let read_marks ~log =
   let marks =
     List.init (Party_menu.members m) (fun i -> Party_menu.mark m (i + 1))
   in
-  M.close "the party" Party_menu.party_menu;
+  M.close_through_fades "the party" Party_menu.party_menu;
   M.settle_back ~label:"party marks" ~log;
   marks
 
@@ -64,7 +64,7 @@ let read_glitched_mail ~log ~slot ~word =
   log ("Mail: the editor reads " ^ word ^ " in field 1 (proof A).");
   M.press Wire.Start;
   Party_actions.confirm_mail ();
-  M.close "the bag" bag_or_party;
+  M.close_through_fades "the bag" bag_or_party;
   M.settle_back ~label:"read glitched mail" ~log
 
 (* While an item moves, the list's cursor is hidden (pokefirered
@@ -88,7 +88,7 @@ let move_to_top ~log item =
       Bag_items.to_top ();
       if Bag_items.list_row item <> Some 0 then
         M.fail "item_not_on_top" (item ^ " did not move to the top"));
-  M.close "the bag" Bag_screen.bag_open;
+  M.close_through_fades "the bag" Bag_screen.bag_open;
   M.settle_back ~label:"move item" ~log
 
 let marks ~where args =

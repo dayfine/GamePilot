@@ -56,13 +56,15 @@ module Fade_in = Frlg_overworld.Warp_fade_in
    the still spell after them take about 2 s (110 frames). *)
 let fade_in_timeout_ms = 5000
 
-let await_fade_in ~code what =
+let fade_in_frame ~code what =
   let watch = Fade_in.watch () in
   let came_up m =
     Fade_in.watch_frame watch m;
     Fade_in.came_up watch
   in
-  ignore (await_screen ~timeout_ms:fade_in_timeout_ms ~code what came_up)
+  await_screen ~timeout_ms:fade_in_timeout_ms ~code what came_up
+
+let await_fade_in ~code what = ignore (fade_in_frame ~code what)
 
 (* The menus a party read goes through: none has a box or a fade the settle's
    look tells from the overworld. *)
@@ -150,3 +152,16 @@ let close_press_ms = 500
 let close what reader =
   press_until ~code:"not_closed" (what ^ " closed") Wire.B
     ~cooldown_ms:close_press_ms (fun m -> not (reader m))
+
+(* The editor, the party and the bag: each closes through a fade of its own. *)
+let max_faded_closes = 3
+
+let rec close_faded_from closes what reader =
+  close what reader;
+  let m = fade_in_frame ~code:"not_closed" ("the screen after " ^ what) in
+  if reader m then
+    if closes >= max_faded_closes then
+      fail "not_closed" (what ^ " did not close")
+    else close_faded_from (closes + 1) what reader
+
+let close_through_fades what reader = close_faded_from 1 what reader

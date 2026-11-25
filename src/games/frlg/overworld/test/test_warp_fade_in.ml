@@ -71,6 +71,31 @@ let came_up_at frames presses =
   in
   Printf.sprintf "%s; B at %s" first (String.concat ", " (List.map at presses))
 
+(* As {!came_up_at}, through several fades: each frame on which the watch
+   comes up again. *)
+let ups_at frames presses =
+  let w = Warp_fade_in.watch () in
+  let up =
+    List.map
+      (fun (m : Effects.measurements) ->
+        Warp_fade_in.watch_frame w m;
+        Warp_fade_in.came_up w)
+      frames
+  in
+  let firsts =
+    List.mapi (fun i u -> (i, u)) up
+    |> List.filter_map (fun (i, u) ->
+           if u && (i = 0 || not (List.nth up (i - 1))) then
+             Some (string_of_int i)
+           else None)
+  in
+  let at i =
+    Printf.sprintf "%d %s" i (if List.nth up i then "after" else "before")
+  in
+  Printf.sprintf "up at frames %s; B at %s"
+    (String.concat ", " firsts)
+    (String.concat ", " (List.map at presses))
+
 let held_still n (lit : Effects.measurements) =
   List.init n (fun i -> { lit with seq = i; t_ms = float_of_int i *. frame_ms })
 
@@ -134,6 +159,20 @@ let () =
         (fun () ->
           came_up_at (frames "fixtures/bag_close.fade.jsonl") [ 0; 4; 85; 166 ])
         "up at frame 104; B at 0 before, 4 before, 85 before, 166 after";
+      (* 08-activate-and-verify testing run 1 (2026-11-24), a Retro Mail given
+         from the bag: the editor's YES at frame 0 fades it out, black from 9,
+         the party up in steps from 48 to 499 by 63. The talk settle's first B
+         came at 10, in the black, and was lost. Its B at 172 closed the party
+         to the bag (black from 183, up to 535 by 222), the one at 253 the bag
+         (black from 264, up in steps from 297 to 433 by 311). Menu_input's
+         close_through_fades watches each of the three fades from its close. *)
+      case "a given mail: up after each of its three fades"
+        (fun () ->
+          ups_at
+            (frames "fixtures/mail_give_close.fade.jsonl")
+            [ 10; 91; 172; 253; 335 ])
+        "up at frames 73, 234, 323; B at 10 before, 91 after, 172 after, 253 \
+         after, 335 after";
       case "a screen that never changes is up after 1 s"
         (fun () ->
           over_at
