@@ -1,0 +1,100 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "frlg",
+  "execution": {
+    "menu": "full"
+  },
+  "metadata": {
+    "phase": "testing",
+    "notes": "From the harbor north into Three Island's port, whose map turns PC storage back on (pret ThreeIsland_Port_OnTransition clears FLAG_SYS_PC_STORAGE_DISABLED), and on north into town below the Bikers. Two coord-event rows stand across the street: row 27 (x 7 to 11) runs the boss's intro while VAR_MAP_SCENE_THREE_ISLAND is 2 (03's Game Corner scene set it), row 26 the battles once it is 3 (ThreeIsland_EventScript_BattleBikersScene). Each is stepped onto with nothing watched, since its text shows at once and a walk would press B through it, and B would answer the Biker's question NO. On (8, 26) the scene runs with VAR_TEMP_1 1 (MidLeft): a Biker comes down, asks \"You wanna make something of it or what?\" (YES), then three Biker goons (Koffing and Grimer 37, Koffing 38, Grimer 38) and Cue Ball Paxton (Weezing and Muk 39) battle the player in a row, each with lines before and after, all in one scene; Paxton walks down to (8, 25), the Bikers are removed and the scene sets VAR_MAP_SCENE_THREE_ISLAND to 4. Gen 3 puts the party back in its order after each battle, so BLASTOISE (Lv 60, Surf) goes to slot 1 first: with MIMIEN (Lv 33) leading, the Bikers' battles opened on it, and it fainted in the second one on mGBA. The prizes are 4 x the last Pokemon's level x the class's base (pokefirered GetMoney: Biker 5, Cue Ball 6): 740, 760, 760 and 936, $3,196 in all. The game is set to the Set battle style, so no \"Will ... change POKeMON?\" is asked.",
+    "postconditions": {
+      "money": {"spent": -3196},
+      "position": {
+        "map": "ThreeIsland",
+        "tiles": [
+          [8, 26]
+        ],
+        "facing": "north"
+      }
+    }
+  },
+  "checkpoint": {
+    "id": "04-three-island-bikers",
+    "title": "Three Island's port turns storage back on; the Bikers and Cue Ball Paxton",
+    "start": {
+      "map": "ThreeIsland_Harbor",
+      "tiles": [
+        [8, 5]
+      ],
+      "facing": "south"
+    },
+    "events": [
+      {
+        "id": "lead_blastoise",
+        "kind": "game_action",
+        "action": "party_swap",
+        "args": {"species": "blastoise", "target_slot": 1},
+        "why": "BLASTOISE (Lv 60, Surf) to slot 1, to lead every one of the Bikers' battles."
+      },
+      {
+        "id": "below_bikers",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {"map": "ThreeIsland", "tiles": [[8, 28]], "facing": "north"}
+        },
+        "why": "North out of the harbor through the port (storage comes back on) into town, below the boss's intro row."
+      },
+      {
+        "id": "onto_boss_intro",
+        "kind": "step",
+        "args": {"direction": "north"},
+        "why": "Onto (8, 27): the boss's intro starts at once.",
+        "declared_after": {
+          "map": "ThreeIsland",
+          "tiles": [
+            [8, 27]
+          ],
+          "facing": "north"
+        }
+      },
+      {
+        "id": "boss_intro_scene",
+        "kind": "scene",
+        "why": "The islanders and Paxton argue (ThreeIsland_EventScript_BikerBossIntroTrigger); the player stays put."
+      },
+      {
+        "id": "onto_bikers",
+        "kind": "step",
+        "args": {"direction": "north"},
+        "why": "Onto (8, 26): a Biker spots the player, comes down a tile and speaks.",
+        "declared_after": {
+          "map": "ThreeIsland",
+          "tiles": [
+            [8, 26]
+          ],
+          "facing": "north"
+        }
+      },
+      {
+        "id": "take_on_bikers",
+        "kind": "answer",
+        "args": {"yes": true},
+        "why": "A turns the Biker's first page; YES to \"You wanna make something of it or what?\" and the first battle starts."
+      },
+      {
+        "id": "bikers_battles",
+        "kind": "train",
+        "args": {"battles": 4},
+        "why": "Three Biker goons, then Cue Ball Paxton, each with lines before and after; the scene ends with the Bikers gone.",
+        "declared_after": {
+          "map": "ThreeIsland",
+          "tiles": [
+            [8, 26]
+          ],
+          "facing": "north"
+        }
+      }
+    ]
+  }
+}

@@ -202,3 +202,48 @@ let walk t at legs =
       Error
         (Pokemon_checkpoints.Failure.cause "message_stuck"
            "a message on the overworld did not close")
+
+let step_leg (at : at) direction
+    (s : Connected_maps.place Grid_planning.Leg.step) :
+    Connected_maps.place Grid_planning.Leg.t =
+  {
+    kind = Walk { tiles = 1; to_wall = false };
+    direction;
+    warps = s.warped;
+    wild = s.wild;
+    facing_after = s.facing;
+    start = at.place;
+    finish = s.next;
+  }
+
+let step_failed fmt =
+  Printf.ksprintf
+    (fun s -> Error (Pokemon_checkpoints.Failure.cause "step_unsupported" s))
+    fmt
+
+(* The hold for one tile at a walk, a turn tap first if the player faces
+   another way; nothing is watched, so a scene's text is left to the plan. *)
+let hold_step spec ~turn_first =
+  let open Grid_walker.Leg_spec in
+  let turn = if turn_first then Route_legs.turn_tap spec.direction else [] in
+  ignore
+    (Effects.submit
+       (turn
+       @ Route_legs.mover ~running:false spec.direction
+           (spec.tile_ms * spec.tiles)))
+
+let step t at direction =
+  let name = Direction.name direction in
+  match Frlg_steps.press t.world at.place direction with
+  | None -> step_failed "no step %s from here" name
+  | Some s when s.warped || s.wild ->
+      step_failed "the step %s takes a warp or may meet a wild battle" name
+  | Some s -> (
+      let leg = step_leg at direction s in
+      match Route_legs.move_of t.world Walking ~facing:at.facing leg with
+      | Ok (Hold { spec; turn_first; _ }) ->
+          t.log ("Step: " ^ name ^ ", nothing watched.");
+          hold_step spec ~turn_first;
+          Ok { place = s.next; facing = Some s.facing }
+      | Ok (Turn _) -> step_failed "the step %s is a turn" name
+      | Error e -> step_failed "%s" e)

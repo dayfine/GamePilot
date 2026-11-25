@@ -1,6 +1,6 @@
 (* FireRed's Game.t through the story runner: a route out of the player's
-   house, then a talk, on a scripted screen; and a route with no position to
-   walk from. *)
+   house, then a talk, on a scripted screen; a route with no position to walk
+   from; and the plan's one-tile step. *)
 
 open Frlg_actions
 open Frlg_overworld_fixtures
@@ -168,11 +168,34 @@ let cut_screen screen (p : S.press) =
 let below_tree : Pokemon_checkpoints.Pose.observed =
   { at_map = "Route16"; at_tile = { x = 41; y = 12 }; faces = Some North }
 
+(* The plan's [step]: one tile, nothing watched, as onto a scene's tile. *)
+let step_checkpoint direction =
+  { checkpoint with events = [ event "step" (Game (Step direction)) ] }
+
+let in_pallet faces : Pokemon_checkpoints.Pose.observed =
+  { at_map = "PalletTown"; at_tile = { x = 12; y = 9 }; faces }
+
 let case name input expectation = { Table_test.name; input; expectation }
 
 let () =
   Table_test.run "checkpoint_game"
     [
+      case "a step: one tile on, facing its way"
+        (run ~checkpoint:(step_checkpoint West) (Some (in_pallet (Some West))))
+        "ok; at PalletTown (11, 9) west; left 267";
+      case "a step facing another way: a turn tap first"
+        (run ~checkpoint:(step_checkpoint West) (Some (in_pallet (Some South))))
+        "ok; at PalletTown (11, 9) west; left, left 267";
+      case
+        "a step off the exit mat, through its warp, is refused, nothing pressed"
+        (run ~checkpoint:(step_checkpoint South)
+           (Some { house with at_tile = { x = 4; y = 8 }; faces = Some South }))
+        "test event 1 (step): step_unsupported: the step south takes a warp or \
+         may meet a wild battle; at PalletTown_PlayersHouse_1F (4, 8) south; ";
+      case "a step with no position to step from"
+        (run ~checkpoint:(step_checkpoint West) None)
+        "test event 1 (step): position_unknown: no position to walk from; at \
+         unknown; ";
       case "a route out of the house, then a talk" (run (Some house))
         "ok; at PalletTown (6, 8) south; down, down 667, A, B x6";
       case "no position to walk from" (run None)
