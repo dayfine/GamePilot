@@ -34,26 +34,16 @@ let nothing_read =
     marks = None;
   }
 
-type verdict = Passed | Failed | Not_checked
-type result = { what : string; verdict : verdict; detail : string }
+type verdict = Promise.verdict = Passed | Failed | Not_checked
 
-let verdict_name = function
-  | Passed -> "passed"
-  | Failed -> "failed"
-  | Not_checked -> "not checked"
+type result = Promise.result = {
+  what : string;
+  verdict : verdict;
+  detail : string;
+}
 
-let not_read what =
-  { what; verdict = Not_checked; detail = "the game can't read it" }
-
-let expected_read what ~expected ~read holds =
-  if holds then { what; verdict = Passed; detail = read }
-  else
-    {
-      what;
-      verdict = Failed;
-      detail = Printf.sprintf "expected %s, read %s" expected read;
-    }
-
+let expected_read = Promise.judge
+let not_read = Promise.not_read
 let member_text = Option.value ~default:"?"
 let party_text members = String.concat ", " (List.map member_text members)
 
@@ -70,8 +60,7 @@ let in_order expected members =
     List.compare_lengths expected members <> 0
     || List.exists2 differs expected members
   then expected_read what ~expected:(String.concat ", " expected) ~read false
-  else if unread members > 0 then
-    { what; verdict = Not_checked; detail = "read " ^ read }
+  else if unread members > 0 then Promise.not_checked what ~why:("read " ^ read)
   else expected_read what ~expected:"" ~read true
 
 (* Each species needs as many members as the list names it. *)
@@ -100,8 +89,7 @@ let includes expected slots members =
   let expected_text = includes_text expected slots in
   match (missing_members expected members, wrong_slots slots members) with
   | [], [] -> expected_read what ~expected:expected_text ~read true
-  | _ when unread members > 0 ->
-      { what; verdict = Not_checked; detail = "read " ^ read }
+  | _ when unread members > 0 -> Promise.not_checked what ~why:("read " ^ read)
   | _ -> expected_read what ~expected:expected_text ~read false
 
 let check_party (expected : Plan.party option) observed =
@@ -112,35 +100,11 @@ let check_party (expected : Plan.party option) observed =
   | Some (Party_includes { members = list; slots }), Some members ->
       [ includes list slots members ]
 
-let delta_text n =
-  if n < 0 then Printf.sprintf "used %d" (-n) else Printf.sprintf "gained %d" n
-
-(* Passed: "gained 1 (4 to 5)"; failed: "expected gained 1, read gained 3 (2
-   to 5)". *)
-let check_gained what n ~start read =
-  let from_to = Printf.sprintf "(%d to %d)" start read in
-  expected_read what ~expected:(delta_text n)
-    ~read:(delta_text (read - start) ^ " " ^ from_to)
-    (read - start = n)
-
-let start_not_read what =
-  {
-    what;
-    verdict = Not_checked;
-    detail = "the count at the start was not read";
-  }
-
 let check_count what (count : Plan.count) ~start read =
-  match (count, start) with
-  | Count_exactly n, _ ->
-      expected_read what ~expected:(string_of_int n) ~read:(string_of_int read)
-        (read = n)
-  | Count_at_least n, _ ->
-      expected_read what
-        ~expected:(Printf.sprintf "at least %d" n)
-        ~read:(string_of_int read) (read >= n)
-  | Count_gained _, None -> start_not_read what
-  | Count_gained n, Some start -> check_gained what n ~start read
+  match count with
+  | Count_exactly n -> Promise.count_exactly what n ~read
+  | Count_at_least n -> Promise.count_at_least what n ~read
+  | Count_gained n -> Promise.count_gained what n ~start ~read
 
 let check_item observed ({ bag_item; count } : Plan.bag_count) =
   let what = "item " ^ bag_item in
@@ -158,49 +122,14 @@ let check_coins expected observed =
   | Some count, Some read ->
       [ check_count "coins" count ~start:observed.start.start_coins read ]
 
-let money_text money = Printf.sprintf "$%d" money
-
-let range_text min max =
-  if min = max then money_text min
-  else Printf.sprintf "%s to %s" (money_text min) (money_text max)
-
-let check_range ~min ~max read =
-  expected_read "money" ~expected:(range_text min max) ~read:(money_text read)
-    (min <= read && read <= max)
-
-(* Passed: "spent $4100 ($29202 to $25102)"; failed: "expected spent $4100,
-   read spent $4188 ($29202 to $25014)". *)
-let check_spent amount ~start read =
-  let spent = start - read in
-  let from_to = Printf.sprintf "(%s to %s)" (money_text start) (money_text read)
-  and spent_text n = "spent " ^ money_text n in
-  if spent = amount then
-    {
-      what = "money";
-      verdict = Passed;
-      detail = spent_text spent ^ " " ^ from_to;
-    }
-  else
-    expected_read "money" ~expected:(spent_text amount)
-      ~read:(spent_text spent ^ " " ^ from_to)
-      false
-
 let check_money (expected : Plan.money option) observed =
-  match (expected, observed.money, observed.start.start_money) with
-  | None, _, _ -> []
-  | Some _, None, _ -> [ not_read "money" ]
-  | Some (Money_range { min; max }), Some read, _ ->
-      [ check_range ~min ~max read ]
-  | Some (Money_spent _), Some _, None ->
-      [
-        {
-          what = "money";
-          verdict = Not_checked;
-          detail = "the money at the start was not read";
-        };
-      ]
-  | Some (Money_spent amount), Some read, Some start ->
-      [ check_spent amount ~start read ]
+  match (expected, observed.money) with
+  | None, _ -> []
+  | Some _, None -> [ not_read "money" ]
+  | Some (Money_range { min; max }), Some read ->
+      [ Promise.money_range ~min ~max ~read ]
+  | Some (Money_spent amount), Some read ->
+      [ Promise.money_spent amount ~start:observed.start.start_money ~read ]
 
 let check_flag observed flag =
   let what = "flag " ^ flag in
@@ -256,29 +185,6 @@ let check (expected : Plan.postconditions) observed =
       check_marks expected.marks observed;
     ]
 
-let unmet = List.filter (fun r -> r.verdict <> Passed)
-
-let result_to_string r =
-  Printf.sprintf "%s: %s: %s" r.what (verdict_name r.verdict) r.detail
-
-let count verdict results =
-  List.length (List.filter (fun r -> r.verdict = verdict) results)
-
-let summary results =
-  if results = [] then "nothing to check"
-  else if count Failed results > 0 then "failed"
-  else if count Not_checked results > 0 then "incomplete"
-  else "passed"
-
-let log_lines checkpoint results =
-  List.map
-    (fun r ->
-      Printf.sprintf "[Postcondition] %s %s" checkpoint (result_to_string r))
-    results
-  @ [
-      Printf.sprintf
-        "[Postcondition] %s: %d passed, %d failed, %d not checked: %s"
-        checkpoint (count Passed results) (count Failed results)
-        (count Not_checked results)
-        (summary results);
-    ]
+let unmet = Promise.unmet
+let result_to_string = Promise.result_to_string
+let log_lines = Promise.log_lines ~tag:"Postcondition"

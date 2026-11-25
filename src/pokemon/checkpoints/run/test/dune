@@ -4,6 +4,7 @@
   test_repeat_until
   test_checkpoint_trials
   test_postcondition_check
+  test_promise
   test_room_policy
   test_event_states)
  (modules
@@ -13,6 +14,7 @@
   test_repeat_until
   test_checkpoint_trials
   test_postcondition_check
+  test_promise
   test_room_policy
   test_event_states)
  (libraries
