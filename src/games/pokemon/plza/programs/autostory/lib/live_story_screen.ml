@@ -66,6 +66,7 @@ let look_of ~still (m : Effects.measurements) : L.t =
     main_menu = s.main_menu;
     alert_eye = s.alert_eye;
     battle = s.battle;
+    lead_hp = s.lead_hp;
     story_dialog = s.story_dialog;
     moves = List.map (Option.map effectiveness) s.moves;
     confirm_row = Confirm_choices.read m;

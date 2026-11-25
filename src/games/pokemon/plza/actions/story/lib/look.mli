@@ -54,6 +54,10 @@ type t = {
       (** The recorded minimap the top-left one matches
           ({!Plza_readers.Minimap}), as the fork's start signature reads it. *)
   battle : bool;  (** The battle HUD. *)
+  lead_hp : float option;
+      (** The lead's HP bar under its level badge, as the share of the bar's box
+          in the fill colours ({!Plza_readers.Battle_hud.lead_hp}): 0.89 for any
+          HP over about 70%, 0.04 at 1 HP of 19; [None] without the badge. *)
   story_dialog : bool;
       (** A dialogue box as the fork's story dialogue detector reads it by
           default (the white box with its arrow, blue or teal): the end of a

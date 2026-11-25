@@ -135,36 +135,63 @@ let no_dialogue =
 
 let lost =
   Failure.cause "battle_lost"
-    "a black fade after the attacks: the lead fainted (the heal and the \
-     rematch follow)"
+    "a black fade with the lead's HP near empty: the lead fainted (before any \
+     Pokémon Center, the heal and the rematch follow)"
 
-let log_lost steps =
+(* The lead's HP at or under this is evidence of a loss: about 10% of the
+   bar (1 HP of 19 reads 0.04; a bar over about 70% reads 0.89). *)
+let near_empty_hp = 0.1
+
+let hp_text = function
+  | Some hp -> Printf.sprintf "the lead's HP last read %.2f" hp
+  | None -> "no HP read for the lead"
+
+let lead_near_empty = function Some hp -> hp <= near_empty_hp | None -> false
+
+let log_lost steps hp =
   S.(steps.log)
-    "[PLZA] story_battle: a black fade after the attacks: the battle is lost.";
+    (Printf.sprintf "[PLZA] story_battle: a black fade, %s: the battle is lost."
+       (hp_text hp));
   Error lost
+
+let log_cutscene steps hp =
+  S.(steps.log)
+    (Printf.sprintf
+       "[PLZA] story_battle: a black fade, %s: a cutscene, fighting on."
+       (hp_text hp))
+
+(* The fight's reads so far: the lead's last HP read, and whether the last
+   read was a black fade. *)
+type seen = { hp : float option; faded : bool }
 
 let fight steps =
   let misses = ref 0 in
-  let rec go ~deadline ~attacked =
+  let rec go ~deadline ~attacked before =
     let look = S.(steps.read_screen) () in
     let deadline =
       Option.value deadline ~default:(look.at_ms +. fight_timeout_ms)
     in
+    let hp = if Option.is_some look.lead_hp then look.lead_hp else before.hp in
+    let next attacked =
+      go ~deadline:(Some deadline) ~attacked { hp; faded = look.fade_black }
+    in
     if look.home_menu then Error S.game_not_running
-    else if look.fade_black && attacked then log_lost steps
+    else if look.fade_black && lead_near_empty hp then log_lost steps hp
     else if look.story_dialog && attacked then (
       S.(steps.log)
         "[PLZA] story_battle: a dialogue box after the attacks: the battle is \
          over.";
       Ok ())
     else if look.at_ms > deadline then Error no_dialogue
-    else if look.story_dialog || not (attempt_one_attack steps misses) then (
-      if not attacked then
-        S.press steps Wire.A ~hold_ms:a_hold_ms ~release_ms:a_release_ms;
-      go ~deadline:(Some deadline) ~attacked)
-    else go ~deadline:(Some deadline) ~attacked:true
+    else (
+      if look.fade_black && not before.faded then log_cutscene steps hp;
+      if look.story_dialog || not (attempt_one_attack steps misses) then (
+        if not attacked then
+          S.press steps Wire.A ~hold_ms:a_hold_ms ~release_ms:a_release_ms;
+        next attacked)
+      else next true)
   in
-  go ~deadline:None ~attacked:false
+  go ~deadline:None ~attacked:false { hp = None; faded = false }
 
 let run steps =
   Result.bind (wait_for_start steps ~start:None ~waited:0) (fun () ->

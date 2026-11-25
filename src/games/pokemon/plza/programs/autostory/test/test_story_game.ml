@@ -3,7 +3,9 @@
    decode, every event reaches its handler, and each handler's presses move a
    game that answers them as the console did. Also the failures: a walk whose
    white fade never shows (lost), a start that is not Confirm Choices, a
-   platform never seen, a story battle lost (a black fade after the attacks). And what the watch page is sent (Story_game.run_watched):
+   platform never seen, a story battle lost (the lead's HP near empty, then
+   a black fade), and a black fade with the lead healthy fought through as
+   a cutscene. And what the watch page is sent (Story_game.run_watched):
    the plan at each event's change and the run. *)
 
 open Plza_checkpoints
@@ -116,11 +118,16 @@ let pancham ?(lost = false) c =
    Chikorita's prompt until A; text until one more A, the choice until A, a
    tutorial card until A, then the battle HUD with the move symbols (left
    super effective) until a move; then Andi's text until two A, then the
-   alley's party bar. [no_symbols]: ZL never brings up the symbols. *)
+   alley's party bar. [no_symbols]: ZL never brings up the symbols. The lead's
+   HP reads 0.89 (healthy), as console B's battles read it. *)
+let healthy_hp = 0.89
+let one_hp = 0.04
+
 let battle ?(no_symbols = false) c =
   {
     (look c) with
     battle = true;
+    lead_hp = Some healthy_hp;
     moves =
       (if no_symbols then []
        else [ Some L.Effective; Some L.Super_effective; None; Some L.No_effect ]);
@@ -164,13 +171,15 @@ let rematch c =
   | Some a3 -> in_battle ~after:a3 c
 
 (* 01.03 lost: the battle with the symbols until a move; then the lead
-   faints (3 s with nothing read, as console B's frame 129 reads at 360p),
-   a black fade for [fade_ms], then Urbain's heal line for good. *)
-let starter_lost ~fade_ms c =
+   faints (3 s of its HP bar at 1 HP of 19 under the badge, as console B's
+   frames 126 and 129 read; with [no_hp], nothing read), a black fade for
+   [fade_ms], then Urbain's heal line for good. *)
+let starter_lost ?(no_hp = false) ~fade_ms c =
   let lost ~after =
     match C.nth_after c Wire.Y ~after 0 with
     | None -> battle c
-    | Some y when since c y < 3000.0 -> look c
+    | Some y when since c y < 3000.0 ->
+        if no_hp then look c else { (look c) with lead_hp = Some one_hp }
     | Some y when since c y < 3000.0 +. fade_ms -> black c
     | Some _ -> { (text c) with story_dialog = true }
   in
@@ -180,6 +189,22 @@ let starter_lost ~fade_ms c =
       match C.nth_after c Wire.A ~after:w 3 with
       | None -> starter c
       | Some a4 -> lost ~after:a4)
+
+(* 01.03 won, the lead healthy: after the move, the HUD 1 s, then a black
+   fade 2 s into Andi's line (as a won battle's cutscene shows one: 03.02b,
+   console B, 2026-11-25), then Andi's text until two A and the alley. *)
+let starter_won_fade c =
+  match C.stick_reached c 600 with
+  | None -> prompt c
+  | Some w -> (
+      match C.nth_after c Wire.A ~after:w 3 with
+      | None -> starter c
+      | Some a4 -> (
+          match C.nth_after c Wire.Y ~after:a4 0 with
+          | None -> battle c
+          | Some y when since c y < 1000.0 -> battle c
+          | Some y when since c y < 3000.0 -> black c
+          | Some y -> andi c ~after:y))
 
 (* 02.01: the alley's party bar until the stick was held 16.75 s; then
    Brigitte's text until two A, the battle HUD until a move, her speech until
@@ -399,11 +424,15 @@ let map_talk c ~y =
 
 (* 03.02b's battles from the battle HUD after [after]: the HUD until a move;
    "We're not done" until two A, the card until A, the HUD until a second
-   move; then the map talk. *)
-let taunie_from_battle c ~after =
+   move; then the map talk. [ko_fade]: Totodile beaten, the HUD (the lead at
+   21/25) 1 s, then a black fade 2 s before "We're not done", as console B's
+   French run (2026-11-25) showed it. *)
+let taunie_from_battle ?(ko_fade = false) c ~after =
   let y n = C.nth_after c Wire.Y ~after n in
   match (y 0, y 1) with
   | None, _ -> battle c
+  | Some y0, None when ko_fade && since c y0 < 1000.0 -> battle c
+  | Some y0, None when ko_fade && since c y0 < 3000.0 -> black c
   | Some y0, None -> (
       match
         (C.nth_after c Wire.A ~after:y0 1, C.nth_after c Wire.A ~after:y0 2)
@@ -415,10 +444,10 @@ let taunie_from_battle c ~after =
 
 (* 03.02b's battles after Taunie's prompt [t]: her text until two A, then
    the battles. *)
-let taunie_battles c ~t =
+let taunie_battles ?ko_fade c ~t =
   match C.nth_after c Wire.A ~after:t 2 with
   | None -> text c
-  | Some _ -> taunie_from_battle c ~after:t
+  | Some _ -> taunie_from_battle ?ko_fade c ~after:t
 
 (* 03.02b: the plaza's party bar, the scene's A prompt once the stick was held
    4 s, until A; a black fade 1.5 s, the Smart Rotom card until A, the party
@@ -428,7 +457,7 @@ let taunie_battles c ~t =
    console B (2026-11-19). [hud_flicker]: the battle HUD on one read of the
    party bar after the card. *)
 let quartiere_verde ?(lost = false) ?(battle_mid_walk = false)
-    ?(hud_flicker = false) c =
+    ?(hud_flicker = false) ?ko_fade c =
   let flicker a =
     match C.nth_after c Wire.A ~after:a 0 with
     | Some card -> hud_flicker && since c card < 250.0
@@ -452,7 +481,7 @@ let quartiere_verde ?(lost = false) ?(battle_mid_walk = false)
           | Some w -> (
               match C.nth_after c Wire.A ~after:w 0 with
               | None -> { (party c) with interact_prompt = true }
-              | Some t -> taunie_battles c ~t)))
+              | Some t -> taunie_battles ?ko_fade c ~t)))
   | _ -> party c
 
 (* 03.02b after 03.02 in a chain (console B, 2026-11-25): 03.02 left the
@@ -1070,17 +1099,46 @@ let cases =
        [PLZA] story_battle: Picking Move: Left\n\
        [Story] 01.03: done";
     case
-      "01.03 lost: the lead faints, a black fade, Urbain's heal: battle_lost, \
-       tried again"
+      "01.03 lost: the lead at 1 HP faints, a black fade, Urbain's heal: \
+       battle_lost, tried again"
       (fun () ->
         let r, c = tried "01.03" (starter_lost ~fade_ms:2000.0) in
         String.concat "\n" (r :: battle_lines c))
-      "01.03 event 3 (andi_battle): battle_lost: a black fade after the \
-       attacks: the lead fainted (the heal and the rematch follow); repeats no\n\
+      "01.03 event 3 (andi_battle): battle_lost: a black fade with the lead's \
+       HP near empty: the lead fainted (before any Pokémon Center, the heal \
+       and the rematch follow); repeats no\n\
        [PLZA] story_battle: Move Effectiveness: Top: Effective; Left: Super \
        Effective; Right: (Unable to Detect); Bottom: No Effect;\n\
        [PLZA] story_battle: Picking Move: Left\n\
-       [PLZA] story_battle: a black fade after the attacks: the battle is lost.";
+       [PLZA] story_battle: a black fade, the lead's HP last read 0.04: the \
+       battle is lost.";
+    (* With no HP read before it, a fade is no evidence of a loss: the fight
+       goes on, the heal's line reads as the won battle's, and the next scene
+       waits for control that never comes. *)
+    case
+      "01.03 lost with no HP read: the fade alone is no loss, the next scene \
+       fails"
+      (fun () -> fst (tried "01.03" (starter_lost ~no_hp:true ~fade_ms:2000.0)))
+      "01.03 event 4 (after_andi): scene_timeout: scene: Did not finish within \
+       360 s (expecting the controls hint, the party bar or the A prompt).; \
+       repeats no";
+    case
+      "01.03 won, a black fade into Andi's line, the lead healthy: a cutscene, \
+       the battle fought on to the line"
+      (fun () ->
+        let r, c = tried "01.03" starter_won_fade in
+        String.concat "\n"
+          (r
+          :: List.filter
+               (fun l ->
+                 not (String.starts_with ~prefix:"[PLZA] story_battle: M" l))
+               (battle_lines c)))
+      "passed\n\
+       [PLZA] story_battle: Picking Move: Left\n\
+       [PLZA] story_battle: a black fade, the lead's HP last read 0.89: a \
+       cutscene, fighting on.\n\
+       [PLZA] story_battle: a dialogue box after the attacks: the battle is \
+       over.";
     (* A fade shorter than the fight's reads (one per attack, 1.25 s or
        more apart) goes unseen: the heal's line reads as the won battle's,
        and the next scene waits for control that never comes, still tried
@@ -1366,6 +1424,42 @@ let cases =
        [PLZA] story_battle: Picking Move: Left\n\
        [PLZA] talk_through_map_screen: the party bar held: back in the \
        overworld";
+    case
+      "03.02b, Totodile beaten, a black fade before \"We're not done\" (the \
+       French run, console B): each battle ends where the plan says"
+      (fun () ->
+        let r, c = outcome "03.02b" (quartiere_verde ~ko_fade:true) in
+        String.concat "\n"
+          (r
+          :: List.filter
+               (fun line ->
+                 List.exists
+                   (fun prefix -> String.starts_with ~prefix line)
+                   [
+                     "[Story] 03.02b #5";
+                     "[Story] 03.02b #6";
+                     "[Story] 03.02b #7";
+                     "[PLZA] story_battle: Picking";
+                     "[PLZA] story_battle: a";
+                   ])
+               (C.lines c)))
+      "passed\n\
+       [Story] 03.02b #5 battle_totodile: start (beat Totodile, until \"We're \
+       not done just yet!\")\n\
+       [PLZA] story_battle: Picking Move: Left\n\
+       [PLZA] story_battle: a black fade, the lead's HP last read 0.89: a \
+       cutscene, fighting on.\n\
+       [PLZA] story_battle: a dialogue box after the attacks: the battle is \
+       over.\n\
+       [Story] 03.02b #5 battle_totodile: done\n\
+       [Story] 03.02b #6 tepig_battle_start: start (A through the Type \
+       Matchups tutorial and Tepig's send-out to the battle HUD)\n\
+       [Story] 03.02b #6 tepig_battle_start: done\n\
+       [Story] 03.02b #7 battle_tepig: start (beat Tepig, until Taunie's speech)\n\
+       [PLZA] story_battle: Picking Move: Left\n\
+       [PLZA] story_battle: a dialogue box after the attacks: the battle is \
+       over.\n\
+       [Story] 03.02b #7 battle_tepig: done";
     case
       "03.02b, Taunie's battle mid-walk: the walk stops on the HUD, the run \
        goes on at the battle (fork PR 725)"
