@@ -1,0 +1,97 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "frlg",
+  "execution": {
+    "menu": "full"
+  },
+  "metadata": {
+    "phase": "testing",
+    "notes": "From a save past the Hall of Fame that turned Bill down after Blaine: he waits in the Cinnabar Pokemon Center (pret CinnabarIsland_EventScript_DeclineSailToOneIsland clears FLAG_HIDE_CINNABAR_POKECENTER_BILL). The Vermilion ferry needs the Tri-Pass first (pret VermilionCity_EventScript_FerrySailor), so the first trip is Bill's. YES runs one script to the end: out of the Center with him, the Seagallop from Cinnabar's shore, the walk from One Island's harbor into its Center, and Celio's scene, which gives the Meteorite, the Tri-Pass and the Town Map's Sevii page (pret OneIsland_PokemonCenter_1F_EventScript_MeetCelioScene). It also sets FLAG_SYS_PC_STORAGE_DISABLED until Three Island's port. The walk to Bill names the tile beside him: CinnabarIsland_PokemonCenter_1F is not in PokemonSimulation's maps yet; it becomes a place once the map is there.",
+    "preconditions": {
+      "badges": 8,
+      "hall_of_fame": true
+    },
+    "postconditions": {
+      "items": [
+        {
+          "item": "tri-pass",
+          "at_least": 1
+        }
+      ]
+    }
+  },
+  "checkpoint": {
+    "id": "01-to-one-island",
+    "title": "Fly to Cinnabar; Bill takes the Seagallop to One Island, Celio gives the Tri-Pass",
+    "start": {
+      "map": "CeladonCity_DepartmentStore_1F",
+      "tiles": [
+        [6, 2]
+      ],
+      "facing": "south"
+    },
+    "events": [
+      {
+        "id": "out_of_dept_store",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {"place": "celadon_dept_store_west_door_outside"}
+        },
+        "why": "Out of the Dept. Store by the west door, to fly."
+      },
+      {
+        "id": "fly_cinnabar",
+        "kind": "game_action",
+        "action": "fly",
+        "args": {
+          "town": "CinnabarIsland",
+          "species": "pidgey"
+        },
+        "why": "Bill waits in Cinnabar's Pokemon Center.",
+        "declared_after": {
+          "map": "CinnabarIsland",
+          "tiles": [
+            [14, 12]
+          ],
+          "facing": "south"
+        }
+      },
+      {
+        "id": "to_bill",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "CinnabarIsland_PokemonCenter_1F",
+            "tiles": [
+              [10, 5]
+            ],
+            "facing": "east"
+          }
+        },
+        "why": "Into the Center, west of Bill (11, 5), facing him: a table fills the tile below him, and his script walks out with a player facing south, east or west (pret CinnabarIsland_PokemonCenter_1F_EventScript_Bill)."
+      },
+      {
+        "id": "sail_with_bill",
+        "kind": "answer",
+        "args": {
+          "yes": true
+        },
+        "why": "\"Ready to set sail to ONE ISLAND?\" YES: out with Bill, the Seagallop, One Island."
+      },
+      {
+        "id": "meet_celio",
+        "kind": "scene",
+        "why": "Celio's scene: the Meteorite, the Tri-Pass and the Town Map's Sevii page; the player ends below Bill, facing him.",
+        "declared_after": {
+          "map": "OneIsland_PokemonCenter_1F",
+          "tiles": [
+            [14, 7]
+          ],
+          "facing": "north"
+        }
+      }
+    ]
+  }
+}
