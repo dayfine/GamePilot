@@ -108,14 +108,14 @@ let () =
     [
       case "every place's object is in the maps, usable from its stand tile"
         (fun () -> failures resolves)
-        "21 places, all pass";
+        "26 places, all pass";
       case "every place's stand tile is walked to from a warp"
         (fun () -> failures reachable)
-        "21 places, all pass";
+        "26 places, all pass";
       case "every town's Fly name is one Fly knows" towns_fly
-        "3 towns, all pass";
+        "4 towns, all pass";
       case "every town's nurse and mart start with the town's key" towns_prefix
-        "3 towns, all pass";
+        "4 towns, all pass";
       case "a town whose nurse is not a place"
         (parse
            {|{"format": "gamepilot-places/1", "game": "frlg", "places": {},

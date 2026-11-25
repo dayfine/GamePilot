@@ -17,5 +17,5 @@
   test_wild_target)
  (deps
   (glob_files fixtures/*.txt)
-  ../../assets/rng_seeds_mgba_route10_save.json)
+  ../../assets/rng_seeds_mgba_sevii_save.json)
  (libraries yojson gamepilot.table_test gamepilot.frlg_rng))

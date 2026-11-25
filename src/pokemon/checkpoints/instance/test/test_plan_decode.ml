@@ -94,7 +94,7 @@ let real_plans : Table_test.case list =
     {
       name = "a plan with no start (new game)";
       input = (fun () -> outline "frlg-00.01.plan.json" authored);
-      expectation = "frlg 00.01 from (no start): 1 new_game, 1 options";
+      expectation = "frlg 00.01 from (no start): 1 new_game, 1 game_settings";
     };
     {
       name = "legs that fight wild Pokemon";

@@ -82,7 +82,7 @@
    started and closed around the command by run/run_checkpoints_on_mgba.sh. *)
 
 open Engine_run
-include Checkpoints_flags
+include Run_flags
 
 (* What the registry says of the program: run.json's program fields for a
    plan folder ([] for none), and the Switch daemons' --viewport, the

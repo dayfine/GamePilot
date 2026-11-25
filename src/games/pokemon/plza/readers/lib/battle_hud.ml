@@ -180,15 +180,50 @@ let box_share m id =
   Option.bind (Pixel_shares.lines m id) (fun (t : L.t) ->
       Pixel_shares.window t.rows ~first:0 ~count:(List.length t.rows))
 
-let bar_total m =
+(* The summed shares of the bar's first [count] probes. *)
+let bar_shares m count =
   List.fold_left
     (fun total i ->
       Option.bind total (fun t ->
           Option.map (( +. ) t) (box_share m (bar_id i))))
-    (Some 0.)
-    (List.init (List.length bar_tests) Fun.id)
+    (Some 0.) (List.init count Fun.id)
 
+let bar_total m = bar_shares m (List.length bar_tests)
 let at_least share = function Some s -> s >= share | None -> false
+
+(* The bar's fill alone: its six fill probes, the trough (the last) left
+   out. *)
+let fill_total m = bar_shares m (List.length bar_tests - 1)
+
+(* The bar's left end: its first 3% of columns (6 pixels at 1080p, 2 at
+   360p) mostly fill. 1 HP of 19 fills about 4%. *)
+let left_end_width = 0.03
+let left_end_share = 0.8
+
+let left_end_fill m i =
+  Option.bind
+    (Pixel_shares.lines m (bar_id i))
+    (fun (t : L.t) ->
+      let columns = List.length t.columns in
+      let count =
+        max 1 (int_of_float (left_end_width *. float_of_int columns))
+      in
+      Pixel_shares.window t.columns ~first:0 ~count)
+
+let left_end_filled m =
+  at_least left_end_share
+    (List.fold_left
+       (fun total i ->
+         Option.bind total (fun t -> Option.map (( +. ) t) (left_end_fill m i)))
+       (Some 0.)
+       (List.init (List.length bar_tests - 1) Fun.id))
+
+let lead_hp m =
+  if
+    at_least badge_share (box_share m badge_id)
+    && (at_least bar_share (bar_total m) || left_end_filled m)
+  then fill_total m
+  else None
 
 let panel_shown m =
   at_least badge_share (box_share m badge_id)

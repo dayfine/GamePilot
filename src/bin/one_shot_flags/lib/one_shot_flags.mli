@@ -1,6 +1,5 @@
-(** [gamepilot run <one-shot program>]'s flags: a checkpoint run's
-    (Checkpoints_flags, the same parser) with the program's own [--state PATH]
-    and [--console].
+(** [gamepilot run <one-shot program>]'s flags: a checkpoint run's (Run_flags,
+    the same parser) with the program's own [--state PATH] and [--console].
 
     With [--watch] (or [--watch-port], [--listen]) the program runs in its own
     daemon, as a checkpoint run does: a checkpoint run's backend (mGBA through

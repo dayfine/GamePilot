@@ -9,7 +9,7 @@ type setup = {
   runs_dir : string;
   daemon : string;
   backend : Daemon_process.backend;
-  common : Checkpoint_command.flags;
+  common : Plan_command.flags;
   mode : Checkpoint_trials.mode;
   policy : Checkpoint_trials.policy;
   world : Frlg_overworld.Frlg_steps.world;

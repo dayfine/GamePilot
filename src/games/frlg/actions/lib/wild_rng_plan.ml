@@ -7,6 +7,8 @@ type t = {
   tid : int;
   sid : int;
   seeds : string;
+  seed_shift : int;
+  ingame_offset : int;
   frame_model : string;
   min_advance : int;
   max_advance : int;
@@ -14,6 +16,7 @@ type t = {
 }
 
 let max_id = 0xffff
+let seed_mask = 0xffff
 let default_min_advance = 900
 let default_max_advance = 4000
 let default_advances = (default_min_advance, default_max_advance)
@@ -30,6 +33,23 @@ let id ~where name args =
   let n = J.int ~where name args in
   if n < 0 || n > max_id then J.fail "%s%s is %d, not 0..65535" where name n
   else n
+
+let seed_shift ~where args =
+  match J.find "seed_shift" args with
+  | None -> 0
+  | Some _ -> id ~where "seed_shift" args
+
+let max_ingame_offset = 99
+
+let ingame_offset ~where args =
+  match J.find "ingame_offset" args with
+  | None -> 0
+  | Some _ ->
+      let n = J.int ~where "ingame_offset" args in
+      if abs n > max_ingame_offset then
+        J.fail "%singame_offset is %d, not -%d..%d" where n max_ingame_offset
+          max_ingame_offset
+      else n
 
 let advances ~where args =
   match J.list_opt ~where "advances" args with
@@ -64,6 +84,8 @@ let read ~where args =
     tid = id ~where "tid" args;
     sid = id ~where "sid" args;
     seeds = J.string ~where "seeds" args;
+    seed_shift = seed_shift ~where args;
+    ingame_offset = ingame_offset ~where args;
     frame_model = frame_model ~where args;
     min_advance;
     max_advance;
@@ -86,7 +108,10 @@ let seed_column t =
       (fun (c : R.Seeds_database.column) -> c.name = column)
       db.columns
   with
-  | Some c -> Ok (db.delays, c.seeds)
+  | Some c ->
+      Ok
+        ( db.delays,
+          Array.map (fun s -> (s + t.seed_shift) land seed_mask) c.seeds )
   | None -> Error (t.seeds ^ " has no column " ^ column)
 
 let slots t =
@@ -102,6 +127,8 @@ let no_target t =
 
 let search t (delays, seeds) slots =
   R.Wild_target.find
+    ~calibrations:
+      { R.Rng_timings.no_calibrations with ingame_offset = t.ingame_offset }
     (List.assoc t.frame_model frame_models)
     ~delays ~seeds slots ~species:t.species ~tid_xor_sid:(t.tid lxor t.sid)
     ~min_advance:t.min_advance ~max_advance:t.max_advance
