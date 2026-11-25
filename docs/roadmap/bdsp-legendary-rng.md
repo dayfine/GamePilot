@@ -15,7 +15,7 @@ Everything here builds on those; nothing is repeated. The starter (W9) proves th
 
 ## Source plan
 
-Fork PR #782, `docs/design/BDSP-Static-Legendary-RNG.md`, extends the starter RNG to every static:
+Fork PR #782 (closed; its design is now `docs/design/BDSP-Static-Legendary-RNG.md` here) extends the starter RNG to every static:
 
 - **Two workflows.** (A) Recover the state from the player's blinks in a quiet room one step before
   the chamber (Dialga/Palkia, the lake guardians, Giratina), then walk in on a timeline that counts
@@ -48,4 +48,4 @@ Post-game BDSP saves for each target; Ramanas Park slates come from D (Undergrou
 ## Open questions
 
 - Which targets first, and on which version?
-- Does the C++ fork implement #782 first (as the oracle), or does GamePilot go first?
+- ~~Does the C++ fork implement #782 first?~~ GamePilot goes first; the fork PR is closed (2026-11-25).
