@@ -28,13 +28,7 @@ type setup = {
 }
 
 let load_plan ~plan_dir id =
-  let plan_suffix = Engine_series.Plan_folder.plan_suffix in
-  match
-    Yojson.Safe.from_file (Engine_series.Plan_folder.plan_file ~plan_dir id)
-  with
-  | json -> P.Plan_decode.decode ~source:(id ^ plan_suffix) json
-  | exception Sys_error e -> Error e
-  | exception Yojson.Json_error e -> Error (id ^ ": " ^ e)
+  P.Plan_decode.load (Engine_series.Plan_folder.plan_file ~plan_dir id)
 
 let failed ?(repeats = false) ?(off_start = false) at reason =
   Failed { at; reason; repeats; off_start }
