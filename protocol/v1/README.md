@@ -88,7 +88,7 @@ size) every v1.1 message means the same in v1.2.
 |---|---|---|
 | `hello` | `protocol` (must be 1), `client` | `protocol`, `daemon`, `backend` {`kind`, `game_code`, `frame_rate`, `width`, `height`, `viewport`, `game_size`}, `probe_kinds` |
 | `backend.load_state` | `path` (a save state file; the daemon passes it to the backend unread) | `seq` after loading, the new `load` |
-| `backend.reset` | {} | `seq` after the reset, the new `load`: the machine restarts as from its power switch and boots from its cartridge save, held at its first frame (mGBA: the core's reset) |
+| `backend.reset` | {} | `seq` after the reset, the new `load`: the machine restarts as from its power switch and boots from its cartridge save, held at its first frame until the next `submit` (or `cancel`), so that batch starts on the reset's frame (mGBA: the core's reset) |
 | `probe.upload_template` | `png`: a PNG file, base64 | `template`: the lowercase hex SHA-256 of the PNG bytes |
 | `subscribe` | `probes`: list of {`id`, `kind`, `box`, `delivery`, and `template` (and optionally `ink`) for `core.template_match@1`, `min` and `max` for `core.color_count@1`, `test` for `core.line_shares@1`, `filters`, `min_area` and the optional `max_area`, `min_size`, `max_size`, `margin`, `template`, `shape` for `core.find@1`} | `subscribed`: ids |
 | `unsubscribe` | `ids`: probe ids | `unsubscribed`: the ids that were subscribed, now removed (others are ignored) |

@@ -213,6 +213,11 @@ void Server::run_lockstep(const std::atomic<bool>& stop) {
     }
     serve_network(0);
     keep_awake();
+    if (held_for_input_) {
+      serve_network(static_cast<int>(kMaxPollMs));
+      rebase_pacing();
+      continue;
+    }
     step_frame();
 
     const double now = clock_.now_ms();
@@ -363,6 +368,7 @@ void Server::accept_pending() {
 // 1000 ms cooldown, already on the board, delayed the next taps by 800 ms
 // (2026-11-23).
 void Server::clear_input() {
+  held_for_input_ = false;
   schedule_.clear();
   live_schedule_.clear();
   batch_owners_.clear();
@@ -631,6 +637,7 @@ pa::JsonObject Server::dispatch_input(ClientConnection& client,
       for (auto& other : clients_) {
         other->sent_results.forget_all();
       }
+      held_for_input_ = method == "backend.reset";
       loads_++;
       return load_state_result(seq, loads_);
     } catch (const BackendError& error) {
@@ -648,6 +655,7 @@ pa::JsonObject Server::dispatch_input(ClientConnection& client,
     }
     const std::int64_t start =
         schedule_.submit(submit.batch_id, submit.commands, backend_.seq());
+    held_for_input_ = false;
     return submit_result(submit.batch_id, start);
   }
   decode_cancel(request.params);
