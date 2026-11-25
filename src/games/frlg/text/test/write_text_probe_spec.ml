@@ -82,6 +82,12 @@ let screens =
       cells ~rows:7 ~cells:2 Text_lines.berry_pouch_number_digit,
       Number_reading.digits,
       dark );
+    ( "card_numbers",
+      glyphs,
+      List.init 6 Text_lines.trainer_card_money_digit
+      @ List.init 3 Text_lines.trainer_card_dex_digit,
+      Number_reading.digits,
+      dark );
   ]
 
 let write_file path data =

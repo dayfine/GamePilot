@@ -12,6 +12,7 @@ Developer pages are in `docs/programs/`.
 | [Supplies](frlg.supplies.md) | `frlg.supplies` | mGBA, the Switch | Stocks what the duplication programs use: Retro Mail and Super Repels. |
 | [Team Training](frlg.team_training.md) | `frlg.team_training` | mGBA, the Switch | Farms Rare Candies with the Mail Glitch's item duplication and levels the team with them. |
 | [Sevii Story](frlg.sevii_story.md) | `frlg.sevii_story` | mGBA | Plays the Sevii Islands story after the Hall of Fame, starting with Bill's trip to One Island. |
+| [Dex Collection](frlg.dex_collection.md) | `frlg.dex_collection` | mGBA | Catches wild Pokemon the Pokedex has not caught yet, toward the 60 the National Pokedex needs. |
 | [ACE Setup](frlg.ace_setup.md) | `frlg.ace_setup` | mGBA | Sets up arbitrary code execution from the Mail Glitch: Magikarp seen, then the ? Mail's words put species 0x0351 in Box 3 slot 1. |
 <!-- /generated -->
 

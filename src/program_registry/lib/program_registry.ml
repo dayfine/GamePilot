@@ -104,9 +104,30 @@ let ace_setup =
     viewport = Nso_gba;
   }
 
+let dex_collection =
+  {
+    id = "frlg.dex_collection";
+    game = frlg;
+    name = "Dex Collection";
+    group = [ "FRLG"; "Pokedex" ];
+    description =
+      "Catches wild Pokemon the Pokedex has not caught yet, toward the 60 the \
+       National Pokedex needs.";
+    doc = "docs/programs/frlg-dex-collection.md";
+    checkpoints = Some "src/games/frlg/programs/dex_collection/plans";
+    backends = [ Mgba ];
+    viewport = Nso_gba;
+  }
+
 let all =
   [
-    start_menu_poc; mail_glitch; supplies; team_training; sevii_story; ace_setup;
+    start_menu_poc;
+    mail_glitch;
+    supplies;
+    team_training;
+    sevii_story;
+    dex_collection;
+    ace_setup;
   ]
 
 let short_id p =

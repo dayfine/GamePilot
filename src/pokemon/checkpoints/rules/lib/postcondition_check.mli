@@ -25,6 +25,9 @@ type start = {
   start_coins : int option;
       (** The coins read at the checkpoint's start, for a
           {!Engine_postcondition.Count.Gained} promise; [None] when not read. *)
+  start_caught : int option;
+      (** The species caught at the checkpoint's start, for a
+          {!Engine_postcondition.Count.Gained} promise; [None] when not read. *)
   start_items : (string * int) list;
       (** Each item read at the checkpoint's start, for a
           {!Engine_postcondition.Count.Gained} promise, and its count; one left
@@ -44,6 +47,7 @@ type observed = {
       (** Each item read and its count in the bag (0: read, not there). An item
           left out was not read. *)
   coins : int option;
+  caught : int option;  (** Species caught, off the Trainer Card. *)
   money : int option;
   start : start;
       (** What was read at the checkpoint's start, for a promise of a change. *)
@@ -78,9 +82,9 @@ type result = Engine_postcondition.Postcondition.result = {
 *)
 
 val check : Postconditions.t -> observed -> result list
-(** The party, then each item, the coins, the money, each flag, each member's
-    moves, each member's level and the party's marks, in that order; a
-    postcondition the plan leaves out gives no result. *)
+(** The party, then each item, the coins, the caught count, the money, each
+    flag, each member's moves, each member's level and the party's marks, in
+    that order; a postcondition the plan leaves out gives no result. *)
 
 val unmet : result list -> result list
 (** {!Engine_postcondition.Postcondition.unmet}. *)

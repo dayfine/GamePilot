@@ -20,7 +20,8 @@
 # with their colors shifted by dev/reader_fixtures/shift_frame.py, which needs Pillow
 # ($SHIFT_PYTHON, default python3; e.g. "uv run --with pillow python3"). The
 # menus set writes menus.<backend>.shifted likewise, from the Seagallop list's
-# frames (seagallop-one-island/).
+# frames (seagallop-one-island/), and the battle set battle.<backend>.shifted
+# from Route 10's wild battles (dex-route10/).
 #
 #   sh games/frlg/readers/test/regen_fixtures.sh [screen|menus|battle ...]
 #
@@ -77,6 +78,7 @@ shifted_frames() {
   case $1 in
   card) grep -v '/pret-trainer-card/' "$2" | cut -d'|' -f2 ;;
   menus) grep '/seagallop-one-island/' "$2" | cut -d'|' -f2 ;;
+  battle) grep '/dex-route10/' "$2" | cut -d'|' -f2 ;;
   ace) cut -d'|' -f2 "$2" ;;
   esac
 }
@@ -111,7 +113,7 @@ regen() {
   probe "$set_name" switch "$spec" "${prefix}switch.probes.jsonl" --viewport "$SWITCH_VIEWPORT"
   probe "$set_name" mgba "$spec" "${prefix}mgba.probes.jsonl"
   case $set_name in
-  card | menus | ace)
+  card | menus | battle | ace)
     probe_shifted "$set_name" switch "$spec" "${prefix}switch.shifted.probes.jsonl" --viewport "$SWITCH_VIEWPORT"
     probe_shifted "$set_name" mgba "$spec" "${prefix}mgba.shifted.probes.jsonl"
     ;;

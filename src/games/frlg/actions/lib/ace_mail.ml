@@ -16,7 +16,7 @@ let await_editor () =
 
 let write_glitched_mail ~log ~slot words =
   log (Printf.sprintf "ACE: Retro Mail to slot %d, the ? Mail's words." slot);
-  Bag_items.item_action mail Party_actions.give_row;
+  Bag_items.item_action mail (Party_actions.give_row mail);
   Party_actions.give_to slot;
   await_editor ();
   Easy_chat_entry.check_unchanged ~count:fields_checked;
