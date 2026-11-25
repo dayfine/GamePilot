@@ -3,7 +3,8 @@
     earlier event brings it, some member knowing Cut, the money its purchases
     cost, the bag items it gives or uses that no earlier purchase or pickup
     ([pick_up_item]) of its own brought (a Rare Candy for [use_rare_candy] and
-    [candy_level]), what the checkpoint before it promised, and the place. *)
+    [candy_level], one of its ball for [capture]), what the checkpoint before it
+    promised, and the place. *)
 
 type need =
   | Party_in_order of string list

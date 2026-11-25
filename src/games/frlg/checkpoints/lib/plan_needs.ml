@@ -119,6 +119,10 @@ let game_action stocks ~where action args acc =
         (List.init
            (rounds + A.Item_duplication.min_mail - 1)
            (fun _ -> "retro-mail"))
+    else if action = "capture" then
+      (* One ball at least: the plan's, a Poke Ball when it names none. *)
+      use_item action acc
+        (Option.value (named "ball") ~default:A.Capture_plan.default_ball)
     else if action = "pick_up_item" then
       Option.fold ~none:acc
         ~some:(fun item -> gain acc (item, 1))

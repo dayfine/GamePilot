@@ -32,5 +32,6 @@ let member_keys =
 let field_move_users = [ ("cut_tree", "cut") ]
 
 let picks_member ~action args =
-  (not (List.mem_assoc action field_move_users))
-  && List.exists (fun key -> J.has key args) member_keys
+  action = "capture"
+  || (not (List.mem_assoc action field_move_users))
+     && List.exists (fun key -> J.has key args) member_keys

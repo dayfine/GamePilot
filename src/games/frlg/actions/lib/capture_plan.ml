@@ -1,13 +1,18 @@
 module J = Json_field
 
+type target = Species of string | Uncaught of string list
+
 type t = {
-  species : string;
+  target : target;
   catches : int;
   max_encounters : int;
   max_balls : int;
+  ball : string;
   pace : Grid_geometry.Direction.t;
 }
 
+let balls = [ "poke-ball"; "great-ball"; "ultra-ball" ]
+let default_ball = "poke-ball"
 let default_catches = 1
 let default_encounters = 20
 let default_balls = 5
@@ -30,12 +35,28 @@ let not_ported ~where args =
         J.fail "%s%s: the weakening move is not ported" where name)
     [ "move"; "turns" ]
 
-let read ~where args =
-  not_ported ~where args;
+let species ~where args =
   let species = J.string ~where "species" args in
   if species = "" then J.fail "%sspecies is empty" where;
+  Species species
+
+let target ~where args =
+  match (J.has "species" args, J.has "uncaught" args) with
+  | true, true -> J.fail "%sspecies and uncaught: name one" where
+  | false, true ->
+      Uncaught (J.strings (where ^ "uncaught") (J.field ~where "uncaught" args))
+  | _ -> species ~where args
+
+let ball ~where args =
+  match J.string_opt ~where "ball" args with
+  | None -> default_ball
+  | Some b when List.mem b balls -> b
+  | Some b -> J.fail "%sball is %s, not %s" where b (String.concat ", " balls)
+
+let read ~where args =
+  not_ported ~where args;
   {
-    species;
+    target = target ~where args;
     catches =
       bounded ~where "catches" ~default:default_catches ~max:max_catches args;
     max_encounters =
@@ -43,6 +64,7 @@ let read ~where args =
         ~max:max_encounter_bound args;
     max_balls =
       bounded ~where "balls" ~default:default_balls ~max:max_ball_bound args;
+    ball = ball ~where args;
     pace =
       (if J.has "pace" args then
          Grid_maps.Grid_field.direction ~where "pace" args
@@ -50,7 +72,8 @@ let read ~where args =
   }
 
 let decode args = Action_args.decode ~action:"capture" read args
+let target_name = function Species s -> s | Uncaught _ -> "uncaught species"
 
 let describe t =
-  Printf.sprintf "%d %s, %d encounters, %d balls" t.catches t.species
-    t.max_encounters t.max_balls
+  Printf.sprintf "%d %s, %d encounters, %d %s" t.catches (target_name t.target)
+    t.max_encounters t.max_balls t.ball
