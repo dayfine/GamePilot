@@ -63,7 +63,7 @@ let read_screen last () =
       last := cells;
       look_of ~still m
 
-let game_steps ~picture:_ ~log ~log_detail : Plza_walk.Walk.game_steps =
+let game_steps ~log ~log_detail : Plza_walk.Walk.game_steps =
   let last = ref None in
   {
     submit = (fun c -> ignore (Effects.submit [ c ] : Wire.batch_done));

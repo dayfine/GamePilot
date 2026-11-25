@@ -32,10 +32,7 @@ let plans_in dir =
 
 (* PLZA's plans are over its own rules: they decode with Plza_engine. *)
 let plza_plan_error file =
-  match
-    Plza_engine.Plan_decode.decode ~source:(Filename.basename file)
-      (Yojson.Safe.from_file file)
-  with
+  match Plza_engine.Plan_decode.load file with
   | Ok _ -> None
   | Error e -> Some (file ^ ": " ^ e)
 
@@ -55,7 +52,9 @@ let bad_plans () =
       | None -> []
       | Some dir ->
           let plan_error =
-            if p.game.game_id = "plza" then plza_plan_error else frlg_plan_error
+            match p.rules with
+            | Plza_story -> plza_plan_error
+            | Pokemon_grid -> frlg_plan_error
           in
           List.filter_map plan_error (plans_in dir))
     R.all

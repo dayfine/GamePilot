@@ -10,14 +10,13 @@
     actions' fuller look comes with them in a later PR. *)
 
 val tile_color : Switch_home.Home_screen.tile_color
-(** The HOME menu's selected tile, as PLZA's reload looks for it. *)
+(** The HOME menu's selected tile, as the HOME check looks for it. *)
 
 val probes :
   picture:Wire.box -> assets:Plza_readers.Blob_assets.t -> Wire.probe_spec list
 (** Every probe a read needs; subscribe them around the run. *)
 
 val game_steps :
-  picture:Wire.box ->
   log:(string -> unit) ->
   log_detail:(string -> unit) ->
   Plza_walk.Walk.game_steps

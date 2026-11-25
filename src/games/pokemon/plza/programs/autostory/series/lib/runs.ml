@@ -27,13 +27,7 @@ type setup = {
 }
 
 let load_plan ~plan_dir id =
-  let plan_suffix = Engine_series.Plan_folder.plan_suffix in
-  match
-    Yojson.Safe.from_file (Engine_series.Plan_folder.plan_file ~plan_dir id)
-  with
-  | json -> P.Plan_decode.decode ~source:(id ^ plan_suffix) json
-  | exception Sys_error e -> Error e
-  | exception Yojson.Json_error e -> Error (id ^ ": " ^ e)
+  P.Plan_decode.load (Engine_series.Plan_folder.plan_file ~plan_dir id)
 
 let failed ?(repeats = false) at reason = Failed { at; reason; repeats }
 
@@ -55,10 +49,8 @@ let no_reload () =
     (Failure.cause ~repeats:true "no_reload"
        "PLZA's skeleton cannot go back to the latest autosave yet")
 
-let run_checkpoint ~log ~picture report (plan : P.Plan.t) =
-  let steps =
-    Story.Live_story_screen.game_steps ~picture ~log ~log_detail:log
-  in
+let run_checkpoint ~log report (plan : P.Plan.t) =
+  let steps = Story.Live_story_screen.game_steps ~log ~log_detail:log in
   let game =
     Story.Story_game.make steps ~checkpoint:plan.checkpoint ~reload:no_reload
   in
@@ -69,7 +61,7 @@ let run_checkpoint ~log ~picture report (plan : P.Plan.t) =
 let with_assets ~log ~picture report plan assets =
   match
     Effects.with_probes (Story.Live_story_screen.probes ~picture ~assets)
-      (fun () -> run_checkpoint ~log ~picture report plan)
+      (fun () -> run_checkpoint ~log report plan)
   with
   | Ok () -> Passed
   | Error f -> f
