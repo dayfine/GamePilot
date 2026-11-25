@@ -8,6 +8,7 @@ type need = Plan_needs.need =
       slots : Postconditions.slot list;
     }
   | Member of { species : string; for_ : string }
+  | No_mail of { species : string; for_ : string }
   | Knows_move of { move : string; for_ : string }
   | Money_at_least of { amount : int; for_ : string }
   | Money_between of { min : int; max : int }
@@ -79,6 +80,26 @@ let knows_row (read : read) ~need move =
       | None when List.exists unread_moves members ->
           { need; read = "moves not read"; verdict = Not_read }
       | None -> { need; read = "no member knows " ^ move; verdict = Mismatch })
+
+(* The first member of the species (the one the deposit stores) and its mark. *)
+let slot_mark species (read : read) =
+  match (read.observed.party, read.observed.marks) with
+  | Some party, Some marks ->
+      Option.bind
+        (List.find_index (( = ) (Some species)) party)
+        (fun i -> Option.map (fun mark -> (i + 1, mark)) (List.nth_opt marks i))
+  | _ -> None
+
+let no_mail_row read ~need species =
+  let mail = Frlg_actions.Mail_glitch_use.name_of_mark Mail in
+  match slot_mark species read with
+  | None -> { need; read = "not read"; verdict = Not_read }
+  | Some (slot, mark) ->
+      {
+        need;
+        read = Printf.sprintf "%s in slot %d: %s" species slot mark;
+        verdict = of_bool (mark <> mail);
+      }
 
 let with_money (read : read) need test =
   match read.observed.money with
@@ -158,6 +179,8 @@ let describe = function
   | Party_includes { members; slots } -> includes_text members slots
   | Member { species; for_ } ->
       Printf.sprintf "%s in the party (%s)" species for_
+  | No_mail { species; for_ } ->
+      Printf.sprintf "%s holds no Mail (%s)" species for_
   | Money_at_least { amount; for_ } ->
       Printf.sprintf "money at least ¥%d (%s)" amount for_
   | Money_between { min; max } -> Printf.sprintf "money ¥%d..¥%d" min max
@@ -181,6 +204,7 @@ let row read need =
       with_party read text (fun m ->
           List.for_all (has m) members && List.for_all (in_slot m) slots)
   | Member { species; _ } -> with_party read text (fun m -> has m species)
+  | No_mail { species; _ } -> no_mail_row read ~need:text species
   | Money_at_least { amount; _ } -> with_money read text (fun m -> m >= amount)
   | Money_between { min; max } ->
       with_money read text (fun m -> m >= min && m <= max)
@@ -234,13 +258,14 @@ let any_count bag_item =
 
 let any_money = Engine_postcondition.Money.Range { min = 0; max = 0 }
 
+let reads_party = function
+  | Party_in_order _ | Party_includes _ | Member _ | No_mail _ | Knows_move _ ->
+      true
+  | _ -> false
+
 let to_read needs : Postconditions.t =
-  let party =
-    List.exists
-      (function
-        | Party_in_order _ | Party_includes _ | Member _ | Knows_move _ -> true
-        | _ -> false)
-      needs
+  let party = List.exists reads_party needs
+  and marks = List.exists (function No_mail _ -> true | _ -> false) needs
   and money =
     List.exists
       (function Money_at_least _ | Money_between _ -> true | _ -> false)
@@ -270,5 +295,5 @@ let to_read needs : Postconditions.t =
     flags = [];
     knows = [];
     levels = [];
-    marks = None;
+    marks = (if marks then Some [] else None);
   }

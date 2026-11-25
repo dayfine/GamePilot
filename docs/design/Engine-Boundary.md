@@ -75,7 +75,7 @@ library only because the map decoders came first.
 | File | | What ties it |
 |---|---|---|
 | `chain_progress.ml`, `checkpoint_order.ml`, `round_trials.ml` | A | |
-| `console_runs.ml` | A | the decision is agnostic (its doc says "soft reset"); the steps are bound to FireRed in `bin/console_session.ml` |
+| `console_runs.ml` | A | the decision is agnostic (its doc says "soft reset"); the steps are bound to FireRed in `games/frlg/series/lib/console_session.ml` |
 | `plan_text.ml` | mixed | A: `event`, `outline`, `count_text`. G and P: kinds, poses, postconditions as text |
 
 ### `core` and around it
@@ -86,7 +86,7 @@ library only because the map decoders came first.
 | `screen_state` | A | facts (fade, banner, dialog, battle, free control, stillness) and the settle rules are shared by every game; the timings were measured on FireRed and a game may give its own `rule` |
 | `switch_home` | mixed | A: parking and resuming on HOME. Tied to the GBA picture: boxes clipped to FireRed's `GAME_BOX` viewport, tests on FireRed's tile |
 | `games/frlg/repo_files` | A | `Repo_files.locate`, `Json_file`: agnostic, but under FireRed, and `program_registry` depends on it |
-| `bin/` | mixed | 13 files name `Frlg_*`: plan loading, the live checkpoint, console save steps, pre-flight, make-room, guides |
+| `bin/` | A | names no game module but in `bin/checkpoint_families.ml`, which picks a family's libraries by the registry's `rules` (FRLG's `games/frlg/series`, its ctl readers, `start_menu_poc`); per-game data (delete-save icons, the lab console's panel and HOME tile) is the registry's |
 | `dev/lint/ocaml_lint.conf` | mixed | layer `game` may use `pokemon`: nothing stops a non-Pokémon game from using Pokémon code |
 | `daemon/src/viewport.h` | G | only `nso_gba_viewport` (240 x 160 inside the Switch frame); a native Switch game is the whole 1920 x 1080 frame |
 | `Wire.command` | A | buttons, waits and both analog sticks (protocol v1.12); no ZL/ZR |
@@ -102,6 +102,12 @@ game's actions, what a checkpoint promises and its check) are plain values, with
 and no text. Each format turns them into bytes or words at one edge only, so the plan types, the
 runner, its failures and the checks never see JSON or build a string. A lint rule enforces it.
 
+**Names to come** (user, 2026-11-25; `Composable-Rules.md`, "Names"): `Engine_checkpoints.Make`
+becomes `Program_engine.Make (Rules) (Plan_format) (Event_snapshot)`; `*_plan_codec` becomes
+`*_plan_format`, `*_saved` `*_event_snapshot`, the instances `*_engine`; `Rules_text` goes, each
+rules part printing itself; `src/engine/checkpoints/` loses its `checkpoints` level. This section
+describes the code as it is until those PRs land.
+
 The rules were first called terms (`Engine_terms.TERMS`, `Pokemon_terms`, `Terms_text`); they were
 renamed `Engine_rules.GAME_RULES`, `Pokemon_rules` and `Rules_text` on 2026-11-25, unchanged. The
 game's own kinds were renamed its actions the same day, also unchanged: `KIND` and `Kind` became
@@ -110,6 +116,10 @@ game's own kinds were renamed its actions the same day, also unchanged: `KIND` a
 the same day `kind_of_plan` became `action_of_plan`, `TEXT.kind` `action`, `Kind_decode` and
 `Kind_text` `Pokemon_action_decode` and `Pokemon_action_text`, and the planner's `Leg.action`
 `Leg.special_step`.
+
+What follows is one `GAME_RULES` per family, as built. How a game builds its rules from shared
+pieces (a pose, action sets, promises), so that FRLG, PLZA and Octopath 0 each take only the parts
+they use and FRLG's own actions stop being raw JSON, is `Composable-Rules.md`.
 
 | Part | Engine signature | Pokémon | Toy game | Used by | Holds |
 |---|---|---|---|---|---|
@@ -369,7 +379,7 @@ three verifying runs do not need three wins.
 
 Today mGBA loads a `.ss` state (`Checkpoint_run.options.state`, `Event_states`), and on the Switch
 `Console_runs` decides "return to the last save, check the start; after a pass save in game", which
-`bin/console_session.ml` binds to FireRed's `Soft_reset.return_to_save`, `Start_check` (kept frame,
+`games/frlg/series/lib/console_session.ml` binds to FireRed's `Soft_reset.return_to_save`, `Start_check` (kept frame,
 party) and `Game_save.save_game`. The decision is agnostic; the binding is the part to lift:
 
 ```ocaml
@@ -388,7 +398,7 @@ type game_steps = {
 }
 ```
 
-`Console_runs.step` runs over this record instead of FireRed's modules, and `bin/console_session.ml`
+`Console_runs.step` runs over this record instead of FireRed's modules, and `games/frlg/series/lib/console_session.ml`
 becomes generic. A game with no emulator has no event states, so `--from-event` refuses as it does on
 the Switch today (`Event_range.check`).
 

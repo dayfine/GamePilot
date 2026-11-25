@@ -1,0 +1,9 @@
+(library
+ (name plza_checkpoints)
+ (public_name gamepilot.plza_checkpoints)
+ (libraries
+  gamepilot.engine_checkpoints
+  gamepilot.plza_rules
+  gamepilot.plza_plan_codec
+  gamepilot.plza_text
+  gamepilot.plza_saved))
