@@ -4,6 +4,9 @@ This program sets up and triggers the Mail Glitch on a post-game FireRed save, t
 copy an item. This page covers the activation, checkpoints mg-01 to mg-05. The copying, mg-06, has
 its own page: [Item duplication](frlg.mail_glitch.item_duplication.md).
 
+How the glitch works, step by step: the Pomeg Letterbombers'
+[Mail Glitch notes](https://pomeg-letterbombers.github.io/pokemon-ace-notes/mail-glitch/).
+
 **What you get.** At the end of mg-05 your Mr. Mime (MIMIEN, from an in-game trade) holds a Leppa
 Berry where its mail used to be, and one of the party's mail slots is "leaked": the game thinks it is
 in use, but no Pokémon holds it. That leaked slot is what makes item duplication work. Along the way
