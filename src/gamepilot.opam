@@ -5,6 +5,7 @@ depends: [
   "ocaml" {>= "5.2"}
   "dune" {>= "3.16"}
   "yojson" {>= "2.0"}
+  "ppx_deriving_yojson" {>= "3.9"}
   "odoc" {with-doc}
 ]
 build: [

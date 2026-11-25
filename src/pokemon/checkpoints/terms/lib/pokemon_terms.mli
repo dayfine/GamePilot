@@ -21,9 +21,6 @@ end
 module Own_kind = Own_kind
 (** {!Own_kind}: the Pokémon event kinds. *)
 
-module Postconditions = Postconditions
-(** {!Postconditions}: what a Pokémon checkpoint promises. *)
-
 module Postcondition_check = Postcondition_check
 (** {!Postcondition_check}: those promises checked against what the game read.
 *)
@@ -31,8 +28,15 @@ module Postcondition_check = Postcondition_check
 module Kind : Engine_terms.KIND with type t = Own_kind.t
 (** The Pokémon event kinds, as the engine carries them. *)
 
-(** What a Pokémon checkpoint promises, as the engine checks it. *)
-module Promises :
-  Engine_terms.PROMISES
-    with type t = Postconditions.t
-     and type reads = Postcondition_check.observed
+(** {!Postconditions}: what a Pokémon checkpoint promises, and its check against
+    what the game read ({!Postcondition_check}). *)
+module Postconditions : sig
+  include module type of struct
+    include Postconditions
+  end
+
+  include
+    Engine_terms.POSTCONDITIONS
+      with type t := t
+       and type reads = Postcondition_check.observed
+end

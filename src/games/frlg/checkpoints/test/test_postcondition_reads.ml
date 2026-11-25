@@ -71,8 +71,11 @@ let items_promised : Pokemon_checkpoints.Postconditions.t =
     party = None;
     items =
       [
-        { bag_item = "revive"; count = Engine_promise.Count.Exactly 2 };
-        { bag_item = "escape-rope"; count = Engine_promise.Count.Exactly 3 };
+        { bag_item = "revive"; count = Engine_postcondition.Count.Exactly 2 };
+        {
+          bag_item = "escape-rope";
+          count = Engine_postcondition.Count.Exactly 3;
+        };
       ];
   }
 
@@ -96,8 +99,11 @@ let read_at_start items () =
       items_promised with
       items =
         [
-          { bag_item = "revive"; count = Engine_promise.Count.Exactly 2 };
-          { bag_item = "escape-rope"; count = Engine_promise.Count.Gained 1 };
+          { bag_item = "revive"; count = Engine_postcondition.Count.Exactly 2 };
+          {
+            bag_item = "escape-rope";
+            count = Engine_postcondition.Count.Gained 1;
+          };
         ];
     }
   in

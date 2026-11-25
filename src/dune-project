@@ -7,4 +7,5 @@
  (depends
   (ocaml (>= 5.2))
   dune
-  (yojson (>= 2.0))))
+  (yojson (>= 2.0))
+  (ppx_deriving_yojson (>= 3.9))))

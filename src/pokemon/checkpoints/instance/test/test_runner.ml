@@ -2,7 +2,7 @@
    and stops at the first failure, naming the event. *)
 
 open Pokemon_checkpoints
-open Engine_promise
+open Engine_postcondition
 
 let tile x y : Grid_geometry.Tile_pos.t = { x; y }
 

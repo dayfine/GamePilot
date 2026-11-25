@@ -127,7 +127,7 @@ let run_result ?end_at ?end_state ?after ?flags () =
 let outcome ?end_at ?end_state ?after ?flags () =
   fst (run_result ?end_at ?end_state ?after ?flags ())
 
-let reads gold_now : Toy_terms.Promises.reads =
+let reads gold_now : Toy_terms.Postconditions.reads =
   { gold_now = Some gold_now; start = Some 50; set = [ "met_cat" ] }
 
 let promised () = Option.get (plan ()).postconditions
@@ -189,12 +189,12 @@ let kept_cases =
         | Ok back -> string_of_bool (back = kept)
         | Error e -> e)
       "true";
-    case "a kept zone the toy cannot read: named under at"
+    case "a kept zone the toy cannot read: the derived reader names its type"
       (fun () ->
         match Toy_saved.of_yojson (`Assoc [ ("at", `Int 1) ]) with
         | Ok _ -> "read"
         | Error e -> e)
-      "at: not a place";
+      "Toy_saved.pose";
   ]
 
 (* Two rounds until the goal holds: the toy's between-rounds runs after each. *)

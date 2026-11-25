@@ -45,3 +45,12 @@ val run :
     program; plain requests (saves, [unsubscribe]) still run, so the program's
     failure path works. [show_plan], [show_log] and [show_run] go out as
     [watch.plan], [watch.log] and [watch.run] notifications. *)
+
+val run_with_backend :
+  ?client:string ->
+  ?lease:string * int option ->
+  transport ->
+  (Wire.backend -> 'a) ->
+  'a
+(** {!run}, the program given what the daemon drives (its [hello]'s [backend]:
+    the frame, where the game picture sits in it). *)

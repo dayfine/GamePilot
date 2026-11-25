@@ -16,6 +16,6 @@ module type TEXT = sig
   (** One of the game's kinds with its args, its name first:
       ["route to Town (4, 0) north"]. *)
 
-  val postconditions : T.Promises.t -> string list
+  val postconditions : T.Postconditions.t -> string list
   (** The promises, one per line, in the order the plan's text gives them. *)
 end

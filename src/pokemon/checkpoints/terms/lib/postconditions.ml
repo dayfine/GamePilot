@@ -4,7 +4,7 @@ type party =
 
 and slot = { slot : int; species : string }
 
-type bag_count = { bag_item : string; count : Engine_promise.Count.t }
+type bag_count = { bag_item : string; count : Engine_postcondition.Count.t }
 type knows = { species : string; moves : string list }
 type level = { species : string; min : int }
 
@@ -12,8 +12,8 @@ type t = {
   position : Pose.grid option;
   party : party option;
   items : bag_count list;
-  coins : Engine_promise.Count.t option;
-  money : Engine_promise.Money.t option;
+  coins : Engine_postcondition.Count.t option;
+  money : Engine_postcondition.Money.t option;
   flags : string list;
   knows : knows list;
   levels : level list;

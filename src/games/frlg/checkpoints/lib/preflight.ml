@@ -215,6 +215,12 @@ let reads_card =
     | Badges_at_least _ | Badges _ | Hall_of_fame -> true
     | _ -> false)
 
+(* An item or the money named only so that it is read (to_read). *)
+let any_count bag_item =
+  { Postconditions.bag_item; count = Engine_postcondition.Count.Exactly 0 }
+
+let any_money = Engine_postcondition.Money.Range { min = 0; max = 0 }
+
 let to_read needs : Postconditions.t =
   let party =
     List.exists
@@ -241,15 +247,9 @@ let to_read needs : Postconditions.t =
       (if party then
          Some (Postconditions.Party_includes { members = []; slots = [] })
        else None);
-    items =
-      List.map
-        (fun bag_item ->
-          { Postconditions.bag_item; count = Engine_promise.Count.Exactly 0 })
-        items;
+    items = List.map any_count items;
     coins = None;
-    money =
-      (if money then Some (Engine_promise.Money.Range { min = 0; max = 0 })
-       else None);
+    money = (if money then Some any_money else None);
     flags = [];
     knows = [];
     levels = [];

@@ -6,7 +6,7 @@
 
 open Engine_run
 open Pokemon_checkpoints
-open Engine_promise
+open Engine_postcondition
 
 let case name input expectation = { Table_test.name; input; expectation }
 
@@ -327,6 +327,13 @@ let kept_cases =
       (fun () ->
         match Saved.of_yojson (`Int 1) with Ok _ -> "read" | Error e -> e)
       "what is kept is not an object";
+    case "a kept pose with no map: the derived reader names the field"
+      (fun () ->
+        let pose = [ ("tile", `List [ `Int 4; `Int 4 ]); ("facing", `Null) ] in
+        match Saved.of_yojson (`Assoc [ ("at", `Assoc pose) ]) with
+        | Ok _ -> "read"
+        | Error e -> e)
+      "Pokemon_saved.observed.at_map";
     case "spent, checked from the event against the checkpoint's start"
       (fun () -> spent_from ~start:(Some 29202))
       "money: passed: spent $4100 ($29202 to $25102)";
