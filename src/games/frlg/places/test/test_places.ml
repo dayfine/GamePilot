@@ -108,10 +108,10 @@ let () =
     [
       case "every place's object is in the maps, usable from its stand tile"
         (fun () -> failures resolves)
-        "23 places, all pass";
+        "24 places, all pass";
       case "every place's stand tile is walked to from a warp"
         (fun () -> failures reachable)
-        "23 places, all pass";
+        "24 places, all pass";
       case "every town's Fly name is one Fly knows" towns_fly
         "6 towns, all pass";
       case "every town's nurse and mart start with the town's key" towns_prefix

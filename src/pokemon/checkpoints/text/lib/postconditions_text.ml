@@ -9,6 +9,7 @@ let slot_text ({ slot; species } : slot) =
 
 let party_text : party option -> string list = function
   | Some (Party_in_order l) -> [ "party in order " ^ list l ]
+  | Some (Party_includes { members = []; slots }) -> List.map slot_text slots
   | Some (Party_includes { members; slots }) ->
       ("party includes " ^ list members) :: List.map slot_text slots
   | None -> []

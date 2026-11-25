@@ -35,3 +35,8 @@ let picks_member ~action args =
   action = "capture"
   || (not (List.mem_assoc action field_move_users))
      && List.exists (fun key -> J.has key args) member_keys
+
+let deposited_species ~where args =
+  Option.fold ~none:[]
+    ~some:(J.strings (where ^ "species"))
+    (J.find "species" args)

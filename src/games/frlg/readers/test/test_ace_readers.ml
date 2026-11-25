@@ -1,0 +1,92 @@
+(* The ACE setup's readers (Easy_chat_screen, Pc_box_screen) on native mGBA
+   frames of frlg.ace_setup (2026-11-25): the mail editor's group grid and
+   word lists while typing BULK UP / CAPABLE / KARATE CHOP / MAGIKARP, and
+   MOVE POKéMON's box screen on Box 1 and Box 3, before and after. The
+   fixtures are probe_images output (regen_fixtures.sh ace, from ace.mgba.map);
+   the shifted fixture holds every frame at brightness x0.9 and x1.1, each
+   channel +-12 and in grey 10 levels (dev/reader_fixtures/shift_frame.py), and
+   each must read the same. The image's name says what it shows: e_g_ the
+   editor's group grid, e_w_ a word list, e_fields_ the message's fields,
+   box1_/box3_ the box screen.
+
+   Headroom on these frames and their shifted versions (threshold; worst
+   reading on the thing; worst off it):
+   - group rectangle, red share of the edge box: 0.15; 0.25; 0.
+   - word arrow, dark share (Cursor_column): 0.10; 0.136; 0.
+   - PKMN DATA, sum of channel stddevs: 10; 157; 0.
+   - hand shadow on slot 1, share: 0.25; 0.31 (grey); 0.
+   - Desert wallpaper, r-g / g-b: 15 / 20; 29 / 38; -60.
+   - Forest wallpaper, g-r / g-b: 20 / 20; 36 / 92; -53.
+   - male mark, blue share: 0.15; 0.41; no frame off it.
+   The word arrow and the hand shadow are the thin ones; the actions confirm
+   both by a second read (the row's words, the panel). *)
+
+open Frlg_readers
+
+let measurements probes : Effects.measurements = { seq = 0; t_ms = 0.; probes }
+
+let cell = function
+  | None -> "none"
+  | Some (c : Easy_chat_screen.cell) -> Printf.sprintf "r%dc%d" c.row c.col
+
+let flag = function None -> "?" | Some true -> "y" | Some false -> "n"
+
+(* Easy Chat frames report the two cursors, box frames the box screen. *)
+let read image m =
+  if String.starts_with ~prefix:"e_" image then
+    Printf.sprintf "group %s, word %s"
+      (cell (Easy_chat_screen.group_cell m))
+      (cell (Easy_chat_screen.word_cell m))
+  else
+    Printf.sprintf "panel %s, first slot %s, desert %s, forest %s, male %s"
+      (flag (Pc_box_screen.panel_occupied m))
+      (flag (Pc_box_screen.hand_on_first_slot m))
+      (flag (Pc_box_screen.desert_wallpaper m))
+      (flag (Pc_box_screen.forest_wallpaper m))
+      (if Pc_box_screen.panel_occupied m = Some true then
+         flag (Pc_box_screen.male m)
+       else "-")
+
+(* Grid rows and list rows are the rows shown: MOVE 1 (grid row 9) and
+   BULK UP (list row 11) sit on the bottom row once scrolled to. The male
+   mark is read only on an occupied slot. *)
+let expected =
+  [
+    ("e_g_first_open", "group r0c0, word none");
+    ("e_g_actions", "group r3c1, word none");
+    ("e_g_move1", "group r3c0, word none");
+    ("e_g_move2", "group r3c1, word none");
+    ("e_g_pokemon", "group r0c0, word none");
+    ("e_w_bulkup", "group none, word r3c0");
+    ("e_w_capable", "group none, word r3c1");
+    ("e_w_karate", "group none, word r3c0");
+    ("e_w_magikarp", "group none, word r3c0");
+    ("e_fields_after_bulk_up", "group none, word none");
+    ( "box1_hand_on_empty_first_slot",
+      "panel n, first slot y, desert n, forest y, male -" );
+    ( "box3_hand_on_third_slot",
+      "panel n, first slot n, desert y, forest n, male -" );
+    ( "box3_ace_hand_on_title",
+      "panel n, first slot n, desert y, forest n, male -" );
+    ( "box3_ace_on_first_slot",
+      "panel y, first slot n, desert y, forest n, male y" );
+  ]
+
+let base image = Filename.remove_extension (Filename.basename image)
+
+let cases label images =
+  List.map
+    (fun (image, probes) ->
+      {
+        Table_test.name = Printf.sprintf "%s: %s" label image;
+        input = (fun () -> read (base image) (measurements probes));
+        expectation =
+          Option.value (List.assoc_opt (base image) expected) ~default:"?";
+      })
+    images
+
+let () =
+  Table_test.run "ace readers"
+    (cases "mgba" (Wire.read_image_probes "fixtures/ace.mgba.probes.jsonl")
+    @ cases "mgba shifted"
+        (Wire.read_image_probes "fixtures/ace.mgba.shifted.probes.jsonl"))

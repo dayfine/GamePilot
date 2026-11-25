@@ -106,6 +106,9 @@ let game_action stocks ~where action args acc =
   let named key = J.string_opt ~where key args in
   let acc =
     if List.mem_assoc action field_move_users then field_move action acc
+    else if action = "pc_deposit" then
+      List.fold_left (use_member action) acc
+        (A.Action_args.deposited_species ~where args)
     else use_members ~named action acc
   in
   let acc =
