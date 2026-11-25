@@ -1,4 +1,4 @@
 (test
- (name test_promise)
- (modules test_promise)
- (libraries gamepilot.table_test gamepilot.engine_promise))
+ (name test_postcondition)
+ (modules test_postcondition)
+ (libraries gamepilot.table_test gamepilot.engine_postcondition))

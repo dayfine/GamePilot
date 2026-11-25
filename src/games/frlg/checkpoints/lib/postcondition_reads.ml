@@ -132,14 +132,16 @@ let observe ~log (promised : Pokemon_checkpoints.Postconditions.t) :
     marks;
   }
 
-let gained : Engine_promise.Count.t -> bool = function
-  | Engine_promise.Count.Gained _ -> true
-  | Engine_promise.Count.Exactly _ | Engine_promise.Count.At_least _ -> false
+let gained : Engine_postcondition.Count.t -> bool = function
+  | Engine_postcondition.Count.Gained _ -> true
+  | Engine_postcondition.Count.Exactly _ | Engine_postcondition.Count.At_least _
+    ->
+      false
 
 let at_start ~log (promised : Pokemon_checkpoints.Postconditions.t) =
   let spent =
     match promised.money with
-    | Some (Engine_promise.Money.Spent _) -> true
+    | Some (Engine_postcondition.Money.Spent _) -> true
     | _ -> false
   and coins = Option.fold ~none:false ~some:gained promised.coins
   and items =

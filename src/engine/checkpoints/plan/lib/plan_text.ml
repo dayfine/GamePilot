@@ -55,10 +55,11 @@ module Make (T : Engine_terms.GAME_TERMS) = struct
             (kind_counts plan.checkpoint.events)))
 
   let lines_text = function [] -> "none" | lines -> String.concat "\n" lines
-  let promises_text promises = lines_text (T.Promises.text promises)
+  let promises_text promises = lines_text (T.Postconditions.text promises)
 
   let postconditions (plan : Plan.t) =
-    lines_text (Option.fold ~none:[] ~some:T.Promises.text plan.postconditions)
+    lines_text
+      (Option.fold ~none:[] ~some:T.Postconditions.text plan.postconditions)
 
   let repeat (plan : Plan.t) =
     match plan.repeat with

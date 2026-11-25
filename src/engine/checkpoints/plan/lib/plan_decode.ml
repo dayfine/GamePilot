@@ -130,7 +130,7 @@ module Make (T : Engine_terms.GAME_TERMS) = struct
         | Some n when n >= 0 -> n
         | Some n -> F.fail "%sretries is %d, not 0 or more." where n)
 
-  let promises ~where obj = ok_or_fail (T.Promises.decode ~where obj)
+  let promises ~where obj = ok_or_fail (T.Postconditions.decode ~where obj)
 
   let repeat_of ~where obj : Plan.repeat =
     known_fields_only ~where [ "until"; "max_rounds" ] obj;

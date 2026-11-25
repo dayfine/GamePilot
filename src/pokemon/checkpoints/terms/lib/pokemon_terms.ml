@@ -1,5 +1,4 @@
 module Own_kind = Own_kind
-module Postconditions = Postconditions
 module Postcondition_check = Postcondition_check
 
 module Pose = struct
@@ -29,15 +28,15 @@ module Kind = struct
   let text = Own_kind.text
 end
 
-module Promises = struct
-  type t = Postconditions.t
+module Postconditions = struct
+  include Postconditions
+
   type reads = Postcondition_check.observed
 
   let decode ~where obj =
     Json_field.catch (fun () -> Postcondition_decode.postconditions ~where obj)
 
   let check = Postcondition_check.check
-  let text = Postconditions.text
 end
 
 module Saved = struct

@@ -20,7 +20,8 @@ open Engine_plan
 module Make (T : Engine_terms.GAME_TERMS) : sig
   val run :
     ?end_at:T.Pose.t ->
-    ?end_state:T.Promises.t * (T.Promises.t -> T.Promises.reads) ->
+    ?end_state:
+      T.Postconditions.t * (T.Postconditions.t -> T.Postconditions.reads) ->
     ?on_event:(int -> Event_progress.t -> unit) ->
     ?events:Event_range.t ->
     Game.Make(T).t ->
@@ -36,8 +37,8 @@ module Make (T : Engine_terms.GAME_TERMS) : sig
 
       With [end_state] (the plan's promises and the game's reader of them), once
       the end position holds the game reads what the plan promises and every one
-      must pass ({!Engine_terms.PROMISES.check}); one failed or not read fails
-      the run with {!Failure.Make.Unmet_postconditions}. Each is logged as
+      must pass ({!Engine_terms.POSTCONDITIONS.check}); one failed or not read
+      fails the run with {!Failure.Make.Unmet_postconditions}. Each is logged as
       ["[Postcondition] <checkpoint> <what>: <verdict>: <detail>"] with a
       summary line. Without [end_state] (a plan that states no postconditions,
       or none the game checks at the end) nothing is read.

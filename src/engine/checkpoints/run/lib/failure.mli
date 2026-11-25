@@ -42,7 +42,7 @@ module Make (T : Engine_terms.GAME_TERMS) : sig
             declared end, or the game cannot tell where they are. *)
     | Unmet_postconditions of string list
         (** Every event passed, but promises of the plan failed or could not be
-            read ({!Engine_terms.PROMISES.check}): each as
+            read ({!Engine_terms.POSTCONDITIONS.check}): each as
             ["coins: failed: expected 20, read 0"]. *)
 
   type t = {

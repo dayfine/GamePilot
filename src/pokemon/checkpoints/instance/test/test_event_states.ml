@@ -6,7 +6,7 @@
 
 open Engine_run
 open Pokemon_checkpoints
-open Engine_promise
+open Engine_postcondition
 
 let case name input expectation = { Table_test.name; input; expectation }
 

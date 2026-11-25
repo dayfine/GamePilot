@@ -19,14 +19,14 @@ module Kind : sig
 end
 
 (** What a toy checkpoint promises. *)
-module Promises : sig
-  type t = { gold : Engine_promise.Count.t option; flags : string list }
+module Postconditions : sig
+  type t = { gold : Engine_postcondition.Count.t option; flags : string list }
   (** Gold gained since the start, and flags set. *)
 
   type reads = { gold_now : int option; start : int option; set : string list }
   (** The gold now and at the start, and the flags set. *)
 
-  include Engine_terms.PROMISES with type t := t and type reads := reads
+  include Engine_terms.POSTCONDITIONS with type t := t and type reads := reads
 end
 
 (** What a toy run keeps beside an event's state. *)

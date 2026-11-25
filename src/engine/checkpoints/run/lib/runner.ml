@@ -1,4 +1,4 @@
-open Engine_promise
+open Engine_postcondition
 
 module Make (T : Engine_terms.GAME_TERMS) = struct
   module Plan = Engine_plan.Plan.Make (T)
@@ -118,16 +118,18 @@ module Make (T : Engine_terms.GAME_TERMS) = struct
       Failure.checkpoint_id = checkpoint.checkpoint_id;
       event_index = index;
       event_id = "postconditions";
-      reason = Unmet_postconditions (List.map Promise.result_to_string unmet);
+      reason =
+        Unmet_postconditions (List.map Postcondition.result_to_string unmet);
     }
 
   (* After the end position: the plan's postconditions, read and checked. *)
   let check_postconditions (game : Game.t) (checkpoint : Plan.checkpoint) index
       (promised, observe) =
-    let results = T.Promises.check promised (observe promised) in
+    let results = T.Postconditions.check promised (observe promised) in
     List.iter game.log
-      (Promise.log_lines ~tag:"Postcondition" checkpoint.checkpoint_id results);
-    match Promise.unmet results with
+      (Postcondition.log_lines ~tag:"Postcondition" checkpoint.checkpoint_id
+         results);
+    match Postcondition.unmet results with
     | [] -> Ok ()
     | unmet -> Error (unmet_failure checkpoint index unmet)
 
