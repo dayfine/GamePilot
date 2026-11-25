@@ -30,7 +30,8 @@ let walk_talk =
     name = "walk";
   }
 
-(* PROMPT_TAKEN: a fade or a text or choice box. A late fade starts 1.8 s
+(* The prompt taken (PokemonLZA_AutoStoryScreenPredicates.h): a fade or a
+   text or choice box. A late fade starts 1.8 s
    after the A. *)
 let through_prompt =
   {

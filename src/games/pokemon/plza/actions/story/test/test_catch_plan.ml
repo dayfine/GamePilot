@@ -1,5 +1,5 @@
 (* The zone catches' choices, as the C++'s tests check them
-   (PokemonLZA_AutoStoryActions_Tests.cpp, [plza/lean]). *)
+   (PokemonLZA_AutoStoryActions_Tests.cpp). *)
 
 open Plza_story.Catch_plan
 

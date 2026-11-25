@@ -1,10 +1,10 @@
 (** How long a walk's last leg has been held, ported from
-    [PokemonLZA_AutoStoryWalks.cpp] (fork #754). The leg is a time budget for
-    its end, not a distance: overshoot is harmless, and falls and fades take
-    game time. A run slice takes less time on a console than its length (the
-    inputs run it faster), so the leg is held until its time has passed on the
-    screen reads' clock too. A clock that stops (a script's repeated last read)
-    leaves the slices' lengths to end it. *)
+    [PokemonLZA_AutoStoryWalks.cpp]. The leg is a time budget for its end, not a
+    distance: overshoot is harmless, and falls and fades take game time. A run
+    slice takes less time on a console than its length (the inputs run it
+    faster), so the leg is held until its time has passed on the screen reads'
+    clock too. A clock that stops (a script's repeated last read) leaves the
+    slices' lengths to end it. *)
 
 type t
 (** The hold so far. *)

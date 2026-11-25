@@ -1,11 +1,11 @@
-(** A run straight ahead to a gate's A prompt: [run_to_gate] of
-    PokemonLZA_AutoStoryConsoleActions.cpp over [run_towards_gate_with_A_button]
-    of PokemonLZA_BasicNavigation.cpp ([plza/lean]), 03.07's run to Wild Zone
-    1's gate. The stick ahead with B held, for up to [timeout_ms], until an A
-    prompt shows: reached. When the party bar has been gone 400 ms (a day/night
-    change stops the run, as the fork's [OverworldPartySelectionOverWatcher]
-    reads it), it waits for free control ({!Free_control_wait}) and runs once
-    more; then, or with no prompt in time, [gate_not_reached].
+(** A run straight ahead to a gate's A prompt, the plan's [run_to_gate]: ported
+    from PokemonLZA_AutoStoryConsoleActions.cpp over the run toward a gate's A
+    prompt in PokemonLZA_BasicNavigation.cpp, 03.07's run to Wild Zone 1's gate.
+    The stick ahead with B held, for up to [timeout_ms], until an A prompt
+    shows: reached. When the party bar has been gone 400 ms (a day/night change
+    stops the run, as the fork's watcher for the party bar going reads it), it
+    waits for free control ({!Free_control_wait}) and runs once more; then, or
+    with no prompt in time, [gate_not_reached].
 
     Where it differs: the fork holds the stick in one press its watchers cut
     short; this holds it in 250 ms slices with a screen read after each, so it

@@ -1,6 +1,6 @@
 (** Reader: how many of the party bar's six slots hold a Pokémon. Ported from
-    PokemonLZA_PartyBarDetector.cpp's [detect] and [slot_has_hp_bar]
-    ([plza/lean]).
+    PokemonLZA_PartyBarDetector.cpp: its bar detection and per-slot HP bar
+    check.
 
     The bar must show (its D-pad marker, or its empty last slot:
     {!Party_bar.shown}). Slots fill left to right, so the count is one past the
@@ -39,10 +39,6 @@ type bar = { hp : float; strict : float; relaxed : float }
 
 val bars : Effects.measurements -> bar list option
 (** The six bars, from {!bar_probes}' results. *)
-
-val has_hp_bar : bar -> bool
-(** Half or more HP colours or trough, at 0.72 when 5% are HP colours, else at
-    0.65. *)
 
 val filled : sent_out:int option -> bar list -> int
 (** One past the rightmost slot sent out or with an HP bar; 0 for none. *)

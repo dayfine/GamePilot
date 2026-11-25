@@ -1,9 +1,7 @@
 {
   "format": "gamepilot-checkpoint/1",
   "game": "plza",
-  "execution": {
-    "save": "unverified"
-  },
+  "execution": {},
   "metadata": {
     "phase": "testing",
     "source": "played from a new game; starts ~3 tiles in front of the elevator, facing it, where 02.04 ends; ends at the autosave on entering Room 202; the fork's plza-02.05.plan.json (plza/lean)",

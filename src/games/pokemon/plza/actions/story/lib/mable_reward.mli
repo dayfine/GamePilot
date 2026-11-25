@@ -1,7 +1,7 @@
-(** Mable's research reward in her office (03.11): the fork's
-    [claim_research_reward] (PokemonLZA_AutoStoryConsoleActions.cpp), with
-    [overworld_to_main_menu] (PokemonLZA_MenuNavigation.cpp) and
-    [press_b_out_of_menu] (PokemonLZA_AutoStoryScenes.cpp), [plza/lean].
+(** Mable's research reward in her office (03.11): ported from
+    PokemonLZA_AutoStoryConsoleActions.cpp, with the way from the overworld to
+    the main menu from PokemonLZA_MenuNavigation.cpp and B out of the menu from
+    PokemonLZA_AutoStoryScenes.cpp.
 
     The main menu: the screen is watched up to 30 s for the overworld (the party
     bar) or the main menu ({!Story_look.t.main_menu}), each held 250 ms; 100 ms
@@ -16,8 +16,8 @@
     [no_reward_lines] (no line at all: not in her office), [menu_not_closed] (60
     B), and [game_not_running] on the HOME menu.
 
-    Where it differs: the fork's overworld is the party bar's D-pad markers
-    ([OverworldPartySelectionWatcher]); here the party bar as the story reads
+    Where it differs: the fork's overworld is the party bar's D-pad markers (its
+    overworld party selection watcher); here the party bar as the story reads
     it, the markers or its empty last slot ({!Plza_readers.Party_bar}). The fork
     also presses B out of the box system, which nothing reads here. *)
 

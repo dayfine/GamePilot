@@ -1,10 +1,7 @@
 {
   "format": "gamepilot-checkpoint/1",
   "game": "plza",
-  "execution": {
-    "save": "autosave",
-    "autosave_step": "after_taunie_battle"
-  },
+  "execution": {},
   "metadata": {
     "phase": "testing",
     "source": "played from a new game; starts outside Hotel Z after the Main Menu card (start unchecked). Ends at the autosave after her talk, in after_taunie_battle; starts where 03.02 ends, or at its end (the minimap reads 03.03-start: every event is skipped; skip_if reads the screen); the fork's plza-03.02b.plan.json (plza/lean)",

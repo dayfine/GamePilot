@@ -1,13 +1,13 @@
 (** Reader: the party bar's D-pad marker (up over the Pokémon sent out next,
     down under one sent out) under one of its six slots. Ported from
-    PokemonLZA_OverworldPartySelectionDetector.cpp ([plza/lean]), the half of
-    PokemonLZA_PartyBarDetector.cpp's [detect] that does not need an empty last
-    slot: it still shows when the bar collapses to its lead icon (03.02b's
+    PokemonLZA_OverworldPartySelectionDetector.cpp, the half of
+    PokemonLZA_PartyBarDetector.cpp's bar detection that does not need an empty
+    last slot: it still shows when the bar collapses to its lead icon (03.02b's
     plaza, console B, 2026-11-25), where the empty slots fade into light
     pavement.
 
     Each slot's box is (0.048 + 0.0398 i, 0.926, 0.017, 0.058), and in it a
-    [ButtonDetector] for each of four templates (PokemonLZA_ButtonDetector.cpp):
+    button detector for each of four templates (PokemonLZA_ButtonDetector.cpp):
     D-pad up and down, blobs of the eight bright ranges (0x808080 to white up to
     0xf0f0f0 to white) of at least 250 pixels and 15 x 15, scored under 80; and
     their black insides, blobs of the four dark ranges (black to 0x404040 up to
@@ -28,4 +28,4 @@ val shown : Effects.measurements -> bool
 
 val down_slot : Effects.measurements -> int option
 (** The first slot showing the D-pad down marker (its button or its inside): the
-    Pokémon sent out (the fork's [dpad_down_idx]). *)
+    Pokémon sent out (the fork's D-pad down slot). *)

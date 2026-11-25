@@ -1,6 +1,6 @@
 (** Turns the player to face a minimap bearing by the minimap's arrow. Ported
-    from [face_heading] in PokemonLZA_AutoStoryWalks.cpp ([plza/lean]), with
-    [get_facing_direction] (PokemonLZA_BasicNavigation.cpp) as its arrow read.
+    from the turn to a heading in PokemonLZA_AutoStoryWalks.cpp, with the facing
+    read of PokemonLZA_BasicNavigation.cpp as its arrow read.
 
     Reads the arrow; up to 4 turns, each an L tap (100/150 ms) and the stick
     toward the turn left to make (150 ms, released 100 ms, walking), until the
@@ -13,7 +13,7 @@
 
     The arrow read waits for the arrow up to 40 s (a day and night change), as
     the fork's; none by then: [arrow_unread] (the fork throws, which its runner
-    reports as [operation_failed]).
+    reports as an operation failure).
 
     Where it differs: the arrow is waited for by screen reads 100 ms apart, not
     by a watcher held 50 ms. *)

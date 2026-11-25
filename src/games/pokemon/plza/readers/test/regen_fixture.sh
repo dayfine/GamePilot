@@ -4,15 +4,18 @@
 # frames (draw_synthetic_frames.py), probed by the daemon's probe_images on the
 # native viewport with every PLZA reader's probes (write_probe_spec.exe, its
 # find templates copied from assets/templates beside the spec). Also
-# fixtures/switch.shifted.probes.jsonl and switch.shifted.rg.probes.jsonl:
-# every frame again with its colors
+# fixtures/switch.shifted.probes.jsonl: every frame again with its colors
 # shifted as another capture card might show them, by
-# dev/reader_fixtures/shift_frame.py (brightness times 0.9 and 1.1, one channel
-# plus or minus 12, 10% toward mid-grey), named <shift>/<folder>/<frame>.png:
-# the jpg frames are decoded to png first, so a shift adds no JPEG loss. The
-# shifted frames are probed without the minimap's cells (write_probe_spec.ml).
-# The brightness and blue shifts go to the first file, the red, green and grey
-# ones to the second: one file of all nine is over GitHub's 50 MB warning.
+# dev/reader_fixtures/shift_frame.py --one (one shift per frame, picked from
+# its name: brightness times 0.9 or 1.1, one channel plus or minus 12, or 10%
+# toward mid-grey), named <shift>/<folder>/<frame>.png: the jpg frames are
+# decoded to png first, so a shift adds no JPEG loss. The shifted frames are
+# probed without the minimap's cells (write_probe_spec.ml). All nine shifts of
+# every frame would be about 85 MB.
+# The fork's 1080p captures are kept at 640x360 where every reader test still
+# passes on them, at 1280x720 where one does not, and at 1080p (JPEG quality
+# 80) where 720p fails too; the scaled frames' arrow bearings moved by up to 6
+# degrees (the fork's tolerance is 10), their expectations with them.
 # Also fixtures/switch.second.probes.jsonl: every frame again, probed by what
 # a two-frame read subscribes from what the frame shows (write_probe_spec.exe
 # --second): the party bars' tests made from its cards, the caught mark's box
@@ -60,9 +63,7 @@ for path in sys.argv[2:]:
     os.makedirs(os.path.dirname(out), exist_ok=True)
     Image.open(path).convert("RGB").save(out)
 ' "$work/lossless" ./*/*)
-(cd "$work/lossless" && $SHIFT_PYTHON "$SHIFT_FRAME" "$work/shifted" ./*/*.png)
+(cd "$work/lossless" && $SHIFT_PYTHON "$SHIFT_FRAME" --one "$work/shifted" \
+    ./*/*.png)
 (cd "$work/shifted" && "$PROBE_IMAGES" --spec "$work/spec/shifted.probes.json" \
-    --viewport native ./b*/*/*.png) >"$HERE/fixtures/switch.shifted.probes.jsonl"
-(cd "$work/shifted" && "$PROBE_IMAGES" --spec "$work/spec/shifted.probes.json" \
-    --viewport native ./[gr]*/*/*.png) \
-    >"$HERE/fixtures/switch.shifted.rg.probes.jsonl"
+    --viewport native ./*/*/*.png) >"$HERE/fixtures/switch.shifted.probes.jsonl"

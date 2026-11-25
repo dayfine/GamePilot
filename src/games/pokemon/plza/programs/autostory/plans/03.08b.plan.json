@@ -2,7 +2,6 @@
   "format": "gamepilot-checkpoint/1",
   "game": "plza",
   "execution": {
-    "save": "unverified",
     "start_signature": {
       "party": 5,
       "talk_prompt": false,

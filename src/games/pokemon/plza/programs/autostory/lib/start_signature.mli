@@ -1,10 +1,10 @@
 (** A checkpoint's start and end checks. The start check: the plan's
     [execution.start_signature], as the fork checks it before a chained
-    checkpoint and after a reload ([check_live_start] and [reload_into] in
-    PokemonLZA_AutoStoryGame.cpp; [read_start_signature], [read_start_position]
-    in PokemonLZA_AutoStory.cpp; [read_start_screen] in
-    PokemonLZA_AutoStoryScreenEvents.cpp; [start_confirmed] in
-    PokemonLZA_AutoStoryStarts.cpp; [plza/lean]).
+    checkpoint and after a reload (the live start check and the reload in
+    PokemonLZA_AutoStoryGame.cpp; the start signature and start position reads
+    in PokemonLZA_AutoStory.cpp; the start screen read in
+    PokemonLZA_AutoStoryScreenEvents.cpp; the start's confirmation in
+    PokemonLZA_AutoStoryStarts.cpp).
 
     A signature names any of [talk_prompt] (an A prompt shows), [wild_zone] (the
     map's pin is in Wild Zone 1), [party] (the party bar's filled slots) and
@@ -20,7 +20,10 @@
     - the plan's [execution.end_signature] read instead: passed, as at its end
       (a reload past the checkpoint's own autosave lands there, and its events
       skip there by [skip_if]);
-    - anything else, or no read agreed on: [chain_off_start], which repeats;
+    - anything else, or no read agreed on: [chain_off_start], which repeats, so
+      the series stops with no reload, as the fork's chain stops its run
+      (PokemonLZA_AutoStoryGame.cpp): a run off its start was put there by the
+      checkpoint before it, which a reload would hide;
     - a signature with another field, an unrecorded minimap, or nothing:
       [start_signature_unread], which repeats.
 
@@ -34,6 +37,13 @@ val check :
   checkpoint_id:string ->
   Json_field.obj ->
   (unit, Engine_run.Failure.cause) result
+
+val decode :
+  checkpoint_id:string ->
+  Json_field.obj ->
+  (unit, Engine_run.Failure.cause) result
+(** The plan's start and end signatures decode (no field but the four, a
+    recorded minimap, not empty): checked when the plan loads. *)
 
 val check_end :
   Plza_story.Story_steps.game_steps ->

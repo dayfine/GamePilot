@@ -1,9 +1,7 @@
-(** A story battle fought to its end: the plan's [story_battle], the fork's
-    [battle_step] (PokemonLZA_AutoStoryActionTable.cpp), [fight_story_battle]
-    (PokemonLZA_AutoStoryConsoleActions.cpp) and
-    [TrainerBattleState::attempt_one_attack] (PokemonLZA_TrainerBattle.cpp),
-    [plza/lean], with the fork's default battle AI (the most effective move, no
-    plus moves).
+(** A story battle fought to its end: the plan's [story_battle]. Ported from
+    PokemonLZA_AutoStoryActionTable.cpp, PokemonLZA_AutoStoryConsoleActions.cpp
+    and PokemonLZA_TrainerBattle.cpp, with the fork's default battle AI (the
+    most effective move, no plus moves).
 
     The start: up to 10 s for the battle HUD; each read without it holds ZL 2 s
     ({!Lock_on}), and move symbols under ZL count as the start too
@@ -24,8 +22,8 @@
 val run : Story_steps.game_steps -> Story_steps.outcome
 
 val attempt_one_attack : Story_steps.game_steps -> int ref -> bool
-(** One attack of the fight ([TrainerBattleState::attempt_one_attack]): ZL held
-    up to 1 s for the move symbols, the most effective move pressed as they
-    show. Whether a move went. [misses] counts the misses in a row (reset on a
-    move); from the third, the camera turns left while ZL is mashed. The
-    catches' [weaken_target] keeps its own count ({!Catches}). *)
+(** One attack of the fight (PokemonLZA_TrainerBattle.cpp): ZL held up to 1 s
+    for the move symbols, the most effective move pressed as they show. Whether
+    a move went. [misses] counts the misses in a row (reset on a move); from the
+    third, the camera turns left while ZL is mashed. The catches'
+    [weaken_target] keeps its own count ({!Catches}). *)

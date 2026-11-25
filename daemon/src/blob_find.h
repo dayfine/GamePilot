@@ -34,7 +34,7 @@ struct FindSpec {
   std::string template_hash;     // non-empty: report each blob's score
   std::string shape_hash;        // non-empty: report each blob's overlap
   // Score each blob's box with the pixels outside the filter's range black,
-  // as the fork's filter_by_mask before a match (MoveEffectivenessSymbol).
+  // as PokemonLZA_MoveEffectivenessSymbol.cpp masks a box before its match.
   bool masked = false;
 };
 

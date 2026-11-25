@@ -9,7 +9,7 @@ let text_presses = 3
 let press steps b =
   S.press steps b ~hold_ms:S.press_hold_ms ~release_ms:S.press_release_ms
 
-(* CHOICE_WITH_ROWS: a choice box whose highlighted row and rows read. *)
+(* A choice box whose highlighted row and rows read. *)
 let with_rows (l : L.t) = l.choice_box && Option.is_some l.choice_rows
 
 let wait_for_rows steps =

@@ -59,7 +59,7 @@ cd src && opam exec -- dune exec -- gamepilot checkpoints --program plza.autosto
 | 03.10 | Up the Research Lab's elevator to the Director's Office |
 | 03.11 | Mable's research, the Rock Smash TM |
 
-<!-- plans: 38fd4322cf23 -->
+<!-- plans: 8bccc5f7e39a -->
 <!-- /generated -->
 
 ## When it stops
@@ -88,8 +88,7 @@ and passes. Each run keeps its log, wire log and a `failure.png` in its run fold
 03.07 to 03.11 have their plans and are ported. 03.11's reward opens the main menu (X, until the
 menu's right arrow and B show; `main_menu_not_reached`), goes three rows down to Mable's Research,
 passes her lines (`no_reward_lines` when there are none: not in her office) and presses B until the
-party bar or a text box shows (`menu_not_closed`). The menu's reader has read only one full-size
-frame so far. 03.08 and 03.08a catch the fourth and fifth species: the party bar's count
+party bar or a text box shows (`menu_not_closed`). 03.08 and 03.08a catch the fourth and fifth species: the party bar's count
 picks the spot (from Taunie's rocks to the 100 spot by the map for the fourth, `rocks_not_left` when
 the run does not start on the rocks; the 80 spot for the fifth), the camera sweeps until ZL locks on,
 up to 4 plates are read by flicking right and the nearest not marked caught is chosen and stepped
@@ -110,7 +109,7 @@ every field named must read the same (`chain_off_start`). A walk with a heading 
 turns to it by the minimap's arrow first, up to 4 turns (`heading_missed`), and stops with
 `arrow_unread` when no arrow shows for 40 s. 03.10 starts in the lab's lobby, where 03.09 ends.
 
-Only 01.00b to 03.07 so far. 01.02's chase, 01.03's walk to Chikorita and the walks of 02.01 to
+01.02's chase, 01.03's walk to Chikorita and the walks of 02.01 to
 03.06 are timed stick legs with no map, so they can miss; the chase then stops on Ryon's
 A prompt (`scene_ended_in_control`), the walk to Chikorita with `walk_no_end`, and the Battle Zone
 walk with `scene_ended_in_control` when Brigitte's talk never starts. In 02.02, a walk to the
@@ -124,7 +123,9 @@ that never reaches its A prompt
 (a door, the clerk, the elevator, the bed) fails with `walk_no_end`. The starter is always Chikorita. The
 battle holds ZL and picks the most effective move from the symbols it shows; the move is pressed
 with ZL still held. A battle that never sees them fails with `battle_failed` after 2 minutes, and
-a lost battle reads as won (the talk after it looks the same), so the scene after it then fails. The
+a lost battle reads as won (the talk after it looks the same), so the scene after it then fails.
+A battle that comes up during a walk or a scene (not one the plan names) is not handled: the walk or
+the scene then fails or times out. The
 party bar is read from its D-pad marker or its empty last slot; "mission
 complete" is not read. After Brigitte, a scene that never starts within 45 s fails with
 `scene_never_started`. The name and language on Confirm Choices are not checked. The

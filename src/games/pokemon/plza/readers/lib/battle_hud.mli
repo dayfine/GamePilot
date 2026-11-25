@@ -1,4 +1,4 @@
-(** Reader: the battle HUD is up, the fork's [BATTLE_STARTED]
+(** Reader: the battle HUD is up, the fork's battle-started event
     (PokemonLZA_AutoStoryScreenEvents.cpp): the A of ["X A: Select Move"] at the
     bottom centre (a {!Interact_prompt} match in the box 0.40, 0.84, 0.20,
     0.10), or the lead's panel with the stat markers or the trainer's Poké Balls

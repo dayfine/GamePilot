@@ -1,8 +1,8 @@
 (** What a walk reads on the screen, and what it judges from it: a fade, free
     control, what keeps the player busy, a walk's end event. Ported from
     [PokemonLZA_AutoStoryScreenPredicates.h], [PokemonLZA_AutoStoryWalks.cpp]
-    and the screen reads of [PokemonLZA_AutoStoryConsoleBackend.cpp] (fork
-    #754). PLZA's readers fill it; until they come, tests do. *)
+    and the screen reads of [PokemonLZA_AutoStoryConsoleBackend.cpp]. PLZA's
+    readers fill it, or tests do. *)
 
 type t = {
   at_ms : float;  (** When the frame was read, on the daemon's clock. *)

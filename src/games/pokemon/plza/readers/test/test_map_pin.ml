@@ -1,5 +1,5 @@
 (* The map pin reader (PokemonLZA_MapPinReader.cpp) on the fork's test frames
-   (PokemonLZA_Detectors_Tests.cpp, [plza/lean]): its drawn maps and two
+   (PokemonLZA_Detectors_Tests.cpp): its drawn maps and two
    console maps of Wild Zone 1. The fork passes a pin within 2 of the
    expected. *)
 
@@ -26,7 +26,7 @@ let cases =
     case "a speck of the arrow's blue" "synthetic/map-arrow-speck" "none";
     (* The fork's (358.9, 227.3). *)
     case "console: stuck at the zone's north fence"
-      "map-pin/zone1-at-north-fence" "(358.5, 228.3)";
+      "map-pin/zone1-at-north-fence" "(358.3, 228.1)";
     (* The fork's (415.4, 230.4). *)
     case
       "console: the patrol's stop 10, the arrow partly under the zone's badge"

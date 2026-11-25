@@ -1,13 +1,13 @@
 (** Waits until the player has free control before a walk starts. Ported from
-    [PokemonLZA_AutoStoryWalks.cpp] (fork #754, [plza/mvp-0101]), over the
-    screen poll {!Switch_home.Screen_poll} and the two timers of
+    [PokemonLZA_AutoStoryWalks.cpp], over the screen poll
+    {!Switch_home.Screen_poll} and the two timers of
     [Pokemon/AutoStory/Engine/Pokemon_ScreenTimers.h].
 
     A screen read every 250 ms. Control is free on two reads in a row of the
     party bar or the controls hint with nothing over them: about 0.5 s when
     control is already free, as it is for most walks. An A prompt with nothing
-    busy held 1 s is control too (the fork's [PROMPT_IS_CONTROL], [plza/lean]:
-    at 01.03 no party bar shows). Two longer limits, kept as the C++ has them:
+    busy held 1 s is control too (as the fork counts a prompt as control: at
+    01.03 no party bar shows). Two longer limits, kept as the C++ has them:
     after 10 s with nothing busy (no text, box or fade) and no sign of control
     either, control is taken as free (longer than the ~7 s from the end of
     01.01's scenes to control, where no sign shows); and 30 s without free

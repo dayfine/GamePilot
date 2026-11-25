@@ -4,8 +4,8 @@ let slice_ms = 250
 let gone_ms = 400
 let runs = 2
 
-(* B held with the stick for the whole slice, as run_towards_gate_with_A_button
-   holds it. *)
+(* B held with the stick for the whole slice, as PokemonLZA_BasicNavigation.cpp's
+   run to a gate holds it. *)
 let run_whole = { Switch_home.Stick_tilt.button = Wire.B; speedup = 1.0 }
 let ( let* ) = Result.bind
 

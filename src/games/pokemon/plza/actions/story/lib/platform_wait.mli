@@ -1,6 +1,5 @@
-(** The platform at the station, where the opening ends and 01.01 starts:
-    [wait_for_platform] and [opening_to_platform] of
-    PokemonLZA_AutoStoryScenes.cpp ([plza/lean]), with their timings. *)
+(** The platform at the station, where the opening ends and 01.01 starts: ported
+    from PokemonLZA_AutoStoryScenes.cpp, with its timings. *)
 
 val wait_for_platform :
   Story_steps.game_steps -> timeout_ms:int -> Story_steps.outcome
@@ -16,4 +15,4 @@ val opening_to_platform :
     left. [platform_not_seen] when no badge shows in [timeout_ms]. *)
 
 val cutscene_skip_hold_ms : int
-(** 2000: how long + is held to skip a cutscene (CUTSCENE_SKIP_HOLD). *)
+(** 2000: how long + is held to skip a cutscene. *)

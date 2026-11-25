@@ -22,7 +22,7 @@ let min_side = 25.
 let max_score = 70.
 
 (* The crop's size and fill as templates.json gives them, with the
-   WaterfillTemplateMatcher's default bounds. *)
+   default bounds of CommonTools/ImageMatch/WaterfillTemplateMatcher.cpp. *)
 let button_a : Blob_template.t =
   {
     width = 34;

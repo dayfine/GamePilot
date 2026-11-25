@@ -1,8 +1,8 @@
 (** A PLZA walk: timed legs of the left stick ({!Plza_rules.Walk_args}), played
     only once the player has free control, and, with an end, the last leg held
     in slices until it shows. A transparent port of the walk in
-    [PokemonLZA_AutoStoryWalks.cpp] and [PokemonLZA_AutoStoryActionTable.cpp]
-    (fork #754, [plza/mvp-0101]): the same presses, order and timings.
+    [PokemonLZA_AutoStoryWalks.cpp] and [PokemonLZA_AutoStoryActionTable.cpp]:
+    the same presses, order and timings.
 
     The camera follows the player and a walk goes where it looks, so a
     {!Plza_rules.Walk_args.Face_then_walk} leg first faces its angle: an L press
@@ -13,7 +13,12 @@
     first. A facing or walk after which the screen stayed still was dropped (or
     walked into a wall) and is played once more. Every walk and held slice asks
     to run ({!Walk_inputs.Run}); [walk_only] walks it, as before dash is
-    unlocked (01.01). *)
+    unlocked (01.01).
+
+    Not ported yet: with a story battle ahead in the checkpoint, the fork stops
+    a walk on two battle HUD reads and goes on at the battle
+    (PokemonLZA_AutoStoryActionTable.cpp). No walk to 03.11 met a battle on
+    console B; here such a walk ends as it would without one. *)
 
 type game_steps = {
   submit : Wire.command -> unit;
@@ -30,10 +35,6 @@ type outcome = (unit, Engine_run.Failure.cause) result
 val play_legs :
   game_steps -> walk_only:bool -> Plza_rules.Walk_args.move -> outcome
 (** Plays every leg as timed. Fails only on a tilt that cannot be sent. *)
-
-val log_final_screen : game_steps -> string -> unit
-(** Reads the screen once the legs are done, so queued inputs have finished
-    before the event ends, and logs what it shows. *)
 
 val walk_to_end :
   game_steps ->
@@ -55,7 +56,7 @@ val walk_to_end :
 val run_event :
   game_steps -> walk_only:bool -> string -> Plza_rules.Walk_args.t -> outcome
 (** A walk event: the wait before, then {!Free_control_wait.wait}, then
-    {!walk_to_end} with an end, or {!play_legs} and {!log_final_screen} without
-    one. A walk with a heading faces it first, once control is free
-    ({!Face_heading}), as the fork's [walk_step]
-    (PokemonLZA_AutoStoryActionTable.cpp, [plza/lean]). *)
+    {!walk_to_end} with an end, or {!play_legs} without one, then the final
+    screen logged. A walk with a heading faces it first, once control is free
+    ({!Face_heading}), as the fork's walk step does
+    (PokemonLZA_AutoStoryActionTable.cpp). *)

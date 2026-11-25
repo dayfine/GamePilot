@@ -1,5 +1,5 @@
 (* Map legs and Wild Zone 1's way out, as the C++'s tests check them
-   (PokemonLZA_AutoStoryActions_Tests.cpp, [plza/lean]). *)
+   (PokemonLZA_AutoStoryActions_Tests.cpp). *)
 
 open Plza_walk
 open Map_leg

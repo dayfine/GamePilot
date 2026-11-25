@@ -75,11 +75,15 @@ let signature ~checkpoint_id ~which key (execution : Json_field.obj) =
       Result.map Option.some (of_fields ~checkpoint_id ~which fields)
   | Some _ -> Error (unread ~checkpoint_id ~which "is not an object")
 
-(* One frame: nothing during a fade or a text box; else the A prompt, the
-   party count and the minimap. *)
+(* One frame: nothing when no frame came (as PokemonLZA_AutoStory.cpp reads
+   an empty signature), or during a fade or a text box; else the A prompt,
+   the party count and the minimap. *)
 let read_frame steps =
   let look = steps.S.read_screen () in
-  if look.fade_black || look.fade_white || look.dialog_box then nothing
+  if
+    (not look.frame_read) || look.fade_black || look.fade_white
+    || look.dialog_box
+  then nothing
   else
     {
       talk_prompt = Some look.interact_prompt;
@@ -101,8 +105,8 @@ and read_next steps ~frame ~last ~agreeing =
   if agreeing >= agreeing_frames && read <> nothing then read
   else read_agreed steps ~frame:(frame + 1) ~last:(Some read) ~agreeing
 
-(* With a signature naming the wild zone, also the map's pin (the fork's
-   read_start_position): in Wild Zone 1 or not. *)
+(* With a signature naming the wild zone, also the map's pin (as
+   PokemonLZA_AutoStory.cpp reads the start position): in Wild Zone 1 or not. *)
 let read steps ~wild_zone =
   let r = read_agreed steps ~frame:0 ~last:None ~agreeing:0 in
   if wild_zone && r <> nothing then
@@ -170,6 +174,15 @@ let check steps ~checkpoint_id (execution : Json_field.obj) =
   match start with
   | None -> Ok (unchecked steps ~checkpoint_id)
   | Some known -> confirm steps ~checkpoint_id known ~at_end
+
+let decode ~checkpoint_id (execution : Json_field.obj) =
+  let* (_ : t option) =
+    signature ~checkpoint_id ~which:"start" "start_signature" execution
+  in
+  let* (_ : t option) =
+    signature ~checkpoint_id ~which:"end" "end_signature" execution
+  in
+  Ok ()
 
 let off_end ~checkpoint_id screen =
   Failure.cause "end_off_signature"

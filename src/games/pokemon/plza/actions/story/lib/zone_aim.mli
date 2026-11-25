@@ -1,8 +1,6 @@
 (** The zone catches' aim under held ZL: read the plates by flicking right,
     choose the nearest not caught, and step toward it. Ported from
-    PokemonLZA_AutoStoryCatches.cpp ([choose_target], [approach_target],
-    [aim_choose_approach], [log_target]; [plza/lean]), with the decisions of
-    {!Catch_plan}. *)
+    PokemonLZA_AutoStoryCatches.cpp, with the decisions of {!Catch_plan}. *)
 
 val lock_on_wait_ms : int
 (** How long ZL is held for a first plate: 3 s (the lock shows over 1.5 s after
@@ -16,10 +14,6 @@ type choice = {
   saw_plates : bool;
 }
 
-val choose_target : Story_steps.game_steps -> Held_zl.t -> choice
-(** Up to 4 plates read by flicking right (0.8), then flicks back to the nearest
-    one not marked caught: the closer one is much more likely to be caught. *)
-
 val approach :
   Story_steps.game_steps ->
   Held_zl.t ->
@@ -31,5 +25,5 @@ val approach :
     plate read (the one before, when it went). *)
 
 val choose_and_approach : Story_steps.game_steps -> choice
-(** ZL held from a fresh start: {!choose_target}, then {!approach} the choice.
-*)
+(** ZL held from a fresh start: up to 4 plates read by flicking right, the
+    nearest one not marked caught chosen, then {!approach} the choice. *)

@@ -120,6 +120,12 @@ let with_assets ~log ~picture ~reload report plan assets =
   | exception Effects.Stop_requested why ->
       Watch_report.end_run report ~passed:false;
       failed ~repeats:true "stopped" why
+  | exception (Effects.Disconnected _ as e) -> raise e
+  | exception e ->
+      (* Any other exception fails the run, as Checkpoint_live_run's do, so
+         the story log, the run record and the watch run still close. *)
+      Watch_report.end_run report ~passed:false;
+      failed "raised" (Printexc.to_string e)
 
 (* The frame a failed run ended on; a refusal is skipped. *)
 let save_failure record =
@@ -149,6 +155,7 @@ let live ~log ~reload record plan (daemon : Daemon_process.t) =
   | exception Effects.Disconnected e -> failed "session" ("disconnected: " ^ e)
   | exception Unix.Unix_error (e, f, _) ->
       failed ~repeats:true "session" (f ^ ": " ^ Unix.error_message e)
+  | exception e -> failed "raised" (Printexc.to_string e)
 
 let with_daemon setup record id body =
   match
@@ -229,13 +236,22 @@ let rec runs_of setup plan ~chained done_ =
         plan.checkpoint.checkpoint_id why;
       false
 
-let rec chain ~plan_dir setup ~chained = function
+let rec chain setup ~chained = function
   | [] -> Ok 0
-  | id :: rest ->
-      let* plan = load_plan ~plan_dir id in
-      if runs_of setup plan ~chained [] then
-        chain ~plan_dir setup ~chained:true rest
+  | plan :: rest ->
+      if runs_of setup plan ~chained [] then chain setup ~chained:true rest
       else Ok 1
+
+(* Every plan of the series, loaded and checked (Plan_check) before the
+   console moves. *)
+let load_checked ~plan_dir ids =
+  List.fold_left
+    (fun plans id ->
+      let* plans = plans in
+      let* plan = load_plan ~plan_dir id in
+      let* () = Story.Plan_check.check plan in
+      Ok (plans @ [ plan ]))
+    (Ok []) ids
 
 let run_series ~plan_dir (f : Checkpoints_flags.flags) ~backend ~viewport =
   let* from_id = Checkpoints_flags.required "--from" f.from_id in
@@ -245,6 +261,7 @@ let run_series ~plan_dir (f : Checkpoints_flags.flags) ~backend ~viewport =
   in
   let* ids = Plan_dir.checkpoint_ids plan_dir in
   let* selected, _ = Plan_dir.select ids ~from_id ~to_id in
+  let* plans = load_checked ~plan_dir selected in
   let program =
     Attached_run.program_fields (Program_registry.of_plan_dir plan_dir)
   in
@@ -262,4 +279,4 @@ let run_series ~plan_dir (f : Checkpoints_flags.flags) ~backend ~viewport =
         Watch_hub.for_runs_dir ~daemon:f.daemon ~runs_dir:f.runs_dir f.watch;
     }
   in
-  chain ~plan_dir setup ~chained:false selected
+  chain setup ~chained:false plans

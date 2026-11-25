@@ -104,6 +104,8 @@ let play_legs steps ~walk_only move =
       ignore (steps.read_screen ());
       face_then_walk_each steps ~walk_only (List.length move.legs) 0 move.legs
 
+(* Reads the screen once the legs are done, so queued inputs have finished
+    before the event ends, and logs what it shows. *)
 let log_final_screen steps walk =
   let screen = steps.read_screen () in
   steps.log
@@ -221,7 +223,7 @@ let talk_check steps walk ~after_legs (screen : Walk_screen.t) ~held_ms :
     | Some (Error cause) -> Failed cause
     | None -> Walk_on
 
-(* The fork's walk_into_talk. *)
+(* A walk into a talk, as PokemonLZA_AutoStoryWalks.cpp walks it. *)
 let walk_into_talk steps ~walk_only walk move ~after_legs =
   let early =
     if prompt_before_walking steps walk move then
@@ -248,7 +250,8 @@ let end_check steps walk ~earliest_end_ms = function
         walk event ~earliest_end_ms
   | Talk _ -> fun _ ~held_ms:_ -> Last_leg_end.Walk_on
 
-(* The fork's ends_before_walking: a walk of one straight leg to the first A
+(* As PokemonLZA_AutoStoryWalks.cpp ends a walk before it walks: a walk of
+   one straight leg to the first A
    prompt ahead, with no earliest end, does not walk when it already shows. *)
 let ends_before_walking steps walk move ~until ~earliest_end_ms =
   match until with

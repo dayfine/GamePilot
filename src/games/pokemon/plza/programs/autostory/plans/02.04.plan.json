@@ -1,9 +1,7 @@
 {
   "format": "gamepilot-checkpoint/1",
   "game": "plza",
-  "execution": {
-    "save": "unverified"
-  },
+  "execution": {},
   "metadata": {
     "phase": "testing",
     "source": "played from a new game; starts inside the lobby door, before the clerk, at the lobby autosave where 02.03 ends; ends ~3 tiles in front of the elevator, facing it; the fork's plza-02.04.plan.json (plza/lean)",

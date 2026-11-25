@@ -1,16 +1,12 @@
 (* The recorded probe results of the PLZA frames (regen_fixture.sh), as the
    measurements a reader takes: fixtures/switch.probes.jsonl by frame
    ("<folder>/<frame>", no extension), every shifted frame of
-   fixtures/switch.shifted.probes.jsonl and switch.shifted.rg.probes.jsonl with
-   the frame it shifts, and each frame's second read
+   fixtures/switch.shifted.probes.jsonl (one shift per frame) with the frame
+   it shifts, and each frame's second read
    (fixtures/switch.second.probes.jsonl). *)
 
 let frames = Wire.read_image_probes "switch.probes.jsonl"
-
-let shifted =
-  Wire.read_image_probes "switch.shifted.probes.jsonl"
-  @ Wire.read_image_probes "switch.shifted.rg.probes.jsonl"
-
+let shifted = Wire.read_image_probes "switch.shifted.probes.jsonl"
 let measurements probes : Wire.frame = { seq = 1; t_ms = 0.; probes }
 
 (* fixtures/switch.second.probes.jsonl: a two-frame read's second frame. *)

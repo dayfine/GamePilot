@@ -2,8 +2,6 @@
   "format": "gamepilot-checkpoint/1",
   "game": "plza",
   "execution": {
-    "save": "autosave",
-    "autosave_step": "rock_pile_scene",
     "start_signature": {
       "minimap": "03.03-start"
     }

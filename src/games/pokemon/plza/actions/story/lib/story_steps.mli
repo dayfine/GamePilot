@@ -1,7 +1,7 @@
 (** What PLZA's story actions read and do in the game, and the screen waits they
-    share: the fork's [PlzaBackend] (press, observe, wait, log) and
-    [Pokemon::wait_for] / [poll_until] of Pokemon/AutoStory/Engine/
-    Pokemon_ScreenWait.h ([plza/lean]), as the PLZA actions call them. *)
+    share: the fork's PLZA backend (press, observe, wait, log) and the screen
+    waits of Pokemon/AutoStory/Engine/Pokemon_ScreenWait.h, as the PLZA actions
+    call them. *)
 
 type game_steps = {
   submit : Wire.command -> unit;
@@ -84,7 +84,7 @@ type rule = {
   confirm_looks : int;  (** Reads in a row the check must hold on; 1 for one. *)
   confirm_hold_ms : int;  (** How long it must hold; 0 for none. *)
 }
-(** The fork's [WaitRule]. *)
+(** How a screen wait holds and times out, as Pokemon_ScreenWait.h's. *)
 
 val rule :
   ?confirm_looks:int ->

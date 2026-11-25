@@ -1,9 +1,7 @@
 {
   "format": "gamepilot-checkpoint/1",
   "game": "plza",
-  "execution": {
-    "save": "unverified"
-  },
+  "execution": {},
   "metadata": {
     "phase": "testing",
     "source": "played from a new game; starts on 3F at the elevator, as the 03.10 autosave reloads. Chained start and start signature are guesses; starts where 03.10 ends; the fork's plza-03.11.plan.json (plza/lean)",

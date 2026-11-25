@@ -6,7 +6,7 @@
 module L = Plza_story.Story_look
 module P = Plza_story.Catch_plan
 module W = Plza_walk.Wild_zone_one
-module C = Fake_console
+module C = Plza_fake_console.Fake_console
 
 let case name input expectation = { Table_test.name; input; expectation }
 let pressed b (i : C.input) = List.mem b i.buttons

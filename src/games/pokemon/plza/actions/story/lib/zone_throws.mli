@@ -1,8 +1,6 @@
 (** The zone catches at one stop: throws at the chosen target, the wild battles
     a throw or the stop brings, and the camera. Ported from
-    PokemonLZA_AutoStoryCatches.cpp ([throw_ball_watched], [weaken_then_throw],
-    [record_breakout_weaken], [throw_at_target], [sweep_for_lock_on],
-    [fight_off], [fight_back], [level_camera], [catch_at_stop]; [plza/lean]).
+    PokemonLZA_AutoStoryCatches.cpp.
 
     Where it differs: the fork races the throw against a party bar watcher (the
     bar at the target count for 250 ms ends it at once). The party count takes
@@ -15,11 +13,6 @@ type result = {
   caught : bool;
   party_reached : bool;  (** the party bar showed the target count *)
 }
-
-val level_camera : Story_steps.game_steps -> unit
-(** After a lock-on the camera looks steeply down: the right stick down 1.5 s
-    (released 100 ms) pins the pitch at its lowest, then up 600 ms (released
-    300) gives the walking pitch. *)
 
 val catch_at_stop :
   Story_steps.game_steps -> spot:string -> max_throws:int -> party:int -> result

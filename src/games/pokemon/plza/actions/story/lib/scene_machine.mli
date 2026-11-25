@@ -1,7 +1,7 @@
-(** A story scene pressed through to its end: [run_scene_machine] of
-    PokemonLZA_AutoStorySceneMachine.cpp ([plza/lean]) with the configs 01.01's
-    to 02.01's scenes use, its classes, presses and timings. Each read every 250
-    ms is classed:
+(** A story scene pressed through to its end: ported from
+    PokemonLZA_AutoStorySceneMachine.cpp with the configs 01.01's to 02.01's
+    scenes use, its classes, presses and timings. Each read every 250 ms is
+    classed:
     - with [stop_at_battle], the battle HUD ends it, and so does a lock-on whose
       ZL brought up the move symbols ({!Lock_on}); after a battle's black fade,
       3 s of a still screen or the party bar with nothing busy (or 1 s of the
@@ -28,20 +28,22 @@
     [stop_at_battle], 120 s with [stop_at_choice], a start window or the button
     B, else 360 s.
 
-    Not ported (no 01.00b to 02.03 scene uses it): [end_at_battle] (a battle
-    before a scene's end when a story battle is ahead). [press_a_first] is the
-    game action [scene_through_prompt] (Story_game). "Mission complete" has no
-    reader yet ({!Story_look}): it reads as a screen no detector reads (A, as
-    for the card). *)
+    Not ported yet: the end at a battle (PokemonLZA_AutoStoryActionTable.cpp:
+    with a story battle ahead in the checkpoint, the battle HUD ends a scene,
+    and the run goes on at the battle). No checkpoint to 03.11 met a battle
+    mid-scene on console B; without it such a scene times out. The fork's option
+    to press A first is the game action [scene_through_prompt] (Story_game).
+    "Mission complete" has no reader yet ({!Story_look}): it reads as a screen
+    no detector reads (A, as for the card). *)
 
 type config = {
   end_on_black_fade : bool;
   stop_at_choice : bool;
   stop_at_battle : bool;
-      (** the fork's [battle_start]: ends on the battle HUD, with the lock-on *)
+      (** the fork's battle start: ends on the battle HUD, with the lock-on *)
   button : Wire.button;  (** A or B: the plan's [button] (A when absent). *)
   start_window_ms : int option;
-      (** the fork's [start_window]: control before any scene waits for one this
+      (** the fork's start window: control before any scene waits for one this
           long, then fails [scene_never_started] *)
 }
 

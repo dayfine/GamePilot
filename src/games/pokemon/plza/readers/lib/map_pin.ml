@@ -40,6 +40,8 @@ let largest blobs =
 let frame_width = float_of_int Native_box.frame_width
 let frame_height = float_of_int Native_box.frame_height
 
+(* The pin from the probe's blobs (frame pixels of the 1080p picture); for
+    tests. *)
 let of_blobs blobs =
   Option.map
     (fun (b : Wire.Blob_find.blob) ->

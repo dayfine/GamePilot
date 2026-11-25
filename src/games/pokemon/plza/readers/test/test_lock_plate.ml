@@ -1,5 +1,5 @@
 (* The lock-on name plate and its caught mark (PokemonLZA_CaughtMarkReader.cpp)
-   on the fork's drawn plates (PokemonLZA_Detectors_Tests.cpp, [plza/lean]):
+   on the fork's drawn plates (PokemonLZA_Detectors_Tests.cpp):
    the bar from the frame, the mark from the second read made from it. *)
 
 open Plza_readers

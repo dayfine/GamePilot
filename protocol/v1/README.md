@@ -40,10 +40,11 @@ and `core.find@1`, blobs found by the fork's fixed pipeline (colour filter, wate
 scores) (`46-subscribe.line_shares_find.request.json`, `47-frame.line_shares_find.notification.json`).
 `hello` lists both. A v1.12 program never subscribes them.
 v1.16 adds the Switch's `ZR` to `submit`, for PLZA's ball throw (ZL and ZR held to aim); a backend
-that is not the Switch refuses it as it does `ZL`. A v1.15 program never names it.
+that is not the Switch refuses it as it does `ZL` (`50-submit.zr.request.json`). A v1.15 program
+never names it.
 v1.15 adds `masked` to `core.find@1` (optional, default `false`): `true` scores each blob's box
-with the pixels outside its filter's range black, as the fork's `filter_by_mask` before
-MoveEffectivenessSymbol's match. v1.15 also adds `then` to `cancel`: the queued commands are dropped
+with the pixels outside its filter's range black, as the fork's move symbol matcher does
+(`49-subscribe.find_masked.request.json`). v1.15 also adds `then` to `cancel`: the queued commands are dropped
 with no release and the batch given runs in their place (on the Switch, the board's replace-on-next:
 the running input lasts until the new one starts), as the fork's command dispatched over a running
 one, so ZL held to read the move symbols stays held through the move

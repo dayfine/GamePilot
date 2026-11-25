@@ -46,7 +46,7 @@ let dark =
     ]
 
 (* The crops' sizes and fills as templates.json gives them, with the
-   WaterfillTemplateMatcher's default bounds. *)
+   default bounds of CommonTools/ImageMatch/WaterfillTemplateMatcher.cpp. *)
 let button_side = 30
 let interior_width = 12
 let interior_height = 10

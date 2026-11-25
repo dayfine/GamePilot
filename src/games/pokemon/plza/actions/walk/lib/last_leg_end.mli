@@ -1,6 +1,6 @@
 (** What ends a walk's last leg, judged on the screen read after each slice, and
-    its failure when nothing did. Ported from [PokemonLZA_AutoStoryWalks.cpp]
-    (fork #754). *)
+    its failure when nothing did. Ported from [PokemonLZA_AutoStoryWalks.cpp].
+*)
 
 (** What one screen read says of the walk. *)
 type verdict =

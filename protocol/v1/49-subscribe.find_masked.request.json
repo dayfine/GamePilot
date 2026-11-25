@@ -1,0 +1,29 @@
+{
+  "jsonrpc": "2.0",
+  "id": 49,
+  "method": "subscribe",
+  "params": {
+    "probes": [
+      {
+        "id": "move_symbols.top",
+        "kind": "core.find@1",
+        "box": {
+          "x": 0.86,
+          "y": 0.55,
+          "w": 0.05,
+          "h": 0.09
+        },
+        "delivery": "latest",
+        "filters": [
+          {
+            "min": [180, 0, 0],
+            "max": [255, 120, 120]
+          }
+        ],
+        "min_area": 100,
+        "template": "21e018b423be9dbd6ab58c8545d5c727d9273f36b56b4596ed49b365f43e17fd",
+        "masked": true
+      }
+    ]
+  }
+}

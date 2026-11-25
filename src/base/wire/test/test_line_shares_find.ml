@@ -97,6 +97,33 @@ let constructor_cases =
         find_params ~min_size:(-1., 0.) ~min_area:1. ());
   ]
 
+(* v1.15's [masked]: the golden's find probe with [masked] true is the one
+   the constructor makes; test_wire re-encodes it unchanged. *)
+let masked_case =
+  {
+    Table_test.name = "masked find: the golden probe is the constructor's";
+    input =
+      (fun () ->
+        let made =
+          Result.map
+            (Wire.find_probe
+               ~template:
+                 "21e018b423be9dbd6ab58c8545d5c727d9273f36b56b4596ed49b365f43e17fd"
+               ~id:"move_symbols.top"
+               ~box:{ Wire.x = 0.86; y = 0.55; w = 0.05; h = 0.09 }
+               ~delivery:Latest)
+            (Wire.Blob_find.params ~masked:true
+               ~filters:[ { low = (180, 0, 0); high = (255, 120, 120) } ]
+               ~min_area:100. ())
+        in
+        match (golden "49-subscribe.find_masked.request.json", made) with
+        | Wire.Request { call = Wire.Subscribe [ probe ]; _ }, Ok made ->
+            string_of_bool (probe = made)
+        | _, Error why -> why
+        | _ -> "no golden probe");
+    expectation = "true";
+  }
+
 let result_of id = List.assoc_opt id (frame_probes ())
 
 let shares_text (s : Wire.Line_shares.t) =
@@ -196,4 +223,4 @@ let pixel_cases =
 
 let () =
   Table_test.run "line shares and find"
-    (constructor_cases @ result_cases @ pixel_cases)
+    ((masked_case :: constructor_cases) @ result_cases @ pixel_cases)

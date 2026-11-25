@@ -1,7 +1,6 @@
 (** The decisions of the zone catches that need no screen: which locked-on
     target to choose and whether to step closer, and when the party bar's count
-    has settled. Ported from PokemonLZA_AutoStoryCatchPlan.h/.cpp ([plza/lean]).
-*)
+    has settled. Ported from PokemonLZA_AutoStoryCatchPlan.h/.cpp. *)
 
 type target = { x : float; y : float; caught : bool option }
 (** A locked-on wild Pokémon: its name plate's bar centre, as fractions of the

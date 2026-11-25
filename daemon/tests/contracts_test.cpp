@@ -174,6 +174,21 @@ void check_requests(const std::map<std::string, pa::JsonValue>& files) {
                       switch_stick_refusal("mgba", "left_stick")) ==
         files.at("45-error.switch_stick.response.json"));
 
+  // ZL and ZR held together: PLZA's aimed throw (v1.16).
+  const SubmitParams throw_ = decode_submit(
+      decode_request(files.at("50-submit.zr.request.json")).params);
+  CHECK(throw_.commands.size() == 1 &&
+        throw_.commands[0].buttons ==
+            (button_mask("ZL") | button_mask("ZR")) &&
+        throw_.commands[0].hold_ms == 500);
+
+  // core.find@1's masked score (v1.15).
+  const SubscribeParams masked = decode_subscribe(
+      decode_request(files.at("49-subscribe.find_masked.request.json"))
+          .params);
+  CHECK(masked.probes.size() == 1 && masked.probes[0].find.has_value() &&
+        masked.probes[0].find->masked);
+
   const Request cancel = decode_request(files.at("12-cancel.request.json"));
   CHECK(cancel.method == "cancel");
   CHECK(!decode_cancel(cancel.params).then);
@@ -555,7 +570,7 @@ int main() {
   const auto files = load_contracts();
   // One per protocol/v1 golden file. The checks below index files by name,
   // so they run only when every one is there.
-  constexpr std::size_t kGoldenFiles = 48;
+  constexpr std::size_t kGoldenFiles = 50;
   CHECK(files.size() == kGoldenFiles);
   if (files.size() == kGoldenFiles) {
     check_requests(files);

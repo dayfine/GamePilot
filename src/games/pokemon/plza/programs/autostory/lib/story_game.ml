@@ -36,7 +36,7 @@ let platform_or_reload ~reload steps ~timeout_ms =
           Platform_wait.wait_for_platform steps ~timeout_ms)
   | outcome -> outcome
 
-(* The fork's scene with "stop_at_choice": its "button" A or B (A when
+(* A scene stopping at a choice, as the fork's: its "button" A or B (A when
    absent). *)
 let scene_to_choice steps (event : Plan.event) (args : Json_field.obj) =
   let to_choice button =
@@ -48,13 +48,13 @@ let scene_to_choice steps (event : Plan.event) (args : Json_field.obj) =
   | [ ("button", `String "B") ] -> to_choice Wire.B
   | _ -> bad_args event "the only arg is button, \"A\" or \"B\""
 
-(* The fork's scene with "battle_start": to the battle HUD. *)
+(* A scene to a battle's start, as the fork's: to the battle HUD. *)
 let scene_to_battle steps =
   Scene_machine.run steps "scene"
     { Scene_machine.default with stop_at_battle = true }
 
-(* The fork's scene with "start_window_ms": control before any scene waits up
-   to that long for one. *)
+(* A scene with a start window, as the fork's: control before any scene
+   waits up to "start_window_ms" for one. *)
 let scene_with_start_window steps (event : Plan.event) (args : Json_field.obj) =
   match args with
   | [ ("start_window_ms", `Int ms) ] when ms > 0 ->
@@ -91,8 +91,8 @@ let prompt_not_seen =
        "scene: no A prompt to press through: free control with nothing to take \
         A (the walk before it stopped short?)")
 
-(* The fork's scene with "press_a_first": A through the prompt first
-   (press_through_prompt), then the scene; with "stop_at_choice", to the
+(* A scene that presses A first, as the fork's: A through the prompt first
+   ({!Plza_walk.Talk_prompt.press_through}), then the scene; with "stop_at_choice", to the
    choice. *)
 let through_prompt steps config =
   if prompt_missing steps then prompt_not_seen

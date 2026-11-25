@@ -1,8 +1,8 @@
-(** ZL held from the lock-on to the throw: the fork's [HeldZl]
-    (PokemonLZA_AutoStoryCatches.cpp, [plza/lean]). Each hold is queued before
-    the last one ends ({!Story_steps.game_steps.queue}), so ZL is never let go
-    while the plates are read, the target is flicked to and stepped toward, and
-    the ball is thrown (the throw queues its own ZL first). *)
+(** ZL held from the lock-on to the throw: ported from
+    PokemonLZA_AutoStoryCatches.cpp. Each hold is queued before the last one
+    ends ({!Story_steps.game_steps.queue}), so ZL is never let go while the
+    plates are read, the target is flicked to and stepped toward, and the ball
+    is thrown (the throw queues its own ZL first). *)
 
 type t
 (** The end of the holds queued so far. *)

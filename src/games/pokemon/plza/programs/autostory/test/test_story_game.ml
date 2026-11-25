@@ -8,7 +8,7 @@
 
 open Plza_checkpoints
 module L = Plza_story.Story_look
-module C = Fake_console
+module C = Plza_fake_console.Fake_console
 
 let case name input expectation = { Table_test.name; input; expectation }
 

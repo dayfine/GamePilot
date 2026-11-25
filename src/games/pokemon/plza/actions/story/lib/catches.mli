@@ -1,6 +1,6 @@
-(** The story's first catches, in Wild Zone 1 (03.07): ported from
-    PokemonLZA_AutoStoryCatches.cpp ([plza/lean]), [catch_tutorial] and
-    [battle_then_catch], with the fork's counts (6 throws, 6 rounds,
+(** The story's first catches, in Wild Zone 1 (03.07), the plan's
+    [catch_tutorial] and [battle_then_catch]: ported from
+    PokemonLZA_AutoStoryCatches.cpp, with the fork's counts (6 throws, 6 rounds,
     PokemonLZA_AutoStoryConsoleActions.cpp).
 
     A throw is the story's ({!Ball_throw}): ZL 500 ms to lock on, ZL and ZR 1.5

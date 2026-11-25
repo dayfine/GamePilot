@@ -10,11 +10,6 @@
  (copy fixtures/switch.shifted.probes.jsonl switch.shifted.probes.jsonl))
 
 (rule
- (copy
-  fixtures/switch.shifted.rg.probes.jsonl
-  switch.shifted.rg.probes.jsonl))
-
-(rule
  (copy fixtures/switch.second.probes.jsonl switch.second.probes.jsonl))
 
 (tests
@@ -52,6 +47,5 @@
  (deps
   switch.probes.jsonl
   switch.shifted.probes.jsonl
-  switch.shifted.rg.probes.jsonl
   switch.second.probes.jsonl)
  (libraries gamepilot.wire gamepilot.table_test gamepilot.plza_readers))

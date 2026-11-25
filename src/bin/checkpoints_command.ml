@@ -193,8 +193,28 @@ let preflight plan_dir f =
   Preflight_command.run ~plan_dir ~from_id
     (preflight_setup plan_dir f backend ~viewport ~from_id)
 
+(* The flags Plza_series does not take: refused, not ignored. *)
+let plza_refused (f : Checkpoints_flags.flags) =
+  let refused =
+    List.filter_map
+      (fun (given, flag) -> if given then Some flag else None)
+      [
+        (f.mode <> None && f.mode <> Some Checkpoint_trials.Testing, "--mode");
+        (f.preflight, "--preflight");
+        (f.from_event <> None, "--from-event");
+        (f.to_event <> None, "--to-event");
+      ]
+  in
+  match refused with
+  | [] -> Ok ()
+  | flags ->
+      Error
+        ("PLZA runs whole checkpoints in testing mode only: no "
+       ^ String.concat ", " flags)
+
 (* A PLZA program's checkpoints (Plza_series): the Switch only, testing. *)
 let plza_series plan_dir f =
+  let* () = plza_refused f in
   let* backend = daemon_backend f Checkpoint_trials.Testing in
   let* viewport = viewport plan_dir f in
   match backend with

@@ -17,13 +17,13 @@ let pin_text = function Some p -> Wild_zone_one.point_text p | None -> "none"
 
 let read_pin (steps : Walk.game_steps) =
   press steps Start ~release_ms:map_open_ms;
+  (* As the C++ loop: 250 ms after every miss, the last one too. *)
   let rec look n =
     match (steps.read_screen ()).map_pin with
     | Some p -> Some p
-    | None when n + 1 >= pin_looks -> None
     | None ->
         wait steps pin_look_gap_ms;
-        look (n + 1)
+        if n + 1 >= pin_looks then None else look (n + 1)
   in
   let pin = look 0 in
   press steps B ~release_ms:map_close_ms;

@@ -1,5 +1,5 @@
 (** Reader: the move effectiveness symbols beside the four moves while ZL locks
-    on in battle: the fork's [MoveEffectivenessSymbolDetector]
+    on in battle: the fork's move effectiveness symbol detector
     (PokemonLZA_MoveEffectivenessSymbol.cpp). In each move's box (top 0.780,
     0.750; left 0.750, 0.800; right 0.806, 0.800; bottom 0.780, 0.850; each
     0.025 x 0.041) the white pixels in four ranges (0xc0c0c0 to 0xf0f0f0 up to
@@ -8,11 +8,11 @@
     under 150 names the move's symbol.
 
     Each blob's box is scored with the pixels outside its range black, as the
-    fork's [filter_by_mask] does ([masked], protocol v1.15): unmasked, the grey
+    fork's mask filter does ([masked], protocol v1.15): unmasked, the grey
     inside a ring and the pavement around it kept every console frame over 230.
     On console B's 01.03 frames Tackle's ring scores 110 to 116. *)
 
-(** A move's symbol, weakest first: the fork's [MoveEffectivenessSymbol]. *)
+(** A move's symbol, weakest first, as the fork orders them. *)
 type symbol = No_effect | Not_very_effective | Effective | Super_effective
 
 val symbol_name : symbol -> string

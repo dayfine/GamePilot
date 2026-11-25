@@ -1,7 +1,7 @@
 (** Reader: the bearing the player faces, from the cyan arrow at the minimap's
-    centre. Ported from PokemonLZA_DirectionArrowDetector.cpp ([plza/lean]),
-    which [get_facing_direction] (PokemonLZA_BasicNavigation.cpp) reads for the
-    AutoStory's [face_heading].
+    centre. Ported from PokemonLZA_DirectionArrowDetector.cpp, which the fork's
+    facing-direction read (PokemonLZA_BasicNavigation.cpp) uses for AutoStory's
+    turns to a heading.
 
     In the box (0.076, 0.138, 0.031, 0.062) of the frame, the pixels OpenCV
     reads as cyan (hue 90 to 110 of 180, saturation and value 200 and over);
@@ -19,7 +19,7 @@
     they disagree with OpenCV's range on 2% of its cyans, all at its edges: hue
     90 where green tops blue by a hair (OpenCV rounds 179 degrees up), left out,
     and 110 and 111 by rounding at 221 degrees. And the hull is filled as a
-    point-in-polygon test with its edges included, not cv::fillPoly's
+    point-in-polygon test with its edges included, not OpenCV's polygon fill's
     rasterising. *)
 
 val probes : picture:Wire.box -> Wire.probe_spec list

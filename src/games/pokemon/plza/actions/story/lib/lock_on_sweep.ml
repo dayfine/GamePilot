@@ -16,6 +16,7 @@ let tap right_stick i =
   in
   Wire.press ?right_stick ~hold_ms:mash_ms ~cooldown_ms:0 buttons
 
+(* One round's inputs. *)
 let round_inputs ~camera_x =
   let right_stick = Result.to_option (Wire.stick camera_x 0.) in
   List.init (stick_ms / mash_ms) (tap right_stick)

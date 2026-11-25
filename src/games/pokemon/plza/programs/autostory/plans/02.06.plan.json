@@ -1,10 +1,7 @@
 {
   "format": "gamepilot-checkpoint/1",
   "game": "plza",
-  "execution": {
-    "save": "autosave",
-    "autosave_step": "wake_up"
-  },
+  "execution": {},
   "metadata": {
     "phase": "testing",
     "source": "played from a new game; starts at the Room 202 autosave, where 02.05 ends; autosaves at wake_up's end; the fork's plza-02.06.plan.json (plza/lean)",

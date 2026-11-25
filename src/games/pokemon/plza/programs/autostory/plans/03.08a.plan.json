@@ -2,8 +2,6 @@
   "format": "gamepilot-checkpoint/1",
   "game": "plza",
   "execution": {
-    "save": "autosave",
-    "autosave_step": "catch_fifth_species",
     "start_signature": {
       "wild_zone": true,
       "party": 4

@@ -8,6 +8,7 @@ type map_point = { x : float; y : float }
 
 type t = {
   at_ms : float;
+  frame_read : bool;
   home_menu : bool;
   screen_still : bool;
   fade_black : bool;
@@ -36,6 +37,7 @@ type t = {
 let empty ~at_ms =
   {
     at_ms;
+    frame_read = true;
     home_menu = false;
     screen_still = false;
     fade_black = false;
@@ -61,6 +63,7 @@ let empty ~at_ms =
     confirm_row = None;
   }
 
+let no_frame ~at_ms = { (empty ~at_ms) with frame_read = false }
 let fade_shows l = l.fade_black || l.fade_white
 let text_shows l = l.dialog_box || l.advance_arrow
 let text_waiting_for_a l = l.dialog_box && l.advance_arrow

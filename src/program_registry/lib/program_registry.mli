@@ -21,8 +21,9 @@ type viewport = Nso_gba | Native
     split in two runs its lettered part first, [cp-05a] then [cp-05], as the
     FRLG fork splits them (Engine_series.Checkpoint_order). [Name_order]: plain
     name order, where a lettered id continues the bare one: PLZA's 01.00b,
-    03.02b and 03.03b, 03.03c follow 01.00a, 03.02 and 03.03 (the PLZA fork's
-    StoryData rows, its plan sources saying where each starts). *)
+    03.02b and 03.03b, 03.03c follow 01.00a, 03.02 and 03.03 (the checkpoint
+    rows of the PLZA fork's PokemonLZA_AutoStoryPlan.h, its plan sources saying
+    where each starts). *)
 type checkpoint_order = Parts_first | Name_order
 
 type game = {

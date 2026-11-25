@@ -1,10 +1,7 @@
 {
   "format": "gamepilot-checkpoint/1",
   "game": "plza",
-  "execution": {
-    "save": "autosave",
-    "autosave_step": "opening"
-  },
+  "execution": {},
   "metadata": {
     "phase": "testing",
     "source": "played from a new game; the fork's plza-01.00b.plan.json (plza/lean)"

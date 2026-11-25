@@ -1,10 +1,7 @@
 {
   "format": "gamepilot-checkpoint/1",
   "game": "plza",
-  "execution": {
-    "save": "autosave",
-    "autosave_step": "arrive_3f"
-  },
+  "execution": {},
   "metadata": {
     "phase": "testing",
     "source": "played from a new game; starts at the lobby save, ends on the 3F autosave after the ride. Start signature is a guess; starts where 03.09 ends; the fork's plza-03.10.plan.json (plza/lean)",

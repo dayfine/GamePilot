@@ -77,9 +77,9 @@ let log_moves steps (look : L.t) =
     ^ String.concat "" (List.map2 move_text move_names (four look.moves)))
 
 (* The move in place of the watch's ZL, ZL still held: the move's button
-   with ZL for 160 ms, ZL alone to 800 ms, then 200 ms released (the fork's
-   ssf_press_button(ZL, 0, 800, 200) beside pbf_press_button(move, 160,
-   320)). *)
+   with ZL for 160 ms, ZL alone to 800 ms, then 200 ms released (the fork
+   presses ZL for 800 ms, then 200 released, beside the move for 160 ms, then
+   320 released). *)
 let attack steps (look : L.t) =
   log_moves steps look;
   let buttons =
@@ -100,18 +100,17 @@ let attack steps (look : L.t) =
   ]
 
 (* The camera turned left while ZL is mashed, for 1 s: the fork's
-   run_lock_recovery (the right stick held from the mash's start). *)
+   lock recovery (the right stick held from the mash's start). *)
 let recover steps =
   S.(steps.log) "[PLZA] story_battle: Failed to lock on. Rotating camera...";
   let right_stick = Result.to_option (Wire.stick (-1.) 0.) in
   let tap buttons =
     Wire.press ?right_stick ~hold_ms:mash_ms ~cooldown_ms:0 buttons
   in
+  (* 25 taps of 40 ms, ZL on every other one from the first: 1000 ms. *)
   S.(steps.submit_batch)
-    (List.concat
-       (List.init
-          (recovery_ms / (2 * mash_ms))
-          (fun _ -> [ tap [ Wire.ZL ]; tap [] ])))
+    (List.init (recovery_ms / mash_ms) (fun i ->
+         tap (if i mod 2 = 0 then [ Wire.ZL ] else [])))
 
 (* One attack: ZL held up to 1 s for the symbols, the move replacing that
    hold as they show; whether a move went. *)

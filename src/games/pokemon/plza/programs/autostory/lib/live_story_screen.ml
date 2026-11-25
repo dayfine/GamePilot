@@ -39,6 +39,7 @@ let look_of ~still (m : Effects.measurements) : L.t =
   let s = Story_screen.read m in
   {
     at_ms = m.t_ms;
+    frame_read = true;
     home_menu = home m;
     screen_still = still;
     fade_black = s.fade = Black;
@@ -72,7 +73,7 @@ let look_of ~still (m : Effects.measurements) : L.t =
 
 let read_screen last () =
   match fresh () with
-  | None -> L.empty ~at_ms:(Effects.now ())
+  | None -> L.no_frame ~at_ms:(Effects.now ())
   | Some m ->
       let cells = Frame_cells.read m in
       let still =
