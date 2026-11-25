@@ -5,6 +5,7 @@
 #pragma once
 
 #include <cstdint>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -20,6 +21,10 @@ struct InputCommand {
   double cooldown_ms = 0;
   double wait_ms = 0;
   bool is_wait = false;
+  // The sticks a press tilts while it holds (the Switch only); one not given
+  // is centred.
+  std::optional<StickPosition> left_stick;
+  std::optional<StickPosition> right_stick;
 };
 
 struct FinishedBatch {

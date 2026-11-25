@@ -36,15 +36,23 @@ let log_of_file path =
 
 let diverge fmt = Printf.ksprintf (fun s -> raise (Divergence s)) fmt
 
+let describe_stick name = function
+  | None -> ""
+  | Some (stick : Wire.stick) ->
+      let x, y = (stick :> float * float) in
+      Printf.sprintf " %s %g,%g" name x y
+
+let describe_command = function
+  | Wire.Press { buttons; left_stick; right_stick; hold_ms; cooldown_ms } ->
+      Printf.sprintf "press %s%s%s hold %d cooldown %d"
+        (String.concat "+" (List.map Wire.string_of_button buttons))
+        (describe_stick "left" left_stick)
+        (describe_stick "right" right_stick)
+        hold_ms cooldown_ms
+  | Wire.Wait { wait_ms } -> Printf.sprintf "wait %d" wait_ms
+
 let describe_commands commands =
-  let one = function
-    | Wire.Press { buttons; hold_ms; cooldown_ms } ->
-        Printf.sprintf "press %s hold %d cooldown %d"
-          (String.concat "+" (List.map Wire.string_of_button buttons))
-          hold_ms cooldown_ms
-    | Wire.Wait { wait_ms } -> Printf.sprintf "wait %d" wait_ms
-  in
-  "[" ^ String.concat "; " (List.map one commands) ^ "]"
+  "[" ^ String.concat "; " (List.map describe_command commands) ^ "]"
 
 let describe = function
   | Wire.Request { id; call } ->

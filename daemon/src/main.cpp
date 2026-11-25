@@ -206,20 +206,6 @@ bool valid_view_flags(Flags& flags) {
          flags.server.keepawake.idle_ms == 0;
 }
 
-// A viewport name sets the whole viewport; x,y,w,h only its picture box.
-bool parse_viewport(const char* text, gamepilot::Viewport& viewport) {
-  if (const auto named = gamepilot::named_viewport(text)) {
-    viewport = *named;
-    return true;
-  }
-  const auto box = gamepilot::parse_box(text);
-  if (!box) {
-    return false;
-  }
-  viewport.picture = *box;
-  return true;
-}
-
 bool parse_flags(int argc, char** argv, Flags& flags) {
   for (int i = 1; i < argc; i++) {
     const std::string_view arg = argv[i];
@@ -241,9 +227,12 @@ bool parse_flags(int argc, char** argv, Flags& flags) {
     } else if (arg == "--capture-check" && has_value) {
       flags.capture_check = argv[++i];
     } else if (arg == "--viewport" && has_value) {
-      if (!parse_viewport(argv[++i], flags.switch_options.viewport)) {
+      const std::optional<gamepilot::Viewport> viewport =
+          gamepilot::parse_viewport(argv[++i], flags.switch_options.viewport);
+      if (!viewport) {
         return false;
       }
+      flags.switch_options.viewport = *viewport;
     } else if (arg == "--port" && has_value) {
       if (!parse_port(argv[++i], flags.server.port)) {
         return false;

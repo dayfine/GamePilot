@@ -42,7 +42,7 @@ let swap ~log a b =
   ignore
     (M.await_screen ~code:"no_party" "the party after the switch"
        Party_menu.party_menu);
-  M.close "the party" Party_menu.party_menu;
+  M.close_through_fades "the party" Party_menu.party_menu;
   M.settle_back ~label:"party swap" ~log
 
 let bag_or_party m = Bag_screen.bag_open m || Party_menu.party_menu m
@@ -107,7 +107,7 @@ let give ~log ~item ~slot =
   if answer_switch () then log "Bag: the member held an item; switched it.";
   if is_mail item then write_one_word ();
   Effects.with_probes Berry_pouch.probes (fun () ->
-      M.close "the bag" bag_pouch_or_party);
+      M.close_through_fades "the bag" bag_pouch_or_party);
   M.settle_back ~label:("give " ^ item) ~log
 
 let warps item = item = "escape-rope"
@@ -148,10 +148,10 @@ let use_on ~log ~item ~slot =
         (M.await_screen ~code:"no_party" "the party to use it on"
            Party_menu.party_menu);
       choose_slot slot;
-      M.close "the bag" bag_or_party;
+      M.close_through_fades "the bag" bag_or_party;
       M.settle_back ~label:("use " ^ item) ~log
   | None ->
-      M.close "the bag" bag_or_party;
+      M.close_through_fades "the bag" bag_or_party;
       M.settle_back ~label:("use " ^ item) ~log
 
 let use ~log ~item ~slot =
@@ -182,6 +182,6 @@ let verify_mail_glitch ~log ~who ~slot =
   Effects.submit [ Wire.Wait { wait_ms = party_settle_ms } ] |> ignore;
   let m = M.await_screen ~code:"no_party" "the party" Party_menu.party_menu in
   let mark = Party_menu.mark m slot in
-  M.close "the party" Party_menu.party_menu;
+  M.close_through_fades "the party" Party_menu.party_menu;
   M.settle_back ~label:"verify mail glitch" ~log;
   verified ~log ~who ~slot mark

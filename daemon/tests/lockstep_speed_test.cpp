@@ -212,8 +212,8 @@ void check_speed(const SpeedCase& c) {
   serving.join();
 }
 
-// mGBA has no Home: a press of it is refused, naming the button, and runs
-// nothing.
+// mGBA has no Home and no sticks: a press of one is refused, naming it, and
+// runs nothing.
 void check_home_refused() {
   const Clock clock;
   FakeLockstep backend;
@@ -234,6 +234,14 @@ void check_home_refused() {
         error->get_integer_default("code") == kInvalidParams &&
         error->get_object_throw("data").get_string_throw("button") == "Home" &&
         error->get_object_throw("data").get_string_throw("backend") == "mgba");
+    const pa::JsonObject tilted = client.request(
+        3, "submit",
+        R"({"batch_id":"s","commands":[{"press":[],"right_stick":[0,1],"hold_ms":50,"cooldown_ms":50}]})");
+    const pa::JsonObject* refused = tilted.get_object("error");
+    CHECK(refused != nullptr &&
+          refused->get_integer_default("code") == kInvalidParams &&
+          refused->get_object_throw("data").get_string_throw("stick") ==
+              "right_stick");
   } catch (const std::exception& error) {
     std::fprintf(stderr, "home refused: %s\n", error.what());
     CHECK(false);

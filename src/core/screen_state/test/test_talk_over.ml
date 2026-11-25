@@ -13,6 +13,13 @@ let calm_faded = { calm with fade = Fade.Black }
 let black = { Facts.none with fade = Fade.Black }
 let banner = { Facts.none with banner = true; free_control = true }
 let battle = { Facts.none with battle = true }
+
+(* The overworld with people walking about: the screen moves, the player does
+   not. *)
+let people_walking = { calm with player_still = true }
+
+(* The player walking: the box around the player moves too. *)
+let player_moving = calm
 let beat_ms = 1000.
 let repeat look n = List.init n (fun _ -> look)
 
@@ -43,6 +50,9 @@ let case name ?(rule = Talk_over.default_rule) beats want expectation =
 
 let default = Talk_over.default_rule
 let short_calm = { default with calm_ms = 1000 }
+
+(* Stillness judged by the player alone, as the fork's settle after a door. *)
+let player_still = { default with still = Player }
 
 let () =
   Table_test.run "Talk_over"
@@ -87,4 +97,11 @@ let () =
       case "a fade is never calm"
         (repeat calm 10 @ repeat calm_faded 10)
         "done" "never done (black fade still down)";
+      case "people walking about do not hold up a player-still quiet"
+        ~rule:player_still (repeat people_walking 8) "done" "done at beat 5";
+      case "the player moving holds up a player-still quiet" ~rule:player_still
+        (repeat player_moving 3 @ repeat people_walking 8)
+        "done" "done at beat 8";
+      case "people walking about hold up a whole-screen quiet until calm"
+        (repeat people_walking 20) "done" "done at beat 15";
     ]

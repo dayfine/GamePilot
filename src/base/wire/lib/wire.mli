@@ -1,4 +1,4 @@
-(** Wire protocol v1.11 (protocol/v1): message types and their JSON codec.
+(** Wire protocol v1.12 (protocol/v1): message types and their JSON codec.
 
     The codec lives in one module per message family ([Command], [Probe],
     [Backend], [Jsonrpc], [Wire_log], [Probe_images]); this module re-exports
@@ -36,9 +36,34 @@ val button_of_string : string -> button option
 val switch_only : button -> bool
 (** [Home], [X] and [Y]: buttons only the Switch backend takes (v1.11). *)
 
+type stick = Command.stick
+(** A stick's tilt (x, y) in -1..1: +x right, +y up (v1.12). *)
+
+val stick : float -> float -> (stick, string) result
+(** [stick x y]; an error when [x] or [y] is outside -1..1 or not a number. *)
+
 type command = Command.command =
-  | Press of { buttons : button list; hold_ms : int; cooldown_ms : int }
+  | Press of {
+      buttons : button list;
+      left_stick : stick option;
+      right_stick : stick option;
+      hold_ms : int;
+      cooldown_ms : int;
+    }
+      (** [buttons] held and the sticks tilted for [hold_ms], then all released
+          and centred for [cooldown_ms]; a stick left out ([None]) is centred
+          (sticks: v1.12, the Switch only). *)
   | Wait of { wait_ms : int }
+
+val press :
+  ?left_stick:stick ->
+  ?right_stick:stick ->
+  hold_ms:int ->
+  cooldown_ms:int ->
+  button list ->
+  command
+(** [press ~hold_ms ~cooldown_ms buttons] is a {!Press}; each stick is centred
+    ([None]) unless given. Build presses with this rather than the record. *)
 
 type box = Probe.box = { x : float; y : float; w : float; h : float }
 (** Normalized, 0..1. A probe's box is relative to the game picture (the [hello]
