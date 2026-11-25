@@ -50,7 +50,6 @@ let plan () =
   let room : Make_room.room =
     {
       center;
-      fly_user = "pidgey";
       deposits =
         [ { slot = 2; species = "eevee" }; { slot = 6; species = "magikarp" } ];
       party = console_b;

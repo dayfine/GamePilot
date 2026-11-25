@@ -15,8 +15,8 @@ Runs on: mGBA.
 
 <!-- generated:needs -->
 - the volcano badge
-- pidgey in the party (fly)
 - blastoise in the party (party_swap)
+- a member knows fly (fly)
 - the thunder badge (fly)
 - super-repel at least x2 (use_item)
 - at the start, anywhere outdoors where Fly works
@@ -51,7 +51,7 @@ sh run/run_checkpoints_on_mgba.sh frlg.sevii_story --from 01-to-one-island --to 
 | 05-berry-forest | Bond Bridge's trainers, the Berry Forest and Lostelle's Hypno; home to the Game Corner |
 | 06-back-to-cinnabar | The Meteorite for a Moon Stone; Bill's goodbye on One Island and the Seagallop to Cinnabar |
 
-<!-- plans: c887f7eec9e3 -->
+<!-- plans: 3a99ab15c65c -->
 <!-- /generated -->
 
 ## When it stops
@@ -59,7 +59,7 @@ sh run/run_checkpoints_on_mgba.sh frlg.sevii_story --from 01-to-one-island --to 
 <!-- generated:preflight -->
 | Resume from | The pre-flight checks |
 |---|---|
-| 01-to-one-island | the volcano badge; pidgey in the party (fly); the thunder badge (fly); at the start, anywhere outdoors where Fly works |
+| 01-to-one-island | the volcano badge; a member knows fly (fly); the thunder badge (fly); at the start, anywhere outdoors where Fly works |
 | 02-to-two-island | tri-pass at least x1 (promised before); at the start, OneIsland_PokemonCenter_1F |
 | 03-to-three-island | meteorite at least x1 (promised before); at the start, TwoIsland |
 | 04-three-island-bikers | blastoise in the party (party_swap); meteorite at least x1 (promised before); at the start, ThreeIsland_Harbor |

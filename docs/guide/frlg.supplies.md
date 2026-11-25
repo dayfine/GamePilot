@@ -18,7 +18,7 @@ Save anywhere outdoors in Kanto, where Fly works. The run ends outside the Celad
 west door, where Team Training can start.
 
 <!-- generated:needs -->
-- pidgey in the party (fly)
+- a member knows fly (fly)
 - the thunder badge (fly)
 - money at least ¥7500 (all the purchases)
 - at the start, anywhere outdoors where Fly works
@@ -44,7 +44,7 @@ sh run/run_checkpoints_on_switch.sh frlg.supplies --from su-01 --to su-01
 |---|---|
 | su-01 | Stock 100 Retro Mail (Celadon 4F) and 5 Super Repels (Lavender) |
 
-<!-- plans: 1a72eb4f2837 -->
+<!-- plans: 988dcea3bc34 -->
 <!-- /generated -->
 
 ## When it stops
@@ -52,7 +52,7 @@ sh run/run_checkpoints_on_switch.sh frlg.supplies --from su-01 --to su-01
 <!-- generated:preflight -->
 | Resume from | The pre-flight checks |
 |---|---|
-| su-01 | pidgey in the party (fly); the thunder badge (fly); money at least ¥7500 (mart, mart); at the start, anywhere outdoors where Fly works |
+| su-01 | a member knows fly (fly); the thunder badge (fly); money at least ¥7500 (mart, mart); at the start, anywhere outdoors where Fly works |
 <!-- /generated -->
 
 ## Known limits

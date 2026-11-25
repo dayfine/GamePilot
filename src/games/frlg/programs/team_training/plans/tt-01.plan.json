@@ -6,7 +6,7 @@
   },
   "metadata": {
     "phase": "testing",
-    "notes": "Starts anywhere outdoors in Kanto with frlg.supplies su-01's stock: Retro Mail >= 99 (98 rounds + 1 kept on the row) and a Super Repel; the pre-flight checks both. MIMIEN in slot 1 (mail record), mail on slots 2-6, Pidgey knows Fly. Rare Candy: 1 picked up, held by MIMIEN, +98 duplicated into the bag.",
+    "notes": "Starts anywhere outdoors in Kanto with frlg.supplies su-01's stock: Retro Mail >= 99 (98 rounds + 1 kept on the row) and a Super Repel; the pre-flight checks both. MIMIEN in slot 1 (mail record), mail on slots 2-6, a member knows Fly. Rare Candy: 1 picked up, held by MIMIEN, +98 duplicated into the bag.",
     "postconditions": {
       "party_slots": [
         {
@@ -34,8 +34,7 @@
         "kind": "game_action",
         "action": "fly",
         "args": {
-          "town": "VermilionCity",
-          "species": "pidgey"
+          "town": "VermilionCity"
         },
         "why": "Fly to Vermilion City; Route 6 is its north connection.",
         "declared_after": {
@@ -90,8 +89,7 @@
         "kind": "game_action",
         "action": "fly",
         "args": {
-          "town": "CeladonCity",
-          "species": "pidgey"
+          "town": "CeladonCity"
         },
         "declared_after": {
           "map": "CeladonCity",

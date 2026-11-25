@@ -17,7 +17,7 @@ Runs on: mGBA.
 - Bring ¥12,000 for 10 Ultra Balls at the Indigo Plateau's Pokemon Center.
 
 <!-- generated:needs -->
-- pidgey in the party (fly)
+- a member knows fly (fly)
 - the thunder badge (fly)
 - money at least ¥12000 (all the purchases)
 - at the start, anywhere outdoors where Fly works
@@ -40,7 +40,7 @@ sh run/run_checkpoints_on_mgba.sh frlg.dex_collection --from 01-ultra-balls --to
 | 01-ultra-balls | From anywhere outdoors: Ultra Balls at Indigo Plateau, then to Route 10's Pokemon Center |
 | 02-route10-new-species | Route 10's north grass: catch two species the Pokedex has not caught, back to the nurse |
 
-<!-- plans: 09c1730ae595 -->
+<!-- plans: a6dda378aabe -->
 <!-- /generated -->
 
 In the grass it runs from every Pokemon you have caught already and catches the ones you have not.
@@ -52,7 +52,7 @@ kind is already caught.
 <!-- generated:preflight -->
 | Resume from | The pre-flight checks |
 |---|---|
-| 01-ultra-balls | pidgey in the party (fly); the thunder badge (fly); money at least ¥12000 (mart); at the start, anywhere outdoors where Fly works |
+| 01-ultra-balls | a member knows fly (fly); the thunder badge (fly); money at least ¥12000 (mart); at the start, anywhere outdoors where Fly works |
 | 02-route10-new-species | ultra-ball at least x1 (capture); at the start, Route10_PokemonCenter_1F |
 <!-- /generated -->
 

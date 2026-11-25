@@ -10,7 +10,7 @@
         "id": "fly_route10",
         "kind": "game_action",
         "action": "fly",
-        "args": {"town": "Route10", "species": "pidgey"},
+        "args": {"town": "Route10"},
         "why": "Route 10's Center is a fly point south of the grass."
       },
       {
@@ -24,8 +24,8 @@
         "id": "deposit_member",
         "kind": "game_action",
         "action": "pc_deposit",
-        "args": {"species": ["mr-mime"]},
-        "why": "The catch's summary needs a party slot; every other member holds Mail, which the PC refuses."
+        "args": {"member": "holding_no_mail"},
+        "why": "The catch's summary needs a party slot. The PC refuses a member holding Mail, so this stores the one that holds none (MIMIEN on the mail glitch saves, where the other five hold Mail)."
       },
       {
         "id": "to_grass",

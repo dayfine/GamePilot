@@ -31,8 +31,7 @@
         "kind": "game_action",
         "action": "fly",
         "args": {
-          "town": "CinnabarIsland",
-          "species": "pidgey"
+          "town": "CinnabarIsland"
         },
         "why": "Bill waits in Cinnabar's Pokemon Center.",
         "declared_after": {

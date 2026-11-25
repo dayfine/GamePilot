@@ -43,11 +43,11 @@ need:
 What the plan needs, as the pre-flight checks it (generated from the plan):
 
 <!-- generated:needs 08-activate-and-verify -->
-- party includes pidgey, farfetchd in slot 1, blastoise in slot 2, mr-mime in slot 3
+- party includes farfetchd in slot 1, blastoise in slot 2, mr-mime in slot 3
 - blastoise in the party (mail_glitch_double_battle)
 - farfetchd in the party (mail_glitch_double_battle)
 - mr-mime in the party (mail_glitch_double_battle)
-- pidgey in the party (fly)
+- a member knows fly (fly)
 - the thunder badge (fly)
 - money at least ¥400 (all the purchases)
 - antidote at least x1 (give_bag_item)
@@ -81,7 +81,7 @@ which a passing 07-glitch-prep run writes. To run the whole program in one go, u
 |---|---|
 | 08-activate-and-verify | Turn the Mail Glitch on against Lea & Jed on Route 16, read the glitched mail, duplicate one Antidote |
 
-<!-- plans: 6d5e7db4fdac -->
+<!-- plans: f3f3406bb0b3 -->
 <!-- /generated -->
 
 In plain words, after the battle and the check that MIMIEN shows a held item:
@@ -114,7 +114,7 @@ the same command, which fights the battle again. On mGBA the start state is unto
 <!-- generated:preflight 08-activate-and-verify -->
 | Resume from | The pre-flight checks |
 |---|---|
-| 08-activate-and-verify | party includes pidgey, farfetchd in slot 1, blastoise in slot 2, mr-mime in slot 3; blastoise in the party (mail_glitch_double_battle); farfetchd in the party (mail_glitch_double_battle); mr-mime in the party (mail_glitch_double_battle); pidgey in the party (fly); the thunder badge (fly); money at least ¥400 (mart); antidote at least x1 (give_bag_item); at the start, Route16 |
+| 08-activate-and-verify | party includes farfetchd in slot 1, blastoise in slot 2, mr-mime in slot 3; blastoise in the party (mail_glitch_double_battle); farfetchd in the party (mail_glitch_double_battle); mr-mime in the party (mail_glitch_double_battle); a member knows fly (fly); the thunder badge (fly); money at least ¥400 (mart); antidote at least x1 (give_bag_item); at the start, Route16 |
 <!-- /generated -->
 
 If the proof step stopped the run (a blank editor or `???`), the battle did not turn the glitch on:

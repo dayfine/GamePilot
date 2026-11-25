@@ -33,7 +33,6 @@ let nearest_center (t : Towns.t) ~maps map =
 
 type room = {
   center : Towns.town;
-  fly_user : string;
   deposits : R.plan;
   party : R.member list;
   needed_moves : string list;
@@ -71,7 +70,7 @@ let events room =
   let town = room.center.name in
   [
     event "fly_to_center" "game_action" ~action:"fly"
-      ~args:[ ("town", `String town); ("species", `String room.fly_user) ]
+      ~args:[ ("town", `String town) ]
       ~after:(landing room)
       ("Fly to " ^ town ^ ", the Center nearest the save");
     route "to_pc" (pc room) "below the Center's PC (11, 1), facing it";
