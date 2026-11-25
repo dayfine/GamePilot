@@ -16,6 +16,7 @@ type outcome =
   | Stopped_by_trainer of {
       world : Frlg_steps.world;
       at : Connected_maps.place;
+      fought : Trainer_sight.trainer list;
     }
 
 type leg = Connected_maps.place Grid_planning.Leg.t
@@ -39,7 +40,7 @@ let leg_steps w (leg : leg) tiles =
   go leg.start 1 []
 
 (* The first of [steps] onto a tile a trainer not beaten may see, as its
-   count from 1 and its step; the fork's trainer_crossing() keeps them all. *)
+   count from 1 and its step; the fork's crossing keeps them all. *)
 let first_seen w ~beaten steps =
   let seen (s : step) =
     (not s.warped) && Trainer_sight.seeing w ~beaten s.next <> []
@@ -104,8 +105,7 @@ let tiles_text places =
 
 (* The world once the trainers who may see [at] have fought the player: each
    beaten, standing on a tile beside the player they may have walked up to. *)
-let after_trainer g w ~beaten at trainers =
-  beaten := trainers @ !beaten;
+let after_trainer g w at trainers =
   let stands =
     List.concat_map (fun tr -> Trainer_sight.walked_up w tr at) trainers
   in
@@ -113,24 +113,22 @@ let after_trainer g w ~beaten at trainers =
     (Printf.sprintf "Route: the trainer stands on %s; on from %s."
        (tiles_text stands)
        (Tile_pos.to_string at.Connected_maps.tile));
-  Stopped_by_trainer { world = Frlg_steps.with_walked_up w stands; at }
+  Stopped_by_trainer
+    { world = Frlg_steps.with_walked_up w stands; at; fought = trainers }
 
-let fought g w ~beaten at trainers =
-  Result.map
-    (fun () -> after_trainer g w ~beaten at trainers)
-    (g.fight_trainer ())
+let fought g w at trainers =
+  Result.map (fun () -> after_trainer g w at trainers) (g.fight_trainer ())
 
 let rec walk_pieces g w ~beaten (leg : leg) ~tiles ~to_wall =
   let steps = leg_steps w leg tiles in
-  match first_seen w ~beaten:!beaten steps with
+  match first_seen w ~beaten steps with
   | None ->
       g.walk_piece ~seen:false (piece leg steps ~count:tiles ~tiles ~to_wall);
       Ok Walked
   | Some (count, s) ->
-      let trainers = Trainer_sight.seeing w ~beaten:!beaten s.next in
+      let trainers = Trainer_sight.seeing w ~beaten s.next in
       g.walk_piece ~seen:true (piece leg steps ~count ~tiles ~to_wall);
-      if trainer_spoke g w ~beaten:!beaten s.next then
-        fought g w ~beaten s.next trainers
+      if trainer_spoke g w ~beaten s.next then fought g w s.next trainers
       else if count >= tiles then Ok Walked
       else
         let rest = tiles - count in

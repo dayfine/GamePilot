@@ -71,8 +71,8 @@ val world :
 
 val with_walked_up : world -> Connected_maps.place list -> world
 (** The world with a trainer who walked up to the player on one of the places:
-    they stay there after the battle, as the fork's [with_trainers()]
-    (Overworld/PokemonFRLG_OverworldReanchor) walls their tile in. *)
+    they stay there after the battle, as the fork's
+    Overworld/PokemonFRLG_OverworldReanchor walls their tile in. *)
 
 val with_tree_cut : world -> Connected_maps.place -> world option
 (** The world with the cut tree on that tile cut: the fork's [tree_cut]

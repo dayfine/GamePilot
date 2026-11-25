@@ -16,7 +16,7 @@ let is_wall (map : Map_data.t) pos =
   | Some (Tile_kind.Wall | Outside) | None -> true
   | Some _ -> false
 
-(* The fork's sees_from(): from [from], [sight] tiles each way [looks], up to
+(* As the fork's map sees: from [from], [sight] tiles each way [looks], up to
    a wall. *)
 let sees_from (map : Map_data.t) (trainer : Map_features.trainer) from pos =
   let rec along tile look n =

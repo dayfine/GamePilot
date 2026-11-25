@@ -7,8 +7,8 @@
     one. Only the ones a story walk meets are listed:
 
     - Three Island: the Biker goons and Cue Ball Paxton in the street north of
-      the coord-event rows 26 and 27 (pokefirered
-      ThreeIsland_EventScript_BattleBikersScene removes all seven Bikers, with
+      the coord-event rows 26 and 27 (the Bikers' scene in pokefirered
+      data/maps/ThreeIsland/scripts.inc removes all seven Bikers, with
       FLAG_HIDE_THREE_ISLAND_BIKERS and FLAG_HIDE_THREE_ISLAND_LONE_BIKER). The
       two islanders beside them (FLAG_HIDE_THREE_ISLAND_ANTIBIKERS) stay until
       Lostelle is home, so they still stand in the way. *)
