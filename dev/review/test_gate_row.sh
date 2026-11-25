@@ -69,18 +69,18 @@ check "ok on a plain change merges" merge \
 check "a guide-only PR merges" merge "$(pr "$doc" "$green" "" | column 4)"
 check "a design doc goes to the user" "user review (design doc: docs/design/a.md)" \
     "$(pr '{"path": "docs/design/a.md"}' "$green" "" | column 4)"
-check "a new lib module goes to the user" "user review (module added: src/x/lib/a.ml)" \
+check "a new lib module merges, marked structural" "merge (structural: module added: src/x/lib/a.ml)" \
     "$(pr '{"path": "src/x/lib/a.ml", "changeType": "ADDED"}' "$green" "$(review "$tip" APPROVED)" | column 4)"
-check "a renamed dune file goes to the user" "user review (module renamed: src/x/lib/dune)" \
+check "a renamed dune file merges, marked structural" "merge (structural: module renamed: src/x/lib/dune)" \
     "$(pr '{"path": "src/x/lib/dune", "changeType": "RENAMED"}' "$green" "$(review "$tip" APPROVED)" | column 4)"
-check "a shared .mli change goes to the user" "user review (shared interface: src/pokemon/a/lib/b.mli)" \
+check "a shared .mli change merges, marked structural" "merge (structural: shared interface: src/pokemon/a/lib/b.mli)" \
     "$(pr '{"path": "src/pokemon/a/lib/b.mli", "changeType": "MODIFIED"}' "$green" "$(review "$tip" APPROVED)" | column 4)"
 check "a game's own .mli change merges" merge \
     "$(pr '{"path": "src/games/frlg/a/lib/b.mli", "changeType": "MODIFIED"}' "$green" "$(review "$tip" APPROVED)" | column 4)"
-check "a decoder change goes to the user" "user review (format: src/x/lib/plan_decode.ml)" \
+check "a decoder change merges, marked structural" "merge (structural: format: src/x/lib/plan_decode.ml)" \
     "$(pr '{"path": "src/x/lib/plan_decode.ml", "changeType": "MODIFIED"}' "$green" "$(review "$tip" APPROVED)" | column 4)"
 check "a rename that also edits a design doc names the rename" \
-    "user review (module renamed: src/x/lib/a.ml)" \
+    "merge (structural: module renamed: src/x/lib/a.ml)" \
     "$(pr '{"path": "docs/design/a.md"}, {"path": "src/x/lib/a.ml", "changeType": "RENAMED"}' "$green" "$(review "$tip" APPROVED)" | column 4)"
 check "a conflict with main comes first" "merge main" \
     "$(pr "$code" "$red" "" | sed 's/^{/{"mergeable": "CONFLICTING", /' | column 4)"
@@ -89,7 +89,7 @@ check "two reworks go to the user" "user review (reworked twice)" \
 rest=$(mktemp)
 printf '%s\n' '{"path": "src/a.ml", "status": "modified"}' \
     '{"path": "src/x/lib/dune", "status": "removed"}' >"$rest"
-check "the REST file list replaces the view's" "user review (module deleted: src/x/lib/dune)" \
+check "the REST file list replaces the view's" "merge (structural: module deleted: src/x/lib/dune)" \
     "$(pr "$code" "$green" "$(review "$tip" APPROVED)" | python3 -I "$here/gate_row.py" "$rest" | cut -f 4)"
 rm -f "$rest"
 exit $failures

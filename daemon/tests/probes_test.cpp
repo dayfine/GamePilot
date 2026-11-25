@@ -1,13 +1,19 @@
-// The probe kinds on synthetic frames, the viewport mapping, base64 decoding,
+// The probe kinds on synthetic frames, the viewport mapping (the GBA picture
+// in the Switch frame, and a full-screen native Switch game), base64 decoding,
 // and the input schedule's frame rounding.
 
 #include "probes.h"
 
 #include <cmath>
+#include <opencv2/imgcodecs.hpp>
+#include <string>
+#include <vector>
 
 #include "base64.h"
 #include "check.h"
+#include "probe_evaluation.h"
 #include "schedule.h"
+#include "template_store.h"
 
 using namespace gamepilot;
 
@@ -161,6 +167,71 @@ void check_viewport() {
   CHECK(!parse_box("0,0,1,1,"));
 }
 
+// A full-screen Switch game: boxes are fractions of the whole 1920x1080
+// frame (the fork's ImageFloatBox) and templates are 1080p crops, matched at
+// their own size.
+void check_native_viewport() {
+  const Viewport native = native_switch_viewport();
+  CHECK(box_to_pixels(picture_box_to_frame(native, Box{0, 0, 1, 1}), 1920,
+                      1080) == cv::Rect(0, 0, 1920, 1080));
+  CHECK(template_size_in_frame(native, cv::Size(60, 40), 1920, 1080) ==
+        cv::Size(60, 40));
+  CHECK(named_viewport("native").has_value() &&
+        named_viewport("native")->game_width == 1920 &&
+        named_viewport("native")->game_height == 1080);
+  CHECK(named_viewport("nso-gba").has_value() &&
+        named_viewport("nso-gba")->game_width == 240);
+  CHECK(!named_viewport("gba"));
+
+  // A gray 1920x1080 frame: a 60x40 striped pattern at pixel (1500, 900) and
+  // a red 192x108 block in the top-left corner.
+  cv::Mat frame(1080, 1920, CV_8UC3, cv::Scalar(128, 128, 128));
+  cv::Mat pattern(40, 60, CV_8UC3, cv::Scalar(255, 255, 255));
+  pattern.rowRange(10, 20).setTo(cv::Scalar(0, 0, 255));
+  pattern.rowRange(20, 30).setTo(cv::Scalar(0, 0, 0));
+  pattern.copyTo(frame(cv::Rect(1500, 900, 60, 40)));
+  frame(cv::Rect(0, 0, 192, 108)).setTo(cv::Scalar(0, 0, 255));
+
+  TemplateStore templates;
+  std::vector<uchar> png;
+  cv::imencode(".png", pattern, png);
+  const auto hash = templates.add_png(std::string(png.begin(), png.end()));
+  CHECK(hash.has_value());
+  if (!hash) {
+    return;
+  }
+  ProbeSpec match{.id = "corner",
+                  .kind = std::string(kTemplateMatchKind),
+                  .box = Box{0.75, 0.8, 0.2, 0.15},
+                  .template_hash = *hash};
+  const FrameProbe mapped = map_probe(match, templates, native, 1920, 1080);
+  CHECK(mapped.pixels == cv::Rect(1440, 864, 384, 162));
+  CHECK(mapped.template_image.size() == cv::Size(60, 40));
+  const ProbeResult matched = evaluate_probe(mapped, frame);
+  const auto* found = std::get_if<TemplateMatch>(&matched);
+  CHECK(found != nullptr && near(found->score, 0) &&
+        near(found->x, 1500.0 / 1920) && near(found->y, 900.0 / 1080));
+
+  // The GBA viewport would scale the same template 6.5 times, past its box.
+  bool too_big = false;
+  try {
+    map_probe(match, templates, nso_gba_viewport(), 1920, 1080);
+  } catch (const RpcError& error) {
+    too_big = error.code() == kInvalidParams;
+  }
+  CHECK(too_big);
+
+  ProbeSpec red{.id = "red",
+                .kind = std::string(kColorCountKind),
+                .box = Box{0, 0, 0.2, 0.2},
+                .color_range = ColorRange{{200, 0, 0}, {255, 60, 60}}};
+  const FrameProbe red_mapped = map_probe(red, templates, native, 1920, 1080);
+  CHECK(red_mapped.pixels == cv::Rect(0, 0, 384, 216));
+  const ProbeResult counted = evaluate_probe(red_mapped, frame);
+  const auto* count = std::get_if<ColorCount>(&counted);
+  CHECK(count != nullptr && near(count->fraction, 0.25));
+}
+
 void check_base64() {
   CHECK(decode_base64("") == std::string());
   CHECK(decode_base64("TWFu") == std::string("Man"));
@@ -209,6 +280,7 @@ int main() {
   check_mask_match();
   check_color_count();
   check_viewport();
+  check_native_viewport();
   check_base64();
   check_schedule();
   return TEST_RESULT();

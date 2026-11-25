@@ -84,6 +84,7 @@ let builtin t (event : Checkpoints_plan.Plan.event) =
   match event.kind with
   | Ready pose -> walk_to t pose
   | Talk -> Talk.talk ~log ()
+  | Answer yes -> Talk.answer ~log ~yes ()
   | Scene -> Talk.scene ~log ()
   | Heal -> Menu_input.run (Heal_and_save.heal_at_nurse ~log)
   | Save -> Menu_input.run (Heal_and_save.save ~log)

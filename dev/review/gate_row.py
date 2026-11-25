@@ -8,7 +8,8 @@ CI is pass / fail / pending / none, over the checks at the PR's tip. STRUCT is t
 verdict at the tip: ok (APPROVED), rework (NEEDS_REWORK), stale(<sha>) when the latest verdict was
 given at an older commit, none, or skip for a docs-only PR (every file is a .md or under docs/).
 NEXT is the one next step: "merge main" first when the PR conflicts with main; once CI is green and
-the verdict is ok, "merge" unless the PR changes structure, then "user review (<reason>)"
+the verdict is ok, "merge", or "merge (structural: <reason>)" when the PR changes structure, or
+"user review (<reason>)" for a design doc or a PR reworked twice
 (AGENTS.md, "PR gate loop"). Structure, read off the file list: a library module or dune file added,
 deleted or renamed under src/; a changed .mli of a library shared across games (src/base, src/core,
 src/pokemon); a changed format (protocol/, a *_decode.ml); a design doc (docs/design/); or two
@@ -72,6 +73,11 @@ def structural_reason(files):
     return None
 
 
+# What still goes to the user; other structural changes merge on an APPROVED verdict (user,
+# 2026-11-24), the main session holding one now and then for the user's spot check.
+USER_REASONS = ("design doc", "reworked twice")
+
+
 def owner_reason(pr):
     """Why the PR needs the user's review, or None."""
     files = pr.get("files") or []
@@ -128,7 +134,11 @@ def next_action(ci, struct, owner=None, conflicting=False):
     if struct == "rework":
         return "rework"
     if struct in ("ok", "skip"):
-        return "user review (" + owner + ")" if owner else "merge"
+        if not owner:
+            return "merge"
+        if owner.startswith(USER_REASONS):
+            return "user review (" + owner + ")"
+        return "merge (structural: " + owner + ")"
     return "run qc-structural"
 
 
