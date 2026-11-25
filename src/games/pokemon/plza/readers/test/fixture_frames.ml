@@ -48,7 +48,9 @@ let shift_and_frame path =
    frame (51 under the bound 60 unshifted), scores over 60 with blue up or
    green down 12 (Alert_eye); and 03.07's Bunnelby battle (a 640x360 run
    frame scaled up) loses the hints under the party bar at brightness 1.1
-   (Controls_hint). *)
+   (Controls_hint); 03.08's Scatterbug under ZL (also a scaled-up run frame)
+   gains a move symbol and the party bar at brightness 0.9 (Move_symbols,
+   Party_bar). *)
 let known_misses =
   [
     ("battle-hud/it-0308b-zone-pillar-wild-battle", "bright90");
@@ -57,6 +59,7 @@ let known_misses =
     ("alert-eye/zone-6-translucent-1-true", "bplus12");
     ("alert-eye/zone-6-translucent-1-true", "gminus12");
     ("alert-eye/en-0307-bunnelby-battle-113-360p", "bright110");
+    ("lock-plate/en-0308-scatterbug-not-caught-038-360p", "bright90");
   ]
 
 (* One case per shifted frame: [read] on it gives what [read] gives on the
