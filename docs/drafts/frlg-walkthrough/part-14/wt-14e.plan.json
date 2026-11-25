@@ -1,0 +1,96 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "frlg",
+  "execution": {
+    "menu": "full"
+  },
+  "metadata": {
+    "phase": "draft",
+    "walkthrough_part": 14,
+    "optional": false,
+    "notes": "Bond Bridge to Berry Forest: Lostelle and the Hypno",
+    "goal_facts": ["flag: FLAG_RESCUED_LOSTELLE"],
+    "needs": [
+      {
+        "capability": "static_encounter",
+        "status": "missing"
+      },
+      {
+        "capability": "battle",
+        "status": "missing"
+      },
+      {
+        "capability": "surf",
+        "status": "missing"
+      },
+      {
+        "capability": "trainer_interrupt",
+        "status": "missing"
+      }
+    ],
+    "maps_missing_in_pokesim": ["ThreeIsland_PokemonCenter_1F"]
+  },
+  "checkpoint": {
+    "id": "wt-14e",
+    "title": "Bond Bridge to Berry Forest: Lostelle and the Hypno",
+    "start": {
+      "map": "ThreeIsland_PokemonCenter_1F",
+      "todo": "TODO: map not in PokemonSimulation"
+    },
+    "events": [
+      {
+        "id": "over_bond_bridge",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "ThreeIsland_BerryForest",
+            "todo": "TODO: the forest's entrance from Bond Bridge"
+          }
+        },
+        "why": "west over Bond Bridge (trainers: Nikki, Violet, Amira, Alexis, Tisha, Joy, Meg; a stretch by Surf)"
+      },
+      {
+        "id": "before_lostelle",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "ThreeIsland_BerryForest",
+            "tiles": [
+              [4, 9]
+            ],
+            "facing": "north",
+            "place": "lostelle"
+          }
+        },
+        "why": "Lostelle (4, 8) in the northwest corner"
+      },
+      {
+        "id": "talk_lostelle",
+        "kind": "talk",
+        "why": "she screams: Hypno"
+      },
+      {
+        "id": "hypno",
+        "kind": "game_action",
+        "action": "static_encounter",
+        "args": {
+          "species": "hypno",
+          "outcome": "catch_or_defeat"
+        },
+        "why": "Lv 30"
+      },
+      {
+        "id": "back_to_two_island",
+        "kind": "scene",
+        "why": "she gives the Iapapa Berry; the two of them go to Two Island's Game Corner"
+      },
+      {
+        "id": "save",
+        "kind": "save",
+        "why": "save: the checkpoint's end"
+      }
+    ]
+  }
+}

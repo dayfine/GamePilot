@@ -1,0 +1,85 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "frlg",
+  "execution": {
+    "menu": "full"
+  },
+  "metadata": {
+    "phase": "draft",
+    "walkthrough_part": 8,
+    "optional": false,
+    "notes": "00.29 ends at Lavender's Center. Rival 5 in Pokemon Tower 2F is left for wt-09f, as the walkthrough allows.",
+    "goal_facts": ["map: CeladonCity_PokemonCenter_1F"],
+    "needs": [
+      {
+        "capability": "trainer_interrupt",
+        "status": "missing"
+      }
+    ],
+    "maps_missing_in_pokesim": ["CeladonCity_PokemonCenter_1F"]
+  },
+  "checkpoint": {
+    "id": "wt-08a",
+    "title": "Lavender to Celadon: Route 8, the Underground Path, Route 7",
+    "start": {
+      "map": "LavenderTown_PokemonCenter_1F",
+      "tiles": [
+        [7, 4]
+      ],
+      "facing": "north"
+    },
+    "events": [
+      {
+        "id": "to_underground_east",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "UndergroundPath_EastEntrance",
+            "tiles": [
+              [5, 8]
+            ],
+            "facing": "north",
+            "place": "underground_east_door"
+          }
+        },
+        "why": "West on Route 8 (trainers: Julia, Rich, Glenn, Paige, Leslie, Andrea, Megan, Stan, Aidan, Eli, Anne, Ricardo, Jaren) to the Underground Path's east entrance; Saffron's gates are shut until the Tea."
+      },
+      {
+        "id": "through_tunnel",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "UndergroundPath_WestEntrance",
+            "todo": "TODO: the stairs up, then the exit to Route 7"
+          }
+        },
+        "why": "West along UndergroundPath_EastWestTunnel, up at the west entrance, out onto Route 7."
+      },
+      {
+        "id": "to_celadon_nurse",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "CeladonCity_PokemonCenter_1F",
+            "place": "celadoncity_nurse",
+            "todo": "TODO: map not in PokemonSimulation; the nurse's front (7, 4) north in every Kanto Center so far"
+          }
+        },
+        "why": "West into Celadon City and its Pokemon Center."
+      },
+      {
+        "id": "heal",
+        "kind": "heal",
+        "why": "the nurse"
+      },
+      {
+        "id": "save",
+        "kind": "save",
+        "why": "save: the checkpoint's end"
+      }
+    ]
+  }
+}

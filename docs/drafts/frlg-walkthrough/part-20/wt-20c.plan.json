@@ -1,0 +1,90 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "frlg",
+  "execution": {
+    "menu": "full"
+  },
+  "metadata": {
+    "phase": "draft",
+    "walkthrough_part": 20,
+    "optional": true,
+    "notes": "A checkpoint template e4_room(member) made from wt-17's plans; each room is its own save in practice.",
+    "goal_facts": ["flag: rematch beaten"],
+    "needs": [
+      {
+        "capability": "e4_room",
+        "status": "missing"
+      },
+      {
+        "capability": "battle",
+        "status": "missing"
+      },
+      {
+        "capability": "battle_policy",
+        "status": "missing"
+      },
+      {
+        "capability": "item_heal",
+        "status": "missing"
+      }
+    ]
+  },
+  "checkpoint": {
+    "id": "wt-20c",
+    "title": "Elite Four rematch: Lorelei, Bruno, Agatha, Lance, rival 9",
+    "start": {
+      "map": "IndigoPlateau_PokemonCenter_1F",
+      "tiles": [
+        [7, 4]
+      ],
+      "facing": "north"
+    },
+    "events": [
+      {
+        "id": "lorelei_2",
+        "kind": "fragment",
+        "action": "e4_room",
+        "args": {
+          "member": "lorelei"
+        },
+        "why": "wt-17a as a template"
+      },
+      {
+        "id": "bruno_2",
+        "kind": "fragment",
+        "action": "e4_room",
+        "args": {
+          "member": "bruno"
+        },
+        "why": "wt-17b"
+      },
+      {
+        "id": "agatha_2",
+        "kind": "fragment",
+        "action": "e4_room",
+        "args": {
+          "member": "agatha"
+        },
+        "why": "wt-17c"
+      },
+      {
+        "id": "lance_2",
+        "kind": "fragment",
+        "action": "e4_room",
+        "args": {
+          "member": "lance"
+        },
+        "why": "wt-17d"
+      },
+      {
+        "id": "champion_2",
+        "kind": "fragment",
+        "action": "e4_room",
+        "args": {
+          "member": "champion"
+        },
+        "why": "wt-17e without the credits' first-time scenes"
+      }
+    ]
+  }
+}

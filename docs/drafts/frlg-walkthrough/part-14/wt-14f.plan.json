@@ -1,0 +1,82 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "frlg",
+  "execution": {
+    "menu": "full"
+  },
+  "metadata": {
+    "phase": "draft",
+    "walkthrough_part": 14,
+    "optional": false,
+    "notes": "Two Island: the Meteorite delivered; Bill's ferry back to Cinnabar",
+    "goal_facts": ["flag: FLAG_SEVII_DETOUR_FINISHED", "bag: moon-stone"],
+    "needs": [
+      {
+        "capability": "ferry",
+        "status": "missing"
+      }
+    ],
+    "maps_missing_in_pokesim": ["TwoIsland_JoyfulGameCorner"]
+  },
+  "checkpoint": {
+    "id": "wt-14f",
+    "title": "Two Island: the Meteorite delivered; Bill's ferry back to Cinnabar",
+    "start": {
+      "map": "TwoIsland_JoyfulGameCorner",
+      "todo": "TODO: map not in PokemonSimulation; where wt-14e's scene leaves the player"
+    },
+    "events": [
+      {
+        "id": "talk_owner",
+        "kind": "talk",
+        "why": "the owner takes the Meteorite, gives a Moon Stone"
+      },
+      {
+        "id": "to_two_harbor",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "TwoIsland_Harbor",
+            "todo": "TODO: the sailor's front"
+          }
+        },
+        "why": "the harbor"
+      },
+      {
+        "id": "ferry_one",
+        "kind": "game_action",
+        "action": "ferry",
+        "args": {
+          "to": "OneIsland"
+        },
+        "why": "back to One Island"
+      },
+      {
+        "id": "to_celio",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "OneIsland_PokemonCenter_1F",
+            "tiles": [
+              [15, 7]
+            ],
+            "facing": "north"
+          }
+        },
+        "why": "the Network Center"
+      },
+      {
+        "id": "bill_goes_home",
+        "kind": "scene",
+        "why": "the machine works; Bill and the player ride the ferry to Cinnabar"
+      },
+      {
+        "id": "save",
+        "kind": "save",
+        "why": "save: the checkpoint's end"
+      }
+    ]
+  }
+}

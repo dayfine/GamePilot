@@ -1,0 +1,89 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "frlg",
+  "execution": {
+    "menu": "full"
+  },
+  "metadata": {
+    "phase": "draft",
+    "walkthrough_part": 10,
+    "optional": false,
+    "notes": "Route 12: wake the Snorlax with the Poke Flute",
+    "goal_facts": ["flag: FLAG_HIDE_ROUTE_12_SNORLAX"],
+    "needs": [
+      {
+        "capability": "answer",
+        "status": "missing"
+      },
+      {
+        "capability": "static_encounter",
+        "status": "missing"
+      },
+      {
+        "capability": "battle",
+        "status": "missing"
+      },
+      {
+        "capability": "trainer_interrupt",
+        "status": "missing"
+      }
+    ]
+  },
+  "checkpoint": {
+    "id": "wt-10a",
+    "title": "Route 12: wake the Snorlax with the Poke Flute",
+    "start": {
+      "map": "LavenderTown_PokemonCenter_1F",
+      "tiles": [
+        [7, 4]
+      ],
+      "facing": "north"
+    },
+    "events": [
+      {
+        "id": "above_snorlax",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "Route12",
+            "tiles": [
+              [14, 69]
+            ],
+            "facing": "south",
+            "place": "route12_snorlax"
+          }
+        },
+        "why": "south from Lavender over Silence Bridge (trainers: Ned, Chip, Hank, Elliot, Luca, Justin, Andrew) to above the Snorlax (14, 70)"
+      },
+      {
+        "id": "talk_snorlax",
+        "kind": "talk",
+        "why": "\"Use the Poke Flute?\""
+      },
+      {
+        "id": "use_flute",
+        "kind": "answer",
+        "args": {
+          "yes": true
+        },
+        "why": "play it"
+      },
+      {
+        "id": "snorlax_12",
+        "kind": "game_action",
+        "action": "static_encounter",
+        "args": {
+          "species": "snorlax",
+          "outcome": "catch_or_defeat"
+        },
+        "why": "Snorlax Lv 30 wakes and attacks; catch it (Ultra Balls) or defeat it"
+      },
+      {
+        "id": "save_past_snorlax",
+        "kind": "save",
+        "why": "save: the checkpoint's end"
+      }
+    ]
+  }
+}

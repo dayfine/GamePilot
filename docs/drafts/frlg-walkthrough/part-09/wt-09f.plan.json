@@ -1,0 +1,90 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "frlg",
+  "execution": {
+    "menu": "full"
+  },
+  "metadata": {
+    "phase": "draft",
+    "walkthrough_part": 9,
+    "optional": false,
+    "notes": "The Tea for Saffron's guard; through Saffron to Lavender",
+    "goal_facts": ["story: Saffron's gates open (the Tea given; VAR in pret's gate scripts)"],
+    "needs": [
+      {
+        "capability": "trainer_interrupt",
+        "status": "missing"
+      }
+    ],
+    "maps_missing_in_pokesim": ["CeladonCity_PokemonCenter_1F"]
+  },
+  "checkpoint": {
+    "id": "wt-09f",
+    "title": "The Tea for Saffron's guard; through Saffron to Lavender",
+    "start": {
+      "map": "CeladonCity_PokemonCenter_1F",
+      "todo": "TODO: map not in PokemonSimulation; the nurse's front (7, 4) north in every Kanto Center so far"
+    },
+    "events": [
+      {
+        "id": "into_route7_gate",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "Route7_EastEntrance",
+            "tiles": [
+              [1, 5]
+            ],
+            "facing": "north",
+            "place": "route7_gate_west"
+          }
+        },
+        "why": "east on Route 7 into the gate"
+      },
+      {
+        "id": "guard_takes_tea",
+        "kind": "scene",
+        "why": "the guard stops the player, drinks the Tea and shares it: every gate opens"
+      },
+      {
+        "id": "to_route8_gate",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "Route8_WestEntrance",
+            "todo": "TODO: the gate's west mat from Saffron (SaffronCity_Connection or SaffronCity: check which map the gate warps to)"
+          }
+        },
+        "why": "through Saffron City east to Route 8's gate"
+      },
+      {
+        "id": "to_lavender_nurse",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "LavenderTown_PokemonCenter_1F",
+            "tiles": [
+              [7, 4]
+            ],
+            "facing": "north",
+            "place": "lavendertown_nurse"
+          }
+        },
+        "why": "Route 8 east to Lavender's Center"
+      },
+      {
+        "id": "heal",
+        "kind": "heal",
+        "why": "the nurse"
+      },
+      {
+        "id": "save",
+        "kind": "save",
+        "why": "save: the checkpoint's end"
+      }
+    ]
+  }
+}

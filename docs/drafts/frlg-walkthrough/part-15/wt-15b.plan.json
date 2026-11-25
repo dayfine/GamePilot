@@ -1,0 +1,118 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "frlg",
+  "execution": {
+    "menu": "full"
+  },
+  "metadata": {
+    "phase": "draft",
+    "walkthrough_part": 15,
+    "optional": true,
+    "notes": "Power Plant: Zapdos (optional)",
+    "goal_facts": ["flag: FLAG_HIDE_ZAPDOS"],
+    "needs": [
+      {
+        "capability": "surf",
+        "status": "missing"
+      },
+      {
+        "capability": "static_encounter",
+        "status": "missing"
+      },
+      {
+        "capability": "battle",
+        "status": "missing"
+      },
+      {
+        "capability": "soft_reset_retry",
+        "status": "partial"
+      }
+    ]
+  },
+  "checkpoint": {
+    "id": "wt-15b",
+    "title": "Power Plant: Zapdos (optional)",
+    "start": {
+      "map": "Route10_PokemonCenter_1F",
+      "todo": "TODO: Fly to Route 10"
+    },
+    "events": [
+      {
+        "id": "fly_route10",
+        "kind": "game_action",
+        "action": "fly",
+        "args": {
+          "town": "Route10",
+          "species": "TODO: a member that knows Fly"
+        },
+        "why": "Route 10's Center"
+      },
+      {
+        "id": "start_surf",
+        "kind": "game_action",
+        "action": "surf",
+        "args": {
+          "species": "TODO"
+        },
+        "why": "the river south of Rock Tunnel"
+      },
+      {
+        "id": "into_power_plant",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "PowerPlant",
+            "tiles": [
+              [4, 39]
+            ],
+            "facing": "north",
+            "place": "power_plant_door"
+          }
+        },
+        "why": "south down the river to the Plant"
+      },
+      {
+        "id": "before_zapdos",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "PowerPlant",
+            "tiles": [
+              [5, 12]
+            ],
+            "facing": "north",
+            "place": "zapdos_front"
+          }
+        },
+        "why": "the Plant's last room; item-shaped Voltorb and Electrode attack when checked"
+      },
+      {
+        "id": "save_before_zapdos",
+        "kind": "save",
+        "why": "save: the checkpoint's end"
+      },
+      {
+        "id": "talk_zapdos",
+        "kind": "talk",
+        "why": "the cry"
+      },
+      {
+        "id": "zapdos",
+        "kind": "game_action",
+        "action": "static_encounter",
+        "args": {
+          "species": "zapdos",
+          "outcome": "catch_or_skip"
+        },
+        "why": "Lv 50"
+      },
+      {
+        "id": "save",
+        "kind": "save",
+        "why": "save: the checkpoint's end"
+      }
+    ]
+  }
+}

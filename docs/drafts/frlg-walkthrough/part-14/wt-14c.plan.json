@@ -1,0 +1,133 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "frlg",
+  "execution": {
+    "menu": "full"
+  },
+  "metadata": {
+    "phase": "draft",
+    "walkthrough_part": 14,
+    "optional": true,
+    "notes": "Mt. Ember: the boulders and Moltres (optional)",
+    "goal_facts": ["flag: FLAG_HIDE_MOLTRES"],
+    "needs": [
+      {
+        "capability": "strength",
+        "status": "missing"
+      },
+      {
+        "capability": "static_encounter",
+        "status": "missing"
+      },
+      {
+        "capability": "battle",
+        "status": "missing"
+      },
+      {
+        "capability": "rock_smash",
+        "status": "missing"
+      },
+      {
+        "capability": "soft_reset_retry",
+        "status": "partial"
+      }
+    ]
+  },
+  "checkpoint": {
+    "id": "wt-14c",
+    "title": "Mt. Ember: the boulders and Moltres (optional)",
+    "start": {
+      "map": "OneIsland_KindleRoad_EmberSpa",
+      "todo": "TODO: wt-14b's end"
+    },
+    "events": [
+      {
+        "id": "to_mt_ember",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "MtEmber_Exterior",
+            "todo": "TODO: Kindle Road's north end"
+          }
+        },
+        "why": "Mt. Ember's foot (trainers: Jocelyn, Logan, Beth)"
+      },
+      {
+        "id": "push_exterior_boulders",
+        "kind": "game_action",
+        "action": "push_boulder",
+        "args": {
+          "map": "MtEmber_Exterior",
+          "boulder": "TODO",
+          "pushes": "TODO"
+        },
+        "why": "the pair of boulders west"
+      },
+      {
+        "id": "through_summit_path",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "MtEmber_Summit",
+            "todo": "TODO: via MtEmber_SummitPath_1F..3F"
+          }
+        },
+        "why": "inside the volcano to the summit"
+      },
+      {
+        "id": "push_summit_boulders",
+        "kind": "game_action",
+        "action": "push_boulder",
+        "args": {
+          "map": "MtEmber_Summit",
+          "boulder": "TODO",
+          "pushes": "TODO: clear the four (8..10, 10..12)"
+        },
+        "why": "clear a way north"
+      },
+      {
+        "id": "before_moltres",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "MtEmber_Summit",
+            "tiles": [
+              [9, 7]
+            ],
+            "facing": "north",
+            "place": "moltres_front"
+          }
+        },
+        "why": "below Moltres (9, 6)"
+      },
+      {
+        "id": "save_before_moltres",
+        "kind": "save",
+        "why": "save: the checkpoint's end"
+      },
+      {
+        "id": "talk_moltres",
+        "kind": "talk",
+        "why": "the cry"
+      },
+      {
+        "id": "moltres",
+        "kind": "game_action",
+        "action": "static_encounter",
+        "args": {
+          "species": "moltres",
+          "outcome": "catch_or_skip"
+        },
+        "why": "Lv 50"
+      },
+      {
+        "id": "save",
+        "kind": "save",
+        "why": "save: the checkpoint's end"
+      }
+    ]
+  }
+}

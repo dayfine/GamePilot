@@ -1,0 +1,208 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "frlg",
+  "execution": {
+    "menu": "full"
+  },
+  "metadata": {
+    "phase": "draft",
+    "walkthrough_part": 13,
+    "optional": false,
+    "notes": "PokemonSimulation already models the Mansion's one switch (FLAG_POKEMON_MANSION_SWITCH_STATE) and its 13 gates; FireRed's planner does not read switches yet.",
+    "goal_facts": ["key: secret-key (FLAG_HIDE_POKEMON_MANSION_B1F_SECRET_KEY set)"],
+    "needs": [
+      {
+        "capability": "mansion_switch",
+        "status": "missing"
+      },
+      {
+        "capability": "heal_at",
+        "status": "missing"
+      },
+      {
+        "capability": "story_gates",
+        "status": "partial"
+      },
+      {
+        "capability": "trainer_interrupt",
+        "status": "missing"
+      },
+      {
+        "capability": "ledge_drop",
+        "status": "partial"
+      }
+    ],
+    "maps_missing_in_pokesim": ["CinnabarIsland_PokemonCenter_1F"]
+  },
+  "checkpoint": {
+    "id": "wt-13a",
+    "title": "Pokemon Mansion: the statue switches, the Secret Key",
+    "start": {
+      "map": "CinnabarIsland_PokemonCenter_1F",
+      "todo": "TODO: map not in PokemonSimulation; the nurse's front (7, 4) north in every Kanto Center so far"
+    },
+    "events": [
+      {
+        "id": "into_mansion",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "PokemonMansion_1F",
+            "tiles": [
+              [7, 33]
+            ],
+            "facing": "north",
+            "place": "mansion_door"
+          }
+        },
+        "why": "the Mansion's door"
+      },
+      {
+        "id": "statue_1f",
+        "kind": "game_action",
+        "action": "mansion_switch",
+        "args": {
+          "map": "PokemonMansion_1F",
+          "statue": "TODO: from the map's switches table"
+        },
+        "why": "1F's northwest statue: \"Press the secret switch?\" yes"
+      },
+      {
+        "id": "to_2f",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "PokemonMansion_2F",
+            "tiles": [
+              [6, 14]
+            ],
+            "facing": "north"
+          }
+        },
+        "why": "stairs up"
+      },
+      {
+        "id": "statue_2f",
+        "kind": "game_action",
+        "action": "mansion_switch",
+        "args": {
+          "map": "PokemonMansion_2F",
+          "statue": "TODO"
+        },
+        "why": "the statue near the stairs"
+      },
+      {
+        "id": "to_3f",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "PokemonMansion_3F",
+            "tiles": [
+              [8, 3]
+            ],
+            "facing": "north"
+          }
+        },
+        "why": "the northwest room's stairs"
+      },
+      {
+        "id": "statue_3f",
+        "kind": "game_action",
+        "action": "mansion_switch",
+        "args": {
+          "map": "PokemonMansion_3F",
+          "statue": "TODO"
+        },
+        "why": "open the south door"
+      },
+      {
+        "id": "jump_to_1f_south",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "PokemonMansion_1F",
+            "todo": "TODO: the balcony drop lands on 1F's south side"
+          }
+        },
+        "why": "jump off the left balcony"
+      },
+      {
+        "id": "to_b1f",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "PokemonMansion_B1F",
+            "tiles": [
+              [34, 29]
+            ],
+            "facing": "north"
+          }
+        },
+        "why": "the stairs down (trainers: Lewis, Ivan)"
+      },
+      {
+        "id": "statue_b1f",
+        "kind": "game_action",
+        "action": "mansion_switch",
+        "args": {
+          "map": "PokemonMansion_B1F",
+          "statue": "TODO"
+        },
+        "why": "the B1F statues as the walkthrough presses them"
+      },
+      {
+        "id": "face_secret_key",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "PokemonMansion_B1F",
+            "tiles": [
+              [4, 7]
+            ],
+            "facing": "east",
+            "place": "mansion_secret_key"
+          }
+        },
+        "why": "the Secret Key on the northwest room's table"
+      },
+      {
+        "id": "pick_up_secret_key",
+        "kind": "game_action",
+        "action": "pick_up_item",
+        "args": {
+          "item": "secret-key"
+        },
+        "why": "the Secret Key"
+      },
+      {
+        "id": "escape_rope",
+        "kind": "game_action",
+        "action": "use_item",
+        "args": {
+          "item": "escape-rope"
+        },
+        "why": "out"
+      },
+      {
+        "id": "heal",
+        "kind": "fragment",
+        "action": "heal_at",
+        "args": {
+          "town": "CinnabarIsland"
+        },
+        "why": "heal at the town's Pokemon Center nurse"
+      },
+      {
+        "id": "save",
+        "kind": "save",
+        "why": "save: the checkpoint's end"
+      }
+    ]
+  }
+}

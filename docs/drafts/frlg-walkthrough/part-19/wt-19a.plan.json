@@ -1,0 +1,145 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "frlg",
+  "execution": {
+    "menu": "full"
+  },
+  "metadata": {
+    "phase": "draft",
+    "walkthrough_part": 19,
+    "optional": false,
+    "notes": "Five Island: the Rocket Warehouse, its Admins, Gideon, the Sapphire",
+    "goal_facts": ["flag: FLAG_DEFEATED_ROCKETS_IN_WAREHOUSE", "flag: FLAG_RECOVERED_SAPPHIRE"],
+    "needs": [
+      {
+        "capability": "ferry",
+        "status": "missing"
+      },
+      {
+        "capability": "fight_trainer",
+        "status": "missing"
+      },
+      {
+        "capability": "battle",
+        "status": "missing"
+      },
+      {
+        "capability": "battle_policy",
+        "status": "missing"
+      },
+      {
+        "capability": "spin_tiles",
+        "status": "missing"
+      }
+    ],
+    "maps_missing_in_pokesim": ["SixIsland_DottedHole_SapphireRoom"]
+  },
+  "checkpoint": {
+    "id": "wt-19a",
+    "title": "Five Island: the Rocket Warehouse, its Admins, Gideon, the Sapphire",
+    "start": {
+      "map": "SixIsland_DottedHole_SapphireRoom",
+      "todo": "TODO: wt-18f's end"
+    },
+    "events": [
+      {
+        "id": "ferry_five",
+        "kind": "game_action",
+        "action": "ferry",
+        "args": {
+          "to": "FiveIsland"
+        },
+        "why": "Seagallop to Five Island"
+      },
+      {
+        "id": "to_warehouse_door",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "FiveIsland_Meadow",
+            "todo": "TODO: below the warehouse door"
+          }
+        },
+        "why": "east through Five Isle Meadow (cut trees (8, 9), (19, 12))"
+      },
+      {
+        "id": "say_passwords",
+        "kind": "talk",
+        "why": "the door takes both passwords"
+      },
+      {
+        "id": "through_spinners",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "FiveIsland_RocketWarehouse",
+            "todo": "TODO: the stopper tiles the walkthrough names"
+          }
+        },
+        "why": "the spinner maze (trainers: Grunt2, Grunt3, Admin1, Admin2, Grunt1)"
+      },
+      {
+        "id": "admin_1",
+        "kind": "fragment",
+        "action": "fight_trainer",
+        "args": {
+          "map": "FiveIsland_RocketWarehouse",
+          "trainer": "Admin1"
+        },
+        "why": "she reverses the east spinners"
+      },
+      {
+        "id": "admin_2",
+        "kind": "fragment",
+        "action": "fight_trainer",
+        "args": {
+          "map": "FiveIsland_RocketWarehouse",
+          "trainer": "Admin2"
+        },
+        "why": "the last Admin"
+      },
+      {
+        "id": "before_gideon",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "FiveIsland_RocketWarehouse",
+            "tiles": [
+              [27, 5]
+            ],
+            "facing": "north",
+            "place": "gideon_front"
+          }
+        },
+        "why": "Gideon (27, 4) in the northeast room"
+      },
+      {
+        "id": "talk_gideon",
+        "kind": "talk",
+        "why": "he battles"
+      },
+      {
+        "id": "gideon",
+        "kind": "battle",
+        "args": {
+          "opponent": "gideon",
+          "policy": "type_matchup"
+        },
+        "why": "Voltorb, Electrode, Magneton"
+      },
+      {
+        "id": "sapphire_back",
+        "kind": "scene",
+        "why": "the Sapphire"
+      },
+      {
+        "id": "save",
+        "kind": "save",
+        "why": "save: the checkpoint's end"
+      }
+    ]
+  }
+}

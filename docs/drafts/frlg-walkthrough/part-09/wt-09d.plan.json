@@ -1,0 +1,135 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "frlg",
+  "execution": {
+    "menu": "full"
+  },
+  "metadata": {
+    "phase": "draft",
+    "walkthrough_part": 9,
+    "optional": false,
+    "notes": "Spinner tiles are in PokemonSimulation's grid (u d l r o) but FireRed's step model does not plan over them yet.",
+    "goal_facts": ["key: lift-key (FLAG_HIDE_LIFT_KEY set)"],
+    "needs": [
+      {
+        "capability": "fight_trainer",
+        "status": "missing"
+      },
+      {
+        "capability": "battle",
+        "status": "missing"
+      },
+      {
+        "capability": "spin_tiles",
+        "status": "missing"
+      },
+      {
+        "capability": "trainer_interrupt",
+        "status": "missing"
+      }
+    ]
+  },
+  "checkpoint": {
+    "id": "wt-09d",
+    "title": "Rocket Hideout B1F to B4F: the spinner mazes, the Lift Key",
+    "start": {
+      "map": "RocketHideout_B1F",
+      "tiles": [
+        [12, 2]
+      ],
+      "facing": "north"
+    },
+    "events": [
+      {
+        "id": "to_b2f",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "RocketHideout_B2F",
+            "tiles": [
+              [28, 2]
+            ],
+            "facing": "north"
+          }
+        },
+        "why": "B1F's stairs down (trainers: Grunt2, Grunt1, Grunt4, Grunt3, Grunt5)"
+      },
+      {
+        "id": "through_b2f_maze",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "RocketHideout_B3F",
+            "tiles": [
+              [18, 2]
+            ],
+            "facing": "north"
+          }
+        },
+        "why": "B2F's spinner maze to the stairs down"
+      },
+      {
+        "id": "through_b3f_maze",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "RocketHideout_B4F",
+            "tiles": [
+              [11, 15]
+            ],
+            "facing": "north"
+          }
+        },
+        "why": "B3F's spinner maze (trainers: Grunt2, Grunt1) to B4F's west rooms"
+      },
+      {
+        "id": "lift_key_grunt",
+        "kind": "fragment",
+        "action": "fight_trainer",
+        "args": {
+          "map": "RocketHideout_B4F",
+          "trainer": "Grunt1"
+        },
+        "why": "the Grunt (4, 2) in the northwest room"
+      },
+      {
+        "id": "talk_lift_key_grunt",
+        "kind": "talk",
+        "why": "after the battle he drops the Lift Key"
+      },
+      {
+        "id": "face_lift_key",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "RocketHideout_B4F",
+            "tiles": [
+              [3, 3]
+            ],
+            "facing": "north",
+            "place": "hideout_lift_key"
+          }
+        },
+        "why": "the dropped Lift Key (3, 2)"
+      },
+      {
+        "id": "pick_up_lift_key",
+        "kind": "game_action",
+        "action": "pick_up_item",
+        "args": {
+          "item": "lift-key"
+        },
+        "why": "the Lift Key"
+      },
+      {
+        "id": "save",
+        "kind": "save",
+        "why": "save: the checkpoint's end"
+      }
+    ]
+  }
+}

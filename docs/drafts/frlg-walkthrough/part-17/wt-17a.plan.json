@@ -1,0 +1,86 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "frlg",
+  "execution": {
+    "menu": "full"
+  },
+  "metadata": {
+    "phase": "draft",
+    "walkthrough_part": 17,
+    "optional": false,
+    "notes": "Elite Four 1: Lorelei",
+    "goal_facts": ["flag: FLAG_DEFEATED_LORELEI"],
+    "needs": [
+      {
+        "capability": "battle",
+        "status": "missing"
+      },
+      {
+        "capability": "battle_policy",
+        "status": "missing"
+      },
+      {
+        "capability": "item_heal",
+        "status": "missing"
+      }
+    ]
+  },
+  "checkpoint": {
+    "id": "wt-17a",
+    "title": "Elite Four 1: Lorelei",
+    "start": {
+      "map": "IndigoPlateau_PokemonCenter_1F",
+      "tiles": [
+        [7, 4]
+      ],
+      "facing": "north"
+    },
+    "events": [
+      {
+        "id": "before_lorelei",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "PokemonLeague_LoreleisRoom",
+            "tiles": [
+              [6, 6]
+            ],
+            "facing": "north",
+            "place": "lorelei_front"
+          }
+        },
+        "why": "into Lorelei's room, below Lorelei"
+      },
+      {
+        "id": "challenge_lorelei",
+        "kind": "talk",
+        "why": "Lorelei's speech"
+      },
+      {
+        "id": "lorelei",
+        "kind": "battle",
+        "args": {
+          "opponent": "lorelei",
+          "policy": "type_matchup"
+        },
+        "why": "Dewgong, Cloyster, Slowbro, Jynx, Lapras: Electric"
+      },
+      {
+        "id": "heal_with_items",
+        "kind": "game_action",
+        "action": "heal_party_items",
+        "args": {
+          "hp_below": "TODO",
+          "revive": true
+        },
+        "why": "no nurse: Full Restores and Revives from the bag"
+      },
+      {
+        "id": "save",
+        "kind": "save",
+        "why": "save: the checkpoint's end"
+      }
+    ]
+  }
+}

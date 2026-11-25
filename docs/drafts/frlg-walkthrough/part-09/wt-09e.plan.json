@@ -1,0 +1,223 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "frlg",
+  "execution": {
+    "menu": "full"
+  },
+  "metadata": {
+    "phase": "draft",
+    "walkthrough_part": 9,
+    "optional": false,
+    "notes": "Hideout B4F by the lift: two Grunts, Giovanni, the Silph Scope",
+    "goal_facts": ["key: silph-scope", "flag: FLAG_HIDE_HIDEOUT_GIOVANNI"],
+    "needs": [
+      {
+        "capability": "elevator",
+        "status": "missing"
+      },
+      {
+        "capability": "battle",
+        "status": "missing"
+      },
+      {
+        "capability": "battle_policy",
+        "status": "missing"
+      },
+      {
+        "capability": "heal_at",
+        "status": "missing"
+      },
+      {
+        "capability": "spin_tiles",
+        "status": "missing"
+      }
+    ],
+    "maps_missing_in_pokesim": ["RocketHideout_Elevator"]
+  },
+  "checkpoint": {
+    "id": "wt-09e",
+    "title": "Hideout B4F by the lift: two Grunts, Giovanni, the Silph Scope",
+    "start": {
+      "map": "RocketHideout_B4F",
+      "todo": "TODO: wt-09d's end"
+    },
+    "events": [
+      {
+        "id": "to_lift",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "RocketHideout_B2F",
+            "todo": "TODO: the lift door: B2F's east side (map RocketHideout_Elevator not in PokemonSimulation)"
+          }
+        },
+        "why": "back up through B3F and B2F's maze to the lift"
+      },
+      {
+        "id": "lift_to_b4f",
+        "kind": "game_action",
+        "action": "lift_floor",
+        "args": {
+          "lift": "RocketHideout_Elevator",
+          "from": "B2F",
+          "to": "B4F"
+        },
+        "why": "the Lift Key works the lift"
+      },
+      {
+        "id": "to_door_grunts",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "RocketHideout_B4F",
+            "tiles": [
+              [16, 15]
+            ],
+            "facing": "north",
+            "place": "hideout_b4f_door_grunt"
+          }
+        },
+        "why": "the two Grunts (16, 14), (19, 14) before Giovanni's door"
+      },
+      {
+        "id": "talk_grunt_2",
+        "kind": "talk",
+        "why": "the first Grunt"
+      },
+      {
+        "id": "door_grunt_2",
+        "kind": "battle",
+        "args": {
+          "opponent": "rocket-grunt"
+        },
+        "why": "Grunt"
+      },
+      {
+        "id": "to_grunt_3",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "RocketHideout_B4F",
+            "tiles": [
+              [19, 15]
+            ],
+            "facing": "north"
+          }
+        },
+        "why": "the second Grunt"
+      },
+      {
+        "id": "talk_grunt_3",
+        "kind": "talk",
+        "why": "the second Grunt"
+      },
+      {
+        "id": "door_grunt_3",
+        "kind": "battle",
+        "args": {
+          "opponent": "rocket-grunt"
+        },
+        "why": "Grunt; the door opens"
+      },
+      {
+        "id": "before_giovanni",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "RocketHideout_B4F",
+            "tiles": [
+              [19, 5]
+            ],
+            "facing": "north",
+            "place": "giovanni_hideout_front"
+          }
+        },
+        "why": "below Giovanni (19, 4)"
+      },
+      {
+        "id": "challenge_giovanni",
+        "kind": "talk",
+        "why": "Giovanni's speech"
+      },
+      {
+        "id": "giovanni_1",
+        "kind": "battle",
+        "args": {
+          "opponent": "giovanni-1",
+          "policy": "type_matchup"
+        },
+        "why": "Onix, Rhyhorn, Kangaskhan"
+      },
+      {
+        "id": "giovanni_leaves",
+        "kind": "scene",
+        "why": "he leaves the Silph Scope"
+      },
+      {
+        "id": "face_scope",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "RocketHideout_B4F",
+            "tiles": [
+              [21, 5]
+            ],
+            "facing": "west"
+          }
+        },
+        "why": "the Silph Scope (20, 5)"
+      },
+      {
+        "id": "pick_up_scope",
+        "kind": "game_action",
+        "action": "pick_up_item",
+        "args": {
+          "item": "silph-scope"
+        },
+        "why": "the Silph Scope"
+      },
+      {
+        "id": "lift_to_b1f",
+        "kind": "game_action",
+        "action": "lift_floor",
+        "args": {
+          "lift": "RocketHideout_Elevator",
+          "from": "B4F",
+          "to": "B1F"
+        },
+        "why": "back up"
+      },
+      {
+        "id": "out_to_game_corner",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "CeladonCity_GameCorner",
+            "todo": "TODO: the hidden stairs' top"
+          }
+        },
+        "why": "out past the last Grunt"
+      },
+      {
+        "id": "heal",
+        "kind": "fragment",
+        "action": "heal_at",
+        "args": {
+          "town": "CeladonCity"
+        },
+        "why": "heal at the town's Pokemon Center nurse"
+      },
+      {
+        "id": "save",
+        "kind": "save",
+        "why": "save: the checkpoint's end"
+      }
+    ]
+  }
+}

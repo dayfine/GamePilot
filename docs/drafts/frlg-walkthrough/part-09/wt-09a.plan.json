@@ -1,0 +1,87 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "frlg",
+  "execution": {
+    "menu": "full"
+  },
+  "metadata": {
+    "phase": "draft",
+    "walkthrough_part": 9,
+    "optional": false,
+    "notes": "mg-01 already gets the Coin Case here; its events carry over. Eevee (Condominiums RoofRoom) and the Dept. Store are optional (buy fragment).",
+    "goal_facts": ["key: tea (FLAG_GOT_TEA)", "key: coin-case (FLAG_GOT_COIN_CASE)"],
+    "needs": [
+      {
+        "capability": "heal_at",
+        "status": "missing"
+      }
+    ],
+    "maps_missing_in_pokesim": ["CeladonCity_PokemonCenter_1F"]
+  },
+  "checkpoint": {
+    "id": "wt-09a",
+    "title": "Celadon: the Tea (Mansion 1F) and the Coin Case (restaurant)",
+    "start": {
+      "map": "CeladonCity_PokemonCenter_1F",
+      "todo": "TODO: map not in PokemonSimulation; the nurse's front (7, 4) north in every Kanto Center so far"
+    },
+    "events": [
+      {
+        "id": "to_tea_woman",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "CeladonCity_Condominiums_1F",
+            "tiles": [
+              [3, 9]
+            ],
+            "facing": "west",
+            "place": "condominiums_tea_woman"
+          }
+        },
+        "why": "the old woman on Celadon Mansion 1F"
+      },
+      {
+        "id": "talk_tea_woman",
+        "kind": "talk",
+        "why": "the Tea, the drink Saffron's guards want"
+      },
+      {
+        "id": "to_coin_case_man",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "CeladonCity_Restaurant",
+            "tiles": [
+              [2, 2]
+            ],
+            "facing": "west",
+            "place": "restaurant_coin_case_man"
+          }
+        },
+        "why": "the man by the restaurant's back wall"
+      },
+      {
+        "id": "talk_coin_case_man",
+        "kind": "talk",
+        "why": "the Coin Case (mg-01 does the same talk)"
+      },
+      {
+        "id": "back_to_nurse",
+        "kind": "fragment",
+        "action": "heal_at",
+        "args": {
+          "town": "CeladonCity"
+        },
+        "why": "heal at the town's Pokemon Center nurse"
+      },
+      {
+        "id": "save",
+        "kind": "save",
+        "why": "save: the checkpoint's end"
+      }
+    ]
+  }
+}

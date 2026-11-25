@@ -1,0 +1,96 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "frlg",
+  "execution": {
+    "menu": "full"
+  },
+  "metadata": {
+    "phase": "draft",
+    "walkthrough_part": 11,
+    "optional": false,
+    "notes": "Saffron Gym's pads are 32 step_on warps in PokemonSimulation; FireRed's step model already takes step_on warps, so the planner may route through them as is: check.",
+    "goal_facts": ["badge: marsh (FLAG_BADGE06_GET)", "flag: FLAG_DEFEATED_SABRINA"],
+    "needs": [
+      {
+        "capability": "battle",
+        "status": "missing"
+      },
+      {
+        "capability": "battle_policy",
+        "status": "missing"
+      },
+      {
+        "capability": "heal_at",
+        "status": "missing"
+      },
+      {
+        "capability": "warp_pads",
+        "status": "partial"
+      },
+      {
+        "capability": "trainer_interrupt",
+        "status": "missing"
+      }
+    ],
+    "maps_missing_in_pokesim": ["SaffronCity_PokemonCenter_1F"]
+  },
+  "checkpoint": {
+    "id": "wt-11d",
+    "title": "Saffron Gym: the warp panels, Sabrina, the Marsh Badge",
+    "start": {
+      "map": "SaffronCity_PokemonCenter_1F",
+      "todo": "TODO: map not in PokemonSimulation; the nurse's front (7, 4) north in every Kanto Center so far"
+    },
+    "events": [
+      {
+        "id": "before_sabrina",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "SaffronCity_Gym",
+            "tiles": [
+              [14, 12]
+            ],
+            "facing": "north",
+            "place": "sabrina_front"
+          }
+        },
+        "why": "pads: the entrance's, then northwest, southwest, southwest (walkthrough), to Sabrina (14, 11) (trainers: Cameron, Johan, Preston, Amanda, Stacy, Tasha, Tyron)"
+      },
+      {
+        "id": "challenge_sabrina",
+        "kind": "talk",
+        "why": "Sabrina's speech"
+      },
+      {
+        "id": "sabrina",
+        "kind": "battle",
+        "args": {
+          "opponent": "sabrina",
+          "policy": "type_matchup"
+        },
+        "why": "Kadabra, Mr. Mime, Venomoth, Alakazam: Bug, Ghost, Dark"
+      },
+      {
+        "id": "marsh_badge",
+        "kind": "scene",
+        "why": "the badge and TM04"
+      },
+      {
+        "id": "heal",
+        "kind": "fragment",
+        "action": "heal_at",
+        "args": {
+          "town": "SaffronCity"
+        },
+        "why": "heal at the town's Pokemon Center nurse"
+      },
+      {
+        "id": "save",
+        "kind": "save",
+        "why": "save: the checkpoint's end"
+      }
+    ]
+  }
+}
