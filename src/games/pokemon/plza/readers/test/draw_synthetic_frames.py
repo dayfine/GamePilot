@@ -109,12 +109,26 @@ def map_with(squares):
 # player's HP bar, the gender mark and the caught mark's Poke Ball.
 PLATE_GREEN = 0xFF2DC673
 GENDER_ORANGE = 0xFFFF7644
+# Ours: the female mark is a pinkish red disc (about 249, 105, 114 on console
+# B's run frames) round a white sign; the fork's frames have only the orange.
+FEMALE_RED = 0xFFF96972
 BALL_RED = 0xFFFF6B6E
 BRIGHT_GRASS = 0xFF44A050
 DARK_GROUND = 0xFF303030
 
 
-def plate(ground, plate_bar=False, player_bar=False, gender=False, ball=False):
+def female_mark(image):
+    fill(image, 1020, 430, 1044, 454, FEMALE_RED)
+    # The sign: a ring over a cross, about 70 white pixels (the console's
+    # female marks counted 23 to 82 white at 1080p).
+    fill(image, 1028, 433, 1036, 441, WHITE)
+    fill(image, 1030, 435, 1034, 439, FEMALE_RED)
+    fill(image, 1031, 441, 1033, 449, WHITE)
+    fill(image, 1029, 445, 1035, 447, WHITE)
+
+
+def plate(ground, plate_bar=False, player_bar=False, gender=False, ball=False,
+          female=False):
     image = solid(ground)
     if plate_bar:
         fill(image, 950, 515, 1058, 533, PLATE_GREEN)
@@ -123,6 +137,8 @@ def plate(ground, plate_bar=False, player_bar=False, gender=False, ball=False):
     if gender:
         fill(image, 1020, 430, 1044, 454, GENDER_ORANGE)
         fill(image, 1028, 438, 1036, 446, WHITE)
+    if female:
+        female_mark(image)
     if ball:
         fill(image, 1056, 430, 1080, 442, BALL_RED)
         fill(image, 1056, 442, 1080, 454, WHITE)
@@ -162,6 +178,10 @@ FRAMES = {
     "plate-gender-mark-only": lambda: plate(DARK_GROUND, plate_bar=True, gender=True),
     "plate-gender-and-ball-marks": lambda: plate(
         DARK_GROUND, plate_bar=True, gender=True, ball=True),
+    # Ours: the female mark, alone and beside the Poke Ball.
+    "plate-female-mark-only": lambda: plate(DARK_GROUND, plate_bar=True, female=True),
+    "plate-female-and-ball-marks": lambda: plate(
+        DARK_GROUND, plate_bar=True, female=True, ball=True),
     "player-bar-alone": lambda: plate(DARK_GROUND, player_bar=True),
     "bright-grass-alone": lambda: plate(BRIGHT_GRASS),
 }

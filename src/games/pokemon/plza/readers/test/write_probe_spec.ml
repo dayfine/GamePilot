@@ -7,7 +7,8 @@
    its reference before comparing, which a colour shift mostly cancels.
 
    With [--second FIXTURE DIR], it writes instead, for each frame of the
-   fixture, DIR/<folder>/<frame>.json: the probes a two-frame read subscribes
+   fixture, DIR/<folder>/<frame>.json (DIR/<shift>/<folder>/<frame>.json for
+   a shifted frame): the probes a two-frame read subscribes
    from what that frame shows, the party bars' made from its cards
    ({!Plza_readers.Party_slots.bar_probes}) and the caught mark's from its
    plate's bar ({!Plza_readers.Lock_plate.mark_probes}).
@@ -50,8 +51,13 @@ let write_second_spec dir (path, probes) =
       let out =
         Filename.concat dir (Filename.remove_extension path ^ ".json")
       in
-      let folder = Filename.dirname out in
-      if not (Sys.file_exists folder) then Sys.mkdir folder 0o755;
+      let rec make_folder folder =
+        if not (Sys.file_exists folder) then (
+          make_folder (Filename.dirname folder);
+          (* "DIR/." exists once DIR does. *)
+          if not (Sys.file_exists folder) then Sys.mkdir folder 0o755)
+      in
+      make_folder (Filename.dirname out);
       Out_channel.with_open_text out (fun oc ->
           output_string oc (params second))
 
