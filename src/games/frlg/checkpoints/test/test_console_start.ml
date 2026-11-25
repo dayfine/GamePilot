@@ -109,8 +109,8 @@ let observed ?party ?money ?(items = []) () =
     items;
   }
 
-let preflight id before read =
-  let rows = Preflight.compare (needs id before) read in
+let rows_text needs read =
+  let rows = Preflight.compare needs read in
   String.concat " | "
     (List.map
        (fun (r : Preflight.row) ->
@@ -122,6 +122,7 @@ let preflight id before read =
        rows)
   ^ if Preflight.passed rows then " => go" else " => stop"
 
+let preflight id before read = rows_text (needs id before) read
 let same = Some { F.tiles = 150; changed = 3 }
 
 (* The pre-flight's row for 02-trade-farfetchd's Cut user. *)
@@ -381,7 +382,6 @@ let deposit_plan =
     Plan_file.decode ~source:"deposit"
       (Yojson.Safe.from_string
          {|{"format": "gamepilot-checkpoint/1", "game": "frlg",
-       "execution": {"menu": "full"},
             "checkpoint": {"id": "deposit", "title": "Two members to the PC",
               "start": {"map": "Route4_PokemonCenter_1F", "tiles": [[11, 2]],
                         "facing": "north"},
@@ -463,7 +463,7 @@ let room_row_cases =
 
 (* A plan that stores Farfetch'd at Pewter's PC, as 09-viridian-forest's
    deposit did (mGBA, 2026-11-25), with Farfetch'd holding Retro Mail. *)
-let deposit_plan =
+let farfetchd_deposit_plan =
   let json =
     {|{"format": "gamepilot-checkpoint/1", "game": "frlg",
        "execution": {"menu": "full"},
@@ -489,20 +489,9 @@ let deposit_preflight marks =
       card = None;
     }
   in
-  match Preflight.needs stocks ~before:None deposit_plan with
+  match Preflight.needs stocks ~before:None farfetchd_deposit_plan with
   | Error e -> "error: " ^ e
-  | Ok needs ->
-      let rows = Preflight.compare needs read in
-      String.concat " | "
-        (List.map
-           (fun (r : Preflight.row) ->
-             Printf.sprintf "%s: %s: %s" r.need r.read
-               (match r.verdict with
-               | Ok -> "ok"
-               | Mismatch -> "MISMATCH"
-               | Not_read -> "NOT READ"))
-           rows)
-      ^ if Preflight.passed rows then " => go" else " => stop"
+  | Ok needs -> rows_text needs read
 
 let deposit_cases =
   [
@@ -522,7 +511,7 @@ let deposit_cases =
        | farfetchd holds no Mail (pc_deposit): not read: NOT READ => stop";
     case "preflight pc_deposit: the marks are read for it"
       (fun () ->
-        match Preflight.needs stocks ~before:None deposit_plan with
+        match Preflight.needs stocks ~before:None farfetchd_deposit_plan with
         | Error e -> "error: " ^ e
         | Ok needs ->
             Option.fold ~none:"none"
