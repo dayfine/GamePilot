@@ -1,4 +1,4 @@
-(* gamepilot run <program>|PLAN_DIR [flags]: a one-shot program
+(* gamepilot run <program>|DIR/PLANS|--plan-dir DIR [flags]: a one-shot program
      ([--port N] [--state PATH | --console]) or a chain of checkpoints
      (Checkpoint_families)
    gamepilot run --plan PLAN.json [flags]: one checkpoint (Checkpoint_families)
@@ -134,8 +134,6 @@ let run (args : Run_args.t) =
   | Plan_folder dir -> Checkpoint_families.main dir args.flags
   | Plan plan -> Checkpoint_families.checkpoint plan args.flags
 
-let is_plan_folder d = Sys.file_exists d && Sys.is_directory d
-
 (* The one-shot program [id] names, run by [run]. *)
 let one_shot id run =
   match Programs_command.one_shot id with
@@ -162,8 +160,7 @@ let () =
   | "run" :: args when List.mem "--help" args ->
       print_string usage;
       exit 0
-  | "run" :: args ->
-      exit_with (Result.bind (Run_args.parse ~is_plan_folder args) run)
+  | "run" :: args -> exit_with (Result.bind (Run_args.parse args) run)
   | (("checkpoints" | "checkpoint") as command) :: args -> (
       match Run_args.of_old_command command args with
       | Some parsed -> old_command command parsed
