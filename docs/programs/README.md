@@ -7,8 +7,13 @@ A descriptor (`Program_registry.t`) gives:
 
 - `id`: `<game>.<program>`, e.g. `frlg.mail_glitch`; the program's folder is
   `src/games/<game>/programs/<program>/`.
-- the game (id and display name), the display name, the group path (`["FRLG"; "Glitches"]`) and a
-  one-line description;
+- the game (`Program_registry.game`): its id and display name, its Switch titles' icons on their
+  Delete Save Data page by the key `gamepilot ctl delete-save` takes (`delete_save_icons`), and its
+  Switch HOME data when measured (`switch_home`: the title park and resume go back to, its HOME
+  tile's colour, and the lab app panel whose console setup `gamepilot switch-devices` reads). The
+  lab console's game is `$GAMEPILOT_LAB_GAME`, else the one game with Switch HOME data. A game may
+  have no program yet (PLZA, for delete-save). Then the display name, the group path
+  (`["FRLG"; "Glitches"]`) and a one-line description;
 - `doc`: its page, from the repo root (a page in this folder, or an existing one);
 - `checkpoints`: its plans folder, or none for a one-shot program (`gamepilot run`);
 - the backends it runs on;
@@ -27,7 +32,7 @@ To add a program, add its descriptor to the list in `program_registry.ml` (regis
 list; nothing registers itself at start-up) and write its page, and its player's guide in
 `docs/guide/` (`gamepilot guide --write` starts it; `docs/guide/README.md`). The registry's tests check that ids
 are unique, that every doc and checkpoints folder exists, and that every plan decodes. A one-shot
-program also needs its case in `gamepilot run` (`src/bin/gamepilot.ml`).
+program also needs its runner in its family's `one_shots` (`src/bin/checkpoint_families.ml`).
 
 What a program needs of the save (free party slots, field moves) is not declared: it is derived
 from its plans, the same way the pre-flight derives it.

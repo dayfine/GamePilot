@@ -36,3 +36,12 @@ val sends_input : step -> bool
 
 val commands : step -> Wire.command list
 (** The batch a press or a wait submits; [[]] for the others. *)
+
+type reader = {
+  name : string;
+  doc : string;
+  read : unit -> (string * string) list;
+}
+(** A reader [read NAME] runs once on the current frame (a game's, picked by its
+    rules): its name, a line saying what it reads, and the reading as
+    [field: value] pairs, in the effect context. *)

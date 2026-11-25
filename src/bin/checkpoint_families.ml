@@ -2,13 +2,24 @@
    entry points: how gamepilot checkpoints runs its series, how gamepilot
    checkpoint runs or replays one plan, how its guide lists its checkpoints,
    their needs and the commands that run them, and what gamepilot programs
-   says a chain needs. The one place under bin/ that picks a family; a program
-   no registry entry names is over the Pokémon grid rules. *)
+   says a chain needs; the readers gamepilot ctl read runs; and the one-shot
+   programs gamepilot run and replay run. The one place under bin/ that picks
+   a family; a program no registry entry names is over the Pokémon grid
+   rules. *)
 
 module R = Program_registry
 module Grid = Frlg_series
 
 let ( let* ) = Result.bind
+
+(* A one-shot program (gamepilot run, gamepilot replay): its label in the run's
+   lines and on the watch page, the save state it loads unless --console, and
+   a run: whether it passed and its line. In the effect context. *)
+type one_shot = {
+  label : string;
+  default_state : string;
+  run : state:string option -> bool * string;
+}
 
 type t = {
   run_series : string -> string list -> (int, string) result;
@@ -21,6 +32,8 @@ type t = {
   chain_needs : string -> (string, string) result;
       (** What a plan folder's chain needs of the save, in one line (gamepilot
           programs). *)
+  ctl_readers : Ctl_script.reader list;  (** What gamepilot ctl read runs. *)
+  one_shots : (string * one_shot) list;  (** By program id. *)
 }
 
 (* run.json's program fields for a plan folder; none for no program. *)
@@ -47,6 +60,17 @@ let grid_guide : Guide_blocks.rules_guide =
     commands = Guide_blocks.grid_commands;
   }
 
+let start_menu_poc =
+  {
+    label = "start_menu_poc";
+    default_state = Start_menu_poc.default_state;
+    run =
+      (fun ~state ->
+        let outcome = Start_menu_poc.run ?state () in
+        ( (match outcome with Start_menu_poc.Passed _ -> true | _ -> false),
+          Start_menu_poc.describe outcome ));
+  }
+
 (* The Pokémon grid rules' entry points. *)
 let grid =
   {
@@ -55,8 +79,11 @@ let grid =
     replay_checkpoint = Grid.Checkpoint_command.replay;
     guide = grid_guide;
     chain_needs = Grid.Chain_needs.needs;
+    ctl_readers = Frlg_ctl_readers.Ctl_readers.all;
+    one_shots = [ ("frlg.start_menu_poc", start_menu_poc) ];
   }
 
+let all = [ grid ]
 let of_rules = function R.Pokemon_grid -> grid
 
 let of_program (p : R.t option) =
@@ -78,3 +105,12 @@ let checkpoint plan args = (of_plan_file plan).run_checkpoint plan args
 
 let replay_checkpoint wirelog plan args =
   (of_plan_file plan).replay_checkpoint wirelog plan args
+
+(* Every family's readers: gamepilot ctl names no program. *)
+let ctl_readers = List.concat_map (fun f -> f.ctl_readers) all
+
+let ctl_reader name =
+  List.find_opt (fun (r : Ctl_script.reader) -> r.name = name) ctl_readers
+
+(* The one-shot program's runner, if its family has one. *)
+let one_shot (p : R.t) = List.assoc_opt p.id (of_program (Some p)).one_shots

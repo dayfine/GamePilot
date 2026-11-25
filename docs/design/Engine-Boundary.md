@@ -86,7 +86,7 @@ library only because the map decoders came first.
 | `screen_state` | A | facts (fade, banner, dialog, battle, free control, stillness) and the settle rules are shared by every game; the timings were measured on FireRed and a game may give its own `rule` |
 | `switch_home` | mixed | A: parking and resuming on HOME. Tied to the GBA picture: boxes clipped to FireRed's `GAME_BOX` viewport, tests on FireRed's tile |
 | `games/frlg/repo_files` | A | `Repo_files.locate`, `Json_file`: agnostic, but under FireRed, and `program_registry` depends on it |
-| `bin/` | mixed | the checkpoint runner, its plan loading, pre-flight, make-room and guide tables are FRLG's `games/frlg/series`, which `bin/checkpoint_families.ml` alone picks (by the registry's `rules`); the ctl readers and the HOME tile are still FireRed's |
+| `bin/` | A | names no game module but in `bin/checkpoint_families.ml`, which picks a family's libraries by the registry's `rules` (FRLG's `games/frlg/series`, its ctl readers, `start_menu_poc`); per-game data (delete-save icons, the lab console's panel and HOME tile) is the registry's |
 | `dev/lint/ocaml_lint.conf` | mixed | layer `game` may use `pokemon`: nothing stops a non-Pokémon game from using Pokémon code |
 | `daemon/src/viewport.h` | G | only `nso_gba_viewport` (240 x 160 inside the Switch frame); a native Switch game is the whole 1920 x 1080 frame |
 | `Wire.command` | A | buttons, waits and both analog sticks (protocol v1.12); no ZL/ZR |
