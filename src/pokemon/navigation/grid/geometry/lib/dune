@@ -1,0 +1,3 @@
+(library
+ (name grid_geometry)
+ (public_name gamepilot.grid_geometry))

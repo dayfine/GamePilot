@@ -2,7 +2,7 @@
    tiles, map names with spaces) and FRLG-style single tiles. Ported from
    Pokemon_RouteLog_Tests.cpp. *)
 
-open Grid_maps
+open Grid_geometry
 open Grid_trace
 
 let tile map x y = { Route_tile.map; pos = { Tile_pos.x; y } }
@@ -33,7 +33,7 @@ let bdsp_legs =
   ]
 
 let frlg_legs = [ { Route_leg.leg = north_open; after = frlg_north } ]
-let case name input expectation = { Case_table.name; input; expectation }
+let case name input expectation = { Table_test.name; input; expectation }
 
 let leg_cases =
   [
@@ -119,4 +119,4 @@ let end_cases =
       "To the grass: arrived at Route 202 (20, 25).";
   ]
 
-let () = Case_table.run "RouteLog" (leg_cases @ plan_cases @ end_cases)
+let () = Table_test.run "RouteLog" (leg_cases @ plan_cases @ end_cases)

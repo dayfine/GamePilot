@@ -9,7 +9,7 @@ val coin_batches : int -> int list
     the batches that make up a total, 500s first. The total is a multiple of 50;
     see {!coins_of_args}. *)
 
-val coins_of_args : where:string -> Grid_maps.Json_field.obj -> int
+val coins_of_args : where:string -> Json_field.obj -> int
 (** ["coins"]: a positive multiple of 50. *)
 
 val prize_slots : int
@@ -19,7 +19,7 @@ val fire_red_prizes : string list
 (** The prizes by row on FireRed: Abra, Clefairy, Dratini, Scyther, Porygon
     (LeafGreen's differ). *)
 
-val prize_slot_of_args : where:string -> Grid_maps.Json_field.obj -> int
+val prize_slot_of_args : where:string -> Json_field.obj -> int
 (** ["slot"]: the prize's row from 0. *)
 
 val choice_wait_ms : int
@@ -30,6 +30,12 @@ val buy_coins : log:(string -> unit) -> int -> unit
     chosen, then the talk settle. Fails as [coins_no_clerk]. *)
 
 val redeem_prize_mon : log:(string -> unit) -> int -> unit
-(** Facing the Pokémon prize clerk: A, the page turned, the prize's row, A, YES,
-    then the talk settle (whose B declines a nickname). Fails as
+(** Facing the Pokémon prize clerk: A, the page turned after {!choice_wait_ms}
+    (his blue arrow has no reader; the fork turns it by time too), the prize's
+    row, A and {!prize_question_wait_ms} (the list lingers under the question),
+    YES, then the talk settle (whose B declines a nickname). Fails as
     [prize_no_clerk] or [prize_no_question]. *)
+
+val prize_question_wait_ms : int
+(** 1200, the fork's wait after A on the prize: the prize list stays up until
+    the question has printed. *)

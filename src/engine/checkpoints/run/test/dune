@@ -1,0 +1,4 @@
+(tests
+ (names test_checkpoint_trials)
+ (modules test_checkpoint_trials)
+ (libraries gamepilot.table_test gamepilot.engine_run))

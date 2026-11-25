@@ -1,7 +1,7 @@
 (* A leg planner case on the toy game: a map, a walk, and what the plan must
    be. Each case of the C++ tests that planned twice is two cases here. *)
 
-open Grid_maps
+open Grid_geometry
 open Grid_planning
 
 type input = {
@@ -32,7 +32,7 @@ let plan input =
 
 let run { name; input; expectation } =
   let legs = plan input in
-  Case_table.report name
+  Table_test.report name
     (Check.expect ~expected:expectation.says ~plan:(Toy_game.describe legs)
        (expectation.holds legs))
 

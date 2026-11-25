@@ -11,7 +11,7 @@
  (libraries
   gamepilot.wire
   gamepilot.effects
-  gamepilot.case_table
+  gamepilot.table_test
   gamepilot.frlg_text))
 
 (test
@@ -19,4 +19,4 @@
  (modules test_text_drawing)
  (deps
   (glob_files fixtures/*))
- (libraries gamepilot.case_table gamepilot.frlg_text))
+ (libraries gamepilot.table_test gamepilot.frlg_text))

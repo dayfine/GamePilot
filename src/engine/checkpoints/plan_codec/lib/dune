@@ -1,0 +1,9 @@
+(library
+ (name engine_plan_codec)
+ (public_name gamepilot.engine_plan_codec)
+ (modules_without_implementation plan_codec)
+ (libraries
+  yojson
+  gamepilot.json_field
+  gamepilot.engine_terms
+  gamepilot.engine_plan))

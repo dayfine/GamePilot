@@ -3,16 +3,20 @@
 // {"image": path, "probes": {id: result}}, the `probes` object of a `frame`
 // notification.
 //
-//   probe_images --spec probes.json [--viewport x,y,w,h] [--game-size WxH]
-//                image.png [image.png ...]
+//   probe_images --spec probes.json [--viewport x,y,w,h|nso-gba|native]
+//                [--game-size WxH] image.png [image.png ...]
 //
 // The spec file holds the `subscribe` params ({"probes": [...]}); a
-// core.template_match@1 probe's `template` is a PNG path, relative to the spec
-// file's folder, that the tool uploads to its own template store.
+// core.template_match@1 probe's `template`, and a core.find@1 probe's
+// `template` and `shape`, are PNG paths, relative to the spec file's folder,
+// that the tool uploads to its own template store.
 // --viewport is where the game picture sits in every image, normalized
-// (default the whole image, as on mGBA; a Switch capture has side bars), and
-// --game-size the picture's native size in game pixels (default 240x160, the
-// GBA), which templates are given in.
+// (default the whole image, as on mGBA; a Switch capture has side bars, and
+// nso-gba is the Switch's GBA app as the daemon's switch backend sees it;
+// native is a full-screen Switch game, the whole image in 1920x1080 game
+// pixels), and --game-size the picture's native size in game pixels (default
+// 240x160, the GBA), which templates are given in. A viewport name sets the
+// game size too, so a --game-size goes after it.
 
 #include <cstdio>
 #include <cstdlib>
@@ -38,8 +42,8 @@ namespace pa = PokemonAutomation;
 
 int usage() {
   std::fputs(
-      "usage: probe_images --spec FILE [--viewport x,y,w,h] [--game-size WxH] "
-      "IMAGE.png [IMAGE.png ...]\n",
+      "usage: probe_images --spec FILE [--viewport x,y,w,h|nso-gba|native] "
+      "[--game-size WxH] IMAGE.png [IMAGE.png ...]\n",
       stderr);
   return 2;
 }
@@ -78,18 +82,27 @@ std::vector<gp::ProbeSpec> load_probes(const std::string& spec_path,
   std::vector<gp::ProbeSpec> probes = gp::decode_subscribe(*params).probes;
   const pa::Filesystem::Path folder =
       pa::Filesystem::Path(spec_path).parent_path();
-  for (gp::ProbeSpec& probe : probes) {
-    if (probe.kind != gp::kTemplateMatchKind) {
-      continue;
+  // Uploads the PNG at `path` (relative to the spec's folder) and puts its
+  // hash in its place; an empty path stays empty.
+  const auto upload = [&](std::string& path) {
+    if (path.empty()) {
+      return;
     }
-    const std::string png_path =
-        (folder / pa::Filesystem::Path(probe.template_hash)).string();
+    const std::string png_path = (folder / pa::Filesystem::Path(path)).string();
     const std::optional<std::string> hash =
         templates.add_png(pa::file_to_string(png_path));
     if (!hash) {
       throw InputError{png_path + ": not a PNG"};
     }
-    probe.template_hash = *hash;
+    path = *hash;
+  };
+  for (gp::ProbeSpec& probe : probes) {
+    if (probe.kind == gp::kTemplateMatchKind) {
+      upload(probe.template_hash);
+    } else if (probe.find) {
+      upload(probe.find->template_hash);
+      upload(probe.find->shape_hash);
+    }
   }
   return probes;
 }
@@ -140,11 +153,12 @@ int main(int argc, char** argv) {
     if (arg == "--spec" && has_value) {
       spec_path = argv[++i];
     } else if (arg == "--viewport" && has_value) {
-      const std::optional<gp::Box> picture = gp::parse_box(argv[++i]);
-      if (!picture) {
+      const std::optional<gp::Viewport> parsed =
+          gp::parse_viewport(argv[++i], viewport);
+      if (!parsed) {
         return usage();
       }
-      viewport.picture = *picture;
+      viewport = *parsed;
     } else if (arg == "--game-size" && has_value) {
       if (!parse_game_size(argv[++i], viewport)) {
         return usage();

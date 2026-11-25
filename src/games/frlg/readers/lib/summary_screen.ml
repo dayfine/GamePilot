@@ -20,16 +20,39 @@ let max_distance = 0.25
 let max_stddev_sum = 20.
 let solid ratio = Solid_color.is_solid ~ratio ~max_distance ~max_stddev_sum
 
-(* Page [p]: marks before it tan, its own white, after it blue. *)
+(* The current mark differs from the tan one before it by at least this much
+   (channel differences summed): a flat pale floor (Victory Road's cave floor,
+   (206, 181, 156)) passes as tan and as white at once, so all three marks read
+   page 3 on the overworld (mg-04b on mGBA, 2026-11-24). Not in the fork. *)
+let min_mark_difference = 60.
+
+let differs (a : Wire.rgb) (b : Wire.rgb) =
+  Float.abs (a.r -. b.r) +. Float.abs (a.g -. b.g) +. Float.abs (a.b -. b.b)
+  >= min_mark_difference
+
+let unlike_before m p =
+  p = 1
+  ||
+  match
+    ( Solid_color.read m (List.nth mark_ids (p - 1)),
+      Solid_color.read m (List.nth mark_ids (p - 2)) )
+  with
+  | Some now, Some before -> differs now.mean before.mean
+  | _ -> false
+
+(* Mark [mark]'s colour on page [p]: tan before it, white (or gold) on it,
+   blue after it. *)
+let mark_test ~p mark =
+  if mark < p then solid tan
+  else if mark = p then fun s -> Solid_color.is_white s || solid gold s
+  else solid blue
+
+(* Page [p]: each mark its colour, its own unlike the one before it. *)
 let shows m p =
-  List.for_all2
-    (fun index id ->
-      let mark = index + 1 in
-      Solid_color.holds m id
-        (if mark < p then solid tan
-         else if mark = p then fun s -> Solid_color.is_white s || solid gold s
-         else solid blue))
-    (List.init (List.length mark_ids) Fun.id)
-    mark_ids
+  unlike_before m p
+  && List.for_all2
+       (fun index id -> Solid_color.holds m id (mark_test ~p (index + 1)))
+       (List.init (List.length mark_ids) Fun.id)
+       mark_ids
 
 let page m = List.find_opt (shows m) [ 1; 2; 3 ]

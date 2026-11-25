@@ -1,5 +1,6 @@
-(** The JSON-RPC 2.0 envelope: calls by method, responses by id, and the [frame]
-    and [batch_done] notifications. *)
+(** The JSON-RPC 2.0 envelope: calls by method, responses by id, and the
+    notifications: [frame], [batch_done] and [stop] from the daemon,
+    [watch.plan], [watch.log] and [watch.run] from the program. *)
 
 type json = Yojson.Safe.t
 type error = { code : int; message : string; data : json option }
@@ -14,6 +15,9 @@ type call =
   | Unsubscribe of string list
   | Submit of { batch_id : string; commands : Command.command list }
   | Cancel
+  | Status
+  | Lease_acquire of { owner : string; ttl_ms : int option }
+  | Lease_release
 
 type request = { id : int; call : call }
 type response = { id : int; outcome : (json, error) result }
@@ -21,6 +25,11 @@ type response = { id : int; outcome : (json, error) result }
 type notification =
   | Frame of { load : int; frame : Probe.frame }
   | Batch_done of Command.batch_done
+  | Watch_plan of Watch.plan
+  | Watch_log of string
+  | Watch_run of Watch_run.t
+  | Stop of string
+  | Keepawake of { key : string; idle_ms : int }
 
 type message =
   | Request of request

@@ -51,7 +51,7 @@ until the new stack passes a measured gate (section 9).
 | D7 | OCaml layering | measurements -> facts -> logic; replay injects measurements, sim injects facts |
 | Q13 | Program style | Direct-style kernel and actions; checkpoints and stories as typed data |
 | D8 | Effects | Programs depend only on our own small effect set, never on an I/O library directly |
-| Q14 | Agents/MCP | Extend pa-lab with a second channel adapter; `contracts/v1` is the spec |
+| Q14 | Agents/MCP | Extend pa-lab with a second channel adapter; `protocol/v1` is the spec |
 | Q15 | Budget | Week 0 spikes, then S0+S1 in at most 5 weeks on one lane, with stop rules |
 
 ## 3. Layer 1: I/O
@@ -88,7 +88,8 @@ on frames and returns raw results with no judgment.
 | `color_stats` | mean RGB, stddev over a box | microseconds |
 | `rmsd_prev` | difference against the previous frame | about a millisecond |
 | `template` | match score against a template at a box | milliseconds |
-| `find` | fixed pipeline: colour filter -> waterfill -> size filter -> template; list of boxes with scores | milliseconds |
+| `line_shares` | share of a box's pixels passing linear channel comparisons, per row and per column (`core.line_shares@1`) | microseconds |
+| `find` | fixed pipeline: colour filter -> waterfill -> size filter -> template; list of boxes with scores (`core.find@1`: also a blob's stray share and its overlap with a shape) | milliseconds |
 | `ocr` (on request) | text | tens to hundreds of milliseconds |
 | `model` (on request) | boxes, labels, scores | tens of milliseconds |
 
@@ -130,6 +131,7 @@ In-process pipeline and the rule on each edge:
 | probes -> client | ordered, bounded; a slow client sees a gap in `seq`, never silent loss |
 | client -> scheduler | ordered, reliable, never dropped |
 | OCR / model requests | separate pool, request/reply, never stalls per-frame results |
+| daemon -> watch page | pulled frames (at most 5 per second, only while a page is open) and events; a slow viewer is dropped, never waited for; never in the wire log (`Watch-Page.md`) |
 
 When ML is worth it: only for a target with no fixed pixels, meaning an object in a 3D
 world under a free camera. In the repo that is SV Area Zero navigation and one LZA hunt.
@@ -234,7 +236,7 @@ be written by OCaml programs; do not invest further in retiring CFR on the old a
 | Slice | What | Proves |
 |---|---|---|
 | S0 | Mail Glitch checkpoints (fork #781, `mg-01`..`mg-05`) on mGBA from their saves | probe model, stream, OCaml loop, protocol |
-| S1 | The same checkpoints on console B's post-game save | capture, `CoreLib` link, real timing |
+| S1 | The same checkpoints on a Switch's post-game save | capture, `CoreLib` link, real timing |
 | S4 | FRLG dex collection (design: `autostory/frlg/design/AutoStory-FRLG-Dex-Collection.md` on `agents`, fork #776) | engine, planner, the FRLG action set |
 | S2 | BDSP legendary shiny RNG | `every` probes, clock-anchored batches, OCaml RNG |
 | S3 | SV programs (legendary collection, isolated shiny hunts) | free-camera 3D, model and audio probes |
@@ -255,7 +257,8 @@ that fits a tick period from per-frame timestamps). Generate golden vectors from
 
 Gates: pass rate (10 runs each, both stacks from the same save, interleaved) on mGBA;
 real timing on the Switch (3 testing-mode runs per checkpoint, no save, then one forward
-run that saves); `mg-05` (the glitch itself) is gated on mGBA only.
+run that saves). `mg-05` (the glitch itself) is no longer mGBA only: it is ported from the
+fork's tested Route 16 version and runs on the Switch after mGBA (user, 2026-11-23).
 
 ## 10. Week 0, budget and stop rules
 
@@ -286,7 +289,7 @@ Estimates here are rough judgments, not measurements.
 - Recordings: the wire log plus a frame-ring dump on failure, under the existing lab disk
   GC.
 - Repo: `dayfine/GamePilot`, private, with `daemon/` (C++) and `programs/` (dune),
-  `contracts/` and `docs/`; Arduino-Source (fork `main`) and Packages as read-only
+  `protocol/` and `docs/`; Arduino-Source (fork `main`) and Packages as read-only
   submodules. Nothing is edited inside a submodule; fixes go to the fork and arrive by a
   bump.
 
@@ -294,7 +297,7 @@ Estimates here are rough judgments, not measurements.
 
 - I/O library under the real effect handler: settled (stdlib, section 13).
 - Repo, S0/S1 checkpoint, mGBA attachment, console takeover: settled (section 13).
-- Exact console-B windows for S1: decided by the main session under the one-train rule.
+- Exact Switch windows for S1: scheduled so that only one program drives the console at a time.
 
 ## 13. Second interview (2026-11-22)
 
@@ -304,12 +307,12 @@ Estimates here are rough judgments, not measurements.
 | R2 | Upstream | Nothing has to go upstream. The overlay on Arduino-Source stays thin |
 | R3 | Image primitives | Probes on OpenCV; only `CoreLib` from PA via upstream's cmake files |
 | R4 | S0 backend | mGBA through the existing `lab/mgba/bridge.lua` protocol, unchanged (the daemon is a second client), plus replay of the recorded wire log |
-| R5 | S0/S1 checkpoints | The Mail Glitch checkpoints of fork #781, after it lands. mGBA has a save per checkpoint (`~/FRLGLab/mgba/emu-1/saves`, story to `20.05`; `mail-glitch-test/` for `mg-*`); console B is post-game |
-| R6 | Repo | `dayfine/GamePilot`, private, `~/Projects/GamePilot`; harness from `dayfine/agent-harness` plus the fork's `pr-maintenance`, `reviewer`, `dispatch`, `console-iteration`, `codex-dispatch`, `cpp-style-review` |
+| R5 | S0/S1 checkpoints | The Mail Glitch checkpoints of fork #781, after it lands. mGBA has a save per checkpoint (story to `20.05`; `mail-glitch-test/` for `mg-*`); the Switch save is post-game |
+| R6 | Repo | `dayfine/GamePilot`; harness from `dayfine/agent-harness` (tool-neutral: `AGENTS.md` and `.agents/`). Console iteration has a hard stop: when the same step fails twice in a row, stop and diagnose before another run |
 | R7 | C++ | One small daemon, glue only (about 2k lines): no thresholds, state machines or game names. `daemon/` and `programs/` are fully separate, each with its own build, lint and CI; `clang-format`, strict warnings, PA's `Filesystem` wrappers for paths |
 | R8 | Real effect handler | OCaml stdlib only (`Unix` sockets, one reader thread, a queue, a small scheduler); OCaml 5.2+ pinned in CI on three OSes; Eio later is a handler swap (D8) |
-| R9 | Gates | Pass rate on mGBA; timing on the Switch in testing mode; `mg-05` on mGBA only |
-| R10 | Console B | GamePilot is one more lab process under the one-train rule (`lablock.sh`); the main session schedules windows |
+| R9 | Gates | Pass rate on mGBA; timing on the Switch in testing mode; `mg-05` too, after mGBA (user, 2026-11-23) |
+| R10 | The Switch | GamePilot shares the console with other automation; only one program may drive it at a time |
 | R11 | Swappable parts | P1: anything that may be swapped (I/O backend, RNG, effect handler, probes) sits behind one boundary. No I/O survey or RNG library search up front |
 | R12 | FRLG RNG | Needed in S4; D6's OCaml rewrite starts there, PA's FRLG RNG as oracle |
 | R13 | Templates | Packages as a read-only submodule; new templates in `src/games/<game>/assets/`; programs upload templates at probe registration (cached by hash); template readers get replay tests |
@@ -318,6 +321,7 @@ Estimates here are rough judgments, not measurements.
 | R16 | OCaml layout | `src/` in `base/` (pure), `core/` (effects + handlers), `pokemon/` (navigation grid, story plans + engine), `games/<game>/{readers,actions,maps,story,programs/<program>}`; each library `lib/` + `test/`; the first real program is `games/frlg/programs/mail_glitch/` |
 | R17 | Naming | Names say what a thing does; no `helpers`, `utils`, `common`, `misc` |
 | R18 | Maps and plans | PokemonSimulation as a read-only submodule: maps are read from it, never copied. Program plans live with the program and are refined there: `mg-01..05` copied from fork #781 (`31dce02b8`) into `src/games/frlg/programs/mail_glitch/plans/` |
-| R20 | Mail Glitch shape | Follow fork #804's split instead of #781's monolith: `pokemon/story` gets `repeat_until` (idempotent looped checkpoints); `games/frlg/actions` gets the shared actions (`party_swap`, `give_bag_item`, `buy_coins`, `redeem_prize_mon`, `ingame_trade`, `spin_for_encounter`); `games/frlg/battle` gets a driver (single + double, ally targeting) under a scripted battle runner; `programs/mail_glitch` keeps only its table and sequence |
+| R20 | Mail Glitch shape | Follow fork #804's split instead of #781's monolith: `pokemon/checkpoints` gets `repeat_until` (idempotent looped checkpoints); `games/frlg/actions` gets the shared actions (`party_swap`, `give_bag_item`, `buy_coins`, `redeem_prize_mon`, `ingame_trade`, `spin_for_encounter`); `games/frlg/battle` gets a driver (single + double, ally targeting) under a scripted battle runner; `programs/mail_glitch` keeps only its table and sequence |
 | R21 | Porting and order | User 2026-11-23: everything runs on the Switch in the end, after mGBA testing. Ports from the fork are transparent (same behaviour, steps and timings; each module names its C++ source); refactors come later. Programs go in order (mg-01 → mg-05) through the checkpoint runner, with the C++ AutoStory dev loop (start states per checkpoint, end-state verification, retries, failure records) carried over. |
+| R22 | Watching a run | User 2026-11-23, option A: the daemon serves one HTML/JS page (frame with probe boxes, plan, log, health, Stop) on its own port, localhost unless `--listen`; the program publishes plan and log as notifications and honours `stop` at its next wait (`Watch-Page.md`) |
 | R19 | Text reading | FRLG: font templates, no OCR. Glyphs and widths come from pokefirered's font graphics; a reader draws each dictionary candidate (item, move names; per-language dictionaries as in Arduino-Source) and scores it with `core.template_match@1`, which the daemon scales from game pixels (v1.2). Two glyph sets cover all six FRLG languages (Western, Japanese); English data first. OCR only for a future game with a large character set |

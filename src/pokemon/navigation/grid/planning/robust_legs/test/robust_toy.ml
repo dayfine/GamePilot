@@ -6,7 +6,7 @@
    counts 2; it holds the player any other way. Rows that wrap join their
    east end to their west end, so a walk along them is never stopped. *)
 
-open Grid_maps
+open Grid_geometry
 open Grid_robust_legs
 
 let pos x y = { Tile_pos.x; y }

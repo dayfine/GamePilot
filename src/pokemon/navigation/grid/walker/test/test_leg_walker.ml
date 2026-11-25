@@ -3,7 +3,7 @@
    Pokemon_LegWalker_Tests.cpp, case by case, with the walker's log lines and
    leg record added. *)
 
-open Grid_maps
+open Grid_geometry
 open Grid_walker
 
 let tile_ms = 267
@@ -19,13 +19,16 @@ let button_of : Direction.t -> Wire.button = function
   | West -> Left
 
 let mover direction hold_ms =
-  [ Wire.Press { buttons = [ button_of direction ]; hold_ms; cooldown_ms = 0 } ]
+  [ Wire.press ~hold_ms ~cooldown_ms:0 [ button_of direction ] ]
 
-let walker ?tracer world log : Leg_walker.t =
+(* The scripted interrupt: a wild battle unless [kind] says otherwise (a sign's
+   message is a [Dialogue]). *)
+let walker ?tracer ?(kind = Grid_trace.Leg_record.Interrupt.Wild_battle) world
+    log : Leg_walker.t =
   let battle : Leg_interrupt.t =
     {
-      name = "a battle";
-      kind = Wild_battle;
+      name = (if kind = Wild_battle then "a battle" else "a message");
+      kind;
       seen = Scripted_interrupts.showing;
       detection_delay_ms = delay_ms;
       clear = (fun () -> Scripted_interrupts.clear world);
@@ -39,7 +42,7 @@ let result_text (r : Leg_spec.result) =
 
 (* Walks [leg] with an interrupt showing at [script]'s times, one per hold;
    what the holds, clears, result and log were, a line each. *)
-let walked ?max_interruptions ?hold_watchers script leg =
+let walked ?max_interruptions ?hold_watchers ?kind script leg =
   let world = Scripted_interrupts.create script in
   let lines = ref [] in
   let log line = lines := line :: !lines in
@@ -47,7 +50,7 @@ let walked ?max_interruptions ?hold_watchers script leg =
     match
       Scripted_interrupts.run world (fun () ->
           Leg_walker.walk_leg ?max_interruptions ?hold_watchers
-            (walker world log) leg)
+            (walker ?kind world log) leg)
     with
     | r -> result_text r
     | exception Leg_walker.Interrupted_too_often why -> "failed: " ^ why
@@ -142,10 +145,12 @@ let late_interrupts () =
     (Printf.sprintf "cleared %d, clock %dms" cleared world.clock_ms
     :: List.rev !lines)
 
-let blocked ?tile_ms script tiles =
-  walked script { (wall_leg ?tile_ms South tiles) with stop_if_blocked = true }
+let blocked ?tile_ms ?(kind = Grid_trace.Leg_record.Interrupt.Dialogue) script
+    tiles =
+  walked ~kind script
+    { (wall_leg ?tile_ms South tiles) with stop_if_blocked = true }
 
-let cases : Case_table.case list =
+let cases : Table_test.case list =
   [
     {
       name = "hold times";
@@ -221,12 +226,12 @@ let cases : Case_table.case list =
         "holds 6675, 6675\n\
          cleared 2\n\
          tiles 0, exact false, interruptions 2, stopped true\n\
-         Leg: a battle after 2200ms, walking to the wall again.\n\
-         Leg: a battle after 600ms, stopping the leg.";
+         Leg: a message after 2200ms, walking to the wall again.\n\
+         Leg: a message after 600ms, stopping the leg.";
     };
     {
       (* Running, a tile takes 133ms, and the sign spoke 353 to 726ms into
-         each hold (console B, 2026-11-13 18:29, 12.03 pallet_shore). *)
+         each hold (Switch, 2026-11-13 18:29, 12.03 pallet_shore). *)
       name = "a wall leg blocked by a sign stops, running";
       input =
         (fun () -> blocked ~tile_ms:133 [ Some 353; Some 578; Some 603 ] 6);
@@ -234,8 +239,8 @@ let cases : Case_table.case list =
         "holds 1064, 1064\n\
          cleared 2\n\
          tiles 0, exact false, interruptions 2, stopped true\n\
-         Leg: a battle after 353ms, walking to the wall again.\n\
-         Leg: a battle after 578ms, stopping the leg.";
+         Leg: a message after 353ms, walking to the wall again.\n\
+         Leg: a message after 578ms, stopping the leg.";
     };
     {
       (* Held north into a sign two tiles short of the leg's end: its message
@@ -244,15 +249,32 @@ let cases : Case_table.case list =
       name = "an open leg blocked by a sign stops";
       input =
         (fun () ->
-          walked
+          walked ~kind:Dialogue
             [ Some 217; Some 83; Some 83 ]
             { (open_leg ~tile_ms:133 North 2) with stop_if_blocked = true });
       expectation =
         "holds 199, 199\n\
          cleared 2\n\
          tiles 0, exact false, interruptions 2, stopped true\n\
-         Leg: a battle after 217ms, about 0 tiles walked, 2 to go.\n\
-         Leg: a battle after 83ms, about 0 of 2 tiles walked, stopping the leg.";
+         Leg: a message after 217ms, about 0 tiles walked, 2 to go.\n\
+         Leg: a message after 83ms, about 0 of 2 tiles walked, stopping the \
+         leg.";
+    };
+    {
+      (* Two wild battles soon after each other on a wall leg through grass
+         are luck, not a sign in the way: the leg is walked on (Switch,
+         2026-11-24, mg-05a's return_to_route8_grass, battles 431 and 657ms
+         into the holds). *)
+      name = "a wall leg with wild battles one after another walks on";
+      input =
+        (fun () ->
+          blocked ~kind:Wild_battle ~tile_ms:133 [ Some 431; Some 657; None ] 4);
+      expectation =
+        "holds 798, 798, 798\n\
+         cleared 2\n\
+         tiles 4, exact true, interruptions 2, stopped false\n\
+         Leg: a battle after 431ms, walking to the wall again.\n\
+         Leg: a battle after 657ms, walking to the wall again.";
     };
     {
       name = "a watcher along a hold never stops it";
@@ -277,4 +299,4 @@ let cases : Case_table.case list =
     };
   ]
 
-let () = Case_table.run "leg walker" cases
+let () = Table_test.run "leg walker" cases

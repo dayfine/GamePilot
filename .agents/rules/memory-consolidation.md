@@ -8,8 +8,8 @@ Agents write memories one at a time, in the moment, and almost never revisit the
 store fills with near-duplicates, entries whose file, flag or PR no longer exists, and lessons that
 were learned again under a different name. Two costs follow:
 
-- **The index has a hard cap.** Claude Code loads the per-project index (`MEMORY.md`) into every
-  session and silently drops what is past its size limit (about 24 KB). The entries that fall off are
+- **The index has a hard cap.** Agent harnesses with a memory store load its per-project index
+  (e.g. `MEMORY.md`) into every session and silently drops what is past its size limit (about 24 KB). The entries that fall off are
   the newest ones.
 - **Wrong memories are worse than none.** A memory that names a function that was since renamed sends
   the next agent to the wrong place, with the authority of "we already knew this".
@@ -19,7 +19,7 @@ a periodic pass that curates them.
 
 ## The pass
 
-Run with the `memory-dream` skill (`.claude/skills/memory-dream/SKILL.md`). One agent, one store:
+Run as one agent task (a `memory-dream` skill or prompt). One agent, one store:
 
 1. **Merge.** Memories that state the same fact or lesson become one file. Its body keeps every
    distinct detail and the latest date. Links (`[[name]]`) to the removed names are repointed.

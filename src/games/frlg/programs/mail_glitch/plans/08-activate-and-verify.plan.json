@@ -1,0 +1,148 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "frlg",
+  "checkpoint": {
+    "id": "08-activate-and-verify",
+    "title": "Turn the Mail Glitch on against Lea & Jed on Route 16, read the glitched mail, duplicate one Antidote",
+    "start": {"map": "Route16", "tiles": [[30, 7]], "facing": "north"},
+    "events": [
+      {
+        "id": "activate_mail_glitch_battle",
+        "kind": "game_action",
+        "action": "mail_glitch_double_battle",
+        "args": {"knock_off_species": "farfetchd", "recycle_species": "mr-mime", "sweeper": "blastoise", "depleted_move": "blizzard", "step_direction": "north"},
+        "declared_after": {"map": "Route16", "tiles": [[30, 6]], "facing": "north"},
+        "why": "Confirm Leppa restores Blizzard PP, then Knock Off against the incoming MIMIEN, Recycle, and finish with Blastoise."
+      },
+      {
+        "id": "verify_mail_glitch",
+        "kind": "game_action",
+        "action": "verify_mail_glitch",
+        "args": {"species": "mr-mime"},
+        "why": "confirm MIMIEN displays the held-item icon (recycled Leppa Berry with Mail Glitch active)"
+      },
+      {
+        "id": "fly_celadon",
+        "kind": "game_action",
+        "action": "fly",
+        "args": {"town": "CeladonCity", "species": "pidgey"},
+        "declared_after": {"map": "CeladonCity", "tiles": [[48, 12]], "facing": "south"},
+        "why": "Fly from Route 16 to Celadon City's Pokemon Center landing tile (48, 12)"
+      },
+      {
+        "id": "to_4f_clerk",
+        "kind": "route",
+        "action": "run",
+        "args": {"target": {"place": "celadon_dept_store_4f_clerk"}},
+        "why": "into Celadon Dept Store and up the lift to face the 4F clerk across the counter"
+      },
+      {
+        "id": "buy_retro_mail",
+        "kind": "game_action",
+        "action": "mart",
+        "args": {"map": "CeladonCity_DepartmentStore_4F", "items": [{"item": "retro-mail", "quantity": 8}]},
+        "why": "buy 8 Retro Mail ($50 each): 5 to fill the party's mail records, 1 for proof A, 1 per duplication round, 1 spare (spec section 6)"
+      },
+      {
+        "id": "to_1f_save_spot",
+        "kind": "route",
+        "action": "run",
+        "args": {"target": {"place": "celadon_dept_store_1f_save"}},
+        "why": "down the lift to the 1F save spot, where the party is set up"
+      },
+      {
+        "id": "arrange_slot1_mimien",
+        "kind": "game_action",
+        "action": "party_swap",
+        "args": {"species": "mr-mime", "target_slot": 1},
+        "why": "MIMIEN to party slot 1, where the C++ ItemDuplication gives (user decision 2 on PR #52)"
+      },
+      {
+        "id": "fill_mail_slot2",
+        "kind": "game_action",
+        "action": "give_bag_item",
+        "args": {"item": "retro-mail", "target_slot": 2},
+        "why": "slot 2 holds a Retro Mail with one word (ABRA): with the battle's leaked record, the five fill every party mail record"
+      },
+      {
+        "id": "fill_mail_slot3",
+        "kind": "game_action",
+        "action": "give_bag_item",
+        "args": {"item": "retro-mail", "target_slot": 3},
+        "why": "slot 3 holds a Retro Mail with one word (ABRA): with the battle's leaked record, the five fill every party mail record"
+      },
+      {
+        "id": "fill_mail_slot4",
+        "kind": "game_action",
+        "action": "give_bag_item",
+        "args": {"item": "retro-mail", "target_slot": 4},
+        "why": "slot 4 holds a Retro Mail with one word (ABRA): with the battle's leaked record, the five fill every party mail record"
+      },
+      {
+        "id": "fill_mail_slot5",
+        "kind": "game_action",
+        "action": "give_bag_item",
+        "args": {"item": "retro-mail", "target_slot": 5},
+        "why": "slot 5 holds a Retro Mail with one word (ABRA): with the battle's leaked record, the five fill every party mail record"
+      },
+      {
+        "id": "fill_mail_slot6",
+        "kind": "game_action",
+        "action": "give_bag_item",
+        "args": {"item": "retro-mail", "target_slot": 6},
+        "why": "slot 6 holds a Retro Mail with one word (ABRA): with the battle's leaked record, the five fill every party mail record"
+      },
+      {
+        "id": "check_mail_marks",
+        "kind": "game_action",
+        "action": "check_party_marks",
+        "args": {"marks": ["held_item", "mail", "mail", "mail", "mail", "mail"]},
+        "why": "MIMIEN shows the held-item mark (its Leppa Berry), the other five the mail mark"
+      },
+      {
+        "id": "read_glitched_mail",
+        "kind": "game_action",
+        "action": "read_glitched_mail",
+        "args": {"species": "mr-mime", "word": "ABRA"},
+        "why": "proof A: Retro Mail given to MIMIEN opens its leaked record, which must read ABRA in field 1; blank or ??? stops the run"
+      },
+      {
+        "id": "give_dup_item",
+        "kind": "game_action",
+        "action": "give_bag_item",
+        "args": {"item": "antidote", "species": "mr-mime"},
+        "why": "MIMIEN holds the Antidote to copy (its Leppa Berry back to the pouch)"
+      },
+      {
+        "id": "retro_mail_to_top",
+        "kind": "game_action",
+        "action": "move_item_to_top",
+        "args": {"item": "retro-mail"},
+        "why": "Retro Mail on the Items pocket's top row, the C++ ItemDuplication's start state"
+      },
+      {
+        "id": "duplicate_item",
+        "kind": "game_action",
+        "action": "duplicate_item",
+        "args": {"species": "mr-mime", "item": "antidote", "count": 1, "word": "ABRA"},
+        "why": "proof B: one round of the C++ ItemDuplication loop; the Antidote count in the bag goes up by one"
+      },
+      {
+        "id": "check_marks_after",
+        "kind": "game_action",
+        "action": "check_party_marks",
+        "args": {"marks": ["held_item", "mail", "mail", "mail", "mail", "mail"]},
+        "why": "the five filler mails stay on the party (user decision 5), MIMIEN holds the Antidote"
+      }
+    ]
+  },
+  "execution": {
+    "menu": "full"
+  },
+  "metadata": {
+    "phase": "testing",
+    "retries": 3,
+    "notes": "One checkpoint for the fork's mg-05 and mg-06 (user, 2026-11-24): the state right after the glitch battle is never saved on the Switch, so the only save after the battle is this one, after the duplication proved the glitch works. A retry starts again from one tile outside Lea's sightline (07-glitch-prep's end), where the battle's luck gets 3 tries as the fork's mg-05 did. The battle (ported from the fork's tested PlanData/mg-05.plan.json, Route 16 run on mGBA, 2026-11-23) steps north into Lea's sightline and ends on (30, 6) facing north with MIMIEN (Lv 33) holding the recycled Leppa Berry; verify_mail_glitch reads MIMIEN's held-item mark, and the Fly from (30, 6) follows. The rest: spec docs/mail-glitch-use.md (PR #52) and the user's decisions there. The fork's mg-05 mGBA save after the battle (Route 16 (30, 6), mail index 0, record 0 = ABRA) had Retro Mail 1, Antidote 2 and $20,788, $1,624 more than 07-glitch-prep's end ($21,464 - $2,300): Lea & Jed's prize. Retro Mail: 1 + 8 - 5 - 1 - 1 = 2. Antidote: 2 - 1 given to MIMIEN + 1 duplicated = 2 in the bag (3 in all). Money: $400 for the mail less the $1,624 prize, $1,224 more than at the start. Dropped from the fork's mg-05 postconditions: slots 1-3's held-item marks (held_item, none, held_item), which the mail given to slots 2-6 changes; the checkpoint checks the marks after (held_item, then five mail) itself.",
+    "postconditions": {"party_includes": ["mr-mime", "pidgey"], "party_slots": [{"slot": 1, "species": "mr-mime"}], "items": [{"item": "antidote", "gained": 0}, {"item": "retro-mail", "gained": 1}], "money": {"spent": -1224}}
+  }
+}

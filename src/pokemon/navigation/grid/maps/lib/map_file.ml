@@ -28,6 +28,7 @@ let read ~where root : Map_data.t =
     regions = string_map (Feature_decode.regions ~where root);
     warps = Feature_decode.warps ~where root;
     objects = Feature_decode.objects ~where root;
+    hidden_items = Feature_decode.hidden_items ~where root;
     triggers = Feature_decode.triggers ~where root;
     flag_sets =
       string_map

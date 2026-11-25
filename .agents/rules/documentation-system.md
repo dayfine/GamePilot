@@ -4,18 +4,19 @@ harness: reusable
 
 # Documentation System
 
-A three-tier doc protocol for agent-driven repos: `CLAUDE.md` (operational
+A three-tier doc protocol for agent-driven repos: `AGENTS.md` (operational
 instructions, repo root), `CONTEXT.md` (per-directory orientation,
 human-authored), `DEEP_DIVE.md` (per-directory exhaustive reference,
 model-generated and regenerable).
 
 The tiers serve different audiences and have different update cadences.
-Mixing them — e.g. putting architecture in `CLAUDE.md`, or hand-editing
+Mixing them — e.g. putting architecture in `AGENTS.md`, or hand-editing
 `DEEP_DIVE.md` — breaks the system.
 
-## CLAUDE.md (repo root, sometimes subsystem root)
+## AGENTS.md (repo root, sometimes subsystem root)
 
-**Purpose:** operational instructions for agents working in this repo.
+**Purpose:** operational instructions for agents working in this repo. Tools
+that read a different file name get a one-line pointer to `AGENTS.md`.
 
 **Contains:**
 - How to run tests, builds, linters (exact commands).
@@ -31,9 +32,9 @@ glossary. Those belong in `CONTEXT.md` / `DEEP_DIVE.md` / `docs/cross_cutting/`.
 **Stays lean.** Read on every interaction; competes with the task for
 attention.
 
-Skeleton: `docs/conventions/CLAUDE.template.md`.
+Skeleton: `docs/conventions/AGENTS.template.md`.
 
-**Doc protocol section (required in `CLAUDE.md`):**
+**Doc protocol section (required in `AGENTS.md`):**
 
 ```
 When working in a directory:
@@ -108,7 +109,7 @@ Skeleton: `docs/conventions/DEEP_DIVE.template.md`.
 
 ## Update protocol
 
-- **`CLAUDE.md` and `CONTEXT.md`:** human edits in code review. Rare.
+- **`AGENTS.md` and `CONTEXT.md`:** human edits in code review. Rare.
 - **`DEEP_DIVE.md`:** regenerated automatically when (a) >20% of files
   changed, (b) build config changed, (c) `CONTEXT.md` changed, (d) >30 days
   elapsed, or (e) manually triggered. PR opens automatically; human

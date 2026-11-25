@@ -1,13 +1,16 @@
-(** Move names as FRLG shows them, from Packages' [BattleMovesOCR.json]
-    ([{language: {slug: [names]}}]), read in place from the submodule. *)
+(** FRLG move names as the game shows them in one language (["KARATE CHOP"]), by
+    the plans' slugs (["karate-chop"]), from a file
+    [src/games/frlg/assets/extract/extract_frlg_move_names.py] writes (Packages'
+    [BattleMovesOCR.json], the first name of each slug). *)
 
 type t = (string * string) list
-(** (slug, name) in the file's order; the first name of each slug. *)
+(** (slug, name), in the file's order. *)
 
-val of_json : language:string -> Yojson.Safe.t -> t
+val of_string : string -> t
+(** Parses the file's text: [<slug> <name>] per line, [#] lines left out. *)
 
-val load : language:string -> string -> t
-(** [load ~language:"eng" path]. *)
+val load : string -> t
+(** [load (Data_files.move_names ~language)]. *)
 
 val name : t -> string -> string option
 (** The name of this slug. *)

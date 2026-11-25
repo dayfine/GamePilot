@@ -8,6 +8,7 @@
 
 type screen =
   | Overworld
+  | Town  (** Another place's overworld: where a Fly lands. *)
   | Dialog
   | Dialog_arrow  (** A text page done: its advance arrow shows. *)
   | Question  (** A Yes/No box over the text box (a Switch capture). *)
@@ -15,15 +16,45 @@ type screen =
   | Flash  (** A wild battle's flash: the overworld with its middle darkened. *)
   | Black
   | Start_menu of int  (** Its cursor on this row, from 0. *)
-  | Party of int  (** This slot (from 1) selected. *)
+  | Party of int
+      (** This slot (from 1) selected; MIMIEN (slot 3) holds Retro Mail, as
+          before mg-05's battle. *)
+  | Party_after_recycle
+      (** The party after mg-05's Recycle (mGBA, Route 16, 2026-11-23), slot 1
+          selected: MIMIEN (slot 3) shows the held-item mark, not mail. *)
   | Member_menu of int
       (** A party member's own menu over the party (SUMMARY, SWITCH, MAIL,
           CANCEL), its cursor on this row from 0. *)
-  | Bag_items  (** The bag's Items pocket, cursor on the top row. *)
+  | Bag_items of (string * int) list
+      (** The bag's Items pocket, cursor on the top row, its list these items
+          and counts (["REVIVE"], 2), then CANCEL: the text reader reads them
+          and nothing else on the list's rows. *)
+  | Item_menu
+      (** An item's action menu over the bag (mGBA, mg-04 testing run 6: the
+          Escape Rope's USE, GIVE, TOSS, CANCEL). *)
   | Mart_list  (** A Mart's BUY list with the money box (a Switch capture). *)
+  | Summary of string
+      (** The summary's info page (a Switch capture) showing this species name
+          (["ABRA"]): the text reader's species line reads it and no other. *)
+  | Summary_at of string * int
+      (** The same page showing this species name and this level in its top
+          left: the species line and the level's digit cells read them. *)
+  | Summary_page of {
+      page : int;  (** 1 (info), 2 (skills) or 3 (moves) *)
+      species : string;  (** [""]: the info page's text not drawn yet *)
+      level : int;
+      moves : string list;  (** names (["SURF"]), on the moves page *)
+    }
+      (** A member's summary on this page (Switch captures of each page): the
+          info page's species line and level cells read [species] and [level],
+          the moves page's rows [moves]. *)
+  | Title  (** The title screen, "PRESS START" (mGBA). *)
+  | Load_menu  (** CONTINUE over NEW GAME after the title (mGBA). *)
+  | Recap  (** "Previously on your quest" after CONTINUE (mGBA). *)
 
 let screen_name = function
   | Overworld -> "overworld"
+  | Town -> "town"
   | Dialog -> "dialog"
   | Dialog_arrow -> "dialog arrow"
   | Question -> "question"
@@ -32,14 +63,24 @@ let screen_name = function
   | Black -> "black"
   | Start_menu row -> Printf.sprintf "start menu row %d" row
   | Party slot -> Printf.sprintf "party slot %d" slot
+  | Party_after_recycle -> "party after recycle"
   | Member_menu row -> Printf.sprintf "member menu row %d" row
-  | Bag_items -> "bag items"
+  | Bag_items _ -> "bag items"
+  | Item_menu -> "item menu"
   | Mart_list -> "mart list"
+  | Summary name -> "summary " ^ name
+  | Summary_at (name, level) -> Printf.sprintf "summary %s Lv %d" name level
+  | Summary_page { page; species; level; _ } ->
+      Printf.sprintf "summary page %d %s Lv %d" page species level
+  | Title -> "title"
+  | Load_menu -> "load menu"
+  | Recap -> "recap"
 
 (* The fixture images each screen is read from; a screen merges the probes of
    every fixture file that has its image. *)
 let image = function
   | Overworld -> "mail-glitch-04/overworld__none.png"
+  | Town -> "mail-glitch-04/mg05-overworld__none.png"
   | Dialog -> "screenshots-779/20261122-003725-01.01__dialog.png"
   | Battle -> "mail-glitch-04/mg05-recycle-3__battle.png"
   | Flash -> "mail-glitch-04/overworld__none.png"
@@ -48,11 +89,20 @@ let image = function
   | Start_menu _ -> "mail-glitch-04/mg05-start-menu__start1.png"
   | Party _ ->
       "mail-glitch-04/mg05-party__party-slot1-members6-held1-held2-mail3.png"
+  | Party_after_recycle ->
+      "mail-glitch-route16/final-party__party-slot1-members6-held1-held3.png"
   | Dialog_arrow -> "screenshots-779/20261122-121507-17.04__dialog-arrow.png"
   | Question -> "AdvanceWhiteDialogDetector/Eng-Select_False__dialog-choice.png"
   | Member_menu _ -> "mail-glitch-04/mg05-mimien-menu__none.png"
-  | Bag_items -> "emu-1/20261122-024507-05.04__bag-items-row0.png"
+  | Bag_items _ -> "emu-1/20261122-024507-05.04__bag-items-row0.png"
+  | Item_menu -> "mg04-escape-rope/item-menu-escape-rope__itemmenu.png"
   | Mart_list -> "ItemListReader/MartBuyList_eng__money.png"
+  | Summary _ | Summary_at _ -> "captures/sm3_s1__summary1.png"
+  | Summary_page { page; _ } ->
+      Printf.sprintf "captures/sm3_s%d__summary%d.png" page page
+  | Title -> "mail-glitch-04/continue__none.png"
+  | Load_menu -> "mail-glitch-04/save-select__loadmenu.png"
+  | Recap -> "mail-glitch-04/location__none.png"
 
 (* Copied next to the test by its dune rules. *)
 let fixtures =
@@ -140,8 +190,17 @@ let border_on ~slot probes =
    bottom. *)
 let member_menu_rows = 4
 
+(* The recorded "overworld" frame (mail-glitch-04/overworld.png) is the load
+   menu, as its screen fixture's tag says: it stands in for an overworld only
+   for the readers that subscribe there, so its load-menu probes are dropped. *)
+let not_load_menu = function
+  | Overworld | Flash ->
+      List.filter (fun (id, _) ->
+          not (String.starts_with ~prefix:"load_menu." id))
+  | _ -> Fun.id
+
 let screen_probes screen =
-  let p = find_probes screen in
+  let p = not_load_menu screen (find_probes screen) in
   match screen with
   | Flash -> List.map darken p
   | Start_menu row -> arrow_on ~prefix:"start_menu" ~row p
@@ -170,21 +229,30 @@ type press = {
 type t = {
   input_delay_ms : int;
       (** A menu takes no cursor tap until it has shown this long. *)
+  capture_latencies_ms : int list;
+      (** A cursor move reaches the frames this long after its tap, taps taking
+          these in turn, as the Switch's capture card shows them (console B,
+          2026-11-23: about 160 or about 335 ms, p99 336). *)
   mutable clock_ms : int;
   mutable seq : int;
   mutable shows : (int * screen) list;  (** From a time on, newest first. *)
   mutable presses : press list;  (** Newest first. *)
   mutable react : t -> press -> unit;
+  mutable subscribed : string list;
+      (** Probe ids the code under test subscribed, for the text lines. *)
 }
 
-let create ?(react = fun _ _ -> ()) ?(input_delay_ms = 0) () =
+let create ?(react = fun _ _ -> ()) ?(input_delay_ms = 0)
+    ?(capture_latencies_ms = [ 0 ]) () =
   {
     input_delay_ms;
+    capture_latencies_ms;
     clock_ms = 0;
     seq = 0;
     shows = [ (0, Overworld) ];
     presses = [];
     react;
+    subscribed = [];
   }
 
 let show t ~at_ms screen = t.shows <- (at_ms, screen) :: t.shows
@@ -222,6 +290,11 @@ let shown_since t ms =
 let start_menu_rows = 7
 let party_slots = 6
 
+(* How late the frames show what this press did. *)
+let latency_of t (p : press) =
+  let latencies = t.capture_latencies_ms in
+  List.nth latencies (p.index mod List.length latencies)
+
 (* UP or DOWN on a menu with a cursor moves it a row (no wrap), once the menu
    has shown {!input_delay_ms}: the game drops a tap before. *)
 let move_cursor t (p : press) =
@@ -239,15 +312,81 @@ let move_cursor t (p : press) =
         Some (Member_menu (clamp 0 (member_menu_rows - 1) (row + step)))
     | _ -> None
   in
+  let latency = latency_of t p in
   match moved with
-  | Some s when step <> 0 && taken -> show t ~at_ms:(p.at_ms + 1) s
+  | Some s when step <> 0 && taken -> show t ~at_ms:(p.at_ms + 1 + latency) s
   | _ -> ()
 
+(* A text line's template probe ("<line>/<text>"): a perfect match for the
+   species the summary shows on its line, far off for every other candidate
+   and on every other screen. *)
+let species_line = "summary_species/"
+let far_off = 0.3
+
+(* The bag list's lines: each item's name ("bag.<row>/<NAME>"), CANCEL after
+   them, and its count's digits, ones first ("bag_count.<row>.<k>/<digit>"). *)
+let bag_lines items =
+  let names = List.map fst items @ [ "CANCEL" ] in
+  let name_ids = List.mapi (Printf.sprintf "bag.%d/%s") names in
+  let digit_ids row (_, count) =
+    let digits = string_of_int count in
+    let n = String.length digits in
+    List.init n (fun k ->
+        Printf.sprintf "bag_count.%d.%d/%c" row k digits.[n - 1 - k])
+  in
+  name_ids @ List.concat (List.mapi digit_ids items)
+
+(* The level's digit cells, from the left ("summary_level.<k>/<digit>"). *)
+let level_lines level =
+  String.to_seq (string_of_int level)
+  |> List.of_seq
+  |> List.mapi (Printf.sprintf "summary_level.%d/%c")
+
+(* The full Start menu's names, row by row ("start_menu_name.<row>/<NAME>");
+   row 3, the player's name, reads as none. *)
+let start_menu_lines =
+  List.mapi
+    (Printf.sprintf "start_menu_name.%d/%s")
+    [ "POKéDEX"; "POKéMON"; "BAG"; "-"; "SAVE"; "OPTION"; "EXIT" ]
+
+(* The moves page's rows ("summary_move.<row>/<NAME>"). *)
+let move_lines moves = List.mapi (Printf.sprintf "summary_move.%d/%s") moves
+
+let text_line id =
+  String.starts_with ~prefix:"start_menu_name" id
+  || String.starts_with ~prefix:"summary_move" id
+  || String.starts_with ~prefix:species_line id
+  || String.starts_with ~prefix:"bag" id
+  || String.starts_with ~prefix:"summary_level" id
+
+let text_result screen id =
+  let shown =
+    match screen with
+    | Summary name -> id = species_line ^ name
+    | Summary_at (name, level) ->
+        id = species_line ^ name || List.mem id (level_lines level)
+    | Summary_page { page = 1; species; level; _ } when species <> "" ->
+        id = species_line ^ species || List.mem id (level_lines level)
+    | Summary_page { page = 3; moves; _ } -> List.mem id (move_lines moves)
+    | Bag_items items -> List.mem id (bag_lines items)
+    | Start_menu _ -> List.mem id start_menu_lines
+    | _ -> false
+  in
+  ( id,
+    Wire.Template_match
+      { score = (if shown then 0. else far_off); x = 0.; y = 0. } )
+
+let text_probes t screen =
+  List.filter_map
+    (fun id -> if text_line id then Some (text_result screen id) else None)
+    t.subscribed
+
 let frame t : Wire.frame =
+  let screen = screen_at t t.clock_ms in
   {
     seq = t.seq;
     t_ms = float_of_int t.clock_ms;
-    probes = probes (screen_at t t.clock_ms);
+    probes = probes screen @ text_probes t screen;
   }
 
 let tick t =
@@ -264,7 +403,7 @@ let rec run_frames t ms stop =
 
 let start_command t (command : Wire.command) =
   match command with
-  | Press { buttons; hold_ms; cooldown_ms } ->
+  | Press { buttons; hold_ms; cooldown_ms; _ } ->
       let press =
         { buttons; at_ms = t.clock_ms; hold_ms; index = List.length t.presses }
       in
@@ -319,8 +458,18 @@ let run t f =
           | Effects.Read -> answer (fun () -> Some (frame t))
           | Effects.Subscribe probes ->
               answer (fun () ->
-                  List.map (fun (p : Wire.probe_spec) -> p.id) probes)
-          | Effects.Unsubscribe ids -> answer (fun () -> ids)
+                  let ids =
+                    List.map (fun (p : Wire.probe_spec) -> p.id) probes
+                  in
+                  t.subscribed <- ids @ t.subscribed;
+                  ids)
+          | Effects.Unsubscribe ids ->
+              answer (fun () ->
+                  t.subscribed <-
+                    List.filter (fun id -> not (List.mem id ids)) t.subscribed;
+                  ids)
+          | Effects.Upload_template png ->
+              answer (fun () -> Digest.to_hex (Digest.string png))
           | _ -> None);
     }
 

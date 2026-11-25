@@ -5,7 +5,13 @@ let along time direction =
   if Direction.is_across direction then time.across_ms else time.up_down_ms
 
 type step_tap = { hold_ms : int; release_ms : int }
-type gait = { tile : tile_time; tap : step_tap; open_legs : open_leg_press }
+
+type gait = {
+  tile : tile_time;
+  tap : step_tap;
+  open_legs : open_leg_press;
+  slow_step_ms : int;
+}
 
 type t = {
   turn_tap_ms : int;
@@ -29,12 +35,14 @@ let bdsp =
         tile = { across_ms = 160; up_down_ms = 240 };
         tap = bdsp_tap;
         open_legs = Step_taps;
+        slow_step_ms = 240;
       };
     run =
       {
         tile = { across_ms = 100; up_down_ms = 150 };
         tap = bdsp_tap;
         open_legs = Step_taps;
+        slow_step_ms = 150;
       };
     bike = None;
   }
@@ -50,12 +58,14 @@ let frlg =
         tile = { across_ms = 267; up_down_ms = 267 };
         tap = frlg_foot_tap;
         open_legs = Timed_hold;
+        slow_step_ms = 400;
       };
     run =
       {
         tile = { across_ms = 133; up_down_ms = 133 };
         tap = frlg_foot_tap;
         open_legs = Timed_hold;
+        slow_step_ms = 200;
       };
     bike =
       Some
@@ -63,5 +73,6 @@ let frlg =
           tile = { across_ms = 100; up_down_ms = 100 };
           tap = { hold_ms = 40; release_ms = 60 };
           open_legs = Step_taps;
+          slow_step_ms = 100;
         };
   }

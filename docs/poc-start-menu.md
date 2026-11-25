@@ -39,7 +39,7 @@ program's own failure. Waiting again past that point is a divergence.
 
 - No `race` effect yet.
 
-Closed in wire protocol v1.1 (`contracts/v1/README.md`): `frame` and the `backend.load_state` reply carry
+Closed in wire protocol v1.1 (`protocol/v1/README.md`): `frame` and the `backend.load_state` reply carry
 a `load` counter and the session drops frames from before the last load; responses stay unnamed (the
 client pairs them with requests by id, as JSON-RPC does); probe results carry their `kind`; replay
 reports a run that ends without sending every recorded request as a divergence naming the first one,

@@ -1,0 +1,3 @@
+# Check out text files with LF on every OS: tests read data files byte for byte
+# (a CRLF checkout on Windows breaks them).
+* text=auto eol=lf

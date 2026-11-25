@@ -1,0 +1,242 @@
+(rule
+ (copy
+  ../../programs/mail_glitch/plans/01-celadon-setup.plan.json
+  01-celadon-setup.plan.json))
+
+(rule
+ (copy
+  ../../programs/mail_glitch/plans/02-trade-farfetchd.plan.json
+  02-trade-farfetchd.plan.json))
+
+(rule
+ (copy
+  ../../programs/mail_glitch/plans/03-trade-mr-mime.plan.json
+  03-trade-mr-mime.plan.json))
+
+(rule
+ (copy
+  ../../programs/mail_glitch/plans/04-grind-farfetchd.plan.json
+  04-grind-farfetchd.plan.json))
+
+(rule
+ (copy
+  ../../programs/mail_glitch/plans/05-grind-mr-mime.plan.json
+  05-grind-mr-mime.plan.json))
+
+(rule
+ (copy
+  ../../programs/mail_glitch/plans/06-grind-return.plan.json
+  06-grind-return.plan.json))
+
+(rule
+ (copy
+  ../../programs/mail_glitch/plans/07-glitch-prep.plan.json
+  07-glitch-prep.plan.json))
+
+(rule
+ (copy
+  ../../programs/mail_glitch/plans/08-activate-and-verify.plan.json
+  08-activate-and-verify.plan.json))
+
+(rule
+ (copy ../../programs/team_training/plans/tt-01.plan.json tt-01.plan.json))
+
+(rule
+ (copy ../../programs/supplies/plans/su-01.plan.json su-01.plan.json))
+
+(rule
+ (target mg04_walk_two_fled_battles.wire.jsonl)
+ (deps mg04_walk_two_fled_battles.wire.jsonl.gz)
+ (action
+  (with-stdout-to
+   %{target}
+   (run gzip -dc %{deps}))))
+
+(test
+ (name test_checkpoint_run)
+ (modules test_checkpoint_run)
+ (deps
+  01-celadon-setup.plan.json
+  02-trade-farfetchd.plan.json
+  03-trade-mr-mime.plan.json
+  04-grind-farfetchd.plan.json
+  05-grind-mr-mime.plan.json
+  06-grind-return.plan.json
+  07-glitch-prep.plan.json
+  08-activate-and-verify.plan.json
+  tt-01.plan.json
+  su-01.plan.json)
+ (libraries
+  gamepilot.table_test
+  gamepilot.pokemon_checkpoints
+  gamepilot.checkpoint_end
+  gamepilot.frlg_actions
+  gamepilot.frlg_checkpoints))
+
+(test
+ (name test_mg04_walk_replay)
+ (modules test_mg04_walk_replay)
+ (deps 04-grind-farfetchd.plan.json mg04_walk_two_fled_battles.wire.jsonl)
+ (libraries
+  gamepilot.table_test
+  gamepilot.replay
+  gamepilot.pokemon_checkpoints
+  gamepilot.frlg_actions
+  gamepilot.frlg_checkpoints))
+
+(rule
+ (copy ../../readers/test/fixtures/mgba.probes.jsonl mgba.probes.jsonl))
+
+(rule
+ (copy
+  ../../readers/test/fixtures/menus.mgba.probes.jsonl
+  menus.mgba.probes.jsonl))
+
+(rule
+ (copy ../../readers/test/fixtures/switch.probes.jsonl switch.probes.jsonl))
+
+(rule
+ (copy
+  ../../readers/test/fixtures/menus.switch.probes.jsonl
+  menus.switch.probes.jsonl))
+
+(test
+ (name test_postcondition_reads)
+ (modules test_postcondition_reads)
+ (deps
+  mgba.probes.jsonl
+  menus.mgba.probes.jsonl
+  switch.probes.jsonl
+  menus.switch.probes.jsonl)
+ (libraries
+  gamepilot.wire
+  gamepilot.table_test
+  gamepilot.pokemon_checkpoints
+  gamepilot.frlg_checkpoints
+  frlg_overworld_fixtures))
+
+(test
+ (name test_console_start)
+ (modules test_console_start)
+ (deps
+  tt-01.plan.json
+  01-celadon-setup.plan.json
+  02-trade-farfetchd.plan.json
+  03-trade-mr-mime.plan.json
+  04-grind-farfetchd.plan.json
+  05-grind-mr-mime.plan.json
+  06-grind-return.plan.json
+  07-glitch-prep.plan.json
+  08-activate-and-verify.plan.json)
+ (libraries
+  yojson
+  gamepilot.wire
+  gamepilot.table_test
+  gamepilot.pokemon_checkpoints
+  gamepilot.room_policy
+  gamepilot.frlg_readers
+  gamepilot.frlg_actions
+  gamepilot.frlg_checkpoints))
+
+(test
+ (name test_party_members)
+ (modules test_party_members)
+ (deps
+  01-celadon-setup.plan.json
+  02-trade-farfetchd.plan.json
+  03-trade-mr-mime.plan.json
+  04-grind-farfetchd.plan.json
+  05-grind-mr-mime.plan.json
+  06-grind-return.plan.json
+  08-activate-and-verify.plan.json)
+ (libraries
+  gamepilot.table_test
+  gamepilot.json_field
+  gamepilot.pokemon_checkpoints
+  gamepilot.frlg_actions
+  gamepilot.frlg_checkpoints))
+
+(test
+ (name test_make_room)
+ (modules test_make_room)
+ (libraries
+  yojson
+  gamepilot.grid_maps
+  gamepilot.table_test
+  gamepilot.pokemon_checkpoints
+  gamepilot.room_policy
+  gamepilot.frlg_actions
+  gamepilot.frlg_checkpoints))
+
+(test
+ (name test_paced_patches)
+ (modules test_paced_patches)
+ (deps 02-trade-farfetchd.plan.json 07-glitch-prep.plan.json)
+ (libraries
+  gamepilot.table_test
+  gamepilot.grid_geometry
+  gamepilot.grid_maps
+  gamepilot.json_field
+  gamepilot.pokemon_checkpoints
+  gamepilot.frlg_overworld
+  gamepilot.frlg_actions
+  gamepilot.frlg_checkpoints))
+
+(test
+ (name test_plan_watch)
+ (modules test_plan_watch)
+ (libraries
+  gamepilot.table_test
+  gamepilot.wire
+  gamepilot.effects
+  gamepilot.pokemon_checkpoints
+  gamepilot.frlg_checkpoints))
+
+(test
+ (name test_mail_glitch_plans)
+ (modules test_mail_glitch_plans)
+ (deps
+  01-celadon-setup.plan.json
+  02-trade-farfetchd.plan.json
+  03-trade-mr-mime.plan.json
+  04-grind-farfetchd.plan.json
+  05-grind-mr-mime.plan.json
+  06-grind-return.plan.json
+  07-glitch-prep.plan.json
+  08-activate-and-verify.plan.json)
+ (libraries
+  gamepilot.table_test
+  gamepilot.pokemon_checkpoints
+  gamepilot.frlg_checkpoints))
+
+(test
+ (name test_plan_preconditions)
+ (modules test_plan_preconditions)
+ (deps tt-01.plan.json)
+ (libraries
+  yojson
+  gamepilot.table_test
+  gamepilot.pokemon_checkpoints
+  gamepilot.frlg_readers
+  gamepilot.frlg_checkpoints))
+
+(executable
+ (name print_plans)
+ (modules print_plans)
+ (libraries
+  gamepilot.repo_io
+  gamepilot.pokemon_checkpoints
+  gamepilot.frlg_checkpoints))
+
+(rule
+ (deps
+  (glob_files_rec ../../programs/*.plan.json))
+ (action
+  (with-stdout-to
+   plans.txt
+   (run ./print_plans.exe ../../programs))))
+
+(rule
+ (alias runtest)
+ (action
+  (diff plans.golden plans.txt)))

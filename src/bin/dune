@@ -4,11 +4,25 @@
  (package gamepilot)
  (libraries
   gamepilot.wire
+  gamepilot.json_field
   gamepilot.effects
+  gamepilot.watch_report
   gamepilot.replay
   gamepilot.live
   gamepilot.start_menu_poc
-  gamepilot.story
+  gamepilot.program_registry
+  gamepilot.guide_page
+  gamepilot.run_record
+  gamepilot.engine_run
+  gamepilot.engine_series
+  gamepilot.pokemon_checkpoints
+  gamepilot.checkpoint_end
+  gamepilot.room_policy
+  gamepilot.checkpoints_series
   gamepilot.frlg_actions
-  gamepilot.frlg_story
-  unix))
+  gamepilot.frlg_readers
+  gamepilot.ctl_script
+  gamepilot.switch_home
+  gamepilot.frlg_checkpoints
+  unix
+  yojson))

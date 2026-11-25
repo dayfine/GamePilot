@@ -6,6 +6,7 @@ type facts = {
   text_box : bool;
   level_up : bool;
   player_box : bool;
+  move_learn : bool;
   foe_box : bool;
   party_list : bool;
   bag : bool;
@@ -21,6 +22,7 @@ let nothing =
     text_box = false;
     level_up = false;
     player_box = false;
+    move_learn = false;
     foe_box = false;
     party_list = false;
     bag = false;
@@ -86,6 +88,7 @@ let of_measurements m =
     text_box = Battle_screen.battle_text_box m;
     level_up = Battle_screen.level_up_box m;
     player_box = Battle_screen.player_box m;
+    move_learn = Battle_yes_no.move_learn m;
     foe_box = Battle_screen.foe_box m;
     party_list = Party_menu.party_menu m;
     bag = Bag_screen.bag_open m;

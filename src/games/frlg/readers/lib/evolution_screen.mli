@@ -1,6 +1,6 @@
 (** Reader: what may be an evolution, so nothing presses B on it (any B cancels
-    one: pokefirered evolution_scene.c; console B, 2026-11-02, Squirtle stayed
-    Lv16 after a battle loop's B presses). The scene loads the battle's text box
+    one: pokefirered evolution_scene.c; Switch, 2026-11-02, Squirtle stayed Lv16
+    after a battle loop's B presses). The scene loads the battle's text box
     (LoadBattleTextboxAndBackground) but no HP boxes, and "What? ... is
     evolving!" stays up through the animation with no arrow. Ported from the
     fork's EvolutionHold::holds (Programs/AutoStory/

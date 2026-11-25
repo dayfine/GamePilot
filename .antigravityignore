@@ -1,3 +1,0 @@
-# Ignore agent workspaces to prevent the agent from getting confused by temporary states
-.agents/worktrees/
-.agents/jj-ws/

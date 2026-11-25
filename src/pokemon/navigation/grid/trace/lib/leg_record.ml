@@ -1,4 +1,4 @@
-open Grid_maps
+open Grid_geometry
 
 let tag = "[Leg] "
 

@@ -9,4 +9,8 @@
   test_open_stops
   test_gate_tiles
   test_gated_planner)
- (libraries gamepilot.case_table gamepilot.grid_maps gamepilot.grid_planning))
+ (libraries
+  gamepilot.table_test
+  gamepilot.grid_geometry
+  gamepilot.grid_maps
+  gamepilot.grid_planning))

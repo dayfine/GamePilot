@@ -1,14 +1,14 @@
-(* Decodes and re-encodes every golden file in contracts/v1; the result must be
+(* Decodes and re-encodes every golden file in protocol/v1; the result must be
    the same JSON value (number spelling and key order aside). *)
 
-(* contracts/ sits outside the dune project, so find it from the build dir. *)
-let contracts_dir () =
+(* protocol/ sits outside the dune project, so find it from the build dir. *)
+let protocol_dir () =
   let rec up dir =
-    let candidate = Filename.concat (Filename.concat dir "contracts") "v1" in
+    let candidate = Filename.concat (Filename.concat dir "protocol") "v1" in
     if Sys.file_exists candidate && Sys.is_directory candidate then candidate
     else
       let parent = Filename.dirname dir in
-      if parent = dir then failwith "contracts/v1 not found above the test dir"
+      if parent = dir then failwith "protocol/v1 not found above the test dir"
       else up parent
   in
   up (Sys.getcwd ())
@@ -45,11 +45,16 @@ let result_round_trips =
     );
     ( "subscribe",
       fun j -> Wire.(json_of_subscribe_result (subscribe_result_of_json j)) );
+    ("status", fun j -> Wire.Daemon_status.(to_json (of_json j)));
     ( "unsubscribe",
       fun j -> Wire.(json_of_unsubscribe_result (unsubscribe_result_of_json j))
     );
     ("submit", fun j -> Wire.(json_of_submit_result (submit_result_of_json j)));
     ("cancel", fun j -> Wire.(json_of_cancel_result (cancel_result_of_json j)));
+    ( "lease.acquire",
+      fun j -> Wire.Lease.(json_of_acquire_result (acquire_result_of_json j)) );
+    ( "lease.release",
+      fun j -> Wire.Lease.(json_of_release_result (release_result_of_json j)) );
   ]
 
 let read_golden dir file =
@@ -223,8 +228,38 @@ let check_image_probes () =
   | exception Wire.Decode_error _ -> ());
   print_endline "ok probe_images lines"
 
+(* The golden status has every heartbeat fresh; a capture thread whose last
+   frame is older than the limit is the one reported stuck. *)
+let check_daemon_status dir =
+  let golden =
+    match Wire.message_of_json (read_golden dir "29-status.response.json") with
+    | Wire.Response { outcome = Ok result; _ } ->
+        Wire.Daemon_status.of_json result
+    | _ -> failwith "29-status.response.json: expected a result"
+  in
+  let module S = Wire.Daemon_status in
+  if S.stuck golden <> [] then failwith "golden status: nothing should be stuck";
+  if golden.client <> Some "gamepilot-programs/0.1" then
+    failwith "golden status: client";
+  let stalled =
+    {
+      golden with
+      threads =
+        List.map
+          (fun (th : S.thread) ->
+            if th.name = "capture" then
+              { th with t_ms = golden.t_ms -. S.stuck_limit_ms -. 1. }
+            else th)
+          golden.threads;
+    }
+  in
+  (match S.stuck stalled with
+  | [ { name = "capture"; _ } ] -> ()
+  | _ -> failwith "stalled capture: expected exactly capture stuck");
+  print_endline "ok daemon status"
+
 let () =
-  let dir = contracts_dir () in
+  let dir = protocol_dir () in
   let files =
     Sys.readdir dir |> Array.to_list
     |> List.filter (fun f -> Filename.check_suffix f ".json")
@@ -261,5 +296,6 @@ let () =
       Printf.printf "ok probe result without kind rejected: %s\n" e);
   check_template_upload dir;
   check_color_count dir;
+  check_daemon_status dir;
   check_probe_constructors ();
   check_image_probes ()

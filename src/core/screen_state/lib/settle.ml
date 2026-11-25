@@ -1,4 +1,4 @@
-type kind = Talk | After_warp | Door
+type kind = Talk | After_warp | Menu_closed
 
 type rule = {
   judge : Talk_over.rule;
@@ -11,18 +11,6 @@ type rule = {
 let talk_look_every_ms = 1200
 let cap_ms = 120_000
 
-(* A door's settle: the player still this long after the fade is back up ends
-   it; a walk any earlier could still go nowhere in the fade-in (BDSP lab-B
-   2026-11-10, 00.04b's nurse). *)
-let door_quiet_ms = 1000
-
-(* A door's settle: the overworld back up this long ends it, still or not
-   (someone walking past the player the whole time). *)
-let door_calm_ms = 2500
-
-(* A door has no text: look often to catch its short still spell. *)
-let door_look_every_ms = 200
-
 let talk_rule =
   {
     judge = Talk_over.default_rule;
@@ -31,26 +19,40 @@ let talk_rule =
     watch_battles = false;
   }
 
-let door_judge =
+(* A menu closed to the overworld: no text or scene comes after it, so a short
+   quiet ends it, looking often. A game whose fade-in can hold still (FireRed's
+   dim spell) reports no free control until it is over. *)
+let menu_quiet_ms = 500
+let menu_calm_ms = 2500
+let menu_look_every_ms = 300
+
+(* Out of the deepest menu (a summary) is three screens and their fades. *)
+let menu_cap_ms = 15_000
+
+let menu_judge =
   {
     Talk_over.default_rule with
-    calm_ms = door_calm_ms;
-    quiet_ms = door_quiet_ms;
-    still = Player;
+    calm_ms = menu_calm_ms;
+    quiet_ms = menu_quiet_ms;
   }
 
 let rule = function
   | Talk -> talk_rule
   | After_warp ->
       { talk_rule with judge = { talk_rule.judge with warp = true } }
-  | Door ->
-      { talk_rule with judge = door_judge; look_every_ms = door_look_every_ms }
+  | Menu_closed ->
+      {
+        talk_rule with
+        judge = menu_judge;
+        look_every_ms = menu_look_every_ms;
+        cap_ms = menu_cap_ms;
+      }
 
 type look = { facts : Facts.t; at_ms : float; since_ms : float option }
 
 type io = {
   look : unit -> look;
-  press : Talk_over.press -> wait_ms:int -> unit;
+  press : Talk_over.press -> wait_ms:int -> look option;
   flee_battle : unit -> bool;
   log : string -> unit;
 }
@@ -85,24 +87,35 @@ let observe judge look =
 
 let log io fmt = Printf.ksprintf (fun s -> io.log ("[Settle] " ^ s)) fmt
 
-(* Acts on the judge's move: the ending, or [None] to look again. *)
+(* After a move: the settle ends, or the next look, with the frame the
+   press's wait saw a warp on, if it did. *)
+type next = End of ending | Look_again of look option
+
+(* Acts on the judge's move. *)
 let answer rule ~label io judge = function
   | Talk_over.Done ->
       log io "%s: over; %s." label (Talk_over.describe judge);
-      Some (Quiet (Talk_over.describe judge))
-  | Talk_over.Battle when rule.watch_battles -> None
+      End (Quiet (Talk_over.describe judge))
+  | Talk_over.Battle when rule.watch_battles -> Look_again None
   | Talk_over.Battle ->
       if io.flee_battle () then (
         log io "%s: fled a wild battle." label;
-        None)
+        Look_again None)
       else (
         log io "%s: a battle started." label;
-        Some (Battle (Talk_over.describe judge)))
+        End (Battle (Talk_over.describe judge)))
   | Talk_over.Press press ->
-      io.press press ~wait_ms:rule.look_every_ms;
-      None
+      Look_again (io.press press ~wait_ms:rule.look_every_ms)
 
-let run rule ~label io =
+(* A frame the press's wait saw a warp on, while the warp is still to come:
+   the judge sees it before the next look, at its own time. Once warped the
+   looks alone time the quiet. *)
+let observe_seen judge = function
+  | Some seen when not (Talk_over.warped judge) ->
+      fst (Talk_over.observe judge seen.facts ~at_ms:seen.at_ms)
+  | Some _ | None -> judge
+
+let run ?seen rule ~label io =
   let first = io.look () in
   let deadline = first.at_ms +. float_of_int rule.cap_ms in
   let rec loop judge look =
@@ -113,7 +126,7 @@ let run rule ~label io =
     else
       let judge, move = observe judge look in
       match answer rule ~label io judge move with
-      | Some ending -> ending
-      | None -> loop judge (io.look ())
+      | End ending -> ending
+      | Look_again seen -> loop (observe_seen judge seen) (io.look ())
   in
-  loop (Talk_over.create rule.judge) first
+  loop (observe_seen (Talk_over.create rule.judge) seen) first

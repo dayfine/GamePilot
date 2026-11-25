@@ -2,6 +2,6 @@
  (name test_route_scorer)
  (modules toy_score_map test_route_scorer)
  (libraries
-  gamepilot.case_table
-  gamepilot.grid_maps
+  gamepilot.table_test
+  gamepilot.grid_geometry
   gamepilot.grid_route_scoring))

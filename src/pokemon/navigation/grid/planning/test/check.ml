@@ -1,4 +1,4 @@
-(* Checks for the planner tests' cases, reported with Case_table.report. *)
+(* Checks for the planner tests' cases, reported with Table_test.report. *)
 
 (* Ok when [holds], else an error saying what was [expected] and what the
    plan was. *)

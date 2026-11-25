@@ -58,7 +58,7 @@ let bike_checks game =
       [ empty_tap "bike" bike; not_faster "the bike" bike "running" game.run ]
 
 let run_case { name; input = game; expectation } =
-  Case_table.report name
+  Table_test.report name
     (Check.all
        ([
           empty_tap "walking" game.walk;
@@ -73,4 +73,4 @@ let run_case { name; input = game; expectation } =
 
 let () =
   List.iter run_case cases;
-  Case_table.finish ()
+  Table_test.finish ()
