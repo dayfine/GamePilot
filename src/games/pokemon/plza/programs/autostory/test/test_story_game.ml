@@ -1,4 +1,4 @@
-(* 01.00b to 02.01 run through the engine (Plza_checkpoints.Runner) with
+(* 01.00b to 02.02 run through the engine (Plza_checkpoints.Runner) with
    Story_game's handlers on a scripted console (Fake_console): the plans
    decode, every event reaches its handler, and each handler's presses move a
    game that answers them as the console did. Also the failures: a walk whose
@@ -178,6 +178,46 @@ let brigitte ?(no_scene = false) c =
           | None -> battle c
           | Some _ when no_scene -> { (party c) with story_dialog = true }
           | Some y -> andi c ~after:y))
+
+(* 02.02: the plaza's party bar until the stick was held 6.5 s; a black fade
+   for 1 s, the cutscene until + is held, the skip's black fade, the street
+   scene's text until two A, the party bar; the gate's A prompt once the stick
+   reached 9.5 s, until A; Taunie's text until two more A, the party bar; the
+   Hotel Z arrival's text once the stick reached 16.5 s, until two A, then the
+   party bar. [lost]: no fade, the party bar alone. *)
+let arrival_at_hotel c ~after =
+  match C.nth_after c Wire.A ~after 2 with
+  | None -> text c
+  | Some _ -> (
+      match C.stick_reached c 16_500 with
+      | None -> party c
+      | Some h -> (
+          match C.nth_after c Wire.A ~after:h 1 with
+          | None -> text c
+          | Some _ -> party c))
+
+let gate c =
+  match C.stick_reached c 9500 with
+  | None -> party c
+  | Some g -> (
+      match C.nth_after c Wire.A ~after:g 0 with
+      | None -> { (party c) with interact_prompt = true }
+      | Some a -> arrival_at_hotel c ~after:a)
+
+let street c ~fade =
+  match C.nth_after c Wire.Start ~after:fade 0 with
+  | None -> look c
+  | Some s when since c s < 800.0 -> black c
+  | Some s -> (
+      match C.nth_after c Wire.A ~after:s 1 with
+      | None -> text c
+      | Some _ -> gate c)
+
+let hotel_z ?(lost = false) c =
+  match C.stick_reached c 6500 with
+  | Some f when not lost ->
+      if since c f < 1000.0 then black c else street c ~fade:f
+  | _ -> party c
 
 let outcome checkpoint screen =
   let c = C.create () in
@@ -426,6 +466,38 @@ let cases =
        never started (player not at its trigger?): the HUD up and no text, \
        choice, battle or cutscene for 45000 ms (expecting the controls hint, \
        the party bar or the A prompt).";
+    case "02.02: the street's cutscene skipped, the gate, Taunie, Hotel Z"
+      (fun () ->
+        let r, c = outcome "02.02" hotel_z in
+        String.concat "\n"
+          (r
+          :: List.filter
+               (fun line ->
+                 List.exists
+                   (fun prefix -> String.starts_with ~prefix line)
+                   [
+                     "[PLZA] to_";
+                     "[PLZA] through_";
+                     "[PLZA] plus";
+                     "[PLZA scene] done";
+                   ])
+               (C.lines c)))
+      "passed\n\
+       [PLZA] to_blocked_street: the end event after 750 ms of the last leg.\n\
+       [PLZA] to_blocked_street: ended on: fade_black\n\
+       [PLZA] plus_skip: a black fade 0 ms after the hold.\n\
+       [PLZA scene] done on control.\n\
+       [PLZA] to_battle_zone_gate: A on the A prompt after 3000 ms of the last \
+       leg started a talk.\n\
+       [PLZA] to_battle_zone_gate: started on: dialog_box, advance_arrow\n\
+       [PLZA scene] done on control.\n\
+       [PLZA] through_covered_passage: legs done, screen now: dialog_box, \
+       advance_arrow\n\
+       [PLZA scene] done on control.";
+    case "02.02 lost: no black fade into the street"
+      (result "02.02" (hotel_z ~lost:true))
+      "02.02 event 1 (to_blocked_street): walk_no_end: to_blocked_street: no \
+       end event within 3363 ms of the last leg";
     case "the walk is walked before 03.03, run after"
       (fun () ->
         Printf.sprintf "%b %b"

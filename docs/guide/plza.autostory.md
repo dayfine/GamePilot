@@ -21,7 +21,7 @@ Choices" screen. Nothing else is read from the save. The Switch's capture must b
 <!-- generated:commands -->
 ```sh
 # the Switch: each checkpoint once, from where the console is
-cd src && opam exec -- dune exec -- gamepilot checkpoints --program plza.autostory --from 01.00b --to 02.01 --mode testing --backend switch --serial PORT --capture DEVICE \
+cd src && opam exec -- dune exec -- gamepilot checkpoints --program plza.autostory --from 01.00b --to 02.02 --mode testing --backend switch --serial PORT --capture DEVICE \
     --watch
 ```
 <!-- /generated -->
@@ -36,8 +36,9 @@ cd src && opam exec -- dune exec -- gamepilot checkpoints --program plza.autosto
 | 01.02 | Main Mission 01: chase Pancham to the battle area |
 | 01.03 | Main Mission 01: the starter and Andi |
 | 02.01 | Main Mission 02: Battle Zone to Brigitte |
+| 02.02 | Main Mission 02: after Brigitte to Hotel Z |
 
-<!-- plans: 8fb2903284ca -->
+<!-- plans: 1916952ccd09 -->
 <!-- /generated -->
 
 ## When it stops
@@ -55,10 +56,13 @@ battle is already up. Started in the night alley after Andi (the party bar up, n
 
 ## Known limits
 
-Only 01.00b to 02.01 so far. 01.02's chase, 01.03's walk to Chikorita and 02.01's walk through
-the Battle Zone are timed stick legs with no map, so they can miss; the chase then stops on Ryon's
+Only 01.00b to 02.02 so far. 01.02's chase, 01.03's walk to Chikorita and 02.01's and 02.02's walks
+are timed stick legs with no map, so they can miss; the chase then stops on Ryon's
 A prompt (`scene_ended_in_control`), the walk to Chikorita with `walk_no_end`, and the Battle Zone
-walk with `scene_ended_in_control` when Brigitte's talk never starts. The starter is always Chikorita. The
+walk with `scene_ended_in_control` when Brigitte's talk never starts. In 02.02, a walk to the
+blocked street that misses fails with `walk_no_end` (no black fade), one to the gate that misses
+its A prompt with `walk_no_end`, and the passage walk that misses Hotel Z leaves its scene to fail
+with `scene_never_started` after 45 s. The starter is always Chikorita. The
 battle holds ZL and picks the most effective move from the symbols it shows; the move is pressed
 with ZL still held. A battle that never sees them fails with `battle_failed` after 2 minutes, and
 a lost battle reads as won (the talk after it looks the same), so the scene after it then fails. The
