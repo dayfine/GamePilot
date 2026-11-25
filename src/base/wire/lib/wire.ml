@@ -56,11 +56,18 @@ type probe_spec = Probe.probe_spec = {
   template : string option;
   ink : color_range option;
   color_range : color_range option;
+  test : Line_shares.test;
+  find : Blob_find.params option;
 }
+
+module Line_shares = Line_shares
+module Blob_find = Blob_find
 
 let color_stats_probe = Probe.color_stats_probe
 let template_match_probe = Probe.template_match_probe
 let color_count_probe = Probe.color_count_probe
+let line_shares_probe = Probe.line_shares_probe
+let find_probe = Probe.find_probe
 
 type rgb = Probe.rgb = { r : float; g : float; b : float }
 
@@ -68,6 +75,8 @@ type probe_result = Probe.probe_result =
   | Color_stats of { mean : rgb; stddev : rgb }
   | Template_match of { score : float; x : float; y : float }
   | Color_count of { fraction : float; mean : rgb option }
+  | Line_shares of Line_shares.t
+  | Find of { blobs : Blob_find.blob list }
   | Other of json
 
 type frame = Probe.frame = {

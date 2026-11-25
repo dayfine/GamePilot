@@ -10,13 +10,19 @@ let probe ~id box range =
 let share m id =
   match Effects.probe m id with
   | Some (Wire.Color_count { fraction; _ }) -> Some fraction
-  | Some (Wire.Color_stats _ | Wire.Template_match _ | Wire.Other _) | None ->
+  | Some
+      ( Wire.Color_stats _ | Wire.Template_match _ | Wire.Line_shares _
+      | Wire.Find _ | Wire.Other _ )
+  | None ->
       None
 
 let mean m id =
   match Effects.probe m id with
   | Some (Wire.Color_count { mean; _ }) -> mean
-  | Some (Wire.Color_stats _ | Wire.Template_match _ | Wire.Other _) | None ->
+  | Some
+      ( Wire.Color_stats _ | Wire.Template_match _ | Wire.Line_shares _
+      | Wire.Find _ | Wire.Other _ )
+  | None ->
       None
 
 let red_excess (c : Wire.rgb) = Float.min (c.r -. c.g) (c.r -. c.b)

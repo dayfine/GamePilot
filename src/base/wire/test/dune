@@ -1,3 +1,8 @@
 (tests
- (names test_wire test_sticks test_watch_times test_watch_registry)
+ (names
+  test_wire
+  test_sticks
+  test_watch_times
+  test_watch_registry
+  test_line_shares_find)
  (libraries yojson gamepilot.wire gamepilot.table_test))
