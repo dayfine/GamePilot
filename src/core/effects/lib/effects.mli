@@ -22,7 +22,7 @@ type raced =
   | Finished of Wire.batch_done  (** the batch ran to its end *)
   | Stopped of measurements
       (** the first frame on which the stop reader held; the batch was cancelled
-      *)
+          ({!race}) or replaced ({!race_then}) *)
 
 exception Rpc_error of Wire.error
 (** The daemon answered a request with an error. *)
@@ -44,7 +44,12 @@ type _ Effect.t +=
   | Await : (measurements -> bool) * int -> awaited Effect.t
   | Race : Wire.command list * (measurements -> bool) -> raced Effect.t
   | Race_held : Wire.command list * (measurements -> bool) -> raced Effect.t
+        (** {!race_then}'s first half: as [Race], but a stopped batch runs on
+            until the [Replace] that follows. Programs call {!race_then}. *)
   | Replace : Wire.command list -> Wire.batch_done Effect.t
+        (** {!race_then}'s second half: the held batch's queued commands are
+            dropped with no release and these run in their place; with none
+            held, a plain [Submit]. Programs call {!race_then}. *)
   | Queue : Wire.command list -> unit Effect.t
   | Now : float Effect.t
   | Read : measurements option Effect.t

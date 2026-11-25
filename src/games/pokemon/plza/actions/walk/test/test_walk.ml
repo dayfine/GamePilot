@@ -49,7 +49,8 @@ let stick_cases =
 
 let screen ?(still = false) ?(fade_black = false) ?(fade_white = false)
     ?(dialog = false) ?(arrow = false) ?(party = false) ?(hint = false)
-    ?(home = false) at_ms : Walk_screen.t =
+    ?(home = false) ?(battle = false) ?(prompt = false) ?(scene = false) at_ms :
+    Walk_screen.t =
   {
     at_ms;
     home_menu = home;
@@ -60,13 +61,18 @@ let screen ?(still = false) ?(fade_black = false) ?(fade_white = false)
     advance_arrow = arrow;
     player_can_move = party;
     controls_hint = hint;
+    interact_prompt = prompt;
+    scene_under_way = scene;
+    battle;
+    minimap_arrow = None;
   }
 
 let platform at = screen ~hint:true at
 let overworld at = screen ~party:true at
 
-(* What the walk sent and logged, in order, and its outcome. *)
-let scripted screens run =
+(* What the walk sent and logged, in order, and its outcome as [outcome] says
+   it. *)
+let recorded screens run outcome =
   let lines = ref [] and screens = ref screens in
   let say line = lines := line :: !lines in
   let next () =
@@ -85,12 +91,15 @@ let scripted screens run =
       log_detail = (fun line -> say ("detail " ^ line));
     }
   in
-  let outcome =
-    match run steps with
-    | Ok () -> "ok"
-    | Error c -> Engine_run.Failure.cause_to_string c
-  in
-  String.concat "\n" (List.rev !lines @ [ outcome ])
+  let ended = outcome (run steps) in
+  String.concat "\n" (List.rev !lines @ [ ended ])
+
+let result_text = function
+  | Ok () -> "ok"
+  | Error c -> Engine_run.Failure.cause_to_string c
+
+(* What the walk sent and logged, in order, and its outcome. *)
+let scripted screens run = recorded screens run result_text
 
 (* The inputs alone, without the logs. *)
 let inputs screens run =
@@ -159,9 +168,12 @@ let move_cases =
 
 (* --- walk_to_end --- *)
 
-let until ?(earliest_end_ms = 0) ?(walk_only = true) until legs steps =
-  Walk.walk_to_end steps ~walk_only "walk" (move legs) ~until ~earliest_end_ms
+let until ?(earliest_end_ms = 0) ?(walk_only = true) ?(stop_on_battle = false)
+    until legs steps =
+  Walk.walk_to_end steps ~walk_only ~stop_on_battle "walk" (move legs) ~until
+    ~earliest_end_ms
 
+let hud at = screen ~battle:true ~party:true at
 let white = Event Fade_white
 
 let until_cases =
@@ -255,12 +267,55 @@ let until_cases =
        stick (0.00, 1.00) 250/0\n\
        walk_no_scene: walk: control still free after 500 ms of the last leg: \
        no scene took it";
+    case
+      "a story battle ahead: the battle HUD on two reads in a row stops the \
+       last leg (fork PR 725)"
+      (fun () ->
+        scripted
+          [
+            platform 0.0;
+            platform 250.0;
+            hud 500.0;
+            platform 750.0;
+            hud 1000.0;
+            hud 1250.0;
+          ]
+          (until ~stop_on_battle:true white [ leg 0.0 3000 ]))
+      "stick (0.00, 1.00) 250/0\n\
+       stick (0.00, 1.00) 250/0\n\
+       stick (0.00, 1.00) 250/0\n\
+       stick (0.00, 1.00) 250/0\n\
+       stick (0.00, 1.00) 250/0\n\
+       log [PLZA] walk: battle HUD showed after 1250 ms of the last leg: \
+       stopping walk.\n\
+       battle_on_screen: battle on screen";
+    case
+      "a walk into a talk, a story battle ahead: the HUD on the last slice and \
+       the read after the legs stops it"
+      (fun () ->
+        scripted
+          [ platform 0.0; platform 250.0; hud 500.0; hud 750.0 ]
+          (until ~stop_on_battle:true
+             (Talk { after_legs = false })
+             [ leg 0.0 250 ]))
+      "stick (0.00, 1.00) 250/0\n\
+       log [PLZA] walk: battle HUD showed after 250 ms of the last leg: \
+       stopping walk.\n\
+       battle_on_screen: battle on screen";
+    case "no story battle ahead: the battle HUD does not stop the walk"
+      (fun () ->
+        inputs
+          [ platform 0.0; hud 250.0; hud 500.0 ]
+          (until white [ leg 0.0 500 ]))
+      "stick (0.00, 1.00) 250/0\n\
+       stick (0.00, 1.00) 250/0\n\
+       walk_no_end: walk: no end event within 500 ms of the last leg";
     case "steered: the last leg sliced at its own angle, after its L"
       (fun () ->
         inputs
           [ screen ~fade_white:true 0.0 ]
           (fun steps ->
-            Walk.walk_to_end steps ~walk_only:true "walk"
+            Walk.walk_to_end steps ~walk_only:true ~stop_on_battle:false "walk"
               (move ~style:Steer [ leg 0.0 300; leg 90.0 500 ])
               ~until:white ~earliest_end_ms:0))
       "stick (0.00, 1.00) 300/0\nL 100/150\nstick (1.00, 0.00) 250/0\nok";
@@ -268,15 +323,23 @@ let until_cases =
 
 (* --- free control, and the walk event --- *)
 
-let can_walk steps =
-  Free_control_wait.wait (Walk.free_control_game_steps steps) "walk"
+let can_walk { Walk.submit; read_screen; log; _ } =
+  Free_control_wait.wait
+    (Free_control_wait.screen_game_steps ~submit ~read_screen ~log)
+    "walk"
 
 let reads_every_poll n make =
   List.init n (fun i -> make (float_of_int (i * 250)))
 
-let step ?(until = None) ?(wait_before_ms = 0) legs steps =
-  Walk.run_event steps ~walk_only:true "walk"
-    { move = { (move legs) with wait_before_ms }; until; earliest_end_ms = 0 }
+let step ?(until = None) ?(wait_before_ms = 0) ?(battle_ahead = false) legs
+    steps =
+  Walk.run_event steps ~walk_only:true ~battle_ahead "walk"
+    {
+      move = { (move legs) with wait_before_ms };
+      until;
+      earliest_end_ms = 0;
+      heading_deg = None;
+    }
 
 let free_cases =
   [
@@ -322,12 +385,190 @@ let free_cases =
           [ overworld 0.0; overworld 250.0; screen ~fade_white:true 500.0 ]
           (step ~until:(Some white) [ leg 0.0 400 ]))
       "wait 250\nstick (0.00, 1.00) 250/0\nok";
+    case
+      "a story battle ahead, the battle HUD before the walk (two reads 250 ms \
+       apart): no walk, battle_on_screen"
+      (fun () ->
+        inputs [ hud 0.0; hud 250.0 ] (step ~battle_ahead:true [ leg 0.0 400 ]))
+      "wait 250\nbattle_on_screen: battle on screen";
+    case
+      "a story battle ahead, a walk that failed with the HUD flickering (never \
+       two reads in a row): the HUD after it, battle_on_screen"
+      (fun () ->
+        inputs
+          [
+            overworld 0.0;
+            overworld 250.0;
+            hud 500.0;
+            overworld 750.0;
+            hud 1000.0;
+            hud 1250.0;
+          ]
+          (step ~battle_ahead:true ~until:(Some white) [ leg 0.0 500 ]))
+      "wait 250\n\
+       stick (0.00, 1.00) 250/0\n\
+       stick (0.00, 1.00) 250/0\n\
+       wait 250\n\
+       battle_on_screen: battle on screen";
+    case "no story battle ahead, the same walk: walk_no_end"
+      (fun () ->
+        inputs
+          [
+            overworld 0.0;
+            overworld 250.0;
+            hud 500.0;
+            overworld 750.0;
+            hud 1000.0;
+            hud 1250.0;
+          ]
+          (step ~until:(Some white) [ leg 0.0 500 ]))
+      "wait 250\n\
+       stick (0.00, 1.00) 250/0\n\
+       stick (0.00, 1.00) 250/0\n\
+       walk_no_end: walk: no end event within 500 ms of the last leg";
     case "a walk event without free control sends no stick"
       (fun () -> inputs [ screen ~home:true 0.0 ] (step [ leg 0.0 400 ]))
       "game_not_running: the game is not running: the Switch HOME menu is \
        showing";
   ]
 
+(* --- A prompts --- *)
+
+(* One fact of a scripted run: its last line, the lines that are an A press,
+   or whether a line starts with [prefix]. *)
+let last_line text = List.hd (List.rev (String.split_on_char '\n' text))
+
+let a_presses text =
+  String.split_on_char '\n' text
+  |> List.filter (String.starts_with ~prefix:"A ")
+  |> List.length |> string_of_int
+
+let has_line prefix text =
+  String.split_on_char '\n' text
+  |> List.exists (String.starts_with ~prefix)
+  |> string_of_bool
+
+let talk_outcome = function
+  | Some r -> result_text r
+  | None -> "nothing started"
+
+let talk screens =
+  recorded screens
+    (fun { Walk.submit; read_screen; log; log_detail } ->
+      Talk_prompt.talk
+        { submit; read_screen; log; log_detail }
+        "walk" ~held_ms:0)
+    talk_outcome
+
+let prompt at = screen ~prompt:true at
+let scene at = screen ~scene:true ~dialog:true at
+
+let talk_cases =
+  [
+    case "a talk: A held 160 ms, released 240"
+      (fun () -> List.hd (String.split_on_char '\n' (talk [ scene 0.0 ])))
+      "A 160/240";
+    case "a talk: a scene on two reads in a row has started it"
+      (fun () -> last_line (talk [ prompt 0.0; scene 250.0; scene 500.0 ]))
+      "ok";
+    case "a talk started on the first A takes one A"
+      (fun () -> a_presses (talk [ prompt 0.0; scene 250.0; scene 500.0 ]))
+      "1";
+    case "a talk: a scene on one read alone has not started it"
+      (fun () ->
+        a_presses
+          (talk
+             [
+               scene 0.0;
+               prompt 250.0;
+               prompt 500.0;
+               prompt 750.0;
+               scene 1000.0;
+               scene 1250.0;
+             ]))
+      "2";
+    case "a talk: the prompt still up after three As is talk_no_scene"
+      (fun () -> last_line (talk [ prompt 0.0 ]))
+      "talk_no_scene: walk: the A prompt still up with nothing open after 3 \
+       As: the game took none";
+    case "a talk: the prompt still up takes three As in all"
+      (fun () -> a_presses (talk [ prompt 0.0 ]))
+      "3";
+    case "a talk: the prompt gone with nothing open is nothing started"
+      (fun () -> last_line (talk [ screen 0.0 ]))
+      "nothing started";
+  ]
+
+(* One straight leg: two reads before it (no prompt), the check for a prompt
+   already showing and the one the first input is checked against, then a read
+   after each slice. *)
+let prompt_end screens = scripted screens (until (Event Prompt) [ leg 0.0 500 ])
+let before_legs = [ platform 0.0; platform 0.0 ]
+
+let prompt_end_cases =
+  [
+    case "the prompt end: a steady prompt ends the walk"
+      (fun () ->
+        last_line (prompt_end (before_legs @ [ prompt 250.0; prompt 550.0 ])))
+      "ok";
+    case "the prompt end: the prompt read again 300 ms on"
+      (fun () ->
+        has_line "wait 300"
+          (prompt_end (before_legs @ [ prompt 250.0; prompt 550.0 ])))
+      "true";
+    case "the prompt end: a prompt gone 300 ms on is walked past"
+      (fun () ->
+        has_line
+          "log [PLZA] walk: the A prompt after 250 ms of the last leg went"
+          (prompt_end (before_legs @ [ prompt 250.0; platform 500.0 ])))
+      "true";
+    case "the prompt end: a prompt that went never ends the walk"
+      (fun () ->
+        last_line (prompt_end (before_legs @ [ prompt 250.0; platform 500.0 ])))
+      "walk_no_end: walk: no end event within 500 ms of the last leg";
+    case "a straight walk to a prompt already showing: no stick"
+      (fun () -> has_line "stick" (prompt_end [ prompt 0.0 ]))
+      "false";
+    case "a straight walk to a prompt already showing: logged"
+      (fun () ->
+        has_line "log [PLZA] walk: the A prompt shows before the walk"
+          (prompt_end [ prompt 0.0 ]))
+      "true";
+    case "a straight walk to a prompt already showing: ok"
+      (fun () -> last_line (prompt_end [ prompt 0.0 ]))
+      "ok";
+    case "a straight walk into a talk, the prompt already showing: A, no stick"
+      (fun () ->
+        has_line "stick"
+          (scripted
+             [ prompt 0.0; prompt 300.0; scene 600.0 ]
+             (until (Talk { after_legs = false }) [ leg 0.0 500 ])))
+      "false";
+  ]
+
+let prompt_free_cases =
+  [
+    case "free control: an A prompt held 1 s with nothing busy"
+      (fun () -> last_line (scripted (reads_every_poll 8 prompt) can_walk))
+      "ok";
+    case "free control: an A prompt is logged as control"
+      (fun () ->
+        has_line
+          "log [PLZA] walk: the A prompt held 1000 ms with nothing busy: \
+           control."
+          (scripted (reads_every_poll 8 prompt) can_walk))
+      "true";
+    case "free control: an A prompt under a text box is not control"
+      (fun () ->
+        has_line "log [PLZA] walk: the A prompt held"
+          (scripted
+             (reads_every_poll 8 (screen ~prompt:true ~dialog:true)
+             @ [ overworld 2000.0 ])
+             can_walk))
+      "false";
+  ]
+
 let () =
   Table_test.run "plza_walk"
-    (stick_cases @ move_cases @ until_cases @ free_cases)
+    (stick_cases @ move_cases @ until_cases @ free_cases @ talk_cases
+   @ prompt_end_cases @ prompt_free_cases)

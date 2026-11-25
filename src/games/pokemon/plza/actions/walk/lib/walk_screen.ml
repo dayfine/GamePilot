@@ -8,6 +8,10 @@ type t = {
   advance_arrow : bool;
   player_can_move : bool;
   controls_hint : bool;
+  interact_prompt : bool;
+  scene_under_way : bool;
+  battle : bool;
+  minimap_arrow : float option;
 }
 
 let empty ~at_ms =
@@ -21,6 +25,10 @@ let empty ~at_ms =
     advance_arrow = false;
     player_can_move = false;
     controls_hint = false;
+    interact_prompt = false;
+    scene_under_way = false;
+    battle = false;
+    minimap_arrow = None;
   }
 
 let fade_shows l = l.fade_black || l.fade_white
@@ -40,6 +48,7 @@ let shows (event : Plza_rules.Walk_args.end_event) l =
   | Fade_white -> l.fade_white
   | Fade_black -> l.fade_black
   | Dialog -> l.dialog_box
+  | Prompt -> l.interact_prompt
 
 let fields l =
   [
@@ -51,6 +60,8 @@ let fields l =
     ("advance_arrow", l.advance_arrow);
     ("player_can_move", l.player_can_move);
     ("controls_hint", l.controls_hint);
+    ("interact_prompt", l.interact_prompt);
+    ("battle", l.battle);
   ]
 
 let set_name (name, on) = if on then Some name else None

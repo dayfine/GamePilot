@@ -13,7 +13,9 @@ let builtin (event : Plan.event) =
 let walk steps ~checkpoint_id (event : Plan.event) (own : Plza_rules.Action.t) =
   let walk_only = walk_only checkpoint_id in
   match own with
-  | Walk args -> Plza_walk.Walk.run_event steps ~walk_only event.id args
+  | Walk args ->
+      Plza_walk.Walk.run_event steps ~walk_only ~battle_ahead:false event.id
+        args
 
 let no_save () =
   Error (Failure.cause ~repeats:true "no_save" "PLZA saves by autosave only")
