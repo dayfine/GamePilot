@@ -22,6 +22,7 @@ type t = {
   tutorial_card : bool;
   choice_rows : Choice_rows.t option;  (** only with a choice box *)
 }
+(** What one frame shows. *)
 
 val probes : picture:Wire.box -> assets:Blob_assets.t -> Wire.probe_spec list
 (** Every probe {!read} needs, for a game picture at [picture] in the frame. *)
