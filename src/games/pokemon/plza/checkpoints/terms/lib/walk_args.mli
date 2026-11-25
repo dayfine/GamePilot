@@ -2,8 +2,10 @@
     and a time, and what ends the last one. Ported from the walk's args in
     [PokemonLZA_AutoStoryActionTable.cpp] and [PokemonLZA_AutoStoryWalks.h]
     (fork #754, [plza/mvp-0101]). Positions in PLZA are 3D and camera-relative,
-    so a walk is durations and angles, never tiles. Pure: [Walk_decode] reads it
-    from a plan. *)
+    so a walk is durations and angles, never tiles. The names are ours, not the
+    fork's: its [held] is [Steer], its wait is [wait_before_ms] and its
+    [end_after_ms] is [earliest_end_ms] (a fork plan file needs those keys
+    renamed, [Walk_decode]). Pure: [Walk_decode] reads it from a plan. *)
 
 type leg = {
   angle_deg : float;

@@ -8,6 +8,7 @@ Trainer Card. It runs on mGBA.
 | Checkpoint | Content |
 |---|---|
 | 01-to-one-island | Fly to Cinnabar, YES to Bill in the Pokemon Center: out with him, the Seagallop, One Island, Celio's Tri-Pass |
+| 02-to-two-island | Bill's Meteorite errand: One Island's harbor, the Seagallop to Two Island, outside the Joyful Game Corner |
 
 The game decides the first trip. Bill offers it when you leave Cinnabar Gym with the seventh badge;
 a player who said no finds him waiting in the Cinnabar Pokemon Center, even after the Hall of Fame
@@ -34,5 +35,19 @@ and holds still for about 600ms before it fades in; the walk waits for that fade
 (`Warp_fade_in`) before its first step, so no step is lost.
 
 Celio's scene also turns off Bill's PC storage (`FLAG_SYS_PC_STORAGE_DISABLED`) until the player
-reaches Three Island's port, which is the next checkpoint's way. After that come Celio's Ruby and
-Sapphire errands and the legendary birds, from the walkthrough drafts.
+reaches Three Island's port.
+
+The scene ends with Bill's favor: take the Meteorite to the man who runs Two Island's Game Corner.
+The `ferry` game action (`Seagallop`) talks to a harbor's sailor, reads his list of islands
+(`Script_menu.seagallop_islands`), moves its cursor to the island and settles the crossing, which
+lands the player at (8, 5) of the island's harbor, facing south. Until Bill's trip back to Cinnabar
+the list is the two other islands of One, Two and Three, then EXIT (pokefirered
+`EventScript_ChooseDestFromOneIsland`); the lists with Vermilion and the Rainbow Pass's pages are
+other windows, not read yet. 02 ends below the Game Corner's door facing east, not north: a press
+toward a door walks in whichever way the player faces (pokefirered `TryDoorWarp`).
+
+The Joyful Game Corner (`TwoIsland_JoyfulGameCorner`) has no map in PokemonSimulation, so the story
+stops at its door. Entering starts the owner's scene (Lostelle is missing; a Biker barges in), which
+sends the player to Three Island, whose port turns PC storage back on and whose Bikers are four
+trainer battles in a row (pokefirered `ThreeIsland_EventScript_BattleBikersScene`). After that come
+Celio's Ruby and Sapphire errands and the legendary birds, from the walkthrough drafts.
