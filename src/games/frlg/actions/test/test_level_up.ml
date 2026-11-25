@@ -1,10 +1,10 @@
-(* Level_up's decisions on a fake driver that answers each step from a script
+(* Level_up's decisions on fake game steps that answer each from a script
    and records the steps: one member's level-ups, who a screen is about, and
    six members levelled by one battle.
 
    [game] (Level_up_fake) is the fake console: given the scripted screens
    (looks), the lists to forget from and how each evolution scene leaves off,
-   its [driver] answers each call from that script and records the call
+   its [fake_game_steps] answer each call from that script and records the call
    ("yes", "no", "forget 1", "leave", "wait", "hold B"). [traced g text]
    appends the calls [g] saw, in order, in [...] after [text], so one string
    checks both the outcome and the exact presses. *)
@@ -18,7 +18,7 @@ let settle ?(lists = []) looks policy () =
   let g = game ~lists looks in
   traced g
     (match
-       Level_up.run (driver g)
+       Level_up.run (fake_game_steps g)
          (Level_up_policy.for_everyone policy)
          ~members:[ gastly ]
      with
@@ -96,7 +96,7 @@ let level_ups =
       "failed: nothing to answer showed []";
   ]
 
-(* Who a screen is about, when the driver names the member: two members,
+(* Who a screen is about, when the game steps name the member: two members,
    the second's screens named out of slot order. *)
 let pair ?(nicknames = (Some "CH'DING", Some "MIMIEN")) () :
     Level_up.member list =
@@ -109,7 +109,7 @@ let named_run ?nicknames looks () =
   let g = game looks in
   let result =
     match
-      Level_up.run (driver g)
+      Level_up.run (fake_game_steps g)
         (Level_up_policy.for_everyone (policy ()))
         ~members:(pair ?nicknames ())
     with
@@ -203,7 +203,9 @@ let battle =
            [ Ended; Continues; Ended; Continues; Ended; Ended; Ended; Ended ]
          six_looks
      in
-     let result = Level_up.run (driver g) six_policies ~members:party in
+     let result =
+       Level_up.run (fake_game_steps g) six_policies ~members:party
+     in
      (result, traced g ""))
 
 let member_outcome slot () =
@@ -232,7 +234,7 @@ let battles =
     member 4 "1 level; learned none; declined harden; evolution evolved";
     member 5 "2 levels; learned none; declined none; evolution evolved";
     member 6 "2 levels; learned none; declined none; evolution evolved";
-    case "the battle: the driver calls, in order"
+    case "the battle: the game steps taken, in order"
       (fun () -> String.trim (snd (Lazy.force battle)))
       "[no, yes, forget 1, yes, leave, wait, hold B, wait, wait, yes, leave, \
        wait, wait, wait, wait]";
