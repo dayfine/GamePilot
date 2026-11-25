@@ -13,7 +13,7 @@ let launch_wait_ms = 60_000
 
 let press ?(hold_ms = tap_hold_ms) ?(cooldown_ms = tap_release_ms) b =
   ignore
-    (Effects.submit [ Wire.Press { buttons = [ b ]; hold_ms; cooldown_ms } ]
+    (Effects.submit [ Wire.press ~hold_ms ~cooldown_ms [ b ] ]
       : Wire.batch_done)
 
 let screen () =

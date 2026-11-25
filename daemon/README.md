@@ -146,7 +146,7 @@ picture whole and at 2x inside side bars give the same results.
 | `src/window_capture*` | one app window as a frame source (ScreenCaptureKit on macOS) |
 | `src/log_tail.*` | another program's log, followed for the page |
 | `src/frame_ring.*` | the bounded ring between the capture and server threads |
-| `src/switch_controller.*` | GBA keys to Pro Controller button reports (CoreLib's PABotBase2 message) |
+| `src/switch_controller.*` | keys and stick tilts to Pro Controller reports (CoreLib's PABotBase2 message) |
 | `src/board_session.*` | the board's session as the C++ app starts it, on CoreLib's link and device handle |
 | `src/switch_geometry.*` | whether a capture shows the GBA picture where the viewport says |
 | `src/live_schedule.*` | command batches to key segments in wall time (live backends) |

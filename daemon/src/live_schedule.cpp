@@ -9,17 +9,19 @@ double LiveSchedule::submit(std::string batch_id,
                             double now_ms) {
   const double start = batches_.empty() ? now_ms : std::max(now_ms, end_ms_);
   double t = start;
-  const auto add = [&](KeyMask keys, double ms) {
-    segments_.push_back(KeySegment{t, ms, keys});
+  const auto add = [&](KeyMask keys, const Sticks& sticks, double ms) {
+    segments_.push_back(KeySegment{t, ms, keys, sticks});
     t += ms;
   };
   for (const InputCommand& command : commands) {
     if (command.is_wait) {
-      add(0, command.wait_ms);
+      add(0, Sticks{}, command.wait_ms);
       continue;
     }
-    add(command.buttons, command.hold_ms);
-    add(0, command.cooldown_ms);
+    const Sticks tilted{command.left_stick.value_or(StickPosition{}),
+                        command.right_stick.value_or(StickPosition{})};
+    add(command.buttons, tilted, command.hold_ms);
+    add(0, Sticks{}, command.cooldown_ms);
   }
   end_ms_ = t;
   batches_.push_back(EndedBatch{std::move(batch_id), t});

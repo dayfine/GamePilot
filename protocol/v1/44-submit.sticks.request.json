@@ -1,0 +1,28 @@
+{
+  "jsonrpc": "2.0",
+  "id": 44,
+  "method": "submit",
+  "params": {
+    "batch_id": "run",
+    "commands": [
+      {
+        "press": ["B"],
+        "left_stick": [0, 1],
+        "hold_ms": 1200,
+        "cooldown_ms": 0
+      },
+      {
+        "press": ["B"],
+        "left_stick": [0.5, 0.866],
+        "hold_ms": 400,
+        "cooldown_ms": 0
+      },
+      {
+        "press": [],
+        "right_stick": [-1, 0],
+        "hold_ms": 300,
+        "cooldown_ms": 100
+      }
+    ]
+  }
+}
