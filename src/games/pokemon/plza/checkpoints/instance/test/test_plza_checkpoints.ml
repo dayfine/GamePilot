@@ -60,20 +60,24 @@ let decode_cases =
       (event "platform_to_plaza")
       "platform_to_plaza: walk [0, 4500] [90, 10000] until fade_white => \
        LumioseCity/plaza";
-    case "held, a wait first, and an end not before a time"
+    case "steered, a wait before, and an end not before a time"
       (fun () ->
         walk_args
-          {|{"legs": [[-66, 600]], "held": true, "wait_ms": 500, "end": "dialog", "end_after_ms": 300}|})
-      "w: walk [-66, 600] held after 500 ms until dialog not before 300 ms";
+          {|{"legs": [[-66, 600]], "style": "steer", "wait_before_ms": 500, "end": "dialog", "earliest_end_ms": 300}|})
+      "w: walk [-66, 600] steer after 500 ms until dialog not before 300 ms";
+    case "a style that is not one of the two"
+      (fun () -> walk_args {|{"legs": [[0, 1]], "style": "held"}|})
+      "plza-01.01.plan.json: checkpoint.events[0].args.style must be \
+       \"face_then_walk\" or \"steer\".";
     case "until a scene"
       (fun () -> walk_args {|{"legs": [[0, 1000]], "end": "scene"}|})
       "w: walk [0, 1000] until scene";
     case "no postconditions: PLZA promises none"
       (fun () -> Plan_text.postconditions (plan ()))
       "none";
-    case "a leg that is not [turn, ms]"
+    case "a leg that is not [angle, ms]"
       (fun () -> walk_args {|{"legs": [[0, 1000], [90]]}|})
-      "plza-01.01.plan.json: checkpoint.events[0].args.legs[1] is not [turn \
+      "plza-01.01.plan.json: checkpoint.events[0].args.legs[1] is not [angle \
        degrees, walk ms].";
     case "legs are required"
       (fun () -> walk_args {|{"end": "scene"}|})
@@ -82,10 +86,10 @@ let decode_cases =
       (fun () -> walk_args {|{"legs": [[0, 1]], "end": "banner"}|})
       "plza-01.01.plan.json: checkpoint.events[0].args.end must be \
        \"fade_white\", \"fade_black\", \"dialog\", or \"scene\".";
-    case "end_after_ms needs an end"
-      (fun () -> walk_args {|{"legs": [[0, 1]], "end_after_ms": 100}|})
-      "plza-01.01.plan.json: checkpoint.events[0].args.end_after_ms needs an \
-       \"end\".";
+    case "earliest_end_ms needs an end"
+      (fun () -> walk_args {|{"legs": [[0, 1]], "earliest_end_ms": 100}|})
+      "plza-01.01.plan.json: checkpoint.events[0].args.earliest_end_ms needs \
+       an \"end\".";
     case "an unknown walk arg"
       (fun () -> walk_args {|{"legs": [[0, 1]], "tiles": 3}|})
       "plza-01.01.plan.json: checkpoint.events[0].args.tiles is not a known \

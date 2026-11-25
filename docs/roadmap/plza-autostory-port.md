@@ -10,11 +10,11 @@ The C++ is the plan: branch `plza/lean` (fork PR #644), story rows 01.00 to 03.1
 
 | C++ (under `PokemonLZA/Programs/AutoStory/`) | What it does | GamePilot home |
 |---|---|---|
-| `StoryData/plza-*.plan.json` (31 plans) | checkpoints as data | `src/games/plza/programs/story/plans/` |
-| `ScreenEvents`, `SceneMachine`, `ConsoleBackend`, `Game` | screen events and scenes, the story backend | `src/games/plza/checkpoints`, `src/pokemon/checkpoints` |
-| `Actions/Walks`, `WorldWalks`, `MapLegs` | timed legs, turns after a camera recenter, minimap heading, platform arrival | `src/games/plza/actions` |
-| `Actions/Catches`, `CatchPlan`, `Zone1` | wild-zone catches, battle then catch | `src/games/plza/battle` |
-| `Actions/NewGame`, `Starts`, `Autosaves` | new game, start checks from recorded minimaps, autosave points | `src/games/plza/actions` |
+| `StoryData/plza-*.plan.json` (31 plans) | checkpoints as data | `src/games/pokemon/plza/programs/story/plans/` |
+| `ScreenEvents`, `SceneMachine`, `ConsoleBackend`, `Game` | screen events and scenes, the story backend | `src/games/pokemon/plza/checkpoints`, `src/pokemon/checkpoints` |
+| `Actions/Walks`, `WorldWalks`, `MapLegs` | timed legs, turns after a camera recenter, minimap heading, platform arrival | `src/games/pokemon/plza/actions` |
+| `Actions/Catches`, `CatchPlan`, `Zone1` | wild-zone catches, battle then catch | `src/games/pokemon/plza/battle` |
+| `Actions/NewGame`, `Starts`, `Autosaves` | new game, start checks from recorded minimaps, autosave points | `src/games/pokemon/plza/actions` |
 
 Related fork PRs: #590 (the shared ball throw helper), #755 and #754 (minimal slices for 01.01 and
 01.02), #756 (detectors with tests).
@@ -34,7 +34,7 @@ shapes the pieces both later games use.
 
 - **Scope.** Checkpoint 01.01 (the platform to MAIN MISSION 01), the cut of fork #754: `wait_for_platform`,
   `set_text_speed_fast`, `walk`, `scene`, `plus_skip`. 01.00 (new game) and 01.02 are later decisions.
-- **Engine.** `games/plza` links `src/engine` only, through its own `Plza_terms` (zone poses, its own
+- **Engine.** `games/pokemon/plza` links `src/engine` only, through its own `Plza_terms` (zone poses, its own
   kinds), after Engine-Boundary PR 4. Readers, actions and the plan file can come before it; nothing
   touches `src/engine` or `src/pokemon/checkpoints` meanwhile. `walk`'s timed legs stay PLZA's own JSON
   until a second game needs the same shape. `plza` joins `family pokemon` in its own PR when battles
@@ -42,7 +42,7 @@ shapes the pieces both later games use.
 - **Daemon (Engine-Boundary PR 8, claimed by this port).** 8a: `--viewport native`, the whole frame at
   1920x1080 game pixels, so the C++ boxes and 1080p templates carry over. 8b: optional `left_stick` and
   `right_stick` on `press`, [x, y] in -1..1; running is B with the stick, as `PlzaConsoleBackend::stick`.
-  Angles and the run speed-up stay in `games/plza`.
+  Angles and the run speed-up stay in `games/pokemon/plza`.
 - **Reload.** As `reload_latest_save` in the C++: close the game and launch PLZA's tile from HOME
   (`switch_home` learns it from `NintendoSwitch_GameEntry`), then game menu to in game. `Home_screen`
   keeps the fork's whole-frame boxes and converts them by the daemon's viewport. The game autosaves on

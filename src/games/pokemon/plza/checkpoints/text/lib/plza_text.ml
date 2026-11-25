@@ -6,23 +6,24 @@ let pose ({ place; spot } : Pose.t) =
   match spot with Some s -> place ^ "/" ^ s | None -> place
 
 let observed = pose
-let leg { turn; walk_ms } = Printf.sprintf "[%g, %d]" turn walk_ms
+let leg { angle_deg; walk_ms } = Printf.sprintf "[%g, %d]" angle_deg walk_ms
 
 let until = function
   | None -> []
   | Some Scene -> [ "until scene" ]
   | Some (Event e) -> [ "until " ^ end_event_name e ]
 
-let walk { move; until = u; end_after_ms } =
+let walk { move; until = u; earliest_end_ms } =
   String.concat " "
     (("walk" :: List.map leg move.legs)
-    @ (if move.style = Held then [ "held" ] else [])
-    @ (if move.wait_first_ms > 0 then
-         [ Printf.sprintf "after %d ms" move.wait_first_ms ]
+    @ (if move.style = Steer then [ "steer" ] else [])
+    @ (if move.wait_before_ms > 0 then
+         [ Printf.sprintf "after %d ms" move.wait_before_ms ]
        else [])
     @ until u
     @
-    if end_after_ms > 0 then [ Printf.sprintf "not before %d ms" end_after_ms ]
+    if earliest_end_ms > 0 then
+      [ Printf.sprintf "not before %d ms" earliest_end_ms ]
     else [])
 
 let kind : Kind.t -> string = function Walk w -> walk w

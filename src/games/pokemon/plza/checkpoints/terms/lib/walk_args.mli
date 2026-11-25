@@ -1,31 +1,32 @@
-(** A PLZA walk as a plan writes it: timed legs of the left stick, each a turn
-    and a walk, and what ends the last one. Ported from the walk's args in
+(** A PLZA walk as a plan writes it: timed legs of the left stick, each an angle
+    and a time, and what ends the last one. Ported from the walk's args in
     [PokemonLZA_AutoStoryActionTable.cpp] and [PokemonLZA_AutoStoryWalks.h]
     (fork #754, [plza/mvp-0101]). Positions in PLZA are 3D and camera-relative,
     so a walk is durations and angles, never tiles. Pure: [Walk_decode] reads it
     from a plan. *)
 
 type leg = {
-  turn : float;
+  angle_deg : float;
       (** Degrees clockwise from where the camera looks (0 straight on, 90
           right). *)
-  walk_ms : int;  (** How long the stick is held after the turn; 0 for none. *)
+  walk_ms : int;  (** How long the stick is held; 0 for none. *)
 }
-(** One leg of a walk: a turn, then a timed walk. *)
+(** One leg of a walk: an angle, and how long to walk. *)
 
 (** How a move's legs are played. *)
 type style =
-  | Turn_then_walk
-      (** Each turn is a short tilt between two L presses (the camera recentres
-          behind the player), then the walk holds the stick straight on. *)
-  | Held
-      (** Each leg holds the stick at its own angle for its time, with an L
-          press before a turned leg after the first. *)
+  | Face_then_walk
+      (** A plan's ["face_then_walk"], the default. Each leg first faces its
+          angle (a short tilt between two L presses: the camera recentres behind
+          the player), then holds the stick straight on. *)
+  | Steer
+      (** A plan's ["steer"]. Each leg holds the stick at its own angle for its
+          time, with an L press before an angled leg after the first. *)
 
 type move = {
   legs : leg list;
   style : style;
-  wait_first_ms : int;  (** A wait before anything else; 0 for none. *)
+  wait_before_ms : int;  (** A wait before anything else; 0 for none. *)
 }
 (** The legs of a walk, and how they are played. *)
 
@@ -42,7 +43,7 @@ type t = {
   until : until option;
       (** [None]: the legs alone, as timed. Set: the last leg is held, in
           slices, until it. *)
-  end_after_ms : int;
+  earliest_end_ms : int;
       (** An end event seen before the last leg has been held this long was
           passed on the way, and the walk goes on; 0 for none. *)
 }
@@ -53,3 +54,9 @@ val end_event_name : end_event -> string
 
 val end_event_of_name : string -> end_event option
 (** {!end_event_name} read back. *)
+
+val style_name : style -> string
+(** ["face_then_walk"], ["steer"]: as a plan writes it. *)
+
+val style_of_name : string -> style option
+(** {!style_name} read back. *)
