@@ -80,7 +80,7 @@ fly_celadon: [fly] game_action {"town":"CeladonCity","species":"pidgeot"}
 to_4f_clerk: [run] route to CeladonCity_DepartmentStore_1F (6, 2) north
 to_4f_clerk.lift: [lift_floor] game_action {"from":"1F","to":"4F"} => CeladonCity_DepartmentStore_4F (6, 2) south
 to_4f_clerk.walk: [run] route to CeladonCity_DepartmentStore_4F (3, 11) south
-buy_retro_mail: [mart] game_action {"map":"CeladonCity_DepartmentStore_4F","items":[{"item":"retro-mail","quantity":50},{"item":"retro-mail","quantity":30}]}
+buy_retro_mail: [mart] game_action {"map":"CeladonCity_DepartmentStore_4F","items":[{"item":"retro-mail","quantity":50},{"item":"retro-mail","quantity":50},{"item":"retro-mail","quantity":10}]}
 out_of_dept_store: [run] route to CeladonCity_DepartmentStore_4F (6, 2) north
 out_of_dept_store.lift: [lift_floor] game_action {"from":"4F","to":"1F"} => CeladonCity_DepartmentStore_1F (6, 2) south
 out_of_dept_store.walk: [run] route to CeladonCity (11, 15) south
@@ -89,22 +89,27 @@ heal_indigo.walk: [run] route to IndigoPlateau_PokemonCenter_1F (13, 12) north
 heal_indigo: heal
 retries 0
 postconditions:
-item retro-mail gained 80
-money spent 4000
+item retro-mail gained 110
+money spent 5500
 no repeat
-== dex_collection/plans/07-copy-more-balls.plan.json
-frlg 07-copy-more-balls from IndigoPlateau_PokemonCenter_1F (13, 12) north: 6 game_action
+== dex_collection/plans/07-copy-candies-and-balls.plan.json
+frlg 07-copy-candies-and-balls from IndigoPlateau_PokemonCenter_1F (13, 12) north: 10 game_action
 mimien_to_slot1: [party_swap] game_action {"species":"mr-mime","target_slot":1}
 check_marks_before: [check_party_marks] game_action {"marks":["held_item","mail","mail","mail","mail","mail"]}
+give_rare_candy: [give_bag_item] game_action {"item":"rare-candy","species":"mr-mime"}
 retro_mail_to_top: [move_item_to_top] game_action {"item":"retro-mail"}
-duplicate_ultra_ball: [duplicate_item] game_action {"species":"mr-mime","item":"ultra-ball","count":80,"word":"ABRA"}
+duplicate_rare_candy: [duplicate_item] game_action {"species":"mr-mime","item":"rare-candy","count":40,"word":"ABRA"}
+give_ultra_ball: [give_bag_item] game_action {"item":"ultra-ball","species":"mr-mime"}
+retro_mail_to_top_again: [move_item_to_top] game_action {"item":"retro-mail"}
+duplicate_ultra_ball: [duplicate_item] game_action {"species":"mr-mime","item":"ultra-ball","count":90,"word":"ABRA"}
 check_marks_after: [check_party_marks] game_action {"marks":["held_item","mail","mail","mail","mail","mail"]}
 blastoise_to_slot1: [party_swap] game_action {"species":"blastoise","target_slot":1}
 retries 0
 postconditions:
 blastoise in slot 1
 mr-mime in slot 2
-item ultra-ball gained 80
+item rare-candy gained 40
+item ultra-ball gained 90
 no repeat
 == dex_collection/plans/08-victory-road-rest.plan.json
 frlg 08-victory-road-rest from IndigoPlateau_PokemonCenter_1F (13, 12) north: 3 game_action, 2 route, 1 heal
@@ -120,18 +125,22 @@ caught gained 2
 at most 4 rounds, until:
 caught at least 25
 == dex_collection/plans/09-viridian-forest.plan.json
-frlg 09-viridian-forest from IndigoPlateau_PokemonCenter_1F (13, 12) north: 4 game_action, 3 route, 1 heal
+frlg 09-viridian-forest from IndigoPlateau_PokemonCenter_1F (13, 12) north: 7 game_action, 4 route, 1 heal
 caught_before: [read_caught] game_action {}
 out_of_indigo: [run] route to IndigoPlateau_Exterior (11, 7) south
 fly_pewter: [fly] game_action {"town":"PewterCity","species":"pidgeot"}
+to_pewter_pc: [run] route to PewterCity_PokemonCenter_1F (11, 2) north
+deposit: [pc_deposit] game_action {"species":["farfetchd","raticate"]}
 to_forest: [run] route to ViridianForest (5, 13) east
 catch_forest: [capture] game_action {"uncaught":["caterpie","weedle","kakuna","metapod","pikachu"],"catches":5,"encounters":150,"balls":20,"ball":"ultra-ball","pace":"east"}
 heal_pewter.walk: [run] route to PewterCity_PokemonCenter_1F (7, 4) north
 heal_pewter: heal
+candy_slot5: [candy_level] game_action {"target_slot":5,"target_level":10,"evolve":true,"max_candies":9}
+candy_slot6: [candy_level] game_action {"target_slot":6,"target_level":10,"evolve":true,"max_candies":9}
 caught_after: [read_caught] game_action {}
 retries 0
 postconditions:
-caught gained 5
+caught at least 31
 no repeat
 == dex_collection/plans/10-route3-east-grass.plan.json
 frlg 10-route3-east-grass from PewterCity_PokemonCenter_1F (7, 4) north: 4 game_action, 3 route, 1 heal
@@ -222,18 +231,21 @@ postconditions:
 caught gained 2
 no repeat
 == dex_collection/plans/16-magikarp-salesman.plan.json
-frlg 16-magikarp-salesman from VermilionCity_PokemonCenter_1F (7, 4) north: 3 game_action, 3 route, 1 answer, 1 heal
+frlg 16-magikarp-salesman from VermilionCity_PokemonCenter_1F (7, 4) north: 5 game_action, 4 route, 1 answer, 1 heal
 caught_before: [read_caught] game_action {}
 out_of_center: [run] route to VermilionCity (15, 7) south
 fly_route4: [fly] game_action {"town":"Route4","species":"pidgeot"}
+to_route4_pc: [run] route to Route4_PokemonCenter_1F (11, 2) north
+deposit: [pc_deposit] game_action {"species":["mr-mime"]}
 to_salesman: [run] route to Route4_PokemonCenter_1F (2, 3) west
 buy_magikarp: answer yes
 heal_route4.walk: [run] route to Route4_PokemonCenter_1F (7, 4) north
 heal_route4: heal
+magikarp_to_gyarados: [candy_level] game_action {"species":"magikarp","target_level":20,"evolve":true,"expect_species":"gyarados","max_candies":16}
 caught_after: [read_caught] game_action {}
 retries 0
 postconditions:
-caught gained 1
+caught gained 2
 money spent 500
 no repeat
 == dex_collection/plans/17-eevee.plan.json
@@ -269,6 +281,20 @@ caught_after: [read_caught] game_action {}
 retries 0
 postconditions:
 caught gained 4
+no repeat
+== dex_collection/plans/19-pokemon-tower.plan.json
+frlg 19-pokemon-tower from Route10_PokemonCenter_1F (7, 4) north: 4 game_action, 3 route, 1 heal
+caught_before: [read_caught] game_action {}
+out_of_center: [run] route to Route10 (13, 21) south
+fly_lavender: [fly] game_action {"town":"LavenderTown","species":"pidgeot"}
+to_tower_3f: [run] route to PokemonTower_3F (4, 11) south
+catch_tower: [capture] game_action {"uncaught":["gastly","cubone","haunter"],"catches":2,"encounters":100,"balls":30,"ball":"ultra-ball","pace":"south"}
+heal_lavender.walk: [run] route to LavenderTown_PokemonCenter_1F (7, 4) north
+heal_lavender: heal
+caught_after: [read_caught] game_action {}
+retries 0
+postconditions:
+caught gained 2
 no repeat
 == mail_glitch/plans/01-celadon-setup.plan.json
 frlg 01-celadon-setup from CeladonCity (48, 12) south: 6 game_action, 7 route, 1 talk, 1 scene

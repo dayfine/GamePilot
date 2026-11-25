@@ -1,0 +1,111 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "frlg",
+  "checkpoint": {
+    "id": "19-pokemon-tower",
+    "title": "From Route 10's nurse: fly to Lavender, Gastly and Cubone on Pokemon Tower 3F, Lavender's nurse",
+    "start": {
+      "map": "Route10_PokemonCenter_1F",
+      "tiles": [
+        [
+          7,
+          4
+        ]
+      ],
+      "facing": "north"
+    },
+    "events": [
+      {
+        "id": "caught_before",
+        "kind": "game_action",
+        "action": "read_caught",
+        "args": {},
+        "why": "The Pokedex count before the catches."
+      },
+      {
+        "id": "out_of_center",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "place": "route10_center_outside"
+          }
+        },
+        "why": "Out of the Center to fly."
+      },
+      {
+        "id": "fly_lavender",
+        "kind": "game_action",
+        "action": "fly",
+        "args": {
+          "town": "LavenderTown",
+          "species": "pidgeot"
+        },
+        "why": "Lavender Town: Pokemon Tower is east of the Center."
+      },
+      {
+        "id": "to_tower_3f",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "PokemonTower_3F",
+            "tiles": [
+              [
+                4,
+                11
+              ]
+            ],
+            "facing": "south"
+          }
+        },
+        "why": "Up two floors to 3F's west strip by its stairs, out of the Channelers' sight behind the wall."
+      },
+      {
+        "id": "catch_tower",
+        "kind": "game_action",
+        "action": "capture",
+        "args": {
+          "uncaught": [
+            "gastly",
+            "cubone",
+            "haunter"
+          ],
+          "catches": 2,
+          "encounters": 100,
+          "balls": 30,
+          "ball": "ultra-ball",
+          "pace": "south"
+        },
+        "why": "Pokemon Tower 3F (FireRed, pret src/data/wild_encounters.json): Gastly 90%, Cubone 9%, Haunter 1%, Lv 13 to 20."
+      },
+      {
+        "fragment": "heal_at",
+        "args": {
+          "town": "lavender"
+        },
+        "id": "heal_lavender",
+        "why": "Down and across to Lavender's nurse, where the next checkpoint starts."
+      },
+      {
+        "id": "caught_after",
+        "kind": "game_action",
+        "action": "read_caught",
+        "args": {},
+        "why": "The Pokedex count after the catches."
+      }
+    ]
+  },
+  "execution": {
+    "menu": "full"
+  },
+  "metadata": {
+    "phase": "testing",
+    "notes": "The party is full, so the catches go to Bill's PC.",
+    "postconditions": {
+      "caught": {
+        "gained": 2
+      }
+    }
+  }
+}

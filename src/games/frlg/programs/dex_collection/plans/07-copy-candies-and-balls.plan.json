@@ -2,8 +2,8 @@
   "format": "gamepilot-checkpoint/1",
   "game": "frlg",
   "checkpoint": {
-    "id": "07-copy-more-balls",
-    "title": "Indigo Plateau's nurse: the Mail Glitch copies 80 more Ultra Balls",
+    "id": "07-copy-candies-and-balls",
+    "title": "Indigo Plateau's nurse: the Mail Glitch copies 40 more Rare Candies and 90 more Ultra Balls",
     "start": {
       "map": "IndigoPlateau_PokemonCenter_1F",
       "tiles": [
@@ -42,6 +42,16 @@
         "why": "The glitch's mail records are intact."
       },
       {
+        "id": "give_rare_candy",
+        "kind": "game_action",
+        "action": "give_bag_item",
+        "args": {
+          "item": "rare-candy",
+          "species": "mr-mime"
+        },
+        "why": "MIMIEN holds a Rare Candy to copy; the Ultra Ball it held goes back to the bag."
+      },
+      {
         "id": "retro_mail_to_top",
         "kind": "game_action",
         "action": "move_item_to_top",
@@ -51,16 +61,47 @@
         "why": "duplicate_item gives the top row's Retro Mail."
       },
       {
+        "id": "duplicate_rare_candy",
+        "kind": "game_action",
+        "action": "duplicate_item",
+        "args": {
+          "species": "mr-mime",
+          "item": "rare-candy",
+          "count": 40,
+          "word": "ABRA"
+        },
+        "why": "40 candies for the catches that join the party (09)."
+      },
+      {
+        "id": "give_ultra_ball",
+        "kind": "game_action",
+        "action": "give_bag_item",
+        "args": {
+          "item": "ultra-ball",
+          "species": "mr-mime"
+        },
+        "why": "Next MIMIEN holds an Ultra Ball; the candy goes back to the bag."
+      },
+      {
+        "id": "retro_mail_to_top_again",
+        "kind": "game_action",
+        "action": "move_item_to_top",
+        "args": {
+          "item": "retro-mail"
+        },
+        "why": "The Retro Mail on the top row again."
+      },
+      {
         "id": "duplicate_ultra_ball",
         "kind": "game_action",
         "action": "duplicate_item",
         "args": {
           "species": "mr-mime",
           "item": "ultra-ball",
-          "count": 80,
+          "count": 90,
           "word": "ABRA"
         },
-        "why": "80 Ultra Balls, one Retro Mail each, for the catches to come."
+        "why": "90 Ultra Balls, one Retro Mail each, for the catches to come."
       },
       {
         "id": "check_marks_after",
@@ -95,12 +136,16 @@
   },
   "metadata": {
     "phase": "testing",
-    "notes": "Needs at least 82 Retro Mail (06's 80 and what 03 left) and MIMIEN holding an Ultra Ball.",
+    "notes": "Needs at least 130 Retro Mail (06's 110 and what 03 left).",
     "postconditions": {
       "items": [
         {
+          "item": "rare-candy",
+          "gained": 40
+        },
+        {
           "item": "ultra-ball",
-          "gained": 80
+          "gained": 90
         }
       ],
       "party_slots": [

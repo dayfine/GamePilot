@@ -3,7 +3,7 @@
   "game": "frlg",
   "checkpoint": {
     "id": "06-retro-mail",
-    "title": "From Indigo Plateau's nurse: fly to Celadon, 80 Retro Mail at the Dept. Store's 4F, fly back to Indigo's nurse",
+    "title": "From Indigo Plateau's nurse: fly to Celadon, 110 Retro Mail at the Dept. Store's 4F, fly back to Indigo's nurse",
     "start": {
       "map": "IndigoPlateau_PokemonCenter_1F",
       "tiles": [
@@ -67,11 +67,15 @@
             },
             {
               "item": "retro-mail",
-              "quantity": 30
+              "quantity": 50
+            },
+            {
+              "item": "retro-mail",
+              "quantity": 10
             }
           ]
         },
-        "why": "80 Retro Mail ($4,000), one per Ultra Ball the next checkpoint copies; the quantity box stops at 99."
+        "why": "110 Retro Mail ($5,500), one per item the next checkpoint copies; the quantity box stops at 99. $500 stays for 16's Magikarp."
       },
       {
         "id": "out_of_dept_store",
@@ -109,16 +113,16 @@
   },
   "metadata": {
     "phase": "testing",
-    "notes": "Victory Road's species take about 7 Ultra Balls each at full HP (Onix about 9): 03's 40 run short.",
+    "notes": "Victory Road's species take about 7 Ultra Balls each at full HP: 03's 40 run short, and more candies evolve the forest's catches.",
     "postconditions": {
       "items": [
         {
           "item": "retro-mail",
-          "gained": 80
+          "gained": 110
         }
       ],
       "money": {
-        "spent": 4000
+        "spent": 5500
       }
     }
   }

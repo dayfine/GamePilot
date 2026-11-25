@@ -3,7 +3,7 @@
   "game": "frlg",
   "checkpoint": {
     "id": "16-magikarp-salesman",
-    "title": "From Vermilion's nurse: fly to Route 4, buy the salesman's Magikarp, Route 4's nurse",
+    "title": "From Vermilion's nurse: fly to Route 4, MIMIEN to the PC, buy the salesman's Magikarp and candy it into Gyarados, Route 4's nurse",
     "start": {
       "map": "VermilionCity_PokemonCenter_1F",
       "tiles": [
@@ -51,6 +51,35 @@
         "why": "Route 4's Center, where the Magikarp salesman sits."
       },
       {
+        "id": "to_route4_pc",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "Route4_PokemonCenter_1F",
+            "tiles": [
+              [
+                11,
+                2
+              ]
+            ],
+            "facing": "north"
+          }
+        },
+        "why": "Below the Center's PC (11, 1)."
+      },
+      {
+        "id": "deposit",
+        "kind": "game_action",
+        "action": "pc_deposit",
+        "args": {
+          "species": [
+            "mr-mime"
+          ]
+        },
+        "why": "MIMIEN's copying is done (07): it goes to the PC, so the Magikarp joins the party."
+      },
+      {
         "id": "to_salesman",
         "kind": "route",
         "action": "run",
@@ -74,7 +103,7 @@
         "args": {
           "yes": true
         },
-        "why": "\"MAGIKARP for just $500! So, will you buy it?\" YES: Magikarp (Lv 5) goes to Bill's PC, and the settle's B answers NO to the nickname (pokefirered data/maps/Route4_PokemonCenter_1F/scripts.inc)."
+        "why": "\"MAGIKARP for just $500! So, will you buy it?\" YES: Magikarp (Lv 5) joins the party, and the settle's B answers NO to the nickname (pokefirered data/maps/Route4_PokemonCenter_1F/scripts.inc)."
       },
       {
         "fragment": "heal_at",
@@ -83,6 +112,19 @@
         },
         "id": "heal_route4",
         "why": "To the nurse, where the next checkpoint starts."
+      },
+      {
+        "id": "magikarp_to_gyarados",
+        "kind": "game_action",
+        "action": "candy_level",
+        "args": {
+          "species": "magikarp",
+          "target_level": 20,
+          "evolve": true,
+          "expect_species": "gyarados",
+          "max_candies": 16
+        },
+        "why": "Magikarp evolves into Gyarados at Lv 20 (pret src/data/pokemon/evolution.h): 15 candies."
       },
       {
         "id": "caught_after",
@@ -101,7 +143,7 @@
     "notes": "Once per save: the salesman sells one Magikarp (FLAG_BOUGHT_MAGIKARP).",
     "postconditions": {
       "caught": {
-        "gained": 1
+        "gained": 2
       },
       "money": {
         "spent": 500
