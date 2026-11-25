@@ -85,7 +85,7 @@ GamePilot automates games through three layers (design: `docs/design/Layered-Aut
 - The FireRed ROM, its path and its hash never enter this repo or any log.
 - The Switch (a Switch with a capture card and a controller board) is shared with other
   automation: only one program may drive the console at a time.
-- Machine-specific paths come from environment variables (`GAMEPILOT_*`, see `README.md`),
+- Machine-specific paths come from environment variables (`GAMEPILOT_*`, see `docs/mgba.md`),
   never from a home path in code, docs or tests.
 
 ## PR gate loop
