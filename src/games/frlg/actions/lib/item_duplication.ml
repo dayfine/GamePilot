@@ -82,7 +82,18 @@ let count_of item =
   | Some n -> n
   | None -> M.fail "count_not_read" (item ^ "'s count did not read")
 
+(* The bag back after the editor: a fade passes first, black on the frame
+   (round 2 read black there), and the list takes no A for a moment after it
+   shows (round 2's A was dropped, so DOWN, A chose the next row; mGBA, tt-01
+   testing runs 2 and 3), so the party's input wait comes after it. *)
+let await_bag () =
+  ignore
+    (M.await_screen ~timeout_ms:wait_ms ~code:"no_bag" "the bag" (fun m ->
+         Bag_screen.pocket m = Some Items));
+  pause Party_actions.party_input_ms
+
 let mail_left () =
+  await_bag ();
   match Bag_items.count_on_row 0 with
   | Some n when n >= min_mail -> ()
   | n ->
@@ -106,9 +117,7 @@ let run ~log plan =
   let before = count_of plan.item in
   Bag_items.to_top ();
   rounds ~log plan;
-  ignore
-    (M.await_screen ~timeout_ms:wait_ms ~code:"no_bag"
-       "the bag after the rounds" (fun m -> Bag_screen.pocket m = Some Items));
+  await_bag ();
   Bag_items.to_top ();
   let after = count_of plan.item in
   Effects.save_run_frame "proof-b.png";
