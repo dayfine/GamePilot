@@ -40,29 +40,46 @@ let fade_up () =
   match
     Effects.await ~timeout_ms:fade_up_timeout_ms (fun m -> not (faded m))
   with
-  | Holds _ -> ()
+  | Holds m -> m
   | Timeout -> fail "fade_stuck" "the warp's fade did not come back up"
 
-(* A map preview's fades: a flash of white, then black, then the map; each
-   watched for [watch_ms] from the one before coming up. *)
-let rec wait_out_preview ~watch_ms =
-  match Effects.await ~timeout_ms:watch_ms faded with
-  | Holds _ ->
-      fade_up ();
-      wait_out_preview ~watch_ms:Map_previews.fade_gap_ms
-  | Timeout -> ()
+(* From the fade's first lit frame [lit] until the room stands still in full
+   light ({!Warp_fade_in}). A screen never still by the timeout is long past
+   any fade-in: the walk goes on. *)
+let wait_fade_in t lit =
+  let fade_in = Warp_fade_in.create lit in
+  match
+    Effects.await ~timeout_ms:fade_up_timeout_ms (Warp_fade_in.seen fade_in)
+  with
+  | Holds _ -> ()
+  | Timeout -> t.log "Route: the screen never stood still after the warp."
 
-(* After a warp: its fade, a map preview's fade if one shows, and the step out
-   of a doorway, until the player takes input. *)
-let wait_out_warp fade ~preview ~steps_out =
+(* A map preview's fades: a flash of white, then black, then the map; each
+   watched for [watch_ms] from the one before coming up at [lit]. The last
+   fade's first lit frame. *)
+let rec wait_out_preview lit ~watch_ms =
+  match Effects.await ~timeout_ms:watch_ms faded with
+  | Holds _ -> wait_out_preview (fade_up ()) ~watch_ms:Map_previews.fade_gap_ms
+  | Timeout -> lit
+
+(* After a warp: its fade, a map preview's fade if one shows, the fade-in and
+   the step out of a doorway, until the player takes input. The step out is
+   timed from the fade's first lit frame. *)
+let wait_out_warp t fade ~preview ~steps_out =
   (if not (Grid_walker.Watch_along.fired fade) then
      match Effects.await ~timeout_ms:warp_fade_timeout_ms faded with
      | Holds _ -> ()
      | Timeout -> fail "no_warp_fade" "no fade after the hold onto the warp");
-  fade_up ();
-  if preview then wait_out_preview ~watch_ms:Map_previews.watch_ms;
+  let lit = fade_up () in
+  wait_fade_in t
+    (if preview then wait_out_preview lit ~watch_ms:Map_previews.watch_ms
+     else lit);
   if steps_out then
-    ignore (Effects.await ~timeout_ms:door_step_out_ms (fun _ -> false))
+    let left_ms = lit.t_ms +. float_of_int door_step_out_ms -. Effects.now () in
+    if left_ms > 0. then
+      ignore
+        (Effects.await ~timeout_ms:(int_of_float left_ms) (fun _ -> false)
+          : Effects.awaited)
 
 let map_name t (place : Connected_maps.place) =
   (Connected_maps.map t.world.maps place.map).name
@@ -99,7 +116,7 @@ let hold t (leg : Connected_maps.place Grid_planning.Leg.t)
   let result = Grid_walker.Leg_walker.walk_leg ~hold_watchers walker spec in
   if result.stopped then raise Leg_blocked;
   if leg.warps then
-    wait_out_warp fade
+    wait_out_warp t fade
       ~preview:
         (Map_previews.on_warp ~from_map:(map_name t leg.start)
            ~to_map:(map_name t leg.finish))

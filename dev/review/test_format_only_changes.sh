@@ -18,6 +18,7 @@ printf 'let f x =\n  x + 1\n' >reflowed.ml
 printf 'let g x = x\n' >edited.ml
 printf 'kept\n' >old_name.txt
 printf 'first\n' >old_edited.txt
+printf 'a\0b c\n' >replay.bin
 git add . && git commit -qm base
 git checkout -qb pr
 printf '{\n  "a": 1,\n  "b": [1, 2]\n}\n' >same.json
@@ -27,6 +28,7 @@ printf 'let g x = x + 0\n' >edited.ml
 git mv old_name.txt new_name.txt
 git mv old_edited.txt new_edited.txt
 printf 'first\nsecond\n' >new_edited.txt
+printf 'a\0bc\n' >replay.bin
 printf 'new\n' >added.txt
 git add -A && git commit -qm pr
 
@@ -40,6 +42,7 @@ check "reformatted JSON is listed" "format-only same.json" "$(echo "$got" | grep
 check "reflowed OCaml is listed" "format-only reflowed.ml" "$(echo "$got" | grep '\.ml' || true)"
 check "unchanged move is listed" "moved old_name.txt -> new_name.txt" \
     "$(echo "$got" | grep '^moved' || true)"
+check "a changed binary file is not listed" "" "$(echo "$got" | grep 'replay' || true)"
 check "nothing else is listed" "3" "$(echo "$got" | wc -l | tr -d ' ')"
 check "no changes, no lines" "" "$(sh "$here/format_only_changes.sh" main main)"
 exit $failures

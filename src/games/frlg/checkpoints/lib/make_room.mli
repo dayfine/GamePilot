@@ -14,9 +14,8 @@ val center_map : string -> string
 (** ["ViridianCity"] -> ["ViridianCity_PokemonCenter_1F"]. *)
 
 val pc_front : Grid_maps.Tile_pos.t
-(** (11, 2), facing north: below the PC (11, 1) on every Center's ground floor
-    of the maps (PokemonSimulation's [CeruleanCity_PokemonCenter_1F] names it
-    [pc]). *)
+(** (11, 2), facing north: below the PC (11, 1) on a standard Center's ground
+    floor ({!Frlg_overworld.Standard_center.pc_front}). *)
 
 val town_of_map :
   Frlg_actions.Fly_towns.t -> string -> Frlg_actions.Fly_towns.town option
@@ -28,9 +27,11 @@ val nearest_center :
   maps:string list ->
   string ->
   (Frlg_actions.Fly_towns.town, string) result
-(** The Fly town with a Center in [maps] whose fly-map cell is nearest (by
-    squared distance; the table's order breaks ties) to the town of the save's
-    map: Viridian City from Pallet Town, which has no Center. *)
+(** The Fly town with a standard Center ({!Frlg_overworld.Standard_center}) in
+    [maps] whose fly-map cell is nearest (by squared distance; the table's order
+    breaks ties) to the town of the save's map: Viridian City from Pallet Town,
+    which has no Center. The Indigo Plateau's Center has its own layout, with no
+    PC at {!pc_front}, so it is never chosen. *)
 
 type room = {
   center : Frlg_actions.Fly_towns.town;
