@@ -2,8 +2,8 @@
 
 Catches a shiny Ekans in Route 10's grass, on purpose, in about a minute. As PA/CC's RNG programs
 do, it restarts the game and presses A on the title screen, then uses Sweet Scent, at moments
-worked out for your trainer ID and secret ID, so the wild Pokémon is the one chosen in advance. It throws Poké Balls and checks the star on the
-catch's summary before saving.
+worked out for your trainer ID and secret ID, so the wild Pokémon is the one chosen in advance. It
+throws Poké Balls and checks the star on the catch's summary before saving.
 
 <!-- generated:backends -->
 Runs on: mGBA.
