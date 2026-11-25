@@ -3,7 +3,15 @@ name: OCaml
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - "daemon/**"
+      - ".github/workflows/daemon.yml"
   pull_request:
+    # The daemon's C++ has its own workflow; the OCaml build reads none of it.
+    # protocol/ is not ignored: the OCaml tests parse its golden files.
+    paths-ignore:
+      - "daemon/**"
+      - ".github/workflows/daemon.yml"
 # A newer push to a PR replaces its queued or running run, as daemon.yml does;
 # main's runs all finish.
 concurrency:
