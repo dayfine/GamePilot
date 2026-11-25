@@ -20,7 +20,7 @@
    Any other frame must not read as the card.
 
    card.<backend>.shifted.probes.jsonl holds every real frame (not the
-   renders) again with its colors shifted (shift_frame.py: brightness times
+   renders) again with its colors shifted (dev/reader_fixtures/shift_frame.py: brightness times
    0.9 and 1.1, one channel plus or minus 12, 10% toward mid-grey), named
    <shift>/<image>: each must read as the frame itself does. *)
 
