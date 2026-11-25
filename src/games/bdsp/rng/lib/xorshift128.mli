@@ -19,16 +19,29 @@ val state_of_seed_pair : int64 -> int64 -> state
 (** [seed0] gives [s0] (high half) and [s1], [seed1] gives [s2] and [s3]. *)
 
 val state_to_seed_pair : state -> int64 * int64
+(** The inverse of {!state_of_seed_pair}. *)
+
 val state_to_vector : state -> Gf2_matrix.vec
+(** The state as one 128-bit vector: [s0] is the top word of [high], [s3] the
+    bottom word of [low]. *)
+
 val state_of_vector : Gf2_matrix.vec -> state
+(** The inverse of {!state_to_vector}. *)
 
 type t
 (** A generator ([Xorshift128]); [next] and [prev] change it in place. *)
 
 val create : state -> t
+(** A generator starting at the state. *)
+
 val state : t -> state
+(** The generator's current state. *)
+
 val set_state : t -> state -> unit
+(** Moves the generator to the state. *)
+
 val copy : t -> t
+(** An independent generator at the same state. *)
 
 val next : t -> int
 (** Steps once and returns the new [s3]. *)
@@ -61,6 +74,8 @@ val bdsp_gen_transform : int -> int
     the window's head without stepping a generator per read. *)
 module Window : sig
   type window
+  (** The buffered outputs, the generator that refills them, and where reads and
+      the head are. *)
 
   val create : size_bits:int -> t -> window
   (** Fills [2^size_bits] outputs from a copy of the generator. The C++ takes
@@ -68,9 +83,17 @@ module Window : sig
       at compile time; taking its exponent keeps every size a power of two. *)
 
   val next_raw : window -> int
+  (** The next output as generated, and moves reads one ahead. *)
+
   val next_gen : window -> int
+  (** The next output through {!bdsp_gen_transform}, and moves reads one ahead.
+  *)
+
   val next_raw_modulo : window -> int -> int
+  (** [next_raw w m] modulo [m]. *)
+
   val next_gen_modulo : window -> int -> int
+  (** [next_gen w m] modulo [m]. *)
 
   val skip : window -> int -> unit
   (** Skips outputs without reading them ([advance]). *)

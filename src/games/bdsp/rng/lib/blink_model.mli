@@ -16,12 +16,22 @@ val npc_tick_seconds : float
 (** 1.017: seconds per NPC tick, one advance per NPC. *)
 
 val pokemon_blink_min_seconds : float
-val pokemon_blink_max_seconds : float
-val pokemon_blink_offset_seconds : float
+(** 3.0: the low end of the range a Pokemon model's blink interval is drawn
+    from, before {!pokemon_blink_offset_seconds}. *)
 
-type blink_type = Single | Double
+val pokemon_blink_max_seconds : float
+(** 12.0: the high end of that range. *)
+
+val pokemon_blink_offset_seconds : float
+(** 0.285: seconds added to every drawn interval, so a Pokemon blinks every
+    3.285 to 12.285 seconds. *)
+
+type blink_type =
+  | Single
+  | Double  (** Whether an NPC closes its eyes once or twice in one blink. *)
 
 val blink_type_name : blink_type -> string
+(** ["Single"] or ["Double"], as the C++ prints them. *)
 
 val npc_blinks : int -> bool
 (** An NPC blinks when bits 1-3 of its roll are all zero: about 1 in 8. *)

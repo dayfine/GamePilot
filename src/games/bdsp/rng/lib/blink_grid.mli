@@ -20,7 +20,13 @@ val build_samples :
     streams), sorted by advance. [slots.(s)] is stream [s]'s place in the NPCs'
     order. [Error] names the problem, as the C++'s [failure_reason]. *)
 
-type anchor = { advance : int; seconds : float; stream_index : int }
+type anchor = {
+  advance : int;  (** The blink's roll on the {!build_samples} grid. *)
+  seconds : float;  (** When the blink was seen. *)
+  stream_index : int;  (** The watcher that saw it, counted from 0. *)
+}
+(** A blink tied to its advance, which later blinks are counted from: the three
+    out-parameters of the C++ [last_blink_anchor]. *)
 
 val last_blink_anchor :
   Blink_extraction.blink_event list list ->
