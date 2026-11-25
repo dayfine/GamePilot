@@ -54,7 +54,7 @@ type read = {
   place : Frlg_readers.Start_frame.difference option;
       (** The frame after the load against the one kept at the start; [None]
           when none was kept or the frame did not read. *)
-  members : Checkpoints_run.Room_policy.member list option;
+  members : Room_policy.member list option;
       (** Each member's species, level and moves on its summary
           ({!Frlg_actions.Party_summary}): the field moves and the room are
           judged on them. [None] when not read. *)

@@ -14,7 +14,7 @@
 
 module Pf = Preflight_command
 module M = Frlg_checkpoints.Make_room
-module R = Checkpoints_run.Room_policy
+module R = Room_policy
 module Pr = Frlg_checkpoints.Party_room
 module Cr = Frlg_checkpoints.Checkpoint_run
 

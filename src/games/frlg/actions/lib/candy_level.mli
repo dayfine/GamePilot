@@ -20,9 +20,7 @@ type game_steps = {
       (** One candy, from the overworld back to it ({!Rare_candy.run}). *)
   member :
     slot:int ->
-    ( Checkpoints_run.Room_policy.member option,
-      Pokemon_checkpoints.Failure.cause )
-    result;
+    (Room_policy.member option, Pokemon_checkpoints.Failure.cause) result;
       (** From the overworld: the member's summary read (species, level, moves);
           [None] when it did not, [Error] as {!level}. *)
   log : string -> unit;

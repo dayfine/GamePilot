@@ -125,7 +125,7 @@ let preflight id before read =
 let same = Some { F.tiles = 150; changed = 3 }
 
 (* The pre-flight's row for 02-trade-farfetchd's Cut user. *)
-let summary slot species moves : Checkpoints_run.Room_policy.member =
+let summary slot species moves : Room_policy.member =
   { slot; species; level = Some 30; moves = Some moves }
 
 let cut_row read =
@@ -331,7 +331,7 @@ let preflight_cases =
 (* {1 Room in the party} *)
 
 let member ?moves slot species level =
-  { Checkpoints_run.Room_policy.slot; species; level = Some level; moves }
+  { Room_policy.slot; species; level = Some level; moves }
 
 (* Console B's save on 2026-11-23: Pallet Town, after the Hall of Fame. The
    moves are what a plain run of FireRed would have them know; a real run

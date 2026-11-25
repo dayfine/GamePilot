@@ -93,6 +93,26 @@ std::array<std::uint8_t, 3> require_rgb(const pa::JsonObject& params,
   return rgb;
 }
 
+// An optional [x, y] stick param, each a number in -1..1.
+std::optional<StickPosition> optional_stick(const pa::JsonObject& params,
+                                            const char* key) {
+  if (params.get_value(key) == nullptr) {
+    return std::nullopt;
+  }
+  const pa::JsonArray& values = require_array(params, key);
+  bool ok = values.size() == 2;
+  for (std::size_t i = 0; ok && i < values.size(); i++) {
+    const double v = values[i].to_double_default(2);
+    ok = values[i].is_float() && v >= -1 && v <= 1;
+  }
+  if (!ok) {
+    throw RpcError(kInvalidParams,
+                   std::string("param must be [x, y] in -1..1: ") + key);
+  }
+  return StickPosition{values[0].to_double_default(),
+                       values[1].to_double_default()};
+}
+
 // `min` and `max`, [r, g, b] each, with min <= max per channel.
 ColorRange require_color_range(const pa::JsonObject& params,
                                const std::string& probe_id) {
@@ -294,6 +314,17 @@ RpcError switch_button_refusal(const std::string& backend, KeyMask mask) {
                   std::move(data));
 }
 
+RpcError switch_stick_refusal(const std::string& backend,
+                              const std::string& stick) {
+  pa::JsonObject data;
+  data["backend"] = backend;
+  data["stick"] = stick;
+  return RpcError(
+      kInvalidParams,
+      stick + " is a Switch stick: the " + backend + " backend has no sticks",
+      std::move(data));
+}
+
 SubmitParams decode_submit(const pa::JsonObject& params) {
   SubmitParams submit;
   submit.batch_id = require_string(params, "batch_id");
@@ -309,6 +340,8 @@ SubmitParams decode_submit(const pa::JsonObject& params) {
         }
         input.buttons = static_cast<KeyMask>(input.buttons | bit);
       }
+      input.left_stick = optional_stick(command, "left_stick");
+      input.right_stick = optional_stick(command, "right_stick");
       input.hold_ms = optional_ms(command, "hold_ms");
       input.cooldown_ms = optional_ms(command, "cooldown_ms");
     } else if (command.get_value("wait_ms") != nullptr) {

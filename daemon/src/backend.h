@@ -37,6 +37,19 @@ struct BackendInfo {
 using KeyMask = std::uint16_t;
 constexpr KeyMask kSwitchOnlyKeys = 0x7u << 10;
 
+// A stick's tilt as CoreLib's JoystickPosition (SerialPrograms/Source/
+// Controllers/Joystick.h): x and y in -1..1, +x right, +y up; 0, 0 is centred.
+struct StickPosition {
+  double x = 0;
+  double y = 0;
+};
+
+// The Switch controller's two sticks, centred unless a press tilts them.
+struct Sticks {
+  StickPosition left;
+  StickPosition right;
+};
+
 // A thread's last sign of life: the last frame it handled and when.
 struct ThreadBeat {
   std::string name;
@@ -92,9 +105,9 @@ class Backend {
   // seq()), waiting up to `timeout_ms` for one; nullopt if none came.
   virtual std::optional<FrameStamp> next_frame(double timeout_ms);
 
-  // Live backends only. Holds `mask` for `ms` from now, after inputs already
-  // queued.
-  virtual void queue_keys(KeyMask mask, double ms);
+  // Live backends only. Holds `mask` and `sticks` for `ms` from now, after
+  // inputs already queued.
+  virtual void queue_keys(KeyMask mask, const Sticks& sticks, double ms);
 
   // Live backends only. Drops the inputs queued with queue_keys() that have
   // not run yet and cuts short the one running, so a cancel takes effect now
@@ -117,7 +130,7 @@ inline std::optional<FrameStamp> Backend::next_frame(double) {
   throw BackendError(info().kind + " is not a live backend");
 }
 
-inline void Backend::queue_keys(KeyMask, double) {
+inline void Backend::queue_keys(KeyMask, const Sticks&, double) {
   throw BackendError(info().kind + " is not a live backend");
 }
 

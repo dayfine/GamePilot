@@ -28,7 +28,7 @@ let needs stocks ~before plan =
 type read = {
   observed : Pokemon_checkpoints.Postcondition_check.observed;
   place : Frlg_readers.Start_frame.difference option;
-  members : Checkpoints_run.Room_policy.member list option;
+  members : Room_policy.member list option;
   card : Frlg_readers.Trainer_card_front.t option;
 }
 
@@ -64,10 +64,10 @@ let includes_text members slots =
   "party includes " ^ species_list (members @ List.map slot_text slots)
 
 (* Its moves as read; a member not in the party read is a mismatch. *)
-let knows (move : string) (m : Checkpoints_run.Room_policy.member) =
+let knows (move : string) (m : Room_policy.member) =
   Option.fold ~none:false ~some:(List.mem move) m.moves
 
-let unread_moves (m : Checkpoints_run.Room_policy.member) = m.moves = None
+let unread_moves (m : Room_policy.member) = m.moves = None
 
 let knows_row (read : read) ~need move =
   match read.members with

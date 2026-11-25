@@ -23,8 +23,7 @@ let level ~log ~slot = Menu_step.result (fun () -> Member_level.read ~log ~slot)
 
 let member ~log ~slot =
   Result.map
-    (List.find_opt (fun (m : Checkpoints_run.Room_policy.member) ->
-         m.slot = slot))
+    (List.find_opt (fun (m : Room_policy.member) -> m.slot = slot))
     (Menu_step.result (Party_summary.read_all ~log))
 
 let candy_level_game_steps ~log ~party : Candy_level.game_steps =

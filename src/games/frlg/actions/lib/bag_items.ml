@@ -221,9 +221,7 @@ let choose_in_item_menu item row =
   to_item_menu_row item row;
   M.press Wire.A
 
-let action_a =
-  Wire.Press
-    { buttons = [ Wire.A ]; hold_ms = M.button_hold_ms; cooldown_ms = 0 }
+let action_a = Wire.press ~hold_ms:M.button_hold_ms ~cooldown_ms:0 [ Wire.A ]
 
 let item_action_press item row =
   open_pocket_top (pocket_of_item item);
