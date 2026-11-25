@@ -1,6 +1,6 @@
 (* Checkpoint_end names where a checkpoint ends. *)
 
-open Pokemon_checkpoints
+open Pokemon_engine
 
 (* A checkpoint starting at [start] (a pose's JSON), with one talk event. *)
 let starting_at start =

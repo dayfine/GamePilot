@@ -6,12 +6,12 @@ include module type of struct
 end
 
 val load_plan :
-  plan_dir:string -> string -> (Pokemon_checkpoints.Plan.t, string) result
+  plan_dir:string -> string -> (Pokemon_engine.Plan.t, string) result
 (** The checkpoint's plan, loaded and checked
     (Frlg_checkpoints.Checkpoint_run.check_plan). *)
 
 val promised_before :
   plan_dir:string ->
   string ->
-  (Pokemon_checkpoints.Postconditions.t option, string) result
+  (Pokemon_engine.Postconditions.t option, string) result
 (** What the checkpoint before it promised: its stated postconditions. *)

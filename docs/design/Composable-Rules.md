@@ -41,6 +41,8 @@ include Program_engine.Make (Plza_rules) (Plza_plan_format) (Plza_event_snapshot
 | `*_saved`, `Event_states.SAVED` | `*_event_snapshot`, `Event_snapshot.SNAPSHOT` | what a run snapshots at the checkpoint's start (money, coins, items) and at each event's start (where the player was reckoned to stand), kept as `<n>-<event>.json` beside the event's save state so a run started from that state checks the same promises |
 | `src/engine/checkpoints/{rules,plan,run,...,make}` | `src/engine/{rules,plan,run,...}`, `src/engine/program_engine` | one folder level less |
 
+Step 0 named `Pokemon_checkpoints` `Pokemon_engine`; it becomes `Frlg_engine` at step 8.
+
 Inside the engine, `Plan`, `Runner`, `Failure`, `Game` and `Series` keep their names, and so do
 `Plan.checkpoint` and the checkpoint runner: a checkpoint is still the stretch between two saves.
 

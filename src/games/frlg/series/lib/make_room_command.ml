@@ -106,10 +106,10 @@ let decide ~plan_dir ~at need (record : Run_record.t) say members =
     say (M.id ^ ": Fly to " ^ room.center.name ^ ", in " ^ dir);
     Ok (Some dir)
 
-let action f : Pokemon_checkpoints.Game.game_action = fun _ _ -> f ()
+let action f : Pokemon_engine.Game.game_action = fun _ _ -> f ()
 
 let failed code why =
-  Error (Pokemon_checkpoints.Failure.cause ~repeats:true code why)
+  Error (Pokemon_engine.Failure.cause ~repeats:true code why)
 
 let soft_reset setup result log () =
   match Pf.reload setup M.id log with
@@ -160,7 +160,7 @@ let session setup world decide say log () =
    with
   | Ok () -> ()
   | Error f when Result.is_ok !result ->
-      result := Error (Pokemon_checkpoints.Failure.to_string f)
+      result := Error (Pokemon_engine.Failure.to_string f)
   | Error _ -> ());
   !result
 

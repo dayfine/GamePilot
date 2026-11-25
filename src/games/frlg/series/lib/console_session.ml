@@ -5,7 +5,7 @@
    start's frame for a pass (Frlg_actions.Game_save), back to the last save for
    a failure. In the effect context. *)
 
-open Pokemon_checkpoints
+open Pokemon_engine
 open Checkpoints_series
 module C = Frlg_checkpoints.Start_check
 

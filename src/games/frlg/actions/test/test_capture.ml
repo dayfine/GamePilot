@@ -13,7 +13,7 @@ let decode json () =
   | Ok t ->
       Printf.sprintf "%s, pace %s" (Capture_plan.describe t)
         (Grid_geometry.Direction.name t.pace)
-  | Error c -> Pokemon_checkpoints.Failure.cause_to_string c
+  | Error c -> Pokemon_engine.Failure.cause_to_string c
 
 let mg02_args =
   {|{"species": "spearow", "catches": 1, "encounters": 50, "balls": 10,
@@ -219,11 +219,23 @@ let decisions =
        caught.: find, see rattata*, ball: caught, to party";
   ]
 
+let names =
+  Frlg_text.Species_names.of_string
+    "spearow SPEAROW\nnidoran-m NIDORAN\xe2\x99\x82\nmr-mime MR. MIME\n"
+
+let opening species () = Capture_steps.opening_line names species
+
 let reading =
   [
-    case "the line a Spearow's battle opens with"
-      (fun () -> Capture_steps.opening_line "spearow")
+    case "the line a Spearow's battle opens with" (opening "spearow")
       "Wild SPEAROW appeared!";
+    (* mGBA 2026-11-25, Route 3: "NIDORAN-M" never read. *)
+    case "a Nidoran's: its sign, not the slug's -m" (opening "nidoran-m")
+      "Wild NIDORAN\xe2\x99\x82 appeared!";
+    case "a Mr. Mime's: its dot and space" (opening "mr-mime")
+      "Wild MR. MIME appeared!";
+    case "a slug not in the names: uppercased" (opening "pidgey")
+      "Wild PIDGEY appeared!";
   ]
 
 (* The looks a throw waits through, from the probes of real mGBA frames

@@ -4,8 +4,8 @@
     timed walks ({!Walk_args}), and a checkpoint promises nothing the game reads
     yet. PLZA links the engine only, not [src/pokemon]
     ([docs/roadmap/plza-autostory-port.md]). Pure: how a plan writes them is
-    [Plza_plan_codec], how a log prints them [Plza_text], and what a run keeps
-    [Plza_saved]; [Plza_checkpoints] applies the engine to the four. *)
+    [Plza_plan_format], how a log prints them [Plza_text], and what a run keeps
+    [Plza_event_snapshot]; [Plza_engine] applies the engine to the four. *)
 
 module Walk_args = Walk_args
 (** {!Walk_args}: a walk's legs and end. *)
