@@ -103,7 +103,7 @@ void check_requests(const std::map<std::string, pa::JsonValue>& files) {
         (std::array<std::uint8_t, 3>{255, 120, 120}));
 
   const SubscribeParams shares_and_blobs = decode_subscribe(
-      decode_request(files.at("44-subscribe.line_shares_find.request.json"))
+      decode_request(files.at("46-subscribe.line_shares_find.request.json"))
           .params);
   CHECK(shares_and_blobs.probes.size() == 3);
   const ProbeSpec& glyph = shares_and_blobs.probes[0];
@@ -150,6 +150,29 @@ void check_requests(const std::map<std::string, pa::JsonValue>& files) {
   CHECK(error_message(pa::JsonValue(std::int64_t{42}),
                       switch_button_refusal("mgba", button_mask("Home"))) ==
         files.at("43-error.switch_button.response.json"));
+
+  // A run: B with the left stick, chained by cooldown 0; then the right stick
+  // alone. A stick left out is not set; its refusal by mGBA names it.
+  const SubmitParams run = decode_submit(
+      decode_request(files.at("44-submit.sticks.request.json")).params);
+  CHECK(run.commands.size() == 3);
+  if (run.commands.size() == 3) {
+    const InputCommand& ahead = run.commands[0];
+    CHECK(ahead.buttons == button_mask("B") && ahead.hold_ms == 1200 &&
+          ahead.cooldown_ms == 0);
+    CHECK(ahead.left_stick.has_value() && ahead.left_stick->x == 0 &&
+          ahead.left_stick->y == 1 && !ahead.right_stick.has_value());
+    CHECK(run.commands[1].left_stick.has_value() &&
+          run.commands[1].left_stick->x == 0.5 &&
+          run.commands[1].left_stick->y == 0.866);
+    const InputCommand& look = run.commands[2];
+    CHECK(look.buttons == 0 && !look.left_stick.has_value() &&
+          look.right_stick.has_value() && look.right_stick->x == -1 &&
+          look.right_stick->y == 0 && look.cooldown_ms == 100);
+  }
+  CHECK(error_message(pa::JsonValue(std::int64_t{44}),
+                      switch_stick_refusal("mgba", "left_stick")) ==
+        files.at("45-error.switch_stick.response.json"));
 
   const Request cancel = decode_request(files.at("12-cancel.request.json"));
   CHECK(cancel.method == "cancel");
@@ -318,7 +341,7 @@ void check_encoders(const std::map<std::string, pa::JsonValue>& files) {
             probe_results_json({{"controls_hint.glyph", glyph},
                                 {"advance_arrow", chevron},
                                 {"choice_arrow", FindResult{}}})) ==
-        files.at("45-frame.line_shares_find.notification.json"));
+        files.at("47-frame.line_shares_find.notification.json"));
   CHECK(batch_done_notification("b1", 1230, 20599.0) ==
         files.at("10-batch_done.notification.json"));
 
@@ -481,6 +504,27 @@ void check_errors() {
        R"(,"ink":{"min":[0,0,0],"max":[1,1,1]}})")
           .c_str()));  // ink only for template matches
 
+  // A stick is [x, y], each a number in -1..1.
+  const auto stick_error = [](const char* stick) {
+    try {
+      decode_submit(
+          parse_message(
+              std::string(
+                  R"({"batch_id":"b","commands":[{"press":[],"left_stick":)") +
+              stick + R"(,"hold_ms":1}]})")
+              .to_object_throw());
+    } catch (const RpcError& error) {
+      return error.code() == kInvalidParams;
+    }
+    return false;
+  };
+  CHECK(stick_error("[1.5,0]"));
+  CHECK(stick_error("[0,-1.01]"));
+  CHECK(stick_error("[0]"));
+  CHECK(stick_error("[0,0,0]"));
+  CHECK(stick_error(R"(["up",0])"));
+  CHECK(!stick_error("[-1,1]"));
+
   threw = false;
   try {
     decode_unsubscribe(parse_message(R"({"ids":[1]})").to_object_throw());
@@ -503,8 +547,9 @@ void check_errors() {
 
 int main() {
   const auto files = load_contracts();
-  // Every golden file: a new one is checked here, then counted.
-  constexpr std::size_t kGoldenFiles = 45;
+  // One per protocol/v1 golden file. The checks below index files by name,
+  // so they run only when every one is there.
+  constexpr std::size_t kGoldenFiles = 47;
   CHECK(files.size() == kGoldenFiles);
   if (files.size() == kGoldenFiles) {
     check_requests(files);

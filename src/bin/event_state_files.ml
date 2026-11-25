@@ -1,10 +1,9 @@
 (* The save states an mGBA run keeps at each event's start, on disk
-   (Checkpoints_run.Event_states): saved through the daemon beside what the run read at
+   (Pokemon_checkpoints.Event_states): saved through the daemon beside what the run read at
    the checkpoint's start, one per event (the newest run's), and found again
    for a partial run (--from-event). *)
 
-open Checkpoints_plan
-open Checkpoints_run
+open Pokemon_checkpoints
 module Run = Frlg_checkpoints.Checkpoint_run
 
 let write_reads path reads =
@@ -51,13 +50,14 @@ let read_kept ~missing path =
 let partial ~states ~checkpoint (plan : Plan.checkpoint) (from_event, to_event)
     =
   let ( let* ) = Result.bind in
-  let* range = Event_range.resolve plan.events ~from_event ~to_event in
+  let ids = List.map (fun (e : Plan.event) -> e.id) plan.events in
+  let* range = Engine_run.Event_range.resolve ids ~from_event ~to_event in
   let first = range.first in
   let event : Plan.event = List.nth plan.events first in
   let path =
     Event_states.path ~states ~checkpoint ~index:first ~event_id:event.id
   in
-  let label = Event_range.label plan.events first in
+  let label = Engine_run.Event_range.label ids first in
   let missing = Event_states.missing ~checkpoint ~label ~path in
   if not (Sys.file_exists path) then Error missing
   else

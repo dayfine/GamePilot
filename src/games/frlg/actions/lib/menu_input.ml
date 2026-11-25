@@ -1,9 +1,9 @@
 open Frlg_readers
 
-exception Action_failed of Checkpoints_run.Failure.cause
+exception Action_failed of Pokemon_checkpoints.Failure.cause
 
 let fail ?repeats code detail =
-  raise (Action_failed (Checkpoints_run.Failure.cause ?repeats code detail))
+  raise (Action_failed (Pokemon_checkpoints.Failure.cause ?repeats code detail))
 
 let raise_error = function
   | Ok () -> ()
@@ -25,13 +25,10 @@ let screen_timeout_ms = 3000
 let press ?(cooldown_ms = 0) button =
   ignore
     (Effects.submit
-       [
-         Wire.Press
-           { buttons = [ button ]; hold_ms = button_hold_ms; cooldown_ms };
-       ])
+       [ Wire.press ~hold_ms:button_hold_ms ~cooldown_ms [ button ] ])
 
 let hold ~hold_ms ~cooldown_ms button =
-  Wire.Press { buttons = [ button ]; hold_ms; cooldown_ms }
+  Wire.press ~hold_ms ~cooldown_ms [ button ]
 
 let taps button n =
   let tap = hold ~hold_ms:tap_hold_ms ~cooldown_ms:tap_release_ms button in
@@ -50,6 +47,20 @@ let await_screen ?(timeout_ms = screen_timeout_ms) ~code what reader =
 let settle_back ~label ~log =
   raise_error (Scene_looks.settle Talk ~label ~battle_ends:false ~log)
 
+module Fade_in = Frlg_overworld.Warp_fade_in
+
+(* A menu's close: its fade out, the black, the dim spell, the steps up and
+   the still spell after them take about 2 s (110 frames). *)
+let fade_in_timeout_ms = 5000
+
+let await_fade_in ~code what =
+  let watch = Fade_in.watch () in
+  let came_up m =
+    Fade_in.watch_frame watch m;
+    Fade_in.came_up watch
+  in
+  ignore (await_screen ~timeout_ms:fade_in_timeout_ms ~code what came_up)
+
 (* The menus a party read goes through: none has a box or a fade the settle's
    look tells from the overworld. *)
 let party_menus m =
@@ -58,8 +69,8 @@ let party_menus m =
   || Option.is_some (Summary_screen.page m)
 
 let settle_menu_closed ~label ~log () =
-  Scene_looks.settle ~menu_open:party_menus Menu_closed ~label
-    ~battle_ends:false ~log
+  Scene_looks.settle ~menu_open:party_menus ~await_fade_in:true Menu_closed
+    ~label ~battle_ends:false ~log
 
 let close_to_overworld ~label ~log =
   raise_error
@@ -116,8 +127,7 @@ let press_until ?(max_presses = default_max_presses) ~code what button
     ~cooldown_ms reader =
   let presses =
     List.init max_presses (fun _ ->
-        Wire.Press
-          { buttons = [ button ]; hold_ms = button_hold_ms; cooldown_ms })
+        Wire.press ~hold_ms:button_hold_ms ~cooldown_ms [ button ])
   in
   let holds = match Effects.read () with Some m -> reader m | None -> false in
   if not holds then

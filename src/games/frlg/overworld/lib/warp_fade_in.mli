@@ -10,11 +10,18 @@
     in steps over 14 frames to 351; a hold sent during the dim spell lost its
     first tile.
 
-    The fork's walker waits a fixed 300 ms after the black ends ([WARP_FADE_IN]
-    in Overworld/PokemonFRLG_OverworldWalk.cpp), which the dim spell outlasts.
-    We deliberately differ: the fade-in is over once the screen's brightness has
+    The fork's walker waits a fixed 300 ms after the black ends
+    ([wait_out_warp()] and [WARP_FADE_IN] in
+    Overworld/PokemonFRLG_OverworldWalk.cpp), which the dim spell outlasts. We
+    deliberately differ: the fade-in is over once the screen's brightness has
     changed from its first lit frame and then stood still for {!still_ms}; a
-    screen that never changes is taken as up after {!unchanged_ms}. *)
+    screen that never changes is taken as up after {!unchanged_ms}.
+
+    This is FireRed's one rule for when a warp's or a door's fade-in is over:
+    the walker ({!Route_walk}) waits on it after every warp, a closed menu's
+    settle (the actions' [Scene_looks]) on every fade it sees, and the actions'
+    [Menu_input.await_fade_in] (#73) after the bag or the Trainer Card closes.
+    The core settle ({!Screen_state.Settle}) has no door rule of its own. *)
 
 type t
 (** A watcher, from the first lit frame on. *)
@@ -43,3 +50,26 @@ val create : Effects.measurements -> t
 val seen : t -> Effects.measurements -> bool
 (** Feeds the watcher one later frame: whether the fade-in is over by it. Frames
     go in order; one without the fade probe is skipped. *)
+
+type watch
+(** Every frame of a span, through any number of fades: whether one is still to
+    finish its fade-in. A menu that closes to the overworld (the party, a
+    summary) fades to black and back in through the same dim spell as a warp: on
+    mGBA (2026-11-24, 04-grind-farfetchd testing run 2, out of the summary) the
+    screen came up from black at a channel sum of 53, held there for 33 frames,
+    then rose in steps over 14 frames to 541; the settle's B came 11 frames into
+    the dim spell and again in the middle of the steps. *)
+
+val watch : unit -> watch
+(** A watch that has seen no fade. *)
+
+val watch_frame : watch -> Effects.measurements -> unit
+(** Feeds the watch one frame, in order: a fade ({!Screen_state.Fade}) starts it
+    over; its first lit frame starts a watcher ({!create}), which every later
+    frame feeds ({!seen}) until it is over. *)
+
+val fading : watch -> bool
+(** A fade showed and its fade-in is not over yet. *)
+
+val came_up : watch -> bool
+(** A fade showed and its fade-in is over, with no fade since. *)

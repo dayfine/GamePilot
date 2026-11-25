@@ -5,7 +5,7 @@
   yojson
   gamepilot.grid_maps
   gamepilot.name_suggestion
-  gamepilot.checkpoints_plan
+  gamepilot.pokemon_checkpoints
   gamepilot.engine_expand
   gamepilot.checkpoints_expand
   gamepilot.repo_io

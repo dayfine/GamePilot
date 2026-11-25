@@ -152,15 +152,13 @@ int main(int argc, char** argv) {
     const bool has_value = i + 1 < argc;
     if (arg == "--spec" && has_value) {
       spec_path = argv[++i];
-    } else if (arg == "--viewport" && has_value &&
-               gp::named_viewport(argv[i + 1])) {
-      viewport = *gp::named_viewport(argv[++i]);
     } else if (arg == "--viewport" && has_value) {
-      const std::optional<gp::Box> picture = gp::parse_box(argv[++i]);
-      if (!picture) {
+      const std::optional<gp::Viewport> parsed =
+          gp::parse_viewport(argv[++i], viewport);
+      if (!parsed) {
         return usage();
       }
-      viewport.picture = *picture;
+      viewport = *parsed;
     } else if (arg == "--game-size" && has_value) {
       if (!parse_game_size(argv[++i], viewport)) {
         return usage();

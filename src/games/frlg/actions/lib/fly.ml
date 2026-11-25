@@ -13,12 +13,7 @@ let to_fly_map plan =
       : Wire.batch_done)
 
 let press button =
-  Wire.Press
-    {
-      buttons = [ button ];
-      hold_ms = Menu_input.button_hold_ms;
-      cooldown_ms = 0;
-    }
+  Wire.press ~hold_ms:Menu_input.button_hold_ms ~cooldown_ms:0 [ button ]
 
 (* The fork's TAKEOFF_TIMEOUT: the fade after the town's A (none: the town
    is not one Fly goes to), and LANDING_TIMEOUT: the flight and the landing,
@@ -39,7 +34,7 @@ let faded m =
   (Frlg_readers.Screen_facts.of_measurements m).fade
   <> Screen_state.Fade.No_fade
 
-let fail code detail = Error (Checkpoints_run.Failure.cause code detail)
+let fail code detail = Error (Pokemon_checkpoints.Failure.cause code detail)
 
 (* A on the town, the fade watched from the press on: the fly map's fade is
    over in half a second, so a look that starts after it misses it (mg-01

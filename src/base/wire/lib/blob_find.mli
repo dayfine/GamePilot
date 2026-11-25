@@ -1,4 +1,4 @@
-(** The params and blobs of [core.find@1] (protocol v1.12): the fork's fixed
+(** The params and blobs of [core.find@1] (protocol v1.13): the fork's fixed
     pipeline (colour filter, 4-connected blobs as its waterfill finds them, size
     filter, scores), as CommonTools/Images/WaterfillUtilities.cpp's
     match_template_by_waterfill and CommonTools/ImageMatch's

@@ -62,7 +62,7 @@ let replayed_walk () =
           Checkpoint_run.run options world (walk_plan ()))
     with
     | Ok () -> "PASSED"
-    | Error failure -> "FAILED " ^ Checkpoints_run.Failure.to_string failure
+    | Error failure -> "FAILED " ^ Pokemon_checkpoints.Failure.to_string failure
     | exception Replay.Divergence e -> "DIVERGED " ^ e
   in
   Printf.sprintf "%s; fled %d wild battles" outcome

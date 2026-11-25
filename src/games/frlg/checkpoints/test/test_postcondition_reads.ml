@@ -13,7 +13,7 @@ let levels = [ 52; 20; 18; 21; 33; 12 ]
 let party_screen ?lost_b () =
   Party.react ?lost_b (List.map2 (fun n l -> Party.member n l) names levels)
 
-let party_promised : Checkpoints_plan.Plan.postconditions =
+let party_promised : Pokemon_checkpoints.Postconditions.t =
   {
     position = None;
     party = Some (Party_includes { members = [ "abra" ]; slots = [] });
@@ -26,7 +26,7 @@ let party_promised : Checkpoints_plan.Plan.postconditions =
     marks = None;
   }
 
-let observed_text (o : Checkpoints_run.Postcondition_check.observed) =
+let observed_text (o : Pokemon_checkpoints.Postcondition_check.observed) =
   match o.party with
   | None -> "party not read"
   | Some members ->
@@ -52,18 +52,20 @@ let nothing_promised () =
     (List.length screen.S.presses)
 
 (* START opens the menu on POKéMON; A on BAG (row 2) the Items pocket with
-   [items] on its list; B from the bag back to the menu, from the menu to the
-   overworld. *)
+   [items] on its list; B from the bag through a black fade back to the menu,
+   from the menu to the overworld. *)
 let bag_screen items screen (p : S.press) =
-  let show s = S.show screen ~at_ms:(p.at_ms + 200) s in
+  let show ?(after_ms = 200) s = S.show screen ~at_ms:(p.at_ms + after_ms) s in
   match (p.buttons, S.screen_at screen p.at_ms) with
   | [ Wire.Start ], _ -> show (S.Start_menu 0)
   | [ Wire.A ], S.Start_menu 2 -> show (S.Bag_items items)
-  | [ Wire.B ], S.Bag_items _ -> show (S.Start_menu 2)
+  | [ Wire.B ], S.Bag_items _ ->
+      show S.Black;
+      show ~after_ms:800 (S.Start_menu 2)
   | [ Wire.B ], S.Start_menu _ -> show S.Overworld
   | _ -> ()
 
-let items_promised : Checkpoints_plan.Plan.postconditions =
+let items_promised : Pokemon_checkpoints.Postconditions.t =
   {
     party_promised with
     party = None;
@@ -119,8 +121,8 @@ let read_level min () =
   in
   Printf.sprintf "%s; ends on %s"
     (String.concat "; "
-       (List.map Checkpoints_run.Postcondition_check.result_to_string
-          (Checkpoints_run.Postcondition_check.check promised observed)))
+       (List.map Pokemon_checkpoints.Postcondition_check.result_to_string
+          (Pokemon_checkpoints.Postcondition_check.check promised observed)))
     (S.screen_name (S.screen_at screen screen.S.clock_ms))
 
 let cases : Table_test.case list =

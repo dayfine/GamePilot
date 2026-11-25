@@ -85,12 +85,12 @@ val found_count :
 val count : log:(string -> unit) -> string -> int option
 (** From the overworld: the item's pocket opened ({!open_pocket_top}), its rows
     read down to the item as {!select} reads them, the count on its row
-    ({!count_on_row}; 1 for a key item, {!found_count}), then the bag closed and
-    the talk settle. [Some 0] when the list reaches CANCEL first; [None] when a
-    row or the count did not read. New for the end checks: the fork's
-    [check_postconditions()] reads counts with its own bag reader
-    (Menus/PokemonFRLG_ItemListReader). Fails as {!open_pocket_top}, or as
-    [unknown_item] for a slug no item is named. *)
+    ({!count_on_row}; 1 for a key item, {!found_count}), then the bag closed,
+    its fade-in over ({!Menu_input.await_fade_in}) and the talk settle. [Some 0]
+    when the list reaches CANCEL first; [None] when a row or the count did not
+    read. New for the end checks: the fork's [check_postconditions()] reads
+    counts with its own bag reader (Menus/PokemonFRLG_ItemListReader). Fails as
+    {!open_pocket_top}, or as [unknown_item] for a slug no item is named. *)
 
 val list_row : string -> int option
 (** In the item's open pocket, from the list's top: its row in the list (from

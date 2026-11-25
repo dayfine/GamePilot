@@ -3,12 +3,16 @@
     The fork's AutoStory [talk] and [scene] events. *)
 
 val talk :
-  log:(string -> unit) -> unit -> (unit, Checkpoints_run.Failure.cause) result
+  log:(string -> unit) ->
+  unit ->
+  (unit, Pokemon_checkpoints.Failure.cause) result
 (** Ends at a quiet overworld, or at a battle (a trainer's, which the plan's
     next event fights); fails as [not_settled]. *)
 
 val pick_up :
-  log:(string -> unit) -> unit -> (unit, Checkpoints_run.Failure.cause) result
+  log:(string -> unit) ->
+  unit ->
+  (unit, Pokemon_checkpoints.Failure.cause) result
 (** A to the faced item ball or hidden item: its text box must show within
     {!item_text_ms}, or it fails as [nothing_picked_up] (a walk that ended a
     tile short faces nothing: A shows no box, and the plan went on as if picked
@@ -17,13 +21,15 @@ val pick_up :
 val item_text_ms : int
 
 val scene :
-  log:(string -> unit) -> unit -> (unit, Checkpoints_run.Failure.cause) result
+  log:(string -> unit) ->
+  unit ->
+  (unit, Pokemon_checkpoints.Failure.cause) result
 
 val answer :
   log:(string -> unit) ->
   yes:bool ->
   unit ->
-  (unit, Checkpoints_run.Failure.cause) result
+  (unit, Pokemon_checkpoints.Failure.cause) result
 (** The plan's [answer] event: A to the person the player faces, and the Yes/No
     question their text comes to answered. YES as {!Menu_input.answer_yes}
     answers it, then the talk settle through whatever the answer starts (Bill's

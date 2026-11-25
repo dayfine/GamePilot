@@ -1,4 +1,4 @@
-# Wire protocol v1.12
+# Wire protocol v1.13
 
 JSON-RPC 2.0 between the OCaml programs (client) and the daemon (server). The golden files in this
 folder are the spec: the daemon's tests parse every file and the OCaml tests decode and re-encode
@@ -30,11 +30,15 @@ keeps pace with the daemon clock, so a v1.9 program runs unchanged.
 v1.11 adds the Switch's own buttons `Home`, `X` and `Y` to `submit` (see Methods), for parking the
 console on the HOME menu; a backend that is not the Switch refuses them with -32602
 (`43-error.switch_button.response.json`). A v1.10 program never names them.
-v1.12 adds two probe kinds for the fork's PLZA detectors (see Probe kinds): `core.line_shares@1`,
+v1.12 adds the Switch's analog sticks to `submit`'s press: optional `left_stick` and `right_stick`
+(see Methods), held with the press's buttons, for walking and running in a 3D game; a backend that
+is not the Switch refuses them with -32602 (`45-error.switch_stick.response.json`). Both are
+optional and absent means centred, so every v1.11 press means the same in v1.12.
+v1.13 adds two probe kinds for the fork's PLZA detectors (see Probe kinds): `core.line_shares@1`,
 the share of a box's pixels passing a test of linear channel comparisons per row and per column,
 and `core.find@1`, blobs found by the fork's fixed pipeline (colour filter, waterfill, size filter,
-scores) (`44-subscribe.line_shares_find.request.json`, `45-frame.line_shares_find.notification.json`).
-`hello` lists both. A v1.11 program never subscribes them.
+scores) (`46-subscribe.line_shares_find.request.json`, `47-frame.line_shares_find.notification.json`).
+`hello` lists both. A v1.12 program never subscribes them.
 v1.2 makes the daemon own where the game picture sits in the frame: `hello` gives the `viewport` and
 the `game_size`, probe boxes and template placements are relative to the picture, templates are in game
 pixels, and `core.color_count@1` is new.
@@ -83,7 +87,7 @@ size) every v1.1 message means the same in v1.2.
 | `probe.upload_template` | `png`: a PNG file, base64 | `template`: the lowercase hex SHA-256 of the PNG bytes |
 | `subscribe` | `probes`: list of {`id`, `kind`, `box`, `delivery`, and `template` (and optionally `ink`) for `core.template_match@1`, `min` and `max` for `core.color_count@1`, `test` for `core.line_shares@1`, `filters`, `min_area` and the optional `max_area`, `min_size`, `max_size`, `margin`, `template`, `shape` for `core.find@1`} | `subscribed`: ids |
 | `unsubscribe` | `ids`: probe ids | `unsubscribed`: the ids that were subscribed, now removed (others are ignored) |
-| `submit` | `batch_id`, `commands`: list of {`press`: buttons, `hold_ms`, `cooldown_ms`} or {`wait_ms`} | `batch_id`, `start_seq` |
+| `submit` | `batch_id`, `commands`: list of {`press`: buttons, optional `left_stick` and `right_stick`, `hold_ms`, `cooldown_ms`} or {`wait_ms`} | `batch_id`, `start_seq` |
 | `cancel` | {} | `released_seq`: drops queued commands and releases all buttons |
 | `status` | {} | `t_ms`, `backend` (its `kind`), `client` (the lease holder's `hello` name, else the oldest connection's, or `null`), `clients` (connections now), `lease` (below, or `null`), `fidelity`, `threads`, `ring`, `gaps` (below) |
 | `lease.acquire` | `owner` (a label for people), optional `ttl_ms` (default 60000) | `lease` {`owner`, `client`, `held_ms`, `ttl_ms`} |
@@ -109,6 +113,19 @@ size) every v1.1 message means the same in v1.2.
   The Switch only: `Home`, `X`, `Y` (`42-submit.home.request.json`). A press of one on another
   backend is refused, as a whole batch, with -32602 and `data` {`backend`, `button`}: mGBA and the
   view backend have no such button (the view backend refuses every input anyway, -32002).
+- Sticks (the Switch only, `44-submit.sticks.request.json`): `left_stick` and `right_stick` are each
+  `[x, y]`, numbers in -1..1, as CoreLib's `JoystickPosition`: +x is right, +y is up, `[0, 0]`
+  centred; a value outside -1..1 is -32602. A stick left out is centred. A press tilts its sticks
+  for `hold_ms` together with its buttons, and its cooldown centres them and releases the buttons;
+  `press` may then be empty (`[]`), a tilt alone. A cooldown of 0 chains the next press straight
+  on, as the C++'s release 0 does: a run is B with the left stick, then the next heading with B.
+  The daemon turns a tilt into the Pro Controller's report as the C++ does (`encode_joystick`,
+  `daemon/src/switch_controller.h`): a tilt inside the unit circle is scaled onto the range the
+  console registers, one on or past it is pushed out to full. Headings in degrees and how fast to
+  run are the game's, not the wire's.
+  mGBA refuses a press that names a stick, as a whole batch, with -32602 and `data` {`backend`,
+  `stick`} (the first one named): the GBA has no stick, and a press that silently dropped its tilt
+  would report a walk that never happened. The view backend refuses every input (-32002).
 - Batches run in order, one after another. Times are rounded to whole frames by the backend.
 - `backend.load_state` also drops queued commands and releases all buttons, as `cancel` does;
   queued batches then get no `batch_done`.
@@ -154,7 +171,7 @@ its milliseconds as given, without rounding to frames, and `start_seq` is the la
 when it was submitted. `backend.load_state` and `backend.save_state` answer -32002 (a console has
 no save states). The game picture sits inside the frame (`viewport`, by default the fork's FRLG
 `GAME_BOX`); GBA buttons map to the Switch's GBA app: Start is Plus, Select is Minus; `Home`, `X`
-and `Y` are the controller's own.
+and `Y` are the controller's own, and so are `left_stick` and `right_stick`.
 
 The `view` backend is live too, and view-only: its frames come from a picture another program owns
 (an app's window), cropped to the video, so `viewport` is the whole frame and `game_size` the
@@ -319,7 +336,8 @@ reader decides "black" from those numbers (low mean, low stddev) in OCaml.
 The daemon writes every message it sends or receives, except the client's `watch.plan`,
 `watch.log` and `watch.run`, one per line (`14-wire_log.line.json`):
 `dir` (`in` = from the client, `out` = to the client), `t_ms`, `conn` (the connection's number,
-from 1 in the order they came), `msg`; an input line also has `owner`, the lease's owner
+from 1 in the order they came), `msg` (the message as sent, so a press's sticks are on its line);
+an input line also has `owner`, the lease's owner
 (`40-wire_log.input_owner.line.json`). Replay reads this file and follows the program's
 connection: the one of the log's first `in` line. A log from before v1.9 has no `conn`.
 A `daemon` line is the daemon's own act, sent to no one: its keep-awake press, a `keepawake`

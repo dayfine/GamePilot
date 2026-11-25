@@ -3,7 +3,7 @@ module J = Json_field
 type town = {
   name : string;
   cell : Grid_maps.Tile_pos.t;
-  landing : Checkpoints_plan.Pose.observed;
+  landing : Pokemon_checkpoints.Pose.observed;
 }
 
 type t = { columns : int; rows : int; towns : town list }
@@ -67,20 +67,11 @@ let to_corner_ms = 3000
 
 let taps button n =
   let tap =
-    Wire.Press
-      {
-        buttons = [ button ];
-        hold_ms = cursor_tap_ms;
-        cooldown_ms = cursor_release_ms;
-      }
+    Wire.press ~hold_ms:cursor_tap_ms ~cooldown_ms:cursor_release_ms [ button ]
   in
   List.init n (fun _ -> tap)
 
 let cursor_presses town =
-  Wire.Press
-    {
-      buttons = [ Wire.Up; Wire.Left ];
-      hold_ms = to_corner_ms;
-      cooldown_ms = cursor_release_ms;
-    }
+  Wire.press ~hold_ms:to_corner_ms ~cooldown_ms:cursor_release_ms
+    [ Wire.Up; Wire.Left ]
   :: (taps Wire.Right town.cell.x @ taps Wire.Down town.cell.y)

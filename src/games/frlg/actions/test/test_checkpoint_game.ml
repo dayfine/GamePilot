@@ -6,7 +6,7 @@ open Frlg_actions
 open Frlg_overworld_fixtures
 module S = Scripted_screen
 
-let event id kind : Checkpoints_plan.Plan.event =
+let event id kind : Pokemon_checkpoints.Plan.event =
   {
     id;
     kind;
@@ -17,17 +17,17 @@ let event id kind : Checkpoints_plan.Plan.event =
     once_per_save = false;
   }
 
-let pallet_door : Checkpoints_plan.Pose.grid =
+let pallet_door : Pokemon_checkpoints.Pose.grid =
   { map = "PalletTown"; tiles = [ { x = 6; y = 8 } ]; facing = None }
 
-let checkpoint : Checkpoints_plan.Plan.checkpoint =
+let checkpoint : Pokemon_checkpoints.Plan.checkpoint =
   {
     checkpoint_id = "test";
     title = "out and talk";
     start = None;
     events =
       [
-        event "out" (Route { target = pallet_door; fight_wild = false });
+        event "out" (Own (Route { target = pallet_door; fight_wild = false }));
         event "talk" Talk;
       ];
   }
@@ -60,27 +60,28 @@ let run ?(world = Frlg_world.pallet) ?(react = react) ?(checkpoint = checkpoint)
   let t = Checkpoint_game.create config ~start in
   let result =
     S.run screen (fun () ->
-        Checkpoints_run.Runner.run (Checkpoint_game.game t) checkpoint)
+        Pokemon_checkpoints.Runner.run (Checkpoint_game.game t) checkpoint)
   in
   let outcome =
     match result with
     | Ok () -> "ok"
-    | Error f -> Checkpoints_run.Failure.to_string f
+    | Error f -> Pokemon_checkpoints.Failure.to_string f
   in
   let at =
-    Option.fold ~none:"unknown" ~some:Checkpoints_plan.Pose.observed_to_string
+    Option.fold ~none:"unknown"
+      ~some:Pokemon_checkpoints.Pose.observed_to_string
       ((Checkpoint_game.game t).position ())
   in
   Printf.sprintf "%s; at %s; %s" outcome at (S.presses_text screen)
 
-let house : Checkpoints_plan.Pose.observed =
+let house : Pokemon_checkpoints.Pose.observed =
   {
     at_map = "PalletTown_PlayersHouse_1F";
     at_tile = { x = 4; y = 6 };
     faces = None;
   }
 
-let swap_event species : Checkpoints_plan.Plan.event =
+let swap_event species : Pokemon_checkpoints.Plan.event =
   {
     (event "swap"
        (Game_action [ ("species", `String species); ("target_slot", `Int 1) ]))
@@ -93,7 +94,7 @@ let swap_checkpoint species =
 
 (* A trade that ran before this save passes without a press; its declared
    tile is where the player is taken to stand, as for a built-in event. *)
-let done_trade : Checkpoints_plan.Plan.event =
+let done_trade : Pokemon_checkpoints.Plan.event =
   {
     (event "trade"
        (Game_action
@@ -114,7 +115,7 @@ let done_trade : Checkpoints_plan.Plan.event =
    facing reckoned before it stays (mg-04 testing run 9: Fly's landing facing
    south was lost to its declared tile, and the walk after it led with a turn
    tap). *)
-let done_trade_no_facing : Checkpoints_plan.Plan.event =
+let done_trade_no_facing : Pokemon_checkpoints.Plan.event =
   {
     done_trade with
     declared_after =
@@ -128,7 +129,7 @@ let done_trade_no_facing : Checkpoints_plan.Plan.event =
   }
 
 (* mg-02's Cut, then its walk north through the tree's tile to the grass. *)
-let cut_then_grass : Checkpoints_plan.Plan.checkpoint =
+let cut_then_grass : Pokemon_checkpoints.Plan.checkpoint =
   {
     checkpoint_id = "test";
     title = "cut and on";
@@ -140,16 +141,17 @@ let cut_then_grass : Checkpoints_plan.Plan.checkpoint =
           action = Some "cut_tree";
         };
         event "grass"
-          (Route
-             {
-               target =
-                 {
-                   map = "Route16";
-                   tiles = [ { x = 35; y = 6 } ];
-                   facing = Some East;
-                 };
-               fight_wild = false;
-             });
+          (Own
+             (Route
+                {
+                  target =
+                    {
+                      map = "Route16";
+                      tiles = [ { x = 35; y = 6 } ];
+                      facing = Some East;
+                    };
+                  fight_wild = false;
+                }));
       ];
   }
 
@@ -164,7 +166,7 @@ let cut_screen screen (p : S.press) =
         show 1600 S.Overworld
     | _ -> ()
 
-let below_tree : Checkpoints_plan.Pose.observed =
+let below_tree : Pokemon_checkpoints.Pose.observed =
   { at_map = "Route16"; at_tile = { x = 41; y = 12 }; faces = Some North }
 
 let case name input expectation = { Table_test.name; input; expectation }

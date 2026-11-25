@@ -4,19 +4,20 @@
     {!Action_failed} through these and {!run} turns it into the story's outcome,
     so a flow reads as the list of its steps. *)
 
-exception Action_failed of Checkpoints_run.Failure.cause
+exception Action_failed of Pokemon_checkpoints.Failure.cause
 
 val fail : ?repeats:bool -> string -> string -> 'a
-(** Raises {!Action_failed} with [Checkpoints_run.Failure.cause code detail]. *)
+(** Raises {!Action_failed} with
+    [Pokemon_checkpoints.Failure.cause code detail]. *)
 
-val raise_error : (unit, Checkpoints_run.Failure.cause) result -> unit
+val raise_error : (unit, Pokemon_checkpoints.Failure.cause) result -> unit
 (** Raises {!Action_failed} with an [Error]'s cause; [Ok] does nothing. *)
 
 val probes : Wire.probe_spec list
 (** What the menu actions read: {!Scene_looks.probes}, the party and a member's
     menu, the bag and the money box. *)
 
-val run : (unit -> unit) -> (unit, Checkpoints_run.Failure.cause) result
+val run : (unit -> unit) -> (unit, Pokemon_checkpoints.Failure.cause) result
 (** Runs the body with {!probes} subscribed; [Error] with the cause it failed
     with. *)
 
@@ -62,11 +63,23 @@ val settle_back : label:string -> log:(string -> unit) -> unit
 (** The talk settle ({!Scene_looks.settle}) back to a quiet overworld: B through
     the rest of a menu's or a talk's text. Fails as its cause. *)
 
+val fade_in_timeout_ms : int
+(** How long {!await_fade_in} waits: 5 s. *)
+
+val await_fade_in : code:string -> string -> unit
+(** After a press that closes a menu through a black fade (the bag, the Trainer
+    Card): every frame watched ({!Frlg_overworld.Warp_fade_in.watch}) until the
+    fade has shown and its fade-in is over, so that the next B lands on a screen
+    that takes it. A look alone reads the dim spell as the overworld (no fade)
+    and the steps up as a screen that moves. Fails as [code] with
+    ["<what> did not show"] after {!fade_in_timeout_ms}. *)
+
 val close_to_overworld : label:string -> log:(string -> unit) -> unit
 (** From the party, a member's menu or a summary, as the settle's [Menu_closed]
     rule closes it ({!Screen_state.Settle.rule}): B until the overworld shows
     with none of these menus, still for 0.5 s; not the talk's 5 s quiet, as no
-    text comes after a menu. Fails as its cause. *)
+    text comes after a menu. No B and no quiet while a menu's fade-in is still
+    coming up ([await_fade_in] of {!Scene_looks.settle}). Fails as its cause. *)
 
 val max_pages : int
 (** A presses {!answer_yes} gives the pages before the question must show: 8. *)

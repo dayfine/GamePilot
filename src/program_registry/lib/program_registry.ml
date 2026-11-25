@@ -1,4 +1,5 @@
 type backend = Mgba | Switch
+type viewport = Nso_gba | Native
 type game = { game_id : string; game_name : string }
 
 type t = {
@@ -10,6 +11,7 @@ type t = {
   doc : string;
   checkpoints : string option;
   backends : backend list;
+  viewport : viewport;
 }
 
 let frlg = { game_id = "frlg"; game_name = "Pokémon FireRed/LeafGreen" }
@@ -26,6 +28,7 @@ let mail_glitch =
     doc = "docs/programs/frlg-mail-glitch.md";
     checkpoints = Some "src/games/frlg/programs/mail_glitch/plans";
     backends = [ Mgba; Switch ];
+    viewport = Nso_gba;
   }
 
 let start_menu_poc =
@@ -39,6 +42,7 @@ let start_menu_poc =
     doc = "docs/poc-start-menu.md";
     checkpoints = None;
     backends = [ Mgba ];
+    viewport = Nso_gba;
   }
 
 let team_training =
@@ -53,6 +57,7 @@ let team_training =
     doc = "docs/programs/frlg-team-training.md";
     checkpoints = Some "src/games/frlg/programs/team_training/plans";
     backends = [ Mgba; Switch ];
+    viewport = Nso_gba;
   }
 
 let supplies =
@@ -66,6 +71,7 @@ let supplies =
     doc = "docs/programs/frlg-supplies.md";
     checkpoints = Some "src/games/frlg/programs/supplies/plans";
     backends = [ Mgba; Switch ];
+    viewport = Nso_gba;
   }
 
 let sevii_story =
@@ -80,6 +86,7 @@ let sevii_story =
     doc = "docs/programs/frlg-sevii-story.md";
     checkpoints = Some "src/games/frlg/programs/sevii_story/plans";
     backends = [ Mgba ];
+    viewport = Nso_gba;
   }
 
 let all = [ start_menu_poc; mail_glitch; supplies; team_training; sevii_story ]
@@ -126,6 +133,20 @@ let of_checkpoint id =
   List.find_opt has_plan all
 
 let backend_name = function Mgba -> "mgba" | Switch -> "switch"
+let viewport_name = function Nso_gba -> "nso-gba" | Native -> "native"
+
+let viewport_mismatch p given =
+  Printf.sprintf
+    "--viewport %s: %s's game picture is %s (program_registry); drop \
+     --viewport, or fix the program's descriptor"
+    given p.id (viewport_name p.viewport)
+
+let check_viewport program given =
+  match (program, given) with
+  | None, given -> Ok given
+  | Some p, None -> Ok (Some (viewport_name p.viewport))
+  | Some p, Some v when v = viewport_name p.viewport -> Ok (Some v)
+  | Some p, Some v -> Error (viewport_mismatch p v)
 
 let run_fields p =
   [

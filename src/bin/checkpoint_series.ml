@@ -5,13 +5,12 @@
    StoryEngine::run_checkpoints() and verify_checkpoint() on the fork's
    frlg/lean; see Checkpoints_command. The chain's progress (Chain_progress)
    goes to the watch page from each run. A repeating checkpoint (05-grind-mr-mime's grind
-   round, Checkpoints_plan.Plan.repeat) runs round by round instead, each round one run
+   round, Pokemon_checkpoints.Plan.repeat) runs round by round instead, each round one run
    whatever the mode's policy. *)
 
 open Engine_run
 open Engine_series
-open Checkpoints_plan
-open Checkpoints_run
+open Pokemon_checkpoints
 module Run = Checkpoint_live_run
 
 let ( let* ) = Result.bind

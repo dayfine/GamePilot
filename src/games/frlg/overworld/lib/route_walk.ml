@@ -24,12 +24,12 @@ let door_step_out_ms = 1000
 (* Times a walk goes on before a sign the plan did not walk into. *)
 let max_sign_rejoins = 2
 
-exception Walk_failed of Checkpoints_run.Failure.cause
+exception Walk_failed of Pokemon_checkpoints.Failure.cause
 exception Leg_blocked
 
 let fail code fmt =
   Printf.ksprintf
-    (fun s -> raise (Walk_failed (Checkpoints_run.Failure.cause code s)))
+    (fun s -> raise (Walk_failed (Pokemon_checkpoints.Failure.cause code s)))
     fmt
 
 let faded m =
@@ -192,12 +192,12 @@ let walk t at legs =
   | at -> Ok at
   | exception Walk_failed cause -> Error cause
   | exception Grid_walker.Leg_walker.Interrupted_too_often s ->
-      Error (Checkpoints_run.Failure.cause "interrupted" s)
+      Error (Pokemon_checkpoints.Failure.cause "interrupted" s)
   | exception Walk_interrupts.Trainer_battle ->
       Error
-        (Checkpoints_run.Failure.cause "trainer_battle"
+        (Pokemon_checkpoints.Failure.cause "trainer_battle"
            "a battle started after a message on the overworld")
   | exception Walk_interrupts.Message_stuck ->
       Error
-        (Checkpoints_run.Failure.cause "message_stuck"
+        (Pokemon_checkpoints.Failure.cause "message_stuck"
            "a message on the overworld did not close")

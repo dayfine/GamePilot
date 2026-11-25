@@ -4,8 +4,7 @@ let a_hold_ms = 160
 let a_cooldown_ms = 500
 
 let press_a () =
-  Wire.Press
-    { buttons = [ Wire.A ]; hold_ms = a_hold_ms; cooldown_ms = a_cooldown_ms }
+  Wire.press ~hold_ms:a_hold_ms ~cooldown_ms:a_cooldown_ms [ Wire.A ]
 
 let talk ~log () =
   ignore (Effects.submit [ press_a () ]);
@@ -24,7 +23,7 @@ let pick_up ~log () =
   match shown with
   | Effects.Timeout ->
       Error
-        (Checkpoints_run.Failure.cause "nothing_picked_up"
+        (Pokemon_checkpoints.Failure.cause "nothing_picked_up"
            "no text box after A: the item is not on the faced tile")
   | Holds _ -> Scene_looks.settle Talk ~label:"pick up" ~battle_ends:false ~log
 

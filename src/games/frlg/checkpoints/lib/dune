@@ -9,8 +9,8 @@
   gamepilot.grid_maps
   gamepilot.json_field
   gamepilot.engine_run
-  gamepilot.checkpoints_plan
-  gamepilot.checkpoints_run
+  gamepilot.pokemon_checkpoints
+  gamepilot.room_policy
   gamepilot.frlg_readers
   gamepilot.frlg_battle
   gamepilot.repo_io

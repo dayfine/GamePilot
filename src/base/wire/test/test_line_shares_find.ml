@@ -14,12 +14,12 @@ let golden file =
        (Filename.concat (protocol_dir (Sys.getcwd ())) file))
 
 let subscribed () =
-  match golden "44-subscribe.line_shares_find.request.json" with
+  match golden "46-subscribe.line_shares_find.request.json" with
   | Wire.Request { call = Wire.Subscribe probes; _ } -> probes
   | _ -> []
 
 let frame_probes () =
-  match golden "45-frame.line_shares_find.notification.json" with
+  match golden "47-frame.line_shares_find.notification.json" with
   | Wire.Notification (Wire.Frame { frame; _ }) -> frame.probes
   | _ -> []
 

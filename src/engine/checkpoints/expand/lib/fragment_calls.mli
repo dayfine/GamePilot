@@ -1,6 +1,6 @@
 (** Fragment calls in a plan, expanded into the fragment's events when the plan
-    is loaded, before its place routes ({!Place_routes}) and the decoder: logs,
-    event states and the watch page see plain events.
+    is loaded, before a game's own rewriters (Pokémon's place routes) and the
+    decoder: logs, event states and the watch page see plain events.
 
     A call is an event that names a fragment instead of a kind:
     [{"id": "heal_lavender", "fragment": "heal_at", "args": {"town":

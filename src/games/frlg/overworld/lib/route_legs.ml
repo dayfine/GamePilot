@@ -30,16 +30,12 @@ let mover ~running direction hold_ms =
   let buttons =
     if running then [ dpad direction; Wire.B ] else [ dpad direction ]
   in
-  [ Wire.Press { buttons; hold_ms; cooldown_ms = step_release_ms } ]
+  [ Wire.press ~hold_ms ~cooldown_ms:step_release_ms buttons ]
 
 let turn_tap direction =
   [
-    Wire.Press
-      {
-        buttons = [ dpad direction ];
-        hold_ms = mechanics.turn_tap_ms;
-        cooldown_ms = turn_settle_ms;
-      };
+    Wire.press ~hold_ms:mechanics.turn_tap_ms ~cooldown_ms:turn_settle_ms
+      [ dpad direction ];
   ]
 
 (* A step onto another map stalls, where the world's edges stall. *)

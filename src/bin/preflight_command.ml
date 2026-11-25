@@ -13,7 +13,7 @@
    runner, so with --watch its daemon's page shows its steps, story lines and
    run as a checkpoint run's (Frlg_checkpoints.Plan_watch). *)
 
-open Checkpoints_run
+open Pokemon_checkpoints
 module Pf = Frlg_checkpoints.Preflight
 module C = Frlg_checkpoints.Start_check
 
@@ -22,6 +22,9 @@ type setup = {
   runs_dir : string;
   daemon : string;
   backend : Daemon_process.backend;
+  viewport : string option;
+      (** The Switch daemon's --viewport: the program's
+          (Program_registry.check_viewport). *)
   info : Run_record.info;
   watch : Daemon_process.watch option;
 }
@@ -86,12 +89,12 @@ let place setup id start log =
 
 (* The party is read on its summaries (species, level, moves): the room and
    the field moves are judged on them. *)
-let without_party (p : Checkpoints_plan.Plan.postconditions) =
+let without_party (p : Pokemon_checkpoints.Postconditions.t) =
   { p with party = None }
 
-let party_of (members : Checkpoints_run.Room_policy.member list) =
+let party_of (members : Room_policy.member list) =
   List.map
-    (fun (m : Checkpoints_run.Room_policy.member) ->
+    (fun (m : Room_policy.member) ->
       if m.species = "?" then None else Some m.species)
     members
 
@@ -106,13 +109,13 @@ type verdict = Rows of Pf.row list | Stopped of string
 
 type reads = {
   mutable place : Frlg_readers.Start_frame.difference option;
-  mutable members : Checkpoints_run.Room_policy.member list option;
-  mutable observed : Checkpoints_run.Postcondition_check.observed option;
+  mutable members : Room_policy.member list option;
+  mutable observed : Pokemon_checkpoints.Postcondition_check.observed option;
   mutable card : Frlg_readers.Trainer_card_front.t option;
   mutable verdict : verdict;
 }
 
-let action f : Checkpoints_run.Game.game_action = fun _ _ -> f ()
+let action f : Pokemon_checkpoints.Game.game_action = fun _ _ -> f ()
 
 (* Back to the save: on a failure, its frame and the verdict. *)
 let soft_reset setup record id reads log () =
@@ -215,8 +218,9 @@ let ending_of id = function
 
 let with_daemon setup record id body =
   match
-    Daemon_process.start ?watch:setup.watch ~daemon:setup.daemon
-      ~backend:setup.backend ~port:0
+    Daemon_process.start ?watch:setup.watch
+      ~flags:(Daemon_process.viewport_args setup.backend setup.viewport)
+      ~daemon:setup.daemon ~backend:setup.backend ~port:0
       ~wire_log:(Run_record.path record "wire.jsonl")
       ~out_file:(Run_record.path record "daemon.out")
       ~checkpoint:id ()

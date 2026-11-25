@@ -1,4 +1,4 @@
-(** [core.line_shares@1] (protocol v1.12): its pixel test and its result.
+(** [core.line_shares@1] (protocol v1.13): its pixel test and its result.
 
     The test is linear comparisons on a pixel's channels, all of which a counted
     pixel passes. They state the fork's PLZA PixelShares tests

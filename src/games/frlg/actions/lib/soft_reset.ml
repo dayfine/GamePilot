@@ -23,12 +23,8 @@ let probes =
 let wait ms = Wire.Wait { wait_ms = ms }
 
 let combo =
-  Wire.Press
-    {
-      buttons = [ Wire.A; B; Select; Start ];
-      hold_ms = combo_hold_ms;
-      cooldown_ms = combo_release_ms;
-    }
+  Wire.press ~hold_ms:combo_hold_ms ~cooldown_ms:combo_release_ms
+    [ Wire.A; B; Select; Start ]
 
 let title_mash =
   let tap =
@@ -95,11 +91,11 @@ let rec attempts_from n ~log =
   | exception M.Action_failed cause when n < attempts ->
       log
         (Printf.sprintf "Soft reset: attempt %d failed: %s" n
-           (Checkpoints_run.Failure.cause_to_string cause));
+           (Pokemon_checkpoints.Failure.cause_to_string cause));
       attempts_from (n + 1) ~log
   | exception M.Action_failed cause ->
       M.fail ~repeats:true "soft_reset_failed"
         (Printf.sprintf "%d attempts; the last: %s" attempts
-           (Checkpoints_run.Failure.cause_to_string cause))
+           (Pokemon_checkpoints.Failure.cause_to_string cause))
 
 let return_to_save ~log () = M.run (fun () -> attempts_from 1 ~log)

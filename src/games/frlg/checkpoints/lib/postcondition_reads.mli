@@ -1,6 +1,6 @@
 (** FireRed's reader of a plan's postconditions
-    ({!Checkpoints_run.Postcondition_check}): what the plan states, each read
-    through its own menu from the overworld and back to it in control. The
+    ({!Pokemon_checkpoints.Postcondition_check}): what the plan states, each
+    read through its own menu from the overworld and back to it in control. The
     party's species by the summary ({!Frlg_actions.Party_species}), the coins by
     the Coin Case ({!Frlg_actions.Coin_case}), the money by the Trainer Card
     ({!Frlg_actions.Trainer_card_money}) and each item's count by its row in the
@@ -15,13 +15,13 @@
 
 val observe :
   log:(string -> unit) ->
-  Checkpoints_plan.Plan.postconditions ->
-  Checkpoints_run.Postcondition_check.observed
+  Pokemon_checkpoints.Postconditions.t ->
+  Pokemon_checkpoints.Postcondition_check.observed
 
 val at_start :
   log:(string -> unit) ->
-  Checkpoints_plan.Plan.postconditions ->
-  Checkpoints_run.Postcondition_check.start
+  Pokemon_checkpoints.Postconditions.t ->
+  Pokemon_checkpoints.Postcondition_check.start
 (** Reads now, at the checkpoint's start, what a promise of a change needs: the
     money for a promise of the money spent ({!Engine_promise.Money.Spent}), the
     coins and each item promised as gained ({!Engine_promise.Count.Gained}),
@@ -29,8 +29,7 @@ val at_start :
     with no such promise. With no Coin Case in the bag the coins at the start
     are 0. A read that failed stays unread, so its promise is not checked. *)
 
-val party_summary :
-  log:(string -> unit) -> Checkpoints_run.Room_policy.member list option
+val party_summary : log:(string -> unit) -> Room_policy.member list option
 (** Every member's species, level and moves ({!Frlg_actions.Party_summary}),
     from the overworld and back to it; [None] when the read failed. *)
 

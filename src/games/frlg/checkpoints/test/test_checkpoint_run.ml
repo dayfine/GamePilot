@@ -14,9 +14,9 @@ let handled =
       (Frlg_actions.Mail_glitch_use.handlers ~log:ignore
          ~party:(ref (Frlg_actions.Party_roster.of_list [])))
 
-let missing (p : Checkpoints_plan.Plan.t) =
+let missing (p : Pokemon_checkpoints.Plan.t) =
   List.filter_map
-    (fun (e : Checkpoints_plan.Plan.event) ->
+    (fun (e : Pokemon_checkpoints.Plan.event) ->
       match (e.kind, e.action) with
       | Game_action _, Some name when not (List.mem name handled) -> Some name
       | _ -> None)
@@ -29,7 +29,8 @@ let summary file () =
     match Checkpoint_run.check_plan p with Ok () -> "frlg" | Error e -> e
   in
   let start =
-    Option.fold ~none:"no start" ~some:Checkpoints_plan.Pose.observed_to_string
+    Option.fold ~none:"no start"
+      ~some:Pokemon_checkpoints.Pose.observed_to_string
       (Checkpoint_run.start_of p.checkpoint)
   in
   let missing =
@@ -39,21 +40,21 @@ let summary file () =
 
 (* Where the player stands after an event that names it, as the story game
    reckons it: a walk's target, a lift ride's exit, a single declared tile. *)
-let reckoned (e : Checkpoints_plan.Plan.event) :
-    Checkpoints_plan.Pose.observed option =
-  let of_grid (g : Checkpoints_plan.Pose.grid) =
+let reckoned (e : Pokemon_checkpoints.Plan.event) :
+    Pokemon_checkpoints.Pose.observed option =
+  let of_grid (g : Pokemon_checkpoints.Pose.grid) =
     match g.tiles with
     | [ tile ] ->
         Some
           {
-            Checkpoints_plan.Pose.at_map = g.map;
+            Pokemon_checkpoints.Pose.at_map = g.map;
             at_tile = tile;
             faces = g.facing;
           }
     | _ -> None
   in
   match (e.kind, e.action) with
-  | Route r, _ -> of_grid r.target
+  | Own (Route r), _ -> of_grid r.target
   | Game_action args, Some "lift_floor" ->
       Result.to_option (Frlg_actions.Lift_ride.ride_of_args args)
       |> Option.map Frlg_actions.Lift_ride.arrival
@@ -65,10 +66,10 @@ let reckoned (e : Checkpoints_plan.Plan.event) :
 let walks file () =
   let p = plan file in
   let world = Result.get_ok (Checkpoint_run.load_world ()) in
-  let step (at, out) (e : Checkpoints_plan.Plan.event) =
+  let step (at, out) (e : Pokemon_checkpoints.Plan.event) =
     let out =
       match (e.kind, at) with
-      | Route r, Some (at : Checkpoints_plan.Pose.observed) ->
+      | Own (Route r), Some (at : Pokemon_checkpoints.Pose.observed) ->
           let legs =
             Result.bind (Frlg_overworld.Route_target.place_of world at)
               (fun from ->
@@ -105,21 +106,20 @@ let capped cap file () =
 let grind_save_point () =
   let start id =
     match (plan (id ^ ".plan.json")).checkpoint.start with
-    | Some (Grid g) -> Checkpoints_plan.Pose.grid_to_string g
+    | Some (Grid g) -> Pokemon_checkpoints.Pose.grid_to_string g
     | Some (Zone _) | None -> "not a tile"
   in
   let a = plan "04-grind-farfetchd.plan.json"
   and b = plan "05-grind-mr-mime.plan.json" in
   let ends =
     [
-      Checkpoints_run.Checkpoint_end.declared ~next:(Some b.checkpoint)
-        a.checkpoint;
+      Checkpoint_end.declared ~next:(Some b.checkpoint) a.checkpoint;
       b.postconditions.position;
     ]
   in
   String.concat "; "
     (List.map
-       (Option.fold ~none:"none" ~some:Checkpoints_plan.Pose.grid_to_string)
+       (Option.fold ~none:"none" ~some:Pokemon_checkpoints.Pose.grid_to_string)
        ends
     @ [ start "05-grind-mr-mime"; start "06-grind-return" ])
 
@@ -129,13 +129,17 @@ let grind_save_point () =
    after the purchase (one rope). [kept_ropes] is the start count kept. *)
 let from_last_event ~kept_ropes () =
   let p = plan "03-trade-mr-mime.plan.json" in
-  let events = p.checkpoint.events in
+  let events =
+    List.map
+      (fun (e : Pokemon_checkpoints.Plan.event) -> e.id)
+      p.checkpoint.events
+  in
   let range =
     Result.get_ok
-      (Checkpoints_run.Event_range.resolve events ~from_event:"heal_lavender"
+      (Engine_run.Event_range.resolve events ~from_event:"heal_lavender"
          ~to_event:None)
   in
-  let kept : Checkpoints_run.Event_states.kept =
+  let kept : Pokemon_checkpoints.Event_states.kept =
     {
       start =
         {
@@ -148,25 +152,25 @@ let from_last_event ~kept_ropes () =
   in
   let kept =
     Result.get_ok
-      (Checkpoints_run.Event_states.kept_of_json
-         (Checkpoints_run.Event_states.kept_to_json kept))
+      (Pokemon_checkpoints.Event_states.kept_of_json
+         (Pokemon_checkpoints.Event_states.kept_to_json kept))
   in
   let observed =
     {
-      Checkpoints_run.Postcondition_check.nothing_read with
+      Pokemon_checkpoints.Postcondition_check.nothing_read with
       items = [ ("revive", 2); ("escape-rope", 1) ];
       start = kept.start;
     }
   in
   let rope =
     List.find
-      (fun (r : Checkpoints_run.Postcondition_check.result) ->
+      (fun (r : Pokemon_checkpoints.Postcondition_check.result) ->
         r.what = "item escape-rope")
-      (Checkpoints_run.Postcondition_check.check p.postconditions observed)
+      (Pokemon_checkpoints.Postcondition_check.check p.postconditions observed)
   in
   Printf.sprintf "%s: %s"
-    (Checkpoints_run.Event_range.label events range.first)
-    (Checkpoints_run.Postcondition_check.result_to_string rope)
+    (Engine_run.Event_range.label events range.first)
+    (Pokemon_checkpoints.Postcondition_check.result_to_string rope)
 
 let () =
   Table_test.run "checkpoint_run"
