@@ -7,8 +7,8 @@
 
 type grid = {
   map : string;
-  tiles : Grid_maps.Tile_pos.t list;
-  facing : Grid_maps.Direction.t option;
+  tiles : Grid_geometry.Tile_pos.t list;
+  facing : Grid_geometry.Direction.t option;
 }
 
 type zone = { place : string; spot : string option; heading : int option }
@@ -19,28 +19,12 @@ type declared = Grid of grid | Zone of zone
 
 type observed = {
   at_map : string;
-  at_tile : Grid_maps.Tile_pos.t;
-  faces : Grid_maps.Direction.t option;  (** [None] when the game cannot tell. *)
+  at_tile : Grid_geometry.Tile_pos.t;
+  faces : Grid_geometry.Direction.t option;
+      (** [None] when the game cannot tell. *)
 }
 (** Where a game reads the player to be. *)
 
-val matches : grid -> observed -> bool
+val grid_matches : grid -> observed -> bool
 (** The map is the pose's, the tile one of its tiles (any, when it lists none),
     and the facing its facing when both the pose and the reading know it. *)
-
-val grid_to_string : grid -> string
-(** ["CeladonCity (48, 12) south"]; alternatives joined by ["|"]. *)
-
-val observed_to_string : observed -> string
-(** ["CeladonCity (48, 12) south"], or without the facing when unknown. *)
-
-val declared_to_string : declared -> string
-(** A grid pose as {!grid_to_string}, a zone as ["zone <place>"]. *)
-
-val observed_to_json : observed -> Yojson.Safe.t
-(** [{"map": "CeladonCity", "tile": [48, 12], "facing": "south"}], the facing
-    [null] when unknown. *)
-
-val observed_of_json : Yojson.Safe.t -> (observed, string) result
-(** What {!observed_to_json} wrote: ["not a map and a tile"] or
-    ["not an object"] else. *)

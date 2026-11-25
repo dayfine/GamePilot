@@ -121,7 +121,7 @@ let run ~log plan =
   Bag_items.to_top ();
   let after = count_of plan.item in
   Effects.save_run_frame "proof-b.png";
-  M.close "the bag" Bag_screen.bag_open;
+  M.close_through_fades "the bag" Bag_screen.bag_open;
   M.settle_back ~label:"duplication" ~log;
   log (Printf.sprintf "Duplication: %s %d -> %d." plan.item before after);
   Option.iter (M.fail "duplication_failed") (counted plan ~before ~after)

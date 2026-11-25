@@ -19,6 +19,8 @@
       take as {!Level_up.Forget_list}.
     - A cancel holds B for {!evolution_hold_ms} from the scene's first look: the
       game stops the evolution while B alone is held as the sprites cycle.
+    - The bag closes through its fade ({!Menu_input.close_through_fades}): no B
+      while the overworld's fade-in is still coming up.
 
     Run it with {!Menu_input.probes} and {!probes} subscribed. Its menu steps
     fail as a Result ({!Menu_step}), not by raising. *)

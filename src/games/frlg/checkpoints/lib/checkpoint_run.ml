@@ -97,7 +97,7 @@ let to_run options ~end_at (plan : Pokemon_checkpoints.Plan.t) =
   else (plan.checkpoint, end_at)
 
 let capped_postconditions ~grind_cap (plan : Pokemon_checkpoints.Plan.t) =
-  let p = plan.postconditions in
+  let p = Pokemon_checkpoints.Postconditions.stated plan.postconditions in
   match grind_cap with
   | None -> (p, [])
   | Some cap ->
@@ -116,10 +116,16 @@ let capped_postconditions ~grind_cap (plan : Pokemon_checkpoints.Plan.t) =
 let with_actions actions (game : Pokemon_checkpoints.Game.t) =
   { game with game_actions = actions @ game.game_actions }
 
-type from_event = { range : Engine_run.Event_range.t; kept : Event_states.kept }
+type from_event = {
+  range : Engine_run.Event_range.t;
+  kept : Pokemon_checkpoints.Saved.t;
+}
 
 type keep_event_state =
-  index:int -> Pokemon_checkpoints.Plan.event -> Event_states.kept -> unit
+  index:int ->
+  Pokemon_checkpoints.Plan.event ->
+  Pokemon_checkpoints.Saved.t ->
+  unit
 
 let kept_start_line (start : Pokemon_checkpoints.Postcondition_check.start) =
   let items =
@@ -142,14 +148,14 @@ let start_reads options ~from_event checked =
   | _ when options.end_check_only ->
       Pokemon_checkpoints.Postcondition_check.nothing_at_start
   | Some { kept; _ } ->
-      options.log (kept_start_line kept.Event_states.start);
+      options.log (kept_start_line kept.Pokemon_checkpoints.Saved.start);
       kept.start
   | None -> Postcondition_reads.at_start ~log:options.log checked
 
 (* Where the player stands at the first event: the checkpoint's start, or on
    a partial run where the run that kept the state reckoned them. *)
 let start_pose (plan : Pokemon_checkpoints.Plan.t) = function
-  | Some { kept; _ } -> kept.Event_states.at
+  | Some { kept; _ } -> kept.Pokemon_checkpoints.Saved.at
   | None -> start_of plan.checkpoint
 
 (* [on_event], and the state kept at each event reached cleanly with what
@@ -195,13 +201,18 @@ let run ?end_at ?on_event ?(actions = []) ?from_event ?keep_event_state options
       let game = with_actions actions (A.Checkpoint_game.game game) in
       let on_event =
         keeping_states ?on_event ~keep:keep_event_state ~first checkpoint
-          (fun () -> { Event_states.start; at = game.position () })
+          (fun () -> { Pokemon_checkpoints.Saved.start; at = game.position () })
       in
       let end_at =
         Option.map (fun g -> Pokemon_checkpoints.Pose.Grid g) end_at
       in
-      Pokemon_checkpoints.Runner.run ?end_at ~end_state:(checked, observe)
-        ~on_event ?events game checkpoint)
+      let end_state =
+        Option.map
+          (fun p -> (p, observe))
+          (Pokemon_checkpoints.Postconditions.at_end checked)
+      in
+      Pokemon_checkpoints.Runner.run ?end_at ?end_state ~on_event ?events game
+        checkpoint)
 
 let goal_holds ~log ~id (goal : Pokemon_checkpoints.Postconditions.t) =
   let module C = Pokemon_checkpoints.Postcondition_check in

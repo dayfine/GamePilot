@@ -7,8 +7,16 @@ let create (checkpoint : Pokemon_checkpoints.Plan.checkpoint) =
        (fun (e : Pokemon_checkpoints.Plan.event) -> e.id)
        checkpoint.events)
 
+(* The event's state on the page and its detail (a failure's reason, the flag
+   a skip held on). *)
+let to_watch : string Engine_run.Event_progress.t -> _ = function
+  | Started -> (Wire.Watch.Current, "")
+  | Passed -> (Wire.Watch.Done, "")
+  | Skipped flag -> (Wire.Watch.Skipped, flag)
+  | Failed reason -> (Wire.Watch.Failed, reason)
+
 let on_event report index progress =
-  let state, detail = Engine_run.Event_progress.to_watch progress in
+  let state, detail = to_watch progress in
   Watch_report.set report index state detail
 
 (* The options of a run that loads no state: the plan's own events go back to

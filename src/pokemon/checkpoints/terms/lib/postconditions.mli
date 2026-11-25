@@ -1,6 +1,6 @@
 (** What a Pokémon checkpoint promises once its events are done: the plan's
     [metadata.postconditions] (and a repeat's [until]), read by
-    {!Postcondition_decode} and checked by {!Postcondition_check}. *)
+    [Pokemon_plan_codec] and checked by {!Postcondition_check}. *)
 
 (** Which party a checkpoint promises. *)
 type party =
@@ -54,13 +54,10 @@ type t = {
 val none : t
 (** Nothing promised: what a plan that states no postconditions promises. *)
 
-val checked_at_end : t -> bool
-(** Whether the runner reads and checks them after the end position: a party,
-    items, coins, money or flags promised (moves, levels and marks alone are not
-    read at the end). *)
+val stated : t option -> t
+(** A plan's postconditions: {!none} when it states none. *)
 
-val text : t -> string list
-(** One line per promise: ["position CeladonCity (39, 21) south"],
-    ["party includes blastoise, pidgey"], ["coins gained 20"],
-    ["money spent 4100"], ["flags a, b"], ["mr-mime knows psychic"],
-    ["mr-mime at least Lv 33"], ["marks mail, none"]. *)
+val at_end : t -> t option
+(** What the runner reads and checks after the end position: [None] unless a
+    party, items, coins, money or flags are promised (moves, levels and marks
+    alone are not read at the end). *)

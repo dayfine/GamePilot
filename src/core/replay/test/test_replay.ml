@@ -388,3 +388,22 @@ let () =
       print_endline e;
       expect "stick press -> divergence naming the stick"
         (contains e "press B left 0,1 hold 500")
+
+(* run_with_backend hands the program the recorded hello's backend: where the
+   game picture sat in the frame. *)
+let () =
+  let log =
+    Replay.log_of_lines
+      (hello
+      @ [
+          {|{"dir":"out","t_ms":2,"msg":{"jsonrpc":"2.0","method":"frame","params":{"seq":501,"load":2,"t_ms":2,"probes":{}}}}|};
+        ])
+  in
+  let backend =
+    Replay.run_with_backend log (fun (b : Wire.backend) ->
+        ignore (Effects.load_state "state.ss" : int);
+        b)
+  in
+  expect "run_with_backend: the recorded hello's viewport"
+    (backend.kind = "mgba" && backend.viewport.w = 1.
+   && backend.game_width = 240)

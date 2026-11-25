@@ -1,12 +1,13 @@
 (** Where one event of a running checkpoint is, as {!Runner.Make.run} reports it
-    to whoever follows the run (the watch page's plan). *)
+    to whoever follows the run (the watch page's plan, the event states). *)
 
-type t =
+type 'reason t =
   | Started
   | Passed
   | Skipped of string  (** the [skip_if] flag that held *)
-  | Failed of string  (** the reason, as logged *)
+  | Failed of 'reason
+      (** why: a {!Log_line.Make.t} from the runner, its text once the engine
+          prints it ([Engine_checkpoints]) *)
 
-val to_watch : t -> Wire.Watch.event_state * string
-(** The event's state on the watch page and its detail (a failure's reason, the
-    flag a skip held on). *)
+val map : ('a -> 'b) -> 'a t -> 'b t
+(** The same progress with its failure's reason mapped. *)

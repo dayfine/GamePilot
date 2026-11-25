@@ -58,7 +58,7 @@ let promised (p : Postconditions.t) =
 let plan acc (p : P.t) =
   let id = p.checkpoint.checkpoint_id in
   let joins, used = List.fold_left (event id) acc p.checkpoint.events in
-  (joins, used @ promised p.postconditions)
+  (joins, used @ promised (Postconditions.stated p.postconditions))
 
 (* The species a trade brings ("receive"). *)
 let traded (p : P.t) =

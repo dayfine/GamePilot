@@ -9,45 +9,6 @@ type start = {
 let nothing_at_start =
   { start_money = None; start_coins = None; start_items = [] }
 
-let option_json f = function Some v -> f v | None -> `Null
-let int_json n = `Int n
-
-let start_to_json start =
-  [
-    ("start_money", option_json int_json start.start_money);
-    ("start_coins", option_json int_json start.start_coins);
-    ( "start_items",
-      `Assoc (List.map (fun (i, n) -> (i, int_json n)) start.start_items) );
-  ]
-
-let count_of_json name = function
-  | `Int n -> Ok (Some n)
-  | `Null -> Ok None
-  | _ -> Error (name ^ " is not a number")
-
-let field fields name = Option.value (List.assoc_opt name fields) ~default:`Null
-let ( let* ) = Result.bind
-
-let rec items_read = function
-  | [] -> Ok []
-  | (item, `Int n) :: rest ->
-      let* rest = items_read rest in
-      Ok ((item, n) :: rest)
-  | (item, _) :: _ -> Error ("start_items: " ^ item ^ " is not a number")
-
-(* Each item's count at the start; none in a file kept before items were. *)
-let items_of_json = function
-  | `Null -> Ok []
-  | `Assoc items -> items_read items
-  | _ -> Error "start_items is not an object"
-
-let start_of_json fields =
-  let count name = count_of_json name (field fields name) in
-  let* start_money = count "start_money" in
-  let* start_coins = count "start_coins" in
-  let* start_items = items_of_json (field fields "start_items") in
-  Ok { start_money; start_coins; start_items }
-
 type observed = {
   party : string option list option;
   items : (string * int) list;

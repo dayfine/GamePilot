@@ -148,3 +148,30 @@ val close_press_ms : int
 val close : string -> (Effects.measurements -> bool) -> unit
 (** B until the reader no longer holds: a bag, a party or a list closed, which
     the settle's look can't tell from the overworld. Fails as [not_closed]. *)
+
+val max_faded_closes : int
+(** How many times {!close_through_fades} closes: 3, the mail editor, the party
+    and the bag after a mail is given. *)
+
+val fade_start_ms : int
+(** How long {!close_through_fades} looks for a fade when the reader did not
+    hold as it began: 1 s. *)
+
+val close_through_fades : string -> (Effects.measurements -> bool) -> unit
+(** A bag or a party that closes through a black fade ({!await_fade_in}): B
+    until the reader no longer holds ({!close}), then every frame watched until
+    the fade-in after it is over; again while the reader holds then, as a party
+    opened from the bag closes to the bag through a fade of its own. When the
+    reader did not hold and no fade shows within {!fade_start_ms}, nothing is
+    waited for and the caller's settle goes on: the party's message after a held
+    item is switched ("The LEPPA BERRY was taken and replaced with the
+    ANTIDOTE.") hides the party's prompt, which {!Frlg_readers.Party_menu}
+    reads, so that close is still the talk settle's B (mGBA, 2026-11-25,
+    08-activate-and-verify give_dup_item). No B goes in while a fade or its
+    fade-in is still coming up: on mGBA (2026-11-24, 08-activate-and-verify
+    testing run 1) the talk settle after a given mail pressed B in the editor's
+    black, and after verify_mail_glitch's party closed, in its fade-out. We
+    deliberately differ from the fork, which mashes B through them. Fails as
+    [not_closed]: after {!max_faded_closes} closes, or with
+    ["the screen after <what> did not show"] when no fade-in is over within
+    {!fade_in_timeout_ms}. *)

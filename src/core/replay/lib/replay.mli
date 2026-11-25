@@ -35,3 +35,8 @@ val run : log -> (unit -> 'a) -> 'a
     first one it did not send, unless one of its waits timed out at a recorded
     point: then it is on its own failure path), or [Effects.Disconnected] when
     the program waits past the end of the log. *)
+
+val run_with_backend : log -> (Wire.backend -> 'a) -> 'a
+(** {!run}, the program given the [backend] of the log's recorded [hello] reply
+    (where the game picture sat in the frame), as [Session.run_with_backend]
+    gives it live. *)

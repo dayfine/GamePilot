@@ -269,6 +269,40 @@ let () =
            "(test (name t) (libraries p.party))" );
        ])
 
+(* --- never_links --- *)
+
+let pure =
+  match Config.parse "root .\nnever_links src/engine/rules/lib yojson\n" with
+  | Ok c -> c
+  | Error e -> failwith e
+
+let never_links_findings extra =
+  checks
+    (Never_links.check pure
+       ([
+          ("src/base/wire/lib/dune", library "wire" [ "yojson" ]);
+          ("src/base/text/lib/dune", library "text" []);
+          ("src/engine/codec/lib/dune", library "codec" [ "p.wire" ]);
+        ]
+       @ extra))
+
+let () =
+  case "never_links: a rules library linking only pure libraries passes"
+    ~expect:[]
+    (never_links_findings
+       [ ("src/engine/rules/lib/dune", library "rules" [ "p.text" ]) ]);
+  case "never_links: linking the library directly is caught"
+    ~expect:[ "never_links" ]
+    (never_links_findings
+       [ ("src/engine/rules/lib/dune", library "rules" [ "yojson" ]) ]);
+  case "never_links: linking it through two libraries is caught"
+    ~expect:[ "never_links" ]
+    (never_links_findings
+       [ ("src/engine/rules/lib/dune", library "rules" [ "codec" ]) ]);
+  case "never_links: another directory may link it" ~expect:[]
+    (never_links_findings
+       [ ("src/engine/other/lib/dune", library "other" [ "p.codec" ]) ])
+
 (* --- exceptions file, parse failures, config --- *)
 
 let () =

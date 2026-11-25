@@ -29,8 +29,7 @@ let summary file () =
     match Checkpoint_run.check_plan p with Ok () -> "frlg" | Error e -> e
   in
   let start =
-    Option.fold ~none:"no start"
-      ~some:Pokemon_checkpoints.Pose.observed_to_string
+    Option.fold ~none:"no start" ~some:Pokemon_checkpoints.Pose_text.observed
       (Checkpoint_run.start_of p.checkpoint)
   in
   let missing =
@@ -106,7 +105,7 @@ let capped cap file () =
 let grind_save_point () =
   let start id =
     match (plan (id ^ ".plan.json")).checkpoint.start with
-    | Some (Grid g) -> Pokemon_checkpoints.Pose.grid_to_string g
+    | Some (Grid g) -> Pokemon_checkpoints.Pose_text.grid g
     | Some (Zone _) | None -> "not a tile"
   in
   let a = plan "04-grind-farfetchd.plan.json"
@@ -114,12 +113,12 @@ let grind_save_point () =
   let ends =
     [
       Checkpoint_end.declared ~next:(Some b.checkpoint) a.checkpoint;
-      b.postconditions.position;
+      Option.bind b.postconditions (fun p -> p.position);
     ]
   in
   String.concat "; "
     (List.map
-       (Option.fold ~none:"none" ~some:Pokemon_checkpoints.Pose.grid_to_string)
+       (Option.fold ~none:"none" ~some:Pokemon_checkpoints.Pose_text.grid)
        ends
     @ [ start "05-grind-mr-mime"; start "06-grind-return" ])
 
@@ -139,7 +138,7 @@ let from_last_event ~kept_ropes () =
       (Engine_run.Event_range.resolve events ~from_event:"heal_lavender"
          ~to_event:None)
   in
-  let kept : Pokemon_checkpoints.Event_states.kept =
+  let kept : Pokemon_checkpoints.Saved.t =
     {
       start =
         {
@@ -152,8 +151,8 @@ let from_last_event ~kept_ropes () =
   in
   let kept =
     Result.get_ok
-      (Pokemon_checkpoints.Event_states.kept_of_json
-         (Pokemon_checkpoints.Event_states.kept_to_json kept))
+      (Pokemon_checkpoints.Saved.of_yojson
+         (Pokemon_checkpoints.Saved.to_yojson kept))
   in
   let observed =
     {
@@ -166,7 +165,9 @@ let from_last_event ~kept_ropes () =
     List.find
       (fun (r : Pokemon_checkpoints.Postcondition_check.result) ->
         r.what = "item escape-rope")
-      (Pokemon_checkpoints.Postcondition_check.check p.postconditions observed)
+      (Pokemon_checkpoints.Postcondition_check.check
+         (Option.get p.postconditions)
+         observed)
   in
   Printf.sprintf "%s: %s"
     (Engine_run.Event_range.label events range.first)

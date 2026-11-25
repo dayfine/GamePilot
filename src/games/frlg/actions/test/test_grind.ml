@@ -27,8 +27,8 @@ let decode json () =
   | Error c -> Pokemon_checkpoints.Failure.cause_to_string c
 
 let heal_name : Grind_plan.heal -> string = function
-  | Nurse g -> "nurse at " ^ Pokemon_checkpoints.Pose.grid_to_string g
-  | Pad g -> "pad at " ^ Pokemon_checkpoints.Pose.grid_to_string g
+  | Nurse g -> "nurse at " ^ Pokemon_checkpoints.Pose_text.grid g
+  | Pad g -> "pad at " ^ Pokemon_checkpoints.Pose_text.grid g
 
 let strategy name () =
   match
@@ -37,7 +37,7 @@ let strategy name () =
   | None -> "none"
   | Some s ->
       Printf.sprintf "spot %s; heal every %d, %s"
-        (Pokemon_checkpoints.Pose.grid_to_string s.spot)
+        (Pokemon_checkpoints.Pose_text.grid s.spot)
         s.heal_every (heal_name s.heal)
 
 let decoding =
@@ -196,8 +196,7 @@ let flow ?cap ?(battle_lines = false) ?(levels = [ Some 9 ]) ~party ~known
         (fun a b ->
           call (Printf.sprintf "swap %d %d" a b);
           party := Party_roster.swap !party a b);
-      go_to =
-        (fun g -> call ("go " ^ Pokemon_checkpoints.Pose.grid_to_string g));
+      go_to = (fun g -> call ("go " ^ Pokemon_checkpoints.Pose_text.grid g));
       heal = (fun h -> call ("heal " ^ heal_name h));
       find_battle = (fun () -> call "spin");
       battle =

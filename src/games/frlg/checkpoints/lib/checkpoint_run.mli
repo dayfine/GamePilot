@@ -63,7 +63,7 @@ val capped_postconditions :
 
 type from_event = {
   range : Engine_run.Event_range.t;
-  kept : Pokemon_checkpoints.Event_states.kept;
+  kept : Pokemon_checkpoints.Saved.t;
       (** What the run that kept the first event's state read at the
           checkpoint's start ({!Pokemon_checkpoints.Event_states}). *)
 }
@@ -72,13 +72,13 @@ type from_event = {
 type keep_event_state =
   index:int ->
   Pokemon_checkpoints.Plan.event ->
-  Pokemon_checkpoints.Event_states.kept ->
+  Pokemon_checkpoints.Saved.t ->
   unit
 (** Keeps the state at an event's start, with the checkpoint's start reads. *)
 
 val run :
   ?end_at:Pokemon_checkpoints.Pose.grid ->
-  ?on_event:(int -> Engine_run.Event_progress.t -> unit) ->
+  ?on_event:(int -> string Engine_run.Event_progress.t -> unit) ->
   ?actions:(string * Pokemon_checkpoints.Game.game_action) list ->
   ?from_event:from_event ->
   ?keep_event_state:keep_event_state ->
