@@ -172,11 +172,11 @@ let transport r : Session.transport =
     wall_ms = (fun () -> if r.ran_out then infinity else 0.);
   }
 
-let run log f =
+let run_with_backend log f =
   let r =
     { log; next_in = 0; next_out = 0; ran_out = false; timed_out = false }
   in
-  let result = Session.run (transport r) f in
+  let result = Session.run_with_backend (transport r) f in
   (match next_client_message r with
   | Some i when not r.timed_out ->
       let n, l = log.(i) in
@@ -184,3 +184,5 @@ let run log f =
         (describe l.msg)
   | Some _ | None -> ());
   result
+
+let run log f = run_with_backend log (fun (_ : Wire.backend) -> f ())

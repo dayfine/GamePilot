@@ -13,8 +13,13 @@
  (copy fixtures/switch.shifted.probes.jsonl switch.shifted.probes.jsonl))
 
 (tests
- (names test_home_screen test_console_park)
- (modules test_home_screen test_console_park fire_red scripted_home)
+ (names test_home_screen test_console_park test_game_entry)
+ (modules
+  test_home_screen
+  test_console_park
+  test_game_entry
+  fire_red
+  scripted_home)
  (deps switch.probes.jsonl switch.shifted.probes.jsonl)
  (libraries
   gamepilot.wire

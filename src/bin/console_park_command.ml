@@ -24,15 +24,15 @@ let usage =
 
 let log line = print_endline line
 
-let park () =
-  match P.park ~log fire_red_tile with
+let park ~picture =
+  match P.park ~log ~picture fire_red_tile with
   | Ok () -> true
   | Error e ->
       log ("[Park] failed: " ^ e);
       false
 
-let resume () =
-  match P.resume ~log fire_red_tile with
+let resume ~picture =
+  match P.resume ~log ~picture fire_red_tile with
   | Ok r ->
       log ("[Resume] " ^ P.resumed_to_string r);
       true
@@ -40,12 +40,46 @@ let resume () =
       log ("[Resume] failed: " ^ e);
       false
 
-(* Park or resume in the effect context; whether it ended where asked. *)
-let act = function `Park -> park () | `Resume -> resume ()
-let owner = function `Park -> "console:park" | `Resume -> "console:resume"
+(* Switch_home.Game_entry's steps, FireRed's tile colour for the HOME
+   reader. *)
+let entry_step name result =
+  match result with
+  | Ok () ->
+      log ("[" ^ name ^ "] done");
+      true
+  | Error e ->
+      log ("[" ^ name ^ "] failed: " ^ e);
+      false
+
+let close_game ~picture =
+  entry_step "Close game"
+    (Switch_home.Game_entry.close_game ~log ~picture fire_red_tile)
+
+let start_game ~picture slot =
+  entry_step "Start game"
+    (Switch_home.Game_entry.start_game ~log ~picture ~game_slot:slot
+       ~user_slot:0 fire_red_tile)
+
+(* Park, resume, close or start in the effect context, over the game picture
+   the daemon's hello reports; whether it ended where asked. *)
+let act which (backend : Wire.backend) =
+  let picture = backend.viewport in
+  match which with
+  | `Park -> park ~picture
+  | `Resume -> resume ~picture
+  | `Close_game -> close_game ~picture
+  | `Start_game slot -> start_game ~picture slot
+
+let name = function
+  | `Park -> "park"
+  | `Resume -> "resume"
+  | `Close_game -> "close-game"
+  | `Start_game _ -> "start-game"
+
+let owner which = "console:" ^ name which
 
 let on_port ~port ~owner:o which =
-  match Live.run ~port ~client ~lease:(o, None) (fun () -> act which) with
+  match Live.run_with_backend ~port ~client ~lease:(o, None) (act which) with
   | true -> 0
   | false -> 1
   | exception Unix.Unix_error (e, _, _) ->
@@ -54,7 +88,7 @@ let on_port ~port ~owner:o which =
 
 (* A daemon of its own on the board and the card for the step. *)
 let with_daemon ~daemon ~serial ~frames ~log_dir which =
-  let name = match which with `Park -> "park" | `Resume -> "resume" in
+  let name = name which in
   let file ext = Filename.concat log_dir ("gamepilot-" ^ name ^ ext) in
   match
     Daemon_process.start ~daemon

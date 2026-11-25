@@ -11,7 +11,8 @@ let hello ~client t =
   in
   if r.protocol <> protocol_version then
     protocol_error "daemon speaks protocol %d, we speak %d" r.protocol
-      protocol_version
+      protocol_version;
+  r.backend
 
 let next_batch_id t =
   let batch_id = Printf.sprintf "b%d" t.next_batch in
@@ -213,8 +214,11 @@ let acquire_lease t (owner, ttl_ms) =
        (call t (Wire.Lease_acquire { owner; ttl_ms }))
       : Wire.Lease.t)
 
-let run ?(client = client_name) ?lease transport f =
+let run_with_backend ?(client = client_name) ?lease transport f =
   let t = create transport in
-  hello ~client t;
+  let backend = hello ~client t in
   Option.iter (acquire_lease t) lease;
-  handle t f
+  handle t (fun () -> f backend)
+
+let run ?client ?lease transport f =
+  run_with_backend ?client ?lease transport (fun (_ : Wire.backend) -> f ())

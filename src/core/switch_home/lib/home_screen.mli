@@ -4,17 +4,18 @@
     (StartGameUserSelectDetector_Switch1, console B's), with their boxes and
     thresholds.
 
-    Where it differs: the daemon's probe boxes lie inside the game picture (the
-    fork's FRLG GAME_BOX, daemon/src/viewport.h), so each of the fork's
-    whole-frame boxes is clipped to it, and the HOME detector's user icon box,
-    outside the picture, is left out. New here: which tile the cursor is on (its
-    cyan frame, above the tile, read through its pulse) and which tile shows a
-    game's colour, among the four whole tiles in view, and the dark theme's HOME
-    dimmed (its grey at about a sixth). The row scrolls a whole tile at a time,
-    so the four tiles sit at the same places scrolled or not; a part tile at
-    either edge of a scrolled row is outside the picture and not read.
-    Unscrolled, the leftmost tile is the game played last. Measured on console
-    B's captures in [test/images] (2026-11-24 and 25).
+    The fork's boxes are in the whole frame; the daemon's probe boxes are
+    relative to the game picture its [hello] reports ({!Picture_box}). On the
+    native viewport they are the fork's; on the GBA app's ([nso-gba], the fork's
+    FRLG GAME_BOX) each is clipped to the picture, and the HOME detector's user
+    icon box, whose avatar lies outside it, is left out. New here: which tile
+    the cursor is on (its cyan frame, above the tile, read through its pulse)
+    and which tile shows a game's colour, among the four whole tiles in view,
+    and the dark theme's HOME dimmed (its grey at about a sixth). The row
+    scrolls a whole tile at a time, so the four tiles sit at the same places
+    scrolled or not; a part tile at either edge of a scrolled row is outside the
+    picture and not read. Unscrolled, the leftmost tile is the game played last.
+    Measured on console B's captures in [test/images] (2026-11-24 and 25).
 
     Another capture card may show the colors a little off. Every capture reads
     the same with its brightness times 0.9 or 1.1, any one channel 12 up or
@@ -39,13 +40,16 @@ type t =
 val tiles : int
 (** 4: the whole tiles in view, read from the left. *)
 
-val probes : tile_color -> Wire.probe_spec list
-(** The probes [read] needs, the game's tile colour among them. *)
+val probes : picture:Wire.box -> tile_color -> Wire.probe_spec list
+(** The probes [read] needs, the game's tile colour among them, for a game
+    picture at [picture] in the frame (the [hello]'s viewport). *)
 
 val read : Effects.measurements -> t
 (** [Elsewhere] also when a probe is missing. *)
 
 val black : Effects.measurements -> bool
-(** The whole picture is black (a launch's loading screen). *)
+(** The whole picture is black: dark and flat (its channels' means summing under
+    80, their stddevs under 24). A launch's loading screen, and also the capture
+    card's black during a game's fade between screens. *)
 
 val to_string : t -> string
