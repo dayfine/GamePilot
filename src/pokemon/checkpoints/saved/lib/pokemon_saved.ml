@@ -1,5 +1,5 @@
 open Grid_geometry
-open Pokemon_terms
+open Pokemon_rules
 
 (* A tile is kept as [[x, y]], a facing by its name; a facing the run cannot
    read back is unknown, as when the game could not tell. *)
@@ -17,7 +17,7 @@ let facing_of_json = function
   | `String name -> Ok (Direction.of_name name)
   | _ -> Ok None
 
-(* The rules' type, its JSON derived here: Pokemon_terms stays free of it. *)
+(* The rules' type, its JSON derived here: Pokemon_rules stays free of it. *)
 type observed = Pose.observed = {
   at_map : string; [@key "map"]
   at_tile : Tile_pos.t;

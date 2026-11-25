@@ -1,5 +1,5 @@
 open Grid_geometry
-open Pokemon_terms.Pose
+open Pokemon_rules.Pose
 
 let with_facing text = function
   | Some direction -> text ^ " " ^ Direction.name direction

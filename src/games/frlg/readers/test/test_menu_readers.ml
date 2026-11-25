@@ -238,12 +238,6 @@ let known_misreads =
   [
     (* A Key Items action menu covers the bag's grey shadow, as in the fork. *)
     ("bag_open", "captures/tmcase-04-tmcase-after-A__bag-itemmenu.png", "false");
-    (* One Island's harbor, with no bag open: its grey quay passes for the
-       bag's shadow, underline and top frame (mGBA, sevii 02, 2026-11-25). Its
-       actions read it only after A on a bag item. *)
-    ("bag_item_menu", "seagallop-one-island/sailor-text__none.png", "true");
-    ("bag_item_menu", "seagallop-one-island/list-row0__seagallop0.png", "true");
-    ("bag_item_menu", "seagallop-one-island/after-b__none.png", "true");
   ]
 
 let expectation r image =
@@ -309,6 +303,55 @@ let floors =
     };
   ]
 
+(* The capture-card shifts of dev/reader_fixtures/shift_frame.py, applied to
+   each color_stats probe's mean (and its stddev, for a scale): what they do to
+   a flat box. Color counts stay as read. *)
+let clamp v = Float.min 255. (Float.max 0. v)
+let each f (c : Wire.rgb) : Wire.rgb = { r = f c.r; g = f c.g; b = f c.b }
+
+let shifts : (string * (Wire.rgb -> Wire.rgb) * float) list =
+  let scale k = each (fun v -> clamp (v *. k)) in
+  [
+    ("bright90", scale 0.9, 0.9);
+    ("bright110", scale 1.1, 1.1);
+    ("grey10", each (fun v -> v +. (0.1 *. (128. -. v))), 0.9);
+    ("rplus12", (fun c -> { c with r = clamp (c.r +. 12.) }), 1.);
+    ("rminus12", (fun c -> { c with r = clamp (c.r -. 12.) }), 1.);
+    ("gplus12", (fun c -> { c with g = clamp (c.g +. 12.) }), 1.);
+    ("gminus12", (fun c -> { c with g = clamp (c.g -. 12.) }), 1.);
+    ("bplus12", (fun c -> { c with b = clamp (c.b +. 12.) }), 1.);
+    ("bminus12", (fun c -> { c with b = clamp (c.b -. 12.) }), 1.);
+  ]
+
+let shifted (shift, k) probes =
+  List.map
+    (fun (id, result) ->
+      match result with
+      | Wire.Color_stats { mean; stddev } ->
+          ( id,
+            Wire.Color_stats
+              { mean = shift mean; stddev = each (fun v -> v *. k) stddev } )
+      | other -> (id, other))
+    probes
+
+(* bag_item_menu reads every image right with its colours shifted. *)
+let shifted_cases backend images =
+  List.concat_map
+    (fun (name, shift, k) ->
+      List.map
+        (fun (image, probes) ->
+          {
+            Table_test.name =
+              Printf.sprintf "%s bag_item_menu %s: %s" backend name image;
+            input =
+              (fun () ->
+                flag Bag_screen.item_menu
+                  (measurements (shifted (shift, k) probes)));
+            expectation = tagged "itemmenu" (tags image);
+          })
+        images)
+    shifts
+
 (* The frame a shifted one comes from: its name less the "<shift>/". *)
 let unshifted image =
   match String.index_opt image '/' with
@@ -343,10 +386,13 @@ let () =
       [ "switch"; "mgba" ]
   in
   List.iter (fun (backend, images) -> print_tally backend images) backends;
-  let shifted =
+  let shifted_frames =
     Wire.read_image_probes "fixtures/menus.mgba.shifted.probes.jsonl"
   in
   Table_test.run "menu readers"
     (floors
     @ List.concat_map (fun (backend, images) -> cases backend images) backends
-    @ shifted_frame_cases "mgba" (List.assoc "mgba" backends) shifted)
+    @ List.concat_map
+        (fun (backend, images) -> shifted_cases backend images)
+        backends
+    @ shifted_frame_cases "mgba" (List.assoc "mgba" backends) shifted_frames)

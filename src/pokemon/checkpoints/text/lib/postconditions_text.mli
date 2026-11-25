@@ -1,7 +1,7 @@
-(** What a Pokémon checkpoint promises ({!Pokemon_terms.Postconditions}) as
+(** What a Pokémon checkpoint promises ({!Pokemon_rules.Postconditions}) as
     text. *)
 
-open Pokemon_terms
+open Pokemon_rules
 
 val text : Postconditions.t -> string list
 (** One line per promise: ["position CeladonCity (39, 21) south"],

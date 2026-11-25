@@ -1,7 +1,7 @@
-(** How Pokémon's rules ({!Pokemon_terms}) read in log lines, failures and a
+(** How Pokémon's rules ({!Pokemon_rules}) read in log lines, failures and a
     plan's text. *)
 
-include Engine_text.Terms_text.TEXT with module T = Pokemon_terms
+include Engine_text.Rules_text.TEXT with module T = Pokemon_rules
 
 module Pose_text = Pose_text
 (** {!Pose_text}: poses as text. *)

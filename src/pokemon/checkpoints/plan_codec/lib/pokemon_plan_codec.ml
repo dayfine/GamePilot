@@ -1,4 +1,4 @@
-module T = Pokemon_terms
+module T = Pokemon_rules
 module F = Json_field
 
 let pose_of_plan ~where obj =

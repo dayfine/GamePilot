@@ -1,6 +1,8 @@
 open Engine_run
 
-module Make (T : Engine_terms.TERMS) (X : Terms_text.TEXT with module T = T) =
+module Make
+    (T : Engine_rules.GAME_RULES)
+    (X : Rules_text.TEXT with module T = T) =
 struct
   module Failure_text = Failure_text.Make (T) (X)
   module Repeat_until = Repeat_until.Make (T) (Engine_plan_codec.Raw_json)

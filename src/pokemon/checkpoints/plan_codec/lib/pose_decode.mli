@@ -4,7 +4,7 @@
     fields (["f: checkpoint.start."]), and raises {!Json_field.Invalid} as
     {!Json_field}'s readers do. *)
 
-open Pokemon_terms
+open Pokemon_rules
 
 val grid_pose : where:string -> Json_field.obj -> Pose.grid
 (** [{"map": ..., "tiles": [[x, y], ...], "facing": ...}]; [tiles] and [facing]

@@ -1,4 +1,4 @@
-open Pokemon_terms
+open Pokemon_rules
 module F = Json_field
 
 let slot_fields = [ "slot"; "species" ]

@@ -1,7 +1,7 @@
 (library
- (name toy_terms)
- (modules toy_terms)
- (libraries gamepilot.engine_postcondition gamepilot.engine_terms))
+ (name toy_rules)
+ (modules toy_rules)
+ (libraries gamepilot.engine_postcondition gamepilot.engine_rules))
 
 (library
  (name toy_game)
@@ -14,7 +14,7 @@
   gamepilot.engine_text
   gamepilot.engine_saved
   gamepilot.engine_checkpoints
-  toy_terms)
+  toy_rules)
  (preprocess
   (pps ppx_deriving_yojson)))
 
@@ -26,5 +26,5 @@
   gamepilot.table_test
   gamepilot.engine_postcondition
   gamepilot.engine_run
-  toy_terms
+  toy_rules
   toy_game))
