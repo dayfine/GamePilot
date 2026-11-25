@@ -2,18 +2,18 @@
     event. Ported from the fork's jump to the story battle
     (Pokemon_StoryEngine.cpp, PokemonLZA_AutoStoryActionTable.cpp and
     PokemonLZA_AutoStorySceneMachine.cpp, on its plza/lean branch, fork PRs 710
-    and 725): with a [story_battle] event later in the checkpoint, a walk that
-    sees the battle HUD fails [battle_on_screen] ({!Plza_walk.Walk}), and the
+    and 725): with a [story_battle] event later in the checkpoint, a walk
+    ({!Plza_walk.Walk}) or a scene ({!Plza_story.Scene_machine}, but for a
+    battle's start) that sees the battle HUD fails [battle_on_screen], and the
     run jumps to the next [story_battle], skipping the events between. Logged as
     the fork logs it:
     ["[Event] 03.02b: battle on screen during to_taunie: jumping to
      battle_totodile, skipping taunie_battle_start"].
 
-    Where it differs: the engine's runner has no jump, so the walk's event
+    Where it differs: the engine's runner has no jump, so the stopped event
     passes and each skipped event passes at once with no input (the runner logs
-    them started and done); the fork logs the walk failed and the skipped events
-    not at all. Only the walk ends on the battle here: the fork's scenes also do
-    (its scene machine's end at a battle), not ported yet. *)
+    them started and done); the fork logs the event failed and the skipped
+    events not at all. *)
 
 type t
 (** One checkpoint run's jump: none yet, or to the battle's event. *)

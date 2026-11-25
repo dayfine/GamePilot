@@ -63,8 +63,8 @@ val make :
 (** The handlers for one checkpoint's run; [new_game] plays 01.00a's choices (by
     default it fails [no_handler]: the live runner passes
     {!Live_intro_screen.run}). With a [story_battle] later in the checkpoint, a
-    walk stops on the battle HUD and the run goes on at the battle
-    ({!Battle_jump}). *)
+    walk or a scene (but [scene_to_battle]) stops on the battle HUD and the run
+    goes on at the battle ({!Battle_jump}). *)
 
 val run_watched :
   ?end_check:(unit -> (unit, Engine_run.Failure.cause) result) ->
