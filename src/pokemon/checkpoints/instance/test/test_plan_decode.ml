@@ -348,6 +348,20 @@ let postcondition_cases : Table_test.case list =
         post ^ "items[0]: give one of quantity, gained, used, at_least.";
     };
     {
+      name = "caught at least, and caught gained";
+      input =
+        (fun () ->
+          with_postconditions {|{"caught": {"at_least": 60}}|}
+          ^ "\n"
+          ^ with_postconditions {|{"caught": {"gained": 2}}|});
+      expectation = "caught at least 60\ncaught gained 2";
+    };
+    {
+      name = "caught as a word";
+      input = (fun () -> with_postconditions {|{"caught": "sixty"}|});
+      expectation = post ^ "caught is not a number or a JSON object.";
+    };
+    {
       name = "coins as an object with no count";
       input = (fun () -> with_postconditions {|{"coins": {}}|});
       expectation = post ^ "coins: give one of exactly, gained, used, at_least.";
@@ -413,6 +427,11 @@ let repeat_cases : Table_test.case list =
     case "until is required"
       (fun () -> repeat_of {|{"repeat": {"max_rounds": 3}}|})
       (at ^ "metadata.repeat.until is missing.");
+    case "rounds until 60 species caught"
+      (fun () ->
+        repeat_of
+          {|{"repeat": {"until": {"caught": {"at_least": 60}}, "max_rounds": 8}}|})
+      "at most 8 rounds, until:\ncaught at least 60";
     case "an unknown goal field is refused"
       (fun () ->
         repeat_of {|{"repeat": {"until": {"badges": 3}, "max_rounds": 3}}|})

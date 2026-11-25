@@ -100,6 +100,10 @@ let observe ~log (promised : Pokemon_checkpoints.Postconditions.t) :
     when_promised (promised.coins <> None) "coins" (fun () ->
         A.Coin_case.read ~log)
   in
+  let caught =
+    when_promised (promised.caught <> None) "caught" (fun () ->
+        A.Trainer_card_caught.read ~log)
+  in
   let money =
     when_promised (promised.money <> None) "money" (fun () ->
         A.Trainer_card_money.read ~log)
@@ -126,6 +130,7 @@ let observe ~log (promised : Pokemon_checkpoints.Postconditions.t) :
     party;
     items;
     coins;
+    caught;
     money;
     knows;
     levels;
@@ -144,12 +149,13 @@ let at_start ~log (promised : Pokemon_checkpoints.Postconditions.t) =
     | Some (Engine_postcondition.Money.Spent _) -> true
     | _ -> false
   and coins = Option.fold ~none:false ~some:gained promised.coins
+  and caught = Option.fold ~none:false ~some:gained promised.caught
   and items =
     List.filter
       (fun (b : Pokemon_checkpoints.Postconditions.bag_count) -> gained b.count)
       promised.items
   in
-  if spent || coins || items <> [] then
+  if spent || coins || caught || items <> [] then
     log "[Postcondition] at the start, for what the checkpoint changes:";
   let start_money =
     if spent then
@@ -162,10 +168,17 @@ let at_start ~log (promised : Pokemon_checkpoints.Postconditions.t) =
       read ~absent:0 ~log "coins at the start" (fun () -> A.Coin_case.read ~log)
     else None
   in
+  let start_caught =
+    if caught then
+      read ~log "caught at the start" (fun () ->
+          A.Trainer_card_caught.read ~log)
+    else None
+  in
   let start_items = List.filter_map (item_count ~log) items in
   {
     Pokemon_checkpoints.Postcondition_check.start_money;
     start_coins;
+    start_caught;
     start_items;
   }
 

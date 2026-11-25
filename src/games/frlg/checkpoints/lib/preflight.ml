@@ -17,6 +17,7 @@ type need = Plan_needs.need =
   | Badges_at_least of int
   | Badges of string list
   | Hall_of_fame
+  | Caught_at_least of int
 
 (* The declared preconditions first: the save's state the plan's goal implies,
    before what its events' args need. *)
@@ -142,6 +143,16 @@ let hall_of_fame_row read ~need =
         if Card.hall_of_fame card then Card.to_string card ^ ": entered"
         else "no star: the Hall of Fame not entered" ))
 
+let caught_text ~need have =
+  if have >= need then Printf.sprintf "%d caught" have
+  else Printf.sprintf "%d caught; %d short" have (need - have)
+
+let caught_row (read : read) ~need n =
+  match read.observed.caught with
+  | None -> { need; read = "not read"; verdict = Not_read }
+  | Some have ->
+      { need; read = caught_text ~need:n have; verdict = of_bool (have >= n) }
+
 let describe = function
   | Party_in_order l -> "party " ^ species_list l
   | Party_includes { members; slots } -> includes_text members slots
@@ -159,6 +170,7 @@ let describe = function
   | Badges_at_least n -> Printf.sprintf "at least %d badges" n
   | Badges names -> "badges " ^ String.concat ", " names
   | Hall_of_fame -> "the Hall of Fame entered"
+  | Caught_at_least n -> Printf.sprintf "at least %d species caught" n
 
 let row read need =
   let text = describe need in
@@ -181,6 +193,7 @@ let row read need =
   | Badges_at_least n -> badge_count_row read ~need:text n
   | Badges names -> badges_row read ~need:text names
   | Hall_of_fame -> hall_of_fame_row read ~need:text
+  | Caught_at_least n -> caught_row read ~need:text n
 
 let compare needs read = List.map (row read) needs
 
@@ -232,6 +245,8 @@ let to_read needs : Postconditions.t =
     List.exists
       (function Money_at_least _ | Money_between _ -> true | _ -> false)
       needs
+  and caught =
+    List.exists (function Caught_at_least _ -> true | _ -> false) needs
   in
   let items =
     List.sort_uniq Stdlib.compare
@@ -249,6 +264,8 @@ let to_read needs : Postconditions.t =
        else None);
     items = List.map any_count items;
     coins = None;
+    caught =
+      (if caught then Some (Engine_postcondition.Count.At_least 0) else None);
     money = (if money then Some any_money else None);
     flags = [];
     knows = [];

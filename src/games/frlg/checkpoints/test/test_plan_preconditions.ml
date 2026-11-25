@@ -28,14 +28,16 @@ let case name input expectation = { Table_test.name; input; expectation }
 let card earned stars : Card.t =
   { badges = List.init 8 (fun i -> i < earned); stars }
 
-(* The pre-flight's rows for the declared needs on this card, and go or stop. *)
-let judge json card =
+(* The pre-flight's rows for the declared needs on this card (and this caught
+   count, off the same card), and go or stop. *)
+let judge ?caught json card =
   match Plan_preconditions.needs (with_preconditions json) with
   | Error e -> Error e
   | Ok needs ->
       let read : Preflight.read =
         {
-          observed = Pokemon_checkpoints.Postcondition_check.nothing_read;
+          observed =
+            { Pokemon_checkpoints.Postcondition_check.nothing_read with caught };
           place = None;
           members = None;
           card;
@@ -51,8 +53,8 @@ let verdict_text : Preflight.verdict -> string = function
 
 (* One case per fact of a judged card: how many rows, each row's need, read
    (naming what is missing) and verdict, and go or stop. *)
-let judged name json card ~rows ~go =
-  let judged = lazy (judge json card) in
+let judged ?caught name json card ~rows ~go =
+  let judged = lazy (judge ?caught json card) in
   let fact what f expected =
     case
       (name ^ ": " ^ what)
@@ -112,6 +114,21 @@ let decode_cases =
     case "a field not known"
       (declared {|{"pokedex": 60}|})
       "error: metadata.preconditions.pokedex is not a known field.";
+    case "the National Dex's 60 caught"
+      (declared {|{"caught": 60}|})
+      "at least 60 species caught";
+    case "a caught count over the National Dex"
+      (declared {|{"caught": 387}|})
+      "error: metadata.preconditions.caught: 387 is not 0 to 386";
+    case "a caught count as a word"
+      (declared {|{"caught": "sixty"}|})
+      "error: metadata.preconditions.caught: a count of species caught";
+    case "the caught count is read for its need"
+      (fun () ->
+        match (Preflight.to_read [ Preflight.Caught_at_least 60 ]).caught with
+        | Some _ -> "read"
+        | None -> "not read")
+      "read";
     case "a list, as the drafts write them"
       (declared {|[{"fact": "badges: 8"}]|})
       "error: metadata.preconditions is not an object.";
@@ -156,6 +173,16 @@ let judge_cases =
           [
             ("badges thunder, soul, marsh", five ^ "; missing marsh", "MISMATCH");
           ]
+        ~go:"stop";
+      judged "60 caught, 61 on the card" {|{"caught": 60}|} None ~caught:61
+        ~rows:[ ("at least 60 species caught", "61 caught", "ok") ]
+        ~go:"go";
+      judged "60 caught, 12 on the card" {|{"caught": 60}|} None ~caught:12
+        ~rows:
+          [ ("at least 60 species caught", "12 caught; 48 short", "MISMATCH") ]
+        ~go:"stop";
+      judged "60 caught, the count not read" {|{"caught": 60}|} None
+        ~rows:[ ("at least 60 species caught", "not read", "NOT READ") ]
         ~go:"stop";
       judged "the card not read" sevii None
         ~rows:
