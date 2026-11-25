@@ -5,6 +5,17 @@ Islands story from a save past the Hall of Fame (roadmap `docs/roadmap/frlg-sevi
 first checkpoint declares the save's eight badges and the Hall of Fame as preconditions, read off the
 Trainer Card. It runs on mGBA.
 
+The program ends when Cerulean Cave opens: Celio takes the Sapphire and the guard leaves
+(`FLAG_HIDE_CERULEAN_CAVE_GUARD`). The roadmap plans the checkpoints after 03, read from pret:
+
+| Stage | Planned checkpoints | First missing feature |
+|---|---|---|
+| Lostelle and Bill's way home | 04-three-island-bikers, 05-berry-forest, 06-back-to-cinnabar | trainer battles |
+| National Dex and the Ruby | 07-national-dex, 08-celio-ruby-request, 09-kindle-road, 10-ruby-path, 11-rainbow-pass | 60 caught, Surf, Strength |
+| Icefall Cave (it moves Ruin Valley's scientist) | 12-icefall-hm07, 13-icefall-lorelei | ice floors, Waterfall |
+| The Sapphire | 14-dotted-hole, 15-rocket-warehouse, 16-celio-sapphire | Cut from the party menu, holes, spinners |
+| Proof | 17-cerulean-cave | Surf |
+
 | Checkpoint | Content |
 |---|---|
 | 01-to-one-island | Fly to Cinnabar, YES to Bill in the Pokemon Center: out with him, the Seagallop, One Island, Celio's Tri-Pass |
