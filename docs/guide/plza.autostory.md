@@ -80,15 +80,15 @@ always reloads its autosave when it follows 03.03c, since its timed legs assume 
 
 ## Known limits
 
-03.07 to 03.09 have their plans but are refused before they press anything (`no handler`): their
-catches (`catch_tutorial`, `battle_then_catch`, `catch_in_zone`) and 03.08b's way out of the
-zone by its map (`run_out_of_zone_1`, `check_out_of_zone_1`) are not ported yet. 03.07's run
-to the gate is. The start checks of 03.08 to 03.08b name the wild zone, the party count or the A
-prompt, which nothing reads yet (`start_signature_unread`), and so do 03.09's. 03.09's first walk
-faces a heading by the minimap's arrow, which nothing reads yet either (`heading_unread`, before any
-leg). 03.10 is ported in full; it starts in the lab's lobby, where 03.09 ends. 03.11 is refused before it presses anything:
-claiming Mable's research reward (`claim_mable_research_reward`) opens the main menu, which nothing
-reads yet.
+03.07 to 03.11 have their plans, but only 03.10 is ported in full; the others stop loudly before
+they press anything. 03.07, 03.08, 03.08a, 03.08b and 03.11 are refused (`no handler`): their
+catches (`catch_tutorial`, `battle_then_catch`, `catch_in_zone`), 03.08b's way out of the zone by
+its map (`run_out_of_zone_1`, `check_out_of_zone_1`) and Mable's research reward
+(`claim_mable_research_reward`, which opens the main menu) are not ported yet; 03.07's run to the
+gate is. The start checks of 03.08 to 03.09 name the wild zone, the party count or the A prompt,
+which nothing reads yet (`start_signature_unread`). 03.09's first walk faces a heading by the
+minimap's arrow, which nothing reads either (`heading_unread`, before any leg). 03.10 starts in the
+lab's lobby, where 03.09 ends.
 
 Only 01.00b to 03.06 so far. 01.02's chase, 01.03's walk to Chikorita and the walks of 02.01 to
 03.06 are timed stick legs with no map, so they can miss; the chase then stops on Ryon's
