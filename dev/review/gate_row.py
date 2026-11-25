@@ -14,7 +14,7 @@ the verdict is ok, "merge", or "merge (structural: <reason>)" when the PR change
 deleted or renamed under src/; a changed .mli of a library shared across games (src/base, src/core,
 src/pokemon); a changed format (protocol/, a *_decode.ml); a design doc (docs/design/); or two
 NEEDS_REWORK verdicts. The reason printed is the first that holds, in the order: reworked twice,
-structure, design doc.
+design doc, structure.
 
 A qc-structural verdict is a COMMENT review (GitHub refuses self-approval, so the review state
 says nothing) whose body has a "## Structural QC" heading, a "Reviewed SHA: <sha>" line and a

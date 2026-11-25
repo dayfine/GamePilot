@@ -136,5 +136,5 @@ on `GAMEPILOT_*` variables and the ROM). → **FAIL** naming the text.
 - That docs-only PRs (every file `.md` or under `docs/`) skip this gate; CI is still required.
   A PR that changes dev tools (`dev/`, `.agents/`, workflows) is not docs-only and gets every row.
 - That the user spot checks structural changes: an APPROVED structural PR merges, the main session
-  holds one now and then for the user, and design docs wait for the user's review. This gate's FLAGs go to the main session,
-  which answers them or brings them to the user.
+  holds one now and then for the user, and design docs wait for the user's review. This gate's
+  FLAGs go to the main session, which answers them or brings them to the user.
