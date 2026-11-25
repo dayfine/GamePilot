@@ -1,10 +1,10 @@
 (** FireRed's story {!Pokemon_checkpoints.Game.t}: [route] and [ready] events
     planned and walked ({!Frlg_overworld}), [talk], [answer] and [scene] settled
     ({!Talk}), [heal] and [save] events ({!Heal_and_save}), the ["fly"] game
-    action ({!Fly}), ["lift_floor"] ({!Lift_ride}), the ["grind"] one ({!Grind},
-    its walks and heals this game's), ["capture"] ({!Capture} on
-    {!Capture_steps}; its catches join the reckoned party), mg-05's
-    ["prepare_berry_pp"] ({!Berry_pp}) and ["mail_glitch_double_battle"]
+    action ({!Fly}), ["lift_floor"] ({!Lift_ride}), ["ferry"] ({!Seagallop}),
+    the ["grind"] one ({!Grind}, its walks and heals this game's), ["capture"]
+    ({!Capture} on {!Capture_steps}; its catches join the reckoned party),
+    mg-05's ["prepare_berry_pp"] ({!Berry_pp}) and ["mail_glitch_double_battle"]
     ({!Mail_glitch_battle}) and the shared ones ({!Game_actions}). Battles and
     the other built-in kinds fail as [not_implemented] (repeats): they come from
     their own libraries.
@@ -15,12 +15,13 @@
 
     FireRed can't show where the player stands, so the position is reckoned: a
     walk ends on its plan's tile, a Fly on the town's landing tile, a lift ride
-    below the floor's lift door, and after any other event that passes, game
-    actions included, the player is taken to be where its [declared_after] says
-    when that names one tile (the fork's StoryStepRunner). The party is reckoned
-    too ({!Party_roster}), from the config's or, when the config states none,
-    from the members' summaries read before the first action that finds a member
-    by its species ({!Party_reading}). *)
+    below the floor's lift door, the Seagallop above the island harbor's sailor,
+    and after any other event that passes, game actions included, the player is
+    taken to be where its [declared_after] says when that names one tile (the
+    fork's StoryStepRunner). The party is reckoned too ({!Party_roster}), from
+    the config's or, when the config states none, from the members' summaries
+    read before the first action that finds a member by its species
+    ({!Party_reading}). *)
 
 type config = {
   world : Frlg_overworld.Frlg_steps.world;

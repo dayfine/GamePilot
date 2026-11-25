@@ -51,6 +51,9 @@ type screen =
   | Title  (** The title screen, "PRESS START" (mGBA). *)
   | Load_menu  (** CONTINUE over NEW GAME after the title (mGBA). *)
   | Recap  (** "Previously on your quest" after CONTINUE (mGBA). *)
+  | Seagallop_list of int
+      (** The Seagallop sailor's list at One Island's harbor (mGBA), its arrow
+          on this row from 0: TWO ISLAND, THREE ISLAND, EXIT. *)
 
 let screen_name = function
   | Overworld -> "overworld"
@@ -75,6 +78,7 @@ let screen_name = function
   | Title -> "title"
   | Load_menu -> "load menu"
   | Recap -> "recap"
+  | Seagallop_list row -> Printf.sprintf "seagallop list row %d" row
 
 (* The fixture images each screen is read from; a screen merges the probes of
    every fixture file that has its image. *)
@@ -103,6 +107,8 @@ let image = function
   | Title -> "mail-glitch-04/continue__none.png"
   | Load_menu -> "mail-glitch-04/save-select__loadmenu.png"
   | Recap -> "mail-glitch-04/location__none.png"
+  | Seagallop_list row ->
+      Printf.sprintf "seagallop-one-island/list-row%d__seagallop%d.png" row row
 
 (* Copied next to the test by its dune rules. *)
 let fixtures =

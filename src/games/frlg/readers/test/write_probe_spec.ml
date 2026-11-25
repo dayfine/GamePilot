@@ -13,6 +13,7 @@ let menu_probes =
   @ Summary_screen.probes @ Money_box.probes @ Move_list_cursor.probes
   @ Member_menu.probes @ Berry_pouch_screen.probes @ Mail_editor.probes
   @ Party_dialogs.probes
+  @ Script_menu.probes Script_menu.seagallop_islands
 
 let battle_probes =
   Battle_screen.probes @ Battle_yes_no.probes @ Battle_text_arrow.probes
