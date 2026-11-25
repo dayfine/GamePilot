@@ -112,8 +112,7 @@ let run_in setup plan n (run : Run_record.run) =
   let log, close = Run_record.story_log run.record in
   log ("[Run] " ^ name);
   let outcome =
-    Live_run.Series_daemons.with_daemon setup.daemons ~failed:of_runner
-      run.record ~checkpoint:id
+    Live_run.Series_daemons.with_daemon setup.daemons ~failed:of_runner run ~n
       (live ~log run.record plan)
   in
   close ();
@@ -122,8 +121,8 @@ let run_in setup plan n (run : Run_record.run) =
     | Passed -> { result = "pass"; at = ""; reason = "" }
     | Failed { at; reason; _ } -> { result = "fail"; at; reason }
   in
-  Live_run.Daemon_run.finish ~runs_dir:setup.flags.runs_dir run
-    ~summary:(summary name outcome) ending;
+  Live_run.Series_daemons.finish setup.daemons ~runs_dir:setup.flags.runs_dir
+    run ~summary:(summary name outcome) ending;
   outcome
 
 (* Run [n] of [plan] in a new run folder; a folder that cannot be made fails
@@ -171,7 +170,7 @@ let load_all ~plan_dir ids =
 
 (* Each run's daemon: the program's viewport, the right stick's keep-awake,
    then the user's flags. *)
-let daemons (f : Flags.t) backend ~viewport =
+let daemons (f : Flags.t) backend ~viewport series =
   Live_run.Series_daemons.create ~daemon:f.daemon ~backend ~port:f.port
     ~flags:
       (Live_run.Daemon_process.viewport_args backend viewport
@@ -179,13 +178,19 @@ let daemons (f : Flags.t) backend ~viewport =
     ~watch:
       (Live_run.Watch_hub.for_runs_dir ~daemon:f.daemon ~runs_dir:f.runs_dir
          f.watch)
+    series
 
-let setup_of (f : Flags.t) ~program ~from_id ~to_id ~backend ~viewport policy =
+let setup_of (f : Flags.t) ~program ~from_id ~to_id ~ids ~backend ~viewport
+    policy =
+  let info : Run_record.info =
+    { kind = Checkpoints; program; from_id; to_id; backend = f.backend }
+  in
+  let mode = Checkpoint_trials.mode_to_string Testing in
   {
     flags = f;
     policy;
-    info = { kind = Checkpoints; program; from_id; to_id; backend = f.backend };
-    daemons = daemons f backend ~viewport;
+    info;
+    daemons = daemons f backend ~viewport { info; mode; checkpoints = ids };
   }
 
 let switch_only : Live_run.Daemon_process.backend -> _ = function
@@ -219,4 +224,9 @@ let run_series ~program ~viewport plan_dir args =
   in
   let* () = one_run policy in
   let* plans = load_all ~plan_dir ids in
-  chain (setup_of f ~program ~from_id ~to_id ~backend ~viewport policy) plans
+  let setup =
+    setup_of f ~program ~from_id ~to_id ~ids ~backend ~viewport policy
+  in
+  let* code = chain setup plans in
+  Live_run.Series_daemons.finished setup.daemons ~passed:(code = 0);
+  Ok code
