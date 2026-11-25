@@ -45,7 +45,7 @@ let new_game ?(confirm = true) c =
       else look c
   | Some a when since c a < 1000.0 -> black c
   | Some a -> (
-      match C.nth_after c Wire.Start ~after:a 0 with
+      match C.nth_after c Wire.Plus ~after:a 0 with
       | None -> look c
       | Some s when since c s < 1000.0 -> black c
       | Some s when since c s < 3000.0 -> { (hint c) with autosave = true }
@@ -61,7 +61,7 @@ let arrival c w =
     | None -> text c
     | Some a3 when since c a3 < 1000.0 -> black c
     | Some a3 -> (
-        match C.nth_after c Wire.Start ~after:a3 0 with
+        match C.nth_after c Wire.Plus ~after:a3 0 with
         | None -> look c
         | Some s when since c s < 800.0 -> black c
         | Some s -> (
@@ -205,7 +205,7 @@ let gate c =
       | Some a -> arrival_at_hotel c ~after:a)
 
 let street c ~fade =
-  match C.nth_after c Wire.Start ~after:fade 0 with
+  match C.nth_after c Wire.Plus ~after:fade 0 with
   | None -> look c
   | Some s when since c s < 800.0 -> black c
   | Some s -> (
@@ -647,7 +647,7 @@ let battle ~max_rounds steps =
 (* Wild Zone 1 with the map open (+ since the last B) on [pin], its arrow
    reading [facing]. *)
 let map_open c =
-  match (C.last_press c Wire.Start, C.last_press c Wire.B) with
+  match (C.last_press c Wire.Plus, C.last_press c Wire.B) with
   | Some s, Some b -> s > b
   | Some _, None -> true
   | None, _ -> false

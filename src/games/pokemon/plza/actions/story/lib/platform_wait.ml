@@ -54,7 +54,7 @@ let on_opening_look steps o (look : L.t) =
   if skip_due o look then (
     S.(steps.log)
       "[PLZA] platform wait: the opening plays; Plus held to skip it";
-    S.press steps Wire.Start ~hold_ms:cutscene_skip_hold_ms
+    S.press steps Wire.Plus ~hold_ms:cutscene_skip_hold_ms
       ~release_ms:opening_release_ms;
     o.faded_in <- None);
   S.wait steps poll_ms
