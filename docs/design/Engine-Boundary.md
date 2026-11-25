@@ -102,18 +102,20 @@ src/base/json_field/         Json_field, moved from Grid_maps (and [catch]: a re
 src/base/repo_io/            library repo_io: Repo_files, Json_file, moved from games/frlg
 src/engine/checkpoints/
   terms/                     GAME_TERMS: the signature a game fills (below)
-  promise/                   Promise (result, verdict, log_lines), Count, Money (from the plan and Postcondition_check)
+  postcondition/             Postcondition (result, verdict, log_lines), Count, Money (from the plan and Postcondition_check)
   plan/                      Make: Plan, Plan_decode, Plan_text; Plan_fields, the field readers they share
-  run/                       Make: Game, Runner, Failure, Event_states, Repeat_until;
-                             Checkpoint_trials, Event_range, Event_progress, Roll (new)
+  run/                       Make: Game, Runner, Failure, Repeat_until;
+                             Event_states, Checkpoint_trials, Event_range, Event_progress, Roll (new)
   series/                    Chain_progress, Checkpoint_order, Round_trials, Console_start (new)
   expand/                    Plan_json, Table_decode, Fragment_table, Fragment_calls
   make/                      Engine_checkpoints.Make: every functor above over one game's terms;
                              its tests apply it to a toy game with zones and no grid
 src/pokemon/checkpoints/
-  terms/                     Pokemon_terms: Pose (grid), Own_kind, Postconditions, their decoders and checks
-  plan/                      Pokemon_checkpoints = Engine_checkpoints.Make (Pokemon_terms)
-  run/                       Checkpoint_end (the grid end check's pose), Room_policy
+  terms/                     Pokemon_terms: Pose (grid), Kind, Postconditions, Saved; Own_kind,
+                             Postcondition_check and the decoders behind them
+  instance/                  Pokemon_checkpoints = Engine_checkpoints.Make (Pokemon_terms)
+  checkpoint_end/            Checkpoint_end (the grid end check's pose)
+  room_policy/               Room_policy
   series/                    Console_runs, until Console_start (section 3b) moves it to the engine
   expand/                    Place_routes (grid, lifts)
 src/games/frlg/              unchanged, but opens Pokemon_checkpoints
@@ -127,66 +129,78 @@ Dependencies stay one-way: `base <- core <- engine <- pokemon <- games/<pokemon 
 
 ### How a game plugs in
 
-The engine needs three types from a game and a few functions over them
-(`src/engine/checkpoints/terms/lib/engine_terms.mli`, as built in step 4):
+The engine needs four small modules from a game, each holding its own type
+(`src/engine/checkpoints/terms/lib/engine_terms.mli`, as shipped):
 
 ```ocaml
 module type GAME_TERMS = sig
-  type pose          (* where a plan says the player stands: a grid pose, a zone *)
-  type observed      (* where the game reads the player *)
-  type own_kind      (* the game's built-in events: route, battle, heal; walk, rest *)
-  type promises      (* what a checkpoint promises: metadata.postconditions, a repeat's until *)
-  type reads         (* what the game read for those promises, start reads included *)
-  type start_reads   (* read at a checkpoint's start, for a promise of a change *)
-  val pose : where:string -> Json_field.obj -> (pose, string) result
-  val matches : pose -> observed -> bool
-  val pose_text : pose -> string
-  val observed_text : observed -> string
-  val observed_to_json : observed -> Yojson.Safe.t           (* kept beside an event state *)
-  val observed_of_json : Yojson.Safe.t -> (observed, string) result
-  val own_kind : string -> (where:string -> Json_field.obj -> (own_kind, string) result) option
-      (* the decoder of a kind name, [None] when the name is not this game's *)
-  val own_kind_text : own_kind -> string
-  val promises : where:string -> Json_field.obj -> (promises, string) result
-  val no_promises : promises                                 (* a plan that states none *)
-  val checked_at_end : promises -> bool                      (* false: the runner reads nothing *)
-  val check : promises -> reads -> Engine_promise.Promise.result list
-  val promises_text : promises -> string list
-  val start_reads_to_json : start_reads -> Json_field.obj    (* kept beside an event state *)
-  val start_reads_of_json : Json_field.obj -> (start_reads, string) result
+  module Pose : sig
+    type t           (* where a plan says the player stands: a grid pose, a zone *)
+    type observed    (* where the game reads the player *)
+    val decode : where:string -> Json_field.obj -> (t, string) result
+    val matches : t -> observed -> bool
+    val text : t -> string
+    val observed_text : observed -> string
+  end
+  module Kind : sig
+    type t           (* the game's own events: route, battle, heal; walk, rest *)
+    val decode : string -> (where:string -> Json_field.obj -> (t, string) result) option
+        (* the decoder of a kind name, [None] when the name is not this game's *)
+    val text : t -> string
+  end
+  module Postconditions : sig
+    type t           (* what a checkpoint promises: metadata.postconditions, a repeat's until *)
+    type reads       (* what the game read for them, start reads included *)
+    val decode : where:string -> Json_field.obj -> (t, string) result
+    val check : t -> reads -> Engine_postcondition.Postcondition.result list
+    val text : t -> string list
+  end
+  module Saved : sig
+    type t           (* kept beside an event state: the start reads and where the player stood *)
+    val to_json : t -> Yojson.Safe.t
+    val of_json : Yojson.Safe.t -> (t, string) result
+  end
 end
 ```
 
+(The file names each part as its own module type, `POSE`, `KIND`, `POSTCONDITIONS` and `SAVED`, so a
+game's `.mli` can extend its own module with one: Pokémon's `Pose` is its grid `Pose` plus the
+engine's four values, and its `Postconditions` is its record plus `decode` and `check`.)
+
 `check` takes the reads alone: what the game read at the start is part of `reads`, so it has no
-`~start`. The game reads its promises through a function the caller hands the runner with them
-(`Runner.run ?end_state:(promises, read)`, FireRed's `Postcondition_reads`), not through a field of
-`Game.t`; the engine only orders the check and logs it. The texts, `observed`'s JSON and
-`no_promises`/`checked_at_end` are there because the engine prints plans (`Plan_text`), keeps the
-observed position beside an event state, and skips the end read when a plan promises nothing.
+`~start`. The game reads its postconditions through a function the caller hands the runner with
+them (`Runner.run ?end_state:(postconditions, read)`, FireRed's `Postcondition_reads`), not through
+a field of `Game.t`; the engine only orders the check and logs it. A plan holds its postconditions
+as `Postconditions.t option`, `None` when it states none, and the runner reads and checks the end
+state only when it is given one. Pokémon reads at the end only a party, items, coins, money or
+flags (`Postconditions.at_end`); a plan whose postconditions name only a position, moves, levels or
+marks still decodes them, because the end tile, the grind cap and the pre-flight use them. The
+texts are there because the engine prints plans (`Plan_text`); `Saved` is what `Event_states` keeps
+beside each state, one JSON object per event as before.
 
 The engine owns no promise fields: items, money and flags are the game's like the rest. A plan's
 `postconditions` is one object, decoded once with its known fields checked, and Pokémon logs its
 results in one order that interleaves those three with the rest (party, items, coins, money, flags,
 moves, levels, marks, as `Postcondition_check` ports it). Split between the engine and the game, the
 object would need two decoders sharing one field list, and the log order would change. Not every game has money or a bag either (the toy game's promises are gold
-and flags). What the engine gives instead are the parts: `Promise` (result, verdict, log lines),
+and flags). What the engine gives instead are the parts: `Postcondition` (result, verdict, log lines),
 `Count` and `Money` (a value, floor, range or change from the start, and their checks and texts),
-which `promise/` holds rather than `plan/` because they are checks as much as plan types.
+which `postcondition/` holds rather than `plan/` because they are checks as much as plan types.
 
-`Engine_checkpoints.Make (T)` gives `Plan`, `Plan_decode`, `Plan_text`, `Failure`, `Game`, `Runner`,
-`Event_states` and `Repeat_until` over `T`'s types; the engine's own kinds are `Talk`, `Answer`,
-`Scene`, `Save`, `Game_action` and `Own of T.own_kind`. The plan format does not change: a kind name
-the engine does not know goes to `T.own_kind`. Pokémon applies it once (`Pokemon_checkpoints`), and
+`Engine_checkpoints.Make (T)` gives `Plan`, `Plan_decode`, `Plan_text`, `Failure`, `Game`, `Runner`
+and `Repeat_until` over `T`'s types, and `Event_states`, which needs none of them; the engine's own kinds are `Talk`, `Answer`,
+`Scene`, `Save`, `Game_action` and `Own of T.Kind.t`. The plan format does not change: a kind name
+the engine does not know goes to `T.Kind.decode`. Pokémon applies it once (`Pokemon_checkpoints`), and
 the engine's tests apply it to a toy game with zone poses and no grid, which is what proves the
 boundary. `Plan_text` moved into the engine with the plan: the game's part of it is its terms' texts.
-The handlers stay a record (`Game.t`): `run_own : Plan.event -> T.own_kind -> outcome` takes the
+The handlers stay a record (`Game.t`): `run_own : Plan.event -> T.Kind.t -> outcome` takes the
 game's own kinds, and `run_builtin : Plan.event -> outcome` stays beside it for the engine's kinds
 the game still carries out (`talk`, `answer`, `scene`, `save`: the engine names them, the game
 presses the buttons). `heal` becomes `between_rounds`.
 
 Two modules came out differently from the first draft. `Checkpoint_end` stays in
 Pokémon: the declared end is a grid pose taken from the next start, the last route or ready target,
-or a `position` promise, all Pokémon terms; the runner takes the result as `?end_at:T.pose`.
+or a `position` promise, all Pokémon terms; the runner takes the result as `?end_at:T.Pose.t`.
 `Event_range` takes the checkpoint's event ids rather than its events, so it needs no functor and
 stays a plain module in `run/`.
 
@@ -267,7 +281,7 @@ type game_steps = {
   return_to_save : slot:int option -> (unit, Failure.cause) result;
       (* FireRed: soft reset, CONTINUE, recap. Octopath 0: its load from the menu or title *)
   save_in_game : slot:int option -> (unit, Failure.cause) result;
-  check_start : unit -> Promise.result list;  (* FireRed: kept frame and party; Octopath 0: zone read *)
+  check_start : unit -> Postcondition.result list;  (* FireRed: kept frame and party; Octopath 0: zone read *)
   relaunch : unit -> (unit, string) result;
       (* the fallback when [return_to_save] fails: close from HOME and start the game (switch_home) *)
 }
@@ -332,7 +346,7 @@ the groups run in parallel inside, in order between.
 |---|---|---|---|
 | 1 | `Json_field` to `src/base/json_field`; `Repo_files`, `Json_file` to `src/base/repo_io`. Moves only | S | |
 | 2 | The `engine` layer and game families in the lint config; `src/engine/checkpoints/expand` gets the four agnostic expand modules; `series` gets `Chain_progress`, `Checkpoint_order`, `Round_trials`; `run` gets `Checkpoint_trials`, `Event_progress`. Moves only | S | 1 |
-| 3 | `Promise`: the agnostic half of `Postcondition_check` | S | 1 (parallel with 2) |
+| 3 | `Postcondition` (first named `Promise`): the agnostic half of `Postcondition_check` | S | 1 (parallel with 2) |
 | 4 | `GAME_TERMS` and `Engine_checkpoints.Make`; `Pokemon_terms`; the rest of `plan` and `run` moved; a toy-game test with zones. Golden test: every plan in the repo prints the same `Plan_text` before and after | S | 2, 3 |
 | 5 | `Game_commands.S` and `bin/` over it; FireRed's module out of `bin/` | S | 4 |
 | 6 | `Roll`: outcome, budget, verdict, scripted-game tests | S | 4 (parallel with 5) |
