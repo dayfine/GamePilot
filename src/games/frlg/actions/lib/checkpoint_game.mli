@@ -1,15 +1,15 @@
 (** FireRed's story {!Pokemon_checkpoints.Game.t}: [route] and [ready] events
     planned and walked ({!Frlg_overworld}), a [step] onto a scene's tile
     ({!Frlg_overworld.Route_walk.step}), [talk], [answer] and [scene] settled
-    ({!Talk}), [train]'s trainer battles in a row ({!Trainer_battles}), [heal]
-    and [save] events ({!Heal_and_save}), the ["fly"] game action ({!Fly}),
-    ["lift_floor"] ({!Lift_ride}), ["ferry"] ({!Seagallop}), the ["grind"] one
-    ({!Grind}, its walks and heals this game's), ["capture"] ({!Capture} on
-    {!Capture_steps}; its catches join the reckoned party), mg-05's
-    ["prepare_berry_pp"] ({!Berry_pp}) and ["mail_glitch_double_battle"]
-    ({!Mail_glitch_battle}) and the shared ones ({!Game_actions}). A wild
-    [battle] and the other built-in kinds fail as [not_implemented] (repeats):
-    they come from their own libraries.
+    ({!Talk}), [train]'s trainer battles in a row ({!Trainer_battles}), a
+    [battle] a talk or scene started ({!Scene_battle}), [heal] and [save] events
+    ({!Heal_and_save}), the ["fly"] game action ({!Fly}), ["lift_floor"]
+    ({!Lift_ride}), ["ferry"] ({!Seagallop}), the ["grind"] one ({!Grind}, its
+    walks and heals this game's), ["capture"] ({!Capture} on {!Capture_steps};
+    its catches join the reckoned party), mg-05's ["prepare_berry_pp"]
+    ({!Berry_pp}) and ["mail_glitch_double_battle"] ({!Mail_glitch_battle}) and
+    the shared ones ({!Game_actions}). The other built-in kinds fail as
+    [not_implemented] (repeats): they come from their own libraries.
 
     Between loop rounds, heal walks to the configured Center's nurse and talks
     to her, save saves from the Start menu, and reload is the program's (an
