@@ -4,17 +4,17 @@
 
     Ported from the fork's [frlg/lean] (paths under
     [SerialPrograms/Source/Pokemon/AutoStory/Engine/]):
-    - modes are [CheckpointTestingStatus] ([Pokemon_StorySavePolicy.h]): testing
-      saves nothing ([StorySaveMode::NONE]), verification saves after verifying
-      ([AFTER_VERIFICATION]). Reproduction ([PER_CHECKPOINT]) is not ported yet.
-    - the verification policy is [VerifyModePolicy{runs = 3, passes_needed = 2}]
-      and its loop [verify_checkpoint()] ([Pokemon_StoryVerifyRuns.{h,cpp}]):
-      every run goes from the same start, a failure that repeats stops the loop.
+    - the modes come from [Pokemon_StorySavePolicy.h]: testing saves nothing,
+      verification saves after verifying. Its third mode, reproduction (a save
+      after every checkpoint), is not ported yet.
+    - the verification policy (3 runs, 2 passes needed) and its loop come from
+      [Pokemon_StoryVerifyRuns.{h,cpp}]: every run goes from the same start, a
+      failure that repeats stops the loop.
     - the hard stop: when the same step fails twice in a row, stop the loop and
       diagnose before another run. The C++ does not enforce it.
 
-    Where it differs: [verify_checkpoint()] saves the end only when every run
-    passed; here a verified checkpoint (2 of 3) keeps its last passing run's
+    Where it differs: the C++ verification loop saves the end only when every
+    run passed; here a verified checkpoint (2 of 3) keeps its last passing run's
     end, as the user's save policy ("verification saves after 2-3 passes") says.
     Testing runs one run by default and needs one pass. *)
 
@@ -57,9 +57,14 @@ val verdict : policy -> run list -> verdict
     every run ran, else run again. *)
 
 val until_decided :
-  policy -> trial:('r -> run) -> (int -> 'r) -> verdict * 'r list
+  policy ->
+  trial:('r -> run) ->
+  (int -> ('r, string) result) ->
+  verdict * 'r list
 (** Runs [n] = 1, 2, ... until the {!verdict} is no longer [Run_again]: the
-    verdict and the runs, oldest first. [trial] reads a run's outcome. *)
+    verdict and the runs, oldest first. [trial] reads a run's outcome. A run
+    that could not happen ([Error], e.g. no folder for its record) stops the
+    checkpoint with that error, the runs before it kept. *)
 
 (** {1 Attempts within a run}
 
@@ -70,7 +75,7 @@ val until_decided :
     an attempt passes, all postconditions holding; verification counts the run
     once, its attempts inside it. For a checkpoint whose outcome depends on
     battle luck (mg-05: Knock Off on the partner). Not in the fork, whose
-    [verify_checkpoint()] has no retries. *)
+    verification loop ([Pokemon_StoryVerifyRuns.cpp]) has no retries. *)
 
 type attempt = Attempt_passed | Attempt_failed of failure
 

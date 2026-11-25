@@ -4,6 +4,13 @@
 
 type swap = By_species of string * int | Slots of int * int
 
+(** The members a PC deposit stores. *)
+type deposit =
+  | Members of string list  (** These species, in order. *)
+  | Holding_no_mail
+      (** The first member, slot 1 first, whose party mark is not Mail: the one
+          member the PC takes when the others hold Mail. *)
+
 type t =
   | Mart of Mart_plan.t
   | Use_item of { item : string; on : Action_args.member option }
@@ -15,7 +22,7 @@ type t =
   | Spin_for_encounter of { max_batches : int }
   | Cut_tree of Grid_geometry.Direction.t
   | Verify_mail_glitch of Action_args.member
-  | Pc_deposit of string list
+  | Pc_deposit of deposit
   | Pick_up_item of string
   | Read_caught of { at_least : int option }
 
@@ -46,8 +53,9 @@ val decode :
     - [spin_for_encounter]: optional ["max_batches"].
     - [cut_tree]: ["direction"].
     - [verify_mail_glitch]: ["species"] or ["target_slot"].
-    - [pc_deposit]: ["species"], a list of the members to store, facing a
-      Pokémon Center's PC ({!Pc_deposit}).
+    - [pc_deposit]: ["species"], a list of the members to store, or ["member"]:
+      ["holding_no_mail"] ({!Holding_no_mail}), facing a Pokémon Center's PC
+      ({!Pc_deposit}).
     - [pick_up_item]: ["item"], the item the player faces (a hidden item, an
       item ball): a talk, as the plan's [talk] event, that names what it gains
       so a pre-flight counts it ({!Frlg_checkpoints.Plan_needs}).

@@ -2,8 +2,9 @@
 
 Turns one Rare Candy into 99 with the Mail Glitch's item duplication, for levelling the team.
 
-It flies to Vermilion, picks up Route 6's hidden Rare Candy under a Super Repel, flies back to the
-Celadon Dept. Store 1F and duplicates it. Using the candies is a later checkpoint.
+From anywhere outdoors, it flies to Vermilion, picks up Route 6's hidden Rare Candy under a Super
+Repel, flies back to the Celadon Dept. Store 1F, duplicates it and steps out of the west door. Using
+the candies is a later checkpoint.
 
 <!-- generated:backends -->
 Runs on: mGBA, the Switch (in its GBA app).
@@ -16,12 +17,12 @@ Runs on: mGBA, the Switch (in its GBA app).
 - At least 99 Retro Mail in the bag: run [Supplies](frlg.supplies.md) first.
 
 <!-- generated:needs -->
-- pidgey in the party (fly)
 - mr-mime in the party (give_bag_item)
+- a member knows fly (fly)
 - the thunder badge (fly)
 - super-repel at least x1 (use_item)
 - retro-mail at least x99 (duplicate_item)
-- at the start, CeladonCity_DepartmentStore_1F
+- at the start, anywhere outdoors where Fly works
 <!-- /generated -->
 
 ## Running it
@@ -44,7 +45,7 @@ sh run/run_checkpoints_on_switch.sh frlg.team_training --from tt-01 --to tt-01
 |---|---|
 | tt-01 | Rare Candy farm: pick up Route 6's hidden Rare Candy, duplicate it to 99 |
 
-<!-- plans: 02c27f1dbd19 -->
+<!-- plans: 8af1f31494de -->
 <!-- /generated -->
 
 ## When it stops
@@ -52,7 +53,20 @@ sh run/run_checkpoints_on_switch.sh frlg.team_training --from tt-01 --to tt-01
 <!-- generated:preflight -->
 | Resume from | The pre-flight checks |
 |---|---|
-| tt-01 | pidgey in the party (fly); mr-mime in the party (give_bag_item); the thunder badge (fly); super-repel at least x1 (use_item); retro-mail at least x99 (duplicate_item); at the start, CeladonCity_DepartmentStore_1F |
+| tt-01 | mr-mime in the party (give_bag_item); a member knows fly (fly); the thunder badge (fly); super-repel at least x1 (use_item); retro-mail at least x99 (duplicate_item); at the start, anywhere outdoors where Fly works |
 <!-- /generated -->
 
 ## Known limits
+
+- It makes the candies but does not use them yet.
+
+## How it works
+
+It turns the Mail Glitch's item duplication into levels (roadmap A1, issue #10). It needs a save
+where `frlg.mail_glitch` has run to 08-activate-and-verify: MIMIEN in slot 1 with the glitched mail
+record, mail on slots 2 to 6. tt-01 picks up Route 6's hidden Rare Candy under a Super Repel, gives
+it to MIMIEN and runs 98 rounds of `duplicate_item`
+([Item duplication](frlg.mail_glitch.item_duplication.md)): 99 candies.
+
+**Next.** The levelling checkpoints, once the `candy_level` action lands: Blastoise to Lv 100 as the
+lead, then the Dex Collection's catchers (Parasect with Spore, Haunter with Mean Look and Hypnosis).

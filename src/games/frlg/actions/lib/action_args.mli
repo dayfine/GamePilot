@@ -31,17 +31,17 @@ val member_keys : string list
     ["sweeper"], ["knock_off_species"], ["recycle_species"]. *)
 
 val field_move_users : (string * string) list
-(** The actions whose member the game picks itself, by the field move it must
-    know: [cut_tree] (Cut). Their ["species"] names that member for the
-    pre-flight only. *)
+(** The actions that use any member knowing a field move, so their args name no
+    member: [cut_tree] (Cut: the game picks the member) and [fly] (Fly: the
+    first member that knows it, {!Fly_user}). *)
 
 val field_move_badges : (string * string) list
 (** The badge each HM needs outside battle, by field move: [("fly", "thunder")]
     and the six others, from pret pokefirered [src/party_menu.c]. *)
 
 val badge_needed : string -> string option
-(** The badge the game checks before this action's field move: Cut's users
-    ({!field_move_users}) and [fly]; [None] for an action with no field move. *)
+(** The badge the game checks before this action's field move
+    ({!field_move_users}); [None] for an action with no field move. *)
 
 val deposited_species : where:string -> Json_field.obj -> string list
 (** [pc_deposit]'s ["species"]: a list, every member it stores, in order; [[]]
@@ -49,6 +49,7 @@ val deposited_species : where:string -> Json_field.obj -> string list
 
 val picks_member : action:string -> Json_field.obj -> bool
 (** The action finds a member by its species in the party: its args name one
-    ({!member_keys}) and the game does not pick it ({!field_move_users}); or it
-    is a capture, which counts the party to know whether a catch joins it or
-    goes to the PC. *)
+    ({!member_keys}) and it uses no field move ({!field_move_users}); or it is a
+    capture, which counts the party to know whether a catch joins it or goes to
+    the PC; or a PC deposit, whose member may be named by what it holds and is
+    looked for by its species. *)

@@ -1,7 +1,6 @@
 open Grid_maps
 open Grid_geometry
 module Pose = Pokemon_engine.Pose
-module Pose_text = Pokemon_engine.Pose_text
 
 let place_of (w : Frlg_steps.world) (pose : Pose.observed) =
   match Connected_maps.find w.maps pose.at_map with
@@ -30,4 +29,4 @@ let plan w ~from ~facing (target : Pose.grid) =
           ~goal_facing:target.facing
       with
       | Some legs -> Ok legs
-      | None -> Error ("no walk reaches " ^ Pose_text.grid target))
+      | None -> Error ("no walk reaches " ^ Pose.grid_to_string target))

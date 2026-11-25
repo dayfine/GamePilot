@@ -23,29 +23,15 @@
     "id": "01-to-one-island",
     "title": "Fly to Cinnabar; Bill takes the Seagallop to One Island, Celio gives the Tri-Pass",
     "start": {
-      "map": "CeladonCity_DepartmentStore_1F",
-      "tiles": [
-        [6, 2]
-      ],
-      "facing": "south"
+      "anywhere": "outdoors"
     },
     "events": [
-      {
-        "id": "out_of_dept_store",
-        "kind": "route",
-        "action": "run",
-        "args": {
-          "target": {"place": "celadon_dept_store_west_door_outside"}
-        },
-        "why": "Out of the Dept. Store by the west door, to fly."
-      },
       {
         "id": "fly_cinnabar",
         "kind": "game_action",
         "action": "fly",
         "args": {
-          "town": "CinnabarIsland",
-          "species": "pidgey"
+          "town": "CinnabarIsland"
         },
         "why": "Bill waits in Cinnabar's Pokemon Center.",
         "declared_after": {

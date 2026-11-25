@@ -1,15 +1,12 @@
 open Engine_run
 
-module Make
-    (T : Engine_rules.GAME_RULES)
-    (X : Rules_text.TEXT with module T = T) =
-struct
-  module Failure_text = Failure_text.Make (T) (X)
+module Make (T : Engine_rules.GAME_RULES) = struct
+  module Failure_text = Failure_text.Make (T)
   module Repeat_until = Repeat_until.Make (T) (Engine_plan_format.Raw_json)
 
   let part : Log_line.Make(T).part -> string = function
     | Text text -> text
-    | Pose pose -> X.pose pose
+    | Pose pose -> T.Pose.to_string pose
     | Reason reason -> Failure_text.reason_to_string reason
     | Failure failure -> Failure_text.to_string failure
 

@@ -1,8 +1,8 @@
 (** Party and bag actions from the overworld, ported from the fork's Mail Glitch
-    actions (Programs/MailGlitch/PokemonFRLG_MailGlitchActions:
-    [swap_party_slots()], [run_give_bag_item()]) and its item use
-    (PokemonFRLG_AutoStoryItemUse), each step waiting on the party or bag
-    reader. Slots are from 1. *)
+    actions (Programs/MailGlitch/PokemonFRLG_MailGlitchActions.cpp: swapping two
+    members, giving a bag item) and its item use
+    (Programs/AutoStory/PokemonFRLG_AutoStoryItemUse.cpp), each step waiting on
+    the party or bag reader. Slots are from 1. *)
 
 val pokemon_row : int
 (** POKéMON on the full Start menu: 1. *)
@@ -57,9 +57,9 @@ val give_row : string -> int
 
 val confirm_mail : unit -> unit
 (** After PLUS in the mail editor: its Yes/No arrow on YES
-    ({!Frlg_readers.Mail_editor}, 4 s), then A, as the C++ ItemDuplication
-    confirms; the fork's give presses A after 1200 ms. Fails as
-    [mail_no_confirm]. *)
+    ({!Frlg_readers.Mail_editor}, 4 s), then A, as the fork's
+    PokemonFRLG_ItemDuplication.cpp confirms; the fork's give presses A after
+    1200 ms. Fails as [mail_no_confirm]. *)
 
 val mail_editor_wait_ms : int
 (** The Easy Chat editor opening: 2500, the fork's measured wait. *)
@@ -75,10 +75,11 @@ val party_settle_ms : int
 (** After the party opens, before its marks are read: 800, the fork's wait. *)
 
 val verify_mail_glitch : log:(string -> unit) -> who:string -> slot:int -> unit
-(** The fork's [run_verify_mail_glitch()]: the party opened, the member's sprite
-    read for the held-item mark ({!Frlg_readers.Party_menu.mark}, the fork's
-    PartyHeldItemDetector), the party closed through its fade
-    ({!Menu_input.close_through_fades}). After mg-05's Recycle the member holds
-    the berry, not mail: any other mark fails as [mail_glitch_not_active],
-    naming the mark read (mail: Knock Off missed; none: the berry was not
-    recycled). [who] names the member in the log. *)
+(** The fork's Mail Glitch check (PokemonFRLG_MailGlitchActions.cpp): the party
+    opened, the member's sprite read for the held-item mark
+    ({!Frlg_readers.Party_menu.mark}, the fork's
+    Inference/Menus/PokemonFRLG_PartyHeldItemDetector.cpp), the party closed
+    through its fade ({!Menu_input.close_through_fades}). After mg-05's Recycle
+    the member holds the berry, not mail: any other mark fails as
+    [mail_glitch_not_active], naming the mark read (mail: Knock Off missed;
+    none: the berry was not recycled). [who] names the member in the log. *)

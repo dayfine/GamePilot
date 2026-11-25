@@ -36,3 +36,16 @@ let declared ~where obj : Pose.declared =
   | _ ->
       F.fail "%s has a \"map\" or a \"place\", not both or neither."
         (String.sub where 0 (String.length where - 1))
+
+let place_class ~where obj =
+  known_fields_only ~where [ "anywhere" ] obj;
+  let name = F.string ~where "anywhere" obj in
+  match Pose.place_class_of_name name with
+  | Some place_class -> place_class
+  | None ->
+      F.fail "%sanywhere \"%s\" is not a class of places (\"outdoors\")." where
+        name
+
+let start ~where obj : Pose.declared =
+  if F.has "anywhere" obj then Pose.Anywhere (place_class ~where obj)
+  else declared ~where obj

@@ -1,11 +1,11 @@
 (** The level in the summary's top left ("Lv33"), shown on every page. Ported
-    from the fork's [StatsReader::read_level()]
-    (Inference/PokemonFRLG_StatsReader.cpp, [frlg/lean]), which reads the same
-    box on page 1 with its digit templates after turning the white text black;
-    here each digit cell ({!Text_lines.summary_level_digit}) is matched against
-    the font's digits in {!ink}. Like the fork, a level outside 2..100 does not
-    read. English and the other Latin languages but Spanish (the fork's
-    [m_box_level]); not Japanese or Spanish, whose boxes differ. *)
+    from the fork's level reader in Inference/PokemonFRLG_StatsReader.cpp
+    ([frlg/lean]), which reads the same box on page 1 with its digit templates
+    after turning the white text black; here each digit cell
+    ({!Text_lines.summary_level_digit}) is matched against the font's digits in
+    {!ink}. Like the fork, a level outside 2..100 does not read. English and the
+    other Latin languages but Spanish (the fork's [m_box_level]); not Japanese
+    or Spanish, whose boxes differ. *)
 
 val ink : Wire.color_range
 (** The level's white: red and blue 200..255, green 212..255. The text is a

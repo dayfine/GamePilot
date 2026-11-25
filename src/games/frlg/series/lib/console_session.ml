@@ -31,9 +31,10 @@ let load_frame ~log path =
       log ("[Start] " ^ e);
       None
 
-(* The frame kept under the checkpoint's id, else the one kept at its start. *)
+(* The frame kept under the checkpoint's id, else the one kept at its start;
+   none for a checkpoint that starts anywhere (no [frame_path]). *)
 let kept_frame ~log ~frame_path ~start_path =
-  match (load_frame ~log frame_path, start_path) with
+  match (Option.bind frame_path (load_frame ~log), start_path) with
   | Some frame, _ -> Some frame
   | None, Some path ->
       let frame = load_frame ~log path in
@@ -47,7 +48,8 @@ let keep_missing ~log frame path =
   if not (Sys.file_exists path) then C.write_frame ~log path frame
 
 let keep_all ~log ~frame_path ~start_path frame =
-  List.iter (keep_missing ~log frame) (frame_path :: Option.to_list start_path)
+  List.iter (keep_missing ~log frame)
+    (Option.to_list frame_path @ Option.to_list start_path)
 
 (* After the reload: the frame first kept as the start's (by id and by start)
    when none was. *)

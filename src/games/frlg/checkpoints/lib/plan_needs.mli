@@ -1,63 +1,17 @@
 (** What a checkpoint's plan needs of the save before its first event, for the
     pre-flight ({!Preflight}): each party member an action names unless an
     earlier event brings it, no Mail on a member of the save it deposits
-    ([pc_deposit]), some member knowing Cut, the badge each field move needs,
-    the money its purchases cost, the bag items it gives or uses that no earlier
-    purchase or pickup ([pick_up_item]) of its own brought (a Rare Candy for
-    [use_rare_candy] and [candy_level], one of its ball for [capture]), what the
-    checkpoint before it promised, and the place. *)
-
-type need =
-  | Party_in_order of string list
-  | Party_includes of {
-      members : string list;
-      slots : Pokemon_engine.Postconditions.slot list;
-    }
-  | Member of { species : string; for_ : string }
-      (** A member an event uses ([for_]: ["fly"]). *)
-  | No_mail of { species : string; for_ : string }
-      (** The first member of this species holds no Mail: a [pc_deposit] stores
-          it, and the game will not store a Mail holder ("Please remove the
-          MAIL."). *)
-  | Knows_move of { move : string; for_ : string }
-      (** Some member knows this field move: a [cut_tree] event's Cut, which the
-          game lets any member that knows it use. *)
-  | Badge of { badge : string; for_ : string }
-      (** The badge a field move needs outside battle ([for_]: the action,
-          ["fly"] needs ["thunder"], ["cut_tree"] ["cascade"]), read off the
-          Trainer Card. The game checks the badge, not a count (pret pokefirered
-          src/party_menu.c: FLAG_BADGE01_GET + the field move; Flash Boulder,
-          Cut Cascade, Fly Thunder, Strength Rainbow, Surf Soul, Rock Smash
-          Marsh, Waterfall Volcano). *)
-  | Money_at_least of { amount : int; for_ : string }
-  | Money_between of { min : int; max : int }
-  | Item_at_least of { item : string; count : int; for_ : string }
-  | Item_exactly of { item : string; count : int }
-  | Place of string  (** The checkpoint's start map. *)
-  | Badges_at_least of int
-      (** At least this many badges ({!Plan_preconditions}: [badges] a count).
-      *)
-  | Badges of string list  (** Each of these badges, by name. *)
-  | Hall_of_fame  (** The Hall of Fame entered: a star on the card. *)
-  | Caught_at_least of int
-      (** At least this many species caught, the Trainer Card's Pokédex count
-          ({!Plan_preconditions}: [caught]). *)
+    ([pc_deposit]), some member knowing Cut or Fly, the badge each field move
+    needs, the money its purchases cost, the bag items it gives or uses that no
+    earlier purchase or pickup ([pick_up_item]) of its own brought (a Rare Candy
+    for [use_rare_candy] and [candy_level], one of its ball for [capture]), what
+    the checkpoint before it promised, and the place. Each is a {!Need.t}. *)
 
 val needs :
   Frlg_actions.Mart_plan.stocks ->
   before:Pokemon_engine.Postconditions.t option ->
   Pokemon_engine.Plan.t ->
-  need list
+  Need.t list
 (** What the save must hold for the plan's first event, in the table's order:
     the party, the money, the items, the place. Raises {!Json_field.Invalid} for
     a plan arg that does not read. *)
-
-val describe : need -> string
-(** The need as the pre-flight's NEED column ({!Preflight}) and the user guides
-    (docs/guide/) say it: ["money at least ¥4100 (buy_coins)"]. *)
-
-val asks_something : need -> bool
-(** False for a need any save meets: money or an item at least 0, at least 0
-    badges or species caught, an empty party order, badge list or [includes].
-    The user guides leave these out (review rule R2,
-    [.agents/rules/review-rules.md]). *)

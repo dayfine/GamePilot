@@ -18,6 +18,7 @@
  (names
   test_pc_deposit_steps
   test_fly_towns
+  test_fly_user
   test_actions
   test_checkpoint_game
   test_action_requests
@@ -39,10 +40,13 @@
   test_trainer_battles
   test_scene_battle
   test_ace_actions
-  test_pc_box)
+  test_pc_box
+  test_wild_rng
+  test_pokedex_entry)
  (modules
   test_pc_deposit_steps
   test_fly_towns
+  test_fly_user
   test_actions
   test_checkpoint_game
   test_action_requests
@@ -65,7 +69,9 @@
   test_trainer_battles
   test_scene_battle
   test_ace_actions
-  test_pc_box)
+  test_pc_box
+  test_wild_rng
+  test_pokedex_entry)
  (deps
   mgba.probes.jsonl
   menus.mgba.probes.jsonl

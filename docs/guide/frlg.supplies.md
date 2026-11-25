@@ -14,13 +14,14 @@ Runs on: mGBA, the Switch (in its GBA app).
 
 ## Before you start
 
-Save at the Celadon Dept. Store 1F save spot: the run starts and ends there.
+Save anywhere outdoors in Kanto, where Fly works. The run ends outside the Celadon Dept. Store's
+west door, where Team Training can start.
 
 <!-- generated:needs -->
-- pidgey in the party (fly)
+- a member knows fly (fly)
 - the thunder badge (fly)
 - money at least ¥7500 (all the purchases)
-- at the start, CeladonCity_DepartmentStore_1F
+- at the start, anywhere outdoors where Fly works
 <!-- /generated -->
 
 ## Running it
@@ -43,7 +44,7 @@ sh run/run_checkpoints_on_switch.sh frlg.supplies --from su-01 --to su-01
 |---|---|
 | su-01 | Stock 100 Retro Mail (Celadon 4F) and 5 Super Repels (Lavender) |
 
-<!-- plans: 741bdeff32cd -->
+<!-- plans: 988dcea3bc34 -->
 <!-- /generated -->
 
 ## When it stops
@@ -51,7 +52,17 @@ sh run/run_checkpoints_on_switch.sh frlg.supplies --from su-01 --to su-01
 <!-- generated:preflight -->
 | Resume from | The pre-flight checks |
 |---|---|
-| su-01 | pidgey in the party (fly); the thunder badge (fly); money at least ¥7500 (mart, mart); at the start, CeladonCity_DepartmentStore_1F |
+| su-01 | a member knows fly (fly); the thunder badge (fly); money at least ¥7500 (mart, mart); at the start, anywhere outdoors where Fly works |
 <!-- /generated -->
 
 ## Known limits
+
+- The shopping list is fixed, and the ¥7,500 comes from your own money.
+
+## How it works
+
+One checkpoint, su-01, its plan in `src/games/frlg/programs/supplies/plans/`: Fly to Lavender, 5
+Super Repels at the Mart, Fly to Celadon, 100 Retro Mail at the Dept. Store 4F, and out of its west
+door. Other programs then only check their stock in the pre-flight and never shop on the way.
+
+**Next.** Duplicate Nuggets and sell them (it needs a sell action), so the stock pays for itself.

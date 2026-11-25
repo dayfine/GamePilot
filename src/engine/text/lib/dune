@@ -1,7 +1,6 @@
 (library
  (name engine_text)
  (public_name gamepilot.engine_text)
- (modules_without_implementation rules_text)
  (libraries
   yojson
   gamepilot.engine_postcondition

@@ -1,6 +1,6 @@
 (* The Pokémon grid rules' own flags: gamepilot run --plan's, which a series'
    runs share, and the series' --make-room; parsed through
-   Checkpoints_flags' game hooks. *)
+   Run_flags' game hooks. *)
 
 type checkpoint_flags = {
   state : string option;
@@ -26,7 +26,7 @@ let checkpoint_defaults =
   }
 
 type series = { common : checkpoint_flags; make_room : string option }
-type flags = series Checkpoints_flags.flags
+type flags = series Run_flags.flags
 
 let common_flag f c = { f with common = c f.common }
 
@@ -49,7 +49,7 @@ let valued f name v =
       Some (Ok (common_flag f (fun c -> { c with center = Some v })))
   | _ -> None
 
-let series : series Checkpoints_flags.game_flags =
+let series : series Run_flags.game_flags =
   {
     game_defaults =
       { common = { checkpoint_defaults with port = 0 }; make_room = None };
@@ -57,11 +57,11 @@ let series : series Checkpoints_flags.game_flags =
     game_valued = valued;
   }
 
-let defaults = Checkpoints_flags.defaults series
-let parse = Checkpoints_flags.parse series
+let defaults = Run_flags.defaults series
+let parse = Run_flags.parse series
 
 let usage =
-  "  gamepilot run PROGRAM|PLAN_DIR --from ID --to ID --mode \
+  "  gamepilot run PROGRAM|DIR/PLANS --from ID --to ID --mode \
    testing|verification\n\
   \      [--runs N] [--states DIR] [--runs-dir DIR] [--daemon PATH]\n\
   \      [--mgba-port N] [--port N] [--party SPECIES,...] [--center TOWN] \
@@ -75,4 +75,6 @@ let usage =
   \      [--viewport nso-gba|native|x,y,w,h]   (Switch: where the game picture \
    sits; the program's by default)\n\
   \      [--from-event ID|N [--to-event ID|N]]   (mGBA, testing, one checkpoint)\n\
-  \  gamepilot run PROGRAM|PLAN_DIR --preflight --from ID [--backend ...]\n"
+  \  gamepilot run PROGRAM|DIR/PLANS --preflight --from ID [--backend ...]\n\
+  \      (a plan folder is a path with a /, or --plan-dir DIR; a bare name is \
+   a program id)\n"

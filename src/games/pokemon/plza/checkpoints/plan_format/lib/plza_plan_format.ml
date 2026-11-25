@@ -10,6 +10,8 @@ let pose_of_plan ~where obj =
         spot = F.string_opt ~where "spot" obj;
       })
 
+let start_of_plan = pose_of_plan
+
 let walk ~where args =
   F.catch (fun () -> T.Action.Walk (Walk_decode.walk ~where args))
 

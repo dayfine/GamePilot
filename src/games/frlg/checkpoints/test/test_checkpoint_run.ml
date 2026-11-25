@@ -8,8 +8,9 @@ open Frlg_checkpoints
 let plan file = Result.get_ok (Frlg_checkpoints.Plan_file.load file)
 
 let handled =
-  "fly" :: "lift_floor" :: "capture" :: "grind" :: "prepare_berry_pp"
-  :: "mail_glitch_double_battle" :: Frlg_actions.Action_requests.names
+  "fly" :: "lift_floor" :: "capture" :: "wild_rng" :: "save_game" :: "grind"
+  :: "prepare_berry_pp" :: "mail_glitch_double_battle"
+  :: Frlg_actions.Action_requests.names
   @ List.map fst
       (Frlg_actions.Mail_glitch_use.handlers ~log:ignore
          ~party:(ref (Frlg_actions.Party_roster.of_list [])))
@@ -29,8 +30,8 @@ let summary file () =
     match Checkpoint_run.check_plan p with Ok () -> "frlg" | Error e -> e
   in
   let start =
-    Option.fold ~none:"no start" ~some:Pokemon_engine.Pose_text.observed
-      (Checkpoint_run.start_of p.checkpoint)
+    Option.fold ~none:"no start" ~some:Pokemon_engine.Pose.to_string
+      p.checkpoint.start
   in
   let missing =
     match missing p with [] -> "none" | l -> String.concat ", " l
@@ -92,6 +93,23 @@ let walks file () =
 
 let case name input expectation = { Table_test.name; input; expectation }
 
+(* check_plan on a plan that starts anywhere outdoors, its first event [first]. *)
+let anywhere_first first () =
+  let text =
+    Printf.sprintf
+      {|{"format": "gamepilot-checkpoint/1", "game": "frlg", "execution": {"menu": "full"},
+  "checkpoint": {"id": "cp", "title": "Test", "start": {"anywhere": "outdoors"},
+    "events": [%s]}}|}
+      first
+  in
+  match
+    Pokemon_engine.Plan_decode.decode ~source:"cp.plan.json"
+      (Yojson.Safe.from_string text)
+  with
+  | Error e -> e
+  | Ok p -> (
+      match Checkpoint_run.check_plan p with Ok () -> "frlg" | Error e -> e)
+
 (* What a run checks and skips with --grind-battles [cap]. *)
 let capped cap file () =
   let p = plan file in
@@ -105,8 +123,8 @@ let capped cap file () =
 let grind_save_point () =
   let start id =
     match (plan (id ^ ".plan.json")).checkpoint.start with
-    | Some (Grid g) -> Pokemon_engine.Pose_text.grid g
-    | Some (Zone _) | None -> "not a tile"
+    | Some (Grid g) -> Pokemon_engine.Pose.grid_to_string g
+    | Some (Zone _ | Anywhere _) | None -> "not a tile"
   in
   let a = plan "04-grind-farfetchd.plan.json"
   and b = plan "05-grind-mr-mime.plan.json" in
@@ -118,7 +136,7 @@ let grind_save_point () =
   in
   String.concat "; "
     (List.map
-       (Option.fold ~none:"none" ~some:Pokemon_engine.Pose_text.grid)
+       (Option.fold ~none:"none" ~some:Pokemon_engine.Pose.grid_to_string)
        ends
     @ [ start "05-grind-mr-mime"; start "06-grind-return" ])
 
@@ -176,7 +194,7 @@ let () =
     [
       case "01-celadon-setup"
         (summary "01-celadon-setup.plan.json")
-        "frlg; from CeladonCity (48, 12) south; missing: none";
+        "frlg; from anywhere outdoors; missing: none";
       case "01-celadon-setup's walks plan on the maps"
         (walks "01-celadon-setup.plan.json")
         "to_coin_case_man 8; to_4f_clerk 11; to_4f_clerk.walk 3; \
@@ -252,17 +270,25 @@ let () =
         "frlg; from Route16 (30, 7) north; missing: none";
       case "08-activate-and-verify's walks plan on the maps"
         (walks "08-activate-and-verify.plan.json")
-        "to_4f_clerk 7; to_4f_clerk.walk 3; to_1f_save_spot 3";
+        "to_4f_clerk 7; to_4f_clerk.walk 3; to_1f_save_spot 3; \
+         out_of_dept_store 3";
+      case "a start anywhere outdoors that flies first"
+        (anywhere_first
+           {|{"id": "fly", "kind": "game_action", "action": "fly", "args": {"town": "CeladonCity", "species": "pidgey"}}|})
+        "frlg";
+      case "a start anywhere outdoors that walks first: refused"
+        (anywhere_first
+           {|{"id": "walk", "kind": "route", "action": "run", "args": {"target": {"map": "CeladonCity", "tiles": [[1, 2]]}}}|})
+        "a checkpoint that starts anywhere outdoors begins with a fly event";
       case "su-01"
         (summary "su-01.plan.json")
-        "frlg; from CeladonCity_DepartmentStore_1F (6, 2) south; missing: none";
+        "frlg; from anywhere outdoors; missing: none";
       case "su-01's walks plan on the maps" (walks "su-01.plan.json")
-        "to_4f_clerk 1; to_4f_clerk.walk 3; out_of_dept_store 3; \
-         out_of_dept_store.walk 3; lavender_mart_clerk 7; out_of_lavender_mart \
-         1; to_save_spot 8";
+        "lavender_mart_clerk 7; out_of_lavender_mart 1; to_4f_clerk 7; \
+         to_4f_clerk.walk 3; out_of_dept_store 3; out_of_dept_store.walk 3";
       case "tt-01"
         (summary "tt-01.plan.json")
-        "frlg; from CeladonCity_DepartmentStore_1F (6, 2) south; missing: none";
+        "frlg; from anywhere outdoors; missing: none";
       case "tt-01's walks plan on the maps" (walks "tt-01.plan.json")
-        "out_of_dept_store 3; face_route6_rare_candy 10; to_save_spot 8";
+        "face_route6_rare_candy 10; to_save_spot 8; out_of_dept_store 3";
     ]

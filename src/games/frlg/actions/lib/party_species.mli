@@ -3,7 +3,7 @@
     species name a candidate ({!Frlg_text.Line_reading}): the species, not the
     nickname the party menu shows (CH'DING is a Spearow). New for the end
     checks: the fork reads the species only in battle and through its party
-    tracker; its Mail Glitch checks ([run_verify_mail_glitch()] in
+    tracker; its Mail Glitch check (in
     Programs/MailGlitch/PokemonFRLG_MailGlitchActions.cpp) find a member by the
     species its tracker reckons. *)
 

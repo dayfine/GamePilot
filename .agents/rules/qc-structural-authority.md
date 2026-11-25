@@ -92,7 +92,8 @@ other private ideas without a pointer to them. Module doc comments say what the 
 for a port, where it comes from (S8). Text read from the game screen (dialogue, menu labels)
 names its language risk: GamePilot keeps multi-language support as a goal. An undocumented type
 or val → **FAIL** naming it. Applies to `lib/` interfaces; a variant whose constructors say it
-all (`Mono | Stereo`) still needs one line on what the type is for.
+all (`Mono | Stereo`) still needs one line on what the type is for. The lint `interface_docs`
+(R11) finds a missing doc; this row judges what it says, and new items in a file it still waives.
 
 ### S6 Readable tests
 

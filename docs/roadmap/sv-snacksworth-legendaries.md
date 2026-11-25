@@ -6,11 +6,11 @@ step after the declared start. Earning the treats (BBQ) is out of scope.
 
 ## Source plan
 
-PokemonSimulation draft PR #78 (branch `sv-snacksworth-automation-plan`): `docs/sv/snacksworth-plan.md`
-(team, battle profiles, recovery, order) and `docs/sv/snacksworth-routes.md` (team acquisition and a
-flight anchor plus final landmark for each target, with sources). It is researched, not console
-validated: no route, timing or battle has been run. This page is the short version; the details
-and sources stay in those two files.
+The full plan is [sv-snacksworth/plan.md](sv-snacksworth/plan.md) (team, battle profiles,
+recovery, order) and [sv-snacksworth/routes.md](sv-snacksworth/routes.md) (team acquisition and a
+flight anchor plus final landmark for each target, with sources), carried over unchanged from
+PokemonSimulation draft PR #78. It is researched, not console validated: no route, timing or battle
+has been run. This page is the short version; the details and sources stay in those two files.
 
 **Start state.** Both DLC regions and the post-game open, free flight, full obedience. Not assumed:
 a trained team, money, candies, TMs, shards, stones, or every flight point registered; the program
@@ -40,7 +40,7 @@ from Remember Moves, held TMs, or crafting.
 - **Glastrier, Spectrier**: Ghost-Tera Gallade as the final catcher (Thrash and Double-Edge cannot
   hit it); Soak Spectrier first; clear confusion before weakening; Taunt against Iron Defense and
   Disable.
-- **Exceptions table** in the plan: Kubfu (no chip damage), Lugia and Ho-Oh (Recover, Pressure),
+- **Exceptions table** in [the plan](sv-snacksworth/plan.md#other-exceptions-to-handle-explicitly): Kubfu (no chip damage), Lugia and Ho-Oh (Recover, Pressure),
   Groudon and Rayquaza (Rest), Kyogre (Aqua Ring), Latias (Reflect Type undoes Soak), Moltres (sand).
 
 ## Routes
@@ -48,7 +48,7 @@ from Remember Moves, held TMs, or crafting.
 Each target starts from a registered flight point and ends at a visually verified interaction spot
 (e.g. Kubfu: Fury Falls, by the sign; Zapdos: top of the Poco Path lighthouse; Groudon: the cave under
 Alfornada, which needs ledge waypoints). Unregistered anchors (Gracia Stones, Groundblight Shrine)
-get a registration route first. The full table of 25 is in `snacksworth-routes.md`.
+get a registration route first. The full table of 25 is in [routes.md](sv-snacksworth/routes.md#legendary-routes-all-25).
 
 ## Mapping onto GamePilot
 

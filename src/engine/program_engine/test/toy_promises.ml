@@ -21,3 +21,7 @@ let check_flag reads flag =
     set
 
 let check p reads = check_gold p reads @ List.map (check_flag reads) p.flags
+
+let to_lines (p : t) =
+  Option.fold ~none:[] ~some:(fun c -> [ "gold " ^ Count.text c ]) p.gold
+  @ if p.flags = [] then [] else [ "flags " ^ String.concat ", " p.flags ]

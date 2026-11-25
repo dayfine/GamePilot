@@ -47,7 +47,7 @@ let past = "arrival-past-mission-banner/"
    subtitles likewise; the other folders as their names say. 0033 and 0038
    show no badge although CommandLineTests names them "+autosave" (here
    0033-autosave-badge, 0038-light-pavement): the fork's
-   PokemonLZA_AutoStoryDetectors_Tests.cpp (branch lab/dev-plza) expects no
+   PokemonLZA_AutoStoryDetectors_Tests.cpp expects no
    badge on any ArrivalToAd frame, and neither frame draws one. *)
 let story_cases =
   List.concat_map
@@ -157,5 +157,7 @@ let () =
   Table_test.run "plza story readers"
     (story_cases @ synthetic_badge_cases @ card_cases @ choice_cases
    @ screen_cases
-    @ Fixture_frames.shifted_cases (fun m ->
-          Story_screen.to_string (Story_screen.read m)))
+    @ Fixture_frames.shifted_cases ~misses:true (fun m ->
+          (* The shifted fixture has no minimap cells (write_probe_spec.ml). *)
+          Story_screen.to_string { (Story_screen.read m) with minimap = None })
+    )

@@ -1,18 +1,17 @@
 module Make
     (T : Engine_rules.GAME_RULES)
     (C : Engine_plan_format.Plan_format.PLAN_FORMAT with module T = T)
-    (X : Engine_text.Rules_text.TEXT with module T = T)
     (S : Engine_event_snapshot.Event_snapshot.SNAPSHOT) =
 struct
   module Raw = Engine_plan_format.Raw_json
-  module Run_text = Engine_text.Run_text.Make (T) (X)
+  module Run_text = Engine_text.Run_text.Make (T)
   module Plan = Engine_plan.Plan.Make (T) (Raw)
   module Plan_decode = Engine_plan_format.Plan_decode.Make (T) (C)
-  module Plan_text = Engine_text.Plan_text.Make (T) (X)
+  module Plan_text = Engine_text.Plan_text.Make (T)
 
   module Failure = struct
     include Engine_run.Failure.Make (T)
-    include Engine_text.Failure_text.Make (T) (X)
+    include Engine_text.Failure_text.Make (T)
   end
 
   module Game = Engine_run.Game.Make (T) (Raw)

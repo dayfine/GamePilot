@@ -17,6 +17,7 @@
   gamepilot.repo_io
   gamepilot.frlg_overworld
   gamepilot.frlg_actions
+  gamepilot.frlg_text
   gamepilot.engine_expand
   gamepilot.checkpoints_expand
   gamepilot.frlg_places))
