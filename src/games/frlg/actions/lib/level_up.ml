@@ -37,10 +37,8 @@ type outcome = {
 }
 
 let max_looks = 200
-
-exception Stopped of string
-
-let stop why = raise (Stopped why)
+let ( let* ) = Result.bind
+let check ok why = if ok then Ok () else Error why
 
 (* A run under way: each member's outcome so far, whose screens these are,
    and whether an evolution scene is still going. *)
@@ -59,8 +57,8 @@ let indices r = Seq.init (Array.length r.members) Fun.id
 
 let find_slot r s =
   match Seq.find (fun i -> r.members.(i).member.slot = s) (indices r) with
-  | Some i -> i
-  | None -> stop (Printf.sprintf "a screen names slot %d, not in the run" s)
+  | Some i -> Ok i
+  | None -> Error (Printf.sprintf "a screen names slot %d, not in the run" s)
 
 (* A nickname shared by two members does not tell them apart: the order
    decides, as when no name was read, and the log says so. *)
@@ -69,8 +67,8 @@ let find_nickname r n ~or_else =
     List.of_seq
       (Seq.filter (fun i -> r.members.(i).member.nickname = Some n) (indices r))
   with
-  | [ i ] -> i
-  | [] -> stop (Printf.sprintf "a screen names %s, not in the run" n)
+  | [ i ] -> Ok i
+  | [] -> Error (Printf.sprintf "a screen names %s, not in the run" n)
   | _ ->
       r.driver.log
         (Printf.sprintf
@@ -85,8 +83,8 @@ let named r who ~or_else =
 
 let current r =
   match r.current with
-  | Some i -> i
-  | None -> stop "a question with no member levelled before it"
+  | Some i -> Ok i
+  | None -> Error "a question with no member levelled before it"
 
 let update r i f = r.members.(i) <- f r.members.(i)
 
@@ -105,9 +103,10 @@ let declined r i offered =
 
 let leave r i offered why =
   log r i "%s" why;
-  if not (r.driver.leave_list ()) then
-    stop "no \"Stop trying to teach?\" after the list";
-  declined r i offered
+  let* () =
+    check (r.driver.leave_list ()) "no \"Stop trying to teach?\" after the list"
+  in
+  Ok (declined r i offered)
 
 let row_of known move =
   let rec find i = function
@@ -123,13 +122,15 @@ let learn r i (rule : P.move_rule) known =
       leave r i (Some rule.learn)
         (rule.replacing ^ " does not read among the known moves")
   | Some row ->
-      if not (r.driver.forget row) then
-        stop (Printf.sprintf "the list's cursor did not read on move %d" row);
+      let* () =
+        check (r.driver.forget row)
+          (Printf.sprintf "the list's cursor did not read on move %d" row)
+      in
       update r i (fun o -> { o with learned = o.learned @ [ rule ] });
-      log r i "learned %s" (P.describe_rule rule)
+      Ok (log r i "learned %s" (P.describe_rule rule))
 
 let on_list r =
-  let i = current r in
+  let* i = current r in
   let { offered; known } = r.driver.read_list () in
   match offered with
   | None -> leave r i None "the move offered did not read"
@@ -139,12 +140,12 @@ let on_list r =
       | None -> leave r i offered ("no rule learns " ^ move))
 
 let prompt r =
-  let i = current r in
-  if (policy r i).rules = [] then (
-    if not (r.driver.decline ()) then stop "no \"Stop trying to teach?\"";
-    declined r i None)
+  let* i = current r in
+  if (policy r i).rules = [] then
+    let* () = check (r.driver.decline ()) "no \"Stop trying to teach?\"" in
+    Ok (declined r i None)
   else if r.driver.open_list () then on_list r
-  else stop "the list to forget from did not show"
+  else Error "the list to forget from did not show"
 
 (* The next member in slot order that levelled, after the last scene's. *)
 let next_levelled r =
@@ -155,51 +156,55 @@ let next_levelled r =
       (fun i -> r.members.(i).levels > 0)
       (Seq.init (max 0 (n - after - 1)) (fun k -> after + 1 + k))
   with
-  | Some i -> i
-  | None -> stop "an evolution with no member left that levelled"
+  | Some i -> Ok i
+  | None -> Error "an evolution with no member left that levelled"
 
 let next_exp r =
   match r.current with
-  | None -> 0
-  | Some i -> (i + 1) mod Array.length r.members
+  | None -> Ok 0
+  | Some i -> Ok ((i + 1) mod Array.length r.members)
 
-let first_or_current r = Option.value r.current ~default:0
+let first_or_current r = Ok (Option.value r.current ~default:0)
 
 (* A scene starts when none is going; it is decided once, by its member's
    policy, and is then only waited out. *)
 let evolving r who =
-  if not r.in_scene then (
-    let i = named r who ~or_else:(fun () -> next_levelled r) in
+  if r.in_scene then
+    Ok (r.in_scene <- r.driver.evolution ~cancel:false = Continues)
+  else
+    let* i = named r who ~or_else:(fun () -> next_levelled r) in
     let evolve = (policy r i).evolve in
     r.current <- Some i;
     r.last_scene <- Some i;
     update r i (fun o ->
         { o with evolution = (if evolve then Evolved else Cancelled) });
     log r i "evolving, %s" (if evolve then "let it run" else "cancelled with B");
-    r.in_scene <- r.driver.evolution ~cancel:(not evolve) = Continues)
-  else r.in_scene <- r.driver.evolution ~cancel:false = Continues
+    Ok (r.in_scene <- r.driver.evolution ~cancel:(not evolve) = Continues)
 
 let answer_look r = function
-  | Exp who -> r.current <- Some (named r who ~or_else:(fun () -> next_exp r))
+  | Exp who ->
+      let* i = named r who ~or_else:(fun () -> next_exp r) in
+      Ok (r.current <- Some i)
   | Stats who ->
-      let i = named r who ~or_else:(fun () -> first_or_current r) in
+      let* i = named r who ~or_else:(fun () -> first_or_current r) in
       r.current <- Some i;
       update r i (fun o -> { o with levels = o.levels + 1 });
-      log r i "level %d of this run" r.members.(i).levels
+      Ok (log r i "level %d of this run" r.members.(i).levels)
   | Move_prompt -> prompt r
   | Forget_list -> on_list r
   | Evolving who -> evolving r who
-  | Back | Timed_out -> ()
+  | Back | Timed_out -> Ok ()
 
 let rec answer r looks =
   if looks >= max_looks then
-    stop (Printf.sprintf "still not back after %d looks" max_looks);
-  match r.driver.next () with
-  | Back -> ()
-  | Timed_out -> stop "nothing to answer showed"
-  | look ->
-      answer_look r look;
-      answer r (looks + 1)
+    Error (Printf.sprintf "still not back after %d looks" max_looks)
+  else
+    match r.driver.next () with
+    | Back -> Ok ()
+    | Timed_out -> Error "nothing to answer showed"
+    | look ->
+        let* () = answer_look r look in
+        answer r (looks + 1)
 
 let start member =
   { member; levels = 0; learned = []; declined = []; evolution = No_evolution }
@@ -217,9 +222,8 @@ let run driver policies ~members =
   in
   if members = [] then Error "no member to level"
   else
-    match answer r 0 with
-    | () -> Ok (Array.to_list r.members)
-    | exception Stopped why -> Error why
+    let* () = answer r 0 in
+    Ok (Array.to_list r.members)
 
 let evolution_name = function
   | No_evolution -> "none"
