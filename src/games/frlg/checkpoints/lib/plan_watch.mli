@@ -4,11 +4,13 @@
     of the pre-flight and the make-room party read. *)
 
 val create : Pokemon_engine.Plan.checkpoint -> Watch_report.t
-(** The checkpoint's events, all pending; shows the plan. *)
+(** {!Pokemon_engine.Plan_watch.create}: the checkpoint's events, all pending;
+    shows the plan. *)
 
 val on_event :
   Watch_report.t -> int -> string Engine_run.Event_progress.t -> unit
-(** The runner's progress of event [i], shown. *)
+(** {!Pokemon_engine.Plan_watch.on_event}: the runner's progress of event [i],
+    shown. *)
 
 val options : (string -> unit) -> Checkpoint_run.options
 (** A run that loads no state (its own events go back to the save), reads the
