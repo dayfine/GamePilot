@@ -50,6 +50,12 @@
       "stand": [10, 5],
       "facing": "east"
     },
+    "indigo_plateau_mart_clerk": {
+      "map": "IndigoPlateau_PokemonCenter_1F",
+      "object": {"npc": "IndigoPlateau_PokemonCenter_1F_EventScript_Clerk"},
+      "stand": [2, 7],
+      "facing": "west"
+    },
     "indigo_plateau_nurse": {
       "map": "IndigoPlateau_PokemonCenter_1F",
       "object": {"npc": "IndigoPlateau_PokemonCenter_1F_EventScript_Nurse"},
@@ -80,6 +86,24 @@
       "stand": [8, 5],
       "facing": "south"
     },
+    "route10_center_outside": {
+      "map": "Route10",
+      "object": {"warp": "warp_3", "to_map": "Route10_PokemonCenter_1F"},
+      "stand": [13, 21],
+      "facing": "south"
+    },
+    "route10_north_grass": {
+      "map": "Route10",
+      "object": {"not_in_maps": "a tile of the grass north of Route 10's Pokemon Center (x 6 to 16, y 6 to 10), one west of the patch's east column, where dex collection paces east and back"},
+      "stand": [12, 8],
+      "facing": "east"
+    },
+    "route10_nurse": {
+      "map": "Route10_PokemonCenter_1F",
+      "object": {"npc": "Route10_PokemonCenter_1F_EventScript_Nurse"},
+      "stand": [7, 4],
+      "facing": "north"
+    },
     "route6_hidden_rare_candy": {
       "map": "Route6",
       "object": {"hidden_item": "FLAG_HIDDEN_ITEM_ROUTE6_RARE_CANDY"},
@@ -106,7 +130,8 @@
     }
   },
   "towns": {
-    "indigo_plateau": {"nurse": "indigo_plateau_nurse", "fly": "IndigoPlateau"},
-    "lavender": {"nurse": "lavender_nurse", "fly": "LavenderTown", "mart": "lavender_mart_clerk"}
+    "indigo_plateau": {"nurse": "indigo_plateau_nurse", "fly": "IndigoPlateau", "mart": "indigo_plateau_mart_clerk"},
+    "lavender": {"nurse": "lavender_nurse", "fly": "LavenderTown", "mart": "lavender_mart_clerk"},
+    "route10": {"nurse": "route10_nurse", "fly": "Route10"}
   }
 }
