@@ -1,9 +1,11 @@
 (* A plan's run on the watch page (Watch_report): its events as the steps,
    moved by the runner's progress. *)
 
-let create (checkpoint : Checkpoints_plan.Plan.checkpoint) =
+let create (checkpoint : Pokemon_checkpoints.Plan.checkpoint) =
   Watch_report.create ~checkpoint:checkpoint.checkpoint_id
-    (List.map (fun (e : Checkpoints_plan.Plan.event) -> e.id) checkpoint.events)
+    (List.map
+       (fun (e : Pokemon_checkpoints.Plan.event) -> e.id)
+       checkpoint.events)
 
 let on_event report index progress =
   let state, detail = Engine_run.Event_progress.to_watch progress in
@@ -26,7 +28,7 @@ let options log : Checkpoint_run.options =
    in [mode] from start to end; every story line to the page too. [actions]
    (made for that log) are the caller's own game actions: a shadow plan's. *)
 let run ~mode ?(actions = fun _ -> []) (options : Checkpoint_run.options) world
-    (plan : Checkpoints_plan.Plan.t) =
+    (plan : Pokemon_checkpoints.Plan.t) =
   let report = create plan.checkpoint in
   Watch_report.start_run report ~mode;
   let log = Watch_report.log options.log in

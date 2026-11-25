@@ -38,7 +38,7 @@ let field (key, value) =
   | "hall_of_fame" -> hall_of_fame value
   | _ -> Error (Printf.sprintf "%s.%s is not a known field." where key)
 
-let needs (plan : Checkpoints_plan.Plan.t) =
+let needs (plan : Pokemon_checkpoints.Plan.t) =
   match Option.bind plan.metadata (List.assoc_opt "preconditions") with
   | None -> Ok []
   | Some (`Assoc fields) -> all_ok (List.map field fields)

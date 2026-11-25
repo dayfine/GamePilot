@@ -3,7 +3,7 @@
    goes back to the saved one. Batches and saves fail where the script says.
    Logs the world's lines and the loop's, not the runner's per-event ones. *)
 
-open Checkpoints_run
+open Pokemon_checkpoints
 
 type script = {
   start_level : int;
@@ -63,12 +63,12 @@ let make script =
   in
   let game : Game.t =
     {
-      walk_route = (fun _ _ -> Ok ());
+      run_own = (fun _ _ -> Ok ());
       run_builtin = (fun _ -> Ok ());
       game_actions = [ ("battle_batch", batch) ];
       flag_holds = (fun _ -> false);
       position = (fun () -> None);
-      heal = (fun () -> Ok ());
+      between_rounds = (fun () -> Ok ());
       save;
       reload;
       log;

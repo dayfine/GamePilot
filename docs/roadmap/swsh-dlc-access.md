@@ -23,19 +23,35 @@ programs need a save that can get there).
 ## Mapping onto GamePilot
 
 There is no SwSh code in GamePilot yet. This needs `src/games/swsh` (readers, actions, story plans),
-the Switch backend only (no emulator), and story checkpoints on the engine as FRLG uses it. SwSh is
-3D with a camera behind the player in towns: the movement model is PLZA's (timed legs, turns,
-arrival checks), not the FRLG grid, so it comes after or with G.
+the Switch backend only (no emulator), and story checkpoints on the engine. SwSh is 3D: the movement
+model is PLZA's (timed legs, turns, arrival checks), not the FRLG grid.
+
+**Decided (user, 2026-11-25).**
+
+- **After PLZA 01.01** (`plza-autostory-port.md`). PLZA brings what SwSh lacks on GamePilot: the stick
+  on the wire, the native viewport, walks without tiles on the agnostic engine, and the reload from
+  HOME. SwSh starts when 01.01 passes on console B.
+- **Shield**, on console B, a brand-new save. The Slowpoke scene is Avery's; Shield fixtures first.
+- **Start after the name.** The user types the player name by hand once; checkpoint 00.00 starts at the
+  Rose introduction. No keyboard port (fork #62).
+- **Driven by programs, not a hand capture round.** The fork's R0 ledger (#571) is not filled in by
+  hand. Each checkpoint starts as a guessed plan from #1207's inputs and the walkthrough, runs on
+  console B, and is revised from where it fails: saved frames become reader fixtures, the failure a
+  replay test. Every input goes through the wire, so the measured walks are the ones the program
+  sends. A guessed plan bounds every walk and scene, and stops on an unknown screen.
+- Tests as for every game with no emulator (AGENTS.md): reader and game tests, scripted runs, wire-log
+  replay, then three console passes in a row.
 
 ## Steps
 
-1. Readers from the frames of #571: dialog, choice arrow, menu, black and white fades, battle menu.
-2. Gate A on console A or B: intro, options, bag, Hop's house, the walk to the station.
-3. Gate B: starter, the Weald, Route 2, the Dynamax Band, the train to the Wild Area.
-4. Box Link, Slowpoke catch, attendant menu check; save and stop.
+1. PLZA 01.01 passes on console B (its own page).
+2. Gate A, 00.00-00.03: Rose introduction, bag, Hop's house, the walk to the station before Leon.
+   Readers as the guessed plans need them: dialog, choice arrow, menu, fades, the control cue.
+3. Gate B: starter, the Weald, Route 2, the Dynamax Band, the train to the Wild Area; the battle port.
+4. Wild Area feasibility (camera, clock lighting), Box Link, Slowpoke catch, attendant menu check;
+   save and stop.
 
 ## Open questions
 
-- Which version and language first? The DLC Slowpoke scene differs by version.
-- Is a fresh save needed, or can the user hand over a save already past part of this?
-- New game needs the system keyboard for the name; the fork has a typer (fork #62) to port.
+- Is a save handed over later (past Gate A) worth adding as a second start, once Gate A passes?
+- How the station menu is read: a template of "Crown Tundra Station" in one language, or text reading.

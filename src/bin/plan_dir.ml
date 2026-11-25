@@ -2,7 +2,7 @@
    a range of them, and the plan before one. *)
 
 open Engine_series
-open Checkpoints_plan
+open Pokemon_checkpoints
 
 let plan_suffix = ".plan.json"
 

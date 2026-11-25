@@ -25,7 +25,9 @@ let expanded ~start events () =
     Frlg_checkpoints.Plan_file.decode ~source:"t"
       (Yojson.Safe.from_string (plan_text ~start events))
   with
-  | Ok p -> String.concat "\n" (List.map Plan_text.event p.checkpoint.events)
+  | Ok p ->
+      String.concat "\n"
+        (List.map Pokemon_checkpoints.Plan_text.event p.checkpoint.events)
   | Error e -> e
 
 let up_to_4f =

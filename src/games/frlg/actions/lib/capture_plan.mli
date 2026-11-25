@@ -17,7 +17,7 @@ type t = {
       (** the way to step for a battle, and back ({!Pacing}) *)
 }
 
-val decode : Json_field.obj -> (t, Checkpoints_run.Failure.cause) result
+val decode : Json_field.obj -> (t, Pokemon_checkpoints.Failure.cause) result
 (** ["species"] (required), ["catches"] (1, 1..999), ["encounters"] (20,
     1..9999), ["balls"] (5, 1..999), ["pace"] (east), as the fork reads them. *)
 

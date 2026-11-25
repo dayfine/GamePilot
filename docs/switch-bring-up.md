@@ -37,6 +37,10 @@ Expect `1920x1080 at 60.00 fps` and `geometry ok: picture 1560x1040 at (180, 5)`
 reader fixtures under `src/games/frlg/readers/test/images/switch/console-b-20261123/`): the
 picture fills that box exactly, black bars left and right.
 
+A full-screen Switch game (Legends Z-A) has no bars: add `--viewport native` to the daemon (and
+`run/run_checkpoints_on_switch.sh --viewport native`), and the check then only asks that the frame
+is not mostly dark.
+
 **4. Press and see it.** Player in the overworld, start menu closed. If the board line says the
 console does not see the controller, press A on the Switch's controller screen and rerun.
 

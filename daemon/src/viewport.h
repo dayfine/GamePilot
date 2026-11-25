@@ -37,6 +37,16 @@ struct Viewport {
 // the one table from GBA coordinates to the Switch frame.
 Viewport nso_gba_viewport();
 
+// A full-screen Switch game (Legends Z-A, BDSP): the picture is the whole
+// 1920x1080 capture, one game pixel per frame pixel. A probe box is then a
+// fraction of the frame, as the fork's ImageFloatBox is, and its templates
+// are 1080p crops, so both carry over from the C++ unchanged.
+Viewport native_switch_viewport();
+
+// The viewport a name stands for: "nso-gba" (nso_gba_viewport) or "native"
+// (native_switch_viewport); nullopt for any other name.
+std::optional<Viewport> named_viewport(std::string_view name);
+
 // Whether the box lies in 0..1 with w, h > 0.
 bool is_unit_box(const Box& box);
 

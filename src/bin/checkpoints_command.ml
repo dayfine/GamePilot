@@ -10,7 +10,7 @@
    as many times as the mode's policy says (Engine_run.Checkpoint_trials), each run with its own daemon and run folder
    (Run_record). A run passes when every event passed and the player ends at
    the checkpoint's declared end (Checkpoints_run.Checkpoint_end) and the plan's
-   postconditions hold (Checkpoints_run.Postcondition_check). With --end-check-only each
+   postconditions hold (Pokemon_checkpoints.Postcondition_check). With --end-check-only each
    run checks its start state against the postconditions and runs no event. The loop goes to the
    next checkpoint only after this one passed; in verification mode the last
    passing run's end becomes the next checkpoint's start state.
@@ -59,7 +59,7 @@
 
    --from-event ID|N [--to-event ID|N] (mGBA, testing, one checkpoint: --to
    is --from unless given) runs that checkpoint from the save state kept at
-   the event's start (Checkpoints_run.Event_states: every mGBA run keeps one at each
+   the event's start (Pokemon_checkpoints.Event_states: every mGBA run keeps one at each
    event it reaches cleanly) to the given event or the last, the end checks
    only when it runs the last. Its mode is "from-event" (run.json's
    from_event and to_event): it never verifies the checkpoint nor saves its
@@ -82,7 +82,6 @@
    started and closed around the command by run/run_checkpoints_on_mgba.sh. *)
 
 open Engine_run
-open Checkpoints_run
 module R = Program_registry
 include Checkpoints_flags
 
@@ -136,7 +135,7 @@ let mode_and_to f ~from_id =
         ( Option.value f.mode ~default:Checkpoint_trials.Testing,
           Option.value f.to_id ~default:from_id )
 
-(* A partial run's own rules (Checkpoints_run.Event_range.check). *)
+(* A partial run's own rules (Engine_run.Event_range.check). *)
 let check_from_event f mode ~checkpoints =
   match f.from_event with
   | None -> Ok ()

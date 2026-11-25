@@ -50,10 +50,11 @@ let knows_fly (m : R.member) =
 
 let room ~at need members =
   let* towns = Frlg_actions.Fly_towns.load () in
-  let* dir =
-    Option.to_result ~none:"no maps" (Repo_io.Repo_files.locate Cr.maps_dir)
+  let* world = Cr.load_world () in
+  let maps =
+    List.init (Grid_maps.Connected_maps.size world.maps) (fun i ->
+        (Grid_maps.Connected_maps.map world.maps i).name)
   in
-  let maps = Grid_maps.Map_file.runtime_names ~maps_dir:dir in
   let* center = M.nearest_center towns ~maps at in
   let* deposits = R.choose (Pr.rules need) (Pr.precondition need) members in
   let* fly_user =
@@ -102,10 +103,10 @@ let decide ~plan_dir ~at need (record : Run_record.t) say members =
     say (M.id ^ ": Fly to " ^ room.center.name ^ ", in " ^ dir);
     Ok (Some dir)
 
-let action f : Checkpoints_run.Game.game_action = fun _ _ -> f ()
+let action f : Pokemon_checkpoints.Game.game_action = fun _ _ -> f ()
 
 let failed code why =
-  Error (Checkpoints_run.Failure.cause ~repeats:true code why)
+  Error (Pokemon_checkpoints.Failure.cause ~repeats:true code why)
 
 let soft_reset setup result log () =
   match Pf.reload setup M.id log with
@@ -156,7 +157,7 @@ let session setup world decide say log () =
    with
   | Ok () -> ()
   | Error f when Result.is_ok !result ->
-      result := Error (Checkpoints_run.Failure.to_string f)
+      result := Error (Pokemon_checkpoints.Failure.to_string f)
   | Error _ -> ());
   !result
 

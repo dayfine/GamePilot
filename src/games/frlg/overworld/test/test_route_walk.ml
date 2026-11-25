@@ -25,7 +25,7 @@ let walker screen log : Route_walk.t =
     log = (fun line -> log := line :: !log);
   }
 
-let target map tiles : Checkpoints_plan.Pose.grid =
+let target map tiles : Pokemon_checkpoints.Pose.grid =
   {
     map;
     tiles = List.map (fun (x, y) -> { Grid_maps.Tile_pos.x; y }) tiles;
@@ -52,7 +52,8 @@ let walk ?react ?(logged = false) ~from goal () =
   let outcome =
     match outcome with
     | Ok at -> "at " ^ at_text at
-    | Error cause -> "failed " ^ Checkpoints_run.Failure.cause_to_string cause
+    | Error cause ->
+        "failed " ^ Pokemon_checkpoints.Failure.cause_to_string cause
   in
   let walked =
     Printf.sprintf "%s; fled %d; %s" outcome !fled (S.presses_text screen)

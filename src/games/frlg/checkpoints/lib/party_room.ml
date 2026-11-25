@@ -1,5 +1,6 @@
 module J = Json_field
-module P = Checkpoints_plan.Plan
+module P = Pokemon_checkpoints.Plan
+module Postconditions = Pokemon_checkpoints.Postconditions
 
 type need = {
   joins : (string * string) list;
@@ -47,11 +48,11 @@ let event id (joins, used) (e : P.event) =
         used @ named ~where action args )
   | _ -> (joins, used)
 
-let promised (p : P.postconditions) =
+let promised (p : Postconditions.t) =
   match p.party with
-  | Some (P.Party_in_order l) -> l
-  | Some (P.Party_includes { members; slots }) ->
-      members @ List.map (fun (s : P.slot) -> s.species) slots
+  | Some (Postconditions.Party_in_order l) -> l
+  | Some (Postconditions.Party_includes { members; slots }) ->
+      members @ List.map (fun (s : Postconditions.slot) -> s.species) slots
   | None -> []
 
 let plan acc (p : P.t) =
