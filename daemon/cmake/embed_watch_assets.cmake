@@ -27,7 +27,7 @@ foreach(name IN LISTS names)
   math(EXPR index "${index} + 1")
 endforeach()
 file(WRITE "${OUTPUT}"
-"// Generated from watch/{${NAMES}} by cmake/embed_watch_assets.cmake.\n"
+"// Generated from watch/page/{${NAMES}} by cmake/embed_watch_assets.cmake.\n"
 "#include <optional>\n"
 "#include <string_view>\n\n"
 "#include \"watch_assets.h\"\n\n"

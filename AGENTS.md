@@ -16,9 +16,10 @@ GamePilot automates games through three layers (design: `docs/design/Layered-Aut
     (promises, counts, money), `plan` (types), `plan_format` (how a plan file is read), `text`
     (plans, failures and log lines printed), `event_snapshot` (what a run keeps beside each
     event's save state), `run` (one checkpoint: handlers, trials, event progress), `series`
-    (chains, order, rounds), `expand` (plan JSON rewrites), `flags` (`gamepilot run`'s flags, a
-    game's own carried along) and `program_engine` (`Program_engine.Make`, the engine applied to
-    a family's rules). It names no game, grid or Pokémon type.
+    (chains, order, rounds), `expand` (plan JSON rewrites), `watch` (a plan's run on the watch
+    page), `flags` (`gamepilot run`'s flags, a game's own carried along) and `program_engine`
+    (`Program_engine.Make`, the engine applied to a family's rules). It names no game, grid or
+    Pokémon type.
   - `pokemon/`: code shared by Pokemon games: the navigation grid, and in `checkpoints/` the
     Pokémon rules (`rules`: grid poses, Pokémon actions, postconditions), their plan format
     (`plan_format`) and event snapshot (`event_snapshot`), the engine applied to them

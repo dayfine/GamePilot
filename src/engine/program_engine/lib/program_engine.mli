@@ -66,6 +66,12 @@ module Make
         reason given to [on_event] as logged. *)
   end
 
+  (** {!Engine_watch.Plan_watch.Make}: a plan's run on the watch page, its
+      events as the steps. *)
+  module Plan_watch : module type of struct
+    include Engine_watch.Plan_watch.Make (T) (Engine_plan_format.Raw_json)
+  end
+
   (** {!Engine_event_snapshot.Event_snapshot}: where a run keeps its states, and
       what it keeps beside them through [S]. *)
   module Event_snapshot : sig

@@ -4,8 +4,8 @@
 // is the daemon started with `--hub`, no backend, serving only HTTP with the
 // same pieces as the watch page (http.h, net.h):
 //
-//   GET /              the page (watch/hub.html, compiled in): the live runs,
-//                      each with its checkpoint, mode and trial (from the
+//   GET /              the page (watch/page/hub.html, compiled in): the live
+//                      runs, each with its checkpoint, mode and trial (from the
 //                      run's /summary.json), elapsed time and state; then
 //                      every run in the runs folder, with filters kept in the
 //                      URL's query (Watch-Page.md, Runs list)
@@ -16,9 +16,9 @@
 //   GET /recent.json   the latest finished runs (RESULTS.tsv), newest first
 //   GET /history.json  every run folder (run_history.h), newest first
 //   GET /runs/NAME/    the run's page from the hub's own build: the live page
-//                      (watch/watch.html) while the run is live, with the
+//                      (watch/page/watch.html) while the run is live, with the
 //                      token the run gives its local viewers; the page of a
-//                      finished run (watch/run.html) after
+//                      finished run (watch/page/run.html) after
 //   GET /runs/NAME/record.json, /probes.json, /files/PATH
 //                      a run's row, its probe timeline (from wire.jsonl, read
 //                      a chunk at a time and kept while the file is
@@ -150,9 +150,9 @@ class WatchHub {
   std::map<std::string, std::pair<std::uintmax_t, std::string>> timelines_;
 };
 
-// The page, compiled in from watch/hub.html (hub_page.cpp is generated).
+// The page, compiled in from watch/page/hub.html (hub_page.cpp is generated).
 std::string_view hub_page();
-// A finished run's page, from watch/run.html (run_page.cpp is generated).
+// A finished run's page, from watch/page/run.html (run_page.cpp is generated).
 std::string_view run_page();
 
 }  // namespace gamepilot
