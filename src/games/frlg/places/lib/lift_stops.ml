@@ -9,7 +9,7 @@ type stop = {
   exit : R.spot;
 }
 
-let stop lift (exit : Checkpoints_plan.Pose.grid) floor =
+let stop lift (exit : Pokemon_checkpoints.Pose.grid) floor =
   let tile = List.hd exit.tiles in
   {
     lift;

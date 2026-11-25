@@ -2,7 +2,7 @@
    kind's args, and rejects a broken plan naming the field. The Mail Glitch
    plans are read through FireRed's loader, in its test_mail_glitch_plans. *)
 
-open Checkpoints_plan
+open Pokemon_checkpoints
 
 let load_all paths =
   let errors =
@@ -70,7 +70,7 @@ let decoded text =
   with
   | Ok plan ->
       String.concat "\n"
-        (Option.fold ~none:"(no start)" ~some:Plan_text.declared
+        (Option.fold ~none:"(no start)" ~some:Plan_text.pose
            plan.checkpoint.start
         :: List.map Plan_text.event plan.checkpoint.events)
   | Error message -> message

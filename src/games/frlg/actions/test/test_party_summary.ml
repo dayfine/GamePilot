@@ -26,7 +26,7 @@ let ends_on screen = S.screen_name (S.screen_at screen screen.S.clock_ms)
 
 let outcome = function
   | Ok () -> "ok"
-  | Error cause -> "failed " ^ Checkpoints_run.Failure.cause_to_string cause
+  | Error cause -> "failed " ^ Pokemon_checkpoints.Failure.cause_to_string cause
 
 (* What was read, how many times the menu opened, where it ended. *)
 let summary_of ?latencies members () =

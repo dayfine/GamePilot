@@ -5,19 +5,26 @@ module R = Checkpoints_run.Room_policy
 
 let table = Result.get_ok (Frlg_actions.Fly_towns.load ())
 
-(* The Centers in PokemonSimulation's maps on 2026-11-23. *)
+(* The maps of the world, with every standard Center's coded room. *)
 let maps =
-  List.map Make_room.center_map
-    [
-      "CeruleanCity";
-      "IndigoPlateau";
-      "LavenderTown";
-      "PewterCity";
-      "Route10";
-      "Route4";
-      "VermilionCity";
-      "ViridianCity";
-    ]
+  let world = Result.get_ok (Checkpoint_run.load_world ()) in
+  List.init (Grid_maps.Connected_maps.size world.maps) (fun i ->
+      (Grid_maps.Connected_maps.map world.maps i).name)
+
+(* Each Center of the world: a coded room (it has the "pc_front" point no map
+   file has) or its map file. *)
+let world_centers () =
+  let world = Result.get_ok (Checkpoint_run.load_world ()) in
+  List.init (Grid_maps.Connected_maps.size world.maps) (fun i ->
+      Grid_maps.Connected_maps.map world.maps i)
+  |> List.filter (fun (m : Grid_maps.Map_data.t) ->
+         String.ends_with ~suffix:"_PokemonCenter_1F" m.name)
+  |> List.partition (fun (m : Grid_maps.Map_data.t) ->
+         Grid_maps.Map_data.String_map.mem "pc_front" m.points)
+  |> fun (coded, mapped) ->
+  Printf.sprintf "%d coded; mapped: %s" (List.length coded)
+    (String.concat ", "
+       (List.map (fun (m : Grid_maps.Map_data.t) -> m.name) mapped))
 
 let nearest map () =
   match Make_room.nearest_center table ~maps map with
@@ -51,19 +58,19 @@ let plan () =
     }
   in
   match
-    Checkpoints_plan.Plan_decode.decode ~source:"00-make-room"
+    Pokemon_checkpoints.Plan_decode.decode ~source:"00-make-room"
       (Make_room.plan_json room)
   with
   | Error e -> "error: " ^ e
   | Ok p ->
       String.concat "; "
         (List.map
-           (fun (e : Checkpoints_plan.Plan.event) ->
+           (fun (e : Pokemon_checkpoints.Plan.event) ->
              e.id ^ " " ^ Option.value e.action ~default:"")
            p.checkpoint.events)
       ^ " | ends "
       ^ Option.fold ~none:"?"
-          ~some:(fun (g : Checkpoints_plan.Pose.grid) -> g.map)
+          ~some:(fun (g : Pokemon_checkpoints.Pose.grid) -> g.map)
           p.postconditions.position
       ^ " | party "
       ^ (match p.postconditions.party with
@@ -72,7 +79,7 @@ let plan () =
       ^ " | knows "
       ^ String.concat ", "
           (List.map
-             (fun (k : Checkpoints_plan.Plan.knows) ->
+             (fun (k : Pokemon_checkpoints.Postconditions.knows) ->
                k.species ^ " " ^ String.concat "+" k.moves)
              p.postconditions.knows)
 
@@ -81,14 +88,20 @@ let case name input expectation : Table_test.case = { name; input; expectation }
 let () =
   Table_test.run "make room"
     [
+      case "the world's Centers: every standard one's coded room wins"
+        world_centers
+        "17 coded; mapped: IndigoPlateau_PokemonCenter_1F, \
+         OneIsland_PokemonCenter_1F";
       case "Pallet Town: Viridian (Pallet has no Center)" (nearest "PalletTown")
         "ViridianCity";
       case "inside Pallet: the town of the map"
         (nearest "PalletTown_PlayersHouse_1F")
         "ViridianCity";
       case "Lavender: its own Center" (nearest "LavenderTown") "LavenderTown";
-      case "Celadon (no Center in the maps): Route 4's, nearest by cell"
-        (nearest "CeladonCity") "Route4";
+      case "Celadon: its own Center, a coded room" (nearest "CeladonCity")
+        "CeladonCity";
+      case "Indigo Plateau: not its own Center, which has no PC at (11, 2)"
+        (nearest "IndigoPlateau") "PewterCity";
       case "a route: no Fly town" (nearest "Route16")
         "error: Route16 is in no Fly town: give a town's map";
       case "console B: the generated checkpoint" plan

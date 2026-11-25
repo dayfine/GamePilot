@@ -35,7 +35,7 @@ let judge json card =
   | Ok needs ->
       let read : Preflight.read =
         {
-          observed = Checkpoints_run.Postcondition_check.nothing_read;
+          observed = Pokemon_checkpoints.Postcondition_check.nothing_read;
           place = None;
           members = None;
           card;

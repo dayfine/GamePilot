@@ -3,7 +3,7 @@
     that runs a plan shows: a checkpoint, and the shadow plans ({!Shadow_plan})
     of the pre-flight and the make-room party read. *)
 
-val create : Checkpoints_plan.Plan.checkpoint -> Watch_report.t
+val create : Pokemon_checkpoints.Plan.checkpoint -> Watch_report.t
 (** The checkpoint's events, all pending; shows the plan. *)
 
 val on_event : Watch_report.t -> int -> Engine_run.Event_progress.t -> unit
@@ -16,11 +16,11 @@ val options : (string -> unit) -> Checkpoint_run.options
 val run :
   mode:string ->
   ?actions:
-    ((string -> unit) -> (string * Checkpoints_run.Game.game_action) list) ->
+    ((string -> unit) -> (string * Pokemon_checkpoints.Game.game_action) list) ->
   Checkpoint_run.options ->
   Frlg_overworld.Frlg_steps.world ->
-  Checkpoints_plan.Plan.t ->
-  (unit, Checkpoints_run.Failure.t) result
+  Pokemon_checkpoints.Plan.t ->
+  (unit, Pokemon_checkpoints.Failure.t) result
 (** In the effect context: the plan through {!Checkpoint_run.run}, shown with
     its run in [mode] (["single"], ["preflight"]) from start to end, failed when
     the run raises (re-raised). Every story line goes to the options' log and to
@@ -31,7 +31,7 @@ val run_shadow :
   mode:string ->
   log:(string -> unit) ->
   Frlg_overworld.Frlg_steps.world ->
-  Checkpoints_plan.Plan.t ->
-  ((string -> unit) -> (string * Checkpoints_run.Game.game_action) list) ->
-  (unit, Checkpoints_run.Failure.t) result
+  Pokemon_checkpoints.Plan.t ->
+  ((string -> unit) -> (string * Pokemon_checkpoints.Game.game_action) list) ->
+  (unit, Pokemon_checkpoints.Failure.t) result
 (** {!run} with {!options}. *)

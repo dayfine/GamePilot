@@ -1,10 +1,14 @@
 module J = Json_field
-module P = Checkpoints_plan.Plan
+module P = Pokemon_checkpoints.Plan
+module Postconditions = Pokemon_checkpoints.Postconditions
 module A = Frlg_actions
 
 type need =
   | Party_in_order of string list
-  | Party_includes of { members : string list; slots : P.slot list }
+  | Party_includes of {
+      members : string list;
+      slots : Postconditions.slot list;
+    }
   | Member of { species : string; for_ : string }
   | Knows_move of { move : string; for_ : string }
   | Money_at_least of { amount : int; for_ : string }
@@ -140,9 +144,9 @@ let event stocks acc (e : P.event) =
 
 let party_needs before acc =
   let promised =
-    match before with
-    | Some { P.party = Some (P.Party_in_order l); _ } -> [ Party_in_order l ]
-    | Some { P.party = Some (P.Party_includes { members; slots }); _ } ->
+    match (before : Postconditions.t option) with
+    | Some { party = Some (Party_in_order l); _ } -> [ Party_in_order l ]
+    | Some { party = Some (Party_includes { members; slots }); _ } ->
         [ Party_includes { members; slots } ]
     | _ -> []
   in
@@ -152,8 +156,8 @@ let party_needs before acc =
 
 let money_needs before acc =
   let promised =
-    match before with
-    | Some { P.money = Some (Money_range { min; max }); _ } ->
+    match (before : Postconditions.t option) with
+    | Some { money = Some (Range { min; max }); _ } ->
         [ Money_between { min; max } ]
     | _ -> []
   in
@@ -170,17 +174,17 @@ let count_use l (item, for_) =
 
 (* A count promised before: an exact count or a floor carries over; a gain
    says nothing of the save's count. *)
-let promised_count ({ bag_item = item; count } : P.bag_count) =
+let promised_count ({ bag_item = item; count } : Postconditions.bag_count) =
   match count with
-  | Count_exactly count -> Some (Item_exactly { item; count })
-  | Count_at_least count ->
+  | Engine_promise.Count.Exactly count -> Some (Item_exactly { item; count })
+  | Engine_promise.Count.At_least count ->
       Some (Item_at_least { item; count; for_ = "promised before" })
-  | Count_gained _ -> None
+  | Engine_promise.Count.Gained _ -> None
 
 let item_needs before acc =
   let promised =
     Option.fold ~none:[]
-      ~some:(fun (p : P.postconditions) ->
+      ~some:(fun (p : Postconditions.t) ->
         List.filter_map promised_count p.items)
       before
   in

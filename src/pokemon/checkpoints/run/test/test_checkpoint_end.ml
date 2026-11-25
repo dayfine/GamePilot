@@ -1,6 +1,6 @@
 (* Checkpoint_end names where a checkpoint ends. *)
 
-open Checkpoints_plan
+open Pokemon_checkpoints
 open Checkpoints_run
 
 (* A checkpoint starting at [start] (a pose's JSON), with one talk event. *)

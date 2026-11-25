@@ -1,0 +1,20 @@
+(library
+ (name toy_game)
+ (modules toy_terms toy_checkpoints)
+ (libraries
+  yojson
+  gamepilot.json_field
+  gamepilot.engine_promise
+  gamepilot.engine_terms
+  gamepilot.engine_plan
+  gamepilot.engine_checkpoints))
+
+(test
+ (name test_toy_game)
+ (modules test_toy_game)
+ (libraries
+  yojson
+  gamepilot.table_test
+  gamepilot.engine_promise
+  gamepilot.engine_run
+  toy_game))

@@ -93,7 +93,8 @@ let decode stocks name args =
   match List.assoc_opt name (readers stocks) with
   | Some read -> Action_args.decode ~action:name read args
   | None ->
-      Error (Checkpoints_run.Failure.cause ~repeats:true "unknown_action" name)
+      Error
+        (Pokemon_checkpoints.Failure.cause ~repeats:true "unknown_action" name)
 
 let member_text = Action_args.member_to_string
 
