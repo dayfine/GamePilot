@@ -8,22 +8,26 @@ GamePilot automates games through three layers (design: `docs/design/Layered-Aut
 - `src/` (OCaml 5.2+, dune): one dune project. Every library is `<name>/lib` with its tests in
   `<name>/test`.
   - `base/`: pure, game-agnostic code with no effects (`wire`: the protocol codec).
-  - `core/`: the effects programs use (`effects`) and their handlers (`session`, `live`, `replay`).
+  - `core/`: the effects programs use (`effects`) and their handlers (`session`, `live`, `replay`);
+    `live_run`: a run's daemon, its watch page and hub, and one checkpoint run in its own daemon,
+    shared by every game's series runner.
   - `engine/`: the game-agnostic program engine (`docs/design/Engine-Boundary.md`), one library
     per folder: `rules` (`GAME_RULES`, what a game family gives the engine), `postcondition`
     (promises, counts, money), `plan` (types), `plan_format` (how a plan file is read), `text`
     (plans, failures and log lines printed), `event_snapshot` (what a run keeps beside each
     event's save state), `run` (one checkpoint: handlers, trials, event progress), `series`
-    (chains, order, rounds), `expand` (plan JSON rewrites) and `program_engine`
-    (`Program_engine.Make`, the engine applied to a family's rules). It names no game, grid or
-    Pokémon type.
+    (chains, order, rounds), `expand` (plan JSON rewrites), `flags` (`gamepilot checkpoints`'
+    flags, a game's own carried along) and `program_engine` (`Program_engine.Make`, the engine
+    applied to a family's rules). It names no game, grid or Pokémon type.
   - `pokemon/`: code shared by Pokemon games: the navigation grid, and in `checkpoints/` the
     Pokémon rules (`rules`: grid poses, Pokémon actions, postconditions), their plan format
     (`plan_format`) and event snapshot (`event_snapshot`), the engine applied to them
     (`instance`: `Pokemon_engine`), the declared end of a checkpoint (`checkpoint_end`), who
     goes to the PC when a chain needs party room (`room_policy`), console runs
-    (`series`) and place-route rewrites (`expand`).
-  - `games/<game>/`: `readers/`, `actions/`, `maps/`, `checkpoints/`, and `programs/<program>/`.
+    (`series`), place-route rewrites (`expand`) and the Pokémon flags of `gamepilot checkpoints` (`flags`).
+  - `games/<game>/` (or `games/pokemon/<game>/`, as PLZA): `readers/`, `actions/`, `maps/`,
+    `checkpoints/`, `series/` (the game's checkpoint series runner, which
+    `bin/checkpoint_families.ml` picks by the registry's `rules`), and `programs/<program>/`.
   - `program_registry/`: every program's descriptor (game, group, name, doc, checkpoints folder,
     backends), as PA/CC's program list. A new program registers there (`docs/programs/README.md`).
   - `bin/`: the `gamepilot` command.

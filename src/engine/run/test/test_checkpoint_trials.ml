@@ -7,13 +7,13 @@ open Checkpoint_trials
 let policy_of ?runs mode =
   match policy ?runs mode with Ok p -> p | Error e -> failwith e
 
-let verdict_text mode runs =
-  match verdict (policy_of mode) runs with
+let verdict_text_of = function
   | Run_again -> "run again"
   | Checkpoint_passed { passes; runs } ->
       Printf.sprintf "passed %d/%d" passes runs
   | Stopped why -> "stopped: " ^ why
 
+let verdict_text mode runs = verdict_text_of (verdict (policy_of mode) runs)
 let fail at = Failed { at; repeats = false }
 
 let cases : Table_test.case list =
@@ -65,6 +65,36 @@ let cases : Table_test.case list =
     };
   ]
 
+(* Runs whose outcomes come from [outcomes] in turn, until the policy
+   decides: the verdict and the run numbers. *)
+let until_decided_text mode outcomes =
+  let verdict, runs =
+    until_decided (policy_of mode) ~trial:snd (fun n ->
+        (n, List.nth outcomes (n - 1)))
+  in
+  Printf.sprintf "%s after runs %s" (verdict_text_of verdict)
+    (String.concat "," (List.map (fun (n, _) -> string_of_int n) runs))
+
+let until_decided_cases : Table_test.case list =
+  [
+    {
+      name = "until decided: verification runs all three";
+      input =
+        (fun () ->
+          until_decided_text Verification [ Passed; fail "#2 talk"; Passed ]);
+      expectation = "passed 2/3 after runs 1,2,3";
+    };
+    {
+      name = "until decided: a hard stop ends the runs";
+      input =
+        (fun () ->
+          until_decided_text Verification
+            [ fail "#2 talk"; fail "#2 talk"; Passed ]);
+      expectation =
+        "stopped: hard stop: failed twice in a row at #2 talk after runs 1,2";
+    };
+  ]
+
 let attempts_text retries list =
   match attempts ~retries list with
   | Attempt_again -> "again"
@@ -104,4 +134,5 @@ let attempt_cases : Table_test.case list =
 
 let () =
   Table_test.run "checkpoint_trials" cases;
-  Table_test.run "checkpoint attempts" attempt_cases
+  Table_test.run "checkpoint attempts" attempt_cases;
+  Table_test.run "checkpoint until decided" until_decided_cases

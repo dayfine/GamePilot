@@ -56,6 +56,11 @@ val verdict : policy -> run list -> verdict
     failed at the same step or the last one repeats, passed or stopped once
     every run ran, else run again. *)
 
+val until_decided :
+  policy -> trial:('r -> run) -> (int -> 'r) -> verdict * 'r list
+(** Runs [n] = 1, 2, ... until the {!verdict} is no longer [Run_again]: the
+    verdict and the runs, oldest first. [trial] reads a run's outcome. *)
+
 (** {1 Attempts within a run}
 
     A run whose plan allows retries (the plan's [retries],
