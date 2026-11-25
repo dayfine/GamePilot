@@ -60,8 +60,17 @@ let start_game ~picture slot =
     (Switch_home.Game_entry.start_game ~log ~picture ~game_slot:slot
        ~user_slot:0 fire_red_tile)
 
-(* Park, resume, close or start in the effect context, over the game picture
-   the daemon's hello reports; whether it ended where asked. *)
+(* Switch_home.Delete_save's two steps (Delete_save_command). *)
+let delete_save ~picture game =
+  entry_step "Delete save"
+    (Switch_home.Delete_save.to_caution ~log ~picture fire_red_tile game)
+
+let delete_save_confirm ~picture =
+  entry_step "Delete save, confirm"
+    (Switch_home.Delete_save.confirm ~log ~picture)
+
+(* Park, resume, close, start or delete a save in the effect context, over the
+   game picture the daemon's hello reports; whether it ended where asked. *)
 let act which (backend : Wire.backend) =
   let picture = backend.viewport in
   match which with
@@ -69,12 +78,16 @@ let act which (backend : Wire.backend) =
   | `Resume -> resume ~picture
   | `Close_game -> close_game ~picture
   | `Start_game slot -> start_game ~picture slot
+  | `Delete_save game -> delete_save ~picture game
+  | `Delete_save_confirm -> delete_save_confirm ~picture
 
 let name = function
   | `Park -> "park"
   | `Resume -> "resume"
   | `Close_game -> "close-game"
   | `Start_game _ -> "start-game"
+  | `Delete_save _ -> "delete-save"
+  | `Delete_save_confirm -> "delete-save-confirm"
 
 let owner which = "console:" ^ name which
 
