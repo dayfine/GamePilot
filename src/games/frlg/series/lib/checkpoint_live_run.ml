@@ -142,8 +142,8 @@ let live setup cp ~progress record log (daemon : Daemon_process.t) =
   Daemon_run.in_session ~failed ~dir:record.Run_record.dir (fun () ->
       Live.run ~port:daemon.port (in_session setup cp ~progress record log))
 
-let with_daemon setup record cp body =
-  Series_daemons.with_daemon setup.daemons ~failed record ~checkpoint:cp.id body
+let with_daemon setup run n body =
+  Series_daemons.with_daemon setup.daemons ~failed run ~n body
 
 let capped_note setup cp =
   Run_line.capped_note ~grind_cap:setup.common.grind_cap cp.plan
@@ -181,7 +181,8 @@ let record_outcome setup cp (run : Run_record.run) n ~attempt outcome =
     | Passed _ -> { result = "pass"; at = ""; reason = "" }
     | Failed { at; reason; _ } -> { result = "fail"; at; reason }
   in
-  Daemon_run.finish ~runs_dir:setup.runs_dir run ~summary:line ending
+  Series_daemons.finish setup.daemons ~runs_dir:setup.runs_dir run ~summary:line
+    ending
 
 (* The attempt in its folder: the folder and how it ended. *)
 let run_in setup cp n ~attempt ~progress (run : Run_record.run) =
@@ -192,9 +193,7 @@ let run_in setup cp n ~attempt ~progress (run : Run_record.run) =
        (Run_line.run_name cp.id cp.plan n)
        (Run_line.attempt_note cp.plan attempt)
        cp.start_state);
-  let outcome =
-    with_daemon setup record cp (live setup cp ~progress record log)
-  in
+  let outcome = with_daemon setup run n (live setup cp ~progress record log) in
   close ();
   record_outcome setup cp run n ~attempt outcome;
   (record, outcome)
