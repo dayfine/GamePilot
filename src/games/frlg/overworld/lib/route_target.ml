@@ -1,7 +1,7 @@
 open Grid_maps
 open Grid_geometry
-module Pose = Pokemon_checkpoints.Pose
-module Pose_text = Pokemon_checkpoints.Pose_text
+module Pose = Pokemon_engine.Pose
+module Pose_text = Pokemon_engine.Pose_text
 
 let place_of (w : Frlg_steps.world) (pose : Pose.observed) =
   match Connected_maps.find w.maps pose.at_map with

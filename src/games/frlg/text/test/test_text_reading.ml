@@ -22,6 +22,7 @@ let screens =
     "mail_editor";
     "start_menu";
     "card_numbers";
+    "pc_message";
   ]
 
 let glyphs =
@@ -55,6 +56,7 @@ let line_of_id id =
       normal (Text_lines.trainer_card_money_digit (int_of_string k))
   | [ "card_dex"; k ] ->
       normal (Text_lines.trainer_card_dex_digit (int_of_string k))
+  | [ "pc_message" ] -> normal Text_lines.pc_message
   | [ "summary_level"; k ] ->
       (Text_lines.summary_level_digit (int_of_string k), Summary_level.max_score)
   | _ -> failwith ("line id " ^ id)

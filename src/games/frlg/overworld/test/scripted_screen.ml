@@ -101,9 +101,11 @@ let image = function
   | Bag_items _ -> "emu-1/20261122-024507-05.04__bag-items-row0.png"
   | Item_menu -> "mg04-escape-rope/item-menu-escape-rope__itemmenu.png"
   | Mart_list -> "ItemListReader/MartBuyList_eng__money.png"
-  | Summary _ | Summary_at _ -> "captures/sm3_s1__summary1.png"
+  | Summary _ | Summary_at _ -> "captures/sm3_s1__summary1-shiny.png"
   | Summary_page { page; _ } ->
-      Printf.sprintf "captures/sm3_s%d__summary%d.png" page page
+      (* The Squirtle of these captures is shiny: pages 1 and 2 show the star. *)
+      Printf.sprintf "captures/sm3_s%d__summary%d%s.png" page page
+        (if page <= 2 then "-shiny" else "")
   | Title -> "mail-glitch-04/continue__none.png"
   | Load_menu -> "mail-glitch-04/save-select__loadmenu.png"
   | Recap -> "mail-glitch-04/location__none.png"

@@ -35,7 +35,7 @@ val default_ball : string
 val balls : string list
 (** The balls a Mart sells: ["poke-ball"], ["great-ball"], ["ultra-ball"]. *)
 
-val decode : Json_field.obj -> (t, Pokemon_checkpoints.Failure.cause) result
+val decode : Json_field.obj -> (t, Pokemon_engine.Failure.cause) result
 (** ["species"] or ["uncaught"] (a list of slugs, maybe empty), not both;
     ["catches"] (1, 1..999), ["encounters"] (20, 1..9999), ["balls"] (5,
     1..999), ["ball"] (["poke-ball"]), ["pace"] (east). *)

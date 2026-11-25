@@ -4,9 +4,9 @@
     shopping ({!Pokemon_action}), and a checkpoint promises a party, items,
     coins, money, flags, moves, levels and marks ({!Postconditions}), checked by
     {!Postcondition_check}. Pure: how a plan writes them is
-    [Pokemon_plan_codec], how a log prints them [Pokemon_text], and what a run
-    keeps [Pokemon_saved]. The family applies the engine to the four once:
-    [Pokemon_checkpoints]. *)
+    [Pokemon_plan_format], how a log prints them [Pokemon_text], and what a run
+    keeps [Pokemon_event_snapshot]. The family applies the engine to the four
+    once: [Pokemon_engine]. *)
 
 (** {!Pose}: where a plan says the player stands (a tile pose, or a zone that
     holds wherever the player is), and where the game reads them. *)

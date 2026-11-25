@@ -151,7 +151,7 @@ let rec parse f = function
 
 (* --backfill: run.json for old run folders (Run_backfill). *)
 let main args =
-  let runs_dir = Checkpoints_command.data_dir "GAMEPILOT_RUNS" "runs" in
+  let runs_dir = Checkpoints_flags.data_dir "GAMEPILOT_RUNS" "runs" in
   match parse { runs_dir; backfill = false; apply = false } args with
   | Error e -> Error e
   | Ok { apply = true; backfill = false; _ } -> Error "--apply needs --backfill"

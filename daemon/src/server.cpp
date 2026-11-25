@@ -42,7 +42,7 @@ Server::Server(Backend& backend, ServerOptions options, const Clock& clock)
     throw std::runtime_error("speed must be above 0");
   }
   game_zero_ms_ = clock_.now_ms();
-  if (keep_awake_.on() && button_mask(keep_awake_.key()) == 0) {
+  if (keep_awake_.on() && !keep_awake_key(keep_awake_.key())) {
     throw std::runtime_error("bad keep-awake key " + keep_awake_.key());
   }
   if (!options_.log_path.empty()) {
@@ -376,6 +376,18 @@ void Server::clear_input() {
   sent_mask_ = KeyMask{0};
 }
 
+// Drops queued commands with no release: a live device's running input goes
+// on until the next one replaces it; a stepped backend's keys stay as they
+// are until the next batch sets them.
+void Server::replace_input() {
+  schedule_.clear();
+  live_schedule_.clear();
+  batch_owners_.clear();
+  if (backend_.info().takes_input && backend_.info().timing == Timing::kLive) {
+    backend_.replace_queued_keys();
+  }
+}
+
 // The connection's probes and templates go with it; its queued batches too
 // when it held the lease (only the holder submits).
 void Server::drop_client(ClientConnection& client, const char* reason) {
@@ -642,9 +654,22 @@ pa::JsonObject Server::dispatch_input(ClientConnection& client,
         schedule_.submit(submit.batch_id, submit.commands, backend_.seq());
     return submit_result(submit.batch_id, start);
   }
-  decode_cancel(request.params);
+  const CancelParams cancel = decode_cancel(request.params);
   keep_awake_.input(clock_.now_ms());
-  clear_input();
+  if (!cancel.then) {
+    clear_input();
+    return cancel_result(backend_.seq());
+  }
+  refuse_switch_input(*cancel.then);
+  replace_input();
+  batch_owners_.emplace_back(cancel.then->batch_id, client.number);
+  if (backend_.info().timing == Timing::kLive) {
+    live_schedule_.submit(cancel.then->batch_id, cancel.then->commands,
+                          clock_.now_ms());
+  } else {
+    schedule_.submit(cancel.then->batch_id, cancel.then->commands,
+                     backend_.seq());
+  }
   return cancel_result(backend_.seq());
 }
 

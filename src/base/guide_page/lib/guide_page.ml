@@ -119,3 +119,82 @@ let fill generate text =
   let page = String.concat "" (List.rev parts) in
   if snd (lines text) then Ok page
   else Ok (String.sub page 0 (max 0 (String.length page - 1)))
+
+(* Hand-written paragraphs. A line is skipped (inside a block, a code fence or
+   an indented code block), breaks the paragraph (blank, a heading, a table
+   row, a comment, a marker or a fence), starts one (a list item, or the first
+   line after a break) or continues the open one. *)
+
+type line_kind = Skip | Break | Item | Prose
+
+type para_state = {
+  in_block : bool;
+  in_fence : bool;
+  para : (int * int) option;  (** The open paragraph's first line and length. *)
+  long : (int * int) list;
+}
+
+let is_list_item t =
+  String.starts_with ~prefix:"- " t
+  || String.starts_with ~prefix:"* " t
+  ||
+  match String.index_opt t '.' with
+  | Some i when i > 0 && i + 1 < String.length t && t.[i + 1] = ' ' ->
+      String.for_all (fun c -> c >= '0' && c <= '9') (String.sub t 0 i)
+  | _ -> false
+
+let breaks t =
+  t = ""
+  || List.exists
+       (fun prefix -> String.starts_with ~prefix t)
+       [ "#"; "|"; "<!--" ]
+
+let kind st line =
+  let t = String.trim line in
+  if parse_start line <> None || is_end line then Break
+  else if st.in_block then Skip
+  else if String.starts_with ~prefix:"```" t then Break
+  else if st.in_fence then Skip
+  else if breaks t then Break
+  else if is_list_item t then Item
+  else if st.para = None && String.starts_with ~prefix:"    " line then Skip
+  else Prose
+
+let close max_lines st =
+  match st.para with
+  | Some (first, n) when n > max_lines ->
+      { st with para = None; long = (first, n) :: st.long }
+  | _ -> { st with para = None }
+
+let toggles st line =
+  let t = String.trim line in
+  {
+    st with
+    in_block =
+      (if parse_start line <> None then true
+       else if is_end line then false
+       else st.in_block);
+    in_fence =
+      (if (not st.in_block) && String.starts_with ~prefix:"```" t then
+         not st.in_fence
+       else st.in_fence);
+  }
+
+let para_step max_lines (no, st) line =
+  let st =
+    match (kind st line, st.para) with
+    | Skip, _ -> st
+    | Break, _ -> toggles (close max_lines st) line
+    | Item, _ | Prose, None -> { (close max_lines st) with para = Some (no, 1) }
+    | Prose, Some (first, n) -> { st with para = Some (first, n + 1) }
+  in
+  (no + 1, st)
+
+let long_paragraphs ~max_lines text =
+  let start = { in_block = false; in_fence = false; para = None; long = [] } in
+  let _, st =
+    List.fold_left (para_step max_lines) (1, start) (fst (lines text))
+  in
+  List.rev (close max_lines st).long
+
+let cell s = String.concat "\\|" (String.split_on_char '|' s)

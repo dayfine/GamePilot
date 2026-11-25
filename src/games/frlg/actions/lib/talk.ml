@@ -23,7 +23,7 @@ let pick_up ~log () =
   match shown with
   | Effects.Timeout ->
       Error
-        (Pokemon_checkpoints.Failure.cause "nothing_picked_up"
+        (Pokemon_engine.Failure.cause "nothing_picked_up"
            "no text box after A: the item is not on the faced tile")
   | Holds _ -> Scene_looks.settle Talk ~label:"pick up" ~battle_ends:false ~log
 
