@@ -37,3 +37,15 @@ let holds ~log condition =
   match pokedex_species condition with
   | Some slug -> seen ~log condition slug
   | None -> false
+
+let remembered read =
+  let answers = Hashtbl.create 4 in
+  fun condition ->
+    match Hashtbl.find_opt answers condition with
+    | Some holds -> holds
+    | None ->
+        let holds = read condition in
+        Hashtbl.replace answers condition holds;
+        holds
+
+let read_once ~log = remembered (holds ~log)
