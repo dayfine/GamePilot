@@ -9,7 +9,8 @@ NEXT is the one next step; once CI is green and the verdict is ok, it is "merge"
 changes structure, then "user review (<reason>)" (AGENTS.md, "PR gate loop"). Structure, read off
 the file list: a library module or dune file added, deleted or renamed under src/; a changed .mli
 of a library shared across games (src/base, src/core, src/pokemon); a changed format (protocol/,
-a *_decode.ml); a design doc (docs/design/); or two NEEDS_REWORK verdicts.
+a *_decode.ml); a design doc (docs/design/); or two NEEDS_REWORK verdicts. The reason
+printed is the first that holds, in the order: reworked twice, structure, design doc.
 
 A qc-structural verdict is a COMMENT review (GitHub refuses self-approval, so the review state
 says nothing) whose body has a "## Structural QC" heading, a "Reviewed SHA: <sha>" line and a
@@ -70,13 +71,12 @@ def structural_reason(files):
 
 def owner_reason(pr):
     """Why the PR needs the user's review, or None."""
-    design = [f["path"] for f in pr.get("files") or [] if f["path"].startswith("docs/design/")]
-    if design:
-        return "design doc: " + design[0]
+    files = pr.get("files") or []
     reworks = [v for v in map(verdict, pr.get("reviews") or []) if v and v[1] == "NEEDS_REWORK"]
     if len(reworks) >= 2:
         return "reworked twice"
-    return structural_reason(pr.get("files") or [])
+    design = [f["path"] for f in files if f["path"].startswith("docs/design/")]
+    return structural_reason(files) or ("design doc: " + design[0] if design else None)
 
 
 def docs_only(files):
