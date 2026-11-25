@@ -5,6 +5,6 @@
   yojson
   gamepilot.grid_maps
   gamepilot.json_field
-  gamepilot.engine_promise
+  gamepilot.engine_postcondition
   gamepilot.engine_plan_codec
   gamepilot.pokemon_terms))

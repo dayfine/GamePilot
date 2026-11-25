@@ -55,7 +55,8 @@ module Make
   module Runner : sig
     val run :
       ?end_at:T.Pose.t ->
-      ?end_state:T.Promises.t * (T.Promises.t -> T.Promises.reads) ->
+      ?end_state:
+        T.Postconditions.t * (T.Postconditions.t -> T.Postconditions.reads) ->
       ?on_event:(int -> string Engine_run.Event_progress.t -> unit) ->
       ?events:Engine_run.Event_range.t ->
       Game.t ->

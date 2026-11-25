@@ -1,4 +1,4 @@
-open Engine_promise
+open Engine_postcondition
 
 module Make (T : Engine_terms.TERMS) (Raw : Engine_plan.Plan.RAW) = struct
   module Plan = Engine_plan.Plan.Make (T) (Raw)
@@ -131,11 +131,12 @@ module Make (T : Engine_terms.TERMS) (Raw : Engine_plan.Plan.RAW) = struct
   (* After the end position: the plan's postconditions, read and checked. *)
   let check_postconditions ~say (checkpoint : Plan.checkpoint) index
       (promised, observe) =
-    let results = T.Promises.check promised (observe promised) in
+    let results = T.Postconditions.check promised (observe promised) in
     List.iter
       (fun line -> say (text line))
-      (Promise.log_lines ~tag:"Postcondition" checkpoint.checkpoint_id results);
-    match Promise.unmet results with
+      (Postcondition.log_lines ~tag:"Postcondition" checkpoint.checkpoint_id
+         results);
+    match Postcondition.unmet results with
     | [] -> Ok ()
     | unmet -> Error (unmet_failure checkpoint index unmet)
 

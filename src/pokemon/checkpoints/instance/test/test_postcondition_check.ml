@@ -2,7 +2,7 @@
    game read, passed, failed or not checked, and the log lines. *)
 
 open Pokemon_checkpoints
-open Engine_promise
+open Engine_postcondition
 module C = Postcondition_check
 
 let nothing : Postconditions.t =

@@ -15,7 +15,7 @@ type party =
 and slot = { slot : int; species : string }
 (** The member in party slot [slot] (from 1) is of [species] (a slug). *)
 
-type bag_count = { bag_item : string; count : Engine_promise.Count.t }
+type bag_count = { bag_item : string; count : Engine_postcondition.Count.t }
 (** A count of the bag item [bag_item] (a slug). *)
 
 type knows = { species : string; moves : string list }
@@ -32,8 +32,8 @@ type t = {
           start ([Checkpoint_end]). *)
   party : party option;
   items : bag_count list;  (** Each item's count in the bag. *)
-  coins : Engine_promise.Count.t option;  (** Game Corner coins. *)
-  money : Engine_promise.Money.t option;
+  coins : Engine_postcondition.Count.t option;  (** Game Corner coins. *)
+  money : Engine_postcondition.Money.t option;
   flags : string list;  (** Story flags (named by the game) that must be set. *)
   knows : knows list;  (** Moves members must know. *)
   levels : level list;

@@ -3,7 +3,7 @@
    kinds are a walk that holds a direction until a landmark shows and a rest
    at an inn, and a checkpoint promises gold and flags. *)
 
-open Engine_promise
+open Engine_postcondition
 
 module Pose = struct
   type t = { place : string; spot : string option }
@@ -19,7 +19,7 @@ module Kind = struct
   type t = Walk of { toward : string; until : string } | Rest
 end
 
-module Promises = struct
+module Postconditions = struct
   type t = { gold : Count.t option; flags : string list }
 
   (* What the game read: the gold now and at the start, and each flag read. *)
@@ -28,13 +28,13 @@ module Promises = struct
   let check_gold (p : t) reads =
     match (p.gold, reads.gold_now) with
     | None, _ -> []
-    | Some _, None -> [ Promise.not_read "gold" ]
+    | Some _, None -> [ Postcondition.not_read "gold" ]
     | Some count, Some read ->
-        [ Promise.count "gold" count ~start:reads.start ~read ]
+        [ Postcondition.count "gold" count ~start:reads.start ~read ]
 
   let check_flag reads flag =
     let set = List.mem flag reads.set in
-    Promise.judge ("flag " ^ flag) ~expected:"set"
+    Postcondition.judge ("flag " ^ flag) ~expected:"set"
       ~read:(if set then "set" else "clear")
       set
 

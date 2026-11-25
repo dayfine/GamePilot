@@ -34,7 +34,8 @@ let cases =
       (fun () ->
         C.outcome_name
           (C.outcome_of_failure
-             (Unmet_postconditions [ Engine_promise.Promise.not_read "money" ])))
+             (Unmet_postconditions
+                [ Engine_postcondition.Postcondition.not_read "money" ])))
       (C.outcome_name C.Failed_end_check);
     case "no handler is an event failure"
       (fun () -> C.outcome_name (C.outcome_of_failure (No_handler "walk")))

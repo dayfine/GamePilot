@@ -127,7 +127,7 @@ let run_result ?end_at ?end_state ?after ?flags () =
 let outcome ?end_at ?end_state ?after ?flags () =
   fst (run_result ?end_at ?end_state ?after ?flags ())
 
-let reads gold_now : Toy_terms.Promises.reads =
+let reads gold_now : Toy_terms.Postconditions.reads =
   { gold_now = Some gold_now; start = Some 50; set = [ "met_cat" ] }
 
 let promised () = Option.get (plan ()).postconditions

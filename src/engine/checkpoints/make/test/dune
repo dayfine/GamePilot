@@ -1,7 +1,7 @@
 (library
  (name toy_terms)
  (modules toy_terms)
- (libraries gamepilot.engine_promise gamepilot.engine_terms))
+ (libraries gamepilot.engine_postcondition gamepilot.engine_terms))
 
 (library
  (name toy_game)
@@ -9,7 +9,7 @@
  (libraries
   yojson
   gamepilot.json_field
-  gamepilot.engine_promise
+  gamepilot.engine_postcondition
   gamepilot.engine_plan_codec
   gamepilot.engine_text
   gamepilot.engine_saved
@@ -22,7 +22,7 @@
  (libraries
   yojson
   gamepilot.table_test
-  gamepilot.engine_promise
+  gamepilot.engine_postcondition
   gamepilot.engine_run
   toy_terms
   toy_game))

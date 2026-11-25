@@ -35,13 +35,13 @@ let kind_of_plan = function
 let gold ~where obj =
   match F.find "gold" obj with
   | None -> None
-  | Some _ -> Some (Engine_promise.Count.Gained (F.int ~where "gold" obj))
+  | Some _ -> Some (Engine_postcondition.Count.Gained (F.int ~where "gold" obj))
 
 let postconditions_of_plan ~where obj =
   F.catch (fun () ->
       known ~where [ "gold"; "flags" ] obj;
       {
-        Promises.gold = gold ~where obj;
+        Postconditions.gold = gold ~where obj;
         flags =
           Option.fold ~none:[]
             ~some:(F.strings (where ^ "flags"))

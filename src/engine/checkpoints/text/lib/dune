@@ -4,7 +4,7 @@
  (modules_without_implementation terms_text)
  (libraries
   yojson
-  gamepilot.engine_promise
+  gamepilot.engine_postcondition
   gamepilot.engine_terms
   gamepilot.engine_plan
   gamepilot.engine_plan_codec

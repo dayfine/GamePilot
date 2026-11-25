@@ -55,7 +55,7 @@ module Make (T : Engine_terms.TERMS) (Raw : RAW) : sig
   (** The plan's [checkpoint]: where it starts and its events in order. *)
 
   type repeat = {
-    until : T.Promises.t;
+    until : T.Postconditions.t;
         (** The goal, read after each passing round: the rounds end once it
             holds. *)
     max_rounds : int;  (** Rounds to run before giving up; at least 1. *)
@@ -74,7 +74,7 @@ module Make (T : Engine_terms.TERMS) (Raw : RAW) : sig
     metadata : Raw.t option;
         (** The plan's phase, verification and postconditions, kept as written.
         *)
-    postconditions : T.Promises.t option;
+    postconditions : T.Postconditions.t option;
         (** The metadata's postconditions, read; [None] when it states none. *)
     retries : int;
         (** The metadata's ["retries"] (default 0): how many more attempts a run
