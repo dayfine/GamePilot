@@ -25,30 +25,8 @@ let load name dir =
   | Ok plan -> plan
   | Error message -> failwith message
 
-let outline name dir =
-  let plan = load name dir in
-  let counts =
-    List.fold_left
-      (fun counts (e : Plan.event) ->
-        let k = Plan_text.kind_name e.kind in
-        if List.mem_assoc k counts then
-          List.map
-            (fun (k', n) -> if k' = k then (k', n + 1) else (k', n))
-            counts
-        else counts @ [ (k, 1) ])
-      [] plan.checkpoint.events
-  in
-  Printf.sprintf "%s %s from %s: %s" plan.game plan.checkpoint.checkpoint_id
-    (Option.fold ~none:"(no start)" ~some:Plan_text.declared
-       plan.checkpoint.start)
-    (String.concat ", "
-       (List.map (fun (k, n) -> Printf.sprintf "%d %s" n k) counts))
-
-let event name dir id =
-  let plan = load name dir in
-  Plan_text.event
-    (List.find (fun (e : Plan.event) -> e.id = id) plan.checkpoint.events)
-
+let outline name dir = Plan_text.outline (load name dir)
+let event name dir id = Plan_text.event_named (load name dir) id
 let authored = Plan_files.authored_dir
 
 let base =

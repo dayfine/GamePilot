@@ -45,10 +45,36 @@ let event (e : Plan.event) =
   let once = if e.once_per_save then " once_per_save" else "" in
   Printf.sprintf "%s: %s%s%s%s%s" e.id action (kind e.kind) after skip once
 
+let event_named (plan : Plan.t) id =
+  match
+    List.find_opt (fun (e : Plan.event) -> e.id = id) plan.checkpoint.events
+  with
+  | Some e -> event e
+  | None -> "no event " ^ id
+
 let kind_name : Plan.kind -> string = function
   | Game_action _ -> "game_action"
   | Route _ -> "route"
   | other -> List.hd (String.split_on_char ' ' (kind other))
+
+let bump k (k', n) = if k' = k then (k', n + 1) else (k', n)
+
+(* Each kind's count, in first-seen order. *)
+let kind_counts events =
+  let add counts (e : Plan.event) =
+    let k = kind_name e.kind in
+    if List.mem_assoc k counts then List.map (bump k) counts
+    else counts @ [ (k, 1) ]
+  in
+  List.fold_left add [] events
+
+let outline (plan : Plan.t) =
+  Printf.sprintf "%s %s from %s: %s" plan.game plan.checkpoint.checkpoint_id
+    (Option.fold ~none:"(no start)" ~some:declared plan.checkpoint.start)
+    (list
+       (List.map
+          (fun (k, n) -> Printf.sprintf "%d %s" n k)
+          (kind_counts plan.checkpoint.events)))
 
 let count_text : Plan.count -> string = function
   | Count_exactly n -> Printf.sprintf "x%d" n

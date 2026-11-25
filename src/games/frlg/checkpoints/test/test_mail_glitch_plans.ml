@@ -2,8 +2,6 @@
    expanded, then decoded): every one decodes, each one's outline, typed
    events, and the postconditions, retries and repeat its metadata promises. *)
 
-open Checkpoints
-
 let plan name =
   match Frlg_checkpoints.Plan_file.load name with
   | Ok plan -> plan
@@ -35,31 +33,8 @@ let all_decode () =
   | [] -> "all decode"
   | first :: _ -> first
 
-(* A plan's id, start, and how many events of each kind, in first-seen order. *)
-let outline name =
-  let plan = plan name in
-  let counts =
-    List.fold_left
-      (fun counts (e : Plan.event) ->
-        let k = Plan_text.kind_name e.kind in
-        if List.mem_assoc k counts then
-          List.map
-            (fun (k', n) -> if k' = k then (k', n + 1) else (k', n))
-            counts
-        else counts @ [ (k, 1) ])
-      [] plan.checkpoint.events
-  in
-  Printf.sprintf "%s %s from %s: %s" plan.game plan.checkpoint.checkpoint_id
-    (Option.fold ~none:"(no start)" ~some:Plan_text.declared
-       plan.checkpoint.start)
-    (String.concat ", "
-       (List.map (fun (k, n) -> Printf.sprintf "%d %s" n k) counts))
-
-let event name id =
-  Plan_text.event
-    (List.find
-       (fun (e : Plan.event) -> e.id = id)
-       (plan name).checkpoint.events)
+let outline name = Plan_text.outline (plan name)
+let event name id = Plan_text.event_named (plan name) id
 
 let records : Table_test.case list =
   [

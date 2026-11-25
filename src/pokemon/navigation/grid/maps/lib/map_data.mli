@@ -23,6 +23,7 @@ type t = {
   warps : Map_features.warp list;
   objects : Map_features.map_object list;
   hidden_items : Map_features.hidden_item list;
+      (** Items hidden on tiles, which do not block them. *)
   triggers : Map_features.trigger list;
   flag_sets : String_set.t String_map.t;
       (** Flags set together, by name (["after_hall_of_fame"]). *)

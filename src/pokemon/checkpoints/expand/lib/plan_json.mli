@@ -19,6 +19,7 @@ val set : string -> Yojson.Safe.t -> fields -> fields
 (** The field replaced in place, or added at the end. *)
 
 val without : string -> fields -> fields
+(** The fields with that key removed. *)
 
 val rewrite_events :
   source:string ->
