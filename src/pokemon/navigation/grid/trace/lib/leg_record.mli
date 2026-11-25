@@ -10,8 +10,9 @@
     A record holds what was planned (direction, tiles, how the leg ends and the
     tiles it may end on), what was measured (taps that moved, the walk's moved
     chunks and held time), where the leg ended and how that is known, and what
-    interrupted it. The JSON matches the C++ walkers' byte for byte: compact,
-    keys sorted. *)
+    interrupted it. The JSON matches the C++ walkers' byte for byte (the fork's
+    Pokemon/Navigation/Grid/Trace/Pokemon_LegTrace.{h,cpp}): compact, keys
+    sorted. *)
 
 val tag : string
 (** ["[Leg] "], the prefix of a record's log line. *)

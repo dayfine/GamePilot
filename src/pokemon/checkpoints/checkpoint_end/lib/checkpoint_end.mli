@@ -6,10 +6,9 @@
     declared end is the next checkpoint's [start] when there is one; for the
     last checkpoint it is its last event's grid [declared_after], else that
     event's route or ready target. A plan whose postconditions name a [position]
-    ({!Pokemon_rules.Postconditions.t}) ends there instead, as the C++'s
-    [check_postconditions()] prefers it
-    ([Pokemon/AutoStory/Pokemon_StoryPostconditionCheck.cpp], fork [frlg/lean]);
-    the caller picks it. The rest of the postconditions are
+    ({!Pokemon_rules.Postconditions.t}) ends there instead, as the C++ end check
+    prefers it ([Pokemon/AutoStory/Pokemon_StoryPostconditionCheck.cpp], fork
+    [frlg/lean]); the caller picks it. The rest of the postconditions are
     {!Pokemon_rules.Postcondition_check}'s. *)
 
 open Pokemon_engine

@@ -130,7 +130,8 @@ let read_encounter ~target (game_steps : B.Battle.game_steps) () :
        ^ B.Battle.event_name event)
 
 (* The pacing counts its taps: one lost to the battle's exit would put it a
-   tile off, so the overworld settles first (wait_out_battle_exit()). *)
+   tile off, so the overworld settles first, as the fork waits out the
+   battle's exit. *)
 let flee ~log game_steps () =
   match B.Wild_flee.run game_steps ~log with
   | Fled _ ->
@@ -176,7 +177,8 @@ let player_fainted () =
    arrow) or the overworld is a catch, the action menu is a break-free, and the
    foe's HP box over the battle's text without the player's is the player's
    Pokemon fainted; every fourth look with none of them checks the overworld,
-   then presses B through the messages (wait_for_throw()). *)
+   then presses B through the messages, as the fork's wait for the throw
+   does. *)
 let rec wait_for_throw ~deadline polls : Capture.throw_end =
   if Effects.now () >= deadline then Throw_failed
   else

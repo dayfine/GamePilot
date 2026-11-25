@@ -21,8 +21,8 @@
      RESULTS.tsv     one row per finished run, across all runs
 
    The C++ writes its failure screenshot to Screenshots/AutoStory/failures
-   (InterruptLogGuard::save_frame() in
-   PokemonFRLG/Programs/AutoStory/PokemonFRLG_AutoStoryStepInterrupts.cpp,
+   when a step is interrupted
+   (PokemonFRLG/Programs/AutoStory/PokemonFRLG_AutoStoryStepInterrupts.cpp,
    fork frlg/lean); run records there are written by hand
    (pokemon_sv/lab/runs/*/RESULT.md on the agents branch). Here the runner
    writes them. *)
