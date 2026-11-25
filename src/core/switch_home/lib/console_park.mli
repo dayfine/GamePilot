@@ -9,8 +9,10 @@
     game's tile first: within the tiles in view, or, when none shows the game
     (the row scrolled, or the game further along), Left a tile at a time (up to
     12, the games HOME holds) and then Right (up to 12), reading HOME after each
-    press, until one does. A launch ends at the first picture that is not black;
-    the runner's soft reset takes the game to its last save from there. *)
+    press, until one does. A launch ends at the first picture that is not black
+    ({!Home_screen.black}: a game's fade to black between screens counts as
+    black too, so it is never taken for the game); the runner's soft reset takes
+    the game to its last save from there. *)
 
 type resumed =
   | Already_in_game  (** HOME was not on screen: nothing pressed *)

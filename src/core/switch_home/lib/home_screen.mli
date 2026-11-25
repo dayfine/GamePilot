@@ -48,6 +48,8 @@ val read : Effects.measurements -> t
 (** [Elsewhere] also when a probe is missing. *)
 
 val black : Effects.measurements -> bool
-(** The whole picture is black (a launch's loading screen). *)
+(** The whole picture is black: dark and flat (its channels' means summing under
+    80, their stddevs under 24). A launch's loading screen, and also the capture
+    card's black during a game's fade between screens. *)
 
 val to_string : t -> string
