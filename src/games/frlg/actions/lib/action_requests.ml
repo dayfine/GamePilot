@@ -15,7 +15,6 @@ type t =
   | Verify_mail_glitch of Action_args.member
   | Pc_deposit of string list
   | Pick_up_item of string
-  | Read_caught of { at_least : int option }
 
 let default_spin_batches = 25
 
@@ -50,20 +49,6 @@ let spin ~where args =
   | Some _ ->
       Spin_for_encounter { max_batches = J.int ~where "max_batches" args }
 
-(* At most the National Pokedex's 386. *)
-let max_caught = 386
-
-let read_caught ~where args =
-  let at_least =
-    if J.has "at_least" args then (
-      let n = J.int ~where "at_least" args in
-      if n < 0 || n > max_caught then
-        J.fail "%sat_least is %d, not 0..%d" where n max_caught;
-      Some n)
-    else None
-  in
-  Read_caught { at_least }
-
 let readers stocks =
   [
     ("mart", fun ~where args -> Mart (Mart_plan.of_args stocks ~where args));
@@ -86,7 +71,6 @@ let readers stocks =
         Pc_deposit (J.strings (where ^ "species") (J.field ~where "species" a))
     );
     ("pick_up_item", fun ~where a -> Pick_up_item (J.string ~where "item" a));
-    ("read_caught", read_caught);
   ]
 
 let names =
@@ -103,7 +87,6 @@ let names =
     "verify_mail_glitch";
     "pc_deposit";
     "pick_up_item";
-    "read_caught";
   ]
 
 let decode stocks name args =
@@ -143,6 +126,3 @@ let to_string = function
   | Verify_mail_glitch m -> "verify the mail glitch on " ^ member_text m
   | Pc_deposit l -> "deposit " ^ String.concat ", " l ^ " at the PC"
   | Pick_up_item item -> "pick up " ^ item
-  | Read_caught { at_least } ->
-      "read the species caught"
-      ^ Option.fold ~none:"" ~some:(Printf.sprintf ", at least %d") at_least

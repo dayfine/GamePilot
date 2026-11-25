@@ -8,16 +8,16 @@
     Pokédex shows no count: it reads as [None]. *)
 
 val max_digits : int
-(** 3. *)
+(** 3: the most digits the count has (386 at most, the National Pokédex). *)
+
+val read_with : int Trainer_card_read.game_steps -> int option
+(** {!Trainer_card_read.read_with} for the count: two reads that agree on the
+    faded-in front ({!Frlg_readers.Trainer_card_front.front_shown}). Logs
+    ["Trainer Card: 10 species caught."], or
+    ["Trainer Card: the Pokedex count did not read."]. *)
 
 val read : log:(string -> unit) -> int option
-(** From the overworld: the card opened, its count read on the card's front
-    ({!Frlg_readers.Trainer_card_front.front_shown}) until two reads
-    {!reread_ms} apart agree, as {!Trainer_card_badges} reads (the card fades
-    in, and a B pressed then is lost: mGBA, 02-route10-new-species verification
-    run 1), then {!Trainer_card_money.close}. [None] when no count read in
-    {!Trainer_card_money.read_timeout_ms}. Fails as [no_start_menu] or
+(** {!read_with} on the console ({!Trainer_card_read.read}): the count on the
+    latest frame. [None] when no count read in
+    {!Trainer_card_read.read_timeout_ms}. Fails as [no_start_menu] or
     [not_closed]. *)
-
-val reread_ms : int
-(** 300 ms between reads. *)

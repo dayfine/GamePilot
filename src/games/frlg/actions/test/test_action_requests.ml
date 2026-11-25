@@ -76,15 +76,6 @@ let decoding =
     case "verify_mail_glitch"
       (decode "verify_mail_glitch" {|{"species": "mr-mime"}|})
       "verify the mail glitch on mr-mime";
-    case "read_caught, logged only"
-      (decode "read_caught" "{}")
-      "read the species caught";
-    case "read_caught with a floor"
-      (decode "read_caught" {|{"at_least": 60}|})
-      "read the species caught, at least 60";
-    case "read_caught past the National Pokedex"
-      (decode "read_caught" {|{"at_least": 400}|})
-      "bad_args: read_caught: at_least is 400, not 0..386";
     case "an action FireRed does not have"
       (decode "switch_grind" "{}")
       "unknown_action: switch_grind";

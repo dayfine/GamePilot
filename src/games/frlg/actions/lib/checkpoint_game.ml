@@ -41,28 +41,49 @@ let route_from w (at : Pokemon_checkpoints.Pose.observed) target =
       Route_target.plan w ~from ~facing:at.faces target
       |> Result.map (fun legs -> (from, legs)))
 
-let walker t : Route_walk.t =
+let battle_game_steps () =
+  Frlg_battle.Battle_steps.make ~read_offered_move:Summary_moves.read_offered
+    ~is_switch_offer:Switch_offer.read ()
+
+let battle_on t wrap script =
+  Effects.with_probes Frlg_battle.Battle_look.probes (fun () ->
+      Frlg_battle.Scripted_battle.run ~log:t.config.log
+        (wrap (battle_game_steps ()))
+        script)
+
+let battle t script = battle_on t Fun.id script
+
+let walker ?(watch_trainers = false) t : Route_walk.t =
   {
     world = t.world;
     gait = t.config.gait;
     flee = t.config.flee;
+    fight_trainer =
+      (fun () ->
+        Trainer_battles.play ~log:t.config.log ~fight:(battle t) ~battles:1);
+    watch_trainers;
     log = t.config.log;
   }
 
 let arrived t (ended : Route_walk.at) =
   t.at <- Some (Route_target.observed_of t.world ended.place ended.facing)
 
-let walk_from t (at : Pokemon_checkpoints.Pose.observed) target =
+let walk_from ?watch_trainers t (at : Pokemon_checkpoints.Pose.observed) target
+    =
   match route_from t.world at target with
   | Error e -> Error (Failure.cause ~repeats:true "no_route" e)
   | Ok (place, legs) ->
       Result.map (arrived t)
-        (Route_walk.walk (walker t) { place; facing = at.faces } legs)
+        (Route_walk.walk (walker ?watch_trainers t)
+           { place; facing = at.faces }
+           legs)
 
 let no_position = Failure.cause "position_unknown" "no position to walk from"
 
-let walk_to t (target : Pokemon_checkpoints.Pose.grid) =
-  match t.at with None -> Error no_position | Some at -> walk_from t at target
+let walk_to ?watch_trainers t (target : Pokemon_checkpoints.Pose.grid) =
+  match t.at with
+  | None -> Error no_position
+  | Some at -> walk_from ?watch_trainers t at target
 
 (* After an event that passed: its declared pose, when it names one tile. A
    pose with no facing on the tile already reckoned keeps the facing reckoned
@@ -135,18 +156,6 @@ let find_battle t ~pace ~patch () =
   Paced_battle.find ~log:t.config.log ~pace ~patch
     ~stands:(fun at -> t.at <- Some at)
     (Paced_battle.reckoned t.at)
-
-let battle_game_steps () =
-  Frlg_battle.Battle_steps.make ~read_offered_move:Summary_moves.read_offered
-    ~is_switch_offer:Switch_offer.read ()
-
-let battle_on t wrap script =
-  Effects.with_probes Frlg_battle.Battle_look.probes (fun () ->
-      Frlg_battle.Scripted_battle.run ~log:t.config.log
-        (wrap (battle_game_steps ()))
-        script)
-
-let battle t script = battle_on t Fun.id script
 
 let grind_game_steps t (plan : Grind_plan.t) =
   (* Grind_plan reads one *)
@@ -291,14 +300,17 @@ let train t event battles =
   declared t event
     (Trainer_battles.play ~log:t.config.log ~fight:(battle t) ~battles)
 
+let run_own t event : Pokemon_checkpoints.Pokemon_action.t -> _ = function
+  | Route route ->
+      regrowing t (fun () ->
+          walk_to ~watch_trainers:route.fight_trainers t route.target)
+  | Step direction -> step t event direction
+  | Train battles -> train t event battles
+  | _ -> run_builtin t event
+
 let game t : Pokemon_checkpoints.Game.t =
   {
-    run_own =
-      (fun event -> function
-        | Route route -> regrowing t (fun () -> walk_to t route.target)
-        | Step direction -> step t event direction
-        | Train battles -> train t event battles
-        | _ -> run_builtin t event);
+    run_own = run_own t;
     run_builtin = run_builtin t;
     game_actions =
       List.map

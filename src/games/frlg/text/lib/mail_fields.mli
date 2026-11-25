@@ -39,3 +39,23 @@ val await_read :
 (** As {!read}, but from the first frame on which a candidate reads, for an
     editor still opening; after [timeout_ms], the last frame's reading (or
     [No_match] when no frame had the probes). *)
+
+(** {1 Any field} *)
+
+val first_left : int
+(** A row's first field starts at x 41 ({!Text_lines.mail_field_one}). *)
+
+val next_left : Glyph_table.t -> left:int -> string -> (int, string) result
+(** Where the field after one showing this text starts: after its width and the
+    {!gap}. [Error] names a character the font lacks. *)
+
+val read_field :
+  Glyph_table.t ->
+  row:int ->
+  left:int ->
+  string list ->
+  (Line_reading.reading, string) result
+(** The field on [row] (0..4) starting at [left] read as the best of the
+    candidates, each scored on its own width plus the {!gap}
+    ({!Text_lines.mail_field}), from the first frame with all their probes;
+    [Error] for a character the font lacks or no such frame within a second. *)

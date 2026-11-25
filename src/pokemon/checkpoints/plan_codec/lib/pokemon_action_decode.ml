@@ -25,7 +25,12 @@ let list_of ~where key args read =
   F.records ~where key args read
 
 let route ~where args =
-  Route { target = target ~where args; fight_wild = fight_wild ~where args }
+  Route
+    {
+      target = target ~where args;
+      fight_wild = fight_wild ~where args;
+      fight_trainers = F.bool_or ~where ~default:false "fight_trainers" args;
+    }
 
 let legs ~where args =
   Legs
@@ -52,7 +57,7 @@ let kinds =
     ("new_game", [], no_args New_game);
     ("options", [], no_args Options);
     ("heal", [], no_args Heal);
-    ("route", [ "target"; "fight_wild" ], route);
+    ("route", [ "target"; "fight_wild"; "fight_trainers" ], route);
     ("ready", [ "target" ], ready);
     ("legs", [ "legs"; "fight_wild" ], legs);
     ("step", [ "direction" ], step);
