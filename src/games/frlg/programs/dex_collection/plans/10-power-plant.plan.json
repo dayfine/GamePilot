@@ -1,0 +1,119 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "frlg",
+  "checkpoint": {
+    "id": "10-power-plant",
+    "title": "From Lavender's nurse: fly to Route 10, surf down to the Power Plant, catch its new species, back to Route 10's nurse",
+    "start": {
+      "map": "LavenderTown_PokemonCenter_1F",
+      "tiles": [
+        [
+          7,
+          4
+        ]
+      ],
+      "facing": "north"
+    },
+    "events": [
+      {
+        "id": "caught_before",
+        "kind": "game_action",
+        "action": "read_caught",
+        "args": {},
+        "why": "The Pokedex count before the catches."
+      },
+      {
+        "id": "out_of_center",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "LavenderTown",
+            "tiles": [
+              [
+                6,
+                6
+              ]
+            ],
+            "facing": "south"
+          }
+        },
+        "why": "Out of the Center to fly."
+      },
+      {
+        "id": "fly_route10",
+        "kind": "game_action",
+        "action": "fly",
+        "args": {
+          "town": "Route10",
+          "species": "pidgeot"
+        },
+        "why": "Route 10's Center: the Power Plant's door is down the river east of it."
+      },
+      {
+        "id": "to_power_plant",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "PowerPlant",
+            "tiles": [
+              [
+                5,
+                36
+              ]
+            ],
+            "facing": "east"
+          }
+        },
+        "why": "North to the river, Blastoise surfs south down it, and west on foot to the Power Plant's door; two tiles in, the floor is all encounter tiles."
+      },
+      {
+        "id": "catch_power_plant",
+        "kind": "game_action",
+        "action": "capture",
+        "args": {
+          "uncaught": [
+            "magnemite",
+            "pikachu",
+            "magneton",
+            "electabuzz"
+          ],
+          "catches": 3,
+          "encounters": 150,
+          "balls": 40,
+          "ball": "ultra-ball",
+          "pace": "east"
+        },
+        "why": "Power Plant (FireRed, pret src/data/wild_encounters.json): Voltorb and Magnemite 30% each, Pikachu 25%, Magneton 10%, Electabuzz 5%, Lv 22 to 35. Pikachu is caught by then (Viridian Forest), so the three are Magnemite, Magneton and Electabuzz."
+      },
+      {
+        "fragment": "heal_at",
+        "args": {
+          "town": "route10"
+        },
+        "id": "heal_route10",
+        "why": "Back up the river to Route 10's nurse, where the next checkpoint starts."
+      },
+      {
+        "id": "caught_after",
+        "kind": "game_action",
+        "action": "read_caught",
+        "args": {},
+        "why": "The Pokedex count after the catches."
+      }
+    ]
+  },
+  "execution": {
+    "menu": "full"
+  },
+  "metadata": {
+    "phase": "testing",
+    "notes": "Needs Surf (Blastoise). The party is full, so the catches go to Bill's PC.",
+    "postconditions": {
+      "caught": {
+        "gained": 3
+      }
+    }
+  }
+}

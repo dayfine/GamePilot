@@ -18,7 +18,13 @@ Runs on: mGBA.
 <!-- generated:needs -->
 - 0 free party slots
 - pidgey in the party (fly)
+- mr-mime in the party (party_swap)
+- blastoise in the party (party_swap)
+- pidgeot in the party (fly)
+- a member knows cut (cut_tree)
 - money at least ¥12000 (all the purchases)
+- retro-mail at least x82 (duplicate_item)
+- rare-candy at least x4 (give_bag_item)
 - at the start, Route10_PokemonCenter_1F
 <!-- /generated -->
 
@@ -27,7 +33,7 @@ Runs on: mGBA.
 <!-- generated:commands -->
 ```sh
 # mGBA: each checkpoint three times from its start state, two must pass
-sh run/run_checkpoints_on_mgba.sh --program frlg.dex_collection --from 01-ultra-balls --to 02-route10-new-species --mode verification
+sh run/run_checkpoints_on_mgba.sh --program frlg.dex_collection --from 01-ultra-balls --to 09-route8-grass --mode verification
 ```
 <!-- /generated -->
 
@@ -38,8 +44,15 @@ sh run/run_checkpoints_on_mgba.sh --program frlg.dex_collection --from 01-ultra-
 |---|---|
 | 01-ultra-balls | From Route 10's Pokemon Center: Ultra Balls at Indigo Plateau, then back |
 | 02-route10-new-species | Route 10's north grass: catch two species the Pokedex has not caught, back to the nurse |
+| 03-copy-candies-and-balls | Route 10's nurse: copy 40 Rare Candies and 40 Ultra Balls with the Mail Glitch |
+| 04-candy-evolutions | Route 10's nurse: Rare Candies evolve Pidgey twice, Rattata and Oddish; Blastoise leads again |
+| 05-victory-road-first | From Route 10's nurse: fly to Indigo Plateau, catch three new species in Victory Road 2F, back to Indigo's nurse |
+| 06-victory-road-rest | Indigo Plateau's nurse: Victory Road 2F until its nine species are caught (repeats, at most 4 rounds) |
+| 07-viridian-forest | From Indigo Plateau's nurse: fly to Pewter, catch Viridian Forest's five new species, back to Pewter's nurse |
+| 08-route3-east-grass | From Pewter's nurse: fly to Route 4, catch Route 3's new species in its east grass, back to Route 4's nurse |
+| 09-route8-grass | From Route 4's nurse: fly to Lavender, cut into Route 8's grass, catch Meowth and Growlithe, back to Lavender's nurse |
 
-<!-- plans: 3607e220ccc3 -->
+<!-- plans: 49b760ec6098 -->
 <!-- /generated -->
 
 ## When it stops
@@ -49,6 +62,13 @@ sh run/run_checkpoints_on_mgba.sh --program frlg.dex_collection --from 01-ultra-
 |---|---|
 | 01-ultra-balls | pidgey in the party (fly); money at least ¥12000 (mart); at the start, Route10_PokemonCenter_1F |
 | 02-route10-new-species | ultra-ball at least x1 (capture); at the start, Route10_PokemonCenter_1F |
+| 03-copy-candies-and-balls | mr-mime in the party (party_swap); rare-candy at least x1 (give_bag_item); ultra-ball at least x1 (give_bag_item); retro-mail at least x82 (duplicate_item); at the start, Route10_PokemonCenter_1F |
+| 04-candy-evolutions | party includes mr-mime in slot 1; blastoise in the party (party_swap); rare-candy at least x40 (promised before); ultra-ball at least x40 (promised before); rare-candy at least x3 (candy_level); at the start, Route10_PokemonCenter_1F |
+| 05-victory-road-first | party includes blastoise in slot 1, mr-mime in slot 2, pidgeot in slot 4, raticate in slot 5, gloom in slot 6; pidgeot in the party (fly); ultra-ball at least x1 (capture); at the start, Route10_PokemonCenter_1F |
+| 06-victory-road-rest | ultra-ball at least x1 (capture); at the start, IndigoPlateau_PokemonCenter_1F |
+| 07-viridian-forest | pidgeot in the party (fly); ultra-ball at least x1 (capture); at the start, IndigoPlateau_PokemonCenter_1F |
+| 08-route3-east-grass | pidgeot in the party (fly); ultra-ball at least x1 (capture); at the start, PewterCity_PokemonCenter_1F |
+| 09-route8-grass | pidgeot in the party (fly); a member knows cut (cut_tree); ultra-ball at least x1 (capture); at the start, Route4_PokemonCenter_1F |
 <!-- /generated -->
 
 ## Known limits

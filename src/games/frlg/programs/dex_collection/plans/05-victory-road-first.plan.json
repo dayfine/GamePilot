@@ -1,0 +1,117 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "frlg",
+  "checkpoint": {
+    "id": "05-victory-road-first",
+    "title": "From Route 10's nurse: fly to Indigo Plateau, catch three new species in Victory Road 2F, back to Indigo's nurse",
+    "start": {
+      "map": "Route10_PokemonCenter_1F",
+      "tiles": [
+        [
+          7,
+          4
+        ]
+      ],
+      "facing": "north"
+    },
+    "events": [
+      {
+        "id": "caught_before",
+        "kind": "game_action",
+        "action": "read_caught",
+        "args": {},
+        "why": "The Pokedex count before the catches."
+      },
+      {
+        "id": "out_of_center",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "place": "route10_center_outside"
+          }
+        },
+        "why": "Out of the Center to fly."
+      },
+      {
+        "id": "fly_indigo",
+        "kind": "game_action",
+        "action": "fly",
+        "args": {
+          "town": "IndigoPlateau",
+          "species": "pidgeot"
+        },
+        "why": "Indigo Plateau: Victory Road 2F's north door is at the top of Route 23, just south of its Center."
+      },
+      {
+        "id": "to_victory_road_1",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "VictoryRoad_2F",
+            "tiles": [
+              [
+                44,
+                11
+              ]
+            ],
+            "facing": "east"
+          }
+        },
+        "why": "South down Route 23 into Victory Road 2F by its north door; the cave floor east of the move tutor is all encounter tiles and no trainer sees it."
+      },
+      {
+        "id": "catch_1",
+        "kind": "game_action",
+        "action": "capture",
+        "args": {
+          "uncaught": [
+            "machop",
+            "geodude",
+            "onix",
+            "primeape",
+            "zubat",
+            "arbok",
+            "golbat",
+            "marowak",
+            "machoke"
+          ],
+          "catches": 3,
+          "encounters": 120,
+          "balls": 40,
+          "ball": "ultra-ball",
+          "pace": "east"
+        },
+        "why": "Victory Road 2F (FireRed, pret src/data/wild_encounters.json): Machop, Geodude and Onix 20% each, Primeape and Zubat 10%, Arbok, Golbat, Marowak and Machoke 5%, Lv 34 to 48. A foe without the caught mark is caught with Ultra Balls; the rest are run from."
+      },
+      {
+        "fragment": "heal_at",
+        "args": {
+          "town": "indigo_plateau"
+        },
+        "id": "heal_indigo_1",
+        "why": "Back up Route 23 to Indigo Plateau's nurse: the foes hit Blastoise on every throw."
+      },
+      {
+        "id": "caught_after",
+        "kind": "game_action",
+        "action": "read_caught",
+        "args": {},
+        "why": "The Pokedex count after the catches."
+      }
+    ]
+  },
+  "execution": {
+    "menu": "full"
+  },
+  "metadata": {
+    "phase": "testing",
+    "notes": "Starts with 03-candy-evolutions' Ultra Balls and Pidgeot (Fly). The party is full, so the catches go to Bill's PC.",
+    "postconditions": {
+      "caught": {
+        "gained": 3
+      }
+    }
+  }
+}

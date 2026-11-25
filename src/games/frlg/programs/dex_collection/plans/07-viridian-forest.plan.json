@@ -1,0 +1,120 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "frlg",
+  "checkpoint": {
+    "id": "07-viridian-forest",
+    "title": "From Indigo Plateau's nurse: fly to Pewter, catch Viridian Forest's five new species, back to Pewter's nurse",
+    "start": {
+      "map": "IndigoPlateau_PokemonCenter_1F",
+      "tiles": [
+        [
+          13,
+          12
+        ]
+      ],
+      "facing": "north"
+    },
+    "events": [
+      {
+        "id": "caught_before",
+        "kind": "game_action",
+        "action": "read_caught",
+        "args": {},
+        "why": "The Pokedex count before the catches."
+      },
+      {
+        "id": "out_of_indigo",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "IndigoPlateau_Exterior",
+            "tiles": [
+              [
+                11,
+                7
+              ]
+            ],
+            "facing": "south"
+          }
+        },
+        "why": "Out of the Center to fly."
+      },
+      {
+        "id": "fly_pewter",
+        "kind": "game_action",
+        "action": "fly",
+        "args": {
+          "town": "PewterCity",
+          "species": "pidgeot"
+        },
+        "why": "Pewter City: Route 2 runs south from it to Viridian Forest's north gate."
+      },
+      {
+        "id": "to_forest",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "ViridianForest",
+            "tiles": [
+              [
+                5,
+                13
+              ]
+            ],
+            "facing": "east"
+          }
+        },
+        "why": "Down Route 2, through the north gate, into the forest's first grass: no trainer sees it."
+      },
+      {
+        "id": "catch_forest",
+        "kind": "game_action",
+        "action": "capture",
+        "args": {
+          "uncaught": [
+            "caterpie",
+            "weedle",
+            "kakuna",
+            "metapod",
+            "pikachu"
+          ],
+          "catches": 5,
+          "encounters": 150,
+          "balls": 20,
+          "ball": "ultra-ball",
+          "pace": "east"
+        },
+        "why": "Viridian Forest (FireRed, pret src/data/wild_encounters.json): Caterpie and Weedle 40% each, Kakuna 10%, Metapod and Pikachu 5%, Lv 3 to 6. Each catches at full HP almost every throw."
+      },
+      {
+        "fragment": "heal_at",
+        "args": {
+          "town": "pewter"
+        },
+        "id": "heal_pewter",
+        "why": "Back up Route 2 to Pewter's nurse, where the next checkpoint starts."
+      },
+      {
+        "id": "caught_after",
+        "kind": "game_action",
+        "action": "read_caught",
+        "args": {},
+        "why": "The Pokedex count after the catches."
+      }
+    ]
+  },
+  "execution": {
+    "menu": "full"
+  },
+  "metadata": {
+    "phase": "testing",
+    "notes": "The party is full, so the catches go to Bill's PC.",
+    "postconditions": {
+      "caught": {
+        "gained": 5
+      }
+    }
+  }
+}

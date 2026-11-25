@@ -1,0 +1,140 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "frlg",
+  "checkpoint": {
+    "id": "11-mansion",
+    "title": "From Route 10's nurse: fly to Cinnabar, catch the Pokemon Mansion's new species on 1F, fly back to Route 10's nurse",
+    "start": {
+      "map": "Route10_PokemonCenter_1F",
+      "tiles": [
+        [
+          7,
+          4
+        ]
+      ],
+      "facing": "north"
+    },
+    "events": [
+      {
+        "id": "caught_before",
+        "kind": "game_action",
+        "action": "read_caught",
+        "args": {},
+        "why": "The Pokedex count before the catches."
+      },
+      {
+        "id": "out_of_center",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "place": "route10_center_outside"
+          }
+        },
+        "why": "Out of the Center to fly."
+      },
+      {
+        "id": "fly_cinnabar",
+        "kind": "game_action",
+        "action": "fly",
+        "args": {
+          "town": "CinnabarIsland",
+          "species": "pidgeot"
+        },
+        "why": "Cinnabar Island: the Pokemon Mansion's door is at its north-west corner."
+      },
+      {
+        "id": "to_mansion",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "PokemonMansion_1F",
+            "tiles": [
+              [
+                8,
+                31
+              ]
+            ],
+            "facing": "east"
+          }
+        },
+        "why": "Into the Mansion by its front door; two tiles north of it the floor is all encounter tiles and no trainer sees it."
+      },
+      {
+        "id": "catch_mansion",
+        "kind": "game_action",
+        "action": "capture",
+        "args": {
+          "uncaught": [
+            "koffing",
+            "grimer",
+            "weezing",
+            "growlithe"
+          ],
+          "catches": 3,
+          "encounters": 150,
+          "balls": 40,
+          "ball": "ultra-ball",
+          "pace": "east"
+        },
+        "why": "Pokemon Mansion 1F (FireRed, pret src/data/wild_encounters.json): Koffing and Raticate 30% each, Growlithe and Rattata 15%, Grimer and Weezing 5%, Lv 26 to 36. Growlithe is caught by then (Route 8), so the three are Koffing, Grimer and Weezing."
+      },
+      {
+        "id": "out_of_mansion",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "CinnabarIsland",
+            "tiles": [
+              [
+                8,
+                4
+              ]
+            ],
+            "facing": "south"
+          }
+        },
+        "why": "Out the front door to fly: Cinnabar's Center has no map yet."
+      },
+      {
+        "id": "fly_route10",
+        "kind": "game_action",
+        "action": "fly",
+        "args": {
+          "town": "Route10",
+          "species": "pidgeot"
+        },
+        "why": "Back to Route 10's Center."
+      },
+      {
+        "fragment": "heal_at",
+        "args": {
+          "town": "route10"
+        },
+        "id": "heal_route10",
+        "why": "At the nurse, where the next checkpoint starts."
+      },
+      {
+        "id": "caught_after",
+        "kind": "game_action",
+        "action": "read_caught",
+        "args": {},
+        "why": "The Pokedex count after the catches."
+      }
+    ]
+  },
+  "execution": {
+    "menu": "full"
+  },
+  "metadata": {
+    "phase": "testing",
+    "notes": "Ditto lives only on B1F. The party is full, so the catches go to Bill's PC.",
+    "postconditions": {
+      "caught": {
+        "gained": 3
+      }
+    }
+  }
+}

@@ -1,0 +1,154 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "frlg",
+  "checkpoint": {
+    "id": "09-route8-grass",
+    "title": "From Route 4's nurse: fly to Lavender, cut into Route 8's grass, catch Meowth and Growlithe, back to Lavender's nurse",
+    "start": {
+      "map": "Route4_PokemonCenter_1F",
+      "tiles": [
+        [
+          7,
+          4
+        ]
+      ],
+      "facing": "north"
+    },
+    "events": [
+      {
+        "id": "caught_before",
+        "kind": "game_action",
+        "action": "read_caught",
+        "args": {},
+        "why": "The Pokedex count before the catches."
+      },
+      {
+        "id": "out_of_center",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "Route4",
+            "tiles": [
+              [
+                12,
+                6
+              ]
+            ],
+            "facing": "south"
+          }
+        },
+        "why": "Out of the Center to fly."
+      },
+      {
+        "id": "fly_lavender",
+        "kind": "game_action",
+        "action": "fly",
+        "args": {
+          "town": "LavenderTown",
+          "species": "pidgeot"
+        },
+        "why": "Lavender Town: Route 8 runs west from it."
+      },
+      {
+        "id": "to_cut_tree",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "Route8",
+            "tiles": [
+              [
+                48,
+                12
+              ]
+            ],
+            "facing": "west"
+          }
+        },
+        "why": "West along Route 8 to the tree that closes its grass on the east."
+      },
+      {
+        "id": "cut_tree",
+        "kind": "game_action",
+        "action": "cut_tree",
+        "args": {
+          "direction": "west"
+        },
+        "declared_after": {
+          "map": "Route8",
+          "tiles": [
+            [
+              47,
+              12
+            ]
+          ],
+          "facing": "west"
+        },
+        "why": "Gloom cuts the tree at (47, 12)."
+      },
+      {
+        "id": "to_grass",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "Route8",
+            "tiles": [
+              [
+                40,
+                14
+              ]
+            ],
+            "facing": "east"
+          }
+        },
+        "why": "Into the grass, out of every trainer's sight."
+      },
+      {
+        "id": "catch_route8",
+        "kind": "game_action",
+        "action": "capture",
+        "args": {
+          "uncaught": [
+            "meowth",
+            "growlithe"
+          ],
+          "catches": 2,
+          "encounters": 120,
+          "balls": 20,
+          "ball": "ultra-ball",
+          "pace": "east"
+        },
+        "why": "Route 8 (FireRed, pret src/data/wild_encounters.json): Meowth 30%, Growlithe 20%, Pidgey 30% and Ekans 20%, Lv 15 to 20."
+      },
+      {
+        "fragment": "heal_at",
+        "args": {
+          "town": "lavender"
+        },
+        "id": "heal_lavender",
+        "why": "Back east to Lavender's nurse, where the next checkpoint starts."
+      },
+      {
+        "id": "caught_after",
+        "kind": "game_action",
+        "action": "read_caught",
+        "args": {},
+        "why": "The Pokedex count after the catches."
+      }
+    ]
+  },
+  "execution": {
+    "menu": "full"
+  },
+  "metadata": {
+    "phase": "testing",
+    "notes": "The tree grows back once the player leaves Route 8. The party is full, so the catches go to Bill's PC.",
+    "postconditions": {
+      "caught": {
+        "gained": 2
+      }
+    }
+  }
+}

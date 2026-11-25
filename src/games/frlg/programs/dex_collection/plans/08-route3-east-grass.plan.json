@@ -1,0 +1,119 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "frlg",
+  "checkpoint": {
+    "id": "08-route3-east-grass",
+    "title": "From Pewter's nurse: fly to Route 4, catch Route 3's new species in its east grass, back to Route 4's nurse",
+    "start": {
+      "map": "PewterCity_PokemonCenter_1F",
+      "tiles": [
+        [
+          7,
+          4
+        ]
+      ],
+      "facing": "north"
+    },
+    "events": [
+      {
+        "id": "caught_before",
+        "kind": "game_action",
+        "action": "read_caught",
+        "args": {},
+        "why": "The Pokedex count before the catches."
+      },
+      {
+        "id": "out_of_center",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "PewterCity",
+            "tiles": [
+              [
+                17,
+                26
+              ]
+            ],
+            "facing": "south"
+          }
+        },
+        "why": "Out of the Center to fly."
+      },
+      {
+        "id": "fly_route4",
+        "kind": "game_action",
+        "action": "fly",
+        "args": {
+          "town": "Route4",
+          "species": "pidgeot"
+        },
+        "why": "Route 4's Center, by Mt. Moon: Route 3's east grass is just south of it, down the ledges."
+      },
+      {
+        "id": "to_grass",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "Route3",
+            "tiles": [
+              [
+                74,
+                13
+              ]
+            ],
+            "facing": "east"
+          }
+        },
+        "why": "South into Route 3's east grass, by the youngster who does not battle."
+      },
+      {
+        "id": "catch_route3",
+        "kind": "game_action",
+        "action": "capture",
+        "args": {
+          "uncaught": [
+            "nidoran-m",
+            "mankey",
+            "jigglypuff",
+            "nidoran-f"
+          ],
+          "catches": 3,
+          "encounters": 150,
+          "balls": 20,
+          "ball": "ultra-ball",
+          "pace": "east"
+        },
+        "why": "Route 3 (FireRed, pret src/data/wild_encounters.json): Nidoran (male) 14%, Mankey and Jigglypuff 10% each, Nidoran (female) 1%, the rest Spearow and Pidgey, Lv 6 to 8."
+      },
+      {
+        "fragment": "heal_at",
+        "args": {
+          "town": "route4"
+        },
+        "id": "heal_route4",
+        "why": "Back up to Route 4's nurse, where the next checkpoint starts."
+      },
+      {
+        "id": "caught_after",
+        "kind": "game_action",
+        "action": "read_caught",
+        "args": {},
+        "why": "The Pokedex count after the catches."
+      }
+    ]
+  },
+  "execution": {
+    "menu": "full"
+  },
+  "metadata": {
+    "phase": "testing",
+    "notes": "Three of the four: Nidoran (female) at 1% is left to chance. The party is full, so the catches go to Bill's PC.",
+    "postconditions": {
+      "caught": {
+        "gained": 3
+      }
+    }
+  }
+}

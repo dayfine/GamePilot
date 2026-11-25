@@ -1,0 +1,149 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "frlg",
+  "checkpoint": {
+    "id": "03-copy-candies-and-balls",
+    "title": "Route 10's nurse: copy 40 Rare Candies and 40 Ultra Balls with the Mail Glitch",
+    "start": {
+      "map": "Route10_PokemonCenter_1F",
+      "tiles": [
+        [
+          7,
+          4
+        ]
+      ],
+      "facing": "north"
+    },
+    "events": [
+      {
+        "id": "mimien_to_slot1",
+        "kind": "game_action",
+        "action": "party_swap",
+        "args": {
+          "species": "mr-mime",
+          "target_slot": 1
+        },
+        "why": "The duplication copies what party slot 1 holds: MIMIEN, the glitched mail record."
+      },
+      {
+        "id": "check_marks_before",
+        "kind": "game_action",
+        "action": "check_party_marks",
+        "args": {
+          "marks": [
+            "held_item",
+            "mail",
+            "mail",
+            "mail",
+            "mail",
+            "mail"
+          ]
+        },
+        "why": "The glitch's mail records, as 08-activate-and-verify left them."
+      },
+      {
+        "id": "give_rare_candy",
+        "kind": "game_action",
+        "action": "give_bag_item",
+        "args": {
+          "item": "rare-candy",
+          "species": "mr-mime"
+        },
+        "why": "MIMIEN holds the bag's one Rare Candy to copy; its held item goes back to the bag."
+      },
+      {
+        "id": "retro_mail_to_top",
+        "kind": "game_action",
+        "action": "move_item_to_top",
+        "args": {
+          "item": "retro-mail"
+        },
+        "why": "duplicate_item gives the top row's Retro Mail."
+      },
+      {
+        "id": "duplicate_rare_candy",
+        "kind": "game_action",
+        "action": "duplicate_item",
+        "args": {
+          "species": "mr-mime",
+          "item": "rare-candy",
+          "count": 40,
+          "word": "ABRA"
+        },
+        "why": "40 candies, one Retro Mail each: Pidgey 21 to 36 is 15, Rattata 10 to 20 is 10, Oddish 13 to 21 is 8, and some to spare."
+      },
+      {
+        "id": "give_ultra_ball",
+        "kind": "game_action",
+        "action": "give_bag_item",
+        "args": {
+          "item": "ultra-ball",
+          "species": "mr-mime"
+        },
+        "why": "Next MIMIEN holds an Ultra Ball; the candy it held goes back to the bag."
+      },
+      {
+        "id": "retro_mail_to_top_again",
+        "kind": "game_action",
+        "action": "move_item_to_top",
+        "args": {
+          "item": "retro-mail"
+        },
+        "why": "The Retro Mail still on the top row for the next rounds."
+      },
+      {
+        "id": "duplicate_ultra_ball",
+        "kind": "game_action",
+        "action": "duplicate_item",
+        "args": {
+          "species": "mr-mime",
+          "item": "ultra-ball",
+          "count": 40,
+          "word": "ABRA"
+        },
+        "why": "40 Ultra Balls for the catches to come, one Retro Mail each, in place of $48,000 at a Mart."
+      },
+      {
+        "id": "check_marks_after",
+        "kind": "game_action",
+        "action": "check_party_marks",
+        "args": {
+          "marks": [
+            "held_item",
+            "mail",
+            "mail",
+            "mail",
+            "mail",
+            "mail"
+          ]
+        },
+        "why": "The glitch's mail records are intact after the rounds."
+      }
+    ]
+  },
+  "execution": {
+    "menu": "full"
+  },
+  "metadata": {
+    "phase": "testing",
+    "notes": "Needs the Mail Glitch active (MIMIEN's glitched mail record, mail on the other five), one Rare Candy and one Ultra Ball in the bag, and at least 82 Retro Mail: 80 rounds and the ones kept on the row. MIMIEN stays in slot 1 for 04, holding an Ultra Ball. It stays at the nurse: the bag and the party menu only.",
+    "postconditions": {
+      "items": [
+        {
+          "item": "rare-candy",
+          "at_least": 40
+        },
+        {
+          "item": "ultra-ball",
+          "at_least": 40
+        }
+      ],
+      "party_slots": [
+        {
+          "slot": 1,
+          "species": "mr-mime"
+        }
+      ]
+    }
+  }
+}

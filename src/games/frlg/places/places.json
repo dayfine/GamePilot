@@ -86,6 +86,12 @@
       "stand": [8, 5],
       "facing": "south"
     },
+    "pewter_nurse": {
+      "map": "PewterCity_PokemonCenter_1F",
+      "object": {"npc": "PewterCity_PokemonCenter_1F_EventScript_Nurse"},
+      "stand": [7, 4],
+      "facing": "north"
+    },
     "route10_center_outside": {
       "map": "Route10",
       "object": {"warp": "warp_3", "to_map": "Route10_PokemonCenter_1F"},
@@ -101,6 +107,12 @@
     "route10_nurse": {
       "map": "Route10_PokemonCenter_1F",
       "object": {"npc": "Route10_PokemonCenter_1F_EventScript_Nurse"},
+      "stand": [7, 4],
+      "facing": "north"
+    },
+    "route4_nurse": {
+      "map": "Route4_PokemonCenter_1F",
+      "object": {"npc": "Route4_PokemonCenter_1F_EventScript_Nurse"},
       "stand": [7, 4],
       "facing": "north"
     },
@@ -126,6 +138,8 @@
   "towns": {
     "indigo_plateau": {"nurse": "indigo_plateau_nurse", "fly": "IndigoPlateau", "mart": "indigo_plateau_mart_clerk"},
     "lavender": {"nurse": "lavender_nurse", "fly": "LavenderTown", "mart": "lavender_mart_clerk"},
-    "route10": {"nurse": "route10_nurse", "fly": "Route10"}
+    "pewter": {"nurse": "pewter_nurse", "fly": "PewterCity"},
+    "route10": {"nurse": "route10_nurse", "fly": "Route10"},
+    "route4": {"nurse": "route4_nurse", "fly": "Route4"}
   }
 }

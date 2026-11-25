@@ -1,0 +1,104 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "frlg",
+  "checkpoint": {
+    "id": "06-victory-road-rest",
+    "title": "Indigo Plateau's nurse: Victory Road 2F until its nine species are caught",
+    "start": {
+      "map": "IndigoPlateau_PokemonCenter_1F",
+      "tiles": [
+        [
+          13,
+          12
+        ]
+      ],
+      "facing": "north"
+    },
+    "events": [
+      {
+        "id": "caught_before",
+        "kind": "game_action",
+        "action": "read_caught",
+        "args": {},
+        "why": "The Pokedex count before the round."
+      },
+      {
+        "id": "to_victory_road_1",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "VictoryRoad_2F",
+            "tiles": [
+              [
+                44,
+                11
+              ]
+            ],
+            "facing": "east"
+          }
+        },
+        "why": "South down Route 23 into Victory Road 2F by its north door; the cave floor east of the move tutor is all encounter tiles and no trainer sees it."
+      },
+      {
+        "id": "catch_1",
+        "kind": "game_action",
+        "action": "capture",
+        "args": {
+          "uncaught": [
+            "machop",
+            "geodude",
+            "onix",
+            "primeape",
+            "zubat",
+            "arbok",
+            "golbat",
+            "marowak",
+            "machoke"
+          ],
+          "catches": 2,
+          "encounters": 120,
+          "balls": 40,
+          "ball": "ultra-ball",
+          "pace": "east"
+        },
+        "why": "Victory Road 2F (FireRed, pret src/data/wild_encounters.json): Machop, Geodude and Onix 20% each, Primeape and Zubat 10%, Arbok, Golbat, Marowak and Machoke 5%, Lv 34 to 48. A foe without the caught mark is caught with Ultra Balls; the rest are run from."
+      },
+      {
+        "fragment": "heal_at",
+        "args": {
+          "town": "indigo_plateau"
+        },
+        "id": "heal_indigo_1",
+        "why": "Back up Route 23 to Indigo Plateau's nurse: the foes hit Blastoise on every throw."
+      },
+      {
+        "id": "caught_after",
+        "kind": "game_action",
+        "action": "read_caught",
+        "args": {},
+        "why": "The Pokedex count after the round."
+      }
+    ]
+  },
+  "execution": {
+    "menu": "full"
+  },
+  "metadata": {
+    "phase": "testing",
+    "notes": "A round from Indigo Plateau's nurse back to her, two new species a round, until the count holds the Sevii save's nine Victory Road species (16 caught after 03, 19 after 04, 25 with all nine).",
+    "postconditions": {
+      "caught": {
+        "gained": 2
+      }
+    },
+    "repeat": {
+      "until": {
+        "caught": {
+          "at_least": 25
+        }
+      },
+      "max_rounds": 4
+    }
+  }
+}

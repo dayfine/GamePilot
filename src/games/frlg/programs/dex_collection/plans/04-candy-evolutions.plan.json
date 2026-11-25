@@ -1,0 +1,117 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "frlg",
+  "checkpoint": {
+    "id": "04-candy-evolutions",
+    "title": "Route 10's nurse: Rare Candies evolve Pidgey twice, Rattata and Oddish; Blastoise leads again",
+    "start": {
+      "map": "Route10_PokemonCenter_1F",
+      "tiles": [
+        [
+          7,
+          4
+        ]
+      ],
+      "facing": "north"
+    },
+    "events": [
+      {
+        "id": "caught_before",
+        "kind": "game_action",
+        "action": "read_caught",
+        "args": {},
+        "why": "The Pokedex count before the evolutions, off the Trainer Card."
+      },
+      {
+        "id": "pidgey_to_pidgeot",
+        "kind": "game_action",
+        "action": "candy_level",
+        "args": {
+          "target_slot": 4,
+          "target_level": 36,
+          "evolve": true,
+          "expect_species": "pidgeot",
+          "max_candies": 15
+        },
+        "why": "Pidgey (Lv 21; its evolution was stopped once) evolves at the first level up into Pidgeotto and at 36 into Pidgeot: two species owned (pret src/data/pokemon/evolution.h). Moves offered with four known are declined, so Fly stays."
+      },
+      {
+        "id": "rattata_to_raticate",
+        "kind": "game_action",
+        "action": "candy_level",
+        "args": {
+          "target_slot": 5,
+          "target_level": 20,
+          "evolve": true,
+          "expect_species": "raticate",
+          "max_candies": 10
+        },
+        "why": "Rattata evolves into Raticate at Lv 20."
+      },
+      {
+        "id": "oddish_to_gloom",
+        "kind": "game_action",
+        "action": "candy_level",
+        "args": {
+          "target_slot": 6,
+          "target_level": 21,
+          "evolve": true,
+          "expect_species": "gloom",
+          "max_candies": 8
+        },
+        "why": "Oddish evolves into Gloom at Lv 21; Cut stays."
+      },
+      {
+        "id": "blastoise_to_slot1",
+        "kind": "game_action",
+        "action": "party_swap",
+        "args": {
+          "species": "blastoise",
+          "target_slot": 1
+        },
+        "why": "Blastoise leads again, as the Sevii story and the catches expect."
+      },
+      {
+        "id": "caught_after",
+        "kind": "game_action",
+        "action": "read_caught",
+        "args": {},
+        "why": "The Pokedex count after the evolutions."
+      }
+    ]
+  },
+  "execution": {
+    "menu": "full"
+  },
+  "metadata": {
+    "phase": "testing",
+    "notes": "Starts with 03's candies, MIMIEN in slot 1 and Pidgey, Rattata and Oddish in slots 4 to 6.",
+    "postconditions": {
+      "caught": {
+        "gained": 4
+      },
+      "party_slots": [
+        {
+          "slot": 1,
+          "species": "blastoise"
+        },
+        {
+          "slot": 2,
+          "species": "mr-mime"
+        },
+        {
+          "slot": 4,
+          "species": "pidgeot"
+        },
+        {
+          "slot": 5,
+          "species": "raticate"
+        },
+        {
+          "slot": 6,
+          "species": "gloom"
+        }
+      ]
+    }
+  }
+}
