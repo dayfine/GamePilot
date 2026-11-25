@@ -234,7 +234,7 @@ daemon keeps them out of the wire log; without a watch page it drops them.
 - `watch.log`: `line` (`31-watch_log.notification.json`): one story log line.
 - `watch.run`: `mode`, `trial`, `trials`, `passes`, `fails`, `started_ms`, `checkpoints`: list of
   {`id`, `state`, `elapsed_ms`} (`33-watch_run.notification.json`). The chain the program runs
-  (`gamepilot checkpoints --from --to`), sent at the start and the end of each run. `state` is
+  (`gamepilot run --from --to`), sent at the start and the end of each run. `state` is
   `pending`, `current`, `passed`, `failed` or `skipped` (not run because an earlier one failed);
   `elapsed_ms` is the time spent on that checkpoint over all its runs, up to the message for the
   current one. `mode` is `testing` or `verification`; `trial` is the current checkpoint's run (1-based)

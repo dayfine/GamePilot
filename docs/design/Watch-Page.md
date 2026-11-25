@@ -1,6 +1,6 @@
 # Watch page (2026-11-23)
 
-`gamepilot checkpoints ... --watch` opens a page for watching one run live, the same on mGBA and
+`gamepilot run ... --watch` opens a page for watching one run live, the same on mGBA and
 the Switch, from any browser: the game frame with the subscribed probe boxes and their latest
 results, the chain of checkpoints the run goes through, the checkpoint's events (done, current,
 failed, skipped), the story log, the daemon's health, and a Stop button. It is step 1 and part of step 2 of `Control-UI.md`.
@@ -27,7 +27,7 @@ failed, skipped), the story log, the daemon's health, and a Stop button. It is s
   notifications (`watch.plan`, `watch.log`, contract v1.6) sent through the `show_plan`/`show_log`
   effects. Notifications need no answer, so they cost the program nothing but a write. The daemon
   keeps the latest plan and the last 1000 lines for a page that connects later.
-- **The chain is the runner's** (`watch.run`, contract v1.7): `gamepilot checkpoints --from --to`
+- **The chain is the runner's** (`watch.run`, contract v1.7): `gamepilot run --from --to`
   sends every checkpoint's state and time, the mode and the current checkpoint's trial (2 of 3, 1
   pass) at the start and the end of each run (`Engine_series.Chain_progress`). Each run has its own daemon,
   so the page's stream reconnects between runs and gets the chain again. The page shows it as a Run
@@ -116,7 +116,7 @@ failed, skipped), the story log, the daemon's health, and a Stop button. It is s
 Two runs at once (mGBA and the Switch, later several mGBAs) must not share ports, and the user
 wants one place to find them.
 
-- **Free ports.** `gamepilot checkpoints` starts each daemon with `--port 0 --watch-port 0` unless
+- **Free ports.** `gamepilot run` starts each daemon with `--port 0 --watch-port 0` unless
   the flags fix them: the daemon binds free ones and prints them, and the runner reads them from
   its output. The next run of the same series asks for the same two ports again (the last daemon
   has exited), so the page keeps its URL and its stream reconnects across checkpoints; when they

@@ -35,7 +35,7 @@ Also:
 <!-- generated:commands -->
 ```sh
 # mGBA: each checkpoint three times from its start state, two must pass
-sh run/run_checkpoints_on_mgba.sh --program frlg.sevii_story --from 01-to-one-island --to 06-back-to-cinnabar --mode verification
+sh run/run_checkpoints_on_mgba.sh frlg.sevii_story --from 01-to-one-island --to 06-back-to-cinnabar --mode verification
 ```
 <!-- /generated -->
 

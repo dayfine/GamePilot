@@ -27,7 +27,7 @@ Runs on: mGBA.
 <!-- generated:commands -->
 ```sh
 # mGBA: each checkpoint three times from its start state, two must pass
-sh run/run_checkpoints_on_mgba.sh --program frlg.dex_collection --from 01-ultra-balls --to 02-route10-new-species --mode verification
+sh run/run_checkpoints_on_mgba.sh frlg.dex_collection --from 01-ultra-balls --to 02-route10-new-species --mode verification
 ```
 <!-- /generated -->
 

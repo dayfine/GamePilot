@@ -61,11 +61,11 @@ Straight after 07-glitch-prep, or on its own from the 07-glitch-prep save:
 <!-- generated:commands 08-activate-and-verify -->
 ```sh
 # mGBA: each checkpoint three times from its start state, two must pass
-sh run/run_checkpoints_on_mgba.sh --program frlg.mail_glitch --from 08-activate-and-verify --to 08-activate-and-verify --mode verification
+sh run/run_checkpoints_on_mgba.sh frlg.mail_glitch --from 08-activate-and-verify --to 08-activate-and-verify --mode verification
 
 # the Switch: check the save first, then run (each checkpoint once, saved when it passes)
-sh run/run_checkpoints_on_switch.sh --program frlg.mail_glitch --from 08-activate-and-verify --to 08-activate-and-verify --preflight-only
-sh run/run_checkpoints_on_switch.sh --program frlg.mail_glitch --from 08-activate-and-verify --to 08-activate-and-verify
+sh run/run_checkpoints_on_switch.sh frlg.mail_glitch --from 08-activate-and-verify --to 08-activate-and-verify --preflight-only
+sh run/run_checkpoints_on_switch.sh frlg.mail_glitch --from 08-activate-and-verify --to 08-activate-and-verify
 ```
 <!-- /generated -->
 
