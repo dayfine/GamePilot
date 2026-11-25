@@ -1,4 +1,4 @@
 (library
  (name checkpoint_end)
  (public_name gamepilot.checkpoint_end)
- (libraries gamepilot.pokemon_terms gamepilot.pokemon_checkpoints))
+ (libraries gamepilot.pokemon_rules gamepilot.pokemon_checkpoints))

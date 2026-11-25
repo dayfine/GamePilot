@@ -1,4 +1,4 @@
-(* The engine over a toy game with zones and no grid (Toy_terms, Toy_codec,
+(* The engine over a toy game with zones and no grid (Toy_rules, Toy_codec,
    Toy_text, Toy_saved): its plans decode with the toy's poses, kinds and
    promises, the runner sends each kind to its handler and checks zones and
    promises, and what a run keeps and loops works on the toy's types. *)
@@ -85,7 +85,7 @@ let decode_cases =
        field.";
   ]
 
-let at place spot : Toy_terms.Pose.t = { place; spot }
+let at place spot : Toy_rules.Pose.t = { place; spot }
 
 (* A toy game that logs each handler and stands where the script says after
    each event. *)
@@ -127,7 +127,7 @@ let run_result ?end_at ?end_state ?after ?flags () =
 let outcome ?end_at ?end_state ?after ?flags () =
   fst (run_result ?end_at ?end_state ?after ?flags ())
 
-let reads gold_now : Toy_terms.Postconditions.reads =
+let reads gold_now : Toy_rules.Postconditions.reads =
   { gold_now = Some gold_now; start = Some 50; set = [ "met_cat" ] }
 
 let promised () = Option.get (plan ()).postconditions

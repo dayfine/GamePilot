@@ -5,5 +5,5 @@
  (libraries
   yojson
   gamepilot.json_field
-  gamepilot.engine_terms
+  gamepilot.engine_rules
   gamepilot.engine_plan))

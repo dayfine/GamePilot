@@ -40,14 +40,14 @@ let plan_patches file () =
   let p = Result.get_ok (Frlg_checkpoints.Plan_file.load file) in
   let named (e : Pokemon_checkpoints.Plan.event) =
     match (e.kind, e.declared_after) with
-    | Own (Route r), _ -> Some r.target
+    | Game (Route r), _ -> Some r.target
     | _, Some (Grid g) -> Some g
     | _ -> None
   in
   let paced (before, out) (e : Pokemon_checkpoints.Plan.event) =
     let out =
-      match (e.kind, e.action, before) with
-      | Game_action args, Some ("capture" | "prepare_berry_pp"), Some g ->
+      match (e.kind, e.way, before) with
+      | Named_action args, Some ("capture" | "prepare_berry_pp"), Some g ->
           let pace = Grid_maps.Grid_field.direction ~where:"" "pace" args in
           patch g.Pokemon_checkpoints.Pose.map (List.hd g.tiles) pace :: out
       | _ -> out
