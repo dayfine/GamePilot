@@ -21,22 +21,24 @@ val hold_ms : int
 type state = {
   mutable after_fade : bool;
   mutable quiet_since : float option;
+  mutable control_since : float option;
   mutable attempts : int;  (** tried so far, this one included once due *)
   mutable locked_on : bool;  (** a try brought up the symbols *)
 }
 (** The scene machine's lock-on with [stop_at_battle], since the last text or
-    choice: after a battle's black fade, a still screen with nothing busy held 3
-    s is due one (the fork also counts the party bar, which has no reader yet),
-    five at most. *)
+    choice: after a battle's black fade, a still screen or the party bar with
+    nothing busy held 3 s is due one, or the party bar while control shows
+    instead of the battle held 1 s; five at most. *)
 
 val new_state : unit -> state
 
 val due : state -> Story_look.t -> bool
 (** A try is due on this read. *)
 
-val record : state -> tried:bool -> Story_look.t -> unit
+val record : state -> tried:bool -> control_instead:bool -> Story_look.t -> unit
 (** What this read changes; [tried]: it was classed due (counted before the try
-    runs). Text or a choice starts over. *)
+    runs); [control_instead]: the scene machine's control-instead-of-the-end
+    read. Text or a choice starts over. *)
 
 val run : state -> Story_steps.game_steps -> string -> unit
 (** The try ({!attempt}), [locked_on] set when the symbols showed. *)

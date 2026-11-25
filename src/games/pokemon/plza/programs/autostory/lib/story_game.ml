@@ -53,6 +53,16 @@ let scene_to_battle steps =
   Scene_machine.run steps "scene"
     { Scene_machine.default with stop_at_battle = true }
 
+(* The fork's scene with "start_window_ms": control before any scene waits up
+   to that long for one. *)
+let scene_with_start_window steps (event : Plan.event) (args : Json_field.obj) =
+  match args with
+  | [ ("start_window_ms", `Int ms) ] when ms > 0 ->
+      Scene_machine.run steps "scene"
+        { Scene_machine.default with start_window_ms = Some ms }
+  | _ ->
+      bad_args event "the only arg is start_window_ms, a positive number of ms"
+
 let game_actions ~reload steps =
   List.map
     (fun (name, action) -> (name, action steps))
@@ -69,6 +79,7 @@ let game_actions ~reload steps =
       ("choose_0", no_args (fun steps -> Choose_row.run steps 0));
       ("choose_1", no_args (fun steps -> Choose_row.run steps 1));
       ("scene_to_battle", no_args scene_to_battle);
+      ("scene_with_start_window", scene_with_start_window);
       ("story_battle", no_args Story_battle.run);
     ]
 

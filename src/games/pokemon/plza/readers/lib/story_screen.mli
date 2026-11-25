@@ -9,8 +9,7 @@
 
     Not read here: the Switch HOME menu ({!Switch_home.Home_screen}); whether
     the screen is still (the fork compares the frame with the one before, which
-    no probe does yet); whether the player can move (the fork's PLZA screen
-    never says so; the controls hint stands for it). *)
+    no probe does yet); the party bar's D-pad marker ({!Party_bar}). *)
 
 type t = {
   fade : Screen_state.Fade.t;
@@ -31,6 +30,9 @@ type t = {
           the white box with its arrow, or the blue or teal box *)
   moves : Move_symbols.symbol option list;
       (** the four moves' effectiveness symbols ({!Move_symbols}) *)
+  party_bar : bool;
+      (** the overworld party bar ({!Party_bar}), with no fade and no text box:
+          the fork's [PLAYER_CAN_MOVE] *)
 }
 (** What one frame shows. *)
 

@@ -4,8 +4,8 @@
     ([plza/lean]). Plain values: the live screen fills it from the readers,
     tests by hand.
 
-    Not read: the party bar ([PLAYER_CAN_MOVE]), the battle HUD and the "mission
-    complete" card, which have no reader yet; each reads as not shown. *)
+    Not read: the "mission complete" card, which has no reader yet; it reads as
+    not shown. *)
 
 (** A move's effectiveness symbol under ZL, weakest first (the fork's
     [MoveEffectivenessSymbol]). *)
@@ -31,6 +31,8 @@ type t = {
   tutorial_card : bool;
   interact_prompt : bool;
       (** An A prompt (["(A) Talk"]) with no text box: [INTERACT_PROMPT]. *)
+  party_bar : bool;
+      (** The overworld party bar with no text box: [PLAYER_CAN_MOVE]. *)
   battle : bool;  (** The battle HUD: [BATTLE_STARTED]. *)
   story_dialog : bool;
       (** A dialogue box as [StoryDialogDetector] reads it by default (the white
@@ -55,17 +57,19 @@ val text_waiting_for_a : t -> bool
 (** TEXT_WAITING_FOR_A: a text box with the advance chevron. *)
 
 val control_shows : t -> bool
-(** CONTROL_SHOWS: the controls hint or an A prompt with no text box (the party
-    bar is not read). *)
+(** CONTROL_SHOWS: the party bar, the controls hint or an A prompt, with no text
+    box. *)
 
 val hud_shows : t -> bool
-(** The scene machine's [hud_shows]: the controls hint or an A prompt. *)
+(** The scene machine's [hud_shows]: the party bar, the controls hint or an A
+    prompt. *)
 
 val scene_busy : t -> bool
 (** SCENE_BUSY: text, a fade or a card (no "mission complete" reader). *)
 
 val overworld_free : t -> bool
-(** OVERWORLD_FREE: the controls hint, with no text box, fade or chevron. *)
+(** OVERWORLD_FREE: the party bar or the controls hint, with no text box, fade
+    or chevron. *)
 
 val platform_hint : t -> bool
 (** PLATFORM_HINT: the controls hint, no text box and no autosave badge. *)
@@ -85,4 +89,4 @@ val describe : t -> string
     still, controls hint"), or ["nothing"]. *)
 
 val to_walk_screen : t -> Plza_walk.Walk_screen.t
-(** The read as the walk takes it; the party bar never shows. *)
+(** The read as the walk takes it. *)

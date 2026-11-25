@@ -1,12 +1,12 @@
 module S = Story_steps
 module L = Story_look
-module Failure = Engine_run.Failure
 
 type config = {
   end_on_black_fade : bool;
   stop_at_choice : bool;
   stop_at_battle : bool;
   button : Wire.button;
+  start_window_ms : int option;
 }
 
 let default =
@@ -15,6 +15,7 @@ let default =
     stop_at_choice = false;
     stop_at_battle = false;
     button = A;
+    start_window_ms = None;
   }
 
 let control_hold_ms = 1000.0
@@ -38,6 +39,8 @@ type screen =
   | Lock_on
   | Card
   | Ended_in_control
+  | Never_started
+  | Awaiting_scene
   | Control
   | Control_showing
   | Other
@@ -53,13 +56,15 @@ let name = function
   | Lock_on -> "lock_on"
   | Card -> "card"
   | Ended_in_control -> "ended_in_control"
+  | Never_started -> "never_started"
+  | Awaiting_scene -> "awaiting_scene"
   | Control -> "control"
   | Control_showing -> "control_showing"
   | Other -> "other"
 
 let terminal = function
   | Battle | Locked_on | Black_fade_end | Choice_end | Ended_in_control
-  | Control ->
+  | Never_started | Control ->
       true
   | _ -> false
 
@@ -69,6 +74,7 @@ type text_a = { at : float; arrow : bool }
 
 (* What earlier reads showed; each hold is when its sign started. *)
 type timeline = {
+  mutable start : float option;
   mutable scene_seen : bool;
   mutable overworld_seen : bool;
   mutable control_since : float option;
@@ -98,15 +104,24 @@ let expected_end config =
     "the controls hint, the party bar or the A prompt"
   else "the controls hint"
 
-let classify_control tl (l : L.t) =
+let classify_held tl (l : L.t) =
   if held tl.control_since ~hold_ms:control_hold_ms l then Control
   else if held tl.control_instead_since ~hold_ms:control_instead_hold_ms l then
     Ended_in_control
   else Control_showing
 
-let classify_rest tl (l : L.t) =
+(* With a start window, control before any scene waits for one, up to the
+   window. *)
+let classify_control config tl (l : L.t) =
+  match config.start_window_ms with
+  | Some window when not tl.scene_seen ->
+      if held tl.start ~hold_ms:(float_of_int window) l then Never_started
+      else Awaiting_scene
+  | _ -> classify_held tl l
+
+let classify_rest config tl (l : L.t) =
   if L.card_shows l then Card
-  else if L.control_shows l then classify_control tl l
+  else if L.control_shows l then classify_control config tl l
   else Other
 
 let classify config tl (l : L.t) =
@@ -117,7 +132,7 @@ let classify config tl (l : L.t) =
   else if l.choice_box then if config.stop_at_choice then Choice_end else Choice
   else if L.text_shows l then Text
   else if config.stop_at_battle && Lock_on.due tl.lock l then Lock_on
-  else classify_rest tl l
+  else classify_rest config tl l
 
 let choice_button steps (l : L.t) =
   match l.choice_rows with
@@ -178,19 +193,21 @@ let record_text_a config tl screen (l : L.t) =
   | Text -> ()
   | _ -> tl.text_a <- None
 
+let control_instead config (l : L.t) =
+  (not (party_bar_is_control config))
+  && L.control_shows l
+  && not (L.scene_busy l)
+
 let record config tl screen (l : L.t) =
-  Lock_on.record tl.lock ~tried:(screen = Lock_on) l;
+  let control_instead = control_instead config l in
+  Lock_on.record tl.lock ~tried:(screen = Lock_on) ~control_instead l;
   record_text_a config tl screen l;
   if l.fade_black then tl.black_fades <- tl.black_fades + 1;
   tl.overworld_seen <- tl.overworld_seen || (tl.scene_seen && L.control_shows l);
   tl.scene_seen <- tl.scene_seen || L.scene_under_way l;
   tl.control_since <- since_while (ends_machine config l) tl.control_since l;
   tl.control_instead_since <-
-    since_while
-      ((not (party_bar_is_control config))
-      && L.control_shows l
-      && not (L.scene_busy l))
-      tl.control_instead_since l
+    since_while control_instead tl.control_instead_since l
 
 (* A line per change of class or readings. *)
 let log_look steps label ~start last screen tl (l : L.t) =
@@ -209,32 +226,39 @@ let log_look steps label ~start last screen tl (l : L.t) =
 
 let timeout_of config =
   if config.stop_at_battle then battle_timeout_ms
-  else if config.stop_at_choice || config.button = Wire.B then short_timeout_ms
+  else if
+    config.stop_at_choice || config.button = Wire.B
+    || Option.is_some config.start_window_ms
+  then short_timeout_ms
   else timeout_ms
 
 let timed_out config label =
-  Failure.cause "scene_timeout"
-    (Printf.sprintf "%s: Did not finish within %d s (expecting %s)." label
-       (int_of_float (S.seconds (float_of_int (timeout_of config))))
-       (expected_end config))
+  Scene_failure.timed_out ~label
+    ~seconds:(int_of_float (S.seconds (float_of_int (timeout_of config))))
+    ~expected:(expected_end config)
 
-let ended_in_control config label =
-  Failure.cause "scene_ended_in_control"
-    (Printf.sprintf
-       "%s: the scene ended in control, the party bar up %d ms with nothing \
-        busy (expecting %s)."
-       label
-       (int_of_float control_instead_hold_ms)
-       (expected_end config))
+let failure config label screen =
+  let expected = expected_end config in
+  if screen = Never_started then
+    Some
+      (Scene_failure.never_started ~label ~expected
+         ~window_ms:(Option.value config.start_window_ms ~default:0))
+  else if screen = Ended_in_control then
+    Some
+      (Scene_failure.ended_in_control ~label ~expected
+         ~hold_ms:(int_of_float control_instead_hold_ms))
+  else None
 
 let outcome steps config label screen =
-  if screen = Ended_in_control then Error (ended_in_control config label)
-  else (
-    S.(steps.log) (Printf.sprintf "[PLZA %s] done on %s." label (name screen));
-    Ok ())
+  match failure config label screen with
+  | Some cause -> Error cause
+  | None ->
+      S.(steps.log) (Printf.sprintf "[PLZA %s] done on %s." label (name screen));
+      Ok ()
 
 let new_timeline () =
   {
+    start = None;
     scene_seen = false;
     overworld_seen = false;
     control_since = None;
@@ -259,6 +283,7 @@ let run steps label config =
   let rec go ~start looks =
     let look = S.(steps.read_screen) () in
     let start = Option.value start ~default:look.at_ms in
+    tl.start <- Some start;
     if look.home_menu then Error S.game_not_running
     else
       let screen = classify config tl look in

@@ -16,7 +16,8 @@
   test_confirm_choices
   test_interact_prompt
   test_battle_hud
-  test_move_symbols)
+  test_move_symbols
+  test_party_bar)
  (modules
   test_dialog_readers
   test_story_readers
@@ -24,6 +25,7 @@
   test_interact_prompt
   test_battle_hud
   test_move_symbols
+  test_party_bar
   fixture_frames)
  (deps switch.probes.jsonl switch.shifted.probes.jsonl)
  (libraries gamepilot.wire gamepilot.table_test gamepilot.plza_readers))

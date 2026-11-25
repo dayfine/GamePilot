@@ -54,6 +54,7 @@ let look_of ~still (m : Effects.measurements) : L.t =
     autosave = s.autosave;
     tutorial_card = s.tutorial_card;
     interact_prompt = s.interact_prompt;
+    party_bar = s.party_bar;
     battle = s.battle;
     story_dialog = s.story_dialog;
     moves = List.map (Option.map effectiveness) s.moves;

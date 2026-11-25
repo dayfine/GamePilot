@@ -18,6 +18,7 @@ type t = {
   autosave : bool;
   tutorial_card : bool;
   interact_prompt : bool;
+  party_bar : bool;
   battle : bool;
   story_dialog : bool;
   moves : effectiveness option list;
@@ -39,6 +40,7 @@ let empty ~at_ms =
     autosave = false;
     tutorial_card = false;
     interact_prompt = false;
+    party_bar = false;
     battle = false;
     story_dialog = false;
     moves = [];
@@ -48,14 +50,15 @@ let empty ~at_ms =
 let fade_shows l = l.fade_black || l.fade_white
 let text_shows l = l.dialog_box || l.advance_arrow
 let text_waiting_for_a l = l.dialog_box && l.advance_arrow
-let control_shows l = (l.controls_hint || l.interact_prompt) && not l.dialog_box
-let hud_shows l = l.controls_hint || l.interact_prompt
+let hud_shows l = l.party_bar || l.controls_hint || l.interact_prompt
+let control_shows l = hud_shows l && not l.dialog_box
 
 let scene_busy l =
   l.dialog_box || fade_shows l || l.advance_arrow || l.tutorial_card
 
 let overworld_free l =
-  l.controls_hint && (not l.dialog_box)
+  (l.party_bar || l.controls_hint)
+  && (not l.dialog_box)
   && (not (fade_shows l))
   && not l.advance_arrow
 
@@ -76,6 +79,7 @@ let flags l =
     (l.dialog_box, "text box");
     (l.choice_box, "choice box");
     (l.battle, "battle");
+    (l.party_bar, "party bar");
     (l.interact_prompt, "A prompt");
     (l.screen_still, "still");
     (l.controls_hint, "controls hint");
@@ -99,7 +103,7 @@ let to_walk_screen l : Plza_walk.Walk_screen.t =
     fade_white = l.fade_white;
     dialog_box = l.dialog_box;
     advance_arrow = l.advance_arrow;
-    player_can_move = false;
+    player_can_move = l.party_bar;
     controls_hint = l.controls_hint;
     interact_prompt = l.interact_prompt;
     scene_under_way = scene_under_way l;

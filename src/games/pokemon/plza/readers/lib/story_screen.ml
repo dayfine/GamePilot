@@ -11,6 +11,7 @@ type t = {
   battle : bool;
   story_dialog : bool;
   moves : Move_symbols.symbol option list;
+  party_bar : bool;
 }
 
 let fade_id = "story_screen.fade"
@@ -32,6 +33,7 @@ let probes ~picture ~assets =
       Interact_prompt.probes ~picture ~assets;
       Battle_hud.probes ~picture ~assets;
       Move_symbols.probes ~picture ~assets;
+      Party_bar.probes ~picture;
     ]
 
 let fade m =
@@ -61,6 +63,7 @@ let read m =
     battle;
     story_dialog = Dialog_box.shown ~white:Box_and_arrow m;
     moves = Move_symbols.read m;
+    party_bar = boxes && (not box) && Party_bar.shown m;
   }
 
 let to_string t =
@@ -85,6 +88,7 @@ let to_string t =
         flag "battle" t.battle;
         flag "story dialog" t.story_dialog;
         (if List.exists Option.is_some t.moves then [ "move symbols" ] else []);
+        flag "party bar" t.party_bar;
       ]
   in
   if shown = [] then "nothing" else String.concat ", " shown

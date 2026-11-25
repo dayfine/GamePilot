@@ -1,4 +1,4 @@
-(* 01.00b to 01.03 run through the engine (Plza_checkpoints.Runner) with
+(* 01.00b to 02.01 run through the engine (Plza_checkpoints.Runner) with
    Story_game's handlers on a scripted console (Fake_console): the plans
    decode, every event reaches its handler, and each handler's presses move a
    game that answers them as the console did. Also the failures: a walk whose
@@ -116,7 +116,7 @@ let pancham ?(lost = false) c =
    Chikorita's prompt until A; text until one more A, the choice until A, a
    tutorial card until A, then the battle HUD with the move symbols (left
    super effective) until a move; then Andi's text until two A, then the
-   prompt. [no_symbols]: ZL never brings up the symbols. *)
+   alley's party bar. [no_symbols]: ZL never brings up the symbols. *)
 let battle ?(no_symbols = false) c =
   {
     (look c) with
@@ -126,10 +126,12 @@ let battle ?(no_symbols = false) c =
        else [ Some L.Effective; Some L.Super_effective; None; Some L.No_effect ]);
   }
 
+let party c = { (look c) with party_bar = true }
+
 let andi c ~after =
   match C.nth_after c Wire.A ~after 1 with
   | None -> { (text c) with story_dialog = true }
-  | Some _ -> prompt c
+  | Some _ -> party c
 
 let starter ?no_symbols c =
   match C.stick_reached c 600 with
@@ -160,6 +162,22 @@ let rematch c =
       { (text c) with story_dialog = true }
   | None -> { (look c) with tutorial_card = true }
   | Some a3 -> in_battle ~after:a3 c
+
+(* 02.01: the alley's party bar until the stick was held 16.75 s; then
+   Brigitte's text until two A, the battle HUD until a move, her speech until
+   two A, then the plaza's party bar. [no_scene]: after the move, her speech
+   box shows over the party bar with no text box, and nothing else follows. *)
+let brigitte ?(no_scene = false) c =
+  match C.stick_reached c 16_750 with
+  | None -> party c
+  | Some w -> (
+      match C.nth_after c Wire.A ~after:w 1 with
+      | None -> text c
+      | Some a2 -> (
+          match C.nth_after c Wire.Y ~after:a2 0 with
+          | None -> battle c
+          | Some _ when no_scene -> { (party c) with story_dialog = true }
+          | Some y -> andi c ~after:y))
 
 let outcome checkpoint screen =
   let c = C.create () in
@@ -367,6 +385,47 @@ let cases =
        [Story] 01.03 #1 approach_starter: skipped (talk_or_battle_shows)\n\
        [PLZA] story_battle: Picking Move: Left\n\
        [Story] 01.03: done";
+    case "01.03 resumed in the alley after it: every event skipped"
+      (fun () -> skips "01.03" party)
+      "passed\n\
+       [Story] 01.03 #1 approach_starter: skipped (party_bar_free)\n\
+       [Story] 01.03 #2 andi_battle_start: skipped (party_bar_free)\n\
+       [Story] 01.03 #3 andi_battle: skipped (party_bar_free)\n\
+       [Story] 01.03 #4 after_andi: skipped (party_bar_free)\n\
+       [Story] 01.03: done";
+    case
+      "02.01: the Battle Zone walk, Brigitte's talk, Cleffa beaten, the plaza"
+      (fun () ->
+        let r, c = outcome "02.01" brigitte in
+        String.concat "\n"
+          (r
+          :: List.filter
+               (fun line ->
+                 List.exists
+                   (fun prefix -> String.starts_with ~prefix line)
+                   [
+                     "[PLZA] battle_zone_to_brigitte";
+                     "[PLZA] story_battle: Picking";
+                     "[PLZA scene] done";
+                   ])
+               (C.lines c)))
+      "passed\n\
+       [PLZA] battle_zone_to_brigitte: legs done, screen now: dialog_box, \
+       advance_arrow\n\
+       [PLZA scene] done on battle.\n\
+       [PLZA] story_battle: Picking Move: Left\n\
+       [PLZA scene] done on control.";
+    case "02.01 lost: no Brigitte after the walk, the party bar alone"
+      (result "02.01" party)
+      "02.01 event 2 (brigitte_battle_start): scene_ended_in_control: scene: \
+       the scene ended in control, the party bar up 5000 ms with nothing busy \
+       (expecting the battle HUD, the controls hint).";
+    case "02.01 with no scene after the battle: the start window passes"
+      (result "02.01" (brigitte ~no_scene:true))
+      "02.01 event 4 (after_brigitte): scene_never_started: scene: the scene \
+       never started (player not at its trigger?): the HUD up and no text, \
+       choice, battle or cutscene for 45000 ms (expecting the controls hint, \
+       the party bar or the A prompt).";
     case "the walk is walked before 03.03, run after"
       (fun () ->
         Printf.sprintf "%b %b"
