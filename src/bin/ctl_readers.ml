@@ -116,6 +116,14 @@ let bag =
       ("cursor_row", fun m -> opt string_of_int (R.Bag_screen.cursor_row m));
     ]
 
+let trainer_card =
+  let module C = R.Trainer_card_front in
+  fields C.probes
+    [
+      ("front", flag C.front_shown);
+      ("read", fun m -> opt C.to_string (C.read m));
+    ]
+
 let all =
   [
     {
@@ -146,6 +154,11 @@ let all =
     };
     { name = "load_menu"; doc = "the title's load menu"; read = load_menu };
     { name = "bag"; doc = "open, item menu, pocket, cursor row"; read = bag };
+    {
+      name = "trainer_card";
+      doc = "the card's front shown, its badges and stars";
+      read = trainer_card;
+    };
   ]
 
 let find name = List.find_opt (fun r -> r.name = name) all

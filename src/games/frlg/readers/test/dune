@@ -47,3 +47,14 @@
   gamepilot.effects
   gamepilot.table_test
   gamepilot.frlg_readers))
+
+(test
+ (name test_card_readers)
+ (modules test_card_readers)
+ (deps
+  (glob_files fixtures/*.jsonl))
+ (libraries
+  gamepilot.wire
+  gamepilot.effects
+  gamepilot.table_test
+  gamepilot.frlg_readers))

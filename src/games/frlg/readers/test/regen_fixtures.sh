@@ -12,7 +12,12 @@
 # map that names them). The tagged name is what the test reads its
 # expectations from. Sets: screen (test_screen_readers.ml,
 # the write_probe_spec default), menus (test_menu_readers.ml) and battle
-# (test_battle_readers.ml).
+# (test_battle_readers.ml); pc (test_pc_readers.ml) and card
+# (test_card_readers.ml) are made only when named. A set with no map for a
+# backend skips that backend. The card set also writes card.<backend>.shifted:
+# its real frames (every image but the renders under pret-trainer-card/)
+# with their colors shifted by shift_frame.py, which needs Pillow
+# ($SHIFT_PYTHON, default python3; e.g. "uv run --with pillow python3").
 #
 #   sh games/frlg/readers/test/regen_fixtures.sh [screen|menus|battle ...]
 #
@@ -31,6 +36,7 @@ HERE=$(cd "$(dirname "$0")" && pwd)
 SRC=$(cd "$HERE/../../../.." && pwd)
 REPO=$(cd "$SRC/.." && pwd)
 PROBE_IMAGES=${PROBE_IMAGES:-$SRC/../daemon/build/probe_images}
+SHIFT_PYTHON=${SHIFT_PYTHON:-python3}
 SWITCH_VIEWPORT=nso-gba
 WORK=$(mktemp -d)
 trap 'rm -rf "$WORK"' EXIT
@@ -55,11 +61,28 @@ probe() {
   set_name=$1 backend=$2 spec=$3 fixture=$4
   shift 4
   map=$HERE/$set_name.$backend.map
+  [ -f "$map" ] || return 0
   stage "$map" "$WORK/$set_name.$backend"
   images=$(cut -d'|' -f2 "$map")
   # shellcheck disable=SC2086
   (cd "$WORK/$set_name.$backend" && "$PROBE_IMAGES" --spec "$spec" "$@" $images) \
     >"$HERE/fixtures/$fixture"
+}
+
+# Probes one backend's real frames, shifted in color, into its fixture; run
+# after probe, which staged them.
+probe_shifted() {
+  set_name=$1 backend=$2 spec=$3 fixture=$4
+  shift 4
+  map=$HERE/$set_name.$backend.map
+  [ -f "$map" ] || return 0
+  out=$WORK/$set_name.$backend.shifted
+  frames=$(grep -v '/pret-trainer-card/' "$map" | cut -d'|' -f2)
+  # shellcheck disable=SC2086
+  (cd "$WORK/$set_name.$backend" && $SHIFT_PYTHON "$HERE/shift_frame.py" "$out" $frames)
+  images=$(cd "$out" && for s in *; do for f in $frames; do echo "$s/$f"; done; done)
+  # shellcheck disable=SC2086
+  (cd "$out" && "$PROBE_IMAGES" --spec "$spec" "$@" $images) >"$HERE/fixtures/$fixture"
 }
 
 regen() {
@@ -74,6 +97,10 @@ regen() {
   fi
   probe "$set_name" switch "$spec" "${prefix}switch.probes.jsonl" --viewport "$SWITCH_VIEWPORT"
   probe "$set_name" mgba "$spec" "${prefix}mgba.probes.jsonl"
+  if [ "$set_name" = card ]; then
+    probe_shifted card switch "$spec" card.switch.shifted.probes.jsonl --viewport "$SWITCH_VIEWPORT"
+    probe_shifted card mgba "$spec" card.mgba.shifted.probes.jsonl
+  fi
 }
 
 [ $# -gt 0 ] || set -- screen menus battle
