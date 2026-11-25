@@ -20,7 +20,7 @@
 
 let icons =
   [
-    ("plza", "src/games/plza/assets/delete-save-icon.png");
+    ("plza", "src/games/pokemon/plza/assets/delete-save-icon.png");
     ("firered", "src/games/frlg/assets/delete-save-icon-firered.png");
   ]
 

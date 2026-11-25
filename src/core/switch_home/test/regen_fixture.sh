@@ -7,7 +7,7 @@
 # one channel plus or minus 12, 10% toward mid-grey), named <shift>/<image>.
 # Likewise fixtures/delete_save.probes.jsonl and delete_save.shifted.probes.jsonl
 # from images/delete-save/ with the native viewport (System Settings, the whole
-# frame) and the games' delete-save icons (src/games/*/assets/delete-save-icon*.png).
+# frame) and the games' delete-save icons (the delete-save-icon*.png under src/games).
 # shift_frame.py needs Pillow ($SHIFT_PYTHON, default python3; e.g.
 # "uv run --with pillow python3").
 #
@@ -28,7 +28,7 @@ spec=$work/home/spec.json
 ds_spec=$work/delete_save/spec.json
 (cd "$SRC" && dune exec core/switch_home/test/write_probe_spec.exe) >"$spec"
 (cd "$SRC" && dune exec core/switch_home/test/write_probe_spec.exe delete-save) >"$ds_spec"
-cp "$SRC/games/plza/assets/delete-save-icon.png" "$work/delete_save/plza-icon.png"
+cp "$SRC/games/pokemon/plza/assets/delete-save-icon.png" "$work/delete_save/plza-icon.png"
 cp "$SRC/games/frlg/assets/delete-save-icon-firered.png" "$work/delete_save/firered-icon.png"
 (cd "$HERE/images" && "$PROBE_IMAGES" --spec "$spec" --viewport nso-gba ./*.png) \
     >"$HERE/fixtures/switch.probes.jsonl"
