@@ -28,5 +28,5 @@ let walk { move; until = u; earliest_end_ms } =
       [ Printf.sprintf "not before %d ms" earliest_end_ms ]
     else [])
 
-let kind : Action.t -> string = function Walk w -> walk w
+let action : Action.t -> string = function Walk w -> walk w
 let postconditions () = []
