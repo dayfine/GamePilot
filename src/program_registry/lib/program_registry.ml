@@ -106,8 +106,8 @@ let mail_glitch =
     name = "Mail Glitch";
     group = [ "FRLG"; "Glitches" ];
     description =
-      "Sets up the Mail Glitch, performs it against Lea & Jed on Route 16 and \
-       uses it to duplicate an item.";
+      "Turns on the Mail Glitch against Lea & Jed on Route 16 and copies one \
+       item with it.";
     doc = "docs/programs/frlg-mail-glitch.md";
     checkpoints = Some "src/games/frlg/programs/mail_glitch/plans";
     backends = [ Mgba; Switch ];
@@ -136,9 +136,7 @@ let team_training =
     game = frlg;
     name = "Team Training";
     group = [ "FRLG"; "Training" ];
-    description =
-      "Farms Rare Candies with the Mail Glitch's item duplication and levels \
-       the team with them.";
+    description = "Copies Rare Candies with the Mail Glitch to level the team.";
     doc = "docs/programs/frlg-team-training.md";
     checkpoints = Some "src/games/frlg/programs/team_training/plans";
     backends = [ Mgba; Switch ];
@@ -167,9 +165,7 @@ let sevii_story =
     game = frlg;
     name = "Sevii Story";
     group = [ "FRLG"; "Story" ];
-    description =
-      "Plays the Sevii Islands story after the Hall of Fame, starting with \
-       Bill's trip to One Island.";
+    description = "Plays the Sevii Islands story after the Hall of Fame.";
     doc = "docs/programs/frlg-sevii-story.md";
     checkpoints = Some "src/games/frlg/programs/sevii_story/plans";
     backends = [ Mgba ];
@@ -200,8 +196,7 @@ let dex_collection =
     name = "Dex Collection";
     group = [ "FRLG"; "Pokedex" ];
     description =
-      "Catches wild Pokemon the Pokedex has not caught yet, toward the 60 the \
-       National Pokedex needs.";
+      "Catches Pokemon the Pokedex lacks, toward the National Pokedex.";
     doc = "docs/programs/frlg-dex-collection.md";
     checkpoints = Some "src/games/frlg/programs/dex_collection/plans";
     backends = [ Mgba ];
