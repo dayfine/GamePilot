@@ -63,11 +63,11 @@ Build first (`cd src && opam exec -- dune build`; on the Switch, also the daemon
 <!-- generated:commands 01-celadon-setup..08-activate-and-verify -->
 ```sh
 # mGBA: each checkpoint three times from its start state, two must pass
-sh run/run_checkpoints_on_mgba.sh --program frlg.mail_glitch --from 01-celadon-setup --to 08-activate-and-verify --mode verification
+sh run/run_checkpoints_on_mgba.sh frlg.mail_glitch --from 01-celadon-setup --to 08-activate-and-verify --mode verification
 
 # the Switch: check the save first, then run (each checkpoint once, saved when it passes)
-sh run/run_checkpoints_on_switch.sh --program frlg.mail_glitch --from 01-celadon-setup --to 08-activate-and-verify --preflight-only
-sh run/run_checkpoints_on_switch.sh --program frlg.mail_glitch --from 01-celadon-setup --to 08-activate-and-verify
+sh run/run_checkpoints_on_switch.sh frlg.mail_glitch --from 01-celadon-setup --to 08-activate-and-verify --preflight-only
+sh run/run_checkpoints_on_switch.sh frlg.mail_glitch --from 01-celadon-setup --to 08-activate-and-verify
 ```
 <!-- /generated -->
 
@@ -144,7 +144,7 @@ To carry on, fix the cause if there is one (a member missing, not enough money),
 command with `--from` set to the checkpoint that failed:
 
 ```sh
-sh run/run_checkpoints_on_switch.sh --program frlg.mail_glitch --from 05-grind-mr-mime --to 08-activate-and-verify
+sh run/run_checkpoints_on_switch.sh frlg.mail_glitch --from 05-grind-mr-mime --to 08-activate-and-verify
 ```
 
 On the Switch the game is back at its last save, which is the failed checkpoint's start. On mGBA

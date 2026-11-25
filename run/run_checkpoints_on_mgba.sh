@@ -1,20 +1,20 @@
 #!/bin/sh
-# Starts the GamePilot mGBA instance, runs `gamepilot checkpoints` against it, and closes it again
+# Starts the GamePilot mGBA instance, runs `gamepilot run` against it, and closes it again
 # (the instance stays closed whenever nothing runs on it). Arguments go to
-# `gamepilot checkpoints` as they are, e.g.:
+# `gamepilot run` as they are, e.g.:
 #
-#   sh run/run_checkpoints_on_mgba.sh --program frlg.mail_glitch \
+#   sh run/run_checkpoints_on_mgba.sh frlg.mail_glitch \
 #       --from 01-celadon-setup --to 03-trade-mr-mime --mode verification
 #
 # To test a fix from just before the changed event, not from the checkpoint's start: every run
 # keeps a save state at each event it reaches cleanly ($GAMEPILOT_STATES/<ID>.events/), and
 #
-#   sh run/run_checkpoints_on_mgba.sh --program frlg.mail_glitch --from 02-trade-farfetchd \
+#   sh run/run_checkpoints_on_mgba.sh frlg.mail_glitch --from 02-trade-farfetchd \
 #       --from-event trade_chding [--to-event N]
 #
 # runs 02-trade-farfetchd from that state (testing, a partial run: never a verification, never a next start).
 #
-# A plan folder in place of --program ID still works (`gamepilot checkpoints PLAN_DIR ...`).
+# A plan folder in place of the program id, or --program ID, still works (`gamepilot run PLAN_DIR ...`).
 #
 # One run at a time: the runner takes the lock $GAMEPILOT_RUNS/.lock (run/run_lock.sh) and waits,
 # saying who holds it, while another runner does; a lock whose holder died is taken over. Once it
@@ -169,4 +169,4 @@ until lsof -nP -iTCP:$bridge_port -sTCP:LISTEN >/dev/null; do
 done
 
 cd "$root"
-"$bin" checkpoints "$@"
+"$bin" run "$@"

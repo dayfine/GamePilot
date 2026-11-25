@@ -127,9 +127,9 @@ let grid_commands (p : R.t) ~args =
        (fun b -> String.concat "\n" (backend_commands args b))
        p.backends)
 
-(* gamepilot checkpoints' --program, --from and --to for [ids]. *)
+(* gamepilot run's program, --from and --to for [ids]. *)
 let program_args (p : R.t) ids =
-  Printf.sprintf "--program %s --from %s --to %s" p.id (List.hd ids) (last ids)
+  Printf.sprintf "%s --from %s --to %s" p.id (List.hd ids) (last ids)
 
 let commands ~guide (p : R.t) arg =
   let body =
