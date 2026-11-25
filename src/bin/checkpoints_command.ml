@@ -117,11 +117,16 @@ let run_info plan_dir f kind ~from_id ~to_id : Run_record.info =
 let watch_of f =
   Watch_hub.for_runs_dir ~daemon:f.daemon ~runs_dir:f.runs_dir f.watch
 
+(* The Switch daemons' --viewport: the program's, which a --viewport given
+   must match. *)
+let viewport plan_dir f = R.check_viewport (R.of_plan_dir plan_dir) f.viewport
+
 (* The pre-flight's (and --make-room's party read's) setup. *)
-let preflight_setup plan_dir f backend ~from_id : Preflight_command.setup =
+let preflight_setup plan_dir f backend ~viewport ~from_id :
+    Preflight_command.setup =
   let info = run_info plan_dir f Preflight ~from_id ~to_id:from_id in
   let { states; runs_dir; daemon; _ } = f in
-  { states; runs_dir; daemon; backend; info; watch = watch_of f }
+  { states; runs_dir; daemon; backend; viewport; info; watch = watch_of f }
 
 (* --from-event: testing by default, one checkpoint (--to is --from unless
    given). *)
@@ -150,9 +155,10 @@ let run_series plan_dir f =
   let* mode, to_id = mode_and_to f ~from_id in
   let* () = check_from_event f mode ~checkpoints:1 in
   let* backend = daemon_backend f mode in
+  let* viewport = viewport plan_dir f in
   let* plan_dir, from_id =
     Make_room_command.with_room ~plan_dir ~from_id f.make_room
-      (preflight_setup plan_dir f backend ~from_id)
+      (preflight_setup plan_dir f backend ~viewport ~from_id)
   in
   let* policy = Checkpoint_trials.policy ?runs:f.runs mode in
   let* ids = Plan_dir.checkpoint_ids plan_dir in
@@ -172,7 +178,8 @@ let run_series plan_dir f =
          world;
          watch = watch_of f;
          info = run_info plan_dir f Checkpoints ~from_id ~to_id;
-         daemon_flags = f.daemon_flags;
+         daemon_flags =
+           Daemon_process.viewport_args backend viewport @ f.daemon_flags;
          bound = ref None;
          save_after_pass = f.save_after_pass;
          max_rounds = f.max_rounds;
@@ -183,8 +190,9 @@ let run_series plan_dir f =
 let preflight plan_dir f =
   let* from_id = required "--from" f.from_id in
   let* backend = daemon_backend f Checkpoint_trials.Testing in
+  let* viewport = viewport plan_dir f in
   Preflight_command.run ~plan_dir ~from_id
-    (preflight_setup plan_dir f backend ~from_id)
+    (preflight_setup plan_dir f backend ~viewport ~from_id)
 
 let main plan_dir args =
   let* f = parse defaults args in

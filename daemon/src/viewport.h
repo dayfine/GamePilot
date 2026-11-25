@@ -70,4 +70,10 @@ cv::Size template_size_in_frame(const Viewport& viewport, cv::Size game_size,
 // "x,y,w,h" as a box when it is_unit_box, else nullopt.
 std::optional<Box> parse_box(std::string_view text);
 
+// A --viewport value: a name (named_viewport) is that whole viewport; x,y,w,h
+// is `base` with its picture box moved, its game size kept; nullopt for
+// anything else. The daemon and probe_images both parse theirs here.
+std::optional<Viewport> parse_viewport(std::string_view text,
+                                       const Viewport& base);
+
 }  // namespace gamepilot

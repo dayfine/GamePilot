@@ -22,6 +22,9 @@ type setup = {
   runs_dir : string;
   daemon : string;
   backend : Daemon_process.backend;
+  viewport : string option;
+      (** The Switch daemon's --viewport: the program's
+          (Program_registry.check_viewport). *)
   info : Run_record.info;
   watch : Daemon_process.watch option;
 }
@@ -215,8 +218,9 @@ let ending_of id = function
 
 let with_daemon setup record id body =
   match
-    Daemon_process.start ?watch:setup.watch ~daemon:setup.daemon
-      ~backend:setup.backend ~port:0
+    Daemon_process.start ?watch:setup.watch
+      ~flags:(Daemon_process.viewport_args setup.backend setup.viewport)
+      ~daemon:setup.daemon ~backend:setup.backend ~port:0
       ~wire_log:(Run_record.path record "wire.jsonl")
       ~out_file:(Run_record.path record "daemon.out")
       ~checkpoint:id ()

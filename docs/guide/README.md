@@ -27,7 +27,7 @@ come from the registry and the plans; everything else is hand-written and kept a
     cd src && opam exec -- dune exec -- gamepilot guide --check    # what CI runs
     cd src && opam exec -- dune exec -- gamepilot guide frlg.mail_glitch    # print a program's blocks
 
-The blocks: `programs` (this table), `backends`, `checkpoints [RANGE]` (each checkpoint's title, and
+The blocks: `programs` (this table), `backends` (on the Switch, with its game picture), `checkpoints [RANGE]` (each checkpoint's title, and
 a digest of its plans, so any plan change needs a regenerated page), `needs [RANGE]` (what the save
 needs for the chain, from the pre-flight), `preflight [RANGE]` (what the pre-flight checks before
 each checkpoint) and `commands [RANGE]`. RANGE is `FROM..TO` or one checkpoint id; without it, every
