@@ -6,7 +6,11 @@
     reach an advance, this composes the step in O(log n) and gives the same
     state.
 
-    A 32-bit state is an OCaml [int] from 0 to 2{^ 32} - 1. *)
+    A 32-bit state is an OCaml [int] from 0 to 2{^ 32} - 1.
+
+    Gen 3 games share this LCRNG and the PID/IV methods but seed differently; if
+    a second Gen 3 game arrives, the generator and methods move to
+    [pokemon/gen3/rng], and seeding stays per game. *)
 
 val next : int -> int
 (** One step. *)

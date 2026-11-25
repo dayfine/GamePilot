@@ -27,6 +27,10 @@ type t = {
   s4 : int;
   s5 : int;
 }
+(** [AdvRngState]. [advance] counts LCG steps from [seed]: advance [n]'s [s0] is
+    the state [n + 1] steps after the seed. [s0] to [s5] are six consecutive
+    states: the PID's low half comes from [s0] and its high half from [s1]; the
+    IVs come from two of [s2] to [s4], chosen by [rng_method]. *)
 
 val of_internal_state : seed:int -> advance:int -> rng_method -> int -> t
 (** [rngstate_from_internal_state]: the window starting at the given state. *)

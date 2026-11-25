@@ -5,11 +5,19 @@
     Port of [SeedsDatabase] in the fork's
     [PokemonFRLG/Programs/RngManipulation/PokemonFRLG_SeedsDatabase.{h,cpp}],
     without the file reading: {!of_columns} takes what the constructor reads
-    from the JSON ([Delay] and the other arrays, in the JSON object's key order,
-    which the C++ iterates sorted). *)
+    from the JSON: the [Delay] array, and every other array with its key. The
+    C++ stores the object in a [std::map], so it sees the columns sorted by name
+    (byte order); pass them in that order to get its tie-breaking in
+    {!find_seed}. *)
 
-type sound = Mono | Stereo
-type seed_button = A | Start | L
+type sound = Mono | Stereo  (** [SoundSetting]: the game's sound option. *)
+
+type seed_button =
+  | A
+  | Start
+  | L
+      (** [SeedButton]: the button pressed on the title screen, which sets the
+          seed. *)
 
 type extra_button =
   | No_extra
@@ -25,8 +33,13 @@ type column = {
   seed_button : seed_button;
   seeds : int array;
 }
+(** [SeedColumn]: one seed list. [name] is its JSON key, parsed into [sound],
+    [button_mode] (e.g. ["Help"], the only mode {!find_seed} uses) and
+    [seed_button]. [seeds.(i)] is the 16-bit seed at [delays.(i)] of {!t}. *)
 
 type t = { delays : int array; columns : column list }
+(** [SeedsDatabase]: the boot delays, one per row, and the columns in the order
+    {!of_columns} was given them. *)
 
 val parse_column_name : string -> (sound * string * seed_button, string) result
 (** ["<Sound> / <Button Mode> / <Seed Button>"], e.g. ["Mono / Help / A"]. *)
@@ -50,4 +63,5 @@ type seed_match = {
 val find_seed : t -> target:int -> sound -> radius:int -> seed_match option
 (** The earliest delay at which a ["Help"] column of [sound] gives [target],
     directly or with L held, with the seeds up to [radius >= 0] rows either side
-    (L-held seeds given without the offset). Earlier columns win ties. *)
+    (L-held seeds given without the offset). On equal delays the earlier column
+    wins, and within a column the seed without L. *)

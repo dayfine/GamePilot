@@ -18,6 +18,7 @@ type ivs = {
   spdef : int;
   speed : int;
 }
+(** [AdvIVs]: the six individual values, each 0 to 31. *)
 
 type result = {
   pid : int;
@@ -36,7 +37,10 @@ val pid_of_states : low:int -> high:int -> int
     [low]. *)
 
 val nature_of_pid : int -> int
+(** [nature_from_pid]: the PID mod 25, an [AdvNature] number. *)
+
 val ability_of_pid : int -> int
+(** [ability_from_pid]: the PID's lowest bit, the ability slot 0 or 1. *)
 
 val gender_of_value : int -> threshold:int -> gender option
 (** [gender_from_gender_value]: [None] for a genderless species (threshold below
@@ -56,3 +60,7 @@ val pokemon_of_state : ?roaming:bool -> Rng_state.t -> result
 (** [pokemon_from_state]: PID from [s0] and [s1], nature from the PID. *)
 
 val shiny_type_of_pid : int -> tid_xor_sid:int -> shiny_type
+(** [shiny_type_from_pid]: [tid_xor_sid] is the trainer's ID xor secret ID. With
+    [p] the PID's high half xor its low half, [Square] when [p] equals
+    [tid_xor_sid], [Star] when [p xor tid_xor_sid] is otherwise below 8, else
+    [Normal]. *)

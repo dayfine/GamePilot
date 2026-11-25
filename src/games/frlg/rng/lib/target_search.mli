@@ -8,6 +8,7 @@
     [None] field is the C++'s [Any]. *)
 
 type iv_range = { low : int; high : int }
+(** IVs from [low] to [high], both inclusive (0 to 31 accepts any). *)
 
 type iv_ranges = {
   hp : iv_range;
@@ -17,6 +18,8 @@ type iv_ranges = {
   spdef : iv_range;
   speed : iv_range;
 }
+(** One {!iv_range} per stat; a result passes only if every IV is in its range.
+*)
 
 type filters = {
   species : string;  (** Wild search only. *)
