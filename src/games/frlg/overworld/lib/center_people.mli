@@ -8,6 +8,7 @@
     maps. With the coded room the one ground floor for all 17, they are listed
     here so that routes go round them. *)
 
+(** How a person in a Center moves, as pret's object events give it. *)
 type motion =
   | Faces of Grid_maps.Direction.t  (** Stands still, facing that way. *)
   | Turns  (** Stands still, looking about. *)
@@ -16,11 +17,12 @@ type motion =
 
 type person = {
   name : string;  (** Its graphics, as PokemonSimulation's maps name it. *)
-  at : Grid_maps.Tile_pos.t;
+  at : Grid_maps.Tile_pos.t;  (** Where it stands in the Center's room. *)
   motion : motion;
   script : string option;  (** Its pret script; none for Six Island's rival. *)
   hide_flag : string option;  (** The game hides it while this is set. *)
 }
+(** One person in a standard Center, an obstacle the walks go round. *)
 
 val of_town : string -> person list
 (** The people of the town's Center (["CinnabarIsland"]), in pret's order; none
