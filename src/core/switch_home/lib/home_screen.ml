@@ -184,8 +184,8 @@ let is_home g =
 (* Dimmed, the dark theme's grey (51 a channel lit) reads 8 on console B: a
    flat band between black and the lit grey, the detail limits scaled by it.
    The band's floor does not tell black from dimmed: console B's black (the
-   capture card's, a launch or a fade) reads 21 (14 to 57 shifted, the FRLG
-   readers' trainer-card captures), inside the band with the dimmed HOME's 24
+   capture card's, a launch or a fade) reads 21 (14 to 57 shifted, test/images'
+   black-between-game-screens), inside the band with the dimmed HOME's 24
    (16 to 60 shifted). The detail tells them apart: black's boxes are flat
    (stddev 0), the dimmed HOME's 31 at least against scaled limits of 20 at
    most. The floor only keeps those limits above 0, which an all-black picture
@@ -247,11 +247,17 @@ let read m =
   if List.exists (fun (_, s) -> Option.is_none s) all then Elsewhere
   else classify m (fun id -> Option.get (List.assoc id all))
 
-let black_max_sum = 30.
+(* Black is dark and flat. Console B's black (test/images'
+   black-between-game-screens) reads 21 on the whole picture, 14 to 57 with its
+   colors shifted (10% toward grey the highest), its stddev 0; the darkest
+   pictures after it, the dimmed HOME 41 at least but with a stddev of 47 at
+   least, the launch's Game Freak intro 104 at least. Each limit sits midway. *)
+let black_max_sum = 80.
+let black_max_stddev = 24.
 
 let black m =
   match stats m picture_id with
-  | Some s -> sum s.mean < black_max_sum
+  | Some s -> sum s.mean < black_max_sum && sum s.stddev < black_max_stddev
   | None -> false
 
 let tile = function None -> "none" | Some k -> string_of_int k

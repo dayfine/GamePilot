@@ -16,7 +16,7 @@
 # (test_card_readers.ml) are made only when named. A set with no map for a
 # backend skips that backend. The card set also writes card.<backend>.shifted:
 # its real frames (every image but the renders under pret-trainer-card/)
-# with their colors shifted by shift_frame.py, which needs Pillow
+# with their colors shifted by dev/reader_fixtures/shift_frame.py, which needs Pillow
 # ($SHIFT_PYTHON, default python3; e.g. "uv run --with pillow python3").
 #
 #   sh games/frlg/readers/test/regen_fixtures.sh [screen|menus|battle ...]
@@ -79,7 +79,7 @@ probe_shifted() {
   out=$WORK/$set_name.$backend.shifted
   frames=$(grep -v '/pret-trainer-card/' "$map" | cut -d'|' -f2)
   # shellcheck disable=SC2086
-  (cd "$WORK/$set_name.$backend" && $SHIFT_PYTHON "$HERE/shift_frame.py" "$out" $frames)
+  (cd "$WORK/$set_name.$backend" && $SHIFT_PYTHON "$REPO/dev/reader_fixtures/shift_frame.py" "$out" $frames)
   images=$(cd "$out" && for s in *; do for f in $frames; do echo "$s/$f"; done; done)
   # shellcheck disable=SC2086
   (cd "$out" && "$PROBE_IMAGES" --spec "$spec" "$@" $images) >"$HERE/fixtures/$fixture"
