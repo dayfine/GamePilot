@@ -37,7 +37,7 @@ What the plan needs, as the pre-flight checks it (generated from the plan):
 - pidgey in the party (fly)
 - mr-mime in the party (party_swap)
 - money at least ¥400 (all the purchases)
-- antidote at least x2 (give_bag_item)
+- antidote at least x1 (give_bag_item)
 - at the start, Route16
 <!-- /generated -->
 
@@ -99,7 +99,7 @@ start state is untouched.
 <!-- generated:preflight mg-06 -->
 | Resume from | The pre-flight checks |
 |---|---|
-| mg-06 | party includes mr-mime, pidgey; pidgey in the party (fly); mr-mime in the party (party_swap); money at least ¥400 (mart); antidote at least x2 (give_bag_item); at the start, Route16 |
+| mg-06 | party includes mr-mime, pidgey; pidgey in the party (fly); mr-mime in the party (party_swap); money at least ¥400 (mart); antidote at least x1 (give_bag_item); at the start, Route16 |
 <!-- /generated -->
 
 If the proof step stopped the run (a blank editor or `???`), the glitch is not active on that save:

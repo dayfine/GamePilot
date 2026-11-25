@@ -9,6 +9,8 @@ Developer pages are in `docs/programs/`.
 |---|---|---|---|
 | [Start Menu PoC](frlg.start_menu_poc.md) | `frlg.start_menu_poc` | mGBA | Opens and closes the Start menu: the first program through the daemon. |
 | [Mail Glitch](frlg.mail_glitch.md) | `frlg.mail_glitch` | mGBA, the Switch | Sets up the Mail Glitch, performs it against Lea & Jed on Route 16 and uses it to duplicate an item. |
+| [Supplies](frlg.supplies.md) | `frlg.supplies` | mGBA, the Switch | Stocks what the duplication programs use: Retro Mail and Super Repels. |
+| [Team Training](frlg.team_training.md) | `frlg.team_training` | mGBA, the Switch | Farms Rare Candies with the Mail Glitch's item duplication and levels the team with them. |
 <!-- /generated -->
 
 The Mail Glitch has a second page for its last checkpoint:
