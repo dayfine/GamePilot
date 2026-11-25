@@ -17,7 +17,6 @@ Runs on: mGBA, the Switch (in its GBA app).
 Save at the Celadon Dept. Store 1F save spot: the run starts and ends there.
 
 <!-- generated:needs -->
-- 0 free party slots
 - pidgey in the party (fly)
 - money at least ¥7500 (all the purchases)
 - at the start, CeladonCity_DepartmentStore_1F

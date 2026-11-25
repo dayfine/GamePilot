@@ -20,6 +20,7 @@ constexpr std::uint8_t kProZR = 1u << 7;
 // button4: the shared buttons.
 constexpr std::uint8_t kProMinus = 1u << 0;
 constexpr std::uint8_t kProPlus = 1u << 1;
+constexpr std::uint8_t kProLStick = 1u << 3;
 constexpr std::uint8_t kProHome = 1u << 4;
 // button5: the left side, the D-pad as execute_state() splits it.
 constexpr std::uint8_t kProDown = 1u << 0;
@@ -52,6 +53,7 @@ constexpr KeyMask kZL = 1u << 13;
 constexpr KeyMask kZR = 1u << 14;
 constexpr KeyMask kPlus = 1u << 15;
 constexpr KeyMask kMinus = 1u << 16;
+constexpr KeyMask kLStick = 1u << 17;
 
 // encode_joystick()'s range for the Pro Controller
 // (PABotBase2_ProController's JOYSTICK_MIN_THRESHOLD and _MAX_THRESHOLD): the
@@ -154,6 +156,7 @@ ProButtons pro_buttons_for_keys(KeyMask keys) {
   set_if(buttons.button3, has(keys, kZR), kProZR);
   set_if(buttons.button4, has(keys, kGbaStart | kPlus), kProPlus);
   set_if(buttons.button4, has(keys, kGbaSelect | kMinus), kProMinus);
+  set_if(buttons.button4, has(keys, kLStick), kProLStick);
   set_if(buttons.button4, has(keys, kHome), kProHome);
   set_if(buttons.button5, has(keys, kGbaL), kProL);
   set_if(buttons.button5, has(keys, kZL), kProZL);
