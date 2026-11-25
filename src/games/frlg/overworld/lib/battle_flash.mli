@@ -2,13 +2,18 @@
     second of the step that set the battle off, seconds before the battle's own
     wipe and screen. Ported from the fork's
     Inference/PokemonFRLG_BattleFlashWatcher: the middle of the screen (the fade
-    probe, {!Frlg_readers.Screen_facts.fade_id}) darkens by a fifth or more, not
-    below two fifths, and starts to come back. A warp's fade only darkens, to
-    black, so it does not count.
+    probe, {!Frlg_readers.Screen_facts.fade_id}) darkens by an eighth or more,
+    not below two fifths, and starts to come back. A warp's fade only darkens,
+    to black, so it does not count.
 
     On mGBA (2026-11-23, run 4 of mg-04, Pokemon Tower 3F) the screen dipped
     from a channel sum of 598 to 335 starting 4 frames after the step that set
-    the battle off, and this watcher fired 13 frames after that step. *)
+    the battle off, and this watcher fired 13 frames after that step.
+
+    Where it differs: the fork's dip is a fifth. Viridian Forest's flash dips
+    only to 0.83 of the screen before it (mGBA, 2026-11-25: 320 to 266, every
+    encounter of the run missed), and a step with no battle stays above 0.95
+    (Route 3) and 0.98 (the forest). *)
 
 type t
 (** A watcher: the brightness of the last {!window_ms} of frames it saw. *)
@@ -17,6 +22,18 @@ val window_ms : float
 (** 400 ms: a flash goes dark and comes back within this. *)
 
 val create : unit -> t
+
+(** What a frame shows of a battle's start. *)
+type sign =
+  | Flash  (** the flash, dark and back *)
+  | Going_black
+      (** the screen below two fifths of the brightest frame of the last
+          {!window_ms}: the battle's wipe, seconds after its flash, or a warp's
+          fade *)
+
+val sign : t -> Effects.measurements -> sign option
+(** Feeds the watcher one frame, as {!seen}: the flash, or the screen going
+    black, by it. *)
 
 val seen : t -> Effects.measurements -> bool
 (** Feeds the watcher one frame: whether a flash shows by it. Frames go in

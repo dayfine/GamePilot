@@ -1,6 +1,6 @@
 (** What a Pokémon checkpoint promises once its events are done: the plan's
     [metadata.postconditions] (and a repeat's [until]), read by
-    [Pokemon_plan_codec] and checked by {!Postcondition_check}. *)
+    [Pokemon_plan_format] and checked by {!Postcondition_check}. *)
 
 (** Which party a checkpoint promises. *)
 type party =

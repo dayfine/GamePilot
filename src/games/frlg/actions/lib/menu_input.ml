@@ -1,9 +1,9 @@
 open Frlg_readers
 
-exception Action_failed of Pokemon_checkpoints.Failure.cause
+exception Action_failed of Pokemon_engine.Failure.cause
 
 let fail ?repeats code detail =
-  raise (Action_failed (Pokemon_checkpoints.Failure.cause ?repeats code detail))
+  raise (Action_failed (Pokemon_engine.Failure.cause ?repeats code detail))
 
 let raise_error = function
   | Ok () -> ()

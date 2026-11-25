@@ -53,7 +53,7 @@ void check_requests(const std::map<std::string, pa::JsonValue>& files) {
   CHECK(load.method == "backend.load_state");
   CHECK(decode_load_state(load.params).path.ends_with("overworld.ss"));
 
-  const Request reset = decode_request(files.at("48-reset.request.json"));
+  const Request reset = decode_request(files.at("52-reset.request.json"));
   CHECK(reset.method == "backend.reset" && reset.has_id);
   decode_reset(reset.params);
 
@@ -132,6 +132,14 @@ void check_requests(const std::map<std::string, pa::JsonValue>& files) {
   CHECK(choice.find && choice.find->max_area == 5000.0 &&
         choice.find->template_hash.size() == 64 &&
         choice.find->shape_hash.empty() && !choice.find->margin);
+  CHECK(!chevron.find || !chevron.find->masked);
+
+  // v1.15: a find scored with the pixels outside its filter black.
+  const SubscribeParams masked = decode_subscribe(
+      decode_request(files.at("49-subscribe.find_masked.request.json")).params);
+  CHECK(masked.probes.size() == 1 && masked.probes[0].find &&
+        masked.probes[0].find->masked &&
+        masked.probes[0].find->template_hash.size() == 64);
 
   const Request submit = decode_request(files.at("08-submit.request.json"));
   const SubmitParams batch = decode_submit(submit.params);
@@ -148,9 +156,23 @@ void check_requests(const std::map<std::string, pa::JsonValue>& files) {
   CHECK(home.commands.size() == 1 &&
         home.commands[0].buttons == button_mask("Home") &&
         (home.commands[0].buttons & kSwitchOnlyKeys) != 0);
-  CHECK((button_mask("X") | button_mask("Y")) ==
+  CHECK((button_mask("X") | button_mask("Y") | button_mask("ZL") |
+         button_mask("ZR") | button_mask("Plus") | button_mask("Minus")) ==
         (kSwitchOnlyKeys & ~button_mask("Home")));
   CHECK((button_mask("L") & kSwitchOnlyKeys) == 0);
+  // v1.17: the Switch's own Plus and Minus, Switch-only like Home.
+  const SubmitParams skip = decode_submit(
+      decode_request(files.at("51-submit.plus.request.json")).params);
+  CHECK(skip.commands.size() == 2 &&
+        skip.commands[0].buttons == button_mask("Plus") &&
+        skip.commands[1].buttons == button_mask("Minus"));
+  // v1.16: ZL then ZL with ZR, PLZA's ball throw.
+  const SubmitParams aim = decode_submit(
+      decode_request(files.at("50-submit.zl_zr.request.json")).params);
+  CHECK(aim.commands.size() == 2 &&
+        aim.commands[0].buttons == button_mask("ZL") &&
+        aim.commands[1].buttons == (button_mask("ZL") | button_mask("ZR")) &&
+        aim.commands[1].cooldown_ms == 8000);
   CHECK(error_message(pa::JsonValue(std::int64_t{42}),
                       switch_button_refusal("mgba", button_mask("Home"))) ==
         files.at("43-error.switch_button.response.json"));
@@ -180,7 +202,13 @@ void check_requests(const std::map<std::string, pa::JsonValue>& files) {
 
   const Request cancel = decode_request(files.at("12-cancel.request.json"));
   CHECK(cancel.method == "cancel");
-  decode_cancel(cancel.params);
+  CHECK(!decode_cancel(cancel.params).then);
+  const Request then = decode_request(files.at("48-cancel.then.request.json"));
+  const CancelParams replaced = decode_cancel(then.params);
+  CHECK(replaced.then && replaced.then->batch_id == "move" &&
+        replaced.then->commands.size() == 2 &&
+        replaced.then->commands[0].buttons ==
+            (button_mask("ZL") | button_mask("X")));
 
   const Request status = decode_request(files.at("28-status.request.json"));
   CHECK(status.method == "status" && status.has_id);
@@ -264,7 +292,7 @@ void check_encoders(const std::map<std::string, pa::JsonValue>& files) {
   CHECK(load_state_result(1200, 1) ==
         result_of(files.at("04-load_state.response.json")));
   CHECK(load_state_result(0, 2) ==
-        result_of(files.at("49-reset.response.json")));
+        result_of(files.at("53-reset.response.json")));
   CHECK(save_result(5400) ==
         result_of(files.at("25-save_state.response.json")));
   CHECK(save_result(5460) ==
@@ -555,7 +583,7 @@ int main() {
   const auto files = load_contracts();
   // One per protocol/v1 golden file. The checks below index files by name,
   // so they run only when every one is there.
-  constexpr std::size_t kGoldenFiles = 49;
+  constexpr std::size_t kGoldenFiles = 53;
   CHECK(files.size() == kGoldenFiles);
   if (files.size() == kGoldenFiles) {
     check_requests(files);

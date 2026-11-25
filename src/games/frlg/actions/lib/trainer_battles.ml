@@ -1,5 +1,5 @@
 module B = Frlg_battle
-module Failure = Pokemon_checkpoints.Failure
+module Failure = Pokemon_engine.Failure
 
 type outcome = Won of int | Lost of { battle : int; why : string }
 

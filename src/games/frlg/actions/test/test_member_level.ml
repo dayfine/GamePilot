@@ -39,7 +39,7 @@ let ends_on screen = S.screen_name (S.screen_at screen screen.S.clock_ms)
 
 let outcome = function
   | Ok () -> "ok"
-  | Error cause -> "failed " ^ Pokemon_checkpoints.Failure.cause_to_string cause
+  | Error cause -> "failed " ^ Pokemon_engine.Failure.cause_to_string cause
 
 let level_text = Option.fold ~none:"unread" ~some:(Printf.sprintf "Lv %d")
 
@@ -105,7 +105,7 @@ let grind levels () =
       known_moves = (fun ~slot:_ -> [ "barrier" ]);
       level = (fun ~slot -> Member_level.read ~log:ignore ~slot);
       swap = (fun a b -> call (Printf.sprintf "swap %d %d" a b));
-      go_to = (fun g -> call ("go " ^ g.Pokemon_checkpoints.Pose.map));
+      go_to = (fun g -> call ("go " ^ g.Pokemon_engine.Pose.map));
       heal = (fun _ -> call "heal");
       find_battle = (fun () -> call "spin");
       battle =

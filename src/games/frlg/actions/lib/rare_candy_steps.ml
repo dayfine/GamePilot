@@ -13,7 +13,15 @@ let list_timeout_ms = 8000
 let question_ms = 8000
 let evolution_hold_ms = 12_000
 let evolution_timeout_ms = 30_000
-let in_bag m = Bag_screen.bag_open m && not (Bag_screen.item_menu m)
+
+(* The bag back, its pocket's arrows shown: the item-use animation that runs
+   before a level-up (pokefirered src/party_menu.c) fades in through a frame
+   of one dim colour, where the bag's boxes pass by their hue alone (mGBA,
+   dex collection 04, Pidgey's first candy). *)
+let in_bag m =
+  Bag_screen.bag_open m
+  && Bag_screen.pocket m <> None
+  && not (Bag_screen.item_menu m)
 
 let party_menu : Level_up_screens.context =
   {
@@ -43,17 +51,17 @@ let closed_without_candy ~log () =
   M.settle_back ~label:"no rare candy" ~log
 
 let open_candy ~log ~slot :
-    (Rare_candy.opened, Pokemon_checkpoints.Failure.cause) result =
+    (Rare_candy.opened, Pokemon_engine.Failure.cause) result =
   match Menu_step.result (fun () -> Bag_items.item_action candy use_row) with
   | Ok () ->
       Result.map
         (fun () -> Rare_candy.Opened)
         (Menu_step.result (to_party ~slot))
-  | Error { Pokemon_checkpoints.Failure.code = "not_in_bag"; _ } ->
+  | Error { Pokemon_engine.Failure.code = "not_in_bag"; _ } ->
       Result.map
         (fun () -> Rare_candy.No_candy)
         (Menu_step.result (closed_without_candy ~log))
-  | Error c -> Ok (Not_opened (Pokemon_checkpoints.Failure.cause_to_string c))
+  | Error c -> Ok (Not_opened (Pokemon_engine.Failure.cause_to_string c))
 
 (* A message with no arrow ("... was elevated to Lv. 51.", "... learned
    ...!") waits for A once printed. A is pressed only after it has shown

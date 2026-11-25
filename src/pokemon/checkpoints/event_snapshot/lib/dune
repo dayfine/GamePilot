@@ -1,0 +1,10 @@
+(library
+ (name pokemon_event_snapshot)
+ (public_name gamepilot.pokemon_event_snapshot)
+ (libraries
+  yojson
+  gamepilot.grid_geometry
+  gamepilot.engine_event_snapshot
+  gamepilot.pokemon_rules)
+ (preprocess
+  (pps ppx_deriving_yojson)))
