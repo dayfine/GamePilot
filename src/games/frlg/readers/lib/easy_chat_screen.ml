@@ -2,16 +2,10 @@ type cell = { row : int; col : int }
 
 let rows = 4
 let cols = 2
-let game_w = 240.
-let game_h = 160.
 
-let box ~x ~y ~w ~h : Wire.box =
-  {
-    x = float x /. game_w;
-    y = float y /. game_h;
-    w = float w /. game_w;
-    h = float h /. game_h;
-  }
+(* Boxes here are stated in whole game pixels. *)
+let box ~x ~y ~w ~h =
+  Game_pixels.box { x = float x; y = float y; w = float w; h = float h }
 
 let cells =
   List.concat_map
