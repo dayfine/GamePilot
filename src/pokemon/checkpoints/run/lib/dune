@@ -7,4 +7,5 @@
   gamepilot.wire
   gamepilot.grid_maps
   gamepilot.json_field
+  gamepilot.engine_run
   gamepilot.checkpoints_plan))

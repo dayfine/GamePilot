@@ -2,7 +2,7 @@
    whose clerk the game looks up, ids from the call's, the call's why and
    skip_if, and the errors. *)
 
-module T = Checkpoints_expand.Fragment_table
+module T = Engine_expand.Fragment_table
 
 let table_json =
   {|{"format": "gamepilot-fragments/1", "game": "test", "fragments": {
@@ -22,7 +22,7 @@ let resolve ~kind value ~field =
   | _ -> Error ("no shop " ^ value)
 
 let expanded =
-  Expand_cases.expanded (Checkpoints_expand.Fragment_calls.expand table resolve)
+  Expand_cases.expanded (Engine_expand.Fragment_calls.expand table resolve)
 
 let case = Expand_cases.case
 

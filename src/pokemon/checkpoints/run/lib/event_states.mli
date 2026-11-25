@@ -13,6 +13,7 @@
     so a partial run checks the same promise a whole run does. Not in the fork.
 *)
 
+open Engine_run
 open Checkpoints_plan
 
 val dir : states:string -> checkpoint:string -> string

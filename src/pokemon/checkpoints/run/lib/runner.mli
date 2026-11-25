@@ -12,6 +12,7 @@
     game knows what its save already holds. The runner neither saves nor
     reloads: the caller (or {!Repeat_until}) decides that. *)
 
+open Engine_run
 open Checkpoints_plan
 
 val run :

@@ -6,7 +6,7 @@
 val create : Checkpoints_plan.Plan.checkpoint -> Watch_report.t
 (** The checkpoint's events, all pending; shows the plan. *)
 
-val on_event : Watch_report.t -> int -> Checkpoints_run.Event_progress.t -> unit
+val on_event : Watch_report.t -> int -> Engine_run.Event_progress.t -> unit
 (** The runner's progress of event [i], shown. *)
 
 val options : (string -> unit) -> Checkpoint_run.options

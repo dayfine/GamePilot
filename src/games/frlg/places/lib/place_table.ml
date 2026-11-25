@@ -21,7 +21,7 @@ let format = "gamepilot-places/1"
 let asset = "src/games/frlg/places/places.json"
 let ( let* ) = Result.bind
 
-module D = Checkpoints_expand.Table_decode
+module D = Engine_expand.Table_decode
 
 let error = D.error
 let field = D.field
@@ -135,7 +135,7 @@ let routes t : Checkpoints_expand.Place_routes.game =
     ride = Lift_stops.ride;
   }
 
-let resolve t : Checkpoints_expand.Fragment_calls.resolve =
+let resolve t : Engine_expand.Fragment_calls.resolve =
  fun ~kind value ~field ->
   match kind with
   | "town" -> Towns.field t.towns value ~field

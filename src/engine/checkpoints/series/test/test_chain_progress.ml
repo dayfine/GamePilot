@@ -1,8 +1,8 @@
 (* Chain_progress: what the watch page's Run strip shows as a fake chain
    (a, b, c) runs, one step per runner call. *)
 
-open Checkpoints_run
-open Checkpoints_series
+open Engine_run
+open Engine_series
 module W = Wire.Watch_run
 
 let policy_of ?runs mode =
