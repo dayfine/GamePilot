@@ -111,6 +111,7 @@ let run ~log ~picture ~assets ~gift_name ~tile ~span ~code =
   let* () = check span in
   let* () =
     Effects.with_probes (G.probes ~picture ~assets ~gift_name) (fun () ->
+        Switch_home.Stick_wake.run ();
         run_all (chosen ~log ~picture ~tile ~code span))
   in
   Ok (stopped ~log span)

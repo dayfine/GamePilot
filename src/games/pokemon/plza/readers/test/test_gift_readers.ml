@@ -4,8 +4,10 @@
    Pokémon and an empty sixth card) reads its row and cards; console B's
    Internet gift list (images/mystery-gift, 2026-11-25: four gifts, the cursor
    on the first, Vivillon the 4th) reads as the active list with its gift on
-   item 4; both also shifted (fixtures/gifts.shifted.probes.jsonl). No other
-   capture reads as the menu, the list or a gift's card. No capture of a card
+   item 4; both also shifted (fixtures/gifts.shifted.probes.jsonl). The same
+   list dimmed by the Switch after an idle (gift-list-dimmed, about 30%
+   brightness) must read as nothing: a dim screen is no screen we know. No
+   other capture reads as the menu, the list or a gift's card. No capture of a card
    exists, so nothing reads one positively yet. *)
 
 open Plza_readers
