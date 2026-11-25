@@ -10,8 +10,9 @@ GamePilot automates games through three layers (design: `docs/design/Layered-Aut
   - `base/`: pure, game-agnostic code with no effects (`wire`: the protocol codec).
   - `core/`: the effects programs use (`effects`) and their handlers (`session`, `live`, `replay`).
   - `pokemon/`: code shared by Pokemon games (navigation grid, checkpoint plans and their runner).
-    `checkpoints/` depends one way: `expand` (raw plan JSON) -> `plan` (types, decoding) -> `run`
-    (one checkpoint) -> `series` (a chain of checkpoints).
+    `checkpoints/` holds four libraries. A plan file passes through `expand` (rewrites raw plan
+    JSON; the game calls it at load) and then `plan` (types, decoding). The libraries depend one
+    way, `plan` -> `run` (one checkpoint) -> `series` (a chain of checkpoints); `expand` stands alone.
   - `games/<game>/`: `readers/`, `actions/`, `maps/`, `checkpoints/`, and `programs/<program>/`.
   - `program_registry/`: every program's descriptor (game, group, name, doc, checkpoints folder,
     backends), as PA/CC's program list. A new program registers there (`docs/programs/README.md`).
