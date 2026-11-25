@@ -24,7 +24,19 @@ let timed run ~default steps (event : Plan.event) (args : Json_field.obj) =
   | [ ("timeout_ms", `Int ms) ] -> run steps ~timeout_ms:ms
   | _ -> bad_args event "the only arg is timeout_ms, a whole number of ms"
 
-let game_actions steps =
+(* The platform's hint fades after a few seconds idle: a start that does not
+   see it reloads the latest autosave, where it shows fresh, and looks again. *)
+let platform_or_reload ~reload steps ~timeout_ms =
+  match Platform_wait.wait_for_platform steps ~timeout_ms with
+  | Error { code = "platform_not_seen"; _ } ->
+      steps.Story_steps.log
+        "[PLZA] platform wait: no controls hint (it fades when idle); \
+         reloading the latest autosave to see it fresh";
+      Result.bind (reload ()) (fun () ->
+          Platform_wait.wait_for_platform steps ~timeout_ms)
+  | outcome -> outcome
+
+let game_actions ~reload steps =
   List.map
     (fun (name, action) -> (name, action steps))
     [
@@ -33,7 +45,7 @@ let game_actions steps =
         timed Platform_wait.opening_to_platform ~default:opening_to_platform_ms
       );
       ( "wait_for_platform",
-        timed Platform_wait.wait_for_platform ~default:wait_for_platform_ms );
+        timed (platform_or_reload ~reload) ~default:wait_for_platform_ms );
       ("set_text_speed_fast", no_args Text_speed.run);
       ("plus_skip", no_args Plus_skip.run);
     ]
@@ -65,7 +77,7 @@ let make steps ~checkpoint_id ~reload : Game.t =
   {
     run_own = walk steps ~checkpoint_id;
     run_builtin = builtin steps;
-    game_actions = game_actions steps;
+    game_actions = game_actions ~reload steps;
     flag_holds = (fun _ -> false);
     position = (fun () -> None);
     between_rounds = (fun () -> Ok ());

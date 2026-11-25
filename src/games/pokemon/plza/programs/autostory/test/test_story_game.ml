@@ -19,6 +19,8 @@ let plan id =
   | Ok p -> p
   | Error e -> failwith e
 
+(* A reload: the console's time moves on and [reloaded] says it happened. *)
+let reloaded = ref false
 let look (c : C.t) = L.empty ~at_ms:c.now
 let hint c = { (look c) with controls_hint = true }
 let black c = { (look c) with fade_black = true }
@@ -71,8 +73,9 @@ let arrival c w =
 
 (* 01.01: the platform; the menu from X until B; the walk's white fade once
    the stick was held 8 s (never when [lost]). *)
-let platform ?(lost = false) c =
+let platform ?(lost = false) ?(faded = false) c =
   match C.nth_after c Wire.X ~after:0.0 0 with
+  | None when faded && not !reloaded -> look c
   | None -> hint c
   | Some x when C.nth_after c Wire.B ~after:x 0 = None -> look c
   | Some _ -> (
@@ -82,10 +85,15 @@ let platform ?(lost = false) c =
 
 let outcome checkpoint screen =
   let c = C.create () in
+  reloaded := false;
   let steps = C.steps c screen in
+  let reload () =
+    reloaded := true;
+    c.now <- c.now +. 30_000.0;
+    Ok ()
+  in
   let game =
-    Plza_autostory.Story_game.make steps ~checkpoint_id:checkpoint
-      ~reload:(fun () -> Ok ())
+    Plza_autostory.Story_game.make steps ~checkpoint_id:checkpoint ~reload
   in
   let result = Runner.run game (plan checkpoint).checkpoint in
   ((match result with Ok () -> "passed" | Error f -> Failure.to_string f), c)
@@ -107,7 +115,13 @@ let cases =
       (result "01.01" (platform ~lost:true))
       "01.01 event 3 (platform_to_plaza): walk_no_end: platform_to_plaza: no \
        end event within 11287 ms of the last leg";
-    case "01.01 off the platform: no controls hint" (result "01.01" look)
+    case "01.01 with the hint faded: a reload, then the whole checkpoint"
+      (fun () ->
+        let r = result "01.01" (platform ~faded:true) () in
+        Printf.sprintf "%s, reloaded %b" r !reloaded)
+      "passed, reloaded true";
+    case "01.01 off the platform: no controls hint, even after a reload"
+      (result "01.01" look)
       "01.01 event 1 (on_platform): platform_not_seen: No controls hint on 2 \
        looks in a row within 10000 ms.";
     case "the walk is walked before 03.03, run after"

@@ -139,3 +139,5 @@ let shown ~white m =
     | Box_and_arrow -> white_box m && arrow_found m black_arrow_id black_arrow
   in
   white_shown || blue_box m || arrow_found m teal_arrow_id teal_arrow
+
+let blue_shown = blue_box

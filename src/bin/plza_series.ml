@@ -11,7 +11,8 @@
    every later run of the same checkpoint first goes back to the latest
    autosave (Plza_autostory.Game_reload), which 01.00b cannot (its start is
    no save): its second run is refused. A passing checkpoint hands the
-   console to the next one as it ends. *)
+   console to the next one as it ends. Its daemons run with keep-awake off
+   (keepawake_off). *)
 
 open Engine_run
 module P = Plza_checkpoints
@@ -19,6 +20,12 @@ module Story = Plza_autostory
 module Assets = Plza_readers.Blob_assets
 
 let ( let* ) = Result.bind
+
+(* The daemon's keep-awake presses B after 180 s idle on the Switch; B backs
+   out of PLZA's new-game menus (console B, 2026-11-25), so PLZA's daemons run
+   without it. A --keepawake given on the command line comes after, and the
+   daemon takes the last. *)
+let keepawake_off = [ "--keepawake"; "0" ]
 
 type outcome =
   | Passed
@@ -244,7 +251,8 @@ let run_series ~plan_dir (f : Checkpoints_flags.flags) ~backend ~viewport =
       info =
         { kind = Checkpoints; program; from_id; to_id; backend = f.backend };
       daemon_flags =
-        Daemon_process.viewport_args backend viewport @ f.daemon_flags;
+        Daemon_process.viewport_args backend viewport
+        @ keepawake_off @ f.daemon_flags;
       watch =
         Watch_hub.for_runs_dir ~daemon:f.daemon ~runs_dir:f.runs_dir f.watch;
     }

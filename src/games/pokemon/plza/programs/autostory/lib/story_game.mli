@@ -6,7 +6,11 @@
     - [confirm_new_game] ({!Plza_story.New_game_confirm}), no args;
     - [opening_to_platform] and [wait_for_platform]
       ({!Plza_story.Platform_wait}), with an optional [timeout_ms] (240 s and
-      180 s when absent);
+      180 s when absent). Where it differs: when [wait_for_platform] sees no
+      controls hint, which fades after a few seconds idle (console B,
+      2026-11-25: 01.01 started a minute after 01.00b ended), it reloads the
+      latest autosave, where the hint shows fresh, and waits again; the fork
+      starts 01.01 right after the opening or a reload and never needed it;
     - [set_text_speed_fast] ({!Plza_story.Text_speed}) and [plus_skip]
       ({!Plza_story.Plus_skip}), no args;
     - the engine's [scene] ({!Plza_story.Scene_machine}): its [action]

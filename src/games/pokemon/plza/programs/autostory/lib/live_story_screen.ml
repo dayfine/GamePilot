@@ -9,6 +9,7 @@ let probes ~picture ~assets =
       Confirm_choices.probes ~picture;
       Frame_cells.probes ~picture;
       Game_loading.probes ~picture;
+      Choice_arrow.backup_save_probes ~picture ~assets;
     ]
 
 let fresh_frame_ms = 500

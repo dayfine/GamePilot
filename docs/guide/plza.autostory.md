@@ -37,12 +37,13 @@ cd src && opam exec -- dune exec -- gamepilot checkpoints --program plza.autosto
 
 ## When it stops
 
-The first run starts wherever the console is. A later run of 01.01 first closes the game and
+The first run starts wherever the console is. If 01.01 does not see the platform's controls hint,
+which fades after a few seconds idle, it reloads the platform's autosave and looks again. A later run of 01.01 first closes the game and
 starts it again from HOME's first tile to load the platform's autosave; 01.00b cannot be reloaded,
 so after it fails, put the console back on Confirm Choices by hand and run it again. Each run
 keeps its log, wire log and a `failure.png` in its run folder.
 
 ## Known limits
 
-Only 01.00b and 01.01 so far. The name and language on Confirm Choices are not checked, and a
-title screen asking about the backup save or showing a dialog stops the reload.
+Only 01.00b and 01.01 so far. The name and language on Confirm Choices are not checked. The
+daemon's keep-awake is off for this program: its B would back out of the new game's menus.
