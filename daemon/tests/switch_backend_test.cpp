@@ -56,8 +56,6 @@ void check_key_mapping() {
   CHECK(pro_buttons_for_keys(button_mask("ZL")).button5 == 0x80);
   // ZR in byte 3 bit 7, beside R.
   CHECK(pro_buttons_for_keys(button_mask("ZR")).button3 == 0x80);
-  // The left stick's click in byte 4 bit 3 (PABotBase2_OemController's).
-  CHECK(pro_buttons_for_keys(button_mask("LClick")).button4 == 0x08);
 }
 
 bool axes_are(const std::uint8_t (&bytes)[3], std::uint16_t x,

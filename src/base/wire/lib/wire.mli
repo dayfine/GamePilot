@@ -31,14 +31,13 @@ type button = Command.button =
   | Y
   | ZL
   | ZR
-  | LClick
 
 val string_of_button : button -> string
 val button_of_string : string -> button option
 
 val switch_only : button -> bool
-(** [Home], [X], [Y] (v1.11), [ZL] (v1.14), [ZR] (v1.16) and [LClick] (v1.17,
-    the left stick pressed in): buttons only the Switch backend takes. *)
+(** [Home], [X], [Y] (v1.11), [ZL] (v1.14) and [ZR] (v1.16): buttons only the
+    Switch backend takes. *)
 
 type stick = Command.stick
 (** A stick's tilt (x, y) in -1..1: +x right, +y up (v1.12). *)
