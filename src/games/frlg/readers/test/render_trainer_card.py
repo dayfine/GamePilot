@@ -8,8 +8,8 @@ earned badges (badges.png, from tile 192) by DrawStarsAndBadgesOnCard. Text
 them. Colors are 5-bit GBA colors widened as mGBA shows them (c << 3 | c >> 2).
 A fade multiplies every color, as the palette fade in from black does.
 
-These renders stand in for mGBA frames until real ones are captured
-(trainer_card_front.mli). Needs Pillow and a pokefirered clone (a sparse one
+These renders cover the card colours, badge patterns and fade steps the real
+mGBA and Switch frames don't (trainer_card_front.mli). Needs Pillow and a pokefirered clone (a sparse one
 works: files are read with git show):
 
   python3 render_trainer_card.py POKEFIRERED OUT.png BADGES STARS [FADE]
