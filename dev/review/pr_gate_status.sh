@@ -16,6 +16,6 @@ fi
 printf 'PR\tCI\tSTRUCT\tNEXT\tTITLE\n'
 for pr in "$@"; do
     gh pr view "$pr" --repo "$repo" \
-        --json number,title,headRefOid,files,reviews,statusCheckRollup |
+        --json number,title,headRefOid,files,reviews,statusCheckRollup,mergeable |
         python3 -I "$here/gate_row.py"
 done

@@ -5,12 +5,13 @@ prints on stdin and prints its gate row: NUMBER CI STRUCT NEXT, tab-separated, t
 CI is pass / fail / pending / none, over the checks at the PR's tip. STRUCT is the qc-structural
 verdict at the tip: ok (APPROVED), rework (NEEDS_REWORK), stale(<sha>) when the latest verdict was
 given at an older commit, none, or skip for a docs-only PR (every file is a .md or under docs/).
-NEXT is the one next step; once CI is green and the verdict is ok, it is "merge" unless the PR
-changes structure, then "user review (<reason>)" (AGENTS.md, "PR gate loop"). Structure, read off
-the file list: a library module or dune file added, deleted or renamed under src/; a changed .mli
-of a library shared across games (src/base, src/core, src/pokemon); a changed format (protocol/,
-a *_decode.ml); a design doc (docs/design/); or two NEEDS_REWORK verdicts. The reason
-printed is the first that holds, in the order: reworked twice, structure, design doc.
+NEXT is the one next step: "merge main" first when the PR conflicts with main; once CI is green and
+the verdict is ok, "merge" unless the PR changes structure, then "user review (<reason>)"
+(AGENTS.md, "PR gate loop"). Structure, read off the file list: a library module or dune file added,
+deleted or renamed under src/; a changed .mli of a library shared across games (src/base, src/core,
+src/pokemon); a changed format (protocol/, a *_decode.ml); a design doc (docs/design/); or two
+NEEDS_REWORK verdicts. The reason printed is the first that holds, in the order: reworked twice,
+structure, design doc.
 
 A qc-structural verdict is a COMMENT review (GitHub refuses self-approval, so the review state
 says nothing) whose body has a "## Structural QC" heading, a "Reviewed SHA: <sha>" line and a
@@ -115,7 +116,9 @@ def ci_state(pr):
     return "none"
 
 
-def next_action(ci, struct, owner=None):
+def next_action(ci, struct, owner=None, conflicting=False):
+    if conflicting:
+        return "merge main"
     if ci == "fail":
         return "fix CI"
     if ci in ("pending", "none"):
@@ -130,7 +133,9 @@ def next_action(ci, struct, owner=None):
 def main():
     pr = json.load(sys.stdin)
     ci, struct = ci_state(pr), struct_state(pr)
-    print("\t".join([str(pr["number"]), ci, struct, next_action(ci, struct, owner_reason(pr)), pr.get("title", "")]))
+    conflicting = pr.get("mergeable") == "CONFLICTING"
+    step = next_action(ci, struct, owner_reason(pr), conflicting)
+    print("\t".join([str(pr["number"]), ci, struct, step, pr.get("title", "")]))
 
 
 if __name__ == "__main__":
