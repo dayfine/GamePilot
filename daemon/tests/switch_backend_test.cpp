@@ -54,6 +54,11 @@ void check_key_mapping() {
   CHECK(pro_buttons_for_keys(button_mask("Y")).button3 == 0x01);
   // ZL in byte 5 bit 7, beside L.
   CHECK(pro_buttons_for_keys(button_mask("ZL")).button5 == 0x80);
+  // Plus and Minus (v1.17) are the GBA app's Start and Select: byte 4 bits 1
+  // and 0.
+  CHECK(pro_buttons_for_keys(button_mask("Plus")).button4 == 0x02);
+  CHECK(pro_buttons_for_keys(button_mask("Minus")).button4 == 0x01);
+  CHECK(pro_buttons_for_keys(button_mask("Start")).button4 == 0x02);
   // ZR in byte 3 bit 7, beside R.
   CHECK(pro_buttons_for_keys(button_mask("ZR")).button3 == 0x80);
 }
@@ -385,8 +390,9 @@ void check_two_clients_and_the_lease() {
       R"({"jsonrpc":"2.0","id":9,"method":"lease.acquire","params":{"owner":"pad"}})");
   CHECK(acquire_refused.find("-32004") != std::string::npos);
 
-  const std::string released = call(
-      client, R"({"jsonrpc":"2.0","id":3,"method":"lease.release","params":{}})");
+  const std::string released =
+      call(client,
+           R"({"jsonrpc":"2.0","id":3,"method":"lease.release","params":{}})");
   CHECK(released.find("\"released\":true") != std::string::npos);
   const std::string acquired = call(
       other,
@@ -394,9 +400,9 @@ void check_two_clients_and_the_lease() {
   CHECK(acquired.find("\"owner\":\"pad\"") != std::string::npos);
   CHECK(call(other, submit_line).find("\"batch_id\":\"x\"") !=
         std::string::npos);
-  CHECK(call(client,
-             R"({"jsonrpc":"2.0","id":4,"method":"cancel","params":{}})")
-            .find("held by pad") != std::string::npos);
+  CHECK(
+      call(client, R"({"jsonrpc":"2.0","id":4,"method":"cancel","params":{}})")
+          .find("held by pad") != std::string::npos);
 
   // Reads need no lease.
   const std::string subscribed = call(
@@ -408,7 +414,8 @@ void check_two_clients_and_the_lease() {
   other.socket.close();
   sleep_ms(50);
   TestClient third = connect_client(options.port);
-  const std::string after = call(third, R"({"jsonrpc":"2.0","id":1,"method":"status"})");
+  const std::string after =
+      call(third, R"({"jsonrpc":"2.0","id":1,"method":"status"})");
   CHECK(after.find("\"lease\":null") != std::string::npos);
 
   stop.store(true);
@@ -558,20 +565,21 @@ void check_one_clock_and_cancel() {
     CHECK(done_ms >= frame_ms - 1 && done_ms - frame_ms < 100);
   }
 
-  call(client,
-       R"({"jsonrpc":"2.0","id":4,"method":"submit","params":{"batch_id":"b2","commands":[{"press":["A"],"hold_ms":50,"cooldown_ms":1000}]}})");
+  call(
+      client,
+      R"({"jsonrpc":"2.0","id":4,"method":"submit","params":{"batch_id":"b2","commands":[{"press":["A"],"hold_ms":50,"cooldown_ms":1000}]}})");
   sleep_ms(150);
   call(client, R"({"jsonrpc":"2.0","id":5,"method":"cancel","params":{}})");
   const double cancelled_ms = clock.now_ms();
-  call(client,
-       R"({"jsonrpc":"2.0","id":6,"method":"submit","params":{"batch_id":"b3","commands":[{"press":["Down"],"hold_ms":50,"cooldown_ms":0}]}})");
+  call(
+      client,
+      R"({"jsonrpc":"2.0","id":6,"method":"submit","params":{"batch_id":"b3","commands":[{"press":["Down"],"hold_ms":50,"cooldown_ms":0}]}})");
   sleep_ms(100);
   const std::vector<BoardCommand> commands = console.board.commands();
   // The only D-pad press of the test.
   const auto down = std::find_if(
-      commands.rbegin(), commands.rend(), [](const BoardCommand& c) {
-        return c.message.buttons.button5 != 0;
-      });
+      commands.rbegin(), commands.rend(),
+      [](const BoardCommand& c) { return c.message.buttons.button5 != 0; });
   CHECK(down != commands.rend());
   if (down != commands.rend()) {
     CHECK(down->start_ms - cancelled_ms < 100);

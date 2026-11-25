@@ -9,15 +9,31 @@ let default_hold_ms = 100
 let default_wait_ms = 500
 
 let buttons =
-  Wire.[ A; B; Select; Start; Right; Left; Up; Down; R; L; Home; X; Y; ZL; ZR ]
+  Wire.
+    [
+      A;
+      B;
+      Select;
+      Start;
+      Right;
+      Left;
+      Up;
+      Down;
+      R;
+      L;
+      Home;
+      X;
+      Y;
+      ZL;
+      ZR;
+      Plus;
+      Minus;
+    ]
 
 let named upper b = String.uppercase_ascii (Wire.string_of_button b) = upper
 
 let button_of_name name =
-  match String.uppercase_ascii name with
-  | "PLUS" -> Some Wire.Start
-  | "MINUS" -> Some Wire.Select
-  | upper -> List.find_opt (named upper) buttons
+  List.find_opt (named (String.uppercase_ascii name)) buttons
 
 let ms what word =
   match int_of_string_opt word with

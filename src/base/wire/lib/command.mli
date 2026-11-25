@@ -18,13 +18,15 @@ type button =
   | Y
   | ZL
   | ZR
+  | Plus
+  | Minus
 
 val string_of_button : button -> string
 val button_of_string : string -> button option
 
 val switch_only : button -> bool
-(** [Home], [X], [Y], [ZL] and [ZR]: the daemon refuses them on any backend but
-    the Switch. *)
+(** [Home], [X], [Y], [ZL], [ZR], [Plus] and [Minus]: the daemon refuses them on
+    any backend but the Switch. *)
 
 type stick = private float * float
 (** A stick's tilt [(x, y)], each in -1..1, as CoreLib's [JoystickPosition]: [x]

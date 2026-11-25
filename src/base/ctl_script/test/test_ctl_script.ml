@@ -34,10 +34,11 @@ let () =
       line "dpad with a count" "dpad UP 3" "press Up hold 100 wait 500 x3";
       line "dpad with a count and flags" "dpad left 2 --wait 300"
         "press Left hold 100 wait 300 x2";
-      line "buttons in any case, PLUS is Start" "press plus"
-        "press Start hold 100 wait 500 x1";
-      line "MINUS is Select" "press MINUS 80 200"
-        "press Select hold 80 wait 200 x1";
+      line "buttons in any case: the Switch's Plus" "press plus"
+        "press Plus hold 100 wait 500 x1";
+      line "the Switch's Minus" "press MINUS 80 200"
+        "press Minus hold 80 wait 200 x1";
+      line "GBA Start" "press start" "press Start hold 100 wait 500 x1";
       line "wait" "wait 1500" "wait 1500";
       line "shot adds .png" "shot title" "shot title.png";
       line "shot keeps a given extension" "shot /tmp/x.png" "shot /tmp/x.png";
