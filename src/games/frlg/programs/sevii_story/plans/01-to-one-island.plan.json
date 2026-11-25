@@ -58,28 +58,13 @@
         }
       },
       {
-        "id": "to_counter",
-        "kind": "route",
-        "action": "run",
-        "args": {
-          "target": {
-            "map": "CinnabarIsland_PokemonCenter_1F",
-            "tiles": [
-              [7, 4]
-            ],
-            "facing": "north"
-          }
-        },
-        "why": "Into the Center and up to the counter, a walk held to the wall: a room entered from its door comes up dim and holds still about 600ms before it fades in, and the player's first steps are lost while the walk reads the dim room as no fade (mGBA, 2026-11-24: \"north 3\" from the mat to Bill's row walked 2 tiles)."
-      },
-      {
         "id": "to_bill",
         "kind": "route",
         "action": "run",
         "args": {
           "target": {"place": "cinnabar_center_bill"}
         },
-        "why": "West of Bill (11, 5), facing him: a table fills the tile below him, and his script walks out with a player facing south, east or west (pret CinnabarIsland_PokemonCenter_1F_EventScript_Bill)."
+        "why": "Into the Center and west of Bill (11, 5), facing him: a table fills the tile below him, and his script walks out with a player facing south, east or west (pret CinnabarIsland_PokemonCenter_1F_EventScript_Bill)."
       },
       {
         "id": "sail_with_bill",

@@ -170,10 +170,9 @@ item retro-mail gained 1
 money spent -1224
 no repeat
 == sevii_story/plans/01-to-one-island.plan.json
-frlg 01-to-one-island from CeladonCity_DepartmentStore_1F (6, 2) south: 3 route, 1 game_action, 1 answer, 1 scene
+frlg 01-to-one-island from CeladonCity_DepartmentStore_1F (6, 2) south: 2 route, 1 game_action, 1 answer, 1 scene
 out_of_dept_store: [run] route to CeladonCity (11, 15) south
 fly_cinnabar: [fly] game_action {"town":"CinnabarIsland","species":"pidgey"} => CinnabarIsland (14, 12) south
-to_counter: [run] route to CinnabarIsland_PokemonCenter_1F (7, 4) north
 to_bill: [run] route to CinnabarIsland_PokemonCenter_1F (10, 5) east
 sail_with_bill: answer yes
 meet_celio: scene => OneIsland_PokemonCenter_1F (14, 7) north
