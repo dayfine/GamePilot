@@ -11,7 +11,11 @@
      ally    a double battle's HP boxes on the player's side
      none    none of these
 
-   Switch names keep their CommandLineTests folder and file name. *)
+   Switch names keep their CommandLineTests folder and file name. A trainer's
+   "Will ... change POKéMON?" (three-island-bikers/switch-offer, the Shift
+   battle style) is tagged learn: its YES/NO stands where a move learn's does,
+   beside the player's HP box, and only its text tells the two apart
+   (Frlg_actions.Switch_offer). *)
 
 open Frlg_readers
 

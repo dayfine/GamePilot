@@ -135,6 +135,9 @@ let answer ~log (game_steps : Battle.game_steps) (script : Battle_script.t) p
   | Action_menu -> action_menu ~log game_steps script p
   | Switch_in -> switch_in game_steps p
   | Move_learn -> move_learn ~log game_steps script (prompted p)
+  | Switch_offer ->
+      game_steps.answer_use_next false;
+      Continue (prompted p)
   | Use_next ->
       game_steps.answer_use_next script.use_next;
       Continue (prompted p)
