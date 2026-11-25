@@ -8,7 +8,7 @@ module B = Frlg_battle
 
 let case name input expectation = { Table_test.name; input; expectation }
 let strategies = Result.get_ok (Grind_plan.load_strategies ())
-let obj json = Grid_maps.Json_field.as_object "" (Yojson.Safe.from_string json)
+let obj json = Json_field.as_object "" (Yojson.Safe.from_string json)
 
 let mimien_args =
   {|{"species": "mr-mime", "target_level": 33, "learn_move": "recycle",

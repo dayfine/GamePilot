@@ -4,6 +4,7 @@
  (package gamepilot)
  (libraries
   gamepilot.wire
+  gamepilot.json_field
   gamepilot.effects
   gamepilot.watch_report
   gamepilot.replay

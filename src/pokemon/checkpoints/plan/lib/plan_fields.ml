@@ -19,7 +19,9 @@ let optional ~where key obj read =
 
 let tiles path : Yojson.Safe.t -> Tile_pos.t list = function
   | `List items ->
-      List.mapi (fun i -> F.pair (Printf.sprintf "%s[%d]" path i)) items
+      List.mapi
+        (fun i -> Grid_field.pair (Printf.sprintf "%s[%d]" path i))
+        items
   | _ -> F.fail "%s is not an array." path
 
 let grid_pose ~where obj : Pose.grid =
@@ -28,7 +30,7 @@ let grid_pose ~where obj : Pose.grid =
     map = F.string ~where "map" obj;
     tiles =
       Option.fold ~none:[] ~some:(tiles (where ^ "tiles")) (F.find "tiles" obj);
-    facing = optional ~where "facing" obj F.direction;
+    facing = optional ~where "facing" obj Grid_field.direction;
   }
 
 let item ~where obj : Plan.item =

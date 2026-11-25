@@ -1,4 +1,4 @@
-module J = Grid_maps.Json_field
+module J = Json_field
 
 type use = { member : Action_args.member; policy : Level_up_policy.policy }
 

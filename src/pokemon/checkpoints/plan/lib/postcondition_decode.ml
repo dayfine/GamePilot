@@ -1,4 +1,3 @@
-open Grid_maps
 module F = Json_field
 open Plan_fields
 

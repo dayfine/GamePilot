@@ -1,4 +1,4 @@
-module J = Grid_maps.Json_field
+module J = Json_field
 module B = Frlg_battle
 
 type lead = Switch_to_sweeper
@@ -46,7 +46,7 @@ let pose ~where key obj : Checkpoints_plan.Pose.grid =
   {
     map = J.string ~where "map" p;
     tiles = [ tile ~where p ];
-    facing = Some (J.direction ~where "facing" p);
+    facing = Some (Grid_maps.Grid_field.direction ~where "facing" p);
   }
 
 let lead ~where obj =
@@ -72,7 +72,7 @@ let strategy i json =
   {
     name = J.string ~where "name" obj;
     spot = pose ~where "spot" obj;
-    pace = J.direction ~where "pace" obj;
+    pace = Grid_maps.Grid_field.direction ~where "pace" obj;
     lead = lead ~where obj;
     heal = heal ~where obj;
     heal_every = J.int ~where "heal_every" obj;
@@ -89,7 +89,7 @@ let strategies_of_json json =
   | exception J.Invalid e -> Error e
 
 let read () =
-  match Frlg_repo_files.Repo_files.locate asset with
+  match Repo_io.Repo_files.locate asset with
   | None -> Error (asset ^ " not found from the working directory")
   | Some path -> (
       match Yojson.Safe.from_file path with

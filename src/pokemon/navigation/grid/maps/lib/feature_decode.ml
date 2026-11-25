@@ -1,4 +1,5 @@
 open Json_field
+open Grid_field
 open Map_features
 
 let source ~where obj =

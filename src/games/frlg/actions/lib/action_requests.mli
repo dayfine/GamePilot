@@ -30,7 +30,7 @@ val default_spin_batches : int
 val decode :
   Mart_plan.stocks ->
   string ->
-  Grid_maps.Json_field.obj ->
+  Json_field.obj ->
   (t, Checkpoints_run.Failure.cause) result
 (** The action of that name with its args; [bad_args] naming the field, or
     [unknown_action]. The args:

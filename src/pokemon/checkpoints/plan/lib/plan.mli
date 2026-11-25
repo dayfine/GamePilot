@@ -33,7 +33,7 @@ type kind =
   | Heal
   | Shop of item list
   | Save
-  | Game_action of Grid_maps.Json_field.obj
+  | Game_action of Json_field.obj
       (** The game's own action, named by the event's [action], with its args.
       *)
 
@@ -143,10 +143,10 @@ type repeat = {
 type t = {
   game : string;  (** The plan's [game], e.g. ["frlg"]. *)
   checkpoint : checkpoint;
-  execution : Grid_maps.Json_field.obj;
+  execution : Json_field.obj;
       (** How the game runs the checkpoint (save menu, supplies, ...): its
           fields are each game's own. *)
-  metadata : Grid_maps.Json_field.obj option;
+  metadata : Json_field.obj option;
       (** The plan's phase, verification and postconditions, kept as written. *)
   postconditions : postconditions;
       (** The metadata's postconditions, read; all empty when it states none. *)

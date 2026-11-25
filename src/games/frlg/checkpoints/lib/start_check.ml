@@ -70,11 +70,11 @@ let start_file ~states = function
 let load_frame path =
   if not (Sys.file_exists path) then Ok None
   else
-    Result.bind (Frlg_repo_files.Json_file.read path) (fun json ->
+    Result.bind (Repo_io.Json_file.read path) (fun json ->
         Result.map Option.some (F.of_json json))
 
 let write_frame ~log path frame =
-  match Frlg_repo_files.Json_file.write path (F.to_json frame) with
+  match Repo_io.Json_file.write path (F.to_json frame) with
   | Ok () -> log ("[Start] kept the start frame as " ^ path)
   | Error e -> log ("[Start] could not keep the frame: " ^ e)
 

@@ -1,11 +1,12 @@
-(** Reading typed fields of a map file's JSON, naming the field in errors.
+(** Reading typed fields of a JSON object, naming the field in errors.
 
     Every reader takes [where], the file and the path to the object being read,
     written as a prefix the field name follows: ["Test.json: "] for the top
     level, ["Test.json: warps[2]."] inside a list item. A field that is missing
     or of the wrong type raises {!Invalid} with a message such as
-    ["Test.json: warps[2].x is missing."]. The map readers raise it and
-    {!Map_data.parse} turns it into an [Error]. *)
+    ["Test.json: warps[2].x is missing."]. A caller's decoder turns it into an
+    [Error] (the grid's map reader does). Readers of grid types are in
+    [Grid_maps.Grid_field]. *)
 
 exception Invalid of string
 
@@ -51,19 +52,6 @@ val records :
   where:string -> string -> obj -> (where:string -> obj -> 'a) -> 'a list
 (** Each object of the array field [key] read by the function, which gets the
     item's prefix; [[]] when the field is left out. *)
-
-val pos : where:string -> obj -> Tile_pos.t
-(** The fields ["x"] and ["y"]. *)
-
-val pair : string -> Yojson.Safe.t -> Tile_pos.t
-(** A value [[x, y]]; [where] names the value itself. *)
-
-val direction_named : string -> string -> Direction.t
-(** [direction_named where name]: the direction [name] names; raises naming
-    [where] (the value itself) otherwise. *)
-
-val direction : where:string -> string -> obj -> Direction.t
-(** The string field [key], read as a direction. *)
 
 val strings : string -> Yojson.Safe.t -> string list
 (** An array of strings; [where] names the array itself. *)

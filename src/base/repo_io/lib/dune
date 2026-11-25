@@ -1,0 +1,4 @@
+(library
+ (name repo_io)
+ (public_name gamepilot.repo_io)
+ (libraries yojson))

@@ -1,4 +1,4 @@
-module J = Grid_maps.Json_field
+module J = Json_field
 module P = Checkpoints_plan.Plan
 module A = Frlg_actions
 

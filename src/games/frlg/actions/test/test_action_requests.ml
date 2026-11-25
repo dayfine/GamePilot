@@ -11,7 +11,7 @@ let stocks = Result.get_ok (Mart_plan.load ())
 let decode name json () =
   match
     Action_requests.decode stocks name
-      (Grid_maps.Json_field.as_object "" (Yojson.Safe.from_string json))
+      (Json_field.as_object "" (Yojson.Safe.from_string json))
   with
   | Ok r -> Action_requests.to_string r
   | Error c -> Checkpoints_run.Failure.cause_to_string c

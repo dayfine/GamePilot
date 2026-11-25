@@ -24,8 +24,8 @@ val asset : string
 val parse : Yojson.Safe.t -> (t, string) result
 
 val load : unit -> (t, string) result
-(** The table, found from the working directory
-    ({!Frlg_repo_files.Repo_files.locate}) and read once. *)
+(** The table, found from the working directory ({!Repo_io.Repo_files.locate})
+    and read once. *)
 
 val find : t -> string -> town option
 

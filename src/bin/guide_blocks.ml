@@ -150,7 +150,7 @@ let needs p arg =
   let* stocks = Frlg_actions.Mart_plan.load () in
   match chain_lines stocks ~before loaded with
   | lines -> Result.map (String.concat "\n") lines
-  | exception Grid_maps.Json_field.Invalid e -> Error e
+  | exception Json_field.Invalid e -> Error e
 
 let needs_text needs =
   cell (String.concat "; " (List.map Frlg_checkpoints.Preflight.describe needs))
@@ -164,7 +164,7 @@ let preflight_row stocks plans id =
       Result.map
         (fun needs -> Printf.sprintf "| %s | %s |" id (needs_text needs))
         needs
-  | exception Grid_maps.Json_field.Invalid e -> Error e
+  | exception Json_field.Invalid e -> Error e
 
 let preflight p arg =
   let* plans = plans_of p in

@@ -101,7 +101,7 @@ let of_plan_dir dir =
       | None -> false)
     all
 
-let locate = Frlg_repo_files.Repo_files.locate
+let locate = Repo_io.Repo_files.locate
 
 let of_checkpoint id =
   let has_plan p =

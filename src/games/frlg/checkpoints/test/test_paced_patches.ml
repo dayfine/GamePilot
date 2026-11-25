@@ -48,7 +48,7 @@ let plan_patches file () =
     let out =
       match (e.kind, e.action, before) with
       | Game_action args, Some ("capture" | "prepare_berry_pp"), Some g ->
-          let pace = Grid_maps.Json_field.direction ~where:"" "pace" args in
+          let pace = Grid_maps.Grid_field.direction ~where:"" "pace" args in
           patch g.Checkpoints_plan.Pose.map (List.hd g.tiles) pace :: out
       | _ -> out
     in

@@ -6,4 +6,5 @@
   yojson
   gamepilot.wire
   gamepilot.grid_maps
+  gamepilot.json_field
   gamepilot.checkpoints_plan))

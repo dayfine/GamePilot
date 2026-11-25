@@ -46,7 +46,7 @@ let needs ~plan_dir from_id =
     (Pf.needs stocks ~before plan, Frlg_checkpoints.Party_room.chain_need plans)
   with
   | needs, room -> Result.map (fun needs -> (needs, room)) needs
-  | exception Grid_maps.Json_field.Invalid e -> Error e
+  | exception Json_field.Invalid e -> Error e
 
 exception Not_back of string
 

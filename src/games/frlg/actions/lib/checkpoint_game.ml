@@ -259,7 +259,7 @@ let adopting t (name, (handler : Checkpoints_run.Game.game_action)) =
 let tree_cut t at args =
   let world, on_tree =
     Tree_cut.cut t.world at
-      (Grid_maps.Json_field.direction ~where:"cut_tree: " "direction" args)
+      (Grid_maps.Grid_field.direction ~where:"cut_tree: " "direction" args)
   in
   t.world <- world;
   t.at <- Some on_tree

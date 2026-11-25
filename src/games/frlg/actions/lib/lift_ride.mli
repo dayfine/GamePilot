@@ -38,7 +38,7 @@ val ride_of_floors : from:string -> to_:string -> ride option
     hideout's, 1F..5F the store's. *)
 
 val ride_of_args :
-  Grid_maps.Json_field.obj -> (ride, Checkpoints_run.Failure.cause) result
+  Json_field.obj -> (ride, Checkpoints_run.Failure.cause) result
 (** A ["lift_floor"] action's ["from"] and ["to"]; [bad_args] otherwise. *)
 
 type presses = { direction : Grid_maps.Direction.t; count : int }

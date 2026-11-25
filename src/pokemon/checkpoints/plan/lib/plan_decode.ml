@@ -28,7 +28,7 @@ let fight_wild ~where args = F.bool_or ~where ~default:false "fight_wild" args
 let leg ~where obj : Plan.leg =
   known_fields_only ~where [ "direction"; "tiles" ] obj;
   {
-    direction = F.direction ~where "direction" obj;
+    direction = Grid_field.direction ~where "direction" obj;
     tiles = F.int ~where "tiles" obj;
   }
 
@@ -49,7 +49,7 @@ let legs ~where args =
 
 let flag ~default key ~where args = F.bool_or ~where ~default key args
 let ready ~where args = Plan.Ready (target ~where args)
-let step ~where args = Plan.Step (F.direction ~where "direction" args)
+let step ~where args = Plan.Step (Grid_field.direction ~where "direction" args)
 let answer ~where args = Plan.Answer (flag ~default:true "yes" ~where args)
 
 let battle ~where args =

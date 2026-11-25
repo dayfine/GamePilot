@@ -1,4 +1,4 @@
-module J = Grid_maps.Json_field
+module J = Json_field
 
 type swap = By_species of string * int | Slots of int * int
 
@@ -61,7 +61,9 @@ let readers stocks =
     );
     ("ingame_trade", ingame_trade);
     ("spin_for_encounter", spin);
-    ("cut_tree", fun ~where a -> Cut_tree (J.direction ~where "direction" a));
+    ( "cut_tree",
+      fun ~where a ->
+        Cut_tree (Grid_maps.Grid_field.direction ~where "direction" a) );
     ( "verify_mail_glitch",
       fun ~where a -> Verify_mail_glitch (Action_args.member ~where a) );
     ( "pc_deposit",

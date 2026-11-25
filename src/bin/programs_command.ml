@@ -50,7 +50,7 @@ let needs dir =
   | free, moves ->
       let moves = if moves = [] then "none" else String.concat ", " moves in
       Ok (Printf.sprintf "%d free party slot(s); field moves: %s" free moves)
-  | exception Grid_maps.Json_field.Invalid e -> Error e
+  | exception Json_field.Invalid e -> Error e
 
 let plan_lines path dir =
   let ids = Result.value (Plan_dir.checkpoint_ids dir) ~default:[] in
