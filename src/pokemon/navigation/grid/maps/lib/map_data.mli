@@ -22,6 +22,7 @@ type t = {
       (** Named non-empty sets of tiles, in the order the map lists them. *)
   warps : Map_features.warp list;
   objects : Map_features.map_object list;
+  hidden_items : Map_features.hidden_item list;
   triggers : Map_features.trigger list;
   flag_sets : String_set.t String_map.t;
       (** Flags set together, by name (["after_hall_of_fame"]). *)

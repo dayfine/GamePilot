@@ -132,5 +132,11 @@ let find t name =
         (Name_suggestion.unknown ~what:"place" name
            (List.map (fun p -> p.name) t))
 
-let pose p : Checkpoints.Pose.grid =
-  { map = p.map; tiles = [ p.stand ]; facing = Some p.facing }
+let spot p : Checkpoints_expand.Place_routes.spot =
+  { map = p.map; tile = p.stand; facing = Some p.facing }
+
+let routes t : Checkpoints_expand.Place_routes.game =
+  {
+    place = (fun name -> Result.map spot (find t name));
+    ride = Lift_stops.ride;
+  }

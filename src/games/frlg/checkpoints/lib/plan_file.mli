@@ -1,5 +1,6 @@
 (** Reads a FireRed checkpoint plan file: the JSON, with its place routes
-    expanded ({!Frlg_places.Place_targets}), decoded by
+    expanded ({!Checkpoints_expand.Place_routes}, with FireRed's places and
+    lifts: {!Frlg_places.Place_table.routes}), decoded by
     {!Checkpoints.Plan_decode}. Every FireRed plan is loaded through it. *)
 
 val decode :

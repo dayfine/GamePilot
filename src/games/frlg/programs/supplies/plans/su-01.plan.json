@@ -39,7 +39,7 @@
         "kind": "route",
         "action": "run",
         "args": {
-          "target": {"place": "dept_store_4f_clerk"}
+          "target": {"place": "celadon_dept_store_4f_clerk"}
         },
         "why": "Up the lift to face the 4F clerk across the counter."
       },
@@ -67,7 +67,7 @@
         "kind": "route",
         "action": "run",
         "args": {
-          "target": {"place": "dept_store_west_door_outside"}
+          "target": {"place": "celadon_dept_store_west_door_outside"}
         },
         "why": "Down the lift and out by the west door, to fly."
       },
@@ -143,7 +143,7 @@
         "kind": "route",
         "action": "run",
         "args": {
-          "target": {"place": "dept_store_1f_save"}
+          "target": {"place": "celadon_dept_store_1f_save"}
         },
         "why": "End at the Dept. Store 1F save spot, team training's start."
       }

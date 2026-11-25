@@ -18,7 +18,7 @@
         "id": "to_4f_clerk",
         "kind": "route",
         "action": "run",
-        "args": {"target": {"place": "dept_store_4f_clerk"}},
+        "args": {"target": {"place": "celadon_dept_store_4f_clerk"}},
         "why": "into Celadon Dept Store and up the lift to face the 4F clerk across the counter"
       },
       {
@@ -32,7 +32,7 @@
         "id": "to_1f_save_spot",
         "kind": "route",
         "action": "run",
-        "args": {"target": {"place": "dept_store_1f_save"}},
+        "args": {"target": {"place": "celadon_dept_store_1f_save"}},
         "why": "down the lift to the 1F save spot, where the party is set up"
       },
       {

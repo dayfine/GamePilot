@@ -59,8 +59,16 @@ type map_object = {
   hide_flag : string option;
       (** The game hides the object while this is set (an event flag, or a story
           state the game's code sets). *)
+  script : string option;
+      (** The decompilation's script for it ([source_script], e.g.
+          ["CeladonCity_GameCorner_EventScript_CoinsClerk"]): how a table that
+          refers to it names it. Not unique for shared scripts (Cut trees). *)
 }
 (** Something standing on a tile, which blocks it. *)
+
+type hidden_item = { hidden_flag : string; hidden_pos : Tile_pos.t }
+(** An item hidden on a tile (the decompilation's hidden-item bg event), named
+    by the flag the game sets once it is found. It does not block the tile. *)
 
 type trigger = {
   trigger_name : string;

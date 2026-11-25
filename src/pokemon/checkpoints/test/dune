@@ -13,7 +13,6 @@
   test_event_states)
  (modules
   plan_files
-  plan_text
   scripted_game
   level_grind_world
   test_plan_decode
@@ -32,4 +31,5 @@
   yojson
   gamepilot.wire
   gamepilot.grid_maps
-  gamepilot.checkpoints))
+  gamepilot.checkpoints
+  gamepilot.plan_text))

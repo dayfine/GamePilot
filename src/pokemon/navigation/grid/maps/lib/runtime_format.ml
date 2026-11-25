@@ -5,7 +5,7 @@ type format = V1 | V2
 let v1_name = "pokesim-runtime-map/1"
 let v2_name = "pokesim-runtime-map/2"
 let object_groups = [ "npcs"; "items"; "signs"; "interactables" ]
-let positioned_sections = [ "warps"; "patches"; "coord_events" ]
+let positioned_sections = [ "warps"; "patches"; "coord_events"; "hidden_items" ]
 
 let without keys (obj : obj) =
   List.filter (fun (k, _) -> not (List.mem k keys)) obj

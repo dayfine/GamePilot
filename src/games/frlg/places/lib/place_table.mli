@@ -22,12 +22,14 @@ type map_object =
 type place = {
   name : string;
   map : string;
-  stand : Grid_maps.Tile_pos.t;
-  facing : Grid_maps.Direction.t;
+  stand : Grid_maps.Tile_pos.t;  (** The tile to stand on to use the object. *)
+  facing : Grid_maps.Direction.t;  (** The way to face there. *)
   map_object : map_object;
 }
+(** One named spot of the table. *)
 
 type t
+(** The loaded table: its places by name, in the file's order. *)
 
 val format : string
 (** ["gamepilot-places/1"]. *)
@@ -47,5 +49,9 @@ val places : t -> place list
 val find : t -> string -> (place, string) result
 (** The place of that name; an unknown name's error suggests the nearest. *)
 
-val pose : place -> Checkpoints.Pose.grid
+val spot : place -> Checkpoints_expand.Place_routes.spot
 (** Where a route to the place ends: its map, its stand tile, its facing. *)
+
+val routes : t -> Checkpoints_expand.Place_routes.game
+(** FireRed's answers to the place expansion: the table's places, and the lift
+    rides ({!Lift_stops.ride}). *)

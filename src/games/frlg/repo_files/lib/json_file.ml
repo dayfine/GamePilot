@@ -4,3 +4,8 @@ let read path =
   | json -> Ok json
   | exception Yojson.Json_error message -> Error (name ^ ": " ^ message)
   | exception Sys_error message -> Error message
+
+let write path json =
+  match Yojson.Safe.to_file path json with
+  | () -> Ok ()
+  | exception Sys_error message -> Error message

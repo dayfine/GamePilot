@@ -38,7 +38,7 @@ sh run/run_checkpoints_on_switch.sh --program frlg.supplies --from su-01 --to su
 |---|---|
 | su-01 | Stock 100 Retro Mail (Celadon 4F) and 5 Super Repels (Lavender) |
 
-<!-- plans: 28c66bfb3e93 -->
+<!-- plans: 741bdeff32cd -->
 <!-- /generated -->
 
 ## When it stops
