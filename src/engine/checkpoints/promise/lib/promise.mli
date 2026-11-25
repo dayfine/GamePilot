@@ -6,14 +6,8 @@
     ([Pokemon/AutoStory/Pokemon_StoryPostconditionCheck.{h,cpp}], [frlg/lean]).
 
     A promise the game cannot read is not checked, never passed. Counts (items,
-    coins) and money are checked as a value, a floor, a range, or a change from
-    what was read at the checkpoint's start; this module takes them as plain
-    numbers because the plan's [count] and [money] types are still in the
-    Pokémon plan library.
-
-    It sits in [checkpoints_run] for now; the engine layer
-    ([docs/design/Engine-Boundary.md], migration step 4) moves it to
-    [src/engine/checkpoints/promise]. *)
+    coins, {!Count}) and money ({!Money}) are checked as a value, a floor, a
+    range, or a change from what was read at the checkpoint's start. *)
 
 (** How one promise came out: it held, it did not, or it could not be checked.
 *)
@@ -39,25 +33,20 @@ val not_checked : string -> why:string -> result
 val not_read : string -> result
 (** Not checked: ["the game can't read it"]. *)
 
-val count_exactly : string -> int -> read:int -> result
-(** ["coins: passed: 20"], ["coins: failed: expected 20, read 200"]. *)
+val count : string -> Count.t -> start:int option -> read:int -> result
+(** [count what promised ~start ~read]: ["coins: passed: 20"],
+    ["coins: failed: expected 20, read 200"],
+    ["item rope: failed: expected at least 2, read 1"]. A {!Count.Gained}
+    promise holds when the count went from [start] to [read] by exactly the
+    promised change, which is negative for a count used:
+    ["gained 20 (50 to 70)"], ["expected used 1, read gained 3 (2 to 5)"]; it is
+    not checked when the start was not read ([None]). *)
 
-val count_at_least : string -> int -> read:int -> result
-(** ["expected at least 2, read 1"] when below. *)
-
-val count_gained : string -> int -> start:int option -> read:int -> result
-(** The count went from [start] to [read] by exactly the promised change, which
-    is negative for a count used: ["gained 20 (50 to 70)"],
-    ["expected used 1, read gained 3 (2 to 5)"]. Not checked when the start was
-    not read ([None]). *)
-
-val money_range : min:int -> max:int -> read:int -> result
-(** What is ["money"]: ["$25014"] when [min = max], ["$100 to $200"] else. *)
-
-val money_spent : int -> start:int option -> read:int -> result
-(** What is ["money"]: the money went down from [start] to [read] by exactly the
-    amount: ["spent $4100 ($29202 to $25102)"]. Not checked when the start was
-    not read ([None]). *)
+val money : Money.t -> start:int option -> read:int -> result
+(** What is ["money"]. A {!Money.Range}: ["$25014"] when [min = max],
+    ["$100 to $200"] else. A {!Money.Spent}: the money went down from [start] to
+    [read] by exactly the amount: ["spent $4100 ($29202 to $25102)"]; not
+    checked when the start was not read ([None]). *)
 
 val unmet : result list -> result list
 (** The results that failed or were not checked. *)

@@ -28,9 +28,15 @@ let load_all dir =
   in
   let world rock_stairs maps =
     Frlg_overworld.Frlg_steps.world ~edge_stalls:false ~rock_stairs
-      (Grid_maps.Connected_maps.create maps)
+      (Grid_maps.Connected_maps.create
+         (Frlg_overworld.Standard_center.with_rooms maps))
   in
-  let names = Grid_maps.Map_file.runtime_names ~maps_dir:dir in
+  (* A standard Center's coded room wins over its map file, which is not read. *)
+  let names =
+    List.filter
+      (fun name -> not (Frlg_overworld.Standard_center.is_standard name))
+      (Grid_maps.Map_file.runtime_names ~maps_dir:dir)
+  in
   Result.bind (load_rock_stairs ()) (fun rock_stairs ->
       Result.map (world rock_stairs) (all [] names))
 
@@ -38,6 +44,13 @@ let load_world () =
   match Repo_io.Repo_files.locate maps_dir with
   | None -> Error (maps_dir ^ " not found from the working directory")
   | Some dir -> load_all dir
+
+let map_in (w : Frlg_overworld.Frlg_steps.world) name =
+  match Grid_maps.Connected_maps.find w.maps name with
+  | Some i -> Ok (Grid_maps.Connected_maps.map w.maps i)
+  | None -> Error (name ^ ": no map file, and no coded room")
+
+let load_map name = Result.bind (load_world ()) (fun w -> map_in w name)
 
 let check_plan (plan : Checkpoints_plan.Plan.t) =
   match (plan.game, Json_field.find "menu" plan.execution) with

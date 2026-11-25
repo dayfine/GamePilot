@@ -25,9 +25,6 @@ val outline : Checkpoints_plan.Plan.t -> string
      route"]: the plan's game, id, start, and how many events of each kind, in
     first-seen order. *)
 
-val count_text : Checkpoints_plan.Plan.count -> string
-(** ["x2"], ["gained 2"], ["used 1"], ["at least 100"]. *)
-
 val postconditions : Checkpoints_plan.Plan.t -> string
 (** The plan's postconditions, one per line; ["none"] when it states none. *)
 

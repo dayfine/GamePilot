@@ -153,7 +153,7 @@ let party_needs before acc =
 let money_needs before acc =
   let promised =
     match before with
-    | Some { P.money = Some (Money_range { min; max }); _ } ->
+    | Some { P.money = Some (Engine_promise.Money.Range { min; max }); _ } ->
         [ Money_between { min; max } ]
     | _ -> []
   in
@@ -172,10 +172,10 @@ let count_use l (item, for_) =
    says nothing of the save's count. *)
 let promised_count ({ bag_item = item; count } : P.bag_count) =
   match count with
-  | Count_exactly count -> Some (Item_exactly { item; count })
-  | Count_at_least count ->
+  | Engine_promise.Count.Exactly count -> Some (Item_exactly { item; count })
+  | Engine_promise.Count.At_least count ->
       Some (Item_at_least { item; count; for_ = "promised before" })
-  | Count_gained _ -> None
+  | Engine_promise.Count.Gained _ -> None
 
 let item_needs before acc =
   let promised =

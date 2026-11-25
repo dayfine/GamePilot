@@ -2,6 +2,7 @@
    game read, passed, failed or not checked, and the log lines. *)
 
 open Checkpoints_plan
+open Engine_promise
 open Checkpoints_run
 module C = Postcondition_check
 
@@ -35,14 +36,14 @@ let includes ?(slots = []) l =
 
 let slot slot species = { Plan.slot; species }
 let party members = { read with party = Some members }
-let money min max = { nothing with money = Some (Money_range { min; max }) }
-let spent n = { nothing with money = Some (Money_spent n) }
+let money min max = { nothing with money = Some (Money.Range { min; max }) }
+let spent n = { nothing with money = Some (Money.Spent n) }
 
 let items count =
   { nothing with items = [ { bag_item = "escape-rope"; count } ] }
 
-let exactly n = items (Count_exactly n)
-let gained n = items (Count_gained n)
+let exactly n = items (Count.Exactly n)
+let gained n = items (Count.Gained n)
 
 let ropes ?start now =
   {
@@ -145,25 +146,25 @@ let count_cases =
         start = { C.nothing_at_start with start_items = [ ("escape-rope", 4) ] };
       }
       "item escape-rope: not checked: the game can't read it";
-    case "at least, with more" (items (Count_at_least 2)) (ropes 5)
+    case "at least, with more" (items (Count.At_least 2)) (ropes 5)
       "item escape-rope: passed: 5";
-    case "at least, with fewer" (items (Count_at_least 2)) (ropes 1)
+    case "at least, with fewer" (items (Count.At_least 2)) (ropes 1)
       "item escape-rope: failed: expected at least 2, read 1";
-    case "coins as read" (coins (Count_exactly 20))
+    case "coins as read" (coins (Count.Exactly 20))
       { read with coins = Some 20 }
       "coins: passed: 20";
-    case "coins not spent on the prize" (coins (Count_exactly 20))
+    case "coins not spent on the prize" (coins (Count.Exactly 20))
       { read with coins = Some 200 }
       "coins: failed: expected 20, read 200";
     case "mg-01's coins on a save that had some: gained 20 (50 to 70)"
-      (coins (Count_gained 20))
+      (coins (Count.Gained 20))
       {
         read with
         start = { C.nothing_at_start with start_coins = Some 50 };
         coins = Some 70;
       }
       "coins: passed: gained 20 (50 to 70)";
-    case "coins gained, the start not read" (coins (Count_gained 20))
+    case "coins gained, the start not read" (coins (Count.Gained 20))
       { read with coins = Some 20 }
       "coins: not checked: the count at the start was not read";
     case "money exactly" (money 25014 25014)
@@ -268,8 +269,8 @@ let log_cases : Table_test.case list =
       (log "the log: one line each and a failed summary"
          {
            in_order with
-           coins = Some (Count_exactly 20);
-           money = Some (Money_range { min = 1; max = 1 });
+           coins = Some (Count.Exactly 20);
+           money = Some (Money.Range { min = 1; max = 1 });
          }
          { (party (some mg01_party)) with coins = Some 200 })
       with
@@ -284,8 +285,8 @@ let log_cases : Table_test.case list =
       (log "the log: incomplete when none failed and one was not read"
          {
            nothing with
-           coins = Some (Count_exactly 20);
-           money = Some (Money_range { min = 1; max = 1 });
+           coins = Some (Count.Exactly 20);
+           money = Some (Money.Range { min = 1; max = 1 });
          }
          { read with coins = Some 20 })
       with

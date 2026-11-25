@@ -45,6 +45,49 @@ let depths lines ~first ~last =
   |> List.filter is_code_line
   |> List.map (fun l -> leading_spaces l / 2)
 
+(* The structure a module expression defines, through functors and
+   constraints. *)
+let rec module_items me =
+  match me.pmod_desc with
+  | Pmod_structure items -> Some items
+  | Pmod_functor (_, body) | Pmod_constraint (body, _) -> module_items body
+  | _ -> None
+
+let first_line (item : structure_item) = item.pstr_loc.loc_start.pos_lnum
+let last_line (item : structure_item) = item.pstr_loc.loc_end.pos_lnum
+
+(* The structure of a [module] item, when it defines one with items. *)
+let item_body item =
+  match item.pstr_desc with
+  | Pstr_module { pmb_expr; _ } -> (
+      match module_items pmb_expr with
+      | Some (_ :: _ as inner) -> Some inner
+      | _ -> None)
+  | _ -> None
+
+(* The line ranges of the module and functor bodies in [items], one range per
+   level a body nests. *)
+let rec module_bodies items =
+  List.concat_map
+    (fun item ->
+      match item_body item with
+      | Some inner ->
+          (first_line (List.hd inner), last_line (List.hd (List.rev inner)))
+          :: module_bodies inner
+      | None -> [])
+    items
+
+(* Each line's depth from the module body it is in: lines inside a module or
+   functor body count from that body, as the file's top level does. *)
+let file_depths (src : Parsed_source.t) =
+  let bodies = module_bodies src.structure in
+  let enclosing n =
+    List.length (List.filter (fun (a, b) -> a <= n && n <= b) bodies)
+  in
+  List.init (Array.length src.lines) (fun i -> (i + 1, src.lines.(i)))
+  |> List.filter (fun (_, l) -> is_code_line l)
+  |> List.map (fun (n, l) -> (leading_spaces l / 2) - enclosing n)
+
 let average = function
   | [] -> 0.0
   | ds ->
@@ -54,8 +97,13 @@ let reason cond text = if cond then Some text else None
 
 let function_finding (c : Config.t) (src : Parsed_source.t)
     (fb : Parsed_source.function_binding) =
-  (* The [let] line itself is depth 0 by construction; measure the body. *)
-  let ds = depths src.lines ~first:(fb.start_line + 1) ~last:fb.end_line in
+  (* The [let] line itself is depth 0 by construction; measure the body from
+     it, so a function in a module or functor body is not one level deeper. *)
+  let base = leading_spaces src.lines.(fb.start_line - 1) / 2 in
+  let ds =
+    depths src.lines ~first:(fb.start_line + 1) ~last:fb.end_line
+    |> List.map (fun d -> d - base)
+  in
   let avg = average ds and deepest = List.fold_left max 0 ds in
   let nested = nested_else_count fb.body in
   let avg_limit = c.max_function_avg_depth and limit = c.max_function_depth in
@@ -81,9 +129,7 @@ let check (c : Config.t) (src : Parsed_source.t) =
     Parsed_source.function_bindings src
     |> List.filter_map (function_finding c src)
   in
-  let file_avg =
-    average (depths src.lines ~first:1 ~last:(Array.length src.lines))
-  in
+  let file_avg = average (file_depths src) in
   if file_avg > c.max_file_avg_depth then
     Finding.error ~check:"nesting" ~path:src.path ~line:0
       (Printf.sprintf "file average depth %.2f > %.1f" file_avg

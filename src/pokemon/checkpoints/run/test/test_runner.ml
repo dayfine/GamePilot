@@ -2,6 +2,7 @@
    and stops at the first failure, naming the event. *)
 
 open Checkpoints_plan
+open Engine_promise
 open Checkpoints_run
 
 let tile x y : Grid_maps.Tile_pos.t = { x; y }
@@ -191,7 +192,7 @@ let promised : Plan.postconditions =
     position = None;
     party = Some (Party_includes { members = [ "abra" ]; slots = [] });
     items = [];
-    coins = Some (Count_exactly 20);
+    coins = Some (Count.Exactly 20);
     money = None;
     flags = [];
     knows = [];

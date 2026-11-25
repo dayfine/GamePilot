@@ -69,8 +69,8 @@ let items_promised : Checkpoints_plan.Plan.postconditions =
     party = None;
     items =
       [
-        { bag_item = "revive"; count = Count_exactly 2 };
-        { bag_item = "escape-rope"; count = Count_exactly 3 };
+        { bag_item = "revive"; count = Engine_promise.Count.Exactly 2 };
+        { bag_item = "escape-rope"; count = Engine_promise.Count.Exactly 3 };
       ];
   }
 
@@ -94,8 +94,8 @@ let read_at_start items () =
       items_promised with
       items =
         [
-          { bag_item = "revive"; count = Count_exactly 2 };
-          { bag_item = "escape-rope"; count = Count_gained 1 };
+          { bag_item = "revive"; count = Engine_promise.Count.Exactly 2 };
+          { bag_item = "escape-rope"; count = Engine_promise.Count.Gained 1 };
         ];
     }
   in
