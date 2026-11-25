@@ -425,8 +425,15 @@ let taunie_battles c ~t =
    bar at the arch; Taunie's A prompt once the stick was held 7 s, until A;
    then her battles. [lost]: no scene prompt. [battle_mid_walk]: her battle
    starts 2 s into the walk to her (the HUD, no talk), as 03.02b's did on
-   console B (2026-11-19). *)
-let quartiere_verde ?(lost = false) ?(battle_mid_walk = false) c =
+   console B (2026-11-19). [hud_flicker]: the battle HUD on one read of the
+   party bar after the card. *)
+let quartiere_verde ?(lost = false) ?(battle_mid_walk = false)
+    ?(hud_flicker = false) c =
+  let flicker a =
+    match C.nth_after c Wire.A ~after:a 0 with
+    | Some card -> hud_flicker && since c card < 250.0
+    | None -> false
+  in
   match C.stick_reached c 4000 with
   | Some p when not lost -> (
       match C.nth_after c Wire.A ~after:p 0 with
@@ -434,6 +441,7 @@ let quartiere_verde ?(lost = false) ?(battle_mid_walk = false) c =
       | Some a when since c a < 1500.0 -> black c
       | Some a when C.nth_after c Wire.A ~after:a 0 = None ->
           { (look c) with tutorial_card = true }
+      | Some a when flicker a -> { (party c) with battle = true }
       | Some _ when battle_mid_walk -> (
           match C.stick_reached c 6000 with
           | None -> party c
@@ -446,6 +454,17 @@ let quartiere_verde ?(lost = false) ?(battle_mid_walk = false) c =
               | None -> { (party c) with interact_prompt = true }
               | Some t -> taunie_battles c ~t)))
   | _ -> party c
+
+(* 03.02b after 03.02 in a chain (console B, 2026-11-25): 03.02 left the
+   hotel, so the first A prompt is Taunie's, once the stick was held 2.75 s,
+   until A; then her battles. *)
+let taunie_first c =
+  match C.stick_reached c 2750 with
+  | None -> party c
+  | Some w -> (
+      match C.nth_after c Wire.A ~after:w 0 with
+      | None -> { (party c) with interact_prompt = true }
+      | Some t -> taunie_battles c ~t)
 
 (* 03.03: Taunie's text until two A, the party bar; the rock pile's text once
    the stick was held 4 s (the gate walk runs: 7 s of walk is 4.2 s held with
@@ -1325,6 +1344,103 @@ let cases =
       "[Event] 03.02b: battle on screen during to_taunie: jumping to \
        battle_totodile, skipping taunie_battle_start\n\
        ran after_taunie_battle";
+    case
+      "03.02b after 03.02: the first prompt is Taunie's, the plaza scene ends \
+       at her battle, the run goes on there"
+      (fun () ->
+        let r, c = outcome "03.02b" taunie_first in
+        String.concat "\n"
+          (r
+          :: List.filter
+               (fun line ->
+                 List.exists
+                   (fun prefix -> String.starts_with ~prefix line)
+                   [
+                     "[PLZA scene] the battle";
+                     "[Event]";
+                     "[Story] 03.02b #";
+                     "[PLZA] story_battle: Picking";
+                     "[PLZA] talk_through";
+                   ])
+               (C.lines c)))
+      "passed\n\
+       [Story] 03.02b #1 to_plaza_scene_prompt: start (to the first A prompt, \
+       which starts a scene, not Taunie's talk (she is 3.25 s further on). not \
+       planned: no tile grid in Lumiose)\n\
+       [Story] 03.02b #1 to_plaza_scene_prompt: done\n\
+       [Story] 03.02b #2 plaza_scene: start (A starts the scene: two black \
+       fades and the Smart Rotom card, then control at the Quartiere Verde \
+       arch (~12 s))\n\
+       [PLZA scene] the battle HUD is up: on to the story battle.\n\
+       [Event] 03.02b: battle on screen during plaza_scene: jumping to \
+       battle_totodile, skipping to_taunie, taunie_battle_start\n\
+       [Story] 03.02b #2 plaza_scene: done\n\
+       [Story] 03.02b #3 to_taunie: start (on through the arch to Taunie's \"A \
+       Talk\", A on it. not planned: no tile grid in Lumiose)\n\
+       [Story] 03.02b #3 to_taunie: done\n\
+       [Story] 03.02b #4 taunie_battle_start: start (A through her talk and \
+       challenge (no A hint, subtitles without a box) to the battle HUD)\n\
+       [Story] 03.02b #4 taunie_battle_start: done\n\
+       [Story] 03.02b #5 battle_totodile: start (beat Totodile, until \"We're \
+       not done just yet!\")\n\
+       [PLZA] story_battle: Picking Move: Left\n\
+       [Story] 03.02b #5 battle_totodile: done\n\
+       [Story] 03.02b #6 tepig_battle_start: start (A through the Type \
+       Matchups tutorial and Tepig's send-out to the battle HUD)\n\
+       [Story] 03.02b #6 tepig_battle_start: done\n\
+       [Story] 03.02b #7 battle_tepig: start (beat Tepig, until Taunie's speech)\n\
+       [PLZA] story_battle: Picking Move: Left\n\
+       [Story] 03.02b #7 battle_tepig: done\n\
+       [Story] 03.02b #8 after_taunie_battle: start (the Map & Missions card \
+       with A, the map closed with B, her talk with B)\n\
+       [PLZA] talk_through_map_screen: the party bar held: back in the overworld\n\
+       [Story] 03.02b #8 after_taunie_battle: done";
+    case
+      "03.02 into Taunie's battle, no story battle ahead: the scene goes on \
+       through the HUD and times out"
+      (fun () ->
+        let r, c = outcome "03.02" taunie_first in
+        String.concat "\n"
+          (r
+          :: List.filter
+               (fun line ->
+                 List.exists
+                   (fun prefix -> String.starts_with ~prefix line)
+                   [ "[PLZA scene] the battle"; "[Event]" ])
+               (C.lines c)))
+      "03.02 event 2 (leave_hotel_z): scene_timeout: scene: Did not finish \
+       within 360 s (expecting the controls hint, the party bar or the A \
+       prompt).";
+    case
+      "03.02b with the battle HUD on one read of the plaza scene: the scene \
+       goes on to control"
+      (fun () ->
+        let r, c = outcome "03.02b" (quartiere_verde ~hud_flicker:true) in
+        String.concat "\n"
+          (r
+          :: List.filter
+               (fun line ->
+                 List.exists
+                   (fun prefix -> String.starts_with ~prefix line)
+                   [
+                     "[PLZA scene] control";
+                     "[PLZA scene] done";
+                     "[PLZA scene] the battle";
+                     "[Event]";
+                     "[Story] 03.02b #2";
+                   ])
+               (C.lines c)))
+      "passed\n\
+       [Story] 03.02b #2 plaza_scene: start (A starts the scene: two black \
+       fades and the Smart Rotom card, then control at the Quartiere Verde \
+       arch (~12 s))\n\
+       [PLZA scene] control_showing at 2.1s: battle, party bar\n\
+       [PLZA scene] control_showing at 2.4s: party bar\n\
+       [PLZA scene] control at 3.3s: party bar\n\
+       [PLZA scene] done on control.\n\
+       [Story] 03.02b #2 plaza_scene: done\n\
+       [PLZA scene] done on battle.\n\
+       [PLZA scene] done on battle.";
     case "03.02b lost: no plaza scene prompt"
       (result "03.02b" (quartiere_verde ~lost:true))
       "03.02b event 1 (to_plaza_scene_prompt): walk_no_end: \

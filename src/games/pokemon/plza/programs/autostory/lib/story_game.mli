@@ -56,8 +56,8 @@ val make :
   reload:(unit -> (unit, Engine_run.Failure.cause) result) ->
   Plza_checkpoints.Game.t
 (** The handlers for one checkpoint's run. With a [story_battle] later in the
-    checkpoint, a walk stops on the battle HUD and the run goes on at the battle
-    ({!Battle_jump}). *)
+    checkpoint, a walk or a scene (but [scene_to_battle]) stops on the battle
+    HUD and the run goes on at the battle ({!Battle_jump}). *)
 
 val run_watched :
   ?end_check:(unit -> (unit, Engine_run.Failure.cause) result) ->

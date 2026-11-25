@@ -36,11 +36,22 @@ let platform_or_reload ~reload steps ~timeout_ms =
           Platform_wait.wait_for_platform steps ~timeout_ms)
   | outcome -> outcome
 
+(* A scene, as the fork's action table runs one: with a story battle ahead,
+   the battle HUD ends it and the run goes on there (but for a battle's
+   start). *)
+let run_scene ~jump steps (event : Plan.event) (config : Scene_machine.config) =
+  Scene_machine.run steps "scene"
+    {
+      config with
+      end_at_battle =
+        (not config.stop_at_battle) && Battle_jump.battle_ahead jump event;
+    }
+
 (* A scene stopping at a choice, as the fork's: its "button" A or B (A when
    absent). *)
-let scene_to_choice steps (event : Plan.event) (args : Json_field.obj) =
+let scene_to_choice ~jump steps (event : Plan.event) (args : Json_field.obj) =
   let to_choice button =
-    Scene_machine.run steps "scene"
+    run_scene ~jump steps event
       { Scene_machine.default with stop_at_choice = true; button }
   in
   match args with
@@ -55,10 +66,11 @@ let scene_to_battle steps =
 
 (* A scene with a start window, as the fork's: control before any scene
    waits up to "start_window_ms" for one. *)
-let scene_with_start_window steps (event : Plan.event) (args : Json_field.obj) =
+let scene_with_start_window ~jump steps (event : Plan.event)
+    (args : Json_field.obj) =
   match args with
   | [ ("start_window_ms", `Int ms) ] when ms > 0 ->
-      Scene_machine.run steps "scene"
+      run_scene ~jump steps event
         { Scene_machine.default with start_window_ms = Some ms }
   | _ ->
       bad_args event "the only arg is start_window_ms, a positive number of ms"
@@ -92,17 +104,19 @@ let prompt_not_seen =
 (* A scene that presses A first, as the fork's: A through the prompt first
    ({!Plza_walk.Talk_prompt.press_through}), then the scene; with "stop_at_choice", to the
    choice. *)
-let through_prompt steps config =
+let through_prompt ~jump steps event config =
   if prompt_missing steps then prompt_not_seen
   else (
     Plza_walk.Talk_prompt.press_through (talk_steps steps);
-    Scene_machine.run steps "scene" config)
+    run_scene ~jump steps event config)
 
-let scene_through_prompt steps (event : Plan.event) (args : Json_field.obj) =
+let scene_through_prompt ~jump steps (event : Plan.event)
+    (args : Json_field.obj) =
   match args with
-  | [] -> through_prompt steps Scene_machine.default
+  | [] -> through_prompt ~jump steps event Scene_machine.default
   | [ ("stop_at_choice", `Bool true) ] ->
-      through_prompt steps { Scene_machine.default with stop_at_choice = true }
+      through_prompt ~jump steps event
+        { Scene_machine.default with stop_at_choice = true }
   | _ -> bad_args event "the only arg is stop_at_choice, true"
 
 (* The fork's console action timeout for run_to_gate. *)
@@ -143,7 +157,7 @@ let zone_actions =
   ]
 
 (* The story's own actions, up to 03.06. *)
-let story_actions ~reload =
+let story_actions ~reload ~jump =
   [
     ("confirm_new_game", no_args New_game_confirm.run);
     ( "opening_to_platform",
@@ -152,38 +166,37 @@ let story_actions ~reload =
       timed (platform_or_reload ~reload) ~default:wait_for_platform_ms );
     ("set_text_speed_fast", no_args Text_speed.run);
     ("plus_skip", no_args Plus_skip.run);
-    ("scene_to_choice", scene_to_choice);
+    ("scene_to_choice", scene_to_choice ~jump);
     ("choose_0", no_args (fun steps -> Choose_row.run steps 0));
     ("choose_1", no_args (fun steps -> Choose_row.run steps 1));
     ("scene_to_battle", no_args scene_to_battle);
-    ("scene_with_start_window", scene_with_start_window);
-    ("scene_through_prompt", scene_through_prompt);
+    ("scene_with_start_window", scene_with_start_window ~jump);
+    ("scene_through_prompt", scene_through_prompt ~jump);
     ("story_battle", no_args Battle.run);
     ("talk_through_map_screen", no_args Map_talk.run);
     ( "climb_ladder",
       no_args (fun steps -> Plza_walk.Ladder_climb.run (talk_steps steps)) );
   ]
 
-let game_actions ~reload steps =
+let game_actions ~reload ~jump steps =
   List.map
     (fun (name, action) -> (name, action steps))
-    (story_actions ~reload @ zone_actions)
+    (story_actions ~reload ~jump @ zone_actions)
 
-let scene steps (event : Plan.event) =
+let scene ~jump steps (event : Plan.event) =
+  let run = run_scene ~jump steps event in
   match event.way with
-  | None -> Scene_machine.run steps "scene" Scene_machine.default
+  | None -> run Scene_machine.default
   | Some "end_on_black_fade" ->
-      Scene_machine.run steps "scene"
-        { Scene_machine.default with end_on_black_fade = true }
-  | Some "button_b" ->
-      Scene_machine.run steps "scene" { Scene_machine.default with button = B }
+      run { Scene_machine.default with end_on_black_fade = true }
+  | Some "button_b" -> run { Scene_machine.default with button = B }
   | Some way ->
       bad_args event
         ("a scene's action is end_on_black_fade or button_b, not " ^ way)
 
-let builtin steps (event : Plan.event) =
+let builtin ~jump steps (event : Plan.event) =
   match event.kind with
-  | Scene -> scene steps event
+  | Scene -> scene ~jump steps event
   | _ ->
       Error
         (Failure.cause ~repeats:true "no_handler"
@@ -196,22 +209,23 @@ let walk steps ~checkpoint_id ~jump (event : Plan.event)
   let battle_ahead = Battle_jump.battle_ahead jump event in
   match own with
   | Walk args ->
-      Battle_jump.after jump event
-        (Plza_walk.Walk.run_event walk_steps ~walk_only ~battle_ahead event.id
-           args)
+      Plza_walk.Walk.run_event walk_steps ~walk_only ~battle_ahead event.id args
 
-(* Every handler runs through the jump to a story battle. *)
+(* Every handler runs through the jump to a story battle: one that ends on a
+   battle goes on there, as the fork's engine resumes at the action its
+   failure names. *)
+let through jump event handle =
+  Battle_jump.run jump event (fun () ->
+      Battle_jump.after jump event (handle ()))
+
 let jumping jump (name, action) =
-  ( name,
-    fun event args -> Battle_jump.run jump event (fun () -> action event args)
-  )
+  (name, fun event args -> through jump event (fun () -> action event args))
 
 let own_through jump steps ~checkpoint_id event own =
-  Battle_jump.run jump event (fun () ->
-      walk steps ~checkpoint_id ~jump event own)
+  through jump event (fun () -> walk steps ~checkpoint_id ~jump event own)
 
 let builtin_through jump steps event =
-  Battle_jump.run jump event (fun () -> builtin steps event)
+  through jump event (fun () -> builtin ~jump steps event)
 
 let no_save () =
   Error (Failure.cause ~repeats:true "no_save" "PLZA saves by autosave only")
@@ -222,7 +236,7 @@ let make steps ~(checkpoint : Plan.checkpoint) ~reload : Game.t =
   {
     run_own = own_through jump steps ~checkpoint_id;
     run_builtin = builtin_through jump steps;
-    game_actions = List.map (jumping jump) (game_actions ~reload steps);
+    game_actions = List.map (jumping jump) (game_actions ~reload ~jump steps);
     flag_holds = Resume_flags.holds steps;
     position = (fun () -> None);
     between_rounds = (fun () -> Ok ());
