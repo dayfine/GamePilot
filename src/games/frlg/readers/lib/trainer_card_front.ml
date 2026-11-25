@@ -56,9 +56,10 @@ let dark : Cc.range =
     high = { r = dark_max; g = dark_max; b = dark_max };
   }
 
-(* The star's yellow: pret's star.pal (255, 213, 82) and its shades. *)
+(* The star's yellow: pret's star.pal (255, 213, 82) and its shades. Green
+   up to 255: a capture 10% bright pushes it past 240. *)
 let star_yellow : Cc.range =
-  { low = { r = 200; g = 160; b = 0 }; high = { r = 255; g = 240; b = 150 } }
+  { low = { r = 200; g = 160; b = 0 }; high = { r = 255; g = 255; b = 150 } }
 
 let probes =
   [ Solid_color.probe ~id:body_id body; Solid_color.probe ~id:strip_id strip ]
@@ -94,7 +95,7 @@ let to_string t =
   in
   badges ^ ", " ^ stars
 
-let min_body_channel = 215.
+let min_body_channel = 195.
 let max_body_stddev_sum = 45.
 let min_strip_sum = 450.
 let max_strip_sum = 670.
