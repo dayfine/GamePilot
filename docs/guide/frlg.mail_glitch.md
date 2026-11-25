@@ -19,7 +19,7 @@ or more with Recycle.
 (`frlg.team_training`) use the glitch to duplicate Rare Candies.
 
 <!-- generated:backends -->
-Runs on: mGBA, the Switch.
+Runs on: mGBA, the Switch (in its GBA app).
 <!-- /generated -->
 
 ## Before you start
