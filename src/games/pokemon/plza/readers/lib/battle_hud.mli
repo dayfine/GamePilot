@@ -30,8 +30,13 @@ val hint_shown : Effects.measurements -> bool
 (** The battle hint's A. *)
 
 val panel_shown : Effects.measurements -> bool
+(** The lead's panel: the level badge and the HP bar. *)
+
 val markers_shown : Effects.measurements -> bool
+(** The stat markers: one slot with the triangle and three or more empty. *)
+
 val trainer_balls_shown : Effects.measurements -> bool
+(** The trainer's Poké Balls: one slot with a ball. *)
 
 val shown : Effects.measurements -> bool
 (** The hint, or the panel with the markers or the trainer's balls. *)

@@ -7,13 +7,13 @@
     pavement.
 
     Each slot's box is (0.048 + 0.0398 i, 0.926, 0.017, 0.058), and in it a
-    button detector for each of four templates (PokemonLZA_ButtonDetector.cpp):
-    D-pad up and down, blobs of the eight bright ranges (0x808080 to white up to
-    0xf0f0f0 to white) of at least 250 pixels and 15 x 15, scored under 80; and
-    their black insides, blobs of the four dark ranges (black to 0x404040 up to
-    black to 0x707070) of at least 25 pixels and 5 x 5, scored under 120. Sizes
-    are the fork's at 4K scaled to 1080p; aspect and fill within 0.8 to 1.25 of
-    the template's.
+    button detector for each of four templates (PokemonLZA_ButtonDetector.cpp,
+    {!Button_detector}): D-pad up and down, blobs of the eight bright ranges
+    (0x808080 to white up to 0xf0f0f0 to white) of at least 250 pixels and 15 x
+    15, scored under 80; and their black insides, blobs of the four dark ranges
+    (black to 0x404040 up to black to 0x707070) of at least 25 pixels and 5 x 5,
+    scored under 120. Sizes are the fork's at 4K scaled to 1080p; aspect and
+    fill within 0.8 to 1.25 of the template's.
 
     Where it differs: the fork keeps which slot shows each marker, up and down;
     this says whether any does ({!shown}) and which slot shows the down one
