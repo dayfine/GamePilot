@@ -1,4 +1,4 @@
-(* gamepilot checkpoints PLAN_DIR --from ID --to ID --mode testing|verification
+(* gamepilot run PLAN_DIR --from ID --to ID --mode testing|verification
      [--runs N] [--states DIR] [--runs-dir DIR] [--daemon PATH]
      [--mgba-port N] [--port N] [--party SPECIES,...] [--center TOWN] [--walk]
      [--end-check-only] [--grind-battles N] [--watch] [--watch-port N]

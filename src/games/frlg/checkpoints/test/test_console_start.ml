@@ -125,6 +125,10 @@ let rows_text needs read =
 let preflight id before read = rows_text (needs id before) read
 let same = Some { F.tiles = 150; changed = 3 }
 
+(* The Trainer Card's front with the first [n] badges and no star. *)
+let badges n : Frlg_readers.Trainer_card_front.t option =
+  Some { badges = List.init 8 (fun i -> i < n); stars = 0 }
+
 (* The pre-flight's row for 02-trade-farfetchd's Cut user. *)
 let summary slot species moves : Room_policy.member =
   { slot; species; level = Some 30; moves = Some moves }
@@ -137,7 +141,7 @@ let cut_row read =
   in
   Preflight.compare (needs "02-trade-farfetchd" before) read
   |> List.filter_map (fun (r : Preflight.row) ->
-         if String.ends_with ~suffix:"(cut_tree)" r.need then
+         if String.starts_with ~prefix:"a member knows" r.need then
            Some
              (Printf.sprintf "%s: %s: %s" r.need r.read
                 (match r.verdict with
@@ -157,24 +161,29 @@ let preflight_cases =
           {
             observed = observed ~party:[ "blastoise"; "pidgey" ] ~money:25014 ();
             place = same;
-            card = None;
+            card = badges 8;
             members = None;
           })
-      "pidgey in the party (fly): blastoise, pidgey: ok | money at least ¥4100 \
-       (mart, buy_coins): ¥25014: ok | at the start, CeladonCity: 3 of 150 \
-       tiles changed: ok => go";
-    case "preflight 01-celadon-setup: no Fly user and too little money stop"
+      "pidgey in the party (fly): blastoise, pidgey: ok | the thunder badge \
+       (fly): 8 badges (boulder, cascade, thunder, rainbow, soul, marsh, \
+       volcano, earth), no star: ok | money at least ¥4100 (mart, buy_coins): \
+       ¥25014: ok | at the start, CeladonCity: 3 of 150 tiles changed: ok => \
+       go";
+    case
+      "preflight 01-celadon-setup: no Fly user, no Thunder Badge and too \
+       little money stop"
       (fun () ->
         preflight "01-celadon-setup" None
           {
             observed = observed ~party:[ "blastoise" ] ~money:4000 ();
             place = same;
-            card = None;
+            card = badges 2;
             members = None;
           })
-      "pidgey in the party (fly): blastoise: MISMATCH | money at least ¥4100 \
-       (mart, buy_coins): ¥4000: MISMATCH | at the start, CeladonCity: 3 of \
-       150 tiles changed: ok => stop";
+      "pidgey in the party (fly): blastoise: MISMATCH | the thunder badge \
+       (fly): 2 badges (boulder, cascade), no star; missing thunder: MISMATCH \
+       | money at least ¥4100 (mart, buy_coins): ¥4000: MISMATCH | at the \
+       start, CeladonCity: 3 of 150 tiles changed: ok => stop";
     case
       "preflight 01-celadon-setup: no kept frame: the place is not read, which \
        stops"
@@ -183,12 +192,14 @@ let preflight_cases =
           {
             observed = observed ~party:[ "pidgey" ] ~money:25014 ();
             place = None;
-            card = None;
+            card = badges 8;
             members = None;
           })
-      "pidgey in the party (fly): pidgey: ok | money at least ¥4100 (mart, \
-       buy_coins): ¥25014: ok | at the start, CeladonCity: no kept start frame \
-       to compare: NOT READ => stop";
+      "pidgey in the party (fly): pidgey: ok | the thunder badge (fly): 8 \
+       badges (boulder, cascade, thunder, rainbow, soul, marsh, volcano, \
+       earth), no star: ok | money at least ¥4100 (mart, buy_coins): ¥25014: \
+       ok | at the start, CeladonCity: no kept start frame to compare: NOT \
+       READ => stop";
     case
       "preflight tt-01, console B: the picked-up Rare Candy is duplicated; its \
        Retro Mail and Super Repel come from su-01"
@@ -202,14 +213,16 @@ let preflight_cases =
                 ~items:[ ("super-repel", 2); ("retro-mail", 100) ]
                 ();
             place = same;
-            card = None;
+            card = badges 8;
             members = None;
           })
       "pidgey in the party (fly): mr-mime, blastoise, pidgey: ok | mr-mime in \
-       the party (give_bag_item): mr-mime, blastoise, pidgey: ok | super-repel \
-       at least x1 (use_item): super-repel x2: ok | retro-mail at least x99 \
-       (duplicate_item): retro-mail x100: ok | at the start, \
-       CeladonCity_DepartmentStore_1F: 3 of 150 tiles changed: ok => go";
+       the party (give_bag_item): mr-mime, blastoise, pidgey: ok | the thunder \
+       badge (fly): 8 badges (boulder, cascade, thunder, rainbow, soul, marsh, \
+       volcano, earth), no star: ok | super-repel at least x1 (use_item): \
+       super-repel x2: ok | retro-mail at least x99 (duplicate_item): \
+       retro-mail x100: ok | at the start, CeladonCity_DepartmentStore_1F: 3 \
+       of 150 tiles changed: ok => go";
     case "preflight 02-trade-farfetchd, mGBA: some member knows Cut (Rattata)"
       (fun () ->
         cut_row
@@ -251,6 +264,24 @@ let preflight_cases =
           })
       "a member knows cut (cut_tree): no member knows cut: MISMATCH";
     case
+      "preflight 02-trade-farfetchd: Cut outside battle needs the Cascade Badge"
+      (fun () ->
+        Preflight.compare
+          (needs "02-trade-farfetchd" None)
+          {
+            observed = observed ~party:[ "rattata" ] ();
+            place = same;
+            card = badges 1;
+            members = None;
+          }
+        |> List.filter_map (fun (r : Preflight.row) ->
+               if String.ends_with ~suffix:"badge (cut_tree)" r.need then
+                 Some (r.need ^ ": " ^ r.read)
+               else None)
+        |> String.concat " | ")
+      "the cascade badge (cut_tree): 1 badge (boulder), no star; missing \
+       cascade";
+    case
       "preflight 03-trade-mr-mime: what 02-trade-farfetchd promised, exactly \
        (its money spent is no start need)"
       (fun () ->
@@ -272,7 +303,8 @@ let preflight_cases =
                 })))
       "party includes blastoise, pidgey, abra, farfetchd; pidgey in the party \
        (fly); abra in the party (ingame_trade); a member knows cut (cut_tree); \
-       money at least ¥3550 (mart); at the start, VermilionCity";
+       the thunder badge (fly); the cascade badge (cut_tree); money at least \
+       ¥3550 (mart); at the start, VermilionCity";
     case
       "preflight 04-grind-farfetchd: 03-trade-mr-mime's Revives and Escape \
        Rope gained are no start need (console B held 5 ropes, not mGBA's 3); \
@@ -296,8 +328,8 @@ let preflight_cases =
                 })))
       "party includes blastoise, pidgey, mr-mime, farfetchd; farfetchd in the \
        party (grind); blastoise in the party (grind); pidgey in the party \
-       (fly); escape-rope at least x1 (use_item); at the start, \
-       LavenderTown_PokemonCenter_1F";
+       (fly); the thunder badge (fly); escape-rope at least x1 (use_item); at \
+       the start, LavenderTown_PokemonCenter_1F";
     case
       "preflight 05-grind-mr-mime (a grind round, resumed from any round's \
        save): what 04-grind-farfetchd promised, MIMIEN and Blastoise, at the \
@@ -345,8 +377,9 @@ let preflight_cases =
       "party includes blastoise, pidgey, mr-mime, farfetchd; blastoise in the \
        party (party_swap); pidgey in the party (fly); farfetchd in the party \
        (party_swap); mr-mime in the party (party_swap); a member knows cut \
-       (cut_tree); money at least ¥2300 (mart); retro-mail at least x1 \
-       (give_bag_item); at the start, LavenderTown";
+       (cut_tree); the cascade badge (cut_tree); the thunder badge (fly); \
+       money at least ¥2300 (mart); retro-mail at least x1 (give_bag_item); at \
+       the start, LavenderTown";
   ]
 
 (* {1 Room in the party} *)

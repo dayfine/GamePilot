@@ -1,5 +1,5 @@
-(* Port of prepare_timings (PokemonFRLG_RngCalibration.cpp) for the Sweet Scent
-   target, with the frame model as a value. *)
+(* Port of the timing preparation in PokemonFRLG_RngCalibration.cpp for the
+   Sweet Scent target, with the frame model as a value. *)
 
 type frame_model = {
   frame_duration_ms : float;
@@ -42,14 +42,14 @@ type t = {
   ingame_delay_ms : int;
 }
 
-(* Teachy TV: 313 advances a frame while it plays, kept for TEACHY_TV_BUFFER
-   advances of margin, and 14067 ms of opening and closing it. *)
+(* Teachy TV: 313 advances a frame while it plays, kept for a margin of 12000
+   advances, and 14067 ms of opening and closing it. *)
 let teachy_advances_per_frame = 313.0
 let teachy_tv_buffer = 12000.0
 let teachy_tv_rounding = 7500.0
 let teachy_tv_overhead_ms = 14067.0
 
-(* check_timings' minimums. *)
+(* The minimums of the C++'s timing check (PokemonFRLG_BlindNavigation.cpp). *)
 let min_csf_delay_ms = 3200
 let min_seed_delay_ms = 29650
 let min_press_gap_ms = 300

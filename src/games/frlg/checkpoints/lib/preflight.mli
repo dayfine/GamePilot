@@ -32,6 +32,9 @@ type need = Plan_needs.need =
   | Knows_move of { move : string; for_ : string }
       (** Some member knows this field move: a [cut_tree] event's Cut, which the
           game lets any member that knows it use. *)
+  | Badge of { badge : string; for_ : string }
+      (** The badge a field move needs outside battle ([for_]: the action),
+          judged on the Trainer Card. *)
   | Money_at_least of { amount : int; for_ : string }
   | Money_between of { min : int; max : int }
   | Item_at_least of { item : string; count : int; for_ : string }
@@ -75,8 +78,10 @@ type verdict = Ok | Mismatch | Not_read
 type row = { need : string; read : string; verdict : verdict }
 
 val describe : need -> string
-(** The need as the table's NEED column and the user guides (docs/guide/) say
-    it: ["money at least ¥4100 (buy_coins)"]. *)
+(** {!Plan_needs.describe}: the need as the table's NEED column says it. *)
+
+val asks_something : need -> bool
+(** {!Plan_needs.asks_something}. *)
 
 val compare : need list -> read -> row list
 

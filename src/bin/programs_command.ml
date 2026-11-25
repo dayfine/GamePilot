@@ -7,8 +7,8 @@
    chain needs of the save, as its rules say it (Checkpoint_families: free
    party slots, field moves).
 
-   Also the program a command names: --program ID in place of a plan folder
-   (gamepilot checkpoints), or a one-shot program's id (gamepilot run). *)
+   Also the program gamepilot run or replay names by its id: a one-shot
+   program, or a chain of checkpoints and its plan folder. *)
 
 module R = Program_registry
 
@@ -60,28 +60,22 @@ let main = function
 
 let unknown id = Error ("no program " ^ id ^ ": gamepilot programs lists them")
 
-(* The plan folder of --program ID, wherever it is in [args], and the other
-   args; else the first arg is the plan folder. *)
-let rec plan_dir_of_args = function
-  | "--program" :: id :: rest -> (
-      match R.find id with
-      | None -> unknown id
-      | Some { checkpoints = None; _ } ->
-          Error (id ^ " has no checkpoints: gamepilot run " ^ id)
-      | Some { checkpoints = Some path; _ } -> (
-          match R.locate path with
-          | Some dir -> Ok (dir, rest)
-          | None -> Error (path ^ " not found from here: run in the repo")))
-  | a :: rest when List.mem "--program" rest ->
-      Result.map (fun (dir, rest) -> (dir, a :: rest)) (plan_dir_of_args rest)
-  | dir :: rest -> Ok (dir, rest)
-  | [] -> Error "a plan folder or --program ID is required"
+type runnable = One_shot of R.t | Chain of R.t * string
 
-(* A one-shot program by its id. *)
+(* The program [id] names: one-shot, or its checkpoints and their plan
+   folder. *)
+let runnable id =
+  match R.find id with
+  | None -> unknown id
+  | Some ({ checkpoints = None; _ } as p) -> Ok (One_shot p)
+  | Some ({ checkpoints = Some path; _ } as p) -> (
+      match R.locate path with
+      | Some dir -> Ok (Chain (p, dir))
+      | None -> Error (path ^ " not found from here: run in the repo"))
+
+(* A one-shot program by its id (gamepilot replay). *)
 let one_shot id =
   match R.find id with
   | Some ({ checkpoints = None; _ } as p) -> Ok p
-  | Some p ->
-      Error
-        (p.id ^ " runs by checkpoints: gamepilot checkpoints --program " ^ p.id)
+  | Some p -> Error (p.id ^ " runs by checkpoints, live: gamepilot run " ^ p.id)
   | None -> unknown id
