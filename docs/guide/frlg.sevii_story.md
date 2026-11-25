@@ -1,22 +1,10 @@
 # Sevii Story
 
-Plays the Sevii Islands story on a save that has beaten the Elite Four. So far it does the first
-trip and Bill's errand after it, up to Bill's return to Cinnabar. It flies to Cinnabar Island and answers YES to
-Bill in the Pokemon Center, who takes you to One Island on the Seagallop. There Celio gives you the
-Tri-Pass, which the Vermilion ferry needs, and Bill gives you a Meteorite for the man who runs Two
-Island's Game Corner. The program then sails from One Island's harbor to Two Island and walks into
-the Game Corner, where the owner asks you to find his daughter Lostelle and a Biker barges in. It
-sails on to Three Island, walks through its port, where PC storage comes back on, and beats the
-Bikers who hold the town: three goons and their boss, Cue Ball Paxton, in four trainer battles in a
-row. It moves BLASTOISE to the front of the party first, since it leads every one of those
-battles. Then it heals in Three Island's Pokemon Center, uses a Super Repel and crosses Bond
-Bridge, beating the trainers who see it on the way, uses another in the Berry Forest, and finds
-Lostelle; it beats the Hypno that attacks her, and the game takes you both back to the Game
-Corner. There her father takes the Meteorite and gives you a Moon Stone, and the program sails back
-to One Island, where Bill says goodbye to Celio and takes the Seagallop home with you to Cinnabar
-Island. Your save must have turned Bill down when he asked after the Cinnabar Gym, so that he
-still waits in the Center. It starts at the Celadon Dept. Store
-1F save spot, where Supplies and Team Training end.
+Plays the Sevii Islands story after the Hall of Fame: Bill's trip to One Island, the Meteorite
+errand and Lostelle's rescue, back to Cinnabar Island.
+
+So far it ends when Bill goes home, before the National Pokedex. "What happens" below lists each
+checkpoint.
 
 <!-- generated:backends -->
 Runs on: mGBA.
@@ -32,6 +20,14 @@ Runs on: mGBA.
 - super-repel at least x2 (use_item)
 - at the start, CeladonCity_DepartmentStore_1F
 <!-- /generated -->
+
+Also:
+
+- Save at the Celadon Dept. Store 1F save spot, where Supplies and Team Training end.
+- Have turned Bill down when he asked after the Cinnabar Gym, so he still waits in the Pokemon
+  Center.
+- Bring a strong BLASTOISE: the program moves it to the front before Three Island's Bikers, and it fights
+  every trainer battle on its own (see "Known limits").
 
 ## Running it
 

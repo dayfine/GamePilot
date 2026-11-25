@@ -35,7 +35,7 @@ type plan = {
           back ({!Pacing}). *)
 }
 
-val decode : Json_field.obj -> (plan, Pokemon_checkpoints.Failure.cause) result
+val decode : Json_field.obj -> (plan, Pokemon_engine.Failure.cause) result
 (** Args ["species"], ["move"] and ["backup_move"] (slugs), and ["pace"] (a
     direction). *)
 

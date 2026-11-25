@@ -4,12 +4,12 @@ module B = Frlg_battle
 type lead = Switch_to_sweeper
 
 type heal =
-  | Nurse of Pokemon_checkpoints.Pose.grid
-  | Pad of Pokemon_checkpoints.Pose.grid
+  | Nurse of Pokemon_engine.Pose.grid
+  | Pad of Pokemon_engine.Pose.grid
 
 type strategy = {
   name : string;
-  spot : Pokemon_checkpoints.Pose.grid;
+  spot : Pokemon_engine.Pose.grid;
   pace : Grid_geometry.Direction.t;
   lead : lead;
   heal : heal;
@@ -40,7 +40,7 @@ let tile ~where obj : Grid_geometry.Tile_pos.t =
   | `List [ `Int x; `Int y ] -> { x; y }
   | _ -> J.fail "%stile is not [x, y]." where
 
-let pose ~where key obj : Pokemon_checkpoints.Pose.grid =
+let pose ~where key obj : Pokemon_engine.Pose.grid =
   let p = J.as_object (where ^ key ^ ": ") (J.field ~where key obj) in
   let where = where ^ key ^ "." in
   {
@@ -146,7 +146,7 @@ let decode strategies obj =
   with
   | t -> Ok t
   | exception J.Invalid e ->
-      Error (Pokemon_checkpoints.Failure.cause ~repeats:true "bad_args" e)
+      Error (Pokemon_engine.Failure.cause ~repeats:true "bad_args" e)
 
 let met goal ~known = List.mem goal.learn_move known
 let heal_due s ~since_heal = since_heal >= s.heal_every

@@ -1,9 +1,8 @@
 type game_steps = {
-  level : slot:int -> (int option, Pokemon_checkpoints.Failure.cause) result;
+  level : slot:int -> (int option, Pokemon_engine.Failure.cause) result;
   candy : slot:int -> Level_up_policy.policy -> Rare_candy.result;
   member :
-    slot:int ->
-    (Room_policy.member option, Pokemon_checkpoints.Failure.cause) result;
+    slot:int -> (Room_policy.member option, Pokemon_engine.Failure.cause) result;
   log : string -> unit;
 }
 
@@ -19,9 +18,7 @@ type report = {
 let ( let* ) = Result.bind
 
 let fail code fmt =
-  Printf.ksprintf
-    (fun d -> Error (Pokemon_checkpoints.Failure.cause code d))
-    fmt
+  Printf.ksprintf (fun d -> Error (Pokemon_engine.Failure.cause code d)) fmt
 
 (* The candies so far and what they did. *)
 type fed = {
@@ -139,7 +136,5 @@ let run game_steps (goal : Candy_plan.goal) ~slot =
       Ok r
   | Error cause ->
       game_steps.log
-        ("Candy level: "
-        ^ Pokemon_checkpoints.Failure.cause_to_string cause
-        ^ ".");
+        ("Candy level: " ^ Pokemon_engine.Failure.cause_to_string cause ^ ".");
       Error cause

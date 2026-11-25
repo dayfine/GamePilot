@@ -48,7 +48,7 @@ let field (key, value) =
   | "caught" -> caught value
   | _ -> Error (Printf.sprintf "%s.%s is not a known field." where key)
 
-let needs (plan : Pokemon_checkpoints.Plan.t) =
+let needs (plan : Pokemon_engine.Plan.t) =
   match Option.bind plan.metadata (List.assoc_opt "preconditions") with
   | None -> Ok []
   | Some (`Assoc fields) -> all_ok (List.map field fields)

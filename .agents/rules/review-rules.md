@@ -51,7 +51,7 @@ and the generated guide blocks do not print it.
 - Bad: `- 0 free party slots` in a guide's `needs` block.
 - Good: the line left out; `- 2 free party slots (joining: ...)` when slots are needed.
 - Find: the generator (`src/games/frlg/series/lib/guide_tables.ml`,
-  `Frlg_checkpoints.Preflight.asks_something`)
+  `Frlg_checkpoints.Plan_needs.asks_something`)
   leaves them out and CI's `gamepilot guide --check` fails on a stale block. A new kind of need
   must say in `asks_something` when it asks nothing. Recipe for leftovers:
   `grep -rnE '^- 0 |x0\b|¥0\b|at least 0' docs/guide`.

@@ -21,7 +21,7 @@ type need = Plan_needs.need =
   | Party_in_order of string list
   | Party_includes of {
       members : string list;
-      slots : Pokemon_checkpoints.Postconditions.slot list;
+      slots : Pokemon_engine.Postconditions.slot list;
     }
   | Member of { species : string; for_ : string }
       (** A member an event uses ([for_]: ["fly"]). *)
@@ -48,8 +48,8 @@ type need = Plan_needs.need =
 
 val needs :
   Frlg_actions.Mart_plan.stocks ->
-  before:Pokemon_checkpoints.Postconditions.t option ->
-  Pokemon_checkpoints.Plan.t ->
+  before:Pokemon_engine.Postconditions.t option ->
+  Pokemon_engine.Plan.t ->
   (need list, string) result
 (** What the save must hold for the plan's first event, in the table's order:
     the plan's declared preconditions ({!Plan_preconditions.needs}), then the
@@ -58,7 +58,7 @@ val needs :
     not read. *)
 
 type read = {
-  observed : Pokemon_checkpoints.Postcondition_check.observed;
+  observed : Pokemon_engine.Postcondition_check.observed;
   place : Frlg_readers.Start_frame.difference option;
       (** The frame after the load against the one kept at the start; [None]
           when none was kept or the frame did not read. *)
@@ -75,14 +75,10 @@ type verdict = Ok | Mismatch | Not_read
 type row = { need : string; read : string; verdict : verdict }
 
 val describe : need -> string
-(** The need as the table's NEED column and the user guides (docs/guide/) say
-    it: ["money at least ¥4100 (buy_coins)"]. *)
+(** {!Plan_needs.describe}: the need as the table's NEED column says it. *)
 
 val asks_something : need -> bool
-(** False for a need any save meets: money or an item at least 0, at least 0
-    badges or species caught, an empty party order, badge list or [includes].
-    The user guides leave these out (review rule R2,
-    [.agents/rules/review-rules.md]). *)
+(** {!Plan_needs.asks_something}. *)
 
 val compare : need list -> read -> row list
 
@@ -102,5 +98,5 @@ val reads_card : need list -> bool
 (** A need is judged on the Trainer Card's badges or stars: the pre-flight reads
     them. *)
 
-val to_read : need list -> Pokemon_checkpoints.Postconditions.t
+val to_read : need list -> Pokemon_engine.Postconditions.t
 (** What {!Postcondition_reads.observe} must read for these needs. *)

@@ -19,5 +19,5 @@
  (libraries
   yojson
   gamepilot.table_test
-  gamepilot.pokemon_checkpoints
+  gamepilot.pokemon_engine
   gamepilot.frlg_checkpoints))

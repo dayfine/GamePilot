@@ -6,6 +6,6 @@
   gamepilot.wire
   gamepilot.engine_postcondition
   gamepilot.engine_series
-  gamepilot.pokemon_checkpoints
+  gamepilot.pokemon_engine
   gamepilot.checkpoints_series
   plan_files))

@@ -8,11 +8,11 @@ Developer pages are in `docs/programs/`.
 | Program | Id | Runs on | What it does |
 |---|---|---|---|
 | [Start Menu PoC](frlg.start_menu_poc.md) | `frlg.start_menu_poc` | mGBA | Opens and closes the Start menu: the first program through the daemon. |
-| [Mail Glitch](frlg.mail_glitch.md) | `frlg.mail_glitch` | mGBA, the Switch | Sets up the Mail Glitch, performs it against Lea & Jed on Route 16 and uses it to duplicate an item. |
+| [Mail Glitch](frlg.mail_glitch.md) | `frlg.mail_glitch` | mGBA, the Switch | Turns on the Mail Glitch against Lea & Jed on Route 16 and copies one item with it. |
 | [Supplies](frlg.supplies.md) | `frlg.supplies` | mGBA, the Switch | Stocks what the duplication programs use: Retro Mail and Super Repels. |
-| [Team Training](frlg.team_training.md) | `frlg.team_training` | mGBA, the Switch | Farms Rare Candies with the Mail Glitch's item duplication and levels the team with them. |
-| [Sevii Story](frlg.sevii_story.md) | `frlg.sevii_story` | mGBA | Plays the Sevii Islands story after the Hall of Fame, starting with Bill's trip to One Island. |
-| [Dex Collection](frlg.dex_collection.md) | `frlg.dex_collection` | mGBA | Catches wild Pokemon the Pokedex has not caught yet, toward the 60 the National Pokedex needs. |
+| [Team Training](frlg.team_training.md) | `frlg.team_training` | mGBA, the Switch | Copies Rare Candies with the Mail Glitch to level the team. |
+| [Sevii Story](frlg.sevii_story.md) | `frlg.sevii_story` | mGBA | Plays the Sevii Islands story after the Hall of Fame. |
+| [Dex Collection](frlg.dex_collection.md) | `frlg.dex_collection` | mGBA | Catches Pokemon the Pokedex lacks, toward the National Pokedex. |
 <!-- /generated -->
 
 The Mail Glitch has a second page for its last checkpoint:
@@ -28,9 +28,24 @@ come from the registry and the plans; everything else is hand-written and kept a
     cd src && opam exec -- dune exec -- gamepilot guide --check    # what CI runs
     cd src && opam exec -- dune exec -- gamepilot guide frlg.mail_glitch    # print a program's blocks
 
-The blocks: `programs` (this table), `backends` (on the Switch, with its game picture), `checkpoints [RANGE]` (each checkpoint's title, and
-a digest of its plans, so any plan change needs a regenerated page), `needs [RANGE]` (what the save
-needs for the chain, from the pre-flight), `preflight [RANGE]` (what the pre-flight checks before
-each checkpoint) and `commands [RANGE]`. RANGE is `FROM..TO` or one checkpoint id; without it, every
-checkpoint. A new page starts from a skeleton whose `TODO(guide)` the check refuses until the prose
-is written.
+The blocks:
+
+- `programs`: this table.
+- `backends`: where it runs (on the Switch, with its game picture).
+- `checkpoints [RANGE]`: each checkpoint's title, and a digest of its plans, so any plan change
+  needs a regenerated page.
+- `needs [RANGE]`: what the save needs for the chain, from the pre-flight.
+- `preflight [RANGE]`: what the pre-flight checks before each checkpoint.
+- `commands [RANGE]`: the commands that run it.
+
+RANGE is `FROM..TO` or one checkpoint id; without it, every checkpoint. A new page starts from a
+skeleton whose `TODO(guide)` the check refuses until the prose is written.
+
+Write for a player who reads in passing:
+
+- Open with what the program does in one or two sentences, then at most a short paragraph. Keep the
+  registry's `description` to one short sentence.
+- No hand-written paragraph or list item over 5 lines; `guide --check` names the file and line of
+  one that is.
+- What the save needs and the steps to take go in lists. Leave to the "What happens" table what it
+  already says.

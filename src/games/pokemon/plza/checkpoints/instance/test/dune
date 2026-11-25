@@ -1,8 +1,8 @@
 (test
- (name test_plza_checkpoints)
+ (name test_plza_engine)
  (libraries
   yojson
   gamepilot.table_test
   gamepilot.plza_rules
   gamepilot.plza_text
-  gamepilot.plza_checkpoints))
+  gamepilot.plza_engine))

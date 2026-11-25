@@ -1,6 +1,6 @@
 open Frlg_readers
 module A = Frlg_actions
-module Event_states = Pokemon_checkpoints.Event_states
+module Event_snapshot = Pokemon_engine.Event_snapshot
 
 type options = {
   state : string option;
@@ -55,19 +55,19 @@ let map_in (w : Frlg_overworld.Frlg_steps.world) name =
 
 let load_map name = Result.bind (load_world ()) (fun w -> map_in w name)
 
-let check_plan (plan : Pokemon_checkpoints.Plan.t) =
+let check_plan (plan : Pokemon_engine.Plan.t) =
   match (plan.game, Json_field.find "menu" plan.execution) with
   | "frlg", (None | Some (`String "full")) -> Ok ()
   | "frlg", Some menu ->
       Error ("execution.menu " ^ Yojson.Safe.to_string menu ^ " is not \"full\"")
   | game, _ -> Error ("the plan is for " ^ game ^ ", not frlg")
 
-let start_of (checkpoint : Pokemon_checkpoints.Plan.checkpoint) =
+let start_of (checkpoint : Pokemon_engine.Plan.checkpoint) =
   match checkpoint.start with
   | Some (Grid { map; tiles = [ tile ]; facing }) ->
       Some
         ({ at_map = map; at_tile = tile; faces = facing }
-          : Pokemon_checkpoints.Pose.observed)
+          : Pokemon_engine.Pose.observed)
   | _ -> None
 
 let reload state () =
@@ -77,7 +77,7 @@ let reload state () =
       Ok ()
   | None ->
       Error
-        (Pokemon_checkpoints.Failure.cause ~repeats:true "no_state"
+        (Pokemon_engine.Failure.cause ~repeats:true "no_state"
            "no start state to reload")
 
 let config options world : A.Checkpoint_game.config =
@@ -95,42 +95,39 @@ let config options world : A.Checkpoint_game.config =
 
 (* End-check only: no events, and no end position (FireRed reckons it from
    the walks, so with none it would be the start's). *)
-let to_run options ~end_at (plan : Pokemon_checkpoints.Plan.t) =
+let to_run options ~end_at (plan : Pokemon_engine.Plan.t) =
   if options.end_check_only then ({ plan.checkpoint with events = [] }, None)
   else (plan.checkpoint, end_at)
 
-let capped_postconditions ~grind_cap (plan : Pokemon_checkpoints.Plan.t) =
-  let p = Pokemon_checkpoints.Postconditions.stated plan.postconditions in
+let capped_postconditions ~grind_cap (plan : Pokemon_engine.Plan.t) =
+  let p = Pokemon_engine.Postconditions.stated plan.postconditions in
   match grind_cap with
   | None -> (p, [])
   | Some cap ->
       let capped what = Printf.sprintf "%s (grind capped at %d)" what cap in
       let skipped_knows
-          ({ species; moves } : Pokemon_checkpoints.Postconditions.knows) =
+          ({ species; moves } : Pokemon_engine.Postconditions.knows) =
         capped (Printf.sprintf "knows %s %s" species (String.concat ", " moves))
-      and skipped_level
-          ({ species; min } : Pokemon_checkpoints.Postconditions.level) =
+      and skipped_level ({ species; min } : Pokemon_engine.Postconditions.level)
+          =
         capped (Printf.sprintf "level %s at least %d" species min)
       in
       ( { p with knows = []; levels = [] },
         List.map skipped_knows p.knows @ List.map skipped_level p.levels )
 
 (* The game with the caller's own actions first (a shadow plan's). *)
-let with_actions actions (game : Pokemon_checkpoints.Game.t) =
+let with_actions actions (game : Pokemon_engine.Game.t) =
   { game with game_actions = actions @ game.game_actions }
 
 type from_event = {
   range : Engine_run.Event_range.t;
-  kept : Pokemon_checkpoints.Saved.t;
+  kept : Pokemon_engine.Saved.t;
 }
 
 type keep_event_state =
-  index:int ->
-  Pokemon_checkpoints.Plan.event ->
-  Pokemon_checkpoints.Saved.t ->
-  unit
+  index:int -> Pokemon_engine.Plan.event -> Pokemon_engine.Saved.t -> unit
 
-let kept_start_line (start : Pokemon_checkpoints.Postcondition_check.start) =
+let kept_start_line (start : Pokemon_engine.Postcondition_check.start) =
   let items =
     List.map (fun (i, n) -> Printf.sprintf ", %s x%d" i n) start.start_items
   and count what = function
@@ -150,32 +147,32 @@ let kept_start_line (start : Pokemon_checkpoints.Postcondition_check.start) =
 let start_reads options ~from_event checked =
   match from_event with
   | _ when options.end_check_only ->
-      Pokemon_checkpoints.Postcondition_check.nothing_at_start
+      Pokemon_engine.Postcondition_check.nothing_at_start
   | Some { kept; _ } ->
-      options.log (kept_start_line kept.Pokemon_checkpoints.Saved.start);
+      options.log (kept_start_line kept.Pokemon_engine.Saved.start);
       kept.start
   | None -> Postcondition_reads.at_start ~log:options.log checked
 
 (* Where the player stands at the first event: the checkpoint's start, or on
    a partial run where the run that kept the state reckoned them. *)
-let start_pose (plan : Pokemon_checkpoints.Plan.t) = function
-  | Some { kept; _ } -> kept.Pokemon_checkpoints.Saved.at
+let start_pose (plan : Pokemon_engine.Plan.t) = function
+  | Some { kept; _ } -> kept.Pokemon_engine.Saved.at
   | None -> start_of plan.checkpoint
 
 (* [on_event], and the state kept at each event reached cleanly with what
    [kept ()] says then. *)
 let keeping_states ?on_event ~keep ~first
-    (checkpoint : Pokemon_checkpoints.Plan.checkpoint) kept =
-  let tracker = Event_states.tracker ~first in
+    (checkpoint : Pokemon_engine.Plan.checkpoint) kept =
+  let tracker = Event_snapshot.tracker ~first in
   fun index progress ->
     (match keep with
-    | Some keep when Event_states.hear tracker index progress ->
+    | Some keep when Event_snapshot.hear tracker index progress ->
         keep ~index (List.nth checkpoint.events index) (kept ())
     | _ -> ());
     Option.iter (fun f -> f index progress) on_event
 
 let run ?end_at ?on_event ?(actions = []) ?from_event ?keep_event_state options
-    world (plan : Pokemon_checkpoints.Plan.t) =
+    world (plan : Pokemon_engine.Plan.t) =
   Option.iter (fun s -> ignore (Effects.load_state s)) options.state;
   let game =
     A.Checkpoint_game.create (config options world)
@@ -205,21 +202,19 @@ let run ?end_at ?on_event ?(actions = []) ?from_event ?keep_event_state options
       let game = with_actions actions (A.Checkpoint_game.game game) in
       let on_event =
         keeping_states ?on_event ~keep:keep_event_state ~first checkpoint
-          (fun () -> { Pokemon_checkpoints.Saved.start; at = game.position () })
+          (fun () -> { Pokemon_engine.Saved.start; at = game.position () })
       in
-      let end_at =
-        Option.map (fun g -> Pokemon_checkpoints.Pose.Grid g) end_at
-      in
+      let end_at = Option.map (fun g -> Pokemon_engine.Pose.Grid g) end_at in
       let end_state =
         Option.map
           (fun p -> (p, observe))
-          (Pokemon_checkpoints.Postconditions.at_end checked)
+          (Pokemon_engine.Postconditions.at_end checked)
       in
-      Pokemon_checkpoints.Runner.run ?end_at ?end_state ~on_event ?events game
+      Pokemon_engine.Runner.run ?end_at ?end_state ~on_event ?events game
         checkpoint)
 
-let goal_holds ~log ~id (goal : Pokemon_checkpoints.Postconditions.t) =
-  let module C = Pokemon_checkpoints.Postcondition_check in
+let goal_holds ~log ~id (goal : Pokemon_engine.Postconditions.t) =
+  let module C = Pokemon_engine.Postcondition_check in
   Effects.with_probes Screen_facts.probes (fun () ->
       let results = C.check goal (Postcondition_reads.observe ~log goal) in
       List.iter (fun line -> log ("[Goal] " ^ line)) (C.log_lines id results);

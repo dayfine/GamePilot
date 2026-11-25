@@ -7,7 +7,7 @@ open Frlg_overworld_fixtures
 open Frlg_world
 module Route_target = Frlg_overworld.Route_target
 
-let target ?facing map tiles : Pokemon_checkpoints.Pose.grid =
+let target ?facing map tiles : Pokemon_engine.Pose.grid =
   { map; tiles = List.map (fun (x, y) -> { Tile_pos.x; y }) tiles; facing }
 
 let plan ~from goal () =
