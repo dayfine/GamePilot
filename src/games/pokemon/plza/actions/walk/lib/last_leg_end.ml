@@ -29,11 +29,20 @@ let scene_took walk what held_ms =
      walk stops."
     walk what held_ms
 
-let check_end_event ~log ~log_detail walk event ~earliest_end_ms
+let prompt_went walk held_ms =
+  Printf.sprintf
+    "[PLZA] %s: the A prompt after %d ms of the last leg went again: on." walk
+    held_ms
+
+let check_end_event ~log ~log_detail ~prompt_steady walk event ~earliest_end_ms
     (screen : Walk_screen.t) ~held_ms =
   let shows = Walk_screen.shows event screen in
   if shows && held_ms < earliest_end_ms then (
     log (passed_on_the_way walk held_ms earliest_end_ms);
+    Walk_on)
+  else if shows && event = Plza_rules.Walk_args.Prompt && not (prompt_steady ())
+  then (
+    log (prompt_went walk held_ms);
     Walk_on)
   else if shows then (
     log (ended walk held_ms);

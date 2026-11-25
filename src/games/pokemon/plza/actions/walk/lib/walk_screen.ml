@@ -44,6 +44,7 @@ let shows (event : Plza_rules.Walk_args.end_event) l =
   | Fade_white -> l.fade_white
   | Fade_black -> l.fade_black
   | Dialog -> l.dialog_box
+  | Prompt -> l.interact_prompt
 
 let fields l =
   [

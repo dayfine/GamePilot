@@ -83,10 +83,10 @@ let decode_cases =
     case "legs are required"
       (fun () -> walk_args {|{"end": "scene"}|})
       "plza-01.01.plan.json: checkpoint.events[0].args.legs is missing.";
-    case "an end that is not one of the six"
+    case "an end that is not one of the seven"
       (fun () -> walk_args {|{"legs": [[0, 1]], "end": "banner"}|})
       "plza-01.01.plan.json: checkpoint.events[0].args.end must be \
-       \"fade_white\", \"fade_black\", \"dialog\", \"talk\", \
+       \"fade_white\", \"fade_black\", \"dialog\", \"prompt\", \"talk\", \
        \"talk_after_legs\" or \"scene\".";
     case "earliest_end_ms needs an end"
       (fun () -> walk_args {|{"legs": [[0, 1]], "earliest_end_ms": 100}|})

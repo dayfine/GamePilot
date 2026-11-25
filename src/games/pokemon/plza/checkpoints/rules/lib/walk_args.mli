@@ -32,8 +32,9 @@ type move = {
 }
 (** The legs of a walk, and how they are played. *)
 
-(** The screen event a walk's last leg is held until. *)
-type end_event = Fade_white | Fade_black | Dialog
+(** The screen event a walk's last leg is held until: [Prompt] an A prompt
+    (["A Enter"]), steady 300 ms on. *)
+type end_event = Fade_white | Fade_black | Dialog | Prompt
 
 (** What ends a walk's last leg. *)
 type until =
@@ -56,7 +57,8 @@ type t = {
 (** A walk event's args. *)
 
 val end_event_name : end_event -> string
-(** ["fade_white"], ["fade_black"], ["dialog"]: as a plan writes it. *)
+(** ["fade_white"], ["fade_black"], ["dialog"], ["prompt"]: as a plan writes it.
+*)
 
 val end_event_of_name : string -> end_event option
 (** {!end_event_name} read back. *)

@@ -63,6 +63,19 @@ let scene_with_start_window steps (event : Plan.event) (args : Json_field.obj) =
   | _ ->
       bad_args event "the only arg is start_window_ms, a positive number of ms"
 
+(* The fork's scene with "press_a_first": A through the prompt first
+   (press_through_prompt), then the plain scene. *)
+let scene_through_prompt steps =
+  let walk = Story_steps.walk_game_steps steps in
+  Plza_walk.Talk_prompt.press_through
+    {
+      submit = walk.submit;
+      read_screen = walk.read_screen;
+      log = walk.log;
+      log_detail = walk.log_detail;
+    };
+  Scene_machine.run steps "scene" Scene_machine.default
+
 let game_actions ~reload steps =
   List.map
     (fun (name, action) -> (name, action steps))
@@ -80,6 +93,7 @@ let game_actions ~reload steps =
       ("choose_1", no_args (fun steps -> Choose_row.run steps 1));
       ("scene_to_battle", no_args scene_to_battle);
       ("scene_with_start_window", scene_with_start_window);
+      ("scene_through_prompt", no_args scene_through_prompt);
       ("story_battle", no_args Story_battle.run);
     ]
 

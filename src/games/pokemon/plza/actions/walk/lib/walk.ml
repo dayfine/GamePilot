@@ -244,10 +244,19 @@ let end_check steps walk ~earliest_end_ms = function
   | Scene -> Last_leg_end.check_scene steps.log walk
   | Event event ->
       Last_leg_end.check_end_event ~log:steps.log ~log_detail:steps.log_detail
+        ~prompt_steady:(fun () -> Talk_prompt.steady (talk_game_steps steps))
         walk event ~earliest_end_ms
   | Talk _ -> fun _ ~held_ms:_ -> Last_leg_end.Walk_on
 
-let walk_to_event steps ~walk_only walk move ~until ~earliest_end_ms =
+(* The fork's ends_before_walking: a walk of one straight leg to the first A
+   prompt ahead, with no earliest end, does not walk when it already shows. *)
+let ends_before_walking steps walk move ~until ~earliest_end_ms =
+  match until with
+  | Event Prompt when earliest_end_ms = 0 ->
+      prompt_before_walking steps walk move
+  | _ -> false
+
+let walk_last_leg_to_event steps ~walk_only walk move ~until ~earliest_end_ms =
   match
     walk_last_leg steps ~walk_only move
       ~check:(end_check steps walk ~earliest_end_ms until)
@@ -258,6 +267,10 @@ let walk_to_event steps ~walk_only walk move ~until ~earliest_end_ms =
       Error
         (Last_leg_end.timed_out walk until
            ~elapsed_ms:(Last_leg_hold.elapsed_ms hold))
+
+let walk_to_event steps ~walk_only walk move ~until ~earliest_end_ms =
+  if ends_before_walking steps walk move ~until ~earliest_end_ms then Ok ()
+  else walk_last_leg_to_event steps ~walk_only walk move ~until ~earliest_end_ms
 
 let walk_to_end steps ~walk_only walk move ~until ~earliest_end_ms =
   match until with

@@ -1,4 +1,4 @@
-(* 01.00b to 02.02 run through the engine (Plza_checkpoints.Runner) with
+(* 01.00b to 02.03 run through the engine (Plza_checkpoints.Runner) with
    Story_game's handlers on a scripted console (Fake_console): the plans
    decode, every event reaches its handler, and each handler's presses move a
    game that answers them as the console did. Also the failures: a walk whose
@@ -217,6 +217,21 @@ let hotel_z ?(lost = false) c =
   match C.stick_reached c 6500 with
   | Some f when not lost ->
       if since c f < 1000.0 then black c else street c ~fade:f
+  | _ -> party c
+
+(* 02.03: the party bar in front of Hotel Z; the door's A prompt over it once
+   the stick was held 2 s, until A; a black fade 1.5 s, the lobby's text until
+   two A, then the party bar. [lost]: no prompt. *)
+let lobby ?(lost = false) c =
+  match C.stick_reached c 2000 with
+  | Some p when not lost -> (
+      match C.nth_after c Wire.A ~after:p 0 with
+      | None -> { (party c) with interact_prompt = true }
+      | Some a when since c a < 1500.0 -> black c
+      | Some a -> (
+          match C.nth_after c Wire.A ~after:a 2 with
+          | None -> text c
+          | Some _ -> party c))
   | _ -> party c
 
 let outcome checkpoint screen =
@@ -498,6 +513,37 @@ let cases =
       (result "02.02" (hotel_z ~lost:true))
       "02.02 event 1 (to_blocked_street): walk_no_end: to_blocked_street: no \
        end event within 3363 ms of the last leg";
+    case "02.03: up the steps to the door's prompt, A Enter, the lobby"
+      (fun () ->
+        let r, c = outcome "02.03" lobby in
+        String.concat "\n"
+          (r
+          :: List.filter
+               (fun line ->
+                 List.exists
+                   (fun prefix -> String.starts_with ~prefix line)
+                   [ "[PLZA] to_"; "[PLZA] press"; "[PLZA scene] done" ])
+               (C.lines c)))
+      "passed\n\
+       [PLZA] to_hotel_z_door: the end event after 2000 ms of the last leg, \
+       before its 3375 ms: passed on the way, on.\n\
+       [PLZA] to_hotel_z_door: the end event after 2250 ms of the last leg, \
+       before its 3375 ms: passed on the way, on.\n\
+       [PLZA] to_hotel_z_door: the end event after 2500 ms of the last leg, \
+       before its 3375 ms: passed on the way, on.\n\
+       [PLZA] to_hotel_z_door: the end event after 2750 ms of the last leg, \
+       before its 3375 ms: passed on the way, on.\n\
+       [PLZA] to_hotel_z_door: the end event after 3000 ms of the last leg, \
+       before its 3375 ms: passed on the way, on.\n\
+       [PLZA] to_hotel_z_door: the end event after 3250 ms of the last leg, \
+       before its 3375 ms: passed on the way, on.\n\
+       [PLZA] to_hotel_z_door: the end event after 3500 ms of the last leg.\n\
+       [PLZA] to_hotel_z_door: ended on: player_can_move, interact_prompt\n\
+       [PLZA scene] done on control.";
+    case "02.03 lost: no door prompt"
+      (result "02.03" (lobby ~lost:true))
+      "02.03 event 1 (to_hotel_z_door): walk_no_end: to_hotel_z_door: no end \
+       event within 5061 ms of the last leg";
     case "the walk is walked before 03.03, run after"
       (fun () ->
         Printf.sprintf "%b %b"

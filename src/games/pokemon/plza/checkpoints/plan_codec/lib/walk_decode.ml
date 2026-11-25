@@ -18,8 +18,8 @@ let legs ~where args =
 
 let not_an_end where =
   F.fail
-    "%send must be \"fade_white\", \"fade_black\", \"dialog\", \"talk\", \
-     \"talk_after_legs\" or \"scene\"."
+    "%send must be \"fade_white\", \"fade_black\", \"dialog\", \"prompt\", \
+     \"talk\", \"talk_after_legs\" or \"scene\"."
     where
 
 let until_of_word ~where word =

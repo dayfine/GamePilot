@@ -28,10 +28,11 @@
     [stop_at_battle], 120 s with [stop_at_choice], a start window or the button
     B, else 360 s.
 
-    Not ported (no 01.00b to 02.01 scene uses them): [end_at_battle] (a battle
-    before a scene's end when a story battle is ahead) and [press_a_first].
-    "Mission complete" has no reader yet ({!Story_look}): it reads as a screen
-    no detector reads (A, as for the card). *)
+    Not ported (no 01.00b to 02.03 scene uses it): [end_at_battle] (a battle
+    before a scene's end when a story battle is ahead). [press_a_first] is the
+    game action [scene_through_prompt] (Story_game). "Mission complete" has no
+    reader yet ({!Story_look}): it reads as a screen no detector reads (A, as
+    for the card). *)
 
 type config = {
   end_on_black_fade : bool;
