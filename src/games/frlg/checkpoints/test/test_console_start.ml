@@ -96,7 +96,10 @@ let start_cases =
 let stocks =
   match Frlg_actions.Mart_plan.load () with Ok s -> s | Error e -> failwith e
 
-let needs id before = Preflight.needs stocks ~before (plan id)
+let needs id before =
+  match Preflight.needs stocks ~before (plan id) with
+  | Ok needs -> needs
+  | Error e -> failwith e
 
 let observed ?party ?money ?(items = []) () =
   {
@@ -149,6 +152,7 @@ let preflight_cases =
           {
             observed = observed ~party:[ "blastoise"; "pidgey" ] ~money:25014 ();
             place = same;
+            card = None;
             members = None;
           })
       "pidgey in the party (fly): blastoise, pidgey: ok | money at least ¥4100 \
@@ -160,6 +164,7 @@ let preflight_cases =
           {
             observed = observed ~party:[ "blastoise" ] ~money:4000 ();
             place = same;
+            card = None;
             members = None;
           })
       "pidgey in the party (fly): blastoise: MISMATCH | money at least ¥4100 \
@@ -173,6 +178,7 @@ let preflight_cases =
           {
             observed = observed ~party:[ "pidgey" ] ~money:25014 ();
             place = None;
+            card = None;
             members = None;
           })
       "pidgey in the party (fly): pidgey: ok | money at least ¥4100 (mart, \
@@ -191,6 +197,7 @@ let preflight_cases =
                 ~items:[ ("super-repel", 2); ("retro-mail", 100) ]
                 ();
             place = same;
+            card = None;
             members = None;
           })
       "pidgey in the party (fly): mr-mime, blastoise, pidgey: ok | mr-mime in \
@@ -204,6 +211,7 @@ let preflight_cases =
           {
             observed = observed ~party:[ "blastoise"; "rattata" ] ();
             place = same;
+            card = None;
             members =
               Some
                 [
@@ -218,6 +226,7 @@ let preflight_cases =
           {
             observed = observed ~party:[ "blastoise"; "oddish" ] ();
             place = same;
+            card = None;
             members =
               Some
                 [
@@ -232,6 +241,7 @@ let preflight_cases =
           {
             observed = observed ~party:[ "blastoise" ] ();
             place = same;
+            card = None;
             members = Some [ summary 1 "blastoise" [ "surf" ] ];
           })
       "a member knows cut (cut_tree): no member knows cut: MISMATCH";
@@ -245,7 +255,12 @@ let preflight_cases =
              (fun (r : Preflight.row) -> r.need)
              (Preflight.compare
                 (needs "03-trade-mr-mime" before)
-                { observed = P.nothing_read; place = None; members = None })))
+                {
+                  observed = P.nothing_read;
+                  place = None;
+                  members = None;
+                  card = None;
+                })))
       "party includes blastoise, pidgey, abra, farfetchd; pidgey in the party \
        (fly); abra in the party (ingame_trade); a member knows cut (cut_tree); \
        money at least ¥3550 (mart); at the start, VermilionCity";
@@ -260,7 +275,12 @@ let preflight_cases =
              (fun (r : Preflight.row) -> r.need)
              (Preflight.compare
                 (needs "04-grind-farfetchd" before)
-                { observed = P.nothing_read; place = None; members = None })))
+                {
+                  observed = P.nothing_read;
+                  place = None;
+                  members = None;
+                  card = None;
+                })))
       "party includes blastoise, pidgey, mr-mime, farfetchd; farfetchd in the \
        party (grind); blastoise in the party (grind); pidgey in the party \
        (fly); escape-rope at least x1 (use_item); at the start, \
@@ -276,7 +296,12 @@ let preflight_cases =
              (fun (r : Preflight.row) -> r.need)
              (Preflight.compare
                 (needs "05-grind-mr-mime" before)
-                { observed = P.nothing_read; place = None; members = None })))
+                {
+                  observed = P.nothing_read;
+                  place = None;
+                  members = None;
+                  card = None;
+                })))
       "party includes blastoise, pidgey, mr-mime, farfetchd; mr-mime in the \
        party (grind); blastoise in the party (grind); at the start, \
        IndigoPlateau_PokemonCenter_1F";
@@ -290,7 +315,12 @@ let preflight_cases =
              (fun (r : Preflight.row) -> r.need)
              (Preflight.compare
                 (needs "07-glitch-prep" before)
-                { observed = P.nothing_read; place = None; members = None })))
+                {
+                  observed = P.nothing_read;
+                  place = None;
+                  members = None;
+                  card = None;
+                })))
       "party includes blastoise, pidgey, mr-mime, farfetchd; blastoise in the \
        party (party_swap); pidgey in the party (fly); farfetchd in the party \
        (party_swap); mr-mime in the party (party_swap); a member knows cut \
@@ -359,7 +389,12 @@ let room_cases =
 let room_row party =
   let r =
     Preflight.room need
-      { observed = observed ~party (); place = None; members = None }
+      {
+        observed = observed ~party ();
+        place = None;
+        members = None;
+        card = None;
+      }
   in
   Printf.sprintf "%s: %s: %s" r.need r.read
     (match r.verdict with

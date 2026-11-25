@@ -10,14 +10,22 @@ type need = Plan_needs.need =
   | Item_at_least of { item : string; count : int; for_ : string }
   | Item_exactly of { item : string; count : int }
   | Place of string
+  | Badges_at_least of int
+  | Badges of string list
+  | Hall_of_fame
 
-(* The args naming a member the action uses, and those naming one it brings. *)
-let needs = Plan_needs.needs
+(* The declared preconditions first: the save's state the plan's goal implies,
+   before what its events' args need. *)
+let needs stocks ~before plan =
+  Result.map
+    (fun declared -> declared @ Plan_needs.needs stocks ~before plan)
+    (Plan_preconditions.needs plan)
 
 type read = {
   observed : Checkpoints_run.Postcondition_check.observed;
   place : Frlg_readers.Start_frame.difference option;
   members : Checkpoints_run.Room_policy.member list option;
+  card : Frlg_readers.Trainer_card_front.t option;
 }
 
 type verdict = Ok | Mismatch | Not_read
@@ -95,6 +103,41 @@ let place_row read ~need =
         verdict = of_bool (F.same_place d);
       }
 
+module Card = Frlg_readers.Trainer_card_front
+
+let with_card (read : read) need judge =
+  match read.card with
+  | None -> { need; read = "not read"; verdict = Not_read }
+  | Some card ->
+      let ok, text = judge card in
+      { need; read = text; verdict = of_bool ok }
+
+let badge_count_row read ~need n =
+  with_card read need (fun card ->
+      let have = List.length (Card.earned card) in
+      ( have >= n,
+        if have >= n then Card.to_string card
+        else Printf.sprintf "%s; %d short" (Card.to_string card) (n - have) ))
+
+let missing_badges names card =
+  let earned = Card.earned card in
+  List.filter (fun b -> not (List.mem b earned)) names
+
+let badges_text card = function
+  | [] -> Card.to_string card
+  | missing -> Card.to_string card ^ "; missing " ^ String.concat ", " missing
+
+let badges_row read ~need names =
+  with_card read need (fun card ->
+      let missing = missing_badges names card in
+      (missing = [], badges_text card missing))
+
+let hall_of_fame_row read ~need =
+  with_card read need (fun card ->
+      ( Card.hall_of_fame card,
+        if Card.hall_of_fame card then Card.to_string card ^ ": entered"
+        else "no star: the Hall of Fame not entered" ))
+
 let describe = function
   | Party_in_order l -> "party " ^ species_list l
   | Party_includes { members; slots } -> includes_text members slots
@@ -109,6 +152,9 @@ let describe = function
   | Knows_move { move; for_ } ->
       Printf.sprintf "a member knows %s (%s)" move for_
   | Place map -> "at the start, " ^ map
+  | Badges_at_least n -> Printf.sprintf "at least %d badges" n
+  | Badges names -> "badges " ^ String.concat ", " names
+  | Hall_of_fame -> "the Hall of Fame entered"
 
 let row read need =
   let text = describe need in
@@ -128,6 +174,9 @@ let row read need =
       with_item read item text (fun n -> n = count)
   | Knows_move { move; _ } -> knows_row read ~need:text move
   | Place _ -> place_row read ~need:text
+  | Badges_at_least n -> badge_count_row read ~need:text n
+  | Badges names -> badges_row read ~need:text names
+  | Hall_of_fame -> hall_of_fame_row read ~need:text
 
 let compare needs read = List.map (row read) needs
 
@@ -156,6 +205,11 @@ let table rows =
   String.concat "\n"
     (line "NEED" "READ" "VERDICT"
     :: List.map (fun r -> line r.need r.read (verdict_text r.verdict)) rows)
+
+let reads_card =
+  List.exists (function
+    | Badges_at_least _ | Badges _ | Hall_of_fame -> true
+    | _ -> false)
 
 let to_read needs : P.postconditions =
   let party =

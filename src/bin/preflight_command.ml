@@ -2,8 +2,8 @@
 
    The pre-flight of a save (Frlg_checkpoints.Preflight): back to the last save (on
    the Switch the soft reset; on mGBA the checkpoint's start state), then the
-   party, money and bag items the first checkpoint's plan needs and the place
-   (against the start frame kept there), read with the existing readers and
+   party, money, bag items and badges the first checkpoint's plan needs and the
+   place (against the start frame kept there), read with the existing readers and
    printed as a table. Exit 1 on a mismatch or a need not read. Its daemon's
    wire log and the story log go to a run folder ("<ID>-preflight"), with
    run.json (mode preflight), the table and the verdict in summary.txt, the
@@ -45,7 +45,7 @@ let needs ~plan_dir from_id =
   match
     (Pf.needs stocks ~before plan, Frlg_checkpoints.Party_room.chain_need plans)
   with
-  | needs, room -> Ok (needs, room)
+  | needs, room -> Result.map (fun needs -> (needs, room)) needs
   | exception Grid_maps.Json_field.Invalid e -> Error e
 
 exception Not_back of string
@@ -108,6 +108,7 @@ type reads = {
   mutable place : Frlg_readers.Start_frame.difference option;
   mutable members : Checkpoints_run.Room_policy.member list option;
   mutable observed : Checkpoints_run.Postcondition_check.observed option;
+  mutable card : Frlg_readers.Trainer_card_front.t option;
   mutable verdict : verdict;
 }
 
@@ -132,6 +133,7 @@ let judge record (needs, room) reads log () =
         | None -> invalid_arg "verdict before read_trainer_card");
       place = reads.place;
       members = reads.members;
+      card = reads.card;
     }
   in
   let rows = Pf.compare needs read @ [ Pf.room room read ] in
@@ -154,6 +156,8 @@ let read_trainer_card needs reads log () =
     Some
       (Frlg_checkpoints.Postcondition_reads.observe ~log
          (without_party (Pf.to_read needs)));
+  if Pf.reads_card needs then
+    reads.card <- Frlg_checkpoints.Postcondition_reads.trainer_card ~log;
   Ok ()
 
 (* The shadow plan's steps (Frlg_checkpoints.Shadow_plan.preflight_steps). The
@@ -175,7 +179,13 @@ let shadow_plan id =
 (* The pre-flight as a plan through the checkpoint runner, on the page. *)
 let session setup record id start needs world log () =
   let reads =
-    { place = None; members = None; observed = None; verdict = Stopped "" }
+    {
+      place = None;
+      members = None;
+      observed = None;
+      card = None;
+      verdict = Stopped "";
+    }
   in
   match
     Frlg_checkpoints.Plan_watch.run_shadow ~mode:"preflight" ~log world

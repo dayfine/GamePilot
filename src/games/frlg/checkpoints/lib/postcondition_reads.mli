@@ -34,3 +34,9 @@ val party_summary :
   log:(string -> unit) -> Checkpoints_run.Room_policy.member list option
 (** Every member's species, level and moves ({!Frlg_actions.Party_summary}),
     from the overworld and back to it; [None] when the read failed. *)
+
+val trainer_card :
+  log:(string -> unit) -> Frlg_readers.Trainer_card_front.t option
+(** The badges and stars on the Trainer Card's front
+    ({!Frlg_actions.Trainer_card_badges}), from the overworld and back to it;
+    [None] when they did not read. *)

@@ -12,6 +12,9 @@ type need =
   | Item_at_least of { item : string; count : int; for_ : string }
   | Item_exactly of { item : string; count : int }
   | Place of string
+  | Badges_at_least of int
+  | Badges of string list
+  | Hall_of_fame
 
 (* The args naming a member the action uses, and those naming one it brings. *)
 let brings action =

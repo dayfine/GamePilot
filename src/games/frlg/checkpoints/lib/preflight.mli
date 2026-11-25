@@ -9,8 +9,9 @@
     checkpoint before it promises a state (its postconditions: the members it
     names and the slots it pins, the money as a range (not what it spent), item
     counts and floors (not what it gained or used)), that is needed too, as
-    promised. And the place: the frame kept at the checkpoint's start
-    ({!Start_check}).
+    promised. The plan's declared preconditions ({!Plan_preconditions}: the
+    badges, the Hall of Fame), read off the Trainer Card. And the place: the
+    frame kept at the checkpoint's start ({!Start_check}).
 
     GamePilot's own: the fork checks the save's place on the save card and its
     StoryPreflight only the program's settings. *)
@@ -31,15 +32,22 @@ type need = Plan_needs.need =
   | Item_at_least of { item : string; count : int; for_ : string }
   | Item_exactly of { item : string; count : int }
   | Place of string  (** The checkpoint's start map. *)
+  | Badges_at_least of int
+      (** At least this many badges ({!Plan_preconditions}: [badges] a count).
+      *)
+  | Badges of string list  (** Each of these badges, by name. *)
+  | Hall_of_fame  (** The Hall of Fame entered: a star on the card. *)
 
 val needs :
   Frlg_actions.Mart_plan.stocks ->
   before:Checkpoints_plan.Plan.postconditions option ->
   Checkpoints_plan.Plan.t ->
-  need list
+  (need list, string) result
 (** What the save must hold for the plan's first event, in the table's order:
-    the party, the money, the items, the place. Raises
-    {!Grid_maps.Json_field.Invalid} for a plan arg that does not read. *)
+    the plan's declared preconditions ({!Plan_preconditions.needs}), then the
+    party, the money, the items, the place. [Error] for declared preconditions
+    that do not decode. Raises {!Grid_maps.Json_field.Invalid} for a plan arg
+    that does not read. *)
 
 type read = {
   observed : Checkpoints_run.Postcondition_check.observed;
@@ -50,6 +58,9 @@ type read = {
       (** Each member's species, level and moves on its summary
           ({!Frlg_actions.Party_summary}): the field moves and the room are
           judged on them. [None] when not read. *)
+  card : Frlg_readers.Trainer_card_front.t option;
+      (** The badges and stars on the Trainer Card
+          ({!Frlg_actions.Trainer_card_badges}); [None] when not read. *)
 }
 
 type verdict = Ok | Mismatch | Not_read
@@ -72,6 +83,10 @@ val passed : row list -> bool
 
 val table : row list -> string
 (** A text table: NEED, READ, OK / MISMATCH / NOT READ, one row a line. *)
+
+val reads_card : need list -> bool
+(** A need is judged on the Trainer Card's badges or stars: the pre-flight reads
+    them. *)
 
 val to_read : need list -> Checkpoints_plan.Plan.postconditions
 (** What {!Postcondition_reads.observe} must read for these needs. *)

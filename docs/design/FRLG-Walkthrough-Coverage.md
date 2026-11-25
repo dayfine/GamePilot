@@ -411,8 +411,9 @@ Trainer Card (badges), and its first checkpoint flies to Vermilion for the Seaga
   from `kanto_mart_stocks.json`.
 - **Item healing.** The Elite Four and the long caves need Full Restores and Revives used on
   members by HP, not the nurse.
-- **Readers.** The Trainer Card's caught count (Flash, Exp. Share, National Dex) and badges (the
-  open Fly-badge question in Programs-As-Goals).
+- **Readers.** The Trainer Card's caught count (Flash, Exp. Share, National Dex). Its badges and
+  its Hall of Fame star are read (`Trainer_card_badges`, a plan's `badges` and `hall_of_fame`
+  preconditions).
 
 **Maps missing from PokemonSimulation** (first part in brackets). Every Center from Celadon on is
 missing, so `heal_at` there has no map to walk:

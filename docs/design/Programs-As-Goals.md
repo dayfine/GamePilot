@@ -110,7 +110,7 @@ or one small addition:
 |---|---|---|
 | Money at least the purchases' cost | Trainer Card front (`trainer_card_money.ml`); a Mart's money box when standing at a clerk | derived from `mart` args |
 | Fly: a member that knows it | party summary moves (`Party_summary`) | `fly` names the member |
-| Fly: the badge | not read; the Trainer Card back shows badges (a new reader) | not checked |
+| Fly: the badge | Trainer Card front (`Trainer_card_badges`); FireRed draws the badges on the front | a plan's declared `badges` precondition |
 | Item count (`retro-mail` at least N) | bag read | derived from `duplicate_item` args (#25) |
 | A member at a level | summary (`Member_level`) | postconditions only |
 | Free party slots | party read (`Party_room`) | yes |
@@ -251,5 +251,7 @@ Exceptions in library code become `Result`, one per PR, in between.
 6. **Configuration.** A goal file per run, one typed decoder per program, precise errors (section 1).
 7. **Level-ups.** Decided before the run from the goal and FireRed's data (section 5).
 
-Still open: the Fly badge (take "a member knows Fly" as enough until a program runs on an earlier
-save), and mart choice (a fixed preference list, Celadon first, unless the goal names a mart).
+The Fly badge is settled: a plan declares it in `metadata.preconditions` (`"badges": 8` or by
+name, with `"hall_of_fame": true`), and the pre-flight reads it off the Trainer Card's front
+(`Plan_preconditions`). Still open: mart choice (a fixed preference list, Celadon first, unless the
+goal names a mart).

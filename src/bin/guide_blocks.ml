@@ -132,13 +132,15 @@ let chain_need (room : Frlg_checkpoints.Party_room.need) =
       Some (Pf.Money_at_least { amount; for_ = "all the purchases" })
   | n -> Some n
 
+(* The chain's declared preconditions are its first checkpoint's: the save's
+   state where it starts. *)
 let chain_lines stocks ~before (loaded : Checkpoints_plan.Plan.t list) =
   let room = Frlg_checkpoints.Party_room.chain_need loaded in
-  room_line room
-  :: List.map
-       (fun n -> "- " ^ Frlg_checkpoints.Preflight.describe n)
-       (List.filter_map (chain_need room)
-          (Frlg_checkpoints.Preflight.needs stocks ~before (as_one_plan loaded)))
+  let* needs =
+    Frlg_checkpoints.Preflight.needs stocks ~before (as_one_plan loaded)
+  in
+  let line n = "- " ^ Frlg_checkpoints.Preflight.describe n in
+  Ok (room_line room :: List.map line (List.filter_map (chain_need room) needs))
 
 let needs p arg =
   let* plans = plans_of p in
@@ -147,7 +149,7 @@ let needs p arg =
   let* before = Plan_dir.promised_before ~plan_dir:plans.dir (List.hd chain) in
   let* stocks = Frlg_actions.Mart_plan.load () in
   match chain_lines stocks ~before loaded with
-  | lines -> Ok (String.concat "\n" lines)
+  | lines -> Result.map (String.concat "\n") lines
   | exception Grid_maps.Json_field.Invalid e -> Error e
 
 let needs_text needs =
@@ -158,7 +160,10 @@ let preflight_row stocks plans id =
   let* plan = Plan_dir.load_plan ~plan_dir:plans.dir id in
   let* before = Plan_dir.promised_before ~plan_dir:plans.dir id in
   match Frlg_checkpoints.Preflight.needs stocks ~before plan with
-  | needs -> Ok (Printf.sprintf "| %s | %s |" id (needs_text needs))
+  | needs ->
+      Result.map
+        (fun needs -> Printf.sprintf "| %s | %s |" id (needs_text needs))
+        needs
   | exception Grid_maps.Json_field.Invalid e -> Error e
 
 let preflight p arg =
