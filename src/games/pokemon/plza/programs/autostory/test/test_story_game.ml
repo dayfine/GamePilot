@@ -1265,6 +1265,10 @@ let cases =
       (result "03.10" (lab_elevator ~lost:true))
       "03.10 event 1 (to_lab_elevator): walk_no_end: to_lab_elevator: no end \
        event within 1538 ms of the last leg";
+    case "03.11 is refused before it presses: Mable's reward is not ported"
+      (refused "03.11")
+      "03.11 event 3 (rock_smash_tm): no handler for game action \
+       \"claim_mable_research_reward\"; 0 inputs";
     case "the walk is walked before 03.03, run after"
       (fun () ->
         Printf.sprintf "%b %b"
