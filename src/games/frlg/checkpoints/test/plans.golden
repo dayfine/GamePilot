@@ -1,25 +1,63 @@
 == dex_collection/plans/01-ultra-balls.plan.json
-frlg 01-ultra-balls from anywhere outdoors: 3 game_action, 3 route, 1 heal
+frlg 01-ultra-balls from anywhere outdoors: 2 game_action, 3 route, 1 heal
 fly_indigo: [fly] game_action {"town":"IndigoPlateau"} => IndigoPlateau_Exterior (11, 7) south
 to_clerk: [run] route to IndigoPlateau_PokemonCenter_1F (2, 7) west
 buy_ultra_balls: [mart] game_action {"map":"IndigoPlateau_PokemonCenter_1F","items":[{"item":"ultra-ball","quantity":10}]}
+heal_indigo.walk: [run] route to IndigoPlateau_PokemonCenter_1F (13, 12) north
+heal_indigo: heal
 out_of_indigo: [run] route to IndigoPlateau_Exterior (11, 7) south
-fly_route10: [fly] game_action {"town":"Route10"}
-heal_route10.walk: [run] route to Route10_PokemonCenter_1F (7, 4) north
-heal_route10: heal
 retries 0
 postconditions:
 item ultra-ball gained 10
 money spent 12000
 no repeat
-== dex_collection/plans/02-route10-new-species.plan.json
-frlg 02-route10-new-species from Route10_PokemonCenter_1F (7, 4) north: 3 game_action, 2 route, 1 heal
-caught_before: [read_caught] game_action {}
+== dex_collection/plans/02-shiny-voltorb.plan.json
+frlg 02-shiny-voltorb from anywhere outdoors: 6 game_action, 5 route, 1 heal
+fly_route10: [fly] game_action {"town":"Route10"} => Route10 (13, 21) south
+to_pc: [run] route to Route10_PokemonCenter_1F (11, 2) north
+make_room: [pc_deposit] game_action {"member":"holding_no_mail"}
 to_grass: [run] route to Route10 (12, 8) east
-catch_new_species: [capture] game_action {"uncaught":["voltorb","spearow","ekans"],"catches":2,"encounters":60,"balls":10,"ball":"ultra-ball","pace":"east"}
+save_in_grass: [save_game] game_action {}
+shiny_voltorb: [wild_rng] game_action {"species":"voltorb","location":"route_10","tid":33002,"sid":9011,"seeds":"rng_seeds_mgba_sevii_save.json","seed_shift":8,"ingame_offset":-1,"frame_model":"mgba","advances":[1000,4000],"ball":"ultra-ball","balls":5,"attempts":1}
+save_catch: [save_game] game_action {}
+back_to_pc: [run] route to Route10_PokemonCenter_1F (11, 2) north
+deposit_catch: [pc_deposit] game_action {"species":["voltorb"]}
 heal_route10.walk: [run] route to Route10_PokemonCenter_1F (7, 4) north
 heal_route10: heal
-caught_after: [read_caught] game_action {}
+out_of_center: [run] route to Route10 (13, 21) south
+retries 0
+postconditions:
+none
+no repeat
+== dex_collection/plans/03-shiny-drowzee.plan.json
+frlg 03-shiny-drowzee from anywhere outdoors: 6 game_action, 4 route, 1 heal
+fly_vermilion: [fly] game_action {"town":"VermilionCity"} => VermilionCity (15, 7) south
+to_grass: [run] route to Route11 (15, 13) east
+save_in_grass: [save_game] game_action {}
+shiny_drowzee: [wild_rng] game_action {"species":"drowzee","location":"route_11","tid":33002,"sid":9011,"seeds":"rng_seeds_mgba_sevii_save.json","seed_shift":4,"ingame_offset":-3,"frame_model":"mgba","advances":[1000,4000],"ball":"ultra-ball","balls":5,"attempts":1}
+save_catch: [save_game] game_action {}
+fly_vermilion_back: [fly] game_action {"town":"VermilionCity"} => VermilionCity (15, 7) south
+back_to_pc: [run] route to VermilionCity_PokemonCenter_1F (11, 2) north
+deposit_catch: [pc_deposit] game_action {"species":["drowzee"]}
+heal_vermilion.walk: [run] route to VermilionCity_PokemonCenter_1F (7, 4) north
+heal_vermilion: heal
+out_of_center: [run] route to VermilionCity (15, 7) south
+retries 0
+postconditions:
+none
+no repeat
+== dex_collection/plans/04-shiny-ekans.plan.json
+frlg 04-shiny-ekans from anywhere outdoors: 5 game_action, 4 route, 1 heal
+fly_route10: [fly] game_action {"town":"Route10"} => Route10 (13, 21) south
+to_grass: [run] route to Route10 (12, 8) east
+save_in_grass: [save_game] game_action {}
+shiny_ekans: [wild_rng] game_action {"species":"ekans","location":"route_10","tid":33002,"sid":9011,"seeds":"rng_seeds_mgba_sevii_save.json","seed_shift":4,"ingame_offset":1,"frame_model":"mgba","advances":[1000,4000],"ball":"ultra-ball","balls":5,"attempts":1}
+save_catch: [save_game] game_action {}
+back_to_pc: [run] route to Route10_PokemonCenter_1F (11, 2) north
+deposit_catch: [pc_deposit] game_action {"species":["ekans"]}
+heal_route10.walk: [run] route to Route10_PokemonCenter_1F (7, 4) north
+heal_route10: heal
+out_of_center: [run] route to Route10 (13, 21) south
 retries 0
 postconditions:
 none
@@ -326,7 +364,7 @@ none
 no repeat
 == wild_rng/plans/02-shiny-ekans.plan.json
 frlg 02-shiny-ekans from Route10 (12, 8) east: 2 game_action
-shiny_ekans: [wild_rng] game_action {"species":"ekans","location":"route_10","tid":33002,"sid":9011,"seeds":"rng_seeds_mgba_route10_save.json","frame_model":"mgba","advances":[900,4000],"ball":"poke-ball","balls":8,"attempts":1}
+shiny_ekans: [wild_rng] game_action {"species":"ekans","location":"route_10","tid":33002,"sid":9011,"seeds":"rng_seeds_mgba_sevii_save.json","seed_shift":8,"frame_model":"mgba","advances":[900,4000],"ball":"poke-ball","balls":8,"attempts":1}
 save_catch: [save_game] game_action {}
 retries 0
 postconditions:
