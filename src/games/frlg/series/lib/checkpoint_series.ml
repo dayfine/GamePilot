@@ -257,4 +257,6 @@ let run ~plan_dir (setup : Run.setup) ids ~after =
       (Chain_progress.create ~mode:setup.mode ~policy:setup.policy
          ~started_ms:(now_ms ()) ids)
   in
-  chain_from ~plan_dir setup ids chain ~after
+  let code = chain_from ~plan_dir setup ids chain ~after in
+  Series_watch.finished setup.series ~passed:(code = 0);
+  code

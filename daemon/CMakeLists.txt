@@ -112,6 +112,7 @@ add_library(gamepilot_core STATIC
   src/viewport.cpp
   src/watch_hub.cpp
   src/watch_registry.cpp
+  src/watch_series.cpp
   src/watch_server.cpp
 )
 # The window frame source: ScreenCaptureKit on macOS (Objective-C++), none

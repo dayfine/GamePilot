@@ -186,6 +186,43 @@ wants one place to find them.
   `?token=T`. With `--listen` beyond localhost the runner prints that URL, with the machine's LAN
   address, for the user's other device.
 
+## One page per series
+
+A checkpoint series (`gamepilot run --from --to`) runs each checkpoint, each attempt even, in a
+daemon of its own, so no daemon knows the series. Without more, the hub listed each run as an
+entry of its own, a run's page showed only its own checkpoint (a PLZA run sends a chain of one),
+and a page that followed the series' port to the next daemon kept the last checkpoint's probes.
+The series is now one entry with one page:
+
+- **The runner keeps the series' record** (`Series_record`, written by `Series_watch` in
+  `src/core/live_run`): `$GAMEPILOT_RUNS/.watch/series/<id>.json`, the id
+  `<date>-<from>-<to>-<pid>`, rewritten whole at each change (aside, then renamed). It has the
+  program fields, range, mode, backend, start and end, `result` (`running`, `pass`, `fail`), `run`
+  (the run going, absent between runs) and every checkpoint in run order with its state (pending,
+  current, passed, failed, skipped), its times and its runs (run folder, run `n`, attempt,
+  result, where and why it failed). A game's series runner starts it and tells it of each run's
+  start and end and of the series' end; nothing is written without `--watch`. The series goes on
+  only after a pass, so a run of the next checkpoint marks the one before passed.
+- **The hub routes by it** (`daemon/src/watch_series.*`): `/series.json` lists the running series
+  (runner alive, not ended); `/runs.json` gives each run its `series`; `/series/ID/` is the live
+  page with the token of the run going; `/series/ID/series.json` the record, running or ended; and
+  everything else under `/series/ID/` (`events`, `stream`, `frame`, `summary.json`, `POST stop`)
+  goes to the daemon of the run going, as under `/runs/NAME/`, or answers 503 between runs. `/live`
+  goes to the newest run's series when it is part of one, and to a running series between its runs.
+- **The page stays while the daemons change.** On `/series/ID/` the Run card is the record,
+  polled every 2 s: program, range, mode, the current checkpoint (3 of 25), total time, and a chip
+  per checkpoint with its state, its time, and its runs and retries when there was more than one
+  (each run's result on hover). A finished checkpoint shows its events from the page's memory, or
+  opens its last run's record. The Plan card is the current checkpoint's, as before. The event
+  stream is opened again when the run going changes, or when the hub closed it between runs, and
+  the frame's stream with it (the daemon's `info`). The hub and the sidebar list the series as one
+  row; a run's own page, when its run ends, goes on to its series' page.
+- **No stale probes.** The page kept its probe list until a `probes` event replaced it, and a new
+  daemon sends none until its program's first probed frame, so after a switch to the next
+  checkpoint's daemon (a page on the run's port) the last checkpoint's probes stayed. Each `info`
+  (a new daemon, or the same one after a lost connection, which sends its probes and plan right
+  after) now clears the probes and the plan.
+
 ## The hub serves the page
 
 Through the hub, `/runs/NAME/` is the hub's own build of `watch.html`, never the run daemon's:

@@ -14,6 +14,7 @@ type setup = {
   policy : Checkpoint_trials.policy;
   world : Frlg_overworld.Frlg_steps.world;
   watch : Daemon_process.watch option;  (** the daemon's watch page, if any *)
+  series : Series_watch.t;
   save_after_pass : bool;
       (** On the Switch: save in the game after a pass
           (Checkpoints_series.Console_runs). *)

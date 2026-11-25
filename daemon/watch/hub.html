@@ -8,7 +8,10 @@
   state (live, stale, covered) from their /summary.json; the live runs table
   and `live` are our own runs only.
   GET runs.json lists the registry's live entries; each run's mode, trial and
-  state come from that run's /summary.json, through the hub too. recent.json
+  state come from that run's /summary.json, through the hub too. A running
+  checkpoint series (series.json) is one row, linking to its page
+  (series/ID/), with its current checkpoint, how far it is and what its run
+  going does; its runs are not listed again. recent.json
   lists the latest finished runs (RESULTS.tsv). Links are relative, so a LAN
   viewer's links stay on the LAN address.
 
@@ -176,6 +179,7 @@ function duration(ms) {
 
 // A run's page, through this hub.
 const runUrl = (name) => "runs/" + encodeURIComponent(name) + "/";
+const seriesUrl = (id) => "series/" + encodeURIComponent(id) + "/";
 
 async function fetchSummary(name) {
   try {
@@ -226,12 +230,33 @@ function renderWatching(sources) {
   }));
 }
 
-function render(all) {
+// A running series: one row for all its runs.
+function seriesRow(s) {
+  const cps = s.checkpoints;
+  const cur = cps.findIndex((c) => c.state === "current");
+  const current = cur >= 0 ? cps[cur] : null;
+  const last = current && current.runs.length ? current.runs[current.runs.length - 1] : null;
+  const tr = el("tr");
+  const name = el("td");
+  const link = el("a", "", (s.program_name || s.program || "series") + " " + s.from + " → " + s.to);
+  link.href = seriesUrl(s.series);
+  name.append(link, el("div", "muted", s.backend + " · series · " + cps.filter((c) => c.state === "passed").length +
+                       " of " + cps.length + " passed"));
+  const [state, cls] = s.run ? stateOf(summaries.get(s.run)) : ["between runs", ""];
+  tr.append(name, el("td", "", current ? current.id + " (" + (cur + 1) + " of " + cps.length + ")" : "–"),
+            el("td", "", s.mode),
+            el("td", "num", last ? "run " + last.n + (last.attempt > 1 ? " attempt " + last.attempt : "") : "–"),
+            el("td", "num", duration(Date.now() - s.started_ms)),
+            el("td", "state " + cls, state));
+  return tr;
+}
+
+function render(all, series) {
   renderWatching(all.filter((r) => r.source));
-  const entries = all.filter((r) => !r.source);
+  const entries = all.filter((r) => !r.source && !r.series);
   const body = $("runs");
-  body.replaceChildren();
-  if (!entries.length) {
+  body.replaceChildren(...[...series].reverse().map(seriesRow));
+  if (!entries.length && !series.length) {
     const td = el("td", "empty", "no live runs: gamepilot run --watch starts one");
     td.colSpan = 6;
     const tr = el("tr");
@@ -516,12 +541,15 @@ readQuery();
 showSort();
 
 let entries = [];
+let series = [];
 async function poll() {
   try {
     const reply = await fetch("runs.json", {cache: "no-store"});
     entries = await reply.json();
+    series = await fetch("series.json", {cache: "no-store"})
+      .then((r) => r.ok ? r.json() : []).catch(() => []);
     await Promise.all(entries.map((r) => fetchSummary(r.run)));
-    const runs = entries.filter((r) => !r.source).length;
+    const runs = entries.filter((r) => !r.source && !r.series).length + series.length;
     const watched = entries.length - runs;
     $("conn").textContent = runs + " live run" + (runs === 1 ? "" : "s") +
       (watched ? " · " + watched + " watched" : "");
@@ -530,7 +558,7 @@ async function poll() {
     $("conn").textContent = "hub unreachable, retrying…";
     $("conn").className = "down";
   }
-  render(entries);
+  render(entries, series);
   setTimeout(poll, POLL_MS);
 }
 poll();

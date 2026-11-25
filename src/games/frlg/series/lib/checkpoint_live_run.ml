@@ -234,10 +234,12 @@ let record_outcome setup cp (run : Run_record.run) n ~attempt outcome =
     | Passed _ -> { result = "pass"; at = ""; reason = "" }
     | Failed { at; reason; _ } -> { result = "fail"; at; reason }
   in
-  Daemon_run.finish ~runs_dir:setup.runs_dir run ~summary:line ending
+  Daemon_run.finish ~runs_dir:setup.runs_dir run ~summary:line ending;
+  Series_watch.run_ended setup.series run ending
 
 (* The attempt in its folder: the folder and how it ended. *)
 let run_in setup cp n ~attempt ~progress (run : Run_record.run) =
+  Series_watch.run_started setup.series run ~n;
   let record = run.record in
   let log, close = Run_record.story_log record in
   log

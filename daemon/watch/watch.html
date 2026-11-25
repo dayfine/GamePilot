@@ -25,6 +25,14 @@
   Through the hub this page comes from the hub's own build, whatever the run
   daemon's age: the run supplies only data (events, stream, frame, summary,
   stop).
+  A checkpoint series' page (/series/ID/, Watch-Page.md, One page per series)
+  is this page for the whole series: the Run card is the series' record
+  (series.json, polled), every checkpoint with its state, runs and times;
+  its data (events, stream, frame, stop) comes from the run going, which the
+  hub passes it to, so the page stays while the daemons change underneath:
+  it opens the event stream again when the run going changes or the stream
+  closes. Each new daemon's `info` clears the probes and the plan, so no
+  checkpoint shows the last one's.
 -->
 <html lang="en">
 <head>
@@ -315,6 +323,9 @@ const $ = (id) => document.getElementById(id);
 // Stop's token: from the URL, else the one the daemon put in for this machine.
 const TOKEN = new URLSearchParams(location.search).get("token") ||
   document.querySelector('meta[name="gamepilot-token"]').content;
+// A series' page: /series/ID/ through the hub.
+const viaSeries = location.pathname.match(/^(.*)\/series\/([^/]+)\/$/);
+const SERIES_ID = viaSeries ? decodeURIComponent(viaSeries[2]) : null;
 const screen = $("screen");
 let info = null;          // the backend, as `hello` describes it
 let probes = [];          // [{id, kind, box, result}]
@@ -745,17 +756,146 @@ function showPast(id) {
   $("past").hidden = !id;
   if (id) {
     const plan = plans.get(id);
-    const state = lastRun.checkpoints.find((c) => c.id === id);
+    const state = chainCheckpoints().find((c) => c.id === id);
     $("past-title").textContent = id + " · " + (state ? state.state : "") + " · its events at its end";
     renderEvents($("past-plan"), plan, false);
   }
-  renderRun();
+  renderChain();
 }
 $("past-close").addEventListener("click", () => showPast(null));
 
+// --- Run: a checkpoint series ------------------------------------------------
+//
+// On a series' page the Run card is the series' record (the runner's
+// Series_record, through the hub's series.json): the program and range, every
+// checkpoint in order with its state, its runs (run n, attempt, result) and
+// its time, the current one marked. A finished checkpoint shows its events
+// from this page's memory, or opens its last run's record.
+
+const SERIES_POLL_MS = 2000;
+let lastSeries = null;
+
+function chainCheckpoints() {
+  return SERIES_ID ? (lastSeries ? lastSeries.checkpoints : []) : (lastRun ? lastRun.checkpoints : []);
+}
+
+function renderChain() {
+  if (SERIES_ID) renderSeries(); else renderRun();
+}
+
+// A checkpoint's time: from its first run's start to its end, or to now.
+function checkpointMs(c) {
+  if (c.started_ms == null) return null;
+  return (c.ended_ms != null ? c.ended_ms : Date.now()) - c.started_ms;
+}
+
+// "2 runs, 1 retry": only when the runner made more than one.
+function runsNote(c) {
+  const runs = new Set(c.runs.map((r) => r.n)).size;
+  const retries = c.runs.filter((r) => r.attempt > 1).length;
+  const parts = [];
+  if (runs > 1) parts.push(runs + " runs");
+  if (retries) parts.push(retries + (retries === 1 ? " retry" : " retries"));
+  return parts.join(", ");
+}
+
+// Each run on its own line: "run 1 attempt 2: fail at #3 talk: no_text".
+function runsTitle(c) {
+  return [c.state, ...c.runs.map((r) => "run " + r.n + (r.attempt > 1 ? " attempt " + r.attempt : "") +
+    ": " + (r.result === "running" ? "running" : r.result +
+      (r.at ? " at " + r.at : "") + (r.reason ? ": " + r.reason : "")))].join("\n");
+}
+
+function seriesMeta(series) {
+  const meta = $("run-meta");
+  const cps = series.checkpoints;
+  const cur = cps.findIndex((c) => c.state === "current");
+  meta.replaceChildren(el("b", "", series.program_name || series.program || "series"),
+    " · " + series.from + " → " + series.to + " · " + series.mode + " · ");
+  if (series.result === "running" && cur >= 0) {
+    meta.append(el("b", "", cps[cur].id), " (" + (cur + 1) + " of " + cps.length + ")" +
+                (series.run ? "" : " · between runs") + " · ");
+  } else if (series.result === "running") {
+    meta.append("starting · ");
+  } else {
+    const failed = cps.find((c) => c.state === "failed");
+    meta.append(el("b", "", series.result === "pass" ? "series passed" :
+                "stopped at " + (failed ? failed.id : "?")), " · ");
+  }
+  const end = series.ended_ms != null ? series.ended_ms : Date.now();
+  meta.append("total " + duration(end - series.started_ms));
+}
+
+function seriesChip(c) {
+  const finished = c.state === "passed" || c.state === "failed";
+  const shows = finished && plans.has(c.id);
+  const last = c.runs.length ? c.runs[c.runs.length - 1] : null;
+  const record = finished && !shows && last;
+  const chip = el(shows ? "button" : record ? "a" : "span", "chip " + c.state +
+                  (shows || record ? " open" : "") + (c.id === pastId ? " shown" : ""));
+  if (shows) {
+    chip.type = "button";
+    chip.addEventListener("click", () => showPast(c.id === pastId ? null : c.id));
+  }
+  if (record) chip.href = runPath(last.run);
+  chip.title = runsTitle(c) + (shows ? "\nShow its events at its end" : record ? "\nOpen its last run's record" : "");
+  chip.append((MARKS[c.state] ? MARKS[c.state] + " " : "") + c.id);
+  const ms = checkpointMs(c);
+  const note = [runsNote(c), c.state === "current" && last && last.attempt > 1 ? "attempt " + last.attempt : "",
+                ms != null && c.state !== "pending" ? duration(ms) : ""].filter((x) => x).join(" · ");
+  if (note) chip.append(el("span", "t", note));
+  return chip;
+}
+
+function renderSeries() {
+  const series = lastSeries;
+  if (!series) return;
+  seriesMeta(series);
+  const chain = $("chain");
+  chain.replaceChildren(...series.checkpoints.map((c) => {
+    const li = el("li");
+    li.append(seriesChip(c));
+    return li;
+  }));
+  document.title = (series.program_name || series.program || "series") + " " + series.from +
+    " → " + series.to + " · GamePilot Watch";
+}
+
+// The series ended: say so, stop the frame and Stop.
+function showSeriesEnded(series) {
+  if (endedShown) return;
+  endedShown = true;
+  const failed = series.checkpoints.find((c) => c.state === "failed");
+  $("ended-text").textContent = "This series has ended: " +
+    (series.result === "pass" ? "every checkpoint passed." : "stopped" + (failed ? " at " + failed.id : "") + ".");
+  $("ended-record").hidden = true;
+  $("ended").hidden = false;
+  $("conn").textContent = "series ended";
+  $("conn").className = "down";
+  setSource("off");
+  $("stop").hidden = true;
+}
+
+async function pollSeries() {
+  if (!document.hidden || !lastSeries) {
+    try {
+      const series = await getJson("series.json");
+      const first = !lastSeries;
+      lastSeries = series;
+      renderSeries();
+      if (first) eventsRun = series.run;  // the stream opened at load is its
+      if (series.result !== "running") showSeriesEnded(series);
+      else if (series.run && series.run !== eventsRun) connect();
+    } catch (e) {
+      // The hub restarting: the next poll tries again.
+    }
+  }
+  setTimeout(pollSeries, SERIES_POLL_MS);
+}
+
 // Times tick between messages.
 setInterval(() => {
-  renderRun();
+  renderChain();
   if (lastPlan && currentKey) renderPlan();
 }, 1000);
 
@@ -827,22 +967,47 @@ setInterval(() => {
 
 // --- Events ------------------------------------------------------------------
 
+// The event stream. On a series' page it follows the run going: opened again
+// when that run changes, and when the hub closed it (between runs, 503).
+let events = null;
+let eventsRun = null;      // the series' run going when it was opened
+const RECONNECT_MS = 2000;
+
 function connect() {
-  const events = new EventSource("events");
-  const on = (name, f) => events.addEventListener(name, (m) => f(JSON.parse(m.data)));
-  events.onopen = () => { $("conn").textContent = "live"; $("conn").className = ""; };
-  events.onerror = () => { $("conn").textContent = "disconnected, retrying…"; $("conn").className = "down"; };
+  if (events) events.close();
+  const source = new EventSource("events");
+  events = source;
+  eventsRun = lastSeries ? lastSeries.run : null;
+  const on = (name, f) => source.addEventListener(name, (m) => f(JSON.parse(m.data)));
+  source.onopen = () => { $("conn").textContent = "live"; $("conn").className = ""; };
+  source.onerror = () => {
+    if (source !== events || endedShown) return;
+    $("conn").textContent = SERIES_ID ? "between runs, waiting for the next…" : "disconnected, retrying…";
+    $("conn").className = "down";
+    if (SERIES_ID && source.readyState === EventSource.CLOSED) {
+      setTimeout(() => { if (source === events && !endedShown) connect(); }, RECONNECT_MS);
+    }
+  };
   // A new daemon (each checkpoint has its own): its frame size, and the
-  // stream again, since the last one ended with the old daemon.
+  // stream again, since the last one ended with the old daemon. Its probes
+  // and plan come after it: the last daemon's are gone.
   on("info", (d) => {
     info = d;
+    lastLabel.clear();
+    changedAt.clear();
+    takeProbes([]);
+    lastPlan = null;
+    currentKey = null;
+    $("plan-title").textContent = "Plan";
+    $("plan").replaceChildren(el("li", "empty", "no plan yet: the program sends it when a checkpoint starts"));
     if (d.backend.kind === "view") showViewOnly();
     frameW = d.backend.width || frameW;
     frameH = d.backend.height || frameH;
     layoutFrame();
     if (!document.hidden) setSource("stream");
   });
-  on("run", (d) => { lastRun = d; runAt = Date.now(); renderRun(); });
+  // A series' page shows the series' record instead of one run's chain.
+  on("run", (d) => { lastRun = d; runAt = Date.now(); if (!SERIES_ID) renderRun(); });
   on("plan", (d) => {
     lastPlan = d;
     plans.set(d.checkpoint, d);
@@ -902,15 +1067,17 @@ const SIDE_POLL_MS = 3000;
 // started on another one).
 const HUB_PORT = Number(new URLSearchParams(location.search).get("hub")) || 47901;
 const PHONE_LAYOUT = window.matchMedia("(max-width: 800px)");
-const viaHub = location.pathname.match(/^(.*)\/runs\/([^/]+)\/$/);
+const viaHub = location.pathname.match(/^(.*)\/runs\/([^/]+)\/$/) || viaSeries;
 const HUB = viaHub ? location.origin + viaHub[1] + "/" :
   location.protocol + "//" + location.hostname + ":" + HUB_PORT + "/";
-let runName = viaHub ? decodeURIComponent(viaHub[2]) : null;
+let runName = viaHub && !SERIES_ID ? decodeURIComponent(viaHub[2]) : null;
 let runPort = viaHub ? null : Number(location.port);
 let wasLive = false;
 let endedShown = false;
 
 const runPath = (name) => HUB + "runs/" + encodeURIComponent(name) + "/";
+const seriesPath = (id) => HUB + "series/" + encodeURIComponent(id) + "/";
+let mySeries = null;       // the series this run's page belongs to
 
 // Wide window: open unless closed before (kept); phone: a closed drawer.
 function setSide(open, keep) {
@@ -986,7 +1153,20 @@ function noteItem(text) {
   return li;
 }
 
-function renderSide(live, summaries, recent) {
+// A running series in the sidebar: one row, its current checkpoint and what
+// its run going is doing.
+function seriesItem(s, summaries) {
+  const cps = s.checkpoints;
+  const cur = cps.findIndex((c) => c.state === "current");
+  const [state, cls] = s.run ? runState(summaries.get(s.run)) : ["between runs", ""];
+  return sideItem(seriesPath(s.series), s.series === SERIES_ID,
+    (cur >= 0 ? cps[cur].id + " (" + (cur + 1) + "/" + cps.length + ")" : s.from + " → " + s.to) +
+      " · " + s.backend,
+    duration(Date.now() - s.started_ms) + " · " + state, cls,
+    (s.program_name || s.program || "series") + " " + s.from + " → " + s.to);
+}
+
+function renderSide(live, summaries, recent, series) {
   const liveList = $("side-live");
   liveList.replaceChildren();
   if (!live) {
@@ -1007,7 +1187,8 @@ function renderSide(live, summaries, recent) {
       duration(Date.now() - r.started_ms) + " · " + state,
       state === "live" ? "pass" : (source ? "fail" : ""), source ? source.detail : "");
   }));
-  for (const r of [...live].sort((a, b) => b.started_ms - a.started_ms)) {
+  for (const s of [...(series || [])].reverse()) liveList.append(seriesItem(s, summaries));
+  for (const r of [...live].filter((x) => !x.series).sort((a, b) => b.started_ms - a.started_ms)) {
     const summary = summaries.get(r.run);
     const run = summary && summary.run;
     const current = run && run.checkpoints.find((c) => c.state === "current");
@@ -1017,7 +1198,7 @@ function renderSide(live, summaries, recent) {
       (current ? current.id : r.checkpoint || r.run) + " · " + r.backend,
       duration(Date.now() - started) + " · " + state, cls, r.run));
   }
-  if (!live.length) liveList.append(noteItem("no live runs"));
+  if (!liveList.childElementCount) liveList.append(noteItem("no live runs"));
   const recentList = $("side-recent");
   recentList.replaceChildren();
   const liveNames = new Set(live.map((r) => r.run));
@@ -1039,12 +1220,15 @@ function checkEnded(live, recent) {
   if (mine) {
     runName = mine.run;
     runPort = mine.port;
+    mySeries = mine.series || null;
     wasLive = true;
     document.title = (mine.checkpoint || mine.run) + " · GamePilot Watch";
     if (endedShown) { endedShown = false; $("ended").hidden = true; }
     return;
   }
   if (!wasLive && !viaHub) return;
+  // A series' run ended: the series' page follows the rest of it.
+  if (viaHub && mySeries) { location.replace(seriesPath(mySeries) + location.search); return; }
   if (viaHub) {
     const next = runPort && live.find((r) => r.port === runPort);
     if (next) { location.replace(runPath(next.run) + location.search); return; }
@@ -1073,18 +1257,19 @@ async function getJson(url) {
 
 async function pollSide() {
   if (!document.hidden) {
-    let live = null, recent = null;
+    let live = null, recent = null, series = [];
     const summaries = new Map();
     try {
-      [live, recent] = await Promise.all([getJson(HUB + "runs.json"),
-                                          getJson(HUB + "recent.json").catch(() => [])]);
+      [live, recent, series] = await Promise.all([getJson(HUB + "runs.json"),
+                                          getJson(HUB + "recent.json").catch(() => []),
+                                          getJson(HUB + "series.json").catch(() => [])]);
       await Promise.all(live.map((r) => getJson(runPath(r.run) + "summary.json")
         .then((s) => summaries.set(r.run, s)).catch(() => {})));
     } catch (e) {
       live = null;
     }
-    if (live) checkEnded(live, recent);
-    renderSide(live, summaries, recent);
+    if (live && !SERIES_ID) checkEnded(live, recent);
+    renderSide(live, summaries, recent, series);
   }
   setTimeout(pollSide, SIDE_POLL_MS);
 }
@@ -1093,6 +1278,7 @@ initialSide();
 layoutFrame();
 connect();  // its `info` starts the stream
 pollSide();
+if (SERIES_ID) pollSeries();
 </script>
 </body>
 </html>

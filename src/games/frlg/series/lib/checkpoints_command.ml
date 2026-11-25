@@ -152,6 +152,10 @@ let run_series program plan_dir (f : Pokemon_flags.flags) =
   let* selected, after = Plan_dir.select ids ~from_id ~to_id in
   let* () = check_from_event f mode ~checkpoints:(List.length selected) in
   let* world = Frlg_checkpoints.Checkpoint_run.load_world () in
+  let watch = watch_of f in
+  let info = run_info program plan_dir f Checkpoints ~from_id ~to_id in
+  let mode_name = Checkpoint_trials.mode_to_string mode in
+  let series = Series_watch.start watch info ~mode:mode_name selected in
   Ok
     (Checkpoint_series.run ~plan_dir
        {
@@ -163,8 +167,9 @@ let run_series program plan_dir (f : Pokemon_flags.flags) =
          mode;
          policy;
          world;
-         watch = watch_of f;
-         info = run_info program plan_dir f Checkpoints ~from_id ~to_id;
+         watch;
+         series;
+         info;
          daemon_flags =
            Daemon_process.viewport_args backend viewport @ f.daemon_flags;
          bound = ref None;
