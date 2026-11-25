@@ -1,0 +1,4 @@
+(library
+ (name frlg_fragments)
+ (public_name gamepilot.frlg_fragments)
+ (libraries yojson gamepilot.frlg_repo_files gamepilot.frlg_places))

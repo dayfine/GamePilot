@@ -183,7 +183,7 @@ let () =
         "frlg; from VermilionCity (19, 18) south; missing: none";
       case "mg-03's walks plan on the maps" (walks "mg-03.plan.json")
         "to_route2_cut_tree 3; to_route2_reyley 8; exit_route2_house 3; \
-         to_lavender_mart 7; to_lavender_nurse 8";
+         to_lavender_mart 7; heal_lavender.walk 8";
       case "mg-03 from its last event: the rope gained from the kept start"
         (from_last_event ~kept_ropes:0)
         "#11 heal_lavender: item escape-rope: passed: gained 1 (0 to 1)";
@@ -202,7 +202,7 @@ let () =
         (summary "mg-04a.plan.json")
         "frlg; from LavenderTown_PokemonCenter_1F (7, 4) north; missing: none";
       case "mg-04a's walks plan on the maps" (walks "mg-04a.plan.json")
-        "to_tower_5f_patch 34; to_indigo_nurse 4";
+        "to_tower_5f_patch 34; heal_indigo.walk 4";
       case "mg-04b (the grind round)"
         (summary "mg-04b.plan.json")
         "frlg; from IndigoPlateau_PokemonCenter_1F (13, 12) north; missing: \

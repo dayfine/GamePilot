@@ -1,0 +1,88 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "frlg",
+  "checkpoint": {
+    "id": "mg-04a",
+    "title": "Grinding, part 1: CH'DING Knock Off (skips when known), Escape Rope, Fly to Indigo Plateau and heal at its nurse",
+    "start": {"map": "LavenderTown_PokemonCenter_1F", "tiles": [[7, 4]], "facing": "north"},
+    "events": [
+      {
+        "id": "to_tower_5f_patch",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {"map": "PokemonTower_5F", "tiles": [[8, 9]], "facing": "east"}
+        },
+        "why": "enter Pokemon Tower and climb to 5F (8, 9), 2 tiles west of PurifiedZone (10, 9)"
+      },
+      {
+        "id": "grind_chding_knock_off",
+        "kind": "game_action",
+        "action": "grind",
+        "args": {
+          "species": "farfetchd",
+          "target_level": 21,
+          "learn_move": "knock-off",
+          "learn_slot": 1,
+          "sweeper": "blastoise",
+          "sweeper_moves": [1, 2],
+          "strategy": "pokemon_tower_5f",
+          "max_battles": 60
+        },
+        "declared_after": {"map": "PokemonTower_5F", "tiles": [[8, 9]]},
+        "why": "CH'DING must know Knock Off; the mg-03 save has it at Lv 22, so this reads the summary and skips. If not, it switch-grinds on the Tower 5F spot it stands on"
+      },
+      {
+        "id": "escape_rope_tower",
+        "kind": "game_action",
+        "action": "use_item",
+        "args": {
+          "item": "escape-rope"
+        },
+        "declared_after": {"map": "LavenderTown", "tiles": [[18, 7]], "facing": "south"},
+        "why": "use Escape Rope out of Pokemon Tower 5F directly to Lavender Town (18, 7), outdoors for the Fly"
+      },
+      {
+        "id": "fly_indigo_plateau",
+        "kind": "game_action",
+        "action": "fly",
+        "args": {
+          "town": "IndigoPlateau",
+          "species": "pidgey"
+        },
+        "declared_after": {"map": "IndigoPlateau_Exterior", "tiles": [[11, 7]]},
+        "why": "Fly to Indigo Plateau: Victory Road 2F's north exit is a short walk south on Route 23"
+      },
+      {
+        "id": "to_indigo_nurse",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {"map": "IndigoPlateau_PokemonCenter_1F", "tiles": [[13, 12]], "facing": "north"}
+        },
+        "why": "into the Indigo Plateau Center to its nurse, mg-04b's start and the grind rounds' save point"
+      },
+      {
+        "id": "heal_indigo",
+        "kind": "heal",
+        "why": "full HP/PP before the first grind round"
+      }
+    ]
+  },
+  "execution": {"menu": "full"},
+  "metadata": {
+    "phase": "testing",
+    "notes": "Ends at the Indigo Plateau nurse, healed: mg-04b's start, where every grind round is saved. CH'DING knows Knock Off; one Escape Rope used; the nurse heals for free.",
+    "postconditions": {
+      "party_includes": ["blastoise", "pidgey", "mr-mime", "farfetchd"],
+      "money": {"spent": 0},
+      "items": [
+        {"item": "revive", "gained": 0},
+        {"item": "escape-rope", "used": 1}
+      ],
+      "knows": [
+        {"species": "farfetchd", "moves": ["knock-off"]}
+      ]
+    }
+  }
+}

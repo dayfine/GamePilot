@@ -1,0 +1,33 @@
+{
+  "format": "gamepilot-fragments/1",
+  "game": "frlg",
+  "fragments": {
+    "go_to": {
+      "params": ["place"],
+      "events": [
+        {
+          "id": "",
+          "kind": "route",
+          "action": "run",
+          "args": {"target": {"place": "{place}"}}
+        }
+      ]
+    },
+    "heal_at": {
+      "params": ["town"],
+      "events": [
+        {
+          "id": "walk",
+          "kind": "route",
+          "action": "run",
+          "args": {"target": {"place": "{town}_nurse"}},
+          "why": "to the Pokemon Center nurse, place {town}_nurse"
+        },
+        {
+          "id": "",
+          "kind": "heal"
+        }
+      ]
+    }
+  }
+}

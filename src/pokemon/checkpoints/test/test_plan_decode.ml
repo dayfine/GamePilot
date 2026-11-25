@@ -124,20 +124,6 @@ let real_plans : Table_test.case list =
          scene";
     };
     {
-      name = "mg-03 outline";
-      input = (fun () -> outline "mg-03.plan.json" mg);
-      expectation =
-        "frlg mg-03 from VermilionCity (19, 18) south: 5 game_action, 5 route, \
-         1 heal";
-    };
-    {
-      name = "mg-04a outline";
-      input = (fun () -> outline "mg-04a.plan.json" mg);
-      expectation =
-        "frlg mg-04a from LavenderTown_PokemonCenter_1F (7, 4) north: 2 route, \
-         3 game_action, 1 heal";
-    };
-    {
       name = "mg-04b outline: one grind round";
       input = (fun () -> outline "mg-04b.plan.json" mg);
       expectation =

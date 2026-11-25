@@ -1,0 +1,19 @@
+(rule
+ (copy ../../programs/mail_glitch/plans/mg-03.plan.json mg-03.plan.json))
+
+(rule
+ (copy ../../programs/mail_glitch/plans/mg-04a.plan.json mg-04a.plan.json))
+
+(test
+ (name test_fragments)
+ (modules test_fragments)
+ (deps
+  mg-03.plan.json
+  mg-04a.plan.json
+  (glob_files before/*.plan.json))
+ (libraries
+  yojson
+  gamepilot.table_test
+  gamepilot.checkpoints
+  gamepilot.frlg_fragments
+  gamepilot.frlg_checkpoints))
