@@ -2,7 +2,6 @@ open Frlg_readers
 module M = Menu_input
 module J = Json_field
 module Text = Frlg_text
-module Steps = Pc_deposit_steps
 
 let mail = "retro-mail"
 let fields_checked = 4
@@ -38,57 +37,11 @@ type slot_check = {
   male : bool option;
 }
 
-(* MOVE POKéMON is the storage menu's third row. *)
-let move_row = 2
-let move_label = "MOVE POKéMON"
-let max_looks = 40
 let box_change_ms = 900
 let hand_ms = 400
 let slots_per_row = 6
 let title_down_col = 2
 let pc_fail why = M.fail "pc_box" why
-
-(* From the overworld facing the PC to the box screen, read look by look. The
-   box screen with a Pokémon's data in PKMN DATA reads as the overworld
-   ({!Pc_screen} knows the deposit's screens): once A went in on MOVE POKéMON,
-   a settled frame that is not the storage menu is the box screen. *)
-let rec to_box_screen ~log ~booted ?(chosen = false) looks =
-  if looks = 0 then pc_fail "the box screen did not open"
-  else
-    let (l : Steps.look) = Pc_deposit.look () in
-    log ("PC: " ^ Pc_screen.screen_name l.view.screen ^ ".");
-    let again ?(chosen = chosen) () =
-      to_box_screen ~log ~booted:true ~chosen (looks - 1)
-    in
-    match (l.view.screen, l.view.cursor) with
-    | Box_grid, _ -> log "PC: the box screen."
-    | Overworld, _ when chosen -> log "PC: the box screen."
-    | Overworld, _ when not booted ->
-        Pc_deposit.press A;
-        again ()
-    | Text, _ ->
-        Pc_deposit.press B;
-        again ()
-    | Pc_list, Some 0
-      when List.exists (fun t -> l.label = Some t) Steps.pc_list_tops ->
-        Pc_deposit.press A;
-        again ()
-    | Pc_list, Some _ ->
-        Pc_deposit.press Up;
-        again ()
-    | Storage_menu, Some c when c = move_row && l.label = Some move_label ->
-        Pc_deposit.press A;
-        again ~chosen:true ()
-    | Storage_menu, Some c when c < move_row ->
-        Pc_deposit.press Down;
-        again ()
-    | Storage_menu, Some _ ->
-        Pc_deposit.press Up;
-        again ()
-    | _ ->
-        Pc_deposit.press Wait;
-        again ()
-
 let step_hold_ms = 160
 
 let step ms button =
@@ -177,24 +130,6 @@ let slot_verdict (c : slot_check) (v : box_view) =
       Wrong (Printf.sprintf "BOX %d's Desert wallpaper is not shown" c.box)
   | Some occupied, Some true -> asked c ~occupied v
 
-let rec leave ~log looks =
-  if looks = 0 then pc_fail "the overworld did not come back"
-  else
-    let (l : Steps.look) = Pc_deposit.look () in
-    match l.view.screen with
-    | Overworld -> log "PC: back on the overworld."
-    | Other ->
-        Pc_deposit.press Wait;
-        leave ~log (looks - 1)
-    | _ ->
-        Pc_deposit.press B;
-        leave ~log (looks - 1)
-
-(* B leaves the box screen first: it can read as the overworld. *)
-let back_out ~log looks =
-  Pc_deposit.press B;
-  leave ~log looks
-
 let report ~log c = function
   | As_asked ->
       log
@@ -203,7 +138,7 @@ let report ~log c = function
   | Wrong why | Unread why -> M.fail "box_slot_wrong" why
 
 let look_at_slot ~log c =
-  to_box_screen ~log ~booted:false max_looks;
+  Pc_box.to_box_screen ~log Pc_box.screen_game_steps;
   to_slot c;
   ignore (Effects.submit [ Wire.Wait { wait_ms = hand_ms } ]);
   Effects.save_run_frame (Printf.sprintf "box%d-slot%d.png" c.box c.slot);
@@ -213,7 +148,7 @@ let look_at_slot ~log c =
     | None -> Wrong "no frame"
   in
   (match v with Unread why -> pc_fail why | As_asked | Wrong _ -> ());
-  back_out ~log max_looks;
+  Pc_box.leave ~log Pc_box.screen_game_steps;
   v
 
 let check_box_slot ~log c =

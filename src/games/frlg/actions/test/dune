@@ -38,7 +38,8 @@
   test_trainer_card_read
   test_trainer_battles
   test_scene_battle
-  test_ace_actions)
+  test_ace_actions
+  test_pc_box)
  (modules
   test_pc_deposit_steps
   test_fly_towns
@@ -63,7 +64,8 @@
   test_trainer_card_read
   test_trainer_battles
   test_scene_battle
-  test_ace_actions)
+  test_ace_actions
+  test_pc_box)
  (deps
   mgba.probes.jsonl
   menus.mgba.probes.jsonl

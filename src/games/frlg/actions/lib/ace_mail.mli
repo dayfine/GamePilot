@@ -15,15 +15,15 @@
     - ["check_box_slot"], args ["box"] (3, the only one: its default Desert
       wallpaper is how the box is told), ["slot"] (from 1), ["occupied"], and
       for an occupied slot optional ["level"] and ["male"]: facing a Pokémon
-      Center's PC, BILL'S PC, MOVE POKéMON ({!Pc_deposit}'s looks and presses),
-      the hand from Box 1's first slot to the slot (UP to the box title, RIGHT
-      per box, DOWN onto the row's third slot, LEFT or RIGHT, DOWN), the box
-      screen read ({!Frlg_readers.Pc_box_screen}, kept as
-      [box<box>-slot<slot>.png]), back out to the overworld. Empty: PKMN DATA
-      flat, and the hand's shadow on the first slot. Occupied: PKMN DATA shows
-      text, and the level ({!Frlg_text.Text_lines.pc_data_level}) and the male
-      mark as asked. The species is not read: the ACE Pokémon (0x0351) shows a ?
-      picture and a garbled name. Fails as [box_slot_wrong] or [pc_box]. *)
+      Center's PC, BILL'S PC, MOVE POKéMON ({!Pc_box.to_box_screen}), the hand
+      from Box 1's first slot to the slot (UP to the box title, RIGHT per box,
+      DOWN onto the row's third slot, LEFT or RIGHT, DOWN), the box screen read
+      ({!Frlg_readers.Pc_box_screen}, kept as [box<box>-slot<slot>.png]), back
+      out to the overworld ({!Pc_box.leave}). Empty: PKMN DATA flat, and the
+      hand's shadow on the first slot. Occupied: PKMN DATA shows text, and the
+      level ({!Frlg_text.Text_lines.pc_data_level}) and the male mark as asked.
+      The species is not read: the ACE Pokémon (0x0351) shows a ? picture and a
+      garbled name. Fails as [box_slot_wrong] or [pc_box]. *)
 
 type slot_check = {
   box : int;

@@ -18,6 +18,5 @@ val perform :
     in the party already passes without a press (it ran before this save). *)
 
 val handlers : context -> (string * Pokemon_checkpoints.Game.game_action) list
-(** One handler per {!Action_requests.names}: decode, then {!perform}; then
-    mg-06's ({!Mail_glitch_use.handlers}) and the Rare Candy ones
-    ({!Candy_actions.handlers}), and the ACE setup's ({!Ace_mail.handlers}). *)
+(** Every FRLG game action a plan can name, by name: each decodes its args, then
+    does the action. *)

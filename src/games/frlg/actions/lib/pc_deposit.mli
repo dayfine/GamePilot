@@ -20,8 +20,8 @@ val look : unit -> Pc_deposit_steps.look
 (** One look at the PC's screen: the view, the cursor row's label, PKMN DATA's
     species on the party panel, "The BOX is full.". A frame that reads as the
     overworld is looked at again 800 ms later. With {!Frlg_readers.Pc_screen}'s
-    probes subscribed. *)
+    probes subscribed. Also {!Pc_box}'s look. *)
 
 val press : Pc_deposit_steps.press -> unit
 (** The fork's press: A and B held 160 ms then 640 ms, the D-pad 160 then 320, a
-    wait 500. *)
+    wait 500. Also {!Pc_box}'s press. *)
