@@ -139,6 +139,22 @@ let inline_plans : Table_test.case list =
         "zone Plaza" ^ String.sub base_events 17 (String.length base_events - 17);
     };
     {
+      name = "a route that fights trainers";
+      input =
+        (fun () ->
+          decoded
+            (edited {|"facing": "north"}}|}
+               {|"facing": "north"}, "fight_trainers": true}|}));
+      expectation =
+        String.concat "\n"
+          (List.map
+             (fun line ->
+               if line = "walk: [run] route to Town (4, 0) north" then
+                 line ^ " fighting trainers"
+               else line)
+             (String.split_on_char '\n' base_events));
+    };
+    {
       name = "not an object";
       input = (fun () -> decoded "[]");
       expectation = "base.plan.json is not a JSON object.";

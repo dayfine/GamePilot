@@ -9,7 +9,9 @@
     its catches join the reckoned party), mg-05's ["prepare_berry_pp"]
     ({!Berry_pp}) and ["mail_glitch_double_battle"] ({!Mail_glitch_battle}) and
     the shared ones ({!Game_actions}). The other built-in kinds fail as
-    [not_implemented] (repeats): they come from their own libraries.
+    [not_implemented] (repeats): they come from their own libraries. A trainer
+    who sees the player on a walk is fought with {!Trainer_battles} too
+    ({!Frlg_overworld.Route_walk}).
 
     Between loop rounds, heal walks to the configured Center's nurse and talks
     to her, save saves from the Start menu, and reload is the program's (an
