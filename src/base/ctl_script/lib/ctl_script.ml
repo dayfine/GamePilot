@@ -7,15 +7,10 @@ type step =
 
 let default_hold_ms = 100
 let default_wait_ms = 500
+let named upper b = String.uppercase_ascii (Wire.string_of_button b) = upper
 
 let button_of_name name =
-  match String.uppercase_ascii name with
-  | "PLUS" -> Some Wire.Start
-  | "MINUS" -> Some Wire.Select
-  | upper ->
-      List.find_opt
-        (fun b -> String.uppercase_ascii (Wire.string_of_button b) = upper)
-        Wire.[ A; B; Select; Start; Right; Left; Up; Down; R; L; Home; X; Y ]
+  List.find_opt (named (String.uppercase_ascii name)) Wire.all_buttons
 
 let ms what word =
   match int_of_string_opt word with
@@ -106,3 +101,9 @@ let commands = function
           Wire.press ~hold_ms ~cooldown_ms:wait_ms [ button ])
   | Wait wait_ms -> [ Wire.Wait { wait_ms } ]
   | Shot _ | Read _ | Status -> []
+
+type reader = {
+  name : string;
+  doc : string;
+  read : unit -> (string * string) list;
+}
