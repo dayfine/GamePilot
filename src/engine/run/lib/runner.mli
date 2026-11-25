@@ -37,7 +37,7 @@ module Make (T : Engine_rules.GAME_RULES) (Raw : Plan.RAW) : sig
       player must read there, or the run fails with {!Failure.Make.Not_at_end}
       (also when the game cannot tell where they are), logged as
       ["[Story] <checkpoint> end <pose>: holds"] or [": failed: ..."]. The C++
-      end check is [check_postconditions()] (map and tile) in
+      end check, of the map and tile, is in
       [Pokemon/AutoStory/Pokemon_StoryPostconditionCheck.cpp] on the fork's
       [frlg/lean].
 

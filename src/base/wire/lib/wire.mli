@@ -8,6 +8,7 @@
     [test/test_wire.ml] decodes and re-encodes every one of them. *)
 
 type json = Yojson.Safe.t
+(** A decoded JSON value: a message, or a result or notification's part. *)
 
 exception Decode_error of string
 (** Raised by every [*_of_json] function on a message that does not match the
@@ -15,6 +16,7 @@ exception Decode_error of string
 
 (** {1 Values} *)
 
+(** A controller button a command presses ({!Command.button}). *)
 type button = Command.button =
   | A
   | B
@@ -39,7 +41,10 @@ val all_buttons : button list
 (** Every button, in the daemon's bit order (protocol/v1). *)
 
 val string_of_button : button -> string
+(** The button's name on the wire, the constructor's own (["ZL"]). *)
+
 val button_of_string : string -> button option
+(** The button a wire name stands for; [None] for an unknown name. *)
 
 val switch_only : button -> bool
 (** [Home], [X], [Y] (v1.11), [ZL] (v1.14), [ZR] (v1.16), [Plus] and [Minus]
@@ -54,6 +59,7 @@ type stick = Command.stick
 val stick : float -> float -> (stick, string) result
 (** [stick x y]; an error when [x] or [y] is outside -1..1 or not a number. *)
 
+(** One step of a [submit] batch, which the daemon runs in order. *)
 type command = Command.command =
   | Press of {
       buttons : button list;
@@ -66,6 +72,7 @@ type command = Command.command =
           and centred for [cooldown_ms]; a stick left out ([None]) is centred
           (sticks: v1.12, the Switch only). *)
   | Wait of { wait_ms : int }
+      (** Presses nothing for [wait_ms], everything released. *)
 
 val press :
   ?left_stick:stick ->
@@ -81,6 +88,8 @@ type box = Probe.box = { x : float; y : float; w : float; h : float }
 (** Normalized, 0..1. A probe's box is relative to the game picture (the [hello]
     backend's [viewport]), not to the frame. *)
 
+(** How often a probe's results reach the client: on [Every] captured frame,
+    none skipped, or on the [Latest] when the client is ready. *)
 type delivery = Probe.delivery = Every | Latest
 
 type color_range = Probe.color_range = {
@@ -164,6 +173,7 @@ val find_probe :
     its alpha) asks for each blob's [score]. *)
 
 type rgb = Probe.rgb = { r : float; g : float; b : float }
+(** A colour measured over many pixels, each channel on 0..255. *)
 
 (** Decoded by the result's [kind] field, not by its shape. *)
 type probe_result = Probe.probe_result =
@@ -198,6 +208,8 @@ type batch_done = Command.batch_done = {
   seq : int;
   t_ms : float;
 }
+(** A [batch_done] notification: the batch [batch_id] has run all its commands,
+    as of frame [seq] at [t_ms] on the daemon clock. *)
 
 type backend = Backend.backend = {
   kind : string;
@@ -213,6 +225,8 @@ type backend = Backend.backend = {
       (** the picture's native size in game pixels ([game_size] on the wire,
           240x160 on the GBA); templates are in these *)
 }
+(** What the daemon drives, from [hello]: the backend, the game, the frame's
+    size and where the game picture sits in it ({!Backend.backend}). *)
 
 type hello_result = Backend.hello_result = {
   protocol : int;
@@ -220,20 +234,27 @@ type hello_result = Backend.hello_result = {
   backend : backend;
   probe_kinds : string list;
 }
+(** The daemon's answer to [hello]: the protocol version, its own name and
+    version, what it drives and the probe kinds it runs. *)
 
 type submit_result = Command.submit_result = {
   batch_id : string;
   start_seq : int;
 }
+(** The answer to [submit]: the batch taken, and the frame it starts on. *)
 
 type error = Jsonrpc.error = {
   code : int;
   message : string;
   data : json option;
 }
+(** A JSON-RPC error answer: its code, a message for a person, and the details
+    some errors carry (a lease refusal's holder). *)
 
 (** {1 Messages} *)
 
+(** A request's method and its params: what a client asks the daemon to do
+    ({!Jsonrpc.call}). *)
 type call = Jsonrpc.call =
   | Hello of { protocol : int; client : string }
   | Load_state of { path : string }
@@ -263,11 +284,13 @@ type call = Jsonrpc.call =
   | Lease_release
 
 type request = Jsonrpc.request = { id : int; call : call }
+(** A call with the id its response will carry. *)
 
 type response = Jsonrpc.response = { id : int; outcome : (json, error) result }
 (** A response does not name its method (JSON-RPC pairs it with its request by
     [id]); decode [Ok] with the [*_result] decoder for that request's method. *)
 
+(** A message no one answers, from the daemon or from the program. *)
 type notification = Jsonrpc.notification =
   | Frame of { load : int; frame : frame }
       (** [load]: how many [backend.load_state] calls had succeeded when the
@@ -292,14 +315,21 @@ type notification = Jsonrpc.notification =
           [key] to keep the console awake after [idle_ms] with no input
           (daemon/src/keep_awake.h). *)
 
+(** Any JSON-RPC message: a request, its response, or a notification. *)
 type message = Jsonrpc.message =
   | Request of request
   | Response of response
   | Notification of notification
 
 val method_name : call -> string
+(** The call's method on the wire, e.g. ["backend.load_state"]. *)
+
 val message_of_json : json -> message
+(** One decoded message; an unknown method or a malformed envelope or params is
+    a [Decode_error]. *)
+
 val json_of_message : message -> json
+(** One message, as {!message_of_json} reads it. *)
 
 val message_of_string : string -> message
 (** Parses one line. Raises [Decode_error] on bad JSON too. *)
@@ -310,38 +340,58 @@ val string_of_message : message -> string
 (** {1 Results} *)
 
 val hello_result_of_json : json -> hello_result
+(** The [hello] result. *)
+
 val json_of_hello_result : hello_result -> json
+(** The [hello] result, as {!hello_result_of_json} reads it. *)
 
 type load_state_result = Backend.load_state_result = { seq : int; load : int }
 (** The [seq] after loading and the daemon's new [load] count. *)
 
 val load_state_result_of_json : json -> load_state_result
+(** The [backend.load_state] (or [backend.reset]) result. *)
+
 val json_of_load_state_result : load_state_result -> json
+(** The [backend.load_state] result, as {!load_state_result_of_json} reads it.
+*)
 
 val save_result_of_json : json -> int
 (** The [seq] of the frame a [backend.save_state] or [backend.save_frame] saved.
 *)
 
 val json_of_save_result : int -> json
+(** [{"seq": n}], as {!save_result_of_json} reads it. *)
 
 val upload_template_result_of_json : json -> string
 (** The template's hash: lowercase hex SHA-256 of the PNG bytes. *)
 
 val json_of_upload_template_result : string -> json
+(** The [probe.upload_template] result for this hash. *)
+
 val subscribe_result_of_json : json -> string list
+(** The [subscribe] result: the ids of the probes now subscribed. *)
+
 val json_of_subscribe_result : string list -> json
+(** The [subscribe] result, [{"subscribed": [ids]}]. *)
 
 val unsubscribe_result_of_json : json -> string list
 (** The ids that were subscribed and are now removed. *)
 
 val json_of_unsubscribe_result : string list -> json
+(** The [unsubscribe] result, [{"unsubscribed": [ids]}]. *)
+
 val submit_result_of_json : json -> submit_result
+(** The [submit] result. *)
+
 val json_of_submit_result : submit_result -> json
+(** The [submit] result, as {!submit_result_of_json} reads it. *)
 
 val cancel_result_of_json : json -> int
-(** The [released_seq]. *)
+(** The [cancel] result's [released_seq]: the frame on which every button was
+    released. *)
 
 val json_of_cancel_result : int -> json
+(** The [cancel] result, [{"released_seq": n}]. *)
 
 module Watch = Watch
 
@@ -359,6 +409,7 @@ module Lease = Lease
 
 (** {1 Wire log} *)
 
+(** Which way a logged message went ([dir] on the wire). *)
 type direction = Wire_log.direction =
   | In  (** from the client *)
   | Out  (** to the client *)
@@ -373,9 +424,15 @@ type log_line = Wire_log.log_line = {
   owner : string option;
   msg : message;
 }
+(** One line of the daemon's wire log: one message, which way it went, when
+    (daemon clock), on which connection and, for input, under whose lease. *)
 
 val log_line_of_json : json -> log_line
+(** One wire log line; a missing field or an unknown [dir] is a [Decode_error].
+*)
+
 val json_of_log_line : log_line -> json
+(** One wire log line, as {!log_line_of_json} reads it. *)
 
 (** {1 Probing saved images} *)
 
@@ -385,6 +442,7 @@ type image_probes = string * (string * probe_result) list
     its probe results by id, as in a {!frame}. *)
 
 val image_probes_of_json : json -> image_probes
+(** One line of the tool's output. *)
 
 val image_probes_of_string : string -> image_probes list
 (** The tool's whole output, one image per non-blank line, in order. *)

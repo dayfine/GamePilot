@@ -11,11 +11,11 @@
     defeat text sat with no arrow until mg-05 testing 1 timed out). Only once a
     level-up box has shown in this battle can that screen be an evolution, and
     then it never gets a B: any B cancels an evolution. The fork's Mail Glitch
-    battle loop presses B on any battle text held 1.5 s (step_non_menu_
-    battle_frame(), Programs/MailGlitch/PokemonFRLG_MailGlitchBattle.cpp); its
-    AutoStory loop holds for an evolution only after a turn that attacked. B
-    never answers YES. The battle is over once no battle screen has shown for
-    {!over_after_ms}, after one did. *)
+    battle loop presses B on any battle text held 1.5 s
+    (Programs/MailGlitch/PokemonFRLG_MailGlitchBattle.cpp); its AutoStory loop
+    holds for an evolution only after a turn that attacked. B never answers YES.
+    The battle is over once no battle screen has shown for {!over_after_ms},
+    after one did. *)
 
 type state
 
@@ -37,8 +37,9 @@ val arrow_press_gap_ms : float
     before its arrow. *)
 
 val press_gap_ms : float
-(** 1.5 s, the fork's STUCK wait: the level-up box's A, a stray move menu's or
-    bag's B, once the screen has held this long since the last press. *)
+(** 1.5 s, as long as the fork waits on a held screen: the level-up box's A, a
+    stray move menu's or bag's B, once the screen has held this long since the
+    last press. *)
 
 val stuck_text_ms : float
 (** 6 s of battle text with no arrow, since the last press: something waits that

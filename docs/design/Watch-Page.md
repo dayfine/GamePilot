@@ -210,7 +210,7 @@ duration; a "frames" tag on a recorded run.
   game, `game_name`, program, `program_name`, group, from, to, checkpoint, backend, mode,
   `started_ms`) and again at the end with `ended_ms`, result, at and reason
   (`src/bin/run_record.ml`). The program is the registry's whose checkpoints folder the plan
-  folder is (`src/program_registry`, `docs/programs/README.md`): `game` and `program` are its ids
+  folder is (`src/program_registry`, `docs/guide/README.md`): `game` and `program` are its ids
   (`frlg`, `frlg.mail_glitch`), the others its names and group path (`FRLG / Glitches`). A folder
   from before `run.json` falls back to its name (`<date>-<checkpoint>-<mode>-<n>`), its
   `RESULTS.tsv` row (result, reason, end time), its daemon's first output line (backend) and its

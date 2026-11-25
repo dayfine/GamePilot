@@ -7,6 +7,8 @@ type t = {
   lines : string array;
   structure : Parsetree.structure;
 }
+(** A parsed [.ml]: its path, its text (whole and by line) and its parse tree.
+*)
 
 type function_binding = {
   name : string;
@@ -14,6 +16,8 @@ type function_binding = {
   end_line : int;
   body : Parsetree.expression;
 }
+(** A [let] bound to a function: its name, the lines it spans (1-based,
+    inclusive) and its right-hand side. *)
 
 val parse : path:string -> string -> (t, Finding.t) result
 (** A file that does not parse is a finding ([parse]), never a silent pass. *)

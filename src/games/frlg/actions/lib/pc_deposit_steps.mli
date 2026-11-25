@@ -1,9 +1,9 @@
 (** What a PC deposit presses on each screen it reads, from the overworld facing
-    the PC to the overworld again with every member stored: the fork's
-    [PcStorageDialog] (Programs/AutoStory/PokemonFRLG_AutoStoryPcStorage.cpp,
-    [frlg/lean]) for a DEPOSIT, pure so it runs in tests against looks made up
-    by hand. Its bounds are the fork's ([PC_MAX_OTHER_IN_A_ROW],
-    [PC_BOOT_READS]).
+    the PC to the overworld again with every member stored: the fork's PC dialog
+    (Programs/AutoStory/PokemonFRLG_AutoStoryPcStorage.cpp, [frlg/lean]) for a
+    DEPOSIT, pure so it runs in tests against looks made up by hand. Its bounds
+    are the fork's (PokemonFRLG_AutoStoryPcRun.h: how many looks at a changing
+    screen in a row, how many at the overworld after A).
 
     Where we differ: members are found by the species PKMN DATA shows under the
     hand, not by slot (DOWN until it shows, CANCEL fails); several in one visit;

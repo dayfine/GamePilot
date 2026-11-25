@@ -7,23 +7,22 @@
       ["mail"] or ["none"]. The party opened, read after the fork's 800 ms
       ({!Party_actions.party_settle_ms}), each slot's mark compared, the party
       closed through its fade ({!Menu_input.close_through_fades}). As the fork's
-      [run_verify_mail_glitch()]
-      (Programs/MailGlitch/PokemonFRLG_MailGlitchActions.cpp), for every slot.
-      Fails as [party_marks_wrong].
+      Mail Glitch check (Programs/MailGlitch/PokemonFRLG_MailGlitchActions.cpp)
+      does, for every slot. Fails as [party_marks_wrong].
     - ["read_glitched_mail"], args ["species"] or ["target_slot"], ["word"]:
       Retro Mail given to the member (as {!Party_actions.give} until the switch
       question, answered YES), the editor's field 1 read
       ({!Frlg_text.Mail_fields}, that frame kept in the run folder as
-      [proof-a.png]), and only if it reads ["word"], PLUS and YES (the C++
-      ItemDuplication's exit) back to the bag, closed through the fades
-      ({!Menu_input.close_through_fades}). Fails as [mail_glitch_not_active]
-      without confirming anything. Not in the fork.
+      [proof-a.png]), and only if it reads ["word"], PLUS and YES (the exit of
+      the fork's Programs/Farming/PokemonFRLG_ItemDuplication.cpp) back to the
+      bag, closed through the fades ({!Menu_input.close_through_fades}). Fails
+      as [mail_glitch_not_active] without confirming anything. Not in the fork.
     - ["move_item_to_top"], args ["item"]: in the item's pocket, SELECT on it,
       UP to the list's top (counted: the cursor hides while the item moves),
       SELECT (pokefirered item_menu.c, [BeginMovingItemInPocket] and
       [Task_MoveItemInPocket_HandleInput]); then the item must read on the top
       row. Nothing is pressed when it is there. Fails as [item_not_on_top]. Not
-      in the fork: the C++ ItemDuplication asks the player to do it.
+      in the fork: its PokemonFRLG_ItemDuplication.cpp asks the player to do it.
     - ["duplicate_item"], args ["species"] or ["target_slot"] (party slot 1, the
       C++'s), ["item"], ["count"], ["word"]: {!Item_duplication.run}. *)
 
