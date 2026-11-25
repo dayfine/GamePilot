@@ -9,7 +9,7 @@ NEXT is the one next step; once CI is green and the verdict is ok, it is "merge"
 changes structure, then "user review (<reason>)" (AGENTS.md, "PR gate loop"). Structure, read off
 the file list: a library module or dune file added, deleted or renamed under src/; a changed .mli
 of a library shared across games (src/base, src/core, src/pokemon); a changed format (protocol/,
-a *_decode.ml); or two NEEDS_REWORK verdicts. Docs-only PRs always go to the user.
+a *_decode.ml); a design doc (docs/design/); or two NEEDS_REWORK verdicts.
 
 A qc-structural verdict is a COMMENT review (GitHub refuses self-approval, so the review state
 says nothing) whose body has a "## Structural QC" heading, a "Reviewed SHA: <sha>" line and a
@@ -70,8 +70,9 @@ def structural_reason(files):
 
 def owner_reason(pr):
     """Why the PR needs the user's review, or None."""
-    if docs_only(pr.get("files") or []):
-        return "docs"
+    design = [f["path"] for f in pr.get("files") or [] if f["path"].startswith("docs/design/")]
+    if design:
+        return "design doc: " + design[0]
     reworks = [v for v in map(verdict, pr.get("reviews") or []) if v and v[1] == "NEEDS_REWORK"]
     if len(reworks) >= 2:
         return "reworked twice"

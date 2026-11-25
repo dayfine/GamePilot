@@ -66,7 +66,9 @@ check "green CI and no verdict asks for one" "run qc-structural" \
     "$(pr "$code" "$green" "$(review "$old" APPROVED)" | column 4)"
 check "ok on a plain change merges" merge \
     "$(pr "$code" "$green" "$(review "$tip" APPROVED)" | column 4)"
-check "docs-only goes to the user" "user review (docs)" "$(pr "$doc" "$green" "" | column 4)"
+check "a guide-only PR merges" merge "$(pr "$doc" "$green" "" | column 4)"
+check "a design doc goes to the user" "user review (design doc: docs/design/a.md)" \
+    "$(pr '{"path": "docs/design/a.md"}' "$green" "" | column 4)"
 check "a new lib module goes to the user" "user review (module added: src/x/lib/a.ml)" \
     "$(pr '{"path": "src/x/lib/a.ml", "changeType": "ADDED"}' "$green" "$(review "$tip" APPROVED)" | column 4)"
 check "a renamed dune file goes to the user" "user review (module renamed: src/x/lib/dune)" \

@@ -29,3 +29,6 @@ What the save needs before a checkpoint (free party slots, field moves, money, i
 the plans: `gamepilot programs` prints the program's needs, and
 `gamepilot checkpoints --program frlg.mail_glitch --preflight --from ID` checks a save against them.
 The port's history and the grinding options are in `docs/roadmap.md` (Phase 4).
+
+The player's guides: `docs/guide/frlg.mail_glitch.md` (activation) and
+`docs/guide/frlg.mail_glitch.item_duplication.md` (mg-06).

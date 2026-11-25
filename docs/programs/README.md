@@ -14,7 +14,8 @@ A descriptor (`Program_registry.t`) gives:
 - the backends it runs on.
 
 To add a program, add its descriptor to the list in `program_registry.ml` (registration is that
-list; nothing registers itself at start-up) and write its page. The registry's tests check that ids
+list; nothing registers itself at start-up) and write its page, and its player's guide in
+`docs/guide/` (`gamepilot guide --write` starts it; `docs/guide/README.md`). The registry's tests check that ids
 are unique, that every doc and checkpoints folder exists, and that every plan decodes. A one-shot
 program also needs its case in `gamepilot run` (`src/bin/gamepilot.ml`).
 
