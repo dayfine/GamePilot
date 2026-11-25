@@ -135,6 +135,27 @@ val pc_data_level : t
     digits' cell top at y 117 from x 34. Measured on mGBA (the ACE Pokémon in
     Box 3, Lv 100, 2026-11-25). *)
 
+val pokedex_list_rows : int
+(** Rows the Pokédex's numerical list shows at once: 9. *)
+
+val pokedex_list_name : int -> t
+(** The name on shown row [row] (0..8) of the Pokédex's numerical list: the
+    species' name, or ["-----"] for one not seen. pokefirered pokedex_screen.c
+    prints the list in window 1 tile from the left 2 and the top 2, its rows 14
+    pixels apart from y 2 and its names at x 56, so at x 72 from y 18; type
+    icons from x 136 on a caught species' row. Measured on mGBA (the Mail Glitch
+    save's list, 2026-11-25), on the English game, whose names and dashes it is
+    read against: another language needs its own names and a check of the
+    positions. *)
+
+val pokedex_list_number_digit : int -> int -> t
+(** [pokedex_list_number_digit row k]: digit [k] (0: hundreds) of the number on
+    shown row [row] (0..8) of the Pokédex's numerical list, the ["129"] of
+    ["No129"]. Small font: pokedex_screen.c prints the No symbol at x 12 of the
+    window and the three digits (leading zeros) 9 pixels right of it, so from x
+    37. Measured on the English game: another language's No symbol may be wider,
+    and the position needs a check there. *)
+
 (** {1 Template rows and the probe box} *)
 
 val template_top : int

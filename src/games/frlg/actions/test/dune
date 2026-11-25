@@ -39,7 +39,8 @@
   test_trainer_card_read
   test_trainer_battles
   test_scene_battle
-  test_wild_rng)
+  test_wild_rng
+  test_pokedex_entry)
  (modules
   test_pc_deposit_steps
   test_fly_towns
@@ -65,7 +66,8 @@
   test_trainer_card_read
   test_trainer_battles
   test_scene_battle
-  test_wild_rng)
+  test_wild_rng
+  test_pokedex_entry)
  (deps
   mgba.probes.jsonl
   menus.mgba.probes.jsonl
