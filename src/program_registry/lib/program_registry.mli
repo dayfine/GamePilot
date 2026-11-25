@@ -19,8 +19,9 @@ type viewport = Nso_gba | Native
 
 (** The rules a program's checkpoint plans are written over, which pick the
     library that loads and runs them. [Pokemon_grid]: the Pokémon grid rules
-    (Pokemon_engine, the FRLG runner). *)
-type rules = Pokemon_grid
+    (Pokemon_engine, the FRLG runner); [Plza_story]: PLZA's story rules
+    (Plza_engine, Plza_series). *)
+type rules = Pokemon_grid | Plza_story
 
 type switch_home = {
   title : string;  (** As the ctl usage names it: ["FireRed"]. *)

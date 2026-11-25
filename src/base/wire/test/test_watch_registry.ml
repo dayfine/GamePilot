@@ -1,5 +1,5 @@
 (* The watch registry entry as the daemon writes it (registry_entry_json in
-   daemon/src/watch_registry.cpp) and a run page's /summary.json, as
+   daemon/watch/server/watch_registry.cpp) and a run page's /summary.json, as
    [gamepilot runs] reads them. *)
 
 module R = Wire.Watch_registry

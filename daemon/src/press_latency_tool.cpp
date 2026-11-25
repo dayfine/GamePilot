@@ -174,8 +174,16 @@ int main(int argc, char** argv) {
                              : (fake ? kFakePresses : kConsolePresses);
 
   try {
-    return fake ? run_fake(plan, response_ms, fps, gate_ms)
-                : run_console(plan, serial, capture, gate_ms);
+    const int status = fake ? run_fake(plan, response_ms, fps, gate_ms)
+                            : run_console(plan, serial, capture, gate_ms);
+    // Flush here rather than at exit: on Windows the exit-time flush comes
+    // after the DLLs' teardown and is sometimes lost, with the exit code
+    // still 0.
+    if (std::fflush(stdout) != 0) {
+      std::fputs("press_latency: cannot write the output\n", stderr);
+      return 1;
+    }
+    return status;
   } catch (const std::exception& error) {
     std::fprintf(stderr, "press_latency: %s\n", error.what());
     return 1;

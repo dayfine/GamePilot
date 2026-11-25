@@ -1,0 +1,80 @@
+<!doctype html>
+<!--
+  gamepilot run record: one finished run, served by the hub under
+  runs/NAME/ once the run is no longer live (daemon/watch/server/watch_hub.cpp;
+  design in docs/design/Watch-Page.md, "Past runs").
+
+  Everything comes from the run's folder through the hub, relative to this
+  page: record.json (the run's row: result, reason, range, backend, times),
+  files/watch_plan.json (each event with its times), files/watch_log.jsonl
+  (each story line with its time; files/story.log for older runs, no times),
+  files/daemon.json (when the daemon clock read 0, to put the probe timeline
+  on the same Unix time as the rest), files/frames/index.jsonl and the
+  recorded frames, files/failure.png, and probes.json: the probe values over
+  the run, which the hub summarizes from wire.jsonl (never sent whole).
+
+  The scrubber moves one time through everything: the recorded frame at it,
+  the story line at it, each probe's value at it, a cursor on the timeline.
+  ?t=S opens the page S seconds into the run.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GamePilot Run</title>
+<link rel="stylesheet" href="run.css">
+</head>
+<body>
+<header>
+  <h1 id="title">Run</h1>
+  <nav><a href="../../">All runs</a><a href="../../live">Newest live run</a></nav>
+</header>
+<main>
+  <section class="wide">
+    <div id="result"><span id="verdict" class="muted">loading…</span>
+      <span id="where"></span><div id="reason" class="muted"></div></div>
+    <div class="facts" id="facts"></div>
+    <div id="failure-box" hidden><h2>Failure frame</h2>
+      <a id="failure-link" href="files/failure.png"><img id="failure" alt="the frame at the failure"></a></div>
+  </section>
+
+  <section id="viewer">
+    <h2>Recorded frames <span class="right muted" id="frame-count"></span></h2>
+    <img id="frame" alt="the recorded frame at the scrubber's time">
+    <input id="scrub" type="range" min="0" max="0" value="0" aria-label="time in the run">
+    <div id="scrub-meta"><span id="scrub-time">–</span><span id="scrub-step"></span></div>
+    <div class="buttons">
+      <button type="button" id="prev" title="previous frame (←)">◀ frame</button>
+      <button type="button" id="next" title="next frame (→)">frame ▶</button>
+      <button type="button" id="prev-step" title="previous step">◀ step</button>
+      <button type="button" id="next-step" title="next step">step ▶</button>
+      <button type="button" id="to-failure" hidden>failure</button>
+    </div>
+    <div id="log-at"></div>
+  </section>
+
+  <section>
+    <h2>Plan <span class="right muted" id="plan-total"></span></h2>
+    <ul id="events"><li class="note">loading</li></ul>
+  </section>
+
+  <section class="wide">
+    <h2>Probe values over the run
+      <input id="probe-filter" type="search" placeholder="filter: party., dialog." aria-label="probe filter">
+      <span class="right muted" id="timeline-note">reading wire.jsonl on the hub…</span></h2>
+    <div id="timeline"></div>
+  </section>
+
+  <section class="wide">
+    <h2>Story log <span class="right muted" id="log-note"></span></h2>
+    <div id="log"></div>
+  </section>
+</main>
+<script src="run_record.js"></script>
+<script src="run_plan.js"></script>
+<script src="run_log.js"></script>
+<script src="run_frames.js"></script>
+<script src="run_probes.js"></script>
+<script src="run.js"></script>
+</body>
+</html>

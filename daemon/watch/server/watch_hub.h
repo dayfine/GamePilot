@@ -4,18 +4,21 @@
 // is the daemon started with `--hub`, no backend, serving only HTTP with the
 // same pieces as the watch page (http.h, net.h):
 //
-//   GET /              the page (watch/hub.html, compiled in): the live runs,
-//                      each with its checkpoint, mode and trial (from the
+//   GET /              the page (watch/page/hub.html, compiled in): the live
+//                      runs, each with its checkpoint, mode and trial (from the
 //                      run's /summary.json), elapsed time and state; then
 //                      every run in the runs folder, with filters kept in the
 //                      URL's query (Watch-Page.md, Runs list)
+//   GET /NAME, /runs/RUN/NAME, /series/ID/NAME
+//                      the pages' scripts and styles (watch_assets.h), from
+//                      the hub's build like the pages
 //   GET /runs.json     the live registry entries
 //   GET /recent.json   the latest finished runs (RESULTS.tsv), newest first
 //   GET /history.json  every run folder (run_history.h), newest first
 //   GET /runs/NAME/    the run's page from the hub's own build: the live page
-//                      (watch/watch.html) while the run is live, with the
+//                      (watch/page/watch.html) while the run is live, with the
 //                      token the run gives its local viewers; the page of a
-//                      finished run (watch/run.html) after
+//                      finished run (watch/page/run.html) after
 //   GET /runs/NAME/record.json, /probes.json, /files/PATH
 //                      a run's row, its probe timeline (from wire.jsonl, read
 //                      a chunk at a time and kept while the file is
@@ -27,11 +30,22 @@
 //                      POST /stop?token=T. NAME is the run folder's name.
 //                      Only data comes from the run, so a page from the
 //                      hub's newer build works with an older run daemon.
-//   GET /live          redirects to the newest live run's page; /live/CP to
-//                      the newest live run of checkpoint CP. With none, a page
-//                      that looks again every few seconds. External sources
-//                      (an entry with a `source`: a view-only daemon watching
-//                      another program) are listed but never /live.
+//   GET /live          redirects to the newest live run's page, or to its
+//                      series' page when it is part of one (also between the
+//                      series' runs); /live/CP to the newest live run of
+//                      checkpoint CP. With none, a page that looks again
+//                      every few seconds. External sources (an entry with a
+//                      `source`: a view-only daemon watching another program)
+//                      are listed but never /live.
+//   GET /series.json   the running checkpoint series' records (watch_series.h)
+//   GET /series/ID/    a series' page: the live page (watch/watch.html, which
+//                      polls the record) with the token of the run going
+//   GET /series/ID/series.json
+//                      the series' record, running or ended
+//   /series/ID/...     anything else goes to the series' run going, as under
+//                      /runs/NAME/ (events, stream, frame, summary.json,
+//                      POST /stop): the page stays and its data follows the
+//                      series from daemon to daemon. Between runs, 503.
 //
 // Passing a run through streams it: what the run sends goes to the browser as
 // it comes (no buffering of the event stream or the MJPEG stream), and a
@@ -54,6 +68,7 @@
 #include "http.h"
 #include "net.h"
 #include "watch_registry.h"
+#include "watch_series.h"
 
 namespace gamepilot {
 
@@ -70,8 +85,17 @@ struct HubOptions {
 std::string hub_run_name(const RegistryEntry& entry);
 
 // The entries as /runs.json gives them: the run folder's name only, so its
-// path stays on this machine.
-std::string hub_runs_json(const std::vector<RegistryEntry>& entries);
+// path stays on this machine, and the id of the series it is part of (empty
+// for none).
+std::string hub_runs_json(const std::vector<RegistryEntry>& entries,
+                          const std::vector<SeriesRecord>& series = {});
+
+// Where /live goes: the newest live run of ours (of `checkpoint` when it is
+// not empty), or the series it is part of; with no checkpoint asked, a running
+// series newer than every other run even between its runs. Empty for none.
+std::string hub_live_path(const std::vector<RegistryEntry>& entries,
+                          const std::vector<SeriesRecord>& series,
+                          std::string_view checkpoint);
 
 // RESULTS.tsv's last `limit` rows, newest first, as /recent.json gives them:
 // one object per row keyed by the header's column names.
@@ -109,6 +133,9 @@ class WatchHub {
   bool respond_run(Connection& connection, const HttpRequest& request,
                    const std::string& name, std::string_view rest,
                    const RegistryEntry* live);
+  // A /series/ID/... request.
+  void respond_series(Connection& connection, const HttpRequest& request,
+                      std::string_view rest);
   std::string probe_timeline(const std::string& name);
   std::string results_text() const;
   void pass_through(Connection& connection, const RegistryEntry& entry,
@@ -123,9 +150,9 @@ class WatchHub {
   std::map<std::string, std::pair<std::uintmax_t, std::string>> timelines_;
 };
 
-// The page, compiled in from watch/hub.html (hub_page.cpp is generated).
+// The page, compiled in from watch/page/hub.html (hub_page.cpp is generated).
 std::string_view hub_page();
-// A finished run's page, from watch/run.html (run_page.cpp is generated).
+// A finished run's page, from watch/page/run.html (run_page.cpp is generated).
 std::string_view run_page();
 
 }  // namespace gamepilot

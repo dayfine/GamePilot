@@ -19,10 +19,13 @@ failed, skipped), the story log, the daemon's health, and a Stop button. It is s
                                                          OCaml program (Live session)
 ```
 
-- **The daemon serves the page** (`daemon/src/watch_server.*`, `server_watch.cpp`): a small HTTP
+- **The daemon serves the page** (`daemon/watch/server/watch_server.*`, `daemon/watch/server/server_watch.cpp`): a small HTTP
   server on its own port (`--watch-port`; the runner asks for a free one), polled by the same loop as
   the program's socket, no thread of its own. It already holds the frame, the probes and the health; the page is
-  one HTML/JS file (`daemon/watch/watch.html`) compiled in and served as is. No new dependency.
+  one HTML file (`daemon/watch/page/watch.html`) with its scripts (`watch_*.js`, by job) and style
+  (`watch.css`) beside it, plain files with no build step, compiled in and served as they are. They are classic scripts
+  loaded in order into one global scope, so a file uses at load time only what the files before it
+  define. No new dependency.
 - **The program publishes what only it knows**: the plan's states and its story lines, as two
   notifications (`watch.plan`, `watch.log`, contract v1.6) sent through the `show_plan`/`show_log`
   effects. Notifications need no answer, so they cost the program nothing but a write. The daemon
@@ -124,10 +127,10 @@ wants one place to find them.
   (one mGBA today).
 - **The registry.** While its page is up, each daemon keeps one file in `$GAMEPILOT_RUNS/.watch/`,
   `<pid>.json`: pid, the page's port and address, backend, run folder, checkpoint, start time
-  (`daemon/src/watch_registry.*`). It removes it on exit; a daemon that died leaves a stale file,
+  (`daemon/watch/server/watch_registry.*`). It removes it on exit; a daemon that died leaves a stale file,
   which every reader skips because its pid is gone.
 - **The hub.** `gamepilot_daemon --hub` serves one page on the fixed port 47901
-  (`daemon/src/watch_hub.*`, `watch/hub.html`, the same HTTP pieces, no new dependency): the live
+  (`daemon/watch/server/watch_hub.*`, `daemon/watch/page/hub.html`, the same HTTP pieces, no new dependency): the live
   runs from the registry (`/runs.json`), each with its checkpoint, mode and trial from that run's
   `/summary.json` (its latest `watch.run` and `watch.plan`), elapsed time and what it is doing,
   and the latest finished runs from `RESULTS.tsv` beside the registry (`/recent.json`). The runner
@@ -185,6 +188,43 @@ wants one place to find them.
   another machine has none and shows "read-only" instead of Stop, unless its URL carries
   `?token=T`. With `--listen` beyond localhost the runner prints that URL, with the machine's LAN
   address, for the user's other device.
+
+## One page per series
+
+A checkpoint series (`gamepilot run --from --to`) runs each checkpoint, each attempt even, in a
+daemon of its own, so no daemon knows the series. Without more, the hub listed each run as an
+entry of its own, a run's page showed only its own checkpoint (a PLZA run sends a chain of one),
+and a page that followed the series' port to the next daemon kept the last checkpoint's probes.
+The series is now one entry with one page:
+
+- **The runner keeps the series' record** (`Series_record`, written by `Series_watch` in
+  `src/core/live_run`): `$GAMEPILOT_RUNS/.watch/series/<id>.json`, the id
+  `<date>-<from>-<to>-<pid>`, rewritten whole at each change (aside, then renamed). It has the
+  program fields, range, mode, backend, start and end, `result` (`running`, `pass`, `fail`), `run`
+  (the run going, absent between runs) and every checkpoint in run order with its state (pending,
+  current, passed, failed, skipped), its times and its runs (run folder, run `n`, attempt,
+  result, where and why it failed). The series' daemons (`Live_run.Series_daemons`) start it and
+  tell it of each run's start and end and of the series' end, as a game's series runner gives them; nothing is written without `--watch`. The series goes on
+  only after a pass, so a run of the next checkpoint marks the one before passed.
+- **The hub routes by it** (`daemon/watch/server/watch_series.*`): `/series.json` lists the running series
+  (runner alive, not ended); `/runs.json` gives each run its `series`; `/series/ID/` is the live
+  page with the token of the run going; `/series/ID/series.json` the record, running or ended; and
+  everything else under `/series/ID/` (`events`, `stream`, `frame`, `summary.json`, `POST stop`)
+  goes to the daemon of the run going, as under `/runs/NAME/`, or answers 503 between runs. `/live`
+  goes to the newest run's series when it is part of one, and to a running series between its runs.
+- **The page stays while the daemons change.** On `/series/ID/` the Run card is the record,
+  polled every 2 s: program, range, mode, the current checkpoint (3 of 25), total time, and a chip
+  per checkpoint with its state, its time, and its runs and retries when there was more than one
+  (each run's result on hover). A finished checkpoint shows its events from the page's memory, or
+  opens its last run's record. The Plan card is the current checkpoint's, as before. The event
+  stream is opened again when the run going changes, or when the hub closed it between runs, and
+  the frame's stream with it (the daemon's `info`). The hub and the sidebar list the series as one
+  row; a run's own page, when its run ends, goes on to its series' page.
+- **No stale probes.** The page kept its probe list until a `probes` event replaced it, and a new
+  daemon sends none until its program's first probed frame, so after a switch to the next
+  checkpoint's daemon (a page on the run's port) the last checkpoint's probes stayed. Each `info`
+  (a new daemon, or the same one after a lost connection, which sends its probes and plan right
+  after) now clears the probes and the plan.
 
 ## The hub serves the page
 
@@ -245,7 +285,7 @@ duration; a "frames" tag on a recorded run.
 
 ## Past runs
 
-`/runs/NAME/` for a run that is not live is its record (`watch/run.html`, from the hub's build):
+`/runs/NAME/` for a run that is not live is its record (`daemon/watch/page/run.html`, from the hub's build):
 the result, where and why it failed, game, program, range, backend, mode, start and duration;
 `failure.png`; the plan with each event's time; the full story log; the recorded frames with a
 scrubber; and the probe values over the run. Everything is read from the run folder through the

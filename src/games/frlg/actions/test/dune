@@ -43,7 +43,8 @@
   test_ace_actions
   test_pc_box
   test_wild_rng
-  test_pokedex_entry)
+  test_pokedex_entry
+  test_skip_conditions)
  (modules
   test_pc_deposit_steps
   test_pc_withdraw_steps
@@ -73,7 +74,8 @@
   test_ace_actions
   test_pc_box
   test_wild_rng
-  test_pokedex_entry)
+  test_pokedex_entry
+  test_skip_conditions)
  (deps
   mgba.probes.jsonl
   menus.mgba.probes.jsonl

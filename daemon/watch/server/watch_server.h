@@ -3,7 +3,9 @@
 // inside the daemon's server loop (no thread of its own): the loop polls its
 // sockets with the program's and calls `serve`.
 //
-//   GET  /           the page (watch/watch.html, compiled in)
+//   GET  /           the page (watch/page/watch.html, compiled in)
+//   GET  /NAME       its scripts and styles (watch_assets.h: watch.css,
+//                    watch_frame.js, ...)
 //   GET  /stream?w=W the live frame as MJPEG, up to W pixels wide
 //                    (frame_stream.h); view-only, like the page
 //   GET  /frame      the current frame, PNG or JPEG (hooks.frame): the page's
@@ -141,7 +143,8 @@ class WatchServer {
   FrameStream stream_;
 };
 
-// The page, compiled in from watch/watch.html (watch_page.cpp is generated).
+// The page, compiled in from watch/page/watch.html (watch_page.cpp is
+// generated).
 std::string_view watch_page();
 
 }  // namespace gamepilot

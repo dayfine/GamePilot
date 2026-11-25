@@ -1,0 +1,9 @@
+(library
+ (name engine_watch)
+ (public_name gamepilot.engine_watch)
+ (libraries
+  gamepilot.wire
+  gamepilot.watch_report
+  gamepilot.engine_rules
+  gamepilot.engine_plan
+  gamepilot.engine_run))
