@@ -27,13 +27,6 @@ let input_text : Wire.command -> string = function
 
 (* --- Walk_inputs --- *)
 
-let position degrees () =
-  match Walk_inputs.stick_toward ~degrees with
-  | Ok s ->
-      let x, y = (s : Wire.stick :> float * float) in
-      Printf.sprintf "(%s, %s)" (tilt x) (tilt y)
-  | Error e -> e
-
 let stick ?(walk_only = false) pace duration_ms () =
   match
     Walk_inputs.tilt ~walk_only pace ~degrees:0.0 ~duration_ms ~release_ms:0
@@ -43,11 +36,6 @@ let stick ?(walk_only = false) pace duration_ms () =
 
 let stick_cases =
   [
-    case "0 degrees: straight on, up" (position 0.0) "(0.00, 1.00)";
-    case "90 degrees: right" (position 90.0) "(1.00, 0.00)";
-    case "-90 degrees: left" (position (-90.0)) "(-1.00, 0.00)";
-    case "180 degrees: back, down" (position 180.0) "(0.00, -1.00)";
-    case "-66 degrees: (sin, cos)" (position (-66.0)) "(-0.91, 0.41)";
     case "a walk holds the stick for its time" (stick Walk 1000)
       "stick (0.00, 1.00) 1000/0";
     case "a run holds B with it, for its time over 1.65 (truncated)"

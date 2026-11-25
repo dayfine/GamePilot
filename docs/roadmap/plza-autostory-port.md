@@ -42,7 +42,7 @@ shapes the pieces both later games use.
 - **Daemon (Engine-Boundary PR 8, claimed by this port).** 8a: `--viewport native`, the whole frame at
   1920x1080 game pixels, so the C++ boxes and 1080p templates carry over. 8b: optional `left_stick` and
   `right_stick` on `press`, [x, y] in -1..1; running is B with the stick, as `PlzaConsoleBackend::stick`.
-  Angles and the run speed-up stay in `games/pokemon/plza`.
+  Angles become tilts in `Switch_home.Stick_tilt`; the run speed-up stays in `games/pokemon/plza`.
 - **Reload.** As `reload_latest_save` in the C++: close the game and launch PLZA's tile from HOME
   (`switch_home` learns it from `NintendoSwitch_GameEntry`), then game menu to in game. `Home_screen`
   keeps the fork's whole-frame boxes and converts them by the daemon's viewport. The game autosaves on
