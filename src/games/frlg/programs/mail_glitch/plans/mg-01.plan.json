@@ -4,13 +4,7 @@
   "checkpoint": {
     "id": "mg-01",
     "title": "Celadon setup: Fly to Celadon, Coin Case, Retro Mail on Dept Store 4F, buy 200 coins, redeem Abra",
-    "start": {
-      "map": "CeladonCity",
-      "tiles": [
-        [48, 12]
-      ],
-      "facing": "south"
-    },
+    "start": {"map": "CeladonCity", "tiles": [[48, 12]], "facing": "south"},
     "events": [
       {
         "id": "fly_celadon",
@@ -20,13 +14,7 @@
           "town": "CeladonCity",
           "species": "pidgey"
         },
-        "declared_after": {
-          "map": "CeladonCity",
-          "tiles": [
-            [48, 12]
-          ],
-          "facing": "south"
-        },
+        "declared_after": {"map": "CeladonCity", "tiles": [[48, 12]], "facing": "south"},
         "why": "Fly from any outdoor Fly-capable save directly to Celadon City's Pokemon Center landing tile (48, 12)"
       },
       {
@@ -34,13 +22,7 @@
         "kind": "route",
         "action": "run",
         "args": {
-          "target": {
-            "map": "CeladonCity_Restaurant",
-            "tiles": [
-              [2, 2]
-            ],
-            "facing": "west"
-          }
+          "target": {"map": "CeladonCity_Restaurant", "tiles": [[2, 2]], "facing": "west"}
         },
         "why": "enter Celadon Restaurant (37, 29) and walk to face CoinCaseMan at (1, 2)"
       },
@@ -52,13 +34,7 @@
       {
         "id": "clear_coin_case_text",
         "kind": "scene",
-        "declared_after": {
-          "map": "CeladonCity_Restaurant",
-          "tiles": [
-            [2, 2]
-          ],
-          "facing": "west"
-        },
+        "declared_after": {"map": "CeladonCity_Restaurant", "tiles": [[2, 2]], "facing": "west"},
         "why": "clear the Coin Case dialog back to overworld"
       },
       {
@@ -66,13 +42,7 @@
         "kind": "route",
         "action": "run",
         "args": {
-          "target": {
-            "map": "CeladonCity_DepartmentStore_1F",
-            "tiles": [
-              [6, 2]
-            ],
-            "facing": "north"
-          }
+          "target": {"map": "CeladonCity_DepartmentStore_1F", "tiles": [[6, 2]], "facing": "north"}
         },
         "why": "exit Restaurant, enter Celadon Dept Store 1F, and stand below the elevator door (6, 1)"
       },
@@ -84,13 +54,7 @@
           "from": "1F",
           "to": "4F"
         },
-        "declared_after": {
-          "map": "CeladonCity_DepartmentStore_4F",
-          "tiles": [
-            [6, 2]
-          ],
-          "facing": "south"
-        },
+        "declared_after": {"map": "CeladonCity_DepartmentStore_4F", "tiles": [[6, 2]], "facing": "south"},
         "why": "ride the Dept Store elevator from 1F to 4F (Wise Man Gifts)"
       },
       {
@@ -98,13 +62,7 @@
         "kind": "route",
         "action": "run",
         "args": {
-          "target": {
-            "map": "CeladonCity_DepartmentStore_4F",
-            "tiles": [
-              [3, 11]
-            ],
-            "facing": "south"
-          }
+          "target": {"map": "CeladonCity_DepartmentStore_4F", "tiles": [[3, 11]], "facing": "south"}
         },
         "why": "walk to face the 4F clerk (3, 13) across counter row 12"
       },
@@ -115,10 +73,7 @@
         "args": {
           "map": "CeladonCity_DepartmentStore_4F",
           "items": [
-            {
-              "item": "retro-mail",
-              "quantity": 2
-            }
+            {"item": "retro-mail", "quantity": 2}
           ]
         },
         "why": "buy 2 Retro Mail ($50 each) for MIMIEN and backup"
@@ -128,13 +83,7 @@
         "kind": "route",
         "action": "run",
         "args": {
-          "target": {
-            "map": "CeladonCity_DepartmentStore_4F",
-            "tiles": [
-              [6, 2]
-            ],
-            "facing": "north"
-          }
+          "target": {"map": "CeladonCity_DepartmentStore_4F", "tiles": [[6, 2]], "facing": "north"}
         },
         "why": "return to below 4F elevator door (6, 1)"
       },
@@ -146,13 +95,7 @@
           "from": "4F",
           "to": "1F"
         },
-        "declared_after": {
-          "map": "CeladonCity_DepartmentStore_1F",
-          "tiles": [
-            [6, 2]
-          ],
-          "facing": "south"
-        },
+        "declared_after": {"map": "CeladonCity_DepartmentStore_1F", "tiles": [[6, 2]], "facing": "south"},
         "why": "ride the elevator back down to 1F"
       },
       {
@@ -160,13 +103,7 @@
         "kind": "route",
         "action": "run",
         "args": {
-          "target": {
-            "map": "CeladonCity_GameCorner",
-            "tiles": [
-              [6, 4]
-            ],
-            "facing": "north"
-          }
+          "target": {"map": "CeladonCity_GameCorner", "tiles": [[6, 4]], "facing": "north"}
         },
         "why": "exit Dept Store, enter Game Corner (34, 21), and stand across counter from CoinsClerk (6, 2)"
       },
@@ -184,13 +121,7 @@
         "kind": "route",
         "action": "run",
         "args": {
-          "target": {
-            "map": "CeladonCity_GameCorner_PrizeRoom",
-            "tiles": [
-              [4, 4]
-            ],
-            "facing": "north"
-          }
+          "target": {"map": "CeladonCity_GameCorner_PrizeRoom", "tiles": [[4, 4]], "facing": "north"}
         },
         "why": "exit Game Corner, enter Prize Room (39, 20), and stand facing PrizeClerkMons (4, 2)"
       },
@@ -208,13 +139,7 @@
         "kind": "route",
         "action": "run",
         "args": {
-          "target": {
-            "map": "CeladonCity",
-            "tiles": [
-              [39, 21]
-            ],
-            "facing": "south"
-          }
+          "target": {"map": "CeladonCity", "tiles": [[39, 21]], "facing": "south"}
         },
         "why": "exit Prize Room onto Celadon City (39, 21) and save"
       }
@@ -228,12 +153,8 @@
     "phase": "testing",
     "postconditions": {
       "party_includes": ["blastoise", "pidgey", "abra"],
-      "coins": {
-        "gained": 20
-      },
-      "money": {
-        "spent": 4100
-      }
+      "coins": {"gained": 20},
+      "money": {"spent": 4100}
     }
   }
 }
