@@ -106,23 +106,19 @@ let run_builtin t (event : Pokemon_checkpoints.Plan.event) =
       if Result.is_ok outcome then adopt_declared t event;
       outcome)
 
+let lands t at outcome =
+  if Result.is_ok outcome then t.at <- Some at;
+  outcome
+
 let fly t (_ : Pokemon_checkpoints.Plan.event) args =
   match Fly_args.decode (party t) args with
   | Error e -> Error (Failure.cause ~repeats:true "bad_args" e)
-  | Ok plan ->
-      let outcome = Fly.fly ~log:t.config.log plan in
-      if Result.is_ok outcome then t.at <- Some plan.town.landing;
-      outcome
+  | Ok plan -> Fly.fly ~log:t.config.log plan |> lands t plan.town.landing
 
-(* The ride leaves the player below the floor's lift door, as Fly does on the
-   town's landing tile. *)
 let lift t (_ : Pokemon_checkpoints.Plan.event) args =
   Result.bind (Lift_ride.ride_of_args args) (fun ride ->
-      let outcome =
-        Menu_input.run (fun () -> Lift_ride.ride ~log:t.config.log ride)
-      in
-      if Result.is_ok outcome then t.at <- Some (Lift_ride.arrival ride);
-      outcome)
+      Menu_input.run (fun () -> Lift_ride.ride ~log:t.config.log ride)
+      |> lands t (Lift_ride.arrival ride))
 
 (* Between loop rounds: to the configured Center's nurse, then the nurse. *)
 let heal t () =
@@ -273,6 +269,10 @@ let cutting t (name, (handler : Pokemon_checkpoints.Game.game_action)) =
   in
   if name = "cut_tree" then (name, cut) else (name, handler)
 
+let ferry t (_ : Pokemon_checkpoints.Plan.event) args =
+  Seagallop.run ~log:t.config.log ~from:(map_now t) args
+  |> Result.map (fun at -> t.at <- Some at)
+
 let game t : Pokemon_checkpoints.Game.t =
   {
     run_own =
@@ -284,6 +284,7 @@ let game t : Pokemon_checkpoints.Game.t =
       List.map
         (fun a -> Party_reading.guard t.reading (adopting t a))
         (("fly", fly t)
+        :: ("ferry", ferry t)
         :: ("grind", grind t)
         :: ("capture", capture t)
         :: ("lift_floor", lift t)
