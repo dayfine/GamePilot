@@ -27,7 +27,7 @@
         "why": "back to Lavender Town for 07-glitch-prep"
       },
       {
-        "id": "to_mg05_start",
+        "id": "to_glitch_prep_start",
         "kind": "route",
         "action": "run",
         "args": {

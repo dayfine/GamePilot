@@ -105,7 +105,7 @@ by battle count, the sim's rate), and the foe's species.
 | Daemon Switch backend: capture card frames and serial controller (one boundary each, R11) | latency spike: frame to command p99 under one frame (stop rule) |
 | 01-celadon-setup..08-activate-and-verify on the post-game save, in Switch windows (only one program drives the console at a time) | 10 runs per checkpoint, pass rate at least the C++ twin's (R9) |
 
-mg-05 runs on the Switch too, after mGBA (user, 2026-11-23; it was mGBA only before).
+08-activate-and-verify (was mg-05) runs on the Switch too, after mGBA (user, 2026-11-23; it was mGBA only before).
 
 ## Standing gates
 

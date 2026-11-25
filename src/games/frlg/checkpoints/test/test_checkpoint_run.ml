@@ -229,7 +229,7 @@ let () =
          none";
       case "06-grind-return's walks plan on the maps"
         (walks "06-grind-return.plan.json")
-        "out_to_indigo_plateau 2; to_mg05_start 4";
+        "out_to_indigo_plateau 2; to_glitch_prep_start 4";
       case "06-grind-return uncapped: every postcondition checked"
         (capped None "06-grind-return.plan.json")
         "knows checked: 2, levels checked: 1; skipped: none";
