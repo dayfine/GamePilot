@@ -36,7 +36,8 @@
   test_console_actions
   test_warp_settle
   test_trainer_card_read
-  test_trainer_battles)
+  test_trainer_battles
+  test_scene_battle)
  (modules
   test_pc_deposit_steps
   test_fly_towns
@@ -59,7 +60,8 @@
   test_console_actions
   test_warp_settle
   test_trainer_card_read
-  test_trainer_battles)
+  test_trainer_battles
+  test_scene_battle)
  (deps
   mgba.probes.jsonl
   menus.mgba.probes.jsonl
