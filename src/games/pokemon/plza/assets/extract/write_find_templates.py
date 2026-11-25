@@ -38,6 +38,55 @@ MATCHERS = {
     "choice_arrow": (
         "PokemonLZA/SelectionArrowRight.png",
         0xFF80C000, 0xFFFFFF7F, 100),
+    # PokemonLZA_ButtonDetector.cpp's ButtonMatcher::A.
+    "button_a": (
+        "PokemonLZA/Buttons/ButtonA.png",
+        0xFF808008, 0xFFFFFFFF, 100),
+    # ButtonMatcher::Minus, for PokemonLZA_RunFromBattleDetector.cpp's Run
+    # prompt.
+    "button_minus": (
+        "PokemonLZA/Buttons/ButtonMinus.png",
+        0xFF808008, 0xFFFFFFFF, 100),
+    # ButtonMatcher::B and ButtonMatcher::Right, for
+    # PokemonLZA_MainMenuDetector.cpp's main menu.
+    "button_b": (
+        "PokemonLZA/Buttons/ButtonB.png",
+        0xFF808008, 0xFFFFFFFF, 100),
+    "button_right": (
+        "PokemonLZA/Buttons/ButtonRight.png",
+        0xFF808008, 0xFFFFFFFF, 100),
+    # PokemonLZA_AlertEyeDetector.cpp's AlertEyeMatcher.
+    "alert_eye": (
+        "PokemonLZA/AlertEye-Template.png",
+        0xFFC86464, 0xFFFFFFFF, 100),
+    # ButtonMatcher::DpadUp and DpadDown, and their black interiors (the
+    # Interior matchers: the dark range, least area 50), for
+    # PokemonLZA_OverworldPartySelectionDetector.cpp's party bar marker.
+    "button_dpad_up": (
+        "PokemonLZA/Buttons/ButtonDpadUp.png",
+        0xFF808008, 0xFFFFFFFF, 100),
+    "button_dpad_down": (
+        "PokemonLZA/Buttons/ButtonDpadDown.png",
+        0xFF808008, 0xFFFFFFFF, 100),
+    "button_dpad_up_interior": (
+        "PokemonLZA/Buttons/ButtonDpadUp.png",
+        0xFF000000, 0xFF404040, 50),
+    "button_dpad_down_interior": (
+        "PokemonLZA/Buttons/ButtonDpadDown.png",
+        0xFF000000, 0xFF404040, 50),
+    # PokemonLZA_MoveEffectivenessSymbol.cpp's MoveEffectivenessSymbolMatcher.
+    "move_no_effect": (
+        "PokemonLZA/MoveEffectiveness/MoveEffectiveness-NoEffect.png",
+        0xFFE0E0E0, 0xFFFFFFFF, 100),
+    "move_not_very_effective": (
+        "PokemonLZA/MoveEffectiveness/MoveEffectiveness-NotVeryEffective.png",
+        0xFFE0E0E0, 0xFFFFFFFF, 100),
+    "move_effective": (
+        "PokemonLZA/MoveEffectiveness/MoveEffectiveness-Normal.png",
+        0xFFE0E0E0, 0xFFFFFFFF, 100),
+    "move_super_effective": (
+        "PokemonLZA/MoveEffectiveness/MoveEffectiveness-SuperEffective.png",
+        0xFFE0E0E0, 0xFFFFFFFF, 100),
 }
 
 SHAPE_WIDTH = 2560
