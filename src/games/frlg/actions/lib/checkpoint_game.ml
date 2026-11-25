@@ -137,7 +137,8 @@ let find_battle t ~pace ~patch () =
     (Paced_battle.reckoned t.at)
 
 let battle_game_steps () =
-  Frlg_battle.Battle_steps.make ~read_offered_move:Summary_moves.read_offered ()
+  Frlg_battle.Battle_steps.make ~read_offered_move:Summary_moves.read_offered
+    ~is_switch_offer:Switch_offer.read ()
 
 let battle_on t wrap script =
   Effects.with_probes Frlg_battle.Battle_look.probes (fun () ->
