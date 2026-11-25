@@ -2,7 +2,7 @@
 
 Goal: from a post-game save, play the Sevii Islands story on mGBA until Cerulean Cave is open, and
 prove it by walking into `CeruleanCave_1F` (a screenshot at its mat). The program is
-`frlg.sevii_story` (`docs/programs/frlg-sevii-story.md`); 01 to 06 exist, 06 ending on
+`frlg.sevii_story` (`docs/guide/frlg.sevii_story.md`); 01 to 06 exist, 06 ending on
 Cinnabar Island's shore (21, 7) after Bill's goodbye.
 
 Everything below is read from pret/pokefirered at the pinned commit `ce6406d8`

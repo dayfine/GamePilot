@@ -1,12 +1,12 @@
 (** The ["use_rare_candy"] game action: one Rare Candy from the bag on a party
     member, then whatever its level brings ({!Level_up}, on the party menu's
-    game steps), back to the overworld. Ported from upstream's
-    [use_rare_candy()] (Programs/RngManipulation/PokemonFRLG_RngNavigation.cpp):
-    the bag, A on the candy until the party shows, the slot, A until the
-    level-up stats show, then until the bag is back, answering each move-learn
-    prompt (B, A: NO, then YES to stop) and each evolution (B) on the way. The
-    game's steps come as {!game_steps}, so the decisions run on a fake in tests;
-    {!Rare_candy_steps} is the game's.
+    game steps), back to the overworld. Ported from upstream's Rare Candy use
+    (Programs/RngManipulation/PokemonFRLG_RngNavigation.cpp): the bag, A on the
+    candy until the party shows, the slot, A until the level-up stats show, then
+    until the bag is back, answering each move-learn prompt (B, A: NO, then YES
+    to stop) and each evolution (B) on the way. The game's steps come as
+    {!game_steps}, so the decisions run on a fake in tests; {!Rare_candy_steps}
+    is the game's.
 
     What one candy shows, in order (pokefirered party_menu.c,
     [ItemUseCB_RareCandy] on; evolution_scene.c; item_use.c

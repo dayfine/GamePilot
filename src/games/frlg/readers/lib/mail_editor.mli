@@ -1,11 +1,11 @@
 (** Reader: the Yes/No box the Easy Chat mail editor shows after START ("The
     MAIL message is as shown. Okay?"), and which answer its arrow is on. Ported
-    from the fork's Programs/Farming/PokemonFRLG_ItemDuplication.cpp, whose
-    [mail_confirmation_arrow] (a SelectionArrowWatcher) looks for the arrow in
-    the box (0.729, 0.460, 0.029, 0.076) of the game picture: that is YES here.
-    The box sits right of the white text box's Yes/No ({!Dialog.yes_no_cursor},
-    the fork's SelectionArrowPositionConfirmationMenu), so that reader misses
-    it.
+    from the fork's Programs/Farming/PokemonFRLG_ItemDuplication.cpp, which
+    watches for the selection arrow
+    (Inference/PokemonFRLG_SelectionArrowDetector.cpp) in the box (0.729, 0.460,
+    0.029, 0.076) of the game picture: that is YES here. The box sits right of
+    the white text box's Yes/No ({!Dialog.yes_no_cursor}, at the confirmation
+    menu's arrow places in that detector file), so that reader misses it.
 
     Where it differs: the fork matches the arrow's template; here
     {!Cursor_column} counts the arrow's dark pixels in that box and in a NO box

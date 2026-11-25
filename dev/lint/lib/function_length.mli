@@ -2,3 +2,4 @@
     the last line of the body). *)
 
 val check : Config.t -> Parsed_source.t -> Finding.t list
+(** One finding per function over the limit, at its [let] line. *)

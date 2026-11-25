@@ -186,3 +186,19 @@ screen, back out of any menu, and rerun. Never answer YES to "There is already a
   (run 05-grind-mr-mime again from its last save).
 - MIMIEN must stay in the party after the battle in 08-activate-and-verify. Depositing or trading
   it resets its mail, and duplication no longer works.
+
+## How it works
+
+The checkpoints are the plans in `src/games/frlg/programs/mail_glitch/plans/`, run in order by the
+checkpoint runner. The port's history and the grinding options are in `docs/roadmap.md` (Phase 4).
+
+**The grind's rounds.** 05-grind-mr-mime repeats (its plan's `metadata.repeat`). Each round starts
+and ends at the Indigo Plateau nurse and is saved there like any checkpoint, so a failure reloads
+the last round's save and only that round runs again. The rounds end once MIMIEN is at least Lv 33
+and knows Recycle, read after each round, at most 20 rounds.
+
+**For a test.** `--max-rounds N` caps the rounds and `--grind-battles N` each round's battles.
+
+**What the save needs.** Free party slots, field moves, money and items come from the plans, not
+from the registry: `gamepilot programs` prints the program's needs, and
+`gamepilot run frlg.mail_glitch --preflight --from ID` checks a save against them.

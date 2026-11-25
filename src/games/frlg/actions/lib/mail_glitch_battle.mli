@@ -1,12 +1,11 @@
 (** The ["mail_glitch_double_battle"] game action: Lea & Jed's double battle on
     Route 16 that turns the Mail Glitch on (mg-05). Ported from the fork's
-    [run_mail_glitch_double_battle_step()], [let_berry_holder_eat()],
-    [execute_double_battle_setup_turns()], [restored_single_digit_pp()] and
-    [sweep_double_battle()]
-    (Programs/MailGlitch/PokemonFRLG_MailGlitchBattle.cpp, the version that
-    passed on mGBA, 2026-11-23). The party is CH'DING (Knock Off) in slot 1, the
-    sweeper (Blastoise, holding a Leppa Berry, its depleted move at 0 PP) in
-    slot 2 and MIMIEN (Recycle, holding Retro Mail) in slot 3.
+    Programs/MailGlitch/PokemonFRLG_MailGlitchBattle.cpp (the version that
+    passed on mGBA, 2026-11-23): the step, the Berry holder eating its Berry,
+    the two setup turns, the check that the PP came back, and the sweep. The
+    party is CH'DING (Knock Off) in slot 1, the sweeper (Blastoise, holding a
+    Leppa Berry, its depleted move at 0 PP) in slot 2 and MIMIEN (Recycle,
+    holding Retro Mail) in slot 3.
 
     One step into Lea's sightline starts the battle. Then, one command per
     action menu, as the fork:
@@ -85,9 +84,10 @@ val pp_restored : slot:int -> unit -> bool
     not red, then B back to the action menu. *)
 
 val step_into_sight : log:(string -> unit) -> Grid_geometry.Direction.t -> unit
-(** One step tap ([STEP_TAP], 66 ms, then 700 ms; the fork's
-    Overworld/PokemonFRLG_MovementStepPresses.h), the trainers' text pressed
-    through until their battle shows. Fails as [double_battle_not_started]. *)
+(** One step tap (66 ms, then 700 ms, as the fork's
+    Overworld/PokemonFRLG_MovementStepPresses.h taps a step), the trainers' text
+    pressed through until their battle shows. Fails as
+    [double_battle_not_started]. *)
 
 type game_steps = {
   species_at : int -> string option;  (** the reckoned party, slots from 1 *)

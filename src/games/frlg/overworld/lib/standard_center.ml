@@ -28,7 +28,7 @@ let centers =
 
 let is_standard name = List.mem name centers
 
-(* The fork's CENTER_ROOM_JSON (Overworld/PokemonFRLG_CodedRooms.cpp) in the
+(* The fork's Center room (Overworld/PokemonFRLG_CodedRooms.cpp) in the
    runtime map format: LAYOUT_POKEMON_CENTER_1F's collision and elevation from
    pokefirered data/layouts/PokemonCenter_1F/map.bin at ce6406d8, the nurse
    and the PC's stand; %s are the name, the points, the warps and the other
@@ -127,8 +127,8 @@ let room ~center ~outside =
          (String.concat "" (List.map (mat_warp outside) (mat_order center)))
          (town_of center) center (people center))
 
-(* The fork's add_pokemon_center_room(): the town gets a point
-   "<Center>_door" on its door, for the mat's warps to land on. *)
+(* As the fork adds the room (Overworld/PokemonFRLG_CodedRooms.cpp): the town
+   gets a point "<Center>_door" on its door, for the mat's warps to land on. *)
 let with_door_point (town : Map_data.t) (door : Tile_pos.t) center =
   let name = center ^ "_door" in
   ({ town with points = Map_data.String_map.add name door town.points }, name)

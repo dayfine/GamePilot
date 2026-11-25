@@ -10,3 +10,4 @@
     branch is a function of its own. *)
 
 val check : Config.t -> Parsed_source.t -> Finding.t list
+(** The per-function and per-file depth findings and each nested else. *)

@@ -82,6 +82,10 @@ sh run/run_checkpoints_on_mgba.sh frlg.dex_collection --from 01-ultra-balls --to
 
 ## How it works
 
+The first slice of the collector in `docs/roadmap/frlg-dex-exclusives.md` (issue #15, step 5),
+every catch shiny (issue #14), toward the 60 caught the National Pokedex needs (Sevii checkpoint 07,
+`docs/roadmap/frlg-sevii-islands.md`).
+
 Each catch is the `wild_rng` action ([Wild RNG](frlg.wild_rng.md)) on the seed table
 `src/games/frlg/assets/rng_seeds_mgba_sevii_save.json`, measured on mGBA from the Sevii story's
 end save, plus the plan's `seed_shift`. On mGBA the seed a title-screen press gives depends a
@@ -99,4 +103,12 @@ exactly once a frame (Route 11's walkers draw on it too). So a plan also holds t
 the lab: -1 for Voltorb, -3 for Drowzee, +1 for Ekans.
 
 The plain catches of the first version of this program (catch whatever the Pokedex lacks, run
-from the rest) are gone: every catch toward the 60 is to be shiny (issue #14).
+from the rest) are gone: every catch toward the 60 is to be shiny.
+
+**Next.**
+
+- More grass routes, one checkpoint each from a Center with its map in PokemonSimulation: Route 22
+  (Mankey), Routes 24 and 25 (Weedle, Caterpie), Route 8 (Meowth, Growlithe; behind a Cut tree),
+  Routes 12 to 15 (Venonat, Ditto). Each needs its `seed_shift` and `ingame_offset` measured.
+- A seed calibration from a miss, as the fork calibrates, so a plan needs no measured offsets.
+- A `caught` precondition (the Trainer Card's count), so Sevii 07 can require 60.
