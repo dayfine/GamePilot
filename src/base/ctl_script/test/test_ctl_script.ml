@@ -34,10 +34,11 @@ let () =
       line "dpad with a count" "dpad UP 3" "press Up hold 100 wait 500 x3";
       line "dpad with a count and flags" "dpad left 2 --wait 300"
         "press Left hold 100 wait 300 x2";
-      line "buttons in any case, PLUS is Start" "press plus"
-        "press Start hold 100 wait 500 x1";
-      line "MINUS is Select" "press MINUS 80 200"
-        "press Select hold 80 wait 200 x1";
+      line "buttons in any case: the Switch's Plus" "press plus"
+        "press Plus hold 100 wait 500 x1";
+      line "the Switch's Minus" "press MINUS 80 200"
+        "press Minus hold 80 wait 200 x1";
+      line "GBA Start" "press start" "press Start hold 100 wait 500 x1";
       line "wait" "wait 1500" "wait 1500";
       line "shot adds .png" "shot title" "shot title.png";
       line "shot keeps a given extension" "shot /tmp/x.png" "shot /tmp/x.png";
@@ -51,7 +52,8 @@ let () =
         "press Home hold 100 wait 1500 x1";
       line "the Switch's X" "press x" "press X hold 100 wait 500 x1";
       line "the Switch's ZL" "press zl 2000 0" "press ZL hold 2000 wait 0 x1";
-      line "unknown button" "press ZR" "error: unknown button \"ZR\"";
+      line "the Switch's ZR" "press zr 1500 0" "press ZR hold 1500 wait 0 x1";
+      line "unknown button" "press ZX" "error: unknown button \"ZX\"";
       line "dpad needs a direction" "dpad A" "error: \"A\" is not a direction";
       line "dpad count of 0" "dpad UP 0" "error: dpad: N must be at least 1";
       line "not a number" "press A soon"

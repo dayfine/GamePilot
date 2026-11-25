@@ -37,7 +37,7 @@ ProButtons neutral_pro_buttons();
 // The Pro Controller report for GBA keys as the Switch's GBA app reads them:
 // A, B, L, R as themselves, Start as Plus, Select as Minus, the arrows as the
 // D-pad (populate_report_buttons() and execute_state()'s split D-pad); the
-// Switch-only keys (kSwitchOnlyKeys) as Home, X, Y, ZL and ZR.
+// Switch-only keys (kSwitchOnlyKeys) as Home, X, Y, ZL, ZR, Plus and Minus.
 // Opposite arrows cancel: the C++'s D-pad is one position, which cannot hold
 // both.
 ProButtons pro_buttons_for_keys(KeyMask keys);

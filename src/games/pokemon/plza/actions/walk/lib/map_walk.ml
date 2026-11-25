@@ -16,7 +16,7 @@ let wait (steps : Walk.game_steps) ms = steps.submit (Inputs.wait ms)
 let pin_text = function Some p -> Wild_zone_one.point_text p | None -> "none"
 
 let read_pin (steps : Walk.game_steps) =
-  press steps Start ~release_ms:map_open_ms;
+  press steps Plus ~release_ms:map_open_ms;
   (* As the C++ loop: 250 ms after every miss, the last one too. *)
   let rec look n =
     match (steps.read_screen ()).map_pin with

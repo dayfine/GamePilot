@@ -22,7 +22,7 @@ let last_press b (c : C.t) =
     c.inputs
 
 let map_open c =
-  match (last_press Wire.Start c, last_press Wire.B c) with
+  match (last_press Wire.Plus c, last_press Wire.B c) with
   | Some s, Some b -> s > b
   | Some _, None -> true
   | None, _ -> false
@@ -48,7 +48,7 @@ type zone = {
   locks : bool;
 }
 
-let opens c = count Wire.Start c
+let opens c = count Wire.Plus c
 let at_spot z c = opens c >= List.length z.route.pins && not (map_open c)
 
 let zl_since_map c =

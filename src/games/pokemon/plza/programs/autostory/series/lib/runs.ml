@@ -27,10 +27,11 @@ type setup = {
   watch : Live_run.Daemon_process.watch option;
 }
 
-let plan_suffix = ".plan.json"
-
 let load_plan ~plan_dir id =
-  match Yojson.Safe.from_file (Filename.concat plan_dir (id ^ plan_suffix)) with
+  let plan_suffix = Engine_series.Plan_folder.plan_suffix in
+  match
+    Yojson.Safe.from_file (Engine_series.Plan_folder.plan_file ~plan_dir id)
+  with
   | json -> P.Plan_decode.decode ~source:(id ^ plan_suffix) json
   | exception Sys_error e -> Error e
   | exception Yojson.Json_error e -> Error (id ^ ": " ^ e)
@@ -109,7 +110,7 @@ let with_assets ~log ~picture ~reload report plan assets =
   | exception (Effects.Disconnected _ as e) -> raise e
   | exception e ->
       (* Any other exception ends the watch run here; the run fails as
-         Daemon_run.in_session fails one. *)
+         [live] fails one. *)
       Watch_report.end_run report ~passed:false;
       failed "raised" (Printexc.to_string e)
 
@@ -131,11 +132,17 @@ let in_session ~log ~reload record plan (backend : Wire.backend) =
   (match outcome with Failed _ -> save_failure record | Passed -> ());
   outcome
 
+(* Any exception Daemon_run.in_session passes on fails the run here, so the
+   story log, the run record and the watch run still close. *)
 let live ~log ~reload record plan (daemon : Live_run.Daemon_process.t) =
-  Live_run.Daemon_run.in_session ~failed:of_runner ~dir:record.Run_record.dir
-    (fun () ->
-      Live.run_with_backend ~port:daemon.port
-        (in_session ~log ~reload record plan))
+  match
+    Live_run.Daemon_run.in_session ~failed:of_runner ~dir:record.Run_record.dir
+      (fun () ->
+        Live.run_with_backend ~port:daemon.port
+          (in_session ~log ~reload record plan))
+  with
+  | outcome -> outcome
+  | exception e -> failed "raised" (Printexc.to_string e)
 
 let print_page setup (daemon : Live_run.Daemon_process.t) =
   match (setup.watch, daemon.watch_port) with
@@ -233,19 +240,14 @@ let load_checked ~plan_dir ids =
       Ok (plans @ [ plan ]))
     (Ok []) ids
 
-let setup_of (f : Flags.t) ~backend ~viewport policy =
+let checkpoint_order = String.compare
+
+let setup_of (f : Flags.t) ~program ~from_id ~to_id ~backend ~viewport policy =
   {
     flags = f;
     backend;
     policy;
-    info =
-      {
-        kind = Checkpoints;
-        program = f.program;
-        from_id = f.from_id;
-        to_id = f.to_id;
-        backend = f.backend_name;
-      };
+    info = { kind = Checkpoints; program; from_id; to_id; backend = f.backend };
     daemon_flags =
       Live_run.Daemon_process.viewport_args backend viewport
       @ keepawake_stick @ f.daemon_flags;
@@ -254,14 +256,31 @@ let setup_of (f : Flags.t) ~backend ~viewport policy =
         f.watch;
   }
 
-let run_series ~plan_dir (f : Flags.t) ~backend ~viewport ids =
-  let* () =
-    match (backend : Live_run.Daemon_process.backend) with
-    | Mgba _ -> Error "PLZA runs on the Switch only: --backend switch"
-    | Switch _ -> Ok ()
+let switch_only : Live_run.Daemon_process.backend -> _ = function
+  | Mgba _ -> Error "PLZA runs on the Switch only: --backend switch"
+  | Switch _ -> Ok ()
+
+(* The checkpoints from --from to --to, in run order. *)
+let selected ~plan_dir (f : Flags.t) =
+  let* from_id = Checkpoints_flags.required "--from" f.from_id in
+  let* to_id = Checkpoints_flags.required "--to" f.to_id in
+  let* ids =
+    Engine_series.Plan_folder.checkpoint_ids ~compare:checkpoint_order plan_dir
   in
+  let* ids, _ = Engine_series.Plan_folder.select ids ~from_id ~to_id in
+  Ok (from_id, to_id, ids)
+
+let run_series ~program ~viewport plan_dir args =
+  let* f = Flags.parse args in
+  let* () = Flags.takes f in
+  let* from_id, to_id, ids = selected ~plan_dir f in
+  let* backend = Checkpoints_flags.daemon_backend f Checkpoint_trials.Testing in
+  let* () = switch_only backend in
+  let* viewport = viewport in
   let* policy =
     Checkpoint_trials.policy ?runs:f.runs Checkpoint_trials.Testing
   in
   let* plans = load_checked ~plan_dir ids in
-  chain (setup_of f ~backend ~viewport policy) ~chained:false plans
+  chain
+    (setup_of f ~program ~from_id ~to_id ~backend ~viewport policy)
+    ~chained:false plans

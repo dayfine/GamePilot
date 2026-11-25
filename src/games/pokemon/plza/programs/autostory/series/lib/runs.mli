@@ -18,14 +18,20 @@ val load_plan :
   plan_dir:string -> string -> (Plza_checkpoints.Plan.t, string) result
 (** The plan [<plan_dir>/<id>.plan.json], decoded. *)
 
+val checkpoint_order : string -> string -> int
+(** PLZA's checkpoints run in plain name order: 01.00b, 03.02b and 03.03b,
+    03.03c follow 01.00a, 03.02 and 03.03 (the checkpoint rows of the fork's
+    PokemonLZA_AutoStoryPlan.h). *)
+
 val run_series :
-  plan_dir:string ->
-  Flags.t ->
-  backend:Live_run.Daemon_process.backend ->
-  viewport:string option ->
+  program:(string * string) list ->
+  viewport:(string option, string) result ->
+  string ->
   string list ->
   (int, string) result
-(** The checkpoints [ids], in order, each run until the policy decides; every
+(** [run_series ~program ~viewport plan_dir args]: the checkpoints --from to
+    --to of the plan folder, in order, each run until the policy decides; every
     plan loaded and checked ({!Plza_autostory.Plan_check}) before the console
-    moves. [Ok 0] when every one passed, [Ok 1] when one stopped; the Switch
-    only. *)
+    moves. [program] is run.json's program fields, [viewport] the Switch
+    daemons' (the registry's check of --viewport). [Ok 0] when every one passed,
+    [Ok 1] when one stopped; the Switch only, testing. *)

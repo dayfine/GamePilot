@@ -8,7 +8,7 @@ let fade_end_wait_ms = 15000
 
 let skip steps =
   S.wait steps after_fade_ms;
-  S.press steps Wire.Start ~hold_ms:Platform_wait.cutscene_skip_hold_ms
+  S.press steps Wire.Plus ~hold_ms:Platform_wait.cutscene_skip_hold_ms
     ~release_ms:0;
   match
     S.wait_for steps (S.rule ~poll_ms ~timeout_ms:fade_within_ms ()) (fun l ->

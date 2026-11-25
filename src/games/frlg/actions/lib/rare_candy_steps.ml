@@ -13,7 +13,15 @@ let list_timeout_ms = 8000
 let question_ms = 8000
 let evolution_hold_ms = 12_000
 let evolution_timeout_ms = 30_000
-let in_bag m = Bag_screen.bag_open m && not (Bag_screen.item_menu m)
+
+(* The bag back, its pocket's arrows shown: the item-use animation that runs
+   before a level-up (pokefirered src/party_menu.c) fades in through a frame
+   of one dim colour, where the bag's boxes pass by their hue alone (mGBA,
+   dex collection 04, Pidgey's first candy). *)
+let in_bag m =
+  Bag_screen.bag_open m
+  && Bag_screen.pocket m <> None
+  && not (Bag_screen.item_menu m)
 
 let party_menu : Level_up_screens.context =
   {

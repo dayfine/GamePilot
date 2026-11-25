@@ -20,8 +20,6 @@ let in_session ~failed ~dir body =
           reason = f ^ ": " ^ Unix.error_message e;
           repeats = true;
         }
-  | exception e ->
-      failed { at = "raised"; reason = Printexc.to_string e; repeats = false }
 
 let finish ~runs_dir (run : Run_record.run) ~summary ending =
   print_endline ("[Run] " ^ run.record.dir ^ ": " ^ summary);

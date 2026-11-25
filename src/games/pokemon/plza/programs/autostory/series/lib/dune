@@ -10,7 +10,10 @@
   gamepilot.run_record
   gamepilot.watch_report
   gamepilot.repo_io
+  gamepilot.guide_page
   gamepilot.engine_run
+  gamepilot.engine_series
+  gamepilot.checkpoints_flags
   gamepilot.plza_readers
   gamepilot.plza_story
   gamepilot.plza_checkpoints
