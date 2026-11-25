@@ -1,0 +1,110 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "frlg",
+  "checkpoint": {
+    "id": "22-mt-moon",
+    "title": "From Route 10's nurse: fly to Route 4, Paras and Clefairy on Mt. Moon B2F, Route 4's nurse",
+    "start": {
+      "map": "Route10_PokemonCenter_1F",
+      "tiles": [
+        [
+          7,
+          4
+        ]
+      ],
+      "facing": "north"
+    },
+    "events": [
+      {
+        "id": "caught_before",
+        "kind": "game_action",
+        "action": "read_caught",
+        "args": {},
+        "why": "The Pokedex count before the catches."
+      },
+      {
+        "id": "out_of_center",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "place": "route10_center_outside"
+          }
+        },
+        "why": "Out of the Center to fly."
+      },
+      {
+        "id": "fly_route4",
+        "kind": "game_action",
+        "action": "fly",
+        "args": {
+          "town": "Route4",
+          "species": "pidgeot"
+        },
+        "why": "Route 4's Center stands at Mt. Moon's west door."
+      },
+      {
+        "id": "to_mt_moon_b2f",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "MtMoon_B2F",
+            "tiles": [
+              [
+                24,
+                16
+              ]
+            ],
+            "facing": "south"
+          }
+        },
+        "why": "Through 1F, down its north-west ladder to B1F's west strip and its ladder (22, 18) to B2F's middle corridor."
+      },
+      {
+        "id": "catch_mt_moon",
+        "kind": "game_action",
+        "action": "capture",
+        "args": {
+          "uncaught": [
+            "paras",
+            "clefairy"
+          ],
+          "catches": 2,
+          "encounters": 200,
+          "balls": 20,
+          "ball": "ultra-ball",
+          "pace": "south"
+        },
+        "why": "Mt. Moon B2F (FireRed, pret src/data/wild_encounters.json): Zubat 49%, Geodude 30%, Paras 15%, Clefairy 6%, Lv 9 to 13."
+      },
+      {
+        "fragment": "heal_at",
+        "args": {
+          "town": "route4"
+        },
+        "id": "heal_route4",
+        "why": "Back up and out to Route 4's nurse, where the next checkpoint starts."
+      },
+      {
+        "id": "caught_after",
+        "kind": "game_action",
+        "action": "read_caught",
+        "args": {},
+        "why": "The Pokedex count after the catches."
+      }
+    ]
+  },
+  "execution": {
+    "menu": "full"
+  },
+  "metadata": {
+    "phase": "testing",
+    "notes": "The party is full, so the catches go to Bill's PC.",
+    "postconditions": {
+      "caught": {
+        "gained": 2
+      }
+    }
+  }
+}

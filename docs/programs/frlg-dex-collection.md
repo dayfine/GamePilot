@@ -29,6 +29,7 @@ It runs on mGBA.
 | 19-pokemon-tower | Fly to Lavender: Gastly and Cubone on Pokemon Tower 3F; Lavender's nurse |
 | 20-route21-tangela | Fly to Pallet Town, surf to Route 21's grass: Tangela; fly to Route 10's nurse |
 | 21-seafoam | Fly to Cinnabar, surf to the Seafoam Islands: Seel and Golduck on B1F; fly to Route 10's nurse |
+| 22-mt-moon | Fly to Route 4: Paras and Clefairy on Mt. Moon B2F; Route 4's nurse |
 
 Each starts and ends at a Pokemon Center's nurse, the next one's start, so a save anywhere in Kanto
 flies to Route 10's first. A catch

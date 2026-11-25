@@ -327,6 +327,20 @@ retries 0
 postconditions:
 caught gained 2
 no repeat
+== dex_collection/plans/22-mt-moon.plan.json
+frlg 22-mt-moon from Route10_PokemonCenter_1F (7, 4) north: 4 game_action, 3 route, 1 heal
+caught_before: [read_caught] game_action {}
+out_of_center: [run] route to Route10 (13, 21) south
+fly_route4: [fly] game_action {"town":"Route4","species":"pidgeot"}
+to_mt_moon_b2f: [run] route to MtMoon_B2F (24, 16) south
+catch_mt_moon: [capture] game_action {"uncaught":["paras","clefairy"],"catches":2,"encounters":200,"balls":20,"ball":"ultra-ball","pace":"south"}
+heal_route4.walk: [run] route to Route4_PokemonCenter_1F (7, 4) north
+heal_route4: heal
+caught_after: [read_caught] game_action {}
+retries 0
+postconditions:
+caught gained 2
+no repeat
 == mail_glitch/plans/01-celadon-setup.plan.json
 frlg 01-celadon-setup from CeladonCity (48, 12) south: 6 game_action, 7 route, 1 talk, 1 scene
 fly_celadon: [fly] game_action {"town":"CeladonCity","species":"pidgey"} => CeladonCity (48, 12) south
