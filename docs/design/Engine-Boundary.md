@@ -119,6 +119,10 @@ and `Event_states.SAVED` `*_event_snapshot` and `Event_snapshot.SNAPSHOT`, `Poke
 `Action.to_string`, `TEXT.postconditions` `Postconditions.to_lines`), `Rules_text.TEXT`,
 `Pokemon_text` and `Toy_text` went, and `Make` took three arguments; every plan prints the same.
 
+What follows is one `GAME_RULES` per family, as built. How a game builds its rules from shared
+pieces (a pose, action sets, promises), so that FRLG, PLZA and Octopath 0 each take only the parts
+they use and FRLG's own actions stop being raw JSON, is `Composable-Rules.md`.
+
 | Part | Engine signature | Pokémon | Toy game | Used by | Holds |
 |---|---|---|---|---|---|
 | Rules | `Engine_rules.GAME_RULES` | `Pokemon_rules` | `Toy_rules` | everything | values and `matches`, `check`, `to_string`, `to_lines` |
