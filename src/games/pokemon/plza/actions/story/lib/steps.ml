@@ -3,15 +3,14 @@ module Failure = Engine_run.Failure
 type game_steps = {
   submit : Wire.command -> unit;
   submit_batch : Wire.command list -> unit;
-  read_screen : unit -> Story_look.t;
-  race : Wire.command -> (Story_look.t -> bool) -> Story_look.t option;
-  race_batch :
-    Wire.command list -> (Story_look.t -> bool) -> Story_look.t option;
+  read_screen : unit -> Look.t;
+  race : Wire.command -> (Look.t -> bool) -> Look.t option;
+  race_batch : Wire.command list -> (Look.t -> bool) -> Look.t option;
   race_then :
     Wire.command ->
-    (Story_look.t -> bool) ->
-    (Story_look.t -> Wire.command list) ->
-    Story_look.t option;
+    (Look.t -> bool) ->
+    (Look.t -> Wire.command list) ->
+    Look.t option;
   queue : Wire.command list -> unit;
   now : unit -> float;
   wait_until : float -> unit;
@@ -36,7 +35,7 @@ let wait steps wait_ms = steps.submit (Wire.Wait { wait_ms })
 let walk_game_steps steps : Plza_walk.Walk.game_steps =
   {
     submit = steps.submit;
-    read_screen = (fun () -> Story_look.to_walk_screen (steps.read_screen ()));
+    read_screen = (fun () -> Look.to_walk_screen (steps.read_screen ()));
     log = steps.log;
     log_detail = steps.log_detail;
   }
@@ -46,7 +45,7 @@ let game_not_running =
     Switch_home.Screen_poll.not_running
 
 type waited =
-  | Matched of { look : Story_look.t; looks : int; elapsed_ms : float }
+  | Matched of { look : Look.t; looks : int; elapsed_ms : float }
   | Timed_out
   | Home_menu
 
@@ -63,7 +62,7 @@ let rule ?(confirm_looks = 1) ?(confirm_hold_ms = 0) ~poll_ms ~timeout_ms () =
 (* The reads in a row the check has held on, and the first one's time. *)
 type run = { count : int; since : float }
 
-let confirmed rule run (look : Story_look.t) =
+let confirmed rule run (look : Look.t) =
   run.count >= rule.confirm_looks
   && look.at_ms -. run.since >= float_of_int rule.confirm_hold_ms
 

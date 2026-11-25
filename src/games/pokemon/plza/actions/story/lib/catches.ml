@@ -1,5 +1,5 @@
-module S = Story_steps
-module L = Story_look
+module S = Steps
+module L = Look
 module Failure = Engine_run.Failure
 
 let story_throw =
@@ -44,7 +44,7 @@ let after_misses steps ~sends =
 let weaken_target steps =
   let rec go ~tries ~landed ~misses ~sends =
     if tries >= max_attacks || landed >= landed_enough then landed
-    else if Story_battle.attempt_one_attack steps misses then (
+    else if Battle.attempt_one_attack steps misses then (
       misses := 0;
       go ~tries:(tries + 1) ~landed:(landed + 1) ~misses ~sends)
     else if !misses < misses_before_send then

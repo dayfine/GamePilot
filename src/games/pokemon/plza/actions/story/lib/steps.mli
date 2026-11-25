@@ -8,20 +8,19 @@ type game_steps = {
       (** Send one input and return once it is done. *)
   submit_batch : Wire.command list -> unit;
       (** Send inputs as one batch: each runs into the next with no gap. *)
-  read_screen : unit -> Story_look.t;
+  read_screen : unit -> Look.t;
       (** Read the screen once the inputs are done. *)
-  race : Wire.command -> (Story_look.t -> bool) -> Story_look.t option;
+  race : Wire.command -> (Look.t -> bool) -> Look.t option;
       (** Send one input and watch the screen while it runs: the first read on
           which the check holds (the input is then cut short, every button
           released), or [None] once the input is done. *)
-  race_batch :
-    Wire.command list -> (Story_look.t -> bool) -> Story_look.t option;
+  race_batch : Wire.command list -> (Look.t -> bool) -> Look.t option;
       (** As [race], over inputs sent as one batch (each runs into the next). *)
   race_then :
     Wire.command ->
-    (Story_look.t -> bool) ->
-    (Story_look.t -> Wire.command list) ->
-    Story_look.t option;
+    (Look.t -> bool) ->
+    (Look.t -> Wire.command list) ->
+    Look.t option;
       (** As [race], but the read that ends the input replaces it with the
           inputs the last function gives (no button released between: ZL held
           through the move), done before it returns. *)
@@ -73,7 +72,7 @@ val game_not_running : Engine_run.Failure.cause
 
 (** How a screen wait ended. *)
 type waited =
-  | Matched of { look : Story_look.t; looks : int; elapsed_ms : float }
+  | Matched of { look : Look.t; looks : int; elapsed_ms : float }
       (** The check held on [looks] reads in a row (and for the hold asked). *)
   | Timed_out
   | Home_menu
@@ -95,15 +94,11 @@ val rule :
   rule
 
 val poll_until :
-  game_steps ->
-  rule ->
-  (Story_look.t -> bool) ->
-  (Story_look.t -> unit) ->
-  waited
+  game_steps -> rule -> (Look.t -> bool) -> (Look.t -> unit) -> waited
 (** [poll_until steps rule holds act]: reads the screen until [holds] has held
     as the rule asks, calling [act] on every other read (which presses or
     waits). Ends at once on the HOME menu; times out once [timeout_ms] has
     passed since the first read, or after [timeout_ms / poll_ms + 1] reads. *)
 
-val wait_for : game_steps -> rule -> (Story_look.t -> bool) -> waited
+val wait_for : game_steps -> rule -> (Look.t -> bool) -> waited
 (** {!poll_until} that waits [poll_ms] between reads. *)

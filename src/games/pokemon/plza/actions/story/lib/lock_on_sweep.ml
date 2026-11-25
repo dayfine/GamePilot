@@ -1,4 +1,4 @@
-module S = Story_steps
+module S = Steps
 
 let stick_ms = 1000
 let dpad_ms = 160
@@ -25,7 +25,7 @@ let round_inputs ~camera_x =
 let rec sweep steps ~camera_x ~rounds =
   rounds > 0
   && (Option.is_some
-        (S.(steps.race_batch) (round_inputs ~camera_x) Story_look.moves_shown)
+        (S.(steps.race_batch) (round_inputs ~camera_x) Look.moves_shown)
      || sweep steps ~camera_x ~rounds:(rounds - 1))
 
 let run steps ~camera_x ~rounds =

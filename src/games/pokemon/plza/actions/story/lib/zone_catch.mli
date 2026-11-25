@@ -16,4 +16,4 @@
 val max_throws : int
 (** 12. *)
 
-val run : Story_steps.game_steps -> max_throws:int -> Story_steps.outcome
+val run : Steps.game_steps -> max_throws:int -> Steps.outcome

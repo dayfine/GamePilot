@@ -7,5 +7,5 @@
     move, one read must show the row highlighted ([choice_not_reached]); then A.
 *)
 
-val run : Story_steps.game_steps -> int -> Story_steps.outcome
+val run : Steps.game_steps -> int -> Steps.outcome
 (** [run steps index]: row [index] (0 the top) taken. *)

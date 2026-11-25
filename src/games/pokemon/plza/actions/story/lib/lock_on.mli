@@ -4,7 +4,7 @@
     fork's watcher wants a symbol held 100 ms; here the first read with a symbol
     ends the hold. *)
 
-val zl_until_symbols : Story_steps.game_steps -> hold_ms:int -> bool
+val zl_until_symbols : Steps.game_steps -> hold_ms:int -> bool
 (** ZL held up to [hold_ms] (no release after), cut short by the first read with
     a move symbol: whether one showed. *)
 
@@ -25,15 +25,15 @@ type state = {
 
 val new_state : unit -> state
 
-val due : state -> Story_look.t -> bool
+val due : state -> Look.t -> bool
 (** A try is due on this read. *)
 
-val record : state -> tried:bool -> control_instead:bool -> Story_look.t -> unit
+val record : state -> tried:bool -> control_instead:bool -> Look.t -> unit
 (** What this read changes; [tried]: it was classed due (counted before the try
     runs); [control_instead]: the scene machine's control-instead-of-the-end
     read. Text or a choice starts over. *)
 
-val run : state -> Story_steps.game_steps -> string -> unit
+val run : state -> Steps.game_steps -> string -> unit
 (** The try: from the second, a quarter turn right and L put the camera behind
     the player, then ZL for {!hold_ms}; [locked_on] set when the symbols showed.
 *)

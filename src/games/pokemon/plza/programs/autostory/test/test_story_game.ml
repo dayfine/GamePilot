@@ -7,7 +7,7 @@
    the plan at each event's change and the run. *)
 
 open Plza_checkpoints
-module L = Plza_story.Story_look
+module L = Plza_story.Look
 module C = Plza_fake_console.Fake_console
 
 let case name input expectation = { Table_test.name; input; expectation }
@@ -706,7 +706,7 @@ let gate_run ?(timeout_ms = 8000) screen () =
   let c = C.create () in
   let r =
     Plza_walk.Gate_run.run
-      (Plza_story.Story_steps.walk_game_steps (C.steps c screen))
+      (Plza_story.Steps.walk_game_steps (C.steps c screen))
       ~timeout_ms
   in
   String.concat "\n"

@@ -18,8 +18,8 @@ val steps :
   ?party:(t -> int option) ->
   ?lock:(t -> Plza_story.Catch_plan.target option) ->
   t ->
-  (t -> Plza_story.Story_look.t) ->
-  Plza_story.Story_steps.game_steps
+  (t -> Plza_story.Look.t) ->
+  Plza_story.Steps.game_steps
 (** The story steps on it; each read advances 33 ms then asks the screen. A
     party count advances two reads and asks [party] (default: none read), a
     plate two reads and asks [lock] (default: none). Queued inputs start at the

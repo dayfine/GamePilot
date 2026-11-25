@@ -27,4 +27,4 @@ val known : string -> (unit, string) result
 (** The flag is one of the above, its minimap a recorded one; else why not.
     Checked when the plan loads. *)
 
-val holds : Plza_story.Story_steps.game_steps -> string -> bool
+val holds : Plza_story.Steps.game_steps -> string -> bool

@@ -12,8 +12,8 @@
     at its own angle instead, with an L press before an angled leg after the
     first. A facing or walk after which the screen stayed still was dropped (or
     walked into a wall) and is played once more. Every walk and held slice asks
-    to run ({!Walk_inputs.Run}); [walk_only] walks it, as before dash is
-    unlocked (01.01).
+    to run ({!Inputs.Run}); [walk_only] walks it, as before dash is unlocked
+    (01.01).
 
     Not ported yet: with a story battle ahead in the checkpoint, the fork stops
     a walk on two battle HUD reads and goes on at the battle
@@ -23,7 +23,7 @@
 type game_steps = {
   submit : Wire.command -> unit;
       (** Send one input and return once it is done. *)
-  read_screen : unit -> Walk_screen.t;  (** Read the screen. *)
+  read_screen : unit -> Screen.t;  (** Read the screen. *)
   log : string -> unit;  (** A line for the log and the watch page. *)
   log_detail : string -> unit;  (** A line for the log alone. *)
 }

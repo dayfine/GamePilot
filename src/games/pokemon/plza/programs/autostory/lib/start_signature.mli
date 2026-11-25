@@ -33,7 +33,7 @@
     here ({!Plza_readers.Party_slots}). *)
 
 val check :
-  Plza_story.Story_steps.game_steps ->
+  Plza_story.Steps.game_steps ->
   checkpoint_id:string ->
   Json_field.obj ->
   (unit, Engine_run.Failure.cause) result
@@ -46,7 +46,7 @@ val decode :
     recorded minimap, not empty): checked when the plan loads. *)
 
 val check_end :
-  Plza_story.Story_steps.game_steps ->
+  Plza_story.Steps.game_steps ->
   checkpoint_id:string ->
   Json_field.obj ->
   (unit, Engine_run.Failure.cause) result

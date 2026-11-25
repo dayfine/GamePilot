@@ -1,5 +1,5 @@
-module S = Story_steps
-module L = Story_look
+module S = Steps
+module L = Look
 module Failure = Engine_run.Failure
 
 let choice_wait_ms = 3000

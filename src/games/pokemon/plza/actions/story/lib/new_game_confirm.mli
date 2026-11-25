@@ -9,4 +9,4 @@
     checks the profile by OCR); the language, look and name are the user's, made
     by hand. *)
 
-val run : Story_steps.game_steps -> Story_steps.outcome
+val run : Steps.game_steps -> Steps.outcome

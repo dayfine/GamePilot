@@ -19,9 +19,9 @@
     v1.15, [cancel] with [then]), as the fork dispatches it over the running
     hold. *)
 
-val run : Story_steps.game_steps -> Story_steps.outcome
+val run : Steps.game_steps -> Steps.outcome
 
-val attempt_one_attack : Story_steps.game_steps -> int ref -> bool
+val attempt_one_attack : Steps.game_steps -> int ref -> bool
 (** One attack of the fight (PokemonLZA_TrainerBattle.cpp): ZL held up to 1 s
     for the move symbols, the most effective move pressed as they show. Whether
     a move went. [misses] counts the misses in a row (reset on a move); from the

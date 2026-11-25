@@ -1,4 +1,4 @@
-module S = Story_steps
+module S = Steps
 
 type t = { steps : S.game_steps; mutable end_ms : float }
 

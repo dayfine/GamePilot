@@ -4,4 +4,4 @@
     fade must show within 5 s after the hold. Fails as [fade_not_ended] or
     [cutscene_not_skipped]. *)
 
-val run : Story_steps.game_steps -> Story_steps.outcome
+val run : Steps.game_steps -> Steps.outcome

@@ -3,7 +3,7 @@
    sweep locks on, the plate is read under held ZL and the throw keeps ZL
    held from the lock to the ball. *)
 
-module L = Plza_story.Story_look
+module L = Plza_story.Look
 module P = Plza_story.Catch_plan
 module W = Plza_walk.Wild_zone_one
 module C = Plza_fake_console.Fake_console

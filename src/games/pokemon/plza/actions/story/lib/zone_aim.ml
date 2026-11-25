@@ -1,4 +1,4 @@
-module S = Story_steps
+module S = Steps
 module P = Catch_plan
 
 let lock_on_wait_ms = 3000

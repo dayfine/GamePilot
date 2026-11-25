@@ -1,4 +1,4 @@
-module S = Story_steps
+module S = Steps
 module W = Plza_walk.Wild_zone_one
 module Failure = Engine_run.Failure
 

@@ -1,5 +1,5 @@
 open Plza_readers
-module L = Plza_story.Story_look
+module L = Plza_story.Look
 
 let probes ~picture ~assets =
   List.concat
@@ -142,7 +142,7 @@ let read_party_slots ~picture () =
   | Some n when n > 0 -> Some n
   | Some _ | None -> None
 
-let game_steps ~picture ~log ~log_detail : Plza_story.Story_steps.game_steps =
+let game_steps ~picture ~log ~log_detail : Plza_story.Steps.game_steps =
   let last = ref None in
   {
     submit = (fun c -> ignore (Effects.submit [ c ] : Wire.batch_done));

@@ -7,7 +7,7 @@
 
     Where it differs: the fork's watcher wants a symbol held 100 ms; here the
     first read with one ends the sweep, as {!Lock_on}. The mash is ZL 40 ms on,
-    40 ms off, as {!Story_battle}'s camera turn. *)
+    40 ms off, as {!Battle}'s camera turn. *)
 
-val run : Story_steps.game_steps -> camera_x:float -> rounds:int -> bool
+val run : Steps.game_steps -> camera_x:float -> rounds:int -> bool
 (** The sweep; whether the move symbols showed. *)

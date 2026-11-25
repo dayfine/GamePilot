@@ -1,5 +1,5 @@
-module S = Plza_story.Story_steps
-module L = Plza_story.Story_look
+module S = Plza_story.Steps
+module L = Plza_story.Look
 
 let reads = 5
 let poll_ms = 250

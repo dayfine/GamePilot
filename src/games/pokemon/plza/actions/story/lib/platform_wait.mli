@@ -1,13 +1,11 @@
 (** The platform at the station, where the opening ends and 01.01 starts: ported
     from PokemonLZA_AutoStoryScenes.cpp, with its timings. *)
 
-val wait_for_platform :
-  Story_steps.game_steps -> timeout_ms:int -> Story_steps.outcome
-(** The platform's controls hint ({!Story_look.platform_hint}) on two reads in a
-    row, read every 300 ms; [platform_not_seen] after [timeout_ms]. *)
+val wait_for_platform : Steps.game_steps -> timeout_ms:int -> Steps.outcome
+(** The platform's controls hint ({!Look.platform_hint}) on two reads in a row,
+    read every 300 ms; [platform_not_seen] after [timeout_ms]. *)
 
-val opening_to_platform :
-  Story_steps.game_steps -> timeout_ms:int -> Story_steps.outcome
+val opening_to_platform : Steps.game_steps -> timeout_ms:int -> Steps.outcome
 (** From the new game's confirm to the platform: every 300 ms, A on text that
     waits for it (once per text), and Start (the Switch's +) held 2 s to skip
     the opening 750 ms after each fade in, when no text or controls hint shows;

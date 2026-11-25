@@ -1,6 +1,6 @@
 (** The story screen read live, in the effect context: every PLZA reader's
     probes over the game picture, and each read turned into a
-    {!Plza_story.Story_look.t}, as the screen read of
+    {!Plza_story.Look.t}, as the screen read of
     PokemonLZA_AutoStoryConsoleBackend.cpp fills its look: the HOME menu first
     ({!Switch_home.Home_screen}), else {!Plza_readers.Story_screen}, the Confirm
     Choices row ({!Plza_readers.Confirm_choices}), and whether the frame is the
@@ -15,6 +15,6 @@ val game_steps :
   picture:Wire.box ->
   log:(string -> unit) ->
   log_detail:(string -> unit) ->
-  Plza_story.Story_steps.game_steps
+  Plza_story.Steps.game_steps
 (** The story actions' steps on the live game: inputs through {!Effects.submit},
     reads as above. *)

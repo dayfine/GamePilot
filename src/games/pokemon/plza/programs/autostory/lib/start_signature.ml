@@ -1,4 +1,4 @@
-module S = Plza_story.Story_steps
+module S = Plza_story.Steps
 module Failure = Engine_run.Failure
 
 let poll_ms = 500

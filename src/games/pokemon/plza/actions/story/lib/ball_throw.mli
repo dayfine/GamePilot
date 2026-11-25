@@ -25,5 +25,5 @@ val default : options
 val inputs : options -> Wire.command list
 (** The throw's inputs, to send as one batch. *)
 
-val throw : Story_steps.game_steps -> options -> unit
+val throw : Steps.game_steps -> options -> unit
 (** The throw sent and done. *)

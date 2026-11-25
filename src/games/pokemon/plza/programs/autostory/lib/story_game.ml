@@ -29,7 +29,7 @@ let timed run ~default steps (event : Plan.event) (args : Json_field.obj) =
 let platform_or_reload ~reload steps ~timeout_ms =
   match Platform_wait.wait_for_platform steps ~timeout_ms with
   | Error { code = "platform_not_seen"; _ } ->
-      steps.Story_steps.log
+      steps.Steps.log
         "[PLZA] platform wait: no controls hint (it fades when idle); \
          reloading the latest autosave to see it fresh";
       Result.bind (reload ()) (fun () ->
@@ -64,7 +64,7 @@ let scene_with_start_window steps (event : Plan.event) (args : Json_field.obj) =
       bad_args event "the only arg is start_window_ms, a positive number of ms"
 
 let talk_steps steps : Plza_walk.Talk_prompt.game_steps =
-  let walk = Story_steps.walk_game_steps steps in
+  let walk = Steps.walk_game_steps steps in
   {
     submit = walk.submit;
     read_screen = walk.read_screen;
@@ -75,14 +75,12 @@ let talk_steps steps : Plza_walk.Talk_prompt.game_steps =
 (* Free control with no A prompt, on two reads 300 ms apart: nothing for A
    to take. *)
 let no_prompt_gap_ms = 300
-
-let no_prompt (l : Story_look.t) =
-  Story_look.control_shows l && not l.interact_prompt
+let no_prompt (l : Look.t) = Look.control_shows l && not l.interact_prompt
 
 let prompt_missing steps =
-  no_prompt (steps.Story_steps.read_screen ())
+  no_prompt (steps.Steps.read_screen ())
   &&
-  (Story_steps.wait steps no_prompt_gap_ms;
+  (Steps.wait steps no_prompt_gap_ms;
    no_prompt (steps.read_screen ()))
 
 let prompt_not_seen =
@@ -111,18 +109,18 @@ let scene_through_prompt steps (event : Plan.event) (args : Json_field.obj) =
 let run_to_gate_ms = 8000
 
 let run_to_gate steps ~timeout_ms =
-  Plza_walk.Gate_run.run (Story_steps.walk_game_steps steps) ~timeout_ms
+  Plza_walk.Gate_run.run (Steps.walk_game_steps steps) ~timeout_ms
 
 (* The plan's timeout for each run at the far gate (plza-03.08b.plan.json). *)
 let run_out_of_zone_1_ms = 5000
 
 let run_out_of_zone_1 steps ~timeout_ms =
   Plza_walk.Map_walk.run_out_of_zone_one
-    (Story_steps.walk_game_steps steps)
+    (Steps.walk_game_steps steps)
     ~timeout_ms
 
 let check_out_of_zone_1 steps =
-  Plza_walk.Map_walk.check_out_of_zone_one (Story_steps.walk_game_steps steps)
+  Plza_walk.Map_walk.check_out_of_zone_one (Steps.walk_game_steps steps)
 
 (* The fork's counts (PokemonLZA_AutoStoryConsoleActions.cpp). *)
 let max_throws = 6
@@ -160,7 +158,7 @@ let story_actions ~reload =
     ("scene_to_battle", no_args scene_to_battle);
     ("scene_with_start_window", scene_with_start_window);
     ("scene_through_prompt", scene_through_prompt);
-    ("story_battle", no_args Story_battle.run);
+    ("story_battle", no_args Battle.run);
     ("talk_through_map_screen", no_args Map_talk.run);
     ( "climb_ladder",
       no_args (fun steps -> Plza_walk.Ladder_climb.run (talk_steps steps)) );
@@ -195,7 +193,7 @@ let walk steps ~checkpoint_id (event : Plan.event) (own : Plza_rules.Action.t) =
   match own with
   | Walk args ->
       Plza_walk.Walk.run_event
-        (Story_steps.walk_game_steps steps)
+        (Steps.walk_game_steps steps)
         ~walk_only:(walk_only checkpoint_id) event.id args
 
 let make steps ~checkpoint_id ~reload : Game.t =

@@ -14,7 +14,7 @@
     control is the timeout, which only a stuck game reaches. *)
 
 type game_steps = {
-  read_screen : unit -> Walk_screen.t;
+  read_screen : unit -> Screen.t;
       (** Read the screen once the inputs are done. *)
   wait : int -> unit;  (** Wait that many ms. *)
   log : string -> unit;
@@ -23,7 +23,7 @@ type game_steps = {
 
 val screen_game_steps :
   submit:(Wire.command -> unit) ->
-  read_screen:(unit -> Walk_screen.t) ->
+  read_screen:(unit -> Screen.t) ->
   log:(string -> unit) ->
   game_steps
 (** The steps of a walk, its waits sent as inputs. *)

@@ -6,4 +6,4 @@
     two reads in a row (read every 250 ms, 30 s at most, [text_speed_timeout]).
 *)
 
-val run : Story_steps.game_steps -> Story_steps.outcome
+val run : Steps.game_steps -> Steps.outcome

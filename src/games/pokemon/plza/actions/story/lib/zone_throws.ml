@@ -1,4 +1,4 @@
-module S = Story_steps
+module S = Steps
 module P = Catch_plan
 
 type result = { throws : int; caught : bool; party_reached : bool }

@@ -1,5 +1,5 @@
-module S = Story_steps
-module L = Story_look
+module S = Steps
+module L = Look
 
 let hold_ms = 2000
 let turn_degrees = 90.0
@@ -12,12 +12,12 @@ let zl_until_symbols (steps : S.game_steps) ~hold_ms =
   Option.is_some
     (steps.race
        (Wire.press ~hold_ms ~cooldown_ms:0 [ Wire.ZL ])
-       Story_look.moves_shown)
+       Look.moves_shown)
 
 (* What the turn did, for the log: the tilt can be refused. *)
 let turn steps =
   match
-    Plza_walk.Walk_inputs.tilt ~walk_only:true Walk ~degrees:turn_degrees
+    Plza_walk.Inputs.tilt ~walk_only:true Walk ~degrees:turn_degrees
       ~duration_ms:turn_ms ~release_ms:turn_release_ms
   with
   | Ok input ->

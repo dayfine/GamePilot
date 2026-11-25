@@ -1,7 +1,6 @@
 (** PLZA's AutoStory as a game of the checkpoint engine ({!Plza_checkpoints}):
-    the handlers 01.00b's to 03.11's plans use, over {!Plza_story.Story_steps}.
-    The fork's action table (PokemonLZA_AutoStoryActionTable.cpp) for these
-    actions:
+    the handlers 01.00b's to 03.11's plans use, over {!Plza_story.Steps}. The
+    fork's action table (PokemonLZA_AutoStoryActionTable.cpp) for these actions:
 
     - [confirm_new_game] ({!Plza_story.New_game_confirm}), no args;
     - [opening_to_platform] and [wait_for_platform]
@@ -31,7 +30,7 @@
       free control with no A prompt on two reads 300 ms apart fails
       [prompt_not_seen] before any A, where the fork presses A on nothing and
       its scene then ends on control, passing a walk that stopped short;
-    - [story_battle] ({!Plza_story.Story_battle}), no args;
+    - [story_battle] ({!Plza_story.Battle}), no args;
     - [talk_through_map_screen] ({!Plza_story.Map_talk}), no args;
     - [climb_ladder] ({!Plza_walk.Ladder_climb}), no args;
     - [run_to_gate] ({!Plza_walk.Gate_run}), with an optional [timeout_ms] (8 s,
@@ -52,7 +51,7 @@ val walk_only : string -> bool
 (** Whether a checkpoint's runs are walked: its id is before ["03.03"]. *)
 
 val make :
-  Plza_story.Story_steps.game_steps ->
+  Plza_story.Steps.game_steps ->
   checkpoint_id:string ->
   reload:(unit -> (unit, Engine_run.Failure.cause) result) ->
   Plza_checkpoints.Game.t

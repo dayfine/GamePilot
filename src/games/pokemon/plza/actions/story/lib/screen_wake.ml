@@ -1,4 +1,4 @@
-module S = Story_steps
+module S = Steps
 
 let tilt_ms = 100
 let lift_ms = 500

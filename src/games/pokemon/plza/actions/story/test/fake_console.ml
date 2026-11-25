@@ -38,7 +38,7 @@ let queue c commands =
 let frame_ms = 33.0
 
 let steps ?(party = fun _ -> None) ?(lock = fun _ -> None) c screen :
-    Plza_story.Story_steps.game_steps =
+    Plza_story.Steps.game_steps =
   let log line = c.lines <- line :: c.lines in
   {
     submit = submit c;

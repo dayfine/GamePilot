@@ -15,7 +15,7 @@ val check_end_event :
   string ->
   Plza_rules.Walk_args.end_event ->
   earliest_end_ms:int ->
-  Walk_screen.t ->
+  Screen.t ->
   held_ms:int ->
   verdict
 (** [check_end_event ~log ~log_detail walk event ~earliest_end_ms screen
@@ -25,7 +25,7 @@ val check_end_event :
     over); else {!Walk_on}. *)
 
 val check_scene :
-  (string -> unit) -> string -> Walk_screen.t -> held_ms:int -> verdict
+  (string -> unit) -> string -> Screen.t -> held_ms:int -> verdict
 (** [check_scene log walk]: a check over the screen reads that ends the walk
     ({!Ended}) on the second busy read in a row (text, a box or a fade). Each
     call makes a fresh check. *)

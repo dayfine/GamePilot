@@ -33,8 +33,8 @@
     and the run goes on at the battle). No checkpoint to 03.11 met a battle
     mid-scene on console B; without it such a scene times out. The fork's option
     to press A first is the game action [scene_through_prompt] (Story_game).
-    "Mission complete" has no reader yet ({!Story_look}): it reads as a screen
-    no detector reads (A, as for the card). *)
+    "Mission complete" has no reader yet ({!Look}): it reads as a screen no
+    detector reads (A, as for the card). *)
 
 type config = {
   end_on_black_fade : bool;
@@ -51,5 +51,5 @@ val default : config
 (** A, no stop at a choice or a battle, no end on a black fade: the plain
     [scene]. *)
 
-val run : Story_steps.game_steps -> string -> config -> Story_steps.outcome
+val run : Steps.game_steps -> string -> config -> Steps.outcome
 (** [run steps label config]; [label] names it in the log ("scene"). *)

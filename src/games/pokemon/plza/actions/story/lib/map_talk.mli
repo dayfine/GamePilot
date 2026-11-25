@@ -6,4 +6,4 @@
     with B). Done once the party bar with no text box has held 1 s;
     [map_talk_timeout] after 120 s. *)
 
-val run : Story_steps.game_steps -> Story_steps.outcome
+val run : Steps.game_steps -> Steps.outcome

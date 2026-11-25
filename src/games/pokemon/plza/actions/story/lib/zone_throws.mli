@@ -4,7 +4,7 @@
 
     Where it differs: the fork races the throw against a party bar watcher (the
     bar at the target count for 250 ms ends it at once). The party count takes
-    two frames here ({!Story_steps.game_steps.read_party_slots}), so the throw's
+    two frames here ({!Steps.game_steps.read_party_slots}), so the throw's
     inputs (ZL 500 ms, ZL and ZR 1.5 s) are sent, then the count is read over
     the throw's 8 s: reaching the target on reads 250 ms apart ends it there. *)
 
@@ -15,7 +15,7 @@ type result = {
 }
 
 val catch_at_stop :
-  Story_steps.game_steps -> spot:string -> max_throws:int -> party:int -> result
+  Steps.game_steps -> spot:string -> max_throws:int -> party:int -> result
 (** Up to 4 tries at the stop, until caught or [max_throws]: a wild battle on is
     fought back (a caught species fought off, else weakened and thrown at); else
     the camera sweeps for a lock-on ({!Lock_on_sweep}, right 0.5, 8 rounds; none

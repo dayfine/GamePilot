@@ -7,7 +7,7 @@ type game_steps = {
 let screen_game_steps ~submit ~read_screen ~log_detail =
   {
     submit;
-    read_arrow = (fun () -> (read_screen () : Walk_screen.t).minimap_arrow);
+    read_arrow = (fun () -> (read_screen () : Screen.t).minimap_arrow);
     log_detail;
   }
 
@@ -27,7 +27,7 @@ let turn_to now heading =
   else if t <= -.half_turn then t +. full_turn
   else t
 
-let wait (steps : game_steps) ms = steps.submit (Walk_inputs.wait ms)
+let wait (steps : game_steps) ms = steps.submit (Inputs.wait ms)
 
 let no_arrow =
   Engine_run.Failure.cause "arrow_unread" "no minimap arrow within 40 s"
@@ -65,14 +65,13 @@ let turn_ms = 150
 let turn_release_ms = 100
 
 let tap_l (steps : game_steps) =
-  steps.submit
-    (Walk_inputs.button L ~hold_ms:tap_hold_ms ~release_ms:tap_release_ms)
+  steps.submit (Inputs.button L ~hold_ms:tap_hold_ms ~release_ms:tap_release_ms)
 
 (* The tap the story was recorded with. *)
 let story_turn (steps : game_steps) degrees =
   tap_l steps;
   match
-    Walk_inputs.tilt ~walk_only:true Walk ~degrees ~duration_ms:turn_ms
+    Inputs.tilt ~walk_only:true Walk ~degrees ~duration_ms:turn_ms
       ~release_ms:turn_release_ms
   with
   | Ok c -> Ok (steps.submit c)
