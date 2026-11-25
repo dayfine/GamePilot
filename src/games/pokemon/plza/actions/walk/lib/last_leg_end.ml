@@ -16,7 +16,7 @@ let ended walk held_ms =
     held_ms
 
 let ended_on walk screen =
-  Printf.sprintf "[PLZA] %s: ended on: %s" walk (Screen.describe screen)
+  Printf.sprintf "[PLZA] %s: ended on: %s" walk (Walk_screen.describe screen)
 
 let black_fade walk held_ms =
   Printf.sprintf
@@ -35,8 +35,8 @@ let prompt_went walk held_ms =
     held_ms
 
 let check_end_event ~log ~log_detail ~prompt_steady walk event ~earliest_end_ms
-    (screen : Screen.t) ~held_ms =
-  let shows = Screen.shows event screen in
+    (screen : Walk_screen.t) ~held_ms =
+  let shows = Walk_screen.shows event screen in
   if shows && held_ms < earliest_end_ms then (
     log (passed_on_the_way walk held_ms earliest_end_ms);
     Walk_on)
@@ -56,7 +56,7 @@ let check_end_event ~log ~log_detail ~prompt_steady walk event ~earliest_end_ms
 let check_scene log walk =
   let busy_reads = ref 0 in
   fun screen ~held_ms ->
-    let busy = Screen.busy_with screen in
+    let busy = Walk_screen.busy_with screen in
     busy_reads := if busy = None then 0 else !busy_reads + 1;
     match busy with
     | Some what when !busy_reads >= scene_reads_to_stop ->

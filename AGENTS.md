@@ -82,7 +82,9 @@ GamePilot automates games through three layers (design: `docs/design/Layered-Aut
   submodule is bumped here. Prefer a change in GamePilot over a patch.
 - The daemon uses `CoreLib` only, through upstream's `SourceFiles.cmake` and `CoreLib.cmake`.
   Vision is OpenCV. Paths go through `Common/Cpp/Filesystem` (UTF-8 on Windows).
-- Nothing here is published upstream. PRs: `--repo dayfine/GamePilot --draft`.
+- Nothing here is published upstream. PRs: `--repo dayfine/GamePilot --draft`. A draft is work in
+  progress; a PR is marked ready once only a merge or the user's review is left (the gate below),
+  and goes back to draft when a new commit makes its verdict stale.
 - The FireRed ROM, its path and its hash never enter this repo or any log.
 - The Switch (a Switch with a capture card and a controller board) is shared with other
   automation: only one program may drive the console at a time.
@@ -114,6 +116,8 @@ for the user to spot check.
   Harness Check, and a deleted or renamed page for the builds (the registry's docs must exist).
 - `sh dev/review/pr_gate_status.sh [PR...]` prints each open PR's CI, verdict (ok / rework /
   stale(<sha>) / none / skip) and next step (`merge`, `merge (structural: <reason>)`, or `user review (<reason>)`).
+  `--sync-draft` also sets each PR's draft flag from its DRAFT column, so GitHub's ready PRs are
+  the merge and review queue.
   `sh dev/review/format_only_changes.sh` lists files changed only in formatting; CI prints the same list as warnings.
 
 When the user's review comment states a general rule (not only a fix for that PR), add it to

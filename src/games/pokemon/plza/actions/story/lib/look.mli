@@ -115,7 +115,7 @@ val describe : t -> string
 (** What shows, as the fork's log lists it ("black fade, text box, still,
     controls hint"), or ["nothing"]. *)
 
-val to_walk_screen : t -> Plza_walk.Screen.t
+val to_walk_screen : t -> Plza_walk.Walk_screen.t
 (** The read as the walk takes it. *)
 
 val wild_battle_on : t -> bool

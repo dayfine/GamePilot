@@ -1,0 +1,21 @@
+(test
+ (name test_series_record)
+ (flags
+  (:standard -open Live_run))
+ (libraries
+  gamepilot.table_test
+  gamepilot.live_run
+  gamepilot.run_record
+  unix
+  yojson))
+
+(test
+ (name test_series_watch)
+ (flags
+  (:standard -open Live_run))
+ (libraries
+  gamepilot.table_test
+  gamepilot.live_run
+  gamepilot.run_record
+  unix
+  yojson))

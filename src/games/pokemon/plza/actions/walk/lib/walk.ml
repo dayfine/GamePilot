@@ -3,7 +3,7 @@ module Failure = Engine_run.Failure
 
 type game_steps = Leg_play.game_steps = {
   submit : Wire.command -> unit;
-  read_screen : unit -> Screen.t;
+  read_screen : unit -> Walk_screen.t;
   log : string -> unit;
   log_detail : string -> unit;
 }
@@ -12,7 +12,6 @@ type outcome = (unit, Failure.cause) result
 
 let ( let* ) = Result.bind
 let play_legs = Leg_play.play_legs
-let last = Leg_play.last
 
 (* How long each slice of the held last leg is, between screen reads for its
    end. *)
@@ -24,7 +23,7 @@ let log_final_screen steps walk =
   let screen = steps.read_screen () in
   steps.log
     (Printf.sprintf "[PLZA] %s: legs done, screen now: %s" walk
-       (Screen.describe screen))
+       (Walk_screen.describe screen))
 
 (* How the last leg's slices came out: [Ended] with the walk's outcome, or
    [Spent] once the hold's budget is spent, with the hold and the battle HUD's
@@ -71,7 +70,7 @@ let rec slice_last_leg steps ~walk_only ~stop_on_battle walk move ~check ~budget
    ends it, the battle HUD holds (with [stop_on_battle]) or the hold's budget
    is spent. *)
 let walk_last_leg steps ~walk_only ~stop_on_battle walk move ~check =
-  let budget = match move.legs with [] -> 0 | legs -> (last legs).walk_ms in
+  let budget = match List.rev move.legs with [] -> 0 | l :: _ -> l.walk_ms in
   let* () = Leg_play.play_legs_but_last_walk steps ~walk_only move in
   slice_last_leg steps ~walk_only ~stop_on_battle walk move ~check ~budget
     ~streak:0
@@ -127,14 +126,14 @@ and talk_read steps ~stop_on_battle walk ~held_ms ~streak tail =
   let next tail = talk_tail steps ~stop_on_battle walk ~held_ms ~streak tail in
   if Battle_stop.holds streak then Battle_stop.stopped steps.log walk ~held_ms
   else if not screen.interact_prompt then (
-    steps.submit (Inputs.wait talk_poll_ms);
+    steps.submit (Walk_inputs.wait talk_poll_ms);
     next (tail + talk_poll_ms))
   else
     match talk_at_prompt steps walk ~held_ms with
     | Some ended -> ended
     | None -> next (tail + talk_retry_gap_ms)
 
-let talk_check steps walk ~after_legs (screen : Screen.t) ~held_ms :
+let talk_check steps walk ~after_legs (screen : Walk_screen.t) ~held_ms :
     Last_leg_end.verdict =
   if after_legs || not screen.interact_prompt then Walk_on
   else
@@ -215,13 +214,13 @@ let walk_to_end steps ~walk_only ~stop_on_battle walk move ~until
 let battle_game_steps steps : Battle_stop.game_steps =
   {
     read_screen = steps.read_screen;
-    wait = (fun ms -> steps.submit (Inputs.wait ms));
+    wait = (fun ms -> steps.submit (Walk_inputs.wait ms));
   }
 
 let walk_step steps ~walk_only ~battle_ahead walk
     (args : Plza_rules.Walk_args.t) =
   if args.move.wait_before_ms > 0 then
-    steps.submit (Inputs.wait args.move.wait_before_ms);
+    steps.submit (Walk_inputs.wait args.move.wait_before_ms);
   let { submit; read_screen; log; log_detail } = steps in
   let free = Free_control_wait.screen_game_steps ~submit ~read_screen ~log in
   let* () = Free_control_wait.wait free walk in

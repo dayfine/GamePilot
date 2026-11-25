@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Reads one PR as `gh pr view N --json number,title,headRefOid,reviews,statusCheckRollup,mergeable`
-prints on stdin and prints its gate row: NUMBER CI STRUCT NEXT, tab-separated, then the title. An
+prints on stdin and prints its gate row: NUMBER CI STRUCT NEXT DRAFT, tab-separated, then the title. An
 optional argument names a file of the PR's changed files, one REST `{path, status}` object per line
 (pr_gate_status.sh pages them, since `--json files` stops at 100); it replaces any `files` on stdin.
 
@@ -12,7 +12,8 @@ given at an older commit, none, or skip for a docs-only PR (every file is a .md 
 NEXT is the one next step: "merge main" first when the PR conflicts with main; once CI is green and
 the verdict is ok, "merge", or "merge (structural: <reason>)" when the PR changes structure, or
 "user review (<reason>)" for a design doc or a PR reworked twice
-(AGENTS.md, "PR gate loop"). Structure, read off the file list: a library module or dune file added,
+(AGENTS.md, "PR gate loop"). DRAFT is what the PR's draft flag should be: ready when NEXT is a merge
+or the user's review (the gate is through, or only the user is left), else draft. Structure, read off the file list: a library module or dune file added,
 deleted or renamed under src/; a changed .mli of a library shared across games (src/base, src/core,
 src/pokemon); a changed format (protocol/, a *_decode.ml); a design doc (docs/design/); or two
 NEEDS_REWORK verdicts. The reason printed is the first that holds, in the order: reworked twice,
@@ -179,6 +180,12 @@ def next_action(ci, struct, owner=None, conflicting=False):
     return "run qc-structural"
 
 
+def draft_flag(step):
+    """ready when only a merge or the user's review is left, else draft."""
+    done = step.startswith("user review") or step == "merge" or step.startswith("merge (")
+    return "ready" if done else "draft"
+
+
 # REST file statuses, as the changeType names `gh pr view --json files` uses.
 REST_CHANGE = {"added": "ADDED", "removed": "DELETED", "renamed": "RENAMED"}
 
@@ -198,7 +205,8 @@ def main():
     ci, struct = ci_state(pr), struct_state(pr)
     conflicting = pr.get("mergeable") == "CONFLICTING"
     step = next_action(ci, struct, owner_reason(pr), conflicting)
-    print("\t".join([str(pr["number"]), ci, struct, step, pr.get("title", "")]))
+    row = [str(pr["number"]), ci, struct, step, draft_flag(step), pr.get("title", "")]
+    print("\t".join(row))
 
 
 if __name__ == "__main__":

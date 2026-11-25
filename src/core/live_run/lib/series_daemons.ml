@@ -1,6 +1,7 @@
 (* The daemons of a checkpoint series, one per run, each asking for the ports
-   the one before it bound, and the series they serve. The daemons' start and
-   ports are moved unchanged from FRLG's Checkpoint_live_run. *)
+   the one before it bound, and the series they serve, told to the watch page
+   (Series_watch). The daemons' start and ports are moved unchanged from FRLG's
+   Checkpoint_live_run. *)
 
 type series = {
   info : Run_record.info;
@@ -10,6 +11,7 @@ type series = {
 
 type t = {
   series : series;
+  watched : Series_watch.t; (* The series on the watch page as one run. *)
   daemon : string;
   backend : Daemon_process.backend;
   flags : string list;
@@ -20,7 +22,10 @@ type t = {
 }
 
 let create ~daemon ~backend ~flags ~port ~watch series =
-  { series; daemon; backend; flags; port; watch; bound = ref None }
+  let watched =
+    Series_watch.start watch series.info ~mode:series.mode series.checkpoints
+  in
+  { series; watched; daemon; backend; flags; port; watch; bound = ref None }
 
 let series t = t.series
 
@@ -58,13 +63,15 @@ let announce t (daemon : Daemon_process.t) =
   | _ -> ());
   t.bound := bound
 
-let with_daemon t ~failed (run : Run_record.run) ~n:_ body =
+let with_daemon t ~failed (run : Run_record.run) ~n body =
+  Series_watch.run_started t.watched run ~n;
   Daemon_run.with_daemon ~failed
     (start_sticky t run.record ~checkpoint:run.checkpoint) (fun daemon ->
       announce t daemon;
       body daemon)
 
-let finish _ ~runs_dir run ~summary ending =
-  Daemon_run.finish ~runs_dir run ~summary ending
+let finish t ~runs_dir run ~summary ending =
+  Daemon_run.finish ~runs_dir run ~summary ending;
+  Series_watch.run_ended t.watched run ending
 
-let finished _ ~passed:_ = ()
+let finished t ~passed = Series_watch.finished t.watched ~passed

@@ -2,13 +2,13 @@ module Failure = Engine_run.Failure
 
 type game_steps = {
   submit : Wire.command -> unit;
-  read_screen : unit -> Screen.t;
+  read_screen : unit -> Walk_screen.t;
   log : string -> unit;
   log_detail : string -> unit;
 }
 
 type at_prompt = {
-  until : Screen.t -> bool;
+  until : Walk_screen.t -> bool;
   until_looks : int;
   retries : int;
   retry_gap_ms : int;
@@ -22,7 +22,7 @@ let steady_gap_ms = 300
 
 let walk_talk =
   {
-    until = (fun (l : Screen.t) -> l.scene_under_way);
+    until = (fun (l : Walk_screen.t) -> l.scene_under_way);
     until_looks = 2;
     retries = 3;
     retry_gap_ms = 1000;
@@ -35,7 +35,8 @@ let walk_talk =
    after the A. *)
 let through_prompt =
   {
-    until = (fun (l : Screen.t) -> l.fade_black || l.fade_white || l.dialog_box);
+    until =
+      (fun (l : Walk_screen.t) -> l.fade_black || l.fade_white || l.dialog_box);
     until_looks = 1;
     retries = 3;
     retry_gap_ms = 3000;
@@ -44,15 +45,15 @@ let through_prompt =
   }
 
 type ended =
-  | Taken of Screen.t
+  | Taken of Walk_screen.t
   | Prompt_stays of { presses : int; since_ms : int }
   | Nothing
 
 let press_a steps at =
   steps.submit
-    (Inputs.button Wire.A ~hold_ms:a_hold_ms ~release_ms:at.release_ms)
+    (Walk_inputs.button Wire.A ~hold_ms:a_hold_ms ~release_ms:at.release_ms)
 
-let wait steps ms = steps.submit (Inputs.wait ms)
+let wait steps ms = steps.submit (Walk_inputs.wait ms)
 
 let again name since presses =
   Printf.sprintf
@@ -61,7 +62,7 @@ let again name since presses =
     name since presses
 
 (* After the retry gap: nothing started, the prompt gone or still up. *)
-let rec after_gap steps at ~presses ~since ~looks (look : Screen.t) =
+let rec after_gap steps at ~presses ~since ~looks (look : Walk_screen.t) =
   if not (looks = 0 && look.interact_prompt) then Nothing
   else if presses >= at.retries then Prompt_stays { presses; since_ms = since }
   else (
@@ -91,7 +92,8 @@ let started steps walk ~held_ms look =
         talk."
        walk held_ms);
   steps.log_detail
-    (Printf.sprintf "[PLZA] %s: started on: %s" walk (Screen.describe look));
+    (Printf.sprintf "[PLZA] %s: started on: %s" walk
+       (Walk_screen.describe look));
   Some (Ok ())
 
 let no_scene walk presses =

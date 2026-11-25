@@ -12,15 +12,17 @@ const SIDE_POLL_MS = 3000;
 // started on another one).
 const HUB_PORT = Number(new URLSearchParams(location.search).get("hub")) || 47901;
 const PHONE_LAYOUT = window.matchMedia("(max-width: 800px)");
-const viaHub = location.pathname.match(/^(.*)\/runs\/([^/]+)\/$/);
+const viaHub = location.pathname.match(/^(.*)\/runs\/([^/]+)\/$/) || viaSeries;
 const HUB = viaHub ? location.origin + viaHub[1] + "/" :
   location.protocol + "//" + location.hostname + ":" + HUB_PORT + "/";
-let runName = viaHub ? decodeURIComponent(viaHub[2]) : null;
+let runName = viaHub && !SERIES_ID ? decodeURIComponent(viaHub[2]) : null;
 let runPort = viaHub ? null : Number(location.port);
 let wasLive = false;
 let endedShown = false;
 
 const runPath = (name) => HUB + "runs/" + encodeURIComponent(name) + "/";
+const seriesPath = (id) => HUB + "series/" + encodeURIComponent(id) + "/";
+let mySeries = null;       // the series this run's page belongs to
 
 // Wide window: open unless closed before (kept); phone: a closed drawer.
 function setSide(open, keep) {
@@ -96,7 +98,20 @@ function noteItem(text) {
   return li;
 }
 
-function renderSide(live, summaries, recent) {
+// A running series in the sidebar: one row, its current checkpoint and what
+// its run going is doing.
+function seriesItem(s, summaries) {
+  const cps = s.checkpoints;
+  const cur = cps.findIndex((c) => c.state === "current");
+  const [state, cls] = s.run ? runState(summaries.get(s.run)) : ["between runs", ""];
+  return sideItem(seriesPath(s.series), s.series === SERIES_ID,
+    (cur >= 0 ? cps[cur].id + " (" + (cur + 1) + "/" + cps.length + ")" : s.from + " → " + s.to) +
+      " · " + s.backend,
+    duration(Date.now() - s.started_ms) + " · " + state, cls,
+    (s.program_name || s.program || "series") + " " + s.from + " → " + s.to);
+}
+
+function renderSide(live, summaries, recent, series) {
   const liveList = $("side-live");
   liveList.replaceChildren();
   if (!live) {
@@ -117,7 +132,8 @@ function renderSide(live, summaries, recent) {
       duration(Date.now() - r.started_ms) + " · " + state,
       state === "live" ? "pass" : (source ? "fail" : ""), source ? source.detail : "");
   }));
-  for (const r of [...live].sort((a, b) => b.started_ms - a.started_ms)) {
+  for (const s of [...(series || [])].reverse()) liveList.append(seriesItem(s, summaries));
+  for (const r of [...live].filter((x) => !x.series).sort((a, b) => b.started_ms - a.started_ms)) {
     const summary = summaries.get(r.run);
     const run = summary && summary.run;
     const current = run && run.checkpoints.find((c) => c.state === "current");
@@ -127,7 +143,7 @@ function renderSide(live, summaries, recent) {
       (current ? current.id : r.checkpoint || r.run) + " · " + r.backend,
       duration(Date.now() - started) + " · " + state, cls, r.run));
   }
-  if (!live.length) liveList.append(noteItem("no live runs"));
+  if (!liveList.childElementCount) liveList.append(noteItem("no live runs"));
   const recentList = $("side-recent");
   recentList.replaceChildren();
   const liveNames = new Set(live.map((r) => r.run));
@@ -149,12 +165,15 @@ function checkEnded(live, recent) {
   if (mine) {
     runName = mine.run;
     runPort = mine.port;
+    mySeries = mine.series || null;
     wasLive = true;
     document.title = (mine.checkpoint || mine.run) + " · GamePilot Watch";
     if (endedShown) { endedShown = false; $("ended").hidden = true; }
     return;
   }
   if (!wasLive && !viaHub) return;
+  // A series' run ended: the series' page follows the rest of it.
+  if (viaHub && mySeries) { location.replace(seriesPath(mySeries) + location.search); return; }
   if (viaHub) {
     const next = runPort && live.find((r) => r.port === runPort);
     if (next) { location.replace(runPath(next.run) + location.search); return; }
@@ -183,18 +202,19 @@ async function getJson(url) {
 
 async function pollSide() {
   if (!document.hidden) {
-    let live = null, recent = null;
+    let live = null, recent = null, series = [];
     const summaries = new Map();
     try {
-      [live, recent] = await Promise.all([getJson(HUB + "runs.json"),
-                                          getJson(HUB + "recent.json").catch(() => [])]);
+      [live, recent, series] = await Promise.all([getJson(HUB + "runs.json"),
+                                          getJson(HUB + "recent.json").catch(() => []),
+                                          getJson(HUB + "series.json").catch(() => [])]);
       await Promise.all(live.map((r) => getJson(runPath(r.run) + "summary.json")
         .then((s) => summaries.set(r.run, s)).catch(() => {})));
     } catch (e) {
       live = null;
     }
-    if (live) checkEnded(live, recent);
-    renderSide(live, summaries, recent);
+    if (live && !SERIES_ID) checkEnded(live, recent);
+    renderSide(live, summaries, recent, series);
   }
   setTimeout(pollSide, SIDE_POLL_MS);
 }

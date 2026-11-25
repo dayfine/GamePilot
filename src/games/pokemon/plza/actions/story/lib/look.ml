@@ -113,7 +113,7 @@ let describe l =
   in
   if shown = [] then "nothing" else String.concat ", " shown
 
-let to_walk_screen l : Plza_walk.Screen.t =
+let to_walk_screen l : Plza_walk.Walk_screen.t =
   {
     at_ms = l.at_ms;
     home_menu = l.home_menu;

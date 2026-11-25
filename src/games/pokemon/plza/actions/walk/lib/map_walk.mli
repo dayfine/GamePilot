@@ -10,8 +10,8 @@
 
 val read_pin : Walk.game_steps -> Map_leg.point option
 (** + ([Plus]; 100 ms, then 1.5 s for the map to open), up to 8 looks 250 ms
-      apart for the pin ({!Screen.t.map_pin}), then B (100 ms, then 1 s for it
-      to close). *)
+      apart for the pin ({!Walk_screen.t.map_pin}), then B (100 ms, then 1 s for
+      it to close). *)
 
 val walk_legs :
   Walk.game_steps ->

@@ -109,4 +109,14 @@ printf '%s\n' '{"path": "src/a.ml", "status": "modified"}' \
 check "the REST file list replaces the view's" "merge (structural: module deleted: src/x/lib/dune)" \
     "$(pr "$code" "$green" "$(review "$tip" APPROVED)" | python3 -I "$here/gate_row.py" "$rest" | cut -f 4)"
 rm -f "$rest"
+check "a PR the gate passed is ready" ready \
+    "$(pr "$code" "$green" "$(review "$tip" APPROVED)" | column 5)"
+check "a PR waiting on the user is ready" ready \
+    "$(pr '{"path": "docs/design/a.md"}' "$green" "" | column 5)"
+check "a PR waiting on CI is a draft" draft "$(pr "$code" "$running" "" | column 5)"
+check "a stale verdict is a draft" draft \
+    "$(pr "$code" "$green" "$(review "$old" APPROVED)" | column 5)"
+check "a PR to rework is a draft" draft \
+    "$(pr "$code" "$green" "$(review "$tip" NEEDS_REWORK)" | column 5)"
+check "the title is the last column" t "$(pr "$code" "$green" "" | column 6)"
 exit $failures

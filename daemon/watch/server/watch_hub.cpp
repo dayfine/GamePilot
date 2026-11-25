@@ -38,6 +38,7 @@ constexpr double kTimelineBucketMs = 1000;
 constexpr std::size_t kTimelinesKept = 8;
 
 constexpr std::string_view kRunsPrefix = "/runs/";
+constexpr std::string_view kSeriesPrefix = "/series/";
 constexpr std::string_view kLive = "/live";
 // The pages' scripts and styles change with the build: never kept stale.
 constexpr std::string_view kNoCache = "Cache-Control: no-cache\r\n";
@@ -144,10 +145,13 @@ std::string hub_run_name(const RegistryEntry& entry) {
   return name.empty() ? "pid-" + std::to_string(entry.pid) : name;
 }
 
-std::string hub_runs_json(const std::vector<RegistryEntry>& entries) {
+std::string hub_runs_json(const std::vector<RegistryEntry>& entries,
+                          const std::vector<SeriesRecord>& series) {
   pa::JsonArray list;
   for (const RegistryEntry& entry : entries) {
+    const SeriesRecord* in = series_of_run(series, hub_run_name(entry));
     pa::JsonObject run;
+    run["series"] = in != nullptr ? in->id : std::string();
     run["pid"] = entry.pid;
     run["port"] = static_cast<std::int64_t>(entry.port);
     run["backend"] = entry.backend;
@@ -158,6 +162,24 @@ std::string hub_runs_json(const std::vector<RegistryEntry>& entries) {
     list.push_back(std::move(run));
   }
   return to_line(pa::JsonValue(std::move(list)));
+}
+
+std::string hub_live_path(const std::vector<RegistryEntry>& entries,
+                          const std::vector<SeriesRecord>& series,
+                          std::string_view checkpoint) {
+  const RegistryEntry* run = newest(entries, checkpoint);
+  const SeriesRecord* in =
+      run != nullptr ? series_of_run(series, hub_run_name(*run)) : nullptr;
+  const SeriesRecord* latest = series.empty() ? nullptr : &series.back();
+  if (checkpoint.empty() && latest != nullptr &&
+      (run == nullptr || latest->started_ms > run->started_ms)) {
+    in = latest;
+  }
+  if (in != nullptr) {
+    return std::string(kSeriesPrefix) + in->id + "/";
+  }
+  return run != nullptr ? std::string(kRunsPrefix) + hub_run_name(*run) + "/"
+                        : std::string();
 }
 
 std::string hub_recent_json(std::string_view results_tsv, std::size_t limit) {
@@ -293,6 +315,9 @@ void WatchHub::respond(Connection& connection, const HttpRequest& request) {
       }
       response = http_response(404, "text/plain", "run not live\n");
     }
+  } else if (path.starts_with(kSeriesPrefix)) {
+    respond_series(connection, request, path.substr(kSeriesPrefix.size()));
+    return;
   } else if (!get) {
     response = http_response(405, "text/plain", "method not allowed\n");
   } else if (path == "/") {
@@ -301,7 +326,12 @@ void WatchHub::respond(Connection& connection, const HttpRequest& request) {
     response = http_response(200, asset->type, asset->bytes, kNoCache);
   } else if (path == "/runs.json") {
     response = http_response(200, "application/json",
-                             hub_runs_json(live_entries(options_.registry)),
+                             hub_runs_json(live_entries(options_.registry),
+                                           live_series(options_.registry)),
+                             kAnyOrigin);
+  } else if (path == "/series.json") {
+    response = http_response(200, "application/json",
+                             hub_series_json(live_series(options_.registry)),
                              kAnyOrigin);
   } else if (path == "/history.json") {
     std::set<std::string> live;
@@ -322,13 +352,12 @@ void WatchHub::respond(Connection& connection, const HttpRequest& request) {
              path.starts_with(std::string(kLive) + "/")) {
     const std::string_view checkpoint =
         path.size() > kLive.size() ? path.substr(kLive.size() + 1) : "";
-    const auto entries = live_entries(options_.registry);
-    const RegistryEntry* entry = newest(entries, checkpoint);
+    const std::string live =
+        hub_live_path(live_entries(options_.registry),
+                      live_series(options_.registry), checkpoint);
     response =
-        entry != nullptr
-            ? redirect(with_query(std::string(kRunsPrefix) +
-                                      hub_run_name(*entry) + "/",
-                                  request.query))
+        !live.empty()
+            ? redirect(with_query(live, request.query))
             : http_response(404, "text/html; charset=utf-8",
                             notice_page(checkpoint.empty()
                                             ? "No live run yet. This page "
@@ -339,6 +368,57 @@ void WatchHub::respond(Connection& connection, const HttpRequest& request) {
                                         /*refresh=*/true));
   } else {
     response = http_response(404, "text/plain", "not found\n");
+  }
+  connection.client.send_all(response);
+  connection.client.close();
+}
+
+// The series' page with its scripts and styles, its record, and the rest
+// passed on to its run going.
+void WatchHub::respond_series(Connection& connection,
+                              const HttpRequest& request,
+                              std::string_view rest) {
+  const std::size_t slash = rest.find('/');
+  const std::string id(rest.substr(0, slash));
+  const auto record = read_series_record(options_.registry, id);
+  std::string response;
+  if (!record) {
+    response = http_response(
+        404, "text/html; charset=utf-8",
+        notice_page("No checkpoint series " + id + " here.", false));
+  } else if (slash == std::string_view::npos) {
+    response = redirect(
+        with_query(std::string(kSeriesPrefix) + id + "/", request.query));
+  } else {
+    const std::string_view sub = rest.substr(slash);
+    const bool get = request.method == "GET";
+    const auto entries = live_entries(options_.registry);
+    const auto entry = std::find_if(
+        entries.begin(), entries.end(), [&](const RegistryEntry& e) {
+          return !record->run.empty() && hub_run_name(e) == record->run;
+        });
+    const RegistryEntry* live = entry != entries.end() ? &*entry : nullptr;
+    const auto asset = watch_asset(sub.substr(1));
+    if (get && sub == "/series.json") {
+      response =
+          http_response(200, "application/json", record->json, kAnyOrigin);
+    } else if (get && asset) {
+      // The page's scripts and styles, from the hub's build like the page.
+      response = http_response(200, asset->type, asset->bytes, kNoCache);
+    } else if (live != nullptr &&
+               (sub == "/" || sub == "/summary.json" || sub == "/events" ||
+                sub == "/stream" || sub == "/frame" || sub == "/stop")) {
+      if (!respond_run(connection, request, record->run, sub, live)) {
+        pass_through(connection, *live, request, sub);
+      }
+      return;
+    } else if (get && sub == "/") {
+      response =
+          http_response(200, "text/html; charset=utf-8", page_with_token(""));
+    } else {
+      response = http_response(503, "text/plain", "between runs\n",
+                               "Retry-After: 2\r\n");
+    }
   }
   connection.client.send_all(response);
   connection.client.close();

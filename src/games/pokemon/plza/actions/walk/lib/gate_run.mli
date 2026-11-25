@@ -12,7 +12,7 @@
     stops up to a slice later. The prompt counts on one read (the fork's watcher
     wants it 200 ms) and over the story screen's prompt box (0.3, 0.2, 0.4,
     0.65; the fork's is 0.7 high). The bar gone is the party bar
-    ({!Screen.t.player_can_move}: its D-pad marker or its empty last slot),
+    ({!Walk_screen.t.player_can_move}: its D-pad marker or its empty last slot),
     where the fork reads the marker alone. *)
 
 val run :
