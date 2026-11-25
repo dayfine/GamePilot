@@ -1,0 +1,3 @@
+(library
+ (name name_suggestion)
+ (public_name gamepilot.name_suggestion))

@@ -15,7 +15,7 @@ type place = {
   map_object : map_object;
 }
 
-type t = place list
+type t = { places : place list; towns : Towns.t }
 
 let format = "gamepilot-places/1"
 let asset = "src/games/frlg/places/places.json"
@@ -101,7 +101,7 @@ let rec all_ok acc = function
 let parse ~source json =
   let where = source ^ ": " in
   let* top = fields where "the table" json in
-  let* () = only where [ "format"; "game"; "places" ] top in
+  let* () = only where [ "format"; "game"; "places"; "towns" ] top in
   let* named = string where "format" top in
   let* () =
     if named = format then Ok ()
@@ -110,7 +110,14 @@ let parse ~source json =
   let* places =
     Result.bind (field where "places" top) (fields where "places")
   in
-  all_ok [] (List.map (place where) places)
+  let* places = all_ok [] (List.map (place where) places) in
+  let names = List.map (fun p -> p.name) places in
+  let* towns =
+    match List.assoc_opt "towns" top with
+    | None -> Ok Towns.empty
+    | Some towns -> Towns.parse ~where ~places:names towns
+  in
+  Ok { places; towns }
 
 let read () =
   match Frlg_repo_files.Repo_files.locate asset with
@@ -122,15 +129,28 @@ let read () =
 
 let loaded = lazy (read ())
 let load () = Lazy.force loaded
-let places t = t
+let places t = t.places
+let towns t = t.towns
 
 let find t name =
-  match List.find_opt (fun p -> p.name = name) t with
+  match List.find_opt (fun p -> p.name = name) t.places with
   | Some p -> Ok p
   | None ->
       Error
         (Name_suggestion.unknown ~what:"place" name
-           (List.map (fun p -> p.name) t))
+           (List.map (fun p -> p.name) t.places))
 
-let pose p : Checkpoints.Pose.grid =
-  { map = p.map; tiles = [ p.stand ]; facing = Some p.facing }
+let spot p : Checkpoints_expand.Place_routes.spot =
+  { map = p.map; tile = p.stand; facing = Some p.facing }
+
+let routes t : Checkpoints_expand.Place_routes.game =
+  {
+    place = (fun name -> Result.map spot (find t name));
+    ride = Lift_stops.ride;
+  }
+
+let resolve t : Checkpoints_expand.Fragment_calls.resolve =
+ fun ~kind value ~field ->
+  match kind with
+  | "town" -> Towns.field t.towns value ~field
+  | other -> Error ("no parameter kind " ^ other ^ " (town)")

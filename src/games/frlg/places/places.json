@@ -2,37 +2,49 @@
   "format": "gamepilot-places/1",
   "game": "frlg",
   "places": {
+    "celadon_dept_store_1f_save": {
+      "map": "CeladonCity_DepartmentStore_1F",
+      "object": {"not_in_maps": "a save spot below the lift door, where su-01 ends and tt-01 starts"},
+      "stand": [6, 2],
+      "facing": "south"
+    },
+    "celadon_dept_store_4f_clerk": {
+      "map": "CeladonCity_DepartmentStore_4F",
+      "object": {"npc": "CeladonCity_DepartmentStore_4F_EventScript_Clerk"},
+      "stand": [3, 11],
+      "facing": "south"
+    },
+    "celadon_dept_store_west_door_outside": {
+      "map": "CeladonCity",
+      "object": {"warp": "warp_1", "to_map": "CeladonCity_DepartmentStore_1F"},
+      "stand": [11, 15],
+      "facing": "south"
+    },
+    "celadon_game_corner_coins_clerk": {
+      "map": "CeladonCity_GameCorner",
+      "object": {"npc": "CeladonCity_GameCorner_EventScript_CoinsClerk"},
+      "stand": [6, 4],
+      "facing": "north"
+    },
+    "celadon_prize_room_mon_clerk": {
+      "map": "CeladonCity_GameCorner_PrizeRoom",
+      "object": {"npc": "CeladonCity_GameCorner_PrizeRoom_EventScript_PrizeClerkMons"},
+      "stand": [4, 4],
+      "facing": "north"
+    },
     "celadon_prize_room_outside": {
       "map": "CeladonCity",
       "object": {"warp": "warp_5", "to_map": "CeladonCity_GameCorner_PrizeRoom"},
       "stand": [39, 21],
       "facing": "south"
     },
-    "dept_store_1f_save": {
-      "map": "CeladonCity_DepartmentStore_1F",
-      "object": {"not_in_maps": "a save spot below the lift door, where su-01 ends and tt-01 starts"},
-      "stand": [6, 2],
-      "facing": "south"
+    "celadon_restaurant_coin_case_man": {
+      "map": "CeladonCity_Restaurant",
+      "object": {"npc": "CeladonCity_Restaurant_EventScript_CoinCaseMan"},
+      "stand": [2, 2],
+      "facing": "west"
     },
-    "dept_store_4f_clerk": {
-      "map": "CeladonCity_DepartmentStore_4F",
-      "object": {"npc": "CeladonCity_DepartmentStore_4F_EventScript_Clerk"},
-      "stand": [3, 11],
-      "facing": "south"
-    },
-    "dept_store_west_door_outside": {
-      "map": "CeladonCity",
-      "object": {"warp": "warp_1", "to_map": "CeladonCity_DepartmentStore_1F"},
-      "stand": [11, 15],
-      "facing": "south"
-    },
-    "game_corner_coins_clerk": {
-      "map": "CeladonCity_GameCorner",
-      "object": {"npc": "CeladonCity_GameCorner_EventScript_CoinsClerk"},
-      "stand": [6, 4],
-      "facing": "north"
-    },
-    "indigoplateau_nurse": {
+    "indigo_plateau_nurse": {
       "map": "IndigoPlateau_PokemonCenter_1F",
       "object": {"npc": "IndigoPlateau_PokemonCenter_1F_EventScript_Nurse"},
       "stand": [13, 12],
@@ -50,34 +62,10 @@
       "stand": [20, 16],
       "facing": "south"
     },
-    "lavendertown_nurse": {
+    "lavender_nurse": {
       "map": "LavenderTown_PokemonCenter_1F",
       "object": {"npc": "LavenderTown_PokemonCenter_1F_EventScript_Nurse"},
       "stand": [7, 4],
-      "facing": "north"
-    },
-    "prize_room_mon_clerk": {
-      "map": "CeladonCity_GameCorner_PrizeRoom",
-      "object": {"npc": "CeladonCity_GameCorner_PrizeRoom_EventScript_PrizeClerkMons"},
-      "stand": [4, 4],
-      "facing": "north"
-    },
-    "restaurant_coin_case_man": {
-      "map": "CeladonCity_Restaurant",
-      "object": {"npc": "CeladonCity_Restaurant_EventScript_CoinCaseMan"},
-      "stand": [2, 2],
-      "facing": "west"
-    },
-    "route2_house_outside": {
-      "map": "Route2",
-      "object": {"warp": "warp_4", "to_map": "Route2_House"},
-      "stand": [17, 23],
-      "facing": "south"
-    },
-    "route2_house_reyley": {
-      "map": "Route2_House",
-      "object": {"npc": "Route2_House_EventScript_Reyley"},
-      "stand": [7, 3],
       "facing": "north"
     },
     "route6_hidden_rare_candy": {
@@ -85,24 +73,10 @@
       "object": {"hidden_item": "FLAG_HIDDEN_ITEM_ROUTE6_RARE_CANDY"},
       "stand": [19, 6],
       "facing": "north"
-    },
-    "route6_hidden_sitrus_berry": {
-      "map": "Route6",
-      "object": {"hidden_item": "FLAG_HIDDEN_ITEM_ROUTE6_SITRUS_BERRY"},
-      "stand": [5, 6],
-      "facing": "north"
-    },
-    "vermilion_house2_elyssa": {
-      "map": "VermilionCity_House2",
-      "object": {"npc": "VermilionCity_House2_EventScript_Elyssa"},
-      "stand": [4, 5],
-      "facing": "north"
-    },
-    "vermilion_house2_outside": {
-      "map": "VermilionCity",
-      "object": {"warp": "warp_6", "to_map": "VermilionCity_House2"},
-      "stand": [19, 18],
-      "facing": "south"
     }
+  },
+  "towns": {
+    "indigo_plateau": {"nurse": "indigo_plateau_nurse", "fly": "IndigoPlateau"},
+    "lavender": {"nurse": "lavender_nurse", "fly": "LavenderTown", "mart": "lavender_mart_clerk"}
   }
 }

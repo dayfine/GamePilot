@@ -1,39 +1,24 @@
-(rule
- (copy ../../programs/mail_glitch/plans/mg-01.plan.json mg-01.plan.json))
-
-(rule
- (copy ../../programs/mail_glitch/plans/mg-06.plan.json mg-06.plan.json))
-
-(rule
- (copy ../../programs/supplies/plans/su-01.plan.json su-01.plan.json))
-
-(rule
- (copy ../../programs/team_training/plans/tt-01.plan.json tt-01.plan.json))
-
 (test
  (name test_places)
- (modules test_places)
+ (modules place_objects test_places)
  (libraries
   yojson
   gamepilot.table_test
   gamepilot.grid_maps
   gamepilot.checkpoints
+  gamepilot.checkpoints_expand
+  gamepilot.frlg_repo_files
   gamepilot.frlg_overworld
+  gamepilot.frlg_actions
   gamepilot.frlg_places
   gamepilot.frlg_checkpoints))
 
 (test
- (name test_place_targets)
- (modules test_place_targets)
- (deps
-  mg-01.plan.json
-  mg-06.plan.json
-  su-01.plan.json
-  tt-01.plan.json
-  (glob_files before/*.plan.json))
+ (name test_plan_expansion)
+ (modules test_plan_expansion)
  (libraries
   yojson
   gamepilot.table_test
   gamepilot.checkpoints
-  gamepilot.frlg_places
+  gamepilot.plan_text
   gamepilot.frlg_checkpoints))

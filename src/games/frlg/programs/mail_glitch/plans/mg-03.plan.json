@@ -100,7 +100,7 @@
       {
         "id": "heal_lavender",
         "fragment": "heal_at",
-        "args": {"town": "lavendertown"},
+        "args": {"town": "lavender"},
         "why": "full HP/PP before Pokemon Tower 5F switch-training"
       }
     ]

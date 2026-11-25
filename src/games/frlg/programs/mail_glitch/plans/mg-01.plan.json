@@ -22,7 +22,7 @@
         "kind": "route",
         "action": "run",
         "args": {
-          "target": {"place": "restaurant_coin_case_man"}
+          "target": {"place": "celadon_restaurant_coin_case_man"}
         },
         "why": "into Celadon Restaurant to face CoinCaseMan"
       },
@@ -42,7 +42,7 @@
         "kind": "route",
         "action": "run",
         "args": {
-          "target": {"place": "dept_store_4f_clerk"}
+          "target": {"place": "celadon_dept_store_4f_clerk"}
         },
         "why": "up the Dept Store lift to face the 4F clerk (Wise Man Gifts) across the counter"
       },
@@ -63,7 +63,7 @@
         "kind": "route",
         "action": "run",
         "args": {
-          "target": {"place": "game_corner_coins_clerk"}
+          "target": {"place": "celadon_game_corner_coins_clerk"}
         },
         "why": "down the lift, out of the Dept Store, into the Game Corner to face CoinsClerk across the counter"
       },
@@ -81,7 +81,7 @@
         "kind": "route",
         "action": "run",
         "args": {
-          "target": {"place": "prize_room_mon_clerk"}
+          "target": {"place": "celadon_prize_room_mon_clerk"}
         },
         "why": "out of the Game Corner, into the Prize Room to face PrizeClerkMons"
       },

@@ -13,5 +13,5 @@
   gamepilot.frlg_repo_files
   gamepilot.frlg_overworld
   gamepilot.frlg_actions
-  gamepilot.frlg_places
-  gamepilot.frlg_fragments))
+  gamepilot.checkpoints_expand
+  gamepilot.frlg_places))

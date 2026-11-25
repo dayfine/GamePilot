@@ -1,7 +1,6 @@
-(* Plan_decode reads every PokemonSimulation FireRed plan and the Mail Glitch
-   plans that need no FireRed expansion (places, fragments: the program
-   registry's test loads every program plan through FireRed's Plan_file), types
-   each built-in kind's args, and rejects a broken plan naming the field. *)
+(* Plan_decode reads every PokemonSimulation FireRed plan, types each built-in
+   kind's args, and rejects a broken plan naming the field. The Mail Glitch
+   plans are read through FireRed's loader, in its test_mail_glitch_plans. *)
 
 open Checkpoints
 
@@ -26,32 +25,6 @@ let load name dir =
   | Ok plan -> plan
   | Error message -> failwith message
 
-(* The plan's metadata (postconditions, retries, repeat), decoded with its
-   events left out: some Mail Glitch plans' events name places or fragments,
-   which only FireRed's loader expands (Frlg_checkpoints.Plan_file). *)
-let metadata_of name dir =
-  let without_events = function
-    | `Assoc plan ->
-        `Assoc
-          (List.map
-             (function
-               | "checkpoint", `Assoc c ->
-                   ( "checkpoint",
-                     `Assoc
-                       (List.map
-                          (function
-                            | "events", _ -> ("events", `List []) | f -> f)
-                          c) )
-               | f -> f)
-             plan)
-    | json -> json
-  in
-  let json = Yojson.Safe.from_file (Filename.concat dir name) in
-  match Plan_decode.decode ~source:name (without_events json) with
-  | Ok plan -> plan
-  | Error message -> failwith message
-
-(* A plan's id, start, and how many events of each kind, in first-seen order. *)
 let outline name dir =
   let plan = load name dir in
   let counts =
@@ -76,7 +49,6 @@ let event name dir id =
   Plan_text.event
     (List.find (fun (e : Plan.event) -> e.id = id) plan.checkpoint.events)
 
-let mg = Plan_files.mail_glitch_dir
 let authored = Plan_files.authored_dir
 
 let base =
@@ -142,53 +114,9 @@ let real_plans : Table_test.case list =
       expectation = "all decode";
     };
     {
-      name = "mg-02 outline";
-      input = (fun () -> outline "mg-02.plan.json" mg);
-      expectation =
-        "frlg mg-02 from CeladonCity (39, 21) south: 7 route, 6 game_action, 1 \
-         scene";
-    };
-    {
-      name = "mg-04b outline: one grind round";
-      input = (fun () -> outline "mg-04b.plan.json" mg);
-      expectation =
-        "frlg mg-04b from IndigoPlateau_PokemonCenter_1F (13, 12) north: 1 \
-         game_action";
-    };
-    {
-      name = "mg-04c outline";
-      input = (fun () -> outline "mg-04c.plan.json" mg);
-      expectation =
-        "frlg mg-04c from IndigoPlateau_PokemonCenter_1F (13, 12) north: 2 \
-         route, 1 game_action";
-    };
-    {
-      name = "mg-05a outline";
-      input = (fun () -> outline "mg-05a.plan.json" mg);
-      expectation =
-        "frlg mg-05a from LavenderTown (18, 7) south: 9 route, 12 game_action, \
-         1 scene";
-    };
-    {
-      name = "mg-05 outline";
-      input = (fun () -> outline "mg-05.plan.json" mg);
-      expectation = "frlg mg-05 from Route16 (30, 7) north: 2 game_action";
-    };
-    {
       name = "a plan with no start (new game)";
       input = (fun () -> outline "frlg-00.01.plan.json" authored);
       expectation = "frlg 00.01 from (no start): 1 new_game, 1 options";
-    };
-    {
-      name = "a route's typed target";
-      input = (fun () -> event "mg-02.plan.json" mg "to_route16_cut_tree");
-      expectation = "to_route16_cut_tree: [run] route to Route16 (41, 12) north";
-    };
-    {
-      name = "a game action keeps its args as JSON, and its declared_after";
-      input = (fun () -> event "mg-02.plan.json" mg "fly_vermilion");
-      expectation =
-        {|fly_vermilion: [fly] game_action {"town":"VermilionCity","species":"pidgey"} => VermilionCity (15, 7) south|};
     };
     {
       name = "legs that fight wild Pokemon";
@@ -289,56 +217,6 @@ let inline_plans : Table_test.case list =
       (at ^ {|start has a "map" or a "place", not both or neither.|});
   ]
 
-(* A plan's postconditions, one per line; "none" when it states none. *)
-let count_text : Plan.count -> string = function
-  | Count_exactly n -> Printf.sprintf "x%d" n
-  | Count_gained n when n < 0 -> Printf.sprintf "used %d" (-n)
-  | Count_gained n -> Printf.sprintf "gained %d" n
-  | Count_at_least n -> Printf.sprintf "at least %d" n
-
-let postconditions_text (plan : Plan.t) =
-  let p = plan.postconditions in
-  let list = String.concat ", " in
-  List.concat
-    [
-      Option.fold ~none:[]
-        ~some:(fun g -> [ "position " ^ Pose.grid_to_string g ])
-        p.position;
-      (match p.party with
-      | Some (Party_in_order l) -> [ "party in order " ^ list l ]
-      | Some (Party_includes { members; slots }) ->
-          ("party includes " ^ list members)
-          :: List.map
-               (fun ({ slot; species } : Plan.slot) ->
-                 Printf.sprintf "%s in slot %d" species slot)
-               slots
-      | None -> []);
-      List.map
-        (fun ({ bag_item; count } : Plan.bag_count) ->
-          Printf.sprintf "item %s %s" bag_item (count_text count))
-        p.items;
-      Option.fold ~none:[] ~some:(fun c -> [ "coins " ^ count_text c ]) p.coins;
-      Option.fold ~none:[]
-        ~some:(function
-          | Plan.Money_range { min; max } ->
-              [ Printf.sprintf "money %d to %d" min max ]
-          | Money_spent n -> [ Printf.sprintf "money spent %d" n ])
-        p.money;
-      (if p.flags = [] then [] else [ "flags " ^ list p.flags ]);
-      List.map
-        (fun ({ species; moves } : Plan.knows) ->
-          Printf.sprintf "%s knows %s" species (list moves))
-        p.knows;
-      List.map
-        (fun ({ species; min } : Plan.level) ->
-          Printf.sprintf "%s at least Lv %d" species min)
-        p.levels;
-      Option.fold ~none:[] ~some:(fun m -> [ "marks " ^ list m ]) p.marks;
-    ]
-  |> function
-  | [] -> "none"
-  | lines -> String.concat "\n" lines
-
 let with_postconditions json =
   let text =
     edited {|"title": "Test",|}
@@ -349,79 +227,13 @@ let with_postconditions json =
   match
     Plan_decode.decode ~source:"base.plan.json" (Yojson.Safe.from_string text)
   with
-  | Ok plan -> postconditions_text plan
+  | Ok plan -> Plan_text.postconditions plan
   | Error message -> message
 
 let post = at ^ "metadata.postconditions."
 
 let postcondition_cases : Table_test.case list =
   [
-    {
-      name =
-        "mg-01 promises the members the plans use (Abra among them), 20 coins \
-         gained and $4,100 spent";
-      input = (fun () -> postconditions_text (metadata_of "mg-01.plan.json" mg));
-      expectation =
-        "party includes blastoise, pidgey, abra\n\
-         coins gained 20\n\
-         money spent 4100";
-    };
-    {
-      name = "mg-05 promises MIMIEN, Pidgey and slots 1-3's marks";
-      input = (fun () -> postconditions_text (metadata_of "mg-05.plan.json" mg));
-      expectation =
-        "party includes mr-mime, pidgey\nmarks held_item, none, held_item";
-    };
-    {
-      name = "mg-03 promises MIMIEN for Abra, 2 Revives and an Escape Rope";
-      input = (fun () -> postconditions_text (metadata_of "mg-03.plan.json" mg));
-      expectation =
-        "party includes blastoise, pidgey, mr-mime, farfetchd\n\
-         item revive gained 2\n\
-         item escape-rope gained 1\n\
-         money spent 3550";
-    };
-    {
-      name = "mg-04a promises Knock Off and one rope used";
-      input =
-        (fun () -> postconditions_text (metadata_of "mg-04a.plan.json" mg));
-      expectation =
-        "party includes blastoise, pidgey, mr-mime, farfetchd\n\
-         item revive gained 0\n\
-         item escape-rope used 1\n\
-         money spent 0\n\
-         farfetchd knows knock-off";
-    };
-    {
-      name = "a grind round (mg-04b) promises what holds on any save";
-      input =
-        (fun () -> postconditions_text (metadata_of "mg-04b.plan.json" mg));
-      expectation =
-        "position IndigoPlateau_PokemonCenter_1F (13, 12) north\n\
-         party includes blastoise, pidgey, mr-mime, farfetchd\n\
-         money spent 0";
-    };
-    {
-      name = "mg-04c promises the grind's moves";
-      input =
-        (fun () -> postconditions_text (metadata_of "mg-04c.plan.json" mg));
-      expectation =
-        "party includes blastoise, pidgey, mr-mime, farfetchd\n\
-         money spent 0\n\
-         farfetchd knows knock-off\n\
-         mr-mime knows recycle\n\
-         mr-mime at least Lv 33";
-    };
-    {
-      name = "mg-06 promises MIMIEN in slot 1, where the duplication gives";
-      input = (fun () -> postconditions_text (metadata_of "mg-06.plan.json" mg));
-      expectation =
-        "party includes pidgey\n\
-         mr-mime in slot 1\n\
-         item antidote gained 0\n\
-         item retro-mail gained 1\n\
-         money spent 400";
-    };
     {
       name = "every postcondition, PokemonSimulation's and ours";
       input =
@@ -505,21 +317,6 @@ let postcondition_cases : Table_test.case list =
       expectation = post ^ "levels[0].min is missing.";
     };
     {
-      name = "mg-05a promises Blastoise's Leppa Berry and MIMIEN's mail";
-      input =
-        (fun () -> postconditions_text (metadata_of "mg-05a.plan.json" mg));
-      expectation =
-        "party includes pidgey\n\
-         farfetchd in slot 1\n\
-         blastoise in slot 2\n\
-         mr-mime in slot 3\n\
-         item antidote gained 2\n\
-         item super-potion gained 3\n\
-         item retro-mail used 1\n\
-         money spent 2300\n\
-         marks held_item, held_item, mail";
-    };
-    {
       name = "counts gained, used and at least, and coins gained";
       input =
         (fun () ->
@@ -581,9 +378,6 @@ let retries_cases : Table_test.case list =
     { name; input; expectation }
   in
   [
-    case "mg-05 retries the battle's luck 3 times"
-      (fun () -> string_of_int (metadata_of "mg-05.plan.json" mg).retries)
-      "3";
     case "no retries field: none"
       (fun () -> retries_of {|{"phase": "testing"}|})
       "0";
@@ -591,13 +385,6 @@ let retries_cases : Table_test.case list =
       (fun () -> retries_of {|{"retries": -1}|})
       (at ^ "metadata.retries is -1, not 0 or more.");
   ]
-
-let repeat_text (plan : Plan.t) =
-  match plan.repeat with
-  | None -> "no repeat"
-  | Some { until; max_rounds } ->
-      Printf.sprintf "at most %d rounds, until:\n%s" max_rounds
-        (postconditions_text { plan with postconditions = until })
 
 let repeat_of metadata =
   let text =
@@ -607,7 +394,7 @@ let repeat_of metadata =
   match
     Plan_decode.decode ~source:"base.plan.json" (Yojson.Safe.from_string text)
   with
-  | Ok plan -> repeat_text plan
+  | Ok plan -> Plan_text.repeat plan
   | Error message -> message
 
 let repeat_cases : Table_test.case list =
@@ -615,12 +402,6 @@ let repeat_cases : Table_test.case list =
     { name; input; expectation }
   in
   [
-    case "mg-04b repeats until MIMIEN is Lv 33 and knows Recycle"
-      (fun () -> repeat_text (metadata_of "mg-04b.plan.json" mg))
-      "at most 20 rounds, until:\nmr-mime knows recycle\nmr-mime at least Lv 33";
-    case "mg-04b retries each round twice"
-      (fun () -> string_of_int (metadata_of "mg-04b.plan.json" mg).retries)
-      "2";
     case "no repeat field: none"
       (fun () -> repeat_of {|{"phase": "testing"}|})
       "no repeat";

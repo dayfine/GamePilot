@@ -56,7 +56,7 @@
       {
         "id": "heal_indigo",
         "fragment": "heal_at",
-        "args": {"town": "indigoplateau"},
+        "args": {"town": "indigo_plateau"},
         "why": "full HP/PP before the first grind round, at the Indigo nurse: mg-04b's start and the grind rounds' save point"
       }
     ]

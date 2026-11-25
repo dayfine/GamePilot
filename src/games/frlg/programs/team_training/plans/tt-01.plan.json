@@ -38,7 +38,7 @@
         "kind": "route",
         "action": "run",
         "args": {
-          "target": {"place": "dept_store_west_door_outside"}
+          "target": {"place": "celadon_dept_store_west_door_outside"}
         },
         "why": "Leave the Dept. Store by its west door to fly."
       },
@@ -120,7 +120,7 @@
         "kind": "route",
         "action": "run",
         "args": {
-          "target": {"place": "dept_store_1f_save"}
+          "target": {"place": "celadon_dept_store_1f_save"}
         },
         "why": "Back to the Dept. Store 1F save spot."
       },

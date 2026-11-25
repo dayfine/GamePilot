@@ -1,0 +1,4 @@
+(library
+ (name plan_text)
+ (public_name gamepilot.plan_text)
+ (libraries yojson gamepilot.grid_maps gamepilot.checkpoints))

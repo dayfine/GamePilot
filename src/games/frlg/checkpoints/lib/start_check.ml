@@ -67,15 +67,13 @@ let start_file ~states = function
 let load_frame path =
   if not (Sys.file_exists path) then Ok None
   else
-    match Yojson.Safe.from_file path with
-    | json -> Result.map Option.some (F.of_json json)
-    | exception Yojson.Json_error e -> Error (path ^ ": " ^ e)
-    | exception Sys_error e -> Error e
+    Result.bind (Frlg_repo_files.Json_file.read path) (fun json ->
+        Result.map Option.some (F.of_json json))
 
 let write_frame ~log path frame =
-  match Yojson.Safe.to_file path (F.to_json frame) with
-  | () -> log ("[Start] kept the start frame as " ^ path)
-  | exception Sys_error e -> log ("[Start] could not keep the frame: " ^ e)
+  match Frlg_repo_files.Json_file.write path (F.to_json frame) with
+  | Ok () -> log ("[Start] kept the start frame as " ^ path)
+  | Error e -> log ("[Start] could not keep the frame: " ^ e)
 
 let keep_frame ~log path =
   match read_frame () with
