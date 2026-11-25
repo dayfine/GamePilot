@@ -51,7 +51,7 @@ sh run/run_checkpoints_on_mgba.sh frlg.dex_collection --from 01-ultra-balls --to
 | 03-shiny-drowzee | From anywhere outdoors: a shiny Drowzee in Route 11's grass by the wild RNG, stored in the PC, back to the nurse |
 | 04-shiny-ekans | From anywhere outdoors: a shiny Ekans in Route 10's grass by the wild RNG, stored in the PC, back to the nurse |
 
-<!-- plans: 1b481ae8c2ea -->
+<!-- plans: 315cd0a45e53 -->
 <!-- /generated -->
 
 
@@ -96,7 +96,7 @@ against the table's.
 The waits can still land a few advances off the target: the overworld's RNG does not advance
 exactly once a frame (Route 11's walkers draw on it too). So a plan also holds the fork's
 `ingame_offset` calibration, found by replaying its presses on the grass save with an RNG trace in
-the lab: -1 for Voltorb, -3 for Drowzee.
+the lab: -1 for Voltorb, -3 for Drowzee, +1 for Ekans.
 
 The plain catches of the first version of this program (catch whatever the Pokedex lacks, run
 from the rest) are gone: every catch toward the 60 is to be shiny (issue #14).

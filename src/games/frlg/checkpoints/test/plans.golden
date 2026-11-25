@@ -51,7 +51,7 @@ frlg 04-shiny-ekans from anywhere outdoors: 5 game_action, 4 route, 1 heal
 fly_route10: [fly] game_action {"town":"Route10"} => Route10 (13, 21) south
 to_grass: [run] route to Route10 (12, 8) east
 save_in_grass: [save_game] game_action {}
-shiny_ekans: [wild_rng] game_action {"species":"ekans","location":"route_10","tid":33002,"sid":9011,"seeds":"rng_seeds_mgba_sevii_save.json","seed_shift":4,"frame_model":"mgba","advances":[1000,4000],"ball":"ultra-ball","balls":5,"attempts":1}
+shiny_ekans: [wild_rng] game_action {"species":"ekans","location":"route_10","tid":33002,"sid":9011,"seeds":"rng_seeds_mgba_sevii_save.json","seed_shift":4,"ingame_offset":1,"frame_model":"mgba","advances":[1000,4000],"ball":"ultra-ball","balls":5,"attempts":1}
 save_catch: [save_game] game_action {}
 back_to_pc: [run] route to Route10_PokemonCenter_1F (11, 2) north
 deposit_catch: [pc_deposit] game_action {"species":["ekans"]}
