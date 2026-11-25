@@ -8,6 +8,27 @@ on #25 (Supplies' configuration, Team Training's checkpoints, the repeated "go t
 and is for review before any code. The choices below are recommendations; the open questions are at
 the end.
 
+## Words
+
+The levels, from what you run down to the wire. Code, docs and reviews use these words and no others
+for these things.
+
+| Level | What it is | Example |
+|---|---|---|
+| **Program** | What you run: registered, takes a configuration | Supplies, Team Training |
+| **Goal** | What the program must achieve, as facts the runner can check on the save | at least 100 Retro Mail; Blastoise Lv 100 |
+| **Checkpoints** | The chain the goal is split into. Each starts from a known save and ends in a checked state, so a failure resumes there | su-01; tt-01 → tt-02 → tt-03 |
+| **Plan** | One checkpoint's script: its start, its events, its postconditions | `tt-01.plan.json` |
+| **Event** | One entry of a plan: a walk or a game action | `fly_vermilion`, `duplicate_item` |
+| **Game steps** | What an action reads and does on the screen (`game_steps`, the record a deciding module takes) | `open_list`, `find_battle` |
+| **Inputs** | Button presses on the wire | A, DOWN, hold B |
+
+A checkpoint repeats in two ways, neither of them a level: **runs** are retries of the same
+checkpoint from its start ("2 of 3 runs must pass"), and **rounds** repeat a checkpoint until a
+condition holds (mg-04b's grind rounds). The whole chain is "the program's checkpoints"; "plan"
+always means one checkpoint's plan. The library that runs them is renamed from `story` to
+`checkpoints` in its own PR before any of this is built.
+
 ## Where we are
 
 - A **plan** (`pokesim-authored-checkpoint/1`, decoded by `pokemon/story`) is a list of events from
