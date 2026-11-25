@@ -37,9 +37,21 @@ let arrow : Blob_template.t =
     fill_upper = 1.1;
   }
 
-let probes ~picture ~(assets : Blob_assets.t) =
+let probe_over ~picture ~(assets : Blob_assets.t) ~id area =
   Find_probe.probe ~template:assets.choice_arrow ~picture ~id area
     (Wire.Blob_find.params ~filters:ranges ~min_area ())
 
-let shown m =
+let shown_over m id =
   List.exists (Blob_template.matches arrow ~max_score) (Find_probe.read m id)
+
+let probes ~picture ~assets = probe_over ~picture ~assets ~id area
+let shown m = shown_over m id
+let backup_save_id = "backup_save_arrow"
+
+let backup_save_area =
+  Native_box.of_fractions { left = 0.2; top = 0.5; width = 0.6; height = 0.3 }
+
+let backup_save_probes ~picture ~assets =
+  probe_over ~picture ~assets ~id:backup_save_id backup_save_area
+
+let backup_save_shown m = shown_over m backup_save_id
