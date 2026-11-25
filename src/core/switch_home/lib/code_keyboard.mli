@@ -56,9 +56,11 @@ val shown : Effects.measurements -> bool
     tile cursor's cyan): look for the keyboard only where it opens. *)
 
 val cursor : Effects.measurements -> key option
-(** The key under the cursor in the first four rows, from its border's cyan (red
-    under 130, green over 160, blue over 170, green over red by 60); [None] when
-    too little cyan shows (under 0.0005 of the frame). *)
+(** The key under the cursor in the first four rows and the eleven character
+    columns (column 10 the name keyboard's [-], [/], ['] and [!], disabled on
+    the code keyboard), from its border's cyan (red under 130, green over 160,
+    blue over 170, green over red by 60); [None] when too little cyan shows
+    (under 0.0005 of the frame). *)
 
 val type_code :
   log:(string -> unit) -> picture:Wire.box -> string -> (unit, string) result

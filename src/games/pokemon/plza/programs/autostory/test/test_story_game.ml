@@ -1,4 +1,4 @@
-(* 01.00b to 02.07 run through the engine (Plza_checkpoints.Runner) with
+(* 01.00a's choices reaching its new game, and 01.00b to 02.07 run through the engine (Plza_checkpoints.Runner) with
    Story_game's handlers on a scripted console (Fake_console): the plans
    decode, every event reaches its handler, and each handler's presses move a
    game that answers them as the console did. Also the failures: a walk whose
@@ -528,6 +528,29 @@ let outcome checkpoint screen =
 
 let result checkpoint screen () = fst (outcome checkpoint screen)
 
+(* 01.00a's plan with a new game that only says what it was given, or the
+   default new game ([given] false). *)
+let new_game_given ?(given = true) () =
+  let choices = ref "not played" in
+  let new_game (c : Plza_story.New_game_choices.t) =
+    choices :=
+      Printf.sprintf "%s, look %d, \"%s\""
+        (Plza_story.New_game_choices.info c.language).tag c.look c.name;
+    Ok ()
+  in
+  let steps = C.steps (C.create ()) look in
+  let game =
+    if given then
+      Plza_autostory.Story_game.make ~new_game steps ~checkpoint_id:"01.00a"
+        ~reload:(fun () -> Ok ())
+    else
+      Plza_autostory.Story_game.make steps ~checkpoint_id:"01.00a"
+        ~reload:(fun () -> Ok ())
+  in
+  match Runner.run game (plan "01.00a").checkpoint with
+  | Ok () -> "passed: " ^ !choices
+  | Error f -> Failure.to_string f
+
 (* Whether [part] is in [line]. *)
 let contains part line =
   let n = String.length part in
@@ -809,6 +832,11 @@ let watched checkpoint screen () =
 
 let cases =
   [
+    case "01.00a: the plan's choices reach the new game" new_game_given
+      "passed: en, look 1, \"Kosmos\"";
+    case "01.00a with no console new game: no handler, repeats"
+      (new_game_given ~given:false)
+      "01.00a event 1 (new_game): no_handler: new_game runs on the console only";
     case "01.00b: Confirm Choices, Ready!, the opening skipped, the platform"
       (result "01.00b" new_game) "passed";
     case "01.00b on another screen: nothing pressed, repeats"

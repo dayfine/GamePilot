@@ -1,7 +1,11 @@
 (executable
  (name write_probe_spec)
  (modules write_probe_spec)
- (libraries yojson gamepilot.wire gamepilot.plza_readers))
+ (libraries
+  yojson
+  gamepilot.wire
+  gamepilot.switch_home
+  gamepilot.plza_readers))
 
 (rule
  (copy fixtures/switch.probes.jsonl switch.probes.jsonl))
@@ -14,6 +18,12 @@
 
 (rule
  (copy fixtures/gifts.probes.jsonl gifts.probes.jsonl))
+
+(rule
+ (copy fixtures/intro.probes.jsonl intro.probes.jsonl))
+
+(rule
+ (copy fixtures/intro.shifted.probes.jsonl intro.shifted.probes.jsonl))
 
 (rule
  (copy fixtures/gifts.shifted.probes.jsonl gifts.shifted.probes.jsonl))
@@ -34,7 +44,8 @@
   test_party_slots
   test_lock_plate
   test_main_menu
-  test_gift_readers)
+  test_gift_readers
+  test_intro_screens)
  (modules
   test_dialog_readers
   test_story_readers
@@ -51,11 +62,19 @@
   test_lock_plate
   test_main_menu
   test_gift_readers
+  test_intro_screens
   fixture_frames)
  (deps
   switch.probes.jsonl
   switch.shifted.probes.jsonl
   switch.second.probes.jsonl
   gifts.probes.jsonl
-  gifts.shifted.probes.jsonl)
- (libraries gamepilot.wire gamepilot.table_test gamepilot.plza_readers))
+  gifts.shifted.probes.jsonl
+  intro.probes.jsonl
+  intro.shifted.probes.jsonl)
+ (libraries
+  gamepilot.wire
+  gamepilot.effects
+  gamepilot.table_test
+  gamepilot.switch_home
+  gamepilot.plza_readers))

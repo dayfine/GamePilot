@@ -26,6 +26,11 @@
 # (write_probe_spec.exe --gifts, the gift name's template from
 # assets/gift-name-vivillon.png), and fixtures/gifts.shifted.probes.jsonl: the
 # main menu's frame and images/mystery-gift's, all nine shifts each.
+# Also fixtures/intro.probes.jsonl: images/new-game's frames (the fork's
+# AutoStoryNewGame/2026-11-15 captures, JPEG quality 80 at 1080p: at 640x360
+# the look picker's corners and the keyboard's cursor no longer read) probed
+# by the new game's readers alone (write_probe_spec.exe --intro), and
+# fixtures/intro.shifted.probes.jsonl: each of them once shifted (--one).
 # The Python steps need Pillow ($SHIFT_PYTHON, default python3; e.g.
 # "uv run --with pillow python3").
 #
@@ -89,3 +94,22 @@ cp "$work/lossless/tutorial-cards/it-menu-no-card.png" "$work/gifts/tutorial-car
 (cd "$work/gifts_shifted" && "$PROBE_IMAGES" \
     --spec "$work/spec/gifts.probes.json" --viewport native ./*/*/*.png) \
     >"$HERE/fixtures/gifts.shifted.probes.jsonl"
+mkdir "$work/intro" "$work/intro_lossless" "$work/intro_shifted"
+(cd "$SRC" && dune exec games/pokemon/plza/readers/test/write_probe_spec.exe \
+    -- --intro) >"$work/spec/intro.probes.json"
+cp -R "$HERE/images/new-game" "$work/intro/"
+(cd "$work/intro" && "$PROBE_IMAGES" --spec "$work/spec/intro.probes.json" \
+    --viewport native ./new-game/*.jpg) >"$HERE/fixtures/intro.probes.jsonl"
+(cd "$work/intro" && $SHIFT_PYTHON -c '
+import os, sys
+from PIL import Image
+for path in sys.argv[2:]:
+    out = os.path.join(sys.argv[1], os.path.splitext(path)[0] + ".png")
+    os.makedirs(os.path.dirname(out), exist_ok=True)
+    Image.open(path).convert("RGB").save(out)
+' "$work/intro_lossless" ./new-game/*.jpg)
+(cd "$work/intro_lossless" && $SHIFT_PYTHON "$SHIFT_FRAME" --one \
+    "$work/intro_shifted" ./new-game/*.png)
+(cd "$work/intro_shifted" && "$PROBE_IMAGES" \
+    --spec "$work/spec/intro.probes.json" --viewport native ./*/*/*.png) \
+    >"$HERE/fixtures/intro.shifted.probes.jsonl"

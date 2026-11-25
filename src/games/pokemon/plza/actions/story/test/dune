@@ -8,12 +8,13 @@
   gamepilot.plza_walk))
 
 (tests
- (names test_catch_plan test_zone_catch)
- (modules test_catch_plan test_zone_catch)
+ (names test_catch_plan test_zone_catch test_new_game_intro)
+ (modules test_catch_plan test_zone_catch test_new_game_intro)
  (libraries
   gamepilot.wire
   gamepilot.effects
   gamepilot.table_test
+  gamepilot.switch_home
   gamepilot.engine_run
   gamepilot.plza_story
   gamepilot.plza_walk

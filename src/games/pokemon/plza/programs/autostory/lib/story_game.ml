@@ -105,6 +105,39 @@ let scene_through_prompt steps (event : Plan.event) (args : Json_field.obj) =
       through_prompt steps { Scene_machine.default with stop_at_choice = true }
   | _ -> bad_args event "the only arg is stop_at_choice, true"
 
+(* 01.00a's choices: "language" (a tag), "look" (1 to 8) and "name", each
+   optional, the fork's default when absent. *)
+let language_choice (c : New_game_choices.t) event tag =
+  match New_game_choices.of_tag tag with
+  | Some language -> Ok { c with language }
+  | None ->
+      bad_args event
+        ("language is one of "
+        ^ String.concat ", " New_game_choices.tags
+        ^ ", not " ^ tag)
+
+let choice (c : New_game_choices.t) (event : Plan.event) = function
+  | "language", `String tag -> language_choice c event tag
+  | "look", `Int look -> Ok { c with look }
+  | "name", `String name -> Ok { c with name }
+  | key, _ ->
+      bad_args event
+        (key
+       ^ ": the args are language (a tag), look (a whole number) and name (a \
+          string)")
+
+let new_game run _steps (event : Plan.event) (args : Json_field.obj) =
+  Result.bind
+    (List.fold_left
+       (fun acc arg -> Result.bind acc (fun c -> choice c event arg))
+       (Ok New_game_choices.default) args)
+    run
+
+let no_new_game _ =
+  Error
+    (Failure.cause ~repeats:true "no_handler"
+       "new_game runs on the console only")
+
 (* The fork's console action timeout for run_to_gate. *)
 let run_to_gate_ms = 8000
 
@@ -143,8 +176,9 @@ let zone_actions =
   ]
 
 (* The story's own actions, up to 03.06. *)
-let story_actions ~reload =
+let story_actions ~new_game:run ~reload =
   [
+    ("new_game", new_game run);
     ("confirm_new_game", no_args New_game_confirm.run);
     ( "opening_to_platform",
       timed Platform_wait.opening_to_platform ~default:opening_to_platform_ms );
@@ -164,10 +198,10 @@ let story_actions ~reload =
       no_args (fun steps -> Plza_walk.Ladder_climb.run (talk_steps steps)) );
   ]
 
-let game_actions ~reload steps =
+let game_actions ~new_game ~reload steps =
   List.map
     (fun (name, action) -> (name, action steps))
-    (story_actions ~reload @ zone_actions)
+    (story_actions ~new_game ~reload @ zone_actions)
 
 let scene steps (event : Plan.event) =
   match event.way with
@@ -196,11 +230,11 @@ let walk steps ~checkpoint_id (event : Plan.event) (own : Plza_rules.Action.t) =
         (Steps.walk_game_steps steps)
         ~walk_only:(walk_only checkpoint_id) event.id args
 
-let make steps ~checkpoint_id ~reload : Game.t =
+let make ?(new_game = no_new_game) steps ~checkpoint_id ~reload : Game.t =
   {
     run_own = walk steps ~checkpoint_id;
     run_builtin = builtin steps;
-    game_actions = game_actions ~reload steps;
+    game_actions = game_actions ~new_game ~reload steps;
     flag_holds = Resume_flags.holds steps;
     position = (fun () -> None);
     between_rounds = (fun () -> Ok ());

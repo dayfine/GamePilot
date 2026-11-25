@@ -11,6 +11,10 @@ val probes :
   picture:Wire.box -> assets:Plza_readers.Blob_assets.t -> Wire.probe_spec list
 (** Every probe a read needs; subscribe them around the run. *)
 
+val fresh : unit -> Effects.measurements option
+(** A frame newer than the inputs sent so far (500 ms at most), else the latest
+    one. *)
+
 val game_steps :
   picture:Wire.box ->
   log:(string -> unit) ->

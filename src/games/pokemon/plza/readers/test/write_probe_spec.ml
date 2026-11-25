@@ -12,6 +12,10 @@
    ({!Plza_readers.Party_slots.bar_probes}) and the caught mark's from its
    plate's bar ({!Plza_readers.Lock_plate.mark_probes}).
 
+   With [--intro], only the new game's readers' probes
+   ({!Plza_readers.Intro_screens}, {!Switch_home.Keyboard_typing} and
+   {!Plza_readers.Confirm_choices}), for fixtures/intro.probes.jsonl.
+
    With [--gifts], only the Mystery Gift steps' readers' probes
    ({!Plza_readers.Main_menu_row}, {!Plza_readers.Mystery_gift_screen}), for
    fixtures/gifts.probes.jsonl. *)
@@ -53,6 +57,12 @@ let () =
   match Array.to_list Sys.argv with
   | [ _; "--second"; fixture; dir ] ->
       List.iter (write_second_spec dir) (Wire.read_image_probes fixture)
+  | [ _; "--intro" ] ->
+      print_endline
+        (params
+           (Plza_readers.Intro_screens.probes ~picture:native
+           @ Switch_home.Keyboard_typing.probes
+           @ Plza_readers.Confirm_choices.probes ~picture:native))
   | [ _; "--gifts" ] ->
       print_endline
         (params

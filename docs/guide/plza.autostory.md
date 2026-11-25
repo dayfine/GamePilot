@@ -1,7 +1,8 @@
 # AutoStory
 
-Plays Pokémon Legends: Z-A's story on the Switch from a new game: it confirms the new game's
-choices, skips the opening to the station platform, then walks off the platform and presses through
+Plays Pokémon Legends: Z-A's story on the Switch from a new game: it launches the game from the
+Switch HOME, picks the language, the look and the name, confirms them, skips the opening to the
+station platform, then walks off the platform and presses through
 the arrival scenes to Main Mission 01, where you have free control in Lumiose City. From there it
 chases Pancham, takes Chikorita and beats Andi (Main Mission 01), then follows Main Missions 02 and
 03: Hotel Z, Taunie's battle, the Pokémon Center, Wild Zone 1's catches (five species in the
@@ -13,16 +14,29 @@ Runs on: the Switch.
 
 ## Before you start
 
-Start a new game by hand: choose the language, the look and the name, and stop on the "Confirm
-Choices" screen. Nothing else is read from the save. The Switch's capture must be the whole
+Delete PLZA's save (`gamepilot ctl delete-save plza`, look at the screen, then
+`gamepilot ctl delete-save --confirm`) and leave the Switch on HOME with PLZA's tile first (the game
+played last). 01.00a starts the new game from there. The Switch's capture must be the whole
 1920x1080 picture (the daemon's `--viewport native`).
+
+The new game's choices are the args of 01.00a's `new_game` event, in its plan
+(`src/games/pokemon/plza/programs/autostory/plans/01.00a.plan.json`):
+
+- `language`: `en` (the default), `es-ES`, `es-419`, `fr`, `de`, `it`, `ja` or `zh-Hant`.
+  Korean (`ko`) and Simplified Chinese (`zh-Hans`) are refused: their keyboards are not typed on.
+- `look`: 1 (the default) to 8, left to right along the top row, then the bottom one.
+- `name`: `Kosmos` (the default); at most 12 characters (6 in Japanese and Chinese), only letters,
+  digits and `- / : ' , . ? !`.
+
+To make the choices by hand instead, stop on the "Confirm Choices" screen and start at 01.00b
+(`--from 01.00b`).
 
 ## Running it
 
 <!-- generated:commands -->
 ```sh
 # the Switch: each checkpoint once, from where the console is
-cd src && opam exec -- dune exec -- gamepilot checkpoints --program plza.autostory --from 01.00b --to 03.11 --mode testing --backend switch --serial PORT --capture DEVICE \
+cd src && opam exec -- dune exec -- gamepilot checkpoints --program plza.autostory --from 01.00a --to 03.11 --mode testing --backend switch --serial PORT --capture DEVICE \
     --watch
 ```
 <!-- /generated -->
@@ -32,6 +46,7 @@ cd src && opam exec -- dune exec -- gamepilot checkpoints --program plza.autosto
 <!-- generated:checkpoints -->
 | Checkpoint | What its plan does |
 |---|---|
+| 01.00a | A new game from HOME to Confirm Choices |
 | 01.00b | Confirm Choices to the station platform |
 | 01.01 | The platform to Main Mission 01 |
 | 01.02 | Main Mission 01: chase Pancham to the battle area |
@@ -59,7 +74,7 @@ cd src && opam exec -- dune exec -- gamepilot checkpoints --program plza.autosto
 | 03.10 | Up the Research Lab's elevator to the Director's Office |
 | 03.11 | Mable's research, the Rock Smash TM |
 
-<!-- plans: 8bccc5f7e39a -->
+<!-- plans: 3b541ab595d2 -->
 <!-- /generated -->
 
 From Wild Zone 1 on:
@@ -77,8 +92,11 @@ Reloads and retries:
 
 - The first run starts wherever the console is.
 - A retry closes the game and reloads the latest autosave first.
-- 01.00b has no autosave to go back to: after it fails, put the console back on Confirm Choices by
-  hand.
+- 01.00a and 01.00b have no autosave to go back to: after 01.00a fails, delete the save again and
+  go back to HOME, or make the choices by hand and start at 01.00b; after 01.00b fails, put the
+  console back on Confirm Choices by hand.
+- 01.00a refuses choices it cannot play before it presses anything (`new_game_refused`), and stops
+  with `new_game_failed` when a screen does not show or a highlight does not reach the choice.
 - 01.01 reloads once more if the platform's controls hint has already faded.
 - A checkpoint that follows a passing one starts where it ended, with no reload.
 - 03.04 always reloads when it follows 03.03c: its legs need the reload's facing.

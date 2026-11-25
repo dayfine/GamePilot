@@ -13,7 +13,7 @@ Developer pages are in `docs/programs/`.
 | [Team Training](frlg.team_training.md) | `frlg.team_training` | mGBA, the Switch | Farms Rare Candies with the Mail Glitch's item duplication and levels the team with them. |
 | [Sevii Story](frlg.sevii_story.md) | `frlg.sevii_story` | mGBA | Plays the Sevii Islands story after the Hall of Fame, starting with Bill's trip to One Island. |
 | [Dex Collection](frlg.dex_collection.md) | `frlg.dex_collection` | mGBA | Catches wild Pokemon the Pokedex has not caught yet, toward the 60 the National Pokedex needs. |
-| [AutoStory](plza.autostory.md) | `plza.autostory` | the Switch | Plays the story from a new game's Confirm Choices to Mable's first research reward (checkpoints 01.00b to 03.11). |
+| [AutoStory](plza.autostory.md) | `plza.autostory` | the Switch | Plays the story from a new game, started on the Switch HOME with no save, to Mable's first research reward (checkpoints 01.00a to 03.11). |
 <!-- /generated -->
 
 The Mail Glitch has a second page for its last checkpoint:

@@ -8,7 +8,9 @@ let first_key = { row = 0; col = 0 }
 (* type_code_cmds' GRID: '.' a disabled key. *)
 let layout = [| "1234567890"; "QWERTYU..P"; "ASDFGHJKL."; ".XCVBNM..." |]
 let disabled = '.'
-let enabled { row; col } = layout.(row).[col] <> disabled
+
+let enabled { row; col } =
+  col < String.length layout.(row) && layout.(row).[col] <> disabled
 
 let key_of_char ch =
   let ch = Char.uppercase_ascii ch in
@@ -186,7 +188,7 @@ let min_cursor_share = 0.0005
 
 let key_at x y =
   let col = Float.to_int (Float.round ((x -. first_column) /. column_step)) in
-  if col < 0 || col >= String.length layout.(0) then None
+  if col < 0 || col >= Float.to_int character_columns then None
   else Some { row = nearest_row y; col }
 
 let enough_cyan (t : L.t) =
@@ -220,7 +222,10 @@ let press b =
 let start_key ~log m =
   match cursor m with
   | Some k ->
-      log (Printf.sprintf "Keyboard cursor on %c." layout.(k.row).[k.col]);
+      log
+        (if enabled k then
+           Printf.sprintf "Keyboard cursor on %c." layout.(k.row).[k.col]
+         else Printf.sprintf "Keyboard cursor on row %d, column %d." k.row k.col);
       k
   | None ->
       log "No keyboard cursor read; starting from \"1\" as the script does.";

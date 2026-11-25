@@ -85,6 +85,7 @@ let run_checkpoint ~log ~picture ~reload report (plan : P.Plan.t) =
   in
   let game =
     Story.Story_game.make steps ~checkpoint_id:id
+      ~new_game:(Story.Live_intro_screen.run ~picture ~log)
       ~reload:(reload_cause ~log ~picture)
   in
   let end_check () =

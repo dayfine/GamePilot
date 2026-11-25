@@ -1,7 +1,11 @@
 (** PLZA's AutoStory as a game of the checkpoint engine ({!Plza_checkpoints}):
-    the handlers 01.00b's to 03.11's plans use, over {!Plza_story.Steps}. The
+    the handlers 01.00a's to 03.11's plans use, over {!Plza_story.Steps}. The
     fork's action table (PokemonLZA_AutoStoryActionTable.cpp) for these actions:
 
+    - [new_game], 01.00a's ({!Plza_story.New_game_intro}), with the fork's
+      choices as optional args: [language] (a tag of
+      {!Plza_story.New_game_choices.tags}, ["en"] when absent), [look] (1 to 8,
+      1) and [name] (["Kosmos"]);
     - [confirm_new_game] ({!Plza_story.New_game_confirm}), no args;
     - [opening_to_platform] and [wait_for_platform]
       ({!Plza_story.Platform_wait}), with an optional [timeout_ms] (240 s and
@@ -51,11 +55,14 @@ val walk_only : string -> bool
 (** Whether a checkpoint's runs are walked: its id is before ["03.03"]. *)
 
 val make :
+  ?new_game:(Plza_story.New_game_choices.t -> Plza_story.Steps.outcome) ->
   Plza_story.Steps.game_steps ->
   checkpoint_id:string ->
   reload:(unit -> (unit, Engine_run.Failure.cause) result) ->
   Plza_checkpoints.Game.t
-(** The handlers for one checkpoint's run. *)
+(** The handlers for one checkpoint's run; [new_game] plays 01.00a's choices (by
+    default it fails [no_handler]: the live runner passes
+    {!Live_intro_screen.run}). *)
 
 val run_watched :
   ?end_check:(unit -> (unit, Engine_run.Failure.cause) result) ->
