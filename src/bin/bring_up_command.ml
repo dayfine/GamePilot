@@ -1,10 +1,11 @@
 (* gamepilot bring-up [--daemon PATH] [--serial PORT] (--capture DEVICE |
-     --replay VIDEO) [--runs-dir DIR]
+     --replay VIDEO) [--viewport V] [--runs-dir DIR]
 
    The Switch's bring-up checks (docs/switch-bring-up.md) as a run of their
    own: the daemon's --board-check (the board's mode), the game resumed when
    the console was parked on HOME (Console_park_command), and --capture-check
-   (one frame and where the GBA picture sits), each run to its end, in a run folder
+   (one frame and where the game picture sits; --viewport V is the daemon's, the
+   GBA picture by default), each run to its end, in a run folder
    (<date>-switch-bring-up-<n>, Run_record) with run.json (kind bring-up),
    both checks' output in daemon.out, the frame (frame.png, also
    $GAMEPILOT_RUNS/bring-up-frame.png), summary.txt and the RESULTS.tsv row.
@@ -17,12 +18,13 @@ type flags = {
   daemon : string;
   serial : string option;
   frames : Daemon_process.frames option;
+  viewport : string option;  (** the daemon's --viewport (nso-gba, native) *)
   runs_dir : string;
 }
 
 let usage =
   "  gamepilot bring-up [--daemon PATH] [--serial PORT] (--capture DEVICE | \
-   --replay VIDEO) [--runs-dir DIR]\n"
+   --replay VIDEO) [--viewport V] [--runs-dir DIR]\n"
 
 let rec parse f = function
   | [] -> Ok f
@@ -32,6 +34,7 @@ let rec parse f = function
       parse { f with frames = Some (Daemon_process.Capture v) } rest
   | "--replay" :: v :: rest ->
       parse { f with frames = Some (Daemon_process.Replay v) } rest
+  | "--viewport" :: v :: rest -> parse { f with viewport = Some v } rest
   | "--runs-dir" :: v :: rest -> parse { f with runs_dir = v } rest
   | a :: _ -> Error ("unknown argument " ^ a)
 
@@ -114,6 +117,7 @@ let run f frames =
     resumed
     && check ~daemon:f.daemon ~out
          (Daemon_process.frames_args frames
+         @ Option.fold ~none:[] ~some:(fun v -> [ "--viewport"; v ]) f.viewport
          @ [ "--capture-check"; Run_record.path run.record "frame.png" ])
   in
   let e = ending ~board ~resumed ~capture in
@@ -128,6 +132,7 @@ let main args =
       daemon = "daemon/build/gamepilot_daemon";
       serial = None;
       frames = None;
+      viewport = None;
       runs_dir = Attached_run.default_runs_dir ();
     }
   in

@@ -1,5 +1,5 @@
 (** FireRed's story {!Checkpoints_run.Game.t}: [route] and [ready] events
-    planned and walked ({!Frlg_overworld}), [talk] and [scene] settled
+    planned and walked ({!Frlg_overworld}), [talk], [answer] and [scene] settled
     ({!Talk}), [heal] and [save] events ({!Heal_and_save}), the ["fly"] game
     action ({!Fly}), ["lift_floor"] ({!Lift_ride}), the ["grind"] one ({!Grind},
     its walks and heals this game's), ["capture"] ({!Capture} on
