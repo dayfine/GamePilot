@@ -252,7 +252,6 @@ duplicate_rare_candy: [duplicate_item] game_action {"species":"mr-mime","item":"
 check_marks_after: [check_party_marks] game_action {"marks":["held_item","mail","mail","mail","mail","mail"]}
 retries 0
 postconditions:
-party includes 
 mr-mime in slot 1
 item rare-candy gained 98
 no repeat

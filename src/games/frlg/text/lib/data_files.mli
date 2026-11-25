@@ -16,6 +16,9 @@ val item_names_eng : string
 val species_names_eng : string
 (** English species names by slug. *)
 
+val easy_chat_words_eng : string
+(** The English Easy Chat groups and words, in the editor's order. *)
+
 val tm_hm_moves_eng : string
 (** The moves the English TMs and HMs teach. *)
 
