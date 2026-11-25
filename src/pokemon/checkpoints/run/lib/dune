@@ -3,6 +3,7 @@
  (public_name gamepilot.checkpoints_run)
  (modules_without_implementation game)
  (libraries
+  gamepilot.engine_promise
   yojson
   gamepilot.wire
   gamepilot.grid_maps

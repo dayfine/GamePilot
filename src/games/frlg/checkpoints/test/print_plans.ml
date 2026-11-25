@@ -14,11 +14,11 @@ let plan_files dir =
 let program_plans programs =
   Sys.readdir programs |> Array.to_list |> List.sort compare
   |> List.concat_map (fun program ->
-      let plans = Filename.concat program "plans" in
-      if Sys.file_exists (Filename.concat programs plans) then
-        List.map (Filename.concat plans)
-          (plan_files (Filename.concat programs plans))
-      else [])
+         let plans = Filename.concat program "plans" in
+         if Sys.file_exists (Filename.concat programs plans) then
+           List.map (Filename.concat plans)
+             (plan_files (Filename.concat programs plans))
+         else [])
   |> List.map (fun name -> (name, Filename.concat programs name))
 
 let authored_plans () =

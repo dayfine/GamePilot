@@ -6,6 +6,7 @@
 
 open Engine_run
 open Checkpoints_plan
+open Engine_promise
 open Checkpoints_run
 
 let case name input expectation = { Table_test.name; input; expectation }
@@ -230,7 +231,7 @@ let spent_from ~start =
       party = None;
       items = [];
       coins = None;
-      money = Some (Money_spent 4100);
+      money = Some (Money.Spent 4100);
       flags = [];
       knows = [];
       levels = [];

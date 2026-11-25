@@ -74,26 +74,7 @@ type party =
 and slot = { slot : int; species : string }
 (** The member in party slot [slot] (from 1) is of [species] (a slug). *)
 
-type money =
-  | Money_range of { min : int; max : int }
-      (** Money from [min] to [max], both included. *)
-  | Money_spent of int
-      (** Exactly this much less than at the checkpoint's start (negative: more
-          than at the start): what the checkpoint's purchases cost, whatever
-          money the save started with. *)
-
-(** How many of a thing (a bag item, Game Corner coins) a checkpoint promises. A
-    count copied from one save holds on that save only: a checkpoint that buys
-    or uses something promises what it changed ({!Count_gained}), and one whose
-    later checkpoints need a stock promises a floor ({!Count_at_least}). *)
-type count =
-  | Count_exactly of int  (** Exactly this many. *)
-  | Count_gained of int
-      (** Exactly this many more than at the checkpoint's start (negative: this
-          many used), whatever the save started with. *)
-  | Count_at_least of int  (** At least this many. *)
-
-type bag_count = { bag_item : string; count : count }
+type bag_count = { bag_item : string; count : Engine_promise.Count.t }
 (** A count of the bag item [bag_item] (a slug). *)
 
 type knows = { species : string; moves : string list }
@@ -110,8 +91,8 @@ type postconditions = {
           start ({!Checkpoint_end}). *)
   party : party option;
   items : bag_count list;  (** Each item's count in the bag. *)
-  coins : count option;  (** Game Corner coins. *)
-  money : money option;
+  coins : Engine_promise.Count.t option;  (** Game Corner coins. *)
+  money : Engine_promise.Money.t option;
   flags : string list;  (** Story flags (named by the game) that must be set. *)
   knows : knows list;  (** Moves members must know. *)
   levels : level list;

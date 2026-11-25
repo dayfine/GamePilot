@@ -131,13 +131,15 @@ let observe ~log (promised : Checkpoints_plan.Plan.postconditions) :
     marks;
   }
 
-let gained : Checkpoints_plan.Plan.count -> bool = function
-  | Count_gained _ -> true
-  | Count_exactly _ | Count_at_least _ -> false
+let gained : Engine_promise.Count.t -> bool = function
+  | Engine_promise.Count.Gained _ -> true
+  | Engine_promise.Count.Exactly _ | Engine_promise.Count.At_least _ -> false
 
 let at_start ~log (promised : Checkpoints_plan.Plan.postconditions) =
   let spent =
-    match promised.money with Some (Money_spent _) -> true | _ -> false
+    match promised.money with
+    | Some (Engine_promise.Money.Spent _) -> true
+    | _ -> false
   and coins = Option.fold ~none:false ~some:gained promised.coins
   and items =
     List.filter

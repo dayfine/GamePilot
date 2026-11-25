@@ -76,12 +76,6 @@ let outline (plan : Plan.t) =
           (fun (k, n) -> Printf.sprintf "%d %s" n k)
           (kind_counts plan.checkpoint.events)))
 
-let count_text : Plan.count -> string = function
-  | Count_exactly n -> Printf.sprintf "x%d" n
-  | Count_gained n when n < 0 -> Printf.sprintf "used %d" (-n)
-  | Count_gained n -> Printf.sprintf "gained %d" n
-  | Count_at_least n -> Printf.sprintf "at least %d" n
-
 let slot ({ slot; species } : Plan.slot) =
   Printf.sprintf "%s in slot %d" species slot
 
@@ -91,12 +85,8 @@ let party : Plan.party option -> string list = function
       ("party includes " ^ list members) :: List.map slot slots
   | None -> []
 
-let money : Plan.money -> string = function
-  | Money_range { min; max } -> Printf.sprintf "money %d to %d" min max
-  | Money_spent n -> Printf.sprintf "money spent %d" n
-
 let bag_count ({ bag_item; count } : Plan.bag_count) =
-  Printf.sprintf "item %s %s" bag_item (count_text count)
+  Printf.sprintf "item %s %s" bag_item (Engine_promise.Count.text count)
 
 let knows ({ species; moves } : Plan.knows) =
   Printf.sprintf "%s knows %s" species (list moves)
@@ -112,8 +102,8 @@ let lines (p : Plan.postconditions) =
       some (fun g -> "position " ^ pose g) p.position;
       party p.party;
       List.map bag_count p.items;
-      some (fun c -> "coins " ^ count_text c) p.coins;
-      some money p.money;
+      some (fun c -> "coins " ^ Engine_promise.Count.text c) p.coins;
+      some Engine_promise.Money.text p.money;
       (if p.flags = [] then [] else [ "flags " ^ list p.flags ]);
       List.map knows p.knows;
       List.map level p.levels;
