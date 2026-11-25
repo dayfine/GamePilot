@@ -134,7 +134,7 @@ let () =
   | "checkpoints" :: args ->
       exit_with
         (Result.bind (Programs_command.plan_dir_of_args args)
-           (fun (plan_dir, flags) -> Checkpoints_command.main plan_dir flags))
+           (fun (plan_dir, flags) -> Checkpoint_families.main plan_dir flags))
   | "replay" :: "checkpoint" :: wirelog :: plan :: flags ->
       exit_with (Checkpoint_command.replay wirelog plan flags)
   | [ "replay"; id; wirelog ] -> one_shot id (replay_start_menu wirelog)

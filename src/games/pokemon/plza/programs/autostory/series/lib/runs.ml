@@ -1,23 +1,3 @@
-(* gamepilot checkpoints --program plza.autostory --from ID --to ID
-     --mode testing --backend switch --serial PORT --capture DEVICE
-     [--runs N] [--watch] [--runs-dir DIR] [--daemon PATH]
-
-   PLZA's checkpoints on the Switch (Plza_autostory.Story_game through the
-   engine, Plza_checkpoints.Runner): each run its own daemon (the program's
-   viewport, native) and run folder, as Checkpoint_live_run for FireRed, but
-   without save states or an in-game save: PLZA saves by autosave. A plan's
-   start signature (minimap, party count, A prompt, wild zone) is checked before each run
-   (Plza_autostory.Start_signature). The series' first run starts where the
-   console is, put there by hand (01.00b on the new game's Confirm Choices,
-   01.01 on the platform); every later run of the same checkpoint first goes
-   back to the latest autosave (Plza_autostory.Game_reload), which 01.00b
-   cannot (its start is no save): its second run is refused. A passing
-   checkpoint hands the console to the next one as it ends. Its daemons keep
-   the console awake with the right stick (keepawake_stick), and each
-   checkpoint wakes the screen before it reads it (Plza_story.Screen_wake).
-   The watch page shows each run's plan, its events moving with the runner
-   (Story_game.run_watched), and the run. *)
-
 open Engine_run
 module P = Plza_checkpoints
 module Story = Plza_autostory
@@ -39,21 +19,26 @@ type outcome =
   | Failed of { at : string; reason : string; repeats : bool }
 
 type setup = {
-  flags : Checkpoints_flags.flags;
-  backend : Daemon_process.backend;
+  flags : Flags.t;
+  backend : Live_run.Daemon_process.backend;
   policy : Checkpoint_trials.policy;
   info : Run_record.info;
   daemon_flags : string list;
-  watch : Daemon_process.watch option;
+  watch : Live_run.Daemon_process.watch option;
 }
 
+let plan_suffix = ".plan.json"
+
 let load_plan ~plan_dir id =
-  match Yojson.Safe.from_file (Plan_dir.plan_file ~plan_dir id) with
-  | json -> P.Plan_decode.decode ~source:(id ^ Plan_dir.plan_suffix) json
+  match Yojson.Safe.from_file (Filename.concat plan_dir (id ^ plan_suffix)) with
+  | json -> P.Plan_decode.decode ~source:(id ^ plan_suffix) json
   | exception Sys_error e -> Error e
   | exception Yojson.Json_error e -> Error (id ^ ": " ^ e)
 
 let failed ?(repeats = false) at reason = Failed { at; reason; repeats }
+
+let of_runner ({ at; reason; repeats } : Live_run.Daemon_run.failed) =
+  Failed { at; reason; repeats }
 
 let of_failure (f : P.Failure.t) =
   failed ~repeats:(P.Failure.repeats f)
@@ -122,8 +107,8 @@ let with_assets ~log ~picture ~reload report plan assets =
       failed ~repeats:true "stopped" why
   | exception (Effects.Disconnected _ as e) -> raise e
   | exception e ->
-      (* Any other exception fails the run, as Checkpoint_live_run's do, so
-         the story log, the run record and the watch run still close. *)
+      (* Any other exception ends the watch run here; the run fails as
+         Daemon_run.in_session fails one. *)
       Watch_report.end_run report ~passed:false;
       failed "raised" (Printexc.to_string e)
 
@@ -138,42 +123,35 @@ let in_session ~log ~reload record plan (backend : Wire.backend) =
   let log = Watch_report.log log in
   let report = P.Plan_watch.create plan.P.Plan.checkpoint in
   let outcome =
-    match Plza_templates.upload () with
+    match Templates.upload () with
     | Error e -> failed ~repeats:true "assets" e
     | Ok assets -> with_assets ~log ~picture ~reload report plan assets
   in
   (match outcome with Failed _ -> save_failure record | Passed -> ());
   outcome
 
-let live ~log ~reload record plan (daemon : Daemon_process.t) =
-  match
-    Effects.with_run_folder record.Run_record.dir (fun () ->
-        Live.run_with_backend ~port:daemon.port
-          (in_session ~log ~reload record plan))
-  with
-  | outcome -> outcome
-  | exception Effects.Disconnected e -> failed "session" ("disconnected: " ^ e)
-  | exception Unix.Unix_error (e, f, _) ->
-      failed ~repeats:true "session" (f ^ ": " ^ Unix.error_message e)
-  | exception e -> failed "raised" (Printexc.to_string e)
+let live ~log ~reload record plan (daemon : Live_run.Daemon_process.t) =
+  Live_run.Daemon_run.in_session ~failed:of_runner ~dir:record.Run_record.dir
+    (fun () ->
+      Live.run_with_backend ~port:daemon.port
+        (in_session ~log ~reload record plan))
+
+let print_page setup (daemon : Live_run.Daemon_process.t) =
+  match (setup.watch, daemon.watch_port) with
+  | Some w, Some port ->
+      Live_run.Watch_urls.print ~listen:w.listen ~token:w.token ~port
+  | _ -> ()
 
 let with_daemon setup record id body =
-  match
-    Daemon_process.start ?watch:setup.watch ~flags:setup.daemon_flags
-      ~daemon:setup.flags.daemon ~backend:setup.backend ~port:0
-      ~wire_log:(Run_record.path record "wire.jsonl")
-      ~out_file:(Run_record.path record "daemon.out")
-      ~checkpoint:id ()
-  with
-  | Error reason -> failed ~repeats:true "daemon" reason
-  | Ok daemon ->
-      (match (setup.watch, daemon.watch_port) with
-      | Some w, Some port ->
-          Watch_urls.print ~listen:w.listen ~token:w.token ~port
-      | _ -> ());
-      Fun.protect
-        ~finally:(fun () -> Daemon_process.stop daemon)
-        (fun () -> body daemon)
+  Live_run.Daemon_run.with_daemon ~failed:of_runner
+    (Live_run.Daemon_process.start ?watch:setup.watch ~flags:setup.daemon_flags
+       ~daemon:setup.flags.daemon ~backend:setup.backend ~port:0
+       ~wire_log:(Run_record.path record "wire.jsonl")
+       ~out_file:(Run_record.path record "daemon.out")
+       ~checkpoint:id ())
+    (fun daemon ->
+      print_page setup daemon;
+      body daemon)
 
 let summary id n = function
   | Passed -> Printf.sprintf "PASS %s run %d" id n
@@ -195,14 +173,13 @@ let run setup plan n ~reload =
     with_daemon setup run.record id (live ~log ~reload run.record plan)
   in
   close ();
-  let line = summary id n outcome in
-  print_endline ("[Run] " ^ run.record.dir ^ ": " ^ line);
   let ending : Run_record.ending =
     match outcome with
     | Passed -> { result = "pass"; at = ""; reason = "" }
     | Failed { at; reason; _ } -> { result = "fail"; at; reason }
   in
-  Run_record.finish ~runs_dir:setup.flags.runs_dir run ~summary:line ending;
+  Live_run.Daemon_run.finish ~runs_dir:setup.flags.runs_dir run
+    ~summary:(summary id n outcome) ending;
   outcome
 
 let trial = function
@@ -221,12 +198,14 @@ let reload_when_chained (plan : P.Plan.t) =
    with no reload either; a reload there cost 40 s and turned the camera),
    unless the plan reloads when chained. [chained]: a checkpoint ran before it
    in the series. *)
-let rec runs_of setup plan ~chained done_ =
-  match Checkpoint_trials.verdict setup.policy (List.map trial done_) with
-  | Checkpoint_trials.Run_again ->
-      let reload = done_ <> [] || (chained && reload_when_chained plan) in
-      let outcome = run setup plan (List.length done_ + 1) ~reload in
-      runs_of setup plan ~chained (done_ @ [ outcome ])
+let runs_of setup plan ~chained =
+  let reload n = n > 1 || (chained && reload_when_chained plan) in
+  match
+    fst
+      (Checkpoint_trials.until_decided setup.policy ~trial (fun n ->
+           run setup plan n ~reload:(reload n)))
+  with
+  | Checkpoint_trials.Run_again -> false
   | Checkpoint_passed { passes; runs } ->
       Printf.printf "[Checkpoints] %s: passed (%d of %d runs)\n%!"
         plan.checkpoint.checkpoint_id passes runs;
@@ -239,7 +218,7 @@ let rec runs_of setup plan ~chained done_ =
 let rec chain setup ~chained = function
   | [] -> Ok 0
   | plan :: rest ->
-      if runs_of setup plan ~chained [] then chain setup ~chained:true rest
+      if runs_of setup plan ~chained then chain setup ~chained:true rest
       else Ok 1
 
 (* Every plan of the series, loaded and checked (Plan_check) before the
@@ -253,30 +232,35 @@ let load_checked ~plan_dir ids =
       Ok (plans @ [ plan ]))
     (Ok []) ids
 
-let run_series ~plan_dir (f : Checkpoints_flags.flags) ~backend ~viewport =
-  let* from_id = Checkpoints_flags.required "--from" f.from_id in
-  let* to_id = Checkpoints_flags.required "--to" f.to_id in
+let setup_of (f : Flags.t) ~backend ~viewport policy =
+  {
+    flags = f;
+    backend;
+    policy;
+    info =
+      {
+        kind = Checkpoints;
+        program = f.program;
+        from_id = f.from_id;
+        to_id = f.to_id;
+        backend = f.backend_name;
+      };
+    daemon_flags =
+      Live_run.Daemon_process.viewport_args backend viewport
+      @ keepawake_stick @ f.daemon_flags;
+    watch =
+      Live_run.Watch_hub.for_runs_dir ~daemon:f.daemon ~runs_dir:f.runs_dir
+        f.watch;
+  }
+
+let run_series ~plan_dir (f : Flags.t) ~backend ~viewport ids =
+  let* () =
+    match (backend : Live_run.Daemon_process.backend) with
+    | Mgba _ -> Error "PLZA runs on the Switch only: --backend switch"
+    | Switch _ -> Ok ()
+  in
   let* policy =
     Checkpoint_trials.policy ?runs:f.runs Checkpoint_trials.Testing
   in
-  let* ids = Plan_dir.checkpoint_ids plan_dir in
-  let* selected, _ = Plan_dir.select ids ~from_id ~to_id in
-  let* plans = load_checked ~plan_dir selected in
-  let program =
-    Attached_run.program_fields (Program_registry.of_plan_dir plan_dir)
-  in
-  let setup =
-    {
-      flags = f;
-      backend;
-      policy;
-      info =
-        { kind = Checkpoints; program; from_id; to_id; backend = f.backend };
-      daemon_flags =
-        Daemon_process.viewport_args backend viewport
-        @ keepawake_stick @ f.daemon_flags;
-      watch =
-        Watch_hub.for_runs_dir ~daemon:f.daemon ~runs_dir:f.runs_dir f.watch;
-    }
-  in
-  chain setup ~chained:false plans
+  let* plans = load_checked ~plan_dir ids in
+  chain (setup_of f ~backend ~viewport policy) ~chained:false plans

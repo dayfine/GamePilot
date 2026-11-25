@@ -23,6 +23,9 @@ type backend =
   | Mgba of { port : int }
   | Switch of { serial : string option; frames : frames }
 
+(* rw-r--r--: the daemon's output file. *)
+let out_perm = 0o644
+
 let frames_args = function
   | Capture device -> [ "--capture"; device ]
   | Replay video -> [ "--replay"; video ]
@@ -139,7 +142,9 @@ let start ?watch ?(flags = []) ~daemon ~backend ~port ~wire_log ~out_file
       @ flags)
   in
   let out =
-    Unix.openfile out_file [ Unix.O_WRONLY; Unix.O_CREAT; Unix.O_TRUNC ] 0o644
+    Unix.openfile out_file
+      [ Unix.O_WRONLY; Unix.O_CREAT; Unix.O_TRUNC ]
+      out_perm
   in
   match Unix.create_process daemon args Unix.stdin out out with
   | pid ->

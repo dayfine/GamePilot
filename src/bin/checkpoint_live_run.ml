@@ -148,20 +148,8 @@ let in_session setup cp ~progress record log () =
   outcome
 
 let live setup cp ~progress record log (daemon : Daemon_process.t) =
-  match
-    Effects.with_run_folder record.Run_record.dir (fun () ->
-        Live.run ~port:daemon.port (in_session setup cp ~progress record log))
-  with
-  | outcome -> outcome
-  | exception Effects.Disconnected e ->
-      Failed { at = "session"; reason = "disconnected: " ^ e; repeats = false }
-  | exception Unix.Unix_error (e, f, _) ->
-      Failed
-        {
-          at = "session";
-          reason = f ^ ": " ^ Unix.error_message e;
-          repeats = true;
-        }
+  Daemon_run.in_session ~failed ~dir:record.Run_record.dir (fun () ->
+      Live.run ~port:daemon.port (in_session setup cp ~progress record log))
 
 let start_daemon setup record cp (port, watch) =
   Daemon_process.start ?watch ~flags:setup.daemon_flags ~daemon:setup.daemon
@@ -198,13 +186,9 @@ let announce setup (daemon : Daemon_process.t) =
   setup.bound := bound
 
 let with_daemon setup record cp body =
-  match start_sticky setup record cp with
-  | Error reason -> Failed { at = "daemon"; reason; repeats = true }
-  | Ok daemon ->
+  Daemon_run.with_daemon ~failed (start_sticky setup record cp) (fun daemon ->
       announce setup daemon;
-      Fun.protect
-        ~finally:(fun () -> Daemon_process.stop daemon)
-        (fun () -> body daemon)
+      body daemon)
 
 let capped_note setup cp =
   Run_line.capped_note ~grind_cap:setup.common.grind_cap cp.plan
@@ -237,13 +221,12 @@ let mode_name setup cp =
 
 let record_outcome setup cp (run : Run_record.run) n ~attempt outcome =
   let line = summary setup cp n ~attempt outcome in
-  print_endline ("[Run] " ^ run.record.dir ^ ": " ^ line);
   let ending : Run_record.ending =
     match outcome with
     | Passed _ -> { result = "pass"; at = ""; reason = "" }
     | Failed { at; reason; _ } -> { result = "fail"; at; reason }
   in
-  Run_record.finish ~runs_dir:setup.runs_dir run ~summary:line ending
+  Daemon_run.finish ~runs_dir:setup.runs_dir run ~summary:line ending
 
 (* Attempt [attempt] of run [n] of [cp]: its folder and how it ended.
    [progress] is the chain for the watch page before the attempt ([None]) and

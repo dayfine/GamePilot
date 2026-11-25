@@ -1,7 +1,3 @@
-(* The PLZA readers' find templates (Plza_readers.Blob_assets), read from the
-   repo and uploaded to the daemon, for gamepilot checkpoints --program
-   plza.autostory (Plza_series). *)
-
 module Assets = Plza_readers.Blob_assets
 
 let ( let* ) = Result.bind
@@ -58,6 +54,6 @@ let upload_from dir =
 
 (* Each template, uploaded to the daemon: its hash. *)
 let upload () =
-  match Program_registry.locate Assets.folder with
+  match Repo_io.Repo_files.locate Assets.folder with
   | None -> Error (Assets.folder ^ " not found from here: run in the repo")
   | Some dir -> upload_from dir

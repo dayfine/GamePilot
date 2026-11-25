@@ -1,6 +1,7 @@
 type backend = Mgba | Switch
 type viewport = Nso_gba | Native
 type checkpoint_order = Parts_first | Name_order
+type rules = Pokemon_grid | Plza_story
 type game = { game_id : string; game_name : string }
 
 type t = {
@@ -14,6 +15,7 @@ type t = {
   backends : backend list;
   viewport : viewport;
   checkpoint_order : checkpoint_order;
+  rules : rules;
 }
 
 let frlg = { game_id = "frlg"; game_name = "Pokémon FireRed/LeafGreen" }
@@ -32,6 +34,7 @@ let mail_glitch =
     backends = [ Mgba; Switch ];
     viewport = Nso_gba;
     checkpoint_order = Parts_first;
+    rules = Pokemon_grid;
   }
 
 let start_menu_poc =
@@ -47,6 +50,7 @@ let start_menu_poc =
     backends = [ Mgba ];
     viewport = Nso_gba;
     checkpoint_order = Parts_first;
+    rules = Pokemon_grid;
   }
 
 let team_training =
@@ -63,6 +67,7 @@ let team_training =
     backends = [ Mgba; Switch ];
     viewport = Nso_gba;
     checkpoint_order = Parts_first;
+    rules = Pokemon_grid;
   }
 
 let supplies =
@@ -78,6 +83,7 @@ let supplies =
     backends = [ Mgba; Switch ];
     viewport = Nso_gba;
     checkpoint_order = Parts_first;
+    rules = Pokemon_grid;
   }
 
 let sevii_story =
@@ -94,6 +100,7 @@ let sevii_story =
     backends = [ Mgba ];
     viewport = Nso_gba;
     checkpoint_order = Parts_first;
+    rules = Pokemon_grid;
   }
 
 let dex_collection =
@@ -110,6 +117,7 @@ let dex_collection =
     backends = [ Mgba ];
     viewport = Nso_gba;
     checkpoint_order = Parts_first;
+    rules = Pokemon_grid;
   }
 
 let plza = { game_id = "plza"; game_name = "Pokémon Legends: Z-A" }
@@ -128,6 +136,7 @@ let autostory =
     backends = [ Switch ];
     viewport = Native;
     checkpoint_order = Name_order;
+    rules = Plza_story;
   }
 
 let all =

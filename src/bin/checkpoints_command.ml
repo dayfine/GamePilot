@@ -193,42 +193,7 @@ let preflight plan_dir f =
   Preflight_command.run ~plan_dir ~from_id
     (preflight_setup plan_dir f backend ~viewport ~from_id)
 
-(* The flags Plza_series does not take: refused, not ignored. *)
-let plza_refused (f : Checkpoints_flags.flags) =
-  let refused =
-    List.filter_map
-      (fun (given, flag) -> if given then Some flag else None)
-      [
-        (f.mode <> None && f.mode <> Some Checkpoint_trials.Testing, "--mode");
-        (f.preflight, "--preflight");
-        (f.from_event <> None, "--from-event");
-        (f.to_event <> None, "--to-event");
-      ]
-  in
-  match refused with
-  | [] -> Ok ()
-  | flags ->
-      Error
-        ("PLZA runs whole checkpoints in testing mode only: no "
-       ^ String.concat ", " flags)
-
-(* A PLZA program's checkpoints (Plza_series): the Switch only, testing. *)
-let plza_series plan_dir f =
-  let* () = plza_refused f in
-  let* backend = daemon_backend f Checkpoint_trials.Testing in
-  let* viewport = viewport plan_dir f in
-  match backend with
-  | Daemon_process.Switch _ ->
-      Plza_series.run_series ~plan_dir f ~backend ~viewport
-  | Mgba _ -> Error "PLZA runs on the Switch only: --backend switch"
-
-let is_plza plan_dir =
-  match R.of_plan_dir plan_dir with
-  | Some p -> p.game.game_id = "plza"
-  | None -> false
-
-let main plan_dir args =
-  let* f = parse defaults args in
-  if is_plza plan_dir then plza_series plan_dir f
-  else if f.preflight then preflight plan_dir f
-  else run_series plan_dir f
+(* A program over the Pokémon grid rules (Checkpoint_families): its
+   preflight, or its series. *)
+let run_grid plan_dir f =
+  if f.preflight then preflight plan_dir f else run_series plan_dir f

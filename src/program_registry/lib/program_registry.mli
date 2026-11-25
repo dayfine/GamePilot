@@ -26,6 +26,12 @@ type viewport = Nso_gba | Native
     where each starts). *)
 type checkpoint_order = Parts_first | Name_order
 
+(** The rules a program's checkpoint plans are written over, which pick the
+    library that loads and runs them. [Pokemon_grid]: the Pokémon grid rules
+    (Pokemon_checkpoints, the FRLG runner); [Plza_story]: PLZA's story rules
+    (Plza_checkpoints, Plza_series). *)
+type rules = Pokemon_grid | Plza_story
+
 type game = {
   game_id : string;  (** ["frlg"], as plans and the games/ folder name it. *)
   game_name : string;
@@ -45,6 +51,7 @@ type t = {
   viewport : viewport;
       (** The Switch's game picture, which every daemon of its runs takes. *)
   checkpoint_order : checkpoint_order;
+  rules : rules;  (** What its plans are written over. *)
 }
 
 val all : t list
