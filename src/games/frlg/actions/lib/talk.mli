@@ -21,7 +21,9 @@ val pick_up :
 val item_text_ms : int
 
 val scene :
-  log:(string -> unit) -> unit -> (unit, Pokemon_checkpoints.Failure.cause) result
+  log:(string -> unit) ->
+  unit ->
+  (unit, Pokemon_checkpoints.Failure.cause) result
 
 val answer :
   log:(string -> unit) ->

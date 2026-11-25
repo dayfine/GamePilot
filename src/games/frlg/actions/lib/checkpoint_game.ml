@@ -152,10 +152,8 @@ let battle_on t wrap script =
 let battle t script = battle_on t Fun.id script
 
 let grind_game_steps t (plan : Grind_plan.t) =
-  let patch =
-    List.hd plan.strategy.spot.tiles
-    (* Grind_plan reads one *)
-  in
+  (* Grind_plan reads one *)
+  let patch = List.hd plan.strategy.spot.tiles in
   let find_battle = find_battle t ~pace:plan.strategy.pace ~patch in
   Grind_steps.make ~log:t.config.log ~party:t.party ~walk_to:(walk_to t)
     ~find_battle ~battle:(battle t)
