@@ -37,7 +37,7 @@ sh run/run_checkpoints_on_mgba.sh --program frlg.sevii_story --from 01-to-one-is
 |---|---|
 | 01-to-one-island | Fly to Cinnabar; Bill takes the Seagallop to One Island, Celio gives the Tri-Pass |
 
-<!-- plans: 4ebf0f0237bb -->
+<!-- plans: 87160197a247 -->
 <!-- /generated -->
 
 ## When it stops
@@ -50,7 +50,5 @@ sh run/run_checkpoints_on_mgba.sh --program frlg.sevii_story --from 01-to-one-is
 
 ## Known limits
 
-- The walk to Bill does not run yet: the Cinnabar Pokemon Center's map is not in PokemonSimulation
-  yet, so it stops after the Fly with no route.
 - Once Celio has given you the Tri-Pass, Bill's PC storage stays off until you reach Three Island's
   port. That is the game's own rule, so a program that uses the PC can't run in between.

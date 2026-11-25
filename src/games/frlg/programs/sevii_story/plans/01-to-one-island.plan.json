@@ -6,7 +6,7 @@
   },
   "metadata": {
     "phase": "testing",
-    "notes": "From a save past the Hall of Fame that turned Bill down after Blaine: he waits in the Cinnabar Pokemon Center (pret CinnabarIsland_EventScript_DeclineSailToOneIsland clears FLAG_HIDE_CINNABAR_POKECENTER_BILL). The Vermilion ferry needs the Tri-Pass first (pret VermilionCity_EventScript_FerrySailor), so the first trip is Bill's. YES runs one script to the end: out of the Center with him, the Seagallop from Cinnabar's shore, the walk from One Island's harbor into its Center, and Celio's scene, which gives the Meteorite, the Tri-Pass and the Town Map's Sevii page (pret OneIsland_PokemonCenter_1F_EventScript_MeetCelioScene). It also sets FLAG_SYS_PC_STORAGE_DISABLED until Three Island's port. The walk to Bill names the tile beside him: CinnabarIsland_PokemonCenter_1F is not in PokemonSimulation's maps yet; it becomes a place once the map is there.",
+    "notes": "From a save past the Hall of Fame that turned Bill down after Blaine: he waits in the Cinnabar Pokemon Center (pret CinnabarIsland_EventScript_DeclineSailToOneIsland clears FLAG_HIDE_CINNABAR_POKECENTER_BILL). The Vermilion ferry needs the Tri-Pass first (pret VermilionCity_EventScript_FerrySailor), so the first trip is Bill's. YES runs one script to the end: out of the Center with him, the Seagallop from Cinnabar's shore, the walk from One Island's harbor into its Center, and Celio's scene, which gives the Meteorite, the Tri-Pass and the Town Map's Sevii page (pret OneIsland_PokemonCenter_1F_EventScript_MeetCelioScene). It also sets FLAG_SYS_PC_STORAGE_DISABLED until Three Island's port. The Cinnabar Center has no map file: the walk goes through its coded room (Frlg_overworld.Standard_center), as the fork's story walks every Center in the shared layout.",
     "preconditions": {
       "badges": 8,
       "hall_of_fame": true
@@ -58,19 +58,28 @@
         }
       },
       {
-        "id": "to_bill",
+        "id": "to_counter",
         "kind": "route",
         "action": "run",
         "args": {
           "target": {
             "map": "CinnabarIsland_PokemonCenter_1F",
             "tiles": [
-              [10, 5]
+              [7, 4]
             ],
-            "facing": "east"
+            "facing": "north"
           }
         },
-        "why": "Into the Center, west of Bill (11, 5), facing him: a table fills the tile below him, and his script walks out with a player facing south, east or west (pret CinnabarIsland_PokemonCenter_1F_EventScript_Bill)."
+        "why": "Into the Center and up to the counter, a walk held to the wall: a room entered from its door comes up dim and holds still about 600ms before it fades in, and the player's first steps are lost while the walk reads the dim room as no fade (mGBA, 2026-11-24: \"north 3\" from the mat to Bill's row walked 2 tiles)."
+      },
+      {
+        "id": "to_bill",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {"place": "cinnabar_center_bill"}
+        },
+        "why": "West of Bill (11, 5), facing him: a table fills the tile below him, and his script walks out with a player facing south, east or west (pret CinnabarIsland_PokemonCenter_1F_EventScript_Bill)."
       },
       {
         "id": "sail_with_bill",
