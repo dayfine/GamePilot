@@ -1,7 +1,7 @@
 (** The Pokémon actions, the event kinds Pokémon games run beside the engine's
     own: walks on the tile grid, battles, healing, shopping, and the opening's
     new game and options, as FireRed runs them. Each kind's args are typed here;
-    [Kind_decode] fills in the format's fallbacks. *)
+    [Pokemon_action_decode] fills in the format's fallbacks. *)
 
 type leg = { direction : Grid_geometry.Direction.t; tiles : int }
 (** A straight walk of [tiles] tiles. *)

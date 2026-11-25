@@ -1,8 +1,8 @@
-type action = ..
+type special_step = ..
 
 type 'state step = {
   next : 'state;
-  action : action option;
+  special_step : special_step option;
   starts_leg : bool;
   ends_leg : bool;
   warped : bool;
@@ -15,7 +15,7 @@ type 'state step = {
 let plain_step next facing =
   {
     next;
-    action = None;
+    special_step = None;
     starts_leg = false;
     ends_leg = false;
     warped = false;
@@ -25,7 +25,10 @@ let plain_step next facing =
     connection = false;
   }
 
-type kind = Walk of { tiles : int; to_wall : bool } | Action of action | Face
+type kind =
+  | Walk of { tiles : int; to_wall : bool }
+  | Special_step of special_step
+  | Face
 
 type 'state t = {
   kind : kind;
@@ -41,15 +44,15 @@ type 'state t = {
 let extends leg direction step =
   match leg.kind with
   | Walk _ ->
-      Option.is_none step.action && (not step.starts_leg)
-      && leg.direction = direction
-  | Action _ | Face -> false
+      Option.is_none step.special_step
+      && (not step.starts_leg) && leg.direction = direction
+  | Special_step _ | Face -> false
 
 let new_leg before direction step =
   let kind =
-    match step.action with
+    match step.special_step with
     | None -> Walk { tiles = 0; to_wall = false }
-    | Some action -> Action action
+    | Some special -> Special_step special
   in
   {
     kind;
@@ -68,7 +71,7 @@ let take ~held_at leg direction step =
     | Walk { tiles; _ } ->
         let to_wall = (not step.warped) && held_at step.next direction in
         Walk { tiles = tiles + 1; to_wall }
-    | (Action _ | Face) as kind -> kind
+    | (Special_step _ | Face) as kind -> kind
   in
   {
     leg with
@@ -89,7 +92,7 @@ let add ~held_at (legs, can_extend, before) (direction, step) =
     | _ -> (new_leg before direction step, legs)
   in
   let leg = take ~held_at last direction step in
-  let can_extend = Option.is_none step.action && not step.ends_leg in
+  let can_extend = Option.is_none step.special_step && not step.ends_leg in
   (leg :: earlier, can_extend, step.next)
 
 let join ~held_at start moves =

@@ -61,7 +61,7 @@ let describe_leg (leg : Tile_pos.t Leg.t) =
           tiles
           (if to_wall then " (to wall)" else "")
     | Face -> "face " ^ Direction.name leg.direction
-    | Action _ -> "action " ^ Direction.name leg.direction
+    | Special_step _ -> "action " ^ Direction.name leg.direction
   in
   Printf.sprintf "%s%s%s -> %s" kind
     (if leg.wild then " (wild)" else "")

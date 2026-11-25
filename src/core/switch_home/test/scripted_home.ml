@@ -1,6 +1,7 @@
-(* A scripted console B for the park and resume tests: each screen's probe
-   results come from a capture (fixtures/switch.probes.jsonl), and a reaction
-   to each press shows the next screens. One frame per ms. *)
+(* A scripted console B for the park, resume, game entry and delete-save tests:
+   each screen's probe results come from a capture (fixtures/switch.probes.jsonl,
+   System Settings' from fixtures/delete_save.probes.jsonl), and a reaction to
+   each press shows the next screens. One frame per ms. *)
 
 type screen =
   | Game  (** FireRed's load menu *)
@@ -24,6 +25,20 @@ type screen =
   | User_select
   | Black  (** a launch's loading screen: every probe black *)
   | Intro  (** the Game Freak logo *)
+  | Settings  (** System Settings, Data Management, Delete Save Data selected *)
+  | Save_list  (** Delete Save Data's list of games *)
+  | Page of string
+      (** a game's "Delete Save Data for <user>" page: Z-A's capture, its two
+          icon scores swapped for ["firered"], both another game's for any other
+          key *)
+  | Caution_greyed
+      (** Caution, its button greyed: synthesized, the red button's boxes from
+          the success popup's capture *)
+  | Caution_red
+      (** Caution, Cancel selected: synthesized, the selection frame's box from
+          the success popup's capture *)
+  | Caution_red_selected  (** Caution, the red Delete Save Data selected *)
+  | Deleted  (** "Successfully deleted save data." *)
 
 let screen_name = function
   | Game -> "game"
@@ -39,13 +54,24 @@ let screen_name = function
   | User_select -> "user select"
   | Black -> "black"
   | Intro -> "intro"
+  | Settings -> "Data Management"
+  | Save_list -> "the save data list"
+  | Page key -> key ^ "'s page"
+  | Caution_greyed -> "Caution (greyed)"
+  | Caution_red -> "Caution (Cancel selected)"
+  | Caution_red_selected -> "Caution (red selected)"
+  | Deleted -> "the deleted popup"
 
 let fixtures = Wire.read_image_probes "switch.probes.jsonl"
+let settings_fixtures = Wire.read_image_probes "delete_save.probes.jsonl"
 
-let capture name =
+let from fixtures name =
   match List.assoc_opt ("./" ^ name ^ ".png") fixtures with
   | Some probes -> probes
   | None -> failwith ("no fixture for " ^ name)
+
+let capture = from fixtures
+let settings = from settings_fixtures
 
 let swap a b probes =
   List.map
@@ -66,6 +92,25 @@ let black_probes =
     (capture "firered-load-menu")
 
 let scrolled_za = "home-scrolled-cursor-on-legends-za-firered-out-of-view"
+let za_page = "za-page-delete-save-data-for-user"
+let caution = "caution-red-button-selected"
+
+(* [ids]' results taken from the capture [donor]. *)
+let take ids donor probes =
+  let donor = settings donor in
+  List.map
+    (fun (id, r) ->
+      if List.mem id ids then (id, List.assoc id donor) else (id, r))
+    probes
+
+let plza_icon = "delete_save.icon.plza"
+let firered_icon = "delete_save.icon.firered"
+
+let page = function
+  | "plza" -> settings za_page
+  | "firered" -> swap plza_icon firered_icon (settings za_page)
+  | _ ->
+      take [ plza_icon; firered_icon ] "game-list-za-first" (settings za_page)
 
 let probes = function
   | Game -> capture "firered-load-menu"
@@ -83,6 +128,17 @@ let probes = function
   | User_select -> capture "user-select"
   | Black -> black_probes
   | Intro -> capture "launch-game-freak-intro"
+  | Settings -> settings "data-management-delete-save-data-selected"
+  | Save_list -> settings "game-list-za-first"
+  | Page key -> page key
+  | Caution_greyed ->
+      take
+        [ "delete_save.red_fill"; "delete_save.red_frame" ]
+        "successfully-deleted" (settings caution)
+  | Caution_red ->
+      take [ "delete_save.red_frame" ] "successfully-deleted" (settings caution)
+  | Caution_red_selected -> settings caution
+  | Deleted -> settings "successfully-deleted"
 
 type t = {
   mutable clock_ms : int;
@@ -175,6 +231,7 @@ let run t f =
               answer (fun () ->
                   List.map (fun (p : Wire.probe_spec) -> p.id) probes)
           | Effects.Unsubscribe ids -> answer (fun () -> ids)
+          | Effects.Upload_template _ -> answer (fun () -> "uploaded")
           | _ -> None);
     }
 

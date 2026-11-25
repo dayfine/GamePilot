@@ -1,0 +1,187 @@
+== the envelope
+not an object
+  p.plan.json is not a JSON object.
+a wrong format
+  p.plan.json: format is "pokesim-story-plan/1", not gamepilot-checkpoint/1.
+no execution
+  p.plan.json: execution is missing.
+an unknown envelope field
+  p.plan.json: x is not a known field.
+no checkpoint
+  p.plan.json: checkpoint is missing.
+an unknown checkpoint field
+  p.plan.json: checkpoint.x is not a known field.
+an empty checkpoint id
+  p.plan.json: checkpoint.id is empty.
+no events
+  p.plan.json: checkpoint.events is missing.
+events not a list
+  p.plan.json: checkpoint.events is not an array.
+== events
+an unknown event field
+  p.plan.json: checkpoint.events[0].x is not a known field.
+an event without an id
+  p.plan.json: checkpoint.events[0].id is missing.
+an empty event id
+  p.plan.json: checkpoint.events[0].id is empty.
+an event without a kind
+  p.plan.json: checkpoint.events[0].kind is missing.
+an unknown kind
+  p.plan.json: checkpoint.events[0].kind "dance" is not a story event kind.
+a repeated event id
+  p.plan.json: checkpoint.events[1].id "e" repeats events[0].
+args not an object
+  p.plan.json: checkpoint.events[0].args is not a JSON object.
+skip_if not a list
+  p.plan.json: checkpoint.events[0].skip_if is not a list of strings.
+once_per_save not true or false
+  p.plan.json: checkpoint.events[0].once_per_save is not true or false.
+a game_action without its action
+  p.plan.json: checkpoint.events[0].action is missing: a game_action names its action.
+a declared_after with a map and a place
+  p.plan.json: checkpoint.events[0].declared_after has a "map" or a "place", not both or neither.
+a declared_after tile not a pair
+  p.plan.json: checkpoint.events[0].declared_after.tiles[0] is not [x, y].
+== the engine's story actions
+talk with an arg
+  p.plan.json: checkpoint.events[0].args.who is not a known field.
+scene with an arg
+  p.plan.json: checkpoint.events[0].args.long is not a known field.
+save with an arg
+  p.plan.json: checkpoint.events[0].args.slot is not a known field.
+answer with an unknown arg
+  p.plan.json: checkpoint.events[0].args.loud is not a known field.
+answer not true or false
+  p.plan.json: checkpoint.events[0].args.yes is not true or false.
+== the Pokémon actions
+new_game with an arg
+  p.plan.json: checkpoint.events[0].args.name is not a known field.
+options with an arg
+  p.plan.json: checkpoint.events[0].args.fast is not a known field.
+heal with an arg
+  p.plan.json: checkpoint.events[0].args.where is not a known field.
+route without a target
+  p.plan.json: checkpoint.events[0].args.target is missing.
+route with an unknown arg
+  p.plan.json: checkpoint.events[0].args.run is not a known field.
+route fight_wild not true or false
+  p.plan.json: checkpoint.events[0].args.fight_wild is not true or false.
+route target with an unknown field
+  p.plan.json: checkpoint.events[0].args.target.spot is not a known field.
+route target without a map
+  p.plan.json: checkpoint.events[0].args.target.map is missing.
+route target tiles not a list
+  p.plan.json: checkpoint.events[0].args.target.tiles is not an array.
+route target tile not a pair
+  p.plan.json: checkpoint.events[0].args.target.tiles[0] is not [x, y].
+route target facing not a direction
+  p.plan.json: checkpoint.events[0].args.target.facing "up" is not north, east, south or west.
+ready with fight_wild
+  p.plan.json: checkpoint.events[0].args.fight_wild is not a known field.
+ready without a target
+  p.plan.json: checkpoint.events[0].args.target is missing.
+legs without legs
+  p.plan.json: checkpoint.events[0].args.legs is missing.
+legs not a list
+  p.plan.json: checkpoint.events[0].args.legs is not an array.
+a leg without tiles
+  p.plan.json: checkpoint.events[0].args.legs[0].tiles is missing.
+a leg with an unknown field
+  p.plan.json: checkpoint.events[0].args.legs[0].run is not a known field.
+a leg direction not a direction
+  p.plan.json: checkpoint.events[0].args.legs[0].direction "up" is not north, east, south or west.
+step without a direction
+  p.plan.json: checkpoint.events[0].args.direction is missing.
+step direction not a direction
+  p.plan.json: checkpoint.events[0].args.direction "up" is not north, east, south or west.
+battle may_lose not true or false
+  p.plan.json: checkpoint.events[0].args.may_lose is not true or false.
+battle with an unknown arg
+  p.plan.json: checkpoint.events[0].args.flee is not a known field.
+train without battles
+  p.plan.json: checkpoint.events[0].args.battles is missing.
+train battles not a number
+  p.plan.json: checkpoint.events[0].args.battles is not an integer.
+shop without items
+  p.plan.json: checkpoint.events[0].args.items is missing.
+a shop item without a quantity
+  p.plan.json: checkpoint.events[0].args.items[0].quantity is missing.
+a shop item with an unknown field
+  p.plan.json: checkpoint.events[0].args.items[0].price is not a known field.
+== postconditions
+an unknown postcondition
+  p.plan.json: checkpoint.metadata.postconditions.badges is not a known field.
+postconditions not an object
+  p.plan.json: checkpoint.metadata.postconditions is not a JSON object.
+a position with a place
+  p.plan.json: checkpoint.metadata.postconditions.position.place is not a known field.
+a position without a map
+  p.plan.json: checkpoint.metadata.postconditions.position.map is missing.
+a position with an unknown field
+  p.plan.json: checkpoint.metadata.postconditions.position.heading is not a known field.
+party and party_includes
+  p.plan.json: checkpoint.metadata.postconditions.party and party_includes: one or the other, not both.
+party_slots with party
+  p.plan.json: checkpoint.metadata.postconditions.party_slots goes with party_includes, not party.
+a party slot past six
+  p.plan.json: checkpoint.metadata.postconditions.party_slots[0].slot 7 is not a party slot (1-6).
+a party slot with an unknown field
+  p.plan.json: checkpoint.metadata.postconditions.party_slots[0].level is not a known field.
+party not a list of names
+  p.plan.json: checkpoint.metadata.postconditions.party[0] is not a string.
+an item with no count
+  p.plan.json: checkpoint.metadata.postconditions.items[0]: give one of quantity, gained, used, at_least.
+an item with two counts
+  p.plan.json: checkpoint.metadata.postconditions.items[0]: give one of quantity, gained, used, at_least.
+an item with an unknown field
+  p.plan.json: checkpoint.metadata.postconditions.items[0].x is not a known field.
+coins not a number or an object
+  p.plan.json: checkpoint.metadata.postconditions.coins is not a number or a JSON object.
+coins with no count
+  p.plan.json: checkpoint.metadata.postconditions.coins: give one of exactly, gained, used, at_least.
+coins with an unknown field
+  p.plan.json: checkpoint.metadata.postconditions.coins.x is not a known field.
+money with neither a range nor spent
+  p.plan.json: checkpoint.metadata.postconditions.money: give min and max, or spent.
+money spent and a range
+  p.plan.json: checkpoint.metadata.postconditions.money: give min and max, or spent, not both.
+money min above max
+  p.plan.json: checkpoint.metadata.postconditions.money.min 5 is above max 4.
+money with an unknown field
+  p.plan.json: checkpoint.metadata.postconditions.money.x is not a known field.
+flags not a list
+  p.plan.json: checkpoint.metadata.postconditions.flags is not a list of strings.
+knows without moves
+  p.plan.json: checkpoint.metadata.postconditions.knows[0].moves is missing.
+a level without its min
+  p.plan.json: checkpoint.metadata.postconditions.levels[0].min is missing.
+a mark no party shows
+  p.plan.json: checkpoint.metadata.postconditions.marks: berry is not held_item, mail or none.
+== several bad fields
+bad items, coins and money
+  p.plan.json: checkpoint.metadata.postconditions.money: give min and max, or spent.
+bad coins and money
+  p.plan.json: checkpoint.metadata.postconditions.money: give min and max, or spent.
+bad items and coins
+  p.plan.json: checkpoint.metadata.postconditions.coins: give one of exactly, gained, used, at_least.
+a bad position and marks
+  p.plan.json: checkpoint.metadata.postconditions.marks: berry is not held_item, mail or none.
+a bad party and levels
+  p.plan.json: checkpoint.metadata.postconditions.levels[0].min is missing.
+an unknown field and a bad money
+  p.plan.json: checkpoint.metadata.postconditions.badges is not a known field.
+a bad event and bad postconditions
+  p.plan.json: checkpoint.metadata.postconditions.money: give min and max, or spent.
+a bad kind and a bad declared_after
+  p.plan.json: checkpoint.events[0].declared_after has a "map" or a "place", not both or neither.
+a bad arg and a bad skip_if
+  p.plan.json: checkpoint.events[0].skip_if is not a list of strings.
+== repeats and retries
+a repeat without until
+  p.plan.json: checkpoint.metadata.repeat.until is missing.
+a repeat below one round
+  p.plan.json: checkpoint.metadata.repeat.max_rounds is 0, not 1 or more.
+a repeat goal with an unknown field
+  p.plan.json: checkpoint.metadata.repeat.until.badges is not a known field.
+negative retries
+  p.plan.json: checkpoint.metadata.retries is -1, not 0 or more.

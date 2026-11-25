@@ -32,12 +32,14 @@ let load name =
   | Ok map -> map
   | Error e -> failwith e
 
-let world ?edge_stalls ?rock_stairs names =
-  Frlg_overworld.Frlg_steps.world ?edge_stalls ?rock_stairs
+let world ?edge_stalls ?rock_stairs ?hidden names =
+  Frlg_overworld.Frlg_steps.world ?edge_stalls ?rock_stairs ?hidden
     (Connected_maps.create (List.map load names))
 
 (* mGBA's world, as the checkpoint runner loads it. *)
-let mgba_world names = world ~edge_stalls:false ~rock_stairs names
+let mgba_world names =
+  world ~edge_stalls:false ~rock_stairs
+    ~hidden:Frlg_overworld.Scene_only_people.hidden names
 
 let pallet =
   world
@@ -68,7 +70,7 @@ let leg_text w (leg : Connected_maps.place Leg.t) =
           tiles
           (if to_wall then " (to wall)" else "")
     | Face -> "face " ^ Direction.name leg.direction
-    | Action _ -> "action " ^ Direction.name leg.direction
+    | Special_step _ -> "action " ^ Direction.name leg.direction
   in
   Printf.sprintf "%s%s -> %s %s" kind
     (if leg.warps then " (warp)" else "")

@@ -91,6 +91,12 @@
       "object": {"warp": "warp_0", "to_map": "TwoIsland_JoyfulGameCorner"},
       "stand": [39, 10],
       "facing": "east"
+    },
+    "two_island_harbor_sailor": {
+      "map": "TwoIsland_Harbor",
+      "object": {"npc": "TwoIsland_Harbor_EventScript_Sailor"},
+      "stand": [8, 5],
+      "facing": "south"
     }
   },
   "towns": {

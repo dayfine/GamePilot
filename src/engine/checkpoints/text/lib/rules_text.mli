@@ -13,7 +13,7 @@ module type TEXT = sig
   val observed : T.Pose.observed -> string
   (** Where the player was read. *)
 
-  val kind : T.Action.t -> string
+  val action : T.Action.t -> string
   (** One of the game's actions with its args, its name first:
       ["route to Town (4, 0) north"]. *)
 

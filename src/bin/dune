@@ -23,6 +23,7 @@
   gamepilot.frlg_readers
   gamepilot.ctl_script
   gamepilot.switch_home
+  gamepilot.repo_io
   gamepilot.frlg_checkpoints
   unix
   yojson))

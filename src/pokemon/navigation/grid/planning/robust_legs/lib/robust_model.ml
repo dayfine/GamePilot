@@ -10,9 +10,9 @@ type 'state t = {
 let nowhere _ = false
 let one_tile _ _ = 1
 
-(* A warp or a game action: the player stops without being held. *)
+(* A warp or a special step: the player stops without being held. *)
 let leaves (step : _ Grid_planning.Leg.step) =
-  Option.is_some step.action || step.warped
+  Option.is_some step.special_step || step.warped
 
 let of_step_model ?(wild = nowhere) ?(wander = nowhere) ?(step_tiles = one_tile)
     (model : _ Grid_planning.Step_model.t) =

@@ -1,6 +1,16 @@
-(* The rules' pose, its JSON derived here: Toy_rules stays free of it. *)
-type pose = Toy_rules.Pose.t = { place : string; spot : string option }
-[@@deriving yojson]
+open Engine_saved
 
-type t = { start : int option; [@key "start_gold"] at : pose option }
-[@@deriving yojson]
+module Start = struct
+  type t = int option
+
+  let fields gold =
+    [ ("start_gold", match gold with None -> `Null | Some n -> `Int n) ]
+
+  let of_fields fields =
+    match List.assoc_opt "start_gold" fields with
+    | None | Some `Null -> Ok None
+    | Some (`Int n) -> Ok (Some n)
+    | Some _ -> Error "start_gold is not a number"
+end
+
+include Kept.Make (Start) (Zone_saved)
