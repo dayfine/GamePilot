@@ -164,6 +164,12 @@ class BoardSession {
   // it does not.
   void cancel_queued();
 
+  // Drops the states sent that have not run yet and lets the one running go
+  // on until the next send_state() replaces it, with no release between (the
+  // board's CQ_REPLACE_ON_NEXT, as the C++ controller's
+  // replace_on_next_command()). The board takes it with the next state.
+  void replace_on_next();
+
   BoardStatus status() const;
 
   // Waits up to `timeout` for the first status answer; returns the status.
