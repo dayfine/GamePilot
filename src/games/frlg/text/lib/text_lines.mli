@@ -185,8 +185,10 @@ val pc_mon_menu_row : int -> t
 val pc_withdraw_menu_row : int -> t
 (** Row [i] (0-4) of a box Pokémon's menu under WITHDRAW POKéMON: WITHDRAW,
     SUMMARY, MARK, RELEASE, CANCEL. WITHDRAW is wider than STORE, so the menu
-    sits 8 pixels left of {!pc_mon_menu_row}'s (text from x 160, measured on
-    mGBA, 2026-11-25). *)
+    sits {!Frlg_readers.Pc_screen.withdraw_shift} pixels left of
+    {!pc_mon_menu_row}'s (text from x 160, mGBA, 2026-11-25). Measured and
+    matched on the English game: another language's labels have other widths,
+    and its menu needs its own measure and text. *)
 
 val pc_data_species : t
 (** The box screen's PKMN DATA species line, ["/ODDISH"]: window 0 at (0, 88)

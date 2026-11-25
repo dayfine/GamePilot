@@ -22,9 +22,9 @@
     under 330), and a party slot's hand white with every channel 235 and over
     (the fork also bounds the spread to 20). The box grid (WITHDRAW) is not
     read: a deposit never shows it. GamePilot's own: under WITHDRAW, a box
-    Pokémon's menu (WITHDRAW, SUMMARY, ...) is wider and its arrow 8 pixels
-    left, at x 153 (mGBA, 2026-11-25); its cursor is read there when STORE's
-    column shows none. *)
+    Pokémon's menu (WITHDRAW, SUMMARY, ...) is wider and its arrow
+    {!withdraw_shift} pixels left; its cursor is read there when STORE's column
+    shows none. *)
 
 type screen =
   | Overworld
@@ -48,6 +48,13 @@ val read : Effects.measurements -> view
 
 val screen_name : screen -> string
 (** ["storage menu"], as the fork's [pc_screen_name()]. *)
+
+val withdraw_shift : int
+(** 8: how far left of STORE's a box Pokémon's menu under WITHDRAW sits, its
+    arrow at x 153 and its text from x 160 (mGBA, 2026-11-25), because WITHDRAW
+    is wider than STORE. Measured on the English game: another language's labels
+    have other widths, and its menu needs its own measure. Also
+    {!Frlg_text.Text_lines.pc_withdraw_menu_row}'s shift. *)
 
 val storage_menu_rows : int
 (** 5. *)

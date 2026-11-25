@@ -234,13 +234,11 @@ let pc_mon_menu_row i =
     width = 60;
   }
 
-let withdraw_shift = 8
-
 let pc_withdraw_menu_row i =
   {
     (pc_mon_menu_row i) with
     id = Printf.sprintf "pc_withdraw_menu.%d" i;
-    left = pc_mon_menu_left - withdraw_shift;
+    left = pc_mon_menu_left - Frlg_readers.Pc_screen.withdraw_shift;
     width = 68;
   }
 

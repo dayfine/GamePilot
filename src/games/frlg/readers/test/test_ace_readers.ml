@@ -58,7 +58,7 @@ let read image m =
    BULK UP (list row 11) sit on the bottom row once scrolled to. The male
    mark is read only on an occupied slot of Box 3, the ACE check's: the
    withdraw frames' Magikarp is female, and the panel's lilac (148, 148, 173)
-   lies in the male mark's blue range, so it reads male under some shifts. *)
+   lies in the male mark's blue range, so it reads male (issue #194). *)
 let expected =
   [
     ("e_g_first_open", "group r0c0, word none");

@@ -66,13 +66,10 @@ let column name (c : column) rows =
 
 let pc_column = { left = 9.; top = 12.; step = 16. }
 let mon_column = { left = 159.; top = 44.; step = 16. }
-
-(* WITHDRAW's menu is wider than STORE's: the same rows, 8 pixels left
-   (arrow at x 153 on mGBA, 2026-11-25). *)
-let withdraw_shift = 8.
+let withdraw_shift = 8
 
 let withdraw_column =
-  { mon_column with left = mon_column.left -. withdraw_shift }
+  { mon_column with left = mon_column.left -. float_of_int withdraw_shift }
 
 let yes_no_column = { left = 191.; top = 91.; step = 14. }
 let pc_rows = column "menu" pc_column storage_menu_rows
