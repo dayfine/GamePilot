@@ -3,16 +3,23 @@
    ("<folder>/<frame>", no extension), every shifted frame of
    fixtures/<folder>.shifted.probes.jsonl (one shift per frame) with the frame
    it shifts, and each frame's second read
-   (fixtures/<folder>.second.probes.jsonl). One file of each kind per image
+   (fixtures/<folder>.second.probes.jsonl, and for the shifted frames
+   fixtures/<folder>.shifted.second.probes.jsonl). One file of each kind per image
    folder, so regenerating one folder rewrites only its own files. *)
 
-(* Every fixtures/<folder><kind>.probes.jsonl, [kind] "" (the frames),
-   ".shifted" or ".second", in file name order. *)
+(* A fixture's kind: what follows its folder's name, "" (the frames),
+   ".shifted", ".second" or ".shifted.second". Folder names have no dot. *)
+let kind_of stem =
+  match String.index_opt stem '.' with
+  | Some i -> String.sub stem i (String.length stem - i)
+  | None -> ""
+
+(* Every fixtures/<folder><kind>.probes.jsonl, in file name order. *)
 let fixtures kind =
   Sys.readdir "fixtures" |> Array.to_list |> List.sort String.compare
   |> List.filter (fun file ->
          match Filename.chop_suffix_opt ~suffix:".probes.jsonl" file with
-         | Some stem -> Filename.extension stem = kind
+         | Some stem -> kind_of stem = kind
          | None -> false)
   |> List.concat_map (fun file ->
          Wire.read_image_probes (Filename.concat "fixtures" file))
@@ -85,6 +92,17 @@ let shifted_cases ?(misses = false) read =
             expectation = read (frame name);
           })
     shifted
+
+(* fixtures/<folder>.shifted.second.probes.jsonl: a shifted frame's second
+   read, by its shift and frame name. *)
+let shifted_seconds = fixtures ".shifted.second"
+
+let shifted_second shift name =
+  Option.map
+    (fun (_, probes) -> measurements probes)
+    (List.find_opt
+       (fun (path, _) -> shift_and_frame path = (shift, name))
+       shifted_seconds)
 
 (* A shifted frame by its shift and frame name. *)
 let shifted_frame shift name =
