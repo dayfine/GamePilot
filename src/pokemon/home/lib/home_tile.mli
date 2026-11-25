@@ -18,17 +18,19 @@ val probes :
 val on_home_tile : Effects.measurements -> bool
 (** The cursor is on Pokémon HOME's tile: the title over the row reads "Pokémon
     HOME": a template of its "HOME" (cut from console B's capture of 2026-11-24,
-    142x48 at (414, 218)), searched 12 pixels round its place, as its cyan ink
-    (red under 120, green over 150, blue over 200), scoring {!max_title_score}
-    or less. Wherever the tile is, scrolled into view or not. *)
+    142x48 at (414, 218)), searched along the whole title row (the title sits at
+    the left until the row scrolls, then over the selected tile), as its cyan
+    ink (red under 120, green over 150, blue over 200), scoring
+    {!max_title_score} or less. Wherever the tile is, scrolled into view or not.
+*)
 
 val title_score : Effects.measurements -> float option
 (** The title's score, for a log line. *)
 
 val max_title_score : float
 (** 0.08: the title scores 0.034 at most (shifted too), other games' titles
-    ("Legends: Z-A", "Brilliant Diamond") and HOME's own screens 0.156 at least.
-*)
+    ("Legends: Z-A", "Brilliant Diamond", "Let's Go, Pikachu!" over a scrolled
+    row with HOME's tile in view) and HOME's own screens 0.143 at least. *)
 
 val tile : Effects.measurements -> int option
 (** The first tile (0 the leftmost) scoring {!max_score} or less. *)

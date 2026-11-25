@@ -109,5 +109,7 @@ let () =
          "switch-home-pokemon-home-third" "HOME's tile 2";
        case "the Switch's HOME after PLZA closed: HOME the fifth, cut off"
          "switch-home-cursor-on-za-home-fifth-cut" "nothing";
+       case "scrolled, the cursor on the 8th; HOME in view, not selected"
+         "switch-home-scrolled-cursor-on-eighth-home-fifth" "HOME's tile 0";
      ]
     @ shifted_cases)

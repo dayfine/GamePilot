@@ -18,11 +18,13 @@ let art k : F.t =
 
 let tile_id k = Printf.sprintf "home.app_tile%d" k
 
-(* The cursor tile's title, top left of the row: "Pokémon HOME" (cyan, after
-   a download icon) has its "HOME" at (414, 218), 142x48; the window allows 12
-   pixels each way. Other games' titles have other words there ("Brilliant",
-   "Legends"), and "Pokémon" alone matches every title. *)
-let title_window : F.t = { x = 402; y = 206; w = 166; h = 72 }
+(* The cursor tile's title, over the row: left-aligned from x 125 while the
+   row has not scrolled, over the selected tile once it has (console B,
+   2026-11-25: "Pokémon: Let's Go, Pikachu!" at x 1230 to 1815). "Pokémon
+   HOME"'s "HOME" is 142x48, its top at y 218; it is searched along the whole
+   title row, 12 pixels above and below. "Pokémon" alone would match every
+   title. *)
+let title_window : F.t = { x = 0; y = 206; w = 1920; h = 72 }
 let title_id = "home.app_title"
 
 (* The title's cyan, as ink: red under 120, green over 150, blue over 200. *)
