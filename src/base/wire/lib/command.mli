@@ -17,7 +17,7 @@ type button =
   | Down  (** the D-pad's down *)
   | R  (** the right shoulder button *)
   | L  (** the left shoulder button *)
-  | Home  (** The Switch only, as are [X] and [Y] (protocol v1.11). *)
+  | Home  (** the Switch's HOME button (protocol v1.11) *)
   | X  (** the Switch's X *)
   | Y  (** the Switch's Y *)
   | ZL  (** the Switch's left trigger *)

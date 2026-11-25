@@ -13,11 +13,9 @@ type event_state =
   | Done  (** finished as planned *)
   | Failed  (** it failed; its [detail] says why *)
   | Skipped
-      (** not run, because the game already held its result; its [detail]
-          names the flag that showed it *)
+      (** not run, because the game already held its result; its [detail] names
+          the flag that showed it *)
 
-(** One event of the checkpoint's plan, as the watch page lists it: its state
-    and its times. *)
 type plan_event = {
   id : string;  (** the event's id in the plan *)
   state : event_state;
@@ -27,6 +25,8 @@ type plan_event = {
       (** When it last started, Unix ms (v1.8); none while pending. *)
   ended_ms : int option;  (** When it ended, Unix ms (v1.8); none until then. *)
 }
+(** One event of the checkpoint's plan, as the watch page lists it: its state
+    and its times. *)
 
 type plan = { checkpoint : string; events : plan_event list }
 (** A [watch.plan] notification: the checkpoint's id and its events, in plan
@@ -51,8 +51,8 @@ val plan_ms : now_ms:int option -> plan -> int option
     while an event runs. The watch page's [planMs]. *)
 
 val plan_of_json : json -> plan
-(** A [watch.plan] notification's params; a missing field or an unknown state
-    is a [Decode_error]. *)
+(** A [watch.plan] notification's params; a missing field or an unknown state is
+    a [Decode_error]. *)
 
 val json_of_plan : plan -> json
 (** A [watch.plan] notification's params, as {!plan_of_json} reads them. *)

@@ -6,9 +6,8 @@ type json = Yojson.Safe.t
 (** A decoded JSON value: a whole message, or a result or error's data. *)
 
 type error = { code : int; message : string; data : json option }
-(** A JSON-RPC error answer: its [code] (e.g. {!Lease.held_code}), a message
-    for a person, and the details some errors carry (a lease refusal's holder).
-*)
+(** A JSON-RPC error answer: its [code] (e.g. {!Lease.held_code}), a message for
+    a person, and the details some errors carry (a lease refusal's holder). *)
 
 (** A request's method and its params: what a client asks the daemon to do. *)
 type call =
@@ -48,8 +47,7 @@ type request = { id : int; call : call }
 (** A call with the id its response will carry. *)
 
 type response = { id : int; outcome : (json, error) result }
-(** The answer to the request with this [id]: its result object, or an error.
-*)
+(** The answer to the request with this [id]: its result object, or an error. *)
 
 (** A message no one answers. *)
 type notification =

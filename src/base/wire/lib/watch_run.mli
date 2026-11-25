@@ -14,7 +14,6 @@ type state =
   | Failed  (** its trials failed, which ends the chain *)
   | Skipped  (** never run: an earlier checkpoint failed *)
 
-(** One checkpoint of the chain, its state and the time spent on it. *)
 type checkpoint = {
   id : string;  (** the checkpoint's id, as [--from] and [--to] name it *)
   state : state;
@@ -22,9 +21,8 @@ type checkpoint = {
       (** Time spent on it, all its runs: so far for the current one (when the
           message was sent), 0 for one not started. *)
 }
+(** One checkpoint of the chain, its state and the time spent on it. *)
 
-(** A [watch.run] notification: the chain, its trial policy, and how the
-    current checkpoint's runs went. *)
 type t = {
   mode : string;  (** ["testing"] or ["verification"]. *)
   trial : int;
@@ -36,6 +34,8 @@ type t = {
   started_ms : int;  (** When the chain started, Unix time in ms. *)
   checkpoints : checkpoint list;  (** In run order. *)
 }
+(** A [watch.run] notification: the chain, its trial policy, and how the current
+    checkpoint's runs went. *)
 
 val string_of_state : state -> string
 (** The state's name on the wire: ["pending"], ["current"], ["passed"],
