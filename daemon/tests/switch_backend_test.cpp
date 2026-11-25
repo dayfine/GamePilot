@@ -54,6 +54,8 @@ void check_key_mapping() {
   CHECK(pro_buttons_for_keys(button_mask("Y")).button3 == 0x01);
   // ZL in byte 5 bit 7, beside L.
   CHECK(pro_buttons_for_keys(button_mask("ZL")).button5 == 0x80);
+  // ZR in byte 3 bit 7, beside R.
+  CHECK(pro_buttons_for_keys(button_mask("ZR")).button3 == 0x80);
 }
 
 bool axes_are(const std::uint8_t (&bytes)[3], std::uint16_t x,

@@ -33,10 +33,10 @@ struct BackendInfo {
 };
 
 // GBA KEYINPUT bit order (A, B, Select, Start, Right, Left, Up, Down, R, L in
-// bits 0-9), then the buttons only the Switch has: Home, X, Y, ZL in bits
-// 10-13.
+// bits 0-9), then the buttons only the Switch has: Home, X, Y, ZL, ZR in bits
+// 10-14.
 using KeyMask = std::uint16_t;
-constexpr KeyMask kSwitchOnlyKeys = 0xFu << 10;
+constexpr KeyMask kSwitchOnlyKeys = 0x1Fu << 10;
 
 // A stick's tilt as CoreLib's JoystickPosition (SerialPrograms/Source/
 // Controllers/Joystick.h): x and y in -1..1, +x right, +y up; 0, 0 is centred.
