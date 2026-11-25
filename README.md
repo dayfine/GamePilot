@@ -4,14 +4,14 @@ Layered game automation. A small C++ daemon owns the console (capture card, cont
 PABotBase2, mGBA, or recorded frames) and serves probe measurements over JSON-RPC; game programs
 are written in OCaml and run unchanged against the console, a replay, or a simulation.
 
+**[Get started](docs/getting-started.md)**: build it, run a first program on mGBA and watch it.
+
+- Running on mGBA: [docs/mgba.md](docs/mgba.md). On the Switch: [docs/switch-bring-up.md](docs/switch-bring-up.md).
+- How to run each program: [docs/guide/README.md](docs/guide/README.md)
 - Design: `docs/design/Layered-Automation-Stack.md`
 - Engine boundary (what is game-agnostic, how a second game plugs in): `docs/design/Engine-Boundary.md`
 - Roadmap: `docs/roadmap.md`
 - Rules for contributors and agents: `AGENTS.md`
-
-```
-git clone --recurse-submodules https://github.com/dayfine/GamePilot
-```
 
 ## Built on
 
@@ -27,39 +27,6 @@ GamePilot stands on these projects, used as read-only submodules under `third_pa
   simulation that GamePilot's plans are checked against.
 - Game data (maps, trainer parties, EV yields) comes from the [pret](https://github.com/pret)
   decompilation projects, through PokemonSimulation.
-
-## Running on mGBA
-
-`run/run_checkpoints_on_mgba.sh` starts mGBA, runs `gamepilot run` against it and closes it
-again. It takes its paths from the environment, or from `~/.config/gamepilot/env` (one
-`export NAME=value` per line; `GAMEPILOT_ENV_FILE` names another file), and prints the ones in use:
-
-| Variable | What | Default |
-|---|---|---|
-| `GAMEPILOT_ROM` | your FireRed ROM | the one `.gba` in `GAMEPILOT_MGBA_DIR` |
-| `GAMEPILOT_MGBA_DIR` | mGBA folder: `run_bridge.lua`, saves | `~/.local/share/gamepilot/mgba` |
-| `GAMEPILOT_MGBA_APP` | the mGBA app | `/Applications/mGBA.app` |
-| `GAMEPILOT_STATES` | checkpoint start states, `<ID>.start.ss` | `~/.local/share/gamepilot/states` |
-| `GAMEPILOT_RUNS` | run records, one folder per run | `~/.local/share/gamepilot/runs` |
-| `GAMEPILOT_BIN` | the `gamepilot` binary | `src/_build/default/bin/gamepilot.exe` |
-| `GAMEPILOT_WATCH_LISTEN` | the watch pages' address; `0.0.0.0` opens them to the LAN | `127.0.0.1` |
-| `GAMEPILOT_LAB_GAME` | the lab console's game id (its HOME tile, its lab panel) for `ctl park`/`resume`, `console`, `switch-devices` | the one game with Switch HOME data (`frlg`) |
-
-`gamepilot run` reads `GAMEPILOT_STATES` and `GAMEPILOT_RUNS` too (`--states` and
-`--runs-dir` override them). No ROM is included in or needed by this repository; bring your own.
-
-## Watching runs
-
-`gamepilot run ... --watch` gives each run its own page (`docs/design/Watch-Page.md`) on a
-free port and prints its URL, with the hub's: `http://127.0.0.1:47901/` lists every live run on
-this machine and links to each page. `gamepilot runs` lists the same in the terminal.
-
-To watch from a phone or another computer, put `export GAMEPILOT_WATCH_LISTEN=0.0.0.0` in
-`~/.config/gamepilot/env` (or pass `--listen 0.0.0.0`). The runner then also prints the run's LAN
-URL with `?token=...`: open that one to get Stop; the hub and a page without the token are
-read-only. On macOS with the firewall on, the first run asks "Do you want the application
-gamepilot_daemon to accept incoming network connections?": choose Allow (System Settings >
-Network > Firewall > Options lists it afterwards). A rebuilt daemon may ask again.
 
 ## Sources
 

@@ -57,7 +57,7 @@ lead, or one that knows a field move.
 ## Running it
 
 Build first (`cd src && opam exec -- dune build`; on the Switch, also the daemon), and set the
-`GAMEPILOT_*` variables described in the repository's `README.md` (mGBA) and
+`GAMEPILOT_*` variables described in [Running on mGBA](../mgba.md) (mGBA) and
 `docs/switch-bring-up.md` (the Switch).
 
 <!-- generated:commands 01-celadon-setup..08-activate-and-verify -->
