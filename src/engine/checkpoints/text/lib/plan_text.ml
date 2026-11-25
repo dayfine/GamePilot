@@ -7,10 +7,10 @@ struct
   let pose = X.pose
 
   let kind : Plan.kind -> string = function
-    | Talk -> "talk"
-    | Answer yes -> if yes then "answer yes" else "answer no"
-    | Scene -> "scene"
-    | Save -> "save"
+    | Talk -> Story_action_text.action Talk
+    | Answer yes -> Story_action_text.action (Answer yes)
+    | Scene -> Story_action_text.action Scene
+    | Save -> Story_action_text.action Save
     | Named_action args -> "game_action " ^ Yojson.Safe.to_string (`Assoc args)
     | Game action -> X.action action
 

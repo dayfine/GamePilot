@@ -40,3 +40,10 @@ module Postconditions : sig
       with type t := t
        and type reads = Postcondition_check.observed
 end
+
+val ends_at : Action.t -> Pose.t option
+(** Where an action says it leaves the player: a [route]'s or [ready]'s target;
+    [None] for every other action. *)
+
+val position : Postconditions.t -> Pose.t option
+(** The promised end [position], as a grid pose. *)
