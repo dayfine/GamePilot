@@ -56,27 +56,25 @@ The simplest program is [Start Menu PoC](guide/frlg.start_menu_poc.md): it opens
 FireRed's Start menu. Start mGBA with your ROM and load the bridge
 ([by hand](mgba.md#load-the-bridge-by-hand)), and walk the player into the overworld.
 
-Then start the daemon with its watch page, in one terminal (47801: the port the bridge printed):
+Then run it with its watch page (47801: the port the bridge printed):
 
 ```sh
-daemon/build/gamepilot_daemon --backend mgba --mgba-port 47801 --port 47900 --watch-port 47902 \
-    --registry ~/.local/share/gamepilot/runs/.watch
+cd src && opam exec -- dune exec -- gamepilot run frlg.start_menu_poc --console --watch \
+    --mgba-port 47801 --daemon ../daemon/build/gamepilot_daemon
 ```
 
-And run the program in another:
-
-```sh
-cd src && opam exec -- dune exec -- gamepilot run frlg.start_menu_poc --console
-```
+It starts its own daemon, prints the page's URL and the hub's (`http://127.0.0.1:47901/`), runs,
+and stops the daemon at the end:
 
 ```
-[Run] ~/.local/share/gamepilot/runs/2026-11-25-frlg.start_menu_poc-run-1
 start_menu_poc: PASS (open 50 ms, close 0 ms after batch_done)
 ```
 
+With `~/.config/gamepilot/env` set up ([mGBA](mgba.md)), `sh run/run_checkpoints_on_mgba.sh
+frlg.start_menu_poc` does the same and starts and closes mGBA too.
+
 `--console` runs on whatever the game shows. Without it the program first loads
 `$GAMEPILOT_STATES/overworld.ss`, a save state you make in mGBA (File > Save State File).
-Stop the daemon with Ctrl-C when you are done.
 
 ## What you see
 
