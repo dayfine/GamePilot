@@ -19,7 +19,7 @@ val run :
   int ->
   attempt:int ->
   progress:(Engine_run.Checkpoint_trials.run option -> Wire.Watch_run.t) ->
-  Run_record.t * outcome
-(** Attempt [attempt] of run [n] of the checkpoint: its folder and how it ended.
-    [progress] is the chain for the watch page before the attempt ([None]) and
-    after it. *)
+  (Run_record.t * outcome, string) result
+(** Attempt [attempt] of run [n] of the checkpoint: its folder and how it ended;
+    [Error] when its folder could not be made. [progress] is the chain for the
+    watch page before the attempt ([None]) and after it. *)

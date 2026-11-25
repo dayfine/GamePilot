@@ -1,4 +1,4 @@
-(** [gamepilot run PROGRAM|PLAN_DIR]: the checkpoint dev loop over FRLG's plans
+(** [gamepilot run PROGRAM|DIR/PLANS]: the checkpoint dev loop over FRLG's plans
     (the Pokémon grid rules), or its pre-flight. Each checkpoint runs from its
     start state as many times as the mode's policy says, each run with its own
     daemon and run folder (Checkpoint_series), going on only after it passed.

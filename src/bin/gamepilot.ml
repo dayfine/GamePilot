@@ -1,4 +1,4 @@
-(* gamepilot run <program>|PLAN_DIR [flags]: a one-shot program
+(* gamepilot run <program>|DIR/PLANS|--plan-dir DIR [flags]: a one-shot program
      ([--port N] [--state PATH | --console]) or a chain of checkpoints
      (Checkpoint_families)
    gamepilot run --plan PLAN.json [flags]: one checkpoint (Checkpoint_families)
@@ -81,14 +81,11 @@ let run_program p handle state =
   print_endline line;
   code
 
-(* Live, in a run folder of its own (Attached_run). *)
-let run_live (p : Program_registry.t) one_shot ~runs_dir ~port state =
-  let run =
-    Attached_run.start ~runs_dir ~kind:Program
-      ~program:(Program_registry.run_fields p)
-      ~label:p.id ~mode:"run"
+(* Live, in its run folder. *)
+let run_live_in one_shot run ~runs_dir ~port state =
+  let after passed =
+    if not passed then Attached_run.save_failure run.Run_record.record
   in
-  let after passed = if not passed then Attached_run.save_failure run.record in
   let line, code =
     Effects.with_run_folder run.record.dir (fun () ->
         program_outcome ~after one_shot (Live.run ~port) state)
@@ -96,6 +93,18 @@ let run_live (p : Program_registry.t) one_shot ~runs_dir ~port state =
   print_endline line;
   Attached_run.finish ~runs_dir run ~line ~code;
   code
+
+(* Live, in a run folder of its own (Attached_run). *)
+let run_live (p : Program_registry.t) one_shot ~runs_dir ~port state =
+  match
+    Attached_run.start ~runs_dir ~kind:Program
+      ~program:(Program_registry.run_fields p)
+      ~label:p.id ~mode:"run"
+  with
+  | Error e ->
+      print_endline (p.id ^ ": " ^ e);
+      1
+  | Ok run -> run_live_in one_shot run ~runs_dir ~port state
 
 let exit_with = function
   | Ok code -> exit code
@@ -125,8 +134,6 @@ let run (args : Run_args.t) =
   | Plan_folder dir -> Checkpoint_families.main dir args.flags
   | Plan plan -> Checkpoint_families.checkpoint plan args.flags
 
-let is_plan_folder d = Sys.file_exists d && Sys.is_directory d
-
 (* The one-shot program [id] names, run by [run]. *)
 let one_shot id run =
   match Programs_command.one_shot id with
@@ -153,8 +160,7 @@ let () =
   | "run" :: args when List.mem "--help" args ->
       print_string usage;
       exit 0
-  | "run" :: args ->
-      exit_with (Result.bind (Run_args.parse ~is_plan_folder args) run)
+  | "run" :: args -> exit_with (Result.bind (Run_args.parse args) run)
   | (("checkpoints" | "checkpoint") as command) :: args -> (
       match Run_args.of_old_command command args with
       | Some parsed -> old_command command parsed

@@ -70,7 +70,9 @@ let cases : Table_test.case list =
 let until_decided_text mode outcomes =
   let verdict, runs =
     until_decided (policy_of mode) ~trial:snd (fun n ->
-        (n, List.nth outcomes (n - 1)))
+        match List.nth outcomes (n - 1) with
+        | Some outcome -> Ok (n, outcome)
+        | None -> Error (Printf.sprintf "run %d: no folder" n))
   in
   Printf.sprintf "%s after runs %s" (verdict_text_of verdict)
     (String.concat "," (List.map (fun (n, _) -> string_of_int n) runs))
@@ -81,7 +83,8 @@ let until_decided_cases : Table_test.case list =
       name = "until decided: verification runs all three";
       input =
         (fun () ->
-          until_decided_text Verification [ Passed; fail "#2 talk"; Passed ]);
+          until_decided_text Verification
+            [ Some Passed; Some (fail "#2 talk"); Some Passed ]);
       expectation = "passed 2/3 after runs 1,2,3";
     };
     {
@@ -89,9 +92,14 @@ let until_decided_cases : Table_test.case list =
       input =
         (fun () ->
           until_decided_text Verification
-            [ fail "#2 talk"; fail "#2 talk"; Passed ]);
+            [ Some (fail "#2 talk"); Some (fail "#2 talk"); Some Passed ]);
       expectation =
         "stopped: hard stop: failed twice in a row at #2 talk after runs 1,2";
+    };
+    {
+      name = "until decided: a run that could not happen stops, as a value";
+      input = (fun () -> until_decided_text Verification [ Some Passed; None ]);
+      expectation = "stopped: run 2: no folder after runs 1";
     };
   ]
 

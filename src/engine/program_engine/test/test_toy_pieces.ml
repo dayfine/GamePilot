@@ -25,7 +25,7 @@ let read action_of_plan show name json =
       | Error message -> message)
 
 let toy name json () =
-  read Toy_plan_format.action_of_plan Toy_text.action name json
+  read Toy_plan_format.action_of_plan Toy_rules.Action.to_string name json
 
 (* A third toy set that also owns [rest]: camping. *)
 module Camp_decode = struct
@@ -72,8 +72,8 @@ let command name json () =
   read
     (Action_parts.action_of_plan command_parts)
     (function
-      | Story a -> "story " ^ Engine_text.Story_action_text.action a
-      | Command s -> "step " ^ Engine_text.Command_step_text.action s)
+      | Story a -> "story " ^ Engine_rules.Story_action.to_string a
+      | Command s -> "step " ^ Engine_rules.Command_step.to_string s)
     name json
 
 let cases =
@@ -103,7 +103,8 @@ let cases =
       (fun () ->
         read
           (Action_parts.action_of_plan with_camp)
-          (function Toy a -> "toy " ^ Toy_text.action a | Camp _ -> "camp")
+          (function
+            | Toy a -> "toy " ^ Toy_rules.Action.to_string a | Camp _ -> "camp")
           "rest" "{}")
       "toy rest";
     case "a command's step, by name"

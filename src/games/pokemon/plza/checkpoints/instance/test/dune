@@ -4,5 +4,4 @@
   yojson
   gamepilot.table_test
   gamepilot.plza_rules
-  gamepilot.plza_text
   gamepilot.plza_engine))
