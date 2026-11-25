@@ -21,7 +21,7 @@ Choices" screen. Nothing else is read from the save. The Switch's capture must b
 <!-- generated:commands -->
 ```sh
 # the Switch: each checkpoint once, from where the console is
-cd src && opam exec -- dune exec -- gamepilot checkpoints --program plza.autostory --from 01.00b --to 03.03 --mode testing --backend switch --serial PORT --capture DEVICE \
+cd src && opam exec -- dune exec -- gamepilot checkpoints --program plza.autostory --from 01.00b --to 03.04 --mode testing --backend switch --serial PORT --capture DEVICE \
     --watch
 ```
 <!-- /generated -->
@@ -48,8 +48,9 @@ cd src && opam exec -- dune exec -- gamepilot checkpoints --program plza.autosto
 | 03.03b | Up the ladder to the rooftop scene |
 | 03.03c | Off the roof to Station Front |
 | 03.03 | To the rock pile scene |
+| 03.04 | Pokemon Center, the Pokedex |
 
-<!-- plans: 2dae21486538 -->
+<!-- plans: 630d6c8f0804 -->
 <!-- /generated -->
 
 ## When it stops

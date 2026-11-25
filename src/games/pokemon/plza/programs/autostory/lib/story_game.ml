@@ -137,8 +137,11 @@ let scene steps (event : Plan.event) =
   | Some "end_on_black_fade" ->
       Scene_machine.run steps "scene"
         { Scene_machine.default with end_on_black_fade = true }
+  | Some "button_b" ->
+      Scene_machine.run steps "scene" { Scene_machine.default with button = B }
   | Some way ->
-      bad_args event ("a scene's action is end_on_black_fade, not " ^ way)
+      bad_args event
+        ("a scene's action is end_on_black_fade or button_b, not " ^ way)
 
 let builtin steps (event : Plan.event) =
   match event.kind with

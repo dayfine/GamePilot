@@ -466,6 +466,20 @@ let off_the_roof ?(lost = false) c =
       | Some _ -> party c)
   | _ -> party c
 
+(* 03.04: the party bar; the nurse's A prompt once the stick was held 3.9 s
+   (the legs run), until A; the Pokedex app and the talks until three B, then
+   the party bar. [lost]: no nurse's prompt. *)
+let nurse ?(lost = false) c =
+  match C.stick_reached c 3900 with
+  | Some n when not lost -> (
+      match C.nth_after c Wire.A ~after:n 0 with
+      | None -> { (party c) with interact_prompt = true }
+      | Some a -> (
+          match C.nth_after c Wire.B ~after:a 2 with
+          | None -> text c
+          | Some _ -> party c))
+  | _ -> party c
+
 let outcome checkpoint screen =
   let c = C.create () in
   reloaded := false;
@@ -1003,6 +1017,26 @@ let cases =
       (result "03.03c" (off_the_roof ~lost:true))
       "03.03c event 1 (off_the_roof): walk_no_scene: off_the_roof: control \
        still free after 8162 ms of the last leg: no scene took it";
+    case "03.04: into the Pokemon Center, the nurse, the Pokedex with B"
+      (fun () ->
+        let r, c = outcome "03.04" nurse in
+        String.concat "\n"
+          (r
+          :: List.filter
+               (fun line ->
+                 List.exists
+                   (fun prefix -> String.starts_with ~prefix line)
+                   [ "[PLZA] into"; "[PLZA scene] done" ])
+               (C.lines c)))
+      "passed\n\
+       [PLZA] into_pokemon_center: A on the A prompt after 750 ms of the last \
+       leg started a talk.\n\
+       [PLZA] into_pokemon_center: started on: dialog_box, advance_arrow\n\
+       [PLZA scene] done on control.";
+    case "03.04 lost: no nurse's prompt"
+      (result "03.04" (nurse ~lost:true))
+      "03.04 event 1 (into_pokemon_center): walk_no_end: into_pokemon_center: \
+       no talk started within 1000 ms after the last leg";
     case "the walk is walked before 03.03, run after"
       (fun () ->
         Printf.sprintf "%b %b"

@@ -14,7 +14,8 @@
     - [set_text_speed_fast] ({!Plza_story.Text_speed}) and [plus_skip]
       ({!Plza_story.Plus_skip}), no args;
     - the engine's [scene] ({!Plza_story.Scene_machine}): its [action]
-      ["end_on_black_fade"] for the fork's [end_on_black_fade: true];
+      ["end_on_black_fade"] for the fork's [end_on_black_fade: true],
+      ["button_b"] for its [button: "B"] (B on text and cutscenes, 120 s);
     - [scene_to_choice], the fork's [scene] with [stop_at_choice: true] (a game
       action here, as the engine's scene takes no args), with an optional
       [button], ["A"] (when absent) or ["B"];
