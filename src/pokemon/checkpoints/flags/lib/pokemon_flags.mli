@@ -33,7 +33,8 @@ val defaults : flags
 (** {!Checkpoints_flags.defaults} with no Pokémon flag given. *)
 
 val parse : flags -> string list -> (flags, string) result
-(** {!Checkpoints_flags.parse} with the Pokémon flags. *)
+(** {!Checkpoints_flags.parse} with the Pokémon flags; [Error] on any
+    [--options]: no grid program takes one. *)
 
 val usage : string
 (** [gamepilot checkpoints]' usage lines. *)

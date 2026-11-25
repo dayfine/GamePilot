@@ -34,6 +34,10 @@ type 'game flags = {
   daemon_flags : string list;
       (** --record, --no-record, --keepawake N, --speed S: passed to each run's
           daemon. *)
+  options : (string * string) list;
+      (** --options KEY=VALUE[,KEY=VALUE...]: the program's own options, in the
+          order given; [[]] when not given. Their keys and values are the
+          program's to check ({!read_options}). *)
   game : 'game;  (** The game's own flags. *)
 }
 
@@ -45,6 +49,29 @@ type 'game game_flags = {
 (** How a game's own flags parse: their defaults, a flag without a value
     ([None]: not the game's), and a flag with its value ([None]: not the game's;
     [Some (Error _)]: a bad value). *)
+
+type 'options option_keys = {
+  unset : 'options;  (** No option given. *)
+  keys : (string * ('options -> string -> ('options, string) result)) list;
+      (** Each key the program takes, with how it reads its value: [Error] is
+          the program's refusal of a bad value, as ["look is 1 to 8, not 9"]. *)
+}
+(** The keys a program takes in [--options] and how it reads them: the program's
+    declaration, which {!read_options} checks the pairs against. *)
+
+val no_option_keys : unit option_keys
+(** A program that takes no options. *)
+
+val read_options :
+  'options option_keys -> (string * string) list -> ('options, string) result
+(** The pairs of [--options] ({!flags.options}) read in order by the program's
+    keys over [unset]; [Error] on a key it does not take (naming those it takes,
+    or saying it takes none) or on a value its key refuses (prefixed
+    ["--options "]). *)
+
+val options_usage : string
+(** [--options]' line in [gamepilot checkpoints]' usage, for every program:
+    where to find each program's keys. *)
 
 val data_dir : string -> string -> string
 (** [data_dir var name]: [$var], else [$HOME/.local/share/gamepilot/<name>]. *)

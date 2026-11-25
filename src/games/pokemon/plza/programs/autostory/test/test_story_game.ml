@@ -949,8 +949,8 @@ let cases =
       "ok: ";
     case "01.01 to 01.02 with options: refused, no new game to take them"
       (choices_of ~options:french_5 [ "01.01"; "01.02" ])
-      "error: --language, --look and --name are 01.00a's new-game choices, and \
-       this series has no new game: start it at 01.00a, or drop them";
+      "error: --options language, look and name are 01.00a's new-game choices, \
+       and this series has no new game: start it at 01.00a, or drop them";
     case
       "01.00a with a name its language cannot take: refused before the console"
       (choices_of

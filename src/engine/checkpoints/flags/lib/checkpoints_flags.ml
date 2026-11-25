@@ -32,6 +32,10 @@ type 'game flags = {
   daemon_flags : string list;
       (** --record, --no-record, --keepawake N, --speed S: passed to each run's
           daemon. *)
+  options : (string * string) list;
+      (** --options KEY=VALUE[,KEY=VALUE...]: the program's own options, in the
+          order given; [[]] when not given. Their keys and values are the
+          program's to check ({!read_options}). *)
   game : 'game;  (** The game's own flags. *)
 }
 
@@ -40,6 +44,43 @@ type 'game game_flags = {
   game_switch : 'game -> string -> 'game option;
   game_valued : 'game -> string -> string -> ('game, string) result option;
 }
+
+type 'options option_keys = {
+  unset : 'options;
+  keys : (string * ('options -> string -> ('options, string) result)) list;
+}
+
+let no_option_keys = { unset = (); keys = [] }
+
+(* "a", "a and b", "a, b and c". *)
+let and_list = function
+  | [] -> ""
+  | [ one ] -> one
+  | items ->
+      let rev = List.rev items in
+      String.concat ", " (List.rev (List.tl rev)) ^ " and " ^ List.hd rev
+
+let not_taken keys key =
+  match List.map fst keys.keys with
+  | [] -> Error "--options: this program takes no options"
+  | names ->
+      Error ("--options: this program takes " ^ and_list names ^ ", not " ^ key)
+
+let read_option keys acc (key, value) =
+  Result.bind acc (fun options ->
+      match List.assoc_opt key keys.keys with
+      | None -> not_taken keys key
+      | Some read ->
+          Result.map_error (fun e -> "--options " ^ e) (read options value))
+
+let read_options keys pairs =
+  List.fold_left (read_option keys) (Ok keys.unset) pairs
+
+let ( let* ) = Result.bind
+
+let options_usage =
+  "      [--options KEY=VALUE[,KEY=VALUE...]]   (once: the program's own \
+   options; its keys in docs/guide/<program id>.md)\n"
 
 let home = Option.value (Sys.getenv_opt "HOME") ~default:"."
 
@@ -76,6 +117,7 @@ let defaults game =
     watch = None;
     viewport = None;
     daemon_flags = [];
+    options = [];
     game = game.game_defaults;
   }
 
@@ -105,6 +147,34 @@ let keepawake_flag f seconds =
     daemon_flags = f.daemon_flags @ [ "--keepawake"; string_of_int seconds ];
   }
 
+(* One KEY=VALUE of --options [text]: the value keeps any later [=]. *)
+let option_pair text pair =
+  match String.index_opt pair '=' with
+  | None when pair = "" -> Error ("--options: an empty key in " ^ text)
+  | None -> Error ("--options: " ^ pair ^ " has no =VALUE")
+  | Some 0 -> Error ("--options: an empty key in " ^ text)
+  | Some i ->
+      Ok
+        ( String.sub pair 0 i,
+          String.sub pair (i + 1) (String.length pair - i - 1) )
+
+let add_pair text acc pair =
+  let* pairs = acc in
+  let* key, value = option_pair text pair in
+  if List.mem_assoc key pairs then
+    Error ("--options: " ^ key ^ " is given twice")
+  else Ok ((key, value) :: pairs)
+
+(* --options KEY=VALUE[,KEY=VALUE...], once: its pairs in order, syntax
+   errors only. *)
+let options_flag f text =
+  if f.options <> [] then
+    Error "--options is given twice; give its pairs once, joined by commas"
+  else
+    Result.map
+      (fun pairs -> { f with options = List.rev pairs })
+      (List.fold_left (add_pair text) (Ok []) (String.split_on_char ',' text))
+
 (* One flag with its value, or [None] for a flag that takes none or an
    unknown one. *)
 let valued f name v =
@@ -132,6 +202,7 @@ let valued f name v =
   | "--keepawake" -> Some (int_flag name v (keepawake_flag f))
   | "--speed" -> Some (speed_flag f v)
   | "--viewport" -> Some (Ok { f with viewport = Some v })
+  | "--options" -> Some (options_flag f v)
   | _ -> None
 
 (* The page by default: on a free port, $GAMEPILOT_WATCH_LISTEN or this machine

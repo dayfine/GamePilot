@@ -58,7 +58,15 @@ let series : series Checkpoints_flags.game_flags =
   }
 
 let defaults = Checkpoints_flags.defaults series
-let parse = Checkpoints_flags.parse series
+
+(* No grid program takes --options: any is refused, not ignored. *)
+let parse f args =
+  let ( let* ) = Result.bind in
+  let* f = Checkpoints_flags.parse series f args in
+  let* () =
+    Checkpoints_flags.read_options Checkpoints_flags.no_option_keys f.options
+  in
+  Ok f
 
 let usage =
   "  gamepilot checkpoints PLAN_DIR|--program ID --from ID --to ID --mode \

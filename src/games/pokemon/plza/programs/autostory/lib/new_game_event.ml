@@ -34,7 +34,7 @@ let choices ~options (event : Plan.event) (args : Json_field.obj) =
        (Ok New_game_choices.default) args)
 
 let refused_options =
-  "--language, --look and --name are 01.00a's new-game choices, and this \
+  "--options language, look and name are 01.00a's new-game choices, and this \
    series has no new game: start it at 01.00a, or drop them"
 
 let playable (checkpoint : Plan.checkpoint) c =

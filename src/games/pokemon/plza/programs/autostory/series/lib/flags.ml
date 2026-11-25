@@ -4,27 +4,39 @@ type t = Options.t Checkpoints_flags.flags
 
 let ( let* ) = Result.bind
 
-let game_flags : Options.t Checkpoints_flags.game_flags =
+let option_keys : Options.t Checkpoints_flags.option_keys =
   {
-    game_defaults = Options.none;
-    game_switch = (fun _ _ -> None);
-    game_valued = Options.valued;
+    unset = Options.none;
+    keys =
+      [
+        ("language", Options.language);
+        ("look", Options.look);
+        ("name", Options.name);
+      ];
+  }
+
+(* No flag of PLZA's own: its options ride in --options. *)
+let no_game_flags : unit Checkpoints_flags.game_flags =
+  {
+    game_defaults = ();
+    game_switch = (fun () _ -> None);
+    game_valued = (fun () _ _ -> None);
   }
 
 let parse args =
   let* f =
-    Checkpoints_flags.parse game_flags
-      (Checkpoints_flags.defaults game_flags)
+    Checkpoints_flags.parse no_game_flags
+      (Checkpoints_flags.defaults no_game_flags)
       args
   in
-  let* () = Options.check f.game in
-  Ok f
+  let* options = Checkpoints_flags.read_options option_keys f.options in
+  let* () = Options.check options in
+  Ok { f with game = options }
 
 let usage =
   "  gamepilot checkpoints --program plza.autostory --from ID --to ID --mode \
    testing\n\
   \      --backend switch --serial PORT --capture DEVICE [--runs N] [--watch]\n"
-  ^ Options.usage
 
 let takes (f : t) =
   let refused =

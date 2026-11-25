@@ -30,21 +30,14 @@ let language t tag =
   | Some l -> Ok { t with language = Some l }
   | None ->
       Error
-        ("--language is one of "
-        ^ String.concat ", " typed_tags
-        ^ ", not " ^ tag)
+        ("language is one of " ^ String.concat ", " typed_tags ^ ", not " ^ tag)
 
 let look t v =
   match int_of_string_opt v with
   | Some n when n >= 1 && n <= Choices.looks -> Ok { t with look = Some n }
-  | _ -> Error (Printf.sprintf "--look is 1 to %d, not %s" Choices.looks v)
+  | _ -> Error (Printf.sprintf "look is 1 to %d, not %s" Choices.looks v)
 
-let valued t flag v =
-  match flag with
-  | "--language" -> Some (language t v)
-  | "--look" -> Some (look t v)
-  | "--name" -> Some (Ok { t with name = Some v })
-  | _ -> None
+let name t v = Ok { t with name = Some v }
 
 let check t =
   match Choices.problem (over t Choices.default) with
@@ -54,10 +47,3 @@ let check t =
 let describe (c : Choices.t) =
   Printf.sprintf "%s, look %d, \"%s\"" (Choices.info c.language).tag c.look
     c.name
-
-let usage =
-  Printf.sprintf
-    "      [--language %s] [--look 1-%d] [--name NAME]   (01.00a's new-game \
-     choices, over its plan's)\n"
-    (String.concat "|" typed_tags)
-    Choices.looks

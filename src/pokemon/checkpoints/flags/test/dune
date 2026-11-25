@@ -1,0 +1,3 @@
+(test
+ (name test_pokemon_flags)
+ (libraries gamepilot.table_test gamepilot.pokemon_flags))
