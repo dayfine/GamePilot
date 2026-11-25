@@ -3,33 +3,17 @@
   "game": "frlg",
   "checkpoint": {
     "id": "01-buy-magikarp",
-    "title": "Magikarp seen and in the party: a free slot made at the Route 4 Pokemon Center's PC, a Magikarp bought there",
+    "title": "Magikarp in the party: from anywhere outdoors, fly to the Route 4 Pokemon Center; unless Magikarp is already seen, a free slot made at its PC and a Magikarp bought there",
     "start": {
-      "map": "CeladonCity_DepartmentStore_1F",
-      "tiles": [
-        [6, 2]
-      ],
-      "facing": "south"
+      "anywhere": "outdoors"
     },
     "events": [
-      {
-        "id": "out_of_dept_store",
-        "kind": "route",
-        "action": "run",
-        "args": {
-          "target": {
-            "place": "celadon_dept_store_west_door_outside"
-          }
-        },
-        "why": "Out of the Dept. Store by the west door, to fly."
-      },
       {
         "id": "fly_route4",
         "kind": "game_action",
         "action": "fly",
         "args": {
-          "town": "Route4",
-          "species": "pidgey"
+          "town": "Route4"
         },
         "declared_after": {
           "map": "Route4",
@@ -38,7 +22,7 @@
           ],
           "facing": "south"
         },
-        "why": "The Route 4 Pokemon Center: its PC and the Magikarp salesman. Any member that knows Fly will do; the plan names it by species (the Mail Glitch save's Pidgey), as the fly action finds its user."
+        "why": "The Route 4 Pokemon Center: its PC and the Magikarp salesman. The first member that knows Fly flies."
       },
       {
         "id": "to_pc",
@@ -52,13 +36,14 @@
         "why": "Below the Center's PC, facing it."
       },
       {
-        "id": "deposit_mimien",
+        "id": "make_room",
         "kind": "game_action",
         "action": "pc_deposit",
         "args": {
-          "species": ["mr-mime"]
+          "member": "holding_no_mail"
         },
-        "why": "A free party slot for the Magikarp, the member the ? Mail is opened for. Any member not holding Mail will do (the PC refuses one holding Mail); the plan names it by species, and on the Mail Glitch save MIMIEN is the only one: the other five hold the filler mails."
+        "why": "A free party slot for the Magikarp, the member the ? Mail is opened for. The PC refuses a member holding Mail, so this stores the one holding none (on the Mail Glitch save the other five hold the filler mails). Skipped when Magikarp is already seen: it holds no Mail itself and would be the one stored.",
+        "skip_if": ["pokedex_seen:magikarp"]
       },
       {
         "id": "to_salesman",
@@ -69,12 +54,13 @@
             "place": "route4_magikarp_salesman"
           }
         },
-        "why": "Facing the Magikarp salesman."
+        "why": "Facing the Magikarp salesman: where 02 starts, bought or not."
       },
       {
         "id": "talk_salesman",
         "kind": "talk",
-        "why": "\"Would you like to buy a MAGIKARP for just $500?\" (pret Route4_PokemonCenter_1F_EventScript_MagikarpSalesman)."
+        "why": "\"Would you like to buy a MAGIKARP for just $500?\" (pret Route4_PokemonCenter_1F_EventScript_MagikarpSalesman).",
+        "skip_if": ["pokedex_seen:magikarp"]
       },
       {
         "id": "buy_magikarp",
@@ -83,7 +69,8 @@
           "yes": true
         },
         "once_per_save": true,
-        "why": "YES: $500, Magikarp Lv 5 joins the party in slot 6, seen and caught in the Pokedex. Bought even when Magikarp is already seen: the run cannot read the Pokedex's seen list yet. It is also the member with mail index 0xFF the ? Mail needs."
+        "why": "YES: $500, Magikarp Lv 5 joins the party in slot 6, seen and caught in the Pokedex. It is also the member with mail index 0xFF the ? Mail needs. Skipped, with the talk, when Magikarp is already seen: the end check still asks for it in slot 6.",
+        "skip_if": ["pokedex_seen:magikarp"]
       },
       {
         "id": "no_nickname",
@@ -91,7 +78,8 @@
         "args": {
           "yes": false
         },
-        "why": "No nickname."
+        "why": "No nickname.",
+        "skip_if": ["pokedex_seen:magikarp"]
       },
       {
         "id": "clear_salesman_text",
@@ -103,7 +91,8 @@
           ],
           "facing": "west"
         },
-        "why": "The salesman's last line, back to free control."
+        "why": "The salesman's last line, back to free control.",
+        "skip_if": ["pokedex_seen:magikarp"]
       }
     ]
   },
@@ -113,21 +102,18 @@
   "metadata": {
     "phase": "testing",
     "retries": 3,
-    "notes": "Starts where frlg.mail_glitch's 08-activate-and-verify ends (Celadon Dept. Store 1F (6, 2)). What the Post-E4 ACE route (pomeg-letterbombers' FRLG non-JPN Post-E4 route) needs, and how this checkpoint meets it: the Mail Glitch active (all six party mail records taken), the game cleared (the MOVE 1 and MOVE 2 word groups unlock with FLAG_SYS_GAME_CLEAR, pret easy_chat.c), Magikarp seen for the word MAGIKARP, and a party member whose mail index is 0xFF to give the Retro Mail to (pret GiveMailToMon finds no free record and leaves the index as it was, so the editor opens mail[0xFF]). The Magikarp bought here is both: seen, and new to the party with index 0xFF. It needs a free party slot, so a member not holding Mail goes to the PC first. Depositing MIMIEN also ends its stale index 0: later item duplication gives mail to a 0xFF member and reads the ? Mail's words, not ABRA.",
+    "notes": "Starts anywhere outdoors where Fly works, such as outside the Celadon Dept. Store, where frlg.mail_glitch's 08-activate-and-verify leaves the player. What the Post-E4 ACE route (pomeg-letterbombers' FRLG non-JPN Post-E4 route) needs, and how this checkpoint meets it: the Mail Glitch active (all six party mail records taken), the game cleared (the MOVE 1 and MOVE 2 word groups unlock with FLAG_SYS_GAME_CLEAR, pret easy_chat.c), Magikarp seen for the word MAGIKARP, and a party member whose mail index is 0xFF to give the Retro Mail to (pret GiveMailToMon finds no free record and leaves the index as it was, so the editor opens mail[0xFF]). The Magikarp bought here is both: seen, and new to the party with index 0xFF. It needs a free party slot, so a member not holding Mail goes to the PC first. Depositing MIMIEN also ends its stale index 0: later item duplication gives mail to a 0xFF member and reads the ? Mail's words, not ABRA.",
     "preconditions": {
       "hall_of_fame": true
     },
     "postconditions": {
-      "party_includes": ["magikarp", "pidgey"],
+      "party_includes": ["magikarp"],
       "party_slots": [
         {
           "slot": 6,
           "species": "magikarp"
         }
-      ],
-      "money": {
-        "spent": 500
-      }
+      ]
     }
   }
 }

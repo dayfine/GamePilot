@@ -19,23 +19,24 @@ What the save needs:
   08-activate-and-verify).
 - The game cleared (the Hall of Fame entered): the move word groups unlock then.
 - Box 3 slot 1 empty: the ? Mail writes over it.
-- Magikarp seen, for the word MAGIKARP. The program buys one ($500).
+- Magikarp seen, for the word MAGIKARP. The program buys one ($500) unless the Pokédex already
+  has it seen.
 - A party member whose mail index is 0xFF (it has not held Mail since it joined), to receive the
   Retro Mail so the ? Mail opens. The bought Magikarp is that member.
-- A free party slot for it: the program puts a member not holding Mail in the PC.
+- A free party slot for it: the program puts the member holding no Mail in the PC.
 - A member that knows Fly, a Retro Mail in the bag, and $500.
-- Standing on the Celadon Department Store's ground floor below the lift, where Mail Glitch 08 ends.
+- Standing anywhere outdoors where Fly works, such as outside the Dept. Store where Mail Glitch 08
+  ends.
 
-The plan names the Fly user and the member to deposit by species, as the Mail Glitch save has them
-(Pidgey and MIMIEN). What the pre-flight checks (generated from the plan):
+The first member that knows Fly flies, and the deposit takes the one holding no Mail (MIMIEN on the
+Mail Glitch save). What the pre-flight checks (generated from the plan):
 
 <!-- generated:needs 01-buy-magikarp -->
 - the Hall of Fame entered
-- pidgey in the party (fly)
-- mr-mime in the party (pc_deposit)
-- mr-mime holds no Mail (pc_deposit)
+- a member holds no Mail (pc_deposit)
+- a member knows fly (fly)
 - the thunder badge (fly)
-- at the start, CeladonCity_DepartmentStore_1F
+- at the start, anywhere outdoors where Fly works
 <!-- /generated -->
 
 ## Running it
@@ -55,16 +56,17 @@ Glitch 08-activate-and-verify ends in.
 <!-- generated:checkpoints -->
 | Checkpoint | What its plan does |
 |---|---|
-| 01-buy-magikarp | Magikarp seen and in the party: a free slot made at the Route 4 Pokemon Center's PC, a Magikarp bought there |
+| 01-buy-magikarp | Magikarp in the party: from anywhere outdoors, fly to the Route 4 Pokemon Center; unless Magikarp is already seen, a free slot made at its PC and a Magikarp bought there |
 | 02-write-ace-mail | The ? Mail written BULK UP / CAPABLE / KARATE CHOP / MAGIKARP: species 0x0351 in Box 3 slot 1 |
 
-<!-- plans: b3353105c0c5 -->
+<!-- plans: eceb73478350 -->
 <!-- /generated -->
 
 In plain words:
 
 1. Flies to the Route 4 Pokémon Center, puts MIMIEN in the PC and buys a Magikarp from the man
-   by the door ($500). The Magikarp joins the party, and with it Magikarp counts as seen.
+   by the door ($500). The Magikarp joins the party, and with it Magikarp counts as seen. When
+   the Pokédex already has Magikarp seen, it only walks to the man: no deposit, no purchase.
 2. Opens the PC and checks that Box 3 slot 1 is empty.
 3. Gives the Magikarp a Retro Mail. Every party mail record is in use, so the game opens the
    "? Mail", nine fields of `???`. It writes `BULK UP / CAPABLE / KARATE CHOP / MAGIKARP`, reads
@@ -84,15 +86,14 @@ the Magikarp) is the backup from before the ? Mail.
 <!-- generated:preflight 01-buy-magikarp -->
 | Resume from | The pre-flight checks |
 |---|---|
-| 01-buy-magikarp | the Hall of Fame entered; pidgey in the party (fly); mr-mime in the party (pc_deposit); mr-mime holds no Mail (pc_deposit); the thunder badge (fly); at the start, CeladonCity_DepartmentStore_1F |
+| 01-buy-magikarp | the Hall of Fame entered; a member holds no Mail (pc_deposit); a member knows fly (fly); the thunder badge (fly); at the start, anywhere outdoors where Fly works |
 <!-- /generated -->
 
 ## Known limits
 
 - mGBA only for now; English FireRed (proven on version 1.1).
-- The Magikarp is bought even when it is already seen: the run cannot read the Pokédex's seen list.
-- It starts at the Dept. Store, where Mail Glitch 08 ends. Any spot you can fly from would do, but
-  a plan's start is one map and tile today.
+- A save with Magikarp seen but not in party slot 6 skips the purchase and then fails 01's end
+  check: put a Magikarp that has never held Mail in slot 6 first.
 - With MIMIEN in the PC, the Mail Glitch's item duplication goes through the ? Mail: its editor
   shows BULK UP, not ABRA.
 - Box 3 is told by its default Desert wallpaper; a changed wallpaper stops the check.
