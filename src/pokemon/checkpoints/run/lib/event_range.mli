@@ -7,6 +7,7 @@
     checkpoint's start ({!keeps_end}). Not in the fork, whose AutoStory runs a
     checkpoint only from its start. *)
 
+open Engine_run
 open Checkpoints_plan
 
 type t = { first : int; last : int option }

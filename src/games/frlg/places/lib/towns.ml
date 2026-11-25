@@ -3,7 +3,7 @@ type t = town list
 
 let ( let* ) = Result.bind
 
-module D = Checkpoints_expand.Table_decode
+module D = Engine_expand.Table_decode
 
 let error = D.error
 let string = D.string

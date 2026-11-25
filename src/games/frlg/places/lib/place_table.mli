@@ -59,6 +59,6 @@ val routes : t -> Checkpoints_expand.Place_routes.game
 (** FireRed's answers to the place expansion: the table's places, and the lift
     rides ({!Lift_stops.ride}). *)
 
-val resolve : t -> Checkpoints_expand.Fragment_calls.resolve
+val resolve : t -> Engine_expand.Fragment_calls.resolve
 (** FireRed's answers to a fragment's placeholders: a ["town"] parameter's key,
     nurse, Fly name or mart ({!Towns.field}). *)

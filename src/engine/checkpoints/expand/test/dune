@@ -1,0 +1,9 @@
+(library
+ (name expand_cases)
+ (modules expand_cases)
+ (libraries yojson gamepilot.table_test gamepilot.engine_expand))
+
+(tests
+ (names test_fragment_calls)
+ (modules test_fragment_calls)
+ (libraries yojson gamepilot.table_test gamepilot.engine_expand expand_cases))

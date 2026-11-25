@@ -6,6 +6,7 @@
   gamepilot.grid_maps
   gamepilot.name_suggestion
   gamepilot.checkpoints_plan
+  gamepilot.engine_expand
   gamepilot.checkpoints_expand
   gamepilot.repo_io
   gamepilot.frlg_actions))

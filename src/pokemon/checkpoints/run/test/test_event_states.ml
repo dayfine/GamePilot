@@ -4,6 +4,7 @@
    chains and is refused on the Switch, and the money spent checked against the
    checkpoint's start kept with the state. *)
 
+open Engine_run
 open Checkpoints_plan
 open Checkpoints_run
 

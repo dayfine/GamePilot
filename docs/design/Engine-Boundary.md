@@ -119,7 +119,7 @@ src/games/octopath0/         section 3d
 Dependencies stay one-way: `base <- core <- engine <- pokemon <- games/<pokemon game>`, and
 `base <- core <- engine <- games/octopath0`. The lint gets an `engine` layer and game families:
 `allow engine engine core base`, `allow pokemon pokemon engine core base`, and a game may use
-`pokemon` only when it is listed as a Pokémon game (`family pokemon frlg`), so `octopath0` cannot.
+`pokemon` only when it is listed as a Pokémon game (`family pokemon game frlg`: the family, the path variable naming the game, then its members), so `octopath0` cannot.
 
 ### How a game plugs in
 

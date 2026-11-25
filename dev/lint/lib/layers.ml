@@ -27,6 +27,16 @@ let describe p =
       Printf.sprintf "%s (%s)" p.layer
         (String.concat ", " (List.rev_map (fun (k, v) -> k ^ "=" ^ v) bs))
 
+let in_family from (f : Config.family) =
+  match List.assoc_opt f.var from.bindings with
+  | None -> true
+  | Some v -> List.mem v f.members
+
+let family_allows (c : Config.t) from target =
+  List.for_all
+    (fun (f : Config.family) -> f.layer <> target.layer || in_family from f)
+    c.families
+
 let allows (c : Config.t) from target =
   let permitted =
     List.concat_map
@@ -42,7 +52,7 @@ let allows (c : Config.t) from target =
         | Some w -> v = w)
       from.bindings
   in
-  layer_ok && bindings_agree
+  layer_ok && bindings_agree && family_allows c from target
 
 let dep_message c ~from lib target =
   let outside = "which is outside every layer" in

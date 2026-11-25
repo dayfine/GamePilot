@@ -14,7 +14,7 @@ let plan ?(start = {|{"map": "Town", "tiles": [[1, 1]], "facing": "south"}|})
 let event_lines json =
   match
     List.assoc_opt "events"
-      Checkpoints_expand.Plan_json.(object_field "checkpoint" (fields_of json))
+      Engine_expand.Plan_json.(object_field "checkpoint" (fields_of json))
   with
   | Some (`List events) -> List.map Yojson.Safe.to_string events
   | _ -> [ "no events" ]

@@ -1,7 +1,7 @@
 (* gamepilot checkpoints' flags: their record, defaults and parsing
    (Checkpoints_command). *)
 
-open Checkpoints_run
+open Engine_run
 
 type flags = {
   from_id : string option;

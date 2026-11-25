@@ -2,8 +2,9 @@
  (names
   test_runner
   test_repeat_until
-  test_checkpoint_trials
+  test_checkpoint_end
   test_postcondition_check
+  test_promise
   test_room_policy
   test_event_states)
  (modules
@@ -11,8 +12,9 @@
   level_grind_world
   test_runner
   test_repeat_until
-  test_checkpoint_trials
+  test_checkpoint_end
   test_postcondition_check
+  test_promise
   test_room_policy
   test_event_states)
  (libraries
@@ -20,5 +22,6 @@
   yojson
   gamepilot.grid_maps
   gamepilot.checkpoints_plan
+  gamepilot.engine_run
   gamepilot.checkpoints_run
   plan_files))

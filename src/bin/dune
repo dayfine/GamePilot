@@ -13,6 +13,8 @@
   gamepilot.program_registry
   gamepilot.guide_page
   gamepilot.run_record
+  gamepilot.engine_run
+  gamepilot.engine_series
   gamepilot.checkpoints_plan
   gamepilot.checkpoints_run
   gamepilot.checkpoints_series

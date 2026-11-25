@@ -6,7 +6,7 @@ let create (checkpoint : Checkpoints_plan.Plan.checkpoint) =
     (List.map (fun (e : Checkpoints_plan.Plan.event) -> e.id) checkpoint.events)
 
 let on_event report index progress =
-  let state, detail = Checkpoints_run.Event_progress.to_watch progress in
+  let state, detail = Engine_run.Event_progress.to_watch progress in
   Watch_report.set report index state detail
 
 (* The options of a run that loads no state: the plan's own events go back to
