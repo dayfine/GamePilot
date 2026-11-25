@@ -1,5 +1,5 @@
 open Frlg_readers
-module J = Grid_maps.Json_field
+module J = Json_field
 module M = Menu_input
 
 let small = 50
@@ -43,10 +43,38 @@ let buy_coins ~log coins =
   log (Printf.sprintf "Game Corner: buy %d coins." coins);
   List.iter (buy_batch ~log) (coin_batches coins)
 
+(* The prize clerk talks in blue, so his page's arrow is blue, and the arrow
+   reader knows only the red one (mg-01 run 3, 2026-11-23: "We exchange your
+   COINS for prizes." done, no arrow read). As the fork: A and its wait, the
+   page turned by time; here the text box is checked between. *)
+let page_wait_ms = choice_wait_ms
+
+let to_prize_choices () =
+  M.press Wire.A ~cooldown_ms:page_wait_ms;
+  ignore
+    (M.await_screen ~code:"prize_no_clerk" "the prize clerk's page"
+       Dialog.dialog_up);
+  M.press Wire.A ~cooldown_ms:choice_wait_ms
+
+(* After A on the prize, as the fork (pbf_press_button(A, 160ms, 1200ms)):
+   the prize list, itself a selection box, stays up until "So, you want the
+   ABRA?" has printed, and the Yes/No wait would take it for the question
+   (mg-01 verification, 2026-11-23: the A meant for YES went to the list's
+   last frames, the B after it answered NO, and all three runs passed with
+   no Abra). *)
+let prize_question_wait_ms = 1200
+
+(* After YES the prize comes with "<player> obtained <mon>!" and the nickname
+   question, which a page's A that took YES must not answer: no screen tells
+   it from the clerk's own pages, so nothing counts as taken. The clerk's blue
+   arrow is unread anyway, so no page gets an A here. *)
+let prize_given _ = false
+
 let redeem_prize_mon ~log slot =
   log (Printf.sprintf "Game Corner: redeem prize row %d." slot);
-  to_choices ~code:"prize_no_clerk" "the prize clerk's page";
+  to_prize_choices ();
   M.taps Wire.Down slot;
-  M.press Wire.A;
-  M.answer_yes ~code:"prize_no_question" "the prize's question";
+  M.press Wire.A ~cooldown_ms:prize_question_wait_ms;
+  M.answer_yes ~code:"prize_no_question" ~taken:prize_given
+    "the prize's question";
   M.settle_back ~label:"redeem prize" ~log

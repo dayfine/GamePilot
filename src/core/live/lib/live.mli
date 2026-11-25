@@ -7,6 +7,21 @@
 val default_port : int
 (** 47900 *)
 
-val run : ?port:int -> (unit -> 'a) -> 'a
-(** Connects, runs the program under {!Session.run} and closes the connection.
-    Raises [Unix.Unix_error] if the daemon is not listening. *)
+val run :
+  ?port:int ->
+  ?client:string ->
+  ?lease:string * int option ->
+  (unit -> 'a) ->
+  'a
+(** Connects, runs the program under {!Session.run} (with its [client] and
+    [lease]) and closes the connection, which ends any lease it held. Raises
+    [Unix.Unix_error] if the daemon is not listening. *)
+
+val run_with_backend :
+  ?port:int ->
+  ?client:string ->
+  ?lease:string * int option ->
+  (Wire.backend -> 'a) ->
+  'a
+(** {!run}, the program given the daemon's [hello] [backend]
+    ({!Session.run_with_backend}). *)

@@ -22,7 +22,7 @@ exception Message_stuck
 (** A message on the overworld did not close after its presses. *)
 
 val late_wild_battle_delay_ms : int
-(** 3700: from the step that set a wild battle off to its screen (console B,
+(** 3700: from the step that set a wild battle off to its screen (Switch,
     2026-11-01, Route 1). *)
 
 val wild_flash_delay_ms : int

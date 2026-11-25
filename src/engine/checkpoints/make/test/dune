@@ -1,0 +1,30 @@
+(library
+ (name toy_terms)
+ (modules toy_terms)
+ (libraries gamepilot.engine_postcondition gamepilot.engine_terms))
+
+(library
+ (name toy_game)
+ (modules toy_codec toy_text toy_saved toy_checkpoints)
+ (libraries
+  yojson
+  gamepilot.json_field
+  gamepilot.engine_postcondition
+  gamepilot.engine_plan_codec
+  gamepilot.engine_text
+  gamepilot.engine_saved
+  gamepilot.engine_checkpoints
+  toy_terms)
+ (preprocess
+  (pps ppx_deriving_yojson)))
+
+(test
+ (name test_toy_game)
+ (modules test_toy_game)
+ (libraries
+  yojson
+  gamepilot.table_test
+  gamepilot.engine_postcondition
+  gamepilot.engine_run
+  toy_terms
+  toy_game))

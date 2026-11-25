@@ -1,4 +1,4 @@
-open Grid_maps
+open Grid_geometry
 
 type t = { map : string; pos : Tile_pos.t }
 

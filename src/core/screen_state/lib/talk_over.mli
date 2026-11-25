@@ -13,8 +13,9 @@ type still_source =
 
 type rule = {
   warp : bool;
-      (** A map change must come first: a fade or the banner. Only the quiet
-          after it counts: a scene can go quiet for 5 s before the fade home. *)
+      (** A map change must come first: a fade, the banner or the arrival read.
+          Only the quiet after it counts: a scene can go quiet for 5 s before
+          the fade home. *)
   end_on_quiet : bool;
       (** False when a battle is to follow (a trainer's lines pause for more
           than 4 s before it): no quiet ends the talk then. *)

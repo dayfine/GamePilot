@@ -1,0 +1,22 @@
+{
+  "format": "gamepilot-fragments/1",
+  "game": "frlg",
+  "fragments": {
+    "heal_at": {
+      "params": {"town": "town"},
+      "events": [
+        {
+          "id": "walk",
+          "kind": "route",
+          "action": "run",
+          "args": {"target": {"place": "{town.nurse}"}},
+          "why": "to the Pokemon Center nurse in {town}"
+        },
+        {
+          "id": "",
+          "kind": "heal"
+        }
+      ]
+    }
+  }
+}

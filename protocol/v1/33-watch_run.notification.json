@@ -1,0 +1,44 @@
+{
+  "jsonrpc": "2.0",
+  "method": "watch.run",
+  "params": {
+    "mode": "verification",
+    "trial": 2,
+    "trials": 3,
+    "passes": 1,
+    "fails": 0,
+    "started_ms": 1795435200000,
+    "checkpoints": [
+      {
+        "id": "mg-01",
+        "state": "passed",
+        "elapsed_ms": 412000
+      },
+      {
+        "id": "mg-02",
+        "state": "passed",
+        "elapsed_ms": 655000
+      },
+      {
+        "id": "mg-03",
+        "state": "current",
+        "elapsed_ms": 301500
+      },
+      {
+        "id": "mg-04",
+        "state": "pending",
+        "elapsed_ms": 0
+      },
+      {
+        "id": "mg-05",
+        "state": "pending",
+        "elapsed_ms": 0
+      },
+      {
+        "id": "mg-06",
+        "state": "pending",
+        "elapsed_ms": 0
+      }
+    ]
+  }
+}

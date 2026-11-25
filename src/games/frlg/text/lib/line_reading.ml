@@ -14,14 +14,37 @@ let ink : Wire.color_range =
     max = (text_red_green_max, text_red_green_max, any_blue);
   }
 
-let template glyphs (line : Text_lines.t) text =
+let light_min = 200
+let brightest = 255
+
+let light_ink : Wire.color_range =
+  {
+    min = (light_min, light_min, light_min);
+    max = (brightest, brightest, brightest);
+  }
+
+let holds_black (range : Wire.color_range) =
+  let r, g, b = range.min in
+  r = darkest && g = darkest && b = darkest
+
+(* The daemon masks the template with the probe's ink too, so the drawing's
+   text must be in the ink: white on black for a light ink. *)
+let inverted (image : Text_drawing.image) =
+  {
+    image with
+    pixels =
+      Bytes.map (fun c -> Char.chr (brightest - Char.code c)) image.pixels;
+  }
+
+let template ?(ink = ink) glyphs (line : Text_lines.t) text =
   Text_drawing.draw_mask glyphs ~width:line.width ~indent:line.indent
     ~top:Text_lines.template_top ~height:Text_lines.template_height text
+  |> Result.map (fun image -> if holds_black ink then image else inverted image)
   |> Result.map Png_encoding.encode_rgb
 
 let probe_id (line : Text_lines.t) text = line.id ^ "/" ^ text
 
-let probe line text ~template =
+let probe ?(ink = ink) line text ~template =
   Wire.template_match_probe ~ink ~id:(probe_id line text)
     ~box:(Text_lines.box line) ~delivery:Latest ~template ()
 
@@ -30,25 +53,28 @@ let score line m text =
   | Some (Wire.Template_match { score; _ }) -> Some (text, score)
   | _ -> None
 
-let pick line candidates m =
+let pick ?(max_score = max_score) line candidates m =
   let scored = List.filter_map (score line m) candidates in
   match List.sort (fun (_, a) (_, b) -> Float.compare a b) scored with
   | (text, score) :: _ when score <= max_score -> Read { text; score }
   | (text, score) :: _ -> No_match { best = Some text; score }
   | [] -> No_match { best = None; score = Float.infinity }
 
-let upload glyphs line text =
-  match template glyphs line text with
-  | Ok png -> probe line text ~template:(Effects.upload_template png)
+let upload ?ink glyphs line text =
+  match template ?ink glyphs line text with
+  | Ok png -> probe ?ink line text ~template:(Effects.upload_template png)
   | Error why -> invalid_arg why
 
-let read glyphs line candidates =
-  let probes = List.map (upload glyphs line) candidates in
+let probes ?ink glyphs line candidates =
+  List.map (upload ?ink glyphs line) candidates
+
+let read ?max_score ?ink glyphs line candidates =
+  let probes = probes ?ink glyphs line candidates in
   let ids = List.map (fun (p : Wire.probe_spec) -> p.id) probes in
   let all_there m = List.for_all (fun id -> Effects.probe m id <> None) ids in
   match
     Effects.with_probes probes (fun () ->
         Effects.await ~timeout_ms:frame_timeout_ms all_there)
   with
-  | Holds m -> pick line candidates m
+  | Holds m -> pick ?max_score line candidates m
   | Timeout -> failwith ("no frame with the probes of " ^ line.id)

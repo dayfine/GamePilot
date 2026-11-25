@@ -1,6 +1,6 @@
-repo src/games/frlg/readers/test/images/mgba/mail-glitch-04-inspect/mg05-recycle-1.png|mail-glitch-04/mg05-recycle-1__nohp.png
-repo src/games/frlg/readers/test/images/mgba/mail-glitch-04-inspect/mg05-recycle-2.png|mail-glitch-04/mg05-recycle-2__nohp.png
-repo src/games/frlg/readers/test/images/mgba/mail-glitch-04-inspect/mg05-recycle-3.png|mail-glitch-04/mg05-recycle-3__none.png
+repo src/games/frlg/readers/test/images/mgba/mail-glitch-04-inspect/mg05-recycle-1.png|mail-glitch-04/mg05-recycle-1__ally.png
+repo src/games/frlg/readers/test/images/mgba/mail-glitch-04-inspect/mg05-recycle-2.png|mail-glitch-04/mg05-recycle-2__ally.png
+repo src/games/frlg/readers/test/images/mgba/mail-glitch-04-inspect/mg05-recycle-3.png|mail-glitch-04/mg05-recycle-3__ally.png
 repo src/games/frlg/readers/test/images/mgba/emu-1/screenshots-779/20261122-004503-01.05.png|screenshots-779/20261122-004503-01.05__none.png
 repo src/games/frlg/readers/test/images/mgba/emu-1/screenshots-779/20261122-011503-03.02.png|screenshots-779/20261122-011503-03.02__none.png
 repo src/games/frlg/readers/test/images/mgba/emu-1/screenshots-779/20261122-012505-03.02.png|screenshots-779/20261122-012505-03.02__none.png
@@ -33,6 +33,9 @@ repo src/games/frlg/readers/test/images/mgba/emu-1/screenshots-779/20261122-1625
 repo src/games/frlg/readers/test/images/mgba/mail-glitch-04-inspect/party.png|mail-glitch-04/party__none.png
 repo src/games/frlg/readers/test/images/mgba/mail-glitch-04-inspect/overworld.png|mail-glitch-04/overworld__none.png
 repo src/games/frlg/readers/test/images/mgba/mail-glitch-04-inspect/pause-menu.png|mail-glitch-04/pause-menu__none.png
-repo src/games/frlg/readers/test/images/mgba/mail-glitch-route16/battle-command.png|mail-glitch-route16/battle-command__none.png
+repo src/games/frlg/readers/test/images/mgba/mail-glitch-route16/battle-command.png|mail-glitch-route16/battle-command__ally.png
 repo src/games/frlg/readers/test/images/mgba/mail-glitch-route16/entry-party.png|mail-glitch-route16/entry-party__none.png
-repo src/games/frlg/readers/test/images/mgba/mail-glitch-route16/refill-pp.png|mail-glitch-route16/refill-pp__none.png
+repo src/games/frlg/readers/test/images/mgba/mail-glitch-route16/refill-pp.png|mail-glitch-route16/refill-pp__ally.png
+repo src/games/frlg/readers/test/images/mgba/victory-road-move-learn/delete-a-move.png|victory-road-move-learn/delete-a-move__yesno-learn.png
+repo src/games/frlg/readers/test/images/mgba/victory-road-move-learn/stop-learning.png|victory-road-move-learn/stop-learning__yesno-learn.png
+repo src/games/frlg/readers/test/images/mgba/mail-glitch-route16/lea-jed-defeat-text.png|mail-glitch-route16/lea-jed-defeat-text__ally.png

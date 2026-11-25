@@ -1,4 +1,7 @@
 (tests
  (names test_route_log test_leg_trace test_console_failure)
  (modules test_route_log test_leg_trace test_console_failure)
- (libraries gamepilot.case_table gamepilot.grid_maps gamepilot.grid_trace))
+ (libraries
+  gamepilot.table_test
+  gamepilot.grid_geometry
+  gamepilot.grid_trace))

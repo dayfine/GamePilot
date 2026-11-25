@@ -14,6 +14,21 @@ val read_row : int -> string option
 val read_offered : unit -> string option
 (** {!read_row} 4: the move offered on the list to forget from. *)
 
+val open_summary : int -> unit
+(** From the overworld: the party, the member in this slot (from 1), SUMMARY on
+    its menu, until the info page (1) shows. In {!Frlg_readers.Summary_screen}'s
+    probes. Fails as [no_party], [no_member_menu] or [no_summary]. *)
+
+val on_page : int -> Effects.measurements -> bool
+(** The summary shows this page. *)
+
+val page_turn_ms : int
+(** Between two RIGHT presses on the summary: 700 ms. *)
+
+val settled_rows : unit -> string list
+(** The open moves page's known moves once its rows settled (see {!read_known}).
+    Fails as [no_summary]. *)
+
 val read_known : log:(string -> unit) -> slot:int -> string list
 
 val reread_ms : int

@@ -24,7 +24,7 @@
  (libraries
   gamepilot.wire
   gamepilot.effects
-  gamepilot.case_table
+  gamepilot.table_test
   gamepilot.frlg_readers
   gamepilot.frlg_menu_cursor
   frlg_overworld_fixtures))

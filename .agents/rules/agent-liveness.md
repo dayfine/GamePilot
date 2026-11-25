@@ -28,7 +28,7 @@ latency each, and once the same agent did it twice in a row.
 **Rule:**
 
 - Run builds and tests in the **foreground** with an explicit tool timeout
-  (for Claude Code's Bash tool, `timeout: 600000`, the 10-minute maximum).
+  (the agent's shell timeout, at its maximum: 10 minutes in most harnesses).
 - When one call could run longer, split it into scoped calls (format, build,
   one test directory at a time).
 - Read exit codes from a file (`cmd; echo $? > rc`), never through a pipe.
@@ -73,8 +73,8 @@ compare the clock with the last command's start before assuming it is slow.
 
 ### 4. The agent dies, or its work is reaped
 
-- **Uncommitted work is deleted.** Claude Code removes an `isolation:
-  "worktree"` worktree that has **no commits** when the agent finishes, and
+- **Uncommitted work is deleted.** A harness that gives an agent its own
+  worktree may remove it when it has **no commits** at the agent's finish, and
   every uncommitted edit goes with it. There is no prompt and no copy.
 - **Usage limits stop agents mid-task.** Subagents share the account's
   limits. A dead agent's notification repeats the limit message as its
@@ -135,12 +135,12 @@ A dispatch brief carries only the task: the issue or PR, the tip SHA, the
 scope or the delta since the last review, the prior review's location and
 the rework iteration. Target about 0.5 KB. Everything that is true for every
 dispatch of that agent belongs in its definition's standing-rules block,
-which `bin/agent-standing-rules-check.sh` keeps from going missing.
+which `.agents/checks/agent-standing-rules-check.sh` keeps from going missing.
 
 ## What a reviewer can check
 
 - **L1.** Every dispatched agent definition carries the standing-rules
-  block (`bin/agent-standing-rules-check.sh`).
+  block (`.agents/checks/agent-standing-rules-check.sh`).
 - **L2.** No script or brief added in the diff contains an uncapped
   `until … done` or `while true` wait loop.
 - **L3.** A dispatch brief does not restate the standing rules.

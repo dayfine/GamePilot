@@ -1,4 +1,5 @@
 open Json_field
+open Grid_field
 open Map_features
 
 let source ~where obj =
@@ -135,9 +136,15 @@ let map_object ~where obj =
     wander = sub "wander" box;
     trainer = sub "trainer" (trainer ~facing);
     hide_flag = string_opt ~where "hide_flag" obj;
+    script = string_opt ~where "source_script" obj;
   }
 
 let objects ~where obj = records ~where "objects" obj map_object
+
+let hidden_item ~where obj : hidden_item =
+  { hidden_flag = string ~where "flag" obj; hidden_pos = pos ~where obj }
+
+let hidden_items ~where obj = records ~where "hidden_items" obj hidden_item
 
 let trigger ~where obj =
   let box_where = where ^ "box" in

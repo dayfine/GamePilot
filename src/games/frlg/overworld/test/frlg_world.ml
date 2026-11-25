@@ -2,33 +2,42 @@
    and a one-line text of planned legs. *)
 
 open Grid_maps
+open Grid_geometry
 open Grid_planning
 
-(* third_party/ sits outside the dune project, so find it from the build
-   dir. *)
-let maps_dir =
-  let maps =
-    List.fold_left Filename.concat "third_party"
-      [ "PokemonSimulation"; "data"; "games"; "frlg"; "maps" ]
-  in
+(* third_party/ and src/games/frlg/assets sit outside the test's build dir,
+   so find them from it. *)
+let above path =
   let rec up dir =
-    let candidate = Filename.concat dir maps in
+    let candidate = Filename.concat dir path in
     if Sys.file_exists candidate then candidate
     else
       let parent = Filename.dirname dir in
-      if parent = dir then
-        failwith "third_party/PokemonSimulation not found above the test dir"
+      if parent = dir then failwith (path ^ " not found above the test dir")
       else up parent
   in
   up (Sys.getcwd ())
+
+let maps_dir = above "third_party/PokemonSimulation/data/games/frlg/maps"
+
+let rock_stairs =
+  match
+    Frlg_overworld.Rock_stairs.load (above Frlg_overworld.Rock_stairs.asset)
+  with
+  | Ok stairs -> stairs
+  | Error e -> failwith e
 
 let load name =
   match Map_file.load_runtime ~maps_dir name with
   | Ok map -> map
   | Error e -> failwith e
 
-let world names =
-  Frlg_overworld.Frlg_steps.world (Connected_maps.create (List.map load names))
+let world ?edge_stalls ?rock_stairs names =
+  Frlg_overworld.Frlg_steps.world ?edge_stalls ?rock_stairs
+    (Connected_maps.create (List.map load names))
+
+(* mGBA's world, as the checkpoint runner loads it. *)
+let mgba_world names = world ~edge_stalls:false ~rock_stairs names
 
 let pallet =
   world

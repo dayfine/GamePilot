@@ -1,13 +1,20 @@
-// The probe kinds on synthetic frames, the viewport mapping, base64 decoding,
+// The probe kinds on synthetic frames, the viewport mapping (the GBA picture
+// in the Switch frame, and a full-screen native Switch game), base64 decoding,
 // and the input schedule's frame rounding.
 
 #include "probes.h"
 
 #include <cmath>
+#include <opencv2/imgcodecs.hpp>
+#include <optional>
+#include <string>
+#include <vector>
 
 #include "base64.h"
 #include "check.h"
+#include "probe_evaluation.h"
 #include "schedule.h"
+#include "template_store.h"
 
 using namespace gamepilot;
 
@@ -131,9 +138,8 @@ void check_color_count() {
 
 void check_viewport() {
   // A 1920x1080 capture with the 240x160 picture inside side bars, as the
-  // fork's FRLG GAME_BOX puts it.
-  const Viewport switch_capture{Box{0.09375, 0.00462963, 0.8125, 0.962963}, 240,
-                                160};
+  // Switch's GBA app shows it.
+  const Viewport switch_capture = nso_gba_viewport();
   const Box whole = picture_box_to_frame(switch_capture, Box{0, 0, 1, 1});
   CHECK(box_to_pixels(whole, 1920, 1080) == cv::Rect(180, 5, 1560, 1040));
   const Box right_half =
@@ -162,6 +168,88 @@ void check_viewport() {
   CHECK(!parse_box("0,0,1,1,"));
 }
 
+// A --viewport value, as the daemon and probe_images take it: a name is the
+// whole viewport, x,y,w,h moves the base's picture and keeps its game size.
+void check_parse_viewport() {
+  const Viewport base{Box{0, 0, 1, 1}, 240, 160};
+  const std::optional<Viewport> native = parse_viewport("native", base);
+  CHECK(native && native->game_width == 1920 && native->game_height == 1080 &&
+        native->picture.w == 1);
+  const std::optional<Viewport> gba = parse_viewport("nso-gba", base);
+  CHECK(gba && gba->picture.x == nso_gba_viewport().picture.x);
+  const std::optional<Viewport> moved = parse_viewport("0.125,0,0.75,1", base);
+  CHECK(moved && moved->picture.x == 0.125 && moved->picture.w == 0.75 &&
+        moved->game_width == 240 && moved->game_height == 160);
+  CHECK(!parse_viewport("gba", base));
+  CHECK(!parse_viewport("0.5,0,0.6,1", base));
+  CHECK(!parse_viewport("", base));
+}
+
+// A full-screen Switch game: boxes are fractions of the whole 1920x1080
+// frame (the fork's ImageFloatBox) and templates are 1080p crops, matched at
+// their own size.
+void check_native_viewport() {
+  const Viewport native = native_switch_viewport();
+  CHECK(box_to_pixels(picture_box_to_frame(native, Box{0, 0, 1, 1}), 1920,
+                      1080) == cv::Rect(0, 0, 1920, 1080));
+  CHECK(template_size_in_frame(native, cv::Size(60, 40), 1920, 1080) ==
+        cv::Size(60, 40));
+  CHECK(named_viewport("native").has_value() &&
+        named_viewport("native")->game_width == 1920 &&
+        named_viewport("native")->game_height == 1080);
+  CHECK(named_viewport("nso-gba").has_value() &&
+        named_viewport("nso-gba")->game_width == 240);
+  CHECK(!named_viewport("gba"));
+
+  // A gray 1920x1080 frame: a 60x40 striped pattern at pixel (1500, 900) and
+  // a red 192x108 block in the top-left corner.
+  cv::Mat frame(1080, 1920, CV_8UC3, cv::Scalar(128, 128, 128));
+  cv::Mat pattern(40, 60, CV_8UC3, cv::Scalar(255, 255, 255));
+  pattern.rowRange(10, 20).setTo(cv::Scalar(0, 0, 255));
+  pattern.rowRange(20, 30).setTo(cv::Scalar(0, 0, 0));
+  pattern.copyTo(frame(cv::Rect(1500, 900, 60, 40)));
+  frame(cv::Rect(0, 0, 192, 108)).setTo(cv::Scalar(0, 0, 255));
+
+  TemplateStore templates;
+  std::vector<uchar> png;
+  cv::imencode(".png", pattern, png);
+  const auto hash = templates.add_png(std::string(png.begin(), png.end()));
+  CHECK(hash.has_value());
+  if (!hash) {
+    return;
+  }
+  ProbeSpec match{.id = "corner",
+                  .kind = std::string(kTemplateMatchKind),
+                  .box = Box{0.75, 0.8, 0.2, 0.15},
+                  .template_hash = *hash};
+  const FrameProbe mapped = map_probe(match, templates, native, 1920, 1080);
+  CHECK(mapped.pixels == cv::Rect(1440, 864, 384, 162));
+  CHECK(mapped.template_image.size() == cv::Size(60, 40));
+  const ProbeResult matched = evaluate_probe(mapped, frame);
+  const auto* found = std::get_if<TemplateMatch>(&matched);
+  CHECK(found != nullptr && near(found->score, 0) &&
+        near(found->x, 1500.0 / 1920) && near(found->y, 900.0 / 1080));
+
+  // The GBA viewport would scale the same template 6.5 times, past its box.
+  bool too_big = false;
+  try {
+    map_probe(match, templates, nso_gba_viewport(), 1920, 1080);
+  } catch (const RpcError& error) {
+    too_big = error.code() == kInvalidParams;
+  }
+  CHECK(too_big);
+
+  ProbeSpec red{.id = "red",
+                .kind = std::string(kColorCountKind),
+                .box = Box{0, 0, 0.2, 0.2},
+                .color_range = ColorRange{{200, 0, 0}, {255, 60, 60}}};
+  const FrameProbe red_mapped = map_probe(red, templates, native, 1920, 1080);
+  CHECK(red_mapped.pixels == cv::Rect(0, 0, 384, 216));
+  const ProbeResult counted = evaluate_probe(red_mapped, frame);
+  const auto* count = std::get_if<ColorCount>(&counted);
+  CHECK(count != nullptr && near(count->fraction, 0.25));
+}
+
 void check_base64() {
   CHECK(decode_base64("") == std::string());
   CHECK(decode_base64("TWFu") == std::string("Man"));
@@ -177,15 +265,22 @@ void check_base64() {
 void check_schedule() {
   InputSchedule schedule(59.7275);
   // The golden batch: Start 100 ms + 100 ms cooldown, then wait 250 ms.
-  InputCommand start{8, 100, 100, 0, false};
-  InputCommand wait{0, 0, 0, 250, true};
+  InputCommand start;
+  start.buttons = 8;
+  start.hold_ms = 100;
+  start.cooldown_ms = 100;
+  InputCommand wait;
+  wait.wait_ms = 250;
+  wait.is_wait = true;
   CHECK(schedule.submit("b1", {start, wait}, 1203) == 1203);
   CHECK(schedule.mask_at(1202) == 0);
   CHECK(schedule.mask_at(1203) == 8);
   CHECK(schedule.mask_at(1208) == 8);
   CHECK(schedule.mask_at(1209) == 0);
   // A second batch queues after the first one ends (frame 1230).
-  CHECK(schedule.submit("b2", {InputCommand{2, 0, 0, 0, false}}, 1205) == 1230);
+  InputCommand b;
+  b.buttons = 2;  // GBA B, 0 ms
+  CHECK(schedule.submit("b2", {b}, 1205) == 1230);
   CHECK(schedule.mask_at(1230) == 2);  // a 0 ms press still lasts one frame
   CHECK(schedule.mask_at(1231) == 0);
   CHECK(schedule.take_finished(1229).empty());
@@ -203,6 +298,8 @@ int main() {
   check_mask_match();
   check_color_count();
   check_viewport();
+  check_native_viewport();
+  check_parse_viewport();
   check_base64();
   check_schedule();
   return TEST_RESULT();

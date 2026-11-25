@@ -1,4 +1,4 @@
-(* The screen driver's decisions on reader facts, with no screen: which screen
+(* The battle steps' decisions on reader facts, with no screen: which screen
    a look's facts make, what next_event does at each look (Event_rule), and
    where the cursors go (Battle_cursor). *)
 
@@ -9,8 +9,8 @@ let text = { f with text_box = true; player_box = true; foe_box = true }
 let arrow = { text with arrow = true }
 let evolving = { f with text_box = true; evolution = true }
 
-let classify_cases : Case_table.case list =
-  let case name facts expectation : Case_table.case =
+let classify_cases : Table_test.case list =
+  let case name facts expectation : Table_test.case =
     {
       name;
       input = (fun () -> Battle_look.(screen_name (classify facts)));
@@ -46,7 +46,7 @@ let classify_cases : Case_table.case list =
   ]
 
 let step_name : Event_rule.step -> string = function
-  | Report e -> Battle_driver.event_name e
+  | Report e -> Battle.event_name e
   | Press b -> "press " ^ Wire.string_of_button b
   | Look -> "look"
 
@@ -62,8 +62,8 @@ let steps looks () =
   in
   String.concat ", " (List.rev names)
 
-let rule_cases : Case_table.case list =
-  let case name looks expectation : Case_table.case =
+let rule_cases : Table_test.case list =
+  let case name looks expectation : Table_test.case =
     { name; input = steps looks; expectation }
   in
   [
@@ -73,8 +73,8 @@ let rule_cases : Case_table.case list =
     case "the party list the game opened: a switch-in"
       [ ({ f with party_list = true }, 100.) ]
       "switch-in";
-    case "a YES/NO with the player's box: a move to learn"
-      [ ({ text with yes_no = true }, 100.) ]
+    case "a YES/NO with the player's box beside it: a move to learn"
+      [ ({ text with yes_no = true; move_learn = true }, 100.) ]
       "move learn";
     case "a YES/NO with the player's box gone: use next"
       [ ({ f with yes_no = true; foe_box = true }, 100.) ]
@@ -85,9 +85,19 @@ let rule_cases : Case_table.case list =
     case "text with no arrow is left to run on until 6 s without a press"
       [ (text, 1500.); (text, 5900.); (text, 6000.) ]
       "look, look, press B";
-    case "an evolution never gets a press"
-      [ (evolving, 1000.); (evolving, 10000.); (evolving, 30000.) ]
-      "look, look, look";
+    case "after a level-up, an evolution never gets a press"
+      [
+        ({ text with level_up = true }, 1500.);
+        (evolving, 2000.);
+        (evolving, 10000.);
+        (evolving, 30000.);
+      ]
+      "press A, look, look, look";
+    case
+      "with no level-up, text with no HP box (Lea & Jed's defeat line) gets B \
+       after 6 s"
+      [ (evolving, 1000.); (evolving, 5900.); (evolving, 6000.) ]
+      "look, look, press B";
     case "the level-up box gets A"
       [ ({ text with level_up = true }, 1500.) ]
       "press A";
@@ -107,8 +117,8 @@ let rule_cases : Case_table.case list =
 
 let buttons bs = String.concat " " (List.map Wire.string_of_button bs)
 
-let cursor_cases : Case_table.case list =
-  let case name presses expectation : Case_table.case =
+let cursor_cases : Table_test.case list =
+  let case name presses expectation : Table_test.case =
     { name; input = (fun () -> buttons presses); expectation }
   in
   [
@@ -128,6 +138,6 @@ let cursor_cases : Case_table.case list =
   ]
 
 let () =
-  Case_table.run "battle look" classify_cases;
-  Case_table.run "event rule" rule_cases;
-  Case_table.run "battle cursor" cursor_cases
+  Table_test.run "battle look" classify_cases;
+  Table_test.run "event rule" rule_cases;
+  Table_test.run "battle cursor" cursor_cases

@@ -33,10 +33,10 @@ let bad json =
   | Ok _ -> "parsed"
   | Error e -> e
 
-let case name input expectation = { Case_table.name; input; expectation }
+let case name input expectation = { Table_test.name; input; expectation }
 
 let () =
-  Case_table.run "fly_towns"
+  Table_test.run "fly_towns"
     [
       case "every town's cell is on the fly map" cells_on_map "";
       case "no two towns share a cell"
@@ -52,7 +52,7 @@ let () =
       case "Indigo Plateau lands outside"
         (fun () ->
           match Fly_towns.find table "IndigoPlateau" with
-          | Some t -> Story.Pose.observed_to_string t.landing
+          | Some t -> Pokemon_checkpoints.Pose_text.observed t.landing
           | None -> "none")
         "IndigoPlateau_Exterior (11, 7) south";
       case "a cell that is not [x, y]"

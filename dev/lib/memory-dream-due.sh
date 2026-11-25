@@ -19,7 +19,7 @@
 # .agents/rules/memory-consolidation.md for presets.
 #
 # Settings: environment, else dev/memory-dream.conf (KEY=VALUE lines, sourced), else defaults.
-#   MEMORY_DIR             memory store (default: the Claude Code per-project store,
+#   MEMORY_DIR             memory store (default: one harness's per-project store,
 #                          ~/.claude/projects/<repo path, / and . as ->/memory)
 #   MEMORY_INDEX           index file name inside MEMORY_DIR (default MEMORY.md)
 #   DREAM_MIN_DAYS         floor between passes (default 3)

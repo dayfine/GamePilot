@@ -8,7 +8,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
-find_package(OpenCV REQUIRED COMPONENTS core imgproc imgcodecs)
+find_package(OpenCV REQUIRED COMPONENTS core imgproc imgcodecs videoio)
 
 # CoreLib, through Arduino-Source's own cmake files. SourceFiles.cmake globs paths
 # relative to SerialPrograms/, so the folder is added as a subdirectory with
@@ -34,19 +34,77 @@ function(gamepilot_warnings target)
   endif()
 endfunction()
 
+# The watch page and the hub's, compiled in as bytes: the daemon serves them
+# as they are.
+function(embed_page page function header)
+  add_custom_command(
+    OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/${function}.cpp"
+    COMMAND ${CMAKE_COMMAND} -DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/watch/${page}
+            -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/${function}.cpp
+            -DFUNCTION=${function} -DHEADER=${header}
+            -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/embed_watch_page.cmake"
+    DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/watch/${page}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/cmake/embed_watch_page.cmake"
+    VERBATIM)
+endfunction()
+embed_page(watch.html watch_page watch_server.h)
+embed_page(hub.html hub_page watch_hub.h)
+embed_page(run.html run_page watch_hub.h)
+
 add_library(gamepilot_core STATIC
+  "${CMAKE_CURRENT_BINARY_DIR}/watch_page.cpp"
+  "${CMAKE_CURRENT_BINARY_DIR}/hub_page.cpp"
+  "${CMAKE_CURRENT_BINARY_DIR}/run_page.cpp"
   src/base64.cpp
+  src/blob_find.cpp
+  src/board_session.cpp
+  src/fake_switch.cpp
+  src/frame_stream.cpp
+  src/frame_ring.cpp
+  src/gzip_reader.cpp
+  src/http.cpp
+  src/input_lease.cpp
+  src/keep_awake.cpp
+  src/live_schedule.cpp
+  src/log_tail.cpp
   src/mgba_backend.cpp
   src/net.cpp
+  src/press_latency.cpp
   src/probe_evaluation.cpp
   src/probes.cpp
   src/rpc.cpp
+  src/run_history.cpp
+  src/run_journal.cpp
   src/schedule.cpp
   src/sent_results.cpp
   src/server.cpp
+  src/server_watch.cpp
+  src/switch_backend.cpp
+  src/switch_controller.cpp
+  src/switch_geometry.cpp
   src/template_store.cpp
+  src/video_capture.cpp
+  src/view_backend.cpp
+  src/view_source.cpp
   src/viewport.cpp
+  src/watch_hub.cpp
+  src/watch_registry.cpp
+  src/watch_server.cpp
 )
+# The window frame source: ScreenCaptureKit on macOS (Objective-C++), none
+# elsewhere (window_capture.h).
+if(APPLE)
+  enable_language(OBJCXX)
+  target_sources(gamepilot_core PRIVATE src/window_capture_mac.mm)
+  set_source_files_properties(src/window_capture_mac.mm PROPERTIES
+    COMPILE_OPTIONS "-fobjc-arc")
+  target_link_libraries(gamepilot_core PUBLIC
+    "-framework ScreenCaptureKit" "-framework CoreMedia"
+    "-framework CoreVideo" "-framework CoreGraphics" "-framework AppKit"
+    "-framework Foundation")
+else()
+  target_sources(gamepilot_core PRIVATE src/window_capture_none.cpp)
+endif()
 target_include_directories(gamepilot_core PUBLIC src)
 target_include_directories(gamepilot_core SYSTEM PUBLIC ${OpenCV_INCLUDE_DIRS})
 target_link_libraries(gamepilot_core PUBLIC CoreLib ${OpenCV_LIBS})
@@ -63,12 +121,25 @@ add_executable(probe_images src/probe_images.cpp)
 target_link_libraries(probe_images PRIVATE gamepilot_core)
 gamepilot_warnings(probe_images)
 
+add_executable(press_latency src/press_latency_tool.cpp)
+target_link_libraries(press_latency PRIVATE gamepilot_core)
+gamepilot_warnings(press_latency)
+
 enable_testing()
-foreach(test contracts_test probes_test)
+foreach(test blob_find_test board_session_test contracts_test input_lease_test keep_awake_test
+             lockstep_speed_test probes_test
+             run_history_test
+             switch_backend_test
+             switch_geometry_test view_source_test watch_test
+             watch_registry_test)
   add_executable(${test} tests/${test}.cpp)
   target_link_libraries(${test} PRIVATE gamepilot_core)
   target_compile_definitions(${test} PRIVATE
-    GAMEPILOT_CONTRACTS_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../contracts/v1")
+    GAMEPILOT_CONTRACTS_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../protocol/v1"
+    GAMEPILOT_SWITCH_IMAGES_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../src/games/frlg/readers/test/images/switch/tmcase"
+    GAMEPILOT_PLZA_IMAGES_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../src/games/plza/readers/test/images/switch"
+    GAMEPILOT_SWITCH_CAPTURES_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../src/games/frlg/readers/test/images/switch"
+    GAMEPILOT_TEST_OUTPUT_DIR="${CMAKE_CURRENT_BINARY_DIR}")
   gamepilot_warnings(${test})
   add_test(NAME ${test} COMMAND ${test})
 endforeach()

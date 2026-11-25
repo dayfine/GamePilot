@@ -1,19 +1,19 @@
-module J = Grid_maps.Json_field
+module J = Json_field
 
 type town = {
   name : string;
-  cell : Grid_maps.Tile_pos.t;
-  landing : Story.Pose.observed;
+  cell : Grid_geometry.Tile_pos.t;
+  landing : Pokemon_checkpoints.Pose.observed;
 }
 
 type t = { columns : int; rows : int; towns : town list }
 
 (* pokefirered src/field_effect.c, FlyInFieldEffect_End: the player gets off
    the bird turned south. *)
-let landing_facing = Grid_maps.Direction.South
+let landing_facing = Grid_geometry.Direction.South
 let asset = "src/games/frlg/assets/kanto_fly_towns.json"
 
-let tile ~where key obj : Grid_maps.Tile_pos.t =
+let tile ~where key obj : Grid_geometry.Tile_pos.t =
   match J.field ~where key obj with
   | `List [ `Int x; `Int y ] -> { x; y }
   | _ -> J.fail "%s%s is not [x, y]." where key
@@ -48,7 +48,7 @@ let parse json =
   | exception J.Invalid e -> Error e
 
 let read () =
-  match Frlg_repo_files.Repo_files.locate asset with
+  match Repo_io.Repo_files.locate asset with
   | None -> Error (asset ^ " not found from the working directory")
   | Some path -> (
       match Yojson.Safe.from_file path with
@@ -67,20 +67,11 @@ let to_corner_ms = 3000
 
 let taps button n =
   let tap =
-    Wire.Press
-      {
-        buttons = [ button ];
-        hold_ms = cursor_tap_ms;
-        cooldown_ms = cursor_release_ms;
-      }
+    Wire.press ~hold_ms:cursor_tap_ms ~cooldown_ms:cursor_release_ms [ button ]
   in
   List.init n (fun _ -> tap)
 
 let cursor_presses town =
-  Wire.Press
-    {
-      buttons = [ Wire.Up; Wire.Left ];
-      hold_ms = to_corner_ms;
-      cooldown_ms = cursor_release_ms;
-    }
+  Wire.press ~hold_ms:to_corner_ms ~cooldown_ms:cursor_release_ms
+    [ Wire.Up; Wire.Left ]
   :: (taps Wire.Right town.cell.x @ taps Wire.Down town.cell.y)

@@ -5,8 +5,10 @@
    shows after "__", dash-separated:
 
      yesno   a battle's YES/NO box       arrow   the battle text's red arrow
+     learn   a YES/NO beside the player's HP box: a move to learn
      nopp    the move menu, its PP red   nohp    the battle text box with no
              HP box, arrow or YES/NO: what an evolution shows
+     ally    a double battle's HP boxes on the player's side
      none    none of these
 
    Switch names keep their CommandLineTests folder and file name. *)
@@ -30,12 +32,14 @@ type reader = {
 let readers =
   [
     { reader = "yes_no_box"; verdict = Battle_yes_no.yes_no_box; tag = "yesno" };
+    { reader = "move_learn"; verdict = Battle_yes_no.move_learn; tag = "learn" };
     {
       reader = "advance_arrow";
       verdict = Battle_text_arrow.advance_arrow;
       tag = "arrow";
     };
     { reader = "no_pp_left"; verdict = Move_pp.no_pp_left; tag = "nopp" };
+    { reader = "ally_boxes"; verdict = Battle_screen.ally_boxes; tag = "ally" };
     {
       reader = "evolution_shows";
       verdict = Evolution_screen.evolution_shows;
@@ -51,7 +55,7 @@ let cases backend images =
       List.map
         (fun (image, probes) ->
           {
-            Case_table.name = Printf.sprintf "%s %s: %s" backend r.reader image;
+            Table_test.name = Printf.sprintf "%s %s: %s" backend r.reader image;
             input = (fun () -> string_of_bool (r.verdict (measurements probes)));
             expectation = string_of_bool (expected r image);
           })
@@ -82,5 +86,5 @@ let () =
       [ "switch"; "mgba" ]
   in
   List.iter (fun (backend, images) -> print_tally backend images) backends;
-  Case_table.run "battle readers"
+  Table_test.run "battle readers"
     (List.concat_map (fun (backend, images) -> cases backend images) backends)

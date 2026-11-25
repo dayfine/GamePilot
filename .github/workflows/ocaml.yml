@@ -18,10 +18,16 @@ jobs:
         run: git submodule update --init --depth 1 third_party/PokemonSimulation
       - name: Lint dune files and opam dependencies
         shell: bash
-        run: sh tools/lint_dune.sh
+        run: sh dev/lint/lint_dune.sh
+      - name: Test the mGBA runner's lock
+        if: runner.os != 'Windows'
+        run: sh run/test_run_lock.sh
+      - name: Test the dune test failure report (dev/ci/)
+        if: runner.os == 'Linux'
+        run: sh dev/ci/test_report_test_failures.sh
       - name: Check golden JSON formatting
         if: runner.os == 'Linux'
-        run: python3 tools/fmt_json.py --check contracts/v1/*.json
+        run: python3 dev/lint/fmt_json.py --check protocol/v1/*.json
       - uses: ocaml/setup-ocaml@v3
         with:
           ocaml-compiler: "5.2"
@@ -30,20 +36,35 @@ jobs:
       - working-directory: src
         run: opam exec -- dune build
       - working-directory: src
-        run: opam exec -- dune test
-      - name: Build and test the OCaml linters (lint/)
+        shell: bash
+        run: |
+          set +e
+          opam exec -- dune test 2>&1 | tee dune-test.log
+          status=${PIPESTATUS[0]}
+          if [ "$status" -ne 0 ]; then sh ../dev/ci/report_test_failures.sh dune-test.log; fi
+          exit "$status"
+      - name: Check the user guides (docs/guide/) against the registry and the plans
         if: runner.os == 'Linux'
-        working-directory: lint
+        working-directory: src
+        run: opam exec -- dune exec -- gamepilot guide --check
+      - name: Build and test the OCaml linters (dev/lint/)
+        if: runner.os == 'Linux'
+        working-directory: dev/lint
+        shell: bash
         run: |
           opam exec -- dune build
-          opam exec -- dune test
-      - name: Run the OCaml linters on src/ and lint/
+          set +e
+          opam exec -- dune test 2>&1 | tee dune-test.log
+          status=${PIPESTATUS[0]}
+          if [ "$status" -ne 0 ]; then sh ../ci/report_test_failures.sh dune-test.log; fi
+          exit "$status"
+      - name: Run the OCaml linters on src/ and dev/lint/
         if: runner.os == 'Linux'
-        run: opam exec -- sh tools/lint_ocaml.sh
+        run: opam exec -- sh dev/lint/lint_ocaml.sh
       - name: Check formatting (ocamlformat version from src/.ocamlformat)
         if: runner.os == 'Linux'
         working-directory: src
         run: |
           opam install --yes "ocamlformat=$(sed -n 's/^version *= *//p' .ocamlformat)"
           opam exec -- dune build @fmt
-          cd ../lint && opam exec -- dune build @fmt
+          cd ../dev/lint && opam exec -- dune build @fmt

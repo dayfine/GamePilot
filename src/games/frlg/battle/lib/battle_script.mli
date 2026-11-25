@@ -1,36 +1,41 @@
 (** A battle written down as data: the commands for the first action menus in
     order, what to do at the action menus after them, whom to send in when a
     member faints, and the answers to the prompts. {!Scripted_battle} plays it
-    on a {!Battle_driver}.
+    on a {!Battle.game_steps}.
 
     One command per action menu: a single battle asks once a turn, a double
     battle twice (its left battler first). The Mail Glitch's three battles:
 
     - switch-grind (mg-04): [opening = [Switch 1]], [fallback = Attack] with the
       sweeper's moves, [send_ins = [{ slot = 1; then_ = None }]] in case the
-      trainee faints before the switch, [learn = Forget_for { move; slot }]; a
-      second faint, the sweeper's, finds no send-in left and fails the battle;
-    - faint-and-flee (mg-05's Berry holder): [fallback = Attack] with move 0,
-      [send_ins = [{ slot = 1; then_ = Some Flee }]];
-    - the double battle (mg-05): four opening commands (Knock Off on the ally, a
-      switch, a switch, Recycle), then [Attack] with Surf, [Default] as it hits
-      both foes. *)
+      trainee faints before the switch, [switch_refused = Some Flee] for a
+      sweeper that fainted in an earlier battle,
+      [learn = Forget_for { move; slot }]; a second faint, the sweeper's, finds
+      no send-in left and fails the battle;
+    - the Leppa Berry's PP drain (mg-05a, [Frlg_actions.Berry_pp]):
+      [fallback = Attack] with the move, then the backup once it is refused;
+    - the double battle (mg-05, [Frlg_actions.Mail_glitch_battle]): the whole
+      battle as the opening (the Berry turn, Knock Off on the ally, a switch, a
+      switch, Recycle, then Surf and Recycle in turn), [fallback = Stop].
+
+    (Faint-and-flee, the old Route 8 plan's Berry holder, is the same shape with
+    [send_ins = [{ slot = 1; then_ = Some Flee }]].) *)
 
 type command =
   | Move of {
       slot : int;
-      target : Battle_driver.target;
+      target : Battle.target;
       name : string option;
-          (** the move the slot must hold, checked where the driver can read it
-          *)
+          (** the move the slot must hold, checked where the game steps can read
+              it *)
     }
   | Switch of int  (** party slot *)
-  | Item of Battle_driver.item
+  | Item of Battle.item
   | Run
 
 (** What each action menu after the opening gets. *)
 type fallback =
-  | Attack of { slots : int list; target : Battle_driver.target }
+  | Attack of { slots : int list; target : Battle.target }
       (** the first of [slots] the game has not refused in this battle (no PP
           left), so a list rotates as each runs dry *)
   | Flee  (** RUN, again after a failed escape *)
@@ -50,7 +55,11 @@ type t = {
   send_ins : send_in list;
       (** A switch-in past these fails the battle: a member fell that the script
           did not plan for. *)
-  learn : Battle_driver.learn;  (** "Delete a move to make room for ...?" *)
+  switch_refused : fallback option;
+      (** The fallback from a refused [Switch] on ("... has no energy left to
+          battle!": the member fainted in an earlier battle), the rest of the
+          opening dropped; [None] fails the battle. *)
+  learn : Battle.learn;  (** "Delete a move to make room for ...?" *)
   use_next : bool;  (** "Use next POKéMON?" *)
   max_menus : int;  (** more action menus than this fail the battle *)
   event_timeout_ms : int;  (** the longest wait for the battle's next event *)
@@ -67,14 +76,15 @@ val default_event_timeout_ms : int
 val make :
   ?opening:command list ->
   ?send_ins:send_in list ->
-  ?learn:Battle_driver.learn ->
+  ?switch_refused:fallback ->
+  ?learn:Battle.learn ->
   ?use_next:bool ->
   ?max_menus:int ->
   ?event_timeout_ms:int ->
   fallback ->
   t
-(** No opening, no send-ins, the moves kept ([Keep_moves]), NO to "Use next
-    POKéMON?", and the defaults above. *)
+(** No opening, no send-ins, a refused switch failing, the moves kept
+    ([Keep_moves]), NO to "Use next POKéMON?", and the defaults above. *)
 
 val describe_command : command -> string
 (** ["move 2 (ally)"], ["switch to 3"], ["item row 0"], ["run"]. *)

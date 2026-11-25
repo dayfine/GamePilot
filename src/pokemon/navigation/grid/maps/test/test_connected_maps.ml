@@ -7,6 +7,7 @@
        y 3..5:      [ Town (4) ][Lake]                                    *)
 
 open Grid_maps
+open Grid_geometry
 
 let open_map ?world ?(points = "{}") name ~width ~height =
   let row = Printf.sprintf "%S" (String.make width '.') in
@@ -112,7 +113,7 @@ let step_cases =
   ]
 
 let run_step { name; input = from, direction; expectation } =
-  Case_table.report name
+  Table_test.report name
     (lands_on "step" ~expected:expectation
        (Connected_maps.neighbour world (place_of from) direction))
 
@@ -155,7 +156,7 @@ let run_warp { warp_name; destination; arrival } =
       one_way = false;
     }
   in
-  Case_table.report warp_name
+  Table_test.report warp_name
     (lands_on "arrival" ~expected:arrival
        (Connected_maps.warp_arrival world warp))
 
@@ -191,7 +192,7 @@ let run_stale { stale_name; map_index; rejected } =
     | _ -> false
     | exception Invalid_argument _ -> true
   in
-  Case_table.report stale_name
+  Table_test.report stale_name
     (Check.equal "rejected" ~expected:(string_of_bool rejected)
        (string_of_bool was_rejected))
 
@@ -199,4 +200,4 @@ let () =
   List.iter run_step step_cases;
   List.iter run_warp warp_cases;
   List.iter run_stale stale_cases;
-  Case_table.finish ()
+  Table_test.finish ()

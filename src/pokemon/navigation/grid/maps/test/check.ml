@@ -1,4 +1,4 @@
-(* Checks for the map tests' cases, reported with Case_table.report. *)
+(* Checks for the map tests' cases, reported with Table_test.report. *)
 
 (* Ok when [read] is [expected], both as text. *)
 let equal what ~expected read =

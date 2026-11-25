@@ -13,13 +13,18 @@ type lead =
       (** the grinder leads and switches to the sweeper on turn 1 *)
 
 type heal =
-  | Nurse of Story.Pose.grid
+  | Nurse of Pokemon_checkpoints.Pose.grid
       (** talk to the nurse from this tile (walked to and back) *)
-  | Pad of Story.Pose.grid  (** step on this healing tile and back *)
+  | Pad of Pokemon_checkpoints.Pose.grid
+      (** step on this healing tile and back *)
 
 type strategy = {
   name : string;
-  spot : Story.Pose.grid;  (** the one tile the player turns on for battles *)
+  spot : Pokemon_checkpoints.Pose.grid;
+      (** the grass tile battles are paced from *)
+  pace : Grid_geometry.Direction.t;
+      (** the way paced, one step and back: the tile that way is grass too
+          ({!Pacing}) *)
   lead : lead;
   heal : heal;
   heal_every : int;
@@ -30,7 +35,8 @@ type strategy = {
 type goal = {
   species : string;  (** the grinder, a slug *)
   target_level : int;
-      (** the level the move comes at: logged, not read (no level reader) *)
+      (** the level the move comes at: the grind ends once the grinder's level,
+          read after each battle, reaches it *)
   learn_move : string;  (** a slug; the goal is met once the grinder knows it *)
   learn_slot : int;  (** the move (0-3) it replaces *)
 }
@@ -42,6 +48,9 @@ type t = {
   sweeper_moves : int list;
       (** its move slots (0-3), the next one taken when one runs dry *)
   max_battles : int;  (** more battles than this fail the action *)
+  round : bool;
+      (** one round only ({!Grind.run}): from the heal place to the spot, at
+          most [heal_every] battles, and back to heal *)
 }
 
 val default_strategy : string
@@ -53,11 +62,13 @@ val load_strategies : unit -> (strategy list, string) result
 (** The asset, found from the working directory and read once. *)
 
 val decode :
-  strategy list -> Grid_maps.Json_field.obj -> (t, Story.Failure.cause) result
+  strategy list ->
+  Json_field.obj ->
+  (t, Pokemon_checkpoints.Failure.cause) result
 (** The action's args: ["species"], ["target_level"], ["learn_move"],
     ["learn_slot"] (from 1), ["sweeper"], ["sweeper_moves"] (from 1),
-    ["max_battles"], and ["strategy"] (default {!default_strategy}). [bad_args]
-    naming the field. *)
+    ["max_battles"], ["strategy"] (default {!default_strategy}) and ["round"]
+    (default [false]). [bad_args] naming the field. *)
 
 val met : goal -> known:string list -> bool
 (** The grinder knows the move. *)

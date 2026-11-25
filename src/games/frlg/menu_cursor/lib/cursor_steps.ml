@@ -9,10 +9,12 @@ let current ~timeout_ms read =
   | Holds m -> read m
   | Timeout -> None
 
+let moved_from read at m = match read m with Some r -> r <> at | None -> false
+
 let tap_toward ~tap read ~at row =
   tap (if row > at then Wire.Down else Wire.Up);
   ignore
-    (Effects.await ~timeout_ms:tap_timeout_ms (fun m -> read m <> Some at)
+    (Effects.await ~timeout_ms:tap_timeout_ms (moved_from read at)
       : Effects.awaited)
 
 let rec step ~timeout_ms ~tap read row taps =

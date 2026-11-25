@@ -1,15 +1,75 @@
 (* gamepilot checkpoints PLAN_DIR --from ID --to ID --mode testing|verification
      [--runs N] [--states DIR] [--runs-dir DIR] [--daemon PATH]
      [--mgba-port N] [--port N] [--party SPECIES,...] [--center TOWN] [--walk]
+     [--end-check-only] [--grind-battles N] [--watch] [--watch-port N]
+     [--listen ADDR] [--backend mgba|switch --serial PORT --capture DEVICE]
 
    The checkpoint dev loop. A program's checkpoints are its plan files
-   (<ID>.plan.json in PLAN_DIR, in name order); each runs from its start state
-   (<states>/<ID>.start.ss), as many times as the mode's policy says
-   (Story.Checkpoint_trials), each run with its own daemon and run folder
+   (<ID>.plan.json in PLAN_DIR, in name order; --program ID in its place:
+   Programs_command); each runs from its start state (<states>/<ID>.start.ss),
+   as many times as the mode's policy says (Engine_run.Checkpoint_trials), each run with its own daemon and run folder
    (Run_record). A run passes when every event passed and the player ends at
-   the checkpoint's declared end (Story.Checkpoint_end). The loop goes to the
+   the checkpoint's declared end (Checkpoint_end) and the plan's
+   postconditions hold (Pokemon_checkpoints.Postcondition_check). With --end-check-only each
+   run checks its start state against the postconditions and runs no event. The loop goes to the
    next checkpoint only after this one passed; in verification mode the last
    passing run's end becomes the next checkpoint's start state.
+
+   --grind-battles N (testing) ends each grind, passing, after N battles: the
+   run's summary says "grind capped at N" and which postconditions it skipped,
+   and its end is never saved as the next checkpoint's start.
+
+   --watch serves the run's watch page (the daemon's, docs/design/Watch-Page.md)
+   on a free port (--watch-port fixes it), the same for every run of the
+   series, lists it in the watch registry ($GAMEPILOT_RUNS/.watch) and starts
+   the hub (Watch_hub, 127.0.0.1:47901) if none runs. --listen 0.0.0.0 (or
+   $GAMEPILOT_WATCH_LISTEN) opens both to the LAN; Stop then takes the series'
+   token, which the URL printed for other devices carries. The program's port
+   (--port) is a free one too unless given, so runs do not collide.
+
+   A repeating checkpoint (its plan's metadata.repeat: 05-grind-mr-mime, the grind
+   round) runs round after round, each one run with its attempts, each passing
+   round saved (on the Switch in the game, on mGBA as the next round's start
+   state), until its goal (repeat.until), read after each passing round,
+   holds; then the series goes on. A round's failure soft-resets to the last
+   round's save. --max-rounds N runs at most N rounds in place of the plan's
+   repeat.max_rounds; with --grind-battles, reaching it passes.
+
+   --record/--no-record, --keepawake SECONDS: each run's daemon's (Watch-Page.md).
+   --speed S (mGBA): the daemon steps the emulator S times as fast; waits and
+   timeouts stay game time.
+   --backend switch runs on the Switch (docs/switch-bring-up.md): the daemon
+   drives the controller board on --serial and reads the capture card
+   --capture (gamepilot switch-devices prints the lab's); --replay VIDEO
+   alone, without --serial, is a dry run on the daemon's fake board. The
+   game's own save is the start, so there are no start states and only --mode
+   testing runs: before each run the runner soft-resets to the last save and
+   checks the start; a run that passes is saved in the game
+   (--save-after-pass, the default; --no-save-after-pass), a failed one
+   soft-resets back to the last save (Checkpoints_series.Console_runs, Console_session).
+
+   Each run reads the party from the members' summaries before its first
+   action that finds a member by its species, so a save whose other members
+   differ keeps every slot right; --party only states the first checkpoint's
+   party for the Switch's start check when no checkpoint before it promises
+   one.
+
+   --make-room MAP (the save's map) runs the generated checkpoint 00-make-room first
+   when the chain needs party room (Make_room_command).
+
+   --from-event ID|N [--to-event ID|N] (mGBA, testing, one checkpoint: --to
+   is --from unless given) runs that checkpoint from the save state kept at
+   the event's start (Pokemon_checkpoints.Event_states: every mGBA run keeps one at each
+   event it reaches cleanly) to the given event or the last, the end checks
+   only when it runs the last. Its mode is "from-event" (run.json's
+   from_event and to_event): it never verifies the checkpoint nor saves its
+   end as the next start. The Switch has no save states: refused there.
+
+   --preflight --from ID reads, from the save, what checkpoint ID's plan needs
+   and prints a table (Preflight_command), its own run; exit 1 on a mismatch.
+
+   --states defaults to $GAMEPILOT_STATES and --runs-dir to $GAMEPILOT_RUNS,
+   else to $HOME/.local/share/gamepilot/{states,runs}.
 
    Mirrors, on the fork's frlg/lean (SerialPrograms/Source/Pokemon/AutoStory/):
    the START/END_CHECKPOINT range (Options/Pokemon_StoryRangeOptions.h) and
@@ -19,139 +79,120 @@
    (STORY_LEFT_WHERE_FAILED in PokemonFRLG_AutoStory.cpp), here as failure.ss.
    Not ported yet: retries inside a run (StoryGame::attempts_per_checkpoint
    with reload), the reproduction phase, the overlay log. mGBA itself is
-   started and closed around the command by tools/run_checkpoints_on_mgba.sh. *)
+   started and closed around the command by run/run_checkpoints_on_mgba.sh. *)
 
-open Story
-
-type flags = {
-  from_id : string option;
-  to_id : string option;
-  mode : Checkpoint_trials.mode option;
-  runs : int option;
-  states : string;
-  runs_dir : string;
-  daemon : string;
-  mgba_port : int;
-  common : Checkpoint_command.flags;
-}
-
-let usage =
-  "  gamepilot checkpoints PLAN_DIR --from ID --to ID --mode \
-   testing|verification\n\
-  \      [--runs N] [--states DIR] [--runs-dir DIR] [--daemon PATH]\n\
-  \      [--mgba-port N] [--port N] [--party SPECIES,...] [--center TOWN] \
-   [--walk]\n"
-
-let home = Option.value (Sys.getenv_opt "HOME") ~default:"."
-let mgba_bridge_port = 47810
-
-let defaults =
-  {
-    from_id = None;
-    to_id = None;
-    mode = None;
-    runs = None;
-    states = Filename.concat home "FRLGLab/mgba/gamepilot/states";
-    runs_dir = Filename.concat home "FRLGLab/gamepilot-runs";
-    daemon = "daemon/build/gamepilot_daemon";
-    mgba_port = mgba_bridge_port;
-    common = Checkpoint_command.defaults;
-  }
-
-let common_flag f c = { f with common = c f.common }
-
-(* A flag with an int value: [set] applies it. *)
-let int_flag name text set =
-  match int_of_string_opt text with
-  | Some n -> Ok (set n)
-  | None -> Error ("bad " ^ name ^ " " ^ text)
-
-let mode_flag f m =
-  match Checkpoint_trials.mode_of_string m with
-  | Some mode -> Ok { f with mode = Some mode }
-  | None -> Error ("bad --mode " ^ m)
-
-(* One flag with its value, or [None] for a flag that takes none or an
-   unknown one. *)
-let valued f name v =
-  match name with
-  | "--from" -> Some (Ok { f with from_id = Some v })
-  | "--to" -> Some (Ok { f with to_id = Some v })
-  | "--mode" -> Some (mode_flag f v)
-  | "--runs" -> Some (int_flag name v (fun n -> { f with runs = Some n }))
-  | "--states" -> Some (Ok { f with states = v })
-  | "--runs-dir" -> Some (Ok { f with runs_dir = v })
-  | "--daemon" -> Some (Ok { f with daemon = v })
-  | "--mgba-port" ->
-      Some (int_flag name v (fun mgba_port -> { f with mgba_port }))
-  | "--port" ->
-      Some
-        (int_flag name v (fun port -> common_flag f (fun c -> { c with port })))
-  | "--party" -> Some (Ok (common_flag f (fun c -> { c with party = v })))
-  | "--center" ->
-      Some (Ok (common_flag f (fun c -> { c with center = Some v })))
-  | _ -> None
-
-let rec parse f = function
-  | [] -> Ok f
-  | "--walk" :: rest ->
-      parse (common_flag f (fun c -> { c with walk = true })) rest
-  | name :: v :: rest when Option.is_some (valued f name v) ->
-      Result.bind (Option.get (valued f name v)) (fun f -> parse f rest)
-  | a :: _ -> Error ("unknown argument " ^ a)
-
-let plan_suffix = ".plan.json"
-
-(* Checkpoint ids in the folder, in name order. *)
-let checkpoint_ids dir =
-  match Sys.readdir dir with
-  | names ->
-      Ok
-        (Array.to_list names
-        |> List.filter (fun n -> Filename.check_suffix n plan_suffix)
-        |> List.map (fun n -> Filename.chop_suffix n plan_suffix)
-        |> List.sort compare)
-  | exception Sys_error e -> Error e
-
-let rec drop_until id = function
-  | [] -> []
-  | x :: rest as all -> if x = id then all else drop_until id rest
-
-(* [from_id .. to_id] and the id after [to_id], if any. *)
-let select ids ~from_id ~to_id =
-  let from = drop_until from_id ids in
-  match (from, drop_until to_id from) with
-  | [], _ -> Error ("no checkpoint " ^ from_id)
-  | _, [] -> Error ("no checkpoint " ^ to_id ^ " at or after " ^ from_id)
-  | _, _ :: after ->
-      let n = List.length from - List.length after in
-      Ok (List.filteri (fun i _ -> i < n) from, List.nth_opt after 0)
-
-let required name = function
-  | Some v -> Ok v
-  | None -> Error (name ^ " is required")
+open Engine_run
+module R = Program_registry
+include Checkpoints_flags
 
 let ( let* ) = Result.bind
 
-let main plan_dir args =
-  let* f = parse defaults args in
+(* The daemon's backend from the flags; the Switch only in testing mode. *)
+let daemon_backend f mode =
+  match (f.backend, f.serial, f.capture, f.replay, mode) with
+  | "mgba", None, None, None, _ ->
+      Ok (Daemon_process.Mgba { port = f.mgba_port })
+  | "mgba", _, _, _, _ ->
+      Error "--serial, --capture and --replay need --backend switch"
+  | "switch", _, _, _, Checkpoint_trials.Verification ->
+      Error "--backend switch runs only --mode testing"
+  | "switch", Some serial, Some capture, None, Testing ->
+      Ok
+        (Daemon_process.Switch
+           { serial = Some serial; frames = Capture capture })
+  | "switch", None, None, Some video, Testing ->
+      Ok (Daemon_process.Switch { serial = None; frames = Replay video })
+  | "switch", _, _, _, _ ->
+      Error
+        "--backend switch needs --serial and --capture, or --replay alone (a \
+         dry run on the fake board)"
+  | b, _, _, _, _ -> Error ("bad --backend " ^ b)
+
+(* What each run's run.json says of the series (or the pre-flight). *)
+let run_info plan_dir f kind ~from_id ~to_id : Run_record.info =
+  let program = Attached_run.program_fields (R.of_plan_dir plan_dir) in
+  { kind; program; from_id; to_id; backend = f.backend }
+
+let watch_of f =
+  Watch_hub.for_runs_dir ~daemon:f.daemon ~runs_dir:f.runs_dir f.watch
+
+(* The Switch daemons' --viewport: the program's, which a --viewport given
+   must match. *)
+let viewport plan_dir f = R.check_viewport (R.of_plan_dir plan_dir) f.viewport
+
+(* The pre-flight's (and --make-room's party read's) setup. *)
+let preflight_setup plan_dir f backend ~viewport ~from_id :
+    Preflight_command.setup =
+  let info = run_info plan_dir f Preflight ~from_id ~to_id:from_id in
+  let { states; runs_dir; daemon; _ } = f in
+  { states; runs_dir; daemon; backend; viewport; info; watch = watch_of f }
+
+(* --from-event: testing by default, one checkpoint (--to is --from unless
+   given). *)
+let mode_and_to f ~from_id =
+  match f.from_event with
+  | None ->
+      let* to_id = required "--to" f.to_id in
+      let* mode = required "--mode" f.mode in
+      Ok (mode, to_id)
+  | Some _ ->
+      Ok
+        ( Option.value f.mode ~default:Checkpoint_trials.Testing,
+          Option.value f.to_id ~default:from_id )
+
+(* A partial run's own rules (Engine_run.Event_range.check). *)
+let check_from_event f mode ~checkpoints =
+  match f.from_event with
+  | None -> Ok ()
+  | Some _ ->
+      Event_range.check ~mode ~keeps_states:(f.backend = "mgba") ~checkpoints
+
+let from_event f = Option.map (fun first -> (first, f.to_event)) f.from_event
+
+let run_series plan_dir f =
   let* from_id = required "--from" f.from_id in
-  let* to_id = required "--to" f.to_id in
-  let* mode = required "--mode" f.mode in
+  let* mode, to_id = mode_and_to f ~from_id in
+  let* () = check_from_event f mode ~checkpoints:1 in
+  let* backend = daemon_backend f mode in
+  let* viewport = viewport plan_dir f in
+  let* plan_dir, from_id =
+    Make_room_command.with_room ~plan_dir ~from_id f.make_room
+      (preflight_setup plan_dir f backend ~viewport ~from_id)
+  in
   let* policy = Checkpoint_trials.policy ?runs:f.runs mode in
-  let* ids = checkpoint_ids plan_dir in
-  let* selected, after = select ids ~from_id ~to_id in
-  let* world = Frlg_story.Checkpoint_run.load_world () in
+  let* ids = Plan_dir.checkpoint_ids plan_dir in
+  let* selected, after = Plan_dir.select ids ~from_id ~to_id in
+  let* () = check_from_event f mode ~checkpoints:(List.length selected) in
+  let* world = Frlg_checkpoints.Checkpoint_run.load_world () in
   Ok
     (Checkpoint_series.run ~plan_dir
        {
          states = f.states;
          runs_dir = f.runs_dir;
          daemon = f.daemon;
-         mgba_port = f.mgba_port;
+         backend;
          common = f.common;
          mode;
          policy;
          world;
+         watch = watch_of f;
+         info = run_info plan_dir f Checkpoints ~from_id ~to_id;
+         daemon_flags =
+           Daemon_process.viewport_args backend viewport @ f.daemon_flags;
+         bound = ref None;
+         save_after_pass = f.save_after_pass;
+         max_rounds = f.max_rounds;
+         from_event = from_event f;
        }
        selected ~after)
+
+let preflight plan_dir f =
+  let* from_id = required "--from" f.from_id in
+  let* backend = daemon_backend f Checkpoint_trials.Testing in
+  let* viewport = viewport plan_dir f in
+  Preflight_command.run ~plan_dir ~from_id
+    (preflight_setup plan_dir f backend ~viewport ~from_id)
+
+let main plan_dir args =
+  let* f = parse defaults args in
+  if f.preflight then preflight plan_dir f else run_series plan_dir f

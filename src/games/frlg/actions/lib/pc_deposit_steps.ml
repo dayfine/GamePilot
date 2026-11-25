@@ -1,0 +1,135 @@
+module S = Frlg_readers.Pc_screen
+
+type look = {
+  view : S.view;
+  label : string option;
+  species : string option;
+  box_full : bool;
+}
+
+type press = A | B | Up | Down | Right | Wait | Done | Fail of string
+
+type t = {
+  targets : string list;  (** Still to store, the next first. *)
+  stored : string list;  (** Newest first. *)
+  booted : bool;
+  boot_looks : int;
+  others : int;
+  storing : bool;  (** A on the chooser, the store not yet seen. *)
+  next_box : bool;  (** The box was full: RIGHT once the question is back. *)
+  boxes : int;
+}
+
+let pc_list_tops = [ "SOMEONE'S PC"; "BILL'S PC" ]
+let deposit_row = "DEPOSIT POKéMON"
+let store_row = "STORE"
+let max_others = 10
+let boot_reads = 4
+let box_count = 14
+let last_slot = 5
+
+let start targets =
+  {
+    targets;
+    stored = [];
+    booted = false;
+    boot_looks = 0;
+    others = 0;
+    storing = false;
+    next_box = false;
+    boxes = 0;
+  }
+
+let deposited t = List.rev t.stored
+let finished t = t.targets = []
+
+let settled t (v : S.view) =
+  match v.screen with
+  | Other -> false
+  | Party_panel -> finished t || v.cursor <> None
+  | _ -> true
+
+let overworld t =
+  if finished t then (t, Done)
+  else if not t.booted then ({ t with booted = true }, A)
+  else if t.boot_looks + 1 < boot_reads then
+    ({ t with boot_looks = t.boot_looks + 1 }, Wait)
+  else (t, Fail "the overworld came back before the deposit")
+
+let label_is l (look : look) = look.label = Some l
+
+let pc_list t (look : look) =
+  match look.view.cursor with
+  | _ when finished t -> (t, B)
+  | Some c when c > 0 -> (t, Up)
+  | _ when List.exists (fun l -> label_is l look) pc_list_tops -> (t, A)
+  | _ -> (t, Fail "the PC list's top row did not read as a storage PC")
+
+(* DEPOSIT is row 1; the menu wraps: the shorter way round. *)
+let storage_menu t (look : look) =
+  match look.view.cursor with
+  | _ when finished t -> (t, B)
+  | None -> (t, Fail "the storage menu's cursor did not read")
+  | Some 1 when label_is deposit_row look -> (t, A)
+  | Some 1 -> (t, Fail "the storage menu's row 2 did not read as DEPOSIT")
+  | Some c -> (t, if c = 0 then Down else Up)
+
+let party_panel t (look : look) =
+  let t =
+    if t.storing then
+      {
+        t with
+        storing = false;
+        stored = List.hd t.targets :: t.stored;
+        targets = List.tl t.targets;
+      }
+    else t
+  in
+  match (t.targets, look.view.cursor) with
+  | [], _ -> (t, B)
+  | target :: _, Some _ when look.species = Some target -> (t, A)
+  | _ :: _, Some c when c < last_slot -> (t, Down)
+  | target :: _, _ -> (t, Fail ("no " ^ target ^ " in the party panel"))
+
+let mon_menu t (look : look) =
+  if finished t then (t, B)
+  else if look.view.cursor = Some 0 && label_is store_row look then (t, A)
+  else (t, Fail "the Pokemon's menu is not on STORE")
+
+let box_chooser t (look : look) =
+  if look.box_full then ({ t with storing = false; next_box = true }, B)
+  else if t.storing then (t, Wait)
+  else if t.next_box then
+    if t.boxes + 1 >= box_count then (t, Fail "every box is full")
+    else ({ t with next_box = false; boxes = t.boxes + 1 }, Right)
+  else ({ t with storing = true }, A)
+
+let on_screen t (look : look) =
+  match look.view.screen with
+  | Overworld -> overworld t
+  | Text -> ({ t with boot_looks = boot_reads }, B)
+  | Pc_list -> pc_list t look
+  | Storage_menu -> storage_menu t look
+  | Party_panel -> party_panel t look
+  | Mon_menu -> mon_menu t look
+  | Box_chooser -> box_chooser t look
+  | Yes_no when finished t -> (t, B)
+  | Yes_no -> (t, Fail "a YES/NO before the deposit")
+  | Box_grid -> (t, Fail "the box grid opened for a deposit")
+  | Other -> (t, Wait)
+
+let next t (look : look) =
+  if settled t look.view then on_screen { t with others = 0 } look
+  else if t.others + 1 >= max_others then
+    (t, Fail (Printf.sprintf "no PC screen settled in %d looks" max_others))
+  else ({ t with others = t.others + 1 }, Wait)
+
+let press_to_string = function
+  | A -> "A"
+  | B -> "B"
+  | Up -> "UP"
+  | Down -> "DOWN"
+  | Right -> "RIGHT"
+  | Wait -> "wait"
+  | Done -> "done"
+  | Fail why -> "fail: " ^ why

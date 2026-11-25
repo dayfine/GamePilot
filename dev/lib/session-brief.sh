@@ -1,14 +1,14 @@
 #!/bin/sh
 # harness: reusable
-# session-brief.sh -- session ramp-up and handoff guard, run from Claude Code hooks.
+# session-brief.sh -- session ramp-up and handoff guard, run from agent session hooks.
 #
 # Usage:
-#   session-brief.sh brief        SessionStart (startup|clear): prints the newest handoff
+#   session-brief.sh brief        session start (and context clear): prints the newest handoff
 #                                 doc, plus main CI and an optional gate-status table, so a
 #                                 fresh session starts briefed.
-#   session-brief.sh precompact   PreCompact: warns (never blocks) when no handoff doc is
-#                                 dated today, so a /compact does not stand in for the
-#                                 committed handoff.
+#   session-brief.sh precompact   before context compaction: warns (never blocks) when no
+#                                 handoff doc is dated today, so a compaction does not
+#                                 stand in for the committed handoff.
 #
 # The newest doc is picked by the date in its file name, not by mtime: a fresh checkout,
 # worktree or cloud clone stamps every file with the checkout time. The date is the first

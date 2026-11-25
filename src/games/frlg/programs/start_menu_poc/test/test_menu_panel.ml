@@ -18,6 +18,9 @@ let () =
   expect "reader: white flat panel is open"
     (Start_menu_poc.Menu_panel.start_menu_open
        (frame (rgb 248.1 248.0 247.9) (rgb 6.2 6.1 6.3)));
+  expect "reader: Switch capture of the open panel is open"
+    (Start_menu_poc.Menu_panel.start_menu_open
+       (frame (rgb 246.65 245.69 246.69) (rgb 21.68 23.02 20.25)));
   expect "reader: red roof is closed"
     (not
        (Start_menu_poc.Menu_panel.start_menu_open

@@ -15,7 +15,7 @@ val turn_hold_ms : int
 val turn_release_ms : int
 (** 100 ms between turns. *)
 
-val turns : Grid_maps.Direction.t -> int -> Grid_maps.Direction.t list
+val turns : Grid_geometry.Direction.t -> int -> Grid_geometry.Direction.t list
 (** [n] turns clockwise, the first one after the facing. *)
 
 val encounter : Effects.measurements -> bool
@@ -23,7 +23,7 @@ val encounter : Effects.measurements -> bool
 
 val spin :
   log:(string -> unit) ->
-  facing:Grid_maps.Direction.t ->
+  facing:Grid_geometry.Direction.t ->
   max_batches:int ->
   unit
 (** Ends once {!encounter} holds; fails as [no_encounter] after [max_batches]

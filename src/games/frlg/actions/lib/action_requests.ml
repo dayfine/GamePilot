@@ -1,4 +1,4 @@
-module J = Grid_maps.Json_field
+module J = Json_field
 
 type swap = By_species of string * int | Slots of int * int
 
@@ -11,7 +11,10 @@ type t =
   | Redeem_prize_mon of int
   | Ingame_trade of { offer : string; receive : string option }
   | Spin_for_encounter of { max_batches : int }
-  | Cut_tree of Grid_maps.Direction.t
+  | Cut_tree of Grid_geometry.Direction.t
+  | Verify_mail_glitch of Action_args.member
+  | Pc_deposit of string list
+  | Pick_up_item of string
 
 let default_spin_batches = 25
 
@@ -58,7 +61,16 @@ let readers stocks =
     );
     ("ingame_trade", ingame_trade);
     ("spin_for_encounter", spin);
-    ("cut_tree", fun ~where a -> Cut_tree (J.direction ~where "direction" a));
+    ( "cut_tree",
+      fun ~where a ->
+        Cut_tree (Grid_maps.Grid_field.direction ~where "direction" a) );
+    ( "verify_mail_glitch",
+      fun ~where a -> Verify_mail_glitch (Action_args.member ~where a) );
+    ( "pc_deposit",
+      fun ~where a ->
+        Pc_deposit (J.strings (where ^ "species") (J.field ~where "species" a))
+    );
+    ("pick_up_item", fun ~where a -> Pick_up_item (J.string ~where "item" a));
   ]
 
 let names =
@@ -72,12 +84,17 @@ let names =
     "ingame_trade";
     "spin_for_encounter";
     "cut_tree";
+    "verify_mail_glitch";
+    "pc_deposit";
+    "pick_up_item";
   ]
 
 let decode stocks name args =
   match List.assoc_opt name (readers stocks) with
   | Some read -> Action_args.decode ~action:name read args
-  | None -> Error (Story.Failure.cause ~repeats:true "unknown_action" name)
+  | None ->
+      Error
+        (Pokemon_checkpoints.Failure.cause ~repeats:true "unknown_action" name)
 
 let member_text = Action_args.member_to_string
 
@@ -105,4 +122,7 @@ let to_string = function
       "trade " ^ offer ^ Option.fold ~none:"" ~some:(( ^ ) " for ") receive
   | Spin_for_encounter { max_batches } ->
       Printf.sprintf "spin for an encounter, %d batches at most" max_batches
-  | Cut_tree d -> "cut the tree to the " ^ Grid_maps.Direction.name d
+  | Cut_tree d -> "cut the tree to the " ^ Grid_geometry.Direction.name d
+  | Verify_mail_glitch m -> "verify the mail glitch on " ^ member_text m
+  | Pc_deposit l -> "deposit " ^ String.concat ", " l ^ " at the PC"
+  | Pick_up_item item -> "pick up " ^ item

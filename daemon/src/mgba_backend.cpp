@@ -62,8 +62,14 @@ MgbaBackend::MgbaBackend(std::uint16_t port) : socket_(connect_local(port)) {
   }
   // The frame is the 240x160 GBA picture.
   info_ = BackendInfo{
-      "mgba",    words[2],   kGbaFrameRate,
-      kGbaWidth, kGbaHeight, Viewport{Box{0, 0, 1, 1}, kGbaWidth, kGbaHeight}};
+      .kind = "mgba",
+      .game_code = words[2],
+      .frame_rate = kGbaFrameRate,
+      .width = kGbaWidth,
+      .height = kGbaHeight,
+      .viewport = Viewport{Box{0, 0, 1, 1}, kGbaWidth, kGbaHeight},
+      .timing = Timing::kLockstep,
+      .takes_input = true};
 
   // GRANT 0 stalls the emulator at its next frame callback, since every frame
   // is >= 0. Give it a few frames to get there, then read the frame it holds

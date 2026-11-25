@@ -32,10 +32,10 @@ let drawn () =
   | Error why -> failwith why
 
 let () =
-  Case_table.run "text_drawing"
+  Table_test.run "text_drawing"
     [
       {
-        Case_table.name = "HM, indent 2, width 16";
+        Table_test.name = "HM, indent 2, width 16";
         input = (fun () -> String.concat "\n" (drawn ()));
         expectation = String.concat "\n" expected;
       };
