@@ -71,6 +71,20 @@ let towns_fly () =
       String.concat ", "
         (List.map (fun (t : Towns.town) -> t.key ^ ": " ^ t.fly) l)
 
+(* Every town's nurse and mart places are named with its key: one spelling per
+   town. *)
+let towns_prefix () =
+  let towns = Towns.towns (Place_table.towns table) in
+  let named (t : Towns.town) place =
+    String.starts_with ~prefix:(t.key ^ "_") place
+  in
+  let wrong (t : Towns.town) =
+    List.filter (fun p -> not (named t p)) (t.nurse :: Option.to_list t.mart)
+  in
+  match List.concat_map wrong towns with
+  | [] -> Printf.sprintf "%d towns, all pass" (List.length towns)
+  | l -> String.concat ", " l
+
 let find name () =
   match Place_table.find table name with
   | Ok p ->
@@ -100,6 +114,8 @@ let () =
         (fun () -> failures reachable)
         "12 places, all pass";
       case "every town's Fly name is one Fly knows" towns_fly
+        "2 towns, all pass";
+      case "every town's nurse and mart start with the town's key" towns_prefix
         "2 towns, all pass";
       case "a town whose nurse is not a place"
         (parse

@@ -5,11 +5,7 @@ type resolve =
   kind:string -> string -> field:string option -> (string, string) result
 
 let ( let* ) = Result.bind
-
-let rec all_ok acc = function
-  | [] -> Ok (List.rev acc)
-  | r :: rest -> Result.bind r (fun x -> all_ok (x :: acc) rest)
-
+let all_ok = Table_decode.all_ok
 let call_fields = [ "id"; "fragment"; "args"; "why"; "skip_if" ]
 
 let check_fields (call : J.fields) =
@@ -26,7 +22,7 @@ let named = function [] -> "none" | l -> String.concat ", " l
 
 (* The call's args, with each one's kind: exactly the fragment's params. *)
 let args (f : T.fragment) (call : J.fields) =
-  let* given = all_ok [] (List.map arg (J.object_field "args" call)) in
+  let* given = all_ok (List.map arg (J.object_field "args" call)) in
   let names = List.sort compare (List.map fst given) in
   let params = List.map (fun (p : T.param) -> p.param) f.params in
   if names = List.sort compare params then
@@ -77,12 +73,12 @@ let rec substitute resolve given :
   | `List l ->
       Result.map
         (fun l -> `List l)
-        (all_ok [] (List.map (substitute resolve given) l))
+        (all_ok (List.map (substitute resolve given) l))
   | `Assoc f ->
       let field (k, v) =
         Result.map (fun v -> (k, v)) (substitute resolve given v)
       in
-      Result.map (fun f -> `Assoc f) (all_ok [] (List.map field f))
+      Result.map (fun f -> `Assoc f) (all_ok (List.map field f))
   | other -> Ok other
 
 let event_id call_id suffix =
@@ -108,7 +104,7 @@ let expand_call table resolve call name =
   let* () = check_fields call in
   let* fragment = T.find table name in
   let* given = args fragment call in
-  all_ok [] (List.map (instance resolve ~call given) fragment.events)
+  all_ok (List.map (instance resolve ~call given) fragment.events)
 
 let step table resolve () event =
   let* events =

@@ -20,7 +20,10 @@ val parse :
     mart that is not one of [places] is an error. *)
 
 val empty : t
+(** No towns: a table without a [towns] section. *)
+
 val towns : t -> town list
+(** In the file's order. *)
 
 val find : t -> string -> (town, string) result
 (** The town of that key; an unknown key's error suggests the nearest. *)

@@ -2,13 +2,11 @@ type town = { key : string; nurse : string; fly : string; mart : string option }
 type t = town list
 
 let ( let* ) = Result.bind
-let error where fmt = Printf.ksprintf (fun m -> Error (where ^ m)) fmt
 
-let string where key fields =
-  match List.assoc_opt key fields with
-  | Some (`String s) -> Ok s
-  | Some _ -> error where "%s is not a string." key
-  | None -> error where "%s is missing." key
+module D = Checkpoints_expand.Table_decode
+
+let error = D.error
+let string = D.string
 
 let a_place where ~places key name =
   if List.mem name places then Ok name
@@ -34,12 +32,8 @@ let town where ~places (key, value) =
   | `Assoc fields -> town_of where ~places key fields
   | _ -> error where "is not an object."
 
-let rec all_ok acc = function
-  | [] -> Ok (List.rev acc)
-  | r :: rest -> Result.bind r (fun x -> all_ok (x :: acc) rest)
-
 let parse ~where ~places = function
-  | `Assoc towns -> all_ok [] (List.map (town where ~places) towns)
+  | `Assoc towns -> D.all_ok (List.map (town where ~places) towns)
   | _ -> error where "towns is not an object."
 
 let empty = []

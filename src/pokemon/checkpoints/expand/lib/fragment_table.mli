@@ -33,6 +33,7 @@ val parse : source:string -> Yojson.Safe.t -> (t, string) result
     placeholder that names no parameter. *)
 
 val fragments : t -> fragment list
+(** In the file's order. *)
 
 val find : t -> string -> (fragment, string) result
 (** The fragment of that name; an unknown name's error suggests the nearest. *)

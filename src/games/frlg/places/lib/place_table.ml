@@ -20,31 +20,19 @@ type t = { places : place list; towns : Towns.t }
 let format = "gamepilot-places/1"
 let asset = "src/games/frlg/places/places.json"
 let ( let* ) = Result.bind
-let error where fmt = Printf.ksprintf (fun m -> Error (where ^ m)) fmt
 
-let field where key fields =
-  match List.assoc_opt key fields with
-  | Some v -> Ok v
-  | None -> error where "%s is missing." key
+module D = Checkpoints_expand.Table_decode
 
-let string where key fields =
-  match List.assoc_opt key fields with
-  | Some (`String s) -> Ok s
-  | Some _ -> error where "%s is not a string." key
-  | None -> error where "%s is missing." key
-
-let fields where key = function
-  | `Assoc fields -> Ok fields
-  | _ -> error where "%s is not an object." key
+let error = D.error
+let field = D.field
+let string = D.string
+let fields = D.as_object
 
 let tile where key = function
   | `List [ `Int x; `Int y ] -> Ok { Tile_pos.x; y }
   | _ -> error where "%s is not [x, y]." key
 
-let only where allowed fields =
-  match List.find_opt (fun (k, _) -> not (List.mem k allowed)) fields with
-  | Some (k, _) -> error where "%s is not a known field." k
-  | None -> Ok ()
+let only = D.only
 
 let not_in_maps where obj what =
   let* tile =
@@ -94,10 +82,6 @@ let place where (name, value) =
   let* map_object = map_object where o in
   Ok { name; map; stand; facing; map_object }
 
-let rec all_ok acc = function
-  | [] -> Ok (List.rev acc)
-  | r :: rest -> Result.bind r (fun x -> all_ok (x :: acc) rest)
-
 let parse ~source json =
   let where = source ^ ": " in
   let* top = fields where "the table" json in
@@ -110,7 +94,7 @@ let parse ~source json =
   let* places =
     Result.bind (field where "places" top) (fields where "places")
   in
-  let* places = all_ok [] (List.map (place where) places) in
+  let* places = D.all_ok (List.map (place where) places) in
   let names = List.map (fun p -> p.name) places in
   let* towns =
     match List.assoc_opt "towns" top with

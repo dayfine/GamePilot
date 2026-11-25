@@ -14,8 +14,16 @@ val event : Checkpoints.Plan.event -> string
 (** ["id: [action] kind => declared_after skip_if a,b once_per_save"], each part
     only when the event has it. *)
 
+val event_named : Checkpoints.Plan.t -> string -> string
+(** The plan's event of that id as {!event}, or ["no event <id>"]. *)
+
 val kind_name : Checkpoints.Plan.kind -> string
 (** The kind's name in the plan format: ["route"], ["game_action"], ... *)
+
+val outline : Checkpoints.Plan.t -> string
+(** ["frlg mg-01 from CeladonCity (48, 12) south: 6 game_action, 7 route"]: the
+    plan's game, id, start, and how many events of each kind, in first-seen
+    order. *)
 
 val count_text : Checkpoints.Plan.count -> string
 (** ["x2"], ["gained 2"], ["used 1"], ["at least 100"]. *)

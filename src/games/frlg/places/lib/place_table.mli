@@ -47,6 +47,7 @@ val places : t -> place list
 (** In the file's order. *)
 
 val towns : t -> Towns.t
+(** The table's [towns] section. *)
 
 val find : t -> string -> (place, string) result
 (** The place of that name; an unknown name's error suggests the nearest. *)
