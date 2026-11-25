@@ -1,3 +1,12 @@
+open Engine_run
+
+module type SAVED = sig
+  type t
+
+  val to_yojson : t -> Yojson.Safe.t
+  val of_yojson : Yojson.Safe.t -> (t, string) result
+end
+
 let dir ~states ~checkpoint = Filename.concat states (checkpoint ^ ".events")
 let file ~index ~event_id = Printf.sprintf "%02d-%s.ss" (index + 1) event_id
 
@@ -24,7 +33,7 @@ type tracker = { mutable next : int; mutable clean : bool }
 
 let tracker ~first = { next = first; clean = true }
 
-let hear t index (progress : Event_progress.t) =
+let hear t index (progress : _ Event_progress.t) =
   match progress with
   | Started -> t.clean && index = t.next
   | Passed | Skipped _ ->
@@ -33,3 +42,15 @@ let hear t index (progress : Event_progress.t) =
   | Failed _ ->
       t.clean <- false;
       false
+
+module Make (S : SAVED) = struct
+  let write_kept state kept =
+    Out_channel.with_open_bin (kept_path state) (fun out ->
+        Out_channel.output_string out
+          (Yojson.Safe.to_string (S.to_yojson kept) ^ "\n"))
+
+  let read_kept ~missing state =
+    let file = kept_path state in
+    if not (Sys.file_exists file) then Error missing
+    else Result.bind (Repo_io.Json_file.read file) S.of_yojson
+end

@@ -18,6 +18,7 @@ type t = {
   layers : layer list;
   allowed : (string * string list) list;
   families : family list;
+  never_links : (string list * string list) list;
 }
 
 let default =
@@ -38,6 +39,7 @@ let default =
     layers = [];
     allowed = [];
     families = [];
+    never_links = [];
   }
 
 let words line =
@@ -96,6 +98,9 @@ let apply_line c = function
       Ok { c with allowed = c.allowed @ [ (name, deps) ] }
   | "family" :: layer :: var :: members ->
       Ok { c with families = c.families @ [ { layer; var; members } ] }
+  | "never_links" :: pattern :: (_ :: _ as libs) ->
+      let rule = (String.split_on_char '/' pattern, libs) in
+      Ok { c with never_links = c.never_links @ [ rule ] }
   | [ key; v ] -> set_threshold c key v
   | key :: _ -> Error (Printf.sprintf "malformed '%s' line" key)
   | [] -> Ok c

@@ -1,22 +1,29 @@
 (** A checkpoint plan ([gamepilot-checkpoint/1], owned by GamePilot; once
     PokemonSimulation's [pokesim-authored-checkpoint/1]): the stretch of story
-    between two saves, as a list of events, over a game's terms
-    ({!Engine_terms.GAME_TERMS}). Types only; {!Plan_decode} reads them from a
-    plan file.
+    between two saves, as a list of events, over a game's rules
+    ({!Engine_terms.TERMS}). Types only, and pure: [Engine_plan_codec] reads
+    them from a plan file.
 
     The engine's own kinds ([talk], [answer], [scene], [save], [game_action])
     are typed here; every other kind is the game's ([Own]). A [game_action]'s
-    args stay JSON: the game that names the action reads them. *)
+    args stay as written ({!RAW}): the game that names the action reads them. *)
 
-(** The plan's types over the game's terms. *)
-module Make (T : Engine_terms.GAME_TERMS) : sig
+(** What the plan keeps unread: a game action's args, the [execution] and the
+    [metadata]. The engine applies the plan to [Engine_plan_codec.Raw_json], the
+    plan's own JSON. *)
+module type RAW = sig
+  type t
+end
+
+(** The plan's types over the game's rules. *)
+module Make (T : Engine_terms.TERMS) (Raw : RAW) : sig
   (** What an event does, with its args. *)
   type kind =
     | Talk
     | Answer of bool  (** Answer a yes/no prompt: [true] for yes. *)
     | Scene  (** Clear dialog and cutscenes back to free control. *)
     | Save
-    | Game_action of Json_field.obj
+    | Game_action of Raw.t
         (** The game's own action, named by the event's [action], with its args.
         *)
     | Own of T.Kind.t  (** One of the game's own kinds, with its args. *)
@@ -61,10 +68,10 @@ module Make (T : Engine_terms.GAME_TERMS) : sig
   type t = {
     game : string;  (** The plan's [game], e.g. ["frlg"]. *)
     checkpoint : checkpoint;
-    execution : Json_field.obj;
+    execution : Raw.t;
         (** How the game runs the checkpoint (save menu, supplies, ...): its
             fields are each game's own. *)
-    metadata : Json_field.obj option;
+    metadata : Raw.t option;
         (** The plan's phase, verification and postconditions, kept as written.
         *)
     postconditions : T.Promises.t option;

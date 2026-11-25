@@ -1,12 +1,12 @@
 open Engine_plan
 
-module Make (T : Engine_terms.GAME_TERMS) = struct
+module Make (T : Engine_terms.TERMS) (Raw : Plan.RAW) = struct
   type outcome = (unit, Failure.cause) result
-  type game_action = Plan.Make(T).event -> Json_field.obj -> outcome
+  type game_action = Plan.Make(T)(Raw).event -> Raw.t -> outcome
 
   type t = {
-    run_own : Plan.Make(T).event -> T.Kind.t -> outcome;
-    run_builtin : Plan.Make(T).event -> outcome;
+    run_own : Plan.Make(T)(Raw).event -> T.Kind.t -> outcome;
+    run_builtin : Plan.Make(T)(Raw).event -> outcome;
     game_actions : (string * game_action) list;
     flag_holds : string -> bool;
     position : unit -> T.Pose.observed option;

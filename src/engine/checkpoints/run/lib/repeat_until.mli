@@ -11,8 +11,8 @@
 
 open Engine_plan
 
-(** The loop over the game's terms. *)
-module Make (T : Engine_terms.GAME_TERMS) : sig
+(** The loop over the game's rules. *)
+module Make (T : Engine_terms.TERMS) (Raw : Plan.RAW) : sig
   type limits = {
     max_rounds : int;  (** Rounds to run before giving up; at least 1. *)
     attempts_per_round : int;
@@ -41,13 +41,12 @@ module Make (T : Engine_terms.GAME_TERMS) : sig
   val run :
     limits ->
     goal:(unit -> (bool, Failure.cause) result) ->
-    Game.Make(T).t ->
-    Plan.Make(T).checkpoint ->
+    say:(Log_line.Make(T).t -> unit) ->
+    Game.Make(T)(Raw).t ->
+    Plan.Make(T)(Raw).checkpoint ->
     (int, stop) result
-  (** Rounds until [goal ()] holds; [Ok rounds] is how many ran. Raises
-      [Invalid_argument] when a limit is below 1. *)
-
-  val stop_to_string : stop -> string
-  (** ["round 3 failed after 2 attempts: <failure>"],
-      ["save failed in round 2: <cause>"], ["goal not met after 60 rounds"]. *)
+  (** Rounds until [goal ()] holds; [Ok rounds] is how many ran. Each round's
+      lines, and the runner's, go to [say] ({!Runner.Make.run}). Raises
+      [Invalid_argument] when a limit is below 1. A stop is printed by
+      [Engine_text.Run_text.stop]. *)
 end

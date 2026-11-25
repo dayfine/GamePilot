@@ -9,3 +9,6 @@
 
 val check : Config.t -> (string * string) list -> Finding.t list
 (** [check config dune_files] where each element is [(path, contents)]. *)
+
+val dir_matches : string list -> string -> bool
+(** Whether the directory matches the pattern's segments ({!Config}). *)

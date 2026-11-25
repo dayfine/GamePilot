@@ -36,15 +36,6 @@ type start = {
 val nothing_at_start : start
 (** Nothing read at the start. *)
 
-val start_to_json : start -> Json_field.obj
-(** [start_money], [start_coins] ([null] when not read) and [start_items] (an
-    object of counts), kept beside an event's save state. *)
-
-val start_of_json : Json_field.obj -> (start, string) result
-(** What {!start_to_json} wrote. A file kept before the coins and items were
-    (only [start_money]) reads with none of them read at the start, so their
-    promises are not checked. *)
-
 type observed = {
   party : string option list option;
       (** Each member's species slug, slot 1 first; [None] for a member whose

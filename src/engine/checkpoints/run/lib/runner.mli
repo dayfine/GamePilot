@@ -10,21 +10,27 @@
     ["[Story] <checkpoint> #<n> <event>: ..."]. A handler that raises is logged
     as failed and the exception passes through.
 
+    The runner prints none of the game's terms: it says each line as a
+    {!Log_line.Make.t}, poses and failures kept as values, and the engine prints
+    it through the game's text ([Engine_checkpoints.Make]'s [Runner], which
+    keeps this module's lines as they read).
+
     An event's [once_per_save] is the game's to honour in its handler: only the
     game knows what its save already holds. The runner neither saves nor
     reloads: the caller (or {!Repeat_until}) decides that. *)
 
 open Engine_plan
 
-(** The runner over the game's terms. *)
-module Make (T : Engine_terms.GAME_TERMS) : sig
+(** The runner over the game's rules. *)
+module Make (T : Engine_terms.TERMS) (Raw : Plan.RAW) : sig
   val run :
     ?end_at:T.Pose.t ->
     ?end_state:T.Promises.t * (T.Promises.t -> T.Promises.reads) ->
-    ?on_event:(int -> Event_progress.t -> unit) ->
+    ?on_event:(int -> Log_line.Make(T).t Event_progress.t -> unit) ->
     ?events:Event_range.t ->
-    Game.Make(T).t ->
-    Plan.Make(T).checkpoint ->
+    say:(Log_line.Make(T).t -> unit) ->
+    Game.Make(T)(Raw).t ->
+    Plan.Make(T)(Raw).checkpoint ->
     (unit, Failure.Make(T).t) result
   (** With [end_at] (the checkpoint's declared end), after the last event the
       player must read there, or the run fails with {!Failure.Make.Not_at_end}
@@ -43,7 +49,8 @@ module Make (T : Engine_terms.GAME_TERMS) : sig
       or none the game checks at the end) nothing is read.
 
       [on_event index progress] hears each event (index from 0) start, pass,
-      fail or be skipped, next to its log line (the watch page's plan).
+      fail (with the reason as logged) or be skipped, next to its log line (the
+      watch page's plan). [say] hears every line the run logs.
 
       With [events], only those events run ({!Event_range}), numbered as in the
       whole checkpoint; the start is logged as

@@ -1,7 +1,7 @@
-type t = Started | Passed | Skipped of string | Failed of string
+type 'reason t = Started | Passed | Skipped of string | Failed of 'reason
 
-let to_watch = function
-  | Started -> (Wire.Watch.Current, "")
-  | Passed -> (Wire.Watch.Done, "")
-  | Skipped flag -> (Wire.Watch.Skipped, flag)
-  | Failed reason -> (Wire.Watch.Failed, reason)
+let map f = function
+  | Started -> Started
+  | Passed -> Passed
+  | Skipped flag -> Skipped flag
+  | Failed reason -> Failed (f reason)
