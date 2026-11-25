@@ -1,7 +1,7 @@
 (* What the expansion tests share: a plan around some events, and the events a
    rewrite gives, one compact JSON line each (or its error). The plan starts in
    a zone, as the engine's toy game's do (engine/checkpoints/make/test,
-   Toy_terms); a game whose rewrite reads the start gives its own. *)
+   Toy_rules); a game whose rewrite reads the start gives its own. *)
 
 let plan ?(start = {|{"place": "Village", "spot": "inn"}|}) events =
   Yojson.Safe.from_string

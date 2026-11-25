@@ -1,7 +1,0 @@
-(library
- (name pokemon_terms)
- (public_name gamepilot.pokemon_terms)
- (libraries
-  gamepilot.grid_geometry
-  gamepilot.engine_postcondition
-  gamepilot.engine_terms))

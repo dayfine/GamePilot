@@ -4,7 +4,7 @@
     [party_slots] (the positions they depend on,
     [[{"slot": 1, "species": "mr-mime"}]]). *)
 
-open Pokemon_terms
+open Pokemon_rules
 
 val party : where:string -> Json_field.obj -> Postconditions.party option
 (** [None] when none of the three is given. Raises {!Json_field.Invalid} for

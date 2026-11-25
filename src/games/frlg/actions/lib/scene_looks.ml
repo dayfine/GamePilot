@@ -96,16 +96,21 @@ let io ?(menu_open = never) ?(arrived = never) ?(await_fade_in = false)
     log;
   }
 
-let settle ?menu_open ?arrived ?await_fade_in ?(start = []) kind ~label
-    ~battle_ends ~log =
+(* The settle's own outcome, with {!probes} subscribed and no battle fled. *)
+let run_settle ?menu_open ?arrived ?await_fade_in ?(start = []) kind ~label ~log
+    =
   let io =
     io ?menu_open ?arrived ?await_fade_in ~flee_battle:(fun () -> false) ~log ()
   in
   let arrived = Option.value arrived ~default:never in
+  Effects.with_probes probes (fun () ->
+      let seen = if start = [] then None else watch ~arrived start in
+      Screen_state.Settle.run ?seen (Screen_state.Settle.rule kind) ~label io)
+
+let settle ?menu_open ?arrived ?await_fade_in ?start kind ~label ~battle_ends
+    ~log =
   match
-    Effects.with_probes probes (fun () ->
-        let seen = if start = [] then None else watch ~arrived start in
-        Screen_state.Settle.run ?seen (Screen_state.Settle.rule kind) ~label io)
+    run_settle ?menu_open ?arrived ?await_fade_in ?start kind ~label ~log
   with
   | Quiet _ -> Ok ()
   | Battle what when battle_ends ->
@@ -113,4 +118,15 @@ let settle ?menu_open ?arrived ?await_fade_in ?(start = []) kind ~label
       Ok ()
   | Battle what ->
       Error (Pokemon_checkpoints.Failure.cause "battle" (label ^ ": " ^ what))
+  | Timed_out why -> Error (Pokemon_checkpoints.Failure.cause "not_settled" why)
+
+let until_battle ~label ~log =
+  match run_settle Talk ~label ~log with
+  | Battle what ->
+      log (label ^ ": a battle starts, " ^ what);
+      Ok ()
+  | Quiet why ->
+      Error
+        (Pokemon_checkpoints.Failure.cause "no_battle"
+           (label ^ ": the overworld went quiet with no battle (" ^ why ^ ")"))
   | Timed_out why -> Error (Pokemon_checkpoints.Failure.cause "not_settled" why)

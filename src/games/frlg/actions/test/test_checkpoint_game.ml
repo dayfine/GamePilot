@@ -10,7 +10,7 @@ let event id kind : Pokemon_checkpoints.Plan.event =
   {
     id;
     kind;
-    action = None;
+    way = None;
     why = id;
     skip_if = [];
     declared_after = None;
@@ -27,7 +27,7 @@ let checkpoint : Pokemon_checkpoints.Plan.checkpoint =
     start = None;
     events =
       [
-        event "out" (Own (Route { target = pallet_door; fight_wild = false }));
+        event "out" (Game (Route { target = pallet_door; fight_wild = false }));
         event "talk" Talk;
       ];
   }
@@ -83,9 +83,9 @@ let house : Pokemon_checkpoints.Pose.observed =
 let swap_event species : Pokemon_checkpoints.Plan.event =
   {
     (event "swap"
-       (Game_action [ ("species", `String species); ("target_slot", `Int 1) ]))
+       (Named_action [ ("species", `String species); ("target_slot", `Int 1) ]))
     with
-    action = Some "party_swap";
+    way = Some "party_swap";
   }
 
 let swap_checkpoint species =
@@ -96,10 +96,10 @@ let swap_checkpoint species =
 let done_trade : Pokemon_checkpoints.Plan.event =
   {
     (event "trade"
-       (Game_action
+       (Named_action
           [ ("species", `String "spearow"); ("receive", `String "farfetchd") ]))
     with
-    action = Some "ingame_trade";
+    way = Some "ingame_trade";
     declared_after =
       Some
         (Grid
@@ -136,11 +136,11 @@ let cut_then_grass : Pokemon_checkpoints.Plan.checkpoint =
     events =
       [
         {
-          (event "cut" (Game_action [ ("direction", `String "north") ])) with
-          action = Some "cut_tree";
+          (event "cut" (Named_action [ ("direction", `String "north") ])) with
+          way = Some "cut_tree";
         };
         event "grass"
-          (Own
+          (Game
              (Route
                 {
                   target =

@@ -1,9 +1,9 @@
 (** A game's rules, as the checkpoint engine's plans, runner and checks carry
-    them: where the player stands, the game's own event kinds, and what a
-    checkpoint promises ([docs/design/Engine-Boundary.md], section 2). Pure: no
-    JSON and no text. How a plan writes them is the game's
+    them: where the player stands, the game's actions (its own event kinds), and
+    what a checkpoint promises ([docs/design/Engine-Boundary.md], section 2).
+    Pure: no JSON and no text. How a plan writes them is the game's
     {!Engine_plan_codec.Plan_codec.PLAN_CODEC}, how a log prints them its
-    {!Engine_text.Terms_text.TEXT}, and what a run keeps on disk its
+    {!Engine_text.Rules_text.TEXT}, and what a run keeps on disk its
     {!Engine_saved.Event_states.SAVED}; the engine is applied to all four once
     per game family ([Engine_checkpoints.Make]). *)
 
@@ -21,12 +21,12 @@ module type POSE = sig
       not check holds wherever the player is. *)
 end
 
-(** The game's own event kinds. *)
-module type KIND = sig
+(** The game's actions: its own event kinds. *)
+module type ACTION = sig
   type t
-  (** The game's own event kinds with their args (route, battle, heal; walk,
-      rest), beside the engine's [talk], [answer], [scene], [save] and
-      [game_action]. *)
+  (** The game's actions, its own event kinds, with their args (route, battle,
+      heal; walk, rest), beside the engine's [talk], [answer], [scene], [save]
+      and [game_action]. *)
 end
 
 (** What a checkpoint promises, and its check. *)
@@ -44,8 +44,8 @@ module type POSTCONDITIONS = sig
 end
 
 (** The rules a game family gives the engine. *)
-module type TERMS = sig
+module type GAME_RULES = sig
   module Pose : POSE
-  module Kind : KIND
+  module Action : ACTION
   module Postconditions : POSTCONDITIONS
 end

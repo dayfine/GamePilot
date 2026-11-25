@@ -1,12 +1,13 @@
 (** A checkpoint plan ([gamepilot-checkpoint/1], owned by GamePilot; once
     PokemonSimulation's [pokesim-authored-checkpoint/1]): the stretch of story
     between two saves, as a list of events, over a game's rules
-    ({!Engine_terms.TERMS}). Types only, and pure: [Engine_plan_codec] reads
-    them from a plan file.
+    ({!Engine_rules.GAME_RULES}). Types only, and pure: [Engine_plan_codec]
+    reads them from a plan file.
 
     The engine's own kinds ([talk], [answer], [scene], [save], [game_action])
-    are typed here; every other kind is the game's ([Own]). A [game_action]'s
-    args stay as written ({!RAW}): the game that names the action reads them. *)
+    are typed here; every other kind is one of the game's actions ([Game]). A
+    [game_action]'s args stay as written ({!RAW}): the game that names the
+    action reads them. *)
 
 (** What the plan keeps unread: a game action's args, the [execution] and the
     [metadata]. The engine applies the plan to [Engine_plan_codec.Raw_json], the
@@ -16,25 +17,26 @@ module type RAW = sig
 end
 
 (** The plan's types over the game's rules. *)
-module Make (T : Engine_terms.TERMS) (Raw : RAW) : sig
+module Make (T : Engine_rules.GAME_RULES) (Raw : RAW) : sig
   (** What an event does, with its args. *)
   type kind =
     | Talk
     | Answer of bool  (** Answer a yes/no prompt: [true] for yes. *)
     | Scene  (** Clear dialog and cutscenes back to free control. *)
     | Save
-    | Game_action of Raw.t
-        (** The game's own action, named by the event's [action], with its args.
-        *)
-    | Own of T.Kind.t  (** One of the game's own kinds, with its args. *)
+    | Named_action of Raw.t
+        (** A game action named by the event's {!way} (the plan's [action]),
+            with its args. *)
+    | Game of T.Action.t  (** One of the game's actions, with its args. *)
 
   type event = {
     id : string;  (** Unique within the checkpoint. *)
     kind : kind;
-    action : string option;
-        (** The plan's [action]: which of its kind's ways the event takes
-            (["run"] for a route), or the game action's name; [None] for the
-            kind's default. Always set for a {!Game_action}. *)
+    way : string option;
+        (** The plan's [action] (the JSON key stays ["action"]): which of its
+            kind's ways the event takes (["run"] for a route), or the game
+            action's name; [None] for the kind's default. Always set for a
+            {!Named_action}. *)
     why : string;  (** What the event is for, in the plan author's words. *)
     skip_if : string list;
         (** Flags (named by the game) under which the event is skipped. *)

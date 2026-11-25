@@ -32,8 +32,8 @@ let handlers = Mail_glitch_use.handlers ~log:ignore ~party
 let event : Pokemon_checkpoints.Plan.event =
   {
     id = "e";
-    kind = Game_action [];
-    action = None;
+    kind = Named_action [];
+    way = None;
     why = "";
     skip_if = [];
     declared_after = None;

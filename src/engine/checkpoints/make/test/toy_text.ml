@@ -1,12 +1,12 @@
-open Toy_terms
-module T = Toy_terms
+open Toy_rules
+module T = Toy_rules
 
 let pose (p : Pose.t) =
   match p.spot with Some s -> p.place ^ "/" ^ s | None -> p.place
 
 let observed = pose
 
-let kind : Kind.t -> string = function
+let kind : Action.t -> string = function
   | Walk { toward; until } -> Printf.sprintf "walk %s until %s" toward until
   | Rest -> "rest"
 

@@ -82,11 +82,11 @@ let adopt_declared t (event : Pokemon_checkpoints.Plan.event) =
 let builtin t (event : Pokemon_checkpoints.Plan.event) =
   let log = t.config.log in
   match event.kind with
-  | Own (Ready pose) -> walk_to t pose
+  | Game (Ready pose) -> walk_to t pose
   | Talk -> Talk.talk ~log ()
   | Answer yes -> Talk.answer ~log ~yes ()
   | Scene -> Talk.scene ~log ()
-  | Own Heal -> Menu_input.run (Heal_and_save.heal_at_nurse ~log)
+  | Game Heal -> Menu_input.run (Heal_and_save.heal_at_nurse ~log)
   | Save -> Menu_input.run (Heal_and_save.save ~log)
   | _ ->
       not_implemented
@@ -273,11 +273,36 @@ let ferry t (_ : Pokemon_checkpoints.Plan.event) args =
   Seagallop.run ~log:t.config.log ~from:(map_now t) args
   |> Result.map (fun at -> t.at <- Some at)
 
+(* The plan's [step]: one tile, nothing watched (Route_walk.step). *)
+let step t (event : Pokemon_checkpoints.Plan.event) direction =
+  match t.at with
+  | None -> Error (Failure.cause "position_unknown" "no position to step from")
+  | Some at -> (
+      match Route_target.place_of t.world at with
+      | Error e -> Error (Failure.cause ~repeats:true "no_route" e)
+      | Ok place ->
+          Route_walk.step (walker t) { place; facing = at.faces } direction
+          |> Result.map (fun ended ->
+                 arrived t ended;
+                 adopt_declared t event))
+
+(* The plan's [train]: [battles] trainer battles in a row (Trainer_battles). *)
+let train t (event : Pokemon_checkpoints.Plan.event) battles =
+  let game_steps =
+    Trainer_battles.live_game_steps ~log:t.config.log ~fight:(battle t)
+  in
+  Result.bind (Trainer_battles.run game_steps ~battles) (fun outcome ->
+      Result.map
+        (fun () -> adopt_declared t event)
+        (Trainer_battles.failure outcome))
+
 let game t : Pokemon_checkpoints.Game.t =
   {
     run_own =
       (fun event -> function
         | Route route -> regrowing t (fun () -> walk_to t route.target)
+        | Step direction -> step t event direction
+        | Train battles -> train t event battles
         | _ -> run_builtin t event);
     run_builtin = run_builtin t;
     game_actions =

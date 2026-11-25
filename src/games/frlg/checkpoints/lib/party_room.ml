@@ -41,8 +41,8 @@ let named ~where action args =
       Frlg_actions.Action_args.member_keys
 
 let event id (joins, used) (e : P.event) =
-  match (e.kind, e.action) with
-  | Game_action args, Some action ->
+  match (e.kind, e.way) with
+  | Named_action args, Some action ->
       let where = id ^ " " ^ e.id ^ ": " in
       ( joins @ List.map (fun s -> (s, id)) (joining ~where action args),
         used @ named ~where action args )
@@ -64,8 +64,8 @@ let plan acc (p : P.t) =
 let traded (p : P.t) =
   List.filter_map
     (fun (e : P.event) ->
-      match (e.kind, e.action) with
-      | Game_action args, Some "ingame_trade" ->
+      match (e.kind, e.way) with
+      | Named_action args, Some "ingame_trade" ->
           J.string_opt ~where:(e.id ^ ": ") "receive" args
       | _ -> None)
     p.checkpoint.events
@@ -74,8 +74,8 @@ let traded (p : P.t) =
 let needed_moves (p : P.t) =
   List.filter_map
     (fun (e : P.event) ->
-      match (e.kind, e.action) with
-      | Game_action _, Some action -> List.assoc_opt action field_move_users
+      match (e.kind, e.way) with
+      | Named_action _, Some action -> List.assoc_opt action field_move_users
       | _ -> None)
     p.checkpoint.events
 
