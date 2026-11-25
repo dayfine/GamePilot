@@ -333,17 +333,17 @@ postconditions:
 party includes ekans
 no repeat
 == frlg-authored/frlg-00.01.plan.json
-frlg 00.01 from (no start): 1 new_game, 1 options
+frlg 00.01 from (no start): 1 new_game, 1 game_settings
 intro: new_game => PalletTown_PlayersHouse_2F (6, 6) north
-options: options
+game_settings: game_settings
 retries 0
 postconditions:
 none
 no repeat
 == frlg-authored/frlg-00.01b.plan.json
-frlg 00.01b from PalletTown_PlayersHouse_2F (6, 6) north: 1 game_action, 1 options
+frlg 00.01b from PalletTown_PlayersHouse_2F (6, 6) north: 1 game_action, 1 game_settings
 close_trainer_card: [close_trainer_card] game_action {} => PalletTown_PlayersHouse_2F (6, 6) north
-options: options
+game_settings: game_settings
 retries 0
 postconditions:
 none

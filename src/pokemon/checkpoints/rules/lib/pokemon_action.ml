@@ -4,7 +4,7 @@ type route = { target : Pose.grid; fight_wild : bool; fight_trainers : bool }
 
 type t =
   | New_game
-  | Options
+  | Game_settings
   | Route of route
   | Ready of Pose.grid
   | Legs of { legs : leg list; fight_wild : bool }
@@ -29,7 +29,7 @@ let legs_text legs fight_wild =
 
 let to_string = function
   | New_game -> "new_game"
-  | Options -> "options"
+  | Game_settings -> "game_settings"
   | Route { target; fight_wild; fight_trainers } ->
       "route to " ^ pose target ^ fighting fight_wild
       ^ if fight_trainers then " fighting trainers" else ""
