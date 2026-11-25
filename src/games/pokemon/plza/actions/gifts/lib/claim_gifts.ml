@@ -1,49 +1,84 @@
 module G = Mystery_gift
 module B = Gift_to_box
 
-type span = { from : string; stop_at : string option; code_only : bool }
-type step = { at : string; go : unit -> (unit, string) result }
+type mode = Both_gifts | Code_gift_only | Internet_gift_only | Box_slot_2_to_1
+type span = { from : string; stop_at : string option; mode : mode }
+
+type game = {
+  log : string -> unit;
+  picture : Wire.box;
+  tile : Switch_home.Home_screen.tile_color;
+  code : string;
+}
+
+type step = { at : string; go : game -> (unit, string) result }
 
 let default_code = "CELEBRATE30TH"
 let ( let* ) = Result.bind
 
-let from_overworld ~log next () =
-  let* _row = Menu_rows.open_menu ~log in
-  next ~log
+let from_overworld next g =
+  let* _row = Menu_rows.open_menu ~log:g.log in
+  next ~log:g.log
 
-let close ~log ~picture ~tile () =
-  log "Closing the game.";
-  Switch_home.Game_entry.close_game ~log ~picture tile
+let close g =
+  g.log "Closing the game.";
+  Switch_home.Game_entry.close_game ~log:g.log ~picture:g.picture g.tile
 
-let internet_steps ~log =
+let step at go = { at; go }
+let open_gifts = step "overworld" (from_overworld G.open_gifts)
+
+let internet_steps =
   [
-    { at = "mystery-gift"; go = (fun () -> G.open_internet_list ~log) };
-    { at = "gift-list"; go = (fun () -> G.choose_gift ~log) };
-    { at = "card"; go = (fun () -> G.leave_card ~log) };
+    step "mystery-gift" (fun g -> G.open_internet_list ~log:g.log);
+    step "gift-list" (fun g -> G.choose_gift ~log:g.log);
+    step "card" (fun g -> G.leave_card ~log:g.log);
   ]
 
-let code_steps ~log ~picture ~code =
+let disconnect _ = Ok (G.disconnect ())
+
+let code_steps =
   [
-    { at = "code"; go = (fun () -> G.open_keyboard ~log) };
-    { at = "keyboard"; go = (fun () -> G.claim_code ~log ~picture code) };
-    { at = "code-card"; go = (fun () -> G.dismiss_card ~log) };
-    { at = "disconnect"; go = (fun () -> Ok (G.disconnect ())) };
+    step "code" (fun g -> G.open_keyboard ~log:g.log);
+    step "keyboard" (fun g -> G.claim_code ~log:g.log ~picture:g.picture g.code);
+    step "code-card" (fun g -> G.dismiss_card ~log:g.log);
+    step "disconnect" disconnect;
   ]
 
-let box_steps ~log ~picture ~tile =
+let save_steps =
   [
-    { at = "after-gifts"; go = from_overworld ~log B.to_boxes };
-    { at = "boxes"; go = (fun () -> B.move_gift ~log) };
-    { at = "moved"; go = (fun () -> B.open_save_prompt ~log) };
-    { at = "save"; go = (fun () -> B.save ~log) };
-    { at = "saved"; go = close ~log ~picture ~tile };
+    step "moved" (fun g -> B.open_save_prompt ~log:g.log);
+    step "save" (fun g -> B.save ~log:g.log);
+    step "saved" close;
   ]
 
-let steps ~log ~picture ~tile ~code ~code_only =
-  { at = "overworld"; go = from_overworld ~log G.open_gifts }
-  :: (if code_only then [] else internet_steps ~log)
-  @ code_steps ~log ~picture ~code
-  @ box_steps ~log ~picture ~tile
+(* With five in the party, the first gift claimed lands in party slot 6: the
+   Internet gift when the run claims it (the code's then goes straight to Box
+   1), else the code's. *)
+let party_gift = function
+  | Code_gift_only -> B.Code_gift
+  | Both_gifts | Internet_gift_only | Box_slot_2_to_1 -> B.Internet_gift
+
+let box_steps mode =
+  [
+    step "after-gifts" (from_overworld B.to_boxes);
+    step "boxes" (fun g -> B.move_gift ~log:g.log (party_gift mode));
+  ]
+  @ save_steps
+
+let steps = function
+  | Both_gifts ->
+      (open_gifts :: internet_steps) @ code_steps @ box_steps Both_gifts
+  | Code_gift_only -> (open_gifts :: code_steps) @ box_steps Code_gift_only
+  | Internet_gift_only ->
+      (open_gifts :: internet_steps)
+      @ [ step "code" disconnect ]
+      @ box_steps Internet_gift_only
+  | Box_slot_2_to_1 ->
+      step "overworld" (from_overworld B.open_boxes)
+      :: step "boxes" (fun g -> B.move_slot_2_to_1 ~log:g.log)
+      :: save_steps
+
+let path mode = List.map (fun s -> s.at) (steps mode)
 
 let points =
   [
@@ -70,34 +105,34 @@ let rec take_to stop = function
   | [] -> []
   | s :: rest -> if Some s.at = stop then [] else s :: take_to stop rest
 
-let index name = List.find_index (String.equal name) points
+let index span name = List.find_index (String.equal name) (path span.mode)
 
-let known name =
-  if index name <> None then Ok ()
+let known span name =
+  if index span name <> None then Ok ()
   else
-    Error (Printf.sprintf "no point %s (%s)" name (String.concat ", " points))
+    Error
+      (Printf.sprintf "no point %s in this run (%s)" name
+         (String.concat ", " (path span.mode)))
 
 let after_start span stop =
-  if index stop > index span.from then Ok ()
+  if index span stop > index span span.from then Ok ()
   else
     Error
       (Printf.sprintf "the stop %s is not after the start %s" stop span.from)
 
 let check span =
-  let* () = known span.from in
-  let* () = Option.fold ~none:(Ok ()) ~some:known span.stop_at in
-  let* () = Option.fold ~none:(Ok ()) ~some:(after_start span) span.stop_at in
-  if span.code_only && span.from <> "overworld" then
-    Error "the code alone starts from the overworld"
-  else Ok ()
+  let* () = known span span.from in
+  let* () = Option.fold ~none:(Ok ()) ~some:(known span) span.stop_at in
+  Option.fold ~none:(Ok ()) ~some:(after_start span) span.stop_at
 
 (* Whether a run claims the Internet gift: its list's step, from at or
    before the list to a stop after it. *)
 let reads_gift_name span =
-  (not span.code_only)
-  && index span.from <= index "gift-list"
+  let at name = index span name in
+  at "gift-list" <> None
+  && at span.from <= at "gift-list"
   && Option.fold ~none:true
-       ~some:(fun stop -> index stop > index "gift-list")
+       ~some:(fun stop -> at stop > at "gift-list")
        span.stop_at
 
 let name_languages = [ "en"; "fr" ]
@@ -120,16 +155,13 @@ let gift_name_template ~language span =
          (String.concat ", " name_languages)
          (name_template "en"))
 
-let rec run_all = function
+let rec run_all g = function
   | [] -> Ok ()
   | s :: rest ->
-      let* () = s.go () in
-      run_all rest
+      let* () = s.go g in
+      run_all g rest
 
-let chosen ~log ~picture ~tile ~code span =
-  take_to span.stop_at
-    (drop_to span.from
-       (steps ~log ~picture ~tile ~code ~code_only:span.code_only))
+let chosen span = take_to span.stop_at (drop_to span.from (steps span.mode))
 
 (* The screen at a point, read with no press, where a reader knows it. *)
 let read_at = function
@@ -165,5 +197,5 @@ let run ~log ~picture ~assets ~gift_name ~tile ~span ~code =
   Effects.with_probes (G.probes ~picture ~assets ~gift_name) (fun () ->
       Switch_home.Stick_wake.run ();
       let* () = start ~log span in
-      let* () = run_all (chosen ~log ~picture ~tile ~code span) in
+      let* () = run_all { log; picture; tile; code } (chosen span) in
       stop ~log span)

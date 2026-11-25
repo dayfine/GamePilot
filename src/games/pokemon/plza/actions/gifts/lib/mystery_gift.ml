@@ -9,6 +9,7 @@ let probes ~picture ~assets ~gift_name =
   @ S.probes ~picture ~gift_name
   @ K.probes
   @ Plza_readers.Boxes_screen.probes ~picture
+  @ Plza_readers.Box_cell.probes ~picture
   @ Plza_readers.Save_dialog.probes ~picture
 
 let a ms : T.t = { button = A; hold_ms = 100; cooldown_ms = ms }

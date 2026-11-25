@@ -20,7 +20,8 @@
    fixtures/intro/intro.probes.jsonl.
 
    With [--gifts LANGUAGE], only the Mystery Gift steps' readers' probes
-   ({!Plza_readers.Main_menu_row}, {!Plza_readers.Mystery_gift_screen}), the
+   ({!Plza_readers.Main_menu_row}, {!Plza_readers.Mystery_gift_screen}, the
+   Boxes' and their cell's, the SAVE dialog's), the
    gift's name matched by its template in that language
    (gift-name-vivillon-<language>.png, copied beside the spec): en for
    fixtures/gifts/gifts.probes.jsonl, fr for fixtures/gifts/gifts.fr.probes.jsonl. *)
@@ -82,6 +83,7 @@ let () =
            (Plza_readers.Main_menu_row.probes ~picture:native
               ~assets:Plza_readers.Blob_assets.file_names
            @ Plza_readers.Boxes_screen.probes ~picture:native
+           @ Plza_readers.Box_cell.probes ~picture:native
            @ Plza_readers.Save_dialog.probes ~picture:native
            @ Plza_readers.Mystery_gift_screen.probes ~picture:native
                ~gift_name:
