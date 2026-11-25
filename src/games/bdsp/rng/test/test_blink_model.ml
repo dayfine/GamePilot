@@ -41,14 +41,10 @@ let ticks_line = function
       in
       generate_blink_ticks state ~ticks:(int_of_string ticks)
         ~npcs:(int_of_string npcs) ~slot:(int_of_string slot)
-      |> List.map tick_char |> List.to_seq |> String.of_seq
+      |> Result.get_ok |> List.map tick_char |> List.to_seq |> String.of_seq
   | _ -> failwith "ticks: state ticks npcs slot"
 
-let raises_invalid_argument f =
-  match f () with
-  | _ -> Error "no Invalid_argument"
-  | exception Invalid_argument _ -> Ok ()
-
+let rejected = function Ok _ -> Error "accepted" | Error _ -> Ok ()
 let zero_state = { Xorshift128.s0 = 1; s1 = 0; s2 = 0; s3 = 0 }
 
 let () =
@@ -58,10 +54,8 @@ let () =
   check "fraction" fraction;
   check "bucket" bucket;
   check "ticks" ticks_line;
-  Case_table.report "ticks: no NPCs is rejected"
-    (raises_invalid_argument (fun () ->
-         generate_blink_ticks zero_state ~ticks:1 ~npcs:0 ~slot:0));
-  Case_table.report "ticks: a slot past the NPCs is rejected"
-    (raises_invalid_argument (fun () ->
-         generate_blink_ticks zero_state ~ticks:1 ~npcs:2 ~slot:2));
-  Case_table.finish ()
+  Table_test.report "ticks: no NPCs is rejected"
+    (rejected (generate_blink_ticks zero_state ~ticks:1 ~npcs:0 ~slot:0));
+  Table_test.report "ticks: a slot past the NPCs is rejected"
+    (rejected (generate_blink_ticks zero_state ~ticks:1 ~npcs:2 ~slot:2));
+  Table_test.finish ()

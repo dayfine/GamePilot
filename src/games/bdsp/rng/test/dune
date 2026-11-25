@@ -7,4 +7,4 @@
   test_blink_model)
  (deps
   (glob_files fixtures/*.txt))
- (libraries gamepilot.case_table gamepilot.bdsp_rng))
+ (libraries gamepilot.table_test gamepilot.bdsp_rng))

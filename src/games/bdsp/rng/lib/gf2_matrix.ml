@@ -41,11 +41,7 @@ let dot a b =
 
 type t = vec array
 
-let of_rows rows =
-  if Array.length rows <> dimension then
-    invalid_arg "Gf2_matrix.of_rows: a matrix has 128 rows";
-  Array.copy rows
-
+let init row = Array.init dimension row
 let row m index = m.(index)
 let identity = Array.init dimension (fun c -> set zero c true)
 let equal a b = Array.for_all2 (fun x y -> x = y) a b

@@ -69,4 +69,4 @@ let check_op records op compute =
       | Some why -> Error why
       | None -> Ok ()
   in
-  Case_table.report name result
+  Table_test.report name result

@@ -27,8 +27,10 @@ type t
 val dimension : int
 (** 128. *)
 
-val of_rows : vec array -> t
-(** Raises [Invalid_argument] unless there are {!dimension} rows. *)
+val init : (int -> vec) -> t
+(** [init row] is the matrix whose row [r] is [row r], for [r] from 0 to
+    {!dimension} - 1. Taking a function instead of an array means a matrix
+    always has {!dimension} rows, as the C++ [std::array] does. *)
 
 val row : t -> int -> vec
 val identity : t

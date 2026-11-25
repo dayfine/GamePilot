@@ -217,13 +217,14 @@ let generate_at s advances =
   generate (Xorshift128.state rng) s.template ~tsv:s.tsv
     ~synchronize_nature:s.synchronize_nature
 
-let search_window = 64
+(* [STATIC_SEARCH_WINDOW]: 64 outputs. *)
+let search_window_bits = 6
 
 let scan ?(stop_at_first = false) s ~min_advances ~max_advances ~accept =
   (* Tracks the state at the start of each advance so that a hit can report it. *)
   let rng = Xorshift128.create s.base_state in
   Xorshift128.advance rng min_advances;
-  let window = Xorshift128.Window.create ~size:search_window rng in
+  let window = Xorshift128.Window.create ~size_bits:search_window_bits rng in
   let source = { next = (fun () -> Xorshift128.Window.next_gen window) } in
   let rec walk advances hits =
     if advances > max_advances then hits

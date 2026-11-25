@@ -83,7 +83,7 @@ let matrix_row images row =
 (* The matrix whose column [c] is the image of basis vector [c] under [step]. *)
 let step_matrix step =
   let images = Array.init Gf2_matrix.dimension (basis_image step) in
-  Gf2_matrix.of_rows (Array.init Gf2_matrix.dimension (matrix_row images))
+  Gf2_matrix.init (matrix_row images)
 
 let transition_matrix = step_matrix (fun rng -> ignore (next rng))
 let inverse_transition_matrix = step_matrix prev
@@ -140,9 +140,8 @@ module Window = struct
     mutable index : int;
   }
 
-  let create ~size generator =
-    if size <= 0 || size land (size - 1) <> 0 then
-      invalid_arg "Xorshift128.Window.create: size must be a power of two";
+  let create ~size_bits generator =
+    let size = 1 lsl size_bits in
     let rng = copy generator in
     let buffer = Array.init size (fun _ -> next rng) in
     { rng; buffer; head = 0; index = 0 }
