@@ -2,9 +2,11 @@
     mapped. 17 of FireRed's 19 [*_PokemonCenter_1F] maps use
     LAYOUT_POKEMON_CENTER_1F (pokefirered data/maps/*/map.json); the Indigo
     Plateau's and One Island's have their own layouts and are in
-    PokemonSimulation's maps. A standard Center with no map file of its own gets
-    this room. Its mat lets out on its town's door, and its people stand in the
-    way, so routes and places reach into it as into any mapped room.
+    PokemonSimulation's maps. Every standard Center gets this room, as the
+    user decided ("regular pokemon center which we should script, like in
+    C++"), so all 17 walk the same way. Its mat lets out on its town's door, and
+    its people stand in the way, so routes and places reach into it as into any
+    mapped room.
 
     Ported from the fork's Overworld/PokemonFRLG_CodedRooms.{h,cpp}
     ([CENTER_ROOM_JSON], [pokemon_center_room()],
@@ -21,10 +23,14 @@
     - Cinnabar's room has Bill at (11, 5), hidden by
       FLAG_HIDE_CINNABAR_POKECENTER_BILL. He waits there after a player turns
       him down, and the fork's story never meets him there.
-    - Each person has a pret script, for places to name, and the stairs lead
-      to the town's 2F (not loaded).
+    - Each Center has all its pret people ({!Center_people}), not the nurse
+      alone. Each person has a pret script, for places to name, and the stairs
+      lead to the town's 2F (not loaded).
     - The room is added only for the 17 standard Centers, where the fork's
-      [is_pokemon_center()] takes any [_PokemonCenter_1F].
+      [is_pokemon_center()] takes any [_PokemonCenter_1F]. It replaces
+      PokemonSimulation's map of a standard Center, where the fork adds it only
+      for a Center with no map: {!Frlg_checkpoints.Checkpoint_run.load_world}
+      does not read those map files.
     - There is a ["pc_front"] point, the PC's stand as
       [Frlg_checkpoints.Make_room] uses it. *)
 
@@ -56,5 +62,7 @@ val room :
 
 val with_rooms : Map_data.t list -> Map_data.t list
 (** The maps, plus the room of each standard Center whose door is on one of them
-    but has no map of its own. As in the fork, each such town gets a point
-    ["<Center>_door"] on that door, and only its first such Center is added. *)
+    and that is not among them. As in the fork, each such town gets a point
+    ["<Center>_door"] on that door, and only its first such Center is added. The
+    caller leaves out the standard Centers' map files for their rooms to be
+    added. *)
