@@ -7,4 +7,4 @@ let result step =
     (fun () ->
       Option.to_result !value
         ~none:
-          (Checkpoints.Failure.cause "no_value" "the step returned no value"))
+          (Checkpoints_run.Failure.cause "no_value" "the step returned no value"))

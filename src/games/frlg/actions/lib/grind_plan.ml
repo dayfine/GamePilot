@@ -2,11 +2,14 @@ module J = Grid_maps.Json_field
 module B = Frlg_battle
 
 type lead = Switch_to_sweeper
-type heal = Nurse of Checkpoints.Pose.grid | Pad of Checkpoints.Pose.grid
+
+type heal =
+  | Nurse of Checkpoints_plan.Pose.grid
+  | Pad of Checkpoints_plan.Pose.grid
 
 type strategy = {
   name : string;
-  spot : Checkpoints.Pose.grid;
+  spot : Checkpoints_plan.Pose.grid;
   pace : Grid_maps.Direction.t;
   lead : lead;
   heal : heal;
@@ -37,7 +40,7 @@ let tile ~where obj : Grid_maps.Tile_pos.t =
   | `List [ `Int x; `Int y ] -> { x; y }
   | _ -> J.fail "%stile is not [x, y]." where
 
-let pose ~where key obj : Checkpoints.Pose.grid =
+let pose ~where key obj : Checkpoints_plan.Pose.grid =
   let p = J.as_object (where ^ key ^ ": ") (J.field ~where key obj) in
   let where = where ^ key ^ "." in
   {
@@ -143,7 +146,7 @@ let decode strategies obj =
   with
   | t -> Ok t
   | exception J.Invalid e ->
-      Error (Checkpoints.Failure.cause ~repeats:true "bad_args" e)
+      Error (Checkpoints_run.Failure.cause ~repeats:true "bad_args" e)
 
 let met goal ~known = List.mem goal.learn_move known
 let heal_due s ~since_heal = since_heal >= s.heal_every

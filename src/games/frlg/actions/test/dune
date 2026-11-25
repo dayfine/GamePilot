@@ -64,7 +64,8 @@
   gamepilot.table_test
   gamepilot.wire
   gamepilot.grid_maps
-  gamepilot.checkpoints
+  gamepilot.checkpoints_plan
+  gamepilot.checkpoints_run
   gamepilot.frlg_overworld
   gamepilot.frlg_actions
   gamepilot.frlg_battle

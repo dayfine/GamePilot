@@ -1,9 +1,10 @@
 (* The save states an mGBA run keeps at each event's start, on disk
-   (Checkpoints.Event_states): saved through the daemon beside what the run read at
+   (Checkpoints_run.Event_states): saved through the daemon beside what the run read at
    the checkpoint's start, one per event (the newest run's), and found again
    for a partial run (--from-event). *)
 
-open Checkpoints
+open Checkpoints_plan
+open Checkpoints_run
 module Run = Frlg_checkpoints.Checkpoint_run
 
 let write_reads path reads =

@@ -68,7 +68,8 @@
   su-01.plan.json)
  (libraries
   gamepilot.table_test
-  gamepilot.checkpoints
+  gamepilot.checkpoints_plan
+  gamepilot.checkpoints_run
   gamepilot.frlg_actions
   gamepilot.frlg_checkpoints))
 
@@ -79,7 +80,7 @@
  (libraries
   gamepilot.table_test
   gamepilot.replay
-  gamepilot.checkpoints
+  gamepilot.checkpoints_run
   gamepilot.frlg_actions
   gamepilot.frlg_checkpoints))
 
@@ -110,7 +111,8 @@
  (libraries
   gamepilot.wire
   gamepilot.table_test
-  gamepilot.checkpoints
+  gamepilot.checkpoints_plan
+  gamepilot.checkpoints_run
   gamepilot.frlg_checkpoints
   frlg_overworld_fixtures))
 
@@ -131,7 +133,8 @@
   yojson
   gamepilot.wire
   gamepilot.table_test
-  gamepilot.checkpoints
+  gamepilot.checkpoints_plan
+  gamepilot.checkpoints_run
   gamepilot.frlg_readers
   gamepilot.frlg_actions
   gamepilot.frlg_checkpoints))
@@ -150,7 +153,8 @@
  (libraries
   gamepilot.table_test
   gamepilot.grid_maps
-  gamepilot.checkpoints
+  gamepilot.checkpoints_plan
+  gamepilot.checkpoints_run
   gamepilot.frlg_actions
   gamepilot.frlg_checkpoints))
 
@@ -160,7 +164,8 @@
  (libraries
   yojson
   gamepilot.table_test
-  gamepilot.checkpoints
+  gamepilot.checkpoints_plan
+  gamepilot.checkpoints_run
   gamepilot.frlg_actions
   gamepilot.frlg_checkpoints))
 
@@ -171,7 +176,7 @@
  (libraries
   gamepilot.table_test
   gamepilot.grid_maps
-  gamepilot.checkpoints
+  gamepilot.checkpoints_plan
   gamepilot.frlg_overworld
   gamepilot.frlg_actions
   gamepilot.frlg_checkpoints))
@@ -183,7 +188,7 @@
   gamepilot.table_test
   gamepilot.wire
   gamepilot.effects
-  gamepilot.checkpoints
+  gamepilot.checkpoints_run
   gamepilot.frlg_checkpoints))
 
 (test
@@ -200,6 +205,5 @@
   08-activate-and-verify.plan.json)
  (libraries
   gamepilot.table_test
-  gamepilot.checkpoints
   gamepilot.plan_text
   gamepilot.frlg_checkpoints))

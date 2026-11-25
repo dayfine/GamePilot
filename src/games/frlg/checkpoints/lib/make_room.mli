@@ -1,6 +1,6 @@
 (** The make-room checkpoint ("00-make-room"), generated before a chain's first
     checkpoint when the party has too few free slots ({!Party_room},
-    {!Checkpoints.Room_policy}): Fly to the Pokémon Center nearest the save,
+    {!Checkpoints_run.Room_policy}): Fly to the Pokémon Center nearest the save,
     walk to its PC, deposit the policy's members ({!Frlg_actions.Pc_deposit}),
     walk out to the town's Fly landing. Its postconditions are its end check:
     the end there, the party left in order (so the free slots), and each needed
@@ -35,8 +35,9 @@ val nearest_center :
 type room = {
   center : Frlg_actions.Fly_towns.town;
   fly_user : string;  (** A member that knows Fly. *)
-  deposits : Checkpoints.Room_policy.plan;
-  party : Checkpoints.Room_policy.member list;  (** As read, slot 1 first. *)
+  deposits : Checkpoints_run.Room_policy.plan;
+  party : Checkpoints_run.Room_policy.member list;
+      (** As read, slot 1 first. *)
   needed_moves : string list;  (** Field moves the chain needs. *)
 }
 

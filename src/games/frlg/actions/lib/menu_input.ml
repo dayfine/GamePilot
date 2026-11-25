@@ -1,9 +1,9 @@
 open Frlg_readers
 
-exception Action_failed of Checkpoints.Failure.cause
+exception Action_failed of Checkpoints_run.Failure.cause
 
 let fail ?repeats code detail =
-  raise (Action_failed (Checkpoints.Failure.cause ?repeats code detail))
+  raise (Action_failed (Checkpoints_run.Failure.cause ?repeats code detail))
 
 let raise_error = function
   | Ok () -> ()

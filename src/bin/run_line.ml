@@ -2,7 +2,7 @@
    run or round it was, its attempt, a repeating checkpoint's goal and a grind
    cap, each a note added to "PASS 05-grind-mr-mime round 3". *)
 
-open Checkpoints
+open Checkpoints_plan
 
 (* "05-grind-mr-mime round 3" for a repeating checkpoint, else "04-grind-farfetchd run 1". *)
 let run_name id (plan : Plan.t) n =

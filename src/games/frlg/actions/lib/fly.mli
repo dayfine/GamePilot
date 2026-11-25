@@ -24,7 +24,7 @@ type plan = {
 val fly_map_wait_ms : int
 
 val fly :
-  log:(string -> unit) -> plan -> (unit, Checkpoints.Failure.cause) result
+  log:(string -> unit) -> plan -> (unit, Checkpoints_run.Failure.cause) result
 (** Fails as [no_start_menu], [no_party], [no_member_menu] or, from the settle,
     [battle] or [not_settled]; [fly_no_takeoff] when no fade follows the town's
     A, [fly_no_landing] when the screen still shows the departure town (the fly

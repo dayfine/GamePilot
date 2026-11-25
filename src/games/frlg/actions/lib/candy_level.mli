@@ -13,14 +13,16 @@
     loop runs on a fake in tests. *)
 
 type game_steps = {
-  level : slot:int -> (int option, Checkpoints.Failure.cause) result;
+  level : slot:int -> (int option, Checkpoints_run.Failure.cause) result;
       (** From the overworld: the member's level on its summary; [None] when it
           did not read, [Error] when a menu step on the way failed. *)
   candy : slot:int -> Level_up_policy.policy -> Rare_candy.result;
       (** One candy, from the overworld back to it ({!Rare_candy.run}). *)
   member :
     slot:int ->
-    (Checkpoints.Room_policy.member option, Checkpoints.Failure.cause) result;
+    ( Checkpoints_run.Room_policy.member option,
+      Checkpoints_run.Failure.cause )
+    result;
       (** From the overworld: the member's summary read (species, level, moves);
           [None] when it did not, [Error] as {!level}. *)
   log : string -> unit;
@@ -41,7 +43,7 @@ val run :
   game_steps ->
   Candy_plan.goal ->
   slot:int ->
-  (report, Checkpoints.Failure.cause) result
+  (report, Checkpoints_run.Failure.cause) result
 (** Fails as [level_unread], [level_stuck] (a candy that did not raise the level
     read), [no_effect] (the candy did nothing: a Lv 100 member),
     [rare_candy_failed] (with the candy's reason), [out_of_candies],

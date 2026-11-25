@@ -4,7 +4,7 @@
    Glitch chain needs in the party (Party_room). Plans are 01-celadon-setup..08-activate-and-verify. *)
 
 open Frlg_checkpoints
-module P = Checkpoints.Postcondition_check
+module P = Checkpoints_run.Postcondition_check
 module F = Frlg_readers.Start_frame
 
 let plan id =
@@ -44,7 +44,7 @@ let frame ?(changed = 0) () =
   | Ok f -> f
   | Error e -> failwith e
 
-let party l = Some (Checkpoints.Plan.Party_in_order l)
+let party l = Some (Checkpoints_plan.Plan.Party_in_order l)
 let read l = Some (List.map Option.some l)
 
 let start_check expected observed =
@@ -122,7 +122,7 @@ let preflight id before read =
 let same = Some { F.tiles = 150; changed = 3 }
 
 (* The pre-flight's row for 02-trade-farfetchd's Cut user. *)
-let summary slot species moves : Checkpoints.Room_policy.member =
+let summary slot species moves : Checkpoints_run.Room_policy.member =
   { slot; species; level = Some 30; moves = Some moves }
 
 let cut_row read =
@@ -301,7 +301,7 @@ let preflight_cases =
 (* {1 Room in the party} *)
 
 let member ?moves slot species level =
-  { Checkpoints.Room_policy.slot; species; level = Some level; moves }
+  { Checkpoints_run.Room_policy.slot; species; level = Some level; moves }
 
 (* Console B's save on 2026-11-23: Pallet Town, after the Hall of Fame. The
    moves are what a plain run of FireRed would have them know; a real run

@@ -5,7 +5,6 @@
   yojson
   gamepilot.table_test
   gamepilot.grid_maps
-  gamepilot.checkpoints
   gamepilot.checkpoints_expand
   gamepilot.frlg_repo_files
   gamepilot.frlg_overworld
@@ -19,6 +18,5 @@
  (libraries
   yojson
   gamepilot.table_test
-  gamepilot.checkpoints
   gamepilot.plan_text
   gamepilot.frlg_checkpoints))

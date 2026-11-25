@@ -24,7 +24,7 @@ let read t =
         ("Party: read " ^ String.concat ", " (Party_roster.to_list !(t.roster))))
     (Menu_input.run (fun () -> species := Party_species.read_all ~log:t.log))
 
-let guard t (name, (handler : Checkpoints.Game.game_action)) =
+let guard t (name, (handler : Checkpoints_run.Game.game_action)) =
   let run event args =
     if t.known || not (Action_args.picks_member ~action:name args) then
       handler event args

@@ -14,7 +14,7 @@ let decode name json () =
       (Grid_maps.Json_field.as_object "" (Yojson.Safe.from_string json))
   with
   | Ok r -> Action_requests.to_string r
-  | Error c -> Checkpoints.Failure.cause_to_string c
+  | Error c -> Checkpoints_run.Failure.cause_to_string c
 
 let decoding =
   [
@@ -122,7 +122,7 @@ let roster =
       (fun () ->
         match Party_roster.resolve mg (Species "mr-mime") with
         | Ok n -> string_of_int n
-        | Error c -> Checkpoints.Failure.cause_to_string c)
+        | Error c -> Checkpoints_run.Failure.cause_to_string c)
       "not_in_party: mr-mime is not in the party (blastoise, pidgey, abra, \
        spearow)";
     case "a full party sends a prize to the PC"

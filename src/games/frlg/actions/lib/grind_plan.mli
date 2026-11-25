@@ -13,13 +13,14 @@ type lead =
       (** the grinder leads and switches to the sweeper on turn 1 *)
 
 type heal =
-  | Nurse of Checkpoints.Pose.grid
+  | Nurse of Checkpoints_plan.Pose.grid
       (** talk to the nurse from this tile (walked to and back) *)
-  | Pad of Checkpoints.Pose.grid  (** step on this healing tile and back *)
+  | Pad of Checkpoints_plan.Pose.grid  (** step on this healing tile and back *)
 
 type strategy = {
   name : string;
-  spot : Checkpoints.Pose.grid;  (** the grass tile battles are paced from *)
+  spot : Checkpoints_plan.Pose.grid;
+      (** the grass tile battles are paced from *)
   pace : Grid_maps.Direction.t;
       (** the way paced, one step and back: the tile that way is grass too
           ({!Pacing}) *)
@@ -62,7 +63,7 @@ val load_strategies : unit -> (strategy list, string) result
 val decode :
   strategy list ->
   Grid_maps.Json_field.obj ->
-  (t, Checkpoints.Failure.cause) result
+  (t, Checkpoints_run.Failure.cause) result
 (** The action's args: ["species"], ["target_level"], ["learn_move"],
     ["learn_slot"] (from 1), ["sweeper"], ["sweeper_moves"] (from 1),
     ["max_battles"], ["strategy"] (default {!default_strategy}) and ["round"]

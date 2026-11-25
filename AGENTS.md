@@ -10,6 +10,8 @@ GamePilot automates games through three layers (design: `docs/design/Layered-Aut
   - `base/`: pure, game-agnostic code with no effects (`wire`: the protocol codec).
   - `core/`: the effects programs use (`effects`) and their handlers (`session`, `live`, `replay`).
   - `pokemon/`: code shared by Pokemon games (navigation grid, checkpoint plans and their runner).
+    `checkpoints/` depends one way: `expand` (raw plan JSON) -> `plan` (types, decoding) -> `run`
+    (one checkpoint) -> `series` (a chain of checkpoints).
   - `games/<game>/`: `readers/`, `actions/`, `maps/`, `checkpoints/`, and `programs/<program>/`.
   - `program_registry/`: every program's descriptor (game, group, name, doc, checkpoints folder,
     backends), as PA/CC's program list. A new program registers there (`docs/programs/README.md`).
@@ -46,7 +48,7 @@ GamePilot automates games through three layers (design: `docs/design/Layered-Aut
   timings, and each module's doc comment names the C++ file(s) it comes from, so a reader can lay the
   two side by side. Improvements and reshaping come later, in their own PRs. Where we deliberately
   differ (a missing reader, a new strategy), say so in the doc comment.
-- **Every checkpoint goes through the checkpoint runner** (`pokemon/checkpoints`) and its dev loop: run
+- **Every checkpoint goes through the checkpoint runner** (`pokemon/checkpoints/run`) and its dev loop: run
   from the checkpoint's start state, verify its end state, retry, record. Programs run in order
   (01-celadon-setup → 08-activate-and-verify), each tested on mGBA before it runs on the Switch.
 - **Submodules are read-only.** `third_party/Arduino-Source` tracks the fork branch

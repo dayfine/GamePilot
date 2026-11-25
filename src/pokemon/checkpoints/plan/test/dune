@@ -1,0 +1,14 @@
+(library
+ (name plan_files)
+ (modules plan_files)
+ (libraries yojson gamepilot.checkpoints_plan))
+
+(tests
+ (names test_plan_decode)
+ (modules test_plan_decode)
+ (libraries
+  gamepilot.table_test
+  yojson
+  gamepilot.checkpoints_plan
+  gamepilot.plan_text
+  plan_files))

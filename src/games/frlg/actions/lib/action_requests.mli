@@ -31,7 +31,7 @@ val decode :
   Mart_plan.stocks ->
   string ->
   Grid_maps.Json_field.obj ->
-  (t, Checkpoints.Failure.cause) result
+  (t, Checkpoints_run.Failure.cause) result
 (** The action of that name with its args; [bad_args] naming the field, or
     [unknown_action]. The args:
     - [mart]: see {!Mart_plan.t}.

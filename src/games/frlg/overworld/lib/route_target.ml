@@ -1,5 +1,5 @@
 open Grid_maps
-module Pose = Checkpoints.Pose
+module Pose = Checkpoints_plan.Pose
 
 let place_of (w : Frlg_steps.world) (pose : Pose.observed) =
   match Connected_maps.find w.maps pose.at_map with

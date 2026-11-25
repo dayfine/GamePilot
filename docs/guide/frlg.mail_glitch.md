@@ -98,7 +98,7 @@ steps and its log, and stop it.
 | 07-glitch-prep | Prepare Leppa and Retro Mail for Lea & Jed on Route 16 |
 | 08-activate-and-verify | Turn the Mail Glitch on against Lea & Jed on Route 16, read the glitched mail, duplicate one Antidote |
 
-<!-- plans: 1b37c7f3ff4d -->
+<!-- plans: e280cf67989c -->
 <!-- /generated -->
 
 In plain words:
