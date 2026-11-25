@@ -180,6 +180,8 @@ type probe_result =
   | Color_stats of { mean : rgb; stddev : rgb }
   | Template_match of { score : float; x : float; y : float }
   | Color_count of { fraction : float; mean : rgb option }
+  | Line_shares of Line_shares.t
+  | Find of { blobs : Blob_find.blob list }
   | Other of json
 
 let color_stats_of_json what j =
@@ -209,6 +211,9 @@ let probe_result_of_json j =
   | kind when kind = color_stats_kind -> color_stats_of_json what j
   | kind when kind = template_match_kind -> template_match_of_json what j
   | kind when kind = color_count_kind -> color_count_of_json what j
+  | kind when kind = line_shares_kind ->
+      Line_shares (Line_shares.of_json what j)
+  | kind when kind = find_kind -> Find { blobs = Blob_find.of_json what j }
   | _ -> Other j
 
 let json_of_color_stats ~mean ~stddev =
@@ -240,16 +245,9 @@ let json_of_probe_result = function
   | Color_stats { mean; stddev } -> json_of_color_stats ~mean ~stddev
   | Template_match { score; x; y } -> json_of_template_match ~score ~x ~y
   | Color_count { fraction; mean } -> json_of_color_count ~fraction ~mean
+  | Line_shares shares -> Line_shares.to_json shares
+  | Find { blobs } -> Blob_find.to_json blobs
   | Other j -> j
-
-let of_kind kind decode = function
-  | Other j when member_opt "kind" j = Some (`String kind) -> decode j
-  | Color_stats _ | Template_match _ | Color_count _ | Other _ -> None
-
-let line_shares = of_kind line_shares_kind Line_shares.of_json
-let blobs = of_kind find_kind Blob_find.of_json
-let line_shares_result shares = Other (Line_shares.to_json shares)
-let find_result blobs = Other (Blob_find.to_json blobs)
 
 let probes_of_json what j =
   List.map (fun (id, v) -> (id, probe_result_of_json v)) (fields what j)

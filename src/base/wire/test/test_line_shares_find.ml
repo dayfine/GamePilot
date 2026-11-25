@@ -1,7 +1,7 @@
-(* The v1.12 probe kinds, core.line_shares@1 and core.find@1: their goldens
+(* The v1.13 probe kinds, core.line_shares@1 and core.find@1: their goldens
    decode into the typed params and results, the constructors make the golden
-   probes, refuse what the daemon refuses, and the total result readers give
-   None, not an exception, on a result that is not theirs. *)
+   probes and refuse what the daemon refuses, and a malformed result is a
+   Decode_error like any known kind's. *)
 
 let rec protocol_dir dir =
   let candidate = Filename.concat (Filename.concat dir "protocol") "v1" in
@@ -110,6 +110,9 @@ let blob_text (b : Wire.Blob_find.blob) =
     (Option.fold ~none:"-" ~some:string_of_float b.overlap)
     (Option.fold ~none:"-" ~some:string_of_float b.score)
 
+let line_shares = function Wire.Line_shares s -> Some s | _ -> None
+let blobs = function Wire.Find { blobs } -> Some blobs | _ -> None
+
 let read id reader text =
   match Option.bind (result_of id) reader with
   | Some value -> text value
@@ -121,72 +124,56 @@ let result_cases =
   [
     {
       Table_test.name = "line shares from the golden frame";
-      input =
-        (fun () -> read "controls_hint.glyph" Wire.line_shares shares_text);
+      input = (fun () -> read "controls_hint.glyph" line_shares shares_text);
       expectation =
         "0.375 0.5 0.25 0.25 0.5 0.375 0.25 -1 0.142857 0.428571 0.571429 \
          0.428571 0.285714 0.428571 0.428571 0.142857";
     };
     {
       Table_test.name = "blobs from the golden frame";
-      input = (fun () -> read "advance_arrow" Wire.blobs blobs_text);
+      input = (fun () -> read "advance_arrow" blobs blobs_text);
       expectation =
         "1 1418,982 32x20 fill 0.359375 stray 0. overlap 0.585443 score -";
     };
     {
       Table_test.name = "no blobs";
-      input = (fun () -> read "choice_arrow" Wire.blobs blobs_text);
+      input = (fun () -> read "choice_arrow" blobs blobs_text);
       expectation = "";
     };
     {
-      Table_test.name = "blobs of a line shares result: none";
-      input = (fun () -> read "controls_hint.glyph" Wire.blobs blobs_text);
+      Table_test.name = "a line shares result is not a find";
+      input = (fun () -> read "controls_hint.glyph" blobs blobs_text);
       expectation = "none";
     };
     {
-      Table_test.name = "line shares of a colour stats result: none";
+      Table_test.name = "a blob missing its fill: decode error";
       input =
         (fun () ->
           match
-            Wire.line_shares
-              (Wire.Color_stats
-                 {
-                   mean = { r = 0.; g = 0.; b = 0. };
-                   stddev = { r = 0.; g = 0.; b = 0. };
-                 })
+            Wire.message_of_string
+              {|{"jsonrpc":"2.0","method":"frame","params":{"seq":1,"load":0,"t_ms":0,"probes":{"p":{"kind":"core.find@1","blobs":[{"filter":0,"x":1,"y":1,"w":1,"h":1}]}}}}|}
           with
-          | Some _ -> "some"
-          | None -> "none");
-      expectation = "none";
+          | _ -> "decoded"
+          | exception Wire.Decode_error why -> why);
+      expectation = {|probe result.blobs: missing field "fill"|};
     };
     {
-      Table_test.name = "a blob missing its fill: none";
+      Table_test.name = "made results round-trip";
       input =
         (fun () ->
-          match
-            Wire.blobs
-              (Wire.Other
-                 (Yojson.Safe.from_string
-                    {|{"kind":"core.find@1","blobs":[{"filter":0,"x":1,"y":1,"w":1,"h":1}]}|}))
-          with
-          | Some _ -> "some"
-          | None -> "none");
-      expectation = "none";
-    };
-    {
-      Table_test.name = "made results read back";
-      input =
-        (fun () ->
-          let shares =
-            { Wire.Line_shares.rows = [ 0.5 ]; columns = [ 1.; 0. ] }
+          let results =
+            [
+              ( "s",
+                Wire.Line_shares
+                  { Wire.Line_shares.rows = [ 0.5 ]; columns = [ 1.; 0. ] } );
+              ("f", Wire.Find { blobs = [] });
+            ]
           in
-          match
-            ( Wire.line_shares (Wire.line_shares_result shares),
-              Wire.blobs (Wire.find_result []) )
-          with
-          | Some s, Some [] -> shares_text s
-          | _ -> "none");
-      expectation = "0.5 -1 1 0";
+          let frame = { Wire.seq = 1; t_ms = 0.; probes = results } in
+          let message = Wire.Notification (Wire.Frame { load = 0; frame }) in
+          string_of_bool
+            (Wire.message_of_string (Wire.string_of_message message) = message));
+      expectation = "true";
     };
   ]
 

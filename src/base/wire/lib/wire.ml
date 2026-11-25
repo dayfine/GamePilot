@@ -75,12 +75,9 @@ type probe_result = Probe.probe_result =
   | Color_stats of { mean : rgb; stddev : rgb }
   | Template_match of { score : float; x : float; y : float }
   | Color_count of { fraction : float; mean : rgb option }
+  | Line_shares of Line_shares.t
+  | Find of { blobs : Blob_find.blob list }
   | Other of json
-
-let line_shares = Probe.line_shares
-let blobs = Probe.blobs
-let line_shares_result = Probe.line_shares_result
-let find_result = Probe.find_result
 
 type frame = Probe.frame = {
   seq : int;

@@ -125,7 +125,10 @@ val color_count_probe :
     in [min..max] (inclusive), and their mean color. *)
 
 module Line_shares = Line_shares
+(** [core.line_shares@1]'s pixel test and result. *)
+
 module Blob_find = Blob_find
+(** [core.find@1]'s params and blobs. *)
 
 val line_shares_probe :
   id:string ->
@@ -161,21 +164,13 @@ type probe_result = Probe.probe_result =
   | Color_count of { fraction : float; mean : rgb option }
       (** [core.color_count@1]: pixels in range over pixels in the box, and the
           mean of those in range ([None] when there are none). *)
-  | Other of json
-      (** a kind this side does not know yet, kept verbatim; and the v1.13
-          kinds, read with {!line_shares} and {!blobs} (new constructors would
-          break every reader's exhaustive match at once) *)
-
-val line_shares : probe_result -> Line_shares.t option
-(** A [core.line_shares@1] result; [None] for any other. *)
-
-val blobs : probe_result -> Blob_find.blob list option
-(** A [core.find@1] result's blobs; [None] for any other result. *)
-
-val line_shares_result : Line_shares.t -> probe_result
-(** The result as a frame carries it, for readers' tests. *)
-
-val find_result : Blob_find.blob list -> probe_result
+  | Line_shares of Line_shares.t
+      (** [core.line_shares@1]: each row's and each column's share of the box's
+          pixels passing the probe's test. *)
+  | Find of { blobs : Blob_find.blob list }
+      (** [core.find@1]: the blobs that passed the probe's filters, with the
+          scores its params asked for; [[]] when none did. *)
+  | Other of json  (** a kind this side does not know yet, kept verbatim *)
 
 type frame = Probe.frame = {
   seq : int;

@@ -10,7 +10,14 @@
     share from one probe. *)
 
 type json = Yojson.Safe.t
-type op = Greater | Greater_equal | Less | Less_equal
+
+type op =
+  | Greater
+  | Greater_equal
+  | Less
+  | Less_equal
+      (** How a comparison's weighted sum stands to its value: [>], [>=], [<],
+          [<=] on the wire. *)
 
 type comparison = { weights : int * int * int; op : op; value : int }
 (** [r * wr + g * wg + b * wb op value], channels 0..255. *)
@@ -31,14 +38,15 @@ val test_of_json : string -> json -> test
 (** A probe's [test]; [what] names it in a [Decode_error]. *)
 
 val json_of_test : test -> json
+(** A probe's [test], as {!test_of_json} reads it. *)
 
 type t = { rows : float list; columns : float list }
 (** Top to bottom and left to right: each line's passing pixels over its pixels.
 *)
 
-val of_json : json -> t option
-(** A result object's [rows] and [columns]; [None] when either is missing or not
-    a list of numbers. Total: a reader gets [None], not an exception. *)
+val of_json : string -> json -> t
+(** A result object's [rows] and [columns]; [what] names it in a [Decode_error].
+*)
 
 val to_json : t -> json
 (** The result object, [kind] included. *)

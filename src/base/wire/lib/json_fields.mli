@@ -29,19 +29,3 @@ val json_of_strings : string list -> json
 
 val parse_json : string -> json
 (** Parses one JSON text; bad JSON is a [Decode_error] too. *)
-
-(** {1 Total readers}
-
-    For results a reader reads every frame: [None] instead of [Decode_error]. *)
-
-val member_opt : string -> json -> json option
-(** An object's member; [None] for a missing one or a non-object. *)
-
-val number_opt : json -> float option
-(** An integer or a float. *)
-
-val all_opt : ('a -> 'b option) -> 'a list -> 'b list option
-(** [f] on every item; [None] as soon as one gives [None]. *)
-
-val numbers_opt : json -> float list option
-(** A list of numbers; [None] when any item is not one. *)

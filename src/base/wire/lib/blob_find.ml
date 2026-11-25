@@ -106,33 +106,23 @@ let params_fields p =
   @ some "margin" float_json p.margin
   @ some "shape" (fun s -> `String s) p.shape
 
-let ( let* ) = Option.bind
+let blob_of_json what j =
+  let num name = float_field what name j in
+  let num_opt name = opt what name to_float j in
+  {
+    filter = int_field what "filter" j;
+    x = num "x";
+    y = num "y";
+    w = num "w";
+    h = num "h";
+    fill = num "fill";
+    stray = num_opt "stray";
+    score = num_opt "score";
+    overlap = num_opt "overlap";
+  }
 
-let blob_of_json j =
-  let num name = Option.bind (member_opt name j) number_opt in
-  let* filter = num "filter" in
-  let* x = num "x" in
-  let* y = num "y" in
-  let* w = num "w" in
-  let* h = num "h" in
-  let* fill = num "fill" in
-  Some
-    {
-      filter = int_of_float filter;
-      x;
-      y;
-      w;
-      h;
-      fill;
-      stray = num "stray";
-      score = num "score";
-      overlap = num "overlap";
-    }
-
-let of_json j =
-  match member_opt "blobs" j with
-  | Some (`List items) -> all_opt blob_of_json items
-  | _ -> None
+let of_json what j =
+  List.map (blob_of_json (what ^ ".blobs")) (list_field what "blobs" j)
 
 let json_of_blob b =
   `Assoc

@@ -61,13 +61,11 @@ type t = { rows : float list; columns : float list }
 
 let kind = "core.line_shares@1"
 
-let of_json j =
-  match
-    ( Option.bind (member_opt "rows" j) numbers_opt,
-      Option.bind (member_opt "columns" j) numbers_opt )
-  with
-  | Some rows, Some columns -> Some { rows; columns }
-  | _ -> None
+let of_json what j =
+  let numbers name =
+    List.map (to_float (what ^ "." ^ name)) (list_field what name j)
+  in
+  { rows = numbers "rows"; columns = numbers "columns" }
 
 let floats l = `List (List.map (fun f -> `Float f) l)
 

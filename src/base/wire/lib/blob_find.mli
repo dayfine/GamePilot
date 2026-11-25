@@ -14,7 +14,7 @@ type filter = { low : int * int * int; high : int * int * int }
 type params = {
   filters : filter list;  (** non-empty, searched in order *)
   min_area : float;  (** a blob's pixels, at least 1 *)
-  max_area : float option;
+  max_area : float option;  (** a blob's pixels, at most *)
   min_size : (float * float) option;  (** width, height; both ends included *)
   max_size : (float * float) option;
   margin : float option;  (** asks for each blob's [stray] *)
@@ -22,6 +22,8 @@ type params = {
       (** an uploaded PNG's hash; asks for each blob's [overlap]. A template
           asking for [score] is the probe's own [template]. *)
 }
+(** What a [core.find@1] probe asks the daemon for: the filters, the size
+    bounds, and which scores to give each blob. *)
 
 type blob = {
   filter : int;  (** the index of the filter that made it *)
@@ -38,6 +40,8 @@ type blob = {
   overlap : float option;
       (** with a shape: its pixels and the shape's, both over either *)
 }
+(** One blob the daemon found, in game pixels of the picture, with the scores
+    the params asked for. *)
 
 val params :
   ?max_area:float ->
@@ -59,9 +63,8 @@ val params_of_json : string -> json -> params
 val params_fields : params -> (string * json) list
 (** The probe object's fields for these params. *)
 
-val of_json : json -> blob list option
-(** A result object's [blobs]; [None] when it is missing or a blob lacks a
-    field. Total: a reader gets [None], not an exception. *)
+val of_json : string -> json -> blob list
+(** A result object's [blobs]; [what] names it in a [Decode_error]. *)
 
 val to_json : blob list -> json
 (** The result object, [kind] included. *)
