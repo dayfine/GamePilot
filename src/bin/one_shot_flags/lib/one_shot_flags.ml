@@ -13,7 +13,7 @@ let game_flags default_state : string option F.game_flags =
       (fun _ name v -> if name = "--state" then Some (Ok (Some v)) else None);
   }
 
-type own = {
+type own_daemon = {
   build : string;
   backend : Daemon_process.backend;
   backend_name : string;
@@ -22,7 +22,7 @@ type own = {
   watch : Daemon_process.watch;
 }
 
-type daemon = Attach of int | Start of own
+type daemon = Attach of int | Start of own_daemon
 type t = { runs_dir : string; state : string option; daemon : daemon }
 
 (* The flags given that only a checkpoint series reads. *)
@@ -64,7 +64,7 @@ let ( let* ) = Result.bind
 
 (* The program's own daemon, from the flags: a checkpoint run's backend
    (testing: a one-shot has no verification) and the program's viewport. *)
-let own (p : Program_registry.t) (f : _ F.flags) watch =
+let own_daemon (p : Program_registry.t) (f : _ F.flags) watch =
   let* backend = F.daemon_backend f Engine_run.Checkpoint_trials.Testing in
   let* viewport = Program_registry.check_viewport (Some p) f.viewport in
   Ok
@@ -95,25 +95,28 @@ let parse (p : Program_registry.t) ~default_state args =
       let port = if f.port = d.port then Live.default_port else f.port in
       Ok { runs_dir = f.runs_dir; state = f.game; daemon = Attach port }
   | Some watch ->
-      let* own = own p f watch in
+      let* own_daemon = own_daemon p f watch in
       (* The Switch keeps no save states: its game is the start. *)
       let state =
-        match own.backend with Switch _ -> None | Mgba _ -> f.game
+        match own_daemon.backend with Switch _ -> None | Mgba _ -> f.game
       in
-      Ok { runs_dir = f.runs_dir; state; daemon = Start own }
+      Ok { runs_dir = f.runs_dir; state; daemon = Start own_daemon }
 
 (* The page, listed in the registry beside [runs_dir], with the hub started
    if none runs. *)
-let with_hub own ~runs_dir =
-  match Watch_hub.for_runs_dir ~daemon:own.build ~runs_dir (Some own.watch) with
+let with_hub own_daemon ~runs_dir =
+  match
+    Watch_hub.for_runs_dir ~daemon:own_daemon.build ~runs_dir
+      (Some own_daemon.watch)
+  with
   | Some watch -> watch
-  | None -> own.watch
+  | None -> own_daemon.watch
 
-let start own ~runs_dir (record : Run_record.t) ~label =
-  let watch = with_hub own ~runs_dir in
+let start own_daemon ~runs_dir (record : Run_record.t) ~label =
+  let watch = with_hub own_daemon ~runs_dir in
   let started =
-    Daemon_process.start ~watch ~flags:own.daemon_flags ~daemon:own.build
-      ~backend:own.backend ~port:own.port
+    Daemon_process.start ~watch ~flags:own_daemon.daemon_flags
+      ~daemon:own_daemon.build ~backend:own_daemon.backend ~port:own_daemon.port
       ~wire_log:(Run_record.path record "wire.jsonl")
       ~out_file:(Run_record.path record "daemon.out")
       ~checkpoint:label ()

@@ -61,7 +61,7 @@ let defaults = Checkpoints_flags.defaults series
 let parse = Checkpoints_flags.parse series
 
 let usage =
-  "  gamepilot run PROGRAM|DIR/PLANS --from ID --to ID --mode \
+  "  gamepilot run PROGRAM|PLAN_DIR --from ID --to ID --mode \
    testing|verification\n\
   \      [--runs N] [--states DIR] [--runs-dir DIR] [--daemon PATH]\n\
   \      [--mgba-port N] [--port N] [--party SPECIES,...] [--center TOWN] \
@@ -75,6 +75,4 @@ let usage =
   \      [--viewport nso-gba|native|x,y,w,h]   (Switch: where the game picture \
    sits; the program's by default)\n\
   \      [--from-event ID|N [--to-event ID|N]]   (mGBA, testing, one checkpoint)\n\
-  \  gamepilot run PROGRAM|DIR/PLANS --preflight --from ID [--backend ...]\n\
-  \      (a plan folder is a path with a /, or --plan-dir DIR; a bare name is \
-   a program id)\n"
+  \  gamepilot run PROGRAM|PLAN_DIR --preflight --from ID [--backend ...]\n"

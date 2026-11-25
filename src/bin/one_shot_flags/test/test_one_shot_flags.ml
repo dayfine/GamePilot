@@ -12,10 +12,11 @@ let backend = function
 
 let daemon = function
   | One_shot_flags.Attach port -> Printf.sprintf "attach %d" port
-  | Start own ->
-      Printf.sprintf "start %s port %d page %d %s [%s]" (backend own.backend)
-        own.port own.watch.port own.watch.listen
-        (String.concat " " own.daemon_flags)
+  | Start own_daemon ->
+      Printf.sprintf "start %s port %d page %d %s [%s]"
+        (backend own_daemon.backend)
+        own_daemon.port own_daemon.watch.port own_daemon.watch.listen
+        (String.concat " " own_daemon.daemon_flags)
 
 let show = function
   | Ok (t : One_shot_flags.t) ->

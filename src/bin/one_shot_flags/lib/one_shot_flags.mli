@@ -9,7 +9,7 @@
     given), and the flags that start a daemon are refused; so are a checkpoint
     series' own ([--from], [--mode], ...). *)
 
-type own = {
+type own_daemon = {
   build : string;  (** The daemon's build (--daemon). *)
   backend : Daemon_process.backend;
   backend_name : string;  (** run.json's: mgba or switch. *)
@@ -21,7 +21,7 @@ type own = {
 (** The daemon the program starts. *)
 
 (** On a daemon already up on a port, or one of its own. *)
-type daemon = Attach of int | Start of own
+type daemon = Attach of int | Start of own_daemon
 
 type t = {
   runs_dir : string;
@@ -40,7 +40,7 @@ val parse :
     otherwise. Reads no files and starts nothing. *)
 
 val start :
-  own ->
+  own_daemon ->
   runs_dir:string ->
   Run_record.t ->
   label:string ->

@@ -16,46 +16,23 @@ let take flag args =
 
 let is_flag a = String.length a > 0 && a.[0] = '-'
 
-(* A plan folder given bare: a path, never a name alone, which is a program
-   id's. *)
-let is_path a = String.exists (fun c -> c = '/' || c = '\\') a
+let positional ~is_plan_folder = function
+  | a :: flags when not (is_flag a) ->
+      let target = if is_plan_folder a then Plan_folder a else Program a in
+      Ok { target; flags }
+  | _ -> Error "a program id, a plan folder or --plan FILE is required"
 
-let named_targets =
-  [
-    ("--plan", fun file -> Plan file);
-    ("--program", fun id -> Program id);
-    ("--plan-dir", fun dir -> Plan_folder dir);
-  ]
-
-(* The targets the flags name, and the args left. *)
-let rec named found args = function
-  | [] -> Ok (found, args)
-  | (flag, target) :: rest -> (
-      match take flag args with
-      | Error e -> Error e
-      | Ok None -> named found args rest
-      | Ok (Some (v, args)) -> named (target v :: found) args rest)
-
-let positional ~bare = function
-  | a :: flags when not (is_flag a) -> Ok { target = bare a; flags }
-  | _ ->
-      Error
-        "a program id, a plan folder (a path, or --plan-dir DIR) or --plan \
-         FILE is required"
-
-let parse_with ~bare args =
-  match named [] args named_targets with
-  | Error e -> Error e
-  | Ok ([], _) -> positional ~bare args
-  | Ok ([ target ], flags) -> Ok { target; flags }
-  | Ok (_, _) -> Error "--plan, --program and --plan-dir: give one"
-
-let parse =
-  parse_with ~bare:(fun a -> if is_path a then Plan_folder a else Program a)
+let parse ~is_plan_folder args =
+  match (take "--plan" args, take "--program" args) with
+  | Error e, _ | _, Error e -> Error e
+  | Ok (Some _), Ok (Some _) -> Error "--plan and --program: give one"
+  | Ok (Some (plan, flags)), Ok None -> Ok { target = Plan plan; flags }
+  | Ok None, Ok (Some (id, flags)) -> Ok { target = Program id; flags }
+  | Ok None, Ok None -> positional ~is_plan_folder args
 
 let of_old_command command args =
   match (command, args) with
-  | "checkpoints", _ -> Some (parse_with ~bare:(fun a -> Plan_folder a) args)
+  | "checkpoints", _ -> Some (parse ~is_plan_folder:(fun _ -> true) args)
   | "checkpoint", plan :: flags -> Some (Ok { target = Plan plan; flags })
   | "checkpoint", [] -> Some (Error "a plan file is required")
   | _ -> None
@@ -75,8 +52,7 @@ let command_line t =
   let target =
     match t.target with
     | Program id -> [ id ]
-    | Plan_folder dir when is_path dir -> [ dir ]
-    | Plan_folder dir -> [ "--plan-dir"; dir ]
+    | Plan_folder dir -> [ dir ]
     | Plan file -> [ "--plan"; file ]
   in
   String.concat " " ("gamepilot" :: "run" :: List.map quote (target @ t.flags))

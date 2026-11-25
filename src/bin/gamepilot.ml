@@ -1,4 +1,4 @@
-(* gamepilot run <program>|DIR/PLANS|--plan-dir DIR [flags]: a one-shot
+(* gamepilot run <program>|PLAN_DIR [flags]: a one-shot
      program ([--state PATH | --console], on a daemon up on --port N or, with
      --watch, its own: One_shot_flags) or a chain of checkpoints
      (Checkpoint_families)
@@ -79,12 +79,13 @@ let in_run_folder one_shot (record : Run_record.t) handle state =
       program_outcome ~after one_shot handle state)
 
 (* In a daemon of its own, stopped after the run (Daemon_run). *)
-let on_own_daemon one_shot (f : One_shot_flags.t) own record =
+let on_own_daemon one_shot (f : One_shot_flags.t) own_daemon record =
   let failed (e : Daemon_run.failed) =
     (one_shot.Checkpoint_families.label ^ ": DAEMON FAILED " ^ e.reason, 1)
   in
   let started =
-    One_shot_flags.start own ~runs_dir:f.runs_dir record ~label:one_shot.label
+    One_shot_flags.start own_daemon ~runs_dir:f.runs_dir record
+      ~label:one_shot.label
   in
   Daemon_run.with_daemon ~failed started (fun daemon ->
       in_run_folder one_shot record (Live.run ~port:daemon.port) f.state)
@@ -93,10 +94,12 @@ let on_own_daemon one_shot (f : One_shot_flags.t) own record =
 let on_daemon one_shot (f : One_shot_flags.t) record =
   match f.daemon with
   | Attach port -> in_run_folder one_shot record (Live.run ~port) f.state
-  | Start own -> on_own_daemon one_shot f own record
+  | Start own_daemon -> on_own_daemon one_shot f own_daemon record
 
 let backend_name (f : One_shot_flags.t) =
-  match f.daemon with Attach _ -> None | Start own -> Some own.backend_name
+  match f.daemon with
+  | Attach _ -> None
+  | Start own_daemon -> Some own_daemon.backend_name
 
 (* Live, in a run folder of its own (Attached_run). *)
 let run_live (p : Program_registry.t) one_shot (f : One_shot_flags.t) =
@@ -136,6 +139,8 @@ let run (args : Run_args.t) =
   | Plan_folder dir -> Checkpoint_families.main dir args.flags
   | Plan plan -> Checkpoint_families.checkpoint plan args.flags
 
+let is_plan_folder d = Sys.file_exists d && Sys.is_directory d
+
 (* The one-shot program [id] names, run by [run]. *)
 let one_shot id run =
   match Programs_command.one_shot id with
@@ -162,7 +167,8 @@ let () =
   | "run" :: args when List.mem "--help" args ->
       print_string usage;
       exit 0
-  | "run" :: args -> exit_with (Result.bind (Run_args.parse args) run)
+  | "run" :: args ->
+      exit_with (Result.bind (Run_args.parse ~is_plan_folder args) run)
   | (("checkpoints" | "checkpoint") as command) :: args -> (
       match Run_args.of_old_command command args with
       | Some parsed -> old_command command parsed
