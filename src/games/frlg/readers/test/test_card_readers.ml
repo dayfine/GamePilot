@@ -17,7 +17,12 @@
      earnedN       badge slot N (1-8) earned
      starsN        N stars on the card
 
-   Any other frame must not read as the card. *)
+   Any other frame must not read as the card.
+
+   card.<backend>.shifted.probes.jsonl holds every real frame (not the
+   renders) again with its colors shifted (shift_frame.py: brightness times
+   0.9 and 1.1, one channel plus or minus 12, 10% toward mid-grey), named
+   <shift>/<image>: each must read as the frame itself does. *)
 
 open Frlg_readers
 
@@ -55,6 +60,32 @@ let cases backend images =
       })
     images
 
+(* The frame a shifted one comes from: its name less the "<shift>/". *)
+let unshifted image =
+  match String.index_opt image '/' with
+  | Some i -> String.sub image (i + 1) (String.length image - i - 1)
+  | None -> failwith ("no shift in " ^ image)
+
+let shifted_cases backend images shifted =
+  List.map
+    (fun (image, probes) ->
+      let original = List.assoc (unshifted image) images in
+      {
+        Table_test.name = Printf.sprintf "%s shifted card: %s" backend image;
+        input =
+          (fun () -> verdict (Trainer_card_front.read (measurements probes)));
+        expectation = verdict (Trainer_card_front.read (measurements original));
+      })
+    shifted
+
+let backend_cases backend =
+  let fixture kind =
+    Wire.read_image_probes
+      (Printf.sprintf "fixtures/card.%s%s.probes.jsonl" backend kind)
+  in
+  let images = fixture "" in
+  cases backend images @ shifted_cases backend images (fixture ".shifted")
+
 let card ~badges ~stars : Trainer_card_front.t = { badges; stars }
 
 let all_but_earth =
@@ -89,10 +120,4 @@ let derived =
 
 let () =
   Table_test.run "trainer card reader"
-    (derived
-    @ List.concat_map
-        (fun backend ->
-          cases backend
-            (Wire.read_image_probes
-               ("fixtures/card." ^ backend ^ ".probes.jsonl")))
-        [ "switch"; "mgba" ])
+    (derived @ List.concat_map backend_cases [ "switch"; "mgba" ])

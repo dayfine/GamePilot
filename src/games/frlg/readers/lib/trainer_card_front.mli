@@ -17,7 +17,13 @@
     them), which match the lab's mGBA frame of the card with no badge and no
     star to the pixel; real mGBA frames of a post-League save (8 badges, 1 star)
     read as such, and so do real Switch frames of the same save (console B's
-    capture card). *)
+    capture card).
+
+    Another capture card may show the colors a little off. Every real frame
+    reads the same with its brightness times 0.9 or 1.1, any one channel 12 up
+    or down, or every channel pulled 10% toward mid-grey (the card tests'
+    shifted fixtures). The price: a card 90% faded in reads as the card, as it
+    is as bright as a settled card on a capture 10% dark. *)
 
 val probes : Wire.probe_spec list
 (** Every probe {!front_shown} and {!read} need. *)
@@ -45,8 +51,10 @@ val to_string : t -> string
 
 val min_body_channel : float
 (** The card's body above the money row (x 24 to 111, y 56 to 63), striped white
-    and the card's palest tint: each channel's mean from this (pret renders: 230
-    at the lowest; a fading card is darker)... *)
+    and the card's palest tint: each channel's mean from this (real frames: 236
+    at the lowest, 212.5 on the Switch frame 10% darker; the nearest frame that
+    is not the card and passes the other tests, 153; a card fading in is darker
+    until its last tenth)... *)
 
 val max_body_stddev_sum : float
 (** ...and the channels' stddev summed at most this (36.5 on the bronze card).

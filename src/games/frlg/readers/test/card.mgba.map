@@ -1,6 +1,6 @@
 repo src/games/frlg/readers/test/images/mgba/pret-trainer-card/front-b00000000-s0-f1.png|pret-trainer-card/front-b00000000-s0-f1__card-stars0.png
 repo src/games/frlg/readers/test/images/mgba/pret-trainer-card/front-b01010101-s3-f1.png|pret-trainer-card/front-b01010101-s3-f1__card-earned2-earned4-earned6-earned8-stars3.png
-repo src/games/frlg/readers/test/images/mgba/pret-trainer-card/front-b10000000-s1-f0.9.png|pret-trainer-card/front-b10000000-s1-f0.9__fading-earned1-stars1.png
+repo src/games/frlg/readers/test/images/mgba/pret-trainer-card/front-b10000000-s1-f0.9.png|pret-trainer-card/front-b10000000-s1-f0.9__card-earned1-stars1.png
 repo src/games/frlg/readers/test/images/mgba/pret-trainer-card/front-b10100000-s0-f1.png|pret-trainer-card/front-b10100000-s0-f1__card-earned1-earned3-stars0.png
 repo src/games/frlg/readers/test/images/mgba/pret-trainer-card/front-b11111110-s1-f1.png|pret-trainer-card/front-b11111110-s1-f1__card-earned1-earned2-earned3-earned4-earned5-earned6-earned7-stars1.png
 repo src/games/frlg/readers/test/images/mgba/pret-trainer-card/front-b11111111-s1-f0.5.png|pret-trainer-card/front-b11111111-s1-f0.5__fading-earned1-earned2-earned3-earned4-earned5-earned6-earned7-earned8-stars1.png
