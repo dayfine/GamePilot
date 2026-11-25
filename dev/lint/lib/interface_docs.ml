@@ -4,8 +4,8 @@ open Parsetree
 let payload_string = function
   | PStr
       [ { pstr_desc = Pstr_eval ({ pexp_desc = Pexp_constant c; _ }, _); _ } ]
-    -> (
-      match c.pconst_desc with Pconst_string (s, _, _) -> Some s | _ -> None)
+    ->
+      String_constant.text c
   | _ -> None
 
 let doc_string (a : attribute) =
@@ -123,5 +123,5 @@ let check ~path text =
   | exception _ ->
       [
         Finding.error ~check:"parse" ~path ~line:lexbuf.lex_curr_p.pos_lnum
-          "does not parse; no other check ran on this file";
+          "does not parse; its docs were not checked";
       ]
