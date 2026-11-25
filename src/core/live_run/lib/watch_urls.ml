@@ -15,13 +15,14 @@ let default_listen () =
   | _ -> local
 
 let token_bytes = 16
+let byte_values = 256
 
 (* Stop's token for a series: 32 random hex digits. *)
 let new_token () =
   let random = Random.State.make_self_init () in
   String.concat ""
     (List.init token_bytes (fun _ ->
-         Printf.sprintf "%02x" (Random.State.int random 256)))
+         Printf.sprintf "%02x" (Random.State.int random byte_values)))
 
 (* A documentation address (TEST-NET-1): connecting a UDP socket to it sends
    nothing but picks the interface of the default route. *)

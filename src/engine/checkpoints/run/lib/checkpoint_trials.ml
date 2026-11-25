@@ -97,3 +97,11 @@ let attempts ~retries attempts =
       Run_failed { at = f.at; repeats = true; why = "the failure repeats" }
   | Attempt_failed _ :: _ when List.length attempts <= retries -> Attempt_again
   | Attempt_failed f :: _ -> out_of_attempts attempts f
+
+let until_decided policy ~trial run =
+  let rec go runs =
+    match verdict policy (List.map trial runs) with
+    | Run_again -> go (runs @ [ run (List.length runs + 1) ])
+    | decided -> (decided, runs)
+  in
+  go []

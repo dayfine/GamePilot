@@ -112,15 +112,10 @@ let trial setup cp n chain =
 
 (* Runs [cp] until the policy decides; the verdict and the runs, oldest
    first. *)
-let rec runs_of setup cp chain runs =
-  match
-    Checkpoint_trials.verdict setup.Run.policy
-      (List.map (fun (_, o) -> Run.trial o) runs)
-  with
-  | Checkpoint_trials.Run_again ->
-      let run = trial setup cp (List.length runs + 1) chain in
-      runs_of setup cp chain (runs @ [ run ])
-  | verdict -> (verdict, runs)
+let runs_of setup cp chain =
+  Checkpoint_trials.until_decided setup.Run.policy
+    ~trial:(fun (_, o) -> Run.trial o)
+    (fun n -> trial setup cp n chain)
 
 (* The last passing run's end.ss as [next]'s start (or [id].end.ss). *)
 let keep_end (setup : Run.setup) id ~next runs =
@@ -157,7 +152,7 @@ let keep_uncapped_end (setup : Run.setup) id ~next runs =
 
 (* Whether [cp] passed, after running it until its policy decided. *)
 let decide (setup : Run.setup) (cp : Run.checkpoint) chain ~next =
-  match runs_of setup cp chain [] with
+  match runs_of setup cp chain with
   | Checkpoint_trials.Checkpoint_passed { passes; runs }, done_runs ->
       Printf.printf "[Checkpoints] %s: passed (%d of %d runs)%s\n%!" cp.id
         passes runs (Run.capped_note setup cp);

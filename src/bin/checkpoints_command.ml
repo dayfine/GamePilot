@@ -193,6 +193,7 @@ let preflight plan_dir f =
   Preflight_command.run ~plan_dir ~from_id
     (preflight_setup plan_dir f backend ~viewport ~from_id)
 
-let main plan_dir args =
-  let* f = parse defaults args in
+(* A program over the Pokémon grid rules (Checkpoint_families): its
+   preflight, or its series. *)
+let run_grid plan_dir f =
   if f.preflight then preflight plan_dir f else run_series plan_dir f
