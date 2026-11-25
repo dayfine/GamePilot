@@ -34,7 +34,7 @@ let plans_of (p : R.t) =
       match R.locate path with
       | None -> Error (path ^ " not found from here: run in the repo")
       | Some dir ->
-          let* ids = Plan_dir.checkpoint_ids dir in
+          let* ids = Engine_series.Plan_folder.checkpoint_ids dir in
           Ok { dir; ids })
 
 (* FROM..TO's two ids; one id is both. *)
@@ -49,7 +49,7 @@ let range plans = function
   | None -> Ok plans.ids
   | Some a ->
       let from_id, to_id = bounds a in
-      Result.map fst (Plan_dir.select plans.ids ~from_id ~to_id)
+      Result.map fst (Engine_series.Plan_folder.select plans.ids ~from_id ~to_id)
 
 let last l = List.nth l (List.length l - 1)
 
@@ -62,14 +62,14 @@ let collect f ids =
       Ok (acc @ [ x ]))
     (Ok []) ids
 
-let load plans ids = collect (Plan_dir.load_plan ~plan_dir:plans.dir) ids
+let load plans ids = collect (Frlg_series.Plan_dir.load_plan ~plan_dir:plans.dir) ids
 let read_file path = In_channel.with_open_bin path In_channel.input_all
 
 (* Line endings dropped, so a checkout with CRLF digests the same. *)
 let digest plans ids =
   ids
   |> List.map (fun id ->
-         read_file (Plan_dir.plan_file ~plan_dir:plans.dir id)
+         read_file (Engine_series.Plan_folder.plan_file ~plan_dir:plans.dir id)
          |> String.split_on_char '\r' |> String.concat "")
   |> String.concat "\n" |> Digest.string |> Digest.to_hex
   |> fun hex -> String.sub hex 0 12
@@ -154,7 +154,7 @@ let needs p arg =
   let* plans = plans_of p in
   let* chain = range plans arg in
   let* loaded = load plans chain in
-  let* before = Plan_dir.promised_before ~plan_dir:plans.dir (List.hd chain) in
+  let* before = Frlg_series.Plan_dir.promised_before ~plan_dir:plans.dir (List.hd chain) in
   let* stocks = Frlg_actions.Mart_plan.load () in
   match chain_lines stocks ~before loaded with
   | lines -> Result.map (String.concat "\n") lines
@@ -165,8 +165,8 @@ let needs_text needs =
 
 (* One row per checkpoint: what the pre-flight checks before resuming there. *)
 let preflight_row stocks plans id =
-  let* plan = Plan_dir.load_plan ~plan_dir:plans.dir id in
-  let* before = Plan_dir.promised_before ~plan_dir:plans.dir id in
+  let* plan = Frlg_series.Plan_dir.load_plan ~plan_dir:plans.dir id in
+  let* before = Frlg_series.Plan_dir.promised_before ~plan_dir:plans.dir id in
   match Frlg_checkpoints.Preflight.needs stocks ~before plan with
   | needs ->
       Result.map
@@ -227,7 +227,7 @@ let grid =
     rows =
       (fun ~plan_dir ids ->
         Result.map (List.map checkpoint_row)
-          (collect (Plan_dir.load_plan ~plan_dir) ids));
+          (collect (Frlg_series.Plan_dir.load_plan ~plan_dir) ids));
     commands = grid_commands;
   }
 

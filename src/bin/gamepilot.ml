@@ -1,7 +1,7 @@
 (* gamepilot run <program> [--port N] [--state PATH | --console]
    gamepilot replay <program> <wirelog>
-   gamepilot checkpoint PLAN.json [flags] (Checkpoint_command)
-   gamepilot checkpoints PLAN_DIR|--program ID [flags] (Checkpoints_command)
+   gamepilot checkpoint PLAN.json [flags] (Checkpoint_families)
+   gamepilot checkpoints PLAN_DIR|--program ID [flags] (Checkpoint_families)
    gamepilot programs (Programs_command)
    gamepilot guide PROGRAM | --write | --check (Guide_command)
    gamepilot status [--port N] (Status_command)
@@ -20,8 +20,8 @@ let usage =
   "usage:\n\
   \  gamepilot run start_menu_poc [--port 47900] [--state PATH | --console] \
    [--runs-dir DIR]\n\
-  \  gamepilot replay start_menu_poc WIRELOG\n" ^ Checkpoint_command.usage
-  ^ Checkpoints_command.usage ^ Programs_command.usage ^ Guide_command.usage
+  \  gamepilot replay start_menu_poc WIRELOG\n" ^ Checkpoint_families.usage
+  ^ Checkpoints_flags.usage ^ Programs_command.usage ^ Guide_command.usage
   ^ Status_command.usage ^ Ctl_command.usage ^ Runs_command.usage
   ^ Switch_devices.usage ^ Bring_up_command.usage ^ Console_park_command.usage
 
@@ -82,7 +82,8 @@ let run_program handle state =
 (* Live, in a run folder of its own (Attached_run). *)
 let run_live (p : Program_registry.t) ~runs_dir ~port state =
   let run =
-    Attached_run.start ~runs_dir ~kind:Program ~program:(Some p) ~label:p.id
+    Attached_run.start ~runs_dir ~kind:Program
+      ~program:(Program_registry.run_fields p) ~label:p.id
       ~mode:"run"
   in
   let after = function
@@ -122,7 +123,7 @@ let () =
               let port, state = parse_run_flags flags in
               exit (run_live p ~runs_dir ~port state))
   | "checkpoint" :: plan :: flags ->
-      exit_with (Checkpoint_command.live plan flags)
+      exit_with (Checkpoint_families.checkpoint plan flags)
   | "status" :: flags -> exit_with (Status_command.main flags)
   | "ctl" :: args -> exit_with (Ctl_command.main args)
   | "runs" :: flags -> exit_with (Runs_command.main flags)
@@ -136,6 +137,6 @@ let () =
         (Result.bind (Programs_command.plan_dir_of_args args)
            (fun (plan_dir, flags) -> Checkpoint_families.main plan_dir flags))
   | "replay" :: "checkpoint" :: wirelog :: plan :: flags ->
-      exit_with (Checkpoint_command.replay wirelog plan flags)
+      exit_with (Checkpoint_families.replay_checkpoint wirelog plan flags)
   | [ "replay"; id; wirelog ] -> one_shot id (replay_start_menu wirelog)
   | _ -> die usage

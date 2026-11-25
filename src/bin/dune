@@ -28,5 +28,7 @@
   gamepilot.switch_home
   gamepilot.repo_io
   gamepilot.frlg_checkpoints
+  gamepilot.frlg_series
+  gamepilot.checkpoints_flags
   unix
   yojson))

@@ -82,48 +82,30 @@
    started and closed around the command by run/run_checkpoints_on_mgba.sh. *)
 
 open Engine_run
-module R = Program_registry
 include Checkpoints_flags
+
+(* What the registry says of the program: run.json's program fields for a
+   plan folder ([] for none), and the Switch daemons' --viewport, the
+   program's, which a --viewport given must match
+   (Program_registry.check_viewport). *)
+type program = {
+  fields : string -> (string * string) list;
+  viewport : (string option, string) result;
+}
 
 let ( let* ) = Result.bind
 
-(* The daemon's backend from the flags; the Switch only in testing mode. *)
-let daemon_backend f mode =
-  match (f.backend, f.serial, f.capture, f.replay, mode) with
-  | "mgba", None, None, None, _ ->
-      Ok (Daemon_process.Mgba { port = f.mgba_port })
-  | "mgba", _, _, _, _ ->
-      Error "--serial, --capture and --replay need --backend switch"
-  | "switch", _, _, _, Checkpoint_trials.Verification ->
-      Error "--backend switch runs only --mode testing"
-  | "switch", Some serial, Some capture, None, Testing ->
-      Ok
-        (Daemon_process.Switch
-           { serial = Some serial; frames = Capture capture })
-  | "switch", None, None, Some video, Testing ->
-      Ok (Daemon_process.Switch { serial = None; frames = Replay video })
-  | "switch", _, _, _, _ ->
-      Error
-        "--backend switch needs --serial and --capture, or --replay alone (a \
-         dry run on the fake board)"
-  | b, _, _, _, _ -> Error ("bad --backend " ^ b)
-
 (* What each run's run.json says of the series (or the pre-flight). *)
-let run_info plan_dir f kind ~from_id ~to_id : Run_record.info =
-  let program = Attached_run.program_fields (R.of_plan_dir plan_dir) in
-  { kind; program; from_id; to_id; backend = f.backend }
+let run_info program plan_dir f kind ~from_id ~to_id : Run_record.info =
+  { kind; program = program.fields plan_dir; from_id; to_id; backend = f.backend }
 
 let watch_of f =
   Watch_hub.for_runs_dir ~daemon:f.daemon ~runs_dir:f.runs_dir f.watch
 
-(* The Switch daemons' --viewport: the program's, which a --viewport given
-   must match. *)
-let viewport plan_dir f = R.check_viewport (R.of_plan_dir plan_dir) f.viewport
-
 (* The pre-flight's (and --make-room's party read's) setup. *)
-let preflight_setup plan_dir f backend ~viewport ~from_id :
+let preflight_setup program plan_dir f backend ~viewport ~from_id :
     Preflight_command.setup =
-  let info = run_info plan_dir f Preflight ~from_id ~to_id:from_id in
+  let info = run_info program plan_dir f Preflight ~from_id ~to_id:from_id in
   let { states; runs_dir; daemon; _ } = f in
   { states; runs_dir; daemon; backend; viewport; info; watch = watch_of f }
 
@@ -149,15 +131,15 @@ let check_from_event f mode ~checkpoints =
 
 let from_event f = Option.map (fun first -> (first, f.to_event)) f.from_event
 
-let run_series plan_dir f =
+let run_series program plan_dir f =
   let* from_id = required "--from" f.from_id in
   let* mode, to_id = mode_and_to f ~from_id in
   let* () = check_from_event f mode ~checkpoints:1 in
   let* backend = daemon_backend f mode in
-  let* viewport = viewport plan_dir f in
+  let* viewport = program.viewport in
   let* plan_dir, from_id =
     Make_room_command.with_room ~plan_dir ~from_id f.make_room
-      (preflight_setup plan_dir f backend ~viewport ~from_id)
+      (preflight_setup program plan_dir f backend ~viewport ~from_id)
   in
   let* policy = Checkpoint_trials.policy ?runs:f.runs mode in
   let* ids = Plan_dir.checkpoint_ids plan_dir in
@@ -176,7 +158,7 @@ let run_series plan_dir f =
          policy;
          world;
          watch = watch_of f;
-         info = run_info plan_dir f Checkpoints ~from_id ~to_id;
+         info = run_info program plan_dir f Checkpoints ~from_id ~to_id;
          daemon_flags =
            Daemon_process.viewport_args backend viewport @ f.daemon_flags;
          bound = ref None;
@@ -186,14 +168,15 @@ let run_series plan_dir f =
        }
        selected ~after)
 
-let preflight plan_dir f =
+let preflight program plan_dir f =
   let* from_id = required "--from" f.from_id in
   let* backend = daemon_backend f Checkpoint_trials.Testing in
-  let* viewport = viewport plan_dir f in
+  let* viewport = program.viewport in
   Preflight_command.run ~plan_dir ~from_id
-    (preflight_setup plan_dir f backend ~viewport ~from_id)
+    (preflight_setup program plan_dir f backend ~viewport ~from_id)
 
 (* A program over the Pokémon grid rules (Checkpoint_families): its
    preflight, or its series. *)
-let run_grid plan_dir f =
-  if f.preflight then preflight plan_dir f else run_series plan_dir f
+let run_grid ~program plan_dir f =
+  if f.preflight then preflight program plan_dir f
+  else run_series program plan_dir f

@@ -3,6 +3,29 @@
 
 open Engine_run
 
+type checkpoint_flags = {
+  state : string option;
+  port : int;
+  log_file : string option;
+  party : string;
+  center : string option;
+  walk : bool;
+  end_check_only : bool;
+  grind_cap : int option;
+}
+
+let checkpoint_defaults =
+  {
+    state = None;
+    port = Live.default_port;
+    log_file = None;
+    party = "";
+    center = None;
+    walk = false;
+    end_check_only = false;
+    grind_cap = None;
+  }
+
 type flags = {
   from_id : string option;
   to_id : string option;
@@ -24,7 +47,7 @@ type flags = {
       (** mGBA, testing: run from this event's kept state
           (Engine_run.Event_range). *)
   to_event : string option;  (** ... to this event (else the last). *)
-  common : Checkpoint_command.flags;
+  common : checkpoint_flags;
   watch : Daemon_process.watch option;
   viewport : string option;
       (** --viewport V: the Switch daemons' game picture; only for a plan folder
@@ -85,7 +108,7 @@ let defaults =
     max_rounds = None;
     from_event = None;
     to_event = None;
-    common = { Checkpoint_command.defaults with port = 0 };
+    common = { checkpoint_defaults with port = 0 };
     watch = None;
     viewport = None;
     daemon_flags = [];
@@ -205,3 +228,24 @@ let rec parse f = function
 let required name = function
   | Some v -> Ok v
   | None -> Error (name ^ " is required")
+
+(* The daemon's backend from the flags; the Switch only in testing mode. *)
+let daemon_backend f mode =
+  match (f.backend, f.serial, f.capture, f.replay, mode) with
+  | "mgba", None, None, None, _ ->
+      Ok (Daemon_process.Mgba { port = f.mgba_port })
+  | "mgba", _, _, _, _ ->
+      Error "--serial, --capture and --replay need --backend switch"
+  | "switch", _, _, _, Checkpoint_trials.Verification ->
+      Error "--backend switch runs only --mode testing"
+  | "switch", Some serial, Some capture, None, Testing ->
+      Ok
+        (Daemon_process.Switch
+           { serial = Some serial; frames = Capture capture })
+  | "switch", None, None, Some video, Testing ->
+      Ok (Daemon_process.Switch { serial = None; frames = Replay video })
+  | "switch", _, _, _, _ ->
+      Error
+        "--backend switch needs --serial and --capture, or --replay alone (a \
+         dry run on the fake board)"
+  | b, _, _, _, _ -> Error ("bad --backend " ^ b)

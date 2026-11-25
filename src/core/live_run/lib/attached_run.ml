@@ -21,14 +21,11 @@ let runs_dir_flag args =
   in
   go (default_runs_dir ()) [] args
 
-(* run.json's program fields; none for no program. *)
-let program_fields = Option.fold ~none:[] ~some:Program_registry.run_fields
-
 let start ~runs_dir ~kind ~program ~label ~mode =
   let info : Run_record.info =
     {
       kind;
-      program = program_fields program;
+      program;
       from_id = label;
       to_id = label;
       backend = "";

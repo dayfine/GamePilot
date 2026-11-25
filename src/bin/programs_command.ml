@@ -17,11 +17,11 @@ let usage = "  gamepilot programs\n"
 let ( let* ) = Result.bind
 
 let load_plans dir =
-  let* ids = Plan_dir.checkpoint_ids dir in
+  let* ids = Engine_series.Plan_folder.checkpoint_ids dir in
   List.fold_left
     (fun acc id ->
       let* acc = acc in
-      let* plan = Plan_dir.load_plan ~plan_dir:dir id in
+      let* plan = Frlg_series.Plan_dir.load_plan ~plan_dir:dir id in
       Ok (plan :: acc))
     (Ok []) ids
   |> Result.map List.rev
@@ -54,7 +54,7 @@ let needs dir =
   | exception Json_field.Invalid e -> Error e
 
 let plan_lines path dir =
-  let ids = Result.value (Plan_dir.checkpoint_ids dir) ~default:[] in
+  let ids = Result.value (Engine_series.Plan_folder.checkpoint_ids dir) ~default:[] in
   let needs =
     match needs dir with Ok n -> n | Error e -> "not derived: " ^ e
   in
