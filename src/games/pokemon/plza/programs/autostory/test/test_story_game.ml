@@ -3,7 +3,7 @@
    decode, every event reaches its handler, and each handler's presses move a
    game that answers them as the console did. Also the failures: a walk whose
    white fade never shows (lost), a start that is not Confirm Choices, a
-   platform never seen. And what the watch page is sent (Story_game.run_watched):
+   platform never seen, a story battle lost (a black fade after the attacks). And what the watch page is sent (Story_game.run_watched):
    the plan at each event's change and the run. *)
 
 open Plza_checkpoints
@@ -162,6 +162,24 @@ let rematch c =
       { (text c) with story_dialog = true }
   | None -> { (look c) with tutorial_card = true }
   | Some a3 -> in_battle ~after:a3 c
+
+(* 01.03 lost: the battle with the symbols until a move; then the lead
+   faints (3 s with nothing read, as console B's frame 129 reads at 360p),
+   a black fade for [fade_ms], then Urbain's heal line for good. *)
+let starter_lost ~fade_ms c =
+  let lost ~after =
+    match C.nth_after c Wire.Y ~after 0 with
+    | None -> battle c
+    | Some y when since c y < 3000.0 -> look c
+    | Some y when since c y < 3000.0 +. fade_ms -> black c
+    | Some _ -> { (text c) with story_dialog = true }
+  in
+  match C.stick_reached c 600 with
+  | None -> prompt c
+  | Some w -> (
+      match C.nth_after c Wire.A ~after:w 3 with
+      | None -> starter c
+      | Some a4 -> lost ~after:a4)
 
 (* 02.01: the alley's party bar until the stick was held 16.75 s; then
    Brigitte's text until two A, the battle HUD until a move, her speech until
@@ -511,7 +529,7 @@ let lab_elevator ?(lost = false) c =
           | Some _ -> party c))
   | _ -> party c
 
-let outcome checkpoint screen =
+let run checkpoint screen =
   let c = C.create () in
   reloaded := false;
   let steps = C.steps c screen in
@@ -523,8 +541,28 @@ let outcome checkpoint screen =
   let game =
     Plza_autostory.Story_game.make steps ~checkpoint_id:checkpoint ~reload
   in
-  let result = Runner.run game (plan checkpoint).checkpoint in
+  (Runner.run game (plan checkpoint).checkpoint, c)
+
+let outcome checkpoint screen =
+  let result, c = run checkpoint screen in
   ((match result with Ok () -> "passed" | Error f -> Failure.to_string f), c)
+
+(* The run's end and whether its failure repeats: a failure that does not is
+   tried again from the last autosave (Runs, Checkpoint_trials). *)
+let tried checkpoint screen =
+  let result, c = run checkpoint screen in
+  ( (match result with
+    | Ok () -> "passed"
+    | Error f ->
+        Printf.sprintf "%s; repeats %s" (Failure.to_string f)
+          (if Failure.repeats f then "yes" else "no")),
+    c )
+
+(* The story battle's log lines. *)
+let battle_lines c =
+  List.filter
+    (fun l -> String.starts_with ~prefix:"[PLZA] story_battle" l)
+    (C.lines c)
 
 let result checkpoint screen () = fst (outcome checkpoint screen)
 
@@ -913,30 +951,26 @@ let cases =
        [PLZA] story_battle: Picking Move: Left\n\
        [Story] 01.03: done";
     case
-      "01.03 lost: a black fade after the move (the lead fainted): battle_lost"
+      "01.03 lost: the lead faints, a black fade, Urbain's heal: battle_lost, \
+       tried again"
       (fun () ->
-        let lost c =
-          match C.nth_after c Wire.Y ~after:0.0 0 with
-          | None ->
-              {
-                (look c) with
-                battle = true;
-                moves = [ Some L.Effective; Some L.Super_effective; None; None ];
-              }
-          | Some _ -> black c
-        in
-        let r, c = outcome "01.03" lost in
-        String.concat "\n"
-          (r
-          :: List.filter
-               (fun l -> String.starts_with ~prefix:"[PLZA] story_battle" l)
-               (C.lines c)))
+        let r, c = tried "01.03" (starter_lost ~fade_ms:2000.0) in
+        String.concat "\n" (r :: battle_lines c))
       "01.03 event 3 (andi_battle): battle_lost: a black fade after the \
-       attacks: the lead fainted (the heal and the rematch follow)\n\
+       attacks: the lead fainted (the heal and the rematch follow); repeats no\n\
        [PLZA] story_battle: Move Effectiveness: Top: Effective; Left: Super \
-       Effective; Right: (Unable to Detect); Bottom: (Unable to Detect);\n\
+       Effective; Right: (Unable to Detect); Bottom: No Effect;\n\
        [PLZA] story_battle: Picking Move: Left\n\
        [PLZA] story_battle: a black fade after the attacks: the battle is lost.";
+    (* A fade shorter than the fight's reads (one per attack, 1.25 s or
+       more apart) goes unseen: the heal's line reads as the won battle's,
+       and the next scene waits for control that never comes, still tried
+       again but 360 s later. *)
+    case "01.03 lost with a fade the reads miss (0.5 s): the next scene fails"
+      (fun () -> fst (tried "01.03" (starter_lost ~fade_ms:500.0)))
+      "01.03 event 4 (after_andi): scene_timeout: scene: Did not finish within \
+       360 s (expecting the controls hint, the party bar or the A prompt).; \
+       repeats no";
     case
       "01.03 resumed at Urbain's heal: the walk skipped, the scene to the HUD"
       (fun () -> skips "01.03" rematch)
