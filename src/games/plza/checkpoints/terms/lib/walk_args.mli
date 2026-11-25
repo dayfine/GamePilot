@@ -1,10 +1,9 @@
 (** A PLZA walk as a plan writes it: timed legs of the left stick, each a turn
-    and a walk, and what ends the last one. Ported from [WalkArgs],
-    [StoryWalkLeg], [StoryWalkStyle] and [StoryMove]
-    ([PokemonLZA_AutoStoryActionTable.cpp], [PokemonLZA_AutoStoryWalks.h], fork
-    #754, [plza/mvp-0101]). Positions in PLZA are 3D and camera-relative, so a
-    walk is durations and angles, never tiles. Pure: [Walk_decode] reads it from
-    a plan, [Plza_walk] walks it. *)
+    and a walk, and what ends the last one. Ported from the walk's args in
+    [PokemonLZA_AutoStoryActionTable.cpp] and [PokemonLZA_AutoStoryWalks.h]
+    (fork #754, [plza/mvp-0101]). Positions in PLZA are 3D and camera-relative,
+    so a walk is durations and angles, never tiles. Pure: [Walk_decode] reads it
+    from a plan. *)
 
 type leg = {
   turn : float;

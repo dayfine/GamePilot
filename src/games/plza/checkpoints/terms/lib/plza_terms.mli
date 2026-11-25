@@ -23,8 +23,7 @@ end
 
 (** PLZA's own kinds. *)
 module Kind : sig
-  type t =
-    | Walk of Walk_args.t  (** A timed walk ([walk] in the C++'s table). *)
+  type t = Walk of Walk_args.t  (** A timed walk: a plan's [walk]. *)
 
   include Engine_terms.KIND with type t := t
 end
