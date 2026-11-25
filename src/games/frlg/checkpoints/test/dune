@@ -68,7 +68,7 @@
   su-01.plan.json)
  (libraries
   gamepilot.table_test
-  gamepilot.checkpoints_plan
+  gamepilot.pokemon_checkpoints
   gamepilot.checkpoints_run
   gamepilot.frlg_actions
   gamepilot.frlg_checkpoints))
@@ -80,6 +80,7 @@
  (libraries
   gamepilot.table_test
   gamepilot.replay
+  gamepilot.pokemon_checkpoints
   gamepilot.checkpoints_run
   gamepilot.frlg_actions
   gamepilot.frlg_checkpoints))
@@ -111,7 +112,7 @@
  (libraries
   gamepilot.wire
   gamepilot.table_test
-  gamepilot.checkpoints_plan
+  gamepilot.pokemon_checkpoints
   gamepilot.checkpoints_run
   gamepilot.frlg_checkpoints
   frlg_overworld_fixtures))
@@ -133,7 +134,7 @@
   yojson
   gamepilot.wire
   gamepilot.table_test
-  gamepilot.checkpoints_plan
+  gamepilot.pokemon_checkpoints
   gamepilot.checkpoints_run
   gamepilot.frlg_readers
   gamepilot.frlg_actions
@@ -154,7 +155,7 @@
   gamepilot.table_test
   gamepilot.grid_maps
   gamepilot.json_field
-  gamepilot.checkpoints_plan
+  gamepilot.pokemon_checkpoints
   gamepilot.checkpoints_run
   gamepilot.frlg_actions
   gamepilot.frlg_checkpoints))
@@ -166,7 +167,7 @@
   yojson
   gamepilot.grid_maps
   gamepilot.table_test
-  gamepilot.checkpoints_plan
+  gamepilot.pokemon_checkpoints
   gamepilot.checkpoints_run
   gamepilot.frlg_actions
   gamepilot.frlg_checkpoints))
@@ -179,7 +180,7 @@
   gamepilot.table_test
   gamepilot.grid_maps
   gamepilot.json_field
-  gamepilot.checkpoints_plan
+  gamepilot.pokemon_checkpoints
   gamepilot.frlg_overworld
   gamepilot.frlg_actions
   gamepilot.frlg_checkpoints))
@@ -191,6 +192,7 @@
   gamepilot.table_test
   gamepilot.wire
   gamepilot.effects
+  gamepilot.pokemon_checkpoints
   gamepilot.checkpoints_run
   gamepilot.frlg_checkpoints))
 
@@ -208,7 +210,7 @@
   08-activate-and-verify.plan.json)
  (libraries
   gamepilot.table_test
-  gamepilot.plan_text
+  gamepilot.pokemon_checkpoints
   gamepilot.frlg_checkpoints))
 
 (test
@@ -218,7 +220,7 @@
  (libraries
   yojson
   gamepilot.table_test
-  gamepilot.checkpoints_plan
+  gamepilot.pokemon_checkpoints
   gamepilot.checkpoints_run
   gamepilot.frlg_readers
   gamepilot.frlg_checkpoints))
@@ -228,8 +230,7 @@
  (modules print_plans)
  (libraries
   gamepilot.repo_io
-  gamepilot.checkpoints_plan
-  gamepilot.plan_text
+  gamepilot.pokemon_checkpoints
   gamepilot.frlg_checkpoints))
 
 (rule

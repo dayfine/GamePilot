@@ -33,13 +33,16 @@ let authored_plans () =
         (fun name -> ("frlg-authored/" ^ name, Filename.concat dir name))
         (plan_files dir)
 
-let plan_lines (plan : Checkpoints_plan.Plan.t) =
+let plan_lines (plan : Pokemon_checkpoints.Plan.t) =
   List.concat
     [
-      [ Plan_text.outline plan ];
-      List.map Plan_text.event plan.checkpoint.events;
+      [ Pokemon_checkpoints.Plan_text.outline plan ];
+      List.map Pokemon_checkpoints.Plan_text.event plan.checkpoint.events;
       [ Printf.sprintf "retries %d" plan.retries; "postconditions:" ];
-      [ Plan_text.postconditions plan; Plan_text.repeat plan ];
+      [
+        Pokemon_checkpoints.Plan_text.postconditions plan;
+        Pokemon_checkpoints.Plan_text.repeat plan;
+      ];
     ]
 
 let print (name, path) =

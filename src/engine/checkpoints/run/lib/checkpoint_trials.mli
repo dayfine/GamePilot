@@ -58,13 +58,14 @@ val verdict : policy -> run list -> verdict
 
 (** {1 Attempts within a run}
 
-    A run whose plan allows retries ({!Plan.t.retries}) is up to [retries + 1]
-    attempts, each from the checkpoint's start (mGBA reloads the start state;
-    the Switch goes back to its last save and checks the start, as every run
-    does). The run passes when an attempt passes, all postconditions holding;
-    verification counts the run once, its attempts inside it. For a checkpoint
-    whose outcome depends on battle luck (mg-05: Knock Off on the partner). Not
-    in the fork, whose [verify_checkpoint()] has no retries. *)
+    A run whose plan allows retries (the plan's [retries],
+    {!Engine_plan.Plan.Make.t}) is up to [retries + 1] attempts, each from the
+    checkpoint's start (mGBA reloads the start state; the Switch goes back to
+    its last save and checks the start, as every run does). The run passes when
+    an attempt passes, all postconditions holding; verification counts the run
+    once, its attempts inside it. For a checkpoint whose outcome depends on
+    battle luck (mg-05: Knock Off on the partner). Not in the fork, whose
+    [verify_checkpoint()] has no retries. *)
 
 type attempt = Attempt_passed | Attempt_failed of failure
 

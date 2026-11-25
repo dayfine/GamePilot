@@ -9,7 +9,8 @@ let menu = function
   | Rocket_hideout -> [ "B1F"; "B2F"; "B4F"; "EXIT" ]
   | Dept_store -> [ "5F"; "4F"; "3F"; "2F"; "1F"; "EXIT" ]
 
-let below_door map (tile : Grid_maps.Tile_pos.t) : Checkpoints_plan.Pose.grid =
+let below_door map (tile : Grid_maps.Tile_pos.t) : Pokemon_checkpoints.Pose.grid
+    =
   { map; tiles = [ tile ]; facing = Some D.South }
 
 (* RocketHideout_Elevator's setdynamicwarp lands on each floor's lift door,
@@ -47,7 +48,7 @@ let where = "lift_floor: "
 
 let ride_of_args args =
   let bad e =
-    Error (Checkpoints_run.Failure.cause ~repeats:true "bad_args" e)
+    Error (Pokemon_checkpoints.Failure.cause ~repeats:true "bad_args" e)
   in
   match
     (Json_field.string ~where "from" args, Json_field.string ~where "to" args)
@@ -75,7 +76,7 @@ let menu_presses ride =
   else if down <= up then { direction = D.South; count = down }
   else { direction = D.North; count = up }
 
-let arrival ride : Checkpoints_plan.Pose.observed =
+let arrival ride : Pokemon_checkpoints.Pose.observed =
   let exit = List.nth (exits ride.lift) ride.to_ in
   { at_map = exit.map; at_tile = List.hd exit.tiles; faces = exit.facing }
 

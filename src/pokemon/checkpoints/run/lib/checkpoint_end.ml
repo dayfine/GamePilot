@@ -1,9 +1,9 @@
-open Checkpoints_plan
+open Pokemon_checkpoints
 
 let of_last_event (event : Plan.event) =
   match (event.declared_after, event.kind) with
   | Some (Grid pose), _ -> Some pose
-  | _, (Route { target; _ } | Ready target) -> Some target
+  | _, Own (Route { target; _ } | Ready target) -> Some target
   | _ -> None
 
 let declared ~(next : Plan.checkpoint option) (checkpoint : Plan.checkpoint) =

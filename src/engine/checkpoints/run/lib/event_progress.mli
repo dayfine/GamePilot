@@ -1,5 +1,5 @@
-(** Where one event of a running checkpoint is, as {!Runner.run} reports it to
-    whoever follows the run (the watch page's plan). *)
+(** Where one event of a running checkpoint is, as {!Runner.Make.run} reports it
+    to whoever follows the run (the watch page's plan). *)
 
 type t =
   | Started

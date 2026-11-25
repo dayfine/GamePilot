@@ -28,6 +28,27 @@ let over_at frames =
             (brightness m)
       | None -> Printf.sprintf "not over by frame %d" (List.length rest))
 
+(* A watch fed every frame of a menu's close, from before its fade on: at each
+   of [presses] (the frames the run's settle sent a B on), whether the B is held
+   back, and the first frame from which the fade-in is over. *)
+let held_at frames presses =
+  let w = Warp_fade_in.watch () in
+  let fading =
+    List.map
+      (fun (m : Effects.measurements) ->
+        Warp_fade_in.watch_frame w m;
+        Warp_fade_in.fading w)
+      frames
+  in
+  let held i =
+    Printf.sprintf "%d %s" i (if List.nth fading i then "held" else "pressed")
+  in
+  let last_fading =
+    List.fold_left max (-1) (List.mapi (fun i f -> if f then i else -1) fading)
+  in
+  let up = Printf.sprintf "up from frame %d" (last_fading + 1) in
+  Printf.sprintf "B at %s; %s" (String.concat ", " (List.map held presses)) up
+
 let held_still n (lit : Effects.measurements) =
   List.init n (fun i -> { lit with seq = i; t_ms = float_of_int i *. frame_ms })
 
@@ -54,6 +75,24 @@ let () =
         (fun () ->
           over_at (frames "fixtures/celadon_dept_store_exit.fade.jsonl"))
         "over at frame 47 (channel sum 551)";
+      (* 04-grind-farfetchd testing run 2 (2026-11-24), before this rule:
+         the party species read's B at frame 0 closes the party; black from
+         frame 10, dim and still at 53 from 44, up in steps to 541 by 90, then
+         the Start menu the party came from. The settle's B came at 27, 54
+         and 81, before the fade-in was over, and at 108 (the Start menu,
+         which it closed). *)
+      case "a closed party: no B until its fade-in is over"
+        (fun () ->
+          held_at (frames "fixtures/party_close.fade.jsonl") [ 27; 54; 81; 108 ])
+        "B at 27 held, 54 held, 81 held, 108 pressed; up from frame 101";
+      (* The same run's summary read, from the black on: dim at 53 from frame
+         17 (the settle's B 10 frames into it), up to 543 by 64. *)
+      case "a closed summary: no B in the dim spell"
+        (fun () ->
+          held_at
+            (frames "fixtures/summary_close.fade.jsonl")
+            [ 27; 54; 81; 108 ])
+        "B at 27 held, 54 held, 81 pressed, 108 pressed; up from frame 75";
       case "a screen that never changes is up after 1 s"
         (fun () ->
           over_at

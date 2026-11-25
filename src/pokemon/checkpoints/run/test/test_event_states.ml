@@ -5,9 +5,8 @@
    checkpoint's start kept with the state. *)
 
 open Engine_run
-open Checkpoints_plan
+open Pokemon_checkpoints
 open Engine_promise
-open Checkpoints_run
 
 let case name input expectation = { Table_test.name; input; expectation }
 
@@ -33,9 +32,9 @@ let event id = Printf.sprintf {|{"id": "%s", "kind": "scene"}|} id
 let mg02 = Plan_files.checkpoint_of_events (List.map event mg02_ids)
 
 let range from_event to_event =
-  match Event_range.resolve mg02.events ~from_event ~to_event with
+  match Event_range.resolve mg02_ids ~from_event ~to_event with
   | Ok r ->
-      let first, last = Event_range.describe r mg02.events in
+      let first, last = Event_range.describe r mg02_ids in
       Printf.sprintf "%s .. %s, end checked: %b" first last
         (Event_range.reaches_end r mg02.events)
   | Error e -> "error: " ^ e
@@ -131,8 +130,8 @@ let to_event_log () =
     Plan_files.checkpoint_of_events (List.map event [ "a"; "b"; "c"; "d" ])
   in
   let game, log = Scripted_game.make Scripted_game.script in
-  let end_at : Pose.grid =
-    { map = "Town"; tiles = [ { x = 4; y = 2 } ]; facing = None }
+  let end_at : Pose.declared =
+    Grid { map = "Town"; tiles = [ { x = 4; y = 2 } ]; facing = None }
   in
   let result =
     match
@@ -225,7 +224,7 @@ let partial_cases =
    from an event after the purchase: the start money is the one kept with the
    event's state, the checkpoint's. *)
 let spent_from ~start =
-  let promised : Plan.postconditions =
+  let promised : Postconditions.t =
     {
       position = None;
       party = None;

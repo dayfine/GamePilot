@@ -77,7 +77,7 @@ let digest plans ids =
 (* A table cell: no pipe ends it. *)
 let cell s = String.concat "\\|" (String.split_on_char '|' s)
 
-let checkpoint_row (plan : Checkpoints_plan.Plan.t) =
+let checkpoint_row (plan : Pokemon_checkpoints.Plan.t) =
   let repeats =
     match plan.repeat with
     | Some { max_rounds; _ } ->
@@ -114,11 +114,11 @@ let room_line (room : Frlg_checkpoints.Party_room.need) =
 (* The chain as one plan: its events in order from the first checkpoint's
    start, so an item or member one checkpoint brings counts for the later
    ones, and the money is all its purchases'. *)
-let as_one_plan (loaded : Checkpoints_plan.Plan.t list) =
+let as_one_plan (loaded : Pokemon_checkpoints.Plan.t list) =
   let first = List.hd loaded in
   let events =
     List.concat_map
-      (fun (p : Checkpoints_plan.Plan.t) -> p.checkpoint.events)
+      (fun (p : Pokemon_checkpoints.Plan.t) -> p.checkpoint.events)
       loaded
   in
   { first with checkpoint = { first.checkpoint with events } }
@@ -135,7 +135,7 @@ let chain_need (room : Frlg_checkpoints.Party_room.need) =
 
 (* The chain's declared preconditions are its first checkpoint's: the save's
    state where it starts. *)
-let chain_lines stocks ~before (loaded : Checkpoints_plan.Plan.t list) =
+let chain_lines stocks ~before (loaded : Pokemon_checkpoints.Plan.t list) =
   let room = Frlg_checkpoints.Party_room.chain_need loaded in
   let* needs =
     Frlg_checkpoints.Preflight.needs stocks ~before (as_one_plan loaded)

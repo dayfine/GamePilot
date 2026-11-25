@@ -1,0 +1,7 @@
+(library
+ (name engine_checkpoints)
+ (public_name gamepilot.engine_checkpoints)
+ (libraries
+  gamepilot.engine_terms
+  gamepilot.engine_plan
+  gamepilot.engine_run))
