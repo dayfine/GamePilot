@@ -76,8 +76,7 @@
         "kind": "game_action",
         "action": "fly",
         "args": {
-          "town": "LavenderTown",
-          "species": "pidgey"
+          "town": "LavenderTown"
         },
         "why": "Lavender's Mart sells Super Repels.",
         "declared_after": {
@@ -126,8 +125,7 @@
         "kind": "game_action",
         "action": "fly",
         "args": {
-          "town": "CeladonCity",
-          "species": "pidgey"
+          "town": "CeladonCity"
         },
         "declared_after": {
           "map": "CeladonCity",

@@ -16,8 +16,8 @@ Runs on: mGBA, the Switch (in its GBA app).
 - At least 99 Retro Mail in the bag: run [Supplies](frlg.supplies.md) first.
 
 <!-- generated:needs -->
-- pidgey in the party (fly)
 - mr-mime in the party (give_bag_item)
+- a member knows fly (fly)
 - the thunder badge (fly)
 - super-repel at least x1 (use_item)
 - retro-mail at least x99 (duplicate_item)
@@ -44,7 +44,7 @@ sh run/run_checkpoints_on_switch.sh frlg.team_training --from tt-01 --to tt-01
 |---|---|
 | tt-01 | Rare Candy farm: pick up Route 6's hidden Rare Candy, duplicate it to 99 |
 
-<!-- plans: 02c27f1dbd19 -->
+<!-- plans: 95b2b11c027e -->
 <!-- /generated -->
 
 ## When it stops
@@ -52,7 +52,7 @@ sh run/run_checkpoints_on_switch.sh frlg.team_training --from tt-01 --to tt-01
 <!-- generated:preflight -->
 | Resume from | The pre-flight checks |
 |---|---|
-| tt-01 | pidgey in the party (fly); mr-mime in the party (give_bag_item); the thunder badge (fly); super-repel at least x1 (use_item); retro-mail at least x99 (duplicate_item); at the start, CeladonCity_DepartmentStore_1F |
+| tt-01 | mr-mime in the party (give_bag_item); a member knows fly (fly); the thunder badge (fly); super-repel at least x1 (use_item); retro-mail at least x99 (duplicate_item); at the start, CeladonCity_DepartmentStore_1F |
 <!-- /generated -->
 
 ## Known limits

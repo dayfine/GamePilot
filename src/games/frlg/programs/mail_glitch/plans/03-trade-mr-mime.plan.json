@@ -11,8 +11,7 @@
         "kind": "game_action",
         "action": "fly",
         "args": {
-          "town": "PewterCity",
-          "species": "pidgey"
+          "town": "PewterCity"
         },
         "declared_after": {"map": "PewterCity", "tiles": [[17, 26]], "facing": "south"},
         "why": "Fly to Pewter City to reach Route 2 House via Cut"
@@ -69,8 +68,7 @@
         "kind": "game_action",
         "action": "fly",
         "args": {
-          "town": "LavenderTown",
-          "species": "pidgey"
+          "town": "LavenderTown"
         },
         "declared_after": {"map": "LavenderTown", "tiles": [[6, 6]], "facing": "south"},
         "why": "Fly to Lavender Town"
@@ -111,7 +109,7 @@
   "metadata": {
     "phase": "testing",
     "postconditions": {
-      "party_includes": ["blastoise", "pidgey", "mr-mime", "farfetchd"],
+      "party_includes": ["blastoise", "mr-mime", "farfetchd"],
       "money": {"spent": 3550},
       "items": [
         {"item": "revive", "gained": 2},

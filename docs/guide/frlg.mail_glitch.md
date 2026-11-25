@@ -30,8 +30,8 @@ You need:
   differently.
 - **A post-game save**: the plans walk through Celadon, Vermilion, Route 2, Lavender, the Pokémon
   Tower and Victory Road, and fly between towns.
-- **Blastoise** (it fights the grind's battles and Lea & Jed) and **Pidgey** (it flies; the plans pick Fly's
-  user by species) in the party, and some member that knows **Cut**.
+- **Blastoise** (it fights the grind's battles and Lea & Jed) in the party, and members that know **Fly**
+  and **Cut**. Any member that knows Fly will do: each Fly reads the party's moves and uses the first.
 - **Two free party slots**: Abra (a Game Corner prize) joins in 01-celadon-setup and Spearow (caught on Route
   16) in 02-trade-farfetchd. On the Switch, `--make-room MAP` can deposit members for you (see below).
 - **Enough money** for every purchase on the way.
@@ -42,8 +42,8 @@ What the plans need, as the pre-flight checks it (generated from the plans):
 
 <!-- generated:needs 01-celadon-setup..08-activate-and-verify -->
 - 2 free party slots (joining: abra in 01-celadon-setup, spearow in 02-trade-farfetchd)
-- pidgey in the party (fly)
 - blastoise in the party (grind)
+- a member knows fly (fly)
 - a member knows cut (cut_tree)
 - the thunder badge (fly)
 - the cascade badge (cut_tree)
@@ -101,7 +101,7 @@ steps and its log, and stop it.
 | 07-glitch-prep | Prepare Leppa and Retro Mail for Lea & Jed on Route 16 |
 | 08-activate-and-verify | Turn the Mail Glitch on against Lea & Jed on Route 16, read the glitched mail, duplicate one Antidote |
 
-<!-- plans: e280cf67989c -->
+<!-- plans: 69759df7b5e0 -->
 <!-- /generated -->
 
 In plain words, beyond the table:
@@ -160,14 +160,14 @@ checkpoint before it promised:
 <!-- generated:preflight 01-celadon-setup..08-activate-and-verify -->
 | Resume from | The pre-flight checks |
 |---|---|
-| 01-celadon-setup | pidgey in the party (fly); the thunder badge (fly); money at least ¥4100 (mart, buy_coins); at the start, CeladonCity |
-| 02-trade-farfetchd | party includes blastoise, pidgey, abra; pidgey in the party (fly); a member knows cut (cut_tree); the cascade badge (cut_tree); the thunder badge (fly); poke-ball at least x1 (capture); at the start, CeladonCity |
-| 03-trade-mr-mime | party includes blastoise, pidgey, abra, farfetchd; pidgey in the party (fly); abra in the party (ingame_trade); a member knows cut (cut_tree); the thunder badge (fly); the cascade badge (cut_tree); money at least ¥3550 (mart); at the start, VermilionCity |
-| 04-grind-farfetchd | party includes blastoise, pidgey, mr-mime, farfetchd; farfetchd in the party (grind); blastoise in the party (grind); pidgey in the party (fly); the thunder badge (fly); escape-rope at least x1 (use_item); at the start, LavenderTown_PokemonCenter_1F |
-| 05-grind-mr-mime | party includes blastoise, pidgey, mr-mime, farfetchd; mr-mime in the party (grind); blastoise in the party (grind); at the start, IndigoPlateau_PokemonCenter_1F |
-| 06-grind-return | party includes blastoise, pidgey, mr-mime, farfetchd; pidgey in the party (fly); the thunder badge (fly); at the start, IndigoPlateau_PokemonCenter_1F |
-| 07-glitch-prep | party includes blastoise, pidgey, mr-mime, farfetchd; blastoise in the party (party_swap); pidgey in the party (fly); farfetchd in the party (party_swap); mr-mime in the party (party_swap); a member knows cut (cut_tree); the cascade badge (cut_tree); the thunder badge (fly); money at least ¥2300 (mart); retro-mail at least x1 (give_bag_item); at the start, LavenderTown |
-| 08-activate-and-verify | party includes pidgey, farfetchd in slot 1, blastoise in slot 2, mr-mime in slot 3; blastoise in the party (mail_glitch_double_battle); farfetchd in the party (mail_glitch_double_battle); mr-mime in the party (mail_glitch_double_battle); pidgey in the party (fly); the thunder badge (fly); money at least ¥400 (mart); antidote at least x1 (give_bag_item); at the start, Route16 |
+| 01-celadon-setup | a member knows fly (fly); the thunder badge (fly); money at least ¥4100 (mart, buy_coins); at the start, CeladonCity |
+| 02-trade-farfetchd | party includes blastoise, abra; a member knows cut (cut_tree); a member knows fly (fly); the cascade badge (cut_tree); the thunder badge (fly); poke-ball at least x1 (capture); at the start, CeladonCity |
+| 03-trade-mr-mime | party includes blastoise, abra, farfetchd; abra in the party (ingame_trade); a member knows fly (fly); a member knows cut (cut_tree); the thunder badge (fly); the cascade badge (cut_tree); money at least ¥3550 (mart); at the start, VermilionCity |
+| 04-grind-farfetchd | party includes blastoise, mr-mime, farfetchd; farfetchd in the party (grind); blastoise in the party (grind); a member knows fly (fly); the thunder badge (fly); escape-rope at least x1 (use_item); at the start, LavenderTown_PokemonCenter_1F |
+| 05-grind-mr-mime | party includes blastoise, mr-mime, farfetchd; mr-mime in the party (grind); blastoise in the party (grind); at the start, IndigoPlateau_PokemonCenter_1F |
+| 06-grind-return | party includes blastoise, mr-mime, farfetchd; a member knows fly (fly); the thunder badge (fly); at the start, IndigoPlateau_PokemonCenter_1F |
+| 07-glitch-prep | party includes blastoise, mr-mime, farfetchd; blastoise in the party (party_swap); farfetchd in the party (party_swap); mr-mime in the party (party_swap); a member knows cut (cut_tree); a member knows fly (fly); the cascade badge (cut_tree); the thunder badge (fly); money at least ¥2300 (mart); retro-mail at least x1 (give_bag_item); at the start, LavenderTown |
+| 08-activate-and-verify | party includes farfetchd in slot 1, blastoise in slot 2, mr-mime in slot 3; blastoise in the party (mail_glitch_double_battle); farfetchd in the party (mail_glitch_double_battle); mr-mime in the party (mail_glitch_double_battle); a member knows fly (fly); the thunder badge (fly); money at least ¥400 (mart); antidote at least x1 (give_bag_item); at the start, Route16 |
 <!-- /generated -->
 
 If the run failed during the soft reset itself, the game is left where it stopped: look at the

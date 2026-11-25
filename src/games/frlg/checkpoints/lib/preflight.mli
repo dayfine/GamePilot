@@ -24,14 +24,18 @@ type need = Plan_needs.need =
       slots : Pokemon_engine.Postconditions.slot list;
     }
   | Member of { species : string; for_ : string }
-      (** A member an event uses ([for_]: ["fly"]). *)
+      (** A member an event uses ([for_]: ["party_swap"]). *)
   | No_mail of { species : string; for_ : string }
       (** The first member of this species holds no Mail: a [pc_deposit] stores
           it, and the game will not store a Mail holder ("Please remove the
           MAIL."). *)
+  | Holding_no_mail of { for_ : string }
+      (** Some member holds no Mail: a [pc_deposit] stores the first such member
+          (["member"]: ["holding_no_mail"]). *)
   | Knows_move of { move : string; for_ : string }
       (** Some member knows this field move: a [cut_tree] event's Cut, which the
-          game lets any member that knows it use. *)
+          game lets any member that knows it use, or a [fly] event's Fly, which
+          the first member that knows it uses. *)
   | Badge of { badge : string; for_ : string }
       (** The badge a field move needs outside battle ([for_]: the action),
           judged on the Trainer Card. *)

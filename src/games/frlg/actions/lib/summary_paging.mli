@@ -19,6 +19,18 @@ val each_member : label:string -> log:(string -> unit) -> (int -> 'a) -> 'a list
     to the overworld. In {!Frlg_readers.Summary_screen}'s probes. Fails as
     [no_party], [no_member_menu], [no_summary] or the close's cause. *)
 
+val until_member :
+  label:string ->
+  log:(string -> unit) ->
+  stop:('a -> bool) ->
+  (int -> 'a) ->
+  'a list
+(** As {!each_member}, but the pass ends at the first member whose read [stop]
+    holds for: the reads so far, slot 1 first, that one last. *)
+
+val info_page : int
+(** 1: the POKéMON INFO page, where {!each_member} leaves each member. *)
+
 val settled : (unit -> 'a option) -> 'a option
 (** A read of the page once two reads {!Summary_moves.reread_ms} apart agree
     (the page's mark shows before its text is drawn); [None] when they never did

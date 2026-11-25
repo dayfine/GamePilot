@@ -1,11 +1,11 @@
 (** What a checkpoint's plan needs of the save before its first event, for the
     pre-flight ({!Preflight}): each party member an action names unless an
     earlier event brings it, no Mail on a member of the save it deposits
-    ([pc_deposit]), some member knowing Cut, the badge each field move needs,
-    the money its purchases cost, the bag items it gives or uses that no earlier
-    purchase or pickup ([pick_up_item]) of its own brought (a Rare Candy for
-    [use_rare_candy] and [candy_level], one of its ball for [capture]), what the
-    checkpoint before it promised, and the place. *)
+    ([pc_deposit]), some member knowing Cut or Fly, the badge each field move
+    needs, the money its purchases cost, the bag items it gives or uses that no
+    earlier purchase or pickup ([pick_up_item]) of its own brought (a Rare Candy
+    for [use_rare_candy] and [candy_level], one of its ball for [capture]), what
+    the checkpoint before it promised, and the place. *)
 
 type need =
   | Party_in_order of string list
@@ -14,14 +14,18 @@ type need =
       slots : Pokemon_engine.Postconditions.slot list;
     }
   | Member of { species : string; for_ : string }
-      (** A member an event uses ([for_]: ["fly"]). *)
+      (** A member an event uses ([for_]: ["party_swap"]). *)
   | No_mail of { species : string; for_ : string }
       (** The first member of this species holds no Mail: a [pc_deposit] stores
           it, and the game will not store a Mail holder ("Please remove the
           MAIL."). *)
+  | Holding_no_mail of { for_ : string }
+      (** Some member holds no Mail: a [pc_deposit] stores the first such member
+          (["member"]: ["holding_no_mail"]). *)
   | Knows_move of { move : string; for_ : string }
       (** Some member knows this field move: a [cut_tree] event's Cut, which the
-          game lets any member that knows it use. *)
+          game lets any member that knows it use, or a [fly] event's Fly, which
+          the first member that knows it uses. *)
   | Badge of { badge : string; for_ : string }
       (** The badge a field move needs outside battle ([for_]: the action,
           ["fly"] needs ["thunder"], ["cut_tree"] ["cascade"]), read off the

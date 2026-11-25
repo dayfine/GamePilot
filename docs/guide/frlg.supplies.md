@@ -17,7 +17,7 @@ Runs on: mGBA, the Switch (in its GBA app).
 Save at the Celadon Dept. Store 1F save spot: the run starts and ends there.
 
 <!-- generated:needs -->
-- pidgey in the party (fly)
+- a member knows fly (fly)
 - the thunder badge (fly)
 - money at least ¥7500 (all the purchases)
 - at the start, CeladonCity_DepartmentStore_1F
@@ -43,7 +43,7 @@ sh run/run_checkpoints_on_switch.sh frlg.supplies --from su-01 --to su-01
 |---|---|
 | su-01 | Stock 100 Retro Mail (Celadon 4F) and 5 Super Repels (Lavender) |
 
-<!-- plans: 741bdeff32cd -->
+<!-- plans: 2ad0c48d1468 -->
 <!-- /generated -->
 
 ## When it stops
@@ -51,7 +51,7 @@ sh run/run_checkpoints_on_switch.sh frlg.supplies --from su-01 --to su-01
 <!-- generated:preflight -->
 | Resume from | The pre-flight checks |
 |---|---|
-| su-01 | pidgey in the party (fly); the thunder badge (fly); money at least ¥7500 (mart, mart); at the start, CeladonCity_DepartmentStore_1F |
+| su-01 | a member knows fly (fly); the thunder badge (fly); money at least ¥7500 (mart, mart); at the start, CeladonCity_DepartmentStore_1F |
 <!-- /generated -->
 
 ## Known limits
