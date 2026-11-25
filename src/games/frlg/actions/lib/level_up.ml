@@ -14,7 +14,7 @@ type look =
 type forget_list = { offered : string option; known : string option list }
 type scene = Continues | Ended
 
-type driver = {
+type game_steps = {
   next : unit -> look;
   open_list : unit -> bool;
   read_list : unit -> forget_list;
@@ -43,7 +43,7 @@ let check ok why = if ok then Ok () else Error why
 (* A run under way: each member's outcome so far, whose screens these are,
    and whether an evolution scene is still going. *)
 type under_way = {
-  driver : driver;
+  game_steps : game_steps;
   policies : P.t;
   members : outcome array;
   mutable current : int option;
@@ -70,7 +70,7 @@ let find_nickname r n ~or_else =
   | [ i ] -> Ok i
   | [] -> Error (Printf.sprintf "a screen names %s, not in the run" n)
   | _ ->
-      r.driver.log
+      r.game_steps.log
         (Printf.sprintf
            "Level up: %s names more than one member; going by the order." n);
       or_else ()
@@ -94,7 +94,8 @@ let policy r i =
 
 let log r i fmt =
   Printf.ksprintf
-    (fun s -> r.driver.log ("Level up: " ^ name r.members.(i) ^ ": " ^ s ^ "."))
+    (fun s ->
+      r.game_steps.log ("Level up: " ^ name r.members.(i) ^ ": " ^ s ^ "."))
     fmt
 
 let declined r i offered =
@@ -104,7 +105,9 @@ let declined r i offered =
 let leave r i offered why =
   log r i "%s" why;
   let* () =
-    check (r.driver.leave_list ()) "no \"Stop trying to teach?\" after the list"
+    check
+      (r.game_steps.leave_list ())
+      "no \"Stop trying to teach?\" after the list"
   in
   Ok (declined r i offered)
 
@@ -123,7 +126,7 @@ let learn r i (rule : P.move_rule) known =
         (rule.replacing ^ " does not read among the known moves")
   | Some row ->
       let* () =
-        check (r.driver.forget row)
+        check (r.game_steps.forget row)
           (Printf.sprintf "the list's cursor did not read on move %d" row)
       in
       update r i (fun o -> { o with learned = o.learned @ [ rule ] });
@@ -131,7 +134,7 @@ let learn r i (rule : P.move_rule) known =
 
 let on_list r =
   let* i = current r in
-  let { offered; known } = r.driver.read_list () in
+  let { offered; known } = r.game_steps.read_list () in
   match offered with
   | None -> leave r i None "the move offered did not read"
   | Some move -> (
@@ -142,9 +145,9 @@ let on_list r =
 let prompt r =
   let* i = current r in
   if (policy r i).rules = [] then
-    let* () = check (r.driver.decline ()) "no \"Stop trying to teach?\"" in
+    let* () = check (r.game_steps.decline ()) "no \"Stop trying to teach?\"" in
     Ok (declined r i None)
-  else if r.driver.open_list () then on_list r
+  else if r.game_steps.open_list () then on_list r
   else Error "the list to forget from did not show"
 
 (* The next member in slot order that levelled, after the last scene's. *)
@@ -170,7 +173,7 @@ let first_or_current r = Ok (Option.value r.current ~default:0)
    policy, and is then only waited out. *)
 let evolving r who =
   if r.in_scene then
-    Ok (r.in_scene <- r.driver.evolution ~cancel:false = Continues)
+    Ok (r.in_scene <- r.game_steps.evolution ~cancel:false = Continues)
   else
     let* i = named r who ~or_else:(fun () -> next_levelled r) in
     let evolve = (policy r i).evolve in
@@ -179,7 +182,7 @@ let evolving r who =
     update r i (fun o ->
         { o with evolution = (if evolve then Evolved else Cancelled) });
     log r i "evolving, %s" (if evolve then "let it run" else "cancelled with B");
-    Ok (r.in_scene <- r.driver.evolution ~cancel:(not evolve) = Continues)
+    Ok (r.in_scene <- r.game_steps.evolution ~cancel:(not evolve) = Continues)
 
 let answer_look r = function
   | Exp who ->
@@ -199,7 +202,7 @@ let rec answer r looks =
   if looks >= max_looks then
     Error (Printf.sprintf "still not back after %d looks" max_looks)
   else
-    match r.driver.next () with
+    match r.game_steps.next () with
     | Back -> Ok ()
     | Timed_out -> Error "nothing to answer showed"
     | look ->
@@ -209,10 +212,10 @@ let rec answer r looks =
 let start member =
   { member; levels = 0; learned = []; declined = []; evolution = No_evolution }
 
-let run driver policies ~members =
+let run game_steps policies ~members =
   let r =
     {
-      driver;
+      game_steps;
       policies;
       members = Array.of_list (List.map start members);
       current = None;

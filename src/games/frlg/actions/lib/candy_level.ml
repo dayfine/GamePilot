@@ -1,4 +1,4 @@
-type driver = {
+type game_steps = {
   level : slot:int -> (int option, Story.Failure.cause) result;
   candy : slot:int -> Level_up_policy.policy -> Rare_candy.result;
   member :
@@ -40,18 +40,18 @@ let add fed (o : Level_up.outcome) =
        else fed.evolutions @ [ o.evolution ]);
   }
 
-let read_level (driver : driver) ~slot =
-  let* level = driver.level ~slot in
+let read_level (game_steps : game_steps) ~slot =
+  let* level = game_steps.level ~slot in
   match level with
   | Some l -> Ok l
   | None -> fail "level_unread" "slot %d's level did not read" slot
 
-let candy driver (goal : Candy_plan.goal) ~slot ~level fed =
+let candy game_steps (goal : Candy_plan.goal) ~slot ~level fed =
   if fed.count >= goal.max_candies then
     fail "max_candies" "%d candies used and slot %d is Lv %d, not %d" fed.count
       slot level goal.target_level
   else
-    match driver.candy ~slot goal.use.policy with
+    match game_steps.candy ~slot goal.use.policy with
     | Out_of_candies ->
         fail "out_of_candies" "no Rare Candy left: slot %d is Lv %d, not %d"
           slot level goal.target_level
@@ -61,19 +61,19 @@ let candy driver (goal : Candy_plan.goal) ~slot ~level fed =
         fail "no_effect" "the candy did not take on slot %d (Lv %d)" slot level
     | Used o -> Ok (add fed o)
 
-let rec feed driver goal ~slot ~before fed =
-  let* level = read_level driver ~slot in
+let rec feed game_steps goal ~slot ~before fed =
+  let* level = read_level game_steps ~slot in
   match before with
   | Some b when level <= b ->
       fail "level_stuck" "slot %d still reads Lv %d after a candy" slot level
   | _ ->
-      driver.log
+      game_steps.log
         (Printf.sprintf "Candy level: slot %d is Lv %d after %d candies." slot
            level fed.count);
       if level >= goal.Candy_plan.target_level then Ok (level, fed)
       else
-        let* fed = candy driver goal ~slot ~level fed in
-        feed driver goal ~slot ~before:(Some level) fed
+        let* fed = candy game_steps goal ~slot ~level fed in
+        feed game_steps goal ~slot ~before:(Some level) fed
 
 let missing_moves (goal : Candy_plan.goal) known =
   List.filter (fun m -> not (List.mem m known)) goal.moves
@@ -118,23 +118,24 @@ let report (m : Story.Room_policy.member) level fed =
     evolutions = fed.evolutions;
   }
 
-let levelled driver goal ~slot =
-  let* level, fed = feed driver goal ~slot ~before:None start in
-  let* member = driver.member ~slot in
+let levelled game_steps goal ~slot =
+  let* level, fed = feed game_steps goal ~slot ~before:None start in
+  let* member = game_steps.member ~slot in
   match member with
   | None -> fail "no_summary" "slot %d's summary did not read" slot
   | Some m ->
       let* () = checked goal ~slot m in
       Ok (report m level fed)
 
-let run driver (goal : Candy_plan.goal) ~slot =
-  driver.log ("Candy level: " ^ Candy_plan.describe_goal goal ^ ".");
-  match levelled driver goal ~slot with
+let run game_steps (goal : Candy_plan.goal) ~slot =
+  game_steps.log ("Candy level: " ^ Candy_plan.describe_goal goal ^ ".");
+  match levelled game_steps goal ~slot with
   | Ok r ->
-      driver.log
+      game_steps.log
         (Printf.sprintf "Candy level: slot %d is a Lv %d %s after %d candies."
            slot r.level r.species r.candies);
       Ok r
   | Error cause ->
-      driver.log ("Candy level: " ^ Story.Failure.cause_to_string cause ^ ".");
+      game_steps.log
+        ("Candy level: " ^ Story.Failure.cause_to_string cause ^ ".");
       Error cause

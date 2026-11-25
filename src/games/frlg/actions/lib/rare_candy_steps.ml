@@ -192,13 +192,13 @@ let close_bag ~log () =
       M.close "the bag" Bag_screen.bag_open;
       M.settle_back ~label:"rare candy" ~log)
 
-let level_up_driver ~log : Level_up.driver =
+let party_menu_game_steps ~log : Level_up.game_steps =
   { next; open_list; read_list; forget; leave_list; decline; evolution; log }
 
-let make ~log : Rare_candy.driver =
+let make ~log : Rare_candy.game_steps =
   {
     open_candy = open_candy ~log;
-    level_up = level_up_driver ~log;
+    level_up = party_menu_game_steps ~log;
     close_bag = close_bag ~log;
     log;
   }

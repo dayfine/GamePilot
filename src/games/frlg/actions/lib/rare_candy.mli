@@ -1,12 +1,12 @@
 (** The ["use_rare_candy"] game action: one Rare Candy from the bag on a party
     member, then whatever its level brings ({!Level_up}, on the party menu's
-    driver), back to the overworld. Ported from upstream's [use_rare_candy()]
-    (Programs/RngManipulation/PokemonFRLG_RngNavigation.cpp): the bag, A on the
-    candy until the party shows, the slot, A until the level-up stats show, then
-    until the bag is back, answering each move-learn prompt (B, A: NO, then YES
-    to stop) and each evolution (B) on the way. The game's steps come as a
-    {!driver}, so the decisions run on a fake in tests; {!Rare_candy_steps} is
-    the game's.
+    game steps), back to the overworld. Ported from upstream's
+    [use_rare_candy()] (Programs/RngManipulation/PokemonFRLG_RngNavigation.cpp):
+    the bag, A on the candy until the party shows, the slot, A until the
+    level-up stats show, then until the bag is back, answering each move-learn
+    prompt (B, A: NO, then YES to stop) and each evolution (B) on the way. The
+    game's steps come as {!game_steps}, so the decisions run on a fake in tests;
+    {!Rare_candy_steps} is the game's.
 
     What one candy shows, in order (pokefirered party_menu.c,
     [ItemUseCB_RareCandy] on; evolution_scene.c; item_use.c
@@ -57,16 +57,18 @@ type opened =
   | No_candy  (** no Rare Candy in the bag: the bag is closed again *)
   | Not_opened of string  (** why *)
 
-type driver = {
+type game_steps = {
   open_candy : slot:int -> (opened, Story.Failure.cause) result;
       (** From the overworld: the bag, the Rare Candy, USE, the slot (from 1).
           [Error] when a menu step after the candy's USE fails, as its cause. *)
-  level_up : Level_up.driver;
+  level_up : Level_up.game_steps;
       (** The party menu's: {!Level_up.Back} is the bag. *)
   close_bag : unit -> (unit, Story.Failure.cause) result;
       (** From the bag, back to the overworld; [Error] as {!open_candy}. *)
   log : string -> unit;
 }
+(** The steps in the game this module can take: what it reads and does on this
+    context's screens (the overworld, the bag and the party menu). *)
 
 type result =
   | Used of Level_up.outcome
@@ -74,9 +76,10 @@ type result =
   | Out_of_candies
   | Failed of string
   | Stopped of Story.Failure.cause
-      (** a menu step of the driver's failed, as this cause *)
+      (** a menu step of the game steps failed, as this cause *)
 
-val run : driver -> Level_up_policy.policy -> member:Level_up.member -> result
+val run :
+  game_steps -> Level_up_policy.policy -> member:Level_up.member -> result
 (** One candy on the member: {!Level_up.run} with it alone. *)
 
 val describe : result -> string

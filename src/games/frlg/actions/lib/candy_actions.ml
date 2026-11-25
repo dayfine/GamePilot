@@ -26,7 +26,7 @@ let member ~log ~slot =
     (List.find_opt (fun (m : Story.Room_policy.member) -> m.slot = slot))
     (Menu_step.result (Party_summary.read_all ~log))
 
-let driver ~log ~party : Candy_level.driver =
+let candy_level_game_steps ~log ~party : Candy_level.game_steps =
   {
     level = (fun ~slot -> level ~log ~slot);
     candy = (fun ~slot policy -> one_candy ~log ~party ~slot policy);
@@ -63,7 +63,7 @@ let use_candy ~log ~party ~slot (use : Candy_plan.use) =
   | Stopped cause -> Error cause
 
 let candy_level ~log ~party ~slot goal =
-  let* r = Candy_level.run (driver ~log ~party) goal ~slot in
+  let* r = Candy_level.run (candy_level_game_steps ~log ~party) goal ~slot in
   Ok (renamed ~party ~slot r.species)
 
 let on_member ~party decode run (_ : Story.Plan.event) args =

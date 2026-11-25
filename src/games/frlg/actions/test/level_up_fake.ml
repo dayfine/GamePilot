@@ -1,12 +1,12 @@
-(* A fake Level_up driver for the tests of Level_up and of what drives it (a
+(* Fake Level_up game steps for the tests of Level_up and of what runs it (a
    Rare Candy): it answers each step from a script and records the steps. *)
 
 open Frlg_actions
 
 (* The fake game: the looks [next] answers in order, the list each opened
    list shows in order, how each evolution scene leaves off; [trace] is every
-   driver call it saw (newest first), [logs] every line logged. Its driver
-   serves any context; [Back] is wherever the context ends. *)
+   step it saw taken (newest first), [logs] every line logged. Its steps
+   serve any context; [Back] is wherever the context ends. *)
 type game = {
   mutable looks : Level_up.look list;
   mutable lists : Level_up.forget_list list;
@@ -48,7 +48,7 @@ let noted g step result () =
   note g step;
   result
 
-let driver g : Level_up.driver =
+let fake_game_steps g : Level_up.game_steps =
   {
     next = pop_look g;
     open_list = noted g "yes" true;
