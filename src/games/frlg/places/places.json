@@ -133,6 +133,12 @@
       "object": {"npc": "TwoIsland_Harbor_EventScript_Sailor"},
       "stand": [8, 5],
       "facing": "south"
+    },
+    "vermilion_nurse": {
+      "map": "VermilionCity_PokemonCenter_1F",
+      "object": {"npc": "VermilionCity_PokemonCenter_1F_EventScript_Nurse"},
+      "stand": [7, 4],
+      "facing": "north"
     }
   },
   "towns": {
@@ -140,6 +146,7 @@
     "lavender": {"nurse": "lavender_nurse", "fly": "LavenderTown", "mart": "lavender_mart_clerk"},
     "pewter": {"nurse": "pewter_nurse", "fly": "PewterCity"},
     "route10": {"nurse": "route10_nurse", "fly": "Route10"},
-    "route4": {"nurse": "route4_nurse", "fly": "Route4"}
+    "route4": {"nurse": "route4_nurse", "fly": "Route4"},
+    "vermilion": {"nurse": "vermilion_nurse", "fly": "VermilionCity"}
   }
 }

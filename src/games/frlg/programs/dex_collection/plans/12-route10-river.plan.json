@@ -1,0 +1,88 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "frlg",
+  "checkpoint": {
+    "id": "12-route10-river",
+    "title": "Route 10's nurse: surf on the river east of the Center, catch a Tentacool, back to the nurse",
+    "start": {
+      "map": "Route10_PokemonCenter_1F",
+      "tiles": [
+        [
+          7,
+          4
+        ]
+      ],
+      "facing": "north"
+    },
+    "events": [
+      {
+        "id": "caught_before",
+        "kind": "game_action",
+        "action": "read_caught",
+        "args": {},
+        "why": "The Pokedex count before the catch."
+      },
+      {
+        "id": "to_river",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "Route10",
+            "tiles": [
+              [
+                20,
+                24
+              ]
+            ],
+            "facing": "south"
+          }
+        },
+        "why": "North to the river's head and Blastoise surfs down it, east of the Center."
+      },
+      {
+        "id": "catch_tentacool",
+        "kind": "game_action",
+        "action": "capture",
+        "args": {
+          "uncaught": [
+            "tentacool"
+          ],
+          "catches": 1,
+          "encounters": 40,
+          "balls": 20,
+          "ball": "ultra-ball",
+          "pace": "south"
+        },
+        "why": "Route 10's water (FireRed, pret src/data/wild_encounters.json): Tentacool, every encounter, Lv 5 to 40."
+      },
+      {
+        "fragment": "heal_at",
+        "args": {
+          "town": "route10"
+        },
+        "id": "heal_route10",
+        "why": "Back up the river to the nurse."
+      },
+      {
+        "id": "caught_after",
+        "kind": "game_action",
+        "action": "read_caught",
+        "args": {},
+        "why": "The Pokedex count after the catch."
+      }
+    ]
+  },
+  "execution": {
+    "menu": "full"
+  },
+  "metadata": {
+    "phase": "testing",
+    "notes": "Needs Surf (Blastoise). The catch goes to Bill's PC.",
+    "postconditions": {
+      "caught": {
+        "gained": 1
+      }
+    }
+  }
+}

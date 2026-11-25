@@ -1,0 +1,143 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "frlg",
+  "checkpoint": {
+    "id": "13-vermilion-routes",
+    "title": "From Route 10's nurse: fly to Vermilion, Drowzee in Route 11's grass, Psyduck on Route 6's pond, back to Vermilion's nurse",
+    "start": {
+      "map": "Route10_PokemonCenter_1F",
+      "tiles": [
+        [
+          7,
+          4
+        ]
+      ],
+      "facing": "north"
+    },
+    "events": [
+      {
+        "id": "caught_before",
+        "kind": "game_action",
+        "action": "read_caught",
+        "args": {},
+        "why": "The Pokedex count before the catches."
+      },
+      {
+        "id": "out_of_center",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "place": "route10_center_outside"
+          }
+        },
+        "why": "Out of the Center to fly."
+      },
+      {
+        "id": "fly_vermilion",
+        "kind": "game_action",
+        "action": "fly",
+        "args": {
+          "town": "VermilionCity",
+          "species": "pidgeot"
+        },
+        "why": "Vermilion City: Route 11 runs east of it, Route 6 north."
+      },
+      {
+        "id": "to_route11_grass",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "Route11",
+            "tiles": [
+              [
+                20,
+                15
+              ]
+            ],
+            "facing": "east"
+          }
+        },
+        "why": "East into Route 11's big south grass."
+      },
+      {
+        "id": "catch_drowzee",
+        "kind": "game_action",
+        "action": "capture",
+        "args": {
+          "uncaught": [
+            "drowzee"
+          ],
+          "catches": 1,
+          "encounters": 60,
+          "balls": 20,
+          "ball": "ultra-ball",
+          "pace": "east"
+        },
+        "why": "Route 11 (FireRed, pret src/data/wild_encounters.json): Ekans 40%, Spearow 35%, Drowzee 25%, Lv 11 to 17."
+      },
+      {
+        "id": "to_route6_pond",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {
+            "map": "Route6",
+            "tiles": [
+              [
+                5,
+                24
+              ]
+            ],
+            "facing": "east"
+          }
+        },
+        "why": "Back west, north into Route 6, and Blastoise surfs onto its pond."
+      },
+      {
+        "id": "catch_psyduck",
+        "kind": "game_action",
+        "action": "capture",
+        "args": {
+          "uncaught": [
+            "psyduck"
+          ],
+          "catches": 1,
+          "encounters": 40,
+          "balls": 20,
+          "ball": "ultra-ball",
+          "pace": "east"
+        },
+        "why": "Route 6's water (FireRed): Psyduck, every encounter."
+      },
+      {
+        "fragment": "heal_at",
+        "args": {
+          "town": "vermilion"
+        },
+        "id": "heal_vermilion",
+        "why": "South to Vermilion's nurse, where the next checkpoint starts."
+      },
+      {
+        "id": "caught_after",
+        "kind": "game_action",
+        "action": "read_caught",
+        "args": {},
+        "why": "The Pokedex count after the catches."
+      }
+    ]
+  },
+  "execution": {
+    "menu": "full"
+  },
+  "metadata": {
+    "phase": "testing",
+    "notes": "Needs Surf (Blastoise). The party is full, so the catches go to Bill's PC.",
+    "postconditions": {
+      "caught": {
+        "gained": 2
+      }
+    }
+  }
+}

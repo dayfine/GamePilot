@@ -25,6 +25,7 @@ Runs on: mGBA.
 - money at least ¥12000 (all the purchases)
 - retro-mail at least x82 (duplicate_item)
 - rare-candy at least x4 (give_bag_item)
+- ultra-ball at least x2 (capture)
 - at the start, Route10_PokemonCenter_1F
 <!-- /generated -->
 
@@ -33,7 +34,7 @@ Runs on: mGBA.
 <!-- generated:commands -->
 ```sh
 # mGBA: each checkpoint three times from its start state, two must pass
-sh run/run_checkpoints_on_mgba.sh --program frlg.dex_collection --from 01-ultra-balls --to 09-route8-grass --mode verification
+sh run/run_checkpoints_on_mgba.sh --program frlg.dex_collection --from 01-ultra-balls --to 13-vermilion-routes --mode verification
 ```
 <!-- /generated -->
 
@@ -51,8 +52,12 @@ sh run/run_checkpoints_on_mgba.sh --program frlg.dex_collection --from 01-ultra-
 | 07-viridian-forest | From Indigo Plateau's nurse: fly to Pewter, catch Viridian Forest's five new species, back to Pewter's nurse |
 | 08-route3-east-grass | From Pewter's nurse: fly to Route 4, catch Route 3's new species in its east grass, back to Route 4's nurse |
 | 09-route8-grass | From Route 4's nurse: fly to Lavender, cut into Route 8's grass, catch Meowth and Growlithe, back to Lavender's nurse |
+| 10-power-plant | From Lavender's nurse: fly to Route 10, surf down to the Power Plant, catch its new species, back to Route 10's nurse |
+| 11-mansion | From Route 10's nurse: fly to Cinnabar, catch the Pokemon Mansion's new species on 1F, fly back to Route 10's nurse |
+| 12-route10-river | Route 10's nurse: surf on the river east of the Center, catch a Tentacool, back to the nurse |
+| 13-vermilion-routes | From Route 10's nurse: fly to Vermilion, Drowzee in Route 11's grass, Psyduck on Route 6's pond, back to Vermilion's nurse |
 
-<!-- plans: 49b760ec6098 -->
+<!-- plans: 9e304174c001 -->
 <!-- /generated -->
 
 ## When it stops
@@ -69,6 +74,10 @@ sh run/run_checkpoints_on_mgba.sh --program frlg.dex_collection --from 01-ultra-
 | 07-viridian-forest | pidgeot in the party (fly); ultra-ball at least x1 (capture); at the start, IndigoPlateau_PokemonCenter_1F |
 | 08-route3-east-grass | pidgeot in the party (fly); ultra-ball at least x1 (capture); at the start, PewterCity_PokemonCenter_1F |
 | 09-route8-grass | pidgeot in the party (fly); a member knows cut (cut_tree); ultra-ball at least x1 (capture); at the start, Route4_PokemonCenter_1F |
+| 10-power-plant | pidgeot in the party (fly); ultra-ball at least x1 (capture); at the start, LavenderTown_PokemonCenter_1F |
+| 11-mansion | pidgeot in the party (fly); ultra-ball at least x1 (capture); at the start, Route10_PokemonCenter_1F |
+| 12-route10-river | ultra-ball at least x1 (capture); at the start, Route10_PokemonCenter_1F |
+| 13-vermilion-routes | pidgeot in the party (fly); ultra-ball at least x2 (capture); at the start, Route10_PokemonCenter_1F |
 <!-- /generated -->
 
 ## Known limits
