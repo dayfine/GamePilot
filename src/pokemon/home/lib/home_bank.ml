@@ -120,8 +120,12 @@ let launch_and_act ~log ~picture (t : templates) mode =
       in
       Effects.with_probes (M.probes ~game_icon) on_menus)
 
+let not_native =
+  "Pokémon HOME is read on the whole frame: run the daemon with --viewport \
+   native"
+
 let run ~log ~picture (t : templates) mode =
-  if not (Frame_box.native picture) then Error Frame_box.not_native
+  if not (Switch_home.Picture_box.native picture) then Error not_native
   else
     let* () = launch_and_act ~log ~picture t mode in
     match mode with

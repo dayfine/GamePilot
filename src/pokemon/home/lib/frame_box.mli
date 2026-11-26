@@ -6,12 +6,6 @@
 type t = { x : int; y : int; w : int; h : int }
 (** Left, top, width and height in frame pixels. *)
 
-val native : Wire.box -> bool
-(** The game picture is the whole frame. *)
-
-val not_native : string
-(** The error when it is not. *)
-
 val box : t -> Wire.box
 (** The box normalized to the frame. *)
 
@@ -29,9 +23,6 @@ val template_probe :
   Effects.template_hash ->
   Wire.probe_spec
 (** A [core.template_match@1] probe, every frame. *)
-
-val fraction : Effects.measurements -> string -> float option
-(** A [color_count] probe's share. *)
 
 val score : Effects.measurements -> string -> (float * float) option
 (** A [template_match] probe's score and its placement's left edge in frame

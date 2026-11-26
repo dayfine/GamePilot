@@ -91,15 +91,7 @@ let probes ~picture color =
          (Picture_box.whole ~picture user_icons_box))
   @ List.concat_map (tile_probes ~picture color) (List.init tiles Fun.id)
 
-let fraction m id =
-  match Effects.probe m id with
-  | Some (Wire.Color_count { fraction; _ }) -> fraction
-  | Some
-      ( Wire.Color_stats _ | Wire.Template_match _ | Wire.Line_shares _
-      | Wire.Find _ | Wire.Other _ )
-  | None ->
-      0.
-
+let fraction m id = Option.value ~default:0. (Color_share.read m id)
 let dark_max_sum = 200.
 let max_flat_stddev = 20.
 let min_icons_stddev = 10.

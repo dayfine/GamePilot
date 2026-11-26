@@ -78,7 +78,10 @@ let probes ~game_icon =
       tiles
 
 let min_menu_orange = 0.45
-let holds m id test = Option.fold ~none:false ~some:test (F.fraction m id)
+
+let holds m id test =
+  Option.fold ~none:false ~some:test (Switch_home.Color_share.read m id)
+
 let main_menu m = holds m menu_id (fun s -> s > min_menu_orange)
 
 type banner = No_banner | Blank | One_line | Two_lines

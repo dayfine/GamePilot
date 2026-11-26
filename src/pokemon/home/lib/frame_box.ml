@@ -2,11 +2,6 @@ type t = { x : int; y : int; w : int; h : int }
 
 let frame_width = 1920.
 let frame_height = 1080.
-let native (p : Wire.box) = p.x = 0. && p.y = 0. && p.w = 1. && p.h = 1.
-
-let not_native =
-  "Pokémon HOME is read on the whole frame: run the daemon with --viewport \
-   native"
 
 let box { x; y; w; h } : Wire.box =
   {
@@ -23,15 +18,6 @@ let count_probe id b ~min ~max =
 
 let template_probe ?ink id b template =
   Wire.template_match_probe ?ink ~id ~box:(box b) ~delivery:Every ~template ()
-
-let fraction m id =
-  match Effects.probe m id with
-  | Some (Wire.Color_count { fraction; _ }) -> Some fraction
-  | Some
-      ( Wire.Color_stats _ | Wire.Template_match _ | Wire.Line_shares _
-      | Wire.Find _ | Wire.Other _ )
-  | None ->
-      None
 
 let score m id =
   match Effects.probe m id with
