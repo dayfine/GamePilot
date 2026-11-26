@@ -7,8 +7,8 @@
    chain needs of the save, as its rules say it (Checkpoint_families: free
    party slots, field moves).
 
-   Also the program gamepilot run or replay names by its id: a one-shot
-   program, or a chain of checkpoints and its plan folder. *)
+   Also resolves a program id for gamepilot run to its checkpoints' plan
+   folder. *)
 
 module R = Program_registry
 
@@ -29,7 +29,7 @@ let plan_lines ~needs path dir =
 
 let checkpoint_lines (p : R.t) =
   match Option.map (fun path -> (path, R.locate path)) p.checkpoints with
-  | None -> [ "one-shot: gamepilot run " ^ p.id ]
+  | None -> [ "checkpoints: none" ]
   | Some (path, None) -> [ "checkpoints: " ^ path ^ " (not found from here)" ]
   | Some (path, Some dir) ->
       let family = Checkpoint_families.of_program (Some p) in
@@ -64,22 +64,13 @@ let main = function
 
 let unknown id = Error ("no program " ^ id ^ ": gamepilot programs lists them")
 
-type runnable = One_shot of R.t | Chain of R.t * string
-
-(* The program [id] names: one-shot, or its checkpoints and their plan
-   folder. *)
-let runnable id =
+(* The plan folder of the program [id] names. *)
+let plan_dir id =
   match R.find id with
   | None -> unknown id
-  | Some ({ checkpoints = None; _ } as p) -> Ok (One_shot p)
-  | Some ({ checkpoints = Some path; _ } as p) -> (
+  | Some ({ checkpoints = None; _ } as p) ->
+      Error (p.id ^ " has no checkpoint plans")
+  | Some { checkpoints = Some path; _ } -> (
       match R.locate path with
-      | Some dir -> Ok (Chain (p, dir))
+      | Some dir -> Ok dir
       | None -> Error (path ^ " not found from here: run in the repo"))
-
-(* A one-shot program by its id (gamepilot replay). *)
-let one_shot id =
-  match R.find id with
-  | Some ({ checkpoints = None; _ } as p) -> Ok p
-  | Some p -> Error (p.id ^ " runs by checkpoints, live: gamepilot run " ^ p.id)
-  | None -> unknown id

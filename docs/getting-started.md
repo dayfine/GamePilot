@@ -52,42 +52,37 @@ The rest of this page uses mGBA.
 
 ## A first run
 
-The simplest program is [Start Menu PoC](guide/frlg.start_menu_poc.md): it opens and closes
-FireRed's Start menu. Start mGBA with your ROM and load the bridge
-([by hand](mgba.md#load-the-bridge-by-hand)), and walk the player into the overworld.
-
-Then run it with its watch page (47801: the port the bridge printed):
+A good first program is [Supplies](guide/frlg.supplies.md): it stocks Retro Mail and Super Repels
+in one checkpoint (`su-01`). Set up `~/.config/gamepilot/env` and a save state for `su-01`
+([Running on mGBA](mgba.md)), then run it with its watch page:
 
 ```sh
-cd src && opam exec -- dune exec -- gamepilot run frlg.start_menu_poc --console --watch \
-    --mgba-port 47801 --daemon ../daemon/build/gamepilot_daemon
+sh run/run_checkpoints_on_mgba.sh frlg.supplies --from su-01 --to su-01
 ```
 
-It starts its own daemon, prints the page's URL and the hub's (`http://127.0.0.1:47901/`), runs,
-and stops the daemon at the end:
+It starts mGBA and its own daemon, prints the watch page's URL and the hub's
+(`http://127.0.0.1:47901/`), runs the checkpoint, and stops both at the end.
 
+To check a running mGBA session without running a full checkpoint, start a daemon against the
+bridge (47801: the port the bridge printed) and read the Start menu with `gamepilot ctl`:
+
+```sh
+daemon/build/gamepilot_daemon --backend mgba --mgba-port 47801
+cd src && opam exec -- dune exec -- gamepilot ctl read start_menu
 ```
-start_menu_poc: PASS (open 50 ms, close 0 ms after batch_done)
-```
-
-With `~/.config/gamepilot/env` set up ([mGBA](mgba.md)), `sh run/run_checkpoints_on_mgba.sh
-frlg.start_menu_poc` does the same and starts and closes mGBA too.
-
-`--console` runs on whatever the game shows. Without it the program first loads
-`$GAMEPILOT_STATES/overworld.ss`, a save state you make in mGBA (File > Save State File).
 
 ## What you see
 
 Open the page URL the run printed, or find it on the hub. The watch page shows the live frame, the
 probe boxes a program reads, its plan and log, the daemon's health, and a Stop button:
 
-![The watch page after Start Menu PoC passed on mGBA](images/watch-page-start-menu-poc.png)
+![The watch page on mGBA](images/watch-page-start-menu-poc.png)
 
 `gamepilot runs` lists the live runs in the terminal, with each page's address:
 
 ```
 CHECKPOINT MODE         TRIAL  ELAPSED  STATE                                    PAGE
-start_menu_poc run          1/1    0:41     -                                        http://127.0.0.1:47902/
+su-01      testing      1/1    0:41     -                                        http://127.0.0.1:47902/
 all runs: http://127.0.0.1:47901/
 ```
 
