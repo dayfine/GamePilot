@@ -22,10 +22,6 @@ let post_dig_wait_ms = 1000
 let screen_probe_timeout_ms = 1000
 let max_open_dialog_presses = 6
 let door_bounce_hold_ms = 2500
-let home_north_ms = 2600
-let home_east_ms = 6000
-let home_south_ms = 11500
-let home_west_ms = 6500
 let map_press_hold_ms = 120
 let map_view_wait_ms = 1500
 let map_restore_wait_ms = 800
@@ -168,12 +164,7 @@ let read_full_map_sparkles ~picture =
   P.press ~hold_ms:map_press_hold_ms ~cooldown_ms:map_restore_wait_ms Wire.B;
   sp
 
-let home_to_south_door () =
-  log "Homing to South Hideaway doorway (N -> E -> S -> W)...";
-  OW.run_hold Corridor_nav.North ~hold_ms:home_north_ms;
-  OW.run_hold Corridor_nav.East ~hold_ms:home_east_ms;
-  OW.run_hold Corridor_nav.South ~hold_ms:home_south_ms;
-  OW.run_hold Corridor_nav.West ~hold_ms:home_west_ms
+let home_to_south_door () = Outdoor_transit.home_to_south_door ~log
 
 let bounce_doorway_with_rehome ~picture =
   let anchor = { Corridor_nav.enter_dir = West; exit_dir = East } in
@@ -251,11 +242,15 @@ let recover_if_mid_dig ctx ~counters =
       Ok next
   | Some scr when scr.dialog ->
       log "Started on post-dig dialog; clearing before homing...";
-      let _items = MP.collect_dig_yields ~log ~picture:ctx.picture () in
+      ignore (MP.collect_dig_yields ~log ~picture:ctx.picture () : _ list);
       home_to_south_door ();
       Ok counters
   | Some scr ->
       log ("Initial screen: " ^ US.to_string scr);
+      let* () =
+        if scr.in_underground then Ok ()
+        else Outdoor_transit.ensure_in_underground ~log ~picture:ctx.picture ()
+      in
       home_to_south_door ();
       Ok counters
   | None -> Ok counters
@@ -271,9 +266,13 @@ let run_farm_loop ctx =
       (fun (n, d) -> (idx + 1, d, n))
       (run_one_cycle ctx ~idx ~door counters)
   in
-  Result.map
-    (fun (_, _, final) -> final)
-    (repeat_until ~stop_when ~step (1, Ring_grid.south_door, initial))
+  let* _, _, final =
+    repeat_until ~stop_when ~step (1, Ring_grid.south_door, initial)
+  in
+  Auto_save.maybe_save ~log ~picture:ctx.picture ~cycle_idx:0 ~prev_shards:0
+    final;
+  let* () = Outdoor_transit.leave_underground ~log ~picture:ctx.picture () in
+  Ok final
 
 let dispatch_mode ~mode ~door ctx =
   match Step_modes.run ~mode ~door ~log ~picture:ctx.picture ~goal:ctx.goal with

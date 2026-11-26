@@ -1,8 +1,10 @@
 module PB = Switch_home.Picture_box
 module SC = Switch_home.Solid_color
+module CS = Switch_home.Color_share
 
 type t = {
   fade : Screen_state.Fade.t;
+  in_underground : bool;
   mining_wall : bool;
   dialog : bool;
   choice_box : bool;
@@ -14,6 +16,20 @@ type t = {
 
 let fade_probe_id = "bdsp_screen_fade"
 let choice_probe_id = "bdsp_screen_choice_box"
+let diglett_hud_id = "bdsp_screen_diglett_hud"
+
+(* Mint-cyan Diglett counter [XX/40] below the top-left Underground minimap:
+   measured 0.228..0.237 in Grand Underground vs 0.000 on Sinnoh surface. *)
+let diglett_hud_rect : Wire.box = { x = 0.004; y = 0.325; w = 0.080; h = 0.045 }
+let diglett_r_min = 125
+let diglett_r_max = 215
+let diglett_g_min = 215
+let diglett_g_max = 255
+let diglett_b_min = 165
+let diglett_b_max = 245
+let diglett_min_rgb = (diglett_r_min, diglett_g_min, diglett_b_min)
+let diglett_max_rgb = (diglett_r_max, diglett_g_max, diglett_b_max)
+let diglett_min_share = 0.08
 
 (* White right-aligned Yes/No choice box measured from run-46/frames/000027.jpg:
    white interior spans x=0.72..0.82, y=0.65..0.77; right half is pure white
@@ -27,9 +43,16 @@ let single_probe ~picture ~id box =
   | Some b -> [ Wire.color_stats_probe ~id ~box:b ~delivery:Every ]
   | None -> []
 
+let count_probe ~picture ~id ~min ~max box =
+  match PB.clipped ~picture box with
+  | Some b -> [ Wire.color_count_probe ~id ~box:b ~min ~max ~delivery:Every ]
+  | None -> []
+
 let probes ~picture =
   single_probe ~picture ~id:fade_probe_id Screen_state.Fade.middle_box
   @ single_probe ~picture ~id:choice_probe_id choice_box_rect
+  @ count_probe ~picture ~id:diglett_hud_id ~min:diglett_min_rgb
+      ~max:diglett_max_rgb diglett_hud_rect
   @ Dialog_detector.probes ~picture
   @ Menu_detector.probes ~picture ()
   @ Battle_detector.probes ~picture
@@ -50,9 +73,13 @@ let read_choice_box m =
       && SC.sum s.stddev <= choice_max_std_sum
   | None -> false
 
+let read_in_underground m =
+  Option.value (CS.read m diglett_hud_id) ~default:0. >= diglett_min_share
+
 let faded_state fade =
   {
     fade;
+    in_underground = false;
     mining_wall = false;
     dialog = false;
     choice_box = false;
@@ -63,6 +90,7 @@ let faded_state fade =
   }
 
 let read_no_fade m =
+  let in_underground = read_in_underground m in
   let mining_wall = Mining_grid.on_mining_screen m in
   let dialog = Dialog_detector.shown m in
   let choice_box = dialog && read_choice_box m in
@@ -75,6 +103,7 @@ let read_no_fade m =
   let wall_sparkle = if free then Wall_sparkle.direction m else None in
   {
     fade = No_fade;
+    in_underground;
     mining_wall;
     dialog;
     choice_box;

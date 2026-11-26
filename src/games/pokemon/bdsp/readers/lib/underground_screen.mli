@@ -12,6 +12,10 @@
 
 type t = {
   fade : Screen_state.Fade.t;
+  in_underground : bool;
+      (** True when the Grand Underground Diglett counter HUD ([XX/40]) is
+          visible on screen, distinguishing Underground overworld from Sinnoh
+          surface overworld. *)
   mining_wall : bool;
   dialog : bool;
   choice_box : bool;
