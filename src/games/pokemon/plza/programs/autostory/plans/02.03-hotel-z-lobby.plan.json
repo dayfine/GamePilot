@@ -8,7 +8,7 @@
     "postconditions": {}
   },
   "checkpoint": {
-    "id": "02.03",
+    "id": "02.03-hotel-z-lobby",
     "title": "Main Mission 02: into the Hotel Z lobby",
     "start": {
       "place": "LumioseCity"

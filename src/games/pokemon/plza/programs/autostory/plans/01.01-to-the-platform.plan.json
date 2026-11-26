@@ -7,7 +7,7 @@
     "source": "played from a new game; the fork's plza-01.00b.plan.json (plza/lean)"
   },
   "checkpoint": {
-    "id": "01.00b",
+    "id": "01.01-to-the-platform",
     "title": "Confirm Choices to the station platform",
     "events": [
       {

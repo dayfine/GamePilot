@@ -8,7 +8,7 @@
     "postconditions": {}
   },
   "checkpoint": {
-    "id": "01.01",
+    "id": "01.02-platform-to-plaza",
     "title": "The platform to Main Mission 01",
     "start": {
       "place": "LumioseCity"

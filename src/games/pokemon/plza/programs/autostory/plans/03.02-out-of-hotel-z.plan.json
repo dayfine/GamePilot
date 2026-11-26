@@ -8,7 +8,7 @@
     "postconditions": {}
   },
   "checkpoint": {
-    "id": "03.02",
+    "id": "03.02-out-of-hotel-z",
     "title": "Out of Hotel Z",
     "start": {
       "place": "HotelZ"

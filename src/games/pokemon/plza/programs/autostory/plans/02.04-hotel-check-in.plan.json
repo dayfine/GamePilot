@@ -8,7 +8,7 @@
     "postconditions": {}
   },
   "checkpoint": {
-    "id": "02.04",
+    "id": "02.04-hotel-check-in",
     "title": "Main Mission 02: Hotel Z check-in",
     "start": {
       "place": "LumioseCity"

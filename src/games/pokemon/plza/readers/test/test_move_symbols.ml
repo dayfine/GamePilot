@@ -1,4 +1,4 @@
-(* The move symbols reader on console frames of 01.03's battle with Andi
+(* The move symbols reader on console frames of 01.04's battle with Andi
    (console B, 2026-11-25: ZL held, Tackle top and Tail Whip right, both
    Effective; and the battle without ZL), on our drawn frames (the four
    symbols' Packages images halved in the four boxes; draw_synthetic_frames.py),

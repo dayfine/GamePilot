@@ -416,15 +416,22 @@ are deleted once that run passed; the unit tests that pin the behaviour stay.
 ### R22 Plan files have short descriptive names
 
 A plan file is its order number and one to five words saying what it does, with species names,
-not nicknames: `03-trade-mr-mime.plan.json`, not `mg-03.plan.json`.
+not nicknames: `03-trade-mr-mime.plan.json`, not `mg-03.plan.json`. Where the game numbers its own
+steps (PLZA's story rows), the order number is `NN.NN`, the mission and the checkpoint's place in
+it, with no letter: `03.03-battle-taunie.plan.json`; otherwise it is `NN`. The id is the file name
+without `.plan.json`.
 
 - Why: the user's calls on plan file names (2026-11-24, in a working session), paraphrased: short
   descriptive names, one or two words ideally and at most five, using species, not nicknames;
-  applied in #43. `su-01` and `tt-01` keep their ids until their programs are split by goal.
-- Bad: `mg-03.plan.json`, `03-trade-mimien.plan.json`.
-- Good: `03-trade-mr-mime.plan.json`.
+  applied in #43. `su-01` and `tt-01` keep their ids until their programs are split by goal. On PLZA
+  (2026-11-25): the story's mission number in front; then the fork's split letters dropped and the
+  checkpoints renumbered `NN.NN` in run order, the fork's file name kept in each plan's `source`
+  as the trail back to it.
+- Bad: `mg-03.plan.json`, `03-trade-mimien.plan.json`, `03.02b.plan.json`,
+  `03.02b-battle-taunie.plan.json`.
+- Good: `03-trade-mr-mime.plan.json`, `03.10-fourth-species.plan.json`.
 - Find: recipe (`su-01`, `tt-01` are known):
-  `ls src/games/*/programs/*/plans | grep -vE '^[0-9]{2}-[a-z0-9]+(-[a-z0-9]+){0,4}\.plan\.json$|:$|^$'`.
+  `ls src/games/*/programs/*/plans src/games/pokemon/*/programs/*/plans | grep -vE '^[0-9]{2}(\.[0-9]{2})?-[a-z0-9]+(-[a-z0-9]+){0,4}\.plan\.json$|:$|^$'`.
 
 ### R23 No runtime dependency on Packages; per-language assets are committed
 
