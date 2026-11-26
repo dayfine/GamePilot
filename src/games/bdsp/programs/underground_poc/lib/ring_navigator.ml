@@ -1,6 +1,7 @@
 module OW = Bdsp_actions.Bdsp_overworld
 module US = Bdsp_readers.Underground_screen
 module MS = Bdsp_readers.Minimap_sparkles
+module WS = Bdsp_readers.Wall_sparkle
 module P = Switch_home.Switch_presses
 module D = Grid_geometry.Direction
 module L = Grid_planning.Leg
@@ -9,8 +10,12 @@ open Bdsp_underground
 let ( let* ) = Result.bind
 let mech = Corridor_nav.bdsp_move_mechanics
 let step_probe_timeout_ms = 350
+let radar_hold_ms = 100
+let radar_settle_ms = 450
 let wall_margin_ms = 350
 let wall_hug_ms = 450
+let servo_step_ms = 240
+let max_servo_steps = 4
 
 let subscribe_screen ~picture =
   ignore (Effects.subscribe (US.probes ~picture) : string list)
@@ -65,21 +70,52 @@ let primary_wall_dir ~along_dir = function
       | Corridor_nav.East | Corridor_nav.West -> Corridor_nav.North
       | Corridor_nav.North | Corridor_nav.South -> Corridor_nav.East)
 
-let visible_sparkle_dir ~picture =
+let read_star_offset ~picture =
   subscribe_screen ~picture;
   match Effects.await ~timeout_ms:step_probe_timeout_ms (fun _ -> true) with
-  | Effects.Holds m -> (US.read m).wall_sparkle
+  | Effects.Holds m -> WS.locate m
   | Effects.Timeout -> None
+
+let servo_step_toward ~along_dir (off : WS.offset) =
+  match along_dir with
+  | Corridor_nav.East | Corridor_nav.West ->
+      if off.dx < 0 then Some Corridor_nav.West
+      else if off.dx > 0 then Some Corridor_nav.East
+      else None
+  | Corridor_nav.North | Corridor_nav.South ->
+      if off.dy < 0 then Some Corridor_nav.North
+      else if off.dy > 0 then Some Corridor_nav.South
+      else None
+
+let wall_from_offset ~along_dir ~fallback (off : WS.offset) =
+  match along_dir with
+  | Corridor_nav.East | Corridor_nav.West ->
+      if off.dy < 0 then Corridor_nav.North
+      else if off.dy > 0 then Corridor_nav.South
+      else fallback
+  | Corridor_nav.North | Corridor_nav.South ->
+      if off.dx > 0 then Corridor_nav.East
+      else if off.dx < 0 then Corridor_nav.West
+      else fallback
+
+let rec lock_onto_star ~log ~picture ~along_dir ~fallback left =
+  match read_star_offset ~picture with
+  | None -> fallback
+  | Some off -> (
+      log (Printf.sprintf "Radar sparkle star at dx=%d dy=%d" off.dx off.dy);
+      match (left > 0, servo_step_toward ~along_dir off) with
+      | true, Some move_dir ->
+          OW.run_hold move_dir ~hold_ms:servo_step_ms;
+          lock_onto_star ~log ~picture ~along_dir ~fallback (left - 1)
+      | _ -> wall_from_offset ~along_dir ~fallback off)
 
 let interact_at_stop ~log ~picture ~on_prompt ~on_battle ~along_dir ~wall_dirs
     cur =
   subscribe_screen ~picture;
+  P.press ~hold_ms:radar_hold_ms ~cooldown_ms:radar_settle_ms Wire.R;
+  let fallback = primary_wall_dir ~along_dir wall_dirs in
   let face_dir =
-    match visible_sparkle_dir ~picture with
-    | Some d ->
-        log "On-screen wall sparkle detected; heading directly to that wall!";
-        d
-    | None -> primary_wall_dir ~along_dir wall_dirs
+    lock_onto_star ~log ~picture ~along_dir ~fallback max_servo_steps
   in
   OW.run_hold face_dir ~hold_ms:wall_hug_ms;
   OW.interact ();
@@ -103,9 +139,9 @@ let run_stop ~log ~picture ~on_prompt ~on_battle acc (st : Ring_grid.stop) =
   interact_at_stop ~log ~picture ~on_prompt ~on_battle ~along_dir
     ~wall_dirs:st.wall_dirs c
 
-let visit_targets ~log ~picture ~(sparkles : MS.nearby) ~on_prompt ~on_battle
-    cur =
-  let waypoints =
+let visit_targets ~log ~picture ~start_door ~(sparkles : MS.nearby) ~on_prompt
+    ~on_battle cur =
+  let raw_waypoints =
     List.map
       (fun (t : MS.target) ->
         Ring_grid.waypoint_of_bucket
@@ -113,9 +149,15 @@ let visit_targets ~log ~picture ~(sparkles : MS.nearby) ~on_prompt ~on_battle
           ~bucket:t.bucket)
       sparkles.targets
   in
-  let route = Ring_grid.plan_route ~start:Ring_grid.south_door ~waypoints in
+  let waypoints =
+    if Grid_geometry.Tile_pos.equal start_door Ring_grid.north_door then
+      List.rev raw_waypoints
+    else raw_waypoints
+  in
+  let route = Ring_grid.plan_route ~start:start_door ~waypoints in
   log
-    (Printf.sprintf "Planned tile route: %d stop(s) -> return %s"
+    (Printf.sprintf "Planned tile route from %s: %d stop(s) -> return %s"
+       (Grid_geometry.Tile_pos.to_string start_door)
        (List.length route.stops)
        (Grid_geometry.Tile_pos.to_string route.return_door));
   let* cur =
@@ -125,4 +167,4 @@ let visit_targets ~log ~picture ~(sparkles : MS.nearby) ~on_prompt ~on_battle
   in
   log "Executing planned return legs to doorway...";
   List.iter (execute_leg ~log) route.return_legs;
-  Ok cur
+  Ok (cur, route.return_door)

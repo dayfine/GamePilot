@@ -163,33 +163,33 @@ let step_read_and_plan ~report ~picture =
   Watch_report.set report step_read_map Wire.Watch.Done desc;
   sp
 
-let run_one_cycle ~picture ~goal ~total_cycles ~idx counters =
+let run_one_cycle ~picture ~goal ~total_cycles ~idx ~door counters =
   let label = Printf.sprintf "cycle %d/%d" idx total_cycles in
   let report = Watch_report.create ~checkpoint:label cycle_step_names in
   log (Printf.sprintf "=== Cycle %d/%d ===" idx total_cycles);
   let* counters = step_refresh_cave ~report ~picture counters in
   let sp = step_read_and_plan ~report ~picture in
-  let* counters =
+  let* counters, next_door =
     if MS.any sp then (
       Watch_report.set report step_route Wire.Watch.Current
         (Printf.sprintf "%d waypoint(s)" (List.length sp.targets));
-      let* next =
-        Ring_navigator.visit_targets ~log ~picture ~sparkles:sp
+      let* next, return_door =
+        Ring_navigator.visit_targets ~log ~picture ~start_door:door ~sparkles:sp
           ~on_prompt:(on_prompt ~report ~picture ~goal)
           ~on_battle:(on_battle ~picture) counters
       in
       Watch_report.set report step_route Wire.Watch.Done "returned to doorway";
-      Ok next)
+      Ok (next, return_door))
     else (
       log "No sparkles on full map; skipping route!";
       Watch_report.set report step_route Wire.Watch.Skipped "no sparkles";
-      Ok (Mining_counters.record_skipped_corridor counters))
+      Ok (Mining_counters.record_skipped_corridor counters, door))
   in
   let counters = Mining_counters.record_cycle counters in
   let summary = Mining_counters.format_summary ~goal counters in
   log ("Counters: " ^ summary);
   Watch_report.set report step_result Wire.Watch.Done summary;
-  Ok counters
+  Ok (counters, next_door)
 
 let rec repeat_until ~stop_when ~step state =
   if stop_when state then Ok state
@@ -232,15 +232,19 @@ let run_farm_loop ~picture ~goal ~total_cycles =
   let* initial =
     recover_if_mid_dig ~picture ~goal ~counters:Mining_counters.empty
   in
-  let stop_when (idx, counters) =
+  let stop_when (idx, _door, counters) =
     idx > total_cycles
     || Mining_goal.is_met goal (Mining_counters.to_tally counters)
   in
-  let step (idx, counters) =
-    let* next = run_one_cycle ~picture ~goal ~total_cycles ~idx counters in
-    Ok (idx + 1, next)
+  let step (idx, door, counters) =
+    let* next, next_door =
+      run_one_cycle ~picture ~goal ~total_cycles ~idx ~door counters
+    in
+    Ok (idx + 1, next_door, next)
   in
-  let* _, final = repeat_until ~stop_when ~step (1, initial) in
+  let* _, _, final =
+    repeat_until ~stop_when ~step (1, Ring_grid.south_door, initial)
+  in
   Ok final
 
 let finish_result = function

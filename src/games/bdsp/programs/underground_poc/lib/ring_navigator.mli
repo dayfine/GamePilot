@@ -9,10 +9,12 @@
 val visit_targets :
   log:(string -> unit) ->
   picture:Wire.box ->
+  start_door:Grid_geometry.Tile_pos.t ->
   sparkles:Bdsp_readers.Minimap_sparkles.nearby ->
   on_prompt:('a -> ('a * bool, string) result) ->
   on_battle:('a -> ('a, string) result) ->
   'a ->
-  ('a, string) result
-(** Sprint to each active sparkle bucket in [sparkles], probe the adjacent wall,
-    and return to the South Hideaway doorway. *)
+  ('a * Grid_geometry.Tile_pos.t, string) result
+(** Plan a route from [start_door] across each active sparkle waypoint, pulse
+    radar ([R]) at each stop to visually lock onto the flashing sparkle star,
+    and return to the nearest doorway. Returns [(final_state, return_door)]. *)
