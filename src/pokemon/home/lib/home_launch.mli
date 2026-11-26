@@ -4,8 +4,9 @@
 
     Any running game is closed first ({!Switch_home.Game_entry.close_game}: HOME
     cannot connect to a game that runs). Pokémon HOME's tile is found as the
-    script found it: HOME (to the first tile), then Right (80 ms, released 600)
-    along the row, up to 8 tiles, each read for its title
+    script found it ({!Switch_home.Home_title.find_tile}): HOME (100 ms,
+    released 1 s) to the first tile, then Right (80 ms, released 600) along the
+    row, up to 8 tiles, each read for its title for 1.5 s
     ({!Home_tile.on_home_tile}); it is started where the cursor stopped, with
     the first user ({!Switch_home.Game_entry.start_game}). Then, until the main
     menu shows ({!Home_menus.main_menu}; 90 s at most): a banner (logging in) is
@@ -19,9 +20,6 @@
     "Pokémon HOME". It started HOME with three A presses at fixed waits; it
     pressed Down once to "the game" and only logged its title; here the game's
     tile is found by its icon and the cursor is read on it before A. *)
-
-val probes : game_icon:Effects.template_hash -> Wire.probe_spec list
-(** {!Home_menus}'s probes. *)
 
 val to_boxes :
   log:(string -> unit) ->
