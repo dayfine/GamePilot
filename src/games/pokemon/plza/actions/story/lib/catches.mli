@@ -30,3 +30,18 @@ val battle_then_catch : Steps.game_steps -> max_rounds:int -> Steps.outcome
     battle on, caught; else the camera sweeps right ({!Lock_on_sweep}, x 0.5, 8
     rounds) and, finding nothing, the round ends there. [still_a_target] after
     [max_rounds]. *)
+
+(** {1 Shared with the zone catches} *)
+
+val story_throw : Ball_throw.options
+(** ZL 500 ms, ZL and ZR 1.5 s, then 8 s for the ball. *)
+
+val lines : Steps.game_steps -> Press_through_lines.passed
+(** The lines after a throw or a battle, passed with A (quiet 3 s, 30 s at
+    most). *)
+
+val wild_battle_on : Steps.game_steps -> bool
+(** On the next read, the Run prompt or the alert eye. *)
+
+val weaken_target : Steps.game_steps -> int
+(** Attacks until 3 land (12 tries at most): the attacks that landed. *)

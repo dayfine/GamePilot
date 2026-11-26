@@ -45,7 +45,8 @@
   test_wild_rng
   test_pokedex_entry
   test_skip_conditions
-  test_naming_entry)
+  test_naming_entry
+  test_box_rename)
  (modules
   test_pc_deposit_steps
   test_pc_withdraw_steps
@@ -77,7 +78,8 @@
   test_wild_rng
   test_pokedex_entry
   test_skip_conditions
-  test_naming_entry)
+  test_naming_entry
+  test_box_rename)
  (deps
   mgba.probes.jsonl
   menus.mgba.probes.jsonl

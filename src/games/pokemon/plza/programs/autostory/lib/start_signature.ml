@@ -6,12 +6,39 @@ let frame_budget = 20
 let agreeing_frames = 3
 let ( let* ) = Result.bind
 
-type t = { minimap : string option }
+type t = {
+  talk_prompt : bool option;
+  wild_zone : bool option;
+  near_rocks : bool option;
+  party : int option;
+  minimap : string option;
+}
 
-let nothing = { minimap = None }
+let nothing =
+  {
+    talk_prompt = None;
+    wild_zone = None;
+    near_rocks = None;
+    party = None;
+    minimap = None;
+  }
+
+let flag ~yes ~no = Option.map (fun b -> if b then yes else no)
 
 let to_string s =
-  match s.minimap with None -> "nothing read" | Some m -> "minimap " ^ m
+  match
+    List.filter_map Fun.id
+      [
+        flag ~yes:"talk prompt" ~no:"no talk prompt" s.talk_prompt;
+        flag ~yes:"in a wild zone" ~no:"not in a wild zone" s.wild_zone;
+        flag ~yes:"near Taunie's rocks" ~no:"not near Taunie's rocks"
+          s.near_rocks;
+        Option.map (Printf.sprintf "party %d") s.party;
+        Option.map (( ^ ) "minimap ") s.minimap;
+      ]
+  with
+  | [] -> "nothing read"
+  | parts -> String.concat ", " parts
 
 let unread ~checkpoint_id ~which detail =
   Failure.cause ~repeats:true "start_signature_unread"
@@ -19,7 +46,10 @@ let unread ~checkpoint_id ~which detail =
 
 let other_field ~checkpoint_id ~which key =
   unread ~checkpoint_id ~which
-    (Printf.sprintf "has \"%s\": its one field is minimap (a recorded name)" key)
+    (Printf.sprintf
+       "has \"%s\": its fields are talk_prompt, wild_zone and near_rocks (true \
+        or false), party (a count) and minimap (a recorded name)"
+       key)
 
 let unrecorded ~checkpoint_id ~which name =
   unread ~checkpoint_id ~which
@@ -28,8 +58,13 @@ let unrecorded ~checkpoint_id ~which name =
 let recorded name = List.mem name Plza_readers.Minimap.reference_names
 
 (* One field of the plan's signature. *)
-let field ~checkpoint_id ~which (_ : t) = function
-  | "minimap", `String name when recorded name -> Ok { minimap = Some name }
+let field ~checkpoint_id ~which s = function
+  | "talk_prompt", `Bool b -> Ok { s with talk_prompt = Some b }
+  | "wild_zone", `Bool b -> Ok { s with wild_zone = Some b }
+  | "near_rocks", `Bool b -> Ok { s with near_rocks = Some b }
+  | "party", `Int n -> Ok { s with party = Some n }
+  | "minimap", `String name when recorded name ->
+      Ok { s with minimap = Some name }
   | "minimap", `String name -> Error (unrecorded ~checkpoint_id ~which name)
   | key, _ -> Error (other_field ~checkpoint_id ~which key)
 
@@ -51,14 +86,22 @@ let signature ~checkpoint_id ~which key (execution : Json_field.obj) =
   | Some _ -> Error (unread ~checkpoint_id ~which "is not an object")
 
 (* One frame: nothing when no frame came (as PokemonLZA_AutoStory.cpp reads
-   an empty signature), or during a fade or a text box; else the minimap. *)
+   an empty signature), or during a fade or a text box; else the A prompt,
+   the party count and the minimap. *)
 let read_frame steps =
   let look = steps.S.read_screen () in
   if
     (not look.frame_read) || look.fade_black || look.fade_white
     || look.dialog_box
   then nothing
-  else { minimap = look.minimap }
+  else
+    {
+      talk_prompt = Some look.interact_prompt;
+      wild_zone = None;
+      near_rocks = None;
+      party = steps.S.read_party_slots ();
+      minimap = look.minimap;
+    }
 
 (* The same read on [agreeing_frames] reads in a row, 500 ms apart, within
    [frame_budget] reads; nothing when they never agree. *)
@@ -73,8 +116,41 @@ and read_next steps ~frame ~last ~agreeing =
   if agreeing >= agreeing_frames && read <> nothing then read
   else read_agreed steps ~frame:(frame + 1) ~last:(Some read) ~agreeing
 
-let read steps = read_agreed steps ~frame:0 ~last:None ~agreeing:0
-let confirmed known r = known.minimap = r.minimap
+type pin_fields = { in_zone : bool; at_rocks : bool }
+(** The fields the map's pin answers that a signature names. *)
+
+let names_pin s =
+  {
+    in_zone = Option.is_some s.wild_zone;
+    at_rocks = Option.is_some s.near_rocks;
+  }
+
+let either a b =
+  { in_zone = a.in_zone || b.in_zone; at_rocks = a.at_rocks || b.at_rocks }
+
+(* With a signature naming the wild zone or the rocks, also the map's pin (as
+   PokemonLZA_AutoStory.cpp reads the start position): in Wild Zone 1 or not,
+   near Taunie's rocks or not. *)
+let read steps (asked : pin_fields) =
+  let r = read_agreed steps ~frame:0 ~last:None ~agreeing:0 in
+  if (asked.in_zone || asked.at_rocks) && r <> nothing then
+    let pin = Plza_walk.Map_walk.read_pin (S.walk_game_steps steps) in
+    let answer yes f = if yes then Option.map f pin else None in
+    {
+      r with
+      wild_zone = answer asked.in_zone Plza_walk.Wild_zone_one.pin_in_zone;
+      near_rocks = answer asked.at_rocks Plza_walk.Wild_zone_one.near_rocks;
+    }
+  else r
+
+(* Every field the signature names reads the same. *)
+let confirmed known r =
+  let agrees k v = Option.is_none k || k = v in
+  agrees known.talk_prompt r.talk_prompt
+  && agrees known.wild_zone r.wild_zone
+  && agrees known.near_rocks r.near_rocks
+  && agrees known.party r.party
+  && agrees known.minimap r.minimap
 
 let log_check steps ~checkpoint_id verdict screen =
   steps.S.log
@@ -94,7 +170,12 @@ let start_screen r known ~at_end =
 (* The start, or the end: a reload past the checkpoint's own autosave lands
    at its end, and its events skip there (skip_if). *)
 let confirm steps ~checkpoint_id known ~at_end =
-  let r = read steps in
+  let asked =
+    Option.fold ~none:(names_pin known)
+      ~some:(fun e -> either (names_pin known) (names_pin e))
+      at_end
+  in
+  let r = read steps asked in
   let screen = start_screen r known ~at_end in
   if r <> nothing && confirmed known r then
     Ok (log_check steps ~checkpoint_id "START CHECKED" screen)
@@ -144,7 +225,7 @@ let check_end steps ~checkpoint_id (execution : Json_field.obj) =
   match at_end with
   | None -> Ok ()
   | Some known ->
-      let r = read steps in
+      let r = read steps (names_pin known) in
       let screen =
         Printf.sprintf "the screen reads (%s), its end is (%s)" (to_string r)
           (to_string known)

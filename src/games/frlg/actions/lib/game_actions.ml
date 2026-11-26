@@ -121,3 +121,4 @@ let handlers ctx =
   @ Mail_glitch_use.handlers ~log:ctx.log ~party:ctx.party
   @ Candy_actions.handlers ~log:ctx.log ~party:ctx.party
   @ Ace_mail.handlers ~log:ctx.log ~party:ctx.party
+  @ Box_rename.handlers ~log:ctx.log

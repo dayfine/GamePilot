@@ -48,14 +48,34 @@ let min_male_share = 0.15
 let min_red_over_green = 15.
 let min_green_over_blue = 20.
 
+(* The title menu's arrow: x 145-149, a row's glyph rows (y 58 + 16 i). *)
+let title_menu_rows = 4
+let title_menu_arrow_left = 143
+let title_menu_arrow_width = 9
+let title_menu_first_top = 59
+let title_menu_pitch = 16
+let title_menu_arrow_height = 11
+
+let title_menu_box i =
+  box ~x:title_menu_arrow_left
+    ~y:(title_menu_first_top + (title_menu_pitch * i))
+    ~w:title_menu_arrow_width ~h:title_menu_arrow_height
+
+let title_menu =
+  Cursor_column.make ~prefix:"pc_box.title_menu"
+    (List.init title_menu_rows title_menu_box)
+
+let title_menu_row m = Cursor_column.row title_menu m
+
 let probes =
-  [
-    Solid_color.probe ~id:panel_id panel_box;
-    Solid_color.probe ~id:item_id item_box;
-    Color_count.probe ~id:shadow_id shadow_box shadow;
-    Color_count.probe ~id:wallpaper_id wallpaper_box anything;
-    Color_count.probe ~id:male_id male_box male_blue;
-  ]
+  Cursor_column.probes title_menu
+  @ [
+      Solid_color.probe ~id:panel_id panel_box;
+      Solid_color.probe ~id:item_id item_box;
+      Color_count.probe ~id:shadow_id shadow_box shadow;
+      Color_count.probe ~id:wallpaper_id wallpaper_box anything;
+      Color_count.probe ~id:male_id male_box male_blue;
+    ]
 
 let panel_occupied m =
   Option.map

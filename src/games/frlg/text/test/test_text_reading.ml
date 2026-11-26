@@ -26,6 +26,7 @@ let screens =
     "pokedex_numbers";
     "pc_message";
     "naming_entry";
+    "box_title";
   ]
 
 let glyphs =
@@ -119,6 +120,7 @@ let reading (e : expectation) =
   let m : Effects.measurements = { seq = 0; t_ms = 0.; probes } in
   let picked =
     if e.line = mail_field then Mail_fields.pick glyphs candidates m
+    else if e.line = "pc_box_title" then Box_title.pick glyphs candidates m
     else if String.starts_with ~prefix:"naming_entry." e.line then
       let line, max_score = line_of_id e.line in
       Line_reading.pick_preferring ~max_score line
