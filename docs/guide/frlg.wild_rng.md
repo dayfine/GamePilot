@@ -29,7 +29,6 @@ were made on has SID 9011, read from the game's memory.
 Each save also needs its seed shift measured (below).
 
 <!-- generated:needs -->
-- 1 free party slot (joining: ekans in 02-shiny-ekans)
 - a member holds no Mail (pc_deposit)
 - a member knows fly (fly)
 - the thunder badge (fly)
