@@ -4,11 +4,11 @@
   "execution": {},
   "metadata": {
     "phase": "testing",
-    "source": "played from a new game; starts at the rock pile autosave on the side street (where a reload lands), Taunie gone; ends at the game's autosave in the rooftop scene; starts where 03.03 ends; the fork's plza-03.03b.plan.json (plza/lean)",
+    "source": "played from a new game; starts at the rock pile autosave on the side street (where a reload lands), Taunie gone; ends at the game's autosave in the rooftop scene; starts where 15-rock-pile-scene ends; the fork's plza-03.03b.plan.json (plza/lean)",
     "postconditions": {}
   },
   "checkpoint": {
-    "id": "03.03b",
+    "id": "16-up-to-the-rooftop",
     "title": "Up the ladder to the rooftop scene",
     "start": {
       "place": "LumioseCity"

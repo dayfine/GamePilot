@@ -29,20 +29,18 @@ type rules_guide = {
   needs : plan_dir:string -> string list -> (string, string) result;
   preflight : plan_dir:string -> string list -> (string, string) result;
   commands : R.t -> args:string -> string;
-  order : string -> string -> int;  (** The checkpoints' run order. *)
 }
 
 type plans = { dir : string; ids : string list }
 
-let plans_of ~guide (p : R.t) =
+let plans_of (p : R.t) =
   match p.checkpoints with
   | None -> Error (p.id ^ " has no checkpoints")
   | Some path -> (
       match R.locate path with
       | None -> Error (path ^ " not found from here: run in the repo")
       | Some dir ->
-          let compare = (guide p).order in
-          let* ids = Engine_series.Plan_folder.checkpoint_ids ~compare dir in
+          let* ids = Engine_series.Plan_folder.checkpoint_ids dir in
           Ok { dir; ids })
 
 (* FROM..TO's two ids; one id is both. *)
@@ -73,7 +71,7 @@ let digest plans ids =
   |> fun hex -> String.sub hex 0 12
 
 let checkpoints ~guide p arg =
-  let* plans = plans_of ~guide p in
+  let* plans = plans_of p in
   let* ids = range plans arg in
   let* rows = (guide p).rows ~plan_dir:plans.dir ids in
   Ok
@@ -84,13 +82,13 @@ let checkpoints ~guide p arg =
 
 (* The needs or pre-flight block of the checkpoints [arg] names, from the
    program's rules ([block]). *)
-let of_range ~guide block p arg =
-  let* plans = plans_of ~guide p in
+let of_range block p arg =
+  let* plans = plans_of p in
   let* ids = range plans arg in
   block ~plan_dir:plans.dir ids
 
-let needs ~guide p arg = of_range ~guide (guide p).needs p arg
-let preflight ~guide p arg = of_range ~guide (guide p).preflight p arg
+let needs ~guide p arg = of_range (guide p).needs p arg
+let preflight ~guide p arg = of_range (guide p).preflight p arg
 let backend_label = function R.Mgba -> "mGBA" | R.Switch -> "the Switch"
 
 (* The Switch with where its game picture is (the descriptor's viewport). *)
@@ -138,7 +136,7 @@ let commands ~guide (p : R.t) arg =
     match p.checkpoints with
     | None -> Ok ("cd src && opam exec -- dune exec -- gamepilot run " ^ p.id)
     | Some _ ->
-        let* plans = plans_of ~guide p in
+        let* plans = plans_of p in
         let* ids = range plans arg in
         Ok ((guide p).commands p ~args:(program_args p ids))
   in

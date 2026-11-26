@@ -9,11 +9,11 @@
   },
   "metadata": {
     "phase": "testing",
-    "source": "played from a new game; starts just outside Wild Zone 1's far gate; ends in the lab lobby; starts where 03.08b ends; the fork's plza-03.09.plan.json (plza/lean)",
+    "source": "played from a new game; starts just outside Wild Zone 1's far gate; ends in the lab lobby; starts where 23-out-of-wild-zone-1 ends; the fork's plza-03.09.plan.json (plza/lean)",
     "postconditions": {}
   },
   "checkpoint": {
-    "id": "03.09",
+    "id": "24-into-research-lab",
     "title": "From Wild Zone 1's gate into the Research Lab",
     "start": {
       "place": "LumioseCity"

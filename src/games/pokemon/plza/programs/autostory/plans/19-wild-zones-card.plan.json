@@ -8,11 +8,11 @@
   },
   "metadata": {
     "phase": "testing",
-    "source": "played from a new game; starts outside the Center where 03.04's autosave ends; ends on the autosave in wild_zones_tutorial; starts where 03.04 ends; the fork's plza-03.06.plan.json (plza/lean)",
+    "source": "played from a new game; starts outside the Center where 18-pokemon-center's autosave ends; ends on the autosave in wild_zones_tutorial; starts where 18-pokemon-center ends; the fork's plza-03.06.plan.json (plza/lean)",
     "postconditions": {}
   },
   "checkpoint": {
-    "id": "03.06",
+    "id": "19-wild-zones-card",
     "title": "To the Wild Zones card",
     "start": {
       "place": "LumioseCity",

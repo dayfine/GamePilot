@@ -4,11 +4,11 @@
   "execution": {},
   "metadata": {
     "phase": "testing",
-    "source": "played from a new game; starts at the Room 202 autosave, where 02.05 ends; autosaves at wake_up's end; the fork's plza-02.06.plan.json (plza/lean)",
+    "source": "played from a new game; starts at the Room 202 autosave, where 09-to-room-202 ends; autosaves at wake_up's end; the fork's plza-02.06.plan.json (plza/lean)",
     "postconditions": {}
   },
   "checkpoint": {
-    "id": "02.06",
+    "id": "10-night-in-room-202",
     "title": "Main Mission 02: the night in Room 202",
     "start": {
       "place": "LumioseCity"

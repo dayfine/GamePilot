@@ -4,11 +4,11 @@
   "execution": {},
   "metadata": {
     "phase": "testing",
-    "source": "played from a new game; starts at the autosave in front of Hotel Z, where 02.02 ends; ends at the lobby autosave; the fork's plza-02.03.plan.json (plza/lean)",
+    "source": "played from a new game; starts at the autosave in front of Hotel Z, where 06-to-hotel-z ends; ends at the lobby autosave; the fork's plza-02.03.plan.json (plza/lean)",
     "postconditions": {}
   },
   "checkpoint": {
-    "id": "02.03",
+    "id": "07-hotel-z-lobby",
     "title": "Main Mission 02: into the Hotel Z lobby",
     "start": {
       "place": "LumioseCity"

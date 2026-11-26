@@ -4,11 +4,11 @@
   "execution": {},
   "metadata": {
     "phase": "testing",
-    "source": "played from a new game; ends outside Hotel Z at the autosave after the Main Menu card; starts where 03.01 ends; the fork's plza-03.02.plan.json (plza/lean)",
+    "source": "played from a new game; ends outside Hotel Z at the autosave after the Main Menu card; starts where 12-down-to-the-lobby ends; the fork's plza-03.02.plan.json (plza/lean)",
     "postconditions": {}
   },
   "checkpoint": {
-    "id": "03.02",
+    "id": "13-out-of-hotel-z",
     "title": "Out of Hotel Z",
     "start": {
       "place": "HotelZ"

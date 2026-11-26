@@ -1,5 +1,5 @@
 (* PLZA's rules through the engine (Plza_engine = Program_engine.Make
-   over Plza_rules): 01.01's plan decodes with zones and walks, a walk's args
+   over Plza_rules): 02-platform-to-plaza's plan decodes with zones and walks, a walk's args
    are checked as PokemonLZA_AutoStoryActionTable.cpp checks them (under our
    names), the runner sends a walk to
    the game's own handler and checks zones, and what a run keeps reads back. *)
@@ -12,7 +12,7 @@ let plan_text ?(start = {|{"place": "LumioseCity"}|}) ?(postconditions = "{}")
     events =
   Printf.sprintf
     {|{"format": "gamepilot-checkpoint/1", "game": "plza", "execution": {},
-       "checkpoint": {"id": "01.01", "title": "The platform to Main Mission 01",
+       "checkpoint": {"id": "02-platform-to-plaza", "title": "The platform to Main Mission 01",
          "start": %s, "metadata": {"postconditions": %s},
          "events": [%s]}}|}
     start postconditions
@@ -25,7 +25,7 @@ let walk ?(after = "") id args =
   Printf.sprintf {|{"id": "%s", "kind": "walk", "args": %s%s}|} id args
     (if after = "" then "" else {|, "declared_after": |} ^ after)
 
-(* 01.01 as the C++ plan has it, its other actions game actions. *)
+(* 02-platform-to-plaza as the C++ plan has it, its other actions game actions. *)
 let platform_events =
   [
     action "on_platform" "wait_for_platform";
@@ -54,9 +54,12 @@ let walk_args args =
 
 let decode_cases =
   [
-    case "01.01's outline: a zone start, a walk among the engine's kinds"
+    case
+      "02-platform-to-plaza's outline: a zone start, a walk among the engine's \
+       kinds"
       (fun () -> Plan_text.outline (plan ()))
-      "plza 01.01 from LumioseCity: 3 game_action, 1 walk, 2 scene";
+      "plza 02-platform-to-plaza from LumioseCity: 3 game_action, 1 walk, 2 \
+       scene";
     case "the walk to the plaza: its legs, its end, a zone declared after"
       (event "platform_to_plaza")
       "platform_to_plaza: walk [0, 4500] [90, 10000] until fade_white => \
@@ -185,8 +188,8 @@ let run_cases =
       "passed";
     case "the zone declared after, elsewhere: the walk fails"
       (fun () -> outcome ())
-      "01.01 event 3 (platform_to_plaza): declared after at LumioseCity/plaza, \
-       but the game reads LumioseCity/platform";
+      "02-platform-to-plaza event 3 (platform_to_plaza): declared after at \
+       LumioseCity/plaza, but the game reads LumioseCity/platform";
     case "a game that reads no zone (PLZA today): nothing to check, passed"
       (fun () -> outcome ~reads_zone:false ())
       "passed";

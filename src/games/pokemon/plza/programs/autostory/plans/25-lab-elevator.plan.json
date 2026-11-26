@@ -4,11 +4,11 @@
   "execution": {},
   "metadata": {
     "phase": "testing",
-    "source": "played from a new game; starts at the lobby save, ends on the 3F autosave after the ride. Start signature is a guess; starts where 03.09 ends; the fork's plza-03.10.plan.json (plza/lean)",
+    "source": "played from a new game; starts at the lobby save, ends on the 3F autosave after the ride. Start signature is a guess; starts where 24-into-research-lab ends; the fork's plza-03.10.plan.json (plza/lean)",
     "postconditions": {}
   },
   "checkpoint": {
-    "id": "03.10",
+    "id": "25-lab-elevator",
     "title": "Up the Research Lab's elevator to the Director's Office",
     "start": {
       "place": "PokemonResearchLab"

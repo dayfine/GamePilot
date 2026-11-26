@@ -4,11 +4,11 @@
   "execution": {},
   "metadata": {
     "phase": "testing",
-    "source": "played from a new game; starts ~3 tiles in front of the elevator, facing it, where 02.04 ends; ends at the autosave on entering Room 202; the fork's plza-02.05.plan.json (plza/lean)",
+    "source": "played from a new game; starts ~3 tiles in front of the elevator, facing it, where 08-hotel-check-in ends; ends at the autosave on entering Room 202; the fork's plza-02.05.plan.json (plza/lean)",
     "postconditions": {}
   },
   "checkpoint": {
-    "id": "02.05",
+    "id": "09-to-room-202",
     "title": "Main Mission 02: Hotel Z elevator to Room 202",
     "start": {
       "place": "LumioseCity"

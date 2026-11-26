@@ -4,11 +4,11 @@
   "execution": {},
   "metadata": {
     "phase": "testing",
-    "source": "played from a new game; starts in free control alone in the plaza, where 02.01 ends; ends at the autosave in front of Hotel Z; the fork's plza-02.02.plan.json (plza/lean)",
+    "source": "played from a new game; starts in free control alone in the plaza, where 05-battle-brigitte ends; ends at the autosave in front of Hotel Z; the fork's plza-02.02.plan.json (plza/lean)",
     "postconditions": {}
   },
   "checkpoint": {
-    "id": "02.02",
+    "id": "06-to-hotel-z",
     "title": "Main Mission 02: after Brigitte to Hotel Z",
     "start": {
       "place": "LumioseCity"

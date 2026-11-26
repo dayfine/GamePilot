@@ -3,13 +3,15 @@
     action table (PokemonLZA_AutoStoryActionTable.cpp) runs its actions, each
     action checking its own args ([bad_args]); a plan that names an action with
     no handler yet fails [no_handler]. An event's [skip_if] flags are read from
-    the screen ({!Resume_flags}), where the fork resumes 01.03 by an option.
+    the screen ({!Resume_flags}), where the fork resumes 04-starter-and-andi by
+    an option.
 
     PLZA reads no position, and saves only by autosave: [save] fails; [reload]
     is the caller's (back to the latest autosave). *)
 
 val walk_only : string -> bool
-(** Whether a checkpoint's runs are walked: its id is before ["03.03"]. *)
+(** Whether a checkpoint's runs are walked: its id is before
+    ["15-rock-pile-scene"]. *)
 
 val make :
   Plza_story.Steps.game_steps ->

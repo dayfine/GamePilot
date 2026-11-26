@@ -4,11 +4,11 @@
   "execution": {},
   "metadata": {
     "phase": "testing",
-    "source": "played from a new game; starts in free control in the night alley, where 01.03 ends; ends at the autosave after Brigitte; the fork's plza-02.01.plan.json (plza/lean)",
+    "source": "played from a new game; starts in free control in the night alley, where 04-starter-and-andi ends; ends at the autosave after Brigitte; the fork's plza-02.01.plan.json (plza/lean)",
     "postconditions": {}
   },
   "checkpoint": {
-    "id": "02.01",
+    "id": "05-battle-brigitte",
     "title": "Main Mission 02: Battle Zone to Brigitte",
     "start": {
       "place": "LumioseCity"

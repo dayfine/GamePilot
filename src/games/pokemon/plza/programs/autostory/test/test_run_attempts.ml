@@ -7,7 +7,7 @@ let off_start =
   A.Failed
     {
       at = "start";
-      reason = "chain_off_start: the run is not at 03.04's start";
+      reason = "chain_off_start: the run is not at 18-pokemon-center's start";
       repeats = true;
       off_start = true;
     }
@@ -108,7 +108,7 @@ let cases =
     case "a run that began with a reload: no second reload"
       (fun () -> reloads (attempts ~reload_first:true [ off_start ]))
       "reload";
-    case "no start to go back to (01.00b): no reload"
+    case "no start to go back to (01-to-the-platform): no reload"
       (fun () -> reloads (attempts ~has_start:false [ off_start ]))
       "as is";
     case "no start to go back to: fails at start"

@@ -5,9 +5,9 @@
     checkpoint's start ([chain_off_start], from the start signature or an
     action's own start check) and did not begin with a reload is followed by one
     that does, whose start is checked again. A checkpoint with no [start]
-    (01.00b, made by hand) has no autosave to go back to, and one off its start
-    after a reload stays off it: both fail at once, as a failure that repeats.
-    Where it differs: the fork's chain stops on [chain_off_start]
+    (01-to-the-platform, made by hand) has no autosave to go back to, and one
+    off its start after a reload stays off it: both fail at once, as a failure
+    that repeats. Where it differs: the fork's chain stops on [chain_off_start]
     (PokemonLZA_AutoStoryGame.cpp); here a checkpoint left off its start by a
     stopped run, or by the checkpoint before it, gets the reload a person would
     give it, and the log says so.

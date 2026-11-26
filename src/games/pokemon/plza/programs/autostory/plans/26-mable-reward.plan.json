@@ -4,11 +4,11 @@
   "execution": {},
   "metadata": {
     "phase": "testing",
-    "source": "played from a new game; starts on 3F at the elevator, as the 03.10 autosave reloads. Chained start and start signature are guesses; starts where 03.10 ends; the fork's plza-03.11.plan.json (plza/lean)",
+    "source": "played from a new game; starts on 3F at the elevator, as the 25-lab-elevator autosave reloads. Chained start and start signature are guesses; starts where 25-lab-elevator ends; the fork's plza-03.11.plan.json (plza/lean)",
     "postconditions": {}
   },
   "checkpoint": {
-    "id": "03.11",
+    "id": "26-mable-reward",
     "title": "Mable's research, the Rock Smash TM",
     "start": {
       "place": "PokemonResearchLab"

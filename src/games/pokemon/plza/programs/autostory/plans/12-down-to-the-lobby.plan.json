@@ -4,11 +4,11 @@
   "execution": {},
   "metadata": {
     "phase": "testing",
-    "source": "played from a new game. No reload_when_chained: 02.07's save is unverified, so a reload could load an older save; starts where 02.07 ends; the fork's plza-03.01.plan.json (plza/lean)",
+    "source": "played from a new game. No reload_when_chained: 11-first-evening's save is unverified, so a reload could load an older save; starts where 11-first-evening ends; the fork's plza-03.01.plan.json (plza/lean)",
     "postconditions": {}
   },
   "checkpoint": {
-    "id": "03.01",
+    "id": "12-down-to-the-lobby",
     "title": "Down to the lobby",
     "start": {
       "place": "HotelZ"

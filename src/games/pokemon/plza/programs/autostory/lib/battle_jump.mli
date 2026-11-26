@@ -7,8 +7,8 @@
     battle's start) that sees the battle HUD fails [battle_on_screen], and the
     run jumps to the next [story_battle], skipping the events between. Logged as
     the fork logs it:
-    ["[Event] 01.03: battle on screen during approach_starter: jumping to
-     andi_battle, skipping andi_battle_start"].
+    ["[Event] 04-starter-and-andi: battle on screen during approach_starter:
+     jumping to andi_battle, skipping andi_battle_start"].
 
     Where it differs: the engine's runner has no jump, so the stopped event
     passes and each skipped event passes at once with no input (the runner logs

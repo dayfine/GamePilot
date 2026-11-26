@@ -4,27 +4,22 @@
     across runs) and run folder (Live_run.Daemon_run), as FireRed's, but without
     save states or an in-game save: PLZA saves by autosave. A plan's start
     signature is checked before each run (Plza_autostory.Start_signature). The
-    series' first run starts where the console is, put there by hand (01.00b on
-    the new game's Confirm Choices, 01.01 on the platform); every later run of
-    the same checkpoint first goes back to the latest autosave
-    (Plza_autostory.Game_reload), which 01.00b cannot (its start is no save):
-    its second run is refused. Within a run (Plza_autostory.Run_attempts), a
-    checkpoint found off its start (its start signature, or an action's own
-    start check) reloads once and checks again, and a plan's [retries] reload
-    and try again; each attempt is its own run folder. A passing checkpoint
-    hands the console to the next one as it ends. Its daemons keep the console
-    awake with the right stick (keepawake_stick), and each checkpoint wakes the
-    screen before it reads it (Plza_story.Screen_wake). The watch page shows
-    each run's plan, its events moving with the runner (Story_game.run_watched),
-    and the run. *)
+    series' first run starts where the console is, put there by hand
+    (01-to-the-platform on the new game's Confirm Choices, 02-platform-to-plaza
+    on the platform); every later run of the same checkpoint first goes back to
+    the latest autosave (Plza_autostory.Game_reload), which 01-to-the-platform
+    cannot (its start is no save): its second run is refused. Within a run
+    (Plza_autostory.Run_attempts), a checkpoint found off its start (its start
+    signature, or an action's own start check) reloads once and checks again,
+    and a plan's [retries] reload and try again; each attempt is its own run
+    folder. A passing checkpoint hands the console to the next one as it ends.
+    Its daemons keep the console awake with the right stick (keepawake_stick),
+    and each checkpoint wakes the screen before it reads it
+    (Plza_story.Screen_wake). The watch page shows each run's plan, its events
+    moving with the runner (Story_game.run_watched), and the run. *)
 
 val load_plan : plan_dir:string -> string -> (Plza_engine.Plan.t, string) result
 (** The plan [<plan_dir>/<id>.plan.json], decoded. *)
-
-val checkpoint_order : string -> string -> int
-(** PLZA's checkpoints run in plain name order: 01.00b, 03.02b and 03.03b,
-    03.03c follow 01.00a, 03.02 and 03.03 (the checkpoint rows of the fork's
-    PokemonLZA_AutoStoryPlan.h). *)
 
 val run_series :
   program:(string * string) list ->

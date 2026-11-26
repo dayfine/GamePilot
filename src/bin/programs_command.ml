@@ -15,11 +15,9 @@ module R = Program_registry
 let usage = "  gamepilot programs\n"
 let ( let* ) = Result.bind
 
-let plan_lines ~needs ~compare path dir =
+let plan_lines ~needs path dir =
   let ids =
-    Result.value
-      (Engine_series.Plan_folder.checkpoint_ids ~compare dir)
-      ~default:[]
+    Result.value (Engine_series.Plan_folder.checkpoint_ids dir) ~default:[]
   in
   let needs =
     match needs dir with Ok n -> n | Error e -> "not derived: " ^ e
@@ -35,7 +33,7 @@ let checkpoint_lines (p : R.t) =
   | Some (path, None) -> [ "checkpoints: " ^ path ^ " (not found from here)" ]
   | Some (path, Some dir) ->
       let family = Checkpoint_families.of_program (Some p) in
-      plan_lines ~needs:family.chain_needs ~compare:family.guide.order path dir
+      plan_lines ~needs:family.chain_needs path dir
 
 let show (p : R.t) =
   Printf.printf "    %s  %s  [%s]  viewport %s\n" p.id p.name

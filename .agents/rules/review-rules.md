@@ -410,7 +410,7 @@ not nicknames: `03-trade-mr-mime.plan.json`, not `mg-03.plan.json`.
 - Bad: `mg-03.plan.json`, `03-trade-mimien.plan.json`.
 - Good: `03-trade-mr-mime.plan.json`.
 - Find: recipe (`su-01`, `tt-01` are known):
-  `ls src/games/*/programs/*/plans | grep -vE '^[0-9]{2}-[a-z0-9]+(-[a-z0-9]+){0,4}\.plan\.json$|:$|^$'`.
+  `ls src/games/*/programs/*/plans src/games/pokemon/*/programs/*/plans | grep -vE '^[0-9]{2}-[a-z0-9]+(-[a-z0-9]+){0,4}\.plan\.json$|:$|^$'`.
 
 ### R23 No runtime dependency on Packages; per-language assets are committed
 

@@ -8,11 +8,11 @@
   },
   "metadata": {
     "phase": "testing",
-    "source": "played from a new game; starts outside the zone's gate, where 03.06's autosave reloads; autosaves at after_catches; starts where 03.06 ends; the fork's plza-03.07.plan.json (plza/lean)",
+    "source": "played from a new game; starts outside the zone's gate, where 19-wild-zones-card's autosave reloads; autosaves at after_catches; starts where 19-wild-zones-card ends; the fork's plza-03.07.plan.json (plza/lean)",
     "postconditions": {}
   },
   "checkpoint": {
-    "id": "03.07",
+    "id": "20-first-catches",
     "title": "Into Wild Zone 1: first catches",
     "start": {
       "place": "LumioseCity",
