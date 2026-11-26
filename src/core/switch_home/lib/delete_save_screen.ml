@@ -14,8 +14,6 @@ let pixels ({ x; y; w; h } : Wire.box) : Wire.box =
     h = h /. frame_height;
   }
 
-let native (p : Wire.box) = p.x = 0. && p.y = 0. && p.w = 1. && p.h = 1.
-
 (* The game page: the top edge of "Delete Save Data for <user>"'s blue frame
    (y 174..180; on Manage Software's page the row's frame starts at 210). The
    icon: 90 px at (90, 30), searched 10 px round. *)

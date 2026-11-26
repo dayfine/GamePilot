@@ -5,6 +5,9 @@
     frame) a box is the fork's unchanged; on the GBA app's ([nso-gba]) it is
     clipped to the picture. *)
 
+val native : Wire.box -> bool
+(** The picture is the whole frame: the daemon's [native] viewport. *)
+
 val clipped : picture:Wire.box -> Wire.box -> Wire.box option
 (** The box's part inside the picture, relative to the picture; [None] when no
     part is inside. *)
