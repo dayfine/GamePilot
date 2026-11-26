@@ -32,6 +32,9 @@ type console = {
   mutable col : int;
   mutable text : string;
   mutable shift : bool;
+  mutable letters : bool;
+      (** the keyboard's letters mode: off in Simplified Chinese's Pinyin, where
+          a letter key types a Pinyin syllable, written here as "*" *)
   mutable presses : int;
   first_look : int;
   accept_pluses : int;  (** + presses the keyboard takes before Confirm *)
@@ -43,7 +46,9 @@ let logos_ms = 15_000.
 let read_ms = 33.
 let keyboard_slide_ms = 500.
 let ring = 12
-let rows = 4
+let rows = 5
+let bottom_row = 4
+let english_key = 3
 let list_rows = 5
 let look_columns = 4
 let layout = [| "1234567890-"; "qwertyuiop/"; "asdfghjkl:'"; "zxcvbnm,.?!" |]
@@ -68,13 +73,17 @@ let on_language k entry b =
       in
       k.phase <- Languages ((c * list_rows) + r)
 
+let typed k ch =
+  if k.letters || not (Char.lowercase_ascii ch <> Char.uppercase_ascii ch) then
+    String.make 1 (if k.shift then Char.uppercase_ascii ch else ch)
+  else "*"
+
 let on_keyboard k b =
   match b with
   | Wire.LStick -> k.shift <- true
+  | Wire.A when k.row = bottom_row -> k.letters <- k.col = english_key
   | Wire.A when k.col < ring - 1 ->
-      let ch = layout.(k.row).[k.col] in
-      k.text <-
-        k.text ^ String.make 1 (if k.shift then Char.uppercase_ascii ch else ch);
+      k.text <- k.text ^ typed k layout.(k.row).[k.col];
       k.shift <- false
   | Wire.Right -> k.col <- (k.col + 1) mod ring
   | Wire.Left -> k.col <- (k.col + ring - 1) mod ring
@@ -144,7 +153,7 @@ let read k () : S.t =
         S.nothing with
         name_keyboard = true;
         keyboard_cursor =
-          (if k.col = ring - 1 then None
+          (if k.col = ring - 1 || k.row = bottom_row then None
            else Some { Switch_home.Code_keyboard.row = k.row; col = k.col });
         text_pixels = 110 * String.length k.text;
       }
@@ -158,7 +167,8 @@ let launch k () =
   else Error "PLZA's tile did not start"
 
 let console ?(dimmed = false) ?(home = true) ?(first_look = 6)
-    ?(accept_pluses = 1) ?(launches = true) ?(picker_lights = true) () =
+    ?(accept_pluses = 1) ?(launches = true) ?(picker_lights = true)
+    ?(letters = true) () =
   {
     now = 0.;
     phase = (if home then Home else Gone);
@@ -169,6 +179,7 @@ let console ?(dimmed = false) ?(home = true) ?(first_look = 6)
     col = 0;
     text = "";
     shift = false;
+    letters;
     presses = 0;
     first_look;
     accept_pluses;
@@ -227,6 +238,14 @@ let with_name name = { C.default with name }
 let japanese_7 : C.t = { language = Japanese; look = 7; name = "1" }
 let chinese_8 : C.t = { language = Chinese_traditional; look = 8; name = "q" }
 
+let simplified_3 : C.t =
+  { language = Chinese_simplified; look = 3; name = "Kosmos" }
+
+(* Simplified Chinese's keyboard, opened in Pinyin (or [letters]); two + to
+   Confirm Choices, as Traditional's. *)
+let pinyin ?(letters = false) () =
+  console ~first_look:3 ~accept_pluses:2 ~letters ()
+
 let runs =
   [
     case "the defaults: passed" (played outcome (console ())) "passed";
@@ -263,6 +282,37 @@ let runs =
     case "Traditional Chinese: look 8"
       (played look ~choices:chinese_8 (console ~accept_pluses:2 ()))
       "8";
+    case "Simplified Chinese: passed"
+      (played outcome ~choices:simplified_3 (pinyin ()))
+      "passed";
+    case "Simplified Chinese: the ninth entry"
+      (played entry ~choices:simplified_3 (pinyin ()))
+      "8";
+    case "Simplified Chinese: Kosmos typed after the English key"
+      (played name ~choices:simplified_3 (pinyin ()))
+      "Kosmos";
+    case "Simplified Chinese opened in English: Kosmos typed"
+      (played name ~choices:simplified_3 (pinyin ~letters:true ()))
+      "Kosmos";
+    case "Simplified Chinese: 54 presses, 9 of them to the English key and back"
+      (played presses ~choices:simplified_3 (pinyin ()))
+      "54";
+    case "Simplified Chinese: the run without the English key types Pinyin"
+      (fun () ->
+        let k = pinyin () in
+        k.phase <- Keyboard { since = -1000.; pluses = 0 };
+        ignore
+          (Switch_home.Keyboard_typing.type_text
+             {
+               read_cursor = (fun () -> (read k ()).keyboard_cursor);
+               read_text_pixels = (fun () -> (read k ()).text_pixels);
+               submit = submit k;
+               log = ignore;
+             }
+             "Kosmos"
+            : (unit, string) result);
+        k.text)
+      "******";
     case "not on HOME: refused"
       (played outcome (console ~home:false ()))
       ("new_game_refused: AutoStory: 00.00-new-game starts a new game (no \
@@ -318,10 +368,9 @@ let problems =
     case "Korean, six Hangul characters"
       (refused { C.default with language = Korean; name = hangul_6 })
       "AutoStory: the program cannot type a name on the ko keyboard (Hangul).";
-    case "Simplified Chinese (ours: its keyboard opens in Pinyin)"
+    case "Simplified Chinese: typed after its English key"
       (refused { C.default with language = Chinese_simplified; name = "q" })
-      "AutoStory: the program cannot type a name on the zh-Hans keyboard \
-       (Pinyin).";
+      "no problem";
     case "digits and the first page's symbols"
       (refused (with_name "a1-/:',.?!"))
       "no problem";
