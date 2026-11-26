@@ -9,7 +9,7 @@
    appends the calls [g] saw, in order, in [...] after [text], so one string
    checks both the outcome and the exact presses. *)
 
-open Frlg_actions
+open Frlg_battle
 open Level_up_fake
 
 let case name input expectation = { Table_test.name; input; expectation }
@@ -91,6 +91,12 @@ let level_ups =
     case "an evolution cancelled once, then waited out"
       (settle [ stats; evolving; evolving; Back ] (policy ()))
       "1 level; learned none; declined none; evolution cancelled [hold B, wait]";
+    case "a move learned over a slot rule"
+      (settle
+         ~lists:[ offer "recycle" ]
+         [ stats; Move_prompt; Back ]
+         (policy ~rules:[ slot_rule "recycle" 2 ] ()))
+      "1 level; learned recycle; declined none; evolution none [yes, forget 2]";
     case "nothing shows"
       (settle [ stats ] (policy ()))
       "failed: nothing to answer showed []";

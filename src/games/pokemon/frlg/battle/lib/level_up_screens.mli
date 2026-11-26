@@ -9,10 +9,11 @@ type context = {
   question : Effects.measurements -> bool;  (** the context's YES/NO box *)
   back : Effects.measurements -> bool;  (** where the context ends *)
 }
+(** The screens specific to one level-up context (party menu or battle). *)
 
 val probes : Wire.probe_spec list
-(** The shared screens' readers': the battle's ({!Frlg_battle.Battle_look}),
-    which hold the evolution scene, its YES/NO and the summary. *)
+(** The shared screens' readers': the battle's ({!Battle_look.probes}), which
+    hold the evolution scene, its YES/NO and the summary. *)
 
 val forget_list : Effects.measurements -> bool
 (** The summary's moves page with its cursor read. *)

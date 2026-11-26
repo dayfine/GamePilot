@@ -85,22 +85,21 @@ let rule_cases : Table_test.case list =
     case "text with no arrow is left to run on until 6 s without a press"
       [ (text, 1500.); (text, 5900.); (text, 6000.) ]
       "look, look, press B";
-    case "after a level-up, an evolution never gets a press"
+    case "after a level-up, an evolution is reported to Level_up (never B)"
       [
         ({ text with level_up = true }, 1500.);
         (evolving, 2000.);
         (evolving, 10000.);
-        (evolving, 30000.);
       ]
-      "press A, look, look, look";
+      "level up, evolution, evolution";
     case
       "with no level-up, text with no HP box (Lea & Jed's defeat line) gets B \
        after 6 s"
       [ (evolving, 1000.); (evolving, 5900.); (evolving, 6000.) ]
       "look, look, press B";
-    case "the level-up box gets A"
+    case "the level-up box is reported at once"
       [ ({ text with level_up = true }, 1500.) ]
-      "press A";
+      "level up";
     case "a stray move menu gets B"
       [ ({ text with move_menu = true }, 2000.) ]
       "press B";

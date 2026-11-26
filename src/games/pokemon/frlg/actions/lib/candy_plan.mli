@@ -1,7 +1,8 @@
 (** The Rare Candy actions as data: whom a candy goes to and what its level
-    brings is answered with ({!Level_up_policy.policy}: which offered moves it
-    learns and over what, whether it may evolve), and a leveling goal on top of
-    that ({!goal}). Pure: {!Rare_candy} and {!Candy_level} run them.
+    brings is answered with ({!Frlg_battle.Level_up_policy.policy}: which
+    offered moves it learns and over what, whether it may evolve), and a
+    leveling goal on top of that ({!goal}). Pure: {!Rare_candy} and
+    {!Candy_level} run them.
 
     A move is learned only where a rule names it: the game asks "Should a move
     be deleted and replaced with ...?" only when the member knows four moves
@@ -9,7 +10,10 @@
     offered while a slot is free is learned by the game without asking
     (pokefirered party_menu.c, [MonTryLearningNewMove] giving it at once). *)
 
-type use = { member : Action_args.member; policy : Level_up_policy.policy }
+type use = {
+  member : Action_args.member;
+  policy : Frlg_battle.Level_up_policy.policy;
+}
 
 type goal = {
   use : use;

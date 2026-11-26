@@ -16,8 +16,8 @@ type target =
           user. Should a cursor show anyway, A takes its start, the foe on the
           left. *)
   | Ally  (** the partner *)
-  | Foe_left
-  | Foe_right
+  | Foe_left  (** the foe on the left *)
+  | Foe_right  (** the foe on the right *)
 
 (** What the battle asks for next. *)
 type event =
@@ -27,9 +27,15 @@ type event =
   | Switch_in
       (** The game opened the party list itself: a battler fainted and a member
           must be sent in. *)
+  | Level_up
+      (** A member's level-up stats box showed; {!Level_up} handles it and any
+          moves or evolutions that follow. *)
   | Move_learn
       (** A YES/NO with the player's battler out: "Delete a move to make room
-          for ...?", or after NO, "Stop learning ...?". *)
+          for ...?", handed to {!Level_up}. *)
+  | Evolution
+      (** An evolution scene after a level-up in this battle, handed to
+          {!Level_up}. *)
   | Use_next
       (** A YES/NO with the player's battler gone: "Use next POKéMON?" in a wild
           battle. *)
@@ -42,7 +48,7 @@ type event =
 
 (** What came of a move chosen. *)
 type move_result =
-  | Chosen
+  | Chosen  (** the move was selected *)
   | Refused
       (** The game turned it down (no PP left, Disable) and the action menu is
           back. *)
@@ -58,29 +64,10 @@ type item = {
 }
 (** A bag item used from the action menu. *)
 
-(** The answer to "Delete a move to make room for ...?". *)
-type learn =
-  | Keep_moves  (** NO, then YES to "Stop learning ...?" *)
-  | Forget of int  (** YES, and this move (0-3) forgotten whatever is offered *)
-  | Forget_for of { move : string; slot : int }
-      (** YES; [slot] (0-3) forgotten only when the move offered, read on the
-          list to forget from (its fifth row), is [move] (a slug). Any other
-          move is backed out of and not learned. *)
-
-(** What came of a {!learn} answer. *)
-type learned =
-  | Learned of { slot : int; move : string option }
-      (** [slot] forgotten for the new move, [move] when it was read *)
-  | Not_learned of { offered : string option }
-      (** the moves kept; [offered] when it was read *)
-  | Unread of string
-      (** the move offered did not read, or the list's cursor did not: backed
-          out with NO to "Stop learning ...?", so the game asks again *)
-
 type game_steps = {
   next_event : timeout_ms:int -> event;
-      (** Plays the battle on (text, level-up boxes) until it asks for
-          something, ends, or [timeout_ms] passes. *)
+      (** Plays the battle on (text) until it asks for something, enters a
+          level-up or evolution, ends, or [timeout_ms] passes. *)
   use_move : slot:int -> target:target -> expect:string option -> move_result;
       (** From the action menu: FIGHT, the move in [slot], its target. With
           [expect], the move's name is checked first where the steps can read
@@ -97,15 +84,16 @@ type game_steps = {
   use_item : item -> bool;
       (** From the action menu: BAG, the item, its target. False if the bag did
           not show the pocket or did not close. *)
-  answer_move_learn : learn -> learned;
-      (** On {!Move_learn}, the whole exchange: "Delete a move ...?", the list
-          to forget from, and "Stop learning ...?" when the move is not taken
-          (pokefirered battle_script_commands.c: YES there stops, NO or B asks
-          again). *)
+  level_up : Level_up.game_steps;
+      (** The battle's {!Level_up.game_steps}, used on {!Level_up},
+          {!Move_learn} and {!Evolution}. *)
   answer_use_next : bool -> unit;
       (** On {!Use_next}: YES or NO; on {!Switch_offer}, NO (B). *)
 }
+(** The verbs a battle is played with. *)
 
 val target_name : target -> string
-val describe_learned : learned -> string
+(** A short label for a move target. *)
+
 val event_name : event -> string
+(** A short label for a battle event. *)

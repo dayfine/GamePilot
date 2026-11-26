@@ -1,3 +1,6 @@
+module Level_up = Frlg_battle.Level_up
+module Level_up_policy = Frlg_battle.Level_up_policy
+
 type game_steps = {
   level : slot:int -> (int option, Pokemon_engine.Failure.cause) result;
   candy : slot:int -> Level_up_policy.policy -> Rare_candy.result;

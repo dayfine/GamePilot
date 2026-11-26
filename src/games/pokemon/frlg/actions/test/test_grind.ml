@@ -86,10 +86,11 @@ let heal_due since_heal () =
   string_of_bool (Grind_plan.heal_due (plan mimien_args).strategy ~since_heal)
 
 let learn () =
-  match (Grind_plan.battle_script (plan mimien_args)).learn with
-  | Forget_for { move; slot } -> Printf.sprintf "forget %d for %s" slot move
-  | Forget s -> Printf.sprintf "forget %d" s
-  | Keep_moves -> "keep"
+  match
+    (Grind_plan.battle_script (plan mimien_args)).level_up.default.rules
+  with
+  | [ r ] -> B.Level_up_policy.describe_rule r
+  | _ -> "none"
 
 let decisions =
   [
@@ -103,7 +104,7 @@ let decisions =
     case "heal: not after 6 battles at Victory Road" (heal_due 6) "false";
     case "heal: after 7" (heal_due 7) "true";
     case "move learn: YES for Recycle only, into move 1" learn
-      "forget 0 for recycle";
+      "recycle over move 0";
   ]
 
 (* The fake game steps: a party, the moves the summary reads, and a list of battles,
@@ -114,9 +115,31 @@ type fake_battle = {
   switch_ok : bool;  (** false: the sweeper fainted, the game refuses it *)
 }
 
+let level_up_steps offered call : B.Level_up.game_steps =
+  let looks =
+    if offered = [] then []
+    else
+      B.Level_up.Stats None
+      :: List.map (fun _ -> B.Level_up.Move_prompt) offered
+      @ [ B.Level_up.Back ]
+  in
+  let lists =
+    List.map
+      (fun m : B.Level_up.forget_list -> { offered = m; known = [] })
+      offered
+  in
+  let g = Level_up_fake.game ~lists looks in
+  let base = Level_up_fake.fake_game_steps g in
+  let log line =
+    if
+      Strings.Contains.substring line ": learned "
+      || Strings.Contains.substring line ": declined "
+    then call line
+  in
+  { base with log }
+
 let fake_battle_game_steps (b : fake_battle) calls : B.Battle.game_steps =
   let events = Queue.of_seq (List.to_seq b.events) in
-  let offered = Queue.of_seq (List.to_seq b.offered) in
   let call s = calls := s :: !calls in
   let take q d = Option.value (Queue.take_opt q) ~default:d in
   {
@@ -135,17 +158,7 @@ let fake_battle_game_steps (b : fake_battle) calls : B.Battle.game_steps =
         true);
     run = (fun () -> call "run");
     use_item = (fun _ -> true);
-    answer_move_learn =
-      (fun learn ->
-        let move = take offered None in
-        let result : B.Battle.learned =
-          match learn with
-          | Forget_for { move = want; slot } when move = Some want ->
-              Learned { slot; move }
-          | _ -> Not_learned { offered = move }
-        in
-        call ("learn: " ^ B.Battle.describe_learned result);
-        result);
+    level_up = level_up_steps b.offered call;
     answer_use_next = (fun _ -> ());
   }
 
@@ -198,19 +211,7 @@ let flow ?cap ?(battle_lines = false) ?(levels = [ Some 9 ]) ~party ~known
           match Queue.take_opt battles with
           | None ->
               B.Scripted_battle.Failed
-                {
-                  why = "no battle";
-                  summary =
-                    {
-                      menus = 0;
-                      send_ins = 0;
-                      refusals = 0;
-                      switches_refused = 0;
-                      prompts = 0;
-                      learned = [];
-                      unread = 0;
-                    };
-                }
+                { why = "no battle"; summary = B.Scripted_battle.empty_summary }
           | Some b ->
               B.Scripted_battle.run (fake_battle_game_steps b calls) script);
       log = (fun line -> if shown ~battle_lines line then call line);
@@ -229,7 +230,7 @@ let lv n = Some n
 
 (* Switch on turn 1, the sweeper's KO, a level up that offers a move. *)
 let won ?(offered = []) () =
-  let learns = List.map (fun _ -> B.Battle.Move_learn) offered in
+  let learns = if offered = [] then [] else [ B.Battle.Level_up ] in
   {
     events =
       B.Battle.[ Action_menu; Action_menu ] @ learns @ [ B.Battle.Battle_over ];
@@ -271,11 +272,11 @@ let flows =
          ]
          (plan mimien_args))
       "summary 2; Lv 31 in 2; swap 2 1; go VictoryRoad_2F (45, 10) west; spin; \
-       switch 1; move 0; learn: not learned: light-screen; Lv 32 in 1; spin; \
-       switch 1; move 0; learn: learned recycle over move 0; Lv 33 in 1; \
-       Grind: mr-mime reached Lv 33 (target 33) in battle 2; learned recycle.; \
-       heal nurse at IndigoPlateau_PokemonCenter_1F (13, 12) north; go \
-       VictoryRoad_2F (45, 10) west => ok";
+       switch 1; move 0; Level up: slot 1: declined light-screen.; Lv 32 in 1; \
+       spin; switch 1; move 0; Level up: slot 1: learned recycle over move 0.; \
+       Lv 33 in 1; Grind: mr-mime reached Lv 33 (target 33) in battle 2; \
+       learned recycle.; heal nurse at IndigoPlateau_PokemonCenter_1F (13, 12) \
+       north; go VictoryRoad_2F (45, 10) west => ok";
     case "Victory Road: the nurse after 7 battles, then back to the spot"
       (flow
          ~levels:(List.init 9 (fun _ -> lv 9) @ [ lv 33 ])
@@ -289,10 +290,10 @@ let flows =
        switch 1; move 0; Lv 9 in 1; heal nurse at \
        IndigoPlateau_PokemonCenter_1F (13, 12) north; go VictoryRoad_2F (45, \
        10) west; spin; switch 1; move 0; Lv 9 in 1; spin; switch 1; move 0; \
-       learn: learned recycle over move 0; Lv 33 in 1; Grind: mr-mime reached \
-       Lv 33 (target 33) in battle 9; learned recycle.; heal nurse at \
-       IndigoPlateau_PokemonCenter_1F (13, 12) north; go VictoryRoad_2F (45, \
-       10) west => ok";
+       Level up: slot 1: learned recycle over move 0.; Lv 33 in 1; Grind: \
+       mr-mime reached Lv 33 (target 33) in battle 9; learned recycle.; heal \
+       nurse at IndigoPlateau_PokemonCenter_1F (13, 12) north; go \
+       VictoryRoad_2F (45, 10) west => ok";
     case "out of battles"
       (flow ~party ~known:[] [ won (); won () ] tight)
       "summary 2; Lv 9 in 2; swap 2 1; go VictoryRoad_2F (45, 10) west; spin; \
@@ -364,10 +365,10 @@ let stops =
          [ won ~offered:[ Some "light-screen" ] (); won () ]
          mimien)
       "summary 2; Lv 32 in 2; swap 2 1; go VictoryRoad_2F (45, 10) west; spin; \
-       switch 1; move 0; learn: not learned: light-screen; Lv 33 in 1; Grind: \
-       mr-mime reached Lv 33 (target 33) in battle 1; did not learn recycle.; \
-       heal nurse at IndigoPlateau_PokemonCenter_1F (13, 12) north; go \
-       VictoryRoad_2F (45, 10) west => ok";
+       switch 1; move 0; Level up: slot 1: declined light-screen.; Lv 33 in 1; \
+       Grind: mr-mime reached Lv 33 (target 33) in battle 1; did not learn \
+       recycle.; heal nurse at IndigoPlateau_PokemonCenter_1F (13, 12) north; \
+       go VictoryRoad_2F (45, 10) west => ok";
     case "the move learned below the target level: fights on to it"
       (flow
          ~levels:[ lv 31; lv 32; lv 33 ]
@@ -375,9 +376,9 @@ let stops =
          [ won ~offered:[ Some "recycle" ] (); won (); won () ]
          mimien)
       "summary 2; Lv 31 in 2; swap 2 1; go VictoryRoad_2F (45, 10) west; spin; \
-       switch 1; move 0; learn: learned recycle over move 0; Lv 32 in 1; spin; \
-       switch 1; move 0; Lv 33 in 1; Grind: mr-mime reached Lv 33 (target 33) \
-       in battle 2; learned recycle.; heal nurse at \
+       switch 1; move 0; Level up: slot 1: learned recycle over move 0.; Lv 32 \
+       in 1; spin; switch 1; move 0; Lv 33 in 1; Grind: mr-mime reached Lv 33 \
+       (target 33) in battle 2; learned recycle.; heal nurse at \
        IndigoPlateau_PokemonCenter_1F (13, 12) north; go VictoryRoad_2F (45, \
        10) west => ok";
     case "the cap first: Lv 33 would come in battle 3"
@@ -443,10 +444,11 @@ let rounds =
          ]
          round)
       "summary 2; Lv 31 in 2; swap 2 1; go VictoryRoad_2F (45, 10) west; spin; \
-       switch 1; move 0; learn: not learned: light-screen; Lv 32 in 1; spin; \
-       switch 1; move 0; learn: learned recycle over move 0; Lv 33 in 1; \
-       Grind: mr-mime reached Lv 33 (target 33) in battle 2; learned recycle.; \
-       heal nurse at IndigoPlateau_PokemonCenter_1F (13, 12) north => ok";
+       switch 1; move 0; Level up: slot 1: declined light-screen.; Lv 32 in 1; \
+       spin; switch 1; move 0; Level up: slot 1: learned recycle over move 0.; \
+       Lv 33 in 1; Grind: mr-mime reached Lv 33 (target 33) in battle 2; \
+       learned recycle.; heal nurse at IndigoPlateau_PokemonCenter_1F (13, 12) \
+       north => ok";
     case "the goal met already (a resumed run): no walk, still at the nurse"
       (flow ~levels:[ lv 33 ] ~party ~known:[ "recycle" ] [] round)
       "summary 2 => ok";

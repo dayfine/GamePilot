@@ -1,6 +1,11 @@
 (test
  (name test_scripted_battle)
- (modules test_scripted_battle)
+ (modules test_scripted_battle level_up_fake)
+ (libraries gamepilot.table_test gamepilot.frlg_battle))
+
+(test
+ (name test_level_up)
+ (modules test_level_up level_up_fake)
  (libraries gamepilot.table_test gamepilot.frlg_battle))
 
 (test

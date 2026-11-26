@@ -32,7 +32,6 @@
   test_lift_ride
   test_seagallop
   test_capture
-  test_level_up
   test_rare_candy
   test_pacing
   test_console_actions
@@ -69,7 +68,6 @@
   test_lift_ride
   test_seagallop
   test_capture
-  test_level_up
   level_up_fake
   test_rare_candy
   test_pacing

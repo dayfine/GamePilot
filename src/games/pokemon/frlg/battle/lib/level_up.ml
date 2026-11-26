@@ -42,7 +42,7 @@ let check ok why = if ok then Ok () else Error why
 
 (* A run under way: each member's outcome so far, whose screens these are,
    and whether an evolution scene is still going. *)
-type under_way = {
+type session = {
   game_steps : game_steps;
   policies : P.t;
   members : outcome array;
@@ -111,19 +111,25 @@ let leave r i offered why =
   in
   Ok (declined r i offered)
 
-let row_of known move =
-  let rec find i = function
-    | [] -> None
-    | Some m :: _ when m = move -> Some i
-    | _ :: rest -> find (i + 1) rest
-  in
-  find 0 known
+let row_of known = function
+  | P.Named move ->
+      let rec find i = function
+        | [] -> None
+        | Some m :: _ when m = move -> Some i
+        | _ :: rest -> find (i + 1) rest
+      in
+      find 0 known
+  | P.Slot slot -> Some slot
+
+let replacing_name = function
+  | P.Named move -> move
+  | P.Slot slot -> Printf.sprintf "move %d" slot
 
 let learn r i (rule : P.move_rule) known =
   match row_of known rule.replacing with
   | None ->
       leave r i (Some rule.learn)
-        (rule.replacing ^ " does not read among the known moves")
+        (replacing_name rule.replacing ^ " does not read among the known moves")
   | Some row ->
       let* () =
         check (r.game_steps.forget row)
@@ -209,24 +215,30 @@ let rec answer r looks =
         let* () = answer_reading r look in
         answer r (looks + 1)
 
-let start member =
+let initial_outcome member =
   { member; levels = 0; learned = []; declined = []; evolution = No_evolution }
 
-let run game_steps policies ~members =
-  let r =
-    {
-      game_steps;
-      policies;
-      members = Array.of_list (List.map start members);
-      current = None;
-      last_scene = None;
-      in_scene = false;
-    }
-  in
+let make_session game_steps policies members =
+  {
+    game_steps;
+    policies;
+    members = Array.of_list (List.map initial_outcome members);
+    current = None;
+    last_scene = None;
+    in_scene = false;
+  }
+
+let start game_steps policies ~members =
   if members = [] then Error "no member to level"
-  else
-    let* () = answer r 0 in
-    Ok (Array.to_list r.members)
+  else Ok (make_session game_steps policies members)
+
+let step_until_back r = answer r 0
+let outcomes r = Array.to_list r.members
+
+let run game_steps policies ~members =
+  let* r = start game_steps policies ~members in
+  let* () = step_until_back r in
+  Ok (outcomes r)
 
 let evolution_name = function
   | No_evolution -> "none"

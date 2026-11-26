@@ -36,13 +36,13 @@ val probes : Wire.probe_spec list
     ({!Level_up_screens.probes}) and the white text box's
     ({!Frlg_readers.Dialog}). *)
 
-val party_menu : Level_up_screens.context
+val party_menu : Frlg_battle.Level_up_screens.context
 (** The party menu's screens: its stats window and YES/NO box
     ({!Frlg_readers.Party_dialogs}), and the bag (no item menu over it) where it
     ends. *)
 
-val classify : Effects.measurements -> Level_up.look option
-(** {!Level_up_screens.classify} on {!party_menu}. *)
+val classify : Effects.measurements -> Frlg_battle.Level_up.look option
+(** {!Frlg_battle.Level_up_screens.classify} on {!party_menu}. *)
 
 val still_ms : int
 (** 1500 ms. *)
@@ -51,8 +51,10 @@ val evolution_hold_ms : int
 (** 12 s: the scene's start (its message, the cry, the intro sound, the
     sparkles) lasts some seconds before the sprites cycle. Unmeasured. *)
 
-val party_menu_game_steps : log:(string -> unit) -> Level_up.game_steps
-(** The party menu's {!Level_up.game_steps}: a stats window pressed through
-    (both pages) is one {!Level_up.Stats}; {!Level_up.Back} is the bag. *)
+val party_menu_game_steps :
+  log:(string -> unit) -> Frlg_battle.Level_up.game_steps
+(** The party menu's {!Frlg_battle.Level_up.game_steps}: a stats window pressed
+    through (both pages) is one {!Frlg_battle.Level_up.Stats};
+    {!Frlg_battle.Level_up.Back} is the bag. *)
 
 val make : log:(string -> unit) -> Rare_candy.game_steps

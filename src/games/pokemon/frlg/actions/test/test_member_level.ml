@@ -76,7 +76,7 @@ let fake_won_battle_game_steps calls : B.Battle.game_steps =
     send_in = (fun ~slot:_ -> true);
     run = (fun () -> ());
     use_item = (fun _ -> true);
-    answer_move_learn = (fun _ -> Not_learned { offered = None });
+    level_up = Level_up_fake.fake_game_steps (Level_up_fake.game []);
     answer_use_next = (fun _ -> ());
   }
 

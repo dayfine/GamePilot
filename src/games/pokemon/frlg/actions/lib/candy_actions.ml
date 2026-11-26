@@ -1,4 +1,5 @@
 module M = Menu_input
+module Level_up = Frlg_battle.Level_up
 
 let ( let* ) = Result.bind
 

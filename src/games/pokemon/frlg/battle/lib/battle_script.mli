@@ -9,9 +9,9 @@
     - switch-grind (mg-04): [opening = [Switch 1]], [fallback = Attack] with the
       sweeper's moves, [send_ins = [{ slot = 1; then_ = None }]] in case the
       trainee faints before the switch, [switch_refused = Some Flee] for a
-      sweeper that fainted in an earlier battle,
-      [learn = Forget_for { move; slot }]; a second faint, the sweeper's, finds
-      no send-in left and fails the battle;
+      sweeper that fainted in an earlier battle, [level_up] learning [move] into
+      [slot]; a second faint, the sweeper's, finds no send-in left and fails the
+      battle;
     - the Leppa Berry's PP drain (mg-05a, [Frlg_actions.Berry_pp]):
       [fallback = Attack] with the move, then the backup once it is refused;
     - the double battle (mg-05, [Frlg_actions.Mail_glitch_battle]): the whole
@@ -59,7 +59,9 @@ type t = {
       (** The fallback from a refused [Switch] on ("... has no energy left to
           battle!": the member fainted in an earlier battle), the rest of the
           opening dropped; [None] fails the battle. *)
-  learn : Battle.learn;  (** "Delete a move to make room for ...?" *)
+  level_up : Level_up_policy.t;
+      (** How level-ups, move learns and evolutions in this battle are answered
+          ({!Level_up}). *)
   use_next : bool;  (** "Use next POKéMON?" *)
   max_menus : int;  (** more action menus than this fail the battle *)
   event_timeout_ms : int;  (** the longest wait for the battle's next event *)
@@ -77,14 +79,15 @@ val make :
   ?opening:command list ->
   ?send_ins:send_in list ->
   ?switch_refused:fallback ->
-  ?learn:Battle.learn ->
+  ?level_up:Level_up_policy.t ->
   ?use_next:bool ->
   ?max_menus:int ->
   ?event_timeout_ms:int ->
   fallback ->
   t
-(** No opening, no send-ins, a refused switch failing, the moves kept
-    ([Keep_moves]), NO to "Use next POKéMON?", and the defaults above. *)
+(** No opening, no send-ins, a refused switch failing, all level-up moves and
+    evolutions declined ({!Level_up_policy.decline_all}), NO to "Use next
+    POKéMON?", and the defaults above. *)
 
 val describe_command : command -> string
 (** ["move 2 (ally)"], ["switch to 3"], ["item row 0"], ["run"]. *)

@@ -1,4 +1,5 @@
-type move_rule = { learn : string; replacing : string }
+type replacing = Named of string | Slot of int
+type move_rule = { learn : string; replacing : replacing }
 type policy = { rules : move_rule list; evolve : bool }
 
 type t = {
@@ -17,4 +18,8 @@ let for_member t ~slot ~species =
       Option.value (List.assoc_opt species t.by_species) ~default:t.default
 
 let rule_for rules ~offered = List.find_opt (fun r -> r.learn = offered) rules
-let describe_rule r = r.learn ^ " over " ^ r.replacing
+
+let describe_rule r =
+  match r.replacing with
+  | Named m -> r.learn ^ " over " ^ m
+  | Slot s -> Printf.sprintf "%s over move %d" r.learn s

@@ -42,7 +42,7 @@ let fake_battle_game_steps (b : fake_battle) call : Battle.game_steps =
         true);
     run = (fun () -> call "run");
     use_item = (fun _ -> true);
-    answer_move_learn = (fun _ -> Battle.Not_learned { offered = None });
+    level_up = Level_up_fake.fake_game_steps (Level_up_fake.game []);
     answer_use_next = (fun _ -> ());
   }
 

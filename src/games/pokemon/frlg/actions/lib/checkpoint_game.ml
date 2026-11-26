@@ -42,14 +42,22 @@ let route_from w (at : Pokemon_engine.Pose.observed) target =
       Route_target.plan w ~from ~facing:at.faces target
       |> Result.map (fun legs -> (from, legs)))
 
-let battle_game_steps () =
-  Frlg_battle.Battle_steps.make ~read_offered_move:Summary_moves.read_offered
+let known_moves_count = 4
+
+let read_forget_list () : Frlg_battle.Level_up.forget_list =
+  {
+    offered = Summary_moves.read_offered ();
+    known = List.init known_moves_count Summary_moves.read_row;
+  }
+
+let battle_game_steps ~log () =
+  Frlg_battle.Battle_steps.make ~log ~read_forget_list
     ~is_switch_offer:Switch_offer.read ()
 
 let battle_on t wrap script =
   Effects.with_probes Frlg_battle.Battle_look.probes (fun () ->
       Frlg_battle.Scripted_battle.run ~log:t.config.log
-        (wrap (battle_game_steps ()))
+        (wrap (battle_game_steps ~log:t.config.log ()))
         script)
 
 let battle t script = battle_on t Fun.id script

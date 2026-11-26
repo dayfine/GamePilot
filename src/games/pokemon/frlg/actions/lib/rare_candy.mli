@@ -61,8 +61,8 @@ type game_steps = {
   open_candy : slot:int -> (opened, Pokemon_engine.Failure.cause) result;
       (** From the overworld: the bag, the Rare Candy, USE, the slot (from 1).
           [Error] when a menu step after the candy's USE fails, as its cause. *)
-  level_up : Level_up.game_steps;
-      (** The party menu's: {!Level_up.Back} is the bag. *)
+  level_up : Frlg_battle.Level_up.game_steps;
+      (** The party menu's: {!Frlg_battle.Level_up.Back} is the bag. *)
   close_bag : unit -> (unit, Pokemon_engine.Failure.cause) result;
       (** From the bag, back to the overworld; [Error] as {!open_candy}. *)
   log : string -> unit;
@@ -71,7 +71,7 @@ type game_steps = {
     context's screens (the overworld, the bag and the party menu). *)
 
 type result =
-  | Used of Level_up.outcome
+  | Used of Frlg_battle.Level_up.outcome
       (** [levels] is 0 when the candy had no effect (a Lv 100 member) *)
   | Out_of_candies
   | Failed of string
@@ -79,8 +79,11 @@ type result =
       (** a menu step of the game steps failed, as this cause *)
 
 val run :
-  game_steps -> Level_up_policy.policy -> member:Level_up.member -> result
-(** One candy on the member: {!Level_up.run} with it alone. *)
+  game_steps ->
+  Frlg_battle.Level_up_policy.policy ->
+  member:Frlg_battle.Level_up.member ->
+  result
+(** One candy on the member: {!Frlg_battle.Level_up.run} with it alone. *)
 
 val describe : result -> string
 (** One line for the log. *)
