@@ -1,6 +1,6 @@
-(* 01.00a-new-game's choices as plza.autostory's options: their declaration
+(* 00.00-new-game's choices as plza.autostory's options: their declaration
    (Plza_story.New_game_choices.decls, through Run_options.check) reads each
-   key's values, and New_game_options.of_run_options the choices 01.00a-new-game
+   key's values, and New_game_options.of_run_options the choices 00.00-new-game
    plays. The rules across keys (a name's length in its language, its
    characters on the keyboard) are checked once, over the plan's args, by
    New_game_event.series_choices (test_story_game). One fact per case: the
@@ -11,7 +11,7 @@ module Choices = Plza_story.New_game_choices
 
 let case name input expectation = { Table_test.name; input; expectation }
 
-(* The choices 01.00a-new-game would play with [pairs], one --options each, over
+(* The choices 00.00-new-game would play with [pairs], one --options each, over
    the fork's defaults; [part] picks the one fact a case checks. *)
 let played part pairs () =
   match

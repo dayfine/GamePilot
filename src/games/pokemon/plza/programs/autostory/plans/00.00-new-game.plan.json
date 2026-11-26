@@ -5,10 +5,10 @@
   "metadata": {
     "phase": "testing",
     "source": "the fork's 01.00a (PokemonLZA_AutoStoryNewGame.cpp, lab/dev-plza-slice1); not yet run on the console",
-    "notes": "Starts on the Switch HOME with no PLZA save (delete it first: gamepilot ctl delete-save plza, then delete-save --confirm), PLZA among the first 8 tiles of HOME. Ends on Confirm Choices, 01.00b's start, with nothing confirmed."
+    "notes": "Starts on the Switch HOME with no PLZA save (delete it first: gamepilot ctl delete-save plza, then delete-save --confirm), PLZA among the first 8 tiles of HOME. Ends on Confirm Choices, 01.01-to-the-platform's start, with nothing confirmed."
   },
   "checkpoint": {
-    "id": "01.00a-new-game",
+    "id": "00.00-new-game",
     "title": "A new game from HOME to Confirm Choices",
     "events": [
       {

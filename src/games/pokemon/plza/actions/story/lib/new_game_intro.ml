@@ -47,7 +47,7 @@ let on_home s = s.home
 
 let not_on_home =
   refused
-    "AutoStory: 01.00a-new-game starts a new game (no save) from the Switch \
+    "AutoStory: 00.00-new-game starts a new game (no save) from the Switch \
      HOME. It is not on screen; pressed B once to wake the screen, nothing \
      else was pressed."
 

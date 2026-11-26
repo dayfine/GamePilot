@@ -61,7 +61,7 @@ let looks = 8
 
 let by_hand_hint =
   "Make the new game's choices by hand up to \"Confirm Choices\", then start \
-   the run at 01.00b."
+   the run at 01.01-to-the-platform."
 
 (* utf8_to_utf32's length: the bytes that do not continue a character. *)
 let continuation_mask = 0xC0
@@ -128,7 +128,7 @@ let decls : Run_options.declared list =
       key = "language";
       value = One_of typed_tags;
       presence = Optional;
-      doc = "the new game's language (01.00a-new-game; not given: the plan's)";
+      doc = "the new game's language (00.00-new-game; not given: the plan's)";
     };
     {
       key = "look";

@@ -9,7 +9,7 @@
    HOME (the home- frames, redacted to PLZA's title band, another game's title
    made a checkerboard: images/new-game/README.md): the cursor on PLZA's tile, first or scrolled to, reads as
    PLZA's tile, and on another tile with PLZA's in view (Pokémon HOME first
-   and PLZA fourth, as the first 01.00a-new-game run found it on 2026-11-25) does not. A frame reads as
+   and PLZA fourth, as the first 00.00-new-game run found it on 2026-11-25) does not. A frame reads as
    everything it shows, in one line. Every frame also reads the same with
    its colours shifted as another capture card might show them
    (fixtures/intro/intro.shifted.probes.jsonl, one shift per frame). *)

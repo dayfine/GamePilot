@@ -18,7 +18,7 @@ val make :
   checkpoint:Plza_engine.Plan.checkpoint ->
   reload:(unit -> (unit, Engine_run.Failure.cause) result) ->
   Plza_engine.Game.t
-(** The handlers for one checkpoint's run; [new_game] plays 01.00a-new-game's
+(** The handlers for one checkpoint's run; [new_game] plays 00.00-new-game's
     choices, the program's [options] (none by default) over the plan's (by
     default it fails [no_handler]: the live runner passes
     {!Live_intro_screen.run}). With a [story_battle] later in the checkpoint, a

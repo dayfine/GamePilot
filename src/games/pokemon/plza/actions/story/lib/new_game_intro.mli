@@ -1,4 +1,4 @@
-(** 01.00a-new-game (the fork's 01.00a): from the Switch HOME with no PLZA save, a new game up to "Confirm
+(** 00.00-new-game (the fork's 01.00a): from the Switch HOME with no PLZA save, a new game up to "Confirm
     Choices", confirming nothing. Ported from PokemonLZA_AutoStoryNewGame.cpp
     and its launch, PokemonLZA_AutoStoryLaunch.cpp (branch
     [lab/dev-plza-slice1]), their steps, order, presses and waits:
@@ -45,7 +45,7 @@ type game_steps = {
   log : string -> unit;
       (** A line for the story log: each screen reached and each choice made. *)
 }
-(** What 01.00a-new-game reads and does on the console. *)
+(** What 00.00-new-game reads and does on the console. *)
 
 val run : game_steps -> New_game_choices.t -> Steps.outcome
 (** [Error] [new_game_refused] (repeats) when the choices cannot be played

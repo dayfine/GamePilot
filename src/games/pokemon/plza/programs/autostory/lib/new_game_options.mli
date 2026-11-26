@@ -1,7 +1,7 @@
-(** 01.00a-new-game's choices as the program's options: the keys [language],
+(** 00.00-new-game's choices as the program's options: the keys [language],
     [look] and [name] ({!Plza_story.New_game_choices.decls}, which
     plza.autostory's registry entry declares for [gamepilot run --options]),
-    each replacing the matching arg of 01.00a-new-game's [new_game] event. The
+    each replacing the matching arg of 00.00-new-game's [new_game] event. The
     fork too reads the new game's choices from the program's options
     (PokemonLZA_AutoStoryNewGame.h). *)
 
