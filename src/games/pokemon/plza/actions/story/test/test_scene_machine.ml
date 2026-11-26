@@ -28,15 +28,7 @@ let outcome config screen () = fst (run config screen)
 let logged config screen part () =
   let _, c = run config screen in
   string_of_bool
-    (List.exists
-       (fun line ->
-         let n = String.length part in
-         let rec at i =
-           i + n <= String.length line
-           && (String.sub line i n = part || at (i + 1))
-         in
-         at 0)
-       (C.lines c))
+    (List.exists (fun line -> Strings.Contains.substring line part) (C.lines c))
 
 (* Text for 1 s, then a two-row choice on its top row. *)
 let choice_at_ms = 1000.0
