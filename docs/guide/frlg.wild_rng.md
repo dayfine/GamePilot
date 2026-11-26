@@ -29,7 +29,6 @@ were made on has SID 9011, read from the game's memory.
 Each save also needs its seed shift measured (below).
 
 <!-- generated:needs -->
-- 1 free party slot (joining: ekans in 02-shiny-ekans)
 - a member holds no Mail (pc_deposit)
 - a member knows fly (fly)
 - the thunder badge (fly)
@@ -92,6 +91,10 @@ the save 01 starts from. The plan names its table (`seeds`).
 timer counts later or sooner by where its last save left the flash sectors (the save count modulo
 14: 0, 4, 8 or 12 on these saves), which moves every seed by that much. 01's end save adds 8,
 measured: the table it gives is the Sevii table plus 8, row for row.
+
+**The in-game offset.** The plan's optional `ingame_offset` (default `0`, in advances) shifts the
+Sweet Scent wait, as in the fork's calibration, when the overworld's RNG lands a few advances off
+the target (for example on routes with walking NPCs).
 
 **The target.** It is searched, not given: of the table's seeds and advances 900 to 4000, the
 shiny Ekans for the plan's TID and SID whose waits add up least (`Frlg_rng.Wild_target`).

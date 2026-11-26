@@ -74,10 +74,11 @@ claimed, already received, expired, not supported or failed.
 - No main menu after X: `not_on_main_menu`.
 - Not five or six Pokémon at full HP on the menu's cards: `party_not_ready`.
 - A gift not received (not listed, no card after the claim) fails that gift; the run goes on with
-  the next one. A gift not listed leaves the list with B and Yes to "stop receiving?", then the
-  link. A screen no reader knows after a claim is kept as
+  the next one. After every gift the way back to the main menu reads each screen before a press:
+  Yes to "stop receiving?" and "disconnect?", A past a message, B anywhere else; never A on the
+  gift list, where it would claim another gift. A screen no reader knows after a claim is kept as
   `gift-<id>-unknown-screen.png` in the run folder.
-- No main menu after 8 B from a failed gift: `screen_lost`; the gifts after it are not tried.
+- No main menu after 12 presses on the way back: `screen_lost`; the gifts after it are not tried.
 - A received gift's box slot empty, or not read: that gift fails.
 - The Boxes or the menu after them not read: `boxes_not_read`; "Last Saved" unchanged: `not_saved`.
 - Any gift failed: `gifts_failed`, naming each, after the save.

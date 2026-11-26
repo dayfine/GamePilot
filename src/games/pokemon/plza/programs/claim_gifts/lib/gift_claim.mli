@@ -4,22 +4,14 @@
     code keyboard, the code typed and its gift claimed. Then the screen is read
     up to 30 s, each read held 1 s:
 
-    - the gift's card: received; A past it, then off the list (Internet: B, yes)
-      and off the link ({!Mystery_gift.disconnect});
-    - the "already received" screen ({!already_received}): counted as done, A
-      past it;
+    - the gift's card: received;
+    - the "already received" screen ({!already_received}): counted as done;
     - anything else: an unknown screen. The frame is kept in the run folder as
       [gift-<id>-unknown-screen.png] and the gift is not received.
 
-    A claim stopped on the Internet list (its gift not listed below the cursor,
-    or not reached) leaves the list first, with B and yes to "stop receiving?",
-    then the link ({!Mystery_gift.disconnect}): B alone there only opens that
-    question and cancels it (console B, 2026-11-25).
-
-    After anything but a card, the main menu is brought back with B (1.5 s),
-    read for 1.5 s after each, 8 at most, the link left once on the way
-    ({!Mystery_gift.disconnect} after the fourth B). Ours, not yet run on a
-    console: the way back from a screen no reader knows. *)
+    Then, as after a claim stopped short of its A (its gift not listed, the list
+    not shown, ...), back to the main menu, each press read first
+    ({!Leave_gifts}): no A on the gift list but the claim's own. *)
 
 (** How one claim came out. *)
 type claim =
@@ -44,7 +36,8 @@ val after_claim_read :
 (** {!claim}'s second half, after the claim's A: the screen read as above (a
     card, already received, or an unknown screen, its frame kept and named in
     the log line with the gift screens' last readings), then the way back to the
-    main menu. The probes must be subscribed ({!Mystery_gift.probes}). *)
+    main menu ({!Leave_gifts}). The probes must be subscribed
+    ({!Mystery_gift.probes}). *)
 
 val claim :
   log:(string -> unit) ->

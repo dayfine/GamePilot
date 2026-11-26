@@ -80,7 +80,9 @@ val desert_wallpaper : Effects.measurements -> bool option
     mGBA) is not. *)
 
 val male : Effects.measurements -> bool option
-(** The male symbol's blue fills at least 0.15 of its box (mGBA: 0.3). *)
+(** The male symbol's core blue (r 0..100, g 0..210, b 190..255; excludes the
+    panel's lilac (148, 148, 173) and the female mark's red) fills at least 0.15
+    of its box (mGBA: 0.231 on male, 0 on female and empty panels). *)
 
 (** {1 The title's wallpaper} *)
 

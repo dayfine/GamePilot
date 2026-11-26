@@ -6,6 +6,7 @@ type need = {
   joins : (string * string) list;
   used : string list;
   moves : string list;
+  free : int;
 }
 
 let party_size = 6
@@ -47,13 +48,36 @@ let named ~where action args =
       (fun k -> if List.mem k brought then None else J.string_opt ~where k args)
       Frlg_actions.Action_args.member_keys
 
-let event id (joins, used) (e : P.event) =
+(* Unconditional [pc_deposit] frees party slots: 1 for a role deposit
+   ("member": "holding_no_mail"), or one per species in ["species"]. *)
+let leaving ~where action args =
+  if action <> "pc_deposit" then 0
+  else if J.has "member" args then 1
+  else List.length (Frlg_actions.Action_args.deposited_species ~where args)
+
+type scan = {
+  scan_joins : (string * string) list;
+  scan_used : string list;
+  delta : int;
+  peak : int;
+}
+
+let empty_scan = { scan_joins = []; scan_used = []; delta = 0; peak = 0 }
+
+let event id acc (e : P.event) =
   match (e.kind, e.way) with
   | Named_action args, Some action ->
       let where = id ^ " " ^ e.id ^ ": " in
-      ( joins @ List.map (fun s -> (s, id)) (joining ~where action args),
-        used @ named ~where action args )
-  | _ -> (joins, used)
+      let joined = joining ~where action args in
+      let freed = if e.skip_if = [] then leaving ~where action args else 0 in
+      let delta = acc.delta + List.length joined - freed in
+      {
+        scan_joins = acc.scan_joins @ List.map (fun s -> (s, id)) joined;
+        scan_used = acc.scan_used @ named ~where action args;
+        delta;
+        peak = max acc.peak delta;
+      }
+  | _ -> acc
 
 let promised (p : Postconditions.t) =
   match p.party with
@@ -64,8 +88,12 @@ let promised (p : Postconditions.t) =
 
 let plan acc (p : P.t) =
   let id = p.checkpoint.checkpoint_id in
-  let joins, used = List.fold_left (event id) acc p.checkpoint.events in
-  (joins, used @ promised (Postconditions.stated p.postconditions))
+  let acc = List.fold_left (event id) acc p.checkpoint.events in
+  {
+    acc with
+    scan_used =
+      acc.scan_used @ promised (Postconditions.stated p.postconditions);
+  }
 
 (* The species a trade brings ("receive"). *)
 let traded (p : P.t) =
@@ -87,16 +115,17 @@ let needed_moves (p : P.t) =
     p.checkpoint.events
 
 let chain_need plans =
-  let joins, used = List.fold_left plan ([], []) plans in
-  let brought = List.map fst joins @ List.concat_map traded plans in
-  let used = List.sort_uniq compare used in
+  let acc = List.fold_left plan empty_scan plans in
+  let brought = List.map fst acc.scan_joins @ List.concat_map traded plans in
+  let used = List.sort_uniq compare acc.scan_used in
   {
-    joins;
+    joins = acc.scan_joins;
     used = List.filter (fun s -> not (List.mem s brought)) used;
     moves = List.sort_uniq compare (List.concat_map needed_moves plans);
+    free = acc.peak;
   }
 
-let free_needed need = List.length need.joins
+let free_needed need = need.free
 
 type member = Room_policy.member
 

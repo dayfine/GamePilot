@@ -22,4 +22,10 @@ sliding in on frame 3: no sixth row yet); `menu-five-rows-*-360p` are frames
 63 to 65 of 03.15-mable-reward's run of 2026-11-25, after Mable's talk and
 before her reward (640x360). Each was redacted from its own capture, as above.
 
+The Japanese ones (`*-ja*`, from `--gifts ja`) keep every `^mystery_gift\.`
+probe: `card-vivillon-ja.png` is console B's 1080p capture of the card
+received on 2026-11-25 (the gift's card, its text and the date and time
+only); the `*-360p.png` frames are that run's and the one before's 640x360
+frames, saved as PNG.
+
 The SAVE dialog keeps its "Last Saved" date and time: the reader reads them.

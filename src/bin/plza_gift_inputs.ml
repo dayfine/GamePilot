@@ -1,6 +1,6 @@
 (* What PLZA's gift programs read at the edge, so that neither reads a clock
    or a file itself: the gift catalog (gifts.json, Plza_gift_catalog), today's
-   date (the host's, UTC), which plza.claim-gifts and plza.bank-home both
+   date (the host's, UTC), which plza.claim-gifts and pokemon_home.bank-plza both
    compare each gift's last day with, and the Internet gifts' name templates
    in the run's language. Claim-gifts gets all three
    (Plza_claim_gifts_series.Claim_gifts_runs.inputs), bank-home the catalog
