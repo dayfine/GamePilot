@@ -135,7 +135,8 @@ A new or changed program updates its guide. Every registered program has a playe
 from the registry and the plans. After changing a program's plans, its descriptor or its commands,
 run `cd src && opam exec -- dune exec -- gamepilot guide --write` and reread the prose around the
 blocks. CI runs `gamepilot guide --check`, which fails on a missing page, a stale block (any plan
-change makes its checkpoints block stale) or a skeleton's unfinished `TODO(guide)`.
+change makes its checkpoints block stale), a skeleton's unfinished `TODO(guide)`, or a program
+that declares options with no `options` block on its page.
 
 ## Agents
 

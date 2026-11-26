@@ -40,7 +40,8 @@ The blocks:
 - `needs [RANGE]`: what the save needs for the chain, from the pre-flight.
 - `preflight [RANGE]`: what the pre-flight checks before each checkpoint.
 - `commands [RANGE]`: the commands that run it.
-- `options`: the keys its `--options` take, from its descriptor (or that it takes none).
+- `options`: the keys its `--options` take, from its descriptor (or that it takes none). A program
+  that declares options must have this block on its page; the check names the page that lacks it.
 
 RANGE is `FROM..TO` or one checkpoint id; without it, every checkpoint. A new page starts from a
 skeleton whose `TODO(guide)` the check refuses until the prose is written.
@@ -76,7 +77,7 @@ A descriptor (`Program_registry.t`) gives:
   runs them (`Pokemon_grid`: the Pokémon grid rules, FRLG's runner). `src/bin/checkpoint_families.ml`
   is the one place in `src/bin` that picks a family's code from it.
 - `options`: the choices a run takes as `gamepilot run ID --options KEY=VALUE` (one pair each,
-  repeatable), each a `Run_options.decl`: its key, its values (`One_of` a list of words,
+  repeatable), each a `Run_options.declared`: its key, its values (`One_of` a list of words,
   `Int_range` low to high, or `Text`), whether it is `Required`, `Optional` or has a `Default`,
   and one line of what it chooses. `[]`: none.
 

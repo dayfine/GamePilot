@@ -35,7 +35,7 @@ let lookup given read () =
   | Ok t -> read t
   | Error e -> "error: " ^ e
 
-let decls d () = result (Result.map (fun () -> "ok") (check_decls d))
+let decls d () = result (Result.map (fun () -> "ok") (check_declaration d))
 let item value presence = [ { key = "item"; value; presence; doc = "" } ]
 let case name input expectation = { Table_test.name; input; expectation }
 

@@ -3,7 +3,14 @@
 
 type value = One_of of string list | Int_range of int * int | Text
 type presence = Required | Optional | Default of string
-type decl = { key : string; value : value; presence : presence; doc : string }
+
+type declared = {
+  key : string;
+  value : value;
+  presence : presence;
+  doc : string;
+}
+
 type t = (string * string) list
 
 let none = []
@@ -46,7 +53,7 @@ let key_char = function
   | 'a' .. 'z' | '0' .. '9' | '-' | '_' -> true
   | _ -> false
 
-let check_decl seen d =
+let check_one_declared seen d =
   let* seen = seen in
   let bad why = Error ("option " ^ d.key ^ ": " ^ why) in
   if d.key = "" || not (String.for_all key_char d.key) then
@@ -60,8 +67,8 @@ let check_decl seen d =
         bad ("the default " ^ v ^ " is not " ^ value_text value)
     | _ -> Ok (d.key :: seen)
 
-let check_decls decls =
-  Result.map ignore (List.fold_left check_decl (Ok []) decls)
+let check_declaration decls =
+  Result.map ignore (List.fold_left check_one_declared (Ok []) decls)
 
 let taken decls =
   String.concat ", "

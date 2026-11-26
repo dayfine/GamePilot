@@ -59,7 +59,7 @@ type t = {
   viewport : viewport;
       (** The Switch's game picture, which every daemon of its runs takes. *)
   rules : rules;  (** What its plans are written over. *)
-  options : Run_options.decl list;
+  options : Run_options.declared list;
       (** The keys its runs take in [gamepilot run --options KEY=VALUE], each
           with the values it takes and a line of what it chooses; [[]]: none.
           [gamepilot programs] and its guide page's [options] block list them.

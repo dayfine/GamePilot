@@ -89,7 +89,7 @@ let lab_game_text id =
 let bad_options () =
   List.filter_map
     (fun (p : R.t) ->
-      match Run_options.check_decls p.options with
+      match Run_options.check_declaration p.options with
       | Ok () -> None
       | Error e -> Some (p.id ^ ": " ^ e))
     R.all

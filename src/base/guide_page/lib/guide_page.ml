@@ -97,6 +97,13 @@ let blocks text =
   Ok
     (List.filter_map (function Block (b, _, _) -> Some b | Text _ -> None) ps)
 
+let missing_blocks ~required text =
+  let* bs = blocks text in
+  Ok
+    (List.filter
+       (fun name -> not (List.exists (fun (b : block) -> b.name = name) bs))
+       required)
+
 let with_newline s =
   if s = "" || String.ends_with ~suffix:"\n" s then s else s ^ "\n"
 
