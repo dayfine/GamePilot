@@ -59,9 +59,9 @@ val promised_end :
   (Plza_rules.Postconditions.t, Engine_run.Failure.cause) result
 (** Where the checkpoint ends: its postconditions' [place], or else the next
     checkpoint's start signature (as a Pokémon checkpoint's end is the next
-    one's start, [Checkpoint_end]); no place when neither names one. The runner
-    checks it after the last event, and passes the checkpoint before the first
-    when it already holds. *)
+    one's start, [Checkpoint_end]); no place when neither names one. With its
+    postconditions' [flags]. The runner checks it after the last event, and
+    passes the checkpoint before the first when it already holds. *)
 
 val read_place :
   Plza_story.Steps.game_steps ->
@@ -72,3 +72,12 @@ val read_place :
     (agreed frames, the map's pin when the place names it), logged as
     ["[Checkpoint] <id>: END PLACE READ: ..."]: the runner's reads of the place.
 *)
+
+val read_end :
+  Plza_story.Steps.game_steps ->
+  checkpoint_id:string ->
+  Plza_rules.Postconditions.t ->
+  Plza_rules.Postconditions.reads
+(** The runner's reads of a checkpoint's end ({!promised_end}): its place
+    ({!read_place}; nothing read when it names none), then its story flags
+    ({!Story_flag_read}, which opens the main menu). *)

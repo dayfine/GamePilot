@@ -16,6 +16,7 @@ type game_steps = {
   wait_until : float -> unit;
   read_lock_target : unit -> Catch_plan.target option;
   read_party_slots : unit -> int option;
+  read_link_play_row : unit -> bool option;
   log : string -> unit;
   log_detail : string -> unit;
 }

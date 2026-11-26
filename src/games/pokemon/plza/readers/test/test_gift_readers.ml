@@ -31,7 +31,17 @@
    no French frame was captured; placed where that run's reading of the old
    time box shows them), whose old box read only the date. Every capture is
    redacted to what its reader probes (images/mystery-gift/README.md,
-   images/switch/box-cells/README.md). *)
+   images/switch/box-cells/README.md).
+
+   The Japanese main menu (console B, 2026-11-25, the menu captures): at
+   1080p its highlighted row and cards read, and its sixth row, Link Play,
+   shows at the end of 03.15-mable-reward (either row highlighted), in every
+   shift. At 360p the menu's buttons do not read, so none reads as the menu;
+   their sixth band still counts in the margins (link_play_margins): Link
+   Play's band is at least 0.082 white at 1080p and 0.061 at 360p, but 0.008
+   at 360p dimmed 10% (its small text under 221); 0.000 on the five-row menus
+   after Mable's talk, on a six-row menu still sliding in and on the Italian
+   four-row one, against the 0.03 it needs. The live reads are at 1080p. *)
 
 open Plza_readers
 module R = Main_menu_row
@@ -43,6 +53,21 @@ let french = Wire.read_image_probes "fixtures/gifts/gifts.fr.probes.jsonl"
 let japanese = Wire.read_image_probes "fixtures/gifts/gifts.ja.probes.jsonl"
 let measurements probes : Wire.frame = { seq = 1; t_ms = 0.; probes }
 let menu = "./tutorial-cards/it-menu-no-card.jpg"
+
+(* The Japanese main menu's captures: the highlighted row and the cards
+   (none at 360p, where the menu's buttons do not read), and whether Link Play
+   shows. *)
+let japanese_menus =
+  [
+    ("./mystery-gift/menu-six-rows-cursor-on-1.png", Some (0, "xxxxxx"), true);
+    ("./mystery-gift/menu-six-rows-cursor-on-6.png", Some (5, "xxxxx."), true);
+    ("./mystery-gift/menu-six-rows-cursor-on-1-360p.png", None, true);
+    ("./mystery-gift/menu-six-rows-sliding-in-360p.png", None, false);
+    ("./mystery-gift/menu-five-rows-cursor-on-1-360p.png", None, false);
+    ("./mystery-gift/menu-five-rows-cursor-on-2-360p.png", None, false);
+    ("./mystery-gift/menu-five-rows-cursor-on-4-360p.png", None, false);
+  ]
+
 let gift_list = "./mystery-gift/gift-list-cursor-on-1.png"
 let french_list = "./mystery-gift/gift-list-fr-cursor-on-1.png"
 let japanese_list = "./mystery-gift/gift-list-ja-stop-receiving.png"
@@ -62,6 +87,9 @@ let menu_text m =
   Option.fold ~none:"no menu"
     ~some:(fun r -> Printf.sprintf "menu row %d; cards %s" r (cards m))
     (R.highlighted m)
+
+let link_play_text m =
+  if R.link_play_shown m then "Link Play" else "no Link Play"
 
 let list_text m =
   if G.list_active m then
@@ -148,8 +176,21 @@ let pokemon_cell = "boxes, a Pokémon in the cell"
 
 (* What each reader reads on a frame; [name] is the language of the gift
    name's template. *)
+let japanese_menu path =
+  List.find_opt (fun (frame, _, _) -> same path frame) japanese_menus
+
 let expected_menu path =
-  if same path menu then "menu row 0; cards xxxxx." else "no menu"
+  if same path menu then "menu row 0; cards xxxxx."
+  else
+    match japanese_menu path with
+    | Some (_, Some (row, cards), _) ->
+        Printf.sprintf "menu row %d; cards %s" row cards
+    | Some (_, None, _) | None -> "no menu"
+
+let expected_link_play path =
+  match japanese_menu path with
+  | Some (_, Some _, true) -> "Link Play"
+  | Some _ | None -> "no Link Play"
 
 let expected_list ~name path =
   let listed gift =
@@ -177,6 +218,7 @@ let expected_save path =
 let readers ~name =
   [
     ("main menu row", menu_text, expected_menu);
+    ("Link Play row", link_play_text, expected_link_play);
     ("gift list", list_text, expected_list ~name);
     ("gift card", card_text, expected_card);
     ("boxes", boxes_text, expected_boxes);
@@ -211,6 +253,44 @@ let gift_item_cases ~name ~label frames =
         (List.find_opt (fun (_, list) -> same (unshifted path) list) lists))
     frames
 
+(* The sixth band's white share on the Japanese menus and the four-row
+   Italian one, every shift: the least where Link Play shows, at 1080p and at
+   360p (dimmed 10% apart), and the most where it does not, against the 0.03
+   it needs. *)
+let link_play_margins () =
+  let band5 probes = List.nth (R.white_shares (measurements probes)) 5 in
+  let menus =
+    List.filter_map
+      (fun (path, probes) ->
+        let frame = unshifted path in
+        let small = String.ends_with ~suffix:"360p.png" frame in
+        let dim = shift_of path = "bright90" in
+        if same frame menu then Some ((false, small, dim), band5 probes)
+        else
+          Option.map
+            (fun (_, _, shown) -> ((shown, small, dim), band5 probes))
+            (japanese_menu frame))
+      (frames @ shifted)
+  in
+  let least group =
+    List.fold_left
+      (fun acc (g, share) -> if group g then Float.min acc share else acc)
+      1. menus
+  in
+  let most =
+    List.fold_left
+      (fun acc ((shown, _, _), share) ->
+        if shown then acc else Float.max acc share)
+      0. menus
+  in
+  Printf.sprintf
+    "shown from %.3f at 1080p, from %.3f at 360p (%.3f dimmed 10%%); not shown \
+     up to %.3f"
+    (least (fun (shown, small, _) -> shown && not small))
+    (least (fun (shown, small, dim) -> shown && small && not dim))
+    (least (fun (shown, small, dim) -> shown && small && dim))
+    most
+
 let () =
   Table_test.run "gift_readers"
     (frame_cases ~label:"" frames
@@ -220,6 +300,12 @@ let () =
     @ gift_item_cases ~name:"en" ~label:"" (frames @ shifted)
     @ gift_item_cases ~name:"fr" ~label:"French name, " french
     @ gift_item_cases ~name:"ja" ~label:"Japanese name, " japanese
+    @ [
+        case "Link Play's band, the Japanese menus in every shift"
+          link_play_margins
+          "shown from 0.082 at 1080p, from 0.061 at 360p (0.008 dimmed 10%); \
+           not shown up to 0.000";
+      ]
     @ last_saved_cases
         (List.filter
            (fun (p, _) -> List.exists (same (unshifted p)) saves)

@@ -88,7 +88,7 @@ cd src && opam exec -- dune exec -- gamepilot run plza.autostory --from 00.00-ne
 | 03.14-lab-elevator | Up the Research Lab's elevator to the Director's Office |
 | 03.15-mable-reward | Mable's research, the Rock Smash TM |
 
-<!-- plans: 18c83658a537 -->
+<!-- plans: d266f5af3fd1 -->
 <!-- /generated -->
 
 00.00-new-game closes any running game, finds PLZA's tile on HOME by its title, starts it, picks
@@ -148,13 +148,16 @@ Start and end checks:
   minimap recorded at its start, the party count, the A prompt, whether the player is in Wild Zone
   1, or (03.10) on Taunie's rocks: `chain_off_start` when one differs.
 - 03.07 also checks its end (outside the Center): `end_off_signature`.
+- 03.15 checks its end by opening the main menu (X, then B): its sixth row, Link Play, shows only
+  once Mable's reward is claimed (the `mystery_gift` flag). Five rows fail the end check.
 - A checkpoint whose plan names no start check logs START UNCHECKED and goes on.
 
 Resuming mid-checkpoint (the screen is read first, and steps already done are skipped):
 
 - 01.04 can start inside Andi's battle, or at Urbain's heal after a lost one.
 - 03.03 started at the plaza arch after its map talk skips everything and passes; so does 03.07
-  started outside the Pokémon Center.
+  started outside the Pokémon Center, and 03.15 started after Mable's reward (Link Play on the
+  main menu). 03.15 started after her talk but before the reward (five menu rows) runs its events.
 
 Failures:
 
@@ -195,7 +198,8 @@ Failures:
 `Plza_checkpoint_series.Checkpoint_series` runs each checkpoint in its own daemon and run folder,
 with the watch page, and `Plza_series.Runs` gives it the story's attempt.
 `Plza_checkpoint_series.Run_attempts` decides when to reload (`Plza_autostory.Game_reload`) and
-try again, and `Plza_autostory.Start_signature` checks the start and end.
+try again, and `Plza_autostory.Start_signature` checks the start and end (story flags through
+`Plza_autostory.Story_flag_read`).
 
 `Plza_autostory.Story_game` gives the engine a handler for each game action a plan names, ported
 from the fork's PLZA AutoStory and built on `Plza_story` and `Plza_walk` over its `Steps`; any

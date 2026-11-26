@@ -43,7 +43,7 @@ let new_game ~log ~picture choices =
    put in its postconditions as the series loaded it (with_end_place). *)
 let ends (plan : P.Plan.t) =
   Option.value plan.postconditions
-    ~default:{ Plza_rules.Postconditions.place = None }
+    ~default:{ Plza_rules.Postconditions.place = None; flags = [] }
 
 let with_end_place ~next plan =
   Result.map_error Engine_run.Failure.cause_to_string
@@ -52,12 +52,7 @@ let with_end_place ~next plan =
        (Story.Start_signature.promised_end ~next plan))
 
 let end_state steps ~checkpoint_id (plan : P.Plan.t) =
-  let read (p : Plza_rules.Postconditions.t) =
-    Option.fold ~none:Plza_rules.Screen_signature.nothing
-      ~some:(Story.Start_signature.read_place steps ~checkpoint_id)
-      p.place
-  in
-  (ends plan, read)
+  (ends plan, Story.Start_signature.read_end steps ~checkpoint_id)
 
 let run_checkpoint ~options ~log ~picture ~reload report (plan : P.Plan.t) =
   let* () = start ~log ~picture ~reload plan in

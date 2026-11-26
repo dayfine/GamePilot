@@ -41,6 +41,11 @@ type game_steps = {
       (** Count the party bar's filled slots on the latest screen: its cards on
           one frame, its bars on the next ({!Plza_readers.Party_slots}); [None]
           with no bar or none filled. *)
+  read_link_play_row : unit -> bool option;
+      (** With the main menu open: whether its sixth row, Link Play, shows, the
+          row given 1.5 s to slide in
+          ({!Plza_readers.Main_menu_row.link_play_shown}); [None] with no main
+          menu. *)
   log : string -> unit;  (** A line for the log and the watch page. *)
   log_detail : string -> unit;  (** A line for the log alone. *)
 }

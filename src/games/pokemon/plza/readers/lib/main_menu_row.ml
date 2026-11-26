@@ -41,9 +41,12 @@ let band_probe ~picture r =
     (Native_box.of_fractions (band r))
     white
 
+let band_probes ~picture =
+  List.concat_map (band_probe ~picture) (List.init rows Fun.id)
+
 let probes ~picture ~assets =
   Main_menu.probes ~picture ~assets
-  @ List.concat_map (band_probe ~picture) (List.init rows Fun.id)
+  @ band_probes ~picture
   @ List.concat_map
       (fun k -> Pixel_shares.probe ~picture ~id:(bar_id k) (bar k) green)
       (List.init cards Fun.id)
@@ -68,6 +71,14 @@ let highlighted m =
   if (not (Main_menu.shown m)) || List.mem None shares || share <= min_white
   then None
   else Some best
+
+let link_play_row = 5
+let min_link_play_white = 0.03
+
+let link_play_shown m =
+  highlighted m <> None
+  && Option.value ~default:0. (fraction m (band_id link_play_row))
+     >= min_link_play_white
 
 let green_share m k =
   match Pixel_shares.lines m (bar_id k) with

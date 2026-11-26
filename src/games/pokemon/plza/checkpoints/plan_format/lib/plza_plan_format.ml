@@ -51,7 +51,21 @@ let place ~where = function
       | Ok s -> Some s
       | Error detail -> F.fail "%splace %s." where detail)
 
+(* A story flag PLZA reads at a checkpoint's end. *)
+let readable ~where flag =
+  if List.mem flag T.readable_flags then flag
+  else
+    F.fail "%sflags has \"%s\": PLZA reads only %s." where flag
+      (String.concat ", " T.readable_flags)
+
+let flags ~where = function
+  | None -> []
+  | Some value -> List.map (readable ~where) (F.strings (where ^ "flags") value)
+
 let postconditions_of_plan ~where obj =
   F.catch (fun () ->
-      known_fields_only ~where [ "place" ] obj;
-      { T.Postconditions.place = place ~where (F.find "place" obj) })
+      known_fields_only ~where [ "place"; "flags" ] obj;
+      {
+        T.Postconditions.place = place ~where (F.find "place" obj);
+        flags = flags ~where (F.find "flags" obj);
+      })
