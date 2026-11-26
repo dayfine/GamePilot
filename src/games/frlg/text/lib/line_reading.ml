@@ -60,6 +60,11 @@ let pick ?(max_score = max_score) line candidates m =
   | (text, score) :: _ -> No_match { best = Some text; score }
   | [] -> No_match { best = None; score = Float.infinity }
 
+let pick_preferring ?max_score line candidates ~fallback m =
+  match pick ?max_score line candidates m with
+  | Read _ as r -> r
+  | No_match _ -> pick ?max_score line fallback m
+
 let upload ?ink glyphs line text =
   match template ?ink glyphs line text with
   | Ok png -> probe ?ink line text ~template:(Effects.upload_template png)
@@ -68,13 +73,16 @@ let upload ?ink glyphs line text =
 let probes ?ink glyphs line candidates =
   List.map (upload ?ink glyphs line) candidates
 
-let read ?max_score ?ink glyphs line candidates =
-  let probes = probes ?ink glyphs line candidates in
+let read_preferring ?max_score ?ink glyphs line candidates ~fallback =
+  let probes = probes ?ink glyphs line (candidates @ fallback) in
   let ids = List.map (fun (p : Wire.probe_spec) -> p.id) probes in
   let all_there m = List.for_all (fun id -> Effects.probe m id <> None) ids in
   match
     Effects.with_probes probes (fun () ->
         Effects.await ~timeout_ms:frame_timeout_ms all_there)
   with
-  | Holds m -> pick ?max_score line candidates m
+  | Holds m -> pick_preferring ?max_score line candidates ~fallback m
   | Timeout -> failwith ("no frame with the probes of " ^ line.id)
+
+let read ?max_score ?ink glyphs line candidates =
+  read_preferring ?max_score ?ink glyphs line candidates ~fallback:[]

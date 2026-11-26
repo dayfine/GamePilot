@@ -21,6 +21,7 @@ type t = {
   battle : bool;  (** The battle HUD. *)
   minimap_arrow : float option;
       (** The bearing of the minimap's arrow, degrees clockwise from up. *)
+  map_pin : Map_leg.point option;  (** The player's pin, with the map open. *)
 }
 (** One screen read. *)
 

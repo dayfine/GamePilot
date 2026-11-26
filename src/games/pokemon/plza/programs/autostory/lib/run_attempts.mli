@@ -2,14 +2,15 @@
     latest autosave: when to reload and try again, and how the run ends.
 
     Off its start: an attempt that fails because the console is not at the
-    checkpoint's start (the start signature's [chain_off_start]) and did not
-    begin with a reload is followed by one that does, whose start is checked
-    again. A checkpoint with no [start] (01.00b, made by hand) has no autosave
-    to go back to, and one off its start after a reload stays off it: both fail
-    at once, as a failure that repeats. Where it differs: the fork's chain stops
-    on [chain_off_start] (PokemonLZA_AutoStoryGame.cpp); here a checkpoint left
-    off its start by a stopped run, or by the checkpoint before it, gets the
-    reload a person would give it, and the log says so.
+    checkpoint's start ([chain_off_start], from the start signature or an
+    action's own start check) and did not begin with a reload is followed by one
+    that does, whose start is checked again. A checkpoint with no [start]
+    (01.00b, made by hand) has no autosave to go back to, and one off its start
+    after a reload stays off it: both fail at once, as a failure that repeats.
+    Where it differs: the fork's chain stops on [chain_off_start]
+    (PokemonLZA_AutoStoryGame.cpp); here a checkpoint left off its start by a
+    stopped run, or by the checkpoint before it, gets the reload a person would
+    give it, and the log says so.
 
     Then the plan's [retries] (the engine's
     {!Engine_run.Checkpoint_trials.attempts}): a failure that does not repeat
@@ -17,8 +18,8 @@
     after an off-start. As the fork's engine (Pokemon_StoryEngine.cpp), which
     reloads a failed checkpoint that started from a save up to its attempts per
     checkpoint (3 by default, PokemonLZA_AutoStory.cpp). Where it differs: the
-    fork tries every checkpoint 3 times; here only a plan that names [retries],
-    and no plan does yet, so a failure stops for a look. *)
+    fork tries every checkpoint 3 times; here only a plan that names [retries]
+    (a luck-bound step), so other failures stop for a look. *)
 
 type failure = {
   at : string;  (** Where it failed: ["start"], ["#1 to_the_center"]. *)
@@ -35,7 +36,7 @@ type outcome =
   | Failed of failure  (** Where and why it failed. *)
 
 val off_start : Engine_run.Failure.cause -> bool
-(** A start check's [chain_off_start]. *)
+(** [chain_off_start], from a start check. *)
 
 val of_cause : at:string -> Engine_run.Failure.cause -> outcome
 (** A failure at [at] for this cause (["code: detail"]), off its start by

@@ -10,11 +10,12 @@ type t = {
   mutable now : float;
   mutable inputs : input list;  (** newest first *)
   mutable lines : string list;  (** newest first *)
+  mutable queued_until : float;  (** when the queued inputs end *)
 }
 
-let create () = { now = 0.0; inputs = []; lines = [] }
+let create () = { now = 0.0; inputs = []; lines = []; queued_until = 0.0 }
 
-let submit c (command : Wire.command) =
+let run_input c (command : Wire.command) =
   match command with
   | Wait { wait_ms } -> c.now <- c.now +. float_of_int wait_ms
   | Press { buttons; left_stick; hold_ms; cooldown_ms; _ } ->
@@ -22,9 +23,22 @@ let submit c (command : Wire.command) =
       let stick_ms = if Option.is_some left_stick then hold_ms else 0 in
       c.inputs <- { at_ms = c.now; buttons; stick_ms } :: c.inputs
 
+let submit c command =
+  c.now <- Float.max c.now c.queued_until;
+  run_input c command
+
+(* Queued: run on a clock of its own, from the queue's end. *)
+let queue c commands =
+  let now = c.now in
+  c.now <- Float.max c.now c.queued_until;
+  List.iter (run_input c) commands;
+  c.queued_until <- c.now;
+  c.now <- now
+
 let frame_ms = 33.0
 
-let steps c screen : Plza_story.Steps.game_steps =
+let steps ?(party = fun _ -> None) ?(lock = fun _ -> None) c screen :
+    Plza_story.Steps.game_steps =
   let log line = c.lines <- line :: c.lines in
   {
     submit = submit c;
@@ -39,6 +53,15 @@ let steps c screen : Plza_story.Steps.game_steps =
         c.now <- c.now +. frame_ms;
         let look = screen c in
         if check look then Some look else None);
+    race_batch =
+      (fun commands check ->
+        List.find_map
+          (fun command ->
+            submit c command;
+            c.now <- c.now +. frame_ms;
+            let look = screen c in
+            if check look then Some look else None)
+          commands);
     race_then =
       (fun command check next ->
         submit c command;
@@ -48,6 +71,17 @@ let steps c screen : Plza_story.Steps.game_steps =
           List.iter (submit c) (next look);
           Some look)
         else None);
+    queue = queue c;
+    now = (fun () -> c.now);
+    wait_until = (fun at -> c.now <- Float.max c.now at);
+    read_lock_target =
+      (fun () ->
+        c.now <- c.now +. (2. *. frame_ms);
+        lock c);
+    read_party_slots =
+      (fun () ->
+        c.now <- c.now +. (2. *. frame_ms);
+        party c);
     log;
     log_detail = log;
   }

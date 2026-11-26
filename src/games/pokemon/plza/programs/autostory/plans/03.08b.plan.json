@@ -1,0 +1,46 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "plza",
+  "execution": {
+    "start_signature": {
+      "party": 5,
+      "talk_prompt": false,
+      "wild_zone": true
+    }
+  },
+  "metadata": {
+    "phase": "testing",
+    "source": "played from a new game; starts at the last catch's autosave, ends on the street just through the far gate; starts where 03.08a ends; the fork's plza-03.08b.plan.json (plza/lean)",
+    "postconditions": {}
+  },
+  "checkpoint": {
+    "id": "03.08b",
+    "title": "Out of Wild Zone 1's far gate",
+    "start": {
+      "place": "WildZone1"
+    },
+    "events": [
+      {
+        "id": "zone_1_to_far_gate",
+        "kind": "game_action",
+        "action": "run_out_of_zone_1",
+        "why": "one map read, then B held: onto the gate's line when off it (runs in off the line hit a pillar), and down the road to the far gate's A prompt; a wild battle does not stop it, leaving ends it",
+        "args": {
+          "timeout_ms": 5000
+        }
+      },
+      {
+        "id": "leave_zone_1",
+        "kind": "game_action",
+        "action": "scene_through_prompt",
+        "why": "A Leave, out on the street"
+      },
+      {
+        "id": "out_of_zone_1",
+        "kind": "game_action",
+        "action": "check_out_of_zone_1",
+        "why": "confirm the map pin is out of Wild Zone 1 before chaining into 03.09"
+      }
+    ]
+  }
+}

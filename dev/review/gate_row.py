@@ -150,8 +150,22 @@ def check_name(check):
     return check.get("name") or check.get("context") or ""
 
 
+def latest_checks(checks):
+    """Each check's run that counts: per workflow and name, the latest run, a cancelled one only
+    when no other run of it finished or is running (a rerun at the same tip supersedes it)."""
+    runs = {}
+    for i, c in enumerate(checks):
+        key = (c.get("workflowName", ""), check_name(c)) if check_name(c) else i
+        runs.setdefault(key, []).append(c)
+    latest = []
+    for group in runs.values():
+        live = [c for c in group if c.get("conclusion") != "CANCELLED"] or group
+        latest.append(max(live, key=lambda c: c.get("startedAt") or ""))
+    return latest
+
+
 def ci_state(pr):
-    checks = pr.get("statusCheckRollup") or []
+    checks = latest_checks(pr.get("statusCheckRollup") or [])
     prose = [c for c in checks if check_name(c) == PROSE_CHECK]
     if prose and prose_only(pr.get("files") or []):
         checks = prose

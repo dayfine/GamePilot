@@ -20,4 +20,5 @@
   gamepilot.frlg_text
   gamepilot.engine_expand
   gamepilot.checkpoints_expand
-  gamepilot.frlg_places))
+  gamepilot.frlg_places
+  gamepilot.run_options))

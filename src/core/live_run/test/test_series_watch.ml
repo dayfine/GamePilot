@@ -8,6 +8,7 @@ let info : Run_record.info =
     from_id = "mg-01";
     to_id = "mg-02";
     backend = "mgba";
+    options = [];
   }
 
 let temp_dir () =

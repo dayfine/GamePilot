@@ -45,6 +45,10 @@ type config = {
           (["LavenderTown"]); [None]: heal fails as [not_implemented]. *)
   reload : unit -> (unit, Pokemon_engine.Failure.cause) result;
       (** Back to the checkpoint's start state. *)
+  program_options : Run_options.t;
+      (** The program's options the run was given (gamepilot run --options,
+          checked against its registry entry): a game action of the program's
+          reads its choices with {!Run_options.find} or {!Run_options.int}. *)
   log : string -> unit;
 }
 

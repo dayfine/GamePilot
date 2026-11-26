@@ -32,6 +32,9 @@ type t = {
   tutorial_card : bool;  (** A tutorial card. *)
   interact_prompt : bool;  (** An A prompt (["(A) Talk"]) with no text box. *)
   party_bar : bool;  (** The overworld party bar with no text box. *)
+  map_pin : Plza_walk.Map_leg.point option;
+      (** The player's pin on the full map, when it is open
+          ({!Plza_readers.Map_pin}). *)
   minimap_arrow : float option;
       (** The bearing the minimap's arrow points, degrees clockwise from up
           ({!Plza_readers.Minimap_arrow}), as the fork reads the facing. *)
@@ -110,3 +113,7 @@ val describe : t -> string
 
 val to_walk_screen : t -> Plza_walk.Walk_screen.t
 (** The read as the walk takes it. *)
+
+val wild_battle_on : t -> bool
+(** A wild battle on, as the catches check it: the Run prompt, or the alert eye
+    while a wild Pokemon attacks before the partner is out. *)
