@@ -93,7 +93,7 @@ let grid =
   }
 
 let plza_series plan_dir args =
-  let* f = Plza_series.Flags.parse args in
+  let* f = Plza_checkpoint_series.Flags.parse args in
   let* options = program_options plan_dir f in
   Plza.run_series ~program:(program_fields plan_dir) ~options
     ~viewport:(viewport plan_dir f) plan_dir args
@@ -102,11 +102,12 @@ let no_stated what ~plan_dir:_ _ = Error ("PLZA's plans state no " ^ what)
 
 let plza_guide : Guide_blocks.rules_guide =
   {
-    rows = Plza_series.Guide_tables.rows;
+    rows = Plza_checkpoint_series.Guide_tables.rows;
     needs = no_stated "needs";
     preflight = no_stated "pre-flight";
-    commands = (fun _ ~args -> Plza_series.Guide_tables.commands ~args);
-    order = Plza.checkpoint_order;
+    commands =
+      (fun _ ~args -> Plza_checkpoint_series.Guide_tables.commands ~args);
+    order = Plza_checkpoint_series.Checkpoint_series.checkpoint_order;
   }
 
 (* PLZA's story rules' entry points: a series of whole checkpoints on the
@@ -124,7 +125,7 @@ let plza =
   }
 
 let plza_home_series plan_dir args =
-  let* f = Plza_bank_home_series.Bank_home_flags.parse args in
+  let* f = Plza_checkpoint_series.Flags.parse args in
   let* options = program_options plan_dir f in
   Plza_bank_home_series.Bank_home_runs.run_series
     ~program:(program_fields plan_dir) ~options ~viewport:(viewport plan_dir f)

@@ -1,7 +1,6 @@
 (test
  (name test_program_registry)
  (libraries
-  yojson
   gamepilot.table_test
   gamepilot.frlg_checkpoints
   gamepilot.frlg_actions

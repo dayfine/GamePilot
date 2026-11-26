@@ -4,7 +4,6 @@ module F = Json_field
 
 let ( let* ) = Result.bind
 let home_box_most = 300
-let option_suffix = "-boxes"
 let move_fields = [ "gift"; "box_slot"; "home_boxes"; "scan" ]
 
 let known_only ~where ~what fields obj =
@@ -88,41 +87,3 @@ let check_moves (moves : M.t list) =
        moves)
 
 let of_args args = Result.bind (decode args) check_moves
-let option_key (m : M.t) = String.lowercase_ascii m.name ^ option_suffix
-
-let boxes_of_text ~key text =
-  let numbers =
-    List.map
-      (fun s -> int_of_string_opt (String.trim s))
-      (String.split_on_char ',' text)
-  in
-  if List.mem None numbers then
-    Error
-      (Printf.sprintf
-         "%s=%s: HOME boxes are whole numbers separated by commas (166,167)" key
-         text)
-  else check_boxes ~what:key (List.filter_map Fun.id numbers)
-
-let over options (m : M.t) =
-  let key = option_key m in
-  match Run_options.find options key with
-  | None -> Ok m
-  | Some text ->
-      Result.map (fun boxes -> { m with boxes }) (boxes_of_text ~key text)
-
-let unmatched options moves =
-  List.filter
-    (fun (key, _) ->
-      String.ends_with ~suffix:option_suffix key
-      && not (List.exists (fun m -> option_key m = key) moves))
-    (Run_options.pairs options)
-
-let with_options options moves =
-  match unmatched options moves with
-  | (key, _) :: _ ->
-      Error
-        (Printf.sprintf "%s: the plan banks no such gift (its gifts: %s)" key
-           (String.concat ", " (List.map (fun (m : M.t) -> m.name) moves)))
-  | [] -> all_ok (List.map (over options) moves)
-
-let moves options args = Result.bind (of_args args) (with_options options)

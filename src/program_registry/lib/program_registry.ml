@@ -277,19 +277,6 @@ let plza_autostory =
     options = [];
   }
 
-(* The HOME boxes a gift's [<gift>-boxes] option sets, over the plan's
-   (Plza_bank_home.Bank_moves_args): one key per gift its plan banks. *)
-let home_boxes_option gift : Run_options.declared =
-  {
-    key = String.lowercase_ascii gift ^ "-boxes";
-    value = Text;
-    presence = Optional;
-    doc =
-      "the HOME boxes the " ^ gift
-      ^ " goes to, tried in order, comma-separated (150,151); by default the \
-         plan's";
-  }
-
 let plza_bank_home =
   {
     id = "plza.bank-home";
@@ -304,7 +291,7 @@ let plza_bank_home =
     backends = [ Switch ];
     viewport = Native;
     rules = Plza_home;
-    options = List.map home_boxes_option [ "Vivillon"; "Xerneas" ];
+    options = [];
   }
 
 let all =

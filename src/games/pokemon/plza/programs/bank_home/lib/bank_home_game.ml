@@ -10,20 +10,20 @@ type templates = {
 
 let action = "bank_in_home"
 
-let check_event options (event : Plan.event) =
+let check_event (event : Plan.event) =
   match (event.kind, event.way) with
   | Named_action args, Some way when way = action ->
       Result.map_error
         (fun e -> event.id ^ ": " ^ e)
-        (Result.map ignore (Bank_moves_args.moves options args))
+        (Result.map ignore (Bank_moves_args.of_args args))
   | _ -> Error (event.id ^ ": bank-home's plans name only " ^ action)
 
-let check_plan options (plan : Plan.t) =
+let check_plan (plan : Plan.t) =
   match plan.checkpoint.events with
   | [] -> Error (plan.checkpoint.checkpoint_id ^ ": no " ^ action ^ " event")
   | events ->
       List.fold_left
-        (fun acc event -> Result.bind acc (fun () -> check_event options event))
+        (fun acc event -> Result.bind acc (fun () -> check_event event))
         (Ok ()) events
 
 (* The walk along HOME's tile row, as Pokemon_home.Home_launch walks it to
@@ -63,8 +63,8 @@ let start_check ~log (t : templates) =
 let bad_args (event : Plan.event) detail =
   Error (Failure.cause ~repeats:true "bad_args" (event.id ^ ": " ^ detail))
 
-let bank ~log ~picture ~options (t : templates) (event : Plan.event) args =
-  match Bank_moves_args.moves options args with
+let bank ~log ~picture (t : templates) (event : Plan.event) args =
+  match Bank_moves_args.of_args args with
   | Error e -> bad_args event e
   | Ok moves ->
       Result.map_error
@@ -76,11 +76,11 @@ let no_handler what () =
     (Failure.cause ~repeats:true "no_handler"
        ("bank-home runs " ^ action ^ " only, no " ^ what))
 
-let make ~log ~picture ~options t : Game.t =
+let make ~log ~picture t : Game.t =
   {
     run_own = (fun _ _ -> no_handler "walk" ());
     run_builtin = (fun _ -> no_handler "talk, answer, scene or save" ());
-    game_actions = [ (action, bank ~log ~picture ~options t) ];
+    game_actions = [ (action, bank ~log ~picture t) ];
     flag_holds = (fun _ -> false);
     position = (fun () -> None);
     between_rounds = (fun () -> Ok ());

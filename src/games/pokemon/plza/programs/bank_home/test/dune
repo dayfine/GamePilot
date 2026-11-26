@@ -6,7 +6,6 @@
   yojson
   gamepilot.table_test
   gamepilot.json_field
-  gamepilot.run_options
   gamepilot.pokemon_home
   gamepilot.plza_engine
   gamepilot.plza_bank_home))
