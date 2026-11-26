@@ -1,83 +1,117 @@
-(* The skeleton's 01.01 runs through the engine (Plza_engine.Runner) with
-   Story_game's handlers on a scripted console: the plan decodes, its walk
-   reaches the walk's handler and passes on the white fade, or fails when the
-   fade never shows (lost); an event PLZA has no handler for yet fails. And
-   what the watch page is sent (Story_game.run_watched): the plan at each
-   event's change and the run. *)
+(* 01.00b and 01.01 run through the engine (Plza_engine.Runner) with
+   Story_game's handlers on a scripted console (Fake_console): the plans
+   decode, every event reaches its handler, and each handler's presses move a
+   game that answers them as the console did. Also the failures: a start that
+   is not Confirm Choices, a walk whose white fade never shows (lost), a
+   platform never seen, an event PLZA has no handler for yet. And what the watch page is sent (Story_game.run_watched):
+   the plan at each event's change and the run. *)
 
 open Plza_engine
-module S = Plza_walk.Walk_screen
+module L = Plza_story.Look
+module C = Plza_fake_console.Fake_console
 
 let case name input expectation = { Table_test.name; input; expectation }
 
-let plan_of_file id =
-  match
-    Plan_decode.decode ~source:(id ^ ".plan.json")
-      (Yojson.Safe.from_file (Filename.concat "../plans" (id ^ ".plan.json")))
-  with
-  | Ok p -> p
-  | Error e -> failwith e
+let decoded source json =
+  match Plan_decode.decode ~source json with Ok p -> p | Error e -> failwith e
 
-let plan_of_text text =
-  match
-    Plan_decode.decode ~source:"test.plan.json" (Yojson.Safe.from_string text)
-  with
-  | Ok p -> p
-  | Error e -> failwith e
+let plan id =
+  decoded (id ^ ".plan.json")
+    (Yojson.Safe.from_file (Filename.concat "../plans" (id ^ ".plan.json")))
 
-(* A scripted console: a clock moved by each input's time and 50 ms per read,
-   and the screen as a function of it. *)
-let read_ms = 50
+let plan_of_text text = decoded "test.plan.json" (Yojson.Safe.from_string text)
 
-let duration : Wire.command -> int = function
-  | Press { hold_ms; cooldown_ms; _ } -> hold_ms + cooldown_ms
-  | Wait { wait_ms } -> wait_ms
+(* A reload: the console's time moves on and [reloaded] says it happened. *)
+let reloaded = ref false
+let look (c : C.t) = L.empty ~at_ms:c.now
+let hint c = { (look c) with controls_hint = true }
+let black c = { (look c) with fade_black = true }
+let white c = { (look c) with fade_white = true }
+let text c = { (look c) with dialog_box = true; advance_arrow = true }
+let since c t = c.C.now -. t
 
-let scripted screen =
-  let now = ref 0.0 and lines = ref [] in
-  let say line = lines := line :: !lines in
-  let steps : Plza_walk.Walk.game_steps =
-    {
-      submit = (fun c -> now := !now +. float_of_int (duration c));
-      read_screen =
-        (fun () ->
-          now := !now +. float_of_int read_ms;
-          screen !now);
-      log = say;
-      log_detail = say;
-    }
+(* 01.00b: Confirm Choices on row 0 until A on row 2; a black fade; the
+   opening until + held; a black fade, the autosave badge on the platform,
+   then the platform. *)
+let new_game ?(confirm = true) c =
+  match C.nth_after c Wire.A ~after:0.0 0 with
+  | None ->
+      let downs =
+        List.length
+          (List.filter
+             (fun (i : C.input) -> List.mem Wire.Down i.buttons)
+             c.inputs)
+      in
+      if confirm then { (look c) with confirm_row = Some (min 2 downs) }
+      else look c
+  | Some a when since c a < 1000.0 -> black c
+  | Some a -> (
+      match C.nth_after c Wire.Plus ~after:a 0 with
+      | None -> look c
+      | Some s when since c s < 1000.0 -> black c
+      | Some s when since c s < 3000.0 -> { (hint c) with autosave = true }
+      | Some _ -> hint c)
+
+(* After the arrival's white fade at [w]: 1.5 s of it, text until three A,
+   the ad's black fade, until + is held, the skip's black fade, text until two
+   A, a banner until one more A, then the hint. *)
+let arrival c w =
+  if since c w < 1500.0 then white c
+  else
+    match C.nth_after c Wire.A ~after:w 2 with
+    | None -> text c
+    | Some a3 when since c a3 < 1000.0 -> black c
+    | Some a3 -> (
+        match C.nth_after c Wire.Plus ~after:a3 0 with
+        | None -> look c
+        | Some s when since c s < 800.0 -> black c
+        | Some s -> (
+            match
+              (C.nth_after c Wire.A ~after:s 1, C.nth_after c Wire.A ~after:s 2)
+            with
+            | None, _ -> text c
+            | Some _, None -> look c
+            | Some _, Some _ -> hint c))
+
+(* 01.01: the platform; the menu from X until B; the walk's white fade once
+   the stick was held 8 s (never when [lost]). *)
+let platform ?(lost = false) ?(faded = false) c =
+  match C.nth_after c Wire.X ~after:0.0 0 with
+  | None when faded && not !reloaded -> look c
+  | None -> hint c
+  | Some x when C.nth_after c Wire.B ~after:x 0 = None -> look c
+  | Some _ -> (
+      match (lost, C.stick_reached c 8000) with
+      | false, Some w -> arrival c w
+      | _ -> hint c)
+
+let run_plan (p : Plan.t) screen =
+  let c = C.create () in
+  reloaded := false;
+  let reload () =
+    reloaded := true;
+    c.now <- c.now +. 30_000.0;
+    Ok ()
   in
-  (steps, fun () -> List.rev !lines)
-
-(* The platform's controls hint until [fade_at] ms, then a white fade
-   (never when [lost]). *)
-let fade_at = 9000.0
-
-let platform ?(lost = false) at_ms : S.t =
-  let screen = S.empty ~at_ms in
-  if (not lost) && at_ms >= fade_at then { screen with fade_white = true }
-  else { screen with controls_hint = true }
-
-let game steps checkpoint =
-  Plza_autostory.Story_game.make steps ~checkpoint ~reload:(fun () -> Ok ())
-
-let result screen (plan : Plan.t) () =
-  let steps, _ = scripted screen in
-  match Runner.run (game steps plan.checkpoint) plan.checkpoint with
+  let game =
+    Plza_autostory.Story_game.make (C.steps c screen) ~checkpoint:p.checkpoint
+      ~reload
+  in
+  match Runner.run game p.checkpoint with
   | Ok () -> "passed"
   | Error f -> Failure.to_string f
 
-let platform_plan () = plan_of_file "01.01"
+let result checkpoint screen () = run_plan (plan checkpoint) screen
 
-(* A plan with a scene after the walk: no handler for it yet. *)
-let with_scene () =
+(* A plan with a talk after the walk: no handler for it yet. *)
+let with_talk () =
   plan_of_text
     {|{"format": "gamepilot-checkpoint/1", "game": "plza", "execution": {},
        "checkpoint": {"id": "01.01", "title": "t",
          "start": {"place": "LumioseCity"},
          "events": [
            {"id": "w", "kind": "walk", "args": {"legs": [[0, 1000]]}},
-           {"id": "arrival", "kind": "scene"}]}}|}
+           {"id": "chat", "kind": "talk"}]}}|}
 
 module W = Wire.Watch
 
@@ -122,50 +156,85 @@ let page f =
     | _ -> None
   in
   Effect.Deep.try_with f () { effc };
-  String.concat "\n" (List.rev !sent)
+  List.rev !sent
 
-(* 01.01 run with Story_game.run_watched: what the page showed. *)
-let watched screen () =
+(* [checkpoint] run with Story_game.run_watched: what the page showed. *)
+let watched ?(checkpoint = "01.01") screen =
   page (fun () ->
-      let plan = platform_plan () in
-      let steps, _ = scripted screen in
-      let report = Plan_watch.create plan.checkpoint in
+      let c = C.create () in
+      let p = plan checkpoint in
+      let game =
+        Plza_autostory.Story_game.make (C.steps c screen)
+          ~checkpoint:p.checkpoint ~reload:(fun () -> Ok ())
+      in
+      let report = Plan_watch.create p.checkpoint in
       ignore
-        (Plza_autostory.Story_game.run_watched ~mode:"testing" report
-           (game steps plan.checkpoint)
-           plan.checkpoint))
+        (Plza_autostory.Story_game.run_watched ~mode:"testing" report game
+           p.checkpoint))
+
+(* The page's last line, and the one before it. *)
+let last_shown ?checkpoint screen () =
+  match List.rev (watched ?checkpoint screen) with
+  | last :: _ -> last
+  | [] -> "nothing"
+
+let last_plan screen () =
+  match List.rev (watched screen) with _ :: plan :: _ -> plan | _ -> "nothing"
 
 let cases =
   [
-    case "01.01's plan: a zone start and its walk"
-      (fun () -> Plan_text.outline (platform_plan ()))
-      "plza 01.01 from LumioseCity: 1 walk";
-    case "01.01: off the platform, walked to the white fade"
-      (fun () -> result platform (platform_plan ()) ())
-      "passed";
+    case "01.00b: Confirm Choices, Ready!, the opening skipped, the platform"
+      (result "01.00b" new_game) "passed";
+    case "01.00b on another screen: nothing pressed, repeats"
+      (result "01.00b" (new_game ~confirm:false))
+      "01.00b event 1 (confirm): not_on_confirm_choices: 01.00b starts on the \
+       new game's \"Confirm Choices\" screen, after the language, look and \
+       name (made by hand). It is not on screen; nothing was pressed.";
+    case "01.00b on the watch page: its run passes"
+      (last_shown ~checkpoint:"01.00b" new_game)
+      "run testing 01.00b=passed";
+    case "01.01's plan: a zone start and its events"
+      (fun () -> Plan_text.outline (plan "01.01"))
+      "plza 01.01 from LumioseCity: 3 game_action, 1 walk, 2 scene";
+    case "01.01: the platform to the controls hint after the arrival scenes"
+      (result "01.01" platform) "passed";
     case "01.01 lost: the walk's white fade never shows"
-      (fun () -> result (platform ~lost:true) (platform_plan ()) ())
-      "01.01 event 1 (platform_to_plaza): walk_no_end: platform_to_plaza: no \
-       end event within 11950 ms of the last leg";
-    case "a scene: no handler in the skeleton yet"
-      (fun () -> result platform (with_scene ()) ())
-      "01.01 event 2 (arrival): no_handler: arrival: PLZA runs no talk, answer \
-       or save event";
-    case "01.01 on the watch page: its walk moves, its run passes"
-      (watched platform)
-      "plan 01.01: platform_to_plaza=pending\n\
-       run testing 01.01=current\n\
-       plan 01.01: platform_to_plaza=current\n\
-       plan 01.01: platform_to_plaza=done\n\
-       run testing 01.01=passed";
+      (result "01.01" (platform ~lost:true))
+      "01.01 event 3 (platform_to_plaza): walk_no_end: platform_to_plaza: no \
+       end event within 11287 ms of the last leg";
+    case "01.01 with the hint faded: passes"
+      (result "01.01" (platform ~faded:true))
+      "passed";
+    case "01.01 with the hint faded: the platform wait reloaded"
+      (fun () ->
+        ignore (result "01.01" (platform ~faded:true) () : string);
+        string_of_bool !reloaded)
+      "true";
+    case "01.01 off the platform: no controls hint, even after a reload"
+      (result "01.01" look)
+      "01.01 event 1 (on_platform): platform_not_seen: No controls hint on 2 \
+       looks in a row within 10000 ms.";
+    case "a talk: no handler for it yet"
+      (fun () -> run_plan (with_talk ()) platform)
+      "01.01 event 2 (chat): no_handler: chat: PLZA runs no talk, answer or \
+       save event";
+    case "01.01 on the watch page: its run passes" (last_shown platform)
+      "run testing 01.01=passed";
+    case "01.01 lost on the watch page: its run fails"
+      (last_shown (platform ~lost:true))
+      "run testing 01.01=failed";
     case "01.01 lost on the watch page: the walk fails with its reason"
-      (watched (platform ~lost:true))
-      "plan 01.01: platform_to_plaza=pending\n\
-       run testing 01.01=current\n\
-       plan 01.01: platform_to_plaza=current\n\
-       plan 01.01: platform_to_plaza=failed(walk_no_end: platform_to_plaza: no \
-       end event within 11950 ms of the last leg)\n\
-       run testing 01.01=failed";
+      (last_plan (platform ~lost:true))
+      "plan 01.01: on_platform=done text_speed_fast=done \
+       platform_to_plaza=failed(walk_no_end: platform_to_plaza: no end event \
+       within 11287 ms of the last leg) arrival_to_ad=pending skip_ad=pending \
+       arrival_scenes=pending";
+    case "the walk is walked before 03.03, run after"
+      (fun () ->
+        Printf.sprintf "%b %b"
+          (Plza_autostory.Story_game.walk_only "01.01")
+          (Plza_autostory.Story_game.walk_only "03.03"))
+      "true false";
   ]
 
 let () = Table_test.run "plza_story_game" cases

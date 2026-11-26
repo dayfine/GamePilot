@@ -9,11 +9,26 @@
   },
   "checkpoint": {
     "id": "01.01",
-    "title": "The platform to the plaza",
+    "title": "The platform to Main Mission 01",
     "start": {
       "place": "LumioseCity"
     },
     "events": [
+      {
+        "id": "on_platform",
+        "kind": "game_action",
+        "action": "wait_for_platform",
+        "why": "start check: on the platform with free control, read by its controls hint (the platform has no party bar)",
+        "args": {
+          "timeout_ms": 10000
+        }
+      },
+      {
+        "id": "text_speed_fast",
+        "kind": "game_action",
+        "action": "set_text_speed_fast",
+        "why": "text speed to fast through the main menu's options; blind presses on the options screens, which no reader reads"
+      },
       {
         "id": "platform_to_plaza",
         "kind": "walk",
@@ -22,6 +37,23 @@
           "legs": [[0, 4500], [90, 10000]],
           "end": "fade_white"
         }
+      },
+      {
+        "id": "arrival_to_ad",
+        "kind": "scene",
+        "action": "end_on_black_fade",
+        "why": "arrival scenes to the black fade that opens the president's ad"
+      },
+      {
+        "id": "skip_ad",
+        "kind": "game_action",
+        "action": "plus_skip",
+        "why": "Plus skips the president's ad"
+      },
+      {
+        "id": "arrival_scenes",
+        "kind": "scene",
+        "why": "the rest of the arrival scenes to the MAIN MISSION 01 banner; ends on the controls hint"
       }
     ]
   }
