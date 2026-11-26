@@ -1,18 +1,18 @@
 (* The party bar reader (PokemonLZA_PartyBarDetector.cpp's last empty slot) on
-   the fork's PartyBarDetector and AutoStoryScreenEvents frames, 01.03's alley
-   on console B, and the other story frames: the platform, the battle HUD,
+   the fork's PartyBarDetector and AutoStoryScreenEvents frames, 04-starter-and-andi's
+   alley on console B, and the other story frames: the platform, the battle HUD,
    dialogue, choices, fades and cards. Every frame shifted reads as unshifted.
 
    Headroom (the line's brightness over the strip inside it, bound 10; over
    the strip outside, bound 0), weakest edge per frame: the frames with the bar
    read 18 inside and 10 outside at least (za2-m3v-s1, a 640x360 capture scaled
-   up, and the zone's pillar), 01.03's alley 41 and 37; shifted, 16 and 9 at
+   up, and the zone's pillar), 04-starter-and-andi's alley 41 and 37; shifted, 16 and 9 at
    least. On every frame without the bar, shifted or not, some edge reads 0
    inside or less. Andi's battle frames and the road show the bar, as the fork
    reads them: the battle HUD leaves it up.
 
    The D-pad marker (Party_marker, score bound 80 for the buttons, 120 for
-   their insides): 03.02b's plaza arch on console B (2026-11-25), where the
+   their insides): 14-battle-taunie's plaza arch on console B (2026-11-25), where the
    bar collapses to its lead icon and the empty slots fade into the light
    pavement (no empty-slot read), shows it at 56 on the 1080p failure frame
    (65 at most shifted), 68 on frame 210 of the run's 640x360 frames scaled up

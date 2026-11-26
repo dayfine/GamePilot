@@ -42,5 +42,5 @@ val settled_party_slots : (unit -> int option) -> int option
 (** Polls [read] (the caller waits 250 ms between looks) until one count holds
     for 13 looks (3 s); [None] if nothing reads in 8 looks (2 s); the last count
     after 32 (8 s). A catch's new member joins the bar seconds after its banner:
-    21-fourth-species read 4 of 5 slots and failed, and its retry at once read 5
+    the fork's 03.08 read 4 of 5 slots and failed, and its retry at once read 5
     (console B, 2026-11-18). *)
