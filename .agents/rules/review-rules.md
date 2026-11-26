@@ -212,7 +212,7 @@ function, no stage. The lab is retired; the doc comment says what the code does.
   ```
 
   and for the lab scripts, where every hit is one (our own `dev/` and `run/` scripts may be named):
-  `grep -rnE --include='*.ml*' 'plza_claim_and_bank|delete_save\.sh|BDSPLab|lab (script|tool)' src`.
+  `grep -rnE --include='*.ml*' --exclude-dir=_build 'plza_claim_and_bank|delete_save\.sh\b|BDSPLab|lab (script|tool)' src`.
 
 ### R10 One decision lives in one module; contexts supply only what they read
 
