@@ -24,7 +24,9 @@
    the SAVE dialog (console B, 2026-11-25) read as themselves and nothing else
    does; on the Boxes (console B's, Xerneas under the cursor, and the fork's
    box-cells captures) the cursor's cell reads as holding a Pokémon or empty,
-   a Pokémon held over an empty cell empty; the dialog's "Last Saved" reads the same as itself and not as a copy
+   a Pokémon held over an empty cell empty, and the box title inks where it
+   is (console B's Japanese "ボックス8" of 2026-11-26, the same in every shift;
+   the fork's "Box 9" and "Box 24", a digit wider); the dialog's "Last Saved" reads the same as itself and not as a copy
    with its 18:16 made 18:18 (synthetic-..., no second save captured), in
    every shift. So does a copy with its date and time where the French game
    shows them (synthetic-save-dialog-fr-layout-..., console B, 2026-11-25:
@@ -121,6 +123,9 @@ let gift_menus =
 
 let messages = [ mg "gift-menu-ja-connected-message-360p" ]
 let boxes = "./mystery-gift/boxes-xerneas-in-box-1.png"
+let box_8 = "./mystery-gift/boxes-box-8-ja-360p.png"
+let box_9 = "./box-cells/pokemon-magikarp-2-0-360p.png"
+let box_24 = "./box-cells/empty-2-5-360p.png"
 
 (* The fork's captures of the Boxes (box-cells/: CommandLineTests'
    BoxCellInfoDetector frames at 360p), named by what the cursor is on. *)
@@ -215,7 +220,7 @@ let expected_message path =
   if List.exists (same path) messages then "message" else "no message"
 
 let expected_boxes path =
-  if same path boxes then pokemon_cell
+  if same path boxes || same path box_8 then pokemon_cell
   else
     match box_cell path with
     | Some true -> pokemon_cell
@@ -277,6 +282,59 @@ let gift_item_cases ~name ~label frames =
         (List.find_opt (fun (_, list) -> same (unshifted path) list) lists))
     frames
 
+(* The box titles: where each inks as captured, the two-digit one a digit
+   wider than the one-digit one, and console B's Japanese one read the same
+   in every shift. *)
+let title_of all path =
+  List.find_map
+    (fun (p, probes) ->
+      if same p path then Box_title.read (measurements probes) else None)
+    all
+
+let ink = function
+  | Some ({ left; right } : Box_title.t) -> Printf.sprintf "%d to %d" left right
+  | None -> "no title"
+
+let wider before after () =
+  match (title_of frames before, title_of frames after) with
+  | Some before, Some after ->
+      string_of_bool (Box_title.one_more_digit ~before ~after)
+  | _ -> "no title"
+
+let title_cases =
+  [
+    case "box title ink, Box 9"
+      (fun () -> ink (title_of frames box_9))
+      "410 to 474";
+    case "box title ink, Box 24"
+      (fun () -> ink (title_of frames box_24))
+      "401 to 480";
+    case "box title ink, Japanese Box 8"
+      (fun () -> ink (title_of frames box_8))
+      "380 to 501";
+    case "box title ink, a frame with the band redacted"
+      (fun () -> ink (title_of frames boxes))
+      "no title";
+    case "Box 24 after Box 9: a digit wider" (wider box_9 box_24) "true";
+    case "Box 9 after Box 24: not wider" (wider box_24 box_9) "false";
+    case "Box 24 after itself: not wider" (wider box_24 box_24) "false";
+  ]
+  @ List.filter_map
+      (fun (path, probes) ->
+        if same (unshifted path) box_8 then
+          Some
+            (case
+               ("Japanese Box 8 reads as captured: " ^ path)
+               (fun () ->
+                 match
+                   (Box_title.read (measurements probes), title_of frames box_8)
+                 with
+                 | Some a, Some b -> string_of_bool (Box_title.same a b)
+                 | _ -> "no title")
+               "true")
+        else None)
+      shifted
+
 let () =
   Table_test.run "gift_readers"
     (frame_cases ~label:"" frames
@@ -286,6 +344,7 @@ let () =
     @ gift_item_cases ~name:"en" ~label:"" (frames @ shifted)
     @ gift_item_cases ~name:"fr" ~label:"French name, " french
     @ gift_item_cases ~name:"ja" ~label:"Japanese name, " japanese
+    @ title_cases
     @ last_saved_cases
         (List.filter
            (fun (p, _) -> List.exists (same (unshifted p)) saves)

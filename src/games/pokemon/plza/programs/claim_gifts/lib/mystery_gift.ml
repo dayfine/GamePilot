@@ -10,6 +10,8 @@ let probes ~picture ~assets ~gift_name =
   @ K.probes
   @ Plza_readers.Boxes_screen.probes ~picture
   @ Plza_readers.Box_cell.probes ~picture
+  @ Plza_readers.Box_title.probes ~picture
+  @ Plza_readers.Tutorial_card.probes ~picture
   @ Plza_readers.Save_dialog.probes ~picture
 
 let dpad button : T.t = { button; hold_ms = 80; cooldown_ms = 300 }

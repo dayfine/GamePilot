@@ -38,10 +38,10 @@ val probes :
   assets:Plza_readers.Blob_assets.t ->
   gift_name:string option ->
   Wire.probe_spec list
-(** The main menu's, the gift screens', the keyboard's, the Boxes' (and their
-    cursor's cell's) and the SAVE dialog's probes; [gift_name] the uploaded
-    template of an Internet gift's name in the game's language, [None] for a
-    gift claimed by code. *)
+(** The main menu's, the gift screens', the keyboard's, the Boxes' (their
+    cursor's cell's, their box title's and the first-time card's) and the SAVE
+    dialog's probes; [gift_name] the uploaded template of an Internet gift's
+    name in the game's language, [None] for a gift claimed by code. *)
 
 val open_gifts : log:(string -> unit) -> (unit, string) result
 (** From the main menu: to the Link Play row, A, Right twice, Down, A, onto the

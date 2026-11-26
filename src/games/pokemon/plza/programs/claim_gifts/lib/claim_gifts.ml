@@ -15,10 +15,7 @@ type outcome =
 type game_steps = {
   read_party : unit -> party_read;
   claim : C.gift -> Gift_claim.claim;
-  check_slots :
-    party_gift:C.box_slot option ->
-    in_box:C.box_slot list ->
-    ((C.box_slot * Gift_boxes.slot_read) list, string) result;
+  arrange_slots : C.box_slot list -> (Gift_boxes.arranged, string) result;
   save : unit -> (unit, string) result;
   log : string -> unit;
 }
@@ -26,16 +23,16 @@ type game_steps = {
 type run = {
   catalog : C.t;
   today : C.date;
-  mutable party : party;
   mutable outcomes : (C.gift * outcome) list;
+  mutable moved : int;
 }
 
 let start catalog ~today =
   {
     catalog;
     today;
-    party = Full;
     outcomes = List.map (fun g -> (g, Not_tried)) catalog;
+    moved = 0;
   }
 
 let outcomes run = run.outcomes
@@ -56,16 +53,18 @@ let outcome_text = function
 
 let fail code detail = Error (Failure.cause ~repeats:true code detail)
 
+let party_text = function
+  | Full ->
+      "Party of six: every gift lands in a box; slot 6 is taken for a gift an \
+       earlier run left there."
+  | Room_for_one -> "Party of five: the first gift lands in party slot 6."
+
 let gifts_start steps run =
   steps.log ("Today (UTC): " ^ C.date_to_string run.today);
   List.iter (fun l -> steps.log ("Gift " ^ l)) (C.lines run.catalog);
   match steps.read_party () with
   | Party p ->
-      run.party <- p;
-      steps.log
-        (match p with
-        | Full -> "Party of six: every gift lands in a box."
-        | Room_for_one -> "Party of five: the first gift lands in party slot 6.");
+      steps.log (party_text p);
       Ok ()
   | No_menu why -> fail "not_on_main_menu" why
   | Not_ready why ->
@@ -102,48 +101,61 @@ let claim_gifts steps run =
   in
   go run.catalog
 
-(* The received gifts with a Pokémon, in claim order. *)
-let received_pokemon run =
-  List.filter_map
-    (fun ((g : C.gift), o) ->
-      match (o, g.pokemon) with Claimed, Some p -> Some (g, p) | _ -> None)
-    run.outcomes
+(* A Pokémon gift that may be in the save: received now, said to be by the
+   game, or failed (an earlier run's gift shows an unknown screen today). *)
+let may_have = function
+  | Claimed | Already_received | Failed _ -> true
+  | Expired | Not_supported _ | Not_tried -> false
+
+(* Those gifts, the ones received now first, each in the catalog's order:
+   the order the game put them in party slot 6 and the boxes. *)
+let boxed_gifts run =
+  let pokemon =
+    List.filter_map
+      (fun ((g : C.gift), o) ->
+        match g.pokemon with
+        | Some p when may_have o -> Some ((g, o), p)
+        | _ -> None)
+      run.outcomes
+  in
+  let now, before = List.partition (fun ((_, o), _) -> o = Claimed) pokemon in
+  now @ before
 
 let slot_name (s : C.box_slot) = Printf.sprintf "Box %d slot %d" s.box s.slot
 
-let judge run (gift, (p : C.pokemon)) reads =
-  match List.assoc_opt p.box_slot reads with
-  | Some Gift_boxes.Filled -> ()
-  | Some Empty -> set run gift (Failed (slot_name p.box_slot ^ " is empty"))
-  | Some (Not_read why) ->
-      set run gift (Failed (slot_name p.box_slot ^ " not read: " ^ why))
-  | None -> set run gift (Failed (slot_name p.box_slot ^ " not read"))
+(* A gift received now or said to be must read in its slot; a failed one
+   keeps its failure. *)
+let judge run (((gift : C.gift), outcome), (p : C.pokemon)) reads =
+  let fail why = set run gift (Failed (slot_name p.box_slot ^ why)) in
+  match (outcome, List.assoc_opt p.box_slot reads) with
+  | (Failed _ | Expired | Not_supported _ | Not_tried), _
+  | _, Some Gift_boxes.Filled ->
+      ()
+  | _, Some Empty -> fail " is empty"
+  | _, Some (Not_read why) -> fail (" not read: " ^ why)
+  | _, None -> fail " not read"
 
-let split run =
-  match (run.party, received_pokemon run) with
-  | Room_for_one, (_, (first : C.pokemon)) :: rest ->
-      ( Some first.box_slot,
-        List.map (fun (_, (p : C.pokemon)) -> p.box_slot) rest )
-  | _, all -> (None, List.map (fun (_, (p : C.pokemon)) -> p.box_slot) all)
+let arrange steps run gifts =
+  let slots = List.map (fun (_, (p : C.pokemon)) -> p.box_slot) gifts in
+  match steps.arrange_slots slots with
+  | Ok { reads; moved } ->
+      run.moved <- moved;
+      List.iter (fun g -> judge run g reads) gifts;
+      Ok ()
+  | Error why -> fail "boxes_not_read" why
 
 let check_gift_slots steps run =
-  match received_pokemon run with
+  match boxed_gifts run with
   | [] ->
-      steps.log "No Pokémon received: no box slot to read.";
+      steps.log "No Pokémon gift in the save: no box slot to arrange.";
       Ok ()
-  | received -> (
-      let party_gift, in_box = split run in
-      match steps.check_slots ~party_gift ~in_box with
-      | Ok reads ->
-          List.iter (fun r -> judge run r reads) received;
-          Ok ()
-      | Error why -> fail "boxes_not_read" why)
+  | gifts -> arrange steps run gifts
 
 let save_progress steps run =
-  if List.exists (fun (_, o) -> o = Claimed) run.outcomes then
+  if List.exists (fun (_, o) -> o = Claimed) run.outcomes || run.moved > 0 then
     Result.map_error (Failure.cause ~repeats:true "not_saved") (steps.save ())
   else (
-    steps.log "Nothing received: not saved.";
+    steps.log "Nothing received or moved: not saved.";
     Ok ())
 
 let failed run =

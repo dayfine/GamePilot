@@ -14,9 +14,13 @@ Runs on: the Switch.
 - A save past AutoStory's last checkpoint (`03.15-mable-reward`, Mable's reward), where Mystery Gift
   opens.
 - The console on the overworld or the main menu, online for Internet gifts.
-- Five or six Pokémon in the party, all at full HP. With five, the first gift lands in party slot 6
-  and is moved to its box slot.
-- Box 1 empty in the gifts' slots (the table below).
+- Five Pokémon of your own in the party, all at full HP. Party slot 6 is empty, or holds a gift an
+  earlier run left there: a sixth Pokémon is taken for a gift and moved to Box 1.
+- Box 1 empty in the gifts' slots (the table below), or holding those gifts already.
+- None of your own Pokémon in the box the Boxes last showed. With a full party the game puts gifts
+  there, and the run moves the Pokémon it finds there to Box 1 when there are as many as gifts
+  missing.
+- The boxes keep their own names ("Box 1", "Box 2", ...): the run finds Box 1 by its title.
 - The Switch's capture the whole 1920x1080 picture (`--viewport native`, from the registry).
 
 ## Running it
@@ -58,16 +62,27 @@ that announced it.
 |---|---|
 | 01-claim-gifts | Claim the catalog's Mystery Gifts, box them and save |
 
-<!-- plans: d38921889812 -->
+<!-- plans: acfb0ba2b66b -->
 <!-- /generated -->
 
 The run prints today's date and the catalog, opens the main menu and reads the party. Each gift is
 claimed from the main menu and back: Link Play, Mystery Gift, then the code typed on the keyboard,
 or the gift found by its name in the Internet list. Its card means it was received.
 
-Then the Boxes: the gift in party slot 6 goes to its slot, and every received gift's slot is read.
-Save Progress saves, checked by its "Last Saved" time. The last line of the log is one line a gift:
-claimed, already received, expired, not supported or failed.
+Then the Boxes, which open on the box you last looked at. The run presses L until the box title
+grows a digit (Box 1 to the last box) and R once back, so it is on Box 1 whichever box they opened
+on, and reads each gift's slot there.
+
+A gift whose slot is empty is looked for: first in party slot 6, then in the box the Boxes opened
+on, whose 30 cells are read. Each is carried to its slot (a box's Pokémon by way of party slot 6),
+and every gift's slot is read again at the end. A gift is known by where the game puts it, not by
+its species: received into a party of five it lands in party slot 6, into a full party in the
+first free cells of the box last shown, in the order received.
+
+So a rerun puts gifts an earlier run left elsewhere in place, and moves nothing when they already
+are. Save Progress saves when a gift was received or a Pokémon moved, checked by its "Last Saved"
+time. The last line of the log is one line a gift: claimed, already received, expired, not
+supported or failed.
 
 ## When it stops
 
@@ -79,8 +94,12 @@ claimed, already received, expired, not supported or failed.
   gift list, where it would claim another gift. A screen no reader knows after a claim is kept as
   `gift-<id>-unknown-screen.png` in the run folder.
 - No main menu after 12 presses on the way back: `screen_lost`; the gifts after it are not tried.
-- A received gift's box slot empty, or not read: that gift fails.
-- The Boxes or the menu after them not read: `boxes_not_read`; "Last Saved" unchanged: `not_saved`.
+- A received gift's box slot empty after the moves, or not read: that gift fails. A gift whose
+  claim failed keeps its own failure, moved or not.
+- The box the Boxes opened on holds more or fewer Pokémon than the gifts still missing: nothing is
+  taken from it, and those gifts fail.
+- The Boxes, a box title or the menu after them not read, or no box title widening after 40 L:
+  `boxes_not_read`; "Last Saved" unchanged: `not_saved`.
 - Any gift failed: `gifts_failed`, naming each, after the save.
 - A failed run is not retried with a reload, which would lose gifts not yet saved.
 
@@ -90,7 +109,11 @@ claimed, already received, expired, not supported or failed.
   unknown screen, with its frame kept.
 - HOME gifts are not claimed. An Internet gift needs its name's template in the game's language;
   only the Poké Ball Pattern Vivillon has one, in English, French and Japanese.
-- A gift in party slot 6 is moved only to Box 1's first row.
+- Gifts are told apart by where they land, not by species. Two gifts received into a full party
+  while the Boxes were left on Box 1 land in its first free slots in the order received, which may
+  not be the catalog's slots.
+- That L goes round from Box 1 to the last box, and that L, R and moving a box's Pokémon to the
+  party work as the run expects, has not yet been run on a console.
 
 ## How it works
 
@@ -100,7 +123,9 @@ must be. `Plza_claim_gifts_series.Claim_gifts_runs` runs its plan on PLZA's shar
 inputs at the edge: the catalog (`Plza_gift_catalog`), today's date and the name templates.
 
 `Gift_claim` claims one gift (`Mystery_gift`'s presses and waits), with a hook,
-`Gift_claim.already_received`, where the "already received" reader will go. `Gift_boxes` reads the
-box slots and moves the party gift; `Save_progress` saves. The readers are PLZA's
-`Mystery_gift_screen`, `Main_menu_row`, `Boxes_screen`, `Box_cell` and `Save_dialog`, and the
-Switch's `Code_keyboard`.
+`Gift_claim.already_received`, where the "already received" reader will go. `Save_progress` saves.
+
+`Gift_boxes` puts the gifts in their slots and reads them, with `Box_paging` (to Box 1 and back),
+`Box_cursor` (the cursor's moves and carries) and `Gift_moves` (where each missing gift is looked
+for). The readers are PLZA's `Mystery_gift_screen`, `Main_menu_row`, `Boxes_screen`, `Box_cell`,
+`Box_title` and `Save_dialog`, and the Switch's `Code_keyboard`.

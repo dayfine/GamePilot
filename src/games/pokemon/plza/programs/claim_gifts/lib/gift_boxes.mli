@@ -1,36 +1,50 @@
-(** The claimed gifts' box slots read on the Boxes, and a gift that landed in
-    party slot 6 moved to its slot, from the main menu back to it (moves and
-    timings as run on console B, 2026-11-20 and 25).
+(** The Pokémon gifts put in their catalog slots in Box 1 and read there, from
+    the main menu back to it: Row 0 (Boxes), A (2.5 s), and A (1.5 s) past the
+    first-time "Your Boxes" card only when the Boxes do not show
+    ({!Plza_readers.Boxes_screen}) and the card does
+    ({!Plza_readers.Tutorial_card}, ours: no capture of that card was kept); B
+    (1.5 s) out (console B, 2026-11-20 and 25). Whether party slot 6 holds a
+    Pokémon is read on the main menu's sixth card first
+    ({!Plza_readers.Main_menu_row}).
 
-    Row 0 (Boxes), A (2.5 s), and A (1.5 s) past the first-time "Your Boxes"
-    card only when the Boxes do not show ({!Plza_readers.Boxes_screen}). The
-    cursor is then on Box 1 slot 1. A slot is read by moving to it (Right and
-    Down, each 80 ms, released 250), reading the cell held 1 s within 2 s
-    ({!Plza_readers.Box_cell}) and moving back.
+    The Boxes open on the box last looked at, the cursor on its first slot. The
+    cursor goes down a row ({!Box_cursor}) and L and R go to Box 1
+    ({!Box_paging}). Each gift's slot is read there; a gift whose slot reads
+    empty is looked for, in the order given:
 
-    A gift in party slot 6: the main menu's sixth party card must hold a Pokémon
-    before ({!Plza_readers.Main_menu_row.card_green}); its slot is read empty,
-    then Up, Right five times to the party's sixth slot, Y (400 ms), Down, Left
-    to the slot's column, Y (600 ms), and the cell under the cursor read. After
-    B (1.5 s) out of the Boxes, the sixth card must be empty and the fifth still
-    hold one.
+    - party slot 6, when it holds a Pokémon: carried to the first such slot;
+    - the box the Boxes opened on, when it is not Box 1: each of its 30 cells
+      read, and when it holds exactly as many Pokémon as gifts still missing,
+      each carried, in reading order, to the next missing gift's slot, by way of
+      party slot 6 (box to party slot 6, L to Box 1, party slot 6 to the slot, R
+      back), as only the party-box move has been run on a console.
 
-    Only Box 1 is read, and a gift is moved only to its first row (slots 1 to 6,
-    as on console B); reading rows below it is ours, not yet run on a console.
-    The probes must be subscribed ({!Mystery_gift.probes}). *)
+    Then every gift's slot is read again, last. A gift is known by where the
+    game puts it, not by its species (no reader for that yet): received into a
+    party of five, it lands in party slot 6, and into a full party in the first
+    empty cells of the box the Boxes open on, in the order received. A Pokémon
+    in a gift's slot counts as that gift. So party slot 6 must hold no Pokémon
+    of the player's but a gift, and the box the Boxes open on none of theirs:
+    the guide asks for both. Ours: the fork has no Mystery Gift program. *)
 
 (** What a slot read. *)
-type slot_read =
+type slot_read = Box_cursor.cell =
   | Filled  (** A Pokémon is there. *)
   | Empty  (** No Pokémon is there. *)
-  | Not_read of string  (** Why it was not read, or the gift not moved. *)
+  | Not_read of string  (** Why it was not read. *)
 
-val check :
+type arranged = {
+  reads : (Plza_gift_catalog.Gift_catalog.box_slot * slot_read) list;
+      (** Each gift's slot as read last, in the order given. *)
+  moved : int;  (** The Pokémon carried into a gift's slot. *)
+}
+(** What came of it. *)
+
+val arrange :
   log:(string -> unit) ->
-  party_gift:Plza_gift_catalog.Gift_catalog.box_slot option ->
-  in_box:Plza_gift_catalog.Gift_catalog.box_slot list ->
-  ((Plza_gift_catalog.Gift_catalog.box_slot * slot_read) list, string) result
-(** From the main menu: each of [in_box] read, then the gift in party slot 6
-    (when [party_gift] names its slot) moved there and read; each slot with what
-    it read. [Error] when the Boxes or the main menu do not show, or the party's
-    cards are not as above. *)
+  Plza_gift_catalog.Gift_catalog.box_slot list ->
+  (arranged, string) result
+(** From the main menu: the gifts' slots, in the order their gifts were received
+    (a slot outside Box 1 is [Not_read]), made true as above. [Error] when the
+    Boxes, a box title or the main menu do not show, or party slot 6 reads
+    neither holding a Pokémon nor empty. *)

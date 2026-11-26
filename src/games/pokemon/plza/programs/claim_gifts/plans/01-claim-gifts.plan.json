@@ -27,7 +27,7 @@
         "id": "box_slots",
         "kind": "game_action",
         "action": "check_gift_slots",
-        "why": "the gift in party slot 6 moved to its box slot, and each received gift read in its slot"
+        "why": "Box 1 found by its title; each Pokémon gift that may be in the save moved to its Box 1 slot from party slot 6 or the box the Boxes open on, and read there"
       },
       {
         "id": "save",
