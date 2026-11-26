@@ -2,8 +2,14 @@ module Failure = Engine_run.Failure
 
 type game_steps = {
   submit : Wire.command -> unit;
+  submit_batch : Wire.command list -> unit;
   read_screen : unit -> Look.t;
   race : Wire.command -> (Look.t -> bool) -> Look.t option;
+  race_then :
+    Wire.command ->
+    (Look.t -> bool) ->
+    (Look.t -> Wire.command list) ->
+    Look.t option;
   log : string -> unit;
   log_detail : string -> unit;
 }
