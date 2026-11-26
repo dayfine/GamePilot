@@ -85,7 +85,45 @@ let lab_game_text id =
   | Ok (g, home) -> g.game_id ^ " " ^ home.title ^ " " ^ home.lab_panel
   | Error e -> "error: " ^ e
 
+(* Every program whose options declaration has an error of its own. *)
+let bad_options () =
+  List.filter_map
+    (fun (p : R.t) ->
+      match Run_options.check_declaration p.options with
+      | Ok () -> None
+      | Error e -> Some (p.id ^ ": " ^ e))
+    R.all
+  |> String.concat ", "
+
+(* A run's --options for [program], as gamepilot run reads them. *)
+let options_for program given =
+  match R.check_options (Option.bind program R.find) given with
+  | Ok t -> "ok " ^ Run_options.to_text t
+  | Error e -> "error: " ^ e
+
 let id_of = function Some (p : R.t) -> p.id | None -> "none"
+
+(* frlg.ace's item choices against the vetted table's items
+   (src/games/frlg/assets/ace_presets.json): a preset added to one and not the
+   other shows here. *)
+let ace_items () =
+  let declared =
+    match R.find "frlg.ace" with
+    | None -> "no frlg.ace"
+    | Some p -> (
+        match
+          List.find_opt
+            (fun (d : Run_options.declared) -> d.key = "item")
+            p.options
+        with
+        | Some { value = One_of items; _ } -> String.concat ", " items
+        | _ -> "no item choice")
+  in
+  match Frlg_actions.Ace_presets.load () with
+  | Error e -> e
+  | Ok t ->
+      let table = String.concat ", " (Frlg_actions.Ace_presets.slugs t) in
+      if declared = table then "same" else declared ^ " | " ^ table
 
 let () =
   Table_test.run "program_registry"
@@ -161,6 +199,17 @@ let () =
       case "viewport: no program, no flag"
         (fun () -> viewport_for None None)
         "default";
+      case "every options declaration is sound" bad_options "";
+      case "frlg.ace's items are the preset table's" ace_items "same";
+      case "options: none given to a program that takes none"
+        (fun () -> options_for (Some "frlg.mail_glitch") [])
+        "ok ";
+      case "options: refused by a program that takes none"
+        (fun () -> options_for (Some "frlg.mail_glitch") [ ("item", "x") ])
+        "error: --options item: this program takes no options";
+      case "options: refused for a plan folder no program registers"
+        (fun () -> options_for None [ ("item", "x") ])
+        "error: --options item: this program takes no options";
       case "run.json fields"
         (fun () ->
           Option.get (R.find "frlg.mail_glitch")

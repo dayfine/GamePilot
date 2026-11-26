@@ -238,10 +238,17 @@ let daemons (f : Flags.t) backend ~viewport series =
          f.watch)
     series
 
-let setup_of (f : Flags.t) ~program ~from_id ~to_id ~ids ~backend ~viewport
-    policy =
+let setup_of (f : Flags.t) ~program ~options ~from_id ~to_id ~ids ~backend
+    ~viewport policy =
   let info : Run_record.info =
-    { kind = Checkpoints; program; from_id; to_id; backend = f.backend }
+    {
+      kind = Checkpoints;
+      program;
+      from_id;
+      to_id;
+      backend = f.backend;
+      options = Run_options.pairs options;
+    }
   in
   let mode = Checkpoint_trials.mode_to_string Testing in
   {
@@ -265,7 +272,7 @@ let selected ~plan_dir (f : Flags.t) =
   let* ids, _ = Engine_series.Plan_folder.select ids ~from_id ~to_id in
   Ok (from_id, to_id, ids)
 
-let run_series ~program ~viewport plan_dir args =
+let run_series ~program ~options ~viewport plan_dir args =
   let* f = Flags.parse args in
   let* () = Flags.takes f in
   let* from_id, to_id, ids = selected ~plan_dir f in
@@ -277,7 +284,7 @@ let run_series ~program ~viewport plan_dir args =
   in
   let* plans = load_checked ~plan_dir ids in
   let setup =
-    setup_of f ~program ~from_id ~to_id ~ids ~backend ~viewport policy
+    setup_of f ~program ~options ~from_id ~to_id ~ids ~backend ~viewport policy
   in
   let* code = chain setup ~chained:false plans in
   Live_run.Series_daemons.finished setup.daemons ~passed:(code = 0);

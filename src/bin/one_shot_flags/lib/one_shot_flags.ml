@@ -23,7 +23,13 @@ type own_daemon = {
 }
 
 type daemon = Attach of int | Start of own_daemon
-type t = { runs_dir : string; state : string option; daemon : daemon }
+
+type t = {
+  runs_dir : string;
+  state : string option;
+  options : Run_options.t;
+  daemon : daemon;
+}
 
 (* The flags given that only a checkpoint series reads. *)
 let series_flags (d : _ F.flags) (f : _ F.flags) =
@@ -86,6 +92,7 @@ let parse (p : Program_registry.t) ~default_state args =
     refuse "a checkpoint series' flags, not a one-shot program's"
       (given (series_flags d f))
   in
+  let* options = Program_registry.check_options (Some p) f.options in
   match f.watch with
   | None ->
       let* () =
@@ -93,14 +100,15 @@ let parse (p : Program_registry.t) ~default_state args =
           (given (daemon_flags d f))
       in
       let port = if f.port = d.port then Live.default_port else f.port in
-      Ok { runs_dir = f.runs_dir; state = f.game; daemon = Attach port }
+      Ok
+        { runs_dir = f.runs_dir; state = f.game; options; daemon = Attach port }
   | Some watch ->
       let* own_daemon = own_daemon p f watch in
       (* The Switch keeps no save states: its game is the start. *)
       let state =
         match own_daemon.backend with Switch _ -> None | Mgba _ -> f.game
       in
-      Ok { runs_dir = f.runs_dir; state; daemon = Start own_daemon }
+      Ok { runs_dir = f.runs_dir; state; options; daemon = Start own_daemon }
 
 (* The page, listed in the registry beside [runs_dir], with the hub started
    if none runs. *)

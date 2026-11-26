@@ -35,6 +35,12 @@
    round's save. --max-rounds N runs at most N rounds in place of the plan's
    repeat.max_rounds; with --grind-battles, reaching it passes.
 
+   --options KEY=VALUE (one pair each, repeatable): the program's own choices,
+   checked against its registry entry before anything runs
+   (Program_registry.check_options), written in each run's run.json and the
+   series record (the watch page's run header), and handed to its game actions
+   (Frlg_actions.Checkpoint_game.config).
+
    --record/--no-record, --keepawake SECONDS: each run's daemon's (Watch-Page.md).
    --speed S (mGBA): the daemon steps the emulator S times as fast; waits and
    timeouts stay game time.
@@ -84,13 +90,11 @@
 open Engine_run
 include Run_flags
 
-(* What the registry says of the program: run.json's program fields for a
-   plan folder ([] for none), and the Switch daemons' --viewport, the
-   program's, which a --viewport given must match
-   (Program_registry.check_viewport). *)
+(* What the registry says of the program (Run_command.mli). *)
 type program = {
   fields : string -> (string * string) list;
   viewport : (string option, string) result;
+  options : Run_options.t;
 }
 
 let ( let* ) = Result.bind
@@ -103,6 +107,7 @@ let run_info program plan_dir f kind ~from_id ~to_id : Run_record.info =
     from_id;
     to_id;
     backend = f.backend;
+    options = Run_options.pairs program.options;
   }
 
 let watch_of f =
@@ -174,6 +179,7 @@ let run_series program plan_dir (f : Pokemon_flags.flags) =
          policy;
          world;
          info;
+         program_options = program.options;
          daemons = daemons f backend ~viewport series;
          save_after_pass = f.save_after_pass;
          max_rounds = f.max_rounds;

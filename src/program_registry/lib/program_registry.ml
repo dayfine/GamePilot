@@ -26,6 +26,7 @@ type t = {
   backends : backend list;
   viewport : viewport;
   rules : rules;
+  options : Run_options.declared list;
 }
 
 (* FireRed's tile on HOME: its orange background and Charizard, 0.41 of the
@@ -113,6 +114,7 @@ let frlg_mail_glitch =
     backends = [ Mgba; Switch ];
     viewport = Nso_gba;
     rules = Pokemon_grid;
+    options = [];
   }
 
 let frlg_start_menu_poc =
@@ -128,6 +130,7 @@ let frlg_start_menu_poc =
     backends = [ Mgba ];
     viewport = Nso_gba;
     rules = Pokemon_grid;
+    options = [];
   }
 
 let frlg_team_training =
@@ -142,6 +145,7 @@ let frlg_team_training =
     backends = [ Mgba; Switch ];
     viewport = Nso_gba;
     rules = Pokemon_grid;
+    options = [];
   }
 
 let frlg_supplies =
@@ -157,6 +161,7 @@ let frlg_supplies =
     backends = [ Mgba; Switch ];
     viewport = Nso_gba;
     rules = Pokemon_grid;
+    options = [];
   }
 
 let frlg_sevii_story =
@@ -171,6 +176,7 @@ let frlg_sevii_story =
     backends = [ Mgba ];
     viewport = Nso_gba;
     rules = Pokemon_grid;
+    options = [];
   }
 
 let frlg_ace_setup =
@@ -187,6 +193,41 @@ let frlg_ace_setup =
     backends = [ Mgba ];
     viewport = Nso_gba;
     rules = Pokemon_grid;
+    options = [];
+  }
+
+(* The most of one item the bag holds. *)
+let bag_most = 999
+
+let frlg_ace =
+  {
+    id = "frlg.ace";
+    game = frlg;
+    name = "ACE";
+    group = [ "FRLG"; "Glitches" ];
+    description =
+      "Runs code typed as PC box names through species 0x0351: 999 of an item \
+       in the PC, some of them to the bag.";
+    doc = "docs/guide/frlg.ace.md";
+    checkpoints = Some "src/games/frlg/programs/ace/plans";
+    backends = [ Mgba ];
+    viewport = Nso_gba;
+    rules = Pokemon_grid;
+    options =
+      [
+        {
+          key = "item";
+          value = One_of [ "master-ball"; "luxury-ball" ];
+          presence = Required;
+          doc = "the item the code makes, 999 of it in the PC's item storage";
+        };
+        {
+          key = "withdraw";
+          value = Int_range (1, bag_most);
+          presence = Required;
+          doc = "how many of them go from the PC to the bag";
+        };
+      ];
   }
 
 let frlg_dex_collection =
@@ -202,6 +243,7 @@ let frlg_dex_collection =
     backends = [ Mgba ];
     viewport = Nso_gba;
     rules = Pokemon_grid;
+    options = [];
   }
 
 let frlg_wild_rng =
@@ -217,6 +259,7 @@ let frlg_wild_rng =
     backends = [ Mgba ];
     viewport = Nso_gba;
     rules = Pokemon_grid;
+    options = [];
   }
 
 let plza_autostory =
@@ -231,6 +274,7 @@ let plza_autostory =
     backends = [ Switch ];
     viewport = Native;
     rules = Plza_story;
+    options = [];
   }
 
 let all =
@@ -242,6 +286,7 @@ let all =
     frlg_sevii_story;
     frlg_dex_collection;
     frlg_ace_setup;
+    frlg_ace;
     frlg_wild_rng;
     plza_autostory;
   ]
@@ -302,6 +347,10 @@ let check_viewport program given =
   | Some p, None -> Ok (Some (viewport_name p.viewport))
   | Some p, Some v when v = viewport_name p.viewport -> Ok (Some v)
   | Some p, Some v -> Error (viewport_mismatch p v)
+
+let check_options program given =
+  let decls = Option.fold ~none:[] ~some:(fun p -> p.options) program in
+  Run_options.check decls given
 
 let run_fields p =
   [

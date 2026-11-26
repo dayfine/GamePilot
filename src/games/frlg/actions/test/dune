@@ -46,7 +46,12 @@
   test_pokedex_entry
   test_skip_conditions
   test_naming_entry
-  test_box_rename)
+  test_box_rename
+  test_ace_trigger
+  test_item_storage
+  test_ace_presets
+  test_ace_code
+  test_ace_item)
  (modules
   test_pc_deposit_steps
   test_pc_withdraw_steps
@@ -79,7 +84,12 @@
   test_pokedex_entry
   test_skip_conditions
   test_naming_entry
-  test_box_rename)
+  test_box_rename
+  test_ace_trigger
+  test_item_storage
+  test_ace_presets
+  test_ace_code
+  test_ace_item)
  (deps
   mgba.probes.jsonl
   menus.mgba.probes.jsonl
@@ -99,4 +109,5 @@
   gamepilot.frlg_overworld
   gamepilot.frlg_actions
   gamepilot.frlg_battle
+  gamepilot.run_options
   frlg_overworld_fixtures))

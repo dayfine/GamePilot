@@ -10,6 +10,7 @@ type config = {
   grind_cap : int option;
   center : string option;
   reload : unit -> (unit, Failure.cause) result;
+  program_options : Run_options.t;
   log : string -> unit;
 }
 
@@ -288,6 +289,7 @@ let action_context t : Game_actions.context =
     party = t.party;
     facing = (fun () -> Option.bind t.at (fun at -> at.faces));
     stocks = Mart_plan.load;
+    options = t.config.program_options;
   }
 
 (* A game action that passed leaves the player where its [declared_after]

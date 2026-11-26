@@ -14,6 +14,7 @@ Each page ends with "How it works", for developers: the ported files, the mechan
 | [Sevii Story](frlg.sevii_story.md) | `frlg.sevii_story` | mGBA | Plays the Sevii Islands story after the Cinnabar Gym. |
 | [Dex Collection](frlg.dex_collection.md) | `frlg.dex_collection` | mGBA | Catches Pokemon the Pokedex lacks, toward the National Pokedex. |
 | [ACE Setup](frlg.ace_setup.md) | `frlg.ace_setup` | mGBA | Sets up arbitrary code execution: the ? Mail puts species 0x0351 in Box 3 slot 1. |
+| [ACE](frlg.ace.md) | `frlg.ace` | mGBA | Runs code typed as PC box names through species 0x0351: 999 of an item in the PC, some of them to the bag. |
 | [Wild RNG](frlg.wild_rng.md) | `frlg.wild_rng` | mGBA | Catches a chosen shiny wild Pokemon by timing the game's random numbers. |
 | [AutoStory](plza.autostory.md) | `plza.autostory` | the Switch | Plays the story from a new game, checkpoint by checkpoint. |
 <!-- /generated -->
@@ -40,6 +41,8 @@ The blocks:
 - `needs [RANGE]`: what the save needs for the chain, from the pre-flight.
 - `preflight [RANGE]`: what the pre-flight checks before each checkpoint.
 - `commands [RANGE]`: the commands that run it.
+- `options`: the keys its `--options` take, from its descriptor (or that it takes none). A program
+  that declares options must have this block on its page; the check names the page that lacks it.
 
 RANGE is `FROM..TO` or one checkpoint id; without it, every checkpoint. A new page starts from a
 skeleton whose `TODO(guide)` the check refuses until the prose is written.
@@ -74,6 +77,19 @@ A descriptor (`Program_registry.t`) gives:
 - `rules`: the rules its checkpoint plans are written over, which pick the library that loads and
   runs them (`Pokemon_grid`: the Pokémon grid rules, FRLG's runner). `src/bin/checkpoint_families.ml`
   is the one place in `src/bin` that picks a family's code from it.
+- `options`: the choices a run takes as `gamepilot run ID --options KEY=VALUE` (one pair each,
+  repeatable), each a `Run_options.declared`: its key, its values (`One_of` a list of words,
+  `Int_range` low to high, or `Text`), whether it is `Required`, `Optional` or has a `Default`,
+  and one line of what it chooses. `[]`: none.
+
+A run's options are checked against the declaration before anything is pressed: an unknown key
+(the keys it takes are printed), a value its key refuses or a required key left out stops the
+run. `gamepilot programs` and the `options` block list them.
+
+The options are written into run.json (`"options": {"item": "master-ball"}`) and the series
+record, shown in the watch page's run header, and handed to the program's game actions, which
+look them up (FRLG: `Checkpoint_game.config.program_options`, read with `Run_options.find` or
+`Run_options.int`).
 
 The lab console's game is `$GAMEPILOT_LAB_GAME`, else the one game with Switch HOME data. A game
 may have no program yet (PLZA, for delete-save).

@@ -30,6 +30,26 @@ val title_menu_row : Effects.measurements -> int option
     measured on mGBA (2026-11-25): the arrow at x 145-149, the window from x
     140. *)
 
+val hand_quick : Effects.measurements -> bool option
+(** The hand over the box's first slot is the quick hand SELECT turns on: at
+    least {!min_quick_share} of its box (x 90-105, y 20-37, the hand's bob
+    included) in {!quick_yellow}. pokefirered pokemon_storage_system_data.c
+    [ToggleCursorMultiMoveMode] swaps the hand sprite's palette
+    ([cursorPalNums]); the quick one fills the glove (255, 231, 90) with orange
+    (255, 181, 107), (255, 165, 0) edges on mGBA, the normal one white.
+    GamePilot's own, for the ACE trigger (the actions' Ace_trigger); read only
+    with the hand on the first slot. *)
+
+val quick_yellow : Color_count.range
+(** Red 225..255, green 200..255, blue 40..150: the quick glove's yellow
+    (brightened x1.1 its green is 254; the normal glove's white has blue 255).
+    Desert's title bar (231, 198, 99) lies outside (green) and right of the box.
+*)
+
+val min_quick_share : float
+(** 0.12: the quick hand fills 0.20-0.25 of the box on mGBA, the normal hand 0.
+*)
+
 val panel_occupied : Effects.measurements -> bool option
 (** The fork's test: the panel's stddev sum over {!min_panel_stddev}. *)
 

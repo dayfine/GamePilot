@@ -1,0 +1,62 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "frlg",
+  "checkpoint": {
+    "id": "02-trigger",
+    "title": "The code run by the double swap: the item x999 in the PC, the asked count in the bag, saved",
+    "start": {
+      "map": "Route4_PokemonCenter_1F",
+      "tiles": [
+        [11, 2]
+      ],
+      "facing": "north"
+    },
+    "events": [
+      {
+        "id": "room",
+        "kind": "game_action",
+        "action": "ace_check_room",
+        "args": {},
+        "why": "The code writes the item storage's slot 30: fewer than 30 stacks stored; and the bag's count of the item plus withdraw at most 999."
+      },
+      {
+        "id": "trigger",
+        "kind": "game_action",
+        "action": "ace_trigger",
+        "args": {
+          "box3_title": "EE …l‘"
+        },
+        "why": "The Pokémon in Box 1 slot 1 moved to Box 3 slot 2 (skipped when it is there), 0x0351 shifted with it twice: the second shift runs the box names. Box 3 is told by its code name, the same for every item. Then the box screen must still answer."
+      },
+      {
+        "id": "stored",
+        "kind": "game_action",
+        "action": "ace_check_stored",
+        "args": {},
+        "why": "The code's item: a stack of it reads x999 in ITEM STORAGE."
+      },
+      {
+        "id": "withdraw",
+        "kind": "game_action",
+        "action": "ace_withdraw",
+        "args": {},
+        "why": "The run's withdraw count taken to the bag, the bag's count read before and after; the rest stays in the PC."
+      },
+      {
+        "id": "save",
+        "kind": "game_action",
+        "action": "save_game",
+        "args": {},
+        "why": "Keeps the items, only once every check passed."
+      }
+    ]
+  },
+  "execution": {
+    "menu": "full"
+  },
+  "metadata": {
+    "phase": "testing",
+    "retries": 0,
+    "notes": "Run with --options item=<slug> withdraw=<n>. Starts at 01-enter-code's code save, below the Route 4 Pokémon Center's PC, and ends there saved. Any failure goes back to the code save, unsaved (a save state on mGBA, a soft reset on the Switch), and stops: no retry runs the code again on its own."
+  }
+}

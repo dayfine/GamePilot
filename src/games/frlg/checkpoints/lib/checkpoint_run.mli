@@ -23,6 +23,9 @@ type options = {
           live check that a state holds what a checkpoint promises; a promise of
           a change (the money spent, coins or items gained) is not checked (no
           start read). *)
+  program_options : Run_options.t;
+      (** The program's options (gamepilot run --options), for its game actions
+          ({!Frlg_actions.Checkpoint_game.config}). *)
   log : string -> unit;
 }
 

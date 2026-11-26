@@ -12,8 +12,9 @@
    - --check fails, naming each page and the command that fixes it, when a
      program has no page, a page names no program, a page still holds the
      skeleton's TODO, a block is not what --write would write (CI runs it:
-     a plan change makes its program's checkpoints block stale), or a
-     hand-written paragraph runs over five lines. *)
+     a plan change makes its program's checkpoints block stale), a
+     hand-written paragraph runs over five lines, or a program that declares
+     options has no options block on its page. *)
 
 module R = Program_registry
 
@@ -136,15 +137,38 @@ let long_paragraphs name text =
         name line n max_paragraph_lines)
     (Guide_page.long_paragraphs ~max_lines:max_paragraph_lines text)
 
+(* The blocks a program's page must hold: the options block when it declares
+   options. *)
+let required_blocks (p : R.t) = if p.options = [] then [] else [ "options" ]
+
+let no_block_problem (p : R.t) name block =
+  Printf.sprintf "%s: %s declares options but its page has no %s block" name
+    p.id
+    (Guide_page.start_marker block None)
+
+(* Only the program's own page, <id>.md, not a part's. *)
+let missing_blocks (p : R.t) name text =
+  let names =
+    if name <> p.id ^ ".md" then Ok []
+    else Guide_page.missing_blocks ~required:(required_blocks p) text
+  in
+  match names with
+  | Error e -> [ name ^ ": " ^ e ]
+  | Ok names -> List.map (no_block_problem p name) names
+
 let page_problems dir name =
   match refill dir name with
   | Error e -> [ e ]
-  | Ok (text, filled) ->
+  | Ok (text, filled) -> (
       (if filled <> text then [ name ^ ": generated blocks are stale" ] else [])
       @ (if Strings.Contains.substring text todo then
            [ name ^ ": still has the skeleton's TODO(guide)" ]
          else [])
       @ long_paragraphs name text
+      @
+      match program_of_page name with
+      | Ok (Some p) -> missing_blocks p name text
+      | Ok None | Error _ -> [])
 
 let check () =
   let* dir = guide_dir () in

@@ -82,6 +82,7 @@
   gamepilot.replay
   gamepilot.pokemon_engine
   gamepilot.frlg_actions
+  gamepilot.run_options
   gamepilot.frlg_checkpoints))
 
 (rule
