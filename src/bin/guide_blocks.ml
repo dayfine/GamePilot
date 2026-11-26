@@ -11,7 +11,8 @@
      program's rules say it (Checkpoint_families);
    - preflight [RANGE]: per checkpoint, what the pre-flight checks before a
      run resumed there;
-   - commands [RANGE]: the commands that run it on each backend.
+   - commands [RANGE]: the commands that run it on each backend;
+   - options: the keys its --options take (Program_registry's options).
 
    RANGE is FROM..TO or one id; default: every checkpoint. *)
 
@@ -144,6 +145,30 @@ let commands ~guide (p : R.t) arg =
   in
   Result.map (fun b -> "```sh\n" ^ b ^ "\n```") body
 
+let option_row (d : Run_options.decl) =
+  let presence =
+    match d.presence with
+    | Required -> "required"
+    | Optional -> "optional"
+    | Default v -> "default `" ^ v ^ "`"
+  in
+  Printf.sprintf "| `%s` | %s | %s | %s |" d.key
+    (Guide_page.cell (Run_options.value_text d.value))
+    presence (Guide_page.cell d.doc)
+
+let options_head =
+  [
+    "Give each as `--options KEY=VALUE`:";
+    "";
+    "| Key | Values | When not given | What it chooses |";
+    "|---|---|---|---|";
+  ]
+
+let options (p : R.t) =
+  match p.options with
+  | [] -> Ok "This program takes no options."
+  | decls -> Ok (String.concat "\n" (options_head @ List.map option_row decls))
+
 let program_row (p : R.t) =
   Printf.sprintf "| [%s](%s.md) | `%s` | %s | %s |" p.name p.id p.id
     (String.concat ", " (List.map backend_label p.backends))
@@ -163,6 +188,9 @@ let generate ~guide (p : R.t option) (b : Guide_page.block) =
   | "needs", Some p -> needs ~guide p b.arg
   | "preflight", Some p -> preflight ~guide p b.arg
   | "commands", Some p -> commands ~guide p b.arg
-  | ("backends" | "checkpoints" | "needs" | "preflight" | "commands"), None ->
+  | "options", Some p -> options p
+  | ( ( "backends" | "checkpoints" | "needs" | "preflight" | "commands"
+      | "options" ),
+      None ) ->
       Error (b.name ^ ": this page is not a program's")
   | name, _ -> Error ("no generated block " ^ name)

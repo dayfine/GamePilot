@@ -7,10 +7,14 @@
 type program = {
   fields : string -> (string * string) list;
   viewport : (string option, string) result;
+  options : Run_options.t;
 }
 (** What the registry says of the program: run.json's program fields for a plan
-    folder ([] for none), and the Switch daemons' --viewport, the program's,
-    which a --viewport given must match (Program_registry.check_viewport). *)
+    folder ([] for none), the Switch daemons' --viewport, the program's, which a
+    --viewport given must match (Program_registry.check_viewport), and the
+    --options given, checked against its declaration
+    (Program_registry.check_options): in each run's run.json and for its game
+    actions. *)
 
 val run_grid :
   program:program -> string -> Pokemon_flags.flags -> (int, string) result

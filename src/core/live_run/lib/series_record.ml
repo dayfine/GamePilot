@@ -183,8 +183,9 @@ let to_json t =
         ("to", `String t.info.to_id);
         ("mode", `String t.mode);
         ("backend", `String t.info.backend);
-        ("started_ms", `Int t.started_ms);
       ]
+    @ Run_record.options_fields t.info.options
+    @ [ ("started_ms", `Int t.started_ms) ]
     @ int_field "ended_ms" t.ended_ms
     @ [ ("result", `String t.result) ]
     @ Option.fold ~none:[] ~some:(fun r -> [ ("run", `String r) ]) t.going

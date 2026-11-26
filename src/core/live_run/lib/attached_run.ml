@@ -21,9 +21,10 @@ let runs_dir_flag args =
   in
   go (default_runs_dir ()) [] args
 
-let start ?(backend = "") ~runs_dir ~kind ~program ~label ~mode () =
+let start ?(backend = "") ?(options = []) ~runs_dir ~kind ~program ~label ~mode
+    () =
   let info : Run_record.info =
-    { kind; program; from_id = label; to_id = label; backend }
+    { kind; program; from_id = label; to_id = label; backend; options }
   in
   Result.map
     (fun (run : Run_record.run) ->

@@ -140,7 +140,8 @@ Decided in the user's review of this note (2026-11-25):
 - **First version**: Master Balls (about 50) and Luxury Balls (about 300). Each run makes 999 in the
   PC's item storage and withdraws only what was asked; the rest stays in the PC.
 - **One template checkpoint pair**, run once per item, driven by program options
-  `item=<slug> withdraw=<n>`. The item must be in a vetted table; an item not in it is refused
+  `--options item=<slug> --options withdraw=<n>` (declared on its registry descriptor:
+  `item` one of the vetted slugs, `withdraw` 1 to 999). The item must be in a vetted table; an item not in it is refused
   before anything is pressed.
 - **Unused boxes** (12-14) are named `A`.
 - **Names are typed without trailing spaces**; the Switch warning about spaces in Boxes 4, 8 and 12
@@ -180,7 +181,8 @@ fails the test, not the run.
 
 ### Checkpoints
 
-The pair, run for one item at a time (`gamepilot run frlg.ace item=luxury-ball withdraw=300`):
+The pair, run for one item at a time
+(`gamepilot run frlg.ace --options item=luxury-ball --options withdraw=300`):
 
 **01-enter-code.** Starts saved in the overworld facing a Pokémon Center PC.
 

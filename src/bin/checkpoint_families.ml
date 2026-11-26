@@ -46,10 +46,17 @@ let program_fields plan_dir =
 let viewport plan_dir (f : _ Run_flags.flags) =
   R.check_viewport (R.of_plan_dir plan_dir) f.viewport
 
+(* The program's --options, checked against its declaration before anything
+   runs. *)
+let program_options plan_dir (f : _ Run_flags.flags) =
+  R.check_options (R.of_plan_dir plan_dir) f.options
+
 let grid_series plan_dir args =
   let* f = Pokemon_flags.parse Pokemon_flags.defaults args in
+  let* options = program_options plan_dir f in
   Grid.Run_command.run_grid
-    ~program:{ fields = program_fields; viewport = viewport plan_dir f }
+    ~program:
+      { fields = program_fields; viewport = viewport plan_dir f; options }
     plan_dir f
 
 (* The Pokémon grid rules' guide. *)
@@ -87,7 +94,8 @@ let grid =
 
 let plza_series plan_dir args =
   let* f = Plza_series.Flags.parse args in
-  Plza.run_series ~program:(program_fields plan_dir)
+  let* options = program_options plan_dir f in
+  Plza.run_series ~program:(program_fields plan_dir) ~options
     ~viewport:(viewport plan_dir f) plan_dir args
 
 let no_stated what ~plan_dir:_ _ = Error ("PLZA's plans state no " ^ what)

@@ -59,6 +59,11 @@ type t = {
   viewport : viewport;
       (** The Switch's game picture, which every daemon of its runs takes. *)
   rules : rules;  (** What its plans are written over. *)
+  options : Run_options.decl list;
+      (** The keys its runs take in [gamepilot run --options KEY=VALUE], each
+          with the values it takes and a line of what it chooses; [[]]: none.
+          [gamepilot programs] and its guide page's [options] block list them.
+      *)
 }
 
 val games : game list
@@ -102,6 +107,12 @@ val check_viewport : t option -> string option -> (string option, string) result
 (** The daemon's [--viewport] for a run: the program's ({!viewport_name}), or
     the [--viewport] given when no program is known. A given one that differs
     from the program's is an error. [None]: neither, the daemon's default. *)
+
+val check_options :
+  t option -> (string * string) list -> (Run_options.t, string) result
+(** A run's [--options] pairs ({!Run_options.check}) against the program's
+    {!t.options}, before anything runs; with no program (a plan folder no
+    program registers) any option is refused. *)
 
 val run_fields : t -> (string * string) list
 (** What a run's run.json says of its program: [game], [game_name], [program]

@@ -9,6 +9,7 @@ type options = {
   grind_cap : int option;
   gait : Frlg_overworld.Route_legs.gait;
   end_check_only : bool;
+  program_options : Run_options.t;
   log : string -> unit;
 }
 
@@ -133,6 +134,7 @@ let config options world : A.Checkpoint_game.config =
     grind_cap = options.grind_cap;
     center = options.center;
     reload = reload options.state;
+    program_options = options.program_options;
     log = options.log;
   }
 

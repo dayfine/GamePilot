@@ -19,6 +19,7 @@ let options setup cp log : Frlg_checkpoints.Checkpoint_run.options =
     (* Each checkpoint of the series reads its party: --party is only the
        first start's, for the Switch's start check (Console_session). *)
     party = None;
+    program_options = setup.program_options;
     state =
       (match setup.backend with
       | Mgba _ -> Some cp.start_state

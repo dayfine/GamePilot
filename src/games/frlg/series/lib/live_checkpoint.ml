@@ -16,6 +16,8 @@ type setup = {
       (** On the Switch: save in the game after a pass
           (Checkpoints_series.Console_runs). *)
   info : Run_record.info;  (** For each run's run.json. *)
+  program_options : Run_options.t;
+      (** --options, checked: for each run's game actions. *)
   daemons : Series_daemons.t;
       (** Each run's daemon: the daemon, its recording and keep-awake flags as
           the user gave them (the daemon's defaults otherwise: on for the

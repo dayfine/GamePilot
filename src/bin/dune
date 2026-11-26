@@ -6,6 +6,7 @@
   (:standard -open Live_run))
  (libraries
   gamepilot.live_run
+  gamepilot.run_options
   gamepilot.wire
   gamepilot.effects
   gamepilot.watch_report
