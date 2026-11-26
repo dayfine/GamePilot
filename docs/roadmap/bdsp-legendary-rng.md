@@ -7,7 +7,7 @@ Goal: shiny static legendaries in BDSP through the blink RNG, on GamePilot (the 
 | PR | Covers |
 |---|---|
 | #1 | `docs/design/BDSP-RNG.md`: the starter RNG port (W1-W10), daemon every-frame probes, capture timestamps, `submit` at a time. It names legendaries as "the rest of S2", **not in that plan** |
-| #2 | `src/games/bdsp/rng`: Xorshift128, static encounter generation, blink model |
+| #2 | `src/games/pokemon/bdsp/rng`: Xorshift128, static encounter generation, blink model |
 | #3 | blink state solvers, blink extraction, the reidentifier |
 | #4 | blink recovery, re-anchoring, the advance clock, hit calibration |
 
@@ -35,7 +35,7 @@ Fork PR #782, `docs/design/BDSP-Static-Legendary-RNG.md`, extends the starter RN
 ## Steps (after W9 passes)
 
 1. Target table for statics as data, with #782's corrections, checked against PokeFinder's generator.
-2. `reidentify_with_pokemon_models` (`1PK`) in `src/games/bdsp/rng`, C++ as oracle once the fork has it.
+2. `reidentify_with_pokemon_models` (`1PK`) in `src/games/pokemon/bdsp/rng`, C++ as oracle once the fork has it.
 3. Intro seed finder (Munchlax) as a program on the effects, replayed from recorded blinks.
 4. Static press schedule (one confirm), separate from the starter's three-press timeline.
 5. Per-target navigation; first target: one Ramanas Park slate (workflow B), then Dialga or Palkia
