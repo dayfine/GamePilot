@@ -45,6 +45,7 @@
           "balls": 10,
           "pace": "east"
         },
+        "skip_if": ["party_has_species:spearow", "party_has_species:farfetchd"],
         "why": "catch 1 Spearow (Lv 20-22) for the Vermilion CH'DING trade"
       },
       {
@@ -80,12 +81,14 @@
         "kind": "game_action",
         "action": "pick_up_item",
         "args": {"item": "sitrus-berry"},
+        "skip_if": ["bag_has_item:sitrus-berry:1"],
         "why": "pick up hidden Sitrus Berry at Route 6 (5, 5) (also creates Berry Pouch automatically)"
       },
       {
         "id": "clear_berry_text",
         "kind": "scene",
         "declared_after": {"map": "Route6", "tiles": [[5, 6]], "facing": "north"},
+        "skip_if": ["bag_has_item:sitrus-berry:1"],
         "why": "clear hidden item message back to overworld"
       },
       {

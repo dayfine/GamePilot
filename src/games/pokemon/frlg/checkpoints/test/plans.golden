@@ -112,8 +112,8 @@ no repeat
 frlg 01-celadon-setup from anywhere outdoors: 6 game_action, 7 route, 1 talk, 1 scene
 fly_celadon: [fly] game_action {"town":"CeladonCity"} => CeladonCity (48, 12) south
 to_coin_case_man: [run] route to CeladonCity_Restaurant (2, 2) west
-talk_coin_case_man: talk
-clear_coin_case_text: scene => CeladonCity_Restaurant (2, 2) west
+talk_coin_case_man: talk skip_if bag_has_item:coin-case:1
+clear_coin_case_text: scene => CeladonCity_Restaurant (2, 2) west skip_if bag_has_item:coin-case:1
 to_4f_clerk: [run] route to CeladonCity_DepartmentStore_1F (6, 2) north
 to_4f_clerk.lift: [lift_floor] game_action {"from":"1F","to":"4F"} => CeladonCity_DepartmentStore_4F (6, 2) south
 to_4f_clerk.walk: [run] route to CeladonCity_DepartmentStore_4F (3, 11) south
@@ -121,9 +121,9 @@ buy_retro_mail: [mart] game_action {"map":"CeladonCity_DepartmentStore_4F","item
 to_coins_clerk: [run] route to CeladonCity_DepartmentStore_4F (6, 2) north
 to_coins_clerk.lift: [lift_floor] game_action {"from":"4F","to":"1F"} => CeladonCity_DepartmentStore_1F (6, 2) south
 to_coins_clerk.walk: [run] route to CeladonCity_GameCorner (6, 4) north
-buy_200_coins: [buy_coins] game_action {"coins":200}
+buy_200_coins: [buy_coins] game_action {"coins":200} skip_if coins_at_least:200
 to_prize_clerk: [run] route to CeladonCity_GameCorner_PrizeRoom (4, 4) north
-redeem_abra: [redeem_prize_mon] game_action {"slot":0}
+redeem_abra: [redeem_prize_mon] game_action {"slot":0} skip_if party_has_species:abra,party_has_species:mr-mime
 exit_prize_room: [run] route to CeladonCity (39, 21) south
 retries 0
 postconditions:
@@ -136,12 +136,12 @@ frlg 02-trade-farfetchd from CeladonCity (39, 21) south: 7 route, 6 game_action,
 to_route16_cut_tree: [run] route to Route16 (41, 12) north
 cut_route16_tree: [cut_tree] game_action {"direction":"north"} => Route16 (41, 11) north
 to_route16_grass: [run] route to Route16 (35, 6) east
-catch_spearow: [capture] game_action {"species":"spearow","catches":1,"encounters":50,"balls":10,"pace":"east"}
+catch_spearow: [capture] game_action {"species":"spearow","catches":1,"encounters":50,"balls":10,"pace":"east"} skip_if party_has_species:spearow,party_has_species:farfetchd
 fly_vermilion: [fly] game_action {"town":"VermilionCity"} => VermilionCity (15, 7) south
 to_route6_pond_wall: [run] route to Route6 (10, 38) north
 to_route6_sitrus_berry: [run] route to Route6 (5, 6) north
-pickup_sitrus_berry: [pick_up_item] game_action {"item":"sitrus-berry"}
-clear_berry_text: scene => Route6 (5, 6) north
+pickup_sitrus_berry: [pick_up_item] game_action {"item":"sitrus-berry"} skip_if bag_has_item:sitrus-berry:1
+clear_berry_text: scene => Route6 (5, 6) north skip_if bag_has_item:sitrus-berry:1
 fly_vermilion_house2: [fly] game_action {"town":"VermilionCity"} => VermilionCity (15, 7) south
 to_vermilion_mart_wall: [run] route to VermilionCity (27, 14) south
 to_vermilion_elyssa: [run] route to VermilionCity_House2 (4, 5) north
@@ -222,8 +222,8 @@ to_route8_cut_tree: [run] route to Route8 (48, 12) west
 cut_route8_tree: [cut_tree] game_action {"direction":"west","species":"rattata"} => Route8 (47, 12) west
 to_route8_grass: [run] route to Route8 (45, 12) west
 face_route8_leppa_berry: [run] route to Route8 (42, 14) south
-pick_up_leppa_berry: [pick_up_item] game_action {"item":"leppa-berry"}
-clear_leppa_text: scene => Route8 (42, 14) south
+pick_up_leppa_berry: [pick_up_item] game_action {"item":"leppa-berry"} skip_if bag_has_item:leppa-berry:1
+clear_leppa_text: scene => Route8 (42, 14) south skip_if bag_has_item:leppa-berry:1
 return_to_route8_grass: [run] route to Route8 (45, 12) west
 lead_blastoise: [party_swap] game_action {"species":"blastoise","target_slot":1}
 use_up_blizzard_pp: [prepare_berry_pp] game_action {"species":"blastoise","move":"blizzard","backup_move":"surf","pace":"west"} => Route8 (45, 12) west
@@ -377,12 +377,13 @@ postconditions:
 none
 no repeat
 == team_training/plans/tt-01.plan.json
-frlg tt-01 from anywhere outdoors: 8 game_action, 3 route, 1 scene
+frlg tt-01 from anywhere outdoors: 9 game_action, 3 route, 1 scene
 fly_vermilion: [fly] game_action {"town":"VermilionCity"} => VermilionCity (15, 7) south
+check_marks_before: [check_party_marks] game_action {"marks":["held_item","mail","mail","mail","mail","mail"]}
 super_repel: [use_item] game_action {"item":"super-repel"}
 face_route6_rare_candy: [run] route to Route6 (19, 6) north
-pick_up_rare_candy: [pick_up_item] game_action {"item":"rare-candy"}
-clear_rare_candy_text: scene => Route6 (19, 6) north
+pick_up_rare_candy: [pick_up_item] game_action {"item":"rare-candy"} skip_if bag_has_item:rare-candy:1
+clear_rare_candy_text: scene => Route6 (19, 6) north skip_if bag_has_item:rare-candy:1
 fly_celadon: [fly] game_action {"town":"CeladonCity"} => CeladonCity (48, 12) south
 to_save_spot: [run] route to CeladonCity_DepartmentStore_1F (6, 2) south
 give_rare_candy: [give_bag_item] game_action {"item":"rare-candy","species":"mr-mime"}
