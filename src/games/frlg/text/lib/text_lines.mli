@@ -200,3 +200,12 @@ val pc_message : t
     "Please remove the MAIL."): window 1 at (88, 136) prints at (0, 2)
     ([PrintStorageMessage]). The messages are matched in English: another
     language's game needs its own text. *)
+
+val naming_entry_cell : max_chars:int -> int -> t
+(** Character [i] (from 0) of the naming screen's text entry, on a screen that
+    takes [max_chars] (a box's name 8, the player's 7, a Pokémon's 10): the game
+    prints each character alone in an 8-pixel cell, the entry centred
+    (pokefirered naming_screen.c, [DrawTextEntry]), so for a box's name from x
+    94, its glyph cells' top at y 49. Measured on mGBA (BOX NAME?, every
+    character of the English keyboard, 2026-11-25). The underscore under each
+    cell (y 62 and below) stays out of the template's rows. *)
