@@ -831,7 +831,10 @@ let map_open c =
 
 let in_zone ?(facing = 270.) ~pin c =
   if map_open c then
-    { (look c) with map_pin = Some { x = fst pin; y = snd pin } }
+    {
+      (look c) with
+      map_pin = Some { Plza_walk.Map_leg.x = fst pin; y = snd pin };
+    }
   else { (party c) with minimap_arrow = Some facing }
 
 (* 03.08b: on the gate's line at (379, 250), facing the gate (264). B held 1 s
@@ -1505,8 +1508,8 @@ let cases_signatures =
       "true";
     case "03.03's start check with no minimap: chain_off_start"
       (start_check "03.03" party)
-      "chain_off_start: the run is not at 03.03's start: the screen reads \
-       (no talk prompt), its start is (minimap 03.03-start)";
+      "chain_off_start: the run is not at 03.03's start: the screen reads (no \
+       talk prompt), its start is (minimap 03.03-start)";
     case "03.04's start check at its end, outside the Center: ok"
       (start_check "03.04" outside_center)
       "ok";
@@ -1516,9 +1519,9 @@ let cases_signatures =
       "true";
     case "03.04's start check at the arch: chain_off_start"
       (start_check "03.04" at_arch)
-      "chain_off_start: the run is not at 03.04's start: the screen reads \
-       (no talk prompt, minimap 03.03-start), its start is (minimap \
-       03.04-start) or its end (minimap 03.06-start)";
+      "chain_off_start: the run is not at 03.04's start: the screen reads (no \
+       talk prompt, minimap 03.03-start), its start is (minimap 03.04-start) \
+       or its end (minimap 03.06-start)";
     case "03.06's start check outside the Center: ok"
       (start_check "03.06" outside_center)
       "ok";
@@ -1571,9 +1574,8 @@ let cases_03_07_to_03_11 =
       "ok";
     case "03.07's start elsewhere: chain_off_start"
       (start_check "03.07" outside_center)
-      "chain_off_start: the run is not at 03.07's start: the screen reads \
-       (no talk prompt, minimap 03.06-start), its start is (minimap \
-       03.07-start)";
+      "chain_off_start: the run is not at 03.07's start: the screen reads (no \
+       talk prompt, minimap 03.06-start), its start is (minimap 03.07-start)";
     case "03.07 with no Fletchling to catch: no_catch"
       (result "03.07" zone_gate)
       "03.07 event 3 (catch_fletchling): no_catch: no tutorial card after 6 \
@@ -1603,7 +1605,8 @@ let cases_03_08_to_03_09 =
       "03.08 event 1 (catch_more_species): rocks_not_left: the pin at the \
        start was not read, not within 8 of (476, 224)";
     case "03.08 with no map pin: only the map's + and B pressed"
-      (inputs_sent "03.08" party) "2";
+      (inputs_sent "03.08" party)
+      "2";
     case "03.08's start at Taunie's rocks with a party of 3: ok"
       (start_check ~party:3 "03.08" at_rocks)
       "ok";
@@ -1640,10 +1643,12 @@ let cases_03_08_to_03_09 =
             | Passed -> "passed"
             | Failed f -> string_of_bool f.off_start))
       "true";
-    case "03.08 retries spawn luck: 2" (fun () ->
-        string_of_int (plan "03.08").retries) "2";
-    case "03.08a retries spawn luck: 2" (fun () ->
-        string_of_int (plan "03.08a").retries) "2";
+    case "03.08 retries spawn luck: 2"
+      (fun () -> string_of_int (plan "03.08").retries)
+      "2";
+    case "03.08a retries spawn luck: 2"
+      (fun () -> string_of_int (plan "03.08a").retries)
+      "2";
     case "03.08a with no map pin: rocks_not_left" (result "03.08a" party)
       "03.08a event 1 (catch_fifth_species): rocks_not_left: the pin at the \
        start was not read, not within 8 of (476, 224)";
@@ -1683,8 +1688,8 @@ let cases_03_08_to_03_09 =
       (result "03.09" look)
       "03.09 event 1 (to_research_lab): arrow_unread: no minimap arrow within \
        40 s";
-    case "03.09 with no minimap arrow: nothing pressed" (inputs_sent "03.09" look)
-      "0";
+    case "03.09 with no minimap arrow: nothing pressed"
+      (inputs_sent "03.09" look) "0";
   ]
 
 let () =

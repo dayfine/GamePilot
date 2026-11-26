@@ -1,7 +1,7 @@
 module S = Steps
 module P = Catch_plan
 
-type result = { throws : int; caught : bool; party_reached : bool }
+type stop_outcome = { throws : int; caught : bool; party_reached : bool }
 
 let none = { throws = 0; caught = false; party_reached = false }
 let party_caught_hold_ms = 250.
@@ -98,7 +98,7 @@ let breakout_weaken steps out ~max_throws ~party =
     in
     { w with throws = out.throws + w.throws })
 
-type target_throws = { result : result; move_on : bool }
+type target_throws = { result : stop_outcome; move_on : bool }
 type after_miss = Caught | Battle | Relocked of P.target * Held_zl.t | Lost
 
 (* After a miss and its lines: a battle, the lock back on a target, or the
@@ -198,7 +198,7 @@ let fight_back steps ~max_throws ~party =
 
 (* One try at the stop: what it threw, whether to stop trying, and whether
    the camera's pitch tipped. *)
-type try_ = { got : result; stop : bool }
+type try_ = { got : stop_outcome; stop : bool }
 
 let aim_and_throw steps ~spot ~max_throws ~party =
   if not (sweep_for_lock_on steps ~spot) then (

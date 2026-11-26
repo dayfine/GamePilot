@@ -63,7 +63,7 @@ let screen z (c : C.t) =
   let k = opens c - 1 in
   if map_open c then
     let x, y = nth_clamped z.route.pins k in
-    { look with map_pin = Some { L.x; y } }
+    { look with map_pin = Some { Plza_walk.Map_leg.x; y } }
   else
     let here = pt (nth_clamped z.route.pins k) in
     let arrow =

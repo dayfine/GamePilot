@@ -126,7 +126,7 @@ let live ~log ~reload record plan (daemon : Live_run.Daemon_process.t) =
   | outcome -> outcome
   | exception e -> failed "raised" (Printexc.to_string e)
 
-(* "03.08 run 1", with " attempt 2" after the first. *)
+(* "03.04 run 1", with " attempt 2" after the first. *)
 let run_name id n = function
   | 1 -> Printf.sprintf "%s run %d" id n
   | a -> Printf.sprintf "%s run %d attempt %d" id n a

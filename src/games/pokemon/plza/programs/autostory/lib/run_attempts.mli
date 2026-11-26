@@ -23,7 +23,7 @@
     (a luck-bound step), so other failures stop for a look. *)
 
 type failure = {
-  at : string;  (** Where it failed: ["start"], ["#1 catch_more_species"]. *)
+  at : string;  (** Where it failed: ["start"], ["#1 to_the_center"]. *)
   reason : string;
   repeats : bool;
       (** Another attempt from the same screen fails the same way. *)
