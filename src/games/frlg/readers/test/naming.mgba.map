@@ -13,3 +13,6 @@ repo src/games/frlg/readers/test/images/mgba/naming-screen/key_upper_r0c1_white.
 repo src/games/frlg/readers/test/images/mgba/naming-screen/key_upper_r1c6_b.png|naming/key_upper_r1c6_b.png
 repo src/games/frlg/readers/test/images/mgba/naming-screen/key_upper_r2c4_b.png|naming/key_upper_r2c4_b.png
 repo src/games/frlg/readers/test/images/mgba/naming-screen/key_upper_r3c7_b.png|naming/key_upper_r3c7_b.png
+repo src/games/frlg/readers/test/images/mgba/naming-screen/box1_title_menu_name.png|naming/box1_title_menu_name.png
+repo src/games/frlg/readers/test/images/mgba/naming-screen/box1_hand_on_title.png|naming/box1_hand_on_title.png
+repo src/games/frlg/readers/test/images/mgba/naming-screen/box1_titled_quotes.png|naming/box1_titled_quotes.png
