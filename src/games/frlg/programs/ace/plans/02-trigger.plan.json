@@ -23,10 +23,8 @@
         "id": "trigger",
         "kind": "game_action",
         "action": "ace_trigger",
-        "args": {
-          "box3_title": "EE …l‘"
-        },
-        "why": "The Pokémon in Box 1 slot 1 moved to Box 3 slot 2 (skipped when it is there), 0x0351 shifted with it twice: the second shift runs the box names. Box 3 is told by its code name, the same for every item. Then the box screen must still answer."
+        "args": {},
+        "why": "The first Pokémon in Box 1 moved to Box 3 slot 2 (skipped when one is there), 0x0351 shifted with it twice: the second shift runs the box names. Box 3 is told by the run's item's code name for it. Then the box screen must still answer."
       },
       {
         "id": "stored",

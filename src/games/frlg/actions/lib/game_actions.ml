@@ -123,7 +123,7 @@ let handlers ctx =
   @ Candy_actions.handlers ~log:ctx.log ~party:ctx.party
   @ Ace_mail.handlers ~log:ctx.log ~party:ctx.party
   @ Box_rename.handlers ~log:ctx.log
-  @ Ace_trigger.handlers ~log:ctx.log
+  @ Ace_trigger.handlers ~log:ctx.log ~options:ctx.options
   @ Item_storage.handlers ~log:ctx.log
   @ Ace_code.handlers ~log:ctx.log ~options:ctx.options
   @ Ace_item.handlers ~log:ctx.log ~options:ctx.options

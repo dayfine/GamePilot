@@ -71,13 +71,16 @@ let steps f : T.game_steps =
         if f.alive && List.mem t cs then Some t else None);
     slot_empty = (fun () -> Some (here f = None));
     ace_at_hand = (fun () -> here f = Some ace);
-    hand_quick = (fun () -> Some f.quick);
+    hand_quick =
+      (fun () ->
+        (* The reader looks only at the first slot. *)
+        if f.on_title || f.slot <> 0 then Some false else Some f.quick);
     await_alive = (fun name -> f.alive && f.titles.(f.box) = name);
     close = (fun () -> note f "close");
   }
 
 let trigger : T.trigger =
-  { box3_title = "EE …l‘"; partner_box = 1; partner_slot = 1 }
+  { box3_title = "EE …l‘"; partner_box = 1; partner_slot = None }
 
 (* [partner_at]: the partner's box and slot (from 1); [None]: nowhere. *)
 let make ?(partner_at = Some (1, 1)) ?(box = 2) ?(quick_lost = false)
@@ -132,14 +135,47 @@ let cases =
        Up Right Right Down Left A Up Down Left Left A Right A A Left A Select \
        Up close; shifts 2, box3 0x0351 magikarp, quick false";
     case
-      ~trigger:{ trigger with partner_box = 5; partner_slot = 9 }
+      ~trigger:{ trigger with partner_box = 5; partner_slot = Some 9 }
       "the partner fetched from Box 5 slot 9: two scrolls right, down a row"
       (fun () -> make ~partner_at:(Some (5, 9)) ())
-      "ok: open Up Down Left Up Right Right Down Down Select A Up Up Left Left \
-       Down Left A Up Down Left Left A Right A A Left A Select Up close; \
-       shifts 2, box3 0x0351 magikarp, quick false";
-    case "no Pokémon in the partner's slot: refused before a SELECT"
-      (fun () -> make ~partner_at:None ())
+      "ok: open Up Down Left Up Right Right Down Down Up Left Left Select Down \
+       Right Right A Up Up Left Left Down Left A Up Down Left Left A Right A A \
+       Left A Select Up close; shifts 2, box3 0x0351 magikarp, quick false";
+    case "Box 1 slot 1 empty: the partner is the first Pokémon, in slot 2"
+      (fun () -> make ~box:0 ~partner_at:(Some (1, 2)) ())
+      "ok: open Up Right Right Down Left Up Left Left Down Left Left Right \
+       Left Select Right A Up Right Right Down Left A Up Down Left Left A \
+       Right A A Left A Select Up close; shifts 2, box3 0x0351 magikarp, quick \
+       false";
+    case "Box 1 empty but slot 30: read slot by slot to the last"
+      (fun () -> make ~partner_at:(Some (1, 30)) ())
+      "ok: open Up Down Left Up Left Left Down Left Left Right Right Right \
+       Right Right Down Left Left Left Left Left Right Right Right Right Right \
+       Down Left Left Left Left Left Right Right Right Right Right Down Left \
+       Left Left Left Left Right Right Right Right Right Down Left Left Left \
+       Left Left Right Right Right Right Right Up Up Up Up Left Left Left Left \
+       Left Select Down Down Down Down Right Right Right Right Right A Up Up \
+       Up Up Up Right Right Down Left A Up Down Left Left A Right A A Left A \
+       Select Up close; shifts 2, box3 0x0351 magikarp, quick false";
+    case
+      ~trigger:{ trigger with partner_box = 3 }
+      "the partner searched in Box 3: from slot 3, past 0x0351"
+      (fun () -> make ~partner_at:(Some (3, 4)) ())
+      "ok: open Up Down Left Up Down Right Left Left Left Select Right Right \
+       Right A Up Down Left A Up Down Left Left A Right A A Left A Select Up \
+       close; shifts 2, box3 0x0351 magikarp, quick false";
+    case "no Pokémon in the partner's box: refused before a SELECT"
+      (fun () -> make ~partner_at:(Some (2, 1)) ())
+      "ace_partner_missing: open Up Down Left Up Left Left Down Left Left \
+       Right Right Right Right Right Down Left Left Left Left Left Right Right \
+       Right Right Right Down Left Left Left Left Left Right Right Right Right \
+       Right Down Left Left Left Left Left Right Right Right Right Right Down \
+       Left Left Left Left Left Right Right Right Right Right; shifts 0, box3 \
+       0x0351 -, quick false";
+    case
+      ~trigger:{ trigger with partner_slot = Some 1 }
+      "no Pokémon in the partner's given slot: not searched past it"
+      (fun () -> make ~partner_at:(Some (1, 2)) ())
       "ace_partner_missing: open Up Down Left Up Left Left Down Left Left; \
        shifts 0, box3 0x0351 -, quick false";
     case "SELECT does not take: no A on 0x0351"
@@ -152,4 +188,39 @@ let cases =
        Select Up; shifts 2, box3 0x0351 magikarp, quick false";
   ]
 
-let () = Table_test.run "ace_trigger" cases
+let obj json = Json_field.as_object "" (Yojson.Safe.from_string json)
+
+let event : Pokemon_engine.Plan.event =
+  {
+    id = "trigger";
+    kind = Named_action [];
+    way = None;
+    why = "";
+    skip_if = [];
+    declared_after = None;
+    once_per_save = false;
+  }
+
+(* Args refused before anything is pressed. *)
+let refused json () =
+  let handlers = T.handlers ~log:ignore ~options:Run_options.none in
+  match (List.assoc "ace_trigger" handlers) event (obj json) with
+  | Ok () -> "ok"
+  | Error c -> Pokemon_engine.Failure.cause_to_string c
+
+let arg_case name input expectation = { Table_test.name; input; expectation }
+
+let arg_cases =
+  [
+    arg_case "no box3_title and no item option" (refused "{}")
+      "bad_args: ace_trigger: no box3_title, and frlg.ace needs its item \
+       option (--options item=<slug>)";
+    arg_case "Box 3 slot 1 named as the partner"
+      (refused {|{"box3_title": "B3", "partner_box": 3, "partner_slot": 1}|})
+      "bad_args: ace_trigger: Box 3 slot 1 is 0x0351, not a partner";
+    arg_case "a slot past 30"
+      (refused {|{"box3_title": "B3", "partner_slot": 31}|})
+      "bad_args: ace_trigger: partner_slot is 31, not 1-30";
+  ]
+
+let () = Table_test.run "ace_trigger" (cases @ arg_cases)
