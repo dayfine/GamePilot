@@ -31,12 +31,12 @@ let north_run_ms = 2800
 let south_return_ms = 3000
 let west_return_ms = 2600
 let sweep_steps = 12
-let bag_menu_row = 0
-let bag_menu_col = 2
 let bag_open_wait_ms = 1400
-let bag_pocket_count = 8
-let bag_pocket_hold_ms = 100
-let bag_pocket_wait_ms = 1200
+let bag_scroll_pages = 5
+let bag_page_rows = 6
+let bag_nav_hold_ms = 80
+let bag_nav_cooldown_ms = 140
+let bag_page_wait_ms = 1200
 let bag_exit_presses = 4
 let bag_exit_cooldown_ms = 700
 
@@ -241,21 +241,24 @@ let recover_if_mid_dig ~picture ~goal ~counters =
   | None -> Ok counters
 
 let run_check_bag ~picture =
-  log "Mode check-bag: opening X menu -> Bag to inspect pockets...";
+  log "Mode check-bag: opening Bag -> Treasures pocket to inspect shards...";
   let* () = OW.open_menu ~log ~picture () in
-  let* () = OW.menu_select ~log ~picture ~dx:bag_menu_col ~dy:bag_menu_row () in
+  let* () = OW.menu_select ~log ~picture ~dx:0 ~dy:0 () in
   P.wait bag_open_wait_ms;
-  for i = 1 to bag_pocket_count do
-    log (Printf.sprintf "Inspecting Bag pocket %d/%d..." i bag_pocket_count);
-    P.wait bag_pocket_wait_ms;
-    P.press ~hold_ms:bag_pocket_hold_ms ~cooldown_ms:bag_pocket_hold_ms
-      Wire.Right
+  P.press ~hold_ms:bag_nav_hold_ms ~cooldown_ms:bag_page_wait_ms Wire.Left;
+  for page = 1 to bag_scroll_pages do
+    log (Printf.sprintf "Treasures pocket page %d/%d..." page bag_scroll_pages);
+    P.wait bag_page_wait_ms;
+    for _ = 1 to bag_page_rows do
+      P.press ~hold_ms:bag_nav_hold_ms ~cooldown_ms:bag_nav_cooldown_ms
+        Wire.Down
+    done
   done;
   log "Closing Bag back to overworld...";
   for _ = 1 to bag_exit_presses do
-    P.press ~hold_ms:bag_pocket_hold_ms ~cooldown_ms:bag_exit_cooldown_ms Wire.B
+    P.press ~hold_ms:bag_nav_hold_ms ~cooldown_ms:bag_exit_cooldown_ms Wire.B
   done;
-  Ok "bag pockets captured"
+  Ok "treasures pocket captured"
 
 let run_farm_loop ~picture ~goal ~total_cycles =
   let* initial =
