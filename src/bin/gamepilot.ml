@@ -41,13 +41,13 @@ let die msg =
 
 (* The program under [handle], [after] whether it passed, in the session; the
    outcome's line and exit code. *)
-let program_outcome ?(after = ignore) (p : Checkpoint_families.one_shot) handle
-    state =
+let program_outcome ?(after = ignore) ?(options = Run_options.none)
+    (p : Checkpoint_families.one_shot) handle state =
   let run () =
     let report = Watch_report.create ~checkpoint:p.label [ "run" ] in
     Watch_report.start_run report ~mode:"run";
     let passed, line =
-      Watch_report.step report "run" (fun () -> p.run ~state)
+      Watch_report.step report "run" (fun () -> p.run ~options ~state)
     in
     if not passed then Watch_report.set report 0 Wire.Watch.Failed line;
     Watch_report.log ignore line;
@@ -73,10 +73,10 @@ let run_program p handle state =
   code
 
 (* The program in [handle]'s session, its run folder [record]'s. *)
-let in_run_folder one_shot (record : Run_record.t) handle state =
+let in_run_folder one_shot ~options (record : Run_record.t) handle state =
   let after passed = if not passed then Attached_run.save_failure record in
   Effects.with_run_folder record.dir (fun () ->
-      program_outcome ~after one_shot handle state)
+      program_outcome ~after ~options one_shot handle state)
 
 (* In a daemon of its own, stopped after the run (Daemon_run). *)
 let on_own_daemon one_shot (f : One_shot_flags.t) own_daemon record =
@@ -88,12 +88,15 @@ let on_own_daemon one_shot (f : One_shot_flags.t) own_daemon record =
       ~label:one_shot.label
   in
   Daemon_run.with_daemon ~failed started (fun daemon ->
-      in_run_folder one_shot record (Live.run ~port:daemon.port) f.state)
+      in_run_folder one_shot ~options:f.options record
+        (Live.run ~port:daemon.port)
+        f.state)
 
 (* On a daemon already up, or one of its own (One_shot_flags). *)
 let on_daemon one_shot (f : One_shot_flags.t) record =
   match f.daemon with
-  | Attach port -> in_run_folder one_shot record (Live.run ~port) f.state
+  | Attach port ->
+      in_run_folder one_shot ~options:f.options record (Live.run ~port) f.state
   | Start own_daemon -> on_own_daemon one_shot f own_daemon record
 
 let backend_name (f : One_shot_flags.t) =

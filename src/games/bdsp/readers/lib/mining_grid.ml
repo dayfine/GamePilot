@@ -49,7 +49,7 @@ let cell_box ~col ~row : Wire.box =
     h = cell_span *. ch;
   }
 
-let tool_probes ~picture =
+let tool_panel_probes ~picture =
   let add id box acc =
     match PB.clipped ~picture box with
     | Some b -> Wire.color_stats_probe ~id ~box:b ~delivery:Every :: acc
@@ -70,16 +70,21 @@ let probes ~picture =
       | None -> ()
     done
   done;
-  tool_probes ~picture @ List.rev !acc
+  tool_panel_probes ~picture @ List.rev !acc
 
-let min_red_panel_r = 170.
-let min_blue_panel_b = 150.
+let min_red_panel_r = 70.
+let min_blue_panel_b = 70.
+let min_red_dominance = 40.
+let min_blue_over_red = 10.
 let stats_luma (s : SC.stats) = (s.mean.r +. s.mean.g +. s.mean.b) /. channels
 
 let on_mining_screen m =
   match (SC.stats m red_tool_probe_id, SC.stats m blue_tool_probe_id) with
   | Some red, Some blue ->
-      red.mean.r >= min_red_panel_r && blue.mean.b >= min_blue_panel_b
+      red.mean.r >= min_red_panel_r
+      && red.mean.r -. red.mean.b >= min_red_dominance
+      && blue.mean.b >= min_blue_panel_b
+      && blue.mean.b -. blue.mean.r >= min_blue_over_red
   | _ -> false
 
 let selected_tool m =

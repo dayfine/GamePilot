@@ -4,5 +4,6 @@
  (libraries
   gamepilot.wire
   gamepilot.effects
+  gamepilot.screen_state
   gamepilot.switch_home
   gamepilot.bdsp_underground))

@@ -18,6 +18,11 @@ val rows : int
 val cell_probe_id : col:int -> row:int -> string
 (** Probe id for cell [(col, row)] in {!probes}. *)
 
+val tool_panel_probes : picture:Wire.box -> Wire.probe_spec list
+(** The two lightweight right-panel probes (Red Hammer / Blue Pickaxe) used by
+    {!on_mining_screen} and {!selected_tool} without subscribing to all 130 grid
+    cells. *)
+
 val probes : picture:Wire.box -> Wire.probe_spec list
 (** The 130 [color_stats_probe] specs (13x10 grid) plus the two right-panel
     tool-selection probes (Red Hammer / Blue Pickaxe), relative to [picture]. *)

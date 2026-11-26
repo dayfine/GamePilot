@@ -3,7 +3,9 @@
  (public_name gamepilot.bdsp_underground_poc)
  (libraries
   gamepilot.wire
+  gamepilot.run_options
   gamepilot.effects
+  gamepilot.screen_state
   gamepilot.watch_report
   gamepilot.switch_home
   gamepilot.bdsp_readers

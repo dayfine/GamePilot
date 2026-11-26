@@ -251,6 +251,9 @@ let plza_autostory =
     options = [];
   }
 
+let max_underground_cycles = 999
+let max_underground_slates = 99
+
 let bdsp_underground_poc =
   {
     id = "bdsp.underground_poc";
@@ -259,12 +262,36 @@ let bdsp_underground_poc =
     group = [ "BDSP"; "Development" ];
     description =
       "Iterative Switch bring-up program for Grand Underground shard farming.";
-    doc = "docs/roadmap/bdsp-underground-mining.md";
+    doc = "docs/guide/bdsp.underground_poc.md";
     checkpoints = None;
     backends = [ Switch ];
     viewport = Native;
     rules = Pokemon_grid;
-    options = [];
+    options =
+      [
+        {
+          key = "mode";
+          value = Run_options.One_of [ "farm"; "check-bag" ];
+          presence = Run_options.Default "farm";
+          doc =
+            "farm: run the Grand Underground shard loop; check-bag: open Bag \
+             pockets to inspect shard and slate counts.";
+        };
+        {
+          key = "cycles";
+          value = Run_options.Int_range (1, max_underground_cycles);
+          presence = Run_options.Default "15";
+          doc = "Number of Hideaway doorway-refresh cycles to run in farm mode.";
+        };
+        {
+          key = "slates";
+          value = Run_options.Int_range (1, max_underground_slates);
+          presence = Run_options.Default "14";
+          doc =
+            "Ramanas Park slate budget (1 Shard L or 3 Shard S per slate); \
+             stops once reached.";
+        };
+      ];
   }
 
 let all =

@@ -19,7 +19,7 @@ let ( let* ) = Result.bind
 type one_shot = {
   label : string;
   default_state : string;
-  run : state:string option -> bool * string;
+  run : options:Run_options.t -> state:string option -> bool * string;
 }
 
 type t = {
@@ -74,7 +74,7 @@ let start_menu_poc =
     label = "start_menu_poc";
     default_state = Start_menu_poc.default_state;
     run =
-      (fun ~state ->
+      (fun ~options:_ ~state ->
         let outcome = Start_menu_poc.run ?state () in
         ( (match outcome with Start_menu_poc.Passed _ -> true | _ -> false),
           Start_menu_poc.describe outcome ));
@@ -84,7 +84,9 @@ let bdsp_underground_poc =
   {
     label = "bdsp.underground_poc";
     default_state = Bdsp_underground_poc.Underground_poc.default_state;
-    run = (fun ~state -> Bdsp_underground_poc.Underground_poc.run ?state ());
+    run =
+      (fun ~options ~state ->
+        Bdsp_underground_poc.Underground_poc.run ~options ?state ());
   }
 
 (* The Pokémon grid rules' entry points. *)
