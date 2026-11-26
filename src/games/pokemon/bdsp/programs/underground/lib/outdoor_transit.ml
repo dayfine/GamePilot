@@ -61,6 +61,18 @@ let fly_to_oreburgh ~log ~picture () =
   log "Arrived in Oreburgh City.";
   Ok ()
 
+let wait_underground_state ~picture ~wanted ~timeout_ms ~label =
+  ignore (Effects.subscribe (US.probes ~picture) : string list);
+  let ready m =
+    let scr = US.read m in
+    if scr.fade = Screen_state.Fade.No_fade && scr.in_underground = wanted then
+      Some ()
+    else None
+  in
+  match H.wait_for ~timeout_ms (H.held clear_hold_ms ready) with
+  | Some () -> Ok ()
+  | None -> Error (label ^ ": timed out waiting for target overworld")
+
 let dive_via_wheel ~log ~picture () =
   log "Using Explorer Kit on + wheel (Play Alone)...";
   P.press ~hold_ms:btn_hold_ms ~cooldown_ms:btn_wait_ms Wire.Plus;
@@ -70,8 +82,8 @@ let dive_via_wheel ~log ~picture () =
   P.press ~hold_ms:btn_hold_ms ~cooldown_ms:kit_confirm_wait_ms Wire.A;
   P.press ~hold_ms:btn_hold_ms ~cooldown_ms:kit_confirm_wait_ms Wire.A;
   let* () =
-    wait_fade_cycle ~picture ~timeout_ms:dive_fade_timeout_ms
-      ~label:"dive_via_wheel"
+    wait_underground_state ~picture ~wanted:true
+      ~timeout_ms:dive_fade_timeout_ms ~label:"dive_via_wheel"
   in
   P.wait post_fly_settle_ms;
   log "Entered Grand Underground (Central Grassland Cave hallway).";
@@ -109,8 +121,8 @@ let leave_underground ~log ~picture () =
   P.press ~hold_ms:btn_hold_ms ~cooldown_ms:surface_confirm_wait_ms Wire.A;
   P.press ~hold_ms:btn_hold_ms ~cooldown_ms:surface_confirm_wait_ms Wire.A;
   let* () =
-    wait_fade_cycle ~picture ~timeout_ms:dive_fade_timeout_ms
-      ~label:"leave_underground"
+    wait_underground_state ~picture ~wanted:false
+      ~timeout_ms:dive_fade_timeout_ms ~label:"leave_underground"
   in
   P.wait post_fly_settle_ms;
   log "Returned to Sinnoh surface.";
