@@ -16,10 +16,7 @@ let band r : Native_box.fractions =
   }
 
 let band_id r = Printf.sprintf "main_menu_row.band%d" r
-let white_min = 221
-let white_floor = (white_min, white_min, white_min)
-let channel_max = 255
-let white_ceiling = (channel_max, channel_max, channel_max)
+let white = Color_count.white 221
 
 (* Card k's HP bar strip in frame pixels. *)
 let first_card_x = 884
@@ -39,27 +36,18 @@ let green =
     ]
 
 let band_probe ~picture r =
-  Option.map
-    (fun box ->
-      Wire.color_count_probe ~id:(band_id r) ~box ~delivery:Every
-        ~min:white_floor ~max:white_ceiling)
-    (Native_box.probe_box ~picture (Native_box.of_fractions (band r)))
+  Color_count.probe ~picture ~id:(band_id r)
+    (Native_box.of_fractions (band r))
+    white
 
 let probes ~picture ~assets =
   Main_menu.probes ~picture ~assets
-  @ List.filter_map (band_probe ~picture) (List.init rows Fun.id)
+  @ List.concat_map (band_probe ~picture) (List.init rows Fun.id)
   @ List.concat_map
       (fun k -> Pixel_shares.probe ~picture ~id:(bar_id k) (bar k) green)
       (List.init cards Fun.id)
 
-let fraction m id =
-  match Effects.probe m id with
-  | Some (Wire.Color_count { fraction; _ }) -> Some fraction
-  | Some
-      ( Wire.Color_stats _ | Wire.Template_match _ | Wire.Line_shares _
-      | Wire.Find _ | Wire.Other _ )
-  | None ->
-      None
+let fraction = Color_count.share
 
 let white_shares m =
   List.init rows (fun r -> Option.value ~default:0. (fraction m (band_id r)))

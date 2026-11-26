@@ -27,22 +27,14 @@ let name_id k = Printf.sprintf "mystery_gift.name%d" k
    console B, and a dimmer capture card keeps them (0.9 times is 228); the
    script read white over 230. Dark blue as the script: red under 45, green
    under 70, blue 66 to 144. *)
-let white_min = 200
-let channel_max = 255
-
-let white =
-  ((white_min, white_min, white_min), (channel_max, channel_max, channel_max))
-
+let white = Color_count.white 200
 let blue_red_max = 44
 let blue_green_max = 69
 let blue_min = 66
 let blue_max = 144
-let blue = ((0, 0, blue_min), (blue_red_max, blue_green_max, blue_max))
 
-let count ~picture id box (min, max) =
-  Option.map
-    (fun box -> Wire.color_count_probe ~id ~box ~delivery:Every ~min ~max)
-    (Native_box.probe_box ~picture box)
+let blue : Color_count.range =
+  { low = (0, 0, blue_min); high = (blue_red_max, blue_green_max, blue_max) }
 
 let name_probe ~picture ~gift_name k =
   Option.map
@@ -54,24 +46,21 @@ let name_probe ~picture ~gift_name k =
 let all = List.init items Fun.id
 
 let probes ~picture ~gift_name =
-  List.filter_map Fun.id
-    ([
-       count ~picture header_id (Native_box.of_fractions header) white;
-       count ~picture text_box_id (Native_box.of_fractions text_box) blue;
-     ]
-    @ List.map (fun k -> count ~picture (item_id k) (item_strip k) white) all
-    @ Option.fold ~none:[]
-        ~some:(fun gift_name -> List.map (name_probe ~picture ~gift_name) all)
-        gift_name)
+  Color_count.probe ~picture ~id:header_id
+    (Native_box.of_fractions header)
+    white
+  @ Color_count.probe ~picture ~id:text_box_id
+      (Native_box.of_fractions text_box)
+      blue
+  @ List.concat_map
+      (fun k -> Color_count.probe ~picture ~id:(item_id k) (item_strip k) white)
+      all
+  @ List.filter_map Fun.id
+      (Option.fold ~none:[]
+         ~some:(fun gift_name -> List.map (name_probe ~picture ~gift_name) all)
+         gift_name)
 
-let fraction m id =
-  match Effects.probe m id with
-  | Some (Wire.Color_count { fraction; _ }) -> Some fraction
-  | Some
-      ( Wire.Color_stats _ | Wire.Template_match _ | Wire.Line_shares _
-      | Wire.Find _ | Wire.Other _ )
-  | None ->
-      None
+let fraction = Color_count.share
 
 let score m id =
   match Effects.probe m id with

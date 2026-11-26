@@ -43,6 +43,13 @@ let cards m =
       if R.card_green m k then 'x' else if R.card_empty m k then '.' else '?')
 
 let item = Option.fold ~none:"none" ~some:(fun k -> string_of_int (k + 1))
+let case name input expectation : Table_test.case = { name; input; expectation }
+
+(* Each reader's text for a frame, one reader per case. *)
+let menu_text m =
+  Option.fold ~none:"no menu"
+    ~some:(fun r -> Printf.sprintf "menu row %d; cards %s" r (cards m))
+    (R.highlighted m)
 
 let list_text m =
   if G.list_active m then
@@ -51,42 +58,17 @@ let list_text m =
       (item (G.gift_item m))
   else "no gift list"
 
-let cell m =
-  if Box_cell.holds_pokemon m then "a Pokémon in the cell" else "an empty cell"
+let card_text m = if G.card m then "gift card" else "no gift card"
 
-let text probes =
-  let m = measurements probes in
-  String.concat "; "
-    ([
-       Option.fold ~none:"no menu"
-         ~some:(Printf.sprintf "menu row %d")
-         (R.highlighted m);
-       "cards " ^ cards m;
-       list_text m;
-       (if G.card m then "gift card" else "no gift card");
-     ]
-    @ (if Boxes_screen.shown m then [ "boxes"; cell m ] else [])
-    @ if Save_dialog.shown m then [ "save dialog" ] else [])
+let boxes_text m =
+  if not (Boxes_screen.shown m) then "no boxes"
+  else if Box_cell.holds_pokemon m then "boxes, a Pokémon in the cell"
+  else "boxes, an empty cell"
 
-let nothing probes =
-  let m = measurements probes in
-  R.highlighted m = None
-  && (not (G.list_active m))
-  && (not (G.card m))
-  && (not (Boxes_screen.shown m))
-  && not (Save_dialog.shown m)
-
-let case name input expectation : Table_test.case = { name; input; expectation }
-let menu_text = "menu row 0; cards xxxxx.; no gift list; no gift card"
-
-let list_read gift =
-  Printf.sprintf
-    "no menu; cards ......; gift list, item 1 selected, the gift item %s; no \
-     gift card"
-    gift
+let save_text m =
+  if Save_dialog.shown m then "save dialog" else "no save dialog"
 
 let same a b = Filename.remove_extension a = Filename.remove_extension b
-let card_read = "no menu; cards ......; no gift list; gift card"
 
 let cards_shown =
   [
@@ -95,9 +77,6 @@ let cards_shown =
 
 let boxes = "./mystery-gift/boxes-xerneas-in-box-1.png"
 
-let boxes_read cell =
-  "no menu; cards ......; no gift list; no gift card; boxes; " ^ cell
-
 (* The fork's captures of the Boxes (box-cells/: CommandLineTests'
    BoxCellInfoDetector frames at 360p), named by what the cursor is on. *)
 let box_cell path =
@@ -105,8 +84,6 @@ let box_cell path =
   | [ _; "box-cells"; frame ] ->
       Some (String.starts_with ~prefix:"pokemon" frame)
   | _ -> None
-
-let save_read = "no menu; cards ......; no gift list; no gift card; save dialog"
 
 (* Each "Last Saved" layout's 18:16 and 18:18. *)
 let save_pairs =
@@ -120,22 +97,6 @@ let save_pairs =
   ]
 
 let saves = List.concat_map (fun (_, a, b) -> [ a; b ]) save_pairs
-
-(* [name] is the language of the gift name's template. *)
-let expected ?(name = "en") path =
-  if same path menu then menu_text
-  else if same path boxes then boxes_read "a Pokémon in the cell"
-  else if box_cell path = Some true then boxes_read "a Pokémon in the cell"
-  else if box_cell path = Some false then boxes_read "an empty cell"
-  else if List.exists (same path) saves then save_read
-  else if same path gift_list then
-    list_read (if name = "en" then "4" else "none")
-  else if same path french_list then
-    list_read (if name = "fr" then "4" else "none")
-  else if List.exists (same path) cards_shown then card_read
-  else "nothing"
-
-let read probes = if nothing probes then "nothing" else text probes
 
 (* "./bright90/mystery-gift/x.png" -> "./mystery-gift/x.png"; the shifted
    frames are png. An unshifted path stays. *)
@@ -176,23 +137,63 @@ let last_saved_cases all =
         save_pairs)
     (List.sort_uniq String.compare (List.map (fun (p, _) -> shift_of p) all))
 
+let pokemon_cell = "boxes, a Pokémon in the cell"
+
+(* What each reader reads on a frame; [name] is the language of the gift
+   name's template. *)
+let expected_menu path =
+  if same path menu then "menu row 0; cards xxxxx." else "no menu"
+
+let expected_list ~name path =
+  let listed gift =
+    Printf.sprintf "gift list, item 1 selected, the gift item %s" gift
+  in
+  if same path gift_list then listed (if name = "en" then "4" else "none")
+  else if same path french_list then
+    listed (if name = "fr" then "4" else "none")
+  else "no gift list"
+
+let expected_card path =
+  if List.exists (same path) cards_shown then "gift card" else "no gift card"
+
+let expected_boxes path =
+  if same path boxes then pokemon_cell
+  else
+    match box_cell path with
+    | Some true -> pokemon_cell
+    | Some false -> "boxes, an empty cell"
+    | None -> "no boxes"
+
+let expected_save path =
+  if List.exists (same path) saves then "save dialog" else "no save dialog"
+
+let readers ~name =
+  [
+    ("main menu row", menu_text, expected_menu);
+    ("gift list", list_text, expected_list ~name);
+    ("gift card", card_text, expected_card);
+    ("boxes", boxes_text, expected_boxes);
+    ("save dialog", save_text, expected_save);
+  ]
+
+(* One case per reader per frame, [label] before the frame's path. *)
+let frame_cases ?(name = "en") ~label frames =
+  List.concat_map
+    (fun (path, probes) ->
+      List.map
+        (fun (reader, read, expected) ->
+          case
+            (Printf.sprintf "%s%s: %s" label reader path)
+            (fun () -> read (measurements probes))
+            (expected (unshifted path)))
+        (readers ~name))
+    frames
+
 let () =
   Table_test.run "gift_readers"
-    (List.map
-       (fun (path, probes) -> case path (fun () -> read probes) (expected path))
-       frames
-    @ List.map
-        (fun (path, probes) ->
-          case ("shifted: " ^ path)
-            (fun () -> read probes)
-            (expected (unshifted path)))
-        shifted
-    @ List.map
-        (fun (path, probes) ->
-          case ("French name: " ^ path)
-            (fun () -> read probes)
-            (expected ~name:"fr" (unshifted path)))
-        french
+    (frame_cases ~label:"" frames
+    @ frame_cases ~label:"shifted, " shifted
+    @ frame_cases ~name:"fr" ~label:"French name, " french
     @ last_saved_cases
         (List.filter
            (fun (p, _) -> List.exists (same (unshifted p)) saves)

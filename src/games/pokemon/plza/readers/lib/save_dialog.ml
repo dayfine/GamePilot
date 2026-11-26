@@ -7,15 +7,9 @@ let button : Native_box.t = { x = 640; y = 722; w = 640; h = 56 }
 (* The whole "Last Saved" line short of Cancel: its label, date and time sit
    further right in French than in English. *)
 let time : Native_box.t = { x = 258; y = 856; w = 1000; h = 32 }
-let white_min = 200
-let dark_max = 110
+let white = Color_count.white 200
+let dark = Color_count.dark 110
 let ink_max = 120
-let channel_max = 255
-
-let count ~picture id box (min, max) =
-  Option.map
-    (fun box -> Wire.color_count_probe ~id ~box ~delivery:Every ~min ~max)
-    (Native_box.probe_box ~picture box)
 
 let ink =
   Wire.Line_shares.
@@ -26,24 +20,11 @@ let ink =
     ]
 
 let probes ~picture =
-  List.filter_map Fun.id
-    [
-      count ~picture panel_id panel
-        ( (white_min, white_min, white_min),
-          (channel_max, channel_max, channel_max) );
-      count ~picture button_id button ((0, 0, 0), (dark_max, dark_max, dark_max));
-    ]
+  Color_count.probe ~picture ~id:panel_id panel white
+  @ Color_count.probe ~picture ~id:button_id button dark
   @ Pixel_shares.probe ~picture ~id:time_id time ink
 
-let fraction m id =
-  match Effects.probe m id with
-  | Some (Wire.Color_count { fraction; _ }) -> fraction
-  | Some
-      ( Wire.Color_stats _ | Wire.Template_match _ | Wire.Line_shares _
-      | Wire.Find _ | Wire.Other _ )
-  | None ->
-      0.
-
+let fraction m id = Option.value ~default:0. (Color_count.share m id)
 let min_panel = 0.90
 let min_button = 0.70
 
