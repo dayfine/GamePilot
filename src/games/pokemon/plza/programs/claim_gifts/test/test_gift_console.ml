@@ -536,8 +536,8 @@ let () =
         (fun () -> leave (Disconnect No))
         "main menu, row 5; claimed [], 0 A on the list";
       case "Last Saved held 1 s over changing shares: saved" save
-        "The current time changed, the dialog opened 1 more times.; Saved: \
-         Last Saved changed. -> main menu, row 0";
+        "The current time changed after 1 reopen of the dialog.; Saved: Last \
+         Saved changed. -> main menu, row 0";
       case "the dialog's time stands still: closed and opened until it changes"
         (fun () ->
           let c = start ~clock_ms:(Some 10_000.) (Menu 0) in

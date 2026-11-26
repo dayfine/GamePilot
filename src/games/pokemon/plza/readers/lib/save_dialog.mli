@@ -17,10 +17,15 @@
       2026-11-25: "6/01/2" of 26/01/2026), so a French save never changed it.
 
     - the current time: its date and time under their label in the top panel
-      (690, 356, 380, 60), read the same way (zh-Hans, console B's frame of
-      2026-11-26: "2026/01/27 12:12" at x 708 to 1035). It is set in a larger
-      type than "Last Saved", and the two are never compared: the current time
-      is read for its change only.
+      (690, 356, 380, 60), read the same way. Measured on console B's frames of
+      2026-11-26: the date and time ink x 711 to 1020 in Japanese ("2026/01/27
+      10:20", the first run's dialog) and 714 to 1017 in zh-Hans ("2026/01/27
+      12:12"), y 345 to 399 in both, the label's foot included; two Japanese
+      dialogs of the same minute read the same, in every colour shift. No other
+      language's dialog with its current time was captured (the English capture
+      is redacted to "Last Saved"). It is set in a larger type than "Last
+      Saved", and the two are never compared: the current time is read for its
+      change only.
 
     Read before saving and again after, the save counts as done when "Last
     Saved" changed. Measured against a copy of the capture with its last digit

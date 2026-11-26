@@ -67,3 +67,9 @@ of that run: the info card after `CELEBRATE30TH`'s + saying the code was used.
 `code-used-before-zh-hans-2-360p.png` (frame 135) are the fifth zh-Hans run's
 info cards: Vivillon received before, and the code used. All three keep the
 gift screens' and the info card's probes only.
+
+`save-dialog-ja-1020-last-1019-360p.png` and
+`save-dialog-ja-1020-last-1020-360p.png` are frames 241 and 250 of console B's
+first claim-gifts run of 2026-11-26 (Japanese): the SAVE dialog before the
+save (current time 10:20, "Last Saved" 10:19) and after it (10:20, 10:20),
+redacted to `^save_dialog\.`.

@@ -60,8 +60,9 @@ let reopened_later now =
 
 let changed_after ~log n =
   log
-    (Printf.sprintf "The current time changed, the dialog opened %d more times."
-       n)
+    (Printf.sprintf "The current time changed after %d reopen%s of the dialog."
+       n
+       (if n = 1 then "" else "s"))
 
 (* Reopened until its current time is another than [now]: then open, its
    "Last Saved" as before. *)
