@@ -157,9 +157,14 @@ let tool_name = function
   | Mining_wall.Hammer -> "Hammer"
   | Mining_wall.Pickaxe -> "Pickaxe"
 
+let max_crack_sync_drop = 10
+
 let sync_integrity ~log st m =
   match Bdsp_readers.Mining_grid.crack_gauge_integrity m with
-  | Some gauge when abs (!(st.integrity) - gauge) > crack_sync_margin ->
+  | Some gauge
+    when gauge < !(st.integrity)
+         && !(st.integrity) - gauge > crack_sync_margin
+         && !(st.integrity) - gauge <= max_crack_sync_drop ->
       log
         (Printf.sprintf "Crack gauge sync: local=%d -> gauge=%d" !(st.integrity)
            gauge);
