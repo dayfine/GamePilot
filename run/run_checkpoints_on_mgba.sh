@@ -17,9 +17,6 @@
 # A plan folder in place of the program id works too: a path (`gamepilot run ./plans ...`) or
 # --plan-dir DIR. A bare name is always a program id.
 #
-# A one-shot program (`frlg.start_menu_poc`) runs in its own daemon with its page, as a
-# checkpoint does.
-#
 # One run at a time: the runner takes the lock $GAMEPILOT_RUNS/.lock (run/run_lock.sh) and waits,
 # saying who holds it, while another runner does; a lock whose holder died is taken over. Once it
 # holds the lock it also waits while the instance or its bridge port is still in use (a runner

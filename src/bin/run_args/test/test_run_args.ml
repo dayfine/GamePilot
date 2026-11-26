@@ -14,9 +14,9 @@ let case name input expectation = { Table_test.name; input; expectation }
 let () =
   Table_test.run "run_args"
     [
-      case "a one-shot program"
-        (run [ "frlg.start_menu_poc"; "--console" ])
-        "gamepilot run frlg.start_menu_poc --console";
+      case "a program with --console"
+        (run [ "frlg.supplies"; "--console" ])
+        "gamepilot run frlg.supplies --console";
       case "a chain with its flags"
         (run [ "frlg.mail_glitch"; "--from"; "mg-01"; "--mode"; "testing" ])
         "gamepilot run frlg.mail_glitch --from mg-01 --mode testing";

@@ -9,8 +9,6 @@
   gamepilot.run_options
   gamepilot.wire
   gamepilot.effects
-  gamepilot.watch_report
-  gamepilot.replay
   gamepilot.live
   gamepilot.program_registry
   gamepilot.guide_page
@@ -32,7 +30,6 @@
   gamepilot.plza_bank_home_series
   gamepilot.run_flags
   gamepilot.run_args
-  gamepilot.one_shot_flags
   gamepilot.pokemon_flags
   gamepilot.strings
   unix

@@ -111,8 +111,7 @@ nothing registers itself at start-up) and write its guide here (`gamepilot guide
 it).
 
 The registry's tests check that ids are unique, that every doc and checkpoints folder exists, and
-that every plan decodes. A one-shot program also needs its runner in its family's `one_shots`
-(`src/bin/checkpoint_families.ml`).
+that every plan decodes.
 
 What a program needs of the save (free party slots, field moves) is not declared: it is derived
 from its plans, the same way the pre-flight derives it.

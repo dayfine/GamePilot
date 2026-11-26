@@ -71,12 +71,14 @@ It passes on `misses 0` and `spread (p99 - median) ... PASS`, under 50 ms.
 
 ## 6. Read the Start menu
 
-The daemon in one terminal, the program in another:
+The daemon in one terminal, `gamepilot ctl` in another:
 
     daemon/build/gamepilot_daemon --backend switch --serial PORT --capture INDEX --log wire.jsonl
-    gamepilot run start_menu_poc --console
+    gamepilot ctl --owner bring-up press START --hold 100 --wait 500
+    gamepilot ctl read start_menu
+    gamepilot ctl --owner bring-up press B --hold 100 --wait 500
 
-Expect `start_menu_poc: PASS`. Stop the daemon with Ctrl-C.
+Expect `start_menu` to report the open menu and its rows. Stop the daemon with Ctrl-C.
 
 ## 7. Pre-flight
 
