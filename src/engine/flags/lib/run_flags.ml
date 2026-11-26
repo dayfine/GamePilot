@@ -47,16 +47,8 @@ type 'game game_flags = {
   game_valued : 'game -> string -> string -> 'game valued_flag;
 }
 
-let home = Option.value (Sys.getenv_opt "HOME") ~default:"."
-
 (* [var] from the environment, else [$HOME/.local/share/gamepilot/<name>]. *)
-let data_dir var name =
-  match Sys.getenv_opt var with
-  | Some dir when dir <> "" -> dir
-  | _ ->
-      List.fold_left Filename.concat home
-        [ ".local"; "share"; "gamepilot"; name ]
-
+let data_dir = Repo_io.Repo_files.data_dir
 let mgba_bridge_port = 47810
 
 let defaults game =
