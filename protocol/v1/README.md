@@ -1,4 +1,4 @@
-# Wire protocol v1.20
+# Wire protocol v1.21
 
 JSON-RPC 2.0 between the OCaml programs (client) and the daemon (server). The golden files in this
 folder are the spec: the daemon's tests parse every file and the OCaml tests decode and re-encode
@@ -39,6 +39,10 @@ the share of a box's pixels passing a test of linear channel comparisons per row
 and `core.find@1`, blobs found by the fork's fixed pipeline (colour filter, waterfill, size filter,
 scores) (`46-subscribe.line_shares_find.request.json`, `47-frame.line_shares_find.notification.json`).
 `hello` lists both. A v1.12 program never subscribes them.
+v1.21 adds `watch.counters` from the program (see Watch page,
+`56-watch_counters.notification.json`): a list of `{label, value}` pairs shown in a live Counters
+card on the watch page and saved as `watch_counters.json` in the run folder. A v1.20 program never
+sends it.
 v1.20 adds `skip_seams` to `core.template_match@1` with `ink` (optional, default `false`;
 `55-subscribe.skip_seams.request.json`): `true` leaves the scaled template mask's seam pixels out of
 the score (see Probe kinds), for text read on the Switch's 6.5x GBA picture. A v1.19 program never
@@ -255,6 +259,11 @@ daemon keeps them out of the wire log; without a watch page it drops them.
   out of the `trials` its policy allows, `passes` and `fails` its runs so far. `started_ms` is when the
   chain started, Unix time in milliseconds. The daemon keeps the latest, like the plan. Each run
   has its own daemon, so the program sends it again at every run's start.
+
+- `watch.counters`: `items`: list of {`label`, `value`} (`56-watch_counters.notification.json`).
+  Live key-value counters a program chooses to display on the watch page (e.g. cycles, digs,
+  encounters, collected items). Sent whole on each update; the daemon keeps the latest for new
+  viewers and writes it to `watch_counters.json` in the run folder.
 
 ## Probe kinds
 

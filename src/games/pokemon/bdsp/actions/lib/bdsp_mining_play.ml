@@ -14,7 +14,8 @@ let dig_start_row = 4
 let dig_default_announced = 3
 let dig_max_moves = 65
 let dig_frame_timeout_ms = 1000
-let dig_post_strike_settle_ms = 220
+let dig_post_pickaxe_settle_ms = 420
+let dig_post_hammer_settle_ms = 800
 let dig_max_hits_per_cell = 3
 let wall_appear_timeout_ms = 8000
 let wall_clear_hold_ms = 200.
@@ -26,20 +27,18 @@ let pickaxe_decay_kernel =
   [ (0, 0, 2); (-1, 0, 1); (1, 0, 1); (0, -1, 1); (0, 1, 1) ]
 
 let hammer_decay_kernel =
-  [
-    (0, 0, 2);
-    (-1, 0, 2);
-    (1, 0, 2);
-    (0, -1, 2);
-    (0, 1, 2);
-    (-1, -1, 1);
-    (1, -1, 1);
-    (-1, 1, 1);
-    (1, 1, 1);
-  ]
+  List.concat_map
+    (fun dr ->
+      List.map
+        (fun dc -> (dc, dr, if dc = 0 || dr = 0 then 2 else 1))
+        [ -1; 0; 1 ])
+    [ -1; 0; 1 ]
 
 let toggle_mining_tool () =
   P.press ~hold_ms:tool_hold_ms ~cooldown_ms:tool_cooldown_ms Wire.R
+
+let mining_strike () =
+  P.press ~hold_ms:strike_hold_ms ~cooldown_ms:strike_cooldown_ms Wire.A
 
 let repeat_cursor btn n =
   for _ = 1 to abs n do
@@ -51,9 +50,6 @@ let mining_move_cursor ~dx ~dy =
   else if dx < 0 then repeat_cursor Wire.Left dx;
   if dy > 0 then repeat_cursor Wire.Down dy
   else if dy < 0 then repeat_cursor Wire.Up dy
-
-let mining_strike () =
-  P.press ~hold_ms:strike_hold_ms ~cooldown_ms:strike_cooldown_ms Wire.A
 
 let decay_cell prev dmg c r =
   if Mining_wall.in_bounds ~col:c ~row:r then
@@ -81,13 +77,15 @@ let ensure_tool ~actual current wanted =
     current := wanted)
   else current := cur
 
-let move_and_hit cur_c cur_r ~col ~row =
-  let dx = col - !cur_c and dy = row - !cur_r in
-  mining_move_cursor ~dx ~dy;
+let move_and_hit cur_c cur_r ~tool ~col ~row =
+  mining_move_cursor ~dx:(col - !cur_c) ~dy:(row - !cur_r);
   cur_c := col;
   cur_r := row;
   mining_strike ();
-  P.wait dig_post_strike_settle_ms
+  P.wait
+    (match tool with
+    | Mining_wall.Hammer -> dig_post_hammer_settle_ms
+    | Mining_wall.Pickaxe -> dig_post_pickaxe_settle_ms)
 
 let cell_char = function
   | Mining_wall.Covered d -> Char.chr (Char.code '0' + min 9 d)
@@ -103,16 +101,13 @@ let log_grid ~log (obs : Mining_wall.observation) =
     log (Printf.sprintf "grid[%d]: %s" r line)
   done
 
+let is_covered = function Mining_wall.Covered _ -> true | _ -> false
+
 let covered_count (obs : Mining_wall.observation) =
-  let count = ref 0 in
-  for r = 0 to obs.rows - 1 do
-    for c = 0 to obs.cols - 1 do
-      match obs.grid.(r).(c) with
-      | Mining_wall.Covered _ -> incr count
-      | _ -> ()
-    done
-  done;
-  !count
+  Array.fold_left
+    (fun acc row ->
+      Array.fold_left (fun n c -> n + Bool.to_int (is_covered c)) acc row)
+    0 obs.grid
 
 let wait_wall_visible ~announced_ref () =
   let wall_ready m =
@@ -133,15 +128,15 @@ let wait_wall_visible ~announced_ref () =
   | Some () -> Ok ()
   | None -> Error "dig_wall_smart: mining wall never appeared"
 
+let mask_row hits_row row =
+  Array.iteri
+    (fun c cell ->
+      if hits_row.(c) >= dig_max_hits_per_cell && is_covered cell then
+        row.(c) <- Mining_wall.Clear_empty)
+    row
+
 let mask_exhausted_cells hits (obs : Mining_wall.observation) =
-  for r = 0 to obs.rows - 1 do
-    for c = 0 to obs.cols - 1 do
-      if hits.(r).(c) >= dig_max_hits_per_cell then
-        match obs.grid.(r).(c) with
-        | Mining_wall.Covered _ -> obs.grid.(r).(c) <- Mining_wall.Clear_empty
-        | _ -> ()
-    done
-  done
+  Array.iteri (fun r row -> mask_row hits.(r) row) obs.grid
 
 type dig_state = {
   cur_c : int ref;
@@ -153,10 +148,7 @@ type dig_state = {
   hits : int array array;
 }
 
-let tool_name = function
-  | Mining_wall.Hammer -> "Hammer"
-  | Mining_wall.Pickaxe -> "Pickaxe"
-
+let tool_name = function Mining_wall.Hammer -> "Hammer" | Pickaxe -> "Pickaxe"
 let max_crack_sync_drop = 10
 
 let sync_integrity ~log st m =
@@ -176,7 +168,7 @@ let execute_action ~log ~actual_tool st ~moves ~bailed obs = function
       if not bailed then log "No wanted shards found; bailing with Hammer!";
       ensure_tool ~actual:actual_tool st.cur_tool Mining_wall.Hammer;
       mining_strike ();
-      P.wait dig_post_strike_settle_ms;
+      P.wait dig_post_hammer_settle_ms;
       st.integrity := max 0 (!(st.integrity) - Mining_wall.hammer_cost);
       st.prev_grid := Some obs.Mining_wall.grid;
       true
@@ -185,7 +177,7 @@ let execute_action ~log ~actual_tool st ~moves ~bailed obs = function
         (Printf.sprintf "Move %d: %s (%d,%d)" (moves + 1) (tool_name tool) col
            row);
       ensure_tool ~actual:actual_tool st.cur_tool tool;
-      move_and_hit st.cur_c st.cur_r ~col ~row;
+      move_and_hit st.cur_c st.cur_r ~tool ~col ~row;
       st.hits.(row).(col) <- st.hits.(row).(col) + 1;
       decay_prev_grid obs.grid ~tool ~col ~row;
       st.prev_grid := Some obs.grid;
@@ -202,7 +194,10 @@ let step_dig ~log ~goal ~tally st ~moves ~bailed m =
   in
   mask_exhausted_cells st.hits obs;
   if moves = 0 || moves mod log_grid_period = 0 then log_grid ~log obs;
-  let act = Mining_solver.decide ~goal ~tally obs in
+  let act =
+    if bailed then Mining_solver.Bail_collapse
+    else Mining_solver.decide ~goal ~tally obs
+  in
   execute_action ~log ~actual_tool st ~moves ~bailed obs act
 
 let make_dig_state ~announced_items =
@@ -236,11 +231,12 @@ let rec dig_loop ~log ~goal ~tally st moves bailed =
         dig_loop ~log ~goal ~tally st (moves + 1) next_bailed
 
 let dig_wall_smart ?announced_items ~log ~picture ~goal ~tally () =
+  let module R = Bdsp_readers in
   ignore
     (Effects.subscribe
-       (Bdsp_readers.Dialog_detector.probes ~picture
-       @ Bdsp_readers.Mining_announce_reader.probes ~picture
-       @ Bdsp_readers.Mining_grid.probes ~picture)
+       (R.Dialog_detector.probes ~picture
+       @ R.Mining_announce_reader.probes ~picture
+       @ R.Mining_grid.probes ~picture)
       : string list);
   let announced_ref = ref announced_items in
   let* () = wait_wall_visible ~announced_ref () in
@@ -252,6 +248,7 @@ let yield_probe_timeout_ms = 1000
 let yield_enter_timeout_ms = 5000
 let yield_advance_wait_ms = 750
 let yield_max_presses = 20
+let yield_quiet_limit = 3
 
 let post_dig_ui_active m =
   let scr = Bdsp_readers.Underground_screen.read m in
@@ -259,41 +256,44 @@ let post_dig_ui_active m =
   || scr.fade = Screen_state.Fade.Black
   || Bdsp_readers.Dig_result_reader.on_item_spotlight m
 
-let wait_post_dig_ui () =
-  match Effects.await ~timeout_ms:yield_enter_timeout_ms post_dig_ui_active with
-  | Effects.Holds _ | Effects.Timeout -> ()
-
-let record_spotlight_item ~log acc m =
+let record_spotlight_item ~log ~in_spot acc m =
   match Bdsp_readers.Dig_result_reader.read m with
-  | Some t ->
+  | Some t when not in_spot ->
       log ("Uncovered item: " ^ Bdsp_readers.Dig_result_reader.treasure_name t);
       (t :: acc, true)
+  | Some _ -> (acc, true)
   | None -> (acc, false)
 
-let advance_yield_frame ~log acc m =
+let advance_yield_frame ~log ~quiet ~in_spot acc m =
   let scr = Bdsp_readers.Underground_screen.read m in
-  let acc, saw_item = record_spotlight_item ~log acc m in
-  if (not saw_item) && (not scr.dialog) && scr.fade = No_fade then None
+  let acc, saw_item = record_spotlight_item ~log ~in_spot acc m in
+  let active = saw_item || scr.dialog || scr.fade <> No_fade in
+  if (not active) && quiet + 1 >= yield_quiet_limit then None
   else (
     if scr.dialog || saw_item then Bdsp_overworld.interact ();
     P.wait yield_advance_wait_ms;
-    Some acc)
+    Some (acc, (if active then 0 else quiet + 1), saw_item))
 
-let rec collect_yields_loop ~log left acc =
+let poll_yield_step ~log ~quiet ~in_spot acc =
+  match Effects.await ~timeout_ms:yield_probe_timeout_ms (fun _ -> true) with
+  | Effects.Timeout -> None
+  | Effects.Holds m -> advance_yield_frame ~log ~quiet ~in_spot acc m
+
+let rec collect_yields_loop ~log ~quiet ~in_spot left acc =
   if left <= 0 then List.rev acc
   else
-    match Effects.await ~timeout_ms:yield_probe_timeout_ms (fun _ -> true) with
-    | Effects.Timeout -> List.rev acc
-    | Effects.Holds m -> (
-        match advance_yield_frame ~log acc m with
-        | None -> List.rev acc
-        | Some next -> collect_yields_loop ~log (left - 1) next)
+    match poll_yield_step ~log ~quiet ~in_spot acc with
+    | None -> List.rev acc
+    | Some (acc', q', spot') ->
+        collect_yields_loop ~log ~quiet:q' ~in_spot:spot' (left - 1) acc'
 
 let collect_dig_yields ~log ~picture () =
-  let probes =
-    Bdsp_readers.Underground_screen.probes ~picture
-    @ Bdsp_readers.Dig_result_reader.probes ~picture
-  in
-  ignore (Effects.subscribe probes : string list);
-  wait_post_dig_ui ();
-  collect_yields_loop ~log yield_max_presses []
+  ignore
+    (Effects.subscribe
+       (Bdsp_readers.Underground_screen.probes ~picture
+       @ Bdsp_readers.Dig_result_reader.probes ~picture)
+      : string list);
+  ignore
+    (Effects.await ~timeout_ms:yield_enter_timeout_ms post_dig_ui_active
+      : Effects.awaited);
+  collect_yields_loop ~log ~quiet:0 ~in_spot:false yield_max_presses []

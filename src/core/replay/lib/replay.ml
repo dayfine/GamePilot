@@ -122,8 +122,9 @@ let next_client_message r = find_from r.log r.next_in (is_dir Wire.In)
    them out), so the replay drops them too. *)
 let rec send r actual =
   match actual with
-  | Wire.Notification (Wire.Watch_plan _ | Wire.Watch_log _ | Wire.Watch_run _)
-    ->
+  | Wire.Notification
+      ( Wire.Watch_plan _ | Wire.Watch_log _ | Wire.Watch_run _
+      | Wire.Watch_counters _ ) ->
       ()
   | _ -> send_logged r actual
 

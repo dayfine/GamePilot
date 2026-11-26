@@ -31,6 +31,7 @@ type _ Effect.t +=
   | Show_plan : Wire.Watch.plan -> unit Effect.t
   | Show_log : string -> unit Effect.t
   | Show_run : Wire.Watch_run.t -> unit Effect.t
+  | Show_counters : Wire.Watch.counter list -> unit Effect.t
 
 let submit commands = Effect.perform (Submit commands)
 let await ~timeout_ms pred = Effect.perform (Await (pred, timeout_ms))
@@ -57,6 +58,7 @@ let unsubscribe ids = Effect.perform (Unsubscribe ids)
 let show_plan plan = Effect.perform (Show_plan plan)
 let show_log line = Effect.perform (Show_log line)
 let show_run run = Effect.perform (Show_run run)
+let show_counters items = Effect.perform (Show_counters items)
 let probe (m : measurements) id = List.assoc_opt id m.probes
 
 (* The folder of the run on this domain, if it keeps one. *)

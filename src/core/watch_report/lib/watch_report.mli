@@ -34,3 +34,7 @@ val end_run : t -> passed:bool -> unit
 val log : (string -> unit) -> string -> unit
 (** [log base line]: the line to [base] (the run's story log) and to the page.
 *)
+
+val counters : Wire.Watch.counter list -> unit
+(** [counters items]: [watch.counters], updating the live Counters card on the
+    watch page. *)

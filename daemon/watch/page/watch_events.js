@@ -35,6 +35,7 @@ function connect() {
     currentKey = null;
     $("plan-title").textContent = "Plan";
     $("plan").replaceChildren(el("li", "empty", "no plan yet: the program sends it when a checkpoint starts"));
+    renderCounters(null);
     if (d.backend.kind === "view") showViewOnly();
     frameW = d.backend.width || frameW;
     frameH = d.backend.height || frameH;
@@ -50,10 +51,27 @@ function connect() {
     renderPlan();
     if (d.checkpoint === pastId) showPast(pastId);
   });
+  on("counters", renderCounters);
   on("source", showSourceState);
   on("log", (d) => addLog(d.line));
   on("probes", (d) => takeProbes(d.probes));
   on("status", (d) => { renderStatus(d); $("conn").textContent = "live"; $("conn").className = ""; });
+}
+
+// Live key-value counters from watch.counters; hidden when empty.
+function renderCounters(d) {
+  const items = d && Array.isArray(d.items) ? d.items : [];
+  const panel = $("counters-panel");
+  const main = document.querySelector("main");
+  panel.hidden = items.length === 0;
+  if (main) main.classList.toggle("has-counters", items.length > 0);
+  const list = $("counters");
+  list.replaceChildren();
+  for (const item of items) {
+    const box = el("div", "counter");
+    box.append(el("dt", "", item.label), el("dd", "", item.value));
+    list.append(box);
+  }
 }
 
 // A view-only daemon: nothing to stop, no run or plan of ours.

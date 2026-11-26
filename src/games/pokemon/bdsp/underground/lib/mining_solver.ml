@@ -17,54 +17,35 @@ let min_hammer_target_dirt = 2
 let min_hammer_target_hits = 3
 let low_gauge_cutoff = 18
 let shard_expand_radius = 2
-let anchor_covered_weight = 4
+let scan_expose_weight = 6
+let scan_crack_weight = 2
 let anchor_iron_penalty = 6
 let cardinal_dirs = [ (-1, 0); (1, 0); (0, -1); (0, 1) ]
 
 let ring_offsets radius =
-  let acc = ref [] in
-  for dr = -radius to radius do
-    for dc = -radius to radius do
-      if dc <> 0 || dr <> 0 then acc := (dc, dr) :: !acc
-    done
-  done;
-  !acc
+  let span = List.init ((2 * radius) + 1) (fun i -> i - radius) in
+  List.concat_map
+    (fun dr ->
+      List.filter_map
+        (fun dc -> if dc = 0 && dr = 0 then None else Some (dc, dr))
+        span)
+    span
 
 let chebyshev_r1 = ring_offsets 1
 let chebyshev_r2 = ring_offsets shard_expand_radius
 let pickaxe_kernel = [ (0, 0, 2); (-1, 0, 1); (1, 0, 1); (0, -1, 1); (0, 1, 1) ]
 
 let hammer_kernel =
-  [
-    (0, 0, 2);
-    (-1, 0, 2);
-    (1, 0, 2);
-    (0, -1, 2);
-    (0, 1, 2);
-    (-1, -1, 1);
-    (1, -1, 1);
-    (-1, 1, 1);
-    (1, 1, 1);
-  ]
+  (0, 0, 2)
+  :: List.map
+       (fun (dc, dr) -> (dc, dr, if dc = 0 || dr = 0 then 2 else 1))
+       chebyshev_r1
 
-(* Sparse 3-tile-spaced Hammer anchors covering the 13x10 wall.
-   Because Hammer hits a 3x3 area, these 12 points inspect nearly every 2x2+
-   item footprint on the board without interior gaps. *)
+let scan_cols = [ 2; 5; 8; scan_right_col ]
+let scan_rows = [ 2; 5; 8 ]
+
 let scan_anchors =
-  [
-    (2, 2);
-    (5, 2);
-    (8, 2);
-    (scan_right_col, 2);
-    (2, 5);
-    (5, 5);
-    (8, 5);
-    (scan_right_col, 5);
-    (2, 8);
-    (5, 8);
-    (8, 8);
-    (scan_right_col, 8);
-  ]
+  List.concat_map (fun r -> List.map (fun c -> (c, r)) scan_cols) scan_rows
 
 let is_iron (obs : Mining_wall.observation) ~col ~row =
   match obs.grid.(row).(col) with Mining_wall.Clear_iron -> true | _ -> false
@@ -74,11 +55,7 @@ let dirt_at (obs : Mining_wall.observation) ~col ~row =
 
 let record_exposed_cell tbl r c = function
   | Mining_wall.Clear_item { id; kind } ->
-      let prev =
-        match Hashtbl.find_opt tbl id with
-        | Some (_, cells) -> cells
-        | None -> []
-      in
+      let prev = Option.fold ~none:[] ~some:snd (Hashtbl.find_opt tbl id) in
       Hashtbl.replace tbl id (kind, (c, r) :: prev)
   | _ -> ()
 
@@ -178,37 +155,79 @@ let all_items_accounted_non_shard ~goal ~tally (obs : Mining_wall.observation)
       (fun (_, kind, _) -> Mining_goal.wants_item goal tally kind)
       items
   in
-  (not any_wanted) && List.length items >= obs.announced_items
-
-let score_scan_anchor (obs : Mining_wall.observation) ~col ~row =
-  let covered, iron =
-    List.fold_left
-      (fun (cov, ir) (dc, dr, _) ->
-        let c = col + dc and r = row + dr in
-        if not (Mining_wall.in_bounds ~col:c ~row:r) then (cov, ir)
-        else if is_iron obs ~col:c ~row:r then (cov, ir + 1)
-        else if dirt_at obs ~col:c ~row:r > 0 then (cov + 1, ir)
-        else (cov, ir))
-      (0, 0) hammer_kernel
+  let real_other =
+    List.filter (fun (_, _, cells) -> List.length cells >= 2) items
   in
-  (covered * anchor_covered_weight)
-  - (iron * anchor_iron_penalty)
-  - dirt_at obs ~col ~row
+  (not any_wanted) && List.length real_other >= obs.announced_items
 
-let next_scan_anchor (obs : Mining_wall.observation) =
+let mark_cell_footprint tbl (c, r) =
+  Hashtbl.replace tbl (c, r) ();
+  List.iter
+    (fun (dc, dr) -> Hashtbl.replace tbl (c + dc, r + dr) ())
+    chebyshev_r1
+
+(* Cells within Chebyshev distance 1 of an exposed non-wanted item: we infer
+   its footprint covers these neighbors and avoid wasting scan hits on them. *)
+let unwanted_footprint ~goal ~tally items =
+  let tbl = Hashtbl.create adj_table_capacity in
+  let add (_, kind, cells) =
+    if not (Mining_goal.wants_item goal tally kind) then
+      List.iter (mark_cell_footprint tbl) cells
+  in
+  List.iter add items;
+  tbl
+
+let scan_dirt_cell (exp, crk, ir) dmg d =
+  if d <= 0 then (exp, crk, ir)
+  else (exp + Bool.to_int (d <= dmg), crk + min dmg d, ir)
+
+let scan_cell ~avoid (obs : Mining_wall.observation) ~col ~row (exp, crk, ir)
+    (dc, dr, dmg) =
+  let c = col + dc and r = row + dr in
+  if not (Mining_wall.in_bounds ~col:c ~row:r) then (exp, crk, ir)
+  else if is_iron obs ~col:c ~row:r then (exp, crk, ir + 1)
+  else if Hashtbl.mem avoid (c, r) then (exp, crk, ir)
+  else scan_dirt_cell (exp, crk, ir) dmg (dirt_at obs ~col:c ~row:r)
+
+let score_scan_kernel ~avoid kernel cost obs ~col ~row =
+  let exp, crk, ir =
+    List.fold_left (scan_cell ~avoid obs ~col ~row) (0, 0, 0) kernel
+  in
+  let raw =
+    (exp * scan_expose_weight) + (crk * scan_crack_weight)
+    - (ir * anchor_iron_penalty)
+  in
+  raw * Mining_wall.hammer_cost / cost
+
+let best_scan_tool ~avoid obs ~col ~row =
+  let p_score =
+    score_scan_kernel ~avoid pickaxe_kernel Mining_wall.pickaxe_cost obs ~col
+      ~row
+  in
+  let h_score =
+    if obs.integrity < Mining_wall.hammer_cost then min_int
+    else
+      score_scan_kernel ~avoid hammer_kernel Mining_wall.hammer_cost obs ~col
+        ~row
+  in
+  if h_score > p_score then (Mining_wall.Hammer, h_score)
+  else (Mining_wall.Pickaxe, p_score)
+
+let next_scan_anchor ~goal ~tally (obs : Mining_wall.observation) items =
+  let avoid = unwanted_footprint ~goal ~tally items in
   let candidates =
     List.filter_map
       (fun (c, r) ->
-        let d = dirt_at obs ~col:c ~row:r in
-        if d > 0 && not (is_iron obs ~col:c ~row:r) then
-          Some (c, r, score_scan_anchor obs ~col:c ~row:r)
+        if dirt_at obs ~col:c ~row:r > 0 && not (is_iron obs ~col:c ~row:r) then
+          let tool, score = best_scan_tool ~avoid obs ~col:c ~row:r in
+          if score > 0 then Some (tool, c, r, score) else None
         else None)
       scan_anchors
   in
   match
-    List.sort (fun (_, _, s1) (_, _, s2) -> Int.compare s2 s1) candidates
+    List.sort (fun (_, _, _, s1) (_, _, _, s2) -> Int.compare s2 s1) candidates
   with
-  | (col, row, _) :: _ -> Some (Strike { tool = Hammer; col; row })
+  | (tool, col, row, _) :: _ -> Some (Strike { tool; col; row })
   | [] -> None
 
 let covered_neighbor_count obs (_, _, cells) =
@@ -236,11 +255,13 @@ let decide_after_scan obs items =
   | Some act -> act
   | None -> Bail_collapse
 
-let decide_low_gauge obs items =
+let decide_low_gauge ~goal ~tally obs items =
   match find_secondary_excavation obs items with
   | Some act -> act
   | None -> (
-      match next_scan_anchor obs with Some act -> act | None -> Bail_collapse)
+      match next_scan_anchor ~goal ~tally obs items with
+      | Some act -> act
+      | None -> Bail_collapse)
 
 let decide ~goal ~tally (obs : Mining_wall.observation) =
   let items = exposed_items obs in
@@ -249,9 +270,10 @@ let decide ~goal ~tally (obs : Mining_wall.observation) =
   | None -> (
       if all_items_accounted_non_shard ~goal ~tally obs items then
         decide_after_scan obs items
-      else if obs.integrity <= low_gauge_cutoff then decide_low_gauge obs items
+      else if obs.integrity <= low_gauge_cutoff then
+        decide_low_gauge ~goal ~tally obs items
       else
-        match next_scan_anchor obs with
+        match next_scan_anchor ~goal ~tally obs items with
         | Some act -> act
         | None -> decide_after_scan obs items)
 
