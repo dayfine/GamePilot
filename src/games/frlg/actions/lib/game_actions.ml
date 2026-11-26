@@ -5,6 +5,7 @@ type context = {
   party : Party_roster.t ref;
   facing : unit -> Grid_geometry.Direction.t option;
   stocks : unit -> (Mart_plan.stocks, string) result;
+  options : Run_options.t;
 }
 
 let resolve ctx member =
@@ -124,3 +125,5 @@ let handlers ctx =
   @ Box_rename.handlers ~log:ctx.log
   @ Ace_trigger.handlers ~log:ctx.log
   @ Item_storage.handlers ~log:ctx.log
+  @ Ace_code.handlers ~log:ctx.log ~options:ctx.options
+  @ Ace_item.handlers ~log:ctx.log ~options:ctx.options

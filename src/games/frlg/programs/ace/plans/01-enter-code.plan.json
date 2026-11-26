@@ -1,0 +1,46 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "frlg",
+  "checkpoint": {
+    "id": "01-enter-code",
+    "title": "The item's code typed as the 14 box names, then saved: the code save",
+    "start": {
+      "map": "Route4_PokemonCenter_1F",
+      "tiles": [
+        [11, 2]
+      ],
+      "facing": "north"
+    },
+    "events": [
+      {
+        "id": "check_boxes",
+        "kind": "game_action",
+        "action": "ace_check_boxes",
+        "args": {},
+        "why": "Before anything is typed: 0x0351 in Box 3 slot 1 (Lv 100, male), Box 13 slot 7 on and all of Box 14 empty, where the code slides into the box names."
+      },
+      {
+        "id": "enter_code",
+        "kind": "game_action",
+        "action": "ace_enter_code",
+        "args": {},
+        "why": "Every box renamed to the code of the run's item (ace_presets.json), a box whose title reads its name already left as it is; each typed name read back from the title."
+      },
+      {
+        "id": "code_save",
+        "kind": "game_action",
+        "action": "save_game",
+        "args": {},
+        "why": "The code save: 02-trigger starts from it, and a failed trigger goes back to it."
+      }
+    ]
+  },
+  "execution": {
+    "menu": "full"
+  },
+  "metadata": {
+    "phase": "testing",
+    "retries": 2,
+    "notes": "Run with --options item=<slug> withdraw=<n>. Starts below the Route 4 Pokémon Center's PC, as frlg.ace_setup's 02-write-ace-mail ends, and ends there saved. Typing a box name changes nothing until the trigger runs, so a failed attempt is retried from the start. The code is Sleipnir17's Get any item with the Switch-adjusted exit (docs/design/FRLG-ACE-Execution.md)."
+  }
+}

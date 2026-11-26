@@ -87,6 +87,10 @@ val screen_game_steps : log:(string -> unit) -> game_steps
     {!Frlg_readers.Item_pc_screen}; [close] presses B four times and waits for
     the overworld to settle. *)
 
+val item_name : string -> string option
+(** The name the list shows for a slug (["master-ball"]: ["MASTER BALL"]), from
+    the game's item names; [None] for a slug no item is named. *)
+
 val handlers :
   log:(string -> unit) -> (string * Pokemon_engine.Game.game_action) list
 (** [check_item_storage], args [{"item": <slug>, "count"?: <n>}], and
