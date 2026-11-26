@@ -30,7 +30,7 @@ Give each as `--options KEY=VALUE`:
 
 | Key | Values | When not given | What it chooses |
 |---|---|---|---|
-| `language` | en \| es-ES \| es-419 \| fr \| de \| it \| ja \| zh-Hant | optional | the new game's language (00.00-new-game; not given: the plan's) |
+| `language` | en \| es-ES \| es-419 \| fr \| de \| it \| ja \| zh-Hans \| zh-Hant | optional | the new game's language (00.00-new-game; not given: the plan's) |
 | `look` | 1 to 8 | optional | the new game's look, left to right along the top row, then the bottom (not given: the plan's) |
 | `name` | text | optional | the player's name: at most 12 characters (6 in Japanese and Chinese), letters, digits and - / : ' , . ? ! (not given: the plan's) |
 | `starter` | grass \| fire \| water | optional | the starter 01.04 picks: grass (Chikorita), fire (Tepig) or water (Totodile) (not given: grass, the plan's walk) |
@@ -97,7 +97,9 @@ cd src && opam exec -- dune exec -- gamepilot run plza.autostory --from 00.00-ne
 
 00.00-new-game closes any running game, finds PLZA's tile on HOME by its title, starts it, picks
 the language on its list, tilts to the look, types the name on the Switch keyboard and presses +
-until Confirm Choices shows.
+until Confirm Choices shows. In Simplified Chinese it first presses the keyboard's 英文 key, which
+turns Pinyin into the Latin letters. Korean's Hangul keyboard is not typed on: make that new game by
+hand.
 
 01.01 confirms the choices, skips the opening and waits for the platform. 01.02 sets the text
 speed to fast, walks down the platform and right to the white fade, and presses through the arrival

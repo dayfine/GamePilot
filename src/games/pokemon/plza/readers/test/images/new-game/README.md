@@ -5,6 +5,9 @@ The `language-list-*`, `look-picker-*`, `name-keyboard-*` and
 captures (JPEG quality 80 at 1080p), kept whole: the game's own screens, the
 only name typed is "1".
 
+`name-keyboard-zhHans-english-dark-cursor-on-1` is console B's own (2026-11-26, the dark theme,
+the keyboard opened in 英文), JPEG quality 80 at 1080p, kept whole: an empty name.
+
 The `home-*` frames are console B's Switch HOME (2026-11-24 and -25), redacted
 by `dev/reader_fixtures/redact_frame.py` to the one band the HOME title reader
 probes (`plza.home_title`); the avatar, the clock and the game tiles are flat

@@ -272,6 +272,11 @@ let type_name steps (c : Choices.t) =
        "AutoStory intro: keyboard: its 0/N counter is not read; the language's \
         limit (%d) holds."
        (Choices.info c.language).name_limit);
+  let* () =
+    if c.language = Choices.Chinese_simplified then
+      Result.map_error failed (Letters_mode.switch (typing_steps steps))
+    else Ok ()
+  in
   steps.log (Printf.sprintf "AutoStory intro: typing \"%s\"." c.name);
   let* () =
     Result.map_error
