@@ -34,4 +34,8 @@ let () =
   assert_cell "pink_shard"
     (Mining_wall.Clear_item { id = 1; kind = Mining_goal.Shard_s })
     (mk_stats (195.0, 90.0, 175.0) (25.0, 20.0, 25.0));
+  (* Half-exposed Shard S measured from Console A run-78/000271.jpg cell (9,5). *)
+  assert_cell "half_exposed_shard_s"
+    (Mining_wall.Clear_item { id = 1; kind = Mining_goal.Shard_s })
+    (mk_stats (128.5, 80.3, 76.7) (40.0, 30.0, 30.0));
   print_endline "OK"

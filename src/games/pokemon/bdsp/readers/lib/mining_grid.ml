@@ -39,13 +39,16 @@ let mid_min_luma = 115.
 let tan_min_g = 115.
 let tan_min_rb_diff = 30.
 let tan_max_rg_diff = 25.
-let empty_min_rb_diff = 35.
-let empty_min_rg_diff = 20.
-let empty_max_std_sum = 35.
-let shard_min_r = 150.
-let shard_min_b = 85.
-let shard_min_rg_diff = 40.
-let shard_min_bg_diff = 8.
+let empty_max_r = 138.
+let empty_max_g = 105.
+let empty_max_b = 78.
+let empty_min_rg_diff = 22.
+let empty_min_gb_diff = 18.
+let empty_max_std_sum = 58.
+let shard_min_r = 122.
+let shard_min_b = 70.
+let shard_min_rg_diff = 42.
+let shard_min_bg_diff = -8.
 let deep_layer = 4
 let mid_layer = 2
 let shallow_layer = 1
@@ -159,16 +162,19 @@ let classify_neutral luma =
   else if luma >= mid_min_luma then Mining_wall.Covered mid_layer
   else Mining_wall.Clear_iron
 
+let is_empty_floor (r, g, b) std_sum =
+  r <= empty_max_r && g <= empty_max_g && b <= empty_max_b
+  && r -. g >= empty_min_rg_diff
+  && g -. b >= empty_min_gb_diff
+  && std_sum < empty_max_std_sum
+
 let classify_colored (r, g, b) std_sum =
   let rb = r -. b and rg = r -. g in
   if is_pink_shard (r, g, b) then
     Mining_wall.Clear_item { id = exposed_shard_id; kind = Mining_goal.Shard_s }
   else if g >= tan_min_g && rb >= tan_min_rb_diff && rg < tan_max_rg_diff then
     Mining_wall.Covered shallow_layer
-  else if
-    rb >= empty_min_rb_diff && rg >= empty_min_rg_diff
-    && std_sum < empty_max_std_sum
-  then Mining_wall.Clear_empty
+  else if is_empty_floor (r, g, b) std_sum then Mining_wall.Clear_empty
   else
     Mining_wall.Clear_item { id = exposed_other_id; kind = Mining_goal.Other }
 
@@ -195,11 +201,57 @@ let read_cell_masked ~cursor ~prev m ~col ~row =
     | Some g -> g.(row).(col)
     | None -> Mining_wall.Covered mid_layer
 
+let neighbor_offsets = [ (-1, 0); (1, 0); (0, -1); (0, 1) ]
+
+let try_visit_neighbor grid visited kind comp_id (c, r) acc (dc, dr) =
+  let nc = c + dc and nr = r + dr in
+  if (not (Mining_wall.in_bounds ~col:nc ~row:nr)) || visited.(nr).(nc) then acc
+  else
+    match grid.(nr).(nc) with
+    | Mining_wall.Clear_item { kind = k; _ } when k = kind ->
+        visited.(nr).(nc) <- true;
+        grid.(nr).(nc) <- Mining_wall.Clear_item { id = comp_id; kind };
+        (nc, nr) :: acc
+    | _ -> acc
+
+let expand_point grid visited kind comp_id rest pt =
+  List.fold_left
+    (try_visit_neighbor grid visited kind comp_id pt)
+    rest neighbor_offsets
+
+let rec flood_component grid visited kind comp_id = function
+  | [] -> ()
+  | pt :: rest ->
+      let next = expand_point grid visited kind comp_id rest pt in
+      flood_component grid visited kind comp_id next
+
+let start_component grid visited next_id r c =
+  if visited.(r).(c) then ()
+  else
+    match grid.(r).(c) with
+    | Mining_wall.Clear_item { kind; _ } ->
+        let id = !next_id in
+        incr next_id;
+        visited.(r).(c) <- true;
+        grid.(r).(c) <- Mining_wall.Clear_item { id; kind };
+        flood_component grid visited kind id [ (c, r) ]
+    | _ -> ()
+
+let label_item_components grid =
+  let visited = Array.init rows (fun _ -> Array.make cols false) in
+  let next_id = ref 1 in
+  for r = 0 to rows - 1 do
+    for c = 0 to cols - 1 do
+      start_component grid visited next_id r c
+    done
+  done
+
 let read_observation ?cursor ?prev ~announced_items ~integrity m =
   let grid =
     Array.init rows (fun row ->
         Array.init cols (fun col -> read_cell_masked ~cursor ~prev m ~col ~row))
   in
+  label_item_components grid;
   {
     Mining_wall.cols;
     rows;

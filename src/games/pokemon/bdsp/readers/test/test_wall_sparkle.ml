@@ -17,10 +17,11 @@ let frame_of pairs : Wire.frame =
   { seq = 1; t_ms = 0.; probes }
 
 let cell ci ri = Printf.sprintf "bdsp_wall_star_%d_%d" ci ri
+let torch ci ri = Printf.sprintf "bdsp_wall_torch_%d_%d" ci ri
 
 let test_probe_layout () =
   let ps = WS.probes ~picture:full_pic in
-  assert_true "9 probes for 3x3 grid" (List.length ps = 9);
+  assert_true "18 probes for 3x3 grid (star + torch)" (List.length ps = 18);
   let find id = List.find (fun (p : Wire.probe_spec) -> p.id = id) ps in
   let top_left = find (cell 0 0) in
   let mid_left = find (cell 0 1) in
@@ -64,6 +65,15 @@ let test_locate_oblique_east_star () =
   assert_true "locate detects oblique East-wall star"
     (WS.locate m = Some { WS.dx = 0; dy = 0 })
 
+let test_torch_halo_masked_out () =
+  (* Wall torch in (1, 0) has bright center + strong red-orange halo; real star
+     in (2, 1) has zero red-orange halo (run-78/000055.jpg). *)
+  let m =
+    frame_of [ (cell 1 0, 0.0020); (torch 1 0, 0.0500); (cell 2 1, 0.0012) ]
+  in
+  assert_true "locate ignores torch cell and picks real star"
+    (WS.locate m = Some { WS.dx = 1; dy = 0 })
+
 let () =
   test_probe_layout ();
   test_torch_cancellation_and_east_wall ();
@@ -71,4 +81,5 @@ let () =
   test_west_wall_star ();
   test_noise_below_threshold ();
   test_locate_oblique_east_star ();
+  test_torch_halo_masked_out ();
   print_endline "OK"

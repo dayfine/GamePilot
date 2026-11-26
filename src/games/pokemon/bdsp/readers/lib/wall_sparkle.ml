@@ -43,14 +43,25 @@ let star_g_max = 255
 let star_b_max = 255
 let star_min = (star_r_min, star_g_min, star_b_min)
 let star_max = (star_r_max, star_g_max, star_b_max)
+let torch_r_min = 240
+let torch_g_min = 0
+let torch_b_min = 0
+let torch_r_max = 255
+let torch_g_max = 140
+let torch_b_max = 40
+let torch_min = (torch_r_min, torch_g_min, torch_b_min)
+let torch_max = (torch_r_max, torch_g_max, torch_b_max)
 
 (* Area-normalized screen-fraction thresholds (share * box.w * box.h) so the
    same sparkle star scores identically in wide side cells (East/West walls)
-   and narrow center cells. Measured from run-64 and run-74 30fps wire logs:
-   oblique East-wall stars reach 4.6e-5..3.7e-4; noise floor is <= 5e-6. *)
+   and narrow center cells. Measured from run-64, run-74, and run-78/000055.jpg:
+   wall torches have ~765 red-orange halo pixels (screen share ~0.0033) while
+   sparkle stars have 0 red-orange halo pixels. *)
 let min_star_screen_share = 0.000045
 let min_diff_screen_share = 0.000025
+let max_torch_screen_share = 0.0008
 let cell_id ci ri = Printf.sprintf "bdsp_wall_star_%d_%d" ci ri
+let torch_id ci ri = Printf.sprintf "bdsp_wall_torch_%d_%d" ci ri
 
 let all_cells =
   List.concat_map (fun ri -> List.init 3 (fun ci -> (ci, ri))) [ 0; 1; 2 ]
@@ -64,33 +75,43 @@ let cell_area ci ri =
   let b = cell_box ci ri in
   b.w *. b.h
 
-let make_probe ~picture (ci, ri) =
-  Option.map
-    (fun b ->
-      Wire.color_count_probe ~id:(cell_id ci ri) ~box:b ~min:star_min
-        ~max:star_max ~delivery:Every)
-    (PB.clipped ~picture (cell_box ci ri))
+let make_probes ~picture (ci, ri) =
+  match PB.clipped ~picture (cell_box ci ri) with
+  | None -> []
+  | Some b ->
+      [
+        Wire.color_count_probe ~id:(cell_id ci ri) ~box:b ~min:star_min
+          ~max:star_max ~delivery:Every;
+        Wire.color_count_probe ~id:(torch_id ci ri) ~box:b ~min:torch_min
+          ~max:torch_max ~delivery:Every;
+      ]
 
-let probes ~picture = List.filter_map (make_probe ~picture) all_cells
+let probes ~picture = List.concat_map (make_probes ~picture) all_cells
+let share m id = Option.value (CS.read m id) ~default:0.
 
-let best_cell ~min_score score_of =
+let has_torch m ci ri =
+  share m (torch_id ci ri) *. cell_area ci ri >= max_torch_screen_share
+
+let pick_better ~min_score ~torch_frame score_of acc (ci, ri) =
+  if has_torch torch_frame ci ri then acc
+  else
+    let s = score_of (cell_id ci ri) *. cell_area ci ri in
+    match acc with
+    | None when s >= min_score -> Some (ci, ri, s)
+    | Some (_, _, bs) when s > bs -> Some (ci, ri, s)
+    | _ -> acc
+
+let best_cell ~min_score ~torch_frame score_of =
   let best =
-    List.fold_left
-      (fun acc (ci, ri) ->
-        let s = score_of (cell_id ci ri) *. cell_area ci ri in
-        match acc with
-        | None when s >= min_score -> Some (ci, ri, s)
-        | Some (_, _, bs) when s > bs -> Some (ci, ri, s)
-        | _ -> acc)
-      None all_cells
+    List.fold_left (pick_better ~min_score ~torch_frame score_of) None all_cells
   in
   Option.map (fun (ci, ri, _) -> { dx = ci - 1; dy = ri - 1 }) best
 
-let share m id = Option.value (CS.read m id) ~default:0.
-let locate m = best_cell ~min_score:min_star_screen_share (share m)
+let locate m =
+  best_cell ~min_score:min_star_screen_share ~torch_frame:m (share m)
 
 let locate_diff ~before ~after =
-  best_cell ~min_score:min_diff_screen_share (fun id ->
+  best_cell ~min_score:min_diff_screen_share ~torch_frame:after (fun id ->
       share after id -. share before id)
 
 let dir_of_offset { dx; dy } =
