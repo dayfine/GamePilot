@@ -2,8 +2,8 @@
     clerk is talked to. Each Mart's stock is read from
     [src/games/frlg/assets/kanto_mart_stocks.json] (made from pokefirered, as
     its ["source"] says). Ported from the fork's AutoStory Mart
-    (PokemonFRLG_AutoStoryMart: [plan_mart_buys()], [quantity_presses()]), with
-    a budget in place of its [if_affordable].
+    (Programs/AutoStory/PokemonFRLG_AutoStoryMart), with a budget in place of
+    its affordability check.
 
     The BUY list is the Mart's stock in order, then CANCEL; the cursor starts on
     the top row and stays on the row bought. The quantity box ({!Quantity_box})
