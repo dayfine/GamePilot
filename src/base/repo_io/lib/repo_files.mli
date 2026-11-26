@@ -1,5 +1,5 @@
-(** Finding a file of the repo (an asset under [src/games/frlg/assets/], a
-    submodule's file) by its path from the repo root, wherever the program or
+(** Finding a file of the repo (an asset under [src/games/pokemon/frlg/assets/],
+    a submodule's file) by its path from the repo root, wherever the program or
     test runs from inside the repo. *)
 
 val locate : string -> string option

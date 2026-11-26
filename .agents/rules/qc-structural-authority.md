@@ -66,7 +66,7 @@ explain themselves without the PR for context: no private jargon (the user quest
 
 - The record of game reads and actions a deciding module takes is `game_steps`. Builders are
   `<context>_game_steps` (e.g. `candy_game_steps`), test fakes are `fake_game_steps`
-  (`src/games/frlg/actions/lib/level_up.mli` is the reference).
+  (`src/games/pokemon/frlg/actions/lib/level_up.mli` is the reference).
 - `rig`, `driver`, `handlers`, `ops`, `callbacks` for that record → **FAIL** ("handler" also
   clashes with the effect handlers in `core/`).
 - `deps` only for a struct of external resources or connections, never for game steps.

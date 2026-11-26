@@ -33,7 +33,7 @@ Birth Island (Deoxys) are in scope and need no Sevii story.
 
 1. **Precheck** port: the requirement sum as pure OCaml with table tests (the C++ unit test as
    oracle), then party and bag checks on the readers.
-2. **Static catch loop** (`src/games/frlg/battle`): the Parasect loop on the scripted battle runner,
+2. **Static catch loop** (`src/games/pokemon/frlg/battle`): the Parasect loop on the scripted battle runner,
    with a foe HP reader to know when False Swipe has done its job, and a sleep check.
 3. **One checkpoint per legendary** (`frlg.legendaries`): walk to the target, save facing it, battle
    and catch, check the party, save. First the ones that need no Sevii story: Articuno, Zapdos,

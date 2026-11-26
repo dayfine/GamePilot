@@ -92,7 +92,7 @@ Clean: R2, R7, A4, A5, ...
 
 Recipe: lint `doc_listing`; judgment on 14 `.mli`s of action tables. 3 hits, 1 finding.
 
-- [ ] `src/games/frlg/actions/lib/candy_actions.mli:12`: drop the list of the candy actions; say what they do.
+- [ ] `src/games/pokemon/frlg/actions/lib/candy_actions.mli:12`: drop the list of the candy actions; say what they do.
 
 ## R6 One doc page per program: its guide
 

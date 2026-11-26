@@ -32,7 +32,7 @@ GamePilot stands on these projects, used as read-only submodules under `third_pa
 
 - The maps come from [PokemonSimulation](https://github.com/dayfine/PokemonSimulation) (MIT).
 - The game data, font glyphs, item and species names are derived from the
-  [pret/pokefirered](https://github.com/pret/pokefirered) decompilation (`src/games/frlg/assets/extract/extract_frlg_*.py`).
+  [pret/pokefirered](https://github.com/pret/pokefirered) decompilation (`src/games/pokemon/frlg/assets/extract/extract_frlg_*.py`).
 - The test screenshots are captures of the games, kept for testing the readers.
 - Pokémon is © Nintendo, Game Freak and Creatures. This project is not affiliated with or endorsed
   by them.
