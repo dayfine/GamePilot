@@ -8,13 +8,13 @@ Each page ends with "How it works", for developers: the ported files, the mechan
 | Program | Id | Runs on | What it does |
 |---|---|---|---|
 | [Start Menu PoC](frlg.start_menu_poc.md) | `frlg.start_menu_poc` | mGBA | Opens and closes the Start menu: the first program through the daemon. |
-| [Mail Glitch](frlg.mail_glitch.md) | `frlg.mail_glitch` | mGBA, the Switch | Turns on the Mail Glitch against Lea & Jed on Route 16 and copies one item with it. |
-| [Supplies](frlg.supplies.md) | `frlg.supplies` | mGBA, the Switch | Stocks what the duplication programs use: Retro Mail and Super Repels. |
-| [Team Training](frlg.team_training.md) | `frlg.team_training` | mGBA, the Switch | Copies Rare Candies with the Mail Glitch to level the team. |
 | [Sevii Story](frlg.sevii_story.md) | `frlg.sevii_story` | mGBA | Plays the Sevii Islands story after the Cinnabar Gym. |
-| [Dex Collection](frlg.dex_collection.md) | `frlg.dex_collection` | mGBA | Catches Pokemon the Pokedex lacks, toward the National Pokedex. |
+| [Mail Glitch](frlg.mail_glitch.md) | `frlg.mail_glitch` | mGBA, the Switch | Turns on the Mail Glitch against Lea & Jed on Route 16 and copies one item with it. |
 | [ACE Setup](frlg.ace_setup.md) | `frlg.ace_setup` | mGBA | Sets up arbitrary code execution: the ? Mail puts species 0x0351 in Box 3 slot 1. |
 | [ACE](frlg.ace.md) | `frlg.ace` | mGBA | Runs code typed as PC box names through species 0x0351: 999 of an item in the PC, some of them to the bag. |
+| [Supplies](frlg.supplies.md) | `frlg.supplies` | mGBA, the Switch | Stocks what the duplication programs use: Retro Mail and Super Repels. |
+| [Team Training](frlg.team_training.md) | `frlg.team_training` | mGBA, the Switch | Copies Rare Candies with the Mail Glitch to level the team. |
+| [Dex Collection](frlg.dex_collection.md) | `frlg.dex_collection` | mGBA | Catches Pokemon the Pokedex lacks, toward the National Pokedex. |
 | [Wild RNG](frlg.wild_rng.md) | `frlg.wild_rng` | mGBA | Catches a chosen shiny wild Pokemon by timing the game's random numbers. |
 | [AutoStory](plza.autostory.md) | `plza.autostory` | the Switch | Plays the story from a new game, checkpoint by checkpoint. |
 | [Claim Gifts](plza.claim-gifts.md) | `plza.claim-gifts` | the Switch | Claims the Mystery Gifts of its catalog that have not expired, puts their Pokémon in the Boxes and saves. |
@@ -73,7 +73,8 @@ A descriptor (`Program_registry.t`) gives:
   Delete Save Data page by the key `gamepilot ctl delete-save` takes (`delete_save_icons`), and its
   Switch HOME data when measured (`switch_home`: the title park and resume go back to, its HOME
   tile's colour, and the lab app panel whose console setup `gamepilot switch-devices` reads).
-- the display name, the group path (`["FRLG"; "Glitches"]`) and a one-line description.
+- the display name, the shared `category` (`Testing`, `Story`, `Glitch_setup`, `Farming`,
+  `Dex_collection`, `Shiny_hunting`, `Gifts`, `Storage`) and a one-line description.
 - `doc`: its guide, `docs/guide/<program id>.md` (or an existing page, for a proof of concept).
 - `checkpoints`: its plans folder, or none for a one-shot program (`gamepilot run`).
 - the backends it runs on.
@@ -105,11 +106,14 @@ bring-up's frame check (`gamepilot bring-up --program ID`), so no run needs the 
 game never runs with the GBA picture. An explicit `--viewport` that differs is refused; it is only
 for a plan folder no program registers.
 
-To add a program, add its descriptor to the list in `program_registry.ml` (registration is that
-list; nothing registers itself at start-up) and write its guide here (`gamepilot guide --write`
-starts it). The registry's tests check that ids are unique, that every doc and checkpoints folder
-exists, and that every plan decodes. A one-shot program also needs its runner in its family's
-`one_shots` (`src/bin/checkpoint_families.ml`).
+To add a program, add its descriptor to its game's module in `src/program_registry/lib/` (such as
+`frlg_programs.ml`, `plza_programs.ml` or `pokemon_home_programs.ml`; registration is those lists,
+nothing registers itself at start-up) and write its guide here (`gamepilot guide --write` starts
+it).
+
+The registry's tests check that ids are unique, that every doc and checkpoints folder exists, and
+that every plan decodes. A one-shot program also needs its runner in its family's `one_shots`
+(`src/bin/checkpoint_families.ml`).
 
 What a program needs of the save (free party slots, field moves) is not declared: it is derived
 from its plans, the same way the pre-flight derives it.

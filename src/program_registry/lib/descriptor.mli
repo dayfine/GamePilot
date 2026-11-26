@@ -18,12 +18,24 @@ type rules =
   | Pokemon_grid
       (** The Pokémon grid rules (Pokemon_engine, the FRLG runner). *)
   | Plza_story  (** PLZA's story rules (Plza_engine, Plza_series). *)
-  | Plza_home
-      (** PLZA's plans run from the Switch's HOME menu in Pokémon HOME
-          (Plza_engine, Plza_bank_home_series). *)
+  | Pokemon_home
+      (** Pokémon HOME plans run from the Switch's HOME menu (Plza_engine,
+          Plza_bank_home_series). *)
   | Plza_gifts
       (** PLZA's plans run from its main menu's Mystery Gift (Plza_engine,
           Plza_claim_gifts_series). *)
+
+(** Shared program grouping across games, shown by [gamepilot programs] and
+    recorded in [run.json]. *)
+type category =
+  | Testing  (** Proofs of concept and bring-up harnesses. *)
+  | Story  (** Story progression checkpoints. *)
+  | Glitch_setup  (** Glitch activation, ACE setup, and ACE execution. *)
+  | Farming  (** Repeatable supply, item, or training loops. *)
+  | Dex_collection  (** Pokédex completion catches. *)
+  | Shiny_hunting  (** RNG manipulation and shiny hunts. *)
+  | Gifts  (** Mystery Gift claiming. *)
+  | Storage  (** Pokémon HOME box transfers. *)
 
 type switch_home = {
   title : string;  (** As the ctl usage names it: ["FireRed"]. *)
@@ -53,7 +65,7 @@ type t = {
   id : string;  (** [<game>.<program>]: ["frlg.mail_glitch"]. *)
   game : game;  (** The game this program belongs to. *)
   name : string;  (** Display name. *)
-  group : string list;  (** Where it is listed: [["FRLG"; "Glitches"]]. *)
+  category : category;  (** Shared group this program is listed under. *)
   description : string;  (** One line. *)
   doc : string;  (** Its page, from the repo root. *)
   checkpoints : string option;
@@ -70,3 +82,6 @@ type t = {
       *)
 }
 (** A registered program's descriptor. *)
+
+val category_name : category -> string
+(** Display name of a category, e.g. ["Glitch Setup"], ["Shiny Hunting"]. *)

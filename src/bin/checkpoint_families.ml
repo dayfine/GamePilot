@@ -180,7 +180,7 @@ let all = [ grid; plza; plza_home; plza_gifts ]
 let of_rules = function
   | R.Pokemon_grid -> grid
   | R.Plza_story -> plza
-  | R.Plza_home -> plza_home
+  | R.Pokemon_home -> plza_home
   | R.Plza_gifts -> plza_gifts
 
 let of_program (p : R.t option) =

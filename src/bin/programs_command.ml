@@ -47,18 +47,18 @@ let show (p : R.t) =
     (fun line -> print_endline ("      " ^ line))
     ((p.description :: ("doc: " ^ p.doc) :: option_lines p) @ checkpoint_lines p)
 
-(* Each game and each group once, above its programs. *)
-let show_under (game, group) (p : R.t) =
+(* Each game and each category once, above its programs. *)
+let show_under (game, category) (p : R.t) =
   if p.game.game_id <> game then
     Printf.printf "%s (%s)\n" p.game.game_name p.game.game_id;
-  if p.game.game_id <> game || p.group <> group then
-    print_endline ("  " ^ String.concat " / " p.group);
+  if p.game.game_id <> game || category <> Some p.category then
+    print_endline ("  " ^ R.category_name p.category);
   show p;
-  (p.game.game_id, p.group)
+  (p.game.game_id, Some p.category)
 
 let main = function
   | [] ->
-      ignore (List.fold_left show_under ("", []) R.all);
+      ignore (List.fold_left show_under ("", None) R.all);
       Ok 0
   | a :: _ -> Error ("unknown argument " ^ a)
 

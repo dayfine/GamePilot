@@ -20,11 +20,23 @@ type viewport = Nso_gba | Native
 (** The rules a program's checkpoint plans are written over, which pick the
     library that loads and runs them. [Pokemon_grid]: the Pokémon grid rules
     (Pokemon_engine, the FRLG runner); [Plza_story]: PLZA's story rules
-    (Plza_engine, Plza_series); [Plza_home]: PLZA's plans run from the Switch's
-    HOME menu in Pokémon HOME (Plza_engine, Plza_bank_home_series);
-    [Plza_gifts]: PLZA's plans run from its main menu's Mystery Gift
-    (Plza_engine, Plza_claim_gifts_series). *)
-type rules = Pokemon_grid | Plza_story | Plza_home | Plza_gifts
+    (Plza_engine, Plza_series); [Pokemon_home]: Pokémon HOME plans run from the
+    Switch's HOME menu (Plza_engine, Plza_bank_home_series); [Plza_gifts]:
+    PLZA's plans run from its main menu's Mystery Gift (Plza_engine,
+    Plza_claim_gifts_series). *)
+type rules = Pokemon_grid | Plza_story | Pokemon_home | Plza_gifts
+
+(** Shared program grouping across games, shown by [gamepilot programs] and
+    recorded in [run.json]. *)
+type category =
+  | Testing  (** Proofs of concept and bring-up harnesses. *)
+  | Story  (** Story progression checkpoints. *)
+  | Glitch_setup  (** Glitch activation, ACE setup, and ACE execution. *)
+  | Farming  (** Repeatable supply, item, or training loops. *)
+  | Dex_collection  (** Pokédex completion catches. *)
+  | Shiny_hunting  (** RNG manipulation and shiny hunts. *)
+  | Gifts  (** Mystery Gift claiming. *)
+  | Storage  (** Pokémon HOME box transfers. *)
 
 type switch_home = {
   title : string;  (** As the ctl usage names it: ["FireRed"]. *)
@@ -52,7 +64,7 @@ type t = {
   id : string;  (** [<game>.<program>]: ["frlg.mail_glitch"]. *)
   game : game;
   name : string;  (** Display name. *)
-  group : string list;  (** Where it is listed: [["FRLG"; "Glitches"]]. *)
+  category : category;  (** Shared group this program is listed under. *)
   description : string;  (** One line. *)
   doc : string;  (** Its page, from the repo root. *)
   checkpoints : string option;
@@ -100,6 +112,9 @@ val locate : string -> string option
 (** A repo path ({!t.doc}, {!t.checkpoints}) on this machine, found from the
     working directory up. *)
 
+val category_name : category -> string
+(** Display name of a category, e.g. ["Glitch Setup"], ["Shiny Hunting"]. *)
+
 val backend_name : backend -> string
 (** [mgba], [switch]: as [--backend] takes it. *)
 
@@ -119,4 +134,4 @@ val check_options :
 
 val run_fields : t -> (string * string) list
 (** What a run's run.json says of its program: [game], [game_name], [program]
-    (the id), [program_name], [group] (its parts joined by [" / "]). *)
+    (the id), [program_name], [group] (the {!category_name}). *)

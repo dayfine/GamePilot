@@ -35,11 +35,26 @@ let start_menu_poc =
     id = "frlg.start_menu_poc";
     game;
     name = "Start Menu PoC";
-    group = [ "FRLG"; "Development" ];
+    category = Testing;
     description =
       "Opens and closes the Start menu: the first program through the daemon.";
     doc = "docs/poc-start-menu.md";
     checkpoints = None;
+    backends = [ Mgba ];
+    viewport = Nso_gba;
+    rules = Pokemon_grid;
+    options = [];
+  }
+
+let sevii_story =
+  {
+    id = "frlg.sevii_story";
+    game;
+    name = "Sevii Story";
+    category = Story;
+    description = "Plays the Sevii Islands story after the Cinnabar Gym.";
+    doc = "docs/guide/frlg.sevii_story.md";
+    checkpoints = Some "src/games/pokemon/frlg/programs/sevii_story/plans";
     backends = [ Mgba ];
     viewport = Nso_gba;
     rules = Pokemon_grid;
@@ -51,7 +66,7 @@ let mail_glitch =
     id = "frlg.mail_glitch";
     game;
     name = "Mail Glitch";
-    group = [ "FRLG"; "Glitches" ];
+    category = Glitch_setup;
     description =
       "Turns on the Mail Glitch against Lea & Jed on Route 16 and copies one \
        item with it.";
@@ -63,74 +78,12 @@ let mail_glitch =
     options = [];
   }
 
-let supplies =
-  {
-    id = "frlg.supplies";
-    game;
-    name = "Supplies";
-    group = [ "FRLG"; "Training" ];
-    description =
-      "Stocks what the duplication programs use: Retro Mail and Super Repels.";
-    doc = "docs/guide/frlg.supplies.md";
-    checkpoints = Some "src/games/pokemon/frlg/programs/supplies/plans";
-    backends = [ Mgba; Switch ];
-    viewport = Nso_gba;
-    rules = Pokemon_grid;
-    options = [];
-  }
-
-let team_training =
-  {
-    id = "frlg.team_training";
-    game;
-    name = "Team Training";
-    group = [ "FRLG"; "Training" ];
-    description = "Copies Rare Candies with the Mail Glitch to level the team.";
-    doc = "docs/guide/frlg.team_training.md";
-    checkpoints = Some "src/games/pokemon/frlg/programs/team_training/plans";
-    backends = [ Mgba; Switch ];
-    viewport = Nso_gba;
-    rules = Pokemon_grid;
-    options = [];
-  }
-
-let sevii_story =
-  {
-    id = "frlg.sevii_story";
-    game;
-    name = "Sevii Story";
-    group = [ "FRLG"; "Story" ];
-    description = "Plays the Sevii Islands story after the Cinnabar Gym.";
-    doc = "docs/guide/frlg.sevii_story.md";
-    checkpoints = Some "src/games/pokemon/frlg/programs/sevii_story/plans";
-    backends = [ Mgba ];
-    viewport = Nso_gba;
-    rules = Pokemon_grid;
-    options = [];
-  }
-
-let dex_collection =
-  {
-    id = "frlg.dex_collection";
-    game;
-    name = "Dex Collection";
-    group = [ "FRLG"; "Pokedex" ];
-    description =
-      "Catches Pokemon the Pokedex lacks, toward the National Pokedex.";
-    doc = "docs/guide/frlg.dex_collection.md";
-    checkpoints = Some "src/games/pokemon/frlg/programs/dex_collection/plans";
-    backends = [ Mgba ];
-    viewport = Nso_gba;
-    rules = Pokemon_grid;
-    options = [];
-  }
-
 let ace_setup =
   {
     id = "frlg.ace_setup";
     game;
     name = "ACE Setup";
-    group = [ "FRLG"; "Glitches" ];
+    category = Glitch_setup;
     description =
       "Sets up arbitrary code execution: the ? Mail puts species 0x0351 in Box \
        3 slot 1.";
@@ -150,7 +103,7 @@ let ace =
     id = "frlg.ace";
     game;
     name = "ACE";
-    group = [ "FRLG"; "Glitches" ];
+    category = Glitch_setup;
     description =
       "Runs code typed as PC box names through species 0x0351: 999 of an item \
        in the PC, some of them to the bag.";
@@ -176,12 +129,59 @@ let ace =
       ];
   }
 
+let supplies =
+  {
+    id = "frlg.supplies";
+    game;
+    name = "Supplies";
+    category = Farming;
+    description =
+      "Stocks what the duplication programs use: Retro Mail and Super Repels.";
+    doc = "docs/guide/frlg.supplies.md";
+    checkpoints = Some "src/games/pokemon/frlg/programs/supplies/plans";
+    backends = [ Mgba; Switch ];
+    viewport = Nso_gba;
+    rules = Pokemon_grid;
+    options = [];
+  }
+
+let team_training =
+  {
+    id = "frlg.team_training";
+    game;
+    name = "Team Training";
+    category = Farming;
+    description = "Copies Rare Candies with the Mail Glitch to level the team.";
+    doc = "docs/guide/frlg.team_training.md";
+    checkpoints = Some "src/games/pokemon/frlg/programs/team_training/plans";
+    backends = [ Mgba; Switch ];
+    viewport = Nso_gba;
+    rules = Pokemon_grid;
+    options = [];
+  }
+
+let dex_collection =
+  {
+    id = "frlg.dex_collection";
+    game;
+    name = "Dex Collection";
+    category = Dex_collection;
+    description =
+      "Catches Pokemon the Pokedex lacks, toward the National Pokedex.";
+    doc = "docs/guide/frlg.dex_collection.md";
+    checkpoints = Some "src/games/pokemon/frlg/programs/dex_collection/plans";
+    backends = [ Mgba ];
+    viewport = Nso_gba;
+    rules = Pokemon_grid;
+    options = [];
+  }
+
 let wild_rng =
   {
     id = "frlg.wild_rng";
     game;
     name = "Wild RNG";
-    group = [ "FRLG"; "RNG" ];
+    category = Shiny_hunting;
     description =
       "Catches a chosen shiny wild Pokemon by timing the game's random numbers.";
     doc = "docs/guide/frlg.wild_rng.md";
@@ -192,15 +192,16 @@ let wild_rng =
     options = [];
   }
 
+(* Grouped by category so [gamepilot programs] prints each heading once. *)
 let all =
   [
     start_menu_poc;
-    mail_glitch;
-    supplies;
-    team_training;
     sevii_story;
-    dex_collection;
+    mail_glitch;
     ace_setup;
     ace;
+    supplies;
+    team_training;
+    dex_collection;
     wild_rng;
   ]

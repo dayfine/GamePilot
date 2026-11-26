@@ -16,7 +16,7 @@ let autostory =
     id = "plza.autostory";
     game;
     name = "AutoStory";
-    group = [ "PLZA"; "Story" ];
+    category = Story;
     description = "Plays the story from a new game, checkpoint by checkpoint.";
     doc = "docs/guide/plza.autostory.md";
     checkpoints = Some "src/games/pokemon/plza/programs/autostory/plans";
@@ -31,7 +31,7 @@ let claim_gifts =
     id = "plza.claim-gifts";
     game;
     name = "Claim Gifts";
-    group = [ "PLZA"; "Gifts" ];
+    category = Gifts;
     description =
       "Claims the Mystery Gifts of its catalog that have not expired, puts \
        their Pokémon in the Boxes and saves.";
@@ -53,21 +53,4 @@ let claim_gifts =
       ];
   }
 
-let bank_home =
-  {
-    id = "plza.bank-home";
-    game;
-    name = "Bank in HOME";
-    group = [ "PLZA"; "Pokémon HOME" ];
-    description =
-      "Moves the claimed gifts from the game's box into their Pokémon HOME \
-       boxes and saves HOME.";
-    doc = "docs/guide/plza.bank-home.md";
-    checkpoints = Some "src/games/pokemon/plza/programs/bank_home/plans";
-    backends = [ Switch ];
-    viewport = Native;
-    rules = Plza_home;
-    options = [];
-  }
-
-let all = [ autostory; claim_gifts; bank_home ]
+let all = [ autostory; claim_gifts ]

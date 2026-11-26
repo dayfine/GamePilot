@@ -489,10 +489,10 @@ shown by the plans and the guide's generated checkpoints table.
 - Good: `"Plays the story from a new game, checkpoint by checkpoint."`
 - Bad (guide intro): `So far it plays Main Missions 01 to 03 (checkpoints 01.00a to 03.11).`
 - Find: recipe, then judgment on each hit:
-  `grep -nA2 'description =' src/program_registry/lib/program_registry.ml | grep -nE 'for now|so far|[0-9]{2}\.[0-9]{2}'`;
+  `grep -nA2 'description =' src/program_registry/lib/*.ml | grep -nE 'for now|so far|[0-9]{2}\.[0-9]{2}'`;
   for guide intros, the lines before each page's first generated block:
   `for f in docs/guide/*.md; do awk '/<!-- generated:/{exit} {print FILENAME": "$0}' "$f"; done | grep -nE 'for now|so far|today|currently|up to|through|[0-9]{2}\.[0-9]{2}'`;
-  and `git log -p -- src/program_registry/lib/program_registry.ml docs/guide` for a description or
+  and `git log -p -- src/program_registry/lib docs/guide` for a description or
   intro edited alongside a plan change.
 
 ## From the session of 2026-11-25 (PLZA new game choices)
