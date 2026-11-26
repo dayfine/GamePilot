@@ -51,7 +51,8 @@ val complete : templates -> bool
 (** All ten digits have a template. *)
 
 val probes : templates -> Wire.probe_spec list
-(** The counter's and every slot's probes (the cursor's are {!cursor_probe}). *)
+(** The counter's and every slot's probes (the cursor's are {!cursor_probes}).
+*)
 
 val cursor_probes : slot -> Wire.probe_spec list
 (** The arrow's probe over the slot. *)
