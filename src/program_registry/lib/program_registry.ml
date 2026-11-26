@@ -271,12 +271,29 @@ let bdsp_underground_poc =
       [
         {
           key = "mode";
-          value = Run_options.One_of [ "farm"; "check-bag"; "check-map" ];
+          value =
+            Run_options.One_of
+              [
+                "farm";
+                "check-bag";
+                "check-map";
+                "step-refresh";
+                "step-read-map";
+                "step-route-one";
+                "step-dig-one";
+              ];
           presence = Run_options.Default "farm";
           doc =
-            "farm: run the Grand Underground shard loop; check-bag: inspect \
-             Treasures pocket shard counts; check-map: press RStick to toggle \
-             the enlarged underground map.";
+            "farm: full Grand Underground shard loop; check-bag: inspect \
+             Treasures pocket; check-map: capture full-sized map (Y -> A); \
+             step-refresh / step-read-map / step-route-one / step-dig-one: \
+             isolated single-step verification modes.";
+        };
+        {
+          key = "door";
+          value = Run_options.One_of [ "south"; "north" ];
+          presence = Run_options.Default "south";
+          doc = "Starting Hideaway doorway for step-route-one (south or north).";
         };
         {
           key = "cycles";

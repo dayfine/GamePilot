@@ -10,9 +10,22 @@ type play_result = {
 }
 
 let scan_right_col = 11
-let adj_table_capacity = 16
+let adj_table_capacity = 24
 let min_secondary_integrity = 6
+let shard_expand_radius = 2
 let cardinal_dirs = [ (-1, 0); (1, 0); (0, -1); (0, 1) ]
+
+let ring_offsets radius =
+  let acc = ref [] in
+  for dr = -radius to radius do
+    for dc = -radius to radius do
+      if dc <> 0 || dr <> 0 then acc := (dc, dr) :: !acc
+    done
+  done;
+  !acc
+
+let chebyshev_r1 = ring_offsets 1
+let chebyshev_r2 = ring_offsets shard_expand_radius
 let pickaxe_kernel = [ (0, 0, 2); (-1, 0, 1); (1, 0, 1); (0, -1, 1); (0, 1, 1) ]
 
 (* Sparse 3-tile-spaced Hammer anchors covering the 13x10 wall.
@@ -64,18 +77,18 @@ let priority_rank = function
   | Mining_goal.Shard_s -> 1
   | Mining_goal.Other -> 2
 
-let add_covered_neighbors obs seen (c, r) =
+let add_covered_neighbors ~offsets obs seen (c, r) =
   List.iter
     (fun (dc, dr) ->
       let nc = c + dc and nr = r + dr in
       if
         Mining_wall.in_bounds ~col:nc ~row:nr && dirt_at obs ~col:nc ~row:nr > 0
       then Hashtbl.replace seen (nc, nr) ())
-    cardinal_dirs
+    offsets
 
-let adjacent_covered (obs : Mining_wall.observation) cells =
+let adjacent_covered ~offsets (obs : Mining_wall.observation) cells =
   let seen = Hashtbl.create adj_table_capacity in
-  List.iter (add_covered_neighbors obs seen) cells;
+  List.iter (add_covered_neighbors ~offsets obs seen) cells;
   Hashtbl.fold (fun pt () acc -> pt :: acc) seen []
 
 let score_pickaxe (obs : Mining_wall.observation) targets ~col ~row =
@@ -89,8 +102,8 @@ let score_pickaxe (obs : Mining_wall.observation) targets ~col ~row =
         else acc)
       0 pickaxe_kernel
 
-let best_excavation_hit obs cells =
-  let targets = adjacent_covered obs cells in
+let best_excavation_hit ~offsets obs cells =
+  let targets = adjacent_covered ~offsets obs cells in
   let best =
     List.fold_left
       (fun acc (c, r) ->
@@ -103,6 +116,11 @@ let best_excavation_hit obs cells =
   in
   Option.map (fun (col, row, _) -> Strike { tool = Pickaxe; col; row }) best
 
+let excavate_wanted_cells obs cells =
+  match best_excavation_hit ~offsets:chebyshev_r1 obs cells with
+  | Some _ as hit -> hit
+  | None -> best_excavation_hit ~offsets:chebyshev_r2 obs cells
+
 let find_wanted_excavation ~goal ~tally (obs : Mining_wall.observation) items =
   let wanted =
     List.filter
@@ -113,7 +131,7 @@ let find_wanted_excavation ~goal ~tally (obs : Mining_wall.observation) items =
     |> List.sort (fun (_, k1, _) (_, k2, _) ->
            Int.compare (priority_rank k1) (priority_rank k2))
   in
-  List.find_map (fun (_, _, cells) -> best_excavation_hit obs cells) wanted
+  List.find_map (fun (_, _, cells) -> excavate_wanted_cells obs cells) wanted
 
 let all_items_accounted_non_shard ~goal ~tally (obs : Mining_wall.observation)
     items =
@@ -145,7 +163,10 @@ let find_secondary_excavation (obs : Mining_wall.observation) items =
     let secondary =
       List.filter (fun (id, _, _) -> not (List.mem id obs.uncovered_ids)) items
     in
-    List.find_map (fun (_, _, cells) -> best_excavation_hit obs cells) secondary
+    List.find_map
+      (fun (_, _, cells) ->
+        best_excavation_hit ~offsets:cardinal_dirs obs cells)
+      secondary
 
 let decide_after_scan obs items =
   match find_secondary_excavation obs items with

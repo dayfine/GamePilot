@@ -253,9 +253,20 @@ let finish_result = function
   | Ok msg -> (true, "bdsp.underground_poc: PASS (" ^ msg ^ ")")
   | Error e -> (false, "bdsp.underground_poc: FAIL " ^ e)
 
+let dispatch_mode ~mode ~door ~picture ~goal ~total_cycles =
+  match Step_modes.run ~mode ~door ~log ~picture ~goal with
+  | Some res -> res
+  | None when mode = "check-bag" -> run_check_bag ~picture
+  | None when mode = "check-map" -> run_check_map ()
+  | None ->
+      Result.map
+        (Mining_counters.format_summary ~goal)
+        (run_farm_loop ~picture ~goal ~total_cycles)
+
 let run ?(options = Run_options.none) ?state:_ () =
   let picture = native_picture in
   let mode = Option.value (Run_options.find options "mode") ~default:"farm" in
+  let door = Option.value (Run_options.find options "door") ~default:"south" in
   let total_cycles =
     Option.value (Run_options.int options "cycles") ~default:default_cycles
   in
@@ -263,10 +274,4 @@ let run ?(options = Run_options.none) ?state:_ () =
     Option.value (Run_options.int options "slates") ~default:default_slates
   in
   let goal = Mining_goal.Slates slates in
-  if mode = "check-bag" then finish_result (run_check_bag ~picture)
-  else if mode = "check-map" then finish_result (run_check_map ())
-  else
-    finish_result
-      (Result.map
-         (Mining_counters.format_summary ~goal)
-         (run_farm_loop ~picture ~goal ~total_cycles))
+  finish_result (dispatch_mode ~mode ~door ~picture ~goal ~total_cycles)

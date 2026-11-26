@@ -14,7 +14,7 @@ let radar_hold_ms = 100
 let radar_settle_ms = 750
 let radar_retry_wait_ms = 350
 let wall_margin_ms = 1500
-let wall_hug_ms = 450
+let wall_hug_ms = 1000
 let servo_step_ms = 240
 let max_servo_steps = 4
 
@@ -164,7 +164,7 @@ let outer_wall_of_tile (p : Grid_geometry.Tile_pos.t) =
   else Corridor_nav.South
 
 let interact_at_stop ~log ~picture ~on_prompt ~on_battle ~along_dir ~wall_dirs
-    ~tile cur =
+    ~tile ~re_seat cur =
   let before = sample_frame ~picture in
   P.press ~hold_ms:radar_hold_ms ~cooldown_ms:radar_settle_ms Wire.R;
   let fallback = primary_wall_dir ~along_dir wall_dirs in
@@ -174,7 +174,7 @@ let interact_at_stop ~log ~picture ~on_prompt ~on_battle ~along_dir ~wall_dirs
   let* next =
     align_and_interact ~picture ~on_prompt ~on_battle ~face_dir ~saw_star cur
   in
-  OW.run_hold (outer_wall_of_tile tile) ~hold_ms:wall_hug_ms;
+  if re_seat then OW.run_hold (outer_wall_of_tile tile) ~hold_ms:wall_hug_ms;
   Ok next
 
 let along_dir_of_legs = function
@@ -183,7 +183,8 @@ let along_dir_of_legs = function
       let last = List.hd (List.rev legs) in
       nav_dir_of_grid last.L.direction
 
-let run_stop ~log ~picture ~on_prompt ~on_battle acc (st : Ring_grid.stop) =
+let run_stop ~log ~picture ~on_prompt ~on_battle ~re_seat acc
+    (st : Ring_grid.stop) =
   let* c = acc in
   log
     (Printf.sprintf "Route -> stop %s (%d legs)..."
@@ -192,7 +193,7 @@ let run_stop ~log ~picture ~on_prompt ~on_battle acc (st : Ring_grid.stop) =
   List.iter (execute_leg ~log) st.legs;
   let along_dir = along_dir_of_legs st.legs in
   interact_at_stop ~log ~picture ~on_prompt ~on_battle ~along_dir
-    ~wall_dirs:st.wall_dirs ~tile:st.tile c
+    ~wall_dirs:st.wall_dirs ~tile:st.tile ~re_seat c
 
 let visit_targets ~log ~picture ~start_door ~(sparkles : MS.nearby) ~on_prompt
     ~on_battle cur =
@@ -217,9 +218,33 @@ let visit_targets ~log ~picture ~start_door ~(sparkles : MS.nearby) ~on_prompt
        (Grid_geometry.Tile_pos.to_string route.return_door));
   let* cur =
     List.fold_left
-      (run_stop ~log ~picture ~on_prompt ~on_battle)
+      (run_stop ~log ~picture ~on_prompt ~on_battle ~re_seat:true)
       (Ok cur) route.stops
   in
   log "Executing planned return legs to doorway...";
   List.iter (execute_leg ~log) route.return_legs;
   Ok (cur, route.return_door)
+
+let first_stop_of ~start_door (sparkles : MS.nearby) =
+  let ordered =
+    if Grid_geometry.Tile_pos.equal start_door Ring_grid.north_door then
+      List.rev sparkles.targets
+    else sparkles.targets
+  in
+  match ordered with
+  | [] -> None
+  | first :: _ ->
+      let wp =
+        Ring_grid.waypoint_of_bucket
+          ~segment:(segment_of_corridor first.corridor)
+          ~bucket:first.bucket
+      in
+      let route = Ring_grid.plan_route ~start:start_door ~waypoints:[ wp ] in
+      List.nth_opt route.stops 0
+
+let route_to_first_stop ~log ~picture ~start_door ~sparkles ~on_prompt
+    ~on_battle cur =
+  match first_stop_of ~start_door sparkles with
+  | None -> Ok cur
+  | Some st ->
+      run_stop ~log ~picture ~on_prompt ~on_battle ~re_seat:false (Ok cur) st

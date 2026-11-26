@@ -25,7 +25,8 @@ Give each as `--options KEY=VALUE`:
 
 | Key | Values | When not given | What it chooses |
 |---|---|---|---|
-| `mode` | farm \| check-bag \| check-map | default `farm` | farm: run the Grand Underground shard loop; check-bag: inspect Treasures pocket shard counts; check-map: press RStick to toggle the enlarged underground map. |
+| `mode` | farm \| check-bag \| check-map \| step-refresh \| step-read-map \| step-route-one \| step-dig-one | default `farm` | farm: full Grand Underground shard loop; check-bag: inspect Treasures pocket; check-map: capture full-sized map (Y -> A); step-refresh / step-read-map / step-route-one / step-dig-one: isolated single-step verification modes. |
+| `door` | south \| north | default `south` | Starting Hideaway doorway for step-route-one (south or north). |
 | `cycles` | 1 to 999 | default `15` | Number of Hideaway doorway-refresh cycles to run in farm mode. |
 | `slates` | 1 to 99 | default `14` | Ramanas Park slate budget (1 Shard L or 3 Shard S per slate); stops once reached. |
 <!-- /generated -->

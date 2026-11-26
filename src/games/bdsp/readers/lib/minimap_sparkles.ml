@@ -56,7 +56,7 @@ let fm_te_x_left = 0.415
 let fm_te_w = 0.035
 let fm_te_y = 0.685
 let fm_te_h = 0.023
-let fm_min_sparkle_share = 0.004
+let fm_min_sparkle_share = 0.015
 let orange_r_min = 200
 let orange_g_min = 110
 let orange_b_min = 0
@@ -154,38 +154,38 @@ let full_map_probes ~picture =
 
 let share_of m id = Option.value (CS.read m id) ~default:0.
 
-(* Merge runs of adjacent active buckets within the same corridor into a single
-   peak waypoint so one straddling diamond never generates two stops. *)
-let flush_peak run acc =
-  match run with
-  | [] -> acc
-  | first :: rest ->
-      let peak, _ =
-        List.fold_left
-          (fun (bt, bs) (t, s) -> if s > bs then (t, s) else (bt, bs))
-          first rest
-      in
-      peak :: acc
+(* Pick local-maximum active buckets within each corridor so a single diamond
+   straddling two buckets merges to its peak, while two distinct diamonds in
+   the same corridor (separated by a dip) both stay as waypoints. *)
+let plateau_min_share = 0.06
 
-let continues_run run t =
-  match run with
-  | (prev, _) :: _ -> prev.corridor = t.corridor && t.bucket = prev.bucket + 1
-  | [] -> false
+let is_local_peak scores i =
+  let s = scores.(i) in
+  let left_ok = i = 0 || s > scores.(i - 1) in
+  let right_ok = i = Array.length scores - 1 || s >= scores.(i + 1) in
+  let wide_plateau_edge =
+    i = 0
+    && Array.length scores >= 3
+    && scores.(0) >= plateau_min_share
+    && scores.(1) >= plateau_min_share
+    && scores.(2) >= plateau_min_share
+  in
+  (left_ok && right_ok) || wide_plateau_edge
 
-let rec merge_loop run acc = function
-  | [] -> List.rev (flush_peak run acc)
-  | ((t, _) as item) :: rest ->
-      if continues_run run t then merge_loop (item :: run) acc rest
-      else merge_loop [ item ] (flush_peak run acc) rest
-
-let merge_adjacent_peaks scored = merge_loop [] [] scored
+let corridor_peaks ~id_of ~threshold m corridor =
+  let scores =
+    Array.init buckets_per_corridor (fun i -> share_of m (id_of corridor i))
+  in
+  List.init buckets_per_corridor Fun.id
+  |> List.filter_map (fun bucket ->
+         if scores.(bucket) >= threshold && is_local_peak scores bucket then
+           Some { corridor; bucket }
+         else None)
 
 let read_targets ~id_of ~threshold m =
-  all_buckets
-  |> List.filter_map (fun t ->
-         let s = share_of m (id_of t.corridor t.bucket) in
-         if s >= threshold then Some (t, s) else None)
-  |> merge_adjacent_peaks
+  List.concat_map
+    (corridor_peaks ~id_of ~threshold m)
+    [ Bottom_east; East_vertical; Top_east ]
 
 let read_player m =
   let best =
@@ -219,6 +219,17 @@ let read_full_map m =
     read_targets ~id_of:full_map_id ~threshold:fm_min_sparkle_share m
   in
   nearby_of ~targets ~player:None
+
+let debug_corridor m c =
+  let parts =
+    List.init buckets_per_corridor (fun i ->
+        Printf.sprintf "%d:%.4f" i (share_of m (full_map_id c i)))
+  in
+  Printf.sprintf "%s=[%s]" (corridor_name c) (String.concat " " parts)
+
+let debug_full_map m =
+  String.concat " | "
+    (List.map (debug_corridor m) [ Bottom_east; East_vertical; Top_east ])
 
 let any n = n.targets <> []
 let target_str t = Printf.sprintf "%s[%d]" (corridor_name t.corridor) t.bucket

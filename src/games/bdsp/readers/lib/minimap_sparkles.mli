@@ -58,6 +58,9 @@ val read_full_map : Effects.measurements -> nearby
 (** Read peak-merged active sparkle buckets from the full-sized Underground map
     ([Y -> A]) measurements. *)
 
+val debug_full_map : Effects.measurements -> string
+(** Format raw per-bucket orange pixel shares for all 12 full-map buckets. *)
+
 val any : nearby -> bool
 (** [true] when at least one sparkle bucket is active. *)
 

@@ -18,3 +18,16 @@ val visit_targets :
 (** Plan a route from [start_door] across each active sparkle waypoint, pulse
     radar ([R]) at each stop to visually lock onto the flashing sparkle star,
     and return to the nearest doorway. Returns [(final_state, return_door)]. *)
+
+val route_to_first_stop :
+  log:(string -> unit) ->
+  picture:Wire.box ->
+  start_door:Grid_geometry.Tile_pos.t ->
+  sparkles:Bdsp_readers.Minimap_sparkles.nearby ->
+  on_prompt:('a -> ('a * bool, string) result) ->
+  on_battle:('a -> ('a, string) result) ->
+  'a ->
+  ('a, string) result
+(** Isolated single-stop test: route from [start_door] to the first active
+    sparkle waypoint, pulse [R] radar, visually lock onto the star, hug its
+    wall, and press [A] (without returning to a doorway). *)
