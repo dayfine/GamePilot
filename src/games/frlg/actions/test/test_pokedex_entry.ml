@@ -1,7 +1,7 @@
 (* Pokedex_entry.read_with on a fake list that moves as pret's list_menu.c
    moves the Pokédex's (9 rows shown; DOWN keeps the arrow on row 5 while the
    list can scroll, UP on row 3; RIGHT and LEFT nine of those), and
-   Skip_conditions.check on condition names. *)
+   Skip_conditions.check on condition names and its answer to an entry. *)
 
 open Frlg_actions
 
@@ -138,7 +138,41 @@ let () =
           ("pokedex_seen:ivysaur", "ok");
           ( "pokedex_seen:mew",
             "skip_if pokedex_seen:mew: mew is no Kanto Pokedex species" );
+          ("pokedex_not_seen:bulbasaur", "ok");
+          ( "pokedex_not_seen:mew",
+            "skip_if pokedex_not_seen:mew: mew is no Kanto Pokedex species" );
           ("surge_winnable", "ok");
+        ]
+    @ List.map
+        (fun (name, seen, entry, expectation) ->
+          {
+            Table_test.name = "answer " ^ name;
+            input =
+              (fun () ->
+                let what, holds = Skip_conditions.answer ~seen entry in
+                Printf.sprintf "%s, %b" what holds);
+            expectation;
+          })
+        [
+          ("pokedex_seen, seen", true, Ok Pokedex_entry.Seen, "seen, true");
+          ("pokedex_seen, caught", true, Ok Pokedex_entry.Caught, "caught, true");
+          ( "pokedex_seen, not seen",
+            true,
+            Ok Pokedex_entry.Not_seen,
+            "not seen, false" );
+          ("pokedex_not_seen, seen", false, Ok Pokedex_entry.Seen, "seen, false");
+          ( "pokedex_not_seen, caught",
+            false,
+            Ok Pokedex_entry.Caught,
+            "caught, false" );
+          ( "pokedex_not_seen, not seen",
+            false,
+            Ok Pokedex_entry.Not_seen,
+            "not seen, true" );
+          ( "pokedex_not_seen, not read: the event runs",
+            false,
+            Error (Pokemon_engine.Failure.cause "pokedex_unread" "no list"),
+            "not read (pokedex_unread: no list), so not skipped, false" );
         ]
     @ [
         {

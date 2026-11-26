@@ -17,6 +17,7 @@
 (tests
  (names
   test_pc_deposit_steps
+  test_pc_withdraw_steps
   test_fly_towns
   test_fly_user
   test_actions
@@ -39,6 +40,8 @@
   test_trainer_card_read
   test_trainer_battles
   test_scene_battle
+  test_ace_actions
+  test_pc_box
   test_wild_rng
   test_pokedex_entry
   test_skip_conditions
@@ -46,6 +49,7 @@
   test_box_rename)
  (modules
   test_pc_deposit_steps
+  test_pc_withdraw_steps
   test_fly_towns
   test_fly_user
   test_actions
@@ -69,6 +73,8 @@
   test_trainer_card_read
   test_trainer_battles
   test_scene_battle
+  test_ace_actions
+  test_pc_box
   test_wild_rng
   test_pokedex_entry
   test_skip_conditions

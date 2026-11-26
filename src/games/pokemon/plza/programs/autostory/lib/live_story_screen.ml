@@ -1,24 +1,15 @@
 open Plza_readers
 module L = Plza_story.Look
 
-type rgb = { r : int; g : int; b : int }
-
-let tile_low = { r = 0; g = 120; b = 120 }
-let tile_high = { r = 120; g = 255; b = 255 }
-
-let tile_color : Switch_home.Home_screen.tile_color =
-  {
-    min = (tile_low.r, tile_low.g, tile_low.b);
-    max = (tile_high.r, tile_high.g, tile_high.b);
-  }
-
 let probes ~picture ~assets =
   List.concat
     [
-      Switch_home.Home_screen.probes ~picture tile_color;
+      Switch_home.Home_screen.probes ~picture Game_reload.tile_color;
       Story_screen.probes ~picture ~assets;
       Confirm_choices.probes ~picture;
       Frame_cells.probes ~picture;
+      Game_loading.probes ~picture;
+      Choice_arrow.backup_save_probes ~picture ~assets;
     ]
 
 let fresh_frame_ms = 500

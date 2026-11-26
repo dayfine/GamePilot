@@ -110,6 +110,18 @@
       "stand": [7, 4],
       "facing": "north"
     },
+    "route4_center_pc": {
+      "map": "Route4_PokemonCenter_1F",
+      "object": {"not_in_maps": "the Center's PC (11, 1), a standard Center's (Standard_center.pc_front), where frlg.ace_setup deposits and checks Box 3"},
+      "stand": [11, 2],
+      "facing": "north"
+    },
+    "route4_magikarp_salesman": {
+      "map": "Route4_PokemonCenter_1F",
+      "object": {"npc": "Route4_PokemonCenter_1F_EventScript_MagikarpSalesman"},
+      "stand": [2, 3],
+      "facing": "west"
+    },
     "route11_west_grass": {
       "map": "Route11",
       "object": {"not_in_maps": "the west column of the grass's lower patch (x 15 to 36, y 13 to 16), one step east of the path, so the walk crosses no grass"},

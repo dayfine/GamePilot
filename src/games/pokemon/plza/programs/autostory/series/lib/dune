@@ -14,5 +14,6 @@
   gamepilot.engine_series
   gamepilot.run_flags
   gamepilot.plza_readers
+  gamepilot.plza_story
   gamepilot.plza_engine
   gamepilot.plza_autostory))
