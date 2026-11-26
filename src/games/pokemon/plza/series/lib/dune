@@ -13,4 +13,6 @@
   gamepilot.engine_series
   gamepilot.run_flags
   gamepilot.run_options
+  gamepilot.repo_io
+  gamepilot.plza_readers
   gamepilot.plza_engine))

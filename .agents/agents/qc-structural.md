@@ -207,7 +207,7 @@ NEEDS_REWORK
 
 ### S1: three concerns in one PR
 - Finding: the party menu readers and the shared Level_up module are reviewable on their own.
-- Location: src/games/frlg/readers/..., src/games/frlg/actions/lib/level_up.ml
+- Location: src/games/pokemon/frlg/readers/..., src/games/pokemon/frlg/actions/lib/level_up.ml
 - Required fix: split into a readers PR, a Level_up PR, and this one on top.
 - harness_gap: ONGOING_REVIEW
 ```

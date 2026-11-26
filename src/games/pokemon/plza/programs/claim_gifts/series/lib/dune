@@ -1,0 +1,12 @@
+(library
+ (name plza_claim_gifts_series)
+ (public_name gamepilot.plza_claim_gifts_series)
+ (libraries
+  gamepilot.effects
+  gamepilot.switch_home
+  gamepilot.watch_report
+  gamepilot.run_options
+  gamepilot.plza_engine
+  gamepilot.plza_checkpoint_series
+  gamepilot.plza_gift_catalog
+  gamepilot.plza_claim_gifts))

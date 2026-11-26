@@ -3,7 +3,7 @@ module P = Plza_engine
 let ( let* ) = Result.bind
 
 let execution_key ~id = function
-  | ("start_signature" | "end_signature"), _ -> Ok ()
+  | "start_signature", _ -> Ok ()
   | "reload_when_chained", `Bool _ -> Ok ()
   | "reload_when_chained", _ ->
       Error (id ^ ": execution.reload_when_chained is not a boolean")
@@ -22,6 +22,6 @@ let check (plan : P.Plan.t) =
   let* () = all (execution_key ~id) plan.execution in
   let* () =
     Result.map_error Engine_run.Failure.cause_to_string
-      (Start_signature.decode ~checkpoint_id:id plan.execution)
+      (Start_signature.decode ~checkpoint_id:id plan)
   in
   all (skip_flags ~id) plan.checkpoint.events

@@ -168,7 +168,7 @@ echo "[Devices] nothing holds $serial_check; the lab app is not running"
 if [ -n "$dry_run" ]; then
     video=${GAMEPILOT_DRY_RUN_VIDEO:-$scratch/replay.mp4}
     if [ ! -f "$video" ]; then
-        frame=$root/src/games/frlg/readers/test/images/mgba/mail-glitch-04-inspect/mg05-overworld.png
+        frame=$root/src/games/pokemon/frlg/readers/test/images/mgba/mail-glitch-04-inspect/mg05-overworld.png
         # The GBA picture where nso_gba_viewport() puts it: 1560x1040 at (180, 5) of 1920x1080.
         ffmpeg -loglevel error -loop 1 -i "$frame" -t 600 -r 10 \
             -vf "scale=1560:1040:flags=neighbor,pad=1920:1080:180:5:black" \

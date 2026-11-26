@@ -9,7 +9,7 @@ save setup. GamePilot goes first, following the closure of
 ## Current foundation
 
 The [starter RNG design](../design/BDSP-RNG.md) defines the shared Switch capture, replay, and
-timing work (W1–W10). Main has the pure OCaml [BDSP RNG library](../../src/games/bdsp/rng)
+timing work (W1–W10). Main has the pure OCaml [BDSP RNG library](../../src/games/pokemon/bdsp/rng)
 and its C++ golden fixtures. The starter attempt loop and a registered BDSP program are still ahead.
 
 | Landed | Reuse for statics |

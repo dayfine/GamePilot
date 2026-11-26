@@ -1,0 +1,8 @@
+(test
+ (name test_gift_catalog)
+ (deps ../gifts.json)
+ (libraries
+  yojson
+  gamepilot.table_test
+  gamepilot.plza_gift_catalog
+  gamepilot.pokemon_home))

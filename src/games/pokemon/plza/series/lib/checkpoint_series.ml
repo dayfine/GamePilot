@@ -16,6 +16,8 @@ type attempt =
 
 type program = {
   check_plans : P.Plan.t list -> (unit, string) result;
+  with_end_place :
+    next:P.Plan.t option -> P.Plan.t -> (P.Plan.t, string) result;
   daemon_flags : string list;
   attempt : attempt;
 }
@@ -27,6 +29,15 @@ type setup = {
   daemons : Live_run.Series_daemons.t;
   attempt : attempt;
 }
+
+let keepawake_stick = [ "--keepawake-key"; "RStick" ]
+
+let each_plan check plans =
+  List.fold_left
+    (fun acc plan -> Result.bind acc (fun () -> check plan))
+    (Ok ()) plans
+
+let no_end_place ~next:_ plan = Ok plan
 
 let load_plan ~plan_dir id =
   P.Plan_decode.load (Engine_series.Plan_folder.plan_file ~plan_dir id)
@@ -162,9 +173,28 @@ let rec chain setup ~chained = function
       if runs_of setup plan ~chained then chain setup ~chained:true rest
       else Ok 1
 
+let rec next_id id = function
+  | a :: (b :: _ as rest) -> if a = id then Some b else next_id id rest
+  | [ _ ] | [] -> None
+
+(* Each plan given its end place by the program, from the plan after it (the
+   folder's next one after the last). *)
+let with_ends program ~plan_dir ~all plans =
+  List.fold_left
+    (fun acc (plan : P.Plan.t) ->
+      let* acc = acc in
+      let* next =
+        match next_id plan.checkpoint.checkpoint_id all with
+        | None -> Ok None
+        | Some n -> Result.map Option.some (load_plan ~plan_dir n)
+      in
+      let* plan = program.with_end_place ~next plan in
+      Ok (acc @ [ plan ]))
+    (Ok []) plans
+
 (* Every plan of the series, loaded in order, then checked before the
-   console moves. *)
-let load_checked ~check_plans ~plan_dir ids =
+   console moves, then given its end place. *)
+let load_checked program ~plan_dir ~all ids =
   let* plans =
     List.fold_left
       (fun plans id ->
@@ -173,8 +203,8 @@ let load_checked ~check_plans ~plan_dir ids =
         Ok (plans @ [ plan ]))
       (Ok []) ids
   in
-  let* () = check_plans plans in
-  Ok plans
+  let* () = program.check_plans plans in
+  with_ends program ~plan_dir ~all plans
 
 (* Each run's daemon: the program's viewport, its own flags, then the
    user's. *)
@@ -222,20 +252,20 @@ let selected ~plan_dir (f : Flags.t) =
   let* ids = Engine_series.Plan_folder.checkpoint_ids plan_dir in
   let* from_id = Engine_series.Plan_folder.resolve ids from_id in
   let* to_id = Engine_series.Plan_folder.resolve ids to_id in
-  let* ids, _ = Engine_series.Plan_folder.select ids ~from_id ~to_id in
-  Ok (from_id, to_id, ids)
+  let* selected, _ = Engine_series.Plan_folder.select ids ~from_id ~to_id in
+  Ok (from_id, to_id, selected, ids)
 
 let run_series program ~program_fields ~options ~viewport plan_dir args =
   let* f = Flags.parse args in
   let* () = Flags.takes f in
-  let* from_id, to_id, ids = selected ~plan_dir f in
+  let* from_id, to_id, ids, all = selected ~plan_dir f in
   let* backend = Run_flags.daemon_backend f Checkpoint_trials.Testing in
   let* () = switch_only backend in
   let* viewport = viewport in
   let* policy =
     Checkpoint_trials.policy ?runs:f.runs Checkpoint_trials.Testing
   in
-  let* plans = load_checked ~check_plans:program.check_plans ~plan_dir ids in
+  let* plans = load_checked program ~plan_dir ~all ids in
   let setup =
     setup_of program f ~program_fields ~options ~from_id ~to_id ~ids ~backend
       ~viewport policy

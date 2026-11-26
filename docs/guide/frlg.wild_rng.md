@@ -79,12 +79,12 @@ sh run/run_checkpoints_on_mgba.sh frlg.wild_rng --from 01-route10-grass --to 02-
 
 A port of the fork's WildRng (PA/CC's `PokemonFRLG/Programs/RngManipulation/`) for Sweet Scent in
 grass, so every catch toward the 60 the National Pokédex needs can be shiny (issue #14). The
-action is `wild_rng` (`src/games/frlg/actions/lib/wild_rng*.ml`).
+action is `wild_rng` (`src/games/pokemon/frlg/actions/lib/wild_rng*.ml`).
 
 **The seed.** The seed is the title screen's A press: `backend.reset` (mGBA's power switch) boots
 the game from its save, and the press N frames later gives the same seed every time.
 
-**The seed table.** `src/games/frlg/assets/rng_seeds_mgba_sevii_save.json` (FR_Eng.json's shape,
+**The seed table.** `src/games/pokemon/frlg/assets/rng_seeds_mgba_sevii_save.json` (FR_Eng.json's shape,
 delays in ms that round to the press frame) was measured on mGBA from the Sevii story's end save,
 the save 01 starts from. The plan names its table (`seeds`).
 
@@ -92,6 +92,10 @@ the save 01 starts from. The plan names its table (`seeds`).
 timer counts later or sooner by where its last save left the flash sectors (the save count modulo
 14: 0, 4, 8 or 12 on these saves), which moves every seed by that much. 01's end save adds 8,
 measured: the table it gives is the Sevii table plus 8, row for row.
+
+**The in-game offset.** The plan's optional `ingame_offset` (default `0`, in advances) shifts the
+Sweet Scent wait, as in the fork's calibration, when the overworld's RNG lands a few advances off
+the target (for example on routes with walking NPCs).
 
 **The target.** It is searched, not given: of the table's seeds and advances 900 to 4000, the
 shiny Ekans for the plan's TID and SID whose waits add up least (`Frlg_rng.Wild_target`).

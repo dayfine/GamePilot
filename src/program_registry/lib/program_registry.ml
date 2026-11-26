@@ -1,6 +1,6 @@
 type backend = Mgba | Switch
 type viewport = Nso_gba | Native
-type rules = Pokemon_grid | Plza_story | Plza_home
+type rules = Pokemon_grid | Plza_story | Plza_home | Plza_gifts
 
 type switch_home = {
   title : string;
@@ -47,7 +47,9 @@ let frlg =
     game_id = "frlg";
     game_name = "Pokémon FireRed/LeafGreen";
     delete_save_icons =
-      [ ("firered", "src/games/frlg/assets/delete-save-icon-firered.png") ];
+      [
+        ("firered", "src/games/pokemon/frlg/assets/delete-save-icon-firered.png");
+      ];
     switch_home =
       Some
         {
@@ -110,7 +112,7 @@ let frlg_mail_glitch =
       "Turns on the Mail Glitch against Lea & Jed on Route 16 and copies one \
        item with it.";
     doc = "docs/guide/frlg.mail_glitch.md";
-    checkpoints = Some "src/games/frlg/programs/mail_glitch/plans";
+    checkpoints = Some "src/games/pokemon/frlg/programs/mail_glitch/plans";
     backends = [ Mgba; Switch ];
     viewport = Nso_gba;
     rules = Pokemon_grid;
@@ -141,7 +143,7 @@ let frlg_team_training =
     group = [ "FRLG"; "Training" ];
     description = "Copies Rare Candies with the Mail Glitch to level the team.";
     doc = "docs/guide/frlg.team_training.md";
-    checkpoints = Some "src/games/frlg/programs/team_training/plans";
+    checkpoints = Some "src/games/pokemon/frlg/programs/team_training/plans";
     backends = [ Mgba; Switch ];
     viewport = Nso_gba;
     rules = Pokemon_grid;
@@ -157,7 +159,7 @@ let frlg_supplies =
     description =
       "Stocks what the duplication programs use: Retro Mail and Super Repels.";
     doc = "docs/guide/frlg.supplies.md";
-    checkpoints = Some "src/games/frlg/programs/supplies/plans";
+    checkpoints = Some "src/games/pokemon/frlg/programs/supplies/plans";
     backends = [ Mgba; Switch ];
     viewport = Nso_gba;
     rules = Pokemon_grid;
@@ -172,7 +174,7 @@ let frlg_sevii_story =
     group = [ "FRLG"; "Story" ];
     description = "Plays the Sevii Islands story after the Cinnabar Gym.";
     doc = "docs/guide/frlg.sevii_story.md";
-    checkpoints = Some "src/games/frlg/programs/sevii_story/plans";
+    checkpoints = Some "src/games/pokemon/frlg/programs/sevii_story/plans";
     backends = [ Mgba ];
     viewport = Nso_gba;
     rules = Pokemon_grid;
@@ -189,7 +191,7 @@ let frlg_ace_setup =
       "Sets up arbitrary code execution: the ? Mail puts species 0x0351 in Box \
        3 slot 1.";
     doc = "docs/guide/frlg.ace_setup.md";
-    checkpoints = Some "src/games/frlg/programs/ace_setup/plans";
+    checkpoints = Some "src/games/pokemon/frlg/programs/ace_setup/plans";
     backends = [ Mgba ];
     viewport = Nso_gba;
     rules = Pokemon_grid;
@@ -209,7 +211,7 @@ let frlg_ace =
       "Runs code typed as PC box names through species 0x0351: 999 of an item \
        in the PC, some of them to the bag.";
     doc = "docs/guide/frlg.ace.md";
-    checkpoints = Some "src/games/frlg/programs/ace/plans";
+    checkpoints = Some "src/games/pokemon/frlg/programs/ace/plans";
     backends = [ Mgba ];
     viewport = Nso_gba;
     rules = Pokemon_grid;
@@ -239,7 +241,7 @@ let frlg_dex_collection =
     description =
       "Catches Pokemon the Pokedex lacks, toward the National Pokedex.";
     doc = "docs/guide/frlg.dex_collection.md";
-    checkpoints = Some "src/games/frlg/programs/dex_collection/plans";
+    checkpoints = Some "src/games/pokemon/frlg/programs/dex_collection/plans";
     backends = [ Mgba ];
     viewport = Nso_gba;
     rules = Pokemon_grid;
@@ -255,7 +257,7 @@ let frlg_wild_rng =
     description =
       "Catches a chosen shiny wild Pokemon by timing the game's random numbers.";
     doc = "docs/guide/frlg.wild_rng.md";
-    checkpoints = Some "src/games/frlg/programs/wild_rng/plans";
+    checkpoints = Some "src/games/pokemon/frlg/programs/wild_rng/plans";
     backends = [ Mgba ];
     viewport = Nso_gba;
     rules = Pokemon_grid;
@@ -275,6 +277,33 @@ let plza_autostory =
     viewport = Native;
     rules = Plza_story;
     options = Plza_story.New_game_choices.decls;
+  }
+
+let plza_claim_gifts =
+  {
+    id = "plza.claim-gifts";
+    game = plza;
+    name = "Claim Gifts";
+    group = [ "PLZA"; "Gifts" ];
+    description =
+      "Claims the Mystery Gifts of its catalog that have not expired, puts \
+       their Pokémon in the Boxes and saves.";
+    doc = "docs/guide/plza.claim-gifts.md";
+    checkpoints = Some "src/games/pokemon/plza/programs/claim_gifts/plans";
+    backends = [ Switch ];
+    viewport = Native;
+    rules = Plza_gifts;
+    options =
+      [
+        {
+          key = "language";
+          value = One_of Plza_story.New_game_choices.tags;
+          presence = Default "en";
+          doc =
+            "the game's language, by its language list's tag, in which the \
+             Internet gifts' names are found in their list";
+        };
+      ];
   }
 
 let plza_bank_home =
@@ -306,6 +335,7 @@ let all =
     frlg_ace;
     frlg_wild_rng;
     plza_autostory;
+    plza_claim_gifts;
     plza_bank_home;
   ]
 

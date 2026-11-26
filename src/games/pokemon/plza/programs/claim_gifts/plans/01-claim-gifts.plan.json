@@ -1,0 +1,46 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "plza",
+  "execution": {},
+  "metadata": {
+    "phase": "testing",
+    "source": "ours: the fork has no Mystery Gift program. Starts on the overworld or the main menu of a save past autostory's last checkpoint (03.15-mable-reward), where Mystery Gift opens",
+    "postconditions": {}
+  },
+  "checkpoint": {
+    "id": "01-claim-gifts",
+    "title": "Claim the catalog's Mystery Gifts, box them and save",
+    "events": [
+      {
+        "id": "start",
+        "kind": "game_action",
+        "action": "gifts_start",
+        "why": "today's date and the catalog printed; X opens the main menu, whose party cards must show five or six Pokémon at full HP"
+      },
+      {
+        "id": "claim",
+        "kind": "game_action",
+        "action": "claim_gifts",
+        "why": "each gift not past its last day, by code or from the Internet list; one not received fails and the next is tried"
+      },
+      {
+        "id": "box_slots",
+        "kind": "game_action",
+        "action": "check_gift_slots",
+        "why": "the gift in party slot 6 moved to its box slot, and each received gift read in its slot"
+      },
+      {
+        "id": "save",
+        "kind": "game_action",
+        "action": "save_progress",
+        "why": "R, Save Progress, checked by its Last Saved time, when any gift was received"
+      },
+      {
+        "id": "report",
+        "kind": "game_action",
+        "action": "report_gifts",
+        "why": "one line a gift; the run fails naming any gift that failed"
+      }
+    ]
+  }
+}

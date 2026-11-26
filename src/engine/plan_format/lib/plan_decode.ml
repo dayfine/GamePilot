@@ -148,6 +148,10 @@ struct
           (promises ~where:(where ^ "metadata.postconditions."))
           (F.object_opt ~where:(where ^ "metadata.") "postconditions" m))
 
+  (* The plan's promises name where it ends ([T.end_place]). *)
+  let ends_in_place (plan : Plan.t) =
+    Option.is_some (Option.bind plan.postconditions T.end_place)
+
   let plan ~where obj : Plan.t =
     known_fields_only ~where
       [ "format"; "game"; "checkpoint"; "execution"; "metadata" ]
@@ -162,15 +166,23 @@ struct
       | Some metadata -> (Some metadata, inner_where)
       | None -> (F.object_opt ~where "metadata" obj, where)
     in
-    {
-      game = F.string ~where "game" obj;
-      checkpoint = checkpoint ~where:inner_where inner;
-      execution = object_field ~where "execution" obj;
-      metadata;
-      postconditions = postconditions ~where:metadata_where metadata;
-      retries = retries ~where:(metadata_where ^ "metadata.") metadata;
-      repeat = repeat ~where:(metadata_where ^ "metadata.") metadata;
-    }
+    let plan : Plan.t =
+      {
+        game = F.string ~where "game" obj;
+        checkpoint = checkpoint ~where:inner_where inner;
+        execution = object_field ~where "execution" obj;
+        metadata;
+        postconditions = postconditions ~where:metadata_where metadata;
+        retries = retries ~where:(metadata_where ^ "metadata.") metadata;
+        repeat = repeat ~where:(metadata_where ^ "metadata.") metadata;
+      }
+    in
+    if ends_in_place plan && Option.is_some plan.repeat then
+      F.fail
+        "%smetadata.postconditions name an end place on a repeated checkpoint: \
+         a round ends where it starts."
+        metadata_where;
+    plan
 
   let decode ~source json =
     let where = source ^ ": " in

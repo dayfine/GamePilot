@@ -194,6 +194,42 @@ module Make (T : Engine_rules.GAME_RULES) (Raw : Engine_plan.Plan.RAW) = struct
   let not_started id failure : Log_line.t =
     [ Text ("[Story] " ^ id ^ ": not started: "); Failure failure ]
 
+  (* Before the first event, as Repeat_until checks its goal before a round:
+     the promises of where the checkpoint ends ([T.end_place]) all pass
+     already. Only on a run from its first event, and never a promise of a
+     change, which cannot hold before anything ran. *)
+  let already_at_end ~end_state (range : Event_range.t) =
+    match (range.first, end_state) with
+    | 0, Some (promised, observe) ->
+        Option.bind (T.end_place promised) (fun place ->
+            let results = T.Postconditions.check place (observe place) in
+            if results <> [] && Postcondition.unmet results = [] then Some place
+            else None)
+    | _ -> None
+
+  (* At its end already: every event is reported skipped, none runs, and the
+     checkpoint passes. *)
+  let pass_at_end ~say ~on_event (checkpoint : Plan.checkpoint) place =
+    let place = String.concat ", " (T.Postconditions.to_lines place) in
+    List.iteri
+      (fun i _ -> on_event i (Event_progress.Skipped "at its end"))
+      checkpoint.events;
+    say
+      (text
+         (Printf.sprintf
+            "[Story] %s: already at its end (%s): passed, no event run"
+            checkpoint.checkpoint_id place));
+    Ok ()
+
+  let run_range ?end_at ?end_state ~on_event ~say game checkpoint range =
+    let ends =
+      if Event_range.reaches_end range checkpoint.Plan.events then
+        Some (end_at, end_state)
+      else None
+    in
+    run_from ~say ~on_event game checkpoint ~ends range.first
+      (Event_range.select range checkpoint.events)
+
   let run ?end_at ?end_state ?(on_event = fun _ _ -> ()) ?events ~say
       (game : Game.t) (checkpoint : Plan.checkpoint) =
     let id = checkpoint.checkpoint_id in
@@ -201,16 +237,13 @@ module Make (T : Engine_rules.GAME_RULES) (Raw : Engine_plan.Plan.RAW) = struct
     | Some failure ->
         say (not_started id failure);
         Error failure
-    | None ->
+    | None -> (
         say (text (start_line checkpoint events));
         let range =
           Option.value events ~default:{ Event_range.first = 0; last = None }
         in
-        let ends =
-          if Event_range.reaches_end range checkpoint.events then
-            Some (end_at, end_state)
-          else None
-        in
-        run_from ~say ~on_event game checkpoint ~ends range.first
-          (Event_range.select range checkpoint.events)
+        match already_at_end ~end_state range with
+        | Some place -> pass_at_end ~say ~on_event checkpoint place
+        | None ->
+            run_range ?end_at ?end_state ~on_event ~say game checkpoint range)
 end

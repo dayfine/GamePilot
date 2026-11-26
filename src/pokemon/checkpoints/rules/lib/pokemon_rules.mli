@@ -47,3 +47,9 @@ val ends_at : Action.t -> Pose.t option
 
 val position : Postconditions.t -> Pose.t option
 (** The promised end [position], as a grid pose. *)
+
+val end_place : Postconditions.t -> Postconditions.t option
+(** [None]: no Pokémon promise says where a checkpoint ends but its [position],
+    which FireRed reckons from the plan (the start's tile until a walk moves
+    it), so it would hold at the start of a checkpoint that does not move (ACE
+    01-enter-code, at its PC). *)

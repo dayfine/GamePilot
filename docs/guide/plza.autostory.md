@@ -88,7 +88,7 @@ cd src && opam exec -- dune exec -- gamepilot run plza.autostory --from 00.00-ne
 | 03.14-lab-elevator | Up the Research Lab's elevator to the Director's Office |
 | 03.15-mable-reward | Mable's research, the Rock Smash TM |
 
-<!-- plans: ba90cc1a9e8a -->
+<!-- plans: 18c83658a537 -->
 <!-- /generated -->
 
 00.00-new-game closes any running game, finds PLZA's tile on HOME by its title, starts it, picks

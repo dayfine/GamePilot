@@ -6,7 +6,7 @@ which game actions, readers and fragments each checkpoint needs that GamePilot d
 for deciding what to build next; nothing here runs.
 
 - **Drafts**: 61 checkpoint plans (13 optional) for Parts 2 and 7 to 20, in the plan shape of
-  `src/games/frlg/programs/*/plans/` (`gamepilot-checkpoint/1`), with the 66 places they name. They
+  `src/games/pokemon/frlg/programs/*/plans/` (`gamepilot-checkpoint/1`), with the 66 places they name. They
   are kept out of this note, in a reference PR (branch `docs/frlg-walkthrough-plan-drafts`), for
   future program PRs to start from; the tables below are counted from them.
 - **Parts 1 to 8** are mostly drafted already: PokemonSimulation's `data/story/frlg-authored/`
@@ -27,8 +27,8 @@ for deciding what to build next; nothing here runs.
   `heal_at` still shows as missing.
 - Route targets name a **place** (`"place": "erika_front"`), next to the map, tile and facing.
   Places and the `heal_at` fragment now exist (#39, #40): the expansion is
-  `src/pokemon/checkpoints/expand/`, FireRed's data `src/games/frlg/places/places.json` (places and
-  towns) and `src/games/frlg/fragments/fragments.json`; a program built from a draft adds its places
+  `src/pokemon/checkpoints/expand/`, FireRed's data `src/games/pokemon/frlg/places/places.json` (places and
+  towns) and `src/games/pokemon/frlg/fragments/fragments.json`; a program built from a draft adds its places
   to that table. Tiles are derived, never typed in: an npc's, item's
   or warp's coord in PokemonSimulation's runtime maps (submodule pin) and the open tile beside it.
   Where that is not possible (the map is missing, the spot is a script trigger, the tile is not open)

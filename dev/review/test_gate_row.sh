@@ -101,7 +101,7 @@ check "a renamed dune file merges, marked structural" "merge (structural: module
 check "a shared .mli change merges, marked structural" "merge (structural: shared interface: src/pokemon/a/lib/b.mli)" \
     "$(pr '{"path": "src/pokemon/a/lib/b.mli", "changeType": "MODIFIED"}' "$green" "$(review "$tip" APPROVED)" | column 4)"
 check "a game's own .mli change merges" merge \
-    "$(pr '{"path": "src/games/frlg/a/lib/b.mli", "changeType": "MODIFIED"}' "$green" "$(review "$tip" APPROVED)" | column 4)"
+    "$(pr '{"path": "src/games/pokemon/frlg/a/lib/b.mli", "changeType": "MODIFIED"}' "$green" "$(review "$tip" APPROVED)" | column 4)"
 check "a decoder change merges, marked structural" "merge (structural: format: src/x/lib/plan_decode.ml)" \
     "$(pr '{"path": "src/x/lib/plan_decode.ml", "changeType": "MODIFIED"}' "$green" "$(review "$tip" APPROVED)" | column 4)"
 check "a rename that also edits a design doc goes to the user for the doc" \

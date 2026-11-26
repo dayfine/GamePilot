@@ -2,13 +2,21 @@
     ({!Game.Make.t}).
 
     Before any event runs, every game action the checkpoint names must have a
-    handler. Then, per event: it is skipped when a flag its [skip_if] names
-    holds; otherwise its handler runs, and once it passes, the game's position
-    (when it can tell) must match its [declared_after]
-    ({!Engine_rules.POSE.matches}). The first event that fails stops the run.
-    Each event's start (with its [why]), skip, end and failure is logged as
-    ["[Story] <checkpoint> #<n> <event>: ..."]. A handler that raises is logged
-    as failed and the exception passes through.
+    handler. Then, as {!Repeat_until} runs no round once its goal holds, a
+    checkpoint already at its end runs no event: when the promises of
+    [end_state] name where it ends ({!Engine_rules.GAME_RULES.end_place}) and
+    every one of those passes before the first event, each event is reported
+    skipped,
+    ["[Story] <checkpoint>: already at its end (<place>): passed, no event run"]
+    is logged, and the checkpoint passes. Nothing else is read then: no end
+    position, and no promise of a change from the start. A run that starts past
+    the first event does not check it. Otherwise, per event: it is skipped when
+    a flag its [skip_if] names holds; otherwise its handler runs, and once it
+    passes, the game's position (when it can tell) must match its
+    [declared_after] ({!Engine_rules.POSE.matches}). The first event that fails
+    stops the run. Each event's start (with its [why]), skip, end and failure is
+    logged as ["[Story] <checkpoint> #<n> <event>: ..."]. A handler that raises
+    is logged as failed and the exception passes through.
 
     The runner prints none of the game's rules: it says each line as a
     {!Log_line.Make.t}, poses and failures kept as values, and the engine prints

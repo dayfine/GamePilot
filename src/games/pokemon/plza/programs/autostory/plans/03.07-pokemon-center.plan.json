@@ -4,15 +4,12 @@
   "execution": {
     "reload_when_chained": true,
     "start_signature": {
-      "minimap": "03.04-start"
-    },
-    "end_signature": {
-      "minimap": "03.06-start"
+      "minimap": "station-front"
     }
   },
   "metadata": {
     "phase": "testing",
-    "source": "played from a new game; ends outside the Center on the autosave. The only PLZA row that reloads when chained: into_pokemon_center's timed legs assume the reloaded save's facing and ran into a wall chained without it. The roof before Station Front reads the same as its start bar the minimap; starts where 03.06 ends; the fork's plza-03.04.plan.json (plza/lean); ends checked by the minimap (end_signature 03.06-start, ours: the fork checks no end). Resumable: a reload past Taunie's autosave reads 03.06-start and every event is skipped",
+    "source": "played from a new game; ends outside the Center on the autosave. The only PLZA row that reloads when chained: into_pokemon_center's timed legs assume the reloaded save's facing and ran into a wall chained without it. The roof before Station Front reads the same as its start bar the minimap; starts where 03.06 ends; the fork's plza-03.04.plan.json (plza/lean); ends checked by 03.08's start, the minimap pokemon-center-door (ours: the fork checks no end). Resumable: a reload past Taunie's autosave reads as its end and runs no event",
     "postconditions": {}
   },
   "checkpoint": {
@@ -29,15 +26,13 @@
         "args": {
           "legs": [[0, 3000], [20, 2200], [-90, 2000], [90, 0]],
           "end": "talk_after_legs"
-        },
-        "skip_if": ["minimap:03.06-start"]
+        }
       },
       {
         "id": "pokedex_app",
         "kind": "scene",
         "action": "button_b",
-        "why": "the Pokedex app, Chikorita's entry, the nurse, Taunie's scene outside (autosave), until control outside the Center (end signature: minimap 03.06-start)",
-        "skip_if": ["minimap:03.06-start"]
+        "why": "the Pokedex app, Chikorita's entry, the nurse, Taunie's scene outside (autosave), until control outside the Center (its end: minimap pokemon-center-door)"
       }
     ]
   }
