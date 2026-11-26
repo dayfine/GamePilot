@@ -38,10 +38,33 @@ type t = {
       (** the species, the ball, the balls; its encounters are the attempts *)
 }
 
-val decode : Json_field.obj -> (t, Pokemon_engine.Failure.cause) result
-(** ["species"], ["location"] (["route_10"]), ["tid"], ["sid"] (0..65535),
-    ["seeds"], ["seed_shift"] (0..65535, default 0), ["ingame_offset"] (-99..99,
-    default 0), ["frame_model"] (["mgba"]), ["advances"] ([[min, max]], default
+type trainer_ids = {
+  tid : int option;
+      (** Trainer ID from the environment or local config, 0..65535. *)
+  sid : int option;
+      (** Secret ID from the environment or local config, 0..65535. *)
+}
+(** Fallback trainer IDs used when neither [--options] nor the plan supplies
+    [tid] or [sid]. *)
+
+val no_trainer_ids : trainer_ids
+(** No fallback trainer IDs. *)
+
+val load_trainer_ids : unit -> (trainer_ids, string) result
+(** Reads fallback trainer IDs from [GAMEPILOT_FRLG_TID] / [GAMEPILOT_FRLG_SID],
+    falling back to [trainer_ids.json] inside the FRLG config directory
+    ([Repo_io.Repo_files.data_dir "GAMEPILOT_FRLG_CONFIG" "frlg"]). Missing
+    files or unset variables yield [None]; malformed values return [Error]. *)
+
+val decode :
+  ?options:Run_options.t ->
+  ?fallback:trainer_ids ->
+  Json_field.obj ->
+  (t, Pokemon_engine.Failure.cause) result
+(** ["species"], ["location"] (["route_10"]), ["tid"], ["sid"] (0..65535, from
+    [--options], else the plan, else [fallback]), ["seeds"], ["seed_shift"]
+    (0..65535, default 0), ["ingame_offset"] (-99..99, default 0),
+    ["frame_model"] (["mgba"]), ["advances"] ([[min, max]], default
     [[900, 4000]]), ["ball"] (["poke-ball"]), ["balls"] (5), ["attempts"] (1).
 *)
 

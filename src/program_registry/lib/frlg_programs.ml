@@ -144,6 +144,26 @@ let team_training =
     options = [];
   }
 
+(* 16-bit trainer and secret IDs (0..65535). *)
+let max_trainer_id = 0xffff
+
+let trainer_id_options : Run_options.declared list =
+  [
+    {
+      key = "tid";
+      value = Int_range (0, max_trainer_id);
+      presence = Optional;
+      doc =
+        "your trainer ID (overrides GAMEPILOT_FRLG_TID and trainer_ids.json)";
+    };
+    {
+      key = "sid";
+      value = Int_range (0, max_trainer_id);
+      presence = Optional;
+      doc = "your secret ID (overrides GAMEPILOT_FRLG_SID and trainer_ids.json)";
+    };
+  ]
+
 let dex_collection =
   {
     id = "frlg.dex_collection";
@@ -157,7 +177,7 @@ let dex_collection =
     backends = [ Mgba ];
     viewport = Nso_gba;
     rules = Pokemon_grid;
-    options = [];
+    options = trainer_id_options;
   }
 
 let wild_rng =
@@ -173,7 +193,7 @@ let wild_rng =
     backends = [ Mgba ];
     viewport = Nso_gba;
     rules = Pokemon_grid;
-    options = [];
+    options = trainer_id_options;
   }
 
 (* Grouped by category so [gamepilot programs] prints each heading once. *)

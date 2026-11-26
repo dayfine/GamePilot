@@ -19,7 +19,9 @@ Runs on: mGBA.
   Center; each catch starts and ends outdoors.
 - Bring ¥12,000 for 10 Ultra Balls at the Indigo Plateau's Pokemon Center.
 - The party's last Pokemon must know Sweet Scent, the game's sound must be Mono and its button
-  mode Help, as [Wild RNG](frlg.wild_rng.md) says. Its plans hold your trainer ID and secret ID.
+  mode Help, as [Wild RNG](frlg.wild_rng.md) says. Supply your trainer ID and secret ID via
+  `--options tid=N --options sid=N`, `GAMEPILOT_FRLG_TID` / `GAMEPILOT_FRLG_SID`, or
+  `trainer_ids.json` in your local FRLG config directory.
 - 02 starts with a full party and stores one member to make room; from then on each catch joins
   as the sixth member, is checked for the shiny star and goes to the PC.
 
@@ -32,6 +34,15 @@ Runs on: mGBA.
 <!-- /generated -->
 
 ## Running it
+
+<!-- generated:options -->
+Give each as `--options KEY=VALUE`:
+
+| Key | Values | When not given | What it chooses |
+|---|---|---|---|
+| `tid` | 0 to 65535 | optional | your trainer ID (overrides GAMEPILOT_FRLG_TID and trainer_ids.json) |
+| `sid` | 0 to 65535 | optional | your secret ID (overrides GAMEPILOT_FRLG_SID and trainer_ids.json) |
+<!-- /generated -->
 
 <!-- generated:commands -->
 ```sh
@@ -50,7 +61,7 @@ sh run/run_checkpoints_on_mgba.sh frlg.dex_collection --from 01-ultra-balls --to
 | 03-shiny-drowzee | From anywhere outdoors: a shiny Drowzee in Route 11's grass by the wild RNG, stored in the PC, back to the nurse |
 | 04-shiny-ekans | From anywhere outdoors: a shiny Ekans in Route 10's grass by the wild RNG, stored in the PC, back to the nurse |
 
-<!-- plans: 315cd0a45e53 -->
+<!-- plans: 70add909a516 -->
 <!-- /generated -->
 
 

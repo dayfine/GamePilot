@@ -242,8 +242,17 @@ let run_wild_rng t (plan : Wild_rng_plan.t) () =
     (Wild_rng.failure_code r.end_)
 
 let wild_rng t (_ : Pokemon_engine.Plan.event) args =
-  Result.bind (Wild_rng_plan.decode args) (fun plan ->
-      Menu_input.run (run_wild_rng t plan))
+  let options = t.config.program_options in
+  let fallback =
+    match (Run_options.int options "tid", Run_options.int options "sid") with
+    | Some _, Some _ -> Ok Wild_rng_plan.no_trainer_ids
+    | _ ->
+        Wild_rng_plan.load_trainer_ids ()
+        |> Result.map_error (Failure.cause ~repeats:true "bad_args")
+  in
+  Result.bind fallback (fun fallback ->
+      Result.bind (Wild_rng_plan.decode ~options ~fallback args) (fun plan ->
+          Menu_input.run (run_wild_rng t plan)))
 
 (* The game saved from the Start menu, as between loop rounds: what a hard
    reset ({!Effects.reset}) boots from. *)
