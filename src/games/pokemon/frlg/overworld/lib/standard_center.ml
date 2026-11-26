@@ -127,10 +127,14 @@ let room ~center ~outside =
          (String.concat "" (List.map (mat_warp outside) (mat_order center)))
          (town_of center) center (people center))
 
+type door_point = Standard_center_door
+
+let door_point_name Standard_center_door = "standard_center_door"
+
 (* As the fork adds the room (Overworld/PokemonFRLG_CodedRooms.cpp): the town
-   gets a point "<Center>_door" on its door, for the mat's warps to land on. *)
-let with_door_point (town : Map_data.t) (door : Tile_pos.t) center =
-  let name = center ^ "_door" in
+   gets a point on its door, for the mat's warps to land on. *)
+let with_door_point (town : Map_data.t) (door : Tile_pos.t) =
+  let name = door_point_name Standard_center_door in
   ({ town with points = Map_data.String_map.add name door town.points }, name)
 
 let loaded maps name = List.exists (fun (m : Map_data.t) -> m.name = name) maps
@@ -149,7 +153,7 @@ let add_room maps (towns, rooms) (town : Map_data.t) =
   match unmapped_door (maps @ rooms) town with
   | None -> (town :: towns, rooms)
   | Some (door, center) -> (
-      let town, point = with_door_point town door center in
+      let town, point = with_door_point town door in
       match room ~center ~outside:{ to_map = town.name; to_point = point } with
       | Ok r -> (town :: towns, r :: rooms)
       | Error _ -> (town :: towns, rooms))

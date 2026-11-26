@@ -12,13 +12,20 @@
     VAR_MAP_SCENE_CINNABAR_ISLAND reaches 4) and the Rainbow Pass's pages are
     other windows, not read yet. *)
 
+type island = {
+  name : string;  (** The island as a plan names it: ["TwoIsland"]. *)
+  harbor : string;  (** Its harbor map: ["TwoIsland_Harbor"]. *)
+}
+(** One Sevii island and its harbor map. *)
+
 type trip = {
   from : string;  (** The harbor's map: ["OneIsland_Harbor"]. *)
-  to_ : string;  (** The island sailed to: ["TwoIsland"]. *)
+  to_ : island;  (** The island sailed to, and its harbor map. *)
   row : int;  (** Its row on the sailor's list, from 0 at the top. *)
 }
+(** One Seagallop crossing. *)
 
-val islands : (string * string list) list
+val islands : (string * island list) list
 (** Each harbor read and its list's islands, top first (EXIT follows). *)
 
 val trip_of_args :

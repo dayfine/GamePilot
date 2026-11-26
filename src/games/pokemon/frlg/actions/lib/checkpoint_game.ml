@@ -8,7 +8,7 @@ type config = {
   flags : string -> bool;
   party : Party_roster.t option;
   grind_cap : int option;
-  center : string option;
+  center : Pokemon_engine.Pose.grid option;
   reload : unit -> (unit, Failure.cause) result;
   program_options : Run_options.t;
   log : string -> unit;
@@ -162,11 +162,8 @@ let lift t (_ : Pokemon_engine.Plan.event) args =
 let heal t () =
   match t.config.center with
   | None -> not_implemented "heal with no Center configured"
-  | Some town ->
-      let front =
-        { Heal_and_save.nurse_front with map = Heal_and_save.center_map town }
-      in
-      Result.bind (walk_to t front) (fun () ->
+  | Some nurse ->
+      Result.bind (walk_to t nurse) (fun () ->
           Menu_input.run (Heal_and_save.heal_at_nurse ~log:t.config.log))
 
 let find_battle t ~pace ~patch () =

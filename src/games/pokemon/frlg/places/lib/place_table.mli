@@ -55,6 +55,15 @@ val towns : t -> Towns.t
 val find : t -> string -> (place, string) result
 (** The place of that name; an unknown name's error suggests the nearest. *)
 
+val center_map_of_fly : t -> string -> string option
+(** The Pokemon Center 1F map of the Fly town (["ViridianCity"]), from its
+    [nurse] place in the table; [None] when that Fly town has no Center listed.
+*)
+
+val center_nurse : t -> string -> (Pokemon_engine.Pose.grid, string) result
+(** The nurse's stand pose for a town named by its table key (["lavender"]) or
+    its Fly map name (["LavenderTown"]), from its [nurse] place. *)
+
 val spot : place -> Checkpoints_expand.Place_routes.spot
 (** Where a route to the place ends: its map, its stand tile, its facing. *)
 

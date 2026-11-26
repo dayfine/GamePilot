@@ -26,6 +26,12 @@
       "stand": [6, 4],
       "facing": "north"
     },
+    "celadon_nurse": {
+      "map": "CeladonCity_PokemonCenter_1F",
+      "object": {"npc": "CeladonCity_PokemonCenter_1F_EventScript_Nurse"},
+      "stand": [7, 4],
+      "facing": "north"
+    },
     "celadon_prize_room_mon_clerk": {
       "map": "CeladonCity_GameCorner_PrizeRoom",
       "object": {"npc": "CeladonCity_GameCorner_PrizeRoom_EventScript_PrizeClerkMons"},
@@ -44,11 +50,29 @@
       "stand": [2, 2],
       "facing": "west"
     },
+    "cerulean_nurse": {
+      "map": "CeruleanCity_PokemonCenter_1F",
+      "object": {"npc": "CeruleanCity_PokemonCenter_1F_EventScript_Nurse"},
+      "stand": [7, 4],
+      "facing": "north"
+    },
     "cinnabar_center_bill": {
       "map": "CinnabarIsland_PokemonCenter_1F",
       "object": {"npc": "CinnabarIsland_PokemonCenter_1F_EventScript_Bill"},
       "stand": [10, 5],
       "facing": "east"
+    },
+    "cinnabar_nurse": {
+      "map": "CinnabarIsland_PokemonCenter_1F",
+      "object": {"npc": "CinnabarIsland_PokemonCenter_1F_EventScript_Nurse"},
+      "stand": [7, 4],
+      "facing": "north"
+    },
+    "fuchsia_nurse": {
+      "map": "FuchsiaCity_PokemonCenter_1F",
+      "object": {"npc": "FuchsiaCity_PokemonCenter_1F_EventScript_Nurse"},
+      "stand": [7, 4],
+      "facing": "north"
     },
     "indigo_plateau_mart_clerk": {
       "map": "IndigoPlateau_PokemonCenter_1F",
@@ -86,6 +110,12 @@
       "stand": [8, 5],
       "facing": "south"
     },
+    "pewter_nurse": {
+      "map": "PewterCity_PokemonCenter_1F",
+      "object": {"npc": "PewterCity_PokemonCenter_1F_EventScript_Nurse"},
+      "stand": [7, 4],
+      "facing": "north"
+    },
     "route10_center_outside": {
       "map": "Route10",
       "object": {"warp": "warp_3", "to_map": "Route10_PokemonCenter_1F"},
@@ -122,6 +152,12 @@
       "stand": [2, 3],
       "facing": "west"
     },
+    "route4_nurse": {
+      "map": "Route4_PokemonCenter_1F",
+      "object": {"npc": "Route4_PokemonCenter_1F_EventScript_Nurse"},
+      "stand": [7, 4],
+      "facing": "north"
+    },
     "route11_west_grass": {
       "map": "Route11",
       "object": {"not_in_maps": "the west column of the grass's lower patch (x 15 to 36, y 13 to 16), one step east of the path, so the walk crosses no grass"},
@@ -132,6 +168,12 @@
       "map": "Route6",
       "object": {"hidden_item": "FLAG_HIDDEN_ITEM_ROUTE6_RARE_CANDY"},
       "stand": [19, 6],
+      "facing": "north"
+    },
+    "saffron_nurse": {
+      "map": "SaffronCity_PokemonCenter_1F",
+      "object": {"npc": "SaffronCity_PokemonCenter_1F_EventScript_Nurse"},
+      "stand": [7, 4],
       "facing": "north"
     },
     "two_island_game_corner_outside": {
@@ -169,12 +211,26 @@
       "object": {"npc": "VermilionCity_PokemonCenter_1F_EventScript_Nurse"},
       "stand": [7, 4],
       "facing": "north"
+    },
+    "viridian_nurse": {
+      "map": "ViridianCity_PokemonCenter_1F",
+      "object": {"npc": "ViridianCity_PokemonCenter_1F_EventScript_Nurse"},
+      "stand": [7, 4],
+      "facing": "north"
     }
   },
   "towns": {
+    "celadon": {"nurse": "celadon_nurse", "fly": "CeladonCity"},
+    "cerulean": {"nurse": "cerulean_nurse", "fly": "CeruleanCity"},
+    "cinnabar": {"nurse": "cinnabar_nurse", "fly": "CinnabarIsland"},
+    "fuchsia": {"nurse": "fuchsia_nurse", "fly": "FuchsiaCity"},
     "indigo_plateau": {"nurse": "indigo_plateau_nurse", "fly": "IndigoPlateau", "mart": "indigo_plateau_mart_clerk"},
     "lavender": {"nurse": "lavender_nurse", "fly": "LavenderTown", "mart": "lavender_mart_clerk"},
+    "pewter": {"nurse": "pewter_nurse", "fly": "PewterCity"},
     "route10": {"nurse": "route10_nurse", "fly": "Route10"},
-    "vermilion": {"nurse": "vermilion_nurse", "fly": "VermilionCity"}
+    "route4": {"nurse": "route4_nurse", "fly": "Route4"},
+    "saffron": {"nurse": "saffron_nurse", "fly": "SaffronCity"},
+    "vermilion": {"nurse": "vermilion_nurse", "fly": "VermilionCity"},
+    "viridian": {"nurse": "viridian_nurse", "fly": "ViridianCity"}
   }
 }

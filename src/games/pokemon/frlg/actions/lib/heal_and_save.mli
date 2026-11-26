@@ -2,13 +2,6 @@
     [save] (the fork's heal_at_pokecenter in PokemonFRLG_Navigation, and
     {!Game_save}). The heal mashes as the fork's does. *)
 
-val nurse_front : Pokemon_engine.Pose.grid
-(** Where the player talks to the nurse on any Center's ground floor (the map is
-    left blank: a caller names the Center): tile (7, 4) facing north. *)
-
-val center_map : string -> string
-(** ["LavenderTown"] -> ["LavenderTown_PokemonCenter_1F"]. *)
-
 val heal_at_nurse : log:(string -> unit) -> unit -> unit
 (** Facing the nurse, the fork's heal_at_pokecenter (PokemonFRLG_Navigation,
     [frlg/lean]): A until the white text box shows ({!dialog_presses}, the
