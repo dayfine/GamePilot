@@ -12,6 +12,7 @@ type t = {
   scene_under_way : bool;
   battle : bool;
   minimap_arrow : float option;
+  map_pin : Map_leg.point option;
 }
 
 let empty ~at_ms =
@@ -29,6 +30,7 @@ let empty ~at_ms =
     scene_under_way = false;
     battle = false;
     minimap_arrow = None;
+    map_pin = None;
   }
 
 let fade_shows l = l.fade_black || l.fade_white

@@ -14,6 +14,7 @@ val probes :
 (** Every probe a read needs; subscribe them around the run. *)
 
 val game_steps :
+  picture:Wire.box ->
   log:(string -> unit) ->
   log_detail:(string -> unit) ->
   Plza_story.Steps.game_steps
