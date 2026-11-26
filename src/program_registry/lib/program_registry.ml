@@ -209,9 +209,7 @@ let plza_autostory =
     game = plza;
     name = "AutoStory";
     group = [ "PLZA"; "Story" ];
-    description =
-      "Plays the story; for now from the new game's Confirm Choices to Main \
-       Mission 01 (checkpoints 01.00b and 01.01).";
+    description = "Plays the story from a new game, checkpoint by checkpoint.";
     doc = "docs/guide/plza.autostory.md";
     checkpoints = Some "src/games/pokemon/plza/programs/autostory/plans";
     backends = [ Switch ];
