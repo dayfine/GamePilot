@@ -242,6 +242,10 @@ let answer : type a. t -> a Effect.t -> (unit -> a) option =
         (fun () -> t.transport.send (Wire.Notification (Wire.Watch_log line)))
   | Effects.Show_run run ->
       Some (fun () -> t.transport.send (Wire.Notification (Wire.Watch_run run)))
+  | Effects.Show_counters items ->
+      Some
+        (fun () ->
+          t.transport.send (Wire.Notification (Wire.Watch_counters items)))
   | _ -> None
 
 (* Errors go back into the program, so its own handlers see them. *)

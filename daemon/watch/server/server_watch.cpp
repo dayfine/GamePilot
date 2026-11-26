@@ -84,9 +84,9 @@ void Server::start_watch() {
   }
 }
 
-// A `watch.plan`, `watch.run` or `watch.log` notification from the program:
-// the page's,
-// so it never reaches dispatch or the wire log. Without a page it is dropped.
+// A `watch.plan`, `watch.run`, `watch.counters` or `watch.log` notification
+// from the program: the page's, so it never reaches dispatch or the wire log.
+// Without a page it is dropped.
 bool Server::take_watch_note(const pa::JsonValue& message) {
   const pa::JsonObject* object = message.to_object();
   if (object == nullptr || object->get_value("id") != nullptr) {
@@ -94,6 +94,7 @@ bool Server::take_watch_note(const pa::JsonValue& message) {
   }
   const std::string* method = object->get_string("method");
   if (method == nullptr || (*method != "watch.plan" && *method != "watch.run" &&
+                            *method != "watch.counters" &&
                             *method != "watch.log")) {
     return false;
   }
@@ -107,6 +108,8 @@ bool Server::take_watch_note(const pa::JsonValue& message) {
       journal_->plan(json);
     } else if (*method == "watch.run") {
       journal_->chain(json);
+    } else if (*method == "watch.counters") {
+      journal_->counters(json);
     } else {
       journal_->log_line(*params, static_cast<double>(unix_now_ms()));
     }
@@ -119,6 +122,8 @@ bool Server::take_watch_note(const pa::JsonValue& message) {
       watch_->set_plan(std::move(json));
     } else if (*method == "watch.run") {
       watch_->set_run(std::move(json));
+    } else if (*method == "watch.counters") {
+      watch_->set_counters(std::move(json));
     } else {
       watch_->add_log(std::move(json));
     }
