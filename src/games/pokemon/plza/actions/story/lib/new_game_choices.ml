@@ -128,7 +128,7 @@ let decls : Run_options.decl list =
       key = "language";
       value = One_of typed_tags;
       presence = Optional;
-      doc = "the new game's language (00-new-game; not given: its plan's, en)";
+      doc = "the new game's language (00-new-game; not given: the plan's)";
     };
     {
       key = "look";
@@ -136,7 +136,7 @@ let decls : Run_options.decl list =
       presence = Optional;
       doc =
         "the new game's look, left to right along the top row, then the bottom \
-         (not given: the plan's, 1)";
+         (not given: the plan's)";
     };
     {
       key = "name";
@@ -144,6 +144,6 @@ let decls : Run_options.decl list =
       presence = Optional;
       doc =
         "the player's name: at most 12 characters (6 in Japanese and Chinese), \
-         letters, digits and - / : ' , . ? ! (not given: the plan's, Kosmos)";
+         letters, digits and - / : ' , . ? ! (not given: the plan's)";
     };
   ]

@@ -30,9 +30,9 @@ Give each as `--options KEY=VALUE`:
 
 | Key | Values | When not given | What it chooses |
 |---|---|---|---|
-| `language` | en \| es-ES \| es-419 \| fr \| de \| it \| ja \| zh-Hant | optional | the new game's language (00-new-game; not given: its plan's, en) |
-| `look` | 1 to 8 | optional | the new game's look, left to right along the top row, then the bottom (not given: the plan's, 1) |
-| `name` | text | optional | the player's name: at most 12 characters (6 in Japanese and Chinese), letters, digits and - / : ' , . ? ! (not given: the plan's, Kosmos) |
+| `language` | en \| es-ES \| es-419 \| fr \| de \| it \| ja \| zh-Hant | optional | the new game's language (00-new-game; not given: the plan's) |
+| `look` | 1 to 8 | optional | the new game's look, left to right along the top row, then the bottom (not given: the plan's) |
+| `name` | text | optional | the player's name: at most 12 characters (6 in Japanese and Chinese), letters, digits and - / : ' , . ? ! (not given: the plan's) |
 <!-- /generated -->
 
 A key not given keeps 00-new-game's plan's arg. Any other key, a key given twice, a value its key
