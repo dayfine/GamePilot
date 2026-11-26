@@ -30,9 +30,9 @@
    a Pokémon held over an empty cell empty, and the box title reads as Box 1
    on console B's Japanese "ボックス1" of 2026-11-26 alone, in every shift (not
    on its "ボックス3" and "ボックス8", nor the fork's "Box 9" and "Box 24").
-   Console B's Japanese "received before" messages of 2026-11-26 (an Internet
-   gift's, a code's) read as themselves by their templates, in every shift,
-   and nothing else does. The dialog's "Last Saved" reads the same as itself and not as a copy
+   Console B's info cards of 2026-11-26 (a gift received before, a code used
+   before; Japanese and zh-Hans) read as the info card by its layout, in
+   every shift, and nothing else does. The dialog's "Last Saved" reads the same as itself and not as a copy
    with its 18:16 made 18:18 (synthetic-..., no second save captured), in
    every shift. So does a copy with its date and time where the French game
    shows them (synthetic-save-dialog-fr-layout-..., console B, 2026-11-25:
@@ -289,24 +289,21 @@ let expected_title path =
   | Some (_, text) -> text
   | None -> if expected_boxes path = "no boxes" then "no boxes" else "no title"
 
-let received_before_text m =
-  match (Received_before.gift_received m, Received_before.code_used m) with
-  | true, false -> "gift received before"
-  | false, true -> "code used before"
-  | false, false -> "neither message"
-  | true, true -> "both messages"
+let info_card_text m = if Info_card.shown m then "info card" else "no info card"
 
-(* Japanese's templates in every spec but zh-Hans', which has its code one
-   alone. *)
-let expected_received_before ~name path =
-  let zh = name = "zh-Hans" in
-  if same path (mg "gift-received-before-ja-360p") && not zh then
-    "gift received before"
-  else if same path (mg "code-used-before-ja-360p") && not zh then
-    "code used before"
-  else if same path (mg "code-used-before-zh-hans-360p") && zh then
-    "code used before"
-  else "neither message"
+(* Console B's info cards of 2026-11-26: a gift received before and a code
+   used before, in Japanese and zh-Hans. *)
+let info_cards =
+  [
+    mg "gift-received-before-ja-360p";
+    mg "code-used-before-ja-360p";
+    mg "gift-received-before-zh-hans";
+    mg "code-used-before-zh-hans-360p";
+    mg "code-used-before-zh-hans-2-360p";
+  ]
+
+let expected_info_card path =
+  if List.exists (same path) info_cards then "info card" else "no info card"
 
 let readers ~name =
   [
@@ -319,7 +316,7 @@ let readers ~name =
     ("boxes", boxes_text, expected_boxes);
     ("save dialog", save_text, expected_save);
     ("box title", title_text, expected_title);
-    ("received before", received_before_text, expected_received_before ~name);
+    ("info card", info_card_text, expected_info_card);
   ]
 
 (* The readers read only once the Mystery Gift screens show: on the story's
@@ -331,19 +328,12 @@ let in_gifts path =
   | [ _; "mystery-gift"; _ ] -> true
   | _ -> false
 
-(* The "received before" messages' white box covers the gift menu's row and
+(* The info cards' white card covers the gift menu's row and
    items, which read white as on the menu (some shifts read it so): the
-   messages are told by their templates, read first. *)
-let messages =
-  [
-    mg "gift-received-before-ja-360p";
-    mg "code-used-before-ja-360p";
-    mg "code-used-before-zh-hans-360p";
-  ]
-
+   cards are told by their layout, read first. *)
 let applies path (reader, _, _) =
   (in_gifts path || not (List.mem reader gift_screens_only))
-  && not (reader = "gift menu" && List.exists (same (unshifted path)) messages)
+  && not (reader = "gift menu" && List.exists (same (unshifted path)) info_cards)
 
 (* One case per reader per frame, [label] before the frame's path. *)
 let frame_cases ?(name = "en") ~label frames =

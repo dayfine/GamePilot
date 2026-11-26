@@ -9,7 +9,7 @@ type claim =
   | Not_received of string
   | Lost of string
 
-let already_received = Plza_readers.Received_before.gift_received
+let already_received = Plza_readers.Info_card.shown
 
 type reached = Pressed | Used_before
 
@@ -91,6 +91,6 @@ let claim_probed ~log ~picture ~gift_name (gift : C.gift) =
       log (Printf.sprintf "Gift %s not claimed: %s." gift.id e);
       ended ~log (Not_received e)
 
-let claim ~log ~picture ~assets ~gift_name ~received_before gift =
-  Effects.with_probes (G.probes ~picture ~assets ~gift_name ~received_before)
-    (fun () -> claim_probed ~log ~picture ~gift_name gift)
+let claim ~log ~picture ~assets ~gift_name gift =
+  Effects.with_probes (G.probes ~picture ~assets ~gift_name) (fun () ->
+      claim_probed ~log ~picture ~gift_name gift)

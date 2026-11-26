@@ -21,23 +21,11 @@
 
    With [--gifts LANGUAGE], only the Mystery Gift steps' readers' probes
    ({!Plza_readers.Main_menu_row}, {!Plza_readers.Mystery_gift_screen}, the
-   Boxes', their cell's and their box title's, the SAVE dialog's, the
-   "received before" messages' by their Japanese templates, zh-Hans' code one
-   for zh-Hans), the gift's name matched by its
+   Boxes', their cell's and their box title's, the SAVE dialog's, the info
+   card's), the gift's name matched by its
    template in that language (gift-name-vivillon-poke-ball-<language>.png, copied beside
    the spec): en for fixtures/gifts/gifts.probes.jsonl, fr, ja and zh-Hans
    for fixtures/gifts/gifts.<language>.probes.jsonl. *)
-
-(* The "received before" templates a spec matches: zh-Hans' code one for
-   zh-Hans, Japanese's for the others. *)
-let message_templates language : Plza_readers.Received_before.templates =
-  if language = "zh-Hans" then
-    { gift = None; code = Some "code-used-before-zh-Hans.png" }
-  else
-    {
-      gift = Some "gift-received-before-ja.png";
-      code = Some "code-used-before-ja.png";
-    }
 
 let native : Wire.box = { x = 0.; y = 0.; w = 1.; h = 1. }
 let no_minimap = Array.mem "--no-minimap" Sys.argv
@@ -98,8 +86,7 @@ let () =
            @ Plza_readers.Boxes_screen.probes ~picture:native
            @ Plza_readers.Box_cell.probes ~picture:native
            @ Plza_readers.Box_title.probes ~picture:native
-           @ Plza_readers.Received_before.probes ~picture:native
-               (message_templates language)
+           @ Plza_readers.Info_card.probes ~picture:native
            @ Plza_readers.Save_dialog.probes ~picture:native
            @ Plza_readers.Mystery_gift_screen.probes ~picture:native
                ~gift_name:

@@ -37,28 +37,12 @@ let read_party ~log () : Claim_gifts.party_read =
       | Holds m -> party_read m
       | Timeout -> unread ())
 
-let message_names = [ "gift-received-before"; "code-used-before" ]
-
-let message_template ~name ~language =
-  Printf.sprintf "src/games/pokemon/plza/assets/%s-%s.png" name language
-
-let received_before ~message_templates : Plza_readers.Received_before.templates
-    =
-  let upload name =
-    Option.map Effects.upload_template (List.assoc_opt name message_templates)
-  in
-  { gift = upload "gift-received-before"; code = upload "code-used-before" }
-
 let gift_name ~name_templates (gift : C.gift) =
   Option.map Effects.upload_template (List.assoc_opt gift.id name_templates)
 
-let game_steps ~log ~picture ~assets ~name_templates ~message_templates :
-    Claim_gifts.game_steps =
+let game_steps ~log ~picture ~assets ~name_templates : Claim_gifts.game_steps =
   let probed f =
-    Effects.with_probes
-      (Mystery_gift.probes ~picture ~assets ~gift_name:None
-         ~received_before:Plza_readers.Received_before.none)
-      f
+    Effects.with_probes (Mystery_gift.probes ~picture ~assets ~gift_name:None) f
   in
   {
     read_party = (fun () -> probed (read_party ~log));
@@ -66,7 +50,6 @@ let game_steps ~log ~picture ~assets ~name_templates ~message_templates :
       (fun gift ->
         Gift_claim.claim ~log ~picture ~assets
           ~gift_name:(gift_name ~name_templates gift)
-          ~received_before:(received_before ~message_templates)
           gift);
     settle_boxes =
       (fun slots -> probed (fun () -> Gift_boxes.settle ~log slots));
@@ -84,14 +67,14 @@ let no_reload () =
     (Engine_run.Failure.cause ~repeats:true "no_reload"
        "plza.claim-gifts neither saves nor reloads but by its save_progress")
 
-let game ~catalog ~today ~name_templates ~message_templates ~log ~picture
-    ~assets : Plza_engine.Game.t =
+let game ~catalog ~today ~name_templates ~log ~picture ~assets :
+    Plza_engine.Game.t =
   {
     run_own = (fun event _ -> no_handler event);
     run_builtin = no_handler;
     game_actions =
       Claim_gifts.game_actions
-        (game_steps ~log ~picture ~assets ~name_templates ~message_templates)
+        (game_steps ~log ~picture ~assets ~name_templates)
         (Claim_gifts.start catalog ~today);
     flag_holds = (fun _ -> false);
     position = (fun () -> None);

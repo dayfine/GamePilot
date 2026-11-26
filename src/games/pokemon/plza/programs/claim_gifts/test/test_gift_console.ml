@@ -41,7 +41,6 @@ module Gc = Plza_claim_gifts.Gift_claim
 module G = Plza_claim_gifts.Mystery_gift
 module Sp = Plza_claim_gifts.Save_progress
 module L = Plza_claim_gifts.Leave_gifts
-module Rb = Plza_readers.Received_before
 
 let gift =
   List.hd
@@ -71,6 +70,11 @@ let before_save = capture "./mystery-gift/save-dialog-last-saved-1816.png"
 let received_before = capture "./mystery-gift/gift-received-before-ja-360p.png"
 let code_used = capture "./mystery-gift/code-used-before-ja-360p.png"
 
+let received_before_zh =
+  capture "./mystery-gift/gift-received-before-zh-hans.png"
+
+let code_used_zh = capture "./mystery-gift/code-used-before-zh-hans-2-360p.png"
+
 let after_save =
   capture "./mystery-gift/synthetic-save-dialog-last-saved-1818.png"
 
@@ -92,6 +96,7 @@ type screen =
   | Save_dialog of int
   | Saving of int
   | Code_used
+  | Code_used_zh
 
 let rows = 6
 let last_item = 3
@@ -123,7 +128,7 @@ let next screen (button : Wire.button) =
   | Stop_receiving (c, _), Up -> Stop_receiving (c, Yes)
   | Stop_receiving (c, _), Down -> Stop_receiving (c, No)
   | Card, B -> Gift_list 0
-  | Code_used, (A | B) -> Gift_menu
+  | (Code_used | Code_used_zh), (A | B) -> Gift_menu
   | Disconnect Yes, A -> Disconnected
   | Disconnect No, A | Disconnect _, B -> Gift_menu
   | Disconnect _, Up -> Disconnect Yes
@@ -171,6 +176,7 @@ let probes ~list ~card ~saved seq = function
   | Disconnect No -> no_lit question
   | Disconnected -> message
   | Code_used -> code_used
+  | Code_used_zh -> code_used_zh
   | Link_play | Battle_club | Connecting | Saving _ -> other_frame
 
 let frame_ms = 50.
@@ -313,7 +319,7 @@ let claim ?card ?battle ?after_connect ?latency_ms ~list () =
         Gc.claim
           ~log:(fun l -> log := !log @ [ l ])
           ~picture ~assets:Plza_readers.Blob_assets.file_names
-          ~gift_name:(Some "name") ~received_before:Rb.none gift)
+          ~gift_name:(Some "name") gift)
   in
   (claim, c, !log)
 
@@ -330,7 +336,7 @@ let screen_text = function
   | Card -> "card"
   | Prompt | Fading _ -> "choose a gift"
   | Link_play | Battle_club | Gift_menu | Connecting | Disconnect _
-  | Disconnected | Save_dialog _ | Saving _ | Code_used ->
+  | Disconnected | Save_dialog _ | Saving _ | Code_used | Code_used_zh ->
       "other"
 
 (* How often the list's screen came back from "stop receiving?". *)
@@ -437,6 +443,14 @@ let () =
         "already received; main menu, row 5; claimed [4], 1 A on the list";
       case "a code used before: no A on its message"
         (fun () -> after_code Code_used)
+        "used before; 0 A; other";
+      case "zh-Hans, a gift received before: the info card, already received"
+        (fun () ->
+          let r, c, _ = claim ~card:received_before_zh ~list:english_list () in
+          claim_text r ^ "; " ^ screen_text c.screen ^ "; " ^ claims c)
+        "already received; main menu, row 5; claimed [4], 1 A on the list";
+      case "zh-Hans, a code used before: the info card, no A"
+        (fun () -> after_code Code_used_zh)
         "used before; 0 A; other";
       case "a code's gift listed: A claims it"
         (fun () -> after_code (Gift_list 0))

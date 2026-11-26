@@ -73,7 +73,7 @@ the party is full.
 
 Each gift is then claimed from the main menu and back: Link Play, Mystery Gift, then the code typed
 on the keyboard, or the gift found by its name in the Internet list. Its card means it was received.
-The game's message that the gift was received, or its code used, before means it is already
+The game's info card instead (the gift was received, or its code used, before) means it is already
 received: no claim, and nothing to check.
 
 Then the Boxes again, on Box 1: the gift received into party slot 6 is carried to its slot, and each
@@ -110,9 +110,9 @@ lands in party slot 6, the first one received.
 
 ## Known limits
 
-- The "received before" message is read in Japanese only, "code used before" in Japanese and
-  Simplified Chinese (console B's captures). In another language a gift claimed twice fails as an
-  unknown screen, with its frame kept, and a used code stops at its message.
+- "Received before" and "code used before" are read as the game's info card (a white card with an
+  "i" and a down arrow), whatever its text: any other message on that card after a claim would be
+  taken for "received before" too.
 - HOME gifts are not claimed. An Internet gift needs its name's template in the game's language;
   only the Poké Ball Pattern Vivillon has one, in English, French, Japanese and Simplified Chinese.
 - Gifts are told apart by where they land, not by species. Gifts received into a full party land in
@@ -131,5 +131,5 @@ inputs at the edge: the catalog (`Plza_gift_catalog`), today's date and the name
 
 `Gift_boxes` opens the Boxes on Box 1, moves party slot 6's Pokémon and reads the gifts' slots, with
 `Box_paging` (L to Box 1) and `Box_cursor` (the cursor's moves and carries). The readers are PLZA's
-`Mystery_gift_screen`, `Received_before`, `Main_menu_row`, `Boxes_screen`, `Box_cell`, `Box_title`
+`Mystery_gift_screen`, `Info_card`, `Main_menu_row`, `Boxes_screen`, `Box_cell`, `Box_title`
 and `Save_dialog`, and the Switch's `Code_keyboard`.

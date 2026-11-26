@@ -4,9 +4,9 @@ module K = Switch_home.Code_keyboard
 
 let ( let* ) = Result.bind
 
-let probes ~picture ~assets ~gift_name ~received_before =
+let probes ~picture ~assets ~gift_name =
   Plza_readers.Main_menu_row.probes ~picture ~assets
-  @ Plza_readers.Received_before.probes ~picture received_before
+  @ Plza_readers.Info_card.probes ~picture
   @ S.probes ~picture ~gift_name
   @ K.probes
   @ Plza_readers.Boxes_screen.probes ~picture
@@ -148,12 +148,10 @@ let open_keyboard ~log =
 
 type entered = Listed | Used_before
 
-module Rb = Plza_readers.Received_before
-
 let after_code ~log code =
   let used = ref false in
   let check m =
-    used := Rb.code_used m;
+    used := Plza_readers.Info_card.shown m;
     !used || S.list_active m
   in
   let* () = until_pressing ~what:"no active gift list" check in

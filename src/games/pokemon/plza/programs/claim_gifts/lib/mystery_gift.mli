@@ -23,12 +23,12 @@
     - {!open_keyboard}: Down, A (2 s); A (2 s) until the keyboard opens, 25 at
       most.
     - {!enter_code}: the code typed; + (5 s); the list again, or the message
-      that the code was used before ({!Plza_readers.Received_before}, read as
-      the list is, A pressed past other screens as above); A (8 s) on the code's
-      gift, none on the message. Which item is selected is not read: no code
-      gift has a name template, no list after a code was captured, and an
-      unselected item reads as an empty row (0.00 white), so "the only new item"
-      cannot be counted either.
+      that the code was used before (the info card, {!Plza_readers.Info_card},
+      read as the list is, A pressed past other screens as above); A (8 s) on
+      the code's gift, none on the message. Which item is selected is not read:
+      no code gift has a name template, no list after a code was captured, and
+      an unselected item reads as an empty row (0.00 white), so "the only new
+      item" cannot be counted either.
     - leaving the gifts, read-driven: {!Leave_gifts}.
 
     The list and the keyboard count once they have read so for 1 s (a white fade
@@ -39,7 +39,6 @@ val probes :
   picture:Wire.box ->
   assets:Plza_readers.Blob_assets.t ->
   gift_name:string option ->
-  received_before:Plza_readers.Received_before.templates ->
   Wire.probe_spec list
 (** The main menu's, the gift screens', the keyboard's, the Boxes' (their
     cursor's cell's, their box title's and the first-time card's) and the SAVE
