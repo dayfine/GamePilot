@@ -17,8 +17,10 @@ let hold_ms = 1000.
 let dialog_ms = 3000
 let menu_ms = 5000
 
-(* A minute and a little: the current time must change within it. *)
-let tick_ms = 65_000
+(* B out of the dialog, then a wait before it is opened again: the current
+   time stands still while the dialog is open. *)
+let close_a_while : T.t = { button = B; hold_ms = 100; cooldown_ms = 15_000 }
+let max_reopens = 6
 
 let held ~timeout_ms read =
   Switch_home.Held_screen.wait_for ~timeout_ms
@@ -44,16 +46,33 @@ let times ~what =
   | Some (), Some shares -> Ok shares
   | _ -> Error what
 
-(* The dialog's current time read, held 1 s, as another than [now]. *)
-let next_minute now =
-  let read m =
-    match D.current_time m with
-    | Some t when not (D.same_time t now) -> Some ()
-    | _ -> None
+let unchanged =
+  Printf.sprintf
+    "the current time did not change in %d reopens of the dialog: not saved"
+    max_reopens
+
+(* The dialog closed and opened again: whether its current time is another
+   than [now]. *)
+let reopened_later now =
+  T.press close_a_while;
+  let* _, later = times ~what:"no SAVE dialog when opened again" in
+  Ok (not (D.same_time later now))
+
+let changed_after ~log n =
+  log
+    (Printf.sprintf "The current time changed, the dialog opened %d more times."
+       n)
+
+(* Reopened until its current time is another than [now]: then open, its
+   "Last Saved" as before. *)
+let next_minute ~log now =
+  let rec go n =
+    if n > max_reopens then Error unchanged
+    else
+      let* later = reopened_later now in
+      if later then Ok (changed_after ~log n) else go (n + 1)
   in
-  Option.to_result
-    ~none:"the current time did not change within 65 s: not saved"
-    (held ~timeout_ms:tick_ms read)
+  go 1
 
 let menu_back () =
   Option.to_result ~none:"no main menu after saving"
@@ -62,8 +81,7 @@ let menu_back () =
 
 let save ~log =
   let* before, now = times ~what:"no SAVE dialog; nothing saved" in
-  let* () = next_minute now in
-  log "The current time changed: saving.";
+  let* () = next_minute ~log now in
   T.press_all confirm_save;
   let* () = menu_back () in
   let* after, _ = times ~what:"no SAVE dialog after saving" in

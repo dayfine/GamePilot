@@ -77,10 +77,12 @@ The game's message that the gift was received, or its code used, before means it
 received: no claim, and nothing to check.
 
 Then the Boxes again, on Box 1: the gift received into party slot 6 is carried to its slot, and each
-Pokémon gift received in this run must read in its slot. Save Progress saves when a gift was
-received or a Pokémon moved: it waits on the SAVE dialog until the current time reaches the next
-minute (up to a minute), saves, and checks that "Last Saved" changed. The last line of the log is one line
-a gift: claimed, already received, expired, not supported or failed.
+Pokémon gift received in this run must read in its slot.
+
+Save Progress saves when a gift was received or a Pokémon moved: it closes and reopens the SAVE
+dialog every 15 s until its current time reaches the next minute (its time stands still while it is
+open), saves, and checks that "Last Saved" changed. The last line of the log is one line a gift:
+claimed, already received, expired, not supported or failed.
 
 A gift is known by where the game puts it, not by its species: received into a party of five it
 lands in party slot 6, the first one received.
@@ -108,9 +110,9 @@ lands in party slot 6, the first one received.
 
 ## Known limits
 
-- The "received before" and "code used before" messages are read in Japanese only (console B's
-  captures). In another language a gift claimed twice fails as an unknown screen, with its frame
-  kept, and a used code stops at its message.
+- The "received before" message is read in Japanese only, "code used before" in Japanese and
+  Simplified Chinese (console B's captures). In another language a gift claimed twice fails as an
+  unknown screen, with its frame kept, and a used code stops at its message.
 - HOME gifts are not claimed. An Internet gift needs its name's template in the game's language;
   only the Poké Ball Pattern Vivillon has one, in English, French, Japanese and Simplified Chinese.
 - Gifts are told apart by where they land, not by species. Gifts received into a full party land in

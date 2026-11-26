@@ -51,3 +51,11 @@ Internet gift list (2026-11-26, four gifts, the cursor on the first, Vivillon
 the 4th as "球球花纹的彩粉蝶"), redacted to `^mystery_gift\.`. Vivillon's
 zh-Hans name template (`../../../assets/gift-name-vivillon-poke-ball-zh-Hans.png`)
 is cut from the unredacted capture at (592, 566, 400, 38), as the others.
+
+`save-dialog-zh-hans-1223.png` is console B's 1080p capture of the SAVE dialog
+in its fourth zh-Hans run (2026-11-26): current time 12:23, "Last Saved" 12:21,
+redacted to `^save_dialog\.`. `code-used-before-zh-hans-360p.png` is frame 109
+of that run: the message after `CELEBRATE30TH`'s + that the code was used,
+redacted to `^(mystery_gift|received_before)\.` of the `--gifts zh-Hans`
+spec; `../../../assets/code-used-before-zh-Hans.png` is its first line, cut
+from the unredacted frame at (275, 146, 90, 15) and scaled 3 times up.

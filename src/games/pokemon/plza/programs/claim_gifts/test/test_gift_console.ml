@@ -19,7 +19,8 @@
    reader knows. The
    SAVE dialog is console B's at 18:16 before the save and its copy at 18:18
    after, its "Last Saved" shares changed a little on every frame, as a
-   capture's do; its current time is made for the game clock's minute. The
+   capture's do; its current time is made for the game clock's minute when
+   it opened, and stands still while it is open (console B, 2026-11-26). The
    game saved last in minute 0, and a save within it leaves "Last Saved" as
    it was (console B, 2026-11-26). Nothing reaches a daemon.
 
@@ -190,6 +191,8 @@ type console = {
   clock_ms : float option;
       (** How far into the game clock's minute 0 the run starts; [None]: the
           clock stands still in minute 0. *)
+  mutable dialog_minute : int;
+      (** The minute the dialog opened in: its current time stands still. *)
 }
 
 (* A prompt fading in and out over the list: 400 ms of it, 500 of the list
@@ -210,9 +213,10 @@ let minute c =
   | None -> 0
   | Some start -> int_of_float ((start +. c.t_ms) /. 60_000.)
 
-(* The dialog's current time, one reading a minute, two apart by 1.0. *)
+(* The dialog's current time, the minute it opened in, one reading a
+   minute, two apart by 1.0. *)
 let now_probe c =
-  let x = if minute c mod 2 = 0 then 0.1 else 0.6 in
+  let x = if c.dialog_minute mod 2 = 0 then 0.1 else 0.6 in
   ("save_dialog.now", Wire.Line_shares { rows = [ 0.2 ]; columns = [ x; x ] })
 
 let frame ~list c : Effects.measurements =
@@ -234,6 +238,7 @@ let press c = function
           c.presses <- c.presses @ [ (screen, b) ];
           (match (screen, b) with
           | Saving _, Wire.A -> c.saved <- minute c <> 0
+          | Menu _, Wire.R -> c.dialog_minute <- minute c
           | Gift_list k, Wire.A -> c.claimed <- c.claimed @ [ k ]
           | _ -> ());
           c.screen <-
@@ -295,6 +300,7 @@ let start ?(card = english_card) ?(battle = false)
     after_connect;
     latency_ms;
     clock_ms;
+    dialog_minute = 0;
   }
 
 let picture : Wire.box = { x = 0.; y = 0.; w = 1.; h = 1. }
@@ -516,11 +522,22 @@ let () =
         (fun () -> leave (Disconnect No))
         "main menu, row 5; claimed [], 0 A on the list";
       case "Last Saved held 1 s over changing shares: saved" save
-        "The current time changed: saving.; Saved: Last Saved changed. -> main \
-         menu, row 0";
+        "The current time changed, the dialog opened 1 more times.; Saved: \
+         Last Saved changed. -> main menu, row 0";
+      case "the dialog's time stands still: closed and opened until it changes"
+        (fun () ->
+          let c = start ~clock_ms:(Some 10_000.) (Menu 0) in
+          let r =
+            on_console ~list:english_list c (fun () -> Sp.save ~log:ignore)
+          in
+          Printf.sprintf "%s; %d R, %d B"
+            (match r with Ok () -> "saved" | Error e -> "error: " ^ e)
+            (List.length (List.filter (fun (_, b) -> b = Wire.R) c.presses))
+            (List.length (List.filter (fun (_, b) -> b = Wire.B) c.presses)))
+        "saved; 5 R, 5 B";
       case "the dialog opened 10 s before the minute changes: waits, then saved"
         (save_a ()) "saved; the clock in minute 1; 2 A";
       case "the clock stands still: no A, not saved" (save_a ~clock_ms:None ())
-        "error: the current time did not change within 65 s: not saved; the \
-         clock in minute 0; 0 A";
+        "error: the current time did not change in 6 reopens of the dialog: \
+         not saved; the clock in minute 0; 0 A";
     ]

@@ -166,7 +166,7 @@ regen_gifts() {
     mkdir -p "$FIXTURES/gifts" "$work/gifts" "$work/gifts/frames" \
         "$work/gifts/lossless/tutorial-cards" "$work/gifts/shifted"
     cp "$SRC/games/pokemon/plza/assets/"gift-name-vivillon-poke-ball-*.png \
-        "$SRC/games/pokemon/plza/assets/"*-before-ja.png "$work/spec/"
+        "$SRC/games/pokemon/plza/assets/"*-before-*.png "$work/spec/"
     for language in en fr ja zh-Hans; do
         (cd "$SRC" && dune exec \
             games/pokemon/plza/readers/test/write_probe_spec.exe \

@@ -4,13 +4,16 @@ let none = { gift = None; code = None }
 let gift_id = "received_before.gift"
 let code_id = "received_before.code"
 let slack = 15
+
+(* zh-Hans' code line sits 21 px above Japanese's cut. *)
+let code_slack = 25
 let max_score = 0.03
 
 (* Where each template was cut, in the 1080p frame. *)
 let gift_cut : Native_box.t = { x = 696; y = 519; w = 522; h = 42 }
 let code_cut : Native_box.t = { x = 825; y = 459; w = 270; h = 45 }
 
-let around (b : Native_box.t) : Native_box.t =
+let around ~slack (b : Native_box.t) : Native_box.t =
   {
     x = b.x - slack;
     y = b.y - slack;
@@ -18,8 +21,8 @@ let around (b : Native_box.t) : Native_box.t =
     h = b.h + (2 * slack);
   }
 
-let gift_line = around gift_cut
-let code_line = around code_cut
+let gift_line = around ~slack gift_cut
+let code_line = around ~slack:code_slack code_cut
 
 let match_probe ~id template box =
   Wire.template_match_probe ~id ~box ~delivery:Every ~template ()

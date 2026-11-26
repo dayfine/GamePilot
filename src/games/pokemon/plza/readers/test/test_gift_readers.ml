@@ -164,13 +164,23 @@ let save_pairs =
       Save_dialog.last_saved,
       "./mystery-gift/synthetic-save-dialog-fr-layout-1816.png",
       "./mystery-gift/synthetic-save-dialog-fr-layout-1818.png" );
+    ( "current time, zh-Hans, 12:12 and 12:23 (two runs)",
+      Save_dialog.current_time,
+      "./mystery-gift/save-dialog-zh-hans-1212-360p.png",
+      "./mystery-gift/save-dialog-zh-hans-1223.png" );
+    ( "Last Saved, zh-Hans, 12:12 and 12:21 (two runs)",
+      Save_dialog.last_saved,
+      "./mystery-gift/save-dialog-zh-hans-1212-360p.png",
+      "./mystery-gift/save-dialog-zh-hans-1223.png" );
     ( "current time, zh-Hans",
       Save_dialog.current_time,
       "./mystery-gift/save-dialog-zh-hans-1212-360p.png",
       "./mystery-gift/synthetic-save-dialog-zh-hans-1211-360p.png" );
   ]
 
-let saves = List.concat_map (fun (_, _, a, b) -> [ a; b ]) save_pairs
+let saves =
+  List.sort_uniq String.compare
+    (List.concat_map (fun (_, _, a, b) -> [ a; b ]) save_pairs)
 
 (* "./bright90/mystery-gift/x.png" -> "./mystery-gift/x.png"; the shifted
    frames are png. An unshifted path stays. *)
@@ -286,9 +296,16 @@ let received_before_text m =
   | false, false -> "neither message"
   | true, true -> "both messages"
 
-let expected_received_before path =
-  if same path (mg "gift-received-before-ja-360p") then "gift received before"
-  else if same path (mg "code-used-before-ja-360p") then "code used before"
+(* Japanese's templates in every spec but zh-Hans', which has its code one
+   alone. *)
+let expected_received_before ~name path =
+  let zh = name = "zh-Hans" in
+  if same path (mg "gift-received-before-ja-360p") && not zh then
+    "gift received before"
+  else if same path (mg "code-used-before-ja-360p") && not zh then
+    "code used before"
+  else if same path (mg "code-used-before-zh-hans-360p") && zh then
+    "code used before"
   else "neither message"
 
 let readers ~name =
@@ -302,7 +319,7 @@ let readers ~name =
     ("boxes", boxes_text, expected_boxes);
     ("save dialog", save_text, expected_save);
     ("box title", title_text, expected_title);
-    ("received before", received_before_text, expected_received_before);
+    ("received before", received_before_text, expected_received_before ~name);
   ]
 
 (* The readers read only once the Mystery Gift screens show: on the story's
@@ -318,7 +335,11 @@ let in_gifts path =
    items, which read white as on the menu (some shifts read it so): the
    messages are told by their templates, read first. *)
 let messages =
-  [ mg "gift-received-before-ja-360p"; mg "code-used-before-ja-360p" ]
+  [
+    mg "gift-received-before-ja-360p";
+    mg "code-used-before-ja-360p";
+    mg "code-used-before-zh-hans-360p";
+  ]
 
 let applies path (reader, _, _) =
   (in_gifts path || not (List.mem reader gift_screens_only))
