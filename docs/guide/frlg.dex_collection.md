@@ -87,7 +87,7 @@ every catch shiny (issue #14), toward the 60 caught the National Pokedex needs (
 `docs/roadmap/frlg-sevii-islands.md`).
 
 Each catch is the `wild_rng` action ([Wild RNG](frlg.wild_rng.md)) on the seed table
-`src/games/frlg/assets/rng_seeds_mgba_sevii_save.json`, measured on mGBA from the Sevii story's
+`src/games/pokemon/frlg/assets/rng_seeds_mgba_sevii_save.json`, measured on mGBA from the Sevii story's
 end save, plus the plan's `seed_shift`. On mGBA the seed a title-screen press gives depends a
 little on the save the game boots from: by where the last save left the flash sectors (the save
 count modulo 14), the boot ends 0, 4, 8 or 12 timer counts later, and every seed moves with it.

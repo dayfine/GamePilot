@@ -133,7 +133,7 @@ appear in one memory-written run; not chased, since the item code is what the pr
 ## The program
 
 `frlg.ace`, registered in `program_registry` with backends mGBA (Switch later), plans in
-`src/games/frlg/programs/ace/plans/`.
+`src/games/pokemon/frlg/programs/ace/plans/`.
 
 Decided in the user's review of this note (2026-11-25):
 
@@ -149,7 +149,7 @@ Decided in the user's review of this note (2026-11-25):
 
 ### Codes and the vetted table, as data
 
-`src/games/frlg/assets/ace_presets.json`: the literal box names, so what is typed is what was
+`src/games/pokemon/frlg/assets/ace_presets.json`: the literal box names, so what is typed is what was
 reviewed.
 
 ```json

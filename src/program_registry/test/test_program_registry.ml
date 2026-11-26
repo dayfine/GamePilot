@@ -61,7 +61,7 @@ let bad_plans () =
   |> String.concat "\n"
 
 let plan_count () =
-  match R.locate "src/games/frlg/programs/mail_glitch/plans" with
+  match R.locate "src/games/pokemon/frlg/programs/mail_glitch/plans" with
   | Some dir -> string_of_bool (plans_in dir <> [])
   | None -> "no folder"
 
@@ -104,7 +104,7 @@ let options_for program given =
 let id_of = function Some (p : R.t) -> p.id | None -> "none"
 
 (* frlg.ace's item choices against the vetted table's items
-   (src/games/frlg/assets/ace_presets.json): a preset added to one and not the
+   (src/games/pokemon/frlg/assets/ace_presets.json): a preset added to one and not the
    other shows here. *)
 let ace_items () =
   let declared =
@@ -157,13 +157,14 @@ let () =
       case "find: unknown" (fun () -> id_of (R.find "mail")) "none";
       case "plan dir: relative, trailing slash"
         (fun () ->
-          id_of (R.of_plan_dir "src/games/frlg/programs/mail_glitch/plans/"))
+          id_of
+            (R.of_plan_dir "src/games/pokemon/frlg/programs/mail_glitch/plans/"))
         "frlg.mail_glitch";
       case "plan dir: absolute, ./ inside"
         (fun () ->
           id_of
             (R.of_plan_dir
-               "/x/GamePilot/./src/games/frlg/programs/mail_glitch/plans"))
+               "/x/GamePilot/./src/games/pokemon/frlg/programs/mail_glitch/plans"))
         "frlg.mail_glitch";
       case "plan dir: a scratch copy is no program"
         (fun () -> id_of (R.of_plan_dir "/tmp/mail_glitch/plans"))

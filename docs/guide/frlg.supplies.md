@@ -61,7 +61,7 @@ sh run/run_checkpoints_on_switch.sh frlg.supplies --from su-01 --to su-01
 
 ## How it works
 
-One checkpoint, su-01, its plan in `src/games/frlg/programs/supplies/plans/`: Fly to Lavender, 5
+One checkpoint, su-01, its plan in `src/games/pokemon/frlg/programs/supplies/plans/`: Fly to Lavender, 5
 Super Repels at the Mart, Fly to Celadon, 100 Retro Mail at the Dept. Store 4F, and out of its west
 door. Other programs then only check their stock in the pre-flight and never shop on the way.
 
