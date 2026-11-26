@@ -132,7 +132,7 @@ let () =
       case "1 to K: down, then left round the side" (path '1' 'K')
         "D D L* L L L L";
       case "Q to P: left round the side" (path 'Q' 'P') "L* L L";
-      case "A to !: left round the side twice" (path 'A' '!') "D L* L";
+      case "A to !: left round the side once" (path 'A' '!') "D L* L";
       case "! to Z: right round the side" (path '!' 'Z') "R R*";
       case "the same key: no move" (path 'k' 'K') "";
       case "Kosmos from 1: typed" (typed field "Kosmos") "Kosmos";

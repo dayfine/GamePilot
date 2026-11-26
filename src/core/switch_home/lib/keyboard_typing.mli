@@ -16,7 +16,10 @@
     Z X C V B N M , . ? !
     v}
     Letters are typed by their key, an upper-case one with Shift (the left
-    stick's click) first; the keyboard opens with Shift off.
+    stick's click) first; the keyboard opens with Shift off. Only this QWERTY
+    layout is typed on, the one console B's English and French games opened: a
+    keyboard laid out otherwise (AZERTY, QWERTZ) is not supported, as for
+    {!Code_keyboard}: the presses would type other characters.
 
     The same keyboard as {!Code_keyboard}'s, and its cursor read
     ({!Code_keyboard.cursor}); the code keyboard's typer is the lab script's,
