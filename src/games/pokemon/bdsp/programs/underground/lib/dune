@@ -1,6 +1,6 @@
 (library
- (name bdsp_underground_poc)
- (public_name gamepilot.bdsp_underground_poc)
+ (name bdsp_underground_program)
+ (public_name gamepilot.bdsp_underground_program)
  (libraries
   gamepilot.wire
   gamepilot.run_options

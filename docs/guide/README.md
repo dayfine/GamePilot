@@ -19,7 +19,7 @@ Each page ends with "How it works", for developers: the ported files, the mechan
 | [AutoStory](plza.autostory.md) | `plza.autostory` | the Switch | Plays the story from a new game, checkpoint by checkpoint. |
 | [Claim Gifts](plza.claim-gifts.md) | `plza.claim-gifts` | the Switch | Claims the Mystery Gifts of its catalog that have not expired, puts their Pokémon in the Boxes and saves. |
 | [Bank in HOME](plza.bank-home.md) | `plza.bank-home` | the Switch | Moves the claimed gifts from the game's box into their Pokémon HOME boxes and saves HOME. |
-| [Underground PoC](bdsp.underground_poc.md) | `bdsp.underground_poc` | the Switch | Iterative Switch bring-up program for Grand Underground shard farming. |
+| [Grand Underground](bdsp.underground.md) | `bdsp.underground` | the Switch | Farms Mysterious Shards and treasures in the Grand Underground. |
 <!-- /generated -->
 
 The Mail Glitch has a second page for its last checkpoint:

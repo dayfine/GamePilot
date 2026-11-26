@@ -334,15 +334,15 @@ let plza_bank_home =
 let max_underground_cycles = 999
 let max_underground_slates = 99
 
-let bdsp_underground_poc =
+let bdsp_underground =
   {
-    id = "bdsp.underground_poc";
+    id = "bdsp.underground";
     game = bdsp;
-    name = "Underground PoC";
-    group = [ "BDSP"; "Development" ];
+    name = "Grand Underground";
+    group = [ "BDSP"; "Farming" ];
     description =
-      "Iterative Switch bring-up program for Grand Underground shard farming.";
-    doc = "docs/guide/bdsp.underground_poc.md";
+      "Farms Mysterious Shards and treasures in the Grand Underground.";
+    doc = "docs/guide/bdsp.underground.md";
     checkpoints = None;
     backends = [ Switch ];
     viewport = Native;
@@ -406,7 +406,7 @@ let all =
     plza_autostory;
     plza_claim_gifts;
     plza_bank_home;
-    bdsp_underground_poc;
+    bdsp_underground;
   ]
 
 let short_id p =

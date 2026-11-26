@@ -1,6 +1,6 @@
-(** Isolated single-step test modes for [bdsp.underground_poc], allowing each
-    stage of the Grand Underground farming loop to be verified independently on
-    live hardware before chaining them in [mode=farm]. *)
+(** Isolated single-step test modes for [bdsp.underground], allowing each stage
+    of the Grand Underground farming loop to be verified independently on live
+    hardware before chaining them in [mode=farm]. *)
 
 open Bdsp_underground
 

@@ -1,5 +1,5 @@
-(** Iterative one-shot program [bdsp.underground_poc] for BDSP Grand Underground
-    Mysterious Shard farming on the Switch with [gamepilot run --watch].
+(** One-shot program [bdsp.underground] for BDSP Grand Underground Mysterious
+    Shard farming on the Switch with [gamepilot run --watch].
 
     Uses {!Bdsp_readers.Underground_screen} for unified frame classification,
     3-zone minimap sparkle steering around the central Hideaway ring, live

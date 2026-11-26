@@ -39,7 +39,7 @@ let cycle_step_names =
   [ "refresh_cave"; "read_map_and_plan"; "route"; "dig"; "handle_dig_result" ]
 
 let log msg =
-  let line = "[bdsp.underground_poc] " ^ msg in
+  let line = "[bdsp.underground] " ^ msg in
   Watch_report.log print_endline line
 
 let is_black m =
@@ -271,8 +271,8 @@ let run_farm_loop ~picture ~goal ~total_cycles =
   Ok final
 
 let finish_result = function
-  | Ok msg -> (true, "bdsp.underground_poc: PASS (" ^ msg ^ ")")
-  | Error e -> (false, "bdsp.underground_poc: FAIL " ^ e)
+  | Ok msg -> (true, "bdsp.underground: PASS (" ^ msg ^ ")")
+  | Error e -> (false, "bdsp.underground: FAIL " ^ e)
 
 let dispatch_mode ~mode ~door ~picture ~goal ~total_cycles =
   match Step_modes.run ~mode ~door ~log ~picture ~goal with

@@ -32,7 +32,7 @@ modules.
 
 ## Self-aligning corridor navigation
 
-A one-shot program `bdsp.underground_poc` in `src/games/pokemon/bdsp/programs/`, Switch backend only.
+A one-shot program `bdsp.underground` in `src/games/pokemon/bdsp/programs/`, Switch backend only.
 BDSP overworld timings come from fork PR #402 (`BDSP_MOVE_MECHANICS`), calibrated live on Console A:
 
 1. Bounce through the Hideaway doorway (`West` → `East`, with perpendicular 350 ms auto-centering
@@ -50,5 +50,5 @@ BDSP overworld timings come from fork PR #402 (`BDSP_MOVE_MECHANICS`), calibrate
   `Dig_result_reader`, and `Mining_grid` (130-cell live classifier + live wall-crack gauge).
 - `src/games/pokemon/bdsp/actions/` (`gamepilot.bdsp_actions`): `Bdsp_game_entry`, `Bdsp_overworld`, and
   `Bdsp_mining_play` (`dig_wall_smart`, `collect_dig_yields`).
-- `src/games/pokemon/bdsp/programs/underground_poc/` (`bdsp.underground_poc`): registered Switch one-shot
-  program verified live on Console A via `gamepilot run bdsp.underground_poc --watch`.
+- `src/games/pokemon/bdsp/programs/underground/` (`bdsp.underground`): registered Switch one-shot
+  program verified live on Console A via `gamepilot run bdsp.underground --watch`.

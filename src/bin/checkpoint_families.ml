@@ -80,13 +80,13 @@ let start_menu_poc =
           Start_menu_poc.describe outcome ));
   }
 
-let bdsp_underground_poc =
+let bdsp_underground =
   {
-    label = "bdsp.underground_poc";
-    default_state = Bdsp_underground_poc.Underground_poc.default_state;
+    label = "bdsp.underground";
+    default_state = Bdsp_underground_program.Underground.default_state;
     run =
       (fun ~options ~state ->
-        Bdsp_underground_poc.Underground_poc.run ~options ?state ());
+        Bdsp_underground_program.Underground.run ~options ?state ());
   }
 
 (* The Pokémon grid rules' entry points. *)
@@ -101,7 +101,7 @@ let grid =
     one_shots =
       [
         ("frlg.start_menu_poc", start_menu_poc);
-        ("bdsp.underground_poc", bdsp_underground_poc);
+        ("bdsp.underground", bdsp_underground);
       ];
   }
 

@@ -1,4 +1,4 @@
-# Underground PoC
+# Grand Underground
 
 Farms the Grand Underground in *Pokémon Brilliant Diamond* / *Shining Pearl* by anchoring at a
 Pokémon Hideaway doorway, bouncing in and out to instantly respawn sparkling wall dig spots,
@@ -11,7 +11,7 @@ Runs on: the Switch.
 
 ## Before you start
 
-<!-- needs: bdsp.underground_poc has no checkpoints -->
+<!-- needs: bdsp.underground has no checkpoints -->
 
 - Load a post-game BDSP save with the National Pokédex and enter the Grand Underground offline
   (`Play Alone`, row 2 of the Explorer Kit mode menu).
@@ -35,20 +35,20 @@ Give each as `--options KEY=VALUE`:
 
 <!-- generated:commands -->
 ```sh
-cd src && opam exec -- dune exec -- gamepilot run bdsp.underground_poc
+cd src && opam exec -- dune exec -- gamepilot run bdsp.underground
 ```
 <!-- /generated -->
 
 To run with the live Watch Page on a Switch console:
 
 ```sh
-cd src && opam exec -- dune exec -- gamepilot run bdsp.underground_poc \
+cd src && opam exec -- dune exec -- gamepilot run bdsp.underground \
   --watch --console --backend switch --serial /dev/cu.usbmodem... --capture 0
 ```
 
 ## What happens
 
-<!-- checkpoints: bdsp.underground_poc has no checkpoints -->
+<!-- checkpoints: bdsp.underground has no checkpoints -->
 
 Each cycle:
 
@@ -64,7 +64,7 @@ Each cycle:
 
 ## When it stops
 
-<!-- preflight: bdsp.underground_poc has no checkpoints -->
+<!-- preflight: bdsp.underground has no checkpoints -->
 
 Stops after completing its configured number of cycles (`total_cycles = 3` in the PoC) and prints
 the cycle, dig, and bail counts.
