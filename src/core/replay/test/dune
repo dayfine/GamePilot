@@ -4,4 +4,4 @@
   gamepilot.wire
   gamepilot.effects
   gamepilot.replay
-  gamepilot.substring))
+  gamepilot.strings))

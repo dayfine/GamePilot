@@ -55,11 +55,11 @@ let wire_span path =
   | ic -> Fun.protect ~finally:(fun () -> close_in ic) (fun () -> span ic)
 
 let backend_of_output text =
-  if Substring.contains text "daemon: mgba" then "mgba"
+  if Strings.Contains.substring text "daemon: mgba" then "mgba"
   else if
     String.starts_with ~prefix:"board:" text
-    || Substring.contains text "daemon: switch"
-    || Substring.contains text "daemon: board"
+    || Strings.Contains.substring text "daemon: switch"
+    || Strings.Contains.substring text "daemon: board"
   then "switch"
   else ""
 

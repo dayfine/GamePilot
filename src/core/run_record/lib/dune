@@ -1,4 +1,4 @@
 (library
  (name run_record)
  (public_name gamepilot.run_record)
- (libraries unix yojson gamepilot.substring))
+ (libraries unix yojson gamepilot.strings))

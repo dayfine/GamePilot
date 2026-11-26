@@ -2,7 +2,7 @@ let is_at text i part =
   let n = String.length part in
   i + n <= String.length text && String.sub text i n = part
 
-let find = Substring.find
+let find = Strings.Find.substring
 
 let rfind text part =
   let rec at i =

@@ -24,7 +24,7 @@ let half_bits = 16
 
 (* Forms a..z are 0..25, then '!' and '?'. *)
 let unown_form_of_slot (slot : slot) =
-  if not (Substring.contains slot.species unown) then None
+  if not (Strings.Contains.substring slot.species unown) then None
   else
     match slot.species.[String.length slot.species - 1] with
     | 'a' .. 'z' as c -> Some (Char.code c - Char.code 'a')
@@ -80,7 +80,7 @@ let pokemon_of_state (state : Rng_state.t) slots ~super_rod =
   { species = slot.species; pokemon; slot = slot_num; level }
 
 let base_species_slug species =
-  if Substring.contains species unown then unown else species
+  if Strings.Contains.substring species unown then unown else species
 
 let species_matches ~observed ~candidate =
   let base = base_species_slug observed in

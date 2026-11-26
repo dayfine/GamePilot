@@ -47,7 +47,7 @@ let split_on_separator name =
   let sep = " / " in
   let n = String.length sep in
   let rec go start acc =
-    match Substring.find ~from:start name sep with
+    match Strings.Find.substring ~from:start name sep with
     | None ->
         List.rev (String.sub name start (String.length name - start) :: acc)
     | Some i -> go (i + n) (String.sub name start (i - start) :: acc)

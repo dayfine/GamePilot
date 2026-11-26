@@ -1,4 +1,4 @@
 (library
  (name engine_expand)
  (public_name gamepilot.engine_expand)
- (libraries yojson gamepilot.name_suggestion gamepilot.substring))
+ (libraries yojson gamepilot.name_suggestion gamepilot.strings))

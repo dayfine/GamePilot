@@ -45,7 +45,7 @@ let text (name, field) =
 let replace_all ~sub ~by s =
   let n = String.length sub and b = Buffer.create (String.length s) in
   let rec go i =
-    match Substring.find ~from:i s sub with
+    match Strings.Find.substring ~from:i s sub with
     | None -> Buffer.add_string b (String.sub s i (String.length s - i))
     | Some j ->
         Buffer.add_string b (String.sub s i (j - i));

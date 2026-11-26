@@ -6,4 +6,4 @@
   gamepilot.grid_geometry
   gamepilot.grid_maps
   gamepilot.json_field
-  gamepilot.substring))
+  gamepilot.strings))

@@ -47,7 +47,8 @@ let () =
   | exception Replay.Divergence e ->
       print_endline e;
       expect "missing recorded request -> divergence"
-        (Substring.contains e "line 5" && Substring.contains e "submit (id 3)")
+        (Strings.Contains.substring e "line 5"
+        && Strings.Contains.substring e "submit (id 3)")
 
 (* A reader that misses on the recorded frames times out where the live run
    pressed next; the program then fails on its own path, which is its outcome,
@@ -185,7 +186,8 @@ let () =
   | r -> failwith ("FAILED replay accepted a missed stop: " ^ raced_text r)
   | exception Replay.Divergence e ->
       print_endline e;
-      expect "missed stop -> divergence" (Substring.contains e "cancel (id 4)")
+      expect "missed stop -> divergence"
+        (Strings.Contains.substring e "cancel (id 4)")
 
 (* [probe.upload_template]: each PNG goes up once per connection, and a replay
    checks the bytes the program uploads against the recorded ones. *)
@@ -225,8 +227,8 @@ let () =
   | exception Replay.Divergence e ->
       print_endline e;
       expect "other template bytes -> divergence"
-        (Substring.contains e "line 5"
-        && Substring.contains e "template differs")
+        (Strings.Contains.substring e "line 5"
+        && Strings.Contains.substring e "template differs")
 
 (* [unsubscribe]: [with_probes] unsubscribes after the reader is done, the
    latest frame drops the probe, and a replay checks the ids. *)
@@ -275,7 +277,7 @@ let () =
   | exception Replay.Divergence e ->
       print_endline e;
       expect "other unsubscribe ids -> divergence"
-        (Substring.contains e "ids differs")
+        (Strings.Contains.substring e "ids differs")
 
 (* v1.4: a frame carries only the results that changed; the session keeps the
    others, so a reader still sees every subscribed probe. *)
@@ -382,7 +384,7 @@ let () =
   | exception Replay.Divergence e ->
       print_endline e;
       expect "stick press -> divergence naming the stick"
-        (Substring.contains e "press B left 0,1 hold 500")
+        (Strings.Contains.substring e "press B left 0,1 hold 500")
 
 (* run_with_backend hands the program the recorded hello's backend: where the
    game picture sat in the frame. *)

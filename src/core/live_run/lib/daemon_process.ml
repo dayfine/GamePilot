@@ -84,7 +84,7 @@ let is_digit c = c >= '0' && c <= '9'
 (* The port after the last ':' on [prefix]'s line: "...127.0.0.1:47950". *)
 let port_after text prefix =
   let ( let* ) = Option.bind in
-  let* i = Substring.find text prefix in
+  let* i = Strings.Find.substring text prefix in
   let line_end =
     Option.value
       (String.index_from_opt text i '\n')
@@ -105,7 +105,7 @@ let exited pid =
 (* Waits for the daemon's "listening" line in its output file. *)
 let rec wait_ready t deadline =
   let out = file_text t.out_file in
-  if Substring.contains out ready_line then
+  if Strings.Contains.substring out ready_line then
     match port_after out ready_line with
     | Some port -> Ok { t with port; watch_port = port_after out watch_line }
     | None -> Error ("the daemon gave no port: " ^ String.trim out)

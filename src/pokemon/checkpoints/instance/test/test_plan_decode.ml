@@ -43,7 +43,7 @@ let base =
 (* The base plan with the first [find] replaced. *)
 let edited find replacement =
   let n = String.length find in
-  match Substring.find base find with
+  match Strings.Find.substring base find with
   | None -> failwith ("not in the base plan: " ^ find)
   | Some i ->
       String.sub base 0 i ^ replacement

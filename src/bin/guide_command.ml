@@ -141,7 +141,7 @@ let page_problems dir name =
   | Error e -> [ e ]
   | Ok (text, filled) ->
       (if filled <> text then [ name ^ ": generated blocks are stale" ] else [])
-      @ (if Substring.contains text todo then
+      @ (if Strings.Contains.substring text todo then
            [ name ^ ": still has the skeleton's TODO(guide)" ]
          else [])
       @ long_paragraphs name text
