@@ -25,5 +25,5 @@ val of_catalog :
   Plza_gift_catalog.Gift_catalog.t ->
   (t, string) result
 (** The moves on [today] (the host's day, UTC, as claim-gifts gets it); [Error]
-    when a gift's slot is not in Box 1's first row (slots 1 to 6, where a move
-    starts), no gift has a Pokémon, or every one has expired. *)
+    when a gift's slot is not in Box 1 (slots 1 to 30), no gift has a Pokémon,
+    or every one has expired. *)

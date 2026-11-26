@@ -21,9 +21,10 @@ let order_text = function
   | Right_to_left -> "right_to_left"
 
 let move_text (m : M.t) =
-  Printf.sprintf "%s col %d boxes %s %s" m.name m.game_col
-    (String.concat "," (List.map string_of_int m.boxes))
-    (order_text m.order)
+  Printf.sprintf "%s box %d row %d col %d boxes %s %s" m.name m.source.box
+    m.source.row m.source.col
+    (String.concat "," (List.map string_of_int m.destination.boxes))
+    (order_text m.destination.order)
 
 let day s = Result.get_ok (C.date_of_string s)
 
@@ -47,13 +48,13 @@ let nth n =
        (fun (t : Moves.t) -> { t with moves = [ List.nth t.moves n ] })
        (Moves.of_catalog ~today catalog))
 
-(* The catalog with the Xerneas' slot moved to [slot]. *)
-let xerneas_at slot =
+(* The catalog with the Xerneas' slot moved to [(box, slot)]. *)
+let xerneas_at ?(box = 1) slot =
   List.map
     (fun (g : C.gift) ->
       match g.pokemon with
       | Some p when g.id = "xerneas-30th" ->
-          { g with pokemon = Some { p with box_slot = { box = 1; slot } } }
+          { g with pokemon = Some { p with box_slot = { box; slot } } }
       | _ -> g)
     catalog
 
@@ -78,28 +79,37 @@ let () =
     [
       case "the catalog's first Pokémon: Vivillon from slot 2"
         (fun () -> nth 0)
-        "Vivillon (Poké Ball Pattern) col 1 boxes 166,167 right_to_left";
+        "Vivillon (Poké Ball Pattern) box 1 row 0 col 1 boxes 166,167 \
+         right_to_left";
       case "the catalog's second Pokémon: Xerneas from slot 1"
         (fun () -> nth 1)
-        "Shiny Xerneas (30th anniversary) col 0 boxes 165,164 left_to_right";
+        "Shiny Xerneas (30th anniversary) box 1 row 0 col 0 boxes 165,164 \
+         left_to_right";
       case "items are not moved"
         (fun () ->
           string_of_int
             (List.length (Result.get_ok (Moves.of_catalog ~today catalog)).moves))
         "2";
-      case "a slot past the first row"
+      case "a slot in row 2 (slot 7) is supported"
         (fun () -> text (Moves.of_catalog ~today (xerneas_at 7)))
-        "error: xerneas-30th: Box 1 slot 7 is not in Box 1's first row (1 to 6)";
+        "Vivillon (Poké Ball Pattern) box 1 row 0 col 1 boxes 166,167 \
+         right_to_left; Shiny Xerneas (30th anniversary) box 1 row 1 col 0 \
+         boxes 165,164 left_to_right";
+      case "a slot outside Box 1 is rejected"
+        (fun () -> text (Moves.of_catalog ~today (xerneas_at ~box:2 1)))
+        "error: xerneas-30th: Box 2 slot 1 is not in Box 1 (slots 1 to 30)";
       case "no Pokémon at all"
         (fun () -> text (Moves.of_catalog ~today items_only))
         "error: the gift catalog has no Pokémon to move";
       case "on the Xerneas' last day: both moved"
         (fun () -> text (moves_on "2027-01-07"))
-        "Vivillon (Poké Ball Pattern) col 1 boxes 166,167 right_to_left; Shiny \
-         Xerneas (30th anniversary) col 0 boxes 165,164 left_to_right";
+        "Vivillon (Poké Ball Pattern) box 1 row 0 col 1 boxes 166,167 \
+         right_to_left; Shiny Xerneas (30th anniversary) box 1 row 0 col 0 \
+         boxes 165,164 left_to_right";
       case "the day after: the Xerneas skipped, as claim-gifts skips it"
         (fun () -> text (moves_on "2027-01-08"))
-        "Vivillon (Poké Ball Pattern) col 1 boxes 166,167 right_to_left";
+        "Vivillon (Poké Ball Pattern) box 1 row 0 col 1 boxes 166,167 \
+         right_to_left";
       case "the day after: the skip's log line"
         (fun () -> skipped_on "2027-01-08")
         "Skipping xerneas-30th: its last day was 2027-01-07.";
@@ -110,8 +120,9 @@ let () =
         "a gift claim-gifts cannot claim, not expired: still moved, so its \
          empty slot fails the bank"
         (fun () -> text (Moves.of_catalog ~today xerneas_by_home))
-        "Vivillon (Poké Ball Pattern) col 1 boxes 166,167 right_to_left; Shiny \
-         Xerneas (30th anniversary) col 0 boxes 165,164 left_to_right";
+        "Vivillon (Poké Ball Pattern) box 1 row 0 col 1 boxes 166,167 \
+         right_to_left; Shiny Xerneas (30th anniversary) box 1 row 0 col 0 \
+         boxes 165,164 left_to_right";
       case "every Pokémon expired: nothing to move"
         (fun () -> text (moves_on "2027-02-26"))
         "error: every Pokémon gift of the catalog has expired, nothing to \
