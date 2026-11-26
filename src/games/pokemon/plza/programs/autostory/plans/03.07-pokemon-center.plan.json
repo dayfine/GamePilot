@@ -4,15 +4,15 @@
   "execution": {
     "reload_when_chained": true,
     "start_signature": {
-      "minimap": "03.04-start"
+      "minimap": "station-front"
     },
     "end_signature": {
-      "minimap": "03.06-start"
+      "minimap": "pokemon-center-door"
     }
   },
   "metadata": {
     "phase": "testing",
-    "source": "played from a new game; ends outside the Center on the autosave. The only PLZA row that reloads when chained: into_pokemon_center's timed legs assume the reloaded save's facing and ran into a wall chained without it. The roof before Station Front reads the same as its start bar the minimap; starts where 03.06 ends; the fork's plza-03.04.plan.json (plza/lean); ends checked by the minimap (end_signature 03.06-start, ours: the fork checks no end). Resumable: a reload past Taunie's autosave reads 03.06-start and every event is skipped",
+    "source": "played from a new game; ends outside the Center on the autosave. The only PLZA row that reloads when chained: into_pokemon_center's timed legs assume the reloaded save's facing and ran into a wall chained without it. The roof before Station Front reads the same as its start bar the minimap; starts where 03.06 ends; the fork's plza-03.04.plan.json (plza/lean); ends checked by the minimap (end_signature pokemon-center-door, ours: the fork checks no end). Resumable: a reload past Taunie's autosave reads pokemon-center-door and every event is skipped",
     "postconditions": {}
   },
   "checkpoint": {
@@ -30,14 +30,14 @@
           "legs": [[0, 3000], [20, 2200], [-90, 2000], [90, 0]],
           "end": "talk_after_legs"
         },
-        "skip_if": ["minimap:03.06-start"]
+        "skip_if": ["minimap:pokemon-center-door"]
       },
       {
         "id": "pokedex_app",
         "kind": "scene",
         "action": "button_b",
-        "why": "the Pokedex app, Chikorita's entry, the nurse, Taunie's scene outside (autosave), until control outside the Center (end signature: minimap 03.06-start)",
-        "skip_if": ["minimap:03.06-start"]
+        "why": "the Pokedex app, Chikorita's entry, the nurse, Taunie's scene outside (autosave), until control outside the Center (end signature: minimap pokemon-center-door)",
+        "skip_if": ["minimap:pokemon-center-door"]
       }
     ]
   }

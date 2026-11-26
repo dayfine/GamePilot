@@ -73,17 +73,17 @@ let bad_cases =
     case "an end signature naming an unrecorded minimap"
       (fun () ->
         with_execution
-          [ ("end_signature", `Assoc [ ("minimap", `String "99.99-start") ]) ])
+          [ ("end_signature", `Assoc [ ("minimap", `String "nowhere") ]) ])
       "start_signature_unread: 03.07-pokemon-center: its end signature names \
-       minimap 99.99-start, which is not recorded";
+       minimap nowhere, which is not recorded";
     case "an unknown skip_if flag"
       (fun () -> with_skip_if "battle_over" (base ()))
       "03.07-pokemon-center event into_pokemon_center: unknown skip_if flag \
        \"battle_over\"";
     case "a skip_if minimap not recorded"
-      (fun () -> with_skip_if "minimap:99.99-start" (base ()))
+      (fun () -> with_skip_if "minimap:nowhere" (base ()))
       "03.07-pokemon-center event into_pokemon_center: skip_if \
-       \"minimap:99.99-start\": no minimap \"99.99-start\" is recorded";
+       \"minimap:nowhere\": no minimap \"nowhere\" is recorded";
   ]
 
 let () = Table_test.run "plza plan check" (plan_cases @ bad_cases)

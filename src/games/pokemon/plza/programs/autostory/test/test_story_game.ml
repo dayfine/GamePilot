@@ -741,10 +741,10 @@ let wild_zones_card ?(lost = false) c =
 
 (* The arch where 03.03 ends: free control with the minimap 03.04 starts
    on. *)
-let at_arch c = { (party c) with minimap = Some "03.03-start" }
+let at_arch c = { (party c) with minimap = Some "after-taunie-battle" }
 
 (* Outside the Center, where 03.07 ends and 03.08 starts. *)
-let outside_center c = { (party c) with minimap = Some "03.06-start" }
+let outside_center c = { (party c) with minimap = Some "pokemon-center-door" }
 
 let cause_or_ok = function
   | Ok () -> "ok"
@@ -796,7 +796,7 @@ let zone_gate c =
   | None -> party c
   | Some _ -> { (party c) with interact_prompt = true }
 
-let at_zone_gate c = { (party c) with minimap = Some "03.07-start" }
+let at_zone_gate c = { (party c) with minimap = Some "wild-zone-1-gate" }
 
 (* The throws: inputs with ZR. *)
 let throws (c : C.t) =
@@ -1611,13 +1611,14 @@ let cases_signatures =
     case "03.04-rock-pile-scene's start check at the arch: logged as checked"
       (start_logged "03.04-rock-pile-scene" at_arch
          "[Checkpoint] 03.04-rock-pile-scene: START CHECKED: the screen reads \
-          (no talk prompt, minimap 03.03-start), its start is (minimap \
-          03.03-start)")
+          (no talk prompt, minimap after-taunie-battle), its start is (minimap \
+          after-taunie-battle)")
       "true";
     case "03.04-rock-pile-scene's start check with no minimap: chain_off_start"
       (start_check "03.04-rock-pile-scene" party)
       "chain_off_start: the run is not at 03.04-rock-pile-scene's start: the \
-       screen reads (no talk prompt), its start is (minimap 03.03-start)";
+       screen reads (no talk prompt), its start is (minimap \
+       after-taunie-battle)";
     case "03.07-pokemon-center's start check at its end, outside the Center: ok"
       (start_check "03.07-pokemon-center" outside_center)
       "ok";
@@ -1630,8 +1631,8 @@ let cases_signatures =
     case "03.07-pokemon-center's start check at the arch: chain_off_start"
       (start_check "03.07-pokemon-center" at_arch)
       "chain_off_start: the run is not at 03.07-pokemon-center's start: the \
-       screen reads (no talk prompt, minimap 03.03-start), its start is \
-       (minimap 03.04-start) or its end (minimap 03.06-start)";
+       screen reads (no talk prompt, minimap after-taunie-battle), its start \
+       is (minimap station-front) or its end (minimap pokemon-center-door)";
     case "03.08-wild-zones-card's start check outside the Center: ok"
       (start_check "03.08-wild-zones-card" outside_center)
       "ok";
@@ -1657,7 +1658,7 @@ let cases_signatures =
       (end_check "03.07-pokemon-center" party)
       "end_off_signature: 03.07-pokemon-center passed its events but did not \
        end at its end: the screen reads (no talk prompt), its end is (minimap \
-       03.06-start)";
+       pokemon-center-door)";
     case "03.04-rock-pile-scene's end check: none named, ok"
       (end_check "03.04-rock-pile-scene" party)
       "ok";
@@ -1672,12 +1673,10 @@ let cases_signatures =
     case "a start signature naming an unrecorded minimap: refused"
       (start_check
          ~execution:
-           [
-             ("start_signature", `Assoc [ ("minimap", `String "03.05-start") ]);
-           ]
+           [ ("start_signature", `Assoc [ ("minimap", `String "rooftop") ]) ]
          "03.04-rock-pile-scene" at_arch)
       "start_signature_unread: 03.04-rock-pile-scene: its start signature \
-       names minimap 03.05-start, which is not recorded";
+       names minimap rooftop, which is not recorded";
     case "a start signature naming nothing: refused"
       (start_check
          ~execution:[ ("start_signature", `Assoc []) ]
@@ -1694,8 +1693,8 @@ let cases_03_07_to_03_11 =
     case "03.09-first-catches' start elsewhere: chain_off_start"
       (start_check "03.09-first-catches" outside_center)
       "chain_off_start: the run is not at 03.09-first-catches's start: the \
-       screen reads (no talk prompt, minimap 03.06-start), its start is \
-       (minimap 03.07-start)";
+       screen reads (no talk prompt, minimap pokemon-center-door), its start \
+       is (minimap wild-zone-1-gate)";
     case "03.09-first-catches with no Fletchling to catch: no_catch"
       (result "03.09-first-catches" zone_gate)
       "03.09-first-catches event 3 (catch_fletchling): no_catch: no tutorial \
