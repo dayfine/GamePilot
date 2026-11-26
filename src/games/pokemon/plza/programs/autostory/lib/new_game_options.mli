@@ -15,6 +15,9 @@ type t = {
 val none : t
 (** No option: the plan's choices. *)
 
+val given : t -> bool
+(** Whether any option is given. *)
+
 val over : t -> Plza_story.New_game_choices.t -> Plza_story.New_game_choices.t
 (** The choices with each option in place of the plan's. *)
 

@@ -7,6 +7,7 @@ type t = {
 }
 
 let none = { language = None; look = None; name = None }
+let given t = t <> none
 
 let over t (c : Choices.t) =
   {

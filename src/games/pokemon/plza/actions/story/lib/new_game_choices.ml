@@ -127,22 +127,23 @@ let decls : Run_options.decl list =
     {
       key = "language";
       value = One_of typed_tags;
-      presence = Default (info default.language).tag;
-      doc = "the new game's language (00-new-game)";
+      presence = Optional;
+      doc = "the new game's language (00-new-game; not given: its plan's, en)";
     };
     {
       key = "look";
       value = Int_range (1, looks);
-      presence = Default (string_of_int default.look);
+      presence = Optional;
       doc =
-        "the new game's look, left to right along the top row, then the bottom";
+        "the new game's look, left to right along the top row, then the bottom \
+         (not given: the plan's, 1)";
     };
     {
       key = "name";
       value = Text;
-      presence = Default default.name;
+      presence = Optional;
       doc =
         "the player's name: at most 12 characters (6 in Japanese and Chinese), \
-         letters, digits and - / : ' , . ? !";
+         letters, digits and - / : ' , . ? ! (not given: the plan's, Kosmos)";
     };
   ]

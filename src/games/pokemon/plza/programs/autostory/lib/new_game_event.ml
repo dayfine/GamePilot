@@ -33,6 +33,10 @@ let choices ~options (event : Plan.event) (args : Json_field.obj) =
        (fun acc arg -> Result.bind acc (fun c -> choice c event arg))
        (Ok New_game_choices.default) args)
 
+let refused_options =
+  "--options language, look and name are 00-new-game's choices, and this \
+   series has no new game: start it at 00-new-game, or drop them"
+
 let playable (checkpoint : Plan.checkpoint) c =
   match New_game_choices.problem c with
   | None -> Ok c
@@ -56,8 +60,11 @@ let all_ok results =
     results (Ok [])
 
 let series_choices ~options checkpoints =
-  all_ok
-    (List.concat_map
-       (fun (cp : Plan.checkpoint) ->
-         List.filter_map (event_choices ~options cp) cp.events)
-       checkpoints)
+  let found =
+    List.concat_map
+      (fun (cp : Plan.checkpoint) ->
+        List.filter_map (event_choices ~options cp) cp.events)
+      checkpoints
+  in
+  if found = [] && New_game_options.given options then Error refused_options
+  else all_ok found

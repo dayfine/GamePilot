@@ -30,13 +30,14 @@ Give each as `--options KEY=VALUE`:
 
 | Key | Values | When not given | What it chooses |
 |---|---|---|---|
-| `language` | en \| es-ES \| es-419 \| fr \| de \| it \| ja \| zh-Hant | default `en` | the new game's language (00-new-game) |
-| `look` | 1 to 8 | default `1` | the new game's look, left to right along the top row, then the bottom |
-| `name` | text | default `Kosmos` | the player's name: at most 12 characters (6 in Japanese and Chinese), letters, digits and - / : ' , . ? ! |
+| `language` | en \| es-ES \| es-419 \| fr \| de \| it \| ja \| zh-Hant | optional | the new game's language (00-new-game; not given: its plan's, en) |
+| `look` | 1 to 8 | optional | the new game's look, left to right along the top row, then the bottom (not given: the plan's, 1) |
+| `name` | text | optional | the player's name: at most 12 characters (6 in Japanese and Chinese), letters, digits and - / : ' , . ? ! (not given: the plan's, Kosmos) |
 <!-- /generated -->
 
-Any other key, a key given twice, a value its key does not take, and a name its language cannot
-take are refused before the console moves. The run prints the choices it plays, and its run.json
+A key not given keeps 00-new-game's plan's arg. Any other key, a key given twice, a value its key
+does not take, a name its language cannot take, and options on a series that does not start at
+00-new-game are refused before the console moves. The run prints the choices it plays, and its run.json
 and watch page show the options. In French with look 5, for example:
 
 ```sh

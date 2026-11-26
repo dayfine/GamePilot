@@ -99,6 +99,28 @@ let typed part ?(row = 0) ?(col = 0) ?(drop = 0) ?(dead = false) name () =
       pressed = String.concat " " (List.rev k.presses);
     }
 
+(* The presses split at each A: one list per character typed. *)
+let per_key t =
+  let rec go current acc = function
+    | [] -> List.rev acc
+    | "A" :: rest -> go [] (List.rev current :: acc) rest
+    | p :: rest -> go (p :: current) acc rest
+  in
+  go [] [] (String.split_on_char ' ' t.pressed)
+
+(* The moves before the [n]th character's A (1 the first), Shift aside. *)
+let moves_to n t =
+  match List.nth_opt (per_key t) (n - 1) with
+  | None -> "no such key"
+  | Some ps -> String.concat " " (List.filter (fun p -> p <> "LStick") ps)
+
+(* The characters typed with Shift first, by number. *)
+let shifted t =
+  per_key t
+  |> List.mapi (fun i ps -> if List.mem "LStick" ps then Some (i + 1) else None)
+  |> List.filter_map Fun.id |> List.map string_of_int |> String.concat " "
+
+let a_presses t = string_of_int (List.length (per_key t))
 let outcome t = t.outcome
 let field t = t.field
 let pressed t = t.pressed
@@ -114,23 +136,53 @@ let () =
       case "! to Z: right round the side" (path '!' 'Z') "R R*";
       case "the same key: no move" (path 'k' 'K') "";
       case "Kosmos from 1: typed" (typed field "Kosmos") "Kosmos";
-      case "Kosmos from 1: Shift for K only" (typed pressed "Kosmos")
-        "Down Down Left Left Left Left Left LStick A Up Right A Down Right \
-         Right Right Right Right A Down Right Right Right Right Right A Up Up \
-         Right Right A Down Right Right Right Right Right A";
+      case "Kosmos from 1: Shift for K only" (typed shifted "Kosmos") "1";
+      case "Kosmos from 1: one A per character" (typed a_presses "Kosmos") "6";
+      case "Kosmos from 1: to K, down then left round the side"
+        (typed (moves_to 1) "Kosmos")
+        "Down Down Left Left Left Left Left";
+      case "Kosmos: K to o, up and right"
+        (typed (moves_to 2) "Kosmos")
+        "Up Right";
+      case "Kosmos: o to s, down then right round the side"
+        (typed (moves_to 3) "Kosmos")
+        "Down Right Right Right Right Right";
+      case "Kosmos: s to m, down then right"
+        (typed (moves_to 4) "Kosmos")
+        "Down Right Right Right Right Right";
+      case "Kosmos: m to o, up twice and right"
+        (typed (moves_to 5) "Kosmos")
+        "Up Up Right Right";
+      case "Kosmos: o to s again"
+        (typed (moves_to 6) "Kosmos")
+        "Down Right Right Right Right Right";
       case "Kosmos with two moves dropped: typed"
         (typed field ~drop:2 "Kosmos")
         "Kosmos";
-      case "Kosmos with two moves dropped: read and moved again"
-        (typed pressed ~drop:2 "Kosmos")
-        "Down Down Left Left Left Left Left Down Down LStick A Up Right A Down \
-         Right Right Right Right Right A Down Right Right Right Right Right A \
-         Up Up Right Right A Down Right Right Right Right Right A";
+      case "Kosmos with two moves dropped: K's two Downs sent again"
+        (typed (moves_to 1) ~drop:2 "Kosmos")
+        "Down Down Left Left Left Left Left Down Down";
+      case "Kosmos with two moves dropped: o's moves as before"
+        (typed (moves_to 2) ~drop:2 "Kosmos")
+        "Up Right";
       case "a1-/:',.?! from 1: typed" (typed field "a1-/:',.?!") "a1-/:',.?!";
-      case "a1-/:',.?! from 1: the presses"
-        (typed pressed "a1-/:',.?!")
-        "Down Down A Up Up A Left Left A Down A Down Left A Right A Down Left \
-         Left Left A Right A Right A Right A";
+      case "a1-/:',.?! from 1: no Shift" (typed shifted "a1-/:',.?!") "";
+      case "a1-/:',.?!: to a, down twice"
+        (typed (moves_to 1) "a1-/:',.?!")
+        "Down Down";
+      case "a1-/:',.?!: a to 1, up twice"
+        (typed (moves_to 2) "a1-/:',.?!")
+        "Up Up";
+      case "a1-/:',.?!: 1 to -, left round the side"
+        (typed (moves_to 3) "a1-/:',.?!")
+        "Left Left";
+      case "a1-/:',.?!: - to /, down" (typed (moves_to 4) "a1-/:',.?!") "Down";
+      case "a1-/:',.?!: ' to ',', down and three left"
+        (typed (moves_to 7) "a1-/:',.?!")
+        "Down Left Left Left";
+      case "a1-/:',.?!: ? to !, right"
+        (typed (moves_to 10) "a1-/:',.?!")
+        "Right";
       case "the cursor on the right column: no read, ten tries"
         (typed outcome ~col:11 "q")
         "System keyboard: the cursor could not be read while moving to 'q' at \

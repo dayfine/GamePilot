@@ -72,5 +72,5 @@ val typed_tags : string list
 val decls : Run_options.decl list
 (** plza.autostory's options, the choices given on the command line
     ([gamepilot run --options], Program_registry): [language] (one of
-    {!typed_tags}), [look] (1 to {!looks}) and [name] (text), each defaulting to
-    {!default}'s. *)
+    {!typed_tags}), [look] (1 to {!looks}) and [name] (text), each optional: a
+    key not given keeps 00-new-game's plan's arg, which its doc names. *)
