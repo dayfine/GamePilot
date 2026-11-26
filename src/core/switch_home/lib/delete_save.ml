@@ -5,7 +5,7 @@ let ( let* ) = Result.bind
 
 type game = { key : string; icon_png : string }
 
-(* A press as the route writes it: the button held [hold_ms], then
+(* A press: the button held [hold_ms], then
    [cooldown_ms] before the next. *)
 type step = { button : Wire.button; hold_ms : int; cooldown_ms : int }
 

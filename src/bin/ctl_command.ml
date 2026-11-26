@@ -5,7 +5,7 @@
    safely next to a running program: a command that presses takes the input
    lease (contracts v1.9) as [--owner] and is refused, naming the holder, while
    someone else holds it; reads (shot, read, status) need no lease. COMMAND and
-   FILE's lines are Ctl_script's (labB.sh's format). [run] prints [ok N LINE]
+   FILE's lines are Ctl_script's. [run] prints [ok N LINE]
    per line and stops at the first error. [park] and [resume] park the Switch
    on its HOME menu and resume the lab console's game from it, [close-game]
    and [start-game] close the running game and start one from a HOME tile
