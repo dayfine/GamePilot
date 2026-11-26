@@ -1,9 +1,9 @@
 # AutoStory
 
 Plays Pokémon Legends: Z-A's story on the Switch from a new game, one checkpoint at a time: it
-confirms the new game's choices, skips the opening, then follows the Main Missions, walking the
-routes, pressing through the scenes and fighting the story battles. The checkpoints table below
-lists the ones it plays.
+launches the game from the Switch HOME, makes and confirms the new game's choices, skips the
+opening, then follows the Main Missions, walking the routes, pressing through the scenes and
+fighting the story battles. The checkpoints table below lists the ones it plays.
 
 <!-- generated:backends -->
 Runs on: the Switch.
@@ -11,17 +11,46 @@ Runs on: the Switch.
 
 ## Before you start
 
-Start a new game by hand up to its Confirm Choices screen (language, look and name), for 01.01; or
-put the console on the station platform with free control, the controls hint showing, to run 01.02
-alone (`--from 01.02`). The Switch's capture must be the whole 1920x1080 picture (the daemon's
-`--viewport native`).
+For 00.00-new-game, delete PLZA's save (`gamepilot ctl delete-save plza`, look at the screen, then
+`gamepilot ctl delete-save --confirm`) and leave the Switch on HOME, PLZA's tile among the first 8.
+
+Or start a new game by hand up to its Confirm Choices screen (language, look and name) and start at
+01.01-to-the-platform (`--from 01.01`); or put the console on the station platform with free
+control, the controls hint showing, to run 01.02-platform-to-plaza alone (`--from 01.02`).
+
+The Switch's capture must be the whole 1920x1080 picture (the daemon's `--viewport native`).
+
+### The new game's choices
+
+00.00-new-game's choices are the program's options, one `--options KEY=VALUE` each; repeat the flag
+for more. Pass them on the command line rather than editing the plan:
+
+<!-- generated:options -->
+Give each as `--options KEY=VALUE`:
+
+| Key | Values | When not given | What it chooses |
+|---|---|---|---|
+| `language` | en \| es-ES \| es-419 \| fr \| de \| it \| ja \| zh-Hant | optional | the new game's language (00.00-new-game; not given: the plan's) |
+| `look` | 1 to 8 | optional | the new game's look, left to right along the top row, then the bottom (not given: the plan's) |
+| `name` | text | optional | the player's name: at most 12 characters (6 in Japanese and Chinese), letters, digits and - / : ' , . ? ! (not given: the plan's) |
+<!-- /generated -->
+
+A key not given keeps 00.00-new-game's plan's arg. Any other key, a key given twice, a value its
+key does not take, a name its language cannot take, and options on a series that does not start at
+00.00-new-game are refused before the console moves. The run prints the choices it plays, and its
+run.json and watch page show the options. In French with look 5, for example:
+
+```sh
+cd src && opam exec -- dune exec -- gamepilot run plza.autostory --from 00.00-new-game --to 03.15-mable-reward --mode testing --backend switch --serial PORT --capture DEVICE \
+    --watch --options language=fr --options look=5
+```
 
 ## Running it
 
 <!-- generated:commands -->
 ```sh
 # the Switch: each checkpoint once, from where the console is
-cd src && opam exec -- dune exec -- gamepilot run plza.autostory --from 01.01-to-the-platform --to 03.15-mable-reward --mode testing --backend switch --serial PORT --capture DEVICE \
+cd src && opam exec -- dune exec -- gamepilot run plza.autostory --from 00.00-new-game --to 03.15-mable-reward --mode testing --backend switch --serial PORT --capture DEVICE \
     --watch
 ```
 <!-- /generated -->
@@ -31,6 +60,7 @@ cd src && opam exec -- dune exec -- gamepilot run plza.autostory --from 01.01-to
 <!-- generated:checkpoints -->
 | Checkpoint | What its plan does |
 |---|---|
+| 00.00-new-game | A new game from HOME to Confirm Choices |
 | 01.01-to-the-platform | Confirm Choices to the station platform |
 | 01.02-platform-to-plaza | The platform to Main Mission 01 |
 | 01.03-chase-pancham | Main Mission 01: chase Pancham to the battle area |
@@ -58,8 +88,12 @@ cd src && opam exec -- dune exec -- gamepilot run plza.autostory --from 01.01-to
 | 03.14-lab-elevator | Up the Research Lab's elevator to the Director's Office |
 | 03.15-mable-reward | Mable's research, the Rock Smash TM |
 
-<!-- plans: 36be4d3292a8 -->
+<!-- plans: ba90cc1a9e8a -->
 <!-- /generated -->
+
+00.00-new-game closes any running game, finds PLZA's tile on HOME by its title, starts it, picks
+the language on its list, tilts to the look, types the name on the Switch keyboard and presses +
+until Confirm Choices shows.
 
 01.01 confirms the choices, skips the opening and waits for the platform. 01.02 sets the text
 speed to fast, walks down the platform and right to the white fade, and presses through the arrival
@@ -96,7 +130,9 @@ Reloads:
 
 - The first run starts wherever the console is.
 - A second run of a checkpoint (`--runs 2`) first closes the game and reloads the latest autosave.
-  01.01 has no autosave to go back to: its second run is refused.
+  00.00-new-game and 01.01 have no autosave to go back to: their second run is refused. After
+  00.00-new-game fails, delete the save again and go back to HOME, or make the choices by hand and
+  start at 01.01.
 - 01.02 reloads once more if the platform's controls hint has already faded.
 - A checkpoint that follows a passing one starts where it ended, with no reload; 03.07 always
   reloads when it follows another, since its walk needs the reload's facing.
@@ -122,6 +158,9 @@ Resuming mid-checkpoint (the screen is read first, and steps already done are sk
 
 Failures:
 
+- 00.00-new-game refuses choices it cannot play before it presses anything (`new_game_refused`),
+  and stops with `new_game_failed` when PLZA's tile is not among HOME's first 8 (play it once so its
+  tile moves to the front), a screen does not show or a highlight does not reach the choice.
 - 01.01 on any screen but Confirm Choices presses nothing and fails `not_on_confirm_choices`.
 - A walk whose end never shows fails `walk_no_end`; one that no scene takes, `walk_no_scene`.
 - A scene that ends in free control where a choice or a battle was due fails
