@@ -180,15 +180,44 @@ let run_one_cycle ~picture ~idx ~counters =
   log ("Counters: " ^ Mining_counters.format_summary ~goal counters);
   Ok counters
 
+let recover_if_mid_dig ~picture ~counters =
+  ignore
+    (Effects.subscribe
+       (B.probes ~picture
+       @ Bdsp_readers.Dialog_detector.probes ~picture
+       @ Bdsp_readers.Mining_grid.probes ~picture)
+      : string list);
+  match Effects.await ~timeout_ms:minimap_probe_timeout_ms (fun _ -> true) with
+  | Effects.Holds m when Bdsp_readers.Mining_grid.on_mining_screen m ->
+      log "Started mid-dig on an active wall; finishing it first...";
+      let tally = Mining_counters.to_tally counters in
+      let* moves, bailed = MP.dig_wall_smart ~log ~picture ~goal ~tally () in
+      log (Printf.sprintf "Recovered dig done: moves=%d bailed=%b" moves bailed);
+      P.wait post_dig_wait_ms;
+      let* () =
+        OW.advance_dialog ~log ~picture ~max_presses:max_end_dialog_presses ()
+      in
+      ignore
+        (H.wait_for ~timeout_ms:fade_timeout_ms
+           (H.held clear_hold_ms is_not_black)
+          : unit option);
+      P.wait post_dig_wait_ms;
+      OW.run_hold Corridor_nav.South ~hold_ms:south_return_ms;
+      OW.run_hold Corridor_nav.North ~hold_ms:north_hug_ms;
+      OW.run_hold Corridor_nav.West ~hold_ms:west_return_ms;
+      Ok (Mining_counters.record_dig counters ~bailed [])
+  | _ -> Ok counters
+
 let run_se_loop () =
   let picture = native_picture in
+  let* initial = recover_if_mid_dig ~picture ~counters:Mining_counters.empty in
   let rec cycle idx counters =
     if idx > total_cycles then Ok counters
     else
       let* next = run_one_cycle ~picture ~idx ~counters in
       cycle (idx + 1) next
   in
-  cycle 1 Mining_counters.empty
+  cycle 1 initial
 
 let run ?state:_ () =
   match run_se_loop () with

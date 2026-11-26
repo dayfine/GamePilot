@@ -72,7 +72,15 @@ let probes ~picture =
   done;
   tool_probes ~picture @ List.rev !acc
 
+let min_red_panel_r = 170.
+let min_blue_panel_b = 150.
 let stats_luma (s : SC.stats) = (s.mean.r +. s.mean.g +. s.mean.b) /. channels
+
+let on_mining_screen m =
+  match (SC.stats m red_tool_probe_id, SC.stats m blue_tool_probe_id) with
+  | Some red, Some blue ->
+      red.mean.r >= min_red_panel_r && blue.mean.b >= min_blue_panel_b
+  | _ -> false
 
 let selected_tool m =
   match (SC.stats m red_tool_probe_id, SC.stats m blue_tool_probe_id) with
