@@ -276,7 +276,7 @@ of the libraries, directly or through any library of the tree, however deep:
 | `src/pokemon/checkpoints/rules/lib` | the same, and `pokemon_plan_format`, `pokemon_event_snapshot` |
 
 The layers stay one-way as before: `allow engine engine core base`, `allow pokemon pokemon engine
-core base`, and a game uses `pokemon` only when its family lists it (`family pokemon game frlg`), so
+core base`, and a game uses `pokemon` only when its family lists it (`family pokemon game frlg plza`), so
 `octopath0` cannot.
 
 ### Folders

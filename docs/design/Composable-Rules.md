@@ -349,8 +349,8 @@ The stick walk stays PLZA's own action until SwSh needs it, then moves to
 
 - **PLZA (#89).** `Pose = Zone_pose`; `Action = Story | Plza of Plza_action.t` (walk,
   wait_for_platform, set_text_speed_fast, plus_skip, today three of them `game_action`s);
-  `Postconditions = With_position (Zone_pose) (No_promises)`. It links the engine only. When its
-  first battle comes it joins `family pokemon` and adds `Pokemon of Pokemon_action.t` and
+  `Postconditions = With_position (Zone_pose) (No_promises)`. Its rules link the engine only (it is in
+  `family pokemon` for Pokémon HOME). When its first battle comes it adds `Pokemon of Pokemon_action.t` and
   `Pokemon_promises`, with no change to FRLG.
 - **SwSh** is PLZA's shape with Pokémon promises from the start. **BDSP** is FRLG's shape with
   its own set.
@@ -395,7 +395,7 @@ Every PR keeps every plan, test and run as it is; **S** marks a structural one.
 | 9 | FRLG's actions typed, in three PRs: the shared ones (`Action_requests`); travel (fly, lift_floor, ferry); battles and the Mail Glitch (grind, capture, berry PP, double battle, mail, candy). Load check of marts, towns, strategies; `Plan_needs` and `Party_room` on typed actions. `game_action` with `"action": "mart"` is read as kind `mart`; unclaimed names stay `Named_action` until the last | S (format) | 8 |
 | 10 | Plans rewritten by script to `"kind": "mart"`; shadow plans to `Command_step`; `Named_action`, the alias and `game_actions` deleted. Golden identical | S (format) | 9 |
 | 11 | PLZA from pieces, after #89 merges | S | 4 |
-| 12 | PLZA in `family pokemon` with its first battle | S | 5, 11 |
+| 12 | PLZA's rules take the Pokémon actions and promises with its first battle | S | 5, 11 |
 | 13 | Octopath 0's rules from pieces (Engine-Boundary PR 9) | S | 3 |
 
 0, 1 and 2 can start at once; 0b follows 0. FRLG's line (3 to 10) runs first; 11 waits for it only where it needs
