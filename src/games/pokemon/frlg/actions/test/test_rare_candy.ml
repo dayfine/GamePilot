@@ -3,6 +3,7 @@
    that counts candies. *)
 
 open Frlg_actions
+open Frlg_level_up_fake
 open Level_up_fake
 
 let case name input expectation = { Table_test.name; input; expectation }

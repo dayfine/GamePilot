@@ -16,7 +16,7 @@ type t = {
   fallback : fallback;
   send_ins : send_in list;
   switch_refused : fallback option;
-  learn : Battle.learn;
+  level_up : Level_up_policy.t;
   use_next : bool;
   max_menus : int;
   event_timeout_ms : int;
@@ -24,9 +24,10 @@ type t = {
 
 let default_max_menus = 40
 let default_event_timeout_ms = 60_000
+let default_level_up = Level_up_policy.for_everyone Level_up_policy.decline_all
 
 let make ?(opening = []) ?(send_ins = []) ?switch_refused
-    ?(learn = Battle.Keep_moves) ?(use_next = false)
+    ?(level_up = default_level_up) ?(use_next = false)
     ?(max_menus = default_max_menus)
     ?(event_timeout_ms = default_event_timeout_ms) fallback =
   {
@@ -34,7 +35,7 @@ let make ?(opening = []) ?(send_ins = []) ?switch_refused
     fallback;
     send_ins;
     switch_refused;
-    learn;
+    level_up;
     use_next;
     max_menus;
     event_timeout_ms;

@@ -1,7 +1,8 @@
-(* Fake Level_up game steps for the tests of Level_up and of what runs it (a
-   Rare Candy): it answers each step from a script and records the steps. *)
+(* Fake Level_up game steps for the tests of Level_up and of what runs it
+   (scripted battles): it answers each step from a script and records the
+   steps. *)
 
-open Frlg_actions
+open Frlg_battle
 
 (* The fake game: the looks [next] answers in order, the list each opened
    list shows in order, how each evolution scene leaves off; [trace] is every
@@ -65,7 +66,12 @@ let fake_game_steps g : Level_up.game_steps =
 
 let known = [ Some "lick"; Some "hypnosis"; Some "spite"; Some "curse" ]
 let offer move : Level_up.forget_list = { offered = Some move; known }
-let rule learn replacing : Level_up_policy.move_rule = { learn; replacing }
+
+let rule learn replacing : Level_up_policy.move_rule =
+  { learn; replacing = Named replacing }
+
+let slot_rule learn slot : Level_up_policy.move_rule =
+  { learn; replacing = Slot slot }
 
 let policy ?(rules = []) ?(evolve = false) () : Level_up_policy.policy =
   { rules; evolve }

@@ -13,7 +13,7 @@ type game_steps = {
 let lead_moves = [ 0; 1; 2; 3 ]
 
 let script =
-  B.Battle_script.make ~learn:Keep_moves ~use_next:false
+  B.Battle_script.make ~use_next:false
     (Attack { slots = lead_moves; target = Default })
 
 let fight_one (g : game_steps) ~battle ~battles =

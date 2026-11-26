@@ -5,10 +5,15 @@ type summary = {
   switches_refused : int;
   prompts : int;
   learned : string list;
-  unread : int;
 }
 
 type outcome = Over of summary | Failed of { why : string; summary : summary }
+
+let party_slots = 6
+
+let default_party =
+  List.init party_slots (fun i : Level_up.member ->
+      { slot = i + 1; species = ""; nickname = None })
 
 (* Where the script stands. *)
 type progress = {
@@ -17,6 +22,7 @@ type progress = {
   send_ins : Battle_script.send_in list;
   switch_refused : Battle_script.fallback option;
   refused : int list;  (** move slots the game turned down *)
+  level_up : Level_up.session;
   summary : summary;
 }
 
@@ -109,22 +115,18 @@ let switch_in (game_steps : Battle.game_steps) p =
 let prompted p =
   { p with summary = { p.summary with prompts = p.summary.prompts + 1 } }
 
-let max_unread = 3
+let learned_names outcomes =
+  List.concat_map
+    (fun (o : Level_up.outcome) ->
+      List.map (fun (r : Level_up_policy.move_rule) -> r.learn) o.learned)
+    outcomes
 
-let move_learn ~log (game_steps : Battle.game_steps) (script : Battle_script.t)
-    p =
-  let result = game_steps.answer_move_learn script.learn in
-  log ("move learn: " ^ Battle.describe_learned result);
-  let s = p.summary in
-  match result with
-  | Learned { move = Some m; _ } ->
-      Continue { p with summary = { s with learned = m :: s.learned } }
-  | Learned { move = None; _ } | Not_learned _ -> Continue p
-  | Unread why ->
-      let p = { p with summary = { s with unread = s.unread + 1 } } in
-      if p.summary.unread >= max_unread then
-        fail p "the move learn did not read %d times: %s" max_unread why
-      else Continue p
+let run_level_up p =
+  match Level_up.step_until_back p.level_up with
+  | Error why -> fail p "level up: %s" why
+  | Ok () ->
+      let learned = List.rev (learned_names (Level_up.outcomes p.level_up)) in
+      Continue { p with summary = { p.summary with learned } }
 
 let answer ~log (game_steps : Battle.game_steps) (script : Battle_script.t) p
     event =
@@ -134,7 +136,7 @@ let answer ~log (game_steps : Battle.game_steps) (script : Battle_script.t) p
   | Timed_out -> fail p "no battle event within %d ms" script.event_timeout_ms
   | Action_menu -> action_menu ~log game_steps script p
   | Switch_in -> switch_in game_steps p
-  | Move_learn -> move_learn ~log game_steps script (prompted p)
+  | Level_up | Move_learn | Evolution -> run_level_up (prompted p)
   | Switch_offer ->
       game_steps.answer_use_next false;
       Continue (prompted p)
@@ -150,16 +152,13 @@ let empty_summary =
     switches_refused = 0;
     prompts = 0;
     learned = [];
-    unread = 0;
   }
 
-let run ?(log = ignore) (game_steps : Battle.game_steps)
-    (script : Battle_script.t) =
+let run_from ~log (game_steps : Battle.game_steps) (script : Battle_script.t)
+    level_up =
   let rec loop p =
-    match
-      answer ~log game_steps script p
-        (game_steps.next_event ~timeout_ms:script.event_timeout_ms)
-    with
+    let event = game_steps.next_event ~timeout_ms:script.event_timeout_ms in
+    match answer ~log game_steps script p event with
     | Continue p -> loop p
     | Stop outcome -> outcome
   in
@@ -170,8 +169,17 @@ let run ?(log = ignore) (game_steps : Battle.game_steps)
       send_ins = script.send_ins;
       switch_refused = script.switch_refused;
       refused = [];
+      level_up;
       summary = empty_summary;
     }
+
+let run ?(log = ignore) (game_steps : Battle.game_steps)
+    (script : Battle_script.t) =
+  match
+    Level_up.start game_steps.level_up script.level_up ~members:default_party
+  with
+  | Error why -> Failed { why; summary = empty_summary }
+  | Ok level_up -> run_from ~log game_steps script level_up
 
 let describe_summary s =
   Printf.sprintf "%d menus, %d send-ins, %d refused, %d prompts%s%s" s.menus

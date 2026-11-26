@@ -26,7 +26,8 @@ let run (game_steps : Battle.game_steps) ~log =
         log (run_line runs);
         game_steps.run ();
         from (runs + 1)
-    | (Switch_in | Move_learn | Use_next | Switch_offer | Timed_out) as event ->
+    | ( Switch_in | Level_up | Move_learn | Evolution | Use_next | Switch_offer
+      | Timed_out ) as event ->
         unanswered event runs
   in
   from 0

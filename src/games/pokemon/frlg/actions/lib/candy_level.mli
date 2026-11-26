@@ -16,7 +16,7 @@ type game_steps = {
   level : slot:int -> (int option, Pokemon_engine.Failure.cause) result;
       (** From the overworld: the member's level on its summary; [None] when it
           did not read, [Error] when a menu step on the way failed. *)
-  candy : slot:int -> Level_up_policy.policy -> Rare_candy.result;
+  candy : slot:int -> Frlg_battle.Level_up_policy.policy -> Rare_candy.result;
       (** One candy, from the overworld back to it ({!Rare_candy.run}). *)
   member :
     slot:int -> (Room_policy.member option, Pokemon_engine.Failure.cause) result;
@@ -31,9 +31,10 @@ type report = {
   candies : int;
   level : int;  (** read before the summary check *)
   species : string;  (** read on the summary at the end *)
-  learned : Level_up_policy.move_rule list;
+  learned : Frlg_battle.Level_up_policy.move_rule list;
   declined : string option list;
-  evolutions : Level_up.evolution list;  (** each evolution met, in order *)
+  evolutions : Frlg_battle.Level_up.evolution list;
+      (** each evolution met, in order *)
 }
 
 val run :

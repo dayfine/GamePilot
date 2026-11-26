@@ -1,6 +1,7 @@
 (** Plays a {!Battle_script} on a {!Battle.game_steps} from anywhere in a battle
     (its opening included) to its end: each event the game steps report gets the
-    script's answer, until the battle is over or the script has none. *)
+    script's answer, until the battle is over or the script has none. Level-ups,
+    move learns and evolutions are decided by {!Level_up}. *)
 
 type summary = {
   menus : int;  (** action menus answered *)
@@ -9,11 +10,12 @@ type summary = {
   switches_refused : int;
       (** switches the game turned down, under {!Battle_script.t}'s
           [switch_refused] *)
-  prompts : int;  (** YES/NO prompts answered *)
+  prompts : int;  (** YES/NO prompts and level-up phases answered *)
   learned : string list;  (** moves learned, as read; the latest first *)
-  unread : int;  (** move learns whose move or cursor did not read *)
 }
+(** Counts of what happened in one battle. *)
 
+(** How {!run} ended. *)
 type outcome =
   | Over of summary
       (** The battle left the screen: won, run from, or lost; the caller reads
@@ -24,9 +26,6 @@ type outcome =
 
 val empty_summary : summary
 (** Nothing answered yet. *)
-
-val max_unread : int
-(** 3: a move learn that does not read this many times fails the battle. *)
 
 val run :
   ?log:(string -> unit) -> Battle.game_steps -> Battle_script.t -> outcome

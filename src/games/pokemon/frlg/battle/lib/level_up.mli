@@ -4,10 +4,9 @@
     the evolved species' own moves; until the screen is back where the context
     ends. The context comes as {!game_steps}: its screens
     ({!Level_up_screens.context}), how its text is pressed through, and what
-    "back" means (the bag after a Rare Candy, the overworld after a battle).
-    Only the party menu's game steps are built
-    ({!Rare_candy_steps.party_menu_game_steps}); a battle's are the follow-up. A
-    Rare Candy is the one-member case.
+    "back" means (the bag after a Rare Candy, the battle or overworld after a
+    battle). A Rare Candy is the one-member case; {!Battle_level_up_steps}
+    builds a battle's game steps.
 
     Text and language: [Level_up] never matches text. The quoted strings below
     are the English messages, there so a reader can find each step in the game;
@@ -38,7 +37,7 @@
       (evolution_scene.c, [EVOSTATE_TRY_LEARN_MOVE]); a stopped one asks
       nothing. Then the next member's scene, then the overworld.
     + A Rare Candy (party_menu.c): one level, its stats window and moves, then
-      at once its evolution, back to the bag ({!Rare_candy}).
+      at once its evolution, back to the bag.
 
     Who a screen is about: the game steps name the member where it reads the
     text ({!who}); else the order tells. A stats window belongs to the member of
@@ -55,7 +54,9 @@
     text. A nickname is found among the [members] given to {!run}; when two of
     them share it, it does not tell them apart, so the order decides (as with no
     name) and the log says so. *)
-type who = Slot of int | Nickname of string
+type who =
+  | Slot of int  (** party slot, from 1 *)
+  | Nickname of string  (** nickname read off the text box *)
 
 (** What the screen asks for next. *)
 type look =
@@ -67,16 +68,19 @@ type look =
       (** the list to forget from, though no YES was given (an A meant for the
           text before took it) *)
   | Evolving of who option  (** an evolution scene, no question on it *)
-  | Back  (** where the context ends: the bag, the overworld *)
+  | Back  (** where the context ends: the bag, the battle, the overworld *)
   | Timed_out  (** none of these within the game steps' bound *)
 
 type forget_list = {
   offered : string option;  (** the fifth row: the move offered *)
   known : string option list;  (** rows 0-3 *)
 }
+(** What the list to forget from shows when read. *)
 
 (** How an evolution scene left off. *)
-type scene = Continues  (** a question or a page of it shows *) | Ended
+type scene =
+  | Continues  (** a question or a page of it shows *)
+  | Ended  (** the scene faded out or ended *)
 
 type game_steps = {
   next : unit -> look;
@@ -100,8 +104,8 @@ type game_steps = {
 (** The steps in the game this module can take: what it reads and does on this
     context's screens. How to press through its text to the next {!look}, read
     its screens, and answer its YES/NO boxes. {!run} decides; the steps only
-    press and read. The Rare Candy action builds them for the party menu; a
-    battle will build its own. *)
+    press and read. The Rare Candy action builds them for the party menu;
+    {!Battle_level_up_steps} builds them for a battle. *)
 
 type member = {
   slot : int;  (** party slot, from 1 *)
@@ -111,7 +115,11 @@ type member = {
 }
 (** A member that may level. *)
 
-type evolution = No_evolution | Evolved | Cancelled
+(** Whether a member met an evolution and how it was answered. *)
+type evolution =
+  | No_evolution  (** no evolution scene showed for this member *)
+  | Evolved  (** the evolution was let run *)
+  | Cancelled  (** the evolution was cancelled with B *)
 
 type outcome = {
   member : member;
@@ -120,19 +128,41 @@ type outcome = {
   declined : string option list;  (** the moves declined, when read *)
   evolution : evolution;
 }
+(** What came of one member's level-ups in a run. *)
+
+type session
+(** A multi-phase level-up run in progress, such as a trainer battle where a
+    member levels up mid-battle and evolves after the battle ends. *)
 
 val max_looks : int
-(** {!look}s before it fails: 200 per run (six members, several levels each). *)
+(** {!look}s before it fails: 200 per phase (six members, several levels each).
+*)
+
+val start :
+  game_steps ->
+  Level_up_policy.t ->
+  members:member list ->
+  (session, string) result
+(** Starts a level-up session for [members] (in party order; must be non-empty).
+*)
+
+val step_until_back : session -> (unit, string) result
+(** Answers screens from [session] until {!Back}, keeping per-member state
+    (levels gained, whose screens are active, last evolution scene) for any
+    later phase in the same battle. *)
+
+val outcomes : session -> outcome list
+(** Each member's outcome so far, in [members]' order. *)
 
 val run :
   game_steps ->
   Level_up_policy.t ->
   members:member list ->
   (outcome list, string) result
-(** Until {!Back}; one outcome per member, in [members]' order, which must be
-    the party's. [Error] with why: nothing showed, a question did not come, the
-    list did not show or its cursor did not read, a screen with no member to
-    belong to, too many looks. Logs each answer. *)
+(** {!start}, {!step_until_back}, and {!outcomes}: one phase until {!Back}.
+    [Error] with why: nothing showed, a question did not come, the list did not
+    show or its cursor did not read, a screen with no member to belong to, too
+    many looks. Logs each answer. *)
 
 val evolution_name : evolution -> string
 (** ["none"], ["evolved"], ["cancelled"]. *)

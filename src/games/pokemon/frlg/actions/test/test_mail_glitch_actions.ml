@@ -4,6 +4,7 @@
    (mail_glitch_double_battle), as the fork's Route 16 run played them. *)
 
 open Frlg_actions
+open Frlg_level_up_fake
 module B = Frlg_battle
 module Battle = B.Battle
 
@@ -42,7 +43,7 @@ let fake_battle_game_steps (b : fake_battle) call : Battle.game_steps =
         true);
     run = (fun () -> call "run");
     use_item = (fun _ -> true);
-    answer_move_learn = (fun _ -> Battle.Not_learned { offered = None });
+    level_up = Level_up_fake.fake_game_steps (Level_up_fake.game []);
     answer_use_next = (fun _ -> ());
   }
 

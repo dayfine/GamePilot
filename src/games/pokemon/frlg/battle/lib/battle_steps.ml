@@ -13,7 +13,7 @@ let scroll_gap_ms = 50
 let pocket_top_taps = 42
 
 (* How long a screen may take to show after a press: a menu, the party list's
-   slide-in, the move list's fade (the fork's 5 s MOVE_LIST_TIMEOUT). *)
+   slide-in, the bag's fade. *)
 let menu_timeout_ms = 3000
 let list_timeout_ms = 5000
 
@@ -21,9 +21,6 @@ let list_timeout_ms = 5000
    once. *)
 let target_cursor_ms = 700
 let look_every_ms = 250
-
-(* The summary screen's moves page, where the move to forget is chosen. *)
-let moves_page = 3
 
 let tap_all ?(hold_ms = tap_hold_ms) ?(cooldown_ms = tap_gap_ms) buttons =
   let tap b = Wire.press ~hold_ms ~cooldown_ms [ b ] in
@@ -147,73 +144,6 @@ let use_item (item : Battle.item) =
       pick_slot item.on_slot)
   && shows ~timeout_ms:list_timeout_ms Battle_screen.battle_shows
 
-let move_list m = Summary_screen.page m = Some moves_page
-let cursor_read m = Move_list_cursor.row m <> None
-
-(* "Stop learning ...?" comes after a NO or a list left without a choice;
-   YES (A, where its cursor starts) stops, NO (B) asks "Delete a move?" again.
-   [Unread] when it never shows. *)
-let stop_prompt_ms = 8000
-
-let answer_stop_learning button ~then_ : Battle.learned =
-  ignore (shows (fun m -> not (Battle_yes_no.yes_no_box m)) : bool);
-  if shows ~timeout_ms:stop_prompt_ms Battle_yes_no.yes_no_box then (
-    tap_all [ button ];
-    then_)
-  else Unread "no \"Stop learning?\" after the move list"
-
-(* B leaves the list; the game asks "Stop learning ...?". A B the list does
-   not take (mGBA, Victory Road, mg-04 testing 14: one tap 1.5 s after the
-   list read, and the list stayed up for good) is tapped again while the list
-   still shows, at most [leave_list_taps] times: B on the list only leaves
-   it. *)
-let leave_list_taps = 3
-let list_left_ms = 1500
-
-let rec tap_off_list taps =
-  tap_all [ Wire.B ];
-  if
-    taps > 1
-    && not (shows ~timeout_ms:list_left_ms (fun m -> not (move_list m)))
-  then tap_off_list (taps - 1)
-
-let leave_list button ~then_ =
-  tap_off_list leave_list_taps;
-  answer_stop_learning button ~then_
-
-(* On the list, on its top row: down to [slot], A only with the cursor read
-   there. *)
-let pick slot ~move : Battle.learned =
-  tap_all (Battle_cursor.down slot);
-  if shows (fun m -> Move_list_cursor.row m = Some slot) then (
-    tap_all [ Wire.A ];
-    Learned { slot; move })
-  else
-    leave_list Wire.B
-      ~then_:(Unread (Printf.sprintf "the cursor did not read on move %d" slot))
-
-let open_list () =
-  tap_all [ Wire.A ];
-  shows ~timeout_ms:list_timeout_ms (fun m -> move_list m && cursor_read m)
-
-let forget_for read_offered ~move ~slot : Battle.learned =
-  match read_offered () with
-  | Some offered when offered = move -> pick slot ~move:(Some offered)
-  | Some offered ->
-      leave_list Wire.A ~then_:(Not_learned { offered = Some offered })
-  | None -> leave_list Wire.B ~then_:(Unread "the move offered did not read")
-
-let no_list = Battle.Unread "the list to forget from did not show"
-
-let answer_move_learn read_offered (learn : Battle.learn) : Battle.learned =
-  match learn with
-  | Keep_moves ->
-      tap_all [ Wire.B ];
-      answer_stop_learning Wire.A ~then_:(Not_learned { offered = None })
-  | Forget slot -> if open_list () then pick slot ~move:None else no_list
-  | Forget_for { move; slot } ->
-      if open_list () then forget_for read_offered ~move ~slot else no_list
-
 let answer_use_next yes = tap_all [ (if yes then Wire.A else Wire.B) ]
 
 (* Carries out a look's answer: [Some event] ends [next_event]. *)
@@ -241,16 +171,21 @@ let told_apart is_switch_offer : Battle.event -> Battle.event = function
   | Move_learn when is_switch_offer () -> Switch_offer
   | event -> event
 
-let next_event is_switch_offer ~timeout_ms =
+let next_event is_switch_offer seen_battle leveled_up ~timeout_ms =
   let deadline = Effects.now () +. float_of_int timeout_ms in
   let rec loop state =
     if Effects.now () > deadline then Battle.Timed_out
     else
       match look_once state with
-      | _, Some event -> told_apart is_switch_offer event
+      | state, Some event ->
+          seen_battle := Event_rule.seen_battle state;
+          leveled_up := Event_rule.leveled_up state;
+          told_apart is_switch_offer event
       | state, None -> loop state
   in
-  loop (Event_rule.start ~at_ms:(Effects.now ()))
+  loop
+    (Event_rule.resume ~seen_battle:!seen_battle ~leveled_up:!leveled_up
+       ~at_ms:(Effects.now ()))
 
 (* RUN, then the menu gone ("Got away safely!" or a refusal's text), so the
    next look does not take the menu RUN was chosen on for the next one; a menu
@@ -259,18 +194,20 @@ let run () =
   tap_all Battle_cursor.run_away;
   ignore (shows (fun m -> not (Battle_screen.battle_menu m)) : bool)
 
-let no_reader () = None
 let never () = false
 
-let make ?read_move_name ?(read_offered_move = no_reader)
-    ?(is_switch_offer = never) () : Battle.game_steps =
+let make ?read_move_name ?read_forget_list ?(is_switch_offer = never) ?log () :
+    Battle.game_steps =
+  let seen_battle = ref false in
+  let leveled_up = ref false in
   {
-    next_event = next_event is_switch_offer;
+    next_event = next_event is_switch_offer seen_battle leveled_up;
     use_move = use_move read_move_name;
     switch_to;
     send_in;
     run;
     use_item;
-    answer_move_learn = answer_move_learn read_offered_move;
+    level_up =
+      Battle_level_up_steps.make ?read_forget_list ~is_switch_offer ?log ();
     answer_use_next;
   }

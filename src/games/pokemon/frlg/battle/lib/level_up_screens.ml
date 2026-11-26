@@ -6,11 +6,12 @@ type context = {
   back : Effects.measurements -> bool;
 }
 
-let probes = Frlg_battle.Battle_look.probes
+(* The summary screen's moves page, where the move to forget is chosen. *)
+let moves_page = 3
+let probes = Battle_look.probes
 
 let forget_list m =
-  Summary_screen.page m = Some Summary_moves.moves_page
-  && Move_list_cursor.row m <> None
+  Summary_screen.page m = Some moves_page && Move_list_cursor.row m <> None
 
 let evolution_question = Battle_yes_no.yes_no_box
 let question c m = c.question m || evolution_question m
