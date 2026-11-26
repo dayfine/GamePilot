@@ -120,7 +120,7 @@ let select_red_button ~log =
   | Holds _ -> selected_after_up ~log
 
 let to_caution ~log ~picture tile game =
-  if not (S.native picture) then Error not_native
+  if not (Picture_box.native picture) then Error not_native
   else
     let* () = Game_entry.close_game ~log ~picture tile in
     let icon = Effects.upload_template game.icon_png in
@@ -150,5 +150,5 @@ let on_red ~log =
   | Holds _ -> press_delete ~log
 
 let confirm ~log ~picture =
-  if not (S.native picture) then Error not_native
+  if not (Picture_box.native picture) then Error not_native
   else Effects.with_probes S.colour_probes (fun () -> on_red ~log)
