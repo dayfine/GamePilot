@@ -141,7 +141,7 @@ let decode_error ~where (cause : Pokemon_engine.Failure.cause) =
 
 let decode_duplicate ~where args =
   ( A.Action_args.member ~where args,
-    A.Mail_glitch_use.duplication_plan ~where args )
+    A.Mail_glitch_use.duplication_plan ~options:Run_options.none ~where args )
 
 let game_action stocks ~where action args acc =
   let map f r = Result.map f (Result.map_error (decode_error ~where) r) in

@@ -48,14 +48,14 @@ no repeat
 frlg 01-ultra-balls from anywhere outdoors: 2 game_action, 3 route, 1 heal
 fly_indigo: [fly] game_action {"town":"IndigoPlateau"} => IndigoPlateau_Exterior (11, 7) south
 to_clerk: [run] route to IndigoPlateau_PokemonCenter_1F (2, 7) west
-buy_ultra_balls: [mart] game_action {"map":"IndigoPlateau_PokemonCenter_1F","items":[{"item":"ultra-ball","quantity":10}]}
+buy_ultra_balls: [mart] game_action {"map":"IndigoPlateau_PokemonCenter_1F","items":[{"item":"ultra-ball","quantity":20}]}
 heal_indigo.walk: [run] route to IndigoPlateau_PokemonCenter_1F (13, 12) north
 heal_indigo: heal
 out_of_indigo: [run] route to IndigoPlateau_Exterior (11, 7) south
 retries 0
 postconditions:
-item ultra-ball gained 10
-money spent 12000
+item ultra-ball gained 20
+money spent 24000
 no repeat
 == dex_collection/plans/02-shiny-voltorb.plan.json
 frlg 02-shiny-voltorb from anywhere outdoors: 6 game_action, 5 route, 1 heal
@@ -393,7 +393,6 @@ out_of_dept_store: [run] route to CeladonCity (11, 15) south
 retries 0
 postconditions:
 mr-mime in slot 1
-item rare-candy gained 98
 no repeat
 == wild_rng/plans/01-route10-grass.plan.json
 frlg 01-route10-grass from anywhere outdoors: 3 game_action, 2 route

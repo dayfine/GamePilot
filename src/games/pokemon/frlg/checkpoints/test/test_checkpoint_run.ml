@@ -13,7 +13,8 @@ let handled =
   :: Frlg_actions.Action_requests.names
   @ List.map fst
       (Frlg_actions.Mail_glitch_use.handlers ~log:ignore
-         ~party:(ref (Frlg_actions.Party_roster.of_list [])))
+         ~party:(ref (Frlg_actions.Party_roster.of_list []))
+         ~options:Run_options.none)
 
 let missing (p : Pokemon_engine.Plan.t) =
   List.filter_map

@@ -17,7 +17,7 @@ Runs on: mGBA.
 
 - Save anywhere outdoors in Kanto: 01 flies to Indigo Plateau for Ultra Balls and ends outside its
   Center; each catch starts and ends outdoors.
-- Bring ¥12,000 for 10 Ultra Balls at the Indigo Plateau's Pokemon Center.
+- Bring ¥24,000 for 20 Ultra Balls at the Indigo Plateau's Pokemon Center.
 - The party's last Pokemon must know Sweet Scent, the game's sound must be Mono and its button
   mode Help, as [Wild RNG](frlg.wild_rng.md) says. Supply your trainer ID and secret ID via
   `--options tid=N --options sid=N`, `GAMEPILOT_FRLG_TID` / `GAMEPILOT_FRLG_SID`, or
@@ -29,7 +29,7 @@ Runs on: mGBA.
 - a member holds no Mail (pc_deposit)
 - a member knows fly (fly)
 - the thunder badge (fly)
-- money at least ¥12000 (all the purchases)
+- money at least ¥24000 (all the purchases)
 - at the start, anywhere outdoors where Fly works
 <!-- /generated -->
 
@@ -65,7 +65,7 @@ sh run/run_checkpoints_on_mgba.sh frlg.dex_collection --from 01-ultra-balls --to
 | 03-shiny-drowzee | From anywhere outdoors: a shiny Drowzee in Route 11's grass by the wild RNG, stored in the PC, back to the nurse |
 | 04-shiny-ekans | From anywhere outdoors: a shiny Ekans in Route 10's grass by the wild RNG, stored in the PC, back to the nurse |
 
-<!-- plans: 70add909a516 -->
+<!-- plans: b4a62405fce3 -->
 <!-- /generated -->
 
 
@@ -74,7 +74,7 @@ sh run/run_checkpoints_on_mgba.sh frlg.dex_collection --from 01-ultra-balls --to
 <!-- generated:preflight -->
 | Resume from | The pre-flight checks |
 |---|---|
-| 01-ultra-balls | a member knows fly (fly); the thunder badge (fly); money at least ¥12000 (mart); at the start, anywhere outdoors where Fly works |
+| 01-ultra-balls | a member knows fly (fly); the thunder badge (fly); money at least ¥24000 (mart); at the start, anywhere outdoors where Fly works |
 | 02-shiny-voltorb | a member holds no Mail (pc_deposit); a member knows fly (fly); the thunder badge (fly); ultra-ball at least x1 (wild_rng); at the start, anywhere outdoors where Fly works |
 | 03-shiny-drowzee | a member knows fly (fly); the thunder badge (fly); ultra-ball at least x1 (wild_rng); at the start, anywhere outdoors where Fly works |
 | 04-shiny-ekans | a member knows fly (fly); the thunder badge (fly); ultra-ball at least x1 (wild_rng); at the start, anywhere outdoors where Fly works |

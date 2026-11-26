@@ -27,7 +27,26 @@ let marks shown () =
     ~default:"ok"
 
 let party = ref (Party_roster.of_list [ "mr-mime"; "blastoise" ])
-let handlers = Mail_glitch_use.handlers ~log:ignore ~party
+
+let handlers =
+  Mail_glitch_use.handlers ~log:ignore ~party ~options:Run_options.none
+
+let candies_options pairs =
+  let decl : Run_options.declared list =
+    [
+      {
+        key = "candies";
+        value = Int_range (1, 99);
+        presence = Default "98";
+        doc = "";
+      };
+    ]
+  in
+  Result.get_ok (Run_options.check decl pairs)
+
+let dup_rounds ?(options = Run_options.none) json () =
+  let p = Mail_glitch_use.duplication_plan ~options ~where:"" (obj json) in
+  Printf.sprintf "%s x%d (%s)" p.item p.rounds p.word
 
 let event : Pokemon_engine.Plan.event =
   {
@@ -122,6 +141,20 @@ let () =
         (args "duplicate_item"
            {|{"species": "mr-mime", "item": "antidote", "word": "ABRA"}|})
         "bad_args: duplicate_item: count is missing.";
+      case "duplicate_item keeps plan count without candies option"
+        (dup_rounds
+           {|{"species": "mr-mime", "item": "rare-candy", "count": 98, "word": "ABRA"}|})
+        "rare-candy x98 (ABRA)";
+      case "duplicate_item overrides rare-candy count with candies option"
+        (dup_rounds
+           ~options:(candies_options [ ("candies", "20") ])
+           {|{"species": "mr-mime", "item": "rare-candy", "count": 98, "word": "ABRA"}|})
+        "rare-candy x20 (ABRA)";
+      case "duplicate_item ignores candies option for non-candy item"
+        (dup_rounds
+           ~options:(candies_options [ ("candies", "20") ])
+           {|{"species": "mr-mime", "item": "antidote", "count": 1, "word": "ABRA"}|})
+        "antidote x1 (ABRA)";
       case "read_glitched_mail needs the word"
         (args "read_glitched_mail" {|{"species": "mr-mime"}|})
         "bad_args: read_glitched_mail: word is missing.";

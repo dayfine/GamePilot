@@ -146,6 +146,8 @@ let supplies =
       ];
   }
 
+let max_candies = 99
+
 let team_training =
   {
     id = "frlg.team_training";
@@ -158,7 +160,15 @@ let team_training =
     backends = [ Mgba; Switch ];
     viewport = Nso_gba;
     rules = Pokemon_grid;
-    options = [];
+    options =
+      [
+        {
+          key = "candies";
+          value = Int_range (1, max_candies);
+          presence = Default "98";
+          doc = "how many Rare Candies to duplicate into the bag";
+        };
+      ];
   }
 
 (* 16-bit trainer and secret IDs (0..65535). *)
