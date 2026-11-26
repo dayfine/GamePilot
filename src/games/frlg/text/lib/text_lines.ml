@@ -223,13 +223,23 @@ let pc_menu_row i =
     width = 104;
   }
 
+let pc_mon_menu_left = 168
+
 let pc_mon_menu_row i =
   {
     id = Printf.sprintf "pc_mon_menu.%d" i;
-    left = 168;
+    left = pc_mon_menu_left;
     indent = 2;
     glyph_top = pc_mon_menu_first_top + (pc_row_pitch * i);
     width = 60;
+  }
+
+let pc_withdraw_menu_row i =
+  {
+    (pc_mon_menu_row i) with
+    id = Printf.sprintf "pc_withdraw_menu.%d" i;
+    left = pc_mon_menu_left - Frlg_readers.Pc_screen.withdraw_shift;
+    width = 68;
   }
 
 let pc_data_species =

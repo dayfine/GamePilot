@@ -12,3 +12,5 @@ repo src/games/frlg/readers/test/images/mgba/ace-setup/box1_hand_on_empty_first_
 repo src/games/frlg/readers/test/images/mgba/ace-setup/box3_hand_on_third_slot.png|ace/box3_hand_on_third_slot.png
 repo src/games/frlg/readers/test/images/mgba/ace-setup/box3_ace_hand_on_title.png|ace/box3_ace_hand_on_title.png
 repo src/games/frlg/readers/test/images/mgba/ace-setup/box3_ace_on_first_slot.png|ace/box3_ace_on_first_slot.png
+repo src/games/frlg/readers/test/images/mgba/ace-setup/box1_withdraw_menu_mimien_antidote.png|ace/box1_withdraw_menu_mimien_antidote.png
+repo src/games/frlg/readers/test/images/mgba/ace-setup/box1_withdraw_menu_magikarp.png|ace/box1_withdraw_menu_magikarp.png
