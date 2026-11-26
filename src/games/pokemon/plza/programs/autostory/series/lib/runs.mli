@@ -28,13 +28,15 @@ val checkpoint_order : string -> string -> int
 
 val run_series :
   program:(string * string) list ->
+  options:Run_options.t ->
   viewport:(string option, string) result ->
   string ->
   string list ->
   (int, string) result
-(** [run_series ~program ~viewport plan_dir args]: the checkpoints --from to
-    --to of the plan folder, in order, each run until the policy decides; every
-    plan loaded and checked ({!Plza_autostory.Plan_check}) before the console
-    moves. [program] is run.json's program fields, [viewport] the Switch
-    daemons' (the registry's check of --viewport). [Ok 0] when every one passed,
-    [Ok 1] when one stopped; the Switch only, testing. *)
+(** [run_series ~program ~options ~viewport plan_dir args]: the checkpoints
+    --from to --to of the plan folder, in order, each run until the policy
+    decides; every plan loaded and checked ({!Plza_autostory.Plan_check}) before
+    the console moves. [program] is run.json's program fields, [options] the
+    program's options, checked (Program_registry.check_options), for run.json,
+    [viewport] the Switch daemons' (the registry's check of --viewport). [Ok 0]
+    when every one passed, [Ok 1] when one stopped; the Switch only, testing. *)

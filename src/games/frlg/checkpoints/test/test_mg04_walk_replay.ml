@@ -55,6 +55,7 @@ let replayed_walk () =
       grind_cap = None;
       gait = Running;
       end_check_only = false;
+      program_options = Run_options.none;
       log = (fun line -> lines := line :: !lines);
     }
   in

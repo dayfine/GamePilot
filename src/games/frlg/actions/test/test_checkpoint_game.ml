@@ -61,6 +61,7 @@ let run ?(world = Frlg_world.pallet) ?(react = react) ?(checkpoint = checkpoint)
       grind_cap = None;
       center = None;
       reload = (fun () -> Ok ());
+      program_options = Run_options.none;
       log = ignore;
     }
   in

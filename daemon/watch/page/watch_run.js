@@ -110,12 +110,19 @@ function runsTitle(c) {
       (r.at ? " at " + r.at : "") + (r.reason ? ": " + r.reason : "")))].join("\n");
 }
 
+// The program's options the series was given, "item=master-ball withdraw=50 · ";
+// "" for none (run.json and the series record leave them out).
+function optionsText(series) {
+  const pairs = Object.entries(series.options || {}).map(([k, v]) => k + "=" + v);
+  return pairs.length ? pairs.join(" ") + " · " : "";
+}
+
 function seriesMeta(series) {
   const meta = $("run-meta");
   const cps = series.checkpoints;
   const cur = cps.findIndex((c) => c.state === "current");
   meta.replaceChildren(el("b", "", series.program_name || series.program || "series"),
-    " · " + series.from + " → " + series.to + " · " + series.mode + " · ");
+    " · " + series.from + " → " + series.to + " · " + series.mode + " · " + optionsText(series));
   if (series.result === "running" && cur >= 0) {
     meta.append(el("b", "", cps[cur].id), " (" + (cur + 1) + " of " + cps.length + ")" +
                 (series.run ? "" : " · between runs") + " · ");

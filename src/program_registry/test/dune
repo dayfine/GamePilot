@@ -4,4 +4,5 @@
   gamepilot.table_test
   gamepilot.frlg_checkpoints
   gamepilot.plza_engine
+  gamepilot.run_options
   gamepilot.program_registry))
