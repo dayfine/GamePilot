@@ -10,7 +10,8 @@
     Each blob's box is scored with the pixels outside its range black, as the
     fork's mask filter does ([masked], protocol v1.15): unmasked, the grey
     inside a ring and the pavement around it kept every console frame over 230.
-    On console B's 01.03 frames Tackle's ring scores 110 to 116. *)
+    On console B's 04-starter-and-andi frames Tackle's ring scores 110 to 116.
+*)
 
 (** A move's symbol, weakest first, as the fork orders them. *)
 type symbol = No_effect | Not_very_effective | Effective | Super_effective

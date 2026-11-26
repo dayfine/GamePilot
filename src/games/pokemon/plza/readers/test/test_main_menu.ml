@@ -5,9 +5,9 @@
    read as the menu; nothing else shows the right arrow (the nearest blob,
    the minimap's corner, scores 93.5 at least).
 
-   01.01's run frames of the menu (640x360 scaled up, console B, 2026-11-25:
+   02-platform-to-plaza's run frames of the menu (640x360 scaled up, console B, 2026-11-25:
    the early menu, Satchel alone) do not read it: no right arrow blob, and B
-   scores 92.7, blurred past its bound. A full-size console frame of 03.11's
+   scores 92.7, blurred past its bound. A full-size console frame of 26-mable-reward's
    menu is wanted. Every frame shifted reads as unshifted. *)
 
 open Plza_readers

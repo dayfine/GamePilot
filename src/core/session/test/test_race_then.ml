@@ -2,8 +2,8 @@
    with [then] (the commands [then_] made from that frame), no plain cancel,
    and the op returns once that batch's batch_done arrives. [then_] runs in the
    program: a log it performs reaches the session (console B, 2026-11-25: run
-   3 of 01.03 died on Effect.Unhandled(Show_log) when [then_] ran inside the
-   session's handler). *)
+   3 of PLZA's 04-starter-and-andi died on Effect.Unhandled(Show_log) when
+   [then_] ran inside the session's handler). *)
 
 let expect name ok =
   if ok then Printf.printf "ok %s\n" name else failwith ("FAILED " ^ name)

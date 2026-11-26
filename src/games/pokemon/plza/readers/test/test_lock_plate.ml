@@ -35,24 +35,25 @@ let cases =
       "synthetic/plate-female-and-ball-marks" "a plate with the caught mark";
     case "the player's HP bar alone" "synthetic/player-bar-alone" "no plate";
     case "bright grass alone" "synthetic/bright-grass-alone" "no plate";
-    case "03.08's Scatterbug under ZL (not caught)"
+    case "21-fourth-species's Scatterbug under ZL (not caught)"
       "lock-plate/en-0308-scatterbug-not-caught-038-360p"
       "a plate with no caught mark";
-    (* 640x360 run frames (console B, 2026-11-25): the plates that 03.08 and
-       03.08a read as caught, and the Bunnelby that was. *)
-    case "03.08's female Scatterbug (not caught)"
+    (* 640x360 run frames (console B, 2026-11-25): the plates that 21-fourth-species and
+       22-fifth-species read as caught, and the Bunnelby that was. *)
+    case "21-fourth-species's female Scatterbug (not caught)"
       "lock-plate/en-0308-scatterbug-female-not-caught-041-360p"
       "a plate with no caught mark";
-    case "03.08a's female Weedle (not caught)"
+    case "22-fifth-species's female Weedle (not caught)"
       "lock-plate/en-0308a-weedle-female-not-caught-029-360p"
       "a plate with no caught mark";
-    case "03.08a's female Weedle, thrown at and caught (a new species)"
+    case
+      "22-fifth-species's female Weedle, thrown at and caught (a new species)"
       "lock-plate/en-0308a-weedle-female-thrown-at-036-360p"
       "a plate with no caught mark";
-    case "03.08a's Bunnelby (caught at 03.07)"
+    case "22-fifth-species's Bunnelby (caught at 20-first-catches)"
       "lock-plate/en-0308a-bunnelby-caught-036-360p"
       "a plate with the caught mark";
-    case "03.07's Bunnelby battle: no lock on"
+    case "20-first-catches's Bunnelby battle: no lock on"
       "alert-eye/en-0307-bunnelby-battle-113-360p" "no plate";
   ]
 

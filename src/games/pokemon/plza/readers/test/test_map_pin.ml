@@ -31,15 +31,16 @@ let cases =
     case
       "console: the patrol's stop 10, the arrow partly under the zone's badge"
       "map-pin/zone1-stop-10-under-badge" "(414.4, 230.4)";
-    (* 03.08's and 03.08b's map reads (640x360 run frames scaled up, console
+    (* 21-fourth-species's and 23-out-of-wild-zone-1's map reads (640x360 run frames scaled up, console
        B, 2026-11-25), against the pin the run logged. *)
-    case "03.08 at Taunie's rocks (run: 476, 223)"
+    case "21-fourth-species at Taunie's rocks (run: 476, 223)"
       "map-pin/en-0308-zone1-rocks-005-360p" "(475.0, 223.8)";
-    case "03.08 at the 100 spot (run: 441, 229)"
+    case "21-fourth-species at the 100 spot (run: 441, 229)"
       "map-pin/en-0308-zone1-spot-100-033-360p" "(440.6, 228.8)";
-    case "03.08b at the 80 spot (run: 403, 233)"
+    case "23-out-of-wild-zone-1 at the 80 spot (run: 403, 233)"
       "map-pin/en-0308b-zone1-spot-80-005-360p" "(405.0, 233.8)";
-    case "03.08b out of the zone, the map opening (run: 401, 227)"
+    case
+      "23-out-of-wild-zone-1 out of the zone, the map opening (run: 401, 227)"
       "map-pin/en-0308b-out-of-zone1-024-360p" "(401.9, 225.6)";
     case "no map: the 03.03 start" "minimap/es-0303-start" "none";
   ]

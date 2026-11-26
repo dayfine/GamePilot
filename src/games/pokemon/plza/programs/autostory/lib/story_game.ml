@@ -119,7 +119,7 @@ let run_to_gate_ms = 8000
 let run_to_gate steps ~timeout_ms =
   Plza_walk.Gate_run.run (Steps.walk_game_steps steps) ~timeout_ms
 
-(* The plan's timeout for each run at the far gate (plza-03.08b.plan.json). *)
+(* The plan's timeout for each run at the far gate (23-out-of-wild-zone-1.plan.json). *)
 let run_out_of_zone_1_ms = 5000
 
 let run_out_of_zone_1 steps ~timeout_ms =

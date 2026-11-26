@@ -1,7 +1,7 @@
 (* The wild battle's readers, the catches' [wild_battle_on]: the alert eye
    (PokemonLZA_AlertEyeDetector.cpp) on ten of the fork's AlertEyeDetector
    frames (CommandLineTests, PokemonLZA/AlertEyeDetector, png kept as jpg) and
-   03.08b's wild battle at the zone's pillar, and 03.07's Bunnelby battle (a
+   23-out-of-wild-zone-1's wild battle at the zone's pillar, and 20-first-catches's Bunnelby battle (a
    640x360 run frame of console B scaled up, 2026-11-25: 44.5; the frame
    after the catch reads none). The Run prompt
    (PokemonLZA_RunFromBattleDetector.cpp), which the fork has no test frame
@@ -12,10 +12,10 @@
    25.9, the bigger eye as the bar first shows 28.1 and 30.3, the pillar's 30.3,
    and Zone 6's translucent first frame 51.1; shifted, 35.5 at most but for the
    translucent one (71.4, a known miss). A blob of the eye's shape on a frame
-   without it scores 69.3 at least, shifted or not (03.01's arrival text
+   without it scores 69.3 at least, shifted or not (12-down-to-the-lobby's arrival text
    box). The Run prompt (bound 80): no frame shows it, and a blob of its shape
    on one scores 81.7 at least, shifted or not (Parla's talk prompt), so its
-   bound is unchecked against a frame with it. 03.07's tutorial battles show
+   bound is unchecked against a frame with it. 20-first-catches's tutorial battles show
    no Run prompt (console B, 2026-11-25): the alert eye is what reads them. *)
 
 open Plza_readers

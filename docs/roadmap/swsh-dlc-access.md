@@ -28,9 +28,9 @@ model is PLZA's (timed legs, turns, arrival checks), not the FRLG grid.
 
 **Decided (user, 2026-11-25).**
 
-- **After PLZA 01.01** (`plza-autostory-port.md`). PLZA brings what SwSh lacks on GamePilot: the stick
+- **After PLZA 02-platform-to-plaza** (the fork's 01.01; `plza-autostory-port.md`). PLZA brings what SwSh lacks on GamePilot: the stick
   on the wire, the native viewport, walks without tiles on the agnostic engine, and the reload from
-  HOME. SwSh starts when 01.01 passes on console B.
+  HOME. SwSh starts when 02-platform-to-plaza passes on console B.
 - **Shield**, on console B, a brand-new save. The Slowpoke scene is Avery's; Shield fixtures first.
 - **Start after the name.** The user types the player name by hand once; checkpoint 00.00 starts at the
   Rose introduction. No keyboard port (fork #62).
@@ -44,7 +44,7 @@ model is PLZA's (timed legs, turns, arrival checks), not the FRLG grid.
 
 ## Steps
 
-1. PLZA 01.01 passes on console B (its own page).
+1. PLZA 02-platform-to-plaza passes on console B (its own page).
 2. Gate A, 00.00-00.03: Rose introduction, bag, Hop's house, the walk to the station before Leon.
    Readers as the guessed plans need them: dialog, choice arrow, menu, fades, the control cue.
 3. Gate B: starter, the Weald, Route 2, the Dynamax Band, the train to the Wild Area; the battle port.

@@ -39,7 +39,7 @@ let platform_events =
   ]
 
 let decode text =
-  Plan_decode.decode ~source:"plza-01.01.plan.json"
+  Plan_decode.decode ~source:"02-platform-to-plaza.plan.json"
     (Yojson.Safe.from_string text)
 
 let decoded show text =
@@ -71,7 +71,7 @@ let decode_cases =
       "w: walk [-66, 600] steer after 500 ms until dialog not before 300 ms";
     case "a style that is not one of the two"
       (fun () -> walk_args {|{"legs": [[0, 1]], "style": "held"}|})
-      "plza-01.01.plan.json: checkpoint.events[0].args.style must be \
+      "02-platform-to-plaza.plan.json: checkpoint.events[0].args.style must be \
        \"face_then_walk\" or \"steer\".";
     case "a heading to face first (the fork's, a minimap bearing)"
       (fun () ->
@@ -86,20 +86,22 @@ let decode_cases =
       "none";
     case "a leg that is not [angle, ms]"
       (fun () -> walk_args {|{"legs": [[0, 1000], [90]]}|})
-      "plza-01.01.plan.json: checkpoint.events[0].args.legs[1] is not [angle \
-       degrees, walk ms].";
+      "02-platform-to-plaza.plan.json: checkpoint.events[0].args.legs[1] is \
+       not [angle degrees, walk ms].";
     case "legs are required"
       (fun () -> walk_args {|{"end": "scene"}|})
-      "plza-01.01.plan.json: checkpoint.events[0].args.legs is missing.";
+      "02-platform-to-plaza.plan.json: checkpoint.events[0].args.legs is \
+       missing.";
     case "an end that is not one of the seven"
       (fun () -> walk_args {|{"legs": [[0, 1]], "end": "banner"}|})
-      "plza-01.01.plan.json: checkpoint.events[0].args.end must be \
+      "02-platform-to-plaza.plan.json: checkpoint.events[0].args.end must be \
        \"fade_white\", \"fade_black\", \"dialog\", \"prompt\", \"talk\", \
        \"talk_after_legs\" or \"scene\".";
     case "earliest_end_ms needs an end"
       (fun () -> walk_args {|{"legs": [[0, 1]], "earliest_end_ms": 100}|})
-      "plza-01.01.plan.json: checkpoint.events[0].args.earliest_end_ms needs \
-       an \"end\" other than a talk.";
+      "02-platform-to-plaza.plan.json: \
+       checkpoint.events[0].args.earliest_end_ms needs an \"end\" other than a \
+       talk.";
     case "a walk into a talk after its legs"
       (fun () ->
         walk_args
@@ -107,23 +109,24 @@ let decode_cases =
       "w: walk [-66, 600] steer into a talk after the legs";
     case "an unknown walk arg"
       (fun () -> walk_args {|{"legs": [[0, 1]], "tiles": 3}|})
-      "plza-01.01.plan.json: checkpoint.events[0].args.tiles is not a known \
-       field.";
+      "02-platform-to-plaza.plan.json: checkpoint.events[0].args.tiles is not \
+       a known field.";
     case "a grid pose is not a PLZA pose"
       (fun () ->
         decoded Plan_text.outline (plan_text ~start:{|{"map": "Town"}|} []))
-      "plza-01.01.plan.json: checkpoint.start.map is not a known field.";
+      "02-platform-to-plaza.plan.json: checkpoint.start.map is not a known \
+       field.";
     case "a Pokémon kind is not PLZA's"
       (fun () ->
         decoded Plan_text.outline
           (plan_text [ {|{"id": "x", "kind": "legs", "args": {"legs": []}}|} ]))
-      {|plza-01.01.plan.json: checkpoint.events[0].kind "legs" is not a story event kind.|};
+      {|02-platform-to-plaza.plan.json: checkpoint.events[0].kind "legs" is not a story event kind.|};
     case "a promise PLZA cannot read"
       (fun () ->
         decoded Plan_text.outline
           (plan_text ~postconditions:{|{"party": []}|} []))
-      "plza-01.01.plan.json: checkpoint.metadata.postconditions.party is not a \
-       known field.";
+      "02-platform-to-plaza.plan.json: \
+       checkpoint.metadata.postconditions.party is not a known field.";
   ]
 
 let at ?spot place : Pose.zone = { place; spot }
