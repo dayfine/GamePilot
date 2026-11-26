@@ -86,10 +86,14 @@ let read_species () =
   | Some path -> Ok (Frlg_text.Species_names.load path)
   | None -> Error (file ^ " not found")
 
-let check_all species conditions =
-  List.fold_left
-    (fun ok c -> Result.bind ok (fun () -> A.Skip_conditions.check species c))
-    (Ok ()) conditions
+let check_each f conditions =
+  List.fold_left (fun ok c -> Result.bind ok (fun () -> f c)) (Ok ()) conditions
+
+let check_pokedex_conditions conditions =
+  if List.exists A.Skip_conditions.reads_pokedex conditions then
+    Result.bind (read_species ()) (fun species ->
+        check_each (A.Skip_conditions.check species) conditions)
+  else Ok ()
 
 let check_skip_conditions (checkpoint : Pokemon_engine.Plan.checkpoint) =
   let conditions =
@@ -97,9 +101,8 @@ let check_skip_conditions (checkpoint : Pokemon_engine.Plan.checkpoint) =
       (fun (e : Pokemon_engine.Plan.event) -> e.skip_if)
       checkpoint.events
   in
-  if List.exists A.Skip_conditions.reads_pokedex conditions then
-    Result.bind (read_species ()) (fun species -> check_all species conditions)
-  else Ok ()
+  Result.bind (check_each A.Skip_conditions.check_syntax conditions) (fun () ->
+      check_pokedex_conditions conditions)
 
 let check_plan (plan : Pokemon_engine.Plan.t) =
   Result.bind (check_menu plan) (fun () ->

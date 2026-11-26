@@ -235,7 +235,7 @@ arrange_slot1_chding: [party_swap] game_action {"species":"farfetchd","target_sl
 arrange_slot2_blastoise: [party_swap] game_action {"species":"blastoise","target_slot":2}
 arrange_slot3_mimien: [party_swap] game_action {"species":"mr-mime","target_slot":3}
 give_leppa_berry_slot2: [give_bag_item] game_action {"item":"leppa-berry","species":"blastoise"}
-give_retro_mail_slot3: [give_bag_item] game_action {"item":"retro-mail","species":"mr-mime"}
+give_retro_mail_slot3: [give_bag_item] game_action {"item":"retro-mail","species":"mr-mime"} skip_if party_slot_holds_mail:3
 retries 0
 postconditions:
 farfetchd in slot 1
@@ -259,11 +259,11 @@ buy_retro_mail: [mart] game_action {"map":"CeladonCity_DepartmentStore_4F","item
 to_1f_save_spot: [run] route to CeladonCity_DepartmentStore_4F (6, 2) north
 to_1f_save_spot.lift: [lift_floor] game_action {"from":"4F","to":"1F"} => CeladonCity_DepartmentStore_1F (6, 2) south
 arrange_slot1_mimien: [party_swap] game_action {"species":"mr-mime","target_slot":1}
-fill_mail_slot2: [give_bag_item] game_action {"item":"retro-mail","target_slot":2}
-fill_mail_slot3: [give_bag_item] game_action {"item":"retro-mail","target_slot":3}
-fill_mail_slot4: [give_bag_item] game_action {"item":"retro-mail","target_slot":4}
-fill_mail_slot5: [give_bag_item] game_action {"item":"retro-mail","target_slot":5}
-fill_mail_slot6: [give_bag_item] game_action {"item":"retro-mail","target_slot":6}
+fill_mail_slot2: [give_bag_item] game_action {"item":"retro-mail","target_slot":2} skip_if party_slot_holds_mail:2
+fill_mail_slot3: [give_bag_item] game_action {"item":"retro-mail","target_slot":3} skip_if party_slot_holds_mail:3
+fill_mail_slot4: [give_bag_item] game_action {"item":"retro-mail","target_slot":4} skip_if party_slot_holds_mail:4
+fill_mail_slot5: [give_bag_item] game_action {"item":"retro-mail","target_slot":5} skip_if party_slot_holds_mail:5
+fill_mail_slot6: [give_bag_item] game_action {"item":"retro-mail","target_slot":6} skip_if party_slot_holds_mail:6
 check_mail_marks: [check_party_marks] game_action {"marks":["held_item","mail","mail","mail","mail","mail"]}
 read_glitched_mail: [read_glitched_mail] game_action {"species":"mr-mime","word":"ABRA"}
 give_dup_item: [give_bag_item] game_action {"item":"antidote","species":"mr-mime"}
