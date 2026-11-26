@@ -16,6 +16,9 @@
     . X C V B N M . . .
     v}
     where [.] is a disabled key (I, O, Z and the punctuation), never stepped on.
+    That is the QWERTY layout, the one console B's English and French games
+    opened; a keyboard laid out otherwise (AZERTY, QWERTZ) is not supported: the
+    presses would type other characters.
 
     Where it differs: the script assumed the cursor on "1" when the keyboard
     opens; here the cursor is read first (the fork: "the keyboard remembers the

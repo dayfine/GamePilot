@@ -19,10 +19,6 @@ type game = { key : string; icon : Effects.template_hash }
 (** A game as the page reader knows it: a short key (its probe's id) and its
     uploaded icon template, in frame pixels. *)
 
-val native : Wire.box -> bool
-(** The game picture is the whole frame: these screens' boxes and the icon
-    templates are in frame pixels. *)
-
 val icon_probe : game -> Wire.probe_spec
 (** The game's icon match on its page, on the [native] viewport: {!is_game}. *)
 
