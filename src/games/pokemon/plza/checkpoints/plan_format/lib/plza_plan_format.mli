@@ -1,7 +1,9 @@
 (** How a PLZA plan writes PLZA's rules ({!Plza_rules}): a pose is a zone
     ([{"place": "LumioseCity", "spot": ...}]), the action is [walk]
     ({!Walk_decode}), and [postconditions] names at most a [place], written as a
-    start signature is ([{"minimap": "after-taunie-battle"}]). *)
+    start signature is ([{"minimap": "after-taunie-battle"}]), and [flags],
+    story flags set by the checkpoint's end ([["mystery_gift"]]), each one PLZA
+    reads ({!Plza_rules.readable_flags}). *)
 
 include Engine_plan_format.Plan_format.PLAN_FORMAT with module T = Plza_rules
 

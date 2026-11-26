@@ -112,6 +112,14 @@ let bad_cases =
         with_postconditions
           [ ("place", `Assoc [ ("minimap", `String "pokemon-center-door") ]) ])
       "ok";
+    case "an end flag PLZA reads: decodes and checks"
+      (fun () ->
+        with_postconditions [ ("flags", `List [ `String "mystery_gift" ]) ])
+      "ok";
+    case "an end flag PLZA does not read"
+      (fun () -> with_postconditions [ ("flags", `List [ `String "can_run" ]) ])
+      "does not decode: case: metadata.postconditions.flags has \"can_run\": \
+       PLZA reads only mystery_gift.";
     case "an unknown skip_if flag"
       (fun () -> with_skip_if "battle_over")
       "03.03-battle-taunie event after_taunie_battle: unknown skip_if flag \

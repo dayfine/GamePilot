@@ -41,5 +41,5 @@ val run_watched :
     ({!Plza_engine.Plan_watch}): the report's steps move with its events and its
     run in [mode] ends passed or failed. [end_state] (none by default) is its
     end place and its reader ({!Start_signature.promised_end},
-    {!Start_signature.read_place}): the runner passes the checkpoint with no
-    event run when it already holds, and checks it after the last event. *)
+    {!Start_signature.read_end}): the runner passes the checkpoint with no event
+    run when it already holds, and checks it after the last event. *)

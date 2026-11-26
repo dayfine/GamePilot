@@ -33,16 +33,33 @@ module Screen_signature = Screen_signature
 (** {!Screen_signature}: what the screen shows where a checkpoint starts or
     ends. *)
 
-(** What a PLZA checkpoint promises: its [place], what the screen shows where it
-    ends. Unset, the series takes the next checkpoint's start signature, as a
-    Pokémon checkpoint's end is the next one's start. *)
-module Postconditions : sig
-  type t = { place : Screen_signature.t option }
+(** A story flag PLZA reads where a checkpoint ends. *)
+type readable_flag =
+  | Mystery_gift
+      (** The main menu's Link Play row, drawn from 03.15-mable-reward on. *)
 
-  include
-    Engine_rules.POSTCONDITIONS
-      with type t := t
-       and type reads = Screen_signature.t
+val readable_flags : (string * readable_flag) list
+(** The story flags a PLZA checkpoint can promise at its end, by the name a plan
+    gives them, each one the game reads there ([Story_flag_read] in the
+    autostory): ["mystery_gift"]. The one list of them: a plan naming another
+    does not decode. The story flags of [docs/design/Story-Flags.md] as the end
+    reads them. *)
+
+(** What a PLZA checkpoint promises: its [place], what the screen shows where it
+    ends (unset, the series takes the next checkpoint's start signature, as a
+    Pokémon checkpoint's end is the next one's start), and its [flags], story
+    flags set by its end, as a Pokémon plan promises them. *)
+module Postconditions : sig
+  type t = { place : Screen_signature.t option; flags : string list }
+
+  type reads = {
+    screen : Screen_signature.t;  (** What the screen shows of the place. *)
+    flags_read : (string * bool) list;
+        (** Each promised flag read, set or clear; a flag left out was not read,
+            and is not checked (so unmet). *)
+  }
+
+  include Engine_rules.POSTCONDITIONS with type t := t and type reads := reads
 end
 
 val ends_at : Action.t -> Pose.t option
@@ -52,4 +69,6 @@ val position : Postconditions.t -> Pose.t option
 (** [None]: PLZA promises no zone. *)
 
 val end_place : Postconditions.t -> Postconditions.t option
-(** The promises when they name a [place] (PLZA promises nothing else). *)
+(** The promises when they name a [place] or [flags] (PLZA promises nothing
+    else): both are read from the game where the checkpoint ends, and neither is
+    a change from its start. *)
