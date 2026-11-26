@@ -137,7 +137,7 @@ and reads the box: its wallpaper, the PKMN DATA panel, the level and the male ma
 `Pc_withdraw` walks the box's slots until PKMN DATA names a species and no item, and withdraws it.
 
 **Reader headroom.** The colour readers' thresholds and their headroom on 16 mGBA frames, each
-under nine colour shifts, are in `src/games/frlg/readers/test/test_ace_readers.ml`. The word
+under nine colour shifts, are in `src/games/pokemon/frlg/readers/test/test_ace_readers.ml`. The word
 arrow and the hand shadow are the thin ones; both are confirmed by a second read.
 
 **For the execution program.** It needs a naming-screen typer (the payload is the box names) and

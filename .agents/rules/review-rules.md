@@ -50,7 +50,7 @@ and the generated guide blocks do not print it.
   https://github.com/dayfine/GamePilot/pull/109#discussion_r4697777309).
 - Bad: `- 0 free party slots` in a guide's `needs` block.
 - Good: the line left out; `- 2 free party slots (joining: ...)` when slots are needed.
-- Find: the generator (`src/games/frlg/series/lib/guide_tables.ml`,
+- Find: the generator (`src/games/pokemon/frlg/series/lib/guide_tables.ml`,
   `Frlg_checkpoints.Plan_needs.asks_something`)
   leaves them out and CI's `gamepilot guide --check` fails on a stale block. A new kind of need
   must say in `asks_something` when it asks nothing. Recipe for leftovers:
@@ -335,9 +335,9 @@ or program uses it, not before; until then it lives with its one user.
 
 - Why: on where the RNG goes: "each game's mechanism is different ... then we need to invent some
   gen directory" (user, 2026-11-24, in a working session; applied in #24). The call, paraphrased:
-  keep it in `games/frlg/rng`, and share nothing before a second user exists.
+  keep it in `games/pokemon/frlg/rng`, and share nothing before a second user exists.
 - Bad: `src/pokemon/rng/` holding FireRed's seeding with FireRed its only caller.
-- Good: `src/games/frlg/rng/`, moved when a second Gen 3 game needs it.
+- Good: `src/games/pokemon/frlg/rng/`, moved when a second Gen 3 game needs it.
 - Find: recipe, then judgment: for each library under `src/pokemon` and `src/engine`, the
   top folders whose `dune` files link it (one game, or only its own layer, is a candidate; a
   library a shared one links is used through it, so follow the chain):
@@ -442,7 +442,7 @@ Code reads game text and assets from files committed in this repo, one per langu
   dependency on Packages, per-language assets committed and every language kept, for CI and
   portability; languages matter even when untested.
 - Bad: a reader opening `third_party/Packages/.../MoveNames.json` at start.
-- Good: `src/games/frlg/text/assets/move_names.<lang>.json` committed, loaded per language.
+- Good: `src/games/pokemon/frlg/text/assets/move_names.<lang>.json` committed, loaded per language.
 - Find: recipe: `grep -rn 'Packages' --include='*.ml' --include=dune src | grep -v '/test/'`.
 
 ## From the review of #146 (review rules catalog, 2026-11-25)
@@ -467,7 +467,7 @@ Find the gate in pret pokefirered (the script or the C that checks it) and cite 
 - Find: recipe, then judgment on each hit (is the count or the Hall of Fame what the game checks?):
   `grep -rnE '"(badges|hall_of_fame)": *(true|[0-9])' src/games/*/programs/*/plans`;
   for field moves, `grep -rnE '"action": "(fly|surf|strength|rock_smash|waterfall|cut_tree|flash)"' src/games/*/programs/*/plans`
-  checked against `field_move_badges` in `src/games/frlg/actions/lib/action_args.ml`, and
+  checked against `field_move_badges` in `src/games/pokemon/frlg/actions/lib/action_args.ml`, and
   `grep -rnE 'in the party \((fly|surf|strength|cut)' docs/guide` for an HM need by species (R3).
 
 ## From the review of #198 (PLZA Main Mission 01.02–01.03, 2026-11-25)

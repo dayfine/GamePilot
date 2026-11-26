@@ -65,7 +65,7 @@ type with its printing, its plan format and its event snapshot. A game's rules a
 pieces, in a dozen lines:
 
 ```ocaml
-(* games/frlg/checkpoints/rules/lib/frlg_rules.ml *)
+(* games/pokemon/frlg/checkpoints/rules/lib/frlg_rules.ml *)
 module Pose = Grid_pose                 (* map, tiles, facing; read as map and tile *)
 
 module Action = struct
@@ -120,7 +120,7 @@ val action_of_plan :
   'action part list -> string -> (where:string -> Json_field.obj -> ('action, string) result) option
 val claimed_twice : 'action part list -> string list   (* names two parts own; a test wants [] *)
 
-(* games/frlg/checkpoints/plan_codec/lib/frlg_plan_codec.ml *)
+(* games/pokemon/frlg/checkpoints/plan_codec/lib/frlg_plan_codec.ml *)
 let parts = Action_parts.[
   Part ((module Story_action_decode), fun a -> Story a);
   Part ((module Grid_action_decode), fun a -> Grid a);
@@ -207,7 +207,7 @@ claimed, unknown fields checked once, parts in order).
 | `Grid_action` | same | route, ready, legs, step | `Grid_action_decode` | |
 | `Pokemon_action` | `src/pokemon/checkpoints` | new_game, options, battle, train, heal, shop | `Pokemon_action_decode` | |
 | `Pokemon_promises` | same | party ... marks, `Postcondition_check` | `Postcondition_decode`, `Party_decode` | `Pokemon_start_snapshot` |
-| `Frlg_action` | `src/games/frlg/checkpoints` | today's `Action_requests` and the rest | `Frlg_action_decode` | |
+| `Frlg_action` | `src/games/pokemon/frlg/checkpoints` | today's `Action_requests` and the rest | `Frlg_action_decode` | |
 
 Today's `*_text` modules (`Story_action_text`, `Zone_pose_text`, `With_position_text`,
 `Grid_pose_text`, `Pokemon_action_text`, `Postconditions_text`, `Frlg_action_text`) fold into the
@@ -336,7 +336,7 @@ src/pokemon/navigation/grid/checkpoints/{rules,plan_format,event_snapshot}/
                   Grid_pose, Grid_action and their formats, beside the grid they walk
 src/pokemon/checkpoints/{rules,plan_format,event_snapshot}/
                   Pokemon_action, Pokemon_promises and their formats; no instance
-src/games/frlg/checkpoints/{rules,plan_format,event_snapshot,engine}/
+src/games/pokemon/frlg/checkpoints/{rules,plan_format,event_snapshot,engine}/
                   Frlg_action, Frlg_rules and formats, Frlg_engine; frlg_checkpoints as today
 src/games/pokemon/plza/checkpoints/{rules,plan_format,event_snapshot,engine}/
                   as #89, built from pieces, Plza_engine

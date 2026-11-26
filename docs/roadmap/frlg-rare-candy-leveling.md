@@ -5,7 +5,7 @@ a chosen Pokemon until a target level, learns the moves the plan names and handl
 
 ## What exists
 
-- **Duplication.** 08-activate-and-verify's `duplicate_item` (`src/games/frlg/programs/mail_glitch/plans/08-activate-and-verify.plan.json`)
+- **Duplication.** 08-activate-and-verify's `duplicate_item` (`src/games/pokemon/frlg/programs/mail_glitch/plans/08-activate-and-verify.plan.json`)
   runs one round of the C++ `ItemDuplication` loop: the held item +1 in the bag, one Retro Mail used.
   The fork's FRLG story design (`docs/design/AutoStory-FRLG-FutureEvents.md`, fork PR #130, section
   "Item duplication") already names Rare Candies and Nuggets as the reason to have it. Retro Mail is
@@ -37,7 +37,7 @@ a chosen Pokemon until a target level, learns the moves the plan names and handl
 - ~~In what order does the game show the move-learn prompt and the evolution when one candy causes
   both?~~ Settled from the decomp: the level-up stats, then every move of that level, then the
   evolution (cancellable with B held), whose new species may ask for its own moves; then back to the
-  bag. The full order is in `Rare_candy`'s doc comment (`src/games/frlg/actions/lib/rare_candy.mli`).
+  bag. The full order is in `Rare_candy`'s doc comment (`src/games/pokemon/frlg/actions/lib/rare_candy.mli`).
 - How many candies per run, and how much money for Retro Mail (one per candy)? Nuggets duplicate the
   same way and could pay for the mail.
 - Which Pokemon does the user want leveled first (the A4 trapper, A6's catcher, or the story team)?
