@@ -11,12 +11,12 @@
     cannot (its start is no save): its second run is refused. Within a run
     (Plza_autostory.Run_attempts), a checkpoint found off its start (its start
     signature) reloads once and checks again, and a plan's [retries] reload and
-    try again; each attempt is its own run folder. A passing
-    checkpoint hands the console to the next one as it ends. Its daemons keep
-    the console awake with the right stick (keepawake_stick), and each
-    checkpoint wakes the screen before it reads it (Plza_story.Screen_wake). The
-    watch page shows each run's plan, its events moving with the runner
-    (Story_game.run_watched), and the run. *)
+    try again; each attempt is its own run folder. A passing checkpoint hands
+    the console to the next one as it ends. Its daemons keep the console awake
+    with the right stick (keepawake_stick), and each checkpoint wakes the screen
+    before it reads it (Plza_story.Screen_wake). The watch page shows each run's
+    plan, its events moving with the runner (Story_game.run_watched), and the
+    run. *)
 
 val load_plan : plan_dir:string -> string -> (Plza_engine.Plan.t, string) result
 (** The plan [<plan_dir>/<id>.plan.json], decoded. *)
