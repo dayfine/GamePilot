@@ -53,7 +53,7 @@ let bad_plans () =
       | Some dir ->
           let plan_error =
             match p.rules with
-            | Plza_story | Plza_home | Plza_gifts -> plza_plan_error
+            | Plza_story | Pokemon_home | Plza_gifts -> plza_plan_error
             | Pokemon_grid -> frlg_plan_error
           in
           List.filter_map plan_error (plans_in dir))
@@ -225,6 +225,6 @@ let () =
           |> List.map (fun (k, v) -> k ^ "=" ^ v)
           |> String.concat "; ")
         "game=frlg; game_name=Pokémon FireRed/LeafGreen; \
-         program=frlg.mail_glitch; program_name=Mail Glitch; group=FRLG / \
-         Glitches";
+         program=frlg.mail_glitch; program_name=Mail Glitch; group=Glitch \
+         Setup";
     ]
