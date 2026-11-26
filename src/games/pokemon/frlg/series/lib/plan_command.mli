@@ -1,7 +1,7 @@
 (** [gamepilot run --plan PLAN.json] and
     [gamepilot replay checkpoint WIRELOG PLAN.json]: one FRLG checkpoint plan
-    through the story runner, live in a run folder of its own (Attached_run) or
-    replayed from a wire log. *)
+    through the checkpoint runner, live in a run folder of its own
+    (Attached_run) or replayed from a wire log. *)
 
 type flags = Pokemon_flags.checkpoint_flags = {
   state : string option;

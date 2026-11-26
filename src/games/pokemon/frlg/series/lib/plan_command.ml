@@ -3,7 +3,7 @@
      [--grind-battles N]
    gamepilot replay checkpoint WIRELOG PLAN.json [the same flags]
 
-   Runs one checkpoint of a FireRed plan through the story runner. The state
+   Runs one checkpoint of a FireRed plan through the checkpoint runner. The state
    is loaded first and again on a reload; --party states the party at the
    checkpoint's start; without it the party is read from the members'
    summaries before the first action that finds a member by its species. With --end-check-only
