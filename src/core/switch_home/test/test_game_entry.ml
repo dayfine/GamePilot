@@ -75,8 +75,7 @@ let () =
          close popup";
       case "start: a user select A never gets past, an error after 10 rounds"
         (run S.Home_on_fire_red user_select_stays (start ~game_slot:0))
-        "error: start_game_from_home_with_inference(): Failed to start game.; \
-         B x4, A x11; ends on user select";
+        "error: Failed to start game.; B x4, A x11; ends on user select";
       case
         "start: B until HOME, HOME and Right to tile 2, A, A on the user \
          select, until its black"

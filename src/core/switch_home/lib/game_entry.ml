@@ -107,8 +107,8 @@ let close_step ~log st = function
   | None ->
       P.press ~hold_ms:button_hold_ms ~cooldown_ms:home_cooldown_ms Wire.Home;
       log
-        "close_game_from_home(): Failed to detect either the Home screen or \
-         the Close game menu after 10 seconds.";
+        "Failed to detect either the Home screen or the Close game menu after \
+         10 seconds.";
       Again st
 
 let rec close_loop ~log st round =
@@ -126,7 +126,7 @@ let close_game ~log ~picture color =
   Effects.with_probes
     (H.probes ~picture color @ Close_game_popup.probes ~picture)
     (fun () ->
-      log "close_game_from_home";
+      log "Closing game from HOME.";
       let* () = ensure_at_home ~log 0 in
       close_loop ~log { seen = false; homes = 0 } 0)
 
@@ -164,10 +164,7 @@ let b_until_home () =
         Option.is_some (home m))
   with
   | Stopped _ -> Ok ()
-  | Finished _ ->
-      Error
-        "start_game_from_home_with_inference(): Failed to detect Home screen \
-         after 10 seconds."
+  | Finished _ -> Error "Failed to detect Home screen after 10 seconds."
 
 let to_game_slot game_slot =
   if game_slot <> 0 then (
@@ -210,14 +207,11 @@ let start_step ~log ~user_slot = function
       press_a ();
       Again ()
   | None -> (
-      log
-        "start_game_from_home_with_inference(): No recognizable state after 30 \
-         seconds.";
+      log "No recognizable state after 30 seconds.";
       match go_home ~log with Ok () -> Again () | Error e -> Done (Error e))
 
 let rec start_loop ~log ~user_slot ~black round =
-  if round >= start_rounds then
-    Error "start_game_from_home_with_inference(): Failed to start game."
+  if round >= start_rounds then Error "Failed to start game."
   else
     let screen = wait_for ~timeout_ms:state_wait_ms (after_a_watch ~black) in
     match start_step ~log ~user_slot screen with

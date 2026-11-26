@@ -98,9 +98,7 @@ let sweet_scent m ~seed_delay_ms ~advances ~use_teachy_tv c =
       "In-game advances cannot be negative. Check your in-game advances and \
        calibration."
   else if seed < 0.0 || csf < 0.0 || ingame < 0.0 then
-    Error
-      "prepare_timings(): a delay cannot be negative. Check your calibration \
-       values."
+    Error "A delay cannot be negative. Check your calibration values."
   else
     checked
       {
