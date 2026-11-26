@@ -53,6 +53,9 @@ type opening = {
   booted : bool;  (** A went in at the PC, so the overworld is not the PC. *)
   chosen : bool;
       (** A went in on the last menu row (MOVE POKéMON, WITHDRAW ITEM). *)
+  message_seen : bool;
+      (** The last look read a message, and a wait went in: B goes on a message
+          only at the second look. *)
 }
 (** Where {!open_menu} is, from what it pressed so far. *)
 
@@ -69,14 +72,17 @@ type next =
 val open_next : target -> opening -> look -> next
 (** [Move_pokemon]: the box screen ([Box_grid], or once MOVE POKéMON was chosen
     a settled frame that reads as the overworld: the box screen with a Pokémon's
-    data shown does) is the end. Else A at the PC, B on a message, A on the PC
-    list's top row once read, UP on another row, A on MOVE POKéMON once read,
-    DOWN or UP toward it on the storage menu, and a wait on anything else.
+    data shown does) is the end. Else A at the PC, B on a message (a wait first,
+    B at the second look in a row: a message still printing can have a menu
+    right behind it, which a B would cancel), A on the PC list's top row once
+    read, UP on another row, A on MOVE POKéMON once read, DOWN or UP toward it
+    on the storage menu, and a wait on anything else.
 
     [Withdraw_item]: the item list is the end. Else A at the PC; on the PC list
     A on the second row, DOWN or UP toward it; A on a menu whose top row reads
-    ITEM STORAGE or WITHDRAW ITEM; B on any other message until WITHDRAW ITEM
-    was chosen; and a wait on anything else (the fade into the list). *)
+    ITEM STORAGE or WITHDRAW ITEM; B on any other message (as above, at the
+    second look) until WITHDRAW ITEM was chosen; and a wait on anything else
+    (the fade into the list). *)
 
 val leave_next : Pc_deposit_steps.look -> Pc_deposit_steps.press option
 (** [None] on the overworld; a wait on a fade; B on any other screen. *)
