@@ -169,7 +169,7 @@ let main args =
 (* A step of another ctl command under the lease, as the ones above: in the
    effect context over the hello's game picture, its log lines printed and on
    the watch page; 0 when it ended where asked, else 1 with its error
-   (Bank_home_command). *)
+   (Home_boxes_command). *)
 let watched_log line =
   log line;
   Effects.show_log line

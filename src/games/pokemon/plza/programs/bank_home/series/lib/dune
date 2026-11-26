@@ -1,0 +1,18 @@
+(library
+ (name plza_bank_home_series)
+ (public_name gamepilot.plza_bank_home_series)
+ (libraries
+  gamepilot.wire
+  gamepilot.effects
+  gamepilot.live
+  gamepilot.live_run
+  gamepilot.run_record
+  gamepilot.watch_report
+  gamepilot.repo_io
+  gamepilot.engine_run
+  gamepilot.engine_series
+  gamepilot.run_flags
+  gamepilot.run_options
+  gamepilot.pokemon_home
+  gamepilot.plza_engine
+  gamepilot.plza_bank_home))

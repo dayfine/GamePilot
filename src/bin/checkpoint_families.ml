@@ -123,8 +123,31 @@ let plza =
     one_shots = [];
   }
 
-let all = [ grid; plza ]
-let of_rules = function R.Pokemon_grid -> grid | R.Plza_story -> plza
+let plza_home_series plan_dir args =
+  let* f = Plza_bank_home_series.Bank_home_flags.parse args in
+  let* options = program_options plan_dir f in
+  Plza_bank_home_series.Bank_home_runs.run_series
+    ~program:(program_fields plan_dir) ~options ~viewport:(viewport plan_dir f)
+    plan_dir args
+
+(* PLZA's Pokémon HOME rules' entry points: plans over PLZA's rules, run from
+   the Switch's HOME menu in Pokémon HOME, whole checkpoints on the Switch, as
+   the story's; their guide is the story's. *)
+let plza_home =
+  {
+    plza with
+    run_series = plza_home_series;
+    run_checkpoint =
+      (fun _ _ -> Error "plza.bank-home runs whole series only: gamepilot run");
+    ctl_readers = [];
+  }
+
+let all = [ grid; plza; plza_home ]
+
+let of_rules = function
+  | R.Pokemon_grid -> grid
+  | R.Plza_story -> plza
+  | R.Plza_home -> plza_home
 
 let of_program (p : R.t option) =
   of_rules (match p with Some p -> p.rules | None -> R.Pokemon_grid)

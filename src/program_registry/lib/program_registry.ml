@@ -1,6 +1,6 @@
 type backend = Mgba | Switch
 type viewport = Nso_gba | Native
-type rules = Pokemon_grid | Plza_story
+type rules = Pokemon_grid | Plza_story | Plza_home
 
 type switch_home = {
   title : string;
@@ -277,6 +277,36 @@ let plza_autostory =
     options = [];
   }
 
+(* The HOME boxes a gift's [<gift>-boxes] option sets, over the plan's
+   (Plza_bank_home.Bank_moves_args): one key per gift its plan banks. *)
+let home_boxes_option gift : Run_options.declared =
+  {
+    key = String.lowercase_ascii gift ^ "-boxes";
+    value = Text;
+    presence = Optional;
+    doc =
+      "the HOME boxes the " ^ gift
+      ^ " goes to, tried in order, comma-separated (150,151); by default the \
+         plan's";
+  }
+
+let plza_bank_home =
+  {
+    id = "plza.bank-home";
+    game = plza;
+    name = "Bank in HOME";
+    group = [ "PLZA"; "Pokémon HOME" ];
+    description =
+      "Moves the claimed gifts from the game's box into their Pokémon HOME \
+       boxes and saves HOME.";
+    doc = "docs/guide/plza.bank-home.md";
+    checkpoints = Some "src/games/pokemon/plza/programs/bank_home/plans";
+    backends = [ Switch ];
+    viewport = Native;
+    rules = Plza_home;
+    options = List.map home_boxes_option [ "Vivillon"; "Xerneas" ];
+  }
+
 let all =
   [
     frlg_start_menu_poc;
@@ -289,6 +319,7 @@ let all =
     frlg_ace;
     frlg_wild_rng;
     plza_autostory;
+    plza_bank_home;
   ]
 
 let short_id p =

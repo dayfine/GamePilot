@@ -53,7 +53,7 @@ let bad_plans () =
       | Some dir ->
           let plan_error =
             match p.rules with
-            | Plza_story -> plza_plan_error
+            | Plza_story | Plza_home -> plza_plan_error
             | Pokemon_grid -> frlg_plan_error
           in
           List.filter_map plan_error (plans_in dir))
@@ -100,6 +100,39 @@ let options_for program given =
   match R.check_options (Option.bind program R.find) given with
   | Ok t -> "ok " ^ Run_options.to_text t
   | Error e -> "error: " ^ e
+
+(* plza.bank-home's declared keys that name no gift its plans move: a key is
+   [<gift>-boxes], the gift's name in lower case
+   (Plza_bank_home.Bank_moves_args.option_key), read here from the plans'
+   bank_in_home moves. *)
+let gift_names file =
+  let open Yojson.Safe.Util in
+  member "checkpoint" (Yojson.Safe.from_file file)
+  |> member "events" |> to_list
+  |> List.concat_map (fun e ->
+         match member "args" e |> member "moves" with
+         | `List moves -> List.map (fun m -> member "gift" m |> to_string) moves
+         | _ -> [])
+
+let bank_home_keys_without_gift () =
+  match R.find "plza.bank-home" with
+  | None -> "no plza.bank-home"
+  | Some p ->
+      let gifts =
+        match Option.bind p.checkpoints R.locate with
+        | None -> []
+        | Some dir -> List.concat_map gift_names (plans_in dir)
+      in
+      List.filter_map
+        (fun (d : Run_options.declared) ->
+          if
+            List.exists
+              (fun g -> String.lowercase_ascii g ^ "-boxes" = d.key)
+              gifts
+          then None
+          else Some d.key)
+        p.options
+      |> String.concat ", "
 
 let id_of = function Some (p : R.t) -> p.id | None -> "none"
 
@@ -148,6 +181,8 @@ let () =
         "error: no game bdsp; games with Switch HOME data: frlg";
       case "the mail glitch folder has plans" plan_count "true";
       case "every plan decodes and checks" bad_plans "";
+      case "plza.bank-home: every option names a gift its plans move"
+        bank_home_keys_without_gift "";
       case "find by id"
         (fun () -> id_of (R.find "frlg.mail_glitch"))
         "frlg.mail_glitch";
