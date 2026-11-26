@@ -185,14 +185,17 @@ cases the user called out.)
 ### R9 A port's doc comment names the source files, not their functions or constants
 
 A ported module's doc comment names the C++ (or pret) file(s) it comes from, so the two can be laid
-side by side, and says where it differs; it does not name the source's functions, classes or
-constants.
+side by side, and says where it differs; it does not name the fork's C++ functions, classes or
+constants. pret is the exception: its files are long, so a doc comment may name the pret function,
+table or constant it follows (`naming_screen.c`'s `sKeyboardChars`), with the file.
 
 - Why: "let's not refer to the old C++ symbols" (user, 2026-11-25:
   https://github.com/dayfine/GamePilot/pull/89#discussion_r4693220866). The base rule is `AGENTS.md`, "Port the C++
   transparently".
 - Bad: `as upstream's [use_rare_candy()] watches for it: ... its PartyLevelUpWatcher`.
 - Good: `as upstream's PokemonFRLG_RngNavigation.cpp does after a Rare Candy: the stats window ...`.
+- Good (pret): `the key grids of pret's naming_screen.c (sKeyboardChars)`; pret symbols allowed
+  (user, 2026-11-25, on #208's qc FLAG).
 - Find: recipe over the files that name a source file, then judgment:
 
   ```sh
