@@ -8,8 +8,9 @@
     ({!Game_reload}): the loading screens ({!Plza_readers.Game_loading}) and the
     backup save's arrow ({!Plza_readers.Choice_arrow}). A read waits for a frame
     newer than the inputs sent before it (500 ms at most). The main menu's Link
-    Play row is read with its bands subscribed for the read
-    ({!Plza_readers.Main_menu_row.band_probes}), up to 1.5 s for it to show. *)
+    Play row is read with its probes subscribed for the read
+    ({!Plza_readers.Main_menu_row.link_play_probes}), up to 1.5 s for it to
+    show. *)
 
 val probes :
   picture:Wire.box -> assets:Plza_readers.Blob_assets.t -> Wire.probe_spec list

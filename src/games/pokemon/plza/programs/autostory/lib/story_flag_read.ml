@@ -11,9 +11,12 @@ let link_play steps ~checkpoint_id =
       (Printf.sprintf "[Checkpoint] %s: mystery_gift: %s" checkpoint_id line)
   in
   let* () = Visit.enter steps ~log in
-  let shown = steps.S.read_link_play_row () in
+  let row = steps.S.read_link_play_row () in
   let* () = Visit.leave steps in
-  Option.to_result ~none:no_menu shown
+  match row with
+  | Shown -> Ok true
+  | Absent -> Ok false
+  | No_menu -> Error no_menu
 
 let read_line flag = function
   | Ok true -> flag ^ " set (the main menu shows Link Play)"
@@ -33,13 +36,15 @@ let log_read steps ~checkpoint_id flag read =
     (Printf.sprintf "[Checkpoint] %s: %s: %s%s" checkpoint_id verdict
        (read_line flag read) why)
 
+(* Each flag PLZA reads, by its reader. *)
+let reading steps ~checkpoint_id : Plza_rules.readable_flag -> _ = function
+  | Mystery_gift -> link_play steps ~checkpoint_id
+
 let read_one steps ~checkpoint_id flag =
-  match flag with
-  | "mystery_gift" ->
-      let read = link_play steps ~checkpoint_id in
+  Option.bind (List.assoc_opt flag Plza_rules.readable_flags) (fun known ->
+      let read = reading steps ~checkpoint_id known in
       log_read steps ~checkpoint_id flag read;
-      Result.to_option (Result.map (fun set -> (flag, set)) read)
-  | _ -> None
+      Result.to_option (Result.map (fun set -> (flag, set)) read))
 
 let read steps ~checkpoint_id flags =
   List.filter_map (read_one steps ~checkpoint_id) flags

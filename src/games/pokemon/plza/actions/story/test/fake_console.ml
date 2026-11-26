@@ -42,7 +42,8 @@ let steps ?(party = fun _ -> None) ?(lock = fun _ -> None) ?link_play c screen :
   let log line = c.lines <- line :: c.lines in
   let link_play =
     Option.value link_play ~default:(fun c ->
-        if (screen c).Plza_story.Look.main_menu then Some false else None)
+        if (screen c).Plza_story.Look.main_menu then Plza_story.Steps.Absent
+        else No_menu)
   in
   {
     submit = submit c;

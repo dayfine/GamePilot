@@ -17,16 +17,16 @@ val create : unit -> t
 val steps :
   ?party:(t -> int option) ->
   ?lock:(t -> Plza_story.Catch_plan.target option) ->
-  ?link_play:(t -> bool option) ->
+  ?link_play:(t -> Plza_story.Steps.link_play_row) ->
   t ->
   (t -> Plza_story.Look.t) ->
   Plza_story.Steps.game_steps
 (** The story steps on it; each read advances 33 ms then asks the screen. A
     party count advances two reads and asks [party] (default: none read), a
     plate two reads and asks [lock] (default: none), the main menu's Link Play
-    row one read and asks [link_play] (default: not shown on a screen with the
-    main menu, [None] on any other). Queued inputs start at the end of the ones
-    queued before (or now) and do not move the clock; a submit starts after
+    row one read and asks [link_play] (default: [Absent] on a screen with the
+    main menu, [No_menu] on any other). Queued inputs start at the end of the
+    ones queued before (or now) and do not move the clock; a submit starts after
     them. *)
 
 val nth_after : t -> Wire.button -> after:float -> int -> float option

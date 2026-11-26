@@ -23,7 +23,9 @@ end
 
 module Screen_signature = Screen_signature
 
-let readable_flags = [ "mystery_gift" ]
+type readable_flag = Mystery_gift
+
+let readable_flags = [ ("mystery_gift", Mystery_gift) ]
 
 module Postconditions = struct
   type t = { place : Screen_signature.t option; flags : string list }

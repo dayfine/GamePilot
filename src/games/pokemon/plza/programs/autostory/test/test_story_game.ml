@@ -1033,7 +1033,11 @@ let office_menu c =
    five rows; [first] the first event run. Its result and the console. *)
 let office_run ?(first = 0) ~six () =
   let c = C.create () in
-  let link_play c = if (office_menu c).main_menu then Some six else None in
+  let link_play c : Plza_story.Steps.link_play_row =
+    if not (office_menu c).main_menu then No_menu
+    else if six then Shown
+    else Absent
+  in
   let steps = C.steps ~link_play c office_menu in
   let id = "03.15-mable-reward" in
   let checkpoint = (plan id).checkpoint in

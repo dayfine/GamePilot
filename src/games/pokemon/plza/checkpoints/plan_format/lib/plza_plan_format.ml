@@ -53,10 +53,10 @@ let place ~where = function
 
 (* A story flag PLZA reads at a checkpoint's end. *)
 let readable ~where flag =
-  if List.mem flag T.readable_flags then flag
+  if List.mem_assoc flag T.readable_flags then flag
   else
     F.fail "%sflags has \"%s\": PLZA reads only %s." where flag
-      (String.concat ", " T.readable_flags)
+      (String.concat ", " (List.map fst T.readable_flags))
 
 let flags ~where = function
   | None -> []

@@ -33,11 +33,17 @@ module Screen_signature = Screen_signature
 (** {!Screen_signature}: what the screen shows where a checkpoint starts or
     ends. *)
 
-val readable_flags : string list
-(** The story flags a PLZA checkpoint can promise at its end, each one the game
-    reads there ([Story_flag_read] in the autostory): ["mystery_gift"] (the main
-    menu's Link Play row, from 03.15-mable-reward on). The story flags of
-    [docs/design/Story-Flags.md] as the end reads them. *)
+(** A story flag PLZA reads where a checkpoint ends. *)
+type readable_flag =
+  | Mystery_gift
+      (** The main menu's Link Play row, drawn from 03.15-mable-reward on. *)
+
+val readable_flags : (string * readable_flag) list
+(** The story flags a PLZA checkpoint can promise at its end, by the name a plan
+    gives them, each one the game reads there ([Story_flag_read] in the
+    autostory): ["mystery_gift"]. The one list of them: a plan naming another
+    does not decode. The story flags of [docs/design/Story-Flags.md] as the end
+    reads them. *)
 
 (** What a PLZA checkpoint promises: its [place], what the screen shows where it
     ends (unset, the series takes the next checkpoint's start signature, as a

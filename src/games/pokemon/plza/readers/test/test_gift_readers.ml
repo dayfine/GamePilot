@@ -34,14 +34,15 @@
    images/switch/box-cells/README.md).
 
    The Japanese main menu (console B, 2026-11-25, the menu captures): at
-   1080p its highlighted row and cards read, and its sixth row, Link Play,
-   shows at the end of 03.15-mable-reward (either row highlighted), in every
+   1080p its highlighted row and cards read, and its sixth row, Link Play, is
+   drawn at the end of 03.15-mable-reward (either row highlighted), in every
    shift. At 360p the menu's buttons do not read, so none reads as the menu;
-   their sixth band still counts in the margins (link_play_margins): Link
-   Play's band is at least 0.082 white at 1080p and 0.061 at 360p, but 0.008
-   at 360p dimmed 10% (its small text under 221); 0.000 on the five-row menus
-   after Mable's talk, on a six-row menu still sliding in and on the Italian
-   four-row one, against the 0.03 it needs. The live reads are at 1080p. *)
+   their sixth row's edge step still counts in the margins
+   (link_play_margins), read from the button, not its name: at least 18.4
+   where the row is drawn (1080p and 360p, every shift), at most 7.8 where it
+   is not (the five-row menus after Mable's talk, a six-row menu still
+   sliding in, the four-row Italian one and the English ones of 01.01),
+   against the 13 it needs. The live reads are at 1080p. *)
 
 open Plza_readers
 module R = Main_menu_row
@@ -253,43 +254,43 @@ let gift_item_cases ~name ~label frames =
         (List.find_opt (fun (_, list) -> same (unshifted path) list) lists))
     frames
 
-(* The sixth band's white share on the Japanese menus and the four-row
-   Italian one, every shift: the least where Link Play shows, at 1080p and at
-   360p (dimmed 10% apart), and the most where it does not, against the 0.03
-   it needs. *)
+(* The English main menus of 01.01 (main-menu/, the fork's, 360p): no sixth
+   row yet. *)
+let early_menus = "./main-menu/en-0101-main-menu"
+
+(* The sixth row's edge step (Main_menu_row.link_play_step) on the Japanese
+   menus, the four-row Italian one (every shift) and the English ones: the least where Link Play
+   is drawn, at 1080p and at 360p, and the most where it is not, against the
+   13 it needs. *)
 let link_play_margins () =
-  let band5 probes = List.nth (R.white_shares (measurements probes)) 5 in
+  let step probes =
+    Option.value ~default:Float.nan (R.link_play_step (measurements probes))
+  in
   let menus =
     List.filter_map
       (fun (path, probes) ->
         let frame = unshifted path in
         let small = String.ends_with ~suffix:"360p.png" frame in
-        let dim = shift_of path = "bright90" in
-        if same frame menu then Some ((false, small, dim), band5 probes)
+        if same frame menu || String.starts_with ~prefix:early_menus frame then
+          Some ((false, small), step probes)
         else
           Option.map
-            (fun (_, _, shown) -> ((shown, small, dim), band5 probes))
+            (fun (_, _, shown) -> ((shown, small), step probes))
             (japanese_menu frame))
       (frames @ shifted)
   in
-  let least group =
+  let fold group f init =
     List.fold_left
-      (fun acc (g, share) -> if group g then Float.min acc share else acc)
-      1. menus
-  in
-  let most =
-    List.fold_left
-      (fun acc ((shown, _, _), share) ->
-        if shown then acc else Float.max acc share)
-      0. menus
+      (fun acc (g, v) -> if group g then f acc v else acc)
+      init menus
   in
   Printf.sprintf
-    "shown from %.3f at 1080p, from %.3f at 360p (%.3f dimmed 10%%); not shown \
-     up to %.3f"
-    (least (fun (shown, small, _) -> shown && not small))
-    (least (fun (shown, small, dim) -> shown && small && not dim))
-    (least (fun (shown, small, dim) -> shown && small && dim))
-    most
+    "drawn from %.1f at 1080p, from %.1f at 360p; not drawn up to %.1f (%d \
+     frames)"
+    (fold (fun (shown, small) -> shown && not small) Float.min 1000.)
+    (fold (fun (shown, small) -> shown && small) Float.min 1000.)
+    (fold (fun (shown, _) -> not shown) Float.max (-1000.))
+    (List.length menus)
 
 let () =
   Table_test.run "gift_readers"
@@ -301,10 +302,10 @@ let () =
     @ gift_item_cases ~name:"fr" ~label:"French name, " french
     @ gift_item_cases ~name:"ja" ~label:"Japanese name, " japanese
     @ [
-        case "Link Play's band, the Japanese menus in every shift"
+        case "Link Play's edges, the Japanese, Italian and English menus"
           link_play_margins
-          "shown from 0.082 at 1080p, from 0.061 at 360p (0.008 dimmed 10%); \
-           not shown up to 0.000";
+          "drawn from 18.4 at 1080p, from 18.9 at 360p; not drawn up to 7.8 \
+           (82 frames)";
       ]
     @ last_saved_cases
         (List.filter

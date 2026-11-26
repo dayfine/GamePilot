@@ -3,6 +3,12 @@
     waits of Pokemon/AutoStory/Engine/Pokemon_ScreenWait.h, as the PLZA actions
     call them. *)
 
+(** The main menu's sixth row, Link Play, as read. *)
+type link_play_row =
+  | Shown  (** The main menu shows the row. *)
+  | Absent  (** The main menu shows, without the row. *)
+  | No_menu  (** No main menu shows. *)
+
 type game_steps = {
   submit : Wire.command -> unit;
       (** Send one input and return once it is done. *)
@@ -41,11 +47,10 @@ type game_steps = {
       (** Count the party bar's filled slots on the latest screen: its cards on
           one frame, its bars on the next ({!Plza_readers.Party_slots}); [None]
           with no bar or none filled. *)
-  read_link_play_row : unit -> bool option;
-      (** With the main menu open: whether its sixth row, Link Play, shows, the
-          row given 1.5 s to slide in
-          ({!Plza_readers.Main_menu_row.link_play_shown}); [None] with no main
-          menu. *)
+  read_link_play_row : unit -> link_play_row;
+      (** With the main menu open: whether its sixth row, Link Play, is drawn,
+          the row given 1.5 s to slide in
+          ({!Plza_readers.Main_menu_row.link_play_shown}). *)
   log : string -> unit;  (** A line for the log and the watch page. *)
   log_detail : string -> unit;  (** A line for the log alone. *)
 }

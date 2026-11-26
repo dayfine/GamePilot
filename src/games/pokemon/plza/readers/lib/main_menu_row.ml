@@ -41,12 +41,39 @@ let band_probe ~picture r =
     (Native_box.of_fractions (band r))
     white
 
-let band_probes ~picture =
+(* The sixth row's button: its left and right edges (x 96 and 672 of the
+   1080p frame) in a strip above its name (y 870 to 896), each read 8 px
+   inside and 8 px outside, 4 px off the edge. *)
+let edge_top = 870
+let edge_height = 26
+let edge_width = 8
+let left_edge = 96
+let right_edge = 672
+let edge_gap = 4
+
+let edge_box x : Native_box.t =
+  { x; y = edge_top; w = edge_width; h = edge_height }
+
+let edges =
+  [
+    ("left_outside", left_edge - edge_gap - edge_width);
+    ("left_inside", left_edge + edge_gap);
+    ("right_inside", right_edge - edge_gap - edge_width);
+    ("right_outside", right_edge + edge_gap);
+  ]
+
+let edge_id name = "main_menu_row.link_play_" ^ name
+
+let link_play_probes ~picture =
   List.concat_map (band_probe ~picture) (List.init rows Fun.id)
+  @ List.concat_map
+      (fun (name, x) ->
+        Box_color.probe ~picture ~id:(edge_id name) (edge_box x))
+      edges
 
 let probes ~picture ~assets =
   Main_menu.probes ~picture ~assets
-  @ band_probes ~picture
+  @ link_play_probes ~picture
   @ List.concat_map
       (fun k -> Pixel_shares.probe ~picture ~id:(bar_id k) (bar k) green)
       (List.init cards Fun.id)
@@ -72,13 +99,29 @@ let highlighted m =
   then None
   else Some best
 
-let link_play_row = 5
-let min_link_play_white = 0.03
+let channels = 3.
+
+(* A box's brightness: its mean's channels averaged. *)
+let brightness m name =
+  Option.map
+    (fun (s : Box_color.stats) ->
+      Switch_home.Solid_color.sum s.mean /. channels)
+    (Box_color.read m (edge_id name))
+
+let link_play_step m =
+  match List.map (fun (name, _) -> brightness m name) edges with
+  | [ Some left_out; Some left_in; Some right_in; Some right_out ] ->
+      Some ((left_in -. left_out +. (right_in -. right_out)) /. 2.)
+  | _ -> None
+
+let min_link_play_step = 13.
 
 let link_play_shown m =
   highlighted m <> None
-  && Option.value ~default:0. (fraction m (band_id link_play_row))
-     >= min_link_play_white
+  &&
+  match link_play_step m with
+  | Some step -> step >= min_link_play_step
+  | None -> false
 
 let green_share m k =
   match Pixel_shares.lines m (bar_id k) with

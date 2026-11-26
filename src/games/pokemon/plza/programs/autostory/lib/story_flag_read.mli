@@ -1,6 +1,7 @@
 (** The story flags a checkpoint promises at its end
     ([metadata.postconditions.flags], {!Plza_rules.readable_flags}), read from
-    the game there, for the runner's end check and its "already at its end"
+    the game there, each name looked up in {!Plza_rules.readable_flags} and read
+    by its reader, for the runner's end check and its "already at its end"
     pre-pass ({!Engine_run.Runner}).
 
     - [mystery_gift]: the main menu's sixth row, Link Play (通信で遊ぶ), shows only
