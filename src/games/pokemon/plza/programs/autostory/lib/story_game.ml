@@ -86,17 +86,6 @@ let talk_steps steps : Plza_walk.Talk_prompt.game_steps =
     log_detail = walk.log_detail;
   }
 
-(* Free control with no A prompt, on two reads 300 ms apart: nothing for A
-   to take. *)
-let no_prompt_gap_ms = 300
-let no_prompt (l : Look.t) = Look.control_shows l && not l.interact_prompt
-
-let prompt_missing steps =
-  no_prompt (steps.Steps.read_screen ())
-  &&
-  (Steps.wait steps no_prompt_gap_ms;
-   no_prompt (steps.read_screen ()))
-
 let prompt_not_seen =
   Error
     (Failure.cause "prompt_not_seen"
@@ -110,7 +99,7 @@ let prompt_not_seen =
    the fork presses A on nothing and its scene then ends on control, passing a
    walk that stopped short. *)
 let through_prompt ~jump steps event config =
-  if prompt_missing steps then prompt_not_seen
+  if Plza_walk.Talk_prompt.missing (talk_steps steps) then prompt_not_seen
   else (
     Plza_walk.Talk_prompt.press_through (talk_steps steps);
     run_scene ~jump steps event config)

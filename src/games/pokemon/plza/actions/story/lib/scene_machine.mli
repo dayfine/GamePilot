@@ -31,9 +31,10 @@
     [stop_at_battle], 120 s with [stop_at_choice], a start window or the button
     B, else 360 s.
 
-    The fork's option to press A first is the game action [scene_through_prompt]
-    (Story_game). "Mission complete" has no reader yet ({!Look}): it reads as a
-    screen no detector reads (A, as for the card). *)
+    The option to press A first is the caller's: it presses A through the prompt
+    ({!Plza_walk.Talk_prompt.press_through}) and then runs the scene. "Mission
+    complete" has no reader yet ({!Look}): it reads as a screen no detector
+    reads (A, as for the card). *)
 
 type config = {
   end_on_black_fade : bool;  (** a black fade ends the scene *)

@@ -1,7 +1,9 @@
 (* The ACE setup's readers (Easy_chat_screen, Pc_box_screen) on native mGBA
    frames of frlg.ace_setup (2026-11-25): the mail editor's group grid and
    word lists while typing BULK UP / CAPABLE / KARATE CHOP / MAGIKARP, and
-   MOVE POKéMON's box screen on Box 1 and Box 3, before and after. The
+   MOVE POKéMON's box screen on Box 1 and Box 3, before and after, and
+   WITHDRAW's on Box 1 with MIMIEN (holding an Antidote) and a Magikarp
+   (holding nothing) under the hand. The
    fixtures are probe_images output (regen_fixtures.sh ace, from ace.mgba.map);
    the shifted fixture holds every frame at brightness x0.9 and x1.1, each
    channel +-12 and in grey 10 levels (dev/reader_fixtures/shift_frame.py), and
@@ -14,6 +16,7 @@
    - group rectangle, red share of the edge box: 0.15; 0.25; 0.
    - word arrow, dark share (Cursor_column): 0.10; 0.136; 0.
    - PKMN DATA, sum of channel stddevs: 10; 157; 0.
+   - PKMN DATA's item line, the same: 10; 180 (grey); 0.
    - hand shadow on slot 1, share: 0.25; 0.31 (grey); 0.
    - Desert wallpaper, r-g / g-b: 15 / 20; 29 / 38; -60.
    - Forest wallpaper, g-r / g-b: 20 / 20; 36 / 92; -53.
@@ -38,18 +41,24 @@ let read image m =
       (cell (Easy_chat_screen.group_cell m))
       (cell (Easy_chat_screen.word_cell m))
   else
-    Printf.sprintf "panel %s, first slot %s, desert %s, forest %s, male %s"
+    Printf.sprintf
+      "panel %s, item %s, first slot %s, desert %s, forest %s, male %s"
       (flag (Pc_box_screen.panel_occupied m))
+      (flag (Pc_box_screen.holds_item m))
       (flag (Pc_box_screen.hand_on_first_slot m))
       (flag (Pc_box_screen.desert_wallpaper m))
       (flag (Pc_box_screen.forest_wallpaper m))
-      (if Pc_box_screen.panel_occupied m = Some true then
-         flag (Pc_box_screen.male m)
+      (if
+         Pc_box_screen.panel_occupied m = Some true
+         && String.starts_with ~prefix:"box3_" image
+       then flag (Pc_box_screen.male m)
        else "-")
 
 (* Grid rows and list rows are the rows shown: MOVE 1 (grid row 9) and
    BULK UP (list row 11) sit on the bottom row once scrolled to. The male
-   mark is read only on an occupied slot. *)
+   mark is read only on an occupied slot of Box 3, the ACE check's: the
+   withdraw frames' Magikarp is female, and the panel's lilac (148, 148, 173)
+   lies in the male mark's blue range, so it reads male (issue #194). *)
 let expected =
   [
     ("e_g_first_open", "group r0c0, word none");
@@ -63,13 +72,17 @@ let expected =
     ("e_w_magikarp", "group none, word r3c0");
     ("e_fields_after_bulk_up", "group none, word none");
     ( "box1_hand_on_empty_first_slot",
-      "panel n, first slot y, desert n, forest y, male -" );
+      "panel n, item n, first slot y, desert n, forest y, male -" );
     ( "box3_hand_on_third_slot",
-      "panel n, first slot n, desert y, forest n, male -" );
+      "panel n, item n, first slot n, desert y, forest n, male -" );
     ( "box3_ace_hand_on_title",
-      "panel n, first slot n, desert y, forest n, male -" );
+      "panel n, item n, first slot n, desert y, forest n, male -" );
     ( "box3_ace_on_first_slot",
-      "panel y, first slot n, desert y, forest n, male y" );
+      "panel y, item y, first slot n, desert y, forest n, male y" );
+    ( "box1_withdraw_menu_mimien_antidote",
+      "panel y, item y, first slot n, desert n, forest n, male -" );
+    ( "box1_withdraw_menu_magikarp",
+      "panel y, item n, first slot n, desert n, forest n, male -" );
   ]
 
 let base image = Filename.remove_extension (Filename.basename image)

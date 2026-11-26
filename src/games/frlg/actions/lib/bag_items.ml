@@ -10,7 +10,7 @@ let scroll_row = 3
 let e_acute = "\xc3\xa9"
 
 let rec plain_e text =
-  match Str_search.find text e_acute with
+  match Strings.Find.substring text e_acute with
   | None -> text
   | Some i ->
       plain_e

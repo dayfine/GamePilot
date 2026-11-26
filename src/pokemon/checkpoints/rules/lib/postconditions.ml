@@ -40,7 +40,7 @@ let stated = Option.value ~default:none
 let at_end p =
   if
     p.party <> None || p.items <> [] || p.coins <> None || p.caught <> None
-    || p.money <> None || p.flags <> []
+    || p.money <> None || p.flags <> [] || p.marks <> None
   then Some p
   else None
 

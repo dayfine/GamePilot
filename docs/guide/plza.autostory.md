@@ -11,9 +11,10 @@ Runs on: the Switch.
 
 ## Before you start
 
-Start a new game by hand: choose the language, the look and the name, and stop on the "Confirm
-Choices" screen. Nothing else is read from the save. The Switch's capture must be the whole
-1920x1080 picture (the daemon's `--viewport native`).
+Start a new game by hand up to its Confirm Choices screen (language, look and name), for 01.00b; or
+put the console on the station platform with free control, the controls hint showing, to run 01.01
+alone (`--from 01.01`). The Switch's capture must be the whole 1920x1080 picture (the daemon's
+`--viewport native`).
 
 ## Running it
 
@@ -60,6 +61,20 @@ cd src && opam exec -- dune exec -- gamepilot run plza.autostory --from 01.00b -
 <!-- plans: d20acd695a53 -->
 <!-- /generated -->
 
+01.00b confirms the choices, skips the opening and waits for the platform. 01.01 sets the text
+speed to fast, walks down the platform and right to the white fade, and presses through the arrival
+scenes (Plus skips the president's ad) until the controls hint shows again.
+
+01.02 walks after Pancham, presses B through the scene to its choice and takes "Battle with
+Pokemon!". 01.03 walks to Chikorita and talks, picks it, presses through the tutorial cards to the
+battle, and fights Andi with the most effective move under ZL until Andi speaks.
+
+Main Mission 02 walks from the Battle Zone to Brigitte and beats her Cleffa, skips the street's
+cutscene, follows Taunie to Hotel Z, then checks in, rides the elevator to Room 202 and rests until
+morning. A walk that ends at an A prompt (a door, the clerk, the elevator, the bed) is followed by a
+scene that presses A through the prompt first; a scene with a start window waits that long for the
+scene to begin before it counts free control as the end.
+
 From Wild Zone 1 on:
 
 - 03.07 catches Fletchling and Bunnelby, weakening them with three attacks when a throw breaks out.
@@ -68,11 +83,6 @@ From Wild Zone 1 on:
 - 03.08b leaves the zone by its far gate, steering by the map's pin and the minimap's arrow.
 - 03.09 and 03.10 walk to the Research Lab and up to the Director's Office.
 - 03.11 opens the main menu, goes to Mable's Research and takes the Rock Smash TM.
-
-01.02 walks after
-Pancham, presses B through the scene to its choice and takes "Battle with Pokemon!". 01.03 walks to
-Chikorita and talks, picks it, presses through the tutorial cards to the battle, and fights Andi
-with the most effective move under ZL until Andi speaks.
 
 ## When it stops
 
@@ -119,6 +129,8 @@ Walks:
 - A missed walk to an A prompt (a door, the clerk, the elevator, the bed): `walk_no_end`.
 - A missed walk whose scene never comes: `scene_ended_in_control` or `scene_never_started`.
 - A missed walk before a plain scene still passes; the next checkpoint then fails.
+- A scene that presses A first, on free control with no A prompt (two reads 300 ms apart):
+  `prompt_not_seen`, before pressing anything.
 - A walk that turns by the minimap's arrow: `heading_missed` after 4 turns, `arrow_unread` when no
   arrow shows for 40 s.
 - 03.08b's gate: `gate_not_reached` after 3 runs, `map_pin_not_read`, `in_wild_zone`.
@@ -152,3 +164,16 @@ Keep-awake and camera:
 - Each checkpoint wakes a dimmed screen the same way before it reads it.
 - The walks aim from where the camera looks, so it must be behind the player when a checkpoint
   starts, as after 01.03's scenes or a reload.
+
+## How it works
+
+`Plza_series.Runs` runs each checkpoint in its own daemon and run folder, with the watch page.
+`Plza_autostory.Story_game` gives the engine its handlers: the walk (`Plza_walk.Walk`, ported from
+`PokemonLZA_AutoStoryWalks.cpp`), the scene machine (`Plza_story.Scene_machine`), the story battle
+(`Plza_story.Battle`) and the other game actions in `Plza_story`, over its `Steps`;
+any other event fails `no_handler`.
+
+A walk or scene that meets the battle early jumps to the battle event
+(`Plza_autostory.Battle_jump`), and `skip_if` flags are read from the screen
+(`Plza_autostory.Resume_flags`). `Plza_autostory.Live_story_screen` reads the screen into a
+`Plza_story.Look` from PLZA's readers.

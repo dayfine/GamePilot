@@ -9,7 +9,10 @@ let overworld_confirm_ms = 800
 let box_full = "The BOX is full."
 let remove_mail = "Please remove the MAIL."
 let messages = [ "Deposit in which BOX?"; box_full; remove_mail ]
-let mon_menu_rows = [ "STORE"; "SUMMARY"; "MARK"; "RELEASE"; "CANCEL" ]
+
+(* A deposit's first row is STORE, a withdraw's WITHDRAW. *)
+let mon_menu_rows =
+  [ "STORE"; "WITHDRAW"; "SUMMARY"; "MARK"; "RELEASE"; "CANCEL" ]
 
 let menu_rows =
   [
@@ -40,8 +43,11 @@ let label (v : Pc_screen.view) =
   match (v.screen, v.cursor) with
   | (Pc_list | Storage_menu), Some row ->
       text (Text.Text_lines.pc_menu_row row) menu_rows
-  | Mon_menu, Some row ->
-      text (Text.Text_lines.pc_mon_menu_row row) mon_menu_rows
+  | Mon_menu, Some row -> (
+      (* STORE's menu, else WITHDRAW's, 8 pixels left. *)
+      match text (Text.Text_lines.pc_mon_menu_row row) mon_menu_rows with
+      | Some l -> Some l
+      | None -> text (Text.Text_lines.pc_withdraw_menu_row row) mon_menu_rows)
   | _ -> None
 
 let wait ms =

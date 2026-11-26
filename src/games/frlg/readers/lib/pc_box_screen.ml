@@ -5,6 +5,12 @@ let box ~x ~y ~w ~h =
 let panel_id = "pc_box.panel"
 let panel_box : Wire.box = { x = 0.007; y = 0.556; w = 0.296; h = 0.253 }
 let min_panel_stddev = 10.
+let item_id = "pc_box.item"
+let item_x = 2
+let item_y = 134
+let item_w = 68
+let item_h = 10
+let item_box = box ~x:item_x ~y:item_y ~w:item_w ~h:item_h
 let shadow_id = "pc_box.first_slot_shadow"
 let shadow_x = 93
 let shadow_y = 49
@@ -45,6 +51,7 @@ let min_green_over_blue = 20.
 let probes =
   [
     Solid_color.probe ~id:panel_id panel_box;
+    Solid_color.probe ~id:item_id item_box;
     Color_count.probe ~id:shadow_id shadow_box shadow;
     Color_count.probe ~id:wallpaper_id wallpaper_box anything;
     Color_count.probe ~id:male_id male_box male_blue;
@@ -54,6 +61,11 @@ let panel_occupied m =
   Option.map
     (fun (s : Solid_color.stats) -> Solid_color.sum s.stddev > min_panel_stddev)
     (Solid_color.read m panel_id)
+
+let holds_item m =
+  Option.map
+    (fun (s : Solid_color.stats) -> Solid_color.sum s.stddev > min_panel_stddev)
+    (Solid_color.read m item_id)
 
 let hand_on_first_slot m =
   Option.map (fun s -> s >= min_shadow_share) (Color_count.share m shadow_id)

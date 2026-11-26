@@ -273,6 +273,27 @@ let end_state_cases : Table_test.case list =
       expectation = "[Story] cp: done\npassed";
     };
     {
+      name = "marks alone: read and checked at the end";
+      input =
+        (fun () ->
+          run_with_end_state
+            ~promised:
+              {
+                promised with
+                party = None;
+                coins = None;
+                marks = Some [ "mail"; "none" ];
+              }
+            {
+              Postcondition_check.nothing_read with
+              marks = Some [ "mail"; "held_item" ];
+            }
+          |> last_line);
+      expectation =
+        "stopped: cp event 5 (postconditions): postconditions unmet: marks: \
+         failed: expected mail, none, read mail, held_item";
+    };
+    {
       name = "the end position fails first: nothing read";
       input =
         (fun () ->
