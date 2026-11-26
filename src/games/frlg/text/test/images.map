@@ -178,3 +178,13 @@ pokedex_numbers mgba shift=bminus12 src/games/frlg/readers/test/images/mgba/poke
 pokedex_numbers mgba shift=bminus12 src/games/frlg/readers/test/images/mgba/pokedex-list/list-129.png|mgba/pokedex-list/bminus12/list-129.png
 pokedex_numbers mgba shift=grey10 src/games/frlg/readers/test/images/mgba/pokedex-list/list-009.png|mgba/pokedex-list/grey10/list-009.png
 pokedex_numbers mgba shift=grey10 src/games/frlg/readers/test/images/mgba/pokedex-list/list-129.png|mgba/pokedex-list/grey10/list-129.png
+naming_entry mgba repo src/games/frlg/readers/test/images/mgba/naming-screen/entry_0.png|mgba/naming-entry-0.png
+naming_entry mgba repo src/games/frlg/readers/test/images/mgba/naming-screen/entry_1.png|mgba/naming-entry-1.png
+naming_entry mgba repo src/games/frlg/readers/test/images/mgba/naming-screen/entry_2.png|mgba/naming-entry-2.png
+naming_entry mgba repo src/games/frlg/readers/test/images/mgba/naming-screen/entry_3.png|mgba/naming-entry-3.png
+naming_entry mgba repo src/games/frlg/readers/test/images/mgba/naming-screen/entry_4.png|mgba/naming-entry-4.png
+naming_entry mgba repo src/games/frlg/readers/test/images/mgba/naming-screen/entry_5.png|mgba/naming-entry-5.png
+naming_entry mgba repo src/games/frlg/readers/test/images/mgba/naming-screen/entry_6.png|mgba/naming-entry-6.png
+naming_entry mgba repo src/games/frlg/readers/test/images/mgba/naming-screen/entry_7.png|mgba/naming-entry-7.png
+naming_entry mgba repo src/games/frlg/readers/test/images/mgba/naming-screen/entry_8.png|mgba/naming-entry-8.png
+naming_entry mgba repo src/games/frlg/readers/test/images/mgba/naming-screen/entry_9.png|mgba/naming-entry-9.png
