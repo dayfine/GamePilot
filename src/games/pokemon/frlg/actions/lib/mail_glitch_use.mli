@@ -45,6 +45,9 @@ val marks_mismatch :
 (** [None] when slot [i] (from 1) reads the [i]-th mark; else the first slot
     that does not: ["slot 2 shows none, not mail"]. *)
 
+val duplication_plan : where:string -> Json_field.obj -> Item_duplication.plan
+(** ["duplicate_item"]'s args: ["item"], ["count"] (rounds) and ["word"]. *)
+
 val handlers :
   log:(string -> unit) ->
   party:Party_roster.t ref ->

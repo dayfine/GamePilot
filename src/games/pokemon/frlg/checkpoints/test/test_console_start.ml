@@ -412,7 +412,8 @@ let console_b =
     member 6 "magikarp" 5 ~moves:[ "splash" ];
   ]
 
-let need = Party_room.chain_need chain
+let chain_need plans = Result.get_ok (Party_room.chain_need plans)
+let need = chain_need chain
 
 let deposits party =
   match Party_room.deposits need party with
@@ -441,8 +442,7 @@ let deposit_plan =
 let room_cases =
   [
     case "room: pc_deposit's species list: each member is used"
-      (fun () ->
-        String.concat ", " (Party_room.chain_need [ deposit_plan ]).used)
+      (fun () -> String.concat ", " (chain_need [ deposit_plan ]).used)
       "abra, mr-mime";
     case "room: deposit before a catch makes its own room: 0 free needed"
       (fun () ->
@@ -463,10 +463,8 @@ let room_cases =
           | Error e -> failwith e
         in
         Printf.sprintf "with deposit=%d; two catches=%d"
-          (Party_room.free_needed
-             (Party_room.chain_need [ deposit_plan; catch_plan ]))
-          (Party_room.free_needed
-             (Party_room.chain_need [ catch_plan; catch_plan ])))
+          (Party_room.free_needed (chain_need [ deposit_plan; catch_plan ]))
+          (Party_room.free_needed (chain_need [ catch_plan; catch_plan ])))
       "with deposit=0; two catches=1";
     case
       "room: the chain brings Abra (01-celadon-setup) and Spearow \
@@ -607,8 +605,7 @@ let deposit_cases =
       "a member holds no Mail (pc_deposit): every member holds Mail: MISMATCH \
        => stop";
     case "preflight pc_deposit by role: no species is used"
-      (fun () ->
-        String.concat ", " (Party_room.chain_need [ no_mail_deposit_plan ]).used)
+      (fun () -> String.concat ", " (chain_need [ no_mail_deposit_plan ]).used)
       "";
   ]
 

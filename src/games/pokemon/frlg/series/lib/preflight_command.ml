@@ -45,11 +45,9 @@ let needs ~plan_dir from_id =
         Ok (acc @ [ p ]))
       (Ok []) chain
   in
-  match
-    (Pf.needs stocks ~before plan, Frlg_checkpoints.Party_room.chain_need plans)
-  with
-  | needs, room -> Result.map (fun needs -> (needs, room)) needs
-  | exception Json_field.Invalid e -> Error e
+  let* needs = Pf.needs stocks ~before plan in
+  let* room = Frlg_checkpoints.Party_room.chain_need plans in
+  Ok (needs, room)
 
 exception Not_back of string
 

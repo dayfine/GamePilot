@@ -29,6 +29,9 @@ let member_to_string = function
 let member_keys =
   [ "species"; "sweeper"; "knock_off_species"; "recycle_species" ]
 
+let named_species ~where args =
+  List.filter_map (fun key -> J.string_opt ~where key args) member_keys
+
 let field_move_users = [ ("cut_tree", "cut"); ("fly", "fly") ]
 
 (* The badge each HM needs outside battle, by field move: pret pokefirered

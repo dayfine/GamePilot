@@ -25,21 +25,18 @@ let field_moves stocks plans =
     | N.Knows_move { move; _ } -> Some (move ^ " (a member that knows it)")
     | _ -> None
   in
-  List.concat_map
-    (fun plan ->
-      List.filter_map field_move
-        (Frlg_checkpoints.Plan_needs.needs stocks ~before:None plan))
-    plans
-  |> List.sort_uniq compare
+  let step acc plan =
+    let* acc = acc in
+    let* needs = Frlg_checkpoints.Plan_needs.needs stocks ~before:None plan in
+    Ok (List.filter_map field_move needs @ acc)
+  in
+  Result.map (List.sort_uniq compare) (List.fold_left step (Ok []) plans)
 
 let needs dir =
   let* plans = load_plans dir in
   let* stocks = Frlg_actions.Mart_plan.load () in
-  match
-    ( Frlg_checkpoints.Party_room.(free_needed (chain_need plans)),
-      field_moves stocks plans )
-  with
-  | free, moves ->
-      let moves = if moves = [] then "none" else String.concat ", " moves in
-      Ok (Printf.sprintf "%d free party slot(s); field moves: %s" free moves)
-  | exception Json_field.Invalid e -> Error e
+  let* room = Frlg_checkpoints.Party_room.chain_need plans in
+  let* moves = field_moves stocks plans in
+  let free = Frlg_checkpoints.Party_room.free_needed room in
+  let moves = if moves = [] then "none" else String.concat ", " moves in
+  Ok (Printf.sprintf "%d free party slot(s); field moves: %s" free moves)
