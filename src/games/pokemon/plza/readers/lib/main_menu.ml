@@ -13,9 +13,14 @@ let probes ~picture ~assets =
   Button_detector.probe ~picture ~assets ~id:right_id Right right_area
   @ Button_detector.probe ~picture ~assets ~id:b_id B b_area
 
+type buttons = { right_arrow : bool; b_button : bool }
+
 let buttons m =
-  (Button_detector.shown m right_id Right, Button_detector.shown m b_id B)
+  {
+    right_arrow = Button_detector.shown m right_id Right;
+    b_button = Button_detector.shown m b_id B;
+  }
 
 let shown m =
-  let right, b = buttons m in
-  right && b
+  let b = buttons m in
+  b.right_arrow && b.b_button

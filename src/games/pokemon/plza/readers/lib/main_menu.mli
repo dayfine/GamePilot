@@ -15,5 +15,11 @@ val probes : picture:Wire.box -> assets:Blob_assets.t -> Wire.probe_spec list
 val shown : Effects.measurements -> bool
 (** Both buttons show; [false] when a probe is missing. *)
 
-val buttons : Effects.measurements -> bool * bool
+type buttons = {
+  right_arrow : bool;  (** The right arrow in the menu's box shows. *)
+  b_button : bool;  (** The "B Close" prompt at the bottom right shows. *)
+}
+(** Whether each of the main menu's two indicator buttons shows. *)
+
+val buttons : Effects.measurements -> buttons
 (** Whether the right arrow and the B button each show. *)

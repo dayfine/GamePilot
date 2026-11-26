@@ -10,7 +10,8 @@ let game_flags default_state : string option F.game_flags =
     game_defaults = Some default_state;
     game_switch = (fun _ name -> if name = "--console" then Some None else None);
     game_valued =
-      (fun _ name v -> if name = "--state" then Some (Ok (Some v)) else None);
+      (fun _ name v ->
+        if name = "--state" then F.Parsed (Some v) else F.Not_game_flag);
   }
 
 type own_daemon = {

@@ -27,10 +27,18 @@ val parse : string list -> (t, string) result
     path (it has a [/], or a backslash on Windows) and a program id otherwise.
 *)
 
-val of_old_command : string -> string list -> (t, string) result option
+(** Result of translating a deprecated command into [gamepilot run] args. *)
+type old_command =
+  | Not_old_command
+      (** The command name is neither [checkpoints] nor [checkpoint]. *)
+  | Invalid_old_args of string
+      (** Recognized old command, but invalid arguments. *)
+  | Run of t  (** Translated [gamepilot run] arguments. *)
+
+val of_old_command : string -> string list -> old_command
 (** [gamepilot checkpoints ARGS] ([--program ID] anywhere, else the first arg is
     the plan folder, whatever its name) or [gamepilot checkpoint PLAN ARGS] as
-    [gamepilot run] runs it; [None] for any other command. *)
+    [gamepilot run] runs it. *)
 
 val command_line : t -> string
 (** [t] as a [gamepilot run] command line, args quoted where the shell needs it;

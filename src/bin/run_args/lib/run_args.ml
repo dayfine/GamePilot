@@ -53,12 +53,17 @@ let parse_with ~bare args =
 let parse =
   parse_with ~bare:(fun a -> if is_path a then Plan_folder a else Program a)
 
+type old_command = Not_old_command | Invalid_old_args of string | Run of t
+
+let of_result = function Ok t -> Run t | Error e -> Invalid_old_args e
+
 let of_old_command command args =
   match (command, args) with
-  | "checkpoints", _ -> Some (parse_with ~bare:(fun a -> Plan_folder a) args)
-  | "checkpoint", plan :: flags -> Some (Ok { target = Plan plan; flags })
-  | "checkpoint", [] -> Some (Error "a plan file is required")
-  | _ -> None
+  | "checkpoints", _ ->
+      of_result (parse_with ~bare:(fun a -> Plan_folder a) args)
+  | "checkpoint", plan :: flags -> Run { target = Plan plan; flags }
+  | "checkpoint", [] -> Invalid_old_args "a plan file is required"
+  | _ -> Not_old_command
 
 let plain c =
   match c with

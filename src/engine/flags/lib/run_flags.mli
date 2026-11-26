@@ -41,14 +41,20 @@ type 'game flags = {
   game : 'game;  (** The game's own flags. *)
 }
 
+(** Result of parsing a game-specific flag that takes a value. *)
+type 'game valued_flag =
+  | Not_game_flag  (** The flag is not one of this game's valued flags. *)
+  | Bad_value of string
+      (** The flag belongs to this game, but its value is invalid. *)
+  | Parsed of 'game  (** Parsed flag applied to the game's flag state. *)
+
 type 'game game_flags = {
   game_defaults : 'game;
   game_switch : 'game -> string -> 'game option;
-  game_valued : 'game -> string -> string -> ('game, string) result option;
+  game_valued : 'game -> string -> string -> 'game valued_flag;
 }
 (** How a game's own flags parse: their defaults, a flag without a value
-    ([None]: not the game's), and a flag with its value ([None]: not the game's;
-    [Some (Error _)]: a bad value). *)
+    ([None]: not the game's), and a flag with its value. *)
 
 val data_dir : string -> string -> string
 (** [data_dir var name]: [$var], else [$HOME/.local/share/gamepilot/<name>]. *)
