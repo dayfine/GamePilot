@@ -46,3 +46,10 @@
 
 val run : Steps.game_steps -> Steps.outcome
 (** The story battle, fought to its end as above. *)
+
+val attempt_one_attack : Steps.game_steps -> int ref -> bool
+(** One attack of the fight (PokemonLZA_TrainerBattle.cpp): ZL held up to 1 s
+    for the move symbols, the most effective move pressed as they show. Whether
+    a move went. [misses] counts the misses in a row (reset on a move); from the
+    third, the camera turns left while ZL is mashed. The catches'
+    [weaken_target] keeps its own count ({!Catches}). *)

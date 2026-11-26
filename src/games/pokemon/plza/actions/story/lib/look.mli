@@ -110,3 +110,7 @@ val describe : t -> string
 
 val to_walk_screen : t -> Plza_walk.Walk_screen.t
 (** The read as the walk takes it. *)
+
+val wild_battle_on : t -> bool
+(** A wild battle on, as the catches check it: the Run prompt, or the alert eye
+    while a wild Pokemon attacks before the partner is out. *)

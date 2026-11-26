@@ -1,4 +1,4 @@
-(* 01.00b to 03.06 run through the engine (Plza_engine.Runner) with
+(* 01.00b to 03.11 run through the engine (Plza_engine.Runner) with
    Story_game's handlers on a scripted console (Fake_console): the plans
    decode, every event reaches its handler, and each handler's presses move a
    game that answers them as the console did. Also the failures: a start that
@@ -787,6 +787,38 @@ let run_count checkpoint screen () =
   let _, c = outcome checkpoint screen in
   string_of_int (runs c)
 
+(* 03.07: the gate's A prompt once the stick was held 4.3 s, then the party
+   bar: no Fletchling ever shows. *)
+let zone_gate c =
+  match C.stick_reached c 4300 with
+  | None -> party c
+  | Some _ -> { (party c) with interact_prompt = true }
+
+let at_zone_gate c = { (party c) with minimap = Some "03.07-start" }
+
+(* The throws: inputs with ZR. *)
+let throws (c : C.t) =
+  List.length
+    (List.filter (fun (i : C.input) -> List.mem Wire.ZR i.buttons) c.inputs)
+
+(* 03.10: the lobby's party bar; the elevator's A prompt once the stick was
+   held 0.8 s (the run: 1.5 s of walk), until A; the attendant's question
+   until A, the floors until A (3F after Down), the ride's text until two B,
+   then the party bar. [lost]: no elevator prompt. *)
+let lab_elevator ?(lost = false) c =
+  match C.stick_reached c 800 with
+  | Some e when not lost -> (
+      let a n = C.nth_after c Wire.A ~after:e n in
+      match (a 0, a 1, a 2) with
+      | None, _, _ -> { (party c) with interact_prompt = true }
+      | Some _, None, _ -> text c
+      | Some _, Some q, None -> choice c ~after:q
+      | Some _, Some _, Some r -> (
+          match C.nth_after c Wire.B ~after:r 1 with
+          | None -> text c
+          | Some _ -> party c))
+  | _ -> party c
+
 let cases =
   [
     case "01.00b: Confirm Choices, Ready!, the opening skipped, the platform"
@@ -1492,8 +1524,41 @@ let cases_signatures =
       "start_signature_unread: 03.03: its start signature names nothing";
   ]
 
+let cases_03_07_to_03_11 =
+  [
+    case "03.07's start at Wild Zone 1's gate: ok"
+      (start_check "03.07" at_zone_gate)
+      "ok";
+    case "03.07's start elsewhere: chain_off_start"
+      (start_check "03.07" outside_center)
+      "chain_off_start: the run is not at 03.07's start: the screen reads \
+       (minimap 03.06-start), its start is (minimap 03.07-start)";
+    case "03.07 with no Fletchling to catch: no_catch"
+      (result "03.07" zone_gate)
+      "03.07 event 3 (catch_fletchling): no_catch: no tutorial card after 6 \
+       throws";
+    case "03.07 with no Fletchling to catch: 6 throws"
+      (fun () -> string_of_int (throws (snd (outcome "03.07" zone_gate))))
+      "6";
+    case "03.10: the lab's elevator to 3F"
+      (result "03.10" lab_elevator)
+      "passed";
+    case "03.10: the walk ends on the elevator's A prompt"
+      (logged "03.10" lab_elevator
+         "to_lab_elevator: ended on: player_can_move, interact_prompt")
+      "true";
+    case "03.10: choose_1 reads the floors"
+      (logged "03.10" lab_elevator "choose_1: row 0 of 2 highlighted")
+      "true";
+    case "03.10 lost: no elevator prompt"
+      (result "03.10" (lab_elevator ~lost:true))
+      "03.10 event 1 (to_lab_elevator): walk_no_end: to_lab_elevator: no end \
+       event within 1538 ms of the last leg";
+  ]
+
 let () =
   Table_test.run "plza_story_game"
     (cases @ cases_actions @ cases_02_01 @ cases_02_02 @ cases_02_03
    @ cases_02_04 @ cases_02_05 @ cases_02_06 @ cases_02_07 @ cases_03_01
-   @ cases_03_02 @ cases_03_02b @ cases_03_03 @ cases_03_04 @ cases_signatures)
+   @ cases_03_02 @ cases_03_02b @ cases_03_03 @ cases_03_04 @ cases_signatures
+   @ cases_03_07_to_03_11)

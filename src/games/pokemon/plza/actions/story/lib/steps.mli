@@ -14,6 +14,8 @@ type game_steps = {
       (** Send one input and watch the screen while it runs: the first read on
           which the check holds (the input is then cut short, every button
           released), or [None] once the input is done. *)
+  race_batch : Wire.command list -> (Look.t -> bool) -> Look.t option;
+      (** As [race], over inputs sent as one batch (each runs into the next). *)
   race_then :
     Wire.command ->
     (Look.t -> bool) ->
@@ -22,6 +24,7 @@ type game_steps = {
       (** As [race], but the read that ends the input replaces it with the
           inputs the last function gives (no button released between: ZL held
           through the move), done before it returns. *)
+  now : unit -> float;  (** The daemon's clock, in ms. *)
   log : string -> unit;  (** A line for the log and the watch page. *)
   log_detail : string -> unit;  (** A line for the log alone. *)
 }
