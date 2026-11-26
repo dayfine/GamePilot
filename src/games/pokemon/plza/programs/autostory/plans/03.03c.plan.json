@@ -1,0 +1,33 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "plza",
+  "execution": {},
+  "metadata": {
+    "phase": "testing",
+    "source": "starts at the rooftop autosave, where a reload lands; starts where 03.03b ends; the fork's plza-03.03c.plan.json (plza/lean)",
+    "postconditions": {}
+  },
+  "checkpoint": {
+    "id": "03.03c",
+    "title": "Off the roof to Station Front",
+    "start": {
+      "place": "LumioseCity"
+    },
+    "events": [
+      {
+        "id": "off_the_roof",
+        "kind": "walk",
+        "why": "off the roof's edge to South Boulevard, until the scene there. not planned: no tile grid in Lumiose",
+        "args": {
+          "legs": [[0, 8000]],
+          "end": "scene"
+        }
+      },
+      {
+        "id": "south_boulevard",
+        "kind": "scene",
+        "why": "Taunie walks to the Pokemon Center, until Station Front"
+      }
+    ]
+  }
+}

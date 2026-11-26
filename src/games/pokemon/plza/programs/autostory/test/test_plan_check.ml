@@ -1,5 +1,6 @@
-(* Plan_check over every plan in plans/, and on a plan with an unknown
-   skip_if flag. *)
+(* Plan_check over every plan in plans/, and on plans with a bad key: an
+   unknown execution key, a signature field or minimap the readers do not
+   know, an unknown skip_if flag. *)
 
 open Plza_engine
 
@@ -26,9 +27,19 @@ let plan_cases =
            expectation = "ok";
          })
 
-(* 01.03's plan, its events' skip_if replaced. *)
+(* 03.04's plan, its execution or its events' skip_if replaced. *)
 let base () =
-  Yojson.Safe.from_file (Filename.concat plans_dir "01.03.plan.json")
+  Yojson.Safe.from_file (Filename.concat plans_dir "03.04.plan.json")
+
+let with_execution fields =
+  match base () with
+  | `Assoc top ->
+      `Assoc
+        (List.map
+           (fun (k, v) ->
+             if k = "execution" then (k, `Assoc fields) else (k, v))
+           top)
+  | other -> other
 
 let rec with_skip_if flag = function
   | `Assoc fields ->
@@ -46,9 +57,30 @@ let case name json expectation : Table_test.case =
 
 let bad_cases =
   [
+    case "a key the runner does not read"
+      (fun () -> with_execution [ ("save", `String "autosave") ])
+      "03.04: unknown execution key \"save\"";
+    case "reload_when_chained not a boolean"
+      (fun () -> with_execution [ ("reload_when_chained", `String "yes") ])
+      "03.04: execution.reload_when_chained is not a boolean";
+    case "a start signature with an unknown field"
+      (fun () ->
+        with_execution [ ("start_signature", `Assoc [ ("hp", `Int 1) ]) ])
+      "start_signature_unread: 03.04: its start signature has \"hp\": its one \
+       field is minimap (a recorded name)";
+    case "an end signature naming an unrecorded minimap"
+      (fun () ->
+        with_execution
+          [ ("end_signature", `Assoc [ ("minimap", `String "99.99-start") ]) ])
+      "start_signature_unread: 03.04: its end signature names minimap \
+       99.99-start, which is not recorded";
     case "an unknown skip_if flag"
       (fun () -> with_skip_if "battle_over" (base ()))
-      "01.03 event approach_starter: unknown skip_if flag \"battle_over\"";
+      "03.04 event into_pokemon_center: unknown skip_if flag \"battle_over\"";
+    case "a skip_if minimap not recorded"
+      (fun () -> with_skip_if "minimap:99.99-start" (base ()))
+      "03.04 event into_pokemon_center: skip_if \"minimap:99.99-start\": no \
+       minimap \"99.99-start\" is recorded";
   ]
 
 let () = Table_test.run "plza plan check" (plan_cases @ bad_cases)

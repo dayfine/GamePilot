@@ -5,8 +5,12 @@
 val plan_suffix : string
 (** [".plan.json"]. *)
 
-val checkpoint_ids : string -> (string list, string) result
-(** Checkpoint ids in the folder, in run order ({!Checkpoint_order}). *)
+val checkpoint_ids :
+  ?compare:(string -> string -> int) -> string -> (string list, string) result
+(** Checkpoint ids in the folder, in run order: [compare]'s, by default
+    {!Checkpoint_order.compare} (a lettered part first). PLZA's 01.00b, 03.02b
+    follow 01.00a, 03.02 instead: plain name order, which the caller picks
+    (bin's Checkpoint_families). *)
 
 val drop_until : string -> string list -> string list
 (** The ids from this one on; [] when it is not there. *)
