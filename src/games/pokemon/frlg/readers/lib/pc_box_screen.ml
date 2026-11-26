@@ -41,8 +41,12 @@ let male_w = 9
 let male_h = 13
 let male_box = box ~x:male_x ~y:male_y ~w:male_w ~h:male_h
 
+(* Core blue of the male mark is (0, 123, 255) on mGBA; the panel's lilac
+   background is (148, 148, 173) (r >= 133 even at x0.9 brightness) and the
+   female mark is red (173, 24, 24). Keeping r <= 100 and b >= 190 isolates
+   the male mark with zero hits on lilac or female frames (#194). *)
 let male_blue : Color_count.range =
-  { low = { r = 0; g = 0; b = 170 }; high = { r = 150; g = 210; b = 255 } }
+  { low = { r = 0; g = 0; b = 190 }; high = { r = 100; g = 210; b = 255 } }
 
 let min_male_share = 0.15
 let min_red_over_green = 15.
