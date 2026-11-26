@@ -21,11 +21,20 @@ let held ~timeout_ms read =
   Switch_home.Held_screen.wait_for ~timeout_ms
     (Switch_home.Held_screen.held hold_ms read)
 
+(* The dialog held 1 s with its "Last Saved" read, and the last frame's
+   reading: the hold is on the reading being there, not on its shares, which
+   differ a little on every frame. *)
 let last_saved ~what =
   T.press open_save;
-  Option.to_result ~none:what
-    (held ~timeout_ms:dialog_ms (fun m ->
-         if D.shown m then D.last_saved m else None))
+  let reading = ref None in
+  let read m =
+    reading := if D.shown m then D.last_saved m else None;
+    Option.map ignore !reading
+  in
+  let held_read = held ~timeout_ms:dialog_ms read in
+  match (held_read, !reading) with
+  | Some (), Some shares -> Ok shares
+  | _ -> Error what
 
 let menu_back () =
   Option.to_result ~none:"no main menu after saving"

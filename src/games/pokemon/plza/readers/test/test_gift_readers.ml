@@ -10,7 +10,13 @@
    "Prismillon (Motif Poké Ball)") reads as the list with no gift under the
    English name, as the console's run failed; under the French name
    (fixtures/gifts/gifts.fr.probes.jsonl, every Mystery Gift frame and its nine
-   shifts) its gift is item 4 and the English list has none. The white fade
+   shifts) its gift is item 4 and the English list has none. The Japanese
+   list under "stop receiving?" (console B, 2026-11-25, the cursor on the
+   first item, Vivillon the 4th as "ボールのもようの　ビビヨン") reads as no
+   list and no card; its gift is item 4 under the Japanese name
+   (fixtures/gifts/gifts.ja.probes.jsonl, likewise) and none under the
+   English or French one, and the other lists have none under the Japanese
+   name. The white fade
    before a card reads as nothing. The same
    list dimmed by the Switch after an idle (gift-list-dimmed, about 30%
    brightness) must read as nothing: a dim screen is no screen we know. No
@@ -34,10 +40,15 @@ module G = Mystery_gift_screen
 let frames = Wire.read_image_probes "fixtures/gifts/gifts.probes.jsonl"
 let shifted = Wire.read_image_probes "fixtures/gifts/gifts.shifted.probes.jsonl"
 let french = Wire.read_image_probes "fixtures/gifts/gifts.fr.probes.jsonl"
+let japanese = Wire.read_image_probes "fixtures/gifts/gifts.ja.probes.jsonl"
 let measurements probes : Wire.frame = { seq = 1; t_ms = 0.; probes }
 let menu = "./tutorial-cards/it-menu-no-card.jpg"
 let gift_list = "./mystery-gift/gift-list-cursor-on-1.png"
 let french_list = "./mystery-gift/gift-list-fr-cursor-on-1.png"
+let japanese_list = "./mystery-gift/gift-list-ja-stop-receiving.png"
+
+(* Each list's capture, by the language of its names. *)
+let lists = [ ("en", gift_list); ("fr", french_list); ("ja", japanese_list) ]
 
 let cards m =
   String.init 6 (fun k ->
@@ -185,11 +196,30 @@ let frame_cases ?(name = "en") ~label frames =
         (readers ~name))
     frames
 
+(* The gift's item on each list's frames, [name] the language of the gift
+   name's template: item 4 on the list in that language, none on the
+   others. *)
+let gift_item_cases ~name ~label frames =
+  List.filter_map
+    (fun (path, probes) ->
+      Option.map
+        (fun (language, _) ->
+          case
+            (Printf.sprintf "%sthe gift's item: %s" label path)
+            (fun () -> item (G.gift_item (measurements probes)))
+            (if language = name then "4" else "none"))
+        (List.find_opt (fun (_, list) -> same (unshifted path) list) lists))
+    frames
+
 let () =
   Table_test.run "gift_readers"
     (frame_cases ~label:"" frames
     @ frame_cases ~label:"shifted, " shifted
     @ frame_cases ~name:"fr" ~label:"French name, " french
+    @ frame_cases ~name:"ja" ~label:"Japanese name, " japanese
+    @ gift_item_cases ~name:"en" ~label:"" (frames @ shifted)
+    @ gift_item_cases ~name:"fr" ~label:"French name, " french
+    @ gift_item_cases ~name:"ja" ~label:"Japanese name, " japanese
     @ last_saved_cases
         (List.filter
            (fun (p, _) -> List.exists (same (unshifted p)) saves)

@@ -76,21 +76,22 @@ let open_internet_list ~log =
   Ok ()
 
 (* The list read for 1 s within 3 s, with no press (A would claim the
-   selected gift); the last frame read. *)
+   selected gift); the last frame read. The hold is on the list showing, not
+   on the frame: no two frames are equal. *)
 let list_read_ms = 3000
 
 let read_list () =
   let last = ref None in
-  let watch m =
+  let shown m =
     last := Some m;
-    if S.list_active m then Some m else None
+    S.list_active m
   in
-  match
-    Switch_home.Held_screen.wait_for ~timeout_ms:list_read_ms
-      (Switch_home.Held_screen.held hold_ms watch)
-  with
-  | Some m -> Ok m
-  | None ->
+  let read =
+    Switch_home.Held_screen.wait_for ~timeout_ms:list_read_ms (held shown)
+  in
+  match (read, !last) with
+  | Some (), Some m -> Ok m
+  | _ ->
       Error
         ("no active gift list: "
         ^ Option.fold ~none:"no frame" ~some:S.describe !last)

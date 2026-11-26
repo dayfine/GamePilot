@@ -74,7 +74,8 @@ claimed, already received, expired, not supported or failed.
 - No main menu after X: `not_on_main_menu`.
 - Not five or six Pokémon at full HP on the menu's cards: `party_not_ready`.
 - A gift not received (not listed, no card after the claim) fails that gift; the run goes on with
-  the next one. A screen no reader knows after a claim is kept as
+  the next one. A gift not listed leaves the list with B and Yes to "stop receiving?", then the
+  link. A screen no reader knows after a claim is kept as
   `gift-<id>-unknown-screen.png` in the run folder.
 - No main menu after 8 B from a failed gift: `screen_lost`; the gifts after it are not tried.
 - A received gift's box slot empty, or not read: that gift fails.
@@ -87,7 +88,7 @@ claimed, already received, expired, not supported or failed.
 - A gift already received is not yet recognised: no capture of that screen exists. It fails as an
   unknown screen, with its frame kept.
 - HOME gifts are not claimed. An Internet gift needs its name's template in the game's language;
-  only the Poké Ball Pattern Vivillon has one, in English and French.
+  only the Poké Ball Pattern Vivillon has one, in English, French and Japanese.
 - A gift in party slot 6 is moved only to Box 1's first row.
 
 ## How it works
