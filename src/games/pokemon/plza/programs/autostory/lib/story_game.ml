@@ -66,6 +66,53 @@ let scene_to_battle steps =
   Scene_machine.run steps "scene"
     { Scene_machine.default with stop_at_battle = true }
 
+(* A scene with a start window, as the fork's: control before any scene
+   waits up to "start_window_ms" for one. *)
+let scene_with_start_window ~jump steps (event : Plan.event)
+    (args : Json_field.obj) =
+  match args with
+  | [ ("start_window_ms", `Int ms) ] when ms > 0 ->
+      run_scene ~jump steps event
+        { Scene_machine.default with start_window_ms = Some ms }
+  | _ ->
+      bad_args event "the only arg is start_window_ms, a positive number of ms"
+
+let talk_steps steps : Plza_walk.Talk_prompt.game_steps =
+  let walk = Steps.walk_game_steps steps in
+  {
+    submit = walk.submit;
+    read_screen = walk.read_screen;
+    log = walk.log;
+    log_detail = walk.log_detail;
+  }
+
+let prompt_not_seen =
+  Error
+    (Failure.cause "prompt_not_seen"
+       "scene: no A prompt to press through: free control with nothing to take \
+        A (the walk before it stopped short?)")
+
+(* A scene that presses A first, as the fork's: A through the prompt first
+   ({!Plza_walk.Talk_prompt.press_through}), then the scene; with
+   "stop_at_choice", to the choice. Where it differs: free control with no A
+   prompt on two reads 300 ms apart fails prompt_not_seen before any A, where
+   the fork presses A on nothing and its scene then ends on control, passing a
+   walk that stopped short. *)
+let through_prompt ~jump steps event config =
+  if Plza_walk.Talk_prompt.missing (talk_steps steps) then prompt_not_seen
+  else (
+    Plza_walk.Talk_prompt.press_through (talk_steps steps);
+    run_scene ~jump steps event config)
+
+let scene_through_prompt ~jump steps (event : Plan.event)
+    (args : Json_field.obj) =
+  match args with
+  | [] -> through_prompt ~jump steps event Scene_machine.default
+  | [ ("stop_at_choice", `Bool true) ] ->
+      through_prompt ~jump steps event
+        { Scene_machine.default with stop_at_choice = true }
+  | _ -> bad_args event "the only arg is stop_at_choice, true"
+
 (* The story's own actions, by the name a plan gives each. *)
 let story_actions ~reload ~jump =
   [
@@ -77,9 +124,15 @@ let story_actions ~reload ~jump =
     ("set_text_speed_fast", no_args Text_speed.run);
     ("plus_skip", no_args Plus_skip.run);
     ("scene_to_choice", scene_to_choice ~jump);
+    ("choose_0", no_args (fun steps -> Choose_row.run steps 0));
     ("choose_1", no_args (fun steps -> Choose_row.run steps 1));
     ("scene_to_battle", no_args scene_to_battle);
+    ("scene_with_start_window", scene_with_start_window ~jump);
+    ("scene_through_prompt", scene_through_prompt ~jump);
     ("story_battle", no_args Battle.run);
+    ("talk_through_map_screen", no_args Map_talk.run);
+    ( "climb_ladder",
+      no_args (fun steps -> Plza_walk.Ladder_climb.run (talk_steps steps)) );
   ]
 
 let game_actions ~reload ~jump steps =

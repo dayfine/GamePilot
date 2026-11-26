@@ -15,6 +15,7 @@ type t =
   | Cut_tree of Grid_geometry.Direction.t
   | Verify_mail_glitch of Action_args.member
   | Pc_deposit of deposit
+  | Pc_withdraw
   | Pick_up_item of string
   | Read_caught of { at_least : int option }
 
@@ -95,6 +96,7 @@ let readers stocks =
     ( "verify_mail_glitch",
       fun ~where a -> Verify_mail_glitch (Action_args.member ~where a) );
     ("pc_deposit", pc_deposit);
+    ("pc_withdraw", fun ~where:_ _ -> Pc_withdraw);
     ("pick_up_item", fun ~where a -> Pick_up_item (J.string ~where "item" a));
     ("read_caught", read_caught);
   ]
@@ -112,6 +114,7 @@ let names =
     "cut_tree";
     "verify_mail_glitch";
     "pc_deposit";
+    "pc_withdraw";
     "pick_up_item";
     "read_caught";
   ]
@@ -152,6 +155,7 @@ let to_string = function
   | Verify_mail_glitch m -> "verify the mail glitch on " ^ member_text m
   | Pc_deposit (Members l) -> "deposit " ^ String.concat ", " l ^ " at the PC"
   | Pc_deposit Holding_no_mail -> "deposit the member holding no Mail at the PC"
+  | Pc_withdraw -> "withdraw the first Pokemon in the box at the PC"
   | Pick_up_item item -> "pick up " ^ item
   | Read_caught { at_least } ->
       "read the species caught"

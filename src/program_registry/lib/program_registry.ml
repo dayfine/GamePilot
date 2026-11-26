@@ -173,6 +173,22 @@ let frlg_sevii_story =
     rules = Pokemon_grid;
   }
 
+let frlg_ace_setup =
+  {
+    id = "frlg.ace_setup";
+    game = frlg;
+    name = "ACE Setup";
+    group = [ "FRLG"; "Glitches" ];
+    description =
+      "Sets up arbitrary code execution: the ? Mail puts species 0x0351 in Box \
+       3 slot 1.";
+    doc = "docs/guide/frlg.ace_setup.md";
+    checkpoints = Some "src/games/frlg/programs/ace_setup/plans";
+    backends = [ Mgba ];
+    viewport = Nso_gba;
+    rules = Pokemon_grid;
+  }
+
 let frlg_dex_collection =
   {
     id = "frlg.dex_collection";
@@ -225,6 +241,7 @@ let all =
     frlg_team_training;
     frlg_sevii_story;
     frlg_dex_collection;
+    frlg_ace_setup;
     frlg_wild_rng;
     plza_autostory;
   ]
