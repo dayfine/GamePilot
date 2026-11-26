@@ -16,6 +16,14 @@
  (copy fixtures/delete_save.probes.jsonl delete_save.probes.jsonl))
 
 (rule
+ (copy fixtures/code_keyboard.probes.jsonl code_keyboard.probes.jsonl))
+
+(rule
+ (copy
+  fixtures/code_keyboard.shifted.probes.jsonl
+  code_keyboard.shifted.probes.jsonl))
+
+(rule
  (copy
   fixtures/delete_save.shifted.probes.jsonl
   delete_save.shifted.probes.jsonl))
@@ -28,7 +36,8 @@
   test_screen_poll
   test_stick_tilt
   test_delete_save_screen
-  test_delete_save)
+  test_delete_save
+  test_code_keyboard)
  (modules
   test_home_screen
   test_console_park
@@ -37,13 +46,16 @@
   test_stick_tilt
   test_delete_save_screen
   test_delete_save
+  test_code_keyboard
   fire_red
   scripted_home)
  (deps
   switch.probes.jsonl
   switch.shifted.probes.jsonl
   delete_save.probes.jsonl
-  delete_save.shifted.probes.jsonl)
+  delete_save.shifted.probes.jsonl
+  code_keyboard.probes.jsonl
+  code_keyboard.shifted.probes.jsonl)
  (libraries
   gamepilot.wire
   gamepilot.effects

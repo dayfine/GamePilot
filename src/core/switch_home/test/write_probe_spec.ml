@@ -3,7 +3,8 @@
    black readers' probes, with FireRed's tile colour, on the GBA picture. With
    [delete-save]: the delete-save screens' probes on the whole frame, an icon
    probe per game whose template is the PNG file [<key>-icon.png] beside the
-   spec. *)
+   spec. With [code-keyboard]: the code keyboard's probes on the whole
+   frame. *)
 
 let home_probes () =
   let picture = Fire_red_spec.nso_gba_picture in
@@ -22,6 +23,7 @@ let () =
   let probes =
     match Sys.argv with
     | [| _; "delete-save" |] -> delete_save_probes ()
+    | [| _; "code-keyboard" |] -> Switch_home.Code_keyboard.probes
     | _ -> home_probes ()
   in
   let request =
