@@ -15,7 +15,7 @@
 # (test_battle_readers.ml); pc (test_pc_readers.ml), card
 # (test_card_readers.ml), ace (test_ace_readers.ml, shifted too), dex
 # (test_dex_readers.ml, shifted too) and naming (test_naming_readers.ml,
-# shifted too) are made only when named. A set with no map for a
+# shifted too) and trigger (test_trigger_readers.ml, shifted too) are made only when named. A set with no map for a
 # backend skips that backend. The card set also writes card.<backend>.shifted:
 # its real frames (every image but the renders under pret-trainer-card/)
 # with their colors shifted by dev/reader_fixtures/shift_frame.py, which needs Pillow
@@ -80,7 +80,7 @@ shifted_frames() {
   card) grep -v '/pret-trainer-card/' "$2" | cut -d'|' -f2 ;;
   menus) grep '/seagallop-one-island/\|/rng-route10-' "$2" | cut -d'|' -f2 ;;
   battle) grep '/dex-route10/' "$2" | cut -d'|' -f2 ;;
-  ace | dex | naming) cut -d'|' -f2 "$2" ;;
+  ace | dex | naming | trigger) cut -d'|' -f2 "$2" ;;
   esac
 }
 
@@ -114,7 +114,7 @@ regen() {
   probe "$set_name" switch "$spec" "${prefix}switch.probes.jsonl" --viewport "$SWITCH_VIEWPORT"
   probe "$set_name" mgba "$spec" "${prefix}mgba.probes.jsonl"
   case $set_name in
-  card | menus | battle | ace | dex | naming)
+  card | menus | battle | ace | dex | naming | trigger)
     probe_shifted "$set_name" switch "$spec" "${prefix}switch.shifted.probes.jsonl" --viewport "$SWITCH_VIEWPORT"
     probe_shifted "$set_name" mgba "$spec" "${prefix}mgba.shifted.probes.jsonl"
     ;;

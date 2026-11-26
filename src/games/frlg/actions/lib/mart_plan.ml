@@ -94,13 +94,7 @@ let buys stock plan =
   in
   List.rev cut
 
-let tens = 10
-
-let quantity_presses quantity =
-  if quantity <= 1 then (0, 0)
-  else
-    let right = (quantity - 1) / tens in
-    (right, quantity - 1 - (right * tens))
+let quantity_presses = Quantity_box.presses_from_one
 
 let buy_to_string b =
   Printf.sprintf "%d %s (row %d, $%d)" b.buy_quantity b.buy_item b.row b.cost

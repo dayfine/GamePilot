@@ -42,6 +42,12 @@ type game_steps = {
 val name_row : int
 (** 2: NAME on the title's menu. *)
 
+val name_on_title :
+  game_steps -> log:(string -> unit) -> others:string list -> string -> unit
+(** With the hand on the box screen's title: A, NAME on its menu, the name typed
+    and OK, then the title read back against the name and [others] (what it may
+    still read); fails as {!run} does after its first read. *)
+
 val run : game_steps -> log:(string -> unit) -> rename -> unit
 (** Fails as [box_name_not_from] (the title reads neither name),
     [box_menu_missing] (no NAME on row 2 after A on the title),
@@ -55,8 +61,9 @@ val screen_game_steps : log:(string -> unit) -> game_steps
     {!Frlg_text.Box_title}, read again while it slides in; the menu's rows by
     their glyphs and its arrow on {!Frlg_readers.Pc_box_screen}'s probes; the
     naming screen awaited on {!Frlg_readers.Naming_screen}'s probes and typed by
-    {!Naming_entry.type_text}; the box screen awaited on [Pc_screen]'s. Logs to
-    [log]. *)
+    {!Naming_entry.type_text}; the box screen awaited by its PKMN DATA panel
+    ({!Frlg_readers.Pc_screen.box_screen_shown}: a Savanna grid reads as the box
+    chooser). Logs to [log]. *)
 
 val handlers :
   log:(string -> unit) -> (string * Pokemon_engine.Game.game_action) list

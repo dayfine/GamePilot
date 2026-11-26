@@ -2,12 +2,12 @@
     clerk is talked to. Each Mart's stock is read from
     [src/games/frlg/assets/kanto_mart_stocks.json] (made from pokefirered, as
     its ["source"] says). Ported from the fork's AutoStory Mart
-    (PokemonFRLG_AutoStoryMart: [plan_mart_buys()], [quantity_presses()]), with
-    a budget in place of its [if_affordable].
+    (Programs/AutoStory/PokemonFRLG_AutoStoryMart), with a budget in place of
+    its affordability check.
 
     The BUY list is the Mart's stock in order, then CANCEL; the cursor starts on
-    the top row and stays on the row bought. The quantity box starts at 1: UP
-    adds one, RIGHT adds ten, at most {!max_quantity}. *)
+    the top row and stays on the row bought. The quantity box ({!Quantity_box})
+    starts at 1: UP adds one, RIGHT adds ten, at most {!max_quantity}. *)
 
 type stock_item = { item : string; price : int }
 type stocks
@@ -45,8 +45,7 @@ val buys : stock_item list -> t -> buy list
     budget covers none of is left out. *)
 
 val quantity_presses : int -> int * int
-(** [(right, up)] from 1 to the quantity: RIGHT never passes it, so it never
-    stops at the most. *)
+(** {!Quantity_box.presses_from_one}: [(right, up)] from 1 to the quantity. *)
 
 val buys_to_string : buy list -> string
 (** ["2 retro-mail (row 1, $100)"], joined by ["; "]; ["nothing"] when empty. *)

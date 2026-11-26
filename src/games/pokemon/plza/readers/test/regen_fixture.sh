@@ -1,7 +1,8 @@
 #!/bin/sh
 # Remakes fixtures/<folder>.probes.jsonl for each image folder: every frame
 # in images/switch/<folder> (console captures from the fork's
-# CommandLineTests, jpg) or, for the folder synthetic, the fork's synthetic
+# CommandLineTests, jpg; box-cells' png, redacted to the Boxes' probes as its
+# README says) or, for the folder synthetic, the fork's synthetic
 # test frames (draw_synthetic_frames.py), probed by the daemon's probe_images
 # on the native viewport with every PLZA reader's probes (write_probe_spec.exe, its
 # find templates copied from assets/templates beside the spec). Also
@@ -31,6 +32,15 @@
 # alone (write_probe_spec.exe --intro, PLZA's HOME title template from
 # assets/), and fixtures/intro/intro.shifted.probes.jsonl: each of them once
 # shifted (--one). Remade with every folder, or alone as the FOLDER intro.
+# Also fixtures/gifts/: the Mystery Gift steps' readers alone
+# (write_probe_spec.exe --gifts en, the gift name's template from
+# assets/gift-name-vivillon-en.png) on every capture and images/mystery-gift's
+# (console B's own, png, redacted as its README says) in gifts.probes.jsonl; the main menu's frame
+# (tutorial-cards/it-menu-no-card) and images/mystery-gift's, all nine shifts
+# each, in gifts.shifted.probes.jsonl; and images/mystery-gift's frames and
+# their nine shifts each, the gift's name matched by its French template
+# (--gifts fr), in gifts.fr.probes.jsonl. Remade with every folder, or alone
+# as the FOLDER gifts.
 # The Python steps need Pillow ($SHIFT_PYTHON, default python3; e.g.
 # "uv run --with pillow python3").
 #
@@ -50,11 +60,11 @@ SHIFT_PYTHON=${SHIFT_PYTHON:-python3}
 SHIFT_FRAME=$SRC/../dev/reader_fixtures/shift_frame.py
 FIXTURES=$HERE/fixtures
 if [ $# -eq 0 ]; then
-    set -- $(ls "$HERE/images/switch") synthetic intro
+    set -- $(ls "$HERE/images/switch") synthetic intro gifts
     rm -f "$FIXTURES"/*.probes.jsonl
 fi
 for folder in "$@"; do
-    case $folder in synthetic | intro) continue ;; esac
+    case $folder in synthetic | intro | gifts) continue ;; esac
     if [ ! -d "$HERE/images/switch/$folder" ]; then
         echo "no image folder images/switch/$folder" >&2
         exit 1
@@ -149,9 +159,45 @@ for path in sys.argv[2:]:
         >"$FIXTURES/intro/intro.shifted.probes.jsonl"
 }
 
+# fixtures/gifts/, as the header says.
+regen_gifts() {
+    mkdir -p "$FIXTURES/gifts" "$work/gifts" "$work/gifts/frames" \
+        "$work/gifts/lossless/tutorial-cards" "$work/gifts/shifted"
+    cp "$SRC/games/pokemon/plza/assets/"gift-name-vivillon-*.png "$work/spec/"
+    for language in en fr; do
+        (cd "$SRC" && dune exec \
+            games/pokemon/plza/readers/test/write_probe_spec.exe \
+            -- --gifts "$language") >"$work/spec/gifts.$language.probes.json"
+    done
+    cp -R "$HERE/images/switch/." "$work/gifts/frames/"
+    cp -R "$HERE/images/mystery-gift" "$work/gifts/frames/mystery-gift"
+    cp -R "$HERE/images/mystery-gift" "$work/gifts/lossless/mystery-gift"
+    $SHIFT_PYTHON -c '
+import sys
+from PIL import Image
+Image.open(sys.argv[1]).convert("RGB").save(sys.argv[2])
+' "$HERE/images/switch/tutorial-cards/it-menu-no-card.jpg" \
+        "$work/gifts/lossless/tutorial-cards/it-menu-no-card.png"
+    (cd "$work/gifts/lossless" && $SHIFT_PYTHON "$SHIFT_FRAME" \
+        "$work/gifts/shifted" ./*/*.png)
+    (cd "$work/gifts/frames" && "$PROBE_IMAGES" \
+        --spec "$work/spec/gifts.en.probes.json" --viewport native \
+        ./*/*.jpg ./*/*.png) >"$FIXTURES/gifts/gifts.probes.jsonl"
+    (cd "$work/gifts/shifted" && "$PROBE_IMAGES" \
+        --spec "$work/spec/gifts.en.probes.json" --viewport native \
+        ./*/*/*.png) >"$FIXTURES/gifts/gifts.shifted.probes.jsonl"
+    (cd "$work/gifts/frames" && "$PROBE_IMAGES" \
+        --spec "$work/spec/gifts.fr.probes.json" --viewport native \
+        ./mystery-gift/*.png) >"$FIXTURES/gifts/gifts.fr.probes.jsonl"
+    (cd "$work/gifts/shifted" && "$PROBE_IMAGES" \
+        --spec "$work/spec/gifts.fr.probes.json" --viewport native \
+        ./*/mystery-gift/*.png) >>"$FIXTURES/gifts/gifts.fr.probes.jsonl"
+}
+
 for folder in "$@"; do
     case $folder in
     intro) regen_intro ;;
+    gifts) regen_gifts ;;
     *) regen_folder "$folder" ;;
     esac
 done

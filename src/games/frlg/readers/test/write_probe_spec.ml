@@ -31,6 +31,8 @@ let () =
     | [| _; "ace" |] -> Easy_chat_screen.probes @ Pc_box_screen.probes
     | [| _; "dex" |] -> Pokedex_list.probes
     | [| _; "naming" |] -> Naming_screen.probes @ Pc_box_screen.probes
+    | [| _; "trigger" |] ->
+        Pc_box_screen.probes @ Item_pc_screen.probes @ Pc_screen.probes
     | _ ->
         Screen_facts.probes @ Scene_signature.probes @ Dialog.yes_no_probes
         @ Load_menu.probes

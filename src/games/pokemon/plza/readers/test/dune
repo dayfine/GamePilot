@@ -23,7 +23,8 @@
   test_party_slots
   test_lock_plate
   test_main_menu
-  test_intro_screens)
+  test_intro_screens
+  test_gift_readers)
  (modules
   test_dialog_readers
   test_story_readers
@@ -40,10 +41,12 @@
   test_lock_plate
   test_main_menu
   test_intro_screens
+  test_gift_readers
   fixture_frames)
  (deps
   (glob_files fixtures/*.probes.jsonl)
-  (glob_files fixtures/intro/*.probes.jsonl))
+  (glob_files fixtures/intro/*.probes.jsonl)
+  (glob_files fixtures/gifts/*.probes.jsonl))
  (libraries
   gamepilot.wire
   gamepilot.table_test

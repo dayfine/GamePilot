@@ -1,0 +1,45 @@
+{
+  "format": "gamepilot-ace-presets/1",
+  "notes": "Box names as typed on the naming screen, no trailing spaces (docs/design/FRLG-ACE-Execution.md). The game's right single quote is written ' as the keyboard and the font write it; the left one is ‘.",
+  "codes": {
+    "get_item_999": {
+      "source": "https://pastebin.com/VAgKwjwJ (Sleipnir17, Get any item), exit: pomeg-letterbombers' FRLG FAQ (Switch-adjusted)",
+      "games": ["firered-en-1.1"],
+      "boxes": {
+        "1": "xFUnDRRn",
+        "2": "……o/E!n",
+        "3": "EE …l‘",
+        "4": "E♀BRm",
+        "9": "'BRm",
+        "10": " FoHIoor",
+        "11": "xn",
+        "12": "A",
+        "13": "A",
+        "14": "A"
+      },
+      "item_boxes": [5, 6, 7, 8]
+    }
+  },
+  "items": {
+    "master-ball": {
+      "code": "get_item_999",
+      "id": 1,
+      "boxes": {
+        "5": "G……o",
+        "6": "EEEJD!n",
+        "7": "EEIB!n",
+        "8": "EI/!n"
+      }
+    },
+    "luxury-ball": {
+      "code": "get_item_999",
+      "id": 11,
+      "boxes": {
+        "5": "Q……o",
+        "6": "EEEJD!n",
+        "7": "EEIB!n",
+        "8": "EI/!n"
+      }
+    }
+  }
+}

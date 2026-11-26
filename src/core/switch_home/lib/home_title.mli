@@ -1,12 +1,11 @@
 (** Reader and walk: which game's tile the cursor is on on the Switch's HOME
     menu, by the title HOME writes over the tile row, and the walk along the row
     to a game's tile. The fork reads the title with OCR (PLZA's
-    PokemonLZA_AutoStoryIntroScreens.cpp: the row's cyan text, ending in "za";
-    the lab's Pokémon HOME script with tesseract); here a
-    [core.template_match@1] probe searches the whole title row for a template of
-    part of the game's title, as its cyan ink. The walk is the fork's PLZA tile
-    search (PokemonLZA_AutoStoryLaunch.cpp), each caller passing its own presses
-    and title check.
+    PokemonLZA_AutoStoryIntroScreens.cpp: the row's cyan text, ending in "za");
+    here a [core.template_match@1] probe searches the whole title row for a
+    template of part of the game's title, as its cyan ink. The walk is the
+    fork's PLZA tile search (PokemonLZA_AutoStoryLaunch.cpp), each caller
+    passing its own presses and title check.
 
     The title is read on the whole frame (the daemon's [native] viewport):
     left-aligned from x 125 while the row has not scrolled, over the selected
@@ -24,9 +23,6 @@ val cyan : Wire.color_range
 val probe : string -> Effects.template_hash -> Wire.probe_spec
 (** The probe of that id searching {!window} for the title template, every
     frame. *)
-
-val score : Effects.measurements -> string -> float option
-(** The probe's score (0 a perfect match), for a log line. *)
 
 val max_score : float
 (** 0.08 for every title so far: Pokémon HOME's "HOME" scores 0.034 at most on

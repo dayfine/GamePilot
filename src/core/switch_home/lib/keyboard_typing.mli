@@ -22,8 +22,8 @@
     {!Code_keyboard}: the presses would type other characters.
 
     The same keyboard as {!Code_keyboard}'s, and its cursor read
-    ({!Code_keyboard.cursor}); the code keyboard's typer is the lab script's,
-    which presses its whole route blind round the disabled keys.
+    ({!Code_keyboard.cursor}); the code keyboard's typer presses its whole route
+    blind round the disabled keys.
 
     Where it differs: the cursor reads only on the four character rows and the
     eleven character columns ({!Code_keyboard.cursor}). On the right column
