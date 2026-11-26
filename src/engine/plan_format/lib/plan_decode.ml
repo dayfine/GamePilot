@@ -27,15 +27,15 @@ struct
     required ~where key args;
     F.records ~where key args read
 
-  (* The engine's story actions are still the plan's own kinds, read by their
+  (* The engine's built-in actions are still the plan's own kinds, read by their
      piece's decoder. *)
-  let story : Engine_rules.Builtin_action.t -> Plan.kind = function
+  let builtin : Engine_rules.Builtin_action.t -> Plan.kind = function
     | Talk -> Talk
     | Answer yes -> Answer yes
     | Scene -> Scene
     | Save -> Save
 
-  let story_kind read ~where args = story (ok_or_fail (read ~where args))
+  let builtin_kind read ~where args = builtin (ok_or_fail (read ~where args))
   let game_kind read ~where args = Plan.Game (ok_or_fail (read ~where args))
 
   let kind ~where obj way : Plan.kind =
@@ -46,10 +46,10 @@ struct
     | "game_action", _, _ when way = None ->
         F.fail "%saction is missing: a game_action names its action." where
     | "game_action", _, _ -> Plan.Named_action args
-    | _, Some read, _ -> story_kind read ~where:args_where args
+    | _, Some read, _ -> builtin_kind read ~where:args_where args
     | _, None, Some read -> game_kind read ~where:args_where args
     | _, None, None ->
-        F.fail "%skind \"%s\" is not a story event kind." where name
+        F.fail "%skind \"%s\" is not a built-in event kind." where name
 
   let event ~where obj : Plan.event =
     known_fields_only ~where

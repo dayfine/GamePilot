@@ -73,7 +73,7 @@ let decode_cases =
       (fun () ->
         decoded Plan_text.outline
           (toy_plan [ {|{"id": "x", "kind": "route"}|} ]))
-      {|toy.plan.json: checkpoint.events[0].kind "route" is not a story event kind.|};
+      {|toy.plan.json: checkpoint.events[0].kind "route" is not a built-in event kind.|};
     case "an unknown arg of the toy's walk action, named by its set's decoder"
       (fun () ->
         decoded Plan_text.outline
