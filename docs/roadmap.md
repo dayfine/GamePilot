@@ -9,7 +9,7 @@ section 13 (R1-R20). This file says what is built in what order. Mark each item 
 | Item | Where | Done when |
 |---|---|---|
 | Layout and naming (R16, R17) | `src/` | #5 merged |
-| PokemonSimulation submodule, `mg-*` plans copied (R18) | `third_party/`, `games/frlg/programs/mail_glitch/plans/` | #6 merged |
+| PokemonSimulation submodule, `mg-*` plans copied (R18) | `third_party/`, `games/pokemon/frlg/programs/mail_glitch/plans/` | #6 merged |
 | **OCaml linters** (see below) | `dev/lint/` | run in `dune test` and CI before any large port lands |
 | Contract v1.1: load counter in `frame`, method in responses, probe kind in results; replay checks every recorded request was sent | `protocol/`, `daemon/`, `src/base/wire`, `src/core/replay` | both sides pass the golden files; PoC passes live again |
 
@@ -48,7 +48,7 @@ Tests compare against the C++ tests' expectations case by case.
 |---|---|
 | Daemon probes: template match (templates uploaded at registration, R13); black screen is `core.color_stats@1` plus a reader threshold (#15) | `daemon/`, `src/base/wire` |
 | Screen state: fade, settled, free control (one rule for scenes, as in the fork) | `src/core/screen_state` |
-| FRLG readers: dialog, Start menu, bag and item list, party and held item, summary moves, digits, battle screen | `src/games/frlg/readers` |
+| FRLG readers: dialog, Start menu, bag and item list, party and held item, summary moves, digits, battle screen | `src/games/pokemon/frlg/readers` |
 | R19 decided: font templates for FRLG (no OCR) | design doc |
 
 Each reader gets frames from recorded mGBA wire logs as tests.
@@ -59,8 +59,8 @@ Follow fork #804's split (R20), not #781's monolith.
 
 | Item | Where |
 |---|---|
-| Overworld and menu actions: talk, Fly, mart, `use_item`, `give_bag_item`, `party_swap`, `buy_coins`, `redeem_prize_mon`, `ingame_trade`, `spin_for_encounter`, `cut_tree`; heal and save; `gamepilot run --plan` (`frlg/shared-actions`; still to come: `lift_floor`, `capture`, berries from the Berry Pouch, a party species reader in place of the reckoned party, live recordings of each flow) | `src/games/frlg/actions`, `src/games/frlg/checkpoints` |
-| Battle driver (single and double, ally targeting, switch, move-learn prompt) and scripted battle runner (#28; YES/NO and out-of-PP readers, double party list and replay tests still to come) | `src/games/frlg/battle` |
+| Overworld and menu actions: talk, Fly, mart, `use_item`, `give_bag_item`, `party_swap`, `buy_coins`, `redeem_prize_mon`, `ingame_trade`, `spin_for_encounter`, `cut_tree`; heal and save; `gamepilot run --plan` (`frlg/shared-actions`; still to come: `lift_floor`, `capture`, berries from the Berry Pouch, a party species reader in place of the reckoned party, live recordings of each flow) | `src/games/pokemon/frlg/actions`, `src/games/pokemon/frlg/checkpoints` |
+| Battle driver (single and double, ally targeting, switch, move-learn prompt) and scripted battle runner (#28; YES/NO and out-of-PP readers, double party list and replay tests still to come) | `src/games/pokemon/frlg/battle` |
 | Story engine: plan decoder (`gamepilot-checkpoint/1`), event runner, `repeat_until` (looped checkpoints that heal and save each round) | `src/engine/plan`, `src/engine/run`, over `src/pokemon/checkpoints/rules` |
 
 ## Phase 4: the Mail Glitch on mGBA (S0)
@@ -84,7 +84,7 @@ EVs do not matter (user, 2026-11-23), and the save is post-game with the Sevii I
 with Knock Off already, so only MIMIEN (Lv 9 to 33, 35,208 EXP) grinds.
 
 The checkpoint is one `grind` game action per grinder: a goal (species, target level, move to learn,
-the move slot it replaces) and a named strategy from `src/games/frlg/assets/grind_strategies.json`
+the move slot it replaces) and a named strategy from `src/games/pokemon/frlg/assets/grind_strategies.json`
 (the spot, who leads, how and how often to heal). The action reads the grinder's moves on the summary
 first and passes at once when it knows the move (CH'DING), and ends after the battle the move is
 learned in; every other move offered is declined.

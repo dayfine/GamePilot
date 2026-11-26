@@ -75,7 +75,7 @@ library only because the map decoders came first.
 | File | | What ties it |
 |---|---|---|
 | `chain_progress.ml`, `checkpoint_order.ml`, `round_trials.ml` | A | |
-| `console_runs.ml` | A | the decision is agnostic (its doc says "soft reset"); the steps are bound to FireRed in `games/frlg/series/lib/console_session.ml` |
+| `console_runs.ml` | A | the decision is agnostic (its doc says "soft reset"); the steps are bound to FireRed in `games/pokemon/frlg/series/lib/console_session.ml` |
 | `plan_text.ml` | mixed | A: `event`, `outline`, `count_text`. G and P: kinds, poses, postconditions as text |
 
 ### `core` and around it
@@ -85,8 +85,8 @@ library only because the map decoders came first.
 | `effects`, `session`, `live`, `replay`, `run_record`, `watch_report` | A | |
 | `screen_state` | A | facts (fade, banner, dialog, battle, free control, stillness) and the settle rules are shared by every game; the timings were measured on FireRed and a game may give its own `rule` |
 | `switch_home` | mixed | A: parking and resuming on HOME. Tied to the GBA picture: boxes clipped to FireRed's `GAME_BOX` viewport, tests on FireRed's tile |
-| `games/frlg/repo_files` | A | `Repo_files.locate`, `Json_file`: agnostic, but under FireRed, and `program_registry` depends on it |
-| `bin/` | A | names no game module but in `bin/checkpoint_families.ml`, which picks a family's libraries by the registry's `rules` (FRLG's `games/frlg/series`, its ctl readers, `start_menu_poc`); per-game data (delete-save icons, the lab console's panel and HOME tile) is the registry's |
+| `games/pokemon/frlg/repo_files` | A | `Repo_files.locate`, `Json_file`: agnostic, but under FireRed, and `program_registry` depends on it |
+| `bin/` | A | names no game module but in `bin/checkpoint_families.ml`, which picks a family's libraries by the registry's `rules` (FRLG's `games/pokemon/frlg/series`, its ctl readers, `start_menu_poc`); per-game data (delete-save icons, the lab console's panel and HOME tile) is the registry's |
 | `dev/lint/ocaml_lint.conf` | mixed | layer `game` may use `pokemon`: nothing stops a non-Pokémon game from using Pokémon code |
 | `daemon/src/viewport.h` | G | only `nso_gba_viewport` (240 x 160 inside the Switch frame); a native Switch game is the whole 1920 x 1080 frame |
 | `Wire.command` | A | buttons (ZL, ZR, Plus and Minus by protocol v1.17, the left stick's click LStick from v1.18), waits and both analog sticks (v1.12) |
@@ -308,7 +308,7 @@ src/pokemon/checkpoints/
   room_policy/                  Room_policy: party room and the PC
   series/                       Console_runs, until Console_start (section 3b) moves it to the engine
   expand/                       Place_routes (grid, lifts)
-src/games/frlg/                 opens Pokemon_engine
+src/games/pokemon/frlg/                 opens Pokemon_engine
 src/games/octopath0/            section 3d
 ```
 
@@ -374,7 +374,7 @@ three verifying runs do not need three wins.
 
 Today mGBA loads a `.ss` state (`Checkpoint_run.options.state`, `Event_snapshot`), and on the Switch
 `Console_runs` decides "return to the last save, check the start; after a pass save in game", which
-`games/frlg/series/lib/console_session.ml` binds to FireRed's `Soft_reset.return_to_save`, `Start_check` (kept frame,
+`games/pokemon/frlg/series/lib/console_session.ml` binds to FireRed's `Soft_reset.return_to_save`, `Start_check` (kept frame,
 party) and `Game_save.save_game`. The decision is agnostic; the binding is the part to lift:
 
 ```ocaml
@@ -393,7 +393,7 @@ type game_steps = {
 }
 ```
 
-`Console_runs.step` runs over this record instead of FireRed's modules, and `games/frlg/series/lib/console_session.ml`
+`Console_runs.step` runs over this record instead of FireRed's modules, and `games/pokemon/frlg/series/lib/console_session.ml`
 becomes generic. A game with no emulator has no event states, so `--from-event` refuses as it does on
 the Switch today (`Event_range.check`).
 
