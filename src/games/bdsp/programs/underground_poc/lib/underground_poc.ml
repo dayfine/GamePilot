@@ -9,6 +9,7 @@ let ( let* ) = Result.bind
 
 let default_state = ""
 let native_picture : Wire.box = { x = 0.; y = 0.; w = 1.; h = 1. }
+let goal = Mining_goal.ramanas_all_slates
 let step_hold_ms = 240
 let step_cooldown_ms = 140
 let fade_timeout_ms = 8000
@@ -17,6 +18,7 @@ let black_hold_ms = 80.
 let clear_hold_ms = 200.
 let post_open_wait_ms = 400
 let post_dig_wait_ms = 1000
+let minimap_probe_timeout_ms = 1000
 let step_probe_timeout_ms = 400
 let max_open_dialog_presses = 6
 let max_end_dialog_presses = 15
@@ -28,7 +30,9 @@ let west_return_ms = 1800
 let sweep_steps = 10
 let total_cycles = 3
 
-let log msg = Printf.printf "[bdsp.underground_poc] %s\n%!" msg
+let log msg =
+  let line = "[bdsp.underground_poc] " ^ msg in
+  Watch_report.log print_endline line
 
 let is_black m = if B.shown m then Some () else None
 let is_not_black m = if not (B.shown m) then Some () else None
@@ -39,10 +43,17 @@ let subscribe_corridor ~picture =
     (Effects.subscribe
        (B.probes ~picture
        @ Bdsp_readers.Dialog_detector.probes ~picture
-       @ Bdsp_readers.Battle_detector.probes ~picture)
+       @ Bdsp_readers.Battle_detector.probes ~picture
+       @ Bdsp_readers.Minimap_sparkles.probes ~picture)
       : string list)
 
-let enter_and_play_minigame ~picture ~tally =
+let read_nearby_sparkles ~picture =
+  subscribe_corridor ~picture;
+  match Effects.await ~timeout_ms:minimap_probe_timeout_ms (fun _ -> true) with
+  | Effects.Holds m -> Bdsp_readers.Minimap_sparkles.read m
+  | Effects.Timeout -> { Bdsp_readers.Minimap_sparkles.north_east = true; south_east = true }
+
+let enter_and_play_minigame ~picture ~counters =
   log "Dig prompt detected! Entering minigame...";
   OW.interact ();
   ignore
@@ -59,10 +70,8 @@ let enter_and_play_minigame ~picture ~tally =
     OW.advance_dialog ~log ~picture ~max_presses:max_open_dialog_presses ()
   in
   P.wait post_open_wait_ms;
-  let* moves, bailed =
-    MP.dig_wall_smart ~log ~picture ~goal:Mining_goal.ramanas_all_slates ~tally
-      ()
-  in
+  let tally = Mining_counters.to_tally counters in
+  let* moves, bailed = MP.dig_wall_smart ~log ~picture ~goal ~tally () in
   log (Printf.sprintf "Smart dig done: moves=%d bailed=%b" moves bailed);
   P.wait post_dig_wait_ms;
   let* () =
@@ -72,75 +81,92 @@ let enter_and_play_minigame ~picture ~tally =
     (H.wait_for ~timeout_ms:fade_timeout_ms (H.held clear_hold_ms is_not_black)
       : unit option);
   P.wait post_dig_wait_ms;
-  Ok (Mining_goal.record_dig tally ~bailed [])
+  let next = Mining_counters.record_dig counters ~bailed [] in
+  log ("Counters: " ^ Mining_counters.format_summary ~goal next);
+  Ok next
 
-let handle_step_event ~picture ~tally =
+let handle_step_event ~picture ~counters =
   match Effects.await ~timeout_ms:step_probe_timeout_ms (fun _ -> true) with
   | Effects.Holds m when Bdsp_readers.Battle_detector.shown m ->
       let* () = OW.run_from_battle ~log ~picture () in
-      Ok tally
+      Ok (Mining_counters.record_battle_escaped counters)
   | Effects.Holds m when Bdsp_readers.Dialog_detector.shown m ->
-      let* next_tally = enter_and_play_minigame ~picture ~tally in
+      let* next = enter_and_play_minigame ~picture ~counters in
       subscribe_corridor ~picture;
-      Ok next_tally
-  | _ -> Ok tally
+      Ok next
+  | _ -> Ok counters
 
-let sweep_wall ~picture ~move_dir ~face_dir ~steps ~tally =
+let sweep_wall ~picture ~move_dir ~face_dir ~steps ~counters =
   subscribe_corridor ~picture;
   let move_btn = OW.button_of_dir move_dir in
-  let rec loop left cur_tally =
-    if left <= 0 then Ok cur_tally
+  let rec loop left cur =
+    if left <= 0 then Ok cur
     else (
       P.press ~hold_ms:step_hold_ms ~cooldown_ms:step_cooldown_ms move_btn;
       OW.turn face_dir;
       OW.interact ();
-      let* next = handle_step_event ~picture ~tally:cur_tally in
+      let* next = handle_step_event ~picture ~counters:cur in
       loop (left - 1) next)
   in
-  loop steps tally
+  loop steps counters
 
-let run_one_cycle ~picture ~idx ~tally =
-  log (Printf.sprintf "=== Cycle %d/%d ===" idx total_cycles);
-  log "Bouncing South Hideaway doorway (West -> East, auto-centering)...";
-  let* () =
-    OW.bounce_doorway ~log ~picture
-      ~anchor:{ Corridor_nav.enter_dir = West; exit_dir = East }
-      ~hold_ms:door_bounce_hold_ms ()
-  in
-  P.wait post_dig_wait_ms;
+let sweep_corridor_and_return ~picture ~counters =
   log "Hugging North wall & sweeping East toward South-East corner...";
   OW.run_hold Corridor_nav.North ~hold_ms:north_hug_ms;
-  let* tally =
+  let* counters =
     sweep_wall ~picture ~move_dir:Corridor_nav.East ~face_dir:Corridor_nav.North
-      ~steps:sweep_steps ~tally
+      ~steps:sweep_steps ~counters
   in
   log "Self-aligning East & sweeping North along East wall...";
   OW.run_hold Corridor_nav.East ~hold_ms:east_align_ms;
-  let* tally =
+  let* counters =
     sweep_wall ~picture ~move_dir:Corridor_nav.North
-      ~face_dir:Corridor_nav.East ~steps:sweep_steps ~tally
+      ~face_dir:Corridor_nav.East ~steps:sweep_steps ~counters
   in
   log "Returning South to South-East corner & West to Hideaway doorway...";
   OW.run_hold Corridor_nav.South ~hold_ms:south_return_ms;
   OW.run_hold Corridor_nav.North ~hold_ms:north_hug_ms;
   OW.run_hold Corridor_nav.West ~hold_ms:west_return_ms;
-  Ok tally
+  Ok counters
+
+let run_one_cycle ~picture ~idx ~counters =
+  log (Printf.sprintf "=== Cycle %d/%d ===" idx total_cycles);
+  let* () =
+    OW.bounce_doorway ~log ~picture
+      ~anchor:{ Corridor_nav.enter_dir = West; exit_dir = East }
+      ~hold_ms:door_bounce_hold_ms ()
+  in
+  let counters = Mining_counters.record_refresh counters in
+  P.wait post_dig_wait_ms;
+  let sp = read_nearby_sparkles ~picture in
+  log
+    (Printf.sprintf "Minimap sparkles: NE=%b SE=%b" sp.north_east sp.south_east);
+  let* counters =
+    if Bdsp_readers.Minimap_sparkles.any sp then
+      sweep_corridor_and_return ~picture ~counters
+    else (
+      log "No nearby sparkles on minimap; skipping corridor sweep!";
+      Ok (Mining_counters.record_skipped_corridor counters))
+  in
+  let counters = Mining_counters.record_cycle counters in
+  log ("Counters: " ^ Mining_counters.format_summary ~goal counters);
+  Ok counters
 
 let run_se_loop () =
   let picture = native_picture in
-  let rec cycle idx tally =
-    if idx > total_cycles then Ok tally
+  let rec cycle idx counters =
+    if idx > total_cycles then Ok counters
     else
-      let* next = run_one_cycle ~picture ~idx ~tally in
+      let* next = run_one_cycle ~picture ~idx ~counters in
       cycle (idx + 1) next
   in
-  cycle 1 Mining_goal.empty_tally
+  cycle 1 Mining_counters.empty
 
 let run ?state:_ () =
   match run_se_loop () with
-  | Ok tally ->
+  | Ok counters ->
       ( true,
-        Printf.sprintf
-          "bdsp.underground_poc: PASS (%d cycles, %d digs, %d bailed)"
-          total_cycles tally.digs tally.walls_bailed )
+        "bdsp.underground_poc: PASS ("
+        ^ Mining_counters.format_summary ~goal counters
+        ^ ")" )
   | Error e -> (false, "bdsp.underground_poc: FAIL " ^ e)

@@ -264,6 +264,7 @@ let bdsp_underground_poc =
     backends = [ Switch ];
     viewport = Native;
     rules = Pokemon_grid;
+    options = [];
   }
 
 let all =
