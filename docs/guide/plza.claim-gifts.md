@@ -18,6 +18,7 @@ Runs on: the Switch.
   earlier run left there: a sixth Pokémon is taken for a gift and moved to Box 1.
 - Box 1 empty in the gifts' slots (the table below), or holding those gifts already.
 - Box 1 keeps its own name ("Box 1", "ボックス1"): the run finds it by its title.
+- 20 boxes or fewer: a "Box 21" or "Box 31" title would read as Box 1.
 - The Switch's capture the whole 1920x1080 picture (`--viewport native`, from the registry).
 
 ## Running it
@@ -59,7 +60,7 @@ that announced it.
 |---|---|
 | 01-claim-gifts | Claim the catalog's Mystery Gifts, box them and save |
 
-<!-- plans: 730cb202dc63 -->
+<!-- plans: 227a3d8005cc -->
 <!-- /generated -->
 
 The run prints today's date and the catalog, opens the main menu and reads the party. Then the
@@ -93,8 +94,12 @@ lands in party slot 6, the first one received.
   gift list, where it would claim another gift. A screen no reader knows after a claim is kept as
   `gift-<id>-unknown-screen.png` in the run folder.
 - No main menu after 12 presses on the way back: `screen_lost`; the gifts after it are not tried.
-- A gift received in this run not in its Box 1 slot after the move, or its slot not read:
-  `gifts_not_in_place`, naming each such gift, before the save.
+- A gift received in this run not in its Box 1 slot after the move, its slot not read, or its slot
+  already holding a Pokémon before the claims: `gifts_not_in_place`, naming each such gift, before
+  the save.
+- A Pokémon carried from party slot 6 whose target does not read empty is put back, its cell read
+  empty first; when that does not read empty either, the run stops with the Pokémon in hand and
+  the Boxes open (`boxes_not_read`).
 - The Boxes, a box title or the menu after them not read, or no title read as Box 1 after 32 L:
   `boxes_not_read`, before any Pokémon is moved; "Last Saved" unchanged: `not_saved`.
 - Any gift failed: `gifts_failed`, naming each, after the save.
@@ -110,7 +115,6 @@ lands in party slot 6, the first one received.
 - Gifts are told apart by where they land, not by species. Gifts received into a full party land in
   Box 1's first free slots in the order received, which may not be the catalog's slots: the check
   then fails them.
-- A box named "Box 21" or "Box 31" reads as Box 1 too (console B's game has 8 boxes).
 - Box 1 found by its title, and the move from party slot 6, have not yet been run on a console.
 
 ## How it works

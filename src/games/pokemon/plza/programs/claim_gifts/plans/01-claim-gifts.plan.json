@@ -15,7 +15,7 @@
         "id": "start",
         "kind": "game_action",
         "action": "gifts_start",
-        "why": "today's date and the catalog printed; X opens the main menu, whose party cards must show five or six Pok\u00e9mon at full HP"
+        "why": "today's date and the catalog printed; X opens the main menu, whose party cards must show five or six Pokémon at full HP"
       },
       {
         "id": "box_one",
@@ -33,13 +33,13 @@
         "id": "box_slots",
         "kind": "game_action",
         "action": "check_gift_slots",
-        "why": "the Boxes on Box 1 again, read by its title; the gift received into party slot 6 moved to its Box 1 slot; each Pok\u00e9mon gift received now must read in its slot, else the run stops before the save"
+        "why": "the Boxes on Box 1 again, read by its title; the gift received into party slot 6 moved to its Box 1 slot; each Pokémon gift received now must read in its slot, which read empty before the claims, else the run stops before the save"
       },
       {
         "id": "save",
         "kind": "game_action",
         "action": "save_progress",
-        "why": "R, Save Progress, checked by its Last Saved time, when any gift was received or a Pok\u00e9mon moved"
+        "why": "R, Save Progress, checked by its Last Saved time, when any gift was received or a Pokémon moved"
       },
       {
         "id": "report",

@@ -27,6 +27,7 @@ type run = {
   today : C.date;
   mutable outcomes : (C.gift * outcome) list;
   mutable moved : bool;
+  mutable before : (C.box_slot * Gift_boxes.slot_read) list;
 }
 
 let start catalog ~today =
@@ -35,6 +36,7 @@ let start catalog ~today =
     today;
     outcomes = List.map (fun g -> (g, Not_tried)) catalog;
     moved = false;
+    before = [];
   }
 
 let outcomes run = run.outcomes
@@ -140,10 +142,18 @@ let settle_boxes steps run =
   | [] ->
       steps.log "No Pokémon gift due: the Boxes not opened.";
       Ok ()
-  | gifts -> Result.map ignore (settle steps run (slots gifts))
+  | gifts ->
+      let* reads = settle steps run (slots gifts) in
+      run.before <- reads;
+      Ok ()
 
-let not_in_place reads ((g : C.gift), (p : C.pokemon)) =
+(* A gift received now, its slot read after the claims; a slot that held a
+   Pokémon before them holds something else. *)
+let not_in_place run reads ((g : C.gift), (p : C.pokemon)) =
+  let held_before = List.assoc_opt p.box_slot run.before = Some Filled in
   match List.assoc_opt p.box_slot reads with
+  | _ when held_before ->
+      Some (g, slot_name p.box_slot ^ " held a Pokémon before the claims")
   | Some Gift_boxes.Filled -> None
   | Some r -> Some (g, slot_name p.box_slot ^ " " ^ read_text r)
   | None -> Some (g, slot_name p.box_slot ^ " not read")
@@ -154,7 +164,7 @@ let missing_text missing =
 
 (* The gifts read out of place failed, the run stopped. *)
 let check_in_place run reads gifts =
-  match List.filter_map (not_in_place reads) gifts with
+  match List.filter_map (not_in_place run reads) gifts with
   | [] -> Ok ()
   | missing ->
       List.iter (fun (g, why) -> set run g (Failed why)) missing;

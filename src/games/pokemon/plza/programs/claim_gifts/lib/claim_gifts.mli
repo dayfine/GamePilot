@@ -19,8 +19,10 @@
       ([screen_lost]: the gifts after it are not tried).
     - [check_gift_slots]: the Boxes settled again with the slots of the Pokémon
       gifts received now, the one in party slot 6 moved to the first empty one;
-      each must then hold a Pokémon, else [gifts_not_in_place] names each gift
-      that does not (it fails) and the run stops before the save.
+      each must then hold a Pokémon, and must not have held one when
+      [settle_boxes] read it (the player's own Pokémon, or a gift received
+      before), else [gifts_not_in_place] names each such gift (it fails) and the
+      run stops before the save.
     - [save_progress]: saved when any gift was received or a Pokémon moved
       ({!Save_progress}).
     - [report_gifts]: one line a gift (id, name, how, last day, outcome);

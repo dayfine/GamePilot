@@ -86,21 +86,22 @@ let leave ~moved reads =
 
 (* Party slot 6's Pokémon carried onto [s]: whether it landed. *)
 let carry_six ~log cur (s : C.box_slot) =
-  match Cur.carry cur ~from:party_six ~onto:(Cur.of_slot s.slot) with
+  let* landed = Cur.carry cur ~from:party_six ~onto:(Cur.of_slot s.slot) in
+  match landed with
   | Filled ->
       log (Printf.sprintf "Party slot 6 moved to Box 1 slot %d." s.slot);
-      true
-  | Empty -> false
+      Ok true
+  | Empty -> Ok false
   | Not_read why ->
       log (Printf.sprintf "Party slot 6 not moved: %s." why);
-      false
+      Ok false
 
 (* Party slot 6's Pokémon to the first slot read empty. *)
 let move_party_gift ~log cur reads =
   match List.find_opt (fun (_, r) -> r = Empty) reads with
   | None ->
       log "Party slot 6 holds a Pokémon, but no gift slot is empty: not moved.";
-      false
+      Ok false
   | Some (s, _) -> carry_six ~log cur s
 
 let settle ~log slots =
@@ -111,5 +112,5 @@ let settle ~log slots =
   Cur.go cur ~row:title_row ~col:0;
   let* () = Box_paging.to_box_one ~log in
   let reads = List.map (read_slot cur) slots in
-  let moved = in_party && move_party_gift ~log cur reads in
+  let* moved = if in_party then move_party_gift ~log cur reads else Ok false in
   leave ~moved (if moved then List.map (read_slot cur) slots else reads)

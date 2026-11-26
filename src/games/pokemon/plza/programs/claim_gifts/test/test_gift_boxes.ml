@@ -11,8 +11,9 @@
    The console keeps console B's 8 boxes of 30 cells and the party's slot 6;
    the Boxes open on the box last looked at, the cursor on its first slot;
    the d-pad moves the cursor (rows 0, the party, to 5), L and R the box,
-   round from Box 1 to Box 8 and back; Y picks a Pokémon up, drops it on an
-   empty cell or swaps it with the one there; B leaves to the menu. Nothing
+   round from Box 1 to Box 8 and back; Y picks a Pokémon up (its cell then
+   empty, unless the case makes it stuck) or drops it on an empty cell, and
+   does nothing on a full one; B leaves to the menu. Nothing
    reaches a daemon. *)
 
 module Gb = Plza_claim_gifts.Gift_boxes
@@ -43,6 +44,8 @@ type console = {
   mutable party_six : bool;
   boxes : bool array array;
   named_one : bool;  (** Box 1's title reads as Box 1 (not renamed). *)
+  stuck : bool;
+      (** Y picks a Pokémon up but its cell still reads as holding one. *)
   mutable t_ms : float;
   mutable seq : int;
   mutable presses : string list;
@@ -94,7 +97,7 @@ let page c step = c.box <- (c.box + step + box_count) mod box_count
 let y c =
   match (c.held, cell_filled c) with
   | false, true ->
-      set_cell c false;
+      if not c.stuck then set_cell c false;
       c.held <- true
   | true, false ->
       set_cell c true;
@@ -163,7 +166,8 @@ let on_console c f =
 
 (* A console on the main menu's row 3, the Boxes last left on [last_box],
    with Pokémon in the (box, slot) cells given. *)
-let console ?(named_one = true) ?(party_six = false) ~last_box filled =
+let console ?(stuck = false) ?(named_one = true) ?(party_six = false) ~last_box
+    filled =
   let boxes = Array.init box_count (fun _ -> Array.make cells false) in
   List.iter (fun (b, s) -> boxes.(b - 1).(s - 1) <- true) filled;
   {
@@ -175,6 +179,7 @@ let console ?(named_one = true) ?(party_six = false) ~last_box filled =
     party_six;
     boxes;
     named_one;
+    stuck;
     t_ms = 0.;
     seq = 0;
     presses = [];
@@ -227,53 +232,89 @@ let presses c () =
   ignore (settle c [ 1; 2 ]);
   String.concat " " c.presses
 
+let cell_text = function Ok r -> read_text r | Error e -> "error: " ^ e
+
+(* Box_cursor.carry from party slot 6 onto Box 1 slot 1 (the Boxes open on
+   Box 1): what it returned, the presses, and whether a Pokémon is in hand. *)
+let carry c =
+  c.screen <- Boxes;
+  let r =
+    on_console c (fun () ->
+        Plza_claim_gifts.Box_cursor.carry
+          (Plza_claim_gifts.Box_cursor.opened ())
+          ~from:(0, 5) ~onto:(1, 0))
+  in
+  Printf.sprintf "%s | %s | held %b" (cell_text r)
+    (String.concat " " c.presses)
+    c.held
+
 let case name input expectation : Table_test.case = { name; input; expectation }
+
+let carry_cases =
+  [
+    case "carry onto an empty cell: dropped there"
+      (fun () -> carry (console ~party_six:true ~last_box:1 []))
+      "filled | Up Right Right Right Right Right Y Down Left Left Left Left \
+       Left Y | held false";
+    case "carry onto a full cell: put back, its cell read empty first"
+      (fun () -> carry (console ~party_six:true ~last_box:1 [ (1, 1) ]))
+      "not read: row 1 column 1 holds a Pokémon: put back | Up Right Right \
+       Right Right Right Y Down Left Left Left Left Left Up Right Right Right \
+       Right Right Y | held false";
+    case "carry onto a full cell, its own not read empty: no Y, still held"
+      (fun () ->
+        carry (console ~stuck:true ~party_six:true ~last_box:1 [ (1, 1) ]))
+      "error: row 1 column 1 holds a Pokémon and row 0 column 6 not read \
+       empty: a Pokémon still held | Up Right Right Right Right Right Y Down \
+       Left Left Left Left Left Up Right Right Right Right Right | held true";
+  ]
 
 let () =
   Table_test.run "gift_boxes"
-    [
-      case "party of five, Boxes last on Box 8: nothing to move"
-        (fun () -> settle (console ~last_box:8 []) [ 1; 2 ])
-        "Box 1: - | moved false | slot 1 empty, slot 2 empty | main menu";
-      case "party of five, Boxes last on Box 8: the presses"
-        (presses (console ~last_box:8 []))
-        "Down Down Down A Down L L L L L L L Up Right B";
-      case "a gift in party slot 6: moved to the first empty slot"
-        (fun () -> settle (console ~party_six:true ~last_box:8 []) [ 1; 2 ])
-        "Box 1: 1 | moved true | slot 1 filled, slot 2 empty | main menu";
-      case "a gift in party slot 6, the first slot taken: to the second"
-        (fun () ->
-          settle (console ~party_six:true ~last_box:8 [ (1, 1) ]) [ 1; 2 ])
-        "Box 1: 1 2 | moved true | slot 1 filled, slot 2 filled | main menu";
-      case "a gift in party slot 6: the presses"
-        (presses (console ~party_six:true ~last_box:8 []))
-        "Down Down Down A Down L L L L L L L Up Right Up Right Right Right \
-         Right Y Down Left Left Left Left Left Y Right B";
-      case "the Boxes open on Box 1: no L"
-        (presses (console ~last_box:1 [ (1, 1); (1, 2) ]))
-        "Down Down Down A Down Up Right B";
-      case "party slot 6 and both slots full: not moved"
-        (fun () ->
-          settle
-            (console ~party_six:true ~last_box:3 [ (1, 1); (1, 2) ])
-            [ 1; 2 ])
-        "Box 1: 1 2; party 6 | moved false | slot 1 filled, slot 2 filled | \
-         main menu";
-      case "no box titled Box 1: nothing moved"
-        (fun () ->
-          let c = console ~named_one:false ~party_six:true ~last_box:8 [] in
-          let r = settle c [ 1 ] in
-          r ^ " | " ^ string_of_bool c.party_six)
-        "error: no Box 1 title after 32 L (glyphs 6 3 6 3 15 24 25 15) | true";
-      case "a slot outside Box 1 is not read"
-        (fun () ->
-          let c = console ~last_box:1 [] in
-          match
-            on_console c (fun () ->
-                Gb.settle ~log:ignore [ { box = 2; slot = 1 } ])
-          with
-          | Ok { reads = [ (_, r) ]; _ } -> read_text r
-          | Ok _ -> "other reads"
-          | Error e -> "error: " ^ e)
-        "not read: only Box 1 is read";
-    ]
+    ([
+       case "party of five, Boxes last on Box 8: nothing to move"
+         (fun () -> settle (console ~last_box:8 []) [ 1; 2 ])
+         "Box 1: - | moved false | slot 1 empty, slot 2 empty | main menu";
+       case "party of five, Boxes last on Box 8: the presses"
+         (presses (console ~last_box:8 []))
+         "Down Down Down A Down L L L L L L L Up Right B";
+       case "a gift in party slot 6: moved to the first empty slot"
+         (fun () -> settle (console ~party_six:true ~last_box:8 []) [ 1; 2 ])
+         "Box 1: 1 | moved true | slot 1 filled, slot 2 empty | main menu";
+       case "a gift in party slot 6, the first slot taken: to the second"
+         (fun () ->
+           settle (console ~party_six:true ~last_box:8 [ (1, 1) ]) [ 1; 2 ])
+         "Box 1: 1 2 | moved true | slot 1 filled, slot 2 filled | main menu";
+       case "a gift in party slot 6: the presses"
+         (presses (console ~party_six:true ~last_box:8 []))
+         "Down Down Down A Down L L L L L L L Up Right Up Right Right Right \
+          Right Y Down Left Left Left Left Left Y Right B";
+       case "the Boxes open on Box 1: no L"
+         (presses (console ~last_box:1 [ (1, 1); (1, 2) ]))
+         "Down Down Down A Down Up Right B";
+       case "party slot 6 and both slots full: not moved"
+         (fun () ->
+           settle
+             (console ~party_six:true ~last_box:3 [ (1, 1); (1, 2) ])
+             [ 1; 2 ])
+         "Box 1: 1 2; party 6 | moved false | slot 1 filled, slot 2 filled | \
+          main menu";
+       case "no box titled Box 1: nothing moved"
+         (fun () ->
+           let c = console ~named_one:false ~party_six:true ~last_box:8 [] in
+           let r = settle c [ 1 ] in
+           r ^ " | " ^ string_of_bool c.party_six)
+         "error: no Box 1 title after 32 L (glyphs 6 3 6 3 15 24 25 15) | true";
+       case "a slot outside Box 1 is not read"
+         (fun () ->
+           let c = console ~last_box:1 [] in
+           match
+             on_console c (fun () ->
+                 Gb.settle ~log:ignore [ { box = 2; slot = 1 } ])
+           with
+           | Ok { reads = [ (_, r) ]; _ } -> read_text r
+           | Ok _ -> "other reads"
+           | Error e -> "error: " ^ e)
+         "not read: only Box 1 is read";
+     ]
+    @ carry_cases)

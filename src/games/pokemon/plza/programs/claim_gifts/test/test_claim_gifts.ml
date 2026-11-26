@@ -2,8 +2,8 @@
    program's own plan (plans/01-claim-gifts.plan.json) and its catalog
    (gifts.json: Vivillon by Internet to Box 1 slot 2, Xerneas by code to slot
    1, PREPAR1NG's items by code). The game is fake_game_steps: a party read, a
-   claim result per gift id, a slot read per slot (the same before and after
-   the claims), whether party slot 6 was moved and a save that are given by
+   claim result per gift id, a slot read per slot before the claims (empty
+   unless given) and after them (filled unless given), whether party slot 6 was moved and a save that are given by
    each case, every call recorded; nothing presses a button. Today is a fixed day, never the clock. *)
 
 module C = Plza_gift_catalog.Gift_catalog
@@ -25,7 +25,10 @@ let day s = Result.get_ok (C.date_of_string s)
 type fake = {
   party : Cg.party_read;
   claims : (string * Gc.claim) list;  (** by gift id; Received when absent *)
-  slots : (int * Gb.slot_read) list;  (** by Box 1 slot; Filled when absent *)
+  before : (int * Gb.slot_read) list;
+      (** by Box 1 slot, read before the claims; Empty when absent *)
+  slots : (int * Gb.slot_read) list;
+      (** by Box 1 slot, read after them; Filled when absent *)
   moved : bool;
   today : string;
 }
@@ -34,6 +37,7 @@ let base =
   {
     party = Party Full;
     claims = [];
+    before = [];
     slots = [];
     moved = false;
     today = "2026-11-25";
@@ -63,8 +67,14 @@ let fake_game_steps f calls : Cg.game_steps =
         call
           (Printf.sprintf "settle %s"
              (String.concat "," (List.map slot_text slots)));
+        let claimed =
+          List.exists (fun c -> String.starts_with ~prefix:"claim" c) !calls
+        in
         let read (s : C.box_slot) =
-          (s, Option.value ~default:Gb.Filled (List.assoc_opt s.slot f.slots))
+          if claimed then
+            (s, Option.value ~default:Gb.Filled (List.assoc_opt s.slot f.slots))
+          else
+            (s, Option.value ~default:Gb.Empty (List.assoc_opt s.slot f.before))
         in
         Ok { reads = List.map read slots; moved = f.moved });
     save =
@@ -188,6 +198,7 @@ let failure_cases =
 
 let empty_slot = { base with slots = [ (1, Gb.Empty) ] }
 let unread_slot = { base with slots = [ (2, Gb.Not_read "no Boxes") ] }
+let held_before = { base with before = [ (1, Gb.Filled) ] }
 
 let slot_cases =
   [
@@ -203,6 +214,14 @@ let slot_cases =
       "gifts_not_in_place";
     case "a received gift's slot not read: it fails" (outcome unread_slot viv)
       "failed: Box 1 slot 2 not read: no Boxes";
+    case "a received gift's slot full before the claims: the run stops"
+      (ran held_before) "gifts_not_in_place";
+    case "a received gift's slot full before the claims: it fails"
+      (outcome held_before xer)
+      "failed: Box 1 slot 1 held a Pokémon before the claims";
+    case "a received gift's slot full before the claims: not saved"
+      (called held_before "save")
+      "false";
   ]
 
 (* A rerun: every gift received before (the game says so, or its code was

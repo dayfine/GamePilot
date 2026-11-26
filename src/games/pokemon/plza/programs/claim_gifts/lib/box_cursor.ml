@@ -13,7 +13,6 @@ let hold_ms = 1000.
 let cell_ms = 2000
 let of_slot slot = (((slot - 1) / columns) + 1, (slot - 1) mod columns)
 let opened () = { row = 1; col = 0 }
-let position t = (t.row, t.col)
 
 let steps n ~less ~more =
   if n < 0 then T.times (-n) (dpad less) else T.times n (dpad more)
@@ -46,6 +45,24 @@ let read t ~row ~col =
 
 let name (row, col) = Printf.sprintf "row %d column %d" row (col + 1)
 
+let target_text = function
+  | Filled -> "holds a Pokémon"
+  | Empty | Not_read _ -> "not read"
+
+(* Holding a Pokémon taken from [from]: back on [from], read empty first. *)
+let put_back t ~from ~onto target =
+  let row, col = from in
+  match read t ~row ~col with
+  | Empty ->
+      T.press drop;
+      Ok
+        (Not_read
+           (Printf.sprintf "%s %s: put back" (name onto) (target_text target)))
+  | Filled | Not_read _ ->
+      Error
+        (Printf.sprintf "%s %s and %s not read empty: a Pokémon still held"
+           (name onto) (target_text target) (name from))
+
 (* Holding a Pokémon taken from [from]: dropped on [onto] when it is empty,
    else back on [from]. *)
 let put t ~from ~onto =
@@ -53,16 +70,8 @@ let put t ~from ~onto =
   match read t ~row ~col with
   | Empty ->
       T.press drop;
-      under ()
-  | (Filled | Not_read _) as target ->
-      let back_row, back_col = from in
-      go t ~row:back_row ~col:back_col;
-      T.press drop;
-      Not_read
-        (Printf.sprintf "%s %s: put back" (name onto)
-           (match target with
-           | Filled -> "holds a Pokémon"
-           | Empty | Not_read _ -> "not read"))
+      Ok (under ())
+  | (Filled | Not_read _) as target -> put_back t ~from ~onto target
 
 let carry t ~from ~onto =
   let row, col = from in
@@ -70,5 +79,5 @@ let carry t ~from ~onto =
   | Filled ->
       T.press pick_up;
       put t ~from ~onto
-  | Empty -> Not_read (name from ^ " is empty")
-  | Not_read why -> Not_read why
+  | Empty -> Ok (Not_read (name from ^ " is empty"))
+  | Not_read why -> Ok (Not_read why)
