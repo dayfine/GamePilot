@@ -157,6 +157,19 @@ let run_check_bag ~picture =
   let* () = OW.inspect_treasures_bag ~log ~picture () in
   Ok "treasures pocket captured"
 
+let map_press_hold_ms = 120
+let map_view_wait_ms = 1500
+let map_restore_wait_ms = 800
+
+let run_check_map () =
+  log "Mode check-map: pressing RStick to inspect enlarged minimap...";
+  P.press ~hold_ms:map_press_hold_ms ~cooldown_ms:map_view_wait_ms Wire.RStick;
+  P.wait map_view_wait_ms;
+  log "Pressing RStick again to restore minimap...";
+  P.press ~hold_ms:map_press_hold_ms ~cooldown_ms:map_restore_wait_ms
+    Wire.RStick;
+  Ok "enlarged minimap captured"
+
 let run_farm_loop ~picture ~goal ~total_cycles =
   let* initial =
     recover_if_mid_dig ~picture ~goal ~counters:Mining_counters.empty
@@ -187,6 +200,7 @@ let run ?(options = Run_options.none) ?state:_ () =
   in
   let goal = Mining_goal.Slates slates in
   if mode = "check-bag" then finish_result (run_check_bag ~picture)
+  else if mode = "check-map" then finish_result (run_check_map ())
   else
     finish_result
       (Result.map

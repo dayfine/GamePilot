@@ -21,6 +21,7 @@ type button =
   | Plus
   | Minus
   | LStick
+  | RStick
 
 let all_buttons =
   [
@@ -42,6 +43,7 @@ let all_buttons =
     Plus;
     Minus;
     LStick;
+    RStick;
   ]
 
 let string_of_button = function
@@ -63,9 +65,10 @@ let string_of_button = function
   | Plus -> "Plus"
   | Minus -> "Minus"
   | LStick -> "LStick"
+  | RStick -> "RStick"
 
 let switch_only = function
-  | Home | X | Y | ZL | ZR | Plus | Minus | LStick -> true
+  | Home | X | Y | ZL | ZR | Plus | Minus | LStick | RStick -> true
   | A | B | Select | Start | Right | Left | Up | Down | R | L -> false
 
 let button_of_string s =

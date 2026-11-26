@@ -25,7 +25,7 @@ Give each as `--options KEY=VALUE`:
 
 | Key | Values | When not given | What it chooses |
 |---|---|---|---|
-| `mode` | farm \| check-bag | default `farm` | farm: run the Grand Underground shard loop; check-bag: open Bag pockets to inspect shard and slate counts. |
+| `mode` | farm \| check-bag \| check-map | default `farm` | farm: run the Grand Underground shard loop; check-bag: inspect Treasures pocket shard counts; check-map: press RStick to toggle the enlarged underground map. |
 | `cycles` | 1 to 999 | default `15` | Number of Hideaway doorway-refresh cycles to run in farm mode. |
 | `slates` | 1 to 99 | default `14` | Ramanas Park slate budget (1 Shard L or 3 Shard S per slate); stops once reached. |
 <!-- /generated -->

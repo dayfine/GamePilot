@@ -24,6 +24,7 @@ type button = Command.button =
   | Plus
   | Minus
   | LStick
+  | RStick
 
 let all_buttons = Command.all_buttons
 let string_of_button = Command.string_of_button

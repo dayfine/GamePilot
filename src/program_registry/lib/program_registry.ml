@@ -271,11 +271,12 @@ let bdsp_underground_poc =
       [
         {
           key = "mode";
-          value = Run_options.One_of [ "farm"; "check-bag" ];
+          value = Run_options.One_of [ "farm"; "check-bag"; "check-map" ];
           presence = Run_options.Default "farm";
           doc =
-            "farm: run the Grand Underground shard loop; check-bag: open Bag \
-             pockets to inspect shard and slate counts.";
+            "farm: run the Grand Underground shard loop; check-bag: inspect \
+             Treasures pocket shard counts; check-map: press RStick to toggle \
+             the enlarged underground map.";
         };
         {
           key = "cycles";

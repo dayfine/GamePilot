@@ -25,6 +25,7 @@ type button =
   | Plus  (** the Switch's + *)
   | Minus  (** the Switch's - *)
   | LStick  (** a click of the Switch's left stick *)
+  | RStick  (** a click of the Switch's right stick *)
 
 val all_buttons : button list
 (** Every button, in the daemon's bit order (protocol/v1). *)

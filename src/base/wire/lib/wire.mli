@@ -36,6 +36,7 @@ type button = Command.button =
   | Plus
   | Minus
   | LStick
+  | RStick
 
 val all_buttons : button list
 (** Every button, in the daemon's bit order (protocol/v1). *)
