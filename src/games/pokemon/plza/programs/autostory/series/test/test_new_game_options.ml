@@ -50,4 +50,29 @@ let cases =
       "error: --options look=9: look is 1 to 8";
   ]
 
+(* The starter option, read through the registry's whole declaration. *)
+let starter pairs () =
+  match
+    Result.bind
+      (Run_options.check (Choices.decls @ Plza_story.Starter.decls) pairs)
+      Plza_autostory.Starter_option.of_run_options
+  with
+  | Ok (Some s) -> Plza_story.Starter.name s
+  | Ok None -> "none"
+  | Error e -> "error: " ^ e
+
+let starter_cases =
+  [
+    case "no starter option: none (the plan's walk, Chikorita's)" (starter [])
+      "none";
+    case "starter=water: Totodile" (starter [ ("starter", "water") ]) "Totodile";
+    case "starter=fire with a language: Tepig"
+      (starter [ ("language", "fr"); ("starter", "fire") ])
+      "Tepig";
+    case "starter=totodile: not a value"
+      (starter [ ("starter", "totodile") ])
+      "error: --options starter=totodile: starter is grass | fire | water";
+  ]
+
+let cases = cases @ starter_cases
 let () = Table_test.run "plza_new_game_options" cases

@@ -9,6 +9,7 @@ type t = {
   until : until option;
   earliest_end_ms : int;
   heading_deg : float option;
+  to_starter : bool;
 }
 
 (* In the order the C++ lists them. *)
@@ -33,7 +34,7 @@ let until = function
   | Some (Talk { after_legs }) ->
       [ (if after_legs then "into a talk after the legs" else "into a talk") ]
 
-let to_string { move; until = u; earliest_end_ms; heading_deg } =
+let to_string { move; until = u; earliest_end_ms; heading_deg; to_starter } =
   String.concat " "
     (("walk" :: List.map leg move.legs)
     @ (if move.style = Steer then [ "steer" ] else [])
@@ -43,6 +44,7 @@ let to_string { move; until = u; earliest_end_ms; heading_deg } =
     @ (match heading_deg with
       | Some h -> [ Printf.sprintf "facing %.0f" h ]
       | None -> [])
+    @ (if to_starter then [ "or the starter's own" ] else [])
     @ until u
     @
     if earliest_end_ms > 0 then

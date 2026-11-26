@@ -33,11 +33,15 @@ Give each as `--options KEY=VALUE`:
 | `language` | en \| es-ES \| es-419 \| fr \| de \| it \| ja \| zh-Hant | optional | the new game's language (00.00-new-game; not given: the plan's) |
 | `look` | 1 to 8 | optional | the new game's look, left to right along the top row, then the bottom (not given: the plan's) |
 | `name` | text | optional | the player's name: at most 12 characters (6 in Japanese and Chinese), letters, digits and - / : ' , . ? ! (not given: the plan's) |
+| `starter` | grass \| fire \| water | optional | the starter 01.04 picks: grass (Chikorita), fire (Tepig) or water (Totodile) (not given: grass, the plan's walk) |
 <!-- /generated -->
 
-A key not given keeps 00.00-new-game's plan's arg. Any other key, a key given twice, a value its
-key does not take, a name its language cannot take, and options on a series that does not start at
-00.00-new-game are refused before the console moves. The run prints the choices it plays, and its
+A key not given keeps 00.00-new-game's plan's arg, and with no `starter` 01.04 picks Chikorita.
+
+Any other key, a key given twice, a value its key does not take, a name its language cannot take,
+a language, look or name on a series that does not start at 00.00-new-game, and a starter on one
+that starts after 01.04-starter-and-andi (the save has its starter by then) are refused before the
+console moves. The run prints the choices it plays, and its
 run.json and watch page show the options. In French with look 5, for example:
 
 ```sh
@@ -88,7 +92,7 @@ cd src && opam exec -- dune exec -- gamepilot run plza.autostory --from 00.00-ne
 | 03.14-lab-elevator | Up the Research Lab's elevator to the Director's Office |
 | 03.15-mable-reward | Mable's research, the Rock Smash TM |
 
-<!-- plans: 18c83658a537 -->
+<!-- plans: 7ec798554384 -->
 <!-- /generated -->
 
 00.00-new-game closes any running game, finds PLZA's tile on HOME by its title, starts it, picks
@@ -100,8 +104,9 @@ speed to fast, walks down the platform and right to the white fade, and presses 
 scenes (Plus skips the president's ad) until the controls hint shows again.
 
 01.03 walks after Pancham, presses B through the scene to its choice and takes "Battle with
-Pokemon!". 01.04 walks to Chikorita and talks, picks it, presses through the tutorial cards to the
-battle, and fights Andi with the most effective move under ZL until Andi speaks.
+Pokemon!". 01.04 walks to the starter (Chikorita, or the `starter` option's) and talks, picks it,
+presses through the tutorial cards to the battle, and fights Andi with the most effective move
+under ZL until Andi speaks.
 
 Main Mission 02 walks from the Battle Zone to Brigitte and beats her Cleffa, skips the street's
 cutscene, follows Taunie to Hotel Z, then checks in, rides the elevator to Room 202 and rests until
@@ -110,9 +115,10 @@ scene that presses A through the prompt first; a scene with a start window waits
 scene to begin before it counts free control as the end.
 
 Main Mission 03 leaves Room 202 by the elevator to the lobby, out of Hotel Z, and through Taunie's
-battle (Totodile, then Tepig) and her talk over the map; past the rock pile, up the side street's
-ladder (stepping along the wall until "Climb Up" shows) and off the roof; into the Pokémon Center
-for the Pokédex, then on to Wild Zone 1's gate and the Wild Zones card. Some walks run with B held.
+battle (Totodile, then Tepig, against Chikorita) and her talk over the map; past the rock pile, up
+the side street's ladder (stepping along the wall until "Climb Up" shows) and off the roof; into the
+Pokémon Center for the Pokédex, then on to Wild Zone 1's gate and the Wild Zones card. Some walks
+run with B held.
 
 In Wild Zone 1 it runs to the gate's A prompt with B held, catches the tutorial's Fletchling (each
 throw locks on with ZL, then throws with ZL and ZR; one that breaks out into a battle weakens the
@@ -187,6 +193,8 @@ Failures:
 ## Known limits
 
 - Walks are timed stick legs with no map, so they can miss.
+- The walks to Totodile and Tepig are the fork's, recorded on console B (2026-11-20), but no
+  GamePilot run has picked either yet, nor fought the story past 01.04 with them.
 - The daemon keeps the console awake with the right stick (up, then down), not B, which would back
   out of the new game's menus.
 

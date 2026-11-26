@@ -209,17 +209,26 @@ let builtin ~jump steps (event : Plan.event) =
            (event.id ^ ": PLZA runs no talk, answer or save event"))
 
 (* The game's walk, walked rather than run before 03.04 (as
-   PokemonLZA_AutoStory.cpp walks them, before dash is unlocked). The fork's
-   starter option (Totodile's or Tepig's legs in place of the plan's) is not
-   ported: 01.04's plan walks to Chikorita, the fork's default. *)
-let walk steps ~checkpoint_id ~jump (event : Plan.event)
+   PokemonLZA_AutoStory.cpp walks them, before dash is unlocked); 01.04's walk
+   to the starter takes the run's starter's own walk (Starter.aimed, the fork's
+   aimed_at_starter). *)
+let log_starter_walk steps starter (event : Plan.event) args =
+  steps.Steps.log
+    (Printf.sprintf "[PLZA] %s: to %s (%s): %s" event.id (Starter.name starter)
+       (Starter.tag starter)
+       (Plza_rules.Walk_args.to_string args))
+
+let walk steps ~starter ~checkpoint_id ~jump (event : Plan.event)
     (own : Plza_rules.Action.t) =
   let walk_steps = Steps.walk_game_steps steps in
   let walk_only = walk_only checkpoint_id in
   let battle_ahead = Battle_jump.battle_ahead jump event in
   match own with
   | Walk args ->
-      Plza_walk.Walk.run_event walk_steps ~walk_only ~battle_ahead event.id args
+      let aimed = Starter.aimed starter args in
+      if args.to_starter then log_starter_walk steps starter event aimed;
+      Plza_walk.Walk.run_event walk_steps ~walk_only ~battle_ahead event.id
+        aimed
 
 (* Every handler runs through the jump to a story battle: one that ends on a
    battle goes on there, as the fork's engine resumes at the action its
@@ -231,8 +240,9 @@ let through jump event handle =
 let jumping jump (name, action) =
   (name, fun event args -> through jump event (fun () -> action event args))
 
-let own_through jump steps ~checkpoint_id event own =
-  through jump event (fun () -> walk steps ~checkpoint_id ~jump event own)
+let own_through jump steps ~starter ~checkpoint_id event own =
+  through jump event (fun () ->
+      walk steps ~starter ~checkpoint_id ~jump event own)
 
 let builtin_through jump steps event =
   through jump event (fun () -> builtin ~jump steps event)
@@ -240,12 +250,13 @@ let builtin_through jump steps event =
 let no_save () =
   Error (Failure.cause ~repeats:true "no_save" "PLZA saves by autosave only")
 
-let make ?(options = New_game_options.none) ?(new_game = no_new_game) steps
-    ~(checkpoint : Plan.checkpoint) ~reload : Game.t =
+let make ?(options = New_game_options.none) ?(starter = Starter.default)
+    ?(new_game = no_new_game) steps ~(checkpoint : Plan.checkpoint) ~reload :
+    Game.t =
   let checkpoint_id = checkpoint.checkpoint_id in
   let jump = Battle_jump.make checkpoint ~log:steps.Steps.log in
   {
-    run_own = own_through jump steps ~checkpoint_id;
+    run_own = own_through jump steps ~starter ~checkpoint_id;
     run_builtin = builtin_through jump steps;
     game_actions =
       List.map (jumping jump)

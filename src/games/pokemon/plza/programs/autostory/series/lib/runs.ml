@@ -59,7 +59,8 @@ let end_state steps ~checkpoint_id (plan : P.Plan.t) =
   in
   (ends plan, read)
 
-let run_checkpoint ~options ~log ~picture ~reload report (plan : P.Plan.t) =
+let run_checkpoint ~options ~starter ~log ~picture ~reload report
+    (plan : P.Plan.t) =
   let* () = start ~log ~picture ~reload plan in
   let steps =
     Story.Live_story_screen.game_steps ~picture ~log ~log_detail:log
@@ -74,7 +75,7 @@ let run_checkpoint ~options ~log ~picture ~reload report (plan : P.Plan.t) =
          ~at_end:(ends plan).place plan.execution)
   in
   let game =
-    Story.Story_game.make ~options steps ~checkpoint:plan.checkpoint
+    Story.Story_game.make ~options ~starter steps ~checkpoint:plan.checkpoint
       ~new_game:(new_game ~log ~picture)
       ~reload:(reload_cause ~log ~picture)
   in
@@ -84,28 +85,37 @@ let run_checkpoint ~options ~log ~picture ~reload report (plan : P.Plan.t) =
        ~mode:"testing" report game plan.checkpoint)
 
 (* One attempt: the story's templates uploaded, its probes subscribed;
-   [options] are 00.00-new-game's choices. *)
-let attempt ~options ~log ~picture ~reload report plan : Attempts.outcome =
+   [options] are 00.00-new-game's choices, [starter] the one 01.04 walks to. *)
+let attempt ~options ~starter ~log ~picture ~reload report plan :
+    Attempts.outcome =
+  let run () =
+    run_checkpoint ~options ~starter ~log ~picture ~reload report plan
+  in
   match Plza_checkpoint_series.Templates.upload () with
   | Error e -> failed ~repeats:true "assets" e
   | Ok assets -> (
       match
-        Effects.with_probes (Story.Live_story_screen.probes ~picture ~assets)
-          (fun () -> run_checkpoint ~options ~log ~picture ~reload report plan)
+        Effects.with_probes
+          (Story.Live_story_screen.probes ~picture ~assets)
+          run
       with
       | Ok () -> Passed
       | Error f -> f)
 
-(* The story's runs, playing [new_game]'s choices at 00.00-new-game. *)
-let story new_game : Series.program =
+(* The story's runs, playing [new_game]'s choices at 00.00-new-game and
+   walking to [starter] in 01.04 (Chikorita when not given). *)
+let story new_game starter : Series.program =
   {
-    check_plans = Series_check.check_all ~options:new_game;
+    check_plans = Series_check.check_all ~options:new_game ~starter;
     with_end_place;
     daemon_flags = Series.keepawake_stick;
-    attempt = attempt ~options:new_game;
+    attempt =
+      attempt ~options:new_game
+        ~starter:(Option.value starter ~default:Plza_story.Starter.default);
   }
 
 let run_series ~program ~options ~viewport plan_dir args =
   let* new_game = Story.New_game_options.of_run_options options in
-  Series.run_series (story new_game) ~program_fields:program ~options ~viewport
-    plan_dir args
+  let* starter = Story.Starter_option.of_run_options options in
+  Series.run_series (story new_game starter) ~program_fields:program ~options
+    ~viewport plan_dir args
