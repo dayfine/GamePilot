@@ -150,7 +150,7 @@ let main args =
   in
   let defaults =
     {
-      daemon = "daemon/build/gamepilot_daemon";
+      daemon = Repo_io.Repo_files.default_daemon ();
       serial = None;
       frames = None;
       log_dir = Filename.get_temp_dir_name ();
