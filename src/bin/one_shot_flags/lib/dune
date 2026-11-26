@@ -5,6 +5,7 @@
   (:standard -open Live_run))
  (libraries
   gamepilot.live_run
+  gamepilot.run_options
   gamepilot.live
   gamepilot.run_record
   gamepilot.run_flags

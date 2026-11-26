@@ -56,6 +56,10 @@ type info = {
   from_id : string;
   to_id : string;
   backend : string;
+  options : (string * string) list;
+      (** The program's options the run was given (gamepilot run --options,
+          Run_options.pairs), defaults included, in the declaration's order;
+          run.json's [options] object, left out when [[]]. *)
 }
 (** What run.json says of a run besides its outcome. *)
 
@@ -80,6 +84,10 @@ type run = {
           never verifies its checkpoint. *)
 }
 (** A started run. *)
+
+val options_fields : (string * string) list -> (string * Yojson.Safe.t) list
+(** [{!info.options}] as run.json and the series' record write them: one
+    [options] object of strings; none for no option. *)
 
 val run_json : run -> ended_ms:int -> ending option -> Yojson.Safe.t
 (** run.json: without the end fields while [None]. *)

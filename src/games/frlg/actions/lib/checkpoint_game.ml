@@ -10,6 +10,7 @@ type config = {
   grind_cap : int option;
   center : string option;
   reload : unit -> (unit, Failure.cause) result;
+  program_options : Run_options.t;
   log : string -> unit;
 }
 

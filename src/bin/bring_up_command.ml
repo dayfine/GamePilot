@@ -134,6 +134,7 @@ let run f frames ~viewport =
       from_id = "";
       to_id = "";
       backend = "switch";
+      options = [];
     }
   in
   Result.map

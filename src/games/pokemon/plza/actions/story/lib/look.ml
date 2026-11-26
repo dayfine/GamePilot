@@ -20,6 +20,7 @@ type t = {
   tutorial_card : bool;
   interact_prompt : bool;
   party_bar : bool;
+  map_pin : Plza_walk.Map_leg.point option;
   minimap_arrow : float option;
   run_prompt : bool;
   main_menu : bool;
@@ -50,6 +51,7 @@ let empty ~at_ms =
     interact_prompt = false;
     party_bar = false;
     minimap = None;
+    map_pin = None;
     minimap_arrow = None;
     run_prompt = false;
     main_menu = false;
@@ -124,6 +126,7 @@ let to_walk_screen l : Plza_walk.Walk_screen.t =
     scene_under_way = scene_under_way l;
     battle = l.battle;
     minimap_arrow = l.minimap_arrow;
+    map_pin = l.map_pin;
   }
 
 let wild_battle_on t = t.run_prompt || t.alert_eye
