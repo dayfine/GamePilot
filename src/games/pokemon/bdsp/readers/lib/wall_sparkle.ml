@@ -15,9 +15,9 @@ let left_probe_id = "bdsp_wall_star_left"
    (240..255, 230..255, 180..255) with area 30..2000 px on 1920x1080, while
    expanding cyan radar rings exceed 2500 px and red-orange wall torches have
    blue < 140 (or stay static across pre/post radar frames). *)
-let star_r_min = 240
-let star_g_min = 235
-let star_b_min = 210
+let star_r_min = 245
+let star_g_min = 240
+let star_b_min = 230
 let star_ch_max = 255
 let star_min_area = 50.
 let star_max_area = 2500.

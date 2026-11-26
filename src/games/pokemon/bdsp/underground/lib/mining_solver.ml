@@ -70,8 +70,8 @@ let exposed_items (obs : Mining_wall.observation) =
 
 let priority_rank = function
   | Mining_goal.Shard_l -> 0
-  | Mining_goal.Shard_s -> 1
-  | Mining_goal.Other -> 2
+  | Shard_s -> 1
+  | Other -> 2
 
 let add_covered_neighbors ~offsets obs seen (c, r) =
   List.iter
@@ -100,10 +100,7 @@ let score_kernel kernel (obs : Mining_wall.observation) targets ~col ~row =
   if is_iron obs ~col ~row then (0, 0)
   else List.fold_left (add_kernel_hit obs targets ~col ~row) (0, 0) kernel
 
-(* Compare Pickaxe (cost 1) vs Hammer (cost 2) using scaled efficiency
-   (target dirt cleared * 2 / cost). Prefer Hammer only when the center has >= 2
-   dirt layers, Hammer hits >= 3 covered target cells, integrity >= 4, and
-   Hammer clears at least as much target dirt per integrity point as Pickaxe. *)
+(* Compare Pickaxe vs Hammer efficiency (target dirt * 2 / cost). *)
 let choose_excavation_tool (obs : Mining_wall.observation) targets ~col ~row =
   let p_dmg, _ = score_kernel pickaxe_kernel obs targets ~col ~row in
   let h_dmg, h_hits = score_kernel hammer_kernel obs targets ~col ~row in
@@ -200,44 +197,48 @@ let score_scan_kernel ~avoid kernel cost obs ~col ~row =
   raw * Mining_wall.hammer_cost / cost
 
 let best_scan_tool ~avoid obs ~col ~row =
-  let p_score =
+  let p =
     score_scan_kernel ~avoid pickaxe_kernel Mining_wall.pickaxe_cost obs ~col
       ~row
   in
-  let h_score =
+  let h =
     if obs.integrity < Mining_wall.hammer_cost then min_int
     else
       score_scan_kernel ~avoid hammer_kernel Mining_wall.hammer_cost obs ~col
         ~row
   in
-  if h_score > p_score then (Mining_wall.Hammer, h_score)
-  else (Mining_wall.Pickaxe, p_score)
+  if h > p then (Mining_wall.Hammer, h) else (Mining_wall.Pickaxe, p)
+
+let all_wall_cells =
+  List.concat_map
+    (fun r -> List.init Mining_wall.cols (fun c -> (c, r)))
+    (List.init Mining_wall.rows Fun.id)
+
+let best_scan_in ~avoid (obs : Mining_wall.observation) cells =
+  let pick best (c, r) =
+    if dirt_at obs ~col:c ~row:r <= 0 || is_iron obs ~col:c ~row:r then best
+    else
+      let tool, score = best_scan_tool ~avoid obs ~col:c ~row:r in
+      match best with
+      | Some (_, _, _, bs) when score <= bs -> best
+      | _ when score > 0 -> Some (tool, c, r, score)
+      | _ -> best
+  in
+  Option.map
+    (fun (tool, col, row, _) -> Strike { tool; col; row })
+    (List.fold_left pick None cells)
 
 let next_scan_anchor ~goal ~tally (obs : Mining_wall.observation) items =
   let avoid = unwanted_footprint ~goal ~tally items in
-  let candidates =
-    List.filter_map
-      (fun (c, r) ->
-        if dirt_at obs ~col:c ~row:r > 0 && not (is_iron obs ~col:c ~row:r) then
-          let tool, score = best_scan_tool ~avoid obs ~col:c ~row:r in
-          if score > 0 then Some (tool, c, r, score) else None
-        else None)
-      scan_anchors
-  in
-  match
-    List.sort (fun (_, _, _, s1) (_, _, _, s2) -> Int.compare s2 s1) candidates
-  with
-  | (tool, col, row, _) :: _ -> Some (Strike { tool; col; row })
-  | [] -> None
-
-let covered_neighbor_count obs (_, _, cells) =
-  List.length (adjacent_covered ~offsets:cardinal_dirs obs cells)
+  match best_scan_in ~avoid obs scan_anchors with
+  | Some _ as hit -> hit
+  | None -> best_scan_in ~avoid obs all_wall_cells
 
 let sort_easiest_first obs items =
-  List.sort
-    (fun a b ->
-      Int.compare (covered_neighbor_count obs a) (covered_neighbor_count obs b))
-    items
+  let cov (_, _, cells) =
+    List.length (adjacent_covered ~offsets:cardinal_dirs obs cells)
+  in
+  List.sort (fun a b -> Int.compare (cov a) (cov b)) items
 
 let find_secondary_excavation (obs : Mining_wall.observation) items =
   if obs.integrity < min_secondary_integrity then None
@@ -250,39 +251,36 @@ let find_secondary_excavation (obs : Mining_wall.observation) items =
         best_excavation_hit ~offsets:cardinal_dirs obs cells)
       (sort_easiest_first obs pending)
 
-let decide_after_scan obs items =
-  match find_secondary_excavation obs items with
-  | Some act -> act
-  | None -> Bail_collapse
-
 let decide_low_gauge ~goal ~tally obs items =
   match find_secondary_excavation obs items with
   | Some act -> act
-  | None -> (
-      match next_scan_anchor ~goal ~tally obs items with
-      | Some act -> act
-      | None -> Bail_collapse)
+  | None ->
+      Option.value
+        (next_scan_anchor ~goal ~tally obs items)
+        ~default:Bail_collapse
 
 let decide ~goal ~tally (obs : Mining_wall.observation) =
   let items = exposed_items obs in
+  let secondary () =
+    Option.value (find_secondary_excavation obs items) ~default:Bail_collapse
+  in
   match find_wanted_excavation ~goal ~tally obs items with
   | Some act -> act
   | None -> (
-      if all_items_accounted_non_shard ~goal ~tally obs items then
-        decide_after_scan obs items
+      if all_items_accounted_non_shard ~goal ~tally obs items then secondary ()
       else if obs.integrity <= low_gauge_cutoff then
         decide_low_gauge ~goal ~tally obs items
       else
         match next_scan_anchor ~goal ~tally obs items with
         | Some act -> act
-        | None -> decide_after_scan obs items)
+        | None -> secondary ())
 
-let collapse_wall wall moves =
-  let rec loop w m =
-    if Mining_wall.is_finished w then (w, m)
-    else loop (Mining_wall.strike w ~tool:Hammer ~col:0 ~row:0) (m + 1)
-  in
-  loop wall moves
+let rec collapse_wall wall moves =
+  if Mining_wall.is_finished wall then (wall, moves)
+  else
+    collapse_wall
+      (Mining_wall.strike wall ~tool:Hammer ~col:0 ~row:0)
+      (moves + 1)
 
 let finish_play ~bailed wall moves =
   { wall; moves; bailed; uncovered = Mining_wall.uncovered_items wall }

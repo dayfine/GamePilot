@@ -21,7 +21,6 @@ let wall_appear_timeout_ms = 8000
 let wall_clear_hold_ms = 200.
 let min_covered_cells_visible = 20
 let log_grid_period = 8
-let crack_sync_margin = 6
 
 let pickaxe_decay_kernel =
   [ (0, 0, 2); (-1, 0, 1); (1, 0, 1); (0, -1, 1); (0, 1, 1) ]
@@ -149,18 +148,14 @@ type dig_state = {
 }
 
 let tool_name = function Mining_wall.Hammer -> "Hammer" | Pickaxe -> "Pickaxe"
-let max_crack_sync_drop = 10
 
 let sync_integrity ~log st m =
   match Bdsp_readers.Mining_grid.crack_gauge_integrity m with
-  | Some gauge
-    when gauge < !(st.integrity)
-         && !(st.integrity) - gauge > crack_sync_margin
-         && !(st.integrity) - gauge <= max_crack_sync_drop ->
+  | Some 0 when !(st.integrity) > 0 ->
       log
-        (Printf.sprintf "Crack gauge sync: local=%d -> gauge=%d" !(st.integrity)
-           gauge);
-      st.integrity := gauge
+        (Printf.sprintf "Crack gauge sync: local=%d -> collapsed"
+           !(st.integrity));
+      st.integrity := 0
   | _ -> ()
 
 let execute_action ~log ~actual_tool st ~moves ~bailed obs = function
