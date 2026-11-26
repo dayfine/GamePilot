@@ -8,16 +8,20 @@
       144): its share of (0.26, 0.80, 0.48, 0.12).
 
     The card (a gift received) shows when its header does, over 0.70 of its top
-    rows (600, 282, 720, 8) are white and over 0.60 of the bottom is dark blue;
-    one [core.color_count@1] probe reads each box. The top rows tell the card
-    from the list under a question, whose header reads 0.70 to 0.71 white (its
-    first item) but whose top edge (y 279 to 293) is the list's blue: on console
-    B's cards (2026-11-25: the English and the Japanese Vivillon's, and a 360p
-    capture of the Japanese one) the top rows read 1.00 white and the header
-    0.84 to 0.87; on every list, alone or under a question, 0.00. The Japanese
-    card's white title bar covers the first item's strip (0.87 white), so that
-    strip says nothing. The white fade before a card (header 1.00, box 0.00) and
-    the receive animation are no card, nor is the SAVE dialog (top rows 1.00,
+    rows (600, 282, 720, 8) are white and the list's items 2 to 6 strips (below)
+    are under 0.30 white, the card's dark body; one [core.color_count@1] probe
+    reads each box. The top rows tell the card from the list under a question,
+    whose header reads 0.70 to 0.71 white (its first item) but whose top edge (y
+    279 to 293) is the list's blue: on console B's cards (2026-11-25: the
+    English and the Japanese Vivillon's, a 360p capture of the Japanese one, and
+    a 360p capture of an item's card) the top rows read 1.00 white and the
+    header 0.82 to 0.88 in every shift; on every list, alone or under a
+    question, 0.00. The body tells the card from the white fade before it and
+    the receive animation's white flashes (every strip 1.00): items 2 to 6 read
+    0.07 at most on the cards. The text box is not needed: the item's card
+    showed none (0.08 to 0.28 dark blue), Vivillon's 0.68 to 0.95. The Japanese
+    card's white title bar covers the first item's strip (0.83 to 0.88 white),
+    so that strip says nothing. The SAVE dialog is no card (top rows 1.00,
     header 0.28).
 
     A question's Yes/No box (console B, Japanese, 2026-11-25: "stop receiving?"
@@ -68,7 +72,9 @@ val selected_item : Effects.measurements -> int option
 (** The one white item, 0 the top; [None] when none or several are. *)
 
 val list_active : Effects.measurements -> bool
-(** The gift list, waiting for a choice. [false] for a missing probe. *)
+(** The gift list, waiting for a choice. [false] for a missing probe, and on the
+    Mystery Gift menu and a card (an item's card reads as the list with its
+    first item selected otherwise). *)
 
 val list_shown : Effects.measurements -> bool
 (** The gift list (an item white), whatever is over it: A there could claim a
@@ -96,7 +102,7 @@ val gift_item : Effects.measurements -> int option
     cursor is not on it. *)
 
 val card : Effects.measurements -> bool
-(** A gift's card with its text box: the gift was received. *)
+(** A gift's card, with its text box or without: the gift was received. *)
 
 val describe : Effects.measurements -> string
 (** The items' white shares, the name scores and the card's shares, for a log

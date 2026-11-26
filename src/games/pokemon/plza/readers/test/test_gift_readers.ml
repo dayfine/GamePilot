@@ -96,6 +96,7 @@ let cards_shown =
     "./mystery-gift/card-vivillon.png";
     "./mystery-gift/card-vivillon-ja.png";
     "./mystery-gift/card-vivillon-ja-360p.png";
+    "./mystery-gift/card-item-ja-360p.png";
   ]
 
 (* Console B's Japanese 360p frames (2026-11-25): the list after Vivillon

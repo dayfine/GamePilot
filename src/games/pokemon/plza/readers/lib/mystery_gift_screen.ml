@@ -111,20 +111,22 @@ let selected_item m =
 (* The menu's first row spans the list's second item's strip too. *)
 let gift_menu m = holds m menu_row_id (fun s -> s > min_white) && white_item m 1
 
-let list_active m =
-  selected_item m <> None
-  && holds m text_box_id (fun s -> s < max_list_blue)
-  && not (gift_menu m)
-
-let list_shown m = List.exists (white_item m) all && not (gift_menu m)
-let text_up m = holds m text_box_id (fun s -> s > min_card_blue)
-
 (* The list under a question with its cursor on the first item reads as
-   white on the header and as blue on the box, but its top edge is blue. *)
+   white on the header, but its top edge is blue; a white fade is white
+   below the header too, where the card's body is dark. *)
 let card m =
   holds m header_id (fun s -> s > min_white)
   && holds m card_top_id (fun s -> s > min_white)
-  && text_up m
+  && List.for_all (dim_item m) (List.tl all)
+
+let list_active m =
+  selected_item m <> None
+  && holds m text_box_id (fun s -> s < max_list_blue)
+  && (not (gift_menu m))
+  && not (card m)
+
+let list_shown m = List.exists (white_item m) all && not (gift_menu m)
+let text_up m = holds m text_box_id (fun s -> s > min_card_blue)
 
 type answer = Yes | No
 

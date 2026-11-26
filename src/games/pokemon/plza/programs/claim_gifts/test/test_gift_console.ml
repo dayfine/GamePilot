@@ -8,12 +8,15 @@
    tutorial-cards' it-menu-no-card; the list console B's English one
    (Vivillon item 4) or its French one (no item matches the English name, as
    on the Japanese game's run of 2026-11-25); the card Vivillon's, English or
-   Japanese (its title bar over the first item's strip); "stop receiving?"
+   Japanese (its title bar over the first item's strip), or an item's with no
+   text box; "stop receiving?"
    console B's Japanese list under it, Yes or No highlighted; the Mystery
    Gift menu console B's Japanese one; "disconnect?" its "write a report?"
    question over that menu (no "disconnect?" was captured), its No a copy
    with the other row lit; "disconnected" its "connected" message; Link Play
-   and connecting the white fade before a card, which no reader knows. The
+   connecting and another Link Play option (a battle club, opened when the
+   cursor is not on Mystery Gift) the white fade before a card, which no
+   reader knows. The
    SAVE dialog is console B's at 18:16 before the save and its copy at 18:18
    after, its "Last Saved" shares changed a little on every frame, as a
    capture's do. Nothing reaches a daemon.
@@ -49,6 +52,7 @@ let english_list = capture "./mystery-gift/gift-list-cursor-on-1.png"
 let french_list = capture "./mystery-gift/gift-list-fr-cursor-on-1.png"
 let english_card = capture "./mystery-gift/card-vivillon.png"
 let japanese_card = capture "./mystery-gift/card-vivillon-ja.png"
+let item_card = capture "./mystery-gift/card-item-ja-360p.png"
 let other_frame = capture "./mystery-gift/claim-white-fade.png"
 let stop_yes = capture "./mystery-gift/gift-list-ja-stop-receiving-yes-360p.png"
 let stop_no = capture "./mystery-gift/gift-list-ja-stop-receiving-no-360p.png"
@@ -65,6 +69,7 @@ type answer = Yes | No
 type screen =
   | Menu of int
   | Link_play
+  | Battle_club
   | Gift_menu
   | Connecting
   | Gift_list of int
@@ -90,6 +95,7 @@ let next screen (button : Wire.button) =
   | Saving r, A -> Menu r
   | Link_play, A -> Gift_menu
   | Link_play, B -> Menu 5
+  | Battle_club, B -> Link_play
   | Gift_menu, A -> Connecting
   | Gift_menu, B -> Disconnect Yes
   | Connecting, A -> Gift_list 0
@@ -146,7 +152,7 @@ let probes ~list ~card ~saved seq = function
   | Disconnect Yes -> question
   | Disconnect No -> no_lit question
   | Disconnected -> message
-  | Link_play | Connecting | Saving _ -> other_frame
+  | Link_play | Battle_club | Connecting | Saving _ -> other_frame
 
 let frame_ms = 50.
 
@@ -160,6 +166,7 @@ type console = {
   mutable claimed : int list;
   mutable presses : (screen * Wire.button) list;
   card : (string * Wire.probe_result) list;
+  battle : bool;
 }
 
 let frame ~list c : Effects.measurements =
@@ -180,7 +187,10 @@ let press c = function
           | Saving _, Wire.A -> c.saved <- true
           | Gift_list k, Wire.A -> c.claimed <- c.claimed @ [ k ]
           | _ -> ());
-          c.screen <- next c.screen b)
+          c.screen <-
+            (match (c.screen, b) with
+            | Link_play, Wire.A when c.battle -> Battle_club
+            | s, b -> next s b))
         buttons;
       c.t_ms <- c.t_ms +. float_of_int (hold_ms + cooldown_ms)
   | Wait { wait_ms } -> c.t_ms <- c.t_ms +. float_of_int wait_ms
@@ -218,7 +228,7 @@ let on_console ~list c f =
           | _ -> None);
     }
 
-let start ?(card = english_card) screen =
+let start ?(card = english_card) ?(battle = false) screen =
   {
     screen;
     t_ms = 0.;
@@ -228,12 +238,13 @@ let start ?(card = english_card) screen =
     claimed = [];
     presses = [];
     card;
+    battle;
   }
 
 let picture : Wire.box = { x = 0.; y = 0.; w = 1.; h = 1. }
 
-let claim ?card ~list () =
-  let c = start ?card (Menu 3) in
+let claim ?card ?battle ~list () =
+  let c = start ?card ?battle (Menu 3) in
   let log = ref [] in
   let claim =
     on_console ~list c (fun () ->
@@ -255,8 +266,8 @@ let screen_text = function
   | Gift_list c -> Printf.sprintf "gift list, item %d" (c + 1)
   | Stop_receiving _ -> "stop receiving?"
   | Card -> "card"
-  | Link_play | Gift_menu | Connecting | Disconnect _ | Disconnected
-  | Save_dialog _ | Saving _ ->
+  | Link_play | Battle_club | Gift_menu | Connecting | Disconnect _
+  | Disconnected | Save_dialog _ | Saving _ ->
       "other"
 
 (* How often the list's screen came back from "stop receiving?". *)
@@ -329,6 +340,33 @@ let () =
           let r, c, _ = claim ~card:japanese_card ~list:english_list () in
           claim_text r ^ "; " ^ screen_text c.screen ^ "; " ^ claims c)
         "received; main menu, row 5; claimed [4], 1 A on the list";
+      case "an item's card, no text box: received"
+        (fun () ->
+          let r, c, _ = claim ~card:item_card ~list:english_list () in
+          claim_text r ^ "; " ^ screen_text c.screen ^ "; " ^ claims c)
+        "received; main menu, row 5; claimed [4], 1 A on the list";
+      case
+        "Link Play's A opens another option: not received, nothing pressed \
+         there but B"
+        (fun () ->
+          let r, c, _ = claim ~battle:true ~list:english_list () in
+          let why =
+            match r with
+            | Not_received why -> List.hd (String.split_on_char ':' why)
+            | r -> claim_text r
+          in
+          let pressed =
+            List.sort_uniq compare
+              (List.filter_map
+                 (function
+                   | Battle_club, b -> Some (Wire.string_of_button b)
+                   | _ -> None)
+                 c.presses)
+          in
+          Printf.sprintf "%s; %s; on it: %s" why (screen_text c.screen)
+            (String.concat " " pressed))
+        "Link Play's A did not open the Mystery Gift menu; main menu, row 5; \
+         on it: B";
       case "the gift not listed: not received, back on the main menu"
         (fun () ->
           let r, c, _ = claim ~list:french_list () in

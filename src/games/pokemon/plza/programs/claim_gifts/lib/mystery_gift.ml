@@ -25,12 +25,6 @@ let to_internet : T.t list =
 
 let claim_a : T.t = { button = A; hold_ms = 100; cooldown_ms = 8000 }
 
-let open_gifts ~log =
-  let* () = Menu_rows.goto ~log link_play_row in
-  T.press_all ([ a_2s ] @ T.times 2 (dpad Right) @ [ dpad Down; a_2s ]);
-  log "Mystery Gift.";
-  Ok ()
-
 (* [check] held for [hold_ms] within [read_ms]; else A, up to [rounds]
    times, but only where A answers what the screen shows: never on the gift
    list without its text box (A would claim the selected gift), nor on no
@@ -61,6 +55,29 @@ let until_pressing ~what check =
         go (n + 1)
   in
   go 0
+
+(* The Mystery Gift menu held 1 s within 3 s after Link Play's A: another
+   Link Play option is left by the way back, not pressed on. *)
+let menu_read_ms = 3000
+
+let open_gifts ~log =
+  let* () = Menu_rows.goto ~log link_play_row in
+  T.press_all ([ a_2s ] @ T.times 2 (dpad Right) @ [ dpad Down; a_2s ]);
+  let last = ref None in
+  let watch m =
+    last := Some m;
+    S.gift_menu m
+  in
+  match
+    Switch_home.Held_screen.wait_for ~timeout_ms:menu_read_ms (held watch)
+  with
+  | Some () ->
+      log "Mystery Gift.";
+      Ok ()
+  | None ->
+      Error
+        ("Link Play's A did not open the Mystery Gift menu: "
+        ^ Option.fold ~none:"no frame" ~some:S.describe !last)
 
 let wait_list () = until_pressing ~what:"no active gift list" S.list_active
 

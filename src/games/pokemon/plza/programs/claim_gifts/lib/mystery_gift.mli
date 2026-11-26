@@ -4,7 +4,12 @@
     subscribed ({!probes}).
 
     - {!open_gifts}: from the main menu, row 5 (Link Play), A (2 s); Right,
-      Right, Down (each 80 ms, released 300) to Mystery Gift; A (2 s).
+      Right, Down (each 80 ms, released 300) to Mystery Gift; A (2 s); the
+      Mystery Gift menu must then read, held 1 s within 3 s
+      ({!Plza_readers.Mystery_gift_screen.gift_menu}). Link Play's highlighted
+      option is not read before that A: console B's frames show it steady only
+      on the battles, Mystery Gift's only mid-fade (2026-11-25), so another
+      option opened is caught after its A and left by the way back.
     - {!open_internet_list}: A (1.5 s), A (4 s) to connect, then A (2 s) until
       the gift list is active, 25 reads at most. A is pressed only on a screen
       read with its text box up (a message or a question, the list's "choose a
@@ -16,7 +21,10 @@
     - {!open_keyboard}: Down, A (2 s); A (2 s) until the keyboard opens, 25 at
       most.
     - {!enter_code}: the code typed; + (5 s); the list again; A (8 s) on the
-      code's gift.
+      code's gift. Which item is selected is not read: no code gift has a name
+      template, no list after a code was captured, and an unselected item reads
+      as an empty row (0.00 white), so "the only new item" cannot be counted
+      either.
     - leaving the gifts, read-driven: {!Leave_gifts}.
 
     The list and the keyboard count once they have read so for 1 s (a white fade
@@ -35,7 +43,7 @@ val probes :
 
 val open_gifts : log:(string -> unit) -> (unit, string) result
 (** From the main menu: to the Link Play row, A, Right twice, Down, A, onto the
-    Mystery Gift menu. *)
+    Mystery Gift menu, which must read; [Error] when it does not. *)
 
 val open_internet_list : log:(string -> unit) -> (unit, string) result
 (** "Get with Internet" and connect (A, A); the gift list must show, A pressed
