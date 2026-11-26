@@ -19,7 +19,7 @@ val usage : string
 (** [gamepilot run --plan]'s and [gamepilot replay checkpoint]'s usage lines. *)
 
 val options : flags -> Frlg_checkpoints.Checkpoint_run.options
-(** The story runner's options from the flags, logging to stdout and, with
+(** The checkpoint runner's options from the flags, logging to stdout and, with
     --log, to the file. *)
 
 val live :
