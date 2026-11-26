@@ -1,11 +1,11 @@
 (** Simplified Chinese's name keyboard switched to its English (letters) mode
-    before the name is typed: a port of the fork's [switch_to_letters]
-    (PokemonLZA_AutoStoryNewGame.cpp, dayfine/Arduino-Source PR #644). The
-    keyboard opens in Pinyin (拼音), where a letter starts a Pinyin syllable (the
-    fork's 2026-11-15 frames); its English key (英文), the fourth key of the
-    bottom row (globe, Shift, 拼音, 英文, 符号, Space), gives the Latin first page
-    every other language types on ({!Switch_home.Keyboard_typing}): console B's
-    frame of 2026-11-26, opened in 英文, has the same four rows.
+    before the name is typed, ported from the fork's
+    PokemonLZA_AutoStoryNewGame.cpp (dayfine/Arduino-Source#644). The keyboard
+    opens in Pinyin (拼音), where a letter starts a Pinyin syllable (the fork's
+    2026-11-15 frames); its English key (英文), the fourth key of the bottom row
+    (globe, Shift, 拼音, 英文, 符号, Space), gives the Latin first page every other
+    language types on ({!Switch_home.Keyboard_typing}): console B's frame of
+    2026-11-26, opened in 英文, has the same four rows.
 
     The fork, at most 16 reads: on the English key, A (400 ms after); left when
     the cursor is right of its column; else down to the bottom row; else right.

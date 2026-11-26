@@ -74,7 +74,7 @@ let on_language k entry b =
       k.phase <- Languages ((c * list_rows) + r)
 
 let typed k ch =
-  if k.letters || not (Char.lowercase_ascii ch <> Char.uppercase_ascii ch) then
+  if k.letters || Char.lowercase_ascii ch = Char.uppercase_ascii ch then
     String.make 1 (if k.shift then Char.uppercase_ascii ch else ch)
   else "*"
 
