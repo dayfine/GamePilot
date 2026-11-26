@@ -86,10 +86,8 @@ let run steps ~log r =
 let hold_ms = 100
 let menu_ms = 500
 let screen_ms = 1500
-let fade_ms = 2500
 let look_timeout_ms = 1000
 let screen_timeout_ms = 4000
-let max_storage_presses = 8
 
 let press_wait ms b =
   ignore (Effects.submit [ M.hold ~hold_ms ~cooldown_ms:ms b ])
@@ -99,61 +97,16 @@ let wait ms = ignore (Effects.await ~timeout_ms:ms (fun _ -> false))
 let press b =
   match b with Wire.A -> press_wait screen_ms b | _ -> press_wait menu_ms b
 
-let view () =
-  Effects.with_probes Pc_screen.probes (fun () ->
-      match Effects.await ~timeout_ms:look_timeout_ms (fun _ -> true) with
-      | Holds m -> Some (Pc_screen.read m)
-      | Timeout -> None)
-
 let label line candidates =
   match Text.Line_reading.read (Text_data.glyphs ()) line candidates with
   | Read { text; _ } -> Some text
   | No_match _ -> None
 
-let move_pokemon_row = 2
-let move_pokemon = "MOVE POKéMON"
-
-(* A through the PC's messages and BILL'S PC (row 0) until the storage menu
-   shows; never A on the storage menu. *)
-let rec to_storage n =
-  if n = 0 then M.fail "pc_no_storage" "the storage menu did not show"
-  else
-    match view () with
-    | Some { screen = Storage_menu; _ } -> ()
-    | Some { screen = Pc_list; cursor = Some 0 } ->
-        press_wait screen_ms Wire.A;
-        to_storage (n - 1)
-    | Some { screen = Pc_list; _ } ->
-        M.fail "pc_no_storage" "the PC list's arrow is not on BILL'S PC"
-    | Some { screen = Overworld | Text; _ } ->
-        press_wait screen_ms Wire.A;
-        to_storage (n - 1)
-    | _ ->
-        wait menu_ms;
-        to_storage (n - 1)
-
-let rec storage_cursor tries =
-  match view () with
-  | Some { screen = Storage_menu; cursor = Some c } when c = move_pokemon_row ->
-      ()
-  | _ when tries = 0 ->
-      M.fail "pc_no_storage" "the arrow did not reach MOVE POKéMON"
-  | Some { screen = Storage_menu; cursor = Some c } ->
-      List.iter (press_wait menu_ms)
-        (List.init
-           (abs (move_pokemon_row - c))
-           (fun _ -> if c < move_pokemon_row then Wire.Down else Wire.Up));
-      storage_cursor (tries - 1)
-  | _ -> M.fail "pc_no_storage" "the storage menu's arrow does not read"
-
-let open_move_pokemon () =
-  to_storage max_storage_presses;
-  storage_cursor max_moves;
-  if
-    label (Text.Text_lines.pc_menu_row move_pokemon_row) [ move_pokemon ]
-    <> Some move_pokemon
-  then M.fail "pc_no_storage" "row 3 does not read MOVE POKéMON";
-  press_wait fade_ms Wire.A
+(* The walk to the box screen and back out is Pc_box's, on Pc_screen's
+   probes. *)
+let open_move_pokemon ~log () =
+  Effects.with_probes Pc_screen.probes (fun () ->
+      Pc_box.to_box_screen ~log Pc_box.screen_game_steps)
 
 let await_screen ~probes ok =
   Effects.with_probes probes (fun () ->
@@ -178,17 +131,9 @@ let read_menu_row () =
       | Holds m -> Pc_box_screen.title_menu_row m
       | Timeout -> None)
 
-let close_presses = 4
-
-let close () =
-  List.iter
-    (fun _ -> press_wait screen_ms Wire.B)
-    (List.init close_presses Fun.id);
-  if
-    not
-      (await_screen ~probes:Pc_screen.probes (fun m ->
-           (Pc_screen.read m).screen = Overworld))
-  then M.fail "pc_not_closed" "not back on the overworld after B out of the PC"
+let close ~log () =
+  Effects.with_probes Pc_screen.probes (fun () ->
+      Pc_box.leave ~log Pc_box.screen_game_steps)
 
 let await_naming_screen () =
   await_screen ~probes:Naming_screen.probes (fun m ->
@@ -207,7 +152,7 @@ let type_name ~log name =
 
 let screen_game_steps ~log =
   {
-    open_move_pokemon;
+    open_move_pokemon = open_move_pokemon ~log;
     read_title = read_title_after title_reads;
     read_menu_label = (fun i -> label (menu_line i) menu_labels);
     read_menu_row;
@@ -215,7 +160,7 @@ let screen_game_steps ~log =
     type_name = type_name ~log;
     await_box_screen;
     press;
-    close;
+    close = close ~log;
   }
 
 let string_field name fields =

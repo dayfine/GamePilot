@@ -125,3 +125,5 @@ let to_walk_screen l : Plza_walk.Walk_screen.t =
     battle = l.battle;
     minimap_arrow = l.minimap_arrow;
   }
+
+let wild_battle_on t = t.run_prompt || t.alert_eye

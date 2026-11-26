@@ -10,14 +10,19 @@
     rerun after the rename). The menu's rows are read (JUMP, WALLPAPER, NAME,
     CANCEL from x 152, glyph cells from y 58, 16 apart, measured on mGBA) and
     its arrow ({!Frlg_readers.Pc_box_screen.title_menu_row}) before A on NAME,
-    so A never lands on a Pokémon's menu or on JUMP. *)
+    so A never lands on a Pokémon's menu or on JUMP.
+
+    The walk to the box screen and back out is {!Pc_box}'s. The menu's labels
+    (JUMP, WALLPAPER, NAME, CANCEL) and the title are matched in English, as
+    {!Pc_box} matches MOVE POKéMON: another language's game needs its own. *)
 
 type rename = { from : string; to_ : string }
 (** The box's name now and the one to give it. *)
 
 type game_steps = {
   open_move_pokemon : unit -> unit;
-      (** From the overworld facing the PC to MOVE POKéMON's box screen. *)
+      (** From the overworld facing the PC to MOVE POKéMON's box screen
+          ({!Pc_box.to_box_screen}). *)
   read_title : string list -> string option;
       (** Which of these the box title reads, if any. *)
   read_menu_label : int -> string option;
@@ -29,7 +34,8 @@ type game_steps = {
   type_name : string -> unit;  (** {!Naming_entry.type_text}. *)
   await_box_screen : unit -> bool;  (** Back on the box screen. *)
   press : Wire.button -> unit;  (** A press and its wait. *)
-  close : unit -> unit;  (** B out of the box screen and the PC. *)
+  close : unit -> unit;
+      (** Out of the box screen and the PC ({!Pc_box.leave}). *)
 }
 (** What the rename reads and presses on the game. *)
 
@@ -44,7 +50,13 @@ val run : game_steps -> log:(string -> unit) -> rename -> unit
     read the new name after OK). *)
 
 val screen_game_steps : log:(string -> unit) -> game_steps
-(** The game's. *)
+(** The real reads and presses: {!Pc_box.to_box_screen} and {!Pc_box.leave} on
+    {!Frlg_readers.Pc_screen}'s probes to open and close the PC; the title by
+    {!Frlg_text.Box_title}, read again while it slides in; the menu's rows by
+    their glyphs and its arrow on {!Frlg_readers.Pc_box_screen}'s probes; the
+    naming screen awaited on {!Frlg_readers.Naming_screen}'s probes and typed by
+    {!Naming_entry.type_text}; the box screen awaited on [Pc_screen]'s. Logs to
+    [log]. *)
 
 val handlers :
   log:(string -> unit) -> (string * Pokemon_engine.Game.game_action) list
