@@ -61,8 +61,7 @@ let checkpoint ~plan_dir (setup : Run.setup) id ~next =
         | None -> Checkpoint_end.declared ~next plan.checkpoint);
     }
 
-let ms_per_s = 1000.
-let now_ms () = int_of_float (Unix.gettimeofday () *. ms_per_s)
+let now_ms = Run_record.now_ms
 
 let attempt_of : Run.outcome -> Checkpoint_trials.attempt = function
   | Passed _ -> Attempt_passed

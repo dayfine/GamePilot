@@ -1,16 +1,10 @@
 module S = Delete_save_screen
 module P = Switch_presses
+module T = Timed_press
 
 let ( let* ) = Result.bind
 
 type game = { key : string; icon_png : string }
-
-(* A press: the button held [hold_ms], then
-   [cooldown_ms] before the next. *)
-type step = { button : Wire.button; hold_ms : int; cooldown_ms : int }
-
-let press { button; hold_ms; cooldown_ms } =
-  P.press ~hold_ms ~cooldown_ms button
 
 (* From HOME (the game closed, then 2 s) to the Delete Save Data list: Down to
    the icon row, Right held to its end (power), Left to the settings gear, A;
@@ -19,9 +13,9 @@ let press { button; hold_ms; cooldown_ms } =
    there), A. *)
 let after_close_ms = 2000
 let data_management_downs = 7
-let down = { button = Down; hold_ms = 80; cooldown_ms = 400 }
+let down : T.t = { button = Down; hold_ms = 80; cooldown_ms = 400 }
 
-let to_list =
+let to_list : T.t list =
   [
     down;
     { button = Right; hold_ms = 2500; cooldown_ms = 400 };
@@ -29,7 +23,7 @@ let to_list =
     { button = A; hold_ms = 100; cooldown_ms = 2500 };
     { button = Up; hold_ms = 2000; cooldown_ms = 400 };
   ]
-  @ List.init data_management_downs (fun _ -> down)
+  @ T.times data_management_downs down
   @ [
       { button = A; hold_ms = 100; cooldown_ms = 1500 };
       { button = Down; hold_ms = 3000; cooldown_ms = 500 };
@@ -38,9 +32,9 @@ let to_list =
 
 (* A row: A opens its game's page; another game's, B back and Down to the next
    row. *)
-let open_row = { button = A; hold_ms = 100; cooldown_ms = 2000 }
+let open_row : T.t = { button = A; hold_ms = 100; cooldown_ms = 2000 }
 
-let next_row =
+let next_row : T.t list =
   [
     { button = B; hold_ms = 100; cooldown_ms = 1500 };
     { button = Down; hold_ms = 80; cooldown_ms = 600 };
@@ -51,15 +45,15 @@ let page_wait_ms = 2000
 
 (* The page: A on "Delete Save Data for <user>" opens Caution, whose red button
    is greyed about 3 s; Up selects it. *)
-let open_caution = { button = A; hold_ms = 100; cooldown_ms = 2000 }
+let open_caution : T.t = { button = A; hold_ms = 100; cooldown_ms = 2000 }
 let greyed_ms = 3000
 let red_wait_ms = 5000
-let select_red = { button = Up; hold_ms = 100; cooldown_ms = 600 }
+let select_red : T.t = { button = Up; hold_ms = 100; cooldown_ms = 600 }
 
 (* Confirm: A on the red button, then OK on the success popup, then HOME. *)
-let delete = { button = A; hold_ms = 100; cooldown_ms = 4000 }
+let delete : T.t = { button = A; hold_ms = 100; cooldown_ms = 4000 }
 
-let after_deleted =
+let after_deleted : T.t list =
   [
     { button = A; hold_ms = 100; cooldown_ms = 1500 };
     { button = Home; hold_ms = 100; cooldown_ms = 2000 };
@@ -75,7 +69,7 @@ let not_native =
 (* After A on a row: [Some true] on the game's page, [Some false] on another
    game's, [None] on no page. *)
 let opened_page key =
-  press open_row;
+  T.press open_row;
   let page m = if S.game_page m then Some (S.is_game key m) else None in
   Screen_graph.Held_screen.wait_for ~timeout_ms:page_wait_ms page
 
@@ -98,13 +92,13 @@ let rec find_row ~log key row =
     | Some true -> Ok (log (Printf.sprintf "Row %d is %s." number key))
     | Some false ->
         log (Printf.sprintf "Row %d is another game." number);
-        List.iter press next_row;
+        T.press_all next_row;
         find_row ~log key number
 
 let caution_is c m = S.caution m = c
 
 let selected_after_up ~log =
-  press select_red;
+  T.press select_red;
   match Effects.read () with
   | Some m when caution_is Red_selected m ->
       log "On the red Delete Save Data button. Nothing deleted.";
@@ -112,7 +106,7 @@ let selected_after_up ~log =
   | Some _ | None -> Error "Up did not select the red button; nothing deleted"
 
 let select_red_button ~log =
-  press open_caution;
+  T.press open_caution;
   P.wait greyed_ms;
   match Effects.await ~timeout_ms:red_wait_ms (caution_is Red_not_selected) with
   | Timeout ->
@@ -127,18 +121,18 @@ let to_caution ~log ~picture tile game =
     let probes = S.icon_probe { key = game.key; icon } :: S.colour_probes in
     Effects.with_probes probes (fun () ->
         P.wait after_close_ms;
-        List.iter press to_list;
+        T.press_all to_list;
         let* () = find_row ~log game.key 0 in
         select_red_button ~log)
 
 let press_delete ~log =
-  press delete;
+  T.press delete;
   match Effects.await ~timeout_ms:deleted_wait_ms S.deleted with
   | Timeout ->
       Error "A on the red button, then no \"Successfully deleted save data.\""
   | Holds _ ->
       log "Successfully deleted save data.";
-      List.iter press after_deleted;
+      T.press_all after_deleted;
       Ok ()
 
 let on_red ~log =
