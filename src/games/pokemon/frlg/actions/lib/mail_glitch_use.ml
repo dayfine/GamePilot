@@ -99,12 +99,15 @@ let marks ~where args =
   in
   List.map mark (J.strings (where ^ "marks") (J.field ~where "marks" args))
 
-let duplication_plan ~where args : Item_duplication.plan =
-  {
-    item = J.string ~where "item" args;
-    rounds = J.int ~where "count" args;
-    word = J.string ~where "word" args;
-  }
+let duplication_plan ~options ~where args : Item_duplication.plan =
+  let item = J.string ~where "item" args in
+  let plan_rounds = J.int ~where "count" args in
+  let rounds =
+    if item = "rare-candy" then
+      Option.value (Run_options.int options "candies") ~default:plan_rounds
+    else plan_rounds
+  in
+  { item; rounds; word = J.string ~where "word" args }
 
 let run_with ~action read perform args =
   Result.bind (Action_args.decode ~action read args) (fun v ->
@@ -126,7 +129,7 @@ let duplicate ~log slot plan =
       (Printf.sprintf "duplicate_item: the holder is in slot %d, not 1" slot);
   Item_duplication.run ~log plan
 
-let handlers ~log ~party =
+let handlers ~log ~party ~options =
   let simple action read perform (_ : Pokemon_engine.Plan.event) args =
     run_with ~action read perform args
   in
@@ -141,6 +144,7 @@ let handlers ~log ~party =
         (fun ~where args -> J.string ~where "item" args)
         (move_to_top ~log) );
     ( "duplicate_item",
-      on_slot party ~action:"duplicate_item" duplication_plan (duplicate ~log)
-    );
+      on_slot party ~action:"duplicate_item"
+        (duplication_plan ~options)
+        (duplicate ~log) );
   ]

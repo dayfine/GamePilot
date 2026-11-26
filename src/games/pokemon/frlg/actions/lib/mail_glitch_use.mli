@@ -24,7 +24,9 @@
       row. Nothing is pressed when it is there. Fails as [item_not_on_top]. Not
       in the fork: its PokemonFRLG_ItemDuplication.cpp asks the player to do it.
     - ["duplicate_item"], args ["species"] or ["target_slot"] (party slot 1, the
-      C++'s), ["item"], ["count"], ["word"]: {!Item_duplication.run}. *)
+      C++'s), ["item"], ["count"], ["word"]: {!Item_duplication.run}. When
+      ["item"] is ["rare-candy"] and [options] sets ["candies"], that option
+      overrides ["count"]. *)
 
 val mark_of_name : string -> Frlg_readers.Party_menu.mark option
 (** ["held_item"], ["mail"], ["none"]. *)
@@ -45,8 +47,18 @@ val marks_mismatch :
 (** [None] when slot [i] (from 1) reads the [i]-th mark; else the first slot
     that does not: ["slot 2 shows none, not mail"]. *)
 
+val duplication_plan :
+  options:Run_options.t ->
+  where:string ->
+  Json_field.obj ->
+  Item_duplication.plan
+(** Decodes [duplicate_item]'s args (["item"], ["count"], ["word"]), overriding
+    [rounds] with the ["candies"] integer option when [item = "rare-candy"] and
+    [options] provides it. *)
+
 val handlers :
   log:(string -> unit) ->
   party:Party_roster.t ref ->
+  options:Run_options.t ->
   (string * Pokemon_engine.Game.game_action) list
 (** The four actions above, by name. *)

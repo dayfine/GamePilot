@@ -6,18 +6,12 @@
   },
   "metadata": {
     "phase": "testing",
-    "notes": "Starts anywhere outdoors in Kanto with frlg.supplies su-01's stock: Retro Mail >= 99 (98 rounds + 1 kept on the row) and a Super Repel; the pre-flight checks both. MIMIEN in slot 1 (mail record), mail on slots 2-6, a member knows Fly. Rare Candy: 1 picked up, held by MIMIEN, +98 duplicated into the bag.",
+    "notes": "Starts anywhere outdoors in Kanto with frlg.supplies su-01's stock: Retro Mail >= candies + 1 (default 99 for 98 rounds + 1 kept on the row) and a Super Repel; the pre-flight checks the default stock. MIMIEN in slot 1 (mail record), mail on slots 2-6, a member knows Fly. Rare Candy: 1 picked up, held by MIMIEN, plus --options candies=N (default 98) duplicated into the bag and verified by Item_duplication.",
     "postconditions": {
       "party_slots": [
         {
           "slot": 1,
           "species": "mr-mime"
-        }
-      ],
-      "items": [
-        {
-          "item": "rare-candy",
-          "gained": 98
         }
       ]
     }

@@ -1,10 +1,11 @@
 # Team Training
 
-Turns one Rare Candy into 99 with the Mail Glitch's item duplication, for levelling the team.
+Turns one Rare Candy into up to 100 (default 99: 1 held + 98 duplicated) with the Mail Glitch's
+item duplication, for levelling the team.
 
 From anywhere outdoors, it flies to Vermilion, picks up Route 6's hidden Rare Candy under a Super
-Repel, flies back to the Celadon Dept. Store 1F, duplicates it and steps out of the west door. Using
-the candies is a later checkpoint.
+Repel, flies back to the Celadon Dept. Store 1F, duplicates it (`--options candies=N`, default 98)
+and steps out of the west door. Using the candies is a later checkpoint.
 
 <!-- generated:backends -->
 Runs on: mGBA, the Switch (in its GBA app).
@@ -14,7 +15,8 @@ Runs on: mGBA, the Switch (in its GBA app).
 
 - The glitch active: the end of [Mail Glitch](frlg.mail_glitch.md).
 - MIMIEN in slot 1.
-- At least 99 Retro Mail in the bag: run [Supplies](frlg.supplies.md) first.
+- At least `candies + 1` Retro Mail in the bag (99 for the default 98): run
+  [Supplies](frlg.supplies.md) first.
 
 <!-- generated:needs -->
 - mr-mime in the party (give_bag_item)
@@ -26,6 +28,14 @@ Runs on: mGBA, the Switch (in its GBA app).
 <!-- /generated -->
 
 ## Running it
+
+<!-- generated:options -->
+Give each as `--options KEY=VALUE`:
+
+| Key | Values | When not given | What it chooses |
+|---|---|---|---|
+| `candies` | 1 to 99 | default `98` | how many Rare Candies to duplicate into the bag |
+<!-- /generated -->
 
 <!-- generated:commands -->
 ```sh
@@ -45,7 +55,7 @@ sh run/run_checkpoints_on_switch.sh frlg.team_training --from tt-01 --to tt-01
 |---|---|
 | tt-01 | Rare Candy farm: pick up Route 6's hidden Rare Candy, duplicate it to 99 |
 
-<!-- plans: 6bdc5967261a -->
+<!-- plans: a1eab8a8384f -->
 <!-- /generated -->
 
 ## When it stops
@@ -59,14 +69,15 @@ sh run/run_checkpoints_on_switch.sh frlg.team_training --from tt-01 --to tt-01
 ## Known limits
 
 - It makes the candies but does not use them yet.
+- Pre-flight checks the default 99 Retro Mail even when `--options candies=N` asks for fewer.
 
 ## How it works
 
 It turns the Mail Glitch's item duplication into levels (roadmap A1, issue #10). It needs a save
 where `frlg.mail_glitch` has run to 08-activate-and-verify: MIMIEN in slot 1 with the glitched mail
 record, mail on slots 2 to 6. tt-01 picks up Route 6's hidden Rare Candy under a Super Repel, gives
-it to MIMIEN and runs 98 rounds of `duplicate_item`
-([Item duplication](frlg.mail_glitch.item_duplication.md)): 99 candies.
+it to MIMIEN and runs `--options candies=N` rounds (default 98) of `duplicate_item`
+([Item duplication](frlg.mail_glitch.item_duplication.md)): 99 candies by default.
 
 **Next.** The levelling checkpoints, once the `candy_level` action lands: Blastoise to Lv 100 as the
 lead, then the Dex Collection's catchers (Parasect with Spore, Haunter with Mean Look and Hypnosis).
