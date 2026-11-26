@@ -9,7 +9,8 @@ type failure = {
 
 type outcome = Passed | Failed of failure
 
-let off_start (c : Engine_run.Failure.cause) = c.code = "chain_off_start"
+let off_start_codes = [ "chain_off_start"; "rocks_not_left" ]
+let off_start (c : Engine_run.Failure.cause) = List.mem c.code off_start_codes
 
 let of_cause ~at (c : Engine_run.Failure.cause) =
   Failed

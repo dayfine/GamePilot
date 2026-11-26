@@ -60,7 +60,9 @@ let start ~log ~picture ~reload (plan : P.Plan.t) =
 
 let run_checkpoint ~log ~picture ~reload report (plan : P.Plan.t) =
   let* () = start ~log ~picture ~reload plan in
-  let steps = Story.Live_story_screen.game_steps ~log ~log_detail:log in
+  let steps =
+    Story.Live_story_screen.game_steps ~picture ~log ~log_detail:log
+  in
   (* A console idle between runs dims its screen; nothing reads on it. *)
   Plza_story.Screen_wake.run steps;
   let id = plan.checkpoint.checkpoint_id in
@@ -124,7 +126,7 @@ let live ~log ~reload record plan (daemon : Live_run.Daemon_process.t) =
   | outcome -> outcome
   | exception e -> failed "raised" (Printexc.to_string e)
 
-(* "03.04 run 1", with " attempt 2" after the first. *)
+(* "03.08 run 1", with " attempt 2" after the first. *)
 let run_name id n = function
   | 1 -> Printf.sprintf "%s run %d" id n
   | a -> Printf.sprintf "%s run %d attempt %d" id n a

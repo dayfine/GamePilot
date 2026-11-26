@@ -23,5 +23,8 @@ val default : options
 (** The fork's defaults: no lock-on, a 500 ms aim, no scrolls (120 ms held, 80
     released each), no wait after. *)
 
+val inputs : options -> Wire.command list
+(** The throw's inputs, to send as one batch. *)
+
 val throw : Steps.game_steps -> options -> unit
 (** The throw sent and done. *)
