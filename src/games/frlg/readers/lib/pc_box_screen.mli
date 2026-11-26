@@ -85,3 +85,38 @@ val male : Effects.measurements -> bool option
 val forest_wallpaper : Effects.measurements -> bool option
 (** The strip's mean is green: green over red and over blue by at least 20
     (mGBA: 48 and 103). Box 1's default Forest. *)
+
+(** {1 The title's wallpaper} *)
+
+(** The four wallpapers a new game gives the boxes. *)
+type wallpaper =
+  | Forest  (** Green sky, grey-green ground. *)
+  | City  (** Blue sky, pale grey ground. *)
+  | Desert  (** Grey sky, dark grey ground. *)
+  | Savanna  (** Pale blue sky, yellow-green ground. *)
+
+val default_wallpaper : int -> wallpaper
+(** Box [n]'s (from 1) wallpaper in a new game: Forest, City, Desert, Savanna in
+    turn, Box 1 Forest, Box 13 Forest, Box 14 City. pokefirered
+    pokemon_storage_system_menu.c [ResetPokemonStorageSystem] sets box [i] (from
+    0) to [i % (MAX_DEFAULT_WALLPAPER + 1)], [MAX_DEFAULT_WALLPAPER] being
+    [WALLPAPER_SAVANNA], the fourth (include/pokemon_storage_system.h). The
+    player can change it (WALLPAPER on the title's menu); a save keeps it. *)
+
+val wallpaper_name : wallpaper -> string
+(** ["Forest"], as the game's WALLPAPER menu names it. *)
+
+val title_wallpaper : Effects.measurements -> wallpaper option
+(** Which of the four the box title's bar shows; [None] for any other (the other
+    twelve wallpapers a player can pick) or a frame without the box screen.
+    GamePilot's own: the bar's sky (y 20-22) and ground (y 34-35) at x 162-193,
+    right of the hand that points at the title and of most names, each within
+    {!max_wallpaper_distance} (Euclidean, RGB) of the wallpaper's colours,
+    measured on mGBA and the Switch (2026-11-25): Forest sky (205, 252, 176) and
+    ground (169, 168, 114), City (87, 136, 207) and (173, 191, 194), Desert
+    (175, 168, 173) and (69, 70, 69), Savanna (189, 209, 225) and (160, 169,
+    34). *)
+
+val max_wallpaper_distance : float
+(** 50: a default's own frames, shifted, lie at most 40 from its colours; the
+    nearest other wallpaper (Pokémon Center's, against Forest) 60. *)
