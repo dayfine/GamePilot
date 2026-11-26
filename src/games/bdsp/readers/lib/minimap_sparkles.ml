@@ -47,16 +47,16 @@ let orange_g_max = 215
 let orange_b_max = 80
 let orange_min = (orange_r_min, orange_g_min, orange_b_min)
 let orange_max = (orange_r_max, orange_g_max, orange_b_max)
-let pink_r_min = 175
-let pink_g_min = 40
+let pink_r_min = 185
+let pink_g_min = 80
 let pink_b_min = 100
 let pink_r_max = 255
-let pink_g_max = 150
-let pink_b_max = 215
+let pink_g_max = 185
+let pink_b_max = 190
 let pink_min = (pink_r_min, pink_g_min, pink_b_min)
 let pink_max = (pink_r_max, pink_g_max, pink_b_max)
 let min_sparkle_share = 0.008
-let min_player_share = 0.025
+let min_player_share = 0.010
 
 let corridor_name = function
   | Bottom_east -> "bottom_east"

@@ -147,10 +147,9 @@ let recover_if_mid_dig ~picture ~goal ~counters =
       Ok next
   | Some scr ->
       log ("Initial screen: " ^ US.to_string scr);
-      if scr.sparkles.player <> None then (
-        log "Started out in corridor; returning South & West to doorway...";
-        OW.run_hold Corridor_nav.South ~hold_ms:south_return_ms;
-        OW.run_hold Corridor_nav.West ~hold_ms:west_return_ms);
+      log "Aligning South & West to South Hideaway doorway...";
+      OW.run_hold Corridor_nav.South ~hold_ms:south_return_ms;
+      OW.run_hold Corridor_nav.West ~hold_ms:west_return_ms;
       Ok counters
   | None -> Ok counters
 
