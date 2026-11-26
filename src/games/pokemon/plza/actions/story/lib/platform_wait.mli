@@ -1,4 +1,4 @@
-(** The platform at the station, where the opening ends and 01.01 starts: ported
+(** The platform at the station, where the opening ends and 01.02 starts: ported
     from PokemonLZA_AutoStoryScenes.cpp, with its timings. *)
 
 val wait_for_platform : Steps.game_steps -> timeout_ms:int -> Steps.outcome

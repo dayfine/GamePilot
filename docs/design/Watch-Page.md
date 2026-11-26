@@ -341,10 +341,10 @@ subscribing 6 probes and pressing twice a second for 43 s, one daemon at a time,
 Recording costs under 2% of a core and nothing on the frame loop: the program got as many probed
 frames either way. A GBA frame (mGBA with `--record`) is doubled to 480x320, about 50 KB.
 
-Disk: about 150 MB an hour of Switch run. `~/BDSPLab/disk_gc.sh` handles run folders by age (a
-folder untouched for 14 days goes unless it holds KEEP, which every failing run does) and gzips
-`wire.jsonl` once it is older than a day; it leaves `frames/index.jsonl` and `watch_log.jsonl`
-plain, since the past-run page reads them as they are. The probe timeline reads the gzipped wire
+Disk: about 150 MB an hour of Switch run. Run folders are pruned by age (a folder untouched for
+14 days goes unless it holds KEEP, which every failing run does) and `wire.jsonl` is gzipped once
+it is older than a day; `frames/index.jsonl` and `watch_log.jsonl` stay plain, since the past-run
+page reads them as they are. The probe timeline reads the gzipped wire
 log. `projects-gc` does not look at the runs folder.
 
 ## Keep-awake
@@ -353,8 +353,7 @@ A Switch daemon presses B after 180 s with no input (`--keepawake SECONDS`, 0 = 
 off; `--keepawake-key`), only while no client batch is queued or running, no client holds the input
 lease and no client submitted in that window, as a batch of its own whose `batch_done` goes to no client
 (`daemon/src/keep_awake.*`). Each press is a `daemon` line in the wire log
-(`protocol/v1/34-keepawake.line.json`), which replay skips. It replaces
-`~/BDSPLab/gp_keepawake.py`, which the old one-client rule locked out (`docs/switch-bring-up.md`).
+(`protocol/v1/34-keepawake.line.json`), which replay skips.
 
 ## Input lease
 

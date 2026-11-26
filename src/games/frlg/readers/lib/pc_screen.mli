@@ -46,6 +46,12 @@ type view = { screen : screen; cursor : int option }
 val probes : Wire.probe_spec list
 val read : Effects.measurements -> view
 
+val box_screen_shown : Effects.measurements -> bool
+(** The box screen shows, whatever is over its grid: the PKMN DATA panel's
+    lilac, the screen not dark. {!read} can take a yellow wallpaper's grid
+    (Savanna, Box 4's default) for the box chooser; this does not look at the
+    grid. *)
+
 val screen_name : screen -> string
 (** ["storage menu"], as the fork's [pc_screen_name()]. *)
 

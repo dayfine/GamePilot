@@ -109,6 +109,10 @@ type probe_spec = Probe.probe_spec = {
   ink : color_range option;
       (** [core.template_match@1] only: compare the masks of the pixels in this
           range instead of the colors. *)
+  skip_seams : bool;
+      (** [core.template_match@1] with [ink] only: leave out of the comparison
+          the scaled template mask's seam pixels, which straddle two game
+          pixels; [false] for every other probe. *)
   color_range : color_range option;  (** [core.color_count@1] only *)
   test : Line_shares.test;  (** [core.line_shares@1] only; else [[]] *)
   find : Blob_find.params option;  (** [core.find@1] only *)
@@ -122,6 +126,7 @@ val color_stats_probe : id:string -> box:box -> delivery:delivery -> probe_spec
 
 val template_match_probe :
   ?ink:color_range ->
+  ?skip_seams:bool ->
   id:string ->
   box:box ->
   delivery:delivery ->
@@ -133,7 +138,11 @@ val template_match_probe :
     PNG is in game pixels and the daemon scales it to the frame. With [ink] the
     daemon compares the masks of the template's and the box's pixels inside that
     range (the score is then the fraction of differing pixels), so text matches
-    whatever its color and shading. *)
+    whatever its color and shading. With [skip_seams] (default [false], ignored
+    without [ink]) the score counts only the scaled template mask's whole
+    pixels: at a fractional scale (6.5 on the Switch's GBA picture) a seam pixel
+    of the mask holds a blend that a binary box mask can only half agree with,
+    which costs about 1/4 of a pixel whatever the frame shows. *)
 
 val color_count_probe :
   id:string ->

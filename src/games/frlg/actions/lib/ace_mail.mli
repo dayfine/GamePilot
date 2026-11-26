@@ -44,6 +44,11 @@ type box_view = {
 (** The box screen as read ({!Frlg_readers.Pc_box_screen}), [None] where a
     reading did not come. *)
 
+val box_view : Effects.measurements -> box_view
+(** The box screen read from one frame with {!Frlg_readers.Pc_box_screen}'s
+    probes; [level_shown] reads PKMN DATA's level
+    ({!Frlg_text.Text_lines.pc_data_level}) when asked. *)
+
 (** What the box screen says about the checked slot. *)
 type verdict =
   | As_asked  (** Box 3, and the slot occupied or empty as the check asks. *)

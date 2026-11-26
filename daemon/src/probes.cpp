@@ -41,15 +41,18 @@ ColorStats color_stats(const cv::Mat& bgr, const cv::Rect& pixels) {
 
 TemplateMatch template_match(const cv::Mat& image,
                              const cv::Mat& template_image,
-                             const cv::Rect& pixels) {
+                             const cv::Rect& pixels, const cv::Mat& compared) {
   constexpr double kChannelMax = 255;
   cv::Mat differences;
-  cv::matchTemplate(image(pixels), template_image, differences, cv::TM_SQDIFF);
+  cv::matchTemplate(image(pixels), template_image, differences, cv::TM_SQDIFF,
+                    compared);
   double min_difference = 0;
   cv::Point best;
   cv::minMaxLoc(differences, &min_difference, nullptr, &best, nullptr);
-  const double samples =
-      static_cast<double>(template_image.total()) * template_image.channels();
+  const double compared_pixels =
+      compared.empty() ? static_cast<double>(template_image.total())
+                       : static_cast<double>(cv::countNonZero(compared));
+  const double samples = compared_pixels * template_image.channels();
   TemplateMatch match;
   // OpenCV may sum in the frequency domain and land a hair below 0.
   match.score = std::clamp(
@@ -66,13 +69,25 @@ cv::Mat ink_mask(const cv::Mat& bgr, const ColorRange& ink) {
 }
 
 TemplateMatch mask_match(const cv::Mat& bgr, const cv::Mat& template_mask,
-                         const cv::Rect& pixels, const ColorRange& ink) {
+                         const cv::Rect& pixels, const ColorRange& ink,
+                         const cv::Mat& compared) {
   const cv::Mat box_mask = ink_mask(bgr(pixels), ink);
-  TemplateMatch match = template_match(
-      box_mask, template_mask, cv::Rect(0, 0, pixels.width, pixels.height));
+  TemplateMatch match =
+      template_match(box_mask, template_mask,
+                     cv::Rect(0, 0, pixels.width, pixels.height), compared);
   match.x += pixels.x;
   match.y += pixels.y;
   return match;
+}
+
+cv::Mat whole_pixels(const cv::Mat& template_mask) {
+  constexpr int kInk = 255;
+  cv::Mat blank;
+  cv::Mat ink;
+  cv::compare(template_mask, 0, blank, cv::CMP_EQ);
+  cv::compare(template_mask, kInk, ink, cv::CMP_EQ);
+  cv::Mat whole = (blank | ink) / kInk;
+  return whole;
 }
 
 ColorCount color_count(const cv::Mat& bgr, const cv::Rect& pixels,

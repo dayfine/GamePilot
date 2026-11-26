@@ -10,7 +10,7 @@
     - teal: the teal arrow shows.
 
     An arrow is a blob of 150 pixels at least matching its template with a score
-    under 120 ({!Blob_template}). 01.01's screen reads the white box with
+    under 120 ({!Blob_template}). 01.02's screen reads the white box with
     {!Box_only} (PokemonLZA_AutoStoryScreenEvents.cpp): the box shows while its
     text is still typed. *)
 

@@ -229,6 +229,10 @@ let read m =
     | Some v -> v
     | None -> text_or_overworld m
 
+let box_screen_shown m =
+  (not (holds m "pc.game" (fun s -> Solid_color.sum s.mean < dark_screen)))
+  && holds m "pc.data_panel" (solid data_panel_lilac)
+
 let screen_name = function
   | Overworld -> "overworld"
   | Text -> "text"
