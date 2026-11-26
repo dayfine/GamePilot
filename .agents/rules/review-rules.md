@@ -186,11 +186,11 @@ cases the user called out.)
 - Good: `type game_steps = { read_party : ...; press : ... }`, built by `candy_game_steps`, faked
   by `fake_game_steps`.
 - Find: recipe, then judgment (is the hit a record of game steps?):
-  `grep -rnE --include='*.ml*' '\b(rig|driver|ops|callbacks)\b|type [a-z_]*(deps|handlers) = \{' src`
+  `grep -rnE --include='*.ml*' --exclude-dir=_build '\b(rig|driver|ops|callbacks)\b|type [a-z_]*(deps|handlers) = \{' src`
   and `lib/` records with step fields (`press`, `submit`, `read_*`) not named `game_steps`:
 
   ```sh
-  find src -path '*/lib/*.ml*' | sort | python3 -c '
+  find src -path '*/lib/*.ml*' -not -path '*/_build/*' | sort | python3 -c '
   import re, sys
   for f in map(str.strip, sys.stdin):
       text = open(f).read()
@@ -226,7 +226,7 @@ function, no stage. The lab is retired; the doc comment says what the code does.
   `.{h,cpp}` source names), then judgment:
 
   ```sh
-  grep -rlE --include='*.mli' 'fork|upstream|C\+\+|\.(cpp|h|c|\{h,cpp\})\b' src | xargs grep -nE \
+  grep -rlE --include='*.mli' --exclude-dir=_build 'fork|upstream|C\+\+|\.(cpp|h|c|\{h,cpp\})\b' src | xargs grep -nE \
     '[A-Za-z_]+\(\)|\b[A-Z][a-z]+([A-Z][a-z]+)+(Watcher|Detector|Reader)\b'
   ```
 
@@ -287,8 +287,8 @@ multi-line log) is split. Each test file says what its fakes stand in for. (qc-s
 - Bad: `check "trace" (String.concat "\n" trace) "press A\nread menu\npress down\n..."`.
 - Good: one case per press and per reading.
 - Find: recipe, then judgment:
-  `find src -path '*/test/*.ml' -exec grep -HnE '\\n[^"]*\\n[^"]*\\n' {} + | grep -vE 'failwith|Printf'`
-  and test files without a top comment (`for f in $(find src -path '*/test/*.ml'); do head -1 "$f" | grep -q '^(\*' || echo "$f"; done`).
+  `find src -path '*/test/*.ml' -not -path '*/_build/*' -exec grep -HnE '\\n[^"]*\\n[^"]*\\n' {} + | grep -vE 'failwith|Printf'`
+  and test files without a top comment (`for f in $(find src -path '*/test/*.ml' -not -path '*/_build/*'); do head -1 "$f" | grep -q '^(\*' || echo "$f"; done`).
 
 ### R13 Repeated plan steps become named places; a place has one spelling
 
@@ -545,7 +545,7 @@ Each is stated in `AGENTS.md` (the name below is its bold lead); the auditor run
 reads each hit.
 
 - **A1 Programs use only our effect set**: `grep -rnE --include='*.ml' '\b(Unix|Thread|Domain|Eio|Lwt|In_channel|Out_channel)\.' src/games/*/programs src/games/*/actions`.
-- **A2 Port the C++ transparently** (each ported module names its source file): `grep -rLE '\.(cpp|h|c|\{h,cpp\})\b|Pokemon[A-Z]+_[A-Za-z0-9_]+|Programs/|Not in the fork|GamePilot.s own' $(grep -rlE 'fork|upstream|C\+\+' --include='*.mli' src)`; see also R9.
+- **A2 Port the C++ transparently** (each ported module names its source file): `grep -rLE --exclude-dir=_build '\.(cpp|h|c|\{h,cpp\})\b|Pokemon[A-Z]+_[A-Za-z0-9_]+|Programs/|Not in the fork|GamePilot.s own' $(grep -rlE --exclude-dir=_build 'fork|upstream|C\+\+' --include='*.mli' src)`; see also R9.
 - **A3 Every checkpoint goes through the checkpoint runner**: judgment; `grep -rnE --include='*.ml' 'Effects\.submit' src/bin src/games/*/programs` for programs driving the game outside the runner.
 - **A4 Submodules are read-only; maps are read, never copied**: `git -C third_party/<sub> status --short` is empty for each submodule, and `git ls-files src | grep -iE 'maps?/.*\.(json|txt)$'` lists no copied map.
 - **A5 Machine-specific paths come from environment variables**: `git grep -nE '/Users/|(^|[^$a-z_])/home/[a-z]|[A-Z]:\\\\' -- src docs dev run protocol daemon | grep -v /home/example/` (the protocol goldens' `/home/example` is an example).
