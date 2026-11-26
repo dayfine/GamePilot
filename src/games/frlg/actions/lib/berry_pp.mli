@@ -1,19 +1,19 @@
 (** The ["prepare_berry_pp"] game action: use up a lead's move in wild battles,
     so that a Leppa Berry held later restores the move's PP at the end of a
     battle's first turn (mg-05a, Blastoise's Blizzard). Ported from the fork's
-    [run_prepare_berry_pp_step()] and [drain_pp_in_wild_battle()]
-    (Programs/MailGlitch/PokemonFRLG_MailGlitchBattle.cpp, the Route 16 version
-    that passed on mGBA, 2026-11-23): the lead must be [species]; each wild
-    battle is found by turning in place ({!Spin_for_encounter}) and fought with
-    [move] while it has PP, then with [backup_move].
+    Programs/MailGlitch/PokemonFRLG_MailGlitchBattle.cpp, its step that drains
+    the move's PP in wild battles (the Route 16 version that passed on mGBA,
+    2026-11-23): the lead must be [species]; each wild battle is found by
+    turning in place ({!Spin_for_encounter}) and fought with [move] while it has
+    PP, then with [backup_move].
 
     Where it differs, for want of readers:
-    - The fork finds each battle by turning in place ([spin_for_encounter()]),
-      reading the player's facing before each batch so no turn tap is a step.
-      With no facing reader, turning here stepped the player off the grass
-      (mg-05a testing 1: from Route 8 (45, 12) onto the path at (46, 12), then
-      no battle in 25 batches). The battles are paced for instead, one step
-      [pace] and back on grass tiles ({!Pacing}, the fork's capture method).
+    - The fork finds each battle by turning in place, reading the player's
+      facing before each batch so no turn tap is a step. With no facing reader,
+      turning here stepped the player off the grass (mg-05a testing 1: from
+      Route 8 (45, 12) onto the path at (46, 12), then no battle in 25 batches).
+      The battles are paced for instead, one step [pace] and back on grass tiles
+      ({!Pacing}, the fork's capture method).
     - The fork reads the move's PP off the summary and counts it down, stopping
       after the battle its last PP goes in. With no PP digit reader here the
       move is used until the game refuses it ("There's no PP left for this
@@ -35,7 +35,7 @@ type plan = {
           back ({!Pacing}). *)
 }
 
-val decode : Json_field.obj -> (plan, Pokemon_checkpoints.Failure.cause) result
+val decode : Json_field.obj -> (plan, Pokemon_engine.Failure.cause) result
 (** Args ["species"], ["move"] and ["backup_move"] (slugs), and ["pace"] (a
     direction). *)
 

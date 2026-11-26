@@ -1,0 +1,44 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "plza",
+  "execution": {
+    "reload_when_chained": true,
+    "start_signature": {
+      "minimap": "03.04-start"
+    },
+    "end_signature": {
+      "minimap": "03.06-start"
+    }
+  },
+  "metadata": {
+    "phase": "testing",
+    "source": "played from a new game; ends outside the Center on the autosave. The only PLZA row that reloads when chained: into_pokemon_center's timed legs assume the reloaded save's facing and ran into a wall chained without it. The roof before Station Front reads the same as its start bar the minimap; starts where 03.06 ends; the fork's plza-03.04.plan.json (plza/lean); ends checked by the minimap (end_signature 03.06-start, ours: the fork checks no end). Resumable: a reload past Taunie's autosave reads 03.06-start and every event is skipped",
+    "postconditions": {}
+  },
+  "checkpoint": {
+    "id": "03.07-pokemon-center",
+    "title": "Pokemon Center, the Pokedex",
+    "start": {
+      "place": "LumioseCity"
+    },
+    "events": [
+      {
+        "id": "into_pokemon_center",
+        "kind": "walk",
+        "why": "into the Pokemon Center to the nurse's \"A Talk\": the -90 run ends against the back wall at the counter's end, the 90 faces the nurse; A on her \"A Talk\" only after every leg (talk_after_legs). The fork's 03.04 at 075a25e4a (plza/lean): its later A on the first prompt look (272cd380a, 9706530a9: 2400 ms, no 90) took Urbain's \"A Talk\" 1000 ms into the -90 run (console B, 2026-11-25), whose one line ended in control. The 20 leg turns in clear of the wall left of the Center's opening (2000 ran into it 4 of 6 times, console B 2026-11-19). not planned: no tile grid in Lumiose",
+        "args": {
+          "legs": [[0, 3000], [20, 2200], [-90, 2000], [90, 0]],
+          "end": "talk_after_legs"
+        },
+        "skip_if": ["minimap:03.06-start"]
+      },
+      {
+        "id": "pokedex_app",
+        "kind": "scene",
+        "action": "button_b",
+        "why": "the Pokedex app, Chikorita's entry, the nurse, Taunie's scene outside (autosave), until control outside the Center (end signature: minimap 03.06-start)",
+        "skip_if": ["minimap:03.06-start"]
+      }
+    ]
+  }
+}

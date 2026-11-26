@@ -19,7 +19,13 @@ type button = Command.button =
   | Home
   | X
   | Y
+  | ZL
+  | ZR
+  | Plus
+  | Minus
+  | LStick
 
+let all_buttons = Command.all_buttons
 let string_of_button = Command.string_of_button
 let button_of_string = Command.button_of_string
 let switch_only = Command.switch_only
@@ -55,6 +61,7 @@ type probe_spec = Probe.probe_spec = {
   delivery : delivery;
   template : string option;
   ink : color_range option;
+  skip_seams : bool;
   color_range : color_range option;
   test : Line_shares.test;
   find : Blob_find.params option;
@@ -123,6 +130,7 @@ type error = Jsonrpc.error = {
 type call = Jsonrpc.call =
   | Hello of { protocol : int; client : string }
   | Load_state of { path : string }
+  | Reset
   | Save_state of { path : string }
   | Save_frame of { path : string }
   | Upload_template of { png : string }
@@ -130,6 +138,7 @@ type call = Jsonrpc.call =
   | Unsubscribe of string list
   | Submit of { batch_id : string; commands : command list }
   | Cancel
+  | Cancel_then of { batch_id : string; commands : command list }
   | Status
   | Lease_acquire of { owner : string; ttl_ms : int option }
   | Lease_release

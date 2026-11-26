@@ -14,11 +14,41 @@
       (x 100-219, y 140-151): Box 3's default Desert is tan (208, 167, 117 on
       mGBA), Box 1's Forest green (156, 204, 101). The title's name is drawn
       white with a dark outline, which the text templates do not read;
-    - the panel's gender mark: the male symbol's blue at x 10-16, y 117-127. *)
+    - the panel's gender mark: the male symbol's blue at x 10-16, y 117-127;
+    - the panel's held-item line ({!holds_item}), flat when the Pokémon holds
+      nothing. *)
 
 val probes : Wire.probe_spec list
-(** The panel's lower part, the first slot's shadow box, the wallpaper strip and
-    the gender mark's box: every probe the functions below read. *)
+(** The panel's lower part, the held-item line, the first slot's shadow box, the
+    wallpaper strip, the gender mark's box and the title menu's arrow: every
+    probe the functions below read. *)
+
+val title_menu_row : Effects.measurements -> int option
+(** The arrow's row (0 JUMP, 1 WALLPAPER, 2 NAME, 3 CANCEL) on the menu A opens
+    on the box title in MOVE POKéMON ({!Cursor_column} over x 143-151 of each
+    row, rows 16 apart from y 59); [None] with no menu. GamePilot's own,
+    measured on mGBA (2026-11-25): the arrow at x 145-149, the window from x
+    140. *)
+
+val hand_quick : Effects.measurements -> bool option
+(** The hand over the box's first slot is the quick hand SELECT turns on: at
+    least {!min_quick_share} of its box (x 90-105, y 20-37, the hand's bob
+    included) in {!quick_yellow}. pokefirered pokemon_storage_system_data.c
+    [ToggleCursorMultiMoveMode] swaps the hand sprite's palette
+    ([cursorPalNums]); the quick one fills the glove (255, 231, 90) with orange
+    (255, 181, 107), (255, 165, 0) edges on mGBA, the normal one white.
+    GamePilot's own, for the ACE trigger (the actions' Ace_trigger); read only
+    with the hand on the first slot. *)
+
+val quick_yellow : Color_count.range
+(** Red 225..255, green 200..255, blue 40..150: the quick glove's yellow
+    (brightened x1.1 its green is 254; the normal glove's white has blue 255).
+    Desert's title bar (231, 198, 99) lies outside (green) and right of the box.
+*)
+
+val min_quick_share : float
+(** 0.12: the quick hand fills 0.20-0.25 of the box on mGBA, the normal hand 0.
+*)
 
 val panel_occupied : Effects.measurements -> bool option
 (** The fork's test: the panel's stddev sum over {!min_panel_stddev}. *)
@@ -26,6 +56,12 @@ val panel_occupied : Effects.measurements -> bool option
 val min_panel_stddev : float
 (** 10, the fork's. Measured on mGBA: an empty slot's panel 0, the ACE Pokémon's
     200 and more. *)
+
+val holds_item : Effects.measurements -> bool option
+(** PKMN DATA's held-item line has text: the channel stddevs' sum over
+    {!min_panel_stddev} in x 2-69, y 134-143, where pokefirered
+    [PrintDisplayMonInfo] prints the item's name in the small font (window 0 at
+    (0, 88), the text at (6, 44)); flat with no item or an empty slot. *)
 
 val hand_on_first_slot : Effects.measurements -> bool option
 (** The hand's shadow fills at least {!min_shadow_share} of the first slot's

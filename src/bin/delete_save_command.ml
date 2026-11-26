@@ -1,8 +1,7 @@
 (* gamepilot ctl [--port N] [--owner LABEL] delete-save GAME | delete-save --confirm
 
    Deletes one game's save data on the Switch from System Settings, in two
-   steps (Switch_home.Delete_save, the lab's delete-save route, delete_save.sh
-   from the BDSPLab lab tools): [delete-save
+   steps (Switch_home.Delete_save): [delete-save
    GAME] closes the running game and stops on the Caution screen with the red
    Delete Save Data button selected, deleting nothing; after a look at the
    screen, [delete-save --confirm] presses it, OK on the success popup, and
@@ -10,20 +9,13 @@
    (Console_park_command); the daemon must show the whole frame (--viewport
    native).
 
-   GAME is a key of [icons]: the game's icon on its "Delete Save Data for
-   <user>" page, 82x82 frame pixels (the 90 px icon at (90, 30), 4 px in).
-   plza's is cut from console B's capture of that page
-   (core/switch_home/test/images/delete-save/za-page-delete-save-data-for-user.png).
-   No FireRed page was captured: firered's is the list's 135 px icon
-   (game-list-za-first.png, at (157, 397)) scaled to 90 px (Lanczos), then cut
-   the same way; Z-A's made so scores 0.0054 on its page against the reader's
-   0.02. *)
+   GAME is a key of a game's delete_save_icons (Program_registry): the
+   game's icon on its "Delete Save Data for <user>" page. *)
 
 let icons =
-  [
-    ("plza", "src/games/pokemon/plza/assets/delete-save-icon.png");
-    ("firered", "src/games/frlg/assets/delete-save-icon-firered.png");
-  ]
+  List.concat_map
+    (fun (g : Program_registry.game) -> g.delete_save_icons)
+    Program_registry.games
 
 let keys = String.concat ", " (List.map fst icons)
 

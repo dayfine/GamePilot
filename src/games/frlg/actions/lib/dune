@@ -9,12 +9,15 @@
   gamepilot.grid_geometry
   gamepilot.grid_maps
   gamepilot.json_field
+  gamepilot.strings
   gamepilot.grid_planning
-  gamepilot.pokemon_checkpoints
+  gamepilot.pokemon_engine
   gamepilot.room_policy
   gamepilot.frlg_readers
   gamepilot.frlg_menu_cursor
   gamepilot.frlg_text
   gamepilot.repo_io
   gamepilot.frlg_overworld
-  gamepilot.frlg_battle))
+  gamepilot.frlg_battle
+  gamepilot.frlg_rng
+  gamepilot.run_options))

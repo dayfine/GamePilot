@@ -1,17 +1,18 @@
-(** FireRed's story {!Pokemon_checkpoints.Game.t}: [route] and [ready] events
-    planned and walked ({!Frlg_overworld}), a [step] onto a scene's tile
+(** FireRed's story {!Pokemon_engine.Game.t}: [route] and [ready] events planned
+    and walked ({!Frlg_overworld}), a [step] onto a scene's tile
     ({!Frlg_overworld.Route_walk.step}), [talk], [answer] and [scene] settled
     ({!Talk}), [train]'s trainer battles in a row ({!Trainer_battles}), a
     [battle] a talk or scene started ({!Scene_battle}), [heal] and [save] events
     ({!Heal_and_save}), the ["fly"] game action ({!Fly}), ["lift_floor"]
     ({!Lift_ride}), ["ferry"] ({!Seagallop}), the ["grind"] one ({!Grind}, its
     walks and heals this game's), ["capture"] ({!Capture} on {!Capture_steps};
-    its catches join the reckoned party), mg-05's ["prepare_berry_pp"]
-    ({!Berry_pp}) and ["mail_glitch_double_battle"] ({!Mail_glitch_battle}) and
-    the shared ones ({!Game_actions}). The other built-in kinds fail as
-    [not_implemented] (repeats): they come from their own libraries. A trainer
-    who sees the player on a walk is fought with {!Trainer_battles} too
-    ({!Frlg_overworld.Route_walk}).
+    its catches join the reckoned party), ["wild_rng"] ({!Wild_rng}),
+    ["save_game"] (save from the Start menu, what a hard reset boots from),
+    mg-05's ["prepare_berry_pp"] ({!Berry_pp}) and ["mail_glitch_double_battle"]
+    ({!Mail_glitch_battle}) and the shared ones ({!Game_actions}). The other
+    built-in kinds fail as [not_implemented] (repeats): they come from their own
+    libraries. A trainer who sees the player on a walk is fought with
+    {!Trainer_battles} too ({!Frlg_overworld.Route_walk}).
 
     Between loop rounds, heal walks to the configured Center's nurse and talks
     to her, save saves from the Start menu, and reload is the program's (an
@@ -42,17 +43,21 @@ type config = {
   center : string option;
       (** The town whose Pokémon Center heals between loop rounds
           (["LavenderTown"]); [None]: heal fails as [not_implemented]. *)
-  reload : unit -> (unit, Pokemon_checkpoints.Failure.cause) result;
+  reload : unit -> (unit, Pokemon_engine.Failure.cause) result;
       (** Back to the checkpoint's start state. *)
+  program_options : Run_options.t;
+      (** The program's options the run was given (gamepilot run --options,
+          checked against its registry entry): a game action of the program's
+          reads its choices with {!Run_options.find} or {!Run_options.int}. *)
   log : string -> unit;
 }
 
 type t
 
-val create : config -> start:Pokemon_checkpoints.Pose.observed option -> t
+val create : config -> start:Pokemon_engine.Pose.observed option -> t
 (** [start]: where the player stands at the checkpoint's start, if known. *)
 
-val game : t -> Pokemon_checkpoints.Game.t
+val game : t -> Pokemon_engine.Game.t
 
 val party : t -> Party_roster.t
 (** The party as reckoned now. *)

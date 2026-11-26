@@ -1,6 +1,7 @@
 type t = { id : string; left : int; glyph_top : int; indent : int; width : int }
 
-let game_width = 240.
+let game_width_px = 240
+let game_width = float game_width_px
 let game_height = 160.
 let template_top = 1
 let template_height = 12
@@ -223,13 +224,23 @@ let pc_menu_row i =
     width = 104;
   }
 
+let pc_mon_menu_left = 168
+
 let pc_mon_menu_row i =
   {
     id = Printf.sprintf "pc_mon_menu.%d" i;
-    left = 168;
+    left = pc_mon_menu_left;
     indent = 2;
     glyph_top = pc_mon_menu_first_top + (pc_row_pitch * i);
     width = 60;
+  }
+
+let pc_withdraw_menu_row i =
+  {
+    (pc_mon_menu_row i) with
+    id = Printf.sprintf "pc_withdraw_menu.%d" i;
+    left = pc_mon_menu_left - Frlg_readers.Pc_screen.withdraw_shift;
+    width = 68;
   }
 
 let pc_data_species =
@@ -240,3 +251,48 @@ let pc_data_level =
 
 let pc_message =
   { id = "pc_message"; left = 88; indent = 0; glyph_top = 138; width = 140 }
+
+(* The Pokédex's numerical list: window at tile (2, 2), rows 14 apart from
+   y 2, the names at x 56 and the No symbol at x 12, its digits 9 right. *)
+let pokedex_list_rows = 9
+let pokedex_list_first_top = 18
+let pokedex_list_pitch = 14
+
+let pokedex_list_row_top row =
+  pokedex_list_first_top + (pokedex_list_pitch * row)
+
+let pokedex_list_name row =
+  {
+    id = Printf.sprintf "pokedex_name.%d" row;
+    left = 72;
+    indent = 2;
+    glyph_top = pokedex_list_row_top row;
+    width = 62;
+  }
+
+let pokedex_number_left = 37
+
+let pokedex_list_number_digit row k =
+  small_digit_cell
+    (Printf.sprintf "pokedex_number.%d.%d" row k)
+    ~left:(pokedex_number_left + (small_digit_width * k))
+    ~glyph_top:(pokedex_list_row_top row)
+
+(* The naming screen's text entry: window WIN_TEXT_ENTRY at tile (8, 6),
+   each character printed alone at x [8 i + base - 64] of the window and y 1,
+   base = (240 - 8 max_chars) / 2 + 6 (pokefirered naming_screen.c,
+   [DrawTextEntry], [NamingScreen_Init]). *)
+let naming_entry_pitch = 8
+let naming_entry_glyph_top = 49
+let naming_entry_centre = 6
+
+let naming_entry_cell ~max_chars i =
+  {
+    id = Printf.sprintf "naming_entry.%d" i;
+    left =
+      ((game_width_px - (naming_entry_pitch * max_chars)) / 2)
+      + naming_entry_centre + (naming_entry_pitch * i);
+    indent = 0;
+    glyph_top = naming_entry_glyph_top;
+    width = naming_entry_pitch;
+  }

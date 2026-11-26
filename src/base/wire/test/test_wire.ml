@@ -35,6 +35,8 @@ let result_round_trips =
     ("hello", fun j -> Wire.(json_of_hello_result (hello_result_of_json j)));
     ( "backend.load_state",
       fun j -> Wire.(json_of_load_state_result (load_state_result_of_json j)) );
+    ( "backend.reset",
+      fun j -> Wire.(json_of_load_state_result (load_state_result_of_json j)) );
     ( "backend.save_state",
       fun j -> Wire.(json_of_save_result (save_result_of_json j)) );
     ( "backend.save_frame",
@@ -130,6 +132,19 @@ let check_template_upload dir =
              ~delivery:Latest ~template:hash ()
       then failwith "FAILED ink subscribe differs from the constructor"
   | _ -> failwith "FAILED template subscribe decoded as something else");
+  (match
+     Wire.message_of_json
+       (read_golden dir "55-subscribe.skip_seams.request.json")
+   with
+  | Wire.Request { call = Wire.Subscribe [ title ]; _ } ->
+      let box = { Wire.x = 0.558333; y = 0.125; w = 0.2; h = 0.1 } in
+      let ink = { Wire.min = (0, 0, 0); max = (90, 90, 90) } in
+      if
+        title
+        <> Wire.template_match_probe ~ink ~skip_seams:true
+             ~id:"pc_box_title/BOX1" ~box ~delivery:Latest ~template:hash ()
+      then failwith "FAILED skip_seams subscribe differs from the constructor"
+  | _ -> failwith "FAILED skip_seams subscribe decoded as something else");
   (* Wrong length, '=' inside, padding before the end, a char outside the
      alphabet. *)
   List.iter

@@ -33,6 +33,8 @@ let mover ~running direction hold_ms =
   in
   [ Wire.press ~hold_ms ~cooldown_ms:step_release_ms buttons ]
 
+let turn_ms = mechanics.turn_tap_ms + turn_settle_ms
+
 let turn_tap direction =
   [
     Wire.press ~hold_ms:mechanics.turn_tap_ms ~cooldown_ms:turn_settle_ms

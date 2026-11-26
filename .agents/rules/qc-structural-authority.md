@@ -12,6 +12,8 @@ on a real PR; the PR is named so the reviewer can read the case.
 ## Project context
 
 - Hard rules: `AGENTS.md`. Layers and boundaries: `docs/design/Layered-Automation-Stack.md`.
+- The user's review rules, each with examples and how to find it: `.agents/rules/review-rules.md`.
+  The rows below cite them by id.
 - Lints: `dev/lint/lint_ocaml.sh` (function length, nesting, magic numbers, file length, `.mli`
   for every `lib/` module, layer boundaries, no exceptions) with waivers in
   `dev/lint/ocaml_lint_exceptions.conf`; `dev/lint/lint_dune.sh` (no C, opam allowlist).
@@ -90,7 +92,8 @@ other private ideas without a pointer to them. Module doc comments say what the 
 for a port, where it comes from (S8). Text read from the game screen (dialogue, menu labels)
 names its language risk: GamePilot keeps multi-language support as a goal. An undocumented type
 or val → **FAIL** naming it. Applies to `lib/` interfaces; a variant whose constructors say it
-all (`Mono | Stereo`) still needs one line on what the type is for.
+all (`Mono | Stereo`) still needs one line on what the type is for. The lint `interface_docs`
+(R11) finds a missing doc; this row judges what it says, and new items in a file it still waives.
 
 ### S6 Readable tests
 

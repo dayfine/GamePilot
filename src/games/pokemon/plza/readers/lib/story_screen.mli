@@ -1,4 +1,4 @@
-(** Reader: what 01.01's story screen shows, every PLZA reading of one frame, as
+(** Reader: what a story screen shows, every PLZA reading of one frame, as
     PokemonLZA_AutoStoryScreenEvents.cpp and
     PokemonLZA_AutoStoryConsoleBackend.cpp combine them. A black or white fade
     (the middle 80% of the frame, {!Screen_state.Fade}) hides the dialogue and
@@ -8,9 +8,8 @@
     controls hint, advance chevron and tutorial card read through a fade.
 
     Not read here: the Switch HOME menu ({!Switch_home.Home_screen}); whether
-    the screen is still (the fork compares the frame with the one before, which
-    no probe does yet); whether the player can move (the fork's PLZA screen
-    never says so; the controls hint stands for it). *)
+    the screen is still ({!Frame_cells}, which the live screen compares between
+    reads). *)
 
 type t = {
   fade : Screen_state.Fade.t;
@@ -18,9 +17,36 @@ type t = {
   choice_box : bool;
   advance_arrow : bool;
   controls_hint : bool;
+      (** not in battle: the battle's own hint ("ZL: Focus on a Pokémon") sits
+          where the controls hint does and can read as it *)
   autosave : bool;
   tutorial_card : bool;
   choice_rows : Choice_rows.t option;  (** only with a choice box *)
+  interact_prompt : bool;
+      (** an A prompt ({!Interact_prompt}), with no fade and no text box *)
+  battle : bool;  (** the battle HUD ({!Battle_hud}), with no fade *)
+  lead_hp : float option;
+      (** the lead's HP bar fill under its level badge ({!Battle_hud.lead_hp}),
+          with no fade *)
+  story_dialog : bool;
+      (** a dialogue box as the fork's default story dialogue detector
+          (PokemonLZA_StoryDialogDetector.cpp) reads it: the white box with its
+          arrow, or the blue or teal box *)
+  moves : Move_symbols.symbol option list;
+      (** the four moves' effectiveness symbols ({!Move_symbols}) *)
+  party_bar : bool;
+      (** the overworld party bar ({!Party_bar}), with no fade and no text box:
+          the fork's can-move event *)
+  map_pin : Map_pin.point option;
+      (** the player's pin on the full map ({!Map_pin}) *)
+  minimap_arrow : float option;
+      (** the bearing of the minimap's arrow ({!Minimap_arrow}), degrees *)
+  run_prompt : bool;  (** a wild battle's Run prompt ({!Run_prompt}) *)
+  main_menu : bool;  (** the game's main menu ({!Main_menu}) *)
+  alert_eye : bool;  (** a wild Pokemon's alert eye ({!Alert_eye}) *)
+  minimap : string option;
+      (** the recorded minimap the top-left one matches ({!Minimap}), with no
+          fade and no text box, as the fork reads a start signature *)
 }
 (** What one frame shows. *)
 

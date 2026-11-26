@@ -47,8 +47,7 @@
         "kind": "game_action",
         "action": "fly",
         "args": {
-          "town": "IndigoPlateau",
-          "species": "pidgey"
+          "town": "IndigoPlateau"
         },
         "declared_after": {"map": "IndigoPlateau_Exterior", "tiles": [[11, 7]]},
         "why": "Fly to Indigo Plateau: Victory Road 2F's north exit is a short walk south on Route 23"
@@ -66,7 +65,7 @@
     "phase": "testing",
     "notes": "Ends at the Indigo Plateau nurse, healed: 05-grind-mr-mime's start, where every grind round is saved. CH'DING knows Knock Off; one Escape Rope used; the nurse heals for free.",
     "postconditions": {
-      "party_includes": ["blastoise", "pidgey", "mr-mime", "farfetchd"],
+      "party_includes": ["blastoise", "mr-mime", "farfetchd"],
       "money": {"spent": 0},
       "items": [
         {"item": "revive", "gained": 0},

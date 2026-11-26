@@ -3,13 +3,6 @@
 let expect name ok =
   if ok then Printf.printf "ok %s\n" name else failwith ("FAILED " ^ name)
 
-let contains s sub =
-  let n = String.length sub in
-  let rec go i =
-    i + n <= String.length s && (String.sub s i n = sub || go (i + 1))
-  in
-  go 0
-
 let hello =
   [
     {|{"dir":"in","t_ms":0,"msg":{"jsonrpc":"2.0","id":1,"method":"hello","params":{"protocol":1,"client":"gamepilot-programs/0.1"}}}|};
@@ -54,7 +47,8 @@ let () =
   | exception Replay.Divergence e ->
       print_endline e;
       expect "missing recorded request -> divergence"
-        (contains e "line 5" && contains e "submit (id 3)")
+        (Strings.Contains.substring e "line 5"
+        && Strings.Contains.substring e "submit (id 3)")
 
 (* A reader that misses on the recorded frames times out where the live run
    pressed next; the program then fails on its own path, which is its outcome,
@@ -192,7 +186,8 @@ let () =
   | r -> failwith ("FAILED replay accepted a missed stop: " ^ raced_text r)
   | exception Replay.Divergence e ->
       print_endline e;
-      expect "missed stop -> divergence" (contains e "cancel (id 4)")
+      expect "missed stop -> divergence"
+        (Strings.Contains.substring e "cancel (id 4)")
 
 (* [probe.upload_template]: each PNG goes up once per connection, and a replay
    checks the bytes the program uploads against the recorded ones. *)
@@ -232,7 +227,8 @@ let () =
   | exception Replay.Divergence e ->
       print_endline e;
       expect "other template bytes -> divergence"
-        (contains e "line 5" && contains e "template differs")
+        (Strings.Contains.substring e "line 5"
+        && Strings.Contains.substring e "template differs")
 
 (* [unsubscribe]: [with_probes] unsubscribes after the reader is done, the
    latest frame drops the probe, and a replay checks the ids. *)
@@ -280,7 +276,8 @@ let () =
   | _ -> failwith "FAILED replay accepted an unsubscribe of other ids"
   | exception Replay.Divergence e ->
       print_endline e;
-      expect "other unsubscribe ids -> divergence" (contains e "ids differs")
+      expect "other unsubscribe ids -> divergence"
+        (Strings.Contains.substring e "ids differs")
 
 (* v1.4: a frame carries only the results that changed; the session keeps the
    others, so a reader still sees every subscribed probe. *)
@@ -387,7 +384,7 @@ let () =
   | exception Replay.Divergence e ->
       print_endline e;
       expect "stick press -> divergence naming the stick"
-        (contains e "press B left 0,1 hold 500")
+        (Strings.Contains.substring e "press B left 0,1 hold 500")
 
 (* run_with_backend hands the program the recorded hello's backend: where the
    game picture sat in the frame. *)
@@ -407,3 +404,44 @@ let () =
   expect "run_with_backend: the recorded hello's viewport"
     (backend.kind = "mgba" && backend.viewport.w = 1.
    && backend.game_width = 240)
+
+(* [queue]: the program queues a ZL hold, reads a frame while it runs, then
+   queues the next hold before it ends; neither waits for a batch_done, and
+   the queued batches' batch_done do not end a later submit. *)
+let () =
+  let zl ms = [ Wire.press ~hold_ms:ms ~cooldown_ms:0 [ ZL ] ] in
+  let submit ~id ~batch ~ms =
+    [
+      Printf.sprintf
+        {|{"dir":"in","t_ms":2,"msg":{"jsonrpc":"2.0","id":%d,"method":"submit","params":{"batch_id":"%s","commands":[{"press":["ZL"],"hold_ms":%d,"cooldown_ms":0}]}}}|}
+        id batch ms;
+      Printf.sprintf
+        {|{"dir":"out","t_ms":2,"msg":{"jsonrpc":"2.0","id":%d,"result":{"batch_id":"%s","start_seq":501}}}|}
+        id batch;
+    ]
+  in
+  let log =
+    Replay.log_of_lines
+      (hello
+      @ submit ~id:3 ~batch:"b1" ~ms:1000
+      @ [ frame ~seq:560 ~load:2 ]
+      @ submit ~id:4 ~batch:"b2" ~ms:1000
+      @ submit ~id:5 ~batch:"b3" ~ms:100
+      @ [
+          batch_done ~batch_id:"b1" ~seq:620;
+          batch_done ~batch_id:"b2" ~seq:680;
+          batch_done ~batch_id:"b3" ~seq:686;
+        ])
+  in
+  let program () =
+    ignore (Effects.load_state "state.ss" : int);
+    Effects.queue (zl 1000);
+    let read = Effects.await ~timeout_ms:1000 (fun m -> m.seq >= 560) in
+    Effects.queue (zl 1000);
+    let d = Effects.submit (zl 100) in
+    (read, d.batch_id)
+  in
+  expect "queue: read while held, the next queued, a submit ends on its own"
+    (match Replay.run log program with
+    | Effects.Holds m, "b3" -> m.seq = 560
+    | _ -> false)

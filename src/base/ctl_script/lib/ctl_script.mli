@@ -1,10 +1,10 @@
 (** The commands of [gamepilot ctl], one per line of a script or one from the
-    command line, in the lab's labB.sh format: [press A 100 800] (button, hold
-    ms, wait ms after the release), [dpad DOWN 160 800], [shot NAME], [wait MS];
-    [#] starts a comment. Buttons are the daemon's (protocol/v1), any case: the
-    GBA buttons, PLUS and MINUS naming Start and Select as the Switch's GBA app
-    maps them, and the Switch's own HOME, X and Y, which only the Switch backend
-    takes. *)
+    command line: [press A 100 800] (button, hold ms, wait ms after the
+    release), [dpad DOWN 160 800], [shot NAME], [wait MS]; [#] starts a comment.
+    Buttons are the daemon's (protocol/v1), any case: the GBA buttons, and the
+    Switch's own HOME, X, Y, ZL, ZR, PLUS, MINUS and LSTICK, which only the
+    Switch backend takes (on the Switch, START and SELECT press Plus and Minus
+    too, as the Switch's GBA app maps them). *)
 
 type step =
   | Press of { button : Wire.button; hold_ms : int; wait_ms : int; times : int }
@@ -36,3 +36,12 @@ val sends_input : step -> bool
 
 val commands : step -> Wire.command list
 (** The batch a press or a wait submits; [[]] for the others. *)
+
+type reader = {
+  name : string;
+  doc : string;
+  read : unit -> (string * string) list;
+}
+(** A reader [read NAME] runs once on the current frame (a game's, picked by its
+    rules): its name, a line saying what it reads, and the reading as
+    [field: value] pairs, in the effect context. *)

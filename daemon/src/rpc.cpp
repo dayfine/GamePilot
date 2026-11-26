@@ -214,6 +214,22 @@ PixelTest require_pixel_test(const pa::JsonObject& probe,
   return test;
 }
 
+// core.template_match@1's optional skip_seams: a boolean, and only with ink
+// (without ink there are no masks, so no seams of one to skip).
+bool optional_skip_seams(const pa::JsonObject& probe, const ProbeSpec& spec) {
+  const pa::JsonValue* skip = probe.get_value("skip_seams");
+  if (skip == nullptr) {
+    return false;
+  }
+  if (!skip->is_boolean()) {
+    throw RpcError(kInvalidParams, "skip_seams must be a boolean: " + spec.id);
+  }
+  if (!spec.ink) {
+    throw RpcError(kInvalidParams, "skip_seams needs ink: " + spec.id);
+  }
+  return skip->to_boolean_default();
+}
+
 // core.find@1's params.
 FindSpec require_find(const pa::JsonObject& probe,
                       const std::string& probe_id) {
@@ -240,6 +256,12 @@ FindSpec require_find(const pa::JsonObject& probe,
   }
   if (probe.get_value("shape") != nullptr) {
     find.shape_hash = require_string(probe, "shape");
+  }
+  if (const pa::JsonValue* masked = probe.get_value("masked")) {
+    if (!masked->is_boolean()) {
+      throw RpcError(kInvalidParams, "masked must be a boolean: " + probe_id);
+    }
+    find.masked = masked->to_boolean_default();
   }
   return find;
 }
@@ -405,21 +427,27 @@ SubscribeParams decode_subscribe(const pa::JsonObject& params) {
                      "delivery must be every or latest: " + spec.id);
     }
     const bool has_template = probe.get_value("template") != nullptr ||
-                              probe.get_value("ink") != nullptr;
+                              probe.get_value("ink") != nullptr ||
+                              probe.get_value("skip_seams") != nullptr;
     if (spec.kind == kTemplateMatchKind) {
       spec.template_hash = require_string(probe, "template");
       if (const pa::JsonValue* ink = probe.get_value("ink")) {
         spec.ink = require_color_range(require_object(*ink, "ink"), spec.id);
       }
+      spec.skip_seams = optional_skip_seams(probe, spec);
     } else if (spec.kind == kFindKind) {
-      if (probe.get_value("ink") != nullptr) {
-        throw RpcError(kInvalidParams,
-                       "ink is only for core.template_match@1: " + spec.id);
+      if (probe.get_value("ink") != nullptr ||
+          probe.get_value("skip_seams") != nullptr) {
+        throw RpcError(
+            kInvalidParams,
+            "ink and skip_seams are only for core.template_match@1: " +
+                spec.id);
       }
       spec.find = require_find(probe, spec.id);
     } else if (has_template) {
       throw RpcError(kInvalidParams,
-                     "template and ink are only for core.template_match@1 "
+                     "template, ink and skip_seams are only for "
+                     "core.template_match@1 "
                      "(template also for core.find@1): " +
                          spec.id);
     }
@@ -457,9 +485,9 @@ UnsubscribeParams decode_unsubscribe(const pa::JsonObject& params) {
 namespace {
 
 // The buttons by KeyMask bit (backend.h).
-constexpr std::array<const char*, 13> kButtons = {
-    "A",    "B", "Select", "Start", "Right", "Left", "Up",
-    "Down", "R", "L",      "Home",  "X",     "Y"};
+constexpr std::array<const char*, 18> kButtons = {
+    "A", "B",    "Select", "Start", "Right", "Left", "Up",   "Down",  "R",
+    "L", "Home", "X",      "Y",     "ZL",    "ZR",   "Plus", "Minus", "LStick"};
 
 }  // namespace
 
@@ -530,7 +558,16 @@ SubmitParams decode_submit(const pa::JsonObject& params) {
   return submit;
 }
 
-CancelParams decode_cancel(const pa::JsonObject&) { return CancelParams{}; }
+CancelParams decode_cancel(const pa::JsonObject& params) {
+  CancelParams cancel;
+  if (params.get_value("then") != nullptr) {
+    cancel.then =
+        decode_submit(require_object(*params.get_value("then"), "then"));
+  }
+  return cancel;
+}
+
+void decode_reset(const pa::JsonObject&) {}
 
 LeaseAcquireParams decode_lease_acquire(const pa::JsonObject& params) {
   LeaseAcquireParams lease;

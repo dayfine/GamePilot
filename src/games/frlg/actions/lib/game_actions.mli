@@ -8,16 +8,16 @@ type context = {
   facing : unit -> Grid_geometry.Direction.t option;
       (** Where the player faces, when known (the spin starts from it). *)
   stocks : unit -> (Mart_plan.stocks, string) result;
+  options : Run_options.t;
+      (** The program's run options, for the actions that read them. *)
 }
 
 val perform :
-  context ->
-  Action_requests.t ->
-  (unit, Pokemon_checkpoints.Failure.cause) result
+  context -> Action_requests.t -> (unit, Pokemon_engine.Failure.cause) result
 (** Runs the action. An in-game trade whose offer is gone and whose [receive] is
     in the party already passes without a press (it ran before this save). *)
 
-val handlers : context -> (string * Pokemon_checkpoints.Game.game_action) list
-(** One handler per {!Action_requests.names}: decode, then {!perform}; then
-    mg-06's ({!Mail_glitch_use.handlers}) and the Rare Candy ones
-    ({!Candy_actions.handlers}). *)
+val handlers : context -> (string * Pokemon_engine.Game.game_action) list
+(** Every FireRed game action a plan can name, by its name: the shared ones
+    ({!Action_requests.names}: decode, then {!perform}) and those of the FireRed
+    action modules. *)

@@ -104,20 +104,8 @@ let viewport f =
   | Some (_, p) -> Program_registry.check_viewport p f.viewport
   | None -> Ok f.viewport
 
-let run f frames ~viewport =
-  let info : Run_record.info =
-    {
-      kind = Bring_up;
-      program = [];
-      from_id = "";
-      to_id = "";
-      backend = "switch";
-    }
-  in
-  let run =
-    Run_record.start ~runs_dir:f.runs_dir info ~checkpoint:"switch"
-      ~mode:"bring-up"
-  in
+(* The board, the resume and the capture, in the run's folder. *)
+let checks f frames ~viewport (run : Run_record.run) =
   let out = Run_record.path run.record "daemon.out" in
   print_endline ("[Bring-up] " ^ run.record.dir);
   let serial =
@@ -138,6 +126,22 @@ let run f frames ~viewport =
   Run_record.finish ~runs_dir:f.runs_dir run ~summary:(summary e) e;
   if e.result = "pass" then 0 else 1
 
+let run f frames ~viewport =
+  let info : Run_record.info =
+    {
+      kind = Bring_up;
+      program = [];
+      from_id = "";
+      to_id = "";
+      backend = "switch";
+      options = [];
+    }
+  in
+  Result.map
+    (checks f frames ~viewport)
+    (Run_record.start ~runs_dir:f.runs_dir info ~checkpoint:"switch"
+       ~mode:"bring-up")
+
 let main args =
   let defaults =
     {
@@ -153,5 +157,5 @@ let main args =
   let* f = parse defaults args in
   let* viewport = viewport f in
   match f.frames with
-  | Some frames -> Ok (run f frames ~viewport)
+  | Some frames -> run f frames ~viewport
   | None -> Error "--capture DEVICE or --replay VIDEO is required"

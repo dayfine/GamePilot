@@ -1,0 +1,8 @@
+(tests
+ (names test_walk test_map_leg test_face_heading)
+ (libraries
+  gamepilot.table_test
+  gamepilot.wire
+  gamepilot.engine_run
+  gamepilot.plza_rules
+  gamepilot.plza_walk))

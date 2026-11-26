@@ -36,6 +36,9 @@ let species =
 
 let dark = Line_reading.ink
 
+(* The Kanto Pokédex's species: the first 151 in the game's order. *)
+let kanto_species = 151
+
 (* Each screen: its font, its lines, their candidates and the ink they are read
    in. *)
 let screens =
@@ -72,6 +75,23 @@ let screens =
       cells ~rows:7 ~cells:3 Text_lines.bag_count_digit,
       Number_reading.digits,
       dark );
+    ( "item_pc",
+      glyphs,
+      rows 6 Item_pc_lines.row,
+      Item_names.in_pocket items Items
+      @ Item_names.in_pocket items Poke_balls
+      @ [ "CANCEL" ],
+      dark );
+    ( "item_pc_counts",
+      small_glyphs,
+      cells ~rows:6 ~cells:3 Item_pc_lines.count_digit,
+      Number_reading.digits,
+      dark );
+    ( "item_pc_quantity",
+      small_glyphs,
+      List.init 3 Item_pc_lines.quantity_digit,
+      Number_reading.digits,
+      dark );
     ( "summary_level",
       glyphs,
       List.init Summary_level.max_digits Text_lines.summary_level_digit,
@@ -81,6 +101,39 @@ let screens =
       small_glyphs,
       cells ~rows:7 ~cells:2 Text_lines.berry_pouch_number_digit,
       Number_reading.digits,
+      dark );
+    ( "pc_message",
+      glyphs,
+      [ Text_lines.pc_message ],
+      [ "Deposit in which BOX?"; "The BOX is full."; "Please remove the MAIL." ],
+      dark );
+    ( "player_pc_menu",
+      glyphs,
+      rows 3 Item_pc_lines.menu_row,
+      [
+        "ITEM STORAGE";
+        "MAILBOX";
+        "TURN OFF";
+        "WITHDRAW ITEM";
+        "DEPOSIT ITEM";
+        "CANCEL";
+      ],
+      dark );
+    ( "pokedex_list",
+      glyphs,
+      rows Text_lines.pokedex_list_rows Text_lines.pokedex_list_name,
+      List.filteri (fun i _ -> i < kanto_species) species @ [ "-----" ],
+      dark );
+    ( "pokedex_numbers",
+      small_glyphs,
+      cells ~rows:Text_lines.pokedex_list_rows ~cells:3
+        Text_lines.pokedex_list_number_digit,
+      Number_reading.digits,
+      dark );
+    ( "naming_entry",
+      glyphs,
+      List.init 8 (Text_lines.naming_entry_cell ~max_chars:8),
+      Naming_keyboard.charset,
       dark );
     ( "card_numbers",
       glyphs,
@@ -121,6 +174,52 @@ let mail_probes dir screen =
       line_probes dir screen glyphs dark (Mail_fields.line glyphs text) [ text ])
     mail_candidates
 
+(* The box title: each candidate on its own line, centred as the game
+   centres it, matched by its dark outline. The default names first (the
+   Switch's captures show Boxes 1-14 so named). *)
+let box_title_candidates =
+  List.init 14 (fun i -> Printf.sprintf "BOX%d" (i + 1))
+  @ [ "Az!…'.,9"; "”‘' A a." ]
+  (* The bag-prep code's names (docs/design/FRLG-ACE-Execution.md), each
+     item's Boxes 5-8 among them: a name must read as itself, not as a near
+     one. *)
+  @ [
+      "xFUnDRRn";
+      "……o/E!n";
+      "EE …l‘";
+      "E♀BRm";
+      "’BRm";
+      " FoHIoor";
+      "xn";
+      "A";
+      "G……o";
+      "Q……o";
+      "J……o";
+      "L……o";
+      "K……o";
+      "EEEJD!n";
+      "EEEND!n";
+      "EEEOD!n";
+      "EEIB!n";
+      "EI/!n";
+    ]
+
+let box_title_probes dir screen =
+  let sub = Filename.concat dir screen in
+  if not (Sys.file_exists sub) then Sys.mkdir sub 0o755;
+  List.filter_map
+    (fun text ->
+      match Box_title.template glyphs text with
+      | Error _ -> None
+      | Ok (line, png) ->
+          let name =
+            Printf.sprintf "%s/%s.%x.png" screen line.Text_lines.id
+              (Hashtbl.hash text)
+          in
+          write_file (Filename.concat dir name) png;
+          Some (Box_title.probe_of line text ~template:name))
+    box_title_candidates
+
 let write_spec dir screen probes =
   let request =
     Wire.json_of_message (Request { id = 1; call = Subscribe probes })
@@ -139,4 +238,6 @@ let () =
   let dir = Sys.argv.(1) in
   List.iter (write_screen dir) screens;
   let mail = "mail_editor" in
-  write_spec dir mail (mail_probes dir mail)
+  write_spec dir mail (mail_probes dir mail);
+  let title = "box_title" in
+  write_spec dir title (box_title_probes dir title)

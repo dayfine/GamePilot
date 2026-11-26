@@ -5,9 +5,10 @@ type look = {
   label : string option;
   species : string option;
   box_full : bool;
+  remove_mail : bool;
 }
 
-type press = A | B | Up | Down | Right | Wait | Done | Fail of string
+type press = A | B | Up | Down | Left | Right | Wait | Done | Fail of string
 
 type t = {
   targets : string list;  (** Still to store, the next first. *)
@@ -74,6 +75,10 @@ let storage_menu t (look : look) =
   | Some 1 -> (t, Fail "the storage menu's row 2 did not read as DEPOSIT")
   | Some c -> (t, if c = 0 then Down else Up)
 
+let holds_mail target =
+  target
+  ^ " holds Mail: the game will not store it (\"Please remove the MAIL.\")"
+
 let party_panel t (look : look) =
   let t =
     if t.storing then
@@ -86,6 +91,7 @@ let party_panel t (look : look) =
     else t
   in
   match (t.targets, look.view.cursor) with
+  | target :: _, _ when look.remove_mail -> (t, Fail (holds_mail target))
   | [], _ -> (t, B)
   | target :: _, Some _ when look.species = Some target -> (t, A)
   | _ :: _, Some c when c < last_slot -> (t, Down)
@@ -129,6 +135,7 @@ let press_to_string = function
   | B -> "B"
   | Up -> "UP"
   | Down -> "DOWN"
+  | Left -> "LEFT"
   | Right -> "RIGHT"
   | Wait -> "wait"
   | Done -> "done"

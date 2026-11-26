@@ -20,6 +20,7 @@ let json_of_error { code; message; data } =
 type call =
   | Hello of { protocol : int; client : string }
   | Load_state of { path : string }
+  | Reset
   | Save_state of { path : string }
   | Save_frame of { path : string }
   | Upload_template of { png : string }
@@ -27,6 +28,7 @@ type call =
   | Unsubscribe of string list
   | Submit of { batch_id : string; commands : Command.command list }
   | Cancel
+  | Cancel_then of { batch_id : string; commands : Command.command list }
   | Status
   | Lease_acquire of { owner : string; ttl_ms : int option }
   | Lease_release
@@ -51,13 +53,14 @@ type message =
 let method_name = function
   | Hello _ -> "hello"
   | Load_state _ -> "backend.load_state"
+  | Reset -> "backend.reset"
   | Save_state _ -> "backend.save_state"
   | Save_frame _ -> "backend.save_frame"
   | Upload_template _ -> "probe.upload_template"
   | Subscribe _ -> "subscribe"
   | Unsubscribe _ -> "unsubscribe"
   | Submit _ -> "submit"
-  | Cancel -> "cancel"
+  | Cancel | Cancel_then _ -> "cancel"
   | Status -> "status"
   | Lease_acquire _ -> "lease.acquire"
   | Lease_release -> "lease.release"
@@ -90,12 +93,21 @@ let submit_of_params what params =
         List.map Command.command_of_json (list_field what "commands" params);
     }
 
+let cancel_of_params what params =
+  match field_opt what "then" params with
+  | None -> Cancel
+  | Some then_ -> (
+      match submit_of_params (what ^ ".then") then_ with
+      | Submit { batch_id; commands } -> Cancel_then { batch_id; commands }
+      | _ -> fail "%s.then: not a batch" what)
+
 let call_of_json name params =
   let what = name ^ ".params" in
   match name with
   | "hello" -> hello_of_params what params
   | "backend.load_state" ->
       Load_state { path = string_field what "path" params }
+  | "backend.reset" -> Reset
   | "backend.save_state" ->
       Save_state { path = string_field what "path" params }
   | "backend.save_frame" ->
@@ -106,11 +118,18 @@ let call_of_json name params =
         (List.map Probe.probe_spec_of_json (list_field what "probes" params))
   | "unsubscribe" -> Unsubscribe (string_list_field what "ids" params)
   | "submit" -> submit_of_params what params
-  | "cancel" -> Cancel
+  | "cancel" -> cancel_of_params what params
   | "status" -> Status
   | "lease.acquire" -> lease_acquire_of_params what params
   | "lease.release" -> Lease_release
   | m -> fail "unknown method %S" m
+
+let submit_params batch_id commands =
+  `Assoc
+    [
+      ("batch_id", `String batch_id);
+      ("commands", `List (List.map Command.json_of_command commands));
+    ]
 
 let params_of_call = function
   | Hello { protocol; client } ->
@@ -121,18 +140,15 @@ let params_of_call = function
   | Subscribe probes ->
       `Assoc [ ("probes", `List (List.map Probe.json_of_probe_spec probes)) ]
   | Unsubscribe ids -> `Assoc [ ("ids", json_of_strings ids) ]
-  | Submit { batch_id; commands } ->
-      `Assoc
-        [
-          ("batch_id", `String batch_id);
-          ("commands", `List (List.map Command.json_of_command commands));
-        ]
+  | Submit { batch_id; commands } -> submit_params batch_id commands
+  | Cancel_then { batch_id; commands } ->
+      `Assoc [ ("then", submit_params batch_id commands) ]
   | Lease_acquire { owner; ttl_ms } ->
       `Assoc
         (("owner", `String owner)
         :: Option.fold ~none:[] ~some:(fun ms -> [ ("ttl_ms", `Int ms) ]) ttl_ms
         )
-  | Cancel | Status | Lease_release -> `Assoc []
+  | Reset | Cancel | Status | Lease_release -> `Assoc []
 
 let check_version j =
   match field_opt "message" "jsonrpc" j with

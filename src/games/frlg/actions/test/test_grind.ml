@@ -24,11 +24,11 @@ let plan json = Result.get_ok (Grind_plan.decode strategies (obj json))
 let decode json () =
   match Grind_plan.decode strategies (obj json) with
   | Ok t -> Grind_plan.describe t
-  | Error c -> Pokemon_checkpoints.Failure.cause_to_string c
+  | Error c -> Pokemon_engine.Failure.cause_to_string c
 
 let heal_name : Grind_plan.heal -> string = function
-  | Nurse g -> "nurse at " ^ Pokemon_checkpoints.Pose_text.grid g
-  | Pad g -> "pad at " ^ Pokemon_checkpoints.Pose_text.grid g
+  | Nurse g -> "nurse at " ^ Pokemon_engine.Pose.grid_to_string g
+  | Pad g -> "pad at " ^ Pokemon_engine.Pose.grid_to_string g
 
 let strategy name () =
   match
@@ -37,7 +37,7 @@ let strategy name () =
   | None -> "none"
   | Some s ->
       Printf.sprintf "spot %s; heal every %d, %s"
-        (Pokemon_checkpoints.Pose_text.grid s.spot)
+        (Pokemon_engine.Pose.grid_to_string s.spot)
         s.heal_every (heal_name s.heal)
 
 let decoding =
@@ -151,19 +151,13 @@ let fake_battle_game_steps (b : fake_battle) calls : B.Battle.game_steps =
 
 (* The log lines a flow shows as calls: the ends' (capped, reached, skipped);
    with [~battle_lines], the per-battle ones too. *)
-let contains line part =
-  let n = String.length part in
-  let rec from i =
-    i + n <= String.length line && (String.sub line i n = part || from (i + 1))
-  in
-  from 0
-
 let shown ~battle_lines line =
   String.starts_with ~prefix:"Grind: capped" line
   || String.starts_with ~prefix:"Grind: round over" line
-  || contains line " could not come in"
-  || contains line " reached Lv "
-  || (contains line " already; skipped" && not (contains line " knows "))
+  || Strings.Contains.substring line " could not come in"
+  || Strings.Contains.substring line " reached Lv "
+  || Strings.Contains.substring line " already; skipped"
+     && not (Strings.Contains.substring line " knows ")
   || (battle_lines && String.starts_with ~prefix:"Grind: battle" line)
 
 (* [cap]: the runner's --grind-battles. [levels]: what the summary reads, one
@@ -196,7 +190,7 @@ let flow ?cap ?(battle_lines = false) ?(levels = [ Some 9 ]) ~party ~known
         (fun a b ->
           call (Printf.sprintf "swap %d %d" a b);
           party := Party_roster.swap !party a b);
-      go_to = (fun g -> call ("go " ^ Pokemon_checkpoints.Pose_text.grid g));
+      go_to = (fun g -> call ("go " ^ Pokemon_engine.Pose.grid_to_string g));
       heal = (fun h -> call ("heal " ^ heal_name h));
       find_battle = (fun () -> call "spin");
       battle =
@@ -226,7 +220,7 @@ let flow ?cap ?(battle_lines = false) ?(levels = [ Some 9 ]) ~party ~known
     match Grind.run ?cap fake_game_steps plan with
     | () -> "ok"
     | exception Menu_input.Action_failed c ->
-        "failed " ^ Pokemon_checkpoints.Failure.cause_to_string c
+        "failed " ^ Pokemon_engine.Failure.cause_to_string c
   in
   String.concat "; " (List.rev !calls) ^ " => " ^ result
 
@@ -503,11 +497,10 @@ let victory_road =
 let nurse_of (s : Grind_plan.strategy) =
   match s.heal with Nurse g | Pad g -> g
 
-let pose_of (g : Pokemon_checkpoints.Pose.grid) :
-    Pokemon_checkpoints.Pose.observed =
+let pose_of (g : Pokemon_engine.Pose.grid) : Pokemon_engine.Pose.observed =
   { at_map = g.map; at_tile = List.hd g.tiles; faces = g.facing }
 
-let legs_from (from : Pokemon_checkpoints.Pose.observed) target =
+let legs_from (from : Pokemon_engine.Pose.observed) target =
   let w = Lazy.force kanto in
   Result.bind (Route_target.place_of w from) (fun place ->
       Route_target.plan w ~from:place ~facing:from.faces target)

@@ -1,8 +1,6 @@
 (** Reader: the screens of System Settings > Data Management > Delete Save Data
     that the delete-save route stops on, read on the whole 1920x1080 frame (the
-    daemon's [native] viewport). The lab's delete-save route, [delete_save.sh]
-    from the BDSPLab lab tools (2026-11-15/25), read the game's title with OCR;
-    there is no OCR probe here, so the game is told by its icon instead, a
+    daemon's [native] viewport). The game is told by its icon, a
     [core.template_match@1] probe per game.
 
     - The game's page: "<game title>" over "Delete Save Data for <user>", that
@@ -18,10 +16,6 @@
 type game = { key : string; icon : Effects.template_hash }
 (** A game as the page reader knows it: a short key (its probe's id) and its
     uploaded icon template, in frame pixels. *)
-
-val native : Wire.box -> bool
-(** The game picture is the whole frame: these screens' boxes and the icon
-    templates are in frame pixels. *)
 
 val icon_probe : game -> Wire.probe_spec
 (** The game's icon match on its page, on the [native] viewport: {!is_game}. *)

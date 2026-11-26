@@ -10,7 +10,7 @@
     - teal: the teal arrow shows.
 
     An arrow is a blob of 150 pixels at least matching its template with a score
-    under 120 ({!Blob_template}). 01.01's screen reads the white box with
+    under 120 ({!Blob_template}). 01.02's screen reads the white box with
     {!Box_only} (PokemonLZA_AutoStoryScreenEvents.cpp): the box shows while its
     text is still typed. *)
 
@@ -25,3 +25,8 @@ val probes : picture:Wire.box -> assets:Blob_assets.t -> Wire.probe_spec list
 val shown : white:white_part -> Effects.measurements -> bool
 (** A white (as [white] asks), blue or teal box shows. [false] for a missing
     probe. *)
+
+val blue_shown : Effects.measurements -> bool
+(** The blue box alone (its corner and white arrow): the fork's blue dialogue
+    detector (PokemonLZA_DialogDetector.cpp), which PLZA's title watches for as
+    it enters the game (PokemonLZA_GameEntry.cpp). *)

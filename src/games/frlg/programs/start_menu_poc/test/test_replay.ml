@@ -7,13 +7,6 @@ let state = Start_menu_poc.default_state
 let expect name ok =
   if ok then Printf.printf "ok %s\n" name else failwith ("FAILED " ^ name)
 
-let contains s sub =
-  let n = String.length sub in
-  let rec go i =
-    i + n <= String.length s && (String.sub s i n = sub || go (i + 1))
-  in
-  go 0
-
 let () =
   let outcome =
     Replay.run
@@ -41,8 +34,9 @@ let () =
   | exception Replay.Divergence e ->
       print_endline e;
       expect "different button -> divergence"
-        (contains e "commands" && contains e "press Start"
-       && contains e "press A")
+        (Strings.Contains.substring e "commands"
+        && Strings.Contains.substring e "press Start"
+        && Strings.Contains.substring e "press A")
 
 (* A program whose wait never holds where the recorded client pressed a button
    times out there (the reader missed on the recorded frames) and must not read
@@ -61,7 +55,7 @@ let () =
   | exception Replay.Divergence e ->
       print_endline e;
       expect "second await past a client message -> divergence"
-        (contains e "recorded client sent submit")
+        (Strings.Contains.substring e "recorded client sent submit")
 
 (* A wire log recorded live on mGBA (FireRed, Pallet overworld state): the
    program passes on it, so a reader change can be checked here without the

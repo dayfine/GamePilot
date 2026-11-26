@@ -16,9 +16,33 @@ type button =
   | Home
   | X
   | Y
+  | ZL
+  | ZR
+  | Plus
+  | Minus
+  | LStick
 
 let all_buttons =
-  [ A; B; Select; Start; Right; Left; Up; Down; R; L; Home; X; Y ]
+  [
+    A;
+    B;
+    Select;
+    Start;
+    Right;
+    Left;
+    Up;
+    Down;
+    R;
+    L;
+    Home;
+    X;
+    Y;
+    ZL;
+    ZR;
+    Plus;
+    Minus;
+    LStick;
+  ]
 
 let string_of_button = function
   | A -> "A"
@@ -34,9 +58,14 @@ let string_of_button = function
   | Home -> "Home"
   | X -> "X"
   | Y -> "Y"
+  | ZL -> "ZL"
+  | ZR -> "ZR"
+  | Plus -> "Plus"
+  | Minus -> "Minus"
+  | LStick -> "LStick"
 
 let switch_only = function
-  | Home | X | Y -> true
+  | Home | X | Y | ZL | ZR | Plus | Minus | LStick -> true
   | A | B | Select | Start | Right | Left | Up | Down | R | L -> false
 
 let button_of_string s =

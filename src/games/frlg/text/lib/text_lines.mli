@@ -135,6 +135,27 @@ val pc_data_level : t
     digits' cell top at y 117 from x 34. Measured on mGBA (the ACE Pokémon in
     Box 3, Lv 100, 2026-11-25). *)
 
+val pokedex_list_rows : int
+(** Rows the Pokédex's numerical list shows at once: 9. *)
+
+val pokedex_list_name : int -> t
+(** The name on shown row [row] (0..8) of the Pokédex's numerical list: the
+    species' name, or ["-----"] for one not seen. pokefirered pokedex_screen.c
+    prints the list in window 1 tile from the left 2 and the top 2, its rows 14
+    pixels apart from y 2 and its names at x 56, so at x 72 from y 18; type
+    icons from x 136 on a caught species' row. Measured on mGBA (the Mail Glitch
+    save's list, 2026-11-25), on the English game, whose names and dashes it is
+    read against: another language needs its own names and a check of the
+    positions. *)
+
+val pokedex_list_number_digit : int -> int -> t
+(** [pokedex_list_number_digit row k]: digit [k] (0: hundreds) of the number on
+    shown row [row] (0..8) of the Pokédex's numerical list, the ["129"] of
+    ["No129"]. Small font: pokedex_screen.c prints the No symbol at x 12 of the
+    window and the three digits (leading zeros) 9 pixels right of it, so from x
+    37. Measured on the English game: another language's No symbol may be wider,
+    and the position needs a check there. *)
+
 (** {1 Template rows and the probe box} *)
 
 val template_top : int
@@ -154,11 +175,20 @@ val box : t -> Wire.box
 val pc_menu_row : int -> t
 (** Row [i] of the PC list ("BILL'S PC" on top) and of the storage menu
     (WITHDRAW POKéMON, DEPOSIT POKéMON, ...): pokefirered's menus, measured on
-    console B's captures (CommandLineTests PcScreenReader) and mGBA frames. *)
+    console B's captures (the CommandLineTests of the fork's
+    Inference/Box/PokemonFRLG_PcScreenReader.cpp) and mGBA frames. *)
 
 val pc_mon_menu_row : int -> t
 (** Row [i] (0-4) of a Pokémon's menu on the box screen: STORE, SUMMARY, MARK,
     RELEASE, CANCEL. *)
+
+val pc_withdraw_menu_row : int -> t
+(** Row [i] (0-4) of a box Pokémon's menu under WITHDRAW POKéMON: WITHDRAW,
+    SUMMARY, MARK, RELEASE, CANCEL. WITHDRAW is wider than STORE, so the menu
+    sits {!Frlg_readers.Pc_screen.withdraw_shift} pixels left of
+    {!pc_mon_menu_row}'s (text from x 160, mGBA, 2026-11-25). Measured and
+    matched on the English game: another language's labels have other widths,
+    and its menu needs its own measure and text. *)
 
 val pc_data_species : t
 (** The box screen's PKMN DATA species line, ["/ODDISH"]: window 0 at (0, 88)
@@ -166,5 +196,16 @@ val pc_data_species : t
     shadow: read with {!Line_reading.light_ink}. *)
 
 val pc_message : t
-(** The box screen's message ("Deposit in which BOX?", "The BOX is full."):
-    window 1 at (88, 136) prints at (0, 2) ([PrintStorageMessage]). *)
+(** The box screen's message ("Deposit in which BOX?", "The BOX is full.",
+    "Please remove the MAIL."): window 1 at (88, 136) prints at (0, 2)
+    ([PrintStorageMessage]). The messages are matched in English: another
+    language's game needs its own text. *)
+
+val naming_entry_cell : max_chars:int -> int -> t
+(** Character [i] (from 0) of the naming screen's text entry, on a screen that
+    takes [max_chars] (a box's name 8, the player's 7, a Pokémon's 10): the game
+    prints each character alone in an 8-pixel cell, the entry centred
+    (pokefirered naming_screen.c, [DrawTextEntry]), so for a box's name from x
+    94, its glyph cells' top at y 49. Measured on mGBA (BOX NAME?, every
+    character of the English keyboard, 2026-11-25). The underscore under each
+    cell (y 62 and below) stays out of the template's rows. *)

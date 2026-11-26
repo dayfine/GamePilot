@@ -42,7 +42,7 @@ Server::Server(Backend& backend, ServerOptions options, const Clock& clock)
     throw std::runtime_error("speed must be above 0");
   }
   game_zero_ms_ = clock_.now_ms();
-  if (keep_awake_.on() && button_mask(keep_awake_.key()) == 0) {
+  if (keep_awake_.on() && !keep_awake_key(keep_awake_.key())) {
     throw std::runtime_error("bad keep-awake key " + keep_awake_.key());
   }
   if (!options_.log_path.empty()) {
@@ -213,6 +213,11 @@ void Server::run_lockstep(const std::atomic<bool>& stop) {
     }
     serve_network(0);
     keep_awake();
+    if (held_for_input_) {
+      serve_network(static_cast<int>(kMaxPollMs));
+      rebase_pacing();
+      continue;
+    }
     step_frame();
 
     const double now = clock_.now_ms();
@@ -363,6 +368,7 @@ void Server::accept_pending() {
 // 1000 ms cooldown, already on the board, delayed the next taps by 800 ms
 // (2026-11-23).
 void Server::clear_input() {
+  held_for_input_ = false;
   schedule_.clear();
   live_schedule_.clear();
   batch_owners_.clear();
@@ -374,6 +380,18 @@ void Server::clear_input() {
   }
   backend_.set_keys(0);
   sent_mask_ = KeyMask{0};
+}
+
+// Drops queued commands with no release: a live device's running input goes
+// on until the next one replaces it; a stepped backend's keys stay as they
+// are until the next batch sets them.
+void Server::replace_input() {
+  schedule_.clear();
+  live_schedule_.clear();
+  batch_owners_.clear();
+  if (backend_.info().takes_input && backend_.info().timing == Timing::kLive) {
+    backend_.replace_queued_keys();
+  }
 }
 
 // The connection's probes and templates go with it; its queued batches too
@@ -454,7 +472,8 @@ void Server::refuse_switch_input(const SubmitParams& submit) const {
 std::optional<std::string> Server::take_lease(ClientConnection& client,
                                               const std::string& method) {
   const bool input = method == "submit" || method == "cancel" ||
-                     method == "backend.load_state";
+                     method == "backend.load_state" ||
+                     method == "backend.reset";
   if (!backend_.info().takes_input && (input || method == "lease.acquire")) {
     throw view_only_refusal(backend_.info().kind, method);
   }
@@ -559,7 +578,7 @@ pa::JsonObject Server::dispatch(ClientConnection& client,
     return dispatch_probes(client, request);
   }
   if (method == "submit" || method == "cancel" ||
-      method == "backend.load_state") {
+      method == "backend.load_state" || method == "backend.reset") {
     return dispatch_input(client, request);
   }
   throw RpcError(kMethodNotFound, "unknown method: " + method);
@@ -608,14 +627,21 @@ pa::JsonObject Server::dispatch_probes(ClientConnection& client,
   return unsubscribe_result(removed);
 }
 
-// Submit, cancel and load_state: take_lease already let the client in.
+// Submit, cancel, load_state and reset: take_lease already let the client in.
 pa::JsonObject Server::dispatch_input(ClientConnection& client,
                                       const Request& request) {
   const std::string& method = request.method;
-  if (method == "backend.load_state") {
-    const LoadStateParams load = decode_load_state(request.params);
+  if (method == "backend.load_state" || method == "backend.reset") {
+    // A reset starts the frames again like a load: the same reply, and the
+    // frames before it carry the old load.
     try {
-      const std::int64_t seq = backend_.load_state(load.path);
+      std::int64_t seq = 0;
+      if (method == "backend.reset") {
+        decode_reset(request.params);
+        seq = backend_.reset();
+      } else {
+        seq = backend_.load_state(decode_load_state(request.params).path);
+      }
       schedule_.clear();
       batch_owners_.clear();
       sent_mask_.reset();
@@ -623,6 +649,7 @@ pa::JsonObject Server::dispatch_input(ClientConnection& client,
       for (auto& other : clients_) {
         other->sent_results.forget_all();
       }
+      held_for_input_ = method == "backend.reset";
       loads_++;
       return load_state_result(seq, loads_);
     } catch (const BackendError& error) {
@@ -640,11 +667,25 @@ pa::JsonObject Server::dispatch_input(ClientConnection& client,
     }
     const std::int64_t start =
         schedule_.submit(submit.batch_id, submit.commands, backend_.seq());
+    held_for_input_ = false;
     return submit_result(submit.batch_id, start);
   }
-  decode_cancel(request.params);
+  const CancelParams cancel = decode_cancel(request.params);
   keep_awake_.input(clock_.now_ms());
-  clear_input();
+  if (!cancel.then) {
+    clear_input();
+    return cancel_result(backend_.seq());
+  }
+  refuse_switch_input(*cancel.then);
+  replace_input();
+  batch_owners_.emplace_back(cancel.then->batch_id, client.number);
+  if (backend_.info().timing == Timing::kLive) {
+    live_schedule_.submit(cancel.then->batch_id, cancel.then->commands,
+                          clock_.now_ms());
+  } else {
+    schedule_.submit(cancel.then->batch_id, cancel.then->commands,
+                     backend_.seq());
+  }
   return cancel_result(backend_.seq());
 }
 

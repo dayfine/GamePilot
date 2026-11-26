@@ -26,6 +26,7 @@ class MgbaBackend : public Backend {
   cv::Mat frame() override;
   std::int64_t load_state(const std::string& path) override;
   std::int64_t save_state(const std::string& path) override;
+  std::int64_t reset() override;
   void release() override;
 
   // KEYS commands the bridge applied late (should stay 0 in lockstep).

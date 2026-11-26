@@ -1,15 +1,16 @@
 (library
  (name plan_files)
  (modules plan_files)
- (libraries yojson gamepilot.pokemon_checkpoints))
+ (libraries yojson gamepilot.pokemon_engine))
 
 (tests
  (names test_plan_decode)
  (modules test_plan_decode)
  (libraries
   gamepilot.table_test
+  gamepilot.strings
   yojson
-  gamepilot.pokemon_checkpoints
+  gamepilot.pokemon_engine
   plan_files))
 
 (tests
@@ -17,26 +18,26 @@
   test_runner
   test_repeat_until
   test_postcondition_check
-  test_event_states)
+  test_event_snapshot)
  (modules
   scripted_game
   level_grind_world
   test_runner
   test_repeat_until
   test_postcondition_check
-  test_event_states)
+  test_event_snapshot)
  (libraries
   gamepilot.table_test
   yojson
   gamepilot.grid_geometry
-  gamepilot.pokemon_checkpoints
+  gamepilot.pokemon_engine
   gamepilot.engine_run
   plan_files))
 
 (executables
  (names print_plan_errors print_kept_files)
  (modules print_plan_errors print_kept_files)
- (libraries yojson gamepilot.pokemon_checkpoints))
+ (libraries yojson gamepilot.pokemon_engine))
 
 (rule
  (action

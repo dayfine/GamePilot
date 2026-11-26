@@ -52,8 +52,7 @@
         "kind": "game_action",
         "action": "fly",
         "args": {
-          "town": "VermilionCity",
-          "species": "pidgey"
+          "town": "VermilionCity"
         },
         "declared_after": {"map": "VermilionCity", "tiles": [[15, 7]], "facing": "south"},
         "why": "Fly to Vermilion City"
@@ -94,8 +93,7 @@
         "kind": "game_action",
         "action": "fly",
         "args": {
-          "town": "VermilionCity",
-          "species": "pidgey"
+          "town": "VermilionCity"
         },
         "declared_after": {"map": "VermilionCity", "tiles": [[15, 7]], "facing": "south"},
         "why": "Fly back to Vermilion City to skip Route 6 grass and the 25-tile south run into wandering woman_1"
@@ -145,7 +143,7 @@
   "metadata": {
     "phase": "testing",
     "postconditions": {
-      "party_includes": ["blastoise", "pidgey", "abra", "farfetchd"],
+      "party_includes": ["blastoise", "abra", "farfetchd"],
       "money": {"spent": 0}
     }
   }

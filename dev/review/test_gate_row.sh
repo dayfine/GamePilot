@@ -48,6 +48,14 @@ check() { # name, expected, got
 check "green CI is pass" pass "$(pr "$code" "$green" "" | column 2)"
 check "one red check is fail" fail "$(pr "$code" "$green, $red" "" | column 2)"
 check "a running check is pending" pending "$(pr "$code" "$green, $running" "" | column 2)"
+cancelled='{"__typename": "CheckRun", "name": "build", "status": "COMPLETED", "conclusion": "CANCELLED", "startedAt": "2026-11-26T01:00:00Z"}'
+rerun='{"__typename": "CheckRun", "name": "build", "status": "COMPLETED", "conclusion": "SUCCESS", "startedAt": "2026-11-26T01:00:03Z"}'
+rerun_red='{"__typename": "CheckRun", "name": "build", "status": "COMPLETED", "conclusion": "FAILURE", "startedAt": "2026-11-26T01:00:03Z"}'
+old_red='{"__typename": "CheckRun", "name": "build", "status": "COMPLETED", "conclusion": "FAILURE", "startedAt": "2026-11-26T00:00:00Z"}'
+check "a cancelled run a rerun passed is pass" pass "$(pr "$code" "$cancelled, $rerun" "" | column 2)"
+check "a cancelled run a rerun failed is fail" fail "$(pr "$code" "$cancelled, $rerun_red" "" | column 2)"
+check "a check only cancelled is fail" fail "$(pr "$code" "$cancelled" "" | column 2)"
+check "a red run a later rerun passed is pass" pass "$(pr "$code" "$old_red, $rerun" "" | column 2)"
 check "no checks is none" none "$(pr "$code" "" "" | column 2)"
 check "no review is none" none "$(pr "$code" "$green" "" | column 3)"
 check "APPROVED at the tip is ok" ok "$(pr "$code" "$green" "$(review "$tip" APPROVED)" | column 3)"
@@ -60,6 +68,23 @@ check "the latest verdict at the tip wins" ok \
 check "a verdict at an older commit is stale" "stale(bbbbbbbb)" \
     "$(pr "$code" "$green" "$(review "$old" APPROVED)" | column 3)"
 check "a fenced quote is not a verdict" none "$(pr "$code" "$green" "$(quoting)" | column 3)"
+named() { # name, check JSON: the check with a name
+    printf '%s' "$2" | sed "s/^{/{\"name\": \"$1\", /"
+}
+check "a prose PR needs only review-tools" pass \
+    "$(pr "$doc" "$(named review-tools "$green"), $(named "build (macos-latest)" "$running")" "" | column 2)"
+check "a prose PR with review-tools red fails" fail \
+    "$(pr "$doc" "$(named review-tools "$red"), $(named build "$green")" "" | column 2)"
+check "a guide page still waits for the builds" pending \
+    "$(pr '{"path": "docs/guide/a.md"}' "$(named review-tools "$green"), $(named build "$running")" "" | column 2)"
+check "an agent's rules wait for Harness Check" pending \
+    "$(pr '{"path": ".agents/agents/qc-structural.md"}' "$(named review-tools "$green"), $(named harness-check "$running")" "" | column 2)"
+check "a deleted page waits for the builds" pending \
+    "$(pr '{"path": "docs/programs/a.md", "changeType": "DELETED"}' "$(named review-tools "$green"), $(named build "$running")" "" | column 2)"
+check "a renamed page waits for the builds" pending \
+    "$(pr '{"path": "docs/programs/b.md", "changeType": "RENAMED"}' "$(named review-tools "$green"), $(named build "$running")" "" | column 2)"
+check "code with prose waits for the builds" pending \
+    "$(pr "$doc, $code" "$(named review-tools "$green"), $(named build "$running")" "" | column 2)"
 check "a docs-only PR skips" skip "$(pr "$doc" "$green" "" | column 3)"
 check "red CI comes first" "fix CI" "$(pr "$code" "$red" "$(review "$tip" APPROVED)" | column 4)"
 check "green CI and no verdict asks for one" "run qc-structural" \
@@ -92,4 +117,14 @@ printf '%s\n' '{"path": "src/a.ml", "status": "modified"}' \
 check "the REST file list replaces the view's" "merge (structural: module deleted: src/x/lib/dune)" \
     "$(pr "$code" "$green" "$(review "$tip" APPROVED)" | python3 -I "$here/gate_row.py" "$rest" | cut -f 4)"
 rm -f "$rest"
+check "a PR the gate passed is ready" ready \
+    "$(pr "$code" "$green" "$(review "$tip" APPROVED)" | column 5)"
+check "a PR waiting on the user is ready" ready \
+    "$(pr '{"path": "docs/design/a.md"}' "$green" "" | column 5)"
+check "a PR waiting on CI is a draft" draft "$(pr "$code" "$running" "" | column 5)"
+check "a stale verdict is a draft" draft \
+    "$(pr "$code" "$green" "$(review "$old" APPROVED)" | column 5)"
+check "a PR to rework is a draft" draft \
+    "$(pr "$code" "$green" "$(review "$tip" NEEDS_REWORK)" | column 5)"
+check "the title is the last column" t "$(pr "$code" "$green" "" | column 6)"
 exit $failures

@@ -2,9 +2,12 @@
  (name gamepilot)
  (public_name gamepilot)
  (package gamepilot)
+ (flags
+  (:standard -open Live_run))
  (libraries
+  gamepilot.live_run
+  gamepilot.run_options
   gamepilot.wire
-  gamepilot.json_field
   gamepilot.effects
   gamepilot.watch_report
   gamepilot.replay
@@ -13,17 +16,22 @@
   gamepilot.program_registry
   gamepilot.guide_page
   gamepilot.run_record
-  gamepilot.engine_run
   gamepilot.engine_series
-  gamepilot.pokemon_checkpoints
-  gamepilot.checkpoint_end
-  gamepilot.room_policy
-  gamepilot.checkpoints_series
-  gamepilot.frlg_actions
-  gamepilot.frlg_readers
+  gamepilot.frlg_ctl_readers
   gamepilot.ctl_script
   gamepilot.switch_home
+  gamepilot.pokemon_home
   gamepilot.repo_io
-  gamepilot.frlg_checkpoints
+  gamepilot.frlg_series
+  gamepilot.plza_series
+  gamepilot.plza_checkpoint_series
+  gamepilot.plza_engine
+  gamepilot.plza_bank_home
+  gamepilot.plza_bank_home_series
+  gamepilot.run_flags
+  gamepilot.run_args
+  gamepilot.one_shot_flags
+  gamepilot.pokemon_flags
+  gamepilot.strings
   unix
   yojson))

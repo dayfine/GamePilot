@@ -1,9 +1,9 @@
 (** What a PC deposit presses on each screen it reads, from the overworld facing
-    the PC to the overworld again with every member stored: the fork's
-    [PcStorageDialog] (Programs/AutoStory/PokemonFRLG_AutoStoryPcStorage.cpp,
-    [frlg/lean]) for a DEPOSIT, pure so it runs in tests against looks made up
-    by hand. Its bounds are the fork's ([PC_MAX_OTHER_IN_A_ROW],
-    [PC_BOOT_READS]).
+    the PC to the overworld again with every member stored: the fork's PC dialog
+    (Programs/AutoStory/PokemonFRLG_AutoStoryPcStorage.cpp, [frlg/lean]) for a
+    DEPOSIT, pure so it runs in tests against looks made up by hand. Its bounds
+    are the fork's (PokemonFRLG_AutoStoryPcRun.h: how many looks at a changing
+    screen in a row, how many at the overworld after A).
 
     Where we differ: members are found by the species PKMN DATA shows under the
     hand, not by slot (DOWN until it shows, CANCEL fails); several in one visit;
@@ -12,16 +12,34 @@
     menu, whose RELEASE is three rows below and never reached (the cursor is
     never moved there); the box is the first with room from the one the chooser
     opens on, RIGHT after "The BOX is full." (pokefirered's [Task_DepositMenu]
-    prints it and waits for a key), where the fork names a box. *)
+    prints it and waits for a key), where the fork names a box; a member holding
+    Mail fails the deposit when the game says "Please remove the MAIL." over the
+    party panel (pokefirered's [Task_DepositMenu] refuses it there) instead of
+    choosing STORE again until the press bound runs out. *)
 
 type look = {
   view : Frlg_readers.Pc_screen.view;
   label : string option;  (** The text of the cursor's row, when read. *)
   species : string option;  (** PKMN DATA's species slug, on the party panel. *)
   box_full : bool;  (** "The BOX is full." over the box chooser. *)
+  remove_mail : bool;
+      (** "Please remove the MAIL." over the party panel: the member holds Mail.
+      *)
 }
 
-type press = A | B | Up | Down | Right | Wait | Done | Fail of string
+(** The button a PC step presses next, a wait, or the walk done or failed (and
+    why). *)
+type press =
+  | A
+  | B
+  | Up
+  | Down
+  | Left  (** Only in a withdraw ({!Pc_withdraw_steps}). *)
+  | Right
+  | Wait
+  | Done
+  | Fail of string
+
 type t
 
 val start : string list -> t

@@ -1,4 +1,4 @@
-open Pokemon_checkpoints
+open Pokemon_engine
 
 type outcome = Passed | Failed_event | Failed_end_check | Stopped
 type step = Return_to_save | Save_in_game | Keep_start_frame

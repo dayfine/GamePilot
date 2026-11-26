@@ -5,6 +5,12 @@ let box ~x ~y ~w ~h =
 let panel_id = "pc_box.panel"
 let panel_box : Wire.box = { x = 0.007; y = 0.556; w = 0.296; h = 0.253 }
 let min_panel_stddev = 10.
+let item_id = "pc_box.item"
+let item_x = 2
+let item_y = 134
+let item_w = 68
+let item_h = 10
+let item_box = box ~x:item_x ~y:item_y ~w:item_w ~h:item_h
 let shadow_id = "pc_box.first_slot_shadow"
 let shadow_x = 93
 let shadow_y = 49
@@ -42,18 +48,61 @@ let min_male_share = 0.15
 let min_red_over_green = 15.
 let min_green_over_blue = 20.
 
+(* The title menu's arrow: x 145-149, a row's glyph rows (y 58 + 16 i). *)
+let title_menu_rows = 4
+let title_menu_arrow_left = 143
+let title_menu_arrow_width = 9
+let title_menu_first_top = 59
+let title_menu_pitch = 16
+let title_menu_arrow_height = 11
+
+let title_menu_box i =
+  box ~x:title_menu_arrow_left
+    ~y:(title_menu_first_top + (title_menu_pitch * i))
+    ~w:title_menu_arrow_width ~h:title_menu_arrow_height
+
+let title_menu =
+  Cursor_column.make ~prefix:"pc_box.title_menu"
+    (List.init title_menu_rows title_menu_box)
+
+let title_menu_row m = Cursor_column.row title_menu m
+
+(* The hand over the first slot, x 90-105, y 20-37 (its bob included). *)
+let hand_id = "pc_box.hand_first_slot"
+let hand_left = 90
+let hand_top = 20
+let hand_width = 16
+let hand_height = 18
+let hand_box = box ~x:hand_left ~y:hand_top ~w:hand_width ~h:hand_height
+
+let quick_yellow : Color_count.range =
+  { low = { r = 225; g = 200; b = 40 }; high = { r = 255; g = 255; b = 150 } }
+
+let min_quick_share = 0.12
+
+let hand_quick m =
+  Option.map (fun s -> s >= min_quick_share) (Color_count.share m hand_id)
+
 let probes =
-  [
-    Solid_color.probe ~id:panel_id panel_box;
-    Color_count.probe ~id:shadow_id shadow_box shadow;
-    Color_count.probe ~id:wallpaper_id wallpaper_box anything;
-    Color_count.probe ~id:male_id male_box male_blue;
-  ]
+  Cursor_column.probes title_menu
+  @ [
+      Solid_color.probe ~id:panel_id panel_box;
+      Solid_color.probe ~id:item_id item_box;
+      Color_count.probe ~id:shadow_id shadow_box shadow;
+      Color_count.probe ~id:wallpaper_id wallpaper_box anything;
+      Color_count.probe ~id:male_id male_box male_blue;
+      Color_count.probe ~id:hand_id hand_box quick_yellow;
+    ]
 
 let panel_occupied m =
   Option.map
     (fun (s : Solid_color.stats) -> Solid_color.sum s.stddev > min_panel_stddev)
     (Solid_color.read m panel_id)
+
+let holds_item m =
+  Option.map
+    (fun (s : Solid_color.stats) -> Solid_color.sum s.stddev > min_panel_stddev)
+    (Solid_color.read m item_id)
 
 let hand_on_first_slot m =
   Option.map (fun s -> s >= min_shadow_share) (Color_count.share m shadow_id)

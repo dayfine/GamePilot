@@ -12,7 +12,7 @@
     [StoryGame::reload] reloads the save after a failure
     (PokemonFRLG_AutoStory.cpp, [frlg/lean]). *)
 
-open Pokemon_checkpoints
+open Pokemon_engine
 
 type outcome =
   | Passed

@@ -1,0 +1,13 @@
+(library
+ (name one_shot_flags)
+ (public_name gamepilot.one_shot_flags)
+ (flags
+  (:standard -open Live_run))
+ (libraries
+  gamepilot.live_run
+  gamepilot.run_options
+  gamepilot.live
+  gamepilot.run_record
+  gamepilot.run_flags
+  gamepilot.engine_run
+  gamepilot.program_registry))

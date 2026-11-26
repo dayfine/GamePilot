@@ -1,0 +1,50 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "plza",
+  "execution": {},
+  "metadata": {
+    "phase": "testing",
+    "source": "played from a new game; starts at the lobby save, ends on the 3F autosave after the ride. Start signature is a guess; starts where 03.13 ends; the fork's plza-03.10.plan.json (plza/lean)",
+    "postconditions": {}
+  },
+  "checkpoint": {
+    "id": "03.14-lab-elevator",
+    "title": "Up the Research Lab's elevator to the Director's Office",
+    "start": {
+      "place": "PokemonResearchLab"
+    },
+    "events": [
+      {
+        "id": "to_lab_elevator",
+        "kind": "walk",
+        "why": "to the elevator's \"A Take Elevator\"; an earlier prompt is passed on the way. not planned: no tile grid in Lumiose",
+        "args": {
+          "legs": [[0, 1500]],
+          "end": "prompt",
+          "earliest_end_ms": 750
+        }
+      },
+      {
+        "id": "take_lab_elevator",
+        "kind": "game_action",
+        "action": "scene_through_prompt",
+        "why": "A Take Elevator, then A through the attendant's question to the choices",
+        "args": {
+          "stop_at_choice": true
+        }
+      },
+      {
+        "id": "ride_to_3f",
+        "kind": "game_action",
+        "action": "choose_1",
+        "why": "\"3F: Director's Office\"; the choices show only after A closes the attendant's question"
+      },
+      {
+        "id": "arrive_3f",
+        "kind": "scene",
+        "action": "button_b",
+        "why": "the ride, until control on 3F"
+      }
+    ]
+  }
+}

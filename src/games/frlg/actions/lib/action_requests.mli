@@ -4,6 +4,13 @@
 
 type swap = By_species of string * int | Slots of int * int
 
+(** The members a PC deposit stores. *)
+type deposit =
+  | Members of string list  (** These species, in order. *)
+  | Holding_no_mail
+      (** The first member, slot 1 first, whose party mark is not Mail: the one
+          member the PC takes when the others hold Mail. *)
+
 type t =
   | Mart of Mart_plan.t
   | Use_item of { item : string; on : Action_args.member option }
@@ -15,7 +22,8 @@ type t =
   | Spin_for_encounter of { max_batches : int }
   | Cut_tree of Grid_geometry.Direction.t
   | Verify_mail_glitch of Action_args.member
-  | Pc_deposit of string list
+  | Pc_deposit of deposit
+  | Pc_withdraw
   | Pick_up_item of string
   | Read_caught of { at_least : int option }
 
@@ -23,7 +31,7 @@ val names : string list
 (** The action names {!decode} reads: ["mart"], ["use_item"], ["give_bag_item"],
     ["party_swap"], ["buy_coins"], ["redeem_prize_mon"], ["ingame_trade"],
     ["spin_for_encounter"], ["cut_tree"], ["verify_mail_glitch"],
-    ["pc_deposit"], ["pick_up_item"], ["read_caught"]. *)
+    ["pc_deposit"], ["pc_withdraw"], ["pick_up_item"], ["read_caught"]. *)
 
 val default_spin_batches : int
 (** ["spin_for_encounter"]'s ["max_batches"] when left out: 25. *)
@@ -32,7 +40,7 @@ val decode :
   Mart_plan.stocks ->
   string ->
   Json_field.obj ->
-  (t, Pokemon_checkpoints.Failure.cause) result
+  (t, Pokemon_engine.Failure.cause) result
 (** The action of that name with its args; [bad_args] naming the field, or
     [unknown_action]. The args:
     - [mart]: see {!Mart_plan.t}.
@@ -46,8 +54,11 @@ val decode :
     - [spin_for_encounter]: optional ["max_batches"].
     - [cut_tree]: ["direction"].
     - [verify_mail_glitch]: ["species"] or ["target_slot"].
-    - [pc_deposit]: ["species"], a list of the members to store, facing a
-      Pokémon Center's PC ({!Pc_deposit}).
+    - [pc_deposit]: ["species"], a list of the members to store, or ["member"]:
+      ["holding_no_mail"] ({!Holding_no_mail}), facing a Pokémon Center's PC
+      ({!Pc_deposit}).
+    - [pc_withdraw]: no args: the first Pokémon in the box the PC opens on moved
+      into the party, facing a Pokémon Center's PC ({!Pc_withdraw}).
     - [pick_up_item]: ["item"], the item the player faces (a hidden item, an
       item ball): a talk, as the plan's [talk] event, that names what it gains
       so a pre-flight counts it ({!Frlg_checkpoints.Plan_needs}).

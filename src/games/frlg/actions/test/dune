@@ -17,7 +17,9 @@
 (tests
  (names
   test_pc_deposit_steps
+  test_pc_withdraw_steps
   test_fly_towns
+  test_fly_user
   test_actions
   test_checkpoint_game
   test_action_requests
@@ -37,10 +39,24 @@
   test_warp_settle
   test_trainer_card_read
   test_trainer_battles
-  test_scene_battle)
+  test_scene_battle
+  test_ace_actions
+  test_pc_box
+  test_wild_rng
+  test_pokedex_entry
+  test_skip_conditions
+  test_naming_entry
+  test_box_rename
+  test_ace_trigger
+  test_item_storage
+  test_ace_presets
+  test_ace_code
+  test_ace_item)
  (modules
   test_pc_deposit_steps
+  test_pc_withdraw_steps
   test_fly_towns
+  test_fly_user
   test_actions
   test_checkpoint_game
   test_action_requests
@@ -61,7 +77,19 @@
   test_warp_settle
   test_trainer_card_read
   test_trainer_battles
-  test_scene_battle)
+  test_scene_battle
+  test_ace_actions
+  test_pc_box
+  test_wild_rng
+  test_pokedex_entry
+  test_skip_conditions
+  test_naming_entry
+  test_box_rename
+  test_ace_trigger
+  test_item_storage
+  test_ace_presets
+  test_ace_code
+  test_ace_item)
  (deps
   mgba.probes.jsonl
   menus.mgba.probes.jsonl
@@ -71,13 +99,15 @@
  (libraries
   yojson
   gamepilot.table_test
+  gamepilot.strings
   gamepilot.wire
   gamepilot.grid_geometry
   gamepilot.grid_maps
   gamepilot.json_field
-  gamepilot.pokemon_checkpoints
+  gamepilot.pokemon_engine
   gamepilot.room_policy
   gamepilot.frlg_overworld
   gamepilot.frlg_actions
   gamepilot.frlg_battle
+  gamepilot.run_options
   frlg_overworld_fixtures))

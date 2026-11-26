@@ -1,0 +1,12 @@
+repo src/games/frlg/readers/test/images/mgba/pokedex-list/contents.png|dex/contents.png
+repo src/games/frlg/readers/test/images/mgba/pokedex-list/list-001.png|dex/list-001.png
+repo src/games/frlg/readers/test/images/mgba/pokedex-list/list-009.png|dex/list-009.png
+repo src/games/frlg/readers/test/images/mgba/pokedex-list/list-010.png|dex/list-010.png
+repo src/games/frlg/readers/test/images/mgba/pokedex-list/list-011.png|dex/list-011.png
+repo src/games/frlg/readers/test/images/mgba/pokedex-list/list-012.png|dex/list-012.png
+repo src/games/frlg/readers/test/images/mgba/pokedex-list/list-129.png|dex/list-129.png
+repo src/games/frlg/readers/test/images/mgba/pokedex-list/list-130.png|dex/list-130.png
+repo src/games/frlg/readers/test/images/mgba/pokedex-list/list-149-end.png|dex/list-149-end.png
+repo src/games/frlg/readers/test/images/mgba/pokedex-list/overworld.png|dex/overworld.png
+repo src/games/frlg/readers/test/images/mgba/pokedex-list/start-menu.png|dex/start-menu.png
+repo src/games/frlg/readers/test/images/mgba/pokedex-list/start-menu-after-close.png|dex/start-menu-after-close.png

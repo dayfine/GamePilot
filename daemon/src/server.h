@@ -139,6 +139,7 @@ class Server {
   std::optional<std::string> take_lease(ClientConnection& client,
                                         const std::string& method);
   void clear_input();
+  void replace_input();
   // Throws switch_button_refusal() when a press names a Switch-only button,
   // or switch_stick_refusal() when it tilts a stick, and the backend is not
   // the Switch.
@@ -200,6 +201,10 @@ class Server {
   std::int64_t frames_stepped_ = 0;
   double game_zero_ms_ = 0;
   std::int64_t loads_ = 0;  // successful backend.load_state calls
+  // After backend.reset, no frame is stepped until the next submit (or a
+  // cancel, a load, the holder gone), so that batch starts on the reset's
+  // own frame: the FRLG seed is the frame the title screen's A lands on.
+  bool held_for_input_ = false;
 
   std::unique_ptr<WatchServer> watch_;
   std::optional<RegistryFile> registry_entry_;  // while the page is up

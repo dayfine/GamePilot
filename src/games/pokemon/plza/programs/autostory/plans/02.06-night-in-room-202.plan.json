@@ -1,0 +1,50 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "plza",
+  "execution": {},
+  "metadata": {
+    "phase": "testing",
+    "source": "played from a new game; starts at the Room 202 autosave, where 02.05 ends; autosaves at wake_up's end; the fork's plza-02.06.plan.json (plza/lean)",
+    "postconditions": {}
+  },
+  "checkpoint": {
+    "id": "02.06-night-in-room-202",
+    "title": "Main Mission 02: the night in Room 202",
+    "start": {
+      "place": "LumioseCity"
+    },
+    "events": [
+      {
+        "id": "to_bed",
+        "kind": "walk",
+        "why": "to the bed's \"A Rest\"; an earlier prompt is passed on the way. not planned: no tile grid in Lumiose",
+        "args": {
+          "legs": [[45, 1500]],
+          "style": "steer",
+          "end": "prompt",
+          "earliest_end_ms": 750
+        }
+      },
+      {
+        "id": "rest_question",
+        "kind": "game_action",
+        "action": "scene_through_prompt",
+        "why": "A Rest, then A to \"Rest until tomorrow morning?\" before the choice shows",
+        "args": {
+          "stop_at_choice": true
+        }
+      },
+      {
+        "id": "rest_until_morning",
+        "kind": "game_action",
+        "action": "choose_0",
+        "why": "yes"
+      },
+      {
+        "id": "wake_up",
+        "kind": "scene",
+        "why": "sleep and wake up, until the party bar shows, facing the door"
+      }
+    ]
+  }
+}

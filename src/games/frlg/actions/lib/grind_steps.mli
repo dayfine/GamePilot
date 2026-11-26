@@ -8,8 +8,7 @@ val make :
   log:(string -> unit) ->
   party:Party_roster.t ref ->
   walk_to:
-    (Pokemon_checkpoints.Pose.grid ->
-    (unit, Pokemon_checkpoints.Failure.cause) result) ->
+    (Pokemon_engine.Pose.grid -> (unit, Pokemon_engine.Failure.cause) result) ->
   find_battle:(unit -> unit) ->
   battle:(Frlg_battle.Battle_script.t -> Frlg_battle.Scripted_battle.outcome) ->
   Grind.game_steps

@@ -5,11 +5,11 @@
     does on the Switch where mGBA loads a save state: before each run and after
     a failure.
 
-    Ported from the fork's [try_soft_reset()] and [soft_reset()]
-    (PokemonFRLG_Navigation.cpp, [frlg/lean]) with its timings
-    (PokemonFRLG_Settings: SELECT_BUTTON_MASH0 5 s, ENTER_GAME_WAIT0 3 s,
-    ENTER_GAME_MASH0 3 s), then the overworld settle of [launch_frlg_save()]
-    (AutoStory/PokemonFRLG_AutoStoryLaunch.cpp: its [mash_until_overworld]).
+    Ported from the fork's soft reset (PokemonFRLG_Navigation.cpp, [frlg/lean])
+    with its timings (PokemonFRLG_Settings.cpp's defaults: SELECT mashed 5 s, 3
+    s for the game to enter and 3 s mashing into it), then the overworld settle
+    of the fork's save launch (AutoStory/PokemonFRLG_AutoStoryLaunch.cpp: A
+    mashed until the overworld).
 
     Where it differs: no random waits (0 to 5 s, twice: they spread an RNG
     program's frames; the story needs none); the fork's A mash stops at a white
@@ -54,8 +54,6 @@ val probes : Wire.probe_spec list
 (** The load menu's, the screen facts', the Start menu's and the YES/NO's. *)
 
 val return_to_save :
-  log:(string -> unit) ->
-  unit ->
-  (unit, Pokemon_checkpoints.Failure.cause) result
+  log:(string -> unit) -> unit -> (unit, Pokemon_engine.Failure.cause) result
 (** Up to {!attempts} resets; [Error] [soft_reset_failed] (repeats) after the
     last. *)

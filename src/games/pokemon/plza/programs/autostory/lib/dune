@@ -1,0 +1,18 @@
+(library
+ (name plza_autostory)
+ (public_name gamepilot.plza_autostory)
+ (libraries
+  yojson
+  gamepilot.wire
+  gamepilot.effects
+  gamepilot.watch_report
+  gamepilot.json_field
+  gamepilot.run_options
+  gamepilot.switch_home
+  gamepilot.screen_state
+  gamepilot.engine_run
+  gamepilot.plza_readers
+  gamepilot.plza_walk
+  gamepilot.plza_story
+  gamepilot.plza_rules
+  gamepilot.plza_engine))

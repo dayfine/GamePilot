@@ -65,7 +65,7 @@ let http_get port path =
       let request = Printf.sprintf "GET %s HTTP/1.1\r\n\r\n" path in
       ignore (Unix.write_substring fd request 0 (String.length request) : int);
       let reply = read_all fd in
-      match Daemon_process.find reply "\r\n\r\n" with
+      match Strings.Find.substring reply "\r\n\r\n" with
       | Some i -> Some (String.sub reply (i + 4) (String.length reply - i - 4))
       | None -> None)
 
@@ -151,7 +151,7 @@ let rec parse f = function
 
 (* --backfill: run.json for old run folders (Run_backfill). *)
 let main args =
-  let runs_dir = Checkpoints_command.data_dir "GAMEPILOT_RUNS" "runs" in
+  let runs_dir = Run_flags.data_dir "GAMEPILOT_RUNS" "runs" in
   match parse { runs_dir; backfill = false; apply = false } args with
   | Error e -> Error e
   | Ok { apply = true; backfill = false; _ } -> Error "--apply needs --backfill"

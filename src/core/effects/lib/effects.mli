@@ -22,7 +22,7 @@ type raced =
   | Finished of Wire.batch_done  (** the batch ran to its end *)
   | Stopped of measurements
       (** the first frame on which the stop reader held; the batch was cancelled
-      *)
+          ({!race}) or replaced ({!race_then}) *)
 
 exception Rpc_error of Wire.error
 (** The daemon answered a request with an error. *)
@@ -43,9 +43,18 @@ type _ Effect.t +=
   | Submit : Wire.command list -> Wire.batch_done Effect.t
   | Await : (measurements -> bool) * int -> awaited Effect.t
   | Race : Wire.command list * (measurements -> bool) -> raced Effect.t
+  | Race_held : Wire.command list * (measurements -> bool) -> raced Effect.t
+        (** {!race_then}'s first half: as [Race], but a stopped batch runs on
+            until the [Replace] that follows. Programs call {!race_then}. *)
+  | Replace : Wire.command list -> Wire.batch_done Effect.t
+        (** {!race_then}'s second half: the held batch's queued commands are
+            dropped with no release and these run in their place; with none
+            held, a plain [Submit]. Programs call {!race_then}. *)
+  | Queue : Wire.command list -> unit Effect.t
   | Now : float Effect.t
   | Read : measurements option Effect.t
   | Load_state : string -> int Effect.t
+  | Reset : int Effect.t
   | Save_state : string -> int Effect.t
   | Save_frame : string -> int Effect.t
   | Upload_template : string -> template_hash Effect.t
@@ -74,6 +83,30 @@ val race : Wire.command list -> stop:(measurements -> bool) -> raced
     so the next op starts from released buttons. Frames received before the
     submit, the latest included, are not checked. *)
 
+val race_then :
+  Wire.command list ->
+  stop:(measurements -> bool) ->
+  then_:(measurements -> Wire.command list) ->
+  raced
+(** As {!race}, but on a stop the batch is replaced, not cancelled: the daemon
+    drops the queued commands with no release and runs [then_ m] in their place
+    (protocol v1.15, [cancel] with [then]), so a button both hold stays held, as
+    the fork's command dispatched over a running one. Returns [Stopped m] once
+    that batch is done. Two effects, [Race_held] (stop and leave the batch
+    running) then [Replace], so [then_] runs in the program's own context and
+    may perform effects (a log line), which a handler's own code could not. *)
+
+val queue : Wire.command list -> unit
+(** Queues one batch after the running and queued ones, as {!submit} does, but
+    returns once the daemon accepted it, not at its end; its [batch_done] is
+    dropped. The program reads and decides while it runs and queues the next
+    before it ends: a button held at one batch's end and the next one's start
+    stays held, as the fork's commands queued on the controller while the
+    program reads (a controller state press,
+    NintendoSwitch_Commands_PushButtons.h, then a snapshot; ZL held through the
+    PLZA catches, PokemonLZA_AutoStoryCatches.cpp). A later {!submit} or {!race}
+    queues after it too; a stop's cancel drops it. *)
+
 val now : unit -> float
 (** Daemon clock in ms: the [t_ms] of the newest frame or [batch_done] seen. *)
 
@@ -84,6 +117,13 @@ val read : unit -> measurements option
 
 val load_state : string -> int
 (** Loads a save state; returns the frame [seq] after loading. *)
+
+val reset : unit -> int
+(** Resets the machine as its power switch would and returns the frame [seq]
+    after it, from which the frames count again (mGBA only: the Switch's hard
+    reset is closing and starting the game from HOME). The game boots from its
+    save, so presses timed from here land on the same frames on every start
+    state: the RNG programs' hard reset. *)
 
 val save_state : string -> int
 (** Saves the emulator's state to the path; returns the frame [seq] saved. A
