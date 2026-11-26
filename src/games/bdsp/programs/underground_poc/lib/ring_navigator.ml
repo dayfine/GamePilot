@@ -51,13 +51,17 @@ let execute_leg ~log ~brake_corner (leg : _ L.t) =
            (D.name leg.direction) tiles brake hold_ms);
       OW.run_hold dir ~hold_ms
 
-let rec execute_legs ~log = function
+let rec execute_legs ~log ~dest_y = function
   | [] -> ()
-  | [ last ] -> execute_leg ~log ~brake_corner:false last
+  | [ last ] ->
+      let brake_corner =
+        last.L.direction = D.South && dest_y >= Ring_grid.south_door.y
+      in
+      execute_leg ~log ~brake_corner last
   | a :: (b :: _ as rest) ->
       let brake_corner = a.L.direction = D.South && b.L.direction = D.West in
       execute_leg ~log ~brake_corner a;
-      execute_legs ~log rest
+      execute_legs ~log ~dest_y rest
 
 let handle_step ~picture ~on_prompt ~on_battle cur =
   match Effects.await ~timeout_ms:step_probe_timeout_ms (fun _ -> true) with
@@ -212,7 +216,7 @@ let run_stop ~log ~picture ~on_prompt ~on_battle ~re_seat acc
     (Printf.sprintf "Route -> stop %s (%d legs)..."
        (Grid_geometry.Tile_pos.to_string st.tile)
        (List.length st.legs));
-  execute_legs ~log st.legs;
+  execute_legs ~log ~dest_y:st.tile.y st.legs;
   let along_dir = along_dir_of_legs st.legs in
   interact_at_stop ~log ~picture ~on_prompt ~on_battle ~along_dir
     ~wall_dirs:st.wall_dirs ~tile:st.tile ~re_seat c
@@ -244,7 +248,7 @@ let visit_targets ~log ~picture ~start_door ~(sparkles : MS.nearby) ~on_prompt
       (Ok cur) route.stops
   in
   log "Executing planned return legs to doorway...";
-  execute_legs ~log route.return_legs;
+  execute_legs ~log ~dest_y:route.return_door.y route.return_legs;
   Ok (cur, route.return_door)
 
 let first_stop_of ~start_door (sparkles : MS.nearby) =
