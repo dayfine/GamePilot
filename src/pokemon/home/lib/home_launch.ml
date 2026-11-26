@@ -5,7 +5,7 @@ module M = Home_menus
 let ( let* ) = Result.bind
 let read_ms = 3000
 
-(* The script's scan: HOME to the first tile, then Right along the row,
+(* The scan: HOME to the first tile, then Right along the row,
    reading each tile's title for 1.5 s; up to 8 tiles. *)
 let walk : Switch_home.Home_title.walk =
   {

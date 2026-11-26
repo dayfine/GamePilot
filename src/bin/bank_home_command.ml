@@ -1,8 +1,7 @@
 (* gamepilot ctl [--port N] [--owner LABEL] bank-home plza [--look]
 
    Banks PLZA's two gifts into Pokémon HOME and saves it
-   (Pokemon_home.Home_bank, the lab's plza_claim_and_bank.sh from the BDSPLab
-   lab tools, its stages 4 and 5): from the Switch's HOME menu, Pokémon HOME
+   (Pokemon_home.Home_bank): from the Switch's HOME menu, Pokémon HOME
    opened on Legends: Z-A; the Vivillon (Box 1 slot 2) into the first empty
    slot of HOME box 166, or 167, scanning right to left; the Xerneas (Box 1
    slot 1) into 165, or 164, left to right; saved, closed. [--look] stops on
