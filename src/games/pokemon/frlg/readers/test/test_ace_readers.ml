@@ -47,27 +47,18 @@ let cell = function
 
 let flag = function None -> "?" | Some true -> "y" | Some false -> "n"
 
-let contains s sub =
-  let n = String.length sub in
-  let rec go i =
-    i + n <= String.length s && (String.sub s i n = sub || go (i + 1))
-  in
-  go 0
-
 let wallpaper m =
   Option.fold ~none:"none"
     ~some:(fun w -> String.lowercase_ascii (Pc_box_screen.wallpaper_name w))
     (Pc_box_screen.title_wallpaper m)
 
-(* Easy Chat frames report the two cursors, wall_ frames the title's
-   wallpaper, box frames the box screen. *)
 (* Pc_screen.box_screen_shown, which Ace_code reads beside the title's
    wallpaper: the PKMN DATA panel's lilac edge, hidden by a Pokémon's picture
    when the hand is over one ([on_a_pokemon]: "no box"). The Switch's
    box-title frames show the title bar only, the rest grey: not read
    there. *)
 let box_screen image m =
-  if contains image "_switch_" then "-"
+  if Strings.Contains.substring image "_switch_" then "-"
   else if Pc_screen.box_screen_shown m then "box screen"
   else "no box"
 
@@ -77,6 +68,8 @@ let on_a_pokemon =
     "wall_desert_desert_box03_hand_on_first_slot";
   ]
 
+(* Easy Chat frames report the two cursors, wall_ frames the title's
+   wallpaper, box frames the box screen. *)
 let read image m =
   if String.starts_with ~prefix:"wall_" image then
     Printf.sprintf "%s, wallpaper %s" (box_screen image m) (wallpaper m)
@@ -137,7 +130,7 @@ let expectation image =
   match String.split_on_char '_' image with
   | "wall" :: want :: _ ->
       let box =
-        if contains image "_switch_" then "-"
+        if Strings.Contains.substring image "_switch_" then "-"
         else if List.mem image on_a_pokemon then "no box"
         else "box screen"
       in
