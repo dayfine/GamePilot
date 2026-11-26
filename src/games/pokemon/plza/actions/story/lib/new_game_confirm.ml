@@ -20,7 +20,7 @@ let read_row steps window_ms =
 
 let not_on_screen =
   Failure.cause ~repeats:true "not_on_confirm_choices"
-    "Confirming starts on the new game's \"Confirm Choices\" screen, after the \
+    "01.00b starts on the new game's \"Confirm Choices\" screen, after the \
      language, look and name (made by hand). It is not on screen; nothing was \
      pressed."
 

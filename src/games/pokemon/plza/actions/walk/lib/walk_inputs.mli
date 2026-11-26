@@ -2,10 +2,9 @@
     stick tilted toward an angle ({!Switch_home.Stick_tilt}), walking or
     running. Ported from PokemonLZA_AutoStoryConsoleBackend.cpp: a tilt asked to
     run is run (B held with the stick, for its walk time over 1.65, running's
-    speedup) unless the run walks only. Every checkpoint before the fork's 03.03
-    walks (PokemonLZA_AutoStory.cpp), kept here (before 15-rock-pile-scene),
-    though dash unlocks at 12-down-to-the-lobby: it and 13-out-of-hotel-z could
-    run.
+    speedup) unless the run walks only. Every checkpoint before 03.03 walks
+    (PokemonLZA_AutoStory.cpp), kept here, though dash unlocks at 03.01: 03.01
+    and 03.02 could run.
 
     Where we differ: the fork also reads the screen 80 ms before a queued run
     ends, to queue the next slice back to back. The wire's submit returns once

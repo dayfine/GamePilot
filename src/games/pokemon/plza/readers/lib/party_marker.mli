@@ -2,9 +2,9 @@
     down under one sent out) under one of its six slots. Ported from
     PokemonLZA_OverworldPartySelectionDetector.cpp, the half of
     PokemonLZA_PartyBarDetector.cpp's bar detection that does not need an empty
-    last slot: it still shows when the bar collapses to its lead icon
-    (14-battle-taunie's plaza, console B, 2026-11-25), where the empty slots
-    fade into light pavement.
+    last slot: it still shows when the bar collapses to its lead icon (03.02b's
+    plaza, console B, 2026-11-25), where the empty slots fade into light
+    pavement.
 
     Each slot's box is (0.048 + 0.0398 i, 0.926, 0.017, 0.058), and in it a
     button detector for each of four templates (PokemonLZA_ButtonDetector.cpp,

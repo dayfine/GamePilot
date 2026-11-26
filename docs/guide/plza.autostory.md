@@ -11,9 +11,9 @@ Runs on: the Switch.
 
 ## Before you start
 
-Start a new game by hand up to its Confirm Choices screen (language, look and name), for 01-to-the-platform; or
-put the console on the station platform with free control, the controls hint showing, to run 02-platform-to-plaza
-alone (`--from 02-platform-to-plaza`). The Switch's capture must be the whole 1920x1080 picture (the daemon's
+Start a new game by hand up to its Confirm Choices screen (language, look and name), for 01.00b; or
+put the console on the station platform with free control, the controls hint showing, to run 01.01
+alone (`--from 01.01`). The Switch's capture must be the whole 1920x1080 picture (the daemon's
 `--viewport native`).
 
 ## Running it
@@ -21,7 +21,7 @@ alone (`--from 02-platform-to-plaza`). The Switch's capture must be the whole 19
 <!-- generated:commands -->
 ```sh
 # the Switch: each checkpoint once, from where the console is
-cd src && opam exec -- dune exec -- gamepilot run plza.autostory --from 01-to-the-platform --to 26-mable-reward --mode testing --backend switch --serial PORT --capture DEVICE \
+cd src && opam exec -- dune exec -- gamepilot run plza.autostory --from 01.00b-to-the-platform --to 03.11-mable-reward --mode testing --backend switch --serial PORT --capture DEVICE \
     --watch
 ```
 <!-- /generated -->
@@ -31,42 +31,42 @@ cd src && opam exec -- dune exec -- gamepilot run plza.autostory --from 01-to-th
 <!-- generated:checkpoints -->
 | Checkpoint | What its plan does |
 |---|---|
-| 01-to-the-platform | Confirm Choices to the station platform |
-| 02-platform-to-plaza | The platform to Main Mission 01 |
-| 03-chase-pancham | Main Mission 01: chase Pancham to the battle area |
-| 04-starter-and-andi | Main Mission 01: the starter and Andi |
-| 05-battle-brigitte | Main Mission 02: Battle Zone to Brigitte |
-| 06-to-hotel-z | Main Mission 02: after Brigitte to Hotel Z |
-| 07-hotel-z-lobby | Main Mission 02: into the Hotel Z lobby |
-| 08-hotel-check-in | Main Mission 02: Hotel Z check-in |
-| 09-to-room-202 | Main Mission 02: Hotel Z elevator to Room 202 |
-| 10-night-in-room-202 | Main Mission 02: the night in Room 202 |
-| 11-first-evening | Main Mission 02: the first evening to Main Mission 03 |
-| 12-down-to-the-lobby | Down to the lobby |
-| 13-out-of-hotel-z | Out of Hotel Z |
-| 14-battle-taunie | Battle Taunie |
-| 15-rock-pile-scene | To the rock pile scene |
-| 16-up-to-the-rooftop | Up the ladder to the rooftop scene |
-| 17-off-the-roof | Off the roof to Station Front |
-| 18-pokemon-center | Pokemon Center, the Pokedex |
-| 19-wild-zones-card | To the Wild Zones card |
-| 20-first-catches | Into Wild Zone 1: first catches |
-| 21-fourth-species | Wild Zone 1: fourth species |
-| 22-fifth-species | Wild Zone 1: fifth species |
-| 23-out-of-wild-zone-1 | Out of Wild Zone 1's far gate |
-| 24-into-research-lab | From Wild Zone 1's gate into the Research Lab |
-| 25-lab-elevator | Up the Research Lab's elevator to the Director's Office |
-| 26-mable-reward | Mable's research, the Rock Smash TM |
+| 01.00b-to-the-platform | Confirm Choices to the station platform |
+| 01.01-platform-to-plaza | The platform to Main Mission 01 |
+| 01.02-chase-pancham | Main Mission 01: chase Pancham to the battle area |
+| 01.03-starter-and-andi | Main Mission 01: the starter and Andi |
+| 02.01-battle-brigitte | Main Mission 02: Battle Zone to Brigitte |
+| 02.02-to-hotel-z | Main Mission 02: after Brigitte to Hotel Z |
+| 02.03-hotel-z-lobby | Main Mission 02: into the Hotel Z lobby |
+| 02.04-hotel-check-in | Main Mission 02: Hotel Z check-in |
+| 02.05-to-room-202 | Main Mission 02: Hotel Z elevator to Room 202 |
+| 02.06-night-in-room-202 | Main Mission 02: the night in Room 202 |
+| 02.07-first-evening | Main Mission 02: the first evening to Main Mission 03 |
+| 03.01-down-to-the-lobby | Down to the lobby |
+| 03.02-out-of-hotel-z | Out of Hotel Z |
+| 03.02b-battle-taunie | Battle Taunie |
+| 03.03-rock-pile-scene | To the rock pile scene |
+| 03.03b-up-to-the-rooftop | Up the ladder to the rooftop scene |
+| 03.03c-off-the-roof | Off the roof to Station Front |
+| 03.04-pokemon-center | Pokemon Center, the Pokedex |
+| 03.06-wild-zones-card | To the Wild Zones card |
+| 03.07-first-catches | Into Wild Zone 1: first catches |
+| 03.08-fourth-species | Wild Zone 1: fourth species |
+| 03.08a-fifth-species | Wild Zone 1: fifth species |
+| 03.08b-out-of-wild-zone-1 | Out of Wild Zone 1's far gate |
+| 03.09-into-research-lab | From Wild Zone 1's gate into the Research Lab |
+| 03.10-lab-elevator | Up the Research Lab's elevator to the Director's Office |
+| 03.11-mable-reward | Mable's research, the Rock Smash TM |
 
-<!-- plans: b09d58e3ef17 -->
+<!-- plans: ed7ceb4657c3 -->
 <!-- /generated -->
 
-01-to-the-platform confirms the choices, skips the opening and waits for the platform. 02-platform-to-plaza sets the text
+01.00b confirms the choices, skips the opening and waits for the platform. 01.01 sets the text
 speed to fast, walks down the platform and right to the white fade, and presses through the arrival
 scenes (Plus skips the president's ad) until the controls hint shows again.
 
-03-chase-pancham walks after Pancham, presses B through the scene to its choice and takes "Battle with
-Pokemon!". 04-starter-and-andi walks to Chikorita and talks, picks it, presses through the tutorial cards to the
+01.02 walks after Pancham, presses B through the scene to its choice and takes "Battle with
+Pokemon!". 01.03 walks to Chikorita and talks, picks it, presses through the tutorial cards to the
 battle, and fights Andi with the most effective move under ZL until Andi speaks.
 
 Main Mission 02 walks from the Battle Zone to Brigitte and beats her Cleffa, skips the street's
@@ -96,51 +96,51 @@ Reloads:
 
 - The first run starts wherever the console is.
 - A second run of a checkpoint (`--runs 2`) first closes the game and reloads the latest autosave.
-  01-to-the-platform has no autosave to go back to: its second run is refused.
-- 02-platform-to-plaza reloads once more if the platform's controls hint has already faded.
-- A checkpoint that follows a passing one starts where it ended, with no reload; 18-pokemon-center always
+  01.00b has no autosave to go back to: its second run is refused.
+- 01.01 reloads once more if the platform's controls hint has already faded.
+- A checkpoint that follows a passing one starts where it ended, with no reload; 03.04 always
   reloads when it follows another, since its walk needs the reload's facing.
 - A checkpoint found off its start (below) reloads once and checks its start again, then stops if
-  it is still off (`chain_off_start`; in 21-fourth-species also when the catch finds the player off Taunie's
+  it is still off (`chain_off_start`; in 03.08 also when the catch finds the player off Taunie's
   rocks); the log says it reloaded.
-- 21-fourth-species and 22-fifth-species reload and try again up to twice when they come up short (`short_of_species`):
+- 03.08 and 03.08a reload and try again up to twice when they come up short (`short_of_species`):
   the reload respawns the zone, so a run of bad spawns is luck, not a bug.
 
 Start and end checks:
 
-- From 15-rock-pile-scene on, a checkpoint whose plan names a start reads it before it presses anything: the
+- From 03.03 on, a checkpoint whose plan names a start reads it before it presses anything: the
   minimap recorded at its start, the party count, the A prompt, whether the player is in Wild Zone
-  1, or (21-fourth-species) on Taunie's rocks: `chain_off_start` when one differs.
-- 18-pokemon-center also checks its end (outside the Center): `end_off_signature`.
+  1, or (03.08) on Taunie's rocks: `chain_off_start` when one differs.
+- 03.04 also checks its end (outside the Center): `end_off_signature`.
 - A checkpoint whose plan names no start check logs START UNCHECKED and goes on.
 
 Resuming mid-checkpoint (the screen is read first, and steps already done are skipped):
 
-- 04-starter-and-andi can start inside Andi's battle, or at Urbain's heal after a lost one.
-- 14-battle-taunie started at the plaza arch after its map talk skips everything and passes; so does 18-pokemon-center
+- 01.03 can start inside Andi's battle, or at Urbain's heal after a lost one.
+- 03.02b started at the plaza arch after its map talk skips everything and passes; so does 03.04
   started outside the Pokémon Center.
 
 Failures:
 
-- 01-to-the-platform on any screen but Confirm Choices presses nothing and fails `not_on_confirm_choices`.
+- 01.00b on any screen but Confirm Choices presses nothing and fails `not_on_confirm_choices`.
 - A walk whose end never shows fails `walk_no_end`; one that no scene takes, `walk_no_scene`.
 - A scene that ends in free control where a choice or a battle was due fails
   `scene_ended_in_control` (the walk before it stopped short).
 - A scene that presses A first, on free control with no A prompt (two reads 300 ms apart), fails
   `prompt_not_seen` before pressing anything: the walk before it stopped short.
-- 16-up-to-the-rooftop's ladder: `ladder_not_found` when no step along the wall shows "Climb Up".
+- 03.03b's ladder: `ladder_not_found` when no step along the wall shows "Climb Up".
 - The run to a gate: `gate_not_reached` when no A prompt shows in time (a day/night change gets
   one more run).
 - A catch: `no_catch` when no throw is followed by the caught card, `still_a_target` when a target
   still locks on after the last round.
-- 21-fourth-species and 22-fifth-species: `short_of_species` when the party does not grow after 12 throws, on each of
+- 03.08 and 03.08a: `short_of_species` when the party does not grow after 12 throws, on each of
   their three attempts.
 - Leaving Wild Zone 1: `gate_not_reached` after 3 runs, `map_pin_not_read`, `in_wild_zone`.
 - Mable's reward: `main_menu_not_reached` when X never opens the main menu, `no_reward_lines` when
   her research page shows no lines (nothing was claimed).
-- 14-battle-taunie's map talk: `map_talk_timeout` when the party bar never holds within 2 minutes.
-- A lost battle (a black fade with the lead's HP near empty) fails `battle_lost`. Run 04-starter-and-andi again
-  (`--from 04-starter-and-andi`): it goes on at Urbain's heal, at Andi's rematch or inside the battle. A battle
+- 03.02b's map talk: `map_talk_timeout` when the party bar never holds within 2 minutes.
+- A lost battle (a black fade with the lead's HP near empty) fails `battle_lost`. Run 01.03 again
+  (`--from 01.03`): it goes on at Urbain's heal, at Andi's rematch or inside the battle. A battle
   whose move symbols never show fails `battle_failed`.
 - The run folder keeps the story log, the wire log and `failure.png`, the last frame of a failed
   run.

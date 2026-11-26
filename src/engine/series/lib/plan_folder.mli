@@ -17,7 +17,13 @@ val select :
   from_id:string ->
   to_id:string ->
   (string list * string option, string) result
-(** [from_id .. to_id] and the id after [to_id], if any. *)
+(** [from_id .. to_id] and the id after [to_id], if any. Either bound may be an
+    id's leading part before a dash when one id alone starts with it: ["03.08"]
+    names ["03.08-fourth-species"], not ["03.08a-fifth-species"]. *)
+
+val resolve : string list -> string -> (string, string) result
+(** The id named: itself when listed, else the one id that starts with it and a
+    dash; an error when none or more than one does. *)
 
 val plan_file : plan_dir:string -> string -> string
 (** The plan file of a checkpoint id in the folder. *)

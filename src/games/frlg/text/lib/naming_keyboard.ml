@@ -2,22 +2,15 @@ module N = Frlg_readers.Naming_screen
 
 type position = { page : N.page; key : N.key }
 
-let utf8_chars s =
-  let rec go i acc =
-    if i >= String.length s then List.rev acc
-    else
-      let n = Uchar.utf_decode_length (String.get_utf_8_uchar s i) in
-      go (i + n) (String.sub s i n :: acc)
-  in
-  go 0 []
-
 (* sKeyboardChars, each row padded with spaces to the page's columns. *)
 let grid = function
   | N.Upper -> [ "ABCDEF ."; "GHIJKL ,"; "MNOPQRS "; "TUVWXYZ " ]
   | N.Lower -> [ "abcdef ."; "ghijkl ,"; "mnopqrs "; "tuvwxyz " ]
   | N.Others -> [ "01234 "; "56789 "; "!?♂♀/-"; "…“”‘' " ]
 
-let rows page = List.map (fun r -> Array.of_list (utf8_chars r)) (grid page)
+let rows page =
+  List.map (fun r -> Array.of_list (Strings.Utf8.chars r)) (grid page)
+
 let char_at page (k : N.key) = (List.nth (rows page) k.row).(k.col)
 let space = " "
 
@@ -58,7 +51,7 @@ let find ~on c =
   | None -> List.find_map (fun page -> key_on page c) pages
 
 let chars text =
-  let cs = utf8_chars text in
+  let cs = Strings.Utf8.chars text in
   match List.find_opt (fun c -> not (List.mem c charset)) cs with
   | Some c -> Error (Printf.sprintf "the keyboard has no \"%s\"" c)
   | None -> Ok cs

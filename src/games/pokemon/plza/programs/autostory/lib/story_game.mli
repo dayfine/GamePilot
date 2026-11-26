@@ -9,8 +9,7 @@
     is the caller's (back to the latest autosave). *)
 
 val walk_only : string -> bool
-(** Whether a checkpoint's runs are walked: its id is before
-    ["15-rock-pile-scene"]. *)
+(** Whether a checkpoint's runs are walked: its id is before ["03.03"]. *)
 
 val make :
   Plza_story.Steps.game_steps ->

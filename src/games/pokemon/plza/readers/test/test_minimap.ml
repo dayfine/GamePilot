@@ -1,8 +1,7 @@
 (* The minimap reader (PokemonLZA_MinimapMatch.cpp) on the fork's recorded
    start frames (CommandLineTests PokemonLZA/AutoStoryStarts, Spanish, console
-   B) and 14-battle-taunie's plaza arch on console B (2026-11-25), where
-   14-battle-taunie ends and 15-rock-pile-scene starts, and frames with no
-   minimap.
+   B) and 03.02b's plaza arch on console B (2026-11-25), where 03.02b ends and
+   03.03 starts, and frames with no minimap.
 
    Headroom (bound 30): 03.03's start reads 1 from its own reference, the arch
    3 (6 on frame 210 scaled up from 640x360), 03.06's 1, 03.07's 3; the

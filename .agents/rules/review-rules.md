@@ -185,14 +185,17 @@ cases the user called out.)
 ### R9 A port's doc comment names the source files, not their functions or constants
 
 A ported module's doc comment names the C++ (or pret) file(s) it comes from, so the two can be laid
-side by side, and says where it differs; it does not name the source's functions, classes or
-constants.
+side by side, and says where it differs; it does not name the fork's C++ functions, classes or
+constants. pret is the exception: its files are long, so a doc comment may name the pret function,
+table or constant it follows (`naming_screen.c`'s `sKeyboardChars`), with the file.
 
 - Why: "let's not refer to the old C++ symbols" (user, 2026-11-25:
   https://github.com/dayfine/GamePilot/pull/89#discussion_r4693220866). The base rule is `AGENTS.md`, "Port the C++
   transparently".
 - Bad: `as upstream's [use_rare_candy()] watches for it: ... its PartyLevelUpWatcher`.
 - Good: `as upstream's PokemonFRLG_RngNavigation.cpp does after a Rare Candy: the stats window ...`.
+- Good (pret): `the key grids of pret's naming_screen.c (sKeyboardChars)`; pret symbols allowed
+  (user, 2026-11-25, on #208's qc FLAG).
 - Find: recipe over the files that name a source file, then judgment:
 
   ```sh
@@ -402,15 +405,19 @@ are deleted once that run passed; the unit tests that pin the behaviour stay.
 ### R22 Plan files have short descriptive names
 
 A plan file is its order number and one to five words saying what it does, with species names,
-not nicknames: `03-trade-mr-mime.plan.json`, not `mg-03.plan.json`.
+not nicknames: `03-trade-mr-mime.plan.json`, not `mg-03.plan.json`. Where the game numbers its own
+steps (PLZA's story rows), the order number is that `NN.NN` numbering, a split's letter kept:
+`03.02b-battle-taunie.plan.json`; otherwise it is `NN`.
 
 - Why: the user's calls on plan file names (2026-11-24, in a working session), paraphrased: short
   descriptive names, one or two words ideally and at most five, using species, not nicknames;
-  applied in #43. `su-01` and `tt-01` keep their ids until their programs are split by goal.
-- Bad: `mg-03.plan.json`, `03-trade-mimien.plan.json`.
-- Good: `03-trade-mr-mime.plan.json`.
+  applied in #43. `su-01` and `tt-01` keep their ids until their programs are split by goal. On PLZA
+  (2026-11-25): the story's own number in front, so a plan, a console run and the fork's checkpoint
+  share it.
+- Bad: `mg-03.plan.json`, `03-trade-mimien.plan.json`, `03.02b.plan.json`.
+- Good: `03-trade-mr-mime.plan.json`, `03.08-fourth-species.plan.json`.
 - Find: recipe (`su-01`, `tt-01` are known):
-  `ls src/games/*/programs/*/plans src/games/pokemon/*/programs/*/plans | grep -vE '^[0-9]{2}-[a-z0-9]+(-[a-z0-9]+){0,4}\.plan\.json$|:$|^$'`.
+  `ls src/games/*/programs/*/plans src/games/pokemon/*/programs/*/plans | grep -vE '^[0-9]{2}(\.[0-9]{2}[a-z]?)?-[a-z0-9]+(-[a-z0-9]+){0,4}\.plan\.json$|:$|^$'`.
 
 ### R23 No runtime dependency on Packages; per-language assets are committed
 

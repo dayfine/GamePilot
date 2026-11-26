@@ -43,10 +43,9 @@ val lead_hp : Effects.measurements -> float option
     panel's six fill probes, the trough left out), while the level badge shows;
     [None] without the badge. The box covers the left 204 of the bar's about 288
     pixels, and the HP text over its bottom rows, so a full bar and any HP over
-    about 70% read 0.89; 1 HP of 19 reads 0.04 (04-starter-and-andi, console B),
-    as a fainting lead's bar does. The trough is not needed: at 640 x 360 it
-    reads darker than the fork's grey. Ours: the fork reads no HP in a story
-    battle. *)
+    about 70% read 0.89; 1 HP of 19 reads 0.04 (01.03, console B), as a fainting
+    lead's bar does. The trough is not needed: at 640 x 360 it reads darker than
+    the fork's grey. Ours: the fork reads no HP in a story battle. *)
 
 val shown : Effects.measurements -> bool
 (** The hint, or the panel with the markers or the trainer's balls. *)

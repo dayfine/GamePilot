@@ -1637,3 +1637,6 @@ mgba/naming-entry-9.png|naming_entry.4|A
 mgba/naming-entry-9.png|naming_entry.5| 
 mgba/naming-entry-9.png|naming_entry.6|a
 mgba/naming-entry-9.png|naming_entry.7|.
+mgba/box-title-box1.png|pc_box_title|BOX1
+mgba/box-title-symbols.png|pc_box_title|Az!…'.,9
+mgba/box-title-quotes.png|pc_box_title|”‘' A a.

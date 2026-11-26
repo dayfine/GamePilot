@@ -6,12 +6,12 @@
     A screen read every 250 ms. Control is free on two reads in a row of the
     party bar or the controls hint with nothing over them: about 0.5 s when
     control is already free, as it is for most walks. An A prompt with nothing
-    busy held 1 s is control too (as the fork counts a prompt as control: at its
-    01.03, our 04-starter-and-andi, no party bar shows). Two longer limits, kept
-    as the C++ has them: after 10 s with nothing busy (no text, box or fade) and
-    no sign of control either, control is taken as free (longer than the ~7 s
-    from the end of 01.01's scenes to control, where no sign shows); and 30 s
-    without free control is the timeout, which only a stuck game reaches. *)
+    busy held 1 s is control too (as the fork counts a prompt as control: at
+    01.03 no party bar shows). Two longer limits, kept as the C++ has them:
+    after 10 s with nothing busy (no text, box or fade) and no sign of control
+    either, control is taken as free (longer than the ~7 s from the end of
+    01.01's scenes to control, where no sign shows); and 30 s without free
+    control is the timeout, which only a stuck game reaches. *)
 
 type game_steps = {
   read_screen : unit -> Walk_screen.t;

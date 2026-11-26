@@ -1,5 +1,5 @@
 (* PLZA's rules through the engine (Plza_engine = Program_engine.Make
-   over Plza_rules): 02-platform-to-plaza's plan decodes with zones and walks, a walk's args
+   over Plza_rules): 01.01's plan decodes with zones and walks, a walk's args
    are checked as PokemonLZA_AutoStoryActionTable.cpp checks them (under our
    names), the runner sends a walk to
    the game's own handler and checks zones, and what a run keeps reads back. *)
@@ -12,7 +12,7 @@ let plan_text ?(start = {|{"place": "LumioseCity"}|}) ?(postconditions = "{}")
     events =
   Printf.sprintf
     {|{"format": "gamepilot-checkpoint/1", "game": "plza", "execution": {},
-       "checkpoint": {"id": "02-platform-to-plaza", "title": "The platform to Main Mission 01",
+       "checkpoint": {"id": "01.01-platform-to-plaza", "title": "The platform to Main Mission 01",
          "start": %s, "metadata": {"postconditions": %s},
          "events": [%s]}}|}
     start postconditions
@@ -25,7 +25,7 @@ let walk ?(after = "") id args =
   Printf.sprintf {|{"id": "%s", "kind": "walk", "args": %s%s}|} id args
     (if after = "" then "" else {|, "declared_after": |} ^ after)
 
-(* 02-platform-to-plaza as the C++ plan has it, its other actions game actions. *)
+(* 01.01 as the C++ plan has it, its other actions game actions. *)
 let platform_events =
   [
     action "on_platform" "wait_for_platform";
@@ -39,7 +39,7 @@ let platform_events =
   ]
 
 let decode text =
-  Plan_decode.decode ~source:"02-platform-to-plaza.plan.json"
+  Plan_decode.decode ~source:"01.01-platform-to-plaza.plan.json"
     (Yojson.Safe.from_string text)
 
 let decoded show text =
@@ -54,11 +54,9 @@ let walk_args args =
 
 let decode_cases =
   [
-    case
-      "02-platform-to-plaza's outline: a zone start, a walk among the engine's \
-       kinds"
+    case "01.01's outline: a zone start, a walk among the engine's kinds"
       (fun () -> Plan_text.outline (plan ()))
-      "plza 02-platform-to-plaza from LumioseCity: 3 game_action, 1 walk, 2 \
+      "plza 01.01-platform-to-plaza from LumioseCity: 3 game_action, 1 walk, 2 \
        scene";
     case "the walk to the plaza: its legs, its end, a zone declared after"
       (event "platform_to_plaza")
@@ -71,8 +69,8 @@ let decode_cases =
       "w: walk [-66, 600] steer after 500 ms until dialog not before 300 ms";
     case "a style that is not one of the two"
       (fun () -> walk_args {|{"legs": [[0, 1]], "style": "held"}|})
-      "02-platform-to-plaza.plan.json: checkpoint.events[0].args.style must be \
-       \"face_then_walk\" or \"steer\".";
+      "01.01-platform-to-plaza.plan.json: checkpoint.events[0].args.style must \
+       be \"face_then_walk\" or \"steer\".";
     case "a heading to face first (the fork's, a minimap bearing)"
       (fun () ->
         walk_args
@@ -86,20 +84,20 @@ let decode_cases =
       "none";
     case "a leg that is not [angle, ms]"
       (fun () -> walk_args {|{"legs": [[0, 1000], [90]]}|})
-      "02-platform-to-plaza.plan.json: checkpoint.events[0].args.legs[1] is \
+      "01.01-platform-to-plaza.plan.json: checkpoint.events[0].args.legs[1] is \
        not [angle degrees, walk ms].";
     case "legs are required"
       (fun () -> walk_args {|{"end": "scene"}|})
-      "02-platform-to-plaza.plan.json: checkpoint.events[0].args.legs is \
+      "01.01-platform-to-plaza.plan.json: checkpoint.events[0].args.legs is \
        missing.";
     case "an end that is not one of the seven"
       (fun () -> walk_args {|{"legs": [[0, 1]], "end": "banner"}|})
-      "02-platform-to-plaza.plan.json: checkpoint.events[0].args.end must be \
-       \"fade_white\", \"fade_black\", \"dialog\", \"prompt\", \"talk\", \
+      "01.01-platform-to-plaza.plan.json: checkpoint.events[0].args.end must \
+       be \"fade_white\", \"fade_black\", \"dialog\", \"prompt\", \"talk\", \
        \"talk_after_legs\" or \"scene\".";
     case "earliest_end_ms needs an end"
       (fun () -> walk_args {|{"legs": [[0, 1]], "earliest_end_ms": 100}|})
-      "02-platform-to-plaza.plan.json: \
+      "01.01-platform-to-plaza.plan.json: \
        checkpoint.events[0].args.earliest_end_ms needs an \"end\" other than a \
        talk.";
     case "a walk into a talk after its legs"
@@ -109,23 +107,23 @@ let decode_cases =
       "w: walk [-66, 600] steer into a talk after the legs";
     case "an unknown walk arg"
       (fun () -> walk_args {|{"legs": [[0, 1]], "tiles": 3}|})
-      "02-platform-to-plaza.plan.json: checkpoint.events[0].args.tiles is not \
-       a known field.";
+      "01.01-platform-to-plaza.plan.json: checkpoint.events[0].args.tiles is \
+       not a known field.";
     case "a grid pose is not a PLZA pose"
       (fun () ->
         decoded Plan_text.outline (plan_text ~start:{|{"map": "Town"}|} []))
-      "02-platform-to-plaza.plan.json: checkpoint.start.map is not a known \
+      "01.01-platform-to-plaza.plan.json: checkpoint.start.map is not a known \
        field.";
     case "a Pokémon kind is not PLZA's"
       (fun () ->
         decoded Plan_text.outline
           (plan_text [ {|{"id": "x", "kind": "legs", "args": {"legs": []}}|} ]))
-      {|02-platform-to-plaza.plan.json: checkpoint.events[0].kind "legs" is not a story event kind.|};
+      {|01.01-platform-to-plaza.plan.json: checkpoint.events[0].kind "legs" is not a story event kind.|};
     case "a promise PLZA cannot read"
       (fun () ->
         decoded Plan_text.outline
           (plan_text ~postconditions:{|{"party": []}|} []))
-      "02-platform-to-plaza.plan.json: \
+      "01.01-platform-to-plaza.plan.json: \
        checkpoint.metadata.postconditions.party is not a known field.";
   ]
 
@@ -191,7 +189,7 @@ let run_cases =
       "passed";
     case "the zone declared after, elsewhere: the walk fails"
       (fun () -> outcome ())
-      "02-platform-to-plaza event 3 (platform_to_plaza): declared after at \
+      "01.01-platform-to-plaza event 3 (platform_to_plaza): declared after at \
        LumioseCity/plaza, but the game reads LumioseCity/platform";
     case "a game that reads no zone (PLZA today): nothing to check, passed"
       (fun () -> outcome ~reads_zone:false ())
