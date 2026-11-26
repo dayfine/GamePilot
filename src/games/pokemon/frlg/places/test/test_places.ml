@@ -101,6 +101,11 @@ let one_place place =
     {|{"format": "gamepilot-places/1", "game": "frlg", "places": {"a": %s}}|}
     place
 
+let center_nurse name () =
+  match Place_table.center_nurse table name with
+  | Ok g -> Pokemon_engine.Pose.to_string (Grid g)
+  | Error e -> e
+
 let case name input expectation = { Table_test.name; input; expectation }
 
 let () =
@@ -108,14 +113,25 @@ let () =
     [
       case "every place's object is in the maps, usable from its stand tile"
         (fun () -> failures resolves)
-        "28 places, all pass";
+        "36 places, all pass";
       case "every place's stand tile is walked to from a warp"
         (fun () -> failures reachable)
-        "28 places, all pass";
+        "36 places, all pass";
       case "every town's Fly name is one Fly knows" towns_fly
-        "4 towns, all pass";
+        "12 towns, all pass";
       case "every town's nurse and mart start with the town's key" towns_prefix
-        "4 towns, all pass";
+        "12 towns, all pass";
+      case "a town's nurse pose by Fly name"
+        (center_nurse "LavenderTown")
+        "LavenderTown_PokemonCenter_1F (7, 4) north";
+      case "Indigo Plateau's nurse pose by key (non-standard layout)"
+        (center_nurse "indigo_plateau")
+        "IndigoPlateau_PokemonCenter_1F (13, 12) north";
+      case "Center map of a Fly town with no Center"
+        (fun () ->
+          Option.value ~default:"none"
+            (Place_table.center_map_of_fly table "PalletTown"))
+        "none";
       case "a town whose nurse is not a place"
         (parse
            {|{"format": "gamepilot-places/1", "game": "frlg", "places": {},

@@ -4,19 +4,17 @@ open Frlg_checkpoints
 module R = Room_policy
 
 let table = Result.get_ok (Frlg_actions.Fly_towns.load ())
+let places = Result.get_ok (Frlg_places.Place_table.load ())
 
 (* The maps of the world, with every standard Center's coded room. *)
-let maps =
-  let world = Result.get_ok (Checkpoint_run.load_world ()) in
-  List.init (Grid_maps.Connected_maps.size world.maps) (fun i ->
-      (Grid_maps.Connected_maps.map world.maps i).name)
+let world = Result.get_ok (Checkpoint_run.load_world ())
+let maps = world.maps
 
 (* Each Center of the world: a coded room (it has the "pc_front" point no map
    file has) or its map file. *)
 let world_centers () =
-  let world = Result.get_ok (Checkpoint_run.load_world ()) in
-  List.init (Grid_maps.Connected_maps.size world.maps) (fun i ->
-      Grid_maps.Connected_maps.map world.maps i)
+  List.init (Grid_maps.Connected_maps.size maps) (fun i ->
+      Grid_maps.Connected_maps.map maps i)
   |> List.filter (fun (m : Grid_maps.Map_data.t) ->
          String.ends_with ~suffix:"_PokemonCenter_1F" m.name)
   |> List.partition (fun (m : Grid_maps.Map_data.t) ->
@@ -27,8 +25,8 @@ let world_centers () =
        (List.map (fun (m : Grid_maps.Map_data.t) -> m.name) mapped))
 
 let nearest map () =
-  match Make_room.nearest_center table ~maps map with
-  | Ok town -> town.name
+  match Make_room.nearest_center table ~places ~maps map with
+  | Ok center -> center.town.name
   | Error e -> "error: " ^ e
 
 let member slot species level moves : R.member =
@@ -46,7 +44,9 @@ let console_b =
   ]
 
 let plan () =
-  let center = Option.get (Frlg_actions.Fly_towns.find table "ViridianCity") in
+  let center =
+    Result.get_ok (Make_room.nearest_center table ~places ~maps "ViridianCity")
+  in
   let room : Make_room.room =
     {
       center;
@@ -97,6 +97,12 @@ let () =
       case "inside Pallet: the town of the map"
         (nearest "PalletTown_PlayersHouse_1F")
         "ViridianCity";
+      case "upstairs in Pallet: indoor warps reach the town"
+        (nearest "PalletTown_PlayersHouse_2F")
+        "ViridianCity";
+      case "Indigo Plateau Center: indoor warp to Fly landing"
+        (nearest "IndigoPlateau_PokemonCenter_1F")
+        "PewterCity";
       case "Lavender: its own Center" (nearest "LavenderTown") "LavenderTown";
       case "Celadon: its own Center, a coded room" (nearest "CeladonCity")
         "CeladonCity";

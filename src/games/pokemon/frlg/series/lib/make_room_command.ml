@@ -53,12 +53,9 @@ let knows_fly (m : R.member) =
 
 let room ~at need members =
   let* towns = Frlg_actions.Fly_towns.load () in
+  let* places = Frlg_places.Place_table.load () in
   let* world = Cr.load_world () in
-  let maps =
-    List.init (Grid_maps.Connected_maps.size world.maps) (fun i ->
-        (Grid_maps.Connected_maps.map world.maps i).name)
-  in
-  let* center = M.nearest_center towns ~maps at in
+  let* center = M.nearest_center towns ~places ~maps:world.maps at in
   let* deposits = R.choose (Pr.rules need) (Pr.precondition need) members in
   let* () =
     if List.exists knows_fly members then Ok () else Error "no member knows Fly"
@@ -101,7 +98,7 @@ let decide ~plan_dir ~at need (record : Run_record.t) say members =
   else
     let dir = Filename.concat record.dir "plans" in
     let* () = write_plans ~plan_dir dir room in
-    say (M.id ^ ": Fly to " ^ room.center.name ^ ", in " ^ dir);
+    say (M.id ^ ": Fly to " ^ room.center.town.name ^ ", in " ^ dir);
     Ok (Some dir)
 
 let action f : Pokemon_engine.Game.game_action = fun _ _ -> f ()

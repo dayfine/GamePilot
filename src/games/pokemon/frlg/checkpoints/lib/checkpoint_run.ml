@@ -127,7 +127,26 @@ let reload state () =
         (Pokemon_engine.Failure.cause ~repeats:true "no_state"
            "no start state to reload")
 
-let config options world : A.Checkpoint_game.config =
+let lookup_center town =
+  match Frlg_places.Place_table.load () with
+  | Error e -> Error e
+  | Ok table ->
+      Result.map Option.some (Frlg_places.Place_table.center_nurse table town)
+
+let resolve_center = function
+  | None -> Ok None
+  | Some town -> lookup_center town
+
+let bad_center (plan : Pokemon_engine.Plan.t) msg : Pokemon_engine.Failure.t =
+  {
+    checkpoint_id = plan.checkpoint.checkpoint_id;
+    event_index = 0;
+    event_id = "center";
+    reason =
+      Handler (Pokemon_engine.Failure.cause ~repeats:true "bad_center" msg);
+  }
+
+let config options ~center world : A.Checkpoint_game.config =
   {
     world;
     gait = options.gait;
@@ -135,7 +154,7 @@ let config options world : A.Checkpoint_game.config =
     flags = A.Skip_conditions.read_once ~log:options.log;
     party = options.party;
     grind_cap = options.grind_cap;
-    center = options.center;
+    center;
     reload = reload options.state;
     program_options = options.program_options;
     log = options.log;
@@ -219,11 +238,12 @@ let keeping_states ?on_event ~keep ~first
     | _ -> ());
     Option.iter (fun f -> f index progress) on_event
 
-let run ?end_at ?on_event ?(actions = []) ?from_event ?keep_event_state options
-    world (plan : Pokemon_engine.Plan.t) =
+let run_with_center ?end_at ?on_event ~actions ?from_event ?keep_event_state
+    options ~center world (plan : Pokemon_engine.Plan.t) =
   Option.iter (fun s -> ignore (Effects.load_state s)) options.state;
   let game =
-    A.Checkpoint_game.create (config options world)
+    A.Checkpoint_game.create
+      (config options ~center world)
       ~start:(start_pose plan from_event)
   in
   let checkpoint, end_at = to_run options ~end_at plan in
@@ -260,6 +280,14 @@ let run ?end_at ?on_event ?(actions = []) ?from_event ?keep_event_state options
       in
       Pokemon_engine.Runner.run ?end_at ?end_state ~on_event ?events game
         checkpoint)
+
+let run ?end_at ?on_event ?(actions = []) ?from_event ?keep_event_state options
+    world (plan : Pokemon_engine.Plan.t) =
+  match resolve_center options.center with
+  | Error msg -> Error (bad_center plan msg)
+  | Ok center ->
+      run_with_center ?end_at ?on_event ~actions ?from_event ?keep_event_state
+        options ~center world plan
 
 let goal_holds ~log ~id (goal : Pokemon_engine.Postconditions.t) =
   let module C = Pokemon_engine.Postcondition_check in
