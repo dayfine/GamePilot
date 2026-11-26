@@ -11,7 +11,6 @@ let mech = Corridor_nav.bdsp_move_mechanics
 let step_probe_timeout_ms = 350
 let wall_margin_ms = 350
 let wall_hug_ms = 450
-let probe_tiles_around_stop = 4
 
 let subscribe_screen ~picture =
   ignore (Effects.subscribe (US.probes ~picture) : string list)
@@ -72,7 +71,7 @@ let visible_sparkle_dir ~picture =
   | Effects.Holds m -> (US.read m).wall_sparkle
   | Effects.Timeout -> None
 
-let probe_stop_walls ~log ~picture ~on_prompt ~on_battle ~along_dir ~wall_dirs
+let interact_at_stop ~log ~picture ~on_prompt ~on_battle ~along_dir ~wall_dirs
     cur =
   subscribe_screen ~picture;
   let face_dir =
@@ -83,18 +82,9 @@ let probe_stop_walls ~log ~picture ~on_prompt ~on_battle ~along_dir ~wall_dirs
     | None -> primary_wall_dir ~along_dir wall_dirs
   in
   OW.run_hold face_dir ~hold_ms:wall_hug_ms;
-  let rec loop left acc =
-    if left <= 0 then Ok acc
-    else (
-      OW.turn face_dir;
-      OW.interact ();
-      let* next, dug = handle_step ~picture ~on_prompt ~on_battle acc in
-      if dug then Ok next
-      else (
-        OW.step_tap along_dir 1;
-        loop (left - 1) next))
-  in
-  loop probe_tiles_around_stop cur
+  OW.interact ();
+  let* next, _dug = handle_step ~picture ~on_prompt ~on_battle cur in
+  Ok next
 
 let along_dir_of_legs = function
   | [] -> Corridor_nav.East
@@ -105,12 +95,12 @@ let along_dir_of_legs = function
 let run_stop ~log ~picture ~on_prompt ~on_battle acc (st : Ring_grid.stop) =
   let* c = acc in
   log
-    (Printf.sprintf "Walking to stop %s (%d legs)..."
+    (Printf.sprintf "Route -> stop %s (%d legs)..."
        (Grid_geometry.Tile_pos.to_string st.tile)
        (List.length st.legs));
   List.iter (execute_leg ~log) st.legs;
   let along_dir = along_dir_of_legs st.legs in
-  probe_stop_walls ~log ~picture ~on_prompt ~on_battle ~along_dir
+  interact_at_stop ~log ~picture ~on_prompt ~on_battle ~along_dir
     ~wall_dirs:st.wall_dirs c
 
 let visit_targets ~log ~picture ~(sparkles : MS.nearby) ~on_prompt ~on_battle
