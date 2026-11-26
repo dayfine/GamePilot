@@ -145,7 +145,8 @@ let plza_home =
     plza with
     run_series = plza_home_series;
     run_checkpoint =
-      (fun _ _ -> Error "plza.bank-home runs whole series only: gamepilot run");
+      (fun _ _ ->
+        Error "pokemon_home.bank-plza runs whole series only: gamepilot run");
     ctl_readers = [];
   }
 

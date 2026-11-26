@@ -34,7 +34,7 @@ This program takes no options.
 <!-- generated:commands -->
 ```sh
 # the Switch: each checkpoint once, from where the console is
-cd src && opam exec -- dune exec -- gamepilot run plza.bank-home --from 01-bank-gifts --to 01-bank-gifts --mode testing --backend switch --serial PORT --capture DEVICE \
+cd src && opam exec -- dune exec -- gamepilot run pokemon_home.bank-plza --from 01-bank-gifts --to 01-bank-gifts --mode testing --backend switch --serial PORT --capture DEVICE \
     --watch
 ```
 <!-- /generated -->

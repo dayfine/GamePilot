@@ -10,14 +10,14 @@ let game =
 
 let plza_bank_home =
   {
-    id = "plza.bank-home";
+    id = "pokemon_home.bank-plza";
     game;
-    name = "Bank in HOME";
+    name = "Bank PLZA in HOME";
     category = Storage;
     description =
       "Moves the claimed gifts from the game's box into their Pokémon HOME \
        boxes and saves HOME.";
-    doc = "docs/guide/plza.bank-home.md";
+    doc = "docs/guide/pokemon_home.bank-plza.md";
     checkpoints = Some "src/games/pokemon/plza/programs/bank_home/plans";
     backends = [ Switch ];
     viewport = Native;
