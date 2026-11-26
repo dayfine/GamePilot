@@ -67,7 +67,8 @@ PA/CC lists its programs (game, then group, then program). `gamepilot programs` 
 A descriptor (`Program_registry.t`) gives:
 
 - `id`: `<game>.<program>`, e.g. `frlg.mail_glitch`; the program's folder is
-  `src/games/<game>/programs/<program>/`.
+  `src/games/pokemon/<game>/programs/<program>/` for a Pokémon game,
+  `src/games/<game>/programs/<program>/` for any other.
 - the game (`Program_registry.game`): its id and display name, its Switch titles' icons on their
   Delete Save Data page by the key `gamepilot ctl delete-save` takes (`delete_save_icons`), and its
   Switch HOME data when measured (`switch_home`: the title park and resume go back to, its HOME

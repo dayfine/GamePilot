@@ -50,7 +50,7 @@ leveling program for the Parasect and bought balls.
 
 ## Steps
 
-1. Pokedex list reader and navigation (`src/games/frlg/readers`, probes, not the C++ OCR).
+1. Pokedex list reader and navigation (`src/games/pokemon/frlg/readers`, probes, not the C++ OCR).
 2. The catalog as PokemonSimulation data; the pure planner in OCaml with table tests.
 3. `capture` with `ball=` and the Spore/False Swipe catcher loop (shared with A4).
 4. Land-wild collector on mGBA from a post-game save: non-shiny, Kanto caught set, one target at a

@@ -52,7 +52,7 @@ FireRed on screen in the GBA app:
 Expect `1920x1080 at 60.00 fps` and `geometry ok: picture 1560x1040 at (180, 5)`, then look at
 `frame.png`. A wrong picture box means fixing `nso_gba_viewport()` before anything else. The box was
 checked against console frames now kept as reader fixtures
-(`src/games/frlg/readers/test/images/switch/`): the picture fills it, with black bars left and
+(`src/games/pokemon/frlg/readers/test/images/switch/`): the picture fills it, with black bars left and
 right.
 
 A full-screen game (Legends Z-A) has no bars. Its registry descriptor says `viewport = Native`
@@ -110,7 +110,7 @@ level goes first, and nothing is ever released.
 With `--make-room MAP` (the save's map, such as `PalletTown`) the runner deposits them itself, as a
 generated checkpoint 00-make-room before the chain:
 
-    sh run/run_checkpoints_on_switch.sh src/games/frlg/programs/mail_glitch/plans \
+    sh run/run_checkpoints_on_switch.sh src/games/pokemon/frlg/programs/mail_glitch/plans \
         --from 01-celadon-setup --to 01-celadon-setup --make-room PalletTown
 
 It Flies to the Center nearest MAP (Viridian from Pallet, which has none), deposits with

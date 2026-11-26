@@ -114,7 +114,7 @@ slots into the names. The design note, docs/design/FRLG-ACE-Execution.md, has th
 code box by box and what was verified on mGBA.
 
 The names are data
-(`src/games/frlg/assets/ace_presets.json`); a unit test (`test_ace_presets`) encodes them with the
+(`src/games/pokemon/frlg/assets/ace_presets.json`); a unit test (`test_ace_presets`) encodes them with the
 game's character table and runs the ARM words, checking the code stores 999 and the item's id.
 The actions are `Ace_code` (the checks and the typing, on `Box_rename`'s naming), `Ace_trigger`
-(the swaps) and `Ace_item` (room, x999, withdraw), in `src/games/frlg/actions/`.
+(the swaps) and `Ace_item` (room, x999, withdraw), in `src/games/pokemon/frlg/actions/`.

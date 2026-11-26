@@ -145,7 +145,7 @@ existing `Lift_ride` code, and the only new code is the expansion (a pure functi
 plan, tested without a game). Fly stays an explicit event in the first step; expanding "place in
 another town" into Fly + walk is the same mechanism and can follow once the lift case has run.
 
-The table lives in GamePilot (`src/games/frlg/places/`). Where an object is (the nurse, a door, a
+The table lives in GamePilot (`src/games/pokemon/frlg/places/`). Where an object is (the nurse, a door, a
 hidden item) is map data and stays in PokemonSimulation: a place names the object by its id there
 and adds only what is ours, the tile we stand on to use it, the facing, and names such as
 `dept_store_1f_save`. A test checks that every place resolves on PokemonSimulation's maps and that

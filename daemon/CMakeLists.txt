@@ -182,9 +182,9 @@ foreach(test blob_find_test board_session_test contracts_test input_lease_test k
   target_link_libraries(${test} PRIVATE gamepilot_core)
   target_compile_definitions(${test} PRIVATE
     GAMEPILOT_CONTRACTS_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../protocol/v1"
-    GAMEPILOT_SWITCH_IMAGES_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../src/games/frlg/readers/test/images/switch/tmcase"
+    GAMEPILOT_SWITCH_IMAGES_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../src/games/pokemon/frlg/readers/test/images/switch/tmcase"
     GAMEPILOT_PLZA_IMAGES_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../src/games/pokemon/plza/readers/test/images/switch"
-    GAMEPILOT_SWITCH_CAPTURES_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../src/games/frlg/readers/test/images/switch"
+    GAMEPILOT_SWITCH_CAPTURES_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../src/games/pokemon/frlg/readers/test/images/switch"
     GAMEPILOT_TEST_OUTPUT_DIR="${CMAKE_CURRENT_BINARY_DIR}")
   gamepilot_warnings(${test})
   add_test(NAME ${test} COMMAND ${test})

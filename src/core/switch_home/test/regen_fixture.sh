@@ -33,7 +33,7 @@ ds_spec=$work/delete_save/spec.json
 (cd "$SRC" && dune exec core/switch_home/test/write_probe_spec.exe) >"$spec"
 (cd "$SRC" && dune exec core/switch_home/test/write_probe_spec.exe delete-save) >"$ds_spec"
 cp "$SRC/games/pokemon/plza/assets/delete-save-icon.png" "$work/delete_save/plza-icon.png"
-cp "$SRC/games/frlg/assets/delete-save-icon-firered.png" "$work/delete_save/firered-icon.png"
+cp "$SRC/games/pokemon/frlg/assets/delete-save-icon-firered.png" "$work/delete_save/firered-icon.png"
 (cd "$HERE/images" && "$PROBE_IMAGES" --spec "$spec" --viewport nso-gba ./*.png) \
     >"$HERE/fixtures/switch.probes.jsonl"
 (cd "$HERE/images" && $SHIFT_PYTHON "$SHIFT_FRAME" "$work/shifted" ./*.png)
