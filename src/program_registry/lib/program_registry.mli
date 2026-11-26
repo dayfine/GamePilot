@@ -21,8 +21,10 @@ type viewport = Nso_gba | Native
     library that loads and runs them. [Pokemon_grid]: the Pokémon grid rules
     (Pokemon_engine, the FRLG runner); [Plza_story]: PLZA's story rules
     (Plza_engine, Plza_series); [Plza_home]: PLZA's plans run from the Switch's
-    HOME menu in Pokémon HOME (Plza_engine, Plza_bank_home_series). *)
-type rules = Pokemon_grid | Plza_story | Plza_home
+    HOME menu in Pokémon HOME (Plza_engine, Plza_bank_home_series);
+    [Plza_gifts]: PLZA's plans run from its main menu's Mystery Gift
+    (Plza_engine, Plza_claim_gifts_series). *)
+type rules = Pokemon_grid | Plza_story | Plza_home | Plza_gifts
 
 type switch_home = {
   title : string;  (** As the ctl usage names it: ["FireRed"]. *)

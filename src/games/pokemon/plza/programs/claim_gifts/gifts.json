@@ -1,0 +1,46 @@
+{
+  "format": "gamepilot-gifts/1",
+  "gifts": [
+    {
+      "id": "vivillon-poke-ball",
+      "name": "Vivillon (Poké Ball Pattern)",
+      "how": "internet",
+      "expires": "2027-02-25",
+      "box_slot": {
+        "box": 1,
+        "slot": 2
+      },
+      "home_boxes": [
+        166,
+        167
+      ],
+      "home_order": "right_to_left",
+      "source": "https://www.dittobase.com/legends-za/events/poke-ball-pattern-vivillon-mystery-gift"
+    },
+    {
+      "id": "xerneas-30th",
+      "name": "Shiny Xerneas (30th anniversary)",
+      "how": "code",
+      "code": "CELEBRATE30TH",
+      "expires": "2027-01-07",
+      "box_slot": {
+        "box": 1,
+        "slot": 1
+      },
+      "home_boxes": [
+        165,
+        164
+      ],
+      "home_order": "left_to_right",
+      "source": "https://www.nintendolife.com/guides/pokemon-legends-z-a-mystery-gift-code-list"
+    },
+    {
+      "id": "prepar1ng-items",
+      "name": "5 Max Revives, 10 Full Restores, 10 Ultra Balls",
+      "how": "code",
+      "code": "PREPAR1NG",
+      "expires": "2027-03-31",
+      "source": "https://www.nintendolife.com/guides/pokemon-legends-z-a-mystery-gift-code-list"
+    }
+  ]
+}

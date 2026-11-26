@@ -28,6 +28,13 @@ type setup = {
   attempt : attempt;
 }
 
+let keepawake_stick = [ "--keepawake-key"; "RStick" ]
+
+let each_plan check plans =
+  List.fold_left
+    (fun acc plan -> Result.bind acc (fun () -> check plan))
+    (Ok ()) plans
+
 let load_plan ~plan_dir id =
   P.Plan_decode.load (Engine_series.Plan_folder.plan_file ~plan_dir id)
 

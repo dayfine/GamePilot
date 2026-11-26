@@ -1,6 +1,6 @@
 type backend = Mgba | Switch
 type viewport = Nso_gba | Native
-type rules = Pokemon_grid | Plza_story | Plza_home
+type rules = Pokemon_grid | Plza_story | Plza_home | Plza_gifts
 
 type switch_home = {
   title : string;
@@ -277,6 +277,33 @@ let plza_autostory =
     options = Plza_story.New_game_choices.decls;
   }
 
+let plza_claim_gifts =
+  {
+    id = "plza.claim-gifts";
+    game = plza;
+    name = "Claim Gifts";
+    group = [ "PLZA"; "Gifts" ];
+    description =
+      "Claims the Mystery Gifts of its catalog that have not expired, puts \
+       their Pokémon in the Boxes and saves.";
+    doc = "docs/guide/plza.claim-gifts.md";
+    checkpoints = Some "src/games/pokemon/plza/programs/claim_gifts/plans";
+    backends = [ Switch ];
+    viewport = Native;
+    rules = Plza_gifts;
+    options =
+      [
+        {
+          key = "language";
+          value = One_of Plza_story.New_game_choices.tags;
+          presence = Default "en";
+          doc =
+            "the game's language, by its language list's tag, in which the \
+             Internet gifts' names are found in their list";
+        };
+      ];
+  }
+
 let plza_bank_home =
   {
     id = "plza.bank-home";
@@ -306,6 +333,7 @@ let all =
     frlg_ace;
     frlg_wild_rng;
     plza_autostory;
+    plza_claim_gifts;
     plza_bank_home;
   ]
 

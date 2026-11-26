@@ -36,14 +36,7 @@ let attempt ~log ~picture ~reload:_ report plan : Attempts.outcome =
       | Error f -> Attempts.of_failure f)
 
 let bank_home : Series.program =
-  {
-    check_plans =
-      List.fold_left
-        (fun acc plan -> Result.bind acc (fun () -> Game.check_plan plan))
-        (Ok ());
-    daemon_flags = [];
-    attempt;
-  }
+  { check_plans = Series.each_plan Game.check_plan; daemon_flags = []; attempt }
 
 let run_series ~program ~options ~viewport plan_dir args =
   Series.run_series bank_home ~program_fields:program ~options ~viewport
