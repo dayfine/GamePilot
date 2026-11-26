@@ -23,12 +23,21 @@
 # --second): the party bars' tests made from its cards, the caught mark's box
 # above its plate. And fixtures/<folder>.shifted.second.probes.jsonl likewise
 # for every shifted frame, from its own first read.
+# Also, for the new game, fixtures/intro/intro.probes.jsonl: images/new-game's
+# frames (the fork's AutoStoryNewGame/2026-11-15 captures, JPEG quality 80 at
+# 1080p: at 640x360 the look picker's corners and the keyboard's cursor no
+# longer read; and home-*, console B's Switch HOME of 2026-11-24 and -25, png,
+# redacted as images/new-game/README.md says) probed by the new game's readers
+# alone (write_probe_spec.exe --intro, PLZA's HOME title template from
+# assets/), and fixtures/intro/intro.shifted.probes.jsonl: each of them once
+# shifted (--one). Remade with every folder, or alone as the FOLDER intro.
 # The Python steps need Pillow ($SHIFT_PYTHON, default python3; e.g.
 # "uv run --with pillow python3").
 #
 #   sh games/pokemon/plza/readers/test/regen_fixture.sh [FOLDER...]
 #
-# remakes the named folders' four files (e.g. party-bar, synthetic), or with
+# remakes the named folders' four files (e.g. party-bar, synthetic; intro its
+# two), or with
 # no FOLDER every folder's (dropping the files of folders no longer there).
 # Run from src/, with probe_images at $PROBE_IMAGES (default the repo's
 # daemon/build/probe_images).
@@ -41,11 +50,12 @@ SHIFT_PYTHON=${SHIFT_PYTHON:-python3}
 SHIFT_FRAME=$SRC/../dev/reader_fixtures/shift_frame.py
 FIXTURES=$HERE/fixtures
 if [ $# -eq 0 ]; then
-    set -- $(ls "$HERE/images/switch") synthetic
+    set -- $(ls "$HERE/images/switch") synthetic intro
     rm -f "$FIXTURES"/*.probes.jsonl
 fi
 for folder in "$@"; do
-    if [ "$folder" != synthetic ] && [ ! -d "$HERE/images/switch/$folder" ]; then
+    case $folder in synthetic | intro) continue ;; esac
+    if [ ! -d "$HERE/images/switch/$folder" ]; then
         echo "no image folder images/switch/$folder" >&2
         exit 1
     fi
@@ -112,6 +122,36 @@ for path in sys.argv[2:]:
         "$FIXTURES/$folder.shifted.second.probes.jsonl"
 }
 
+# fixtures/intro/, as the header says.
+regen_intro() {
+    i=$work/intro
+    mkdir -p "$i/frames" "$i/lossless/new-game" "$i/shifted" "$FIXTURES/intro"
+    (cd "$SRC" && dune exec games/pokemon/plza/readers/test/write_probe_spec.exe \
+        -- --intro) >"$work/spec/intro.probes.json"
+    cp "$SRC/games/pokemon/plza/assets/switch-home-title-legends-za.png" \
+        "$work/spec/"
+    cp -R "$HERE/images/new-game" "$i/frames/"
+    rm -f "$i/frames/new-game/README.md"
+    (cd "$i/frames" && "$PROBE_IMAGES" --spec "$work/spec/intro.probes.json" \
+        --viewport native ./new-game/*.jpg ./new-game/*.png) \
+        >"$FIXTURES/intro/intro.probes.jsonl"
+    (cd "$i/frames" && $SHIFT_PYTHON -c '
+import os, sys
+from PIL import Image
+for path in sys.argv[2:]:
+    out = os.path.join(sys.argv[1], os.path.splitext(path)[0] + ".png")
+    Image.open(path).convert("RGB").save(out)
+' "$i/lossless" ./new-game/*.jpg ./new-game/*.png)
+    (cd "$i/lossless" && $SHIFT_PYTHON "$SHIFT_FRAME" --one "$i/shifted" \
+        ./new-game/*.png)
+    (cd "$i/shifted" && "$PROBE_IMAGES" \
+        --spec "$work/spec/intro.probes.json" --viewport native ./*/*/*.png) \
+        >"$FIXTURES/intro/intro.shifted.probes.jsonl"
+}
+
 for folder in "$@"; do
-    regen_folder "$folder"
+    case $folder in
+    intro) regen_intro ;;
+    *) regen_folder "$folder" ;;
+    esac
 done

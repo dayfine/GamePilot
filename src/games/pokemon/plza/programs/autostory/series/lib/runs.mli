@@ -23,8 +23,8 @@ val load_plan : plan_dir:string -> string -> (Plza_engine.Plan.t, string) result
 
 val checkpoint_order : string -> string -> int
 (** PLZA's checkpoints run in plain name order: 01.00b, 03.02b and 03.03b,
-    03.03c follow 01.00a, 03.02 and 03.03 (the checkpoint rows of the fork's
-    PokemonLZA_AutoStoryPlan.h). *)
+    03.03c follow 00-new-game, 03.02 and 03.03 (the checkpoint rows of the
+    fork's PokemonLZA_AutoStoryPlan.h). *)
 
 val run_series :
   program:(string * string) list ->

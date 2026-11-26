@@ -4,12 +4,13 @@
  (libraries gamepilot.wire gamepilot.plza_story))
 
 (tests
- (names test_scene_machine test_flicker_filter)
- (modules test_scene_machine test_flicker_filter)
+ (names test_scene_machine test_flicker_filter test_new_game_intro)
+ (modules test_scene_machine test_flicker_filter test_new_game_intro)
  (libraries
   gamepilot.wire
   gamepilot.table_test
   gamepilot.strings
+  gamepilot.switch_home
   gamepilot.engine_run
   gamepilot.plza_story
   plza_fake_console))

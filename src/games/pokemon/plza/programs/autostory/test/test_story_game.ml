@@ -1,4 +1,5 @@
-(* 01.00b to 03.11 run through the engine (Plza_engine.Runner) with
+(* 00-new-game's choices reaching its new game, the program's options over them;
+   and 01.00b to 03.11 run through the engine (Plza_engine.Runner) with
    Story_game's handlers on a scripted console (Fake_console): the plans
    decode, every event reaches its handler, and each handler's presses move a
    game that answers them as the console did. Also the failures: a start that
@@ -376,6 +377,50 @@ let run_plan (p : Plan.t) screen =
   | Error f -> Failure.to_string f
 
 let result checkpoint screen () = run_plan (plan checkpoint) screen
+
+(* 00-new-game's plan with a new game that only says what it was given, or the
+   default new game ([given] false); [options]: the program's options over the
+   plan's choices. *)
+let new_game_given ?(given = true) ?options () =
+  let choices = ref "not played" in
+  let new_game (c : Plza_story.New_game_choices.t) =
+    choices :=
+      Printf.sprintf "%s, look %d, \"%s\""
+        (Plza_story.New_game_choices.info c.language).tag c.look c.name;
+    Ok ()
+  in
+  let steps = C.steps (C.create ()) look in
+  let checkpoint = (plan "00-new-game").checkpoint in
+  let game =
+    if given then
+      Plza_autostory.Story_game.make ?options ~new_game steps ~checkpoint
+        ~reload:(fun () -> Ok ())
+    else
+      Plza_autostory.Story_game.make steps ~checkpoint ~reload:(fun () -> Ok ())
+  in
+  match Runner.run game checkpoint with
+  | Ok () -> "passed: " ^ !choices
+  | Error f -> Failure.to_string f
+
+(* The new games [ids]' plans play with [options] over their args, before
+   the console moves (New_game_event.series_choices). *)
+let choices_of ?(options = Plza_autostory.New_game_options.none) ids () =
+  match
+    Plza_autostory.New_game_event.series_choices ~options
+      (List.map (fun id -> (plan id).checkpoint) ids)
+  with
+  | Ok cs ->
+      "ok: "
+      ^ String.concat "; "
+          (List.map Plza_autostory.New_game_options.describe cs)
+  | Error e -> "error: " ^ e
+
+let french_5 =
+  {
+    Plza_autostory.New_game_options.none with
+    language = Some Plza_story.New_game_choices.French;
+    look = Some 5;
+  }
 
 (* The run on [screen]: its end and the console. *)
 let outcome checkpoint screen =
@@ -818,6 +863,52 @@ let lab_elevator ?(lost = false) c =
           | None -> text c
           | Some _ -> party c))
   | _ -> party c
+
+let cases_01_00a =
+  [
+    case "00-new-game: the plan's choices reach the new game" new_game_given
+      "passed: en, look 1, \"Kosmos\"";
+    case
+      "00-new-game: the program's options replace the plan's choices they give"
+      (new_game_given ~options:french_5)
+      "passed: fr, look 5, \"Kosmos\"";
+    case "00-new-game: a name option alone keeps the plan's language and look"
+      (new_game_given
+         ~options:
+           { Plza_autostory.New_game_options.none with name = Some "Ana" })
+      "passed: en, look 1, \"Ana\"";
+    case "00-new-game to 01.00b with options: the choices it will play"
+      (choices_of ~options:french_5 [ "00-new-game"; "01.00b" ])
+      "ok: fr, look 5, \"Kosmos\"";
+    case "00-new-game, no options: the plan's choices"
+      (choices_of [ "00-new-game" ])
+      "ok: en, look 1, \"Kosmos\"";
+    case "01.01 to 01.02, no options: no new game"
+      (choices_of [ "01.01"; "01.02" ])
+      "ok: ";
+    case "01.01 to 01.02 with options: refused, no new game to take them"
+      (choices_of ~options:french_5 [ "01.01"; "01.02" ])
+      "error: --options language, look and name are 00-new-game's new-game \
+       choices, and this series has no new game: start it at 00-new-game, or \
+       drop them";
+    case
+      "00-new-game with a name its language cannot take: refused before the \
+       console"
+      (choices_of
+         ~options:
+           {
+             Plza_autostory.New_game_options.none with
+             language = Some Plza_story.New_game_choices.Japanese;
+             name = Some "Kosmoss";
+           }
+         [ "00-new-game" ])
+      "error: 00-new-game: AutoStory: the player name \"Kosmoss\" has 7 \
+       characters; the game takes at most 6 in this language (ja).";
+    case "00-new-game with no console new game: no handler, repeats"
+      (new_game_given ~given:false)
+      "00-new-game event 1 (new_game): no_handler: new_game runs on the \
+       console only";
+  ]
 
 let cases =
   [
@@ -1558,7 +1649,7 @@ let cases_03_07_to_03_11 =
 
 let () =
   Table_test.run "plza_story_game"
-    (cases @ cases_actions @ cases_02_01 @ cases_02_02 @ cases_02_03
-   @ cases_02_04 @ cases_02_05 @ cases_02_06 @ cases_02_07 @ cases_03_01
-   @ cases_03_02 @ cases_03_02b @ cases_03_03 @ cases_03_04 @ cases_signatures
-   @ cases_03_07_to_03_11)
+    (cases_01_00a @ cases @ cases_actions @ cases_02_01 @ cases_02_02
+   @ cases_02_03 @ cases_02_04 @ cases_02_05 @ cases_02_06 @ cases_02_07
+   @ cases_03_01 @ cases_03_02 @ cases_03_02b @ cases_03_03 @ cases_03_04
+   @ cases_signatures @ cases_03_07_to_03_11)

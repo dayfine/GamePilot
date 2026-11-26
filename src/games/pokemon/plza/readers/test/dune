@@ -1,7 +1,11 @@
 (executable
  (name write_probe_spec)
  (modules write_probe_spec)
- (libraries yojson gamepilot.wire gamepilot.plza_readers))
+ (libraries
+  yojson
+  gamepilot.wire
+  gamepilot.switch_home
+  gamepilot.plza_readers))
 
 (tests
  (names
@@ -18,7 +22,8 @@
   test_map_pin
   test_party_slots
   test_lock_plate
-  test_main_menu)
+  test_main_menu
+  test_intro_screens)
  (modules
   test_dialog_readers
   test_story_readers
@@ -34,7 +39,13 @@
   test_party_slots
   test_lock_plate
   test_main_menu
+  test_intro_screens
   fixture_frames)
  (deps
-  (glob_files fixtures/*.probes.jsonl))
- (libraries gamepilot.wire gamepilot.table_test gamepilot.plza_readers))
+  (glob_files fixtures/*.probes.jsonl)
+  (glob_files fixtures/intro/*.probes.jsonl))
+ (libraries
+  gamepilot.wire
+  gamepilot.table_test
+  gamepilot.switch_home
+  gamepilot.plza_readers))

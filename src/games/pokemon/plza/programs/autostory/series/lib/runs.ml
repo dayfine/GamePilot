@@ -58,7 +58,16 @@ let start ~log ~picture ~reload (plan : P.Plan.t) =
   | true, None -> Error (unreachable plan)
   | true, Some _ -> back_to_autosave ~log ~picture
 
-let run_checkpoint ~log ~picture ~reload report (plan : P.Plan.t) =
+(* 00-new-game's new game, with PLZA's HOME title uploaded for its launch; the
+   choices it plays (the program's options over the plan's) in the log. *)
+let new_game ~log ~picture choices =
+  log ("[Console] new game: " ^ Story.New_game_options.describe choices);
+  match Templates.upload_home_title () with
+  | Error e -> Error (Failure.cause ~repeats:true "assets" e)
+  | Ok home_title ->
+      Story.Live_intro_screen.run ~picture ~log ~home_title choices
+
+let run_checkpoint ~options ~log ~picture ~reload report (plan : P.Plan.t) =
   let* () = start ~log ~picture ~reload plan in
   let steps = Story.Live_story_screen.game_steps ~log ~log_detail:log in
   (* A console idle between runs dims its screen; nothing reads on it. *)
@@ -70,7 +79,8 @@ let run_checkpoint ~log ~picture ~reload report (plan : P.Plan.t) =
       (Story.Start_signature.check steps ~checkpoint_id:id plan.execution)
   in
   let game =
-    Story.Story_game.make steps ~checkpoint:plan.checkpoint
+    Story.Story_game.make ~options steps ~checkpoint:plan.checkpoint
+      ~new_game:(new_game ~log ~picture)
       ~reload:(reload_cause ~log ~picture)
   in
   let end_check () =
@@ -81,10 +91,10 @@ let run_checkpoint ~log ~picture ~reload report (plan : P.Plan.t) =
        plan.checkpoint)
 
 (* The run fails on the page when it stops before its runner ended it. *)
-let with_assets ~log ~picture ~reload report plan assets =
+let with_assets ~options ~log ~picture ~reload report plan assets =
   match
     Effects.with_probes (Story.Live_story_screen.probes ~picture ~assets)
-      (fun () -> run_checkpoint ~log ~picture ~reload report plan)
+      (fun () -> run_checkpoint ~options ~log ~picture ~reload report plan)
   with
   | Ok () -> Passed
   | Error f -> f
@@ -98,14 +108,14 @@ let with_assets ~log ~picture ~reload report plan assets =
       Watch_report.end_run report ~passed:false;
       failed "raised" (Printexc.to_string e)
 
-let in_session ~log ~reload record plan (backend : Wire.backend) =
+let in_session ~options ~log ~reload record plan (backend : Wire.backend) =
   let picture = backend.viewport in
   let log = Watch_report.log log in
   let report = P.Plan_watch.create plan.P.Plan.checkpoint in
   let outcome =
     match Templates.upload () with
     | Error e -> failed ~repeats:true "assets" e
-    | Ok assets -> with_assets ~log ~picture ~reload report plan assets
+    | Ok assets -> with_assets ~options ~log ~picture ~reload report plan assets
   in
   (match outcome with
   | Failed _ -> Live_run.Daemon_run.save_failure ~log record ~save_states:false
@@ -114,12 +124,13 @@ let in_session ~log ~reload record plan (backend : Wire.backend) =
 
 (* Any exception Daemon_run.in_session passes on fails the run here, so the
    story log, the run record and the watch run still close. *)
-let live ~log ~reload record plan (daemon : Live_run.Daemon_process.t) =
+let live ~options ~log ~reload record plan (daemon : Live_run.Daemon_process.t)
+    =
   match
     Live_run.Daemon_run.in_session ~failed:of_runner ~dir:record.Run_record.dir
       (fun () ->
         Live.run_with_backend ~port:daemon.port
-          (in_session ~log ~reload record plan))
+          (in_session ~options ~log ~reload record plan))
   with
   | outcome -> outcome
   | exception e -> failed "raised" (Printexc.to_string e)
@@ -143,7 +154,7 @@ let run_in setup plan n ~attempt ~reload (run : Run_record.run) =
   log ("[Run] " ^ name ^ if reload then " (after a reload)" else "");
   let outcome =
     Live_run.Series_daemons.with_daemon setup.daemons ~failed:of_runner run ~n
-      (live ~log ~reload run.record plan)
+      (live ~options:setup.flags.game ~log ~reload run.record plan)
   in
   close ();
   let ending : Run_record.ending =
@@ -213,16 +224,20 @@ let rec chain setup ~chained = function
       if runs_of setup plan ~chained then chain setup ~chained:true rest
       else Ok 1
 
-(* Every plan of the series, loaded and checked (Plan_check) before the
-   console moves. *)
-let load_checked ~plan_dir ids =
-  List.fold_left
-    (fun plans id ->
-      let* plans = plans in
-      let* plan = load_plan ~plan_dir id in
-      let* () = Story.Plan_check.check plan in
-      Ok (plans @ [ plan ]))
-    (Ok []) ids
+(* Every plan of the series, loaded and checked (Plan_check), and 00-new-game's
+   new-game choices (Series_check), before the console moves. *)
+let load_checked ~plan_dir ~options ids =
+  let* plans =
+    List.fold_left
+      (fun plans id ->
+        let* plans = plans in
+        let* plan = load_plan ~plan_dir id in
+        let* () = Story.Plan_check.check plan in
+        Ok (plans @ [ plan ]))
+      (Ok []) ids
+  in
+  let* () = Series_check.check ~options plans in
+  Ok plans
 
 let checkpoint_order = String.compare
 
@@ -275,7 +290,7 @@ let run_series ~program ~viewport plan_dir args =
   let* policy =
     Checkpoint_trials.policy ?runs:f.runs Checkpoint_trials.Testing
   in
-  let* plans = load_checked ~plan_dir ids in
+  let* plans = load_checked ~plan_dir ~options:f.game ids in
   let setup =
     setup_of f ~program ~from_id ~to_id ~ids ~backend ~viewport policy
   in

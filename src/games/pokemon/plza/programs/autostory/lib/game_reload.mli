@@ -15,8 +15,7 @@
     title, its dialog or the backup save's arrow is tested yet. *)
 
 val tile_color : Switch_home.Home_screen.tile_color
-(** PLZA's tile colour for the HOME reader. A guess, not measured: the HOME
-    reader's cursor and HOME detection do not need it. *)
+(** {!Plza_readers.Switch_home_tile.tile_color}. *)
 
 val reload : log:(string -> unit) -> picture:Wire.box -> (unit, string) result
 (** In the effect context, with {!Live_story_screen.probes} subscribed. *)

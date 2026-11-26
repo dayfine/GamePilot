@@ -134,9 +134,18 @@ let zone_actions =
     ("claim_mable_research_reward", no_args Mable_reward.run);
   ]
 
+let new_game ~options run _steps event args =
+  Result.bind (New_game_event.choices ~options event args) run
+
+let no_new_game _ =
+  Error
+    (Failure.cause ~repeats:true "no_handler"
+       "new_game runs on the console only")
+
 (* The story's own actions, by the name a plan gives each. *)
-let story_actions ~reload ~jump =
+let story_actions ~options ~new_game:run ~reload ~jump =
   [
+    ("new_game", new_game ~options run);
     ("confirm_new_game", no_args New_game_confirm.run);
     ( "opening_to_platform",
       timed Platform_wait.opening_to_platform ~default:opening_to_platform_ms );
@@ -156,10 +165,10 @@ let story_actions ~reload ~jump =
       no_args (fun steps -> Plza_walk.Ladder_climb.run (talk_steps steps)) );
   ]
 
-let game_actions ~reload ~jump steps =
+let game_actions ~options ~new_game ~reload ~jump steps =
   List.map
     (fun (name, action) -> (name, action steps))
-    (story_actions ~reload ~jump @ zone_actions)
+    (story_actions ~options ~new_game ~reload ~jump @ zone_actions)
 
 (* The engine's scene: its action "end_on_black_fade" for the fork's scene
    ending on a black fade, "button_b" for its scene pressing B (B on text and
@@ -215,13 +224,16 @@ let builtin_through jump steps event =
 let no_save () =
   Error (Failure.cause ~repeats:true "no_save" "PLZA saves by autosave only")
 
-let make steps ~(checkpoint : Plan.checkpoint) ~reload : Game.t =
+let make ?(options = New_game_options.none) ?(new_game = no_new_game) steps
+    ~(checkpoint : Plan.checkpoint) ~reload : Game.t =
   let checkpoint_id = checkpoint.checkpoint_id in
   let jump = Battle_jump.make checkpoint ~log:steps.Steps.log in
   {
     run_own = own_through jump steps ~checkpoint_id;
     run_builtin = builtin_through jump steps;
-    game_actions = List.map (jumping jump) (game_actions ~reload ~jump steps);
+    game_actions =
+      List.map (jumping jump)
+        (game_actions ~options ~new_game ~reload ~jump steps);
     flag_holds = Resume_flags.holds steps;
     position = (fun () -> None);
     between_rounds = (fun () -> Ok ());

@@ -1,0 +1,27 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "plza",
+  "execution": {},
+  "metadata": {
+    "phase": "testing",
+    "source": "the fork's 01.00a (PokemonLZA_AutoStoryNewGame.cpp, lab/dev-plza-slice1); not yet run on the console",
+    "notes": "Starts on the Switch HOME with no PLZA save (delete it first: gamepilot ctl delete-save plza, then delete-save --confirm), PLZA among the first 8 tiles of HOME. Ends on Confirm Choices, 01.00b's start, with nothing confirmed."
+  },
+  "checkpoint": {
+    "id": "00-new-game",
+    "title": "A new game from HOME to Confirm Choices",
+    "events": [
+      {
+        "id": "new_game",
+        "kind": "game_action",
+        "action": "new_game",
+        "why": "launch PLZA from HOME, pick the language on its list, tilt to the look, type the name on the Switch keyboard, + until Confirm Choices reads",
+        "args": {
+          "language": "en",
+          "look": 1,
+          "name": "Kosmos"
+        }
+      }
+    ]
+  }
+}

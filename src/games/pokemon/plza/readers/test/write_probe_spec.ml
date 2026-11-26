@@ -11,7 +11,13 @@
    a shifted frame): the probes a two-frame read subscribes
    from what that frame shows, the party bars' made from its cards
    ({!Plza_readers.Party_slots.bar_probes}) and the caught mark's from its
-   plate's bar ({!Plza_readers.Lock_plate.mark_probes}). *)
+   plate's bar ({!Plza_readers.Lock_plate.mark_probes}).
+
+   With [--intro], only the new game's readers' probes
+   ({!Plza_readers.Switch_home_tile}, its title template named by the file
+   beside the spec, {!Plza_readers.Intro_screens},
+   {!Switch_home.Keyboard_typing} and {!Plza_readers.Confirm_choices}), for
+   fixtures/intro/intro.probes.jsonl. *)
 
 let native : Wire.box = { x = 0.; y = 0.; w = 1.; h = 1. }
 let no_minimap = Array.mem "--no-minimap" Sys.argv
@@ -55,6 +61,15 @@ let () =
   match Array.to_list Sys.argv with
   | [ _; "--second"; fixture; dir ] ->
       List.iter (write_second_spec dir) (Wire.read_image_probes fixture)
+  | [ _; "--intro" ] ->
+      print_endline
+        (params
+           (Plza_readers.Switch_home_tile.probes
+              ~title:
+                (Filename.basename Plza_readers.Switch_home_tile.title_template)
+           @ Plza_readers.Intro_screens.probes ~picture:native
+           @ Switch_home.Keyboard_typing.probes
+           @ Plza_readers.Confirm_choices.probes ~picture:native))
   | _ ->
       let assets = Plza_readers.Blob_assets.file_names in
       print_endline
