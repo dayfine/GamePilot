@@ -34,6 +34,16 @@ type t = { map : string; lines : line list; budget : int option }
 val max_quantity : int
 (** 99. *)
 
+val split_quantity : int -> int list
+(** Splits a total quantity [n >= 0] into purchase lines of at most
+    {!max_quantity}, avoiding a trailing 1 when splitting (e.g. [100] ->
+    [[50; 50]], [101] -> [[50; 51]], [0] -> [[]]). *)
+
+val apply_options : Run_options.t -> t -> t
+(** Replaces the quantities of any item whose slug is given as an integer option
+    in [options], splitting totals above {!max_quantity} via {!split_quantity}
+    and dropping items set to [0]. *)
+
 val of_args : stocks -> where:string -> Json_field.obj -> t
 (** Raises {!Json_field.Invalid} naming the field. *)
 

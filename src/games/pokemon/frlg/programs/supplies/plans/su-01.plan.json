@@ -6,22 +6,7 @@
   },
   "metadata": {
     "phase": "testing",
-    "notes": "Stocks what the duplication programs use: Retro Mail (one per round, Celadon 4F, $50) and Super Repels (Lavender, $500) for walks that must not be cut by wild battles. Starts anywhere outdoors in Kanto and ends outside the Dept. Store's west door, outdoors, where frlg.team_training starts.",
-    "postconditions": {
-      "items": [
-        {
-          "item": "retro-mail",
-          "gained": 100
-        },
-        {
-          "item": "super-repel",
-          "gained": 5
-        }
-      ],
-      "money": {
-        "spent": 7500
-      }
-    }
+    "notes": "Stocks what the duplication programs use: Retro Mail (one per round, Celadon 4F, $50) and Super Repels (Lavender, $500) for walks that must not be cut by wild battles. Quantities default to 100 Retro Mail and 5 Super Repels and can be overridden with --options retro-mail=N --options super-repel=N (0 skips that purchase). Starts anywhere outdoors in Kanto and ends outside the Dept. Store's west door, outdoors, where frlg.team_training starts."
   },
   "checkpoint": {
     "id": "su-01",

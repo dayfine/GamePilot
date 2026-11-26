@@ -2,11 +2,12 @@
 
 Stocks the items other programs use up, so they can check a count instead of shopping themselves.
 
-It buys a fixed list for now (a configurable shopping list is planned), for ¥7,500:
+By default it buys 100 Retro Mail and 5 Super Repels (¥7,500), and either count can be changed on
+demand with `--options` (pass `0` to skip that purchase):
 
-- 100 Retro Mail from the Celadon Dept. Store 4F: the Mail Glitch's item duplication spends one per
-  copy.
-- 5 Super Repels from the Lavender Mart.
+- Retro Mail (default 100, ¥50 each) from the Celadon Dept. Store 4F: the Mail Glitch's item
+  duplication spends one per copy.
+- Super Repels (default 5, ¥500 each) from the Lavender Mart.
 
 <!-- generated:backends -->
 Runs on: mGBA, the Switch (in its GBA app).
@@ -26,6 +27,15 @@ west door, where Team Training can start.
 
 ## Running it
 
+<!-- generated:options -->
+Give each as `--options KEY=VALUE`:
+
+| Key | Values | When not given | What it chooses |
+|---|---|---|---|
+| `retro-mail` | 0 to 999 | default `100` | how many Retro Mail to buy at Celadon Dept. Store 4F (0 to skip) |
+| `super-repel` | 0 to 99 | default `5` | how many Super Repels to buy at Lavender Mart (0 to skip) |
+<!-- /generated -->
+
 <!-- generated:commands -->
 ```sh
 # mGBA: each checkpoint three times from its start state, two must pass
@@ -44,7 +54,7 @@ sh run/run_checkpoints_on_switch.sh frlg.supplies --from su-01 --to su-01
 |---|---|
 | su-01 | Stock 100 Retro Mail (Celadon 4F) and 5 Super Repels (Lavender) |
 
-<!-- plans: 988dcea3bc34 -->
+<!-- plans: a830b940f875 -->
 <!-- /generated -->
 
 ## When it stops
@@ -57,7 +67,7 @@ sh run/run_checkpoints_on_switch.sh frlg.supplies --from su-01 --to su-01
 
 ## Known limits
 
-- The shopping list is fixed, and the ¥7,500 comes from your own money.
+- The money comes from your own pocket, and pre-flight checks the default list's ¥7,500.
 
 ## How it works
 
