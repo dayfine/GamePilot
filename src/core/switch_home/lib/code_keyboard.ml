@@ -1,4 +1,3 @@
-module P = Switch_presses
 module L = Wire.Line_shares
 
 type key = { row : int; col : int }
@@ -204,7 +203,6 @@ let cursor_key (t : L.t) =
 
 let cursor m = Option.bind (lines m cursor_id) cursor_key
 let shown m = grey_keys m && cursor m <> None
-let native (p : Wire.box) = p.x = 0. && p.y = 0. && p.w = 1. && p.h = 1.
 
 (* The script's presses: D-pad 80 ms then 140, A 80 then 180. *)
 let move_hold_ms = 80
@@ -212,10 +210,10 @@ let move_cooldown_ms = 140
 let a_hold_ms = 80
 let a_cooldown_ms = 180
 
-let press b =
-  if b = Wire.A then
-    Wire.press ~hold_ms:a_hold_ms ~cooldown_ms:a_cooldown_ms [ b ]
-  else Wire.press ~hold_ms:move_hold_ms ~cooldown_ms:move_cooldown_ms [ b ]
+let press button : Timed_press.t =
+  if button = Wire.A then
+    { button; hold_ms = a_hold_ms; cooldown_ms = a_cooldown_ms }
+  else { button; hold_ms = move_hold_ms; cooldown_ms = move_cooldown_ms }
 
 let start_key ~log m =
   match cursor m with
@@ -232,13 +230,13 @@ let type_on ~log code m =
     Result.map
       (fun buttons ->
         log (Printf.sprintf "Typing %s." (normalize code));
-        ignore (Effects.submit (List.map press buttons) : Wire.batch_done))
+        Timed_press.press_all (List.map press buttons))
       (presses ~from:(start_key ~log m) code)
 
 let read_wait_ms = 1000
 
 let type_code ~log ~picture code =
-  if not (native picture) then
+  if not (Picture_box.native picture) then
     Error
       "the keyboard is read on the whole frame: run the daemon with --viewport \
        native"
