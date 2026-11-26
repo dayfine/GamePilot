@@ -1,7 +1,8 @@
 #!/bin/sh
 # Remakes fixtures/<folder>.probes.jsonl for each image folder: every frame
 # in images/switch/<folder> (console captures from the fork's
-# CommandLineTests, jpg) or, for the folder synthetic, the fork's synthetic
+# CommandLineTests, jpg; box-cells' png, redacted to the Boxes' probes as its
+# README says) or, for the folder synthetic, the fork's synthetic
 # test frames (draw_synthetic_frames.py), probed by the daemon's probe_images
 # on the native viewport with every PLZA reader's probes (write_probe_spec.exe, its
 # find templates copied from assets/templates beside the spec). Also
@@ -26,7 +27,7 @@
 # Also fixtures/gifts/: the Mystery Gift steps' readers alone
 # (write_probe_spec.exe --gifts en, the gift name's template from
 # assets/gift-name-vivillon-en.png) on every capture and images/mystery-gift's
-# (console B's own, png) in gifts.probes.jsonl; the main menu's frame
+# (console B's own, png, redacted as its README says) in gifts.probes.jsonl; the main menu's frame
 # (tutorial-cards/it-menu-no-card) and images/mystery-gift's, all nine shifts
 # each, in gifts.shifted.probes.jsonl; and images/mystery-gift's frames and
 # their nine shifts each, the gift's name matched by its French template
