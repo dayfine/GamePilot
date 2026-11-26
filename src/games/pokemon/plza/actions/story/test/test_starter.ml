@@ -1,5 +1,5 @@
 (* The starter option (Plza_story.Starter): its values, and the walk to the
-   starter it gives 01.04 (the fork's aimed_at_starter). One fact per case. *)
+   starter it gives 01.04 (as PokemonLZA_AutoStoryActionTable.cpp gives it). One fact per case. *)
 
 module S = Plza_story.Starter
 module W = Plza_rules.Walk_args

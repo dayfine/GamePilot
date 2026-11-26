@@ -1,15 +1,14 @@
 (** The starter 01.04 picks, plza.autostory's [starter] option. Ported from the
-    fork's Starter option (PokemonLZA_AutoStory.h and .cpp, [StarterChoice],
-    [starter_move]; the walk's [to_starter] in
-    PokemonLZA_AutoStoryActionTable.cpp, [aimed_at_starter];
-    dayfine/Arduino-Source PR #644): 01.04's walk to the starter has Chikorita's
+    fork's Starter option (PokemonLZA_AutoStory.h and .cpp, and the walk's
+    [to_starter] in PokemonLZA_AutoStoryActionTable.cpp;
+    dayfine/Arduino-Source#644): 01.04's walk to the starter has Chikorita's
     legs, and Totodile's or Tepig's own walk replaces them, each 600 ms with the
     stick held at its angle (console B, 2026-11-20).
 
     Where it differs: the option's values are the starters' types ([grass],
     [fire], [water]), not the fork's names. *)
 
-(** The three starters, as the fork's [StarterChoice]. *)
+(** The three starters the fork's option offers. *)
 type t =
   | Chikorita  (** grass, the fork's default *)
   | Tepig  (** fire *)

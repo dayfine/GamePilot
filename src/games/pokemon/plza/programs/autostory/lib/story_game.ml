@@ -210,8 +210,8 @@ let builtin ~jump steps (event : Plan.event) =
 
 (* The game's walk, walked rather than run before 03.04 (as
    PokemonLZA_AutoStory.cpp walks them, before dash is unlocked); 01.04's walk
-   to the starter takes the run's starter's own walk (Starter.aimed, the fork's
-   aimed_at_starter). *)
+   to the starter takes the run's starter's own walk (Starter.aimed, as
+   PokemonLZA_AutoStoryActionTable.cpp does). *)
 let log_starter_walk steps starter (event : Plan.event) args =
   steps.Steps.log
     (Printf.sprintf "[PLZA] %s: to %s (%s): %s" event.id (Starter.name starter)

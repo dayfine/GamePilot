@@ -17,7 +17,8 @@ let name = function
 
 let of_tag t = List.find_opt (fun s -> tag s = t) all
 
-(* starter_move's legs, held ("held": true, our Steer) for 600 ms. *)
+(* The fork's walks to Totodile and Tepig: one leg held ("held": true, our
+   Steer) for 600 ms. *)
 let held_ms = 600
 
 let steered angle_deg =
@@ -32,7 +33,7 @@ let move = function
   | Tepig -> Some (steered (-34.0))
   | Chikorita -> None
 
-(* aimed_at_starter. *)
+(* The starter's walk in place of the legs, the wait before kept. *)
 let aimed starter walk =
   match (walk.to_starter, move starter) with
   | true, Some m ->
