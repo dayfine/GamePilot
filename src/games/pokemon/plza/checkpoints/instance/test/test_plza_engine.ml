@@ -54,7 +54,9 @@ let walk_args args =
 
 let decode_cases =
   [
-    case "01.01's outline: a zone start, a walk among the engine's kinds"
+    case
+      "01.01-platform-to-plaza's outline: a zone start, a walk among the \
+       engine's kinds"
       (fun () -> Plan_text.outline (plan ()))
       "plza 01.01-platform-to-plaza from LumioseCity: 3 game_action, 1 walk, 2 \
        scene";

@@ -868,16 +868,16 @@ let cases =
        the platform"
       (result "01.00b-to-the-platform" new_game)
       "passed";
-    case "01.00b on another screen: nothing pressed, repeats"
+    case "01.00b-to-the-platform on another screen: nothing pressed, repeats"
       (result "01.00b-to-the-platform" (new_game ~confirm:false))
       "01.00b-to-the-platform event 1 (confirm): not_on_confirm_choices: \
        01.00b starts on the new game's \"Confirm Choices\" screen, after the \
        language, look and name (made by hand). It is not on screen; nothing \
        was pressed.";
-    case "01.00b on the watch page: its run passes"
+    case "01.00b-to-the-platform on the watch page: its run passes"
       (last_shown ~checkpoint:"01.00b-to-the-platform" new_game)
       "run testing 01.00b-to-the-platform=passed";
-    case "01.01's plan: a zone start and its events"
+    case "01.01-platform-to-plaza's plan: a zone start and its events"
       (fun () -> Plan_text.outline (plan "01.01-platform-to-plaza"))
       "plza 01.01-platform-to-plaza from LumioseCity: 3 game_action, 1 walk, 2 \
        scene";
@@ -886,20 +886,23 @@ let cases =
        arrival scenes"
       (result "01.01-platform-to-plaza" platform)
       "passed";
-    case "01.01 lost: the walk's white fade never shows"
+    case "01.01-platform-to-plaza lost: the walk's white fade never shows"
       (result "01.01-platform-to-plaza" (platform ~lost:true))
       "01.01-platform-to-plaza event 3 (platform_to_plaza): walk_no_end: \
        platform_to_plaza: no end event within 11287 ms of the last leg";
-    case "01.01 with the hint faded: passes"
+    case "01.01-platform-to-plaza with the hint faded: passes"
       (result "01.01-platform-to-plaza" (platform ~faded:true))
       "passed";
-    case "01.01 with the hint faded: the platform wait reloaded"
+    case
+      "01.01-platform-to-plaza with the hint faded: the platform wait reloaded"
       (fun () ->
         ignore
           (result "01.01-platform-to-plaza" (platform ~faded:true) () : string);
         string_of_bool !reloaded)
       "true";
-    case "01.01 off the platform: no controls hint, even after a reload"
+    case
+      "01.01-platform-to-plaza off the platform: no controls hint, even after \
+       a reload"
       (result "01.01-platform-to-plaza" look)
       "01.01-platform-to-plaza event 1 (on_platform): platform_not_seen: No \
        controls hint on 2 looks in a row within 10000 ms.";
@@ -915,7 +918,8 @@ let cases =
       (logged "01.02-chase-pancham" pancham
          "[PLZA] choose_1: row 0 of 2 highlighted")
       "true";
-    case "01.02 lost: no scene after the chase, Ryon's prompt alone"
+    case
+      "01.02-chase-pancham lost: no scene after the chase, Ryon's prompt alone"
       (result "01.02-chase-pancham" (pancham ~lost:true))
       "01.02-chase-pancham event 2 (pancham_cornered): scene_ended_in_control: \
        scene: the scene ended in control, the party bar up 5000 ms with \
@@ -937,16 +941,18 @@ let cases =
          "[PLZA] story_battle: a dialogue box after the attacks: the battle is \
           over.")
       "true";
-    case "01.03 no symbols: ZL never locks on in the battle"
+    case "01.03-starter-and-andi no symbols: ZL never locks on in the battle"
       (result "01.03-starter-and-andi" (starter ~no_symbols:true))
       "01.03-starter-and-andi event 3 (andi_battle): battle_failed: \
        fight_story_battle(): no dialogue after the battle within the timeout.";
-    case "01.03 lost: the lead at 1 HP faints, a black fade: battle_lost"
+    case
+      "01.03-starter-and-andi lost: the lead at 1 HP faints, a black fade: \
+       battle_lost"
       (result "01.03-starter-and-andi" (starter_lost ~fade_ms:2000.0))
       "01.03-starter-and-andi event 3 (andi_battle): battle_lost: a black fade \
        with the lead's HP near empty: the lead fainted (before any Pokémon \
        Center, the heal and the rematch follow)";
-    case "01.03 lost: the fade logged with the lead's last HP"
+    case "01.03-starter-and-andi lost: the fade logged with the lead's last HP"
       (logged "01.03-starter-and-andi"
          (starter_lost ~fade_ms:2000.0)
          "a black fade, the lead's HP last read 0.04: the battle is lost.")
@@ -954,68 +960,83 @@ let cases =
     (* With no HP read before it, a fade is no evidence of a loss: the fight
        goes on, the heal's line reads as the won battle's, and the next scene
        waits for control that never comes. *)
-    case "01.03 lost with no HP read: the fade alone is no loss"
+    case
+      "01.03-starter-and-andi lost with no HP read: the fade alone is no loss"
       (result "01.03-starter-and-andi"
          (starter_lost ~no_hp:true ~fade_ms:2000.0))
       "01.03-starter-and-andi event 4 (after_andi): scene_timeout: scene: Did \
        not finish within 360 s (expecting the controls hint, the party bar or \
        the A prompt).";
-    case "01.03 won, a black fade into Andi's line: a cutscene, fought on"
+    case
+      "01.03-starter-and-andi won, a black fade into Andi's line: a cutscene, \
+       fought on"
       (result "01.03-starter-and-andi" starter_won_fade)
       "passed";
-    case "01.03 won, a black fade into Andi's line: logged as a cutscene"
+    case
+      "01.03-starter-and-andi won, a black fade into Andi's line: logged as a \
+       cutscene"
       (logged "01.03-starter-and-andi" starter_won_fade
          "a black fade, the lead's HP last read 0.89: a cutscene, fighting on.")
       "true";
     (* A fade shorter than the fight's reads (one per attack, 1.25 s or more
        apart) goes unseen: the heal's line reads as the won battle's. *)
-    case "01.03 lost with a fade the reads miss (0.5 s): the next scene fails"
+    case
+      "01.03-starter-and-andi lost with a fade the reads miss (0.5 s): the \
+       next scene fails"
       (result "01.03-starter-and-andi" (starter_lost ~fade_ms:500.0))
       "01.03-starter-and-andi event 4 (after_andi): scene_timeout: scene: Did \
        not finish within 360 s (expecting the controls hint, the party bar or \
        the A prompt).";
-    case "01.03 resumed inside Andi's battle: passes"
+    case "01.03-starter-and-andi resumed inside Andi's battle: passes"
       (result "01.03-starter-and-andi" (in_battle ~after:0.0))
       "passed";
-    case "01.03 resumed inside Andi's battle: the walk and the scene skipped"
+    case
+      "01.03-starter-and-andi resumed inside Andi's battle: the walk and the \
+       scene skipped"
       (skipped "01.03-starter-and-andi" (in_battle ~after:0.0))
       "approach_starter andi_battle_start";
-    case "01.03 resumed at Urbain's heal: passes"
+    case "01.03-starter-and-andi resumed at Urbain's heal: passes"
       (result "01.03-starter-and-andi" rematch)
       "passed";
-    case "01.03 resumed at Urbain's heal: the walk skipped"
+    case "01.03-starter-and-andi resumed at Urbain's heal: the walk skipped"
       (skipped "01.03-starter-and-andi" rematch)
       "approach_starter";
-    case "01.03 resumed in the alley after it: every event skipped"
+    case
+      "01.03-starter-and-andi resumed in the alley after it: every event \
+       skipped"
       (skipped "01.03-starter-and-andi" party)
       "approach_starter andi_battle_start andi_battle after_andi";
-    case "01.03's jump: a battle during the walk jumps to the battle"
+    case
+      "01.03-starter-and-andi's jump: a battle during the walk jumps to the \
+       battle"
       (fun () -> List.hd (jump_lines ()))
       "[Event] 01.03-starter-and-andi: battle on screen during \
        approach_starter: jumping to andi_battle, skipping andi_battle_start";
-    case "01.03's jump: the scene before the battle is not run"
+    case "01.03-starter-and-andi's jump: the scene before the battle is not run"
       (fun () ->
         string_of_bool (List.mem "ran andi_battle_start" (jump_lines ())))
       "false";
-    case "01.03's jump: the battle runs"
+    case "01.03-starter-and-andi's jump: the battle runs"
       (fun () -> string_of_bool (List.mem "ran andi_battle" (jump_lines ())))
       "true";
     case "a talk: no handler for it yet"
       (fun () -> run_plan (with_talk ()) platform)
       "01.01-platform-to-plaza event 2 (chat): no_handler: chat: PLZA runs no \
        talk, answer or save event";
-    case "01.01 on the watch page: its run passes" (last_shown platform)
-      "run testing 01.01-platform-to-plaza=passed";
-    case "01.01 lost on the watch page: its run fails"
+    case "01.01-platform-to-plaza on the watch page: its run passes"
+      (last_shown platform) "run testing 01.01-platform-to-plaza=passed";
+    case "01.01-platform-to-plaza lost on the watch page: its run fails"
       (last_shown (platform ~lost:true))
       "run testing 01.01-platform-to-plaza=failed";
-    case "01.01 lost on the watch page: the walk fails with its reason"
+    case
+      "01.01-platform-to-plaza lost on the watch page: the walk fails with its \
+       reason"
       (last_plan (platform ~lost:true))
       "plan 01.01-platform-to-plaza: on_platform=done text_speed_fast=done \
        platform_to_plaza=failed(walk_no_end: platform_to_plaza: no end event \
        within 11287 ms of the last leg) arrival_to_ad=pending skip_ad=pending \
        arrival_scenes=pending";
-    case "the walk is walked before 03.03, run after"
+    case "the walk is walked before 03.03-rock-pile-scene, run after"
       (fun () ->
         Printf.sprintf "%b %b"
           (Plza_autostory.Story_game.walk_only "01.01-platform-to-plaza")
@@ -1051,29 +1072,33 @@ let cases_02_01 =
       (result "02.01-battle-brigitte" brigitte)
       "passed";
     case
-      "02.01 logs: [PLZA] battle_zone_to_brigitte: legs done, screen now: \
-       dialog_box, advance_arrow"
+      "02.01-battle-brigitte logs: [PLZA] battle_zone_to_brigitte: legs done, \
+       screen now: dialog_box, advance_arrow"
       (logged "02.01-battle-brigitte" brigitte
          "[PLZA] battle_zone_to_brigitte: legs done, screen now: dialog_box, \
           advance_arrow")
       "true";
-    case "02.01 logs: [PLZA scene] done on battle."
+    case "02.01-battle-brigitte logs: [PLZA scene] done on battle."
       (logged "02.01-battle-brigitte" brigitte "[PLZA scene] done on battle.")
       "true";
-    case "02.01 logs: [PLZA] story_battle: Picking Move: Left"
+    case "02.01-battle-brigitte logs: [PLZA] story_battle: Picking Move: Left"
       (logged "02.01-battle-brigitte" brigitte
          "[PLZA] story_battle: Picking Move: Left")
       "true";
-    case "02.01 logs: [PLZA scene] done on control."
+    case "02.01-battle-brigitte logs: [PLZA scene] done on control."
       (logged "02.01-battle-brigitte" brigitte "[PLZA scene] done on control.")
       "true";
-    case "02.01 lost: no Brigitte after the walk, the party bar alone"
+    case
+      "02.01-battle-brigitte lost: no Brigitte after the walk, the party bar \
+       alone"
       (result "02.01-battle-brigitte" party)
       "02.01-battle-brigitte event 2 (brigitte_battle_start): \
        scene_ended_in_control: scene: the scene ended in control, the party \
        bar up 5000 ms with nothing busy (expecting the battle HUD, the \
        controls hint).";
-    case "02.01 with no scene after the battle: the start window passes"
+    case
+      "02.01-battle-brigitte with no scene after the battle: the start window \
+       passes"
       (result "02.01-battle-brigitte" (brigitte ~no_scene:true))
       "02.01-battle-brigitte event 4 (after_brigitte): scene_never_started: \
        scene: the scene never started (player not at its trigger?): the HUD up \
@@ -1090,43 +1115,45 @@ let cases_02_02 =
       (result "02.02-to-hotel-z" hotel_z)
       "passed";
     case
-      "02.02 logs: [PLZA] to_blocked_street: the end event after 750 ms of the \
-       last leg."
+      "02.02-to-hotel-z logs: [PLZA] to_blocked_street: the end event after \
+       750 ms of the last leg."
       (logged "02.02-to-hotel-z" hotel_z
          "[PLZA] to_blocked_street: the end event after 750 ms of the last leg.")
       "true";
-    case "02.02 logs: [PLZA] to_blocked_street: ended on: fade_black"
+    case "02.02-to-hotel-z logs: [PLZA] to_blocked_street: ended on: fade_black"
       (logged "02.02-to-hotel-z" hotel_z
          "[PLZA] to_blocked_street: ended on: fade_black")
       "true";
-    case "02.02 logs: [PLZA] plus_skip: a black fade 0 ms after the hold."
+    case
+      "02.02-to-hotel-z logs: [PLZA] plus_skip: a black fade 0 ms after the \
+       hold."
       (logged "02.02-to-hotel-z" hotel_z
          "[PLZA] plus_skip: a black fade 0 ms after the hold.")
       "true";
-    case "02.02 logs: [PLZA scene] done on control."
+    case "02.02-to-hotel-z logs: [PLZA scene] done on control."
       (logged "02.02-to-hotel-z" hotel_z "[PLZA scene] done on control.")
       "true";
     case
-      "02.02 logs: [PLZA] to_battle_zone_gate: A on the A prompt after 3000 ms \
-       of the last leg started a talk."
+      "02.02-to-hotel-z logs: [PLZA] to_battle_zone_gate: A on the A prompt \
+       after 3000 ms of the last leg started a talk."
       (logged "02.02-to-hotel-z" hotel_z
          "[PLZA] to_battle_zone_gate: A on the A prompt after 3000 ms of the \
           last leg started a talk.")
       "true";
     case
-      "02.02 logs: [PLZA] to_battle_zone_gate: started on: dialog_box, \
-       advance_arrow"
+      "02.02-to-hotel-z logs: [PLZA] to_battle_zone_gate: started on: \
+       dialog_box, advance_arrow"
       (logged "02.02-to-hotel-z" hotel_z
          "[PLZA] to_battle_zone_gate: started on: dialog_box, advance_arrow")
       "true";
     case
-      "02.02 logs: [PLZA] through_covered_passage: legs done, screen now: \
-       dialog_box, advance_arrow"
+      "02.02-to-hotel-z logs: [PLZA] through_covered_passage: legs done, \
+       screen now: dialog_box, advance_arrow"
       (logged "02.02-to-hotel-z" hotel_z
          "[PLZA] through_covered_passage: legs done, screen now: dialog_box, \
           advance_arrow")
       "true";
-    case "02.02 lost: no black fade into the street"
+    case "02.02-to-hotel-z lost: no black fade into the street"
       (result "02.02-to-hotel-z" (hotel_z ~lost:true))
       "02.02-to-hotel-z event 1 (to_blocked_street): walk_no_end: \
        to_blocked_street: no end event within 3363 ms of the last leg";
@@ -1141,63 +1168,63 @@ let cases_02_03 =
       (result "02.03-hotel-z-lobby" lobby)
       "passed";
     case
-      "02.03 logs: [PLZA] to_hotel_z_door: the end event after 2000 ms of the \
-       last leg, before its 3375 ms: passed on the way, on."
+      "02.03-hotel-z-lobby logs: [PLZA] to_hotel_z_door: the end event after \
+       2000 ms of the last leg, before its 3375 ms: passed on the way, on."
       (logged "02.03-hotel-z-lobby" lobby
          "[PLZA] to_hotel_z_door: the end event after 2000 ms of the last leg, \
           before its 3375 ms: passed on the way, on.")
       "true";
     case
-      "02.03 logs: [PLZA] to_hotel_z_door: the end event after 2250 ms of the \
-       last leg, before its 3375 ms: passed on the way, on."
+      "02.03-hotel-z-lobby logs: [PLZA] to_hotel_z_door: the end event after \
+       2250 ms of the last leg, before its 3375 ms: passed on the way, on."
       (logged "02.03-hotel-z-lobby" lobby
          "[PLZA] to_hotel_z_door: the end event after 2250 ms of the last leg, \
           before its 3375 ms: passed on the way, on.")
       "true";
     case
-      "02.03 logs: [PLZA] to_hotel_z_door: the end event after 2500 ms of the \
-       last leg, before its 3375 ms: passed on the way, on."
+      "02.03-hotel-z-lobby logs: [PLZA] to_hotel_z_door: the end event after \
+       2500 ms of the last leg, before its 3375 ms: passed on the way, on."
       (logged "02.03-hotel-z-lobby" lobby
          "[PLZA] to_hotel_z_door: the end event after 2500 ms of the last leg, \
           before its 3375 ms: passed on the way, on.")
       "true";
     case
-      "02.03 logs: [PLZA] to_hotel_z_door: the end event after 2750 ms of the \
-       last leg, before its 3375 ms: passed on the way, on."
+      "02.03-hotel-z-lobby logs: [PLZA] to_hotel_z_door: the end event after \
+       2750 ms of the last leg, before its 3375 ms: passed on the way, on."
       (logged "02.03-hotel-z-lobby" lobby
          "[PLZA] to_hotel_z_door: the end event after 2750 ms of the last leg, \
           before its 3375 ms: passed on the way, on.")
       "true";
     case
-      "02.03 logs: [PLZA] to_hotel_z_door: the end event after 3000 ms of the \
-       last leg, before its 3375 ms: passed on the way, on."
+      "02.03-hotel-z-lobby logs: [PLZA] to_hotel_z_door: the end event after \
+       3000 ms of the last leg, before its 3375 ms: passed on the way, on."
       (logged "02.03-hotel-z-lobby" lobby
          "[PLZA] to_hotel_z_door: the end event after 3000 ms of the last leg, \
           before its 3375 ms: passed on the way, on.")
       "true";
     case
-      "02.03 logs: [PLZA] to_hotel_z_door: the end event after 3250 ms of the \
-       last leg, before its 3375 ms: passed on the way, on."
+      "02.03-hotel-z-lobby logs: [PLZA] to_hotel_z_door: the end event after \
+       3250 ms of the last leg, before its 3375 ms: passed on the way, on."
       (logged "02.03-hotel-z-lobby" lobby
          "[PLZA] to_hotel_z_door: the end event after 3250 ms of the last leg, \
           before its 3375 ms: passed on the way, on.")
       "true";
     case
-      "02.03 logs: [PLZA] to_hotel_z_door: the end event after 3500 ms of the \
-       last leg."
+      "02.03-hotel-z-lobby logs: [PLZA] to_hotel_z_door: the end event after \
+       3500 ms of the last leg."
       (logged "02.03-hotel-z-lobby" lobby
          "[PLZA] to_hotel_z_door: the end event after 3500 ms of the last leg.")
       "true";
     case
-      "02.03 logs: [PLZA] to_hotel_z_door: ended on: player_can_move, \
-       interact_prompt"
+      "02.03-hotel-z-lobby logs: [PLZA] to_hotel_z_door: ended on: \
+       player_can_move, interact_prompt"
       (logged "02.03-hotel-z-lobby" lobby
          "[PLZA] to_hotel_z_door: ended on: player_can_move, interact_prompt")
       "true";
-    case "02.03 logs: [PLZA scene] done on control."
+    case "02.03-hotel-z-lobby logs: [PLZA scene] done on control."
       (logged "02.03-hotel-z-lobby" lobby "[PLZA scene] done on control.")
       "true";
-    case "02.03 lost: no door prompt"
+    case "02.03-hotel-z-lobby lost: no door prompt"
       (result "02.03-hotel-z-lobby" (lobby ~lost:true))
       "02.03-hotel-z-lobby event 1 (to_hotel_z_door): walk_no_end: \
        to_hotel_z_door: no end event within 5061 ms of the last leg";
@@ -1210,22 +1237,22 @@ let cases_02_04 =
       (result "02.04-hotel-check-in" clerk)
       "passed";
     case
-      "02.04 logs: [PLZA] to_front_counter: A on the A prompt after 0 ms of \
-       the last leg started a talk."
+      "02.04-hotel-check-in logs: [PLZA] to_front_counter: A on the A prompt \
+       after 0 ms of the last leg started a talk."
       (logged "02.04-hotel-check-in" clerk
          "[PLZA] to_front_counter: A on the A prompt after 0 ms of the last \
           leg started a talk.")
       "true";
     case
-      "02.04 logs: [PLZA] to_front_counter: started on: dialog_box, \
-       advance_arrow"
+      "02.04-hotel-check-in logs: [PLZA] to_front_counter: started on: \
+       dialog_box, advance_arrow"
       (logged "02.04-hotel-check-in" clerk
          "[PLZA] to_front_counter: started on: dialog_box, advance_arrow")
       "true";
-    case "02.04 logs: [PLZA scene] done on control."
+    case "02.04-hotel-check-in logs: [PLZA scene] done on control."
       (logged "02.04-hotel-check-in" clerk "[PLZA scene] done on control.")
       "true";
-    case "02.04 lost: no clerk's prompt"
+    case "02.04-hotel-check-in lost: no clerk's prompt"
       (result "02.04-hotel-check-in" (clerk ~lost:true))
       "02.04-hotel-check-in event 1 (to_front_counter): walk_no_end: \
        to_front_counter: no talk started within 1000 ms after the last leg";
@@ -1238,41 +1265,41 @@ let cases_02_05 =
       (result "02.05-to-room-202" elevator)
       "passed";
     case
-      "02.05 logs: [PLZA] to_lobby_elevator: the end event after 2000 ms of \
-       the last leg."
+      "02.05-to-room-202 logs: [PLZA] to_lobby_elevator: the end event after \
+       2000 ms of the last leg."
       (logged "02.05-to-room-202" elevator
          "[PLZA] to_lobby_elevator: the end event after 2000 ms of the last \
           leg.")
       "true";
     case
-      "02.05 logs: [PLZA] to_lobby_elevator: ended on: player_can_move, \
-       interact_prompt"
+      "02.05-to-room-202 logs: [PLZA] to_lobby_elevator: ended on: \
+       player_can_move, interact_prompt"
       (logged "02.05-to-room-202" elevator
          "[PLZA] to_lobby_elevator: ended on: player_can_move, interact_prompt")
       "true";
-    case "02.05 logs: [PLZA scene] done on choice."
+    case "02.05-to-room-202 logs: [PLZA scene] done on choice."
       (logged "02.05-to-room-202" elevator "[PLZA scene] done on choice.")
       "true";
-    case "02.05 logs: [PLZA] choose_0: row 0 of 2 highlighted"
+    case "02.05-to-room-202 logs: [PLZA] choose_0: row 0 of 2 highlighted"
       (logged "02.05-to-room-202" elevator
          "[PLZA] choose_0: row 0 of 2 highlighted")
       "true";
-    case "02.05 logs: [PLZA scene] done on control."
+    case "02.05-to-room-202 logs: [PLZA scene] done on control."
       (logged "02.05-to-room-202" elevator "[PLZA scene] done on control.")
       "true";
     case
-      "02.05 logs: [PLZA] to_room_202: the end event after 2000 ms of the last \
-       leg."
+      "02.05-to-room-202 logs: [PLZA] to_room_202: the end event after 2000 ms \
+       of the last leg."
       (logged "02.05-to-room-202" elevator
          "[PLZA] to_room_202: the end event after 2000 ms of the last leg.")
       "true";
     case
-      "02.05 logs: [PLZA] to_room_202: ended on: player_can_move, \
+      "02.05-to-room-202 logs: [PLZA] to_room_202: ended on: player_can_move, \
        interact_prompt"
       (logged "02.05-to-room-202" elevator
          "[PLZA] to_room_202: ended on: player_can_move, interact_prompt")
       "true";
-    case "02.05 lost: no elevator prompt"
+    case "02.05-to-room-202 lost: no elevator prompt"
       (result "02.05-to-room-202" (elevator ~lost:true))
       "02.05-to-room-202 event 1 (to_lobby_elevator): walk_no_end: \
        to_lobby_elevator: no end event within 3363 ms of the last leg";
@@ -1285,32 +1312,35 @@ let cases_02_06 =
       (result "02.06-night-in-room-202" bed)
       "passed";
     case
-      "02.06 logs: [PLZA] to_bed: the end event after 500 ms of the last leg, \
-       before its 750 ms: passed on the way, on."
+      "02.06-night-in-room-202 logs: [PLZA] to_bed: the end event after 500 ms \
+       of the last leg, before its 750 ms: passed on the way, on."
       (logged "02.06-night-in-room-202" bed
          "[PLZA] to_bed: the end event after 500 ms of the last leg, before \
           its 750 ms: passed on the way, on.")
       "true";
     case
-      "02.06 logs: [PLZA] to_bed: the end event after 1000 ms of the last leg."
+      "02.06-night-in-room-202 logs: [PLZA] to_bed: the end event after 1000 \
+       ms of the last leg."
       (logged "02.06-night-in-room-202" bed
          "[PLZA] to_bed: the end event after 1000 ms of the last leg.")
       "true";
-    case "02.06 logs: [PLZA] to_bed: ended on: player_can_move, interact_prompt"
+    case
+      "02.06-night-in-room-202 logs: [PLZA] to_bed: ended on: player_can_move, \
+       interact_prompt"
       (logged "02.06-night-in-room-202" bed
          "[PLZA] to_bed: ended on: player_can_move, interact_prompt")
       "true";
-    case "02.06 logs: [PLZA scene] done on choice."
+    case "02.06-night-in-room-202 logs: [PLZA scene] done on choice."
       (logged "02.06-night-in-room-202" bed "[PLZA scene] done on choice.")
       "true";
-    case "02.06 logs: [PLZA] choose_0: row 0 of 2 highlighted"
+    case "02.06-night-in-room-202 logs: [PLZA] choose_0: row 0 of 2 highlighted"
       (logged "02.06-night-in-room-202" bed
          "[PLZA] choose_0: row 0 of 2 highlighted")
       "true";
-    case "02.06 logs: [PLZA scene] done on control."
+    case "02.06-night-in-room-202 logs: [PLZA scene] done on control."
       (logged "02.06-night-in-room-202" bed "[PLZA scene] done on control.")
       "true";
-    case "02.06 lost: no bed prompt"
+    case "02.06-night-in-room-202 lost: no bed prompt"
       (result "02.06-night-in-room-202" (bed ~lost:true))
       "02.06-night-in-room-202 event 1 (to_bed): walk_no_end: to_bed: no end \
        event within 1665 ms of the last leg";
@@ -1323,21 +1353,21 @@ let cases_02_07 =
       (result "02.07-first-evening" room_door)
       "passed";
     case
-      "02.07 logs: [PLZA] to_room_door: the end event after 1750 ms of the \
-       last leg."
+      "02.07-first-evening logs: [PLZA] to_room_door: the end event after 1750 \
+       ms of the last leg."
       (logged "02.07-first-evening" room_door
          "[PLZA] to_room_door: the end event after 1750 ms of the last leg.")
       "true";
     case
-      "02.07 logs: [PLZA] to_room_door: ended on: player_can_move, \
-       interact_prompt"
+      "02.07-first-evening logs: [PLZA] to_room_door: ended on: \
+       player_can_move, interact_prompt"
       (logged "02.07-first-evening" room_door
          "[PLZA] to_room_door: ended on: player_can_move, interact_prompt")
       "true";
-    case "02.07 logs: [PLZA scene] done on control."
+    case "02.07-first-evening logs: [PLZA scene] done on control."
       (logged "02.07-first-evening" room_door "[PLZA scene] done on control.")
       "true";
-    case "02.07 lost: no door prompt"
+    case "02.07-first-evening lost: no door prompt"
       (result "02.07-first-evening" (room_door ~lost:true))
       "02.07-first-evening event 1 (to_room_door): walk_no_end: to_room_door: \
        no end event within 2231 ms of the last leg";
@@ -1349,23 +1379,27 @@ let cases_03_01 =
     case "03.01-down-to-the-lobby: out of Room 202, the elevator, the lobby"
       (result "03.01-down-to-the-lobby" out_of_room)
       "passed";
-    case "03.01 logs: the door's prompt after 1000 ms of the last leg"
+    case
+      "03.01-down-to-the-lobby logs: the door's prompt after 1000 ms of the \
+       last leg"
       (logged "03.01-down-to-the-lobby" out_of_room
          "[PLZA] out_of_room_202: the end event after 1000 ms of the last leg.")
       "true";
-    case "03.01 logs: the elevator's prompt after 2000 ms of the last leg"
+    case
+      "03.01-down-to-the-lobby logs: the elevator's prompt after 2000 ms of \
+       the last leg"
       (logged "03.01-down-to-the-lobby" out_of_room
          "[PLZA] to_2f_elevator: the end event after 2000 ms of the last leg.")
       "true";
-    case "03.01 logs: the floor question ends on its choice"
+    case "03.01-down-to-the-lobby logs: the floor question ends on its choice"
       (logged "03.01-down-to-the-lobby" out_of_room
          "[PLZA scene] done on choice.")
       "true";
-    case "03.01 logs: choose_0 on row 0 of 2"
+    case "03.01-down-to-the-lobby logs: choose_0 on row 0 of 2"
       (logged "03.01-down-to-the-lobby" out_of_room
          "[PLZA] choose_0: row 0 of 2 highlighted")
       "true";
-    case "03.01 lost: no door prompt"
+    case "03.01-down-to-the-lobby lost: no door prompt"
       (result "03.01-down-to-the-lobby" (out_of_room ~lost:true))
       "03.01-down-to-the-lobby event 1 (out_of_room_202): walk_no_end: \
        out_of_room_202: no end event within 1099 ms of the last leg";
@@ -1377,19 +1411,19 @@ let cases_03_02 =
     case "03.02-out-of-hotel-z: across the lobby, A Leave, the Main Menu card"
       (result "03.02-out-of-hotel-z" hotel_door)
       "passed";
-    case "03.02 logs: the legs end on the front door's prompt"
+    case "03.02-out-of-hotel-z logs: the legs end on the front door's prompt"
       (logged "03.02-out-of-hotel-z" hotel_door
          "[PLZA] to_hotel_front_door: legs done, screen now: player_can_move, \
           interact_prompt")
       "true";
-    case "03.02 lost: no front door prompt"
+    case "03.02-out-of-hotel-z lost: no front door prompt"
       (result "03.02-out-of-hotel-z" (hotel_door ~lost:true))
       "03.02-out-of-hotel-z event 2 (leave_hotel_z): prompt_not_seen: scene: \
        no A prompt to press through: free control with nothing to take A (the \
        walk before it stopped short?)";
     case
-      "03.02 into Taunie's battle, no story battle ahead: the scene goes on \
-       through the HUD and times out"
+      "03.02-out-of-hotel-z into Taunie's battle, no story battle ahead: the \
+       scene goes on through the HUD and times out"
       (result "03.02-out-of-hotel-z" taunie_first)
       "03.02-out-of-hotel-z event 2 (leave_hotel_z): scene_timeout: scene: Did \
        not finish within 360 s (expecting the controls hint, the party bar or \
@@ -1404,70 +1438,85 @@ let cases_03_02b =
        talk"
       (result "03.02b-battle-taunie" quartiere_verde)
       "passed";
-    case "03.02b logs: a talk to Taunie started after 3000 ms of the last leg"
+    case
+      "03.02b-battle-taunie logs: a talk to Taunie started after 3000 ms of \
+       the last leg"
       (logged "03.02b-battle-taunie" quartiere_verde
          "[PLZA] to_taunie: A on the A prompt after 3000 ms of the last leg \
           started a talk.")
       "true";
-    case "03.02b logs: the map talk ends on the party bar"
+    case "03.02b-battle-taunie logs: the map talk ends on the party bar"
       (logged "03.02b-battle-taunie" quartiere_verde
          "[PLZA] talk_through_map_screen: the party bar held: back in the \
           overworld")
       "true";
-    case "03.02b, a black fade before \"We're not done\": passes"
+    case "03.02b-battle-taunie, a black fade before \"We're not done\": passes"
       (result "03.02b-battle-taunie" (quartiere_verde ~ko_fade:true))
       "passed";
     case
-      "03.02b, a black fade before \"We're not done\": a cutscene, fighting on"
+      "03.02b-battle-taunie, a black fade before \"We're not done\": a \
+       cutscene, fighting on"
       (logged "03.02b-battle-taunie"
          (quartiere_verde ~ko_fade:true)
          "[PLZA] story_battle: a black fade, the lead's HP last read 0.89: a \
           cutscene, fighting on.")
       "true";
-    case "03.02b, Taunie's battle mid-walk: passes"
+    case "03.02b-battle-taunie, Taunie's battle mid-walk: passes"
       (result "03.02b-battle-taunie" (quartiere_verde ~battle_mid_walk:true))
       "passed";
-    case "03.02b, Taunie's battle mid-walk: the walk stops on the HUD"
+    case
+      "03.02b-battle-taunie, Taunie's battle mid-walk: the walk stops on the \
+       HUD"
       (logged "03.02b-battle-taunie"
          (quartiere_verde ~battle_mid_walk:true)
          "[PLZA] to_taunie: battle HUD showed after 2250 ms of the last leg: \
           stopping walk.")
       "true";
-    case "03.02b, Taunie's battle mid-walk: the run jumps to the battle"
+    case
+      "03.02b-battle-taunie, Taunie's battle mid-walk: the run jumps to the \
+       battle"
       (logged "03.02b-battle-taunie"
          (quartiere_verde ~battle_mid_walk:true)
          "[Event] 03.02b-battle-taunie: battle on screen during to_taunie: \
           jumping to battle_totodile, skipping taunie_battle_start")
       "true";
     case
-      "03.02b after 03.02-out-of-hotel-z: Taunie's prompt first, then it passes"
+      "03.02b-battle-taunie after 03.02-out-of-hotel-z: Taunie's prompt first, \
+       then it passes"
       (result "03.02b-battle-taunie" taunie_first)
       "passed";
-    case "03.02b after 03.02-out-of-hotel-z: the plaza scene ends at her battle"
+    case
+      "03.02b-battle-taunie after 03.02-out-of-hotel-z: the plaza scene ends \
+       at her battle"
       (logged "03.02b-battle-taunie" taunie_first
          "[Event] 03.02b-battle-taunie: battle on screen during plaza_scene: \
           jumping to battle_totodile, skipping to_taunie, taunie_battle_start")
       "true";
-    case "03.02b with the battle HUD on one read of the plaza scene: passes"
+    case
+      "03.02b-battle-taunie with the battle HUD on one read of the plaza \
+       scene: passes"
       (result "03.02b-battle-taunie" (quartiere_verde ~hud_flicker:true))
       "passed";
-    case "03.02b with the battle HUD on one read: the scene ends on control"
+    case
+      "03.02b-battle-taunie with the battle HUD on one read: the scene ends on \
+       control"
       (logged "03.02b-battle-taunie"
          (quartiere_verde ~hud_flicker:true)
          "[PLZA scene] control at 3.3s: party bar")
       "true";
-    case "03.02b lost: no plaza scene prompt"
+    case "03.02b-battle-taunie lost: no plaza scene prompt"
       (result "03.02b-battle-taunie" (quartiere_verde ~lost:true))
       "03.02b-battle-taunie event 1 (to_plaza_scene_prompt): walk_no_end: \
        to_plaza_scene_prompt: no end event within 9023 ms of the last leg";
-    case "03.02b resumed at the arch after it: passes"
+    case "03.02b-battle-taunie resumed at the arch after it: passes"
       (result "03.02b-battle-taunie" at_arch)
       "passed";
-    case "03.02b resumed at the arch after it: every event skipped"
+    case
+      "03.02b-battle-taunie resumed at the arch after it: every event skipped"
       (skipped "03.02b-battle-taunie" at_arch)
       "to_plaza_scene_prompt plaza_scene to_taunie taunie_battle_start \
        battle_totodile tepig_battle_start battle_tepig after_taunie_battle";
-    case "03.02b's start, the plaza: nothing skipped"
+    case "03.02b-battle-taunie's start, the plaza: nothing skipped"
       (skipped "03.02b-battle-taunie" quartiere_verde)
       "";
   ]
@@ -1482,29 +1531,32 @@ let cases_03_03 =
       (run_count "03.03-rock-pile-scene" rock_pile)
       "1";
     case
-      "03.03 lost: no rock pile scene, yet it passes (the fork's plain scene)"
+      "03.03-rock-pile-scene lost: no rock pile scene, yet it passes (the \
+       fork's plain scene)"
       (result "03.03-rock-pile-scene" (rock_pile ~lost:true))
       "passed";
     case "03.03b-up-to-the-rooftop: the side street, the ladder, the rooftop"
       (result "03.03b-up-to-the-rooftop" ladder)
       "passed";
-    case "03.03b logs: Climb Up after 2 steps along the wall"
+    case "03.03b-up-to-the-rooftop logs: Climb Up after 2 steps along the wall"
       (logged "03.03b-up-to-the-rooftop" ladder
          "[PLZA] climb_ladder: Climb Up after 2 steps along the wall")
       "true";
-    case "03.03b lost: no ladder prompt along the wall"
+    case "03.03b-up-to-the-rooftop lost: no ladder prompt along the wall"
       (result "03.03b-up-to-the-rooftop" (ladder ~lost:true))
       "03.03b-up-to-the-rooftop event 2 (climb_ladder): ladder_not_found: no \
        Climb Up prompt stepping along the wall";
     case "03.03c-off-the-roof: off the roof into the south boulevard scene"
       (result "03.03c-off-the-roof" off_the_roof)
       "passed";
-    case "03.03c logs: a scene took the walk after 5250 ms of the last leg"
+    case
+      "03.03c-off-the-roof logs: a scene took the walk after 5250 ms of the \
+       last leg"
       (logged "03.03c-off-the-roof" off_the_roof
          "[PLZA] off_the_roof: a scene (text waiting for A) took control after \
           5250 ms of the last leg: the walk stops.")
       "true";
-    case "03.03c lost: no scene takes the walk"
+    case "03.03c-off-the-roof lost: no scene takes the walk"
       (result "03.03c-off-the-roof" (off_the_roof ~lost:true))
       "03.03c-off-the-roof event 1 (off_the_roof): walk_no_scene: \
        off_the_roof: control still free after 8162 ms of the last leg: no \
@@ -1519,19 +1571,20 @@ let cases_03_04 =
        with B"
       (result "03.04-pokemon-center" nurse)
       "passed";
-    case "03.04 logs: a talk started on the A prompt after the legs"
+    case
+      "03.04-pokemon-center logs: a talk started on the A prompt after the legs"
       (logged "03.04-pokemon-center" nurse
          "[PLZA] into_pokemon_center: A on the A prompt after 0 ms of the last \
           leg started a talk.")
       "true";
-    case "03.04 lost: no nurse's prompt"
+    case "03.04-pokemon-center lost: no nurse's prompt"
       (result "03.04-pokemon-center" (nurse ~lost:true))
       "03.04-pokemon-center event 1 (into_pokemon_center): walk_no_end: \
        into_pokemon_center: no talk started within 1000 ms after the last leg";
-    case "03.04 resumed outside the Center: passes"
+    case "03.04-pokemon-center resumed outside the Center: passes"
       (result "03.04-pokemon-center" outside_center)
       "passed";
-    case "03.04 resumed outside the Center: every event skipped"
+    case "03.04-pokemon-center resumed outside the Center: every event skipped"
       (skipped "03.04-pokemon-center" outside_center)
       "into_pokemon_center pokedex_app";
     case
@@ -1542,7 +1595,7 @@ let cases_03_04 =
     case "03.06-wild-zones-card: the walk runs with B, once"
       (run_count "03.06-wild-zones-card" wild_zones_card)
       "1";
-    case "03.06 lost: no scene within the start window"
+    case "03.06-wild-zones-card lost: no scene within the start window"
       (result "03.06-wild-zones-card" (wild_zones_card ~lost:true))
       "03.06-wild-zones-card event 2 (wild_zones_tutorial): \
        scene_never_started: scene: the scene never started (player not at its \
@@ -1553,56 +1606,60 @@ let cases_03_04 =
 (* The start and end signatures (Start_signature). *)
 let cases_signatures =
   [
-    case "03.03's start check at the arch: ok"
+    case "03.03-rock-pile-scene's start check at the arch: ok"
       (start_check "03.03-rock-pile-scene" at_arch)
       "ok";
-    case "03.03's start check at the arch: logged as checked"
+    case "03.03-rock-pile-scene's start check at the arch: logged as checked"
       (start_logged "03.03-rock-pile-scene" at_arch
          "[Checkpoint] 03.03-rock-pile-scene: START CHECKED: the screen reads \
           (no talk prompt, minimap 03.03-start), its start is (minimap \
           03.03-start)")
       "true";
-    case "03.03's start check with no minimap: chain_off_start"
+    case "03.03-rock-pile-scene's start check with no minimap: chain_off_start"
       (start_check "03.03-rock-pile-scene" party)
       "chain_off_start: the run is not at 03.03-rock-pile-scene's start: the \
        screen reads (no talk prompt), its start is (minimap 03.03-start)";
-    case "03.04's start check at its end, outside the Center: ok"
+    case "03.04-pokemon-center's start check at its end, outside the Center: ok"
       (start_check "03.04-pokemon-center" outside_center)
       "ok";
-    case "03.04's start check at its end: logged as checked at its end"
+    case
+      "03.04-pokemon-center's start check at its end: logged as checked at its \
+       end"
       (start_logged "03.04-pokemon-center" outside_center
          "[Checkpoint] 03.04-pokemon-center: START CHECKED (at its end)")
       "true";
-    case "03.04's start check at the arch: chain_off_start"
+    case "03.04-pokemon-center's start check at the arch: chain_off_start"
       (start_check "03.04-pokemon-center" at_arch)
       "chain_off_start: the run is not at 03.04-pokemon-center's start: the \
        screen reads (no talk prompt, minimap 03.03-start), its start is \
        (minimap 03.04-start) or its end (minimap 03.06-start)";
-    case "03.06's start check outside the Center: ok"
+    case "03.06-wild-zones-card's start check outside the Center: ok"
       (start_check "03.06-wild-zones-card" outside_center)
       "ok";
-    case "03.02's start: no signature, ok"
+    case "03.02-out-of-hotel-z's start: no signature, ok"
       (start_check "03.02-out-of-hotel-z" party)
       "ok";
-    case "03.02's start: logged as unchecked"
+    case "03.02-out-of-hotel-z's start: logged as unchecked"
       (start_logged "03.02-out-of-hotel-z" party
          "[Checkpoint] 03.02-out-of-hotel-z: START UNCHECKED: its plan names \
           no start signature")
       "true";
-    case "03.04's end check outside the Center: ok"
+    case "03.04-pokemon-center's end check outside the Center: ok"
       (end_check "03.04-pokemon-center" outside_center)
       "ok";
-    case "03.04's end check outside the Center: logged as checked"
+    case
+      "03.04-pokemon-center's end check outside the Center: logged as checked"
       (end_logged "03.04-pokemon-center" outside_center
          "[Checkpoint] 03.04-pokemon-center: END CHECKED")
       "true";
     case
-      "03.04's end check inside the Center (Urbain's line): end_off_signature"
+      "03.04-pokemon-center's end check inside the Center (Urbain's line): \
+       end_off_signature"
       (end_check "03.04-pokemon-center" party)
       "end_off_signature: 03.04-pokemon-center passed its events but did not \
        end at its end: the screen reads (no talk prompt), its end is (minimap \
        03.06-start)";
-    case "03.03's end check: none named, ok"
+    case "03.03-rock-pile-scene's end check: none named, ok"
       (end_check "03.03-rock-pile-scene" party)
       "ok";
     case "a start signature with another field: refused"
@@ -1632,19 +1689,19 @@ let cases_signatures =
 
 let cases_03_07_to_03_11 =
   [
-    case "03.07's start at Wild Zone 1's gate: ok"
+    case "03.07-first-catches' start at Wild Zone 1's gate: ok"
       (start_check "03.07-first-catches" at_zone_gate)
       "ok";
-    case "03.07's start elsewhere: chain_off_start"
+    case "03.07-first-catches' start elsewhere: chain_off_start"
       (start_check "03.07-first-catches" outside_center)
       "chain_off_start: the run is not at 03.07-first-catches's start: the \
        screen reads (no talk prompt, minimap 03.06-start), its start is \
        (minimap 03.07-start)";
-    case "03.07 with no Fletchling to catch: no_catch"
+    case "03.07-first-catches with no Fletchling to catch: no_catch"
       (result "03.07-first-catches" zone_gate)
       "03.07-first-catches event 3 (catch_fletchling): no_catch: no tutorial \
        card after 6 throws";
-    case "03.07 with no Fletchling to catch: 6 throws"
+    case "03.07-first-catches with no Fletchling to catch: 6 throws"
       (fun () ->
         string_of_int (throws (snd (outcome "03.07-first-catches" zone_gate))))
       "6";
@@ -1659,7 +1716,7 @@ let cases_03_07_to_03_11 =
       (logged "03.10-lab-elevator" lab_elevator
          "choose_1: row 0 of 2 highlighted")
       "true";
-    case "03.10 lost: no elevator prompt"
+    case "03.10-lab-elevator lost: no elevator prompt"
       (result "03.10-lab-elevator" (lab_elevator ~lost:true))
       "03.10-lab-elevator event 1 (to_lab_elevator): walk_no_end: \
        to_lab_elevator: no end event within 1538 ms of the last leg";
@@ -1667,38 +1724,43 @@ let cases_03_07_to_03_11 =
 
 let cases_03_08_to_03_09 =
   [
-    case "03.08 with no map pin: off its start, the rocks not left"
+    case
+      "03.08-fourth-species with no map pin: off its start, the rocks not left"
       (result "03.08-fourth-species" party)
       "03.08-fourth-species event 1 (catch_more_species): chain_off_start: \
        rocks not left: the pin at the start was not read, not within 8 of \
        (476, 224)";
-    case "03.08 with no map pin: only the map's + and B pressed"
+    case "03.08-fourth-species with no map pin: only the map's + and B pressed"
       (inputs_sent "03.08-fourth-species" party)
       "2";
-    case "03.08's start at Taunie's rocks with a party of 3: ok"
+    case "03.08-fourth-species' start at Taunie's rocks with a party of 3: ok"
       (start_check ~party:3 "03.08-fourth-species" at_rocks)
       "ok";
-    case "03.08's start at Taunie's rocks: the pin logged"
+    case "03.08-fourth-species' start at Taunie's rocks: the pin logged"
       (start_logged ~party:3 "03.08-fourth-species" at_rocks
          "[PLZA] map pin: (476, 224)")
       "true";
-    case "03.08's start out of the zone: chain_off_start"
+    case "03.08-fourth-species' start out of the zone: chain_off_start"
       (start_check ~party:3 "03.08-fourth-species" (in_zone ~pin:(401., 224.)))
       "chain_off_start: the run is not at 03.08-fourth-species's start: the \
        screen reads (no talk prompt, not in a wild zone, not near Taunie's \
        rocks, party 3), its start is (in a wild zone, near Taunie's rocks, \
        party 3)";
-    case "03.08's start at the 100 spot, where a run stopped: chain_off_start"
+    case
+      "03.08-fourth-species' start at the 100 spot, where a run stopped: \
+       chain_off_start"
       (start_check ~party:3 "03.08-fourth-species" at_100_spot)
       "chain_off_start: the run is not at 03.08-fourth-species's start: the \
        screen reads (no talk prompt, in a wild zone, not near Taunie's rocks, \
        party 3), its start is (in a wild zone, near Taunie's rocks, party 3)";
-    case "03.08's start with a party of 4: chain_off_start"
+    case "03.08-fourth-species' start with a party of 4: chain_off_start"
       (start_check ~party:4 "03.08-fourth-species" at_rocks)
       "chain_off_start: the run is not at 03.08-fourth-species's start: the \
        screen reads (no talk prompt, in a wild zone, near Taunie's rocks, \
        party 4), its start is (in a wild zone, near Taunie's rocks, party 3)";
-    case "03.08 off Taunie's rocks: off its start, a reload's to fix"
+    case
+      "03.08-fourth-species off Taunie's rocks: off its start, a reload's to \
+       fix"
       (fun () ->
         let c = C.create () in
         let p = plan "03.08-fourth-species" in
@@ -1713,13 +1775,14 @@ let cases_03_08_to_03_09 =
             | Passed -> "passed"
             | Failed f -> string_of_bool f.off_start))
       "true";
-    case "03.08 retries spawn luck: 2"
+    case "03.08-fourth-species retries spawn luck: 2"
       (fun () -> string_of_int (plan "03.08-fourth-species").retries)
       "2";
-    case "03.08a retries spawn luck: 2"
+    case "03.08a-fifth-species retries spawn luck: 2"
       (fun () -> string_of_int (plan "03.08a-fifth-species").retries)
       "2";
-    case "03.08a with no map pin: off its start, the rocks not left"
+    case
+      "03.08a-fifth-species with no map pin: off its start, the rocks not left"
       (result "03.08a-fifth-species" party)
       "03.08a-fifth-species event 1 (catch_fifth_species): chain_off_start: \
        rocks not left: the pin at the start was not read, not within 8 of \
@@ -1741,29 +1804,33 @@ let cases_03_08_to_03_09 =
       (logged "03.08b-out-of-wild-zone-1" leave_zone
          "out of Wild Zone 1: the map pin reads (401, 225)")
       "true";
-    case "03.08b with no gate prompt: gate_not_reached"
+    case "03.08b-out-of-wild-zone-1 with no gate prompt: gate_not_reached"
       (result "03.08b-out-of-wild-zone-1"
          (in_zone ~facing:264. ~pin:(379., 250.)))
       "03.08b-out-of-wild-zone-1 event 1 (zone_1_to_far_gate): \
        gate_not_reached: no gate A prompt in 5000 ms of running";
-    case "03.08b with no gate prompt: runs again from the line"
+    case
+      "03.08b-out-of-wild-zone-1 with no gate prompt: runs again from the line"
       (logged "03.08b-out-of-wild-zone-1"
          (in_zone ~facing:264. ~pin:(379., 250.))
          "run_out_of_zone_1: no prompt on run 2, again from (379, 250)")
       "true";
-    case "03.09's start: out of the zone with a party of 5: ok"
+    case
+      "03.09-into-research-lab's start: out of the zone with a party of 5: ok"
       (start_check ~party:5 "03.09-into-research-lab" out_of_zone)
       "ok";
-    case "03.09's start in the zone: chain_off_start"
+    case "03.09-into-research-lab's start in the zone: chain_off_start"
       (start_check ~party:5 "03.09-into-research-lab" at_rocks)
       "chain_off_start: the run is not at 03.09-into-research-lab's start: the \
        screen reads (no talk prompt, in a wild zone, party 5), its start is \
        (not in a wild zone, party 5)";
-    case "03.09 with no minimap arrow: arrow_unread before any leg"
+    case
+      "03.09-into-research-lab with no minimap arrow: arrow_unread before any \
+       leg"
       (result "03.09-into-research-lab" look)
       "03.09-into-research-lab event 1 (to_research_lab): arrow_unread: no \
        minimap arrow within 40 s";
-    case "03.09 with no minimap arrow: nothing pressed"
+    case "03.09-into-research-lab with no minimap arrow: nothing pressed"
       (inputs_sent "03.09-into-research-lab" look)
       "0";
   ]
