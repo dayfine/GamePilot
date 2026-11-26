@@ -34,7 +34,7 @@ Give each as `--options KEY=VALUE`:
 
 | Key | Values | When not given | What it chooses |
 |---|---|---|---|
-| `language` | ja \| en \| fr \| it \| de \| es \| es-419 \| ko \| zh-hans \| zh-hant | default `en` | the game's language, in which the Internet gifts' names are found in their list |
+| `language` | en \| es-ES \| es-419 \| fr \| de \| it \| ja \| ko \| zh-Hans \| zh-Hant | default `en` | the game's language, in which the Internet gifts' names are found in their list |
 <!-- /generated -->
 
 ## The gifts
@@ -93,9 +93,9 @@ claimed, already received, expired, not supported or failed.
 ## How it works
 
 `Plza_claim_gifts.Claim_gifts` decides: which gifts are due, what came of each, where each Pokémon
-must be. Its game actions run through PLZA's checkpoint runner (`Plza_series.Runs`), handed in
-beside the story's (`Plza_autostory.Story_game`) by `src/bin/plza_gift_run.ml`, which reads the
-catalog (`Plza_gift_catalog`), today's date and the name templates at the edge.
+must be. `Plza_claim_gifts_series.Claim_gifts_runs` runs its plan on PLZA's shared series loop
+(`Plza_checkpoint_series`), one attempt with no reload. `src/bin/plza_gift_run.ml` reads the run's
+inputs at the edge: the catalog (`Plza_gift_catalog`), today's date and the name templates.
 
 `Gift_claim` claims one gift (`Mystery_gift`'s presses and waits), with a hook,
 `Gift_claim.already_received`, where the "already received" reader will go. `Gift_boxes` reads the

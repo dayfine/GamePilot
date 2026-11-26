@@ -1,0 +1,13 @@
+(library
+ (name plza_bank_home)
+ (public_name gamepilot.plza_bank_home)
+ (libraries
+  yojson
+  gamepilot.wire
+  gamepilot.effects
+  gamepilot.json_field
+  gamepilot.switch_home
+  gamepilot.pokemon_home
+  gamepilot.engine_run
+  gamepilot.plza_rules
+  gamepilot.plza_engine))

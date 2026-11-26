@@ -58,7 +58,29 @@ let game_steps ~log ~picture ~assets ~name_templates : Claim_gifts.game_steps =
     log;
   }
 
-let actions ~catalog ~today ~name_templates ~log ~picture ~assets =
-  Claim_gifts.game_actions
-    (game_steps ~log ~picture ~assets ~name_templates)
-    (Claim_gifts.start catalog ~today)
+let no_handler (event : Plza_engine.Plan.event) =
+  Error
+    (Engine_run.Failure.cause ~repeats:true "no_handler"
+       (event.id ^ ": plza.claim-gifts runs its game actions only"))
+
+let no_reload () =
+  Error
+    (Engine_run.Failure.cause ~repeats:true "no_reload"
+       "plza.claim-gifts neither saves nor reloads but by its save_progress")
+
+let game ~catalog ~today ~name_templates ~log ~picture ~assets :
+    Plza_engine.Game.t =
+  {
+    run_own = (fun event _ -> no_handler event);
+    run_builtin = no_handler;
+    game_actions =
+      Claim_gifts.game_actions
+        (game_steps ~log ~picture ~assets ~name_templates)
+        (Claim_gifts.start catalog ~today);
+    flag_holds = (fun _ -> false);
+    position = (fun () -> None);
+    between_rounds = (fun () -> Ok ());
+    save = no_reload;
+    reload = no_reload;
+    log;
+  }

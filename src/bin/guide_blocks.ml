@@ -13,8 +13,8 @@
      run resumed there;
    - commands [RANGE]: the commands that run it on each backend;
    - options: the keys its --options take (Program_registry's options);
-   - a program's own blocks, which its rules' guide gives (plza.claim-gifts'
-     gifts: its gift catalog).
+   - a block of a program's rules' own, which their guide gives (PLZA's
+     Mystery Gift rules' gifts: plza.claim-gifts' gift catalog).
 
    RANGE is FROM..TO or one id; default: every checkpoint. *)
 
@@ -34,8 +34,8 @@ type rules_guide = {
   commands : R.t -> args:string -> string;
   order : string -> string -> int;  (** The checkpoints' run order. *)
   program_block : R.t -> string -> (string, string) result option;
-      (** A block of one program's own, by name (plza.claim-gifts' gifts: its
-          catalog); [None] when the program has no such block. *)
+      (** A block of the rules' own, by name; [None] when they have no such
+          block. *)
 }
 
 type plans = { dir : string; ids : string list }

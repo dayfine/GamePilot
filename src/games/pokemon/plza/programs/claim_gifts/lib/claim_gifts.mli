@@ -77,3 +77,7 @@ val game_actions :
   game_steps -> run -> (string * Plza_engine.Game.game_action) list
 (** The five actions above, by the names the plan gives them. Each takes no
     args. *)
+
+val check_plan : Plza_engine.Plan.t -> (unit, string) result
+(** Before the console moves: the plan's events are all these game actions, and
+    its execution is empty. *)

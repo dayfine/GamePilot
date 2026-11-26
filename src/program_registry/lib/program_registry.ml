@@ -1,6 +1,6 @@
 type backend = Mgba | Switch
 type viewport = Nso_gba | Native
-type rules = Pokemon_grid | Plza_story
+type rules = Pokemon_grid | Plza_story | Plza_home | Plza_gifts
 
 type switch_home = {
   title : string;
@@ -277,10 +277,13 @@ let plza_autostory =
     options = [];
   }
 
-(* PLZA's languages, as the gift names' templates are named
+(* PLZA's languages, by the tags of its language list (as 00.00-new-game's
+   choices name them), in which the gift names' templates are named
    (src/games/pokemon/plza/assets/gift-name-<gift>-<language>.png). *)
 let plza_languages =
-  [ "ja"; "en"; "fr"; "it"; "de"; "es"; "es-419"; "ko"; "zh-hans"; "zh-hant" ]
+  [
+    "en"; "es-ES"; "es-419"; "fr"; "de"; "it"; "ja"; "ko"; "zh-Hans"; "zh-Hant";
+  ]
 
 let plza_claim_gifts =
   {
@@ -295,7 +298,7 @@ let plza_claim_gifts =
     checkpoints = Some "src/games/pokemon/plza/programs/claim_gifts/plans";
     backends = [ Switch ];
     viewport = Native;
-    rules = Plza_story;
+    rules = Plza_gifts;
     options =
       [
         {
@@ -307,6 +310,23 @@ let plza_claim_gifts =
              in their list";
         };
       ];
+  }
+
+let plza_bank_home =
+  {
+    id = "plza.bank-home";
+    game = plza;
+    name = "Bank in HOME";
+    group = [ "PLZA"; "Pokémon HOME" ];
+    description =
+      "Moves the claimed gifts from the game's box into their Pokémon HOME \
+       boxes and saves HOME.";
+    doc = "docs/guide/plza.bank-home.md";
+    checkpoints = Some "src/games/pokemon/plza/programs/bank_home/plans";
+    backends = [ Switch ];
+    viewport = Native;
+    rules = Plza_home;
+    options = [];
   }
 
 let all =
@@ -322,6 +342,7 @@ let all =
     frlg_wild_rng;
     plza_autostory;
     plza_claim_gifts;
+    plza_bank_home;
   ]
 
 let short_id p =

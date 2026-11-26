@@ -167,13 +167,29 @@ let no_args action steps run (event : Plza_engine.Plan.event) = function
   | (key, _) :: _ ->
       fail "bad_args" (event.id ^ ": " ^ key ^ " is not an arg of this action")
 
+let actions =
+  [
+    ("gifts_start", gifts_start);
+    ("claim_gifts", claim_gifts);
+    ("check_gift_slots", check_gift_slots);
+    ("save_progress", save_progress);
+    ("report_gifts", report_gifts);
+  ]
+
 let game_actions steps run =
-  List.map
-    (fun (name, action) -> (name, no_args action steps run))
-    [
-      ("gifts_start", gifts_start);
-      ("claim_gifts", claim_gifts);
-      ("check_gift_slots", check_gift_slots);
-      ("save_progress", save_progress);
-      ("report_gifts", report_gifts);
-    ]
+  List.map (fun (name, action) -> (name, no_args action steps run)) actions
+
+let check_event (e : Plza_engine.Plan.event) =
+  match (e.kind, e.way) with
+  | Named_action _, Some name when List.mem_assoc name actions -> Ok ()
+  | _ ->
+      Error
+        (Printf.sprintf "event %s: only game actions of %s" e.id
+           (String.concat ", " (List.map fst actions)))
+
+let check_plan (plan : Plza_engine.Plan.t) =
+  if plan.execution <> [] then Error "the plan's execution must be {}"
+  else
+    List.fold_left
+      (fun acc e -> Result.bind acc (fun () -> check_event e))
+      (Ok ()) plan.checkpoint.events

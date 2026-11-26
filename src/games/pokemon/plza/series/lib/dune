@@ -1,0 +1,18 @@
+(library
+ (name plza_checkpoint_series)
+ (public_name gamepilot.plza_checkpoint_series)
+ (libraries
+  gamepilot.wire
+  gamepilot.effects
+  gamepilot.live
+  gamepilot.live_run
+  gamepilot.run_record
+  gamepilot.watch_report
+  gamepilot.guide_page
+  gamepilot.engine_run
+  gamepilot.engine_series
+  gamepilot.run_flags
+  gamepilot.run_options
+  gamepilot.repo_io
+  gamepilot.plza_readers
+  gamepilot.plza_engine))

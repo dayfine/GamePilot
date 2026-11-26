@@ -153,9 +153,10 @@ Failures:
 
 ## How it works
 
-`Plza_series.Runs` runs each checkpoint in its own daemon and run folder, with the watch page;
-`Plza_autostory.Run_attempts` decides when to reload (`Plza_autostory.Game_reload`) and try
-again, and `Plza_autostory.Start_signature` checks the start and end.
+`Plza_checkpoint_series.Checkpoint_series` runs each checkpoint in its own daemon and run folder,
+with the watch page, and `Plza_series.Runs` gives it the story's attempt.
+`Plza_checkpoint_series.Run_attempts` decides when to reload (`Plza_autostory.Game_reload`) and
+try again, and `Plza_autostory.Start_signature` checks the start and end.
 
 `Plza_autostory.Story_game` gives the engine a handler for each game action a plan names, ported
 from the fork's PLZA AutoStory and built on `Plza_story` and `Plza_walk` over its `Steps`; any

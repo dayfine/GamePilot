@@ -5,7 +5,7 @@ let row ~plan_dir id =
     (fun (plan : Plza_engine.Plan.t) ->
       Printf.sprintf "| %s | %s |" plan.checkpoint.checkpoint_id
         (Guide_page.cell plan.checkpoint.title))
-    (Runs.load_plan ~plan_dir id)
+    (Checkpoint_series.load_plan ~plan_dir id)
 
 let rows ~plan_dir ids =
   List.fold_left

@@ -165,3 +165,22 @@ let main args =
       Ok
         (with_daemon ~daemon:f.daemon ~serial:f.serial ~frames
            ~log_dir:f.log_dir which)
+
+(* A step of another ctl command under the lease, as the ones above: in the
+   effect context over the hello's game picture, its log lines printed and on
+   the watch page; 0 when it ended where asked, else 1 with its error
+   (Home_boxes_command). *)
+let watched_log line =
+  log line;
+  Effects.show_log line
+
+let run_step ~port ~owner ~name step =
+  let act (backend : Wire.backend) =
+    entry_step name (step ~log:watched_log ~picture:backend.viewport)
+  in
+  match Live.run_with_backend ~port ~client ~lease:(owner, None) act with
+  | true -> 0
+  | false -> 1
+  | exception Unix.Unix_error (e, _, _) ->
+      log ("no daemon: " ^ Unix.error_message e);
+      1

@@ -1,14 +1,13 @@
 (* plza.claim-gifts' run inputs, read at the edge: its gift catalog
    (gifts.json), today's date (the host's, UTC) and the Internet gifts' name
    templates in the run's language; and its guide's gifts block. The program
-   reads no clock and no file: they are handed to its actions
-   (Plza_claim_gifts.Live_gift_steps.actions). *)
+   reads no clock and no file: they are handed to its series
+   (Plza_claim_gifts_series.Claim_gifts_runs). *)
 
 module C = Plza_gift_catalog.Gift_catalog
 module D = Plza_gift_catalog.Gift_catalog_decode
 
 let ( let* ) = Result.bind
-let program_id = "plza.claim-gifts"
 
 let catalog () =
   match Repo_io.Repo_files.locate D.path with
@@ -37,13 +36,17 @@ let name_templates ~language catalog =
 
 let default_language = "en"
 
-let program_actions options =
+let inputs options :
+    (Plza_claim_gifts_series.Claim_gifts_runs.inputs, string) result =
   let* catalog = catalog () in
   let language =
     Option.value ~default:default_language (Run_options.find options "language")
   in
   Ok
-    (Plza_claim_gifts.Live_gift_steps.actions ~catalog ~today:(today ())
-       ~name_templates:(name_templates ~language catalog))
+    {
+      Plza_claim_gifts_series.Claim_gifts_runs.catalog;
+      today = today ();
+      name_templates = name_templates ~language catalog;
+    }
 
 let gifts_block () = Result.map C.guide_table (catalog ())

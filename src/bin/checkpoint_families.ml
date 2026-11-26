@@ -93,37 +93,23 @@ let grid =
     one_shots = [ ("frlg.start_menu_poc", start_menu_poc) ];
   }
 
-(* A PLZA program's own game actions, beside the story's: plza.claim-gifts'
-   (Plza_gift_run); none for the others. *)
-let plza_program_actions plan_dir options =
-  match R.of_plan_dir plan_dir with
-  | Some p when p.id = Plza_gift_run.program_id ->
-      Result.map Option.some (Plza_gift_run.program_actions options)
-  | _ -> Ok None
-
 let plza_series plan_dir args =
-  let* f = Plza_series.Flags.parse args in
+  let* f = Plza_checkpoint_series.Flags.parse args in
   let* options = program_options plan_dir f in
-  let* program_actions = plza_program_actions plan_dir options in
-  Plza.run_series ?program_actions ~program:(program_fields plan_dir) ~options
+  Plza.run_series ~program:(program_fields plan_dir) ~options
     ~viewport:(viewport plan_dir f) plan_dir args
 
 let no_stated what ~plan_dir:_ _ = Error ("PLZA's plans state no " ^ what)
 
-(* plza.claim-gifts' gifts block: its catalog. *)
-let plza_program_block (p : R.t) name =
-  if p.id = Plza_gift_run.program_id && name = "gifts" then
-    Some (Plza_gift_run.gifts_block ())
-  else None
-
 let plza_guide : Guide_blocks.rules_guide =
   {
-    rows = Plza_series.Guide_tables.rows;
+    rows = Plza_checkpoint_series.Guide_tables.rows;
     needs = no_stated "needs";
     preflight = no_stated "pre-flight";
-    commands = (fun _ ~args -> Plza_series.Guide_tables.commands ~args);
-    order = Plza.checkpoint_order;
-    program_block = plza_program_block;
+    commands =
+      (fun _ ~args -> Plza_checkpoint_series.Guide_tables.commands ~args);
+    order = Plza_checkpoint_series.Checkpoint_series.checkpoint_order;
+    program_block = (fun _ _ -> None);
   }
 
 (* PLZA's story rules' entry points: a series of whole checkpoints on the
@@ -140,8 +126,58 @@ let plza =
     one_shots = [];
   }
 
-let all = [ grid; plza ]
-let of_rules = function R.Pokemon_grid -> grid | R.Plza_story -> plza
+let plza_home_series plan_dir args =
+  let* f = Plza_checkpoint_series.Flags.parse args in
+  let* options = program_options plan_dir f in
+  Plza_bank_home_series.Bank_home_runs.run_series
+    ~program:(program_fields plan_dir) ~options ~viewport:(viewport plan_dir f)
+    plan_dir args
+
+(* PLZA's Pokémon HOME rules' entry points: plans over PLZA's rules, run from
+   the Switch's HOME menu in Pokémon HOME, whole checkpoints on the Switch, as
+   the story's; their guide is the story's. *)
+let plza_home =
+  {
+    plza with
+    run_series = plza_home_series;
+    run_checkpoint =
+      (fun _ _ -> Error "plza.bank-home runs whole series only: gamepilot run");
+    ctl_readers = [];
+  }
+
+let plza_gifts_series plan_dir args =
+  let* f = Plza_checkpoint_series.Flags.parse args in
+  let* options = program_options plan_dir f in
+  let* inputs = Plza_gift_run.inputs options in
+  Plza_claim_gifts_series.Claim_gifts_runs.run_series inputs
+    ~program:(program_fields plan_dir) ~options ~viewport:(viewport plan_dir f)
+    plan_dir args
+
+(* The gifts block: plza.claim-gifts' catalog. *)
+let gifts_block _ = function
+  | "gifts" -> Some (Plza_gift_run.gifts_block ())
+  | _ -> None
+
+(* PLZA's Mystery Gift rules' entry points: plans over PLZA's rules, run from
+   the game's main menu, whole checkpoints on the Switch, as the story's; their
+   guide is the story's, with the gift catalog's block. *)
+let plza_gifts =
+  {
+    plza with
+    run_series = plza_gifts_series;
+    run_checkpoint =
+      (fun _ _ ->
+        Error "plza.claim-gifts runs whole series only: gamepilot run");
+    guide = { plza_guide with program_block = gifts_block };
+  }
+
+let all = [ grid; plza; plza_home; plza_gifts ]
+
+let of_rules = function
+  | R.Pokemon_grid -> grid
+  | R.Plza_story -> plza
+  | R.Plza_home -> plza_home
+  | R.Plza_gifts -> plza_gifts
 
 let of_program (p : R.t option) =
   of_rules (match p with Some p -> p.rules | None -> R.Pokemon_grid)

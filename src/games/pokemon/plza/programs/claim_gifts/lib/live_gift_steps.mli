@@ -19,14 +19,15 @@ val game_steps :
     the game's language, by gift id, as PNG bytes; uploaded when its gift is
     claimed. *)
 
-val actions :
+val game :
   catalog:Plza_gift_catalog.Gift_catalog.t ->
   today:Plza_gift_catalog.Gift_catalog.date ->
   name_templates:(string * string) list ->
   log:(string -> unit) ->
   picture:Wire.box ->
   assets:Plza_readers.Blob_assets.t ->
-  (string * Plza_engine.Game.game_action) list
-(** The program's game actions ({!Claim_gifts.game_actions}) over these steps,
-    for one run's session: a new {!Claim_gifts.run} of the catalog on [today].
-*)
+  Plza_engine.Game.t
+(** The engine's game for one attempt: {!Claim_gifts.game_actions} over these
+    steps, on a new {!Claim_gifts.run} of the catalog on [today]. Any other
+    event fails [no_handler]; the engine's save and reload fail [no_reload] (the
+    program saves by its own action and never reloads). *)
