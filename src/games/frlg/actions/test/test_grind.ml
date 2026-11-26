@@ -151,7 +151,6 @@ let fake_battle_game_steps (b : fake_battle) calls : B.Battle.game_steps =
 
 (* The log lines a flow shows as calls: the ends' (capped, reached, skipped);
    with [~battle_lines], the per-battle ones too. *)
-
 let shown ~battle_lines line =
   String.starts_with ~prefix:"Grind: capped" line
   || String.starts_with ~prefix:"Grind: round over" line

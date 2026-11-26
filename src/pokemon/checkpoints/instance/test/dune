@@ -6,7 +6,12 @@
 (tests
  (names test_plan_decode)
  (modules test_plan_decode)
- (libraries gamepilot.table_test yojson gamepilot.pokemon_engine plan_files))
+ (libraries
+  gamepilot.table_test
+  gamepilot.substring
+  yojson
+  gamepilot.pokemon_engine
+  plan_files))
 
 (tests
  (names

@@ -22,11 +22,8 @@ let mentions message parts =
    when [find] is not in it, as the case would test nothing. *)
 let edited base find replacement =
   let n = String.length find in
-  let rec at i =
-    if i + n > String.length base then failwith ("not in the map: " ^ find)
-    else if String.sub base i n = find then i
-    else at (i + 1)
-  in
-  let i = at 0 in
-  String.sub base 0 i ^ replacement
-  ^ String.sub base (i + n) (String.length base - i - n)
+  match Substring.find base find with
+  | None -> failwith ("not in the map: " ^ find)
+  | Some i ->
+      String.sub base 0 i ^ replacement
+      ^ String.sub base (i + n) (String.length base - i - n)

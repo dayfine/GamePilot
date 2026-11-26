@@ -65,7 +65,7 @@ let http_get port path =
       let request = Printf.sprintf "GET %s HTTP/1.1\r\n\r\n" path in
       ignore (Unix.write_substring fd request 0 (String.length request) : int);
       let reply = read_all fd in
-      match Daemon_process.find reply "\r\n\r\n" with
+      match Substring.find reply "\r\n\r\n" with
       | Some i -> Some (String.sub reply (i + 4) (String.length reply - i - 4))
       | None -> None)
 

@@ -43,14 +43,11 @@ let base =
 (* The base plan with the first [find] replaced. *)
 let edited find replacement =
   let n = String.length find in
-  let rec at i =
-    if i + n > String.length base then failwith ("not in the base plan: " ^ find)
-    else if String.sub base i n = find then
+  match Substring.find base find with
+  | None -> failwith ("not in the base plan: " ^ find)
+  | Some i ->
       String.sub base 0 i ^ replacement
       ^ String.sub base (i + n) (String.length base - i - n)
-    else at (i + 1)
-  in
-  at 0
 
 let base_events =
   String.concat "\n"
