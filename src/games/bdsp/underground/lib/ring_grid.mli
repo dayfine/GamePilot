@@ -3,9 +3,9 @@
     {!Grid_maps.Grid} and {!Grid_planning.Leg_planner}.
 
     Tile coordinates (width 16 x height 24, 3-tile-wide corridors):
-    - [south_door]: [(1, 22)], outer-wall track outside the South Hideaway
-      doorway
-    - [north_door]: [(1, 1)], outer-wall track outside the North Hideaway
+    - [south_door]: [(1, 20)], North-wall track outside the South Hideaway
+      doorway (dig spots never spawn on the South cutaway rim)
+    - [north_door]: [(1, 1)], North-wall track outside the North Hideaway
       doorway
     - Bottom-East corridor: [x = 1..14, y = 20..22]
     - East vertical corridor: [x = 12..14, y = 1..22]
@@ -46,7 +46,7 @@ val grid : cell Grid_maps.Grid.t
 (** The in-memory 16x24 ring tile grid. *)
 
 val south_door : Grid_geometry.Tile_pos.t
-(** Tile on the outer-wall track outside the South Hideaway doorway [(1, 22)].
+(** Tile on the North-wall track outside the South Hideaway doorway [(1, 20)].
 *)
 
 val north_door : Grid_geometry.Tile_pos.t

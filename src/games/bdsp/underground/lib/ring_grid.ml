@@ -17,7 +17,7 @@ type route = {
 
 let width = 16
 let height = 24
-let south_door : P.t = { x = 1; y = 22 }
+let south_door : P.t = { x = 1; y = 20 }
 let north_door : P.t = { x = 1; y = 1 }
 let min_x = 1
 let max_x = 14
@@ -37,7 +37,7 @@ let east_y3 = 4
 let bucket_bottom_xs = [| bot_x0; bot_x1; bot_x2; bot_x3 |]
 let bucket_east_ys = [| east_y0; east_y1; east_y2; east_y3 |]
 let bucket_top_xs = [| bot_x3; bot_x2; bot_x1; bot_x0 |]
-let bottom_center_y = 22
+let bottom_center_y = 20
 let east_center_x = 14
 let top_center_y = 1
 

@@ -11,7 +11,8 @@ type play_result = {
 
 let scan_right_col = 11
 let adj_table_capacity = 24
-let min_secondary_integrity = 6
+let min_secondary_integrity = 4
+let low_gauge_cutoff = 18
 let shard_expand_radius = 2
 let cardinal_dirs = [ (-1, 0); (1, 0); (0, -1); (0, 1) ]
 
@@ -157,16 +158,25 @@ let next_scan_anchor (obs : Mining_wall.observation) =
   | (col, row, _) :: _ -> Some (Strike { tool = Hammer; col; row })
   | [] -> None
 
+let covered_neighbor_count obs (_, _, cells) =
+  List.length (adjacent_covered ~offsets:cardinal_dirs obs cells)
+
+let sort_easiest_first obs items =
+  List.sort
+    (fun a b ->
+      Int.compare (covered_neighbor_count obs a) (covered_neighbor_count obs b))
+    items
+
 let find_secondary_excavation (obs : Mining_wall.observation) items =
   if obs.integrity < min_secondary_integrity then None
   else
-    let secondary =
+    let pending =
       List.filter (fun (id, _, _) -> not (List.mem id obs.uncovered_ids)) items
     in
     List.find_map
       (fun (_, _, cells) ->
         best_excavation_hit ~offsets:cardinal_dirs obs cells)
-      secondary
+      (sort_easiest_first obs pending)
 
 let decide_after_scan obs items =
   match find_secondary_excavation obs items with
@@ -178,8 +188,10 @@ let decide ~goal ~tally (obs : Mining_wall.observation) =
   match find_wanted_excavation ~goal ~tally obs items with
   | Some act -> act
   | None -> (
-      if all_items_accounted_non_shard ~goal ~tally obs items then
-        decide_after_scan obs items
+      if
+        obs.integrity <= low_gauge_cutoff
+        || all_items_accounted_non_shard ~goal ~tally obs items
+      then decide_after_scan obs items
       else
         match next_scan_anchor obs with
         | Some act -> act

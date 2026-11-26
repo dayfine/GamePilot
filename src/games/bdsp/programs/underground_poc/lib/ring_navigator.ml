@@ -64,12 +64,13 @@ let handle_step ~picture ~on_prompt ~on_battle cur =
       else Ok (cur, false)
   | Effects.Timeout -> Ok (cur, false)
 
-let primary_wall_dir ~along_dir = function
-  | d :: _ -> nav_dir_of_grid d
-  | [] -> (
-      match along_dir with
-      | Corridor_nav.East | Corridor_nav.West -> Corridor_nav.North
-      | Corridor_nav.North | Corridor_nav.South -> Corridor_nav.East)
+let primary_wall_dir ~along_dir wall_dirs =
+  match along_dir with
+  | Corridor_nav.East | Corridor_nav.West -> Corridor_nav.North
+  | Corridor_nav.North | Corridor_nav.South -> (
+      match List.filter (fun d -> d <> D.South) wall_dirs with
+      | d :: _ -> nav_dir_of_grid d
+      | [] -> Corridor_nav.East)
 
 let sample_frame ~picture =
   subscribe_screen ~picture;
@@ -101,12 +102,11 @@ let servo_step_toward ~along_dir (off : WS.offset) =
       else if off.dy > 0 then Some Corridor_nav.South
       else None
 
+(* Dig spots never spawn on the South cutaway rim; horizontal corridors always
+   face North, while vertical corridors face East or West from the star offset. *)
 let wall_from_offset ~along_dir ~fallback (off : WS.offset) =
   match along_dir with
-  | Corridor_nav.East | Corridor_nav.West ->
-      if off.dy < 0 then Corridor_nav.North
-      else if off.dy > 0 then Corridor_nav.South
-      else fallback
+  | Corridor_nav.East | Corridor_nav.West -> Corridor_nav.North
   | Corridor_nav.North | Corridor_nav.South ->
       if off.dx > 0 then Corridor_nav.East
       else if off.dx < 0 then Corridor_nav.West
@@ -159,9 +159,7 @@ let align_and_interact ~picture ~on_prompt ~on_battle ~face_dir ~saw_star cur =
 let east_outer_x = 14
 
 let outer_wall_of_tile (p : Grid_geometry.Tile_pos.t) =
-  if p.x >= east_outer_x then Corridor_nav.East
-  else if p.y <= Ring_grid.north_door.y then Corridor_nav.North
-  else Corridor_nav.South
+  if p.x >= east_outer_x then Corridor_nav.East else Corridor_nav.North
 
 let interact_at_stop ~log ~picture ~on_prompt ~on_battle ~along_dir ~wall_dirs
     ~tile ~re_seat cur =
