@@ -1,5 +1,5 @@
 (** A story scene pressed through to its end: ported from
-    PokemonLZA_AutoStorySceneMachine.cpp with the configs 01.01's to 02.01's
+    PokemonLZA_AutoStorySceneMachine.cpp with the configs the fork's story
     scenes use, its classes, presses and timings. Each read every 250 ms is
     classed:
     - with [end_at_battle], the battle HUD on two reads within 2 s
@@ -31,9 +31,11 @@
     [stop_at_battle], 120 s with [stop_at_choice], a start window or the button
     B, else 360 s.
 
-    The fork's option to press A first is the game action [scene_through_prompt]
-    (Story_game). "Mission complete" has no reader yet ({!Look}): it reads as a
-    screen no detector reads (A, as for the card). *)
+    Story_game runs the plain config, [end_on_black_fade] and the button B
+    today; the choice, battle and start-window configs come with the plans that
+    use them. The fork's option to press A first is not here. "Mission complete"
+    has no reader yet ({!Look}): it reads as a screen no detector reads (A, as
+    for the card). *)
 
 type config = {
   end_on_black_fade : bool;  (** a black fade ends the scene *)

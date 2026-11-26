@@ -20,16 +20,16 @@ type t = {
           nothing. *)
   home_menu : bool;  (** The Switch HOME menu, not the game. *)
   screen_still : bool;  (** The frame is the same as the last read's. *)
-  fade_black : bool;
-  fade_white : bool;
+  fade_black : bool;  (** A black fade. *)
+  fade_white : bool;  (** A white fade. *)
   dialog_box : bool;  (** A text box, or a choice box. *)
-  choice_box : bool;
+  choice_box : bool;  (** A choice box. *)
   choice_rows : (int * int) option;
       (** With a choice box: the highlighted row (0 the top) and the rows. *)
-  advance_arrow : bool;
-  controls_hint : bool;
-  autosave : bool;
-  tutorial_card : bool;
+  advance_arrow : bool;  (** The text box's advance chevron. *)
+  controls_hint : bool;  (** The overworld's controls hint. *)
+  autosave : bool;  (** The autosave badge. *)
+  tutorial_card : bool;  (** A tutorial card. *)
   interact_prompt : bool;  (** An A prompt (["(A) Talk"]) with no text box. *)
   party_bar : bool;  (** The overworld party bar with no text box. *)
   minimap_arrow : float option;
