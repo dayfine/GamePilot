@@ -16,6 +16,7 @@ Each page ends with "How it works", for developers: the ported files, the mechan
 | [ACE Setup](frlg.ace_setup.md) | `frlg.ace_setup` | mGBA | Sets up arbitrary code execution: the ? Mail puts species 0x0351 in Box 3 slot 1. |
 | [Wild RNG](frlg.wild_rng.md) | `frlg.wild_rng` | mGBA | Catches a chosen shiny wild Pokemon by timing the game's random numbers. |
 | [AutoStory](plza.autostory.md) | `plza.autostory` | the Switch | Plays the story from a new game, checkpoint by checkpoint. |
+| [Underground PoC](bdsp.underground_poc.md) | `bdsp.underground_poc` | the Switch | Iterative Switch bring-up program for Grand Underground shard farming. |
 <!-- /generated -->
 
 The Mail Glitch has a second page for its last checkpoint:

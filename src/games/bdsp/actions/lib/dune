@@ -1,0 +1,9 @@
+(library
+ (name bdsp_actions)
+ (public_name gamepilot.bdsp_actions)
+ (libraries
+  gamepilot.wire
+  gamepilot.effects
+  gamepilot.switch_home
+  gamepilot.bdsp_readers
+  gamepilot.bdsp_underground))

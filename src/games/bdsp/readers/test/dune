@@ -1,0 +1,7 @@
+(tests
+ (names test_mining_grid)
+ (libraries
+  gamepilot.wire
+  gamepilot.switch_home
+  gamepilot.bdsp_underground
+  gamepilot.bdsp_readers))

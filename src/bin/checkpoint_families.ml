@@ -80,6 +80,13 @@ let start_menu_poc =
           Start_menu_poc.describe outcome ));
   }
 
+let bdsp_underground_poc =
+  {
+    label = "bdsp.underground_poc";
+    default_state = Bdsp_underground_poc.Underground_poc.default_state;
+    run = (fun ~state -> Bdsp_underground_poc.Underground_poc.run ?state ());
+  }
+
 (* The Pokémon grid rules' entry points. *)
 let grid =
   {
@@ -89,7 +96,11 @@ let grid =
     guide = grid_guide;
     chain_needs = Grid.Chain_needs.needs;
     ctl_readers = Frlg_ctl_readers.Ctl_readers.all;
-    one_shots = [ ("frlg.start_menu_poc", start_menu_poc) ];
+    one_shots =
+      [
+        ("frlg.start_menu_poc", start_menu_poc);
+        ("bdsp.underground_poc", bdsp_underground_poc);
+      ];
   }
 
 let plza_series plan_dir args =

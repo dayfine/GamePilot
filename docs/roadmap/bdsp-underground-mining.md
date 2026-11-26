@@ -1,40 +1,57 @@
 # D. BDSP Underground mining
 
-Goal: a program that digs in the Grand Underground until the save holds the items a legendary unlock
-needs, then stops. No prior plan exists on the fork; this page is a first outline.
+Goal: a program that digs in the Grand Underground until the save holds enough Mysterious Shards
+for the target Ramanas Park slates, then stops. No prior Underground program exists on the fork;
+this page records the verified game mechanics, live Console A measurements, and implemented
+modules.
 
-## What is known
+## Verified game mechanics
 
-- Fork PR #782 (C) needs Ramanas Park slates for most of its RNG targets, and Regigigas needs the
-  three Regis in the party.
-- That the Ramanas Park slates are traded for Mysterious Shards dug in the Grand Underground, and
-  which shard each slate costs, is from memory of the game: **verify it** (Bulbapedia's Ramanas Park
-  and Grand Underground pages) before writing any plan data.
-- Upstream PA/CC has no Underground program for BDSP.
+- **Ramanas Park slates (target):** 14 slates total per version unlock all legendaries (fork PR
+  #782, `docs/roadmap/bdsp-legendary-rng.md`). Each slate costs either **3× Mysterious Shard S** or
+  **1× Mysterious Shard L**, so the stop condition is `shard_L + (shard_S / 3) >= target_slates`
+  (14 Large, 42 Small, or any mix). Unlocked after obtaining the National Pokédex.
+- **Region choice:** All 6 partitioned regions of the Grand Underground share the **same global
+  mining item pool** (~2.87% Shard S, ~0.96% Shard L per item slot; 2–4 items per wall). Region
+  choice is purely about corridor geometry and convenience: dive from **Route 221 (Ramanas Park)**
+  or any outdoor spot into a corridor directly adjacent to a Pokémon Hideaway doorway.
+- **Ignore the 40-Diglett bonus (`LightStone`):** Datamines confirm the 4-minute 40/40 Diglett
+  bonus only boosts Gorgeous Boxes (5% → 95%) and doubles Hideaway shiny odds (1/4096 → 1/2048);
+  it does **not** change Mysterious Shard drop rates. Play **offline** (`一人遊玩`, row 2 = `Down 2`
+  + `A` in the Explorer Kit mode menu) and skip Digletts.
+- **Instant dig-spot refresh (verified live on Console A):** Stepping through **any Pokémon
+  Hideaway doorway** and immediately walking back out (~4 s total) instantly respawns all sparkling
+  dig spots in the surrounding tunnels with zero wild Pokémon encounters.
+- **Mining minigame (verified live on Console A):**
+  - **13 columns × 10 rows** grid at normalized frame box `x = 0.1328..0.7484`,
+    `y = 0.1111..0.9556`.
+  - Cursor starts at `(6, 4)` with **Blue Pickaxe** selected; **R** toggles **Red Hammer** (cost 2,
+    3×3) ↔ **Blue Pickaxe** (cost 1, 5-tile cross); **A** strikes.
+  - **49 wall-integrity points** (crack grows right-to-left across `y = 0.00..0.11`).
+  - Post-dig dialog (`牆壁崩塌了！`) advances with **A**, not **B**.
 
-## Shape
+## Self-aligning corridor navigation
 
-A one-shot program `bdsp.underground_dig` in `src/games/bdsp/programs/`, Switch backend only:
+BDSP overworld timings come from fork PR #402 (`BDSP_MOVE_MECHANICS`: `turn_tap = 50 ms`,
+`start_delay = 250 ms`, run `100/150 ms/tile`). Rather than needing full Underground tile maps,
+anchoring at an L-shaped corridor adjacent to a Hideaway doorway gives zero-drift self-alignment:
 
-1. **Enter**: from a known spot, open the Explorer Kit and go underground (menu and fade readers).
-2. **Find a dig spot**: simplest first version is one cavern, a short fixed route, and a reader
-   for the spot to dig at and the dig prompt.
-3. **Dig**: the Gen 4 minigame is a grid of rock over buried items with a wall that cracks (check
-   BDSP's version on the console). Read the grid,
-   choose pickaxe or hammer per hit, stop before the wall collapses. A greedy policy on the read
-   grid is enough to start; it can be simulated offline from recorded frames.
-4. **Count**: read what was dug (result screen), keep a tally against the goal, leave and re-enter to
-   respawn spots, save every N digs.
-5. **Stop** when the goal (e.g. N of a shard) is met.
+1. Bounce through the Hideaway doorway (`West` → `East`, with perpendicular 350 ms auto-centering
+   nudge if off-center) to refresh dig spots.
+2. Hug the North wall and sweep East toward the South-East corner, digging any sparkle.
+3. Self-align against the East wall and sweep North, digging any sparkle.
+4. Return South to the South-East corner wall and West back to the Hideaway doorway.
 
-## Prerequisites
+## Implemented modules
 
-- A BDSP save with the Explorer Kit (story).
-- BDSP readers shared with C (dialog, menus); the daemon Switch backend.
-
-## Open questions
-
-- The exact goal: which slates and how many shards, or also evolution stones and plates?
-- Do spots respawn by leaving the Underground, by time, or by something else? Measure on the console.
-- Is a dig grid reader feasible from the frames (item outlines under rock), or do we dig blind with
-  a fixed pattern and accept the yield?
+- `src/games/bdsp/underground/` (`gamepilot.bdsp_underground`): pure `Mining_goal`, `Mining_wall`,
+  `Mining_solver`, and `Corridor_nav` with offline unit & Monte Carlo tests.
+- `src/games/bdsp/readers/` (`gamepilot.bdsp_readers`): `Menu_detector`, `Dialog_detector`,
+  `Battle_detector` (Fight + Run buttons), `Minimap_sparkles`, and `Mining_grid` (130-cell live
+  classifier with cursor-sprite masking + unit tests).
+- `src/games/bdsp/actions/` (`gamepilot.bdsp_actions`): `Bdsp_game_entry`, `Bdsp_overworld`, and
+  `Bdsp_mining_play` (`dig_wall_smart` with wall-fade wait, `prev_grid` decay, and per-cell hit
+  cap).
+- `src/games/bdsp/programs/underground_poc/` (`bdsp.underground_poc`): registered Switch one-shot
+  program verified live on Console A via `gamepilot run bdsp.underground_poc --watch` (3-cycle
+  endurance pass in `run-38`).

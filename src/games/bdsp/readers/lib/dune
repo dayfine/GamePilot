@@ -1,0 +1,8 @@
+(library
+ (name bdsp_readers)
+ (public_name gamepilot.bdsp_readers)
+ (libraries
+  gamepilot.wire
+  gamepilot.effects
+  gamepilot.switch_home
+  gamepilot.bdsp_underground))

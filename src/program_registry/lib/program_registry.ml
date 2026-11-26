@@ -68,7 +68,15 @@ let plza =
     switch_home = None;
   }
 
-let games = [ plza; frlg ]
+let bdsp =
+  {
+    game_id = "bdsp";
+    game_name = "Pokémon Brilliant Diamond / Shining Pearl";
+    delete_save_icons = [];
+    switch_home = None;
+  }
+
+let games = [ plza; frlg; bdsp ]
 let with_home (g : game) = Option.map (fun h -> (g, h)) g.switch_home
 
 let home_ids () =
@@ -243,6 +251,21 @@ let plza_autostory =
     options = [];
   }
 
+let bdsp_underground_poc =
+  {
+    id = "bdsp.underground_poc";
+    game = bdsp;
+    name = "Underground PoC";
+    group = [ "BDSP"; "Development" ];
+    description =
+      "Iterative Switch bring-up program for Grand Underground shard farming.";
+    doc = "docs/roadmap/bdsp-underground-mining.md";
+    checkpoints = None;
+    backends = [ Switch ];
+    viewport = Native;
+    rules = Pokemon_grid;
+  }
+
 let all =
   [
     frlg_start_menu_poc;
@@ -254,6 +277,7 @@ let all =
     frlg_ace_setup;
     frlg_wild_rng;
     plza_autostory;
+    bdsp_underground_poc;
   ]
 
 let short_id p =

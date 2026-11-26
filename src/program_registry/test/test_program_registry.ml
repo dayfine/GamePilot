@@ -122,8 +122,8 @@ let () =
         (fun () -> lab_game_text (Some "plza"))
         "error: plza has no Switch HOME data; games with it: frlg";
       case "lab game: an unknown id"
-        (fun () -> lab_game_text (Some "bdsp"))
-        "error: no game bdsp; games with Switch HOME data: frlg";
+        (fun () -> lab_game_text (Some "sv"))
+        "error: no game sv; games with Switch HOME data: frlg";
       case "the mail glitch folder has plans" plan_count "true";
       case "every plan decodes and checks" bad_plans "";
       case "find by id"
