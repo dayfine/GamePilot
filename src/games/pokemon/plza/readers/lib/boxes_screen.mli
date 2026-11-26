@@ -3,8 +3,7 @@
     white tab at the top left ("X", the box icons) is all white over (130, 30,
     110, 36), every channel 200 or over, while the "Current Party" title band
     under it (100, 100, 240, 40), dark blue, is not (a white fade is white in
-    both). The lab script read nothing there; reading it tells the Boxes from
-    the first-time "Your Boxes" card. *)
+    both). Reading it tells the Boxes from the first-time "Your Boxes" card. *)
 
 val probes : picture:Wire.box -> Wire.probe_spec list
 (** The tab's probe, for a game picture at [picture] in the frame. *)

@@ -16,18 +16,17 @@
       over English's minutes, (552, 856, 70, 32), held French's date (console B,
       2026-11-25: "6/01/2" of 26/01/2026), so a French save never changed it.
 
-    The script did not read the save. Read before saving and again after, the
-    save counts as done when "Last Saved" changed. Measured against a copy of
-    the capture with its last digit replaced by the 8 before it (18:18,
-    images/mystery-gift/synthetic-...), as no second save was captured: 0.53 to
-    0.72 apart in every colour shift (18:16 and 18:18 differ least of the
-    digits; a static dialog read twice on console B is 0.00 apart). Also on a
-    copy with the date and time moved where French shows them, the date as
-    26/01/2026 (synthetic-save-dialog-fr-layout-1816 and -1818), placed so the
-    old minutes box reads it as console B's French run did, but for the day's
-    second digit; no French frame of the dialog was captured. Any language whose
-    line fits the box reads the same way; one whose date or time sits past x
-    1258, or on another row, does not. *)
+    Read before saving and again after, the save counts as done when "Last
+    Saved" changed. Measured against a copy of the capture with its last digit
+    replaced by the 8 before it (18:18, images/mystery-gift/synthetic-...), as
+    no second save was captured: 0.53 to 0.72 apart in every colour shift (18:16
+    and 18:18 differ least of the digits; a static dialog read twice on console
+    B is 0.00 apart). Also on a copy with the date and time moved where French
+    shows them, the date as 26/01/2026 (synthetic-save-dialog-fr-layout-1816 and
+    -1818), placed so the old minutes box reads it as console B's French run
+    did, but for the day's second digit; no French frame of the dialog was
+    captured. Any language whose line fits the box reads the same way; one whose
+    date or time sits past x 1258, or on another row, does not. *)
 
 val probes : picture:Wire.box -> Wire.probe_spec list
 (** The panel's, the button's and the time's probes. *)

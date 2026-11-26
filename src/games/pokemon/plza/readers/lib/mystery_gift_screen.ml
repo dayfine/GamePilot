@@ -24,9 +24,8 @@ let item_id k = Printf.sprintf "mystery_gift.item%d" k
 let name_id k = Printf.sprintf "mystery_gift.name%d" k
 
 (* White from 200: the card's header and the selected item are 253 on
-   console B, and a dimmer capture card keeps them (0.9 times is 228); the
-   script read white over 230. Dark blue as the script: red under 45, green
-   under 70, blue 66 to 144. *)
+   console B, and a dimmer capture card keeps them (0.9 times is 228). Dark
+   blue: red under 45, green under 70, blue 66 to 144. *)
 let white_min = 200
 let white = Color_count.white white_min
 let blue_red_max = 44
