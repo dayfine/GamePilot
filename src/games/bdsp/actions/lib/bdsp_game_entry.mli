@@ -18,4 +18,5 @@ val openedgame_to_ingame :
   (unit, string) result
 (** From the black launch screen (or already on the title screen), wait for the
     opening/title to appear, mash A to enter the save, wait for the load-to-
-    overworld black fade to finish, and wait [post_wait_ms] (default 1000 ms). *)
+    overworld black fade to finish, and wait [post_wait_ms] (default 1000 ms).
+*)

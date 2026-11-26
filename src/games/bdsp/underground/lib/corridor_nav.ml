@@ -23,16 +23,8 @@ let bdsp_move_mechanics =
     step_tap_release_ms = 640;
   }
 
-type sparkle_target = {
-  offset_tiles : int;
-  wall_side : direction;
-}
-
-type doorway_anchor = {
-  enter_dir : direction;
-  exit_dir : direction;
-}
-
+type sparkle_target = { offset_tiles : int; wall_side : direction }
+type doorway_anchor = { enter_dir : direction; exit_dir : direction }
 type walk_outcome = At_wall | Wild_battle
 type refresh_outcome = Refreshed | Refresh_wild_battle
 
@@ -108,7 +100,9 @@ let run_session ~goal ~anchor ~save_every ~max_refreshes ~steps =
       Error "max_refreshes reached before goal was met"
     else
       let* targets = steps.pulse_radar () in
-      let* after_sweep = sweep_sparkles ~goal ~save_every ~steps summary targets in
+      let* after_sweep =
+        sweep_sparkles ~goal ~save_every ~steps summary targets
+      in
       if Mining_goal.is_met goal after_sweep.tally then Ok after_sweep
       else
         let* after_refresh = refresh_corridor ~anchor ~steps after_sweep in

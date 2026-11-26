@@ -16,13 +16,13 @@ type goal =
   | Shards of { shard_s : int; shard_l : int }
       (** Explicit minimum counts for each shard size. *)
 
-(** Cumulative counts across a farming session. *)
 type tally = {
   shard_s : int;  (** Total Mysterious Shard S collected. *)
   shard_l : int;  (** Total Mysterious Shard L collected. *)
   digs : int;  (** Total mining walls completed. *)
   walls_bailed : int;  (** Walls collapsed early after ruling out shards. *)
 }
+(** Cumulative counts across a farming session. *)
 
 (** Which shard sizes the mining solver should prioritize. *)
 type priority =

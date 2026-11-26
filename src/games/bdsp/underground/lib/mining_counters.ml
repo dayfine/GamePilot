@@ -42,7 +42,10 @@ let empty =
 
 let record_cycle c = { c with cycles = c.cycles + 1 }
 let record_refresh c = { c with refreshes = c.refreshes + 1 }
-let record_skipped_corridor c = { c with skipped_corridors = c.skipped_corridors + 1 }
+
+let record_skipped_corridor c =
+  { c with skipped_corridors = c.skipped_corridors + 1 }
+
 let record_battle_escaped c = { c with battles_escaped = c.battles_escaped + 1 }
 
 let add_treasure c = function
@@ -71,16 +74,16 @@ let target_slates = function
   | Mining_goal.Slates n -> n
   | Mining_goal.Shards req ->
       req.shard_l
-      + ((req.shard_s + Mining_goal.small_per_slate - 1)
-        / Mining_goal.small_per_slate)
+      + (req.shard_s + Mining_goal.small_per_slate - 1)
+        / Mining_goal.small_per_slate
 
 let format_summary ~goal c =
   let slates = Mining_goal.slate_equivalents (to_tally c) in
   let target = target_slates goal in
   Printf.sprintf
-    "cycles=%d refreshes=%d skipped=%d digs=%d bailed=%d battles=%d | \
-     shards S=%d L=%d (slates=%d/%d) | spheres=%d stones=%d fossils=%d \
-     boxes=%d other=%d"
+    "cycles=%d refreshes=%d skipped=%d digs=%d bailed=%d battles=%d | shards \
+     S=%d L=%d (slates=%d/%d) | spheres=%d stones=%d fossils=%d boxes=%d \
+     other=%d"
     c.cycles c.refreshes c.skipped_corridors c.digs c.walls_bailed
     c.battles_escaped c.shard_s c.shard_l slates target c.spheres c.stones
     c.fossils c.statue_boxes c.other_treasures

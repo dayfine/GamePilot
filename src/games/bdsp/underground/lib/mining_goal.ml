@@ -1,24 +1,12 @@
 type item = Shard_s | Shard_l | Other
-
-type goal =
-  | Slates of int
-  | Shards of { shard_s : int; shard_l : int }
-
-type tally = {
-  shard_s : int;
-  shard_l : int;
-  digs : int;
-  walls_bailed : int;
-}
-
+type goal = Slates of int | Shards of { shard_s : int; shard_l : int }
+type tally = { shard_s : int; shard_l : int; digs : int; walls_bailed : int }
 type priority = Large_first | Small_only | Large_only
 
 let small_per_slate = 3
 let ramanas_total_slates = 14
 let ramanas_all_slates = Slates ramanas_total_slates
-
 let empty_tally = { shard_s = 0; shard_l = 0; digs = 0; walls_bailed = 0 }
-
 let slate_equivalents t = t.shard_l + (t.shard_s / small_per_slate)
 
 let is_met goal t =

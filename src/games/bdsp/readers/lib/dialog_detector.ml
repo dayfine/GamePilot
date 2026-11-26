@@ -36,5 +36,4 @@ let border_ok m id =
 let shown m =
   is_white m id_left_white
   && (is_white m id_right_white || is_white m id_right_white_low)
-  && border_ok m id_left
-  && border_ok m id_right
+  && border_ok m id_left && border_ok m id_right

@@ -6,13 +6,13 @@ module P = Switch_home.Switch_presses
 open Bdsp_underground
 
 let ( let* ) = Result.bind
-
 let default_state = ""
 let native_picture : Wire.box = { x = 0.; y = 0.; w = 1.; h = 1. }
 let goal = Mining_goal.ramanas_all_slates
-let step_hold_ms = 240
-let step_cooldown_ms = 140
+let step_hold_ms = 340
+let step_cooldown_ms = 120
 let fade_timeout_ms = 8000
+let dig_enter_fade_timeout_ms = 3500
 let open_dlg_timeout_ms = 8000
 let black_hold_ms = 80.
 let clear_hold_ms = 200.
@@ -24,11 +24,11 @@ let max_open_dialog_presses = 6
 let max_end_dialog_presses = 15
 let door_bounce_hold_ms = 2500
 let north_hug_ms = 450
-let east_align_ms = 800
+let east_align_ms = 2000
 let south_return_ms = 3000
-let west_return_ms = 1800
-let sweep_steps = 10
-let total_cycles = 3
+let west_return_ms = 2600
+let sweep_steps = 12
+let total_cycles = 15
 
 let log msg =
   let line = "[bdsp.underground_poc] " ^ msg in
@@ -51,20 +51,18 @@ let read_nearby_sparkles ~picture =
   subscribe_corridor ~picture;
   match Effects.await ~timeout_ms:minimap_probe_timeout_ms (fun _ -> true) with
   | Effects.Holds m -> Bdsp_readers.Minimap_sparkles.read m
-  | Effects.Timeout -> { Bdsp_readers.Minimap_sparkles.north_east = true; south_east = true }
+  | Effects.Timeout ->
+      {
+        Bdsp_readers.Minimap_sparkles.east_corridor = true;
+        north_corridor = true;
+      }
 
-let enter_and_play_minigame ~picture ~counters =
-  log "Dig prompt detected! Entering minigame...";
-  OW.interact ();
-  ignore
-    (H.wait_for ~timeout_ms:fade_timeout_ms (H.held black_hold_ms is_black)
-      : unit option);
+let play_entered_minigame ~picture ~counters =
   ignore
     (H.wait_for ~timeout_ms:fade_timeout_ms (H.held clear_hold_ms is_not_black)
       : unit option);
   ignore
-    (H.wait_for ~timeout_ms:open_dlg_timeout_ms
-       (H.held clear_hold_ms is_dialog)
+    (H.wait_for ~timeout_ms:open_dlg_timeout_ms (H.held clear_hold_ms is_dialog)
       : unit option);
   let* () =
     OW.advance_dialog ~log ~picture ~max_presses:max_open_dialog_presses ()
@@ -84,6 +82,23 @@ let enter_and_play_minigame ~picture ~counters =
   let next = Mining_counters.record_dig counters ~bailed [] in
   log ("Counters: " ^ Mining_counters.format_summary ~goal next);
   Ok next
+
+let enter_and_play_minigame ~picture ~counters =
+  log "Prompt detected; confirming dig vs NPC dialog...";
+  OW.interact ();
+  match
+    H.wait_for ~timeout_ms:dig_enter_fade_timeout_ms
+      (H.held black_hold_ms is_black)
+  with
+  | Some () ->
+      log "Dig fade detected! Entering minigame...";
+      play_entered_minigame ~picture ~counters
+  | None ->
+      log "No dig fade (NPC dialog); dismissing with B...";
+      let* () =
+        OW.dismiss_dialog ~log ~picture ~max_presses:max_open_dialog_presses ()
+      in
+      Ok counters
 
 let handle_step_event ~picture ~counters =
   match Effects.await ~timeout_ms:step_probe_timeout_ms (fun _ -> true) with
@@ -110,21 +125,33 @@ let sweep_wall ~picture ~move_dir ~face_dir ~steps ~counters =
   in
   loop steps counters
 
-let sweep_corridor_and_return ~picture ~counters =
+let sweep_east_leg ~picture ~counters =
   log "Hugging North wall & sweeping East toward South-East corner...";
   OW.run_hold Corridor_nav.North ~hold_ms:north_hug_ms;
-  let* counters =
-    sweep_wall ~picture ~move_dir:Corridor_nav.East ~face_dir:Corridor_nav.North
-      ~steps:sweep_steps ~counters
-  in
-  log "Self-aligning East & sweeping North along East wall...";
+  sweep_wall ~picture ~move_dir:Corridor_nav.East ~face_dir:Corridor_nav.North
+    ~steps:sweep_steps ~counters
+
+let sweep_north_leg ~picture ~counters =
+  log "Running East to corner & sweeping North along East wall...";
   OW.run_hold Corridor_nav.East ~hold_ms:east_align_ms;
   let* counters =
-    sweep_wall ~picture ~move_dir:Corridor_nav.North
-      ~face_dir:Corridor_nav.East ~steps:sweep_steps ~counters
+    sweep_wall ~picture ~move_dir:Corridor_nav.North ~face_dir:Corridor_nav.East
+      ~steps:sweep_steps ~counters
   in
-  log "Returning South to South-East corner & West to Hideaway doorway...";
+  log "Returning South to South-East corner...";
   OW.run_hold Corridor_nav.South ~hold_ms:south_return_ms;
+  Ok counters
+
+let sweep_targeted_corridors ~picture
+    ~(sp : Bdsp_readers.Minimap_sparkles.nearby) ~counters =
+  let* counters =
+    if sp.east_corridor then sweep_east_leg ~picture ~counters else Ok counters
+  in
+  let* counters =
+    if sp.north_corridor then sweep_north_leg ~picture ~counters
+    else Ok counters
+  in
+  log "Returning West to Hideaway doorway...";
   OW.run_hold Corridor_nav.North ~hold_ms:north_hug_ms;
   OW.run_hold Corridor_nav.West ~hold_ms:west_return_ms;
   Ok counters
@@ -140,10 +167,11 @@ let run_one_cycle ~picture ~idx ~counters =
   P.wait post_dig_wait_ms;
   let sp = read_nearby_sparkles ~picture in
   log
-    (Printf.sprintf "Minimap sparkles: NE=%b SE=%b" sp.north_east sp.south_east);
+    (Printf.sprintf "Minimap sparkles: East=%b North=%b" sp.east_corridor
+       sp.north_corridor);
   let* counters =
     if Bdsp_readers.Minimap_sparkles.any sp then
-      sweep_corridor_and_return ~picture ~counters
+      sweep_targeted_corridors ~picture ~sp ~counters
     else (
       log "No nearby sparkles on minimap; skipping corridor sweep!";
       Ok (Mining_counters.record_skipped_corridor counters))

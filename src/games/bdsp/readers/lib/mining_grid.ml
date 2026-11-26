@@ -33,8 +33,11 @@ let shallow_layer = 1
 let exposed_shard_id = 1
 let exposed_other_id = 2
 let channels = 3.
-
 let cell_probe_id ~col ~row = Printf.sprintf "bdsp_mine_%d_%d" col row
+let red_tool_probe_id = "bdsp_mine_tool_red"
+let blue_tool_probe_id = "bdsp_mine_tool_blue"
+let red_tool_box : Wire.box = { x = 0.89; y = 0.42; w = 0.06; h = 0.16 }
+let blue_tool_box : Wire.box = { x = 0.89; y = 0.70; w = 0.06; h = 0.16 }
 
 let cell_box ~col ~row : Wire.box =
   let cw = grid_w /. float_of_int cols in
@@ -45,6 +48,16 @@ let cell_box ~col ~row : Wire.box =
     w = cell_span *. cw;
     h = cell_span *. ch;
   }
+
+let tool_probes ~picture =
+  let add id box acc =
+    match PB.clipped ~picture box with
+    | Some b -> Wire.color_stats_probe ~id ~box:b ~delivery:Every :: acc
+    | None -> acc
+  in
+  []
+  |> add blue_tool_probe_id blue_tool_box
+  |> add red_tool_probe_id red_tool_box
 
 let probes ~picture =
   let acc = ref [] in
@@ -57,7 +70,16 @@ let probes ~picture =
       | None -> ()
     done
   done;
-  List.rev !acc
+  tool_probes ~picture @ List.rev !acc
+
+let stats_luma (s : SC.stats) = (s.mean.r +. s.mean.g +. s.mean.b) /. channels
+
+let selected_tool m =
+  match (SC.stats m red_tool_probe_id, SC.stats m blue_tool_probe_id) with
+  | Some red, Some blue ->
+      if stats_luma red > stats_luma blue then Some Mining_wall.Hammer
+      else Some Mining_wall.Pickaxe
+  | _ -> None
 
 let is_pink_shard (r, g, b) =
   r >= shard_min_r && b >= shard_min_b
@@ -76,8 +98,7 @@ let classify_colored (r, g, b) std_sum =
   else if g >= tan_min_g && rb >= tan_min_rb_diff && rg < tan_max_rg_diff then
     Mining_wall.Covered shallow_layer
   else if
-    rb >= empty_min_rb_diff
-    && rg >= empty_min_rg_diff
+    rb >= empty_min_rb_diff && rg >= empty_min_rg_diff
     && std_sum < empty_max_std_sum
   then Mining_wall.Clear_empty
   else
@@ -97,8 +118,7 @@ let read_cell m ~col ~row =
 let cursor_occludes ~cursor ~col ~row =
   match cursor with
   | None -> false
-  | Some (cc, cr) ->
-      col >= cc && col <= cc + 1 && row >= cr - 1 && row <= cr
+  | Some (cc, cr) -> col >= cc && col <= cc + 1 && row >= cr - 1 && row <= cr
 
 let read_cell_masked ~cursor ~prev m ~col ~row =
   if not (cursor_occludes ~cursor ~col ~row) then read_cell m ~col ~row

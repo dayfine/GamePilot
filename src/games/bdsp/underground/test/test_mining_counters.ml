@@ -10,10 +10,8 @@ let assert_eq_int label expected actual =
 
 let () =
   let c =
-    Mining_counters.empty
-    |> Mining_counters.record_refresh
-    |> Mining_counters.record_skipped_corridor
-    |> Mining_counters.record_cycle
+    Mining_counters.empty |> Mining_counters.record_refresh
+    |> Mining_counters.record_skipped_corridor |> Mining_counters.record_cycle
     |> Mining_counters.record_refresh
   in
   let c =
@@ -22,8 +20,7 @@ let () =
   in
   let c =
     Mining_counters.record_dig c ~bailed:true [ Statue_box ]
-    |> Mining_counters.record_battle_escaped
-    |> Mining_counters.record_cycle
+    |> Mining_counters.record_battle_escaped |> Mining_counters.record_cycle
   in
   assert_eq_int "cycles" 2 c.cycles;
   assert_eq_int "refreshes" 2 c.refreshes;

@@ -10,18 +10,20 @@ type treasure =
   | Shard_s  (** Mysterious Shard S (3 = 1 Ramanas Park slate). *)
   | Shard_l  (** Mysterious Shard L (1 = 1 Ramanas Park slate). *)
   | Sphere  (** Prism/Pale/Red/Blue/Green Sphere. *)
-  | Evolution_stone  (** Fire, Water, Thunder, Leaf, Moon, Sun, Dawn, Dusk, Shiny Stone. *)
+  | Evolution_stone
+      (** Fire, Water, Thunder, Leaf, Moon, Sun, Dawn, Dusk, Shiny Stone. *)
   | Fossil  (** Skull, Armor, Helix, Dome, Old Amber, Root, Claw Fossil. *)
   | Statue_box  (** Pretty or Gorgeous Stone Box. *)
   | Other_treasure  (** Heart Scale, Hard Stone, Plate, Revive, etc. *)
 
-(** Cumulative counters for a Grand Underground farming run. *)
 type t = {
   cycles : int;  (** Completed loop cycles. *)
   refreshes : int;  (** Hideaway doorway bounces performed. *)
-  skipped_corridors : int;  (** Cycles skipped when minimap showed no nearby sparkles. *)
+  skipped_corridors : int;
+      (** Cycles skipped when minimap showed no nearby sparkles. *)
   digs : int;  (** Mining walls entered and completed. *)
-  walls_bailed : int;  (** Walls collapsed early after ruling out wanted shards. *)
+  walls_bailed : int;
+      (** Walls collapsed early after ruling out wanted shards. *)
   battles_escaped : int;  (** Unexpected wild battles escaped cleanly. *)
   shard_s : int;  (** Mysterious Shard S collected. *)
   shard_l : int;  (** Mysterious Shard L collected. *)
@@ -31,6 +33,7 @@ type t = {
   statue_boxes : int;  (** Stone boxes collected. *)
   other_treasures : int;  (** Other items collected. *)
 }
+(** Cumulative counters for a Grand Underground farming run. *)
 
 val empty : t
 (** Zeroed starting counters for a new run. *)
@@ -54,4 +57,5 @@ val to_tally : t -> Mining_goal.tally
 (** Project shard/dig/bail counts into a {!Mining_goal.tally}. *)
 
 val format_summary : goal:Mining_goal.goal -> t -> string
-(** Format a concise single-line counter summary suitable for Watch Page logs. *)
+(** Format a concise single-line counter summary suitable for Watch Page logs.
+*)

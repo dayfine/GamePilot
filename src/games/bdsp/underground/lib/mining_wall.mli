@@ -9,12 +9,12 @@ type tool =
   | Hammer  (** Red Hammer: 3x3 damage kernel, costs 2 wall integrity. *)
   | Pickaxe  (** Blue Pickaxe: 5-tile cross damage kernel, costs 1 integrity. *)
 
-(** One buried treasure placed on the 13x10 wall. *)
 type buried_item = {
   id : int;  (** Unique item identifier within the wall. *)
   kind : Mining_goal.item;  (** Shard S, Shard L, or Other. *)
   cells : (int * int) list;  (** All [(col, row)] tiles occupied by the item. *)
 }
+(** One buried treasure placed on the 13x10 wall. *)
 
 (** Hidden layer underneath a wall tile once its dirt is cleared. *)
 type cell_content =
@@ -33,7 +33,6 @@ type visible_cell =
 type wall
 (** Complete hidden + visible state of an offline 13x10 mining wall. *)
 
-(** Snapshot of the 13x10 mining wall visible to a solver or frame reader. *)
 type observation = {
   cols : int;  (** Grid width (13). *)
   rows : int;  (** Grid height (10). *)
@@ -43,6 +42,7 @@ type observation = {
   grid : visible_cell array array;  (** Indexed as [grid.(row).(col)]. *)
   uncovered_ids : int list;  (** Item IDs completely cleared of dirt. *)
 }
+(** Snapshot of the 13x10 mining wall visible to a solver or frame reader. *)
 
 val cols : int
 (** Width of the BDSP mining grid (13 columns). *)
@@ -71,7 +71,8 @@ val make :
   items:buried_item list ->
   (wall, string) result
 (** Build a wall from a [rows x cols] dirt-layer matrix, iron bar coordinates,
-    and buried items. Returns [Error] if dimensions or coordinates are invalid. *)
+    and buried items. Returns [Error] if dimensions or coordinates are invalid.
+*)
 
 val generate : seed:int -> items:Mining_goal.item list -> wall
 (** Deterministic synthetic wall generator for offline solver benchmarks. *)
@@ -80,8 +81,8 @@ val observe : wall -> observation
 (** Project [wall] to the partial observation visible to a solver. *)
 
 val strike : wall -> tool:tool -> col:int -> row:int -> wall
-(** Apply one tool hit. No-op if the wall has already collapsed or all items
-    are uncovered. *)
+(** Apply one tool hit. No-op if the wall has already collapsed or all items are
+    uncovered. *)
 
 val integrity : wall -> int
 (** Remaining wall integrity points. *)

@@ -43,7 +43,6 @@ let lcg_mask = 0x7fffffff
 let lcg_shift = 16
 let lcg_out_mask = 0x7fff
 let max_place_attempts = 40
-
 let pickaxe_kernel = [ (0, 0, 2); (-1, 0, 1); (1, 0, 1); (0, -1, 1); (0, 1, 1) ]
 
 let hammer_kernel =
@@ -60,7 +59,11 @@ let hammer_kernel =
   ]
 
 let tool_cost = function Hammer -> hammer_cost | Pickaxe -> pickaxe_cost
-let damage_kernel = function Pickaxe -> pickaxe_kernel | Hammer -> hammer_kernel
+
+let damage_kernel = function
+  | Pickaxe -> pickaxe_kernel
+  | Hammer -> hammer_kernel
+
 let in_bounds ~col ~row = col >= 0 && col < cols && row >= 0 && row < rows
 let copy_grid g = Array.init (Array.length g) (fun r -> Array.copy g.(r))
 
@@ -73,8 +76,7 @@ let uncovered_ids_of (w : wall) =
     w.items
 
 let is_finished (w : wall) =
-  w.integrity <= 0
-  || List.for_all (fun it -> item_uncovered w.dirt it) w.items
+  w.integrity <= 0 || List.for_all (fun it -> item_uncovered w.dirt it) w.items
 
 let integrity (w : wall) = w.integrity
 let all_items (w : wall) = w.items
@@ -150,8 +152,7 @@ let apply_damage dirt ~tool ~col ~row =
   List.iter
     (fun (dc, dr, dmg) ->
       let c = col + dc and r = row + dr in
-      if in_bounds ~col:c ~row:r then
-        dirt.(r).(c) <- max 0 (dirt.(r).(c) - dmg))
+      if in_bounds ~col:c ~row:r then dirt.(r).(c) <- max 0 (dirt.(r).(c) - dmg))
     (damage_kernel tool)
 
 let strike (w : wall) ~tool ~col ~row =
@@ -203,7 +204,9 @@ let generate ~seed ~items =
     rng := s;
     v
   in
-  let dirt = Array.init rows (fun _ -> Array.init cols (fun _ -> 2 + (draw () mod 3))) in
+  let dirt =
+    Array.init rows (fun _ -> Array.init cols (fun _ -> 2 + (draw () mod 3)))
+  in
   let occupied = Array.init rows (fun _ -> Array.make cols false) in
   let buried =
     List.mapi

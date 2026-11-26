@@ -3,7 +3,6 @@ module H = Switch_home.Held_screen
 module P = Switch_home.Switch_presses
 
 let ( let* ) = Result.bind
-
 let tool_hold_ms = 100
 let tool_cooldown_ms = 250
 let cursor_hold_ms = 60
@@ -13,7 +12,7 @@ let strike_cooldown_ms = 350
 let dig_start_col = 6
 let dig_start_row = 4
 let dig_default_announced = 3
-let dig_max_moves = 45
+let dig_max_moves = 65
 let dig_frame_timeout_ms = 1000
 let dig_post_strike_settle_ms = 220
 let dig_max_hits_per_cell = 3
@@ -70,12 +69,16 @@ let decay_prev_grid prev ~tool ~col ~row =
     | Mining_wall.Pickaxe -> pickaxe_decay_kernel
     | Mining_wall.Hammer -> hammer_decay_kernel
   in
-  List.iter (fun (dc, dr, dmg) -> decay_cell prev dmg (col + dc) (row + dr)) kernel
+  List.iter
+    (fun (dc, dr, dmg) -> decay_cell prev dmg (col + dc) (row + dr))
+    kernel
 
-let ensure_tool current wanted =
-  if !current <> wanted then (
+let ensure_tool ~actual current wanted =
+  let cur = Option.value actual ~default:!current in
+  if cur <> wanted then (
     toggle_mining_tool ();
     current := wanted)
+  else current := cur
 
 let move_and_hit cur_c cur_r ~col ~row =
   let dx = col - !cur_c and dy = row - !cur_r in
@@ -103,7 +106,9 @@ let covered_count (obs : Mining_wall.observation) =
   let count = ref 0 in
   for r = 0 to obs.rows - 1 do
     for c = 0 to obs.cols - 1 do
-      match obs.grid.(r).(c) with Mining_wall.Covered _ -> incr count | _ -> ()
+      match obs.grid.(r).(c) with
+      | Mining_wall.Covered _ -> incr count
+      | _ -> ()
     done
   done;
   !count
@@ -147,18 +152,20 @@ let tool_name = function
   | Mining_wall.Hammer -> "Hammer"
   | Mining_wall.Pickaxe -> "Pickaxe"
 
-let execute_action ~log st ~moves ~bailed obs = function
+let execute_action ~log ~actual_tool st ~moves ~bailed obs = function
   | Mining_solver.Bail_collapse ->
       if not bailed then log "No wanted shards found; bailing with Hammer!";
-      ensure_tool st.cur_tool Mining_wall.Hammer;
+      ensure_tool ~actual:actual_tool st.cur_tool Mining_wall.Hammer;
       mining_strike ();
       P.wait dig_post_strike_settle_ms;
       st.integrity := max 0 (!(st.integrity) - Mining_wall.hammer_cost);
       st.prev_grid := Some obs.Mining_wall.grid;
       true
   | Mining_solver.Strike { tool; col; row } ->
-      log (Printf.sprintf "Move %d: %s (%d,%d)" (moves + 1) (tool_name tool) col row);
-      ensure_tool st.cur_tool tool;
+      log
+        (Printf.sprintf "Move %d: %s (%d,%d)" (moves + 1) (tool_name tool) col
+           row);
+      ensure_tool ~actual:actual_tool st.cur_tool tool;
       move_and_hit st.cur_c st.cur_r ~col ~row;
       st.hits.(row).(col) <- st.hits.(row).(col) + 1;
       decay_prev_grid obs.grid ~tool ~col ~row;
@@ -167,15 +174,16 @@ let execute_action ~log st ~moves ~bailed obs = function
       bailed
 
 let step_dig ~log ~goal ~tally st ~moves ~bailed m =
+  let actual_tool = Bdsp_readers.Mining_grid.selected_tool m in
   let obs =
-    Bdsp_readers.Mining_grid.read_observation
-      ~cursor:(!(st.cur_c), !(st.cur_r)) ?prev:!(st.prev_grid)
-      ~announced_items:dig_default_announced ~integrity:!(st.integrity) m
+    Bdsp_readers.Mining_grid.read_observation ~cursor:(!(st.cur_c), !(st.cur_r))
+      ?prev:!(st.prev_grid) ~announced_items:dig_default_announced
+      ~integrity:!(st.integrity) m
   in
   mask_exhausted_cells st.hits obs;
   if moves = 0 || moves mod log_grid_period = 0 then log_grid ~log obs;
   let act = Mining_solver.decide ~goal ~tally obs in
-  execute_action ~log st ~moves ~bailed obs act
+  execute_action ~log ~actual_tool st ~moves ~bailed obs act
 
 let make_dig_state () =
   {

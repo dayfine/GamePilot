@@ -19,12 +19,17 @@ val cell_probe_id : col:int -> row:int -> string
 (** Probe id for cell [(col, row)] in {!probes}. *)
 
 val probes : picture:Wire.box -> Wire.probe_spec list
-(** The 130 [color_stats_probe] specs (13x10 grid), relative to [picture]. *)
+(** The 130 [color_stats_probe] specs (13x10 grid) plus the two right-panel
+    tool-selection probes (Red Hammer / Blue Pickaxe), relative to [picture]. *)
+
+val selected_tool : Effects.measurements -> Mining_wall.tool option
+(** Read which mining tool is currently highlighted on the right-side panel
+    (brighter glow on the red Hammer button vs the blue Pickaxe button). *)
 
 val classify_cell : Switch_home.Solid_color.stats -> Mining_wall.visible_cell
-(** Classify one cell's RGB mean/stddev into covered dirt (1/2/4), cleared
-    empty wall, iron bar, or exposed item (distinguishing pink/magenta
-    Mysterious Shards from other items). *)
+(** Classify one cell's RGB mean/stddev into covered dirt (1/2/4), cleared empty
+    wall, iron bar, or exposed item (distinguishing pink/magenta Mysterious
+    Shards from other items). *)
 
 val read_observation :
   ?cursor:int * int ->

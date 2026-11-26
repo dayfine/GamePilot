@@ -11,6 +11,7 @@ type play_result = {
 
 let scan_right_col = 11
 let adj_table_capacity = 16
+let min_secondary_integrity = 6
 let cardinal_dirs = [ (-1, 0); (1, 0); (0, -1); (0, 1) ]
 let pickaxe_kernel = [ (0, 0, 2); (-1, 0, 1); (1, 0, 1); (0, -1, 1); (0, 1, 1) ]
 
@@ -34,14 +35,10 @@ let scan_anchors =
   ]
 
 let is_iron (obs : Mining_wall.observation) ~col ~row =
-  match obs.grid.(row).(col) with
-  | Mining_wall.Clear_iron -> true
-  | _ -> false
+  match obs.grid.(row).(col) with Mining_wall.Clear_iron -> true | _ -> false
 
 let dirt_at (obs : Mining_wall.observation) ~col ~row =
-  match obs.grid.(row).(col) with
-  | Mining_wall.Covered d -> d
-  | _ -> 0
+  match obs.grid.(row).(col) with Mining_wall.Covered d -> d | _ -> 0
 
 let record_exposed_cell tbl r c = function
   | Mining_wall.Clear_item { id; kind } ->
@@ -71,8 +68,9 @@ let add_covered_neighbors obs seen (c, r) =
   List.iter
     (fun (dc, dr) ->
       let nc = c + dc and nr = r + dr in
-      if Mining_wall.in_bounds ~col:nc ~row:nr && dirt_at obs ~col:nc ~row:nr > 0 then
-        Hashtbl.replace seen (nc, nr) ())
+      if
+        Mining_wall.in_bounds ~col:nc ~row:nr && dirt_at obs ~col:nc ~row:nr > 0
+      then Hashtbl.replace seen (nc, nr) ())
     cardinal_dirs
 
 let adjacent_covered (obs : Mining_wall.observation) cells =
@@ -117,9 +115,12 @@ let find_wanted_excavation ~goal ~tally (obs : Mining_wall.observation) items =
   in
   List.find_map (fun (_, _, cells) -> best_excavation_hit obs cells) wanted
 
-let all_items_accounted_non_shard ~goal ~tally (obs : Mining_wall.observation) items =
+let all_items_accounted_non_shard ~goal ~tally (obs : Mining_wall.observation)
+    items =
   let any_wanted =
-    List.exists (fun (_, kind, _) -> Mining_goal.wants_item goal tally kind) items
+    List.exists
+      (fun (_, kind, _) -> Mining_goal.wants_item goal tally kind)
+      items
   in
   (not any_wanted) && List.length items >= obs.announced_items
 
@@ -138,16 +139,30 @@ let next_scan_anchor (obs : Mining_wall.observation) =
   | (col, row, _) :: _ -> Some (Strike { tool = Hammer; col; row })
   | [] -> None
 
+let find_secondary_excavation (obs : Mining_wall.observation) items =
+  if obs.integrity < min_secondary_integrity then None
+  else
+    let secondary =
+      List.filter (fun (id, _, _) -> not (List.mem id obs.uncovered_ids)) items
+    in
+    List.find_map (fun (_, _, cells) -> best_excavation_hit obs cells) secondary
+
+let decide_after_scan obs items =
+  match find_secondary_excavation obs items with
+  | Some act -> act
+  | None -> Bail_collapse
+
 let decide ~goal ~tally (obs : Mining_wall.observation) =
   let items = exposed_items obs in
   match find_wanted_excavation ~goal ~tally obs items with
   | Some act -> act
-  | None ->
-      if all_items_accounted_non_shard ~goal ~tally obs items then Bail_collapse
+  | None -> (
+      if all_items_accounted_non_shard ~goal ~tally obs items then
+        decide_after_scan obs items
       else
         match next_scan_anchor obs with
         | Some act -> act
-        | None -> Bail_collapse
+        | None -> decide_after_scan obs items)
 
 let collapse_wall wall moves =
   let rec loop w m =
@@ -156,18 +171,17 @@ let collapse_wall wall moves =
   in
   loop wall moves
 
-let play_wall ~goal ~tally wall =
-  let rec loop w moves bailed =
-    if Mining_wall.is_finished w then
-      { wall = w; moves; bailed; uncovered = Mining_wall.uncovered_items w }
-    else
-      let obs = Mining_wall.observe w in
-      match decide ~goal ~tally obs with
-      | Bail_collapse ->
-          let w', m' = collapse_wall w moves in
-          { wall = w'; moves = m'; bailed = true; uncovered = Mining_wall.uncovered_items w' }
-      | Strike { tool; col; row } ->
-          let w' = Mining_wall.strike w ~tool ~col ~row in
-          loop w' (moves + 1) bailed
-  in
-  loop wall 0 false
+let finish_play ~bailed wall moves =
+  { wall; moves; bailed; uncovered = Mining_wall.uncovered_items wall }
+
+let rec play_loop ~goal ~tally w moves =
+  if Mining_wall.is_finished w then finish_play ~bailed:false w moves
+  else
+    match decide ~goal ~tally (Mining_wall.observe w) with
+    | Bail_collapse ->
+        let w', m' = collapse_wall w moves in
+        finish_play ~bailed:true w' m'
+    | Strike { tool; col; row } ->
+        play_loop ~goal ~tally (Mining_wall.strike w ~tool ~col ~row) (moves + 1)
+
+let play_wall ~goal ~tally wall = play_loop ~goal ~tally wall 0

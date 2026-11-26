@@ -3,14 +3,12 @@ module H = Switch_home.Held_screen
 module P = Switch_home.Switch_presses
 
 let ( let* ) = Result.bind
-
 let load_game_timeout_ms = 60_000
 let enter_game_mash_ms = 5000
 let enter_game_timeout_ms = 60_000
 let default_post_wait_ms = 1000
 let black_hold_ms = 100.
 let clear_hold_ms = 250.
-
 let is_black m = if B.shown m then Some () else None
 let is_not_black m = if not (B.shown m) then Some () else None
 

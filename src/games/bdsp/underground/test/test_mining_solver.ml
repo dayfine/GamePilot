@@ -8,8 +8,7 @@ let assert_eq_int label expected actual =
   if expected <> actual then
     fail (Printf.sprintf "%s: expected %d, got %d" label expected actual)
 
-let assert_true label cond =
-  if not cond then fail label
+let assert_true label cond = if not cond then fail label
 
 let test_goal_arithmetic () =
   let goal = Mining_goal.ramanas_all_slates in
@@ -27,7 +26,9 @@ let test_goal_arithmetic () =
   assert_true "met for 2 slates" (Mining_goal.is_met small_goal t)
 
 let test_wall_mechanics () =
-  let dirt = Array.init Mining_wall.rows (fun _ -> Array.make Mining_wall.cols 2) in
+  let dirt =
+    Array.init Mining_wall.rows (fun _ -> Array.make Mining_wall.cols 2)
+  in
   let shard =
     {
       Mining_wall.id = 0;
@@ -63,18 +64,22 @@ let test_solver_uncovers_shards_and_bails_on_junk () =
     (Printf.sprintf "expected >= 85/100 Shard L recovery, got %d" !recovered)
     (!recovered >= 85);
   let junk_walls = 50 in
-  let bailed_count = ref 0 in
+  let recovered_other = ref 0 in
+  let finished_count = ref 0 in
   for seed = 1001 to 1000 + junk_walls do
     let w =
-      Mining_wall.generate ~seed
-        ~items:[ Mining_goal.Other; Mining_goal.Other ]
+      Mining_wall.generate ~seed ~items:[ Mining_goal.Other; Mining_goal.Other ]
     in
     let res = Mining_solver.play_wall ~goal ~tally w in
-    if res.bailed then incr bailed_count
+    if Mining_wall.is_finished res.wall then incr finished_count;
+    if List.mem Mining_goal.Other res.uncovered then incr recovered_other
   done;
+  assert_eq_int "all junk walls finished" junk_walls !finished_count;
   assert_true
-    (Printf.sprintf "expected >= 45/50 junk walls bailed, got %d" !bailed_count)
-    (!bailed_count >= 45)
+    (Printf.sprintf
+       "expected >= 25/50 junk walls to excavate exposed items, got %d"
+       !recovered_other)
+    (!recovered_other >= 25)
 
 let () =
   test_goal_arithmetic ();

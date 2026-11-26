@@ -36,18 +36,12 @@ val bounce_doorway :
     finishes, then immediately walk back out until the corridor reloads. *)
 
 val open_menu :
-  log:(string -> unit) ->
-  picture:Wire.box ->
-  unit ->
-  (unit, string) result
+  log:(string -> unit) -> picture:Wire.box -> unit -> (unit, string) result
 (** Port of [overworld_to_menu] from [PokemonBDSP_GameNavigation.cpp]: press X
     and wait for {!Bdsp_readers.Menu_detector.shown}. *)
 
 val close_menu :
-  log:(string -> unit) ->
-  picture:Wire.box ->
-  unit ->
-  (unit, string) result
+  log:(string -> unit) -> picture:Wire.box -> unit -> (unit, string) result
 (** Press B and wait until {!Bdsp_readers.Menu_detector.shown} clears. *)
 
 val dismiss_dialog :
@@ -85,14 +79,11 @@ val use_explorer_kit_offline :
   unit ->
   (unit, string) result
 (** From the overworld with Bag selected on the X menu and Key Items active,
-    open Bag, move down [explorer_kit_row] rows to the Explorer Kit, choose
-    Use -> Play Alone (row 2: Down 2 + A), and wait for the Grand Underground
+    open Bag, move down [explorer_kit_row] rows to the Explorer Kit, choose Use
+    -> Play Alone (row 2: Down 2 + A), and wait for the Grand Underground
     transition fade. *)
 
 val run_from_battle :
-  log:(string -> unit) ->
-  picture:Wire.box ->
-  unit ->
-  (unit, string) result
+  log:(string -> unit) -> picture:Wire.box -> unit -> (unit, string) result
 (** Escape a wild battle once {!Bdsp_readers.Battle_detector.shown} appears:
     press Up -> A (Run) and wait for the battle-end fade to clear. *)

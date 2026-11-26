@@ -11,7 +11,8 @@ val mining_move_cursor : dx:int -> dy:int -> unit
 (** Move the 13x10 mining grid cursor by [(dx, dy)] tiles. *)
 
 val mining_strike : unit -> unit
-(** Strike the current mining grid tile with A and wait for the hit animation. *)
+(** Strike the current mining grid tile with A and wait for the hit animation.
+*)
 
 val dig_wall_smart :
   log:(string -> unit) ->

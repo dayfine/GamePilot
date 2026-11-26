@@ -4,7 +4,6 @@ module H = Switch_home.Held_screen
 module P = Switch_home.Switch_presses
 
 let ( let* ) = Result.bind
-
 let mech = Corridor_nav.bdsp_move_mechanics
 let action_hold_ms = 100
 let action_cooldown_ms = 250
@@ -101,10 +100,10 @@ let nudge_and_enter ~dir ~nudge_dir ~nudge_ms =
 let enter_with_nudge ~log ~dir ~hold_ms =
   match cross_door ~dir ~hold_ms with
   | Ok () -> Ok ()
-  | Error _ ->
+  | Error _ -> (
       let d1, d2 = perp_dirs dir in
       log "Doorway not centered; nudging 1 step sideways to find doorway...";
-      (match nudge_and_enter ~dir ~nudge_dir:d1 ~nudge_ms:nudge_step_ms with
+      match nudge_and_enter ~dir ~nudge_dir:d1 ~nudge_ms:nudge_step_ms with
       | Ok () -> Ok ()
       | Error _ ->
           nudge_and_enter ~dir ~nudge_dir:d2 ~nudge_ms:(2 * nudge_step_ms))
@@ -117,7 +116,8 @@ let bounce_doorway ~log ~picture ~(anchor : Corridor_nav.doorway_anchor)
   log "Exiting Hideaway doorway to refresh dig spots...";
   cross_door ~dir:anchor.exit_dir ~hold_ms
 
-let menu_is_open m = if Bdsp_readers.Menu_detector.shown m then Some () else None
+let menu_is_open m =
+  if Bdsp_readers.Menu_detector.shown m then Some () else None
 
 let menu_is_closed m =
   if not (Bdsp_readers.Menu_detector.shown m) then Some () else None
