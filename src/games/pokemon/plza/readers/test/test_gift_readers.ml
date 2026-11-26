@@ -16,7 +16,10 @@
    list and no card; its gift is item 4 under the Japanese name
    (fixtures/gifts/gifts.ja.probes.jsonl, likewise) and none under the
    English or French one, and the other lists have none under the Japanese
-   name. The white fade
+   name. The zh-Hans list (console B, 2026-11-26, the cursor on the first
+   item, Vivillon the 4th as "球球花纹的彩粉蝶") reads as the list, its gift
+   item 4 under the zh-Hans name (fixtures/gifts/gifts.zh-Hans.probes.jsonl,
+   likewise) and none under the others'. The white fade
    before a card reads as nothing. The same
    list dimmed by the Switch after an idle (gift-list-dimmed, about 30%
    brightness) must read as nothing: a dim screen is no screen we know. No
@@ -24,7 +27,12 @@
    the SAVE dialog (console B, 2026-11-25) read as themselves and nothing else
    does; on the Boxes (console B's, Xerneas under the cursor, and the fork's
    box-cells captures) the cursor's cell reads as holding a Pokémon or empty,
-   a Pokémon held over an empty cell empty; the dialog's "Last Saved" reads the same as itself and not as a copy
+   a Pokémon held over an empty cell empty, and the box title reads as Box 1
+   on console B's Japanese "ボックス1" of 2026-11-26 alone, in every shift (not
+   on its "ボックス3" and "ボックス8", nor the fork's "Box 9" and "Box 24").
+   Console B's info cards of 2026-11-26 (a gift received before, a code used
+   before; Japanese and zh-Hans) read as the info card by its layout, in
+   every shift, and nothing else does. The dialog's "Last Saved" reads the same as itself and not as a copy
    with its 18:16 made 18:18 (synthetic-..., no second save captured), in
    every shift. So does a copy with its date and time where the French game
    shows them (synthetic-save-dialog-fr-layout-..., console B, 2026-11-25:
@@ -52,6 +60,7 @@ let frames = Wire.read_image_probes "fixtures/gifts/gifts.probes.jsonl"
 let shifted = Wire.read_image_probes "fixtures/gifts/gifts.shifted.probes.jsonl"
 let french = Wire.read_image_probes "fixtures/gifts/gifts.fr.probes.jsonl"
 let japanese = Wire.read_image_probes "fixtures/gifts/gifts.ja.probes.jsonl"
+let chinese = Wire.read_image_probes "fixtures/gifts/gifts.zh-Hans.probes.jsonl"
 let measurements probes : Wire.frame = { seq = 1; t_ms = 0.; probes }
 let menu = "./tutorial-cards/it-menu-no-card.jpg"
 
@@ -72,9 +81,16 @@ let japanese_menus =
 let gift_list = "./mystery-gift/gift-list-cursor-on-1.png"
 let french_list = "./mystery-gift/gift-list-fr-cursor-on-1.png"
 let japanese_list = "./mystery-gift/gift-list-ja-stop-receiving.png"
+let chinese_list = "./mystery-gift/gift-list-zh-hans-cursor-on-1.png"
 
 (* Each list's capture, by the language of its names. *)
-let lists = [ ("en", gift_list); ("fr", french_list); ("ja", japanese_list) ]
+let lists =
+  [
+    ("en", gift_list);
+    ("fr", french_list);
+    ("ja", japanese_list);
+    ("zh-Hans", chinese_list);
+  ]
 
 let cards m =
   String.init 6 (fun k ->
@@ -150,6 +166,11 @@ let gift_menus =
 
 let messages = [ mg "gift-menu-ja-connected-message-360p" ]
 let boxes = "./mystery-gift/boxes-xerneas-in-box-1.png"
+let box_8 = "./mystery-gift/boxes-box-8-ja-360p.png"
+let box_1 = "./mystery-gift/boxes-box-1-ja-360p.png"
+let box_3 = "./mystery-gift/boxes-box-3-ja-360p.png"
+let box_9 = "./box-cells/pokemon-magikarp-2-0-360p.png"
+let box_24 = "./box-cells/empty-2-5-360p.png"
 
 (* The fork's captures of the Boxes (box-cells/: CommandLineTests'
    BoxCellInfoDetector frames at 360p), named by what the cursor is on. *)
@@ -159,18 +180,54 @@ let box_cell path =
       Some (String.starts_with ~prefix:"pokemon" frame)
   | _ -> None
 
-(* Each "Last Saved" layout's 18:16 and 18:18. *)
+(* Pairs of SAVE dialog times, and whether they differ: each "Last Saved"
+   layout's 18:16 and 18:18, console B's Japanese dialog of 2026-11-26 before
+   and after a save (current time 10:20 both, "Last Saved" 10:19 then 10:20),
+   and zh-Hans' current time,
+   12:12 and its copy made 12:11 (the minutes' "2" replaced by the "1"
+   before it). *)
 let save_pairs =
   [
-    ( "English",
+    ( "Last Saved, English",
+      Save_dialog.last_saved,
       "./mystery-gift/save-dialog-last-saved-1816.png",
-      "./mystery-gift/synthetic-save-dialog-last-saved-1818.png" );
-    ( "French layout",
+      "./mystery-gift/synthetic-save-dialog-last-saved-1818.png",
+      true );
+    ( "Last Saved, French layout",
+      Save_dialog.last_saved,
       "./mystery-gift/synthetic-save-dialog-fr-layout-1816.png",
-      "./mystery-gift/synthetic-save-dialog-fr-layout-1818.png" );
+      "./mystery-gift/synthetic-save-dialog-fr-layout-1818.png",
+      true );
+    ( "current time, zh-Hans, 12:12 and 12:23 (two runs)",
+      Save_dialog.current_time,
+      "./mystery-gift/save-dialog-zh-hans-1212-360p.png",
+      "./mystery-gift/save-dialog-zh-hans-1223.png",
+      true );
+    ( "Last Saved, zh-Hans, 12:12 and 12:21 (two runs)",
+      Save_dialog.last_saved,
+      "./mystery-gift/save-dialog-zh-hans-1212-360p.png",
+      "./mystery-gift/save-dialog-zh-hans-1223.png",
+      true );
+    ( "current time, zh-Hans",
+      Save_dialog.current_time,
+      "./mystery-gift/save-dialog-zh-hans-1212-360p.png",
+      "./mystery-gift/synthetic-save-dialog-zh-hans-1211-360p.png",
+      true );
+    ( "current time, Japanese, 10:20 twice (one run)",
+      Save_dialog.current_time,
+      "./mystery-gift/save-dialog-ja-1020-last-1019-360p.png",
+      "./mystery-gift/save-dialog-ja-1020-last-1020-360p.png",
+      false );
+    ( "Last Saved, Japanese, 10:19 and 10:20 (one run)",
+      Save_dialog.last_saved,
+      "./mystery-gift/save-dialog-ja-1020-last-1019-360p.png",
+      "./mystery-gift/save-dialog-ja-1020-last-1020-360p.png",
+      true );
   ]
 
-let saves = List.concat_map (fun (_, a, b) -> [ a; b ]) save_pairs
+let saves =
+  List.sort_uniq String.compare
+    (List.concat_map (fun (_, _, a, b, _) -> [ a; b ]) save_pairs)
 
 (* "./bright90/mystery-gift/x.png" -> "./mystery-gift/x.png"; the shifted
    frames are png. An unshifted path stays. *)
@@ -179,23 +236,23 @@ let unshifted path =
   | [ dot; _shift; folder; frame ] -> String.concat "/" [ dot; folder; frame ]
   | _ -> path
 
-(* A layout's "Last Saved" 18:16 against itself and against 18:18, in one
+(* A pair's first time against itself and against the other, in one
    shift. *)
 let shift_of path = List.nth (String.split_on_char '/' path) 1
 
 let last_saved_cases all =
-  let reading k frame =
+  let reading k read frame =
     List.find_map
       (fun (path, probes) ->
         if shift_of path = k && same (unshifted path) frame then
-          Save_dialog.last_saved (measurements probes)
+          read (measurements probes)
         else None)
       all
   in
-  let compare k (_, before, after) () =
-    match (reading k before, reading k after) with
+  let compare k (_, read, before, after, _) () =
+    match (reading k read before, reading k read after) with
     | Some a, Some b ->
-        Printf.sprintf "itself %b, 18:16 and 18:18 %b"
+        Printf.sprintf "itself %b, the other %b"
           (Save_dialog.same_time a a)
           (Save_dialog.same_time a b)
     | _ -> "no reading"
@@ -203,11 +260,12 @@ let last_saved_cases all =
   List.concat_map
     (fun k ->
       List.map
-        (fun ((layout, _, _) as pair) ->
+        (fun ((layout, _, _, _, differ) as pair) ->
           case
-            (Printf.sprintf "Last Saved, %s, %s" layout
+            (Printf.sprintf "%s, %s" layout
                (if k = "mystery-gift" then "as captured" else k))
-            (compare k pair) "itself true, 18:16 and 18:18 false")
+            (compare k pair)
+            (Printf.sprintf "itself true, the other %b" (not differ)))
         save_pairs)
     (List.sort_uniq String.compare (List.map (fun (p, _) -> shift_of p) all))
 
@@ -239,6 +297,8 @@ let expected_list ~name path =
   else if same path after_claim then listed "none"
   else if same path french_list then
     listed (if name = "fr" then "4" else "none")
+  else if same path chinese_list then
+    listed (if name = "zh-Hans" then "4" else "none")
   else "no gift list"
 
 let expected_card path =
@@ -257,7 +317,8 @@ let expected_message path =
   if List.exists (same path) messages then "message" else "no message"
 
 let expected_boxes path =
-  if same path boxes then pokemon_cell
+  if same path boxes || same path box_8 then pokemon_cell
+  else if same path box_1 || same path box_3 then "boxes, an empty cell"
   else
     match box_cell path with
     | Some true -> pokemon_cell
@@ -266,6 +327,44 @@ let expected_boxes path =
 
 let expected_save path =
   if List.exists (same path) saves then "save dialog" else "no save dialog"
+
+(* The box titles read as Box 1 or not, as their frames' boxes are. *)
+let box_titles =
+  [
+    (mg "boxes-box-1-ja-360p", "Box 1");
+    (mg "boxes-box-3-ja-360p", "another box");
+    (box_8, "another box");
+    (box_9, "another box");
+    (box_24, "another box");
+  ]
+
+let title_text m =
+  if not (Boxes_screen.shown m) then "no boxes"
+  else
+    match Box_title.read m with
+    | None -> "no title"
+    | Some t -> if Box_title.box_one t then "Box 1" else "another box"
+
+let expected_title path =
+  match List.find_opt (fun (f, _) -> same path f) box_titles with
+  | Some (_, text) -> text
+  | None -> if expected_boxes path = "no boxes" then "no boxes" else "no title"
+
+let info_card_text m = if Info_card.shown m then "info card" else "no info card"
+
+(* Console B's info cards of 2026-11-26: a gift received before and a code
+   used before, in Japanese and zh-Hans. *)
+let info_cards =
+  [
+    mg "gift-received-before-ja-360p";
+    mg "code-used-before-ja-360p";
+    mg "gift-received-before-zh-hans";
+    mg "code-used-before-zh-hans-360p";
+    mg "code-used-before-zh-hans-2-360p";
+  ]
+
+let expected_info_card path =
+  if List.exists (same path) info_cards then "info card" else "no info card"
 
 let readers ~name =
   [
@@ -278,6 +377,8 @@ let readers ~name =
     ("message", message_text, expected_message);
     ("boxes", boxes_text, expected_boxes);
     ("save dialog", save_text, expected_save);
+    ("box title", title_text, expected_title);
+    ("info card", info_card_text, expected_info_card);
   ]
 
 (* The readers read only once the Mystery Gift screens show: on the story's
@@ -289,8 +390,12 @@ let in_gifts path =
   | [ _; "mystery-gift"; _ ] -> true
   | _ -> false
 
+(* The info cards' white card covers the gift menu's row and
+   items, which read white as on the menu (some shifts read it so): the
+   cards are told by their layout, read first. *)
 let applies path (reader, _, _) =
-  in_gifts path || not (List.mem reader gift_screens_only)
+  (in_gifts path || not (List.mem reader gift_screens_only))
+  && not (reader = "gift menu" && List.exists (same (unshifted path)) info_cards)
 
 (* One case per reader per frame, [label] before the frame's path. *)
 let frame_cases ?(name = "en") ~label frames =
@@ -358,16 +463,71 @@ let link_play_margins () =
     (fold (fun (shown, _) -> not shown) Float.max (-1000.))
     (List.length menus)
 
+(* The gift name's template scores (Mystery_gift_screen.gift_item reads an
+   item at 0.03 or less): the most on the gift's own item on each language's
+   list, every shift, and the least on any other item of any frame, Vivillon
+   on the Japanese lists under a prompt or question (item 4 of
+   gift-list-ja-*, not read as the list) aside. *)
+let name_margins () =
+  let score probes k =
+    match List.assoc_opt (Printf.sprintf "mystery_gift.name%d" k) probes with
+    | Some (Wire.Template_match { score; _ }) -> Some score
+    | _ -> None
+  in
+  let own name path =
+    List.exists (fun (l, list) -> l = name && same (unshifted path) list) lists
+  in
+  let under_prompt path =
+    String.starts_with ~prefix:"./mystery-gift/gift-list-ja-" (unshifted path)
+  in
+  let scores (name, all) =
+    List.concat_map
+      (fun (path, probes) ->
+        List.filter_map
+          (fun k ->
+            Option.map
+              (fun s ->
+                if k = 3 && own name path then `Own s
+                else if k = 3 && under_prompt path then `Aside
+                else `Other s)
+              (score probes k))
+          (List.init G.items Fun.id))
+      all
+  in
+  let all =
+    List.concat_map scores
+      [
+        ("en", frames @ shifted);
+        ("fr", french);
+        ("ja", japanese);
+        ("zh-Hans", chinese);
+      ]
+  in
+  let own_max =
+    List.fold_left (fun m -> function `Own s -> Float.max m s | _ -> m) 0. all
+  in
+  let other_min =
+    List.fold_left
+      (fun m -> function `Other s -> Float.min m s | _ -> m)
+      1. all
+  in
+  Printf.sprintf "own at most %.3f, others at least %.3f, bound 0.03" own_max
+    other_min
+
 let () =
   Table_test.run "gift_readers"
     (frame_cases ~label:"" frames
     @ frame_cases ~label:"shifted, " shifted
     @ frame_cases ~name:"fr" ~label:"French name, " french
     @ frame_cases ~name:"ja" ~label:"Japanese name, " japanese
+    @ frame_cases ~name:"zh-Hans" ~label:"Chinese name, " chinese
     @ gift_item_cases ~name:"en" ~label:"" (frames @ shifted)
     @ gift_item_cases ~name:"fr" ~label:"French name, " french
     @ gift_item_cases ~name:"ja" ~label:"Japanese name, " japanese
+    @ gift_item_cases ~name:"zh-Hans" ~label:"Chinese name, " chinese
     @ [
+        case "the gift name's scores, own item against the others" name_margins
+          "own at most 0.003, others at least 0.038, bound 0.03";
         case "Link Play's edges, the Japanese, Italian and English menus"
           link_play_margins
           "drawn from 18.4 at 1080p, from 18.9 at 360p; not drawn up to 7.8 \

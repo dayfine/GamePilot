@@ -18,6 +18,12 @@
         "why": "today's date and the catalog printed; X opens the main menu, whose party cards must show five or six Pokémon at full HP"
       },
       {
+        "id": "box_one",
+        "kind": "game_action",
+        "action": "settle_boxes",
+        "why": "the Boxes paged with L to the box titled Box 1 and left there, so a gift received into a full party lands in it; a gift an earlier run left in party slot 6 moved to its Box 1 slot and read there"
+      },
+      {
         "id": "claim",
         "kind": "game_action",
         "action": "claim_gifts",
@@ -27,13 +33,13 @@
         "id": "box_slots",
         "kind": "game_action",
         "action": "check_gift_slots",
-        "why": "the gift in party slot 6 moved to its box slot, and each received gift read in its slot"
+        "why": "the Boxes on Box 1 again, read by its title; the gift received into party slot 6 moved to its Box 1 slot; each Pokémon gift received now must read in its slot, which read empty before the claims, else the run stops before the save"
       },
       {
         "id": "save",
         "kind": "game_action",
         "action": "save_progress",
-        "why": "R, Save Progress, checked by its Last Saved time, when any gift was received"
+        "why": "R, Save Progress, checked by its Last Saved time, when any gift was received or a Pokémon moved"
       },
       {
         "id": "report",

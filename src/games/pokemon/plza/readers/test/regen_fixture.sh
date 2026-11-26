@@ -165,7 +165,7 @@ regen_gifts() {
     mkdir -p "$FIXTURES/gifts" "$work/gifts" "$work/gifts/frames" \
         "$work/gifts/lossless/tutorial-cards" "$work/gifts/shifted"
     cp "$SRC/games/pokemon/plza/assets/"gift-name-vivillon-poke-ball-*.png "$work/spec/"
-    for language in en fr ja; do
+    for language in en fr ja zh-Hans; do
         (cd "$SRC" && dune exec \
             games/pokemon/plza/readers/test/write_probe_spec.exe \
             -- --gifts "$language") >"$work/spec/gifts.$language.probes.json"
@@ -187,7 +187,7 @@ Image.open(sys.argv[1]).convert("RGB").save(sys.argv[2])
     (cd "$work/gifts/shifted" && "$PROBE_IMAGES" \
         --spec "$work/spec/gifts.en.probes.json" --viewport native \
         ./*/*/*.png) >"$FIXTURES/gifts/gifts.shifted.probes.jsonl"
-    for language in fr ja; do
+    for language in fr ja zh-Hans; do
         out=$FIXTURES/gifts/gifts.$language.probes.jsonl
         (cd "$work/gifts/frames" && "$PROBE_IMAGES" \
             --spec "$work/spec/gifts.$language.probes.json" \

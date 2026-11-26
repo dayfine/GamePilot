@@ -2,9 +2,9 @@
    program's own plan (plans/01-claim-gifts.plan.json) and its catalog
    (gifts.json: Vivillon by Internet to Box 1 slot 2, Xerneas by code to slot
    1, PREPAR1NG's items by code). The game is fake_game_steps: a party read, a
-   claim result per gift id, a slot read per slot and a save that are given
-   by each case, every call recorded; nothing presses a button. Today is a
-   fixed day, never the clock. *)
+   claim result per gift id, a slot read per slot before the claims (empty
+   unless given) and after them (filled unless given), whether party slot 6 was moved and a save that are given by
+   each case, every call recorded; nothing presses a button. Today is a fixed day, never the clock. *)
 
 module C = Plza_gift_catalog.Gift_catalog
 module Cg = Plza_claim_gifts.Claim_gifts
@@ -25,11 +25,23 @@ let day s = Result.get_ok (C.date_of_string s)
 type fake = {
   party : Cg.party_read;
   claims : (string * Gc.claim) list;  (** by gift id; Received when absent *)
-  slots : (int * Gb.slot_read) list;  (** by Box 1 slot; Filled when absent *)
+  before : (int * Gb.slot_read) list;
+      (** by Box 1 slot, read before the claims; Empty when absent *)
+  slots : (int * Gb.slot_read) list;
+      (** by Box 1 slot, read after them; Filled when absent *)
+  moved : bool;
   today : string;
 }
 
-let base = { party = Party Full; claims = []; slots = []; today = "2026-11-25" }
+let base =
+  {
+    party = Party Full;
+    claims = [];
+    before = [];
+    slots = [];
+    moved = false;
+    today = "2026-11-25";
+  }
 
 type result = {
   ran : (unit, string) Stdlib.result;
@@ -50,16 +62,21 @@ let fake_game_steps f calls : Cg.game_steps =
       (fun g ->
         call ("claim " ^ g.id);
         Option.value ~default:Gc.Received (List.assoc_opt g.id f.claims));
-    check_slots =
-      (fun ~party_gift ~in_box ->
+    settle_boxes =
+      (fun slots ->
         call
-          (Printf.sprintf "check_slots party=%s box=%s"
-             (Option.fold ~none:"-" ~some:slot_text party_gift)
-             (String.concat "," (List.map slot_text in_box)));
-        let read (s : C.box_slot) =
-          (s, Option.value ~default:Gb.Filled (List.assoc_opt s.slot f.slots))
+          (Printf.sprintf "settle %s"
+             (String.concat "," (List.map slot_text slots)));
+        let claimed =
+          List.exists (fun c -> String.starts_with ~prefix:"claim" c) !calls
         in
-        Ok (List.map read (Option.to_list party_gift @ in_box)));
+        let read (s : C.box_slot) =
+          if claimed then
+            (s, Option.value ~default:Gb.Filled (List.assoc_opt s.slot f.slots))
+          else
+            (s, Option.value ~default:Gb.Empty (List.assoc_opt s.slot f.before))
+        in
+        Ok { reads = List.map read slots; moved = f.moved });
     save =
       (fun () ->
         call "save";
@@ -102,6 +119,7 @@ let run f =
 
 let ran f () = match (run f).ran with Ok () -> "ok" | Error code -> code
 let called f what () = string_of_bool (List.mem what (run f).calls)
+let calls f () = String.concat "; " (run f).calls
 
 let outcome f id () =
   Option.value ~default:"absent" (List.assoc_opt id (run f).outcomes)
@@ -116,19 +134,19 @@ let all_received =
     case "every gift received: the run passes" (ran base) "ok";
     case "every gift received: Vivillon claimed" (outcome base viv) "claimed";
     case "every gift received: the items claimed" (outcome base items) "claimed";
-    case "a party of six: both Pokémon read in the Boxes"
-      (called base "check_slots party=- box=2,1")
-      "true";
-    case "something received: saved" (called base "save") "true";
+    case "every gift received: the calls, in order" (calls base)
+      "read_party; settle 2,1; claim vivillon-poke-ball; claim xerneas-30th; \
+       claim prepar1ng-items; settle 2,1; save";
   ]
 
 let room = { base with party = Party Room_for_one }
 
 let party_cases =
   [
-    case "a party of five: the first Pokémon moved from party slot 6"
-      (called room "check_slots party=2 box=1")
-      "true";
+    case "a party of five: Box 1 settled before and after the claims"
+      (calls room)
+      "read_party; settle 2,1; claim vivillon-poke-ball; claim xerneas-30th; \
+       claim prepar1ng-items; settle 2,1; save";
     case "a party not ready: the run stops"
       (ran { base with party = Not_ready "0.20" })
       "party_not_ready";
@@ -146,9 +164,10 @@ let expiry_cases =
   [
     case "past Xerneas' last day: it is skipped" (outcome later xer)
       "expired, skipped";
-    case "past Xerneas' last day: it is not claimed"
-      (called later ("claim " ^ xer))
-      "false";
+    case "past Xerneas' last day: it is not claimed nor its slot read"
+      (calls later)
+      "read_party; settle 2; claim vivillon-poke-ball; claim prepar1ng-items; \
+       settle 2; save";
     case "on Xerneas' last day: it is claimed"
       (called { base with today = "2027-01-07" } ("claim " ^ xer))
       "true";
@@ -165,40 +184,75 @@ let failure_cases =
     case "a gift not received: the next is still claimed"
       (called missed ("claim " ^ xer))
       "true";
-    case "a gift not received: the others are saved" (called missed "save")
-      "true";
+    case "a gift not received: only the received one's slot checked"
+      (calls missed)
+      "read_party; settle 2,1; claim vivillon-poke-ball; claim xerneas-30th; \
+       claim prepar1ng-items; settle 1; save";
     case "a gift not received: the run fails at the report" (ran missed)
       "gifts_failed";
     case "the menu lost: the run stops" (ran lost) "screen_lost";
     case "the menu lost: the next gift is not tried" (outcome lost xer)
       "not tried";
     case "the menu lost: nothing saved" (called lost "save") "false";
-    case "already received counts as done"
-      (ran { base with claims = [ (xer, Gc.Already_received) ] })
-      "ok";
   ]
 
-let none_received =
-  {
-    base with
-    claims =
-      List.map (fun (g : C.gift) -> (g.id, Gc.Not_received "no list")) catalog;
-  }
-
 let empty_slot = { base with slots = [ (1, Gb.Empty) ] }
+let unread_slot = { base with slots = [ (2, Gb.Not_read "no Boxes") ] }
+let held_before = { base with before = [ (1, Gb.Filled) ] }
 
 let slot_cases =
   [
-    case "an empty box slot fails its gift" (outcome empty_slot xer)
+    case "a received gift's slot empty: the run stops" (ran empty_slot)
+      "gifts_not_in_place";
+    case "a received gift's slot empty: it fails" (outcome empty_slot xer)
       "failed: Box 1 slot 1 is empty";
-    case "an empty box slot leaves the other gift claimed"
+    case "a received gift's slot empty: the other stays claimed"
       (outcome empty_slot viv) "claimed";
-    case "nothing received: not saved" (called none_received "save") "false";
-    case "nothing received: no box read"
-      (called none_received "check_slots party=- box=")
+    case "a received gift's slot empty: not saved" (called empty_slot "save")
       "false";
+    case "a received gift's slot not read: the run stops" (ran unread_slot)
+      "gifts_not_in_place";
+    case "a received gift's slot not read: it fails" (outcome unread_slot viv)
+      "failed: Box 1 slot 2 not read: no Boxes";
+    case "a received gift's slot full before the claims: the run stops"
+      (ran held_before) "gifts_not_in_place";
+    case "a received gift's slot full before the claims: it fails"
+      (outcome held_before xer)
+      "failed: Box 1 slot 1 held a Pokémon before the claims";
+    case "a received gift's slot full before the claims: not saved"
+      (called held_before "save")
+      "false";
+  ]
+
+(* A rerun: every gift received before (the game says so, or its code was
+   used), all of them banked to HOME: Box 1 empty. *)
+let rerun =
+  {
+    base with
+    claims = List.map (fun (g : C.gift) -> (g.id, Gc.Already_received)) catalog;
+    slots = [ (1, Gb.Empty); (2, Gb.Empty) ];
+  }
+
+let rerun_moved = { rerun with moved = true }
+let all_expired = { base with today = "2027-04-01" }
+
+let rerun_cases =
+  [
+    case "a rerun: the run passes" (ran rerun) "ok";
+    case "a rerun: each gift already received" (outcome rerun viv)
+      "already received";
+    case "a rerun: no slot checked after the claims, nothing saved"
+      (calls rerun)
+      "read_party; settle 2,1; claim vivillon-poke-ball; claim xerneas-30th; \
+       claim prepar1ng-items";
+    case "a rerun that moved party slot 6: saved"
+      (called rerun_moved "save")
+      "true";
+    case "every gift expired: the Boxes not opened" (calls all_expired)
+      "read_party";
   ]
 
 let () =
   Table_test.run "claim_gifts"
-    (all_received @ party_cases @ expiry_cases @ failure_cases @ slot_cases)
+    (all_received @ party_cases @ expiry_cases @ failure_cases @ slot_cases
+   @ rerun_cases)

@@ -1,5 +1,5 @@
 (tests
- (names test_claim_gifts test_gift_claim test_gift_console)
+ (names test_claim_gifts test_gift_claim test_gift_console test_gift_boxes)
  (deps
   ../../../gift_catalog/gifts.json
   ../../../readers/test/fixtures/gifts/gifts.probes.jsonl

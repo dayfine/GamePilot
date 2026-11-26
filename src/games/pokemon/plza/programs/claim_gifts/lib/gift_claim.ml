@@ -9,7 +9,9 @@ type claim =
   | Not_received of string
   | Lost of string
 
-let already_received (_ : Effects.measurements) = false
+let already_received = Plza_readers.Info_card.shown
+
+type reached = Pressed | Used_before
 
 (* The presses up to the claim, from the main menu. *)
 let reach ~log ~picture ~gift_name (gift : C.gift) =
@@ -17,20 +19,23 @@ let reach ~log ~picture ~gift_name (gift : C.gift) =
   | Internet, _, Some _ ->
       let* () = G.open_gifts ~log in
       let* () = G.open_internet_list ~log in
-      G.choose_gift ~log
+      let* () = G.choose_gift ~log in
+      Ok Pressed
   | Internet, _, None -> Error "no template of its name in the game's language"
   | Code, Some code, _ ->
       let* () = G.open_gifts ~log in
       let* () = G.open_keyboard ~log in
-      G.enter_code ~log ~picture code
+      let* entered = G.enter_code ~log ~picture code in
+      Ok (match entered with Listed -> Pressed | Used_before -> Used_before)
   | Code, None, _ -> Error "a code gift with no code"
   | Home, _, _ -> Error "HOME gifts are received in Pokémon HOME"
 
 type after = Card | Already
 
+(* The message first: its white box reads white over the card's header. *)
 let after_claim m =
-  if G.card_shown m then Some Card
-  else if already_received m then Some Already
+  if already_received m then Some Already
+  else if G.card_shown m then Some Card
   else None
 
 let card_wait_ms = 30_000
@@ -78,7 +83,10 @@ let after_claim_read ~log (gift : C.gift) =
 
 let claim_probed ~log ~picture ~gift_name (gift : C.gift) =
   match reach ~log ~picture ~gift_name gift with
-  | Ok () -> after_claim_read ~log gift
+  | Ok Pressed -> after_claim_read ~log gift
+  | Ok Used_before ->
+      log (Printf.sprintf "Gift %s: already received (its code used)." gift.id);
+      ended ~log Already_received
   | Error e ->
       log (Printf.sprintf "Gift %s not claimed: %s." gift.id e);
       ended ~log (Not_received e)

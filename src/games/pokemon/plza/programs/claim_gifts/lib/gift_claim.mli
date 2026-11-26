@@ -1,11 +1,14 @@
 (** Claiming one Mystery Gift, from the main menu back to the main menu
     ({!Mystery_gift}'s presses). An Internet gift: Mystery Gift, the Internet
     list, the gift found by its name and claimed; a code gift: Mystery Gift, the
-    code keyboard, the code typed and its gift claimed. Then the screen is read
-    up to 30 s, each read held 1 s:
+    code keyboard, the code typed and its gift claimed, or, when the game says
+    the code was used before (the info card after its +,
+    {!Plza_readers.Info_card}), already received with no claim. Then the screen
+    is read up to 30 s, each read held 1 s:
 
     - the gift's card: received;
-    - the "already received" screen ({!already_received}): counted as done;
+    - the info card, the "received before" message ({!already_received}):
+      already received;
     - anything else: an unknown screen. The frame is kept in the run folder as
       [gift-<id>-unknown-screen.png] and the gift is not received.
 
@@ -26,10 +29,9 @@ type claim =
           on to the next gift. *)
 
 val already_received : Effects.measurements -> bool
-(** The hook for the game's "already received" screen: [false] on every frame
-    until its reader is written from a console capture of that screen (none
-    exists yet). A gift claimed twice therefore ends as an unknown screen today.
-*)
+(** The game's info card after the claim's A, taken for its message that the
+    gift was received before ({!Plza_readers.Info_card}: read by its layout, in
+    any language). *)
 
 val after_claim_read :
   log:(string -> unit) -> Plza_gift_catalog.Gift_catalog.gift -> claim

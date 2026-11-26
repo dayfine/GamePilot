@@ -6,10 +6,13 @@ let ( let* ) = Result.bind
 
 let probes ~picture ~assets ~gift_name =
   Plza_readers.Main_menu_row.probes ~picture ~assets
+  @ Plza_readers.Info_card.probes ~picture
   @ S.probes ~picture ~gift_name
   @ K.probes
   @ Plza_readers.Boxes_screen.probes ~picture
   @ Plza_readers.Box_cell.probes ~picture
+  @ Plza_readers.Box_title.probes ~picture
+  @ Plza_readers.Tutorial_card.probes ~picture
   @ Plza_readers.Save_dialog.probes ~picture
 
 let dpad button : T.t = { button; hold_ms = 80; cooldown_ms = 300 }
@@ -143,13 +146,27 @@ let open_keyboard ~log =
   log "The code keyboard is open.";
   Ok ()
 
+type entered = Listed | Used_before
+
+let after_code ~log code =
+  let used = ref false in
+  let check m =
+    used := Plza_readers.Info_card.shown m;
+    !used || S.list_active m
+  in
+  let* () = until_pressing ~what:"no active gift list" check in
+  if !used then (
+    log (Printf.sprintf "The code %s was used before." (K.normalize code));
+    Ok Used_before)
+  else (
+    log (Printf.sprintf "The gift for %s is listed." (K.normalize code));
+    T.press claim_a;
+    Ok Listed)
+
 let enter_code ~log ~picture code =
   let* () = K.type_code ~log ~picture code in
   T.press { button = Start; hold_ms = 100; cooldown_ms = plus_ms };
-  let* () = wait_list () in
-  log (Printf.sprintf "The gift for %s is listed." (K.normalize code));
-  T.press claim_a;
-  Ok ()
+  after_code ~log code
 
 let card_shown = S.card
 let describe = S.describe

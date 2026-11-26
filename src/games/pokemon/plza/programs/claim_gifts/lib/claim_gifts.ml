@@ -1,6 +1,8 @@
 module C = Plza_gift_catalog.Gift_catalog
 module Failure = Engine_run.Failure
 
+let ( let* ) = Result.bind
+
 type party = Full | Room_for_one
 type party_read = Party of party | No_menu of string | Not_ready of string
 
@@ -15,10 +17,7 @@ type outcome =
 type game_steps = {
   read_party : unit -> party_read;
   claim : C.gift -> Gift_claim.claim;
-  check_slots :
-    party_gift:C.box_slot option ->
-    in_box:C.box_slot list ->
-    ((C.box_slot * Gift_boxes.slot_read) list, string) result;
+  settle_boxes : C.box_slot list -> (Gift_boxes.settled, string) result;
   save : unit -> (unit, string) result;
   log : string -> unit;
 }
@@ -26,16 +25,18 @@ type game_steps = {
 type run = {
   catalog : C.t;
   today : C.date;
-  mutable party : party;
   mutable outcomes : (C.gift * outcome) list;
+  mutable moved : bool;
+  mutable before : (C.box_slot * Gift_boxes.slot_read) list;
 }
 
 let start catalog ~today =
   {
     catalog;
     today;
-    party = Full;
     outcomes = List.map (fun g -> (g, Not_tried)) catalog;
+    moved = false;
+    before = [];
   }
 
 let outcomes run = run.outcomes
@@ -56,16 +57,18 @@ let outcome_text = function
 
 let fail code detail = Error (Failure.cause ~repeats:true code detail)
 
+let party_text = function
+  | Full ->
+      "Party of six: slot 6 is taken for a gift an earlier run left there, \
+       moved to Box 1 before the claims."
+  | Room_for_one -> "Party of five: the first gift lands in party slot 6."
+
 let gifts_start steps run =
   steps.log ("Today (UTC): " ^ C.date_to_string run.today);
   List.iter (fun l -> steps.log ("Gift " ^ l)) (C.lines run.catalog);
   match steps.read_party () with
   | Party p ->
-      run.party <- p;
-      steps.log
-        (match p with
-        | Full -> "Party of six: every gift lands in a box."
-        | Room_for_one -> "Party of five: the first gift lands in party slot 6.");
+      steps.log (party_text p);
       Ok ()
   | No_menu why -> fail "not_on_main_menu" why
   | Not_ready why ->
@@ -102,48 +105,86 @@ let claim_gifts steps run =
   in
   go run.catalog
 
-(* The received gifts with a Pokémon, in claim order. *)
-let received_pokemon run =
-  List.filter_map
-    (fun ((g : C.gift), o) ->
-      match (o, g.pokemon) with Claimed, Some p -> Some (g, p) | _ -> None)
-    run.outcomes
-
 let slot_name (s : C.box_slot) = Printf.sprintf "Box %d slot %d" s.box s.slot
 
-let judge run (gift, (p : C.pokemon)) reads =
-  match List.assoc_opt p.box_slot reads with
-  | Some Gift_boxes.Filled -> ()
-  | Some Empty -> set run gift (Failed (slot_name p.box_slot ^ " is empty"))
-  | Some (Not_read why) ->
-      set run gift (Failed (slot_name p.box_slot ^ " not read: " ^ why))
-  | None -> set run gift (Failed (slot_name p.box_slot ^ " not read"))
+let read_text = function
+  | Gift_boxes.Filled -> "holds a Pokémon"
+  | Empty -> "is empty"
+  | Not_read why -> "not read: " ^ why
 
-let split run =
-  match (run.party, received_pokemon run) with
-  | Room_for_one, (_, (first : C.pokemon)) :: rest ->
-      ( Some first.box_slot,
-        List.map (fun (_, (p : C.pokemon)) -> p.box_slot) rest )
-  | _, all -> (None, List.map (fun (_, (p : C.pokemon)) -> p.box_slot) all)
+(* Settled, each slot's reading logged; whether party slot 6 moved. *)
+let settle steps run slots =
+  match steps.settle_boxes slots with
+  | Ok { reads; moved } ->
+      List.iter
+        (fun (s, r) -> steps.log (slot_name s ^ " " ^ read_text r ^ "."))
+        reads;
+      run.moved <- run.moved || moved;
+      Ok reads
+  | Error why -> fail "boxes_not_read" why
 
-let check_gift_slots steps run =
-  match received_pokemon run with
+(* The Pokémon gifts with an [outcome] that [keep] keeps, in the catalog's
+   order: the order they are received in. *)
+let pokemon_gifts run keep =
+  List.filter_map
+    (fun ((g : C.gift), o) ->
+      match g.pokemon with Some p when keep o -> Some (g, p) | _ -> None)
+    run.outcomes
+
+let slots gifts = List.map (fun (_, (p : C.pokemon)) -> p.box_slot) gifts
+
+(* Before the claims: the Pokémon gifts not expired nor received in HOME. *)
+let settle_boxes steps run =
+  let due ((g : C.gift), _) =
+    g.how <> Home && not (C.expired ~today:run.today g)
+  in
+  match List.filter due (pokemon_gifts run (fun _ -> true)) with
   | [] ->
-      steps.log "No Pokémon received: no box slot to read.";
+      steps.log "No Pokémon gift due: the Boxes not opened.";
       Ok ()
-  | received -> (
-      let party_gift, in_box = split run in
-      match steps.check_slots ~party_gift ~in_box with
-      | Ok reads ->
-          List.iter (fun r -> judge run r reads) received;
-          Ok ()
-      | Error why -> fail "boxes_not_read" why)
+  | gifts ->
+      let* reads = settle steps run (slots gifts) in
+      run.before <- reads;
+      Ok ()
+
+(* A gift received now, its slot read after the claims; a slot that held a
+   Pokémon before them holds something else. *)
+let not_in_place run reads ((g : C.gift), (p : C.pokemon)) =
+  let held_before = List.assoc_opt p.box_slot run.before = Some Filled in
+  match List.assoc_opt p.box_slot reads with
+  | _ when held_before ->
+      Some (g, slot_name p.box_slot ^ " held a Pokémon before the claims")
+  | Some Gift_boxes.Filled -> None
+  | Some r -> Some (g, slot_name p.box_slot ^ " " ^ read_text r)
+  | None -> Some (g, slot_name p.box_slot ^ " not read")
+
+let missing_text missing =
+  String.concat "; "
+    (List.map (fun ((g : C.gift), why) -> g.id ^ ": " ^ why) missing)
+
+(* The gifts read out of place failed, the run stopped. *)
+let check_in_place run reads gifts =
+  match List.filter_map (not_in_place run reads) gifts with
+  | [] -> Ok ()
+  | missing ->
+      List.iter (fun (g, why) -> set run g (Failed why)) missing;
+      fail "gifts_not_in_place" (missing_text missing)
+
+(* After the claims: each Pokémon gift received now in its slot. *)
+let check_gift_slots steps run =
+  match pokemon_gifts run (fun o -> o = Claimed) with
+  | [] ->
+      steps.log "No Pokémon received: no box slot to check.";
+      Ok ()
+  | gifts ->
+      let* reads = settle steps run (slots gifts) in
+      check_in_place run reads gifts
 
 let save_progress steps run =
-  if List.exists (fun (_, o) -> o = Claimed) run.outcomes then
+  if List.exists (fun (_, o) -> o = Claimed) run.outcomes || run.moved then
     Result.map_error (Failure.cause ~repeats:true "not_saved") (steps.save ())
   else (
-    steps.log "Nothing received: not saved.";
+    steps.log "Nothing received or moved: not saved.";
     Ok ())
 
 let failed run =
@@ -168,6 +209,7 @@ let no_args action steps run (event : Plza_engine.Plan.event) = function
 let actions =
   [
     ("gifts_start", gifts_start);
+    ("settle_boxes", settle_boxes);
     ("claim_gifts", claim_gifts);
     ("check_gift_slots", check_gift_slots);
     ("save_progress", save_progress);
