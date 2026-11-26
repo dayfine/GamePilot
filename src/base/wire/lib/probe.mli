@@ -38,6 +38,10 @@ type probe_spec = {
   ink : color_range option;
       (** [core.template_match@1] only: compare the masks of the pixels in this
           range instead of the colors. *)
+  skip_seams : bool;
+      (** [core.template_match@1] with [ink] only: leave out of the comparison
+          the scaled template mask's seam pixels, which straddle two game
+          pixels; [false] for every other probe. *)
   color_range : color_range option;  (** [core.color_count@1] only *)
   test : Line_shares.test;  (** [core.line_shares@1] only; else [[]] *)
   find : Blob_find.params option;  (** [core.find@1] only *)
@@ -52,6 +56,7 @@ val color_stats_probe : id:string -> box:box -> delivery:delivery -> probe_spec
 
 val template_match_probe :
   ?ink:color_range ->
+  ?skip_seams:bool ->
   id:string ->
   box:box ->
   delivery:delivery ->
@@ -60,7 +65,9 @@ val template_match_probe :
   probe_spec
 (** A [core.template_match@1] probe: the best placement inside [box] of the
     uploaded template whose hash is [template]; with [ink], it compares which
-    pixels lie in that range instead of their colours. *)
+    pixels lie in that range instead of their colours, and with [skip_seams]
+    (default [false]; ignored without [ink]) only the scaled mask's whole
+    pixels. *)
 
 val color_count_probe :
   id:string ->

@@ -3,7 +3,7 @@ module Failure = Engine_run.Failure
 module Game = Plza_engine.Game
 module Plan = Plza_engine.Plan
 
-let run_from = "03.03"
+let run_from = "03.04"
 let walk_only id = String.compare id run_from < 0
 let wait_for_platform_ms = 180_000
 let opening_to_platform_ms = 240_000
@@ -27,7 +27,7 @@ let timed run ~default steps (event : Plan.event) (args : Json_field.obj) =
 (* The platform's hint fades after a few seconds idle: a start that does not
    see it reloads the latest autosave, where it shows fresh, and looks again.
    Ours: the fork starts 01.01 right after the opening or a reload and never
-   needed it (console B, 2026-11-25: 01.01 started a minute after 01.00b). *)
+   needed it (console B, 2026-11-25: 01.02 started a minute after 01.01). *)
 let platform_or_reload ~reload steps ~timeout_ms =
   match Platform_wait.wait_for_platform steps ~timeout_ms with
   | Error { code = "platform_not_seen"; _ } ->
@@ -119,7 +119,7 @@ let run_to_gate_ms = 8000
 let run_to_gate steps ~timeout_ms =
   Plza_walk.Gate_run.run (Steps.walk_game_steps steps) ~timeout_ms
 
-(* The plan's timeout for each run at the far gate (plza-03.08b.plan.json). *)
+(* The plan's timeout for each run at the far gate (03.12-out-of-wild-zone-1.plan.json). *)
 let run_out_of_zone_1_ms = 5000
 
 let run_out_of_zone_1 steps ~timeout_ms =
@@ -134,7 +134,7 @@ let check_out_of_zone_1 steps =
 let max_throws = 6
 let max_rounds = 6
 
-(* Wild Zone 1's actions, from 03.07 on, and Mable's reward. *)
+(* Wild Zone 1's actions, from 03.09 on, and Mable's reward. *)
 let zone_actions =
   [
     ("run_to_gate", timed run_to_gate ~default:run_to_gate_ms);
@@ -208,10 +208,10 @@ let builtin ~jump steps (event : Plan.event) =
         (Failure.cause ~repeats:true "no_handler"
            (event.id ^ ": PLZA runs no talk, answer or save event"))
 
-(* The game's walk, walked rather than run before 03.03 (as
+(* The game's walk, walked rather than run before 03.04 (as
    PokemonLZA_AutoStory.cpp walks them, before dash is unlocked). The fork's
    starter option (Totodile's or Tepig's legs in place of the plan's) is not
-   ported: 01.03's plan walks to Chikorita, the fork's default. *)
+   ported: 01.04's plan walks to Chikorita, the fork's default. *)
 let walk steps ~checkpoint_id ~jump (event : Plan.event)
     (own : Plza_rules.Action.t) =
   let walk_steps = Steps.walk_game_steps steps in

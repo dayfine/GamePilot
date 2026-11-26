@@ -9,7 +9,7 @@ let ( let* ) = Result.bind
    nudge the right stick instead, which only turns the camera in the field and
    does nothing in a dialogue, a menu or a battle (up then down, so the
    camera's heading never moves: walk legs are aimed from it). Off, an idle
-   console dimmed its screen, which reads as nothing (01.03's run 2). A
+   console dimmed its screen, which reads as nothing (01.04's run 2). A
    --keepawake-key given on the command line comes after, and the daemon takes
    the last. *)
 let keepawake_stick = [ "--keepawake-key"; "RStick" ]
@@ -139,7 +139,7 @@ let live ~options ~log ~reload record plan (daemon : Live_run.Daemon_process.t)
   | outcome -> outcome
   | exception e -> failed "raised" (Printexc.to_string e)
 
-(* "03.04 run 1", with " attempt 2" after the first. *)
+(* "03.07 run 1", with " attempt 2" after the first. *)
 let run_name id n = function
   | 1 -> Printf.sprintf "%s run %d" id n
   | a -> Printf.sprintf "%s run %d attempt %d" id n a
@@ -194,8 +194,8 @@ let run setup (plan : P.Plan.t) n ~reload =
     (run_attempt setup plan n)
 
 (* The plan's execution asks for a reload when it follows another checkpoint
-   in the series (the fork's "reload_when_chained", 03.04's: its walk starts
-   from the autosave's spot, not where 03.03c's scene leaves the player). *)
+   in the series (the fork's "reload_when_chained", 03.07's: its walk starts
+   from the autosave's spot, not where 03.06's scene leaves the player). *)
 let reload_when_chained (plan : P.Plan.t) =
   List.assoc_opt "reload_when_chained" plan.execution = Some (`Bool true)
 
@@ -227,8 +227,6 @@ let rec chain setup ~chained = function
   | plan :: rest ->
       if runs_of setup plan ~chained then chain setup ~chained:true rest
       else Ok 1
-
-let checkpoint_order = String.compare
 
 (* Each run's daemon: the program's viewport, the right stick's keep-awake,
    then the user's flags. *)
@@ -271,9 +269,9 @@ let switch_only : Live_run.Daemon_process.backend -> _ = function
 let selected ~plan_dir (f : Flags.t) =
   let* from_id = Run_flags.required "--from" f.from_id in
   let* to_id = Run_flags.required "--to" f.to_id in
-  let* ids =
-    Engine_series.Plan_folder.checkpoint_ids ~compare:checkpoint_order plan_dir
-  in
+  let* ids = Engine_series.Plan_folder.checkpoint_ids plan_dir in
+  let* from_id = Engine_series.Plan_folder.resolve ids from_id in
+  let* to_id = Engine_series.Plan_folder.resolve ids to_id in
   let* ids, _ = Engine_series.Plan_folder.select ids ~from_id ~to_id in
   Ok (from_id, to_id, ids)
 

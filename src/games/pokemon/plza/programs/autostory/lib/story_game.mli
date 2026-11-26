@@ -9,7 +9,7 @@
     is the caller's (back to the latest autosave). *)
 
 val walk_only : string -> bool
-(** Whether a checkpoint's runs are walked: its id is before ["03.03"]. *)
+(** Whether a checkpoint's runs are walked: its id is before ["03.04"]. *)
 
 val make :
   ?options:New_game_options.t ->
