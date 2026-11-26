@@ -4,16 +4,19 @@
     up by hand. New: the fork has no withdraw. It reads the screens as
     {!Pc_deposit_steps} does and keeps its bounds.
 
-    The walk: A at the PC, A on the PC list's top row ("BILL'S PC" or "SOMEONE'S
-    PC") once read, A on WITHDRAW POKéMON once read (UP toward it from a lower
-    row). The box screen opens on the box the PC was last left on, the hand on
-    its first slot (pokefirered [InitCursor]). The hand goes along the box's 30
-    slots, row by row, RIGHT on the first row, LEFT on the second (DOWN between
-    them), until PKMN DATA names a species; A there, A on WITHDRAW (a Pokémon's
-    menu's first row, once read), and the game moves it into the party's first
-    free slot ([Task_WithdrawMon]). Once PKMN DATA is blank again (the hand is
-    over the emptied slot), B through "Continue BOX operations?" (B is NO), the
-    storage menu and the PC list to the overworld, seen twice.
+    The walk: A at the PC, on a message a wait first and B only at the second
+    settled look in a row (as {!Pc_deposit_steps}: "Which PC should be
+    accessed?" has the PC list right behind it in pokefirered pc.inc, so a B on
+    the first look can cancel the list), A on the PC list's top row ("BILL'S PC"
+    or "SOMEONE'S PC") once read, A on WITHDRAW POKéMON once read (UP toward it
+    from a lower row). The box screen opens on the box the PC was last left on,
+    the hand on its first slot (pokefirered [InitCursor]). The hand goes along
+    the box's 30 slots, row by row, RIGHT on the first row, LEFT on the second
+    (DOWN between them), until PKMN DATA names a species; A there, A on WITHDRAW
+    (a Pokémon's menu's first row, once read), and the game moves it into the
+    party's first free slot ([Task_WithdrawMon]). Once PKMN DATA is blank again
+    (the hand is over the emptied slot), B through "Continue BOX operations?" (B
+    is NO), the storage menu and the PC list to the overworld, seen twice.
 
     Which Pokémon: the first the hand finds holding nothing, any species. A box
     Pokémon holds no Mail (the PC takes none that does), and once withdrawn its

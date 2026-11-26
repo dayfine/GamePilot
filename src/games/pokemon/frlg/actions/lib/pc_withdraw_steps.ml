@@ -10,7 +10,7 @@ type look = {
 }
 
 type phase =
-  | Opening of { booted : bool; boot_looks : int }
+  | Opening of { booted : bool; boot_looks : int; message_seen : bool }
   | Browsing of { slot : int; blank_looks : int }
       (** The hand on this slot of the walk (0..29). *)
   | Choosing of { species : string; menu_looks : int }
@@ -33,33 +33,55 @@ let blank_reads = 2
 (* Looks at a Pokémon's menu before its cursor and first row read: the first
    frame of the menu did not on mGBA (2026-11-25). *)
 let menu_reads = 3
-let start = { phase = Opening { booted = false; boot_looks = 0 }; others = 0 }
+
+let start =
+  {
+    phase = Opening { booted = false; boot_looks = 0; message_seen = false };
+    others = 0;
+  }
 
 let withdrawn t =
   match t.phase with Leaving { species; _ } -> Some species | _ -> None
 
 let go t phase (press : D.press) = ({ t with phase }, press)
 
-let opening t ~booted ~boot_looks (l : look) : t * D.press =
+(* B on a message only at the second look in a row: one still printing can
+   have a menu right behind it ("Which PC should be accessed?", pokefirered
+   pc.inc: message, waitmessage, then the list), and a B that lands as the
+   list opens cancels it and turns the PC off (#244, console B,
+   2026-11-25). *)
+let on_message t ~message_seen =
+  let open_state seen =
+    Opening { booted = true; boot_looks = D.boot_reads; message_seen = seen }
+  in
+  if message_seen then go t (open_state false) B
+  else go t (open_state true) Wait
+
+let opening t ~booted ~boot_looks ~message_seen (l : look) : t * D.press =
+  let clear =
+    { t with phase = Opening { booted; boot_looks; message_seen = false } }
+  in
   let label_is s = l.label = Some s in
   match (l.view.screen, l.view.cursor) with
   | Overworld, _ when not booted ->
-      go t (Opening { booted = true; boot_looks }) A
+      go clear (Opening { booted = true; boot_looks; message_seen = false }) A
   | Overworld, _ when boot_looks + 1 < D.boot_reads ->
-      go t (Opening { booted; boot_looks = boot_looks + 1 }) Wait
-  | Overworld, _ -> (t, Fail "the overworld came back before the withdraw")
-  | Text, _ -> go t (Opening { booted = true; boot_looks = D.boot_reads }) B
-  | Pc_list, Some 0 when List.exists label_is D.pc_list_tops -> (t, A)
-  | Pc_list, Some _ -> (t, Up)
-  | Pc_list, None -> (t, Fail "the PC list's cursor did not read")
+      go clear
+        (Opening { booted; boot_looks = boot_looks + 1; message_seen = false })
+        Wait
+  | Overworld, _ -> (clear, Fail "the overworld came back before the withdraw")
+  | Text, _ -> on_message t ~message_seen
+  | Pc_list, Some 0 when List.exists label_is D.pc_list_tops -> (clear, A)
+  | Pc_list, Some _ -> (clear, Up)
+  | Pc_list, None -> (clear, Fail "the PC list's cursor did not read")
   | Storage_menu, Some 0 when label_is withdraw_row ->
-      go t (Browsing { slot = 0; blank_looks = 0 }) A
+      go clear (Browsing { slot = 0; blank_looks = 0 }) A
   | Storage_menu, Some 0 ->
-      (t, Fail "the storage menu's row 1 did not read as WITHDRAW")
-  | Storage_menu, Some _ -> (t, Up)
-  | Storage_menu, None -> (t, Fail "the storage menu's cursor did not read")
+      (clear, Fail "the storage menu's row 1 did not read as WITHDRAW")
+  | Storage_menu, Some _ -> (clear, Up)
+  | Storage_menu, None -> (clear, Fail "the storage menu's cursor did not read")
   | (Box_grid | Party_panel | Mon_menu | Box_chooser | Yes_no), _ ->
-      (t, Fail "a box screen before WITHDRAW POKéMON")
+      (clear, Fail "a box screen before WITHDRAW POKéMON")
   | Other, _ -> (t, Wait)
 
 (* The walk's slot [k] in the box: RIGHT along even rows, LEFT along odd ones,
@@ -115,7 +137,8 @@ let leaving t species ~overworld_seen (l : look) : t * D.press =
 
 let on_screen t (l : look) =
   match t.phase with
-  | Opening { booted; boot_looks } -> opening t ~booted ~boot_looks l
+  | Opening { booted; boot_looks; message_seen } ->
+      opening t ~booted ~boot_looks ~message_seen l
   | Browsing { slot; blank_looks } -> browsing t ~slot ~blank_looks l
   | Choosing { species; menu_looks } -> choosing t ~species ~menu_looks l
   | Withdrawing species -> withdrawing t species l
