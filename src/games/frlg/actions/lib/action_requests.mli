@@ -23,6 +23,7 @@ type t =
   | Cut_tree of Grid_geometry.Direction.t
   | Verify_mail_glitch of Action_args.member
   | Pc_deposit of deposit
+  | Pc_withdraw
   | Pick_up_item of string
   | Read_caught of { at_least : int option }
 
@@ -30,7 +31,7 @@ val names : string list
 (** The action names {!decode} reads: ["mart"], ["use_item"], ["give_bag_item"],
     ["party_swap"], ["buy_coins"], ["redeem_prize_mon"], ["ingame_trade"],
     ["spin_for_encounter"], ["cut_tree"], ["verify_mail_glitch"],
-    ["pc_deposit"], ["pick_up_item"], ["read_caught"]. *)
+    ["pc_deposit"], ["pc_withdraw"], ["pick_up_item"], ["read_caught"]. *)
 
 val default_spin_batches : int
 (** ["spin_for_encounter"]'s ["max_batches"] when left out: 25. *)
@@ -56,6 +57,8 @@ val decode :
     - [pc_deposit]: ["species"], a list of the members to store, or ["member"]:
       ["holding_no_mail"] ({!Holding_no_mail}), facing a Pokémon Center's PC
       ({!Pc_deposit}).
+    - [pc_withdraw]: no args: the first Pokémon in the box the PC opens on moved
+      into the party, facing a Pokémon Center's PC ({!Pc_withdraw}).
     - [pick_up_item]: ["item"], the item the player faces (a hidden item, an
       item ball): a talk, as the plan's [talk] event, that names what it gains
       so a pre-flight counts it ({!Frlg_checkpoints.Plan_needs}).

@@ -8,7 +8,7 @@ type look = {
   remove_mail : bool;
 }
 
-type press = A | B | Up | Down | Right | Wait | Done | Fail of string
+type press = A | B | Up | Down | Left | Right | Wait | Done | Fail of string
 
 type t = {
   targets : string list;  (** Still to store, the next first. *)
@@ -135,6 +135,7 @@ let press_to_string = function
   | B -> "B"
   | Up -> "UP"
   | Down -> "DOWN"
+  | Left -> "LEFT"
   | Right -> "RIGHT"
   | Wait -> "wait"
   | Done -> "done"

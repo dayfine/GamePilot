@@ -1,3 +1,29 @@
+== ace_setup/plans/01-buy-magikarp.plan.json
+frlg 01-buy-magikarp from anywhere outdoors: 3 game_action, 3 route, 1 talk, 2 answer, 1 scene
+fly_route4: [fly] game_action {"town":"Route4"} => Route4 (12, 6) south
+to_pc: [run] route to Route4_PokemonCenter_1F (11, 2) north
+make_room: [pc_deposit] game_action {"member":"holding_no_mail"}
+withdraw: [pc_withdraw] game_action {} skip_if pokedex_not_seen:magikarp
+to_salesman: [run] route to Route4_PokemonCenter_1F (2, 3) west skip_if pokedex_seen:magikarp
+talk_salesman: talk skip_if pokedex_seen:magikarp
+buy_magikarp: answer yes skip_if pokedex_seen:magikarp once_per_save
+no_nickname: answer no skip_if pokedex_seen:magikarp
+clear_salesman_text: scene => Route4_PokemonCenter_1F (2, 3) west skip_if pokedex_seen:magikarp
+back_to_pc: [run] route to Route4_PokemonCenter_1F (11, 2) north
+retries 3
+postconditions:
+marks mail, mail, mail, mail, mail, none
+no repeat
+== ace_setup/plans/02-write-ace-mail.plan.json
+frlg 02-write-ace-mail from Route4_PokemonCenter_1F (11, 2) north: 3 game_action
+box3_slot1_empty: [check_box_slot] game_action {"box":3,"slot":1,"occupied":false}
+write_ace_mail: [write_glitched_mail] game_action {"target_slot":6,"words":[{"group":"MOVE 2","word":"BULK UP"},{"group":"ACTIONS","word":"CAPABLE"},{"group":"MOVE 1","word":"KARATE CHOP"},{"group":"POKéMON","word":"MAGIKARP"}]}
+box3_slot1_ace: [check_box_slot] game_action {"box":3,"slot":1,"occupied":true,"level":100,"male":true}
+retries 3
+postconditions:
+item retro-mail used 1
+marks mail, mail, mail, mail, mail, none
+no repeat
 == dex_collection/plans/01-ultra-balls.plan.json
 frlg 01-ultra-balls from anywhere outdoors: 2 game_action, 3 route, 1 heal
 fly_indigo: [fly] game_action {"town":"IndigoPlateau"} => IndigoPlateau_Exterior (11, 7) south

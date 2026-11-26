@@ -78,7 +78,7 @@ let check_menu (plan : Pokemon_engine.Plan.t) =
 
 (* Each skip_if condition FireRed reads names what it reads: the species
    names (English, as the Pokédex reader matches them) are loaded only for a
-   plan with a pokedex_seen condition. *)
+   plan with a pokedex_seen or pokedex_not_seen condition. *)
 let read_species () =
   let file = Frlg_text.Data_files.species_names_eng in
   match Frlg_text.Data_files.locate file with
@@ -96,8 +96,7 @@ let check_skip_conditions (checkpoint : Pokemon_engine.Plan.checkpoint) =
       (fun (e : Pokemon_engine.Plan.event) -> e.skip_if)
       checkpoint.events
   in
-  let pokedex = String.starts_with ~prefix:A.Skip_conditions.pokedex_seen in
-  if List.exists pokedex conditions then
+  if List.exists A.Skip_conditions.reads_pokedex conditions then
     Result.bind (read_species ()) (fun species -> check_all species conditions)
   else Ok ()
 
