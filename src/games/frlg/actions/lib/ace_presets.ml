@@ -86,3 +86,15 @@ let box_name item b = List.nth item.names (b - 1)
 let known_names t b =
   List.sort_uniq compare
     (Printf.sprintf "BOX%d" b :: List.map (fun i -> box_name i b) t.items)
+
+let item_of t slug =
+  Option.to_result ~none:(slug ^ " is not in " ^ asset) (find t slug)
+  |> Result.map (fun item -> (t, item))
+
+let run_item options =
+  let slug =
+    Option.to_result
+      ~none:"frlg.ace needs its item option (--options item=<slug>)"
+      (Run_options.find options "item")
+  in
+  Result.bind (load ()) (fun t -> Result.bind slug (item_of t))

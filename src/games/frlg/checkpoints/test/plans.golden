@@ -10,7 +10,7 @@ no repeat
 == ace/plans/02-trigger.plan.json
 frlg 02-trigger from Route4_PokemonCenter_1F (11, 2) north: 5 game_action
 room: [ace_check_room] game_action {}
-trigger: [ace_trigger] game_action {"box3_title":"EE …l‘"}
+trigger: [ace_trigger] game_action {}
 stored: [ace_check_stored] game_action {}
 withdraw: [ace_withdraw] game_action {}
 save: [save_game] game_action {}

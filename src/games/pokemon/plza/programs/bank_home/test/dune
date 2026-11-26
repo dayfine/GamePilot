@@ -1,0 +1,11 @@
+(tests
+ (names test_bank_moves_args)
+ (deps
+  (glob_files ../plans/*.plan.json))
+ (libraries
+  yojson
+  gamepilot.table_test
+  gamepilot.json_field
+  gamepilot.pokemon_home
+  gamepilot.plza_engine
+  gamepilot.plza_bank_home))

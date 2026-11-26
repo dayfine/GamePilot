@@ -57,3 +57,9 @@ let upload () =
   match Repo_io.Repo_files.locate Assets.folder with
   | None -> Error (Assets.folder ^ " not found from here: run in the repo")
   | Some dir -> upload_from dir
+
+let upload_home_title () =
+  let path = Plza_readers.Switch_home_tile.title_template in
+  match Repo_io.Repo_files.locate path with
+  | None -> Error (path ^ " not found from here: run in the repo")
+  | Some file -> Result.map Effects.upload_template (read_file file)

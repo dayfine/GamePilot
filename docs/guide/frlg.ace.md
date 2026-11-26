@@ -19,8 +19,8 @@ What the save needs:
 
 - [ACE Setup](frlg.ace_setup.md) done: species 0x0351 (a male Lv 100 Pokémon with a ? picture) in
   Box 3 slot 1, standing below the Route 4 Pokémon Center's PC, facing it.
-- A Pokémon in Box 1 slot 1 (MIMIEN on the Mail Glitch save), or already in Box 3 slot 2: the swap
-  partner.
+- A Pokémon in Box 1 (MIMIEN on the Mail Glitch save), or already in Box 3 slot 2: the swap
+  partner. The first Pokémon in Box 1 is used, whichever slot it is in.
 - Box 13 from slot 7 on and all of Box 14 empty. The program checks this before it types anything.
 - Fewer than 30 kinds of item in the PC's item storage, and room in the bag: what it holds of the
   item plus `withdraw` at most 999.
@@ -65,7 +65,7 @@ On mGBA the start state is `01-enter-code.start.ss` in `GAMEPILOT_STATES`: the s
 | 01-enter-code | The item's code typed as the 14 box names, then saved: the code save |
 | 02-trigger | The code run by the double swap: the item x999 in the PC, the asked count in the bag, saved |
 
-<!-- plans: 2157eb928d5b -->
+<!-- plans: 42586305bffa -->
 <!-- /generated -->
 
 In plain words:
@@ -74,8 +74,8 @@ In plain words:
    slots are empty. Then it goes through the boxes from Box 1 and renames each to the item's code,
    reading each name back from the box title. A box already named right is skipped, so a second
    item retypes only Boxes 5-8. Then it saves: the code save.
-2. Checks the item storage and the bag have room. In MOVE POKéMON it moves the Pokémon in Box 1
-   slot 1 next to 0x0351 (Box 3 slot 2), picks 0x0351 up and swaps it with that Pokémon twice:
+2. Checks the item storage and the bag have room. In MOVE POKéMON it moves the first Pokémon in
+   Box 1 next to 0x0351 (Box 3 slot 2), picks 0x0351 up and swaps it with that Pokémon twice:
    the second swap runs the box names. It checks the box screen still answers, opens ITEM STORAGE
    to find the item x999, withdraws `withdraw` of it, checks the bag's count went up by that much,
    and saves.

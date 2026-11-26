@@ -2,10 +2,11 @@
     moves in 3D with a camera that follows the player, so there is no tile grid:
     a plan's pose is a zone (a place, and maybe a spot in it), its actions are
     timed walks ({!Walk_args}), and a checkpoint promises what the screen shows
-    where it ends. PLZA links the engine only, not [src/pokemon]
-    ([docs/roadmap/plza-autostory-port.md]). Pure, and each part prints itself:
-    how a plan writes them is [Plza_plan_format], and what a run keeps
-    [Plza_event_snapshot]; [Plza_engine] applies the engine to the three. *)
+    where it ends. They are over the engine alone, not the Pokémon rules
+    ([src/pokemon/checkpoints], [docs/roadmap/plza-autostory-port.md]). Pure,
+    and each part prints itself: how a plan writes them is [Plza_plan_format],
+    and what a run keeps [Plza_event_snapshot]; [Plza_engine] applies the engine
+    to the three. *)
 
 module Walk_args = Walk_args
 (** {!Walk_args}: a walk's legs and end. *)

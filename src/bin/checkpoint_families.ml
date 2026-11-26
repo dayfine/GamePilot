@@ -92,7 +92,7 @@ let grid =
   }
 
 let plza_series plan_dir args =
-  let* f = Plza_series.Flags.parse args in
+  let* f = Plza_checkpoint_series.Flags.parse args in
   let* options = program_options plan_dir f in
   Plza.run_series ~program:(program_fields plan_dir) ~options
     ~viewport:(viewport plan_dir f) plan_dir args
@@ -101,10 +101,11 @@ let no_stated what ~plan_dir:_ _ = Error ("PLZA's plans state no " ^ what)
 
 let plza_guide : Guide_blocks.rules_guide =
   {
-    rows = Plza_series.Guide_tables.rows;
+    rows = Plza_checkpoint_series.Guide_tables.rows;
     needs = no_stated "needs";
     preflight = no_stated "pre-flight";
-    commands = (fun _ ~args -> Plza_series.Guide_tables.commands ~args);
+    commands =
+      (fun _ ~args -> Plza_checkpoint_series.Guide_tables.commands ~args);
   }
 
 (* PLZA's story rules' entry points: a series of whole checkpoints on the
@@ -121,8 +122,31 @@ let plza =
     one_shots = [];
   }
 
-let all = [ grid; plza ]
-let of_rules = function R.Pokemon_grid -> grid | R.Plza_story -> plza
+let plza_home_series plan_dir args =
+  let* f = Plza_checkpoint_series.Flags.parse args in
+  let* options = program_options plan_dir f in
+  Plza_bank_home_series.Bank_home_runs.run_series
+    ~program:(program_fields plan_dir) ~options ~viewport:(viewport plan_dir f)
+    plan_dir args
+
+(* PLZA's Pokémon HOME rules' entry points: plans over PLZA's rules, run from
+   the Switch's HOME menu in Pokémon HOME, whole checkpoints on the Switch, as
+   the story's; their guide is the story's. *)
+let plza_home =
+  {
+    plza with
+    run_series = plza_home_series;
+    run_checkpoint =
+      (fun _ _ -> Error "plza.bank-home runs whole series only: gamepilot run");
+    ctl_readers = [];
+  }
+
+let all = [ grid; plza; plza_home ]
+
+let of_rules = function
+  | R.Pokemon_grid -> grid
+  | R.Plza_story -> plza
+  | R.Plza_home -> plza_home
 
 let of_program (p : R.t option) =
   of_rules (match p with Some p -> p.rules | None -> R.Pokemon_grid)

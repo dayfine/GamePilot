@@ -12,13 +12,18 @@ val walk_only : string -> bool
 (** Whether a checkpoint's runs are walked: its id is before ["03.04"]. *)
 
 val make :
+  ?options:New_game_options.t ->
+  ?new_game:(Plza_story.New_game_choices.t -> Plza_story.Steps.outcome) ->
   Plza_story.Steps.game_steps ->
   checkpoint:Plza_engine.Plan.checkpoint ->
   reload:(unit -> (unit, Engine_run.Failure.cause) result) ->
   Plza_engine.Game.t
-(** The handlers for one checkpoint's run. With a [story_battle] later in the
-    checkpoint, a walk or a scene (but [scene_to_battle]) stops on the battle
-    HUD and the run goes on at the battle ({!Battle_jump}). *)
+(** The handlers for one checkpoint's run; [new_game] plays 00.00-new-game's
+    choices, the program's [options] (none by default) over the plan's (by
+    default it fails [no_handler]: the live runner passes
+    {!Live_intro_screen.run}). With a [story_battle] later in the checkpoint, a
+    walk or a scene (but [scene_to_battle]) stops on the battle HUD and the run
+    goes on at the battle ({!Battle_jump}). *)
 
 val run_watched :
   ?end_state:

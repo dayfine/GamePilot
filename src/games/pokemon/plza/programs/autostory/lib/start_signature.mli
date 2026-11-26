@@ -22,8 +22,9 @@
       end (a reload past the checkpoint's own autosave lands there, and the
       runner runs no event there: {!Engine_run.Runner});
     - anything else, or no read agreed on: [chain_off_start], which repeats from
-      the same screen; the series reloads once on it ({!Run_attempts}), where
-      the fork's chain stops its run (PokemonLZA_AutoStoryGame.cpp);
+      the same screen; the series reloads once on it
+      (Plza_checkpoint_series.Run_attempts), where the fork's chain stops its
+      run (PokemonLZA_AutoStoryGame.cpp);
     - a signature with another field, an unrecorded minimap, or nothing:
       [start_signature_unread], which repeats.
 
