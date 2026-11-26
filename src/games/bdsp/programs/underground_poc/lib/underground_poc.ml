@@ -25,6 +25,9 @@ let max_end_dialog_presses = 15
 let door_bounce_hold_ms = 2500
 let south_return_ms = 3000
 let west_return_ms = 2600
+let map_press_hold_ms = 120
+let map_view_wait_ms = 1500
+let map_restore_wait_ms = 800
 
 let log msg =
   let line = "[bdsp.underground_poc] " ^ msg in
@@ -108,6 +111,19 @@ let on_battle ~picture counters =
   let* () = OW.run_from_battle ~log ~picture () in
   Ok (Mining_counters.record_battle_escaped counters)
 
+let read_full_map_sparkles ~picture =
+  P.press ~hold_ms:map_press_hold_ms ~cooldown_ms:map_restore_wait_ms Wire.Y;
+  P.press ~hold_ms:map_press_hold_ms ~cooldown_ms:map_view_wait_ms Wire.A;
+  ignore (Effects.subscribe (MS.full_map_probes ~picture) : string list);
+  let sp =
+    match Effects.await ~timeout_ms:screen_probe_timeout_ms (fun _ -> true) with
+    | Effects.Holds m -> MS.read_full_map m
+    | Effects.Timeout -> MS.none
+  in
+  P.press ~hold_ms:map_press_hold_ms ~cooldown_ms:map_restore_wait_ms Wire.B;
+  P.press ~hold_ms:map_press_hold_ms ~cooldown_ms:map_restore_wait_ms Wire.B;
+  sp
+
 let run_one_cycle ~picture ~goal ~total_cycles ~idx ~counters =
   log (Printf.sprintf "=== Cycle %d/%d ===" idx total_cycles);
   let* () =
@@ -117,13 +133,8 @@ let run_one_cycle ~picture ~goal ~total_cycles ~idx ~counters =
   in
   let counters = Mining_counters.record_refresh counters in
   P.wait post_dig_wait_ms;
-  let sp =
-    match read_screen ~picture with
-    | Some scr ->
-        log ("Screen: " ^ US.to_string scr);
-        scr.sparkles
-    | None -> MS.none
-  in
+  let sp = read_full_map_sparkles ~picture in
+  log ("Full map sparkles: " ^ MS.to_string sp);
   let* counters =
     if MS.any sp then
       Ring_navigator.visit_targets ~log ~picture ~sparkles:sp
@@ -157,18 +168,15 @@ let run_check_bag ~picture =
   let* () = OW.inspect_treasures_bag ~log ~picture () in
   Ok "treasures pocket captured"
 
-let map_press_hold_ms = 120
-let map_view_wait_ms = 1500
-let map_restore_wait_ms = 800
-
 let run_check_map () =
-  log "Mode check-map: pressing RStick to inspect enlarged minimap...";
-  P.press ~hold_ms:map_press_hold_ms ~cooldown_ms:map_view_wait_ms Wire.RStick;
+  log "Mode check-map: pressing Y -> A to open full-sized Underground map...";
+  P.press ~hold_ms:map_press_hold_ms ~cooldown_ms:map_restore_wait_ms Wire.Y;
+  P.press ~hold_ms:map_press_hold_ms ~cooldown_ms:map_view_wait_ms Wire.A;
   P.wait map_view_wait_ms;
-  log "Pressing RStick again to restore minimap...";
-  P.press ~hold_ms:map_press_hold_ms ~cooldown_ms:map_restore_wait_ms
-    Wire.RStick;
-  Ok "enlarged minimap captured"
+  log "Pressing B to close full-sized map...";
+  P.press ~hold_ms:map_press_hold_ms ~cooldown_ms:map_restore_wait_ms Wire.B;
+  P.press ~hold_ms:map_press_hold_ms ~cooldown_ms:map_restore_wait_ms Wire.B;
+  Ok "full-sized map captured"
 
 let run_farm_loop ~picture ~goal ~total_cycles =
   let* initial =

@@ -66,9 +66,22 @@ let primary_wall_dir ~along_dir = function
       | Corridor_nav.East | Corridor_nav.West -> Corridor_nav.North
       | Corridor_nav.North | Corridor_nav.South -> Corridor_nav.East)
 
-let probe_stop_walls ~picture ~on_prompt ~on_battle ~along_dir ~wall_dirs cur =
+let visible_sparkle_dir ~picture =
   subscribe_screen ~picture;
-  let face_dir = primary_wall_dir ~along_dir wall_dirs in
+  match Effects.await ~timeout_ms:step_probe_timeout_ms (fun _ -> true) with
+  | Effects.Holds m -> (US.read m).wall_sparkle
+  | Effects.Timeout -> None
+
+let probe_stop_walls ~log ~picture ~on_prompt ~on_battle ~along_dir ~wall_dirs
+    cur =
+  subscribe_screen ~picture;
+  let face_dir =
+    match visible_sparkle_dir ~picture with
+    | Some d ->
+        log "On-screen wall sparkle detected; heading directly to that wall!";
+        d
+    | None -> primary_wall_dir ~along_dir wall_dirs
+  in
   OW.run_hold face_dir ~hold_ms:wall_hug_ms;
   let rec loop left acc =
     if left <= 0 then Ok acc
@@ -97,7 +110,7 @@ let run_stop ~log ~picture ~on_prompt ~on_battle acc (st : Ring_grid.stop) =
        (List.length st.legs));
   List.iter (execute_leg ~log) st.legs;
   let along_dir = along_dir_of_legs st.legs in
-  probe_stop_walls ~picture ~on_prompt ~on_battle ~along_dir
+  probe_stop_walls ~log ~picture ~on_prompt ~on_battle ~along_dir
     ~wall_dirs:st.wall_dirs c
 
 let visit_targets ~log ~picture ~(sparkles : MS.nearby) ~on_prompt ~on_battle

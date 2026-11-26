@@ -9,6 +9,7 @@ type t = {
   menu : bool;
   battle : bool;
   sparkles : Minimap_sparkles.nearby;
+  wall_sparkle : Bdsp_underground.Corridor_nav.direction option;
 }
 
 let fade_probe_id = "bdsp_screen_fade"
@@ -34,6 +35,7 @@ let probes ~picture =
   @ Battle_detector.probes ~picture
   @ Mining_grid.tool_panel_probes ~picture
   @ Minimap_sparkles.probes ~picture
+  @ Wall_sparkle.probes ~picture
 
 let read_fade m =
   match SC.stats m fade_probe_id with
@@ -57,6 +59,7 @@ let faded_state fade =
     menu = false;
     battle = false;
     sparkles = Minimap_sparkles.none;
+    wall_sparkle = None;
   }
 
 let read_no_fade m =
@@ -69,7 +72,17 @@ let read_no_fade m =
   let sparkles =
     if free then Minimap_sparkles.read m else Minimap_sparkles.none
   in
-  { fade = No_fade; mining_wall; dialog; choice_box; menu; battle; sparkles }
+  let wall_sparkle = if free then Wall_sparkle.direction m else None in
+  {
+    fade = No_fade;
+    mining_wall;
+    dialog;
+    choice_box;
+    menu;
+    battle;
+    sparkles;
+    wall_sparkle;
+  }
 
 let read m =
   match read_fade m with

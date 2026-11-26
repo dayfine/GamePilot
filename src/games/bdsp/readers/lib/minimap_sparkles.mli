@@ -44,11 +44,19 @@ val none : nearby
 
 val probes : picture:Wire.box -> Wire.probe_spec list
 (** All orange-sparkle and pink-player-dot [color_count_probe] specs across the
-    three ring corridors. *)
+    three ring corridors on the top-left minimap. *)
+
+val full_map_probes : picture:Wire.box -> Wire.probe_spec list
+(** Orange-sparkle [color_count_probe] specs across the three ring corridors on
+    the unobstructed full-sized Underground map ([Y -> A]). *)
 
 val read : Effects.measurements -> nearby
-(** Read active sparkle buckets and current player bucket from daemon
-    measurements. *)
+(** Read peak-merged active sparkle buckets and current player bucket from the
+    top-left minimap measurements. *)
+
+val read_full_map : Effects.measurements -> nearby
+(** Read peak-merged active sparkle buckets from the full-sized Underground map
+    ([Y -> A]) measurements. *)
 
 val any : nearby -> bool
 (** [true] when at least one sparkle bucket is active. *)
