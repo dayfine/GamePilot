@@ -52,12 +52,14 @@ let wallpaper () =
   ignore (Effects.submit [ Wire.Wait { wait_ms = hand_ms } ]);
   match Effects.read () with
   | Some m when Pc_box_screen.desert_wallpaper m = Some true -> `Desert
-  | Some m when Pc_box_screen.forest_wallpaper m = Some true -> `Forest
+  | Some m when Pc_box_screen.title_wallpaper m = Some Pc_box_screen.Forest ->
+      `Forest
   | _ -> `Other
 
 (* MOVE POKéMON opens on the box last shown (the save's current box), on its
-   first slot: UP to the title; from Box 1 (Forest) RIGHT twice to Box 3
-   (Desert); DOWN onto the row's third slot, across, down. *)
+   first slot: UP to the title; from Box 1 (Forest, by the title's bar) RIGHT
+   twice to Box 3 (Desert, by the grid's foot); DOWN onto the row's third
+   slot, across, down. *)
 let to_slot c =
   step hand_ms Wire.Up;
   (match wallpaper () with

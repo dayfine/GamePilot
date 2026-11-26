@@ -2,11 +2,13 @@ module M = Menu_input
 module P = Ace_presets
 module W = Frlg_readers.Pc_box_screen
 
+type wallpaper_read = No_box_screen | Shows of W.wallpaper option
+
 type game_steps = {
   open_move_pokemon : unit -> unit;
   press : Wire.button -> unit;
   read_title : string list -> string option;
-  read_wallpaper : unit -> W.wallpaper option;
+  read_wallpaper : unit -> wallpaper_read;
   slot_empty : unit -> bool option;
   ace_at_hand : unit -> bool;
   name_title : others:string list -> string -> unit;
@@ -53,16 +55,33 @@ let wallpaper_shown = function
   | Some w -> "the " ^ W.wallpaper_name w ^ " wallpaper"
   | None -> "none of the new game's wallpapers (Forest, City, Desert, Savanna)"
 
+(* The bar read, once more when no box screen showed (no frame in time, or a
+   frame between two screens). *)
+let read_wallpaper steps =
+  match steps.read_wallpaper () with
+  | No_box_screen -> steps.read_wallpaper ()
+  | Shows _ as read -> read
+
+let wrong_wallpaper b shown =
+  let want = W.wallpaper_name (W.default_wallpaper b) in
+  M.fail "ace_box_wallpaper"
+    (Printf.sprintf
+       "Box %d shows %s, not its default %s: set it back to %s (WALLPAPER on \
+        the box title's menu) before the code is entered"
+       b (wallpaper_shown shown) want want)
+
+let no_box_screen b =
+  M.fail "ace_box_unread"
+    (Printf.sprintf
+       "Box %d's wallpaper was not read: the box screen did not show, twice" b)
+
 (* Box [b] must show its new game's wallpaper: one the player changed fails,
    since the boxes are counted by it. *)
-let check_wallpaper b shown =
-  let want = W.wallpaper_name (W.default_wallpaper b) in
-  if shown <> Some (W.default_wallpaper b) then
-    M.fail "ace_box_wallpaper"
-      (Printf.sprintf
-         "Box %d shows %s, not its default %s: set it back to %s (WALLPAPER on \
-          the box title's menu) before the code is entered"
-         b (wallpaper_shown shown) want want)
+let check_wallpaper b = function
+  | No_box_screen -> no_box_screen b
+  | Shows shown when shown <> Some (W.default_wallpaper b) ->
+      wrong_wallpaper b shown
+  | Shows _ -> ()
 
 (* With the hand on the title: the box screen opened, the title shown, Box 1
    found, by its name and its wallpaper. *)
@@ -70,7 +89,7 @@ let open_at_box1 steps t =
   steps.open_move_pokemon ();
   steps.press Wire.Up;
   to_box1 steps t P.boxes;
-  check_wallpaper 1 (steps.read_wallpaper ())
+  check_wallpaper 1 (read_wallpaper steps)
 
 let before b = if b = 1 then P.boxes else b - 1
 
@@ -91,7 +110,7 @@ let dropped t b title shown =
   match title with
   | Some name when still_before t b name -> true
   | Some name when reached t b name -> false
-  | _ -> shown = Some (W.default_wallpaper (before b))
+  | _ -> shown = Shows (Some (W.default_wallpaper (before b)))
 
 let scroll_tries = 3
 
@@ -102,7 +121,7 @@ let scroll_tries = 3
 let rec next_box steps t b tries =
   steps.press Wire.Right;
   let title = steps.read_title (all_names t) in
-  let shown = steps.read_wallpaper () in
+  let shown = read_wallpaper steps in
   if dropped t b title shown then (
     if tries = 0 then
       M.fail "ace_box_lost" (Printf.sprintf "RIGHT did not reach Box %d" b);
@@ -218,6 +237,18 @@ let enter_code steps ~log t item =
   wrap_to_box1 steps t (Some (P.box_name item 1));
   steps.close ()
 
+(* With the hand on the title, the PKMN DATA panel shows no Pokémon, so
+   Pc_screen.box_screen_shown reads. *)
+let title_bar m =
+  if Frlg_readers.Pc_screen.box_screen_shown m then Some (W.title_wallpaper m)
+  else None
+
+let screen_wallpaper () =
+  Effects.with_probes Frlg_readers.Pc_screen.probes (fun () ->
+      Option.fold ~none:No_box_screen
+        ~some:(fun shown -> Shows shown)
+        (Ace_trigger.box_reading title_bar))
+
 let screen_game_steps ~log =
   let box = Ace_trigger.screen_game_steps ~log in
   let rename = Box_rename.screen_game_steps ~log in
@@ -225,7 +256,7 @@ let screen_game_steps ~log =
     open_move_pokemon = box.open_move_pokemon;
     press = box.press;
     read_title = box.read_title;
-    read_wallpaper = (fun () -> Ace_trigger.box_reading W.title_wallpaper);
+    read_wallpaper = screen_wallpaper;
     slot_empty = box.slot_empty;
     ace_at_hand = box.ace_at_hand;
     name_title = Box_rename.name_on_title rename ~log;
