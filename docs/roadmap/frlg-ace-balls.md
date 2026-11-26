@@ -17,7 +17,7 @@ Runner") is the plan to carry over:
   check the game still answers and the expected change happened before saving again; on a mismatch,
   stop without saving.
 - The exact payloads for the Switch release must be verified against its memory layout before any
-  preset ships (the plan says so; none is verified yet).
+  preset ships (the plan says so). The mGBA payloads are in `docs/design/FRLG-ACE-Execution.md`.
 
 Track 1A of the same plan (Mail Glitch Activation) is what GamePilot already ported as 01-celadon-setup..08-activate-and-verify.
 How the Mail Glitch leads to ACE is in the
@@ -41,9 +41,16 @@ How the Mail Glitch leads to ACE is in the
 
 ## Open questions
 
-- Which ACE route and payloads? Nothing is verified for the Switch release yet; mGBA can verify a
-  payload's memory effect directly before the Switch is tried.
+- Which ACE route and payloads? Settled for English FireRed 1.1 on mGBA
+  (`docs/design/FRLG-ACE-Execution.md`): pomeg-letterbombers' Post-E4 route (species 0x0351, done
+  by `frlg.ace_setup`) and Sleipnir17's "Get any item" box names with the BIOS-less exit, one
+  execution per item into the PC's item storage, then withdrawn to the bag. Proven on mGBA from
+  memory for Master Ball, Luxury Ball, Rare Candy, Max Repel and Escape Rope (x999 each); the
+  Switch release is still unverified (its emulator needs adjusted names, per the pomeg FAQ).
+- Money and coins have no code in that list: a new code, or dropped from bag prep?
+- One checkpoint per item or one per preset? The design proposes one per item.
 - Why ACE rather than more `duplicate_item` rounds (one item per round and one Retro Mail)? ACE gives
   a full stack at once and can make items that cannot be bought; duplication needs one held item to
   start from.
-- How many Luxury Balls: A4's legendary plan asks for 50 per legendary by default.
+- How many Luxury Balls: A4's legendary plan asks for 50 per legendary by default; the preset makes
+  a full stack of 999.
