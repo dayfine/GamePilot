@@ -14,7 +14,7 @@ Each page ends with "How it works", for developers: the ported files, the mechan
 | [Sevii Story](frlg.sevii_story.md) | `frlg.sevii_story` | mGBA | Plays the Sevii Islands story after the Cinnabar Gym. |
 | [Dex Collection](frlg.dex_collection.md) | `frlg.dex_collection` | mGBA | Catches Pokemon the Pokedex lacks, toward the National Pokedex. |
 | [Wild RNG](frlg.wild_rng.md) | `frlg.wild_rng` | mGBA | Catches a chosen shiny wild Pokemon by timing the game's random numbers. |
-| [AutoStory](plza.autostory.md) | `plza.autostory` | the Switch | Plays the story; for now from the new game's Confirm Choices through Main Mission 01 (checkpoints 01.00b to 01.03). |
+| [AutoStory](plza.autostory.md) | `plza.autostory` | the Switch | Plays the story; for now from the new game's Confirm Choices to Main Mission 01 (checkpoints 01.00b and 01.01). |
 <!-- /generated -->
 
 The Mail Glitch has a second page for its last checkpoint:

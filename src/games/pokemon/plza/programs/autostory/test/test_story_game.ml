@@ -237,18 +237,10 @@ let outcome checkpoint screen =
     | Error f -> Failure.to_string f),
     c )
 
-(* Whether [part] is in [line]. *)
-let contains part line =
-  let n = String.length part in
-  let rec at i =
-    i + n <= String.length line && (String.sub line i n = part || at (i + 1))
-  in
-  at 0
-
-(* Whether a line of the run on [screen] has [part]. *)
 let logged checkpoint screen part () =
   let _, c = outcome checkpoint screen in
-  string_of_bool (List.exists (contains part) (C.lines c))
+  string_of_bool
+    (List.exists (fun line -> Strings.Contains.substring line part) (C.lines c))
 
 (* The events the run on [screen] skipped, by their skip_if. *)
 let skipped checkpoint screen () =
@@ -260,7 +252,9 @@ let skipped checkpoint screen () =
   in
   String.concat " "
     (List.filter_map
-       (fun line -> if contains ": skipped (" line then event line else None)
+       (fun line ->
+         if Strings.Contains.substring line ": skipped (" then event line
+         else None)
        (C.lines c))
 
 (* 01.03's battle jump: the walk ends on the battle HUD. *)

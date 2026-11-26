@@ -8,6 +8,7 @@
   gamepilot.wire
   gamepilot.effects
   gamepilot.table_test
+  gamepilot.strings
   gamepilot.plza_walk
   gamepilot.plza_story
   plza_fake_console

@@ -25,7 +25,9 @@ let timed run ~default steps (event : Plan.event) (args : Json_field.obj) =
   | _ -> bad_args event "the only arg is timeout_ms, a whole number of ms"
 
 (* The platform's hint fades after a few seconds idle: a start that does not
-   see it reloads the latest autosave, where it shows fresh, and looks again. *)
+   see it reloads the latest autosave, where it shows fresh, and looks again.
+   Ours: the fork starts 01.01 right after the opening or a reload and never
+   needed it (console B, 2026-11-25: 01.01 started a minute after 01.00b). *)
 let platform_or_reload ~reload steps ~timeout_ms =
   match Platform_wait.wait_for_platform steps ~timeout_ms with
   | Error { code = "platform_not_seen"; _ } ->
@@ -64,7 +66,7 @@ let scene_to_battle steps =
   Scene_machine.run steps "scene"
     { Scene_machine.default with stop_at_battle = true }
 
-(* The story's own actions, 01.00b's to 01.03's so far. *)
+(* The story's own actions, by the name a plan gives each. *)
 let story_actions ~reload ~jump =
   [
     ("confirm_new_game", no_args New_game_confirm.run);
@@ -85,6 +87,9 @@ let game_actions ~reload ~jump steps =
     (fun (name, action) -> (name, action steps))
     (story_actions ~reload ~jump)
 
+(* The engine's scene: its action "end_on_black_fade" for the fork's scene
+   ending on a black fade, "button_b" for its scene pressing B (B on text and
+   cutscenes, 120 s). *)
 let scene ~jump steps (event : Plan.event) =
   let run = run_scene ~jump steps event in
   match event.way with
@@ -104,6 +109,10 @@ let builtin ~jump steps (event : Plan.event) =
         (Failure.cause ~repeats:true "no_handler"
            (event.id ^ ": PLZA runs no talk, answer or save event"))
 
+(* The game's walk, walked rather than run before 03.03 (as
+   PokemonLZA_AutoStory.cpp walks them, before dash is unlocked). The fork's
+   starter option (Totodile's or Tepig's legs in place of the plan's) is not
+   ported: 01.03's plan walks to Chikorita, the fork's default. *)
 let walk steps ~checkpoint_id ~jump (event : Plan.event)
     (own : Plza_rules.Action.t) =
   let walk_steps = Steps.walk_game_steps steps in
