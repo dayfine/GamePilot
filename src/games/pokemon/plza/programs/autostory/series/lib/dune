@@ -13,6 +13,7 @@
   gamepilot.engine_run
   gamepilot.engine_series
   gamepilot.run_flags
+  gamepilot.run_options
   gamepilot.plza_readers
   gamepilot.plza_story
   gamepilot.plza_engine

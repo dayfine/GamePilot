@@ -26,6 +26,7 @@ type t = {
   backends : backend list;
   viewport : viewport;
   rules : rules;
+  options : Run_options.decl list;
 }
 
 (* FireRed's tile on HOME: its orange background and Charizard, 0.41 of the
@@ -113,6 +114,7 @@ let frlg_mail_glitch =
     backends = [ Mgba; Switch ];
     viewport = Nso_gba;
     rules = Pokemon_grid;
+    options = [];
   }
 
 let frlg_start_menu_poc =
@@ -128,6 +130,7 @@ let frlg_start_menu_poc =
     backends = [ Mgba ];
     viewport = Nso_gba;
     rules = Pokemon_grid;
+    options = [];
   }
 
 let frlg_team_training =
@@ -142,6 +145,7 @@ let frlg_team_training =
     backends = [ Mgba; Switch ];
     viewport = Nso_gba;
     rules = Pokemon_grid;
+    options = [];
   }
 
 let frlg_supplies =
@@ -157,6 +161,7 @@ let frlg_supplies =
     backends = [ Mgba; Switch ];
     viewport = Nso_gba;
     rules = Pokemon_grid;
+    options = [];
   }
 
 let frlg_sevii_story =
@@ -171,6 +176,7 @@ let frlg_sevii_story =
     backends = [ Mgba ];
     viewport = Nso_gba;
     rules = Pokemon_grid;
+    options = [];
   }
 
 let frlg_ace_setup =
@@ -187,6 +193,7 @@ let frlg_ace_setup =
     backends = [ Mgba ];
     viewport = Nso_gba;
     rules = Pokemon_grid;
+    options = [];
   }
 
 let frlg_dex_collection =
@@ -202,6 +209,7 @@ let frlg_dex_collection =
     backends = [ Mgba ];
     viewport = Nso_gba;
     rules = Pokemon_grid;
+    options = [];
   }
 
 let frlg_wild_rng =
@@ -217,6 +225,7 @@ let frlg_wild_rng =
     backends = [ Mgba ];
     viewport = Nso_gba;
     rules = Pokemon_grid;
+    options = [];
   }
 
 let plza_autostory =
@@ -231,6 +240,7 @@ let plza_autostory =
     backends = [ Switch ];
     viewport = Native;
     rules = Plza_story;
+    options = [];
   }
 
 let all =
@@ -302,6 +312,10 @@ let check_viewport program given =
   | Some p, None -> Ok (Some (viewport_name p.viewport))
   | Some p, Some v when v = viewport_name p.viewport -> Ok (Some v)
   | Some p, Some v -> Error (viewport_mismatch p v)
+
+let check_options program given =
+  let decls = Option.fold ~none:[] ~some:(fun p -> p.options) program in
+  Run_options.check decls given
 
 let run_fields p =
   [

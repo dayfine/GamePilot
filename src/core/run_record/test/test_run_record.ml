@@ -7,8 +7,8 @@ module R = Run_record
 let case name input expectation = { Table_test.name; input; expectation }
 let mail_glitch = [ ("game", "frlg"); ("program", "frlg.mail_glitch") ]
 
-let info kind ~program ~from_id ~to_id ~backend : R.info =
-  { kind; program; from_id; to_id; backend }
+let info ?(options = []) kind ~program ~from_id ~to_id ~backend : R.info =
+  { kind; program; from_id; to_id; backend; options }
 
 let run_of info ~name ~checkpoint ~mode : R.run =
   {
@@ -44,6 +44,15 @@ let paths =
         ~name:"r" ~checkpoint:"mg-02" ~mode:"verification",
       fail,
       {|{"run":"r","kind":"checkpoints","game":"frlg","program":"frlg.mail_glitch","from":"mg-01","to":"mg-03","checkpoint":"mg-02","backend":"mgba","mode":"verification","started_ms":1000,"ended_ms":2000,"result":"fail","at":"#2 talk","reason":"no_text"}|}
+    );
+    ( "a run given the program's options",
+      run_of
+        (info Checkpoints ~program:mail_glitch ~from_id:"ac-01" ~to_id:"ac-02"
+           ~backend:"mgba"
+           ~options:[ ("item", "master-ball"); ("withdraw", "50") ])
+        ~name:"r" ~checkpoint:"ac-01" ~mode:"testing",
+      None,
+      {|{"run":"r","kind":"checkpoints","game":"frlg","program":"frlg.mail_glitch","from":"ac-01","to":"ac-02","checkpoint":"ac-01","backend":"mgba","options":{"item":"master-ball","withdraw":"50"},"mode":"testing","started_ms":1000}|}
     );
     ( "attempt 2 of 4 of a run with retries, failed",
       {

@@ -95,4 +95,5 @@
   gamepilot.frlg_overworld
   gamepilot.frlg_actions
   gamepilot.frlg_battle
+  gamepilot.run_options
   frlg_overworld_fixtures))

@@ -3,7 +3,7 @@
    The program registry (Program_registry) by game and group, as PA/CC's
    program list shows it: each program's id, name, backends, its Switch game
    picture (the daemon's --viewport), description and
-   page, and for a program with checkpoints its checkpoint ids and what its
+   page, the keys its --options take, and for a program with checkpoints its checkpoint ids and what its
    chain needs of the save, as its rules say it (Checkpoint_families: free
    party slots, field moves).
 
@@ -37,13 +37,17 @@ let checkpoint_lines (p : R.t) =
       let family = Checkpoint_families.of_program (Some p) in
       plan_lines ~needs:family.chain_needs ~compare:family.guide.order path dir
 
+(* Each key the program takes in --options, with its values. *)
+let option_lines (p : R.t) =
+  List.map (fun d -> "--options " ^ Run_options.describe d) p.options
+
 let show (p : R.t) =
   Printf.printf "    %s  %s  [%s]  viewport %s\n" p.id p.name
     (String.concat ", " (List.map R.backend_name p.backends))
     (R.viewport_name p.viewport);
   List.iter
     (fun line -> print_endline ("      " ^ line))
-    (p.description :: ("doc: " ^ p.doc) :: checkpoint_lines p)
+    ((p.description :: ("doc: " ^ p.doc) :: option_lines p) @ checkpoint_lines p)
 
 (* Each game and each group once, above its programs. *)
 let show_under (game, group) (p : R.t) =

@@ -24,4 +24,5 @@
   gamepilot.frlg_actions
   gamepilot.frlg_readers
   gamepilot.frlg_checkpoints
+  gamepilot.run_options
   unix))

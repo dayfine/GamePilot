@@ -40,6 +40,7 @@ The blocks:
 - `needs [RANGE]`: what the save needs for the chain, from the pre-flight.
 - `preflight [RANGE]`: what the pre-flight checks before each checkpoint.
 - `commands [RANGE]`: the commands that run it.
+- `options`: the keys its `--options` take, from its descriptor (or that it takes none).
 
 RANGE is `FROM..TO` or one checkpoint id; without it, every checkpoint. A new page starts from a
 skeleton whose `TODO(guide)` the check refuses until the prose is written.
@@ -74,6 +75,19 @@ A descriptor (`Program_registry.t`) gives:
 - `rules`: the rules its checkpoint plans are written over, which pick the library that loads and
   runs them (`Pokemon_grid`: the Pokémon grid rules, FRLG's runner). `src/bin/checkpoint_families.ml`
   is the one place in `src/bin` that picks a family's code from it.
+- `options`: the choices a run takes as `gamepilot run ID --options KEY=VALUE` (one pair each,
+  repeatable), each a `Run_options.decl`: its key, its values (`One_of` a list of words,
+  `Int_range` low to high, or `Text`), whether it is `Required`, `Optional` or has a `Default`,
+  and one line of what it chooses. `[]`: none.
+
+A run's options are checked against the declaration before anything is pressed: an unknown key
+(the keys it takes are printed), a value its key refuses or a required key left out stops the
+run. `gamepilot programs` and the `options` block list them.
+
+The options are written into run.json (`"options": {"item": "master-ball"}`) and the series
+record, shown in the watch page's run header, and handed to the program's game actions, which
+look them up (FRLG: `Checkpoint_game.config.program_options`, read with `Run_options.find` or
+`Run_options.int`).
 
 The lab console's game is `$GAMEPILOT_LAB_GAME`, else the one game with Switch HOME data. A game
 may have no program yet (PLZA, for delete-save).

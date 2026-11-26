@@ -85,6 +85,22 @@ let lab_game_text id =
   | Ok (g, home) -> g.game_id ^ " " ^ home.title ^ " " ^ home.lab_panel
   | Error e -> "error: " ^ e
 
+(* Every program whose options declaration has an error of its own. *)
+let bad_options () =
+  List.filter_map
+    (fun (p : R.t) ->
+      match Run_options.check_decls p.options with
+      | Ok () -> None
+      | Error e -> Some (p.id ^ ": " ^ e))
+    R.all
+  |> String.concat ", "
+
+(* A run's --options for [program], as gamepilot run reads them. *)
+let options_for program given =
+  match R.check_options (Option.bind program R.find) given with
+  | Ok t -> "ok " ^ Run_options.to_text t
+  | Error e -> "error: " ^ e
+
 let id_of = function Some (p : R.t) -> p.id | None -> "none"
 
 let () =
@@ -161,6 +177,16 @@ let () =
       case "viewport: no program, no flag"
         (fun () -> viewport_for None None)
         "default";
+      case "every options declaration is sound" bad_options "";
+      case "options: none given to a program that takes none"
+        (fun () -> options_for (Some "frlg.mail_glitch") [])
+        "ok ";
+      case "options: refused by a program that takes none"
+        (fun () -> options_for (Some "frlg.mail_glitch") [ ("item", "x") ])
+        "error: --options item: this program takes no options";
+      case "options: refused for a plan folder no program registers"
+        (fun () -> options_for None [ ("item", "x") ])
+        "error: --options item: this program takes no options";
       case "run.json fields"
         (fun () ->
           Option.get (R.find "frlg.mail_glitch")
