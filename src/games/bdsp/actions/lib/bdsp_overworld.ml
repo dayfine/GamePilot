@@ -104,16 +104,20 @@ let nudge_and_enter ~dir ~nudge_dir ~nudge_ms =
     (button_of_dir nudge_dir);
   cross_door ~dir ~hold_ms:door_retry_hold_ms
 
+let rec try_nudges ~dir = function
+  | [] -> Error "timed out waiting for doorway fade to black"
+  | nudge_dir :: rest -> (
+      match nudge_and_enter ~dir ~nudge_dir ~nudge_ms:nudge_step_ms with
+      | Ok () -> Ok ()
+      | Error _ -> try_nudges ~dir rest)
+
 let enter_with_nudge ~log ~dir ~hold_ms =
   match cross_door ~dir ~hold_ms with
   | Ok () -> Ok ()
-  | Error _ -> (
+  | Error _ ->
       let d1, d2 = perp_dirs dir in
-      log "Doorway not centered; nudging 1 step sideways to find doorway...";
-      match nudge_and_enter ~dir ~nudge_dir:d1 ~nudge_ms:nudge_step_ms with
-      | Ok () -> Ok ()
-      | Error _ ->
-          nudge_and_enter ~dir ~nudge_dir:d2 ~nudge_ms:(2 * nudge_step_ms))
+      log "Doorway not centered; stepping sideways 1 tile at a time...";
+      try_nudges ~dir [ d1; d2; d2 ]
 
 let bounce_doorway ~log ~picture ~(anchor : Corridor_nav.doorway_anchor)
     ?(hold_ms = default_door_hold_ms) () =
