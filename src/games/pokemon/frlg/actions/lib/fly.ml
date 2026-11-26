@@ -59,7 +59,7 @@ let left_departure before =
 let rec judge_landing ~log ~deadline plan before =
   let town = plan.town.Fly_towns.name in
   match
-    Scene_looks.settle Talk ~label:("fly to " ^ town) ~battle_ends:false ~log
+    Scene_readings.settle Talk ~label:("fly to " ^ town) ~battle_ends:false ~log
   with
   | Error _ as e -> e
   | Ok () when left_departure before ->

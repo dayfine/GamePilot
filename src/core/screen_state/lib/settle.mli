@@ -33,7 +33,7 @@ type rule = {
 val rule : kind -> rule
 (** The rule of [kind]. *)
 
-type look = {
+type reading = {
   facts : Facts.t;
   at_ms : float;  (** when it was taken, on the daemon clock *)
   since_ms : float option;
@@ -43,8 +43,8 @@ type look = {
 }
 
 type game_steps = {
-  look : unit -> look;  (** the screen now *)
-  press : Talk_over.press -> wait_ms:int -> look option;
+  read : unit -> reading;  (** the screen now *)
+  press : Talk_over.press -> wait_ms:int -> reading option;
       (** answers a look, then waits [wait_ms]; a game that only watches just
           waits. Returns the first frame of the wait that showed a warp
           ({!Facts.shows_warp}), if one did: a whole warp (fade out, black, fade
@@ -63,7 +63,7 @@ type ending =
   | Battle of string  (** a battle [flee_battle] did not flee *)
   | Timed_out of string  (** the cap: the step fails; the string says why *)
 
-val run : ?seen:look -> rule -> label:string -> game_steps -> ending
+val run : ?seen:reading -> rule -> label:string -> game_steps -> ending
 (** Looks and presses until [rule] says the game has settled, a battle ends it,
     or the cap. [label] names the step in the log and the failure. [seen]: a
     frame before the first look that showed a warp, watched while the press that

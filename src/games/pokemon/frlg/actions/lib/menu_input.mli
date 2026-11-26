@@ -13,8 +13,8 @@ val raise_error : (unit, Pokemon_engine.Failure.cause) result -> unit
 (** Raises {!Action_failed} with an [Error]'s cause; [Ok] does nothing. *)
 
 val probes : Wire.probe_spec list
-(** What the menu actions read: {!Scene_looks.probes}, the party and a member's
-    menu, the bag and the money box. *)
+(** What the menu actions read: {!Scene_readings.probes}, the party and a
+    member's menu, the bag and the money box. *)
 
 val run : (unit -> unit) -> (unit, Pokemon_engine.Failure.cause) result
 (** Runs the body with {!probes} subscribed; [Error] with the cause it failed
@@ -59,8 +59,8 @@ val await_screen :
 *)
 
 val settle_back : label:string -> log:(string -> unit) -> unit
-(** The talk settle ({!Scene_looks.settle}) back to a quiet overworld: B through
-    the rest of a menu's or a talk's text. Fails as its cause. *)
+(** The talk settle ({!Scene_readings.settle}) back to a quiet overworld: B
+    through the rest of a menu's or a talk's text. Fails as its cause. *)
 
 val fade_in_timeout_ms : int
 (** How long {!await_fade_in} waits: 5 s. *)
@@ -78,7 +78,8 @@ val close_to_overworld : label:string -> log:(string -> unit) -> unit
     rule closes it ({!Screen_state.Settle.rule}): B until the overworld shows
     with none of these menus, still for 0.5 s; not the talk's 5 s quiet, as no
     text comes after a menu. No B and no quiet while a menu's fade-in is still
-    coming up ([await_fade_in] of {!Scene_looks.settle}). Fails as its cause. *)
+    coming up ([await_fade_in] of {!Scene_readings.settle}). Fails as its cause.
+*)
 
 val max_pages : int
 (** A presses {!answer_yes} gives the pages before the question must show: 8. *)

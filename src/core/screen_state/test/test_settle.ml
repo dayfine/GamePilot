@@ -80,7 +80,7 @@ let run_pressing rule ?(flee = true) script =
   let next = next_of script in
   let fake_game_steps : Settle.game_steps =
     {
-      look = (fun () -> { facts = next (); at_ms = !now; since_ms = None });
+      read = (fun () -> { facts = next (); at_ms = !now; since_ms = None });
       press =
         (fun p ~wait_ms ->
           Buffer.add_char presses (match p with Next -> 'N' | B -> 'B');
@@ -170,7 +170,12 @@ let run_watching (rule : Settle.rule) script =
     true
   in
   let fake_game_steps : Settle.game_steps =
-    { look; press = (fun _ ~wait_ms:_ -> None); flee_battle; log = ignore }
+    {
+      read = look;
+      press = (fun _ ~wait_ms:_ -> None);
+      flee_battle;
+      log = ignore;
+    }
   in
   let ending = Settle.run rule ~label:"Step" fake_game_steps in
   Printf.sprintf "%s after %d looks, %d flees" (ending_text ending) !looks

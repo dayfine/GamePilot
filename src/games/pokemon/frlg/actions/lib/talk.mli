@@ -1,6 +1,6 @@
 (** Talking and scenes on FireRed: A to the person or thing the player faces,
-    then the talk settle ({!Scene_looks.settle}); a scene is the settle alone.
-    The fork's AutoStory [talk] and [scene] events. *)
+    then the talk settle ({!Scene_readings.settle}); a scene is the settle
+    alone. The fork's AutoStory [talk] and [scene] events. *)
 
 val talk :
   log:(string -> unit) -> unit -> (unit, Pokemon_engine.Failure.cause) result

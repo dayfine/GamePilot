@@ -137,7 +137,7 @@ let settle_warp ~log ~item before =
     Option.map (fun before -> Scene_signature.left ~before) before
   in
   match
-    Scene_looks.settle After_warp ?arrived ~start:[ use_a ]
+    Scene_readings.settle After_warp ?arrived ~start:[ use_a ]
       ~label:("use " ^ item) ~battle_ends:false ~log
   with
   | Ok () -> ()

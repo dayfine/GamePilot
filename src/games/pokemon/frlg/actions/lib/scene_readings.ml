@@ -42,7 +42,7 @@ let facts ~menu_open ~arrived ~fade_in ~last m : Screen_state.Facts.t =
 let see_fade_in fade_in m =
   Option.iter (fun w -> Fade_in.watch_frame w m) fade_in
 
-let look ~menu_open ~arrived ~fade_in last () : Screen_state.Settle.look =
+let look ~menu_open ~arrived ~fade_in last () : Screen_state.Settle.reading =
   match Effects.read () with
   | None ->
       {
@@ -58,7 +58,7 @@ let look ~menu_open ~arrived ~fade_in last () : Screen_state.Settle.look =
 
 let press_b () = Wire.press ~hold_ms:press_hold_ms ~cooldown_ms:0 [ Wire.B ]
 
-let warp_look ~arrived m : Screen_state.Settle.look option =
+let warp_reading ~arrived m : Screen_state.Settle.reading option =
   let seen = Screen_facts.of_measurements m in
   let facts = { seen with arrived = arrived_at ~arrived seen m } in
   if Screen_state.Facts.shows_warp facts then
@@ -71,7 +71,7 @@ let watch ?fade_in ~arrived commands =
   let seen = ref None in
   let note m =
     see_fade_in fade_in m;
-    if Option.is_none !seen then seen := warp_look ~arrived m;
+    if Option.is_none !seen then seen := warp_reading ~arrived m;
     false
   in
   ignore (Effects.race commands ~stop:note : Effects.raced);
@@ -90,7 +90,7 @@ let game_steps ?(menu_open = never) ?(arrived = never) ?(await_fade_in = false)
   let last = ref None in
   let fade_in = if await_fade_in then Some (Fade_in.watch ()) else None in
   {
-    look = look ~menu_open ~arrived ~fade_in last;
+    read = look ~menu_open ~arrived ~fade_in last;
     press = press ~arrived ~fade_in;
     flee_battle;
     log;
