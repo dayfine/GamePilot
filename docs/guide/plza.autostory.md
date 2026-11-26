@@ -101,7 +101,8 @@ Reloads:
 - A checkpoint that follows a passing one starts where it ended, with no reload; 03.04 always
   reloads when it follows another, since its walk needs the reload's facing.
 - A checkpoint found off its start (below) reloads once and checks its start again, then stops if
-  it is still off (`chain_off_start`, or `rocks_not_left` in 03.08); the log says it reloaded.
+  it is still off (`chain_off_start`; in 03.08 also when the catch finds the player off Taunie's
+  rocks); the log says it reloaded.
 - 03.08 and 03.08a reload and try again up to twice when they come up short (`short_of_species`):
   the reload respawns the zone, so a run of bad spawns is luck, not a bug.
 

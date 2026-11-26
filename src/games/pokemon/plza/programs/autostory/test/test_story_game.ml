@@ -1601,9 +1601,10 @@ let cases_03_07_to_03_11 =
 
 let cases_03_08_to_03_09 =
   [
-    case "03.08 with no map pin: rocks_not_left" (result "03.08" party)
-      "03.08 event 1 (catch_more_species): rocks_not_left: the pin at the \
-       start was not read, not within 8 of (476, 224)";
+    case "03.08 with no map pin: off its start, the rocks not left"
+      (result "03.08" party)
+      "03.08 event 1 (catch_more_species): chain_off_start: rocks not left: \
+       the pin at the start was not read, not within 8 of (476, 224)";
     case "03.08 with no map pin: only the map's + and B pressed"
       (inputs_sent "03.08" party)
       "2";
@@ -1649,9 +1650,10 @@ let cases_03_08_to_03_09 =
     case "03.08a retries spawn luck: 2"
       (fun () -> string_of_int (plan "03.08a").retries)
       "2";
-    case "03.08a with no map pin: rocks_not_left" (result "03.08a" party)
-      "03.08a event 1 (catch_fifth_species): rocks_not_left: the pin at the \
-       start was not read, not within 8 of (476, 224)";
+    case "03.08a with no map pin: off its start, the rocks not left"
+      (result "03.08a" party)
+      "03.08a event 1 (catch_fifth_species): chain_off_start: rocks not left: \
+       the pin at the start was not read, not within 8 of (476, 224)";
     case "03.08b: down the gate's line to the A prompt, out, checked"
       (result "03.08b" leave_zone)
       "passed";
