@@ -46,7 +46,7 @@ home page), "for all non-Japanese versions". It writes one item into **slot 30 o
 storage** with quantity 999 (or 65535); the game moves it up to the first free slot the next time
 the item storage opens. The code (r12 = slot 30's address - 0xC4, from the PC):
 
-| Box | Name | What it does |
+| Box | Name (as Sleipnir writes it) | What it does |
 |---|---|---|
 | 1 | `xFUnDRRn` | `sbc r12, pc, #0xEC`; `sbc r12, r12, #0xBE00`: r12 from the PC (`x`, not `z`: the variant for accurate emulators and consoles) |
 | 2 | `……o/E!n ` | `movs r11, #0xFF`; `adc r11, r11, #0x2E8`: r11 = 999 |
@@ -59,11 +59,14 @@ the item storage opens. The code (r12 = slot 30's address - 0xC4, from the PC):
 | 9 | `’BRm    ` | `strh r11, [r12, #0xC4]`: the item |
 | 10 | ` FoHIoor` | exit: `bic r0, #0xFF`; `mvn r12, ...` |
 | 11 | `xn` | exit: `rsc pc, r12, #0x398` (to `BX LR` at `0x08000398`) |
-| 12-14 | anything | not reached |
+| 12-14 | `A` | not reached; named `A` so every box has a known name |
 
 `‘` is the left single quote, `’` the right one (the keyboard's `'`); `…` is one character.
-Spaces are part of the names: every name but Box 11's is exactly 8 characters. Boxes 1-4 and 9-11
-are the same for every item; Boxes 5-8 carry the item's id (Sleipnir's digit tables).
+Sleipnir writes the names with trailing spaces to 8 characters, but they are not needed: typed
+without them (Box 4 `E♀BRm`, Box 8 `EI/!n`, and so on), the code still works (see "Verified on
+mGBA"). The program types them without trailing spaces. Box 3's inner space (`EE …l‘`) stays.
+Boxes 1-4 and 9-11 are the same for every item; Boxes 5-8 carry the item's id (Sleipnir's digit
+tables).
 
 **Bag prep**, the boxes that change (Boxes 5-8):
 
@@ -76,8 +79,23 @@ are the same for every item; Boxes 5-8 carry the item's id (Sleipnir's digit tab
 | Escape Rope | 0x0055 | `K……o    ` | `EEEOD!n ` | `EEIB!n  ` | `EI/!n   ` |
 
 Every character is on the naming screen's keyboard (pret `naming_screen.c`: letters on the upper
-and lower pages, space on both; `…`, `‘`, `'`, `♀`, `/`, `!` on the symbols page). The naming screen
-saves all 9 bytes, padded with `0xFF` (`SaveInputText`), and ignores a name of only spaces.
+and lower pages, space on both; `…`, `‘`, `'`, `♀`, `/`, `!` on the symbols page).
+
+**What a confirmed box name leaves in memory** (pret pokefirered at `ce6406d`):
+
+- The box's naming screen gets `gPokemonStoragePtr->boxNames[box]` as its destination
+  (`pokemon_storage_system.c` 118-121 `GetBoxNamePtr`; `pokemon_storage_system_tasks.c` 2075
+  `DoNamingScreen(NAMING_SCREEN_BOX, GetBoxNamePtr(StorageGetCurrentBox()), ...)`).
+- The entry buffer starts as all `EOS` (`naming_screen.c` 494 `memset(sNamingScreen->textBuffer,
+  EOS, ...)`); the box template does not copy the old name in (2096 `.copyExistingString = FALSE`,
+  2097 `.maxChars = BOX_NAME_LENGTH`). Typing fills it from the front (1845-1849 `BufferCharacter`);
+  backspace writes `EOS` back (1817).
+- On confirm, `SaveInputText` (1851-1864) copies `maxChars + 1` = 9 bytes with `StringCopyN`, a plain
+  byte copy that does not stop at `EOS` (`string_util.c` 112-120). It copies only if some character
+  is not a space or `EOS` (1856-1858): a name of only spaces leaves the old name as it was.
+
+So the bytes after the end mark are **`0xFF`, the whole 9-byte name rewritten**; nothing of the
+old name is left over.
 
 Money and coins, also in the fork plan's preset, are not in Sleipnir's list. Money is stored XORed
 with the save's key, so it needs a new code (E-Sh4rk's
@@ -98,6 +116,15 @@ results read from memory:
   BAG." (the save held one Master Ball already); 998 went in. The Poké Balls pocket then read
   Master Ball x999 (quantity XORed with the save key), the PC kept one.
 - The standard BIOS exit (`     …oa` / `…o`) reset the game on mGBA's HLE BIOS.
+- Short names (2026-11-25, Master Ball): every name with trailing spaces written without them
+  (Boxes 2-9), Boxes 12-14 named `A`, three ways: the end mark then `0xFF` fill (what the naming
+  screen leaves), the end mark then the long version's old bytes, and the long version itself. All
+  three gave MASTER BALL x999 in slot 30, and the box screen still answered after the swaps. The
+  bytes the spaces held land in filler words: they become `0xFFFFFFFF` (condition NV, never run) or
+  `BFBFFFFF`-like `svclt` words, skipped because the LT condition is false at that point, the same
+  condition the 999 variant's `mvnlt` already relies on.
+- Partner in Box 3: with MIMIEN in Box 3 slot 2 (put there in memory, not through the PC), the
+  trigger was SELECT, A on 0x0351, RIGHT, A, A, all in Box 3: MASTER BALL x999, game still running.
 
 Not verified: typing the names (the typer is not built), saving and loading after a run, the 1.0
 ROM, other languages, the Switch. Pomeg's own check code (a Bulbasaur in Box 9 slot 30) did not
@@ -108,7 +135,18 @@ appear in one memory-written run; not chased, since the item code is what the pr
 `frlg.ace`, registered in `program_registry` with backends mGBA (Switch later), plans in
 `src/games/frlg/programs/ace/plans/`.
 
-### Presets as data
+Decided in the user's review of this note (2026-11-25):
+
+- **First version**: Master Balls (about 50) and Luxury Balls (about 300). Each run makes 999 in the
+  PC's item storage and withdraws only what was asked; the rest stays in the PC.
+- **One template checkpoint pair**, run once per item, driven by program options
+  `item=<slug> withdraw=<n>`. The item must be in a vetted table; an item not in it is refused
+  before anything is pressed.
+- **Unused boxes** (12-14) are named `A`.
+- **Names are typed without trailing spaces**; the Switch warning about spaces in Boxes 4, 8 and 12
+  is moot unless a test shows spaces are needed (the mGBA test above shows they are not).
+
+### Codes and the vetted table, as data
 
 `src/games/frlg/assets/ace_presets.json`: the literal box names, so what is typed is what was
 reviewed.
@@ -120,70 +158,71 @@ reviewed.
     "get_item_999": {
       "source": "https://pastebin.com/VAgKwjwJ (Get any item), exit: pomeg FRLG FAQ",
       "games": ["firered-en-1.1"],
-      "boxes": {"1": "xFUnDRRn", "2": "……o/E!n ", "3": "EE …l‘  ", "4": "E♀BRm   ",
-                "9": "’BRm    ", "10": " FoHIoor", "11": "xn"},
+      "boxes": {"1": "xFUnDRRn", "2": "……o/E!n", "3": "EE …l‘", "4": "E♀BRm",
+                "9": "’BRm", "10": " FoHIoor", "11": "xn", "12": "A", "13": "A", "14": "A"},
       "item_boxes": [5, 6, 7, 8]
     }
   },
-  "presets": {
-    "bag-prep": [
-      {"code": "get_item_999", "item": "master-ball", "id": 1,
-       "boxes": {"5": "G……o    ", "6": "EEEJD!n ", "7": "EEIB!n  ", "8": "EI/!n   "}},
-      {"code": "get_item_999", "item": "luxury-ball", "id": 11, "boxes": {"5": "Q……o    ", "...": "..."}}
-    ]
+  "items": {
+    "master-ball": {"code": "get_item_999", "id": 1,
+                    "boxes": {"5": "G……o", "6": "EEEJD!n", "7": "EEIB!n", "8": "EI/!n"}},
+    "luxury-ball": {"code": "get_item_999", "id": 11,
+                    "boxes": {"5": "Q……o", "6": "EEEJD!n", "7": "EEIB!n", "8": "EI/!n"}}
   }
 }
 ```
 
-A unit test decodes every name through the game's character table, rebuilds the ARM words and
-checks what they store: quantity 999 at `+0xC6`, the entry's `id` at `+0xC4`, the exit words. A
-typo in the data fails the test, not the run.
+Rare Candy, Max Repel and Escape Rope (table above) are proven on mGBA too and join the table
+when wanted. A unit test decodes every name through the game's character table, rebuilds the 14 x 9
+bytes as the naming screen leaves them (`0xFF` after the end mark), and checks the ARM words: the
+quantity 999 stored at `+0xC6`, the entry's `id` at `+0xC4`, the exit words. A typo in the data
+fails the test, not the run.
 
 ### Checkpoints
 
-One checkpoint per item (proposed; the roadmap says one per preset): `01-master-balls`,
-`02-luxury-balls`, `03-rare-candies`, `04-max-repels`, `05-escape-ropes`. Each starts saved in the
-overworld below a Pokémon Center PC and ends there, saved, with the stack in the bag. One checkpoint
-per item keeps a retry to one execution and one save. Each:
+The pair, run for one item at a time (`gamepilot run frlg.ace item=luxury-ball withdraw=300`):
 
-1. Pre-flight: 0x0351 in a box outside Boxes 13 and 14 (level 100, male, the ? icon: the readers of
-   `Ace_mail.check_box_slot`); Box 13 slot 7 onward and Box 14 empty (pomeg; Sleipnir asks for
-   Boxes 13 and 14 empty); another Pokémon to swap with; the bag holds less than 999 of the item
-   and has a free slot in its pocket; the PC item storage has fewer than 30 items.
-2. Rename the boxes whose names differ from the preset (the box rename action, reading each name
-   back). The first item types Boxes 1-11; later ones only Boxes 5-8.
-3. Trigger (below).
-4. PLAYER's PC, ITEM STORAGE, WITHDRAW ITEM: the item's row shows x999; withdraw 999 minus what the
-   bag holds.
-5. Check the bag count (`Bag_items.count`), then save.
+**01-enter-code.** Starts saved in the overworld facing a Pokémon Center PC.
 
-### Trigger action
+1. Refuse an item not in the table, or `withdraw` outside 1-999.
+2. Before typing, read the boxes: Box 13 slot 7 onward and all of Box 14 empty (pomeg; Sleipnir
+   asks for Boxes 13 and 14 empty), and 0x0351 in Box 3 slot 1 (level 100, male, the ? icon: the
+   readers of `Ace_mail.check_box_slot`).
+3. Rename all 14 boxes to the code's names, skipping a box whose current name already reads right;
+   a name the reader cannot read is retyped. Each typed name is read back. On a second item only
+   Boxes 5-8 differ, so only they are typed.
+4. Save. This save, "the code save", is what a failed trigger goes back to.
 
-Pressed and checked on mGBA:
+**02-trigger.** Starts at the code save.
 
-1. Facing the PC: A through "booted up the PC", BILL's PC, "Accessed BILL's PC", "POKéMON Storage
-   System opened", then MOVE POKéMON. The box opens on the current box with the hand on slot 1.
-2. With the hand on 0x0351: SELECT (the hand turns orange: Relocate mode), A (picks it up).
-3. Move to the swap partner. On the setup save that is MIMIEN in Box 1 slot 1: UP to the box title,
-   LEFT twice (wait for each box to scroll in), DOWN, LEFT to slot 1. Input during the scroll is
-   lost, so each move waits for the screen to settle (a reader, not a count).
-4. A (swap), A (swap back). The code runs during the second swap.
-5. Put 0x0351 down in an empty slot (Box 1 slot 2), B, "Continue BOX operations?" NO.
+1. Before the PC: the item storage holds fewer than 30 items (slot 30 is where the code writes),
+   and the bag has room: what it holds plus `withdraw` is at most 999, and the pocket has a free
+   slot if the item is not in it yet.
+2. Partner: MIMIEN, moved once from Box 1 slot 1 to Box 3 slot 2 (skipped when Box 3 slot 2
+   already holds it), so the swap needs no box scrolling.
+3. MOVE POKéMON (the box opens on Box 3, hand on slot 1), SELECT (hand orange), A (holds 0x0351),
+   RIGHT, A (swap), A (swap back: the code runs here), LEFT, A (0x0351 back in slot 1; this last
+   put-down is not yet tried on mGBA).
+4. Check the game is alive: the box screen still reads and answers a move. Leave the PC.
+5. PLAYER's PC, ITEM STORAGE, WITHDRAW ITEM: the item's row reads x999. Withdraw `withdraw`.
+6. Check the bag count rose by `withdraw` (`Bag_items.count`), then save.
 
-Pomeg's FAQ: leave the PC soon after viewing 0x0351 and keep it out of Boxes 13 and 14; its long
-name also corrupts Box 13 slots 7-9 now and then.
+Any failure after the code save soft-resets (`Soft_reset`) back to it, unsaved, and stops.
+
+Notes: pomeg's FAQ says to leave the PC soon after viewing 0x0351 and keep it out of Boxes 13 and
+14; its long name also corrupts Box 13 slots 7-9 now and then, which the next run's step 2 catches.
+A second run for an item already in item storage adds a second stack of it there.
 
 ### Guardrails (from the roadmap)
 
-- Save in the overworld before the PC: the checkpoint's start.
-- Check every character and the length of each name before any press: the preset test, and again
-  at run time against the keyboard's character set.
+- Save in the overworld before the PC: 01's start, and the code save before the trigger.
+- Check every character and the length of each name before any press: the table's test, and
+  again at run time against the keyboard's character set.
 - Type and confirm each name with cursor and screen checked, then read the name back: the typer and
   the box title reader.
-- After the trigger, check the game still answers (the box screen still reads after the swaps) and
-  the expected change happened (ITEM STORAGE lists the item x999) before saving.
-- On a mismatch, stop without saving. On mGBA the start state is the backup; on the Switch, the
-  last save is.
+- After the trigger, check the game still answers and the expected change happened (ITEM STORAGE
+  lists the item x999) before saving.
+- On a mismatch, soft reset to the code save and stop.
 - The code may be called more than once in one swap (breakpoints hit the entry several times):
   every payload must give the same result if run twice. "Get any item" does: it writes the same
   slot.
@@ -192,24 +231,17 @@ name also corrupts Box 13 slots 7-9 now and then.
 
 | Reader | For | Exists? |
 |---|---|---|
-| Box title (the name on the box screen) | read each name back after renaming; tell boxes apart | no (`Pc_box` tells Box 3 by its wallpaper) |
+| Box title (the name on the box screen) | skip boxes already right; read each name back | no (`Pc_box` tells Box 3 by its wallpaper) |
+| Box slots empty (Box 13 slot 7+, Box 14) | 01's check before typing | partly (the hand and PKMN DATA, slot by slot) |
 | Hand colour (normal or orange) | Relocate mode on before A | no |
-| Hand position over a slot, and box scrolled in | moving to the swap partner | partly (`Ace_mail.check_box_slot`, `Pc_box`) |
-| PKMN DATA of 0x0351 | which Pokémon is held | yes (level, male mark) |
+| PKMN DATA of 0x0351 and of MIMIEN | what is held, what is in slot 2 | yes (level, male mark; species names) |
 | PC menu with PLAYER's PC, ITEM STORAGE menu | reaching WITHDRAW ITEM | partly (`Pc_screen` reads the PC list) |
-| Item storage list: names and x counts | the item arrived; how many | no |
+| Item storage list: names, x counts, how many rows | fewer than 30; the item arrived | no |
 | Quantity box (`xNNN`) | withdraw the right count | no |
-| Bag counts | the end check | yes (`Bag_items.count`) |
+| Bag counts | room before, the count after | yes (`Bag_items.count`) |
 
 ## Open questions
 
-1. One checkpoint per item (proposed) or one per preset (roadmap)?
-2. Money and coins: write a new code (unverified) or drop them from bag prep?
-3. The Switch: the FAQ says the rerelease's emulator mishandles spaces typed into the last three
-   characters of Boxes 4, 8 and 12 (leave them out and confirm early), and Box 4 (`E♀BRm   `) and
-   Box 8 (`EI/!n   `) end in three spaces; the exit's ROM target needs checking there. Verify on
-   the console only after mGBA runs the whole program.
-4. The swap partner: MIMIEN in Box 1 is what `frlg.ace_setup` leaves. Should the program instead
-   put 0x0351 beside another Pokémon in its own box, so no box has to scroll?
-5. Quantities: 999 of each (one full stack). A4 asks for 50 Luxury Balls per legendary, so 999 covers
-   it; enough?
+1. Money and coins: write a new code (unverified) or leave them out?
+2. The Switch: the exit jumps to a ROM address (`0x08000398`), and the rerelease's ROM is modified;
+   check it there before the first console run, after mGBA runs the whole program.

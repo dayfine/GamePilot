@@ -48,9 +48,10 @@ How the Mail Glitch leads to ACE is in the
   memory for Master Ball, Luxury Ball, Rare Candy, Max Repel and Escape Rope (x999 each); the
   Switch release is still unverified (its emulator needs adjusted names, per the pomeg FAQ).
 - Money and coins have no code in that list: a new code, or dropped from bag prep?
-- One checkpoint per item or one per preset? The design proposes one per item.
+- Checkpoints: decided in review, one template pair (enter the code, trigger) run per item with
+  options `item=<slug> withdraw=<n>` from a vetted table.
 - Why ACE rather than more `duplicate_item` rounds (one item per round and one Retro Mail)? ACE gives
   a full stack at once and can make items that cannot be bought; duplication needs one held item to
   start from.
-- How many Luxury Balls: A4's legendary plan asks for 50 per legendary by default; the preset makes
-  a full stack of 999.
+- How many: decided in review, the first version withdraws about 50 Master Balls and 300 Luxury
+  Balls from each run's 999.
