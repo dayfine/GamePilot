@@ -2,8 +2,8 @@ module H = Home_screen
 module P = Switch_presses
 
 let ( let* ) = Result.bind
-let held = Held_screen.held
-let wait_for = Held_screen.wait_for
+let held = Screen_graph.Held_screen.held
+let wait_for = Screen_graph.Held_screen.wait_for
 
 (* ConsoleSettings' defaults (NintendoSwitch_Settings.cpp). *)
 let close_game_delay_ms = 2000

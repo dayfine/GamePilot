@@ -4,6 +4,7 @@
  (libraries
   gamepilot.wire
   gamepilot.effects
+  gamepilot.screen_graph
   gamepilot.switch_home
   gamepilot.engine_run
   gamepilot.plza_readers
