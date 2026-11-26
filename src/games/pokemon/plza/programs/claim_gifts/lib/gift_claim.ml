@@ -12,20 +12,30 @@ type claim =
 
 let already_received (_ : Effects.measurements) = false
 
+(* Where a claim stopped short of its A: on the Internet gift list, which B
+   alone never leaves (each B there asks "stop receiving?" and the next one
+   cancels it), or anywhere else. *)
+type stopped = On_list | Elsewhere
+
+let elsewhere r = Result.map_error (fun e -> (e, Elsewhere)) r
+let on_list r = Result.map_error (fun e -> (e, On_list)) r
+
 (* The presses up to the claim, from the main menu. *)
 let reach ~log ~picture ~gift_name (gift : C.gift) =
   match (gift.how, gift.code, gift_name) with
   | Internet, _, Some _ ->
-      let* () = G.open_gifts ~log in
-      let* () = G.open_internet_list ~log in
-      G.choose_gift ~log
-  | Internet, _, None -> Error "no template of its name in the game's language"
+      let* () = elsewhere (G.open_gifts ~log) in
+      let* () = elsewhere (G.open_internet_list ~log) in
+      on_list (G.choose_gift ~log)
+  | Internet, _, None ->
+      Error ("no template of its name in the game's language", Elsewhere)
   | Code, Some code, _ ->
-      let* () = G.open_gifts ~log in
-      let* () = G.open_keyboard ~log in
-      G.enter_code ~log ~picture code
-  | Code, None, _ -> Error "a code gift with no code"
-  | Home, _, _ -> Error "HOME gifts are received in Pokémon HOME"
+      elsewhere
+        (let* () = G.open_gifts ~log in
+         let* () = G.open_keyboard ~log in
+         G.enter_code ~log ~picture code)
+  | Code, None, _ -> Error ("a code gift with no code", Elsewhere)
+  | Home, _, _ -> Error ("HOME gifts are received in Pokémon HOME", Elsewhere)
 
 type after = Card | Already
 
@@ -98,8 +108,9 @@ let after_claim_read ~log (gift : C.gift) =
 let claim_probed ~log ~picture ~gift_name (gift : C.gift) =
   match reach ~log ~picture ~gift_name gift with
   | Ok () -> after_claim_read ~log gift
-  | Error e ->
+  | Error (e, at) ->
       log (Printf.sprintf "Gift %s not claimed: %s." gift.id e);
+      if at = On_list then leave gift;
       ended ~log (Not_received e)
 
 let claim ~log ~picture ~assets ~gift_name gift =

@@ -11,6 +11,11 @@
     - anything else: an unknown screen. The frame is kept in the run folder as
       [gift-<id>-unknown-screen.png] and the gift is not received.
 
+    A claim stopped on the Internet list (its gift not listed below the cursor,
+    or not reached) leaves the list first, with B and yes to "stop receiving?",
+    then the link ({!Mystery_gift.disconnect}): B alone there only opens that
+    question and cancels it (console B, 2026-11-25).
+
     After anything but a card, the main menu is brought back with B (1.5 s),
     read for 1.5 s after each, 8 at most, the link left once on the way
     ({!Mystery_gift.disconnect} after the fourth B). Ours, not yet run on a

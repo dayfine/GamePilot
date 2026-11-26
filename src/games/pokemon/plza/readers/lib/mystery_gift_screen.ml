@@ -88,9 +88,13 @@ let selected_item m =
 let list_active m =
   selected_item m <> None && holds m text_box_id (fun s -> s < max_list_blue)
 
+(* The card covers the list's first item but for part of its strip; the
+   list under a question with its cursor there reads as white on the header
+   and as blue on the box. *)
 let card m =
   holds m header_id (fun s -> s > min_white)
   && holds m text_box_id (fun s -> s > min_card_blue)
+  && not (white_item m 0)
 
 let name_scores m = List.map (fun k -> score m (name_id k)) all
 

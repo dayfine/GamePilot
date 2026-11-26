@@ -1,7 +1,8 @@
 (tests
- (names test_claim_gifts test_gift_claim)
+ (names test_claim_gifts test_gift_claim test_gift_console)
  (deps
   ../../../gift_catalog/gifts.json
+  ../../../readers/test/fixtures/gifts/gifts.probes.jsonl
   (glob_files ../plans/*.plan.json))
  (libraries
   yojson
@@ -10,5 +11,6 @@
   gamepilot.effects
   gamepilot.engine_run
   gamepilot.plza_engine
+  gamepilot.plza_readers
   gamepilot.plza_gift_catalog
   gamepilot.plza_claim_gifts))

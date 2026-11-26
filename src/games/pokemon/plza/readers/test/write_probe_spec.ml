@@ -23,8 +23,8 @@
    ({!Plza_readers.Main_menu_row}, {!Plza_readers.Mystery_gift_screen}, the
    Boxes' and their cell's, the SAVE dialog's), the gift's name matched by its
    template in that language (gift-name-vivillon-poke-ball-<language>.png, copied beside
-   the spec): en for fixtures/gifts/gifts.probes.jsonl, fr for
-   fixtures/gifts/gifts.fr.probes.jsonl. *)
+   the spec): en for fixtures/gifts/gifts.probes.jsonl, fr and ja for
+   fixtures/gifts/gifts.fr.probes.jsonl and gifts.ja.probes.jsonl. *)
 
 let native : Wire.box = { x = 0.; y = 0.; w = 1.; h = 1. }
 let no_minimap = Array.mem "--no-minimap" Sys.argv

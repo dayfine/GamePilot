@@ -39,8 +39,9 @@
 # (tutorial-cards/it-menu-no-card) and images/mystery-gift's, all nine shifts
 # each, in gifts.shifted.probes.jsonl; and images/mystery-gift's frames and
 # their nine shifts each, the gift's name matched by its French template
-# (--gifts fr), in gifts.fr.probes.jsonl. Remade with every folder, or alone
-# as the FOLDER gifts.
+# (--gifts fr), in gifts.fr.probes.jsonl, and by its Japanese one (--gifts
+# ja) in gifts.ja.probes.jsonl. Remade with every folder, or alone as the
+# FOLDER gifts.
 # The Python steps need Pillow ($SHIFT_PYTHON, default python3; e.g.
 # "uv run --with pillow python3").
 #
@@ -164,7 +165,7 @@ regen_gifts() {
     mkdir -p "$FIXTURES/gifts" "$work/gifts" "$work/gifts/frames" \
         "$work/gifts/lossless/tutorial-cards" "$work/gifts/shifted"
     cp "$SRC/games/pokemon/plza/assets/"gift-name-vivillon-poke-ball-*.png "$work/spec/"
-    for language in en fr; do
+    for language in en fr ja; do
         (cd "$SRC" && dune exec \
             games/pokemon/plza/readers/test/write_probe_spec.exe \
             -- --gifts "$language") >"$work/spec/gifts.$language.probes.json"
@@ -186,12 +187,15 @@ Image.open(sys.argv[1]).convert("RGB").save(sys.argv[2])
     (cd "$work/gifts/shifted" && "$PROBE_IMAGES" \
         --spec "$work/spec/gifts.en.probes.json" --viewport native \
         ./*/*/*.png) >"$FIXTURES/gifts/gifts.shifted.probes.jsonl"
-    (cd "$work/gifts/frames" && "$PROBE_IMAGES" \
-        --spec "$work/spec/gifts.fr.probes.json" --viewport native \
-        ./mystery-gift/*.png) >"$FIXTURES/gifts/gifts.fr.probes.jsonl"
-    (cd "$work/gifts/shifted" && "$PROBE_IMAGES" \
-        --spec "$work/spec/gifts.fr.probes.json" --viewport native \
-        ./*/mystery-gift/*.png) >>"$FIXTURES/gifts/gifts.fr.probes.jsonl"
+    for language in fr ja; do
+        out=$FIXTURES/gifts/gifts.$language.probes.jsonl
+        (cd "$work/gifts/frames" && "$PROBE_IMAGES" \
+            --spec "$work/spec/gifts.$language.probes.json" \
+            --viewport native ./mystery-gift/*.png) >"$out"
+        (cd "$work/gifts/shifted" && "$PROBE_IMAGES" \
+            --spec "$work/spec/gifts.$language.probes.json" \
+            --viewport native ./*/mystery-gift/*.png) >>"$out"
+    done
 }
 
 for folder in "$@"; do
