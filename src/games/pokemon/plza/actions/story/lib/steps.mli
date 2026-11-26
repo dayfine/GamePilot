@@ -6,12 +6,22 @@
 type game_steps = {
   submit : Wire.command -> unit;
       (** Send one input and return once it is done. *)
+  submit_batch : Wire.command list -> unit;
+      (** Send inputs as one batch: each runs into the next with no gap. *)
   read_screen : unit -> Look.t;
       (** Read the screen once the inputs are done. *)
   race : Wire.command -> (Look.t -> bool) -> Look.t option;
       (** Send one input and watch the screen while it runs: the first read on
           which the check holds (the input is then cut short, every button
           released), or [None] once the input is done. *)
+  race_then :
+    Wire.command ->
+    (Look.t -> bool) ->
+    (Look.t -> Wire.command list) ->
+    Look.t option;
+      (** As [race], but the read that ends the input replaces it with the
+          inputs the last function gives (no button released between: ZL held
+          through the move), done before it returns. *)
   log : string -> unit;  (** A line for the log and the watch page. *)
   log_detail : string -> unit;  (** A line for the log alone. *)
 }

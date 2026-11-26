@@ -1,0 +1,47 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "plza",
+  "execution": {},
+  "metadata": {
+    "phase": "testing",
+    "source": "played from a new game; starts at the MAIN MISSION 01 autosave; the fork's plza-01.02.plan.json (plza/lean)",
+    "postconditions": {}
+  },
+  "checkpoint": {
+    "id": "01.02",
+    "title": "Main Mission 01: chase Pancham to the battle area",
+    "start": {
+      "place": "LumioseCity"
+    },
+    "events": [
+      {
+        "id": "chase_pancham",
+        "kind": "walk",
+        "why": "after Pancham, through the archway, around the starters into the scene. not planned: no tile grid in Lumiose",
+        "args": {
+          "legs": [[-15, 4000], [-75, 3500], [90, 10500], [-90, 4000]]
+        }
+      },
+      {
+        "id": "pancham_cornered",
+        "kind": "game_action",
+        "action": "scene_to_choice",
+        "why": "the scene up to its choice",
+        "args": {
+          "button": "B"
+        }
+      },
+      {
+        "id": "battle_with_pokemon",
+        "kind": "game_action",
+        "action": "choose_1",
+        "why": "\"Battle with Pokemon!\" (second choice)"
+      },
+      {
+        "id": "battle_area",
+        "kind": "scene",
+        "why": "until free control in the battle area: Ryon's A Talk prompt held (no hint or party bar yet)"
+      }
+    ]
+  }
+}

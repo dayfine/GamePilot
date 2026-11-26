@@ -159,12 +159,14 @@ let rec chain setup = function
   | [] -> Ok 0
   | plan :: rest -> if runs_of setup plan then chain setup rest else Ok 1
 
-(* Every plan of the series, loaded before the console moves. *)
+(* Every plan of the series, loaded and checked (Plan_check) before the
+   console moves. *)
 let load_all ~plan_dir ids =
   List.fold_left
     (fun plans id ->
       let* plans = plans in
       let* plan = load_plan ~plan_dir id in
+      let* () = Story.Plan_check.check plan in
       Ok (plans @ [ plan ]))
     (Ok []) ids
 

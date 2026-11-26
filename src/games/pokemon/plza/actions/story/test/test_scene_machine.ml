@@ -1,6 +1,5 @@
 (* The scene machine (Plza_story.Scene_machine) on a scripted console
-   (Fake_console), for the configs no plan on main runs yet: a stop at a
-   choice, a battle's start (the HUD, or the lock-on after a battle's black
+   (Fake_console), config by config: a stop at a choice, a battle's start (the HUD, or the lock-on after a battle's black
    fade), the end at a battle ahead, a start window; and its failures: a
    scene that never started, control where a choice was due, a timeout. *)
 

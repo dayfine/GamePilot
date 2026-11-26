@@ -4,8 +4,8 @@
  (libraries gamepilot.wire gamepilot.plza_story))
 
 (tests
- (names test_scene_machine)
- (modules test_scene_machine)
+ (names test_scene_machine test_flicker_filter)
+ (modules test_scene_machine test_flicker_filter)
  (libraries
   gamepilot.wire
   gamepilot.table_test
