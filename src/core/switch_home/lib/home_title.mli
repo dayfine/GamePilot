@@ -25,9 +25,6 @@ val probe : string -> Effects.template_hash -> Wire.probe_spec
 (** The probe of that id searching {!window} for the title template, every
     frame. *)
 
-val score : Effects.measurements -> string -> float option
-(** The probe's score (0 a perfect match), for a log line. *)
-
 val max_score : float
 (** 0.08 for every title so far: Pokémon HOME's "HOME" scores 0.034 at most on
     its title (shifted too), 0.143 at least on others; PLZA's "Legends: Z-A"
