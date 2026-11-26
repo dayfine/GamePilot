@@ -56,19 +56,44 @@ let handle_step ~picture ~on_prompt ~on_battle cur =
       else Ok (cur, false)
   | Effects.Timeout -> Ok (cur, false)
 
+let opposite_dir = function
+  | Corridor_nav.North -> Corridor_nav.South
+  | South -> North
+  | East -> West
+  | West -> East
+
+let check_one_wall ~picture ~on_prompt ~on_battle ~face_dir cur =
+  OW.turn face_dir;
+  OW.interact ();
+  handle_step ~picture ~on_prompt ~on_battle cur
+
+let check_both_walls ~picture ~on_prompt ~on_battle ~face_dir cur =
+  let* cur, dug = check_one_wall ~picture ~on_prompt ~on_battle ~face_dir cur in
+  if dug then Ok (cur, true)
+  else
+    let opp = opposite_dir face_dir in
+    OW.run_hold opp ~hold_ms:south_hug_ms;
+    let* cur, dug2 =
+      check_one_wall ~picture ~on_prompt ~on_battle ~face_dir:opp cur
+    in
+    if dug2 then Ok (cur, true)
+    else (
+      OW.run_hold face_dir ~hold_ms:north_hug_ms;
+      Ok (cur, false))
+
 let probe_bucket_walls ~picture ~on_prompt ~on_battle ~move_dir ~face_dir cur =
   subscribe_screen ~picture;
   let move_btn = OW.button_of_dir move_dir in
   let rec loop left acc =
     if left <= 0 then Ok acc
-    else (
-      OW.turn face_dir;
-      OW.interact ();
-      let* next, dug = handle_step ~picture ~on_prompt ~on_battle acc in
+    else
+      let* next, dug =
+        check_both_walls ~picture ~on_prompt ~on_battle ~face_dir acc
+      in
       if dug then Ok next
       else (
         P.press ~hold_ms:step_hold_ms ~cooldown_ms:step_cooldown_ms move_btn;
-        loop (left - 1) next))
+        loop (left - 1) next)
   in
   loop bucket_probe_steps cur
 
