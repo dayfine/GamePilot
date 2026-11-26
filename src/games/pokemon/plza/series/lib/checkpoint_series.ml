@@ -37,6 +37,8 @@ let each_plan check plans =
     (fun acc plan -> Result.bind acc (fun () -> check plan))
     (Ok ()) plans
 
+let no_end_place ~next:_ plan = Ok plan
+
 let load_plan ~plan_dir id =
   P.Plan_decode.load (Engine_series.Plan_folder.plan_file ~plan_dir id)
 
@@ -171,7 +173,6 @@ let rec chain setup ~chained = function
       if runs_of setup plan ~chained then chain setup ~chained:true rest
       else Ok 1
 
-(* The checkpoint after [id] in the folder's run order, if any. *)
 let rec next_id id = function
   | a :: (b :: _ as rest) -> if a = id then Some b else next_id id rest
   | [ _ ] | [] -> None

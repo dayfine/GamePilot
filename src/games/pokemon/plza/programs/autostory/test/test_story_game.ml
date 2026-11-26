@@ -35,13 +35,10 @@ let ends id =
     |> List.map Filename.chop_extension
     |> List.sort compare
   in
-  let rec next = function
-    | a :: (b :: _ as rest) -> if a = id then Some (plan b) else next rest
-    | _ -> None
+  let next =
+    Option.map plan (Plza_checkpoint_series.Checkpoint_series.next_id id ids)
   in
-  match
-    Plza_autostory.Start_signature.promised_end ~next:(next ids) (plan id)
-  with
+  match Plza_autostory.Start_signature.promised_end ~next (plan id) with
   | Ok ends -> ends
   | Error e -> failwith (Engine_run.Failure.cause_to_string e)
 

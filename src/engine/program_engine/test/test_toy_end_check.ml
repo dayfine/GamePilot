@@ -89,16 +89,30 @@ let run ?events ?postconditions ?(sign = None) ?(after = Some "inn") () =
 
 let first_line text = List.hd (String.split_on_char '\n' text)
 
+(* The run's lines that start with [prefix], joined by commas. *)
+let starting prefix text =
+  String.concat ","
+    (List.filter (String.starts_with ~prefix) (String.split_on_char '\n' text))
+
+let at_end () = run ~sign:(Some "inn") ()
+
 let cases =
   [
-    case "at its end before the first event: passed, nothing run, gold unread"
-      (fun () -> run ~sign:(Some "inn") ())
-      "passed\n\
-       [Story] cf: start, 2 events\n\
-       [Story] cf: already at its end (sign inn): passed, no event run\n\
-       #1 skipped (at its end)\n\
-       #2 skipped (at its end)\n\
-       gold read 0";
+    case "at its end before the first event: passed"
+      (fun () -> first_line (at_end ()))
+      "passed";
+    case "at its end before the first event: logged with the sign read"
+      (fun () -> starting "[Story] cf: already" (at_end ()))
+      "[Story] cf: already at its end (sign inn): passed, no event run";
+    case "at its end before the first event: no event runs"
+      (fun () -> starting "ran" (at_end ()))
+      "";
+    case "at its end before the first event: every event skipped as at its end"
+      (fun () -> starting "#" (at_end ()))
+      "#1 skipped (at its end),#2 skipped (at its end)";
+    case "at its end before the first event: gold, a change, is not read"
+      (fun () -> starting "gold read" (at_end ()))
+      "gold read 0";
     case "not at its end: every event runs, then the promises are checked"
       (fun () -> first_line (run ()))
       "passed";
@@ -106,11 +120,7 @@ let cases =
       (fun () -> List.nth (List.rev (String.split_on_char '\n' (run ()))) 0)
       "gold read 1";
     case "another sign in sight before the first event: the events run"
-      (fun () ->
-        String.concat ","
-          (List.filter
-             (String.starts_with ~prefix:"ran")
-             (String.split_on_char '\n' (run ~sign:(Some "well") ()))))
+      (fun () -> starting "ran" (run ~sign:(Some "well") ()))
       "ran greet,ran sleep";
     case "the events run but the sign is not in sight: the end fails"
       (fun () -> first_line (run ~after:None ()))
@@ -118,19 +128,11 @@ let cases =
        expected inn, read none";
     case "a run from the second event: not checked before it"
       (fun () ->
-        String.concat ","
-          (List.filter
-             (String.starts_with ~prefix:"ran")
-             (String.split_on_char '\n'
-                (run ~events:{ first = 1; last = None } ~sign:(Some "inn") ()))))
+        starting "ran"
+          (run ~events:{ first = 1; last = None } ~sign:(Some "inn") ()))
       "ran sleep";
     case "promises with no sign: no end place, the events run"
-      (fun () ->
-        String.concat ","
-          (List.filter
-             (String.starts_with ~prefix:"ran")
-             (String.split_on_char '\n'
-                (run ~postconditions:{|{"gold": 30}|} ()))))
+      (fun () -> starting "ran" (run ~postconditions:{|{"gold": 30}|} ()))
       "ran greet,ran sleep";
     case "a repeated checkpoint promising a sign: refused"
       (fun () ->

@@ -56,6 +56,16 @@ val each_plan :
   (unit, string) result
 (** A [check_plans] of one check per plan, in order: the first [Error]. *)
 
+val next_id : string -> string list -> string option
+(** The checkpoint after [id] in a folder's run order, if any. *)
+
+val no_end_place :
+  next:Plza_engine.Plan.t option ->
+  Plza_engine.Plan.t ->
+  (Plza_engine.Plan.t, string) result
+(** A [with_end_place] for a program whose plans promise no end place: the plan
+    unchanged, so each runs its events. *)
+
 val load_plan : plan_dir:string -> string -> (Plza_engine.Plan.t, string) result
 (** The plan [<plan_dir>/<id>.plan.json], decoded. *)
 

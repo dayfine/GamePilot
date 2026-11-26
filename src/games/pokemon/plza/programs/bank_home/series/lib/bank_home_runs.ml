@@ -38,8 +38,7 @@ let attempt moves ~log ~picture ~reload:_ report plan : Attempts.outcome =
 let bank_home moves : Series.program =
   {
     check_plans = Series.each_plan Game.check_plan;
-    (* Its plans promise no end place: each runs its events. *)
-    with_end_place = (fun ~next:_ plan -> Ok plan);
+    with_end_place = Series.no_end_place;
     daemon_flags = [];
     attempt = attempt moves;
   }
