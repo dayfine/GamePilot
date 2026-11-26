@@ -162,10 +162,36 @@ let test_benchmark_200_walls () =
     "Benchmark 200 walls: Shard_l=%d/200 Shard_s=%d/200 Other=%d/200\n%!"
     !shard_l_ok !shard_s_ok !other_ok
 
+let test_layer_aware_scan_and_unwanted_avoidance () =
+  let goal = Mining_goal.ramanas_all_slates in
+  let tally = Mining_goal.empty_tally in
+  (* 1. All Layer-1 shallow dirt: Pickaxe exposes 5/1 > Hammer 9/2. *)
+  let shallow =
+    Array.init Mining_wall.rows (fun _ ->
+        Array.make Mining_wall.cols (Mining_wall.Covered 1))
+  in
+  (match Mining_solver.decide ~goal ~tally (mk_obs ~integrity:40 shallow) with
+  | Mining_solver.Strike { tool = Mining_wall.Pickaxe; _ } -> ()
+  | _ -> fail "expected Pickaxe on Layer-1 shallow scan");
+  (* 2. All Layer-2 rock: Hammer exposes 5/2 > Pickaxe 1/1. *)
+  let mid =
+    Array.init Mining_wall.rows (fun _ ->
+        Array.make Mining_wall.cols (Mining_wall.Covered 2))
+  in
+  (match Mining_solver.decide ~goal ~tally (mk_obs ~integrity:40 mid) with
+  | Mining_solver.Strike { tool = Mining_wall.Hammer; _ } -> ()
+  | _ -> fail "expected Hammer on Layer-2 scan");
+  (* 3. Exposed non-wanted item at (2, 2): scan avoids anchor (2, 2). *)
+  mid.(2).(2) <- Mining_wall.Clear_item { id = 2; kind = Mining_goal.Other };
+  match Mining_solver.decide ~goal ~tally (mk_obs ~integrity:40 mid) with
+  | Mining_solver.Strike { col; row; _ } when col <> 2 || row <> 2 -> ()
+  | _ -> fail "expected scan to avoid inferred footprint of non-wanted item"
+
 let () =
   test_goal_arithmetic ();
   test_wall_mechanics ();
   test_smart_tool_selection ();
   test_low_gauge_switch ();
+  test_layer_aware_scan_and_unwanted_avoidance ();
   test_benchmark_200_walls ();
   print_endline "OK"

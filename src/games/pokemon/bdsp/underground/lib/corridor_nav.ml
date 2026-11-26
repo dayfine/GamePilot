@@ -18,7 +18,7 @@ let bdsp_move_mechanics =
     walk_across_ms = 340;
     walk_up_down_ms = 280;
     run_across_ms = 360;
-    run_up_down_ms = 480;
+    run_up_down_ms = 430;
     step_tap_hold_ms = 160;
     step_tap_release_ms = 640;
   }

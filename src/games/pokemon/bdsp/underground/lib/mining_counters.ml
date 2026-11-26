@@ -87,3 +87,28 @@ let format_summary ~goal c =
     c.cycles c.refreshes c.skipped_corridors c.digs c.walls_bailed
     c.battles_escaped c.shard_s c.shard_l slates target c.spheres c.stones
     c.fossils c.statue_boxes c.other_treasures
+
+let watch_items ~goal ~total_cycles c =
+  let slates = Mining_goal.slate_equivalents (to_tally c) in
+  let target = target_slates goal in
+  let digs_val =
+    if c.walls_bailed > 0 then
+      Printf.sprintf "%d (%d bailed)" c.digs c.walls_bailed
+    else string_of_int c.digs
+  in
+  let refresh_val =
+    if c.skipped_corridors > 0 then
+      Printf.sprintf "%d (%d skipped)" c.refreshes c.skipped_corridors
+    else string_of_int c.refreshes
+  in
+  [
+    ("Cycles", Printf.sprintf "%d / %d" c.cycles total_cycles);
+    ("Refreshes", refresh_val);
+    ("Digs", digs_val);
+    ("Shards (S / L)", Printf.sprintf "%d / %d" c.shard_s c.shard_l);
+    ("Slates", Printf.sprintf "%d / %d" slates target);
+    ("Spheres", string_of_int c.spheres);
+    ("Stones / Fossils", Printf.sprintf "%d / %d" c.stones c.fossils);
+    ("Boxes / Other", Printf.sprintf "%d / %d" c.statue_boxes c.other_treasures);
+    ("Battles", string_of_int c.battles_escaped);
+  ]
