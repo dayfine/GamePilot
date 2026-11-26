@@ -78,6 +78,7 @@ let options flags : Frlg_checkpoints.Checkpoint_run.options =
     grind_cap = flags.grind_cap;
     gait = (if flags.walk then Walking else Running);
     end_check_only = flags.end_check_only;
+    program_options = Run_options.none;
     log = logger flags.log_file;
   }
 

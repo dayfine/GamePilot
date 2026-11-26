@@ -27,6 +27,9 @@ type t = {
   state : string option;
       (** The save state the program loads first: the program's default,
           --state's, or none (--console, the Switch). *)
+  options : Run_options.t;
+      (** --options, checked against the program's declaration
+          (Program_registry.check_options). *)
   daemon : daemon;
 }
 
@@ -36,7 +39,8 @@ val parse :
   string list ->
   (t, string) result
 (** The flags given for the program, which loads [default_state] unless they say
-    otherwise. Reads no files and starts nothing. *)
+    otherwise. Reads no files and starts nothing. An option the program does not
+    declare, or a value it refuses, is an error. *)
 
 val start :
   own_daemon ->

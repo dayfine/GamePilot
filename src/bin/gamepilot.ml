@@ -104,8 +104,9 @@ let backend_name (f : One_shot_flags.t) =
 (* Live, in a run folder of its own (Attached_run). *)
 let run_live (p : Program_registry.t) one_shot (f : One_shot_flags.t) =
   match
-    Attached_run.start ?backend:(backend_name f) ~runs_dir:f.runs_dir
-      ~kind:Program
+    Attached_run.start ?backend:(backend_name f)
+      ~options:(Run_options.pairs f.options)
+      ~runs_dir:f.runs_dir ~kind:Program
       ~program:(Program_registry.run_fields p)
       ~label:p.id ~mode:"run" ()
   with

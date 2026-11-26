@@ -13,6 +13,7 @@ let info : Run_record.info =
     from_id = "01.00a";
     to_id = "01.01";
     backend = "switch";
+    options = [];
   }
 
 let series =

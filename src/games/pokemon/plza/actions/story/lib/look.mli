@@ -32,6 +32,9 @@ type t = {
   tutorial_card : bool;  (** A tutorial card. *)
   interact_prompt : bool;  (** An A prompt (["(A) Talk"]) with no text box. *)
   party_bar : bool;  (** The overworld party bar with no text box. *)
+  map_pin : Plza_walk.Map_leg.point option;
+      (** The player's pin on the full map, when it is open
+          ({!Plza_readers.Map_pin}). *)
   minimap_arrow : float option;
       (** The bearing the minimap's arrow points, degrees clockwise from up
           ({!Plza_readers.Minimap_arrow}), as the fork reads the facing. *)
