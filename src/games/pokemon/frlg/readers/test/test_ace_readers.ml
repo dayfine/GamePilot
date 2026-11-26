@@ -27,7 +27,8 @@
    - PKMN DATA's item line, the same: 10; 180 (grey); 0.
    - hand shadow on slot 1, share: 0.25; 0.31 (grey); 0.
    - Desert wallpaper, r-g / g-b: 15 / 20; 29 / 38; -60.
-   - male mark, blue share: 0.15; 0.41; no frame off it.
+   - male mark, blue share: 0.15; 0.231 (male, all shifts); 0 (female and empty
+     panels, all shifts).
    - title wallpaper, the farther of the sky's and the ground's distance from
      the wallpaper's colours: 50; 40 (Savanna, mGBA x0.9); 60 (Pokémon
      Center's against Forest, green +12).
@@ -85,17 +86,12 @@ let read image m =
       (flag (Pc_box_screen.hand_on_first_slot m))
       (flag (Pc_box_screen.desert_wallpaper m))
       (wallpaper m)
-      (if
-         Pc_box_screen.panel_occupied m = Some true
-         && String.starts_with ~prefix:"box3_" image
-       then flag (Pc_box_screen.male m)
-       else "-")
+      (flag (Pc_box_screen.male m))
 
 (* Grid rows and list rows are the rows shown: MOVE 1 (grid row 9) and
-   BULK UP (list row 11) sit on the bottom row once scrolled to. The male
-   mark is read only on an occupied slot of Box 3, the ACE check's: the
-   withdraw frames' Magikarp is female, and the panel's lilac (148, 148, 173)
-   lies in the male mark's blue range, so it reads male (issue #194). *)
+   BULK UP (list row 11) sit on the bottom row once scrolled to. The withdraw
+   frames' MIMIEN is male and Magikarp is female; empty panels read not male
+   (#194). *)
 let expected =
   [
     ("e_g_first_open", "group r0c0, word none");
@@ -110,20 +106,20 @@ let expected =
     ("e_fields_after_bulk_up", "group none, word none");
     ( "box1_hand_on_empty_first_slot",
       "box screen, panel n, item n, first slot y, desert n, title forest, male \
-       -" );
+       n" );
     ( "box3_hand_on_third_slot",
       "box screen, panel n, item n, first slot n, desert y, title desert, male \
-       -" );
+       n" );
     ( "box3_ace_hand_on_title",
       "box screen, panel n, item n, first slot n, desert y, title desert, male \
-       -" );
+       n" );
     ( "box3_ace_on_first_slot",
       "no box, panel y, item y, first slot n, desert y, title desert, male y" );
     ( "box1_withdraw_menu_mimien_antidote",
-      "box screen, panel y, item y, first slot n, desert n, title none, male -"
+      "box screen, panel y, item y, first slot n, desert n, title none, male y"
     );
     ( "box1_withdraw_menu_magikarp",
-      "box screen, panel y, item n, first slot n, desert n, title none, male -"
+      "box screen, panel y, item n, first slot n, desert n, title none, male n"
     );
   ]
 

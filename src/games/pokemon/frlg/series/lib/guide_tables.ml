@@ -39,8 +39,8 @@ let rows ~plan_dir ids =
 
 let plural n one many = if n = 1 then one else many
 
-(* No line when the chain needs no free slot and no member joins: a need of
-   zero is no need (review rule R2). *)
+(* No line when the chain needs no free slot at the start: a need of zero is no
+   need (review rule R2). *)
 let room_line (room : Frlg_checkpoints.Party_room.need) =
   let free = Frlg_checkpoints.Party_room.free_needed room in
   let joins =
@@ -48,7 +48,7 @@ let room_line (room : Frlg_checkpoints.Party_room.need) =
       (fun (species, cp) -> Printf.sprintf "%s in %s" species cp)
       room.joins
   in
-  if free = 0 && joins = [] then []
+  if free = 0 then []
   else
     [
       Printf.sprintf "- %d free party %s%s" free

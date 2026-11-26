@@ -24,7 +24,6 @@ Runs on: mGBA.
   as the sixth member, is checked for the shiny star and goes to the PC.
 
 <!-- generated:needs -->
-- 3 free party slots (joining: voltorb in 02-shiny-voltorb, drowzee in 03-shiny-drowzee, ekans in 04-shiny-ekans)
 - a member holds no Mail (pc_deposit)
 - a member knows fly (fly)
 - the thunder badge (fly)

@@ -444,6 +444,30 @@ let room_cases =
       (fun () ->
         String.concat ", " (Party_room.chain_need [ deposit_plan ]).used)
       "abra, mr-mime";
+    case "room: deposit before a catch makes its own room: 0 free needed"
+      (fun () ->
+        let catch_plan =
+          match
+            Plan_file.decode ~source:"catch"
+              (Yojson.Safe.from_string
+                 {|{"format": "gamepilot-checkpoint/1", "game": "frlg",
+                    "checkpoint": {"id": "catch", "title": "Catch one",
+                      "events": [
+                        {"id": "c", "kind": "game_action", "action": "wild_rng",
+                         "args": {"species": "voltorb"}},
+                        {"id": "d", "kind": "game_action", "action": "pc_deposit",
+                         "args": {"species": ["voltorb"]}}]},
+                    "execution": {"menu": "full"}}|})
+          with
+          | Ok p -> p
+          | Error e -> failwith e
+        in
+        Printf.sprintf "with deposit=%d; two catches=%d"
+          (Party_room.free_needed
+             (Party_room.chain_need [ deposit_plan; catch_plan ]))
+          (Party_room.free_needed
+             (Party_room.chain_need [ catch_plan; catch_plan ])))
+      "with deposit=0; two catches=1";
     case
       "room: the chain brings Abra (01-celadon-setup) and Spearow \
        (02-trade-farfetchd)"
