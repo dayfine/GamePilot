@@ -33,21 +33,24 @@ let pc_deposit ~where args =
       Pc_deposit
         (Members (J.strings (where ^ "species") (J.field ~where "species" args)))
 
-let use_item ~where args =
+let use_item ~options ~where args =
   let on =
-    if J.has "species" args || J.has "target_slot" args then
-      Some (Action_args.member ~where args)
+    if J.has "species" args || J.has "role" args || J.has "target_slot" args
+    then Some (Action_args.member ~options ~where args)
     else None
   in
   Use_item { item = J.string ~where "item" args; on }
 
-let give_bag_item ~where args =
+let give_bag_item ~options ~where args =
   Give_bag_item
-    { item = J.string ~where "item" args; to_ = Action_args.member ~where args }
+    {
+      item = J.string ~where "item" args;
+      to_ = Action_args.member ~options ~where args;
+    }
 
-let party_swap ~where args =
+let party_swap ~options ~where args =
   let slot key = Action_args.slot ~where key args in
-  match J.string_opt ~where "species" args with
+  match Action_args.species_opt ~options ~where args with
   | Some species -> Party_swap (By_species (species, slot "target_slot"))
   | None -> Party_swap (Slots (slot "slot_a", slot "slot_b"))
 
@@ -78,12 +81,12 @@ let read_caught ~where args =
   in
   Read_caught { at_least }
 
-let readers stocks =
+let readers ~options stocks =
   [
     ("mart", fun ~where args -> Mart (Mart_plan.of_args stocks ~where args));
-    ("use_item", use_item);
-    ("give_bag_item", give_bag_item);
-    ("party_swap", party_swap);
+    ("use_item", use_item ~options);
+    ("give_bag_item", give_bag_item ~options);
+    ("party_swap", party_swap ~options);
     ("buy_coins", fun ~where a -> Buy_coins (Game_corner.coins_of_args ~where a));
     ( "redeem_prize_mon",
       fun ~where a -> Redeem_prize_mon (Game_corner.prize_slot_of_args ~where a)
@@ -94,7 +97,8 @@ let readers stocks =
       fun ~where a ->
         Cut_tree (Grid_maps.Grid_field.direction ~where "direction" a) );
     ( "verify_mail_glitch",
-      fun ~where a -> Verify_mail_glitch (Action_args.member ~where a) );
+      fun ~where a -> Verify_mail_glitch (Action_args.member ~options ~where a)
+    );
     ("pc_deposit", pc_deposit);
     ("pc_withdraw", fun ~where:_ _ -> Pc_withdraw);
     ("pick_up_item", fun ~where a -> Pick_up_item (J.string ~where "item" a));
@@ -119,8 +123,8 @@ let names =
     "read_caught";
   ]
 
-let decode stocks name args =
-  match List.assoc_opt name (readers stocks) with
+let decode ?(options = Run_options.none) stocks name args =
+  match List.assoc_opt name (readers ~options stocks) with
   | Some read -> Action_args.decode ~action:name read args
   | None ->
       Error (Pokemon_engine.Failure.cause ~repeats:true "unknown_action" name)

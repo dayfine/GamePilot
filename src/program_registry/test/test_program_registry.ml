@@ -203,11 +203,26 @@ let () =
       case "every options declaration is sound" bad_options "";
       case "frlg.ace's items are the preset table's" ace_items "same";
       case "options: none given to a program that takes none"
-        (fun () -> options_for (Some "frlg.mail_glitch") [])
+        (fun () -> options_for (Some "frlg.ace_setup") [])
         "ok ";
       case "options: refused by a program that takes none"
-        (fun () -> options_for (Some "frlg.mail_glitch") [ ("item", "x") ])
+        (fun () -> options_for (Some "frlg.ace_setup") [ ("item", "x") ])
         "error: --options item: this program takes no options";
+      case "options: frlg.sevii_story defaults to blastoise"
+        (fun () -> options_for (Some "frlg.sevii_story") [])
+        "ok sweeper=blastoise";
+      case "options: frlg.sevii_story accepts another sweeper"
+        (fun () ->
+          options_for (Some "frlg.sevii_story") [ ("sweeper", "charizard") ])
+        "ok sweeper=charizard";
+      case "options: frlg.mail_glitch defaults to blastoise and blizzard"
+        (fun () -> options_for (Some "frlg.mail_glitch") [])
+        "ok sweeper=blastoise depleted-move=blizzard";
+      case "options: frlg.mail_glitch overrides sweeper and depleted-move"
+        (fun () ->
+          options_for (Some "frlg.mail_glitch")
+            [ ("sweeper", "charizard"); ("depleted-move", "fire-blast") ])
+        "ok sweeper=charizard depleted-move=fire-blast";
       case "options: plza.autostory, none given: the plan's"
         (fun () -> options_for (Some "plza.autostory") [])
         "ok ";

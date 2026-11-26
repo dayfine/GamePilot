@@ -39,6 +39,10 @@ val decode : Json_field.obj -> (plan, Pokemon_engine.Failure.cause) result
 (** Args ["species"], ["move"] and ["backup_move"] (slugs), and ["pace"] (a
     direction). *)
 
+val apply_options : Run_options.t -> plan -> plan
+(** Applies [--options sweeper=SPECIES] and [--options depleted-move=MOVE] over
+    the plan's defaults when given. *)
+
 val script : move_slot:int -> backup_slot:int -> Frlg_battle.Battle_script.t
 (** A wild battle: [move_slot] until the game refuses it, then [backup_slot]. *)
 

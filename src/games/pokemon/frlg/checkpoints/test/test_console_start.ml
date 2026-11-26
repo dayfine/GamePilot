@@ -213,8 +213,8 @@ let preflight_cases =
         |> String.concat " | ")
       "at the start, CeladonCity: no kept start frame to compare";
     case
-      "preflight tt-01, console B: the picked-up Rare Candy is duplicated; its \
-       Retro Mail and Super Repel come from su-01"
+      "preflight tt-01, console B: slot 1 is targeted by slot (no hardcoded \
+       species); its Retro Mail and Super Repel come from su-01"
       (fun () ->
         preflight "tt-01" None
           {
@@ -228,8 +228,7 @@ let preflight_cases =
             card = badges 8;
             members = members [ "mr-mime"; "blastoise"; "pidgey" ];
           })
-      "mr-mime in the party (give_bag_item): mr-mime, blastoise, pidgey: ok | \
-       a member knows fly (fly): pidgey knows fly: ok | the thunder badge \
+      "a member knows fly (fly): pidgey knows fly: ok | the thunder badge \
        (fly): 8 badges (boulder, cascade, thunder, rainbow, soul, marsh, \
        volcano, earth), no star: ok | super-repel at least x1 (use_item): \
        super-repel x2: ok | retro-mail at least x99 (duplicate_item): \

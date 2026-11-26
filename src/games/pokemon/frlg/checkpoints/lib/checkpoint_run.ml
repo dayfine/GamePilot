@@ -1,6 +1,9 @@
 open Frlg_readers
 module A = Frlg_actions
-module Event_snapshot = Pokemon_engine.Event_snapshot
+module PE = Pokemon_engine
+module Event_snapshot = PE.Event_snapshot
+
+let ( let* ) = Result.bind
 
 type options = {
   state : string option;
@@ -59,61 +62,57 @@ let load_map name = Result.bind (load_world ()) (fun w -> map_in w name)
 (* FireRed reckons where the player stands from the start; from anywhere
    outdoors it knows nothing until a Fly lands, and that Fly is the check that
    the save is outdoors (the game will not fly from indoors). *)
-let check_start (checkpoint : Pokemon_engine.Plan.checkpoint) =
+let check_start (checkpoint : PE.Plan.checkpoint) =
   match (checkpoint.start, checkpoint.events) with
   | Some (Anywhere _), { kind = Named_action _; way = Some "fly"; _ } :: _ ->
       Ok ()
   | Some (Anywhere _ as start), _ ->
       Error
-        ("a checkpoint that starts "
-        ^ Pokemon_engine.Pose.to_string start
-        ^ " begins with a fly event")
+        ("a checkpoint that starts " ^ PE.Pose.to_string start
+       ^ " begins with a fly event")
   | _ -> Ok ()
 
-let decode_menu execution =
-  Json_field.catch (fun () ->
-      Json_field.string_opt ~where:"execution." "menu" execution)
-
-let check_menu (plan : Pokemon_engine.Plan.t) =
+let check_menu (plan : PE.Plan.t) =
+  let menu =
+    Json_field.catch (fun () ->
+        Json_field.string_opt ~where:"execution." "menu" plan.execution)
+  in
   if plan.game <> "frlg" then
     Error ("the plan is for " ^ plan.game ^ ", not frlg")
   else
-    Result.bind (decode_menu plan.execution) (function
+    Result.bind menu (function
       | None | Some "full" -> Ok ()
       | Some other ->
           Error (Printf.sprintf "execution.menu %S is not \"full\"" other))
 
-(* Each skip_if condition FireRed reads names what it reads: the species
-   names (English, as the Pokédex reader matches them) are loaded only for a
-   plan with a pokedex_seen or pokedex_not_seen condition. *)
+(* English species names are loaded only when a condition reads the Pokédex or
+   party. *)
 let read_species () =
   let file = Frlg_text.Data_files.species_names_eng in
   match Frlg_text.Data_files.locate file with
   | Some path -> Ok (Frlg_text.Species_names.load path)
   | None -> Error (file ^ " not found")
 
-let check_each f conditions =
-  List.fold_left (fun ok c -> Result.bind ok (fun () -> f c)) (Ok ()) conditions
+let check_each f =
+  List.fold_left (fun ok c -> Result.bind ok (fun () -> f c)) (Ok ())
 
 let check_species_conditions conditions =
-  if List.exists A.Skip_conditions.reads_species conditions then
-    Result.bind (read_species ()) (fun species ->
-        check_each (A.Skip_conditions.check species) conditions)
-  else Ok ()
+  if not (List.exists A.Skip_conditions.reads_species conditions) then Ok ()
+  else
+    let* species = read_species () in
+    check_each (A.Skip_conditions.check species) conditions
 
-let check_skip_conditions (checkpoint : Pokemon_engine.Plan.checkpoint) =
+let check_skip_conditions (checkpoint : PE.Plan.checkpoint) =
   let conditions =
-    List.concat_map
-      (fun (e : Pokemon_engine.Plan.event) -> e.skip_if)
-      checkpoint.events
+    List.concat_map (fun (e : PE.Plan.event) -> e.skip_if) checkpoint.events
   in
-  Result.bind (check_each A.Skip_conditions.check_syntax conditions) (fun () ->
-      check_species_conditions conditions)
+  let* () = check_each A.Skip_conditions.check_syntax conditions in
+  check_species_conditions conditions
 
-let check_plan (plan : Pokemon_engine.Plan.t) =
-  Result.bind (check_menu plan) (fun () ->
-      Result.bind (check_start plan.checkpoint) (fun () ->
-          check_skip_conditions plan.checkpoint))
+let check_plan (plan : PE.Plan.t) =
+  let* () = check_menu plan in
+  let* () = check_start plan.checkpoint in
+  check_skip_conditions plan.checkpoint
 
 let start_of (checkpoint : Pokemon_engine.Plan.checkpoint) =
   match checkpoint.start with
@@ -172,33 +171,26 @@ let to_run options ~end_at (plan : Pokemon_engine.Plan.t) =
   if options.end_check_only then ({ plan.checkpoint with events = [] }, None)
   else (plan.checkpoint, end_at)
 
-let capped_postconditions ~grind_cap (plan : Pokemon_engine.Plan.t) =
-  let p = Pokemon_engine.Postconditions.stated plan.postconditions in
+let capped_postconditions ~grind_cap (plan : PE.Plan.t) =
+  let p = PE.Postconditions.stated plan.postconditions in
   match grind_cap with
   | None -> (p, [])
   | Some cap ->
       let capped what = Printf.sprintf "%s (grind capped at %d)" what cap in
-      let skipped_knows
-          ({ species; moves } : Pokemon_engine.Postconditions.knows) =
+      let skipped_knows ({ species; moves } : PE.Postconditions.knows) =
         capped (Printf.sprintf "knows %s %s" species (String.concat ", " moves))
-      and skipped_level ({ species; min } : Pokemon_engine.Postconditions.level)
-          =
+      and skipped_level ({ species; min } : PE.Postconditions.level) =
         capped (Printf.sprintf "level %s at least %d" species min)
       in
       ( { p with knows = []; levels = [] },
         List.map skipped_knows p.knows @ List.map skipped_level p.levels )
 
 (* The game with the caller's own actions first (a shadow plan's). *)
-let with_actions actions (game : Pokemon_engine.Game.t) =
+let with_actions actions (game : PE.Game.t) =
   { game with game_actions = actions @ game.game_actions }
 
-type from_event = {
-  range : Engine_run.Event_range.t;
-  kept : Pokemon_engine.Saved.t;
-}
-
-type keep_event_state =
-  index:int -> Pokemon_engine.Plan.event -> Pokemon_engine.Saved.t -> unit
+type from_event = { range : Engine_run.Event_range.t; kept : PE.Saved.t }
+type keep_event_state = index:int -> PE.Plan.event -> PE.Saved.t -> unit
 
 let kept_start_line (start : Pokemon_engine.Postcondition_check.start) =
   let items =

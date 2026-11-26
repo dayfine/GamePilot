@@ -46,6 +46,25 @@ let decoding =
     case "MIMIEN on the default strategy" (decode mimien_args)
       "mr-mime to Lv 33 for recycle (into move 1) at victory_road_2f, \
        blastoise fighting";
+    case "apply_options overrides the sweeper"
+      (fun () ->
+        let decl : Run_options.declared list =
+          [
+            {
+              key = "sweeper";
+              value = Text;
+              presence = Default "blastoise";
+              doc = "";
+            };
+          ]
+        in
+        let options =
+          Result.get_ok (Run_options.check decl [ ("sweeper", "charizard") ])
+        in
+        Grind_plan.describe
+          (Grind_plan.apply_options options (plan mimien_args)))
+      "mr-mime to Lv 33 for recycle (into move 1) at victory_road_2f, \
+       charizard fighting";
     case "the Tower fallback named"
       (decode (with_field "strategy" (`String "pokemon_tower_5f") mimien_args))
       "mr-mime to Lv 33 for recycle (into move 1) at pokemon_tower_5f, \

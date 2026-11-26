@@ -21,6 +21,17 @@ let decode =
           Grid_maps.Grid_field.direction ~where "step_direction" args;
       })
 
+let apply_options options (plan : plan) =
+  let sweeper =
+    Option.value (Run_options.find options "sweeper") ~default:plan.sweeper
+  in
+  let depleted_move =
+    Option.value
+      (Run_options.find options "depleted-move")
+      ~default:plan.depleted_move
+  in
+  { plan with sweeper; depleted_move }
+
 type slots = {
   knock_off : int;
   sand_attack : int;
