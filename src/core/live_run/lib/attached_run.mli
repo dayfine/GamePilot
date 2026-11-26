@@ -13,6 +13,7 @@ val runs_dir_flag : string list -> (string * string list, string) result
 
 val start :
   ?backend:string ->
+  ?options:(string * string) list ->
   runs_dir:string ->
   kind:Run_record.kind ->
   program:(string * string) list ->
@@ -23,7 +24,8 @@ val start :
 (** The run's folder, started and printed. [program]: run.json's program fields
     (Program_registry.run_fields), [] for no program. [backend]: run.json's
     (mgba or switch) when the run starts its own daemon; unknown by default.
-    [Error] when the folder cannot be made. *)
+    [options]: the program's options the run was given (Run_options.pairs); none
+    by default. [Error] when the folder cannot be made. *)
 
 val save_failure : Run_record.t -> unit
 (** The frame now, in the session, as the run's failure.png; a refusal (an older

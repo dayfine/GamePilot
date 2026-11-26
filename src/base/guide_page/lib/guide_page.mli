@@ -23,6 +23,11 @@ val blocks : string -> (block list, string) result
 (** The page's blocks in order; [Error] for a start marker with no end, an end
     with no start, or a start inside a block, naming its line. *)
 
+val missing_blocks :
+  required:string list -> string -> (string list, string) result
+(** The names in [required] that no block of the page has, in [required]'s
+    order; [Error] as {!blocks}. *)
+
 val fill :
   (block -> (string, string) result) -> string -> (string, string) result
 (** The page with each block's body replaced by what [generate] gives for it (a

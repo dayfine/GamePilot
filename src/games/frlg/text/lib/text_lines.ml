@@ -1,6 +1,7 @@
 type t = { id : string; left : int; glyph_top : int; indent : int; width : int }
 
-let game_width = 240.
+let game_width_px = 240
+let game_width = float game_width_px
 let game_height = 160.
 let template_top = 1
 let template_height = 12
@@ -276,3 +277,22 @@ let pokedex_list_number_digit row k =
     (Printf.sprintf "pokedex_number.%d.%d" row k)
     ~left:(pokedex_number_left + (small_digit_width * k))
     ~glyph_top:(pokedex_list_row_top row)
+
+(* The naming screen's text entry: window WIN_TEXT_ENTRY at tile (8, 6),
+   each character printed alone at x [8 i + base - 64] of the window and y 1,
+   base = (240 - 8 max_chars) / 2 + 6 (pokefirered naming_screen.c,
+   [DrawTextEntry], [NamingScreen_Init]). *)
+let naming_entry_pitch = 8
+let naming_entry_glyph_top = 49
+let naming_entry_centre = 6
+
+let naming_entry_cell ~max_chars i =
+  {
+    id = Printf.sprintf "naming_entry.%d" i;
+    left =
+      ((game_width_px - (naming_entry_pitch * max_chars)) / 2)
+      + naming_entry_centre + (naming_entry_pitch * i);
+    indent = 0;
+    glyph_top = naming_entry_glyph_top;
+    width = naming_entry_pitch;
+  }

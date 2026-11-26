@@ -28,6 +28,11 @@ let show_long text =
   |> List.map (fun (line, n) -> Printf.sprintf "%d:%d" line n)
   |> String.concat " "
 
+let show_missing required text =
+  match Guide_page.missing_blocks ~required text with
+  | Ok names -> String.concat " " names
+  | Error e -> "error: " ^ e
+
 let page =
   "# Title\n\
    prose\n\
@@ -117,6 +122,17 @@ let () =
       case "a paragraph at the end of the page"
         (fun () -> show_long "x\n\na\nb\nc")
         "3:3";
+      case "a required block the page lacks is missing"
+        (fun () -> show_missing [ "options"; "needs" ] page)
+        "options";
+      case "a page that requires no block misses none"
+        (fun () -> show_missing [] "# T\nprose\n")
+        "";
+      case "a required block the page has is not missing"
+        (fun () ->
+          show_missing [ "options" ]
+            "<!-- generated:options -->\n<!-- /generated -->\n")
+        "";
       case "the start marker"
         (fun () -> Guide_page.start_marker "checkpoints" (Some "mg-06"))
         "<!-- generated:checkpoints mg-06 -->";

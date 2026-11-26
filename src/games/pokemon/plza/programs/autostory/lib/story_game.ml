@@ -113,6 +113,43 @@ let scene_through_prompt ~jump steps (event : Plan.event)
         { Scene_machine.default with stop_at_choice = true }
   | _ -> bad_args event "the only arg is stop_at_choice, true"
 
+(* The fork's console action timeout for run_to_gate. *)
+let run_to_gate_ms = 8000
+
+let run_to_gate steps ~timeout_ms =
+  Plza_walk.Gate_run.run (Steps.walk_game_steps steps) ~timeout_ms
+
+(* The plan's timeout for each run at the far gate (plza-03.08b.plan.json). *)
+let run_out_of_zone_1_ms = 5000
+
+let run_out_of_zone_1 steps ~timeout_ms =
+  Plza_walk.Map_walk.run_out_of_zone_one
+    (Steps.walk_game_steps steps)
+    ~timeout_ms
+
+let check_out_of_zone_1 steps =
+  Plza_walk.Map_walk.check_out_of_zone_one (Steps.walk_game_steps steps)
+
+(* The fork's counts (PokemonLZA_AutoStoryConsoleActions.cpp). *)
+let max_throws = 6
+let max_rounds = 6
+
+(* Wild Zone 1's actions, from 03.07 on, and Mable's reward. *)
+let zone_actions =
+  [
+    ("run_to_gate", timed run_to_gate ~default:run_to_gate_ms);
+    ( "catch_tutorial",
+      no_args (fun steps -> Catches.catch_tutorial steps ~max_throws) );
+    ( "battle_then_catch",
+      no_args (fun steps -> Catches.battle_then_catch steps ~max_rounds) );
+    ( "catch_in_zone",
+      no_args (fun steps ->
+          Zone_catch.run steps ~max_throws:Zone_catch.max_throws) );
+    ("run_out_of_zone_1", timed run_out_of_zone_1 ~default:run_out_of_zone_1_ms);
+    ("check_out_of_zone_1", no_args check_out_of_zone_1);
+    ("claim_mable_research_reward", no_args Mable_reward.run);
+  ]
+
 (* The story's own actions, by the name a plan gives each. *)
 let story_actions ~reload ~jump =
   [
@@ -138,7 +175,7 @@ let story_actions ~reload ~jump =
 let game_actions ~reload ~jump steps =
   List.map
     (fun (name, action) -> (name, action steps))
-    (story_actions ~reload ~jump)
+    (story_actions ~reload ~jump @ zone_actions)
 
 (* The engine's scene: its action "end_on_black_fade" for the fork's scene
    ending on a black fade, "button_b" for its scene pressing B (B on text and

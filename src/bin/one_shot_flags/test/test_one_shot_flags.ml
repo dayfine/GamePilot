@@ -39,6 +39,14 @@ let () =
         (run [ "--port"; "47950"; "--console" ])
         "attach 47950, state none";
       case "--state" (run [ "--state"; "a.ss" ]) "attach 47900, state a.ss";
+      case "--options: a program that takes none refuses one"
+        (run [ "--options"; "item=master-ball" ])
+        "error: --options item: this program takes no options";
+      case "--options without ="
+        (run [ "--options"; "item" ])
+        "error: --options item: not KEY=VALUE";
+      case "--options without its value" (run [ "--options" ])
+        "error: unknown argument --options";
       case "--watch: its own daemon on mGBA, any free ports" (run [ "--watch" ])
         "start mgba:47810 port 0 page 0 127.0.0.1 [], state overworld.ss";
       case "--listen and --mgba-port"

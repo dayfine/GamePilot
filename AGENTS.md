@@ -7,7 +7,8 @@ GamePilot automates games through three layers (design: `docs/design/Layered-Aut
   `clang-format`, strict warnings.
 - `src/` (OCaml 5.2+, dune): one dune project. Every library is `<name>/lib` with its tests in
   `<name>/test`.
-  - `base/`: pure, game-agnostic code with no effects (`wire`: the protocol codec).
+  - `base/`: pure, game-agnostic code with no effects (`wire`: the protocol codec; `run_options`:
+    a program's `--options`, declared on its registry entry).
   - `core/`: the effects programs use (`effects`) and their handlers (`session`, `live`, `replay`);
     `live_run`: a run's daemon, its watch page and hub, and one checkpoint run in its own daemon,
     shared by every game's series runner.
@@ -134,7 +135,8 @@ A new or changed program updates its guide. Every registered program has a playe
 from the registry and the plans. After changing a program's plans, its descriptor or its commands,
 run `cd src && opam exec -- dune exec -- gamepilot guide --write` and reread the prose around the
 blocks. CI runs `gamepilot guide --check`, which fails on a missing page, a stale block (any plan
-change makes its checkpoints block stale) or a skeleton's unfinished `TODO(guide)`.
+change makes its checkpoints block stale), a skeleton's unfinished `TODO(guide)`, or a program
+that declares options with no `options` block on its page.
 
 ## Agents
 

@@ -14,6 +14,8 @@ type game_steps = {
       (** Send one input and watch the screen while it runs: the first read on
           which the check holds (the input is then cut short, every button
           released), or [None] once the input is done. *)
+  race_batch : Wire.command list -> (Look.t -> bool) -> Look.t option;
+      (** As [race], over inputs sent as one batch (each runs into the next). *)
   race_then :
     Wire.command ->
     (Look.t -> bool) ->
@@ -22,6 +24,23 @@ type game_steps = {
       (** As [race], but the read that ends the input replaces it with the
           inputs the last function gives (no button released between: ZL held
           through the move), done before it returns. *)
+  queue : Wire.command list -> unit;
+      (** Queue inputs after the running ones and return at once, not when they
+          are done ({!Effects.queue}): a button held at the end of one queued
+          batch and the start of the next stays held. A later [submit] runs
+          after them. *)
+  now : unit -> float;  (** The daemon's clock, in ms. *)
+  wait_until : float -> unit;
+      (** Send nothing until the clock reaches this time; queued inputs run on.
+      *)
+  read_lock_target : unit -> Catch_plan.target option;
+      (** The plate of the locked-on wild Pokémon on the latest screen: its bar
+          on one frame, the caught mark over it on the next
+          ({!Plza_readers.Lock_plate}); [None] with no plate. *)
+  read_party_slots : unit -> int option;
+      (** Count the party bar's filled slots on the latest screen: its cards on
+          one frame, its bars on the next ({!Plza_readers.Party_slots}); [None]
+          with no bar or none filled. *)
   log : string -> unit;  (** A line for the log and the watch page. *)
   log_detail : string -> unit;  (** A line for the log alone. *)
 }

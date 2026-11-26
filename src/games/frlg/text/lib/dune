@@ -5,4 +5,5 @@
   gamepilot.wire
   gamepilot.effects
   gamepilot.repo_io
+  gamepilot.strings
   gamepilot.frlg_readers))

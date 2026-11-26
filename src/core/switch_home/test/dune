@@ -37,7 +37,9 @@
   test_stick_tilt
   test_delete_save_screen
   test_delete_save
-  test_code_keyboard)
+  test_code_keyboard
+  test_keyboard_typing
+  test_home_title)
  (modules
   test_home_screen
   test_console_park
@@ -47,6 +49,8 @@
   test_delete_save_screen
   test_delete_save
   test_code_keyboard
+  test_keyboard_typing
+  test_home_title
   fire_red
   scripted_home)
  (deps

@@ -5,11 +5,17 @@ type game_steps = {
   submit_batch : Wire.command list -> unit;
   read_screen : unit -> Look.t;
   race : Wire.command -> (Look.t -> bool) -> Look.t option;
+  race_batch : Wire.command list -> (Look.t -> bool) -> Look.t option;
   race_then :
     Wire.command ->
     (Look.t -> bool) ->
     (Look.t -> Wire.command list) ->
     Look.t option;
+  queue : Wire.command list -> unit;
+  now : unit -> float;
+  wait_until : float -> unit;
+  read_lock_target : unit -> Catch_plan.target option;
+  read_party_slots : unit -> int option;
   log : string -> unit;
   log_detail : string -> unit;
 }
