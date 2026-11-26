@@ -225,9 +225,7 @@ let plza_autostory =
     game = plza;
     name = "AutoStory";
     group = [ "PLZA"; "Story" ];
-    description =
-      "Plays the story; for now its first walk, from the platform to the plaza \
-       (checkpoint 01.01).";
+    description = "Plays the story from a new game, checkpoint by checkpoint.";
     doc = "docs/guide/plza.autostory.md";
     checkpoints = Some "src/games/pokemon/plza/programs/autostory/plans";
     backends = [ Switch ];

@@ -1,0 +1,15 @@
+(library
+ (name plza_fake_console)
+ (modules fake_console)
+ (libraries gamepilot.wire gamepilot.plza_story))
+
+(tests
+ (names test_scene_machine test_flicker_filter)
+ (modules test_scene_machine test_flicker_filter)
+ (libraries
+  gamepilot.wire
+  gamepilot.table_test
+  gamepilot.strings
+  gamepilot.engine_run
+  gamepilot.plza_story
+  plza_fake_console))

@@ -15,7 +15,7 @@ Each page ends with "How it works", for developers: the ported files, the mechan
 | [Dex Collection](frlg.dex_collection.md) | `frlg.dex_collection` | mGBA | Catches Pokemon the Pokedex lacks, toward the National Pokedex. |
 | [ACE Setup](frlg.ace_setup.md) | `frlg.ace_setup` | mGBA | Sets up arbitrary code execution: the ? Mail puts species 0x0351 in Box 3 slot 1. |
 | [Wild RNG](frlg.wild_rng.md) | `frlg.wild_rng` | mGBA | Catches a chosen shiny wild Pokemon by timing the game's random numbers. |
-| [AutoStory](plza.autostory.md) | `plza.autostory` | the Switch | Plays the story; for now its first walk, from the platform to the plaza (checkpoint 01.01). |
+| [AutoStory](plza.autostory.md) | `plza.autostory` | the Switch | Plays the story from a new game, checkpoint by checkpoint. |
 <!-- /generated -->
 
 The Mail Glitch has a second page for its last checkpoint:

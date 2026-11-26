@@ -46,14 +46,13 @@ let parse_hex_seed text =
 let split_on_separator name =
   let sep = " / " in
   let n = String.length sep in
-  let rec go start i acc =
-    if i + n > String.length name then
-      List.rev (String.sub name start (String.length name - start) :: acc)
-    else if String.sub name i n = sep then
-      go (i + n) (i + n) (String.sub name start (i - start) :: acc)
-    else go start (i + 1) acc
+  let rec go start acc =
+    match Strings.Find.substring ~from:start name sep with
+    | None ->
+        List.rev (String.sub name start (String.length name - start) :: acc)
+    | Some i -> go (i + n) (String.sub name start (i - start) :: acc)
   in
-  go 0 0 []
+  go 0 []
 
 let parse_column_name name =
   let* sound, mode, button =

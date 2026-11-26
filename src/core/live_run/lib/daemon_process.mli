@@ -39,9 +39,6 @@ val viewport_args : backend -> string option -> string list
 (** The Switch daemon's --viewport, when there is one; mGBA's frame is the
     picture. *)
 
-val find : string -> string -> int option
-(** Where the second string starts in the first. *)
-
 val start :
   ?watch:watch ->
   ?flags:string list ->

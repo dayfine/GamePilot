@@ -1,26 +1,24 @@
-(** PLZA's AutoStory as a game of the checkpoint engine ({!Plza_engine}): the
-    handlers its plans use. The fork's action table
-    (PokemonLZA_AutoStoryActionTable.cpp) for these actions:
+(** PLZA's AutoStory as a game of the checkpoint engine ({!Plza_engine}): runs
+    each plan event through its handler over {!Plza_story.Steps}, as the fork's
+    action table (PokemonLZA_AutoStoryActionTable.cpp) runs its actions, each
+    action checking its own args ([bad_args]); a plan that names an action with
+    no handler yet fails [no_handler]. An event's [skip_if] flags are read from
+    the screen ({!Resume_flags}), where the fork resumes 01.03 by an option.
 
-    - the game's [walk] ({!Plza_walk.Walk}), walked rather than run before 03.03
-      (as PokemonLZA_AutoStory.cpp walks them, before dash is unlocked).
-
-    Where it differs: only the walk so far. The story's scenes, battles, catches
-    and game actions come in later PRs; a plan that names one fails
-    [no_handler].
-
-    PLZA reads no position and no flag, and saves only by autosave: [save]
-    fails; [reload] is the caller's (back to the latest autosave). *)
+    PLZA reads no position, and saves only by autosave: [save] fails; [reload]
+    is the caller's (back to the latest autosave). *)
 
 val walk_only : string -> bool
 (** Whether a checkpoint's runs are walked: its id is before ["03.03"]. *)
 
 val make :
-  Plza_walk.Walk.game_steps ->
+  Plza_story.Steps.game_steps ->
   checkpoint:Plza_engine.Plan.checkpoint ->
   reload:(unit -> (unit, Engine_run.Failure.cause) result) ->
   Plza_engine.Game.t
-(** The handlers for one checkpoint's run. *)
+(** The handlers for one checkpoint's run. With a [story_battle] later in the
+    checkpoint, a walk or a scene (but [scene_to_battle]) stops on the battle
+    HUD and the run goes on at the battle ({!Battle_jump}). *)
 
 val run_watched :
   ?end_check:(unit -> (unit, Engine_run.Failure.cause) result) ->

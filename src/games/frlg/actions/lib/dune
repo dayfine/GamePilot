@@ -9,6 +9,7 @@
   gamepilot.grid_geometry
   gamepilot.grid_maps
   gamepilot.json_field
+  gamepilot.strings
   gamepilot.grid_planning
   gamepilot.pokemon_engine
   gamepilot.room_policy

@@ -54,19 +54,12 @@ let wire_span path =
   | exception Sys_error _ -> None
   | ic -> Fun.protect ~finally:(fun () -> close_in ic) (fun () -> span ic)
 
-let contains text part =
-  let n = String.length part in
-  let rec at i =
-    i + n <= String.length text && (String.sub text i n = part || at (i + 1))
-  in
-  at 0
-
 let backend_of_output text =
-  if contains text "daemon: mgba" then "mgba"
+  if Strings.Contains.substring text "daemon: mgba" then "mgba"
   else if
     String.starts_with ~prefix:"board:" text
-    || contains text "daemon: switch"
-    || contains text "daemon: board"
+    || Strings.Contains.substring text "daemon: switch"
+    || Strings.Contains.substring text "daemon: board"
   then "switch"
   else ""
 
