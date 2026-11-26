@@ -29,7 +29,7 @@ struct
 
   (* The engine's story actions are still the plan's own kinds, read by their
      piece's decoder. *)
-  let story : Engine_rules.Story_action.t -> Plan.kind = function
+  let story : Engine_rules.Builtin_action.t -> Plan.kind = function
     | Talk -> Talk
     | Answer yes -> Answer yes
     | Scene -> Scene
@@ -42,7 +42,7 @@ struct
     let name = F.string ~where "kind" obj in
     let args = Option.value ~default:[] (F.object_opt ~where "args" obj) in
     let args_where = where ^ "args." in
-    match (name, Story_action_decode.of_plan name, C.action_of_plan name) with
+    match (name, Builtin_action_decode.of_plan name, C.action_of_plan name) with
     | "game_action", _, _ when way = None ->
         F.fail "%saction is missing: a game_action names its action." where
     | "game_action", _, _ -> Plan.Named_action args

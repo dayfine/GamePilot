@@ -75,7 +75,7 @@ let write t file text =
   Out_channel.with_open_bin (path t file) (fun out ->
       Out_channel.output_string out text)
 
-let story_log t =
+let run_log t =
   let out = open_out (path t "story.log") in
   let log line =
     print_endline line;

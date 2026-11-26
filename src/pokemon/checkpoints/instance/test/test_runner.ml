@@ -54,20 +54,20 @@ let cases : Table_test.case list =
       name = "every event in order, each logged with its why";
       input = (fun () -> run mart);
       expectation =
-        {|[Story] cp: start, 4 events
-[Story] cp #1 to_door: start (walk to the door)
+        {|[Run] cp: start, 4 events
+[Run] cp #1 to_door: start (walk to the door)
 walk to_door
-[Story] cp #1 to_door: done
-[Story] cp #2 buy: start
+[Run] cp #1 to_door: done
+[Run] cp #2 buy: start
 action mart buy
-[Story] cp #2 buy: done
-[Story] cp #3 chat: start
+[Run] cp #2 buy: done
+[Run] cp #3 chat: start
 builtin chat
-[Story] cp #3 chat: done
-[Story] cp #4 leave: start (back to the overworld)
+[Run] cp #3 chat: done
+[Run] cp #4 leave: start (back to the overworld)
 builtin leave
-[Story] cp #4 leave: done
-[Story] cp: done
+[Run] cp #4 leave: done
+[Run] cp: done
 passed|};
     };
     {
@@ -81,38 +81,38 @@ passed|};
                 [ ("buy", Failure.cause "no_money" "300 needed, 120 held") ];
             });
       expectation =
-        {|[Story] cp: start, 4 events
-[Story] cp #1 to_door: start (walk to the door)
+        {|[Run] cp: start, 4 events
+[Run] cp #1 to_door: start (walk to the door)
 walk to_door
-[Story] cp #1 to_door: done
-[Story] cp #2 buy: start
+[Run] cp #1 to_door: done
+[Run] cp #2 buy: start
 action mart buy
-[Story] cp #2 buy: failed: no_money: 300 needed, 120 held
+[Run] cp #2 buy: failed: no_money: 300 needed, 120 held
 stopped: cp event 2 (buy): no_money: 300 needed, 120 held|};
     };
     {
       name = "a game action the game lacks fails before any event runs";
       input = (fun () -> run Scripted_game.script);
       expectation =
-        {|[Story] cp: not started: cp event 2 (buy): no handler for game action "mart"
+        {|[Run] cp: not started: cp event 2 (buy): no handler for game action "mart"
 stopped: cp event 2 (buy): no handler for game action "mart"|};
     };
     {
       name = "a flag in skip_if skips the event";
       input = (fun () -> run { mart with flags = [ "met_clerk" ] });
       expectation =
-        {|[Story] cp: start, 4 events
-[Story] cp #1 to_door: start (walk to the door)
+        {|[Run] cp: start, 4 events
+[Run] cp #1 to_door: start (walk to the door)
 walk to_door
-[Story] cp #1 to_door: done
-[Story] cp #2 buy: start
+[Run] cp #1 to_door: done
+[Run] cp #2 buy: start
 action mart buy
-[Story] cp #2 buy: done
-[Story] cp #3 chat: skipped (met_clerk)
-[Story] cp #4 leave: start (back to the overworld)
+[Run] cp #2 buy: done
+[Run] cp #3 chat: skipped (met_clerk)
+[Run] cp #4 leave: start (back to the overworld)
 builtin leave
-[Story] cp #4 leave: done
-[Story] cp: done
+[Run] cp #4 leave: done
+[Run] cp: done
 passed|};
     };
     {
@@ -160,8 +160,7 @@ passed|};
               read_after =
                 [ ("leave", { (at_door None) with at_tile = tile 4 2 }) ];
             });
-      expectation =
-        "[Story] cp end Town (4, 2): holds\n[Story] cp: done\npassed";
+      expectation = "[Run] cp end Town (4, 2): holds\n[Run] cp: done\npassed";
     };
     {
       name = "the player elsewhere at the end: stops at the end";
@@ -169,8 +168,8 @@ passed|};
         (fun () ->
           run_to_end { mart with read_after = [ ("leave", at_door None) ] });
       expectation =
-        "[Story] cp #4 leave: done\n\
-         [Story] cp end Town (4, 2): failed: declared end at Town (4, 2), but \
+        "[Run] cp #4 leave: done\n\
+         [Run] cp end Town (4, 2): failed: declared end at Town (4, 2), but \
          the game reads Town (4, 0)\n\
          stopped: cp event 5 (end): declared end at Town (4, 2), but the game \
          reads Town (4, 0)";
@@ -219,8 +218,7 @@ let run_with_end_state ?end_at ?(promised = promised) observed =
   let after_events =
     List.filteri
       (fun i _ ->
-        i
-        > Option.get (List.find_index (( = ) "[Story] cp #4 leave: done") lines))
+        i > Option.get (List.find_index (( = ) "[Run] cp #4 leave: done") lines))
       lines
   in
   String.concat "\n" (after_events @ [ result ])
@@ -242,7 +240,7 @@ let end_state_cases : Table_test.case list =
          [Postcondition] cp party: passed: pidgey, abra\n\
          [Postcondition] cp coins: passed: 20\n\
          [Postcondition] cp: 2 passed, 0 failed, 0 not checked: passed\n\
-         [Story] cp: done\n\
+         [Run] cp: done\n\
          passed";
     };
     {
@@ -270,7 +268,7 @@ let end_state_cases : Table_test.case list =
           run_with_end_state
             ~promised:{ promised with party = None; coins = None }
             Postcondition_check.nothing_read);
-      expectation = "[Story] cp: done\npassed";
+      expectation = "[Run] cp: done\npassed";
     };
     {
       name = "marks alone: read and checked at the end";
@@ -301,7 +299,7 @@ let end_state_cases : Table_test.case list =
             ~end_at:(Grid { map = "Town"; tiles = [ tile 4 2 ]; facing = None })
             (with_abra (Some 20)));
       expectation =
-        "[Story] cp end Town (4, 2): failed: declared end at Town (4, 2), but \
+        "[Run] cp end Town (4, 2): failed: declared end at Town (4, 2), but \
          the game reads no position\n\
          stopped: cp event 5 (end): declared end at Town (4, 2), but the game \
          reads no position";

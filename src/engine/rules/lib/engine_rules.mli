@@ -91,8 +91,8 @@ end
     each prints itself, and brings its plan format and event snapshot in those
     libraries. *)
 
-module Story_action = Story_action
-(** {!Story_action}: talk, answer, scene and save. *)
+module Builtin_action = Builtin_action
+(** {!Builtin_action}: talk, answer, scene and save. *)
 
 module Command_step = Command_step
 (** {!Command_step}: a command's step, by name. *)

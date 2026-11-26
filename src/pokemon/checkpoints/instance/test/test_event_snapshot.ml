@@ -158,8 +158,8 @@ let which_cases =
       (fun () -> run_kept ~events:{ first = 2; last = None } [])
       "3 4";
     case "to an event before the last: runs #2..#3, checks no end" to_event_log
-      "[Story] cp: start at #2 b, to #3 c, of 4 events\n\
-       [Story] cp: stopped after #3 (--to-event): end not checked\n\
+      "[Run] cp: start at #2 b, to #3 c, of 4 events\n\
+       [Run] cp: stopped after #3 (--to-event): end not checked\n\
        passed";
     case "a skipped event counts as done"
       (fun () ->

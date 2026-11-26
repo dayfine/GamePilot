@@ -65,7 +65,7 @@ module T = Toy_rules
 let parts =
   Action_parts.
     [
-      Part ((module Story_action_decode), fun a -> Toy_rules.Action.Story a);
+      Part ((module Builtin_action_decode), fun a -> Toy_rules.Action.Story a);
       Part ((module Walk_decode), fun w -> Toy_rules.Action.Walk w);
       Part ((module Inn_decode), fun i -> Toy_rules.Action.Inn i);
     ]

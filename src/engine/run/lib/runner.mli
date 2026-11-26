@@ -7,7 +7,7 @@
     [end_state] name where it ends ({!Engine_rules.GAME_RULES.end_place}) and
     every one of those passes before the first event, each event is reported
     skipped,
-    ["[Story] <checkpoint>: already at its end (<place>): passed, no event run"]
+    ["[Run] <checkpoint>: already at its end (<place>): passed, no event run"]
     is logged, and the checkpoint passes. Nothing else is read then: no end
     position, and no promise of a change from the start. A run that starts past
     the first event does not check it. Otherwise, per event: it is skipped when
@@ -15,8 +15,8 @@
     passes, the game's position (when it can tell) must match its
     [declared_after] ({!Engine_rules.POSE.matches}). The first event that fails
     stops the run. Each event's start (with its [why]), skip, end and failure is
-    logged as ["[Story] <checkpoint> #<n> <event>: ..."]. A handler that raises
-    is logged as failed and the exception passes through.
+    logged as ["[Run] <checkpoint> #<n> <event>: ..."]. A handler that raises is
+    logged as failed and the exception passes through.
 
     The runner prints none of the game's rules: it says each line as a
     {!Log_line.Make.t}, poses and failures kept as values, and the engine prints
@@ -44,8 +44,8 @@ module Make (T : Engine_rules.GAME_RULES) (Raw : Plan.RAW) : sig
   (** With [end_at] (the checkpoint's declared end), after the last event the
       player must read there, or the run fails with {!Failure.Make.Not_at_end}
       (also when the game cannot tell where they are), logged as
-      ["[Story] <checkpoint> end <pose>: holds"] or [": failed: ..."]. The C++
-      end check, of the map and tile, is in
+      ["[Run] <checkpoint> end <pose>: holds"] or [": failed: ..."]. The C++ end
+      check, of the map and tile, is in
       [Pokemon/AutoStory/Pokemon_StoryPostconditionCheck.cpp] on the fork's
       [frlg/lean].
 
@@ -63,8 +63,8 @@ module Make (T : Engine_rules.GAME_RULES) (Raw : Plan.RAW) : sig
 
       With [events], only those events run ({!Event_range}), numbered as in the
       whole checkpoint; the start is logged as
-      ["[Story] <checkpoint>: start at #13 <event>, to #14 <event>, of 14
-       events"]. A range that stops before the last event checks neither
-      [end_at] nor [end_state] (logged as
+      ["[Run] <checkpoint>: start at #13 <event>, to #14 <event>, of 14 events"].
+      A range that stops before the last event checks neither [end_at] nor
+      [end_state] (logged as
       ["... stopped after #<n> (--to-event): end not checked"]). *)
 end

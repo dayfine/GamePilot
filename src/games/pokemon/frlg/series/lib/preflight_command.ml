@@ -248,7 +248,7 @@ let run ~plan_dir ~from_id setup =
       ~mode:"preflight"
   in
   let record = run.record in
-  let log, close = Run_record.story_log record in
+  let log, close = Run_record.run_log record in
   print_endline ("[Preflight] " ^ record.dir);
   let verdict =
     with_daemon setup record from_id

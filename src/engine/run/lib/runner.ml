@@ -78,8 +78,8 @@ module Make (T : Engine_rules.GAME_RULES) (Raw : Engine_plan.Plan.RAW) = struct
     let notify = on_event index in
     let line rest : Log_line.t =
       Text
-        (Printf.sprintf "[Story] %s #%d %s: " checkpoint.checkpoint_id
-           (index + 1) event.id)
+        (Printf.sprintf "[Run] %s #%d %s: " checkpoint.checkpoint_id (index + 1)
+           event.id)
       :: rest
     in
     match List.find_opt game.flag_holds event.skip_if with
@@ -104,7 +104,7 @@ module Make (T : Engine_rules.GAME_RULES) (Raw : Engine_plan.Plan.RAW) = struct
     let id = checkpoint.checkpoint_id in
     let verdict = end_verdict game declared in
     say
-      (Log_line.Text ("[Story] " ^ id ^ " end ")
+      (Log_line.Text ("[Run] " ^ id ^ " end ")
       :: Pose declared
       ::
       (match verdict with
@@ -154,7 +154,7 @@ module Make (T : Engine_rules.GAME_RULES) (Raw : Engine_plan.Plan.RAW) = struct
         (fun () -> check_end_state ~say checkpoint index end_state)
     in
     if Result.is_ok checked then
-      say (text ("[Story] " ^ checkpoint.Plan.checkpoint_id ^ ": done"));
+      say (text ("[Run] " ^ checkpoint.Plan.checkpoint_id ^ ": done"));
     checked
 
   (* A partial run that stops before the last event checks no end: the player
@@ -163,7 +163,7 @@ module Make (T : Engine_rules.GAME_RULES) (Raw : Engine_plan.Plan.RAW) = struct
     say
       (text
          (Printf.sprintf
-            "[Story] %s: stopped after #%d (--to-event): end not checked"
+            "[Run] %s: stopped after #%d (--to-event): end not checked"
             checkpoint.Plan.checkpoint_id index));
     Ok ()
 
@@ -183,16 +183,16 @@ module Make (T : Engine_rules.GAME_RULES) (Raw : Engine_plan.Plan.RAW) = struct
 
   let start_line (checkpoint : Plan.checkpoint) = function
     | None ->
-        Printf.sprintf "[Story] %s: start, %d events" checkpoint.checkpoint_id
+        Printf.sprintf "[Run] %s: start, %d events" checkpoint.checkpoint_id
           (List.length checkpoint.events)
     | Some range ->
         let first, last = Event_range.describe range (event_ids checkpoint) in
-        Printf.sprintf "[Story] %s: start at %s, to %s, of %d events"
+        Printf.sprintf "[Run] %s: start at %s, to %s, of %d events"
           checkpoint.checkpoint_id first last
           (List.length checkpoint.events)
 
   let not_started id failure : Log_line.t =
-    [ Text ("[Story] " ^ id ^ ": not started: "); Failure failure ]
+    [ Text ("[Run] " ^ id ^ ": not started: "); Failure failure ]
 
   (* Before the first event, as Repeat_until checks its goal before a round:
      the promises of where the checkpoint ends ([T.end_place]) all pass
@@ -217,7 +217,7 @@ module Make (T : Engine_rules.GAME_RULES) (Raw : Engine_plan.Plan.RAW) = struct
     say
       (text
          (Printf.sprintf
-            "[Story] %s: already at its end (%s): passed, no event run"
+            "[Run] %s: already at its end (%s): passed, no event run"
             checkpoint.checkpoint_id place));
     Ok ()
 

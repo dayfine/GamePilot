@@ -196,7 +196,7 @@ let prepare ~plan_dir ~from_id ~at (setup : Pf.setup) =
     Run_record.start ~runs_dir:setup.runs_dir setup.info ~checkpoint:M.id
       ~mode:"preflight"
   in
-  let log, close = Run_record.story_log run.record in
+  let log, close = Run_record.run_log run.record in
   let lines = ref [] in
   let result =
     party setup world run.record

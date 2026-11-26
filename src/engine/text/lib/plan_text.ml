@@ -4,10 +4,10 @@ module Make (T : Engine_rules.GAME_RULES) = struct
   let pose = T.Pose.to_string
 
   let kind : Plan.kind -> string = function
-    | Talk -> Engine_rules.Story_action.to_string Talk
-    | Answer yes -> Engine_rules.Story_action.to_string (Answer yes)
-    | Scene -> Engine_rules.Story_action.to_string Scene
-    | Save -> Engine_rules.Story_action.to_string Save
+    | Talk -> Engine_rules.Builtin_action.to_string Talk
+    | Answer yes -> Engine_rules.Builtin_action.to_string (Answer yes)
+    | Scene -> Engine_rules.Builtin_action.to_string Scene
+    | Save -> Engine_rules.Builtin_action.to_string Save
     | Named_action args -> "game_action " ^ Yojson.Safe.to_string (`Assoc args)
     | Game action -> T.Action.to_string action
 
