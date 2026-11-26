@@ -81,6 +81,10 @@ val run : game_steps -> log:(string -> unit) -> trigger -> unit
     [ace_game_stopped] (no box title after the swaps: the game hung or reset).
 *)
 
+val box_reading : (Effects.measurements -> 'a option) -> 'a option
+(** A read of one frame of {!Frlg_readers.Pc_box_screen}'s probes, subscribed
+    for it; [None] when no frame came in a second. *)
+
 val screen_game_steps : log:(string -> unit) -> game_steps
 (** The box screen's steps on mGBA's timings: {!Pc_box}'s walk to MOVE POKéMON
     and out on {!Frlg_readers.Pc_screen}'s probes; presses held 100 ms, then a

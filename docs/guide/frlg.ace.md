@@ -22,6 +22,10 @@ What the save needs:
 - A Pokémon in Box 1 (MIMIEN on the Mail Glitch save), or already in Box 3 slot 2: the swap
   partner. The first Pokémon in Box 1 is used, whichever slot it is in.
 - Box 13 from slot 7 on and all of Box 14 empty. The program checks this before it types anything.
+- Every box's wallpaper as a new game leaves it (Box 1 Forest, then City, Desert, Savanna, again
+  from Box 5): the program tells the boxes apart by it, since several hold the same name. A box
+  whose wallpaper was changed stops the run before anything is typed; set it back with WALLPAPER on
+  the box title's menu.
 - Fewer than 30 kinds of item in the PC's item storage, and room in the bag: what it holds of the
   item plus `withdraw` at most 999.
 - English FireRed 1.1. The code's exit jumps to an address in that ROM; other versions and the

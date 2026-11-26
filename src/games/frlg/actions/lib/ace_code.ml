@@ -1,10 +1,12 @@
 module M = Menu_input
 module P = Ace_presets
+module W = Frlg_readers.Pc_box_screen
 
 type game_steps = {
   open_move_pokemon : unit -> unit;
   press : Wire.button -> unit;
   read_title : string list -> string option;
+  read_wallpaper : unit -> W.wallpaper option;
   slot_empty : unit -> bool option;
   ace_at_hand : unit -> bool;
   name_title : others:string list -> string -> unit;
@@ -47,32 +49,65 @@ let rec to_box1 steps t tries =
       steps.press Wire.Right;
       to_box1 steps t (tries - 1)
 
+let wallpaper_shown = function
+  | Some w -> "the " ^ W.wallpaper_name w ^ " wallpaper"
+  | None -> "none of the new game's wallpapers (Forest, City, Desert, Savanna)"
+
+(* Box [b] must show its new game's wallpaper: one the player changed fails,
+   since the boxes are counted by it. *)
+let check_wallpaper b shown =
+  let want = W.wallpaper_name (W.default_wallpaper b) in
+  if shown <> Some (W.default_wallpaper b) then
+    M.fail "ace_box_wallpaper"
+      (Printf.sprintf
+         "Box %d shows %s, not its default %s: set it back to %s (WALLPAPER on \
+          the box title's menu) before the code is entered"
+         b (wallpaper_shown shown) want want)
+
 (* With the hand on the title: the box screen opened, the title shown, Box 1
-   found. *)
+   found, by its name and its wallpaper. *)
 let open_at_box1 steps t =
   steps.open_move_pokemon ();
   steps.press Wire.Up;
-  to_box1 steps t P.boxes
+  to_box1 steps t P.boxes;
+  check_wallpaper 1 (steps.read_wallpaper ())
+
+let before b = if b = 1 then P.boxes else b - 1
 
 (* A title that reads as box [b - 1]'s and not [b]'s: the scroll was lost. *)
 let still_before t b name =
-  let before = if b = 1 then P.boxes else b - 1 in
-  List.mem name (P.known_names t before)
+  List.mem name (P.known_names t (before b))
   && not (List.mem name (P.known_names t b))
+
+(* A title that reads as box [b]'s and not [b - 1]'s. *)
+let reached t b name =
+  List.mem name (P.known_names t b)
+  && not (List.mem name (P.known_names t (before b)))
+
+(* After RIGHT toward box [b]: still on the box before, by its title, or by
+   its wallpaper when the title does not tell them apart (Boxes 12 to 14 are
+   all [A]; consecutive boxes' defaults always differ). *)
+let dropped t b title shown =
+  match title with
+  | Some name when still_before t b name -> true
+  | Some name when reached t b name -> false
+  | _ -> shown = Some (W.default_wallpaper (before b))
 
 let scroll_tries = 3
 
 (* With the hand on box [b - 1]'s title: RIGHT to box [b]'s, pressed again
-   while the title still reads as the box before (a RIGHT the screen dropped
-   on mGBA, right after a rename). *)
+   while the title or the wallpaper still shows the box before (a RIGHT the
+   screen dropped on mGBA, right after a rename); box [b]'s wallpaper must
+   then show. *)
 let rec next_box steps t b tries =
   steps.press Wire.Right;
-  match steps.read_title (all_names t) with
-  | Some name when still_before t b name ->
-      if tries = 0 then
-        M.fail "ace_box_lost" (Printf.sprintf "RIGHT did not reach Box %d" b);
-      next_box steps t b (tries - 1)
-  | _ -> ()
+  let title = steps.read_title (all_names t) in
+  let shown = steps.read_wallpaper () in
+  if dropped t b title shown then (
+    if tries = 0 then
+      M.fail "ace_box_lost" (Printf.sprintf "RIGHT did not reach Box %d" b);
+    next_box steps t b (tries - 1))
+  else check_wallpaper b shown
 
 (* From box [from]'s title RIGHT to box [to_]'s, which must read. *)
 let scroll steps t ~from to_ =
@@ -190,6 +225,7 @@ let screen_game_steps ~log =
     open_move_pokemon = box.open_move_pokemon;
     press = box.press;
     read_title = box.read_title;
+    read_wallpaper = (fun () -> Ace_trigger.box_reading W.title_wallpaper);
     slot_empty = box.slot_empty;
     ace_at_hand = box.ace_at_hand;
     name_title = Box_rename.name_on_title rename ~log;

@@ -1,10 +1,12 @@
-(* Ace_code on a fake box screen: 14 boxes of 30 slots with their titles,
-   the hand on the title or a slot, RIGHT on the title to the next box, and a
-   rename that sets the shown box's title. Run against the real preset
-   table. *)
+(* Ace_code on a fake box screen: 14 boxes of 30 slots with their titles
+   and wallpapers (a new game's unless [walls] says otherwise; [None] reads as
+   none of the four), the hand on the title or a slot, RIGHT on the title to
+   the next box, and a rename that sets the shown box's title. Run against the
+   real preset table. *)
 
 open Frlg_actions
 module C = Ace_code
+module W = Frlg_readers.Pc_box_screen
 
 let table = Result.get_ok (Ace_presets.load ())
 let master = Option.get (Ace_presets.find table "master-ball")
@@ -14,6 +16,7 @@ let ace = "0x0351"
 type fake = {
   slots : string option array array;
   titles : string array;
+  walls : W.wallpaper option array;
   mutable box : int;
   mutable on_title : bool;
   mutable slot : int;  (** 0-based *)
@@ -49,6 +52,7 @@ let steps f : C.game_steps =
       (fun cs ->
         let t = f.titles.(f.box) in
         if Some f.box <> f.unread && List.mem t cs then Some t else None);
+    read_wallpaper = (fun () -> f.walls.(f.box));
     slot_empty = (fun () -> Some (f.slots.(f.box).(f.slot) = None));
     ace_at_hand = (fun () -> f.slots.(f.box).(f.slot) = Some ace);
     name_title =
@@ -59,8 +63,10 @@ let steps f : C.game_steps =
     close = (fun () -> ());
   }
 
+let new_game i = Some (W.default_wallpaper (i + 1))
+
 let make ?(box = 2) ?(titles = fun i -> Printf.sprintf "BOX%d" (i + 1))
-    ?(stray = None) ?unread ?(drop_after_rename = 0) () =
+    ?(walls = new_game) ?(stray = None) ?unread ?(drop_after_rename = 0) () =
   let slots = Array.init 14 (fun _ -> Array.make 30 None) in
   slots.(2).(0) <- Some ace;
   slots.(0).(0) <- Some "MIMIEN";
@@ -68,6 +74,7 @@ let make ?(box = 2) ?(titles = fun i -> Printf.sprintf "BOX%d" (i + 1))
   {
     slots;
     titles = Array.init 14 titles;
+    walls = Array.init 14 walls;
     box;
     on_title = false;
     slot = 0;
@@ -147,6 +154,32 @@ let () =
           let titles i = if i = 12 then "BOX13" else named master i in
           enter master (make ~titles ()))
         "ok; typed 1: 13:A";
+      case "Box 6's wallpaper changed by hand: stopped before Box 13 is read"
+        (fun () ->
+          check
+            (make
+               ~walls:(fun i -> if i = 5 then Some W.Desert else new_game i)
+               ()))
+        "ace_box_wallpaper: Box 6 shows the Desert wallpaper, not its default \
+         City: set it back to City (WALLPAPER on the box title's menu) before \
+         the code is entered";
+      case "Box 1's wallpaper none of the four: stopped at once"
+        (fun () ->
+          enter master
+            (make ~walls:(fun i -> if i = 0 then None else new_game i) ()))
+        "ace_box_wallpaper: Box 1 shows none of the new game's wallpapers \
+         (Forest, City, Desert, Savanna), not its default Forest: set it back \
+         to Forest (WALLPAPER on the box title's menu) before the code is \
+         entered; typed 0: ";
+      case
+        "a RIGHT dropped between Boxes 12 and 13, both A: told by the \
+         wallpaper, pressed again"
+        (fun () ->
+          let titles i = if i = 11 then "BOX12" else named master i in
+          let f = make ~titles ~drop_after_rename:1 () in
+          let o = enter master f in
+          o ^ "; Box 13 " ^ f.titles.(12))
+        "ok; typed 1: 12:A; Box 13 A";
       case "no Box 1 anywhere"
         (fun () -> enter master (make ~titles:(fun _ -> "?") ()))
         "ace_box_lost: no box title reads as Box 1; typed 0: ";

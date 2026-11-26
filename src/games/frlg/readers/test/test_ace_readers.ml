@@ -9,7 +9,14 @@
    channel +-12 and in grey 10 levels (dev/reader_fixtures/shift_frame.py), and
    each must read the same. The image's name says what it shows: e_g_ the
    editor's group grid, e_w_ a word list, e_fields_ the message's fields,
-   box1_/box3_ the box screen.
+   box1_/box3_ the box screen. The wall_<wallpaper>_ frames are box titles
+   read for their wallpaper (Pc_box_screen.title_wallpaper), <wallpaper> what
+   it must read ("none" for the twelve a player can pick besides the four
+   defaults): on mGBA all sixteen wallpapers (box-titles/, Boxes 1-14, some
+   changed by hand) and three box screens with the hand on the title, the
+   ACE Pokémon or an empty slot (ace-setup/); on the Switch Boxes 1-14 as a
+   new game leaves them (console B, box-titles-20261125/: the title bar
+   only, the rest grey), each shifted too.
 
    Headroom on these frames and their shifted versions (threshold; worst
    reading on the thing; worst off it):
@@ -21,6 +28,9 @@
    - Desert wallpaper, r-g / g-b: 15 / 20; 29 / 38; -60.
    - Forest wallpaper, g-r / g-b: 20 / 20; 36 / 92; -53.
    - male mark, blue share: 0.15; 0.41; no frame off it.
+   - title wallpaper, the farther of the sky's and the ground's distance from
+     the wallpaper's colours: 50; 40 (Savanna, mGBA x0.9); 60 (Pokémon
+     Center's against Forest, green +12).
    The word arrow and the hand shadow are the thin ones; the actions confirm
    both by a second read (the row's words, the panel). *)
 
@@ -34,9 +44,16 @@ let cell = function
 
 let flag = function None -> "?" | Some true -> "y" | Some false -> "n"
 
-(* Easy Chat frames report the two cursors, box frames the box screen. *)
+let wallpaper m =
+  Option.fold ~none:"none"
+    ~some:(fun w -> String.lowercase_ascii (Pc_box_screen.wallpaper_name w))
+    (Pc_box_screen.title_wallpaper m)
+
+(* Easy Chat frames report the two cursors, wall_ frames the title's
+   wallpaper, box frames the box screen. *)
 let read image m =
-  if String.starts_with ~prefix:"e_" image then
+  if String.starts_with ~prefix:"wall_" image then "wallpaper " ^ wallpaper m
+  else if String.starts_with ~prefix:"e_" image then
     Printf.sprintf "group %s, word %s"
       (cell (Easy_chat_screen.group_cell m))
       (cell (Easy_chat_screen.word_cell m))
@@ -87,14 +104,19 @@ let expected =
 
 let base image = Filename.remove_extension (Filename.basename image)
 
+(* A wall_ frame's expectation is in its name. *)
+let expectation image =
+  match String.split_on_char '_' image with
+  | "wall" :: want :: _ -> "wallpaper " ^ want
+  | _ -> Option.value (List.assoc_opt image expected) ~default:"?"
+
 let cases label images =
   List.map
     (fun (image, probes) ->
       {
         Table_test.name = Printf.sprintf "%s: %s" label image;
         input = (fun () -> read (base image) (measurements probes));
-        expectation =
-          Option.value (List.assoc_opt (base image) expected) ~default:"?";
+        expectation = expectation (base image);
       })
     images
 
@@ -102,4 +124,7 @@ let () =
   Table_test.run "ace readers"
     (cases "mgba" (Wire.read_image_probes "fixtures/ace.mgba.probes.jsonl")
     @ cases "mgba shifted"
-        (Wire.read_image_probes "fixtures/ace.mgba.shifted.probes.jsonl"))
+        (Wire.read_image_probes "fixtures/ace.mgba.shifted.probes.jsonl")
+    @ cases "switch" (Wire.read_image_probes "fixtures/ace.switch.probes.jsonl")
+    @ cases "switch shifted"
+        (Wire.read_image_probes "fixtures/ace.switch.shifted.probes.jsonl"))
