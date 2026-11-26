@@ -5,7 +5,7 @@
    eighth is found, the cursor left on it; not among the first eight, the walk
    stops after eight reads and seven Rights. *)
 
-open Switch_home
+open Switch
 
 let walk : Home_title.walk =
   {

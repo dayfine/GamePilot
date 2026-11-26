@@ -16,7 +16,7 @@
    With [--intro], only the new game's readers' probes
    ({!Plza_readers.Switch_home_tile}, its title template named by the file
    beside the spec, {!Plza_readers.Intro_screens},
-   {!Switch_home.Keyboard_typing} and {!Plza_readers.Confirm_choices}), for
+   {!Switch.Keyboard_typing} and {!Plza_readers.Confirm_choices}), for
    fixtures/intro/intro.probes.jsonl.
 
    With [--gifts LANGUAGE], only the Mystery Gift steps' readers' probes
@@ -76,7 +76,7 @@ let () =
               ~title:
                 (Filename.basename Plza_readers.Switch_home_tile.title_template)
            @ Plza_readers.Intro_screens.probes ~picture:native
-           @ Switch_home.Keyboard_typing.probes
+           @ Switch.Keyboard_typing.probes
            @ Plza_readers.Confirm_choices.probes ~picture:native))
   | [ _; "--gifts"; language ] ->
       print_endline

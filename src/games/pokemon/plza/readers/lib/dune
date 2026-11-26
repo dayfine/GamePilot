@@ -4,5 +4,5 @@
  (libraries
   gamepilot.wire
   gamepilot.effects
-  gamepilot.switch_home
+  gamepilot.switch
   gamepilot.screen_state))

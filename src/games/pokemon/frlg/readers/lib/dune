@@ -6,4 +6,4 @@
   gamepilot.wire
   gamepilot.effects
   gamepilot.screen_state
-  gamepilot.switch_home))
+  gamepilot.switch))

@@ -1,7 +1,7 @@
 (executable
  (name write_probe_spec)
  (modules write_probe_spec fire_red_spec)
- (libraries yojson gamepilot.wire gamepilot.switch_home))
+ (libraries yojson gamepilot.wire gamepilot.switch))
 
 (rule
  (copy fire_red.ml fire_red_spec.ml))
@@ -64,4 +64,4 @@
   gamepilot.wire
   gamepilot.effects
   gamepilot.table_test
-  gamepilot.switch_home))
+  gamepilot.switch))

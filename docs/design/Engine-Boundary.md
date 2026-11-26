@@ -84,7 +84,7 @@ library only because the map decoders came first.
 |---|---|---|
 | `effects`, `session`, `live`, `replay`, `run_record`, `watch_report` | A | |
 | `screen_state` | A | facts (fade, banner, dialog, battle, free control, stillness) and the settle rules are shared by every game; the timings were measured on FireRed and a game may give its own `rule` |
-| `switch_home` | mixed | A: parking and resuming on HOME. Tied to the GBA picture: boxes clipped to FireRed's `GAME_BOX` viewport, tests on FireRed's tile |
+| `switch` | mixed | A: parking and resuming on HOME. Tied to the GBA picture: boxes clipped to FireRed's `GAME_BOX` viewport, tests on FireRed's tile |
 | `games/pokemon/frlg/repo_files` | A | `Repo_files.locate`, `Json_file`: agnostic, but under FireRed, and `program_registry` depends on it |
 | `bin/` | A | names no game module but in `bin/checkpoint_families.ml`, which picks a family's libraries by the registry's `rules` (FRLG's `games/pokemon/frlg/series`, its ctl readers); per-game data (delete-save icons, the lab console's panel and HOME tile) is the registry's |
 | `dev/lint/ocaml_lint.conf` | mixed | layer `game` may use `pokemon`: nothing stops a non-Pokémon game from using Pokémon code |
@@ -389,7 +389,7 @@ type game_steps = {
   save_in_game : slot:int option -> (unit, Failure.cause) result;
   check_start : unit -> Postcondition.result list;  (* FireRed: kept frame and party; Octopath 0: zone read *)
   relaunch : unit -> (unit, string) result;
-      (* the fallback when [return_to_save] fails: close from HOME and start the game (switch_home) *)
+      (* the fallback when [return_to_save] fails: close from HOME and start the game (switch) *)
 }
 ```
 
@@ -486,5 +486,5 @@ its C++ steps and timings passed on the console, so a failure points at the engi
    at 30-60 s each), with the attempt cap settable in the goal file; a spent budget stops and reports
    the observed rate.
 7. **Reload path in Octopath 0.** Recommendation: the game's own load (menu or title) as
-   `return_to_save`, and close-and-relaunch from HOME (`switch_home`) only as the fallback, since it
+   `return_to_save`, and close-and-relaunch from HOME (`switch`) only as the fallback, since it
    is slower and depends on the HOME readers working on a native game's picture.

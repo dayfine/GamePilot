@@ -4,7 +4,7 @@
    times 0.9 and 1.1, one channel plus or minus 12, 10% toward mid-grey),
    named <shift>/<image>: each must read as the capture itself does. *)
 
-open Switch_home
+open Switch
 
 let fixtures = Wire.read_image_probes "switch.probes.jsonl"
 let shifted = Wire.read_image_probes "switch.shifted.probes.jsonl"

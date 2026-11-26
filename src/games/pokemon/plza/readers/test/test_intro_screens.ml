@@ -1,5 +1,5 @@
 (* The new game's readers (Switch_home_tile, Intro_screens, the keyboard's cursor and text
-   field as Switch_home.Keyboard_typing reads them, Confirm_choices) on the
+   field as Switch.Keyboard_typing reads them, Confirm_choices) on the
    fork's frames of 2026-11-15 (PokemonLZA_AutoStoryIntroScreens_Tests.cpp,
    AutoStoryNewGame/2026-11-15, images/new-game): the language list on each
    of its ten entries, the look picker before the stick moves and after the
@@ -16,7 +16,7 @@
    (fixtures/intro/intro.shifted.probes.jsonl, one shift per frame). *)
 
 open Plza_readers
-module T = Switch_home.Keyboard_typing
+module T = Switch.Keyboard_typing
 
 let frames = Wire.read_image_probes "fixtures/intro/intro.probes.jsonl"
 let shifted = Wire.read_image_probes "fixtures/intro/intro.shifted.probes.jsonl"
@@ -29,9 +29,9 @@ let keyboard_parts m =
   [
     Some "keyboard";
     Option.map
-      (fun (k : Switch_home.Code_keyboard.key) ->
+      (fun (k : Switch.Code_keyboard.key) ->
         Printf.sprintf "cursor (%d, %d)" k.row k.col)
-      (Switch_home.Code_keyboard.cursor m);
+      (Switch.Code_keyboard.cursor m);
     (if T.text_pixels m >= has_text then Some "text" else None);
   ]
 

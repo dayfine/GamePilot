@@ -19,5 +19,5 @@ val probe :
     not wholly in the picture. *)
 
 val share : Effects.measurements -> string -> float option
-(** The probe's share, 0 to 1, when there is one
-    ({!Switch_home.Color_share.read}). *)
+(** The probe's share, 0 to 1, when there is one ({!Switch.Color_share.read}).
+*)

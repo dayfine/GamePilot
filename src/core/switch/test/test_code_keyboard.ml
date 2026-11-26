@@ -11,7 +11,7 @@
    shows. Brightened by 1.1, the light keys clip to white and are not read;
    the dark ones still are. *)
 
-open Switch_home
+open Switch
 module K = Code_keyboard
 
 let letter = function

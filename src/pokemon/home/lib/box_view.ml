@@ -1,5 +1,5 @@
 module F = Frame_box
-open Switch_home.Solid_color
+open Switch.Solid_color
 
 type pane = Home_box | Game_box
 type slot = { pane : pane; row : int; col : int }

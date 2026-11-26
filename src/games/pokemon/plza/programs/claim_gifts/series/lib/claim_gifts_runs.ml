@@ -15,7 +15,7 @@ let run_checkpoint inputs ~log ~picture ~assets report (plan : P.Plan.t) =
       ~assets
   in
   (* A console idle before the run dims its screen; nothing reads on it. *)
-  Switch_home.Stick_wake.run ();
+  Switch.Stick_wake.run ();
   P.Plan_watch.run ~mode:"testing" report (fun ~on_event ->
       P.Runner.run ~on_event game plan.checkpoint)
 

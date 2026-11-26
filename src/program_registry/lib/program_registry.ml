@@ -3,7 +3,7 @@ include Descriptor
 let games =
   [ Plza_programs.game; Frlg_programs.game; Pokemon_home_programs.game ]
 
-let with_home (g : game) = Option.map (fun h -> (g, h)) g.switch_home
+let with_home (g : game) = Option.map (fun h -> (g, h)) g.switch
 
 let home_ids () =
   String.concat ", "

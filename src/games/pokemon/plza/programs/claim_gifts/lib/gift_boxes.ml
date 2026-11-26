@@ -1,4 +1,4 @@
-module T = Switch_home.Timed_press
+module T = Switch.Timed_press
 module R = Plza_readers.Main_menu_row
 module C = Plza_gift_catalog.Gift_catalog
 module Cur = Box_cursor

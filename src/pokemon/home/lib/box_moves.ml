@@ -1,4 +1,4 @@
-module T = Switch_home.Timed_press
+module T = Switch.Timed_press
 module B = Box_view
 
 let ( let* ) = Result.bind
@@ -50,7 +50,7 @@ let goto_box target =
       fail (Printf.sprintf "HOME box %d not reached (on %d)" target current)
     else (
       T.press_all (T.times (min (abs d) max_switches) (switch_button d));
-      Switch_home.Switch_presses.wait settle_ms;
+      Switch.Switch_presses.wait settle_ms;
       go (n + 1))
   in
   go 0

@@ -1,7 +1,7 @@
 (* Parking on HOME and resuming the game, on a scripted console B
    (Scripted_home) whose screens are captures read by Home_screen. *)
 
-open Switch_home
+open Switch
 module S = Scripted_home
 
 (* HOME zooms out of the game; A on FireRed's tile resumes it when it was

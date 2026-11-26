@@ -3,7 +3,7 @@ open Descriptor
 (* FireRed's tile on HOME: its orange background and Charizard, 0.41 of the
    art; the other tiles on console B 0.05 at most (2026-11-24). RGB, each
    bound 0 to 255. *)
-let fire_red_tile : Switch_home.Home_screen.tile_color =
+let fire_red_tile : Switch.Home_screen.tile_color =
   let red_from = 200 and green_from = 40 in
   let full = 255 and green_to = 170 and blue_to = 100 in
   { min = (red_from, green_from, 0); max = (full, green_to, blue_to) }
@@ -21,7 +21,7 @@ let game =
       [
         ("firered", "src/games/pokemon/frlg/assets/delete-save-icon-firered.png");
       ];
-    switch_home =
+    switch =
       Some
         {
           title = "FireRed";

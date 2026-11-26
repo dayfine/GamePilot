@@ -1,7 +1,6 @@
 (** Waits until the player has free control before a walk starts. Ported from
-    [PokemonLZA_AutoStoryWalks.cpp], over the screen poll
-    {!Switch_home.Screen_poll} and the two timers of
-    [Pokemon/AutoStory/Engine/Pokemon_ScreenTimers.h].
+    [PokemonLZA_AutoStoryWalks.cpp], over the screen poll {!Switch.Screen_poll}
+    and the two timers of [Pokemon/AutoStory/Engine/Pokemon_ScreenTimers.h].
 
     A screen read every 250 ms. Control is free on two reads in a row of the
     party bar or the controls hint with nothing over them: about 0.5 s when

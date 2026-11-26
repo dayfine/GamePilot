@@ -26,4 +26,4 @@ val shifted : ?dx:int -> ?dy:int -> t -> t
 val probe_box : picture:Wire.box -> t -> Wire.box option
 (** The box relative to the game picture at [picture] in the frame (the
     [hello]'s viewport; the whole frame on [native]), or [None] when it is not
-    wholly inside ({!Switch_home.Picture_box.whole}). *)
+    wholly inside ({!Switch.Picture_box.whole}). *)
