@@ -11,8 +11,7 @@
     first tile.
 
     The fork's walker waits a fixed 300 ms after the black ends
-    ([wait_out_warp()] and [WARP_FADE_IN] in
-    Overworld/PokemonFRLG_OverworldWalk.cpp), which the dim spell outlasts. We
+    (Overworld/PokemonFRLG_OverworldWalk.cpp), which the dim spell outlasts. We
     deliberately differ: the fade-in is over once the screen's brightness has
     changed from its first lit frame and then stood still for {!still_ms}; a
     screen that never changes is taken as up after {!unchanged_ms}.

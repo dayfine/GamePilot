@@ -1,5 +1,3 @@
-open Wire.Line_shares
-
 type bar = { x : float; y : float; w : float; h : float }
 
 let id = "lock_plate"
@@ -57,49 +55,60 @@ let mark_box b : Native_box.t =
   and y1 = trunc (b.y -. (mark_bottom *. b.w)) in
   { x = x0; y = y0; w = x1 - x0; h = y1 - y0 }
 
-let red =
-  [
-    { weights = (1, 0, 0); op = Greater; value = 190 };
-    { weights = (1, -1, 0); op = Greater; value = 70 };
-    { weights = (1, 0, -1); op = Greater; value = 50 };
-    { weights = (0, -1, 1); op = Greater_equal; value = -15 };
-  ]
-
-let white =
-  [
-    { weights = (1, 0, 0); op = Greater; value = 215 };
-    { weights = (0, 1, 0); op = Greater; value = 215 };
-    { weights = (0, 0, 1); op = Greater; value = 215 };
-  ]
-
-let red_id = "lock_plate.mark.red"
-let white_id = "lock_plate.mark.white"
+(* The Poke Ball's red half and the female mark's pinkish red alike, and
+   white: wider than the fork's (red over 190, white over 215), as a 640x360
+   frame's ball is blurred dimmer. *)
+let red = Find_probe.filter { min = 0xffa00000; max = 0xffff96aa }
+let white = Find_probe.filter { min = 0xffc8c8c8; max = 0xffffffff }
+let red_filter = 0
+let mark_id = "lock_plate.mark"
+let min_mark_area = 40.
 let empty (box : Native_box.t) = box.w <= 0 || box.h <= 0
 
 let mark_probes ~picture b =
   let box = mark_box b in
   if empty box then []
   else
-    Pixel_shares.probe ~picture ~id:red_id box red
-    @ Pixel_shares.probe ~picture ~id:white_id box white
+    Find_probe.probe ~picture ~id:mark_id box
+      (Wire.Blob_find.params ~filters:[ red; white ] ~min_area:min_mark_area ())
 
-(* 15 at 720p, scaled by area to 1080p. *)
-let min_pixels_720p = 15.
-let lines_720p = 720.
-let scale = float_of_int Native_box.frame_height /. lines_720p
-let min_pixels = min_pixels_720p *. scale *. scale
+(* The ball: a red half at least 1.4 times as wide as high (the female mark
+   is a disc, its white sign inside its red), and under it a white half: its
+   top no higher than 0.35 of the red's height above the red's bottom and no
+   lower than 1.5 heights below it, its centre over the red or within a
+   quarter of its width beside it, and at least 0.4 times as wide. *)
+let min_half_aspect = 1.4
+let top_slack = 0.35
+let max_drop = 1.5
+let centre_slack = 0.25
+let min_width_ratio = 0.4
 
-(* The pixels passing: each row's share times its width. *)
-let count m id =
-  Option.map
-    (fun (t : Wire.Line_shares.t) ->
-      let width = float_of_int (List.length t.columns) in
-      Float.round (List.fold_left (fun s r -> s +. (r *. width)) 0. t.rows))
-    (Pixel_shares.lines m id)
+let under (r : Wire.Blob_find.blob) (w : Wire.Blob_find.blob) =
+  let bottom = r.y +. r.h and centre = w.x +. (w.w *. half) in
+  w.y >= bottom -. (top_slack *. r.h)
+  && w.y <= bottom +. (max_drop *. r.h)
+  && centre >= r.x -. (centre_slack *. r.w)
+  && centre <= r.x +. r.w +. (centre_slack *. r.w)
+  && w.w >= min_width_ratio *. r.w
+
+let ball blobs =
+  let reds, whites =
+    List.partition
+      (fun (b : Wire.Blob_find.blob) -> b.filter = red_filter)
+      blobs
+  in
+  List.exists
+    (fun (r : Wire.Blob_find.blob) ->
+      r.w >= min_half_aspect *. r.h && List.exists (under r) whites)
+    reds
 
 let caught m b =
   if empty (mark_box b) then Some false
   else
-    match (count m red_id, count m white_id) with
-    | Some r, Some w -> Some (r >= min_pixels && w >= min_pixels)
-    | _ -> None
+    match Effects.probe m mark_id with
+    | Some (Wire.Find { blobs }) -> Some (ball blobs)
+    | Some
+        ( Wire.Color_stats _ | Wire.Template_match _ | Wire.Color_count _
+        | Wire.Line_shares _ | Wire.Other _ )
+    | None ->
+        None

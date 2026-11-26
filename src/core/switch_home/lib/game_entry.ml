@@ -10,9 +10,9 @@ let close_game_delay_ms = 2000
 let settings_to_home_delay_ms = 960
 let button_hold_ms = 160
 
-(* The watchers' holds: HomeMenuWatcher, CloseGameWatcher and
-   StartGameUserSelectWatcher 250 ms; start's BlackScreenWatcher 100 ms and
-   its HomeMenuWatcher 2000 ms. *)
+(* How long each screen must hold before NintendoSwitch_GameEntry.cpp counts
+   it: HOME, the close-game prompt and the user select 250 ms; after a launch,
+   the black 100 ms and HOME again 2000 ms. *)
 let watcher_hold_ms = 250.
 let black_hold_ms = 100.
 let home_again_hold_ms = 2000.

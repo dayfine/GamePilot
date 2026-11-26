@@ -1,0 +1,44 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "frlg",
+  "execution": {
+    "menu": "full"
+  },
+  "metadata": {
+    "phase": "testing",
+    "notes": "The box rename's test on mGBA: Box 1 (the box the PC opens on) from BOX1 to a name of symbols and back. Starts facing Route 4 Pokémon Center's PC, from a save whose Box 1 is BOX1, and ends there."
+  },
+  "checkpoint": {
+    "id": "01-rename-box",
+    "title": "Box 1 renamed Az!…'.,9 and back to BOX1",
+    "start": {
+      "map": "Route4_PokemonCenter_1F",
+      "tiles": [
+        [11, 2]
+      ],
+      "facing": "north"
+    },
+    "events": [
+      {
+        "id": "rename_to_symbols",
+        "kind": "game_action",
+        "action": "rename_box",
+        "args": {
+          "from": "BOX1",
+          "to": "Az!…'.,9"
+        },
+        "why": "Eight characters from all three pages of the naming screen, a symbol and the ellipsis among them, typed and read back from the box title."
+      },
+      {
+        "id": "rename_back",
+        "kind": "game_action",
+        "action": "rename_box",
+        "args": {
+          "from": "Az!…'.,9",
+          "to": "BOX1"
+        },
+        "why": "Back to the name the save had, so the checkpoint ends where it started."
+      }
+    ]
+  }
+}

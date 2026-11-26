@@ -1,10 +1,10 @@
 (** Reader: the move menu's chosen move has no PP left. On the move menu the PP
     box shows the move under the cursor's "PP current/max" in a color for how
     much is left (pokefirered battle_message.c, GetCurrentPpToMaxPpState), red
-    at 0. Ported from the fork's Dialogs/PokemonFRLG_BattleDialogs
-    (BattleOutOfPpDetector, which the fork reads with the move menu up before
-    the game says "There's no PP left for this move!"); its box, relative to the
-    game picture.
+    at 0. Ported from the fork's out-of-PP detector in
+    Inference/Dialogs/PokemonFRLG_BattleDialogs.cpp (read with the move menu up
+    before the game says "There's no PP left for this move!"); its box, relative
+    to the game picture.
 
     Unverified: no capture of a move at 0 PP yet. The captures at hand show only
     that full and partly spent PP (8/10, 19/20, 12/15, 9/15, 5/5 on mGBA; Switch

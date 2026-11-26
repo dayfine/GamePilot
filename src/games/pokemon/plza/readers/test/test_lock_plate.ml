@@ -4,19 +4,17 @@
 
 open Plza_readers
 
-let read name =
-  let first = Fixture_frames.frame name in
+let read_frames first second =
   match Lock_plate.bar first with
   | None -> "no plate"
   | Some bar -> (
-      match
-        Option.map
-          (fun m -> Lock_plate.caught m bar)
-          (Fixture_frames.second name)
-      with
+      match Option.map (fun m -> Lock_plate.caught m bar) second with
       | Some (Some true) -> "a plate with the caught mark"
       | Some (Some false) -> "a plate with no caught mark"
       | Some None | None -> "mark unread")
+
+let read name =
+  read_frames (Fixture_frames.frame name) (Fixture_frames.second name)
 
 let case name frame expectation : Table_test.case =
   { name; input = (fun () -> read frame); expectation }
@@ -29,11 +27,31 @@ let cases =
       "synthetic/plate-gender-mark-only" "a plate with no caught mark";
     case "a plate with the gender mark and the Poke Ball (Bunnelby, caught)"
       "synthetic/plate-gender-and-ball-marks" "a plate with the caught mark";
+    (* Ours: the female mark is pinkish red round a white sign, which the
+       fork's counts took for the Poke Ball. *)
+    case "a plate with the female mark only (not caught)"
+      "synthetic/plate-female-mark-only" "a plate with no caught mark";
+    case "a plate with the female mark and the Poke Ball (caught)"
+      "synthetic/plate-female-and-ball-marks" "a plate with the caught mark";
     case "the player's HP bar alone" "synthetic/player-bar-alone" "no plate";
     case "bright grass alone" "synthetic/bright-grass-alone" "no plate";
     case "03.08's Scatterbug under ZL (not caught)"
       "lock-plate/en-0308-scatterbug-not-caught-038-360p"
       "a plate with no caught mark";
+    (* 640x360 run frames (console B, 2026-11-25): the plates that 03.08 and
+       03.08a read as caught, and the Bunnelby that was. *)
+    case "03.08's female Scatterbug (not caught)"
+      "lock-plate/en-0308-scatterbug-female-not-caught-041-360p"
+      "a plate with no caught mark";
+    case "03.08a's female Weedle (not caught)"
+      "lock-plate/en-0308a-weedle-female-not-caught-029-360p"
+      "a plate with no caught mark";
+    case "03.08a's female Weedle, thrown at and caught (a new species)"
+      "lock-plate/en-0308a-weedle-female-thrown-at-036-360p"
+      "a plate with no caught mark";
+    case "03.08a's Bunnelby (caught at 03.07)"
+      "lock-plate/en-0308a-bunnelby-caught-036-360p"
+      "a plate with the caught mark";
     case "03.07's Bunnelby battle: no lock on"
       "alert-eye/en-0307-bunnelby-battle-113-360p" "no plate";
   ]
@@ -60,6 +78,15 @@ let plates =
     ("synthetic/plate-and-player-bar-on-grass", "a plate at (0.52, 0.49)");
     ("synthetic/plate-gender-and-ball-marks", "a plate at (0.52, 0.49)");
     ("synthetic/plate-gender-mark-only", "a plate at (0.52, 0.49)");
+    ("synthetic/plate-female-mark-only", "a plate at (0.52, 0.49)");
+    ("synthetic/plate-female-and-ball-marks", "a plate at (0.52, 0.49)");
+    ( "lock-plate/en-0308-scatterbug-female-not-caught-041-360p",
+      "a plate at (0.53, 0.43)" );
+    ( "lock-plate/en-0308a-weedle-female-not-caught-029-360p",
+      "a plate at (0.53, 0.42)" );
+    ( "lock-plate/en-0308a-weedle-female-thrown-at-036-360p",
+      "a plate at (0.52, 0.58)" );
+    ("lock-plate/en-0308a-bunnelby-caught-036-360p", "a plate at (0.53, 0.39)");
   ]
 
 let frame_cases =
@@ -98,6 +125,9 @@ let shift_misses =
     ("synthetic/autosave-mint-banner-bands", "bright90");
     ("tutorial-cards/it-menu-no-card", "bright90");
     ("tutorial-cards/it-menu-no-card", "gplus12");
+    (* Not lost: with blue up 12 the 640x360 bar loses its blurred bottom
+       row, and its centre (0.576) rounds to 0.57. *)
+    ("lock-plate/en-0308a-weedle-female-thrown-at-036-360p", "bplus12");
   ]
 
 let shifted_cases =
@@ -119,6 +149,29 @@ let mareep : Table_test.case =
     expectation = "a plate with the caught mark";
   }
 
+(* The caught mark on every shifted frame with a plate, its second read made
+   from the shifted frame's own bar: as on the frame itself. *)
+let shifted_mark_cases =
+  List.filter_map
+    (fun (path, probes) : Table_test.case option ->
+      let shift, name = Fixture_frames.shift_and_frame path in
+      if List.mem_assoc name plates then
+        Some
+          {
+            name =
+              Printf.sprintf "%s, %s: the mark reads as unshifted" name shift;
+            input =
+              (fun () ->
+                read_frames
+                  (Fixture_frames.measurements probes)
+                  (Fixture_frames.shifted_second shift name));
+            expectation = read name;
+          }
+      else None)
+    Fixture_frames.shifted
+
 let () =
   Table_test.run "lock_plate"
-    (cases @ (mareep :: no_plate_elsewhere :: frame_cases) @ shifted_cases)
+    (cases
+    @ (mareep :: no_plate_elsewhere :: frame_cases)
+    @ shifted_cases @ shifted_mark_cases)

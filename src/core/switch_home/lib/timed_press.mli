@@ -3,6 +3,7 @@
     nothing held before the next, as {!Switch_presses.press} does it. *)
 
 type t = { button : Wire.button; hold_ms : int; cooldown_ms : int }
+(** One button, its hold and the quiet after it, in ms. *)
 
 val command : t -> Wire.command
 (** The daemon's press. *)

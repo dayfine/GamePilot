@@ -69,3 +69,8 @@ val end_event_of_name : string -> end_event option
 
 val style_of_name : string -> style option
 (** ["face_then_walk"] or ["steer"], as a plan writes it. *)
+
+val to_string : t -> string
+(** ["walk [0, 4500] [90, 10000] until fade_white"]: the legs as the plan writes
+    them, then [steer], the wait before, the heading faced first, the end and
+    its [earliest_end_ms] when set. *)

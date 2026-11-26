@@ -8,13 +8,13 @@ module S = Scripted_screen
 
 let outcome = function
   | Ok () -> "ok"
-  | Error cause -> "failed " ^ Pokemon_checkpoints.Failure.cause_to_string cause
+  | Error cause -> "failed " ^ Pokemon_engine.Failure.cause_to_string cause
 
 let args to_ = Json_field.as_object "args" (`Assoc [ ("to", `String to_) ])
 
 let trip ~from to_ () =
   match Seagallop.trip_of_args ~from (args to_) with
-  | Error cause -> "failed " ^ Pokemon_checkpoints.Failure.cause_to_string cause
+  | Error cause -> "failed " ^ Pokemon_engine.Failure.cause_to_string cause
   | Ok t ->
       let at = Seagallop.arrival t in
       Printf.sprintf "row %d; lands %s %s" t.row at.at_map

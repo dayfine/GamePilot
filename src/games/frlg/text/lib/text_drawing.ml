@@ -6,15 +6,7 @@ let paper = { r = 255; g = 255; b = 255 }
 type image = { width : int; height : int; pixels : Bytes.t }
 
 let bytes_per_pixel = 3
-
-let chars text =
-  let rec decode pos acc =
-    if pos >= String.length text then List.rev acc
-    else
-      let d = String.get_utf_8_uchar text pos in
-      decode (pos + Uchar.utf_decode_length d) (Uchar.utf_decode_uchar d :: acc)
-  in
-  decode 0 []
+let chars = Strings.Utf8.uchars
 
 let glyph_of glyphs text char =
   match Glyph_table.find glyphs char with

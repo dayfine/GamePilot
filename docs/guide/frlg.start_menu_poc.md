@@ -15,7 +15,15 @@ loads the Pallet Town state the program names; `--state PATH` loads another, `--
 
 ## Running it
 
-Start mGBA with the bridge and the daemon first, as `docs/poc-start-menu.md` shows, then:
+The runner script starts mGBA, the program's own daemon and its watch page, and closes mGBA after:
+
+```sh
+sh run/run_checkpoints_on_mgba.sh frlg.start_menu_poc
+```
+
+On an mGBA you started yourself with the bridge, `--watch` starts the daemon and the page
+(`--mgba-port N`: the port the bridge printed). Without `--watch` it runs on a daemon already up on
+`--port` (47900), as `docs/poc-start-menu.md` shows:
 
 <!-- generated:commands -->
 ```sh

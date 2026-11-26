@@ -5,7 +5,7 @@
    with several bad fields (which one is named first). A change that keeps
    plan_errors.golden as it is reports every broken plan the same way. *)
 
-open Pokemon_checkpoints
+open Pokemon_engine
 
 let start = {|{"map": "Town", "tiles": [[1, 2]], "facing": "south"}|}
 
@@ -92,7 +92,7 @@ let target = {|"target": {"map": "Town", "tiles": [[4, 0]], "facing": "north"}|}
 let pokemon_action_cases =
   [
     ("new_game with an arg", one "new_game" {|{"name": "RED"}|});
-    ("options with an arg", one "options" {|{"fast": true}|});
+    ("game_settings with an arg", one "game_settings" {|{"fast": true}|});
     ("heal with an arg", one "heal" {|{"where": "center"}|});
     ("route without a target", one "route" "{}");
     ( "route with an unknown arg",

@@ -1,0 +1,182 @@
+  :root {
+    --bg: #f6f7f9; --panel: #ffffff; --text: #1c2026; --muted: #69707a;
+    --line: #dfe3e8; --ok: #1f8a4c; --bad: #c62f2f; --cur: #1f6fd1;
+    --skip: #8a8f98; --box: #ffcc00;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #14171b; --panel: #1c2026; --text: #e6e9ed; --muted: #9aa3ad;
+      --line: #2d333b; --ok: #4cc27f; --bad: #ff6b6b; --cur: #6aa8ff;
+      --skip: #7d848e; --box: #ffd84d;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font: 14px/1.4 -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  header {
+    display: flex; align-items: center; gap: 12px; padding: 10px 16px;
+    border-bottom: 1px solid var(--line); background: var(--panel);
+  }
+  header h1 { font-size: 16px; margin: 0; }
+  #conn { color: var(--muted); font-size: 13px; }
+  #conn.down { color: var(--bad); font-weight: 600; }
+  #source-state { font-size: 13px; font-weight: 600; color: var(--ok); }
+  #source-state.warn { color: var(--bad); }
+  #stop {
+    margin-left: auto; background: var(--bad); color: #fff; border: 0;
+    border-radius: 6px; padding: 8px 18px; font-size: 14px; font-weight: 600;
+    cursor: pointer;
+  }
+  #stop:disabled { opacity: 0.5; cursor: default; }
+  #readonly { margin-left: auto; color: var(--muted); font-size: 13px; }
+  #side-toggle { background: var(--panel); color: var(--text); border: 1px solid var(--line);
+                 border-radius: 6px; padding: 4px 9px; font-size: 16px; line-height: 1;
+                 cursor: pointer; }
+  /* The runs sidebar: a column beside the page on a wide window (closable),
+     a drawer over it on a phone (closed until opened). Its rows have fixed
+     heights, so updates never move the page. */
+  #shell { display: flex; align-items: flex-start; }
+  #shell > main { flex: 1 1 auto; min-width: 0; }
+  #side { flex: 0 0 250px; width: 250px; position: sticky; top: 0; max-height: 100vh;
+          overflow: auto; padding: 12px 0 12px 16px; }
+  body.side-closed #side { display: none; }
+  #side h2 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em;
+             color: var(--muted); margin: 4px 0 6px; display: flex; gap: 6px; }
+  #side h2 a { margin-left: auto; font-weight: 500; text-transform: none; letter-spacing: 0;
+               color: var(--cur); text-decoration: none; }
+  #side ul { list-style: none; margin: 0 0 14px; padding: 0; }
+  #side li { border: 1px solid transparent; border-radius: 6px; }
+  #side li a, #side li .row { display: block; padding: 5px 8px; color: var(--text);
+                              text-decoration: none; }
+  #side li a:hover { background: color-mix(in srgb, var(--cur) 8%, transparent); border-radius: 6px; }
+  #side li.here { border-color: var(--cur);
+                  background: color-mix(in srgb, var(--cur) 12%, transparent); }
+  #side .l1, #side .l2 { display: block; white-space: nowrap; overflow: hidden;
+                         text-overflow: ellipsis; }
+  #side .l1 { font-weight: 600; }
+  #side .l2 { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+  #side .pass { color: var(--ok); }
+  #side .fail { color: var(--bad); }
+  #side .note { color: var(--muted); font-size: 12px; padding: 0 8px; }
+  #side-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 19; }
+  @media (max-width: 800px) {
+    #side { position: fixed; top: 0; bottom: 0; left: 0; width: min(300px, 85vw);
+            max-height: none; z-index: 20; background: var(--bg); padding: 12px;
+            border-right: 1px solid var(--line); transform: translateX(-105%);
+            transition: transform 0.2s; }
+    body.side-closed #side { display: block; }
+    body.side-open #side { transform: none; }
+  }
+  @media (min-width: 801px) { #side-backdrop { display: none; } }
+  /* Fixed at the bottom, so it never moves the page. */
+  #ended { position: fixed; left: 16px; right: 16px; bottom: 16px; z-index: 18;
+           max-width: 560px; margin: 0 auto; background: var(--panel);
+           border: 1px solid var(--line); border-left: 4px solid var(--cur);
+           border-radius: 8px; padding: 10px 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+           display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+  #ended[hidden] { display: none; }
+  #ended a { color: var(--cur); font-weight: 600; text-decoration: none; }
+  #ended button { margin-left: auto; font: inherit; font-size: 12px; background: var(--panel);
+                  color: var(--text); border: 1px solid var(--line); border-radius: 6px;
+                  padding: 2px 8px; cursor: pointer; }
+  main {
+    display: grid; gap: 12px; padding: 12px 16px;
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+    grid-template-areas: "frame frame" "run run" "plan log" "health log";
+  }
+  @media (max-width: 800px) {
+    main { grid-template-columns: minmax(0, 1fr);
+           grid-template-areas: "frame" "run" "plan" "health" "log"; }
+  }
+  section {
+    background: var(--panel); border: 1px solid var(--line);
+    border-radius: 8px; padding: 10px 12px; min-width: 0;
+  }
+  section h2 {
+    font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em;
+    color: var(--muted); margin: 0 0 8px;
+  }
+  #frame-panel { grid-area: frame; }
+  #run-panel { grid-area: run; }
+  #plan-panel { grid-area: plan; }
+  #log-panel { grid-area: log; }
+  #health-panel { grid-area: health; }
+  #frame-body { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-start; }
+  #stage-wrap { flex: 1 1 320px; min-width: 0; }
+  #stage { position: relative; background: #000; border-radius: 4px;
+           display: inline-block; vertical-align: top; }
+  #screen { display: block; }
+  #stage.pixel #screen { image-rendering: pixelated; }
+  #overlay { position: absolute; inset: 0; width: 100%; height: 100%; }
+  #frame-meta { color: var(--muted); font-size: 12px; margin-top: 4px; }
+  .toolbar { display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
+             flex-wrap: wrap; }
+  .modes { display: inline-flex; border: 1px solid var(--line); border-radius: 6px;
+           overflow: hidden; }
+  .modes button { background: var(--panel); color: var(--text); border: 0;
+                  padding: 4px 10px; font: inherit; font-size: 13px; cursor: pointer; }
+  .modes button + button { border-left: 1px solid var(--line); }
+  .modes button[aria-pressed="true"] { background: var(--cur); color: #fff; }
+  #probe-side { flex: 0 1 300px; min-width: 220px; }
+  #probe-filter { width: 100%; font: inherit; font-size: 13px; padding: 4px 6px;
+                  border: 1px solid var(--line); border-radius: 6px;
+                  background: var(--panel); color: var(--text); margin-bottom: 6px; }
+  /* A fixed height: as the probe set changed between phases, a growing and
+     shrinking table shifted everything below it on a phone. */
+  #probe-scroll { height: min(480px, 45vh); overflow: auto; }
+  #probe-table td { font-size: 12px; padding: 2px 4px 2px 0; }
+  #probe-table td.pid { overflow-wrap: anywhere; }
+  #probe-table td.val { font: 12px ui-monospace, Menlo, Consolas, monospace;
+                        white-space: nowrap; }
+  #probe-table td.chg { width: 14px; color: var(--box); text-align: center; }
+  #probe-table tr.hot td { background: color-mix(in srgb, var(--cur) 14%, transparent); }
+  ol.plan { list-style: none; margin: 0; padding: 0; max-height: 420px;
+            overflow: auto; }
+  ol.plan li { display: grid; grid-template-columns: 22px 28px 1fr auto;
+               padding: 3px 0; border-bottom: 1px solid var(--line); }
+  ol.plan li .t { grid-column: 4; grid-row: 1; padding-left: 8px; color: var(--muted);
+                  font-variant-numeric: tabular-nums; }
+  ol.plan li.total { font-weight: 600; border-top: 1px solid var(--line); }
+  ol.plan li.total .t { color: var(--text); }
+  ol.plan li:last-child { border-bottom: 0; }
+  ol.plan li.empty { display: block; }
+  #run-meta { color: var(--muted); margin-bottom: 8px; font-variant-numeric: tabular-nums; }
+  #run-meta b { color: var(--text); font-weight: 600; }
+  ol#chain { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { display: inline-flex; align-items: baseline; gap: 6px; font: inherit; font-size: 13px;
+          border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px;
+          background: var(--panel); color: var(--muted); cursor: default; }
+  .chip .t { font-size: 12px; font-variant-numeric: tabular-nums; }
+  .chip.passed { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 45%, var(--line)); }
+  .chip.failed { color: var(--bad); border-color: color-mix(in srgb, var(--bad) 45%, var(--line)); }
+  .chip.skipped { color: var(--skip); text-decoration: line-through; }
+  .chip.current { color: var(--cur); border-color: var(--cur); font-weight: 600;
+                  background: color-mix(in srgb, var(--cur) 12%, transparent); }
+  .chip.open { cursor: pointer; }
+  .chip.open:hover, .chip.shown { outline: 2px solid color-mix(in srgb, var(--cur) 50%, transparent); }
+  #past { margin-top: 10px; border-top: 1px solid var(--line); padding-top: 8px; }
+  #past-head { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+  #past-head button { margin-left: auto; font: inherit; font-size: 12px; background: var(--panel);
+                      color: var(--text); border: 1px solid var(--line); border-radius: 6px;
+                      padding: 2px 8px; cursor: pointer; }
+  .mark { font-weight: 700; text-align: center; }
+  .n { color: var(--muted); font-variant-numeric: tabular-nums; }
+  .detail { grid-column: 3; color: var(--muted); font-size: 12px;
+            overflow-wrap: anywhere; }
+  li.done .mark { color: var(--ok); }
+  li.current { background: color-mix(in srgb, var(--cur) 12%, transparent); }
+  li.current .mark, li.current .id { color: var(--cur); font-weight: 600; }
+  li.failed .mark, li.failed .detail { color: var(--bad); }
+  li.skipped .mark, li.skipped .id { color: var(--skip); }
+  #log { font: 12px/1.45 ui-monospace, Menlo, Consolas, monospace;
+         height: 320px; overflow: auto; white-space: pre-wrap;
+         overflow-wrap: anywhere; margin: 0; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  td, th { text-align: left; padding: 3px 6px 3px 0;
+           border-bottom: 1px solid var(--line); }
+  th { color: var(--muted); font-weight: 500; }
+  td.num { font-variant-numeric: tabular-nums; }
+  tr.stuck td { color: var(--bad); font-weight: 600; }
+  .empty { color: var(--muted); font-style: italic; }

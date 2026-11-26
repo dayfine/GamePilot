@@ -13,7 +13,7 @@
 
     A position is a set of tiles: BDSP plans from every tile the player may be
     on, FRLG from the one it is on. The text matches the C++ walkers' word for
-    word. The functions return a line without the tag, which {!tag} holds; the
+    word (the fork's Pokemon/Navigation/Grid/Trace/Pokemon_RouteLog.{h,cpp}). The functions return a line without the tag, which {!tag} holds; the
     caller logs it. *)
 
 val tag : string

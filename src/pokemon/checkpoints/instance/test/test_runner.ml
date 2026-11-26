@@ -1,7 +1,7 @@
 (* Runner.run takes a checkpoint's events in order through the game's handlers
    and stops at the first failure, naming the event. *)
 
-open Pokemon_checkpoints
+open Pokemon_engine
 open Engine_postcondition
 
 let tile x y : Grid_geometry.Tile_pos.t = { x; y }
@@ -271,6 +271,27 @@ let end_state_cases : Table_test.case list =
             ~promised:{ promised with party = None; coins = None }
             Postcondition_check.nothing_read);
       expectation = "[Story] cp: done\npassed";
+    };
+    {
+      name = "marks alone: read and checked at the end";
+      input =
+        (fun () ->
+          run_with_end_state
+            ~promised:
+              {
+                promised with
+                party = None;
+                coins = None;
+                marks = Some [ "mail"; "none" ];
+              }
+            {
+              Postcondition_check.nothing_read with
+              marks = Some [ "mail"; "held_item" ];
+            }
+          |> last_line);
+      expectation =
+        "stopped: cp event 5 (postconditions): postconditions unmet: marks: \
+         failed: expected mail, none, read mail, held_item";
     };
     {
       name = "the end position fails first: nothing read";

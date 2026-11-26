@@ -78,10 +78,11 @@ Port 0 (for `--watch-port` and `--port`) binds a free port; the daemon prints bo
 "listening" line. Stop takes the token (`--watch-token`, else a random one): the page served to
 this machine carries it, another machine's viewer needs `?token=` in the URL. With `--registry` the
 daemon lists its page there (`<pid>.json`, removed on exit) for the hub: `--hub` serves the list of
-live runs (`watch/hub.html`) in a session of its own, and exits at once when its port is taken.
-The page is `watch/watch.html`, compiled in. The 10 s rate line on mGBA adds what the page costs
+live runs (`watch/page/hub.html`) in a session of its own, and exits at once when its port is taken.
+The page is `watch/page/watch.html` with its scripts and style beside it (`watch_*.js`, `watch.css`),
+compiled in. The 10 s rate line on mGBA adds what the page costs
 the frame loop (stream viewers, frames polled, ms spent); the stream prints its own 10 s line
-(encodes/s, ms and bytes a frame, the slowest viewer's frames/s). `gamepilot checkpoints --watch` starts the runner's daemons with it.
+(encodes/s, ms and bytes a frame, the slowest viewer's frames/s). `gamepilot run --watch` starts the runner's daemons with it.
 
 ## View-only sources
 
@@ -91,8 +92,8 @@ the frame loop (stream viewers, frames polled, ms spent); the stream prints its 
     gamepilot_daemon --backend view --replay clip.mp4 ...
 
 Shows another program's picture on the watch page with nothing sent anywhere (`src/view_backend.h`):
-no controller, no lease, no keep-awake; `submit`, `cancel`, `backend.load_state` and
-`lease.acquire` answer -32002 (`protocol/v1/41-error.view_only.response.json`). On macOS the frames
+no controller, no lease, no keep-awake; `submit`, `cancel`, `backend.load_state`, `backend.reset`
+and `lease.acquire` answer -32002 (`protocol/v1/41-error.view_only.response.json`). On macOS the frames
 come from one app window through ScreenCaptureKit (`src/window_capture_mac.mm`; the terminal that
 starts it needs Screen Recording), at most 30 a second; other platforms build without it. `--crop
 auto` finds the video in the window (its edges, or the 16:9 area whose pixels change) and shows the
@@ -137,9 +138,11 @@ picture whole and at 2x inside side bars give the same results.
 | `src/server.*` | the JSON-RPC server and the frame loop |
 | `src/net.*` | TCP (POSIX and Winsock): 127.0.0.1 for programs, any address for the page |
 | `src/http.*` | the HTTP/1.1 and Server-Sent Events framing the watch page needs |
-| `src/watch_server.*` | the watch page's server: page, frame, event stream, Stop |
-| `src/server_watch.cpp` | what the server shows there, the program's notes, Stop |
-| `watch/watch.html` | the page (compiled in by `cmake/embed_watch_page.cmake`) |
+| `watch/server/watch_server.*` | the watch page's server: page, frame, event stream, Stop |
+| `watch/server/server_watch.cpp` | what the server shows there, the program's notes, Stop |
+| `watch/page/watch.html` | the page (compiled in by `cmake/embed_watch_page.cmake`) |
+| `watch/page/*.js`, `watch/page/*.css` | the pages' scripts and styles, one file per job (compiled in by `cmake/embed_watch_assets.cmake`) |
+| `watch/server/watch_assets.h` | those scripts and styles by name, served beside the page that loads them |
 | `src/switch_backend.*` | the Switch: capture thread, ring reader, controller |
 | `src/video_capture.*` | frame sources: capture card and video replay (OpenCV `VideoCapture`) |
 | `src/view_backend.*` | the view-only backend: a source's frames, cropped, with no input |

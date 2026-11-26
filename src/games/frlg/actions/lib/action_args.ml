@@ -6,7 +6,7 @@ let decode ~action read args =
   match read ~where:(action ^ ": ") args with
   | value -> Ok value
   | exception J.Invalid e ->
-      Error (Pokemon_checkpoints.Failure.cause ~repeats:true "bad_args" e)
+      Error (Pokemon_engine.Failure.cause ~repeats:true "bad_args" e)
 
 let party_slots = 6
 
@@ -29,10 +29,30 @@ let member_to_string = function
 let member_keys =
   [ "species"; "sweeper"; "knock_off_species"; "recycle_species" ]
 
-let field_move_users = [ ("cut_tree", "cut") ]
+let field_move_users = [ ("cut_tree", "cut"); ("fly", "fly") ]
+
+(* The badge each HM needs outside battle, by field move: pret pokefirered
+   src/party_menu.c (FLAG_BADGE01_GET + the field move, from
+   include/constants/party_menu.h: Flash 0 to Waterfall 6), the overworld
+   prompts in data/scripts/field_moves.inc (Cut, Rock Smash, Strength) and
+   src/field_control_avatar.c (Surf, Waterfall). *)
+let field_move_badges =
+  [
+    ("flash", "boulder");
+    ("cut", "cascade");
+    ("fly", "thunder");
+    ("strength", "rainbow");
+    ("surf", "soul");
+    ("rock_smash", "marsh");
+    ("waterfall", "volcano");
+  ]
+
+let badge_needed action =
+  Option.bind (List.assoc_opt action field_move_users) (fun m ->
+      List.assoc_opt m field_move_badges)
 
 let picks_member ~action args =
-  action = "capture"
+  action = "capture" || action = "pc_deposit"
   || (not (List.mem_assoc action field_move_users))
      && List.exists (fun key -> J.has key args) member_keys
 

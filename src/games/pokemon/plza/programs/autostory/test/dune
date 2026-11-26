@@ -1,6 +1,10 @@
 (tests
- (names test_story_game test_plan_check)
- (modules test_story_game test_plan_check)
+ (names test_story_game test_plan_check test_run_attempts test_zone_actions)
+ (modules
+  test_story_game
+  test_plan_check
+  test_run_attempts
+  test_zone_actions)
  (deps
   (glob_files ../plans/*.plan.json))
  (libraries
@@ -8,9 +12,10 @@
   gamepilot.wire
   gamepilot.effects
   gamepilot.table_test
-  gamepilot.plza_story
+  gamepilot.strings
   gamepilot.plza_walk
+  gamepilot.plza_story
+  plza_fake_console
   gamepilot.engine_run
-  gamepilot.plza_checkpoints
-  gamepilot.plza_autostory
-  plza_fake_console))
+  gamepilot.plza_engine
+  gamepilot.plza_autostory))

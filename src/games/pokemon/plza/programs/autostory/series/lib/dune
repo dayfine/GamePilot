@@ -2,7 +2,6 @@
  (name plza_series)
  (public_name gamepilot.plza_series)
  (libraries
-  yojson
   gamepilot.wire
   gamepilot.effects
   gamepilot.live
@@ -10,8 +9,12 @@
   gamepilot.run_record
   gamepilot.watch_report
   gamepilot.repo_io
+  gamepilot.guide_page
   gamepilot.engine_run
+  gamepilot.engine_series
+  gamepilot.run_flags
+  gamepilot.run_options
   gamepilot.plza_readers
   gamepilot.plza_story
-  gamepilot.plza_checkpoints
+  gamepilot.plza_engine
   gamepilot.plza_autostory))

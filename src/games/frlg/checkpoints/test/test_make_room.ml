@@ -50,7 +50,6 @@ let plan () =
   let room : Make_room.room =
     {
       center;
-      fly_user = "pidgey";
       deposits =
         [ { slot = 2; species = "eevee" }; { slot = 6; species = "magikarp" } ];
       party = console_b;
@@ -58,22 +57,20 @@ let plan () =
     }
   in
   match
-    Pokemon_checkpoints.Plan_decode.decode ~source:"00-make-room"
+    Pokemon_engine.Plan_decode.decode ~source:"00-make-room"
       (Make_room.plan_json room)
   with
   | Error e -> "error: " ^ e
   | Ok p ->
-      let promised =
-        Pokemon_checkpoints.Postconditions.stated p.postconditions
-      in
+      let promised = Pokemon_engine.Postconditions.stated p.postconditions in
       String.concat "; "
         (List.map
-           (fun (e : Pokemon_checkpoints.Plan.event) ->
+           (fun (e : Pokemon_engine.Plan.event) ->
              e.id ^ " " ^ Option.value e.way ~default:"")
            p.checkpoint.events)
       ^ " | ends "
       ^ Option.fold ~none:"?"
-          ~some:(fun (g : Pokemon_checkpoints.Pose.grid) -> g.map)
+          ~some:(fun (g : Pokemon_engine.Pose.grid) -> g.map)
           promised.position
       ^ " | party "
       ^ (match promised.party with
@@ -82,7 +79,7 @@ let plan () =
       ^ " | knows "
       ^ String.concat ", "
           (List.map
-             (fun (k : Pokemon_checkpoints.Postconditions.knows) ->
+             (fun (k : Pokemon_engine.Postconditions.knows) ->
                k.species ^ " " ^ String.concat "+" k.moves)
              promised.knows)
 

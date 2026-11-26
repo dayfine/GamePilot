@@ -6,7 +6,7 @@
   },
   "metadata": {
     "phase": "testing",
-    "notes": "Starts at Celadon Dept. Store 1F (6, 2) with frlg.supplies su-01's stock: Retro Mail >= 99 (98 rounds + 1 kept on the row) and a Super Repel; the pre-flight checks both. MIMIEN in slot 1 (mail record), mail on slots 2-6, Pidgey knows Fly. Rare Candy: 1 picked up, held by MIMIEN, +98 duplicated into the bag.",
+    "notes": "Starts anywhere outdoors in Kanto with frlg.supplies su-01's stock: Retro Mail >= 99 (98 rounds + 1 kept on the row) and a Super Repel; the pre-flight checks both. MIMIEN in slot 1 (mail record), mail on slots 2-6, a member knows Fly. Rare Candy: 1 picked up, held by MIMIEN, +98 duplicated into the bag.",
     "postconditions": {
       "party_slots": [
         {
@@ -26,29 +26,15 @@
     "id": "tt-01",
     "title": "Rare Candy farm: pick up Route 6's hidden Rare Candy, duplicate it to 99",
     "start": {
-      "map": "CeladonCity_DepartmentStore_1F",
-      "tiles": [
-        [6, 2]
-      ],
-      "facing": "south"
+      "anywhere": "outdoors"
     },
     "events": [
-      {
-        "id": "out_of_dept_store",
-        "kind": "route",
-        "action": "run",
-        "args": {
-          "target": {"place": "celadon_dept_store_west_door_outside"}
-        },
-        "why": "Leave the Dept. Store by its west door to fly."
-      },
       {
         "id": "fly_vermilion",
         "kind": "game_action",
         "action": "fly",
         "args": {
-          "town": "VermilionCity",
-          "species": "pidgey"
+          "town": "VermilionCity"
         },
         "why": "Fly to Vermilion City; Route 6 is its north connection.",
         "declared_after": {
@@ -103,8 +89,7 @@
         "kind": "game_action",
         "action": "fly",
         "args": {
-          "town": "CeladonCity",
-          "species": "pidgey"
+          "town": "CeladonCity"
         },
         "declared_after": {
           "map": "CeladonCity",
@@ -163,6 +148,15 @@
           "marks": ["held_item", "mail", "mail", "mail", "mail", "mail"]
         },
         "why": "The glitch's mail records are intact after the rounds."
+      },
+      {
+        "id": "out_of_dept_store",
+        "kind": "route",
+        "action": "run",
+        "args": {
+          "target": {"place": "celadon_dept_store_west_door_outside"}
+        },
+        "why": "Out by the west door: the checkpoint ends outdoors, where the next program can fly from."
       }
     ]
   }

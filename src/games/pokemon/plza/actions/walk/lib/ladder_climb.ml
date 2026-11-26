@@ -19,7 +19,9 @@ let sidesteps =
   @ List.init rights (fun _ -> side_degrees)
 
 let tilt (steps : game_steps) ~degrees ~duration_ms ~release_ms =
-  match Inputs.tilt ~walk_only:true Walk ~degrees ~duration_ms ~release_ms with
+  match
+    Walk_inputs.tilt ~walk_only:true Walk ~degrees ~duration_ms ~release_ms
+  with
   | Ok input -> Ok (steps.submit input)
   | Error e -> Error (Failure.cause ~repeats:true "walk_stick" e)
 

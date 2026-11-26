@@ -40,11 +40,26 @@ val probes :
     run does not claim it ({!Claim_gifts.gift_name_template}). *)
 
 val open_gifts : log:(string -> unit) -> (unit, string) result
+(** From the main menu: to the Link Play row, A, Right twice, Down, A, onto the
+    Mystery Gift menu. *)
+
 val open_internet_list : log:(string -> unit) -> (unit, string) result
+(** "Get with Internet" and connect (A, A); the gift list must show, A pressed
+    while it does not. *)
+
 val choose_gift : log:(string -> unit) -> (unit, string) result
+(** Down from the selected item to the Internet gift's, which must be below it
+    and be reached, then A to claim it. *)
+
 val leave_card : log:(string -> unit) -> (unit, string) result
+(** {!dismiss_card}, then B and yes to "stop for now?". *)
+
 val open_keyboard : log:(string -> unit) -> (unit, string) result
+(** Down and A on the Mystery Gift menu; the code keyboard must show, A pressed
+    while it does not. *)
+
 val dismiss_card : log:(string -> unit) -> (unit, string) result
+(** {!await_card}, then A past it. *)
 
 val await_list : unit -> (unit, string) result
 (** The gift list read for 1 s within 3 s, no press. *)
@@ -58,5 +73,8 @@ val await_keyboard : unit -> (unit, string) result
 
 val claim_code :
   log:(string -> unit) -> picture:Wire.box -> string -> (unit, string) result
+(** Types the code ({!Switch_home.Code_keyboard.type_code}), + (5 s); the gift
+    list must show, then A claims the code's gift. *)
 
 val disconnect : unit -> unit
+(** B, yes to "you will be disconnected", A, B: off the link, no read. *)

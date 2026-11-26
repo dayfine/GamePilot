@@ -27,8 +27,13 @@
       over a slot, which bobs: (cx - 25, cy - 112, 50, 54), 0.15 of it green.
       The tooltip's green underline over a neighbour reads 0.08 at most. *)
 
-type pane = Home_box | Game_box  (** left, right *)
+(** The box a slot is in. *)
+type pane =
+  | Home_box  (** HOME's, on the left *)
+  | Game_box  (** the game's, on the right *)
+
 type slot = { pane : pane; row : int; col : int }
+(** A slot of one box, its row and column 0-based from the top left. *)
 
 val columns : int
 (** 6. *)
@@ -40,6 +45,7 @@ type templates = {
   slash : Effects.template_hash;  (** "/300" *)
   digits : (int * Effects.template_hash) list;  (** the digits with one *)
 }
+(** The counter's templates. *)
 
 val complete : templates -> bool
 (** All ten digits have a template. *)
@@ -60,15 +66,19 @@ val counter_to_string : Effects.measurements -> string
 (** Each digit window's best digit and score, for a log line. *)
 
 val empty : Effects.measurements -> slot -> bool
+(** The slot reads flat and light: nothing in it. *)
 
 val occupied : Effects.measurements -> slot -> bool
 (** Neither empty nor unread. *)
 
 val cursor_at : Effects.measurements -> slot -> bool
+(** The green arrow shows over the slot. *)
 
 (** The script's scan orders over HOME's box: column by column, top to bottom in
     each. *)
-type order = Right_to_left | Left_to_right
+type order =
+  | Right_to_left  (** from the rightmost column *)
+  | Left_to_right  (** from the leftmost column *)
 
 val first_empty : Effects.measurements -> order -> slot option
 (** The first empty slot of HOME's box in that order. *)

@@ -21,7 +21,11 @@ type button = Command.button =
   | Y
   | ZL
   | ZR
+  | Plus
+  | Minus
+  | LStick
 
+let all_buttons = Command.all_buttons
 let string_of_button = Command.string_of_button
 let button_of_string = Command.button_of_string
 let switch_only = Command.switch_only
@@ -125,6 +129,7 @@ type error = Jsonrpc.error = {
 type call = Jsonrpc.call =
   | Hello of { protocol : int; client : string }
   | Load_state of { path : string }
+  | Reset
   | Save_state of { path : string }
   | Save_frame of { path : string }
   | Upload_template of { png : string }

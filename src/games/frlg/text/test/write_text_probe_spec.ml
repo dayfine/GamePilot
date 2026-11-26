@@ -36,6 +36,9 @@ let species =
 
 let dark = Line_reading.ink
 
+(* The Kanto Pokédex's species: the first 151 in the game's order. *)
+let kanto_species = 151
+
 (* Each screen: its font, its lines, their candidates and the ink they are read
    in. *)
 let screens =
@@ -82,6 +85,27 @@ let screens =
       cells ~rows:7 ~cells:2 Text_lines.berry_pouch_number_digit,
       Number_reading.digits,
       dark );
+    ( "pc_message",
+      glyphs,
+      [ Text_lines.pc_message ],
+      [ "Deposit in which BOX?"; "The BOX is full."; "Please remove the MAIL." ],
+      dark );
+    ( "pokedex_list",
+      glyphs,
+      rows Text_lines.pokedex_list_rows Text_lines.pokedex_list_name,
+      List.filteri (fun i _ -> i < kanto_species) species @ [ "-----" ],
+      dark );
+    ( "pokedex_numbers",
+      small_glyphs,
+      cells ~rows:Text_lines.pokedex_list_rows ~cells:3
+        Text_lines.pokedex_list_number_digit,
+      Number_reading.digits,
+      dark );
+    ( "naming_entry",
+      glyphs,
+      List.init 8 (Text_lines.naming_entry_cell ~max_chars:8),
+      Naming_keyboard.charset,
+      dark );
     ( "card_numbers",
       glyphs,
       List.init 6 Text_lines.trainer_card_money_digit
@@ -121,6 +145,19 @@ let mail_probes dir screen =
       line_probes dir screen glyphs dark (Mail_fields.line glyphs text) [ text ])
     mail_candidates
 
+(* The box title: each candidate on its own line, centred as the game
+   centres it, in the title's white. *)
+let box_title_candidates = [ "BOX1"; "BOX2"; "Az!…'.,9"; "”‘' A a." ]
+
+let box_title_probes dir screen =
+  List.concat_map
+    (fun text ->
+      match Box_title.template glyphs text with
+      | Error _ -> []
+      | Ok (line, _) ->
+          line_probes dir screen glyphs Box_title.ink line [ text ])
+    box_title_candidates
+
 let write_spec dir screen probes =
   let request =
     Wire.json_of_message (Request { id = 1; call = Subscribe probes })
@@ -139,4 +176,6 @@ let () =
   let dir = Sys.argv.(1) in
   List.iter (write_screen dir) screens;
   let mail = "mail_editor" in
-  write_spec dir mail (mail_probes dir mail)
+  write_spec dir mail (mail_probes dir mail);
+  let title = "box_title" in
+  write_spec dir title (box_title_probes dir title)

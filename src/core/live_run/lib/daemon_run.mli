@@ -1,8 +1,9 @@
-(** One checkpoint run in its own daemon, as every game's live series runs it
-    (FRLG's Checkpoint_live_run, PLZA's Plza_series): the daemon started and
-    always stopped, the session in the run's folder with any exception made a
-    failure, and the run's ending printed and recorded. The game gives its own
-    outcome type and how a failure makes one ([failed]). *)
+(** One checkpoint run in its own daemon, as a game's live series runs it
+    (FRLG's Checkpoint_live_run): the daemon started and always stopped, the
+    session in the run's folder with a lost connection made a failure, the saves
+    the session makes in that folder, and the run's ending printed and recorded.
+    The game gives its own outcome type and how a failure makes one ([failed]).
+*)
 
 type failed = { at : string; reason : string; repeats : bool }
 (** A run that failed: where, why, and whether another run would fail the same
@@ -18,9 +19,8 @@ val with_daemon :
 
 val in_session : failed:(failed -> 'o) -> dir:string -> (unit -> 'o) -> 'o
 (** The session (a [Live.run]) with [dir] as the run folder. A lost connection
-    fails at ["session"] (not repeating), a Unix error at ["session"]
-    (repeating), and any other exception at ["raised"], so the run's log, record
-    and watch page still close. *)
+    fails at ["session"] (not repeating) and a Unix error at ["session"]
+    (repeating); any other exception goes on to the caller. *)
 
 val finish :
   runs_dir:string ->
@@ -29,3 +29,13 @@ val finish :
   Run_record.ending ->
   unit
 (** Prints ["[Run] <folder>: <summary>"] and writes the run's ending. *)
+
+val save : log:(string -> unit) -> string -> (unit -> int) -> unit
+(** [save ~log what op]: a save in the session the daemon may refuse (an older
+    daemon, a bad path), logged ["[Run] saved <what>"] or why it could not be;
+    never fatal. Moved unchanged from FRLG's Checkpoint_live_run. *)
+
+val save_failure :
+  log:(string -> unit) -> Run_record.t -> save_states:bool -> unit
+(** What a failed run saves in its folder (Run_record.failure_saves: the frame,
+    and the state when [save_states]), each through [save]. *)

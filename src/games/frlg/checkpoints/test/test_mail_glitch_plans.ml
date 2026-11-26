@@ -32,8 +32,8 @@ let all_decode () =
   | [] -> "all decode"
   | first :: _ -> first
 
-let outline name = Pokemon_checkpoints.Plan_text.outline (plan name)
-let event name id = Pokemon_checkpoints.Plan_text.event_named (plan name) id
+let outline name = Pokemon_engine.Plan_text.outline (plan name)
+let event name id = Pokemon_engine.Plan_text.event_named (plan name) id
 
 let records : Table_test.case list =
   [
@@ -46,8 +46,8 @@ let records : Table_test.case list =
       name = "01-celadon-setup outline";
       input = (fun () -> outline "01-celadon-setup.plan.json");
       expectation =
-        "frlg 01-celadon-setup from CeladonCity (48, 12) south: 6 game_action, \
-         7 route, 1 talk, 1 scene";
+        "frlg 01-celadon-setup from anywhere outdoors: 6 game_action, 7 route, \
+         1 talk, 1 scene";
     };
     {
       name = "a place route, expanded: the lift ride FireRed adds";
@@ -102,7 +102,7 @@ let records : Table_test.case list =
       input = (fun () -> outline "08-activate-and-verify.plan.json");
       expectation =
         "frlg 08-activate-and-verify from Route16 (30, 7) north: 18 \
-         game_action, 3 route";
+         game_action, 4 route";
     };
     {
       name = "a route's typed target";
@@ -114,7 +114,7 @@ let records : Table_test.case list =
       name = "a game action keeps its args as JSON, and its declared_after";
       input = (fun () -> event "02-trade-farfetchd.plan.json" "fly_vermilion");
       expectation =
-        {|fly_vermilion: [fly] game_action {"town":"VermilionCity","species":"pidgey"} => VermilionCity (15, 7) south|};
+        {|fly_vermilion: [fly] game_action {"town":"VermilionCity"} => VermilionCity (15, 7) south|};
     };
     {
       name =
@@ -122,12 +122,10 @@ let records : Table_test.case list =
          them), 20 coins gained and $4,100 spent";
       input =
         (fun () ->
-          Pokemon_checkpoints.Plan_text.postconditions
+          Pokemon_engine.Plan_text.postconditions
             (plan "01-celadon-setup.plan.json"));
       expectation =
-        "party includes blastoise, pidgey, abra\n\
-         coins gained 20\n\
-         money spent 4100";
+        "party includes blastoise, abra\ncoins gained 20\nmoney spent 4100";
     };
     {
       name =
@@ -135,10 +133,10 @@ let records : Table_test.case list =
          Rope";
       input =
         (fun () ->
-          Pokemon_checkpoints.Plan_text.postconditions
+          Pokemon_engine.Plan_text.postconditions
             (plan "03-trade-mr-mime.plan.json"));
       expectation =
-        "party includes blastoise, pidgey, mr-mime, farfetchd\n\
+        "party includes blastoise, mr-mime, farfetchd\n\
          item revive gained 2\n\
          item escape-rope gained 1\n\
          money spent 3550";
@@ -147,10 +145,10 @@ let records : Table_test.case list =
       name = "04-grind-farfetchd promises Knock Off and one rope used";
       input =
         (fun () ->
-          Pokemon_checkpoints.Plan_text.postconditions
+          Pokemon_engine.Plan_text.postconditions
             (plan "04-grind-farfetchd.plan.json"));
       expectation =
-        "party includes blastoise, pidgey, mr-mime, farfetchd\n\
+        "party includes blastoise, mr-mime, farfetchd\n\
          item revive gained 0\n\
          item escape-rope used 1\n\
          money spent 0\n\
@@ -160,21 +158,21 @@ let records : Table_test.case list =
       name = "a grind round (05-grind-mr-mime) promises what holds on any save";
       input =
         (fun () ->
-          Pokemon_checkpoints.Plan_text.postconditions
+          Pokemon_engine.Plan_text.postconditions
             (plan "05-grind-mr-mime.plan.json"));
       expectation =
         "position IndigoPlateau_PokemonCenter_1F (13, 12) north\n\
-         party includes blastoise, pidgey, mr-mime, farfetchd\n\
+         party includes blastoise, mr-mime, farfetchd\n\
          money spent 0";
     };
     {
       name = "06-grind-return promises the grind's moves";
       input =
         (fun () ->
-          Pokemon_checkpoints.Plan_text.postconditions
+          Pokemon_engine.Plan_text.postconditions
             (plan "06-grind-return.plan.json"));
       expectation =
-        "party includes blastoise, pidgey, mr-mime, farfetchd\n\
+        "party includes blastoise, mr-mime, farfetchd\n\
          money spent 0\n\
          farfetchd knows knock-off\n\
          mr-mime knows recycle\n\
@@ -186,10 +184,10 @@ let records : Table_test.case list =
          duplication gives, and Lea & Jed's prize less the mail";
       input =
         (fun () ->
-          Pokemon_checkpoints.Plan_text.postconditions
+          Pokemon_engine.Plan_text.postconditions
             (plan "08-activate-and-verify.plan.json"));
       expectation =
-        "party includes mr-mime, pidgey\n\
+        "party includes mr-mime\n\
          mr-mime in slot 1\n\
          item antidote gained 0\n\
          item retro-mail gained 1\n\
@@ -199,11 +197,10 @@ let records : Table_test.case list =
       name = "07-glitch-prep promises Blastoise's Leppa Berry and MIMIEN's mail";
       input =
         (fun () ->
-          Pokemon_checkpoints.Plan_text.postconditions
+          Pokemon_engine.Plan_text.postconditions
             (plan "07-glitch-prep.plan.json"));
       expectation =
-        "party includes pidgey\n\
-         farfetchd in slot 1\n\
+        "farfetchd in slot 1\n\
          blastoise in slot 2\n\
          mr-mime in slot 3\n\
          item antidote gained 2\n\
@@ -225,7 +222,7 @@ let cases : Table_test.case list =
       "3";
     case "05-grind-mr-mime repeats until MIMIEN is Lv 33 and knows Recycle"
       (fun () ->
-        Pokemon_checkpoints.Plan_text.repeat (plan "05-grind-mr-mime.plan.json"))
+        Pokemon_engine.Plan_text.repeat (plan "05-grind-mr-mime.plan.json"))
       "at most 20 rounds, until:\nmr-mime knows recycle\nmr-mime at least Lv 33";
     case "05-grind-mr-mime retries each round twice"
       (fun () -> string_of_int (plan "05-grind-mr-mime.plan.json").retries)

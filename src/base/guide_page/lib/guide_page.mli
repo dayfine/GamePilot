@@ -23,6 +23,11 @@ val blocks : string -> (block list, string) result
 (** The page's blocks in order; [Error] for a start marker with no end, an end
     with no start, or a start inside a block, naming its line. *)
 
+val missing_blocks :
+  required:string list -> string -> (string list, string) result
+(** The names in [required] that no block of the page has, in [required]'s
+    order; [Error] as {!blocks}. *)
+
 val fill :
   (block -> (string, string) result) -> string -> (string, string) result
 (** The page with each block's body replaced by what [generate] gives for it (a
@@ -32,3 +37,12 @@ val start_marker : string -> string option -> string
 (** ["<!-- generated:NAME ARG -->"], for a page's first draft. *)
 
 val end_marker : string
+
+val long_paragraphs : max_lines:int -> string -> (int * int) list
+(** The hand-written paragraphs longer than [max_lines] lines, as each one's
+    first line number and length. A list item counts as a paragraph of its own;
+    blocks, code (fenced or indented), headings, tables and comments are not
+    paragraphs. *)
+
+val cell : string -> string
+(** Text as a Markdown table cell: every pipe escaped, so none ends the cell. *)

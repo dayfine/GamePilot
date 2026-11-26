@@ -50,6 +50,7 @@ type span = {
   stop_at : string option;  (** the point to stop on, before its step *)
   mode : mode;  (** what the run claims and boxes *)
 }
+(** The part of the steps a run takes, and what it claims. *)
 
 val points : string list
 (** The screens between the steps, in order: overworld (the start), mystery-gift

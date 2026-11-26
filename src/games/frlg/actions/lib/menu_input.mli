@@ -4,20 +4,19 @@
     {!Action_failed} through these and {!run} turns it into the story's outcome,
     so a flow reads as the list of its steps. *)
 
-exception Action_failed of Pokemon_checkpoints.Failure.cause
+exception Action_failed of Pokemon_engine.Failure.cause
 
 val fail : ?repeats:bool -> string -> string -> 'a
-(** Raises {!Action_failed} with
-    [Pokemon_checkpoints.Failure.cause code detail]. *)
+(** Raises {!Action_failed} with [Pokemon_engine.Failure.cause code detail]. *)
 
-val raise_error : (unit, Pokemon_checkpoints.Failure.cause) result -> unit
+val raise_error : (unit, Pokemon_engine.Failure.cause) result -> unit
 (** Raises {!Action_failed} with an [Error]'s cause; [Ok] does nothing. *)
 
 val probes : Wire.probe_spec list
 (** What the menu actions read: {!Scene_looks.probes}, the party and a member's
     menu, the bag and the money box. *)
 
-val run : (unit -> unit) -> (unit, Pokemon_checkpoints.Failure.cause) result
+val run : (unit -> unit) -> (unit, Pokemon_engine.Failure.cause) result
 (** Runs the body with {!probes} subscribed; [Error] with the cause it failed
     with. *)
 

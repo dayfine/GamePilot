@@ -13,7 +13,7 @@ let decode json () =
   | Ok t ->
       Printf.sprintf "%s, pace %s" (Capture_plan.describe t)
         (Grid_geometry.Direction.name t.pace)
-  | Error c -> Pokemon_checkpoints.Failure.cause_to_string c
+  | Error c -> Pokemon_engine.Failure.cause_to_string c
 
 let mg02_args =
   {|{"species": "spearow", "catches": 1, "encounters": 50, "balls": 10,
@@ -102,6 +102,7 @@ let fake_game_steps g : Capture.game_steps =
           | Caught -> "ball: caught"
           | Broke_free -> "ball: free"
           | No_balls -> "ball: none"
+          | Player_fainted -> "ball: player fainted"
           | Throw_failed -> "ball: ?");
         t);
     finish_catch =
@@ -187,6 +188,13 @@ let decisions =
       (decide ~flees:false [ Some "pidgey" ] [])
       "Capture of rattata: couldn't run from pidgey: 1 encounters, 0 balls \
        thrown, 0 of 1 caught.: find, see pidgey, run";
+    (* mGBA 2026-11-25, Victory Road: Machoke beat Mr. Mime after the ball;
+       the capture ends with the battle on, as the fork's PLAYER_FAINTED. *)
+    case "the player's Pokemon fainted after a throw ends it, no catch"
+      (decide [ Some "rattata" ] [ Broke_free; Player_fainted ])
+      "Capture of rattata: the player's Pokemon fainted: 1 encounters, 1 balls \
+       thrown, 0 of 1 caught.: find, see rattata, ball: free, ball: player \
+       fainted";
     case "a throw with no answer ends it"
       (decide [ Some "rattata" ] [ Throw_failed ])
       "Capture of rattata: the throw didn't end in a catch or at the battle \
@@ -211,11 +219,47 @@ let decisions =
        caught.: find, see rattata*, ball: caught, to party";
   ]
 
+let names =
+  Frlg_text.Species_names.of_string
+    "spearow SPEAROW\nnidoran-m NIDORAN\xe2\x99\x82\nmr-mime MR. MIME\n"
+
+let opening species () = Capture_steps.opening_line names species
+
 let reading =
   [
-    case "the line a Spearow's battle opens with"
-      (fun () -> Capture_steps.opening_line "spearow")
+    case "the line a Spearow's battle opens with" (opening "spearow")
       "Wild SPEAROW appeared!";
+    (* mGBA 2026-11-25, Route 3: "NIDORAN-M" never read. *)
+    case "a Nidoran's: its sign, not the slug's -m" (opening "nidoran-m")
+      "Wild NIDORAN\xe2\x99\x82 appeared!";
+    case "a Mr. Mime's: its dot and space" (opening "mr-mime")
+      "Wild MR. MIME appeared!";
+    case "a slug not in the names: uppercased" (opening "pidgey")
+      "Wild PIDGEY appeared!";
   ]
 
-let () = Table_test.run "capture" (decoding @ decisions @ reading)
+(* The looks a throw waits through, from the probes of real mGBA frames
+   (fixtures/capture_throw.looks.jsonl, cut from the run's wire log): which show
+   the player's Pokemon down. *)
+let looks =
+  List.map
+    (fun (image, probes) -> (image, { Wire.seq = 0; t_ms = 0.; probes }))
+    (Wire.read_image_probes "fixtures/capture_throw.looks.jsonl")
+
+let player_down () =
+  String.concat "; "
+    (List.filter_map
+       (fun (image, m) ->
+         if Capture_steps.player_down m then
+           Some (List.nth (String.split_on_char ',' image) 1 |> String.trim)
+         else None)
+       looks)
+
+let throw_looks =
+  [
+    (* Not the catch's looks, nor a frame the player's bobbing box left. *)
+    case "08-victory-road-rest testing-1: the player's Pokemon down" player_down
+      "MR. MIME fainted (frame 445899); Use next POKEMON (frame 446100)";
+  ]
+
+let () = Table_test.run "capture" (decoding @ decisions @ reading @ throw_looks)

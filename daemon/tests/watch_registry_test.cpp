@@ -1,17 +1,25 @@
 // The watch registry and the hub: an entry is written while its daemon lives
 // and removed after; readers skip stale entries (dead pid), other files and
 // a missing folder; the hub's list keeps run folder paths off the network;
-// a hub asked for port 0 gets a free one.
+// a hub asked for port 0 gets a free one. A checkpoint series' record
+// (watch_series.h) makes its runs one entry, with a page that follows the
+// run going.
 
 #include "watch_registry.h"
 
+#include <functional>
 #include <string>
+#include <string_view>
+#include <vector>
 
 #include "Common/Cpp/Filesystem/FileIO.h"
 #include "Common/Cpp/Filesystem/Filesystem.h"
 #include "check.h"
 #include "net.h"
+#include "page_assets.h"
+#include "watch_assets.h"
 #include "watch_hub.h"
+#include "watch_series.h"
 #include "watch_server.h"
 
 using namespace gamepilot;
@@ -163,8 +171,32 @@ std::string hub_request(WatchHub& hub, WatchServer& run,
   return through_hub(hub, run, client, want);
 }
 
+// Each script and style `page` loads, served under `base` with its type
+// (`get` asks the hub for a path, until the text it is given).
+void check_assets(const std::function<std::string(const std::string&,
+                                                  const std::string&)>& get,
+                  const std::string& base, std::string_view page) {
+  const std::vector<std::string> assets = test::page_assets(page);
+  CHECK(assets.size() > 2);
+  for (const std::string& name : assets) {
+    const auto asset = watch_asset(name);
+    CHECK(asset && asset->type == test::asset_type(name));
+    if (!asset) {
+      continue;
+    }
+    const std::string reply =
+        get(base + name,
+            std::string(asset->bytes.substr(asset->bytes.size() - 32)));
+    CHECK(reply.starts_with("HTTP/1.1 200 OK"));
+    CHECK(reply.find("Content-Type: " + std::string(asset->type) + "\r\n") !=
+          std::string::npos);
+    CHECK(reply.ends_with(asset->bytes));
+  }
+}
+
 // A run's page under /runs/NAME/: the page with its token for this machine,
-// Stop, the event stream as it comes, and /live's redirects.
+// its scripts and styles (and the hub's at /), Stop, the event stream as it
+// comes, and /live's redirects.
 void check_hub_pass_through() {
   fs::remove_all(kDir);
   int stops = 0;
@@ -184,6 +216,11 @@ void check_hub_pass_through() {
       hub_request(hub, run, "GET " + base + " HTTP/1.1\r\n\r\n", "</html>");
   CHECK(page.starts_with("HTTP/1.1 200 OK"));
   CHECK(page.find("content=\"t0\"") != std::string::npos);
+  const auto get = [&](const std::string& path, const std::string& want) {
+    return hub_request(hub, run, "GET " + path + " HTTP/1.1\r\n\r\n", want);
+  };
+  check_assets(get, base, watch_page());
+  check_assets(get, "/", hub_page());
   CHECK(hub_request(hub, run,
                     "POST " + base + "stop?token=t0 HTTP/1.1\r\n\r\n", "}")
             .ends_with("{\"stopped\":true}"));
@@ -212,9 +249,9 @@ void check_hub_pass_through() {
             .find("is not live") != std::string::npos);
 }
 
-// A finished run's folder under /runs/NAME/: its page from the hub's build,
-// its row, its files (never the wire log, never outside the folder), and the
-// runs list.
+// A finished run's folder under /runs/NAME/: its page from the hub's build
+// with its scripts and styles, its row, its files (never the wire log, never
+// outside the folder), and the runs list.
 void check_hub_past_run() {
   const std::string runs = kDir + "-runs";
   fs::remove_all(runs);
@@ -236,6 +273,7 @@ void check_hub_past_run() {
     return hub_request(hub, idle, "GET " + path + " HTTP/1.1\r\n\r\n", want);
   };
   CHECK(get(base, "</html>").find("GamePilot Run") != std::string::npos);
+  check_assets(get, base, run_page());
   CHECK(get(base + "record.json", "}").find("\"checkpoint\":\"mg-06\"") !=
         std::string::npos);
   CHECK(get(base + "files/story.log", "events\n").ends_with("1 events\n"));
@@ -277,6 +315,158 @@ void check_hub_sources() {
   CHECK(get("/live", "</html>").starts_with("HTTP/1.1 404"));
 }
 
+
+// A series' record as the runner writes it (series_watch.mli): three
+// checkpoints, the first passed after a retry, the second's run going.
+std::string series_json(const std::string& id, std::int64_t pid,
+                        const std::string& result, const std::string& run) {
+  return "{\"series\":\"" + id + "\",\"pid\":" + std::to_string(pid) +
+         ",\"game\":\"plza\",\"program\":\"plza.autostory\","
+         "\"from\":\"01.00a\",\"to\":\"01.01\",\"mode\":\"testing\","
+         "\"backend\":\"switch\",\"started_ms\":1795435100000,"
+         "\"result\":\"" +
+         result + "\"" + (run.empty() ? "" : ",\"run\":\"" + run + "\"") +
+         ",\"checkpoints\":["
+         "{\"id\":\"01.00a\",\"state\":\"passed\",\"runs\":["
+         "{\"run\":\"a1\",\"n\":1,\"attempt\":1,\"result\":\"fail\"},"
+         "{\"run\":\"a2\",\"n\":1,\"attempt\":2,\"result\":\"pass\"}]},"
+         "{\"id\":\"mg-07\",\"state\":\"current\",\"runs\":["
+         "{\"run\":\"2026-11-23-mg-07-testing-1\",\"n\":1,\"attempt\":1,"
+         "\"result\":\"running\"}]},"
+         "{\"id\":\"01.01\",\"state\":\"pending\",\"runs\":[]}]}";
+}
+
+void write_series(const std::string& registry, const std::string& id,
+                  const std::string& json) {
+  fs::create_directories(registry + "/series");
+  pa::FileIO file(registry + "/series/" + id + ".json",
+                  pa::FileMode::WRITE | pa::FileMode::BINARY);
+  file.write(json + "\n");
+}
+
+void check_series_record() {
+  const auto read = parse_series_record(
+      series_json("s1", 42, "running", "2026-11-23-mg-07-testing-1"));
+  CHECK(read && read->id == "s1" && read->pid == 42 &&
+        read->started_ms == 1795435100000 && read->result == "running" &&
+        read->run == "2026-11-23-mg-07-testing-1");
+  CHECK(read && read->runs == std::vector<std::string>(
+                                  {"a1", "a2", "2026-11-23-mg-07-testing-1"}));
+  const auto between =
+      parse_series_record(series_json("s1", 42, "running", ""));
+  CHECK(between && between->run.empty());
+  for (const char* bad :
+       {"", "not json", "[1]", "{\"pid\":1}", "{\"series\":\"../x\",\"pid\":1}",
+        "{\"series\":\"s\",\"pid\":0}"}) {
+    CHECK(!parse_series_record(bad));
+  }
+
+  // Live: the runner's pid is alive and the series has not ended.
+  fs::remove_all(kDir);
+  CHECK(live_series(kDir).empty());  // no folder yet
+  constexpr std::int64_t kDead = 999999001;
+  write_series(kDir, "s-live", series_json("s-live", own_pid(), "running", ""));
+  write_series(kDir, "s-dead", series_json("s-dead", kDead, "running", ""));
+  write_series(kDir, "s-done", series_json("s-done", own_pid(), "pass", ""));
+  pa::FileIO junk(kDir + "/series/junk.json",
+                  pa::FileMode::WRITE | pa::FileMode::BINARY);
+  junk.write(std::string("{"));
+  const auto live = live_series(kDir);
+  CHECK(live.size() == 1 && live[0].id == "s-live");
+  // Any record, live or not, by its id.
+  const auto done = read_series_record(kDir, "s-done");
+  CHECK(done && done->result == "pass");
+  CHECK(!read_series_record(kDir, "s-none"));
+  CHECK(!read_series_record(kDir, "../series/s-done"));
+}
+
+// The hub's lists with a series: its runs carry its id; /live goes to the
+// series while it is the newest, even between its runs.
+void check_hub_series_lists() {
+  const SeriesRecord series = *parse_series_record(
+      series_json("s1", 42, "running", "2026-11-23-mg-07-testing-1"));
+  RegistryEntry in_series = entry(12, "mg-07");
+  in_series.started_ms = 1795435200000;
+  RegistryEntry alone = entry(13, "mg-05");
+  alone.started_ms = 1795435000000;  // before the series
+  const std::string json = hub_runs_json({in_series, alone}, {series});
+  CHECK(json.find("\"series\":\"s1\"") != std::string::npos);
+  CHECK(json.find("\"series\":\"\"") != std::string::npos);  // mg-05's
+  CHECK(hub_runs_json({}, {}) == "[]");
+
+  CHECK(hub_live_path({in_series, alone}, {series}, "") == "/series/s1/");
+  CHECK(hub_live_path({alone}, {series}, "") == "/series/s1/");  // between runs
+  RegistryEntry newer = alone;
+  newer.started_ms = 1795435300000;
+  CHECK(hub_live_path({in_series, newer}, {series}, "") ==
+        "/runs/2026-11-23-mg-05-testing-1/");
+  CHECK(hub_live_path({in_series}, {}, "") ==
+        "/runs/2026-11-23-mg-07-testing-1/");
+  CHECK(hub_live_path({in_series, alone}, {series}, "mg-05") ==
+        "/runs/2026-11-23-mg-05-testing-1/");
+  CHECK(hub_live_path({}, {}, "").empty());
+  const std::string listed = hub_series_json({series});
+  CHECK(listed.starts_with("[{") &&
+        listed.find("\"series\":\"s1\"") != std::string::npos &&
+        listed.find("\"from\":\"01.00a\"") != std::string::npos);
+}
+
+// A series' page under /series/ID/: the page with the token of the run
+// going and its scripts and styles (between runs too), its record, its data
+// and Stop passed on to that run's daemon, and an answer that says "between
+// runs" while none goes.
+void check_hub_series_page() {
+  fs::remove_all(kDir);
+  int stops = 0;
+  WatchServer run(WatchOptions{"127.0.0.1", 0, "t0"},
+                  WatchHooks{[] { return WatchFrame{"image/png", "P"}; },
+                             [&stops] {
+                               stops++;
+                               return true;
+                             }});
+  RegistryEntry own = entry(own_pid(), "mg-07");
+  own.port = run.port();
+  const RegistryFile file(kDir, own);
+  write_series(
+      kDir, "s1",
+      series_json("s1", own_pid(), "running", "2026-11-23-mg-07-testing-1"));
+  WatchHub hub(HubOptions{"127.0.0.1", 0, kDir, "", ""});
+  const auto get = [&](const std::string& path, const std::string& want) {
+    return hub_request(hub, run, "GET " + path + " HTTP/1.1\r\n\r\n", want);
+  };
+
+  const std::string page = get("/series/s1/", "</html>");
+  CHECK(page.starts_with("HTTP/1.1 200 OK"));
+  CHECK(page.find("content=\"t0\"") != std::string::npos);
+  check_assets(get, "/series/s1/", watch_page());
+  CHECK(get("/series/s1", "\r\n\r\n").find("Location: /series/s1/\r\n") !=
+        std::string::npos);
+  CHECK(get("/series/s1/series.json", "]}").find("\"checkpoints\":[") !=
+        std::string::npos);
+  CHECK(get("/series.json", "]").find("\"series\":\"s1\"") !=
+        std::string::npos);
+  CHECK(get("/runs.json", "]").find("\"series\":\"s1\"") != std::string::npos);
+  CHECK(get("/live", "\r\n\r\n").find("Location: /series/s1/\r\n") !=
+        std::string::npos);
+  CHECK(hub_request(hub, run, "POST /series/s1/stop?token=t0 HTTP/1.1\r\n\r\n",
+                    "}")
+            .ends_with("{\"stopped\":true}"));
+  CHECK(stops == 1);
+  Socket viewer = connect_local(hub.port());
+  viewer.send_all("GET /series/s1/events HTTP/1.1\r\n\r\n");
+  CHECK(through_hub(hub, run, viewer, "\r\n\r\n").find("text/event-stream") !=
+        std::string::npos);
+
+  // Between runs: the page still opens (it waits for the next run), its data
+  // does not.
+  write_series(kDir, "s1", series_json("s1", own_pid(), "running", ""));
+  CHECK(get("/series/s1/", "</html>").starts_with("HTTP/1.1 200 OK"));
+  check_assets(get, "/series/s1/", watch_page());
+  CHECK(get("/series/s1/events", "\n\n").starts_with("HTTP/1.1 503"));
+  CHECK(get("/series/s9/", "</html>").starts_with("HTTP/1.1 404"));
+  CHECK(get("/series/../x/", "\n\n").starts_with("HTTP/1.1 404"));
+}
+
 }  // namespace
 
 int main() {
@@ -288,6 +478,9 @@ int main() {
   check_hub_pass_through();
   check_hub_past_run();
   check_hub_sources();
+  check_series_record();
+  check_hub_series_lists();
+  check_hub_series_page();
   fs::remove_all(kDir);
   return TEST_RESULT();
 }

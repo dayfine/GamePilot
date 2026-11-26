@@ -2,7 +2,7 @@
    kind's args, and rejects a broken plan naming the field. The Mail Glitch
    plans are read through FireRed's loader, in its test_mail_glitch_plans. *)
 
-open Pokemon_checkpoints
+open Pokemon_engine
 
 let load_all paths =
   let errors =
@@ -43,14 +43,11 @@ let base =
 (* The base plan with the first [find] replaced. *)
 let edited find replacement =
   let n = String.length find in
-  let rec at i =
-    if i + n > String.length base then failwith ("not in the base plan: " ^ find)
-    else if String.sub base i n = find then
+  match Strings.Find.substring base find with
+  | None -> failwith ("not in the base plan: " ^ find)
+  | Some i ->
       String.sub base 0 i ^ replacement
       ^ String.sub base (i + n) (String.length base - i - n)
-    else at (i + 1)
-  in
-  at 0
 
 let base_events =
   String.concat "\n"
@@ -94,7 +91,7 @@ let real_plans : Table_test.case list =
     {
       name = "a plan with no start (new game)";
       input = (fun () -> outline "frlg-00.01.plan.json" authored);
-      expectation = "frlg 00.01 from (no start): 1 new_game, 1 options";
+      expectation = "frlg 00.01 from (no start): 1 new_game, 1 game_settings";
     };
     {
       name = "legs that fight wild Pokemon";
@@ -209,6 +206,32 @@ let inline_plans : Table_test.case list =
       ( {|"start": {"map": "Town",|},
         {|"start": {"place": "Plaza", "map": "Town",|} )
       (at ^ {|start has a "map" or a "place", not both or neither.|});
+    {
+      name = "a start anywhere outdoors";
+      input =
+        (fun () ->
+          decoded
+            (edited {|{"map": "Town", "tiles": [[1, 2]], "facing": "south"},|}
+               {|{"anywhere": "outdoors"},|}));
+      expectation =
+        String.concat "\n"
+          ("anywhere outdoors"
+          :: List.tl (String.split_on_char '\n' base_events));
+    };
+    error "a start anywhere in an unknown class"
+      ( {|{"map": "Town", "tiles": [[1, 2]], "facing": "south"},|},
+        {|{"anywhere": "indoors"},|} )
+      (at ^ {|start.anywhere "indoors" is not a class of places ("outdoors").|});
+    error "a start anywhere with a map too"
+      ({|{"map": "Town",|}, {|{"anywhere": "outdoors", "map": "Town",|})
+      (at ^ "start.map is not a known field.");
+    error "an event's pose is one place, never anywhere"
+      ( {|{"id": "fight", "kind": "battle"}|},
+        {|{"id": "fight", "kind": "battle", "declared_after": {"anywhere": "outdoors"}}|}
+      )
+      (at
+     ^ {|events[5].declared_after has a "map" or a "place", not both or neither.|}
+      );
   ]
 
 let with_postconditions json =

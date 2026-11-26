@@ -4,11 +4,13 @@
   "execution": {
     "start_signature": {
       "wild_zone": true,
+      "near_rocks": true,
       "party": 3
     }
   },
   "metadata": {
     "phase": "testing",
+    "retries": 2,
     "source": "played from a new game; starts at 03.07's autosave at Taunie's rocks (party 3), ends on the fourth species's autosave (party 4); starts where 03.07 ends; the fork's plza-03.08.plan.json (plza/lean)",
     "postconditions": {}
   },

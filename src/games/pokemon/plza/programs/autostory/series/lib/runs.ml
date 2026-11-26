@@ -1,5 +1,5 @@
 open Engine_run
-module P = Plza_checkpoints
+module P = Plza_engine
 module Story = Plza_autostory
 
 let ( let* ) = Result.bind
@@ -9,41 +9,30 @@ let ( let* ) = Result.bind
    nudge the right stick instead, which only turns the camera in the field and
    does nothing in a dialogue, a menu or a battle (up then down, so the
    camera's heading never moves: walk legs are aimed from it). Off, an idle
-   console dimmed
-   its screen, which reads as nothing (01.03's run 2). A --keepawake-key given
-   on the command line comes after, and the daemon takes the last. *)
+   console dimmed its screen, which reads as nothing (01.03's run 2). A
+   --keepawake-key given on the command line comes after, and the daemon takes
+   the last. *)
 let keepawake_stick = [ "--keepawake-key"; "RStick" ]
 
-type outcome =
-  | Passed
-  | Failed of { at : string; reason : string; repeats : bool }
+module Attempts = Story.Run_attempts
+
+type outcome = Attempts.outcome = Passed | Failed of Attempts.failure
 
 type setup = {
   flags : Flags.t;
-  backend : Live_run.Daemon_process.backend;
   policy : Checkpoint_trials.policy;
   info : Run_record.info;
-  daemon_flags : string list;
-  watch : Live_run.Daemon_process.watch option;
+  daemons : Live_run.Series_daemons.t;
 }
 
-let plan_suffix = ".plan.json"
-
 let load_plan ~plan_dir id =
-  match Yojson.Safe.from_file (Filename.concat plan_dir (id ^ plan_suffix)) with
-  | json -> P.Plan_decode.decode ~source:(id ^ plan_suffix) json
-  | exception Sys_error e -> Error e
-  | exception Yojson.Json_error e -> Error (id ^ ": " ^ e)
+  P.Plan_decode.load (Engine_series.Plan_folder.plan_file ~plan_dir id)
 
-let failed ?(repeats = false) at reason = Failed { at; reason; repeats }
+let failed ?(repeats = false) ?(off_start = false) at reason =
+  Failed { at; reason; repeats; off_start }
 
 let of_runner ({ at; reason; repeats } : Live_run.Daemon_run.failed) =
-  Failed { at; reason; repeats }
-
-let of_failure (f : P.Failure.t) =
-  failed ~repeats:(P.Failure.repeats f)
-    (Printf.sprintf "#%d %s" (f.event_index + 1) f.event_id)
-    (P.Failure.reason_to_string f.reason)
+  failed ~repeats at reason
 
 let reload_cause ~log ~picture () =
   Result.map_error
@@ -79,18 +68,17 @@ let run_checkpoint ~log ~picture ~reload report (plan : P.Plan.t) =
   let id = plan.checkpoint.checkpoint_id in
   let* () =
     Result.map_error
-      (fun (c : Failure.cause) ->
-        failed ~repeats:c.repeats "start" (Failure.cause_to_string c))
+      (Attempts.of_cause ~at:"start")
       (Story.Start_signature.check steps ~checkpoint_id:id plan.execution)
   in
   let game =
-    Story.Story_game.make steps ~checkpoint_id:id
+    Story.Story_game.make steps ~checkpoint:plan.checkpoint
       ~reload:(reload_cause ~log ~picture)
   in
   let end_check () =
     Story.Start_signature.check_end steps ~checkpoint_id:id plan.execution
   in
-  Result.map_error of_failure
+  Result.map_error Attempts.of_failure
     (Story.Story_game.run_watched ~end_check ~mode:"testing" report game
        plan.checkpoint)
 
@@ -108,15 +96,9 @@ let with_assets ~log ~picture ~reload report plan assets =
   | exception (Effects.Disconnected _ as e) -> raise e
   | exception e ->
       (* Any other exception ends the watch run here; the run fails as
-         Daemon_run.in_session fails one. *)
+         [live] fails one. *)
       Watch_report.end_run report ~passed:false;
       failed "raised" (Printexc.to_string e)
-
-(* The frame a failed run ended on; a refusal is skipped. *)
-let save_failure record =
-  match Effects.save_frame (Run_record.path record "failure.png") with
-  | (_ : int) -> ()
-  | exception Effects.Rpc_error _ -> ()
 
 let in_session ~log ~reload record plan (backend : Wire.backend) =
   let picture = backend.viewport in
@@ -127,50 +109,43 @@ let in_session ~log ~reload record plan (backend : Wire.backend) =
     | Error e -> failed ~repeats:true "assets" e
     | Ok assets -> with_assets ~log ~picture ~reload report plan assets
   in
-  (match outcome with Failed _ -> save_failure record | Passed -> ());
+  (match outcome with
+  | Failed _ -> Live_run.Daemon_run.save_failure ~log record ~save_states:false
+  | Passed -> ());
   outcome
 
+(* Any exception Daemon_run.in_session passes on fails the run here, so the
+   story log, the run record and the watch run still close. *)
 let live ~log ~reload record plan (daemon : Live_run.Daemon_process.t) =
-  Live_run.Daemon_run.in_session ~failed:of_runner ~dir:record.Run_record.dir
-    (fun () ->
-      Live.run_with_backend ~port:daemon.port
-        (in_session ~log ~reload record plan))
+  match
+    Live_run.Daemon_run.in_session ~failed:of_runner ~dir:record.Run_record.dir
+      (fun () ->
+        Live.run_with_backend ~port:daemon.port
+          (in_session ~log ~reload record plan))
+  with
+  | outcome -> outcome
+  | exception e -> failed "raised" (Printexc.to_string e)
 
-let print_page setup (daemon : Live_run.Daemon_process.t) =
-  match (setup.watch, daemon.watch_port) with
-  | Some w, Some port ->
-      Live_run.Watch_urls.print ~listen:w.listen ~token:w.token ~port
-  | _ -> ()
+(* "03.04 run 1", with " attempt 2" after the first. *)
+let run_name id n = function
+  | 1 -> Printf.sprintf "%s run %d" id n
+  | a -> Printf.sprintf "%s run %d attempt %d" id n a
 
-let with_daemon setup record id body =
-  Live_run.Daemon_run.with_daemon ~failed:of_runner
-    (Live_run.Daemon_process.start ?watch:setup.watch ~flags:setup.daemon_flags
-       ~daemon:setup.flags.daemon ~backend:setup.backend ~port:0
-       ~wire_log:(Run_record.path record "wire.jsonl")
-       ~out_file:(Run_record.path record "daemon.out")
-       ~checkpoint:id ())
-    (fun daemon ->
-      print_page setup daemon;
-      body daemon)
-
-let summary id n = function
-  | Passed -> Printf.sprintf "PASS %s run %d" id n
+let summary name = function
+  | Passed -> "PASS " ^ name
   | Failed { at; reason; _ } ->
-      Printf.sprintf "FAIL %s run %d at %s: %s" id n at reason
+      Printf.sprintf "FAIL %s at %s: %s" name at reason
 
-(* Run [n] of [plan]; [reload] for any run but the series' first. *)
-let run setup plan n ~reload =
+(* Attempt [attempt] of run [n] of [plan] in its folder [run]; [reload]: back
+   to the latest autosave first. *)
+let run_in setup plan n ~attempt ~reload (run : Run_record.run) =
   let id = plan.P.Plan.checkpoint.checkpoint_id in
-  let run =
-    Run_record.start ~runs_dir:setup.flags.runs_dir setup.info ~checkpoint:id
-      ~mode:"testing"
-  in
+  let name = run_name id n attempt in
   let log, close = Run_record.story_log run.record in
-  log
-    (Printf.sprintf "[Run] %s run %d%s" id n
-       (if reload then " (after a reload)" else ""));
+  log ("[Run] " ^ name ^ if reload then " (after a reload)" else "");
   let outcome =
-    with_daemon setup run.record id (live ~log ~reload run.record plan)
+    Live_run.Series_daemons.with_daemon setup.daemons ~failed:of_runner run ~n
+      (live ~log ~reload run.record plan)
   in
   close ();
   let ending : Run_record.ending =
@@ -178,13 +153,32 @@ let run setup plan n ~reload =
     | Passed -> { result = "pass"; at = ""; reason = "" }
     | Failed { at; reason; _ } -> { result = "fail"; at; reason }
   in
-  Live_run.Daemon_run.finish ~runs_dir:setup.flags.runs_dir run
-    ~summary:(summary id n outcome) ending;
+  Live_run.Series_daemons.finish setup.daemons ~runs_dir:setup.flags.runs_dir
+    run ~summary:(summary name outcome) ending;
   outcome
 
-let trial = function
-  | Passed -> Checkpoint_trials.Passed
-  | Failed { at; repeats; _ } -> Checkpoint_trials.Failed { at; repeats }
+(* {!run_in} in a new run folder; a folder that cannot be made fails the
+   attempt, as a failure that repeats. *)
+let run_attempt setup plan n ~attempt ~reload =
+  let id = plan.P.Plan.checkpoint.checkpoint_id in
+  match
+    Run_record.start ~runs_dir:setup.flags.runs_dir setup.info ~checkpoint:id
+      ~mode:"testing"
+  with
+  | Ok run -> run_in setup plan n ~attempt ~reload run
+  | Error reason ->
+      Failed { at = "run folder"; reason; repeats = true; off_start = false }
+
+(* Run [n] of [plan]: attempts until one passes or the run fails
+   (Run_attempts: a reload when off its start, and the plan's retries).
+   [reload]: its first attempt goes back to the latest autosave. *)
+let run setup (plan : P.Plan.t) n ~reload =
+  let id = plan.checkpoint.checkpoint_id in
+  Attempts.run
+    ~has_start:(Option.is_some plan.checkpoint.start)
+    ~retries:plan.retries ~reload_first:reload
+    ~log:(fun line -> Printf.printf "[Checkpoints] %s run %d: %s\n%!" id n line)
+    (run_attempt setup plan n)
 
 (* The plan's execution asks for a reload when it follows another checkpoint
    in the series (the fork's "reload_when_chained", 03.04's: its walk starts
@@ -202,8 +196,8 @@ let runs_of setup plan ~chained =
   let reload n = n > 1 || (chained && reload_when_chained plan) in
   match
     fst
-      (Checkpoint_trials.until_decided setup.policy ~trial (fun n ->
-           run setup plan n ~reload:(reload n)))
+      (Checkpoint_trials.until_decided setup.policy ~trial:Attempts.trial
+         (fun n -> Ok (run setup plan n ~reload:(reload n))))
   with
   | Checkpoint_trials.Run_again -> false
   | Checkpoint_passed { passes; runs } ->
@@ -232,35 +226,68 @@ let load_checked ~plan_dir ids =
       Ok (plans @ [ plan ]))
     (Ok []) ids
 
-let setup_of (f : Flags.t) ~backend ~viewport policy =
+let checkpoint_order = String.compare
+
+(* Each run's daemon: the program's viewport, the right stick's keep-awake,
+   then the user's flags. *)
+let daemons (f : Flags.t) backend ~viewport series =
+  Live_run.Series_daemons.create ~daemon:f.daemon ~backend ~port:f.port
+    ~flags:
+      (Live_run.Daemon_process.viewport_args backend viewport
+      @ keepawake_stick @ f.daemon_flags)
+    ~watch:
+      (Live_run.Watch_hub.for_runs_dir ~daemon:f.daemon ~runs_dir:f.runs_dir
+         f.watch)
+    series
+
+let setup_of (f : Flags.t) ~program ~options ~from_id ~to_id ~ids ~backend
+    ~viewport policy =
+  let info : Run_record.info =
+    {
+      kind = Checkpoints;
+      program;
+      from_id;
+      to_id;
+      backend = f.backend;
+      options = Run_options.pairs options;
+    }
+  in
+  let mode = Checkpoint_trials.mode_to_string Testing in
   {
     flags = f;
-    backend;
     policy;
-    info =
-      {
-        kind = Checkpoints;
-        program = f.program;
-        from_id = f.from_id;
-        to_id = f.to_id;
-        backend = f.backend_name;
-      };
-    daemon_flags =
-      Live_run.Daemon_process.viewport_args backend viewport
-      @ keepawake_stick @ f.daemon_flags;
-    watch =
-      Live_run.Watch_hub.for_runs_dir ~daemon:f.daemon ~runs_dir:f.runs_dir
-        f.watch;
+    info;
+    daemons = daemons f backend ~viewport { info; mode; checkpoints = ids };
   }
 
-let run_series ~plan_dir (f : Flags.t) ~backend ~viewport ids =
-  let* () =
-    match (backend : Live_run.Daemon_process.backend) with
-    | Mgba _ -> Error "PLZA runs on the Switch only: --backend switch"
-    | Switch _ -> Ok ()
+let switch_only : Live_run.Daemon_process.backend -> _ = function
+  | Mgba _ -> Error "PLZA runs on the Switch only: --backend switch"
+  | Switch _ -> Ok ()
+
+(* The checkpoints from --from to --to, in run order. *)
+let selected ~plan_dir (f : Flags.t) =
+  let* from_id = Run_flags.required "--from" f.from_id in
+  let* to_id = Run_flags.required "--to" f.to_id in
+  let* ids =
+    Engine_series.Plan_folder.checkpoint_ids ~compare:checkpoint_order plan_dir
   in
+  let* ids, _ = Engine_series.Plan_folder.select ids ~from_id ~to_id in
+  Ok (from_id, to_id, ids)
+
+let run_series ~program ~options ~viewport plan_dir args =
+  let* f = Flags.parse args in
+  let* () = Flags.takes f in
+  let* from_id, to_id, ids = selected ~plan_dir f in
+  let* backend = Run_flags.daemon_backend f Checkpoint_trials.Testing in
+  let* () = switch_only backend in
+  let* viewport = viewport in
   let* policy =
     Checkpoint_trials.policy ?runs:f.runs Checkpoint_trials.Testing
   in
   let* plans = load_checked ~plan_dir ids in
-  chain (setup_of f ~backend ~viewport policy) ~chained:false plans
+  let setup =
+    setup_of f ~program ~options ~from_id ~to_id ~ids ~backend ~viewport policy
+  in
+  let* code = chain setup ~chained:false plans in
+  Live_run.Series_daemons.finished setup.daemons ~passed:(code = 0);
+  Ok code

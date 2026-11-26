@@ -52,6 +52,25 @@ let read_caught ~log at_least =
         (Printf.sprintf "%d species caught, not at least %d" n least)
   | Some _, _ -> ()
 
+(* The species of the first member whose mark is not Mail, by the party as
+   read. *)
+let species_in ctx i =
+  match List.nth_opt (Party_roster.to_list !(ctx.party)) i with
+  | Some species -> species
+  | None ->
+      Menu_input.fail "not_in_party"
+        (Printf.sprintf "slot %d is not in the party as read" (i + 1))
+
+let without_mail ctx =
+  let marks = Mail_glitch_use.read_marks ~log:ctx.log in
+  match List.find_index (fun m -> m <> Frlg_readers.Party_menu.Mail) marks with
+  | None -> Menu_input.fail ~repeats:true "no_member" "every member holds Mail"
+  | Some i -> species_in ctx i
+
+let deposited ctx : R.deposit -> string list = function
+  | Members species -> species
+  | Holding_no_mail -> [ without_mail ctx ]
+
 let facing ctx =
   Option.value (ctx.facing ()) ~default:Grid_geometry.Direction.North
 
@@ -73,9 +92,13 @@ let body ctx (request : R.t) () =
   | Spin_for_encounter { max_batches } ->
       Spin_for_encounter.spin ~log ~facing:(facing ctx) ~max_batches
   | Cut_tree d -> Cut_tree.cut ~log d
-  | Pc_deposit species ->
+  | Pc_deposit deposit ->
+      let species = deposited ctx deposit in
       Pc_deposit.deposit ~log species;
       ctx.party := List.fold_left Party_roster.remove !(ctx.party) species
+  | Pc_withdraw ->
+      let species = Pc_withdraw.withdraw ~log in
+      ctx.party := Party_roster.add !(ctx.party) species
   | Verify_mail_glitch member ->
       Party_actions.verify_mail_glitch ~log
         ~who:(Action_args.member_to_string member)
@@ -85,10 +108,10 @@ let body ctx (request : R.t) () =
 
 let perform ctx request = Menu_input.run (body ctx request)
 
-let handler ctx name (_ : Pokemon_checkpoints.Plan.event) args =
+let handler ctx name (_ : Pokemon_engine.Plan.event) args =
   match (ctx.stocks (), name) with
   | Error e, "mart" ->
-      Error (Pokemon_checkpoints.Failure.cause ~repeats:true "no_mart_stock" e)
+      Error (Pokemon_engine.Failure.cause ~repeats:true "no_mart_stock" e)
   | stocks, _ ->
       let stocks = Result.value stocks ~default:Mart_plan.empty in
       Result.bind (R.decode stocks name args) (perform ctx)
@@ -97,3 +120,5 @@ let handlers ctx =
   List.map (fun name -> (name, handler ctx name)) R.names
   @ Mail_glitch_use.handlers ~log:ctx.log ~party:ctx.party
   @ Candy_actions.handlers ~log:ctx.log ~party:ctx.party
+  @ Ace_mail.handlers ~log:ctx.log ~party:ctx.party
+  @ Box_rename.handlers ~log:ctx.log

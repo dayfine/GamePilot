@@ -14,8 +14,11 @@ val time : unit -> string
 val make_dirs : string -> unit
 (** The folder and its parents. *)
 
-val create : runs_dir:string -> checkpoint:string -> mode:string -> t
-(** The first free [<date>-<checkpoint>-<mode>-<n>] folder, made. *)
+val create :
+  runs_dir:string -> checkpoint:string -> mode:string -> (t, string) result
+(** The first free [<date>-<checkpoint>-<mode>-<n>] folder, made (the runs
+    folder too). A name is free when making it succeeds, so runs started at once
+    each get a folder of their own. [Error] when a folder cannot be made. *)
 
 val path : t -> string -> string
 (** A file in the folder. *)
@@ -53,6 +56,10 @@ type info = {
   from_id : string;
   to_id : string;
   backend : string;
+  options : (string * string) list;
+      (** The program's options the run was given (gamepilot run --options,
+          Run_options.pairs), defaults included, in the declaration's order;
+          run.json's [options] object, left out when [[]]. *)
 }
 (** What run.json says of a run besides its outcome. *)
 
@@ -78,6 +85,10 @@ type run = {
 }
 (** A started run. *)
 
+val options_fields : (string * string) list -> (string * Yojson.Safe.t) list
+(** [{!info.options}] as run.json and the series' record write them: one
+    [options] object of strings; none for no option. *)
+
 val run_json : run -> ended_ms:int -> ending option -> Yojson.Safe.t
 (** run.json: without the end fields while [None]. *)
 
@@ -88,7 +99,7 @@ val start :
   info ->
   checkpoint:string ->
   mode:string ->
-  run
+  (run, string) result
 (** The run's folder ({!create}) and its run.json. *)
 
 val finish : runs_dir:string -> run -> summary:string -> ending -> unit

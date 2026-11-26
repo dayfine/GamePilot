@@ -1,7 +1,10 @@
 (** A story scene pressed through to its end: ported from
-    PokemonLZA_AutoStorySceneMachine.cpp with the configs 01.01's to 02.01's
+    PokemonLZA_AutoStorySceneMachine.cpp with the configs the fork's story
     scenes use, its classes, presses and timings. Each read every 250 ms is
     classed:
+    - with [end_at_battle], the battle HUD on two reads within 2 s
+      ({!Flicker_filter}) ends it, failing [battle_on_screen]
+      ({!Plza_walk.Battle_stop}): the run goes on at the story battle;
     - with [stop_at_battle], the battle HUD ends it, and so does a lock-on whose
       ZL brought up the move symbols ({!Lock_on}); after a battle's black fade,
       3 s of a still screen or the party bar with nothing busy (or 1 s of the
@@ -28,28 +31,30 @@
     [stop_at_battle], 120 s with [stop_at_choice], a start window or the button
     B, else 360 s.
 
-    Not ported yet: the end at a battle (PokemonLZA_AutoStoryActionTable.cpp:
-    with a story battle ahead in the checkpoint, the battle HUD ends a scene,
-    and the run goes on at the battle). No checkpoint to 03.11 met a battle
-    mid-scene on console B; without it such a scene times out. The fork's option
-    to press A first is the game action [scene_through_prompt] (Story_game).
-    "Mission complete" has no reader yet ({!Look}): it reads as a screen no
-    detector reads (A, as for the card). *)
+    The option to press A first is the caller's: it presses A through the prompt
+    ({!Plza_walk.Talk_prompt.press_through}) and then runs the scene. "Mission
+    complete" has no reader yet ({!Look}): it reads as a screen no detector
+    reads (A, as for the card). *)
 
 type config = {
-  end_on_black_fade : bool;
-  stop_at_choice : bool;
+  end_on_black_fade : bool;  (** a black fade ends the scene *)
+  stop_at_choice : bool;  (** a choice box ends the scene, unanswered *)
   stop_at_battle : bool;
       (** the fork's battle start: ends on the battle HUD, with the lock-on *)
+  end_at_battle : bool;
+      (** the fork's end at a battle, which its action table
+          (PokemonLZA_AutoStoryActionTable.cpp) sets with a story battle ahead
+          in the checkpoint, for every scene but a battle's start *)
   button : Wire.button;  (** A or B: the plan's [button] (A when absent). *)
   start_window_ms : int option;
       (** the fork's start window: control before any scene waits for one this
           long, then fails [scene_never_started] *)
 }
+(** How a scene ends and which button it takes. *)
 
 val default : config
-(** A, no stop at a choice or a battle, no end on a black fade: the plain
-    [scene]. *)
+(** A, no stop at a choice or a battle, no end at a battle or on a black fade:
+    the plain [scene]. *)
 
 val run : Steps.game_steps -> string -> config -> Steps.outcome
 (** [run steps label config]; [label] names it in the log ("scene"). *)

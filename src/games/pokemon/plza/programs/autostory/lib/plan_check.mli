@@ -4,5 +4,5 @@
     [reload_when_chained] (a boolean), and every event's [skip_if] flag is one
     {!Resume_flags} reads. *)
 
-val check : Plza_checkpoints.Plan.t -> (unit, string) result
+val check : Plza_engine.Plan.t -> (unit, string) result
 (** [Error] names the checkpoint and the key. *)

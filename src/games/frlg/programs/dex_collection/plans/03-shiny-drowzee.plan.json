@@ -1,0 +1,102 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "frlg",
+  "checkpoint": {
+    "id": "03-shiny-drowzee",
+    "title": "From anywhere outdoors: a shiny Drowzee in Route 11's grass by the wild RNG, stored in the PC, back to the nurse",
+    "start": {"anywhere": "outdoors"},
+    "events": [
+      {
+        "id": "fly_vermilion",
+        "kind": "game_action",
+        "action": "fly",
+        "args": {"town": "VermilionCity"},
+        "declared_after": {"map": "VermilionCity", "tiles": [[15, 7]], "facing": "south"},
+        "why": "Fly to Vermilion City, Route 11's Center."
+      },
+      {
+        "id": "to_grass",
+        "kind": "route",
+        "action": "run",
+        "args": {"target": {"place": "route11_west_grass"}},
+        "why": "Into Route 11's west grass, where Sweet Scent finds Ekans, Spearow and Drowzee."
+      },
+      {
+        "id": "save_in_grass",
+        "kind": "game_action",
+        "action": "save_game",
+        "args": {},
+        "why": "The wild RNG's hard reset boots from this save, in the grass."
+      },
+      {
+        "id": "shiny_drowzee",
+        "kind": "game_action",
+        "action": "wild_rng",
+        "args": {
+          "species": "drowzee",
+          "location": "route_11",
+          "tid": 33002,
+          "sid": 9011,
+          "seeds": "rng_seeds_mgba_sevii_save.json",
+          "seed_shift": 4,
+          "ingame_offset": -3,
+          "frame_model": "mgba",
+          "advances": [1000, 4000],
+          "ball": "ultra-ball",
+          "balls": 5,
+          "attempts": 1
+        },
+        "why": "A shiny Drowzee, the soonest of the table for TID 33002 and SID 9011 (read once from the save's memory). seed_shift 4: what this checkpoint's grass save (the save file's save number 141) adds to the table's seeds on mGBA, measured from it. The party's last member knows Sweet Scent. ingame_offset -3: the target's waits otherwise land on another advance, measured by replaying the presses on the grass save with an RNG trace."
+      },
+      {
+        "id": "save_catch",
+        "kind": "game_action",
+        "action": "save_game",
+        "args": {},
+        "why": "Keeps the shiny."
+      },
+      {
+        "id": "fly_vermilion_back",
+        "kind": "game_action",
+        "action": "fly",
+        "args": {"town": "VermilionCity"},
+        "declared_after": {"map": "VermilionCity", "tiles": [[15, 7]], "facing": "south"},
+        "why": "Back to Vermilion by Fly, outside its Center: the long walk back after the battle drifted twice and missed the Center's door."
+      },
+      {
+        "id": "back_to_pc",
+        "kind": "route",
+        "action": "run",
+        "args": {"target": {"place": "vermilion_center_pc"}},
+        "why": "Below the Center's PC."
+      },
+      {
+        "id": "deposit_catch",
+        "kind": "game_action",
+        "action": "pc_deposit",
+        "args": {"species": ["drowzee"]},
+        "why": "Stores the catch, so the party is five again with the Sweet Scent member last, as the next catch needs."
+      },
+      {
+        "fragment": "heal_at",
+        "args": {"town": "vermilion"},
+        "id": "heal_vermilion",
+        "why": "Sweet Scent's PP back at the nurse."
+      },
+      {
+        "id": "out_of_center",
+        "kind": "route",
+        "action": "run",
+        "args": {"target": {"place": "vermilion_center_outside"}},
+        "why": "Outdoors, where the next catch starts."
+      }
+    ]
+  },
+  "execution": {
+    "menu": "full"
+  },
+  "metadata": {
+    "phase": "testing",
+    "notes": "mGBA only. The seed shift holds for this checkpoint's start save as the program's chain leaves it (from sevii_story's end, two saves a catch): a start save with another number of saves before it boots a few timer counts off and misses, failing the checkpoint (wild_rng_not_shiny) with the catch unsaved."
+  }
+}

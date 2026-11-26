@@ -26,7 +26,7 @@ let rec run_slices steps ~timeout_ms ~ran ~gone_since =
   if ran >= timeout_ms then Ok Out_of_time
   else
     let* () = slice steps in
-    let (look : Screen.t) = steps.read_screen () in
+    let (look : Walk_screen.t) = steps.read_screen () in
     let gone_since =
       if look.player_can_move then None
       else Some (Option.value gone_since ~default:look.at_ms)

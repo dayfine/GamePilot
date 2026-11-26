@@ -1,32 +1,26 @@
-type t = {
-  from_id : string;
-  to_id : string;
-  runs : int option;
-  runs_dir : string;
-  daemon : string;
-  backend_name : string;
-  watch : Live_run.Daemon_process.watch option;
-  daemon_flags : string list;
-  program : (string * string) list;
-}
+type t = unit Run_flags.flags
 
-type others = {
-  mode : Engine_run.Checkpoint_trials.mode option;
-  preflight : bool;
-  from_event : string option;
-  to_event : string option;
-}
+let no_game_flags : unit Run_flags.game_flags =
+  {
+    game_defaults = ();
+    game_switch = (fun () _ -> None);
+    game_valued = (fun () _ _ -> None);
+  }
 
-let takes (o : others) =
+let parse args =
+  Run_flags.parse no_game_flags (Run_flags.defaults no_game_flags) args
+
+let takes (f : t) =
   let refused =
     List.filter_map
       (fun (given, flag) -> if given then Some flag else None)
       [
-        ( o.mode <> None && o.mode <> Some Engine_run.Checkpoint_trials.Testing,
+        ( f.mode <> None && f.mode <> Some Engine_run.Checkpoint_trials.Testing,
           "--mode" );
-        (o.preflight, "--preflight");
-        (o.from_event <> None, "--from-event");
-        (o.to_event <> None, "--to-event");
+        (f.preflight, "--preflight");
+        (f.from_event <> None, "--from-event");
+        (f.to_event <> None, "--to-event");
+        (f.max_rounds <> None, "--max-rounds");
       ]
   in
   match refused with

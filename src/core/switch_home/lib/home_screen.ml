@@ -91,15 +91,7 @@ let probes ~picture color =
          (Picture_box.whole ~picture user_icons_box))
   @ List.concat_map (tile_probes ~picture color) (List.init tiles Fun.id)
 
-let fraction m id =
-  match Effects.probe m id with
-  | Some (Wire.Color_count { fraction; _ }) -> fraction
-  | Some
-      ( Wire.Color_stats _ | Wire.Template_match _ | Wire.Line_shares _
-      | Wire.Find _ | Wire.Other _ )
-  | None ->
-      0.
-
+let fraction m id = Option.value ~default:0. (Color_share.read m id)
 let dark_max_sum = 200.
 let max_flat_stddev = 20.
 let min_icons_stddev = 10.
@@ -215,7 +207,9 @@ let read m =
    black-between-game-screens) reads 21 on the whole picture, 14 to 57 with its
    colors shifted (10% toward grey the highest), its stddev 0; the darkest
    pictures after it, the dimmed HOME 41 at least but with a stddev of 47 at
-   least, the launch's Game Freak intro 104 at least. Each limit sits midway. *)
+   least (46 and 41 on test/images' copy, redacted to the probed boxes over
+   its own mean colour), the launch's Game Freak intro 104 at least. Each limit
+   sits midway. *)
 let black_max_sum = 80.
 let black_max_stddev = 24.
 

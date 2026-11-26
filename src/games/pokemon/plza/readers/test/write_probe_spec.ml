@@ -7,17 +7,18 @@
    its reference before comparing, which a colour shift mostly cancels.
 
    With [--second FIXTURE DIR], it writes instead, for each frame of the
-   fixture, DIR/<folder>/<frame>.json: the probes a two-frame read subscribes
+   fixture, DIR/<folder>/<frame>.json (DIR/<shift>/<folder>/<frame>.json for
+   a shifted frame): the probes a two-frame read subscribes
    from what that frame shows, the party bars' made from its cards
    ({!Plza_readers.Party_slots.bar_probes}) and the caught mark's from its
    plate's bar ({!Plza_readers.Lock_plate.mark_probes}).
 
    With [--gifts LANGUAGE], only the Mystery Gift steps' readers' probes
    ({!Plza_readers.Main_menu_row}, {!Plza_readers.Mystery_gift_screen}, the
-   Boxes' and their cell's, the SAVE dialog's), the
-   gift's name matched by its template in that language
-   (gift-name-vivillon-<language>.png, copied beside the spec): en for
-   fixtures/gifts.probes.jsonl, fr for fixtures/gifts.fr.probes.jsonl. *)
+   Boxes' and their cell's, the SAVE dialog's), the gift's name matched by its
+   template in that language (gift-name-vivillon-<language>.png, copied beside
+   the spec): en for fixtures/gifts/gifts.probes.jsonl, fr for
+   fixtures/gifts/gifts.fr.probes.jsonl. *)
 
 let native : Wire.box = { x = 0.; y = 0.; w = 1.; h = 1. }
 let no_minimap = Array.mem "--no-minimap" Sys.argv
@@ -47,8 +48,13 @@ let write_second_spec dir (path, probes) =
       let out =
         Filename.concat dir (Filename.remove_extension path ^ ".json")
       in
-      let folder = Filename.dirname out in
-      if not (Sys.file_exists folder) then Sys.mkdir folder 0o755;
+      let rec make_folder folder =
+        if not (Sys.file_exists folder) then (
+          make_folder (Filename.dirname folder);
+          (* "DIR/." exists once DIR does. *)
+          if not (Sys.file_exists folder) then Sys.mkdir folder 0o755)
+      in
+      make_folder (Filename.dirname out);
       Out_channel.with_open_text out (fun oc ->
           output_string oc (params second))
 

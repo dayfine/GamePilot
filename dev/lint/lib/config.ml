@@ -8,6 +8,7 @@ type t = {
   library_dir : string;
   exceptions_file : string option;
   no_exceptions_roots : string list;
+  interface_docs_roots : string list;
   max_function_lines : int;
   max_function_avg_depth : float;
   max_function_depth : int;
@@ -19,6 +20,7 @@ type t = {
   allowed : (string * string list) list;
   families : family list;
   never_links : (string list * string list) list;
+  doc_listing : string list;
 }
 
 let default =
@@ -29,6 +31,7 @@ let default =
     library_dir = "lib";
     exceptions_file = None;
     no_exceptions_roots = [];
+    interface_docs_roots = [];
     max_function_lines = 50;
     max_function_avg_depth = 3.0;
     max_function_depth = 5;
@@ -40,6 +43,7 @@ let default =
     allowed = [];
     families = [];
     never_links = [];
+    doc_listing = [];
   }
 
 let words line =
@@ -91,6 +95,8 @@ let apply_line c = function
   | [ "exceptions"; file ] -> Ok { c with exceptions_file = Some file }
   | [ "no_exceptions"; dir ] ->
       Ok { c with no_exceptions_roots = c.no_exceptions_roots @ [ dir ] }
+  | [ "interface_docs"; dir ] ->
+      Ok { c with interface_docs_roots = c.interface_docs_roots @ [ dir ] }
   | [ "layer"; name; pattern ] ->
       let layer = { name; pattern = String.split_on_char '/' pattern } in
       Ok { c with layers = c.layers @ [ layer ] }
@@ -101,6 +107,8 @@ let apply_line c = function
   | "never_links" :: pattern :: (_ :: _ as libs) ->
       let rule = (String.split_on_char '/' pattern, libs) in
       Ok { c with never_links = c.never_links @ [ rule ] }
+  | "doc_listing" :: (_ :: _ as values) ->
+      Ok { c with doc_listing = c.doc_listing @ values }
   | [ key; v ] -> set_threshold c key v
   | key :: _ -> Error (Printf.sprintf "malformed '%s' line" key)
   | [] -> Ok c

@@ -1,5 +1,5 @@
-(* Port of SeedsDatabase (PokemonFRLG/Programs/RngManipulation/
-   PokemonFRLG_SeedsDatabase.cpp) without the JSON file reading. *)
+(* Port of PokemonFRLG/Programs/RngManipulation/PokemonFRLG_SeedsDatabase.cpp,
+   without the JSON file reading. *)
 
 type sound = Mono | Stereo
 type seed_button = A | Start | L
@@ -46,14 +46,13 @@ let parse_hex_seed text =
 let split_on_separator name =
   let sep = " / " in
   let n = String.length sep in
-  let rec go start i acc =
-    if i + n > String.length name then
-      List.rev (String.sub name start (String.length name - start) :: acc)
-    else if String.sub name i n = sep then
-      go (i + n) (i + n) (String.sub name start (i - start) :: acc)
-    else go start (i + 1) acc
+  let rec go start acc =
+    match Strings.Find.substring ~from:start name sep with
+    | None ->
+        List.rev (String.sub name start (String.length name - start) :: acc)
+    | Some i -> go (i + n) (String.sub name start (i - start) :: acc)
   in
-  go 0 0 []
+  go 0 []
 
 let parse_column_name name =
   let* sound, mode, button =
@@ -145,3 +144,46 @@ let find_seed t ~target sound ~radius =
       if column.sound <> sound || column.button_mode <> "Help" then best
       else List.fold_left (try_variant t ~radius column) best variants)
     None t.columns
+
+let rec collect f = function
+  | [] -> Ok []
+  | x :: rest ->
+      let* v = f x in
+      let* vs = collect f rest in
+      Ok (v :: vs)
+
+let json_string key = function
+  | `String s -> Ok s
+  | _ -> Error ("Seed column " ^ key ^ " holds a non-string")
+
+let json_int = function
+  | `Int d -> Ok d
+  | _ -> Error "Delay holds a non-integer"
+
+let json_strings key = function
+  | `List items -> collect (json_string key) items
+  | _ -> Error ("Seed column " ^ key ^ " is not an array")
+
+let json_delays = function
+  | `List items -> Result.map Array.of_list (collect json_int items)
+  | _ -> Error "Delay is not an array"
+
+let json_column (key, v) =
+  let* seeds = json_strings key v in
+  Ok (key, seeds)
+
+let by_name (a, _) (b, _) = String.compare a b
+
+let of_fields fields =
+  let* delays =
+    Option.fold ~none:(Error "No Delay array in the seed file")
+      ~some:json_delays
+      (List.assoc_opt "Delay" fields)
+  in
+  let named = List.filter (fun (k, _) -> k <> "Delay") fields in
+  let* columns = collect json_column (List.sort by_name named) in
+  of_columns ~delays columns
+
+let of_json = function
+  | `Assoc fields -> of_fields fields
+  | _ -> Error "The seed file is not an object"

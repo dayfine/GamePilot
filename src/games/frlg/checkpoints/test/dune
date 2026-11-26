@@ -68,7 +68,7 @@
   su-01.plan.json)
  (libraries
   gamepilot.table_test
-  gamepilot.pokemon_checkpoints
+  gamepilot.pokemon_engine
   gamepilot.checkpoint_end
   gamepilot.frlg_actions
   gamepilot.frlg_checkpoints))
@@ -80,8 +80,9 @@
  (libraries
   gamepilot.table_test
   gamepilot.replay
-  gamepilot.pokemon_checkpoints
+  gamepilot.pokemon_engine
   gamepilot.frlg_actions
+  gamepilot.run_options
   gamepilot.frlg_checkpoints))
 
 (rule
@@ -111,7 +112,7 @@
  (libraries
   gamepilot.wire
   gamepilot.table_test
-  gamepilot.pokemon_checkpoints
+  gamepilot.pokemon_engine
   gamepilot.frlg_checkpoints
   frlg_overworld_fixtures))
 
@@ -132,7 +133,7 @@
   yojson
   gamepilot.wire
   gamepilot.table_test
-  gamepilot.pokemon_checkpoints
+  gamepilot.pokemon_engine
   gamepilot.room_policy
   gamepilot.frlg_readers
   gamepilot.frlg_actions
@@ -152,7 +153,7 @@
  (libraries
   gamepilot.table_test
   gamepilot.json_field
-  gamepilot.pokemon_checkpoints
+  gamepilot.pokemon_engine
   gamepilot.frlg_actions
   gamepilot.frlg_checkpoints))
 
@@ -163,7 +164,7 @@
   yojson
   gamepilot.grid_maps
   gamepilot.table_test
-  gamepilot.pokemon_checkpoints
+  gamepilot.pokemon_engine
   gamepilot.room_policy
   gamepilot.frlg_actions
   gamepilot.frlg_checkpoints))
@@ -177,7 +178,7 @@
   gamepilot.grid_geometry
   gamepilot.grid_maps
   gamepilot.json_field
-  gamepilot.pokemon_checkpoints
+  gamepilot.pokemon_engine
   gamepilot.frlg_overworld
   gamepilot.frlg_actions
   gamepilot.frlg_checkpoints))
@@ -189,7 +190,7 @@
   gamepilot.table_test
   gamepilot.wire
   gamepilot.effects
-  gamepilot.pokemon_checkpoints
+  gamepilot.pokemon_engine
   gamepilot.frlg_checkpoints))
 
 (test
@@ -206,7 +207,7 @@
   08-activate-and-verify.plan.json)
  (libraries
   gamepilot.table_test
-  gamepilot.pokemon_checkpoints
+  gamepilot.pokemon_engine
   gamepilot.frlg_checkpoints))
 
 (test
@@ -216,7 +217,7 @@
  (libraries
   yojson
   gamepilot.table_test
-  gamepilot.pokemon_checkpoints
+  gamepilot.pokemon_engine
   gamepilot.frlg_readers
   gamepilot.frlg_checkpoints))
 
@@ -225,11 +226,16 @@
  (modules print_plans)
  (libraries
   gamepilot.repo_io
-  gamepilot.pokemon_checkpoints
+  gamepilot.pokemon_engine
   gamepilot.frlg_checkpoints))
+
+; print_plans also reads PokemonSimulation's FireRed plans, outside this dune
+; project where dune cannot see them change: (universe) reruns the rule every
+; build, so the dune cache never hands back a listing of older plans.
 
 (rule
  (deps
+  (universe)
   (glob_files_rec ../../programs/*.plan.json))
  (action
   (with-stdout-to

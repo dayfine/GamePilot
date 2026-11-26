@@ -69,3 +69,25 @@
   gamepilot.effects
   gamepilot.table_test
   gamepilot.frlg_readers))
+
+(test
+ (name test_dex_readers)
+ (modules test_dex_readers)
+ (deps
+  (glob_files fixtures/*.jsonl))
+ (libraries
+  gamepilot.wire
+  gamepilot.effects
+  gamepilot.table_test
+  gamepilot.frlg_readers))
+
+(test
+ (name test_naming_readers)
+ (modules test_naming_readers)
+ (deps
+  (glob_files fixtures/*.jsonl))
+ (libraries
+  gamepilot.wire
+  gamepilot.effects
+  gamepilot.table_test
+  gamepilot.frlg_readers))

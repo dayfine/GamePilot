@@ -1,9 +1,9 @@
 let window_ms = 400.
 
-(* The fork's thresholds: the dip is below this share of the brightest frame
-   before it, above this share (lower is a fade to black), and the screen then
-   comes back to this much of the dip. *)
-let darker = 0.8
+(* The dip is below this share of the brightest frame before it (the fork's is
+   0.8), above this share (lower is a fade to black), and the screen then comes
+   back to this much of the dip (the fork's). *)
+let darker = 0.88
 let floor_share = 0.4
 let recovery = 1.1
 
@@ -35,6 +35,13 @@ let flash_ends ~recent ~now =
   | Some (before, dip) -> dip > before *. floor_share && now > dip *. recovery
   | None -> false
 
+type sign = Flash | Going_black
+
+(* The frame is below [floor_share] of the brightest one before it. *)
+let going_black ~recent ~now =
+  let brightest = List.fold_left (fun b (_, x) -> max b x) 0. recent in
+  now < brightest *. floor_share
+
 let see t ~at_ms ~now =
   let recent =
     List.filter (fun (at, _) -> at_ms -. at <= window_ms) t.history
@@ -42,7 +49,11 @@ let see t ~at_ms ~now =
   let fired = flash_ends ~recent ~now in
   (* A flash fires once: the frames after it start a new history. *)
   t.history <- (if fired then [] else recent @ [ (at_ms, now) ]);
-  fired
+  if fired then Some Flash
+  else if going_black ~recent ~now then Some Going_black
+  else None
 
-let seen t (m : Effects.measurements) =
-  match brightness m with None -> false | Some now -> see t ~at_ms:m.t_ms ~now
+let sign t (m : Effects.measurements) =
+  match brightness m with None -> None | Some now -> see t ~at_ms:m.t_ms ~now
+
+let seen t m = sign t m = Some Flash

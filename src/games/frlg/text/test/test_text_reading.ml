@@ -22,6 +22,11 @@ let screens =
     "mail_editor";
     "start_menu";
     "card_numbers";
+    "pokedex_list";
+    "pokedex_numbers";
+    "pc_message";
+    "naming_entry";
+    "box_title";
   ]
 
 let glyphs =
@@ -55,6 +60,15 @@ let line_of_id id =
       normal (Text_lines.trainer_card_money_digit (int_of_string k))
   | [ "card_dex"; k ] ->
       normal (Text_lines.trainer_card_dex_digit (int_of_string k))
+  | [ "pc_message" ] -> normal Text_lines.pc_message
+  | [ "naming_entry"; i ] ->
+      normal (Text_lines.naming_entry_cell ~max_chars:8 (int_of_string i))
+  | [ "pokedex_name"; row ] ->
+      normal (Text_lines.pokedex_list_name (int_of_string row))
+  | [ "pokedex_number"; row; k ] ->
+      small
+        (Text_lines.pokedex_list_number_digit (int_of_string row)
+           (int_of_string k))
   | [ "summary_level"; k ] ->
       (Text_lines.summary_level_digit (int_of_string k), Summary_level.max_score)
   | _ -> failwith ("line id " ^ id)
@@ -106,6 +120,12 @@ let reading (e : expectation) =
   let m : Effects.measurements = { seq = 0; t_ms = 0.; probes } in
   let picked =
     if e.line = mail_field then Mail_fields.pick glyphs candidates m
+    else if e.line = "pc_box_title" then Box_title.pick glyphs candidates m
+    else if String.starts_with ~prefix:"naming_entry." e.line then
+      let line, max_score = line_of_id e.line in
+      Line_reading.pick_preferring ~max_score line
+        (List.filter (fun c -> c <> " ") candidates)
+        ~fallback:[ " " ] m
     else
       let line, max_score = line_of_id e.line in
       Line_reading.pick ~max_score line candidates m

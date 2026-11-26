@@ -8,14 +8,10 @@
 
 (** A move's effectiveness symbol under ZL, weakest first. *)
 type effectiveness =
-  | No_effect
-  | Not_very_effective
-  | Effective
-  | Super_effective
-
-type map_point = { x : float; y : float }
-(** A point on the full map, which is the frame scaled to 800 x 450, as the
-    fork's map points. *)
+  | No_effect  (** The crossed-out symbol. *)
+  | Not_very_effective  (** One down arrow. *)
+  | Effective  (** One up arrow. *)
+  | Super_effective  (** Two up arrows. *)
 
 type t = {
   at_ms : float;  (** When the frame was read, on the daemon's clock. *)
@@ -24,19 +20,19 @@ type t = {
           nothing. *)
   home_menu : bool;  (** The Switch HOME menu, not the game. *)
   screen_still : bool;  (** The frame is the same as the last read's. *)
-  fade_black : bool;
-  fade_white : bool;
+  fade_black : bool;  (** A black fade. *)
+  fade_white : bool;  (** A white fade. *)
   dialog_box : bool;  (** A text box, or a choice box. *)
-  choice_box : bool;
+  choice_box : bool;  (** A choice box. *)
   choice_rows : (int * int) option;
       (** With a choice box: the highlighted row (0 the top) and the rows. *)
-  advance_arrow : bool;
-  controls_hint : bool;
-  autosave : bool;
-  tutorial_card : bool;
+  advance_arrow : bool;  (** The text box's advance chevron. *)
+  controls_hint : bool;  (** The overworld's controls hint. *)
+  autosave : bool;  (** The autosave badge. *)
+  tutorial_card : bool;  (** A tutorial card. *)
   interact_prompt : bool;  (** An A prompt (["(A) Talk"]) with no text box. *)
   party_bar : bool;  (** The overworld party bar with no text box. *)
-  map_pin : map_point option;
+  map_pin : Plza_walk.Map_leg.point option;
       (** The player's pin on the full map, when it is open
           ({!Plza_readers.Map_pin}). *)
   minimap_arrow : float option;
@@ -54,6 +50,10 @@ type t = {
       (** The recorded minimap the top-left one matches
           ({!Plza_readers.Minimap}), as the fork's start signature reads it. *)
   battle : bool;  (** The battle HUD. *)
+  lead_hp : float option;
+      (** The lead's HP bar under its level badge, as the share of the bar's box
+          in the fill colours ({!Plza_readers.Battle_hud.lead_hp}): 0.89 for any
+          HP over about 70%, 0.04 at 1 HP of 19; [None] without the badge. *)
   story_dialog : bool;
       (** A dialogue box as the fork's story dialogue detector reads it by
           default (the white box with its arrow, blue or teal): the end of a
@@ -64,6 +64,7 @@ type t = {
   confirm_row : int option;
       (** On the new game's Confirm Choices: the highlighted row. *)
 }
+(** What one read of the screen shows. *)
 
 val empty : at_ms:float -> t
 (** A read with nothing on it. *)
@@ -110,7 +111,7 @@ val describe : t -> string
 (** What shows, as the fork's log lists it ("black fade, text box, still,
     controls hint"), or ["nothing"]. *)
 
-val to_walk_screen : t -> Plza_walk.Screen.t
+val to_walk_screen : t -> Plza_walk.Walk_screen.t
 (** The read as the walk takes it. *)
 
 val wild_battle_on : t -> bool

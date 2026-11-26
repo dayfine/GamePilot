@@ -3,7 +3,7 @@
    fled two wild battles and cleared the PurifiedZone message on the way.
 
    Re-record: daemon/build/gamepilot_daemon --backend mgba --mgba-port 47810
-   --log run.wire.jsonl, then gamepilot checkpoint on 04-grind-farfetchd (mg-04 then) cut to its first
+   --log run.wire.jsonl, then gamepilot run --plan on 04-grind-farfetchd (mg-04 then) cut to its first
    event, its postconditions emptied, with --state 04-grind-farfetchd.start.ss
    (formerly mg04_start.ss; a save state, not committed); rewrite the
    load_state path in the log to "mg04_start.ss" (replay does not compare it)
@@ -30,7 +30,7 @@ let walk_plan () =
     checkpoint = { p.checkpoint with events = [ first ] };
     postconditions =
       Option.map
-        (fun (promised : Pokemon_checkpoints.Postconditions.t) ->
+        (fun (promised : Pokemon_engine.Postconditions.t) ->
           {
             promised with
             party = None;
@@ -55,6 +55,7 @@ let replayed_walk () =
       grind_cap = None;
       gait = Running;
       end_check_only = false;
+      program_options = Run_options.none;
       log = (fun line -> lines := line :: !lines);
     }
   in
@@ -65,7 +66,7 @@ let replayed_walk () =
           Checkpoint_run.run options world (walk_plan ()))
     with
     | Ok () -> "PASSED"
-    | Error failure -> "FAILED " ^ Pokemon_checkpoints.Failure.to_string failure
+    | Error failure -> "FAILED " ^ Pokemon_engine.Failure.to_string failure
     | exception Replay.Divergence e -> "DIVERGED " ^ e
   in
   Printf.sprintf "%s; fled %d wild battles" outcome

@@ -14,7 +14,7 @@ let decode name json () =
       (Json_field.as_object "" (Yojson.Safe.from_string json))
   with
   | Ok r -> Action_requests.to_string r
-  | Error c -> Pokemon_checkpoints.Failure.cause_to_string c
+  | Error c -> Pokemon_engine.Failure.cause_to_string c
 
 let decoding =
   [
@@ -70,6 +70,20 @@ let decoding =
     case "spin_for_encounter with its default"
       (decode "spin_for_encounter" "{}")
       "spin for an encounter, 25 batches at most";
+    case "pc_deposit: species"
+      (decode "pc_deposit" {|{"species": ["eevee", "magikarp"]}|})
+      "deposit eevee, magikarp at the PC";
+    case "pc_deposit: the member holding no Mail"
+      (decode "pc_deposit" {|{"member": "holding_no_mail"}|})
+      "deposit the member holding no Mail at the PC";
+    case "pc_deposit: species and a role together"
+      (decode "pc_deposit"
+         {|{"member": "holding_no_mail", "species": ["mr-mime"]}|})
+      "bad_args: pc_deposit: species and member: name the members or their \
+       role, not both.";
+    case "pc_deposit: a member role it does not know"
+      (decode "pc_deposit" {|{"member": "the_lead"}|})
+      "bad_args: pc_deposit: member is the_lead, not holding_no_mail.";
     case "cut_tree"
       (decode "cut_tree" {|{"direction": "north"}|})
       "cut the tree to the north";
@@ -131,7 +145,7 @@ let roster =
       (fun () ->
         match Party_roster.resolve mg (Species "mr-mime") with
         | Ok n -> string_of_int n
-        | Error c -> Pokemon_checkpoints.Failure.cause_to_string c)
+        | Error c -> Pokemon_engine.Failure.cause_to_string c)
       "not_in_party: mr-mime is not in the party (blastoise, pidgey, abra, \
        spearow)";
     case "a full party sends a prize to the PC"

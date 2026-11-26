@@ -181,6 +181,13 @@ int main(int argc, char** argv) {
           gp::to_line(image_line(path, probes, templates, viewport)) + "\n";
       std::fputs(line.c_str(), stdout);
     }
+    // Flush here rather than at exit: on Windows the exit-time flush comes
+    // after the DLLs' teardown and is sometimes lost, with the exit code
+    // still 0.
+    if (std::fflush(stdout) != 0) {
+      std::fputs("probe_images: cannot write the output\n", stderr);
+      return 1;
+    }
     return 0;
   } catch (const InputError& error) {
     std::fprintf(stderr, "probe_images: %s\n", error.message.c_str());

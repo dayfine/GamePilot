@@ -24,16 +24,20 @@ val probes : game_icon:Effects.template_hash -> Wire.probe_spec list
 (** Every probe, with the game's icon template for the game list. *)
 
 val main_menu : Effects.measurements -> bool
+(** Pokémon HOME's main menu shows. *)
 
 (** The bottom banner. *)
 type banner =
-  | No_banner
+  | No_banner  (** none shows *)
   | Blank  (** the white bar, no text (between login lines) *)
   | One_line  (** text on the first line only: taken to be "saved" *)
   | Two_lines  (** "logging in" or "saving" *)
 
 val banner : Effects.measurements -> banner
+(** The banner the frame shows. *)
+
 val banner_to_string : banner -> string
+(** In words, for a log line ("a one-line banner"). *)
 
 type tile = { row : int; col : int }
 (** A tile of the game list, 0-based from the top left. *)

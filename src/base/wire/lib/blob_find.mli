@@ -6,6 +6,7 @@
     pixels; the daemon judges nothing. *)
 
 type json = Yojson.Safe.t
+(** A decoded JSON value: a probe object's fields or a result object. *)
 
 type filter = { low : int * int * int; high : int * int * int }
 (** One colour range, (r, g, b) 0..255 each, both ends included: a mask of its

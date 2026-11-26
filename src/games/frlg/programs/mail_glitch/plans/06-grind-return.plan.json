@@ -20,8 +20,7 @@
         "kind": "game_action",
         "action": "fly",
         "args": {
-          "town": "LavenderTown",
-          "species": "pidgey"
+          "town": "LavenderTown"
         },
         "declared_after": {"map": "LavenderTown", "tiles": [[6, 6]]},
         "why": "back to Lavender Town for 07-glitch-prep"
@@ -42,7 +41,7 @@
     "phase": "testing",
     "notes": "The grind's real end: CH'DING knows Knock Off, MIMIEN at least Lv 33 (read on its summary) knows Recycle, nothing spent since 03-trade-mr-mime.",
     "postconditions": {
-      "party_includes": ["blastoise", "pidgey", "mr-mime", "farfetchd"],
+      "party_includes": ["blastoise", "mr-mime", "farfetchd"],
       "money": {"spent": 0},
       "knows": [
         {"species": "farfetchd", "moves": ["knock-off"]},

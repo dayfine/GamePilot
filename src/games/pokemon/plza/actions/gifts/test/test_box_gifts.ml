@@ -14,7 +14,7 @@
    between the party and the box row, Left and Right along a row; Y picks up
    the Pokémon under the cursor, or drops the one held on an empty cell; B
    leaves the Boxes for the main menu. Its frames are captures' probes
-   (fixtures/gifts.probes.jsonl): the Boxes are console B's with Xerneas under
+   (readers/test/fixtures/gifts/gifts.probes.jsonl): the Boxes are console B's with Xerneas under
    the cursor, their cell's probes swapped for an empty cell's (the fork's
    box-cells/empty-0-4) when the cursor's cell is empty; the main menu is
    tutorial-cards' it-menu-no-card (five Pokémon), its sixth card's probe

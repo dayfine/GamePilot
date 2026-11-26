@@ -1,11 +1,9 @@
 # AutoStory
 
-Plays Pokémon Legends: Z-A's story on the Switch from a new game: it confirms the new game's
-choices, skips the opening to the station platform, then walks off the platform and presses through
-the arrival scenes to Main Mission 01, where you have free control in Lumiose City. From there it
-chases Pancham, takes Chikorita and beats Andi (Main Mission 01), then follows Main Missions 02 and
-03: Hotel Z, Taunie's battle, the Pokémon Center, Wild Zone 1's catches (five species in the
-party), the research lab and Mable's first research reward, the Rock Smash TM (checkpoint 03.11).
+Plays Pokémon Legends: Z-A's story on the Switch from a new game, one checkpoint at a time: it
+confirms the new game's choices, skips the opening, then follows the Main Missions, walking the
+routes, pressing through the scenes and fighting the story battles. The checkpoints table below
+lists the ones it plays.
 
 <!-- generated:backends -->
 Runs on: the Switch.
@@ -13,16 +11,17 @@ Runs on: the Switch.
 
 ## Before you start
 
-Start a new game by hand: choose the language, the look and the name, and stop on the "Confirm
-Choices" screen. Nothing else is read from the save. The Switch's capture must be the whole
-1920x1080 picture (the daemon's `--viewport native`).
+Start a new game by hand up to its Confirm Choices screen (language, look and name), for 01.00b; or
+put the console on the station platform with free control, the controls hint showing, to run 01.01
+alone (`--from 01.01`). The Switch's capture must be the whole 1920x1080 picture (the daemon's
+`--viewport native`).
 
 ## Running it
 
 <!-- generated:commands -->
 ```sh
 # the Switch: each checkpoint once, from where the console is
-cd src && opam exec -- dune exec -- gamepilot checkpoints --program plza.autostory --from 01.00b --to 03.11 --mode testing --backend switch --serial PORT --capture DEVICE \
+cd src && opam exec -- dune exec -- gamepilot run plza.autostory --from 01.00b --to 03.11 --mode testing --backend switch --serial PORT --capture DEVICE \
     --watch
 ```
 <!-- /generated -->
@@ -59,85 +58,110 @@ cd src && opam exec -- dune exec -- gamepilot checkpoints --program plza.autosto
 | 03.10 | Up the Research Lab's elevator to the Director's Office |
 | 03.11 | Mable's research, the Rock Smash TM |
 
-<!-- plans: 8bccc5f7e39a -->
+<!-- plans: d20acd695a53 -->
 <!-- /generated -->
 
-From Wild Zone 1 on:
+01.00b confirms the choices, skips the opening and waits for the platform. 01.01 sets the text
+speed to fast, walks down the platform and right to the white fade, and presses through the arrival
+scenes (Plus skips the president's ad) until the controls hint shows again.
 
-- 03.07 catches Fletchling and Bunnelby, weakening them with three attacks when a throw breaks out.
-- 03.08 and 03.08a catch a fourth and a fifth species: the camera sweeps until ZL locks on, and
-  the nearest Pokémon not marked caught gets the throws.
-- 03.08b leaves the zone by its far gate, steering by the map's pin and the minimap's arrow.
-- 03.09 and 03.10 walk to the Research Lab and up to the Director's Office.
-- 03.11 opens the main menu, goes to Mable's Research and takes the Rock Smash TM.
+01.02 walks after Pancham, presses B through the scene to its choice and takes "Battle with
+Pokemon!". 01.03 walks to Chikorita and talks, picks it, presses through the tutorial cards to the
+battle, and fights Andi with the most effective move under ZL until Andi speaks.
+
+Main Mission 02 walks from the Battle Zone to Brigitte and beats her Cleffa, skips the street's
+cutscene, follows Taunie to Hotel Z, then checks in, rides the elevator to Room 202 and rests until
+morning. A walk that ends at an A prompt (a door, the clerk, the elevator, the bed) is followed by a
+scene that presses A through the prompt first; a scene with a start window waits that long for the
+scene to begin before it counts free control as the end.
+
+Main Mission 03 leaves Room 202 by the elevator to the lobby, out of Hotel Z, and through Taunie's
+battle (Totodile, then Tepig) and her talk over the map; past the rock pile, up the side street's
+ladder (stepping along the wall until "Climb Up" shows) and off the roof; into the Pokémon Center
+for the Pokédex, then on to Wild Zone 1's gate and the Wild Zones card. Some walks run with B held.
+
+In Wild Zone 1 it runs to the gate's A prompt with B held, catches the tutorial's Fletchling (each
+throw locks on with ZL, then throws with ZL and ZR; one that breaks out into a battle weakens the
+target first) and Bunnelby (attacks until three land, then a throw, sweeping the camera when the
+target is out of sight).
+
+From Taunie's rocks it catches a fourth and a fifth species: the camera sweeps until ZL locks on,
+and the nearest Pokémon not marked caught gets the throws. It leaves by the far gate, steering by
+the map's pin and the minimap's arrow. In the Research Lab it rides the elevator to the third
+floor and claims Mable's research reward from the main menu.
 
 ## When it stops
 
-Reloads and retries:
+Reloads:
 
 - The first run starts wherever the console is.
-- A retry closes the game and reloads the latest autosave first.
-- 01.00b has no autosave to go back to: after it fails, put the console back on Confirm Choices by
-  hand.
+- A second run of a checkpoint (`--runs 2`) first closes the game and reloads the latest autosave.
+  01.00b has no autosave to go back to: its second run is refused.
 - 01.01 reloads once more if the platform's controls hint has already faded.
-- A checkpoint that follows a passing one starts where it ended, with no reload.
-- 03.04 always reloads when it follows 03.03c: its legs need the reload's facing.
+- A checkpoint that follows a passing one starts where it ended, with no reload; 03.04 always
+  reloads when it follows another, since its walk needs the reload's facing.
+- A checkpoint found off its start (below) reloads once and checks its start again, then stops if
+  it is still off (`chain_off_start`; in 03.08 also when the catch finds the player off Taunie's
+  rocks); the log says it reloaded.
+- 03.08 and 03.08a reload and try again up to twice when they come up short (`short_of_species`):
+  the reload respawns the zone, so a run of bad spawns is luck, not a bug.
+
+Start and end checks:
+
+- From 03.03 on, a checkpoint whose plan names a start reads it before it presses anything: the
+  minimap recorded at its start, the party count, the A prompt, whether the player is in Wild Zone
+  1, or (03.08) on Taunie's rocks: `chain_off_start` when one differs.
+- 03.04 also checks its end (outside the Center): `end_off_signature`.
+- A checkpoint whose plan names no start check logs START UNCHECKED and goes on.
 
 Resuming mid-checkpoint (the screen is read first, and steps already done are skipped):
 
 - 01.03 can start inside Andi's battle, or at Urbain's heal after a lost one.
-- 01.03 started in the night alley after Andi skips everything and passes.
-- 03.02b started at the plaza arch after its map talk skips everything and passes.
-- 03.04 started outside the Pokémon Center skips everything and passes.
+- 03.02b started at the plaza arch after its map talk skips everything and passes; so does 03.04
+  started outside the Pokémon Center.
 
-Start and end checks:
+Failures:
 
-- From 03.03 on, a checkpoint checks its start before it presses anything: the minimap, the party
-  count, the A prompt or whether the player is in Wild Zone 1.
-- A start that does not match stops the series: `chain_off_start`.
-- 03.04 also checks its end (outside the Center): `end_off_signature`.
-
-The run folder keeps:
-
-- the story log and the wire log;
-- `failure.png`, the last frame of a failed run.
+- 01.00b on any screen but Confirm Choices presses nothing and fails `not_on_confirm_choices`.
+- A walk whose end never shows fails `walk_no_end`; one that no scene takes, `walk_no_scene`.
+- A scene that ends in free control where a choice or a battle was due fails
+  `scene_ended_in_control` (the walk before it stopped short).
+- A scene that presses A first, on free control with no A prompt (two reads 300 ms apart), fails
+  `prompt_not_seen` before pressing anything: the walk before it stopped short.
+- 03.03b's ladder: `ladder_not_found` when no step along the wall shows "Climb Up".
+- The run to a gate: `gate_not_reached` when no A prompt shows in time (a day/night change gets
+  one more run).
+- A catch: `no_catch` when no throw is followed by the caught card, `still_a_target` when a target
+  still locks on after the last round.
+- 03.08 and 03.08a: `short_of_species` when the party does not grow after 12 throws, on each of
+  their three attempts.
+- Leaving Wild Zone 1: `gate_not_reached` after 3 runs, `map_pin_not_read`, `in_wild_zone`.
+- Mable's reward: `main_menu_not_reached` when X never opens the main menu, `no_reward_lines` when
+  her research page shows no lines (nothing was claimed).
+- 03.02b's map talk: `map_talk_timeout` when the party bar never holds within 2 minutes.
+- A lost battle (a black fade with the lead's HP near empty) fails `battle_lost`. Run 01.03 again
+  (`--from 01.03`): it goes on at Urbain's heal, at Andi's rematch or inside the battle. A battle
+  whose move symbols never show fails `battle_failed`.
+- The run folder keeps the story log, the wire log and `failure.png`, the last frame of a failed
+  run.
 
 ## Known limits
 
-Walks:
-
 - Walks are timed stick legs with no map, so they can miss.
-- A missed walk to an A prompt (a door, the clerk, the elevator, the bed): `walk_no_end`.
-- A missed walk whose scene never comes: `scene_ended_in_control` or `scene_never_started`.
-- A missed walk before a plain scene still passes; the next checkpoint then fails.
-- A walk that turns by the minimap's arrow: `heading_missed` after 4 turns, `arrow_unread` when no
-  arrow shows for 40 s.
-- 03.08b's gate: `gate_not_reached` after 3 runs, `map_pin_not_read`, `in_wild_zone`.
-
-Battles:
-
-- The starter is always Chikorita.
-- A lost battle reads as won, so the scene after it fails.
-- A battle with no move symbols for 2 minutes: `battle_failed`.
-- A battle that comes up during a walk or a scene is not handled: that step fails or times out.
-
-Catching:
-
-- The Run prompt's reader has not seen a console frame yet.
-- 03.07: `no_catch` after 6 throws at Fletchling, `still_a_target` after 6 rounds at Bunnelby.
-- 03.08 must start on Taunie's rocks: `rocks_not_left`.
-- 03.08 and 03.08a: `short_of_species` when the party does not grow after 12 throws.
-
-Readers:
-
-- "Mission complete" is not read.
-- The name and language on Confirm Choices are not checked.
-- 03.11: `main_menu_not_reached`, `no_reward_lines` (not in Mable's office), `menu_not_closed`.
-
-Keep-awake and camera:
-
 - The daemon keeps the console awake with the right stick (up, then down), not B, which would back
   out of the new game's menus.
-- Each checkpoint wakes a dimmed screen the same way before it reads it.
-- The walks aim from where the camera looks, so it must be behind the player when a checkpoint
-  starts, as after 01.03's scenes or a reload.
+
+## How it works
+
+`Plza_series.Runs` runs each checkpoint in its own daemon and run folder, with the watch page;
+`Plza_autostory.Run_attempts` decides when to reload (`Plza_autostory.Game_reload`) and try
+again, and `Plza_autostory.Start_signature` checks the start and end.
+
+`Plza_autostory.Story_game` gives the engine a handler for each game action a plan names, ported
+from the fork's PLZA AutoStory and built on `Plza_story` and `Plza_walk` over its `Steps`; any
+other event fails `no_handler`.
+
+A walk or scene that meets the battle early jumps to the battle event
+(`Plza_autostory.Battle_jump`), and `skip_if` flags are read from the screen
+(`Plza_autostory.Resume_flags`). `Plza_autostory.Live_story_screen` reads the screen into a
+`Plza_story.Look` from PLZA's readers.

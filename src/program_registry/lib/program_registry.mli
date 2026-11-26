@@ -4,7 +4,7 @@
     SerialPrograms/Source/CommonFramework/Panels/PanelDescriptor.h: category,
     display name, description, doc link). Unlike the fork, nothing registers
     itself at start-up: {!all} is a plain list, and a new program is one more
-    entry in it (docs/programs/README.md).
+    entry in it (docs/guide/README.md, "Adding a program").
 
     What a program needs of the save (free party slots, field moves) is not
     declared here: it is derived from its checkpoint plans, as the pre-flight
@@ -17,24 +17,32 @@ type backend = Mgba | Switch
     (FRLG); [Native]: a full-screen Switch game, the whole frame. *)
 type viewport = Nso_gba | Native
 
-(** How a program's checkpoint ids order its chain. [Parts_first]: a checkpoint
-    split in two runs its lettered part first, [cp-05a] then [cp-05], as the
-    FRLG fork splits them (Engine_series.Checkpoint_order). [Name_order]: plain
-    name order, where a lettered id continues the bare one: PLZA's 01.00b,
-    03.02b and 03.03b, 03.03c follow 01.00a, 03.02 and 03.03 (the checkpoint
-    rows of the PLZA fork's PokemonLZA_AutoStoryPlan.h, its plan sources saying
-    where each starts). *)
-type checkpoint_order = Parts_first | Name_order
-
 (** The rules a program's checkpoint plans are written over, which pick the
     library that loads and runs them. [Pokemon_grid]: the Pokémon grid rules
-    (Pokemon_checkpoints, the FRLG runner); [Plza_story]: PLZA's story rules
-    (Plza_checkpoints, Plza_series). *)
+    (Pokemon_engine, the FRLG runner); [Plza_story]: PLZA's story rules
+    (Plza_engine, Plza_series). *)
 type rules = Pokemon_grid | Plza_story
+
+type switch_home = {
+  title : string;  (** As the ctl usage names it: ["FireRed"]. *)
+  home_tile : Switch_home.Home_screen.tile_color;
+  lab_panel : string;  (** ["PokemonFRLG:AutoStory"]. *)
+}
+(** A game on the lab's Switch: the title the HOME steps (park, resume,
+    close-game, start-game, delete-save) go back to and look for by its tile's
+    colour, and the lab app's program panel whose console setup has the
+    controller board and capture card it runs with ([gamepilot switch-devices]).
+*)
 
 type game = {
   game_id : string;  (** ["frlg"], as plans and the games/ folder name it. *)
   game_name : string;
+  delete_save_icons : (string * string) list;
+      (** Its Switch titles' icons on their "Delete Save Data for <user>" page
+          (Switch_home.Delete_save), each a repo path, by the key
+          [gamepilot ctl delete-save] takes: [firered] for FRLG. *)
+  switch_home : switch_home option;
+      (** [None] while none of its HOME tiles was measured. *)
 }
 
 type t = {
@@ -50,9 +58,25 @@ type t = {
   backends : backend list;
   viewport : viewport;
       (** The Switch's game picture, which every daemon of its runs takes. *)
-  checkpoint_order : checkpoint_order;
   rules : rules;  (** What its plans are written over. *)
+  options : Run_options.declared list;
+      (** The keys its runs take in [gamepilot run --options KEY=VALUE], each
+          with the values it takes and a line of what it chooses; [[]]: none.
+          [gamepilot programs] and its guide page's [options] block list them.
+      *)
 }
+
+val games : game list
+(** Every game with a program or a Switch title GamePilot knows, PLZA (no
+    program yet) first, as [gamepilot ctl delete-save] lists their keys. *)
+
+val lab_game : string option -> (game * switch_home, string) result
+(** The game the lab's console runs, by its id; with none, the one game that has
+    Switch HOME data. An unknown id, a game without it, or (no id) not exactly
+    one such game is an error naming the ids to pick from. *)
+
+val lab_game_of_env : unit -> (game * switch_home, string) result
+(** {!lab_game} of $GAMEPILOT_LAB_GAME (unset or empty: none). *)
 
 val all : t list
 (** By game, then group, then name. *)
@@ -83,6 +107,12 @@ val check_viewport : t option -> string option -> (string option, string) result
 (** The daemon's [--viewport] for a run: the program's ({!viewport_name}), or
     the [--viewport] given when no program is known. A given one that differs
     from the program's is an error. [None]: neither, the daemon's default. *)
+
+val check_options :
+  t option -> (string * string) list -> (Run_options.t, string) result
+(** A run's [--options] pairs ({!Run_options.check}) against the program's
+    {!t.options}, before anything runs; with no program (a plan folder no
+    program registers) any option is refused. *)
 
 val run_fields : t -> (string * string) list
 (** What a run's run.json says of its program: [game], [game_name], [program]

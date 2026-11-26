@@ -5,6 +5,7 @@ type config = {
   end_on_black_fade : bool;
   stop_at_choice : bool;
   stop_at_battle : bool;
+  end_at_battle : bool;
   button : Wire.button;
   start_window_ms : int option;
 }
@@ -14,6 +15,7 @@ let default =
     end_on_black_fade = false;
     stop_at_choice = false;
     stop_at_battle = false;
+    end_at_battle = false;
     button = A;
     start_window_ms = None;
   }
@@ -82,6 +84,7 @@ type timeline = {
   mutable black_fades : int;
   mutable text_a : text_a option;
   lock : Lock_on.state;
+  battle : Flicker_filter.t;
 }
 
 let held since ~hold_ms (l : L.t) =
@@ -124,8 +127,13 @@ let classify_rest config tl (l : L.t) =
   else if L.control_shows l then classify_control config tl l
   else Other
 
+(* With end_at_battle, the HUD on two reads within 2 s (it flickers). *)
+let battle_ends config tl (l : L.t) =
+  (config.stop_at_battle && l.battle)
+  || (config.end_at_battle && Flicker_filter.on_with tl.battle l.battle l.at_ms)
+
 let classify config tl (l : L.t) =
-  if config.stop_at_battle && l.battle then Battle
+  if battle_ends config tl l then Battle
   else if tl.lock.locked_on then Locked_on
   else if L.fade_shows l then
     if config.end_on_black_fade && l.fade_black then Black_fade_end else Fade
@@ -133,23 +141,6 @@ let classify config tl (l : L.t) =
   else if L.text_shows l then Text
   else if config.stop_at_battle && Lock_on.due tl.lock l then Lock_on
   else classify_rest config tl l
-
-let choice_button steps (l : L.t) =
-  match l.choice_rows with
-  | None ->
-      S.(steps.log) "[PLZA scene] choice: rows not read: A";
-      Wire.A
-  | Some (selected, rows) when selected > 0 ->
-      S.(steps.log)
-        (Printf.sprintf
-           "[PLZA scene] choice: %d rows, row %d highlighted: Up to row 0" rows
-           selected);
-      Wire.Up
-  | Some (_, rows) ->
-      S.(steps.log)
-        (Printf.sprintf "[PLZA scene] choice: %d rows, row 0 highlighted: A"
-           rows);
-      Wire.A
 
 (* stop_at_choice with A: a new page (its arrow came or went), or the last
    A's page 2 s on. *)
@@ -176,7 +167,7 @@ let other_button config tl =
 
 let button steps config tl screen (l : L.t) =
   match screen with
-  | Choice -> Some (choice_button steps l)
+  | Choice -> Some (Scene_choice.button steps l)
   | Text -> text_button config tl l
   | Card -> Some Wire.A
   | Other -> other_button config tl
@@ -201,6 +192,7 @@ let control_instead config (l : L.t) =
 let record config tl screen (l : L.t) =
   let control_instead = control_instead config l in
   Lock_on.record tl.lock ~tried:(screen = Lock_on) ~control_instead l;
+  Flicker_filter.record tl.battle l.battle l.at_ms;
   record_text_a config tl screen l;
   if l.fade_black then tl.black_fades <- tl.black_fades + 1;
   tl.overworld_seen <- tl.overworld_seen || (tl.scene_seen && L.control_shows l);
@@ -252,6 +244,11 @@ let failure config label screen =
 let outcome steps config label screen =
   match failure config label screen with
   | Some cause -> Error cause
+  | None when screen = Battle && not config.stop_at_battle ->
+      S.(steps.log)
+        (Printf.sprintf
+           "[PLZA %s] the battle HUD is up: on to the story battle." label);
+      Error Plza_walk.Battle_stop.battle_on_screen
   | None ->
       S.(steps.log) (Printf.sprintf "[PLZA %s] done on %s." label (name screen));
       Ok ()
@@ -266,6 +263,7 @@ let new_timeline () =
     black_fades = 0;
     text_a = None;
     lock = Lock_on.new_state ();
+    battle = Flicker_filter.battle_hud ();
   }
 
 let act steps label tl screen = function

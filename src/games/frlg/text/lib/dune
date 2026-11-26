@@ -1,4 +1,9 @@
 (library
  (name frlg_text)
  (public_name gamepilot.frlg_text)
- (libraries gamepilot.wire gamepilot.effects gamepilot.repo_io))
+ (libraries
+  gamepilot.wire
+  gamepilot.effects
+  gamepilot.repo_io
+  gamepilot.strings
+  gamepilot.frlg_readers))

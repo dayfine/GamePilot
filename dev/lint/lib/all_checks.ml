@@ -11,13 +11,23 @@ let code_checks c path text =
         No_exceptions.check src
       else []
 
+let interface_checks c path text =
+  if
+    Source_tree.in_library_dir c path
+    && Source_tree.under_interface_docs_root c path
+  then Interface_docs.check ~path text
+  else []
+
 let file_findings (c : Config.t) path =
   if Source_tree.in_test_dir c path then []
   else if Filename.check_suffix path ".ml" then
     let text = Source_tree.read path in
     File_length.check c ~path text @ code_checks c path text
   else if Filename.check_suffix path ".mli" then
-    File_length.check c ~path (Source_tree.read path)
+    let text = Source_tree.read path in
+    File_length.check c ~path text
+    @ Doc_listing.check c ~path text
+    @ interface_checks c path text
   else []
 
 let exceptions (c : Config.t) =

@@ -39,11 +39,18 @@ let queue t commands =
   Hashtbl.replace t.queued batch_id ();
   check_submitted batch_id (call t (Wire.Submit { batch_id; commands }))
 
+(* A cancel drops every batch still queued, and the daemon sends no
+   [batch_done] for a dropped one (server.cpp, clear_input and replace_input);
+   any sent before the cancel's reply came before it. So once the reply is in,
+   no [queue]d batch will end: forget them. *)
+let forget_queued t = Hashtbl.reset t.queued
+
 (* Cancels the batch [race] stopped. Its [batch_done] can still arrive before
    the cancel's reply (it was on its way); after the reply none can, so the one
    that came is dropped there. *)
 let cancel_batch t batch_id =
   ignore (Wire.cancel_result_of_json (call t Wire.Cancel) : int);
+  forget_queued t;
   Hashtbl.remove t.dones batch_id
 
 (* Every frame pumped after the submit was sent is checked against [stop],
@@ -91,6 +98,7 @@ let replace t commands =
       let next = next_batch_id t in
       let cancel = Wire.Cancel_then { batch_id = next; commands } in
       ignore (Wire.cancel_result_of_json (call t cancel) : int);
+      forget_queued t;
       Hashtbl.remove t.dones held;
       pump_until t (fun () ->
           check_stop t;
@@ -168,6 +176,12 @@ let load_state t path =
   t.latest <- None;
   r.seq
 
+let reset t =
+  let r = Wire.load_state_result_of_json (call t Wire.Reset) in
+  t.load <- r.load;
+  t.latest <- None;
+  r.seq
+
 let save t request = Wire.save_result_of_json (call t request)
 
 (* The first frame after a subscribe carries every subscribed result. *)
@@ -212,6 +226,7 @@ let answer : type a. t -> a Effect.t -> (unit -> a) option =
   | Effects.Now -> Some (fun () -> Option.value t.now ~default:0.)
   | Effects.Read -> Some (fun () -> t.latest)
   | Effects.Load_state path -> Some (fun () -> load_state t path)
+  | Effects.Reset -> Some (fun () -> reset t)
   | Effects.Save_state path ->
       Some (fun () -> save t (Wire.Save_state { path }))
   | Effects.Save_frame path ->

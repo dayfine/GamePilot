@@ -1,15 +1,15 @@
 (* The Mystery Gift steps' readers (Main_menu_row, Mystery_gift_screen) on the
-   PLZA captures (fixtures/gifts.probes.jsonl, regen_fixture.sh): the one
+   PLZA captures (fixtures/gifts/gifts.probes.jsonl, regen_fixture.sh): the one
    full-size main menu (tutorial-cards' it-menu-no-card: Box highlighted, five
    Pokémon and an empty sixth card) reads its row and cards; console B's
    Internet gift list (images/mystery-gift, 2026-11-25: four gifts, the cursor
    on the first, Vivillon the 4th) reads as the active list with its gift on
    item 4; its two cards (Vivillon's, the shiny Xerneas's) read as a card;
-   all also shifted (fixtures/gifts.shifted.probes.jsonl). The French list
+   all also shifted (fixtures/gifts/gifts.shifted.probes.jsonl). The French list
    (console B, 2026-11-25: the same four gifts, Vivillon the 4th as
    "Prismillon (Motif Poké Ball)") reads as the list with no gift under the
    English name, as the console's run failed; under the French name
-   (fixtures/gifts.fr.probes.jsonl, every Mystery Gift frame and its nine
+   (fixtures/gifts/gifts.fr.probes.jsonl, every Mystery Gift frame and its nine
    shifts) its gift is item 4 and the English list has none. The white fade
    before a card, the receive animation and the code keyboard read as
    nothing. The same
@@ -30,9 +30,9 @@ open Plza_readers
 module R = Main_menu_row
 module G = Mystery_gift_screen
 
-let frames = Wire.read_image_probes "gifts.probes.jsonl"
-let shifted = Wire.read_image_probes "gifts.shifted.probes.jsonl"
-let french = Wire.read_image_probes "gifts.fr.probes.jsonl"
+let frames = Wire.read_image_probes "fixtures/gifts/gifts.probes.jsonl"
+let shifted = Wire.read_image_probes "fixtures/gifts/gifts.shifted.probes.jsonl"
+let french = Wire.read_image_probes "fixtures/gifts/gifts.fr.probes.jsonl"
 let measurements probes : Wire.frame = { seq = 1; t_ms = 0.; probes }
 let menu = "./tutorial-cards/it-menu-no-card.jpg"
 let gift_list = "./mystery-gift/gift-list-cursor-on-1.png"

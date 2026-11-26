@@ -7,3 +7,4 @@
 *)
 
 val run : Steps.game_steps -> Steps.outcome
+(** Text speed set to fast, back on the overworld. *)

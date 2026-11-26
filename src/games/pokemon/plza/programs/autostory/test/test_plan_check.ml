@@ -2,7 +2,7 @@
    unknown execution key, a signature field or minimap the readers do not
    know, an unknown skip_if flag. *)
 
-open Plza_checkpoints
+open Plza_engine
 
 let plans_dir = "../plans"
 
@@ -67,8 +67,8 @@ let bad_cases =
       (fun () ->
         with_execution [ ("start_signature", `Assoc [ ("hp", `Int 1) ]) ])
       "start_signature_unread: 03.04: its start signature has \"hp\": its \
-       fields are talk_prompt and wild_zone (true or false), party (a count) \
-       and minimap (a recorded name)";
+       fields are talk_prompt, wild_zone and near_rocks (true or false), party \
+       (a count) and minimap (a recorded name)";
     case "an end signature naming an unrecorded minimap"
       (fun () ->
         with_execution

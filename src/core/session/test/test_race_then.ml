@@ -22,8 +22,9 @@ let batch_done batch_id =
     (Wire.Notification (Wire.Batch_done { batch_id; seq = 9; t_ms = 9. }))
 
 (* A daemon whose frames count up; a cancel with [then] is answered and that
-   batch ends at once. *)
-let fake_daemon () =
+   batch ends at once. With [ends_submits], a submitted batch ends after the
+   next frame too. *)
+let fake_daemon ?(ends_submits = false) () =
   let queue = Queue.create () and sent = ref [] and next = ref 0 in
   let reply id body =
     Queue.push
@@ -36,7 +37,11 @@ let fake_daemon () =
     match m with
     | Wire.Request { id; call = Wire.Hello _ } -> reply id hello_result
     | Wire.Request { id; call = Wire.Submit { batch_id; _ } } ->
-        reply id (Printf.sprintf {|{"batch_id":%S,"start_seq":1}|} batch_id)
+        reply id (Printf.sprintf {|{"batch_id":%S,"start_seq":1}|} batch_id);
+        if ends_submits then (
+          incr next;
+          Queue.push (frame !next) queue;
+          Queue.push (batch_done batch_id) queue)
     | Wire.Request { id; call = Wire.Cancel_then { batch_id; _ } } ->
         reply id {|{"released_seq":5}|};
         Queue.push (batch_done batch_id) queue
@@ -115,3 +120,50 @@ let () =
          (List.exists
             (function Wire.Cancel | Wire.Cancel_then _ -> true | _ -> false)
             (calls !sent)))
+
+(* Effects.race_then where the stop never holds: the batch runs to its end,
+   [then_] is never called and no cancel is sent. *)
+let () =
+  let transport, sent = fake_daemon ~ends_submits:true () in
+  let hold = [ Wire.press ~hold_ms:160 ~cooldown_ms:0 [ Wire.ZL ] ] in
+  let called = ref false in
+  let raced =
+    Session.run transport (fun () ->
+        Effects.race_then hold
+          ~stop:(fun _ -> false)
+          ~then_:(fun _ ->
+            called := true;
+            []))
+  in
+  expect "race_then, no stop: the batch finished"
+    (match raced with Effects.Finished _ -> true | Stopped _ -> false);
+  expect "race_then, no stop: then_ not called, no cancel"
+    ((not !called)
+    && not
+         (List.exists
+            (function Wire.Cancel | Wire.Cancel_then _ -> true | _ -> false)
+            (calls !sent)))
+
+(* Effects.Replace with no batch held: a plain submit, ended by its own
+   batch_done. *)
+let () =
+  let transport, sent = fake_daemon ~ends_submits:true () in
+  let tap = [ Wire.press ~hold_ms:80 ~cooldown_ms:0 [ Wire.A ] ] in
+  let done_ =
+    Session.run transport (fun () -> Effect.perform (Effects.Replace tap))
+  in
+  let submits =
+    List.filter_map
+      (function
+        | Wire.Submit { batch_id; commands } -> Some (batch_id, commands)
+        | _ -> None)
+      (calls !sent)
+  in
+  expect "replace, none held: one submit, no cancel"
+    (List.map snd submits = [ tap ]
+    && not
+         (List.exists
+            (function Wire.Cancel | Wire.Cancel_then _ -> true | _ -> false)
+            (calls !sent)));
+  expect "replace, none held: ends on that submit's batch_done"
+    (List.map fst submits = [ done_.Wire.batch_id ])
