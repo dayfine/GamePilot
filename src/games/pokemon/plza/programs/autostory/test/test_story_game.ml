@@ -1897,7 +1897,7 @@ let cases_03_08_to_03_09 =
         match Runner.run game p.checkpoint with
         | Ok () -> "passed"
         | Error f -> (
-            match Plza_autostory.Run_attempts.of_failure f with
+            match Plza_checkpoint_series.Run_attempts.of_failure f with
             | Passed -> "passed"
             | Failed f -> string_of_bool f.off_start))
       "true";

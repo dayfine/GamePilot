@@ -1,6 +1,6 @@
-(** What flags PLZA's series runner ({!Runs}) takes: [gamepilot run]'s flags
-    (Run_flags) with no game flags of its own, and the ones it refuses rather
-    than ignores. *)
+(** What flags PLZA's series runner ({!Checkpoint_series}) takes:
+    [gamepilot run]'s flags (Run_flags) with no game flags of its own, and the
+    ones it refuses rather than ignores. *)
 
 type t = unit Run_flags.flags
 (** The command's flags, with no game flags. *)

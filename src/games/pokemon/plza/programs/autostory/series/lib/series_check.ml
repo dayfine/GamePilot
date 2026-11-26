@@ -11,15 +11,10 @@ let check ~options plans =
 
 let ( let* ) = Result.bind
 
-let load_checked load ~options ids =
-  let* plans =
+let check_all ~options plans =
+  let* () =
     List.fold_left
-      (fun plans id ->
-        let* plans = plans in
-        let* plan = load id in
-        let* () = Story.Plan_check.check plan in
-        Ok (plans @ [ plan ]))
-      (Ok []) ids
+      (fun acc plan -> Result.bind acc (fun () -> Story.Plan_check.check plan))
+      (Ok ()) plans
   in
-  let* () = check ~options plans in
-  Ok plans
+  check ~options plans

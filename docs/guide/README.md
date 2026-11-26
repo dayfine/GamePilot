@@ -17,6 +17,7 @@ Each page ends with "How it works", for developers: the ported files, the mechan
 | [ACE](frlg.ace.md) | `frlg.ace` | mGBA | Runs code typed as PC box names through species 0x0351: 999 of an item in the PC, some of them to the bag. |
 | [Wild RNG](frlg.wild_rng.md) | `frlg.wild_rng` | mGBA | Catches a chosen shiny wild Pokemon by timing the game's random numbers. |
 | [AutoStory](plza.autostory.md) | `plza.autostory` | the Switch | Plays the story from a new game, checkpoint by checkpoint. |
+| [Bank in HOME](plza.bank-home.md) | `plza.bank-home` | the Switch | Moves the claimed gifts from the game's box into their Pokémon HOME boxes and saves HOME. |
 <!-- /generated -->
 
 The Mail Glitch has a second page for its last checkpoint:

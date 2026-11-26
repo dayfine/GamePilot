@@ -1,7 +1,7 @@
 (* Run_attempts over scripted attempts: which attempts reload first, and how
    the run ends; one fact per check. *)
 
-module A = Plza_autostory.Run_attempts
+module A = Plza_checkpoint_series.Run_attempts
 
 let off_start =
   A.Failed

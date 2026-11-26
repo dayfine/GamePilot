@@ -53,7 +53,7 @@ let bad_plans () =
       | Some dir ->
           let plan_error =
             match p.rules with
-            | Plza_story -> plza_plan_error
+            | Plza_story | Plza_home -> plza_plan_error
             | Pokemon_grid -> frlg_plan_error
           in
           List.filter_map plan_error (plans_in dir))
