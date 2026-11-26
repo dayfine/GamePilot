@@ -77,7 +77,7 @@ let not_native =
 let opened_page key =
   press open_row;
   let page m = if S.game_page m then Some (S.is_game key m) else None in
-  Held_screen.wait_for ~timeout_ms:page_wait_ms page
+  Screen_graph.Held_screen.wait_for ~timeout_ms:page_wait_ms page
 
 let no_row key =
   Printf.sprintf

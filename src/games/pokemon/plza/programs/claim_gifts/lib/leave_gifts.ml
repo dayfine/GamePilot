@@ -31,8 +31,8 @@ let read () =
     Some (screen m)
   in
   let held =
-    Switch_home.Held_screen.wait_for ~timeout_ms:read_ms
-      (Switch_home.Held_screen.held hold_ms watch)
+    Screen_graph.Held_screen.wait_for ~timeout_ms:read_ms
+      (Screen_graph.Held_screen.held hold_ms watch)
   in
   (held, !last)
 
