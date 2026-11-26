@@ -1,6 +1,7 @@
 open Bdsp_underground
 module PB = Switch_home.Picture_box
 module SC = Switch_home.Solid_color
+module CS = Switch_home.Color_share
 
 let cols = Mining_wall.cols
 let rows = Mining_wall.rows
@@ -13,6 +14,24 @@ let grid_h = 0.8444
 let cell_inset = 0.20
 let cell_span = 0.60
 
+(* Top wall-crack gauge bar measured from Console A run-73/000005..000048.jpg:
+   crack grows right-to-left across x=0.13..0.85, y=0.00..0.095. *)
+let crack_slices = 10
+let crack_x = 0.13
+let crack_w = 0.72
+let crack_y = 0.0
+let crack_h = 0.095
+let crack_ch_zero = 0
+let crack_max_r = 90
+let crack_max_g = 80
+let crack_max_b = 65
+let crack_min_rgb = (crack_ch_zero, crack_ch_zero, crack_ch_zero)
+let crack_max_rgb = (crack_max_r, crack_max_g, crack_max_b)
+let crack_min_share = 0.06
+let crack_full_collapse_share = 0.30
+let crack_half_slice = 0.5
+let crack_probe_id idx = Printf.sprintf "bdsp_mine_crack_%d" idx
+
 (* Classification thresholds measured from Console A captures. *)
 let neutral_max_rb_diff = 18.
 let deep_min_luma = 165.
@@ -24,9 +43,9 @@ let empty_min_rb_diff = 35.
 let empty_min_rg_diff = 20.
 let empty_max_std_sum = 35.
 let shard_min_r = 150.
-let shard_min_b = 130.
+let shard_min_b = 85.
 let shard_min_rg_diff = 40.
-let shard_min_bg_diff = 20.
+let shard_min_bg_diff = 8.
 let deep_layer = 4
 let mid_layer = 2
 let shallow_layer = 1
@@ -59,6 +78,20 @@ let tool_panel_probes ~picture =
   |> add blue_tool_probe_id blue_tool_box
   |> add red_tool_probe_id red_tool_box
 
+let crack_slice_box idx : Wire.box =
+  let sw = crack_w /. float_of_int crack_slices in
+  { x = crack_x +. (float_of_int idx *. sw); y = crack_y; w = sw; h = crack_h }
+
+let crack_slice_probe ~picture idx =
+  let make box =
+    Wire.color_count_probe ~id:(crack_probe_id idx) ~box ~min:crack_min_rgb
+      ~max:crack_max_rgb ~delivery:Every
+  in
+  Option.map make (PB.clipped ~picture (crack_slice_box idx))
+
+let crack_gauge_probes ~picture =
+  List.init crack_slices (crack_slice_probe ~picture) |> List.filter_map Fun.id
+
 let probes ~picture =
   let acc = ref [] in
   for r = 0 to rows - 1 do
@@ -70,7 +103,29 @@ let probes ~picture =
       | None -> ()
     done
   done;
-  tool_panel_probes ~picture @ List.rev !acc
+  tool_panel_probes ~picture @ crack_gauge_probes ~picture @ List.rev !acc
+
+let integrity_for_slice idx share =
+  if idx = 0 && share >= crack_full_collapse_share then 0
+  else
+    let frac =
+      (float_of_int idx +. crack_half_slice) /. float_of_int crack_slices
+    in
+    let est =
+      int_of_float
+        (Float.round (float_of_int Mining_wall.max_integrity *. frac))
+    in
+    max 0 (min Mining_wall.max_integrity est)
+
+let rec find_leftmost_crack idx = function
+  | [] -> Mining_wall.max_integrity
+  | Some v :: _ when v >= crack_min_share -> integrity_for_slice idx v
+  | _ :: rest -> find_leftmost_crack (idx + 1) rest
+
+let crack_gauge_integrity m =
+  let shares = List.init crack_slices (fun i -> CS.read m (crack_probe_id i)) in
+  if List.for_all Option.is_none shares then None
+  else Some (find_leftmost_crack 0 shares)
 
 let min_red_panel_r = 70.
 let min_blue_panel_b = 70.

@@ -12,8 +12,13 @@ type play_result = {
 let scan_right_col = 11
 let adj_table_capacity = 24
 let min_secondary_integrity = 4
+let min_hammer_excavate_integrity = 4
+let min_hammer_target_dirt = 2
+let min_hammer_target_hits = 3
 let low_gauge_cutoff = 18
 let shard_expand_radius = 2
+let anchor_covered_weight = 4
+let anchor_iron_penalty = 6
 let cardinal_dirs = [ (-1, 0); (1, 0); (0, -1); (0, 1) ]
 
 let ring_offsets radius =
@@ -29,9 +34,22 @@ let chebyshev_r1 = ring_offsets 1
 let chebyshev_r2 = ring_offsets shard_expand_radius
 let pickaxe_kernel = [ (0, 0, 2); (-1, 0, 1); (1, 0, 1); (0, -1, 1); (0, 1, 1) ]
 
+let hammer_kernel =
+  [
+    (0, 0, 2);
+    (-1, 0, 2);
+    (1, 0, 2);
+    (0, -1, 2);
+    (0, 1, 2);
+    (-1, -1, 1);
+    (1, -1, 1);
+    (-1, 1, 1);
+    (1, 1, 1);
+  ]
+
 (* Sparse 3-tile-spaced Hammer anchors covering the 13x10 wall.
    Because Hammer hits a 3x3 area, these 12 points inspect nearly every 2x2+
-   item footprint on the board. *)
+   item footprint on the board without interior gaps. *)
 let scan_anchors =
   [
     (2, 2);
@@ -92,30 +110,49 @@ let adjacent_covered ~offsets (obs : Mining_wall.observation) cells =
   List.iter (add_covered_neighbors ~offsets obs seen) cells;
   Hashtbl.fold (fun pt () acc -> pt :: acc) seen []
 
-let score_pickaxe (obs : Mining_wall.observation) targets ~col ~row =
-  if is_iron obs ~col ~row then -1
-  else
-    List.fold_left
-      (fun acc (dc, dr, dmg) ->
-        let c = col + dc and r = row + dr in
-        if Mining_wall.in_bounds ~col:c ~row:r && List.mem (c, r) targets then
-          acc + min dmg (dirt_at obs ~col:c ~row:r)
-        else acc)
-      0 pickaxe_kernel
+let add_kernel_hit obs targets ~col ~row (dmg_acc, hit_acc) (dc, dr, dmg) =
+  let c = col + dc and r = row + dr in
+  if
+    Mining_wall.in_bounds ~col:c ~row:r
+    && List.mem (c, r) targets
+    && dirt_at obs ~col:c ~row:r > 0
+  then (dmg_acc + min dmg (dirt_at obs ~col:c ~row:r), hit_acc + 1)
+  else (dmg_acc, hit_acc)
+
+let score_kernel kernel (obs : Mining_wall.observation) targets ~col ~row =
+  if is_iron obs ~col ~row then (0, 0)
+  else List.fold_left (add_kernel_hit obs targets ~col ~row) (0, 0) kernel
+
+(* Compare Pickaxe (cost 1) vs Hammer (cost 2) using scaled efficiency
+   (target dirt cleared * 2 / cost). Prefer Hammer only when the center has >= 2
+   dirt layers, Hammer hits >= 3 covered target cells, integrity >= 4, and
+   Hammer clears at least as much target dirt per integrity point as Pickaxe. *)
+let choose_excavation_tool (obs : Mining_wall.observation) targets ~col ~row =
+  let p_dmg, _ = score_kernel pickaxe_kernel obs targets ~col ~row in
+  let h_dmg, h_hits = score_kernel hammer_kernel obs targets ~col ~row in
+  let p_eff = p_dmg * Mining_wall.hammer_cost in
+  let can_hammer =
+    obs.integrity >= min_hammer_excavate_integrity
+    && dirt_at obs ~col ~row >= min_hammer_target_dirt
+    && h_hits >= min_hammer_target_hits
+    && h_dmg >= p_eff
+  in
+  if can_hammer then (Mining_wall.Hammer, h_dmg)
+  else (Mining_wall.Pickaxe, p_eff)
 
 let best_excavation_hit ~offsets obs cells =
   let targets = adjacent_covered ~offsets obs cells in
   let best =
     List.fold_left
       (fun acc (c, r) ->
-        let s = score_pickaxe obs targets ~col:c ~row:r in
+        let tool, score = choose_excavation_tool obs targets ~col:c ~row:r in
         match acc with
-        | None when s > 0 -> Some (c, r, s)
-        | Some (_, _, bs) when s > bs -> Some (c, r, s)
+        | None when score > 0 -> Some (tool, c, r, score)
+        | Some (_, _, _, bs) when score > bs -> Some (tool, c, r, score)
         | _ -> acc)
       None targets
   in
-  Option.map (fun (col, row, _) -> Strike { tool = Pickaxe; col; row }) best
+  Option.map (fun (tool, col, row, _) -> Strike { tool; col; row }) best
 
 let excavate_wanted_cells obs cells =
   match best_excavation_hit ~offsets:chebyshev_r1 obs cells with
@@ -143,17 +180,33 @@ let all_items_accounted_non_shard ~goal ~tally (obs : Mining_wall.observation)
   in
   (not any_wanted) && List.length items >= obs.announced_items
 
+let score_scan_anchor (obs : Mining_wall.observation) ~col ~row =
+  let covered, iron =
+    List.fold_left
+      (fun (cov, ir) (dc, dr, _) ->
+        let c = col + dc and r = row + dr in
+        if not (Mining_wall.in_bounds ~col:c ~row:r) then (cov, ir)
+        else if is_iron obs ~col:c ~row:r then (cov, ir + 1)
+        else if dirt_at obs ~col:c ~row:r > 0 then (cov + 1, ir)
+        else (cov, ir))
+      (0, 0) hammer_kernel
+  in
+  (covered * anchor_covered_weight)
+  - (iron * anchor_iron_penalty)
+  - dirt_at obs ~col ~row
+
 let next_scan_anchor (obs : Mining_wall.observation) =
   let candidates =
     List.filter_map
       (fun (c, r) ->
         let d = dirt_at obs ~col:c ~row:r in
-        if d > 0 && not (is_iron obs ~col:c ~row:r) then Some (c, r, d)
+        if d > 0 && not (is_iron obs ~col:c ~row:r) then
+          Some (c, r, score_scan_anchor obs ~col:c ~row:r)
         else None)
       scan_anchors
   in
   match
-    List.sort (fun (_, _, d1) (_, _, d2) -> Int.compare d1 d2) candidates
+    List.sort (fun (_, _, s1) (_, _, s2) -> Int.compare s2 s1) candidates
   with
   | (col, row, _) :: _ -> Some (Strike { tool = Hammer; col; row })
   | [] -> None
@@ -183,15 +236,20 @@ let decide_after_scan obs items =
   | Some act -> act
   | None -> Bail_collapse
 
+let decide_low_gauge obs items =
+  match find_secondary_excavation obs items with
+  | Some act -> act
+  | None -> (
+      match next_scan_anchor obs with Some act -> act | None -> Bail_collapse)
+
 let decide ~goal ~tally (obs : Mining_wall.observation) =
   let items = exposed_items obs in
   match find_wanted_excavation ~goal ~tally obs items with
   | Some act -> act
   | None -> (
-      if
-        obs.integrity <= low_gauge_cutoff
-        || all_items_accounted_non_shard ~goal ~tally obs items
-      then decide_after_scan obs items
+      if all_items_accounted_non_shard ~goal ~tally obs items then
+        decide_after_scan obs items
+      else if obs.integrity <= low_gauge_cutoff then decide_low_gauge obs items
       else
         match next_scan_anchor obs with
         | Some act -> act

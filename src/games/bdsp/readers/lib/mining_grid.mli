@@ -24,8 +24,14 @@ val tool_panel_probes : picture:Wire.box -> Wire.probe_spec list
     cells. *)
 
 val probes : picture:Wire.box -> Wire.probe_spec list
-(** The 130 [color_stats_probe] specs (13x10 grid) plus the two right-panel
-    tool-selection probes (Red Hammer / Blue Pickaxe), relative to [picture]. *)
+(** The 130 [color_stats_probe] specs (13x10 grid), the two right-panel
+    tool-selection probes (Red Hammer / Blue Pickaxe), and the 10 top-bar
+    wall-crack gauge probes, relative to [picture]. *)
+
+val crack_gauge_integrity : Effects.measurements -> int option
+(** Estimate remaining wall integrity ([0..49]) directly from the top-bar crack
+    gauge ([y = 0.00..0.095], growing right-to-left across [x = 0.13..0.85]), or
+    [None] if the crack-gauge probes are absent from the measurement map. *)
 
 val selected_tool : Effects.measurements -> Mining_wall.tool option
 (** Read which mining tool is currently highlighted on the right-side panel

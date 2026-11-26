@@ -15,6 +15,7 @@ val mining_strike : unit -> unit
 *)
 
 val dig_wall_smart :
+  ?announced_items:int ->
   log:(string -> unit) ->
   picture:Wire.box ->
   goal:Mining_goal.goal ->
@@ -23,7 +24,10 @@ val dig_wall_smart :
   (int * bool, string) result
 (** Play an open 13x10 mining wall live using {!Bdsp_readers.Mining_grid} and
     {!Bdsp_underground.Mining_solver.decide} until the wall collapses or
-    finishes. Returns [(moves_taken, bailed)]. *)
+    finishes. When [announced_items] is omitted, reads the opening announcement
+    digit via {!Bdsp_readers.Mining_announce_reader} if visible, falling back to
+    [3]. Fuses live wall-crack gauge readings with local integrity tracking.
+    Returns [(moves_taken, bailed)]. *)
 
 val collect_dig_yields :
   log:(string -> unit) ->

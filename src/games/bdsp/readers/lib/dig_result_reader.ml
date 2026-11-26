@@ -5,6 +5,7 @@ module CS = Switch_home.Color_share
 
 let spot_left_id = "bdsp_dig_spot_left"
 let spot_right_id = "bdsp_dig_spot_right"
+let icon_stats_id = "bdsp_dig_icon_stats"
 let icon_pink_id = "bdsp_dig_icon_pink"
 let icon_blue_id = "bdsp_dig_icon_blue"
 let icon_red_id = "bdsp_dig_icon_red"
@@ -18,6 +19,7 @@ let spot_min_g = 155.
 let spot_min_b = 115.
 let spot_min_r_over_b = 30.
 let spot_max_std = 65.
+let icon_min_std_sum = 20.
 let ch_max = 255
 let ch_zero = 0
 let pink_r_min = 180
@@ -66,6 +68,7 @@ let probes ~picture =
     [
       stats_probe ~picture ~id:spot_left_id spot_left_box;
       stats_probe ~picture ~id:spot_right_id spot_right_box;
+      stats_probe ~picture ~id:icon_stats_id icon_box;
       count_probe ~picture ~id:icon_pink_id ~min:pink_min ~max:pink_max icon_box;
       count_probe ~picture ~id:icon_blue_id ~min:blue_min ~max:blue_max icon_box;
       count_probe ~picture ~id:icon_red_id ~min:red_min ~max:red_max icon_box;
@@ -82,8 +85,15 @@ let is_tan_spot m id =
       && SC.sum s.stddev <= spot_max_std
   | None -> false
 
+let has_icon_present m =
+  match SC.stats m icon_stats_id with
+  | Some s -> SC.sum s.stddev >= icon_min_std_sum
+  | None -> false
+
 let on_item_spotlight m =
-  is_tan_spot m spot_left_id && is_tan_spot m spot_right_id
+  is_tan_spot m spot_left_id
+  && is_tan_spot m spot_right_id
+  && has_icon_present m
 
 let share m id = Option.value (CS.read m id) ~default:0.
 
