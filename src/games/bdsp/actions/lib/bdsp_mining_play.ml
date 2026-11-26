@@ -195,6 +195,25 @@ let make_dig_state () =
     hits = Array.init Mining_wall.rows (fun _ -> Array.make Mining_wall.cols 0);
   }
 
+let min_moves_before_exit = 3
+
+let rec dig_loop ~log ~goal ~tally st moves bailed =
+  if moves >= dig_max_moves then Ok (moves, bailed)
+  else
+    match Effects.await ~timeout_ms:dig_frame_timeout_ms (fun _ -> true) with
+    | Effects.Timeout -> Error "dig_wall_smart: timed out waiting for frame"
+    | Effects.Holds m when Bdsp_readers.Dialog_detector.shown m ->
+        log "Wall finished / collapsed dialog detected.";
+        Ok (moves, bailed)
+    | Effects.Holds m
+      when moves >= min_moves_before_exit
+           && not (Bdsp_readers.Mining_grid.on_mining_screen m) ->
+        log "Mining wall screen ended; handing off to dig yield reader.";
+        Ok (moves, bailed)
+    | Effects.Holds m ->
+        let next_bailed = step_dig ~log ~goal ~tally st ~moves ~bailed m in
+        dig_loop ~log ~goal ~tally st (moves + 1) next_bailed
+
 let dig_wall_smart ~log ~picture ~goal ~tally () =
   ignore
     (Effects.subscribe
@@ -202,17 +221,42 @@ let dig_wall_smart ~log ~picture ~goal ~tally () =
        @ Bdsp_readers.Mining_grid.probes ~picture)
       : string list);
   let* () = wait_wall_visible () in
-  let st = make_dig_state () in
-  let rec loop moves bailed =
-    if moves >= dig_max_moves then Ok (moves, bailed)
-    else
-      match Effects.await ~timeout_ms:dig_frame_timeout_ms (fun _ -> true) with
-      | Effects.Timeout -> Error "dig_wall_smart: timed out waiting for frame"
-      | Effects.Holds m when Bdsp_readers.Dialog_detector.shown m ->
-          log "Wall finished / collapsed dialog detected.";
-          Ok (moves, bailed)
-      | Effects.Holds m ->
-          let next_bailed = step_dig ~log ~goal ~tally st ~moves ~bailed m in
-          loop (moves + 1) next_bailed
+  dig_loop ~log ~goal ~tally (make_dig_state ()) 0 false
+
+let yield_probe_timeout_ms = 1000
+let yield_advance_wait_ms = 650
+let yield_max_presses = 15
+
+let record_spotlight_item ~log acc m =
+  match Bdsp_readers.Dig_result_reader.read m with
+  | Some t ->
+      log ("Uncovered item: " ^ Bdsp_readers.Dig_result_reader.treasure_name t);
+      (t :: acc, true)
+  | None -> (acc, false)
+
+let advance_yield_frame ~log acc m =
+  let scr = Bdsp_readers.Underground_screen.read m in
+  let acc, saw_item = record_spotlight_item ~log acc m in
+  if (not saw_item) && (not scr.dialog) && scr.fade = No_fade then None
+  else (
+    Bdsp_overworld.interact ();
+    P.wait yield_advance_wait_ms;
+    Some acc)
+
+let rec collect_yields_loop ~log left acc =
+  if left <= 0 then List.rev acc
+  else
+    match Effects.await ~timeout_ms:yield_probe_timeout_ms (fun _ -> true) with
+    | Effects.Timeout -> List.rev acc
+    | Effects.Holds m -> (
+        match advance_yield_frame ~log acc m with
+        | None -> List.rev acc
+        | Some next -> collect_yields_loop ~log (left - 1) next)
+
+let collect_dig_yields ~log ~picture () =
+  let probes =
+    Bdsp_readers.Underground_screen.probes ~picture
+    @ Bdsp_readers.Dig_result_reader.probes ~picture
   in
-  loop 0 false
+  ignore (Effects.subscribe probes : string list);
+  collect_yields_loop ~log yield_max_presses []

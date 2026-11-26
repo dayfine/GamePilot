@@ -24,3 +24,12 @@ val dig_wall_smart :
 (** Play an open 13x10 mining wall live using {!Bdsp_readers.Mining_grid} and
     {!Bdsp_underground.Mining_solver.decide} until the wall collapses or
     finishes. Returns [(moves_taken, bailed)]. *)
+
+val collect_dig_yields :
+  log:(string -> unit) ->
+  picture:Wire.box ->
+  unit ->
+  Mining_counters.treasure list
+(** Step through post-dig collapse and item-reward ([獲得了 ...！]) screens,
+    classifying every uncovered treasure via {!Bdsp_readers.Dig_result_reader}
+    until returning to the overworld. *)

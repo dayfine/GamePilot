@@ -15,10 +15,10 @@ let bdsp_move_mechanics =
   {
     turn_tap_ms = 50;
     start_delay_ms = 250;
-    walk_across_ms = 160;
-    walk_up_down_ms = 240;
-    run_across_ms = 100;
-    run_up_down_ms = 150;
+    walk_across_ms = 340;
+    walk_up_down_ms = 280;
+    run_across_ms = 360;
+    run_up_down_ms = 480;
     step_tap_hold_ms = 160;
     step_tap_release_ms = 640;
   }

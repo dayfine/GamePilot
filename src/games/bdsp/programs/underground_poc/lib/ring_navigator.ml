@@ -11,8 +11,9 @@ let ( let* ) = Result.bind
 let mech = Corridor_nav.bdsp_move_mechanics
 let step_probe_timeout_ms = 350
 let radar_hold_ms = 100
-let radar_settle_ms = 450
-let wall_margin_ms = 350
+let radar_settle_ms = 750
+let radar_retry_wait_ms = 350
+let wall_margin_ms = 1500
 let wall_hug_ms = 450
 let servo_step_ms = 240
 let max_servo_steps = 4
@@ -70,11 +71,24 @@ let primary_wall_dir ~along_dir = function
       | Corridor_nav.East | Corridor_nav.West -> Corridor_nav.North
       | Corridor_nav.North | Corridor_nav.South -> Corridor_nav.East)
 
-let read_star_offset ~picture =
+let sample_frame ~picture =
   subscribe_screen ~picture;
   match Effects.await ~timeout_ms:step_probe_timeout_ms (fun _ -> true) with
-  | Effects.Holds m -> WS.locate m
+  | Effects.Holds m -> Some m
   | Effects.Timeout -> None
+
+let read_star_offset ~picture ~before =
+  let locate_from after =
+    match before with
+    | Some b -> WS.locate_diff ~before:b ~after
+    | None -> WS.locate after
+  in
+  let check () = Option.bind (sample_frame ~picture) locate_from in
+  match check () with
+  | Some _ as hit -> hit
+  | None ->
+      P.wait radar_retry_wait_ms;
+      check ()
 
 let servo_step_toward ~along_dir (off : WS.offset) =
   match along_dir with
@@ -98,28 +112,69 @@ let wall_from_offset ~along_dir ~fallback (off : WS.offset) =
       else if off.dx < 0 then Corridor_nav.West
       else fallback
 
-let rec lock_onto_star ~log ~picture ~along_dir ~fallback left =
-  match read_star_offset ~picture with
-  | None -> fallback
-  | Some off -> (
+let rec lock_onto_star ~log ~picture ~along_dir ~fallback ~before left =
+  match read_star_offset ~picture ~before with
+  | None -> (fallback, false)
+  | Some off ->
       log (Printf.sprintf "Radar sparkle star at dx=%d dy=%d" off.dx off.dy);
-      match (left > 0, servo_step_toward ~along_dir off) with
-      | true, Some move_dir ->
-          OW.run_hold move_dir ~hold_ms:servo_step_ms;
-          lock_onto_star ~log ~picture ~along_dir ~fallback (left - 1)
-      | _ -> wall_from_offset ~along_dir ~fallback off)
+      step_or_face ~log ~picture ~along_dir ~fallback left off
 
-let interact_at_stop ~log ~picture ~on_prompt ~on_battle ~along_dir ~wall_dirs
-    cur =
-  subscribe_screen ~picture;
-  P.press ~hold_ms:radar_hold_ms ~cooldown_ms:radar_settle_ms Wire.R;
-  let fallback = primary_wall_dir ~along_dir wall_dirs in
-  let face_dir =
-    lock_onto_star ~log ~picture ~along_dir ~fallback max_servo_steps
-  in
+and step_or_face ~log ~picture ~along_dir ~fallback left off =
+  match (left > 0, servo_step_toward ~along_dir off) with
+  | true, Some move_dir ->
+      OW.run_hold move_dir ~hold_ms:servo_step_ms;
+      lock_onto_star ~log ~picture ~along_dir ~fallback ~before:None (left - 1)
+  | _ -> (wall_from_offset ~along_dir ~fallback off, true)
+
+let lateral_dirs = function
+  | Corridor_nav.North | Corridor_nav.South ->
+      (Corridor_nav.West, Corridor_nav.East)
+  | Corridor_nav.East | Corridor_nav.West ->
+      (Corridor_nav.North, Corridor_nav.South)
+
+let try_wall_interact ~picture ~on_prompt ~on_battle ~face_dir cur =
   OW.run_hold face_dir ~hold_ms:wall_hug_ms;
   OW.interact ();
-  let* next, _dug = handle_step ~picture ~on_prompt ~on_battle cur in
+  handle_step ~picture ~on_prompt ~on_battle cur
+
+let align_and_interact ~picture ~on_prompt ~on_battle ~face_dir ~saw_star cur =
+  let* cur, dug =
+    try_wall_interact ~picture ~on_prompt ~on_battle ~face_dir cur
+  in
+  if dug || not saw_star then Ok cur
+  else
+    let d_neg, d_pos = lateral_dirs face_dir in
+    OW.run_hold d_neg ~hold_ms:servo_step_ms;
+    let* cur, dug =
+      try_wall_interact ~picture ~on_prompt ~on_battle ~face_dir cur
+    in
+    if dug then Ok cur
+    else (
+      OW.run_hold d_pos ~hold_ms:(servo_step_ms * 2);
+      let* cur, _ =
+        try_wall_interact ~picture ~on_prompt ~on_battle ~face_dir cur
+      in
+      Ok cur)
+
+let east_outer_x = 14
+
+let outer_wall_of_tile (p : Grid_geometry.Tile_pos.t) =
+  if p.x >= east_outer_x then Corridor_nav.East
+  else if p.y <= Ring_grid.north_door.y then Corridor_nav.North
+  else Corridor_nav.South
+
+let interact_at_stop ~log ~picture ~on_prompt ~on_battle ~along_dir ~wall_dirs
+    ~tile cur =
+  let before = sample_frame ~picture in
+  P.press ~hold_ms:radar_hold_ms ~cooldown_ms:radar_settle_ms Wire.R;
+  let fallback = primary_wall_dir ~along_dir wall_dirs in
+  let face_dir, saw_star =
+    lock_onto_star ~log ~picture ~along_dir ~fallback ~before max_servo_steps
+  in
+  let* next =
+    align_and_interact ~picture ~on_prompt ~on_battle ~face_dir ~saw_star cur
+  in
+  OW.run_hold (outer_wall_of_tile tile) ~hold_ms:wall_hug_ms;
   Ok next
 
 let along_dir_of_legs = function
@@ -137,7 +192,7 @@ let run_stop ~log ~picture ~on_prompt ~on_battle acc (st : Ring_grid.stop) =
   List.iter (execute_leg ~log) st.legs;
   let along_dir = along_dir_of_legs st.legs in
   interact_at_stop ~log ~picture ~on_prompt ~on_battle ~along_dir
-    ~wall_dirs:st.wall_dirs c
+    ~wall_dirs:st.wall_dirs ~tile:st.tile c
 
 let visit_targets ~log ~picture ~start_door ~(sparkles : MS.nearby) ~on_prompt
     ~on_battle cur =

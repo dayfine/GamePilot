@@ -21,10 +21,11 @@ let post_open_wait_ms = 400
 let post_dig_wait_ms = 1000
 let screen_probe_timeout_ms = 1000
 let max_open_dialog_presses = 6
-let max_end_dialog_presses = 15
 let door_bounce_hold_ms = 2500
-let south_return_ms = 3000
-let west_return_ms = 2600
+let home_north_ms = 2600
+let home_east_ms = 6000
+let home_south_ms = 11500
+let home_west_ms = 6500
 let map_press_hold_ms = 120
 let map_view_wait_ms = 1500
 let map_restore_wait_ms = 800
@@ -65,13 +66,11 @@ let read_screen ~picture =
 let handle_dig_result ~report ~picture ~goal ~bailed ~counters =
   Watch_report.set report step_result Wire.Watch.Current "reading dig yields";
   P.wait post_dig_wait_ms;
-  let* () =
-    OW.advance_dialog ~log ~picture ~max_presses:max_end_dialog_presses ()
-  in
+  let items = MP.collect_dig_yields ~log ~picture () in
   subscribe_screen ~picture;
   wait_clear ~timeout_ms:fade_timeout_ms is_not_black;
   P.wait post_dig_wait_ms;
-  let next = Mining_counters.record_dig counters ~bailed [] in
+  let next = Mining_counters.record_dig counters ~bailed items in
   let summary = Mining_counters.format_summary ~goal next in
   log ("Counters: " ^ summary);
   Watch_report.set report step_result Wire.Watch.Done summary;
@@ -197,20 +196,24 @@ let rec repeat_until ~stop_when ~step state =
     let* next = step state in
     repeat_until ~stop_when ~step next
 
+let home_to_south_door () =
+  log "Homing to South Hideaway doorway (N -> E -> S -> W)...";
+  OW.run_hold Corridor_nav.North ~hold_ms:home_north_ms;
+  OW.run_hold Corridor_nav.East ~hold_ms:home_east_ms;
+  OW.run_hold Corridor_nav.South ~hold_ms:home_south_ms;
+  OW.run_hold Corridor_nav.West ~hold_ms:home_west_ms
+
 let recover_if_mid_dig ~picture ~goal ~counters =
   let report = Watch_report.create ~checkpoint:"startup" cycle_step_names in
   match read_screen ~picture with
   | Some scr when scr.mining_wall ->
       log "Started mid-dig on an active wall; finishing it first...";
       let* next = run_dig_step ~report ~picture ~goal ~counters in
-      OW.run_hold Corridor_nav.South ~hold_ms:south_return_ms;
-      OW.run_hold Corridor_nav.West ~hold_ms:west_return_ms;
+      home_to_south_door ();
       Ok next
   | Some scr ->
       log ("Initial screen: " ^ US.to_string scr);
-      log "Aligning South & West to South Hideaway doorway...";
-      OW.run_hold Corridor_nav.South ~hold_ms:south_return_ms;
-      OW.run_hold Corridor_nav.West ~hold_ms:west_return_ms;
+      home_to_south_door ();
       Ok counters
   | None -> Ok counters
 
@@ -219,11 +222,10 @@ let run_check_bag ~picture =
   Ok "treasures pocket captured"
 
 let run_check_map () =
-  log "Mode check-map: pressing Y -> A to open full-sized Underground map...";
+  log "Mode check-map: opening full-sized Underground map (Y -> A)...";
   P.press ~hold_ms:map_press_hold_ms ~cooldown_ms:map_restore_wait_ms Wire.Y;
   P.press ~hold_ms:map_press_hold_ms ~cooldown_ms:map_view_wait_ms Wire.A;
   P.wait map_view_wait_ms;
-  log "Pressing B to close full-sized map...";
   P.press ~hold_ms:map_press_hold_ms ~cooldown_ms:map_restore_wait_ms Wire.B;
   P.press ~hold_ms:map_press_hold_ms ~cooldown_ms:map_restore_wait_ms Wire.B;
   Ok "full-sized map captured"

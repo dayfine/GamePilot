@@ -1,13 +1,13 @@
-(** Reader: on-screen bright magenta/white 4-point sparkle star on Grand
+(** Reader: on-screen bright white-gold 4-point sparkle star on Grand
     Underground tunnel walls (flashed for ~2.5s whenever the player pulses [R]
     radar).
 
-    Measured from Console A captures ([run-47/frames/000038.jpg] and
-    [run-49/frames/000005.jpg]): the sparkle star's halo sits in RGB
-    [(200..255, 0..185, 200..255)] (25-220 pixels on 640x360, with zero
-    background pixels in that range on brown tunnel floors/walls). A 3x3 grid
-    around the centered player gives both horizontal ([dx]) and vertical ([dy])
-    offset so the navigator can visually lock onto the exact sparkling tile. *)
+    Measured from Console A capture [run-59/frames/000079.jpg]: the sparkle
+    star's pure-white core sits in RGB [(240..255, 245..255, 235..255)] (~30
+    pixels on 640x360), whereas static orange wall torches have <= 13 pixels in
+    that range and cancel out completely under {!locate_diff}. A 3x3 grid around
+    the player gives both horizontal ([dx]) and vertical ([dy]) offset so the
+    navigator can visually lock onto the exact sparkling tile. *)
 
 open Bdsp_underground
 
@@ -24,6 +24,12 @@ val probes : picture:Wire.box -> Wire.probe_spec list
 
 val locate : Effects.measurements -> offset option
 (** Screen offset of the strongest visible sparkle star, if any. *)
+
+val locate_diff :
+  before:Effects.measurements -> after:Effects.measurements -> offset option
+(** Screen offset of the cell whose sparkle-star share increased most from
+    [before] (pre-radar) to [after] (post-radar), cancelling static wall
+    torches. *)
 
 val direction : Effects.measurements -> Corridor_nav.direction option
 (** Dominant cardinal direction of the strongest visible sparkle star, if any.
