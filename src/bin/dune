@@ -22,6 +22,7 @@
   gamepilot.repo_io
   gamepilot.frlg_series
   gamepilot.plza_series
+  gamepilot.plza_engine
   gamepilot.run_flags
   gamepilot.run_args
   gamepilot.one_shot_flags

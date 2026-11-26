@@ -126,3 +126,14 @@ let press_through steps =
 let steady steps =
   wait steps steady_gap_ms;
   (steps.read_screen ()).interact_prompt
+
+(* Free control with no A prompt: nothing for A to take. *)
+let no_prompt (l : Walk_screen.t) =
+  (l.player_can_move || l.controls_hint)
+  && (not l.dialog_box) && not l.interact_prompt
+
+let missing steps =
+  no_prompt (steps.read_screen ())
+  &&
+  (wait steps steady_gap_ms;
+   no_prompt (steps.read_screen ()))

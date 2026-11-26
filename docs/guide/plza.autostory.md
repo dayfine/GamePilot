@@ -21,7 +21,7 @@ alone (`--from 01.01`). The Switch's capture must be the whole 1920x1080 picture
 <!-- generated:commands -->
 ```sh
 # the Switch: each checkpoint once, from where the console is
-cd src && opam exec -- dune exec -- gamepilot run plza.autostory --from 01.00b --to 02.07 --mode testing --backend switch --serial PORT --capture DEVICE \
+cd src && opam exec -- dune exec -- gamepilot run plza.autostory --from 01.00b --to 03.06 --mode testing --backend switch --serial PORT --capture DEVICE \
     --watch
 ```
 <!-- /generated -->
@@ -42,8 +42,16 @@ cd src && opam exec -- dune exec -- gamepilot run plza.autostory --from 01.00b -
 | 02.05 | Main Mission 02: Hotel Z elevator to Room 202 |
 | 02.06 | Main Mission 02: the night in Room 202 |
 | 02.07 | Main Mission 02: the first evening to Main Mission 03 |
+| 03.01 | Down to the lobby |
+| 03.02 | Out of Hotel Z |
+| 03.02b | Battle Taunie |
+| 03.03 | To the rock pile scene |
+| 03.03b | Up the ladder to the rooftop scene |
+| 03.03c | Off the roof to Station Front |
+| 03.04 | Pokemon Center, the Pokedex |
+| 03.06 | To the Wild Zones card |
 
-<!-- plans: cbcbedb7cf67 -->
+<!-- plans: b620b33472c8 -->
 <!-- /generated -->
 
 01.00b confirms the choices, skips the opening and waits for the platform. 01.01 sets the text
@@ -60,22 +68,50 @@ morning. A walk that ends at an A prompt (a door, the clerk, the elevator, the b
 scene that presses A through the prompt first; a scene with a start window waits that long for the
 scene to begin before it counts free control as the end.
 
+Main Mission 03 leaves Room 202 by the elevator to the lobby, out of Hotel Z, and through Taunie's
+battle (Totodile, then Tepig) and her talk over the map; past the rock pile, up the side street's
+ladder (stepping along the wall until "Climb Up" shows) and off the roof; into the Pokémon Center
+for the Pokédex, then on to Wild Zone 1's gate and the Wild Zones card. Some walks run with B held.
+
 ## When it stops
 
-- The run starts wherever the console is; nothing reloads, so each checkpoint runs once
-  (`--runs 2` is refused).
+Reloads:
+
+- The first run starts wherever the console is.
+- A second run of a checkpoint (`--runs 2`) first closes the game and reloads the latest autosave.
+  01.00b has no autosave to go back to: its second run is refused.
+- 01.01 reloads once more if the platform's controls hint has already faded.
+- A checkpoint that follows a passing one starts where it ended, with no reload; 03.04 always
+  reloads when it follows another, since its walk needs the reload's facing.
+- A checkpoint found off its start (below) reloads once and checks its start again, then stops if
+  it is still off (`chain_off_start`); the log says it reloaded.
+
+Start and end checks:
+
+- 03.03, 03.04 and 03.06 read the minimap before they press anything and compare it with the one
+  recorded at their start: `chain_off_start` when it differs.
+- 03.04 also checks its end (outside the Center): `end_off_signature`.
+- A checkpoint whose plan names no start check logs START UNCHECKED and goes on.
+
+Resuming mid-checkpoint (the screen is read first, and steps already done are skipped):
+
+- 01.03 can start inside Andi's battle, or at Urbain's heal after a lost one.
+- 03.02b started at the plaza arch after its map talk skips everything and passes; so does 03.04
+  started outside the Pokémon Center.
+
+Failures:
+
 - 01.00b on any screen but Confirm Choices presses nothing and fails `not_on_confirm_choices`.
-- When the platform's controls hint has faded (it does after a few seconds idle), 01.01 would reload
-  the latest autosave to see it fresh; the runner cannot reload yet, so it fails `no_reload`. Start
-  01.01 right after 01.00b, or move the stick by hand first.
-- A walk whose white fade never shows fails `walk_no_end`.
+- A walk whose end never shows fails `walk_no_end`; one that no scene takes, `walk_no_scene`.
 - A scene that ends in free control where a choice or a battle was due fails
   `scene_ended_in_control` (the walk before it stopped short).
 - A scene that presses A first, on free control with no A prompt (two reads 300 ms apart), fails
   `prompt_not_seen` before pressing anything: the walk before it stopped short.
+- 03.03b's ladder: `ladder_not_found` when no step along the wall shows "Climb Up".
+- 03.02b's map talk: `map_talk_timeout` when the party bar never holds within 2 minutes.
 - A lost battle (a black fade with the lead's HP near empty) fails `battle_lost`. Run 01.03 again
-  (`--from 01.03`): it reads the screen and skips what is done, so it goes on at Urbain's heal, at
-  Andi's rematch or inside the battle. A battle whose move symbols never show fails `battle_failed`.
+  (`--from 01.03`): it goes on at Urbain's heal, at Andi's rematch or inside the battle. A battle
+  whose move symbols never show fails `battle_failed`.
 - The run folder keeps the story log, the wire log and `failure.png`, the last frame of a failed
   run.
 
@@ -87,7 +123,10 @@ scene to begin before it counts free control as the end.
 
 ## How it works
 
-`Plza_series.Runs` runs each checkpoint in its own daemon and run folder, with the watch page.
+`Plza_series.Runs` runs each checkpoint in its own daemon and run folder, with the watch page;
+`Plza_autostory.Run_attempts` decides when to reload (`Plza_autostory.Game_reload`) and try
+again, and `Plza_autostory.Start_signature` checks the start and end.
+
 `Plza_autostory.Story_game` gives the engine its handlers: the walk (`Plza_walk.Walk`, ported from
 `PokemonLZA_AutoStoryWalks.cpp`), the scene machine (`Plza_story.Scene_machine`), the story battle
 (`Plza_story.Battle`) and the other game actions in `Plza_story`, over its `Steps`;

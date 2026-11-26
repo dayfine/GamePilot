@@ -30,4 +30,5 @@ val run_watched :
 (** The checkpoint through the runner, shown on the watch page
     ({!Plza_engine.Plan_watch}): the report's steps move with its events and its
     run in [mode] ends passed or failed. [end_check] (none by default) runs
-    after the last event passed: its failure is the run's, at "end". *)
+    after the last event passed: its failure is the run's, at "end"
+    ({!Start_signature.check_end}). *)

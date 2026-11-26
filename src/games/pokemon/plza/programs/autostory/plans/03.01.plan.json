@@ -1,0 +1,65 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "plza",
+  "execution": {},
+  "metadata": {
+    "phase": "testing",
+    "source": "played from a new game. No reload_when_chained: 02.07's save is unverified, so a reload could load an older save; starts where 02.07 ends; the fork's plza-03.01.plan.json (plza/lean)",
+    "postconditions": {}
+  },
+  "checkpoint": {
+    "id": "03.01",
+    "title": "Down to the lobby",
+    "start": {
+      "place": "HotelZ"
+    },
+    "events": [
+      {
+        "id": "out_of_room_202",
+        "kind": "walk",
+        "why": "to the room door's \"A Leave\". not planned: no tile grid in Lumiose",
+        "args": {
+          "legs": [[0, 1000], [-45, 1000]],
+          "end": "prompt",
+          "earliest_end_ms": 750
+        }
+      },
+      {
+        "id": "leave_room_202",
+        "kind": "game_action",
+        "action": "scene_through_prompt",
+        "why": "A Leave, until the party bar shows in the 2F hall"
+      },
+      {
+        "id": "to_2f_elevator",
+        "kind": "walk",
+        "why": "down the hall to \"A Take Elevator\"; an earlier prompt is passed on the way. not planned: no tile grid in Lumiose",
+        "args": {
+          "legs": [[-15, 3000]],
+          "end": "prompt",
+          "earliest_end_ms": 1500
+        }
+      },
+      {
+        "id": "floor_question",
+        "kind": "game_action",
+        "action": "scene_through_prompt",
+        "why": "A Take Elevator, then A to \"Which floor?\", before the choice shows; B would close the talk",
+        "args": {
+          "stop_at_choice": true
+        }
+      },
+      {
+        "id": "ride_to_lobby",
+        "kind": "game_action",
+        "action": "choose_0",
+        "why": "\"1F (Lobby)\""
+      },
+      {
+        "id": "lobby_scene",
+        "kind": "scene",
+        "why": "the ride, Z-A Royale, the outfit, AZ, Lida; autosave; Alton's choice is the top row"
+      }
+    ]
+  }
+}

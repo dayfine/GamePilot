@@ -1,0 +1,41 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "plza",
+  "execution": {
+    "start_signature": {
+      "minimap": "03.06-start"
+    }
+  },
+  "metadata": {
+    "phase": "testing",
+    "source": "played from a new game; starts outside the Center where 03.04's autosave ends; ends on the autosave in wild_zones_tutorial; starts where 03.04 ends; the fork's plza-03.06.plan.json (plza/lean)",
+    "postconditions": {}
+  },
+  "checkpoint": {
+    "id": "03.06",
+    "title": "To the Wild Zones card",
+    "start": {
+      "place": "LumioseCity",
+      "spot": "PokemonCenterDoor"
+    },
+    "events": [
+      {
+        "id": "center_to_zone_1",
+        "kind": "walk",
+        "why": "from outside the Pokemon Center straight on to Wild Zone 1's gate, into Taunie's scene. not planned: no tile grid in Lumiose",
+        "args": {
+          "legs": [[0, 15000]]
+        }
+      },
+      {
+        "id": "wild_zones_tutorial",
+        "kind": "game_action",
+        "action": "scene_with_start_window",
+        "why": "Taunie on wild zones, the Wild Zones card",
+        "args": {
+          "start_window_ms": 45000
+        }
+      }
+    ]
+  }
+}
