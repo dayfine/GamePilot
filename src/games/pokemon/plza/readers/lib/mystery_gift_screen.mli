@@ -100,7 +100,7 @@ val message : Effects.measurements -> bool
     Mystery Gift menu may be): A only moves past it. *)
 
 val gift_item : Effects.measurements -> int option
-(** The item showing the gift's name (scored 0.05 at most, the best), when the
+(** The item showing the gift's name (scored 0.03 at most, the best), when the
     cursor is not on it. *)
 
 val card : Effects.measurements -> bool
