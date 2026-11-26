@@ -1,7 +1,7 @@
 (tests
  (names test_catalog_moves)
  (deps
-  ../../claim_gifts/gifts.json
+  ../../../gift_catalog/gifts.json
   (glob_files ../plans/*.plan.json))
  (libraries
   yojson

@@ -2,7 +2,7 @@ module C = Gift_catalog
 module F = Json_field
 
 let ( let* ) = Result.bind
-let path = "src/games/pokemon/plza/programs/claim_gifts/gifts.json"
+let path = "src/games/pokemon/plza/gift_catalog/gifts.json"
 let format = "gamepilot-gifts/1"
 let where = "gifts.json: "
 

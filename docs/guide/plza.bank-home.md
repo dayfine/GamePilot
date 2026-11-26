@@ -23,7 +23,9 @@ Runs on: the Switch.
 ## Running it
 
 The gifts, their slots and their HOME boxes are the gift catalog's
-(`src/games/pokemon/plza/programs/claim_gifts/gifts.json`), the one place they are written.
+(`src/games/pokemon/plza/gift_catalog/gifts.json`), the one place they are written. A gift whose
+last day is before today (the host's date, in UTC) is skipped, with a line in the log, as Claim
+Gifts skips it: its slot is empty on a save claimed after that day.
 
 <!-- generated:options -->
 This program takes no options.
@@ -56,8 +58,8 @@ the box number and HOME's box, moving nothing (close HOME by hand afterwards, wi
 
 - Legends: Z-A's tile is not among HOME's first 8 tiles: `home_tile_not_found`, before anything
   opens.
-- A catalog gift's slot past Box 1's first row: refused before the console moves (the catalog
-  itself refuses a HOME box that is not 1 to 300).
+- A catalog gift's slot past Box 1's first row, or every Pokémon gift expired: refused before
+  the console moves (the catalog itself refuses a HOME box that is not 1 to 300).
 - A move fails its check (the game's slot empty, the cursor off its slot, every HOME box full, a
   box number unread): `home_bank_failed`. Pokémon HOME stays open and unsaved; closing it from
   the HOME menu discards the moves made.
@@ -66,8 +68,10 @@ the box number and HOME's box, moving nothing (close HOME by hand afterwards, wi
 
 ## Known limits
 
-- Every Pokémon of the catalog is moved: one Claim Gifts skipped or failed leaves its slot empty,
-  and the bank stops there (`home_bank_failed`).
+- Every Pokémon of the catalog that has not expired is moved: one Claim Gifts failed leaves its
+  slot empty, and the bank stops there (`home_bank_failed`), so a missing Pokémon is never left
+  out unseen.
+- A gift claimed on or before its last day but banked after it stays in the game's box.
 - A run is one attempt with no retry: a failed bank leaves HOME open for a look.
 
 ## How it works
@@ -79,7 +83,9 @@ walks HOME's tile row to Legends: Z-A's title, `Switch_home.Home_title`) and giv
 game action, `bank_in_home`.
 
 Its moves come from the gift catalog (`Plza_gift_catalog`), turned into `Pokemon_home.Box_moves`
-by `Plza_bank_home.Catalog_moves`; `src/bin` reads the catalog before the run.
+by `Plza_bank_home.Catalog_moves`, which leaves out the gifts `Gift_catalog.expired` says have
+expired (Claim Gifts' rule); `src/bin/plza_gift_inputs.ml` reads the catalog and today's date
+before the run.
 
 The action is `Pokemon_home.Home_bank`: HOME opened on the game (`Home_launch`), each move (`Box_moves`), then the save, whose saving banner and
 then main menu or saved banner are the checkpoint's end check, and HOME closed.

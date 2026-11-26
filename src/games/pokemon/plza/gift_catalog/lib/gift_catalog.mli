@@ -1,9 +1,9 @@
 (** PLZA's Mystery Gift catalog: the gifts [plza.claim-gifts] claims and
-    [plza.bank-home] banks in Pokémon HOME, as [gifts.json] in claim-gifts'
-    folder lists them ({!Gift_catalog_decode} reads it): the one place each
-    gift's box slot and HOME boxes are written. Pure: the gifts, the date a run
-    compares their expiry with, and the lines that print them. Ours: the fork
-    has no Mystery Gift program. *)
+    [plza.bank-home] banks in Pokémon HOME, as [gifts.json] beside this library
+    lists them ({!Gift_catalog_decode} reads it): the one place each gift's box
+    slot and HOME boxes are written. Pure: the gifts, the date a run compares
+    their expiry with, and the lines that print them. Ours: the fork has no
+    Mystery Gift program. *)
 
 type date = { year : int; month : int; day : int }
 (** A calendar day, as ISO writes it (2026-11-25). *)
@@ -60,7 +60,12 @@ type t = gift list
 (** The gifts, in the order a run claims them. *)
 
 val expired : today:date -> gift -> bool
-(** Its last day is before [today]. *)
+(** Its last day is before [today]: claim-gifts does not try it, and bank-home
+    does not move its Pokémon. *)
+
+val skipped_line : gift -> string
+(** The log line of a gift {!expired} skips:
+    ["Skipping xerneas-30th: its last day was 2027-01-07."] *)
 
 val line : gift -> string
 (** The gift for the run's log: id, name, how and last day. *)

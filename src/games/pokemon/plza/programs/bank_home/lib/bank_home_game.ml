@@ -62,9 +62,10 @@ let bad_args (event : Plan.event) detail =
 
 let bank ~log ~picture ~moves (t : templates) (event : Plan.event) = function
   | [] ->
+      List.iter log moves.Catalog_moves.skipped;
       Result.map_error
         (Failure.cause "home_bank_failed")
-        (Pokemon_home.Home_bank.run ~log ~picture t.home (Bank moves))
+        (Pokemon_home.Home_bank.run ~log ~picture t.home (Bank moves.moves))
   | (key, _) :: _ -> bad_args event (key ^ " is not an arg of " ^ action)
 
 let no_handler what () =

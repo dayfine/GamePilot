@@ -127,8 +127,12 @@ let plza =
 let plza_home_series plan_dir args =
   let* f = Plza_checkpoint_series.Flags.parse args in
   let* options = program_options plan_dir f in
-  let* catalog = Plza_gift_run.catalog () in
-  let* moves = Plza_bank_home.Catalog_moves.of_catalog catalog in
+  let* catalog = Plza_gift_inputs.catalog () in
+  let* moves =
+    Plza_bank_home.Catalog_moves.of_catalog
+      ~today:(Plza_gift_inputs.today ())
+      catalog
+  in
   Plza_bank_home_series.Bank_home_runs.run_series ~moves
     ~program:(program_fields plan_dir) ~options ~viewport:(viewport plan_dir f)
     plan_dir args
@@ -148,14 +152,14 @@ let plza_home =
 let plza_gifts_series plan_dir args =
   let* f = Plza_checkpoint_series.Flags.parse args in
   let* options = program_options plan_dir f in
-  let* inputs = Plza_gift_run.inputs options in
+  let* inputs = Plza_gift_inputs.inputs options in
   Plza_claim_gifts_series.Claim_gifts_runs.run_series inputs
     ~program:(program_fields plan_dir) ~options ~viewport:(viewport plan_dir f)
     plan_dir args
 
 (* The gifts block: plza.claim-gifts' catalog. *)
 let gifts_block _ = function
-  | "gifts" -> Some (Plza_gift_run.gifts_block ())
+  | "gifts" -> Some (Plza_gift_inputs.gifts_block ())
   | _ -> None
 
 (* PLZA's Mystery Gift rules' entry points: plans over PLZA's rules, run from

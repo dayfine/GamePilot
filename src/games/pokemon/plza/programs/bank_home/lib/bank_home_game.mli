@@ -36,10 +36,10 @@ val start_check :
 val make :
   log:(string -> unit) ->
   picture:Wire.box ->
-  moves:Pokemon_home.Box_moves.t list ->
+  moves:Catalog_moves.t ->
   templates ->
   Plza_engine.Game.t
-(** The handlers of one run: {!action} only, moving [moves]
-    ({!Catalog_moves.of_catalog}). A walk, a scene, a talk, a save or a reload
-    fails [no_handler]: Pokémon HOME saves inside the action, and a failed bank
-    leaves HOME open for a look. *)
+(** The handlers of one run: {!action} only, which logs the expired gifts it
+    skips and makes [moves] ({!Catalog_moves.of_catalog}). A walk, a scene, a
+    talk, a save or a reload fails [no_handler]: Pokémon HOME saves inside the
+    action, and a failed bank leaves HOME open for a look. *)

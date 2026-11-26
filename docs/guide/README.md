@@ -43,7 +43,8 @@ The blocks:
 - `needs [RANGE]`: what the save needs for the chain, from the pre-flight.
 - `preflight [RANGE]`: what the pre-flight checks before each checkpoint.
 - `commands [RANGE]`: the commands that run it.
-- `gifts`: `plza.claim-gifts`' gift catalog, from its `gifts.json` (a block of that program's own).
+- `gifts`: `plza.claim-gifts`' gift catalog, from `src/games/pokemon/plza/gift_catalog/gifts.json`
+  (a block of that program's own).
 - `options`: the keys its `--options` take, from its descriptor (or that it takes none). A program
   that declares options must have this block on its page; the check names the page that lacks it.
 

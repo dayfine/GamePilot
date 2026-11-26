@@ -69,6 +69,10 @@ let how_name = function
 
 let expired ~today g = compare_date g.expires today < 0
 
+let skipped_line g =
+  Printf.sprintf "Skipping %s: its last day was %s." g.id
+    (date_to_string g.expires)
+
 let line g =
   Printf.sprintf "%s: %s, by %s, until %s" g.id g.name (how_name g.how)
     (date_to_string g.expires)

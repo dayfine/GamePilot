@@ -6,8 +6,7 @@
 module C = Plza_gift_catalog.Gift_catalog
 module D = Plza_gift_catalog.Gift_catalog_decode
 
-let shipped () =
-  D.of_json (Yojson.Safe.from_file "../../programs/claim_gifts/gifts.json")
+let shipped () = D.of_json (Yojson.Safe.from_file "../gifts.json")
 
 let decoded name = function
   | Ok catalog ->
