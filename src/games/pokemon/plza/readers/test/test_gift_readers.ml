@@ -72,6 +72,15 @@ let list_text m =
 
 let card_text m = if G.card m then "gift card" else "no gift card"
 
+let question_text m =
+  match G.question m with
+  | Some Yes -> "question, Yes highlighted"
+  | Some No -> "question, No highlighted"
+  | None -> "no question"
+
+let gift_menu_text m = if G.gift_menu m then "gift menu" else "no gift menu"
+let message_text m = if G.message m then "message" else "no message"
+
 let boxes_text m =
   if not (Boxes_screen.shown m) then "no boxes"
   else if Box_cell.holds_pokemon m then "boxes, a Pokémon in the cell"
@@ -81,7 +90,35 @@ let save_text m =
   if Save_dialog.shown m then "save dialog" else "no save dialog"
 
 let same a b = Filename.remove_extension a = Filename.remove_extension b
-let cards_shown = [ "./mystery-gift/card-vivillon.png" ]
+
+let cards_shown =
+  [
+    "./mystery-gift/card-vivillon.png";
+    "./mystery-gift/card-vivillon-ja.png";
+    "./mystery-gift/card-vivillon-ja-360p.png";
+  ]
+
+(* Console B's Japanese 360p frames (2026-11-25): the list after Vivillon
+   was claimed (three gifts, the cursor on the first), the Yes/No questions
+   and the Mystery Gift menu. *)
+let after_claim = "./mystery-gift/gift-list-ja-after-claim-360p.png"
+let mg k = "./mystery-gift/" ^ k ^ ".png"
+
+let questions =
+  [
+    (mg "gift-list-ja-stop-receiving-yes-360p", "question, Yes highlighted");
+    (mg "gift-list-ja-stop-receiving-no-360p", "question, No highlighted");
+    (mg "gift-menu-ja-report-question-360p", "question, Yes highlighted");
+  ]
+
+let gift_menus =
+  [
+    mg "gift-menu-ja-360p";
+    mg "gift-menu-ja-connected-message-360p";
+    mg "gift-menu-ja-report-question-360p";
+  ]
+
+let messages = [ mg "gift-menu-ja-connected-message-360p" ]
 let boxes = "./mystery-gift/boxes-xerneas-in-box-1.png"
 
 (* The fork's captures of the Boxes (box-cells/: CommandLineTests'
@@ -156,12 +193,25 @@ let expected_list ~name path =
     Printf.sprintf "gift list, item 1 selected, the gift item %s" gift
   in
   if same path gift_list then listed (if name = "en" then "4" else "none")
+  else if same path after_claim then listed "none"
   else if same path french_list then
     listed (if name = "fr" then "4" else "none")
   else "no gift list"
 
 let expected_card path =
   if List.exists (same path) cards_shown then "gift card" else "no gift card"
+
+let expected_question path =
+  Option.value ~default:"no question"
+    (List.find_map
+       (fun (q, text) -> if same path q then Some text else None)
+       questions)
+
+let expected_gift_menu path =
+  if List.exists (same path) gift_menus then "gift menu" else "no gift menu"
+
+let expected_message path =
+  if List.exists (same path) messages then "message" else "no message"
 
 let expected_boxes path =
   if same path boxes then pokemon_cell
@@ -179,9 +229,24 @@ let readers ~name =
     ("main menu row", menu_text, expected_menu);
     ("gift list", list_text, expected_list ~name);
     ("gift card", card_text, expected_card);
+    ("question", question_text, expected_question);
+    ("gift menu", gift_menu_text, expected_gift_menu);
+    ("message", message_text, expected_message);
     ("boxes", boxes_text, expected_boxes);
     ("save dialog", save_text, expected_save);
   ]
+
+(* The readers read only once the Mystery Gift screens show: on the story's
+   white fades and text boxes the menu's row and a message read too. *)
+let gift_screens_only = [ "gift menu"; "message" ]
+
+let in_gifts path =
+  match String.split_on_char '/' (unshifted path) with
+  | [ _; "mystery-gift"; _ ] -> true
+  | _ -> false
+
+let applies path (reader, _, _) =
+  in_gifts path || not (List.mem reader gift_screens_only)
 
 (* One case per reader per frame, [label] before the frame's path. *)
 let frame_cases ?(name = "en") ~label frames =
@@ -193,7 +258,7 @@ let frame_cases ?(name = "en") ~label frames =
             (Printf.sprintf "%s%s: %s" label reader path)
             (fun () -> read (measurements probes))
             (expected (unshifted path)))
-        (readers ~name))
+        (List.filter (applies path) (readers ~name)))
     frames
 
 (* The gift's item on each list's frames, [name] the language of the gift

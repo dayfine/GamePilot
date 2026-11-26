@@ -15,7 +15,6 @@ let probes ~picture ~assets ~gift_name =
 let dpad button : T.t = { button; hold_ms = 80; cooldown_ms = 300 }
 let link_play_row = 5
 let a_2s : T.t = { button = A; hold_ms = 100; cooldown_ms = 2000 }
-let b_1500 : T.t = { button = B; hold_ms = 100; cooldown_ms = 1500 }
 
 (* "Get with Internet", then connect. *)
 let to_internet : T.t list =
@@ -24,20 +23,7 @@ let to_internet : T.t list =
     { button = A; hold_ms = 100; cooldown_ms = 4000 };
   ]
 
-(* B, then yes to "stop for now?". *)
-let stop_list = [ b_1500; a_2s ]
-
-(* B, yes to "you will be disconnected", A, B. *)
-let leave_link : T.t list =
-  [
-    b_1500;
-    { button = A; hold_ms = 100; cooldown_ms = 4500 };
-    { button = A; hold_ms = 100; cooldown_ms = 2500 };
-    { button = B; hold_ms = 100; cooldown_ms = 2000 };
-  ]
-
 let claim_a : T.t = { button = A; hold_ms = 100; cooldown_ms = 8000 }
-let card_a : T.t = { button = A; hold_ms = 100; cooldown_ms = 3000 }
 
 let open_gifts ~log =
   let* () = Menu_rows.goto ~log link_play_row in
@@ -46,7 +32,9 @@ let open_gifts ~log =
   Ok ()
 
 (* [check] held for [hold_ms] within [read_ms]; else A, up to [rounds]
-   times. *)
+   times, but only where A answers what the screen shows: never on the gift
+   list without its text box (A would claim the selected gift), nor on no
+   frame. *)
 let hold_ms = 1000.
 let read_ms = 1500
 let rounds = 25
@@ -55,14 +43,21 @@ let held check =
   Switch_home.Held_screen.held hold_ms (fun m ->
       if check m then Some () else None)
 
+let a_answers m = S.text_up m || not (S.list_shown m)
+
 let until_pressing ~what check =
   let rec go n =
-    match Switch_home.Held_screen.wait_for ~timeout_ms:read_ms (held check) with
+    let last = ref None in
+    let watch m =
+      last := Some m;
+      check m
+    in
+    match Switch_home.Held_screen.wait_for ~timeout_ms:read_ms (held watch) with
     | Some () -> Ok ()
     | None when n >= rounds ->
-        Error (Printf.sprintf "%s after %d A presses" what rounds)
+        Error (Printf.sprintf "%s after %d reads" what rounds)
     | None ->
-        T.press a_2s;
+        if Option.fold ~none:false ~some:a_answers !last then T.press a_2s;
         go (n + 1)
   in
   go 0
@@ -114,7 +109,6 @@ let choose_gift ~log =
       T.press claim_a;
       Ok ()
 
-let leave_list () = T.press_all stop_list
 let plus_ms = 5000
 
 let open_keyboard ~log =
@@ -133,5 +127,3 @@ let enter_code ~log ~picture code =
 
 let card_shown = S.card
 let describe = S.describe
-let dismiss_card () = T.press card_a
-let disconnect () = T.press_all leave_link

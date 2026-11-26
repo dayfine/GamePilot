@@ -6,18 +6,18 @@
     - {!open_gifts}: from the main menu, row 5 (Link Play), A (2 s); Right,
       Right, Down (each 80 ms, released 300) to Mystery Gift; A (2 s).
     - {!open_internet_list}: A (1.5 s), A (4 s) to connect, then A (2 s) until
-      the gift list is active, 25 at most.
+      the gift list is active, 25 reads at most. A is pressed only on a screen
+      read with its text box up (a message or a question, the list's "choose a
+      gift" among them) or with no gift list: never on the list alone, where it
+      would claim the selected gift.
     - {!choose_gift}: Down from the selected item to the gift's (found by its
       name, {!Plza_readers.Mystery_gift_screen.gift_item}), the cursor read on
       it, then A (8 s).
-    - {!leave_list}: B (1.5 s) and A (2 s): "stop for now?", yes.
     - {!open_keyboard}: Down, A (2 s); A (2 s) until the keyboard opens, 25 at
       most.
     - {!enter_code}: the code typed; + (5 s); the list again; A (8 s) on the
       code's gift.
-    - {!dismiss_card}: A (3 s) past a gift's card.
-    - {!disconnect}: B (1.5 s), A (4.5 s): "you will be disconnected", yes; A
-      (2.5 s); B (2 s): back on the main menu.
+    - leaving the gifts, read-driven: {!Leave_gifts}.
 
     The list and the keyboard count once they have read so for 1 s (a white fade
     reads as the list for a moment). Ours: the fork's PLZA programs have no
@@ -46,10 +46,6 @@ val choose_gift : log:(string -> unit) -> (unit, string) result
     be reached, then A to claim it. [Error] before A when the gift is not
     listed. *)
 
-val leave_list : unit -> unit
-(** B and yes to "stop for now?": from the gift list to the Mystery Gift menu.
-*)
-
 val open_keyboard : log:(string -> unit) -> (unit, string) result
 (** Down and A on the Mystery Gift menu; the code keyboard must show, A pressed
     while it does not. *)
@@ -64,10 +60,3 @@ val card_shown : Effects.measurements -> bool
 
 val describe : Effects.measurements -> string
 (** The gift screens' readings, for a log line. *)
-
-val dismiss_card : unit -> unit
-(** A past a gift's card. *)
-
-val disconnect : unit -> unit
-(** B, yes to "you will be disconnected", A, B: off the link, back on the main
-    menu, no read. *)

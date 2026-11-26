@@ -1,29 +1,37 @@
-(* Gift_claim.claim of the Internet gift (Vivillon) and Save_progress.save
-   on a scripted console: a
-   screen that changes with each press as console B's did (2026-11-25), shown
-   as frames 50 ms apart, each one the probes of a real capture
+(* Gift_claim.claim of the Internet gift (Vivillon), Leave_gifts and
+   Save_progress.save on a scripted console: a screen that changes with each
+   press as console B's did (2026-11-25), shown as frames 50 ms apart, each
+   one the probes of a real capture
    (../../../readers/test/fixtures/gifts/gifts.probes.jsonl, every gift
    probe, the gift's name matched by its English template) with the menu's
    highlighted row or the list's cursor set. The main menu is
    tutorial-cards' it-menu-no-card; the list console B's English one
    (Vivillon item 4) or its French one (no item matches the English name, as
-   on the Japanese game's run of 2026-11-25); the card Vivillon's; every
-   other screen (Link Play, the Mystery Gift menu, the Yes/No questions) the
-   white fade before a card, which no reader knows. The SAVE dialog is console
-   B's at 18:16 before the save and its copy at 18:18 after, its "Last Saved"
-   shares changed a little on every frame, as a capture's do. Nothing
-   reaches a daemon.
+   on the Japanese game's run of 2026-11-25); the card Vivillon's, English or
+   Japanese (its title bar over the first item's strip); "stop receiving?"
+   console B's Japanese list under it, Yes or No highlighted; the Mystery
+   Gift menu console B's Japanese one; "disconnect?" its "write a report?"
+   question over that menu (no "disconnect?" was captured), its No a copy
+   with the other row lit; "disconnected" its "connected" message; Link Play
+   and connecting the white fade before a card, which no reader knows. The
+   SAVE dialog is console B's at 18:16 before the save and its copy at 18:18
+   after, its "Last Saved" shares changed a little on every frame, as a
+   capture's do. Nothing reaches a daemon.
 
-   The list must count once it has shown for 1 s, though no two of its
-   frames are equal; and a gift not found on the list must leave it with B
-   and yes to "stop receiving?" (B alone only opens and cancels that
-   question) and then the link, back on the main menu. The SAVE dialog's
-   "Last Saved" must count once it has shown for 1 s, though its shares
-   differ on every frame. *)
+   On the console, A on the list claims the item under the cursor, B on the
+   list asks "stop receiving?", B there cancels it, and B on the card goes
+   back to the list (console B, 2026-11-25). Every way off the list must read
+   the screen before A: A only on the claim's own item, never on the list
+   otherwise, also when "stop receiving?" is already open as the leave starts
+   (the run of 2026-11-25 closed it with B and claimed the first item with
+   its A). The list must count once it has shown for 1 s, though no two of
+   its frames are equal. The SAVE dialog's "Last Saved" must count once it
+   has shown for 1 s, though its shares differ on every frame. *)
 
 module Gc = Plza_claim_gifts.Gift_claim
 module G = Plza_claim_gifts.Mystery_gift
 module Sp = Plza_claim_gifts.Save_progress
+module L = Plza_claim_gifts.Leave_gifts
 
 let gift =
   List.hd
@@ -39,12 +47,20 @@ let capture path = List.assoc path captures
 let menu_frame = capture "./tutorial-cards/it-menu-no-card.jpg"
 let english_list = capture "./mystery-gift/gift-list-cursor-on-1.png"
 let french_list = capture "./mystery-gift/gift-list-fr-cursor-on-1.png"
-let card_frame = capture "./mystery-gift/card-vivillon.png"
+let english_card = capture "./mystery-gift/card-vivillon.png"
+let japanese_card = capture "./mystery-gift/card-vivillon-ja.png"
 let other_frame = capture "./mystery-gift/claim-white-fade.png"
+let stop_yes = capture "./mystery-gift/gift-list-ja-stop-receiving-yes-360p.png"
+let stop_no = capture "./mystery-gift/gift-list-ja-stop-receiving-no-360p.png"
+let gift_menu = capture "./mystery-gift/gift-menu-ja-360p.png"
+let question = capture "./mystery-gift/gift-menu-ja-report-question-360p.png"
+let message = capture "./mystery-gift/gift-menu-ja-connected-message-360p.png"
 let before_save = capture "./mystery-gift/save-dialog-last-saved-1816.png"
 
 let after_save =
   capture "./mystery-gift/synthetic-save-dialog-last-saved-1818.png"
+
+type answer = Yes | No
 
 type screen =
   | Menu of int
@@ -52,9 +68,9 @@ type screen =
   | Gift_menu
   | Connecting
   | Gift_list of int
-  | Stop_receiving of int
+  | Stop_receiving of int * answer
   | Card
-  | Disconnect
+  | Disconnect of answer
   | Disconnected
   | Save_dialog of int
   | Saving of int
@@ -75,16 +91,21 @@ let next screen (button : Wire.button) =
   | Link_play, A -> Gift_menu
   | Link_play, B -> Menu 5
   | Gift_menu, A -> Connecting
-  | Gift_menu, B -> Disconnect
+  | Gift_menu, B -> Disconnect Yes
   | Connecting, A -> Gift_list 0
   | Gift_list c, Down -> Gift_list (min last_item (c + 1))
   | Gift_list _, A -> Card
-  | Gift_list c, B -> Stop_receiving c
-  | Stop_receiving _, A -> Gift_menu
-  | Stop_receiving c, B -> Gift_list c
-  | Card, A -> Gift_list last_item
-  | Disconnect, A -> Disconnected
-  | Disconnect, B -> Gift_menu
+  | Gift_list c, B -> Stop_receiving (c, Yes)
+  | Stop_receiving (_, Yes), A -> Gift_menu
+  | Stop_receiving (c, No), A -> Gift_list c
+  | Stop_receiving (c, _), B -> Gift_list c
+  | Stop_receiving (c, _), Up -> Stop_receiving (c, Yes)
+  | Stop_receiving (c, _), Down -> Stop_receiving (c, No)
+  | Card, B -> Gift_list 0
+  | Disconnect Yes, A -> Disconnected
+  | Disconnect No, A | Disconnect _, B -> Gift_menu
+  | Disconnect _, Up -> Disconnect Yes
+  | Disconnect _, Down -> Disconnect No
   | Disconnected, A -> Link_play
   | s, _ -> s
 
@@ -110,14 +131,22 @@ let jitter seq probes =
       | p -> (id, p))
     probes
 
-let probes ~list ~saved seq = function
+(* "write a report?" with its No highlighted. *)
+let no_lit =
+  set [ ("mystery_gift.yes", share 0.0); ("mystery_gift.no", share 1.0) ]
+
+let probes ~list ~card ~saved seq = function
   | Menu r -> set (lit "main_menu_row.band" r) menu_frame
   | Save_dialog _ -> jitter seq (if saved then after_save else before_save)
   | Gift_list c -> set (lit "mystery_gift.item" c) list
-  | Card -> card_frame
-  | Link_play | Gift_menu | Connecting | Stop_receiving _ | Disconnect
-  | Disconnected | Saving _ ->
-      other_frame
+  | Stop_receiving (c, a) ->
+      set (lit "mystery_gift.item" c) (if a = Yes then stop_yes else stop_no)
+  | Card -> card
+  | Gift_menu -> gift_menu
+  | Disconnect Yes -> question
+  | Disconnect No -> no_lit question
+  | Disconnected -> message
+  | Link_play | Connecting | Saving _ -> other_frame
 
 let frame_ms = 50.
 
@@ -128,6 +157,9 @@ type console = {
   mutable seq : int;
   mutable seen : screen list;
   mutable saved : bool;
+  mutable claimed : int list;
+  mutable presses : (screen * Wire.button) list;
+  card : (string * Wire.probe_result) list;
 }
 
 let frame ~list c : Effects.measurements =
@@ -136,15 +168,17 @@ let frame ~list c : Effects.measurements =
   {
     seq = c.seq;
     t_ms = c.t_ms;
-    probes = probes ~list ~saved:c.saved c.seq c.screen;
+    probes = probes ~list ~card:c.card ~saved:c.saved c.seq c.screen;
   }
 
 let press c = function
   | Wire.Press { buttons; hold_ms; cooldown_ms; _ } ->
       List.iter
         (fun b ->
+          c.presses <- c.presses @ [ (c.screen, b) ];
           (match (c.screen, b) with
           | Saving _, Wire.A -> c.saved <- true
+          | Gift_list k, Wire.A -> c.claimed <- c.claimed @ [ k ]
           | _ -> ());
           c.screen <- next c.screen b)
         buttons;
@@ -184,11 +218,22 @@ let on_console ~list c f =
           | _ -> None);
     }
 
-let start screen = { screen; t_ms = 0.; seq = 0; seen = []; saved = false }
+let start ?(card = english_card) screen =
+  {
+    screen;
+    t_ms = 0.;
+    seq = 0;
+    seen = [];
+    saved = false;
+    claimed = [];
+    presses = [];
+    card;
+  }
+
 let picture : Wire.box = { x = 0.; y = 0.; w = 1.; h = 1. }
 
-let claim ~list =
-  let c = start (Menu 3) in
+let claim ?card ~list () =
+  let c = start ?card (Menu 3) in
   let log = ref [] in
   let claim =
     on_console ~list c (fun () ->
@@ -210,7 +255,7 @@ let screen_text = function
   | Gift_list c -> Printf.sprintf "gift list, item %d" (c + 1)
   | Stop_receiving _ -> "stop receiving?"
   | Card -> "card"
-  | Link_play | Gift_menu | Connecting | Disconnect | Disconnected
+  | Link_play | Gift_menu | Connecting | Disconnect _ | Disconnected
   | Save_dialog _ | Saving _ ->
       "other"
 
@@ -222,6 +267,27 @@ let cancels seen =
     | [] -> n
   in
   count 0 seen
+
+let items ks = String.concat " " (List.map (fun k -> string_of_int (k + 1)) ks)
+
+(* The items claimed, and the A presses on the list alone. *)
+let claims c =
+  let on_list =
+    List.length
+      (List.filter
+         (function Gift_list _, Wire.A -> true | _ -> false)
+         c.presses)
+  in
+  Printf.sprintf "claimed [%s], %d A on the list" (items c.claimed) on_list
+
+(* Leave_gifts from [screen]: where it ended, and what it claimed. *)
+let leave screen =
+  let c = start screen in
+  let r =
+    on_console ~list:english_list c (fun () -> L.to_main_menu ~log:ignore)
+  in
+  let ended = match r with Ok () -> screen_text c.screen | Error e -> e in
+  ended ^ "; " ^ claims c
 
 let choose ~list =
   let c = start (Gift_list 0) in
@@ -255,24 +321,45 @@ let () =
         "Claiming item 4, the gift. -> card";
       case "the English list: Vivillon received"
         (fun () ->
-          let r, c, _ = claim ~list:english_list in
-          claim_text r ^ "; " ^ screen_text c.screen)
-        "received; main menu, row 5";
+          let r, c, _ = claim ~list:english_list () in
+          claim_text r ^ "; " ^ screen_text c.screen ^ "; " ^ claims c)
+        "received; main menu, row 5; claimed [4], 1 A on the list";
+      case "the Japanese card: Vivillon received"
+        (fun () ->
+          let r, c, _ = claim ~card:japanese_card ~list:english_list () in
+          claim_text r ^ "; " ^ screen_text c.screen ^ "; " ^ claims c)
+        "received; main menu, row 5; claimed [4], 1 A on the list";
       case "the gift not listed: not received, back on the main menu"
         (fun () ->
-          let r, c, _ = claim ~list:french_list in
+          let r, c, _ = claim ~list:french_list () in
           let why =
             match r with
             | Not_received why -> List.hd (String.split_on_char ':' why)
             | r -> claim_text r
           in
-          why ^ "; " ^ screen_text c.screen)
-        "the gift is not listed below the cursor; main menu, row 5";
+          why ^ "; " ^ screen_text c.screen ^ "; " ^ claims c)
+        "the gift is not listed below the cursor; main menu, row 5; claimed \
+         [], 0 A on the list";
       case "the gift not listed: the list left with B and yes, no B cancelled"
         (fun () ->
-          let _, c, _ = claim ~list:french_list in
+          let _, c, _ = claim ~list:french_list () in
           string_of_int (cancels c.seen))
         "0";
+      case "leaving with \"stop receiving?\" already open: yes, nothing claimed"
+        (fun () -> leave (Stop_receiving (0, Yes)))
+        "main menu, row 5; claimed [], 0 A on the list";
+      case "leaving with \"stop receiving?\" on No: Up, yes, nothing claimed"
+        (fun () -> leave (Stop_receiving (0, No)))
+        "main menu, row 5; claimed [], 0 A on the list";
+      case "leaving from the card: B, nothing claimed"
+        (fun () -> leave Card)
+        "main menu, row 5; claimed [], 0 A on the list";
+      case "leaving from the list: nothing claimed"
+        (fun () -> leave (Gift_list 2))
+        "main menu, row 5; claimed [], 0 A on the list";
+      case "leaving from \"disconnect?\" on No: nothing claimed"
+        (fun () -> leave (Disconnect No))
+        "main menu, row 5; claimed [], 0 A on the list";
       case "Last Saved held 1 s over changing shares: saved" save
         "Saved: Last Saved changed. -> main menu, row 0";
     ]

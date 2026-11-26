@@ -7,15 +7,33 @@
     - the bottom text box, dark blue (red under 45, green under 70, blue 66 to
       144): its share of (0.26, 0.80, 0.48, 0.12).
 
-    The card (a gift received) shows when its header does, over 0.60 of the
-    bottom is dark blue and the list's first item is not white (below); one
-    [core.color_count@1] probe reads each box. On console B's two cards
-    (2026-11-25, Vivillon's and the shiny Xerneas's) the header reads 0.83 and
-    0.90 white, the box 0.95 blue and the first item's strip 0.48 white; the
-    white fade before a card (header 1.00, box 0.00) and the receive animation
-    (0.04, 0.00) are no card, nor is the list (0.70, 0.18), nor the list under
-    "stop receiving?" with its cursor on the first item (Japanese, console B,
-    2026-11-25: header 0.70, box 0.80 to 0.93, the first item 1.00).
+    The card (a gift received) shows when its header does, over 0.70 of its top
+    rows (600, 282, 720, 8) are white and over 0.60 of the bottom is dark blue;
+    one [core.color_count@1] probe reads each box. The top rows tell the card
+    from the list under a question, whose header reads 0.70 to 0.71 white (its
+    first item) but whose top edge (y 279 to 293) is the list's blue: on console
+    B's cards (2026-11-25: the English and the Japanese Vivillon's, and a 360p
+    capture of the Japanese one) the top rows read 1.00 white and the header
+    0.84 to 0.87; on every list, alone or under a question, 0.00. The Japanese
+    card's white title bar covers the first item's strip (0.87 white), so that
+    strip says nothing. The white fade before a card (header 1.00, box 0.00) and
+    the receive animation are no card, nor is the SAVE dialog (top rows 1.00,
+    header 0.28).
+
+    A question's Yes/No box (console B, Japanese, 2026-11-25: "stop receiving?"
+    over the list and "write a report?" over the Mystery Gift menu, the box at
+    about (1404, 651, 312, 150)): the highlighted answer's row is white right of
+    its word, (1560, 665, 140, 40) for Yes and (1560, 745, 140, 40) for No, 1.00
+    white on it and 0.00 on the other; with the text box up, one white and the
+    other under 0.30 is the question ({!question}). The "disconnect?" question
+    was not captured: it is taken to use the same box.
+
+    The Mystery Gift menu, its first row ("Get with Internet") highlighted:
+    white from x 387 to 1521, y 342 to 456, so (1380, 380, 120, 40), right of
+    the gift list's right end (1346), reads 1.00 white on it and 0.00 on the
+    list, the card and the questions over the list. Its row covers the list's
+    second item's strip (1.00 white): without this probe the menu reads as the
+    list with its cursor on item 2.
 
     The list, measured on console B's Internet gift list (2026-11-25, four
     gifts, the cursor on the first): the list's items, 84 pixels apart from y
@@ -51,6 +69,27 @@ val selected_item : Effects.measurements -> int option
 
 val list_active : Effects.measurements -> bool
 (** The gift list, waiting for a choice. [false] for a missing probe. *)
+
+val list_shown : Effects.measurements -> bool
+(** The gift list (an item white), whatever is over it: A there could claim a
+    gift. [false] on the Mystery Gift menu. *)
+
+val gift_menu : Effects.measurements -> bool
+(** The Mystery Gift menu, its first row highlighted. *)
+
+val text_up : Effects.measurements -> bool
+(** The bottom text box (a message or a question) shows: over 0.60 of it dark
+    blue. *)
+
+(** A question's highlighted answer. *)
+type answer = Yes  (** Yes highlighted. *) | No  (** No highlighted. *)
+
+val question : Effects.measurements -> answer option
+(** A Yes/No question with the text box up, and its highlighted answer. *)
+
+val message : Effects.measurements -> bool
+(** A message in the text box, no question, card or gift list under it (the
+    Mystery Gift menu may be): A only moves past it. *)
 
 val gift_item : Effects.measurements -> int option
 (** The item showing the gift's name (scored 0.05 at most, the best), when the
