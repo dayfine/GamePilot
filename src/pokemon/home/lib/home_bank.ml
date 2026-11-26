@@ -41,13 +41,6 @@ let look ~log =
          saving (HOME, X).";
       Ok ()
 
-let digits = 10
-
-let missing_digits (t : B.templates) =
-  List.filter
-    (fun d -> not (List.mem_assoc d t.digits))
-    (List.init digits Fun.id)
-
 let save_and_quit : T.t list =
   [
     { button = Start; hold_ms = 100; cooldown_ms = 1500 };
@@ -91,19 +84,16 @@ let bank ~log moves =
   in
   save ~log
 
-let no_digits missing =
+let no_digits =
   Error
-    (Printf.sprintf
-       "no template yet for box-number digits %s; nothing moved, Pokémon HOME \
-        left open"
-       (String.concat ", " (List.map string_of_int missing)))
+    "a box-number digit has no template yet; nothing moved, Pokémon HOME left \
+     open"
 
 let bank_all ~log templates moves =
-  match missing_digits templates with
-  | [] ->
-      Effects.with_probes (Box_moves.cursor_probes moves) (fun () ->
-          bank ~log moves)
-  | missing -> no_digits missing
+  if B.complete templates then
+    Effects.with_probes (Box_moves.cursor_probes moves) (fun () ->
+        bank ~log moves)
+  else no_digits
 
 let on_boxes ~log templates = function
   | Look -> look ~log
