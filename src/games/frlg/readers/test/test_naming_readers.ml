@@ -1,8 +1,9 @@
 (* The naming screen's reader (Naming_screen) on native mGBA frames of BOX
    NAME? (Route 4 Pokémon Center's PC, 2026-11-25): the cursor on keys of each
    page at the red end of its cycle, three frames at its pink or white end
-   (no key reads: the typer awaits the red), and two box
-   screens that are no naming screen. The fixtures are probe_images output
+   (no key reads: the typer awaits the red), and box
+   screens that are no naming screen, two with the box title's menu
+   (Pc_box_screen.title_menu_row: JUMP, NAME). The fixtures are probe_images output
    (regen_fixtures.sh naming, from naming.mgba.map); the shifted fixture holds
    every frame at brightness x0.9 and x1.1, each channel +-12 and in grey 10
    levels (dev/reader_fixtures/shift_frame.py), and each must read the same.
@@ -11,7 +12,8 @@
    reading on the thing; worst off it), printed by this test:
    - page patch share of the page's colour: 0.8; 1.0; 0 (the other pages);
    - entry patch share of white: 0.9; 1.0; 0.70 (the box menu, brighter);
-   - cursor edge share of cursor red: 0.3; 0.73; 0. *)
+   - cursor edge share of cursor red: 0.3; 0.73; 0;
+   - title menu arrow, dark share (Cursor_column): 0.10; 0.25; 0. *)
 
 open Frlg_readers
 
@@ -22,9 +24,14 @@ let page_name = function
   | Lower -> "lower"
   | Others -> "others"
 
+let menu_row m =
+  match Pc_box_screen.title_menu_row m with
+  | Some r -> Printf.sprintf "no page, menu row %d" r
+  | None -> "no page"
+
 let read m =
   match Naming_screen.page m with
-  | None -> "no page"
+  | None -> menu_row m
   | Some p -> (
       page_name p
       ^
@@ -37,6 +44,8 @@ let expected image =
   match String.split_on_char '_' image with
   | [ "key"; page; _; ("white" | "pink") ] -> page ^ " no key"
   | "key" :: page :: key :: _ -> page ^ " " ^ key
+  | [ "box1"; "title"; "menu" ] -> "no page, menu row 0"
+  | [ "box1"; "title"; "menu"; "name" ] -> "no page, menu row 2"
   | _ -> "no page"
 
 let base image = Filename.remove_extension (Filename.basename image)
@@ -50,6 +59,12 @@ let cases label images =
         expectation = expected (base image);
       })
     images
+
+let menu_arrow_row image =
+  match image with
+  | "box1_title_menu" -> Some 0
+  | "box1_title_menu_name" -> Some 2
+  | _ -> None
 
 (* The worst share on and off the thing each probe looks for: [pick image id]
    says whether the probe is on it, [None] for a probe the reader does not
@@ -100,7 +115,15 @@ let headroom images =
              let mine = "naming.cursor." ^ layout ^ "." in
              if not (String.starts_with ~prefix:mine id) then None
              else Some (phase <> "white" && phase <> "pink" && id = mine ^ key)
-         | _ -> None))
+         | _ -> None));
+  report "title menu arrow"
+    (shares "pc_box.title_menu.row" (fun image id ->
+         if not (String.starts_with ~prefix:"box1_" image) then None
+         else
+           Some
+             (match menu_arrow_row image with
+             | Some r -> id = Printf.sprintf "pc_box.title_menu.row%d" r
+             | None -> false)))
 
 let () =
   let frames = Wire.read_image_probes "fixtures/naming.mgba.probes.jsonl"
