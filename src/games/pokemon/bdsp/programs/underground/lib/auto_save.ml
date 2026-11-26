@@ -7,6 +7,6 @@ let maybe_save ~log ~picture ~cycle_idx ~prev_shards
     cur_shards > prev_shards
     || (cycle_idx mod every_cycles = 0 && counters.digs > 0)
   then
-    match Bdsp_actions.Bdsp_save.save_game ~log ~picture () with
+    match Bdsp_actions.Game_save.save_game ~log ~picture () with
     | Ok () -> ()
     | Error e -> log ("Auto-save skipped: " ^ e)

@@ -1,5 +1,5 @@
 module OW = Bdsp_actions.Bdsp_overworld
-module Fly = Bdsp_actions.Bdsp_fly
+module Fly = Bdsp_actions.Fly
 module US = Bdsp_readers.Underground_screen
 module H = Switch_home.Held_screen
 module P = Switch_home.Switch_presses
