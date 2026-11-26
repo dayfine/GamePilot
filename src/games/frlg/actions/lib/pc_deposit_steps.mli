@@ -27,7 +27,19 @@ type look = {
       *)
 }
 
-type press = A | B | Up | Down | Right | Wait | Done | Fail of string
+(** The button a PC step presses next, a wait, or the walk done or failed (and
+    why). *)
+type press =
+  | A
+  | B
+  | Up
+  | Down
+  | Left  (** Only in a withdraw ({!Pc_withdraw_steps}). *)
+  | Right
+  | Wait
+  | Done
+  | Fail of string
+
 type t
 
 val start : string list -> t
