@@ -88,6 +88,12 @@ void check_requests(const std::map<std::string, pa::JsonValue>& files) {
   CHECK(cursor.probes[1].ink &&
         cursor.probes[1].ink->max ==
             (std::array<std::uint8_t, 3>{144, 144, 255}));
+  CHECK(!cursor.probes[1].skip_seams);
+
+  const SubscribeParams title = decode_subscribe(
+      decode_request(files.at("55-subscribe.skip_seams.request.json")).params);
+  CHECK(title.probes.size() == 1);
+  CHECK(title.probes[0].ink && title.probes[0].skip_seams);
 
   const Request unsubscribe =
       decode_request(files.at("21-unsubscribe.request.json"));
@@ -545,6 +551,16 @@ void check_errors() {
       (std::string(R"({"id":"p","kind":"core.color_stats@1",)") + kBox +
        R"(,"ink":{"min":[0,0,0],"max":[1,1,1]}})")
           .c_str()));  // ink only for template matches
+  CHECK(subscribe_error(
+      (std::string(R"({"id":"p","kind":"core.template_match@1",)") + kBox +
+       R"(,"template":"t","skip_seams":true})")
+          .c_str()));  // skip_seams needs ink
+  CHECK(subscribe_error(
+      (std::string(R"({"id":"p","kind":"core.template_match@1",)") + kBox +
+       R"(,"template":"t","ink":{"min":[0,0,0],"max":[1,1,1]},"skip_seams":1})")
+          .c_str()));  // skip_seams is a boolean
+  CHECK(subscribe_error((find + filter + R"(,"min_area":1,"skip_seams":true})")
+                            .c_str()));  // skip_seams only for template_match
 
   // A stick is [x, y], each a number in -1..1.
   const auto stick_error = [](const char* stick) {
@@ -591,7 +607,7 @@ int main() {
   const auto files = load_contracts();
   // One per protocol/v1 golden file. The checks below index files by name,
   // so they run only when every one is there.
-  constexpr std::size_t kGoldenFiles = 54;
+  constexpr std::size_t kGoldenFiles = 55;
   CHECK(files.size() == kGoldenFiles);
   if (files.size() == kGoldenFiles) {
     check_requests(files);

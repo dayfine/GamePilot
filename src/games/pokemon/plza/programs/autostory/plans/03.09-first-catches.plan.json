@@ -1,0 +1,56 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "plza",
+  "execution": {
+    "start_signature": {
+      "minimap": "03.07-start"
+    }
+  },
+  "metadata": {
+    "phase": "testing",
+    "source": "played from a new game; starts outside the zone's gate, where 03.08's autosave reloads; autosaves at after_catches; starts where 03.08 ends; the fork's plza-03.07.plan.json (plza/lean)",
+    "postconditions": {}
+  },
+  "checkpoint": {
+    "id": "03.09-first-catches",
+    "title": "Into Wild Zone 1: first catches",
+    "start": {
+      "place": "LumioseCity",
+      "spot": "WildZone1Gate"
+    },
+    "events": [
+      {
+        "id": "to_zone_1_gate",
+        "kind": "game_action",
+        "action": "run_to_gate",
+        "why": "run to Wild Zone 1's gate until its A prompt (~4.3 s)",
+        "args": {
+          "timeout_ms": 8000
+        }
+      },
+      {
+        "id": "enter_zone_1",
+        "kind": "game_action",
+        "action": "scene_through_prompt",
+        "why": "A Enter, Taunie, the Throwing Poke Balls card; the \"received 10 Poke Balls\" box has no detector and gets A as any unread screen"
+      },
+      {
+        "id": "catch_fletchling",
+        "kind": "game_action",
+        "action": "catch_tutorial",
+        "why": "catch Fletchling, again when it breaks out"
+      },
+      {
+        "id": "catch_bunnelby",
+        "kind": "game_action",
+        "action": "battle_then_catch",
+        "why": "weaken Bunnelby, then catch it"
+      },
+      {
+        "id": "after_catches",
+        "kind": "scene",
+        "why": "Taunie: tall grass, more Poke Balls, moves smash boulders"
+      }
+    ]
+  }
+}

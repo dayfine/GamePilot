@@ -1,0 +1,7 @@
+(test
+ (name test_run_attempts)
+ (libraries
+  gamepilot.table_test
+  gamepilot.engine_run
+  gamepilot.plza_engine
+  gamepilot.plza_checkpoint_series))

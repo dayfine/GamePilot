@@ -32,9 +32,8 @@ modules.
 
 ## Self-aligning corridor navigation
 
-BDSP overworld timings come from fork PR #402 (`BDSP_MOVE_MECHANICS`: `turn_tap = 50 ms`,
-`start_delay = 250 ms`, run `100/150 ms/tile`). Rather than needing full Underground tile maps,
-anchoring at an L-shaped corridor adjacent to a Hideaway doorway gives zero-drift self-alignment:
+A one-shot program `bdsp.underground_poc` in `src/games/pokemon/bdsp/programs/`, Switch backend only.
+BDSP overworld timings come from fork PR #402 (`BDSP_MOVE_MECHANICS`), calibrated live on Console A:
 
 1. Bounce through the Hideaway doorway (`West` → `East`, with perpendicular 350 ms auto-centering
    nudge if off-center) to refresh dig spots.
@@ -44,14 +43,12 @@ anchoring at an L-shaped corridor adjacent to a Hideaway doorway gives zero-drif
 
 ## Implemented modules
 
-- `src/games/bdsp/underground/` (`gamepilot.bdsp_underground`): pure `Mining_goal`, `Mining_wall`,
-  `Mining_solver`, and `Corridor_nav` with offline unit & Monte Carlo tests.
-- `src/games/bdsp/readers/` (`gamepilot.bdsp_readers`): `Menu_detector`, `Dialog_detector`,
-  `Battle_detector` (Fight + Run buttons), `Minimap_sparkles`, and `Mining_grid` (130-cell live
-  classifier with cursor-sprite masking + unit tests).
-- `src/games/bdsp/actions/` (`gamepilot.bdsp_actions`): `Bdsp_game_entry`, `Bdsp_overworld`, and
-  `Bdsp_mining_play` (`dig_wall_smart` with wall-fade wait, `prev_grid` decay, and per-cell hit
-  cap).
-- `src/games/bdsp/programs/underground_poc/` (`bdsp.underground_poc`): registered Switch one-shot
-  program verified live on Console A via `gamepilot run bdsp.underground_poc --watch` (3-cycle
-  endurance pass in `run-38`).
+- `src/games/pokemon/bdsp/underground/` (`gamepilot.bdsp_underground`): pure `Mining_goal`, `Mining_wall`,
+  `Mining_solver`, `Ring_grid`, `Mining_counters`, and `Corridor_nav` with offline unit & Monte Carlo tests.
+- `src/games/pokemon/bdsp/readers/` (`gamepilot.bdsp_readers`): `Menu_detector`, `Dialog_detector`,
+  `Battle_detector`, `Minimap_sparkles`, `Wall_sparkle`, `Underground_screen`, `Mining_announce_reader`,
+  `Dig_result_reader`, and `Mining_grid` (130-cell live classifier + live wall-crack gauge).
+- `src/games/pokemon/bdsp/actions/` (`gamepilot.bdsp_actions`): `Bdsp_game_entry`, `Bdsp_overworld`, and
+  `Bdsp_mining_play` (`dig_wall_smart`, `collect_dig_yields`).
+- `src/games/pokemon/bdsp/programs/underground_poc/` (`bdsp.underground_poc`): registered Switch one-shot
+  program verified live on Console A via `gamepilot run bdsp.underground_poc --watch`.

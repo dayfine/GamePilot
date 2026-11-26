@@ -1,0 +1,49 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "plza",
+  "execution": {},
+  "metadata": {
+    "phase": "testing",
+    "source": "played from a new game; starts on 3F at the elevator, as the 03.14 autosave reloads. Chained start and start signature are guesses; starts where 03.14 ends; the fork's plza-03.11.plan.json (plza/lean)",
+    "postconditions": {}
+  },
+  "checkpoint": {
+    "id": "03.15-mable-reward",
+    "title": "Mable's research, the Rock Smash TM",
+    "start": {
+      "place": "PokemonResearchLab"
+    },
+    "events": [
+      {
+        "id": "to_mable",
+        "kind": "walk",
+        "why": "from the 3F autosave around the desk's left end into Mable's talk. not planned: no tile grid in Lumiose",
+        "args": {
+          "legs": [[-90, 700], [90, 1300], [90, 1600]],
+          "end": "dialog"
+        }
+      },
+      {
+        "id": "mable_talk",
+        "kind": "game_action",
+        "action": "scene_with_start_window",
+        "why": "Mable's research requests until control: A takes \"Yes\" and closes her \"Press X...\" line",
+        "args": {
+          "start_window_ms": 45000
+        }
+      },
+      {
+        "id": "rock_smash_tm",
+        "kind": "game_action",
+        "action": "claim_mable_research_reward",
+        "why": "Mable's Research, Rewards: TM004 Rock Smash"
+      },
+      {
+        "id": "leave_mable",
+        "kind": "scene",
+        "action": "button_b",
+        "why": "through Mable's talk until control. B closes her mission and reward screens, which the default A scene sits on"
+      }
+    ]
+  }
+}

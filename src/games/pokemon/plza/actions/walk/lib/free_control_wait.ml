@@ -22,7 +22,7 @@ let quiet_is_control_ms = 10000
 let control_reads = 2
 
 (* An A prompt shows only in the overworld, so it is control where no party
-   bar shows (01.03). Held a second, so a prompt left up under a late fade
+   bar shows (01.04). Held a second, so a prompt left up under a late fade
    after A at a door is not taken. *)
 let prompt_is_control_ms = 1000
 

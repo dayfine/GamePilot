@@ -29,7 +29,7 @@ check() {
 }
 
 # The Start menu frame where nso_gba_viewport() puts the GBA picture: 1560x1040 at (180, 5).
-frame=$root/src/games/frlg/readers/test/images/mgba/mail-glitch-04-inspect/mg05-start-menu.png
+frame=$root/src/games/pokemon/frlg/readers/test/images/mgba/mail-glitch-04-inspect/mg05-start-menu.png
 ffmpeg -loglevel error -loop 1 -i "$frame" -t 120 -r 10 \
     -vf "scale=1560:1040:flags=neighbor,pad=1920:1080:180:5:black" \
     -c:v libx264 -pix_fmt yuv420p "$tmp/replay.mp4"

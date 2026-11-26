@@ -79,12 +79,12 @@ sh run/run_checkpoints_on_mgba.sh frlg.wild_rng --from 01-route10-grass --to 02-
 
 A port of the fork's WildRng (PA/CC's `PokemonFRLG/Programs/RngManipulation/`) for Sweet Scent in
 grass, so every catch toward the 60 the National Pokédex needs can be shiny (issue #14). The
-action is `wild_rng` (`src/games/frlg/actions/lib/wild_rng*.ml`).
+action is `wild_rng` (`src/games/pokemon/frlg/actions/lib/wild_rng*.ml`).
 
 **The seed.** The seed is the title screen's A press: `backend.reset` (mGBA's power switch) boots
 the game from its save, and the press N frames later gives the same seed every time.
 
-**The seed table.** `src/games/frlg/assets/rng_seeds_mgba_sevii_save.json` (FR_Eng.json's shape,
+**The seed table.** `src/games/pokemon/frlg/assets/rng_seeds_mgba_sevii_save.json` (FR_Eng.json's shape,
 delays in ms that round to the press frame) was measured on mGBA from the Sevii story's end save,
 the save 01 starts from. The plan names its table (`seeds`).
 

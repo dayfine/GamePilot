@@ -21,10 +21,17 @@
   gamepilot.frlg_ctl_readers
   gamepilot.ctl_script
   gamepilot.switch_home
+  gamepilot.pokemon_home
   gamepilot.repo_io
   gamepilot.frlg_series
   gamepilot.plza_series
+  gamepilot.plza_checkpoint_series
   gamepilot.plza_engine
+  gamepilot.plza_gift_catalog
+  gamepilot.plza_claim_gifts
+  gamepilot.plza_claim_gifts_series
+  gamepilot.plza_bank_home
+  gamepilot.plza_bank_home_series
   gamepilot.run_flags
   gamepilot.run_args
   gamepilot.one_shot_flags

@@ -2,7 +2,7 @@
 
 The first half of arbitrary code execution (ACE) in FireRed, after the Mail Glitch: it puts the
 glitch Pokémon the ACE payloads run through (species 0x0351, from pomeg-letterbombers' Post-E4
-route) in Box 3 slot 1. The second half, the execution program, is not written yet.
+route) in Box 3 slot 1. The second half, which runs code through it, is [ACE](frlg.ace.md).
 
 **What you get.** A male Lv 100 Pokémon with a ? picture and a garbled name in Box 3 slot 1, a
 Magikarp seen in the Pokédex, and one party member moved to the PC for a Magikarp (bought) or, if
@@ -137,7 +137,7 @@ and reads the box: its wallpaper, the PKMN DATA panel, the level and the male ma
 `Pc_withdraw` walks the box's slots until PKMN DATA names a species and no item, and withdraws it.
 
 **Reader headroom.** The colour readers' thresholds and their headroom on 16 mGBA frames, each
-under nine colour shifts, are in `src/games/frlg/readers/test/test_ace_readers.ml`. The word
+under nine colour shifts, are in `src/games/pokemon/frlg/readers/test/test_ace_readers.ml`. The word
 arrow and the hand shadow are the thin ones; both are confirmed by a second read.
 
 **For the execution program.** It needs a naming-screen typer (the payload is the box names) and

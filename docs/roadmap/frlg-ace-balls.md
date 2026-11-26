@@ -25,11 +25,11 @@ How the Mail Glitch leads to ACE is in the
 
 ## Steps
 
-1. **Naming-screen typer** (`src/games/frlg/actions`): all three pages (upper, lower, symbols), the
+1. **Naming-screen typer** (`src/games/pokemon/frlg/actions`): all three pages (upper, lower, symbols), the
    key grids taken from `naming_screen.c` in the pret decomp, cursor and page reader to check each
    move. Needed for the full ACE character set; it also covers player and nickname typing.
 2. **Box rename action**: PC, Box options, rename, type, confirm, read the new name back.
-3. **ACE runner** (`frlg.ace`): presets as data (`src/games/frlg/assets/ace_presets.json`), the
+3. **ACE runner** (`frlg.ace`): presets as data (`src/games/pokemon/frlg/assets/ace_presets.json`), the
    guardrails above as checks in the plan, one checkpoint per preset.
 4. **Proof on mGBA**: one preset end to end, with a bag reader check of each item count.
 
@@ -45,7 +45,7 @@ How the Mail Glitch leads to ACE is in the
   (`docs/design/FRLG-ACE-Execution.md`): pomeg-letterbombers' Post-E4 route (species 0x0351, done
   by `frlg.ace_setup`) and Sleipnir17's "Get any item" box names with the BIOS-less exit, one
   execution per item into the PC's item storage, then withdrawn to the bag. Proven on mGBA from
-  memory for Master Ball, Luxury Ball, Rare Candy, Max Repel and Escape Rope (x999 each); the
+  memory for Master Ball, Luxury Ball, Rare Candy, Repel and Escape Rope (x999 each); the
   Switch release is still unverified (its emulator needs adjusted names, per the pomeg FAQ).
 - Money and coins have no code in that list: a new code, or dropped from bag prep?
 - Checkpoints: decided in review, one template pair (enter the code, trigger) run per item with

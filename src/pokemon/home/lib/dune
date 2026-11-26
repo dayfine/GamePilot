@@ -1,0 +1,4 @@
+(library
+ (name pokemon_home)
+ (public_name gamepilot.pokemon_home)
+ (libraries gamepilot.wire gamepilot.effects gamepilot.switch_home))

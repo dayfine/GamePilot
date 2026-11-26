@@ -8,7 +8,7 @@
     spots the same way (PokemonLZA_AutoStoryZone1Road.h). *)
 
 val rocks : Map_leg.waypoint
-(** Taunie's rocks (476, 224), where 03.08 starts. *)
+(** Taunie's rocks (476, 224), where 03.10 starts. *)
 
 val rocks_radius : float
 (** 8: how far from {!rocks} a pin still reads as on them, as the fork's catch

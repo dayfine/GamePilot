@@ -1,7 +1,7 @@
 // The Switch's GBA picture sits where nso_gba_viewport() says on every FRLG
-// capture of the lab's (src/games/frlg/readers/test/images/switch), and the
-// check refuses frames it does not fit: a capture of another game and the
-// picture shifted by a few game pixels.
+// capture of the lab's (src/games/pokemon/frlg/readers/test/images/switch),
+// and the check refuses frames it does not fit: a capture of another game and
+// the picture shifted by a few game pixels.
 
 #include "switch_geometry.h"
 

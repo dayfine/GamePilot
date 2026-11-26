@@ -1,4 +1,4 @@
-(** Mable's research reward in her office (03.11): ported from
+(** Mable's research reward in her office (03.15): ported from
     PokemonLZA_AutoStoryConsoleActions.cpp, with the way from the overworld to
     the main menu from PokemonLZA_MenuNavigation.cpp and B out of the menu from
     PokemonLZA_AutoStoryScenes.cpp.

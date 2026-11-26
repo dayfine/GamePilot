@@ -22,8 +22,9 @@
       (a reload past the checkpoint's own autosave lands there, and its events
       skip there by [skip_if]);
     - anything else, or no read agreed on: [chain_off_start], which repeats from
-      the same screen; the series reloads once on it ({!Run_attempts}), where
-      the fork's chain stops its run (PokemonLZA_AutoStoryGame.cpp);
+      the same screen; the series reloads once on it
+      (Plza_checkpoint_series.Run_attempts), where the fork's chain stops its
+      run (PokemonLZA_AutoStoryGame.cpp);
     - a signature with another field, an unrecorded minimap, or nothing:
       [start_signature_unread], which repeats.
 
@@ -31,7 +32,7 @@
     zone and the party, and a run left at the 100 spot
     ({!Plza_walk.Wild_zone_one.spot_100}) passed it (console B, 2026-11-25), to
     fail in the catch's own rocks check. The end signature is ours too: the fork
-    checks no end (it only notes whether its autosave showed), and 03.04 passed
+    checks no end (it only notes whether its autosave showed), and 03.07 passed
     on Urbain's one line inside the Center (console B, 2026-11-25). The party
     count takes two frames here ({!Plza_readers.Party_slots}). *)
 

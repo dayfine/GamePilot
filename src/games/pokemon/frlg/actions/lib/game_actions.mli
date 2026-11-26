@@ -1,0 +1,23 @@
+(** Performs FireRed's shared game actions ({!Action_requests}) as story
+    handlers, and keeps the reckoned party ({!Party_roster}) up to date: a swap
+    swaps it, a trade replaces the member, a prize joins it. *)
+
+type context = {
+  log : string -> unit;
+  party : Party_roster.t ref;
+  facing : unit -> Grid_geometry.Direction.t option;
+      (** Where the player faces, when known (the spin starts from it). *)
+  stocks : unit -> (Mart_plan.stocks, string) result;
+  options : Run_options.t;
+      (** The program's run options, for the actions that read them. *)
+}
+
+val perform :
+  context -> Action_requests.t -> (unit, Pokemon_engine.Failure.cause) result
+(** Runs the action. An in-game trade whose offer is gone and whose [receive] is
+    in the party already passes without a press (it ran before this save). *)
+
+val handlers : context -> (string * Pokemon_engine.Game.game_action) list
+(** Every FireRed game action a plan can name, by its name: the shared ones
+    ({!Action_requests.names}: decode, then {!perform}) and those of the FireRed
+    action modules. *)

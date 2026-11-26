@@ -65,7 +65,7 @@ type with its printing, its plan format and its event snapshot. A game's rules a
 pieces, in a dozen lines:
 
 ```ocaml
-(* games/frlg/checkpoints/rules/lib/frlg_rules.ml *)
+(* games/pokemon/frlg/checkpoints/rules/lib/frlg_rules.ml *)
 module Pose = Grid_pose                 (* map, tiles, facing; read as map and tile *)
 
 module Action = struct
@@ -120,7 +120,7 @@ val action_of_plan :
   'action part list -> string -> (where:string -> Json_field.obj -> ('action, string) result) option
 val claimed_twice : 'action part list -> string list   (* names two parts own; a test wants [] *)
 
-(* games/frlg/checkpoints/plan_codec/lib/frlg_plan_codec.ml *)
+(* games/pokemon/frlg/checkpoints/plan_codec/lib/frlg_plan_codec.ml *)
 let parts = Action_parts.[
   Part ((module Story_action_decode), fun a -> Story a);
   Part ((module Grid_action_decode), fun a -> Grid a);
@@ -207,7 +207,7 @@ claimed, unknown fields checked once, parts in order).
 | `Grid_action` | same | route, ready, legs, step | `Grid_action_decode` | |
 | `Pokemon_action` | `src/pokemon/checkpoints` | new_game, options, battle, train, heal, shop | `Pokemon_action_decode` | |
 | `Pokemon_promises` | same | party ... marks, `Postcondition_check` | `Postcondition_decode`, `Party_decode` | `Pokemon_start_snapshot` |
-| `Frlg_action` | `src/games/frlg/checkpoints` | today's `Action_requests` and the rest | `Frlg_action_decode` | |
+| `Frlg_action` | `src/games/pokemon/frlg/checkpoints` | today's `Action_requests` and the rest | `Frlg_action_decode` | |
 
 Today's `*_text` modules (`Story_action_text`, `Zone_pose_text`, `With_position_text`,
 `Grid_pose_text`, `Pokemon_action_text`, `Postconditions_text`, `Frlg_action_text`) fold into the
@@ -336,7 +336,7 @@ src/pokemon/navigation/grid/checkpoints/{rules,plan_format,event_snapshot}/
                   Grid_pose, Grid_action and their formats, beside the grid they walk
 src/pokemon/checkpoints/{rules,plan_format,event_snapshot}/
                   Pokemon_action, Pokemon_promises and their formats; no instance
-src/games/frlg/checkpoints/{rules,plan_format,event_snapshot,engine}/
+src/games/pokemon/frlg/checkpoints/{rules,plan_format,event_snapshot,engine}/
                   Frlg_action, Frlg_rules and formats, Frlg_engine; frlg_checkpoints as today
 src/games/pokemon/plza/checkpoints/{rules,plan_format,event_snapshot,engine}/
                   as #89, built from pieces, Plza_engine
@@ -349,8 +349,8 @@ The stick walk stays PLZA's own action until SwSh needs it, then moves to
 
 - **PLZA (#89).** `Pose = Zone_pose`; `Action = Story | Plza of Plza_action.t` (walk,
   wait_for_platform, set_text_speed_fast, plus_skip, today three of them `game_action`s);
-  `Postconditions = With_position (Zone_pose) (No_promises)`. It links the engine only. When its
-  first battle comes it joins `family pokemon` and adds `Pokemon of Pokemon_action.t` and
+  `Postconditions = With_position (Zone_pose) (No_promises)`. Its rules link the engine only (it is in
+  `family pokemon` for Pokémon HOME). When its first battle comes it adds `Pokemon of Pokemon_action.t` and
   `Pokemon_promises`, with no change to FRLG.
 - **SwSh** is PLZA's shape with Pokémon promises from the start. **BDSP** is FRLG's shape with
   its own set.
@@ -395,7 +395,7 @@ Every PR keeps every plan, test and run as it is; **S** marks a structural one.
 | 9 | FRLG's actions typed, in three PRs: the shared ones (`Action_requests`); travel (fly, lift_floor, ferry); battles and the Mail Glitch (grind, capture, berry PP, double battle, mail, candy). Load check of marts, towns, strategies; `Plan_needs` and `Party_room` on typed actions. `game_action` with `"action": "mart"` is read as kind `mart`; unclaimed names stay `Named_action` until the last | S (format) | 8 |
 | 10 | Plans rewritten by script to `"kind": "mart"`; shadow plans to `Command_step`; `Named_action`, the alias and `game_actions` deleted. Golden identical | S (format) | 9 |
 | 11 | PLZA from pieces, after #89 merges | S | 4 |
-| 12 | PLZA in `family pokemon` with its first battle | S | 5, 11 |
+| 12 | PLZA's rules take the Pokémon actions and promises with its first battle | S | 5, 11 |
 | 13 | Octopath 0's rules from pieces (Engine-Boundary PR 9) | S | 3 |
 
 0, 1 and 2 can start at once; 0b follows 0. FRLG's line (3 to 10) runs first; 11 waits for it only where it needs

@@ -1,4 +1,4 @@
-(** Up 03.03b's ladder to the roof, the plan's [climb_ladder]: ported from the
+(** Up 03.05's ladder to the roof, the plan's [climb_ladder]: ported from the
     ladder climb of PokemonLZA_AutoStoryScenes.cpp and the steps along a wall
     until a prompt of PokemonLZA_AutoStoryWalks.cpp. The side street's run stops
     left or right of the ladder, so: the stick ahead 150 ms (released 500), then

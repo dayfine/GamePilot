@@ -5,7 +5,7 @@
    safely next to a running program: a command that presses takes the input
    lease (contracts v1.9) as [--owner] and is refused, naming the holder, while
    someone else holds it; reads (shot, read, status) need no lease. COMMAND and
-   FILE's lines are Ctl_script's (labB.sh's format). [run] prints [ok N LINE]
+   FILE's lines are Ctl_script's. [run] prints [ok N LINE]
    per line and stops at the first error. [park] and [resume] park the Switch
    on its HOME menu and resume the lab console's game from it, [close-game]
    and [start-game] close the running game and start one from a HOME tile
@@ -39,7 +39,7 @@ let usage =
   ^ ")\n\
     \      | close-game | start-game TILE  (the Switch, from HOME: close the\n\
     \        running game; start the game on TILE, 1 the first, 0 the cursor's)\n"
-  ^ Delete_save_command.usage_line
+  ^ Delete_save_command.usage_line ^ Home_boxes_command.usage_line
   ^ "  gamepilot ctl [--port N] [--owner LABEL] run FILE\n    readers:\n"
   ^ readers_usage ()
 
@@ -157,6 +157,8 @@ let main args =
   | Ok (f, [ "start-game"; tile ]) -> start_game f tile
   | Ok (f, "delete-save" :: args) ->
       Delete_save_command.main ~port:f.port ~owner:f.owner args
+  | Ok (f, "home-boxes" :: args) ->
+      Home_boxes_command.main ~port:f.port ~owner:f.owner args
   | Ok (f, [ "run"; file ]) -> (
       match parse_script (read_lines file) with
       | Ok steps -> Ok (run_steps f steps)

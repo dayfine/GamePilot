@@ -50,7 +50,7 @@ and the generated guide blocks do not print it.
   https://github.com/dayfine/GamePilot/pull/109#discussion_r4697777309).
 - Bad: `- 0 free party slots` in a guide's `needs` block.
 - Good: the line left out; `- 2 free party slots (joining: ...)` when slots are needed.
-- Find: the generator (`src/games/frlg/series/lib/guide_tables.ml`,
+- Find: the generator (`src/games/pokemon/frlg/series/lib/guide_tables.ml`,
   `Frlg_checkpoints.Plan_needs.asks_something`)
   leaves them out and CI's `gamepilot guide --check` fails on a stale block. A new kind of need
   must say in `asks_something` when it asks nothing. Recipe for leftovers:
@@ -187,7 +187,9 @@ cases the user called out.)
 A ported module's doc comment names the C++ (or pret) file(s) it comes from, so the two can be laid
 side by side, and says where it differs; it does not name the fork's C++ functions, classes or
 constants. pret is the exception: its files are long, so a doc comment may name the pret function,
-table or constant it follows (`naming_screen.c`'s `sKeyboardChars`), with the file.
+table or constant it follows (`naming_screen.c`'s `sKeyboardChars`), with the file. The BDSPLab lab
+scripts (`plza_claim_and_bank.sh`, `delete_save.sh`) are never referred to at all: no file, no
+function, no stage. The lab is retired; the doc comment says what the code does.
 
 - Why: "let's not refer to the old C++ symbols" (user, 2026-11-25:
   https://github.com/dayfine/GamePilot/pull/89#discussion_r4693220866). The base rule is `AGENTS.md`, "Port the C++
@@ -196,12 +198,21 @@ table or constant it follows (`naming_screen.c`'s `sKeyboardChars`), with the fi
 - Good: `as upstream's PokemonFRLG_RngNavigation.cpp does after a Rare Candy: the stats window ...`.
 - Good (pret): `the key grids of pret's naming_screen.c (sKeyboardChars)`; pret symbols allowed
   (user, 2026-11-25, on #208's qc FLAG).
+- Why (lab scripts): "just eliminiate reference" (user, 2026-11-25, in session), on doc comments
+  that cite a lab script's file and functions as the route's source.
+- Bad (lab scripts): `The route is [type_code_cmds] in [plza_claim_and_bank.sh] from the BDSPLab
+  lab tools`.
+- Good (lab scripts): `Typing a code: the keyboard's layout, the key-to-key moves round the
+  disabled keys, and the presses (D-pad 80 ms, released 140; A 80 ms, released 180)`.
 - Find: recipe over the files that name a source file, then judgment:
 
   ```sh
   grep -rlE --include='*.ml*' '\.(cpp|h|c)\b' src | xargs grep -nE \
     '[A-Za-z_]+\(\)|\b[A-Z][a-z]+([A-Z][a-z]+)+(Watcher|Detector|Reader|Session|Program)\b|\b[A-Z][A-Z0-9_]{4,}\b'
   ```
+
+  and for the lab scripts, where every hit is one (our own `dev/` and `run/` scripts may be named):
+  `grep -rnE --include='*.ml*' --exclude-dir=_build 'plza_claim_and_bank|delete_save\.sh\b|BDSPLab|lab (script|tool)' src`.
 
 ### R10 One decision lives in one module; contexts supply only what they read
 
@@ -324,9 +335,9 @@ or program uses it, not before; until then it lives with its one user.
 
 - Why: on where the RNG goes: "each game's mechanism is different ... then we need to invent some
   gen directory" (user, 2026-11-24, in a working session; applied in #24). The call, paraphrased:
-  keep it in `games/frlg/rng`, and share nothing before a second user exists.
+  keep it in `games/pokemon/frlg/rng`, and share nothing before a second user exists.
 - Bad: `src/pokemon/rng/` holding FireRed's seeding with FireRed its only caller.
-- Good: `src/games/frlg/rng/`, moved when a second Gen 3 game needs it.
+- Good: `src/games/pokemon/frlg/rng/`, moved when a second Gen 3 game needs it.
 - Find: recipe, then judgment: for each library under `src/pokemon` and `src/engine`, the
   top folders whose `dune` files link it (one game, or only its own layer, is a candidate; a
   library a shared one links is used through it, so follow the chain):
@@ -405,15 +416,22 @@ are deleted once that run passed; the unit tests that pin the behaviour stay.
 ### R22 Plan files have short descriptive names
 
 A plan file is its order number and one to five words saying what it does, with species names,
-not nicknames: `03-trade-mr-mime.plan.json`, not `mg-03.plan.json`.
+not nicknames: `03-trade-mr-mime.plan.json`, not `mg-03.plan.json`. Where the game numbers its own
+steps (PLZA's story rows), the order number is `NN.NN`, the mission and the checkpoint's place in
+it, with no letter: `03.03-battle-taunie.plan.json`; otherwise it is `NN`. The id is the file name
+without `.plan.json`.
 
 - Why: the user's calls on plan file names (2026-11-24, in a working session), paraphrased: short
   descriptive names, one or two words ideally and at most five, using species, not nicknames;
-  applied in #43. `su-01` and `tt-01` keep their ids until their programs are split by goal.
-- Bad: `mg-03.plan.json`, `03-trade-mimien.plan.json`.
-- Good: `03-trade-mr-mime.plan.json`.
+  applied in #43. `su-01` and `tt-01` keep their ids until their programs are split by goal. On PLZA
+  (2026-11-25): the story's mission number in front; then the fork's split letters dropped and the
+  checkpoints renumbered `NN.NN` in run order, the fork's file name kept in each plan's `source`
+  as the trail back to it.
+- Bad: `mg-03.plan.json`, `03-trade-mimien.plan.json`, `03.02b.plan.json`,
+  `03.02b-battle-taunie.plan.json`.
+- Good: `03-trade-mr-mime.plan.json`, `03.10-fourth-species.plan.json`.
 - Find: recipe (`su-01`, `tt-01` are known):
-  `ls src/games/*/programs/*/plans | grep -vE '^[0-9]{2}-[a-z0-9]+(-[a-z0-9]+){0,4}\.plan\.json$|:$|^$'`.
+  `ls src/games/*/programs/*/plans src/games/pokemon/*/programs/*/plans | grep -vE '^[0-9]{2}(\.[0-9]{2})?-[a-z0-9]+(-[a-z0-9]+){0,4}\.plan\.json$|:$|^$'`.
 
 ### R23 No runtime dependency on Packages; per-language assets are committed
 
@@ -424,7 +442,7 @@ Code reads game text and assets from files committed in this repo, one per langu
   dependency on Packages, per-language assets committed and every language kept, for CI and
   portability; languages matter even when untested.
 - Bad: a reader opening `third_party/Packages/.../MoveNames.json` at start.
-- Good: `src/games/frlg/text/assets/move_names.<lang>.json` committed, loaded per language.
+- Good: `src/games/pokemon/frlg/text/assets/move_names.<lang>.json` committed, loaded per language.
 - Find: recipe: `grep -rn 'Packages' --include='*.ml' --include=dune src | grep -v '/test/'`.
 
 ## From the review of #146 (review rules catalog, 2026-11-25)
@@ -449,27 +467,51 @@ Find the gate in pret pokefirered (the script or the C that checks it) and cite 
 - Find: recipe, then judgment on each hit (is the count or the Hall of Fame what the game checks?):
   `grep -rnE '"(badges|hall_of_fame)": *(true|[0-9])' src/games/*/programs/*/plans`;
   for field moves, `grep -rnE '"action": "(fly|surf|strength|rock_smash|waterfall|cut_tree|flash)"' src/games/*/programs/*/plans`
-  checked against `field_move_badges` in `src/games/frlg/actions/lib/action_args.ml`, and
+  checked against `field_move_badges` in `src/games/pokemon/frlg/actions/lib/action_args.ml`, and
   `grep -rnE 'in the party \((fly|surf|strength|cut)' docs/guide` for an HM need by species (R3).
 
 ## From the review of #198 (PLZA Main Mission 01.02–01.03, 2026-11-25)
 
-### R25 A program's registry description says what it does, never how far it gets today
+### R25 A program's description and guide intro say what it does, never how far it gets today
 
-A program's `description` in `src/program_registry` says what the program does, not which
-checkpoints, missions or steps it covers so far: coverage changes with every plan PR and is shown
-by the plans and the guide's generated blocks.
+A program's `description` in `src/program_registry`, and the hand-written intro of its guide
+(`docs/guide/<id>.md`, the prose before the generated blocks), say what the program does, not
+which checkpoints, missions or steps it covers so far: coverage changes with every plan PR and is
+shown by the plans and the guide's generated checkpoints table.
 
 - Why: "this doesn't need to change every single timme / This is leaking details" (user,
   2026-11-25, on `program_registry.ml`:
   https://github.com/dayfine/GamePilot/pull/198#discussion_r4702448448).
+- Why (guide intro): the user widened it to the guide's intro (user, 2026-11-25, in session): the
+  intro says what the program does; the generated checkpoints table carries coverage.
 - Bad: `"Plays the story; for now from the new game's Confirm Choices through Main Mission 01
   (checkpoints 01.00b to 01.03)."`
 - Good: `"Plays the story from a new game, checkpoint by checkpoint."`
+- Bad (guide intro): `So far it plays Main Missions 01 to 03 (checkpoints 01.00a to 03.11).`
 - Find: recipe, then judgment on each hit:
   `grep -nA2 'description =' src/program_registry/lib/program_registry.ml | grep -nE 'for now|so far|[0-9]{2}\.[0-9]{2}'`;
-  and `git log -p -- src/program_registry/lib/program_registry.ml` for a description edited
-  alongside a plan change.
+  for guide intros, the lines before each page's first generated block:
+  `for f in docs/guide/*.md; do awk '/<!-- generated:/{exit} {print FILENAME": "$0}' "$f"; done | grep -nE 'for now|so far|today|currently|up to|through|[0-9]{2}\.[0-9]{2}'`;
+  and `git log -p -- src/program_registry/lib/program_registry.ml docs/guide` for a description or
+  intro edited alongside a plan change.
+
+## From the session of 2026-11-25 (PLZA new game choices)
+
+### R26 Personal per-run choices are given with `--options`, never kept in the repo
+
+A choice that is the player's own for one run (the player's name, and the like) is never written
+into a plan, a test fixture or a doc as the value to use: it is given on the command line with
+`--options KEY=VALUE`. The plan keeps the fork's default (PLZA's name "Kosmos"), so a run with no
+option plays as the fork does.
+
+- Why: "that should not be in the repo, but a local CLI flag (into --options)" (user, 2026-11-25,
+  in session).
+- Bad: a plan's name entry changed to the user's own name, committed; or edited locally for one run.
+- Good: the plan's `"name": "Kosmos"`, and `gamepilot checkpoints ... --options name=<name>` for
+  a run that wants another.
+- Find: judgment; read new-game choice args in plans (name, look, language) and check each is the
+  fork's default with a registry option to change it:
+  `grep -rnE '"(name|player_name|look|language)": *"' src/games/*/programs/*/plans src/games/pokemon/*/programs/*/plans`.
 
 ## AGENTS.md hard rules no lint checks yet
 

@@ -75,7 +75,7 @@ tables).
 | Master Ball | 0x0001 | `G……o    ` | `EEEJD!n ` | `EEIB!n  ` | `EI/!n   ` |
 | Luxury Ball | 0x000B | `Q……o    ` | `EEEJD!n ` | `EEIB!n  ` | `EI/!n   ` |
 | Rare Candy | 0x0044 | `J……o    ` | `EEEND!n ` | `EEIB!n  ` | `EI/!n   ` |
-| Max Repel | 0x0056 | `L……o    ` | `EEEOD!n ` | `EEIB!n  ` | `EI/!n   ` |
+| Repel | 0x0056 | `L……o    ` | `EEEOD!n ` | `EEIB!n  ` | `EI/!n   ` |
 | Escape Rope | 0x0055 | `K……o    ` | `EEEOD!n ` | `EEIB!n  ` | `EI/!n   ` |
 
 Every character is on the naming screen's keyboard (pret `naming_screen.c`: letters on the upper
@@ -109,7 +109,7 @@ names written into memory instead of typed, the trigger pressed through the menu
 results read from memory:
 
 - PC item slot 30 after each run: Master Ball (1) x999, Luxury Ball (11) x999, Rare Candy (68)
-  x999, Max Repel (86) x999, Escape Rope (85) x999, plus Full Heal (19) x999, item 0x1CC x999, and
+  x999, Repel (86) x999, Escape Rope (85) x999, plus Full Heal (19) x999, item 0x1CC x999, and
   Luxury Ball x65535 with the `o` variant. Seven runs in a row in one PC session, holding 0x0351 and
   swapping it twice with MIMIEN each time; the game kept running.
 - The bag: ITEM STORAGE showed MASTER BALL x999; WITHDRAW of 999 said "There is no more room in the
@@ -133,7 +133,7 @@ appear in one memory-written run; not chased, since the item code is what the pr
 ## The program
 
 `frlg.ace`, registered in `program_registry` with backends mGBA (Switch later), plans in
-`src/games/frlg/programs/ace/plans/`.
+`src/games/pokemon/frlg/programs/ace/plans/`.
 
 Decided in the user's review of this note (2026-11-25):
 
@@ -149,7 +149,7 @@ Decided in the user's review of this note (2026-11-25):
 
 ### Codes and the vetted table, as data
 
-`src/games/frlg/assets/ace_presets.json`: the literal box names, so what is typed is what was
+`src/games/pokemon/frlg/assets/ace_presets.json`: the literal box names, so what is typed is what was
 reviewed.
 
 ```json
@@ -173,7 +173,7 @@ reviewed.
 }
 ```
 
-Rare Candy, Max Repel and Escape Rope (table above) are proven on mGBA too and join the table
+Rare Candy, Repel and Escape Rope (table above) are proven on mGBA too and join the table
 when wanted. A unit test decodes every name through the game's character table, rebuilds the 14 x 9
 bytes as the naming screen leaves them (`0xFF` after the end mark), and checks the ARM words: the
 quantity 999 stored at `+0xC6`, the entry's `id` at `+0xC4`, the exit words. A typo in the data

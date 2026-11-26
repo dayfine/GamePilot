@@ -9,7 +9,6 @@
   gamepilot.run_record
   gamepilot.watch_report
   gamepilot.repo_io
-  gamepilot.guide_page
   gamepilot.engine_run
   gamepilot.engine_series
   gamepilot.run_flags
@@ -17,4 +16,5 @@
   gamepilot.plza_readers
   gamepilot.plza_story
   gamepilot.plza_engine
+  gamepilot.plza_checkpoint_series
   gamepilot.plza_autostory))

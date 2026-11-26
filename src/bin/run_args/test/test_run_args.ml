@@ -26,8 +26,12 @@ let () =
         (run [ "./plans"; "--preflight" ])
         "gamepilot run ./plans --preflight";
       case "a longer path"
-        (run [ "src/games/frlg/programs/mail_glitch/plans"; "--from"; "a" ])
-        "gamepilot run src/games/frlg/programs/mail_glitch/plans --from a";
+        (run
+           [
+             "src/games/pokemon/frlg/programs/mail_glitch/plans"; "--from"; "a";
+           ])
+        "gamepilot run src/games/pokemon/frlg/programs/mail_glitch/plans \
+         --from a";
       case "a bare name is a program id, whatever folders there are"
         (fun () ->
           match Run_args.parse [ "plans"; "--preflight" ] with

@@ -53,7 +53,7 @@ let bad_plans () =
       | Some dir ->
           let plan_error =
             match p.rules with
-            | Plza_story -> plza_plan_error
+            | Plza_story | Plza_home | Plza_gifts -> plza_plan_error
             | Pokemon_grid -> frlg_plan_error
           in
           List.filter_map plan_error (plans_in dir))
@@ -61,7 +61,7 @@ let bad_plans () =
   |> String.concat "\n"
 
 let plan_count () =
-  match R.locate "src/games/frlg/programs/mail_glitch/plans" with
+  match R.locate "src/games/pokemon/frlg/programs/mail_glitch/plans" with
   | Some dir -> string_of_bool (plans_in dir <> [])
   | None -> "no folder"
 
@@ -103,6 +103,28 @@ let options_for program given =
 
 let id_of = function Some (p : R.t) -> p.id | None -> "none"
 
+(* frlg.ace's item choices against the vetted table's items
+   (src/games/pokemon/frlg/assets/ace_presets.json): a preset added to one and not the
+   other shows here. *)
+let ace_items () =
+  let declared =
+    match R.find "frlg.ace" with
+    | None -> "no frlg.ace"
+    | Some p -> (
+        match
+          List.find_opt
+            (fun (d : Run_options.declared) -> d.key = "item")
+            p.options
+        with
+        | Some { value = One_of items; _ } -> String.concat ", " items
+        | _ -> "no item choice")
+  in
+  match Frlg_actions.Ace_presets.load () with
+  | Error e -> e
+  | Ok t ->
+      let table = String.concat ", " (Frlg_actions.Ace_presets.slugs t) in
+      if declared = table then "same" else declared ^ " | " ^ table
+
 let () =
   Table_test.run "program_registry"
     [
@@ -135,13 +157,14 @@ let () =
       case "find: unknown" (fun () -> id_of (R.find "mail")) "none";
       case "plan dir: relative, trailing slash"
         (fun () ->
-          id_of (R.of_plan_dir "src/games/frlg/programs/mail_glitch/plans/"))
+          id_of
+            (R.of_plan_dir "src/games/pokemon/frlg/programs/mail_glitch/plans/"))
         "frlg.mail_glitch";
       case "plan dir: absolute, ./ inside"
         (fun () ->
           id_of
             (R.of_plan_dir
-               "/x/GamePilot/./src/games/frlg/programs/mail_glitch/plans"))
+               "/x/GamePilot/./src/games/pokemon/frlg/programs/mail_glitch/plans"))
         "frlg.mail_glitch";
       case "plan dir: a scratch copy is no program"
         (fun () -> id_of (R.of_plan_dir "/tmp/mail_glitch/plans"))
@@ -178,12 +201,20 @@ let () =
         (fun () -> viewport_for None None)
         "default";
       case "every options declaration is sound" bad_options "";
+      case "frlg.ace's items are the preset table's" ace_items "same";
       case "options: none given to a program that takes none"
         (fun () -> options_for (Some "frlg.mail_glitch") [])
         "ok ";
       case "options: refused by a program that takes none"
         (fun () -> options_for (Some "frlg.mail_glitch") [ ("item", "x") ])
         "error: --options item: this program takes no options";
+      case "options: plza.autostory, none given: the plan's"
+        (fun () -> options_for (Some "plza.autostory") [])
+        "ok ";
+      case "options: plza.autostory refuses Korean"
+        (fun () -> options_for (Some "plza.autostory") [ ("language", "ko") ])
+        "error: --options language=ko: language is en | es-ES | es-419 | fr | \
+         de | it | ja | zh-Hant";
       case "options: refused for a plan folder no program registers"
         (fun () -> options_for None [ ("item", "x") ])
         "error: --options item: this program takes no options";

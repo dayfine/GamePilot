@@ -1,0 +1,21 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "plza",
+  "execution": {},
+  "metadata": {
+    "phase": "testing",
+    "source": "the moves gamepilot ctl bank-home plza made (PR #234); the gifts' slots and HOME boxes are the gift catalog's"
+  },
+  "checkpoint": {
+    "id": "01-bank-gifts",
+    "title": "The gifts from the game's box into their HOME boxes, saved",
+    "events": [
+      {
+        "id": "bank",
+        "kind": "game_action",
+        "action": "bank_in_home",
+        "why": "Pokémon HOME opened on Legends: Z-A; each Pokémon of the gift catalog (gifts.json) from its slot in Box 1's first row to the first empty slot of its HOME boxes; HOME saved and closed"
+      }
+    ]
+  }
+}

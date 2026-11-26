@@ -117,9 +117,13 @@ ColorStats color_stats(const cv::Mat& bgr, const cv::Rect& pixels);
 // channels: BGR, or one for masks. x, y are frame pixels. Not TM_SQDIFF_NORMED:
 // that divides by the template's energy and scores a flat black template 1 on
 // an exact match.
+// With `compared` (a one-channel CV_8U mask of the template's size, 1 for a
+// pixel compared, 0 for one left out), only those pixels count and the score
+// divides by their number instead of w * h.
 TemplateMatch template_match(const cv::Mat& image,
                              const cv::Mat& template_image,
-                             const cv::Rect& pixels);
+                             const cv::Rect& pixels,
+                             const cv::Mat& compared = cv::Mat());
 
 // The pixels of a BGR image inside the ink range as an 8-bit mask: 255 where
 // every channel is in range, 0 elsewhere.
@@ -128,8 +132,16 @@ cv::Mat ink_mask(const cv::Mat& bgr, const ColorRange& ink);
 // core.template_match@1 with ink: template_match of the box's ink mask against
 // a template mask (ink_mask of the template, then scaled). With binary masks
 // the score is the fraction of template pixels whose mask differs.
+// `compared` as for template_match.
 TemplateMatch mask_match(const cv::Mat& bgr, const cv::Mat& template_mask,
-                         const cv::Rect& pixels, const ColorRange& ink);
+                         const cv::Rect& pixels, const ColorRange& ink,
+                         const cv::Mat& compared = cv::Mat());
+
+// The whole pixels of a scaled template mask, for skip_seams: 1 where the mask
+// is 0 or 255, 0 on a seam pixel, which straddles two game pixels and holds a
+// blend. A binary box mask can only half agree with a blend, so a seam costs
+// about 1/4 whatever the frame shows there.
+cv::Mat whole_pixels(const cv::Mat& template_mask);
 
 // core.color_count@1: how many of the pixels lie inside the range, and their
 // mean color.

@@ -62,6 +62,7 @@ type probe_spec = Probe.probe_spec = {
   delivery : delivery;
   template : string option;
   ink : color_range option;
+  skip_seams : bool;
   color_range : color_range option;
   test : Line_shares.test;
   find : Blob_find.params option;

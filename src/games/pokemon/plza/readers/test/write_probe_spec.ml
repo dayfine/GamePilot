@@ -11,7 +11,20 @@
    a shifted frame): the probes a two-frame read subscribes
    from what that frame shows, the party bars' made from its cards
    ({!Plza_readers.Party_slots.bar_probes}) and the caught mark's from its
-   plate's bar ({!Plza_readers.Lock_plate.mark_probes}). *)
+   plate's bar ({!Plza_readers.Lock_plate.mark_probes}).
+
+   With [--intro], only the new game's readers' probes
+   ({!Plza_readers.Switch_home_tile}, its title template named by the file
+   beside the spec, {!Plza_readers.Intro_screens},
+   {!Switch_home.Keyboard_typing} and {!Plza_readers.Confirm_choices}), for
+   fixtures/intro/intro.probes.jsonl.
+
+   With [--gifts LANGUAGE], only the Mystery Gift steps' readers' probes
+   ({!Plza_readers.Main_menu_row}, {!Plza_readers.Mystery_gift_screen}, the
+   Boxes' and their cell's, the SAVE dialog's), the gift's name matched by its
+   template in that language (gift-name-vivillon-poke-ball-<language>.png, copied beside
+   the spec): en for fixtures/gifts/gifts.probes.jsonl, fr for
+   fixtures/gifts/gifts.fr.probes.jsonl. *)
 
 let native : Wire.box = { x = 0.; y = 0.; w = 1.; h = 1. }
 let no_minimap = Array.mem "--no-minimap" Sys.argv
@@ -55,6 +68,28 @@ let () =
   match Array.to_list Sys.argv with
   | [ _; "--second"; fixture; dir ] ->
       List.iter (write_second_spec dir) (Wire.read_image_probes fixture)
+  | [ _; "--intro" ] ->
+      print_endline
+        (params
+           (Plza_readers.Switch_home_tile.probes
+              ~title:
+                (Filename.basename Plza_readers.Switch_home_tile.title_template)
+           @ Plza_readers.Intro_screens.probes ~picture:native
+           @ Switch_home.Keyboard_typing.probes
+           @ Plza_readers.Confirm_choices.probes ~picture:native))
+  | [ _; "--gifts"; language ] ->
+      print_endline
+        (params
+           (Plza_readers.Main_menu_row.probes ~picture:native
+              ~assets:Plza_readers.Blob_assets.file_names
+           @ Plza_readers.Boxes_screen.probes ~picture:native
+           @ Plza_readers.Box_cell.probes ~picture:native
+           @ Plza_readers.Save_dialog.probes ~picture:native
+           @ Plza_readers.Mystery_gift_screen.probes ~picture:native
+               ~gift_name:
+                 (Some
+                    (Printf.sprintf "gift-name-vivillon-poke-ball-%s.png"
+                       language))))
   | _ ->
       let assets = Plza_readers.Blob_assets.file_names in
       print_endline

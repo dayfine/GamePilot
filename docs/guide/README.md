@@ -14,8 +14,11 @@ Each page ends with "How it works", for developers: the ported files, the mechan
 | [Sevii Story](frlg.sevii_story.md) | `frlg.sevii_story` | mGBA | Plays the Sevii Islands story after the Cinnabar Gym. |
 | [Dex Collection](frlg.dex_collection.md) | `frlg.dex_collection` | mGBA | Catches Pokemon the Pokedex lacks, toward the National Pokedex. |
 | [ACE Setup](frlg.ace_setup.md) | `frlg.ace_setup` | mGBA | Sets up arbitrary code execution: the ? Mail puts species 0x0351 in Box 3 slot 1. |
+| [ACE](frlg.ace.md) | `frlg.ace` | mGBA | Runs code typed as PC box names through species 0x0351: 999 of an item in the PC, some of them to the bag. |
 | [Wild RNG](frlg.wild_rng.md) | `frlg.wild_rng` | mGBA | Catches a chosen shiny wild Pokemon by timing the game's random numbers. |
 | [AutoStory](plza.autostory.md) | `plza.autostory` | the Switch | Plays the story from a new game, checkpoint by checkpoint. |
+| [Claim Gifts](plza.claim-gifts.md) | `plza.claim-gifts` | the Switch | Claims the Mystery Gifts of its catalog that have not expired, puts their Pokémon in the Boxes and saves. |
+| [Bank in HOME](plza.bank-home.md) | `plza.bank-home` | the Switch | Moves the claimed gifts from the game's box into their Pokémon HOME boxes and saves HOME. |
 | [Underground PoC](bdsp.underground_poc.md) | `bdsp.underground_poc` | the Switch | Iterative Switch bring-up program for Grand Underground shard farming. |
 <!-- /generated -->
 
@@ -41,6 +44,8 @@ The blocks:
 - `needs [RANGE]`: what the save needs for the chain, from the pre-flight.
 - `preflight [RANGE]`: what the pre-flight checks before each checkpoint.
 - `commands [RANGE]`: the commands that run it.
+- `gifts`: `plza.claim-gifts`' gift catalog, from `src/games/pokemon/plza/gift_catalog/gifts.json`
+  (a block of that program's own).
 - `options`: the keys its `--options` take, from its descriptor (or that it takes none). A program
   that declares options must have this block on its page; the check names the page that lacks it.
 
@@ -63,7 +68,8 @@ PA/CC lists its programs (game, then group, then program). `gamepilot programs` 
 A descriptor (`Program_registry.t`) gives:
 
 - `id`: `<game>.<program>`, e.g. `frlg.mail_glitch`; the program's folder is
-  `src/games/<game>/programs/<program>/`.
+  `src/games/pokemon/<game>/programs/<program>/` for a Pokémon game,
+  `src/games/<game>/programs/<program>/` for any other.
 - the game (`Program_registry.game`): its id and display name, its Switch titles' icons on their
   Delete Save Data page by the key `gamepilot ctl delete-save` takes (`delete_save_icons`), and its
   Switch HOME data when measured (`switch_home`: the title park and resume go back to, its HOME
