@@ -68,8 +68,7 @@ let steps f : T.game_steps =
         let t = f.titles.(f.box) in
         if f.alive && List.mem t cs then Some t else None);
     species_at_hand =
-      (fun () ->
-        match here f with Some s when s <> ace -> Some s | _ -> None);
+      (fun () -> match here f with Some s when s <> ace -> Some s | _ -> None);
     slot_empty = (fun () -> Some (here f = None));
     ace_at_hand = (fun () -> here f = Some ace);
     hand_quick = (fun () -> Some f.quick);
@@ -80,8 +79,8 @@ let steps f : T.game_steps =
 let trigger : T.trigger =
   { box1_title = "xFUnDRRn"; box3_title = "EE …l‘"; partner = "mr-mime" }
 
-let make ?(partner_in = `Box1) ?(box = 2) ?(quick_lost = false)
-    ?(crash = false) () =
+let make ?(partner_in = `Box1) ?(box = 2) ?(quick_lost = false) ?(crash = false)
+    () =
   let boxes = Array.init 14 (fun _ -> Array.make 30 None) in
   boxes.(2).(0) <- Some ace;
   (match partner_in with
@@ -130,10 +129,9 @@ let cases =
        shifts 2, box3 0x0351 mr-mime, quick false";
     case "partner fetched from Box 1, the screen opened on Box 1"
       (fun () -> make ~box:0 ())
-      "ok: open Up Right Right Down Left Up Right Right Right Right Right \
-       Right Right Right Right Right Right Right Down Left Left Select A Up \
-       Right Right Down Left A Left A Right A A Left A Select Up close; shifts \
-       2, box3 0x0351 mr-mime, quick false";
+      "ok: open Up Right Right Down Left Up Left Left Down Left Left Select A \
+       Up Right Right Down Left A Up Down Left Left A Right A A Left A Select \
+       Up close; shifts 2, box3 0x0351 mr-mime, quick false";
     case "another Pokémon in Box 3 slot 2: refused before a SELECT"
       (fun () -> make ~partner_in:`Other ())
       "ace_slot_taken: open Up Down Left; shifts 0, box3 0x0351 magikarp, \

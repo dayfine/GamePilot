@@ -49,7 +49,8 @@ let template glyphs text =
       |> Result.map (fun image -> (l, Png_encoding.encode_rgb image)))
 
 let probe_of (l : Text_lines.t) text ~template =
-  Wire.template_match_probe ~ink ~id:(Line_reading.probe_id l text)
+  Wire.template_match_probe ~ink
+    ~id:(Line_reading.probe_id l text)
     ~box:(box l) ~delivery:Latest ~template ()
 
 let score glyphs m text =

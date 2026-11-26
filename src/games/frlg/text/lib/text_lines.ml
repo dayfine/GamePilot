@@ -133,39 +133,6 @@ let bag_count_digit row k =
     ~left:(count_ones_left - (small_digit_width * k))
     ~glyph_top:(list_row_top row)
 
-(* The PC's item storage (pokefirered item_pc.c): the list window 0 at tile
-   (7, 1), so x 56, y 8; names at item_X 9 (x 65), rows 16 apart from y 10;
-   ["×<count>"] at x 110 of the window (166), the × 8 wide. *)
-let item_pc_row i =
-  {
-    id = Printf.sprintf "item_pc.%d" i;
-    left = 65;
-    indent = 2;
-    glyph_top = list_row_top i;
-    width = 98;
-  }
-
-let item_pc_count_ones_left = 184
-
-let item_pc_count_digit row k =
-  small_digit_cell
-    (Printf.sprintf "item_pc_count.%d.%d" row k)
-    ~left:(item_pc_count_ones_left - (small_digit_width * k))
-    ~glyph_top:(list_row_top row)
-
-(* The quantity window 3 at tile (24, 15), so (192, 120); ["×NNN"] at (8, 10):
-   on mGBA the × inks x 201-205 and the digits' cells start at x 208, 5
-   apart. *)
-let item_pc_quantity_left = 208
-let item_pc_quantity_pitch = small_digit_width
-let item_pc_quantity_top = 130
-
-let item_pc_quantity_digit k =
-  small_digit_cell
-    (Printf.sprintf "item_pc_quantity.%d" k)
-    ~left:(item_pc_quantity_left + (item_pc_quantity_pitch * k))
-    ~glyph_top:item_pc_quantity_top
-
 (* The label at x 97: the No symbol (8 wide), CLEAR 1, then the digits. *)
 let berry_number_left = 106
 

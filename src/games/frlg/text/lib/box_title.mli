@@ -17,8 +17,8 @@
     against Q……o, one letter apart) 0.012. Each candidate's template keeps
     {!margin} blank pixels either side, so a short name ([A]) does not match
     inside a longer one that holds it (["”‘' A a."]). The hand over a slot of
-    the top row's middle covers the name: read with the hand on the title or
-    on the first slot. *)
+    the top row's middle covers the name: read with the hand on the title or on
+    the first slot. *)
 
 val margin : int
 (** 10. *)

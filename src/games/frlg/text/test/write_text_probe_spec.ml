@@ -77,19 +77,19 @@ let screens =
       dark );
     ( "item_pc",
       glyphs,
-      rows 6 Text_lines.item_pc_row,
+      rows 6 Item_pc_lines.row,
       Item_names.in_pocket items Items
       @ Item_names.in_pocket items Poke_balls
       @ [ "CANCEL" ],
       dark );
     ( "item_pc_counts",
       small_glyphs,
-      cells ~rows:6 ~cells:3 Text_lines.item_pc_count_digit,
+      cells ~rows:6 ~cells:3 Item_pc_lines.count_digit,
       Number_reading.digits,
       dark );
     ( "item_pc_quantity",
       small_glyphs,
-      List.init 3 Text_lines.item_pc_quantity_digit,
+      List.init 3 Item_pc_lines.quantity_digit,
       Number_reading.digits,
       dark );
     ( "summary_level",
@@ -170,9 +170,24 @@ let box_title_candidates =
      item's Boxes 5-8 among them: a name must read as itself, not as a near
      one. *)
   @ [
-      "xFUnDRRn"; "……o/E!n"; "EE …l‘"; "E♀BRm"; "’BRm"; " FoHIoor"; "xn"; "A";
-      "G……o"; "Q……o"; "J……o"; "L……o"; "K……o"; "EEEJD!n"; "EEEND!n";
-      "EEEOD!n"; "EEIB!n"; "EI/!n";
+      "xFUnDRRn";
+      "……o/E!n";
+      "EE …l‘";
+      "E♀BRm";
+      "’BRm";
+      " FoHIoor";
+      "xn";
+      "A";
+      "G……o";
+      "Q……o";
+      "J……o";
+      "L……o";
+      "K……o";
+      "EEEJD!n";
+      "EEEND!n";
+      "EEEOD!n";
+      "EEIB!n";
+      "EI/!n";
     ]
 
 let box_title_probes dir screen =

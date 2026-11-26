@@ -2,27 +2,27 @@
     PLAYER'S PC, ITEM STORAGE, WITHDRAW ITEM; its list read to CANCEL, and an
     item withdrawn by a count set in the quantity box. New, not in the fork,
     which never opens it: for frlg.ace (docs/design/FRLG-ACE-Execution.md),
-    whose code writes its item into slot 30 of this storage, so the storage
-    must hold fewer than 30 items first, and the item's stack must read x999
-    after.
+    whose code writes its item into slot 30 of this storage, so the storage must
+    hold fewer than 30 items first, and the item's stack must read x999 after.
 
     From pret pokefirered ([ce6406d]): item_pc.c lists the stored items then
     CANCEL ([ItemPc_CountPcItems]: [nItems], the list [nItems + 1] rows), six
-    rows at most, scrolled by list_menu.c as the bag is ({!Bag_items.taps_to_reveal});
-    A on an item opens WITHDRAW, GIVE, CANCEL with the cursor on WITHDRAW
-    ([sItemPcSubmenuOptions], [Menu_InitCursor] at 0); WITHDRAW of a stack of
-    one takes it at once, of more opens the quantity box at x001
-    ([Task_ItemPcWithdraw]), which UP and DOWN move by one, wrapping between 1
-    and the stack, and RIGHT and LEFT by ten, stopping there
+    rows at most, scrolled by list_menu.c as the bag is
+    ({!Bag_items.taps_to_reveal}); A on an item opens WITHDRAW, GIVE, CANCEL
+    with the cursor on WITHDRAW ([sItemPcSubmenuOptions], [Menu_InitCursor] at
+    0); WITHDRAW of a stack of one takes it at once, of more opens the quantity
+    box at x001 ([Task_ItemPcWithdraw]), which UP and DOWN move by one, wrapping
+    between 1 and the stack, and RIGHT and LEFT by ten, stopping there
     (menu_helpers.c [AdjustQuantityAccordingToDPadInput]); A withdraws and
-    prints "Withdrew ..." or "There is no more room in the BAG." until A or B. *)
+    prints "Withdrew ..." or "There is no more room in the BAG." until A or B.
+*)
 
 (** What one list row shows. *)
 type row =
   | Item of { named : bool; count : int }
       (** An item and its count; [named] when the name read is the one asked
           about. *)
-  | Cancel
+  | Cancel  (** The list's last row. *)
 
 type game_steps = {
   open_withdraw : unit -> unit;
@@ -42,34 +42,37 @@ type stock = {
   items : int;  (** Rows before CANCEL: the stacks stored. *)
   stacks : (int * int) list;
       (** The asked item's stacks: list row (from 0) and count, top first. *)
+  cursor : int;  (** The list row the cursor was left on. *)
 }
+(** The list as {!scan} read it. *)
 
 val slots : int
 (** 30: [PC_ITEMS_COUNT]. *)
 
 val scan : game_steps -> string -> stock
-(** From the list's top, every row read down to CANCEL, the cursor left on
-    CANCEL. Fails as [item_storage_unread] on a row that reads as neither an
-    item with a count nor CANCEL. *)
+(** From the list's top, every row read down to CANCEL: DOWN only once a row is
+    below the six shown, so the cursor stays on the top row of a short list.
+    Fails as [item_storage_unread] on a row that reads as neither an item with a
+    count nor CANCEL. *)
 
 val quantity_press : now:int -> target:int -> stack:int -> Wire.button option
 (** The press that moves the quantity box from [now] toward [target] (in 1 ..
-    [stack]): DOWN from 1 straight to the stack when that is the target,
-    RIGHT or LEFT while ten or more away, UP or DOWN for the rest; [None] at
-    the target. *)
+    [stack]): DOWN from 1 straight to the stack when that is the target, RIGHT
+    or LEFT while ten or more away, UP or DOWN for the rest; [None] at the
+    target. *)
 
 val max_quantity_presses : int
-(** 200: more than any count needs (999 from 1 is one press; 990 from 1 is
-    ten). *)
+(** 200: more than any count needs (999 from 1 is one press; 990 from 1 is ten).
+*)
 
 val withdraw : game_steps -> log:(string -> unit) -> string -> int -> unit
 (** {!scan}, then the first stack of the item holding at least [count]: the
-    cursor up to it (its row read again), A, A on WITHDRAW, the quantity set
-    to [count] (each press read back), A, A past the message. Fails as
-    {!scan}, or [item_storage_missing] (no stack that big),
-    [item_storage_cursor] (the cursor is not on the stack),
-    [item_storage_no_quantity] or [item_storage_quantity] (the box does not
-    come or does not reach the count). *)
+    cursor up to it (its row read again), A, A on WITHDRAW, the quantity set to
+    [count] (each press read back), A, A past the message. Fails as {!scan}, or
+    [item_storage_missing] (no stack that big), [item_storage_cursor] (the
+    cursor is not on the stack), [item_storage_no_quantity] or
+    [item_storage_quantity] (the box does not come or does not reach the count).
+*)
 
 val check : game_steps -> log:(string -> unit) -> string -> int option -> unit
 (** {!scan}; fails as [item_storage_full] with {!slots} items or more, and, for

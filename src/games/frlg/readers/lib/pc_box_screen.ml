@@ -69,10 +69,14 @@ let title_menu_row m = Cursor_column.row title_menu m
 
 (* The hand over the first slot, x 90-105, y 20-37 (its bob included). *)
 let hand_id = "pc_box.hand_first_slot"
-let hand_box = box ~x:90 ~y:20 ~w:16 ~h:18
+let hand_left = 90
+let hand_top = 20
+let hand_width = 16
+let hand_height = 18
+let hand_box = box ~x:hand_left ~y:hand_top ~w:hand_width ~h:hand_height
 
 let quick_yellow : Color_count.range =
-  { low = { r = 225; g = 200; b = 40 }; high = { r = 255; g = 250; b = 150 } }
+  { low = { r = 225; g = 200; b = 40 }; high = { r = 255; g = 255; b = 150 } }
 
 let min_quick_share = 0.12
 

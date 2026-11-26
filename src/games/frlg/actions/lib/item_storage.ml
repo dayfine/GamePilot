@@ -14,7 +14,7 @@ type game_steps = {
   close : unit -> unit;
 }
 
-type stock = { items : int; stacks : (int * int) list }
+type stock = { items : int; stacks : (int * int) list; cursor : int }
 
 let slots = 30
 let last_shown = Bag_items.shown_rows - 1
@@ -28,21 +28,21 @@ let reveal steps ~taps k =
   done;
   (max taps need, if k < Bag_items.shown_rows then k else last_shown)
 
-let scan steps name =
-  let rec go k taps stacks =
-    if k > slots then M.fail "item_storage_unread" "no CANCEL after 30 rows"
-    else
-      let taps, shown = reveal steps ~taps k in
-      match steps.read_row shown name with
-      | Some Cancel -> { items = k; stacks = List.rev stacks }
-      | Some (Item { named; count }) ->
-          go (k + 1) taps (if named then (k, count) :: stacks else stacks)
-      | None ->
-          M.fail "item_storage_unread"
-            (Printf.sprintf "list row %d reads as no item and no CANCEL" k)
-  in
-  go 0 0 []
+let fail_unread k =
+  M.fail "item_storage_unread"
+    (Printf.sprintf "list row %d reads as no item and no CANCEL" k)
 
+let rec scan_from steps name k taps stacks =
+  if k > slots then M.fail "item_storage_unread" "no CANCEL after 30 rows";
+  let taps, shown = reveal steps ~taps k in
+  match steps.read_row shown name with
+  | Some Cancel -> { items = k; stacks = List.rev stacks; cursor = taps }
+  | Some (Item { named = true; count }) ->
+      scan_from steps name (k + 1) taps ((k, count) :: stacks)
+  | Some (Item _) -> scan_from steps name (k + 1) taps stacks
+  | None -> fail_unread k
+
+let scan steps name = scan_from steps name 0 0 []
 let tens = 10
 
 let quantity_press ~now ~target ~stack =
@@ -55,25 +55,30 @@ let quantity_press ~now ~target ~stack =
 
 let max_quantity_presses = 200
 
-let rec set_quantity steps ~target ~stack presses =
-  match steps.read_quantity () with
-  | None -> M.fail "item_storage_quantity" "the quantity does not read"
-  | Some now -> (
-      match quantity_press ~now ~target ~stack with
-      | None -> ()
-      | Some _ when presses = 0 ->
-          M.fail "item_storage_quantity"
-            (Printf.sprintf "the quantity stays at %d, not %d" now target)
-      | Some b ->
-          steps.press b;
-          set_quantity steps ~target ~stack (presses - 1))
+let quantity_stuck now target =
+  M.fail "item_storage_quantity"
+    (Printf.sprintf "the quantity stays at %d, not %d" now target)
 
-(* After {!scan} the cursor is on CANCEL, list row [items]; UP to the
-   stack's row [k], which is then on the cursor's shown row. *)
-let to_stack steps name ~items (k, count) =
-  for _ = k + 1 to items do
-    steps.press Wire.Up
-  done;
+let rec set_quantity steps ~target ~stack presses =
+  let now =
+    match steps.read_quantity () with
+    | Some n -> n
+    | None -> M.fail "item_storage_quantity" "the quantity does not read"
+  in
+  match quantity_press ~now ~target ~stack with
+  | None -> ()
+  | Some _ when presses = 0 -> quantity_stuck now target
+  | Some b ->
+      steps.press b;
+      set_quantity steps ~target ~stack (presses - 1)
+
+(* From list row [cursor] (where {!scan} left it) UP or DOWN to the stack's
+   row [k], which is then on the cursor's shown row. *)
+let to_stack steps name ~cursor (k, count) =
+  List.iter steps.press
+    (List.init
+       (abs (k - cursor))
+       (fun _ -> if k < cursor then Wire.Up else Wire.Down));
   match steps.cursor_row () with
   | Some r when steps.read_row r name = Some (Item { named = true; count }) ->
       ()
@@ -89,7 +94,7 @@ let withdraw steps ~log name count =
       M.fail "item_storage_missing"
         (Printf.sprintf "no stack of %s with %d" name count)
   | Some ((_, have) as stack) ->
-      to_stack steps name ~items:stock.items stack;
+      to_stack steps name ~cursor:stock.cursor stack;
       steps.press Wire.A;
       steps.press Wire.A;
       if have > 1 then (
@@ -131,7 +136,9 @@ let press_wait ms b =
   ignore (Effects.submit [ M.hold ~hold_ms ~cooldown_ms:ms b ])
 
 let press b =
-  match b with Wire.A | Wire.B -> press_wait screen_ms b | _ -> press_wait menu_ms b
+  match b with
+  | Wire.A | Wire.B -> press_wait screen_ms b
+  | _ -> press_wait menu_ms b
 
 let looking f =
   Effects.with_probes (Pc_screen.probes @ Item_pc_screen.probes) (fun () ->
@@ -144,7 +151,8 @@ let text line candidates =
   | Read { text; _ } -> Some text
   | No_match _ -> None
 
-let menu_label row candidates = text (Text.Text_lines.pc_menu_row row) candidates
+let menu_label row candidates =
+  text (Text.Text_lines.pc_menu_row row) candidates
 
 (* The PC's menus, from pokefirered pc.inc and player_pc.c: the PC list's
    second row is the player's PC; its menu ITEM STORAGE, MAILBOX, TURN OFF;
@@ -155,44 +163,52 @@ let withdraw_item = "WITHDRAW ITEM"
 
 type opening = Booting | On_list | In_player_pc | In_storage
 
+let toward_player_pc r =
+  if r < player_pc_row then press Wire.Down
+  else if r > player_pc_row then press Wire.Up
+  else press Wire.A
+
+(* One look's press and the stage after it. *)
+let open_step stage (view : Pc_screen.view) =
+  match (stage, view) with
+  | Booting, { screen = Pc_list; cursor = Some r } ->
+      toward_player_pc r;
+      if r = player_pc_row then On_list else Booting
+  | Booting, { screen = Overworld | Text; _ } ->
+      press Wire.A;
+      Booting
+  | (On_list | In_player_pc), { cursor = Some 0; _ }
+    when menu_label 0 [ item_storage ] = Some item_storage ->
+      press Wire.A;
+      In_player_pc
+  | (On_list | In_player_pc), { cursor = Some 0; _ }
+    when menu_label 0 [ withdraw_item ] = Some withdraw_item ->
+      press Wire.A;
+      In_storage
+  | (On_list | In_player_pc | In_storage), { screen = Text; _ } ->
+      press Wire.A;
+      stage
+  | _ ->
+      press_wait menu_ms Wire.Up;
+      stage
+
 let rec open_next stage looks =
-  if looks = 0 then M.fail "item_storage_open" "WITHDRAW ITEM's list did not open"
-  else
-    let view = looking (fun m -> (Pc_screen.read m, Item_pc_screen.shown m)) in
-    match (stage, view) with
-    | _, Some (_, Some true) -> ()
-    | Booting, Some ({ screen = Pc_list; cursor = Some r }, _) ->
-        if r < player_pc_row then press Wire.Down
-        else if r > player_pc_row then press Wire.Up
-        else press Wire.A;
-        open_next (if r = player_pc_row then On_list else Booting) (looks - 1)
-    | Booting, Some ({ screen = Overworld | Text; _ }, _) ->
-        press Wire.A;
-        open_next Booting (looks - 1)
-    | (On_list | In_player_pc), Some ({ cursor = Some 0; _ }, _)
-      when menu_label 0 [ item_storage ] = Some item_storage ->
-        press Wire.A;
-        open_next In_player_pc (looks - 1)
-    | (On_list | In_player_pc), Some ({ cursor = Some 0; _ }, _)
-      when menu_label 0 [ withdraw_item ] = Some withdraw_item ->
-        press Wire.A;
-        open_next In_storage (looks - 1)
-    | (On_list | In_player_pc | In_storage), Some ({ screen = Text; _ }, _) ->
-        press Wire.A;
-        open_next stage (looks - 1)
-    | _ ->
-        press_wait menu_ms Wire.Up;
-        open_next stage (looks - 1)
+  if looks = 0 then
+    M.fail "item_storage_open" "WITHDRAW ITEM's list did not open";
+  match looking (fun m -> (Pc_screen.read m, Item_pc_screen.shown m)) with
+  | Some (_, Some true) -> ()
+  | Some (view, _) -> open_next (open_step stage view) (looks - 1)
+  | None -> open_next stage (looks - 1)
 
 let read_count row =
   Text.Number_reading.read_right_aligned
     ~max_score:Text.Number_reading.small_max_score
     (Text_data.small_glyphs ())
-    (Text.Text_lines.item_pc_count_digit row)
+    (Text.Item_pc_lines.count_digit row)
     ~max_cells:max_count_digits
 
 let read_row i name =
-  match text (Text.Text_lines.item_pc_row i) [ name; cancel ] with
+  match text (Text.Item_pc_lines.row i) [ name; cancel ] with
   | Some t when t = cancel -> Some Cancel
   | named -> (
       match read_count i with
@@ -203,7 +219,7 @@ let read_quantity () =
   Text.Number_reading.read_left_aligned
     ~max_score:Text.Number_reading.small_max_score
     (Text_data.small_glyphs ())
-    Text.Text_lines.item_pc_quantity_digit ~max_cells:max_count_digits
+    Text.Item_pc_lines.quantity_digit ~max_cells:max_count_digits
 
 let await_on f =
   Effects.with_probes Item_pc_screen.probes (fun () ->
@@ -223,11 +239,11 @@ let screen_game_steps ~log =
   {
     open_withdraw = (fun () -> open_next Booting max_opening_looks);
     read_row;
-    cursor_row =
-      (fun () -> Option.join (looking Item_pc_screen.cursor_row));
+    cursor_row = (fun () -> Option.join (looking Item_pc_screen.cursor_row));
     press;
     await_quantity =
-      (fun () -> await_on (fun m -> Item_pc_screen.quantity_shown m = Some true));
+      (fun () ->
+        await_on (fun m -> Item_pc_screen.quantity_shown m = Some true));
     read_quantity;
     close = close ~log;
   }
@@ -263,6 +279,6 @@ let handlers ~log =
           check (screen_game_steps ~log) ~log name count) );
     ( "withdraw_from_item_storage",
       run_with ~action:"withdraw_from_item_storage" withdraw_args
-        (fun (name, count) ->
-          withdraw (screen_game_steps ~log) ~log name count) );
+        (fun (name, count) -> withdraw (screen_game_steps ~log) ~log name count)
+    );
   ]

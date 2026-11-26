@@ -20,24 +20,33 @@ let boxes = 14
 let alive_timeout_ms = 3000
 let quoted s = "\"" ^ s ^ "\""
 
-(* With the hand on the title: RIGHT until it reads [name]. *)
-let rec scroll_to steps name tries =
+(* With the hand on the title: [toward] (LEFT or RIGHT) until it reads
+   [name]. *)
+let rec scroll_to steps ~toward name tries =
   match steps.read_title [ name ] with
   | Some _ -> ()
   | None when tries = 0 ->
       M.fail "ace_box_not_found" ("no box title reads " ^ quoted name)
   | None ->
-      steps.press Wire.Right;
-      scroll_to steps name (tries - 1)
+      steps.press toward;
+      scroll_to steps ~toward name (tries - 1)
 
-(* From a slot of the top row (or the title) to the box named [name], the
-   hand on its slot [slot] (1 or 2): UP to the title, scroll, DOWN onto the
-   third slot, LEFT to the slot. *)
-let to_slot steps name slot =
-  steps.press Wire.Up;
-  scroll_to steps name boxes;
+let down_to_slot steps slot =
   steps.press Wire.Down;
   List.iter steps.press (List.init (3 - slot) (fun _ -> Wire.Left))
+
+(* From a slot of the top row to the box named [name], the hand on its slot
+   [slot] (1 or 2): UP to the title, scroll, DOWN onto the third slot, LEFT
+   to the slot. *)
+let to_slot steps ~toward name slot =
+  steps.press Wire.Up;
+  scroll_to steps ~toward name boxes;
+  down_to_slot steps slot
+
+(* Box 1 to Box 3: two RIGHTs on the title (pokemon_storage_system_tasks.c
+   [INPUT_SCROLL_RIGHT]: the next box). Counted, not read: the Pokémon the
+   hand carries covers the title's left. *)
+let box1_to_box3 = 2
 
 let quick_on steps =
   if steps.hand_quick () <> Some true then (
@@ -54,26 +63,32 @@ let quick_off steps =
    (left on); the hand starts on Box 3 slot 2, which is empty, and ends
    there. *)
 let fetch_partner steps ~log t =
-  to_slot steps t.box1_title 1;
+  to_slot steps ~toward:Wire.Left t.box1_title 1;
   if steps.species_at_hand () <> Some t.partner then
     M.fail "ace_partner_missing"
       (Printf.sprintf "Box 1 slot 1 does not hold %s" t.partner);
   quick_on steps;
   steps.press Wire.A;
-  to_slot steps t.box3_title 2;
+  steps.press Wire.Up;
+  List.iter steps.press (List.init box1_to_box3 (fun _ -> Wire.Right));
+  down_to_slot steps 2;
   steps.press Wire.A;
+  steps.press Wire.Up;
+  if steps.read_title [ t.box3_title ] = None then
+    M.fail "ace_box_not_found"
+      ("the partner was put down in a box not titled " ^ quoted t.box3_title);
+  down_to_slot steps 2;
   if steps.species_at_hand () <> Some t.partner then
     M.fail "ace_partner_missing"
       (Printf.sprintf "%s did not land in Box 3 slot 2" t.partner);
   log (Printf.sprintf "PC: %s moved to Box 3 slot 2." t.partner)
 
 let place_partner steps ~log t =
-  to_slot steps t.box3_title 2;
+  to_slot steps ~toward:Wire.Right t.box3_title 2;
   match steps.species_at_hand () with
   | Some s when s = t.partner ->
       log (Printf.sprintf "PC: %s is in Box 3 slot 2." t.partner)
-  | Some s ->
-      M.fail "ace_slot_taken" (Printf.sprintf "Box 3 slot 2 holds %s" s)
+  | Some s -> M.fail "ace_slot_taken" (Printf.sprintf "Box 3 slot 2 holds %s" s)
   | None when steps.slot_empty () = Some true -> fetch_partner steps ~log t
   | None -> M.fail "ace_slot_taken" "Box 3 slot 2 is not empty"
 
@@ -154,25 +169,30 @@ let alive_reads = alive_timeout_ms / look_timeout_ms
 
 let rec await_alive_after tries name =
   read_title [ name ] = Some name
-  || tries > 0 && await_alive_after (tries - 1) name
+  || (tries > 0 && await_alive_after (tries - 1) name)
+
+let open_move_pokemon ~log () =
+  Effects.with_probes Pc_screen.probes (fun () ->
+      Pc_box.to_box_screen ~log Pc_box.screen_game_steps)
+
+let close ~log () =
+  Effects.with_probes Pc_screen.probes (fun () ->
+      Pc_box.leave ~log Pc_box.screen_game_steps)
+
+let slot_empty () =
+  box_reading (fun m -> Option.map not (Pc_box_screen.panel_occupied m))
 
 let screen_game_steps ~log =
   {
-    open_move_pokemon =
-      (fun () -> Pc_box.to_box_screen ~log Pc_box.screen_game_steps);
+    open_move_pokemon = open_move_pokemon ~log;
     press;
     read_title;
     species_at_hand = Pc_deposit.species_shown;
-    slot_empty =
-      (fun () ->
-        box_reading (fun m -> Option.map not (Pc_box_screen.panel_occupied m)));
+    slot_empty;
     ace_at_hand;
     hand_quick = (fun () -> box_reading Pc_box_screen.hand_quick);
     await_alive = await_alive_after alive_reads;
-    close =
-      (fun () ->
-        Effects.with_probes Pc_screen.probes (fun () ->
-            Pc_box.leave ~log Pc_box.screen_game_steps));
+    close = close ~log;
   }
 
 let decode ~where args =

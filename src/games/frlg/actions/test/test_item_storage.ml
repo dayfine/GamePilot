@@ -110,7 +110,8 @@ let master = ("MASTER BALL", 999)
 let presses ~now ~target ~stack =
   let rec go now n acc =
     match S.quantity_press ~now ~target ~stack with
-    | None -> Printf.sprintf "%d presses: %s" n (String.concat " " (List.rev acc))
+    | None ->
+        Printf.sprintf "%d presses: %s" n (String.concat " " (List.rev acc))
     | Some b ->
         let next =
           match b with
@@ -143,24 +144,28 @@ let cases =
     case "no x999: missing"
       (checked [ ("MASTER BALL", 3) ] (Some 999))
       "item_storage_missing";
-    case "50 of 999" (withdrawn [ ("POTION", 1); master ] 50)
-      "ok: withdrew 50; 13 presses";
+    case "50 of 999"
+      (withdrawn [ ("POTION", 1); master ] 50)
+      "ok: withdrew 50; 18 presses";
     case "999 of 999: DOWN wraps to the stack"
       (withdrawn [ ("POTION", 1); master ] 999)
-      "ok: withdrew 999; 5 presses";
+      "ok: withdrew 999; 6 presses";
     case "a stack of one: no quantity box"
       (withdrawn [ ("MASTER BALL", 1) ] 1)
       "ok: withdrew 1; 3 presses";
-    case "more than stored" (withdrawn [ master ] 1000)
+    case "more than stored"
+      (withdrawn [ master ] 1000)
       "item_storage_missing: withdrew 0; -1 presses";
     case "quantity 1 to 300 of 999"
       (fun () -> presses ~now:1 ~target:300 ~stack:999)
       "38 presses: Right Right Right Right Right Right Right Right Right Right \
        Right Right Right Right Right Right Right Right Right Right Right Right \
        Right Right Right Right Right Right Right Up Up Up Up Up Up Up Up Up";
-    case "quantity 1 to 999" (fun () -> presses ~now:1 ~target:999 ~stack:999)
+    case "quantity 1 to 999"
+      (fun () -> presses ~now:1 ~target:999 ~stack:999)
       "1 presses: Down";
-    case "quantity 12 to 8" (fun () -> presses ~now:12 ~target:8 ~stack:999)
+    case "quantity 12 to 8"
+      (fun () -> presses ~now:12 ~target:8 ~stack:999)
       "4 presses: Down Down Down Down";
   ]
 
