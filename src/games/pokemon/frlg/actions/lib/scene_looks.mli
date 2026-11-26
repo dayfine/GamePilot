@@ -29,22 +29,22 @@ val max_still_change : float
 (** The sum of the three channels' mean change over the middle of the screen
     below which it counts as still: 3. *)
 
-val io :
+val game_steps :
   ?menu_open:(Effects.measurements -> bool) ->
   ?arrived:(Effects.measurements -> bool) ->
   ?await_fade_in:bool ->
   flee_battle:(unit -> bool) ->
   log:(string -> unit) ->
   unit ->
-  Screen_state.Settle.io
-(** A fresh settle's looks and presses. Each [io] keeps its own last look. A
-    look on which [menu_open] holds (default never) is no free control: a menu
-    with no box and no fade (the party, a summary) is not the overworld. A look
-    of the overworld (no fade, box or battle) on which [arrived] holds (default
-    never) is the arrival read. With [await_fade_in] (default false), a look
-    while a fade-in is still coming up is no free control and its press sends no
-    B. Each press watches every frame of its wait and returns the first that
-    showed a warp. *)
+  Screen_state.Settle.game_steps
+(** A fresh settle's looks and presses. Each [game_steps] keeps its own last
+    look. A look on which [menu_open] holds (default never) is no free control:
+    a menu with no box and no fade (the party, a summary) is not the overworld.
+    A look of the overworld (no fade, box or battle) on which [arrived] holds
+    (default never) is the arrival read. With [await_fade_in] (default false), a
+    look while a fade-in is still coming up is no free control and its press
+    sends no B. Each press watches every frame of its wait and returns the first
+    that showed a warp. *)
 
 val settle :
   ?menu_open:(Effects.measurements -> bool) ->
@@ -59,11 +59,11 @@ val settle :
 (** Runs the settle of that kind with {!probes} subscribed, fleeing no battle.
     [start] (default none): the presses that start the step (the item's USE),
     run once the probes are subscribed with every frame watched, so a warp that
-    begins during them counts. [arrived]: as for {!io}; its readers' probes are
-    the caller's to subscribe. [await_fade_in]: as for {!io}. The settle ends
-    [Ok] once quiet, or when a battle starts if [battle_ends] (a trainer's after
-    their talk, which the plan's next event fights); else a battle fails as
-    [battle]. The cap fails as [not_settled]. *)
+    begins during them counts. [arrived]: as for {!game_steps}; its readers'
+    probes are the caller's to subscribe. [await_fade_in]: as for {!game_steps}.
+    The settle ends [Ok] once quiet, or when a battle starts if [battle_ends] (a
+    trainer's after their talk, which the plan's next event fights); else a
+    battle fails as [battle]. The cap fails as [not_settled]. *)
 
 val until_battle :
   label:string ->

@@ -1,8 +1,8 @@
 (** How a step waits for the game to settle after a talk, a scene, a warp or a
     closed menu: one loop over {!Talk_over} for every game. A game gives it its
-    looks (facts from its readers) and its presses through {!io}; the rule for
-    each kind of settle is one table here. A walk through a door is not settled
-    here: the game's walker waits out its own warp (FireRed's
+    looks (facts from its readers) and its presses through {!game_steps}; the
+    rule for each kind of settle is one table here. A walk through a door is not
+    settled here: the game's walker waits out its own warp (FireRed's
     [Frlg_overworld.Warp_fade_in]). *)
 
 (** What ends a settle. *)
@@ -42,7 +42,7 @@ type look = {
           [None]: from [at_ms]. *)
 }
 
-type io = {
+type game_steps = {
   look : unit -> look;  (** the screen now *)
   press : Talk_over.press -> wait_ms:int -> look option;
       (** answers a look, then waits [wait_ms]; a game that only watches just
@@ -63,7 +63,7 @@ type ending =
   | Battle of string  (** a battle [flee_battle] did not flee *)
   | Timed_out of string  (** the cap: the step fails; the string says why *)
 
-val run : ?seen:look -> rule -> label:string -> io -> ending
+val run : ?seen:look -> rule -> label:string -> game_steps -> ending
 (** Looks and presses until [rule] says the game has settled, a battle ends it,
     or the cap. [label] names the step in the log and the failure. [seen]: a
     frame before the first look that showed a warp, watched while the press that
