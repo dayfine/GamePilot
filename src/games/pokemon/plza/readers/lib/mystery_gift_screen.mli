@@ -56,8 +56,10 @@
     everywhere. Likewise the Japanese template ("ボールのもようの　ビビヨン" at item 4 of the
     Japanese list under "stop receiving?", console B, 2026-11-25, cut as the
     others at (592, 566, 400, 38)): 0.000 on its item (0.003 at most shifted)
-    and 0.078 at least elsewhere, shifted too. The French list's third name is
-    long enough to reach that item's strip: 0.14 white. *)
+    and 0.078 at least elsewhere, shifted too. And the zh-Hans template
+    ("球球花纹的彩粉蝶" at item 4 of the zh-Hans list, console B, 2026-11-26, cut the
+    same way). The French list's third name is long enough to reach that item's
+    strip: 0.14 white. *)
 
 val items : int
 (** 6: the rows the list shows. *)

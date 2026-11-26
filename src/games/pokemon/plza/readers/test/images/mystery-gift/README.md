@@ -38,3 +38,16 @@ gift screens' probes and the messages' template windows only. The templates
 in `../../../assets/` (`gift-received-before-ja.png`,
 `code-used-before-ja.png`) are a line of each, cut from the unredacted frames
 and scaled 3 times up (`Received_before` gives the boxes).
+
+`save-dialog-zh-hans-1212-360p.png` is frame 189 of console B's claim-gifts
+run of 2026-11-26 (the third, zh-Hans): the SAVE dialog, its current time and
+"Last Saved" both 2026/01/27 12:12, redacted to `^save_dialog\.`.
+`synthetic-save-dialog-zh-hans-1211-360p.png` is its copy with the current
+time's last "2" replaced by the "1" before it (12:11), as no second minute
+was captured.
+
+`gift-list-zh-hans-cursor-on-1.png` is console B's 1080p capture of the zh-Hans
+Internet gift list (2026-11-26, four gifts, the cursor on the first, Vivillon
+the 4th as "球球花纹的彩粉蝶"), redacted to `^mystery_gift\.`. Vivillon's
+zh-Hans name template (`../../../assets/gift-name-vivillon-poke-ball-zh-Hans.png`)
+is cut from the unredacted capture at (592, 566, 400, 38), as the others.

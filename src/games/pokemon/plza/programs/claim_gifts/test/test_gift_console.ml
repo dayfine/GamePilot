@@ -19,7 +19,9 @@
    reader knows. The
    SAVE dialog is console B's at 18:16 before the save and its copy at 18:18
    after, its "Last Saved" shares changed a little on every frame, as a
-   capture's do. Nothing reaches a daemon.
+   capture's do; its current time is made for the game clock's minute. The
+   game saved last in minute 0, and a save within it leaves "Last Saved" as
+   it was (console B, 2026-11-26). Nothing reaches a daemon.
 
    On the console, A on the list claims the item under the cursor, B on the
    list asks "stop receiving?", B there cancels it, and B on the card goes
@@ -185,6 +187,9 @@ type console = {
   battle : bool;
   after_connect : screen;
   latency_ms : float;
+  clock_ms : float option;
+      (** How far into the game clock's minute 0 the run starts; [None]: the
+          clock stands still in minute 0. *)
 }
 
 (* A prompt fading in and out over the list: 400 ms of it, 500 of the list
@@ -199,15 +204,26 @@ let shown c =
       else Gift_list 0
   | s -> s
 
+(* The game clock's minute: the earlier save was made in minute 0. *)
+let minute c =
+  match c.clock_ms with
+  | None -> 0
+  | Some start -> int_of_float ((start +. c.t_ms) /. 60_000.)
+
+(* The dialog's current time, one reading a minute, two apart by 1.0. *)
+let now_probe c =
+  let x = if minute c mod 2 = 0 then 0.1 else 0.6 in
+  ("save_dialog.now", Wire.Line_shares { rows = [ 0.2 ]; columns = [ x; x ] })
+
 let frame ~list c : Effects.measurements =
   c.seq <- c.seq + 1;
   let screen = shown c in
   c.seen <- c.seen @ [ screen ];
-  {
-    seq = c.seq;
-    t_ms = c.t_ms;
-    probes = probes ~list ~card:c.card ~saved:c.saved c.seq screen;
-  }
+  let ps = probes ~list ~card:c.card ~saved:c.saved c.seq screen in
+  let ps =
+    match screen with Save_dialog _ -> set [ now_probe c ] ps | _ -> ps
+  in
+  { seq = c.seq; t_ms = c.t_ms; probes = ps }
 
 let press c = function
   | Wire.Press { buttons; hold_ms; cooldown_ms; _ } ->
@@ -217,7 +233,7 @@ let press c = function
           let screen = shown c in
           c.presses <- c.presses @ [ (screen, b) ];
           (match (screen, b) with
-          | Saving _, Wire.A -> c.saved <- true
+          | Saving _, Wire.A -> c.saved <- minute c <> 0
           | Gift_list k, Wire.A -> c.claimed <- c.claimed @ [ k ]
           | _ -> ());
           c.screen <-
@@ -264,7 +280,8 @@ let on_console ~list c f =
     }
 
 let start ?(card = english_card) ?(battle = false)
-    ?(after_connect = Gift_list 0) ?(latency_ms = 0.) screen =
+    ?(after_connect = Gift_list 0) ?(latency_ms = 0.) ?(clock_ms = Some 50_000.)
+    screen =
   {
     screen;
     t_ms = 0.;
@@ -277,6 +294,7 @@ let start ?(card = english_card) ?(battle = false)
     battle;
     after_connect;
     latency_ms;
+    clock_ms;
   }
 
 let picture : Wire.box = { x = 0.; y = 0.; w = 1.; h = 1. }
@@ -350,8 +368,10 @@ let choose ~list =
   | Ok () -> String.concat "; " !log ^ " -> " ^ screen_text c.screen
   | Error e -> "error: " ^ e
 
-let save () =
-  let c = start (Menu 0) in
+(* Saved from the main menu, the game clock [clock_ms] into the minute of
+   the earlier save. *)
+let save ?clock_ms () =
+  let c = start ?clock_ms (Menu 0) in
   let log = ref [] in
   let r =
     on_console ~list:english_list c (fun () ->
@@ -360,6 +380,16 @@ let save () =
   match r with
   | Ok () -> String.concat "; " !log ^ " -> " ^ screen_text c.screen
   | Error e -> "error: " ^ e
+
+(* Sp.save as above: what came of it, the clock's minute and the A
+   presses. *)
+let save_a ?clock_ms () () =
+  let c = start ?clock_ms (Menu 0) in
+  let r = on_console ~list:english_list c (fun () -> Sp.save ~log:ignore) in
+  Printf.sprintf "%s; the clock in minute %d; %d A"
+    (match r with Ok () -> "saved" | Error e -> "error: " ^ e)
+    (minute c)
+    (List.length (List.filter (fun (_, b) -> b = Wire.A) c.presses))
 
 (* Mystery_gift.after_code from [screen]: what it read, the A presses and
    where it ended. *)
@@ -486,5 +516,11 @@ let () =
         (fun () -> leave (Disconnect No))
         "main menu, row 5; claimed [], 0 A on the list";
       case "Last Saved held 1 s over changing shares: saved" save
-        "Saved: Last Saved changed. -> main menu, row 0";
+        "The current time changed: saving.; Saved: Last Saved changed. -> main \
+         menu, row 0";
+      case "the dialog opened 10 s before the minute changes: waits, then saved"
+        (save_a ()) "saved; the clock in minute 1; 2 A";
+      case "the clock stands still: no A, not saved" (save_a ~clock_ms:None ())
+        "error: the current time did not change within 65 s: not saved; the \
+         clock in minute 0; 0 A";
     ]

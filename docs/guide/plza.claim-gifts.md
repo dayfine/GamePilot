@@ -78,7 +78,8 @@ received: no claim, and nothing to check.
 
 Then the Boxes again, on Box 1: the gift received into party slot 6 is carried to its slot, and each
 Pokémon gift received in this run must read in its slot. Save Progress saves when a gift was
-received or a Pokémon moved, checked by its "Last Saved" time. The last line of the log is one line
+received or a Pokémon moved: it waits on the SAVE dialog until the current time reaches the next
+minute (up to a minute), saves, and checks that "Last Saved" changed. The last line of the log is one line
 a gift: claimed, already received, expired, not supported or failed.
 
 A gift is known by where the game puts it, not by its species: received into a party of five it
@@ -111,7 +112,7 @@ lands in party slot 6, the first one received.
   captures). In another language a gift claimed twice fails as an unknown screen, with its frame
   kept, and a used code stops at its message.
 - HOME gifts are not claimed. An Internet gift needs its name's template in the game's language;
-  only the Poké Ball Pattern Vivillon has one, in English, French and Japanese.
+  only the Poké Ball Pattern Vivillon has one, in English, French, Japanese and Simplified Chinese.
 - Gifts are told apart by where they land, not by species. Gifts received into a full party land in
   Box 1's first free slots in the order received, which may not be the catalog's slots: the check
   then fails them.

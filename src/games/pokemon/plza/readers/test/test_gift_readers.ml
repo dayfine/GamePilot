@@ -16,7 +16,10 @@
    list and no card; its gift is item 4 under the Japanese name
    (fixtures/gifts/gifts.ja.probes.jsonl, likewise) and none under the
    English or French one, and the other lists have none under the Japanese
-   name. The white fade
+   name. The zh-Hans list (console B, 2026-11-26, the cursor on the first
+   item, Vivillon the 4th as "球球花纹的彩粉蝶") reads as the list, its gift
+   item 4 under the zh-Hans name (fixtures/gifts/gifts.zh-Hans.probes.jsonl,
+   likewise) and none under the others'. The white fade
    before a card reads as nothing. The same
    list dimmed by the Switch after an idle (gift-list-dimmed, about 30%
    brightness) must read as nothing: a dim screen is no screen we know. No
@@ -46,14 +49,22 @@ let frames = Wire.read_image_probes "fixtures/gifts/gifts.probes.jsonl"
 let shifted = Wire.read_image_probes "fixtures/gifts/gifts.shifted.probes.jsonl"
 let french = Wire.read_image_probes "fixtures/gifts/gifts.fr.probes.jsonl"
 let japanese = Wire.read_image_probes "fixtures/gifts/gifts.ja.probes.jsonl"
+let chinese = Wire.read_image_probes "fixtures/gifts/gifts.zh-Hans.probes.jsonl"
 let measurements probes : Wire.frame = { seq = 1; t_ms = 0.; probes }
 let menu = "./tutorial-cards/it-menu-no-card.jpg"
 let gift_list = "./mystery-gift/gift-list-cursor-on-1.png"
 let french_list = "./mystery-gift/gift-list-fr-cursor-on-1.png"
 let japanese_list = "./mystery-gift/gift-list-ja-stop-receiving.png"
+let chinese_list = "./mystery-gift/gift-list-zh-hans-cursor-on-1.png"
 
 (* Each list's capture, by the language of its names. *)
-let lists = [ ("en", gift_list); ("fr", french_list); ("ja", japanese_list) ]
+let lists =
+  [
+    ("en", gift_list);
+    ("fr", french_list);
+    ("ja", japanese_list);
+    ("zh-Hans", chinese_list);
+  ]
 
 let cards m =
   String.init 6 (fun k ->
@@ -140,18 +151,26 @@ let box_cell path =
       Some (String.starts_with ~prefix:"pokemon" frame)
   | _ -> None
 
-(* Each "Last Saved" layout's 18:16 and 18:18. *)
+(* Each "Last Saved" layout's 18:16 and 18:18, and zh-Hans' current time,
+   12:12 and its copy made 12:11 (the minutes' "2" replaced by the "1"
+   before it). *)
 let save_pairs =
   [
-    ( "English",
+    ( "Last Saved, English",
+      Save_dialog.last_saved,
       "./mystery-gift/save-dialog-last-saved-1816.png",
       "./mystery-gift/synthetic-save-dialog-last-saved-1818.png" );
-    ( "French layout",
+    ( "Last Saved, French layout",
+      Save_dialog.last_saved,
       "./mystery-gift/synthetic-save-dialog-fr-layout-1816.png",
       "./mystery-gift/synthetic-save-dialog-fr-layout-1818.png" );
+    ( "current time, zh-Hans",
+      Save_dialog.current_time,
+      "./mystery-gift/save-dialog-zh-hans-1212-360p.png",
+      "./mystery-gift/synthetic-save-dialog-zh-hans-1211-360p.png" );
   ]
 
-let saves = List.concat_map (fun (_, a, b) -> [ a; b ]) save_pairs
+let saves = List.concat_map (fun (_, _, a, b) -> [ a; b ]) save_pairs
 
 (* "./bright90/mystery-gift/x.png" -> "./mystery-gift/x.png"; the shifted
    frames are png. An unshifted path stays. *)
@@ -160,23 +179,23 @@ let unshifted path =
   | [ dot; _shift; folder; frame ] -> String.concat "/" [ dot; folder; frame ]
   | _ -> path
 
-(* A layout's "Last Saved" 18:16 against itself and against 18:18, in one
+(* A pair's first time against itself and against the other, in one
    shift. *)
 let shift_of path = List.nth (String.split_on_char '/' path) 1
 
 let last_saved_cases all =
-  let reading k frame =
+  let reading k read frame =
     List.find_map
       (fun (path, probes) ->
         if shift_of path = k && same (unshifted path) frame then
-          Save_dialog.last_saved (measurements probes)
+          read (measurements probes)
         else None)
       all
   in
-  let compare k (_, before, after) () =
-    match (reading k before, reading k after) with
+  let compare k (_, read, before, after) () =
+    match (reading k read before, reading k read after) with
     | Some a, Some b ->
-        Printf.sprintf "itself %b, 18:16 and 18:18 %b"
+        Printf.sprintf "itself %b, the other %b"
           (Save_dialog.same_time a a)
           (Save_dialog.same_time a b)
     | _ -> "no reading"
@@ -184,11 +203,11 @@ let last_saved_cases all =
   List.concat_map
     (fun k ->
       List.map
-        (fun ((layout, _, _) as pair) ->
+        (fun ((layout, _, _, _) as pair) ->
           case
-            (Printf.sprintf "Last Saved, %s, %s" layout
+            (Printf.sprintf "%s, %s" layout
                (if k = "mystery-gift" then "as captured" else k))
-            (compare k pair) "itself true, 18:16 and 18:18 false")
+            (compare k pair) "itself true, the other false")
         save_pairs)
     (List.sort_uniq String.compare (List.map (fun (p, _) -> shift_of p) all))
 
@@ -207,6 +226,8 @@ let expected_list ~name path =
   else if same path after_claim then listed "none"
   else if same path french_list then
     listed (if name = "fr" then "4" else "none")
+  else if same path chinese_list then
+    listed (if name = "zh-Hans" then "4" else "none")
   else "no gift list"
 
 let expected_card path =
@@ -337,9 +358,11 @@ let () =
     @ frame_cases ~label:"shifted, " shifted
     @ frame_cases ~name:"fr" ~label:"French name, " french
     @ frame_cases ~name:"ja" ~label:"Japanese name, " japanese
+    @ frame_cases ~name:"zh-Hans" ~label:"Chinese name, " chinese
     @ gift_item_cases ~name:"en" ~label:"" (frames @ shifted)
     @ gift_item_cases ~name:"fr" ~label:"French name, " french
     @ gift_item_cases ~name:"ja" ~label:"Japanese name, " japanese
+    @ gift_item_cases ~name:"zh-Hans" ~label:"Chinese name, " chinese
     @ last_saved_cases
         (List.filter
            (fun (p, _) -> List.exists (same (unshifted p)) saves)

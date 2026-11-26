@@ -16,6 +16,12 @@
       over English's minutes, (552, 856, 70, 32), held French's date (console B,
       2026-11-25: "6/01/2" of 26/01/2026), so a French save never changed it.
 
+    - the current time: its date and time under their label in the top panel
+      (690, 356, 380, 60), read the same way (zh-Hans, console B's frame of
+      2026-11-26: "2026/01/27 12:12" at x 708 to 1035). It is set in a larger
+      type than "Last Saved", and the two are never compared: the current time
+      is read for its change only.
+
     Read before saving and again after, the save counts as done when "Last
     Saved" changed. Measured against a copy of the capture with its last digit
     replaced by the 8 before it (18:18, images/mystery-gift/synthetic-...), as
@@ -29,7 +35,7 @@
     date or time sits past x 1258, or on another row, does not. *)
 
 val probes : picture:Wire.box -> Wire.probe_spec list
-(** The panel's, the button's and the time's probes. *)
+(** The panel's, the button's and the two times' probes. *)
 
 val shown : Effects.measurements -> bool
 (** The SAVE dialog is open: the panel strip over 0.90 white and the button over
@@ -39,5 +45,10 @@ val last_saved : Effects.measurements -> float list option
 (** The "Last Saved" columns' dark shares, left first; [None] without the
     dialog. *)
 
+val current_time : Effects.measurements -> float list option
+(** The current time's columns' and rows' dark shares, as {!last_saved}; [None]
+    without the dialog. *)
+
 val same_time : float list -> float list -> bool
-(** Two {!last_saved} readings show the same time. *)
+(** Two {!last_saved} readings, or two {!current_time} readings, show the same
+    time. *)
