@@ -29,12 +29,6 @@ val how_name : how -> string
 type box_slot = { box : int; slot : int }
 (** A Boxes slot: box 1 the first, slot 1 to 30 left to right, then down. *)
 
-(** The order a HOME box's slots are tried in for the first empty one, column by
-    column. *)
-type home_order =
-  | Left_to_right  (** from column 1 *)
-  | Right_to_left  (** from the last column *)
-
 type pokemon = {
   box_slot : box_slot;
       (** Where the program leaves the gift's Pokémon: the first free box slot
@@ -44,7 +38,9 @@ type pokemon = {
   home_boxes : int list;
       (** The Pokémon HOME boxes it is banked in later (plza.bank-home), tried
           in order: the first with an empty slot takes it. *)
-  home_order : home_order;  (** How each of them is searched. *)
+  home_order : Pokemon_home.Box_view.order;
+      (** How each of them is searched for its first empty slot: bank-home's
+          scan order, so the catalog names the reader's type, not a copy. *)
 }
 (** Where a gift's Pokémon goes. *)
 
