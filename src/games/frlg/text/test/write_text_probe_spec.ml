@@ -163,7 +163,7 @@ let mail_probes dir screen =
     mail_candidates
 
 (* The box title: each candidate on its own line, centred as the game
-   centres it, in the title's white. *)
+   centres it, matched by its dark outline. *)
 let box_title_candidates =
   [ "BOX1"; "BOX2"; "Az!…'.,9"; "”‘' A a." ]
   (* The bag-prep code's names (docs/design/FRLG-ACE-Execution.md), each
