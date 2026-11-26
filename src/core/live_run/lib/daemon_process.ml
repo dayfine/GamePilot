@@ -79,23 +79,12 @@ let file_text path =
   | text -> text
   | exception Sys_error _ -> ""
 
-(* Where [part] starts in [text]. *)
-let find text part =
-  let n = String.length part in
-  let rec at i =
-    if i + n > String.length text then None
-    else if String.sub text i n = part then Some i
-    else at (i + 1)
-  in
-  at 0
-
-let contains text part = Option.is_some (find text part)
 let is_digit c = c >= '0' && c <= '9'
 
 (* The port after the last ':' on [prefix]'s line: "...127.0.0.1:47950". *)
 let port_after text prefix =
   let ( let* ) = Option.bind in
-  let* i = find text prefix in
+  let* i = Strings.Find.substring text prefix in
   let line_end =
     Option.value
       (String.index_from_opt text i '\n')
@@ -116,7 +105,7 @@ let exited pid =
 (* Waits for the daemon's "listening" line in its output file. *)
 let rec wait_ready t deadline =
   let out = file_text t.out_file in
-  if contains out ready_line then
+  if Strings.Contains.substring out ready_line then
     match port_after out ready_line with
     | Some port -> Ok { t with port; watch_port = port_after out watch_line }
     | None -> Error ("the daemon gave no port: " ^ String.trim out)

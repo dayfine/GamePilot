@@ -1,0 +1,3 @@
+(library
+ (name strings)
+ (public_name gamepilot.strings))

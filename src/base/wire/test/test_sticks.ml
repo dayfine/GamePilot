@@ -48,7 +48,7 @@ let check_press_without_sticks () =
   let text = Yojson.Safe.to_string json in
   if
     List.exists
-      (fun f -> Substring.contains text f)
+      (fun f -> Strings.Contains.substring text f)
       [ "left_stick"; "right_stick" ]
   then failwith ("FAILED a press without sticks encodes a stick: " ^ text);
   (match Wire.message_of_json json with

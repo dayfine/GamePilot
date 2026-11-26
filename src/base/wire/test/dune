@@ -5,4 +5,4 @@
   test_watch_times
   test_watch_registry
   test_line_shares_find)
- (libraries yojson gamepilot.wire gamepilot.table_test gamepilot.substring))
+ (libraries yojson gamepilot.wire gamepilot.table_test gamepilot.strings))

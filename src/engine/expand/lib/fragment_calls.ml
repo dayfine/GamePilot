@@ -45,14 +45,12 @@ let text (name, field) =
 let replace_all ~sub ~by s =
   let n = String.length sub and b = Buffer.create (String.length s) in
   let rec go i =
-    if i > String.length s - n then
-      Buffer.add_string b (String.sub s i (String.length s - i))
-    else if String.sub s i n = sub then (
-      Buffer.add_string b by;
-      go (i + n))
-    else (
-      Buffer.add_char b s.[i];
-      go (i + 1))
+    match Strings.Find.substring ~from:i s sub with
+    | None -> Buffer.add_string b (String.sub s i (String.length s - i))
+    | Some j ->
+        Buffer.add_string b (String.sub s i (j - i));
+        Buffer.add_string b by;
+        go (j + n)
   in
   go 0;
   Buffer.contents b

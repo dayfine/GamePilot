@@ -151,14 +151,13 @@ let fake_battle_game_steps (b : fake_battle) calls : B.Battle.game_steps =
 
 (* The log lines a flow shows as calls: the ends' (capped, reached, skipped);
    with [~battle_lines], the per-battle ones too. *)
-
 let shown ~battle_lines line =
   String.starts_with ~prefix:"Grind: capped" line
   || String.starts_with ~prefix:"Grind: round over" line
-  || Substring.contains line " could not come in"
-  || Substring.contains line " reached Lv "
-  || Substring.contains line " already; skipped"
-     && not (Substring.contains line " knows ")
+  || Strings.Contains.substring line " could not come in"
+  || Strings.Contains.substring line " reached Lv "
+  || Strings.Contains.substring line " already; skipped"
+     && not (Strings.Contains.substring line " knows ")
   || (battle_lines && String.starts_with ~prefix:"Grind: battle" line)
 
 (* [cap]: the runner's --grind-battles. [levels]: what the summary reads, one

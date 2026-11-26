@@ -34,9 +34,9 @@ let () =
   | exception Replay.Divergence e ->
       print_endline e;
       expect "different button -> divergence"
-        (Substring.contains e "commands"
-        && Substring.contains e "press Start"
-        && Substring.contains e "press A")
+        (Strings.Contains.substring e "commands"
+        && Strings.Contains.substring e "press Start"
+        && Strings.Contains.substring e "press A")
 
 (* A program whose wait never holds where the recorded client pressed a button
    times out there (the reader missed on the recorded frames) and must not read
@@ -55,7 +55,7 @@ let () =
   | exception Replay.Divergence e ->
       print_endline e;
       expect "second await past a client message -> divergence"
-        (Substring.contains e "recorded client sent submit")
+        (Strings.Contains.substring e "recorded client sent submit")
 
 (* A wire log recorded live on mGBA (FireRed, Pallet overworld state): the
    program passes on it, so a reader change can be checked here without the
