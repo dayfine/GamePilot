@@ -40,5 +40,5 @@ type room = {
   needed_moves : string list;  (** Field moves the chain needs. *)
 }
 
-val plan_json : room -> Yojson.Safe.t
+val room_plan : room -> Yojson.Safe.t
 (** The checkpoint as a plan file ([gamepilot-checkpoint/1]). *)

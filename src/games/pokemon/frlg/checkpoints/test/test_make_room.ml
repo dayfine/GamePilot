@@ -58,7 +58,7 @@ let plan () =
   in
   match
     Pokemon_engine.Plan_decode.decode ~source:"00-make-room"
-      (Make_room.plan_json room)
+      (Make_room.room_plan room)
   with
   | Error e -> "error: " ^ e
   | Ok p ->
