@@ -99,7 +99,7 @@ let summary name = function
 let run_in setup plan n ~attempt ~reload (run : Run_record.run) =
   let id = plan.P.Plan.checkpoint.checkpoint_id in
   let name = run_name id n attempt in
-  let log, close = Run_record.story_log run.record in
+  let log, close = Run_record.run_log run.record in
   log ("[Run] " ^ name ^ if reload then " (after a reload)" else "");
   let outcome =
     Live_run.Series_daemons.with_daemon setup.daemons ~failed:of_runner run ~n

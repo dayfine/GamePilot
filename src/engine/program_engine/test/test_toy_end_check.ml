@@ -102,8 +102,8 @@ let cases =
       (fun () -> first_line (at_end ()))
       "passed";
     case "at its end before the first event: logged with the sign read"
-      (fun () -> starting "[Story] cf: already" (at_end ()))
-      "[Story] cf: already at its end (sign inn): passed, no event run";
+      (fun () -> starting "[Run] cf: already" (at_end ()))
+      "[Run] cf: already at its end (sign inn): passed, no event run";
     case "at its end before the first event: no event runs"
       (fun () -> starting "ran" (at_end ()))
       "";

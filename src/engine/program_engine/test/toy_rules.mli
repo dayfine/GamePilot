@@ -19,7 +19,7 @@ module Pose = Engine_rules.Zone_pose
 (** The toy's actions: one constructor per set. *)
 module Action : sig
   type t =
-    | Story of Engine_rules.Story_action.t  (** The engine's. *)
+    | Story of Engine_rules.Builtin_action.t  (** The engine's. *)
     | Walk of Toy_walk.t  (** Hold a direction until a landmark shows. *)
     | Inn of Toy_inn.t  (** Rest at an inn, or buy there. *)
 

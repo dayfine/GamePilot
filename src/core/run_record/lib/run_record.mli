@@ -29,7 +29,7 @@ val write : t -> string -> string -> unit
 val append : t -> string -> string -> unit
 (** [append t file text] adds [text] at the end of the run folder's [file]. *)
 
-val story_log : t -> (string -> unit) * (unit -> unit)
+val run_log : t -> (string -> unit) * (unit -> unit)
 (** A logger to stdout and story.log, and what closes it. *)
 
 val copy_file : src:string -> dst:string -> unit

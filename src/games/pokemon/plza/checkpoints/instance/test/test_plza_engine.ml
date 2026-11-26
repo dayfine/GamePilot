@@ -129,7 +129,7 @@ let decode_cases =
       (fun () ->
         decoded Plan_text.outline
           (plan_text [ {|{"id": "x", "kind": "legs", "args": {"legs": []}}|} ]))
-      {|01.02-platform-to-plaza.plan.json: checkpoint.events[0].kind "legs" is not a story event kind.|};
+      {|01.02-platform-to-plaza.plan.json: checkpoint.events[0].kind "legs" is not a built-in event kind.|};
     case "a promise PLZA cannot read"
       (fun () ->
         decoded Plan_text.outline

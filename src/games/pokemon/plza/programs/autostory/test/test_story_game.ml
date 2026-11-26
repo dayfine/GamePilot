@@ -1763,7 +1763,7 @@ let cases_03_02b =
       "passed";
     case "03.03-battle-taunie resumed at the arch after it: already at its end"
       (logged "03.03-battle-taunie" at_arch
-         "[Story] 03.03-battle-taunie: already at its end (place minimap \
+         "[Run] 03.03-battle-taunie: already at its end (place minimap \
           after-taunie-battle): passed, no event run")
       "true";
     case "03.03-battle-taunie resumed at the arch after it: nothing pressed"
@@ -1852,7 +1852,7 @@ let cases_03_04 =
       "passed";
     case "03.07-pokemon-center resumed outside the Center: already at its end"
       (logged "03.07-pokemon-center" outside_center
-         "[Story] 03.07-pokemon-center: already at its end (place minimap \
+         "[Run] 03.07-pokemon-center: already at its end (place minimap \
           pokemon-center-door): passed, no event run")
       "true";
     case "03.07-pokemon-center resumed outside the Center: nothing pressed"
@@ -1939,7 +1939,7 @@ let cases_signatures =
     case
       "03.15-mable-reward resumed at its end: already at its end, no event run"
       (office_logged ~six:true
-         "[Story] 03.15-mable-reward: already at its end (flags mystery_gift): \
+         "[Run] 03.15-mable-reward: already at its end (flags mystery_gift): \
           passed, no event run")
       "true";
     case "03.15-mable-reward resumed at its end: the flag read set"
@@ -1959,7 +1959,7 @@ let cases_signatures =
     case
       "03.15-mable-reward resumed after Mable's talk (five rows): its events \
        run"
-      (office_logged ~six:false "[Story] 03.15-mable-reward #1 to_mable: start")
+      (office_logged ~six:false "[Run] 03.15-mable-reward #1 to_mable: start")
       "true";
     case
       "03.15-mable-reward resumed after Mable's talk (five rows): not already \

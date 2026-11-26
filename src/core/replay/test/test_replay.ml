@@ -333,7 +333,7 @@ let () =
   in
   let program () =
     ignore (Effects.load_state "state.ss" : int);
-    Effects.show_log "[Story] waiting";
+    Effects.show_log "[Run] waiting";
     Effects.await ~timeout_ms:100_000 (fun _ -> false)
   in
   expect "a logged stop replays as Stop_requested"

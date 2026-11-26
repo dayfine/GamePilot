@@ -29,7 +29,7 @@ let make script =
   let level = ref script.start_level and saved = ref script.start_level in
   let batches = ref 0 and saves = ref 0 and lines = ref [] in
   let log line =
-    if not (String.starts_with ~prefix:"[Story]" line) then
+    if not (String.starts_with ~prefix:"[Run]" line) then
       lines := line :: !lines
   in
   let batch _event _args =

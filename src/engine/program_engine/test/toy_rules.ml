@@ -10,12 +10,12 @@ module Pose = Engine_rules.Zone_pose
 
 module Action = struct
   type t =
-    | Story of Engine_rules.Story_action.t
+    | Story of Engine_rules.Builtin_action.t
     | Walk of Toy_walk.t
     | Inn of Toy_inn.t
 
   let to_string = function
-    | Story a -> Engine_rules.Story_action.to_string a
+    | Story a -> Engine_rules.Builtin_action.to_string a
     | Walk w -> Toy_walk.to_string w
     | Inn i -> Toy_inn.to_string i
 end

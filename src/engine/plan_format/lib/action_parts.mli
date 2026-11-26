@@ -6,7 +6,7 @@
       let parts =
         Action_parts.
           [
-            Part ((module Story_action_decode), fun a -> Story a);
+            Part ((module Builtin_action_decode), fun a -> Builtin a);
             Part ((module Toy_walk_decode), fun a -> Walk a);
           ]
 

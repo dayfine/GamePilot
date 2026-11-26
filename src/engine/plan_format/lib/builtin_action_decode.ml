@@ -1,7 +1,7 @@
 module F = Json_field
-open Engine_rules.Story_action
+open Engine_rules.Builtin_action
 
-type t = Engine_rules.Story_action.t
+type t = Engine_rules.Builtin_action.t
 
 let no_args action ~where:_ _ = action
 let answer ~where args = Answer (F.bool_or ~where ~default:true "yes" args)
