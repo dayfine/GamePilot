@@ -340,6 +340,7 @@ let step ?(until = None) ?(wait_before_ms = 0) ?(battle_ahead = false) legs
       until;
       earliest_end_ms = 0;
       heading_deg = None;
+      to_starter = false;
     }
 
 let free_cases =

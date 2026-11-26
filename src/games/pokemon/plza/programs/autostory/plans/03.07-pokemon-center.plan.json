@@ -32,7 +32,7 @@
         "id": "pokedex_app",
         "kind": "scene",
         "action": "button_b",
-        "why": "the Pokedex app, Chikorita's entry, the nurse, Taunie's scene outside (autosave), until control outside the Center (its end: minimap pokemon-center-door)"
+        "why": "the Pokedex app, the starter's entry, the nurse, Taunie's scene outside (autosave), until control outside the Center (its end: minimap pokemon-center-door)"
       }
     ]
   }

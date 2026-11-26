@@ -7,9 +7,11 @@
     [[[angle degrees, walk ms], ...]]), [style] (["face_then_walk"], the
     default, or ["steer"]), [wait_before_ms], [heading] (degrees, turned to by
     the minimap's arrow first), [end] (["fade_white"], ["fade_black"],
-    ["dialog"], ["prompt"], ["talk"], ["talk_after_legs"] or ["scene"]) and
-    [earliest_end_ms] (only with an [end]). PLZA's own JSON shape. Raises
-    [Json_field.Invalid] as its readers do; the codec catches it. *)
+    ["dialog"], ["prompt"], ["talk"], ["talk_after_legs"] or ["scene"]),
+    [earliest_end_ms] (only with an [end]) and [to_starter] (01.04's walk to the
+    starter: its legs are Chikorita's, the fork's default; not empty). PLZA's
+    own JSON shape. Raises [Json_field.Invalid] as its readers do; the codec
+    catches it. *)
 
 val walk : where:string -> Json_field.obj -> Plza_rules.Walk_args.t
 (** [where] is the prefix of the args' fields

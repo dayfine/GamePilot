@@ -17,12 +17,13 @@
       {
         "id": "approach_starter",
         "kind": "walk",
-        "why": "to Chikorita's \"A Talk\" prompt (the fork's default starter) and A on it. not planned: no tile grid in Lumiose",
+        "why": "to the chosen starter's \"A Talk\" prompt and A on it; the legs are Chikorita's (the default); the starter option's own walk replaces them. not planned: no tile grid in Lumiose",
         "skip_if": ["talk_or_battle_shows", "party_bar_free"],
         "args": {
           "legs": [[-66, 600]],
           "style": "steer",
-          "end": "talk_after_legs"
+          "end": "talk_after_legs",
+          "to_starter": true
         }
       },
       {

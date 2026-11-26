@@ -57,6 +57,10 @@ type t = {
   heading_deg : float option;
       (** A minimap bearing (0 north, 90 east), as the fork's plans give it, to
           face before the legs, read from the minimap's arrow. *)
+  to_starter : bool;
+      (** The walk to the starter 01.04 picks (the fork's [to_starter]): the
+          legs are Chikorita's, and the run's starter's own move, when it has
+          one, replaces them ([Plza_story.Starter]). *)
 }
 (** A walk event's args. *)
 
@@ -72,5 +76,6 @@ val style_of_name : string -> style option
 
 val to_string : t -> string
 (** ["walk [0, 4500] [90, 10000] until fade_white"]: the legs as the plan writes
-    them, then [steer], the wait before, the heading faced first, the end and
-    its [earliest_end_ms] when set. *)
+    them, then [steer], the wait before, the heading faced first,
+    [or the starter's own] for {!t.to_starter}, the end and its
+    [earliest_end_ms] when set. *)

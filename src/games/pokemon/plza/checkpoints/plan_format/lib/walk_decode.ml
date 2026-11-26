@@ -49,9 +49,25 @@ let style ~where args =
       | Some style -> style
       | None -> F.fail "%sstyle must be \"face_then_walk\" or \"steer\"." where)
 
+(* The fork's check: the legs are the starter's with no walk of its own. *)
+let to_starter ~where args move =
+  let flagged = F.bool_or ~where ~default:false "to_starter" args in
+  if flagged && move.legs = [] then
+    F.fail "%sto_starter needs the legs of the starter with no walk of its own."
+      where
+  else flagged
+
 let walk ~where args =
   known_fields_only ~where
-    [ "legs"; "end"; "style"; "wait_before_ms"; "earliest_end_ms"; "heading" ]
+    [
+      "legs";
+      "end";
+      "style";
+      "wait_before_ms";
+      "earliest_end_ms";
+      "heading";
+      "to_starter";
+    ]
     args;
   let move =
     {
@@ -67,4 +83,5 @@ let walk ~where args =
     until;
     earliest_end_ms = earliest_end_ms ~where args until;
     heading_deg = Option.map float_of_int (optional ~where "heading" args F.int);
+    to_starter = to_starter ~where args move;
   }

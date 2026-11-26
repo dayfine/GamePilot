@@ -456,6 +456,16 @@ let choices_of ?(options = Plza_autostory.New_game_options.none) fact ids () =
   | Ok cs -> "ok: " ^ String.concat "; " (List.map fact cs)
   | Error e -> "error: " ^ e
 
+(* The starter option over the series [ids] (Starter_option.series_check). *)
+let starter_over tag ids () =
+  match
+    Plza_autostory.Starter_option.series_check
+      (Plza_story.Starter.of_tag tag)
+      (List.map (fun id -> (plan id).checkpoint) ids)
+  with
+  | Ok () -> "ok"
+  | Error e -> "error: " ^ e
+
 let french_5 =
   {
     Plza_autostory.New_game_options.none with
@@ -464,11 +474,11 @@ let french_5 =
   }
 
 (* The run on [screen]: its end and the console. *)
-let outcome checkpoint screen =
+let outcome ?starter checkpoint screen =
   let c = C.create () in
   let steps = C.steps c screen in
   let game =
-    Plza_autostory.Story_game.make steps
+    Plza_autostory.Story_game.make ?starter steps
       ~checkpoint:(plan checkpoint).checkpoint ~reload:(fun () -> Ok ())
   in
   ( (match
@@ -480,8 +490,8 @@ let outcome checkpoint screen =
     | Error f -> Failure.to_string f),
     c )
 
-let logged checkpoint screen part () =
-  let _, c = outcome checkpoint screen in
+let logged ?starter checkpoint screen part () =
+  let _, c = outcome ?starter checkpoint screen in
   string_of_bool
     (List.exists (fun line -> Strings.Contains.substring line part) (C.lines c))
 
@@ -1089,6 +1099,37 @@ let cases =
        beaten"
       (result "01.04-starter-and-andi" starter)
       "passed";
+    case "01.04-starter-and-andi with no starter: Chikorita's walk, the plan's"
+      (logged "01.04-starter-and-andi" starter
+         "approach_starter: to Chikorita (grass): walk [-66, 600] steer")
+      "true";
+    case "01.04-starter-and-andi with water: Totodile's walk"
+      (logged ~starter:Plza_story.Starter.Totodile "01.04-starter-and-andi"
+         starter
+         "approach_starter: to Totodile (water): walk [-50, 600] steer or the \
+          starter's own into a talk after the legs")
+      "true";
+    case "01.04-starter-and-andi with water: passes as Chikorita's does"
+      (fun () ->
+        fst
+          (outcome ~starter:Plza_story.Starter.Totodile "01.04-starter-and-andi"
+             starter))
+      "passed";
+    case "the starter option over a series from 00.00: taken"
+      (starter_over "water" [ "00.00-new-game"; "01.04-starter-and-andi" ])
+      "ok";
+    case "the starter option over a series from 01.04: taken"
+      (starter_over "water"
+         [ "01.04-starter-and-andi"; "02.01-battle-brigitte" ])
+      "ok";
+    case "the starter option over a series after 01.04: refused"
+      (starter_over "water" [ "02.01-battle-brigitte"; "03.03-battle-taunie" ])
+      "error: --options starter is the starter 01.04-starter-and-andi walks \
+       to, and this series does not walk there (the save has its starter \
+       already): start it at or before 01.04-starter-and-andi, or drop it";
+    case "no starter option over a series after 01.04: nothing to check"
+      (starter_over "none" [ "02.01-battle-brigitte" ])
+      "ok";
     case "01.04-starter-and-andi: the scene to the battle ends on its HUD"
       (logged "01.04-starter-and-andi" starter "[PLZA scene] done on battle.")
       "true";
@@ -1639,7 +1680,7 @@ let cases_03_02b =
       (logged "03.03-battle-taunie"
          (quartiere_verde ~battle_mid_walk:true)
          "[Event] 03.03-battle-taunie: battle on screen during to_taunie: \
-          jumping to battle_totodile, skipping taunie_battle_start")
+          jumping to first_battle, skipping taunie_battle_start")
       "true";
     case
       "03.03-battle-taunie after 03.02-out-of-hotel-z: Taunie's prompt first, \
@@ -1651,7 +1692,7 @@ let cases_03_02b =
        her battle"
       (logged "03.03-battle-taunie" taunie_first
          "[Event] 03.03-battle-taunie: battle on screen during plaza_scene: \
-          jumping to battle_totodile, skipping to_taunie, taunie_battle_start")
+          jumping to first_battle, skipping to_taunie, taunie_battle_start")
       "true";
     case
       "03.03-battle-taunie with the battle HUD on one read of the plaza scene: \
