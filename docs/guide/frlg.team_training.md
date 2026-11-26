@@ -55,7 +55,7 @@ sh run/run_checkpoints_on_switch.sh frlg.team_training --from tt-01 --to tt-01
 |---|---|
 | tt-01 | Rare Candy farm: pick up Route 6's hidden Rare Candy, duplicate it to 99 |
 
-<!-- plans: 11272af45a61 -->
+<!-- plans: a1eab8a8384f -->
 <!-- /generated -->
 
 ## When it stops

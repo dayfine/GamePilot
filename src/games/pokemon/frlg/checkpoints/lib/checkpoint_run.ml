@@ -89,8 +89,8 @@ let read_species () =
 let check_each f conditions =
   List.fold_left (fun ok c -> Result.bind ok (fun () -> f c)) (Ok ()) conditions
 
-let check_pokedex_conditions conditions =
-  if List.exists A.Skip_conditions.reads_pokedex conditions then
+let check_species_conditions conditions =
+  if List.exists A.Skip_conditions.reads_species conditions then
     Result.bind (read_species ()) (fun species ->
         check_each (A.Skip_conditions.check species) conditions)
   else Ok ()
@@ -102,7 +102,7 @@ let check_skip_conditions (checkpoint : Pokemon_engine.Plan.checkpoint) =
       checkpoint.events
   in
   Result.bind (check_each A.Skip_conditions.check_syntax conditions) (fun () ->
-      check_pokedex_conditions conditions)
+      check_species_conditions conditions)
 
 let check_plan (plan : Pokemon_engine.Plan.t) =
   Result.bind (check_menu plan) (fun () ->

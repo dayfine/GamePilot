@@ -28,12 +28,14 @@
       {
         "id": "talk_coin_case_man",
         "kind": "talk",
+        "skip_if": ["bag_has_item:coin-case:1"],
         "why": "receive the Coin Case (idempotent if already obtained)"
       },
       {
         "id": "clear_coin_case_text",
         "kind": "scene",
         "declared_after": {"map": "CeladonCity_Restaurant", "tiles": [[2, 2]], "facing": "west"},
+        "skip_if": ["bag_has_item:coin-case:1"],
         "why": "clear the Coin Case dialog back to overworld"
       },
       {
@@ -73,6 +75,7 @@
         "args": {
           "coins": 200
         },
+        "skip_if": ["coins_at_least:200"],
         "why": "buy 200 coins (4 x 50 coins = $4,000; Abra costs 180 in FireRed / 120 in LeafGreen)"
       },
       {
@@ -91,6 +94,7 @@
         "args": {
           "slot": 0
         },
+        "skip_if": ["party_has_species:abra", "party_has_species:mr-mime"],
         "why": "redeem Abra (slot 0, Lv 9 in FireRed) into party"
       },
       {

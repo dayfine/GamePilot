@@ -40,6 +40,15 @@
         }
       },
       {
+        "id": "check_marks_before",
+        "kind": "game_action",
+        "action": "check_party_marks",
+        "args": {
+          "marks": ["held_item", "mail", "mail", "mail", "mail", "mail"]
+        },
+        "why": "Precondition: the Mail Glitch party is intact (slot 1 holds an item, slots 2-6 hold Mail) before farming Rare Candy."
+      },
+      {
         "id": "super_repel",
         "kind": "game_action",
         "action": "use_item",
@@ -64,6 +73,7 @@
         "args": {
           "item": "rare-candy"
         },
+        "skip_if": ["bag_has_item:rare-candy:1"],
         "why": "The one Rare Candy the duplication copies."
       },
       {
@@ -76,6 +86,7 @@
           ],
           "facing": "north"
         },
+        "skip_if": ["bag_has_item:rare-candy:1"],
         "why": "Clear the hidden item dialog."
       },
       {

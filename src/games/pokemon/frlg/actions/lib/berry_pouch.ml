@@ -110,3 +110,39 @@ let choose_give slug =
   match berry_number slug with
   | None -> M.fail ~repeats:true "unknown_item" (slug ^ " is no berry's name")
   | Some number -> give_from_row (row_of slug number)
+
+let find_shown_row target =
+  match find_shown target 0 with
+  | Some row -> Some row
+  | None -> (
+      presses ~n:scroll_downs ~hold_ms:scroll_hold_ms
+        ~cooldown_ms:scroll_release_ms Wire.Down;
+      match scroll target shown_rows None scroll_downs with
+      | Some _, _ -> Some (shown_rows - 1)
+      | None, _ -> None)
+
+let bag_or_pouch m = Bag_screen.bag_open m || shows_pouch m
+
+let read_count number =
+  match find_shown_row number with
+  | Some row -> Bag_items.count_on_row row
+  | None -> Some 0
+
+let log_count ~log slug = function
+  | Some n -> log (Printf.sprintf "Berry Pouch: %d %s." n slug)
+  | None ->
+      log (Printf.sprintf "Berry Pouch: the count of %s did not read." slug)
+
+let count_number ~log slug number =
+  Effects.with_probes probes open_pouch;
+  let counted = Effects.with_probes probes (fun () -> read_count number) in
+  log_count ~log slug counted;
+  Effects.with_probes probes (fun () ->
+      M.close_through_fades "the bag" bag_or_pouch);
+  M.settle_back ~label:"berry count" ~log;
+  counted
+
+let count ~log slug =
+  match berry_number slug with
+  | None -> M.fail ~repeats:true "unknown_item" (slug ^ " is no berry's name")
+  | Some number -> count_number ~log slug number

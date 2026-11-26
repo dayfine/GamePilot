@@ -68,12 +68,14 @@
         "kind": "game_action",
         "action": "pick_up_item",
         "args": {"item": "leppa-berry"},
+        "skip_if": ["bag_has_item:leppa-berry:1"],
         "why": "Pick up the Leppa Berry for the opening turn."
       },
       {
         "id": "clear_leppa_text",
         "kind": "scene",
         "declared_after": {"map": "Route8", "tiles": [[42, 14]], "facing": "south"},
+        "skip_if": ["bag_has_item:leppa-berry:1"],
         "why": "Clear the hidden item dialog."
       },
       {
