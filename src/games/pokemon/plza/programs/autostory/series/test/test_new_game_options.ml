@@ -35,9 +35,6 @@ let cases =
     case "language=zh-Hant: the language"
       (played language [ ("language", "zh-Hant") ])
       "zh-Hant";
-    case "language=zh-Hans: the language"
-      (played language [ ("language", "zh-Hans") ])
-      "zh-Hans";
     case "look=5: the look" (played look [ ("look", "5") ]) "5";
     case "look=5: the language stays en"
       (played language [ ("look", "5") ])
@@ -47,7 +44,7 @@ let cases =
     case "language=ko: not one it types a name in"
       (played language [ ("language", "ko") ])
       "error: --options language=ko: language is en | es-ES | es-419 | fr | de \
-       | it | ja | zh-Hans | zh-Hant";
+       | it | ja | zh-Hant";
     case "look=9: out of range"
       (played look [ ("look", "9") ])
       "error: --options look=9: look is 1 to 8";

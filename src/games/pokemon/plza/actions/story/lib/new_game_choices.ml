@@ -33,7 +33,8 @@ let info = function
   | Italian -> row "it" 5 latin_limit
   | Japanese -> row "ja" 6 east_asian_limit
   | Korean -> { (row "ko" 7 east_asian_limit) with typed = false }
-  | Chinese_simplified -> row "zh-Hans" 8 east_asian_limit
+  | Chinese_simplified ->
+      { (row "zh-Hans" 8 east_asian_limit) with typed = false }
   | Chinese_traditional -> row "zh-Hant" 9 east_asian_limit
 
 let all =
@@ -91,8 +92,9 @@ let choices_problem c =
 
 let keyboard_name = function
   | Korean -> "Hangul"
+  | Chinese_simplified -> "Pinyin"
   | English | Spanish_spain | Spanish_latin_america | French | German | Italian
-  | Japanese | Chinese_simplified | Chinese_traditional ->
+  | Japanese | Chinese_traditional ->
       "Latin"
 
 (* name_typing_problem. *)

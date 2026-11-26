@@ -18,8 +18,6 @@
       A (80 ms, 500 after) on the look, else one tilt toward it, column first (a
       full tilt 150 ms, 500 after: the D-pad does not move it);
     + the name keyboard must show within 20 s, then 1 s for it to slide in;
-    + in Simplified Chinese, the keyboard's English (letters) key first
-      ({!Letters_mode});
     + the name is typed ({!Switch_home.Keyboard_typing});
     + + (80 ms, 500 after), at most 3 times (Chinese keyboards take one to
       accept the text), until Confirm Choices reads within 5 s of one, stopping
@@ -29,7 +27,7 @@
 
     Where it differs: the keyboard's "0/N" counter is not read (OCR); the
     language's limit holds, as the fork's does when its counter does not read.
-    Korean is refused ({!New_game_choices}). The fork's debug
+    Simplified Chinese is refused ({!New_game_choices}). The fork's debug
     captures of each screen are not taken. The launch is the caller's ([launch]);
     on the console it walks HOME's row to PLZA's tile by its title, as the fork
     does, matching a template instead of OCR
