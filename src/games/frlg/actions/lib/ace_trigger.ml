@@ -2,7 +2,11 @@ open Frlg_readers
 module M = Menu_input
 module Text = Frlg_text
 
-type trigger = { box3_title : string; partner_box : int; partner_slot : int }
+type trigger = {
+  box3_title : string;
+  partner_box : int;
+  partner_slot : int option;
+}
 
 type game_steps = {
   open_move_pokemon : unit -> unit;
@@ -73,20 +77,59 @@ let quick_off steps =
   if steps.hand_quick () <> Some false then
     M.fail "ace_hand_not_quick" "SELECT did not turn the hand back"
 
-(* The partner, any Pokémon in [partner_box]'s [partner_slot], to Box 3
+(* From slot [a] to slot [b] of the same box: DOWN or UP to [b]'s row, LEFT
+   or RIGHT to its column. *)
+let slot_to_slot steps a b =
+  let row s = (s - 1) / slots_per_row and col s = (s - 1) mod slots_per_row in
+  let down = row b - row a and across = col b - col a in
+  List.iter steps.press
+    (presses (abs down) (if down < 0 then Wire.Up else Wire.Down));
+  List.iter steps.press
+    (presses (abs across) (if across < 0 then Wire.Left else Wire.Right))
+
+(* Box 3's first slots are 0x0351 and the empty slot 2. *)
+let first_searched box = if box = ace_box then 3 else 1
+
+(* With the hand on slot [slot] of [box]: the first slot from it in reading
+   order that holds a Pokémon, the hand left there. *)
+let rec first_occupied steps box slot =
+  match steps.slot_empty () with
+  | Some false -> slot
+  | None ->
+      M.fail "ace_partner_missing"
+        (Printf.sprintf "Box %d slot %d does not read" box slot)
+  | Some true when slot = slots ->
+      M.fail "ace_partner_missing"
+        (Printf.sprintf "Box %d holds no Pokémon" box)
+  | Some true ->
+      slot_to_slot steps slot (slot + 1);
+      first_occupied steps box (slot + 1)
+
+(* With the hand on [box]'s title: to the partner's slot, the one given or
+   else the box's first that holds a Pokémon. *)
+let find_partner steps t =
+  match t.partner_slot with
+  | Some slot ->
+      title_to_slot steps slot;
+      if steps.slot_empty () <> Some false then
+        M.fail "ace_partner_missing"
+          (Printf.sprintf "Box %d slot %d holds no Pokémon" t.partner_box slot);
+      slot
+  | None ->
+      let first = first_searched t.partner_box in
+      title_to_slot steps first;
+      first_occupied steps t.partner_box first
+
+(* The partner, any Pokémon in [partner_box] ({!find_partner}), to Box 3
    slot 2, carried in the quick hand (left on); the hand starts on Box 3
    slot 2, which is empty, and ends there. *)
 let fetch_partner steps ~log t =
   slot_to_title steps 2;
   scroll_boxes steps t.partner_box;
-  title_to_slot steps t.partner_slot;
-  if steps.slot_empty () <> Some false then
-    M.fail "ace_partner_missing"
-      (Printf.sprintf "Box %d slot %d holds no Pokémon" t.partner_box
-         t.partner_slot);
+  let slot = find_partner steps t in
   quick_on steps;
   steps.press Wire.A;
-  slot_to_title steps t.partner_slot;
+  slot_to_title steps slot;
   scroll_boxes steps ~back:true t.partner_box;
   title_to_slot steps 2;
   steps.press Wire.A;
@@ -99,7 +142,7 @@ let fetch_partner steps ~log t =
     M.fail "ace_partner_missing" "the partner did not land in Box 3 slot 2";
   log
     (Printf.sprintf "PC: the Pokémon in Box %d slot %d moved to Box 3 slot 2."
-       t.partner_box t.partner_slot)
+       t.partner_box slot)
 
 (* Box 3 slot 2 holds the partner (any Pokémon), else it is fetched. *)
 let place_partner steps ~log t =
@@ -212,29 +255,41 @@ let screen_game_steps ~log =
     close = close ~log;
   }
 
-let int_or ~where ~default ~most name args =
-  let n =
-    if Json_field.has name args then Json_field.int ~where name args
-    else default
-  in
+let in_range ~where ~most name n =
   if n < 1 || n > most then
-    Json_field.fail "%s: %s is %d, not 1-%d" where name n most;
+    Json_field.fail "%s%s is %d, not 1-%d" where name n most;
   n
 
-let decode ~where args =
+let int_opt ~where ~most name args =
+  if Json_field.has name args then
+    Some (in_range ~where ~most name (Json_field.int ~where name args))
+  else None
+
+(* Box 3's name: the arg if given, else the run's item's ({!Ace_presets}). *)
+let box3_title ~where ~options args =
+  if Json_field.has "box3_title" args then
+    Json_field.string ~where "box3_title" args
+  else
+    match Ace_presets.run_item options with
+    | Ok (_, item) -> Ace_presets.box_name item ace_box
+    | Error e -> Json_field.fail "%sno box3_title, and %s" where e
+
+let decode ~options ~where args =
   let t =
     {
-      box3_title = Json_field.string ~where "box3_title" args;
-      partner_box = int_or ~where ~default:1 ~most:boxes "partner_box" args;
-      partner_slot = int_or ~where ~default:1 ~most:slots "partner_slot" args;
+      box3_title = box3_title ~where ~options args;
+      partner_box =
+        Option.value ~default:1 (int_opt ~where ~most:boxes "partner_box" args);
+      partner_slot = int_opt ~where ~most:slots "partner_slot" args;
     }
   in
-  if t.partner_box = ace_box && t.partner_slot = 1 then
-    Json_field.fail "%s: Box 3 slot 1 is 0x0351, not a partner" where;
+  if t.partner_box = ace_box && t.partner_slot = Some 1 then
+    Json_field.fail "%sBox 3 slot 1 is 0x0351, not a partner" where;
   t
 
-let ace_trigger ~log (_ : Pokemon_engine.Plan.event) args =
-  Result.bind (Action_args.decode ~action:"ace_trigger" decode args) (fun t ->
-      M.run (fun () -> run (screen_game_steps ~log) ~log t))
+let ace_trigger ~log ~options (_ : Pokemon_engine.Plan.event) args =
+  Result.bind
+    (Action_args.decode ~action:"ace_trigger" (decode ~options) args)
+    (fun t -> M.run (fun () -> run (screen_game_steps ~log) ~log t))
 
-let handlers ~log = [ ("ace_trigger", ace_trigger ~log) ]
+let handlers ~log ~options = [ ("ace_trigger", ace_trigger ~log ~options) ]

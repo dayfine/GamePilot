@@ -198,21 +198,8 @@ let screen_game_steps ~log =
 
 let bad_args e = Error (Pokemon_engine.Failure.cause ~repeats:true "bad_args" e)
 
-let item_of t slug =
-  Option.to_result ~none:(slug ^ " is not in " ^ P.asset) (P.find t slug)
-  |> Result.map (fun item -> (t, item))
-
-(* The table and the run's item, or why the action cannot start. *)
-let chosen options =
-  let slug =
-    Option.to_result
-      ~none:"frlg.ace needs its item option (--options item=<slug>)"
-      (Run_options.find options "item")
-  in
-  Result.bind (P.load ()) (fun t -> Result.bind slug (item_of t))
-
 let with_item ~options f (_ : Pokemon_engine.Plan.event) (_ : Json_field.obj) =
-  match chosen options with
+  match P.run_item options with
   | Error e -> bad_args e
   | Ok (t, item) -> M.run (fun () -> f t item)
 
