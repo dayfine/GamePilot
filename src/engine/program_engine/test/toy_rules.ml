@@ -27,3 +27,13 @@ let ends_at : Action.t -> Pose.t option = function
   | Story _ | Walk _ | Inn _ -> None
 
 let position = Promised.position
+
+(* The sign it promises in sight, alone: the toy's end place. *)
+let end_place (p : Postconditions.t) =
+  Option.map
+    (fun sign ->
+      {
+        Engine_rules.Promises.position = None;
+        promises = { Toy_promises.gold = None; flags = []; sign = Some sign };
+      })
+    p.promises.sign

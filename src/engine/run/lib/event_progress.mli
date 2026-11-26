@@ -4,7 +4,9 @@
 type 'reason t =
   | Started
   | Passed
-  | Skipped of string  (** the [skip_if] flag that held *)
+  | Skipped of string
+      (** the [skip_if] flag that held, or ["at its end"] when the checkpoint
+          was already at its end ({!Runner.Make.run}) *)
   | Failed of 'reason
       (** why: a {!Log_line.Make.t} from the runner, its text once the engine
           prints it ([Program_engine]) *)

@@ -17,8 +17,8 @@
   toy_rules))
 
 (tests
- (names test_toy_game test_toy_pieces)
- (modules test_toy_game test_toy_pieces)
+ (names test_toy_game test_toy_pieces test_toy_end_check)
+ (modules test_toy_game test_toy_pieces test_toy_end_check)
  (libraries
   yojson
   gamepilot.table_test

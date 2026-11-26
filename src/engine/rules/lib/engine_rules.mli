@@ -72,6 +72,16 @@ module type GAME_RULES = sig
   val position : Postconditions.t -> Pose.t option
   (** The end position the promises name, if any: preferred over the declared
       end. *)
+
+  val end_place : Postconditions.t -> Postconditions.t option
+  (** The promises that say where the checkpoint ends, read from the world
+      (PLZA: what the screen shows there), with no promise of a change from its
+      start: what the runner reads before the first event, to pass a checkpoint
+      the console is already at the end of ({!Engine_run.Runner}). [None] when
+      the promises name no such place. A [position] is not one: a game may
+      reckon it from the plan (FireRed: the start's tile until a walk moves it),
+      and a checkpoint that does not move ends where it starts (FireRed's ACE
+      01-enter-code). *)
 end
 
 (** {2 Pieces}

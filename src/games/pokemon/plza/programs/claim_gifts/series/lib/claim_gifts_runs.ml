@@ -34,6 +34,7 @@ let run_series inputs ~program ~options ~viewport plan_dir args =
   Series.run_series
     {
       check_plans = Series.each_plan Plza_claim_gifts.Claim_gifts.check_plan;
+      with_end_place = Series.no_end_place;
       daemon_flags = Series.keepawake_stick;
       attempt = attempt inputs;
     }

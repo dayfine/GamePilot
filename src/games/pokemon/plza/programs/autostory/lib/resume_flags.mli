@@ -12,10 +12,10 @@
       PokemonLZA_AutoStoryScreenPredicates.h, less the battle): free control
       with a Pokémon in the party, so after 01.04's starter;
     - ["minimap:<name>"]: the minimap reads as the recorded one
-      ({!Plza_readers.Minimap}, ["minimap:03.03-start"]): where a checkpoint
-      ends when the next one's start signature names it. 03.03's end, the plaza
-      arch, shows the party bar as its start does, but its minimap only after
-      the map talk.
+      ({!Plza_readers.Minimap}, ["minimap:after-taunie-battle"]): where a
+      checkpoint ends when the next one's start signature names it. 03.03's end,
+      the plaza arch, shows the party bar as its start does, but its minimap
+      only after the map talk.
 
     The screen is woken first ({!Plza_story.Screen_wake}): a dimmed one reads as
     nothing. Each is read over 1 s (five reads 250 ms apart): the first two hold

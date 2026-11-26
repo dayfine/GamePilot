@@ -38,3 +38,5 @@ let ends_at : Action.t -> Pose.t option = function
 
 let position (p : Postconditions.t) =
   Option.map (fun grid -> Pose.Grid grid) p.position
+
+let end_place (_ : Postconditions.t) = None

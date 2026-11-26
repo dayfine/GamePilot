@@ -1,9 +1,7 @@
 (* The minimap reader (PokemonLZA_MinimapMatch.cpp) on the fork's recorded
    start frames (CommandLineTests PokemonLZA/AutoStoryStarts, Spanish, console
    B) and 03.03's plaza arch on console B (2026-11-25), where 03.03 ends and
-   03.04 starts, and frames with no minimap. The references keep the fork's
-   numbers: 03.03-start is our 03.04's start, 03.06-start our 03.08's and
-   03.07-start our 03.09's.
+   03.04 starts, and frames with no minimap.
 
    Headroom (bound 30): 03.04's start reads 1 from its own reference, the arch
    3 (6 on frame 210 scaled up from 640x360), 03.08's 1, 03.09's 3; the
@@ -11,11 +9,12 @@
    nearest). The fork's frames are named one off: its Spanish_0305_start.png
    is 03.08's start (outside the Center, where 03.07 ends; the fork has no
    03.05), as its 03.06 reference says it was recorded on, and
-   Spanish_0306_start.png is the counter inside; here they are es-0306-start
-   and es-center-counter. The shifted fixture leaves the minimap out
-   (write_probe_spec.ml): each channel is scaled to the reference before
-   comparing; the fork measured its 03.04's start 20% darker at 2.2 and 20%
-   brighter at 21.9. *)
+   Spanish_0306_start.png is the counter inside; here they are
+   es-pokemon-center-door and es-center-counter. Its Spanish_0303_start.png and
+   Spanish_0307_start.png are es-after-taunie-battle and es-wild-zone-1-gate.
+   The shifted fixture leaves the minimap out (write_probe_spec.ml): each
+   channel is scaled to the reference before comparing; the fork measured its
+   03.04's start 20% darker at 2.2 and 20% brighter at 21.9. *)
 
 open Plza_readers
 
@@ -61,23 +60,26 @@ let cases =
     {
       Table_test.name = "every reference parses";
       input = (fun () -> String.concat ", " Minimap.reference_names);
-      expectation = "03.03-start, 03.04-start, 03.06-start, 03.07-start";
+      expectation =
+        "after-taunie-battle, station-front, pokemon-center-door, \
+         wild-zone-1-gate";
     };
-    case "minimap/es-0303-start" "03.03-start";
-    case "minimap/es-0306-start" "03.06-start";
+    case "minimap/es-after-taunie-battle" "after-taunie-battle";
+    case "minimap/es-pokemon-center-door" "pokemon-center-door";
     case "minimap/es-center-counter" "none";
-    case "minimap/es-0307-start" "03.07-start";
-    case "party-bar/en-0302b-arch-collapsed-1080p" "03.03-start";
-    case "party-bar/en-0302b-arch-collapsed-210" "03.03-start";
+    case "minimap/es-wild-zone-1-gate" "wild-zone-1-gate";
+    case "party-bar/en-0302b-arch-collapsed-1080p" "after-taunie-battle";
+    case "party-bar/en-0302b-arch-collapsed-210" "after-taunie-battle";
     case "party-bar/0103-alley-party1" "none";
     case "party-bar/en-0302b-arch-taunie-cutscene-150" "none";
     case "arrival-to-ad/0007-plaza" "none";
     case "battle-hud/it-0308-zone1-road-no-battle" "none";
-    headroom "minimap/es-0303-start" "03.03-start at 1";
-    headroom "minimap/es-0306-start" "03.06-start at 1";
-    headroom "minimap/es-center-counter" "03.03-start at 49";
-    headroom "party-bar/en-0302b-arch-collapsed-1080p" "03.03-start at 3";
-    story_screen "party-bar/en-0302b-arch-collapsed-1080p" "03.03-start";
+    headroom "minimap/es-after-taunie-battle" "after-taunie-battle at 1";
+    headroom "minimap/es-pokemon-center-door" "pokemon-center-door at 1";
+    headroom "minimap/es-center-counter" "after-taunie-battle at 49";
+    headroom "party-bar/en-0302b-arch-collapsed-1080p"
+      "after-taunie-battle at 3";
+    story_screen "party-bar/en-0302b-arch-collapsed-1080p" "after-taunie-battle";
     story_screen "party-bar/en-0302b-arch-urbain-text-144" "none";
   ]
 

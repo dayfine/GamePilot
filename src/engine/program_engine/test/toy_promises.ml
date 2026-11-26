@@ -1,11 +1,17 @@
-(* The toy's promises: gold gained since the start, and flags set. *)
+(* The toy's promises: gold gained since the start, flags set, and the sign in
+   sight at the end (the toy's end place, read from the world). *)
 
 open Engine_postcondition
 
-type t = { gold : Count.t option; flags : string list }
+type t = { gold : Count.t option; flags : string list; sign : string option }
 
 (* What the game read: the gold now and at the start, and each flag read. *)
-type reads = { gold_now : int option; start : int option; set : string list }
+type reads = {
+  gold_now : int option;
+  start : int option;
+  set : string list;
+  in_sight : string option;
+}
 
 let check_gold (p : t) reads =
   match (p.gold, reads.gold_now) with
@@ -20,8 +26,20 @@ let check_flag reads flag =
     ~read:(if set then "set" else "clear")
     set
 
-let check p reads = check_gold p reads @ List.map (check_flag reads) p.flags
+let check_sign (p : t) reads =
+  match p.sign with
+  | None -> []
+  | Some sign ->
+      [
+        Postcondition.judge "sign" ~expected:sign
+          ~read:(Option.value reads.in_sight ~default:"none")
+          (reads.in_sight = Some sign);
+      ]
+
+let check p reads =
+  check_gold p reads @ List.map (check_flag reads) p.flags @ check_sign p reads
 
 let to_lines (p : t) =
   Option.fold ~none:[] ~some:(fun c -> [ "gold " ^ Count.text c ]) p.gold
-  @ if p.flags = [] then [] else [ "flags " ^ String.concat ", " p.flags ]
+  @ (if p.flags = [] then [] else [ "flags " ^ String.concat ", " p.flags ])
+  @ Option.fold ~none:[] ~some:(fun s -> [ "sign " ^ s ]) p.sign
