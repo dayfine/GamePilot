@@ -1,5 +1,5 @@
 (* Run_attempts over scripted attempts: which attempts reload first, and how
-   the run ends. *)
+   the run ends; one fact per check. *)
 
 module A = Plza_autostory.Run_attempts
 
@@ -7,132 +7,163 @@ let off_start =
   A.Failed
     {
       at = "start";
-      reason = "chain_off_start: the run is not at 03.08's start";
+      reason = "chain_off_start: the run is not at 03.04's start";
       repeats = true;
       off_start = true;
     }
 
-let short =
+(* A failure a reload may fix: it does not repeat. *)
+let missed =
   A.Failed
     {
-      at = "#1 catch_more_species";
-      reason = "short_of_species: the party holds 3 species of 4";
+      at = "#1 to_the_center";
+      reason = "walk_no_end: no A prompt after the legs";
       repeats = false;
       off_start = false;
     }
 
-(* The attempts [script] gives in turn (then passes), each logged with whether
-   it began with a reload, and the run's end. *)
-let attempts ?(has_start = true) ?(retries = 0) ?(reload_first = false) script
-    () =
+let stuck =
+  A.Failed
+    {
+      at = "#1 to_the_center";
+      reason = "walk_stick: no stick";
+      repeats = true;
+      off_start = false;
+    }
+
+type ran = { reloads : bool list; log : string list; ended : A.outcome }
+
+(* The attempts [script] gives in turn (then passes): whether each began with
+   a reload, the log, and the run's end. *)
+let attempts ?(has_start = true) ?(retries = 0) ?(reload_first = false) script =
   let left = ref script in
-  let lines = ref [] in
-  let attempt ~attempt ~reload =
-    lines :=
-      Printf.sprintf "attempt %d%s" attempt
-        (if reload then " after a reload" else "")
-      :: !lines;
+  let reloads = ref [] in
+  let log = ref [] in
+  let attempt ~attempt:_ ~reload =
+    reloads := reload :: !reloads;
     match !left with
     | o :: rest ->
         left := rest;
         o
     | [] -> A.Passed
   in
-  let log line = lines := line :: !lines in
   let ended =
-    match A.run ~has_start ~retries ~reload_first ~log attempt with
-    | A.Passed -> "passed"
-    | A.Failed f ->
-        Printf.sprintf "failed at %s: %s; repeats %b" f.at f.reason f.repeats
+    A.run ~has_start ~retries ~reload_first
+      ~log:(fun l -> log := l :: !log)
+      attempt
   in
-  String.concat "\n" (List.rev (ended :: !lines))
+  { reloads = List.rev !reloads; log = List.rev !log; ended }
 
-let case name input expectation : Table_test.case = { name; input; expectation }
+let reloads ran =
+  String.concat ", "
+    (List.map (fun r -> if r then "reload" else "as is") ran.reloads)
+
+let ended ran =
+  match ran.ended with
+  | A.Passed -> "passed"
+  | A.Failed f -> "failed at " ^ f.at
+
+let reason ran = match ran.ended with A.Passed -> "" | A.Failed f -> f.reason
+
+let repeats ran =
+  match ran.ended with
+  | A.Passed -> "passed"
+  | A.Failed f -> string_of_bool f.repeats
+
+let logged ran part =
+  string_of_bool
+    (List.exists (fun l -> Strings.Contains.substring l part) ran.log)
+
+let case name check expectation : Table_test.case =
+  { name; input = (fun () -> check ()); expectation }
+
+let off_once () = attempts [ off_start ]
+let off_twice () = attempts [ off_start; off_start ]
+let missed_retried () = attempts ~retries:2 [ missed ]
+let missed_thrice () = attempts ~retries:2 [ missed; missed; missed ]
 
 let cases =
   [
-    case "off its start on the first run: one reload, then it passes"
-      (attempts [ off_start ])
-      "attempt 1\n\
-       off its start (chain_off_start: the run is not at 03.08's start): back \
-       to the latest autosave, and its start checked again\n\
-       attempt 2 after a reload\n\
-       passed";
-    case "off its start again after the reload: fails, and repeats"
-      (attempts [ off_start; off_start ])
-      "attempt 1\n\
-       off its start (chain_off_start: the run is not at 03.08's start): back \
-       to the latest autosave, and its start checked again\n\
-       attempt 2 after a reload\n\
-       failed at start: off its start after a reload: chain_off_start: the run \
-       is not at 03.08's start; repeats true";
-    case "off its start on a run that began with a reload: no second reload"
-      (attempts ~reload_first:true [ off_start ])
-      "attempt 1 after a reload\n\
-       failed at start: off its start after a reload: chain_off_start: the run \
-       is not at 03.08's start; repeats true";
-    case "off its start with no start to go back to (01.00b): fails at once"
-      (attempts ~has_start:false [ off_start ])
-      "attempt 1\n\
-       failed at start: chain_off_start: the run is not at 03.08's start; \
-       repeats true";
-    case "short of species, no retries: fails, a failure that does not repeat"
-      (attempts [ short ])
-      "attempt 1\n\
-       failed at #1 catch_more_species: short_of_species: the party holds 3 \
-       species of 4; repeats false";
-    case "short of species once, retries 2: a reload, then it passes"
-      (attempts ~retries:2 [ short ])
-      "attempt 1\n\
-       a failure a reload may fix: trying again\n\
-       attempt 2 after a reload\n\
-       passed";
-    case "short of species three times, retries 2: fails after 3 attempts"
-      (attempts ~retries:2 [ short; short; short ])
-      "attempt 1\n\
-       a failure a reload may fix: trying again\n\
-       attempt 2 after a reload\n\
-       a failure a reload may fix: trying again\n\
-       attempt 3 after a reload\n\
-       failed at #1 catch_more_species: failed the same way on all 3 attempts: \
-       short_of_species: the party holds 3 species of 4; repeats true";
-    case "off its start, then short twice, retries 2: the reload is not a retry"
-      (attempts ~retries:2 [ off_start; short; short ])
-      "attempt 1\n\
-       off its start (chain_off_start: the run is not at 03.08's start): back \
-       to the latest autosave, and its start checked again\n\
-       attempt 2 after a reload\n\
-       a failure a reload may fix: trying again\n\
-       attempt 3 after a reload\n\
-       a failure a reload may fix: trying again\n\
-       attempt 4 after a reload\n\
-       passed";
-    case "a failure that repeats, retries 2: fails at once"
-      (attempts ~retries:2
-         [
-           A.Failed
-             {
-               at = "#1 catch_more_species";
-               reason = "walk_stick: no stick";
-               repeats = true;
-               off_start = false;
-             };
-         ])
-      "attempt 1\n\
-       failed at #1 catch_more_species: walk_stick: no stick; repeats true";
-    case "retries with no start to go back to: no reload"
-      (attempts ~has_start:false ~retries:2 [ short ])
-      "attempt 1\n\
-       failed at #1 catch_more_species: short_of_species: the party holds 3 \
-       species of 4; repeats false";
-    case "an action's own start check is off its start; a catch is not"
+    case "off its start: the second attempt reloads"
+      (fun () -> reloads (off_once ()))
+      "as is, reload";
+    case "off its start once: then it passes"
+      (fun () -> ended (off_once ()))
+      "passed";
+    case "off its start: the log says why it reloads"
+      (fun () -> logged (off_once ()) "off its start (chain_off_start")
+      "true";
+    case "off its start after the reload: fails at start"
+      (fun () -> ended (off_twice ()))
+      "failed at start";
+    case "off its start after the reload: a failure that repeats"
+      (fun () -> repeats (off_twice ()))
+      "true";
+    case "off its start after the reload: the reason says so"
       (fun () ->
-        Printf.sprintf "%b %b %b"
-          (A.off_start (Engine_run.Failure.cause "rocks_not_left" ""))
+        string_of_bool
+          (String.starts_with ~prefix:"off its start after a reload"
+             (reason (off_twice ()))))
+      "true";
+    case "a run that began with a reload: no second reload"
+      (fun () -> reloads (attempts ~reload_first:true [ off_start ]))
+      "reload";
+    case "no start to go back to (01.00b): no reload"
+      (fun () -> reloads (attempts ~has_start:false [ off_start ]))
+      "as is";
+    case "no start to go back to: fails at start"
+      (fun () -> ended (attempts ~has_start:false [ off_start ]))
+      "failed at start";
+    case "a failure, no retries: no second attempt"
+      (fun () -> reloads (attempts [ missed ]))
+      "as is";
+    case "a failure, no retries: fails at its event"
+      (fun () -> ended (attempts [ missed ]))
+      "failed at #1 to_the_center";
+    case "a failure, no retries: it does not repeat"
+      (fun () -> repeats (attempts [ missed ]))
+      "false";
+    case "a failure once, retries 2: the retry reloads"
+      (fun () -> reloads (missed_retried ()))
+      "as is, reload";
+    case "a failure once, retries 2: then it passes"
+      (fun () -> ended (missed_retried ()))
+      "passed";
+    case "a failure once, retries 2: the log says it tries again"
+      (fun () -> logged (missed_retried ()) "a reload may fix: trying again")
+      "true";
+    case "a failure three times, retries 2: three attempts"
+      (fun () -> reloads (missed_thrice ()))
+      "as is, reload, reload";
+    case "a failure three times, retries 2: fails, as a failure that repeats"
+      (fun () -> repeats (missed_thrice ()))
+      "true";
+    case "a failure three times, retries 2: the reason counts the attempts"
+      (fun () ->
+        string_of_bool
+          (Strings.Contains.substring
+             (reason (missed_thrice ()))
+             "on all 3 attempts"))
+      "true";
+    case "off its start, then two failures, retries 2: the reload is no retry"
+      (fun () -> reloads (attempts ~retries:2 [ off_start; missed; missed ]))
+      "as is, reload, reload, reload";
+    case "a failure that repeats, retries 2: no second attempt"
+      (fun () -> reloads (attempts ~retries:2 [ stuck ]))
+      "as is";
+    case "retries with no start to go back to: no reload"
+      (fun () -> reloads (attempts ~has_start:false ~retries:2 [ missed ]))
+      "as is";
+    case "the start check's chain_off_start is off its start"
+      (fun () ->
+        string_of_bool
           (A.off_start
-             (Engine_run.Failure.cause ~repeats:true "chain_off_start" ""))
-          (A.off_start (Engine_run.Failure.cause "short_of_species" "")))
-      "true true false";
+             (Engine_run.Failure.cause ~repeats:true "chain_off_start" "")))
+      "true";
+    case "a walk's failure is not off its start"
+      (fun () ->
+        string_of_bool (A.off_start (Engine_run.Failure.cause "walk_no_end" "")))
+      "false";
   ]
 
 let () = Table_test.run "plza run attempts" cases

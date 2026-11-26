@@ -8,6 +8,10 @@
 # Likewise fixtures/delete_save.probes.jsonl and delete_save.shifted.probes.jsonl
 # from images/delete-save/ with the native viewport (System Settings, the whole
 # frame) and the games' delete-save icons (the delete-save-icon*.png under src/games).
+# Likewise fixtures/code_keyboard.probes.jsonl and
+# code_keyboard.shifted.probes.jsonl from images/keyboard/ and the HOME captures
+# in images/ (no keyboard there) with the native viewport, the keyboards alone
+# shifted.
 # shift_frame.py needs Pillow ($SHIFT_PYTHON, default python3; e.g.
 # "uv run --with pillow python3").
 #
@@ -40,3 +44,12 @@ cp "$SRC/games/frlg/assets/delete-save-icon-firered.png" "$work/delete_save/fire
 (cd "$HERE/images/delete-save" && $SHIFT_PYTHON "$SHIFT_FRAME" "$work/shifted_delete_save" ./*.png)
 (cd "$work/shifted_delete_save" && "$PROBE_IMAGES" --spec "$ds_spec" --viewport native ./*/*.png) \
     >"$HERE/fixtures/delete_save.shifted.probes.jsonl"
+kb_spec=$work/code_keyboard.json
+mkdir "$work/kb" "$work/shifted_kb"
+(cd "$SRC" && dune exec core/switch_home/test/write_probe_spec.exe code-keyboard) >"$kb_spec"
+cp "$HERE"/images/keyboard/*.png "$HERE"/images/home-cursor-on-last-played.png "$HERE"/images/user-select.png "$work/kb/"
+(cd "$work/kb" && "$PROBE_IMAGES" --spec "$kb_spec" --viewport native ./*.png) \
+    >"$HERE/fixtures/code_keyboard.probes.jsonl"
+(cd "$work/kb" && $SHIFT_PYTHON "$SHIFT_FRAME" "$work/shifted_kb" ./*-cursor-on-1.png)
+(cd "$work/shifted_kb" && "$PROBE_IMAGES" --spec "$kb_spec" --viewport native ./*/*.png) \
+    >"$HERE/fixtures/code_keyboard.shifted.probes.jsonl"

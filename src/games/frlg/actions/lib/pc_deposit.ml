@@ -93,6 +93,7 @@ let press (p : Steps.press) =
     | B -> [ button Wire.B ]
     | Up -> [ dpad Wire.Up ]
     | Down -> [ dpad Wire.Down ]
+    | Left -> [ dpad Wire.Left ]
     | Right -> [ dpad Wire.Right ]
     | Wait | Done | Fail _ -> [ Wire.Wait { wait_ms } ]
   in

@@ -15,3 +15,21 @@ val max_presses : int -> int
 val deposit : log:(string -> unit) -> string list -> unit
 (** Stores these species (slugs) in the first boxes with room, and is back on
     the overworld. Fails as [pc_deposit] naming the screen and why. *)
+
+val label : Frlg_readers.Pc_screen.view -> string option
+(** The text of the cursor's row on the PC list, the storage menu or a Pokémon's
+    menu (STORE or WITHDRAW first), when it reads. *)
+
+val species_shown : unit -> string option
+(** The species slug PKMN DATA shows (["/MAGIKARP"]), on any box screen, when it
+    reads. *)
+
+val look : unit -> Pc_deposit_steps.look
+(** One look at the PC's screen: the view, the cursor row's label, PKMN DATA's
+    species on the party panel, "The BOX is full.". A frame that reads as the
+    overworld is looked at again 800 ms later. With {!Frlg_readers.Pc_screen}'s
+    probes subscribed. Also {!Pc_box}'s look. *)
+
+val press : Pc_deposit_steps.press -> unit
+(** The fork's press: A and B held 160 ms then 640 ms, the D-pad 160 then 320, a
+    wait 500. Also {!Pc_box}'s press. *)
