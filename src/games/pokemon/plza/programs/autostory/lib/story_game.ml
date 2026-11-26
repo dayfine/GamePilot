@@ -26,7 +26,7 @@ let timed run ~default steps (event : Plan.event) (args : Json_field.obj) =
 
 (* The platform's hint fades after a few seconds idle: a start that does not
    see it reloads the latest autosave, where it shows fresh, and looks again.
-   Ours: the fork starts 02-platform-to-plaza right after the opening or a reload and never
+   Ours: the fork starts 01.01 right after the opening or a reload and never
    needed it (console B, 2026-11-25: 02-platform-to-plaza started a minute after 01-to-the-platform). *)
 let platform_or_reload ~reload steps ~timeout_ms =
   match Platform_wait.wait_for_platform steps ~timeout_ms with

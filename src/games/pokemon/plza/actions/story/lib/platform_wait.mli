@@ -1,5 +1,5 @@
-(** The platform at the station, where the opening ends and 01.01 starts: ported
-    from PokemonLZA_AutoStoryScenes.cpp, with its timings. *)
+(** The platform at the station, where the opening ends and 02-platform-to-plaza
+    starts: ported from PokemonLZA_AutoStoryScenes.cpp, with its timings. *)
 
 val wait_for_platform : Steps.game_steps -> timeout_ms:int -> Steps.outcome
 (** The platform's controls hint ({!Look.platform_hint}) on two reads in a row,

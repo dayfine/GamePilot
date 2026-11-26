@@ -27,8 +27,8 @@
     - a signature with another field, an unrecorded minimap, or nothing:
       [start_signature_unread], which repeats.
 
-    Where it differs: [near_rocks] is ours: the fork's 21-fourth-species checks
-    only the zone and the party, and a run left at the 100 spot
+    Where it differs: [near_rocks] is ours: the fork's 03.08 checks only the
+    zone and the party, and a run left at the 100 spot
     ({!Plza_walk.Wild_zone_one.spot_100}) passed it (console B, 2026-11-25), to
     fail in the catch's own rocks check. The end signature is ours too: the fork
     checks no end (it only notes whether its autosave showed), and

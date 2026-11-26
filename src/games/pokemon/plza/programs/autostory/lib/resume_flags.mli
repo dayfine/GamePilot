@@ -2,8 +2,8 @@
     comes up, so a checkpoint resumes from where the console is:
     04-starter-and-andi after a lost battle with Andi (Urbain heals the starter
     and Andi challenges again), inside it, or after it in free control. The fork
-    resumes 04-starter-and-andi by an option naming the action to resume at
-    instead; we differ in reading the screen.
+    resumes 01.03 by an option naming the action to resume at instead; we differ
+    in reading the screen.
 
     - ["talk_or_battle_shows"]: a dialogue box, a choice, a tutorial card, a
       fade or the battle HUD shows (not free control in the battle area);

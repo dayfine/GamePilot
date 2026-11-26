@@ -181,14 +181,14 @@ let run setup (plan : P.Plan.t) n ~reload =
     (run_attempt setup plan n)
 
 (* The plan's execution asks for a reload when it follows another checkpoint
-   in the series (the fork's "reload_when_chained", 18-pokemon-center's: its walk starts
+   in the series (the fork's "reload_when_chained", 03.04's: its walk starts
    from the autosave's spot, not where 17-off-the-roof's scene leaves the player). *)
 let reload_when_chained (plan : P.Plan.t) =
   List.assoc_opt "reload_when_chained" plan.execution = Some (`Bool true)
 
 (* Runs [plan] until the policy decides; whether it passed. Its first run
    starts where the console is: the series' start, put there by hand, or
-   where the checkpoint before it ended (the fork chains 04-starter-and-andi into 05-battle-brigitte
+   where the checkpoint before it ended (the fork chains 01.03 into 02.01
    with no reload either; a reload there cost 40 s and turned the camera),
    unless the plan reloads when chained. [chained]: a checkpoint ran before it
    in the series. *)

@@ -13,7 +13,7 @@
     first. A facing or walk after which the screen stayed still was dropped (or
     walked into a wall) and is played once more. Every walk and held slice asks
     to run ({!Walk_inputs.Run}); [walk_only] walks it, as before dash is
-    unlocked (01.01).
+    unlocked (02-platform-to-plaza).
 
     With a story battle ahead in the checkpoint ([battle_ahead]), as the fork's
     walk action (PokemonLZA_AutoStoryActionTable.cpp, fork PR 725 on its

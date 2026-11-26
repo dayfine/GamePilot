@@ -1,4 +1,4 @@
-(* 03.08's and 03.08a's catches (Plza_story.Zone_catch) on a scripted
+(* 21-fourth-species's and 22-fifth-species's catches (Plza_story.Zone_catch) on a scripted
    console: the party count decides the spot, the map's pin leads there, the
    sweep locks on, the plate is read under held ZL and the throw keeps ZL
    held from the lock to the ball. *)
@@ -136,8 +136,8 @@ let run ?(lines = fun l -> String.starts_with ~prefix:"[PLZA] catch_in_zone" l)
 let cases =
   [
     case
-      "03.08: from the rocks to the 100 spot, locked on, caught on the first \
-       throw"
+      "21-fourth-species: from the rocks to the 100 spot, locked on, caught on \
+       the first throw"
       (run (zone ()))
       "ok\n\
        [PLZA] catch_in_zone: the party bar shows 3 filled slots, steady after \
@@ -159,7 +159,7 @@ let cases =
        [PLZA] catch_in_zone: 1 throws at the 100 spot, caught=true, \
        party_slots=4/4: done\n\
        6 inputs with ZL up to the throw, all ZL: true";
-    case "03.08 off the rocks: chain_off_start, nothing thrown"
+    case "21-fourth-species off the rocks: chain_off_start, nothing thrown"
       (run (zone ~route:{ to_spot_100 with pins = [ (442., 227.) ] } ()))
       "chain_off_start: rocks not left: the pin at the start was (442, 227), \
        not within 8 of (476, 224)\n\
@@ -170,7 +170,7 @@ let cases =
        [PLZA] catch_in_zone: pin at the start (442, 227), not within 8 of \
        (476, 224): stop\n\
        0 inputs with ZL up to the throw, all ZL: true";
-    case "03.08a: a party of 4 walks to the 80 spot for the fifth"
+    case "22-fifth-species: a party of 4 walks to the 80 spot for the fifth"
       (run (zone ~route:to_spot_80 ~party:4 ()))
       "ok\n\
        [PLZA] catch_in_zone: the party bar shows 4 filled slots, steady after \
@@ -190,7 +190,8 @@ let cases =
        party_slots=5/5: done\n\
        6 inputs with ZL up to the throw, all ZL: true";
     case
-      "03.08, a far plate (y 0.40): 4 steps toward it under ZL, then the throw"
+      "21-fourth-species, a far plate (y 0.40): 4 steps toward it under ZL, \
+       then the throw"
       (run (zone ~plate_y:0.40 ()))
       "ok\n\
        [PLZA] catch_in_zone: the party bar shows 3 filled slots, steady after \
@@ -213,8 +214,8 @@ let cases =
        party_slots=4/4: done\n\
        14 inputs with ZL up to the throw, all ZL: true";
     case
-      "03.08, the plate gone after a miss: called caught, the bar says 3: \
-       short_of_species"
+      "21-fourth-species, the plate gone after a miss: called caught, the bar \
+       says 3: short_of_species"
       (run (zone ~catches:false ()))
       "short_of_species: the party holds 3 species of 4 (1 throws at the 100 \
        spot)\n\
@@ -239,7 +240,9 @@ let cases =
        [PLZA] catch_in_zone: 1 throws at the 100 spot, caught=true, \
        party_slots=3/4: short\n\
        6 inputs with ZL up to the throw, all ZL: true";
-    case "03.08, nothing locks on in the sweep: short_of_species, no throws"
+    case
+      "21-fourth-species, nothing locks on in the sweep: short_of_species, no \
+       throws"
       (run (zone ~locks:false ()))
       "short_of_species: the party holds 3 species of 4 (0 throws at the 100 \
        spot)\n\
