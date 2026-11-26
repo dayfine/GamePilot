@@ -18,37 +18,16 @@ let art k : F.t =
 
 let tile_id k = Printf.sprintf "home.app_tile%d" k
 
-(* The cursor tile's title, over the row: left-aligned from x 125 while the
-   row has not scrolled, over the selected tile once it has (console B,
-   2026-11-25: "Pokémon: Let's Go, Pikachu!" at x 1230 to 1815). "Pokémon
-   HOME"'s "HOME" is 142x48, its top at y 218; it is searched along the whole
-   title row, 12 pixels above and below. "Pokémon" alone would match every
+(* "Pokémon HOME"'s "HOME" (142x48, its top at y 218), searched along HOME's
+   title row by Switch_home.Home_title. "Pokémon" alone would match every
    title. *)
-let title_window : F.t = { x = 0; y = 206; w = 1920; h = 72 }
 let title_id = "home.app_title"
 
-(* The title's cyan, as ink: red under 120, green over 150, blue over 200. *)
-let cyan_red_max = 120
-let cyan_green_min = 150
-let cyan_blue_min = 200
-let channel_max = 255
-
-let cyan : Wire.color_range =
-  {
-    min = (0, cyan_green_min, cyan_blue_min);
-    max = (cyan_red_max, channel_max, channel_max);
-  }
-
 let probes ~art:art_png ~title =
-  F.template_probe ~ink:cyan title_id title_window title
+  Switch_home.Home_title.probe title_id title
   :: List.init tiles (fun k -> F.template_probe (tile_id k) (art k) art_png)
 
-let max_title_score = 0.08
-let title_score m = Option.map fst (F.score m title_id)
-
-let on_home_tile m =
-  Option.fold ~none:false ~some:(fun s -> s <= max_title_score) (title_score m)
-
+let on_home_tile m = Switch_home.Home_title.shows m title_id
 let max_score = 0.05
 
 let tile m =
