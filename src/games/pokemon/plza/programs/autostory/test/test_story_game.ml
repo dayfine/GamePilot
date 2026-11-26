@@ -1,11 +1,12 @@
-(* 01.00b to 02.07 run through the engine (Plza_engine.Runner) with
+(* 01.00b to 03.11 run through the engine (Plza_engine.Runner) with
    Story_game's handlers on a scripted console (Fake_console): the plans
    decode, every event reaches its handler, and each handler's presses move a
-   game that answers them as the console did. Also the failures: a walk whose
-   white fade never shows (lost), a start that is not Confirm Choices, a
-   platform never seen, a story battle lost (the lead's HP near empty, then
-   a black fade), and a black fade with the lead healthy fought through as
-   a cutscene. And what the watch page is sent (Story_game.run_watched):
+   game that answers them as the console did. Also the failures: a start that
+   is not Confirm Choices, a walk whose white fade never shows (lost), a
+   platform never seen, a scene with no choice, a battle with no symbols or
+   lost, a catch with nothing to catch, Wild Zone 1's start checks (its map
+   pin and party count), an event PLZA has no handler for yet; 01.03 resumed by its skip_if
+   flags, and the jump to its battle. And what the watch page is sent (Story_game.run_watched):
    the plan at each event's change and the run. *)
 
 open Plza_engine
@@ -14,13 +15,14 @@ module C = Plza_fake_console.Fake_console
 
 let case name input expectation = { Table_test.name; input; expectation }
 
+let decoded source json =
+  match Plan_decode.decode ~source json with Ok p -> p | Error e -> failwith e
+
 let plan id =
-  match
-    Plan_decode.decode ~source:(id ^ ".plan.json")
-      (Yojson.Safe.from_file (Filename.concat "../plans" (id ^ ".plan.json")))
-  with
-  | Ok p -> p
-  | Error e -> failwith e
+  decoded (id ^ ".plan.json")
+    (Yojson.Safe.from_file (Filename.concat "../plans" (id ^ ".plan.json")))
+
+let plan_of_text text = decoded "test.plan.json" (Yojson.Safe.from_string text)
 
 (* A reload: the console's time moves on and [reloaded] says it happened. *)
 let reloaded = ref false
@@ -358,6 +360,171 @@ let room_door ?(lost = false) c =
           | Some _ -> party c))
   | _ -> party c
 
+let run_plan (p : Plan.t) screen =
+  let c = C.create () in
+  reloaded := false;
+  let reload () =
+    reloaded := true;
+    c.now <- c.now +. 30_000.0;
+    Ok ()
+  in
+  let game =
+    Plza_autostory.Story_game.make (C.steps c screen) ~checkpoint:p.checkpoint
+      ~reload
+  in
+  match Runner.run game p.checkpoint with
+  | Ok () -> "passed"
+  | Error f -> Failure.to_string f
+
+let result checkpoint screen () = run_plan (plan checkpoint) screen
+
+(* The run on [screen]: its end and the console. *)
+let outcome checkpoint screen =
+  let c = C.create () in
+  let game =
+    Plza_autostory.Story_game.make (C.steps c screen)
+      ~checkpoint:(plan checkpoint).checkpoint ~reload:(fun () -> Ok ())
+  in
+  ( (match Runner.run game (plan checkpoint).checkpoint with
+    | Ok () -> "passed"
+    | Error f -> Failure.to_string f),
+    c )
+
+let logged checkpoint screen part () =
+  let _, c = outcome checkpoint screen in
+  string_of_bool
+    (List.exists (fun line -> Strings.Contains.substring line part) (C.lines c))
+
+(* The events the run on [screen] skipped, by their skip_if. *)
+let skipped checkpoint screen () =
+  let _, c = outcome checkpoint screen in
+  let event line =
+    Option.map
+      (fun word -> String.concat "" (String.split_on_char ':' word))
+      (List.nth_opt (String.split_on_char ' ' line) 3)
+  in
+  String.concat " "
+    (List.filter_map
+       (fun line ->
+         if Strings.Contains.substring line ": skipped (" then event line
+         else None)
+       (C.lines c))
+
+(* 01.03's battle jump: the walk ends on the battle HUD. *)
+let jump_lines () =
+  let cp = (plan "01.03").checkpoint in
+  let ev id = List.find (fun (e : Plan.event) -> e.id = id) cp.events in
+  let lines = ref [] in
+  let jump =
+    Plza_autostory.Battle_jump.make cp ~log:(fun l -> lines := l :: !lines)
+  in
+  let ran id =
+    ignore
+      (Plza_autostory.Battle_jump.run jump (ev id) (fun () ->
+           lines := ("ran " ^ id) :: !lines;
+           Ok ())
+        : (unit, Engine_run.Failure.cause) result)
+  in
+  ignore
+    (Plza_autostory.Battle_jump.after jump (ev "approach_starter")
+       (Error Plza_walk.Battle_stop.battle_on_screen)
+      : (unit, Engine_run.Failure.cause) result);
+  ran "andi_battle_start";
+  ran "andi_battle";
+  List.rev !lines
+
+(* A plan with a talk after the walk: no handler for it yet. *)
+let with_talk () =
+  plan_of_text
+    {|{"format": "gamepilot-checkpoint/1", "game": "plza", "execution": {},
+       "checkpoint": {"id": "01.01", "title": "t",
+         "start": {"place": "LumioseCity"},
+         "events": [
+           {"id": "w", "kind": "walk", "args": {"legs": [[0, 1000]]}},
+           {"id": "chat", "kind": "talk"}]}}|}
+
+(* A plan of one game action with [args] (JSON). *)
+let one_action action args =
+  plan_of_text
+    (Printf.sprintf
+       {|{"format": "gamepilot-checkpoint/1", "game": "plza", "execution": {},
+          "checkpoint": {"id": "02.01", "title": "t",
+            "start": {"place": "LumioseCity"},
+            "events": [
+              {"id": "a", "kind": "game_action", "action": %S, "args": %s}]}}|}
+       action args)
+
+let one_action_result action args screen () =
+  run_plan (one_action action args) screen
+
+module W = Wire.Watch
+
+let state_name = function
+  | W.Pending -> "pending"
+  | Current -> "current"
+  | Done -> "done"
+  | Failed -> "failed"
+  | Skipped -> "skipped"
+
+let shown_event (e : W.plan_event) =
+  e.id ^ "=" ^ state_name e.state
+  ^ if e.detail = "" then "" else "(" ^ e.detail ^ ")"
+
+let shown_run (r : Wire.Watch_run.t) =
+  String.concat " "
+    (("run " ^ r.mode)
+    :: List.map
+         (fun (c : Wire.Watch_run.checkpoint) ->
+           c.id ^ "=" ^ Wire.Watch_run.string_of_state c.state)
+         r.checkpoints)
+
+(* What the watch page is sent while [f] runs: each plan and run, in order. *)
+let page f =
+  let sent = ref [] in
+  let add line = sent := line :: !sent in
+  let effc : type a.
+      a Effect.t -> ((a, unit) Effect.Deep.continuation -> unit) option =
+    function
+    | Effects.Show_plan p ->
+        Some
+          (fun k ->
+            add
+              ("plan " ^ p.checkpoint ^ ": "
+              ^ String.concat " " (List.map shown_event p.events));
+            Effect.Deep.continue k ())
+    | Effects.Show_run r ->
+        Some
+          (fun k ->
+            add (shown_run r);
+            Effect.Deep.continue k ())
+    | _ -> None
+  in
+  Effect.Deep.try_with f () { effc };
+  List.rev !sent
+
+(* [checkpoint] run with Story_game.run_watched: what the page showed. *)
+let watched ?(checkpoint = "01.01") screen =
+  page (fun () ->
+      let c = C.create () in
+      let p = plan checkpoint in
+      let game =
+        Plza_autostory.Story_game.make (C.steps c screen)
+          ~checkpoint:p.checkpoint ~reload:(fun () -> Ok ())
+      in
+      let report = Plan_watch.create p.checkpoint in
+      ignore
+        (Plza_autostory.Story_game.run_watched ~mode:"testing" report game
+           p.checkpoint))
+
+(* The page's last line, and the one before it. *)
+let last_shown ?checkpoint screen () =
+  match List.rev (watched ?checkpoint screen) with
+  | last :: _ -> last
+  | [] -> "nothing"
+
+let last_plan screen () =
+  match List.rev (watched screen) with _ :: plan :: _ -> plan | _ -> "nothing"
+
 (* 03.01: the room's party bar; the door's A prompt once the stick was held
    2 s, until A; a black fade 1.5 s, the 2F hall's party bar; the elevator's A
    prompt once the stick was held 4.2 s, until A; "Which floor?" until A, the
@@ -545,8 +712,9 @@ let off_the_roof ?(lost = false) c =
   | _ -> party c
 
 (* 03.04: the party bar; an A prompt once the stick was held 3.9 s (Urbain's
-   on the way in the -90 run, then the nurse's once the legs end), until A; the Pokedex app and the talks until three B, then
-   the party bar. [lost]: no nurse's prompt. *)
+   on the way in the -90 run, then the nurse's once the legs end), until A;
+   the Pokedex app and the talks until three B, then the party bar. [lost]: no
+   nurse's prompt. *)
 let nurse ?(lost = false) c =
   match C.stick_reached c 3900 with
   | Some n when not lost -> (
@@ -571,6 +739,70 @@ let wild_zones_card ?(lost = false) c =
       | Some _, Some _ -> party c)
   | _ -> party c
 
+(* The arch where 03.02b ends: free control with the minimap 03.03 starts
+   on. *)
+let at_arch c = { (party c) with minimap = Some "03.03-start" }
+
+(* Outside the Center, where 03.04 ends and 03.06 starts. *)
+let outside_center c = { (party c) with minimap = Some "03.06-start" }
+
+let cause_or_ok = function
+  | Ok () -> "ok"
+  | Error e -> Engine_run.Failure.cause_to_string e
+
+(* The start check of [checkpoint]'s plan (or [execution]) on [screen]: its
+   result, and the console for its log. *)
+let start_checked ?execution ?party checkpoint screen =
+  let c = C.create () in
+  let execution = Option.value execution ~default:(plan checkpoint).execution in
+  let party = Option.map (fun n _ -> Some n) party in
+  ( cause_or_ok
+      (Plza_autostory.Start_signature.check (C.steps ?party c screen)
+         ~checkpoint_id:checkpoint execution),
+    c )
+
+let start_check ?execution ?party checkpoint screen () =
+  fst (start_checked ?execution ?party checkpoint screen)
+
+let start_logged ?party checkpoint screen part () =
+  let _, c = start_checked ?party checkpoint screen in
+  string_of_bool
+    (List.exists (fun line -> Strings.Contains.substring line part) (C.lines c))
+
+(* The end check of [checkpoint]'s plan on [screen]. *)
+let end_checked checkpoint screen =
+  let c = C.create () in
+  ( cause_or_ok
+      (Plza_autostory.Start_signature.check_end (C.steps c screen)
+         ~checkpoint_id:checkpoint (plan checkpoint).execution),
+    c )
+
+let end_check checkpoint screen () = fst (end_checked checkpoint screen)
+
+let end_logged checkpoint screen part () =
+  let _, c = end_checked checkpoint screen in
+  string_of_bool
+    (List.exists (fun line -> Strings.Contains.substring line part) (C.lines c))
+
+(* How many inputs held B with the stick: the walk's runs. *)
+let run_count checkpoint screen () =
+  let _, c = outcome checkpoint screen in
+  string_of_int (runs c)
+
+(* 03.07: the gate's A prompt once the stick was held 4.3 s, then the party
+   bar: no Fletchling ever shows. *)
+let zone_gate c =
+  match C.stick_reached c 4300 with
+  | None -> party c
+  | Some _ -> { (party c) with interact_prompt = true }
+
+let at_zone_gate c = { (party c) with minimap = Some "03.07-start" }
+
+(* The throws: inputs with ZR. *)
+let throws (c : C.t) =
+  List.length
+    (List.filter (fun (i : C.input) -> List.mem Wire.ZR i.buttons) c.inputs)
+
 (* 03.10: the lobby's party bar; the elevator's A prompt once the stick was
    held 0.8 s (the run: 1.5 s of walk), until A; the attendant's question
    until A, the floors until A (3F after Down), the ride's text until two B,
@@ -589,153 +821,6 @@ let lab_elevator ?(lost = false) c =
           | Some _ -> party c))
   | _ -> party c
 
-let run checkpoint screen =
-  let c = C.create () in
-  reloaded := false;
-  let steps = C.steps c screen in
-  let reload () =
-    reloaded := true;
-    c.now <- c.now +. 30_000.0;
-    Ok ()
-  in
-  let game =
-    Plza_autostory.Story_game.make steps
-      ~checkpoint:(plan checkpoint).checkpoint ~reload
-  in
-  (Runner.run game (plan checkpoint).checkpoint, c)
-
-let outcome checkpoint screen =
-  let result, c = run checkpoint screen in
-  ((match result with Ok () -> "passed" | Error f -> Failure.to_string f), c)
-
-(* The run's end and whether its failure repeats: a failure that does not is
-   tried again from the last autosave (Runs, Checkpoint_trials). *)
-let tried checkpoint screen =
-  let result, c = run checkpoint screen in
-  ( (match result with
-    | Ok () -> "passed"
-    | Error f ->
-        Printf.sprintf "%s; repeats %s" (Failure.to_string f)
-          (if Failure.repeats f then "yes" else "no")),
-    c )
-
-(* The story battle's log lines. *)
-let battle_lines c =
-  List.filter
-    (fun l -> String.starts_with ~prefix:"[PLZA] story_battle" l)
-    (C.lines c)
-
-let result checkpoint screen () = fst (outcome checkpoint screen)
-let contains part line = Strings.Contains.substring line part
-
-(* The arch where 03.02b ends: free control with the minimap 03.03 starts
-   on. *)
-let at_arch c = { (party c) with minimap = Some "03.03-start" }
-
-(* The start check of [checkpoint]'s plan on [screen], with its log lines. *)
-let start_check ?execution ?party checkpoint screen () =
-  let c = C.create () in
-  let execution = Option.value execution ~default:(plan checkpoint).execution in
-  let party = Option.map (fun n _ -> Some n) party in
-  let r =
-    Plza_autostory.Start_signature.check (C.steps ?party c screen)
-      ~checkpoint_id:checkpoint execution
-  in
-  String.concat "\n"
-    ((match r with
-     | Ok () -> "ok"
-     | Error e -> Engine_run.Failure.cause_to_string e)
-    :: C.lines c)
-
-(* The end check of [checkpoint]'s plan on [screen], with its log lines. *)
-let end_check checkpoint screen () =
-  let c = C.create () in
-  let r =
-    Plza_autostory.Start_signature.check_end (C.steps c screen)
-      ~checkpoint_id:checkpoint (plan checkpoint).execution
-  in
-  String.concat "\n"
-    ((match r with
-     | Ok () -> "ok"
-     | Error e -> Engine_run.Failure.cause_to_string e)
-    :: C.lines c)
-
-(* Outside the Center, where 03.04 ends and 03.06 starts. *)
-let outside_center c = { (party c) with minimap = Some "03.06-start" }
-
-(* The ball throws so far: each holds ZR once. *)
-let throws (c : C.t) =
-  List.length
-    (List.filter (fun (i : C.input) -> List.mem Wire.ZR i.buttons) c.inputs)
-
-(* Under ZL the move symbols show; a move's button lands it. *)
-let zl_held (c : C.t) =
-  match c.inputs with i :: _ -> List.mem Wire.ZL i.buttons | [] -> false
-
-let wild_battle ?(symbols = true) c =
-  {
-    (party c) with
-    run_prompt = true;
-    moves =
-      (if symbols && zl_held c then [ Some L.Effective; None; None; None ]
-       else []);
-  }
-
-(* The tutorial card after the catching throw until A, then the party bar. *)
-let caught c =
-  let rec throw_end n = function
-    | [] -> 0.
-    | (i : C.input) :: rest ->
-        if List.mem Wire.ZR i.buttons then
-          if n = 0 then i.at_ms else throw_end (n - 1) rest
-        else throw_end n rest
-  in
-  match C.nth_after c Wire.A ~after:(throw_end 0 c.inputs) 0 with
-  | None -> { (look c) with tutorial_card = true }
-  | Some _ -> party c
-
-(* 03.07's Fletchling: the throw [catch_on] (from 1) catches it; the ones
-   before break out into a wild battle. *)
-let fletchling ~catch_on c =
-  let n = throws c in
-  if n >= catch_on then caught c else if n >= 1 then wild_battle c else party c
-
-(* 03.07's Bunnelby, in battle from the start: the first throw catches it,
-   or with [breaks_out] the first breaks out out of sight (no symbols until
-   the camera sweeps: ZL with D-pad up) and the second catches it. *)
-let bunnelby ?(breaks_out = false) (c : C.t) =
-  let swept =
-    List.exists
-      (fun (i : C.input) ->
-        List.mem Wire.Up i.buttons && List.mem Wire.ZL i.buttons)
-      c.inputs
-  in
-  match throws c with
-  | 0 -> wild_battle c
-  | 1 when breaks_out -> wild_battle ~symbols:swept c
-  | _ -> party c
-
-(* A catch on [screen]: its result and log. *)
-let catch run screen () =
-  let c = C.create () in
-  let r = run (C.steps c screen) in
-  String.concat "\n"
-    ((match r with
-     | Ok () -> Printf.sprintf "ok, %d throws" (throws c)
-     | Error e -> Engine_run.Failure.cause_to_string e)
-    :: List.filter
-         (fun line ->
-           List.exists
-             (fun p -> String.starts_with ~prefix:p line)
-             [ "[PLZA] catch"; "[PLZA] battle"; "[PLZA] weaken" ])
-         (C.lines c))
-
-let tutorial ~max_throws steps =
-  Plza_story.Catches.catch_tutorial steps ~max_throws
-
-let battle ~max_rounds steps =
-  Plza_story.Catches.battle_then_catch steps ~max_rounds
-
 (* Wild Zone 1 with the map open (+ since the last B) on [pin], its arrow
    reading [facing]. *)
 let map_open c =
@@ -746,12 +831,15 @@ let map_open c =
 
 let in_zone ?(facing = 270.) ~pin c =
   if map_open c then
-    { (look c) with map_pin = Some { x = fst pin; y = snd pin } }
+    {
+      (look c) with
+      map_pin = Some { Plza_walk.Map_leg.x = fst pin; y = snd pin };
+    }
   else { (party c) with minimap_arrow = Some facing }
 
-(* 03.08b: on the gate's line at (379, 250), facing the gate (264). B held 1 s or more
-   brings up the gate's A prompt; A leaves (a black fade for 1.5 s), then the
-   street outside, where the map opens on its centre (401, 225). *)
+(* 03.08b: on the gate's line at (379, 250), facing the gate (264). B held 1 s
+   or more brings up the gate's A prompt; A leaves (a black fade for 1.5 s),
+   then the street outside, where the map opens on its centre (401, 225). *)
 let leave_zone c =
   let held_b =
     List.fold_left
@@ -765,139 +853,13 @@ let leave_zone c =
   | None when held_b >= 1000 && not (map_open c) -> prompt c
   | None -> in_zone ~facing:264. ~pin:(379., 250.) c
 
-(* 03.11's reward: the party bar until X; the main menu until A; with
-   [lines], Mable's text until two more A, then the Rewards page (nothing
-   read) until B, then the party bar. [menu]: X opens it. *)
-let mable ?(menu = true) ?(lines = true) c =
-  match C.nth_after c Wire.X ~after:0. 0 with
-  | None -> party c
-  | Some _ when not menu -> party c
-  | Some x -> (
-      match C.nth_after c Wire.A ~after:x 0 with
-      | None -> { (look c) with main_menu = true }
-      | Some _ when not lines -> look c
-      | Some a -> (
-          match
-            (C.nth_after c Wire.A ~after:a 1, C.nth_after c Wire.B ~after:a 0)
-          with
-          | None, _ -> text c
-          | Some _, None -> look c
-          | Some _, Some _ -> party c))
+let at_rocks = in_zone ~pin:(476., 224.)
+let at_100_spot = in_zone ~pin:(440., 229.)
+let out_of_zone = in_zone ~pin:(401., 225.)
 
-let mable_reward screen () =
-  let c = C.create () in
-  let r = Plza_story.Mable_reward.run (C.steps c screen) in
-  String.concat "\n"
-    ((match r with
-     | Ok () -> Printf.sprintf "ok, %d inputs" (List.length c.C.inputs)
-     | Error e -> Engine_run.Failure.cause_to_string e)
-    :: C.lines c)
-
-(* 03.07's run to the gate on [screen]: its result and log. *)
-let gate_run ?(timeout_ms = 8000) screen () =
-  let c = C.create () in
-  let r =
-    Plza_walk.Gate_run.run
-      (Plza_story.Steps.walk_game_steps (C.steps c screen))
-      ~timeout_ms
-  in
-  String.concat "\n"
-    ((match r with
-     | Ok () -> Printf.sprintf "ok, %d run" (runs c)
-     | Error e -> Engine_run.Failure.cause_to_string e)
-    :: C.lines c)
-
-(* The gate's A prompt once the stick was held 4.3 s. *)
-let gate c =
-  match C.stick_reached c 4300 with
-  | None -> party c
-  | Some _ -> { (party c) with interact_prompt = true }
-
-(* A day/night change 2 s into the run: 1.5 s of nothing, then the bar; the
-   gate 4.3 s into the second run. *)
-let gate_after_night c =
-  match C.stick_reached c 2000 with
-  | None -> party c
-  | Some d when since c d < 1500.0 -> look c
-  | Some d -> (
-      match C.stick_reached c 6300 with
-      | Some g when g > d -> { (party c) with interact_prompt = true }
-      | _ -> party c)
-
-(* A checkpoint the runner refuses before its first input: its result and
-   how many inputs went out. *)
-let refused checkpoint () =
-  let r, c = outcome checkpoint party in
-  Printf.sprintf "%s; %d inputs" r (List.length c.C.inputs)
-
-(* The run's skips, its moves and its end. *)
-let skips checkpoint screen =
-  let r, c = outcome checkpoint screen in
-  let kept line =
-    contains ": skipped (" line
-    || String.starts_with ~prefix:"[PLZA] story_battle: Picking" line
-    || line = "[Story] " ^ checkpoint ^ ": done"
-  in
-  String.concat "\n" (r :: List.filter kept (C.lines c))
-
-module W = Wire.Watch
-
-let state_name = function
-  | W.Pending -> "pending"
-  | Current -> "current"
-  | Done -> "done"
-  | Failed -> "failed"
-  | Skipped -> "skipped"
-
-let shown_event (e : W.plan_event) =
-  e.id ^ "=" ^ state_name e.state
-  ^ if e.detail = "" then "" else "(" ^ e.detail ^ ")"
-
-let shown_run (r : Wire.Watch_run.t) =
-  String.concat " "
-    (("run " ^ r.mode)
-    :: List.map
-         (fun (c : Wire.Watch_run.checkpoint) ->
-           c.id ^ "=" ^ Wire.Watch_run.string_of_state c.state)
-         r.checkpoints)
-
-(* What the watch page is sent while [f] runs: each plan and run, in order. *)
-let page f =
-  let sent = ref [] in
-  let add line = sent := line :: !sent in
-  let effc : type a.
-      a Effect.t -> ((a, unit) Effect.Deep.continuation -> unit) option =
-    function
-    | Effects.Show_plan p ->
-        Some
-          (fun k ->
-            add
-              ("plan " ^ p.checkpoint ^ ": "
-              ^ String.concat " " (List.map shown_event p.events));
-            Effect.Deep.continue k ())
-    | Effects.Show_run r ->
-        Some
-          (fun k ->
-            add (shown_run r);
-            Effect.Deep.continue k ())
-    | _ -> None
-  in
-  Effect.Deep.try_with f () { effc };
-  String.concat "\n" (List.rev !sent)
-
-(* [checkpoint] run with Story_game.run_watched: what the page showed. *)
-let watched checkpoint screen () =
-  page (fun () ->
-      let c = C.create () in
-      reloaded := false;
-      let game =
-        Plza_autostory.Story_game.make (C.steps c screen)
-          ~checkpoint:(plan checkpoint).checkpoint ~reload:(fun () -> Ok ())
-      in
-      let report = Plan_watch.create (plan checkpoint).checkpoint in
-      ignore
-        (Plza_autostory.Story_game.run_watched ~mode:"testing" report game
-           (plan checkpoint).checkpoint))
+(* The inputs a run on [screen] sent. *)
+let inputs_sent checkpoint screen () =
+  string_of_int (List.length (snd (outcome checkpoint screen)).C.inputs)
 
 let cases =
   [
@@ -908,189 +870,177 @@ let cases =
       "01.00b event 1 (confirm): not_on_confirm_choices: 01.00b starts on the \
        new game's \"Confirm Choices\" screen, after the language, look and \
        name (made by hand). It is not on screen; nothing was pressed.";
+    case "01.00b on the watch page: its run passes"
+      (last_shown ~checkpoint:"01.00b" new_game)
+      "run testing 01.00b=passed";
+    case "01.01's plan: a zone start and its events"
+      (fun () -> Plan_text.outline (plan "01.01"))
+      "plza 01.01 from LumioseCity: 3 game_action, 1 walk, 2 scene";
     case "01.01: the platform to the controls hint after the arrival scenes"
       (result "01.01" platform) "passed";
     case "01.01 lost: the walk's white fade never shows"
       (result "01.01" (platform ~lost:true))
       "01.01 event 3 (platform_to_plaza): walk_no_end: platform_to_plaza: no \
        end event within 11287 ms of the last leg";
-    case "01.01 with the hint faded: a reload, then the whole checkpoint"
+    case "01.01 with the hint faded: passes"
+      (result "01.01" (platform ~faded:true))
+      "passed";
+    case "01.01 with the hint faded: the platform wait reloaded"
       (fun () ->
-        let r = result "01.01" (platform ~faded:true) () in
-        Printf.sprintf "%s, reloaded %b" r !reloaded)
-      "passed, reloaded true";
+        ignore (result "01.01" (platform ~faded:true) () : string);
+        string_of_bool !reloaded)
+      "true";
     case "01.01 off the platform: no controls hint, even after a reload"
       (result "01.01" look)
       "01.01 event 1 (on_platform): platform_not_seen: No controls hint on 2 \
        looks in a row within 10000 ms.";
-    case "01.00b on the watch page: its events move, its run passes"
-      (watched "01.00b" new_game)
-      "plan 01.00b: confirm=pending opening=pending\n\
-       run testing 01.00b=current\n\
-       plan 01.00b: confirm=current opening=pending\n\
-       plan 01.00b: confirm=done opening=pending\n\
-       plan 01.00b: confirm=done opening=current\n\
-       plan 01.00b: confirm=done opening=done\n\
-       run testing 01.00b=passed";
-    case "01.01 lost on the watch page: the walk fails with its reason"
-      (fun () ->
-        let shown =
-          String.split_on_char '\n' (watched "01.01" (platform ~lost:true) ())
-        in
-        String.concat "\n" (List.filteri (fun i _ -> i >= 6) shown))
-      "plan 01.01: on_platform=done text_speed_fast=done \
-       platform_to_plaza=current arrival_to_ad=pending skip_ad=pending \
-       arrival_scenes=pending\n\
-       plan 01.01: on_platform=done text_speed_fast=done \
-       platform_to_plaza=failed(walk_no_end: platform_to_plaza: no end event \
-       within 11287 ms of the last leg) arrival_to_ad=pending skip_ad=pending \
-       arrival_scenes=pending\n\
-       run testing 01.01=failed";
     case "01.02: the chase, Pancham's scene to its choice, row 1, Ryon's prompt"
-      (fun () ->
-        let r, c = outcome "01.02" pancham in
-        String.concat "\n"
-          (r
-          :: List.filter
-               (fun line ->
-                 String.starts_with ~prefix:"[PLZA] choose" line
-                 || String.starts_with ~prefix:"[PLZA scene] done" line)
-               (C.lines c)))
-      "passed\n\
-       [PLZA scene] done on choice.\n\
-       [PLZA] choose_1: row 0 of 2 highlighted\n\
-       [PLZA scene] done on control.";
+      (result "01.02" pancham) "passed";
+    case "01.02: the scene ends on the choice"
+      (logged "01.02" pancham "[PLZA scene] done on choice.")
+      "true";
+    case "01.02: choose_1 reads the highlight on row 0 of 2"
+      (logged "01.02" pancham "[PLZA] choose_1: row 0 of 2 highlighted")
+      "true";
     case "01.02 lost: no scene after the chase, Ryon's prompt alone"
       (result "01.02" (pancham ~lost:true))
       "01.02 event 2 (pancham_cornered): scene_ended_in_control: scene: the \
        scene ended in control, the party bar up 5000 ms with nothing busy \
        (expecting the choice box, the controls hint).";
     case "01.03: to Chikorita's prompt, through the cards, Andi beaten"
-      (fun () ->
-        let r, c = outcome "01.03" starter in
-        String.concat "\n"
-          (r
-          :: List.filter
-               (fun line ->
-                 List.exists
-                   (fun prefix -> String.starts_with ~prefix line)
-                   [
-                     "[PLZA] approach_starter";
-                     "[PLZA] story_battle";
-                     "[PLZA scene] done";
-                   ])
-               (C.lines c)))
-      "passed\n\
-       [PLZA] approach_starter: the A prompt held 1000 ms with nothing busy: \
-       control.\n\
-       [PLZA] approach_starter: A on the A prompt after 600 ms of the last leg \
-       started a talk.\n\
-       [PLZA] approach_starter: started on: dialog_box, advance_arrow\n\
-       [PLZA scene] done on battle.\n\
-       [PLZA] story_battle: Move Effectiveness: Top: Effective; Left: Super \
-       Effective; Right: (Unable to Detect); Bottom: No Effect;\n\
-       [PLZA] story_battle: Picking Move: Left\n\
-       [PLZA] story_battle: a dialogue box after the attacks: the battle is \
-       over.\n\
-       [PLZA scene] done on control.";
+      (result "01.03" starter) "passed";
+    case "01.03: the scene to the battle ends on its HUD"
+      (logged "01.03" starter "[PLZA scene] done on battle.")
+      "true";
+    case "01.03: the battle picks the super effective move"
+      (logged "01.03" starter "[PLZA] story_battle: Picking Move: Left")
+      "true";
+    case "01.03: the battle ends on Andi's dialogue"
+      (logged "01.03" starter
+         "[PLZA] story_battle: a dialogue box after the attacks: the battle is \
+          over.")
+      "true";
     case "01.03 no symbols: ZL never locks on in the battle"
       (result "01.03" (starter ~no_symbols:true))
       "01.03 event 3 (andi_battle): battle_failed: fight_story_battle(): no \
        dialogue after the battle within the timeout.";
-    case "01.03 resumed inside Andi's battle: the walk and the scene skipped"
-      (fun () -> skips "01.03" (in_battle ~after:0.0))
-      "passed\n\
-       [Story] 01.03 #1 approach_starter: skipped (talk_or_battle_shows)\n\
-       [Story] 01.03 #2 andi_battle_start: skipped (battle_shows)\n\
-       [PLZA] story_battle: Picking Move: Left\n\
-       [Story] 01.03: done";
-    case
-      "01.03 lost: the lead at 1 HP faints, a black fade, Urbain's heal: \
-       battle_lost, tried again"
-      (fun () ->
-        let r, c = tried "01.03" (starter_lost ~fade_ms:2000.0) in
-        String.concat "\n" (r :: battle_lines c))
+    case "01.03 lost: the lead at 1 HP faints, a black fade: battle_lost"
+      (result "01.03" (starter_lost ~fade_ms:2000.0))
       "01.03 event 3 (andi_battle): battle_lost: a black fade with the lead's \
        HP near empty: the lead fainted (before any Pokémon Center, the heal \
-       and the rematch follow); repeats no\n\
-       [PLZA] story_battle: Move Effectiveness: Top: Effective; Left: Super \
-       Effective; Right: (Unable to Detect); Bottom: No Effect;\n\
-       [PLZA] story_battle: Picking Move: Left\n\
-       [PLZA] story_battle: a black fade, the lead's HP last read 0.04: the \
-       battle is lost.";
+       and the rematch follow)";
+    case "01.03 lost: the fade logged with the lead's last HP"
+      (logged "01.03"
+         (starter_lost ~fade_ms:2000.0)
+         "a black fade, the lead's HP last read 0.04: the battle is lost.")
+      "true";
     (* With no HP read before it, a fade is no evidence of a loss: the fight
        goes on, the heal's line reads as the won battle's, and the next scene
        waits for control that never comes. *)
-    case
-      "01.03 lost with no HP read: the fade alone is no loss, the next scene \
-       fails"
-      (fun () -> fst (tried "01.03" (starter_lost ~no_hp:true ~fade_ms:2000.0)))
+    case "01.03 lost with no HP read: the fade alone is no loss"
+      (result "01.03" (starter_lost ~no_hp:true ~fade_ms:2000.0))
       "01.03 event 4 (after_andi): scene_timeout: scene: Did not finish within \
-       360 s (expecting the controls hint, the party bar or the A prompt).; \
-       repeats no";
-    case
-      "01.03 won, a black fade into Andi's line, the lead healthy: a cutscene, \
-       the battle fought on to the line"
-      (fun () ->
-        let r, c = tried "01.03" starter_won_fade in
-        String.concat "\n"
-          (r
-          :: List.filter
-               (fun l ->
-                 not (String.starts_with ~prefix:"[PLZA] story_battle: M" l))
-               (battle_lines c)))
-      "passed\n\
-       [PLZA] story_battle: Picking Move: Left\n\
-       [PLZA] story_battle: a black fade, the lead's HP last read 0.89: a \
-       cutscene, fighting on.\n\
-       [PLZA] story_battle: a dialogue box after the attacks: the battle is \
-       over.";
-    (* A fade shorter than the fight's reads (one per attack, 1.25 s or
-       more apart) goes unseen: the heal's line reads as the won battle's,
-       and the next scene waits for control that never comes, still tried
-       again but 360 s later. *)
+       360 s (expecting the controls hint, the party bar or the A prompt).";
+    case "01.03 won, a black fade into Andi's line: a cutscene, fought on"
+      (result "01.03" starter_won_fade)
+      "passed";
+    case "01.03 won, a black fade into Andi's line: logged as a cutscene"
+      (logged "01.03" starter_won_fade
+         "a black fade, the lead's HP last read 0.89: a cutscene, fighting on.")
+      "true";
+    (* A fade shorter than the fight's reads (one per attack, 1.25 s or more
+       apart) goes unseen: the heal's line reads as the won battle's. *)
     case "01.03 lost with a fade the reads miss (0.5 s): the next scene fails"
-      (fun () -> fst (tried "01.03" (starter_lost ~fade_ms:500.0)))
+      (result "01.03" (starter_lost ~fade_ms:500.0))
       "01.03 event 4 (after_andi): scene_timeout: scene: Did not finish within \
-       360 s (expecting the controls hint, the party bar or the A prompt).; \
-       repeats no";
-    case
-      "01.03 resumed at Urbain's heal: the walk skipped, the scene to the HUD"
-      (fun () -> skips "01.03" rematch)
-      "passed\n\
-       [Story] 01.03 #1 approach_starter: skipped (talk_or_battle_shows)\n\
-       [PLZA] story_battle: Picking Move: Left\n\
-       [Story] 01.03: done";
+       360 s (expecting the controls hint, the party bar or the A prompt).";
+    case "01.03 resumed inside Andi's battle: passes"
+      (result "01.03" (in_battle ~after:0.0))
+      "passed";
+    case "01.03 resumed inside Andi's battle: the walk and the scene skipped"
+      (skipped "01.03" (in_battle ~after:0.0))
+      "approach_starter andi_battle_start";
+    case "01.03 resumed at Urbain's heal: passes" (result "01.03" rematch)
+      "passed";
+    case "01.03 resumed at Urbain's heal: the walk skipped"
+      (skipped "01.03" rematch) "approach_starter";
     case "01.03 resumed in the alley after it: every event skipped"
-      (fun () -> skips "01.03" party)
-      "passed\n\
-       [Story] 01.03 #1 approach_starter: skipped (party_bar_free)\n\
-       [Story] 01.03 #2 andi_battle_start: skipped (party_bar_free)\n\
-       [Story] 01.03 #3 andi_battle: skipped (party_bar_free)\n\
-       [Story] 01.03 #4 after_andi: skipped (party_bar_free)\n\
-       [Story] 01.03: done";
+      (skipped "01.03" party)
+      "approach_starter andi_battle_start andi_battle after_andi";
+    case "01.03's jump: a battle during the walk jumps to the battle"
+      (fun () -> List.hd (jump_lines ()))
+      "[Event] 01.03: battle on screen during approach_starter: jumping to \
+       andi_battle, skipping andi_battle_start";
+    case "01.03's jump: the scene before the battle is not run"
+      (fun () ->
+        string_of_bool (List.mem "ran andi_battle_start" (jump_lines ())))
+      "false";
+    case "01.03's jump: the battle runs"
+      (fun () -> string_of_bool (List.mem "ran andi_battle" (jump_lines ())))
+      "true";
+    case "a talk: no handler for it yet"
+      (fun () -> run_plan (with_talk ()) platform)
+      "01.01 event 2 (chat): no_handler: chat: PLZA runs no talk, answer or \
+       save event";
+    case "01.01 on the watch page: its run passes" (last_shown platform)
+      "run testing 01.01=passed";
+    case "01.01 lost on the watch page: its run fails"
+      (last_shown (platform ~lost:true))
+      "run testing 01.01=failed";
+    case "01.01 lost on the watch page: the walk fails with its reason"
+      (last_plan (platform ~lost:true))
+      "plan 01.01: on_platform=done text_speed_fast=done \
+       platform_to_plaza=failed(walk_no_end: platform_to_plaza: no end event \
+       within 11287 ms of the last leg) arrival_to_ad=pending skip_ad=pending \
+       arrival_scenes=pending";
+    case "the walk is walked before 03.03, run after"
+      (fun () ->
+        Printf.sprintf "%b %b"
+          (Plza_autostory.Story_game.walk_only "01.01")
+          (Plza_autostory.Story_game.walk_only "03.03"))
+      "true false";
+  ]
+
+(* The actions' own failures. *)
+let cases_actions =
+  [
+    case "scene_through_prompt with free control and no A prompt"
+      (one_action_result "scene_through_prompt" "{}" party)
+      "02.01 event 1 (a): prompt_not_seen: scene: no A prompt to press \
+       through: free control with nothing to take A (the walk before it \
+       stopped short?)";
+    case "scene_through_prompt with an unknown arg"
+      (one_action_result "scene_through_prompt" {|{"stop_at_choice": false}|}
+         party)
+      "02.01 event 1 (a): bad_args: a: the only arg is stop_at_choice, true";
+    case "scene_with_start_window with no window"
+      (one_action_result "scene_with_start_window" "{}" party)
+      "02.01 event 1 (a): bad_args: a: the only arg is start_window_ms, a \
+       positive number of ms";
+  ]
+
+(* 02.01. *)
+let cases_02_01 =
+  [
     case
       "02.01: the Battle Zone walk, Brigitte's talk, Cleffa beaten, the plaza"
-      (fun () ->
-        let r, c = outcome "02.01" brigitte in
-        String.concat "\n"
-          (r
-          :: List.filter
-               (fun line ->
-                 List.exists
-                   (fun prefix -> String.starts_with ~prefix line)
-                   [
-                     "[PLZA] battle_zone_to_brigitte";
-                     "[PLZA] story_battle: Picking";
-                     "[PLZA scene] done";
-                   ])
-               (C.lines c)))
-      "passed\n\
-       [PLZA] battle_zone_to_brigitte: legs done, screen now: dialog_box, \
-       advance_arrow\n\
-       [PLZA scene] done on battle.\n\
-       [PLZA] story_battle: Picking Move: Left\n\
-       [PLZA scene] done on control.";
+      (result "02.01" brigitte) "passed";
+    case
+      "02.01 logs: [PLZA] battle_zone_to_brigitte: legs done, screen now: \
+       dialog_box, advance_arrow"
+      (logged "02.01" brigitte
+         "[PLZA] battle_zone_to_brigitte: legs done, screen now: dialog_box, \
+          advance_arrow")
+      "true";
+    case "02.01 logs: [PLZA scene] done on battle."
+      (logged "02.01" brigitte "[PLZA scene] done on battle.")
+      "true";
+    case "02.01 logs: [PLZA] story_battle: Picking Move: Left"
+      (logged "02.01" brigitte "[PLZA] story_battle: Picking Move: Left")
+      "true";
+    case "02.01 logs: [PLZA scene] done on control."
+      (logged "02.01" brigitte "[PLZA scene] done on control.")
+      "true";
     case "02.01 lost: no Brigitte after the walk, the party bar alone"
       (result "02.01" party)
       "02.01 event 2 (brigitte_battle_start): scene_ended_in_control: scene: \
@@ -1102,591 +1052,497 @@ let cases =
        never started (player not at its trigger?): the HUD up and no text, \
        choice, battle or cutscene for 45000 ms (expecting the controls hint, \
        the party bar or the A prompt).";
+  ]
+
+(* 02.02. *)
+let cases_02_02 =
+  [
     case "02.02: the street's cutscene skipped, the gate, Taunie, Hotel Z"
-      (fun () ->
-        let r, c = outcome "02.02" hotel_z in
-        String.concat "\n"
-          (r
-          :: List.filter
-               (fun line ->
-                 List.exists
-                   (fun prefix -> String.starts_with ~prefix line)
-                   [
-                     "[PLZA] to_";
-                     "[PLZA] through_";
-                     "[PLZA] plus";
-                     "[PLZA scene] done";
-                   ])
-               (C.lines c)))
-      "passed\n\
-       [PLZA] to_blocked_street: the end event after 750 ms of the last leg.\n\
-       [PLZA] to_blocked_street: ended on: fade_black\n\
-       [PLZA] plus_skip: a black fade 0 ms after the hold.\n\
-       [PLZA scene] done on control.\n\
-       [PLZA] to_battle_zone_gate: A on the A prompt after 3000 ms of the last \
-       leg started a talk.\n\
-       [PLZA] to_battle_zone_gate: started on: dialog_box, advance_arrow\n\
-       [PLZA scene] done on control.\n\
-       [PLZA] through_covered_passage: legs done, screen now: dialog_box, \
-       advance_arrow\n\
-       [PLZA scene] done on control.";
+      (result "02.02" hotel_z) "passed";
+    case
+      "02.02 logs: [PLZA] to_blocked_street: the end event after 750 ms of the \
+       last leg."
+      (logged "02.02" hotel_z
+         "[PLZA] to_blocked_street: the end event after 750 ms of the last leg.")
+      "true";
+    case "02.02 logs: [PLZA] to_blocked_street: ended on: fade_black"
+      (logged "02.02" hotel_z "[PLZA] to_blocked_street: ended on: fade_black")
+      "true";
+    case "02.02 logs: [PLZA] plus_skip: a black fade 0 ms after the hold."
+      (logged "02.02" hotel_z
+         "[PLZA] plus_skip: a black fade 0 ms after the hold.")
+      "true";
+    case "02.02 logs: [PLZA scene] done on control."
+      (logged "02.02" hotel_z "[PLZA scene] done on control.")
+      "true";
+    case
+      "02.02 logs: [PLZA] to_battle_zone_gate: A on the A prompt after 3000 ms \
+       of the last leg started a talk."
+      (logged "02.02" hotel_z
+         "[PLZA] to_battle_zone_gate: A on the A prompt after 3000 ms of the \
+          last leg started a talk.")
+      "true";
+    case
+      "02.02 logs: [PLZA] to_battle_zone_gate: started on: dialog_box, \
+       advance_arrow"
+      (logged "02.02" hotel_z
+         "[PLZA] to_battle_zone_gate: started on: dialog_box, advance_arrow")
+      "true";
+    case
+      "02.02 logs: [PLZA] through_covered_passage: legs done, screen now: \
+       dialog_box, advance_arrow"
+      (logged "02.02" hotel_z
+         "[PLZA] through_covered_passage: legs done, screen now: dialog_box, \
+          advance_arrow")
+      "true";
     case "02.02 lost: no black fade into the street"
       (result "02.02" (hotel_z ~lost:true))
       "02.02 event 1 (to_blocked_street): walk_no_end: to_blocked_street: no \
        end event within 3363 ms of the last leg";
+  ]
+
+(* 02.03. *)
+let cases_02_03 =
+  [
     case "02.03: up the steps to the door's prompt, A Enter, the lobby"
-      (fun () ->
-        let r, c = outcome "02.03" lobby in
-        String.concat "\n"
-          (r
-          :: List.filter
-               (fun line ->
-                 List.exists
-                   (fun prefix -> String.starts_with ~prefix line)
-                   [ "[PLZA] to_"; "[PLZA] press"; "[PLZA scene] done" ])
-               (C.lines c)))
-      "passed\n\
-       [PLZA] to_hotel_z_door: the end event after 2000 ms of the last leg, \
-       before its 3375 ms: passed on the way, on.\n\
-       [PLZA] to_hotel_z_door: the end event after 2250 ms of the last leg, \
-       before its 3375 ms: passed on the way, on.\n\
-       [PLZA] to_hotel_z_door: the end event after 2500 ms of the last leg, \
-       before its 3375 ms: passed on the way, on.\n\
-       [PLZA] to_hotel_z_door: the end event after 2750 ms of the last leg, \
-       before its 3375 ms: passed on the way, on.\n\
-       [PLZA] to_hotel_z_door: the end event after 3000 ms of the last leg, \
-       before its 3375 ms: passed on the way, on.\n\
-       [PLZA] to_hotel_z_door: the end event after 3250 ms of the last leg, \
-       before its 3375 ms: passed on the way, on.\n\
-       [PLZA] to_hotel_z_door: the end event after 3500 ms of the last leg.\n\
-       [PLZA] to_hotel_z_door: ended on: player_can_move, interact_prompt\n\
-       [PLZA scene] done on control.";
+      (result "02.03" lobby) "passed";
+    case
+      "02.03 logs: [PLZA] to_hotel_z_door: the end event after 2000 ms of the \
+       last leg, before its 3375 ms: passed on the way, on."
+      (logged "02.03" lobby
+         "[PLZA] to_hotel_z_door: the end event after 2000 ms of the last leg, \
+          before its 3375 ms: passed on the way, on.")
+      "true";
+    case
+      "02.03 logs: [PLZA] to_hotel_z_door: the end event after 2250 ms of the \
+       last leg, before its 3375 ms: passed on the way, on."
+      (logged "02.03" lobby
+         "[PLZA] to_hotel_z_door: the end event after 2250 ms of the last leg, \
+          before its 3375 ms: passed on the way, on.")
+      "true";
+    case
+      "02.03 logs: [PLZA] to_hotel_z_door: the end event after 2500 ms of the \
+       last leg, before its 3375 ms: passed on the way, on."
+      (logged "02.03" lobby
+         "[PLZA] to_hotel_z_door: the end event after 2500 ms of the last leg, \
+          before its 3375 ms: passed on the way, on.")
+      "true";
+    case
+      "02.03 logs: [PLZA] to_hotel_z_door: the end event after 2750 ms of the \
+       last leg, before its 3375 ms: passed on the way, on."
+      (logged "02.03" lobby
+         "[PLZA] to_hotel_z_door: the end event after 2750 ms of the last leg, \
+          before its 3375 ms: passed on the way, on.")
+      "true";
+    case
+      "02.03 logs: [PLZA] to_hotel_z_door: the end event after 3000 ms of the \
+       last leg, before its 3375 ms: passed on the way, on."
+      (logged "02.03" lobby
+         "[PLZA] to_hotel_z_door: the end event after 3000 ms of the last leg, \
+          before its 3375 ms: passed on the way, on.")
+      "true";
+    case
+      "02.03 logs: [PLZA] to_hotel_z_door: the end event after 3250 ms of the \
+       last leg, before its 3375 ms: passed on the way, on."
+      (logged "02.03" lobby
+         "[PLZA] to_hotel_z_door: the end event after 3250 ms of the last leg, \
+          before its 3375 ms: passed on the way, on.")
+      "true";
+    case
+      "02.03 logs: [PLZA] to_hotel_z_door: the end event after 3500 ms of the \
+       last leg."
+      (logged "02.03" lobby
+         "[PLZA] to_hotel_z_door: the end event after 3500 ms of the last leg.")
+      "true";
+    case
+      "02.03 logs: [PLZA] to_hotel_z_door: ended on: player_can_move, \
+       interact_prompt"
+      (logged "02.03" lobby
+         "[PLZA] to_hotel_z_door: ended on: player_can_move, interact_prompt")
+      "true";
+    case "02.03 logs: [PLZA scene] done on control."
+      (logged "02.03" lobby "[PLZA scene] done on control.")
+      "true";
     case "02.03 lost: no door prompt"
       (result "02.03" (lobby ~lost:true))
       "02.03 event 1 (to_hotel_z_door): walk_no_end: to_hotel_z_door: no end \
        event within 5061 ms of the last leg";
+  ]
+
+(* 02.04. *)
+let cases_02_04 =
+  [
     case "02.04: along the counter, the clerk's prompt, check-in"
-      (fun () ->
-        let r, c = outcome "02.04" clerk in
-        String.concat "\n"
-          (r
-          :: List.filter
-               (fun line ->
-                 List.exists
-                   (fun prefix -> String.starts_with ~prefix line)
-                   [ "[PLZA] to_"; "[PLZA] press"; "[PLZA scene] done" ])
-               (C.lines c)))
-      "passed\n\
-       [PLZA] to_front_counter: A on the A prompt after 0 ms of the last leg \
-       started a talk.\n\
-       [PLZA] to_front_counter: started on: dialog_box, advance_arrow\n\
-       [PLZA scene] done on control.";
+      (result "02.04" clerk) "passed";
+    case
+      "02.04 logs: [PLZA] to_front_counter: A on the A prompt after 0 ms of \
+       the last leg started a talk."
+      (logged "02.04" clerk
+         "[PLZA] to_front_counter: A on the A prompt after 0 ms of the last \
+          leg started a talk.")
+      "true";
+    case
+      "02.04 logs: [PLZA] to_front_counter: started on: dialog_box, \
+       advance_arrow"
+      (logged "02.04" clerk
+         "[PLZA] to_front_counter: started on: dialog_box, advance_arrow")
+      "true";
+    case "02.04 logs: [PLZA scene] done on control."
+      (logged "02.04" clerk "[PLZA scene] done on control.")
+      "true";
     case "02.04 lost: no clerk's prompt"
       (result "02.04" (clerk ~lost:true))
       "02.04 event 1 (to_front_counter): walk_no_end: to_front_counter: no \
        talk started within 1000 ms after the last leg";
-    case "02.05: the elevator, 2F, Room 202"
-      (fun () ->
-        let r, c = outcome "02.05" elevator in
-        String.concat "\n"
-          (r
-          :: List.filter
-               (fun line ->
-                 List.exists
-                   (fun prefix -> String.starts_with ~prefix line)
-                   [ "[PLZA] to_"; "[PLZA] choose"; "[PLZA scene] done" ])
-               (C.lines c)))
-      "passed\n\
-       [PLZA] to_lobby_elevator: the end event after 2000 ms of the last leg.\n\
-       [PLZA] to_lobby_elevator: ended on: player_can_move, interact_prompt\n\
-       [PLZA scene] done on choice.\n\
-       [PLZA] choose_0: row 0 of 2 highlighted\n\
-       [PLZA scene] done on control.\n\
-       [PLZA] to_room_202: the end event after 2000 ms of the last leg.\n\
-       [PLZA] to_room_202: ended on: player_can_move, interact_prompt\n\
-       [PLZA scene] done on control.";
+  ]
+
+(* 02.05. *)
+let cases_02_05 =
+  [
+    case "02.05: the elevator, 2F, Room 202" (result "02.05" elevator) "passed";
+    case
+      "02.05 logs: [PLZA] to_lobby_elevator: the end event after 2000 ms of \
+       the last leg."
+      (logged "02.05" elevator
+         "[PLZA] to_lobby_elevator: the end event after 2000 ms of the last \
+          leg.")
+      "true";
+    case
+      "02.05 logs: [PLZA] to_lobby_elevator: ended on: player_can_move, \
+       interact_prompt"
+      (logged "02.05" elevator
+         "[PLZA] to_lobby_elevator: ended on: player_can_move, interact_prompt")
+      "true";
+    case "02.05 logs: [PLZA scene] done on choice."
+      (logged "02.05" elevator "[PLZA scene] done on choice.")
+      "true";
+    case "02.05 logs: [PLZA] choose_0: row 0 of 2 highlighted"
+      (logged "02.05" elevator "[PLZA] choose_0: row 0 of 2 highlighted")
+      "true";
+    case "02.05 logs: [PLZA scene] done on control."
+      (logged "02.05" elevator "[PLZA scene] done on control.")
+      "true";
+    case
+      "02.05 logs: [PLZA] to_room_202: the end event after 2000 ms of the last \
+       leg."
+      (logged "02.05" elevator
+         "[PLZA] to_room_202: the end event after 2000 ms of the last leg.")
+      "true";
+    case
+      "02.05 logs: [PLZA] to_room_202: ended on: player_can_move, \
+       interact_prompt"
+      (logged "02.05" elevator
+         "[PLZA] to_room_202: ended on: player_can_move, interact_prompt")
+      "true";
     case "02.05 lost: no elevator prompt"
       (result "02.05" (elevator ~lost:true))
       "02.05 event 1 (to_lobby_elevator): walk_no_end: to_lobby_elevator: no \
        end event within 3363 ms of the last leg";
+  ]
+
+(* 02.06. *)
+let cases_02_06 =
+  [
     case "02.06: a prompt passed, the bed, rest until morning"
-      (fun () ->
-        let r, c = outcome "02.06" bed in
-        String.concat "\n"
-          (r
-          :: List.filter
-               (fun line ->
-                 List.exists
-                   (fun prefix -> String.starts_with ~prefix line)
-                   [ "[PLZA] to_"; "[PLZA] choose"; "[PLZA scene] done" ])
-               (C.lines c)))
-      "passed\n\
-       [PLZA] to_bed: the end event after 500 ms of the last leg, before its \
-       750 ms: passed on the way, on.\n\
-       [PLZA] to_bed: the end event after 1000 ms of the last leg.\n\
-       [PLZA] to_bed: ended on: player_can_move, interact_prompt\n\
-       [PLZA scene] done on choice.\n\
-       [PLZA] choose_0: row 0 of 2 highlighted\n\
-       [PLZA scene] done on control.";
+      (result "02.06" bed) "passed";
+    case
+      "02.06 logs: [PLZA] to_bed: the end event after 500 ms of the last leg, \
+       before its 750 ms: passed on the way, on."
+      (logged "02.06" bed
+         "[PLZA] to_bed: the end event after 500 ms of the last leg, before \
+          its 750 ms: passed on the way, on.")
+      "true";
+    case
+      "02.06 logs: [PLZA] to_bed: the end event after 1000 ms of the last leg."
+      (logged "02.06" bed
+         "[PLZA] to_bed: the end event after 1000 ms of the last leg.")
+      "true";
+    case "02.06 logs: [PLZA] to_bed: ended on: player_can_move, interact_prompt"
+      (logged "02.06" bed
+         "[PLZA] to_bed: ended on: player_can_move, interact_prompt")
+      "true";
+    case "02.06 logs: [PLZA scene] done on choice."
+      (logged "02.06" bed "[PLZA scene] done on choice.")
+      "true";
+    case "02.06 logs: [PLZA] choose_0: row 0 of 2 highlighted"
+      (logged "02.06" bed "[PLZA] choose_0: row 0 of 2 highlighted")
+      "true";
+    case "02.06 logs: [PLZA scene] done on control."
+      (logged "02.06" bed "[PLZA scene] done on control.")
+      "true";
     case "02.06 lost: no bed prompt"
       (result "02.06" (bed ~lost:true))
       "02.06 event 1 (to_bed): walk_no_end: to_bed: no end event within 1665 \
        ms of the last leg";
+  ]
+
+(* 02.07. *)
+let cases_02_07 =
+  [
     case "02.07: to the door's prompt, A Leave, the first evening"
-      (fun () ->
-        let r, c = outcome "02.07" room_door in
-        String.concat "\n"
-          (r
-          :: List.filter
-               (fun line ->
-                 List.exists
-                   (fun prefix -> String.starts_with ~prefix line)
-                   [ "[PLZA] to_"; "[PLZA scene] done" ])
-               (C.lines c)))
-      "passed\n\
-       [PLZA] to_room_door: the end event after 1750 ms of the last leg.\n\
-       [PLZA] to_room_door: ended on: player_can_move, interact_prompt\n\
-       [PLZA scene] done on control.";
+      (result "02.07" room_door) "passed";
+    case
+      "02.07 logs: [PLZA] to_room_door: the end event after 1750 ms of the \
+       last leg."
+      (logged "02.07" room_door
+         "[PLZA] to_room_door: the end event after 1750 ms of the last leg.")
+      "true";
+    case
+      "02.07 logs: [PLZA] to_room_door: ended on: player_can_move, \
+       interact_prompt"
+      (logged "02.07" room_door
+         "[PLZA] to_room_door: ended on: player_can_move, interact_prompt")
+      "true";
+    case "02.07 logs: [PLZA scene] done on control."
+      (logged "02.07" room_door "[PLZA scene] done on control.")
+      "true";
     case "02.07 lost: no door prompt"
       (result "02.07" (room_door ~lost:true))
       "02.07 event 1 (to_room_door): walk_no_end: to_room_door: no end event \
        within 2231 ms of the last leg";
+  ]
+
+(* 03.01. *)
+let cases_03_01 =
+  [
     case "03.01: out of Room 202, the elevator, the lobby"
-      (fun () ->
-        let r, c = outcome "03.01" out_of_room in
-        String.concat "\n"
-          (r
-          :: List.filter
-               (fun line ->
-                 List.exists
-                   (fun prefix -> String.starts_with ~prefix line)
-                   [
-                     "[PLZA] to_";
-                     "[PLZA] out";
-                     "[PLZA] choose";
-                     "[PLZA scene] done";
-                   ])
-               (C.lines c)))
-      "passed\n\
-       [PLZA] out_of_room_202: the end event after 1000 ms of the last leg.\n\
-       [PLZA] out_of_room_202: ended on: player_can_move, interact_prompt\n\
-       [PLZA scene] done on control.\n\
-       [PLZA] to_2f_elevator: the end event after 2000 ms of the last leg.\n\
-       [PLZA] to_2f_elevator: ended on: player_can_move, interact_prompt\n\
-       [PLZA scene] done on choice.\n\
-       [PLZA] choose_0: row 0 of 2 highlighted\n\
-       [PLZA scene] done on control.";
+      (result "03.01" out_of_room)
+      "passed";
+    case "03.01 logs: the door's prompt after 1000 ms of the last leg"
+      (logged "03.01" out_of_room
+         "[PLZA] out_of_room_202: the end event after 1000 ms of the last leg.")
+      "true";
+    case "03.01 logs: the elevator's prompt after 2000 ms of the last leg"
+      (logged "03.01" out_of_room
+         "[PLZA] to_2f_elevator: the end event after 2000 ms of the last leg.")
+      "true";
+    case "03.01 logs: the floor question ends on its choice"
+      (logged "03.01" out_of_room "[PLZA scene] done on choice.")
+      "true";
+    case "03.01 logs: choose_0 on row 0 of 2"
+      (logged "03.01" out_of_room "[PLZA] choose_0: row 0 of 2 highlighted")
+      "true";
     case "03.01 lost: no door prompt"
       (result "03.01" (out_of_room ~lost:true))
       "03.01 event 1 (out_of_room_202): walk_no_end: out_of_room_202: no end \
        event within 1099 ms of the last leg";
+  ]
+
+(* 03.02. *)
+let cases_03_02 =
+  [
     case "03.02: across the lobby, A Leave, the Main Menu card"
-      (fun () ->
-        let r, c = outcome "03.02" hotel_door in
-        String.concat "\n"
-          (r
-          :: List.filter
-               (fun line ->
-                 List.exists
-                   (fun prefix -> String.starts_with ~prefix line)
-                   [ "[PLZA] to_"; "[PLZA] press"; "[PLZA scene] done" ])
-               (C.lines c)))
-      "passed\n\
-       [PLZA] to_hotel_front_door: legs done, screen now: player_can_move, \
-       interact_prompt\n\
-       [PLZA scene] done on control.";
+      (result "03.02" hotel_door)
+      "passed";
+    case "03.02 logs: the legs end on the front door's prompt"
+      (logged "03.02" hotel_door
+         "[PLZA] to_hotel_front_door: legs done, screen now: player_can_move, \
+          interact_prompt")
+      "true";
     case "03.02 lost: no front door prompt"
       (result "03.02" (hotel_door ~lost:true))
       "03.02 event 2 (leave_hotel_z): prompt_not_seen: scene: no A prompt to \
        press through: free control with nothing to take A (the walk before it \
        stopped short?)";
-    case "03.02b: the plaza scene, Taunie's two battles, the map talk"
-      (fun () ->
-        let r, c = outcome "03.02b" quartiere_verde in
-        String.concat "\n"
-          (r
-          :: List.filter
-               (fun line ->
-                 List.exists
-                   (fun prefix -> String.starts_with ~prefix line)
-                   [
-                     "[PLZA] to_";
-                     "[PLZA] story_battle: Picking";
-                     "[PLZA] talk_through";
-                     "[PLZA scene] done";
-                   ])
-               (C.lines c)))
-      "passed\n\
-       [PLZA] to_plaza_scene_prompt: the end event after 4000 ms of the last \
-       leg.\n\
-       [PLZA] to_plaza_scene_prompt: ended on: player_can_move, interact_prompt\n\
-       [PLZA scene] done on control.\n\
-       [PLZA] to_taunie: A on the A prompt after 3000 ms of the last leg \
-       started a talk.\n\
-       [PLZA] to_taunie: started on: dialog_box, advance_arrow\n\
-       [PLZA scene] done on battle.\n\
-       [PLZA] story_battle: Picking Move: Left\n\
-       [PLZA scene] done on battle.\n\
-       [PLZA] story_battle: Picking Move: Left\n\
-       [PLZA] talk_through_map_screen: the party bar held: back in the \
-       overworld";
-    case
-      "03.02b, Totodile beaten, a black fade before \"We're not done\" (the \
-       French run, console B): each battle ends where the plan says"
-      (fun () ->
-        let r, c = outcome "03.02b" (quartiere_verde ~ko_fade:true) in
-        String.concat "\n"
-          (r
-          :: List.filter
-               (fun line ->
-                 List.exists
-                   (fun prefix -> String.starts_with ~prefix line)
-                   [
-                     "[Story] 03.02b #5";
-                     "[Story] 03.02b #6";
-                     "[Story] 03.02b #7";
-                     "[PLZA] story_battle: Picking";
-                     "[PLZA] story_battle: a";
-                   ])
-               (C.lines c)))
-      "passed\n\
-       [Story] 03.02b #5 battle_totodile: start (beat Totodile, until \"We're \
-       not done just yet!\")\n\
-       [PLZA] story_battle: Picking Move: Left\n\
-       [PLZA] story_battle: a black fade, the lead's HP last read 0.89: a \
-       cutscene, fighting on.\n\
-       [PLZA] story_battle: a dialogue box after the attacks: the battle is \
-       over.\n\
-       [Story] 03.02b #5 battle_totodile: done\n\
-       [Story] 03.02b #6 tepig_battle_start: start (A through the Type \
-       Matchups tutorial and Tepig's send-out to the battle HUD)\n\
-       [Story] 03.02b #6 tepig_battle_start: done\n\
-       [Story] 03.02b #7 battle_tepig: start (beat Tepig, until Taunie's speech)\n\
-       [PLZA] story_battle: Picking Move: Left\n\
-       [PLZA] story_battle: a dialogue box after the attacks: the battle is \
-       over.\n\
-       [Story] 03.02b #7 battle_tepig: done";
-    case
-      "03.02b, Taunie's battle mid-walk: the walk stops on the HUD, the run \
-       goes on at the battle (fork PR 725)"
-      (fun () ->
-        let r, c = outcome "03.02b" (quartiere_verde ~battle_mid_walk:true) in
-        String.concat "\n"
-          (r
-          :: List.filter
-               (fun line ->
-                 List.exists
-                   (fun prefix -> String.starts_with ~prefix line)
-                   [
-                     "[PLZA] to_taunie";
-                     "[Event]";
-                     "[Story] 03.02b #3";
-                     "[Story] 03.02b #4";
-                     "[Story] 03.02b #5";
-                     "[PLZA] story_battle: Picking";
-                   ])
-               (C.lines c)))
-      "passed\n\
-       [Story] 03.02b #3 to_taunie: start (on through the arch to Taunie's \"A \
-       Talk\", A on it. not planned: no tile grid in Lumiose)\n\
-       [PLZA] to_taunie: battle HUD showed after 2250 ms of the last leg: \
-       stopping walk.\n\
-       [Event] 03.02b: battle on screen during to_taunie: jumping to \
-       battle_totodile, skipping taunie_battle_start\n\
-       [Story] 03.02b #3 to_taunie: done\n\
-       [Story] 03.02b #4 taunie_battle_start: start (A through her talk and \
-       challenge (no A hint, subtitles without a box) to the battle HUD)\n\
-       [Story] 03.02b #4 taunie_battle_start: done\n\
-       [Story] 03.02b #5 battle_totodile: start (beat Totodile, until \"We're \
-       not done just yet!\")\n\
-       [PLZA] story_battle: Picking Move: Left\n\
-       [Story] 03.02b #5 battle_totodile: done\n\
-       [PLZA] story_battle: Picking Move: Left";
-    case
-      "03.02b's jump, its battles skipped by their skip_if: the next event \
-       runs again"
-      (fun () ->
-        let cp = (plan "03.02b").checkpoint in
-        let ev id = List.find (fun (e : Plan.event) -> e.id = id) cp.events in
-        let lines = ref [] in
-        let jump =
-          Plza_autostory.Battle_jump.make cp ~log:(fun l ->
-              lines := l :: !lines)
-        in
-        let ran id =
-          match
-            Plza_autostory.Battle_jump.run jump (ev id) (fun () ->
-                lines := ("ran " ^ id) :: !lines;
-                Ok ())
-          with
-          | Ok () -> ()
-          | Error _ -> lines := "failed" :: !lines
-        in
-        ignore
-          (Plza_autostory.Battle_jump.after jump (ev "to_taunie")
-             (Error Plza_walk.Battle_stop.battle_on_screen));
-        ran "taunie_battle_start";
-        ran "after_taunie_battle";
-        String.concat "\n" (List.rev !lines))
-      "[Event] 03.02b: battle on screen during to_taunie: jumping to \
-       battle_totodile, skipping taunie_battle_start\n\
-       ran after_taunie_battle";
-    case
-      "03.02b after 03.02: the first prompt is Taunie's, the plaza scene ends \
-       at her battle, the run goes on there"
-      (fun () ->
-        let r, c = outcome "03.02b" taunie_first in
-        String.concat "\n"
-          (r
-          :: List.filter
-               (fun line ->
-                 List.exists
-                   (fun prefix -> String.starts_with ~prefix line)
-                   [
-                     "[PLZA scene] the battle";
-                     "[Event]";
-                     "[Story] 03.02b #";
-                     "[PLZA] story_battle: Picking";
-                     "[PLZA] talk_through";
-                   ])
-               (C.lines c)))
-      "passed\n\
-       [Story] 03.02b #1 to_plaza_scene_prompt: start (to the first A prompt, \
-       which starts a scene, not Taunie's talk (she is 3.25 s further on). not \
-       planned: no tile grid in Lumiose)\n\
-       [Story] 03.02b #1 to_plaza_scene_prompt: done\n\
-       [Story] 03.02b #2 plaza_scene: start (A starts the scene: two black \
-       fades and the Smart Rotom card, then control at the Quartiere Verde \
-       arch (~12 s))\n\
-       [PLZA scene] the battle HUD is up: on to the story battle.\n\
-       [Event] 03.02b: battle on screen during plaza_scene: jumping to \
-       battle_totodile, skipping to_taunie, taunie_battle_start\n\
-       [Story] 03.02b #2 plaza_scene: done\n\
-       [Story] 03.02b #3 to_taunie: start (on through the arch to Taunie's \"A \
-       Talk\", A on it. not planned: no tile grid in Lumiose)\n\
-       [Story] 03.02b #3 to_taunie: done\n\
-       [Story] 03.02b #4 taunie_battle_start: start (A through her talk and \
-       challenge (no A hint, subtitles without a box) to the battle HUD)\n\
-       [Story] 03.02b #4 taunie_battle_start: done\n\
-       [Story] 03.02b #5 battle_totodile: start (beat Totodile, until \"We're \
-       not done just yet!\")\n\
-       [PLZA] story_battle: Picking Move: Left\n\
-       [Story] 03.02b #5 battle_totodile: done\n\
-       [Story] 03.02b #6 tepig_battle_start: start (A through the Type \
-       Matchups tutorial and Tepig's send-out to the battle HUD)\n\
-       [Story] 03.02b #6 tepig_battle_start: done\n\
-       [Story] 03.02b #7 battle_tepig: start (beat Tepig, until Taunie's speech)\n\
-       [PLZA] story_battle: Picking Move: Left\n\
-       [Story] 03.02b #7 battle_tepig: done\n\
-       [Story] 03.02b #8 after_taunie_battle: start (the Map & Missions card \
-       with A, the map closed with B, her talk with B)\n\
-       [PLZA] talk_through_map_screen: the party bar held: back in the overworld\n\
-       [Story] 03.02b #8 after_taunie_battle: done";
     case
       "03.02 into Taunie's battle, no story battle ahead: the scene goes on \
        through the HUD and times out"
-      (fun () ->
-        let r, c = outcome "03.02" taunie_first in
-        String.concat "\n"
-          (r
-          :: List.filter
-               (fun line ->
-                 List.exists
-                   (fun prefix -> String.starts_with ~prefix line)
-                   [ "[PLZA scene] the battle"; "[Event]" ])
-               (C.lines c)))
+      (result "03.02" taunie_first)
       "03.02 event 2 (leave_hotel_z): scene_timeout: scene: Did not finish \
        within 360 s (expecting the controls hint, the party bar or the A \
        prompt).";
+  ]
+
+(* 03.02b. *)
+let cases_03_02b =
+  [
+    case "03.02b: the plaza scene, Taunie's two battles, the map talk"
+      (result "03.02b" quartiere_verde)
+      "passed";
+    case "03.02b logs: a talk to Taunie started after 3000 ms of the last leg"
+      (logged "03.02b" quartiere_verde
+         "[PLZA] to_taunie: A on the A prompt after 3000 ms of the last leg \
+          started a talk.")
+      "true";
+    case "03.02b logs: the map talk ends on the party bar"
+      (logged "03.02b" quartiere_verde
+         "[PLZA] talk_through_map_screen: the party bar held: back in the \
+          overworld")
+      "true";
+    case "03.02b, a black fade before \"We're not done\": passes"
+      (result "03.02b" (quartiere_verde ~ko_fade:true))
+      "passed";
     case
-      "03.02b with the battle HUD on one read of the plaza scene: the scene \
-       goes on to control"
-      (fun () ->
-        let r, c = outcome "03.02b" (quartiere_verde ~hud_flicker:true) in
-        String.concat "\n"
-          (r
-          :: List.filter
-               (fun line ->
-                 List.exists
-                   (fun prefix -> String.starts_with ~prefix line)
-                   [
-                     "[PLZA scene] control";
-                     "[PLZA scene] done";
-                     "[PLZA scene] the battle";
-                     "[Event]";
-                     "[Story] 03.02b #2";
-                   ])
-               (C.lines c)))
-      "passed\n\
-       [Story] 03.02b #2 plaza_scene: start (A starts the scene: two black \
-       fades and the Smart Rotom card, then control at the Quartiere Verde \
-       arch (~12 s))\n\
-       [PLZA scene] control_showing at 2.1s: battle, party bar\n\
-       [PLZA scene] control_showing at 2.4s: party bar\n\
-       [PLZA scene] control at 3.3s: party bar\n\
-       [PLZA scene] done on control.\n\
-       [Story] 03.02b #2 plaza_scene: done\n\
-       [PLZA scene] done on battle.\n\
-       [PLZA scene] done on battle.";
+      "03.02b, a black fade before \"We're not done\": a cutscene, fighting on"
+      (logged "03.02b"
+         (quartiere_verde ~ko_fade:true)
+         "[PLZA] story_battle: a black fade, the lead's HP last read 0.89: a \
+          cutscene, fighting on.")
+      "true";
+    case "03.02b, Taunie's battle mid-walk: passes"
+      (result "03.02b" (quartiere_verde ~battle_mid_walk:true))
+      "passed";
+    case "03.02b, Taunie's battle mid-walk: the walk stops on the HUD"
+      (logged "03.02b"
+         (quartiere_verde ~battle_mid_walk:true)
+         "[PLZA] to_taunie: battle HUD showed after 2250 ms of the last leg: \
+          stopping walk.")
+      "true";
+    case "03.02b, Taunie's battle mid-walk: the run jumps to the battle"
+      (logged "03.02b"
+         (quartiere_verde ~battle_mid_walk:true)
+         "[Event] 03.02b: battle on screen during to_taunie: jumping to \
+          battle_totodile, skipping taunie_battle_start")
+      "true";
+    case "03.02b after 03.02: Taunie's prompt first, then it passes"
+      (result "03.02b" taunie_first)
+      "passed";
+    case "03.02b after 03.02: the plaza scene ends at her battle"
+      (logged "03.02b" taunie_first
+         "[Event] 03.02b: battle on screen during plaza_scene: jumping to \
+          battle_totodile, skipping to_taunie, taunie_battle_start")
+      "true";
+    case "03.02b with the battle HUD on one read of the plaza scene: passes"
+      (result "03.02b" (quartiere_verde ~hud_flicker:true))
+      "passed";
+    case "03.02b with the battle HUD on one read: the scene ends on control"
+      (logged "03.02b"
+         (quartiere_verde ~hud_flicker:true)
+         "[PLZA scene] control at 3.3s: party bar")
+      "true";
     case "03.02b lost: no plaza scene prompt"
       (result "03.02b" (quartiere_verde ~lost:true))
       "03.02b event 1 (to_plaza_scene_prompt): walk_no_end: \
        to_plaza_scene_prompt: no end event within 9023 ms of the last leg";
-    case "03.03: Taunie runs off, the gate walk runs with B, the rock pile"
-      (fun () ->
-        let r, c = outcome "03.03" rock_pile in
-        String.concat "\n"
-          ((r ^ Printf.sprintf ", %d run" (runs c))
-          :: List.filter
-               (fun line ->
-                 List.exists
-                   (fun prefix -> String.starts_with ~prefix line)
-                   [ "[PLZA] through"; "[PLZA scene] done" ])
-               (C.lines c)))
-      "passed, 1 run\n\
-       [PLZA scene] done on control.\n\
-       [PLZA] through_hotel_gate: legs done, screen now: dialog_box, \
-       advance_arrow\n\
-       [PLZA scene] done on control.";
+    case "03.02b resumed at the arch after it: passes" (result "03.02b" at_arch)
+      "passed";
+    case "03.02b resumed at the arch after it: every event skipped"
+      (skipped "03.02b" at_arch)
+      "to_plaza_scene_prompt plaza_scene to_taunie taunie_battle_start \
+       battle_totodile tepig_battle_start battle_tepig after_taunie_battle";
+    case "03.02b's start, the plaza: nothing skipped"
+      (skipped "03.02b" quartiere_verde)
+      "";
+  ]
+
+(* 03.03 to 03.03c. *)
+let cases_03_03 =
+  [
+    case "03.03: Taunie runs off, the gate walk, the rock pile"
+      (result "03.03" rock_pile) "passed";
+    case "03.03: the gate walk runs with B, once"
+      (run_count "03.03" rock_pile)
+      "1";
     case
       "03.03 lost: no rock pile scene, yet it passes (the fork's plain scene)"
       (result "03.03" (rock_pile ~lost:true))
       "passed";
     case "03.03b: the side street, the ladder, the rooftop"
-      (fun () ->
-        let r, c = outcome "03.03b" ladder in
-        String.concat "\n"
-          (r
-          :: List.filter
-               (fun line ->
-                 List.exists
-                   (fun prefix -> String.starts_with ~prefix line)
-                   [ "[PLZA] side"; "[PLZA] climb"; "[PLZA scene] done" ])
-               (C.lines c)))
-      "passed\n\
-       [PLZA] side_street_to_wall: legs done, screen now: player_can_move\n\
-       [PLZA] climb_ladder: Climb Up after 2 steps along the wall\n\
-       [PLZA scene] done on control.";
+      (result "03.03b" ladder) "passed";
+    case "03.03b logs: Climb Up after 2 steps along the wall"
+      (logged "03.03b" ladder
+         "[PLZA] climb_ladder: Climb Up after 2 steps along the wall")
+      "true";
     case "03.03b lost: no ladder prompt along the wall"
       (result "03.03b" (ladder ~lost:true))
       "03.03b event 2 (climb_ladder): ladder_not_found: no Climb Up prompt \
        stepping along the wall";
     case "03.03c: off the roof into the south boulevard scene"
-      (fun () ->
-        let r, c = outcome "03.03c" off_the_roof in
-        String.concat "\n"
-          (r
-          :: List.filter
-               (fun line ->
-                 List.exists
-                   (fun prefix -> String.starts_with ~prefix line)
-                   [ "[PLZA] off"; "[PLZA scene] done" ])
-               (C.lines c)))
-      "passed\n\
-       [PLZA] off_the_roof: a scene (text waiting for A) took control after \
-       5250 ms of the last leg: the walk stops.\n\
-       [PLZA scene] done on control.";
+      (result "03.03c" off_the_roof)
+      "passed";
+    case "03.03c logs: a scene took the walk after 5250 ms of the last leg"
+      (logged "03.03c" off_the_roof
+         "[PLZA] off_the_roof: a scene (text waiting for A) took control after \
+          5250 ms of the last leg: the walk stops.")
+      "true";
     case "03.03c lost: no scene takes the walk"
       (result "03.03c" (off_the_roof ~lost:true))
       "03.03c event 1 (off_the_roof): walk_no_scene: off_the_roof: control \
        still free after 8162 ms of the last leg: no scene took it";
-    case
-      "03.04: into the Pokemon Center past Urbain's prompt, the nurse after \
-       the legs, the Pokedex with B"
-      (fun () ->
-        let r, c = outcome "03.04" nurse in
-        String.concat "\n"
-          (r
-          :: List.filter
-               (fun line ->
-                 List.exists
-                   (fun prefix -> String.starts_with ~prefix line)
-                   [ "[PLZA] into"; "[PLZA scene] done" ])
-               (C.lines c)))
-      "passed\n\
-       [PLZA] into_pokemon_center: A on the A prompt after 0 ms of the last \
-       leg started a talk.\n\
-       [PLZA] into_pokemon_center: started on: dialog_box, advance_arrow\n\
-       [PLZA scene] done on control.";
+  ]
+
+(* 03.04 and 03.06. *)
+let cases_03_04 =
+  [
+    case "03.04: into the Pokemon Center, the nurse, the Pokedex with B"
+      (result "03.04" nurse) "passed";
+    case "03.04 logs: a talk started on the A prompt after the legs"
+      (logged "03.04" nurse
+         "[PLZA] into_pokemon_center: A on the A prompt after 0 ms of the last \
+          leg started a talk.")
+      "true";
     case "03.04 lost: no nurse's prompt"
       (result "03.04" (nurse ~lost:true))
       "03.04 event 1 (into_pokemon_center): walk_no_end: into_pokemon_center: \
        no talk started within 1000 ms after the last leg";
-    case "03.02b resumed at the arch after it: every event skipped"
-      (fun () -> skips "03.02b" at_arch)
-      "passed\n\
-       [Story] 03.02b #1 to_plaza_scene_prompt: skipped (minimap:03.03-start)\n\
-       [Story] 03.02b #2 plaza_scene: skipped (minimap:03.03-start)\n\
-       [Story] 03.02b #3 to_taunie: skipped (minimap:03.03-start)\n\
-       [Story] 03.02b #4 taunie_battle_start: skipped (minimap:03.03-start)\n\
-       [Story] 03.02b #5 battle_totodile: skipped (minimap:03.03-start)\n\
-       [Story] 03.02b #6 tepig_battle_start: skipped (minimap:03.03-start)\n\
-       [Story] 03.02b #7 battle_tepig: skipped (minimap:03.03-start)\n\
-       [Story] 03.02b #8 after_taunie_battle: skipped (minimap:03.03-start)\n\
-       [Story] 03.02b: done";
-    case "03.02b's start: the plaza, no minimap, nothing skipped"
-      (fun () ->
-        String.concat "\n"
-          (List.filter
-             (fun line -> contains "skipped" line)
-             (C.lines (snd (outcome "03.02b" quartiere_verde)))))
-      "";
-    case "03.03's start check at the arch: the minimap reads 03.03-start"
+    case "03.04 resumed outside the Center: passes"
+      (result "03.04" outside_center)
+      "passed";
+    case "03.04 resumed outside the Center: every event skipped"
+      (skipped "03.04" outside_center)
+      "into_pokemon_center pokedex_app";
+    case "03.06: on to Wild Zone 1's gate, Taunie, the Wild Zones card"
+      (result "03.06" wild_zones_card)
+      "passed";
+    case "03.06: the walk runs with B, once"
+      (run_count "03.06" wild_zones_card)
+      "1";
+    case "03.06 lost: no scene within the start window"
+      (result "03.06" (wild_zones_card ~lost:true))
+      "03.06 event 2 (wild_zones_tutorial): scene_never_started: scene: the \
+       scene never started (player not at its trigger?): the HUD up and no \
+       text, choice, battle or cutscene for 45000 ms (expecting the controls \
+       hint, the party bar or the A prompt).";
+  ]
+
+(* The start and end signatures (Start_signature). *)
+let cases_signatures =
+  [
+    case "03.03's start check at the arch: ok"
       (start_check "03.03" at_arch)
-      "ok\n\
-       [Checkpoint] 03.03: START CHECKED: the screen reads (no talk prompt, \
-       minimap 03.03-start), its start is (minimap 03.03-start)";
-    case "03.03's start check elsewhere: chain_off_start"
+      "ok";
+    case "03.03's start check at the arch: logged as checked"
+      (start_logged "03.03" at_arch
+         "[Checkpoint] 03.03: START CHECKED: the screen reads (no talk prompt, \
+          minimap 03.03-start), its start is (minimap 03.03-start)")
+      "true";
+    case "03.03's start check with no minimap: chain_off_start"
       (start_check "03.03" party)
       "chain_off_start: the run is not at 03.03's start: the screen reads (no \
-       talk prompt), its start is (minimap 03.03-start)\n\
-       [Checkpoint] 03.03: START CHECK FAILED: the screen reads (no talk \
-       prompt), its start is (minimap 03.03-start)";
-    case "03.04's start check at its end, outside the Center: passed"
+       talk prompt), its start is (minimap 03.03-start)";
+    case "03.04's start check at its end, outside the Center: ok"
       (start_check "03.04" outside_center)
-      "ok\n\
-       [Checkpoint] 03.04: START CHECKED (at its end): the screen reads (no \
-       talk prompt, minimap 03.06-start), its start is (minimap 03.04-start) \
+      "ok";
+    case "03.04's start check at its end: logged as checked at its end"
+      (start_logged "03.04" outside_center
+         "[Checkpoint] 03.04: START CHECKED (at its end)")
+      "true";
+    case "03.04's start check at the arch: chain_off_start"
+      (start_check "03.04" at_arch)
+      "chain_off_start: the run is not at 03.04's start: the screen reads (no \
+       talk prompt, minimap 03.03-start), its start is (minimap 03.04-start) \
        or its end (minimap 03.06-start)";
-    case "03.04 resumed outside the Center: every event skipped"
-      (fun () -> skips "03.04" outside_center)
-      "passed\n\
-       [Story] 03.04 #1 into_pokemon_center: skipped (minimap:03.06-start)\n\
-       [Story] 03.04 #2 pokedex_app: skipped (minimap:03.06-start)\n\
-       [Story] 03.04: done";
-    case "03.04's end check outside the Center: passed"
+    case "03.06's start check outside the Center: ok"
+      (start_check "03.06" outside_center)
+      "ok";
+    case "03.02's start: no signature, ok" (start_check "03.02" party) "ok";
+    case "03.02's start: logged as unchecked"
+      (start_logged "03.02" party
+         "[Checkpoint] 03.02: START UNCHECKED: its plan names no start \
+          signature")
+      "true";
+    case "03.04's end check outside the Center: ok"
       (end_check "03.04" outside_center)
-      "ok\n\
-       [Checkpoint] 03.04: END CHECKED: the screen reads (no talk prompt, \
-       minimap 03.06-start), its end is (minimap 03.06-start)";
+      "ok";
+    case "03.04's end check outside the Center: logged as checked"
+      (end_logged "03.04" outside_center "[Checkpoint] 03.04: END CHECKED")
+      "true";
     case
       "03.04's end check inside the Center (Urbain's line): end_off_signature"
       (end_check "03.04" party)
       "end_off_signature: 03.04 passed its events but did not end at its end: \
-       the screen reads (no talk prompt), its end is (minimap 03.06-start)\n\
-       [Checkpoint] 03.04: END CHECK FAILED: the screen reads (no talk \
-       prompt), its end is (minimap 03.06-start)";
-    case "03.03's end check: none named, nothing read" (end_check "03.03" party)
-      "ok";
-    case "03.04's start check at the arch: chain_off_start, the wrong minimap"
-      (start_check "03.04" at_arch)
-      "chain_off_start: the run is not at 03.04's start: the screen reads (no \
-       talk prompt, minimap 03.03-start), its start is (minimap 03.04-start) \
-       or its end (minimap 03.06-start)\n\
-       [Checkpoint] 03.04: START CHECK FAILED: the screen reads (no talk \
-       prompt, minimap 03.03-start), its start is (minimap 03.04-start) or its \
-       end (minimap 03.06-start)";
-    case "03.02's start: no signature, unchecked"
-      (start_check "03.02" party)
-      "ok\n\
-       [Checkpoint] 03.02: START UNCHECKED: its plan names no start signature";
-    case "a start signature naming the party: the party count reads it"
-      (start_check ~party:1
-         ~execution:[ ("start_signature", `Assoc [ ("party", `Int 1) ]) ]
-         "03.03" at_arch)
-      "ok\n\
-       [Checkpoint] 03.03: START CHECKED: the screen reads (no talk prompt, \
-       party 1, minimap 03.03-start), its start is (party 1)";
+       the screen reads (no talk prompt), its end is (minimap 03.06-start)";
+    case "03.03's end check: none named, ok" (end_check "03.03" party) "ok";
     case "a start signature with another field: refused"
       (start_check
          ~execution:
@@ -1704,238 +1560,143 @@ let cases =
          "03.03" at_arch)
       "start_signature_unread: 03.03: its start signature names minimap \
        03.05-start, which is not recorded";
-    case "03.06: on to Wild Zone 1's gate, Taunie, the Wild Zones card"
-      (fun () ->
-        let r, c = outcome "03.06" wild_zones_card in
-        String.concat "\n"
-          ((r ^ Printf.sprintf ", %d run" (runs c))
-          :: List.filter
-               (fun line ->
-                 List.exists
-                   (fun prefix -> String.starts_with ~prefix line)
-                   [ "[PLZA] center"; "[PLZA scene] done" ])
-               (C.lines c)))
-      "passed, 1 run\n\
-       [PLZA] center_to_zone_1: legs done, screen now: dialog_box, advance_arrow\n\
-       [PLZA scene] done on control.";
-    case "03.06 lost: no scene within the start window"
-      (result "03.06" (wild_zones_card ~lost:true))
-      "03.06 event 2 (wild_zones_tutorial): scene_never_started: scene: the \
-       scene never started (player not at its trigger?): the HUD up and no \
-       text, choice, battle or cutscene for 45000 ms (expecting the controls \
-       hint, the party bar or the A prompt).";
-    case "03.06's start check outside the Center"
-      (start_check "03.06" (fun c ->
-           { (party c) with minimap = Some "03.06-start" }))
-      "ok\n\
-       [Checkpoint] 03.06: START CHECKED: the screen reads (no talk prompt, \
-       minimap 03.06-start), its start is (minimap 03.06-start)";
-    case "03.07's run to the gate: B held to the A prompt" (gate_run gate)
-      "ok, 18 run\n[PLZA] run_to_gate: the gate's A prompt: reached the gate";
-    case "03.07's run to the gate, a day/night change: runs again"
-      (gate_run gate_after_night)
-      "ok, 26 run\n\
-       [PLZA] run_to_gate: a day/night change while running\n\
-       [PLZA] run_to_gate: the gate's A prompt: reached the gate";
-    case "03.07's run to the gate, no prompt: gate_not_reached" (gate_run party)
-      "gate_not_reached: no gate A prompt in 8000 ms of running";
-    case "03.07 with no Fletchling to catch: no_catch after 6 throws"
-      (fun () ->
-        let r, c = outcome "03.07" gate in
-        Printf.sprintf "%s; %d throws" r (throws c))
+    case "a start signature naming nothing: refused"
+      (start_check
+         ~execution:[ ("start_signature", `Assoc []) ]
+         "03.03" at_arch)
+      "start_signature_unread: 03.03: its start signature names nothing";
+  ]
+
+let cases_03_07_to_03_11 =
+  [
+    case "03.07's start at Wild Zone 1's gate: ok"
+      (start_check "03.07" at_zone_gate)
+      "ok";
+    case "03.07's start elsewhere: chain_off_start"
+      (start_check "03.07" outside_center)
+      "chain_off_start: the run is not at 03.07's start: the screen reads (no \
+       talk prompt, minimap 03.06-start), its start is (minimap 03.07-start)";
+    case "03.07 with no Fletchling to catch: no_catch"
+      (result "03.07" zone_gate)
       "03.07 event 3 (catch_fletchling): no_catch: no tutorial card after 6 \
-       throws; 6 throws";
-    case "03.07's Fletchling: caught on the first throw"
-      (catch (tutorial ~max_throws:6) (fletchling ~catch_on:1))
-      "ok, 1 throws\n[PLZA] catch_tutorial: caught on throw 1";
-    case "03.07's Fletchling breaks out once: weakened, caught on the second"
-      (catch (tutorial ~max_throws:6) (fletchling ~catch_on:2))
-      "ok, 2 throws\n\
-       [PLZA] catch_tutorial: throw 1 broke out into a battle: 3 attacks landed\n\
-       [PLZA] catch_tutorial: caught on throw 2";
-    case "03.07's Fletchling never caught: no_catch"
-      (catch (tutorial ~max_throws:2) (fletchling ~catch_on:3))
-      "no_catch: no tutorial card after 2 throws\n\
-       [PLZA] catch_tutorial: throw 1 broke out into a battle: 3 attacks landed";
-    case "03.07's Bunnelby: weakened, caught, nothing left to lock on"
-      (catch (battle ~max_rounds:6) bunnelby)
-      "ok, 1 throws\n\
-       [PLZA] battle_then_catch: round 1: 3 attacks landed, then a throw\n\
-       [PLZA] weaken_target: no lock-on twice: D-pad up to send the partner out\n\
-       [PLZA] weaken_target: no lock-on twice: D-pad up to send the partner out\n\
-       [PLZA] battle_then_catch: nothing to lock on in round 2: caught";
-    case "03.07's Bunnelby breaks out out of sight: the camera sweep finds it"
-      (catch (battle ~max_rounds:6) (bunnelby ~breaks_out:true))
-      "ok, 2 throws\n\
-       [PLZA] battle_then_catch: round 1: 3 attacks landed, then a throw\n\
-       [PLZA] weaken_target: no lock-on twice: D-pad up to send the partner out\n\
-       [PLZA] weaken_target: no lock-on twice: D-pad up to send the partner out\n\
-       [PLZA] battle_then_catch: nothing to lock on in round 2, still in \
-       battle: sweeping camera\n\
-       [PLZA] battle_then_catch: round 2: 0 attacks landed, then a throw\n\
-       [PLZA] weaken_target: no lock-on twice: D-pad up to send the partner out\n\
-       [PLZA] weaken_target: no lock-on twice: D-pad up to send the partner out\n\
-       [PLZA] battle_then_catch: nothing to lock on in round 3: caught";
-    case "03.07's Bunnelby never caught: still_a_target"
-      (catch (battle ~max_rounds:2) wild_battle)
-      "still_a_target: a target still locks on after 2 rounds\n\
-       [PLZA] battle_then_catch: round 1: 3 attacks landed, then a throw\n\
-       [PLZA] battle_then_catch: round 2: 3 attacks landed, then a throw";
-    case "03.08 with no map pin: rocks_not_left, after the map's + and B"
-      (refused "03.08")
-      "03.08 event 1 (catch_more_species): rocks_not_left: the pin at the \
-       start was not read, not within 8 of (476, 224); 2 inputs";
-    case "03.08's start: at Taunie's rocks with a party of 3"
-      (start_check ~party:3 "03.08" (in_zone ~pin:(476., 224.)))
-      "ok\n\
-       [PLZA] map pin: (476, 224)\n\
-       [Checkpoint] 03.08: START CHECKED: the screen reads (no talk prompt, in \
-       a wild zone, near Taunie's rocks, party 3), its start is (in a wild \
-       zone, near Taunie's rocks, party 3)";
-    case "03.08's start out of the zone: chain_off_start"
-      (start_check ~party:3 "03.08" (in_zone ~pin:(401., 224.)))
-      "chain_off_start: the run is not at 03.08's start: the screen reads (no \
-       talk prompt, not in a wild zone, not near Taunie's rocks, party 3), its \
-       start is (in a wild zone, near Taunie's rocks, party 3)\n\
-       [PLZA] map pin: (401, 224)\n\
-       [Checkpoint] 03.08: START CHECK FAILED: the screen reads (no talk \
-       prompt, not in a wild zone, not near Taunie's rocks, party 3), its \
-       start is (in a wild zone, near Taunie's rocks, party 3)";
-    case "03.08's start at the 100 spot, where a run stopped: chain_off_start"
-      (start_check ~party:3 "03.08" (in_zone ~pin:(440., 229.)))
-      "chain_off_start: the run is not at 03.08's start: the screen reads (no \
-       talk prompt, in a wild zone, not near Taunie's rocks, party 3), its \
-       start is (in a wild zone, near Taunie's rocks, party 3)\n\
-       [PLZA] map pin: (440, 229)\n\
-       [Checkpoint] 03.08: START CHECK FAILED: the screen reads (no talk \
-       prompt, in a wild zone, not near Taunie's rocks, party 3), its start is \
-       (in a wild zone, near Taunie's rocks, party 3)";
-    case "03.08 off Taunie's rocks: the run is off its start, a reload's to fix"
-      (fun () ->
-        match run "03.08" (in_zone ~pin:(440., 229.)) with
-        | Ok (), _ -> "passed"
-        | Error f, _ -> (
-            match Plza_autostory.Run_attempts.of_failure f with
-            | Passed -> "passed"
-            | Failed f ->
-                Printf.sprintf "%s %s: off its start %b, repeats %b" f.at
-                  (List.hd (String.split_on_char ':' f.reason))
-                  f.off_start f.repeats))
-      "#1 catch_more_species rocks_not_left: off its start true, repeats false";
-    case "03.08 and 03.08a retry spawn luck: 2 retries each, from a reload"
-      (fun () ->
-        Printf.sprintf "%d %d" (plan "03.08").retries (plan "03.08a").retries)
-      "2 2";
-    case "03.08a with no party bar read: the fourth's way, rocks_not_left"
-      (refused "03.08a")
-      "03.08a event 1 (catch_fifth_species): rocks_not_left: the pin at the \
-       start was not read, not within 8 of (476, 224); 2 inputs";
-    case "03.08b: down the gate's line to the A prompt, out, checked"
-      (fun () ->
-        let r, c = outcome "03.08b" leave_zone in
-        String.concat "\n" (r :: C.lines c))
-      "passed\n\
-       [Story] 03.08b: start, 3 events\n\
-       [Story] 03.08b #1 zone_1_to_far_gate: start (one map read, then B held: \
-       onto the gate's line when off it (runs in off the line hit a pillar), \
-       and down the road to the far gate's A prompt; a wild battle does not \
-       stop it, leaving ends it)\n\
-       [PLZA] map pin: (379, 250)\n\
-       [PLZA] face_heading: the arrow reads 264.0 deg, 264 wanted: -0.3 off\n\
-       [PLZA] run_to_gate: the gate's A prompt: reached the gate\n\
-       [Story] 03.08b #1 zone_1_to_far_gate: done\n\
-       [Story] 03.08b #2 leave_zone_1: start (A Leave, out on the street)\n\
-       [PLZA scene] start, expecting the controls hint, the party bar or the A \
-       prompt.\n\
-       [PLZA scene] fade at 0.0s: black fade, black fade 1\n\
-       [PLZA scene] fade at 0.3s: black fade, black fade 2\n\
-       [PLZA scene] fade at 0.6s: black fade, black fade 3\n\
-       [PLZA scene] fade at 0.8s: black fade, black fade 4\n\
-       [PLZA scene] fade at 1.1s: black fade, black fade 5\n\
-       [PLZA scene] fade at 1.4s: black fade, black fade 6\n\
-       [PLZA scene] control_showing at 1.7s: party bar\n\
-       [PLZA scene] control at 2.8s: party bar\n\
-       [PLZA scene] done on control.\n\
-       [Story] 03.08b #2 leave_zone_1: done\n\
-       [Story] 03.08b #3 out_of_zone_1: start (confirm the map pin is out of \
-       Wild Zone 1 before chaining into 03.09)\n\
-       [PLZA] map pin: (401, 225)\n\
-       [PLZA] out of Wild Zone 1: the map pin reads (401, 225)\n\
-       [Story] 03.08b #3 out_of_zone_1: done\n\
-       [Story] 03.08b: done";
-    case "03.08b with no gate prompt: three runs, then gate_not_reached"
-      (fun () ->
-        let r, c = outcome "03.08b" (in_zone ~facing:264. ~pin:(379., 250.)) in
-        String.concat "\n"
-          (r
-          :: List.filter
-               (fun l -> contains "run_out_of_zone_1" l || contains "map pin" l)
-               (C.lines c)))
-      "03.08b event 1 (zone_1_to_far_gate): gate_not_reached: no gate A prompt \
-       in 5000 ms of running\n\
-       [PLZA] map pin: (379, 250)\n\
-       [PLZA] map pin: (379, 250)\n\
-       [PLZA] run_out_of_zone_1: no prompt on run 1, again from (379, 250)\n\
-       [PLZA] map pin: (379, 250)\n\
-       [PLZA] run_out_of_zone_1: no prompt on run 2, again from (379, 250)";
-    case "03.09 with no minimap arrow: the walk's heading fails before any leg"
-      (refused "03.09")
-      "03.09 event 1 (to_research_lab): arrow_unread: no minimap arrow within \
-       40 s; 0 inputs";
-    case "03.09's start: out of the zone with a party of 5"
-      (start_check ~party:5 "03.09" (in_zone ~pin:(401., 225.)))
-      "ok\n\
-       [PLZA] map pin: (401, 225)\n\
-       [Checkpoint] 03.09: START CHECKED: the screen reads (no talk prompt, \
-       not in a wild zone, party 5), its start is (not in a wild zone, party \
-       5)";
+       throws";
+    case "03.07 with no Fletchling to catch: 6 throws"
+      (fun () -> string_of_int (throws (snd (outcome "03.07" zone_gate))))
+      "6";
     case "03.10: the lab's elevator to 3F"
-      (fun () ->
-        let r, c = outcome "03.10" lab_elevator in
-        String.concat "\n"
-          (r
-          :: List.filter
-               (fun line ->
-                 List.exists
-                   (fun prefix -> String.starts_with ~prefix line)
-                   [ "[PLZA] to_"; "[PLZA] choose"; "[PLZA scene] done" ])
-               (C.lines c)))
-      "passed\n\
-       [PLZA] to_lab_elevator: the end event after 1500 ms of the last leg.\n\
-       [PLZA] to_lab_elevator: ended on: player_can_move, interact_prompt\n\
-       [PLZA scene] done on choice.\n\
-       [PLZA] choose_1: row 0 of 2 highlighted\n\
-       [PLZA scene] done on control.";
+      (result "03.10" lab_elevator)
+      "passed";
+    case "03.10: the walk ends on the elevator's A prompt"
+      (logged "03.10" lab_elevator
+         "to_lab_elevator: ended on: player_can_move, interact_prompt")
+      "true";
+    case "03.10: choose_1 reads the floors"
+      (logged "03.10" lab_elevator "choose_1: row 0 of 2 highlighted")
+      "true";
     case "03.10 lost: no elevator prompt"
       (result "03.10" (lab_elevator ~lost:true))
       "03.10 event 1 (to_lab_elevator): walk_no_end: to_lab_elevator: no end \
        event within 1538 ms of the last leg";
-    case "03.11's reward: X, the menu, three down, A, her lines, B out"
-      (mable_reward mable)
-      "ok, 8 inputs\n\
-       [PLZA] claim_mable_research_reward: overworld: X\n\
-       [PLZA] claim_mable_research_reward: main menu";
-    case "03.11's reward, not in her office: no_reward_lines"
-      (mable_reward (mable ~lines:false))
-      "no_reward_lines: no dialog after opening Mable's Research: no reward \
-       was claimed\n\
-       [PLZA] claim_mable_research_reward: overworld: X\n\
-       [PLZA] claim_mable_research_reward: main menu";
-    case "03.11's reward, the menu never shows: main_menu_not_reached"
-      (fun () ->
-        match
-          String.split_on_char '\n' (mable_reward (mable ~menu:false) ())
-        with
-        | result :: lines ->
-            Printf.sprintf "%s; %d X pressed" result (List.length lines)
-        | [] -> "no result")
-      "main_menu_not_reached: no main menu after 120 s; 139 X pressed";
-    case "the walk is walked before 03.03, run after"
-      (fun () ->
-        Printf.sprintf "%b %b"
-          (Plza_autostory.Story_game.walk_only "01.01")
-          (Plza_autostory.Story_game.walk_only "03.03"))
-      "true false";
   ]
 
-let () = Table_test.run "plza_story_game" cases
+let cases_03_08_to_03_09 =
+  [
+    case "03.08 with no map pin: off its start, the rocks not left"
+      (result "03.08" party)
+      "03.08 event 1 (catch_more_species): chain_off_start: rocks not left: \
+       the pin at the start was not read, not within 8 of (476, 224)";
+    case "03.08 with no map pin: only the map's + and B pressed"
+      (inputs_sent "03.08" party)
+      "2";
+    case "03.08's start at Taunie's rocks with a party of 3: ok"
+      (start_check ~party:3 "03.08" at_rocks)
+      "ok";
+    case "03.08's start at Taunie's rocks: the pin logged"
+      (start_logged ~party:3 "03.08" at_rocks "[PLZA] map pin: (476, 224)")
+      "true";
+    case "03.08's start out of the zone: chain_off_start"
+      (start_check ~party:3 "03.08" (in_zone ~pin:(401., 224.)))
+      "chain_off_start: the run is not at 03.08's start: the screen reads (no \
+       talk prompt, not in a wild zone, not near Taunie's rocks, party 3), its \
+       start is (in a wild zone, near Taunie's rocks, party 3)";
+    case "03.08's start at the 100 spot, where a run stopped: chain_off_start"
+      (start_check ~party:3 "03.08" at_100_spot)
+      "chain_off_start: the run is not at 03.08's start: the screen reads (no \
+       talk prompt, in a wild zone, not near Taunie's rocks, party 3), its \
+       start is (in a wild zone, near Taunie's rocks, party 3)";
+    case "03.08's start with a party of 4: chain_off_start"
+      (start_check ~party:4 "03.08" at_rocks)
+      "chain_off_start: the run is not at 03.08's start: the screen reads (no \
+       talk prompt, in a wild zone, near Taunie's rocks, party 4), its start \
+       is (in a wild zone, near Taunie's rocks, party 3)";
+    case "03.08 off Taunie's rocks: off its start, a reload's to fix"
+      (fun () ->
+        let c = C.create () in
+        let p = plan "03.08" in
+        let game =
+          Plza_autostory.Story_game.make (C.steps c at_100_spot)
+            ~checkpoint:p.checkpoint ~reload:(fun () -> Ok ())
+        in
+        match Runner.run game p.checkpoint with
+        | Ok () -> "passed"
+        | Error f -> (
+            match Plza_autostory.Run_attempts.of_failure f with
+            | Passed -> "passed"
+            | Failed f -> string_of_bool f.off_start))
+      "true";
+    case "03.08 retries spawn luck: 2"
+      (fun () -> string_of_int (plan "03.08").retries)
+      "2";
+    case "03.08a retries spawn luck: 2"
+      (fun () -> string_of_int (plan "03.08a").retries)
+      "2";
+    case "03.08a with no map pin: off its start, the rocks not left"
+      (result "03.08a" party)
+      "03.08a event 1 (catch_fifth_species): chain_off_start: rocks not left: \
+       the pin at the start was not read, not within 8 of (476, 224)";
+    case "03.08b: down the gate's line to the A prompt, out, checked"
+      (result "03.08b" leave_zone)
+      "passed";
+    case "03.08b: faces the gate before the run"
+      (logged "03.08b" leave_zone
+         "face_heading: the arrow reads 264.0 deg, 264 wanted")
+      "true";
+    case "03.08b: reaches the gate's A prompt"
+      (logged "03.08b" leave_zone
+         "run_to_gate: the gate's A prompt: reached the gate")
+      "true";
+    case "03.08b: out of Wild Zone 1 by the map pin"
+      (logged "03.08b" leave_zone
+         "out of Wild Zone 1: the map pin reads (401, 225)")
+      "true";
+    case "03.08b with no gate prompt: gate_not_reached"
+      (result "03.08b" (in_zone ~facing:264. ~pin:(379., 250.)))
+      "03.08b event 1 (zone_1_to_far_gate): gate_not_reached: no gate A prompt \
+       in 5000 ms of running";
+    case "03.08b with no gate prompt: runs again from the line"
+      (logged "03.08b"
+         (in_zone ~facing:264. ~pin:(379., 250.))
+         "run_out_of_zone_1: no prompt on run 2, again from (379, 250)")
+      "true";
+    case "03.09's start: out of the zone with a party of 5: ok"
+      (start_check ~party:5 "03.09" out_of_zone)
+      "ok";
+    case "03.09's start in the zone: chain_off_start"
+      (start_check ~party:5 "03.09" at_rocks)
+      "chain_off_start: the run is not at 03.09's start: the screen reads (no \
+       talk prompt, in a wild zone, party 5), its start is (not in a wild \
+       zone, party 5)";
+    case "03.09 with no minimap arrow: arrow_unread before any leg"
+      (result "03.09" look)
+      "03.09 event 1 (to_research_lab): arrow_unread: no minimap arrow within \
+       40 s";
+    case "03.09 with no minimap arrow: nothing pressed"
+      (inputs_sent "03.09" look) "0";
+  ]
+
+let () =
+  Table_test.run "plza_story_game"
+    (cases @ cases_actions @ cases_02_01 @ cases_02_02 @ cases_02_03
+   @ cases_02_04 @ cases_02_05 @ cases_02_06 @ cases_02_07 @ cases_03_01
+   @ cases_03_02 @ cases_03_02b @ cases_03_03 @ cases_03_04 @ cases_signatures
+   @ cases_03_07_to_03_11 @ cases_03_08_to_03_09)

@@ -77,7 +77,7 @@ let walk_move (steps : Walk.game_steps) w pin ~heading ~hold_ms ~correction =
   stick steps Walk_inputs.Walk ~hold_ms
 
 (* The map's cursor can snap onto a badge next to the player, its ring over
-   the player's arrow (the zone's "1" at the 60 spot). *)
+   the player's arrow (the zone's "1" where the far gate's marker reads 60 m). *)
 let short_step (steps : Walk.game_steps) =
   steps.log "[PLZA] map pin not read: a short step, then the map again";
   stick steps Walk_inputs.Walk ~hold_ms:release_ms

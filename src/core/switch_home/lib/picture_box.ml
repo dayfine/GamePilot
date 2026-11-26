@@ -20,3 +20,5 @@ let whole ~(picture : Wire.box) ({ x; y; w; h } as box : Wire.box) =
     && y +. h <= picture.y +. picture.h
   in
   if inside then clipped ~picture box else None
+
+let native (p : Wire.box) = p.x = 0. && p.y = 0. && p.w = 1. && p.h = 1.

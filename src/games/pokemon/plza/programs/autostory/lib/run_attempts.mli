@@ -2,9 +2,9 @@
     latest autosave: when to reload and try again, and how the run ends.
 
     Off its start: an attempt that fails because the console is not at the
-    checkpoint's start (the start signature's [chain_off_start], or an action's
-    own start check, {!off_start}) and did not begin with a reload is followed
-    by one that does, whose start is checked again. A checkpoint with no [start]
+    checkpoint's start ([chain_off_start], from the start signature or an
+    action's own start check) and did not begin with a reload is followed by one
+    that does, whose start is checked again. A checkpoint with no [start]
     (01.00b, made by hand) has no autosave to go back to, and one off its start
     after a reload stays off it: both fail at once, as a failure that repeats.
     Where it differs: the fork's chain stops on [chain_off_start]
@@ -13,8 +13,7 @@
     give it, and the log says so.
 
     Then the plan's [retries] (the engine's
-    {!Engine_run.Checkpoint_trials.attempts}): a failure that does not repeat,
-    such as 03.08's [short_of_species] (spawn luck: a reload respawns the zone),
+    {!Engine_run.Checkpoint_trials.attempts}): a failure that does not repeat
     reloads and tries again, up to [retries + 1] attempts not counting the one
     after an off-start. As the fork's engine (Pokemon_StoryEngine.cpp), which
     reloads a failed checkpoint that started from a save up to its attempts per
@@ -23,7 +22,7 @@
     (a luck-bound step), so other failures stop for a look. *)
 
 type failure = {
-  at : string;  (** Where it failed: ["start"], ["#1 catch_more_species"]. *)
+  at : string;  (** Where it failed: ["start"], ["#1 to_the_center"]. *)
   reason : string;
   repeats : bool;
       (** Another attempt from the same screen fails the same way. *)
@@ -37,8 +36,7 @@ type outcome =
   | Failed of failure  (** Where and why it failed. *)
 
 val off_start : Engine_run.Failure.cause -> bool
-(** A start check's [chain_off_start], or 03.08's [rocks_not_left] (the catch
-    checks it before it presses anything but the map's buttons). *)
+(** [chain_off_start], from a start check. *)
 
 val of_cause : at:string -> Engine_run.Failure.cause -> outcome
 (** A failure at [at] for this cause (["code: detail"]), off its start by
@@ -46,7 +44,7 @@ val of_cause : at:string -> Engine_run.Failure.cause -> outcome
 
 val of_failure : Plza_engine.Failure.t -> outcome
 (** The runner's failure at ["#<n> <event>"], off its start when its handler's
-    cause is (an action's own start check, such as 03.08's rocks). *)
+    cause is. *)
 
 val trial : outcome -> Engine_run.Checkpoint_trials.run
 (** What the series' policy sees of a run. *)

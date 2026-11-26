@@ -63,7 +63,7 @@ let screen z (c : C.t) =
   let k = opens c - 1 in
   if map_open c then
     let x, y = nth_clamped z.route.pins k in
-    { look with map_pin = Some { L.x; y } }
+    { look with map_pin = Some { Plza_walk.Map_leg.x; y } }
   else
     let here = pt (nth_clamped z.route.pins k) in
     let arrow =
@@ -159,10 +159,10 @@ let cases =
        [PLZA] catch_in_zone: 1 throws at the 100 spot, caught=true, \
        party_slots=4/4: done\n\
        6 inputs with ZL up to the throw, all ZL: true";
-    case "03.08 off the rocks: rocks_not_left, nothing thrown"
+    case "03.08 off the rocks: chain_off_start, nothing thrown"
       (run (zone ~route:{ to_spot_100 with pins = [ (442., 227.) ] } ()))
-      "rocks_not_left: the pin at the start was (442, 227), not within 8 of \
-       (476, 224)\n\
+      "chain_off_start: rocks not left: the pin at the start was (442, 227), \
+       not within 8 of (476, 224)\n\
        [PLZA] catch_in_zone: the party bar shows 3 filled slots, steady after \
        13 looks\n\
        [PLZA] catch_in_zone: at the start, Taunie's rocks is put at (476, 224) \

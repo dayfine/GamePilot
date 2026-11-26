@@ -134,7 +134,7 @@ let check_out_of_zone_1 steps =
 let max_throws = 6
 let max_rounds = 6
 
-(* Wild Zone 1's actions, from 03.07 on. *)
+(* Wild Zone 1's actions, from 03.07 on, and Mable's reward. *)
 let zone_actions =
   [
     ("run_to_gate", timed run_to_gate ~default:run_to_gate_ms);

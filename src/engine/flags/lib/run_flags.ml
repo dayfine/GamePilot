@@ -32,6 +32,10 @@ type 'game flags = {
   daemon_flags : string list;
       (** --record, --no-record, --keepawake N, --speed S: passed to each run's
           daemon. *)
+  options : (string * string) list;
+      (** --options KEY=VALUE, one pair each, repeatable: the program's own
+          choices in the order given; [[]] when none. The program's registry
+          entry declares the keys it takes (Program_registry.check_options). *)
   game : 'game;  (** The game's own flags. *)
 }
 
@@ -76,6 +80,7 @@ let defaults game =
     watch = None;
     viewport = None;
     daemon_flags = [];
+    options = [];
     game = game.game_defaults;
   }
 
@@ -105,6 +110,13 @@ let keepawake_flag f seconds =
     daemon_flags = f.daemon_flags @ [ "--keepawake"; string_of_int seconds ];
   }
 
+(* --options KEY=VALUE: one more pair, its syntax checked; the keys are the
+   program's to check. *)
+let options_flag f text =
+  Result.map
+    (fun pair -> { f with options = f.options @ [ pair ] })
+    (Run_options.pair text)
+
 (* One flag with its value, or [None] for a flag that takes none or an
    unknown one. *)
 let valued f name v =
@@ -132,6 +144,7 @@ let valued f name v =
   | "--keepawake" -> Some (int_flag name v (keepawake_flag f))
   | "--speed" -> Some (speed_flag f v)
   | "--viewport" -> Some (Ok { f with viewport = Some v })
+  | "--options" -> Some (options_flag f v)
   | _ -> None
 
 (* The page by default: on a free port, $GAMEPILOT_WATCH_LISTEN or this machine

@@ -28,12 +28,14 @@ let read_party_slots steps =
         !looks);
   slots
 
-let rocks_not_left pin_text =
+(* Off its start, as a start check is: a reload puts it right. *)
+let off_the_rocks_start pin_text =
   let r = W.rocks.pin in
-  Failure.cause "rocks_not_left"
+  Failure.cause "chain_off_start"
     (Printf.sprintf
-       "the pin at the start was %s, not within %.0f of (%.0f, %.0f)" pin_text
-       W.rocks_radius r.x r.y)
+       "rocks not left: the pin at the start was %s, not within %.0f of (%.0f, \
+        %.0f)"
+       pin_text W.rocks_radius r.x r.y)
 
 let off_the_rocks steps =
   S.press steps Wire.L ~hold_ms:l_hold_ms ~release_ms:l_release_ms;
@@ -52,7 +54,7 @@ let go_to_spot_100 steps =
   if not (Option.fold ~none:false ~some:W.near_rocks pin) then (
     log steps "pin at the start %s, not within %.0f of (%.0f, %.0f): stop"
       pin_text W.rocks_radius r.pin.x r.pin.y;
-    Error (rocks_not_left pin_text))
+    Error (off_the_rocks_start pin_text))
   else (
     log steps "pin at the start %s: off the rocks to the spot" pin_text;
     off_the_rocks steps;

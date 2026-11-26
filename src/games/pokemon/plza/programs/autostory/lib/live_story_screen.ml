@@ -59,7 +59,7 @@ let look_of ~still (m : Effects.measurements) : L.t =
     minimap = s.minimap;
     map_pin =
       Option.map
-        (fun ({ x; y } : Map_pin.point) : L.map_point -> { x; y })
+        (fun ({ x; y } : Map_pin.point) : Plza_walk.Map_leg.point -> { x; y })
         s.map_pin;
     minimap_arrow = s.minimap_arrow;
     run_prompt = s.run_prompt;

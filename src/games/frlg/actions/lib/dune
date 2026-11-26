@@ -19,4 +19,5 @@
   gamepilot.repo_io
   gamepilot.frlg_overworld
   gamepilot.frlg_battle
-  gamepilot.frlg_rng))
+  gamepilot.frlg_rng
+  gamepilot.run_options))

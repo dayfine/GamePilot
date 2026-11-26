@@ -20,8 +20,15 @@
 
 val probes : Wire.probe_spec list
 (** The panel's lower part, the held-item line, the first slot's shadow box, the
-    wallpaper strip and the gender mark's box: every probe the functions below
-    read. *)
+    wallpaper strip, the gender mark's box and the title menu's arrow: every
+    probe the functions below read. *)
+
+val title_menu_row : Effects.measurements -> int option
+(** The arrow's row (0 JUMP, 1 WALLPAPER, 2 NAME, 3 CANCEL) on the menu A opens
+    on the box title in MOVE POKéMON ({!Cursor_column} over x 143-151 of each
+    row, rows 16 apart from y 59); [None] with no menu. GamePilot's own,
+    measured on mGBA (2026-11-25): the arrow at x 145-149, the window from x
+    140. *)
 
 val panel_occupied : Effects.measurements -> bool option
 (** The fork's test: the panel's stddev sum over {!min_panel_stddev}. *)

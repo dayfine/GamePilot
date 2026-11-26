@@ -34,6 +34,10 @@ type 'game flags = {
   daemon_flags : string list;
       (** --record, --no-record, --keepawake N, --speed S: passed to each run's
           daemon. *)
+  options : (string * string) list;
+      (** --options KEY=VALUE, one pair each, repeatable: the program's own
+          choices in the order given; [[]] when none. The program's registry
+          entry declares the keys it takes (Program_registry.check_options). *)
   game : 'game;  (** The game's own flags. *)
 }
 

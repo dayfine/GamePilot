@@ -1,6 +1,11 @@
 (** Wild Zone 1 on the full map: its outline, the way out by its far gate, and
     the check that the player is out. Ported from
-    PokemonLZA_AutoStoryZone1.h/.cpp. *)
+    PokemonLZA_AutoStoryZone1.h/.cpp.
+
+    The catch spots are named by the distance, in metres, that the objective
+    marker (the zone's far gate) reads on screen there: the 100 spot on the
+    plaza's road (Scatterbug), the 80 spot by the blue kiosk. The fork names its
+    spots the same way (PokemonLZA_AutoStoryZone1Road.h). *)
 
 val rocks : Map_leg.waypoint
 (** Taunie's rocks (476, 224), where 03.08 starts. *)
@@ -16,12 +21,13 @@ val road_entry : Map_leg.waypoint
 (** Off the rocks onto the road, on the way to {!spot_100}. *)
 
 val spot_100 : Map_leg.waypoint
-(** The 100 spot (442, 227), stop radius 12. *)
+(** The 100 spot (442, 227), stop radius 12: the far gate's marker reads 100 m.
+*)
 
 val spot_80 : Map_leg.waypoint
-(** The 80 spot (408, 234), stop radius 12: the sidewalk by the blue kiosk
-    (Weedle and Pichu lawn), inside the zone and clear of its reticle ring and
-    the map's centre. *)
+(** The 80 spot (408, 234), stop radius 12 (the marker reads 80 m): the sidewalk
+    by the blue kiosk (Weedle and Pichu lawn), inside the zone and clear of its
+    reticle ring and the map's centre. *)
 
 val pin_in_zone : Map_leg.point -> bool
 (** Inside the zone's outline (traced from map frames, every pin read in the

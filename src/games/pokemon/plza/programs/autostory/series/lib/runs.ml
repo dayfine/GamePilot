@@ -126,7 +126,7 @@ let live ~log ~reload record plan (daemon : Live_run.Daemon_process.t) =
   | outcome -> outcome
   | exception e -> failed "raised" (Printexc.to_string e)
 
-(* "03.08 run 1", with " attempt 2" after the first. *)
+(* "03.04 run 1", with " attempt 2" after the first. *)
 let run_name id n = function
   | 1 -> Printf.sprintf "%s run %d" id n
   | a -> Printf.sprintf "%s run %d attempt %d" id n a
@@ -240,10 +240,17 @@ let daemons (f : Flags.t) backend ~viewport series =
          f.watch)
     series
 
-let setup_of (f : Flags.t) ~program ~from_id ~to_id ~ids ~backend ~viewport
-    policy =
+let setup_of (f : Flags.t) ~program ~options ~from_id ~to_id ~ids ~backend
+    ~viewport policy =
   let info : Run_record.info =
-    { kind = Checkpoints; program; from_id; to_id; backend = f.backend }
+    {
+      kind = Checkpoints;
+      program;
+      from_id;
+      to_id;
+      backend = f.backend;
+      options = Run_options.pairs options;
+    }
   in
   let mode = Checkpoint_trials.mode_to_string Testing in
   {
@@ -267,7 +274,7 @@ let selected ~plan_dir (f : Flags.t) =
   let* ids, _ = Engine_series.Plan_folder.select ids ~from_id ~to_id in
   Ok (from_id, to_id, ids)
 
-let run_series ~program ~viewport plan_dir args =
+let run_series ~program ~options ~viewport plan_dir args =
   let* f = Flags.parse args in
   let* () = Flags.takes f in
   let* from_id, to_id, ids = selected ~plan_dir f in
@@ -279,7 +286,7 @@ let run_series ~program ~viewport plan_dir args =
   in
   let* plans = load_checked ~plan_dir ids in
   let setup =
-    setup_of f ~program ~from_id ~to_id ~ids ~backend ~viewport policy
+    setup_of f ~program ~options ~from_id ~to_id ~ids ~backend ~viewport policy
   in
   let* code = chain setup ~chained:false plans in
   Live_run.Series_daemons.finished setup.daemons ~passed:(code = 0);

@@ -75,6 +75,8 @@ let usage =
   \      [--viewport nso-gba|native|x,y,w,h]   (Switch: where the game picture \
    sits; the program's by default)\n\
   \      [--from-event ID|N [--to-event ID|N]]   (mGBA, testing, one checkpoint)\n\
+  \      [--options KEY=VALUE]...   (the program's own choices, one pair each; \
+   gamepilot programs lists its keys)\n\
   \  gamepilot run PROGRAM|DIR/PLANS --preflight --from ID [--backend ...]\n\
   \      (a plan folder is a path with a /, or --plan-dir DIR; a bare name is \
    a program id)\n"

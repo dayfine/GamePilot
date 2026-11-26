@@ -161,6 +161,7 @@ type info = {
   from_id : string;
   to_id : string;
   backend : string;
+  options : (string * string) list;
 }
 
 type ending = { result : string; at : string; reason : string }
@@ -200,6 +201,11 @@ let events_fields = function
   | Some (first, last) ->
       [ ("from_event", `String first); ("to_event", `String last) ]
 
+let options_fields = function
+  | [] -> []
+  | options ->
+      [ ("options", `Assoc (List.map (fun (k, v) -> (k, `String v)) options)) ]
+
 let run_json run ~ended_ms ending =
   let s v = `String v in
   let info = run.info in
@@ -213,9 +219,9 @@ let run_json run ~ended_ms ending =
         ("to", s info.to_id);
         ("checkpoint", s run.checkpoint);
         ("backend", s info.backend);
-        ("mode", s run.mode);
-        ("started_ms", `Int run.started_ms);
       ]
+    @ options_fields info.options
+    @ [ ("mode", s run.mode); ("started_ms", `Int run.started_ms) ]
     @ attempt_fields run.attempt @ events_fields run.events
     @ ended_fields ~ended_ms ending)
 

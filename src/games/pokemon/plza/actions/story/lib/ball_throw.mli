@@ -11,11 +11,11 @@
 
 type options = {
   lock_on_ms : int;  (** 0: ZL and ZR together from the start *)
-  aim_ms : int;
+  aim_ms : int;  (** ZL and ZR held before the scrolls *)
   right_scrolls : int;  (** negative scrolls left *)
-  scroll_hold_ms : int;
-  scroll_release_ms : int;
-  after_throw_ms : int;
+  scroll_hold_ms : int;  (** each scroll's D-pad press *)
+  scroll_release_ms : int;  (** after each scroll, ZL and ZR still held *)
+  after_throw_ms : int;  (** nothing held after the release (the ball flies) *)
 }
 (** A throw's timings. *)
 

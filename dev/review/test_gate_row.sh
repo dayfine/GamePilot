@@ -48,6 +48,14 @@ check() { # name, expected, got
 check "green CI is pass" pass "$(pr "$code" "$green" "" | column 2)"
 check "one red check is fail" fail "$(pr "$code" "$green, $red" "" | column 2)"
 check "a running check is pending" pending "$(pr "$code" "$green, $running" "" | column 2)"
+cancelled='{"__typename": "CheckRun", "name": "build", "status": "COMPLETED", "conclusion": "CANCELLED", "startedAt": "2026-11-26T01:00:00Z"}'
+rerun='{"__typename": "CheckRun", "name": "build", "status": "COMPLETED", "conclusion": "SUCCESS", "startedAt": "2026-11-26T01:00:03Z"}'
+rerun_red='{"__typename": "CheckRun", "name": "build", "status": "COMPLETED", "conclusion": "FAILURE", "startedAt": "2026-11-26T01:00:03Z"}'
+old_red='{"__typename": "CheckRun", "name": "build", "status": "COMPLETED", "conclusion": "FAILURE", "startedAt": "2026-11-26T00:00:00Z"}'
+check "a cancelled run a rerun passed is pass" pass "$(pr "$code" "$cancelled, $rerun" "" | column 2)"
+check "a cancelled run a rerun failed is fail" fail "$(pr "$code" "$cancelled, $rerun_red" "" | column 2)"
+check "a check only cancelled is fail" fail "$(pr "$code" "$cancelled" "" | column 2)"
+check "a red run a later rerun passed is pass" pass "$(pr "$code" "$old_red, $rerun" "" | column 2)"
 check "no checks is none" none "$(pr "$code" "" "" | column 2)"
 check "no review is none" none "$(pr "$code" "$green" "" | column 3)"
 check "APPROVED at the tip is ok" ok "$(pr "$code" "$green" "$(review "$tip" APPROVED)" | column 3)"
