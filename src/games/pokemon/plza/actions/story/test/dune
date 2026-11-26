@@ -9,6 +9,7 @@
  (libraries
   gamepilot.wire
   gamepilot.table_test
+  gamepilot.substring
   gamepilot.engine_run
   gamepilot.plza_story
   plza_fake_console))

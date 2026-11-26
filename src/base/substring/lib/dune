@@ -1,0 +1,3 @@
+(library
+ (name substring)
+ (public_name gamepilot.substring))

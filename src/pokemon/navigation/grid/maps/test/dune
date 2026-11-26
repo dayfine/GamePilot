@@ -22,6 +22,7 @@
   test_frlg_maps)
  (libraries
   gamepilot.table_test
+  gamepilot.substring
   yojson
   gamepilot.grid_geometry
   gamepilot.grid_maps

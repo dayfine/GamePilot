@@ -3,13 +3,6 @@
 let expect name ok =
   if ok then Printf.printf "ok %s\n" name else failwith ("FAILED " ^ name)
 
-let contains s sub =
-  let n = String.length sub in
-  let rec go i =
-    i + n <= String.length s && (String.sub s i n = sub || go (i + 1))
-  in
-  go 0
-
 let hello =
   [
     {|{"dir":"in","t_ms":0,"msg":{"jsonrpc":"2.0","id":1,"method":"hello","params":{"protocol":1,"client":"gamepilot-programs/0.1"}}}|};
@@ -54,7 +47,7 @@ let () =
   | exception Replay.Divergence e ->
       print_endline e;
       expect "missing recorded request -> divergence"
-        (contains e "line 5" && contains e "submit (id 3)")
+        (Substring.contains e "line 5" && Substring.contains e "submit (id 3)")
 
 (* A reader that misses on the recorded frames times out where the live run
    pressed next; the program then fails on its own path, which is its outcome,
@@ -192,7 +185,7 @@ let () =
   | r -> failwith ("FAILED replay accepted a missed stop: " ^ raced_text r)
   | exception Replay.Divergence e ->
       print_endline e;
-      expect "missed stop -> divergence" (contains e "cancel (id 4)")
+      expect "missed stop -> divergence" (Substring.contains e "cancel (id 4)")
 
 (* [probe.upload_template]: each PNG goes up once per connection, and a replay
    checks the bytes the program uploads against the recorded ones. *)
@@ -232,7 +225,8 @@ let () =
   | exception Replay.Divergence e ->
       print_endline e;
       expect "other template bytes -> divergence"
-        (contains e "line 5" && contains e "template differs")
+        (Substring.contains e "line 5"
+        && Substring.contains e "template differs")
 
 (* [unsubscribe]: [with_probes] unsubscribes after the reader is done, the
    latest frame drops the probe, and a replay checks the ids. *)
@@ -280,7 +274,8 @@ let () =
   | _ -> failwith "FAILED replay accepted an unsubscribe of other ids"
   | exception Replay.Divergence e ->
       print_endline e;
-      expect "other unsubscribe ids -> divergence" (contains e "ids differs")
+      expect "other unsubscribe ids -> divergence"
+        (Substring.contains e "ids differs")
 
 (* v1.4: a frame carries only the results that changed; the session keeps the
    others, so a reader still sees every subscribed probe. *)
@@ -387,7 +382,7 @@ let () =
   | exception Replay.Divergence e ->
       print_endline e;
       expect "stick press -> divergence naming the stick"
-        (contains e "press B left 0,1 hold 500")
+        (Substring.contains e "press B left 0,1 hold 500")
 
 (* run_with_backend hands the program the recorded hello's backend: where the
    game picture sat in the frame. *)
