@@ -5,7 +5,7 @@ let no_game : unit Run_flags.game_flags =
   {
     game_defaults = ();
     game_switch = (fun () _ -> None);
-    game_valued = (fun () _ _ -> None);
+    game_valued = (fun () _ _ -> Run_flags.Not_game_flag);
   }
 
 let options args () =

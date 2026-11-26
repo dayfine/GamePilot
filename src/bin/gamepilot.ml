@@ -173,8 +173,9 @@ let () =
   | "run" :: args -> exit_with (Result.bind (Run_args.parse args) run)
   | (("checkpoints" | "checkpoint") as command) :: args -> (
       match Run_args.of_old_command command args with
-      | Some parsed -> old_command command parsed
-      | None -> die usage)
+      | Run parsed -> old_command command (Ok parsed)
+      | Invalid_old_args e -> old_command command (Error e)
+      | Not_old_command -> die usage)
   | "status" :: flags -> exit_with (Status_command.main flags)
   | "ctl" :: args -> exit_with (Ctl_command.main args)
   | "runs" :: flags -> exit_with (Runs_command.main flags)
