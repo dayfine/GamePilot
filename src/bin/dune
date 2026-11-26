@@ -19,6 +19,7 @@
   gamepilot.frlg_ctl_readers
   gamepilot.ctl_script
   gamepilot.switch_home
+  gamepilot.pokemon_home
   gamepilot.repo_io
   gamepilot.frlg_series
   gamepilot.plza_series

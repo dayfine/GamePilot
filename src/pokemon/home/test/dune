@@ -1,0 +1,16 @@
+(executable
+ (name write_probe_spec)
+ (modules write_probe_spec)
+ (libraries yojson gamepilot.wire gamepilot.pokemon_home))
+
+(rule
+ (copy fixtures/home.probes.jsonl home.probes.jsonl))
+
+(rule
+ (copy fixtures/home.shifted.probes.jsonl home.shifted.probes.jsonl))
+
+(tests
+ (names test_home_readers test_box_moves)
+ (modules test_home_readers test_box_moves scripted_boxes)
+ (deps home.probes.jsonl home.shifted.probes.jsonl)
+ (libraries gamepilot.wire gamepilot.table_test gamepilot.pokemon_home))

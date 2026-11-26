@@ -39,7 +39,7 @@ let usage =
   ^ ")\n\
     \      | close-game | start-game TILE  (the Switch, from HOME: close the\n\
     \        running game; start the game on TILE, 1 the first, 0 the cursor's)\n"
-  ^ Delete_save_command.usage_line
+  ^ Delete_save_command.usage_line ^ Bank_home_command.usage_line
   ^ "  gamepilot ctl [--port N] [--owner LABEL] run FILE\n    readers:\n"
   ^ readers_usage ()
 
@@ -157,6 +157,8 @@ let main args =
   | Ok (f, [ "start-game"; tile ]) -> start_game f tile
   | Ok (f, "delete-save" :: args) ->
       Delete_save_command.main ~port:f.port ~owner:f.owner args
+  | Ok (f, "bank-home" :: args) ->
+      Bank_home_command.main ~port:f.port ~owner:f.owner args
   | Ok (f, [ "run"; file ]) -> (
       match parse_script (read_lines file) with
       | Ok steps -> Ok (run_steps f steps)
