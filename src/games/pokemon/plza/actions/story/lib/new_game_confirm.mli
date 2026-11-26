@@ -1,4 +1,4 @@
-(** 01.00b's first step: the new game's "Confirm Choices" screen, then "Ready!":
+(** 01.01's first step: the new game's "Confirm Choices" screen, then "Ready!":
     ported from PokemonLZA_AutoStoryNewGame.cpp. The screen must read within 2 s
     (else [not_on_confirm_choices], which repeats: nothing was pressed); then,
     at most 6 times, A (held 160 ms, 2 s after) once "Ready!" is highlighted,

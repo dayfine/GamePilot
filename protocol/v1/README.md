@@ -1,4 +1,4 @@
-# Wire protocol v1.19
+# Wire protocol v1.20
 
 JSON-RPC 2.0 between the OCaml programs (client) and the daemon (server). The golden files in this
 folder are the spec: the daemon's tests parse every file and the OCaml tests decode and re-encode
@@ -39,6 +39,10 @@ the share of a box's pixels passing a test of linear channel comparisons per row
 and `core.find@1`, blobs found by the fork's fixed pipeline (colour filter, waterfill, size filter,
 scores) (`46-subscribe.line_shares_find.request.json`, `47-frame.line_shares_find.notification.json`).
 `hello` lists both. A v1.12 program never subscribes them.
+v1.20 adds `skip_seams` to `core.template_match@1` with `ink` (optional, default `false`;
+`55-subscribe.skip_seams.request.json`): `true` leaves the scaled template mask's seam pixels out of
+the score (see Probe kinds), for text read on the Switch's 6.5x GBA picture. A v1.19 program never
+sends it, and its scores are unchanged.
 v1.19 adds `backend.reset` (see Methods): mGBA's power switch, answered like `backend.load_state`
 (`53-reset.request.json`, `54-reset.response.json`), for the FRLG RNG programs' hard reset. A
 v1.18 program never sends it.
@@ -109,7 +113,7 @@ size) every v1.1 message means the same in v1.2.
 | `backend.load_state` | `path` (a save state file; the daemon passes it to the backend unread) | `seq` after loading, the new `load` |
 | `backend.reset` | {} | `seq` after the reset, the new `load`: the machine restarts as from its power switch and boots from its cartridge save, held at its first frame until the next `submit` (or `cancel`), so that batch starts on the reset's frame (mGBA: the core's reset) |
 | `probe.upload_template` | `png`: a PNG file, base64 | `template`: the lowercase hex SHA-256 of the PNG bytes |
-| `subscribe` | `probes`: list of {`id`, `kind`, `box`, `delivery`, and `template` (and optionally `ink`) for `core.template_match@1`, `min` and `max` for `core.color_count@1`, `test` for `core.line_shares@1`, `filters`, `min_area` and the optional `max_area`, `min_size`, `max_size`, `margin`, `template`, `shape`, `masked` for `core.find@1`} | `subscribed`: ids |
+| `subscribe` | `probes`: list of {`id`, `kind`, `box`, `delivery`, and `template` (and optionally `ink`, and with it `skip_seams`) for `core.template_match@1`, `min` and `max` for `core.color_count@1`, `test` for `core.line_shares@1`, `filters`, `min_area` and the optional `max_area`, `min_size`, `max_size`, `margin`, `template`, `shape`, `masked` for `core.find@1`} | `subscribed`: ids |
 | `unsubscribe` | `ids`: probe ids | `unsubscribed`: the ids that were subscribed, now removed (others are ignored) |
 | `submit` | `batch_id`, `commands`: list of {`press`: buttons, optional `left_stick` and `right_stick`, `hold_ms`, `cooldown_ms`} or {`wait_ms`} | `batch_id`, `start_seq` |
 | `cancel` | {} or {`then`: {`batch_id`, `commands`}} | `released_seq`: drops queued commands and releases all buttons; with `then` (v1.15), releases none and runs that batch in their place, its `batch_done` as a submit's |
@@ -292,6 +296,14 @@ between 0 and 255 and counts by its squared difference. A text reader sets `ink`
 text color, so the same drawn word matches gray, blue or shaded text on any background.
 `ink` is an option rather than a kind of its own because the result, its fields and the score's formula
 stay the same; only the pixels compared change.
+
+`skip_seams` (a boolean, default `false`, only with `ink`, else -32602) leaves those seam pixels out:
+the score is then the squared differences of the scaled mask's whole pixels (0 or 255) over their
+count. The box's mask is binary, so a seam pixel (a blend near 128) costs about 1/4 of a pixel
+whatever the frame shows there: on the Switch's GBA picture every other edge between two game pixels
+is a seam, and a line of text scores about 0.01 against its own drawing, as much as one letter
+changed. With whole pixels only (mGBA, or a whole scale) nothing is left out and the
+score is the same either way; a template with no whole pixel left is refused (-32602).
 
 `core.color_count@1` takes `min` and `max`, [r, g, b] integers 0..255 with `min` <= `max` per
 channel (else -32602), and counts the box's pixels whose every channel lies in `min`..`max`, both

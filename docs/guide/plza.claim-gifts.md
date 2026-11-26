@@ -34,7 +34,7 @@ Give each as `--options KEY=VALUE`:
 
 | Key | Values | When not given | What it chooses |
 |---|---|---|---|
-| `language` | en \| es-ES \| es-419 \| fr \| de \| it \| ja \| ko \| zh-Hans \| zh-Hant | default `en` | the game's language, in which the Internet gifts' names are found in their list |
+| `language` | en \| es-ES \| es-419 \| fr \| de \| it \| ja \| ko \| zh-Hans \| zh-Hant | default `en` | the game's language, by its language list's tag, in which the Internet gifts' names are found in their list |
 <!-- /generated -->
 
 ## The gifts

@@ -1,0 +1,35 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "plza",
+  "execution": {},
+  "metadata": {
+    "phase": "testing",
+    "source": "played from a new game; starts at the autosave after waking up, where 02.06 ends, facing the door; the fork's plza-02.07.plan.json (plza/lean)",
+    "postconditions": {}
+  },
+  "checkpoint": {
+    "id": "02.07-first-evening",
+    "title": "Main Mission 02: the first evening to Main Mission 03",
+    "start": {
+      "place": "LumioseCity"
+    },
+    "events": [
+      {
+        "id": "to_room_door",
+        "kind": "walk",
+        "why": "to the door's \"A Leave\". not planned: no tile grid in Lumiose",
+        "args": {
+          "legs": [[0, 2000]],
+          "end": "prompt",
+          "earliest_end_ms": 1500
+        }
+      },
+      {
+        "id": "first_evening",
+        "kind": "game_action",
+        "action": "scene_through_prompt",
+        "why": "A Leave, Taunie, the rooftop, AZ, the Main Mission 03 banner and its autosave"
+      }
+    ]
+  }
+}

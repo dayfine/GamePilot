@@ -1,4 +1,7 @@
-let shadow_max = 90
+(* Under the title bars' darkest other colour, (0, 24, 99) on Seafloor and
+   (82, 90, 99) on City, over the Switch's outline, which its scaling rings up
+   to about 100 inside a stroke (mGBA draws it (57, 57, 57)). *)
+let shadow_max = 98
 let frame_timeout_ms = 1000
 
 let ink : Wire.color_range =
@@ -13,23 +16,33 @@ let centre = 160
 let glyph_top = 22
 let margin = 10
 
+(* The template starts on an even game x and y: the Switch draws game pixel k
+   of the GBA picture from frame pixel 180 + 6.5k across (5 + 6.5k down), a
+   whole frame pixel only for an even k, and the daemon places a template on
+   whole frame pixels. From an odd one, every edge of the drawing would sit
+   half a frame pixel off the capture's. A name of odd left gets one more
+   blank column on its left. *)
+let parity x = x land 1
+
 let line_of_width width : Text_lines.t =
+  let left = centre - (width / 2) in
+  let indent = margin + parity (left - margin) in
   {
     id = "pc_box_title";
-    left = centre - (width / 2);
-    indent = margin;
+    left;
+    indent;
     glyph_top;
-    width = width + (2 * margin);
+    width = width + indent + margin;
   }
 
 let line glyphs text =
   Result.map line_of_width (Text_drawing.text_width glyphs text)
 
-(* Glyph rows 1-11 (y 23-33): the title bar's dark frame runs along y 34 on
-   some wallpapers (Desert), where a row 12 would put blank template pixels
-   over it. *)
-let rows_top = 1
-let rows = 11
+(* Glyph rows 0-11 (y 22-33): from row 0, an even y (see [line_of_width]);
+   not row 12, since the title bar's dark frame runs along y 34 on some
+   wallpapers (Desert), where it would put blank template pixels over it. *)
+let rows_top = 0
+let rows = 12
 let slack = 2
 let game_width = 240.
 let game_height = 160.
@@ -49,7 +62,7 @@ let template glyphs text =
       |> Result.map (fun image -> (l, Png_encoding.encode_rgb image)))
 
 let probe_of (l : Text_lines.t) text ~template =
-  Wire.template_match_probe ~ink
+  Wire.template_match_probe ~ink ~skip_seams:true
     ~id:(Line_reading.probe_id l text)
     ~box:(box l) ~delivery:Latest ~template ()
 

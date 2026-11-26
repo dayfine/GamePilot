@@ -23,8 +23,8 @@ type attempt =
     exception it lets out fails the attempt here, the watch run ended. *)
 
 type program = {
-  check_plan : Plza_engine.Plan.t -> (unit, string) result;
-      (** A plan's own check, before the console moves. *)
+  check_plans : Plza_engine.Plan.t list -> (unit, string) result;
+      (** The series' plans checked, in run order, before the console moves. *)
   daemon_flags : string list;
       (** Its daemons' flags before the user's (plza.autostory's keep-awake
           stick). *)
@@ -43,13 +43,14 @@ val keepawake_stick : string list
     [--keepawake-key] given on the command line comes after, and the daemon
     takes the last. *)
 
+val each_plan :
+  (Plza_engine.Plan.t -> (unit, string) result) ->
+  Plza_engine.Plan.t list ->
+  (unit, string) result
+(** A [check_plans] of one check per plan, in order: the first [Error]. *)
+
 val load_plan : plan_dir:string -> string -> (Plza_engine.Plan.t, string) result
 (** The plan [<plan_dir>/<id>.plan.json], decoded. *)
-
-val checkpoint_order : string -> string -> int
-(** PLZA's checkpoints run in plain name order: 01.00b, 03.02b and 03.03b,
-    03.03c follow 01.00a, 03.02 and 03.03 (the checkpoint rows of the fork's
-    PokemonLZA_AutoStoryPlan.h). *)
 
 val failed :
   ?repeats:bool -> ?off_start:bool -> string -> string -> Run_attempts.outcome
@@ -66,10 +67,10 @@ val run_series :
   (int, string) result
 (** [run_series program ~program_fields ~options ~viewport plan_dir args]: the
     checkpoints --from to --to of the plan folder, in order, each run until the
-    policy decides; every plan loaded and checked ([program.check_plan]) before
-    the console moves. A checkpoint's first run starts where the console is (the
-    series' start, or where the checkpoint before it ended) unless its plan's
-    execution says [reload_when_chained]; every later run first reloads.
+    policy decides; every plan loaded, then checked ([program.check_plans]),
+    before the console moves. A checkpoint's first run starts where the console
+    is (the series' start, or where the checkpoint before it ended) unless its
+    plan's execution says [reload_when_chained]; every later run first reloads.
     [program_fields] is run.json's program fields, [options] the program's
     options, checked (Program_registry.check_options), for run.json, [viewport]
     the Switch daemons' (the registry's check of --viewport). [Ok 0] when every

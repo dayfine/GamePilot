@@ -1,4 +1,4 @@
-(** Wild Zone 1's catches for the fourth and fifth species (03.08, 03.08a), the
+(** Wild Zone 1's catches for the fourth and fifth species (03.10, 03.11), the
     plan's [catch_in_zone]: ported from PokemonLZA_AutoStoryCatches.cpp (with
     its party slot count and its way to a zone spot), 12 throws as the fork's
     (PokemonLZA_AutoStoryConsoleActions.cpp).

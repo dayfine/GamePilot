@@ -9,5 +9,6 @@
   gamepilot.switch_home
   gamepilot.pokemon_home
   gamepilot.engine_run
+  gamepilot.plza_readers
   gamepilot.plza_rules
   gamepilot.plza_engine))

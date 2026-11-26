@@ -13,7 +13,7 @@ type templates = {
       (** What Pokémon HOME's steps find their way by. *)
   plza_title : string;
       (** PNG: "Legends: Z-A" over HOME's tile row, the cursor on its tile
-          ({!Switch_home.Home_title}). *)
+          ({!Plza_readers.Switch_home_tile}). *)
 }
 (** The PNG templates a run uploads. *)
 

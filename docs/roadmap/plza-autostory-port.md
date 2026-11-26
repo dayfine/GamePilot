@@ -6,7 +6,9 @@ including its battle and catch code, to GamePilot, transparently (same steps and
 ## Source
 
 The C++ is the plan: branch `plza/lean` (fork PR #644), story rows 01.00 to 03.11, described in
-`autostory/plza/UPSTREAM_PLAN.md` on the fork's `agents` branch.
+`autostory/plza/UPSTREAM_PLAN.md` on the fork's `agents` branch. Row numbers on this page (and
+"PLZA 01.01" on the pages that link here) are the fork's; our checkpoint ids renumber them without
+letters (the fork's 01.01 is `01.02-platform-to-plaza`), and each plan's `source` names its fork file.
 
 | C++ (under `PokemonLZA/Programs/AutoStory/`) | What it does | GamePilot home |
 |---|---|---|

@@ -123,7 +123,7 @@ let platform_legs = [ leg 0.0 4500; leg 90.0 10000 ]
 let move_cases =
   [
     case
-      "01.01's legs, walking: walk, then L, a 150 ms tilt right and L, then \
+      "01.02's legs, walking: walk, then L, a 150 ms tilt right and L, then \
        walk"
       (fun () -> inputs [ platform 0.0 ] (walk_only_move platform_legs))
       "stick (0.00, 1.00) 4500/0\n\

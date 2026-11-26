@@ -86,9 +86,11 @@ struct ProbeSpec {
   Box box;
   std::string delivery;  // "every" or "latest"
   // core.template_match@1 only: the hash probe.upload_template returned, and
-  // the optional ink range that makes it compare masks.
+  // the optional ink range that makes it compare masks; with ink, skip_seams
+  // leaves the scaled mask's seam pixels out of the comparison.
   std::string template_hash;
   std::optional<ColorRange> ink;
+  bool skip_seams = false;
   // core.color_count@1 only.
   ColorRange color_range;
   // core.line_shares@1 only: what a counted pixel passes.
