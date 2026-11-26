@@ -28,6 +28,7 @@ type probe_spec = {
   delivery : delivery;
   template : string option;
   ink : color_range option;
+  skip_seams : bool;
   color_range : color_range option;
   test : Line_shares.test;
   find : Blob_find.params option;
@@ -47,6 +48,7 @@ let bare ~id ~kind ~box ~delivery =
     delivery;
     template = None;
     ink = None;
+    skip_seams = false;
     color_range = None;
     test = [];
     find = None;
@@ -55,11 +57,12 @@ let bare ~id ~kind ~box ~delivery =
 let color_stats_probe ~id ~box ~delivery =
   bare ~id ~kind:color_stats_kind ~box ~delivery
 
-let template_match_probe ?ink ~id ~box ~delivery ~template () =
+let template_match_probe ?ink ?skip_seams ~id ~box ~delivery ~template () =
   {
     (bare ~id ~kind:template_match_kind ~box ~delivery) with
     template = Some template;
     ink;
+    skip_seams = Option.is_some ink && skip_seams = Some true;
   }
 
 let color_count_probe ~id ~box ~delivery ~min ~max =
@@ -101,9 +104,7 @@ let color_range_of_json what j =
 let color_range_fields { min; max } =
   [ ("min", json_of_channels min); ("max", json_of_channels max) ]
 
-let json_of_color_range = function
-  | Some range -> color_range_fields range
-  | None -> []
+let json_of_color_range = Option.fold ~none:[] ~some:color_range_fields
 
 let ink_of_json j =
   match field_opt "probe" "ink" j with
@@ -113,8 +114,11 @@ let ink_of_json j =
       | Some range -> Some range
       | None -> fail "probe.ink: needs min and max")
 
-let json_of_ink = function
-  | Some range -> [ ("ink", `Assoc (color_range_fields range)) ]
+let json_of_ink p =
+  match p.ink with
+  | Some range ->
+      ("ink", `Assoc (color_range_fields range))
+      :: (if p.skip_seams then [ ("skip_seams", `Bool true) ] else [])
   | None -> []
 
 let test_of_json j =
@@ -136,6 +140,9 @@ let probe_spec_of_json j =
     template =
       Option.map (to_string "probe.template") (field_opt what "template" j);
     ink = ink_of_json j;
+    skip_seams =
+      Option.map (to_bool "probe.skip_seams") (field_opt what "skip_seams" j)
+      = Some true;
     color_range = color_range_of_json what j;
     test = test_of_json j;
     find = find_of_json kind j;
@@ -162,7 +169,7 @@ let json_of_probe_spec p =
        ("delivery", `String (string_of_delivery p.delivery));
      ]
     @ json_of_template p.template
-    @ json_of_ink p.ink
+    @ json_of_ink p
     @ json_of_color_range p.color_range
     @ json_of_test p.test @ json_of_find p.find)
 

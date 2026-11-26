@@ -175,9 +175,11 @@ let mail_probes dir screen =
     mail_candidates
 
 (* The box title: each candidate on its own line, centred as the game
-   centres it, matched by its dark outline. *)
+   centres it, matched by its dark outline. The default names first (the
+   Switch's captures show Boxes 1-14 so named). *)
 let box_title_candidates =
-  [ "BOX1"; "BOX2"; "Az!…'.,9"; "”‘' A a." ]
+  List.init 14 (fun i -> Printf.sprintf "BOX%d" (i + 1))
+  @ [ "Az!…'.,9"; "”‘' A a." ]
   (* The bag-prep code's names (docs/design/FRLG-ACE-Execution.md), each
      item's Boxes 5-8 among them: a name must read as itself, not as a near
      one. *)

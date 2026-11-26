@@ -66,6 +66,13 @@ FrameProbe map_probe(const ProbeSpec& probe, const TemplateStore& templates,
     throw RpcError(kInvalidParams,
                    "box is smaller than the template: " + probe.id);
   }
+  if (probe.skip_seams) {
+    mapped.compared = whole_pixels(mapped.template_image);
+    if (cv::countNonZero(mapped.compared) == 0) {
+      throw RpcError(kInvalidParams,
+                     "the scaled template has no whole pixel: " + probe.id);
+    }
+  }
   return mapped;
 }
 
@@ -74,7 +81,7 @@ ProbeResult evaluate_probe(const FrameProbe& probe, const cv::Mat& frame) {
     TemplateMatch match =
         probe.spec.ink
             ? mask_match(frame, probe.template_image, probe.pixels,
-                         *probe.spec.ink)
+                         *probe.spec.ink, probe.compared)
             : template_match(frame, probe.template_image, probe.pixels);
     match.x = frame_x_to_picture(probe.viewport, match.x / frame.cols);
     match.y = frame_y_to_picture(probe.viewport, match.y / frame.rows);
