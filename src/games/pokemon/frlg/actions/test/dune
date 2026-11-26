@@ -68,7 +68,6 @@
   test_lift_ride
   test_seagallop
   test_capture
-  level_up_fake
   test_rare_candy
   test_pacing
   test_console_actions
@@ -107,5 +106,6 @@
   gamepilot.frlg_overworld
   gamepilot.frlg_actions
   gamepilot.frlg_battle
+  frlg_level_up_fake
   gamepilot.run_options
   frlg_overworld_fixtures))

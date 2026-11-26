@@ -4,6 +4,7 @@
    strategy's script. *)
 
 open Frlg_actions
+open Frlg_level_up_fake
 module B = Frlg_battle
 
 let case name input expectation = { Table_test.name; input; expectation }

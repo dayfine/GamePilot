@@ -10,6 +10,7 @@
    checks both the outcome and the exact presses. *)
 
 open Frlg_battle
+open Frlg_level_up_fake
 open Level_up_fake
 
 let case name input expectation = { Table_test.name; input; expectation }

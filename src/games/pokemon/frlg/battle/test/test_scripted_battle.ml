@@ -6,6 +6,7 @@
    list). *)
 
 open Frlg_battle
+open Frlg_level_up_fake
 
 type fake = {
   events : Battle.event list;

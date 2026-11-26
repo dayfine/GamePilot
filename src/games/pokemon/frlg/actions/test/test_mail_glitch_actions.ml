@@ -4,6 +4,7 @@
    (mail_glitch_double_battle), as the fork's Route 16 run played them. *)
 
 open Frlg_actions
+open Frlg_level_up_fake
 module B = Frlg_battle
 module Battle = B.Battle
 

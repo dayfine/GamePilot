@@ -3,6 +3,7 @@
    battle on fake game steps whose level reads go through that screen. *)
 
 open Frlg_actions
+open Frlg_level_up_fake
 module S = Frlg_overworld_fixtures.Scripted_screen
 module B = Frlg_battle
 
