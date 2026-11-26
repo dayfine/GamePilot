@@ -27,28 +27,30 @@ let crack_max_g = 80
 let crack_max_b = 65
 let crack_min_rgb = (crack_ch_zero, crack_ch_zero, crack_ch_zero)
 let crack_max_rgb = (crack_max_r, crack_max_g, crack_max_b)
-let crack_min_share = 0.06
+let crack_min_share = 0.10
 let crack_full_collapse_share = 0.30
 let crack_half_slice = 0.5
 let crack_probe_id idx = Printf.sprintf "bdsp_mine_crack_%d" idx
 
 (* Classification thresholds measured from Console A captures. *)
-let neutral_max_rb_diff = 18.
+let neutral_max_rb_diff = 25.
+let neutral_max_rg_diff = 18.
 let deep_min_luma = 165.
 let mid_min_luma = 115.
-let tan_min_g = 115.
-let tan_min_rb_diff = 30.
+let tan_min_g = 95.
+let tan_min_rb_diff = 25.
 let tan_max_rg_diff = 25.
-let empty_max_r = 138.
-let empty_max_g = 105.
-let empty_max_b = 78.
+let empty_min_r = 92.
+let empty_max_r = 148.
+let empty_max_g = 118.
+let empty_max_b = 90.
 let empty_min_rg_diff = 22.
 let empty_min_gb_diff = 18.
-let empty_max_std_sum = 58.
+let empty_max_std_sum = 80.
 let shard_min_r = 122.
 let shard_min_b = 70.
 let shard_min_rg_diff = 42.
-let shard_min_bg_diff = -8.
+let shard_min_bg_diff = 12.
 let deep_layer = 4
 let mid_layer = 2
 let shallow_layer = 1
@@ -163,7 +165,7 @@ let classify_neutral luma =
   else Mining_wall.Clear_iron
 
 let is_empty_floor (r, g, b) std_sum =
-  r <= empty_max_r && g <= empty_max_g && b <= empty_max_b
+  r >= empty_min_r && r <= empty_max_r && g <= empty_max_g && b <= empty_max_b
   && r -. g >= empty_min_rg_diff
   && g -. b >= empty_min_gb_diff
   && std_sum < empty_max_std_sum
@@ -181,7 +183,10 @@ let classify_colored (r, g, b) std_sum =
 let classify_cell (s : SC.stats) =
   let r = s.mean.r and g = s.mean.g and b = s.mean.b in
   let luma = (r +. g +. b) /. channels in
-  if Float.abs (r -. b) < neutral_max_rb_diff then classify_neutral luma
+  if
+    Float.abs (r -. b) < neutral_max_rb_diff
+    && Float.abs (r -. g) < neutral_max_rg_diff
+  then classify_neutral luma
   else classify_colored (r, g, b) (SC.sum s.stddev)
 
 let read_cell m ~col ~row =
@@ -246,6 +251,34 @@ let label_item_components grid =
     done
   done
 
+let has_covered_neighbor grid (c, r) =
+  List.exists
+    (fun (dc, dr) ->
+      let nc = c + dc and nr = r + dr in
+      Mining_wall.in_bounds ~col:nc ~row:nr
+      && match grid.(nr).(nc) with Mining_wall.Covered _ -> true | _ -> false)
+    neighbor_offsets
+
+let infer_uncovered_ids grid =
+  let tbl = Hashtbl.create 8 in
+  for r = 0 to rows - 1 do
+    for c = 0 to cols - 1 do
+      match grid.(r).(c) with
+      | Mining_wall.Clear_item { id; _ } ->
+          let prev = Option.value (Hashtbl.find_opt tbl id) ~default:[] in
+          Hashtbl.replace tbl id ((c, r) :: prev)
+      | _ -> ()
+    done
+  done;
+  Hashtbl.fold
+    (fun id cells acc ->
+      if
+        List.length cells >= 2
+        && not (List.exists (has_covered_neighbor grid) cells)
+      then id :: acc
+      else acc)
+    tbl []
+
 let read_observation ?cursor ?prev ~announced_items ~integrity m =
   let grid =
     Array.init rows (fun row ->
@@ -259,5 +292,5 @@ let read_observation ?cursor ?prev ~announced_items ~integrity m =
     collapsed = integrity <= 0;
     announced_items;
     grid;
-    uncovered_ids = [];
+    uncovered_ids = infer_uncovered_ids grid;
   }

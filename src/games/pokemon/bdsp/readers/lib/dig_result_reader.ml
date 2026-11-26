@@ -22,9 +22,13 @@ let spot_max_std = 65.
 let icon_min_std_sum = 20.
 let ch_max = 255
 let ch_zero = 0
+
+(* Calibrated from Console A run-12/001985 (Shard S = 0.0172), run-12/004369 &
+   005847 (Shard L = 0.0284..0.0310), run-8/000144 (Heat Rock = 0.0016), and
+   run-12/006057 (Red Sphere = 0.0006). *)
 let pink_r_min = 180
-let pink_g_max = 155
-let pink_b_min = 140
+let pink_g_max = 140
+let pink_b_min = 165
 let blue_r_max = 110
 let blue_g_min = 60
 let blue_g_max = 200
@@ -48,8 +52,8 @@ let green_min = (ch_zero, green_g_min, ch_zero)
 let green_max = (green_r_max, ch_max, green_b_max)
 let gold_min = (gold_r_min, gold_g_min, ch_zero)
 let gold_max = (ch_max, gold_g_max, gold_b_max)
-let shard_l_min_share = 0.075
-let shard_s_min_share = 0.015
+let shard_l_min_share = 0.024
+let shard_s_min_share = 0.010
 let sphere_min_share = 0.025
 let gold_min_share = 0.035
 

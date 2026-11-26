@@ -34,8 +34,21 @@ let () =
   assert_cell "pink_shard"
     (Mining_wall.Clear_item { id = 1; kind = Mining_goal.Shard_s })
     (mk_stats (195.0, 90.0, 175.0) (25.0, 20.0, 25.0));
-  (* Half-exposed Shard S measured from Console A run-78/000271.jpg cell (9,5). *)
-  assert_cell "half_exposed_shard_s"
-    (Mining_wall.Clear_item { id = 1; kind = Mining_goal.Shard_s })
-    (mk_stats (128.5, 80.3, 76.7) (40.0, 30.0, 30.0));
+  (* Red Sphere (run-4 Dig #1) must NOT be misclassified as Shard_s. *)
+  assert_cell "red_sphere_not_shard"
+    (Mining_wall.Clear_item { id = 2; kind = Mining_goal.Other })
+    (mk_stats (155.0, 75.0, 80.0) (30.0, 25.0, 25.0));
+  (* Bright & shadowed empty floor (run-4) must classify as Clear_empty. *)
+  assert_cell "bright_empty_floor" Mining_wall.Clear_empty
+    (mk_stats (141.0, 112.0, 80.0) (6.0, 6.0, 7.0));
+  assert_cell "shadowed_empty_floor" Mining_wall.Clear_empty
+    (mk_stats (104.0, 80.0, 59.0) (23.0, 23.0, 23.0));
+  (* Dusty warm rock in 18..25 rb range must stay Covered, not Clear_item. *)
+  assert_cell "dusty_warm_rock" (Mining_wall.Covered 2)
+    (mk_stats (170.0, 167.0, 152.0) (20.0, 20.0, 20.0));
+  (* Shadowed col-0 Layer-1 tan dirt from Console A run-2/000138.jpg (0,0) & (0,9). *)
+  assert_cell "shadowed_tan_dirt_top" (Mining_wall.Covered 1)
+    (mk_stats (116.8, 105.4, 75.7) (14.6, 16.2, 20.8));
+  assert_cell "shadowed_tan_dirt_bot" (Mining_wall.Covered 1)
+    (mk_stats (110.2, 102.4, 74.4) (21.2, 19.8, 22.1));
   print_endline "OK"
