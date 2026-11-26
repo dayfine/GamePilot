@@ -76,10 +76,25 @@ let handle_dig_result ~report ~picture ~goal ~bailed ~counters =
   Watch_report.set report step_result Wire.Watch.Done summary;
   Ok next
 
-let run_dig_step ~report ~picture ~goal ~counters =
+let read_announced_items ~picture =
+  ignore
+    (Effects.subscribe (Bdsp_readers.Mining_announce_reader.probes ~picture)
+      : string list);
+  match Effects.await ~timeout_ms:screen_probe_timeout_ms (fun _ -> true) with
+  | Effects.Holds m -> (
+      match Bdsp_readers.Mining_announce_reader.read m with
+      | Some n ->
+          log (Printf.sprintf "Opening dialog announced %d buried item(s)" n);
+          Some n
+      | None -> None)
+  | Effects.Timeout -> None
+
+let run_dig_step ?announced_items ~report ~picture ~goal ~counters () =
   Watch_report.set report step_dig Wire.Watch.Current "mining wall";
   let tally = Mining_counters.to_tally counters in
-  let* moves, bailed = MP.dig_wall_smart ~log ~picture ~goal ~tally () in
+  let* moves, bailed =
+    MP.dig_wall_smart ?announced_items ~log ~picture ~goal ~tally ()
+  in
   let detail = Printf.sprintf "moves=%d bailed=%b" moves bailed in
   log ("Smart dig done: " ^ detail);
   Watch_report.set report step_dig Wire.Watch.Done detail;
@@ -88,11 +103,12 @@ let run_dig_step ~report ~picture ~goal ~counters =
 let play_entered_minigame ~report ~picture ~goal ~counters =
   wait_clear ~timeout_ms:fade_timeout_ms is_not_black;
   wait_clear ~timeout_ms:open_dlg_timeout_ms is_dialog;
+  let announced_items = read_announced_items ~picture in
   let* () =
     OW.advance_dialog ~log ~picture ~max_presses:max_open_dialog_presses ()
   in
   P.wait post_open_wait_ms;
-  run_dig_step ~report ~picture ~goal ~counters
+  run_dig_step ?announced_items ~report ~picture ~goal ~counters ()
 
 let confirm_dig_choice ~report ~picture ~goal ~counters =
   log "Dig choice box (是/否) detected! Confirming Yes...";
@@ -208,7 +224,7 @@ let recover_if_mid_dig ~picture ~goal ~counters =
   match read_screen ~picture with
   | Some scr when scr.mining_wall ->
       log "Started mid-dig on an active wall; finishing it first...";
-      let* next = run_dig_step ~report ~picture ~goal ~counters in
+      let* next = run_dig_step ~report ~picture ~goal ~counters () in
       home_to_south_door ();
       Ok next
   | Some scr ->
