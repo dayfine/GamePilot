@@ -145,7 +145,7 @@ let commands ~guide (p : R.t) arg =
   in
   Result.map (fun b -> "```sh\n" ^ b ^ "\n```") body
 
-let option_row (d : Run_options.decl) =
+let option_row (d : Run_options.declared) =
   let presence =
     match d.presence with
     | Required -> "required"

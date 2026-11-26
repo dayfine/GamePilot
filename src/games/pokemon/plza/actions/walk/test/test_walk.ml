@@ -65,6 +65,7 @@ let screen ?(still = false) ?(fade_black = false) ?(fade_white = false)
     scene_under_way = scene;
     battle;
     minimap_arrow = None;
+    map_pin = None;
   }
 
 let platform at = screen ~hint:true at

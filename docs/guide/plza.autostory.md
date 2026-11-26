@@ -81,10 +81,14 @@ cd src && opam exec -- dune exec -- gamepilot run plza.autostory --from 01.00a-n
 | 03.04 | Pokemon Center, the Pokedex |
 | 03.06 | To the Wild Zones card |
 | 03.07 | Into Wild Zone 1: first catches |
+| 03.08 | Wild Zone 1: fourth species |
+| 03.08a | Wild Zone 1: fifth species |
+| 03.08b | Out of Wild Zone 1's far gate |
+| 03.09 | From Wild Zone 1's gate into the Research Lab |
 | 03.10 | Up the Research Lab's elevator to the Director's Office |
 | 03.11 | Mable's research, the Rock Smash TM |
 
-<!-- plans: 0f757450ec57 -->
+<!-- plans: 3acc261de689 -->
 <!-- /generated -->
 
 01.00a-new-game closes any running game, finds PLZA's tile on HOME by its title, starts it, picks

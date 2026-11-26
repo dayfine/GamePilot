@@ -69,7 +69,7 @@ val by_hand_hint : string
 val typed_tags : string list
 (** The language tags 01.00a-new-game types a name in. *)
 
-val decls : Run_options.decl list
+val decls : Run_options.declared list
 (** plza.autostory's options, the choices given on the command line
     ([gamepilot run --options], Program_registry): [language] (one of
     {!typed_tags}), [look] (1 to {!looks}) and [name] (text), each optional: a

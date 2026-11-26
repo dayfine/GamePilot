@@ -122,7 +122,7 @@ let typed_tags =
       match of_tag tag with Some l -> (info l).typed | None -> false)
     tags
 
-let decls : Run_options.decl list =
+let decls : Run_options.declared list =
   [
     {
       key = "language";

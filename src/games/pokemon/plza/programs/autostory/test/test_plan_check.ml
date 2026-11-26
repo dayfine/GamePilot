@@ -66,8 +66,9 @@ let bad_cases =
     case "a start signature with an unknown field"
       (fun () ->
         with_execution [ ("start_signature", `Assoc [ ("hp", `Int 1) ]) ])
-      "start_signature_unread: 03.04: its start signature has \"hp\": its one \
-       field is minimap (a recorded name)";
+      "start_signature_unread: 03.04: its start signature has \"hp\": its \
+       fields are talk_prompt, wild_zone and near_rocks (true or false), party \
+       (a count) and minimap (a recorded name)";
     case "an end signature naming an unrecorded minimap"
       (fun () ->
         with_execution

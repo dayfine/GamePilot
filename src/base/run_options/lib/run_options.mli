@@ -19,7 +19,7 @@ type presence =
   | Optional  (** The run has no value for it. *)
   | Default of string  (** The run takes this value. *)
 
-type decl = {
+type declared = {
   key : string;  (** ["item"]: lower case, digits and [-] or [_]. *)
   value : value;
   presence : presence;
@@ -37,11 +37,11 @@ val pair : string -> (string * string, string) result
 (** One [--options] argument, [KEY=VALUE] (the value keeps any later [=]);
     [Error] on a missing [=] or an empty key. *)
 
-val check_decls : decl list -> (unit, string) result
+val check_declaration : declared list -> (unit, string) result
 (** A declaration's own errors: a key twice or not in the key alphabet, an empty
     [One_of] or [Int_range], a default its value refuses. *)
 
-val check : decl list -> (string * string) list -> (t, string) result
+val check : declared list -> (string * string) list -> (t, string) result
 (** The pairs given, read against the declaration: [Error] on a key given twice,
     a key it does not declare (naming the keys it takes and their values, or
     saying it takes none), a value its key refuses (naming what it takes), or a
@@ -61,7 +61,7 @@ val int : t -> string -> int option
 val value_text : value -> string
 (** ["master-ball | luxury-ball"], ["1 to 999"], ["text"]. *)
 
-val describe : decl -> string
+val describe : declared -> string
 (** One line: ["item=master-ball | luxury-ball (required): the item to make"].
 *)
 

@@ -119,6 +119,17 @@ let run_to_gate_ms = 8000
 let run_to_gate steps ~timeout_ms =
   Plza_walk.Gate_run.run (Steps.walk_game_steps steps) ~timeout_ms
 
+(* The plan's timeout for each run at the far gate (plza-03.08b.plan.json). *)
+let run_out_of_zone_1_ms = 5000
+
+let run_out_of_zone_1 steps ~timeout_ms =
+  Plza_walk.Map_walk.run_out_of_zone_one
+    (Steps.walk_game_steps steps)
+    ~timeout_ms
+
+let check_out_of_zone_1 steps =
+  Plza_walk.Map_walk.check_out_of_zone_one (Steps.walk_game_steps steps)
+
 (* The fork's counts (PokemonLZA_AutoStoryConsoleActions.cpp). *)
 let max_throws = 6
 let max_rounds = 6
@@ -131,6 +142,11 @@ let zone_actions =
       no_args (fun steps -> Catches.catch_tutorial steps ~max_throws) );
     ( "battle_then_catch",
       no_args (fun steps -> Catches.battle_then_catch steps ~max_rounds) );
+    ( "catch_in_zone",
+      no_args (fun steps ->
+          Zone_catch.run steps ~max_throws:Zone_catch.max_throws) );
+    ("run_out_of_zone_1", timed run_out_of_zone_1 ~default:run_out_of_zone_1_ms);
+    ("check_out_of_zone_1", no_args check_out_of_zone_1);
     ("claim_mable_research_reward", no_args Mable_reward.run);
   ]
 

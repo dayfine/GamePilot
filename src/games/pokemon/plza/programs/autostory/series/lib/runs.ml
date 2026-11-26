@@ -71,7 +71,9 @@ let new_game ~log ~picture choices =
 
 let run_checkpoint ~options ~log ~picture ~reload report (plan : P.Plan.t) =
   let* () = start ~log ~picture ~reload plan in
-  let steps = Story.Live_story_screen.game_steps ~log ~log_detail:log in
+  let steps =
+    Story.Live_story_screen.game_steps ~picture ~log ~log_detail:log
+  in
   (* A console idle between runs dims its screen; nothing reads on it. *)
   Plza_story.Screen_wake.run steps;
   let id = plan.checkpoint.checkpoint_id in

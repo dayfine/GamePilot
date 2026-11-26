@@ -18,6 +18,7 @@ val fresh : unit -> Effects.measurements option
     one. *)
 
 val game_steps :
+  picture:Wire.box ->
   log:(string -> unit) ->
   log_detail:(string -> unit) ->
   Plza_story.Steps.game_steps

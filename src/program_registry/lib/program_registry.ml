@@ -26,7 +26,7 @@ type t = {
   backends : backend list;
   viewport : viewport;
   rules : rules;
-  options : Run_options.decl list;
+  options : Run_options.declared list;
 }
 
 (* FireRed's tile on HOME: its orange background and Charizard, 0.41 of the
