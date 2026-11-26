@@ -16,9 +16,10 @@ module Pose : sig
   type zone = { place : string; spot : string option }
   (** A place (["LumioseCity"]), and maybe a spot in it. *)
 
-  (** A pose without a spot holds anywhere in its place. The C++ checks no pose;
-      PLZA reads none yet, so its game tells no position ([None]) and the runner
-      checks nothing until a zone reader comes. *)
+  (** A pose without a spot holds anywhere in its place. The fork's
+      [PokemonLZA_AutoStoryGame.cpp] checks no pose; PLZA reads none yet, so its
+      game tells no position ([None]) and the runner checks nothing until a zone
+      reader comes. *)
   include Engine_rules.POSE with type t = zone and type observed = zone
 end
 

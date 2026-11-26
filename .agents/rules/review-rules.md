@@ -71,8 +71,8 @@ the run the plan was written from. A species is named only when the story needs 
 - Good: `a member knows Fly (fly)`; `a member holding no mail`.
 - Find: recipe, then judgment on each hit (is the species part of the story, a trade's offer, or
   only the member the action used?):
-  `grep -rnE '"species"|"party_includes"|"party"' src/games/*/programs/*/plans` and
-  `grep -rnE 'in the party \(|party includes' docs/guide`.
+  `find src/games -path '*/programs/*/plans/*.plan.json' -exec grep -HnE '"species"|"party_includes"|"party"' {} +`
+  and `grep -rnE 'in the party \(|party includes' docs/guide`.
 
 ### R4 A program's first checkpoint starts anywhere sensible
 
@@ -89,10 +89,14 @@ flies from wherever the player is.
 - Find: recipe, then judgment (does the first event need the spot, or does it leave it?):
 
   ```sh
-  python3 -c 'import json,glob
-  for d in sorted(glob.glob("src/games/*/programs/*/plans")):
-      f = sorted(glob.glob(d + "/*.plan.json"))[0]
-      s = json.load(open(f))["checkpoint"]["start"]
+  find src/games -path '*/programs/*/plans/*.plan.json' | sort | python3 -c '
+  import json, os, sys
+  seen = set()
+  for f in map(str.strip, sys.stdin):
+      d = os.path.dirname(f)
+      if d in seen: continue
+      seen.add(d)
+      s = json.load(open(f))["checkpoint"].get("start") or {}
       print(f, s.get("map"), s.get("tiles"))'
   ```
 
@@ -119,12 +123,14 @@ so as a checked precondition.
 - Find: recipe, then judgment on each event (can the game already hold its result?):
 
   ```sh
-  python3 -c 'import json,glob
-  for f in sorted(glob.glob("src/games/*/programs/*/plans/*.plan.json")):
+  find src/games -path '*/programs/*/plans/*.plan.json' | sort | python3 -c '
+  import json, sys
+  for f in map(str.strip, sys.stdin):
       for e in json.load(open(f))["checkpoint"]["events"]:
           if e.get("kind") in ("game_action", "talk", "pickup") and "skip_if" not in e:
               print(f, e["id"], e.get("action", e.get("kind")))'
-  grep -rnE 'from (mg|tt|su|sb)-[0-9]+|chained|as left by|the save from' src/games/*/programs/*/plans
+  find src/games -path '*/programs/*/plans/*.plan.json' -exec grep -HnE \
+    'from (mg|tt|su|sb)-[0-9]+|chained|as left by|the save from' {} +
   ```
 
 ### R6 One doc page per program: its guide
@@ -180,7 +186,19 @@ cases the user called out.)
 - Good: `type game_steps = { read_party : ...; press : ... }`, built by `candy_game_steps`, faked
   by `fake_game_steps`.
 - Find: recipe, then judgment (is the hit a record of game steps?):
-  `grep -rnE --include='*.ml*' '\b(rig|driver|ops|callbacks)\b|type [a-z_]*(deps|handlers) = \{' src`.
+  `grep -rnE --include='*.ml*' --exclude-dir=_build '\b(rig|driver|ops|callbacks)\b|type [a-z_]*(deps|handlers) = \{' src`
+  and `lib/` records with step fields (`press`, `submit`, `read_*`) not named `game_steps`:
+
+  ```sh
+  find src -path '*/lib/*.ml*' -not -path '*/_build/*' | sort | python3 -c '
+  import re, sys
+  for f in map(str.strip, sys.stdin):
+      text = open(f).read()
+      for m in re.finditer(r"type\s+([a-z_][a-z0-9_]*)\s*=\s*\{([^}]*)\}", text):
+          if m.group(1) != "game_steps" and re.search(r"\b(press|submit|read_[a-z0-9_]*)\s*:", m.group(2)):
+              line = text.count("\n", 0, m.start()) + 1
+              print(f"{f}:{line}: type {m.group(1)}")'
+  ```
 
 ### R9 A port's doc comment names the source files, not their functions or constants
 
@@ -204,11 +222,12 @@ function, no stage. The lab is retired; the doc comment says what the code does.
   lab tools`.
 - Good (lab scripts): `Typing a code: the keyboard's layout, the key-to-key moves round the
   disabled keys, and the presses (D-pad 80 ms, released 140; A 80 ms, released 180)`.
-- Find: recipe over the files that name a source file, then judgment:
+- Find: recipe over every `.mli` mentioning the fork, upstream or C++ (including extensionless and
+  `.{h,cpp}` source names), then judgment:
 
   ```sh
-  grep -rlE --include='*.ml*' '\.(cpp|h|c)\b' src | xargs grep -nE \
-    '[A-Za-z_]+\(\)|\b[A-Z][a-z]+([A-Z][a-z]+)+(Watcher|Detector|Reader|Session|Program)\b|\b[A-Z][A-Z0-9_]{4,}\b'
+  grep -rlE --include='*.mli' --exclude-dir=_build 'fork|upstream|C\+\+|\.(cpp|h|c|\{h,cpp\})\b' src | xargs grep -nE \
+    '[A-Za-z_]+\(\)|\b[A-Z][a-z]+([A-Z][a-z]+)+(Watcher|Detector|Reader)\b'
   ```
 
   and for the lab scripts, where every hit is one (our own `dev/` and `run/` scripts may be named):
@@ -268,8 +287,8 @@ multi-line log) is split. Each test file says what its fakes stand in for. (qc-s
 - Bad: `check "trace" (String.concat "\n" trace) "press A\nread menu\npress down\n..."`.
 - Good: one case per press and per reading.
 - Find: recipe, then judgment:
-  `grep -rnE --include='*.ml' '\\n[^"]*\\n[^"]*\\n' src/*/*/test src/*/*/*/test src/games/*/*/test | grep -vE 'failwith|Printf'`
-  and test files without a top comment (`for f in $(find src -path '*/test/*.ml'); do head -1 "$f" | grep -q '^(\*' || echo "$f"; done`).
+  `find src -path '*/test/*.ml' -not -path '*/_build/*' -exec grep -HnE '\\n[^"]*\\n[^"]*\\n' {} + | grep -vE 'failwith|Printf'`
+  and test files without a top comment (`for f in $(find src -path '*/test/*.ml' -not -path '*/_build/*'); do head -1 "$f" | grep -q '^(\*' || echo "$f"; done`).
 
 ### R13 Repeated plan steps become named places; a place has one spelling
 
@@ -286,9 +305,10 @@ from strings.
 - Find: recipe for runs of three identical events in two plans, and string-built place names:
 
   ```sh
-  python3 -c 'import json,glob,collections
+  find src/games -path '*/programs/*/plans/*.plan.json' | sort | python3 -c '
+  import json, sys, collections
   seen = collections.defaultdict(set)
-  for f in glob.glob("src/games/*/programs/*/plans/*.plan.json"):
+  for f in map(str.strip, sys.stdin):
       ev = [json.dumps({k: v for k, v in e.items() if k not in ("id", "why")}, sort_keys=True)
             for e in json.load(open(f))["checkpoint"]["events"]]
       for i in range(len(ev) - 2): seen["|".join(ev[i:i + 3])].add(f)
@@ -313,7 +333,7 @@ before the first event, naming the missing fact and the checkpoint that provides
   out.
 - Good: `--count 30` with a default, validated; the pre-flight's `money at least ¥36000` row.
 - Find: judgment. Read each program's plans for counts, targets and lists a player would set
-  (`grep -rnE '"(quantity|count|target_level|level)": *[0-9]{2,}' src/games/*/programs/*/plans`)
+  (`find src/games -path '*/programs/*/plans/*.plan.json' -exec grep -HnE '"(quantity|count|target_level|level)": *[0-9]{2,}' {} +`)
   and each guide's "Before you start" block for a need the pre-flight does not check.
 
 ### R15 Supplies are stocked beyond the immediate need
@@ -326,7 +346,7 @@ never run short.
 - Bad: duplicating exactly the 8 Retro Mail the next checkpoint gives away.
 - Good: duplicating to 99 and leaving the rest in the bag.
 - Find: judgment. Compare each stocking checkpoint's `gained` postcondition with what later
-  checkpoints spend: `grep -rnE '"(gained|spent|quantity)"' src/games/*/programs/*/plans`.
+  checkpoints spend: `find src/games -path '*/programs/*/plans/*.plan.json' -exec grep -HnE '"(gained|spent|quantity)"' {} +`.
 
 ### R16 Nothing is shared before a second user exists
 
@@ -409,9 +429,14 @@ are deleted once that run passed; the unit tests that pin the behaviour stay.
 - Bad: a `before/` folder of expanded plans beside the expansion tests.
 - Good: the expansion tests alone.
 - Find: recipe, then judgment (is any test or doc reading it?):
-  `find src docs -type d \( -name before -o -name after -o -name proof \)` and
-  `git ls-files src | grep -E '\.(png|jsonl\.gz|log)$'` checked against the `dune` files that
-  name them (`grep -rn <basename> --include=dune src`).
+  `find src docs -type d \( -name before -o -name after -o -name proof \)` and unreferenced
+  fixtures checked against every tracked non-image file (`daemon/` included):
+
+  ```sh
+  for f in $(git ls-files src | grep -E '\.(png|jsonl\.gz|log)$'); do
+    git grep -qF "$(basename "$f")" -- ':!*.png' ':!*.jsonl.gz' ':!*.log' || echo "$f"
+  done
+  ```
 
 ### R22 Plan files have short descriptive names
 
@@ -431,7 +456,7 @@ without `.plan.json`.
   `03.02b-battle-taunie.plan.json`.
 - Good: `03-trade-mr-mime.plan.json`, `03.10-fourth-species.plan.json`.
 - Find: recipe (`su-01`, `tt-01` are known):
-  `ls src/games/*/programs/*/plans src/games/pokemon/*/programs/*/plans | grep -vE '^[0-9]{2}(\.[0-9]{2})?-[a-z0-9]+(-[a-z0-9]+){0,4}\.plan\.json$|:$|^$'`.
+  `find src/games -path '*/programs/*/plans/*.plan.json' | grep -vE '/[0-9]{2}(\.[0-9]{2})?-[a-z0-9]+(-[a-z0-9]+){0,4}\.plan\.json$'`.
 
 ### R23 No runtime dependency on Packages; per-language assets are committed
 
@@ -465,8 +490,9 @@ Find the gate in pret pokefirered (the script or the C that checks it) and cite 
   `FLAG_BADGE01_GET` + its field move: Flash Boulder, Cut Cascade, Fly Thunder, Strength Rainbow,
   Surf Soul, Rock Smash Marsh, Waterfall Volcano; `Frlg_checkpoints.Plan_needs` derives it).
 - Find: recipe, then judgment on each hit (is the count or the Hall of Fame what the game checks?):
-  `grep -rnE '"(badges|hall_of_fame)": *(true|[0-9])' src/games/*/programs/*/plans`;
-  for field moves, `grep -rnE '"action": "(fly|surf|strength|rock_smash|waterfall|cut_tree|flash)"' src/games/*/programs/*/plans`
+  `find src/games -path '*/programs/*/plans/*.plan.json' -exec grep -HnE '"(badges|hall_of_fame)": *(true|[0-9])' {} +`;
+  for field moves,
+  `find src/games -path '*/programs/*/plans/*.plan.json' -exec grep -HnE '"action": "(fly|surf|strength|rock_smash|waterfall|cut_tree|flash)"' {} +`
   checked against `field_move_badges` in `src/games/pokemon/frlg/actions/lib/action_args.ml`, and
   `grep -rnE 'in the party \((fly|surf|strength|cut)' docs/guide` for an HM need by species (R3).
 
@@ -511,7 +537,7 @@ option plays as the fork does.
   a run that wants another.
 - Find: judgment; read new-game choice args in plans (name, look, language) and check each is the
   fork's default with a registry option to change it:
-  `grep -rnE '"(name|player_name|look|language)": *"' src/games/*/programs/*/plans src/games/pokemon/*/programs/*/plans`.
+  `find src/games -path '*/programs/*/plans/*.plan.json' -exec grep -HnE '"(name|player_name|look|language)": *"' {} +`.
 
 ## AGENTS.md hard rules no lint checks yet
 
@@ -519,10 +545,10 @@ Each is stated in `AGENTS.md` (the name below is its bold lead); the auditor run
 reads each hit.
 
 - **A1 Programs use only our effect set**: `grep -rnE --include='*.ml' '\b(Unix|Thread|Domain|Eio|Lwt|In_channel|Out_channel)\.' src/games/*/programs src/games/*/actions`.
-- **A2 Port the C++ transparently** (each ported module names its source file): `grep -rLE '\.(cpp|h|c)\b|Not in the fork|GamePilot.s own' $(grep -rlE 'fork|upstream|C\+\+' --include='*.mli' src)`; see also R9.
+- **A2 Port the C++ transparently** (each ported module names its source file): `grep -rLE --exclude-dir=_build '\.(cpp|h|c|\{h,cpp\})\b|Pokemon[A-Z]+_[A-Za-z0-9_]+|Programs/|Not in the fork|GamePilot.s own' $(grep -rlE --exclude-dir=_build 'fork|upstream|C\+\+' --include='*.mli' src)`; see also R9.
 - **A3 Every checkpoint goes through the checkpoint runner**: judgment; `grep -rnE --include='*.ml' 'Effects\.submit' src/bin src/games/*/programs` for programs driving the game outside the runner.
 - **A4 Submodules are read-only; maps are read, never copied**: `git -C third_party/<sub> status --short` is empty for each submodule, and `git ls-files src | grep -iE 'maps?/.*\.(json|txt)$'` lists no copied map.
-- **A5 Machine-specific paths come from environment variables**: `git grep -nE '/Users/|/home/[a-z]|[A-Z]:\\\\' -- src docs dev run protocol daemon | grep -v /home/example/` (the protocol goldens' `/home/example` is an example).
+- **A5 Machine-specific paths come from environment variables**: `git grep -nE '/Users/|(^|[^$a-z_])/home/[a-z]|[A-Z]:\\\\' -- src docs dev run protocol daemon | grep -v /home/example/` (the protocol goldens' `/home/example` is an example).
 - **A6 The FireRed ROM, its path and its hash never enter this repo**: `git grep -niE '\.gba\b|sha1.*[0-9a-f]{40}' -- . ':!third_party'`.
 - **A7 Swappable parts sit behind one boundary each**: judgment; read new I/O backends, probes,
   handlers and RNG users for a second way in.
