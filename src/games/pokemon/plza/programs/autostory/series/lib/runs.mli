@@ -39,7 +39,7 @@ val run_series :
     the console moves. [program] is run.json's program fields, [options] the
     program's options, checked (Program_registry.check_options), for run.json
     and 01.00a-new-game's choices
-    ({!Plza_autostory.New_game_options.of_run_options}: [Error] before the
-    console moves on choices it cannot play), [viewport] the Switch daemons'
-    (the registry's check of --viewport). [Ok 0] when every one passed, [Ok 1]
-    when one stopped; the Switch only, testing. *)
+    ({!Plza_autostory.New_game_options.of_run_options}, over the plan's args;
+    {!Series_check} refuses before the console moves choices it cannot play),
+    [viewport] the Switch daemons' (the registry's check of --viewport). [Ok 0]
+    when every one passed, [Ok 1] when one stopped; the Switch only, testing. *)

@@ -1,9 +1,10 @@
 (* 01.00a-new-game's choices as plza.autostory's options: their declaration
-   (Plza_story.New_game_choices.decls, through Run_options.check) reads each key's
-   values, and
-   New_game_options.of_run_options the choices 01.00a-new-game plays and the rules
-   across keys, before anything is pressed. One fact per case: the choice's
-   language, look or name, or the refusal. *)
+   (Plza_story.New_game_choices.decls, through Run_options.check) reads each
+   key's values, and New_game_options.of_run_options the choices 01.00a-new-game
+   plays. The rules across keys (a name's length in its language, its
+   characters on the keyboard) are checked once, over the plan's args, by
+   New_game_event.series_choices (test_story_game). One fact per case: the
+   choice's language, look or name, or the refusal. *)
 
 module Options = Plza_autostory.New_game_options
 module Choices = Plza_story.New_game_choices
@@ -40,10 +41,6 @@ let cases =
       "en";
     case "name=Ana: the name" (played name [ ("name", "Ana") ]) "Ana";
     case "a name keeps its commas" (played name [ ("name", "Ana,B") ]) "Ana,B";
-    case "a name its language cannot take: refused"
-      (played name [ ("name", "Kosmoss"); ("language", "ja") ])
-      "error: AutoStory: the player name \"Kosmoss\" has 7 characters; the \
-       game takes at most 6 in this language (ja).";
     case "language=ko: not one it types a name in"
       (played language [ ("language", "ko") ])
       "error: --options language=ko: language is en | es-ES | es-419 | fr | de \
@@ -51,11 +48,6 @@ let cases =
     case "look=9: out of range"
       (played look [ ("look", "9") ])
       "error: --options look=9: look is 1 to 8";
-    case "name with a character not on the keyboard"
-      (played name [ ("name", "K@smos") ])
-      "error: AutoStory: the player name \"K@smos\" has a character that is \
-       not on the name keyboard's first page (letters, digits and - / : ' , . \
-       ? !).";
   ]
 
 let () = Table_test.run "plza_new_game_options" cases

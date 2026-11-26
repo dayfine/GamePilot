@@ -21,14 +21,11 @@ val given : t -> bool
 val over : t -> Plza_story.New_game_choices.t -> Plza_story.New_game_choices.t
 (** The choices with each option in place of the plan's. *)
 
-val check : t -> (unit, string) result
-(** The rules across keys ({!Plza_story.New_game_choices.problem}: the name's
-    length in the language, its characters on the keyboard), over the fork's
-    defaults; [Error] is the refusal 01.00a-new-game would make. *)
-
 val of_run_options : Run_options.t -> (t, string) result
 (** A run's checked options (each key's own values already checked by the
-    registry), read and {!check}ed. *)
+    registry), read. The rules across keys (the name's length in the language,
+    its characters on the keyboard) are checked once, over the plan's args, by
+    {!New_game_event.series_choices}. *)
 
 val describe : Plza_story.New_game_choices.t -> string
 (** For the log: [fr, look 5, "Kosmos"]. *)

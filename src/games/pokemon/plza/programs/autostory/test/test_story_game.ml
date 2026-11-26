@@ -928,6 +928,16 @@ let cases_01_00a_new_game =
          name_of [ "01.00a-new-game" ])
       "error: 01.00a-new-game: AutoStory: the player name \"Kosmoss\" has 7 \
        characters; the game takes at most 6 in this language (ja).";
+    case
+      "01.00a-new-game with a name not on the keyboard: refused before the \
+       console"
+      (choices_of
+         ~options:
+           { Plza_autostory.New_game_options.none with name = Some "K@smos" }
+         name_of [ "01.00a-new-game" ])
+      "error: 01.00a-new-game: AutoStory: the player name \"K@smos\" has a \
+       character that is not on the name keyboard's first page (letters, \
+       digits and - / : ' , . ? !).";
     case "01.00a-new-game with no console new game: no handler, repeats"
       (new_game_given ~given:false run_end)
       "01.00a-new-game event 1 (new_game): no_handler: new_game runs on the \

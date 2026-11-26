@@ -24,22 +24,14 @@ let language options =
   | Some (Some l) -> Ok (Some l)
   | Some None -> Error "--options language: not a language tag"
 
-let check t =
-  match Choices.problem (over t Choices.default) with
-  | None -> Ok ()
-  | Some why -> Error why
-
 let of_run_options options =
   let* language = language options in
-  let t =
+  Ok
     {
       language;
       look = Run_options.int options "look";
       name = Run_options.find options "name";
     }
-  in
-  let* () = check t in
-  Ok t
 
 let describe (c : Choices.t) =
   Printf.sprintf "%s, look %d, \"%s\"" (Choices.info c.language).tag c.look
