@@ -3,7 +3,10 @@
     name rather than counting rows (the menu grows during the story and the
     Safari Zone's starts with RETIRE) and never presses A on a row it did not
     read. GamePilot's own: the fork's StartMenuNavigation moves to a row by
-    position. *)
+    position.
+
+    Language: Start menu row labels are matched as English text; non-English
+    ROMs need localized candidate strings. *)
 
 val names : string list
 (** The candidates: POKéDEX, POKéMON, BAG, SAVE, OPTION, EXIT, RETIRE. The

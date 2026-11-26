@@ -13,5 +13,4 @@ type reader = Ctl_script.reader = {
     records can be written here. *)
 
 val all : reader list
-(** start_menu, dialog, party_menu, summary, battle, yes_no, load_menu, bag,
-    trainer_card. *)
+(** Every FRLG one-shot reader registered for [gamepilot ctl read NAME]. *)

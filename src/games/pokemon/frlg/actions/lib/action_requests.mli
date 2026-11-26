@@ -28,10 +28,8 @@ type t =
   | Read_caught of { at_least : int option }
 
 val names : string list
-(** The action names {!decode} reads: ["mart"], ["use_item"], ["give_bag_item"],
-    ["party_swap"], ["buy_coins"], ["redeem_prize_mon"], ["ingame_trade"],
-    ["spin_for_encounter"], ["cut_tree"], ["verify_mail_glitch"],
-    ["pc_deposit"], ["pc_withdraw"], ["pick_up_item"], ["read_caught"]. *)
+(** The action names {!decode} accepts, used to validate plan action names and
+    suggest close matches on typos. *)
 
 val default_spin_batches : int
 (** ["spin_for_encounter"]'s ["max_batches"] when left out: 25. *)
