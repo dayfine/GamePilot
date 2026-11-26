@@ -105,14 +105,14 @@ let headroom_cases =
 (* Ours, from frames with other expectations. *)
 let zone_cases =
   [
-    case "03.08 on Wild Zone 1's road: four"
+    case "03.10 on Wild Zone 1's road: four"
       "battle-hud/it-0308-zone1-road-no-battle" "4";
-    case "03.08b at the zone's pillar: five"
+    case "03.12 at the zone's pillar: five"
       "battle-hud/it-0308b-zone-pillar-no-battle" "5";
-    case "03.08b in a wild battle at the pillar: five"
+    case "03.12 in a wild battle at the pillar: five"
       "battle-hud/it-0308b-zone-pillar-wild-battle" "5";
     (* 640x360 run frames scaled up (console B, 2026-11-25). *)
-    case "03.08 at Taunie's rocks: three"
+    case "03.10 at Taunie's rocks: three"
       "party-bar/en-0308-zone1-rocks-party3-014-360p" "3";
     (* At night the bars' green is dim (green about 115, the card about 45):
        no HP colour and no trough, as the fork's limits read it too. *)

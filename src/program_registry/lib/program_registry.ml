@@ -274,16 +274,8 @@ let plza_autostory =
     backends = [ Switch ];
     viewport = Native;
     rules = Plza_story;
-    options = [];
+    options = Plza_story.New_game_choices.decls;
   }
-
-(* PLZA's languages, by the tags of its language list (as 00.00-new-game's
-   choices name them), in which the gift names' templates are named
-   (src/games/pokemon/plza/assets/gift-name-<gift>-<language>.png). *)
-let plza_languages =
-  [
-    "en"; "es-ES"; "es-419"; "fr"; "de"; "it"; "ja"; "ko"; "zh-Hans"; "zh-Hant";
-  ]
 
 let plza_claim_gifts =
   {
@@ -303,11 +295,11 @@ let plza_claim_gifts =
       [
         {
           key = "language";
-          value = One_of plza_languages;
+          value = One_of Plza_story.New_game_choices.tags;
           presence = Default "en";
           doc =
-            "the game's language, in which the Internet gifts' names are found \
-             in their list";
+            "the game's language, by its language list's tag, in which the \
+             Internet gifts' names are found in their list";
         };
       ];
   }

@@ -22,7 +22,7 @@
     mark is a pinkish red disc round a white sign, which those counts take for
     the ball: at 1080p on console B (2026-11-25) a female Weedle or Scatterbug
     with no ball counted 49 to 101 red and 23 to 82 white against the bound 34,
-    so 03.08 and 03.08a read most plates as caught and threw at none; a caught
+    so 03.10 and 03.11 read most plates as caught and threw at none; a caught
     Bunnelby counted 121 red and 223 to 262 white. Here the ball is told by its
     shape instead: the disc is not flat, and its sign sits inside its red, not
     under it. The ranges are wider than the fork's so that a 640x360 frame's

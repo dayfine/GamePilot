@@ -2,7 +2,7 @@
     down under one sent out) under one of its six slots. Ported from
     PokemonLZA_OverworldPartySelectionDetector.cpp, the half of
     PokemonLZA_PartyBarDetector.cpp's bar detection that does not need an empty
-    last slot: it still shows when the bar collapses to its lead icon (03.02b's
+    last slot: it still shows when the bar collapses to its lead icon (03.03's
     plaza, console B, 2026-11-25), where the empty slots fade into light
     pavement.
 

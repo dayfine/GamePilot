@@ -22,7 +22,7 @@ let load () : (Plza_bank_home.Bank_home_game.templates, string) result =
   let* home_title = read (home_assets ^ "switch-home-title-pokemon-home.png") in
   let* slash = read (home_assets ^ "box-counter-slash-300.png") in
   let* game_icon = read (plza_assets ^ "home-game-icon.png") in
-  let* plza_title = read (plza_assets ^ "switch-home-title-legends-za.png") in
+  let* plza_title = read Plza_readers.Switch_home_tile.title_template in
   Ok
     {
       Plza_bank_home.Bank_home_game.home =

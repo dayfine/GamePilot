@@ -1,18 +1,21 @@
 (* The minimap reader (PokemonLZA_MinimapMatch.cpp) on the fork's recorded
    start frames (CommandLineTests PokemonLZA/AutoStoryStarts, Spanish, console
-   B) and 03.02b's plaza arch on console B (2026-11-25), where 03.02b ends and
-   03.03 starts, and frames with no minimap.
+   B) and 03.03's plaza arch on console B (2026-11-25), where 03.03 ends and
+   03.04 starts, and frames with no minimap. The references keep the fork's
+   numbers: 03.03-start is our 03.04's start, 03.06-start our 03.08's and
+   03.07-start our 03.09's.
 
-   Headroom (bound 30): 03.03's start reads 1 from its own reference, the arch
-   3 (6 on frame 210 scaled up from 640x360), 03.06's 1, 03.07's 3; the
+   Headroom (bound 30): 03.04's start reads 1 from its own reference, the arch
+   3 (6 on frame 210 scaled up from 640x360), 03.08's 1, 03.09's 3; the
    Pokémon Center's counter, a spot no start names, matches nothing (49 at the
    nearest). The fork's frames are named one off: its Spanish_0305_start.png
-   is 03.06's start (outside the Center, where 03.04 ends; there is no 03.05),
-   as its 03.06 reference says it was recorded on, and Spanish_0306_start.png
-   is the counter inside; here they are es-0306-start and es-center-counter. The shifted
-   fixture leaves the minimap out (write_probe_spec.ml): each channel is
-   scaled to the reference before comparing; the fork measured 03.04's start
-   20% darker at 2.2 and 20% brighter at 21.9. *)
+   is 03.08's start (outside the Center, where 03.07 ends; the fork has no
+   03.05), as its 03.06 reference says it was recorded on, and
+   Spanish_0306_start.png is the counter inside; here they are es-0306-start
+   and es-center-counter. The shifted fixture leaves the minimap out
+   (write_probe_spec.ml): each channel is scaled to the reference before
+   comparing; the fork measured its 03.04's start 20% darker at 2.2 and 20%
+   brighter at 21.9. *)
 
 open Plza_readers
 

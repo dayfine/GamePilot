@@ -1,0 +1,33 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "plza",
+  "execution": {},
+  "metadata": {
+    "phase": "testing",
+    "source": "played from a new game; ends outside Hotel Z at the autosave after the Main Menu card; starts where 03.01 ends; the fork's plza-03.02.plan.json (plza/lean)",
+    "postconditions": {}
+  },
+  "checkpoint": {
+    "id": "03.02-out-of-hotel-z",
+    "title": "Out of Hotel Z",
+    "start": {
+      "place": "HotelZ"
+    },
+    "events": [
+      {
+        "id": "to_hotel_front_door",
+        "kind": "walk",
+        "why": "across the lobby to the front door. not planned: no tile grid in Lumiose",
+        "args": {
+          "legs": [[0, 6000]]
+        }
+      },
+      {
+        "id": "leave_hotel_z",
+        "kind": "game_action",
+        "action": "scene_through_prompt",
+        "why": "A Leave, the Main Menu tutorial card"
+      }
+    ]
+  }
+}

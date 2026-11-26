@@ -5,6 +5,7 @@
 #include "probes.h"
 
 #include <cmath>
+#include <cstdint>
 #include <opencv2/imgcodecs.hpp>
 #include <optional>
 #include <string>
@@ -108,6 +109,32 @@ void check_mask_match() {
   // One stroke pixel missing: 1 of the template's 80 pixels differs.
   frame.at<cv::Vec3b>(10, 11) = cv::Vec3b(198, 255, 255);
   CHECK(near(mask_match(frame, word_mask, whole, dark_ink).score, 1.0 / 80));
+}
+
+void check_skip_seams() {
+  // A scaled mask's row: blank, a seam (half each game pixel), two ink pixels.
+  // The box's binary mask agrees with every whole pixel; the seam alone costs
+  // 128^2 / 255^2 of a pixel, unless it is left out.
+  cv::Mat template_mask(1, 4, CV_8UC1, cv::Scalar(255));
+  template_mask.at<std::uint8_t>(0, 0) = 0;
+  template_mask.at<std::uint8_t>(0, 1) = 128;
+  const cv::Mat whole = whole_pixels(template_mask);
+  CHECK(whole.type() == CV_8UC1 && cv::countNonZero(whole) == 3 &&
+        whole.at<std::uint8_t>(0, 1) == 0 && whole.at<std::uint8_t>(0, 2) == 1);
+  const ColorRange dark{{0, 0, 0}, {90, 90, 90}};
+  cv::Mat frame(1, 6, CV_8UC3, cv::Scalar(255, 255, 255));
+  frame(cv::Rect(3, 0, 3, 1)).setTo(cv::Scalar(57, 57, 57));
+  const cv::Rect box(1, 0, 4, 1);
+  const double seam = 128.0 * 128 / (255.0 * 255);
+  CHECK(near(mask_match(frame, template_mask, box, dark).score, seam / 4));
+  const TemplateMatch skipped =
+      mask_match(frame, template_mask, box, dark, whole);
+  CHECK(near(skipped.score, 0) && near(skipped.x, 1));
+
+  // A whole pixel that differs still counts, over the 3 compared.
+  frame.at<cv::Vec3b>(0, 4) = cv::Vec3b(255, 255, 255);
+  CHECK(
+      near(mask_match(frame, template_mask, box, dark, whole).score, 1.0 / 3));
 }
 
 void check_color_count() {
@@ -296,6 +323,7 @@ int main() {
   check_color_stats();
   check_template_match();
   check_mask_match();
+  check_skip_seams();
   check_color_count();
   check_viewport();
   check_native_viewport();

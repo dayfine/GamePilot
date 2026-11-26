@@ -33,7 +33,7 @@ let attempt inputs ~log ~picture ~reload:_ report plan : Attempts.outcome =
 let run_series inputs ~program ~options ~viewport plan_dir args =
   Series.run_series
     {
-      check_plan = Plza_claim_gifts.Claim_gifts.check_plan;
+      check_plans = Series.each_plan Plza_claim_gifts.Claim_gifts.check_plan;
       daemon_flags = Series.keepawake_stick;
       attempt = attempt inputs;
     }

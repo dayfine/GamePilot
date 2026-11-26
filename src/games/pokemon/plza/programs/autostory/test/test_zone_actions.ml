@@ -1,6 +1,6 @@
 (* Wild Zone 1's first actions and Mable's reward on a scripted console
-   (Fake_console): 03.07's run to the gate (Plza_walk.Gate_run) and catches
-   (Plza_story.Catches), and 03.11's reward (Plza_story.Mable_reward). Each
+   (Fake_console): 03.09's run to the gate (Plza_walk.Gate_run) and catches
+   (Plza_story.Catches), and 03.15's reward (Plza_story.Mable_reward). Each
    case checks one fact: the result, an input count, or one log line. *)
 
 module L = Plza_story.Look
@@ -59,13 +59,13 @@ let caught c =
   | None -> { (look c) with tutorial_card = true }
   | Some _ -> party c
 
-(* 03.07's Fletchling: the throw [catch_on] (from 1) catches it; the ones
+(* 03.09's Fletchling: the throw [catch_on] (from 1) catches it; the ones
    before break out into a wild battle. *)
 let fletchling ~catch_on c =
   let n = throws c in
   if n >= catch_on then caught c else if n >= 1 then wild_battle c else party c
 
-(* 03.07's Bunnelby, in battle from the start: the first throw catches it, or
+(* 03.09's Bunnelby, in battle from the start: the first throw catches it, or
    with [breaks_out] the first breaks out out of sight (no symbols until the
    camera sweeps: ZL with D-pad up) and the second catches it. *)
 let bunnelby ?(breaks_out = false) (c : C.t) =
@@ -118,7 +118,7 @@ let gate_after_night c =
       | Some g when g > d -> { (party c) with interact_prompt = true }
       | _ -> party c)
 
-(* 03.11's reward: the party bar until X; the main menu until A; with
+(* 03.15's reward: the party bar until X; the main menu until A; with
    [lines], Mable's text until two more A, then the Rewards page (nothing
    read) until B, then the party bar. [menu]: X opens it. *)
 let mable ?(menu = true) ?(lines = true) c =

@@ -36,7 +36,11 @@ let attempt moves ~log ~picture ~reload:_ report plan : Attempts.outcome =
       | Error f -> Attempts.of_failure f)
 
 let bank_home moves : Series.program =
-  { check_plan = Game.check_plan; daemon_flags = []; attempt = attempt moves }
+  {
+    check_plans = Series.each_plan Game.check_plan;
+    daemon_flags = [];
+    attempt = attempt moves;
+  }
 
 let run_series ~moves ~program ~options ~viewport plan_dir args =
   Series.run_series (bank_home moves) ~program_fields:program ~options ~viewport
