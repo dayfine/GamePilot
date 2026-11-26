@@ -101,6 +101,11 @@ let screens =
         Text_lines.pokedex_list_number_digit,
       Number_reading.digits,
       dark );
+    ( "naming_entry",
+      glyphs,
+      List.init 8 (Text_lines.naming_entry_cell ~max_chars:8),
+      Naming_keyboard.charset,
+      dark );
     ( "card_numbers",
       glyphs,
       List.init 6 Text_lines.trainer_card_money_digit

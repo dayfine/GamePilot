@@ -64,6 +64,19 @@ val pick :
 (** The best candidate among those with a result in the frame, scoring at most
     [max_score] (default {!max_score}). *)
 
+val pick_preferring :
+  ?max_score:float ->
+  Text_lines.t ->
+  string list ->
+  fallback:string list ->
+  Effects.measurements ->
+  reading
+(** {!pick} among the candidates, and among [fallback] only when none of them
+    reads. For a candidate that matches wherever the line shows little, as a
+    blank naming-screen cell (a space): the box's slack lets it slide off a
+    3-pixel quote, so it scores 0 there too, but no character's ink matches a
+    blank cell. *)
+
 val probes :
   ?ink:Wire.color_range ->
   Glyph_table.t ->
@@ -73,6 +86,16 @@ val probes :
 (** One probe per candidate, its template uploaded (the handler sends each
     distinct PNG once per connection); the caller subscribes them and {!pick}s.
     Raises [Invalid_argument] if a candidate cannot be drawn on the line. *)
+
+val read_preferring :
+  ?max_score:float ->
+  ?ink:Wire.color_range ->
+  Glyph_table.t ->
+  Text_lines.t ->
+  string list ->
+  fallback:string list ->
+  reading
+(** {!read}, picked with {!pick_preferring}: one frame for both lists. *)
 
 val read :
   ?max_score:float ->
