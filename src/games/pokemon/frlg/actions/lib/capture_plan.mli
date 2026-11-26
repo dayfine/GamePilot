@@ -44,6 +44,10 @@ val decode : Json_field.obj -> (t, Pokemon_engine.Failure.cause) result
     ["catches"] (1, 1..999), ["encounters"] (20, 1..9999), ["balls"] (5,
     1..999), ["ball"] (["poke-ball"]), ["pace"] (east). *)
 
+val apply_options : Run_options.t -> t -> t
+(** Overrides [ball] and [max_balls] when the run's [--options] give ["ball"]
+    (one of {!balls}) or ["balls"] (1..999). *)
+
 val target_name : target -> string
 (** ["spearow"], or ["uncaught species"]. *)
 

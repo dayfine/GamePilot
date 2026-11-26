@@ -72,6 +72,20 @@ let read ~where args =
   }
 
 let decode args = Action_args.decode ~action:"capture" read args
+
+let apply_options options t =
+  let ball =
+    match Run_options.find options "ball" with
+    | Some b when List.mem b balls -> b
+    | _ -> t.ball
+  in
+  let max_balls =
+    match Run_options.int options "balls" with
+    | Some n when n >= 1 && n <= max_ball_bound -> n
+    | _ -> t.max_balls
+  in
+  { t with ball; max_balls }
+
 let target_name = function Species s -> s | Uncaught _ -> "uncaught species"
 
 let describe t =

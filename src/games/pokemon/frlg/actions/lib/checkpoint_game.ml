@@ -211,6 +211,7 @@ let run_capture t (plan : Capture_plan.t) () =
 
 let capture t (_ : Pokemon_engine.Plan.event) args =
   Result.bind (Capture_plan.decode args) (fun plan ->
+      let plan = Capture_plan.apply_options t.config.program_options plan in
       Menu_input.run (run_capture t plan))
 
 (* The wild RNG catch ({!Wild_rng}): the target searched for, then the capture

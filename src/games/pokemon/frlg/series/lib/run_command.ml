@@ -148,6 +148,21 @@ let daemons f backend ~viewport series =
 
 let from_event f = Option.map (fun first -> (first, f.to_event)) f.from_event
 
+let filter_for_target ~plan_dir options ids =
+  let* target = Dex_targets.of_options options in
+  match target with
+  | None -> Ok ids
+  | Some mode ->
+      let* caught = Dex_targets.load_caught () in
+      let* kept, skipped =
+        Dex_targets.filter_checkpoints ~plan_dir ~mode ~caught ids
+      in
+      List.iter
+        (fun (id, why) ->
+          Printf.printf "[Checkpoints] %s: skipped (%s)\n%!" id why)
+        skipped;
+      Ok kept
+
 let run_series program plan_dir (f : Pokemon_flags.flags) =
   let* from_id = required "--from" f.from_id in
   let* mode, to_id = mode_and_to f ~from_id in
@@ -161,6 +176,7 @@ let run_series program plan_dir (f : Pokemon_flags.flags) =
   let* policy = Checkpoint_trials.policy ?runs:f.runs mode in
   let* ids = Plan_dir.checkpoint_ids plan_dir in
   let* selected, after = Plan_dir.select ids ~from_id ~to_id in
+  let* selected = filter_for_target ~plan_dir program.options selected in
   let* () = check_from_event f mode ~checkpoints:(List.length selected) in
   let* world = Frlg_checkpoints.Checkpoint_run.load_world () in
   let info = run_info program plan_dir f Checkpoints ~from_id ~to_id in

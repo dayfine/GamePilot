@@ -164,6 +164,48 @@ let trainer_id_options : Run_options.declared list =
     };
   ]
 
+let dex_collection_options : Run_options.declared list =
+  ([
+     {
+       key = "ball";
+       value = One_of [ "poke-ball"; "great-ball"; "ultra-ball" ];
+       presence = Optional;
+       doc = "the ball to throw (overrides each catch plan's default)";
+     };
+     {
+       key = "balls";
+       value = Int_range (1, bag_most);
+       presence = Optional;
+       doc = "max balls to throw per catch attempt (overrides plan default)";
+     };
+     {
+       key = "target";
+       value =
+         One_of
+           [
+             "everything";
+             "missing-on-dex";
+             "version-exclusive";
+             "version-exclusive-uncaught";
+             "specific-list";
+           ];
+       presence = Default "everything";
+       doc =
+         "which species to catch (everything and missing-on-dex skip species \
+          recorded in local dex_progress.json)";
+     };
+     {
+       key = "species";
+       value = Text;
+       presence = Optional;
+       doc =
+         "comma-separated species slugs for target=specific-list (e.g. \
+          ekans,voltorb)";
+     };
+   ]
+    : Run_options.declared list)
+  @ trainer_id_options
+
 let dex_collection =
   {
     id = "frlg.dex_collection";
@@ -177,7 +219,7 @@ let dex_collection =
     backends = [ Mgba ];
     viewport = Nso_gba;
     rules = Pokemon_grid;
-    options = trainer_id_options;
+    options = dex_collection_options;
   }
 
 let wild_rng =

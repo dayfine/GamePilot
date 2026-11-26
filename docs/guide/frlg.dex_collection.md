@@ -40,6 +40,10 @@ Give each as `--options KEY=VALUE`:
 
 | Key | Values | When not given | What it chooses |
 |---|---|---|---|
+| `ball` | poke-ball \| great-ball \| ultra-ball | optional | the ball to throw (overrides each catch plan's default) |
+| `balls` | 1 to 999 | optional | max balls to throw per catch attempt (overrides plan default) |
+| `target` | everything \| missing-on-dex \| version-exclusive \| version-exclusive-uncaught \| specific-list | default `everything` | which species to catch (everything and missing-on-dex skip species recorded in local dex_progress.json) |
+| `species` | text | optional | comma-separated species slugs for target=specific-list (e.g. ekans,voltorb) |
 | `tid` | 0 to 65535 | optional | your trainer ID (overrides GAMEPILOT_FRLG_TID and trainer_ids.json) |
 | `sid` | 0 to 65535 | optional | your secret ID (overrides GAMEPILOT_FRLG_SID and trainer_ids.json) |
 <!-- /generated -->
@@ -87,7 +91,14 @@ sh run/run_checkpoints_on_mgba.sh frlg.dex_collection --from 01-ultra-balls --to
 - A catch started where its Fly lands (outside that route's Center) fails at once: Fly to the town
   the player stands in lands where it took off, which the fly action takes for no landing. The
   order of the checkpoints never flies twice in a row to one town.
-- A catch already in the Pokedex is not skipped yet: it is caught again, shiny.
+- A catch already recorded in local progress (`dex_progress.json` under `GAMEPILOT_FRLG_CONFIG`,
+  defaulting to `~/.local/share/gamepilot/frlg`) is skipped under `target=everything`,
+  `target=missing-on-dex`, and `target=version-exclusive-uncaught`. Use `target=version-exclusive`
+  or `target=specific-list --options species=...` to target specific species regardless of local
+  progress.
+- Ball choice (`--options ball=...` and `--options balls=...`) overrides the ball thrown during
+  catches; `01-ultra-balls` still buys Ultra Balls at Indigo Plateau (start from `02-shiny-voltorb`
+  if you bring your own Poké Balls or Great Balls).
 - It never weakens a Pokemon before throwing: Ultra Balls catch these three often enough at full HP.
 
 ## How it works

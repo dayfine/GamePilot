@@ -158,12 +158,29 @@ let keep_uncapped_end (setup : Run.setup) id ~next runs =
         cap
   | None -> keep_end setup id ~next runs
 
+let record_species cp_id species =
+  match Dex_targets.record_caught species with
+  | Ok () ->
+      Printf.printf "[Checkpoints] %s: recorded %s in local dex progress\n%!"
+        cp_id species
+  | Error e ->
+      Printf.printf "[Checkpoints] %s: dex progress not saved: %s\n%!" cp_id e
+
+let record_dex_progress (setup : Run.setup) (cp : Run.checkpoint) =
+  match
+    ( Run_options.find setup.program_options "target",
+      Dex_targets.plan_species cp.plan )
+  with
+  | Some _, Some species -> record_species cp.id species
+  | _ -> ()
+
 (* Whether [cp] passed, after running it until its policy decided. *)
 let decide (setup : Run.setup) (cp : Run.checkpoint) chain ~next =
   match runs_of setup cp chain with
   | Checkpoint_trials.Checkpoint_passed { passes; runs }, done_runs ->
       Printf.printf "[Checkpoints] %s: passed (%d of %d runs)%s\n%!" cp.id
         passes runs (Run.capped_note setup cp);
+      record_dex_progress setup cp;
       if Event_range.keeps_end (Run.partial_range cp) setup.policy then
         keep_uncapped_end setup cp.id ~next done_runs;
       true
