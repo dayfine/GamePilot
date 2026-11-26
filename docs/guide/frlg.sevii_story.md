@@ -27,10 +27,19 @@ Also:
 - Save anywhere outdoors in Kanto, where Fly works; Supplies and Team Training end so.
 - Have turned Bill down when he asked after the Cinnabar Gym, so he still waits in the Pokemon
   Center.
-- Bring a strong BLASTOISE: the program moves it to the front before Three Island's Bikers, and it fights
-  every trainer battle on its own (see "Known limits").
+- Bring a strong sweeper (default `blastoise`; pass `--options sweeper=SPECIES` for another
+  starter): the program moves it to the front before Three Island's Bikers, and it fights every
+  trainer battle on its own (see "Known limits").
 
 ## Running it
+
+<!-- generated:options -->
+Give each as `--options KEY=VALUE`:
+
+| Key | Values | When not given | What it chooses |
+|---|---|---|---|
+| `sweeper` | text | default `blastoise` | party member that leads and sweeps battles (species slug) |
+<!-- /generated -->
 
 <!-- generated:commands -->
 ```sh
@@ -51,7 +60,7 @@ sh run/run_checkpoints_on_mgba.sh frlg.sevii_story --from 01-to-one-island --to 
 | 05-berry-forest | Bond Bridge's trainers, the Berry Forest and Lostelle's Hypno; home to the Game Corner |
 | 06-back-to-cinnabar | The Meteorite for a Moon Stone; Bill's goodbye on One Island and the Seagallop to Cinnabar |
 
-<!-- plans: 3a99ab15c65c -->
+<!-- plans: c65393f97d5c -->
 <!-- /generated -->
 
 ## When it stops

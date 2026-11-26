@@ -35,6 +35,7 @@ val default_spin_batches : int
 (** ["spin_for_encounter"]'s ["max_batches"] when left out: 25. *)
 
 val decode :
+  ?options:Run_options.t ->
   Mart_plan.stocks ->
   string ->
   Json_field.obj ->

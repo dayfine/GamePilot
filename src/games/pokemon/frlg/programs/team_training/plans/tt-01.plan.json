@@ -6,15 +6,7 @@
   },
   "metadata": {
     "phase": "testing",
-    "notes": "Starts anywhere outdoors in Kanto with frlg.supplies su-01's stock: Retro Mail >= candies + 1 (default 99 for 98 rounds + 1 kept on the row) and a Super Repel; the pre-flight checks the default stock. MIMIEN in slot 1 (mail record), mail on slots 2-6, a member knows Fly. Rare Candy: 1 picked up, held by MIMIEN, plus --options candies=N (default 98) duplicated into the bag and verified by Item_duplication.",
-    "postconditions": {
-      "party_slots": [
-        {
-          "slot": 1,
-          "species": "mr-mime"
-        }
-      ]
-    }
+    "notes": "Starts anywhere outdoors in Kanto with frlg.supplies su-01's stock: Retro Mail >= candies + 1 (default 99 for 98 rounds + 1 kept on the row) and a Super Repel; the pre-flight checks the default stock. The glitched-mail holder (e.g. MIMIEN) in slot 1, mail on slots 2-6, a member knows Fly. Rare Candy: 1 picked up, held by slot 1, plus --options candies=N (default 98) duplicated into the bag and verified by Item_duplication."
   },
   "checkpoint": {
     "id": "tt-01",
@@ -120,9 +112,9 @@
         "action": "give_bag_item",
         "args": {
           "item": "rare-candy",
-          "species": "mr-mime"
+          "target_slot": 1
         },
-        "why": "MIMIEN (slot 1, the glitched mail record) holds the item to copy; its Antidote is switched back to the bag."
+        "why": "Slot 1 (the glitched mail record holder) holds the item to copy; its previous held item is switched back to the bag."
       },
       {
         "id": "retro_mail_to_top",
@@ -138,12 +130,12 @@
         "kind": "game_action",
         "action": "duplicate_item",
         "args": {
-          "species": "mr-mime",
+          "target_slot": 1,
           "item": "rare-candy",
           "count": 98,
           "word": "ABRA"
         },
-        "why": "98 rounds: the held candy + 98 in the bag = 99, more than the team needs now (Blastoise 62 -> 100 is 38), so later steps never run short."
+        "why": "98 rounds: the held candy + 98 in the bag = 99, more than the team needs now, so later steps never run short."
       },
       {
         "id": "check_marks_after",

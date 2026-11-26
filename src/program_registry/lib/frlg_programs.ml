@@ -30,6 +30,14 @@ let game =
         };
   }
 
+let sweeper_option : Run_options.declared =
+  {
+    key = "sweeper";
+    value = Text;
+    presence = Default "blastoise";
+    doc = "party member that leads and sweeps battles (species slug)";
+  }
+
 let sevii_story =
   {
     id = "frlg.sevii_story";
@@ -42,7 +50,7 @@ let sevii_story =
     backends = [ Mgba ];
     viewport = Nso_gba;
     rules = Pokemon_grid;
-    options = [];
+    options = [ sweeper_option ];
   }
 
 let mail_glitch =
@@ -59,7 +67,18 @@ let mail_glitch =
     backends = [ Mgba; Switch ];
     viewport = Nso_gba;
     rules = Pokemon_grid;
-    options = [];
+    options =
+      [
+        sweeper_option;
+        {
+          key = "depleted-move";
+          value = Text;
+          presence = Default "blizzard";
+          doc =
+            "sweeper move whose PP is drained on Route 8 so the Leppa Berry \
+             fires";
+        };
+      ];
   }
 
 let ace_setup =

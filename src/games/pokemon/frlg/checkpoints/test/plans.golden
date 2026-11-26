@@ -225,16 +225,16 @@ face_route8_leppa_berry: [run] route to Route8 (42, 14) south
 pick_up_leppa_berry: [pick_up_item] game_action {"item":"leppa-berry"} skip_if bag_has_item:leppa-berry:1
 clear_leppa_text: scene => Route8 (42, 14) south skip_if bag_has_item:leppa-berry:1
 return_to_route8_grass: [run] route to Route8 (45, 12) west
-lead_blastoise: [party_swap] game_action {"species":"blastoise","target_slot":1}
+lead_blastoise: [party_swap] game_action {"species":"blastoise","role":"sweeper","target_slot":1}
 use_up_blizzard_pp: [prepare_berry_pp] game_action {"species":"blastoise","move":"blizzard","backup_move":"surf","pace":"west"} => Route8 (45, 12) west
 fly_celadon: [fly] game_action {"town":"CeladonCity"} => CeladonCity (48, 12) south
 to_route16_cut_tree: [run] route to Route16 (41, 12) north
 cut_route16_tree: [cut_tree] game_action {"direction":"north","species":"rattata"} => Route16 (41, 11) north
 to_lea_and_jed: [run] route to Route16 (30, 7) north
 arrange_slot1_chding: [party_swap] game_action {"species":"farfetchd","target_slot":1}
-arrange_slot2_blastoise: [party_swap] game_action {"species":"blastoise","target_slot":2}
+arrange_slot2_blastoise: [party_swap] game_action {"species":"blastoise","role":"sweeper","target_slot":2}
 arrange_slot3_mimien: [party_swap] game_action {"species":"mr-mime","target_slot":3}
-give_leppa_berry_slot2: [give_bag_item] game_action {"item":"leppa-berry","species":"blastoise"}
+give_leppa_berry_slot2: [give_bag_item] game_action {"item":"leppa-berry","species":"blastoise","role":"sweeper"}
 give_retro_mail_slot3: [give_bag_item] game_action {"item":"retro-mail","species":"mr-mime"} skip_if party_slot_holds_mail:3
 retries 0
 postconditions:
@@ -312,7 +312,7 @@ item meteorite at least 1
 no repeat
 == sevii_story/plans/04-three-island-bikers.plan.json
 frlg 04-three-island-bikers from ThreeIsland_Harbor (8, 5) south: 1 game_action, 1 route, 2 step, 1 scene, 1 answer, 1 train
-lead_blastoise: [party_swap] game_action {"species":"blastoise","target_slot":1}
+lead_blastoise: [party_swap] game_action {"species":"blastoise","role":"sweeper","target_slot":1}
 below_bikers: [run] route to ThreeIsland (8, 28) north
 onto_boss_intro: step north => ThreeIsland (8, 27) north
 boss_intro_scene: scene
@@ -386,14 +386,14 @@ pick_up_rare_candy: [pick_up_item] game_action {"item":"rare-candy"} skip_if bag
 clear_rare_candy_text: scene => Route6 (19, 6) north skip_if bag_has_item:rare-candy:1
 fly_celadon: [fly] game_action {"town":"CeladonCity"} => CeladonCity (48, 12) south
 to_save_spot: [run] route to CeladonCity_DepartmentStore_1F (6, 2) south
-give_rare_candy: [give_bag_item] game_action {"item":"rare-candy","species":"mr-mime"}
+give_rare_candy: [give_bag_item] game_action {"item":"rare-candy","target_slot":1}
 retro_mail_to_top: [move_item_to_top] game_action {"item":"retro-mail"}
-duplicate_rare_candy: [duplicate_item] game_action {"species":"mr-mime","item":"rare-candy","count":98,"word":"ABRA"}
+duplicate_rare_candy: [duplicate_item] game_action {"target_slot":1,"item":"rare-candy","count":98,"word":"ABRA"}
 check_marks_after: [check_party_marks] game_action {"marks":["held_item","mail","mail","mail","mail","mail"]}
 out_of_dept_store: [run] route to CeladonCity (11, 15) south
 retries 0
 postconditions:
-mr-mime in slot 1
+none
 no repeat
 == wild_rng/plans/01-route10-grass.plan.json
 frlg 01-route10-grass from anywhere outdoors: 3 game_action, 2 route

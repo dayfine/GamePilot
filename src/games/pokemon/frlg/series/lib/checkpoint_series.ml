@@ -43,10 +43,17 @@ let start_and_partial (setup : Run.setup) id (plan : Plan.t) =
 (* The checkpoint [id], its end declared by [next]'s plan. *)
 let checkpoint ~plan_dir (setup : Run.setup) id ~next =
   let* plan = load_plan ~plan_dir id in
+  let apply =
+    Option.map
+      (Frlg_checkpoints.Plan_file.apply_postcondition_options
+         setup.program_options)
+  in
+  let plan = { plan with postconditions = apply plan.postconditions } in
   let next_id = next in
   let* next = next_plan ~plan_dir next in
   let* start_state, partial = start_and_partial setup id plan in
   let* before = Plan_dir.promised_before ~plan_dir id in
+  let before = apply before in
   Ok
     {
       Run.id;

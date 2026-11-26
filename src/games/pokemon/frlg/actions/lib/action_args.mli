@@ -20,8 +20,15 @@ val party_slots : int
 val slot : where:string -> string -> Json_field.obj -> int
 (** The int field, which must be a party slot (1 to {!party_slots}). *)
 
-val member : where:string -> Json_field.obj -> member
-(** ["species"] if given, else ["target_slot"]; one of them is required. *)
+val species_opt :
+  ?options:Run_options.t -> where:string -> Json_field.obj -> string option
+(** The species slug named by ["species"], overridden by the matching run option
+    when ["role"] is given (e.g. ["role": "sweeper"] reads [--options sweeper]).
+    Fails when ["role"] is set with neither an option nor a default ["species"].
+*)
+
+val member : ?options:Run_options.t -> where:string -> Json_field.obj -> member
+(** {!species_opt} if given, else ["target_slot"]; one of them is required. *)
 
 val member_to_string : member -> string
 (** ["mr-mime"] or ["slot 3"]. *)

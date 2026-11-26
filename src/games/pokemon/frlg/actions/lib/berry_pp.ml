@@ -18,6 +18,15 @@ let decode =
         pace = Grid_maps.Grid_field.direction ~where "pace" args;
       })
 
+let apply_options options (plan : plan) =
+  let species =
+    Option.value (Run_options.find options "sweeper") ~default:plan.species
+  in
+  let move =
+    Option.value (Run_options.find options "depleted-move") ~default:plan.move
+  in
+  { plan with species; move }
+
 let script ~move_slot ~backup_slot =
   Frlg_battle.Battle_script.make
     (Attack { slots = [ move_slot; backup_slot ]; target = Default })
