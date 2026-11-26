@@ -4,6 +4,7 @@
  (libraries
   gamepilot.effects
   gamepilot.live
+  gamepilot.repo_io
   gamepilot.run_record
   gamepilot.strings
   unix

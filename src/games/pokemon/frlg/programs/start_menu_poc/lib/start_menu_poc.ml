@@ -5,19 +5,11 @@ type outcome =
   | Did_not_open
   | Did_not_close
 
-let home () =
-  match Sys.getenv_opt "HOME" with
-  | Some h -> h
-  | None -> Option.value (Sys.getenv_opt "USERPROFILE") ~default:"."
+let default_state =
+  Filename.concat
+    (Repo_io.Repo_files.data_dir "GAMEPILOT_STATES" "states")
+    "overworld.ss"
 
-let states_dir () =
-  match Sys.getenv_opt "GAMEPILOT_STATES" with
-  | Some dir when dir <> "" -> dir
-  | _ ->
-      List.fold_left Filename.concat (home ())
-        [ ".local"; "share"; "gamepilot"; "states" ]
-
-let default_state = Filename.concat (states_dir ()) "overworld.ss"
 let timeout_ms = 3000
 let press_hold_ms = 100
 let press_cooldown_ms = 100

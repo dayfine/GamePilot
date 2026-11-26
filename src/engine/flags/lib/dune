@@ -3,4 +3,8 @@
  (public_name gamepilot.run_flags)
  (flags
   (:standard -open Live_run))
- (libraries gamepilot.live_run gamepilot.engine_run gamepilot.run_options))
+ (libraries
+  gamepilot.repo_io
+  gamepilot.live_run
+  gamepilot.engine_run
+  gamepilot.run_options))

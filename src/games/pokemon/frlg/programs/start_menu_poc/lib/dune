@@ -1,4 +1,4 @@
 (library
  (name start_menu_poc)
  (public_name gamepilot.start_menu_poc)
- (libraries gamepilot.wire gamepilot.effects))
+ (libraries gamepilot.wire gamepilot.effects gamepilot.repo_io))
