@@ -146,16 +146,47 @@ let mail_probes dir screen =
     mail_candidates
 
 (* The box title: each candidate on its own line, centred as the game
-   centres it, in the title's white. *)
-let box_title_candidates = [ "BOX1"; "BOX2"; "Az!…'.,9"; "”‘' A a." ]
+   centres it, matched by its dark outline. *)
+let box_title_candidates =
+  [ "BOX1"; "BOX2"; "Az!…'.,9"; "”‘' A a." ]
+  (* The bag-prep code's names (docs/design/FRLG-ACE-Execution.md), each
+     item's Boxes 5-8 among them: a name must read as itself, not as a near
+     one. *)
+  @ [
+      "xFUnDRRn";
+      "……o/E!n";
+      "EE …l‘";
+      "E♀BRm";
+      "’BRm";
+      " FoHIoor";
+      "xn";
+      "A";
+      "G……o";
+      "Q……o";
+      "J……o";
+      "L……o";
+      "K……o";
+      "EEEJD!n";
+      "EEEND!n";
+      "EEEOD!n";
+      "EEIB!n";
+      "EI/!n";
+    ]
 
 let box_title_probes dir screen =
-  List.concat_map
+  let sub = Filename.concat dir screen in
+  if not (Sys.file_exists sub) then Sys.mkdir sub 0o755;
+  List.filter_map
     (fun text ->
       match Box_title.template glyphs text with
-      | Error _ -> []
-      | Ok (line, _) ->
-          line_probes dir screen glyphs Box_title.ink line [ text ])
+      | Error _ -> None
+      | Ok (line, png) ->
+          let name =
+            Printf.sprintf "%s/%s.%x.png" screen line.Text_lines.id
+              (Hashtbl.hash text)
+          in
+          write_file (Filename.concat dir name) png;
+          Some (Box_title.probe_of line text ~template:name))
     box_title_candidates
 
 let write_spec dir screen probes =

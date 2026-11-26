@@ -26,6 +26,7 @@ val text_width : Glyph_table.t -> string -> (int, string) result
     font lacks. *)
 
 val draw_mask :
+  ?layer:Glyph_table.pixel ->
   Glyph_table.t ->
   width:int ->
   indent:int ->
@@ -36,4 +37,6 @@ val draw_mask :
 (** [draw_mask glyphs ~width ~indent ~top ~height text] draws [text] from
     [indent] pixels right of the image's left edge onto a [width]-pixel
     background and keeps glyph rows [top] .. [top + height - 1]. [Error] when a
-    character is missing or the text does not fit. *)
+    character is missing or the text does not fit. [layer] (default [Text]) is
+    the glyph pixels drawn in {!ink}: [Shadow] draws the outline instead, for
+    text whose own colour the background shares (the box title's white). *)
