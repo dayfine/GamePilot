@@ -1,4 +1,4 @@
-(* 01.00b to 01.03 run through the engine (Plza_engine.Runner) with
+(* 01.00b to 02.07 run through the engine (Plza_engine.Runner) with
    Story_game's handlers on a scripted console (Fake_console): the plans
    decode, every event reaches its handler, and each handler's presses move a
    game that answers them as the console did. Also the failures: a start that
@@ -207,6 +207,158 @@ let starter_won_fade c =
           | Some y when since c y < 3000.0 -> black c
           | Some y -> andi c ~after:y))
 
+(* 02.01: the alley's party bar until the stick was held 16.75 s; then
+   Brigitte's text until two A, the battle HUD until a move, her speech until
+   two A, then the plaza's party bar. [no_scene]: after the move, her speech
+   box shows over the party bar with no text box, and nothing else follows. *)
+let brigitte ?(no_scene = false) c =
+  match C.stick_reached c 16_750 with
+  | None -> party c
+  | Some w -> (
+      match C.nth_after c Wire.A ~after:w 1 with
+      | None -> text c
+      | Some a2 -> (
+          match C.nth_after c Wire.Y ~after:a2 0 with
+          | None -> battle c
+          | Some _ when no_scene -> { (party c) with story_dialog = true }
+          | Some y -> andi c ~after:y))
+
+(* 02.02: the plaza's party bar until the stick was held 6.5 s; a black fade
+   for 1 s, the cutscene until + is held, the skip's black fade, the street
+   scene's text until two A, the party bar; the gate's A prompt once the stick
+   reached 9.5 s, until A; Taunie's text until two more A, the party bar; the
+   Hotel Z arrival's text once the stick reached 16.5 s, until two A, then the
+   party bar. [lost]: no fade, the party bar alone. *)
+let arrival_at_hotel c ~after =
+  match C.nth_after c Wire.A ~after 2 with
+  | None -> text c
+  | Some _ -> (
+      match C.stick_reached c 16_500 with
+      | None -> party c
+      | Some h -> (
+          match C.nth_after c Wire.A ~after:h 1 with
+          | None -> text c
+          | Some _ -> party c))
+
+let gate c =
+  match C.stick_reached c 9500 with
+  | None -> party c
+  | Some g -> (
+      match C.nth_after c Wire.A ~after:g 0 with
+      | None -> { (party c) with interact_prompt = true }
+      | Some a -> arrival_at_hotel c ~after:a)
+
+let street c ~fade =
+  match C.nth_after c Wire.Plus ~after:fade 0 with
+  | None -> look c
+  | Some s when since c s < 800.0 -> black c
+  | Some s -> (
+      match C.nth_after c Wire.A ~after:s 1 with
+      | None -> text c
+      | Some _ -> gate c)
+
+let hotel_z ?(lost = false) c =
+  match C.stick_reached c 6500 with
+  | Some f when not lost ->
+      if since c f < 1000.0 then black c else street c ~fade:f
+  | _ -> party c
+
+(* 02.03: the party bar in front of Hotel Z; the door's A prompt over it once
+   the stick was held 2 s, until A; a black fade 1.5 s, the lobby's text until
+   two A, then the party bar. [lost]: no prompt. *)
+let lobby ?(lost = false) c =
+  match C.stick_reached c 2000 with
+  | Some p when not lost -> (
+      match C.nth_after c Wire.A ~after:p 0 with
+      | None -> { (party c) with interact_prompt = true }
+      | Some a when since c a < 1500.0 -> black c
+      | Some a -> (
+          match C.nth_after c Wire.A ~after:a 2 with
+          | None -> text c
+          | Some _ -> party c))
+  | _ -> party c
+
+(* 02.04: the lobby's party bar; the clerk's A prompt once the stick was held
+   2.5 s and the turn faced (L presses after it), until A; the check-in's
+   text until three A, then the party bar. [lost]: no prompt. *)
+let clerk ?(lost = false) c =
+  match C.stick_reached c 2500 with
+  | Some w when not lost -> (
+      match C.nth_after c Wire.L ~after:w 1 with
+      | None -> party c
+      | Some _ -> (
+          match C.nth_after c Wire.A ~after:w 0 with
+          | None -> { (party c) with interact_prompt = true }
+          | Some a -> (
+              match C.nth_after c Wire.A ~after:a 3 with
+              | None -> text c
+              | Some _ -> party c)))
+  | _ -> party c
+
+(* 02.05: the lobby's party bar; the elevator's A prompt once the stick was
+   held 2 s, until A; "Which floor?" until A, the choice until A, the ride's
+   black fade 1.5 s, the party bar on 2F; Room 202's A prompt once the stick
+   was held 4 s, until A, a black fade 1.5 s, the party bar. [lost]: no
+   elevator prompt. *)
+let room_202 c =
+  match C.stick_reached c 4000 with
+  | None -> party c
+  | Some p -> (
+      match C.nth_after c Wire.A ~after:p 0 with
+      | None -> { (party c) with interact_prompt = true }
+      | Some a when since c a < 1500.0 -> black c
+      | Some _ -> party c)
+
+let elevator ?(lost = false) c =
+  match C.stick_reached c 2000 with
+  | Some e when not lost -> (
+      let a n = C.nth_after c Wire.A ~after:e n in
+      match (a 0, a 1, a 2) with
+      | None, _, _ -> { (party c) with interact_prompt = true }
+      | Some _, None, _ -> text c
+      | Some _, Some a1, None -> choice c ~after:a1
+      | Some _, Some _, Some r when since c r < 1500.0 -> black c
+      | Some _, Some _, Some _ -> room_202 c)
+  | _ -> party c
+
+(* 02.06: the room's party bar; a passing prompt over it from 300 ms of stick
+   to 600 ms, the bed's A prompt from 1 s, until A; "Rest until tomorrow
+   morning?" until A, the choice until A, the night's black fade 2 s, text
+   until one A, then the party bar. [lost]: the passing prompt only. *)
+let bed ?(lost = false) c =
+  let prompt = { (party c) with interact_prompt = true } in
+  match
+    (C.stick_reached c 300, C.stick_reached c 600, C.stick_reached c 1000)
+  with
+  | None, _, _ -> party c
+  | Some _, None, _ -> prompt
+  | Some _, Some _, None -> party c
+  | Some _, Some _, Some _ when lost -> party c
+  | Some _, Some _, Some b -> (
+      let a n = C.nth_after c Wire.A ~after:b n in
+      match (a 0, a 1, a 2, a 3) with
+      | None, _, _, _ -> prompt
+      | Some _, None, _, _ -> text c
+      | Some _, Some a1, None, _ -> choice c ~after:a1
+      | Some _, Some _, Some r, _ when since c r < 2000.0 -> black c
+      | Some _, Some _, Some _, None -> text c
+      | Some _, Some _, Some _, Some _ -> party c)
+
+(* 02.07: the room's party bar; the door's A prompt once the stick was held
+   1.6 s, until A; a black fade 1.5 s, the evening's text until three A, then
+   the party bar. [lost]: no prompt. *)
+let room_door ?(lost = false) c =
+  match C.stick_reached c 1600 with
+  | Some d when not lost -> (
+      match C.nth_after c Wire.A ~after:d 0 with
+      | None -> { (party c) with interact_prompt = true }
+      | Some a when since c a < 1500.0 -> black c
+      | Some a -> (
+          match C.nth_after c Wire.A ~after:a 2 with
+          | None -> text c
+          | Some _ -> party c))
+  | _ -> party c
+
 let run_plan (p : Plan.t) screen =
   let c = C.create () in
   reloaded := false;
@@ -289,6 +441,20 @@ let with_talk () =
          "events": [
            {"id": "w", "kind": "walk", "args": {"legs": [[0, 1000]]}},
            {"id": "chat", "kind": "talk"}]}}|}
+
+(* A plan of one game action with [args] (JSON). *)
+let one_action action args =
+  plan_of_text
+    (Printf.sprintf
+       {|{"format": "gamepilot-checkpoint/1", "game": "plza", "execution": {},
+          "checkpoint": {"id": "02.01", "title": "t",
+            "start": {"place": "LumioseCity"},
+            "events": [
+              {"id": "a", "kind": "game_action", "action": %S, "args": %s}]}}|}
+       action args)
+
+let one_action_result action args screen () =
+  run_plan (one_action action args) screen
 
 module W = Wire.Watch
 
@@ -498,4 +664,308 @@ let cases =
       "true false";
   ]
 
-let () = Table_test.run "plza_story_game" cases
+(* The actions' own failures. *)
+let cases_actions =
+  [
+    case "scene_through_prompt with free control and no A prompt"
+      (one_action_result "scene_through_prompt" "{}" party)
+      "02.01 event 1 (a): prompt_not_seen: scene: no A prompt to press \
+       through: free control with nothing to take A (the walk before it \
+       stopped short?)";
+    case "scene_through_prompt with an unknown arg"
+      (one_action_result "scene_through_prompt" {|{"stop_at_choice": false}|}
+         party)
+      "02.01 event 1 (a): bad_args: a: the only arg is stop_at_choice, true";
+    case "scene_with_start_window with no window"
+      (one_action_result "scene_with_start_window" "{}" party)
+      "02.01 event 1 (a): bad_args: a: the only arg is start_window_ms, a \
+       positive number of ms";
+  ]
+
+(* 02.01. *)
+let cases_02_01 =
+  [
+    case
+      "02.01: the Battle Zone walk, Brigitte's talk, Cleffa beaten, the plaza"
+      (result "02.01" brigitte) "passed";
+    case
+      "02.01 logs: [PLZA] battle_zone_to_brigitte: legs done, screen now: \
+       dialog_box, advance_arrow"
+      (logged "02.01" brigitte
+         "[PLZA] battle_zone_to_brigitte: legs done, screen now: dialog_box, \
+          advance_arrow")
+      "true";
+    case "02.01 logs: [PLZA scene] done on battle."
+      (logged "02.01" brigitte "[PLZA scene] done on battle.")
+      "true";
+    case "02.01 logs: [PLZA] story_battle: Picking Move: Left"
+      (logged "02.01" brigitte "[PLZA] story_battle: Picking Move: Left")
+      "true";
+    case "02.01 logs: [PLZA scene] done on control."
+      (logged "02.01" brigitte "[PLZA scene] done on control.")
+      "true";
+    case "02.01 lost: no Brigitte after the walk, the party bar alone"
+      (result "02.01" party)
+      "02.01 event 2 (brigitte_battle_start): scene_ended_in_control: scene: \
+       the scene ended in control, the party bar up 5000 ms with nothing busy \
+       (expecting the battle HUD, the controls hint).";
+    case "02.01 with no scene after the battle: the start window passes"
+      (result "02.01" (brigitte ~no_scene:true))
+      "02.01 event 4 (after_brigitte): scene_never_started: scene: the scene \
+       never started (player not at its trigger?): the HUD up and no text, \
+       choice, battle or cutscene for 45000 ms (expecting the controls hint, \
+       the party bar or the A prompt).";
+  ]
+
+(* 02.02. *)
+let cases_02_02 =
+  [
+    case "02.02: the street's cutscene skipped, the gate, Taunie, Hotel Z"
+      (result "02.02" hotel_z) "passed";
+    case
+      "02.02 logs: [PLZA] to_blocked_street: the end event after 750 ms of the \
+       last leg."
+      (logged "02.02" hotel_z
+         "[PLZA] to_blocked_street: the end event after 750 ms of the last leg.")
+      "true";
+    case "02.02 logs: [PLZA] to_blocked_street: ended on: fade_black"
+      (logged "02.02" hotel_z "[PLZA] to_blocked_street: ended on: fade_black")
+      "true";
+    case "02.02 logs: [PLZA] plus_skip: a black fade 0 ms after the hold."
+      (logged "02.02" hotel_z
+         "[PLZA] plus_skip: a black fade 0 ms after the hold.")
+      "true";
+    case "02.02 logs: [PLZA scene] done on control."
+      (logged "02.02" hotel_z "[PLZA scene] done on control.")
+      "true";
+    case
+      "02.02 logs: [PLZA] to_battle_zone_gate: A on the A prompt after 3000 ms \
+       of the last leg started a talk."
+      (logged "02.02" hotel_z
+         "[PLZA] to_battle_zone_gate: A on the A prompt after 3000 ms of the \
+          last leg started a talk.")
+      "true";
+    case
+      "02.02 logs: [PLZA] to_battle_zone_gate: started on: dialog_box, \
+       advance_arrow"
+      (logged "02.02" hotel_z
+         "[PLZA] to_battle_zone_gate: started on: dialog_box, advance_arrow")
+      "true";
+    case
+      "02.02 logs: [PLZA] through_covered_passage: legs done, screen now: \
+       dialog_box, advance_arrow"
+      (logged "02.02" hotel_z
+         "[PLZA] through_covered_passage: legs done, screen now: dialog_box, \
+          advance_arrow")
+      "true";
+    case "02.02 lost: no black fade into the street"
+      (result "02.02" (hotel_z ~lost:true))
+      "02.02 event 1 (to_blocked_street): walk_no_end: to_blocked_street: no \
+       end event within 3363 ms of the last leg";
+  ]
+
+(* 02.03. *)
+let cases_02_03 =
+  [
+    case "02.03: up the steps to the door's prompt, A Enter, the lobby"
+      (result "02.03" lobby) "passed";
+    case
+      "02.03 logs: [PLZA] to_hotel_z_door: the end event after 2000 ms of the \
+       last leg, before its 3375 ms: passed on the way, on."
+      (logged "02.03" lobby
+         "[PLZA] to_hotel_z_door: the end event after 2000 ms of the last leg, \
+          before its 3375 ms: passed on the way, on.")
+      "true";
+    case
+      "02.03 logs: [PLZA] to_hotel_z_door: the end event after 2250 ms of the \
+       last leg, before its 3375 ms: passed on the way, on."
+      (logged "02.03" lobby
+         "[PLZA] to_hotel_z_door: the end event after 2250 ms of the last leg, \
+          before its 3375 ms: passed on the way, on.")
+      "true";
+    case
+      "02.03 logs: [PLZA] to_hotel_z_door: the end event after 2500 ms of the \
+       last leg, before its 3375 ms: passed on the way, on."
+      (logged "02.03" lobby
+         "[PLZA] to_hotel_z_door: the end event after 2500 ms of the last leg, \
+          before its 3375 ms: passed on the way, on.")
+      "true";
+    case
+      "02.03 logs: [PLZA] to_hotel_z_door: the end event after 2750 ms of the \
+       last leg, before its 3375 ms: passed on the way, on."
+      (logged "02.03" lobby
+         "[PLZA] to_hotel_z_door: the end event after 2750 ms of the last leg, \
+          before its 3375 ms: passed on the way, on.")
+      "true";
+    case
+      "02.03 logs: [PLZA] to_hotel_z_door: the end event after 3000 ms of the \
+       last leg, before its 3375 ms: passed on the way, on."
+      (logged "02.03" lobby
+         "[PLZA] to_hotel_z_door: the end event after 3000 ms of the last leg, \
+          before its 3375 ms: passed on the way, on.")
+      "true";
+    case
+      "02.03 logs: [PLZA] to_hotel_z_door: the end event after 3250 ms of the \
+       last leg, before its 3375 ms: passed on the way, on."
+      (logged "02.03" lobby
+         "[PLZA] to_hotel_z_door: the end event after 3250 ms of the last leg, \
+          before its 3375 ms: passed on the way, on.")
+      "true";
+    case
+      "02.03 logs: [PLZA] to_hotel_z_door: the end event after 3500 ms of the \
+       last leg."
+      (logged "02.03" lobby
+         "[PLZA] to_hotel_z_door: the end event after 3500 ms of the last leg.")
+      "true";
+    case
+      "02.03 logs: [PLZA] to_hotel_z_door: ended on: player_can_move, \
+       interact_prompt"
+      (logged "02.03" lobby
+         "[PLZA] to_hotel_z_door: ended on: player_can_move, interact_prompt")
+      "true";
+    case "02.03 logs: [PLZA scene] done on control."
+      (logged "02.03" lobby "[PLZA scene] done on control.")
+      "true";
+    case "02.03 lost: no door prompt"
+      (result "02.03" (lobby ~lost:true))
+      "02.03 event 1 (to_hotel_z_door): walk_no_end: to_hotel_z_door: no end \
+       event within 5061 ms of the last leg";
+  ]
+
+(* 02.04. *)
+let cases_02_04 =
+  [
+    case "02.04: along the counter, the clerk's prompt, check-in"
+      (result "02.04" clerk) "passed";
+    case
+      "02.04 logs: [PLZA] to_front_counter: A on the A prompt after 0 ms of \
+       the last leg started a talk."
+      (logged "02.04" clerk
+         "[PLZA] to_front_counter: A on the A prompt after 0 ms of the last \
+          leg started a talk.")
+      "true";
+    case
+      "02.04 logs: [PLZA] to_front_counter: started on: dialog_box, \
+       advance_arrow"
+      (logged "02.04" clerk
+         "[PLZA] to_front_counter: started on: dialog_box, advance_arrow")
+      "true";
+    case "02.04 logs: [PLZA scene] done on control."
+      (logged "02.04" clerk "[PLZA scene] done on control.")
+      "true";
+    case "02.04 lost: no clerk's prompt"
+      (result "02.04" (clerk ~lost:true))
+      "02.04 event 1 (to_front_counter): walk_no_end: to_front_counter: no \
+       talk started within 1000 ms after the last leg";
+  ]
+
+(* 02.05. *)
+let cases_02_05 =
+  [
+    case "02.05: the elevator, 2F, Room 202" (result "02.05" elevator) "passed";
+    case
+      "02.05 logs: [PLZA] to_lobby_elevator: the end event after 2000 ms of \
+       the last leg."
+      (logged "02.05" elevator
+         "[PLZA] to_lobby_elevator: the end event after 2000 ms of the last \
+          leg.")
+      "true";
+    case
+      "02.05 logs: [PLZA] to_lobby_elevator: ended on: player_can_move, \
+       interact_prompt"
+      (logged "02.05" elevator
+         "[PLZA] to_lobby_elevator: ended on: player_can_move, interact_prompt")
+      "true";
+    case "02.05 logs: [PLZA scene] done on choice."
+      (logged "02.05" elevator "[PLZA scene] done on choice.")
+      "true";
+    case "02.05 logs: [PLZA] choose_0: row 0 of 2 highlighted"
+      (logged "02.05" elevator "[PLZA] choose_0: row 0 of 2 highlighted")
+      "true";
+    case "02.05 logs: [PLZA scene] done on control."
+      (logged "02.05" elevator "[PLZA scene] done on control.")
+      "true";
+    case
+      "02.05 logs: [PLZA] to_room_202: the end event after 2000 ms of the last \
+       leg."
+      (logged "02.05" elevator
+         "[PLZA] to_room_202: the end event after 2000 ms of the last leg.")
+      "true";
+    case
+      "02.05 logs: [PLZA] to_room_202: ended on: player_can_move, \
+       interact_prompt"
+      (logged "02.05" elevator
+         "[PLZA] to_room_202: ended on: player_can_move, interact_prompt")
+      "true";
+    case "02.05 lost: no elevator prompt"
+      (result "02.05" (elevator ~lost:true))
+      "02.05 event 1 (to_lobby_elevator): walk_no_end: to_lobby_elevator: no \
+       end event within 3363 ms of the last leg";
+  ]
+
+(* 02.06. *)
+let cases_02_06 =
+  [
+    case "02.06: a prompt passed, the bed, rest until morning"
+      (result "02.06" bed) "passed";
+    case
+      "02.06 logs: [PLZA] to_bed: the end event after 500 ms of the last leg, \
+       before its 750 ms: passed on the way, on."
+      (logged "02.06" bed
+         "[PLZA] to_bed: the end event after 500 ms of the last leg, before \
+          its 750 ms: passed on the way, on.")
+      "true";
+    case
+      "02.06 logs: [PLZA] to_bed: the end event after 1000 ms of the last leg."
+      (logged "02.06" bed
+         "[PLZA] to_bed: the end event after 1000 ms of the last leg.")
+      "true";
+    case "02.06 logs: [PLZA] to_bed: ended on: player_can_move, interact_prompt"
+      (logged "02.06" bed
+         "[PLZA] to_bed: ended on: player_can_move, interact_prompt")
+      "true";
+    case "02.06 logs: [PLZA scene] done on choice."
+      (logged "02.06" bed "[PLZA scene] done on choice.")
+      "true";
+    case "02.06 logs: [PLZA] choose_0: row 0 of 2 highlighted"
+      (logged "02.06" bed "[PLZA] choose_0: row 0 of 2 highlighted")
+      "true";
+    case "02.06 logs: [PLZA scene] done on control."
+      (logged "02.06" bed "[PLZA scene] done on control.")
+      "true";
+    case "02.06 lost: no bed prompt"
+      (result "02.06" (bed ~lost:true))
+      "02.06 event 1 (to_bed): walk_no_end: to_bed: no end event within 1665 \
+       ms of the last leg";
+  ]
+
+(* 02.07. *)
+let cases_02_07 =
+  [
+    case "02.07: to the door's prompt, A Leave, the first evening"
+      (result "02.07" room_door) "passed";
+    case
+      "02.07 logs: [PLZA] to_room_door: the end event after 1750 ms of the \
+       last leg."
+      (logged "02.07" room_door
+         "[PLZA] to_room_door: the end event after 1750 ms of the last leg.")
+      "true";
+    case
+      "02.07 logs: [PLZA] to_room_door: ended on: player_can_move, \
+       interact_prompt"
+      (logged "02.07" room_door
+         "[PLZA] to_room_door: ended on: player_can_move, interact_prompt")
+      "true";
+    case "02.07 logs: [PLZA scene] done on control."
+      (logged "02.07" room_door "[PLZA scene] done on control.")
+      "true";
+    case "02.07 lost: no door prompt"
+      (result "02.07" (room_door ~lost:true))
+      "02.07 event 1 (to_room_door): walk_no_end: to_room_door: no end event \
+       within 2231 ms of the last leg";
+  ]
+
+let () =
+  Table_test.run "plza_story_game"
+    (cases @ cases_actions @ cases_02_01 @ cases_02_02 @ cases_02_03
+   @ cases_02_04 @ cases_02_05 @ cases_02_06 @ cases_02_07)
