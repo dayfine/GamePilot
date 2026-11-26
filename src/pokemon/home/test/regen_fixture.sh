@@ -1,7 +1,7 @@
 #!/bin/sh
 # Remakes fixtures/home.probes.jsonl from images/: console B's captures of
-# Pokémon HOME and the Switch's HOME menu (1920x1080, 2026-11-24 and -25, copied
-# byte-for-byte), probed by the daemon's probe_images on the whole frame
+# Pokémon HOME and the Switch's HOME menu (1920x1080, 2026-11-24 and -25,
+# redacted to the readers' probe boxes as images/README.md says), probed by the daemon's probe_images on the whole frame
 # (native), with the templates from pokemon/home/assets and PLZA's HOME icon.
 # Also fixtures/home.shifted.probes.jsonl: every capture again with its colors
 # shifted as another capture card might show them, by
