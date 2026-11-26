@@ -207,7 +207,9 @@ let read m =
    black-between-game-screens) reads 21 on the whole picture, 14 to 57 with its
    colors shifted (10% toward grey the highest), its stddev 0; the darkest
    pictures after it, the dimmed HOME 41 at least but with a stddev of 47 at
-   least, the launch's Game Freak intro 104 at least. Each limit sits midway. *)
+   least (46 and 41 on test/images' copy, redacted to the probed boxes over
+   its own mean colour), the launch's Game Freak intro 104 at least. Each limit
+   sits midway. *)
 let black_max_sum = 80.
 let black_max_stddev = 24.
 
