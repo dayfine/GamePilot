@@ -3,10 +3,13 @@
     viewport, native; Live_run.Series_daemons, so the watch page keeps its URL
     across runs) and run folder (Live_run.Daemon_run), as FireRed's, but without
     save states or an in-game save: PLZA saves by autosave. A plan's start
-    signature is checked before each run (Plza_autostory.Start_signature). The
-    series' first run starts where the console is, put there by hand (01.01 on
-    the new game's Confirm Choices, 01.02 on the platform); every later run of
-    the same checkpoint first goes back to the latest autosave
+    signature is checked before each run (Plza_autostory.Start_signature), and
+    its end place (its postconditions' [place], else the next checkpoint's start
+    signature, put in its postconditions as the series loads it) is the
+    runner's: a checkpoint already there runs no event, and every other one must
+    end there. The series' first run starts where the console is, put there by
+    hand (01.01 on the new game's Confirm Choices, 01.02 on the platform); every
+    later run of the same checkpoint first goes back to the latest autosave
     (Plza_autostory.Game_reload), which 01.01 cannot (its start is no save): its
     second run is refused. Within a run (Plza_autostory.Run_attempts), a
     checkpoint found off its start (its start signature, or an action's own

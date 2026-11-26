@@ -58,7 +58,7 @@ cd src && opam exec -- dune exec -- gamepilot run plza.autostory --from 01.01-to
 | 03.14-lab-elevator | Up the Research Lab's elevator to the Director's Office |
 | 03.15-mable-reward | Mable's research, the Rock Smash TM |
 
-<!-- plans: e7d456df093d -->
+<!-- plans: 89e8e2bbe2bd -->
 <!-- /generated -->
 
 01.01 confirms the choices, skips the opening and waits for the platform. 01.02 sets the text

@@ -4,7 +4,7 @@
   "execution": {},
   "metadata": {
     "phase": "testing",
-    "source": "played from a new game; starts outside Hotel Z after the Main Menu card (start unchecked). Ends at the autosave after her talk, in after_taunie_battle; starts where 03.02 ends, or at its end (end.is: the minimap reads after-taunie-battle, checked before the first event and after the last); the fork's plza-03.02b.plan.json (plza/lean)",
+    "source": "played from a new game; starts outside Hotel Z after the Main Menu card (start unchecked). Ends at the autosave after her talk, in after_taunie_battle; starts where 03.02 ends, or at its end (03.04's start, the minimap after-taunie-battle: no event runs there); the fork's plza-03.02b.plan.json (plza/lean)",
     "postconditions": {}
   },
   "checkpoint": {
@@ -12,9 +12,6 @@
     "title": "Battle Taunie",
     "start": {
       "place": "LumioseCity"
-    },
-    "end": {
-      "is": ["minimap:after-taunie-battle"]
     },
     "events": [
       {

@@ -5,14 +5,11 @@
     "reload_when_chained": true,
     "start_signature": {
       "minimap": "station-front"
-    },
-    "end_signature": {
-      "minimap": "pokemon-center-door"
     }
   },
   "metadata": {
     "phase": "testing",
-    "source": "played from a new game; ends outside the Center on the autosave. The only PLZA row that reloads when chained: into_pokemon_center's timed legs assume the reloaded save's facing and ran into a wall chained without it. The roof before Station Front reads the same as its start bar the minimap; starts where 03.06 ends; the fork's plza-03.04.plan.json (plza/lean); ends checked by the minimap (end_signature pokemon-center-door, ours: the fork checks no end). Resumable: a reload past Taunie's autosave reads pokemon-center-door, its end.is, and runs no event",
+    "source": "played from a new game; ends outside the Center on the autosave. The only PLZA row that reloads when chained: into_pokemon_center's timed legs assume the reloaded save's facing and ran into a wall chained without it. The roof before Station Front reads the same as its start bar the minimap; starts where 03.06 ends; the fork's plza-03.04.plan.json (plza/lean); ends checked by 03.08's start, the minimap pokemon-center-door (ours: the fork checks no end). Resumable: a reload past Taunie's autosave reads as its end and runs no event",
     "postconditions": {}
   },
   "checkpoint": {
@@ -20,9 +17,6 @@
     "title": "Pokemon Center, the Pokedex",
     "start": {
       "place": "LumioseCity"
-    },
-    "end": {
-      "is": ["minimap:pokemon-center-door"]
     },
     "events": [
       {
@@ -38,7 +32,7 @@
         "id": "pokedex_app",
         "kind": "scene",
         "action": "button_b",
-        "why": "the Pokedex app, Chikorita's entry, the nurse, Taunie's scene outside (autosave), until control outside the Center (end signature: minimap pokemon-center-door)"
+        "why": "the Pokedex app, Chikorita's entry, the nurse, Taunie's scene outside (autosave), until control outside the Center (its end: minimap pokemon-center-door)"
       }
     ]
   }

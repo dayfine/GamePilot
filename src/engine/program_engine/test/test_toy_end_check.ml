@@ -1,66 +1,39 @@
-(* A checkpoint's end check (the plan's "end": {"is": [flags]}) over the toy
-   game: decoded and refused as the plan loads; before the first event, every
-   flag holding passes the checkpoint with nothing run; after the last event,
-   every flag must hold. The toy game's flags are fixed for a run, or turn on
-   once an event has run. *)
+(* A checkpoint already at its end, over the toy game: the runner reads the
+   promises of where it ends (the toy's sign, Toy_rules.end_place) before the
+   first event and, when they pass, runs no event and passes, as Repeat_until
+   runs no round once its goal holds. Its gold, a change, is not read then. A
+   run from a later event does not check it, nor a toy whose promises name no
+   sign; a repeated checkpoint cannot promise one. *)
 
 open Toy_game
 open Toy_engine
 
 let talk = {|{"id": "greet", "kind": "talk"}|}
-let rest = {|{"id": "sleep", "kind": "rest", "skip_if": ["rested"]}|}
+let rest = {|{"id": "sleep", "kind": "rest"}|}
 
-let toy_plan ?(end_ = {|, "end": {"is": ["home"]}|}) ?(metadata = "{}") events =
+let toy_plan ?(postconditions = {|{"sign": "inn", "gold": 30}|}) ?(repeat = "")
+    () =
   Printf.sprintf
     {|{"format": "gamepilot-checkpoint/1", "game": "toy", "execution": {},
-       "checkpoint": {"id": "cf", "title": "Cat farm"%s,
-         "metadata": %s, "events": [%s]}}|}
-    end_ metadata
-    (String.concat ", " events)
+       "checkpoint": {"id": "cf", "title": "Cat farm",
+         "metadata": {"postconditions": %s%s},
+         "events": [%s, %s]}}|}
+    postconditions repeat talk rest
 
 let decode text =
   Plan_decode.decode ~source:"toy.plan.json" (Yojson.Safe.from_string text)
 
-let end_flags text =
-  match decode text with
-  | Ok plan -> "[" ^ String.concat "; " plan.checkpoint.end_flags ^ "]"
-  | Error message -> message
-
 let case name input expectation = { Table_test.name; input; expectation }
 
-let decode_cases =
-  [
-    case "an end: its flags" (fun () -> end_flags (toy_plan [ talk ])) "[home]";
-    case "no end: no flags"
-      (fun () -> end_flags (toy_plan ~end_:"" [ talk ]))
-      "[]";
-    case "an end that names no flag: refused"
-      (fun () -> end_flags (toy_plan ~end_:{|, "end": {"is": []}|} [ talk ]))
-      "toy.plan.json: checkpoint.end.is is empty: an end names a flag.";
-    case "an end with another field: refused"
-      (fun () ->
-        end_flags
-          (toy_plan ~end_:{|, "end": {"is": ["home"], "at": "inn"}|} [ talk ]))
-      "toy.plan.json: checkpoint.end.at is not a known field.";
-    case "an end on a repeated checkpoint: refused"
-      (fun () ->
-        end_flags
-          (toy_plan
-             ~metadata:{|{"repeat": {"until": {"gold": 30}, "max_rounds": 2}}|}
-             [ talk ]))
-      "toy.plan.json: checkpoint.end is set on a repeated checkpoint: a round \
-       ends where it starts.";
-  ]
-
-(* A toy game whose flags hold from the start ([flags]) or once an event of
-   that id has run ([set_by]), logging each event it runs. *)
-let toy_game ?(flags = []) ?(set_by = []) () =
-  let lines = ref [] and held = ref flags in
+(* A toy game that logs each event it runs; the sign in sight is [sign] until
+   an event runs, then [after]. *)
+let toy_game ~sign ~after =
+  let lines = ref [] and in_sight = ref sign and moved = ref false in
   let log line = lines := line :: !lines in
   let ran (event : Plan.event) =
     log ("ran " ^ event.id);
-    held :=
-      List.map snd (List.filter (fun (id, _) -> id = event.id) set_by) @ !held;
+    in_sight := after;
+    moved := true;
     Ok ()
   in
   let game : Game.t =
@@ -68,7 +41,7 @@ let toy_game ?(flags = []) ?(set_by = []) () =
       run_own = (fun event _ -> ran event);
       run_builtin = ran;
       game_actions = [];
-      flag_holds = (fun flag -> List.mem flag !held);
+      flag_holds = (fun _ -> false);
       position = (fun () -> None);
       between_rounds = (fun () -> Ok ());
       save = (fun () -> Ok ());
@@ -76,14 +49,25 @@ let toy_game ?(flags = []) ?(set_by = []) () =
       log;
     }
   in
-  (game, fun () -> List.rev !lines)
+  (game, in_sight, moved, fun () -> List.rev !lines)
 
-let plan () = Result.get_ok (decode (toy_plan [ talk; rest ]))
-
-(* The run's outcome, then every line it logged (the runner's and the toy's
-   "ran <event>") and every event's progress. *)
-let run ?events ?flags ?set_by () =
-  let game, lines = toy_game ?flags ?set_by () in
+(* The run's outcome, every line it logged and every event's progress. Gold
+   reads 50 at the start and 80 once an event ran; [read_gold] counts the
+   reads that asked for it. *)
+let run ?events ?postconditions ?(sign = None) ?(after = Some "inn") () =
+  let plan = Result.get_ok (decode (toy_plan ?postconditions ())) in
+  let game, in_sight, moved, lines = toy_game ~sign ~after in
+  let gold_reads = ref 0 in
+  let observe (p : Toy_rules.Postconditions.t) : Toy_rules.Postconditions.reads
+      =
+    if p.promises.gold <> None then incr gold_reads;
+    {
+      gold_now = Some (if !moved then 80 else 50);
+      start = Some 50;
+      set = [];
+      in_sight = !in_sight;
+    }
+  in
   let heard = ref [] in
   let on_event i (p : _ Engine_run.Event_progress.t) =
     let p =
@@ -95,59 +79,71 @@ let run ?events ?flags ?set_by () =
     in
     heard := Printf.sprintf "#%d %s" (i + 1) p :: !heard
   in
-  let result = Runner.run ?events ~on_event game (plan ()).checkpoint in
+  let end_state = Option.map (fun p -> (p, observe)) plan.postconditions in
+  let result = Runner.run ?end_state ?events ~on_event game plan.checkpoint in
   String.concat "\n"
     ((match result with Ok () -> "passed" | Error f -> Failure.to_string f)
      :: lines ()
-    @ List.rev !heard)
+    @ List.rev !heard
+    @ [ Printf.sprintf "gold read %d" !gold_reads ])
 
 let first_line text = List.hd (String.split_on_char '\n' text)
 
-let run_cases =
+let cases =
   [
-    case "at its end before the first event: passed, nothing run"
-      (fun () -> run ~flags:[ "home" ] ())
+    case "at its end before the first event: passed, nothing run, gold unread"
+      (fun () -> run ~sign:(Some "inn") ())
       "passed\n\
        [Story] cf: start, 2 events\n\
-       [Story] cf: already at its end (home): passed, no event run\n\
-       #1 skipped (end: home)\n\
-       #2 skipped (end: home)";
-    case "not at its end: every event runs, then the end holds"
-      (fun () -> run ~set_by:[ ("sleep", "home") ] ())
-      "passed\n\
-       [Story] cf: start, 2 events\n\
-       [Story] cf #1 greet: start\n\
-       ran greet\n\
-       [Story] cf #1 greet: done\n\
-       [Story] cf #2 sleep: start\n\
-       ran sleep\n\
-       [Story] cf #2 sleep: done\n\
-       [End] cf home: passed: holds\n\
-       [End] cf: 1 passed, 0 failed, 0 not checked: passed\n\
-       [Story] cf: done\n\
-       #1 started\n\
-       #1 passed\n\
-       #2 started\n\
-       #2 passed";
-    case "every event passed but the end does not hold: the run fails"
+       [Story] cf: already at its end (sign inn): passed, no event run\n\
+       #1 skipped (at its end)\n\
+       #2 skipped (at its end)\n\
+       gold read 0";
+    case "not at its end: every event runs, then the promises are checked"
       (fun () -> first_line (run ()))
-      "cf event 3 (end): postconditions unmet: home: failed: expected holds, \
-       read does not hold";
-    case "a run from the second event: the end is not checked before it"
-      (fun () ->
-        first_line (run ~events:{ first = 1; last = None } ~flags:[ "home" ] ()))
       "passed";
-    case "a run from the second event: it runs, then the end is checked"
+    case "not at its end: the end's promises read once, after the last event"
+      (fun () -> List.nth (List.rev (String.split_on_char '\n' (run ()))) 0)
+      "gold read 1";
+    case "another sign in sight before the first event: the events run"
       (fun () ->
         String.concat ","
           (List.filter
-             (fun l -> String.starts_with ~prefix:"ran" l)
+             (String.starts_with ~prefix:"ran")
+             (String.split_on_char '\n' (run ~sign:(Some "well") ()))))
+      "ran greet,ran sleep";
+    case "the events run but the sign is not in sight: the end fails"
+      (fun () -> first_line (run ~after:None ()))
+      "cf event 3 (postconditions): postconditions unmet: sign: failed: \
+       expected inn, read none";
+    case "a run from the second event: not checked before it"
+      (fun () ->
+        String.concat ","
+          (List.filter
+             (String.starts_with ~prefix:"ran")
              (String.split_on_char '\n'
-                (run ~events:{ first = 1; last = None } ~flags:[ "home" ] ()))))
+                (run ~events:{ first = 1; last = None } ~sign:(Some "inn") ()))))
       "ran sleep";
-    case "a run that stops before the last event: the end is not checked"
-      (fun () -> first_line (run ~events:{ first = 0; last = Some 0 } ()))
-      "passed";
+    case "promises with no sign: no end place, the events run"
+      (fun () ->
+        String.concat ","
+          (List.filter
+             (String.starts_with ~prefix:"ran")
+             (String.split_on_char '\n'
+                (run ~postconditions:{|{"gold": 30}|} ()))))
+      "ran greet,ran sleep";
+    case "a repeated checkpoint promising a sign: refused"
+      (fun () ->
+        match
+          decode
+            (toy_plan
+               ~repeat:{|, "repeat": {"until": {"gold": 30}, "max_rounds": 2}|}
+               ())
+        with
+        | Ok _ -> "decoded"
+        | Error e -> e)
+      "toy.plan.json: checkpoint.metadata.postconditions name an end place on \
+       a repeated checkpoint: a round ends where it starts.";
   ]
 
-let () = Table_test.run "toy_end_check" (decode_cases @ run_cases)
+let () = Table_test.run "toy_end_check" cases

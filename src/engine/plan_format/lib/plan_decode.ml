@@ -100,21 +100,9 @@ struct
          (fun (seen, i) e -> (check seen i e, i + 1))
          ([], 0) events)
 
-  (* The checkpoint's "end": {"is": [flags]}, every flag named. *)
-  let end_flags ~where obj =
-    match F.object_opt ~where "end" obj with
-    | None -> []
-    | Some end_ -> (
-        let where = where ^ "end." in
-        known_fields_only ~where [ "is" ] end_;
-        required ~where "is" end_;
-        match F.strings (where ^ "is") (List.assoc "is" end_) with
-        | [] -> F.fail "%sis is empty: an end names a flag." where
-        | flags -> flags)
-
   let checkpoint ~where obj : Plan.checkpoint =
     known_fields_only ~where
-      [ "id"; "title"; "start"; "end"; "events"; "metadata" ]
+      [ "id"; "title"; "start"; "events"; "metadata" ]
       obj;
     let checkpoint_id = F.string ~where "id" obj in
     if checkpoint_id = "" then F.fail "%sid is empty." where;
@@ -124,7 +112,6 @@ struct
       checkpoint_id;
       title = F.string ~where "title" obj;
       start = Option.map (start (where ^ "start")) (F.find "start" obj);
-      end_flags = end_flags ~where obj;
       events;
     }
 
@@ -161,6 +148,10 @@ struct
           (promises ~where:(where ^ "metadata.postconditions."))
           (F.object_opt ~where:(where ^ "metadata.") "postconditions" m))
 
+  (* The plan's promises name where it ends ([T.end_place]). *)
+  let ends_in_place (plan : Plan.t) =
+    Option.is_some (Option.bind plan.postconditions T.end_place)
+
   let plan ~where obj : Plan.t =
     known_fields_only ~where
       [ "format"; "game"; "checkpoint"; "execution"; "metadata" ]
@@ -186,10 +177,11 @@ struct
         repeat = repeat ~where:(metadata_where ^ "metadata.") metadata;
       }
     in
-    if plan.checkpoint.end_flags <> [] && Option.is_some plan.repeat then
+    if ends_in_place plan && Option.is_some plan.repeat then
       F.fail
-        "%send is set on a repeated checkpoint: a round ends where it starts."
-        inner_where;
+        "%smetadata.postconditions name an end place on a repeated checkpoint: \
+         a round ends where it starts."
+        metadata_where;
     plan
 
   let decode ~source json =

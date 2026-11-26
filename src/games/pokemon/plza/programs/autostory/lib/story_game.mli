@@ -21,7 +21,9 @@ val make :
     HUD and the run goes on at the battle ({!Battle_jump}). *)
 
 val run_watched :
-  ?end_check:(unit -> (unit, Engine_run.Failure.cause) result) ->
+  ?end_state:
+    Plza_rules.Postconditions.t
+    * (Plza_rules.Postconditions.t -> Plza_rules.Postconditions.reads) ->
   mode:string ->
   Watch_report.t ->
   Plza_engine.Game.t ->
@@ -29,6 +31,7 @@ val run_watched :
   (unit, Plza_engine.Failure.t) result
 (** The checkpoint through the runner, shown on the watch page
     ({!Plza_engine.Plan_watch}): the report's steps move with its events and its
-    run in [mode] ends passed or failed. [end_check] (none by default) runs
-    after the last event passed: its failure is the run's, at "end"
-    ({!Start_signature.check_end}). *)
+    run in [mode] ends passed or failed. [end_state] (none by default) is its
+    end place and its reader ({!Start_signature.promised_end},
+    {!Start_signature.read_place}): the runner passes the checkpoint with no
+    event run when it already holds, and checks it after the last event. *)

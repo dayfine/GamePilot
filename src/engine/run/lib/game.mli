@@ -23,8 +23,7 @@ module Make (T : Engine_rules.GAME_RULES) (Raw : Plan.RAW) : sig
     game_actions : (string * game_action) list;
         (** The game actions it implements, by name. *)
     flag_holds : string -> bool;
-        (** Whether a flag an event's [skip_if] or the checkpoint's [end.is]
-            names holds now. *)
+        (** Whether a flag an event's [skip_if] names holds now. *)
     position : unit -> T.Pose.observed option;
         (** Where the player is, or [None] when the game cannot tell; checked
             against an event's [declared_after]. *)

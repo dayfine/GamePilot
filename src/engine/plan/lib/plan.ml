@@ -25,7 +25,6 @@ module Make (T : Engine_rules.GAME_RULES) (Raw : RAW) = struct
     checkpoint_id : string;
     title : string;
     start : T.Pose.t option;
-    end_flags : string list;
     events : event list;
   }
 

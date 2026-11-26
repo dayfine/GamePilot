@@ -4,7 +4,7 @@
   "execution": {},
   "metadata": {
     "phase": "testing",
-    "source": "played from a new game; starts in the battle area, where 01.03 ends, or inside Andi's battle or its talk after a lost one, or after it in free control in the alley (end.is: party_bar_free, checked before the first event and after the last; skip_if reads the rest from the screen); the fork's plza-01.03.plan.json (plza/lean)",
+    "source": "played from a new game; starts in the battle area, where 01.03 ends, or inside Andi's battle or its talk after a lost one, or after it in free control in the alley (skip_if reads the screen); the fork's plza-01.03.plan.json (plza/lean)",
     "postconditions": {}
   },
   "checkpoint": {
@@ -13,15 +13,12 @@
     "start": {
       "place": "LumioseCity"
     },
-    "end": {
-      "is": ["party_bar_free"]
-    },
     "events": [
       {
         "id": "approach_starter",
         "kind": "walk",
         "why": "to Chikorita's \"A Talk\" prompt (the fork's default starter) and A on it. not planned: no tile grid in Lumiose",
-        "skip_if": ["talk_or_battle_shows"],
+        "skip_if": ["talk_or_battle_shows", "party_bar_free"],
         "args": {
           "legs": [[-66, 600]],
           "style": "steer",
@@ -33,18 +30,20 @@
         "kind": "game_action",
         "action": "scene_to_battle",
         "why": "choose it (top choice), through the battle tutorial cards to the battle HUD; after a lost battle, Urbain's heal and Andi's challenge to it",
-        "skip_if": ["battle_shows"]
+        "skip_if": ["battle_shows", "party_bar_free"]
       },
       {
         "id": "andi_battle",
         "kind": "game_action",
         "action": "story_battle",
-        "why": "beat Andi's Pancham (Lv 6), until Andi's speech"
+        "why": "beat Andi's Pancham (Lv 6), until Andi's speech",
+        "skip_if": ["party_bar_free"]
       },
       {
         "id": "after_andi",
         "kind": "scene",
-        "why": "through MAIN MISSION 01 COMPLETE (waits for A) to free control in the alley (the party bar)"
+        "why": "through MAIN MISSION 01 COMPLETE (waits for A) to free control in the alley (the party bar)",
+        "skip_if": ["party_bar_free"]
       }
     ]
   }

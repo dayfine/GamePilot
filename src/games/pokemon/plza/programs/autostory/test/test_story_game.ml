@@ -24,6 +24,26 @@ let plan id =
 
 let plan_of_text text = decoded "test.plan.json" (Yojson.Safe.from_string text)
 
+(* The checkpoint's end place, as the series resolves it (Runs): its own, or
+   the next plan's start signature in the folder's order. *)
+let ends id =
+  let ids =
+    Sys.readdir "../plans" |> Array.to_list
+    |> List.filter (String.ends_with ~suffix:".plan.json")
+    |> List.map Filename.chop_extension
+    |> List.map Filename.chop_extension
+    |> List.sort compare
+  in
+  let rec next = function
+    | a :: (b :: _ as rest) -> if a = id then Some (plan b) else next rest
+    | _ -> None
+  in
+  match
+    Plza_autostory.Start_signature.promised_end ~next:(next ids) (plan id)
+  with
+  | Ok ends -> ends
+  | Error e -> failwith (Engine_run.Failure.cause_to_string e)
+
 (* A reload: the console's time moves on and [reloaded] says it happened. *)
 let reloaded = ref false
 let look (c : C.t) = L.empty ~at_ms:c.now
@@ -360,7 +380,19 @@ let room_door ?(lost = false) c =
           | Some _ -> party c))
   | _ -> party c
 
-let run_plan (p : Plan.t) screen =
+(* The runner's end state for [checkpoint]: its end place (ends) and its
+   reader on the console's steps, as Runs gives them. *)
+let end_state steps checkpoint =
+  let read (p : Plza_rules.Postconditions.t) =
+    Option.fold ~none:Plza_rules.Screen_signature.nothing
+      ~some:
+        (Plza_autostory.Start_signature.read_place steps
+           ~checkpoint_id:checkpoint)
+      p.place
+  in
+  (ends checkpoint, read)
+
+let run_plan ?ends_of ?party (p : Plan.t) screen =
   let c = C.create () in
   reloaded := false;
   let reload () =
@@ -368,24 +400,32 @@ let run_plan (p : Plan.t) screen =
     c.now <- c.now +. 30_000.0;
     Ok ()
   in
+  let party = Option.map (fun n _ -> Some n) party in
+  let steps = C.steps ?party c screen in
   let game =
-    Plza_autostory.Story_game.make (C.steps c screen) ~checkpoint:p.checkpoint
-      ~reload
+    Plza_autostory.Story_game.make steps ~checkpoint:p.checkpoint ~reload
   in
-  match Runner.run game p.checkpoint with
+  let end_state = Option.map (end_state steps) ends_of in
+  match Runner.run ?end_state game p.checkpoint with
   | Ok () -> "passed"
   | Error f -> Failure.to_string f
 
-let result checkpoint screen () = run_plan (plan checkpoint) screen
+let result ?party checkpoint screen () =
+  run_plan ~ends_of:checkpoint ?party (plan checkpoint) screen
 
 (* The run on [screen]: its end and the console. *)
 let outcome checkpoint screen =
   let c = C.create () in
+  let steps = C.steps c screen in
   let game =
-    Plza_autostory.Story_game.make (C.steps c screen)
+    Plza_autostory.Story_game.make steps
       ~checkpoint:(plan checkpoint).checkpoint ~reload:(fun () -> Ok ())
   in
-  ( (match Runner.run game (plan checkpoint).checkpoint with
+  ( (match
+       Runner.run
+         ~end_state:(end_state steps checkpoint)
+         game (plan checkpoint).checkpoint
+     with
     | Ok () -> "passed"
     | Error f -> Failure.to_string f),
     c )
@@ -719,7 +759,7 @@ let off_the_roof ?(lost = false) c =
   | Some w when not lost -> (
       match C.nth_after c Wire.A ~after:w 1 with
       | None -> text c
-      | Some _ -> party c)
+      | Some _ -> { (party c) with minimap = Some "station-front" })
   | _ -> party c
 
 (* 03.07: the party bar; an A prompt once the stick was held 3.9 s (Urbain's
@@ -747,7 +787,7 @@ let wild_zones_card ?(lost = false) c =
       match (a 1, a 2) with
       | None, _ -> text c
       | Some _, None -> { (look c) with tutorial_card = true }
-      | Some _, Some _ -> party c)
+      | Some _, Some _ -> { (party c) with minimap = Some "wild-zone-1-gate" })
   | _ -> party c
 
 (* The arch where 03.03 ends: free control with the minimap 03.04 starts
@@ -769,7 +809,7 @@ let start_checked ?execution ?party checkpoint screen =
   let party = Option.map (fun n _ -> Some n) party in
   ( cause_or_ok
       (Plza_autostory.Start_signature.check (C.steps ?party c screen)
-         ~checkpoint_id:checkpoint execution),
+         ~checkpoint_id:checkpoint ~at_end:(ends checkpoint).place execution),
     c )
 
 let start_check ?execution ?party checkpoint screen () =
@@ -777,21 +817,6 @@ let start_check ?execution ?party checkpoint screen () =
 
 let start_logged ?party checkpoint screen part () =
   let _, c = start_checked ?party checkpoint screen in
-  string_of_bool
-    (List.exists (fun line -> Strings.Contains.substring line part) (C.lines c))
-
-(* The end check of [checkpoint]'s plan on [screen]. *)
-let end_checked checkpoint screen =
-  let c = C.create () in
-  ( cause_or_ok
-      (Plza_autostory.Start_signature.check_end (C.steps c screen)
-         ~checkpoint_id:checkpoint (plan checkpoint).execution),
-    c )
-
-let end_check checkpoint screen () = fst (end_checked checkpoint screen)
-
-let end_logged checkpoint screen part () =
-  let _, c = end_checked checkpoint screen in
   string_of_bool
     (List.exists (fun line -> Strings.Contains.substring line part) (C.lines c))
 
@@ -1013,14 +1038,10 @@ let cases =
       (skipped "01.04-starter-and-andi" rematch)
       "approach_starter";
     case
-      "01.04-starter-and-andi resumed in the alley after it: already at its end"
-      (logged "01.04-starter-and-andi" party
-         "[Story] 01.04-starter-and-andi: already at its end (party_bar_free): \
-          passed, no event run")
-      "true";
-    case "01.04-starter-and-andi resumed in the alley after it: nothing pressed"
-      (pressed "01.04-starter-and-andi" party)
-      "0";
+      "01.04-starter-and-andi resumed in the alley after it: every event \
+       skipped"
+      (skipped "01.04-starter-and-andi" party)
+      "approach_starter andi_battle_start andi_battle after_andi";
     case
       "01.04-starter-and-andi's jump: a battle during the walk jumps to the \
        battle"
@@ -1529,23 +1550,26 @@ let cases_03_02b =
       "passed";
     case "03.03-battle-taunie resumed at the arch after it: already at its end"
       (logged "03.03-battle-taunie" at_arch
-         "[Story] 03.03-battle-taunie: already at its end \
-          (minimap:after-taunie-battle): passed, no event run")
+         "[Story] 03.03-battle-taunie: already at its end (place minimap \
+          after-taunie-battle): passed, no event run")
       "true";
     case "03.03-battle-taunie resumed at the arch after it: nothing pressed"
       (pressed "03.03-battle-taunie" at_arch)
       "0";
-    case "03.03-battle-taunie: its end checked after the map talk"
+    case
+      "03.03-battle-taunie: its end, 03.04's start, checked after the map talk"
       (logged "03.03-battle-taunie" quartiere_verde
-         "[End] 03.03-battle-taunie minimap:after-taunie-battle: passed: holds")
+         "[Postcondition] 03.03-battle-taunie place: passed: no talk prompt, \
+          minimap after-taunie-battle")
       "true";
     case "03.03-battle-taunie ending off the arch's minimap: the end fails"
       (result "03.03-battle-taunie" (fun c ->
            match (quartiere_verde c).minimap with
            | Some _ -> party c
            | None -> quartiere_verde c))
-      "03.03-battle-taunie event 9 (end): postconditions unmet: \
-       minimap:after-taunie-battle: failed: expected holds, read does not hold";
+      "03.03-battle-taunie event 9 (postconditions): postconditions unmet: \
+       place: failed: expected minimap after-taunie-battle, read no talk \
+       prompt";
     case "03.03-battle-taunie's start, the plaza: nothing skipped"
       (skipped "03.03-battle-taunie" quartiere_verde)
       "";
@@ -1615,8 +1639,8 @@ let cases_03_04 =
       "passed";
     case "03.07-pokemon-center resumed outside the Center: already at its end"
       (logged "03.07-pokemon-center" outside_center
-         "[Story] 03.07-pokemon-center: already at its end \
-          (minimap:pokemon-center-door): passed, no event run")
+         "[Story] 03.07-pokemon-center: already at its end (place minimap \
+          pokemon-center-door): passed, no event run")
       "true";
     case "03.07-pokemon-center resumed outside the Center: nothing pressed"
       (pressed "03.07-pokemon-center" outside_center)
@@ -1637,7 +1661,7 @@ let cases_03_04 =
        ms (expecting the controls hint, the party bar or the A prompt).";
   ]
 
-(* The start and end signatures (Start_signature). *)
+(* The start signatures and end places (Start_signature). *)
 let cases_signatures =
   [
     case "03.04-rock-pile-scene's start check at the arch: ok"
@@ -1679,24 +1703,24 @@ let cases_signatures =
          "[Checkpoint] 03.02-out-of-hotel-z: START UNCHECKED: its plan names \
           no start signature")
       "true";
-    case "03.07-pokemon-center's end check outside the Center: ok"
-      (end_check "03.07-pokemon-center" outside_center)
-      "ok";
     case
-      "03.07-pokemon-center's end check outside the Center: logged as checked"
-      (end_logged "03.07-pokemon-center" outside_center
-         "[Checkpoint] 03.07-pokemon-center: END CHECKED")
-      "true";
-    case
-      "03.07-pokemon-center's end check inside the Center (Urbain's line): \
-       end_off_signature"
-      (end_check "03.07-pokemon-center" party)
-      "end_off_signature: 03.07-pokemon-center passed its events but did not \
-       end at its end: the screen reads (no talk prompt), its end is (minimap \
-       pokemon-center-door)";
-    case "03.04-rock-pile-scene's end check: none named, ok"
-      (end_check "03.04-rock-pile-scene" party)
-      "ok";
+      "03.07-pokemon-center ending inside the Center (Urbain's line): its end \
+       place unmet"
+      (result "03.07-pokemon-center" (fun c ->
+           match (nurse c).minimap with Some _ -> party c | None -> nurse c))
+      "03.07-pokemon-center event 3 (postconditions): postconditions unmet: \
+       place: failed: expected minimap pokemon-center-door, read no talk \
+       prompt";
+    case "03.07-pokemon-center's end: 03.08's start signature"
+      (fun () ->
+        String.concat "; "
+          (Plza_rules.Postconditions.to_lines (ends "03.07-pokemon-center")))
+      "place minimap pokemon-center-door";
+    case "03.15-mable-reward's end: the last checkpoint names none"
+      (fun () ->
+        String.concat "; "
+          (Plza_rules.Postconditions.to_lines (ends "03.15-mable-reward")))
+      "";
     case "a start signature with another field: refused"
       (start_check
          ~execution:
@@ -1729,7 +1753,8 @@ let cases_03_07_to_03_11 =
       (start_check "03.09-first-catches" outside_center)
       "chain_off_start: the run is not at 03.09-first-catches's start: the \
        screen reads (no talk prompt, minimap pokemon-center-door), its start \
-       is (minimap wild-zone-1-gate)";
+       is (minimap wild-zone-1-gate) or its end (in a wild zone, near Taunie's \
+       rocks, party 3)";
     case "03.09-first-catches with no Fletchling to catch: no_catch"
       (result "03.09-first-catches" zone_gate)
       "03.09-first-catches event 3 (catch_fletchling): no_catch: no tutorial \
@@ -1763,9 +1788,11 @@ let cases_03_08_to_03_09 =
       "03.10-fourth-species event 1 (catch_more_species): chain_off_start: \
        rocks not left: the pin at the start was not read, not within 8 of \
        (476, 224)";
-    case "03.10-fourth-species with no map pin: only the map's + and B pressed"
+    case
+      "03.10-fourth-species with no map pin: only the map's + and B pressed, \
+       for its end place (03.11's start) and the walk's pin"
       (inputs_sent "03.10-fourth-species" party)
-      "2";
+      "4";
     case "03.10-fourth-species' start at Taunie's rocks with a party of 3: ok"
       (start_check ~party:3 "03.10-fourth-species" at_rocks)
       "ok";
@@ -1778,19 +1805,20 @@ let cases_03_08_to_03_09 =
       "chain_off_start: the run is not at 03.10-fourth-species's start: the \
        screen reads (no talk prompt, not in a wild zone, not near Taunie's \
        rocks, party 3), its start is (in a wild zone, near Taunie's rocks, \
-       party 3)";
+       party 3) or its end (in a wild zone, party 4)";
     case
       "03.10-fourth-species' start at the 100 spot, where a run stopped: \
        chain_off_start"
       (start_check ~party:3 "03.10-fourth-species" at_100_spot)
       "chain_off_start: the run is not at 03.10-fourth-species's start: the \
        screen reads (no talk prompt, in a wild zone, not near Taunie's rocks, \
-       party 3), its start is (in a wild zone, near Taunie's rocks, party 3)";
-    case "03.10-fourth-species' start with a party of 4: chain_off_start"
+       party 3), its start is (in a wild zone, near Taunie's rocks, party 3) \
+       or its end (in a wild zone, party 4)";
+    case
+      "03.10-fourth-species' start with a party of 4 in the zone: ok, at its \
+       end (03.11's start)"
       (start_check ~party:4 "03.10-fourth-species" at_rocks)
-      "chain_off_start: the run is not at 03.10-fourth-species's start: the \
-       screen reads (no talk prompt, in a wild zone, near Taunie's rocks, \
-       party 4), its start is (in a wild zone, near Taunie's rocks, party 3)";
+      "ok";
     case
       "03.10-fourth-species off Taunie's rocks: off its start, a reload's to \
        fix"
@@ -1823,7 +1851,7 @@ let cases_03_08_to_03_09 =
     case
       "03.12-out-of-wild-zone-1: down the gate's line to the A prompt, out, \
        checked"
-      (result "03.12-out-of-wild-zone-1" leave_zone)
+      (result ~party:5 "03.12-out-of-wild-zone-1" leave_zone)
       "passed";
     case "03.12-out-of-wild-zone-1: faces the gate before the run"
       (logged "03.12-out-of-wild-zone-1" leave_zone

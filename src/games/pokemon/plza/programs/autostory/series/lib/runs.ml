@@ -25,8 +25,7 @@ type setup = {
   daemons : Live_run.Series_daemons.t;
 }
 
-let load_plan ~plan_dir id =
-  P.Plan_decode.load (Engine_series.Plan_folder.plan_file ~plan_dir id)
+let load_plan = Checked_plans.load_plan
 
 let failed ?(repeats = false) ?(off_start = false) at reason =
   Failed { at; reason; repeats; off_start }
@@ -58,7 +57,14 @@ let start ~log ~picture ~reload (plan : P.Plan.t) =
   | true, None -> Error (unreachable plan)
   | true, Some _ -> back_to_autosave ~log ~picture
 
+(* The plan's end place: its own, or the next checkpoint's start signature,
+   put in its postconditions when the series loaded it (load_checked). *)
+let ends (plan : P.Plan.t) =
+  Option.value plan.postconditions
+    ~default:{ Plza_rules.Postconditions.place = None }
+
 let run_checkpoint ~log ~picture ~reload report (plan : P.Plan.t) =
+  let ends = ends plan in
   let* () = start ~log ~picture ~reload plan in
   let steps =
     Story.Live_story_screen.game_steps ~picture ~log ~log_detail:log
@@ -69,18 +75,21 @@ let run_checkpoint ~log ~picture ~reload report (plan : P.Plan.t) =
   let* () =
     Result.map_error
       (Attempts.of_cause ~at:"start")
-      (Story.Start_signature.check steps ~checkpoint_id:id plan.execution)
+      (Story.Start_signature.check steps ~checkpoint_id:id
+         ~at_end:ends.Plza_rules.Postconditions.place plan.execution)
   in
   let game =
     Story.Story_game.make steps ~checkpoint:plan.checkpoint
       ~reload:(reload_cause ~log ~picture)
   in
-  let end_check () =
-    Story.Start_signature.check_end steps ~checkpoint_id:id plan.execution
+  let read (p : Plza_rules.Postconditions.t) =
+    Option.fold ~none:Plza_rules.Screen_signature.nothing
+      ~some:(Story.Start_signature.read_place steps ~checkpoint_id:id)
+      p.place
   in
   Result.map_error Attempts.of_failure
-    (Story.Story_game.run_watched ~end_check ~mode:"testing" report game
-       plan.checkpoint)
+    (Story.Story_game.run_watched ~end_state:(ends, read) ~mode:"testing" report
+       game plan.checkpoint)
 
 (* The run fails on the page when it stops before its runner ended it. *)
 let with_assets ~log ~picture ~reload report plan assets =
@@ -215,17 +224,6 @@ let rec chain setup ~chained = function
       if runs_of setup plan ~chained then chain setup ~chained:true rest
       else Ok 1
 
-(* Every plan of the series, loaded and checked (Plan_check) before the
-   console moves. *)
-let load_checked ~plan_dir ids =
-  List.fold_left
-    (fun plans id ->
-      let* plans = plans in
-      let* plan = load_plan ~plan_dir id in
-      let* () = Story.Plan_check.check plan in
-      Ok (plans @ [ plan ]))
-    (Ok []) ids
-
 (* Each run's daemon: the program's viewport, the right stick's keep-awake,
    then the user's flags. *)
 let daemons (f : Flags.t) backend ~viewport series =
@@ -269,20 +267,20 @@ let selected ~plan_dir (f : Flags.t) =
   let* ids = Engine_series.Plan_folder.checkpoint_ids plan_dir in
   let* from_id = Engine_series.Plan_folder.resolve ids from_id in
   let* to_id = Engine_series.Plan_folder.resolve ids to_id in
-  let* ids, _ = Engine_series.Plan_folder.select ids ~from_id ~to_id in
-  Ok (from_id, to_id, ids)
+  let* selected, _ = Engine_series.Plan_folder.select ids ~from_id ~to_id in
+  Ok (from_id, to_id, selected, ids)
 
 let run_series ~program ~options ~viewport plan_dir args =
   let* f = Flags.parse args in
   let* () = Flags.takes f in
-  let* from_id, to_id, ids = selected ~plan_dir f in
+  let* from_id, to_id, ids, all = selected ~plan_dir f in
   let* backend = Run_flags.daemon_backend f Checkpoint_trials.Testing in
   let* () = switch_only backend in
   let* viewport = viewport in
   let* policy =
     Checkpoint_trials.policy ?runs:f.runs Checkpoint_trials.Testing
   in
-  let* plans = load_checked ~plan_dir ids in
+  let* plans = Checked_plans.load ~plan_dir ~all ids in
   let setup =
     setup_of f ~program ~options ~from_id ~to_id ~ids ~backend ~viewport policy
   in

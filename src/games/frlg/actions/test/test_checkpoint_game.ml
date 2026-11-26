@@ -25,7 +25,6 @@ let checkpoint : Pokemon_engine.Plan.checkpoint =
     checkpoint_id = "test";
     title = "out and talk";
     start = None;
-    end_flags = [];
     events =
       [
         event "out"
@@ -142,7 +141,6 @@ let cut_then_grass : Pokemon_engine.Plan.checkpoint =
     checkpoint_id = "test";
     title = "cut and on";
     start = None;
-    end_flags = [];
     events =
       [
         {

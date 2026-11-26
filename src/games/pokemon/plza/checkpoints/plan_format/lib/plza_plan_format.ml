@@ -17,5 +17,41 @@ let walk ~where args =
 
 let action_of_plan = function "walk" -> Some walk | _ -> None
 
+let other_field key =
+  Printf.sprintf
+    "has \"%s\": its fields are talk_prompt, wild_zone and near_rocks (true or \
+     false), party (a count) and minimap (a recorded name)"
+    key
+
+(* One field of a signature. *)
+let field (s : T.Screen_signature.t) = function
+  | "talk_prompt", `Bool b -> Ok { s with talk_prompt = Some b }
+  | "wild_zone", `Bool b -> Ok { s with wild_zone = Some b }
+  | "near_rocks", `Bool b -> Ok { s with near_rocks = Some b }
+  | "party", `Int n -> Ok { s with party = Some n }
+  | "minimap", `String name -> Ok { s with minimap = Some name }
+  | key, _ -> Error (other_field key)
+
+let of_fields fields =
+  List.fold_left
+    (fun s kv -> Result.bind s (fun s -> field s kv))
+    (Ok T.Screen_signature.nothing) fields
+
+let signature_of_plan = function
+  | `Assoc fields -> (
+      match of_fields fields with
+      | Ok s when s = T.Screen_signature.nothing -> Error "names nothing"
+      | result -> result)
+  | _ -> Error "is not an object"
+
+let place ~where = function
+  | None -> None
+  | Some value -> (
+      match signature_of_plan value with
+      | Ok s -> Some s
+      | Error detail -> F.fail "%splace %s." where detail)
+
 let postconditions_of_plan ~where obj =
-  F.catch (fun () -> known_fields_only ~where [] obj)
+  F.catch (fun () ->
+      known_fields_only ~where [ "place" ] obj;
+      { T.Postconditions.place = place ~where (F.find "place" obj) })
