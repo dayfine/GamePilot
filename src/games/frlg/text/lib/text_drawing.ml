@@ -33,9 +33,8 @@ let set_pixel image x y { r; g; b } =
   Bytes.set_uint8 image.pixels (at + 1) g;
   Bytes.set_uint8 image.pixels (at + 2) b
 
-let color : Glyph_table.pixel -> rgb = function
-  | Text -> ink
-  | Shadow | Background -> paper
+let color ~layer (pixel : Glyph_table.pixel) =
+  if pixel = layer then ink else paper
 
 let blank ~width ~height =
   let image =
@@ -48,14 +47,15 @@ let blank ~width ~height =
   done;
   image
 
-let draw_glyph image ~top ~left (g : Glyph_table.glyph) =
+let draw_glyph image ~layer ~top ~left (g : Glyph_table.glyph) =
   for y = 0 to image.height - 1 do
     Array.iteri
-      (fun x pixel -> set_pixel image (left + x) y (color pixel))
+      (fun x pixel -> set_pixel image (left + x) y (color ~layer pixel))
       g.rows.(top + y)
   done
 
-let draw_mask glyphs ~width ~indent ~top ~height text =
+let draw_mask ?(layer = Glyph_table.Text) glyphs ~width ~indent ~top ~height
+    text =
   match glyphs_of glyphs text with
   | Error _ as e -> e
   | Ok gs when indent + total_width gs > width ->
@@ -63,7 +63,7 @@ let draw_mask glyphs ~width ~indent ~top ~height text =
   | Ok gs ->
       let image = blank ~width ~height in
       let draw_at left (g : Glyph_table.glyph) =
-        draw_glyph image ~top ~left g;
+        draw_glyph image ~layer ~top ~left g;
         left + g.width
       in
       ignore (List.fold_left draw_at indent gs);

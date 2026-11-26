@@ -1640,3 +1640,71 @@ mgba/naming-entry-9.png|naming_entry.7|.
 mgba/box-title-box1.png|pc_box_title|BOX1
 mgba/box-title-symbols.png|pc_box_title|Az!…'.,9
 mgba/box-title-quotes.png|pc_box_title|”‘' A a.
+# Box titles on every wallpaper (mGBA, the bag-prep code's names; the hand on the title unless named), and some with their colours shifted.
+mgba/box-titles/forest_p1_box01.png|pc_box_title|xFUnDRRn
+mgba/box-titles/city_p1_box02.png|pc_box_title|……o/E!n
+mgba/box-titles/bright90/city_p1_box02.png|pc_box_title|……o/E!n
+mgba/box-titles/bright110/city_p1_box02.png|pc_box_title|……o/E!n
+mgba/box-titles/rplus12/city_p1_box02.png|pc_box_title|……o/E!n
+mgba/box-titles/rminus12/city_p1_box02.png|pc_box_title|……o/E!n
+mgba/box-titles/gplus12/city_p1_box02.png|pc_box_title|……o/E!n
+mgba/box-titles/gminus12/city_p1_box02.png|pc_box_title|……o/E!n
+mgba/box-titles/bplus12/city_p1_box02.png|pc_box_title|……o/E!n
+mgba/box-titles/bminus12/city_p1_box02.png|pc_box_title|……o/E!n
+mgba/box-titles/grey10/city_p1_box02.png|pc_box_title|……o/E!n
+mgba/box-titles/desert_p1_box03.png|pc_box_title|EE …l‘
+mgba/box-titles/bright90/desert_p1_box03.png|pc_box_title|EE …l‘
+mgba/box-titles/bright110/desert_p1_box03.png|pc_box_title|EE …l‘
+mgba/box-titles/rplus12/desert_p1_box03.png|pc_box_title|EE …l‘
+mgba/box-titles/rminus12/desert_p1_box03.png|pc_box_title|EE …l‘
+mgba/box-titles/gplus12/desert_p1_box03.png|pc_box_title|EE …l‘
+mgba/box-titles/gminus12/desert_p1_box03.png|pc_box_title|EE …l‘
+mgba/box-titles/bplus12/desert_p1_box03.png|pc_box_title|EE …l‘
+mgba/box-titles/bminus12/desert_p1_box03.png|pc_box_title|EE …l‘
+mgba/box-titles/grey10/desert_p1_box03.png|pc_box_title|EE …l‘
+mgba/box-titles/savanna_p1_box04.png|pc_box_title|E♀BRm
+mgba/box-titles/crag_p1_box05.png|pc_box_title|G……o
+mgba/box-titles/volcano_p1_box06.png|pc_box_title|EEEJD!n
+mgba/box-titles/snow_p1_box07.png|pc_box_title|EEIB!n
+mgba/box-titles/bright90/snow_p1_box07.png|pc_box_title|EEIB!n
+mgba/box-titles/bright110/snow_p1_box07.png|pc_box_title|EEIB!n
+mgba/box-titles/rplus12/snow_p1_box07.png|pc_box_title|EEIB!n
+mgba/box-titles/rminus12/snow_p1_box07.png|pc_box_title|EEIB!n
+mgba/box-titles/gplus12/snow_p1_box07.png|pc_box_title|EEIB!n
+mgba/box-titles/gminus12/snow_p1_box07.png|pc_box_title|EEIB!n
+mgba/box-titles/bplus12/snow_p1_box07.png|pc_box_title|EEIB!n
+mgba/box-titles/bminus12/snow_p1_box07.png|pc_box_title|EEIB!n
+mgba/box-titles/grey10/snow_p1_box07.png|pc_box_title|EEIB!n
+mgba/box-titles/cave_p1_box08.png|pc_box_title|EI/!n
+mgba/box-titles/beach_p1_box09.png|pc_box_title|’BRm
+mgba/box-titles/bright90/beach_p1_box09.png|pc_box_title|’BRm
+mgba/box-titles/bright110/beach_p1_box09.png|pc_box_title|’BRm
+mgba/box-titles/rplus12/beach_p1_box09.png|pc_box_title|’BRm
+mgba/box-titles/rminus12/beach_p1_box09.png|pc_box_title|’BRm
+mgba/box-titles/gplus12/beach_p1_box09.png|pc_box_title|’BRm
+mgba/box-titles/gminus12/beach_p1_box09.png|pc_box_title|’BRm
+mgba/box-titles/bplus12/beach_p1_box09.png|pc_box_title|’BRm
+mgba/box-titles/bminus12/beach_p1_box09.png|pc_box_title|’BRm
+mgba/box-titles/grey10/beach_p1_box09.png|pc_box_title|’BRm
+mgba/box-titles/seafloor_p1_box10.png|pc_box_title| FoHIoor
+mgba/box-titles/river_p1_box11.png|pc_box_title|xn
+mgba/box-titles/sky_p1_box12.png|pc_box_title|A
+mgba/box-titles/bright90/sky_p1_box12.png|pc_box_title|A
+mgba/box-titles/bright110/sky_p1_box12.png|pc_box_title|A
+mgba/box-titles/rplus12/sky_p1_box12.png|pc_box_title|A
+mgba/box-titles/rminus12/sky_p1_box12.png|pc_box_title|A
+mgba/box-titles/gplus12/sky_p1_box12.png|pc_box_title|A
+mgba/box-titles/gminus12/sky_p1_box12.png|pc_box_title|A
+mgba/box-titles/bplus12/sky_p1_box12.png|pc_box_title|A
+mgba/box-titles/bminus12/sky_p1_box12.png|pc_box_title|A
+mgba/box-titles/grey10/sky_p1_box12.png|pc_box_title|A
+mgba/box-titles/polkadot_p1_box13.png|pc_box_title|A
+mgba/box-titles/pokecenter_p1_box14.png|pc_box_title|A
+mgba/box-titles/machine_p2_box01.png|pc_box_title|xFUnDRRn
+mgba/box-titles/plain_p2_box02.png|pc_box_title|……o/E!n
+mgba/box-titles/desert_p2_box05.png|pc_box_title|Q……o
+mgba/box-titles/forest_p3_box05.png|pc_box_title|J……o
+mgba/box-titles/city_p3_box06.png|pc_box_title|EEEOD!n
+mgba/box-titles/desert_p3_box07.png|pc_box_title|K……o
+mgba/box-titles/savanna_p3_box08.png|pc_box_title|L……o
+mgba/box-titles/desert_box03_hand_on_first_slot.png|pc_box_title|EE …l‘
