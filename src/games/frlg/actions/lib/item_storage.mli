@@ -1,9 +1,10 @@
 (** The PC's item storage: from the overworld facing a Pokémon Center's PC,
-    PLAYER'S PC, ITEM STORAGE, WITHDRAW ITEM; its list read to CANCEL, and an
-    item withdrawn by a count set in the quantity box. New, not in the fork,
-    which never opens it: for frlg.ace (docs/design/FRLG-ACE-Execution.md),
-    whose code writes its item into slot 30 of this storage, so the storage must
-    hold fewer than 30 items first, and the item's stack must read x999 after.
+    PLAYER'S PC, ITEM STORAGE, WITHDRAW ITEM ({!Pc_box.open_menu}); its list
+    read to CANCEL, and an item withdrawn by a count set in the quantity box
+    ({!Quantity_box}). New, not in the fork, which never opens it: for frlg.ace
+    (docs/design/FRLG-ACE-Execution.md), whose code writes its item into slot 30
+    of this storage, so the storage must hold fewer than 30 items first, and the
+    item's stack must read x999 after.
 
     From pret pokefirered ([ce6406d]): item_pc.c lists the stored items then
     CANCEL ([ItemPc_CountPcItems]: [nItems], the list [nItems + 1] rows), six
@@ -13,9 +14,12 @@
     0); WITHDRAW of a stack of one takes it at once, of more opens the quantity
     box at x001 ([Task_ItemPcWithdraw]), which UP and DOWN move by one, wrapping
     between 1 and the stack, and RIGHT and LEFT by ten, stopping there
-    (menu_helpers.c [AdjustQuantityAccordingToDPadInput]); A withdraws and
-    prints "Withdrew ..." or "There is no more room in the BAG." until A or B.
-*)
+    ({!Quantity_box}); A withdraws and prints "Withdrew ..." or "There is no
+    more room in the BAG." until A or B.
+
+    The menus' labels (ITEM STORAGE, WITHDRAW ITEM), the list's CANCEL and the
+    item names are matched in English, at English widths
+    ({!Frlg_text.Item_pc_lines}): another language's game needs its own. *)
 
 (** What one list row shows. *)
 type row =
@@ -55,12 +59,6 @@ val scan : game_steps -> string -> stock
     Fails as [item_storage_unread] on a row that reads as neither an item with a
     count nor CANCEL. *)
 
-val quantity_press : now:int -> target:int -> stack:int -> Wire.button option
-(** The press that moves the quantity box from [now] toward [target] (in 1 ..
-    [stack]): DOWN from 1 straight to the stack when that is the target, RIGHT
-    or LEFT while ten or more away, UP or DOWN for the rest; [None] at the
-    target. *)
-
 val max_quantity_presses : int
 (** 200: more than any count needs (999 from 1 is one press; 990 from 1 is ten).
 *)
@@ -79,7 +77,15 @@ val check : game_steps -> log:(string -> unit) -> string -> int option -> unit
     [Some n], as [item_storage_missing] unless a stack of the item reads [n]. *)
 
 val screen_game_steps : log:(string -> unit) -> game_steps
-(** The game's. *)
+(** The item storage's steps on mGBA's timings: [open_withdraw] is
+    {!Pc_box.open_menu} to [Withdraw_item] on {!Frlg_readers.Pc_screen}'s and
+    {!Frlg_readers.Item_pc_screen}'s probes; presses held 100 ms, then a wait (A
+    and B 1500 ms, others 500 ms); [read_row] reads the row's name against the
+    item and CANCEL ({!Frlg_text.Item_pc_lines.row}) and its count in the small
+    font, [read_quantity] the quantity box's three digits (their own probes);
+    [cursor_row] and [await_quantity] (up to 4 s) read
+    {!Frlg_readers.Item_pc_screen}; [close] presses B four times and waits for
+    the overworld to settle. *)
 
 val handlers :
   log:(string -> unit) -> (string * Pokemon_engine.Game.game_action) list

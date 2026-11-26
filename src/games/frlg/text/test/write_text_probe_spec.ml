@@ -107,6 +107,18 @@ let screens =
       [ Text_lines.pc_message ],
       [ "Deposit in which BOX?"; "The BOX is full."; "Please remove the MAIL." ],
       dark );
+    ( "player_pc_menu",
+      glyphs,
+      rows 3 Item_pc_lines.menu_row,
+      [
+        "ITEM STORAGE";
+        "MAILBOX";
+        "TURN OFF";
+        "WITHDRAW ITEM";
+        "DEPOSIT ITEM";
+        "CANCEL";
+      ],
+      dark );
     ( "pokedex_list",
       glyphs,
       rows Text_lines.pokedex_list_rows Text_lines.pokedex_list_name,

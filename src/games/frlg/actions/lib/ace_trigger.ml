@@ -2,13 +2,12 @@ open Frlg_readers
 module M = Menu_input
 module Text = Frlg_text
 
-type trigger = { box1_title : string; box3_title : string; partner : string }
+type trigger = { box3_title : string; partner_box : int; partner_slot : int }
 
 type game_steps = {
   open_move_pokemon : unit -> unit;
   press : Wire.button -> unit;
   read_title : string list -> string option;
-  species_at_hand : unit -> string option;
   slot_empty : unit -> bool option;
   ace_at_hand : unit -> bool;
   hand_quick : unit -> bool option;
@@ -17,6 +16,8 @@ type game_steps = {
 }
 
 let boxes = 14
+let slots = 30
+let ace_box = 3
 let alive_timeout_ms = 3000
 let quoted s = "\"" ^ s ^ "\""
 
@@ -31,22 +32,35 @@ let rec scroll_to steps ~toward name tries =
       steps.press toward;
       scroll_to steps ~toward name (tries - 1)
 
-let down_to_slot steps slot =
+(* The box grid: six slots a row, five rows; DOWN from the title lands on
+   the top row's third slot. *)
+let slots_per_row = 6
+let below_title = 2
+let presses n b = List.init n (fun _ -> b)
+
+(* From the title to slot [slot] (from 1): DOWN, LEFT or RIGHT across, DOWN
+   to its row. *)
+let title_to_slot steps slot =
+  let col = (slot - 1) mod slots_per_row and row = (slot - 1) / slots_per_row in
+  let across = col - below_title in
   steps.press Wire.Down;
-  List.iter steps.press (List.init (3 - slot) (fun _ -> Wire.Left))
+  List.iter steps.press
+    (presses (abs across) (if across < 0 then Wire.Left else Wire.Right));
+  List.iter steps.press (presses row Wire.Down)
 
-(* From a slot of the top row to the box named [name], the hand on its slot
-   [slot] (1 or 2): UP to the title, scroll, DOWN onto the third slot, LEFT
-   to the slot. *)
-let to_slot steps ~toward name slot =
-  steps.press Wire.Up;
-  scroll_to steps ~toward name boxes;
-  down_to_slot steps slot
+(* From slot [slot] UP to the title. *)
+let slot_to_title steps slot =
+  List.iter steps.press (presses (((slot - 1) / slots_per_row) + 1) Wire.Up)
 
-(* Box 1 to Box 3: two RIGHTs on the title (pokemon_storage_system_tasks.c
-   [INPUT_SCROLL_RIGHT]: the next box). Counted, not read: the Pokémon the
-   hand carries covers the title's left. *)
-let box1_to_box3 = 2
+(* With the hand on the title: [count] boxes from Box 3 to [box], LEFT
+   below it and RIGHT above it (pokemon_storage_system_tasks.c
+   [INPUT_SCROLL_LEFT], [INPUT_SCROLL_RIGHT]: the box before or after); back
+   from [box] to Box 3 with [~back]. Counted, not read: only Box 3's title
+   is given, and a carried Pokémon covers the title's left. *)
+let scroll_boxes steps ?(back = false) box =
+  let ahead = box > ace_box <> back in
+  List.iter steps.press
+    (presses (abs (box - ace_box)) (if ahead then Wire.Right else Wire.Left))
 
 let quick_on steps =
   if steps.hand_quick () <> Some true then (
@@ -59,38 +73,43 @@ let quick_off steps =
   if steps.hand_quick () <> Some false then
     M.fail "ace_hand_not_quick" "SELECT did not turn the hand back"
 
-(* The partner from Box 1 slot 1 to Box 3 slot 2, carried in the quick hand
-   (left on); the hand starts on Box 3 slot 2, which is empty, and ends
-   there. *)
+(* The partner, any Pokémon in [partner_box]'s [partner_slot], to Box 3
+   slot 2, carried in the quick hand (left on); the hand starts on Box 3
+   slot 2, which is empty, and ends there. *)
 let fetch_partner steps ~log t =
-  to_slot steps ~toward:Wire.Left t.box1_title 1;
-  if steps.species_at_hand () <> Some t.partner then
+  slot_to_title steps 2;
+  scroll_boxes steps t.partner_box;
+  title_to_slot steps t.partner_slot;
+  if steps.slot_empty () <> Some false then
     M.fail "ace_partner_missing"
-      (Printf.sprintf "Box 1 slot 1 does not hold %s" t.partner);
+      (Printf.sprintf "Box %d slot %d holds no Pokémon" t.partner_box
+         t.partner_slot);
   quick_on steps;
   steps.press Wire.A;
-  steps.press Wire.Up;
-  List.iter steps.press (List.init box1_to_box3 (fun _ -> Wire.Right));
-  down_to_slot steps 2;
+  slot_to_title steps t.partner_slot;
+  scroll_boxes steps ~back:true t.partner_box;
+  title_to_slot steps 2;
   steps.press Wire.A;
   steps.press Wire.Up;
   if steps.read_title [ t.box3_title ] = None then
     M.fail "ace_box_not_found"
       ("the partner was put down in a box not titled " ^ quoted t.box3_title);
-  down_to_slot steps 2;
-  if steps.species_at_hand () <> Some t.partner then
-    M.fail "ace_partner_missing"
-      (Printf.sprintf "%s did not land in Box 3 slot 2" t.partner);
-  log (Printf.sprintf "PC: %s moved to Box 3 slot 2." t.partner)
+  title_to_slot steps 2;
+  if steps.slot_empty () <> Some false then
+    M.fail "ace_partner_missing" "the partner did not land in Box 3 slot 2";
+  log
+    (Printf.sprintf "PC: the Pokémon in Box %d slot %d moved to Box 3 slot 2."
+       t.partner_box t.partner_slot)
 
+(* Box 3 slot 2 holds the partner (any Pokémon), else it is fetched. *)
 let place_partner steps ~log t =
-  to_slot steps ~toward:Wire.Right t.box3_title 2;
-  match steps.species_at_hand () with
-  | Some s when s = t.partner ->
-      log (Printf.sprintf "PC: %s is in Box 3 slot 2." t.partner)
-  | Some s -> M.fail "ace_slot_taken" (Printf.sprintf "Box 3 slot 2 holds %s" s)
-  | None when steps.slot_empty () = Some true -> fetch_partner steps ~log t
-  | None -> M.fail "ace_slot_taken" "Box 3 slot 2 is not empty"
+  steps.press Wire.Up;
+  scroll_to steps ~toward:Wire.Right t.box3_title boxes;
+  title_to_slot steps 2;
+  match steps.slot_empty () with
+  | Some false -> log "PC: Box 3 slot 2 holds the partner."
+  | Some true -> fetch_partner steps ~log t
+  | None -> M.fail "ace_partner_missing" "Box 3 slot 2 does not read"
 
 (* From Box 3 slot 2: LEFT onto 0x0351, the quick hand (read on the first
    slot only), pick it up, shift it with the partner twice (the second runs
@@ -147,23 +166,22 @@ let read_title candidates =
   | Ok (Read { text; _ }) -> Some text
   | Ok (No_match _) | Error _ -> None
 
-let ace_level = "100"
+(* 0x0351 as frlg.ace_setup leaves it: Ace_mail's check of Box 3 slot 1. *)
+let ace_level = 100
 
-let level_reads () =
-  match
-    Text.Line_reading.read ~ink:Text.Line_reading.light_ink
-      (Text_data.glyphs ()) Text.Text_lines.pc_data_level [ ace_level ]
-  with
-  | Read _ -> true
-  | No_match _ -> false
+let ace_slot : Ace_mail.slot_check =
+  {
+    box = ace_box;
+    slot = 1;
+    occupied = true;
+    level = Some ace_level;
+    male = Some true;
+  }
 
 let ace_at_hand () =
   box_reading (fun m ->
-      Some
-        (Pc_box_screen.panel_occupied m = Some true
-        && Pc_box_screen.male m = Some true))
-  = Some true
-  && level_reads ()
+      Some (Ace_mail.slot_verdict ace_slot (Ace_mail.box_view m)))
+  = Some Ace_mail.As_asked
 
 let alive_reads = alive_timeout_ms / look_timeout_ms
 
@@ -187,7 +205,6 @@ let screen_game_steps ~log =
     open_move_pokemon = open_move_pokemon ~log;
     press;
     read_title;
-    species_at_hand = Pc_deposit.species_shown;
     slot_empty;
     ace_at_hand;
     hand_quick = (fun () -> box_reading Pc_box_screen.hand_quick);
@@ -195,12 +212,26 @@ let screen_game_steps ~log =
     close = close ~log;
   }
 
+let int_or ~where ~default ~most name args =
+  let n =
+    if Json_field.has name args then Json_field.int ~where name args
+    else default
+  in
+  if n < 1 || n > most then
+    Json_field.fail "%s: %s is %d, not 1-%d" where name n most;
+  n
+
 let decode ~where args =
-  {
-    box1_title = Json_field.string ~where "box1_title" args;
-    box3_title = Json_field.string ~where "box3_title" args;
-    partner = Json_field.string ~where "partner" args;
-  }
+  let t =
+    {
+      box3_title = Json_field.string ~where "box3_title" args;
+      partner_box = int_or ~where ~default:1 ~most:boxes "partner_box" args;
+      partner_slot = int_or ~where ~default:1 ~most:slots "partner_slot" args;
+    }
+  in
+  if t.partner_box = ace_box && t.partner_slot = 1 then
+    Json_field.fail "%s: Box 3 slot 1 is 0x0351, not a partner" where;
+  t
 
 let ace_trigger ~log (_ : Pokemon_engine.Plan.event) args =
   Result.bind (Action_args.decode ~action:"ace_trigger" decode args) (fun t ->

@@ -28,15 +28,30 @@ let off_first_slot image =
       "ace-trigger_hand_slot2"; "ace-trigger_holding_slot2"; "ace-trigger_swap2";
     ]
 
+(* What Pc_screen makes of item storage's screens, which Pc_box's walk to
+   WITHDRAW ITEM reads: the player's PC's menus are messages with no cursor
+   (Pc_box reads their top row's label), the item list is the overworld
+   (Item_pc_screen tells it). The PC list itself is test_pc_readers'; here
+   its frames shifted +12 in a channel read as a message, so it is left
+   out. *)
+let pc_read image m =
+  if image = "item-storage_pc_list" then ""
+  else
+    let pc = Pc_screen.read m in
+    Printf.sprintf "; pc %s %s"
+      (Pc_screen.screen_name pc.screen)
+      (row pc.cursor)
+
 let read image m =
   if String.starts_with ~prefix:"ace-trigger_" image then
     if off_first_slot image then "quick -"
     else Printf.sprintf "quick %s" (flag (Pc_box_screen.hand_quick m))
   else
-    Printf.sprintf "storage %s, cursor %s, quantity %s"
+    Printf.sprintf "storage %s, cursor %s, quantity %s%s"
       (flag (Item_pc_screen.shown m))
       (row (Item_pc_screen.cursor_row m))
       (flag (Item_pc_screen.quantity_shown m))
+      (pc_read image m)
 
 let expected =
   [
@@ -51,21 +66,28 @@ let expected =
     ("ace-trigger_holding_slot2", "quick -");
     ("ace-trigger_swap2", "quick -");
     ("item-storage_pc_list", "storage n, cursor -, quantity n");
-    ("item-storage_player_pc_menu", "storage n, cursor -, quantity n");
-    ("item-storage_item_storage_menu", "storage n, cursor -, quantity n");
-    ("item-storage_list_code", "storage y, cursor 0, quantity n");
-    ("item-storage_list_code_master", "storage y, cursor 1, quantity n");
-    ("item-storage_list8_top", "storage y, cursor 0, quantity n");
-    ("item-storage_list8_down4", "storage y, cursor 3, quantity n");
-    ("item-storage_list8_down8", "storage y, cursor 5, quantity n");
-    ("item-storage_list30_top", "storage y, cursor 0, quantity n");
-    ("item-storage_list_after", "storage y, cursor 1, quantity n");
-    ("item-storage_submenu", "storage y, cursor 1, quantity n");
-    ("item-storage_qty_001", "storage y, cursor 1, quantity y");
-    ("item-storage_qty_012", "storage y, cursor 1, quantity y");
-    ("item-storage_qty_999", "storage y, cursor 1, quantity y");
-    ("item-storage_qty_950", "storage y, cursor 1, quantity y");
-    ("item-storage_withdrew_msg", "storage y, cursor 1, quantity n");
+    ("item-storage_player_pc_menu", "storage n, cursor -, quantity n; pc text -");
+    ( "item-storage_item_storage_menu",
+      "storage n, cursor -, quantity n; pc text -" );
+    ("item-storage_list_code", "storage y, cursor 0, quantity n; pc overworld -");
+    ( "item-storage_list_code_master",
+      "storage y, cursor 1, quantity n; pc overworld -" );
+    ("item-storage_list8_top", "storage y, cursor 0, quantity n; pc overworld -");
+    ( "item-storage_list8_down4",
+      "storage y, cursor 3, quantity n; pc overworld -" );
+    ( "item-storage_list8_down8",
+      "storage y, cursor 5, quantity n; pc overworld -" );
+    ( "item-storage_list30_top",
+      "storage y, cursor 0, quantity n; pc overworld -" );
+    ( "item-storage_list_after",
+      "storage y, cursor 1, quantity n; pc overworld -" );
+    ("item-storage_submenu", "storage y, cursor 1, quantity n; pc overworld -");
+    ("item-storage_qty_001", "storage y, cursor 1, quantity y; pc overworld -");
+    ("item-storage_qty_012", "storage y, cursor 1, quantity y; pc overworld -");
+    ("item-storage_qty_999", "storage y, cursor 1, quantity y; pc overworld -");
+    ("item-storage_qty_950", "storage y, cursor 1, quantity y; pc overworld -");
+    ( "item-storage_withdrew_msg",
+      "storage y, cursor 1, quantity n; pc overworld -" );
   ]
 
 let cases label images =

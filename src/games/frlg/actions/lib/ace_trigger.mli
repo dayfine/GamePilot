@@ -1,8 +1,8 @@
 (** The ACE trigger (frlg.ace's 02-trigger, docs/design/FRLG-ACE-Execution.md):
-    from the overworld facing a Pokémon Center's PC, MOVE POKéMON, the partner
-    put in Box 3 slot 2 if it is not there, then the two swaps that run the box
-    names' code, and a check that the game still answers. New, not in the fork,
-    which has no ACE.
+    from the overworld facing a Pokémon Center's PC, MOVE POKéMON, a partner
+    (any Pokémon) put in Box 3 slot 2 if that slot is empty, then the two swaps
+    that run the box names' code, and a check that the game still answers. New,
+    not in the fork, which has no ACE.
 
     The presses, from pret pokefirered ([ce6406d]):
     - the box screen's hand: UP from the top row goes to the box title, LEFT and
@@ -22,13 +22,17 @@
       overruns into [monPlaceChangeFunc] and the code runs (the design note,
       "How the code runs").
 
-    Boxes are told by their titles ({!Frlg_text.Box_title}): after the code is
-    typed, Box 1 and Box 3 read the code's names, so a plan gives them. *)
+    Box 3 is told by its title ({!Frlg_text.Box_title}): after the code is
+    typed, it reads one of the code's names, so a plan gives it. The partner's
+    box is counted from Box 3 by scrolls. The species is never read: the swap
+    needs a Pokémon there, not a given one. *)
 
 type trigger = {
-  box1_title : string;  (** Box 1's name: where the partner waits. *)
   box3_title : string;  (** Box 3's name: 0x0351 in slot 1. *)
-  partner : string;  (** The partner's species slug (["mr-mime"]). *)
+  partner_box : int;
+      (** Where the partner waits when Box 3 slot 2 is empty: its box (1-14,
+          default 1) ... *)
+  partner_slot : int;  (** ... and slot there (1-30, default 1). *)
 }
 (** ["ace_trigger"]'s args. *)
 
@@ -39,11 +43,12 @@ type game_steps = {
   press : Wire.button -> unit;  (** A press and the wait after it. *)
   read_title : string list -> string option;
       (** Which of these the box title reads, if any. *)
-  species_at_hand : unit -> string option;
-      (** The species slug PKMN DATA shows for the slot under the hand. *)
-  slot_empty : unit -> bool option;  (** PKMN DATA is flat: no Pokémon. *)
+  slot_empty : unit -> bool option;
+      (** PKMN DATA shows no text: the slot under the hand holds no Pokémon. *)
   ace_at_hand : unit -> bool;
-      (** PKMN DATA shows species 0x0351: Lv 100, the male mark. *)
+      (** The slot under the hand passes {!Ace_mail.slot_verdict} for Box 3 slot
+          1 occupied, Lv 100, the male mark: species 0x0351 as frlg.ace_setup
+          leaves it. *)
   hand_quick : unit -> bool option;
       (** The hand is orange ({!Frlg_readers.Pc_box_screen.hand_quick}). *)
   await_alive : string -> bool;
@@ -56,20 +61,30 @@ type game_steps = {
 val boxes : int
 (** 14: the most scrolls that can find a box. *)
 
+val slots : int
+(** 30: a box's slots. *)
+
 val alive_timeout_ms : int
 (** 3000. *)
 
 val run : game_steps -> log:(string -> unit) -> trigger -> unit
-(** Fails as [ace_box_not_found] (no title reads the box in {!boxes} scrolls),
-    [ace_partner_missing] (Box 1 slot 1 does not hold the partner),
-    [ace_slot_taken] (Box 3 slot 2 holds another Pokémon), [ace_not_in_slot]
-    (Box 3 slot 1 does not show 0x0351), [ace_hand_not_quick] (SELECT did not
-    turn the hand orange) or [ace_game_stopped] (no box title after the swaps:
-    the game hung or reset). *)
+(** Fails as [ace_box_not_found] (no title reads the box in {!boxes} scrolls, or
+    the partner was put down in another box), [ace_partner_missing] (the
+    partner's slot holds no Pokémon, or it did not land), [ace_not_in_slot] (Box
+    3 slot 1 does not show 0x0351), [ace_hand_not_quick] (SELECT did not turn
+    the hand orange) or [ace_game_stopped] (no box title after the swaps: the
+    game hung or reset). *)
 
 val screen_game_steps : log:(string -> unit) -> game_steps
-(** The game's. *)
+(** The box screen's steps on mGBA's timings: {!Pc_box}'s walk to MOVE POKéMON
+    and out on {!Frlg_readers.Pc_screen}'s probes; presses held 100 ms, then a
+    wait (LEFT, RIGHT and A 1200 ms: a box scroll, a shift; others 500 ms); the
+    title read with {!Frlg_text.Box_title.read} (its own probes); [slot_empty],
+    [hand_quick] and [ace_at_hand] from one frame of
+    {!Frlg_readers.Pc_box_screen}'s probes, [ace_at_hand] also reading PKMN
+    DATA's level; [await_alive] reads the title up to four times. *)
 
 val handlers :
   log:(string -> unit) -> (string * Pokemon_engine.Game.game_action) list
-(** [ace_trigger], args [{"box1_title", "box3_title", "partner"}]. *)
+(** [ace_trigger], args [{"box3_title", "partner_box"?, "partner_slot"?}]: the
+    box 1-14 and slot 1-30, not Box 3 slot 1. *)

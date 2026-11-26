@@ -109,7 +109,7 @@ let master = ("MASTER BALL", 999)
 
 let presses ~now ~target ~stack =
   let rec go now n acc =
-    match S.quantity_press ~now ~target ~stack with
+    match Quantity_box.next_press ~now ~target ~most:stack with
     | None ->
         Printf.sprintf "%d presses: %s" n (String.concat " " (List.rev acc))
     | Some b ->

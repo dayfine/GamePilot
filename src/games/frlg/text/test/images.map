@@ -303,3 +303,5 @@ item_pc_quantity mgba shift=bminus12 src/games/frlg/readers/test/images/mgba/ite
 item_pc mgba shift=grey10 src/games/frlg/readers/test/images/mgba/item-storage/list8_top.png|mgba/item-storage/grey10/list8_top.png
 item_pc_counts mgba shift=grey10 src/games/frlg/readers/test/images/mgba/item-storage/list8_top.png|mgba/item-storage/grey10/list8_top.png
 item_pc_quantity mgba shift=grey10 src/games/frlg/readers/test/images/mgba/item-storage/qty_950.png|mgba/item-storage/grey10/qty_950.png
+player_pc_menu mgba repo src/games/frlg/readers/test/images/mgba/item-storage/player_pc_menu.png|mgba/item-storage/player_pc_menu.png
+player_pc_menu mgba repo src/games/frlg/readers/test/images/mgba/item-storage/item_storage_menu.png|mgba/item-storage/item_storage_menu.png

@@ -39,3 +39,15 @@ let quantity_digit k =
     (Printf.sprintf "item_pc_quantity.%d" k)
     ~left:(quantity_left + (quantity_pitch * k))
     ~glyph_top:quantity_top
+
+(* The player's PC's menu window is 13 tiles wide from tile 1 (pokefirered
+   player_pc.c [sWindowTemplate_TopMenu_3Items]): its right frame at x 112,
+   where Text_lines.pc_menu_row's 104 pixels from x 16 would reach over it. *)
+let menu_width = 92
+
+let menu_row i : Text_lines.t =
+  {
+    (Text_lines.pc_menu_row i) with
+    id = Printf.sprintf "player_pc_menu.%d" i;
+    width = menu_width;
+  }

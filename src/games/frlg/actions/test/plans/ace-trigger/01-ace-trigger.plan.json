@@ -6,7 +6,7 @@
   },
   "metadata": {
     "phase": "testing",
-    "notes": "The ACE trigger's test on mGBA: a save after frlg.ace_setup (0x0351 in Box 3 slot 1, MIMIEN in Box 1 slot 1) whose 14 box names hold the bag-prep code for Master Balls (docs/design/FRLG-ACE-Execution.md). Starts facing Route 4 Pokémon Center's PC and ends there, 50 Master Balls withdrawn."
+    "notes": "The ACE trigger's test on mGBA: a save after frlg.ace_setup (0x0351 in Box 3 slot 1, a Pokémon in Box 1 slot 1: MIMIEN) whose 14 box names hold the bag-prep code for Master Balls (docs/design/FRLG-ACE-Execution.md). Starts facing Route 4 Pokémon Center's PC and ends there, 50 Master Balls withdrawn."
   },
   "checkpoint": {
     "id": "01-ace-trigger",
@@ -33,11 +33,9 @@
         "kind": "game_action",
         "action": "ace_trigger",
         "args": {
-          "box1_title": "xFUnDRRn",
-          "box3_title": "EE …l‘",
-          "partner": "mr-mime"
+          "box3_title": "EE …l‘"
         },
-        "why": "MIMIEN to Box 3 slot 2, then 0x0351 shifted with it twice: the second shift runs the box names."
+        "why": "The Pokémon in Box 1 slot 1 (MIMIEN) to Box 3 slot 2, then 0x0351 shifted with it twice: the second shift runs the box names."
       },
       {
         "id": "master_balls_stored",

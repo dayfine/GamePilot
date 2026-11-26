@@ -2001,3 +2001,10 @@ mgba/item-storage/grey10/list8_top.png|item_pc_count.5.0|7
 mgba/item-storage/grey10/qty_950.png|item_pc_quantity.0|9
 mgba/item-storage/grey10/qty_950.png|item_pc_quantity.1|5
 mgba/item-storage/grey10/qty_950.png|item_pc_quantity.2|0
+# The player's PC's menu and ITEM STORAGE's on mGBA (Item_pc_lines.menu_row), which Pc_box reads by their top row.
+mgba/item-storage/player_pc_menu.png|player_pc_menu.0|ITEM STORAGE
+mgba/item-storage/player_pc_menu.png|player_pc_menu.1|MAILBOX
+mgba/item-storage/player_pc_menu.png|player_pc_menu.2|TURN OFF
+mgba/item-storage/item_storage_menu.png|player_pc_menu.0|WITHDRAW ITEM
+mgba/item-storage/item_storage_menu.png|player_pc_menu.1|DEPOSIT ITEM
+mgba/item-storage/item_storage_menu.png|player_pc_menu.2|CANCEL

@@ -43,16 +43,6 @@ let rec scan_from steps name k taps stacks =
   | None -> fail_unread k
 
 let scan steps name = scan_from steps name 0 0 []
-let tens = 10
-
-let quantity_press ~now ~target ~stack =
-  if now = target then None
-  else if now = 1 && target = stack then Some Wire.Down
-  else if target - now >= tens then Some Wire.Right
-  else if now - target >= tens then Some Wire.Left
-  else if target > now then Some Wire.Up
-  else Some Wire.Down
-
 let max_quantity_presses = 200
 
 let quantity_stuck now target =
@@ -65,7 +55,7 @@ let rec set_quantity steps ~target ~stack presses =
     | Some n -> n
     | None -> M.fail "item_storage_quantity" "the quantity does not read"
   in
-  match quantity_press ~now ~target ~stack with
+  match Quantity_box.next_press ~now ~target ~most:stack with
   | None -> ()
   | Some _ when presses = 0 -> quantity_stuck now target
   | Some b ->
@@ -128,7 +118,6 @@ let menu_ms = 500
 let screen_ms = 1500
 let look_timeout_ms = 1000
 let screen_timeout_ms = 4000
-let max_opening_looks = 16
 let max_count_digits = 3
 let cancel = "CANCEL"
 
@@ -151,54 +140,11 @@ let text line candidates =
   | Read { text; _ } -> Some text
   | No_match _ -> None
 
-let menu_label row candidates =
-  text (Text.Text_lines.pc_menu_row row) candidates
-
-(* The PC's menus, from pokefirered pc.inc and player_pc.c: the PC list's
-   second row is the player's PC; its menu ITEM STORAGE, MAILBOX, TURN OFF;
-   ITEM STORAGE's WITHDRAW ITEM, DEPOSIT ITEM, TOSS ITEM, CANCEL. *)
-let player_pc_row = 1
-let item_storage = "ITEM STORAGE"
-let withdraw_item = "WITHDRAW ITEM"
-
-type opening = Booting | On_list | In_player_pc | In_storage
-
-let toward_player_pc r =
-  if r < player_pc_row then press Wire.Down
-  else if r > player_pc_row then press Wire.Up
-  else press Wire.A
-
-(* One look's press and the stage after it. *)
-let open_step stage (view : Pc_screen.view) =
-  match (stage, view) with
-  | Booting, { screen = Pc_list; cursor = Some r } ->
-      toward_player_pc r;
-      if r = player_pc_row then On_list else Booting
-  | Booting, { screen = Overworld | Text; _ } ->
-      press Wire.A;
-      Booting
-  | (On_list | In_player_pc), { cursor = Some 0; _ }
-    when menu_label 0 [ item_storage ] = Some item_storage ->
-      press Wire.A;
-      In_player_pc
-  | (On_list | In_player_pc), { cursor = Some 0; _ }
-    when menu_label 0 [ withdraw_item ] = Some withdraw_item ->
-      press Wire.A;
-      In_storage
-  | (On_list | In_player_pc | In_storage), { screen = Text; _ } ->
-      press Wire.A;
-      stage
-  | _ ->
-      press_wait menu_ms Wire.Up;
-      stage
-
-let rec open_next stage looks =
-  if looks = 0 then
-    M.fail "item_storage_open" "WITHDRAW ITEM's list did not open";
-  match looking (fun m -> (Pc_screen.read m, Item_pc_screen.shown m)) with
-  | Some (_, Some true) -> ()
-  | Some (view, _) -> open_next (open_step stage view) (looks - 1)
-  | None -> open_next stage (looks - 1)
+(* The walk to WITHDRAW ITEM's list is Pc_box's, on the PC's and item
+   storage's probes. *)
+let open_withdraw ~log () =
+  Effects.with_probes (Pc_screen.probes @ Item_pc_screen.probes) (fun () ->
+      Pc_box.open_menu ~log Pc_box.screen_game_steps Withdraw_item)
 
 let read_count row =
   Text.Number_reading.read_right_aligned
@@ -237,7 +183,7 @@ let close ~log () =
 
 let screen_game_steps ~log =
   {
-    open_withdraw = (fun () -> open_next Booting max_opening_looks);
+    open_withdraw = open_withdraw ~log;
     read_row;
     cursor_row = (fun () -> Option.join (looking Item_pc_screen.cursor_row));
     press;
