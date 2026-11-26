@@ -12,4 +12,10 @@ place (IN and OUT the same file):
     redact_frame.py SPEC '^mystery_gift\.' claim-white-fade.png gift-list-*.png
     redact_frame.py SPEC '^save_dialog\.' *save-dialog*.png
 
+The Japanese ones (`*-ja*`, from `--gifts ja`) keep every `^mystery_gift\.`
+probe: `card-vivillon-ja.png` is console B's 1080p capture of the card
+received on 2026-11-25 (the gift's card, its text and the date and time
+only); the `*-360p.png` frames are that run's and the one before's 640x360
+frames, saved as PNG.
+
 The SAVE dialog keeps its "Last Saved" date and time: the reader reads them.
