@@ -34,6 +34,18 @@ let options_of pairs =
         presence = Optional;
         doc = "";
       };
+      {
+        key = "ball";
+        value = One_of [ "poke-ball"; "great-ball"; "ultra-ball" ];
+        presence = Optional;
+        doc = "";
+      };
+      {
+        key = "balls";
+        value = Int_range (1, 999);
+        presence = Optional;
+        doc = "";
+      };
     ]
   in
   Result.get_ok (Run_options.check decl pairs)
@@ -61,6 +73,20 @@ let decoding =
       "ekans at route_10, ids 42/99, rng_seeds_mgba_sevii_save.json + 8 \
        (mgba), advances 900..4000, in-game 0: 1 ekans, 1 encounters, 8 \
        poke-ball";
+    case "ball and balls overridden by --options"
+      (decode
+         ~options:
+           (options_of
+              [
+                ("tid", "42");
+                ("sid", "99");
+                ("ball", "great-ball");
+                ("balls", "12");
+              ])
+         plan_args_no_ids)
+      "ekans at route_10, ids 42/99, rng_seeds_mgba_sevii_save.json + 8 \
+       (mgba), advances 900..4000, in-game 0: 1 ekans, 1 encounters, 12 \
+       great-ball";
     case "--options overrides plan and fallback"
       (decode
          ~options:(options_of [ ("tid", "7"); ("sid", "8") ])

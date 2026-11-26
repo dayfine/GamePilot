@@ -157,7 +157,7 @@ let read ~options ~fallback ~where args =
     frame_model = frame_model ~where args;
     min_advance;
     max_advance;
-    capture = capture ~where args;
+    capture = Capture_plan.apply_options options (capture ~where args);
   }
 
 let decode ?(options = Run_options.none) ?(fallback = no_trainer_ids) args =
