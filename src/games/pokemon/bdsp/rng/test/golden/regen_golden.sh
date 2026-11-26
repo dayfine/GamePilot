@@ -17,7 +17,7 @@
 # arm64 otherwise fuses BlinkModel's "f * min + (1 - f) * max" into an FMA and
 # differs from x86 and MSVC builds (and from OCaml) by one ulp.
 #
-#   sh src/games/bdsp/rng/test/golden/regen_golden.sh
+#   sh src/games/pokemon/bdsp/rng/test/golden/regen_golden.sh
 #
 # FORK is an Arduino-Source checkout with the BDSP RNG code (default
 # ~/Projects/wt/dev-bdsp; the fixtures in this folder came from its commit

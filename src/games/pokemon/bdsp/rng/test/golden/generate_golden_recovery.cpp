@@ -1,5 +1,5 @@
 //  Golden vectors for the ports of the fork's BlinkRecovery, RngCalibration
-//  and AdvanceClock (src/games/bdsp/rng), computed by its C++ (D6). Same line
+//  and AdvanceClock (src/games/pokemon/bdsp/rng), computed by its C++ (D6). Same line
 //  format as generate_golden.cpp, whose main calls the *_golden functions at
 //  the bottom.
 

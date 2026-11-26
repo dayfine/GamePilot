@@ -14,7 +14,7 @@ needs, then stops. No prior plan exists on the fork; this page is a first outlin
 
 ## Shape
 
-A one-shot program `bdsp.underground_dig` in `src/games/bdsp/programs/`, Switch backend only:
+A one-shot program `bdsp.underground_dig` in `src/games/pokemon/bdsp/programs/`, Switch backend only:
 
 1. **Enter**: from a known spot, open the Explorer Kit and go underground (menu and fade readers).
 2. **Find a dig spot**: simplest first version is one cavern, a short fixed route, and a reader
