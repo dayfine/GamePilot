@@ -2,13 +2,18 @@
     ({!Game.Make.t}).
 
     Before any event runs, every game action the checkpoint names must have a
-    handler. Then, per event: it is skipped when a flag its [skip_if] names
-    holds; otherwise its handler runs, and once it passes, the game's position
-    (when it can tell) must match its [declared_after]
-    ({!Engine_rules.POSE.matches}). The first event that fails stops the run.
-    Each event's start (with its [why]), skip, end and failure is logged as
-    ["[Story] <checkpoint> #<n> <event>: ..."]. A handler that raises is logged
-    as failed and the exception passes through.
+    handler. Then, when the plan's [end.is] names flags and every one holds
+    already ({!Game.Make.t}'s [flag_holds]), no event runs: each is reported
+    skipped,
+    ["[Story] <checkpoint>: already at its end (<flags>): passed, no event run"]
+    is logged, and the checkpoint passes without its end checks (nothing was
+    pressed, so a promised change from the start cannot hold). Otherwise, per
+    event: it is skipped when a flag its [skip_if] names holds; otherwise its
+    handler runs, and once it passes, the game's position (when it can tell)
+    must match its [declared_after] ({!Engine_rules.POSE.matches}). The first
+    event that fails stops the run. Each event's start (with its [why]), skip,
+    end and failure is logged as ["[Story] <checkpoint> #<n> <event>: ..."]. A
+    handler that raises is logged as failed and the exception passes through.
 
     The runner prints none of the game's rules: it says each line as a
     {!Log_line.Make.t}, poses and failures kept as values, and the engine prints
@@ -41,8 +46,14 @@ module Make (T : Engine_rules.GAME_RULES) (Raw : Plan.RAW) : sig
       [Pokemon/AutoStory/Pokemon_StoryPostconditionCheck.cpp] on the fork's
       [frlg/lean].
 
+      Once the end position holds, every flag of the plan's [end.is] must hold;
+      each is judged as a promise and logged as
+      ["[End] <checkpoint> <flag>: passed: holds"] with a summary line, and one
+      that does not hold fails the run with {!Failure.Make.Unmet_postconditions}
+      at event ["end"].
+
       With [end_state] (the plan's promises and the game's reader of them), once
-      the end position holds the game reads what the plan promises and every one
+      the end flags hold the game reads what the plan promises and every one
       must pass ({!Engine_rules.POSTCONDITIONS.check}); one failed or not read
       fails the run with {!Failure.Make.Unmet_postconditions}. Each is logged as
       ["[Postcondition] <checkpoint> <what>: <verdict>: <detail>"] with a
@@ -54,9 +65,10 @@ module Make (T : Engine_rules.GAME_RULES) (Raw : Plan.RAW) : sig
       watch page's plan). [say] hears every line the run logs.
 
       With [events], only those events run ({!Event_range}), numbered as in the
-      whole checkpoint; the start is logged as
+      whole checkpoint, and a range that starts past the first event does not
+      check [end.is] before it; the start is logged as
       ["[Story] <checkpoint>: start at #13 <event>, to #14 <event>, of 14
-       events"]. A range that stops before the last event checks neither
-      [end_at] nor [end_state] (logged as
+       events"]. A range that stops before the last event checks none of
+      [end_at], [end.is] and [end_state] (logged as
       ["... stopped after #<n> (--to-event): end not checked"]). *)
 end

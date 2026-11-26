@@ -52,9 +52,13 @@ module Make (T : Engine_rules.GAME_RULES) (Raw : RAW) : sig
     checkpoint_id : string;
     title : string;
     start : T.Pose.t option;
+    end_flags : string list;
+        (** The plan's [end.is]: flags (named by the game, as [skip_if]'s) that
+            all hold at the checkpoint's end; [[]] when it has no [end]. *)
     events : event list;
   }
-  (** The plan's [checkpoint]: where it starts and its events in order. *)
+  (** The plan's [checkpoint]: where it starts, what holds at its end and its
+      events in order. *)
 
   type repeat = {
     until : T.Postconditions.t;

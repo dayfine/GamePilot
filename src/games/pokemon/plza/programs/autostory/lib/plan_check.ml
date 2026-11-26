@@ -24,4 +24,9 @@ let check (plan : P.Plan.t) =
     Result.map_error Engine_run.Failure.cause_to_string
       (Start_signature.decode ~checkpoint_id:id plan.execution)
   in
+  let* () =
+    Result.map_error
+      (fun why -> Printf.sprintf "%s end: %s" id why)
+      (all Resume_flags.known plan.checkpoint.end_flags)
+  in
   all (skip_flags ~id) plan.checkpoint.events

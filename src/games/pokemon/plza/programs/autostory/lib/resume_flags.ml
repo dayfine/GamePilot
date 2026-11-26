@@ -64,13 +64,12 @@ let find flag =
 
 let known flag =
   match find flag with
-  | None -> Error (Printf.sprintf "unknown skip_if flag %S" flag)
+  | None -> Error (Printf.sprintf "unknown flag %S" flag)
   | Some _ when String.starts_with ~prefix:minimap_prefix flag ->
       let n = String.length minimap_prefix in
       let name = String.sub flag n (String.length flag - n) in
       if List.mem name Plza_readers.Minimap.reference_names then Ok ()
-      else
-        Error (Printf.sprintf "skip_if %S: no minimap %S is recorded" flag name)
+      else Error (Printf.sprintf "%S: no minimap %S is recorded" flag name)
   | Some _ -> Ok ()
 
 let holds steps flag =

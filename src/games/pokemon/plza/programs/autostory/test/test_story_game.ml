@@ -410,6 +410,16 @@ let skipped checkpoint screen () =
          else None)
        (C.lines c))
 
+(* How many buttons and left-stick moves the run on [screen] sent: not the
+   screen wake's right stick (Screen_wake). *)
+let pressed checkpoint screen () =
+  let _, (c : C.t) = outcome checkpoint screen in
+  string_of_int
+    (List.length
+       (List.filter
+          (fun (i : C.input) -> i.buttons <> [] || i.stick_ms > 0)
+          c.inputs))
+
 (* 01.04's battle jump: the walk ends on the battle HUD. *)
 let jump_lines () =
   let cp = (plan "01.04-starter-and-andi").checkpoint in
@@ -587,7 +597,8 @@ let map_talk c ~y =
           match (b 0, b 1) with
           | None, _ -> look c
           | Some _, None -> text c
-          | Some _, Some _ -> party c))
+          | Some _, Some _ ->
+              { (party c) with minimap = Some "after-taunie-battle" }))
 
 (* 03.03's battles from the battle HUD after [after]: the HUD until a move;
    "We're not done" until two A, the card until A, the HUD until a second
@@ -723,7 +734,7 @@ let nurse ?(lost = false) c =
       | Some a -> (
           match C.nth_after c Wire.B ~after:a 2 with
           | None -> text c
-          | Some _ -> party c))
+          | Some _ -> { (party c) with minimap = Some "pokemon-center-door" }))
   | _ -> party c
 
 (* 03.08: the party bar while the run is held (15 s of walk is 9.1 s with
@@ -1002,10 +1013,14 @@ let cases =
       (skipped "01.04-starter-and-andi" rematch)
       "approach_starter";
     case
-      "01.04-starter-and-andi resumed in the alley after it: every event \
-       skipped"
-      (skipped "01.04-starter-and-andi" party)
-      "approach_starter andi_battle_start andi_battle after_andi";
+      "01.04-starter-and-andi resumed in the alley after it: already at its end"
+      (logged "01.04-starter-and-andi" party
+         "[Story] 01.04-starter-and-andi: already at its end (party_bar_free): \
+          passed, no event run")
+      "true";
+    case "01.04-starter-and-andi resumed in the alley after it: nothing pressed"
+      (pressed "01.04-starter-and-andi" party)
+      "0";
     case
       "01.04-starter-and-andi's jump: a battle during the walk jumps to the \
        battle"
@@ -1512,10 +1527,25 @@ let cases_03_02b =
     case "03.03-battle-taunie resumed at the arch after it: passes"
       (result "03.03-battle-taunie" at_arch)
       "passed";
-    case "03.03-battle-taunie resumed at the arch after it: every event skipped"
-      (skipped "03.03-battle-taunie" at_arch)
-      "to_plaza_scene_prompt plaza_scene to_taunie taunie_battle_start \
-       battle_totodile tepig_battle_start battle_tepig after_taunie_battle";
+    case "03.03-battle-taunie resumed at the arch after it: already at its end"
+      (logged "03.03-battle-taunie" at_arch
+         "[Story] 03.03-battle-taunie: already at its end \
+          (minimap:after-taunie-battle): passed, no event run")
+      "true";
+    case "03.03-battle-taunie resumed at the arch after it: nothing pressed"
+      (pressed "03.03-battle-taunie" at_arch)
+      "0";
+    case "03.03-battle-taunie: its end checked after the map talk"
+      (logged "03.03-battle-taunie" quartiere_verde
+         "[End] 03.03-battle-taunie minimap:after-taunie-battle: passed: holds")
+      "true";
+    case "03.03-battle-taunie ending off the arch's minimap: the end fails"
+      (result "03.03-battle-taunie" (fun c ->
+           match (quartiere_verde c).minimap with
+           | Some _ -> party c
+           | None -> quartiere_verde c))
+      "03.03-battle-taunie event 9 (end): postconditions unmet: \
+       minimap:after-taunie-battle: failed: expected holds, read does not hold";
     case "03.03-battle-taunie's start, the plaza: nothing skipped"
       (skipped "03.03-battle-taunie" quartiere_verde)
       "";
@@ -1583,9 +1613,14 @@ let cases_03_04 =
     case "03.07-pokemon-center resumed outside the Center: passes"
       (result "03.07-pokemon-center" outside_center)
       "passed";
-    case "03.07-pokemon-center resumed outside the Center: every event skipped"
-      (skipped "03.07-pokemon-center" outside_center)
-      "into_pokemon_center pokedex_app";
+    case "03.07-pokemon-center resumed outside the Center: already at its end"
+      (logged "03.07-pokemon-center" outside_center
+         "[Story] 03.07-pokemon-center: already at its end \
+          (minimap:pokemon-center-door): passed, no event run")
+      "true";
+    case "03.07-pokemon-center resumed outside the Center: nothing pressed"
+      (pressed "03.07-pokemon-center" outside_center)
+      "0";
     case
       "03.08-wild-zones-card: on to Wild Zone 1's gate, Taunie, the Wild Zones \
        card"

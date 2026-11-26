@@ -1,6 +1,6 @@
 (* Plan_check over every plan in plans/, and on plans with a bad key: an
    unknown execution key, a signature field or minimap the readers do not
-   know, an unknown skip_if flag. *)
+   know, an unknown skip_if or end flag. *)
 
 open Plza_engine
 
@@ -27,10 +27,10 @@ let plan_cases =
            expectation = "ok";
          })
 
-(* 03.07's plan, its execution or its events' skip_if replaced. *)
-let base () =
-  Yojson.Safe.from_file
-    (Filename.concat plans_dir "03.07-pokemon-center.plan.json")
+(* 03.07's plan (03.03's for a skip_if, which 03.07's events no longer
+   carry), its execution, its events' skip_if or its end replaced. *)
+let base ?(file = "03.07-pokemon-center.plan.json") () =
+  Yojson.Safe.from_file (Filename.concat plans_dir file)
 
 let with_execution fields =
   match base () with
@@ -42,16 +42,22 @@ let with_execution fields =
            top)
   | other -> other
 
-let rec with_skip_if flag = function
+(* Every [key] list in the plan, as [[flag]]. *)
+let rec with_list key flag = function
   | `Assoc fields ->
       `Assoc
         (List.map
            (fun (k, v) ->
-             if k = "skip_if" then (k, `List [ `String flag ])
-             else (k, with_skip_if flag v))
+             if k = key then (k, `List [ `String flag ])
+             else (k, with_list key flag v))
            fields)
-  | `List items -> `List (List.map (with_skip_if flag) items)
+  | `List items -> `List (List.map (with_list key flag) items)
   | other -> other
+
+let with_skip_if flag =
+  with_list "skip_if" flag (base ~file:"03.03-battle-taunie.plan.json" ())
+
+let with_end flag = with_list "is" flag (base ())
 
 let case name json expectation : Table_test.case =
   { name; input = (fun () -> checked (json ())); expectation }
@@ -77,13 +83,20 @@ let bad_cases =
       "start_signature_unread: 03.07-pokemon-center: its end signature names \
        minimap nowhere, which is not recorded";
     case "an unknown skip_if flag"
-      (fun () -> with_skip_if "battle_over" (base ()))
-      "03.07-pokemon-center event into_pokemon_center: unknown skip_if flag \
+      (fun () -> with_skip_if "battle_over")
+      "03.03-battle-taunie event after_taunie_battle: unknown flag \
        \"battle_over\"";
     case "a skip_if minimap not recorded"
-      (fun () -> with_skip_if "minimap:nowhere" (base ()))
-      "03.07-pokemon-center event into_pokemon_center: skip_if \
-       \"minimap:nowhere\": no minimap \"nowhere\" is recorded";
+      (fun () -> with_skip_if "minimap:nowhere")
+      "03.03-battle-taunie event after_taunie_battle: \"minimap:nowhere\": no \
+       minimap \"nowhere\" is recorded";
+    case "an unknown end flag"
+      (fun () -> with_end "battle_over")
+      "03.07-pokemon-center end: unknown flag \"battle_over\"";
+    case "an end minimap not recorded"
+      (fun () -> with_end "minimap:nowhere")
+      "03.07-pokemon-center end: \"minimap:nowhere\": no minimap \"nowhere\" \
+       is recorded";
   ]
 
 let () = Table_test.run "plza plan check" (plan_cases @ bad_cases)

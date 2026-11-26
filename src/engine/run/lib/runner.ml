@@ -140,6 +140,29 @@ module Make (T : Engine_rules.GAME_RULES) (Raw : Engine_plan.Plan.RAW) = struct
     | [] -> Ok ()
     | unmet -> Error (unmet_failure checkpoint index unmet)
 
+  (* One flag of the plan's [end.is], judged as a promise. *)
+  let judge_end_flag (game : Game.t) flag =
+    let holds = game.flag_holds flag in
+    Postcondition.judge flag ~expected:"holds"
+      ~read:(if holds then "holds" else "does not hold")
+      holds
+
+  let end_flags_failure checkpoint index = function
+    | [] -> Ok ()
+    | unmet ->
+        Error { (unmet_failure checkpoint index unmet) with event_id = "end" }
+
+  (* After the end position: every flag of the plan's [end.is] holds. *)
+  let check_end_flags ~say (game : Game.t) (checkpoint : Plan.checkpoint) index
+      =
+    if checkpoint.end_flags = [] then Ok ()
+    else
+      let results = List.map (judge_end_flag game) checkpoint.end_flags in
+      List.iter
+        (fun line -> say (text line))
+        (Postcondition.log_lines ~tag:"End" checkpoint.checkpoint_id results);
+      end_flags_failure checkpoint index (Postcondition.unmet results)
+
   let check_end_position ~say game checkpoint index = function
     | None -> Ok ()
     | Some declared -> check_end ~say game checkpoint index declared
@@ -149,9 +172,11 @@ module Make (T : Engine_rules.GAME_RULES) (Raw : Engine_plan.Plan.RAW) = struct
     | None -> Ok ()
 
   let finish ~say (game : Game.t) checkpoint index ~end_at ~end_state =
+    let ( let* ) = Result.bind in
     let checked =
-      Result.bind (check_end_position ~say game checkpoint index end_at)
-        (fun () -> check_end_state ~say checkpoint index end_state)
+      let* () = check_end_position ~say game checkpoint index end_at in
+      let* () = check_end_flags ~say game checkpoint index in
+      check_end_state ~say checkpoint index end_state
     in
     if Result.is_ok checked then
       say (text ("[Story] " ^ checkpoint.Plan.checkpoint_id ^ ": done"));
@@ -194,6 +219,36 @@ module Make (T : Engine_rules.GAME_RULES) (Raw : Engine_plan.Plan.RAW) = struct
   let not_started id failure : Log_line.t =
     [ Text ("[Story] " ^ id ^ ": not started: "); Failure failure ]
 
+  (* Before the first event: the console already reads as the checkpoint's
+     end (every flag of its [end.is] holds). *)
+  let at_end (game : Game.t) (checkpoint : Plan.checkpoint)
+      (range : Event_range.t) =
+    range.first = 0 && checkpoint.end_flags <> []
+    && List.for_all game.flag_holds checkpoint.end_flags
+
+  (* At its end already: every event is skipped, nothing pressed, and the
+     checkpoint passes. *)
+  let pass_at_end ~say ~on_event (checkpoint : Plan.checkpoint) =
+    let flags = String.concat ", " checkpoint.end_flags in
+    List.iteri
+      (fun i _ -> on_event i (Event_progress.Skipped ("end: " ^ flags)))
+      checkpoint.events;
+    say
+      (text
+         (Printf.sprintf
+            "[Story] %s: already at its end (%s): passed, no event run"
+            checkpoint.checkpoint_id flags));
+    Ok ()
+
+  let run_range ?end_at ?end_state ~on_event ~say game checkpoint range =
+    let ends =
+      if Event_range.reaches_end range checkpoint.Plan.events then
+        Some (end_at, end_state)
+      else None
+    in
+    run_from ~say ~on_event game checkpoint ~ends range.first
+      (Event_range.select range checkpoint.events)
+
   let run ?end_at ?end_state ?(on_event = fun _ _ -> ()) ?events ~say
       (game : Game.t) (checkpoint : Plan.checkpoint) =
     let id = checkpoint.checkpoint_id in
@@ -206,11 +261,7 @@ module Make (T : Engine_rules.GAME_RULES) (Raw : Engine_plan.Plan.RAW) = struct
         let range =
           Option.value events ~default:{ Event_range.first = 0; last = None }
         in
-        let ends =
-          if Event_range.reaches_end range checkpoint.events then
-            Some (end_at, end_state)
-          else None
-        in
-        run_from ~say ~on_event game checkpoint ~ends range.first
-          (Event_range.select range checkpoint.events)
+        if at_end game checkpoint range then
+          pass_at_end ~say ~on_event checkpoint
+        else run_range ?end_at ?end_state ~on_event ~say game checkpoint range
 end

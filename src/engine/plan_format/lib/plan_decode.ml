@@ -100,9 +100,21 @@ struct
          (fun (seen, i) e -> (check seen i e, i + 1))
          ([], 0) events)
 
+  (* The checkpoint's "end": {"is": [flags]}, every flag named. *)
+  let end_flags ~where obj =
+    match F.object_opt ~where "end" obj with
+    | None -> []
+    | Some end_ -> (
+        let where = where ^ "end." in
+        known_fields_only ~where [ "is" ] end_;
+        required ~where "is" end_;
+        match F.strings (where ^ "is") (List.assoc "is" end_) with
+        | [] -> F.fail "%sis is empty: an end names a flag." where
+        | flags -> flags)
+
   let checkpoint ~where obj : Plan.checkpoint =
     known_fields_only ~where
-      [ "id"; "title"; "start"; "events"; "metadata" ]
+      [ "id"; "title"; "start"; "end"; "events"; "metadata" ]
       obj;
     let checkpoint_id = F.string ~where "id" obj in
     if checkpoint_id = "" then F.fail "%sid is empty." where;
@@ -112,6 +124,7 @@ struct
       checkpoint_id;
       title = F.string ~where "title" obj;
       start = Option.map (start (where ^ "start")) (F.find "start" obj);
+      end_flags = end_flags ~where obj;
       events;
     }
 
@@ -162,15 +175,22 @@ struct
       | Some metadata -> (Some metadata, inner_where)
       | None -> (F.object_opt ~where "metadata" obj, where)
     in
-    {
-      game = F.string ~where "game" obj;
-      checkpoint = checkpoint ~where:inner_where inner;
-      execution = object_field ~where "execution" obj;
-      metadata;
-      postconditions = postconditions ~where:metadata_where metadata;
-      retries = retries ~where:(metadata_where ^ "metadata.") metadata;
-      repeat = repeat ~where:(metadata_where ^ "metadata.") metadata;
-    }
+    let plan : Plan.t =
+      {
+        game = F.string ~where "game" obj;
+        checkpoint = checkpoint ~where:inner_where inner;
+        execution = object_field ~where "execution" obj;
+        metadata;
+        postconditions = postconditions ~where:metadata_where metadata;
+        retries = retries ~where:(metadata_where ^ "metadata.") metadata;
+        repeat = repeat ~where:(metadata_where ^ "metadata.") metadata;
+      }
+    in
+    if plan.checkpoint.end_flags <> [] && Option.is_some plan.repeat then
+      F.fail
+        "%send is set on a repeated checkpoint: a round ends where it starts."
+        inner_where;
+    plan
 
   let decode ~source json =
     let where = source ^ ": " in
