@@ -41,8 +41,8 @@ let box_slot ~where obj : C.box_slot =
   { box = F.int ~where "box" obj; slot = F.int ~where "slot" obj }
 
 let home_order ~where = function
-  | "left_to_right" -> C.Left_to_right
-  | "right_to_left" -> C.Right_to_left
+  | "left_to_right" -> Pokemon_home.Box_view.Left_to_right
+  | "right_to_left" -> Pokemon_home.Box_view.Right_to_left
   | s -> F.fail "%shome_order is %S, not left_to_right or right_to_left" where s
 
 let home_boxes ~where obj =

@@ -36,7 +36,7 @@ let gift : C.gift =
         {
           box_slot = { box = 1; slot = 1 };
           home_boxes = [ 165; 164 ];
-          home_order = Left_to_right;
+          home_order = Pokemon_home.Box_view.Left_to_right;
         };
     source = "https://www.nintendolife.com/guides/x";
   }

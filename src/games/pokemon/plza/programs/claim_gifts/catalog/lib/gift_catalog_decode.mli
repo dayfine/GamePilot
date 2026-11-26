@@ -13,11 +13,10 @@
 
     [how] is ["code"], ["internet"] or ["home"]; [code] is given for a code gift
     only; [box_slot], [home_boxes] and [home_order] ("left_to_right" or
-    "right_to_left") are all given (a Pokémon) or both left out (items).
-    Checked: each id once, short and lower case; a code of letters and digits; a
-    real day; slots 1 to 30 of a box from 1, each slot once; HOME boxes 1 to
-    300; a source on dittobase.com, nintendolife.com or videogameschronicle.com.
-*)
+    "right_to_left") are all given (a Pokémon) or all left out (items). Checked:
+    each id once, short and lower case; a code of letters and digits; a real
+    day; slots 1 to 30 of a box from 1, each slot once; HOME boxes 1 to 300; a
+    source on dittobase.com, nintendolife.com or videogameschronicle.com. *)
 
 val path : string
 (** [gifts.json]'s path from the repo root. *)

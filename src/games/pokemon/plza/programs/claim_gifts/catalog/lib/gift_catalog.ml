@@ -1,12 +1,11 @@
 type date = { year : int; month : int; day : int }
 type how = Code | Internet | Home
 type box_slot = { box : int; slot : int }
-type home_order = Left_to_right | Right_to_left
 
 type pokemon = {
   box_slot : box_slot;
   home_boxes : int list;
-  home_order : home_order;
+  home_order : Pokemon_home.Box_view.order;
 }
 
 type gift = {
