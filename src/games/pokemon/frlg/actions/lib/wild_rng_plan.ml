@@ -15,6 +15,9 @@ type t = {
   capture : Capture_plan.t;
 }
 
+type trainer_ids = { tid : int option; sid : int option }
+
+let no_trainer_ids = { tid = None; sid = None }
 let max_id = 0xffff
 let seed_mask = 0xffff
 let default_min_advance = 900
@@ -25,6 +28,60 @@ let max_attempts = 99
 let assets = "src/games/pokemon/frlg/assets/"
 let encounter_slots = assets ^ "encounter_slots_firered.json"
 let column = "Mono / Help / A"
+let config_env = "GAMEPILOT_FRLG_CONFIG"
+let config_file = "trainer_ids.json"
+let ( let* ) = Result.bind
+
+let env_var = function
+  | "tid" -> "GAMEPILOT_FRLG_TID"
+  | "sid" -> "GAMEPILOT_FRLG_SID"
+  | name -> "GAMEPILOT_FRLG_" ^ String.uppercase_ascii name
+
+let check_id ~label n =
+  if n < 0 || n > max_id then
+    Error (Printf.sprintf "%s is %d, not 0..%d" label n max_id)
+  else Ok n
+
+let env_id name =
+  let var = env_var name in
+  match Sys.getenv_opt var with
+  | None | Some "" -> Ok None
+  | Some raw -> (
+      match int_of_string_opt (String.trim raw) with
+      | Some n -> Result.map Option.some (check_id ~label:var n)
+      | None -> Error (Printf.sprintf "%s is %S, not 0..%d" var raw max_id))
+
+let json_id ~path name fields =
+  match List.assoc_opt name fields with
+  | None | Some `Null -> Ok None
+  | Some (`Int n) ->
+      Result.map Option.some (check_id ~label:(path ^ ": " ^ name) n)
+  | Some _ -> Error (Printf.sprintf "%s: %s is not an integer" path name)
+
+let file_trainer_ids () =
+  let dir = Repo_io.Repo_files.data_dir config_env "frlg" in
+  let path = Filename.concat dir config_file in
+  if not (Sys.file_exists path) then Ok no_trainer_ids
+  else
+    let* json = Repo_io.Json_file.read path in
+    match json with
+    | `Assoc fields ->
+        let* tid = json_id ~path "tid" fields in
+        let* sid = json_id ~path "sid" fields in
+        Ok { tid; sid }
+    | _ -> Error (path ^ ": expected a JSON object")
+
+let pick primary secondary =
+  match primary with Some _ -> primary | None -> secondary
+
+let load_trainer_ids () =
+  let* env_tid = env_id "tid" in
+  let* env_sid = env_id "sid" in
+  match (env_tid, env_sid) with
+  | Some _, Some _ -> Ok { tid = env_tid; sid = env_sid }
+  | _ ->
+      let* file = file_trainer_ids () in
+      Ok { tid = pick env_tid file.tid; sid = pick env_sid file.sid }
 
 let frame_models =
   [ ("mgba", R.Rng_timings.mgba); ("switch", R.Rng_timings.switch) ]
@@ -76,13 +133,24 @@ let capture ~where args =
   let plan = Capture_plan.read ~where args in
   { plan with max_encounters = attempts ~where args; catches = 1 }
 
-let read ~where args =
+let resolved_id ~where ~options ~fallback name args =
+  match (Run_options.int options name, J.find name args, fallback) with
+  | Some n, _, _ -> n
+  | None, Some _, _ -> id ~where name args
+  | None, None, Some n -> n
+  | None, None, None ->
+      J.fail "%smissing %s (pass --options %s=N, set %s, or set it in %s)" where
+        name name (env_var name) config_file
+
+let read ~options ~fallback ~where args =
   let min_advance, max_advance = advances ~where args in
+  let tid = resolved_id ~where ~options ~fallback:fallback.tid "tid" args in
+  let sid = resolved_id ~where ~options ~fallback:fallback.sid "sid" args in
   {
     species = J.string ~where "species" args;
     location = J.string ~where "location" args;
-    tid = id ~where "tid" args;
-    sid = id ~where "sid" args;
+    tid;
+    sid;
     seeds = J.string ~where "seeds" args;
     seed_shift = seed_shift ~where args;
     ingame_offset = ingame_offset ~where args;
@@ -92,8 +160,8 @@ let read ~where args =
     capture = capture ~where args;
   }
 
-let decode args = Action_args.decode ~action:"wild_rng" read args
-let ( let* ) = Result.bind
+let decode ?(options = Run_options.none) ?(fallback = no_trainer_ids) args =
+  Action_args.decode ~action:"wild_rng" (read ~options ~fallback) args
 
 let json path =
   match Repo_io.Repo_files.locate path with
