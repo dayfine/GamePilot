@@ -21,7 +21,8 @@ let plans_in dir =
 let authored_dir =
   repo_path "third_party/PokemonSimulation/data/story/frlg-authored"
 
-let mail_glitch_dir = repo_path "src/games/frlg/programs/mail_glitch/plans"
+let mail_glitch_dir =
+  repo_path "src/games/pokemon/frlg/programs/mail_glitch/plans"
 
 (* A plan with these events, decoded as a plan file would be. *)
 let checkpoint_of_events events =

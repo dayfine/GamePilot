@@ -4,16 +4,6 @@ module Series = Plza_checkpoint_series.Checkpoint_series
 module Attempts = Plza_checkpoint_series.Run_attempts
 
 let ( let* ) = Result.bind
-
-(* The daemon's keep-awake presses B after 180 s idle on the Switch; B backs
-   out of PLZA's new-game menus (console B, 2026-11-25), so PLZA's daemons
-   nudge the right stick instead, which only turns the camera in the field and
-   does nothing in a dialogue, a menu or a battle (up then down, so the
-   camera's heading never moves: walk legs are aimed from it). Off, an idle
-   console dimmed its screen, which reads as nothing (01.04's run 2). A
-   --keepawake-key given on the command line comes after, and the daemon takes
-   the last. *)
-let keepawake_stick = [ "--keepawake-key"; "RStick" ]
 let failed = Series.failed
 
 let reload_cause ~log ~picture () =
@@ -44,7 +34,7 @@ let start ~log ~picture ~reload (plan : P.Plan.t) =
    choices it plays (the program's options over the plan's) in the log. *)
 let new_game ~log ~picture choices =
   log ("[Console] new game: " ^ Story.New_game_options.describe choices);
-  match Templates.upload_home_title () with
+  match Plza_checkpoint_series.Templates.upload_home_title () with
   | Error e -> Error (Engine_run.Failure.cause ~repeats:true "assets" e)
   | Ok home_title ->
       Story.Live_intro_screen.run ~picture ~log ~home_title choices
@@ -96,7 +86,7 @@ let run_checkpoint ~options ~log ~picture ~reload report (plan : P.Plan.t) =
 (* One attempt: the story's templates uploaded, its probes subscribed;
    [options] are 00.00-new-game's choices. *)
 let attempt ~options ~log ~picture ~reload report plan : Attempts.outcome =
-  match Templates.upload () with
+  match Plza_checkpoint_series.Templates.upload () with
   | Error e -> failed ~repeats:true "assets" e
   | Ok assets -> (
       match
@@ -111,7 +101,7 @@ let story new_game : Series.program =
   {
     check_plans = Series_check.check_all ~options:new_game;
     with_end_place;
-    daemon_flags = keepawake_stick;
+    daemon_flags = Series.keepawake_stick;
     attempt = attempt ~options:new_game;
   }
 

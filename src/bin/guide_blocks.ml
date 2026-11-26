@@ -12,7 +12,9 @@
    - preflight [RANGE]: per checkpoint, what the pre-flight checks before a
      run resumed there;
    - commands [RANGE]: the commands that run it on each backend;
-   - options: the keys its --options take (Program_registry's options).
+   - options: the keys its --options take (Program_registry's options);
+   - a block of a program's rules' own, which their guide gives (PLZA's
+     Mystery Gift rules' gifts: plza.claim-gifts' gift catalog).
 
    RANGE is FROM..TO or one id; default: every checkpoint. *)
 
@@ -30,6 +32,9 @@ type rules_guide = {
   needs : plan_dir:string -> string list -> (string, string) result;
   preflight : plan_dir:string -> string list -> (string, string) result;
   commands : R.t -> args:string -> string;
+  program_block : R.t -> string -> (string, string) result option;
+      (** A block of the rules' own, by name; [None] when they have no such
+          block. *)
 }
 
 type plans = { dir : string; ids : string list }
@@ -191,4 +196,8 @@ let generate ~guide (p : R.t option) (b : Guide_page.block) =
       | "options" ),
       None ) ->
       Error (b.name ^ ": this page is not a program's")
-  | name, _ -> Error ("no generated block " ^ name)
+  | name, Some p -> (
+      match (guide p).program_block p name with
+      | Some block -> block
+      | None -> Error ("no generated block " ^ name))
+  | name, None -> Error ("no generated block " ^ name)

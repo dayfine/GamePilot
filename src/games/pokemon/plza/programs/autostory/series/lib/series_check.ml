@@ -13,8 +13,7 @@ let ( let* ) = Result.bind
 
 let check_all ~options plans =
   let* () =
-    List.fold_left
-      (fun acc plan -> Result.bind acc (fun () -> Story.Plan_check.check plan))
-      (Ok ()) plans
+    Plza_checkpoint_series.Checkpoint_series.each_plan Story.Plan_check.check
+      plans
   in
   check ~options plans

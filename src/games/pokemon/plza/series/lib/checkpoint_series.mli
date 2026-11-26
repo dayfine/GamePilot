@@ -39,6 +39,23 @@ type program = {
 }
 (** What a program's runs do. *)
 
+val keepawake_stick : string list
+(** The daemon flags that keep PLZA's console awake with the right stick:
+    [--keepawake-key RStick]. The daemon's keep-awake presses B after 180 s idle
+    on the Switch, and B backs out of PLZA's new-game menus (console B,
+    2026-11-25); the right stick only turns the camera in the field and does
+    nothing in a dialogue, a menu or a battle (up then down, so the camera's
+    heading never moves: walk legs are aimed from it). Off, an idle console
+    dimmed its screen, which reads as nothing (01.03's run 2). A
+    [--keepawake-key] given on the command line comes after, and the daemon
+    takes the last. *)
+
+val each_plan :
+  (Plza_engine.Plan.t -> (unit, string) result) ->
+  Plza_engine.Plan.t list ->
+  (unit, string) result
+(** A [check_plans] of one check per plan, in order: the first [Error]. *)
+
 val load_plan : plan_dir:string -> string -> (Plza_engine.Plan.t, string) result
 (** The plan [<plan_dir>/<id>.plan.json], decoded. *)
 

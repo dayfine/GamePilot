@@ -1,9 +1,10 @@
 (** [plza.bank-home]'s checkpoints as a game of the checkpoint engine
     ({!Plza_engine}): one game action, [bank_in_home], which opens Pokémon HOME
-    on Legends: Z-A from the Switch's HOME menu, moves the gifts its args name
-    ({!Bank_moves_args}) from the game's box to their HOME boxes, saves HOME and
-    closes it ({!Pokemon_home.Home_bank}). Pokémon HOME's save banner, then its
-    main menu or saved banner, is the checkpoint's end check, inside the action.
+    on Legends: Z-A from the Switch's HOME menu, moves the gift catalog's
+    Pokémon ({!Catalog_moves}) from the game's box to their HOME boxes, saves
+    HOME and closes it ({!Pokemon_home.Home_bank}). Pokémon HOME's save banner,
+    then its main menu or saved banner, is the checkpoint's end check, inside
+    the action.
 
     Its start check ({!start_check}) finds Legends: Z-A's tile on the Switch's
     HOME menu. Not in the fork, which banks nothing in Pokémon HOME. *)
@@ -21,8 +22,8 @@ val action : string
 (** ["bank_in_home"]: the one game action a plan names. *)
 
 val check_plan : Plza_engine.Plan.t -> (unit, string) result
-(** Before the console moves: every event is a {!action} whose moves read
-    ({!Bank_moves_args.of_args}), and there is one at least. *)
+(** Before the console moves: every event is a {!action} with no args (its moves
+    are the gift catalog's), and there is one at least. *)
 
 val start_check :
   log:(string -> unit) -> templates -> (unit, Engine_run.Failure.cause) result
@@ -33,7 +34,12 @@ val start_check :
     tile, or [home_tile_not_found] (repeats). *)
 
 val make :
-  log:(string -> unit) -> picture:Wire.box -> templates -> Plza_engine.Game.t
-(** The handlers of one run: {!action} only. A walk, a scene, a talk, a save or
-    a reload fails [no_handler]: Pokémon HOME saves inside the action, and a
-    failed bank leaves HOME open for a look. *)
+  log:(string -> unit) ->
+  picture:Wire.box ->
+  moves:Catalog_moves.t ->
+  templates ->
+  Plza_engine.Game.t
+(** The handlers of one run: {!action} only, which logs the expired gifts it
+    skips and makes [moves] ({!Catalog_moves.of_catalog}). A walk, a scene, a
+    talk, a save or a reload fails [no_handler]: Pokémon HOME saves inside the
+    action, and a failed bank leaves HOME open for a look. *)

@@ -189,7 +189,7 @@ screen, back out of any menu, and rerun. Never answer YES to "There is already a
 
 ## How it works
 
-The checkpoints are the plans in `src/games/frlg/programs/mail_glitch/plans/`, run in order by the
+The checkpoints are the plans in `src/games/pokemon/frlg/programs/mail_glitch/plans/`, run in order by the
 checkpoint runner. The port's history and the grinding options are in `docs/roadmap.md` (Phase 4).
 
 **The grind's rounds.** 05-grind-mr-mime repeats (its plan's `metadata.repeat`). Each round starts

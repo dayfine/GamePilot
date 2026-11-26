@@ -21,7 +21,7 @@ caught, and stop on a shiny. They gate the shiny parts of A4 and A6.
 
 ## Steps
 
-1. **Pure math** in `src/games/frlg/rng`: the Gen 3 LCG, Method 1/2/4 generation, the wild slot
+1. **Pure math** in `src/games/pokemon/frlg/rng`: the Gen 3 LCG, Method 1/2/4 generation, the wild slot
    and encounter tables, the seed database lookup and the target search. Golden vectors generated
    from the C++, as `src/games/bdsp/rng` does in PR #2.
 2. **Calibration** (seed and advance offsets learned from caught results) as pure functions with the

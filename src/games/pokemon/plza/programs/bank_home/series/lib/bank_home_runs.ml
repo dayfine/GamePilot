@@ -15,8 +15,8 @@ let at_start (checkpoint : P.Plan.checkpoint) cause : P.Failure.t =
     reason = Handler cause;
   }
 
-let run_checkpoint ~log ~picture templates report (plan : P.Plan.t) =
-  let game = Game.make ~log ~picture templates in
+let run_checkpoint ~log ~picture ~moves templates report (plan : P.Plan.t) =
+  let game = Game.make ~log ~picture ~moves templates in
   P.Plan_watch.run ~mode:"testing" report (fun ~on_event ->
       let* () =
         Result.map_error (at_start plan.checkpoint)
@@ -27,26 +27,23 @@ let run_checkpoint ~log ~picture templates report (plan : P.Plan.t) =
 (* One attempt: Pokémon HOME's templates read and the checkpoint run. Its
    start check reaches its start from anywhere, so a reload asks nothing
    more. *)
-let attempt ~log ~picture ~reload:_ report plan : Attempts.outcome =
+let attempt moves ~log ~picture ~reload:_ report plan : Attempts.outcome =
   match Home_templates.load () with
   | Error e -> Series.failed ~repeats:true "assets" e
   | Ok templates -> (
-      match run_checkpoint ~log ~picture templates report plan with
+      match run_checkpoint ~log ~picture ~moves templates report plan with
       | Ok () -> Passed
       | Error f -> Attempts.of_failure f)
 
-let bank_home : Series.program =
+let bank_home moves : Series.program =
   {
-    check_plans =
-      List.fold_left
-        (fun acc plan -> Result.bind acc (fun () -> Game.check_plan plan))
-        (Ok ());
+    check_plans = Series.each_plan Game.check_plan;
     (* Its plans promise no end place: each runs its events. *)
     with_end_place = (fun ~next:_ plan -> Ok plan);
     daemon_flags = [];
-    attempt;
+    attempt = attempt moves;
   }
 
-let run_series ~program ~options ~viewport plan_dir args =
-  Series.run_series bank_home ~program_fields:program ~options ~viewport
+let run_series ~moves ~program ~options ~viewport plan_dir args =
+  Series.run_series (bank_home moves) ~program_fields:program ~options ~viewport
     plan_dir args

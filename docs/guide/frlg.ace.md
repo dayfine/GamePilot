@@ -22,6 +22,10 @@ What the save needs:
 - A Pokémon in Box 1 (MIMIEN on the Mail Glitch save), or already in Box 3 slot 2: the swap
   partner. The first Pokémon in Box 1 is used, whichever slot it is in.
 - Box 13 from slot 7 on and all of Box 14 empty. The program checks this before it types anything.
+- Every box's wallpaper as a new game leaves it (Box 1 Forest, then City, Desert, Savanna, again
+  from Box 5): the program tells the boxes apart by it, since several hold the same name. A box
+  whose wallpaper was changed stops the run before anything is typed; set it back with WALLPAPER on
+  the box title's menu.
 - Fewer than 30 kinds of item in the PC's item storage, and room in the bag: what it holds of the
   item plus `withdraw` at most 999.
 - English FireRed 1.1. The code's exit jumps to an address in that ROM; other versions and the
@@ -110,7 +114,7 @@ slots into the names. The design note, docs/design/FRLG-ACE-Execution.md, has th
 code box by box and what was verified on mGBA.
 
 The names are data
-(`src/games/frlg/assets/ace_presets.json`); a unit test (`test_ace_presets`) encodes them with the
+(`src/games/pokemon/frlg/assets/ace_presets.json`); a unit test (`test_ace_presets`) encodes them with the
 game's character table and runs the ARM words, checking the code stores 999 and the item's id.
 The actions are `Ace_code` (the checks and the typing, on `Box_rename`'s naming), `Ace_trigger`
-(the swaps) and `Ace_item` (room, x999, withdraw), in `src/games/frlg/actions/`.
+(the swaps) and `Ace_item` (room, x999, withdraw), in `src/games/pokemon/frlg/actions/`.

@@ -1,7 +1,7 @@
 # FRLG after the Elite Four
 
 Six milestones that start from a post-game FireRed save (the Mail Glitch's save, or the C++ story's
-Hall of Fame save). All live in `src/games/frlg`, run on mGBA first and then on the Switch, and use
+Hall of Fame save). All live in `src/games/pokemon/frlg`, run on mGBA first and then on the Switch, and use
 the checkpoint runner and story engine the Mail Glitch built. Together they are slice S4.
 
 | # | Milestone | Needs first | Page |
@@ -29,4 +29,4 @@ The order is a proposal; the parent issue's task list is where it is decided.
 
 From the Mail Glitch work (`docs/roadmap.md`, Phase 3 and mg-04): a level reader, HP and PP readers,
 a foe species reader, a party species reader in place of the reckoned party, and `capture` with a
-chosen ball. Most milestones need some of these; build each once, in `src/games/frlg/readers`.
+chosen ball. Most milestones need some of these; build each once, in `src/games/pokemon/frlg/readers`.

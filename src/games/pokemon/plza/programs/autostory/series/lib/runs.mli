@@ -10,9 +10,10 @@
     checkpoint first goes back to the latest autosave
     (Plza_autostory.Game_reload), which 01.01 cannot (its start is no save): its
     second run is refused. Its daemons keep the console awake with the right
-    stick (keepawake_stick), and each checkpoint wakes the screen before it
-    reads it (Plza_story.Screen_wake). Every plan is checked before the console
-    moves ({!Series_check.check_all}). *)
+    stick (Plza_checkpoint_series.Checkpoint_series.keepawake_stick), and each
+    checkpoint wakes the screen before it reads it (Plza_story.Screen_wake).
+    Every plan is checked before the console moves ({!Series_check.check_all}).
+*)
 
 val run_series :
   program:(string * string) list ->
