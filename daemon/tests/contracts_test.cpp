@@ -347,7 +347,8 @@ void check_encoders(const std::map<std::string, pa::JsonValue>& files) {
   // The program's watch notes are notifications the daemon passes to the page.
   for (const char* name :
        {"30-watch_plan.notification.json", "31-watch_log.notification.json",
-        "33-watch_run.notification.json"}) {
+        "33-watch_run.notification.json",
+        "56-watch_counters.notification.json"}) {
     const Request note = decode_request(files.at(name));
     CHECK(!note.has_id && note.method.starts_with("watch."));
   }
@@ -607,7 +608,7 @@ int main() {
   const auto files = load_contracts();
   // One per protocol/v1 golden file. The checks below index files by name,
   // so they run only when every one is there.
-  constexpr std::size_t kGoldenFiles = 55;
+  constexpr std::size_t kGoldenFiles = 56;
   CHECK(files.size() == kGoldenFiles);
   if (files.size() == kGoldenFiles) {
     check_requests(files);

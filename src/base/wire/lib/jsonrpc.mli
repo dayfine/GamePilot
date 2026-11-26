@@ -61,6 +61,8 @@ type notification =
   | Watch_log of string  (** [watch.log], from the program: one log line *)
   | Watch_run of Watch_run.t
       (** [watch.run], from the program: its chain of checkpoints *)
+  | Watch_counters of Watch.counter list
+      (** [watch.counters], from the program: live key-value counters *)
   | Stop of string
       (** [stop], from the daemon: someone pressed Stop on the watch page, for
           this reason *)

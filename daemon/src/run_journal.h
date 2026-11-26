@@ -61,6 +61,7 @@ class RunJournal {
 
   void plan(const std::string& json);
   void chain(const std::string& json);
+  void counters(const std::string& json);
   // A watch.log note's params ({"line": ...}) and when it came.
   void log_line(const pa::JsonObject& params, double unix_ms);
 

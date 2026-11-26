@@ -1,0 +1,24 @@
+{
+  "jsonrpc": "2.0",
+  "method": "watch.counters",
+  "params": {
+    "items": [
+      {
+        "label": "Cycles",
+        "value": "4 / 15"
+      },
+      {
+        "label": "Digs",
+        "value": "7"
+      },
+      {
+        "label": "Shards (S / L)",
+        "value": "2 / 1"
+      },
+      {
+        "label": "Slates",
+        "value": "1 / 13"
+      }
+    ]
+  }
+}

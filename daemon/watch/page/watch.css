@@ -86,9 +86,14 @@
     grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
     grid-template-areas: "frame frame" "run run" "plan log" "health log";
   }
+  main.has-counters {
+    grid-template-areas: "frame frame" "run run" "counters counters" "plan log" "health log";
+  }
   @media (max-width: 800px) {
     main { grid-template-columns: minmax(0, 1fr);
            grid-template-areas: "frame" "run" "plan" "health" "log"; }
+    main.has-counters {
+           grid-template-areas: "frame" "run" "counters" "plan" "health" "log"; }
   }
   section {
     background: var(--panel); border: 1px solid var(--line);
@@ -100,6 +105,16 @@
   }
   #frame-panel { grid-area: frame; }
   #run-panel { grid-area: run; }
+  #counters-panel { grid-area: counters; }
+  #counters-panel[hidden] { display: none; }
+  #counters { margin: 0; display: flex; flex-wrap: wrap; gap: 8px 16px; }
+  .counter { display: flex; flex-direction: column; min-width: 88px;
+             padding: 4px 10px; border: 1px solid var(--line); border-radius: 6px;
+             background: var(--bg); }
+  .counter dt { font-size: 11px; color: var(--muted); text-transform: uppercase;
+                letter-spacing: 0.04em; }
+  .counter dd { margin: 2px 0 0; font-size: 16px; font-weight: 600;
+                font-variant-numeric: tabular-nums; }
   #plan-panel { grid-area: plan; }
   #log-panel { grid-area: log; }
   #health-panel { grid-area: health; }
