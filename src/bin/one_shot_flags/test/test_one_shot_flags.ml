@@ -3,7 +3,7 @@
 
 module D = Live_run.Daemon_process
 
-let program = Option.get (Program_registry.find "frlg.start_menu_poc")
+let program = Option.get (Program_registry.find "frlg.mail_glitch")
 
 let backend = function
   | D.Mgba { port } -> Printf.sprintf "mgba:%d" port

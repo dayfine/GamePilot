@@ -12,7 +12,6 @@
   gamepilot.watch_report
   gamepilot.replay
   gamepilot.live
-  gamepilot.start_menu_poc
   gamepilot.program_registry
   gamepilot.guide_page
   gamepilot.run_record

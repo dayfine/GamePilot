@@ -69,17 +69,6 @@ let grid_guide : Guide_blocks.rules_guide =
     program_block = (fun _ _ -> None);
   }
 
-let start_menu_poc =
-  {
-    label = "start_menu_poc";
-    default_state = Start_menu_poc.default_state;
-    run =
-      (fun ~state ->
-        let outcome = Start_menu_poc.run ?state () in
-        ( (match outcome with Start_menu_poc.Passed _ -> true | _ -> false),
-          Start_menu_poc.describe outcome ));
-  }
-
 (* The Pokémon grid rules' entry points. *)
 let grid =
   {
@@ -89,7 +78,7 @@ let grid =
     guide = grid_guide;
     chain_needs = Grid.Chain_needs.needs;
     ctl_readers = Frlg_ctl_readers.Ctl_readers.all;
-    one_shots = [ ("frlg.start_menu_poc", start_menu_poc) ];
+    one_shots = [];
   }
 
 let plza_series plan_dir args =

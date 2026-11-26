@@ -23,13 +23,13 @@
 
 let usage =
   "usage:\n\
-  \  gamepilot run frlg.start_menu_poc [--port 47900] [--state PATH | \
+  \  gamepilot run PROGRAM [--port 47900] [--state PATH | --console] \
+   [--runs-dir DIR]\n\
+  \  gamepilot run PROGRAM --watch [--listen ADDR] [--watch-port N] \
+   [--mgba-port N | --backend switch ...] [--daemon PATH] [--state PATH | \
    --console] [--runs-dir DIR]\n\
-  \  gamepilot run frlg.start_menu_poc --watch [--listen ADDR] [--watch-port \
-   N] [--mgba-port N | --backend switch ...] [--daemon PATH] [--state PATH | \
-   --console] [--runs-dir DIR]\n\
-  \  gamepilot replay frlg.start_menu_poc WIRELOG\n"
-  ^ Checkpoint_families.run_usage ^ Checkpoint_families.usage
+  \  gamepilot replay PROGRAM WIRELOG\n" ^ Checkpoint_families.run_usage
+  ^ Checkpoint_families.usage
   ^ "  (gamepilot checkpoints and gamepilot checkpoint: old forms of gamepilot \
      run)\n" ^ Programs_command.usage ^ Guide_command.usage
   ^ Status_command.usage ^ Ctl_command.usage ^ Runs_command.usage

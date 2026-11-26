@@ -30,22 +30,6 @@ let game =
         };
   }
 
-let start_menu_poc =
-  {
-    id = "frlg.start_menu_poc";
-    game;
-    name = "Start Menu PoC";
-    category = Testing;
-    description =
-      "Opens and closes the Start menu: the first program through the daemon.";
-    doc = "docs/poc-start-menu.md";
-    checkpoints = None;
-    backends = [ Mgba ];
-    viewport = Nso_gba;
-    rules = Pokemon_grid;
-    options = [];
-  }
-
 let sevii_story =
   {
     id = "frlg.sevii_story";
@@ -195,7 +179,6 @@ let wild_rng =
 (* Grouped by category so [gamepilot programs] prints each heading once. *)
 let all =
   [
-    start_menu_poc;
     sevii_story;
     mail_glitch;
     ace_setup;

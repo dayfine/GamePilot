@@ -7,7 +7,6 @@ Each page ends with "How it works", for developers: the ported files, the mechan
 <!-- generated:programs -->
 | Program | Id | Runs on | What it does |
 |---|---|---|---|
-| [Start Menu PoC](frlg.start_menu_poc.md) | `frlg.start_menu_poc` | mGBA | Opens and closes the Start menu: the first program through the daemon. |
 | [Sevii Story](frlg.sevii_story.md) | `frlg.sevii_story` | mGBA | Plays the Sevii Islands story after the Cinnabar Gym. |
 | [Mail Glitch](frlg.mail_glitch.md) | `frlg.mail_glitch` | mGBA, the Switch | Turns on the Mail Glitch against Lea & Jed on Route 16 and copies one item with it. |
 | [ACE Setup](frlg.ace_setup.md) | `frlg.ace_setup` | mGBA | Sets up arbitrary code execution: the ? Mail puts species 0x0351 in Box 3 slot 1. |
