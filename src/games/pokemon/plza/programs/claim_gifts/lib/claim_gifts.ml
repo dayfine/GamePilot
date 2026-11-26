@@ -81,9 +81,7 @@ let of_claim : Gift_claim.claim -> outcome * bool = function
 
 let try_gift steps run (gift : C.gift) =
   if C.expired ~today:run.today gift then (
-    steps.log
-      (Printf.sprintf "Skipping %s: its last day was %s." gift.id
-         (C.date_to_string gift.expires));
+    steps.log (C.skipped_line gift);
     (Expired, true))
   else
     match gift.how with

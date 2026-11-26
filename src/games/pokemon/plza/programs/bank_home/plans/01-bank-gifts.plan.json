@@ -4,7 +4,7 @@
   "execution": {},
   "metadata": {
     "phase": "testing",
-    "source": "the moves gamepilot ctl bank-home plza made (PR #234)"
+    "source": "the moves gamepilot ctl bank-home plza made (PR #234); the gifts' slots and HOME boxes are the gift catalog's"
   },
   "checkpoint": {
     "id": "01-bank-gifts",
@@ -14,23 +14,7 @@
         "id": "bank",
         "kind": "game_action",
         "action": "bank_in_home",
-        "why": "Pokémon HOME opened on Legends: Z-A; each gift from Box 1's first row to the first empty slot of its HOME boxes; HOME saved and closed",
-        "args": {
-          "moves": [
-            {
-              "gift": "Vivillon",
-              "box_slot": 2,
-              "home_boxes": [166, 167],
-              "scan": "right_to_left"
-            },
-            {
-              "gift": "Xerneas",
-              "box_slot": 1,
-              "home_boxes": [165, 164],
-              "scan": "left_to_right"
-            }
-          ]
-        }
+        "why": "Pokémon HOME opened on Legends: Z-A; each Pokémon of the gift catalog (gifts.json) from its slot in Box 1's first row to the first empty slot of its HOME boxes; HOME saved and closed"
       }
     ]
   }

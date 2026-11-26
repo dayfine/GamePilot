@@ -1,5 +1,6 @@
-(** Reading the Mystery Gift catalog, [gifts.json] in [plza.claim-gifts]'s
-    folder, into a {!Gift_catalog.t}, and checking it. The file:
+(** Reading the Mystery Gift catalog, [gifts.json] beside this library (read by
+    plza.claim-gifts and plza.bank-home), into a {!Gift_catalog.t}, and checking
+    it. The file:
 
     {v
     { "format": "gamepilot-gifts/1",

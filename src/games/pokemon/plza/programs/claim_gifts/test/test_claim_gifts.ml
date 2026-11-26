@@ -14,7 +14,7 @@ module Gb = Plza_claim_gifts.Gift_boxes
 let catalog =
   Result.get_ok
     (Plza_gift_catalog.Gift_catalog_decode.of_json
-       (Yojson.Safe.from_file "../gifts.json"))
+       (Yojson.Safe.from_file "../../../gift_catalog/gifts.json"))
 
 let plan =
   Result.get_ok

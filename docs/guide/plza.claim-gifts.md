@@ -48,7 +48,7 @@ Give each as `--options KEY=VALUE`:
 <!-- /generated -->
 
 A gift whose last day is before today (the host's date, in UTC) is skipped, with a line in the log.
-The catalog is `src/games/pokemon/plza/programs/claim_gifts/gifts.json`; each gift names the page
+The catalog is `src/games/pokemon/plza/gift_catalog/gifts.json`; each gift names the page
 that announced it.
 
 ## What happens
@@ -94,7 +94,7 @@ claimed, already received, expired, not supported or failed.
 
 `Plza_claim_gifts.Claim_gifts` decides: which gifts are due, what came of each, where each Pokémon
 must be. `Plza_claim_gifts_series.Claim_gifts_runs` runs its plan on PLZA's shared series loop
-(`Plza_checkpoint_series`), one attempt with no reload. `src/bin/plza_gift_run.ml` reads the run's
+(`Plza_checkpoint_series`), one attempt with no reload. `src/bin/plza_gift_inputs.ml` reads the run's
 inputs at the edge: the catalog (`Plza_gift_catalog`), today's date and the name templates.
 
 `Gift_claim` claims one gift (`Mystery_gift`'s presses and waits), with a hook,

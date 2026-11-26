@@ -1,6 +1,6 @@
 (test
  (name test_gift_catalog)
- (deps ../../gifts.json)
+ (deps ../gifts.json)
  (libraries
   yojson
   gamepilot.table_test

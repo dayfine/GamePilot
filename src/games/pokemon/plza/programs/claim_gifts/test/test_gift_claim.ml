@@ -10,7 +10,7 @@ let gift =
   List.hd
     (Result.get_ok
        (Plza_gift_catalog.Gift_catalog_decode.of_json
-          (Yojson.Safe.from_file "../gifts.json")))
+          (Yojson.Safe.from_file "../../../gift_catalog/gifts.json")))
 
 (* Every share probe of the gift screens at 0.00. *)
 let frame : Effects.measurements =
