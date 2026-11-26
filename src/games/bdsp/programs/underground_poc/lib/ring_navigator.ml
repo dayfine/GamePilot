@@ -59,37 +59,27 @@ let handle_step ~picture ~on_prompt ~on_battle cur =
       else Ok (cur, false)
   | Effects.Timeout -> Ok (cur, false)
 
-let check_wall_dir ~picture ~on_prompt ~on_battle dir cur =
-  OW.run_hold dir ~hold_ms:wall_hug_ms;
-  OW.interact ();
-  handle_step ~picture ~on_prompt ~on_battle cur
-
-let check_walls_at_tile ~picture ~on_prompt ~on_battle dirs cur =
-  let rec loop acc = function
-    | [] -> Ok (acc, false)
-    | d :: rest ->
-        let* next, dug = check_wall_dir ~picture ~on_prompt ~on_battle d acc in
-        if dug then Ok (next, true) else loop next rest
-  in
-  loop cur dirs
+let primary_wall_dir ~along_dir = function
+  | d :: _ -> nav_dir_of_grid d
+  | [] -> (
+      match along_dir with
+      | Corridor_nav.East | Corridor_nav.West -> Corridor_nav.North
+      | Corridor_nav.North | Corridor_nav.South -> Corridor_nav.East)
 
 let probe_stop_walls ~picture ~on_prompt ~on_battle ~along_dir ~wall_dirs cur =
   subscribe_screen ~picture;
-  let dirs =
-    match wall_dirs with
-    | [] -> [ Corridor_nav.North; Corridor_nav.South ]
-    | xs -> List.map nav_dir_of_grid xs
-  in
+  let face_dir = primary_wall_dir ~along_dir wall_dirs in
+  OW.run_hold face_dir ~hold_ms:wall_hug_ms;
   let rec loop left acc =
     if left <= 0 then Ok acc
-    else
-      let* next, dug =
-        check_walls_at_tile ~picture ~on_prompt ~on_battle dirs acc
-      in
+    else (
+      OW.turn face_dir;
+      OW.interact ();
+      let* next, dug = handle_step ~picture ~on_prompt ~on_battle acc in
       if dug then Ok next
       else (
         OW.step_tap along_dir 1;
-        loop (left - 1) next)
+        loop (left - 1) next))
   in
   loop probe_tiles_around_stop cur
 
