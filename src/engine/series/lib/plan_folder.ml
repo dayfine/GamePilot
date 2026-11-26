@@ -1,13 +1,13 @@
 let plan_suffix = ".plan.json"
 
-let checkpoint_ids dir =
+let checkpoint_ids ?(compare = Checkpoint_order.compare) dir =
   match Sys.readdir dir with
   | names ->
       Ok
         (Array.to_list names
         |> List.filter (fun n -> Filename.check_suffix n plan_suffix)
         |> List.map (fun n -> Filename.chop_suffix n plan_suffix)
-        |> List.sort Checkpoint_order.compare)
+        |> List.sort compare)
   | exception Sys_error e -> Error e
 
 let rec drop_until id = function

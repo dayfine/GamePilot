@@ -4,11 +4,10 @@
     the HOME menu first ({!Switch_home.Home_screen}), else
     {!Plza_readers.Story_screen}, the Confirm Choices row
     ({!Plza_readers.Confirm_choices}), and whether the frame is the last read's
-    ({!Plza_readers.Frame_cells}). A read waits for a frame newer than the
-    inputs sent before it (500 ms at most). *)
-
-val tile_color : Switch_home.Home_screen.tile_color
-(** The HOME menu's selected tile, as the HOME check looks for it. *)
+    ({!Plza_readers.Frame_cells}). The probes also serve the reload
+    ({!Game_reload}): the loading screens ({!Plza_readers.Game_loading}) and the
+    backup save's arrow ({!Plza_readers.Choice_arrow}). A read waits for a frame
+    newer than the inputs sent before it (500 ms at most). *)
 
 val probes :
   picture:Wire.box -> assets:Plza_readers.Blob_assets.t -> Wire.probe_spec list

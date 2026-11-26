@@ -1,6 +1,6 @@
 (tests
- (names test_story_game test_plan_check)
- (modules test_story_game test_plan_check)
+ (names test_story_game test_plan_check test_run_attempts)
+ (modules test_story_game test_plan_check test_run_attempts)
  (deps
   (glob_files ../plans/*.plan.json))
  (libraries
