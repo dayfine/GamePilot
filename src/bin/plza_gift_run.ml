@@ -1,4 +1,6 @@
-(* plza.claim-gifts' run inputs, read at the edge: its gift catalog
+(* PLZA's gift catalog (gifts.json), read at the edge for plza.claim-gifts
+   and plza.bank-home (Plza_bank_home.Catalog_moves); and claim-gifts' run
+   inputs: its gift catalog
    (gifts.json), today's date (the host's, UTC) and the Internet gifts' name
    templates in the run's language; and its guide's gifts block. The program
    reads no clock and no file: they are handed to its series

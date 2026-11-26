@@ -1,7 +1,9 @@
-(** PLZA's Mystery Gift catalog: the gifts [plza.claim-gifts] claims, as
-    [gifts.json] in the program's folder lists them ({!Gift_catalog_decode}
-    reads it). Pure: the gifts, the date a run compares their expiry with, and
-    the lines that print them. Ours: the fork has no Mystery Gift program. *)
+(** PLZA's Mystery Gift catalog: the gifts [plza.claim-gifts] claims and
+    [plza.bank-home] banks in Pokémon HOME, as [gifts.json] in claim-gifts'
+    folder lists them ({!Gift_catalog_decode} reads it): the one place each
+    gift's box slot and HOME boxes are written. Pure: the gifts, the date a run
+    compares their expiry with, and the lines that print them. Ours: the fork
+    has no Mystery Gift program. *)
 
 type date = { year : int; month : int; day : int }
 (** A calendar day, as ISO writes it (2026-11-25). *)

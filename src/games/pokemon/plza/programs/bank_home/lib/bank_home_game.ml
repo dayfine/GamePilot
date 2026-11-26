@@ -12,10 +12,11 @@ let action = "bank_in_home"
 
 let check_event (event : Plan.event) =
   match (event.kind, event.way) with
-  | Named_action args, Some way when way = action ->
-      Result.map_error
-        (fun e -> event.id ^ ": " ^ e)
-        (Result.map ignore (Bank_moves_args.of_args args))
+  | Named_action [], Some way when way = action -> Ok ()
+  | Named_action _, Some way when way = action ->
+      Error
+        (event.id ^ ": " ^ action
+       ^ " takes no args: its moves are the gift catalog's")
   | _ -> Error (event.id ^ ": bank-home's plans name only " ^ action)
 
 let check_plan (plan : Plan.t) =
@@ -63,24 +64,23 @@ let start_check ~log (t : templates) =
 let bad_args (event : Plan.event) detail =
   Error (Failure.cause ~repeats:true "bad_args" (event.id ^ ": " ^ detail))
 
-let bank ~log ~picture (t : templates) (event : Plan.event) args =
-  match Bank_moves_args.of_args args with
-  | Error e -> bad_args event e
-  | Ok moves ->
+let bank ~log ~picture ~moves (t : templates) (event : Plan.event) = function
+  | [] ->
       Result.map_error
         (Failure.cause "home_bank_failed")
         (Pokemon_home.Home_bank.run ~log ~picture t.home (Bank moves))
+  | (key, _) :: _ -> bad_args event (key ^ " is not an arg of " ^ action)
 
 let no_handler what () =
   Error
     (Failure.cause ~repeats:true "no_handler"
        ("bank-home runs " ^ action ^ " only, no " ^ what))
 
-let make ~log ~picture t : Game.t =
+let make ~log ~picture ~moves t : Game.t =
   {
     run_own = (fun _ _ -> no_handler "walk" ());
     run_builtin = (fun _ -> no_handler "talk, answer, scene or save" ());
-    game_actions = [ (action, bank ~log ~picture t) ];
+    game_actions = [ (action, bank ~log ~picture ~moves t) ];
     flag_holds = (fun _ -> false);
     position = (fun () -> None);
     between_rounds = (fun () -> Ok ());

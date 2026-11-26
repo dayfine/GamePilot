@@ -129,7 +129,9 @@ let plza =
 let plza_home_series plan_dir args =
   let* f = Plza_checkpoint_series.Flags.parse args in
   let* options = program_options plan_dir f in
-  Plza_bank_home_series.Bank_home_runs.run_series
+  let* catalog = Plza_gift_run.catalog () in
+  let* moves = Plza_bank_home.Catalog_moves.of_catalog catalog in
+  Plza_bank_home_series.Bank_home_runs.run_series ~moves
     ~program:(program_fields plan_dir) ~options ~viewport:(viewport plan_dir f)
     plan_dir args
 

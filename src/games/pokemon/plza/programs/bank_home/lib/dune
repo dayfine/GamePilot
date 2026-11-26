@@ -10,4 +10,5 @@
   gamepilot.pokemon_home
   gamepilot.engine_run
   gamepilot.plza_rules
-  gamepilot.plza_engine))
+  gamepilot.plza_engine
+  gamepilot.plza_gift_catalog))
