@@ -196,6 +196,40 @@ let frlg_ace_setup =
     options = [];
   }
 
+(* The most of one item the bag holds. *)
+let bag_most = 999
+
+let frlg_ace =
+  {
+    id = "frlg.ace";
+    game = frlg;
+    name = "ACE";
+    group = [ "FRLG"; "Glitches" ];
+    description =
+      "Runs code typed as PC box names through species 0x0351: 999 of an item \
+       in the PC, some of them to the bag.";
+    doc = "docs/guide/frlg.ace.md";
+    checkpoints = Some "src/games/frlg/programs/ace/plans";
+    backends = [ Mgba ];
+    viewport = Nso_gba;
+    rules = Pokemon_grid;
+    options =
+      [
+        {
+          key = "item";
+          value = One_of [ "master-ball"; "luxury-ball" ];
+          presence = Required;
+          doc = "the item the code makes, 999 of it in the PC's item storage";
+        };
+        {
+          key = "withdraw";
+          value = Int_range (1, bag_most);
+          presence = Required;
+          doc = "how many of them go from the PC to the bag";
+        };
+      ];
+  }
+
 let frlg_dex_collection =
   {
     id = "frlg.dex_collection";
@@ -252,6 +286,7 @@ let all =
     frlg_sevii_story;
     frlg_dex_collection;
     frlg_ace_setup;
+    frlg_ace;
     frlg_wild_rng;
     plza_autostory;
   ]

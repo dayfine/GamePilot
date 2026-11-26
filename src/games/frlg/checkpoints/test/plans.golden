@@ -1,3 +1,23 @@
+== ace/plans/01-enter-code.plan.json
+frlg 01-enter-code from Route4_PokemonCenter_1F (11, 2) north: 3 game_action
+check_boxes: [ace_check_boxes] game_action {}
+enter_code: [ace_enter_code] game_action {}
+code_save: [save_game] game_action {}
+retries 2
+postconditions:
+none
+no repeat
+== ace/plans/02-trigger.plan.json
+frlg 02-trigger from Route4_PokemonCenter_1F (11, 2) north: 5 game_action
+room: [ace_check_room] game_action {}
+trigger: [ace_trigger] game_action {"box3_title":"EE …l‘"}
+stored: [ace_check_stored] game_action {}
+withdraw: [ace_withdraw] game_action {}
+save: [save_game] game_action {}
+retries 0
+postconditions:
+none
+no repeat
 == ace_setup/plans/01-buy-magikarp.plan.json
 frlg 01-buy-magikarp from anywhere outdoors: 3 game_action, 3 route, 1 talk, 2 answer, 1 scene
 fly_route4: [fly] game_action {"town":"Route4"} => Route4 (12, 6) south

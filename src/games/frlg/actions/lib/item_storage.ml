@@ -194,13 +194,16 @@ let screen_game_steps ~log =
     close = close ~log;
   }
 
-let display_name ~where slug =
+let item_name slug =
   let names =
     List.concat_map
       (Text.Item_names.in_pocket (Text_data.item_names ()))
       [ Items; Poke_balls; Tm_case; Berry_pouch ]
   in
-  match Bag_items.display_name names slug with
+  Bag_items.display_name names slug
+
+let display_name ~where slug =
+  match item_name slug with
   | Some n -> n
   | None -> Json_field.fail "%s: no item named %s" where slug
 

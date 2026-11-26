@@ -53,8 +53,7 @@ let rec to_name_row steps tries =
 
 let quoted s = "\"" ^ s ^ "\""
 
-let rename_shown steps ~log r =
-  steps.press Wire.Up;
+let name_on_title steps ~log ~others to_ =
   steps.press Wire.A;
   if steps.read_menu_label name_row <> Some "NAME" then
     M.fail "box_menu_missing" "no NAME on the menu A opened on the box title";
@@ -62,13 +61,17 @@ let rename_shown steps ~log r =
   steps.press Wire.A;
   if not (steps.await_naming_screen ()) then
     M.fail "naming_no_screen" "NAME did not open the naming screen";
-  steps.type_name r.to_;
+  steps.type_name to_;
   if not (steps.await_box_screen ()) then
     M.fail "box_name_wrong" "no box screen after the naming screen";
-  match steps.read_title [ r.to_; r.from ] with
-  | Some t when t = r.to_ -> log ("Box renamed " ^ quoted r.to_ ^ ".")
+  match steps.read_title (to_ :: others) with
+  | Some t when t = to_ -> log ("Box renamed " ^ quoted to_ ^ ".")
   | Some t -> M.fail "box_name_wrong" ("the title still reads " ^ quoted t)
-  | None -> M.fail "box_name_wrong" ("the title does not read " ^ quoted r.to_)
+  | None -> M.fail "box_name_wrong" ("the title does not read " ^ quoted to_)
+
+let rename_shown steps ~log r =
+  steps.press Wire.Up;
+  name_on_title steps ~log ~others:[ r.from ] r.to_
 
 let run steps ~log r =
   steps.open_move_pokemon ();
@@ -140,8 +143,7 @@ let await_naming_screen () =
       Naming_screen.page m = Some Upper)
 
 let await_box_screen () =
-  await_screen ~probes:Pc_screen.probes (fun m ->
-      (Pc_screen.read m).screen = Box_grid)
+  await_screen ~probes:Pc_screen.probes Pc_screen.box_screen_shown
 
 let box_chars = Naming_entry.box_name_chars
 

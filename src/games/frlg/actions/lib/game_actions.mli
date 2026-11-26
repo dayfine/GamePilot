@@ -8,6 +8,8 @@ type context = {
   facing : unit -> Grid_geometry.Direction.t option;
       (** Where the player faces, when known (the spin starts from it). *)
   stocks : unit -> (Mart_plan.stocks, string) result;
+  options : Run_options.t;
+      (** The program's run options, for the actions that read them. *)
 }
 
 val perform :
