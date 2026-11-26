@@ -7,10 +7,13 @@
     Boxes are found by their titles ({!Frlg_text.Box_title}): each title is read
     against every name a box may hold ({!Ace_presets.known_names}: the game's
     [BOX<n>] and every item's code). From the box the PC shows, RIGHT until a
-    title reads as Box 1's, then one RIGHT per box, each title read again: a
+    title reads as Box 1's, then one RIGHT per box, each title read again. A
+    RIGHT the screen dropped (seen on mGBA right after a rename: the title still
+    reads as the box before) is pressed again, up to three times; any other
     title that reads as another box's name (and not this one's) fails rather
     than renaming the wrong box. Boxes 12 to 14 are all [A], so a box reading
-    [A] is taken for the one counted to. *)
+    [A] is taken for the one counted to; both actions end with RIGHT from Box
+    14, which must reach Box 1, so a count lost among them fails too. *)
 
 type game_steps = {
   open_move_pokemon : unit -> unit;

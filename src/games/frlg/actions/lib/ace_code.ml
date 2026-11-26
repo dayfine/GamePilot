@@ -54,11 +54,47 @@ let open_at_box1 steps t =
   steps.press Wire.Up;
   to_box1 steps t P.boxes
 
+(* A title that reads as box [b - 1]'s and not [b]'s: the scroll was lost. *)
+let still_before t b name =
+  let before = if b = 1 then P.boxes else b - 1 in
+  List.mem name (P.known_names t before)
+  && not (List.mem name (P.known_names t b))
+
+let scroll_tries = 3
+
+(* With the hand on box [b - 1]'s title: RIGHT to box [b]'s, pressed again
+   while the title still reads as the box before (a RIGHT the screen dropped
+   on mGBA, right after a rename). *)
+let rec next_box steps t b tries =
+  steps.press Wire.Right;
+  match steps.read_title (all_names t) with
+  | Some name when still_before t b name ->
+      if tries = 0 then
+        M.fail "ace_box_lost" (Printf.sprintf "RIGHT did not reach Box %d" b);
+      next_box steps t b (tries - 1)
+  | _ -> ()
+
 (* From box [from]'s title RIGHT to box [to_]'s, which must read. *)
 let scroll steps t ~from to_ =
-  List.iter steps.press (presses (to_ - from) Wire.Right);
+  List.iter
+    (fun b -> next_box steps t b scroll_tries)
+    (List.init (to_ - from) (fun i -> from + i + 1));
   if title_of steps t to_ = None then
     M.fail "ace_box_lost" (Printf.sprintf "Box %d's title does not read" to_)
+
+(* On Box 14's title: RIGHT wraps to Box 1, whose title must read [box1]
+   (any of its names when [None]): the count of boxes held, though Boxes 12
+   to 14 share a name. *)
+let wrap_to_box1 steps t box1 =
+  next_box steps t 1 scroll_tries;
+  let ok =
+    match (steps.read_title (all_names t), box1) with
+    | Some name, Some want -> name = want
+    | Some name, None -> List.mem name (P.known_names t 1)
+    | None, _ -> false
+  in
+  if not ok then
+    M.fail "ace_box_lost" "RIGHT from what was counted as Box 14 is not Box 1"
 
 (* The box grid: six slots a row; DOWN from the title lands on the top row's
    third slot (Ace_trigger). *)
@@ -124,6 +160,7 @@ let check_boxes steps ~log t =
          check_empty steps ~log b slots;
          b)
        ace_box empty_slots);
+  wrap_to_box1 steps t None;
   steps.close ()
 
 let name_box steps ~log t item b =
@@ -140,9 +177,10 @@ let enter_code steps ~log t item =
   open_at_box1 steps t;
   List.iter
     (fun b ->
-      if b > 1 then steps.press Wire.Right;
+      if b > 1 then next_box steps t b scroll_tries;
       name_box steps ~log t item b)
     box_numbers;
+  wrap_to_box1 steps t (Some (P.box_name item 1));
   steps.close ()
 
 let screen_game_steps ~log =

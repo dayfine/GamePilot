@@ -19,6 +19,8 @@ type fake = {
   mutable slot : int;  (** 0-based *)
   mutable typed : string list;
   unread : int option;  (** a box (0-based) whose title reads as nothing *)
+  mutable drops : int;  (** RIGHT presses on the title still to drop *)
+  drop_after_rename : int;  (** RIGHT presses dropped after each rename *)
 }
 
 let press f (b : Wire.button) =
@@ -28,6 +30,7 @@ let press f (b : Wire.button) =
   | Down when f.on_title ->
       f.on_title <- false;
       f.slot <- 2
+  | Right when f.on_title && f.drops > 0 -> f.drops <- f.drops - 1
   | Right when f.on_title -> f.box <- (f.box + 1) mod 14
   | Left when f.on_title -> f.box <- (f.box + 13) mod 14
   | Down -> f.slot <- f.slot + 6
@@ -51,12 +54,13 @@ let steps f : C.game_steps =
     name_title =
       (fun ~others:_ name ->
         f.typed <- Printf.sprintf "%d:%s" (f.box + 1) name :: f.typed;
-        f.titles.(f.box) <- name);
+        f.titles.(f.box) <- name;
+        f.drops <- f.drop_after_rename);
     close = (fun () -> ());
   }
 
 let make ?(box = 2) ?(titles = fun i -> Printf.sprintf "BOX%d" (i + 1))
-    ?(stray = None) ?unread () =
+    ?(stray = None) ?unread ?(drop_after_rename = 0) () =
   let slots = Array.init 14 (fun _ -> Array.make 30 None) in
   slots.(2).(0) <- Some ace;
   slots.(0).(0) <- Some "MIMIEN";
@@ -69,6 +73,8 @@ let make ?(box = 2) ?(titles = fun i -> Printf.sprintf "BOX%d" (i + 1))
     slot = 0;
     typed = [];
     unread;
+    drops = 0;
+    drop_after_rename;
   }
 
 let outcome f run =
@@ -125,6 +131,22 @@ let () =
           enter master (make ~titles ()))
         "ace_box_lost: Box 6's title reads \"BOX7\", another box's name; typed \
          0: ";
+      case "a RIGHT dropped after each rename: pressed again"
+        (fun () ->
+          let f = make ~titles:(named luxury) ~drop_after_rename:1 () in
+          f.titles.(3) <- "BOX4";
+          let o = enter master f in
+          o ^ "; Box 6 " ^ f.titles.(5))
+        "ok; typed 2: 4:E♀BRm, 5:G……o; Box 6 EEEJD!n";
+      case "four RIGHTs dropped: stopped"
+        (fun () ->
+          enter master (make ~titles:(named luxury) ~drop_after_rename:4 ()))
+        "ace_box_lost: RIGHT did not reach Box 6; typed 1: 5:G……o";
+      case "Box 13 left BOX13, the rest right: renamed, the wrap reaches Box 1"
+        (fun () ->
+          let titles i = if i = 12 then "BOX13" else named master i in
+          enter master (make ~titles ()))
+        "ok; typed 1: 13:A";
       case "no Box 1 anywhere"
         (fun () -> enter master (make ~titles:(fun _ -> "?") ()))
         "ace_box_lost: no box title reads as Box 1; typed 0: ";
