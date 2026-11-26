@@ -1,51 +1,67 @@
 # C. BDSP legendary RNG
 
-Goal: shiny static legendaries in BDSP through the blink RNG, on GamePilot (the rest of slice S2).
+GamePilot will build shiny static legendary RNG as the rest of slice S2, tracked in
+[issue #18](https://github.com/dayfine/GamePilot/issues/18). The
+[fork design](../design/BDSP-Static-Legendary-RNG.md) is the reference for encounter mechanics and
+save setup. GamePilot goes first, following the closure of
+[dayfine/Arduino-Source#782](https://github.com/dayfine/Arduino-Source/pull/782).
 
-## What is already covered (PRs #1-#4)
+## Current foundation
 
-| PR | Covers |
+The [starter RNG design](../design/BDSP-RNG.md) defines the shared Switch capture, replay, and
+timing work (W1–W10). Main has the pure OCaml [BDSP RNG library](../../src/games/bdsp/rng)
+and its C++ golden fixtures. The starter attempt loop and a registered BDSP program are still ahead.
+
+| Landed | Reuse for statics |
 |---|---|
-| #1 | `docs/design/BDSP-RNG.md`: the starter RNG port (W1-W10), daemon every-frame probes, capture timestamps, `submit` at a time. It names legendaries as "the rest of S2", **not in that plan** |
-| #2 | `src/games/bdsp/rng`: Xorshift128, static encounter generation, blink model |
-| #3 | blink state solvers, blink extraction, the reidentifier |
-| #4 | blink recovery, re-anchoring, the advance clock, hit calibration |
+| [#2](https://github.com/dayfine/GamePilot/pull/2) | Xorshift128, the blink model, and static generation and search. The generator and search already accept Synchronize. |
+| [#3](https://github.com/dayfine/GamePilot/pull/3) | Blink extraction, the periodic player/NPC and aperiodic Pokémon blink solvers, and the reidentifier for periodic NPC blinks. Mixed player and Pokémon-model reidentification (`1PK`) is new work. |
+| [#4](https://github.com/dayfine/GamePilot/pull/4) | Pure blink recovery, re-anchoring, the advance clock, and hit calibration. The stat calculation accepts a level and base stats. Hit identification currently generates with Synchronize off. |
 
-Everything here builds on those; nothing is repeated. The starter (W9) proves the loop first.
+The [Switch backend](../switch-bring-up.md) buffers captured frames and timestamps them after
+each read. The protocol exposes their sequence numbers and
+[ring gap counters](../../protocol/v1/README.md#methods).
+Use those for capture health and replay. The BDSP timing measurements, eye template probe,
+absolute-time input, and capture-gap handling still follow W3–W8 and W10 of the starter design.
+The fork's Stream History diagnosis describes a C++ capture failure. On GamePilot, carry frame gaps
+to blink extraction and replay so a missing dip can leave the blink type unknown.
 
-## Source plan
+## Encounter workflows
 
-Fork PR #782 (closed; its design is now `docs/design/BDSP-Static-Legendary-RNG.md` here) extends the starter RNG to every static:
+- **Quiet room (A).** Recover the state from player blinks before entering the chamber, then track
+  the legendary model's aperiodic blinks on the room-entry timeline. This is the first approach for
+  Dialga or Palkia and also applies to Uxie, Azelf, and Giratina. Rotom can use a direct trigger.
+- **In-chamber save (B).** Recover the boot state from the Munchlax intro, load the save, and
+  reidentify the advance with one player and one Pokémon model (`1PK`). This lets Ramanas Park
+  start after the slate fixes the encounter species. Heatran, Regigigas, Darkrai, and Arceus can
+  follow once their scenes and trigger timings are measured.
 
-- **Two workflows.** (A) Recover the state from the player's blinks in a quiet room one step before
-  the chamber (Dialga/Palkia, the lake guardians, Giratina), then walk in on a timeline that counts
-  the legendary model's blinks. (B) Recover the seed on the Munchlax intro screen at boot (the
-  intro seed finder), load the save facing the legendary, reidentify the advance with one player and
-  one Pokemon model (`1PK`), press on target (Ramanas Park after inserting a slate, Heatran,
-  Regigigas, Darkrai, Arceus, roamers).
-- **Why two.** 3D Pokemon models blink on an aperiodic timer; the periodic player-blink solver fails
-  while one is on screen.
-- **Fixes it found** in the C++ starter code: wrong levels and abilities in the target table,
-  summary stat bounds for Lv 5 only, menu and party-slot assumptions, Synchronize not passed to the
-  searcher.
-- **Out of v1**: Shaymin (Flower Paradise advances the RNG about 279 times a second); roamers
-  (Mesprit, Cresselia) need a separate flow because pressing A releases them instead of battling.
-- **Stream History** must be off during blink sampling (a frame stall misreads a double blink).
+V1 covers static battles. Shaymin's Flower Paradise particle effects consume about 279 advances per
+second, and Mesprit and Cresselia need a separate release flow. V1 excludes those three encounters.
 
-## Steps (after W9 passes)
+## Steps after the starter (W9) passes
 
-1. Target table for statics as data, with #782's corrections, checked against PokeFinder's generator.
-2. `reidentify_with_pokemon_models` (`1PK`) in `src/games/bdsp/rng`, C++ as oracle once the fork has it.
-3. Intro seed finder (Munchlax) as a program on the effects, replayed from recorded blinks.
-4. Static press schedule (one confirm), separate from the starter's three-press timeline.
-5. Per-target navigation; first target: one Ramanas Park slate (workflow B), then Dialga or Palkia
-   (workflow A).
+1. Add verified encounter data for the first targets. Check levels, ability roll counts,
+   guaranteed IVs, and Synchronize against PokeFinder and the existing C++ vectors where they
+   overlap. Treat blind delays in the fork design as starting values for console calibration.
+2. Build the Munchlax capture and seed recovery flow on the game effects using the existing
+   Pokémon blink solver. Replay recorded intro blinks before running it live.
+3. Add mixed-model timeline simulation and `1PK` reidentification to the RNG library. Use
+   deterministic simulated traces for unique, ambiguous, and missing matches, then check against
+   recorded in-chamber blinks.
+4. Add the static trigger scheduler and encounter readers. Pass the lead's Synchronize setting
+   through search and hit identification, and verify summary reads at the encounter's level when
+   catch calibration is enabled. Catch calibration defaults off and uses standard balls when
+   enabled. A Master Ball is opt-in.
+5. Validate one post-slate Ramanas Park encounter on the Switch with autosave off, then one
+   Dialga or Palkia encounter to cover workflow A. Replay each workflow end to end and measure the
+   hit offset before expanding the target list.
 
 ## Prerequisites
 
-Post-game BDSP saves for each target; Ramanas Park slates come from D (Underground). W3-W8 of #1.
+A passing starter loop (W9), a post-game BDSP save, and a matching slate for the first Ramanas Park
+test. [Underground mining](bdsp-underground-mining.md) can supply slates for later runs.
 
-## Open questions
+## Open question
 
-- Which targets first, and on which version?
-- ~~Does the C++ fork implement #782 first?~~ GamePilot goes first; the fork PR is closed (2026-11-25).
+Which Ramanas Park encounter and game version should provide the first post-slate test save?
