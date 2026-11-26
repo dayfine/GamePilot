@@ -23,16 +23,21 @@
       "How the code runs").
 
     Box 3 is told by its title ({!Frlg_text.Box_title}): after the code is
-    typed, it reads one of the code's names, so a plan gives it. The partner's
-    box is counted from Box 3 by scrolls. The species is never read: the swap
-    needs a Pokémon there, not a given one. *)
+    typed, it reads the code's name for it, the run's item's
+    ({!Ace_presets.box_name}) unless a plan gives one. The partner's box is
+    counted from Box 3 by scrolls; its partner is the first slot there, in
+    reading order, that holds a Pokémon (PKMN DATA shows text), unless a plan
+    names the slot. The species is never read: the swap needs a Pokémon there,
+    not a given one. *)
 
 type trigger = {
   box3_title : string;  (** Box 3's name: 0x0351 in slot 1. *)
   partner_box : int;
       (** Where the partner waits when Box 3 slot 2 is empty: its box (1-14,
           default 1) ... *)
-  partner_slot : int;  (** ... and slot there (1-30, default 1). *)
+  partner_slot : int option;
+      (** ... and slot there (1-30); [None]: the box's first slot that holds a
+          Pokémon (from slot 3 in Box 3). *)
 }
 (** ["ace_trigger"]'s args. *)
 
@@ -70,10 +75,11 @@ val alive_timeout_ms : int
 val run : game_steps -> log:(string -> unit) -> trigger -> unit
 (** Fails as [ace_box_not_found] (no title reads the box in {!boxes} scrolls, or
     the partner was put down in another box), [ace_partner_missing] (the
-    partner's slot holds no Pokémon, or it did not land), [ace_not_in_slot] (Box
-    3 slot 1 does not show 0x0351), [ace_hand_not_quick] (SELECT did not turn
-    the hand orange) or [ace_game_stopped] (no box title after the swaps: the
-    game hung or reset). *)
+    partner's given slot holds no Pokémon, its box holds none, a slot does not
+    read, or it did not land), [ace_not_in_slot] (Box 3 slot 1 does not show
+    0x0351), [ace_hand_not_quick] (SELECT did not turn the hand orange) or
+    [ace_game_stopped] (no box title after the swaps: the game hung or reset).
+*)
 
 val screen_game_steps : log:(string -> unit) -> game_steps
 (** The box screen's steps on mGBA's timings: {!Pc_box}'s walk to MOVE POKéMON
@@ -85,6 +91,10 @@ val screen_game_steps : log:(string -> unit) -> game_steps
     DATA's level; [await_alive] reads the title up to four times. *)
 
 val handlers :
-  log:(string -> unit) -> (string * Pokemon_engine.Game.game_action) list
-(** [ace_trigger], args [{"box3_title", "partner_box"?, "partner_slot"?}]: the
-    box 1-14 and slot 1-30, not Box 3 slot 1. *)
+  log:(string -> unit) ->
+  options:Run_options.t ->
+  (string * Pokemon_engine.Game.game_action) list
+(** [ace_trigger], args [{"box3_title"?, "partner_box"?, "partner_slot"?}]: the
+    box 1-14 and slot 1-30, not Box 3 slot 1. With no [box3_title], Box 3's name
+    is the run's [item] option's ({!Ace_presets.run_item}); with neither, it
+    fails as [bad_args] before anything is pressed. *)

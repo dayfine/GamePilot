@@ -45,3 +45,7 @@ val box_name : item -> int -> string
 val known_names : t -> int -> string list
 (** Every name box [b] may hold before or after a run: the game's default
     (["BOX<b>"]) and each item's name for it, each once. *)
+
+val run_item : Run_options.t -> (t * item, string) result
+(** The table and the item the run's [item] option names, or why not: no [item]
+    option, a slug not in the table, or the table refused. *)
