@@ -227,6 +227,11 @@ let recover_if_mid_dig ~picture ~goal ~counters =
       let* next = run_dig_step ~report ~picture ~goal ~counters () in
       home_to_south_door ();
       Ok next
+  | Some scr when scr.dialog ->
+      log "Started on post-dig dialog; clearing before homing...";
+      let _items = MP.collect_dig_yields ~log ~picture () in
+      home_to_south_door ();
+      Ok counters
   | Some scr ->
       log ("Initial screen: " ^ US.to_string scr);
       home_to_south_door ();

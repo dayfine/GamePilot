@@ -244,8 +244,19 @@ let dig_wall_smart ?announced_items ~log ~picture ~goal ~tally () =
   dig_loop ~log ~goal ~tally (make_dig_state ~announced_items:announced) 0 false
 
 let yield_probe_timeout_ms = 1000
-let yield_advance_wait_ms = 650
-let yield_max_presses = 15
+let yield_enter_timeout_ms = 5000
+let yield_advance_wait_ms = 750
+let yield_max_presses = 20
+
+let post_dig_ui_active m =
+  let scr = Bdsp_readers.Underground_screen.read m in
+  scr.dialog
+  || scr.fade = Screen_state.Fade.Black
+  || Bdsp_readers.Dig_result_reader.on_item_spotlight m
+
+let wait_post_dig_ui () =
+  match Effects.await ~timeout_ms:yield_enter_timeout_ms post_dig_ui_active with
+  | Effects.Holds _ | Effects.Timeout -> ()
 
 let record_spotlight_item ~log acc m =
   match Bdsp_readers.Dig_result_reader.read m with
@@ -259,7 +270,7 @@ let advance_yield_frame ~log acc m =
   let acc, saw_item = record_spotlight_item ~log acc m in
   if (not saw_item) && (not scr.dialog) && scr.fade = No_fade then None
   else (
-    Bdsp_overworld.interact ();
+    if scr.dialog || saw_item then Bdsp_overworld.interact ();
     P.wait yield_advance_wait_ms;
     Some acc)
 
@@ -279,4 +290,5 @@ let collect_dig_yields ~log ~picture () =
     @ Bdsp_readers.Dig_result_reader.probes ~picture
   in
   ignore (Effects.subscribe probes : string list);
+  wait_post_dig_ui ();
   collect_yields_loop ~log yield_max_presses []
