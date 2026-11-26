@@ -1,5 +1,5 @@
-(** One read of the screen as 00-new-game ({!New_game_intro}) reads it: the HOME
-    menu, the new game's screens before Confirm Choices
+(** One read of the screen as 01.00a-new-game ({!New_game_intro}) reads it: the
+    HOME menu, the new game's screens before Confirm Choices
     ({!Plza_readers.Intro_screens}), the name keyboard's cursor and text field
     ({!Switch_home.Keyboard_typing}) and Confirm Choices. *)
 

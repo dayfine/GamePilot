@@ -9,4 +9,4 @@ val upload : unit -> (Plza_readers.Blob_assets.t, string) result
 val upload_home_title : unit -> (Effects.template_hash, string) result
 (** PLZA's title on the Switch's HOME
     ({!Plza_readers.Switch_home_tile.title_template}), uploaded for
-    00-new-game's launch; [Error] when it is not found from here. *)
+    01.00a-new-game's launch; [Error] when it is not found from here. *)

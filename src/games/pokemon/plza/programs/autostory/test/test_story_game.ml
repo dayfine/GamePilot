@@ -1,4 +1,4 @@
-(* 00-new-game's choices reaching its new game, the program's options over them;
+(* 01.00a-new-game's choices reaching its new game, the program's options over them;
    and 01.00b to 03.11 run through the engine (Plza_engine.Runner) with
    Story_game's handlers on a scripted console (Fake_console): the plans
    decode, every event reaches its handler, and each handler's presses move a
@@ -378,7 +378,7 @@ let run_plan (p : Plan.t) screen =
 
 let result checkpoint screen () = run_plan (plan checkpoint) screen
 
-(* 00-new-game's plan with a new game that only says what it was given, or the
+(* 01.00a-new-game's plan with a new game that only says what it was given, or the
    default new game ([given] false); [options]: the program's options over the
    plan's choices. *)
 let new_game_given ?(given = true) ?options part () =
@@ -388,7 +388,7 @@ let new_game_given ?(given = true) ?options part () =
     Ok ()
   in
   let steps = C.steps (C.create ()) look in
-  let checkpoint = (plan "00-new-game").checkpoint in
+  let checkpoint = (plan "01.00a-new-game").checkpoint in
   let game =
     if given then
       Plza_autostory.Story_game.make ?options ~new_game steps ~checkpoint
@@ -872,49 +872,50 @@ let lab_elevator ?(lost = false) c =
           | Some _ -> party c))
   | _ -> party c
 
-let cases_00_new_game =
+let cases_01_00a_new_game =
   [
-    case "00-new-game: the run passes" (new_game_given run_end) "passed";
-    case "00-new-game: the plan's language reaches the new game"
+    case "01.00a-new-game: the run passes" (new_game_given run_end) "passed";
+    case "01.00a-new-game: the plan's language reaches the new game"
       (new_game_given (played_choice tag))
       "en";
-    case "00-new-game: the plan's look reaches the new game"
+    case "01.00a-new-game: the plan's look reaches the new game"
       (new_game_given (played_choice look_of))
       "1";
-    case "00-new-game: the plan's name reaches the new game"
+    case "01.00a-new-game: the plan's name reaches the new game"
       (new_game_given (played_choice name_of))
       "Kosmos";
-    case "00-new-game: a language option replaces the plan's"
+    case "01.00a-new-game: a language option replaces the plan's"
       (new_game_given ~options:french_5 (played_choice tag))
       "fr";
-    case "00-new-game: a look option replaces the plan's"
+    case "01.00a-new-game: a look option replaces the plan's"
       (new_game_given ~options:french_5 (played_choice look_of))
       "5";
-    case "00-new-game: no name option keeps the plan's"
+    case "01.00a-new-game: no name option keeps the plan's"
       (new_game_given ~options:french_5 (played_choice name_of))
       "Kosmos";
-    case "00-new-game: a name option alone keeps the plan's language"
+    case "01.00a-new-game: a name option alone keeps the plan's language"
       (new_game_given
          ~options:
            { Plza_autostory.New_game_options.none with name = Some "Ana" }
          (played_choice tag))
       "en";
-    case "00-new-game to 01.00b with options: the language it will play"
-      (choices_of ~options:french_5 tag [ "00-new-game"; "01.00b" ])
+    case "01.00a-new-game to 01.00b with options: the language it will play"
+      (choices_of ~options:french_5 tag [ "01.00a-new-game"; "01.00b" ])
       "ok: fr";
-    case "00-new-game, no options: the plan's language"
-      (choices_of tag [ "00-new-game" ])
+    case "01.00a-new-game, no options: the plan's language"
+      (choices_of tag [ "01.00a-new-game" ])
       "ok: en";
     case "01.01 to 01.02, no options: no new game"
       (choices_of tag [ "01.01"; "01.02" ])
       "ok: ";
     case "01.01 to 01.02 with options: refused, no new game to take them"
       (choices_of ~options:french_5 tag [ "01.01"; "01.02" ])
-      "error: --options language, look and name are 00-new-game's choices, and \
-       this series has no new game: start it at 00-new-game, or drop them";
+      "error: --options language, look and name are 01.00a-new-game's choices, \
+       and this series has no new game: start it at 01.00a-new-game, or drop \
+       them";
     case
-      "00-new-game with a name its language cannot take: refused before the \
-       console"
+      "01.00a-new-game with a name its language cannot take: refused before \
+       the console"
       (choices_of
          ~options:
            {
@@ -922,12 +923,12 @@ let cases_00_new_game =
              language = Some Plza_story.New_game_choices.Japanese;
              name = Some "Kosmoss";
            }
-         name_of [ "00-new-game" ])
-      "error: 00-new-game: AutoStory: the player name \"Kosmoss\" has 7 \
+         name_of [ "01.00a-new-game" ])
+      "error: 01.00a-new-game: AutoStory: the player name \"Kosmoss\" has 7 \
        characters; the game takes at most 6 in this language (ja).";
-    case "00-new-game with no console new game: no handler, repeats"
+    case "01.00a-new-game with no console new game: no handler, repeats"
       (new_game_given ~given:false run_end)
-      "00-new-game event 1 (new_game): no_handler: new_game runs on the \
+      "01.00a-new-game event 1 (new_game): no_handler: new_game runs on the \
        console only";
   ]
 
@@ -1670,7 +1671,7 @@ let cases_03_07_to_03_11 =
 
 let () =
   Table_test.run "plza_story_game"
-    (cases_00_new_game @ cases @ cases_actions @ cases_02_01 @ cases_02_02
+    (cases_01_00a_new_game @ cases @ cases_actions @ cases_02_01 @ cases_02_02
    @ cases_02_03 @ cases_02_04 @ cases_02_05 @ cases_02_06 @ cases_02_07
    @ cases_03_01 @ cases_03_02 @ cases_03_02b @ cases_03_03 @ cases_03_04
    @ cases_signatures @ cases_03_07_to_03_11)

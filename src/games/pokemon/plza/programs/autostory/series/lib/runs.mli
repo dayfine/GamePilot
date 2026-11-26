@@ -23,7 +23,7 @@ val load_plan : plan_dir:string -> string -> (Plza_engine.Plan.t, string) result
 
 val checkpoint_order : string -> string -> int
 (** PLZA's checkpoints run in plain name order: 01.00b, 03.02b and 03.03b,
-    03.03c follow 00-new-game, 03.02 and 03.03 (the checkpoint rows of the
+    03.03c follow 01.00a-new-game, 03.02 and 03.03 (the checkpoint rows of the
     fork's PokemonLZA_AutoStoryPlan.h). *)
 
 val run_series :
@@ -38,7 +38,7 @@ val run_series :
     decides; every plan loaded and checked ({!Plza_autostory.Plan_check}) before
     the console moves. [program] is run.json's program fields, [options] the
     program's options, checked (Program_registry.check_options), for run.json
-    and 00-new-game's choices
+    and 01.00a-new-game's choices
     ({!Plza_autostory.New_game_options.of_run_options}: [Error] before the
     console moves on choices it cannot play), [viewport] the Switch daemons'
     (the registry's check of --viewport). [Ok 0] when every one passed, [Ok 1]

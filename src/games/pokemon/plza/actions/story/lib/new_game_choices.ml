@@ -128,7 +128,7 @@ let decls : Run_options.decl list =
       key = "language";
       value = One_of typed_tags;
       presence = Optional;
-      doc = "the new game's language (00-new-game; not given: the plan's)";
+      doc = "the new game's language (01.00a-new-game; not given: the plan's)";
     };
     {
       key = "look";

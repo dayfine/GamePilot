@@ -1,4 +1,4 @@
-(* 00-new-game (New_game_intro) on a scripted console: HOME, the launch, the logos,
+(* 01.00a-new-game (New_game_intro) on a scripted console: HOME, the launch, the logos,
    the language list (the D-pad moves its highlight), the look picker (no
    highlight until the first tilt, which lands on a look of the console's
    choosing; each tilt moves it after), the name keyboard (the D-pad moves its
@@ -265,9 +265,9 @@ let runs =
       "8";
     case "not on HOME: refused"
       (played outcome (console ~home:false ()))
-      ("new_game_refused: AutoStory: 00-new-game starts a new game (no save) \
-        from the Switch HOME. It is not on screen; pressed B once to wake the \
-        screen, nothing else was pressed. " ^ hint);
+      ("new_game_refused: AutoStory: 01.00a-new-game starts a new game (no \
+        save) from the Switch HOME. It is not on screen; pressed B once to \
+        wake the screen, nothing else was pressed. " ^ hint);
     case "not on HOME: one B" (played presses (console ~home:false ())) "1";
     case "the launch fails"
       (played outcome (console ~launches:false ()))

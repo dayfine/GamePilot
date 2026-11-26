@@ -1,5 +1,5 @@
-(** 00-new-game's new game ({!Plza_story.New_game_intro}) on the live console:
-    its screen read in the effect context, the HOME menu
+(** 01.00a-new-game's new game ({!Plza_story.New_game_intro}) on the live
+    console: its screen read in the effect context, the HOME menu
     ({!Switch_home.Home_screen}), the intro's screens
     ({!Plza_readers.Intro_screens}), the name keyboard's cursor and text field
     ({!Switch_home.Keyboard_typing}) and Confirm Choices
@@ -17,8 +17,8 @@
 
 val probes :
   picture:Wire.box -> home_title:Effects.template_hash -> Wire.probe_spec list
-(** The probes a read needs, subscribed only while 00-new-game runs, with PLZA's
-    HOME title template ({!Plza_readers.Switch_home_tile.title_template})
+(** The probes a read needs, subscribed only while 01.00a-new-game runs, with
+    PLZA's HOME title template ({!Plza_readers.Switch_home_tile.title_template})
     uploaded. *)
 
 val run :

@@ -5,7 +5,7 @@ module Plan = Plza_engine.Plan
 let bad_args (event : Plan.event) detail =
   Error (Failure.cause ~repeats:true "bad_args" (event.id ^ ": " ^ detail))
 
-(* 00-new-game's choices: "language" (a tag), "look" (1 to 8) and "name", each
+(* 01.00a-new-game's choices: "language" (a tag), "look" (1 to 8) and "name", each
    optional, the fork's default when absent. *)
 let language_choice (c : New_game_choices.t) event tag =
   match New_game_choices.of_tag tag with
@@ -34,8 +34,8 @@ let choices ~options (event : Plan.event) (args : Json_field.obj) =
        (Ok New_game_choices.default) args)
 
 let refused_options =
-  "--options language, look and name are 00-new-game's choices, and this \
-   series has no new game: start it at 00-new-game, or drop them"
+  "--options language, look and name are 01.00a-new-game's choices, and this \
+   series has no new game: start it at 01.00a-new-game, or drop them"
 
 let playable (checkpoint : Plan.checkpoint) c =
   match New_game_choices.problem c with

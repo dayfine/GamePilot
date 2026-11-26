@@ -24,7 +24,7 @@ type setup = {
   info : Run_record.info;
   daemons : Live_run.Series_daemons.t;
   new_game : Story.New_game_options.t;
-      (* 00-new-game's choices, from the program's options. *)
+      (* 01.00a-new-game's choices, from the program's options. *)
 }
 
 let load_plan ~plan_dir id =
@@ -60,7 +60,7 @@ let start ~log ~picture ~reload (plan : P.Plan.t) =
   | true, None -> Error (unreachable plan)
   | true, Some _ -> back_to_autosave ~log ~picture
 
-(* 00-new-game's new game, with PLZA's HOME title uploaded for its launch; the
+(* 01.00a-new-game's new game, with PLZA's HOME title uploaded for its launch; the
    choices it plays (the program's options over the plan's) in the log. *)
 let new_game ~log ~picture choices =
   log ("[Console] new game: " ^ Story.New_game_options.describe choices);
