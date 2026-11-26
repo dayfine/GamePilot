@@ -39,6 +39,15 @@ let steps c screen : Plza_story.Steps.game_steps =
         c.now <- c.now +. frame_ms;
         let look = screen c in
         if check look then Some look else None);
+    race_batch =
+      (fun commands check ->
+        List.find_map
+          (fun command ->
+            submit c command;
+            c.now <- c.now +. frame_ms;
+            let look = screen c in
+            if check look then Some look else None)
+          commands);
     race_then =
       (fun command check next ->
         submit c command;
@@ -48,6 +57,7 @@ let steps c screen : Plza_story.Steps.game_steps =
           List.iter (submit c) (next look);
           Some look)
         else None);
+    now = (fun () -> c.now);
     log;
     log_detail = log;
   }

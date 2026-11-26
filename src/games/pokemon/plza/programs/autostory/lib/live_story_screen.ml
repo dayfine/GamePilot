@@ -88,6 +88,9 @@ let raced = function
 let race c check =
   raced (Effects.race [ c ] ~stop:(fun m -> check (look_of ~still:false m)))
 
+let race_batch cs check =
+  raced (Effects.race cs ~stop:(fun m -> check (look_of ~still:false m)))
+
 let race_then c check next =
   raced
     (Effects.race_then [ c ]
@@ -101,7 +104,9 @@ let game_steps ~log ~log_detail : Plza_story.Steps.game_steps =
     submit_batch = (fun cs -> ignore (Effects.submit cs : Wire.batch_done));
     read_screen = read_screen last;
     race;
+    race_batch;
     race_then;
+    now = Effects.now;
     log;
     log_detail;
   }

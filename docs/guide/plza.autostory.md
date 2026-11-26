@@ -21,7 +21,7 @@ alone (`--from 01.01`). The Switch's capture must be the whole 1920x1080 picture
 <!-- generated:commands -->
 ```sh
 # the Switch: each checkpoint once, from where the console is
-cd src && opam exec -- dune exec -- gamepilot run plza.autostory --from 01.00b --to 03.06 --mode testing --backend switch --serial PORT --capture DEVICE \
+cd src && opam exec -- dune exec -- gamepilot run plza.autostory --from 01.00b --to 03.11 --mode testing --backend switch --serial PORT --capture DEVICE \
     --watch
 ```
 <!-- /generated -->
@@ -50,8 +50,11 @@ cd src && opam exec -- dune exec -- gamepilot run plza.autostory --from 01.00b -
 | 03.03c | Off the roof to Station Front |
 | 03.04 | Pokemon Center, the Pokedex |
 | 03.06 | To the Wild Zones card |
+| 03.07 | Into Wild Zone 1: first catches |
+| 03.10 | Up the Research Lab's elevator to the Director's Office |
+| 03.11 | Mable's research, the Rock Smash TM |
 
-<!-- plans: b620b33472c8 -->
+<!-- plans: 31ea32d71c40 -->
 <!-- /generated -->
 
 01.00b confirms the choices, skips the opening and waits for the platform. 01.01 sets the text
@@ -72,6 +75,12 @@ Main Mission 03 leaves Room 202 by the elevator to the lobby, out of Hotel Z, an
 battle (Totodile, then Tepig) and her talk over the map; past the rock pile, up the side street's
 ladder (stepping along the wall until "Climb Up" shows) and off the roof; into the Pokémon Center
 for the Pokédex, then on to Wild Zone 1's gate and the Wild Zones card. Some walks run with B held.
+
+In Wild Zone 1 it runs to the gate's A prompt with B held, catches the tutorial's Fletchling (each
+throw locks on with ZL, then throws with ZL and ZR; one that breaks out into a battle weakens the
+target first) and Bunnelby (attacks until three land, then a throw, sweeping the camera when the
+target is out of sight). In the Research Lab it rides the elevator to the third floor and claims
+Mable's research reward from the main menu.
 
 ## When it stops
 
@@ -108,6 +117,12 @@ Failures:
 - A scene that presses A first, on free control with no A prompt (two reads 300 ms apart), fails
   `prompt_not_seen` before pressing anything: the walk before it stopped short.
 - 03.03b's ladder: `ladder_not_found` when no step along the wall shows "Climb Up".
+- The run to a gate: `gate_not_reached` when no A prompt shows in time (a day/night change gets
+  one more run).
+- A catch: `no_catch` when no throw is followed by the caught card, `still_a_target` when a target
+  still locks on after the last round.
+- Mable's reward: `main_menu_not_reached` when X never opens the main menu, `no_reward_lines` when
+  her research page shows no lines (nothing was claimed).
 - 03.02b's map talk: `map_talk_timeout` when the party bar never holds within 2 minutes.
 - A lost battle (a black fade with the lead's HP near empty) fails `battle_lost`. Run 01.03 again
   (`--from 01.03`): it goes on at Urbain's heal, at Andi's rematch or inside the battle. A battle
@@ -129,7 +144,8 @@ again, and `Plza_autostory.Start_signature` checks the start and end.
 
 `Plza_autostory.Story_game` gives the engine its handlers: the walk (`Plza_walk.Walk`, ported from
 `PokemonLZA_AutoStoryWalks.cpp`), the scene machine (`Plza_story.Scene_machine`), the story battle
-(`Plza_story.Battle`) and the other game actions in `Plza_story`, over its `Steps`;
+(`Plza_story.Battle`), the catches (`Plza_story.Catches`) and the other game actions in
+`Plza_story` and `Plza_walk`, over its `Steps`;
 any other event fails `no_handler`.
 
 A walk or scene that meets the battle early jumps to the battle event
