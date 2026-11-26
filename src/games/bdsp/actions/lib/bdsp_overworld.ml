@@ -29,6 +29,13 @@ let kit_confirm_wait_ms = 1200
 let underground_fade_timeout_ms = 25_000
 let battle_menu_timeout_ms = 20_000
 let battle_run_wait_ms = 5000
+let bag_scroll_pages = 5
+let bag_page_rows = 6
+let bag_nav_hold_ms = 80
+let bag_nav_cooldown_ms = 140
+let bag_page_wait_ms = 1200
+let bag_exit_presses = 4
+let bag_exit_cooldown_ms = 700
 
 let button_of_dir = function
   | Corridor_nav.North -> Wire.Up
@@ -263,3 +270,23 @@ let run_from_battle ~log ~picture () =
         Wire.A;
       P.wait battle_run_wait_ms;
       Ok ()
+
+let inspect_treasures_bag ~log ~picture () =
+  log "Opening Bag -> Treasures pocket to inspect shards...";
+  let* () = open_menu ~log ~picture () in
+  let* () = menu_select ~log ~picture ~dx:0 ~dy:0 () in
+  P.wait bag_open_wait_ms;
+  P.press ~hold_ms:bag_nav_hold_ms ~cooldown_ms:bag_page_wait_ms Wire.Left;
+  for page = 1 to bag_scroll_pages do
+    log (Printf.sprintf "Treasures pocket page %d/%d..." page bag_scroll_pages);
+    P.wait bag_page_wait_ms;
+    for _ = 1 to bag_page_rows do
+      P.press ~hold_ms:bag_nav_hold_ms ~cooldown_ms:bag_nav_cooldown_ms
+        Wire.Down
+    done
+  done;
+  log "Closing Bag back to overworld...";
+  for _ = 1 to bag_exit_presses do
+    P.press ~hold_ms:bag_nav_hold_ms ~cooldown_ms:bag_exit_cooldown_ms Wire.B
+  done;
+  Ok ()

@@ -87,3 +87,9 @@ val run_from_battle :
   log:(string -> unit) -> picture:Wire.box -> unit -> (unit, string) result
 (** Escape a wild battle once {!Bdsp_readers.Battle_detector.shown} appears:
     press Up -> A (Run) and wait for the battle-end fade to clear. *)
+
+val inspect_treasures_bag :
+  log:(string -> unit) -> picture:Wire.box -> unit -> (unit, string) result
+(** Open the Bag from the X menu, switch to the Treasures pocket, scroll through
+    its pages so captures record current shard/fossil counts, and close back to
+    the overworld. *)

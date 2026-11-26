@@ -1,15 +1,26 @@
-(** Reader: Grand Underground minimap orange/gold dig-spot sparkles.
+(** Reader: Grand Underground minimap orange dig-spot sparkles and pink player
+    dot position along the three corridors of the central Hideaway ring.
 
     Measured from Console A captures ([run-24/frames/000001.jpg],
-    [run-39/frames/000024.jpg], [run-42/frames/000300.jpg]): orange sparkle
-    diamonds on the top-left minimap sit in RGB [(200..255, 110..215, 0..80)].
-    Probes split the right half of the central Hideaway ring into three zones
-    (starting East of the player dot at [x = 0.114] so the player's own dot
-    never false-positives):
-    - [bottom_east]: horizontal corridor East of the South doorway
-    - [east_vertical]: vertical corridor along the East outer wall
-    - [top_east]: horizontal corridor West from the NE corner to the North
-      doorway *)
+    [run-39/frames/000024.jpg], [run-42/frames/000300.jpg],
+    [run-46/frames/000025.jpg]):
+    - Orange sparkle diamonds: RGB [(200..255, 110..215, 0..80)].
+    - Pink player dot: RGB [(170..255, 40..145, 100..210)]. Each of the three
+      ring corridors is split into [buckets_per_corridor] (4) ordered sub-boxes
+      so the runner can sprint straight to each sparkle's bucket without
+      stepping tile by tile. *)
+
+(** The three corridors on the right half of the central Hideaway ring. *)
+type corridor =
+  | Bottom_east  (** Horizontal corridor East of the South doorway. *)
+  | East_vertical  (** Vertical corridor along the East outer wall. *)
+  | Top_east  (** Horizontal corridor West from NE corner to North doorway. *)
+
+type target = {
+  corridor : corridor;
+  bucket : int;  (** Ordered 0..3 along the corridor's travel direction. *)
+}
+(** One active dig-spot bucket detected on the minimap. *)
 
 type nearby = {
   bottom_east : bool;
@@ -17,20 +28,30 @@ type nearby = {
   east_vertical : bool;
       (** At least one orange sparkle along the East vertical corridor. *)
   top_east : bool;  (** At least one orange sparkle in the top-East corridor. *)
+  targets : target list;
+      (** Ordered list of active sparkle buckets to sprint to. *)
+  player : target option;
+      (** Current corridor and bucket of the pink player dot, if inside the
+          ring. *)
 }
-(** Active nearby dig-spot summary read from the minimap. *)
+(** Active nearby dig-spot and player-position summary from the minimap. *)
+
+val buckets_per_corridor : int
+(** Number of sub-buckets per corridor (4). *)
 
 val none : nearby
-(** No sparkles in any of the three zones. *)
+(** No sparkles and no player bucket read. *)
 
 val probes : picture:Wire.box -> Wire.probe_spec list
-(** The three [color_count_probe] specs for the ring corridor strips. *)
+(** All orange-sparkle and pink-player-dot [color_count_probe] specs across the
+    three ring corridors. *)
 
 val read : Effects.measurements -> nearby
-(** Read whether orange dig-spot sparkles are visible in each strip. *)
+(** Read active sparkle buckets and current player bucket from daemon
+    measurements. *)
 
 val any : nearby -> bool
-(** [true] when at least one of the three corridor strips has a sparkle. *)
+(** [true] when at least one sparkle bucket is active. *)
 
 val to_string : nearby -> string
-(** Short summary, e.g. ["bottom_east, top_east"] or ["none"]. *)
+(** Short summary, e.g. ["bottom_east[1], top_east[2]"] or ["none"]. *)

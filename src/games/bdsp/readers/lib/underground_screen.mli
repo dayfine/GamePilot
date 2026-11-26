@@ -14,6 +14,9 @@ type t = {
   fade : Screen_state.Fade.t;
   mining_wall : bool;
   dialog : bool;
+  choice_box : bool;
+      (** White Yes/No choice box ([是 / 否]) above the dialog box, shown on
+          dig-spot confirmation prompts ([牆壁有點隆起。要挖挖看嗎？]). *)
   menu : bool;
   battle : bool;
   sparkles : Minimap_sparkles.nearby;
