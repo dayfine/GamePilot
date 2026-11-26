@@ -1,5 +1,5 @@
 (** A story scene pressed through to its end: ported from
-    PokemonLZA_AutoStorySceneMachine.cpp with the configs 01.01's to 02.01's
+    PokemonLZA_AutoStorySceneMachine.cpp with the configs the fork's story
     scenes use, its classes, presses and timings. Each read every 250 ms is
     classed:
     - with [end_at_battle], the battle HUD on two reads within 2 s
