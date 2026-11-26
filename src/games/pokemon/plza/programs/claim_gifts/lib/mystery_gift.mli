@@ -12,9 +12,11 @@
       option opened is caught after its A and left by the way back.
     - {!open_internet_list}: A (1.5 s), A (4 s) to connect, then A (2 s) until
       the gift list is active, 25 reads at most. A is pressed only on a screen
-      read with its text box up (a message or a question, the list's "choose a
-      gift" among them) or with no gift list: never on the list alone, where it
-      would claim the selected gift.
+      held 1 s with its text box up (a message or a question, the list's "choose
+      a gift" among them: A moved past it on both runs of 2026-11-25, and no
+      frame shows it leave on its own) or with no gift list: never on the list
+      alone, where it would claim the selected gift, nor on a frame of the
+      prompt fading out.
     - {!choose_gift}: Down from the selected item to the gift's (found by its
       name, {!Plza_readers.Mystery_gift_screen.gift_item}), the cursor read on
       it, then A (8 s).

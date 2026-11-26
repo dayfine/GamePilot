@@ -27,7 +27,10 @@
    the screen before A: A only on the claim's own item, never on the list
    otherwise, also when "stop receiving?" is already open as the leave starts
    (the run of 2026-11-25 closed it with B and claimed the first item with
-   its A). The list must count once it has shown for 1 s, though no two of
+   its A). On the way in, A goes past the list's "choose a gift" prompt
+   (console B's Japanese capture of it) only once it has held 1 s: a prompt
+   that only flickers over the list, with presses landing 200 ms late, gets
+   no A. The list must count once it has shown for 1 s, though no two of
    its frames are equal. The SAVE dialog's "Last Saved" must count once it
    has shown for 1 s, though its shares differ on every frame. *)
 
@@ -55,6 +58,7 @@ let japanese_card = capture "./mystery-gift/card-vivillon-ja.png"
 let item_card = capture "./mystery-gift/card-item-ja-360p.png"
 let other_frame = capture "./mystery-gift/claim-white-fade.png"
 let stop_yes = capture "./mystery-gift/gift-list-ja-stop-receiving-yes-360p.png"
+let prompt = capture "./mystery-gift/gift-list-ja-choose-prompt-360p.png"
 let stop_no = capture "./mystery-gift/gift-list-ja-stop-receiving-no-360p.png"
 let gift_menu = capture "./mystery-gift/gift-menu-ja-360p.png"
 let question = capture "./mystery-gift/gift-menu-ja-report-question-360p.png"
@@ -73,6 +77,8 @@ type screen =
   | Gift_menu
   | Connecting
   | Gift_list of int
+  | Prompt
+  | Fading of float
   | Stop_receiving of int * answer
   | Card
   | Disconnect of answer
@@ -102,6 +108,8 @@ let next screen (button : Wire.button) =
   | Gift_list c, Down -> Gift_list (min last_item (c + 1))
   | Gift_list _, A -> Card
   | Gift_list c, B -> Stop_receiving (c, Yes)
+  | Prompt, A -> Gift_list 0
+  | Prompt, B -> Stop_receiving (0, Yes)
   | Stop_receiving (_, Yes), A -> Gift_menu
   | Stop_receiving (c, No), A -> Gift_list c
   | Stop_receiving (c, _), B -> Gift_list c
@@ -147,6 +155,8 @@ let probes ~list ~card ~saved seq = function
   | Gift_list c -> set (lit "mystery_gift.item" c) list
   | Stop_receiving (c, a) ->
       set (lit "mystery_gift.item" c) (if a = Yes then stop_yes else stop_no)
+  | Prompt -> set (lit "mystery_gift.item" 0) prompt
+  | Fading _ -> other_frame
   | Card -> card
   | Gift_menu -> gift_menu
   | Disconnect Yes -> question
@@ -167,29 +177,48 @@ type console = {
   mutable presses : (screen * Wire.button) list;
   card : (string * Wire.probe_result) list;
   battle : bool;
+  after_connect : screen;
+  latency_ms : float;
 }
+
+(* A prompt fading in and out over the list: 400 ms of it, 500 of the list
+   alone, again and again, neither ever held 1 s. *)
+let fade_period = 900.
+let fade_prompt = 400.
+
+let shown c =
+  match c.screen with
+  | Fading t0 ->
+      if Float.rem (c.t_ms -. t0) fade_period < fade_prompt then Prompt
+      else Gift_list 0
+  | s -> s
 
 let frame ~list c : Effects.measurements =
   c.seq <- c.seq + 1;
-  c.seen <- c.seen @ [ c.screen ];
+  let screen = shown c in
+  c.seen <- c.seen @ [ screen ];
   {
     seq = c.seq;
     t_ms = c.t_ms;
-    probes = probes ~list ~card:c.card ~saved:c.saved c.seq c.screen;
+    probes = probes ~list ~card:c.card ~saved:c.saved c.seq screen;
   }
 
 let press c = function
   | Wire.Press { buttons; hold_ms; cooldown_ms; _ } ->
       List.iter
         (fun b ->
-          c.presses <- c.presses @ [ (c.screen, b) ];
-          (match (c.screen, b) with
+          c.t_ms <- c.t_ms +. c.latency_ms;
+          let screen = shown c in
+          c.presses <- c.presses @ [ (screen, b) ];
+          (match (screen, b) with
           | Saving _, Wire.A -> c.saved <- true
           | Gift_list k, Wire.A -> c.claimed <- c.claimed @ [ k ]
           | _ -> ());
           c.screen <-
-            (match (c.screen, b) with
+            (match (screen, b) with
             | Link_play, Wire.A when c.battle -> Battle_club
+            | Connecting, Wire.A -> (
+                match c.after_connect with Fading _ -> Fading c.t_ms | s -> s)
             | s, b -> next s b))
         buttons;
       c.t_ms <- c.t_ms +. float_of_int (hold_ms + cooldown_ms)
@@ -228,7 +257,8 @@ let on_console ~list c f =
           | _ -> None);
     }
 
-let start ?(card = english_card) ?(battle = false) screen =
+let start ?(card = english_card) ?(battle = false)
+    ?(after_connect = Gift_list 0) ?(latency_ms = 0.) screen =
   {
     screen;
     t_ms = 0.;
@@ -239,12 +269,14 @@ let start ?(card = english_card) ?(battle = false) screen =
     presses = [];
     card;
     battle;
+    after_connect;
+    latency_ms;
   }
 
 let picture : Wire.box = { x = 0.; y = 0.; w = 1.; h = 1. }
 
-let claim ?card ?battle ~list () =
-  let c = start ?card ?battle (Menu 3) in
+let claim ?card ?battle ?after_connect ?latency_ms ~list () =
+  let c = start ?card ?battle ?after_connect ?latency_ms (Menu 3) in
   let log = ref [] in
   let claim =
     on_console ~list c (fun () ->
@@ -266,6 +298,7 @@ let screen_text = function
   | Gift_list c -> Printf.sprintf "gift list, item %d" (c + 1)
   | Stop_receiving _ -> "stop receiving?"
   | Card -> "card"
+  | Prompt | Fading _ -> "choose a gift"
   | Link_play | Battle_club | Gift_menu | Connecting | Disconnect _
   | Disconnected | Save_dialog _ | Saving _ ->
       "other"
@@ -367,6 +400,28 @@ let () =
             (String.concat " " pressed))
         "Link Play's A did not open the Mystery Gift menu; main menu, row 5; \
          on it: B";
+      case
+        "the list's \"choose a gift\" prompt held: A past it, Vivillon received"
+        (fun () ->
+          let r, c, _ = claim ~after_connect:Prompt ~list:english_list () in
+          claim_text r ^ "; " ^ screen_text c.screen ^ "; " ^ claims c)
+        "received; main menu, row 5; claimed [4], 1 A on the list";
+      case
+        "a prompt fading in and out over the list, presses 200 ms late: no A \
+         on the list"
+        (fun () ->
+          let r, c, _ =
+            claim ~after_connect:(Fading 0.) ~latency_ms:200. ~list:english_list
+              ()
+          in
+          let why =
+            match r with
+            | Not_received why -> List.hd (String.split_on_char ':' why)
+            | r -> claim_text r
+          in
+          why ^ "; " ^ screen_text c.screen ^ "; " ^ claims c)
+        "no active gift list after 25 reads; main menu, row 5; claimed [], 0 A \
+         on the list";
       case "the gift not listed: not received, back on the main menu"
         (fun () ->
           let r, c, _ = claim ~list:french_list () in

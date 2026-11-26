@@ -26,9 +26,10 @@ let to_internet : T.t list =
 let claim_a : T.t = { button = A; hold_ms = 100; cooldown_ms = 8000 }
 
 (* [check] held for [hold_ms] within [read_ms]; else A, up to [rounds]
-   times, but only where A answers what the screen shows: never on the gift
-   list without its text box (A would claim the selected gift), nor on no
-   frame. *)
+   times, but only once a screen where A answers what it shows has held
+   [hold_ms] too: never on the gift list without its text box (A would claim
+   the selected gift), nor on a frame or two of its "choose a gift" prompt
+   fading out, nor on no frame. *)
 let hold_ms = 1000.
 let read_ms = 1500
 let rounds = 25
@@ -39,20 +40,28 @@ let held check =
 
 let a_answers m = S.text_up m || not (S.list_shown m)
 
+type read = Ready | Answer
+
+(* The first of [check] and [a_answers] to hold; [check] first on a frame
+   where both do. *)
+let watch check =
+  let ready = held check and answer = held a_answers in
+  fun m ->
+    let r = ready m and a = answer m in
+    if Option.is_some r then Some Ready else Option.map (fun () -> Answer) a
+
 let until_pressing ~what check =
   let rec go n =
-    let last = ref None in
-    let watch m =
-      last := Some m;
-      check m
-    in
-    match Switch_home.Held_screen.wait_for ~timeout_ms:read_ms (held watch) with
-    | Some () -> Ok ()
-    | None when n >= rounds ->
+    match
+      Switch_home.Held_screen.wait_for ~timeout_ms:read_ms (watch check)
+    with
+    | Some Ready -> Ok ()
+    | (Some Answer | None) when n >= rounds ->
         Error (Printf.sprintf "%s after %d reads" what rounds)
-    | None ->
-        if Option.fold ~none:false ~some:a_answers !last then T.press a_2s;
+    | Some Answer ->
+        T.press a_2s;
         go (n + 1)
+    | None -> go (n + 1)
   in
   go 0
 
