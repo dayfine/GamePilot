@@ -10,10 +10,9 @@
     - the hand over the box's first slot: its shadow, a blue-grey ellipse (82,
       107, 123) at x 93-105, y 49-55, shows under the hand over an empty slot
       (an icon hides it);
-    - the box's wallpaper, by the mean colour of a strip along the grid's foot
-      (x 100-219, y 140-151): Box 3's default Desert is tan (208, 167, 117 on
-      mGBA), Box 1's Forest green (156, 204, 101). The title's name is drawn
-      white with a dark outline, which the text templates do not read;
+    - Box 3's default Desert wallpaper, by the mean colour of a strip along the
+      grid's foot (x 100-219, y 140-151): tan (208, 167, 117 on mGBA); the
+      others' wallpapers by the title's bar ({!title_wallpaper});
     - the panel's gender mark: the male symbol's blue at x 10-16, y 117-127;
     - the panel's held-item line ({!holds_item}), flat when the Pokémon holds
       nothing. *)
@@ -77,14 +76,11 @@ val min_shadow_share : float
 
 val desert_wallpaper : Effects.measurements -> bool option
 (** The strip's mean is tan: red over green by at least 15, green over blue by
-    at least 20 (mGBA: 41 and 50). Forest (green over red) is not. *)
+    at least 20 (mGBA: 41 and 50). Forest (green over red, (156, 204, 101) on
+    mGBA) is not. *)
 
 val male : Effects.measurements -> bool option
 (** The male symbol's blue fills at least 0.15 of its box (mGBA: 0.3). *)
-
-val forest_wallpaper : Effects.measurements -> bool option
-(** The strip's mean is green: green over red and over blue by at least 20
-    (mGBA: 48 and 103). Box 1's default Forest. *)
 
 (** {1 The title's wallpaper} *)
 

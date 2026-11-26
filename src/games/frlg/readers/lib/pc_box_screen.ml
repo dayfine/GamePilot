@@ -136,14 +136,6 @@ let desert_wallpaper m =
 let male m =
   Option.map (fun s -> s >= min_male_share) (Color_count.share m male_id)
 
-let min_green_over_red = 20.
-
-let forest_wallpaper m =
-  Option.map
-    (fun (c : Wire.rgb) ->
-      c.g -. c.r >= min_green_over_red && c.g -. c.b >= min_green_over_red)
-    (Color_count.mean m wallpaper_id)
-
 type wallpaper = Forest | City | Desert | Savanna
 
 let default_wallpapers = [ Forest; City; Desert; Savanna ]

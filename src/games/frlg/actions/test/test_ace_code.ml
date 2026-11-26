@@ -1,6 +1,7 @@
 (* Ace_code on a fake box screen: 14 boxes of 30 slots with their titles
    and wallpapers (a new game's unless [walls] says otherwise; [None] reads as
-   none of the four), the hand on the title or a slot, RIGHT on the title to
+   none of the four; the first [no_screen] reads show no box screen), the
+   hand on the title or a slot, RIGHT on the title to
    the next box, and a rename that sets the shown box's title. Run against the
    real preset table. *)
 
@@ -24,6 +25,7 @@ type fake = {
   unread : int option;  (** a box (0-based) whose title reads as nothing *)
   mutable drops : int;  (** RIGHT presses on the title still to drop *)
   drop_after_rename : int;  (** RIGHT presses dropped after each rename *)
+  mutable no_screen : int;  (** wallpaper reads still to see no box screen *)
 }
 
 let press f (b : Wire.button) =
@@ -52,7 +54,12 @@ let steps f : C.game_steps =
       (fun cs ->
         let t = f.titles.(f.box) in
         if Some f.box <> f.unread && List.mem t cs then Some t else None);
-    read_wallpaper = (fun () -> f.walls.(f.box));
+    read_wallpaper =
+      (fun () ->
+        if f.no_screen > 0 then (
+          f.no_screen <- f.no_screen - 1;
+          C.No_box_screen)
+        else C.Shows f.walls.(f.box));
     slot_empty = (fun () -> Some (f.slots.(f.box).(f.slot) = None));
     ace_at_hand = (fun () -> f.slots.(f.box).(f.slot) = Some ace);
     name_title =
@@ -66,7 +73,8 @@ let steps f : C.game_steps =
 let new_game i = Some (W.default_wallpaper (i + 1))
 
 let make ?(box = 2) ?(titles = fun i -> Printf.sprintf "BOX%d" (i + 1))
-    ?(walls = new_game) ?(stray = None) ?unread ?(drop_after_rename = 0) () =
+    ?(walls = new_game) ?(stray = None) ?unread ?(drop_after_rename = 0)
+    ?(no_screen = 0) () =
   let slots = Array.init 14 (fun _ -> Array.make 30 None) in
   slots.(2).(0) <- Some ace;
   slots.(0).(0) <- Some "MIMIEN";
@@ -82,6 +90,7 @@ let make ?(box = 2) ?(titles = fun i -> Printf.sprintf "BOX%d" (i + 1))
     unread;
     drops = 0;
     drop_after_rename;
+    no_screen;
   }
 
 let outcome f run =
@@ -171,6 +180,13 @@ let () =
          (Forest, City, Desert, Savanna), not its default Forest: set it back \
          to Forest (WALLPAPER on the box title's menu) before the code is \
          entered; typed 0: ";
+      case "Box 1's box screen missed once: read again, the check goes on"
+        (fun () -> check (make ~no_screen:1 ()))
+        "ok";
+      case "Box 1's box screen missed twice: unread, not a wallpaper to fix"
+        (fun () -> enter master (make ~no_screen:2 ()))
+        "ace_box_unread: Box 1's wallpaper was not read: the box screen did \
+         not show, twice; typed 0: ";
       case
         "a RIGHT dropped between Boxes 12 and 13, both A: told by the \
          wallpaper, pressed again"
