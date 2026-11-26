@@ -7,8 +7,10 @@ let button : Native_box.t = { x = 640; y = 722; w = 640; h = 56 }
 (* The whole "Last Saved" line short of Cancel: its label, date and time sit
    further right in French than in English. *)
 let time : Native_box.t = { x = 258; y = 856; w = 1000; h = 32 }
-let white = Color_count.white 200
-let dark = Color_count.dark 110
+let white_min = 200
+let dark_max = 110
+let white = Color_count.white white_min
+let dark = Color_count.dark dark_max
 let ink_max = 120
 
 let ink =

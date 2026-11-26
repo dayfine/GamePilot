@@ -27,7 +27,8 @@ let name_id k = Printf.sprintf "mystery_gift.name%d" k
    console B, and a dimmer capture card keeps them (0.9 times is 228); the
    script read white over 230. Dark blue as the script: red under 45, green
    under 70, blue 66 to 144. *)
-let white = Color_count.white 200
+let white_min = 200
+let white = Color_count.white white_min
 let blue_red_max = 44
 let blue_green_max = 69
 let blue_min = 66

@@ -2,7 +2,8 @@ let tab_id = "boxes_screen.tab"
 let party_id = "boxes_screen.party_title"
 let tab : Native_box.t = { x = 130; y = 30; w = 110; h = 36 }
 let party_title : Native_box.t = { x = 100; y = 100; w = 240; h = 40 }
-let white = Color_count.white 200
+let white_min = 200
+let white = Color_count.white white_min
 
 let probes ~picture =
   Color_count.probe ~picture ~id:tab_id tab white

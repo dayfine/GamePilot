@@ -16,7 +16,8 @@ let band r : Native_box.fractions =
   }
 
 let band_id r = Printf.sprintf "main_menu_row.band%d" r
-let white = Color_count.white 221
+let white_min = 221
+let white = Color_count.white white_min
 
 (* Card k's HP bar strip in frame pixels. *)
 let first_card_x = 884
