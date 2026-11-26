@@ -19,10 +19,23 @@
     ({!Frlg_readers.Pc_box_screen.default_wallpaper}), so after each RIGHT the
     title's bar must show the box's own, and a bar that still shows the box
     before's is a dropped RIGHT, pressed again as above: that tells Boxes 12 to
-    14, all named [A], apart. A wallpaper the player changed (or one that does
-    not read) fails as [ace_box_wallpaper], naming the box and the wallpaper to
-    set back, before anything more is pressed. Box 3 is still found by 0x0351 in
+    14, all named [A], apart. A wallpaper the player changed (a box screen whose
+    bar shows none of the four, or another box's) fails as [ace_box_wallpaper],
+    naming the box and the wallpaper to set back, before anything more is
+    pressed. A read with no box screen (no frame came, or the frame is not the
+    box screen) is not a wallpaper's fault: it is read once more, and fails as
+    [ace_box_unread] if it still shows none. Box 3 is still found by 0x0351 in
     its first slot too. *)
+
+(** What the title's bar shows. *)
+type wallpaper_read =
+  | No_box_screen
+      (** No frame came, or the frame does not show the box screen
+          ({!Frlg_readers.Pc_screen.box_screen_shown}). *)
+  | Shows of Frlg_readers.Pc_box_screen.wallpaper option
+      (** The box screen, its bar showing this one of the new game's four
+          wallpapers ({!Frlg_readers.Pc_box_screen.title_wallpaper}); [None] for
+          any other. *)
 
 type game_steps = {
   open_move_pokemon : unit -> unit;
@@ -31,9 +44,8 @@ type game_steps = {
   press : Wire.button -> unit;  (** A press and its wait. *)
   read_title : string list -> string option;
       (** Which of these the box title reads, if any. *)
-  read_wallpaper : unit -> Frlg_readers.Pc_box_screen.wallpaper option;
-      (** Which of the new game's four wallpapers the title's bar shows, if any
-          ({!Frlg_readers.Pc_box_screen.title_wallpaper}). *)
+  read_wallpaper : unit -> wallpaper_read;
+      (** What the title's bar shows, from one frame. *)
   slot_empty : unit -> bool option;
       (** PKMN DATA shows no text: the slot under the hand holds no Pokémon. *)
   ace_at_hand : unit -> bool;
@@ -56,7 +68,8 @@ val check_boxes : game_steps -> log:(string -> unit) -> Ace_presets.t -> unit
 (** Box 3 slot 1 shows 0x0351 and every slot of {!empty_slots} is empty, each
     read with the hand on it. Fails as [ace_box_lost] (no title reads as Box 1
     in 14 scrolls, or a box's title reads as another box's), [ace_box_wallpaper]
-    (a box shows another wallpaper than its default), [ace_not_in_slot] or
+    (a box shows another wallpaper than its default), [ace_box_unread] (twice no
+    box screen where a box's wallpaper is read), [ace_not_in_slot] or
     [ace_box_not_empty] (a slot holds a Pokémon, or does not read). *)
 
 val enter_code :
@@ -67,12 +80,16 @@ val enter_code :
   unit
 (** Every box's title read and, unless it reads the item's name already, renamed
     to it: a title that reads none of the names is retyped. Fails as
-    [ace_box_lost], [ace_box_wallpaper], or as {!Box_rename.name_on_title} does.
-*)
+    [ace_box_lost], [ace_box_wallpaper], [ace_box_unread], or as
+    {!Box_rename.name_on_title} does. *)
 
 val screen_game_steps : log:(string -> unit) -> game_steps
 (** {!Ace_trigger.screen_game_steps}'s reads and presses, and
-    {!Box_rename.screen_game_steps}'s naming. *)
+    {!Box_rename.screen_game_steps}'s naming; the wallpaper read from one frame
+    of {!Frlg_readers.Pc_box_screen}'s and {!Frlg_readers.Pc_screen}'s probes
+    ({!Ace_trigger.box_reading}), always with the hand on the title: a Pokémon's
+    picture in PKMN DATA hides the lilac edge
+    {!Frlg_readers.Pc_screen.box_screen_shown} reads. *)
 
 val handlers :
   log:(string -> unit) ->

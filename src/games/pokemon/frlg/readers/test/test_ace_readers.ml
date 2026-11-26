@@ -9,7 +9,8 @@
    channel +-12 and in grey 10 levels (dev/reader_fixtures/shift_frame.py), and
    each must read the same. The image's name says what it shows: e_g_ the
    editor's group grid, e_w_ a word list, e_fields_ the message's fields,
-   box1_/box3_ the box screen. The wall_<wallpaper>_ frames are box titles
+   box1_/box3_ the box screen (the title's wallpaper for Box 1, Ace_mail's
+   Forest). The wall_<wallpaper>_ frames are box titles
    read for their wallpaper (Pc_box_screen.title_wallpaper), <wallpaper> what
    it must read ("none" for the twelve a player can pick besides the four
    defaults): on mGBA all sixteen wallpapers (box-titles/, Boxes 1-14, some
@@ -26,11 +27,12 @@
    - PKMN DATA's item line, the same: 10; 180 (grey); 0.
    - hand shadow on slot 1, share: 0.25; 0.31 (grey); 0.
    - Desert wallpaper, r-g / g-b: 15 / 20; 29 / 38; -60.
-   - Forest wallpaper, g-r / g-b: 20 / 20; 36 / 92; -53.
    - male mark, blue share: 0.15; 0.41; no frame off it.
    - title wallpaper, the farther of the sky's and the ground's distance from
      the wallpaper's colours: 50; 40 (Savanna, mGBA x0.9); 60 (Pokémon
      Center's against Forest, green +12).
+   - box screen (Pc_screen.box_screen_shown, its own thresholds): read on
+     every mGBA frame, shifted too, but with a Pokémon under the hand.
    The word arrow and the hand shadow are the thin ones; the actions confirm
    both by a second read (the row's words, the panel). *)
 
@@ -44,6 +46,13 @@ let cell = function
 
 let flag = function None -> "?" | Some true -> "y" | Some false -> "n"
 
+let contains s sub =
+  let n = String.length sub in
+  let rec go i =
+    i + n <= String.length s && (String.sub s i n = sub || go (i + 1))
+  in
+  go 0
+
 let wallpaper m =
   Option.fold ~none:"none"
     ~some:(fun w -> String.lowercase_ascii (Pc_box_screen.wallpaper_name w))
@@ -51,20 +60,38 @@ let wallpaper m =
 
 (* Easy Chat frames report the two cursors, wall_ frames the title's
    wallpaper, box frames the box screen. *)
+(* Pc_screen.box_screen_shown, which Ace_code reads beside the title's
+   wallpaper: the PKMN DATA panel's lilac edge, hidden by a Pokémon's picture
+   when the hand is over one ([on_a_pokemon]: "no box"). The Switch's
+   box-title frames show the title bar only, the rest grey: not read
+   there. *)
+let box_screen image m =
+  if contains image "_switch_" then "-"
+  else if Pc_screen.box_screen_shown m then "box screen"
+  else "no box"
+
+let on_a_pokemon =
+  [
+    "wall_desert_box3_ace_on_first_slot";
+    "wall_desert_desert_box03_hand_on_first_slot";
+  ]
+
 let read image m =
-  if String.starts_with ~prefix:"wall_" image then "wallpaper " ^ wallpaper m
+  if String.starts_with ~prefix:"wall_" image then
+    Printf.sprintf "%s, wallpaper %s" (box_screen image m) (wallpaper m)
   else if String.starts_with ~prefix:"e_" image then
     Printf.sprintf "group %s, word %s"
       (cell (Easy_chat_screen.group_cell m))
       (cell (Easy_chat_screen.word_cell m))
   else
     Printf.sprintf
-      "panel %s, item %s, first slot %s, desert %s, forest %s, male %s"
+      "%s, panel %s, item %s, first slot %s, desert %s, title %s, male %s"
+      (box_screen image m)
       (flag (Pc_box_screen.panel_occupied m))
       (flag (Pc_box_screen.holds_item m))
       (flag (Pc_box_screen.hand_on_first_slot m))
       (flag (Pc_box_screen.desert_wallpaper m))
-      (flag (Pc_box_screen.forest_wallpaper m))
+      (wallpaper m)
       (if
          Pc_box_screen.panel_occupied m = Some true
          && String.starts_with ~prefix:"box3_" image
@@ -89,25 +116,36 @@ let expected =
     ("e_w_magikarp", "group none, word r3c0");
     ("e_fields_after_bulk_up", "group none, word none");
     ( "box1_hand_on_empty_first_slot",
-      "panel n, item n, first slot y, desert n, forest y, male -" );
+      "box screen, panel n, item n, first slot y, desert n, title forest, male \
+       -" );
     ( "box3_hand_on_third_slot",
-      "panel n, item n, first slot n, desert y, forest n, male -" );
+      "box screen, panel n, item n, first slot n, desert y, title desert, male \
+       -" );
     ( "box3_ace_hand_on_title",
-      "panel n, item n, first slot n, desert y, forest n, male -" );
+      "box screen, panel n, item n, first slot n, desert y, title desert, male \
+       -" );
     ( "box3_ace_on_first_slot",
-      "panel y, item y, first slot n, desert y, forest n, male y" );
+      "no box, panel y, item y, first slot n, desert y, title desert, male y" );
     ( "box1_withdraw_menu_mimien_antidote",
-      "panel y, item y, first slot n, desert n, forest n, male -" );
+      "box screen, panel y, item y, first slot n, desert n, title none, male -"
+    );
     ( "box1_withdraw_menu_magikarp",
-      "panel y, item n, first slot n, desert n, forest n, male -" );
+      "box screen, panel y, item n, first slot n, desert n, title none, male -"
+    );
   ]
 
 let base image = Filename.remove_extension (Filename.basename image)
 
-(* A wall_ frame's expectation is in its name. *)
+(* A wall_ frame's wallpaper is in its name. *)
 let expectation image =
   match String.split_on_char '_' image with
-  | "wall" :: want :: _ -> "wallpaper " ^ want
+  | "wall" :: want :: _ ->
+      let box =
+        if contains image "_switch_" then "-"
+        else if List.mem image on_a_pokemon then "no box"
+        else "box screen"
+      in
+      Printf.sprintf "%s, wallpaper %s" box want
   | _ -> Option.value (List.assoc_opt image expected) ~default:"?"
 
 let cases label images =

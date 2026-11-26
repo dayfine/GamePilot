@@ -19,6 +19,7 @@ type t = {
   storing : bool;  (** A on the chooser, the store not yet seen. *)
   next_box : bool;  (** The box was full: RIGHT once the question is back. *)
   boxes : int;
+  message_seen : bool;  (** The last settled look read a message: B now. *)
 }
 
 let pc_list_tops = [ "SOMEONE'S PC"; "BILL'S PC" ]
@@ -39,6 +40,7 @@ let start targets =
     storing = false;
     next_box = false;
     boxes = 0;
+    message_seen = false;
   }
 
 let deposited t = List.rev t.stored
@@ -110,10 +112,20 @@ let box_chooser t (look : look) =
     else ({ t with next_box = false; boxes = t.boxes + 1 }, Right)
   else ({ t with storing = true }, A)
 
+(* B on a message only at the second look in a row: one still printing can
+   have a menu right behind it ("Which PC should be accessed?", pokefirered
+   pc.inc: message, waitmessage, then the list), and a B that lands as the
+   list opens cancels it and turns the PC off (#244, console B,
+   2026-11-25). *)
+let on_message t =
+  let t = { t with boot_looks = boot_reads } in
+  if t.message_seen then ({ t with message_seen = false }, B)
+  else ({ t with message_seen = true }, Wait)
+
 let on_screen t (look : look) =
   match look.view.screen with
   | Overworld -> overworld t
-  | Text -> ({ t with boot_looks = boot_reads }, B)
+  | Text -> on_message t
   | Pc_list -> pc_list t look
   | Storage_menu -> storage_menu t look
   | Party_panel -> party_panel t look
@@ -125,7 +137,9 @@ let on_screen t (look : look) =
   | Other -> (t, Wait)
 
 let next t (look : look) =
-  if settled t look.view then on_screen { t with others = 0 } look
+  if settled t look.view then
+    let message_seen = t.message_seen && look.view.screen = Text in
+    on_screen { t with others = 0; message_seen } look
   else if t.others + 1 >= max_others then
     (t, Fail (Printf.sprintf "no PC screen settled in %d looks" max_others))
   else ({ t with others = t.others + 1 }, Wait)

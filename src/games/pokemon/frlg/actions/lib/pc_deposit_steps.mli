@@ -15,7 +15,13 @@
     prints it and waits for a key), where the fork names a box; a member holding
     Mail fails the deposit when the game says "Please remove the MAIL." over the
     party panel (pokefirered's [Task_DepositMenu] refuses it there) instead of
-    choosing STORE again until the press bound runs out. *)
+    choosing STORE again until the press bound runs out; on a message a wait
+    first, B only when the next settled look reads a message too (the fork
+    presses B on any message): "Which PC should be accessed?" is printed with no
+    button wait and the PC list opens right behind it (pokefirered pc.inc:
+    message, waitmessage, then the list), so a B on it can land as the list
+    opens, cancel it and turn the PC off, as it did to {!Pc_box}'s walk on
+    console B (2026-11-25). *)
 
 type look = {
   view : Frlg_readers.Pc_screen.view;

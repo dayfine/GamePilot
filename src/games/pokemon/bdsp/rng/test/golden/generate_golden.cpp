@@ -1,4 +1,4 @@
-//  Golden vectors for src/games/bdsp/rng, computed by the fork's C++ (D6: the
+//  Golden vectors for src/games/pokemon/bdsp/rng, computed by the fork's C++ (D6: the
 //  C++ is the oracle). Each output line holds its inputs and the C++'s outputs,
 //  so the OCaml tests read the inputs from the line and check they give the same
 //  text. regen_golden.sh builds and runs this; see it for the command.
