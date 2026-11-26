@@ -33,3 +33,7 @@ val press_through : game_steps -> unit
 val steady : game_steps -> bool
 (** The prompt still up 300 ms on: a first glimpse can be it fading in or the
     player still moving. *)
+
+val missing : game_steps -> bool
+(** Free control with no A prompt and no text box, on two reads 300 ms apart
+    (the {!steady} gap): nothing for A to take. *)

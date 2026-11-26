@@ -14,8 +14,9 @@ let ( let* ) = Result.bind
    the last. *)
 let keepawake_stick = [ "--keepawake-key"; "RStick" ]
 
-type failure = { at : string; reason : string; repeats : bool }
-type outcome = Passed | Failed of failure
+module Attempts = Story.Run_attempts
+
+type outcome = Attempts.outcome = Passed | Failed of Attempts.failure
 
 type setup = {
   flags : Flags.t;
@@ -27,39 +28,63 @@ type setup = {
 let load_plan ~plan_dir id =
   P.Plan_decode.load (Engine_series.Plan_folder.plan_file ~plan_dir id)
 
-let failed ?(repeats = false) at reason = Failed { at; reason; repeats }
+let failed ?(repeats = false) ?(off_start = false) at reason =
+  Failed { at; reason; repeats; off_start }
 
 let of_runner ({ at; reason; repeats } : Live_run.Daemon_run.failed) =
   failed ~repeats at reason
 
-(* The runner's failure at "#<n> <event>". *)
-let of_failure (f : P.Failure.t) =
-  failed ~repeats:(P.Failure.repeats f)
-    (Printf.sprintf "#%d %s" (f.event_index + 1) f.event_id)
-    (P.Failure.reason_to_string f.reason)
+let reload_cause ~log ~picture () =
+  Result.map_error
+    (fun e -> Failure.cause "reload_failed" e)
+    (Story.Game_reload.reload ~log ~picture)
 
-let trial = function
-  | Passed -> Checkpoint_trials.Passed
-  | Failed { at; repeats; _ } -> Checkpoint_trials.Failed { at; repeats }
+let unreachable (plan : P.Plan.t) =
+  failed ~repeats:true "start"
+    (plan.checkpoint.checkpoint_id
+   ^ " starts on a screen made by hand, which no reload reaches: put the \
+      console there and run it again")
 
-let no_reload () =
-  Error
-    (Failure.cause ~repeats:true "no_reload"
-       "PLZA's skeleton cannot go back to the latest autosave yet")
+let back_to_autosave ~log ~picture =
+  log "[Console] back to the latest autosave";
+  Result.map_error
+    (fun e -> failed ~repeats:true "reload" e)
+    (Story.Game_reload.reload ~log ~picture)
 
-let run_checkpoint ~log report (plan : P.Plan.t) =
+(* Back to the latest autosave before a run that is not the series' first. *)
+let start ~log ~picture ~reload (plan : P.Plan.t) =
+  match (reload, plan.checkpoint.start) with
+  | false, _ -> Ok ()
+  | true, None -> Error (unreachable plan)
+  | true, Some _ -> back_to_autosave ~log ~picture
+
+let run_checkpoint ~log ~picture ~reload report (plan : P.Plan.t) =
+  let* () = start ~log ~picture ~reload plan in
   let steps = Story.Live_story_screen.game_steps ~log ~log_detail:log in
-  let game =
-    Story.Story_game.make steps ~checkpoint:plan.checkpoint ~reload:no_reload
+  (* A console idle between runs dims its screen; nothing reads on it. *)
+  Plza_story.Screen_wake.run steps;
+  let id = plan.checkpoint.checkpoint_id in
+  let* () =
+    Result.map_error
+      (Attempts.of_cause ~at:"start")
+      (Story.Start_signature.check steps ~checkpoint_id:id plan.execution)
   in
-  Result.map_error of_failure
-    (Story.Story_game.run_watched ~mode:"testing" report game plan.checkpoint)
+  let game =
+    Story.Story_game.make steps ~checkpoint:plan.checkpoint
+      ~reload:(reload_cause ~log ~picture)
+  in
+  let end_check () =
+    Story.Start_signature.check_end steps ~checkpoint_id:id plan.execution
+  in
+  Result.map_error Attempts.of_failure
+    (Story.Story_game.run_watched ~end_check ~mode:"testing" report game
+       plan.checkpoint)
 
 (* The run fails on the page when it stops before its runner ended it. *)
-let with_assets ~log ~picture report plan assets =
+let with_assets ~log ~picture ~reload report plan assets =
   match
     Effects.with_probes (Story.Live_story_screen.probes ~picture ~assets)
-      (fun () -> run_checkpoint ~log report plan)
+      (fun () -> run_checkpoint ~log ~picture ~reload report plan)
   with
   | Ok () -> Passed
   | Error f -> f
@@ -73,14 +98,14 @@ let with_assets ~log ~picture report plan assets =
       Watch_report.end_run report ~passed:false;
       failed "raised" (Printexc.to_string e)
 
-let in_session ~log record plan (backend : Wire.backend) =
+let in_session ~log ~reload record plan (backend : Wire.backend) =
   let picture = backend.viewport in
   let log = Watch_report.log log in
   let report = P.Plan_watch.create plan.P.Plan.checkpoint in
   let outcome =
     match Templates.upload () with
     | Error e -> failed ~repeats:true "assets" e
-    | Ok assets -> with_assets ~log ~picture report plan assets
+    | Ok assets -> with_assets ~log ~picture ~reload report plan assets
   in
   (match outcome with
   | Failed _ -> Live_run.Daemon_run.save_failure ~log record ~save_states:false
@@ -89,31 +114,36 @@ let in_session ~log record plan (backend : Wire.backend) =
 
 (* Any exception Daemon_run.in_session passes on fails the run here, so the
    story log, the run record and the watch run still close. *)
-let live ~log record plan (daemon : Live_run.Daemon_process.t) =
+let live ~log ~reload record plan (daemon : Live_run.Daemon_process.t) =
   match
     Live_run.Daemon_run.in_session ~failed:of_runner ~dir:record.Run_record.dir
       (fun () ->
-        Live.run_with_backend ~port:daemon.port (in_session ~log record plan))
+        Live.run_with_backend ~port:daemon.port
+          (in_session ~log ~reload record plan))
   with
   | outcome -> outcome
   | exception e -> failed "raised" (Printexc.to_string e)
 
-let run_name id n = Printf.sprintf "%s run %d" id n
+(* "03.04 run 1", with " attempt 2" after the first. *)
+let run_name id n = function
+  | 1 -> Printf.sprintf "%s run %d" id n
+  | a -> Printf.sprintf "%s run %d attempt %d" id n a
 
 let summary name = function
   | Passed -> "PASS " ^ name
   | Failed { at; reason; _ } ->
       Printf.sprintf "FAIL %s at %s: %s" name at reason
 
-(* Run [n] of [plan] in its folder [run]. *)
-let run_in setup plan n (run : Run_record.run) =
+(* Attempt [attempt] of run [n] of [plan] in its folder [run]; [reload]: back
+   to the latest autosave first. *)
+let run_in setup plan n ~attempt ~reload (run : Run_record.run) =
   let id = plan.P.Plan.checkpoint.checkpoint_id in
-  let name = run_name id n in
+  let name = run_name id n attempt in
   let log, close = Run_record.story_log run.record in
-  log ("[Run] " ^ name);
+  log ("[Run] " ^ name ^ if reload then " (after a reload)" else "");
   let outcome =
     Live_run.Series_daemons.with_daemon setup.daemons ~failed:of_runner run ~n
-      (live ~log run.record plan)
+      (live ~log ~reload run.record plan)
   in
   close ();
   let ending : Run_record.ending =
@@ -125,25 +155,47 @@ let run_in setup plan n (run : Run_record.run) =
     run ~summary:(summary name outcome) ending;
   outcome
 
-(* Run [n] of [plan] in a new run folder; a folder that cannot be made fails
-   the run, as a failure that repeats. *)
-let run setup (plan : P.Plan.t) n =
-  let id = plan.checkpoint.checkpoint_id in
+(* {!run_in} in a new run folder; a folder that cannot be made fails the
+   attempt, as a failure that repeats. *)
+let run_attempt setup plan n ~attempt ~reload =
+  let id = plan.P.Plan.checkpoint.checkpoint_id in
   match
     Run_record.start ~runs_dir:setup.flags.runs_dir setup.info ~checkpoint:id
       ~mode:"testing"
   with
-  | Ok run -> run_in setup plan n run
-  | Error reason -> failed ~repeats:true "run folder" reason
+  | Ok run -> run_in setup plan n ~attempt ~reload run
+  | Error reason ->
+      Failed { at = "run folder"; reason; repeats = true; off_start = false }
 
-(* Runs [plan] until the policy decides; whether it passed. Its run starts
-   where the console is: the series' start, put there by hand, or where the
-   checkpoint before it ended. *)
-let runs_of setup plan =
+(* Run [n] of [plan]: attempts until one passes or the run fails
+   (Run_attempts: a reload when off its start, and the plan's retries).
+   [reload]: its first attempt goes back to the latest autosave. *)
+let run setup (plan : P.Plan.t) n ~reload =
+  let id = plan.checkpoint.checkpoint_id in
+  Attempts.run
+    ~has_start:(Option.is_some plan.checkpoint.start)
+    ~retries:plan.retries ~reload_first:reload
+    ~log:(fun line -> Printf.printf "[Checkpoints] %s run %d: %s\n%!" id n line)
+    (run_attempt setup plan n)
+
+(* The plan's execution asks for a reload when it follows another checkpoint
+   in the series (the fork's "reload_when_chained", 03.04's: its walk starts
+   from the autosave's spot, not where 03.03c's scene leaves the player). *)
+let reload_when_chained (plan : P.Plan.t) =
+  List.assoc_opt "reload_when_chained" plan.execution = Some (`Bool true)
+
+(* Runs [plan] until the policy decides; whether it passed. Its first run
+   starts where the console is: the series' start, put there by hand, or
+   where the checkpoint before it ended (the fork chains 01.03 into 02.01
+   with no reload either; a reload there cost 40 s and turned the camera),
+   unless the plan reloads when chained. [chained]: a checkpoint ran before it
+   in the series. *)
+let runs_of setup plan ~chained =
+  let reload n = n > 1 || (chained && reload_when_chained plan) in
   match
     fst
-      (Checkpoint_trials.until_decided setup.policy ~trial (fun n ->
-           Ok (run setup plan n)))
+      (Checkpoint_trials.until_decided setup.policy ~trial:Attempts.trial
+         (fun n -> Ok (run setup plan n ~reload:(reload n))))
   with
   | Checkpoint_trials.Run_again -> false
   | Checkpoint_passed { passes; runs } ->
@@ -155,13 +207,15 @@ let runs_of setup plan =
         plan.checkpoint.checkpoint_id why;
       false
 
-let rec chain setup = function
+let rec chain setup ~chained = function
   | [] -> Ok 0
-  | plan :: rest -> if runs_of setup plan then chain setup rest else Ok 1
+  | plan :: rest ->
+      if runs_of setup plan ~chained then chain setup ~chained:true rest
+      else Ok 1
 
 (* Every plan of the series, loaded and checked (Plan_check) before the
    console moves. *)
-let load_all ~plan_dir ids =
+let load_checked ~plan_dir ids =
   List.fold_left
     (fun plans id ->
       let* plans = plans in
@@ -169,6 +223,8 @@ let load_all ~plan_dir ids =
       let* () = Story.Plan_check.check plan in
       Ok (plans @ [ plan ]))
     (Ok []) ids
+
+let checkpoint_order = String.compare
 
 (* Each run's daemon: the program's viewport, the right stick's keep-awake,
    then the user's flags. *)
@@ -199,18 +255,13 @@ let switch_only : Live_run.Daemon_process.backend -> _ = function
   | Mgba _ -> Error "PLZA runs on the Switch only: --backend switch"
   | Switch _ -> Ok ()
 
-(* A second run of a checkpoint would start where the first ended: no reload
-   puts it back yet. *)
-let one_run (policy : Checkpoint_trials.policy) =
-  if policy.runs > 1 then
-    Error "PLZA runs each checkpoint once for now: no reload between runs"
-  else Ok ()
-
 (* The checkpoints from --from to --to, in run order. *)
 let selected ~plan_dir (f : Flags.t) =
   let* from_id = Run_flags.required "--from" f.from_id in
   let* to_id = Run_flags.required "--to" f.to_id in
-  let* ids = Engine_series.Plan_folder.checkpoint_ids plan_dir in
+  let* ids =
+    Engine_series.Plan_folder.checkpoint_ids ~compare:checkpoint_order plan_dir
+  in
   let* ids, _ = Engine_series.Plan_folder.select ids ~from_id ~to_id in
   Ok (from_id, to_id, ids)
 
@@ -224,11 +275,10 @@ let run_series ~program ~viewport plan_dir args =
   let* policy =
     Checkpoint_trials.policy ?runs:f.runs Checkpoint_trials.Testing
   in
-  let* () = one_run policy in
-  let* plans = load_all ~plan_dir ids in
+  let* plans = load_checked ~plan_dir ids in
   let setup =
     setup_of f ~program ~from_id ~to_id ~ids ~backend ~viewport policy
   in
-  let* code = chain setup plans in
+  let* code = chain setup ~chained:false plans in
   Live_run.Series_daemons.finished setup.daemons ~passed:(code = 0);
   Ok code
