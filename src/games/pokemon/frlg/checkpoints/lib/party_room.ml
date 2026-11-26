@@ -1,6 +1,6 @@
-module J = Json_field
 module P = Pokemon_engine.Plan
 module Postconditions = Pokemon_engine.Postconditions
+module A = Frlg_actions
 
 type need = {
   joins : (string * string) list;
@@ -11,73 +11,125 @@ type need = {
 
 let party_size = 6
 let field_moves = [ "cut"; "fly"; "surf"; "strength" ]
+let field_move_users = A.Action_args.field_move_users
 
-(* The members an action brings, and the arg keys naming them. *)
-let joining ~where action args =
-  match action with
-  | "redeem_prize_mon" ->
-      let slot = Frlg_actions.Game_corner.prize_slot_of_args ~where args in
-      Option.to_list
-        (List.nth_opt Frlg_actions.Game_corner.fire_red_prizes slot)
-  | "capture" -> (
-      (* Collecting uncaught species needs no room: a full party sends them to
-         the PC. *)
-      match J.string_opt ~where "species" args with
-      | Some species ->
-          List.init (J.int ~where "catches" args) (fun _ -> species)
-      | None -> [])
-  | "wild_rng" -> [ J.string ~where "species" args ]
-  | _ -> []
+type event_effect = {
+  eff_joined : string list;
+  eff_used : string list;
+  eff_freed : int;
+  eff_traded : string option;
+  eff_moves : string list;
+}
 
-let brought_keys = function
-  | "capture" | "wild_rng" -> [ "species" ]
-  | "ingame_trade" -> [ "receive" ]
-  | _ -> []
+let no_effect =
+  {
+    eff_joined = [];
+    eff_used = [];
+    eff_freed = 0;
+    eff_traded = None;
+    eff_moves = [];
+  }
 
-let field_move_users = Frlg_actions.Action_args.field_move_users
+let member_species = function
+  | A.Action_args.Species s -> [ s ]
+  | A.Action_args.Slot _ -> []
 
-(* A field move's user is any member that knows it ([moves]): the action
-   names none the plans use. *)
-let named ~where action args =
-  let brought = brought_keys action in
-  if List.mem_assoc action field_move_users then []
-  else if action = "pc_deposit" then
-    Frlg_actions.Action_args.deposited_species ~where args
+let of_request : A.Action_requests.t -> event_effect = function
+  | Redeem_prize_mon slot ->
+      {
+        no_effect with
+        eff_joined =
+          Option.to_list (List.nth_opt A.Game_corner.fire_red_prizes slot);
+      }
+  | Pc_deposit (Members species) ->
+      { no_effect with eff_used = species; eff_freed = List.length species }
+  | Pc_deposit Holding_no_mail -> { no_effect with eff_freed = 1 }
+  | Ingame_trade { offer; receive } ->
+      { no_effect with eff_used = [ offer ]; eff_traded = receive }
+  | Use_item { on = Some m; _ } ->
+      { no_effect with eff_used = member_species m }
+  | Give_bag_item { to_; _ } -> { no_effect with eff_used = member_species to_ }
+  | Party_swap (By_species (s, _)) -> { no_effect with eff_used = [ s ] }
+  | Verify_mail_glitch m -> { no_effect with eff_used = member_species m }
+  | Cut_tree _ -> { no_effect with eff_moves = [ "cut" ] }
+  | Mart _
+  | Use_item { on = None; _ }
+  | Party_swap (Slots _)
+  | Buy_coins _ | Spin_for_encounter _ | Pc_withdraw | Pick_up_item _
+  | Read_caught _ ->
+      no_effect
+
+(* Collecting uncaught species needs no room: a full party sends them to the
+   PC. *)
+let of_capture ~single (plan : A.Capture_plan.t) =
+  let eff_joined =
+    match plan.target with
+    | Species s -> List.init (if single then 1 else plan.catches) (fun _ -> s)
+    | Uncaught _ -> []
+  in
+  { no_effect with eff_joined }
+
+let decode_error ~where (cause : Pokemon_engine.Failure.cause) =
+  where ^ cause.detail
+
+let action_effect ~where action args =
+  let map f r = Result.map f (Result.map_error (decode_error ~where) r) in
+  if action = "mart" then Ok no_effect
+  else if List.mem action A.Action_requests.names then
+    map of_request (A.Action_requests.decode A.Mart_plan.empty action args)
   else
-    List.filter_map
-      (fun k -> if List.mem k brought then None else J.string_opt ~where k args)
-      Frlg_actions.Action_args.member_keys
-
-(* Unconditional [pc_deposit] frees party slots: 1 for a role deposit
-   ("member": "holding_no_mail"), or one per species in ["species"]. *)
-let leaving ~where action args =
-  if action <> "pc_deposit" then 0
-  else if J.has "member" args then 1
-  else List.length (Frlg_actions.Action_args.deposited_species ~where args)
+    match (action, List.assoc_opt action field_move_users) with
+    | _, Some move -> Ok { no_effect with eff_moves = [ move ] }
+    | "capture", _ ->
+        map (of_capture ~single:false) (A.Capture_plan.decode args)
+    | "wild_rng", _ ->
+        map (of_capture ~single:true) (A.Capture_plan.decode args)
+    | _ ->
+        map
+          (fun eff_used -> { no_effect with eff_used })
+          (A.Action_args.decode ~action A.Action_args.named_species args)
 
 type scan = {
   scan_joins : (string * string) list;
   scan_used : string list;
+  scan_traded : string list;
+  scan_moves : string list;
   delta : int;
   peak : int;
 }
 
-let empty_scan = { scan_joins = []; scan_used = []; delta = 0; peak = 0 }
+let empty_scan =
+  {
+    scan_joins = [];
+    scan_used = [];
+    scan_traded = [];
+    scan_moves = [];
+    delta = 0;
+    peak = 0;
+  }
+
+(* Unconditional [pc_deposit] frees party slots: 1 for a role deposit
+   ("member": "holding_no_mail"), or one per species in ["species"]. *)
+let apply_effect id ~skippable acc eff =
+  let freed = if skippable then 0 else eff.eff_freed in
+  let delta = acc.delta + List.length eff.eff_joined - freed in
+  {
+    scan_joins = acc.scan_joins @ List.map (fun s -> (s, id)) eff.eff_joined;
+    scan_used = acc.scan_used @ eff.eff_used;
+    scan_traded = Option.to_list eff.eff_traded @ acc.scan_traded;
+    scan_moves = eff.eff_moves @ acc.scan_moves;
+    delta;
+    peak = max acc.peak delta;
+  }
 
 let event id acc (e : P.event) =
   match (e.kind, e.way) with
   | Named_action args, Some action ->
       let where = id ^ " " ^ e.id ^ ": " in
-      let joined = joining ~where action args in
-      let freed = if e.skip_if = [] then leaving ~where action args else 0 in
-      let delta = acc.delta + List.length joined - freed in
-      {
-        scan_joins = acc.scan_joins @ List.map (fun s -> (s, id)) joined;
-        scan_used = acc.scan_used @ named ~where action args;
-        delta;
-        peak = max acc.peak delta;
-      }
-  | _ -> acc
+      Result.map
+        (apply_effect id ~skippable:(e.skip_if <> []) acc)
+        (action_effect ~where action args)
+  | _ -> Ok acc
 
 let promised (p : Postconditions.t) =
   match p.party with
@@ -88,42 +140,29 @@ let promised (p : Postconditions.t) =
 
 let plan acc (p : P.t) =
   let id = p.checkpoint.checkpoint_id in
-  let acc = List.fold_left (event id) acc p.checkpoint.events in
-  {
-    acc with
-    scan_used =
-      acc.scan_used @ promised (Postconditions.stated p.postconditions);
-  }
-
-(* The species a trade brings ("receive"). *)
-let traded (p : P.t) =
-  List.filter_map
-    (fun (e : P.event) ->
-      match (e.kind, e.way) with
-      | Named_action args, Some "ingame_trade" ->
-          J.string_opt ~where:(e.id ^ ": ") "receive" args
-      | _ -> None)
-    p.checkpoint.events
-
-(* The field moves the plans' events need some member to know. *)
-let needed_moves (p : P.t) =
-  List.filter_map
-    (fun (e : P.event) ->
-      match (e.kind, e.way) with
-      | Named_action _, Some action -> List.assoc_opt action field_move_users
-      | _ -> None)
-    p.checkpoint.events
+  let step acc e = Result.bind acc (fun acc -> event id acc e) in
+  Result.map
+    (fun acc ->
+      {
+        acc with
+        scan_used =
+          acc.scan_used @ promised (Postconditions.stated p.postconditions);
+      })
+    (List.fold_left step (Ok acc) p.checkpoint.events)
 
 let chain_need plans =
-  let acc = List.fold_left plan empty_scan plans in
-  let brought = List.map fst acc.scan_joins @ List.concat_map traded plans in
-  let used = List.sort_uniq compare acc.scan_used in
-  {
-    joins = acc.scan_joins;
-    used = List.filter (fun s -> not (List.mem s brought)) used;
-    moves = List.sort_uniq compare (List.concat_map needed_moves plans);
-    free = acc.peak;
-  }
+  let step acc p = Result.bind acc (fun acc -> plan acc p) in
+  Result.map
+    (fun acc ->
+      let brought = List.map fst acc.scan_joins @ acc.scan_traded in
+      let used = List.sort_uniq compare acc.scan_used in
+      {
+        joins = acc.scan_joins;
+        used = List.filter (fun s -> not (List.mem s brought)) used;
+        moves = List.sort_uniq compare acc.scan_moves;
+        free = acc.peak;
+      })
+    (List.fold_left step (Ok empty_scan) plans)
 
 let free_needed need = need.free
 

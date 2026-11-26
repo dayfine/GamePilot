@@ -186,7 +186,7 @@ let ending = function
 (* A pre-flight run of 00-make-room's own ("<date>-00-make-room-preflight-<n>"). *)
 let prepare ~plan_dir ~from_id ~at (setup : Pf.setup) =
   let* plans = chain_plans ~plan_dir from_id in
-  let need = Pr.chain_need plans in
+  let* need = Pr.chain_need plans in
   let* () = ensure_start setup from_id in
   let* world = Frlg_checkpoints.Checkpoint_run.load_world () in
   let* run =

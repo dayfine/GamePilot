@@ -24,9 +24,8 @@ val party_size : int
 val field_moves : string list
 (** cut, fly, surf, strength: a member knowing one stays. *)
 
-val chain_need : Pokemon_engine.Plan.t list -> need
-(** Over the plans in run order. Raises {!Json_field.Invalid} for an arg that
-    does not read. *)
+val chain_need : Pokemon_engine.Plan.t list -> (need, string) result
+(** Over the plans in run order. [Error] for an arg that does not decode. *)
 
 val free_needed : need -> int
 (** Peak free party slots needed at the start of the chain ({!need.free}): a

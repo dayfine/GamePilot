@@ -70,12 +70,18 @@ let check_start (checkpoint : Pokemon_engine.Plan.checkpoint) =
         ^ " begins with a fly event")
   | _ -> Ok ()
 
+let decode_menu execution =
+  Json_field.catch (fun () ->
+      Json_field.string_opt ~where:"execution." "menu" execution)
+
 let check_menu (plan : Pokemon_engine.Plan.t) =
-  match (plan.game, Json_field.find "menu" plan.execution) with
-  | "frlg", (None | Some (`String "full")) -> Ok ()
-  | "frlg", Some menu ->
-      Error ("execution.menu " ^ Yojson.Safe.to_string menu ^ " is not \"full\"")
-  | game, _ -> Error ("the plan is for " ^ game ^ ", not frlg")
+  if plan.game <> "frlg" then
+    Error ("the plan is for " ^ plan.game ^ ", not frlg")
+  else
+    Result.bind (decode_menu plan.execution) (function
+      | None | Some "full" -> Ok ()
+      | Some other ->
+          Error (Printf.sprintf "execution.menu %S is not \"full\"" other))
 
 (* Each skip_if condition FireRed reads names what it reads: the species
    names (English, as the Pokédex reader matches them) are loaded only for a

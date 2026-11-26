@@ -30,6 +30,9 @@ val member_keys : string list
 (** The args that name a party member an action uses or brings: ["species"],
     ["sweeper"], ["knock_off_species"], ["recycle_species"]. *)
 
+val named_species : where:string -> Json_field.obj -> string list
+(** The species slugs named by {!member_keys} in the args, in key order. *)
+
 val field_move_users : (string * string) list
 (** The actions that use any member knowing a field move, so their args name no
     member: [cut_tree] (Cut: the game picks the member) and [fly] (Fly: the

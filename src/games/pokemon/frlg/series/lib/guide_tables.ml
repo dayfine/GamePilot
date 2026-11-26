@@ -82,7 +82,7 @@ let chain_need (room : Frlg_checkpoints.Party_room.need) =
 (* The chain's declared preconditions are its first checkpoint's: the save's
    state where it starts. *)
 let chain_lines stocks ~before (loaded : Pokemon_engine.Plan.t list) =
-  let room = Frlg_checkpoints.Party_room.chain_need loaded in
+  let* room = Frlg_checkpoints.Party_room.chain_need loaded in
   let* needs =
     Frlg_checkpoints.Preflight.needs stocks ~before (as_one_plan loaded)
   in
@@ -97,9 +97,7 @@ let needs ~plan_dir chain =
   let* loaded = load ~plan_dir chain in
   let* before = Plan_dir.promised_before ~plan_dir (List.hd chain) in
   let* stocks = Frlg_actions.Mart_plan.load () in
-  match chain_lines stocks ~before loaded with
-  | lines -> Result.map (String.concat "\n") lines
-  | exception Json_field.Invalid e -> Error e
+  Result.map (String.concat "\n") (chain_lines stocks ~before loaded)
 
 (* The needs any save meets left out (review rule R2). *)
 let needs_text needs =
@@ -110,12 +108,8 @@ let needs_text needs =
 let preflight_row stocks ~plan_dir id =
   let* plan = Plan_dir.load_plan ~plan_dir id in
   let* before = Plan_dir.promised_before ~plan_dir id in
-  match Frlg_checkpoints.Preflight.needs stocks ~before plan with
-  | needs ->
-      Result.map
-        (fun needs -> Printf.sprintf "| %s | %s |" id (needs_text needs))
-        needs
-  | exception Json_field.Invalid e -> Error e
+  let* needs = Frlg_checkpoints.Preflight.needs stocks ~before plan in
+  Ok (Printf.sprintf "| %s | %s |" id (needs_text needs))
 
 let preflight ~plan_dir ids =
   let* stocks = Frlg_actions.Mart_plan.load () in
