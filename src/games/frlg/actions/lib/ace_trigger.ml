@@ -127,7 +127,10 @@ let fetch_partner steps ~log t =
   slot_to_title steps 2;
   scroll_boxes steps t.partner_box;
   let slot = find_partner steps t in
+  (* The quick hand reads only over the first slot. *)
+  slot_to_slot steps slot 1;
   quick_on steps;
+  slot_to_slot steps 1 slot;
   steps.press Wire.A;
   slot_to_title steps slot;
   scroll_boxes steps ~back:true t.partner_box;
