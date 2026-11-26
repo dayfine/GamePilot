@@ -16,9 +16,6 @@ val title_id : string
 val probes : title:Effects.template_hash -> Wire.probe_spec list
 (** The title's probe, on the whole frame, with the uploaded template. *)
 
-val title_score : Effects.measurements -> float option
-(** For a log line. *)
-
 val on_plza_tile : Effects.measurements -> bool
 (** The title scores {!Switch_home.Home_title.max_score} (0.08) or less: 0.038
     at most on console B's HOME with the cursor on PLZA's tile, the row scrolled
