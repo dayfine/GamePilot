@@ -24,6 +24,8 @@
   gamepilot.frlg_series
   gamepilot.plza_series
   gamepilot.plza_engine
+  gamepilot.plza_gift_catalog
+  gamepilot.plza_claim_gifts
   gamepilot.run_flags
   gamepilot.run_args
   gamepilot.one_shot_flags

@@ -11,12 +11,24 @@
 val walk_only : string -> bool
 (** Whether a checkpoint's runs are walked: its id is before ["03.03"]. *)
 
+type program_actions =
+  log:(string -> unit) ->
+  picture:Wire.box ->
+  assets:Plza_readers.Blob_assets.t ->
+  (string * Plza_engine.Game.game_action) list
+(** A program's own game actions, beside the story's ({!make}), made by its
+    runner in each run's session: its log, the game picture and the uploaded
+    reader templates. *)
+
 val make :
+  ?program_actions:(string * Plza_engine.Game.game_action) list ->
   Plza_story.Steps.game_steps ->
   checkpoint:Plza_engine.Plan.checkpoint ->
   reload:(unit -> (unit, Engine_run.Failure.cause) result) ->
   Plza_engine.Game.t
-(** The handlers for one checkpoint's run. With a [story_battle] later in the
+(** The handlers for one checkpoint's run: the story's actions, then
+    [program_actions] (none by default), the actions of the program whose plans
+    these are, as its runner hands them in. With a [story_battle] later in the
     checkpoint, a walk or a scene (but [scene_to_battle]) stops on the battle
     HUD and the run goes on at the battle ({!Battle_jump}). *)
 

@@ -3,6 +3,12 @@ module Failure = Engine_run.Failure
 module Game = Plza_engine.Game
 module Plan = Plza_engine.Plan
 
+type program_actions =
+  log:(string -> unit) ->
+  picture:Wire.box ->
+  assets:Plza_readers.Blob_assets.t ->
+  (string * Game.game_action) list
+
 let run_from = "03.03"
 let walk_only id = String.compare id run_from < 0
 let wait_for_platform_ms = 180_000
@@ -231,13 +237,16 @@ let builtin_through jump steps event =
 let no_save () =
   Error (Failure.cause ~repeats:true "no_save" "PLZA saves by autosave only")
 
-let make steps ~(checkpoint : Plan.checkpoint) ~reload : Game.t =
+let make ?(program_actions = []) steps ~(checkpoint : Plan.checkpoint) ~reload :
+    Game.t =
   let checkpoint_id = checkpoint.checkpoint_id in
   let jump = Battle_jump.make checkpoint ~log:steps.Steps.log in
   {
     run_own = own_through jump steps ~checkpoint_id;
     run_builtin = builtin_through jump steps;
-    game_actions = List.map (jumping jump) (game_actions ~reload ~jump steps);
+    game_actions =
+      List.map (jumping jump)
+        (game_actions ~reload ~jump steps @ program_actions);
     flag_holds = Resume_flags.holds steps;
     position = (fun () -> None);
     between_rounds = (fun () -> Ok ());

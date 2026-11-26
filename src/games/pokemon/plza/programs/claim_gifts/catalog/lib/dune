@@ -1,0 +1,4 @@
+(library
+ (name plza_gift_catalog)
+ (public_name gamepilot.plza_gift_catalog)
+ (libraries yojson gamepilot.json_field))

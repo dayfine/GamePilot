@@ -277,6 +277,38 @@ let plza_autostory =
     options = [];
   }
 
+(* PLZA's languages, as the gift names' templates are named
+   (src/games/pokemon/plza/assets/gift-name-<gift>-<language>.png). *)
+let plza_languages =
+  [ "ja"; "en"; "fr"; "it"; "de"; "es"; "es-419"; "ko"; "zh-hans"; "zh-hant" ]
+
+let plza_claim_gifts =
+  {
+    id = "plza.claim-gifts";
+    game = plza;
+    name = "Claim Gifts";
+    group = [ "PLZA"; "Gifts" ];
+    description =
+      "Claims the Mystery Gifts of its catalog that have not expired, puts \
+       their Pokémon in the Boxes and saves.";
+    doc = "docs/guide/plza.claim-gifts.md";
+    checkpoints = Some "src/games/pokemon/plza/programs/claim_gifts/plans";
+    backends = [ Switch ];
+    viewport = Native;
+    rules = Plza_story;
+    options =
+      [
+        {
+          key = "language";
+          value = One_of plza_languages;
+          presence = Default "en";
+          doc =
+            "the game's language, in which the Internet gifts' names are found \
+             in their list";
+        };
+      ];
+  }
+
 let all =
   [
     frlg_start_menu_poc;
@@ -289,6 +321,7 @@ let all =
     frlg_ace;
     frlg_wild_rng;
     plza_autostory;
+    plza_claim_gifts;
   ]
 
 let short_id p =

@@ -17,6 +17,7 @@ Each page ends with "How it works", for developers: the ported files, the mechan
 | [ACE](frlg.ace.md) | `frlg.ace` | mGBA | Runs code typed as PC box names through species 0x0351: 999 of an item in the PC, some of them to the bag. |
 | [Wild RNG](frlg.wild_rng.md) | `frlg.wild_rng` | mGBA | Catches a chosen shiny wild Pokemon by timing the game's random numbers. |
 | [AutoStory](plza.autostory.md) | `plza.autostory` | the Switch | Plays the story from a new game, checkpoint by checkpoint. |
+| [Claim Gifts](plza.claim-gifts.md) | `plza.claim-gifts` | the Switch | Claims the Mystery Gifts of its catalog that have not expired, puts their Pokémon in the Boxes and saves. |
 <!-- /generated -->
 
 The Mail Glitch has a second page for its last checkpoint:
@@ -41,6 +42,7 @@ The blocks:
 - `needs [RANGE]`: what the save needs for the chain, from the pre-flight.
 - `preflight [RANGE]`: what the pre-flight checks before each checkpoint.
 - `commands [RANGE]`: the commands that run it.
+- `gifts`: `plza.claim-gifts`' gift catalog, from its `gifts.json` (a block of that program's own).
 - `options`: the keys its `--options` take, from its descriptor (or that it takes none). A program
   that declares options must have this block on its page; the check names the page that lacks it.
 

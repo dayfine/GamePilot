@@ -1,0 +1,49 @@
+(* plza.claim-gifts' run inputs, read at the edge: its gift catalog
+   (gifts.json), today's date (the host's, UTC) and the Internet gifts' name
+   templates in the run's language; and its guide's gifts block. The program
+   reads no clock and no file: they are handed to its actions
+   (Plza_claim_gifts.Live_gift_steps.actions). *)
+
+module C = Plza_gift_catalog.Gift_catalog
+module D = Plza_gift_catalog.Gift_catalog_decode
+
+let ( let* ) = Result.bind
+let program_id = "plza.claim-gifts"
+
+let catalog () =
+  match Repo_io.Repo_files.locate D.path with
+  | None -> Error (D.path ^ " not found from here: run in the repo")
+  | Some file -> Result.bind (Repo_io.Json_file.read file) D.of_json
+
+(* The host's day in UTC. *)
+let today () =
+  let t = Unix.gmtime (Unix.time ()) in
+  { C.year = t.tm_year + 1900; month = t.tm_mon + 1; day = t.tm_mday }
+
+let read_file path = In_channel.with_open_bin path In_channel.input_all
+
+(* Each Internet gift's name template that exists in [language], as PNG
+   bytes, by gift id. *)
+let name_templates ~language catalog =
+  List.filter_map
+    (fun (g : C.gift) ->
+      let path =
+        Plza_claim_gifts.Live_gift_steps.name_template ~id:g.id ~language
+      in
+      match (g.how, Repo_io.Repo_files.locate path) with
+      | Internet, Some file -> Some (g.id, read_file file)
+      | _ -> None)
+    catalog
+
+let default_language = "en"
+
+let program_actions options =
+  let* catalog = catalog () in
+  let language =
+    Option.value ~default:default_language (Run_options.find options "language")
+  in
+  Ok
+    (Plza_claim_gifts.Live_gift_steps.actions ~catalog ~today:(today ())
+       ~name_templates:(name_templates ~language catalog))
+
+let gifts_block () = Result.map C.guide_table (catalog ())

@@ -26,7 +26,7 @@
 # for every shifted frame, from its own first read.
 # Also fixtures/gifts/: the Mystery Gift steps' readers alone
 # (write_probe_spec.exe --gifts en, the gift name's template from
-# assets/gift-name-vivillon-en.png) on every capture and images/mystery-gift's
+# assets/gift-name-vivillon-poke-ball-en.png) on every capture and images/mystery-gift's
 # (console B's own, png, redacted as its README says) in gifts.probes.jsonl; the main menu's frame
 # (tutorial-cards/it-menu-no-card) and images/mystery-gift's, all nine shifts
 # each, in gifts.shifted.probes.jsonl; and images/mystery-gift's frames and
@@ -126,7 +126,7 @@ for path in sys.argv[2:]:
 regen_gifts() {
     mkdir -p "$FIXTURES/gifts" "$work/gifts" "$work/gifts/frames" \
         "$work/gifts/lossless/tutorial-cards" "$work/gifts/shifted"
-    cp "$SRC/games/pokemon/plza/assets/"gift-name-vivillon-*.png "$work/spec/"
+    cp "$SRC/games/pokemon/plza/assets/"gift-name-vivillon-poke-ball-*.png "$work/spec/"
     for language in en fr; do
         (cd "$SRC" && dune exec \
             games/pokemon/plza/readers/test/write_probe_spec.exe \

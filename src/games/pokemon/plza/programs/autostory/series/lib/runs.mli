@@ -27,6 +27,7 @@ val checkpoint_order : string -> string -> int
     PokemonLZA_AutoStoryPlan.h). *)
 
 val run_series :
+  ?program_actions:Plza_autostory.Story_game.program_actions ->
   program:(string * string) list ->
   options:Run_options.t ->
   viewport:(string option, string) result ->
@@ -39,4 +40,5 @@ val run_series :
     the console moves. [program] is run.json's program fields, [options] the
     program's options, checked (Program_registry.check_options), for run.json,
     [viewport] the Switch daemons' (the registry's check of --viewport). [Ok 0]
-    when every one passed, [Ok 1] when one stopped; the Switch only, testing. *)
+    when every one passed, [Ok 1] when one stopped; the Switch only, testing.
+    [program_actions] (none by default) are the program's own actions. *)

@@ -19,6 +19,7 @@ module Attempts = Story.Run_attempts
 type outcome = Attempts.outcome = Passed | Failed of Attempts.failure
 
 type setup = {
+  program_actions : Story.Story_game.program_actions;
   flags : Flags.t;
   policy : Checkpoint_trials.policy;
   info : Run_record.info;
@@ -58,7 +59,8 @@ let start ~log ~picture ~reload (plan : P.Plan.t) =
   | true, None -> Error (unreachable plan)
   | true, Some _ -> back_to_autosave ~log ~picture
 
-let run_checkpoint ~log ~picture ~reload report (plan : P.Plan.t) =
+let run_checkpoint ~log ~picture ~assets ~reload setup report (plan : P.Plan.t)
+    =
   let* () = start ~log ~picture ~reload plan in
   let steps =
     Story.Live_story_screen.game_steps ~picture ~log ~log_detail:log
@@ -73,6 +75,7 @@ let run_checkpoint ~log ~picture ~reload report (plan : P.Plan.t) =
   in
   let game =
     Story.Story_game.make steps ~checkpoint:plan.checkpoint
+      ~program_actions:(setup.program_actions ~log ~picture ~assets)
       ~reload:(reload_cause ~log ~picture)
   in
   let end_check () =
@@ -83,10 +86,10 @@ let run_checkpoint ~log ~picture ~reload report (plan : P.Plan.t) =
        plan.checkpoint)
 
 (* The run fails on the page when it stops before its runner ended it. *)
-let with_assets ~log ~picture ~reload report plan assets =
+let with_assets ~log ~picture ~reload setup report plan assets =
   match
     Effects.with_probes (Story.Live_story_screen.probes ~picture ~assets)
-      (fun () -> run_checkpoint ~log ~picture ~reload report plan)
+      (fun () -> run_checkpoint ~log ~picture ~assets ~reload setup report plan)
   with
   | Ok () -> Passed
   | Error f -> f
@@ -100,14 +103,14 @@ let with_assets ~log ~picture ~reload report plan assets =
       Watch_report.end_run report ~passed:false;
       failed "raised" (Printexc.to_string e)
 
-let in_session ~log ~reload record plan (backend : Wire.backend) =
+let in_session ~log ~reload setup record plan (backend : Wire.backend) =
   let picture = backend.viewport in
   let log = Watch_report.log log in
   let report = P.Plan_watch.create plan.P.Plan.checkpoint in
   let outcome =
     match Templates.upload () with
     | Error e -> failed ~repeats:true "assets" e
-    | Ok assets -> with_assets ~log ~picture ~reload report plan assets
+    | Ok assets -> with_assets ~log ~picture ~reload setup report plan assets
   in
   (match outcome with
   | Failed _ -> Live_run.Daemon_run.save_failure ~log record ~save_states:false
@@ -116,12 +119,12 @@ let in_session ~log ~reload record plan (backend : Wire.backend) =
 
 (* Any exception Daemon_run.in_session passes on fails the run here, so the
    story log, the run record and the watch run still close. *)
-let live ~log ~reload record plan (daemon : Live_run.Daemon_process.t) =
+let live ~log ~reload setup record plan (daemon : Live_run.Daemon_process.t) =
   match
     Live_run.Daemon_run.in_session ~failed:of_runner ~dir:record.Run_record.dir
       (fun () ->
         Live.run_with_backend ~port:daemon.port
-          (in_session ~log ~reload record plan))
+          (in_session ~log ~reload setup record plan))
   with
   | outcome -> outcome
   | exception e -> failed "raised" (Printexc.to_string e)
@@ -145,7 +148,7 @@ let run_in setup plan n ~attempt ~reload (run : Run_record.run) =
   log ("[Run] " ^ name ^ if reload then " (after a reload)" else "");
   let outcome =
     Live_run.Series_daemons.with_daemon setup.daemons ~failed:of_runner run ~n
-      (live ~log ~reload run.record plan)
+      (live ~log ~reload setup run.record plan)
   in
   close ();
   let ending : Run_record.ending =
@@ -240,8 +243,8 @@ let daemons (f : Flags.t) backend ~viewport series =
          f.watch)
     series
 
-let setup_of (f : Flags.t) ~program ~options ~from_id ~to_id ~ids ~backend
-    ~viewport policy =
+let setup_of (f : Flags.t) ~program_actions ~program ~options ~from_id ~to_id
+    ~ids ~backend ~viewport policy =
   let info : Run_record.info =
     {
       kind = Checkpoints;
@@ -254,6 +257,7 @@ let setup_of (f : Flags.t) ~program ~options ~from_id ~to_id ~ids ~backend
   in
   let mode = Checkpoint_trials.mode_to_string Testing in
   {
+    program_actions;
     flags = f;
     policy;
     info;
@@ -274,7 +278,8 @@ let selected ~plan_dir (f : Flags.t) =
   let* ids, _ = Engine_series.Plan_folder.select ids ~from_id ~to_id in
   Ok (from_id, to_id, ids)
 
-let run_series ~program ~options ~viewport plan_dir args =
+let run_series ?(program_actions = fun ~log:_ ~picture:_ ~assets:_ -> [])
+    ~program ~options ~viewport plan_dir args =
   let* f = Flags.parse args in
   let* () = Flags.takes f in
   let* from_id, to_id, ids = selected ~plan_dir f in
@@ -286,7 +291,8 @@ let run_series ~program ~options ~viewport plan_dir args =
   in
   let* plans = load_checked ~plan_dir ids in
   let setup =
-    setup_of f ~program ~options ~from_id ~to_id ~ids ~backend ~viewport policy
+    setup_of f ~program_actions ~program ~options ~from_id ~to_id ~ids ~backend
+      ~viewport policy
   in
   let* code = chain setup ~chained:false plans in
   Live_run.Series_daemons.finished setup.daemons ~passed:(code = 0);
