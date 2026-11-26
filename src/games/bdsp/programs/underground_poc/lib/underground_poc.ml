@@ -23,7 +23,6 @@ let screen_probe_timeout_ms = 1000
 let max_open_dialog_presses = 6
 let max_end_dialog_presses = 15
 let door_bounce_hold_ms = 2500
-let north_hug_ms = 450
 let south_return_ms = 3000
 let west_return_ms = 2600
 
@@ -144,11 +143,14 @@ let recover_if_mid_dig ~picture ~goal ~counters =
       log "Started mid-dig on an active wall; finishing it first...";
       let* next = finish_active_wall ~picture ~goal ~counters in
       OW.run_hold Corridor_nav.South ~hold_ms:south_return_ms;
-      OW.run_hold Corridor_nav.North ~hold_ms:north_hug_ms;
       OW.run_hold Corridor_nav.West ~hold_ms:west_return_ms;
       Ok next
   | Some scr ->
       log ("Initial screen: " ^ US.to_string scr);
+      if scr.sparkles.player <> None then (
+        log "Started out in corridor; returning South & West to doorway...";
+        OW.run_hold Corridor_nav.South ~hold_ms:south_return_ms;
+        OW.run_hold Corridor_nav.West ~hold_ms:west_return_ms);
       Ok counters
   | None -> Ok counters
 

@@ -15,6 +15,7 @@ let north_hug_ms = 450
 let east_align_ms = 2000
 let north_run_ms = 2800
 let south_return_ms = 3000
+let south_hug_ms = 500
 let west_return_ms = 2600
 
 let subscribe_screen ~picture =
@@ -136,7 +137,7 @@ let visit_targets ~log ~picture ~(sparkles : MS.nearby) ~on_prompt ~on_battle
   let* cur =
     visit_east_and_top ~log ~picture ~on_prompt ~on_battle sparkles.targets cur
   in
-  log "Returning West to South Hideaway doorway...";
-  OW.run_hold Corridor_nav.North ~hold_ms:north_hug_ms;
+  log "Hugging South wall & returning West to South Hideaway doorway...";
+  OW.run_hold Corridor_nav.South ~hold_ms:south_hug_ms;
   OW.run_hold Corridor_nav.West ~hold_ms:west_return_ms;
   Ok cur
