@@ -87,26 +87,25 @@ let () =
         expectation = "true";
       };
       {
-        name = "no main menu after 12 presses: lost";
+        name = "no main menu after 3 unread B presses: lost";
         input =
           (fun () ->
             match fst (lines ()) with
             | Lost why -> List.hd (String.split_on_char '(' why)
             | _ -> "not lost");
-        expectation = "no main menu after 12 presses ";
+        expectation = "plza.gifts: screen unread ";
       };
       {
-        name = "the way back on an unknown screen: B only";
+        name =
+          "the way back on an unknown screen: capped recovery presses logged";
         input =
           (fun () ->
-            String.concat ", "
-              (List.sort_uniq String.compare
-                 (List.filter_map
+            string_of_int
+              (List.length
+                 (List.filter
                     (fun l ->
-                      if String.starts_with ~prefix:"Leaving the gifts" l then
-                        Some l
-                      else None)
+                      String.starts_with ~prefix:"plza.gifts: screen unread" l)
                     (snd (lines ())))));
-        expectation = "Leaving the gifts: no steady screen, B.";
+        expectation = "3";
       };
     ]

@@ -8,5 +8,6 @@
   gamepilot.switch_home
   gamepilot.engine_run
   gamepilot.plza_readers
+  gamepilot.plza_screens
   gamepilot.plza_engine
   gamepilot.plza_gift_catalog))

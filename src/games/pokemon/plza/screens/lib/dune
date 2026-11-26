@@ -1,0 +1,8 @@
+(library
+ (name plza_screens)
+ (public_name gamepilot.plza_screens)
+ (libraries
+  gamepilot.wire
+  gamepilot.screen_graph
+  gamepilot.switch_home
+  gamepilot.plza_readers))
