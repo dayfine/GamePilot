@@ -62,6 +62,7 @@
         "kind": "game_action",
         "action": "give_bag_item",
         "args": {"item": "retro-mail", "target_slot": 2},
+        "skip_if": ["party_slot_holds_mail:2"],
         "why": "slot 2 holds a Retro Mail with one word (ABRA): with the battle's leaked record, the five fill every party mail record"
       },
       {
@@ -69,6 +70,7 @@
         "kind": "game_action",
         "action": "give_bag_item",
         "args": {"item": "retro-mail", "target_slot": 3},
+        "skip_if": ["party_slot_holds_mail:3"],
         "why": "slot 3 holds a Retro Mail with one word (ABRA): with the battle's leaked record, the five fill every party mail record"
       },
       {
@@ -76,6 +78,7 @@
         "kind": "game_action",
         "action": "give_bag_item",
         "args": {"item": "retro-mail", "target_slot": 4},
+        "skip_if": ["party_slot_holds_mail:4"],
         "why": "slot 4 holds a Retro Mail with one word (ABRA): with the battle's leaked record, the five fill every party mail record"
       },
       {
@@ -83,6 +86,7 @@
         "kind": "game_action",
         "action": "give_bag_item",
         "args": {"item": "retro-mail", "target_slot": 5},
+        "skip_if": ["party_slot_holds_mail:5"],
         "why": "slot 5 holds a Retro Mail with one word (ABRA): with the battle's leaked record, the five fill every party mail record"
       },
       {
@@ -90,6 +94,7 @@
         "kind": "game_action",
         "action": "give_bag_item",
         "args": {"item": "retro-mail", "target_slot": 6},
+        "skip_if": ["party_slot_holds_mail:6"],
         "why": "slot 6 holds a Retro Mail with one word (ABRA): with the battle's leaked record, the five fill every party mail record"
       },
       {

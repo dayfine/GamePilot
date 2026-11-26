@@ -161,6 +161,7 @@
         "kind": "game_action",
         "action": "give_bag_item",
         "args": {"item": "retro-mail", "species": "mr-mime"},
+        "skip_if": ["party_slot_holds_mail:3"],
         "why": "equip Retro Mail with 1 Easy Chat word onto Slot 3 (MIMIEN)"
       }
     ]
