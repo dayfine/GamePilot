@@ -45,11 +45,6 @@ val await_read :
 val first_left : int
 (** A row's first field starts at x 41 ({!Text_lines.mail_field_one}). *)
 
-val cursor_width : int
-(** The editor's field cursor, the arrow drawn just before a field: it fills the
-    last 8 pixels of the gap before that field (x 117-122 before a field at 124,
-    on a Switch capture of the ? Mail). *)
-
 val next_left : Glyph_table.t -> left:int -> string -> (int, string) result
 (** Where the field after one showing this text starts: after its width and the
     {!gap}. [Error] names a character the font lacks. *)
@@ -61,8 +56,6 @@ val read_field :
   string list ->
   (Line_reading.reading, string) result
 (** The field on [row] (0..4) starting at [left] read as the best of the
-    candidates, each scored on its own width plus the {!gap} less the
-    {!cursor_width} ({!Text_lines.mail_field}): the cursor on the next field
-    stays out of the template, and 9 blank pixels still tell a longer word that
-    starts the same way, from the first frame with all their probes; [Error] for
-    a character the font lacks or no such frame within a second. *)
+    candidates, each scored on its own width plus the {!gap}
+    ({!Text_lines.mail_field}), from the first frame with all their probes;
+    [Error] for a character the font lacks or no such frame within a second. *)
