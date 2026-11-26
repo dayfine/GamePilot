@@ -626,14 +626,7 @@ let battle_lines c =
     (C.lines c)
 
 let result checkpoint screen () = fst (outcome checkpoint screen)
-
-(* Whether [part] is in [line]. *)
-let contains part line =
-  let n = String.length part in
-  let rec at i =
-    i + n <= String.length line && (String.sub line i n = part || at (i + 1))
-  in
-  at 0
+let contains part line = Strings.Contains.substring line part
 
 (* The arch where 03.02b ends: free control with the minimap 03.03 starts
    on. *)

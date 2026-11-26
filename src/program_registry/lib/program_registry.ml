@@ -209,9 +209,7 @@ let plza_autostory =
     game = plza;
     name = "AutoStory";
     group = [ "PLZA"; "Story" ];
-    description =
-      "Plays the story from a new game's Confirm Choices to Mable's first \
-       research reward (checkpoints 01.00b to 03.11).";
+    description = "Plays the story from a new game, checkpoint by checkpoint.";
     doc = "docs/guide/plza.autostory.md";
     checkpoints = Some "src/games/pokemon/plza/programs/autostory/plans";
     backends = [ Switch ];

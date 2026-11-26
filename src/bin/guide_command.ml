@@ -51,13 +51,6 @@ let pages dir =
   |> List.filter (fun n -> Filename.check_suffix n ".md")
   |> List.sort compare
 
-let contains text sub =
-  let n = String.length sub in
-  let rec at i =
-    i + n <= String.length text && (String.sub text i n = sub || at (i + 1))
-  in
-  at 0
-
 let read path = In_channel.with_open_bin path In_channel.input_all
 
 let write path text =
@@ -148,7 +141,7 @@ let page_problems dir name =
   | Error e -> [ e ]
   | Ok (text, filled) ->
       (if filled <> text then [ name ^ ": generated blocks are stale" ] else [])
-      @ (if contains text todo then
+      @ (if Strings.Contains.substring text todo then
            [ name ^ ": still has the skeleton's TODO(guide)" ]
          else [])
       @ long_paragraphs name text

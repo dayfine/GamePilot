@@ -1,3 +1,7 @@
 (test
  (name test_replay)
- (libraries gamepilot.wire gamepilot.effects gamepilot.replay))
+ (libraries
+  gamepilot.wire
+  gamepilot.effects
+  gamepilot.replay
+  gamepilot.strings))

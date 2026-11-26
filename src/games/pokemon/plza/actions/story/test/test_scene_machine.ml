@@ -1,6 +1,5 @@
 (* The scene machine (Plza_story.Scene_machine) on a scripted console
-   (Fake_console), for the configs no plan on main runs yet: a stop at a
-   choice, a battle's start (the HUD, or the lock-on after a battle's black
+   (Fake_console), config by config: a stop at a choice, a battle's start (the HUD, or the lock-on after a battle's black
    fade), the end at a battle ahead, a start window; and its failures: a
    scene that never started, control where a choice was due, a timeout. *)
 
@@ -29,15 +28,7 @@ let outcome config screen () = fst (run config screen)
 let logged config screen part () =
   let _, c = run config screen in
   string_of_bool
-    (List.exists
-       (fun line ->
-         let n = String.length part in
-         let rec at i =
-           i + n <= String.length line
-           && (String.sub line i n = part || at (i + 1))
-         in
-         at 0)
-       (C.lines c))
+    (List.exists (fun line -> Strings.Contains.substring line part) (C.lines c))
 
 (* Text for 1 s, then a two-row choice on its top row. *)
 let choice_at_ms = 1000.0

@@ -5,5 +5,6 @@
   gamepilot.effects
   gamepilot.live
   gamepilot.run_record
+  gamepilot.strings
   unix
   yojson))

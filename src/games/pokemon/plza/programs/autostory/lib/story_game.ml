@@ -25,7 +25,9 @@ let timed run ~default steps (event : Plan.event) (args : Json_field.obj) =
   | _ -> bad_args event "the only arg is timeout_ms, a whole number of ms"
 
 (* The platform's hint fades after a few seconds idle: a start that does not
-   see it reloads the latest autosave, where it shows fresh, and looks again. *)
+   see it reloads the latest autosave, where it shows fresh, and looks again.
+   Ours: the fork starts 01.01 right after the opening or a reload and never
+   needed it (console B, 2026-11-25: 01.01 started a minute after 01.00b). *)
 let platform_or_reload ~reload steps ~timeout_ms =
   match Platform_wait.wait_for_platform steps ~timeout_ms with
   | Error { code = "platform_not_seen"; _ } ->
@@ -102,8 +104,11 @@ let prompt_not_seen =
         A (the walk before it stopped short?)")
 
 (* A scene that presses A first, as the fork's: A through the prompt first
-   ({!Plza_walk.Talk_prompt.press_through}), then the scene; with "stop_at_choice", to the
-   choice. *)
+   ({!Plza_walk.Talk_prompt.press_through}), then the scene; with
+   "stop_at_choice", to the choice. Where it differs: free control with no A
+   prompt on two reads 300 ms apart fails prompt_not_seen before any A, where
+   the fork presses A on nothing and its scene then ends on control, passing a
+   walk that stopped short. *)
 let through_prompt ~jump steps event config =
   if prompt_missing steps then prompt_not_seen
   else (
@@ -156,7 +161,7 @@ let zone_actions =
     ("claim_mable_research_reward", no_args Mable_reward.run);
   ]
 
-(* The story's own actions, up to 03.06. *)
+(* The story's own actions, by the name a plan gives each. *)
 let story_actions ~reload ~jump =
   [
     ("confirm_new_game", no_args New_game_confirm.run);
@@ -183,6 +188,9 @@ let game_actions ~reload ~jump steps =
     (fun (name, action) -> (name, action steps))
     (story_actions ~reload ~jump @ zone_actions)
 
+(* The engine's scene: its action "end_on_black_fade" for the fork's scene
+   ending on a black fade, "button_b" for its scene pressing B (B on text and
+   cutscenes, 120 s). *)
 let scene ~jump steps (event : Plan.event) =
   let run = run_scene ~jump steps event in
   match event.way with
@@ -202,6 +210,10 @@ let builtin ~jump steps (event : Plan.event) =
         (Failure.cause ~repeats:true "no_handler"
            (event.id ^ ": PLZA runs no talk, answer or save event"))
 
+(* The game's walk, walked rather than run before 03.03 (as
+   PokemonLZA_AutoStory.cpp walks them, before dash is unlocked). The fork's
+   starter option (Totodile's or Tepig's legs in place of the plan's) is not
+   ported: 01.03's plan walks to Chikorita, the fork's default. *)
 let walk steps ~checkpoint_id ~jump (event : Plan.event)
     (own : Plza_rules.Action.t) =
   let walk_steps = Steps.walk_game_steps steps in

@@ -1,13 +1,9 @@
 # AutoStory
 
-Plays Pokémon Legends: Z-A's story on the Switch from a new game: it confirms the new game's
-choices, skips the opening to the station platform, then walks off the platform and presses through
-the arrival scenes to Main Mission 01, where you have free control in Lumiose City.
-
-From there it chases Pancham, takes Chikorita and beats Andi (Main Mission 01), then follows Main
-Missions 02 and 03: Hotel Z, Taunie's battle, the Pokémon Center, Wild Zone 1's catches (five
-species in the party), the research lab and Mable's first research reward, the Rock Smash TM
-(checkpoint 03.11).
+Plays Pokémon Legends: Z-A's story on the Switch from a new game, one checkpoint at a time: it
+confirms the new game's choices, skips the opening, then follows the Main Missions, walking the
+routes, pressing through the scenes, fighting the story battles and making the catches the story
+asks for. The checkpoints table below lists the ones it plays.
 
 <!-- generated:backends -->
 Runs on: the Switch.
@@ -72,6 +68,11 @@ From Wild Zone 1 on:
 - 03.08b leaves the zone by its far gate, steering by the map's pin and the minimap's arrow.
 - 03.09 and 03.10 walk to the Research Lab and up to the Director's Office.
 - 03.11 opens the main menu, goes to Mable's Research and takes the Rock Smash TM.
+
+01.02 walks after
+Pancham, presses B through the scene to its choice and takes "Battle with Pokemon!". 01.03 walks to
+Chikorita and talks, picks it, presses through the tutorial cards to the battle, and fights Andi
+with the most effective move under ZL until Andi speaks.
 
 ## When it stops
 

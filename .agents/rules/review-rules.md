@@ -449,6 +449,25 @@ Find the gate in pret pokefirered (the script or the C that checks it) and cite 
   checked against `field_move_badges` in `src/games/frlg/actions/lib/action_args.ml`, and
   `grep -rnE 'in the party \((fly|surf|strength|cut)' docs/guide` for an HM need by species (R3).
 
+## From the review of #198 (PLZA Main Mission 01.02–01.03, 2026-11-25)
+
+### R25 A program's registry description says what it does, never how far it gets today
+
+A program's `description` in `src/program_registry` says what the program does, not which
+checkpoints, missions or steps it covers so far: coverage changes with every plan PR and is shown
+by the plans and the guide's generated blocks.
+
+- Why: "this doesn't need to change every single timme / This is leaking details" (user,
+  2026-11-25, on `program_registry.ml`:
+  https://github.com/dayfine/GamePilot/pull/198#discussion_r4702448448).
+- Bad: `"Plays the story; for now from the new game's Confirm Choices through Main Mission 01
+  (checkpoints 01.00b to 01.03)."`
+- Good: `"Plays the story from a new game, checkpoint by checkpoint."`
+- Find: recipe, then judgment on each hit:
+  `grep -nA2 'description =' src/program_registry/lib/program_registry.ml | grep -nE 'for now|so far|[0-9]{2}\.[0-9]{2}'`;
+  and `git log -p -- src/program_registry/lib/program_registry.ml` for a description edited
+  alongside a plan change.
+
 ## AGENTS.md hard rules no lint checks yet
 
 Each is stated in `AGENTS.md` (the name below is its bold lead); the auditor runs the recipe and
