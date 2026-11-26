@@ -2,30 +2,33 @@
 
     Mirrors FRLG's {!Frlg_actions.Fly} / {!Frlg_actions.Fly_towns}: opens the
     Town Map via [X -> +], clamps the cursor to the top-left corner so it works
-    from any outdoor Sinnoh location, steps to the destination's calibrated grid
-    offset, confirms Fly ([A -> A]), and waits for the black transition fade to
-    complete. *)
+    from any outdoor Sinnoh location, looks up the destination's [(x, y)] grid
+    offset in {!known_towns}, confirms Fly ([A -> A]), and waits for the black
+    transition fade to complete. *)
 
-(** Calibrated Sinnoh Town Map Fly destinations (add new towns here as BDSP
-    AutoStory / post-game programs need them). *)
-type destination =
-  | Oreburgh
-      (** Oreburgh City (drops into the Central Grassland Cave hallway). *)
-  | Celestic
-      (** Celestic Town (drops into the isolated Stargleam Cavern zone). *)
-  | Ramanas_park  (** Ramanas Park on Route 221. *)
+val oreburgh_city : string
+(** Oreburgh City (drops into the Central Grassland Cave hallway). *)
 
-val destination_name : destination -> string
-(** Human-readable destination name for logs. *)
+val celestic_town : string
+(** Celestic Town (drops into the isolated Stargleam Cavern zone). *)
 
-val map_offset : destination -> int * int
-(** [(right_taps, down_taps)] from the top-left corner-clamped Town Map cursor.
-*)
+val ramanas_park : string
+(** Ramanas Park on Route 221. *)
+
+val known_towns : (string * (int * int)) list
+(** All calibrated Sinnoh Town Map destinations as [(name, (x, y))] offsets from
+    the top-left corner-clamped cursor. Add remaining Sinnoh towns from BDSP
+    Town Map data / decomp as future programs need them. *)
+
+val coordinates : string -> (int * int) option
+(** Look up a town's [(right_taps, down_taps)] Town Map offset in the Sinnoh
+    lookup map, if known. *)
 
 val fly_to :
   log:(string -> unit) ->
   picture:Wire.box ->
-  destination ->
+  string ->
   unit ->
   (unit, string) result
-(** Fly from any outdoor Sinnoh location to [destination]. *)
+(** Fly from any outdoor Sinnoh location to [town]. Returns [Error] if [town] is
+    not in {!known_towns} or if the Fly transition fails. *)
