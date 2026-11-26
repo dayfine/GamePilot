@@ -2,7 +2,7 @@
     stick tilted toward an angle ({!Switch_home.Stick_tilt}), walking or
     running. Ported from PokemonLZA_AutoStoryConsoleBackend.cpp: a tilt asked to
     run is run (B held with the stick, for its walk time over 1.65, running's
-    speedup) unless the run walks only. Every checkpoint before 03.03 walks
+    speedup) unless the run walks only. Every checkpoint before 03.04 walks
     (PokemonLZA_AutoStory.cpp), kept here, though dash unlocks at 03.01: 03.01
     and 03.02 could run.
 

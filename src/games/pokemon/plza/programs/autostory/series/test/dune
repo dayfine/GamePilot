@@ -1,0 +1,7 @@
+(test
+ (name test_new_game_options)
+ (libraries
+  gamepilot.table_test
+  gamepilot.run_options
+  gamepilot.plza_story
+  gamepilot.plza_autostory))

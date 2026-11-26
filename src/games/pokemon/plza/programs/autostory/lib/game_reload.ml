@@ -1,16 +1,6 @@
 module G = Switch_home.Game_entry
 
-type rgb = { r : int; g : int; b : int }
-
-let tile_low = { r = 0; g = 120; b = 120 }
-let tile_high = { r = 120; g = 255; b = 255 }
-
-let tile_color : Switch_home.Home_screen.tile_color =
-  {
-    min = (tile_low.r, tile_low.g, tile_low.b);
-    max = (tile_high.r, tile_high.g, tile_high.b);
-  }
-
+let tile_color = Plza_readers.Switch_home_tile.tile_color
 let start_game_wait_ms = 40_000
 let enter_game_wait_ms = 60_000
 let mash_ms = 2000

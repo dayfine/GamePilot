@@ -14,23 +14,34 @@
     first slot, and on five of them with their colours shifted
     (dev/reader_fixtures/shift_frame.py: brightness x0.9 and x1.1, each channel
     +-12, grey 10): every right name scores 0; the nearest wrong one (G……o
-    against Q……o, one letter apart) 0.012. Each candidate's template keeps
-    {!margin} blank pixels either side, so a short name ([A]) does not match
-    inside a longer one that holds it (["”‘' A a."]). The hand over a slot of
-    the top row's middle covers the name: read with the hand on the title or on
-    the first slot. *)
+    against Q……o, one letter apart) 0.011. Each candidate's template keeps
+    {!margin} blank pixels either side (one more on the left to start on an even
+    x, below), so a short name ([A]) does not match inside a longer one that
+    holds it (["”‘' A a."]). The hand over a slot of the top row's middle covers
+    the name: read with the hand on the title or on the first slot.
+
+    On the Switch (console B, 2026-11-25: Boxes 1-14 named BOX1-BOX14, the hand
+    on the title) the GBA picture is scaled 6.5 times, so the template is
+    compared on its whole pixels only ([skip_seams]) and starts on an even game
+    x and y, where the capture's game pixels start on a whole frame pixel: every
+    right name scores at most 0.0007, and at most 0.0032 with the colour shifts
+    above. The nearest wrong one there is BOX6 against BOX8 (0.0053): the two
+    digits differ by a few outline pixels, so a caller that may see either
+    passes both. *)
 
 val margin : int
 (** 10. *)
 
 val ink : Wire.color_range
-(** Every channel 0..90: the outline's (57, 57, 57). *)
+(** Every channel 0..98: the outline's (57, 57, 57) on mGBA and the Switch's
+    blurred outline, not the title bars' darkest pictures (99 on Seafloor and
+    City). *)
 
 val max_score : float
-(** 0.006: half the nearest wrong name's score, much tighter than
-    {!Line_reading.max_score}, since one letter changed in a name scores 0.012.
-    A caller still passes every name the box may show as a candidate, so a near
-    name loses to the right one. *)
+(** 0.006: about half the nearest wrong name's score on mGBA, much tighter than
+    {!Line_reading.max_score}, since one letter changed in a name scores 0.011
+    there (BOX6 against BOX8 less, see above). A caller still passes every name
+    the box may show as a candidate, so a near name loses to the right one. *)
 
 val pick :
   Glyph_table.t -> string list -> Effects.measurements -> Line_reading.reading
@@ -50,5 +61,6 @@ val template : Glyph_table.t -> string -> (Text_lines.t * string, string) result
     specs. *)
 
 val probe_of : Text_lines.t -> string -> template:string -> Wire.probe_spec
-(** The candidate's probe over its line's glyph rows 1-11 with 2 pixels' slack;
-    [template] is the upload's hash or, offline, the PNG's path. *)
+(** The candidate's probe over its line's glyph rows 0-11 with 2 pixels' slack,
+    on the template's whole pixels; [template] is the upload's hash or, offline,
+    the PNG's path. *)

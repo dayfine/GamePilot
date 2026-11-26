@@ -9,5 +9,6 @@
   gamepilot.run_options
   gamepilot.pokemon_home
   gamepilot.plza_engine
+  gamepilot.plza_readers
   gamepilot.plza_checkpoint_series
   gamepilot.plza_bank_home))

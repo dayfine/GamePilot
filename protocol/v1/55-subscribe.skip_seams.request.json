@@ -1,0 +1,26 @@
+{
+  "jsonrpc": "2.0",
+  "id": 55,
+  "method": "subscribe",
+  "params": {
+    "probes": [
+      {
+        "id": "pc_box_title/BOX1",
+        "kind": "core.template_match@1",
+        "box": {
+          "x": 0.558333,
+          "y": 0.125,
+          "w": 0.2,
+          "h": 0.1
+        },
+        "delivery": "latest",
+        "template": "21e018b423be9dbd6ab58c8545d5c727d9273f36b56b4596ed49b365f43e17fd",
+        "ink": {
+          "min": [0, 0, 0],
+          "max": [90, 90, 90]
+        },
+        "skip_seams": true
+      }
+    ]
+  }
+}

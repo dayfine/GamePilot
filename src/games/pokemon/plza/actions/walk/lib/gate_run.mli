@@ -1,6 +1,6 @@
 (** A run straight ahead to a gate's A prompt, the plan's [run_to_gate]: ported
     from PokemonLZA_AutoStoryConsoleActions.cpp over the run toward a gate's A
-    prompt in PokemonLZA_BasicNavigation.cpp, 03.07's run to Wild Zone 1's gate.
+    prompt in PokemonLZA_BasicNavigation.cpp, 03.09's run to Wild Zone 1's gate.
     The stick ahead with B held, for up to [timeout_ms], until an A prompt
     shows: reached. When the party bar has been gone 400 ms (a day/night change
     stops the run, as the fork's watcher for the party bar going reads it), it

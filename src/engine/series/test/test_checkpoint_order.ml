@@ -16,6 +16,17 @@ let () =
       case "parts in letter order, before the bare id"
         (sorted [ "cp-2"; "cp-2b"; "cp-2a"; "cp-10" ])
         "cp-10, cp-2a, cp-2b, cp-2";
+      case "a named id sorts by its whole name: 03.02 before 03.02b"
+        (sorted
+           [
+             "03.03-rock-pile-scene";
+             "03.02b-battle-taunie";
+             "01.00b-to-the-platform";
+             "03.02-out-of-hotel-z";
+             "01.00a-new-game";
+           ])
+        "01.00a-new-game, 01.00b-to-the-platform, 03.02-out-of-hotel-z, \
+         03.02b-battle-taunie, 03.03-rock-pile-scene";
       case "letters not after a digit are part of the name"
         (sorted [ "intro"; "intra" ])
         "intra, intro";

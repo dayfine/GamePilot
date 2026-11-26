@@ -274,7 +274,7 @@ let plza_autostory =
     backends = [ Switch ];
     viewport = Native;
     rules = Plza_story;
-    options = [];
+    options = Plza_story.New_game_choices.decls;
   }
 
 let plza_bank_home =

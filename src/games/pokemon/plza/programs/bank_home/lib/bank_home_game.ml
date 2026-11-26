@@ -2,6 +2,7 @@ module Failure = Engine_run.Failure
 module Game = Plza_engine.Game
 module Plan = Plza_engine.Plan
 module Title = Switch_home.Home_title
+module Tile = Plza_readers.Switch_home_tile
 
 type templates = {
   home : Pokemon_home.Home_bank.templates;
@@ -35,13 +36,10 @@ let walk : Title.walk =
     tiles = 8;
   }
 
-let title_id = "plza.home_title"
 let title_read_ms = 1500
 
 let title_shows () =
-  match
-    Effects.await ~timeout_ms:title_read_ms (fun m -> Title.shows m title_id)
-  with
+  match Effects.await ~timeout_ms:title_read_ms Tile.on_plza_tile with
   | Holds _ -> true
   | Timeout -> false
 
@@ -53,9 +51,7 @@ let find_plza_tile ~log =
 let start_check ~log (t : templates) =
   let title = Effects.upload_template t.plza_title in
   match
-    Effects.with_probes
-      [ Title.probe title_id title ]
-      (fun () -> find_plza_tile ~log)
+    Effects.with_probes (Tile.probes ~title) (fun () -> find_plza_tile ~log)
   with
   | Ok _ -> Ok ()
   | Error e -> Error (Failure.cause ~repeats:true "home_tile_not_found" e)

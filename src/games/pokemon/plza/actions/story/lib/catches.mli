@@ -1,4 +1,4 @@
-(** The story's first catches, in Wild Zone 1 (03.07), the plan's
+(** The story's first catches, in Wild Zone 1 (03.09), the plan's
     [catch_tutorial] and [battle_then_catch]: ported from
     PokemonLZA_AutoStoryCatches.cpp, with the fork's counts (6 throws, 6 rounds,
     PokemonLZA_AutoStoryConsoleActions.cpp).

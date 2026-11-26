@@ -66,7 +66,6 @@ let grid_guide : Guide_blocks.rules_guide =
     needs = Grid.Guide_tables.needs;
     preflight = Grid.Guide_tables.preflight;
     commands = Guide_blocks.grid_commands;
-    order = Engine_series.Checkpoint_order.compare;
   }
 
 let start_menu_poc =
@@ -107,7 +106,6 @@ let plza_guide : Guide_blocks.rules_guide =
     preflight = no_stated "pre-flight";
     commands =
       (fun _ ~args -> Plza_checkpoint_series.Guide_tables.commands ~args);
-    order = Plza_checkpoint_series.Checkpoint_series.checkpoint_order;
   }
 
 (* PLZA's story rules' entry points: a series of whole checkpoints on the
