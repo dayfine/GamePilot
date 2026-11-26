@@ -1,8 +1,8 @@
-# Screen graph: `go_to` a screen by reading, not by script (draft, 2026-11-26)
+# Screen graph: `go_to` a screen by reading, not by script (2026-11-26)
 
 A game's menu screens as a graph the game declares, and one game-agnostic `go_to` that reads where
-the game is, takes one press toward the target, and reads again. Draft for the user's review: the
-decisions below are recommendations; the open questions are at the end.
+the game is, takes one press toward the target, and reads again. The user took every recommendation
+(2026-11-26); the questions it settled are at the end.
 
 ## The problem
 
@@ -243,18 +243,16 @@ ACE); walking (the navigation grid is its own graph); typing (`Code_keyboard`); 
 screen (the Y, move, Y of `Gift_boxes`); and menus with no cursor reader (a bag item's menu, a
 Mart's list), which count presses until they have one.
 
-## Open questions
+## Settled questions
 
-1. **The unread press** (decision 7). Allow a graph to declare B on an unread screen, as #251 and
-   `Pc_box.leave_next` do today, or fail strictly and write Link Play's reader first?
-   Recommendation: allow it, declared and capped, and log every use so each is a reader to write.
-2. **Does #251 merge first?** Recommendation: yes; step 2 then replaces `Leave_gifts` under its
-   tests, instead of the two changing the same exits at once.
-3. **Should a plan name a screen** (a checkpoint's start or end "on the main menu")?
-   Recommendation: not yet; it is a format change and belongs with composing programs
+The user took each recommendation (2026-11-26, "take the doc's recommendation").
+
+1. **The unread press** (decision 7): a graph may declare B on an unread screen, as #251 and
+   `Pc_box.leave_next` do today, capped, and every use is logged so each is a reader to write.
+2. **#251 merged first** (476816cf); step 2 replaces `Leave_gifts` under its tests.
+3. **Plans do not name screens yet**: a format change that belongs with composing programs
    (`Story-Flags.md`, decision 5).
-4. **`core/screen_graph` depends on `switch_home` for `Held_screen`**, which is game-agnostic but
-   lives there. Move it to `screen_graph` in step 1 (a rename, structural) or leave it?
-   Recommendation: move it; its users are `switch_home` and claim-gifts.
-5. **FRLG before or after PLZA's Boxes?** The party example is the user's own, but it needs the
-   `Action_failed` conversion first. Recommendation: PLZA steps 2 to 4 first, FRLG party next.
+4. **`Held_screen` moves to `screen_graph`** in step 1 (a rename, structural); its users are
+   `switch_home` and claim-gifts.
+5. **PLZA first**: steps 2 to 4 (gifts, the gift loop, Boxes/Save/HOME), then FRLG's party once
+   `Action_failed` is a `Result`.
