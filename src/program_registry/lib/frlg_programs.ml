@@ -113,6 +113,8 @@ let ace =
       ];
   }
 
+let max_repels = 99
+
 let supplies =
   {
     id = "frlg.supplies";
@@ -126,7 +128,22 @@ let supplies =
     backends = [ Mgba; Switch ];
     viewport = Nso_gba;
     rules = Pokemon_grid;
-    options = [];
+    options =
+      [
+        {
+          key = "retro-mail";
+          value = Int_range (0, bag_most);
+          presence = Default "100";
+          doc =
+            "how many Retro Mail to buy at Celadon Dept. Store 4F (0 to skip)";
+        };
+        {
+          key = "super-repel";
+          value = Int_range (0, max_repels);
+          presence = Default "5";
+          doc = "how many Super Repels to buy at Lavender Mart (0 to skip)";
+        };
+      ];
   }
 
 let team_training =

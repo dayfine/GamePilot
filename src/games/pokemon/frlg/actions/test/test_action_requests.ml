@@ -104,12 +104,32 @@ let decoding =
       "unknown_action: switch_grind";
   ]
 
-let buys map items budget () =
+let buys ?(options = Run_options.none) map items budget () =
   let stock = Option.get (Mart_plan.stock stocks map) in
   let lines =
     List.map (fun (i, q) -> { Mart_plan.line_item = i; quantity = q }) items
   in
-  Mart_plan.buys_to_string (Mart_plan.buys stock { map; lines; budget })
+  let plan = Mart_plan.apply_options options { map; lines; budget } in
+  Mart_plan.buys_to_string (Mart_plan.buys stock plan)
+
+let supplies_options pairs =
+  let decl : Run_options.declared list =
+    [
+      {
+        key = "retro-mail";
+        value = Int_range (0, 999);
+        presence = Default "100";
+        doc = "";
+      };
+      {
+        key = "super-repel";
+        value = Int_range (0, 99);
+        presence = Default "5";
+        doc = "";
+      };
+    ]
+  in
+  Result.get_ok (Run_options.check decl pairs)
 
 let presses q () =
   let right, up = Mart_plan.quantity_presses q in
@@ -125,6 +145,28 @@ let mart =
          [ ("revive", 2); ("escape-rope", 1) ]
          (Some 2000))
       "1 revive (row 2, $1500)";
+    case "options override retro-mail to 20 (collapses 50+50)"
+      (buys
+         ~options:(supplies_options [ ("retro-mail", "20") ])
+         "CeladonCity_DepartmentStore_4F"
+         [ ("retro-mail", 50); ("retro-mail", 50) ]
+         None)
+      "20 retro-mail (row 1, $1000)";
+    case "options override retro-mail to 150 (splits 50+50+50)"
+      (buys
+         ~options:(supplies_options [ ("retro-mail", "150") ])
+         "CeladonCity_DepartmentStore_4F"
+         [ ("retro-mail", 50); ("retro-mail", 50) ]
+         None)
+      "50 retro-mail (row 1, $2500); 50 retro-mail (row 1, $2500); 50 \
+       retro-mail (row 1, $2500)";
+    case "options override super-repel to 0 (skips purchase)"
+      (buys
+         ~options:(supplies_options [ ("super-repel", "0") ])
+         "LavenderTown_Mart"
+         [ ("super-repel", 5) ]
+         None)
+      "nothing";
     case "quantity 1: no presses" (presses 1) "right 0, up 0";
     case "quantity 25: two tens, then four" (presses 25) "right 2, up 4";
     case "quantity 99" (presses 99) "right 9, up 8";

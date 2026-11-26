@@ -21,7 +21,8 @@ let mart ctx (plan : Mart_plan.t) =
           (Mart_plan.stock s plan.map))
   in
   match stock with
-  | Ok stock -> Mart.run ~log:ctx.log stock plan
+  | Ok stock ->
+      Mart.run ~log:ctx.log stock (Mart_plan.apply_options ctx.options plan)
   | Error e -> Menu_input.fail ~repeats:true "no_mart_stock" e
 
 let swap ctx (swap : R.swap) =

@@ -374,9 +374,7 @@ out_of_dept_store.lift: [lift_floor] game_action {"from":"4F","to":"1F"} => Cela
 out_of_dept_store.walk: [run] route to CeladonCity (11, 15) south
 retries 0
 postconditions:
-item retro-mail gained 100
-item super-repel gained 5
-money spent 7500
+none
 no repeat
 == team_training/plans/tt-01.plan.json
 frlg tt-01 from anywhere outdoors: 8 game_action, 3 route, 1 scene
