@@ -34,6 +34,13 @@ val already_received : Effects.measurements -> bool
     exists yet). A gift claimed twice therefore ends as an unknown screen today.
 *)
 
+val after_claim_read :
+  log:(string -> unit) -> Plza_gift_catalog.Gift_catalog.gift -> claim
+(** {!claim}'s second half, after the claim's A: the screen read as above (a
+    card, already received, or an unknown screen, its frame kept and named in
+    the log line with the gift screens' last readings), then the way back to the
+    main menu. The probes must be subscribed ({!Mystery_gift.probes}). *)
+
 val claim :
   log:(string -> unit) ->
   picture:Wire.box ->

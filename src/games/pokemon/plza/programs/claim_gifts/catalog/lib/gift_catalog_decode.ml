@@ -7,7 +7,17 @@ let format = "gamepilot-gifts/1"
 let where = "gifts.json: "
 
 let fields =
-  [ "id"; "name"; "how"; "code"; "expires"; "box_slot"; "home_box"; "source" ]
+  [
+    "id";
+    "name";
+    "how";
+    "code";
+    "expires";
+    "box_slot";
+    "home_boxes";
+    "home_order";
+    "source";
+  ]
 
 let known_fields ~where obj =
   List.iter
@@ -30,16 +40,28 @@ let box_slot ~where obj : C.box_slot =
   let where = where ^ "box_slot." in
   { box = F.int ~where "box" obj; slot = F.int ~where "slot" obj }
 
+let home_order ~where = function
+  | "left_to_right" -> C.Left_to_right
+  | "right_to_left" -> C.Right_to_left
+  | s -> F.fail "%shome_order is %S, not left_to_right or right_to_left" where s
+
+let home_boxes ~where obj =
+  List.map
+    (function
+      | `Int b -> b | _ -> F.fail "%shome_boxes holds box numbers" where)
+    (Option.value ~default:[] (F.list_opt ~where "home_boxes" obj))
+
 let pokemon ~where obj =
-  match (F.object_opt ~where "box_slot" obj, F.find "home_box" obj) with
-  | None, None -> None
+  match (F.object_opt ~where "box_slot" obj, F.find "home_boxes" obj) with
+  | None, None when not (F.has "home_order" obj) -> None
   | Some slot, Some _ ->
       Some
         {
           C.box_slot = box_slot ~where slot;
-          home_box = F.int ~where "home_box" obj;
+          home_boxes = home_boxes ~where obj;
+          home_order = home_order ~where (F.string ~where "home_order" obj);
         }
-  | _ -> F.fail "%sbox_slot and home_box go together" where
+  | _ -> F.fail "%sbox_slot, home_boxes and home_order go together" where
 
 let gift ~where obj : C.gift =
   known_fields ~where obj;
@@ -62,6 +84,7 @@ let decode json =
 
 (* The checks no one field shows. *)
 let max_slot = 30
+let home_box_most = 300
 let max_id = 40
 let id_char c = (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c = '-'
 let code_char c = (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9')
@@ -91,9 +114,10 @@ let check_code (g : C.gift) =
 
 let check_slot (g : C.gift) =
   match g.pokemon with
-  | Some { box_slot = { box; slot }; home_box }
-    when box < 1 || slot < 1 || slot > max_slot || home_box < 1 ->
-      Error "box and home_box are 1 or more, slot 1 to 30"
+  | Some { box_slot = { box; slot }; home_boxes; _ }
+    when box < 1 || slot < 1 || slot > max_slot || home_boxes = []
+         || List.exists (fun b -> b < 1 || b > home_box_most) home_boxes ->
+      Error "box is 1 or more, slot 1 to 30, home_boxes some of 1 to 300"
   | Some _ | None -> Ok ()
 
 let check_source (g : C.gift) =

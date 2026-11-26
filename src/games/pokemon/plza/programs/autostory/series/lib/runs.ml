@@ -4,16 +4,6 @@ module Series = Plza_checkpoint_series.Checkpoint_series
 module Attempts = Plza_checkpoint_series.Run_attempts
 
 let ( let* ) = Result.bind
-
-(* The daemon's keep-awake presses B after 180 s idle on the Switch; B backs
-   out of PLZA's new-game menus (console B, 2026-11-25), so PLZA's daemons
-   nudge the right stick instead, which only turns the camera in the field and
-   does nothing in a dialogue, a menu or a battle (up then down, so the
-   camera's heading never moves: walk legs are aimed from it). Off, an idle
-   console dimmed its screen, which reads as nothing (01.03's run 2). A
-   --keepawake-key given on the command line comes after, and the daemon takes
-   the last. *)
-let keepawake_stick = [ "--keepawake-key"; "RStick" ]
 let failed = Series.failed
 
 let reload_cause ~log ~picture () =
@@ -79,7 +69,7 @@ let attempt ~log ~picture ~reload report plan : Attempts.outcome =
 let story : Series.program =
   {
     check_plan = Story.Plan_check.check;
-    daemon_flags = keepawake_stick;
+    daemon_flags = Series.keepawake_stick;
     attempt;
   }
 

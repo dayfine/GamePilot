@@ -27,13 +27,22 @@ val how_name : how -> string
 type box_slot = { box : int; slot : int }
 (** A Boxes slot: box 1 the first, slot 1 to 30 left to right, then down. *)
 
+(** The order a HOME box's slots are tried in for the first empty one, column by
+    column. *)
+type home_order =
+  | Left_to_right  (** from column 1 *)
+  | Right_to_left  (** from the last column *)
+
 type pokemon = {
   box_slot : box_slot;
       (** Where the program leaves the gift's Pokémon: the first free box slot
           the game gives it, on a save with a full party (or five, the first
           gift then moved from party slot 6) and Box 1 empty, the gifts claimed
           in the catalog's order. *)
-  home_box : int;  (** The Pokémon HOME box it is banked in later. *)
+  home_boxes : int list;
+      (** The Pokémon HOME boxes it is banked in later (plza.bank-home), tried
+          in order: the first with an empty slot takes it. *)
+  home_order : home_order;  (** How each of them is searched. *)
 }
 (** Where a gift's Pokémon goes. *)
 
@@ -63,4 +72,4 @@ val lines : t -> string list
 
 val guide_table : t -> string
 (** The catalog as the guide's [gifts] block shows it: a Markdown table of name,
-    how, code, last day and box slot. *)
+    how, code, last day, box slot and HOME boxes. *)

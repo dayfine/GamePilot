@@ -28,6 +28,8 @@ type setup = {
   attempt : attempt;
 }
 
+let keepawake_stick = [ "--keepawake-key"; "RStick" ]
+
 let load_plan ~plan_dir id =
   P.Plan_decode.load (Engine_series.Plan_folder.plan_file ~plan_dir id)
 

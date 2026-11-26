@@ -1,7 +1,13 @@
 type date = { year : int; month : int; day : int }
 type how = Code | Internet | Home
 type box_slot = { box : int; slot : int }
-type pokemon = { box_slot : box_slot; home_box : int }
+type home_order = Left_to_right | Right_to_left
+
+type pokemon = {
+  box_slot : box_slot;
+  home_boxes : int list;
+  home_order : home_order;
+}
 
 type gift = {
   id : string;
@@ -74,12 +80,19 @@ let slot_cell = function
   | None -> "none (items)"
   | Some p -> Printf.sprintf "Box %d slot %d" p.box_slot.box p.box_slot.slot
 
+let home_cell = function
+  | None -> ""
+  | Some p -> String.concat ", " (List.map string_of_int p.home_boxes)
+
 let row g =
-  Printf.sprintf "| %s | %s | %s | %s | %s |" g.name (how_name g.how)
+  Printf.sprintf "| %s | %s | %s | %s | %s | %s |" g.name (how_name g.how)
     (Option.fold ~none:"" ~some:(Printf.sprintf "`%s`") g.code)
-    (date_to_string g.expires) (slot_cell g.pokemon)
+    (date_to_string g.expires) (slot_cell g.pokemon) (home_cell g.pokemon)
 
 let guide_table catalog =
   String.concat "\n"
-    ([ "| Gift | How | Code | Last day | Lands in |"; "|---|---|---|---|---|" ]
+    ([
+       "| Gift | How | Code | Last day | Lands in | HOME boxes |";
+       "|---|---|---|---|---|---|";
+     ]
     @ List.map row catalog)

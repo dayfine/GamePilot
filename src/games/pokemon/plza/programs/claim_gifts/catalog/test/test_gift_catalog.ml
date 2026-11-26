@@ -31,7 +31,13 @@ let gift : C.gift =
     how = Code;
     code = Some "CELEBRATE30TH";
     expires = day "2027-01-07";
-    pokemon = Some { box_slot = { box = 1; slot = 1 }; home_box = 1 };
+    pokemon =
+      Some
+        {
+          box_slot = { box = 1; slot = 1 };
+          home_boxes = [ 165; 164 ];
+          home_order = Left_to_right;
+        };
     source = "https://www.nintendolife.com/guides/x";
   }
 
@@ -87,7 +93,8 @@ let one_gift edits =
       ("code", `String "CELEBRATE30TH");
       ("expires", `String "2027-01-07");
       ("box_slot", `Assoc [ ("box", `Int 1); ("slot", `Int 1) ]);
-      ("home_box", `Int 1);
+      ("home_boxes", `List [ `Int 165; `Int 164 ]);
+      ("home_order", `String "left_to_right");
       ("source", `String "https://www.nintendolife.com/guides/x");
     ]
   in
@@ -128,12 +135,21 @@ let refusal_cases =
       "refused: gifts.json: gift xerneas-30th: the code is upper-case letters \
        and digits";
     refused "a box slot without its HOME box"
-      [ ("home_box", `Null) ]
-      "refused: gifts.json: gifts[0].box_slot and home_box go together";
+      [ ("home_boxes", `Null) ]
+      "refused: gifts.json: gifts[0].box_slot, home_boxes and home_order go \
+       together";
     refused "slot 31"
       [ ("box_slot", `Assoc [ ("box", `Int 1); ("slot", `Int 31) ]) ]
-      "refused: gifts.json: gift xerneas-30th: box and home_box are 1 or more, \
-       slot 1 to 30";
+      "refused: gifts.json: gift xerneas-30th: box is 1 or more, slot 1 to 30, \
+       home_boxes some of 1 to 300";
+    refused "HOME box 301"
+      [ ("home_boxes", `List [ `Int 301 ]) ]
+      "refused: gifts.json: gift xerneas-30th: box is 1 or more, slot 1 to 30, \
+       home_boxes some of 1 to 300";
+    refused "an unknown HOME order"
+      [ ("home_order", `String "spiral") ]
+      "refused: gifts.json: gifts[0].home_order is \"spiral\", not \
+       left_to_right or right_to_left";
     refused "a source elsewhere"
       [ ("source", `String "https://example.com/x") ]
       "refused: gifts.json: gift xerneas-30th: the source is a Dittobase, \

@@ -44,9 +44,11 @@ let read_after () =
     last := Some m;
     after_claim m
   in
-  ( Switch_home.Held_screen.wait_for ~timeout_ms:card_wait_ms
-      (Switch_home.Held_screen.held hold_ms watch),
-    !last )
+  let read =
+    Switch_home.Held_screen.wait_for ~timeout_ms:card_wait_ms
+      (Switch_home.Held_screen.held hold_ms watch)
+  in
+  (read, !last)
 
 let back_b : T.t = { button = B; hold_ms = 100; cooldown_ms = 1500 }
 let most_b = 8
@@ -68,7 +70,9 @@ let frame_name (gift : C.gift) = "gift-" ^ gift.id ^ "-unknown-screen.png"
 let unknown ~log gift last =
   Effects.save_run_frame (frame_name gift);
   let read = Option.fold ~none:"no frame" ~some:G.describe last in
-  log (Printf.sprintf "Gift %s: unknown screen (%s)." gift.id read);
+  log
+    (Printf.sprintf "Gift %s: unknown screen, kept as %s (%s)." gift.id
+       (frame_name gift) read);
   Not_received
     (Printf.sprintf "unknown screen after the claim, kept as %s"
        (frame_name gift))
@@ -78,7 +82,7 @@ let leave (gift : C.gift) =
   if gift.how = Internet then G.leave_list ();
   G.disconnect ()
 
-let claimed ~log (gift : C.gift) =
+let after_claim_read ~log (gift : C.gift) =
   match read_after () with
   | Some Card, _ ->
       log (Printf.sprintf "Gift %s received." gift.id);
@@ -93,7 +97,7 @@ let claimed ~log (gift : C.gift) =
 
 let claim_probed ~log ~picture ~gift_name (gift : C.gift) =
   match reach ~log ~picture ~gift_name gift with
-  | Ok () -> claimed ~log gift
+  | Ok () -> after_claim_read ~log gift
   | Error e ->
       log (Printf.sprintf "Gift %s not claimed: %s." gift.id e);
       ended ~log (Not_received e)

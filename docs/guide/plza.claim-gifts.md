@@ -40,11 +40,11 @@ Give each as `--options KEY=VALUE`:
 ## The gifts
 
 <!-- generated:gifts -->
-| Gift | How | Code | Last day | Lands in |
-|---|---|---|---|---|
-| Vivillon (Poké Ball Pattern) | internet |  | 2027-02-25 | Box 1 slot 2 |
-| Shiny Xerneas (30th anniversary) | code | `CELEBRATE30TH` | 2027-01-07 | Box 1 slot 1 |
-| 5 Max Revives, 10 Full Restores, 10 Ultra Balls | code | `PREPAR1NG` | 2027-03-31 | none (items) |
+| Gift | How | Code | Last day | Lands in | HOME boxes |
+|---|---|---|---|---|---|
+| Vivillon (Poké Ball Pattern) | internet |  | 2027-02-25 | Box 1 slot 2 | 166, 167 |
+| Shiny Xerneas (30th anniversary) | code | `CELEBRATE30TH` | 2027-01-07 | Box 1 slot 1 | 165, 164 |
+| 5 Max Revives, 10 Full Restores, 10 Ultra Balls | code | `PREPAR1NG` | 2027-03-31 | none (items) |  |
 <!-- /generated -->
 
 A gift whose last day is before today (the host's date, in UTC) is skipped, with a line in the log.

@@ -8,9 +8,6 @@ type inputs = {
   name_templates : (string * string) list;
 }
 
-(* As plza.autostory's: the right stick, not B, keeps the console awake. *)
-let keepawake_stick = [ "--keepawake-key"; "RStick" ]
-
 let run_checkpoint inputs ~log ~picture ~assets report (plan : P.Plan.t) =
   let game =
     Plza_claim_gifts.Live_gift_steps.game ~catalog:inputs.catalog
@@ -37,7 +34,7 @@ let run_series inputs ~program ~options ~viewport plan_dir args =
   Series.run_series
     {
       check_plan = Plza_claim_gifts.Claim_gifts.check_plan;
-      daemon_flags = keepawake_stick;
+      daemon_flags = Series.keepawake_stick;
       attempt = attempt inputs;
     }
     ~program_fields:program ~options ~viewport plan_dir args

@@ -1,11 +1,13 @@
-(test
- (name test_claim_gifts)
+(tests
+ (names test_claim_gifts test_gift_claim)
  (deps
   ../gifts.json
   (glob_files ../plans/*.plan.json))
  (libraries
   yojson
   gamepilot.table_test
+  gamepilot.wire
+  gamepilot.effects
   gamepilot.engine_run
   gamepilot.plza_engine
   gamepilot.plza_gift_catalog

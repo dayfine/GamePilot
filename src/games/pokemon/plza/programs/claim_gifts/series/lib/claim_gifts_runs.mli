@@ -5,9 +5,10 @@
     plan's events, whose first reads its start (the main menu and the party).
     Its plan has no [start] and no [retries]: one attempt, with no reload, which
     would lose the gifts not yet saved. Its daemons keep the console awake with
-    the right stick, which does nothing in a menu, as plza.autostory's. Every
-    plan is checked ({!Plza_claim_gifts.Claim_gifts.check_plan}) before the
-    console moves. *)
+    the right stick, which does nothing in a menu
+    (Plza_checkpoint_series.Checkpoint_series.keepawake_stick). Every plan is
+    checked ({!Plza_claim_gifts.Claim_gifts.check_plan}) before the console
+    moves. *)
 
 type inputs = {
   catalog : Plza_gift_catalog.Gift_catalog.t;  (** The gifts, in claim order. *)
