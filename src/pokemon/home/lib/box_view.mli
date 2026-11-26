@@ -13,16 +13,13 @@
       right digit 0.038 at most, the next best 0.102 at least, an 8 against a 3;
       boxes 152, 158, 159, 164 and 167, shifted too). The digits are cut from
       those captures: the ink's columns (170 or under) and 2 px each side, y 783
-      to 810. The lab script ([plza_claim_and_bank.sh] in the BDSPLab lab tools)
-      read the counter with tesseract; there is no OCR here, so every digit
-      needs a template, and the steps refuse to move anything until all ten are
-      there ({!complete}).
-    - A slot (the script's [empty_rtl] / [empty_ltr] boxes): 56 px round (1920 ×
-      (0.073 + 0.0725 col), 1080 × (0.228 + 0.112 row)) on the left, from 1920 ×
-      0.5635 on the right. Empty is flat and light: its stddevs summing to 25 or
-      less and its mean to 550 or more. Empty slots read 20 at most, shifted
-      too; the palest Pokémon, Mew, which the script's dark-pixel test took for
-      empty, 42 (29.5 brightened by 1.1, its whites clipped).
+      to 810. There is no OCR: every digit needs a template, and the steps
+      refuse to move anything until all ten are there ({!complete}).
+    - A slot: 56 px round (1920 × (0.073 + 0.0725 col), 1080 × (0.228 + 0.112
+      row)) on the left, from 1920 × 0.5635 on the right. Empty is flat and
+      light: its stddevs summing to 25 or less and its mean to 550 or more.
+      Empty slots read 20 at most, shifted too; the palest Pokémon, Mew, 42
+      (29.5 brightened by 1.1, its whites clipped).
     - The cursor: the green arrow (green over 150 and over red and blue by 60)
       over a slot, which bobs: (cx - 25, cy - 112, 50, 54), 0.15 of it green.
       The tooltip's green underline over a neighbour reads 0.08 at most. *)
@@ -75,8 +72,7 @@ val occupied : Effects.measurements -> slot -> bool
 val cursor_at : Effects.measurements -> slot -> bool
 (** The cursor's arrow shows over the slot. *)
 
-(** The script's scan orders over HOME's box: column by column, top to bottom in
-    each. *)
+(** The scan orders over HOME's box: column by column, top to bottom in each. *)
 type order =
   | Right_to_left  (** the rightmost column first *)
   | Left_to_right  (** the leftmost column first *)

@@ -3,16 +3,14 @@
     captures of 2026-11-24 (the BDSP banking run, [test/images]).
 
     - The main menu (主選單): its orange 寶可夢 button fills over 0.45 of (1075, 238,
-      653, 130) (red over 210, green 121 to 204, blue under 60), as
-      [plza_claim_and_bank.sh]'s [home_menu] test in the BDSPLab lab tools read
-      it: 0.67 on the menu, 0.03 at most elsewhere.
+      653, 130) (red over 210, green 121 to 204, blue under 60): 0.67 on the
+      menu, 0.03 at most elsewhere.
     - The bottom banner (logging in, saving, saved): a white strip along its top
       (307, 864, 1306, 22), and whether each of its two text lines (288, 896,
       864, 49) and (288, 967, 864, 54) holds text (stddevs summing to 60 or
-      more; a blank line reads 0, a line of text 136 at least). The script read
-      the banner as a white bar and could not tell saving from saved; here
-      "saving" (正在儲存紀錄……/請勿關閉) is two lines and "saved" (已確實儲存紀錄了！) is taken to
-      be one. No capture of the saved banner survives: that is a guess.
+      more; a blank line reads 0, a line of text 136 at least). "Saving"
+      (正在儲存紀錄……/請勿關閉) is two lines and "saved" (已確實儲存紀錄了！) is taken to be one.
+      No capture of the saved banner survives: that is a guess.
     - The game list (請選擇要連動的遊戲軟體): a 3x3 grid of 194 px tiles from (1046, 344),
       267 across and 222 down. The page is light above the game's card ((100,
       200, 800, 40): means summing to 400 or more, stddevs to 30 or less); the
