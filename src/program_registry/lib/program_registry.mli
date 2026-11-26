@@ -97,8 +97,8 @@ val all : t list
 (** By game, then group, then name. *)
 
 val find : string -> t option
-(** By id, or by the part after the game ([start_menu_poc]) when only one
-    program has it. *)
+(** By id, or by the part after the game ([mail_glitch]) when only one program
+    has it. *)
 
 val of_plan_dir : string -> t option
 (** The program whose checkpoints folder this is: the folder's path (absolute or

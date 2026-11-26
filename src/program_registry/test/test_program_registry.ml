@@ -152,8 +152,8 @@ let () =
         (fun () -> id_of (R.find "frlg.mail_glitch"))
         "frlg.mail_glitch";
       case "find by the part after the game"
-        (fun () -> id_of (R.find "start_menu_poc"))
-        "frlg.start_menu_poc";
+        (fun () -> id_of (R.find "mail_glitch"))
+        "frlg.mail_glitch";
       case "find: unknown" (fun () -> id_of (R.find "mail")) "none";
       case "plan dir: relative, trailing slash"
         (fun () ->
