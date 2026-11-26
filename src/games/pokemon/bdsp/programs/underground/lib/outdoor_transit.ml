@@ -65,7 +65,7 @@ let ensure_in_underground ~log ~picture () =
         log "Already in Grand Underground.";
         Ok ())
       else
-        let* () = Fly.fly_to ~log ~picture Fly.Oreburgh () in
+        let* () = Fly.fly_to ~log ~picture Fly.oreburgh_city () in
         dive_via_wheel ~log ~picture ()
   | Effects.Timeout -> Error "ensure_in_underground: timed out reading screen"
 

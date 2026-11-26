@@ -71,7 +71,7 @@ offline (unit / synthetic / Monte Carlo tests) and live on Console A before movi
   `Battle_detector`, `Minimap_sparkles`, `Wall_sparkle` (blob-diff), `Underground_screen`
   (including `in_underground` Diglett HUD detection), `Mining_announce_reader`, `Dig_result_reader`,
   and `Mining_grid` (130-cell live classifier + live wall-crack gauge).
-- `src/games/pokemon/bdsp/actions/` (`gamepilot.bdsp_actions`): reusable `Fly` and `Game_save`
+- `src/games/pokemon/bdsp/actions/` (`gamepilot.bdsp_actions`): reusable `Fly` and `Save_game`
   modules, plus `Bdsp_game_entry`, `Bdsp_overworld`, and `Bdsp_mining_play` (`dig_wall_smart`,
   `collect_dig_yields`).
 - `src/games/pokemon/bdsp/programs/underground/` (`bdsp.underground`): `Outdoor_transit`,

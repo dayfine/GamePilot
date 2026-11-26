@@ -67,7 +67,7 @@ cd src && opam exec -- dune exec -- gamepilot run bdsp.underground \
    once a pink Mysterious Shard appears, and fast bail when no shards are found.
 5. **Yield accounting & auto-save:** Classifies spotlight items with `Dig_result_reader`
    (distinguishing Shard S, Shard L, spheres, stones, fossils, and boxes), updates live
-   `watch.counters`, and saves via `Bdsp_actions.Game_save` every 3 cycles and after any shard.
+   `watch.counters`, and saves via `Bdsp_actions.Save_game` every 3 cycles and after any shard.
 
 ## When it stops
 
