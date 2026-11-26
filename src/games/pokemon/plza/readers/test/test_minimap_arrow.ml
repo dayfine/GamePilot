@@ -1,3 +1,6 @@
+(* Minimap_arrow: heading angle and confidence tested on synthetic rotated dart
+   masks (no capture frames or daemon fakes) and on recorded PLZA fixture masks. *)
+
 open Plza_readers
 
 let text = function Some a -> Printf.sprintf "%.0f" a | None -> "none"
