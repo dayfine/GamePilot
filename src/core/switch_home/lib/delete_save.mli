@@ -1,15 +1,13 @@
-(** Deleting one game's save data from System Settings: the lab's delete-save
-    route, [delete_save.sh] from the BDSPLab lab tools (2026-11-15/25, console
-    B, on a firmware whose Data Management lists Delete Save Data last), its
-    presses, holds and waits, in two steps so that a person looks before
-    anything is deleted. The screens are read by {!Delete_save_screen}, on the
-    whole frame (the daemon's [native] viewport).
+(** Deleting one game's save data from System Settings (console B,
+    2026-11-15/25, on a firmware whose Data Management lists Delete Save Data
+    last): fixed presses, holds and waits, in two steps so that a person looks
+    before anything is deleted. The screens are read by {!Delete_save_screen},
+    on the whole frame (the daemon's [native] viewport).
 
-    Where it differs from the route, deliberately: the game is told by its icon,
-    not by OCR of its title; each game page, the Caution screen and the success
-    popup are read before going on, and the route stops with an error, having
-    deleted nothing, when one is not there; the red button is waited for (up to
-    5 s after the route's 3 s) before Up selects it. *)
+    The game is told by its icon; each game page, the Caution screen and the
+    success popup are read before going on, and the steps stop with an error,
+    having deleted nothing, when one is not there; after a 3 s wait the red
+    button is waited for (up to 5 s more) before Up selects it. *)
 
 type game = { key : string; icon_png : string }
 (** The game whose save is deleted: a short key and its icon on its "Delete Save

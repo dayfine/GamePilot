@@ -1,5 +1,5 @@
-(* Deleting a game's save from System Settings (Delete_save, the lab's
-   delete-save route), on a scripted console B (Scripted_home) whose screens
+(* Deleting a game's save from System Settings (Delete_save), on a scripted
+   console B (Scripted_home) whose screens
    are captures: to the red Caution button, and the confirm from there. *)
 
 open Switch_home
@@ -53,7 +53,7 @@ let to_caution ?(picture = native) key () =
 
 let confirm () = Delete_save.confirm ~log:ignore ~picture:native
 
-(* Close, then the route to the list but its last A (counted with the A on
+(* Close, then the presses to the list but its last A (counted with the A on
    the first row that follows it). *)
 let to_list = "X x13, A, Down, Right, Left, A, Up, Down x7, A, Down"
 let case name input expectation : Table_test.case = { name; input; expectation }

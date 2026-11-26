@@ -4,7 +4,7 @@ type key = { row : int; col : int }
 
 let first_key = { row = 0; col = 0 }
 
-(* type_code_cmds' GRID: '.' a disabled key. *)
+(* The keys by row and column: '.' a disabled key. *)
 let layout = [| "1234567890"; "QWERTYU..P"; "ASDFGHJKL."; ".XCVBNM..." |]
 let disabled = '.'
 let enabled { row; col } = layout.(row).[col] <> disabled
@@ -204,7 +204,7 @@ let cursor_key (t : L.t) =
 let cursor m = Option.bind (lines m cursor_id) cursor_key
 let shown m = grey_keys m && cursor m <> None
 
-(* The script's presses: D-pad 80 ms then 140, A 80 then 180. *)
+(* The presses: D-pad 80 ms then 140, A 80 then 180. *)
 let move_hold_ms = 80
 let move_cooldown_ms = 140
 let a_hold_ms = 80
@@ -221,7 +221,7 @@ let start_key ~log m =
       log (Printf.sprintf "Keyboard cursor on %c." layout.(k.row).[k.col]);
       k
   | None ->
-      log "No keyboard cursor read; starting from \"1\" as the script does.";
+      log "No keyboard cursor read; starting from \"1\".";
       first_key
 
 let type_on ~log code m =
