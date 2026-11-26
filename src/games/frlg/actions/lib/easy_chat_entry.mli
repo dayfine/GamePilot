@@ -9,8 +9,7 @@
     target (both cells read against the candidates,
     {!Frlg_text.Easy_chat_words}), then to its column, and A only once the
     cursor ({!Frlg_readers.Easy_chat_screen}) is on it. Each field is read back
-    after its word ({!Frlg_text.Mail_fields.read_field}), and the whole message
-    again before START.
+    after its word ({!Frlg_text.Mail_fields.read_field}), before the next one.
 
     English only: the group names and words are read against the English game's
     ({!Frlg_text.Easy_chat_words}), in its font; another language's editor does
@@ -57,6 +56,6 @@ val check_unchanged : count:int -> unit
 
 val write : log:(string -> unit) -> word list -> unit
 (** From the fields with the cursor on field 1: each word into the next field,
-    read back; then every field read again. Fails as [bad_args] (a word not in
-    its group), [easy_chat_no_cursor], [easy_chat_not_found] or
-    [mail_word_wrong], before START: nothing is kept. *)
+    read back right after it is typed. Fails as [bad_args] (a word not in its
+    group), [easy_chat_no_cursor], [easy_chat_not_found] or [mail_word_wrong],
+    before START: nothing is kept. *)

@@ -164,7 +164,6 @@ let write ~log ws =
       choose ~log words w;
       check (i + 1) i)
     ws;
-  List.iteri (fun i _ -> check (List.length ws) i) ws;
   log
     ("Easy Chat: the message reads "
     ^ String.concat " / " (Array.to_list typed)
