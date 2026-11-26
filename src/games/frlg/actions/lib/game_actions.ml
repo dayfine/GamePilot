@@ -122,3 +122,5 @@ let handlers ctx =
   @ Candy_actions.handlers ~log:ctx.log ~party:ctx.party
   @ Ace_mail.handlers ~log:ctx.log ~party:ctx.party
   @ Box_rename.handlers ~log:ctx.log
+  @ Ace_trigger.handlers ~log:ctx.log
+  @ Item_storage.handlers ~log:ctx.log

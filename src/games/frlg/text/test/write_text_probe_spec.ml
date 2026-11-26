@@ -75,6 +75,23 @@ let screens =
       cells ~rows:7 ~cells:3 Text_lines.bag_count_digit,
       Number_reading.digits,
       dark );
+    ( "item_pc",
+      glyphs,
+      rows 6 Item_pc_lines.row,
+      Item_names.in_pocket items Items
+      @ Item_names.in_pocket items Poke_balls
+      @ [ "CANCEL" ],
+      dark );
+    ( "item_pc_counts",
+      small_glyphs,
+      cells ~rows:6 ~cells:3 Item_pc_lines.count_digit,
+      Number_reading.digits,
+      dark );
+    ( "item_pc_quantity",
+      small_glyphs,
+      List.init 3 Item_pc_lines.quantity_digit,
+      Number_reading.digits,
+      dark );
     ( "summary_level",
       glyphs,
       List.init Summary_level.max_digits Text_lines.summary_level_digit,
@@ -89,6 +106,18 @@ let screens =
       glyphs,
       [ Text_lines.pc_message ],
       [ "Deposit in which BOX?"; "The BOX is full."; "Please remove the MAIL." ],
+      dark );
+    ( "player_pc_menu",
+      glyphs,
+      rows 3 Item_pc_lines.menu_row,
+      [
+        "ITEM STORAGE";
+        "MAILBOX";
+        "TURN OFF";
+        "WITHDRAW ITEM";
+        "DEPOSIT ITEM";
+        "CANCEL";
+      ],
       dark );
     ( "pokedex_list",
       glyphs,

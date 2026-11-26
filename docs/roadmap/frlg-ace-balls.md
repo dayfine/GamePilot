@@ -45,7 +45,7 @@ How the Mail Glitch leads to ACE is in the
   (`docs/design/FRLG-ACE-Execution.md`): pomeg-letterbombers' Post-E4 route (species 0x0351, done
   by `frlg.ace_setup`) and Sleipnir17's "Get any item" box names with the BIOS-less exit, one
   execution per item into the PC's item storage, then withdrawn to the bag. Proven on mGBA from
-  memory for Master Ball, Luxury Ball, Rare Candy, Max Repel and Escape Rope (x999 each); the
+  memory for Master Ball, Luxury Ball, Rare Candy, Repel and Escape Rope (x999 each); the
   Switch release is still unverified (its emulator needs adjusted names, per the pomeg FAQ).
 - Money and coins have no code in that list: a new code, or dropped from bag prep?
 - Checkpoints: decided in review, one template pair (enter the code, trigger) run per item with
