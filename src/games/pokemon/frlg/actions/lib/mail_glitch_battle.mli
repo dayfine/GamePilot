@@ -45,6 +45,10 @@ val decode : Json_field.obj -> (plan, Pokemon_engine.Failure.cause) result
 (** Args ["knock_off_species"], ["recycle_species"], ["sweeper"],
     ["depleted_move"] (slugs) and ["step_direction"]. *)
 
+val apply_options : Run_options.t -> plan -> plan
+(** Applies [--options sweeper=SPECIES] and [--options depleted-move=MOVE] over
+    the plan's defaults when given. *)
+
 type slots = {
   knock_off : int;
   sand_attack : int;

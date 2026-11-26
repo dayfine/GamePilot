@@ -186,6 +186,7 @@ let grind t (_ : Pokemon_engine.Plan.event) args =
   | Error e -> Error (Failure.cause ~repeats:true "no_grind_strategies" e)
   | Ok strategies ->
       Result.bind (Grind_plan.decode strategies args) (fun plan ->
+          let plan = Grind_plan.apply_options t.config.program_options plan in
           Menu_input.run (run_grind t ?cap plan))
 
 (* The catches that went to the party join it; the player stands where the
@@ -287,6 +288,7 @@ let run_berry_pp t (plan : Berry_pp.plan) () =
 
 let prepare_berry_pp t (_ : Pokemon_engine.Plan.event) args =
   Result.bind (Berry_pp.decode args) (fun plan ->
+      let plan = Berry_pp.apply_options t.config.program_options plan in
       Menu_input.run (run_berry_pp t plan))
 
 let double_battle t (_ : Pokemon_engine.Plan.event) args =
@@ -296,6 +298,9 @@ let double_battle t (_ : Pokemon_engine.Plan.event) args =
       ~battle:(battle_on t)
   in
   Result.bind (Mail_glitch_battle.decode args) (fun plan ->
+      let plan =
+        Mail_glitch_battle.apply_options t.config.program_options plan
+      in
       Menu_input.run (fun () -> Mail_glitch_battle.run game_steps plan))
 
 let action_context t : Game_actions.context =

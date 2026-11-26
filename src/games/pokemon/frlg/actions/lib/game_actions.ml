@@ -116,7 +116,7 @@ let handler ctx name (_ : Pokemon_engine.Plan.event) args =
       Error (Pokemon_engine.Failure.cause ~repeats:true "no_mart_stock" e)
   | stocks, _ ->
       let stocks = Result.value stocks ~default:Mart_plan.empty in
-      Result.bind (R.decode stocks name args) (perform ctx)
+      Result.bind (R.decode ~options:ctx.options stocks name args) (perform ctx)
 
 let handlers ctx =
   List.map (fun name -> (name, handler ctx name)) R.names

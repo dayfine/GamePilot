@@ -148,6 +148,11 @@ let decode strategies obj =
   | exception J.Invalid e ->
       Error (Pokemon_engine.Failure.cause ~repeats:true "bad_args" e)
 
+let apply_options options t =
+  match Run_options.find options "sweeper" with
+  | Some sweeper -> { t with sweeper }
+  | None -> t
+
 let met goal ~known = List.mem goal.learn_move known
 let heal_due s ~since_heal = since_heal >= s.heal_every
 

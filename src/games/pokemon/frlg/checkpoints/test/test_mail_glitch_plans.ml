@@ -227,6 +227,36 @@ let cases : Table_test.case list =
     case "05-grind-mr-mime retries each round twice"
       (fun () -> string_of_int (plan "05-grind-mr-mime.plan.json").retries)
       "2";
+    case "apply_postcondition_options replaces blastoise with sweeper option"
+      (fun () ->
+        let decl : Run_options.declared list =
+          [
+            {
+              key = "sweeper";
+              value = Text;
+              presence = Default "blastoise";
+              doc = "";
+            };
+          ]
+        in
+        let options =
+          Result.get_ok (Run_options.check decl [ ("sweeper", "charizard") ])
+        in
+        let p = plan "07-glitch-prep.plan.json" in
+        let postconditions =
+          Option.map
+            (Frlg_checkpoints.Plan_file.apply_postcondition_options options)
+            p.postconditions
+        in
+        Pokemon_engine.Plan_text.postconditions { p with postconditions })
+      "farfetchd in slot 1\n\
+       charizard in slot 2\n\
+       mr-mime in slot 3\n\
+       item antidote gained 2\n\
+       item super-potion gained 3\n\
+       item retro-mail used 1\n\
+       money spent 2300\n\
+       marks held_item, held_item, mail";
   ]
 
 let () = Table_test.run "mail_glitch_plans" (records @ cases)
