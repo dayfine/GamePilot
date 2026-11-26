@@ -1640,3 +1640,364 @@ mgba/naming-entry-9.png|naming_entry.7|.
 mgba/box-title-box1.png|pc_box_title|BOX1
 mgba/box-title-symbols.png|pc_box_title|Az!…'.,9
 mgba/box-title-quotes.png|pc_box_title|”‘' A a.
+# Box titles on every wallpaper (mGBA, the bag-prep code's names; the hand on the title unless named), and some with their colours shifted.
+mgba/box-titles/forest_p1_box01.png|pc_box_title|xFUnDRRn
+mgba/box-titles/city_p1_box02.png|pc_box_title|……o/E!n
+mgba/box-titles/bright90/city_p1_box02.png|pc_box_title|……o/E!n
+mgba/box-titles/bright110/city_p1_box02.png|pc_box_title|……o/E!n
+mgba/box-titles/rplus12/city_p1_box02.png|pc_box_title|……o/E!n
+mgba/box-titles/rminus12/city_p1_box02.png|pc_box_title|……o/E!n
+mgba/box-titles/gplus12/city_p1_box02.png|pc_box_title|……o/E!n
+mgba/box-titles/gminus12/city_p1_box02.png|pc_box_title|……o/E!n
+mgba/box-titles/bplus12/city_p1_box02.png|pc_box_title|……o/E!n
+mgba/box-titles/bminus12/city_p1_box02.png|pc_box_title|……o/E!n
+mgba/box-titles/grey10/city_p1_box02.png|pc_box_title|……o/E!n
+mgba/box-titles/desert_p1_box03.png|pc_box_title|EE …l‘
+mgba/box-titles/bright90/desert_p1_box03.png|pc_box_title|EE …l‘
+mgba/box-titles/bright110/desert_p1_box03.png|pc_box_title|EE …l‘
+mgba/box-titles/rplus12/desert_p1_box03.png|pc_box_title|EE …l‘
+mgba/box-titles/rminus12/desert_p1_box03.png|pc_box_title|EE …l‘
+mgba/box-titles/gplus12/desert_p1_box03.png|pc_box_title|EE …l‘
+mgba/box-titles/gminus12/desert_p1_box03.png|pc_box_title|EE …l‘
+mgba/box-titles/bplus12/desert_p1_box03.png|pc_box_title|EE …l‘
+mgba/box-titles/bminus12/desert_p1_box03.png|pc_box_title|EE …l‘
+mgba/box-titles/grey10/desert_p1_box03.png|pc_box_title|EE …l‘
+mgba/box-titles/savanna_p1_box04.png|pc_box_title|E♀BRm
+mgba/box-titles/crag_p1_box05.png|pc_box_title|G……o
+mgba/box-titles/volcano_p1_box06.png|pc_box_title|EEEJD!n
+mgba/box-titles/snow_p1_box07.png|pc_box_title|EEIB!n
+mgba/box-titles/bright90/snow_p1_box07.png|pc_box_title|EEIB!n
+mgba/box-titles/bright110/snow_p1_box07.png|pc_box_title|EEIB!n
+mgba/box-titles/rplus12/snow_p1_box07.png|pc_box_title|EEIB!n
+mgba/box-titles/rminus12/snow_p1_box07.png|pc_box_title|EEIB!n
+mgba/box-titles/gplus12/snow_p1_box07.png|pc_box_title|EEIB!n
+mgba/box-titles/gminus12/snow_p1_box07.png|pc_box_title|EEIB!n
+mgba/box-titles/bplus12/snow_p1_box07.png|pc_box_title|EEIB!n
+mgba/box-titles/bminus12/snow_p1_box07.png|pc_box_title|EEIB!n
+mgba/box-titles/grey10/snow_p1_box07.png|pc_box_title|EEIB!n
+mgba/box-titles/cave_p1_box08.png|pc_box_title|EI/!n
+mgba/box-titles/beach_p1_box09.png|pc_box_title|’BRm
+mgba/box-titles/bright90/beach_p1_box09.png|pc_box_title|’BRm
+mgba/box-titles/bright110/beach_p1_box09.png|pc_box_title|’BRm
+mgba/box-titles/rplus12/beach_p1_box09.png|pc_box_title|’BRm
+mgba/box-titles/rminus12/beach_p1_box09.png|pc_box_title|’BRm
+mgba/box-titles/gplus12/beach_p1_box09.png|pc_box_title|’BRm
+mgba/box-titles/gminus12/beach_p1_box09.png|pc_box_title|’BRm
+mgba/box-titles/bplus12/beach_p1_box09.png|pc_box_title|’BRm
+mgba/box-titles/bminus12/beach_p1_box09.png|pc_box_title|’BRm
+mgba/box-titles/grey10/beach_p1_box09.png|pc_box_title|’BRm
+mgba/box-titles/seafloor_p1_box10.png|pc_box_title| FoHIoor
+mgba/box-titles/river_p1_box11.png|pc_box_title|xn
+mgba/box-titles/sky_p1_box12.png|pc_box_title|A
+mgba/box-titles/bright90/sky_p1_box12.png|pc_box_title|A
+mgba/box-titles/bright110/sky_p1_box12.png|pc_box_title|A
+mgba/box-titles/rplus12/sky_p1_box12.png|pc_box_title|A
+mgba/box-titles/rminus12/sky_p1_box12.png|pc_box_title|A
+mgba/box-titles/gplus12/sky_p1_box12.png|pc_box_title|A
+mgba/box-titles/gminus12/sky_p1_box12.png|pc_box_title|A
+mgba/box-titles/bplus12/sky_p1_box12.png|pc_box_title|A
+mgba/box-titles/bminus12/sky_p1_box12.png|pc_box_title|A
+mgba/box-titles/grey10/sky_p1_box12.png|pc_box_title|A
+mgba/box-titles/polkadot_p1_box13.png|pc_box_title|A
+mgba/box-titles/pokecenter_p1_box14.png|pc_box_title|A
+mgba/box-titles/machine_p2_box01.png|pc_box_title|xFUnDRRn
+mgba/box-titles/plain_p2_box02.png|pc_box_title|……o/E!n
+mgba/box-titles/desert_p2_box05.png|pc_box_title|Q……o
+mgba/box-titles/forest_p3_box05.png|pc_box_title|J……o
+mgba/box-titles/city_p3_box06.png|pc_box_title|EEEOD!n
+mgba/box-titles/desert_p3_box07.png|pc_box_title|K……o
+mgba/box-titles/savanna_p3_box08.png|pc_box_title|L……o
+mgba/box-titles/desert_box03_hand_on_first_slot.png|pc_box_title|EE …l‘
+# The PC's item storage (WITHDRAW ITEM) on mGBA: names <image>|item_pc.<row>|<name>, counts item_pc_count.<row>.<cell from the right>, the withdraw quantity item_pc_quantity.<cell from the left>.
+mgba/item-storage/list_code.png|item_pc.0|POTION
+mgba/item-storage/list_code.png|item_pc_count.0.0|1
+mgba/item-storage/list_code.png|item_pc.1|MASTER BALL
+mgba/item-storage/list_code.png|item_pc_count.1.0|9
+mgba/item-storage/list_code.png|item_pc_count.1.1|9
+mgba/item-storage/list_code.png|item_pc_count.1.2|9
+mgba/item-storage/list_code.png|item_pc.2|CANCEL
+mgba/item-storage/list_code_master.png|item_pc.0|POTION
+mgba/item-storage/list_code_master.png|item_pc_count.0.0|1
+mgba/item-storage/list_code_master.png|item_pc.1|MASTER BALL
+mgba/item-storage/list_code_master.png|item_pc_count.1.0|9
+mgba/item-storage/list_code_master.png|item_pc_count.1.1|9
+mgba/item-storage/list_code_master.png|item_pc_count.1.2|9
+mgba/item-storage/list_code_master.png|item_pc.2|CANCEL
+mgba/item-storage/list8_top.png|item_pc.0|MASTER BALL
+mgba/item-storage/list8_top.png|item_pc_count.0.0|9
+mgba/item-storage/list8_top.png|item_pc_count.0.1|9
+mgba/item-storage/list8_top.png|item_pc_count.0.2|9
+mgba/item-storage/list8_top.png|item_pc.1|LUXURY BALL
+mgba/item-storage/list8_top.png|item_pc_count.1.0|9
+mgba/item-storage/list8_top.png|item_pc_count.1.1|9
+mgba/item-storage/list8_top.png|item_pc_count.1.2|9
+mgba/item-storage/list8_top.png|item_pc.2|POTION
+mgba/item-storage/list8_top.png|item_pc_count.2.0|1
+mgba/item-storage/list8_top.png|item_pc.3|RARE CANDY
+mgba/item-storage/list8_top.png|item_pc_count.3.0|5
+mgba/item-storage/list8_top.png|item_pc_count.3.1|4
+mgba/item-storage/list8_top.png|item_pc.4|REPEL
+mgba/item-storage/list8_top.png|item_pc_count.4.0|2
+mgba/item-storage/list8_top.png|item_pc_count.4.1|1
+mgba/item-storage/list8_top.png|item_pc.5|ESCAPE ROPE
+mgba/item-storage/list8_top.png|item_pc_count.5.0|7
+mgba/item-storage/list8_down4.png|item_pc.0|LUXURY BALL
+mgba/item-storage/list8_down4.png|item_pc_count.0.0|9
+mgba/item-storage/list8_down4.png|item_pc_count.0.1|9
+mgba/item-storage/list8_down4.png|item_pc_count.0.2|9
+mgba/item-storage/list8_down4.png|item_pc.1|POTION
+mgba/item-storage/list8_down4.png|item_pc_count.1.0|1
+mgba/item-storage/list8_down4.png|item_pc.2|RARE CANDY
+mgba/item-storage/list8_down4.png|item_pc_count.2.0|5
+mgba/item-storage/list8_down4.png|item_pc_count.2.1|4
+mgba/item-storage/list8_down4.png|item_pc.3|REPEL
+mgba/item-storage/list8_down4.png|item_pc_count.3.0|2
+mgba/item-storage/list8_down4.png|item_pc_count.3.1|1
+mgba/item-storage/list8_down4.png|item_pc.4|ESCAPE ROPE
+mgba/item-storage/list8_down4.png|item_pc_count.4.0|7
+mgba/item-storage/list8_down4.png|item_pc.5|FULL RESTORE
+mgba/item-storage/list8_down4.png|item_pc_count.5.0|0
+mgba/item-storage/list8_down4.png|item_pc_count.5.1|0
+mgba/item-storage/list8_down4.png|item_pc_count.5.2|1
+mgba/item-storage/list8_down8.png|item_pc.0|RARE CANDY
+mgba/item-storage/list8_down8.png|item_pc_count.0.0|5
+mgba/item-storage/list8_down8.png|item_pc_count.0.1|4
+mgba/item-storage/list8_down8.png|item_pc.1|REPEL
+mgba/item-storage/list8_down8.png|item_pc_count.1.0|2
+mgba/item-storage/list8_down8.png|item_pc_count.1.1|1
+mgba/item-storage/list8_down8.png|item_pc.2|ESCAPE ROPE
+mgba/item-storage/list8_down8.png|item_pc_count.2.0|7
+mgba/item-storage/list8_down8.png|item_pc.3|FULL RESTORE
+mgba/item-storage/list8_down8.png|item_pc_count.3.0|0
+mgba/item-storage/list8_down8.png|item_pc_count.3.1|0
+mgba/item-storage/list8_down8.png|item_pc_count.3.2|1
+mgba/item-storage/list8_down8.png|item_pc.4|POKé BALL
+mgba/item-storage/list8_down8.png|item_pc_count.4.0|3
+mgba/item-storage/list8_down8.png|item_pc.5|CANCEL
+mgba/item-storage/list30_top.png|item_pc.0|MASTER BALL
+mgba/item-storage/list30_top.png|item_pc_count.0.0|1
+mgba/item-storage/list30_top.png|item_pc.1|ULTRA BALL
+mgba/item-storage/list30_top.png|item_pc_count.1.0|8
+mgba/item-storage/list30_top.png|item_pc_count.1.1|3
+mgba/item-storage/list30_top.png|item_pc.2|GREAT BALL
+mgba/item-storage/list30_top.png|item_pc_count.2.0|5
+mgba/item-storage/list30_top.png|item_pc_count.2.1|7
+mgba/item-storage/list30_top.png|item_pc.3|POKé BALL
+mgba/item-storage/list30_top.png|item_pc_count.3.0|2
+mgba/item-storage/list30_top.png|item_pc_count.3.1|1
+mgba/item-storage/list30_top.png|item_pc_count.3.2|1
+mgba/item-storage/list30_top.png|item_pc.4|LUXURY BALL
+mgba/item-storage/list30_top.png|item_pc_count.4.0|9
+mgba/item-storage/list30_top.png|item_pc_count.4.1|4
+mgba/item-storage/list30_top.png|item_pc_count.4.2|1
+mgba/item-storage/list30_top.png|item_pc.5|POTION
+mgba/item-storage/list30_top.png|item_pc_count.5.0|6
+mgba/item-storage/list30_top.png|item_pc_count.5.1|8
+mgba/item-storage/list30_top.png|item_pc_count.5.2|1
+mgba/item-storage/list_after.png|item_pc.0|POTION
+mgba/item-storage/list_after.png|item_pc_count.0.0|1
+mgba/item-storage/list_after.png|item_pc.1|MASTER BALL
+mgba/item-storage/list_after.png|item_pc_count.1.0|9
+mgba/item-storage/list_after.png|item_pc_count.1.1|4
+mgba/item-storage/list_after.png|item_pc.2|CANCEL
+mgba/item-storage/qty_001.png|item_pc_quantity.0|0
+mgba/item-storage/qty_001.png|item_pc_quantity.1|0
+mgba/item-storage/qty_001.png|item_pc_quantity.2|1
+mgba/item-storage/qty_012.png|item_pc_quantity.0|0
+mgba/item-storage/qty_012.png|item_pc_quantity.1|1
+mgba/item-storage/qty_012.png|item_pc_quantity.2|2
+mgba/item-storage/qty_999.png|item_pc_quantity.0|9
+mgba/item-storage/qty_999.png|item_pc_quantity.1|9
+mgba/item-storage/qty_999.png|item_pc_quantity.2|9
+mgba/item-storage/qty_950.png|item_pc_quantity.0|9
+mgba/item-storage/qty_950.png|item_pc_quantity.1|5
+mgba/item-storage/qty_950.png|item_pc_quantity.2|0
+mgba/item-storage/bright90/list8_top.png|item_pc.0|MASTER BALL
+mgba/item-storage/bright90/list8_top.png|item_pc_count.0.0|9
+mgba/item-storage/bright90/list8_top.png|item_pc_count.0.1|9
+mgba/item-storage/bright90/list8_top.png|item_pc_count.0.2|9
+mgba/item-storage/bright90/list8_top.png|item_pc.1|LUXURY BALL
+mgba/item-storage/bright90/list8_top.png|item_pc_count.1.0|9
+mgba/item-storage/bright90/list8_top.png|item_pc_count.1.1|9
+mgba/item-storage/bright90/list8_top.png|item_pc_count.1.2|9
+mgba/item-storage/bright90/list8_top.png|item_pc.2|POTION
+mgba/item-storage/bright90/list8_top.png|item_pc_count.2.0|1
+mgba/item-storage/bright90/list8_top.png|item_pc.3|RARE CANDY
+mgba/item-storage/bright90/list8_top.png|item_pc_count.3.0|5
+mgba/item-storage/bright90/list8_top.png|item_pc_count.3.1|4
+mgba/item-storage/bright90/list8_top.png|item_pc.4|REPEL
+mgba/item-storage/bright90/list8_top.png|item_pc_count.4.0|2
+mgba/item-storage/bright90/list8_top.png|item_pc_count.4.1|1
+mgba/item-storage/bright90/list8_top.png|item_pc.5|ESCAPE ROPE
+mgba/item-storage/bright90/list8_top.png|item_pc_count.5.0|7
+mgba/item-storage/bright90/qty_950.png|item_pc_quantity.0|9
+mgba/item-storage/bright90/qty_950.png|item_pc_quantity.1|5
+mgba/item-storage/bright90/qty_950.png|item_pc_quantity.2|0
+mgba/item-storage/bright110/list8_top.png|item_pc.0|MASTER BALL
+mgba/item-storage/bright110/list8_top.png|item_pc_count.0.0|9
+mgba/item-storage/bright110/list8_top.png|item_pc_count.0.1|9
+mgba/item-storage/bright110/list8_top.png|item_pc_count.0.2|9
+mgba/item-storage/bright110/list8_top.png|item_pc.1|LUXURY BALL
+mgba/item-storage/bright110/list8_top.png|item_pc_count.1.0|9
+mgba/item-storage/bright110/list8_top.png|item_pc_count.1.1|9
+mgba/item-storage/bright110/list8_top.png|item_pc_count.1.2|9
+mgba/item-storage/bright110/list8_top.png|item_pc.2|POTION
+mgba/item-storage/bright110/list8_top.png|item_pc_count.2.0|1
+mgba/item-storage/bright110/list8_top.png|item_pc.3|RARE CANDY
+mgba/item-storage/bright110/list8_top.png|item_pc_count.3.0|5
+mgba/item-storage/bright110/list8_top.png|item_pc_count.3.1|4
+mgba/item-storage/bright110/list8_top.png|item_pc.4|REPEL
+mgba/item-storage/bright110/list8_top.png|item_pc_count.4.0|2
+mgba/item-storage/bright110/list8_top.png|item_pc_count.4.1|1
+mgba/item-storage/bright110/list8_top.png|item_pc.5|ESCAPE ROPE
+mgba/item-storage/bright110/list8_top.png|item_pc_count.5.0|7
+mgba/item-storage/bright110/qty_950.png|item_pc_quantity.0|9
+mgba/item-storage/bright110/qty_950.png|item_pc_quantity.1|5
+mgba/item-storage/bright110/qty_950.png|item_pc_quantity.2|0
+mgba/item-storage/rplus12/list8_top.png|item_pc.0|MASTER BALL
+mgba/item-storage/rplus12/list8_top.png|item_pc_count.0.0|9
+mgba/item-storage/rplus12/list8_top.png|item_pc_count.0.1|9
+mgba/item-storage/rplus12/list8_top.png|item_pc_count.0.2|9
+mgba/item-storage/rplus12/list8_top.png|item_pc.1|LUXURY BALL
+mgba/item-storage/rplus12/list8_top.png|item_pc_count.1.0|9
+mgba/item-storage/rplus12/list8_top.png|item_pc_count.1.1|9
+mgba/item-storage/rplus12/list8_top.png|item_pc_count.1.2|9
+mgba/item-storage/rplus12/list8_top.png|item_pc.2|POTION
+mgba/item-storage/rplus12/list8_top.png|item_pc_count.2.0|1
+mgba/item-storage/rplus12/list8_top.png|item_pc.3|RARE CANDY
+mgba/item-storage/rplus12/list8_top.png|item_pc_count.3.0|5
+mgba/item-storage/rplus12/list8_top.png|item_pc_count.3.1|4
+mgba/item-storage/rplus12/list8_top.png|item_pc.4|REPEL
+mgba/item-storage/rplus12/list8_top.png|item_pc_count.4.0|2
+mgba/item-storage/rplus12/list8_top.png|item_pc_count.4.1|1
+mgba/item-storage/rplus12/list8_top.png|item_pc.5|ESCAPE ROPE
+mgba/item-storage/rplus12/list8_top.png|item_pc_count.5.0|7
+mgba/item-storage/rplus12/qty_950.png|item_pc_quantity.0|9
+mgba/item-storage/rplus12/qty_950.png|item_pc_quantity.1|5
+mgba/item-storage/rplus12/qty_950.png|item_pc_quantity.2|0
+mgba/item-storage/rminus12/list8_top.png|item_pc.0|MASTER BALL
+mgba/item-storage/rminus12/list8_top.png|item_pc_count.0.0|9
+mgba/item-storage/rminus12/list8_top.png|item_pc_count.0.1|9
+mgba/item-storage/rminus12/list8_top.png|item_pc_count.0.2|9
+mgba/item-storage/rminus12/list8_top.png|item_pc.1|LUXURY BALL
+mgba/item-storage/rminus12/list8_top.png|item_pc_count.1.0|9
+mgba/item-storage/rminus12/list8_top.png|item_pc_count.1.1|9
+mgba/item-storage/rminus12/list8_top.png|item_pc_count.1.2|9
+mgba/item-storage/rminus12/list8_top.png|item_pc.2|POTION
+mgba/item-storage/rminus12/list8_top.png|item_pc_count.2.0|1
+mgba/item-storage/rminus12/list8_top.png|item_pc.3|RARE CANDY
+mgba/item-storage/rminus12/list8_top.png|item_pc_count.3.0|5
+mgba/item-storage/rminus12/list8_top.png|item_pc_count.3.1|4
+mgba/item-storage/rminus12/list8_top.png|item_pc.4|REPEL
+mgba/item-storage/rminus12/list8_top.png|item_pc_count.4.0|2
+mgba/item-storage/rminus12/list8_top.png|item_pc_count.4.1|1
+mgba/item-storage/rminus12/list8_top.png|item_pc.5|ESCAPE ROPE
+mgba/item-storage/rminus12/list8_top.png|item_pc_count.5.0|7
+mgba/item-storage/rminus12/qty_950.png|item_pc_quantity.0|9
+mgba/item-storage/rminus12/qty_950.png|item_pc_quantity.1|5
+mgba/item-storage/rminus12/qty_950.png|item_pc_quantity.2|0
+mgba/item-storage/gplus12/list8_top.png|item_pc.0|MASTER BALL
+mgba/item-storage/gplus12/list8_top.png|item_pc_count.0.0|9
+mgba/item-storage/gplus12/list8_top.png|item_pc_count.0.1|9
+mgba/item-storage/gplus12/list8_top.png|item_pc_count.0.2|9
+mgba/item-storage/gplus12/list8_top.png|item_pc.1|LUXURY BALL
+mgba/item-storage/gplus12/list8_top.png|item_pc_count.1.0|9
+mgba/item-storage/gplus12/list8_top.png|item_pc_count.1.1|9
+mgba/item-storage/gplus12/list8_top.png|item_pc_count.1.2|9
+mgba/item-storage/gplus12/list8_top.png|item_pc.2|POTION
+mgba/item-storage/gplus12/list8_top.png|item_pc_count.2.0|1
+mgba/item-storage/gplus12/list8_top.png|item_pc.3|RARE CANDY
+mgba/item-storage/gplus12/list8_top.png|item_pc_count.3.0|5
+mgba/item-storage/gplus12/list8_top.png|item_pc_count.3.1|4
+mgba/item-storage/gplus12/list8_top.png|item_pc.4|REPEL
+mgba/item-storage/gplus12/list8_top.png|item_pc_count.4.0|2
+mgba/item-storage/gplus12/list8_top.png|item_pc_count.4.1|1
+mgba/item-storage/gplus12/list8_top.png|item_pc.5|ESCAPE ROPE
+mgba/item-storage/gplus12/list8_top.png|item_pc_count.5.0|7
+mgba/item-storage/gplus12/qty_950.png|item_pc_quantity.0|9
+mgba/item-storage/gplus12/qty_950.png|item_pc_quantity.1|5
+mgba/item-storage/gplus12/qty_950.png|item_pc_quantity.2|0
+mgba/item-storage/gminus12/list8_top.png|item_pc.0|MASTER BALL
+mgba/item-storage/gminus12/list8_top.png|item_pc_count.0.0|9
+mgba/item-storage/gminus12/list8_top.png|item_pc_count.0.1|9
+mgba/item-storage/gminus12/list8_top.png|item_pc_count.0.2|9
+mgba/item-storage/gminus12/list8_top.png|item_pc.1|LUXURY BALL
+mgba/item-storage/gminus12/list8_top.png|item_pc_count.1.0|9
+mgba/item-storage/gminus12/list8_top.png|item_pc_count.1.1|9
+mgba/item-storage/gminus12/list8_top.png|item_pc_count.1.2|9
+mgba/item-storage/gminus12/list8_top.png|item_pc.2|POTION
+mgba/item-storage/gminus12/list8_top.png|item_pc_count.2.0|1
+mgba/item-storage/gminus12/list8_top.png|item_pc.3|RARE CANDY
+mgba/item-storage/gminus12/list8_top.png|item_pc_count.3.0|5
+mgba/item-storage/gminus12/list8_top.png|item_pc_count.3.1|4
+mgba/item-storage/gminus12/list8_top.png|item_pc.4|REPEL
+mgba/item-storage/gminus12/list8_top.png|item_pc_count.4.0|2
+mgba/item-storage/gminus12/list8_top.png|item_pc_count.4.1|1
+mgba/item-storage/gminus12/list8_top.png|item_pc.5|ESCAPE ROPE
+mgba/item-storage/gminus12/list8_top.png|item_pc_count.5.0|7
+mgba/item-storage/gminus12/qty_950.png|item_pc_quantity.0|9
+mgba/item-storage/gminus12/qty_950.png|item_pc_quantity.1|5
+mgba/item-storage/gminus12/qty_950.png|item_pc_quantity.2|0
+mgba/item-storage/bplus12/list8_top.png|item_pc.0|MASTER BALL
+mgba/item-storage/bplus12/list8_top.png|item_pc_count.0.0|9
+mgba/item-storage/bplus12/list8_top.png|item_pc_count.0.1|9
+mgba/item-storage/bplus12/list8_top.png|item_pc_count.0.2|9
+mgba/item-storage/bplus12/list8_top.png|item_pc.1|LUXURY BALL
+mgba/item-storage/bplus12/list8_top.png|item_pc_count.1.0|9
+mgba/item-storage/bplus12/list8_top.png|item_pc_count.1.1|9
+mgba/item-storage/bplus12/list8_top.png|item_pc_count.1.2|9
+mgba/item-storage/bplus12/list8_top.png|item_pc.2|POTION
+mgba/item-storage/bplus12/list8_top.png|item_pc_count.2.0|1
+mgba/item-storage/bplus12/list8_top.png|item_pc.3|RARE CANDY
+mgba/item-storage/bplus12/list8_top.png|item_pc_count.3.0|5
+mgba/item-storage/bplus12/list8_top.png|item_pc_count.3.1|4
+mgba/item-storage/bplus12/list8_top.png|item_pc.4|REPEL
+mgba/item-storage/bplus12/list8_top.png|item_pc_count.4.0|2
+mgba/item-storage/bplus12/list8_top.png|item_pc_count.4.1|1
+mgba/item-storage/bplus12/list8_top.png|item_pc.5|ESCAPE ROPE
+mgba/item-storage/bplus12/list8_top.png|item_pc_count.5.0|7
+mgba/item-storage/bplus12/qty_950.png|item_pc_quantity.0|9
+mgba/item-storage/bplus12/qty_950.png|item_pc_quantity.1|5
+mgba/item-storage/bplus12/qty_950.png|item_pc_quantity.2|0
+mgba/item-storage/bminus12/list8_top.png|item_pc.0|MASTER BALL
+mgba/item-storage/bminus12/list8_top.png|item_pc_count.0.0|9
+mgba/item-storage/bminus12/list8_top.png|item_pc_count.0.1|9
+mgba/item-storage/bminus12/list8_top.png|item_pc_count.0.2|9
+mgba/item-storage/bminus12/list8_top.png|item_pc.1|LUXURY BALL
+mgba/item-storage/bminus12/list8_top.png|item_pc_count.1.0|9
+mgba/item-storage/bminus12/list8_top.png|item_pc_count.1.1|9
+mgba/item-storage/bminus12/list8_top.png|item_pc_count.1.2|9
+mgba/item-storage/bminus12/list8_top.png|item_pc.2|POTION
+mgba/item-storage/bminus12/list8_top.png|item_pc_count.2.0|1
+mgba/item-storage/bminus12/list8_top.png|item_pc.3|RARE CANDY
+mgba/item-storage/bminus12/list8_top.png|item_pc_count.3.0|5
+mgba/item-storage/bminus12/list8_top.png|item_pc_count.3.1|4
+mgba/item-storage/bminus12/list8_top.png|item_pc.4|REPEL
+mgba/item-storage/bminus12/list8_top.png|item_pc_count.4.0|2
+mgba/item-storage/bminus12/list8_top.png|item_pc_count.4.1|1
+mgba/item-storage/bminus12/list8_top.png|item_pc.5|ESCAPE ROPE
+mgba/item-storage/bminus12/list8_top.png|item_pc_count.5.0|7
+mgba/item-storage/bminus12/qty_950.png|item_pc_quantity.0|9
+mgba/item-storage/bminus12/qty_950.png|item_pc_quantity.1|5
+mgba/item-storage/bminus12/qty_950.png|item_pc_quantity.2|0
+mgba/item-storage/grey10/list8_top.png|item_pc.0|MASTER BALL
+mgba/item-storage/grey10/list8_top.png|item_pc_count.0.0|9
+mgba/item-storage/grey10/list8_top.png|item_pc_count.0.1|9
+mgba/item-storage/grey10/list8_top.png|item_pc_count.0.2|9
+mgba/item-storage/grey10/list8_top.png|item_pc.1|LUXURY BALL
+mgba/item-storage/grey10/list8_top.png|item_pc_count.1.0|9
+mgba/item-storage/grey10/list8_top.png|item_pc_count.1.1|9
+mgba/item-storage/grey10/list8_top.png|item_pc_count.1.2|9
+mgba/item-storage/grey10/list8_top.png|item_pc.2|POTION
+mgba/item-storage/grey10/list8_top.png|item_pc_count.2.0|1
+mgba/item-storage/grey10/list8_top.png|item_pc.3|RARE CANDY
+mgba/item-storage/grey10/list8_top.png|item_pc_count.3.0|5
+mgba/item-storage/grey10/list8_top.png|item_pc_count.3.1|4
+mgba/item-storage/grey10/list8_top.png|item_pc.4|REPEL
+mgba/item-storage/grey10/list8_top.png|item_pc_count.4.0|2
+mgba/item-storage/grey10/list8_top.png|item_pc_count.4.1|1
+mgba/item-storage/grey10/list8_top.png|item_pc.5|ESCAPE ROPE
+mgba/item-storage/grey10/list8_top.png|item_pc_count.5.0|7
+mgba/item-storage/grey10/qty_950.png|item_pc_quantity.0|9
+mgba/item-storage/grey10/qty_950.png|item_pc_quantity.1|5
+mgba/item-storage/grey10/qty_950.png|item_pc_quantity.2|0

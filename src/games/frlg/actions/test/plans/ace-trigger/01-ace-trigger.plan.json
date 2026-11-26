@@ -1,0 +1,64 @@
+{
+  "format": "gamepilot-checkpoint/1",
+  "game": "frlg",
+  "execution": {
+    "menu": "full"
+  },
+  "metadata": {
+    "phase": "testing",
+    "notes": "The ACE trigger's test on mGBA: a save after frlg.ace_setup (0x0351 in Box 3 slot 1, MIMIEN in Box 1 slot 1) whose 14 box names hold the bag-prep code for Master Balls (docs/design/FRLG-ACE-Execution.md). Starts facing Route 4 Pokémon Center's PC and ends there, 50 Master Balls withdrawn."
+  },
+  "checkpoint": {
+    "id": "01-ace-trigger",
+    "title": "The code run by the double swap: MASTER BALL x999 in item storage, 50 withdrawn",
+    "start": {
+      "map": "Route4_PokemonCenter_1F",
+      "tiles": [
+        [11, 2]
+      ],
+      "facing": "north"
+    },
+    "events": [
+      {
+        "id": "storage_has_room",
+        "kind": "game_action",
+        "action": "check_item_storage",
+        "args": {
+          "item": "master-ball"
+        },
+        "why": "The code writes PC item slot 30: fewer than 30 items stored."
+      },
+      {
+        "id": "trigger",
+        "kind": "game_action",
+        "action": "ace_trigger",
+        "args": {
+          "box1_title": "xFUnDRRn",
+          "box3_title": "EE …l‘",
+          "partner": "mr-mime"
+        },
+        "why": "MIMIEN to Box 3 slot 2, then 0x0351 shifted with it twice: the second shift runs the box names."
+      },
+      {
+        "id": "master_balls_stored",
+        "kind": "game_action",
+        "action": "check_item_storage",
+        "args": {
+          "item": "master-ball",
+          "count": 999
+        },
+        "why": "The code's item: MASTER BALL x999 in the item storage."
+      },
+      {
+        "id": "withdraw_50",
+        "kind": "game_action",
+        "action": "withdraw_from_item_storage",
+        "args": {
+          "item": "master-ball",
+          "count": 50
+        },
+        "why": "The quantity box set to 50 and withdrawn: 949 stay in the PC."
+      }
+    ]
+  }
+}

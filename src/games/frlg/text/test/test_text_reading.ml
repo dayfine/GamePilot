@@ -27,6 +27,9 @@ let screens =
     "pc_message";
     "naming_entry";
     "box_title";
+    "item_pc";
+    "item_pc_counts";
+    "item_pc_quantity";
   ]
 
 let glyphs =
@@ -61,6 +64,12 @@ let line_of_id id =
   | [ "card_dex"; k ] ->
       normal (Text_lines.trainer_card_dex_digit (int_of_string k))
   | [ "pc_message" ] -> normal Text_lines.pc_message
+  | [ "item_pc"; i ] -> normal (Text_lines.item_pc_row (int_of_string i))
+  | [ "item_pc_count"; row; k ] ->
+      small
+        (Text_lines.item_pc_count_digit (int_of_string row) (int_of_string k))
+  | [ "item_pc_quantity"; k ] ->
+      small (Text_lines.item_pc_quantity_digit (int_of_string k))
   | [ "naming_entry"; i ] ->
       normal (Text_lines.naming_entry_cell ~max_chars:8 (int_of_string i))
   | [ "pokedex_name"; row ] ->

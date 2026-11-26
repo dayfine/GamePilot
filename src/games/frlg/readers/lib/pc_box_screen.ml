@@ -67,6 +67,18 @@ let title_menu =
 
 let title_menu_row m = Cursor_column.row title_menu m
 
+(* The hand over the first slot, x 90-105, y 20-37 (its bob included). *)
+let hand_id = "pc_box.hand_first_slot"
+let hand_box = box ~x:90 ~y:20 ~w:16 ~h:18
+
+let quick_yellow : Color_count.range =
+  { low = { r = 225; g = 200; b = 40 }; high = { r = 255; g = 250; b = 150 } }
+
+let min_quick_share = 0.12
+
+let hand_quick m =
+  Option.map (fun s -> s >= min_quick_share) (Color_count.share m hand_id)
+
 let probes =
   Cursor_column.probes title_menu
   @ [
@@ -75,6 +87,7 @@ let probes =
       Color_count.probe ~id:shadow_id shadow_box shadow;
       Color_count.probe ~id:wallpaper_id wallpaper_box anything;
       Color_count.probe ~id:male_id male_box male_blue;
+      Color_count.probe ~id:hand_id hand_box quick_yellow;
     ]
 
 let panel_occupied m =
