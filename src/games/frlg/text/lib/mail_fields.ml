@@ -69,9 +69,12 @@ let first_left = 41
 let next_left glyphs ~left text =
   Result.map (fun w -> left + w + gap) (Text_drawing.text_width glyphs text)
 
+let cursor_width = 8
+
 let field_line glyphs ~row ~left text =
   Result.map
-    (fun width -> Text_lines.mail_field ~row ~left ~width:(width + gap))
+    (fun width ->
+      Text_lines.mail_field ~row ~left ~width:(width + gap - cursor_width))
     (Text_drawing.text_width glyphs text)
 
 let line_probe line text png =
