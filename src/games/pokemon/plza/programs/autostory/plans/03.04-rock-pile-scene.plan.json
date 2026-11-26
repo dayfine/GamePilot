@@ -8,11 +8,11 @@
   },
   "metadata": {
     "phase": "testing",
-    "source": "played from a new game. Start minimap recorded on the chained start. Ends at the game's autosave in the rock pile scene (split 2026-11-19: a reload lands after it); starts where 03.02b ends; the fork's plza-03.03.plan.json (plza/lean)",
+    "source": "played from a new game. Start minimap recorded on the chained start. Ends at the game's autosave in the rock pile scene (split 2026-11-19: a reload lands after it); starts where 03.03 ends; the fork's plza-03.03.plan.json (plza/lean)",
     "postconditions": {}
   },
   "checkpoint": {
-    "id": "03.03-rock-pile-scene",
+    "id": "03.04-rock-pile-scene",
     "title": "To the rock pile scene",
     "start": {
       "place": "LumioseCity"

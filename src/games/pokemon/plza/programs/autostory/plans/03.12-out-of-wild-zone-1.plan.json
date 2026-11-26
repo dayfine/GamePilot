@@ -10,11 +10,11 @@
   },
   "metadata": {
     "phase": "testing",
-    "source": "played from a new game; starts at the last catch's autosave, ends on the street just through the far gate; starts where 03.08a ends; the fork's plza-03.08b.plan.json (plza/lean)",
+    "source": "played from a new game; starts at the last catch's autosave, ends on the street just through the far gate; starts where 03.11 ends; the fork's plza-03.08b.plan.json (plza/lean)",
     "postconditions": {}
   },
   "checkpoint": {
-    "id": "03.08b-out-of-wild-zone-1",
+    "id": "03.12-out-of-wild-zone-1",
     "title": "Out of Wild Zone 1's far gate",
     "start": {
       "place": "WildZone1"
@@ -39,7 +39,7 @@
         "id": "out_of_zone_1",
         "kind": "game_action",
         "action": "check_out_of_zone_1",
-        "why": "confirm the map pin is out of Wild Zone 1 before chaining into 03.09"
+        "why": "confirm the map pin is out of Wild Zone 1 before chaining into 03.13"
       }
     ]
   }

@@ -4,11 +4,11 @@
   "execution": {},
   "metadata": {
     "phase": "testing",
-    "source": "starts at the rooftop autosave, where a reload lands; starts where 03.03b ends; the fork's plza-03.03c.plan.json (plza/lean)",
+    "source": "starts at the rooftop autosave, where a reload lands; starts where 03.05 ends; the fork's plza-03.03c.plan.json (plza/lean)",
     "postconditions": {}
   },
   "checkpoint": {
-    "id": "03.03c-off-the-roof",
+    "id": "03.06-off-the-roof",
     "title": "Off the roof to Station Front",
     "start": {
       "place": "LumioseCity"

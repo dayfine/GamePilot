@@ -58,19 +58,19 @@ let face ?(turns_take = true) ?(stale_reads = 0) ?(small_turn_scale = 1.)
 
 let cases =
   [
-    case "run 10 of 03.08: from 135 to west" (face ~facing:135. 270.) "faced";
+    case "run 10 of 03.10: from 135 to west" (face ~facing:135. 270.) "faced";
     case "across north" (face ~facing:350. 20.) "faced";
     case
-      "8 off is not facing it: 03.09 read 272 for 264 and walked right of the \
+      "8 off is not facing it: 03.13 read 272 for 264 and walked right of the \
        gate"
       (face ~turns_take:false ~facing:272. 264.)
       "heading_missed";
-    (* Korean 03.08 catch_more_species read 161, 163, 269, 9, 9 for 265: each
+    (* Korean 03.10 catch_more_species read 161, 163, 269, 9, 9 for 265: each
        reading one turn late (console B video, 2026-11-17 23:58). *)
     case "a lagging feed: from 161 to 265"
       (face ~stale_reads:1 ~facing:161. 265.)
       "faced";
-    (* CHS 03.08 read 248.9, 259.1, 249.1, 259.3 for 254: each 5 deg
+    (* CHS 03.10 read 248.9, 259.1, 249.1, 259.3 for 254: each 5 deg
        correction turned 10 (console B, 2026-11-18 02:03). *)
     case "small turns overshoot: from 249 to 254"
       (face ~small_turn_scale:2. ~facing:249. 254.)

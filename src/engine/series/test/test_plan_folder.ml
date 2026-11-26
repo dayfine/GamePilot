@@ -29,9 +29,9 @@ let ids = [ "mg-01"; "mg-04"; "mg-05a"; "mg-05"; "mg-06" ]
 let plza_ids =
   [
     "03.02-out-of-hotel-z";
-    "03.02b-battle-taunie";
-    "03.08-fourth-species";
-    "03.08a-fifth-species";
+    "03.03-battle-taunie";
+    "03.10-fourth-species";
+    "03.11-fifth-species";
   ]
 
 let () =
@@ -67,20 +67,20 @@ let () =
         (fun () -> select_text ids ~from_id:"mg-05" ~to_id:"mg-04")
         "error: no checkpoint mg-04 at or after mg-05";
       case "a bound named by its number alone"
-        (fun () -> select_text plza_ids ~from_id:"03.02" ~to_id:"03.08")
-        "03.02-out-of-hotel-z, 03.02b-battle-taunie, 03.08-fourth-species then \
-         03.08a-fifth-species";
+        (fun () -> select_text plza_ids ~from_id:"03.02" ~to_id:"03.10")
+        "03.02-out-of-hotel-z, 03.03-battle-taunie, 03.10-fourth-species then \
+         03.11-fifth-species";
       case "a full id is a bound too"
         (fun () ->
-          select_text plza_ids ~from_id:"03.02b-battle-taunie"
-            ~to_id:"03.08a-fifth-species")
-        "03.02b-battle-taunie, 03.08-fourth-species, 03.08a-fifth-species then \
+          select_text plza_ids ~from_id:"03.03-battle-taunie"
+            ~to_id:"03.11-fifth-species")
+        "03.03-battle-taunie, 03.10-fourth-species, 03.11-fifth-species then \
          none";
       case "a leading part two ids share is refused"
         (fun () -> select_text [ "01-a"; "01-b" ] ~from_id:"01" ~to_id:"01-b")
         "error: 01 names more than one checkpoint: 01-a, 01-b";
       case "a part not followed by a dash names nothing"
-        (fun () -> select_text plza_ids ~from_id:"03.0" ~to_id:"03.08")
+        (fun () -> select_text plza_ids ~from_id:"03.0" ~to_id:"03.10")
         "error: no checkpoint 03.0";
       case "the ids from one on"
         (fun () -> String.concat ", " (F.drop_until "mg-05" ids))

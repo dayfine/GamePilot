@@ -31,7 +31,7 @@
     zone and the party, and a run left at the 100 spot
     ({!Plza_walk.Wild_zone_one.spot_100}) passed it (console B, 2026-11-25), to
     fail in the catch's own rocks check. The end signature is ours too: the fork
-    checks no end (it only notes whether its autosave showed), and 03.04 passed
+    checks no end (it only notes whether its autosave showed), and 03.07 passed
     on Urbain's one line inside the Center (console B, 2026-11-25). The party
     count takes two frames here ({!Plza_readers.Party_slots}). *)
 
