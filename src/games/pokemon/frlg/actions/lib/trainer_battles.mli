@@ -16,8 +16,8 @@
       farmer mashes B;
     - the battles are not walked to, a scene brings each one, and the lines
       before each are pressed through until the battle shows
-      ({!Scene_looks.until_battle}), where the farmer mashes B until the battle
-      menu;
+      ({!Scene_readings.until_battle}), where the farmer mashes B until the
+      battle menu;
     - there is no turn cap: the farmer fails a battle that runs past three turns
       per Pokémon the trainer has, while the plan here does not know the
       trainers' teams, so a battle ends only by its end or a battle step's
@@ -67,7 +67,8 @@ val live_game_steps :
   log:(string -> unit) ->
   fight:(Frlg_battle.Battle_script.t -> Frlg_battle.Scripted_battle.outcome) ->
   game_steps
-(** The settles on the screen ({!Scene_looks}), and [fight] for the battle. *)
+(** The settles on the screen ({!Scene_readings}), and [fight] for the battle.
+*)
 
 val play :
   log:(string -> unit) ->

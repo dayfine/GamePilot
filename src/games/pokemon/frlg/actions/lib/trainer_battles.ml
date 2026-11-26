@@ -46,11 +46,11 @@ let failure = function
 let live_game_steps ~log ~fight =
   {
     await_battle =
-      (fun () -> Scene_looks.until_battle ~label:"trainer battle" ~log);
+      (fun () -> Scene_readings.until_battle ~label:"trainer battle" ~log);
     fight;
     settle =
       (fun () ->
-        Scene_looks.settle Talk ~label:"after the battles" ~battle_ends:false
+        Scene_readings.settle Talk ~label:"after the battles" ~battle_ends:false
           ~log);
     log;
   }

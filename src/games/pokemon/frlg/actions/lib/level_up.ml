@@ -184,7 +184,7 @@ let evolving r who =
     log r i "evolving, %s" (if evolve then "let it run" else "cancelled with B");
     Ok (r.in_scene <- r.game_steps.evolution ~cancel:(not evolve) = Continues)
 
-let answer_look r = function
+let answer_reading r = function
   | Exp who ->
       let* i = named r who ~or_else:(fun () -> next_exp r) in
       Ok (r.current <- Some i)
@@ -206,7 +206,7 @@ let rec answer r looks =
     | Back -> Ok ()
     | Timed_out -> Error "nothing to answer showed"
     | look ->
-        let* () = answer_look r look in
+        let* () = answer_reading r look in
         answer r (looks + 1)
 
 let start member =

@@ -144,11 +144,11 @@ let step_into_fade direction =
 
 (* One look at a dim warp's scene: whether the middle of the screen has left
    [before] and held still since [last], the look before if it had left too. *)
-let dim_look before last now =
+let dim_reading before last now =
   let left = moved before now >= dim_warp_change in
   let still =
     Option.fold ~none:false
-      ~some:(fun l -> moved l now < Scene_looks.max_still_change)
+      ~some:(fun l -> moved l now < Scene_readings.max_still_change)
       !last
   in
   last := if left then Some now else None;
@@ -162,7 +162,7 @@ let dim_scene_over before =
   fun (m : Effects.measurements) ->
     let due = m.t_ms -. !last_ms >= float_of_int dim_poll_ms in
     if due then last_ms := m.t_ms;
-    due && Option.fold ~none:false ~some:(dim_look before last) (middle m)
+    due && Option.fold ~none:false ~some:(dim_reading before last) (middle m)
 
 let wait_out_dim before =
   match before with

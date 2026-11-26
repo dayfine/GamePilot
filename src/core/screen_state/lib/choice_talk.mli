@@ -6,13 +6,13 @@
     button; anything else is waited on. As the fork's [ScreenObservation], a
     choice box is also a text box, so the choice is looked at first.
 
-    Where it differs: the screen the pick leads to ({!look.past_choice}) also
+    Where it differs: the screen the pick leads to ({!reading.past_choice}) also
     ends the talk once one of our presses has gone in, since that press can land
     on the box as it draws and take its default (on console B a frame shows the
     game 160-335 ms late). The fork's machine sees the choice before pressing
     on, so it has no such rule. *)
 
-type look = {
+type reading = {
   choice : bool;  (** the choice box shows, its cursor read *)
   page : bool;  (** a page of text waits for the talk button *)
   past_choice : bool;  (** the screen the default answer leads to *)
@@ -24,6 +24,6 @@ type move =
   | Answered  (** a press of ours took the default answer: done *)
   | Wait  (** look again *)
 
-val move : pressed:bool -> look -> move
+val move : pressed:bool -> reading -> move
 (** The move for a look; [pressed]: a talk-button press of ours has gone in
     since the talk began. *)

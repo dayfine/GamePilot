@@ -69,7 +69,7 @@ let sail ~log trip =
   M.press Wire.A ~cooldown_ms:talk_ms;
   Effects.with_probes (Script_menu.probes island_list) (fun () -> pick trip);
   M.raise_error
-    (Scene_looks.settle ~await_fade_in:true Talk ~label:"Seagallop"
+    (Scene_readings.settle ~await_fade_in:true Talk ~label:"Seagallop"
        ~battle_ends:false ~log)
 
 let run ~log ~from args =

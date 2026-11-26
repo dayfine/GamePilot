@@ -48,11 +48,11 @@ let rule = function
         cap_ms = menu_cap_ms;
       }
 
-type look = { facts : Facts.t; at_ms : float; since_ms : float option }
+type reading = { facts : Facts.t; at_ms : float; since_ms : float option }
 
 type game_steps = {
-  look : unit -> look;
-  press : Talk_over.press -> wait_ms:int -> look option;
+  read : unit -> reading;
+  press : Talk_over.press -> wait_ms:int -> reading option;
   flee_battle : unit -> bool;
   log : string -> unit;
 }
@@ -89,7 +89,7 @@ let log io fmt = Printf.ksprintf (fun s -> io.log ("[Settle] " ^ s)) fmt
 
 (* After a move: the settle ends, or the next look, with the frame the
    press's wait saw a warp on, if it did. *)
-type next = End of ending | Look_again of look option
+type next = End of ending | Look_again of reading option
 
 (* Acts on the judge's move. *)
 let answer rule ~label io judge = function
@@ -116,7 +116,7 @@ let observe_seen judge = function
   | Some _ | None -> judge
 
 let run ?seen rule ~label io =
-  let first = io.look () in
+  let first = io.read () in
   let deadline = first.at_ms +. float_of_int rule.cap_ms in
   let rec loop judge look =
     if look.at_ms >= deadline then (
@@ -127,6 +127,6 @@ let run ?seen rule ~label io =
       let judge, move = observe judge look in
       match answer rule ~label io judge move with
       | End ending -> ending
-      | Look_again seen -> loop (observe_seen judge seen) (io.look ())
+      | Look_again seen -> loop (observe_seen judge seen) (io.read ())
   in
   loop (observe_seen (Talk_over.create rule.judge) seen) first

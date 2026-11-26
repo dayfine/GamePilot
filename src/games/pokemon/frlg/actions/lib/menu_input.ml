@@ -10,7 +10,8 @@ let raise_error = function
   | Error cause -> raise (Action_failed cause)
 
 let probes =
-  Scene_looks.probes @ Party_menu.probes @ Bag_screen.probes @ Money_box.probes
+  Scene_readings.probes @ Party_menu.probes @ Bag_screen.probes
+  @ Money_box.probes
 
 let run body =
   match Effects.with_probes probes body with
@@ -45,7 +46,7 @@ let await_screen ?(timeout_ms = screen_timeout_ms) ~code what reader =
   | Timeout -> fail code (what ^ " did not show")
 
 let settle_back ~label ~log =
-  raise_error (Scene_looks.settle Talk ~label ~battle_ends:false ~log)
+  raise_error (Scene_readings.settle Talk ~label ~battle_ends:false ~log)
 
 module Fade_in = Frlg_overworld.Warp_fade_in
 
@@ -71,7 +72,7 @@ let party_menus m =
   || Option.is_some (Summary_screen.page m)
 
 let settle_menu_closed ~label ~log () =
-  Scene_looks.settle ~menu_open:party_menus ~await_fade_in:true Menu_closed
+  Scene_readings.settle ~menu_open:party_menus ~await_fade_in:true Menu_closed
     ~label ~battle_ends:false ~log
 
 let close_to_overworld ~label ~log =
@@ -93,12 +94,12 @@ let answer_yes_to m =
 let page_press_ms = 600
 
 (* One look, one move: Screen_state.Choice_talk on the FRLG readers. *)
-let choice_look ~taken m : Screen_state.Choice_talk.look =
+let choice_reading ~taken m : Screen_state.Choice_talk.reading =
   { choice = question m; page = Dialog.advance_arrow m; past_choice = taken m }
 
 let rec answer_yes_from page ~code ~taken what =
   let move m =
-    Screen_state.Choice_talk.move ~pressed:(page > 1) (choice_look ~taken m)
+    Screen_state.Choice_talk.move ~pressed:(page > 1) (choice_reading ~taken m)
   in
   let m = await_screen ~code what (fun m -> move m <> Wait) in
   match move m with
