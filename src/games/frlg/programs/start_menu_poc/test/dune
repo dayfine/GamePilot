@@ -5,6 +5,7 @@
   (glob_files fixtures/*.jsonl))
  (libraries
   gamepilot.wire
+  gamepilot.substring
   gamepilot.effects
   gamepilot.replay
   gamepilot.start_menu_poc))

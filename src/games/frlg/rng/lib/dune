@@ -1,4 +1,4 @@
 (library
  (name frlg_rng)
  (public_name gamepilot.frlg_rng)
- (libraries yojson))
+ (libraries yojson gamepilot.substring))

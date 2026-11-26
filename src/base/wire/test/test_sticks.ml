@@ -18,13 +18,6 @@ let golden_call name =
   | Wire.Request { call; _ } -> call
   | _ -> failwith (name ^ ": expected a request")
 
-let contains s sub =
-  let n = String.length sub in
-  let rec go i =
-    i + n <= String.length s && (String.sub s i n = sub || go (i + 1))
-  in
-  go 0
-
 let stick x y = match Wire.stick x y with Ok s -> s | Error e -> failwith e
 
 let check_golden_run () =
@@ -53,8 +46,11 @@ let check_press_without_sticks () =
          { id = 1; call = Wire.Submit { batch_id = "b"; commands = [ start ] } })
   in
   let text = Yojson.Safe.to_string json in
-  if List.exists (fun f -> contains text f) [ "left_stick"; "right_stick" ] then
-    failwith ("FAILED a press without sticks encodes a stick: " ^ text);
+  if
+    List.exists
+      (fun f -> Substring.contains text f)
+      [ "left_stick"; "right_stick" ]
+  then failwith ("FAILED a press without sticks encodes a stick: " ^ text);
   (match Wire.message_of_json json with
   | Wire.Request { call = Wire.Submit { commands = [ c ]; _ }; _ }
     when c = start ->

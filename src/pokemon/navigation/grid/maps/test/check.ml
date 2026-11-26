@@ -9,16 +9,11 @@ let equal what ~expected read =
 let all checks =
   List.fold_left (fun result check -> Result.bind result check) (Ok ()) checks
 
-let contains text part =
-  let n = String.length part in
-  let rec at i =
-    i + n <= String.length text && (String.sub text i n = part || at (i + 1))
-  in
-  at 0
-
 (* Ok when [message] names every one of [parts]. *)
 let mentions message parts =
-  match List.find_opt (fun part -> not (contains message part)) parts with
+  match
+    List.find_opt (fun part -> not (Substring.contains message part)) parts
+  with
   | None -> Ok ()
   | Some part ->
       Error (Printf.sprintf "expected an error naming %S, got %S" part message)
