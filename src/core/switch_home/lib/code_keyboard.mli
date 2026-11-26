@@ -1,12 +1,10 @@
 (** The Switch's own keyboard as a game opens it for a code (PLZA's Mystery Gift
-    code): typing a code with the D-pad and A, on the keys it leaves enabled.
-    The route is [type_code_cmds] in [plza_claim_and_bank.sh] from the BDSPLab
-    lab tools (console B, 2026-11-20): its layout, its key-to-key moves round
-    the disabled keys, and its presses (D-pad 80 ms, released 140; A 80 ms,
-    released 180). The cursor read is the fork's
-    NintendoSwitch_SystemKeyboardDetector.cpp (branch [ns/system-keyboard]): the
-    centroid of the cursor border's cyan over the keys, mapped to the nearest
-    key.
+    code): typing a code with the D-pad and A, on the keys it leaves enabled,
+    moving key to key round the disabled ones (console B, 2026-11-20). Each
+    press is D-pad 80 ms, released 140, or A 80 ms, released 180. The cursor
+    read is the fork's NintendoSwitch_SystemKeyboardDetector.cpp (branch
+    [ns/system-keyboard]): the centroid of the cursor border's cyan over the
+    keys, mapped to the nearest key.
 
     The code keyboard's first four rows, ten columns each:
     {v
@@ -20,19 +18,18 @@
     opened; a keyboard laid out otherwise (AZERTY, QWERTZ) is not supported: the
     presses would type other characters.
 
-    Where it differs: the script assumed the cursor on "1" when the keyboard
-    opens; here the cursor is read first (the fork: "the keyboard remembers the
-    cursor between uses, so read it"), and only when no cursor reads is "1"
-    assumed, as the script did, with a log line. The script's keyboard test knew
-    only the dark theme's grey keys; the light theme's grey counts too. Read on
-    console B's code keyboard (2026-11-25: dark, empty, cursor on "1"; I, O and
-    Z greyed as the layout says), also shifted. *)
+    The cursor is read first (the fork: "the keyboard remembers the cursor
+    between uses, so read it"); only when no cursor reads is it taken to be on
+    "1", where the keyboard opens, with a log line. Both the dark theme's grey
+    keys and the light theme's count as the keyboard. Read on console B's code
+    keyboard (2026-11-25: dark, empty, cursor on "1"; I, O and Z greyed as the
+    layout says), also shifted. *)
 
 type key = { row : int; col : int }
 (** A key: row 0 the digits, column 0 the leftmost. *)
 
 val first_key : key
-(** "1", where the script starts. *)
+(** "1", where the keyboard opens. *)
 
 val key_of_char : char -> key option
 (** The enabled key for a character (letters in either case); [None] for a
@@ -54,9 +51,9 @@ val probes : Wire.probe_spec list
 val shown : Effects.measurements -> bool
 (** The keyboard is open: most of its keys' area (x 0.10 to 0.80, y 0.50 to 0.85
     of the frame) is the dark theme's grey keys (each channel 41 to 134, within
-    15 of each other), as the script read it, or the light theme's (200 to 250),
-    and a cursor reads ({!cursor}). The dark HOME menu passes too (its grey, its
-    tile cursor's cyan): look for the keyboard only where it opens. *)
+    15 of each other) or the light theme's (200 to 250), and a cursor reads
+    ({!cursor}). The dark HOME menu passes too (its grey, its tile cursor's
+    cyan): look for the keyboard only where it opens. *)
 
 val cursor : Effects.measurements -> key option
 (** The key under the cursor in the first four rows, from its border's cyan (red

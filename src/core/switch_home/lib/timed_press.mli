@@ -1,4 +1,4 @@
-(** A press as the lab's scripts write it ([press X 100 1500],
+(** A timed press, as a [gamepilot ctl] line writes it ([press X 100 1500],
     [dpad DOWN 80 300]): the button held [hold_ms], then [cooldown_ms] with
     nothing held before the next, as {!Switch_presses.press} does it. *)
 

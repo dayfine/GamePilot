@@ -1,12 +1,11 @@
-(* The code keyboard (Code_keyboard): the presses that type a code, as the
-   lab script's type_code_cmds prints them (plza_claim_and_bank.sh, run on
-   these codes: D-pad as R/L/U/D, A), and the reader on PLZA's name keyboard
+(* The code keyboard (Code_keyboard): the presses that type a code (D-pad as
+   R/L/U/D, A), and the reader on PLZA's name keyboard
    (the same system keyboard, light theme, cursor on "1": console B's
    Japanese capture and the fork's German one, images/keyboard) and on the
    code keyboard itself (dark theme, empty, cursor on "1": console B's
    Mystery Gift code entry, 2026-11-25), with their
    colors shifted as well (fixtures/code_keyboard.shifted.probes.jsonl). The
-   dark HOME menu and the user select pass the script's dark-grey test and
+   dark HOME menu and the user select pass the dark-grey test and
    show a cyan cursor of their own, so they read as the keyboard: the steps
    look for it only right after Mystery Gift's code entry, where neither
    shows. Brightened by 1.1, the light keys clip to white and are not read;
