@@ -39,22 +39,16 @@ type 'game flags = {
   game : 'game;  (** The game's own flags. *)
 }
 
+type 'game valued_flag = Not_game_flag | Bad_value of string | Parsed of 'game
+
 type 'game game_flags = {
   game_defaults : 'game;
   game_switch : 'game -> string -> 'game option;
-  game_valued : 'game -> string -> string -> ('game, string) result option;
+  game_valued : 'game -> string -> string -> 'game valued_flag;
 }
 
-let home = Option.value (Sys.getenv_opt "HOME") ~default:"."
-
 (* [var] from the environment, else [$HOME/.local/share/gamepilot/<name>]. *)
-let data_dir var name =
-  match Sys.getenv_opt var with
-  | Some dir when dir <> "" -> dir
-  | _ ->
-      List.fold_left Filename.concat home
-        [ ".local"; "share"; "gamepilot"; name ]
-
+let data_dir = Repo_io.Repo_files.data_dir
 let mgba_bridge_port = 47810
 
 let defaults game =
@@ -172,9 +166,10 @@ let watch_valued f name v =
 
 (* The game's flag with its value. *)
 let game_valued game f name v =
-  Option.map
-    (Result.map (fun g -> { f with game = g }))
-    (game.game_valued f.game name v)
+  match game.game_valued f.game name v with
+  | Not_game_flag -> None
+  | Bad_value e -> Some (Error e)
+  | Parsed g -> Some (Ok { f with game = g })
 
 let valued game f name v =
   match watch_valued f name v with

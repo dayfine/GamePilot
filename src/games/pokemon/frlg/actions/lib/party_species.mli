@@ -5,7 +5,10 @@
     checks: the fork reads the species only in battle and through its party
     tracker; its Mail Glitch check (in
     Programs/MailGlitch/PokemonFRLG_MailGlitchActions.cpp) find a member by the
-    species its tracker reckons. *)
+    species its tracker reckons.
+
+    Language: summary species names are matched as English text; non-English
+    ROMs need localized species tables. *)
 
 val read_shown : unit -> string option
 (** The species slug on the open info page; [None] when the line shows no

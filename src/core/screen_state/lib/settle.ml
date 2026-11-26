@@ -50,7 +50,7 @@ let rule = function
 
 type look = { facts : Facts.t; at_ms : float; since_ms : float option }
 
-type io = {
+type game_steps = {
   look : unit -> look;
   press : Talk_over.press -> wait_ms:int -> look option;
   flee_battle : unit -> bool;

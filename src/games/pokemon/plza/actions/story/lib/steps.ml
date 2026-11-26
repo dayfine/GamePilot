@@ -1,5 +1,7 @@
 module Failure = Engine_run.Failure
 
+type link_play_row = Shown | Absent | No_menu
+
 type game_steps = {
   submit : Wire.command -> unit;
   submit_batch : Wire.command list -> unit;
@@ -16,6 +18,7 @@ type game_steps = {
   wait_until : float -> unit;
   read_lock_target : unit -> Catch_plan.target option;
   read_party_slots : unit -> int option;
+  read_link_play_row : unit -> link_play_row;
   log : string -> unit;
   log_detail : string -> unit;
 }

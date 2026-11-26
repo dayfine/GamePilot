@@ -13,13 +13,15 @@
   test_zone_catch
   test_scene_machine
   test_flicker_filter
-  test_new_game_intro)
+  test_new_game_intro
+  test_starter)
  (modules
   test_catch_plan
   test_zone_catch
   test_scene_machine
   test_flicker_filter
-  test_new_game_intro)
+  test_new_game_intro
+  test_starter)
  (libraries
   gamepilot.wire
   gamepilot.effects
@@ -29,4 +31,5 @@
   gamepilot.engine_run
   gamepilot.plza_story
   gamepilot.plza_walk
+  gamepilot.plza_rules
   plza_fake_console))

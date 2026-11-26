@@ -7,7 +7,10 @@
    platform never seen, a scene with no choice, a battle with no symbols or
    lost, a catch with nothing to catch, Wild Zone 1's start checks (its map
    pin and party count), an event PLZA has no handler for yet; 01.04 resumed by its skip_if
-   flags, and the jump to its battle. And what the watch page is sent (Story_game.run_watched):
+   flags, and the jump to its battle. 03.15's end, its mystery_gift flag read
+   on the main menu (Link Play shown or five rows): resumed at its end it runs
+   no event, after Mable's talk its events run, and after its last event the
+   flag is checked. And what the watch page is sent (Story_game.run_watched):
    the plan at each event's change and the run. *)
 
 open Plza_engine
@@ -381,14 +384,8 @@ let room_door ?(lost = false) c =
 (* The runner's end state for [checkpoint]: its end place (ends) and its
    reader on the console's steps, as Runs gives them. *)
 let end_state steps checkpoint =
-  let read (p : Plza_rules.Postconditions.t) =
-    Option.fold ~none:Plza_rules.Screen_signature.nothing
-      ~some:
-        (Plza_autostory.Start_signature.read_place steps
-           ~checkpoint_id:checkpoint)
-      p.place
-  in
-  (ends checkpoint, read)
+  ( ends checkpoint,
+    Plza_autostory.Start_signature.read_end steps ~checkpoint_id:checkpoint )
 
 let run_plan ?ends_of ?party (p : Plan.t) screen =
   let c = C.create () in
@@ -456,6 +453,16 @@ let choices_of ?(options = Plza_autostory.New_game_options.none) fact ids () =
   | Ok cs -> "ok: " ^ String.concat "; " (List.map fact cs)
   | Error e -> "error: " ^ e
 
+(* The starter option over the series [ids] (Starter_option.series_check). *)
+let starter_over tag ids () =
+  match
+    Plza_autostory.Starter_option.series_check
+      (Plza_story.Starter.of_tag tag)
+      (List.map (fun id -> (plan id).checkpoint) ids)
+  with
+  | Ok () -> "ok"
+  | Error e -> "error: " ^ e
+
 let french_5 =
   {
     Plza_autostory.New_game_options.none with
@@ -464,11 +471,11 @@ let french_5 =
   }
 
 (* The run on [screen]: its end and the console. *)
-let outcome checkpoint screen =
+let outcome ?starter checkpoint screen =
   let c = C.create () in
   let steps = C.steps c screen in
   let game =
-    Plza_autostory.Story_game.make steps
+    Plza_autostory.Story_game.make ?starter steps
       ~checkpoint:(plan checkpoint).checkpoint ~reload:(fun () -> Ok ())
   in
   ( (match
@@ -480,8 +487,8 @@ let outcome checkpoint screen =
     | Error f -> Failure.to_string f),
     c )
 
-let logged checkpoint screen part () =
-  let _, c = outcome checkpoint screen in
+let logged ?starter checkpoint screen part () =
+  let _, c = outcome ?starter checkpoint screen in
   string_of_bool
     (List.exists (fun line -> Strings.Contains.substring line part) (C.lines c))
 
@@ -1021,6 +1028,57 @@ let out_of_zone = in_zone ~pin:(401., 225.)
 let inputs_sent checkpoint screen () =
   string_of_int (List.length (snd (outcome checkpoint screen)).C.inputs)
 
+(* Mable's office (03.15) with the main menu on X until B: the party bar,
+   the menu after X, the party bar again after B. *)
+let office_menu c =
+  let menu_open =
+    match (C.last_press c Wire.X, C.last_press c Wire.B) with
+    | Some x, Some b -> x > b
+    | Some _, None -> true
+    | None, _ -> false
+  in
+  if menu_open then { (look c) with main_menu = true } else party c
+
+(* 03.15 run in Mable's office, its main menu with Link Play ([six]) or with
+   five rows; [first] the first event run. Its result and the console. *)
+let office_run ?(first = 0) ~six () =
+  let c = C.create () in
+  let link_play c : Plza_story.Steps.link_play_row =
+    if not (office_menu c).main_menu then No_menu
+    else if six then Shown
+    else Absent
+  in
+  let steps = C.steps ~link_play c office_menu in
+  let id = "03.15-mable-reward" in
+  let checkpoint = (plan id).checkpoint in
+  let game =
+    Plza_autostory.Story_game.make steps ~checkpoint ~reload:(fun () -> Ok ())
+  in
+  ( (match
+       Runner.run
+         ~events:{ Engine_run.Event_range.first; last = None }
+         ~end_state:(end_state steps id) game checkpoint
+     with
+    | Ok () -> "passed"
+    | Error f -> Failure.to_string f),
+    c )
+
+let office_result ?first ~six () = fst (office_run ?first ~six ())
+
+let office_logged ?first ~six part () =
+  let _, c = office_run ?first ~six () in
+  string_of_bool
+    (List.exists (fun line -> Strings.Contains.substring line part) (C.lines c))
+
+(* The buttons pressed, in order. *)
+let office_buttons ?first ~six () =
+  let _, c = office_run ?first ~six () in
+  String.concat " "
+    (List.rev_map
+       (fun (i : C.input) ->
+         String.concat "+" (List.map Wire.string_of_button i.buttons))
+       (List.filter (fun (i : C.input) -> i.buttons <> []) c.inputs))
+
 let cases =
   [
     case
@@ -1089,6 +1147,37 @@ let cases =
        beaten"
       (result "01.04-starter-and-andi" starter)
       "passed";
+    case "01.04-starter-and-andi with no starter: Chikorita's walk, the plan's"
+      (logged "01.04-starter-and-andi" starter
+         "approach_starter: to Chikorita (grass): walk [-66, 600] steer")
+      "true";
+    case "01.04-starter-and-andi with water: Totodile's walk"
+      (logged ~starter:Plza_story.Starter.Totodile "01.04-starter-and-andi"
+         starter
+         "approach_starter: to Totodile (water): walk [-50, 600] steer or the \
+          starter's own into a talk after the legs")
+      "true";
+    case "01.04-starter-and-andi with water: passes as Chikorita's does"
+      (fun () ->
+        fst
+          (outcome ~starter:Plza_story.Starter.Totodile "01.04-starter-and-andi"
+             starter))
+      "passed";
+    case "the starter option over a series from 00.00: taken"
+      (starter_over "water" [ "00.00-new-game"; "01.04-starter-and-andi" ])
+      "ok";
+    case "the starter option over a series from 01.04: taken"
+      (starter_over "water"
+         [ "01.04-starter-and-andi"; "02.01-battle-brigitte" ])
+      "ok";
+    case "the starter option over a series after 01.04: refused"
+      (starter_over "water" [ "02.01-battle-brigitte"; "03.03-battle-taunie" ])
+      "error: --options starter is the starter 01.04-starter-and-andi walks \
+       to, and this series does not walk there (the save has its starter \
+       already): start it at or before 01.04-starter-and-andi, or drop it";
+    case "no starter option over a series after 01.04: nothing to check"
+      (starter_over "none" [ "02.01-battle-brigitte" ])
+      "ok";
     case "01.04-starter-and-andi: the scene to the battle ends on its HUD"
       (logged "01.04-starter-and-andi" starter "[PLZA scene] done on battle.")
       "true";
@@ -1639,7 +1728,7 @@ let cases_03_02b =
       (logged "03.03-battle-taunie"
          (quartiere_verde ~battle_mid_walk:true)
          "[Event] 03.03-battle-taunie: battle on screen during to_taunie: \
-          jumping to battle_totodile, skipping taunie_battle_start")
+          jumping to first_battle, skipping taunie_battle_start")
       "true";
     case
       "03.03-battle-taunie after 03.02-out-of-hotel-z: Taunie's prompt first, \
@@ -1651,7 +1740,7 @@ let cases_03_02b =
        her battle"
       (logged "03.03-battle-taunie" taunie_first
          "[Event] 03.03-battle-taunie: battle on screen during plaza_scene: \
-          jumping to battle_totodile, skipping to_taunie, taunie_battle_start")
+          jumping to first_battle, skipping to_taunie, taunie_battle_start")
       "true";
     case
       "03.03-battle-taunie with the battle HUD on one read of the plaza scene: \
@@ -1840,11 +1929,55 @@ let cases_signatures =
         String.concat "; "
           (Plza_rules.Postconditions.to_lines (ends "03.07-pokemon-center")))
       "place minimap pokemon-center-door";
-    case "03.15-mable-reward's end: the last checkpoint names none"
+    case "03.15-mable-reward's end: the mystery_gift flag, no place"
       (fun () ->
         String.concat "; "
           (Plza_rules.Postconditions.to_lines (ends "03.15-mable-reward")))
-      "";
+      "flags mystery_gift";
+    case "03.15-mable-reward resumed at its end (Link Play shows): passes"
+      (office_result ~six:true) "passed";
+    case
+      "03.15-mable-reward resumed at its end: already at its end, no event run"
+      (office_logged ~six:true
+         "[Story] 03.15-mable-reward: already at its end (flags mystery_gift): \
+          passed, no event run")
+      "true";
+    case "03.15-mable-reward resumed at its end: the flag read set"
+      (office_logged ~six:true
+         "[Checkpoint] 03.15-mable-reward: FLAG READ: mystery_gift set (the \
+          main menu shows Link Play)")
+      "true";
+    case "03.15-mable-reward resumed at its end: X opens the menu, B closes it"
+      (office_buttons ~six:true) "X B";
+    case
+      "03.15-mable-reward resumed after Mable's talk (five rows): the flag \
+       read clear"
+      (office_logged ~six:false
+         "[Checkpoint] 03.15-mable-reward: FLAG READ: mystery_gift clear (the \
+          main menu has no Link Play row)")
+      "true";
+    case
+      "03.15-mable-reward resumed after Mable's talk (five rows): its events \
+       run"
+      (office_logged ~six:false "[Story] 03.15-mable-reward #1 to_mable: start")
+      "true";
+    case
+      "03.15-mable-reward resumed after Mable's talk (five rows): not already \
+       at its end"
+      (office_logged ~six:false "already at its end")
+      "false";
+    case "03.15-mable-reward's last event, Link Play then shown: passes"
+      (office_result ~first:3 ~six:true)
+      "passed";
+    case
+      "03.15-mable-reward's last event, Link Play then shown: the flag checked"
+      (office_logged ~first:3 ~six:true
+         "[Postcondition] 03.15-mable-reward flag mystery_gift: passed: set")
+      "true";
+    case "03.15-mable-reward's last event with five rows: the end fails"
+      (office_result ~first:3 ~six:false)
+      "03.15-mable-reward event 5 (postconditions): postconditions unmet: flag \
+       mystery_gift: failed: expected set, read clear";
     case "a start signature with another field: refused"
       (start_check
          ~execution:

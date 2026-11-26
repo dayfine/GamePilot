@@ -85,8 +85,8 @@ let press ~arrived ~fade_in (_ : Screen_state.Talk_over.press) ~wait_ms =
 
 let never _ = false
 
-let io ?(menu_open = never) ?(arrived = never) ?(await_fade_in = false)
-    ~flee_battle ~log () : Screen_state.Settle.io =
+let game_steps ?(menu_open = never) ?(arrived = never) ?(await_fade_in = false)
+    ~flee_battle ~log () : Screen_state.Settle.game_steps =
   let last = ref None in
   let fade_in = if await_fade_in then Some (Fade_in.watch ()) else None in
   {
@@ -99,13 +99,15 @@ let io ?(menu_open = never) ?(arrived = never) ?(await_fade_in = false)
 (* The settle's own outcome, with {!probes} subscribed and no battle fled. *)
 let run_settle ?menu_open ?arrived ?await_fade_in ?(start = []) kind ~label ~log
     =
-  let io =
-    io ?menu_open ?arrived ?await_fade_in ~flee_battle:(fun () -> false) ~log ()
+  let steps =
+    game_steps ?menu_open ?arrived ?await_fade_in
+      ~flee_battle:(fun () -> false)
+      ~log ()
   in
   let arrived = Option.value arrived ~default:never in
   Effects.with_probes probes (fun () ->
       let seen = if start = [] then None else watch ~arrived start in
-      Screen_state.Settle.run ?seen (Screen_state.Settle.rule kind) ~label io)
+      Screen_state.Settle.run ?seen (Screen_state.Settle.rule kind) ~label steps)
 
 let settle ?menu_open ?arrived ?await_fade_in ?start kind ~label ~battle_ends
     ~log =

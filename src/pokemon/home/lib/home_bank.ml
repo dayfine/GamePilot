@@ -12,7 +12,16 @@ type templates = {
   digits : (int * string) list;
 }
 
-type mode = Look | Bank of Box_moves.t list
+type on_failure = Stop_open | Quit_discard | Save_partial
+type deposit = { moves : Box_moves.t list; on_failure : on_failure }
+type mode = Look | Bank of deposit
+
+type game_steps = {
+  move : Box_moves.t -> (unit, Box_moves.move_error) result;
+  save : unit -> (unit, string) result;
+  close : unit -> (unit, string) result;
+  log : string -> unit;
+}
 
 let upload (t : templates) : B.templates =
   {
@@ -76,33 +85,73 @@ let save ~log =
          unsaved"
   | Holds _ -> saved ~log
 
-let bank ~log moves =
-  let* () =
-    List.fold_left
-      (fun acc move -> Result.bind acc (fun () -> Box_moves.run ~log move))
-      (Ok ()) moves
+let close_with steps detail =
+  let* () = steps.close () in
+  Error detail
+
+let save_partial_and_close steps ~moved ~total (err : Box_moves.move_error) =
+  if err.holding then
+    Error
+      (err.message
+     ^ "; cursor may hold a Pokémon, Pokémon HOME left open unsaved")
+  else if moved = 0 then
+    close_with steps (err.message ^ "; nothing moved, Pokémon HOME closed")
+  else
+    let* () = steps.save () in
+    close_with steps
+      (Printf.sprintf "saved %d of %d Pokémon before failure: %s" moved total
+         err.message)
+
+let finish_failed steps ~on_failure ~moved ~total (err : Box_moves.move_error) =
+  match on_failure with
+  | Stop_open -> Error err.message
+  | Quit_discard ->
+      close_with steps (err.message ^ "; Pokémon HOME closed, unsaved")
+  | Save_partial -> save_partial_and_close steps ~moved ~total err
+
+let run_deposit steps { moves; on_failure } =
+  let total = List.length moves in
+  let rec loop moved = function
+    | [] ->
+        let* () = if moved > 0 then steps.save () else Ok () in
+        steps.close ()
+    | move :: rest -> (
+        match steps.move move with
+        | Ok () -> loop (moved + 1) rest
+        | Error err -> finish_failed steps ~on_failure ~moved ~total err)
   in
-  save ~log
+  loop 0 moves
 
 let no_digits =
   Error
     "a box-number digit has no template yet; nothing moved, Pokémon HOME left \
      open"
 
-let bank_all ~log templates moves =
+let live_game_steps ~log ~picture : game_steps =
+  {
+    move = Box_moves.run ~log;
+    save = (fun () -> save ~log);
+    close =
+      (fun () ->
+        log "Closing Pokémon HOME.";
+        Switch_home.Game_entry.close_game ~log ~picture Home_tile.tile_color);
+    log;
+  }
+
+let bank_all ~log ~picture templates deposit =
   if B.complete templates then
-    Effects.with_probes (Box_moves.cursor_probes moves) (fun () ->
-        bank ~log moves)
+    Effects.with_probes (Box_moves.cursor_probes deposit.moves) (fun () ->
+        run_deposit (live_game_steps ~log ~picture) deposit)
   else no_digits
 
-let on_boxes ~log templates = function
+let on_boxes ~log ~picture templates = function
   | Look -> look ~log
-  | Bank moves -> bank_all ~log templates moves
+  | Bank deposit -> bank_all ~log ~picture templates deposit
 
 let launch_and_act ~log ~picture (t : templates) mode =
   let box_templates = upload t in
   let game_icon = Effects.upload_template t.game_icon in
-  let on_menus () = on_boxes ~log box_templates mode in
+  let on_menus () = on_boxes ~log ~picture box_templates mode in
   Effects.with_probes (B.probes box_templates) (fun () ->
       let* () =
         Home_launch.to_boxes ~log ~picture ~home_art:t.home_art
@@ -116,10 +165,4 @@ let not_native =
 
 let run ~log ~picture (t : templates) mode =
   if not (Switch_home.Picture_box.native picture) then Error not_native
-  else
-    let* () = launch_and_act ~log ~picture t mode in
-    match mode with
-    | Look -> Ok ()
-    | Bank _ ->
-        log "Closing Pokémon HOME.";
-        Switch_home.Game_entry.close_game ~log ~picture Home_tile.tile_color
+  else launch_and_act ~log ~picture t mode

@@ -13,6 +13,7 @@ val walk_only : string -> bool
 
 val make :
   ?options:New_game_options.t ->
+  ?starter:Plza_story.Starter.t ->
   ?new_game:(Plza_story.New_game_choices.t -> Plza_story.Steps.outcome) ->
   Plza_story.Steps.game_steps ->
   checkpoint:Plza_engine.Plan.checkpoint ->
@@ -21,9 +22,11 @@ val make :
 (** The handlers for one checkpoint's run; [new_game] plays 00.00-new-game's
     choices, the program's [options] (none by default) over the plan's (by
     default it fails [no_handler]: the live runner passes
-    {!Live_intro_screen.run}). With a [story_battle] later in the checkpoint, a
-    walk or a scene (but [scene_to_battle]) stops on the battle HUD and the run
-    goes on at the battle ({!Battle_jump}). *)
+    {!Live_intro_screen.run}). A walk with [to_starter] (01.04's) walks to
+    [starter] ({!Plza_story.Starter.aimed}; Chikorita, the plan's legs, by
+    default). With a [story_battle] later in the checkpoint, a walk or a scene
+    (but [scene_to_battle]) stops on the battle HUD and the run goes on at the
+    battle ({!Battle_jump}). *)
 
 val run_watched :
   ?end_state:
@@ -38,5 +41,5 @@ val run_watched :
     ({!Plza_engine.Plan_watch}): the report's steps move with its events and its
     run in [mode] ends passed or failed. [end_state] (none by default) is its
     end place and its reader ({!Start_signature.promised_end},
-    {!Start_signature.read_place}): the runner passes the checkpoint with no
-    event run when it already holds, and checks it after the last event. *)
+    {!Start_signature.read_end}): the runner passes the checkpoint with no event
+    run when it already holds, and checks it after the last event. *)

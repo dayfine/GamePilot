@@ -31,7 +31,10 @@
       pocket's arrows show again: the list redraws after the editor), and must
       have gone up by one per round (the C++ only counts its rounds); an item of
       another pocket (an Ultra Ball) is counted on its own pocket, then the
-      Items pocket is back at its top. *)
+      Items pocket is back at its top.
+
+    Language: the mail editor's Easy Chat word check matches English words;
+    non-English ROMs use localized Easy Chat dictionaries. *)
 
 val wait_ms : int
 (** Every wait of the C++'s loop: 4000. *)

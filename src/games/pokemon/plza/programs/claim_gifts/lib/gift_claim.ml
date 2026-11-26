@@ -49,8 +49,8 @@ let read_after () =
     after_claim m
   in
   let read =
-    Switch_home.Held_screen.wait_for ~timeout_ms:card_wait_ms
-      (Switch_home.Held_screen.held hold_ms watch)
+    Screen_graph.Held_screen.wait_for ~timeout_ms:card_wait_ms
+      (Screen_graph.Held_screen.held hold_ms watch)
   in
   (read, !last)
 

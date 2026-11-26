@@ -167,8 +167,13 @@ let next_start = function
 
 let promised_end ~next (plan : Plza_engine.Plan.t) =
   let own = Option.bind plan.postconditions (fun p -> p.place) in
+  let flags =
+    Option.fold ~none:[]
+      ~some:(fun (p : Plza_rules.Postconditions.t) -> p.flags)
+      plan.postconditions
+  in
   let* place = if Option.is_some own then Ok own else next_start next in
-  Ok { Plza_rules.Postconditions.place }
+  Ok { Plza_rules.Postconditions.place; flags }
 
 let read_place steps ~checkpoint_id (place : t) =
   let r = read steps (names_pin place) in
@@ -176,3 +181,11 @@ let read_place steps ~checkpoint_id (place : t) =
     (Printf.sprintf "the screen reads (%s), its end is (%s)" (to_string r)
        (to_string place));
   r
+
+let read_end steps ~checkpoint_id (p : Plza_rules.Postconditions.t) :
+    Plza_rules.Postconditions.reads =
+  {
+    screen =
+      Option.fold ~none:nothing ~some:(read_place steps ~checkpoint_id) p.place;
+    flags_read = Story_flag_read.read steps ~checkpoint_id p.flags;
+  }

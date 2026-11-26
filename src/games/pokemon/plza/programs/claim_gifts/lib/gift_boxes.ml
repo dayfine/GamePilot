@@ -19,8 +19,8 @@ let card_boxes_ms = 5000
 let hold_ms = 1000.
 
 let held_on ~timeout_ms shown =
-  Switch_home.Held_screen.wait_for ~timeout_ms
-    (Switch_home.Held_screen.held hold_ms (fun m ->
+  Screen_graph.Held_screen.wait_for ~timeout_ms
+    (Screen_graph.Held_screen.held hold_ms (fun m ->
          if shown m then Some () else None))
 
 let boxes_shown = held_on Plza_readers.Boxes_screen.shown

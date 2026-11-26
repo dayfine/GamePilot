@@ -8,7 +8,7 @@
     ends. The watch page shows each run's plan, its events moving with the
     runner, and the run. What each attempt does on the console is the program's
     ({!program}). Moved from plza.autostory's series (Plza_series.Runs) when
-    plza.bank-home came. *)
+    pokemon_home.bank-plza came. *)
 
 type attempt =
   log:(string -> unit) ->

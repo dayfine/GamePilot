@@ -121,7 +121,7 @@ let metadata room =
   `Assoc
     [ ("phase", string "generated"); ("postconditions", postconditions room) ]
 
-let plan_json room =
+let room_plan room =
   `Assoc
     [
       ("format", string "gamepilot-checkpoint/1");

@@ -32,8 +32,8 @@ let on_boxes m =
 (* The cell under the cursor, on the Boxes. *)
 let under () =
   match
-    Switch_home.Held_screen.wait_for ~timeout_ms:cell_ms
-      (Switch_home.Held_screen.held hold_ms on_boxes)
+    Screen_graph.Held_screen.wait_for ~timeout_ms:cell_ms
+      (Screen_graph.Held_screen.held hold_ms on_boxes)
   with
   | Some true -> Filled
   | Some false -> Empty

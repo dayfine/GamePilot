@@ -5,8 +5,9 @@ let run args () = show (Run_args.parse args)
 
 let old command args () =
   match Run_args.of_old_command command args with
-  | None -> "none"
-  | Some r -> show r
+  | Not_old_command -> "none"
+  | Invalid_old_args e -> "error: " ^ e
+  | Run t -> Run_args.command_line t
 
 let case name input expectation = { Table_test.name; input; expectation }
 

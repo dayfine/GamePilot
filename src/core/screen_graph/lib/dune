@@ -1,0 +1,4 @@
+(library
+ (name screen_graph)
+ (public_name gamepilot.screen_graph)
+ (libraries gamepilot.wire gamepilot.effects))

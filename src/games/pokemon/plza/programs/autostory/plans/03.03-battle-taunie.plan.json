@@ -45,22 +45,22 @@
         "why": "A through her talk and challenge (no A hint, subtitles without a box) to the battle HUD"
       },
       {
-        "id": "battle_totodile",
+        "id": "first_battle",
         "kind": "game_action",
         "action": "story_battle",
-        "why": "beat Totodile, until \"We're not done just yet!\""
+        "why": "beat her first Pokémon (Totodile against Chikorita, console B; the starter's other two untested), until \"We're not done just yet!\""
       },
       {
-        "id": "tepig_battle_start",
+        "id": "second_battle_start",
         "kind": "game_action",
         "action": "scene_to_battle",
-        "why": "A through the Type Matchups tutorial and Tepig's send-out to the battle HUD"
+        "why": "A through the Type Matchups tutorial and her second Pokémon's send-out (Tepig against Chikorita) to the battle HUD"
       },
       {
-        "id": "battle_tepig",
+        "id": "second_battle",
         "kind": "game_action",
         "action": "story_battle",
-        "why": "beat Tepig, until Taunie's speech"
+        "why": "beat her second Pokémon, until Taunie's speech"
       },
       {
         "id": "after_taunie_battle",

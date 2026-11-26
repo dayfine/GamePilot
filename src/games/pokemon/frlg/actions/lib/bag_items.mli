@@ -8,7 +8,10 @@
     The bag's list scrolls as pokefirered's list_menu.c scrolls it: going down,
     the cursor stops on the window's fourth row and the list moves under it, so
     with the cursor on the list's top row the six rows shown are the list's
-    first six, and each further tap shows one more on the bottom row. *)
+    first six, and each further tap shows one more on the bottom row.
+
+    Language: item names and CANCEL are matched as English text; non-English
+    ROMs need localized candidate strings. *)
 
 val bag_row : int
 (** BAG on the full Start menu: 2. *)

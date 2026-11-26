@@ -23,7 +23,8 @@ let steady () =
         first := Some (t, m.t_ms);
         None
 
-let title () = Switch_home.Held_screen.wait_for ~timeout_ms:title_ms (steady ())
+let title () =
+  Screen_graph.Held_screen.wait_for ~timeout_ms:title_ms (steady ())
 
 let not_found ls t =
   Error

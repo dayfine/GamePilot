@@ -7,3 +7,18 @@ let locate path =
       if parent = dir then None else up parent
   in
   up (Sys.getcwd ())
+
+let home_dir () =
+  match Sys.getenv_opt "HOME" with
+  | Some h when h <> "" -> h
+  | _ -> (
+      match Sys.getenv_opt "USERPROFILE" with
+      | Some h when h <> "" -> h
+      | _ -> ".")
+
+let data_dir var name =
+  match Sys.getenv_opt var with
+  | Some dir when dir <> "" -> dir
+  | _ ->
+      List.fold_left Filename.concat (home_dir ())
+        [ ".local"; "share"; "gamepilot"; name ]

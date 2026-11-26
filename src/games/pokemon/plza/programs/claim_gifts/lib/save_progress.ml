@@ -23,8 +23,8 @@ let close_a_while : T.t = { button = B; hold_ms = 100; cooldown_ms = 15_000 }
 let max_reopens = 6
 
 let held ~timeout_ms read =
-  Switch_home.Held_screen.wait_for ~timeout_ms
-    (Switch_home.Held_screen.held hold_ms read)
+  Screen_graph.Held_screen.wait_for ~timeout_ms
+    (Screen_graph.Held_screen.held hold_ms read)
 
 let both m =
   match (D.last_saved m, D.current_time m) with

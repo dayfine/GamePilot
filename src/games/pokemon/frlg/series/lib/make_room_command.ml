@@ -85,7 +85,7 @@ let write_plans ~plan_dir dir room =
     ids;
   Yojson.Safe.to_file
     (Filename.concat dir (M.id ^ Plan_dir.plan_suffix))
-    (M.plan_json room);
+    (M.room_plan room);
   Ok ()
 
 let say lines line =

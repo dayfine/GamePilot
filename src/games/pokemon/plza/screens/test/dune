@@ -1,0 +1,9 @@
+(tests
+ (names test_gifts_graph)
+ (deps
+  (file ../../readers/test/fixtures/gifts/gifts.probes.jsonl))
+ (libraries
+  gamepilot.wire
+  gamepilot.table_test
+  gamepilot.screen_graph
+  gamepilot.plza_screens))

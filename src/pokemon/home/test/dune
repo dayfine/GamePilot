@@ -10,7 +10,7 @@
  (copy fixtures/home.shifted.probes.jsonl home.shifted.probes.jsonl))
 
 (tests
- (names test_home_readers test_box_moves)
- (modules test_home_readers test_box_moves scripted_boxes)
+ (names test_home_readers test_box_moves test_home_bank)
+ (modules test_home_readers test_box_moves test_home_bank scripted_boxes)
  (deps home.probes.jsonl home.shifted.probes.jsonl)
  (libraries gamepilot.wire gamepilot.table_test gamepilot.pokemon_home))

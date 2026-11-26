@@ -4,7 +4,8 @@
    AutoStoryNewGame/2026-11-15, images/new-game): the language list on each
    of its ten entries, the look picker before the stick moves and after the
    first tilt, the name keyboard in nine languages with the cursor on "1",
-   Simplified Chinese's keyboard keeping "1" after the first +, and Confirm
+   Simplified Chinese's keyboard keeping "1" after the first +, and console
+   B's Simplified Chinese keyboard of 2026-11-26 (dark, in English), and Confirm
    Choices after the name "1" (none of the others); and console B's Switch
    HOME (the home- frames, redacted to PLZA's title band, another game's title
    made a checkerboard: images/new-game/README.md): the cursor on PLZA's tile, first or scrolled to, reads as
@@ -123,6 +124,10 @@ let keyboards =
   @ [
       case "name-keyboard-zhHans-typed-1-after-plus"
         "keyboard, cursor (0, 0), text";
+      (* Console B, 2026-11-26: the dark theme, opened in English (英文),
+         the Latin page every other language types on. *)
+      case "name-keyboard-zhHans-english-dark-cursor-on-1"
+        "keyboard, cursor (0, 0)";
     ]
 
 let confirms =
