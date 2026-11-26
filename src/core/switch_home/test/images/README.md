@@ -10,7 +10,10 @@ rest is mid-grey. Each in place:
     redact_frame.py SPEC '^(home\.(top|iconrow|bottom|game_slot|close_game|cursor|tile)|user\.|close_game\.)' IN IN
 
 home-dimmed adds `--fill-mean` (its own mean colour, so it stays dark for
-Home_screen.black); user-select adds `--pattern 852,634,214,284`, the profile's
+Home_screen.black) and `--pattern 184,582,84,84` (the profile's icon on
+FireRed's "Playing" badge); home-close-software-popup adds the same pattern
+and `--pattern 558,556,84,86` (the icon on the dialog's FireRed art);
+user-select adds `--pattern 852,634,214,284`, the profile's
 icon and name made a checkerboard (the user slot keeps its detail).
 In delete-save/, user-select-native (with the same pattern),
 za-page-delete-save-data-for-user (the profile's name and icon) and
@@ -19,6 +22,8 @@ game-list-za-first (the library) are redacted to the delete-save spec's boxes
 (black, the Game Freak intro, System Settings' menus and dialogs) show no
 profile and are whole; FireRed's load menu shows the save's in-game name.
 
-Only whole-picture probes (home.picture, start_game.black) and the boxes over
-the profile read differently from the unredacted captures; every reader reads
-them as before.
+Only whole-picture probes (home.picture, start_game.black), the boxes over
+the profile, and the code keyboard's probes on home-cursor-on-last-played and
+user-select (fixtures/code_keyboard.probes.jsonl: their wide box now reads
+mostly fill) read differently from the unredacted captures; every reader reads
+them as before (no keyboard on either).
