@@ -142,11 +142,9 @@ Failures:
 `Plza_autostory.Run_attempts` decides when to reload (`Plza_autostory.Game_reload`) and try
 again, and `Plza_autostory.Start_signature` checks the start and end.
 
-`Plza_autostory.Story_game` gives the engine its handlers: the walk (`Plza_walk.Walk`, ported from
-`PokemonLZA_AutoStoryWalks.cpp`), the scene machine (`Plza_story.Scene_machine`), the story battle
-(`Plza_story.Battle`), the catches (`Plza_story.Catches`) and the other game actions in
-`Plza_story` and `Plza_walk`, over its `Steps`;
-any other event fails `no_handler`.
+`Plza_autostory.Story_game` gives the engine a handler for each game action a plan names, ported
+from the fork's PLZA AutoStory and built on `Plza_story` and `Plza_walk` over its `Steps`; any
+other event fails `no_handler`.
 
 A walk or scene that meets the battle early jumps to the battle event
 (`Plza_autostory.Battle_jump`), and `skip_if` flags are read from the screen
