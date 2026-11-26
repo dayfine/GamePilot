@@ -40,9 +40,9 @@ type config = {
   grind_cap : int option;
       (** Testing: every ["grind"] ends, passing, after this many battles
           ({!Grind.run}'s [cap]). *)
-  center : string option;
-      (** The town whose Pokémon Center heals between loop rounds
-          (["LavenderTown"]); [None]: heal fails as [not_implemented]. *)
+  center : Pokemon_engine.Pose.grid option;
+      (** The nurse's stand pose to heal at between loop rounds (from the places
+          table); [None]: heal fails as [not_implemented]. *)
   reload : unit -> (unit, Pokemon_engine.Failure.cause) result;
       (** Back to the checkpoint's start state. *)
   program_options : Run_options.t;

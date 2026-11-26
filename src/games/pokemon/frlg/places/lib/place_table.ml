@@ -126,6 +126,24 @@ let find t name =
         (Name_suggestion.unknown ~what:"place" name
            (List.map (fun p -> p.name) t.places))
 
+let pose_of_place p : Pokemon_engine.Pose.grid =
+  { map = p.map; tiles = [ p.stand ]; facing = Some p.facing }
+
+let center_map_of_fly t fly =
+  match Towns.find_by_fly t.towns fly with
+  | None -> None
+  | Some town ->
+      Result.to_option (Result.map (fun p -> p.map) (find t town.nurse))
+
+let center_nurse t name =
+  let town =
+    match Towns.find_by_fly t.towns name with
+    | Some town -> Ok town
+    | None -> Towns.find t.towns name
+  in
+  let* town = town in
+  Result.map pose_of_place (find t town.nurse)
+
 let spot p : Checkpoints_expand.Place_routes.spot =
   { map = p.map; tile = p.stand; facing = Some p.facing }
 

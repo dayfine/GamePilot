@@ -45,17 +45,20 @@ let added () =
     (Option.is_some
        (Connected_maps.find w.maps "CinnabarIsland_PokemonCenter_1F"))
 
-let walk ~from:(map, x, y, facing) (tx, ty, goal_facing) () =
+let walk_to ~from:(map, x, y, facing) (goal_map, tx, ty, goal_facing) () =
   let w = world_with_rooms () in
   let goal : Pokemon_engine.Pose.grid =
     {
-      map = "CinnabarIsland_PokemonCenter_1F";
+      map = goal_map;
       tiles = [ { x = tx; y = ty } ];
       facing = Some goal_facing;
     }
   in
   legs_text w
     (Route_target.plan w ~from:(place w map x y) ~facing:(Some facing) goal)
+
+let walk ~from (tx, ty, goal_facing) =
+  walk_to ~from ("CinnabarIsland_PokemonCenter_1F", tx, ty, goal_facing)
 
 let case name input expectation = { Table_test.name; input; expectation }
 
@@ -92,4 +95,9 @@ let () =
            (10, 5, East))
         "south 1 -> CinnabarIsland_PokemonCenter_1F (7, 5) south; east 3 (to \
          wall) -> CinnabarIsland_PokemonCenter_1F (10, 5) east";
+      case "out of the Center onto the town's door point"
+        (walk_to
+           ~from:("CinnabarIsland_PokemonCenter_1F", 7, 8, South)
+           ("CinnabarIsland", 14, 12, South))
+        "south 1 (warp) -> CinnabarIsland (14, 12) south";
     ]
