@@ -3,12 +3,12 @@
 
     Measured from Console A captures ([run-24/frames/000001.jpg],
     [run-39/frames/000024.jpg], [run-42/frames/000300.jpg],
-    [run-46/frames/000025.jpg]):
+    [run-46/frames/000025.jpg], [run-64], [run-68], [run-71], [run-74]):
     - Orange sparkle diamonds: RGB [(200..255, 110..215, 0..80)].
     - Pink player dot: RGB [(170..255, 40..145, 100..210)]. Each of the three
-      ring corridors is split into [buckets_per_corridor] (4) ordered sub-boxes
+      ring corridors is split into [buckets_per_corridor] (8) ordered sub-boxes
       so the runner can sprint straight to each sparkle's bucket without
-      stepping tile by tile. *)
+      stepping tile by tile or merging nearby diamonds. *)
 
 (** The three corridors on the right half of the central Hideaway ring. *)
 type corridor =
@@ -18,7 +18,7 @@ type corridor =
 
 type target = {
   corridor : corridor;
-  bucket : int;  (** Ordered 0..3 along the corridor's travel direction. *)
+  bucket : int;  (** Ordered 0..7 along the corridor's travel direction. *)
 }
 (** One active dig-spot bucket detected on the minimap. *)
 
@@ -37,7 +37,7 @@ type nearby = {
 (** Active nearby dig-spot and player-position summary from the minimap. *)
 
 val buckets_per_corridor : int
-(** Number of sub-buckets per corridor (4). *)
+(** Number of sub-buckets per corridor (8). *)
 
 val none : nearby
 (** No sparkles and no player bucket read. *)
@@ -59,7 +59,7 @@ val read_full_map : Effects.measurements -> nearby
     ([Y -> A]) measurements. *)
 
 val debug_full_map : Effects.measurements -> string
-(** Format raw per-bucket orange pixel shares for all 12 full-map buckets. *)
+(** Format raw per-bucket orange pixel shares for all 24 full-map buckets. *)
 
 val any : nearby -> bool
 (** [true] when at least one sparkle bucket is active. *)

@@ -26,17 +26,32 @@ let top_y_max = 3
 let bot_y_min = 20
 let bot_y_max = 22
 let east_x_min = 12
-let bot_x0 = 3
-let bot_x1 = 6
-let bot_x2 = 10
-let bot_x3 = 13
+let bot_x0 = 2
+let bot_x1 = 3
+let bot_x2 = 5
+let bot_x3 = 7
+let bot_x4 = 8
+let bot_x5 = 10
+let bot_x6 = 12
+let bot_x7 = 14
 let east_y0 = 19
-let east_y1 = 14
-let east_y2 = 9
-let east_y3 = 4
-let bucket_bottom_xs = [| bot_x0; bot_x1; bot_x2; bot_x3 |]
-let bucket_east_ys = [| east_y0; east_y1; east_y2; east_y3 |]
-let bucket_top_xs = [| bot_x3; bot_x2; bot_x1; bot_x0 |]
+let east_y1 = 16
+let east_y2 = 14
+let east_y3 = 12
+let east_y4 = 9
+let east_y5 = 7
+let east_y6 = 5
+let east_y7 = 2
+
+let bucket_bottom_xs =
+  [| bot_x0; bot_x1; bot_x2; bot_x3; bot_x4; bot_x5; bot_x6; bot_x7 |]
+
+let bucket_east_ys =
+  [| east_y0; east_y1; east_y2; east_y3; east_y4; east_y5; east_y6; east_y7 |]
+
+let bucket_top_xs =
+  [| bot_x7; bot_x6; bot_x5; bot_x4; bot_x3; bot_x2; bot_x1; bot_x0 |]
+
 let bottom_center_y = 20
 let east_center_x = 14
 let top_center_y = 1

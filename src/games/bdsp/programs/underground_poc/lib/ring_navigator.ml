@@ -11,10 +11,11 @@ let ( let* ) = Result.bind
 let mech = Corridor_nav.bdsp_move_mechanics
 let step_probe_timeout_ms = 350
 let radar_hold_ms = 100
-let radar_settle_ms = 750
-let radar_retry_wait_ms = 350
+let radar_settle_ms = 850
+let radar_retry_wait_ms = 300
+let radar_sample_tries = 3
 let wall_margin_ms = 1500
-let wall_hug_ms = 1000
+let wall_hug_ms = 1100
 let servo_step_ms = 240
 let max_servo_steps = 4
 
@@ -84,12 +85,15 @@ let read_star_offset ~picture ~before =
     | Some b -> WS.locate_diff ~before:b ~after
     | None -> WS.locate after
   in
-  let check () = Option.bind (sample_frame ~picture) locate_from in
-  match check () with
-  | Some _ as hit -> hit
-  | None ->
-      P.wait radar_retry_wait_ms;
-      check ()
+  let rec poll tries_left =
+    match Option.bind (sample_frame ~picture) locate_from with
+    | Some _ as hit -> hit
+    | None when tries_left > 1 ->
+        P.wait radar_retry_wait_ms;
+        poll (tries_left - 1)
+    | None -> None
+  in
+  poll radar_sample_tries
 
 let servo_step_toward ~along_dir (off : WS.offset) =
   match along_dir with
@@ -102,29 +106,39 @@ let servo_step_toward ~along_dir (off : WS.offset) =
       else if off.dy > 0 then Some Corridor_nav.South
       else None
 
-(* Dig spots never spawn on the South cutaway rim; horizontal corridors always
-   face North, while vertical corridors face East or West from the star offset. *)
-let wall_from_offset ~along_dir ~fallback (off : WS.offset) =
+(* Dig spots never spawn on the South cutaway rim; horizontal corridors face
+   North unless the star sits on an adjacent East/West corner wall, while
+   vertical corridors face East or West from the star offset. *)
+let wall_from_offset ~along_dir ~wall_dirs ~fallback (off : WS.offset) =
   match along_dir with
-  | Corridor_nav.East | Corridor_nav.West -> Corridor_nav.North
+  | Corridor_nav.East | Corridor_nav.West ->
+      if off.dy < 0 then Corridor_nav.North
+      else if off.dx > 0 && List.mem D.East wall_dirs then Corridor_nav.East
+      else if off.dx < 0 && List.mem D.West wall_dirs then Corridor_nav.West
+      else Corridor_nav.North
   | Corridor_nav.North | Corridor_nav.South ->
       if off.dx > 0 then Corridor_nav.East
       else if off.dx < 0 then Corridor_nav.West
       else fallback
 
-let rec lock_onto_star ~log ~picture ~along_dir ~fallback ~before left =
+let rec lock_onto_star ~log ~picture ~along_dir ~wall_dirs ~fallback ~before
+    ~seen left =
   match read_star_offset ~picture ~before with
-  | None -> (fallback, false)
+  | None -> seen
   | Some off ->
       log (Printf.sprintf "Radar sparkle star at dx=%d dy=%d" off.dx off.dy);
-      step_or_face ~log ~picture ~along_dir ~fallback left off
+      let face_dir = wall_from_offset ~along_dir ~wall_dirs ~fallback off in
+      step_or_face ~log ~picture ~along_dir ~wall_dirs ~fallback ~face_dir left
+        off
 
-and step_or_face ~log ~picture ~along_dir ~fallback left off =
+and step_or_face ~log ~picture ~along_dir ~wall_dirs ~fallback ~face_dir left
+    off =
   match (left > 0, servo_step_toward ~along_dir off) with
   | true, Some move_dir ->
       OW.run_hold move_dir ~hold_ms:servo_step_ms;
-      lock_onto_star ~log ~picture ~along_dir ~fallback ~before:None (left - 1)
-  | _ -> (wall_from_offset ~along_dir ~fallback off, true)
+      lock_onto_star ~log ~picture ~along_dir ~wall_dirs ~fallback ~before:None
+        ~seen:(face_dir, true) (left - 1)
+  | _ -> (face_dir, true)
 
 let lateral_dirs = function
   | Corridor_nav.North | Corridor_nav.South ->
@@ -167,7 +181,8 @@ let interact_at_stop ~log ~picture ~on_prompt ~on_battle ~along_dir ~wall_dirs
   P.press ~hold_ms:radar_hold_ms ~cooldown_ms:radar_settle_ms Wire.R;
   let fallback = primary_wall_dir ~along_dir wall_dirs in
   let face_dir, saw_star =
-    lock_onto_star ~log ~picture ~along_dir ~fallback ~before max_servo_steps
+    lock_onto_star ~log ~picture ~along_dir ~wall_dirs ~fallback ~before
+      ~seen:(fallback, false) max_servo_steps
   in
   let* next =
     align_and_interact ~picture ~on_prompt ~on_battle ~face_dir ~saw_star cur

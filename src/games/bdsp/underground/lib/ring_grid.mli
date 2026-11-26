@@ -58,7 +58,7 @@ val adjacent_walls : Grid_geometry.Tile_pos.t -> Grid_geometry.Direction.t list
 
 val waypoint_of_bucket :
   segment:segment -> bucket:int -> Grid_geometry.Tile_pos.t
-(** Map a minimap sparkle [(segment, bucket)] ([0..3]) to its center walkable
+(** Map a minimap sparkle [(segment, bucket)] ([0..7]) to its center walkable
     tile on {!grid}. *)
 
 val plan_legs :

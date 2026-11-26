@@ -12,7 +12,7 @@ type nearby = {
   player : target option;
 }
 
-let buckets_per_corridor = 4
+let buckets_per_corridor = 8
 
 let none =
   {
@@ -40,22 +40,23 @@ let te_w = 0.048
 let te_y = 0.055
 let te_h = 0.027
 
-(* Full-sized Underground map (Y -> A) SW green ring bounds from run-55/000004.jpg:
-   bottom_east:   x=0.415..0.450, y=0.785..0.810
-   east_vertical: x=0.438..0.455, y=0.700..0.785
-   top_east:      x=0.415..0.450, y=0.685..0.708 *)
+(* Full-sized Underground map (Y -> A) SW green ring bounds verified across
+   Console A captures run-55, run-64, run-68, run-71, run-74:
+   bottom_east:   x=0.415..0.450, y=0.785..0.808 (diamonds at y~0.794)
+   east_vertical: x=0.439..0.454, y=0.700..0.785 (diamonds at x~0.446)
+   top_east:      x=0.415..0.450, y=0.680..0.700 (diamonds at y~0.686) *)
 let fm_be_x0 = 0.415
 let fm_be_w = 0.035
 let fm_be_y = 0.785
-let fm_be_h = 0.025
-let fm_ev_x = 0.438
-let fm_ev_w = 0.017
+let fm_be_h = 0.023
+let fm_ev_x = 0.439
+let fm_ev_w = 0.015
 let fm_ev_y_top = 0.700
 let fm_ev_h = 0.085
 let fm_te_x_left = 0.415
 let fm_te_w = 0.035
-let fm_te_y = 0.685
-let fm_te_h = 0.023
+let fm_te_y = 0.680
+let fm_te_h = 0.020
 let fm_min_sparkle_share = 0.015
 let orange_r_min = 200
 let orange_g_min = 110
@@ -155,22 +156,13 @@ let full_map_probes ~picture =
 let share_of m id = Option.value (CS.read m id) ~default:0.
 
 (* Pick local-maximum active buckets within each corridor so a single diamond
-   straddling two buckets merges to its peak, while two distinct diamonds in
-   the same corridor (separated by a dip) both stay as waypoints. *)
-let plateau_min_share = 0.06
-
+   straddling two buckets merges to its peak (leftmost on an exact tie), while
+   two distinct diamonds separated by a dip both stay as waypoints. *)
 let is_local_peak scores i =
   let s = scores.(i) in
   let left_ok = i = 0 || s > scores.(i - 1) in
   let right_ok = i = Array.length scores - 1 || s >= scores.(i + 1) in
-  let wide_plateau_edge =
-    i = 0
-    && Array.length scores >= 3
-    && scores.(0) >= plateau_min_share
-    && scores.(1) >= plateau_min_share
-    && scores.(2) >= plateau_min_share
-  in
-  (left_ok && right_ok) || wide_plateau_edge
+  left_ok && right_ok
 
 let corridor_peaks ~id_of ~threshold m corridor =
   let scores =
