@@ -41,7 +41,7 @@ let cases =
       "map-pin/en-0308b-zone1-spot-80-005-360p" "(405.0, 233.8)";
     case "03.12 out of the zone, the map opening (run: 401, 227)"
       "map-pin/en-0308b-out-of-zone1-024-360p" "(401.9, 225.6)";
-    case "no map: the 03.04 start" "minimap/es-0303-start" "none";
+    case "no map: the 03.04 start" "minimap/es-after-taunie-battle" "none";
   ]
 
 let is_map name =

@@ -21,14 +21,29 @@ module Action = struct
   let to_string = function Walk w -> Walk_args.to_string w
 end
 
-module Postconditions = struct
-  type t = unit
-  type reads = unit
+module Screen_signature = Screen_signature
 
-  let check () () = []
-  let to_lines () = []
+module Postconditions = struct
+  type t = { place : Screen_signature.t option }
+  type reads = Screen_signature.t
+
+  let judge_place read known =
+    Engine_postcondition.Postcondition.judge "place"
+      ~expected:(Screen_signature.to_string known)
+      ~read:(Screen_signature.to_string read)
+      (Screen_signature.confirmed ~known read)
+
+  let check p read = Option.to_list (Option.map (judge_place read) p.place)
+
+  let to_lines p =
+    Option.fold ~none:[]
+      ~some:(fun s -> [ "place " ^ Screen_signature.to_string s ])
+      p.place
 end
 
-(* PLZA reads no position: a walk names no end, and nothing is promised. *)
+(* PLZA reads no position: a walk names no end, and no zone is promised. *)
 let ends_at (Action.Walk _) = None
-let position () = None
+let position (_ : Postconditions.t) = None
+
+let end_place (p : Postconditions.t) =
+  Option.map (fun _ -> p) p.Postconditions.place

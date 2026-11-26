@@ -145,7 +145,12 @@ let outcome ?end_at ?end_state ?after ?flags () =
   fst (run_result ?end_at ?end_state ?after ?flags ())
 
 let reads gold_now : Toy_rules.Postconditions.reads =
-  { gold_now = Some gold_now; start = Some 50; set = [ "met_cat" ] }
+  {
+    gold_now = Some gold_now;
+    start = Some 50;
+    set = [ "met_cat" ];
+    in_sight = None;
+  }
 
 let promised () = Option.get (plan ()).postconditions
 

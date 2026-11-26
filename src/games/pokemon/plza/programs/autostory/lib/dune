@@ -15,4 +15,5 @@
   gamepilot.plza_walk
   gamepilot.plza_story
   gamepilot.plza_rules
+  gamepilot.plza_plan_format
   gamepilot.plza_engine))
