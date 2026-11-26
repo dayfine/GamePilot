@@ -48,26 +48,37 @@ let step ms button =
   ignore
     (Effects.submit [ M.hold ~hold_ms:step_hold_ms ~cooldown_ms:ms button ])
 
-let wallpaper () =
+(* With the hand on the title, the PKMN DATA panel shows no Pokémon, so
+   Pc_screen.box_screen_shown reads; read once more when no box screen showed
+   (as {!Ace_code.read_wallpaper}). *)
+let read_title_bar () =
   ignore (Effects.submit [ Wire.Wait { wait_ms = hand_ms } ]);
   match Effects.read () with
-  | Some m when Pc_box_screen.desert_wallpaper m = Some true -> `Desert
-  | Some m when Pc_box_screen.title_wallpaper m = Some Pc_box_screen.Forest ->
-      `Forest
-  | _ -> `Other
+  | Some m when Pc_screen.box_screen_shown m ->
+      `Shows (Pc_box_screen.title_wallpaper m)
+  | _ -> `No_box_screen
+
+let wallpaper () =
+  match read_title_bar () with
+  | `No_box_screen -> read_title_bar ()
+  | `Shows _ as read -> read
 
 (* MOVE POKéMON opens on the box last shown (the save's current box), on its
    first slot: UP to the title; from Box 1 (Forest, by the title's bar) RIGHT
-   twice to Box 3 (Desert, by the grid's foot); DOWN onto the row's third
+   twice to Box 3 (Desert, by the title's bar); DOWN onto the row's third
    slot, across, down. *)
 let to_slot c =
   step hand_ms Wire.Up;
   (match wallpaper () with
-  | `Desert -> ()
-  | `Forest ->
+  | `Shows (Some Pc_box_screen.Desert) -> ()
+  | `Shows (Some Pc_box_screen.Forest) ->
       step box_change_ms Wire.Right;
       step box_change_ms Wire.Right
-  | `Other -> pc_fail "the box shown is neither Box 1 nor Box 3 (by wallpaper)");
+  | `Shows _ ->
+      pc_fail "the box shown is neither Box 1 nor Box 3 (by wallpaper)"
+  | `No_box_screen ->
+      pc_fail
+        "the box wallpaper was not read: the box screen did not show, twice");
   step hand_ms Wire.Down;
   let col = (c.slot - 1) mod slots_per_row
   and row = (c.slot - 1) / slots_per_row in
