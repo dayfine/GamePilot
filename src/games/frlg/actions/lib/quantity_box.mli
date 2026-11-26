@@ -5,7 +5,7 @@
     most and at 1.
 
     {!presses_from_one} is ported from the fork's AutoStory Mart
-    (PokemonFRLG_AutoStoryMart, [quantity_presses()]), unchanged; {!next_press}
+    (Programs/AutoStory/PokemonFRLG_AutoStoryMart), unchanged; {!next_press}
     is new, not in the fork, which never withdraws an item. *)
 
 val tens : int
